@@ -70,7 +70,7 @@ char	**argv;
 	/*  Change object name in the directory. */
 	if( db_rename( dbip, dp, argv[2] ) < 0 ||
 	    db_get( dbip,  dp, &record, 0 , 1) < 0 )  {
-		printf("error in rename to %s, aborting\n", argv[2] );
+		rt_log("error in rename to %s, aborting\n", argv[2] );
 	    	ERROR_RECOVERY_SUGGESTION;
 	    	return CMD_BAD;
 	}
@@ -144,7 +144,7 @@ char	**argv;
 	if( argc == 4 )
 		oper = argv[3][0];
 	if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
-		(void)printf("bad operation: %c\n", oper );
+		rt_log("bad operation: %c\n", oper );
 		return CMD_BAD;
 	}
 	if( combadd( dp, argv[2], 0, oper, 0, 0 ) == DIR_NULL )
@@ -172,7 +172,7 @@ char	**argv;
  
 	/* Check for even number of arguments */
 	if( argc & 01 )  {
-		(void)printf("error in number of args!\n");
+		rt_log("error in number of args!\n");
 		return CMD_BAD;
 	}
 
@@ -180,25 +180,25 @@ char	**argv;
 		/* will attempt to create the region */
 		if(item_default) {
 			item_default++;
-			(void)printf("Defaulting item number to %d\n", item_default);
+			rt_log("Defaulting item number to %d\n", item_default);
 		}
 	}
 
 	/* Get operation and solid name for each solid */
 	for( i = 2; i < argc; i += 2 )  {
 		if( argv[i][1] != '\0' )  {
-			(void)printf("bad operation: %s skip member: %s\n",
+			rt_log("bad operation: %s skip member: %s\n",
 				argv[i], argv[i+1] );
 			continue;
 		}
 		oper = argv[i][0];
 		if( (dp = db_lookup( dbip,  argv[i+1], LOOKUP_NOISY )) == DIR_NULL )  {
-			(void)printf("skipping %s\n", argv[i+1] );
+			rt_log("skipping %s\n", argv[i+1] );
 			continue;
 		}
 
 		if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
-			(void)printf("bad operation: %c skip member: %s\n",
+			rt_log("bad operation: %c skip member: %s\n",
 				oper, dp->d_namep );
 			continue;
 		}
@@ -210,14 +210,14 @@ char	**argv;
 		
 		if( record.u_id == ID_COMB ) {
 			if( record.c.c_flags == 'R' ) {
-				(void)printf(
+				rt_log(
 				     "Note: %s is a region\n",
 				     dp->d_namep );
 			}
 		}
 
 		if( combadd( dp, argv[1], 1, oper, ident, air ) == DIR_NULL )  {
-			(void)printf("error in combadd\n");
+			rt_log("error in combadd\n");
 			return CMD_BAD;
 		}
 	}
@@ -252,7 +252,7 @@ char	**argv;
 
 	/* Check for odd number of arguments */
 	if( argc & 01 )  {
-		(void)printf("error in number of args!\n");
+		rt_log("error in number of args!\n");
 		return CMD_BAD;
 	}
 
@@ -262,30 +262,30 @@ char	**argv;
 	/* Get operation and solid name for each solid */
 	for( i = 2; i < argc; i += 2 )  {
 		if( argv[i][1] != '\0' )  {
-			(void)printf("bad operation: %s skip member: %s\n",
+			rt_log("bad operation: %s skip member: %s\n",
 				argv[i], argv[i+1] );
 			continue;
 		}
 		oper = argv[i][0];
 		if( (dp = db_lookup( dbip,  argv[i+1], LOOKUP_NOISY )) == DIR_NULL )  {
-			(void)printf("skipping %s\n", argv[i+1] );
+			rt_log("skipping %s\n", argv[i+1] );
 			continue;
 		}
 
 		if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
-			(void)printf("bad operation: %c skip member: %s\n",
+			rt_log("bad operation: %c skip member: %s\n",
 				oper, dp->d_namep );
 			continue;
 		}
 
 		if( combadd( dp, comb_name, 0, oper, 0, 0 ) == DIR_NULL )  {
-			(void)printf("error in combadd\n");
+			rt_log("error in combadd\n");
 			return CMD_BAD;
 		}
 	}
 
 	if( db_lookup( dbip, comb_name, LOOKUP_QUIET) == DIR_NULL ) {
-		(void)printf("Error:  %s not created\n", comb_name );
+		rt_log("Error:  %s not created\n", comb_name );
 		return CMD_BAD;
 	}
 
@@ -345,7 +345,7 @@ char	**argv;
 				UNION, 0, 0) == DIR_NULL )
 				return CMD_BAD;
 		}  else
-			(void)printf("skip member %s\n", argv[i]);
+			rt_log("skip member %s\n", argv[i]);
 	}
 	return CMD_OK;
 }
@@ -376,9 +376,9 @@ top:
 		for( i = 2; i < argc; i++ )  {
 			if( strcmp( argv[i], record.M.m_instname ) != 0 )
 				continue;
-			(void)printf("deleting member %s\n", argv[i] );
+			rt_log("deleting member %s\n", argv[i] );
 			if( db_delrec( dbip, dp, rec ) < 0 )  {
-				(void)printf("Error in deleting member.\n");
+				rt_log("Error in deleting member.\n");
 				ERROR_RECOVERY_SUGGESTION;
 				return CMD_BAD;
 			}

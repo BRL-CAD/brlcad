@@ -80,7 +80,7 @@ struct button {
 				/* are recognized, ON and OFF;  may be	*/
 				/* toggled by mged "redebug" command.	*/
 static int		XGL_debug_level = 0;
-#define	DPRINTF(S)	if(XGL_debug_level) (void)fprintf(stderr, S)
+#define	DPRINTF(S)	if(XGL_debug_level) (void)rt_log( S)
 
 
 
@@ -391,7 +391,7 @@ XGL_open()
 	DPRINTF("XGL_open\n");
 
 	if(once++) {
-		fprintf(stderr, "Cannot re-attach to XGL\n");
+		rt_log( "Cannot re-attach to XGL\n");
 		return(-1);
 	}
 
@@ -542,7 +542,7 @@ XGL_epilog()
 		xgl_context_new_frame(ctx_2d);
 		break;
 	}
-/*fprintf(stderr,"XGL_epilog: %d ms from prolog\n", stop_ts());*/
+/*rt_log("XGL_epilog: %d ms from prolog\n", stop_ts());*/
 
 	return;
 }
@@ -722,14 +722,14 @@ static struct timeval tp1, tp2;
 		if (sp->s_soldash) {
 			if (get_1_pt_list (sp, 
 			    		&pl_dash[num_pt_dash_lists]) == 0) {
-				fprintf(stderr, "mged XGL_object: no memory\n");
+				rt_log( "mged XGL_object: no memory\n");
                 		return 0;
         		}
 			num_pt_dash_lists++;
 		} else {
 #endif
 			if (get_1_pt_list (sp, &pl[num_pt_lists]) == 0) {
-				fprintf(stderr, "mged XGL_object: no memory\n");
+				rt_log( "mged XGL_object: no memory\n");
                 		return 0;
         		}
 			num_pt_lists++;
@@ -1051,7 +1051,7 @@ int	oldstate, newstate;
 		DPRINTF("XGL_statechange:  UNKNOWN STATE\n");
 		return;
 	}
-	if(XGL_debug_level) fprintf(stderr, "XGL_statechange from %s to %s\n",
+	if(XGL_debug_level) rt_log( "XGL_statechange from %s to %s\n",
 		state_str[oldstate], state_str[newstate]);
 
 	return;
@@ -1298,7 +1298,7 @@ init_graphics_parent_xview()
 				DefaultScreen(display))->class;
 		win_depth = DisplayPlanes (display, DefaultScreen(display));
 	}
-/*fprintf(stderr, "Visual Class is %d, depth = %d\n",win_visual_class,win_depth);*/
+/*rt_log( "Visual Class is %d, depth = %d\n",win_visual_class,win_depth);*/
 #endif
 	panel = (Panel)xv_create(frame, PANEL,
 		PANEL_LAYOUT,		PANEL_VERTICAL,
@@ -1414,7 +1414,7 @@ Frame	frame;
 {
        Xgl_inquire          *inq_info;
        if (!(inq_info = xgl_inquire(sys_state, &win_desc))) {
-          printf("error in getting inquiry\n");
+          rt_log("error in getting inquiry\n");
           exit(1);
         }
 	bufs = inq_info->maximum_buffer;	/* if double buffering, its 2 */
@@ -1561,15 +1561,15 @@ init_check_buffering( int bufs)
 
 	if(nbufs > 1) {
 
-	printf("\nA total of %d buffers are supported by this\n", nbufs);
-	printf("hardware.  Hardware double buffering will be turned on.\n");
+	rt_log("\nA total of %d buffers are supported by this\n", nbufs);
+	rt_log("hardware.  Hardware double buffering will be turned on.\n");
 
 		return(AB_DBUFF);
 
 	} else if(maxsize == 2) {
 
-	printf("\nThis is a MONOCHROME frame buffer.  No double buffering\n");
-	printf("of any type can be used.\n\n");
+	rt_log("\nThis is a MONOCHROME frame buffer.  No double buffering\n");
+	rt_log("of any type can be used.\n\n");
 
 		maxcolors = 2;
 		colortablesize = 2;
@@ -1577,13 +1577,13 @@ init_check_buffering( int bufs)
 
 	} else if(maxsize != 256) {
 
-	printf("\nUnknown frame buffer type ... aborting.\n\n");
+	rt_log("\nUnknown frame buffer type ... aborting.\n\n");
 
 		return(-1);
 
 	} else {
 
-		printf("\nUsing colormap double buffering, 8 bit color.\n");
+		rt_log("\nUsing colormap double buffering, 8 bit color.\n");
 
 		switch(DEFAULT_DB) {
 		case OPTION_ZERO:
@@ -1610,7 +1610,7 @@ init_check_buffering( int bufs)
 			colortablesize = 256;
 			break;
 		  default:
-			printf("Undefined DEFAULT_DB option, exiting\n");
+			rt_log("Undefined DEFAULT_DB option, exiting\n");
 			exit(1);
 		}
 	}
@@ -1626,7 +1626,7 @@ init_editor()
 
 	if((editor = getenv("EDITOR")) != NULL) {
 		if((openwinhome = getenv("OPENWINHOME")) == NULL) {
-			fprintf(stderr,
+			rt_log(
 			    "mged XGL_open:  $OPENWINHOME not set\n");
 			return(-1);
 		}
@@ -1664,7 +1664,7 @@ int	defalt;
 	char	line[80];
 
 	for(;;) {
-		printf("Is it OK to proceed [%s]? ",
+		rt_log("Is it OK to proceed [%s]? ",
 			(defalt == YES) ? "yes" : "no");
 		(void)fgets( line, sizeof(line), stdin ); /* \n, null terminated */
 		line[strlen(line)-1] = '\0';		/* remove newline */
@@ -1784,9 +1784,9 @@ stop_func(client, fd)
 Notify_client	client;
 int		fd;
 {
-/*fprintf (stderr,"stop_func:calling notify_stop()\n");*/
+/*rt_log("stop_func:calling notify_stop()\n");*/
 	notify_stop();
-/*fprintf (stderr,"stop_func:back from notify_stop()\n");*/
+/*rt_log("stop_func:back from notify_stop()\n");*/
 
 	return(NOTIFY_DONE);
 }
@@ -2234,9 +2234,9 @@ dump_pl(Xgl_pt_list *pl, int n)
 	int i, j;
 
 	for (i = 0; i < n; i++) {
-		fprintf(stderr, "PL[%d]: (%d pts)\n",i, pl[i].num_pts);
+		rt_log( "PL[%d]: (%d pts)\n",i, pl[i].num_pts);
 		for (j = 0; j < pl[i].num_pts; j++) {
-			fprintf(stderr, "	pt[%j]: %f,%f,%f, %d\n",
+			rt_log( "	pt[%j]: %f,%f,%f, %d\n",
 				pl[i].pts.flag_f3d[j].x,
 				pl[i].pts.flag_f3d[j].y,
 				pl[i].pts.flag_f3d[j].z,

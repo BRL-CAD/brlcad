@@ -766,7 +766,7 @@ static void
 ars_ed( arg )
 int arg;
 {
-	(void)printf("NOT IMPLEMENTED YET\n");
+	rt_log("NOT IMPLEMENTED YET\n");
 }
 
 
@@ -800,7 +800,7 @@ int arg;
 {
 	switch(arg)  {
 	default:
-		(void)printf("nmg_ed: undefined menu event?\n");
+		rt_log("nmg_ed: undefined menu event?\n");
 		return;
 	case ECMD_NMG_EPICK:
 	case ECMD_NMG_EMOVE:
@@ -809,7 +809,7 @@ int arg;
 		break;
 	case ECMD_NMG_EDEBUG:
 		if( !es_eu )  {
-			(void)printf("nmg_ed: no edge selected yet\n");
+			rt_log("nmg_ed: no edge selected yet\n");
 			return;
 		}
 
@@ -844,32 +844,32 @@ int arg;
 		return;
 	case ECMD_NMG_FORW:
 		if( !es_eu )  {
-			(void)printf("nmg_ed: no edge selected yet\n");
+			rt_log("nmg_ed: no edge selected yet\n");
 			return;
 		}
 		NMG_CK_EDGEUSE(es_eu);
 		es_eu = RT_LIST_PNEXT_CIRC(edgeuse, es_eu);
-		(void)printf("edgeuse selected=x%x\n", es_eu);
+		rt_log("edgeuse selected=x%x\n", es_eu);
 		sedraw = 1;
 		return;
 	case ECMD_NMG_BACK:
 		if( !es_eu )  {
-			(void)printf("nmg_ed: no edge selected yet\n");
+			rt_log("nmg_ed: no edge selected yet\n");
 			return;
 		}
 		NMG_CK_EDGEUSE(es_eu);
 		es_eu = RT_LIST_PPREV_CIRC(edgeuse, es_eu);
-		(void)printf("edgeuse selected=x%x\n", es_eu);
+		rt_log("edgeuse selected=x%x\n", es_eu);
 		sedraw = 1;
 		return;
 	case ECMD_NMG_RADIAL:
 		if( !es_eu )  {
-			(void)printf("nmg_ed: no edge selected yet\n");
+			rt_log("nmg_ed: no edge selected yet\n");
 			return;
 		}
 		NMG_CK_EDGEUSE(es_eu);
 		es_eu = es_eu->eumate_p->radial_p;
-		(void)printf("edgeuse selected=x%x\n", es_eu);
+		rt_log("edgeuse selected=x%x\n", es_eu);
 		sedraw = 1;
 		return;
 	case ECMD_NMG_LEXTRU:
@@ -910,13 +910,13 @@ int arg;
 
 			if( !wire_loop_count )
 			{
-				(void)printf( "No sketch (wire loop) to extrude\n" );
+				rt_log( "No sketch (wire loop) to extrude\n" );
 				return;
 			}
 
 			if( wire_loop_count > 1 )
 			{
-				(void)printf( "Too many wire loops!!! Don't know which to extrude!!\n" );
+				rt_log( "Too many wire loops!!! Don't know which to extrude!!\n" );
 				return;
 			}
 
@@ -931,7 +931,7 @@ int arg;
 
 			if( area < 0.0 )
 			{
-				(void)printf( "Cannot extrude loop with no area\n" );
+				rt_log( "Cannot extrude loop with no area\n" );
 				return;
 			}
 
@@ -971,19 +971,19 @@ int arg;
 					if( (ret_val=rt_isect_lseg3_lseg3( dist, v1->vg_p->coord, edge1,
 						v2->vg_p->coord, edge2, &mged_tol )) > (-1) )
 					{
-						(void)printf( "Loop crosses itself, cannot extrude\n" );
-						(void)printf( "edge1: pt=( %g %g %g ), dir=( %g %g %g)\n",
+						rt_log( "Loop crosses itself, cannot extrude\n" );
+						rt_log( "edge1: pt=( %g %g %g ), dir=( %g %g %g)\n",
 							V3ARGS( v1->vg_p->coord ), V3ARGS( edge1 ) );
-						(void)printf( "edge2: pt=( %g %g %g ), dir=( %g %g %g)\n",
+						rt_log( "edge2: pt=( %g %g %g ), dir=( %g %g %g)\n",
 							V3ARGS( v2->vg_p->coord ), V3ARGS( edge2 ) );
 						if( ret_val == 0 )
-							(void)printf( "edges are collinear and overlap\n" );
+							rt_log( "edges are collinear and overlap\n" );
 						else
 						{
 							point_t isect_pt;
 
 							VJOIN1( isect_pt, v1->vg_p->coord, dist[0], edge1 );
-							(void)printf( "edges intersect at ( %g %g %g )\n",
+							rt_log( "edges intersect at ( %g %g %g )\n",
 								V3ARGS( isect_pt ) );
 						}
 						return;
@@ -998,7 +998,7 @@ int arg;
 			lu_copy = nmg_dup_loop( lu , &s_tmp->l.magic , (long **)0 );
 			if( !lu_copy )
 			{
-				(void)printf( "Failed to make copy of loop\n" );
+				rt_log( "Failed to make copy of loop\n" );
 				nmg_km( m_tmp );
 				return;
 			}
@@ -1554,7 +1554,7 @@ int type;
 		p2 = arb_faces[type][i*4+1];
 		p3 = arb_faces[type][i*4+2];
 		if(planeqn(i, p1, p2, p3, &temprec)) {
-			(void)printf("No eqn for face %d%d%d%d\n",
+			rt_log("No eqn for face %d%d%d%d\n",
 				p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
 			return;
 		}
@@ -1578,7 +1578,7 @@ init_sedit()
 	 * Check for a processed region or other illegal solid.
 	 */
 	if( illump->s_Eflag )  {
-		(void)printf(
+		rt_log(
 "Unable to Solid_Edit a processed region;  select a primitive instead\n");
 		return;
 	}
@@ -1611,7 +1611,7 @@ init_sedit()
 		es_type = type;
 		if( rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol ) )
 		{
-			(void) printf( "Cannot calculate plane equations for ARB8\n" );
+			rt_log( "Cannot calculate plane equations for ARB8\n" );
 			db_free_external( &es_ext );
 			rt_functab[id].ft_ifree( &es_int );
 			return;
@@ -1785,7 +1785,7 @@ int type;
 	for(i=0; i<8; i++){
 		/* use temp_srec until we know intersect doesn't fail */
 		if( intersect(type,i*3,i,&temp_srec) ){
-			(void)printf("Intersection of planes fails\n");
+			rt_log("Intersection of planes fails\n");
 			/* clean up array es_peqn for anyone else */
 			calc_planes( old_srec, type );
 			return;				/* failure */
@@ -1856,7 +1856,7 @@ sedit()
 				menu_array[MENU_L1] = which_menu[es_type+6];
 				break;
 			default:
-				(void)printf("Bad menu item.\n");
+				rt_log("Bad menu item.\n");
 				return;
 		}
 		break;
@@ -1889,7 +1889,7 @@ sedit()
 		
 		/* special case for arb7 */
 		if( es_type == ARB7  && pnt5 ){
-				(void)printf("\nFixed vertex is point 5.\n");
+				rt_log("\nFixed vertex is point 5.\n");
 				fixv = 5;
 		}
 		else{
@@ -1900,14 +1900,14 @@ sedit()
 				char	line[128];
 				
 				type = es_type - 4;
-				(void)printf("\nEnter fixed vertex number( ");
+				rt_log("\nEnter fixed vertex number( ");
 				loc = es_menu*4;
 				for(i=0; i<4; i++){
 					if( arb_vertices[type][loc+i] )
-						printf("%d ",
+						rt_log("%d ",
 						    arb_vertices[type][loc+i]);
 				}
-				printf(") [%d]: ",arb_vertices[type][loc]);
+				rt_log(") [%d]: ",arb_vertices[type][loc]);
 
 				(void)fgets( line, sizeof(line), stdin );
 				line[strlen(line)-1] = '\0';		/* remove newline */
@@ -1982,7 +1982,7 @@ sedit()
 				es_peqn[es_menu][2] = sin(fb);
 			}
 			else{
-				(void)printf("Must be < rot fb | xdeg ydeg zdeg >\n");
+				rt_log("Must be < rot fb | xdeg ydeg zdeg >\n");
 				return;
 			}
 
@@ -2109,7 +2109,7 @@ sedit()
 
 			/* check for zero H vector */
 			if( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
-				(void)printf("Zero H vector not allowed, resetting to +Z\n");
+				rt_log("Zero H vector not allowed, resetting to +Z\n");
 				VSET(tgc->h, 0, 0, 1 );
 				break;
 			}
@@ -2151,7 +2151,7 @@ sedit()
 
 			/* check for zero H vector */
 			if( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
-				(void)printf("Zero H vector not allowed, resetting to +Z\n");
+				rt_log("Zero H vector not allowed, resetting to +Z\n");
 				VSET(tgc->h, 0, 0, 1 );
 				break;
 			}
@@ -2269,7 +2269,7 @@ sedit()
 
 			if( !es_eu )
 			{
-				printf( "No edge selected!\n" );
+				rt_log( "No edge selected!\n" );
 				break;
 			}
 			NMG_CK_EDGEUSE( es_eu );
@@ -2280,7 +2280,7 @@ sedit()
 				VMOVE( new_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				(void)printf( "x y z coordinates required for edge move\n" );
+				rt_log( "x y z coordinates required for edge move\n" );
 				break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -2314,7 +2314,7 @@ sedit()
 					if( rt_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
 					{
 						/* line does not intersect plane, don't do an esplit */
-						(void)printf( "Edge Move: Cannot place new point in plane of loop\n" );
+						rt_log( "Edge Move: Cannot place new point in plane of loop\n" );
 						break;
 					}
 					VJOIN1( new_pt , new_pt , dist , view_dir );
@@ -2334,7 +2334,7 @@ sedit()
 
 			if( !es_eu )
 			{
-				printf( "No edge selected!\n" );
+				rt_log( "No edge selected!\n" );
 				break;
 			}
 			NMG_CK_EDGEUSE( es_eu );
@@ -2352,7 +2352,7 @@ sedit()
 				if( *lu->up.magic_p != NMG_SHELL_MAGIC )
 				{
 					/* Currently can only kill wire edges or edges in wire loops */
-					(void)printf( "Currently, we can only kill wire edges or edges in wire loops\n" );
+					rt_log( "Currently, we can only kill wire edges or edges in wire loops\n" );
 					es_edflag = IDLE;
 					break;
 				}
@@ -2370,7 +2370,7 @@ sedit()
 						/* refuse to delete last edge that runs
 						 * to/from same vertex
 						 */
-						(void)printf( "Cannot delete last edge running to/from same vertex\n" );
+						rt_log( "Cannot delete last edge running to/from same vertex\n" );
 						break;
 					}
 					NMG_CK_EDGEUSE( es_eu->eumate_p );
@@ -2418,7 +2418,7 @@ sedit()
 
 			if( !es_eu )
 			{
-				printf( "No edge selected!\n" );
+				rt_log( "No edge selected!\n" );
 				break;
 			}
 			NMG_CK_EDGEUSE( es_eu );
@@ -2430,7 +2430,7 @@ sedit()
 				VMOVE( new_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				(void)printf( "x y z coordinates required for edge split\n" );
+				rt_log( "x y z coordinates required for edge split\n" );
 				break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -2446,7 +2446,7 @@ sedit()
 				/* Currently, can only split wire edges or edges in wire loops */
 				if( *lu->up.magic_p != NMG_SHELL_MAGIC )
 				{
-					(void)printf( "Currently, we can only split wire edges or edges in wire loops\n" );
+					rt_log( "Currently, we can only split wire edges or edges in wire loops\n" );
 					es_edflag = IDLE;
 					break;
 				}
@@ -2467,7 +2467,7 @@ sedit()
 					if( rt_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
 					{
 						/* line does not intersect plane, don't do an esplit */
-						(void)printf( "Edge Split: Cannot place new point in plane of loop\n" );
+						rt_log( "Edge Split: Cannot place new point in plane of loop\n" );
 						break;
 					}
 					VJOIN1( new_pt , new_pt , dist , view_dir );
@@ -2499,7 +2499,7 @@ sedit()
 				VMOVE( to_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				(void)printf( "x y z coordinates required for loop extrusion\n" );
+				rt_log( "x y z coordinates required for loop extrusion\n" );
 				break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -2509,7 +2509,7 @@ sedit()
 
 			if( rt_isect_line3_plane( &dist , to_pt , extrude_vec , lu_pl , &mged_tol ) < 1 )
 			{
-				(void)printf( "Cannot extrude parallel to plane of loop\n" );
+				rt_log( "Cannot extrude parallel to plane of loop\n" );
 				return;
 			}
 
@@ -2526,7 +2526,7 @@ sedit()
 			area = nmg_loop_plane_area( new_lu , new_lu_pl );
 			if( area < 0.0 )
 			{
-				(void)printf( "loop to be extruded as no area!!!\n" );
+				rt_log( "loop to be extruded as no area!!!\n" );
 				return;
 			}
 
@@ -2562,7 +2562,7 @@ sedit()
 		break;
 
 	default:
-		(void)printf("sedit():  unknown edflag = %d.\n", es_edflag );
+		rt_log("sedit():  unknown edflag = %d.\n", es_edflag );
 	}
 
 	/* must re-calculate the face plane equations for arbs */
@@ -2745,12 +2745,12 @@ CONST vect_t	mousevec;
 			NMG_CK_MODEL(m);
 			if( (e = nmg_find_e_nearest_pt2( &m->magic, mousevec,
 			    model2view, &mged_tol )) == (struct edge *)NULL )  {
-				(void)printf("ECMD_NMG_EPICK: unable to find an edge\n");
+				rt_log("ECMD_NMG_EPICK: unable to find an edge\n");
 				return;
 			}
 			es_eu = e->eu_p;
 			NMG_CK_EDGEUSE(es_eu);
-			(void)printf("edgeuse selected=x%x\n", es_eu);
+			rt_log("edgeuse selected=x%x\n", es_eu);
 			sedraw = 1;
 		}
 		break;
@@ -2766,7 +2766,7 @@ CONST vect_t	mousevec;
 		return;
 
 	default:
-		(void)printf("mouse press undefined in this solid edit mode\n");
+		rt_log("mouse press undefined in this solid edit mode\n");
 		break;
 	}
 
@@ -2853,7 +2853,7 @@ CONST vect_t	mousevec;
 		mat_copy( oldchanges, modelchanges );
 		mat_mul( modelchanges, incr_change, oldchanges );
 	}  else  {
-		(void)printf("No object edit mode selected;  mouse press ignored\n");
+		rt_log("No object edit mode selected;  mouse press ignored\n");
 		return;
 	}
 	mat_idn( incr_change );
@@ -2880,7 +2880,7 @@ CONST mat_t			mat;
 
 	if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
 	    base2local ) < 0 )
-		printf("vls_solid: describe error\n");
+		rt_log("vls_solid: describe error\n");
 	rt_functab[id].ft_ifree( &intern );
 }
 
@@ -3482,7 +3482,7 @@ init_objedit()
 
 	/* Not an evaluated region - just a regular path ending in a solid */
 	if( db_get_external( &es_ext, illump->s_path[illump->s_last], dbip ) < 0 )  {
-		(void)printf("init_objedit(%s): db_get_external failure\n",
+		rt_log("init_objedit(%s): db_get_external failure\n",
 			illump->s_path[illump->s_last]->d_namep );
 		button(BE_REJECT);
 		return;
@@ -3599,18 +3599,18 @@ char	*argv[];
 	struct rt_arb_internal *arb;
 
 	if( state != ST_S_EDIT ){
-		(void)printf("Eqn: must be in solid edit\n");
+		rt_log("Eqn: must be in solid edit\n");
 		return CMD_BAD;
 	}
 
 	if( es_int.idb_type != ID_ARB8 )
 	{
-		(void)printf("Eqn: type must be GENARB8\n");
+		rt_log("Eqn: type must be GENARB8\n");
 		return CMD_BAD;
 	}
 
 	if( es_edflag != ECMD_ARB_ROTATE_FACE ){
-		(void)printf("Eqn: must be rotating a face\n");
+		rt_log("Eqn: must be rotating a face\n");
 		return CMD_BAD;
 	}
 
@@ -3719,13 +3719,13 @@ char	**argv;
 	register int i;
 
 	if( es_edflag <= 0 )  {
-		(void)printf("A solid editor option not selected\n");
+		rt_log("A solid editor option not selected\n");
 		return CMD_BAD;
 	}
 	if( es_edflag == ECMD_TGC_ROT_H
 		|| es_edflag == ECMD_TGC_ROT_AB
 		|| es_edflag == ECMD_ETO_ROT_C ) {
-		(void)printf("\"p\" command not defined for this option\n");
+		rt_log("\"p\" command not defined for this option\n");
 		return CMD_BAD;
 	}
 
@@ -3737,7 +3737,7 @@ char	**argv;
 
 	if( es_edflag == PSCALE || es_edflag == SSCALE )  {
 		if(es_para[0] <= 0.0) {
-			(void)printf("ERROR: SCALE FACTOR <= 0\n");
+			rt_log("ERROR: SCALE FACTOR <= 0\n");
 			inpara = 0;
 			sedraw = 0;
 			return CMD_BAD;
@@ -4528,7 +4528,7 @@ char	**argv;
 	switch (--argc)
 	{
 	    case 0:
-		printf("%s (%g, %g, %g)\n", es_keytag, V3ARGS(es_keypoint));
+		rt_log("%s (%g, %g, %g)\n", es_keytag, V3ARGS(es_keypoint));
 		break;
 	    case 3:
 		VSET(es_keypoint,
@@ -4548,7 +4548,7 @@ char	**argv;
 		    break;
 		}
 	    default:
-		(void) printf("Usage: 'keypoint [<x y z> | reset]'\n");
+		rt_log("Usage: 'keypoint [<x y z> | reset]'\n");
 		return CMD_BAD;
 	}
 

@@ -249,7 +249,7 @@ int			id;
 	    &vhead,
 	    &intern,
 	    tsp->ts_ttol, tsp->ts_tol ) < 0 )  {
-		printf("%s: plot failure\n",
+		rt_log("%s: plot failure\n",
 			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 		rt_functab[id].ft_ifree( &intern );
 	    	return(TREE_NULL);		/* ERROR */
@@ -416,8 +416,8 @@ int	kind;
 			mged_do_not_draw_nmg_solids_during_debugging = 1;
 			break;
 		default:
-			printf("option '%c' unknown\n", c);
-			printf("Usage: ev [-uwTnq] object(s)\n\
+			rt_log("option '%c' unknown\n", c);
+			rt_log("Usage: ev [-uwTnq] object(s)\n\
 	-w draw wireframes (rather than polygons)\n\
 	-n draw surface normals as little 'hairs'\n\
 	-u debug: draw edgeuses\n\
@@ -472,7 +472,7 @@ int	kind;
 	case 3:
 	  {
 		/* NMG */
-	  	(void)printf("\
+	  	rt_log("\
 Please note that the NMG library used by this command is experimental.\n\
 A production implementation will exist in the maintenance release.\n");
 	  	mged_nmg_model = nmg_mm();
@@ -488,7 +488,7 @@ A production implementation will exist in the maintenance release.\n");
 	  	if (mged_draw_edge_uses) {
 	  		struct rt_vlblock *vbp;
 
-	  		fprintf(stderr, "Doing the edgeuse thang\n");
+	  		rt_log( "Doing the edgeuse thang\n");
 	  		vbp = rt_vlblock_init();
 			nmg_vlblock_m(vbp, mged_nmg_model, 1);
 	  		cvt_vlblock_to_solids(vbp, "_EDGEUSES_", 0);
@@ -543,7 +543,7 @@ register struct solid *sp;
 				V_MAX( zmax, (*pt)[Z] );
 				break;
 			default:
-				(void)printf("unknown vlist op %d\n", *cmd);
+				rt_log("unknown vlist op %d\n", *cmd);
 			}
 		}
 		sp->s_vlen += nused;
@@ -633,7 +633,7 @@ struct solid		*existing_sp;
 		sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
 		if( sp->s_addr == 0 )  {
 			no_memory = 1;
-			(void)printf("draw: out of Displaylist\n");
+			rt_log("draw: out of Displaylist\n");
 			sp->s_bytes = 0;	/* not drawn */
 		} else {
 			sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes );
@@ -678,7 +678,7 @@ matp_t matp;
 		parentp = sp->s_path[i];
 		kidp = sp->s_path[i+1];
 		if( !(parentp->d_flags & DIR_COMB) )  {
-			printf("pathHmat:  %s is not a combination\n",
+			rt_log("pathHmat:  %s is not a combination\n",
 				parentp->d_namep);
 			return;		/* ERROR */
 		}
@@ -697,7 +697,7 @@ matp_t matp;
 			mat_copy( matp, tmat );
 			goto next_level;
 		}
-		(void)printf("pathHmat: unable to follow %s/%s path\n",
+		rt_log("pathHmat: unable to follow %s/%s path\n",
 			parentp->d_namep, kidp->d_namep );
 		return;			/* ERROR */
 next_level:
@@ -728,7 +728,7 @@ struct solid	*sp;
 
 	dp = sp->s_path[sp->s_last];
 	if( sp->s_Eflag )  {
-		(void)printf("replot_original_solid(%s): Unable to plot evaluated regions, skipping\n",
+		rt_log("replot_original_solid(%s): Unable to plot evaluated regions, skipping\n",
 			dp->d_namep );
 		return(-1);
 	}
@@ -738,7 +738,7 @@ struct solid	*sp;
 	if( db_get_external( &ext, dp, dbip ) < 0 )  return(-1);
 
 	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
-		(void)printf("replot_original_solid() unable to identify type of solid %s\n",
+		rt_log("replot_original_solid() unable to identify type of solid %s\n",
 			dp->d_namep );
 		db_free_external( &ext );
 		return(-1);
@@ -789,7 +789,7 @@ CONST mat_t			mat;
 	RT_LIST_INIT( &vhead );
 
 	if( sp == SOLID_NULL )  {
-		(void)printf("replot_modified_solid() sp==NULL?\n");
+		rt_log("replot_modified_solid() sp==NULL?\n");
 		return(-1);
 	}
 
@@ -811,7 +811,7 @@ CONST mat_t			mat;
 	transform_editing_solid( &intern, mat, ip, 0 );
 
 	if( rt_functab[ip->idb_type].ft_plot( &vhead, &intern, &mged_ttol, &mged_tol ) < 0 )  {
-		(void)printf("%s: re-plot failure\n",
+		rt_log("%s: re-plot failure\n",
 			sp->s_path[sp->s_last]->d_namep );
 	    	return(-1);
 	}
@@ -884,7 +884,7 @@ int		copy;
 
 	if( (dp = db_lookup( dbip,  name, LOOKUP_QUIET )) != DIR_NULL )  {
 		if( dp->d_addr != RT_DIR_PHONY_ADDR )  {
-			printf("invent_solid(%s) would clobber existing database entry, ignored\n");
+			rt_log("invent_solid(%s) would clobber existing database entry, ignored\n");
 			return(-1);
 		}
 		/* Name exists from some other overlay,
@@ -939,7 +939,7 @@ int		copy;
 		sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
 		if( sp->s_addr == 0 )  {
 			no_memory = 1;
-			(void)printf("invent_solid: out of Displaylist\n");
+			rt_log("invent_solid: out of Displaylist\n");
 			sp->s_bytes = 0;	/* not drawn */
 		} else {
 			sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes );
@@ -1044,7 +1044,7 @@ char	**argv;
 			triangulate = 1;
 			break;
 		default:
-			printf("option '%c' unknown\n", c);
+			rt_log("option '%c' unknown\n", c);
 			break;
 		}
 	}
@@ -1056,7 +1056,7 @@ char	**argv;
 	argc--;
 
 	if( db_lookup( dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
-		printf("error: solid '%s' already exists, aborting\n", newname);
+		rt_log("error: solid '%s' already exists, aborting\n", newname);
 		return CMD_BAD;
 	}
 

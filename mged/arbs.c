@@ -92,17 +92,17 @@ char	**argv;
 
 	/* get the arb name */
 	if( argc < 2 ) {
-		(void)printf("Enter name for this arb: ");
+		rt_log("Enter name for this arb: ");
 		return CMD_MORE;
 	}
 
 	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
-		(void)printf("%s:  already exists\n", argv[1]);
+		rt_log("%s:  already exists\n", argv[1]);
 		return CMD_BAD;
 	}
 
 	if( (int)strlen(argv[1]) >= NAMESIZE ) {
-		(void)printf("Names are limited to %d charscters\n",NAMESIZE-1);
+		rt_log("Names are limited to %d charscters\n",NAMESIZE-1);
 		return CMD_BAD;
 	}
 	strcpy( name , argv[1] );
@@ -110,7 +110,7 @@ char	**argv;
 	/* read the three points */
 	promp = &p_arb3pt[0];
 	if( argc < 11 ) {
-		(void)printf("%s", promp[argc-2]);
+		rt_log("%s", promp[argc-2]);
 		return CMD_MORE;
 	}
 
@@ -122,13 +122,13 @@ char	**argv;
 	VCROSS(norm, vec1, vec2);
 	length = MAGNITUDE( norm );
 	if(length == 0.0) {
-		(void)printf("points are colinear\n");
+		rt_log("points are colinear\n");
 		return CMD_BAD;
 	}
 	VSCALE(norm, norm, 1.0/length);
 
 	if( argc < 12 ) {
-		(void)printf("Enter coordinate to solve for (x, y, or z): ");
+		rt_log("Enter coordinate to solve for (x, y, or z): ");
 		return CMD_MORE;
 	}
 
@@ -136,17 +136,17 @@ char	**argv;
 
 	case 'x':
 		if(norm[0] == 0.0) {
-			(void)printf("X not unique in this face\n");
+			rt_log("X not unique in this face\n");
 			return CMD_BAD;
 		}
 		solve = X;
 
 		if( argc < 13 ) {			
-			(void)printf("Enter the Y, Z coordinate values: ");
+			rt_log("Enter the Y, Z coordinate values: ");
 			return CMD_MORE;
 		}
 		if( argc < 14 ) {
-			(void)printf("Enter the Z coordinate value: ");
+			rt_log("Enter the Z coordinate value: ");
 			return CMD_MORE;
 		}
 		pt4[0] = atof( argv[12] ) * local2base;
@@ -155,17 +155,17 @@ char	**argv;
 
 	case 'y':
 		if(norm[1] == 0.0) {
-			(void)printf("Y not unique in this face\n");
+			rt_log("Y not unique in this face\n");
 			return CMD_BAD;
 		}
 		solve = Y;
 
 		if ( argc < 13 ) {
-			(void)printf("Enter the X, Z coordinate values: ");
+			rt_log("Enter the X, Z coordinate values: ");
 			return CMD_MORE;
 		}
 		if ( argc < 14 ) {
-			(void)printf("Enter the Z coordinate value: ");
+			rt_log("Enter the Z coordinate value: ");
 			return CMD_MORE;
 		}
 
@@ -175,17 +175,17 @@ char	**argv;
 
 	case 'z':
 		if(norm[2] == 0.0) {
-			(void)printf("Z not unique in this face\n");
+			rt_log("Z not unique in this face\n");
 			return CMD_BAD;
 		}
 		solve = Z;
 
 		if ( argc < 13 ) {
-			(void)printf("Enter the X, Y coordinate values: ");
+			rt_log("Enter the X, Y coordinate values: ");
 			return CMD_MORE;
 		}
 		if ( argc < 14 ) {
-			(void)printf("Enter the Y coordinate value: ");
+			rt_log("Enter the Y coordinate value: ");
 			return CMD_MORE;
 		}
 		pt4[0] = atof( argv[12] ) * local2base;
@@ -193,18 +193,18 @@ char	**argv;
 		break;
 
 	default:
-		(void)printf("coordinate must be x, y, or z\n");
+		rt_log("coordinate must be x, y, or z\n");
 		return CMD_BAD;
 	}
 
 
 	if ( argc < 15 ) {
-		(void)printf("Enter thickness for this arb: ");
+		rt_log("Enter thickness for this arb: ");
 		return CMD_MORE;
 	}
 
 	if( (thick = (atof( argv[14] ))) == 0.0 ) {
-		(void)printf("thickness = 0.0\n");
+		rt_log("thickness = 0.0\n");
 		return CMD_BAD;
 	}
 
@@ -260,7 +260,7 @@ char	**argv;
 		break;
 
 		default:
-			(void)printf("bad coordinate to solve for\n");
+			rt_log("bad coordinate to solve for\n");
 			return CMD_BAD;
 
 	}
@@ -340,16 +340,16 @@ char	**argv;
 
 	/* get the arb name */
 	if( argc < 2 ) {
-		(void)printf("Enter name for this arb: ");
+		rt_log("Enter name for this arb: ");
 		return CMD_MORE;
 	}
 	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
-		(void)printf("%s:  already exists\n", argv[1]);
+		rt_log("%s:  already exists\n", argv[1]);
 		return CMD_BAD;
 	}
 
 	if( (int)strlen(argv[1]) >= NAMESIZE ) {
-		(void)printf("Names are limited to %d charscters\n",NAMESIZE-1);
+		rt_log("Names are limited to %d charscters\n",NAMESIZE-1);
 		return CMD_BAD;
 	}
 	strcpy( name , argv[1] );
@@ -357,19 +357,19 @@ char	**argv;
 	/* read the known point */
 	promp = &p_rfin[0];
 	if( argc < 5 ) {
-		(void)printf("%s", promp[argc-2]);
+		rt_log("%s", promp[argc-2]);
 		return CMD_MORE;
 	}
 
 	if ( argc < 6 ) {
-		(void)printf("Enter ROTATION angle (deg): ");
+		rt_log("Enter ROTATION angle (deg): ");
 		return CMD_MORE;
 	}
 
 	rota = atof( argv[5] ) * degtorad;
 
 	if ( argc < 7 ) {
-		(void)printf("Enter FALL BACK angle (deg): ");
+		rt_log("Enter FALL BACK angle (deg): ");
 		return CMD_MORE;
 	}
 
@@ -382,25 +382,25 @@ char	**argv;
 
 	for(i=0; i<3; i++) {
 		if( argc < 8+3*i ) {
-			(void)printf("POINT %d...",i+2);
-			(void)printf("Enter coordinate to solve for (x, y, or z): ");
+			rt_log("POINT %d...",i+2);
+			rt_log("Enter coordinate to solve for (x, y, or z): ");
 			return CMD_MORE;
 		}
 
 		switch( argv[7+3*i][0] ) {
 		case 'x':
 			if(norm[0] == 0.0) {
-				(void)printf("X not unique in this face\n");
+				rt_log("X not unique in this face\n");
 				return CMD_BAD;
 			}
 			solve[i] = X;
 
 			if( argc < 7+3*i+2 ) {
-				(void)printf("Enter the Y, Z coordinate values: ");
+				rt_log("Enter the Y, Z coordinate values: ");
 				return CMD_MORE;
 			}
 			if( argc < 7+3*i+3 ) {
-				(void)printf("Enter the Z coordinate value: ");
+				rt_log("Enter the Z coordinate value: ");
 				return CMD_MORE;
 			}
 			pt[i][0] = atof( argv[7+3*i+1] ) * local2base;
@@ -409,17 +409,17 @@ char	**argv;
 
 		case 'y':
 			if(norm[1] == 0.0) {
-				(void)printf("Y not unique in this face\n");
+				rt_log("Y not unique in this face\n");
 				return CMD_BAD;
 			}
 			solve[i] = Y;
 
 			if( argc < 7+3*i+2 ) {
-				(void)printf("Enter the X, Z coordinate values: ");
+				rt_log("Enter the X, Z coordinate values: ");
 				return CMD_MORE;
 			}
 			if( argc < 7+3*i+3 ) {
-				(void)printf("Enter the Z coordinate value: ");							
+				rt_log("Enter the Z coordinate value: ");							
 				return CMD_MORE;
 			}
 			pt[i][0] = atof( argv[7+3*i+1] ) * local2base;
@@ -428,17 +428,17 @@ char	**argv;
 
 		case 'z':
 			if(norm[2] == 0.0) {
-				(void)printf("Z not unique in this face\n");
+				rt_log("Z not unique in this face\n");
 				return CMD_BAD;
 			}
 			solve[i] = Z;
 
 			if( argc < 7+3*i+2 ) {
-				(void)printf("Enter the X, Y coordinate values: ");
+				rt_log("Enter the X, Y coordinate values: ");
 				return CMD_MORE;
 			}
 			if( argc < 7+3*i+3 ) {
-				(void)printf("Enter the Y coordinate value: ");
+				rt_log("Enter the Y coordinate value: ");
 				return CMD_MORE;
 			}
 			pt[i][0] = atof( argv[7+3*i+1] ) * local2base;
@@ -446,17 +446,17 @@ char	**argv;
 			break;
 
 		default:
-			(void)printf("coordinate must be x, y, or z\n");
+			rt_log("coordinate must be x, y, or z\n");
 			return CMD_BAD;
 		}
 	}
 
 	if( argc < 8+3*3 ) {
-		(void)printf("Enter thickness for this arb: ");
+		rt_log("Enter thickness for this arb: ");
 		return CMD_MORE;
 	}
 	if( (thick = (atof( argv[7+3*3] ))) == 0.0 ) {
-		(void)printf("thickness = 0.0\n");
+		rt_log("thickness = 0.0\n");
 		return CMD_BAD;
 	}
 	thick *= local2base;
@@ -684,7 +684,7 @@ register int *svec;	/* array of like points */
 		break;
 
 	default:
-		(void)printf("solid: %s  bad number of unique vectors (%d)\n",
+		rt_log("solid: %s  bad number of unique vectors (%d)\n",
 			input.s.s_name, numuvec);
 		return(0);
 	}
@@ -830,11 +830,11 @@ register int *svec;	/* array of like points */
 		return(0);
 	}
 #if 0
-	printf("uvec: ");
-	for(j=0; j<8; j++) printf("%d, ", uvec[j]);
-	printf("\nsvec: ");
-	for(j=0; j<11; j++ ) printf("%d, ", svec[j]);
-	printf("\n");
+	rt_log("uvec: ");
+	for(j=0; j<8; j++) rt_log("%d, ", uvec[j]);
+	rt_log("\nsvec: ");
+	for(j=0; j<11; j++ ) rt_log("%d, ", svec[j]);
+	rt_log("\n");
 #endif
 	return( numuvec );
 }

@@ -89,11 +89,11 @@ char	**argv;
 		return CMD_BAD;
 	}
 	if( record.u_id != ID_COMB ) {
-		(void)printf("%s: not a combination\n", dp->d_namep );
+		rt_log("%s: not a combination\n", dp->d_namep );
 		return CMD_BAD;
 	}
 	if( record.c.c_flags != 'R' ) {
-		(void)printf("%s: not a region\n", dp->d_namep );
+		rt_log("%s: not a region\n", dp->d_namep );
 		return CMD_BAD;
 	}
 	record.c.c_regionid = ident;
@@ -128,22 +128,22 @@ char	**argv;
 	}
 
 	if( record.u_id != ID_COMB )  {
-		(void)printf("%s: not a combination\n", dp->d_namep );
+		rt_log("%s: not a combination\n", dp->d_namep );
 		return CMD_BAD;
 	}
 	if( argc >= 3 )  {
 		if( strncmp( argv[2], "del", 3 ) != 0 )  {
-			(void)printf("Use 'mater name del' to delete\n");
+			rt_log("Use 'mater name del' to delete\n");
 			return CMD_BAD;
 		}
-		(void)printf("Was %s %s\n", record.c.c_matname, record.c.c_matparm);
+		rt_log("Was %s %s\n", record.c.c_matname, record.c.c_matparm);
 		record.c.c_matname[0] = '\0';
 		record.c.c_override = 0;
 		goto out;
 	}
 
 	/* Material */
-	(void)printf("Material = %s\nMaterial?  ('del' to delete, CR to skip) ", record.c.c_matname);
+	rt_log("Material = %s\nMaterial?  ('del' to delete, CR to skip) ", record.c.c_matname);
 	fflush(stdout);
 	(void)fgets(line,sizeof(line),stdin);
 	nlp = strchr( line, '\n' );
@@ -156,7 +156,7 @@ char	**argv;
 	}
 
 	/* Parameters */
-	(void)printf("Param = %s\nParameter string? ('del' to delete, CR to skip) ", record.c.c_matparm);
+	rt_log("Param = %s\nParameter string? ('del' to delete, CR to skip) ", record.c.c_matparm);
 	fflush(stdout);
 	(void)fgets(line,sizeof(line),stdin);
 	nlp = strchr( line, '\n' );
@@ -170,13 +170,13 @@ char	**argv;
 
 	/* Color */
 	if( record.c.c_override )
-		(void)printf("Color = %d %d %d\n", 
+		rt_log("Color = %d %d %d\n", 
 			record.c.c_rgb[0],
 			record.c.c_rgb[1],
 			record.c.c_rgb[2] );
 	else
-		(void)printf("Color = (No color specified)\n");
-	(void)printf("Color R G B (0..255)? ('del' to delete, CR to skip) ");
+		rt_log("Color = (No color specified)\n");
+	rt_log("Color R G B (0..255)? ('del' to delete, CR to skip) ");
 	fflush(stdout);
 	/* XXX This is bad!!!  Should use CMD_MORE return*/
 	(void)fgets(line,sizeof(line),stdin);
@@ -189,7 +189,7 @@ char	**argv;
 		record.c.c_override = 1;
 	} else {
 		/* Else, leave it unchanged */
-		printf(" (color unchanged)\n");
+		rt_log(" (color unchanged)\n");
 	}
 
 	/* Inherit */
@@ -199,13 +199,13 @@ char	**argv;
 		record.c.c_inherit = DB_INH_LOWER;
 		/* Fall through */
 	case DB_INH_LOWER:
-		(void)printf("Inherit = 0:  lower nodes (towards leaves) override\n");
+		rt_log("Inherit = 0:  lower nodes (towards leaves) override\n");
 		break;
 	case DB_INH_HIGHER:
-		(void)printf("Inherit = 1:  higher nodes (towards root) override\n");
+		rt_log("Inherit = 1:  higher nodes (towards root) override\n");
 		break;
 	}
-	(void)printf("Inheritance (0|1)? (CR to skip) ");
+	rt_log("Inheritance (0|1)? (CR to skip) ");
 	fflush(stdout);
 	(void)fgets(line,sizeof(line),stdin);
 	switch( line[0] )  {
@@ -219,7 +219,7 @@ char	**argv;
 	case '\n':
 		break;
 	default:
-		(void)printf("Unknown response ignored\n");
+		rt_log("Unknown response ignored\n");
 		break;
 	}		
 out:
@@ -255,7 +255,7 @@ char	**argv;
 	}
 
 	if( record.u_id != ID_COMB )  {
-		(void)printf("%s: not a combination\n", dp->d_namep );
+		rt_log("%s: not a combination\n", dp->d_namep );
 		return CMD_BAD;
 	}
 
@@ -307,7 +307,7 @@ char	**argv;
 	if( strcmp( argv[3], "z" ) == 0 )
 		k = 2;
 	if( k < 0 ) {
-		(void)printf("axis must be x, y or z\n");
+		rt_log("axis must be x, y or z\n");
 		return CMD_BAD;
 	}
 
@@ -354,7 +354,7 @@ char	**argv;
 			mat_t	xmat;
 
 			if(rec[i].u_id != ID_MEMB) {
-				(void)printf("f_mirror: bad db record\n");
+				rt_log("f_mirror: bad db record\n");
 				return CMD_BAD;
 			}
 			rt_mat_dbmat( xmat, rec[i].M.m_mat );
@@ -367,12 +367,12 @@ char	**argv;
 		}
 		rt_free( (char *)rec, "record" );
 	} else {
-		(void)printf("%s: Cannot mirror\n",argv[2]);
+		rt_log("%s: Cannot mirror\n",argv[2]);
 		return CMD_BAD;
 	}
 
 	if( no_memory )  {
-		(void)printf(
+		rt_log(
 		"Mirror image (%s) created but NO memory left to draw it\n",
 			argv[2] );
 		return CMD_BAD;
@@ -406,7 +406,7 @@ char	**argv;
 		return CMD_BAD;
 	}
 	if( record.u_id != ID_COMB ) {
-		(void)printf("%s: not a combination\n", dp->d_namep );
+		rt_log("%s: not a combination\n", dp->d_namep );
 		return CMD_BAD;
 	}
 
@@ -444,7 +444,7 @@ char	**argv;
 
 	if( argc < 2 )  {
 		str = rt_units_string(dbip->dbi_local2base);
-		(void)printf("You are currently editing in '%s'.  1%s = %gmm \n",
+		rt_log("You are currently editing in '%s'.  1%s = %gmm \n",
 			str, str, dbip->dbi_local2base );
 		return CMD_OK;
 	}
@@ -470,11 +470,11 @@ char	**argv;
 		db_conversions( dbip, new_unit );
 
 		if( db_ident( dbip, dbip->dbi_title, new_unit ) < 0 )
-			printf("Warning: unable to stash working units into database\n");
+			rt_log("Warning: unable to stash working units into database\n");
 
 	} else if( (loc2mm = rt_units_conversion(argv[1]) ) <= 0 )  {
-		(void)printf("%s: unrecognized unit\n", argv[1]);
-		(void)printf("valid units: <mm|cm|m|in|ft|meters|inches|feet>\n");
+		rt_log("%s: unrecognized unit\n", argv[1]);
+		rt_log("valid units: <mm|cm|m|in|ft|meters|inches|feet>\n");
 		return CMD_BAD;
 	} else {
 		/*
@@ -484,11 +484,11 @@ char	**argv;
 		dbip->dbi_localunit = ID_MM_UNIT;
 		dbip->dbi_local2base = loc2mm;
 		dbip->dbi_base2local = 1.0 / loc2mm;
-		(void)printf("\
+		rt_log("\
 Due to a database restriction in the current format of .g files,\n\
 this choice of units will not be remembered on your next editing session.\n");
 	}
-	(void)printf("New editing units = '%s'\n",
+	rt_log("New editing units = '%s'\n",
 		rt_units_string(dbip->dbi_local2base) );
 	dmaflag = 1;
 
@@ -507,7 +507,7 @@ char	**argv;
 	int bad = 0;
 
 	if( argc < 2 )  {
-		(void)printf("%s\n", dbip->dbi_title);
+		rt_log("%s\n", dbip->dbi_title);
 		return CMD_OK;
 	}
 
@@ -515,7 +515,7 @@ char	**argv;
 	rt_vls_from_argv( &title, argc-1, argv+1 );
 
 	if( db_ident( dbip, rt_vls_addr(&title), dbip->dbi_localunit ) < 0 ) {
-		printf("Error: unable to change database title\n");
+		rt_log("Error: unable to change database title\n");
 		bad = 1;
 	}
 
@@ -530,7 +530,7 @@ void
 aexists( name )
 char	*name;
 {
-	(void)printf( "%s:  already exists\n", name );
+	rt_log( "%s:  already exists\n", name );
 }
 
 /*
@@ -869,12 +869,12 @@ char	**argv;
 		   strcmp( argv[2], "pipe" ) == 0 ||
 		   strcmp( argv[2], "nurb" ) == 0 ||
 		   strcmp( argv[2], "spline" ) == 0 )  {
-		(void)printf("make %s not implimented yet\n", argv[2]);
+		rt_log("make %s not implimented yet\n", argv[2]);
 		return CMD_BAD;
 	} else {
-		(void)printf("make:  %s is not a known primitive\n", argv[2]);
-		(void)printf("\tchoices are: arb8, arb7, arb6, arb5, arb4, sph, ell, ellg, grip, tor,\n" );
-		(void)printf("\t\ttgc, tec, rec, trc, rcc, half, rpc, rhc, epa, ehy, eto, part\n" );
+		rt_log("make:  %s is not a known primitive\n", argv[2]);
+		rt_log("\tchoices are: arb8, arb7, arb6, arb5, arb4, sph, ell, ellg, grip, tor,\n" );
+		rt_log("\t\ttgc, tec, rec, trc, rcc, half, rpc, rhc, epa, ehy, eto, part\n" );
 		return CMD_BAD;
 	}
 
@@ -980,7 +980,7 @@ char	**argv;
 		return CMD_BAD;
 
 	if( atof(argv[1]) <= 0.0 ) {
-		(void)printf("ERROR: scale factor <=  0\n");
+		rt_log("ERROR: scale factor <=  0\n");
 		return CMD_BAD;
 	}
 
@@ -1139,7 +1139,7 @@ struct directory *old_dp;
 	if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )  {
 		/* Free memory */
 		nmg_km(m);
-		printf("rt_db_put_internal() failure\n");
+		rt_log("rt_db_put_internal() failure\n");
 		frac_stat = 1;
 		return;
 	}
@@ -1182,7 +1182,7 @@ char	**argv;
 		return CMD_BAD;
 
 	if( rt_db_get_internal( &old_intern, old_dp, dbip, rt_identity ) < 0 )  {
-		(void)printf("rt_db_get_internal() error\n");
+		rt_log("rt_db_get_internal() error\n");
 		return CMD_BAD;
 	}
 

@@ -304,7 +304,7 @@ int	catch_sigint;
 	rt_prep_timer();
 	drawtrees( argc, argv, kind );
 	(void)rt_get_timer( (struct rt_vls *)0, &elapsed_time );
-	(void)printf("%ld vectors in %g sec\n", nvectors, elapsed_time );
+	rt_log("%ld vectors in %g sec\n", nvectors, elapsed_time );
 	
 	/* If we went from blank screen to non-blank, resize */
 	if (mged_variables.autosize  && initial_blank_screen &&
@@ -328,7 +328,7 @@ char	**argv;
 
 	if( argc > 1 )  lvl = atoi(argv[1]);
 
-	printf("ndrawn=%d\n", ndrawn);
+	rt_log("ndrawn=%d\n", ndrawn);
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	pr_schain( &HeadSolid, lvl );
 
@@ -346,7 +346,7 @@ char	**argv;
 		regdebug = !regdebug;	/* toggle */
 	else
 		regdebug = atoi( argv[1] );
-	(void)printf("regdebug=%d\n", regdebug);
+	rt_log("regdebug=%d\n", regdebug);
 	dmp->dmr_debug(regdebug);
 
 	return CMD_OK;
@@ -416,7 +416,7 @@ int	verbose;
 	fprintf( outfp, "%s:  ", dp->d_namep);
 	RT_INIT_EXTERNAL(&ext);
 	if( db_get_external( &ext, dp, dbip ) < 0 )  {
-		printf("db_get_external(%s) failure\n", dp->d_namep);
+		rt_log("db_get_external(%s) failure\n", dp->d_namep);
 		return;
 	}
 	rp = (union record *)ext.ext_buf;
@@ -426,7 +426,7 @@ int	verbose;
 		/* Combination */
 		(void)fprintf( outfp, "%s (len %d) ", dp->d_namep, dp->d_len-1 );
 		if( rp[0].c.c_flags == 'R' )
-			(void)printf("REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
+			rt_log("REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
 				rp[0].c.c_regionid,
 				rp[0].c.c_aircode,
 				rp[0].c.c_los,
@@ -519,13 +519,13 @@ int	verbose;
 	id = rt_id_solid( &ext );
 	mat_idn( ident );
 	if( rt_functab[id].ft_import( &intern, &ext, ident ) < 0 )  {
-		printf("%s: database import error\n", dp->d_namep);
+		rt_log("%s: database import error\n", dp->d_namep);
 		goto out;
 	}
 	rt_vls_init( &str );
 	if( rt_functab[id].ft_describe( &str, &intern,
 	    verbose, base2local ) < 0 )
-		printf("%s: describe error\n", dp->d_namep);
+		rt_log("%s: describe error\n", dp->d_namep);
 	rt_functab[id].ft_ifree( &intern );
 	fputs( rt_vls_addr( &str ), outfp );
 	rt_vls_free( &str );
@@ -624,7 +624,7 @@ char	**argv;
 		RT_CK_DIR(dp);
 		if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
 			if( db_dirdelete( dbip, dp ) < 0 )  {
-				printf("f_zap: db_dirdelete failed\n");
+				rt_log("f_zap: db_dirdelete failed\n");
 			}
 		}
 		sp->s_addr = sp->s_bytes = 0;
@@ -648,9 +648,9 @@ f_status(argc, argv)
 int	argc;
 char	**argv;
 {
-	(void)printf("STATE=%s, ", state_str[state] );
-	(void)printf("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
-	(void)printf("base2local=%f\n", base2local);
+	rt_log("STATE=%s, ", state_str[state] );
+	rt_log("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
+	rt_log("base2local=%f\n", base2local);
 	mat_print("toViewcenter", toViewcenter);
 	mat_print("Viewrot", Viewrot);
 	mat_print("model2view", model2view);
@@ -748,7 +748,7 @@ register struct directory *dp;
 	}
 	if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
 		if( db_dirdelete( dbip, dp ) < 0 )  {
-			printf("eraseobj: db_dirdelete failed\n");
+			rt_log("eraseobj: db_dirdelete failed\n");
 		}
 	}
 }
@@ -782,23 +782,23 @@ int		lvl;			/* debug level */
 	int			npts;
 
 	for( sp = startp->s_forw; sp != startp; sp = sp->s_forw )  {
-		(void)printf( sp->s_flag == UP ? "VIEW ":"-no- " );
+		rt_log( sp->s_flag == UP ? "VIEW ":"-no- " );
 		for( i=0; i <= sp->s_last; i++ )
-			(void)printf("/%s", sp->s_path[i]->d_namep);
+			rt_log("/%s", sp->s_path[i]->d_namep);
 		if( sp->s_iflag == UP )
-			(void)printf(" ILLUM");
-		(void)printf("\n");
+			rt_log(" ILLUM");
+		rt_log("\n");
 
 		if( lvl <= 0 )  continue;
 
 		/* convert to the local unit for printing */
-		(void)printf("  cent=(%.3f,%.3f,%.3f) sz=%g ",
+		rt_log("  cent=(%.3f,%.3f,%.3f) sz=%g ",
 			sp->s_center[X]*base2local,
 			sp->s_center[Y]*base2local, 
 			sp->s_center[Z]*base2local,
 			sp->s_size*base2local );
-		(void)printf("reg=%d\n",sp->s_regionid );
-		(void)printf("  color=(%d,%d,%d) %d,%d,%d i=%d\n",
+		rt_log("reg=%d\n",sp->s_regionid );
+		rt_log("  color=(%d,%d,%d) %d,%d,%d i=%d\n",
 			sp->s_basecolor[0],
 			sp->s_basecolor[1],
 			sp->s_basecolor[2],
@@ -823,12 +823,12 @@ int		lvl;			/* debug level */
 			if( lvl <= 2 )  continue;
 
 			for( i = 0; i < nused; i++,cmd++,pt++ )  {
-				printf("  %s (%g, %g, %g)\n",
+				rt_log("  %s (%g, %g, %g)\n",
 					mged_vl_draw_message[*cmd],
 					V3ARGS( *pt ) );
 			}
 		}
-		printf("  %d vlist structures, %d pts\n", nvlist, npts );
+		rt_log("  %d vlist structures, %d pts\n", nvlist, npts );
 	}
 }
 
@@ -863,11 +863,11 @@ char	**argv;
 		sp->s_iflag = DOWN;
 	}
 	if( nmatch <= 0 )  {
-		(void)printf("%s not being displayed\n", argv[1]);
+		rt_log("%s not being displayed\n", argv[1]);
 		return CMD_BAD;
 	}
 	if( nmatch > 1 )  {
-		(void)printf("%s multiply referenced\n", argv[1]);
+		rt_log("%s multiply referenced\n", argv[1]);
 		return CMD_BAD;
 	}
 	/* Make the specified solid the illuminated solid */
@@ -1027,9 +1027,9 @@ char	**argv;
 		dm_values.dv_zoom = 0;
 	} else {
 usage:
-		(void)printf("knob: x,y,z for rotation, S for scale, X,Y,Z for slew (rates, range -1..+1)\n");
-		(void)printf("knob: xadc, yadc, zadc, ang1, ang2, distadc (values, range -2048..+2047)\n");
-		(void)printf("knob: zero (cancel motion)\n");
+		rt_log("knob: x,y,z for rotation, S for scale, X,Y,Z for slew (rates, range -1..+1)\n");
+		rt_log("knob: xadc, yadc, zadc, ang1, ang2, distadc (values, range -2048..+2047)\n");
+		rt_log("knob: zero (cancel motion)\n");
 	}
 
 	check_nonzero_rates();
@@ -1052,19 +1052,19 @@ char	**argv;
 	double	f;
 
 	if( argc < 3 )  {
-		(void)printf("Current tolerance settings are:\n");
+		rt_log("Current tolerance settings are:\n");
 		if( mged_abs_tol > 0.0 )  {
-			(void)printf("\tabs %g %s\n",
+			rt_log("\tabs %g %s\n",
 				mged_abs_tol * base2local,
 				rt_units_string(dbip->dbi_local2base) );
 		} else {
-			(void)printf("\tabs None\n");
+			rt_log("\tabs None\n");
 		}
 		if( mged_rel_tol > 0.0 )  {
-			(void)printf("\trel %g (%g%%)\n",
+			rt_log("\trel %g (%g%%)\n",
 				mged_rel_tol, mged_rel_tol * 100.0 );
 		} else {
-			(void)printf("\trel None\n");
+			rt_log("\trel None\n");
 		}
 		if( mged_nrm_tol > 0.0 )  {
 			int	deg, min;
@@ -1076,11 +1076,11 @@ char	**argv;
 			min = (int)(sec);
 			sec = (sec - (double)min) * 60;
 
-			(void)printf("\tnorm %g degrees (%d deg %d min %g sec)\n",
+			rt_log("\tnorm %g degrees (%d deg %d min %g sec)\n",
 				mged_nrm_tol * rt_radtodeg,
 				deg, min, sec );
 		} else {
-			(void)printf("\tnorm None\n");
+			rt_log("\tnorm None\n");
 		}
 		return CMD_OK;
 	}
@@ -1098,7 +1098,7 @@ char	**argv;
 	if( argv[1][0] == 'r' )  {
 		/* Relative */
 		if( f < 0.0 || f >= 1.0 )  {
-			(void)printf("relative tolerance must be between 0 and 1, not changed\n");
+			rt_log("relative tolerance must be between 0 and 1, not changed\n");
 			return CMD_BAD;
 		}
 		/* Note that a value of 0.0 will disable relative tolerance */
@@ -1108,14 +1108,14 @@ char	**argv;
 	if( argv[1][0] == 'n' )  {
 		/* Normal tolerance, in degrees */
 		if( f < 0.0 || f > 90.0 )  {
-			(void)printf("Normal tolerance must be in positive degrees, < 90.0\n");
+			rt_log("Normal tolerance must be in positive degrees, < 90.0\n");
 			return CMD_BAD;
 		}
 		/* Note that a value of 0.0 or 360.0 will disable this tol */
 		mged_nrm_tol = f * rt_degtorad;
 		return CMD_OK;
 	}
-	(void)printf("Error, tolerance '%s' unknown\n", argv[1] );
+	rt_log("Error, tolerance '%s' unknown\n", argv[1] );
 	return CMD_BAD;
 }
 
@@ -1134,7 +1134,7 @@ char	**argv;
 
 	val = atof(argv[1]);
 	if( val < SMALL_FASTF || val > INFINITY )  {
-		(void)printf("zoom: scale factor out of range\n");
+		rt_log("zoom: scale factor out of range\n");
 		return CMD_BAD;
 	}
 	if( Viewscale < SMALL_FASTF || Viewscale > INFINITY )
@@ -1189,7 +1189,7 @@ char	**argv;
     {
 	if (NEAR_ZERO(dz, 0.00001))
 	{
-	    printf("f_qvrot: (dx, dy, dz) may not be the zero vector\n");
+	    rt_log("f_qvrot: (dx, dy, dz) may not be the zero vector\n");
 	    return CMD_BAD;
 	}
 	az = 0.0;

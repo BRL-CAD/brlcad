@@ -119,33 +119,33 @@ char	**argv;
 	/* open the input file */
 	if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
 		perror( argv[1] );
-		(void)fprintf(stderr, "dup: Can't open %s\n", argv[1]);
+		(void)rt_log( "dup: Can't open %s\n", argv[1]);
 		return CMD_BAD;
 	}
 
-	(void)printf("\n*** Comparing %s with %s for duplicate names\n",
+	rt_log("\n*** Comparing %s with %s for duplicate names\n",
 		dbip->dbi_filename,argv[1]);
 	if( ncharadd ) {
-		(void)printf("  For comparison, all names in %s prefixed with:  %s\n",
+		rt_log("  For comparison, all names in %s prefixed with:  %s\n",
 				argv[1],prestr);
 	}
 
 	/* Get array to hold names of duplicates */
 	if( (dup_dirp = dir_getspace(0)) == (struct directory **) 0) {
-		(void) printf( "f_dup: unable to get memory\n");
+		rt_log( "f_dup: unable to get memory\n");
 		return CMD_BAD;
 	}
 	dirp0 = dup_dirp;
 
 	/* Scan new database for overlaps */
 	if( db_scan( newdbp, mged_dir_check, 0 ) < 0 )  {
-		(void)fprintf(stderr, "dup: db_scan failure\n");
+		(void)rt_log( "dup: db_scan failure\n");
 		return CMD_BAD;
 	}
 
 	col_pr4v( dirp0, (int)(dup_dirp - dirp0));
 	rt_free( (char *)dirp0, "dir_getspace array" );
-	(void)printf("\n -----  %d duplicate names found  -----\n",num_dups);
+	rt_log("\n -----  %d duplicate names found  -----\n",num_dups);
 
 	db_close( newdbp );
 
@@ -234,9 +234,9 @@ int			flags;
 
 	/* Update the name, and any references */
 	if( flags & DIR_SOLID )  {
-		printf("adding solid '%s'\n", local );
+		rt_log("adding solid '%s'\n", local );
 		if ((ncharadd + strlen(name)) >= (unsigned)NAMESIZE)
-			printf("WARNING: solid name \"%s%s\" truncated to \"%s\"\n",
+			rt_log("WARNING: solid name \"%s%s\" truncated to \"%s\"\n",
 				prestr,name, local);
 
 		/* Depends on all kinds of solids having name in same place */
@@ -245,7 +245,7 @@ int			flags;
 		register int i;
 		char	mref[NAMESIZE+2];
 
-		printf("adding  comb '%s'\n", local );
+		rt_log("adding  comb '%s'\n", local );
 		NAMEMOVE( local, rec->c.c_name );
 
 		/* Update all the member records */
@@ -291,7 +291,7 @@ char	**argv;
 
 	/* get any prefix */
 	if( argc < 3 )  {
-		(void)fprintf(stderr,
+		(void)rt_log(
 			"concat: Enter prefix string or / for no prefix: ");
 		return CMD_MORE;
 	}
@@ -311,13 +311,13 @@ char	**argv;
 	/* open the input file */
 	if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
 		perror( argv[1] );
-		(void)fprintf(stderr, "concat: Can't open %s\n", argv[1]);
+		(void)rt_log( "concat: Can't open %s\n", argv[1]);
 		return CMD_BAD;
 	}
 
 	/* Scan new database, adding everything encountered. */
 	if( db_scan( newdbp, mged_dir_add, 1 ) < 0 )  {
-		(void)fprintf(stderr, "concat: db_scan failure\n");
+		(void)rt_log( "concat: db_scan failure\n");
 		bad = 1;	
 		/* Fall through, to close off database */
 	}

@@ -97,7 +97,7 @@ Plot_open()
 {
 	char line[64];
 
-	(void)printf("UNIX-Plot filter [pl-fb]? ");
+	rt_log("UNIX-Plot filter [pl-fb]? ");
 	(void)fgets( line, sizeof(line), stdin ); /* \n, Null terminated */
 	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( feof(stdin) )  quit();
@@ -396,7 +396,7 @@ unsigned
 Plot_load( addr, count )
 unsigned addr, count;
 {
-	(void)printf("Plot_load(x%x, %d.)\n", addr, count );
+	rt_log("Plot_load(x%x, %d.)\n", addr, count );
 	return( 0 );
 }
 
@@ -421,7 +421,7 @@ void
 Plot_debug(lvl)
 {
 	(void)fflush(up_fp);
-	printf("flushed\n");
+	rt_log("flushed\n");
 }
 
 void

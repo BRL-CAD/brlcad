@@ -136,7 +136,7 @@ T49_open()
 {
 	char line[64], line2[64];
 
-	(void)printf("Output tty [stdout]? ");
+	rt_log("Output tty [stdout]? ");
 	(void)fgets( line, sizeof(line), stdin ); /* \n, null terminated */
 	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( feof(stdin) )  
@@ -209,7 +209,7 @@ T49_close()
 void
 T49_restart()
 {
-	(void)printf("%cTek_restart\n",US);		/* NRTC */
+	rt_log("%cTek_restart\n",US);		/* NRTC */
 }
 
 /*
@@ -412,13 +412,13 @@ t49get_cursor()
 	i = read( second_fd, ibuf, sizeof(ibuf) );
 	/* The LAST 6 chars are the string from the tektronix */
 	if( i < 6 )  {
-		(void)printf("short read of %d\n", i);
+		rt_log("short read of %d\n", i);
 		return;		/* Fails if he hits RETURN */
 	}
 	cp = &ibuf[i-6];
 	if( cp[5] != '\n' )  {
-		(void)printf("cursor synch?\n");
-		(void)printf("saw:%c%c%c%c%c%c\n",
+		rt_log("cursor synch?\n");
+		rt_log("saw:%c%c%c%c%c%c\n",
 			cp[0], cp[1], cp[2], cp[3], cp[4], cp[5] );
 		return;
 	}
@@ -441,7 +441,7 @@ t49get_cursor()
 
 	switch(cp[0])  {
 	case 'Z':
-		(void)printf("x=%d,y=%d\n", xpen, ypen);
+		rt_log("x=%d,y=%d\n", xpen, ypen);
 		break;		/* NOP */
 	case 'b':
 		rt_vls_strcat( &dm_values.dv_string , "zoom 0.5\n" );
@@ -453,7 +453,7 @@ t49get_cursor()
 		rt_vls_printf( &dm_values.dv_string , "M 1 %d %d\n", xpen, ypen );
 		break;
 	default:
-		(void)printf("s=smaller, b=bigger, .=slew, space=pick/slew\n");
+		rt_log("s=smaller, b=bigger, .=slew, space=pick/slew\n");
 		return;
 	case ' ':
 		rt_vls_printf( &dm_values.dv_string , "M 1 %d %d\n", xpen, ypen );
@@ -544,7 +544,7 @@ unsigned
 T49_load( addr, count )
 unsigned addr, count;
 {
-	(void)printf("%cTek_load(x%x, %d.)\n",US, addr, count );
+	rt_log("%cTek_load(x%x, %d.)\n",US, addr, count );
 	return( 0 );
 }
 

@@ -157,7 +157,7 @@ SunPw_open()
 	 * Gets the name of our parent.
 	 */
 	if( we_getgfxwindow(gfxwinname) ) {
-		fprintf( stderr, "dm-sun: Must be running suntools\n" );
+		rt_log( "dm-sun: Must be running suntools\n" );
 		return(-1);
 	}
 
@@ -282,7 +282,7 @@ int	color;
 		sun_cmap_color = 5;
 		break;
 	default:
-		printf("sun_color:  mged color %d not known\n", color);
+		rt_log("sun_color:  mged color %d not known\n", color);
 		break;
 	}
 }
@@ -410,7 +410,7 @@ double	ratio;
 				break;
 			}
 			if( ++numvec >= MAXVEC ) {
-				(void)fprintf( stderr,
+				(void)rt_log(
 					"SunPw_object: nvec %d clipped to %d\n",
 					sp->s_vlen, numvec );
 				break;
@@ -643,7 +643,7 @@ caddr_t	*arg;
 	xpen = SUNPWx_TO_GED(event_x(event));
 	ypen = -SUNPWy_TO_GED(event_y(event));
 	if( sun_debug )
-		printf("Event %d at (%d %d)\n",id,event_x(event),event_y(event));
+		rt_log("Event %d at (%d %d)\n",id,event_x(event),event_y(event));
 	switch(id) {
 	case MS_LEFT:
 		if (event_is_down(event)) {
@@ -824,7 +824,7 @@ unsigned
 SunPw_load(addr, count)
 unsigned	addr, count;
 {
-	(void) printf("SunPw_load(x%x, %d.)\n", addr, count);
+	rt_log("SunPw_load(x%x, %d.)\n", addr, count);
 	return (0);
 }
 
@@ -854,7 +854,7 @@ int	a, b;
 		mouse_motion = 0;
 		break;
 	default:
-		(void)printf("SunPw_statechange: unknown state %s\n", state_str[b]);
+		rt_log("SunPw_statechange: unknown state %s\n", state_str[b]);
 		break;
 	}
 	/*SunPw_viewchange( DM_CHGV_REDO, SOLID_NULL );*/

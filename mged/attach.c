@@ -190,7 +190,7 @@ char *name;
 		if( dmp->dmr_open() )
 			break;
 
-		(void)printf("ATTACHING %s (%s)\n",
+		rt_log("ATTACHING %s (%s)\n",
 			dmp->dmr_name, dmp->dmr_lname);
 
 		FOR_ALL_SOLIDS( sp )  {
@@ -210,7 +210,7 @@ char *name;
 		dmaflag++;
 		return;
 	}
-	(void)printf("attach(%s): BAD\n", name);
+	rt_log("attach(%s): BAD\n", name);
 	dmp = &dm_Null;
 }
 
@@ -273,12 +273,12 @@ get_attached()
 	}
 
 	while(1)  {
-		(void)printf("attach (");
+		rt_log("attach (");
 		dp = &which_dm[0];
-		(void)printf("%s", (*dp++)->dmr_name);
+		rt_log("%s", (*dp++)->dmr_name);
 		for( ; *dp != (struct dm *)0; dp++ )
-			(void)printf("|%s", (*dp)->dmr_name);
-		(void)printf(")[%s]? ", which_dm[0]->dmr_name);
+			rt_log("|%s", (*dp)->dmr_name);
+		rt_log(")[%s]? ", which_dm[0]->dmr_name);
 		(void)fgets(line, sizeof(line), stdin);	/* \n, Null terminated */
 		line[strlen(line)-1] = '\0';		/* remove newline */
 		if( feof(stdin) )  quit();
@@ -315,11 +315,11 @@ int	argc;
 char	**argv;
 {
 	if( !dmp->dmr_cmd )  {
-		printf("The '%s' display manager does not support any local commands.\n", dmp->dmr_name);
+		rt_log("The '%s' display manager does not support any local commands.\n", dmp->dmr_name);
 		return CMD_BAD;
 	}
 	if( argc-1 < 1 )  {
-		printf("'dm' command requires an argument.\n");
+		rt_log("'dm' command requires an argument.\n");
 		return CMD_BAD;
 	}
 	(void)dmp->dmr_cmd( argc-1, argv+1 );

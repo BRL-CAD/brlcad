@@ -96,7 +96,7 @@ PS_open()
 {
 	char line[64];
 
-	(void)printf("PostScript file? ");
+	rt_log("PostScript file? ");
 	(void)fgets( line, sizeof(line), stdin ); /* \n, null terminated */
 	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( feof(stdin) )  quit();
@@ -164,7 +164,7 @@ PS_close()
 	fputs("%end(plot)\n", ps_fp);
 	(void)fclose(ps_fp);
 	ps_fp = (FILE *)0;
-	printf("PS_close()\n");
+	rt_log("PS_close()\n");
 }
 
 /*
@@ -444,7 +444,7 @@ unsigned
 PS_load( addr, count )
 unsigned addr, count;
 {
-	(void)printf("PS_load(x%x, %d.)\n", addr, count );
+	rt_log("PS_load(x%x, %d.)\n", addr, count );
 	return( 0 );
 }
 

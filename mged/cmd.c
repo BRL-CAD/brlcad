@@ -472,7 +472,7 @@ char   **argv;
 	/* Handle "!" shell escape char so the shell can parse the line */
 	if( *lp == '!' )  {
 		(void)system( ++lp);
-		(void)printf("!\n");
+		rt_log("!\n");
 		return(1);		/* Don't process command line! */
 	}
 
@@ -493,7 +493,7 @@ char   **argv;
 			if( *argcp > 0 )
 				(void)cmd_glob(argcp, argv, MAXARGS);
 			if( (*argcp)++ >= MAXARGS )  {
-				(void)printf("More than %d arguments, excess flushed\n", MAXARGS);
+				rt_log("More than %d arguments, excess flushed\n", MAXARGS);
 				argv[MAXARGS] = (char *)0;
 				return(0);
 			}
@@ -523,7 +523,7 @@ struct funtab *functions;
 	register struct funtab *ftp;
 
 	if( argc == 0 )  {
-		(void)printf("no command entered, type '%s?' for help\n",
+		rt_log("no command entered, type '%s?' for help\n",
 		    functions->ft_name);
 		return CMD_BAD;
 	}
@@ -546,7 +546,7 @@ struct funtab *functions;
 			case CMD_MORE:
 				return CMD_MORE;
 			default:
-				printf("mged_cmd(): Invalid return from %s\n",
+				rt_log("mged_cmd(): Invalid return from %s\n",
 					ftp->ft_name);
 				return CMD_BAD;
 			}
@@ -582,7 +582,7 @@ char	**argv;
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;
 	(void)signal(SIGINT, cur_sigint);
-	(void)printf("!\n");
+	rt_log("!\n");
 
 	return CMD_OK;  /* ? */
 }
@@ -669,7 +669,7 @@ struct funtab *functions;
 	register struct funtab *ftp;
 
 	if( argc <= 1 )  {
-		(void)printf("The following commands are available:\n");
+		rt_log("The following commands are available:\n");
 		for( ftp = functions+1; ftp->ft_name; ftp++ )  {
 			rt_log("%s%s %s\n\t(%s)\n", functions->ft_name,
 			    ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
@@ -704,7 +704,7 @@ struct funtab *functions;
 	register struct funtab *ftp;
 
 	if( argc <= 1 )  {
-		(void)printf("The following %scommands are available:\n",
+		rt_log("The following %scommands are available:\n",
 		    functions->ft_name);
 		for( ftp = functions+1; ftp->ft_name; ftp++ )  {
 			col_item(ftp->ft_name);
@@ -755,7 +755,7 @@ char	**argv;
 			flags |= DIR_COMB;
 			break;
 		default:
-			(void)printf("summary:  S R or G are only valid parmaters\n");
+			rt_log("summary:  S R or G are only valid parmaters\n");
 			bad = 1;
 			break;
 	}
@@ -793,9 +793,9 @@ char	*argv[];
 	register int i;
 
 	for( i=1; i < argc; i++ )  {
-		fprintf(stdout, i==1 ? "%s" : " %s", argv[i]);
+		rt_log( i==1 ? "%s" : " %s", argv[i]);
 	}
-	fprintf(stdout, "\n");
+	rt_log( "\n");
 
 	return CMD_OK;
 }

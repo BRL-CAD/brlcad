@@ -239,7 +239,7 @@ vect_t pos_model;
 		break;
 
 		default:
-			(void)printf("edarb: unknown ARB type\n");
+			rt_log("edarb: unknown ARB type\n");
 		return(1);
 	}
 
@@ -379,7 +379,7 @@ printf("redo plane 2 == 5,6,7 for ARB7\n");
 
 err:
 	/* Error handling */
-	(void)printf("cannot move edge: %d%d\n", pt1+1,pt2+1);
+	rt_log("cannot move edge: %d%d\n", pt1+1,pt2+1);
 	es_edflag = IDLE;
 
 	return(1);		/* BAD */
@@ -492,7 +492,7 @@ vect_t	dir;
 
 	if( rt_isect_line3_plane( &t1, thru, dir, es_peqn[bp1], &tol ) < 0 ||
 	    rt_isect_line3_plane( &t2, thru, dir, es_peqn[bp2], &tol ) < 0 )  {
-		(void)printf("edge (direction) parallel to face normal\n");
+		rt_log("edge (direction) parallel to face normal\n");
 		return( 1 );
 	}
 
@@ -524,12 +524,12 @@ char	**argv;
 
 	if( es_int.idb_type != ID_ARB8 )
 	{
-		(void)printf("Extrude: solid type must be ARB\n");
+		rt_log("Extrude: solid type must be ARB\n");
 		return CMD_BAD;
 	}
 
 	if(es_type != ARB8 && es_type != ARB6 && es_type != ARB4) {
-		(void)printf("ARB%d: extrusion of faces not allowed\n",es_type);
+		rt_log("ARB%d: extrusion of faces not allowed\n",es_type);
 		return CMD_BAD;
 	}
 
@@ -587,7 +587,7 @@ char	**argv;
 			pt[i]++;
 		pt[i]--;
 		if( pt[i] > 7 )  {
-			(void)printf("bad face: %d\n",face);
+			rt_log("bad face: %d\n",face);
 			return CMD_BAD;
 		}
 	}
@@ -596,7 +596,7 @@ char	**argv;
 	if( rt_mk_plane_3pts( es_peqn[6], larb.pt[pt[0]], larb.pt[pt[1]],
 				larb.pt[pt[2]], &mged_tol ) )
 	{
-		(void)printf("face: %d is not a plane\n",face);
+		rt_log("face: %d is not a plane\n",face);
 		return CMD_BAD;
 	}
 
@@ -609,7 +609,7 @@ char	**argv;
 
 	case 24:   /* protrude face 1234 */
 		if(es_type == ARB6) {
-			(void)printf("ARB6: extrusion of face %d not allowed\n",face);
+			rt_log("ARB6: extrusion of face %d not allowed\n",face);
 			return CMD_BAD;
 		}
 		if(es_type == ARB4)
@@ -669,18 +669,18 @@ a4toa6:
 
 	case 120:
 	case 180:
-		(void)printf("ARB6: extrusion of face %d not allowed\n",face);
+		rt_log("ARB6: extrusion of face %d not allowed\n",face);
 		return CMD_BAD;
 
 	default:
-		(void)printf("bad face: %d\n", face );
+		rt_log("bad face: %d\n", face );
 		return CMD_BAD;
 	}
 
 	/* redo the plane equations */
 	if( rt_arb_calc_planes( es_peqn , &larb , es_type , &mged_tol ) )
 	{
-		(void)printf( "Cannot calculate new plane equations for faces\n" );
+		rt_log( "Cannot calculate new plane equations for faces\n" );
 		return CMD_BAD;
 	}
 
@@ -805,7 +805,7 @@ char	**argv;
 
 	if( es_int.idb_type != ID_ARB8 )
 	{
-		(void)printf("Mirface: solid type must be ARB\n");
+		rt_log("Mirface: solid type must be ARB\n");
 		return CMD_BAD;
 	}
 
@@ -813,12 +813,12 @@ char	**argv;
 	RT_ARB_CK_MAGIC( arb );
 
 	if(es_type != ARB8 && es_type != ARB6) {
-		(void)printf("ARB%d: mirroring of faces not allowed\n",es_type);
+		rt_log("ARB%d: mirroring of faces not allowed\n",es_type);
 		return CMD_BAD;
 	}
 	face = atoi( argv[1] );
 	if( face > 9999 || (face < 1000 && es_type != ARB6) ) {
-		(void)printf("ERROR: %d bad face\n",face);
+		rt_log("ERROR: %d bad face\n",face);
 		return CMD_BAD;
 	}
 	/* check which axis */
@@ -830,7 +830,7 @@ char	**argv;
 	if( strcmp( argv[2], "z" ) == 0 )
 		k = 2;
 	if( k < 0 ) {
-		(void)printf("axis must be x, y or z\n");
+		rt_log("axis must be x, y or z\n");
 		return CMD_BAD;
 	}
 
@@ -873,7 +873,7 @@ char	**argv;
 		prod *= pt[i];
 		pt[i]--;
 		if( pt[i] > 7 )  {
-			(void)printf("bad face: %d\n",face);
+			rt_log("bad face: %d\n",face);
 			return CMD_BAD;
 		}
 	}
@@ -883,7 +883,7 @@ char	**argv;
 
 	case 24:   /* mirror face 1234 */
 		if(es_type == ARB6) {
-			(void)printf("ARB6: mirroring of face %d not allowed\n",face);
+			rt_log("ARB6: mirroring of face %d not allowed\n",face);
 			return CMD_BAD;
 		}
 		for( i = 0; i < 4; i++ )  {
@@ -931,11 +931,11 @@ char	**argv;
 
 	case 120:
 	case 180:
-		(void)printf("ARB6: mirroring of face %d not allowed\n",face);
+		rt_log("ARB6: mirroring of face %d not allowed\n",face);
 		return CMD_BAD;
 
 	default:
-		(void)printf("bad face: %d\n", face );
+		rt_log("bad face: %d\n", face );
 		return CMD_BAD;
 	}
 
@@ -971,13 +971,13 @@ char	**argv;
 		return CMD_BAD;
 
 	if( es_edflag != EARB ) {
-		(void)printf("Not moving an ARB edge\n");
+		rt_log("Not moving an ARB edge\n");
 		return CMD_BAD;
 	}
 
 	if( es_int.idb_type != ID_ARB8 )
 	{
-		(void)printf("Edgedir: solid type must be an ARB\n");
+		rt_log("Edgedir: solid type must be an ARB\n");
 		return CMD_BAD;
 	}
 
@@ -1000,7 +1000,7 @@ char	**argv;
 	}
 
 	if(MAGNITUDE(slope) == 0) {
-		(void)printf("BAD slope\n");
+		rt_log("BAD slope\n");
 		return CMD_BAD;
 	}
 
@@ -1187,13 +1187,13 @@ char	**argv;
 
     if( es_int.idb_type != ID_ARB8 )
     {
-	(void) printf("Permute: solid type must be an ARB\n");
+	rt_log("Permute: solid type must be an ARB\n");
 	return CMD_BAD;
     }
 
     if ((es_type < 4) || (es_type > 8))
     {
-	(void) printf("Permute: es_type=%d\nThis shouldn't happen\n",
+	rt_log("Permute: es_type=%d\nThis shouldn't happen\n",
 		      es_type);
 	return CMD_BAD;
     }
@@ -1214,8 +1214,8 @@ char	**argv;
 	char *s;
 	
 	s = "ERROR: tuple '%s' too short to disambiguate ARB%d face\n";
-	(void) printf(s, argv[1], es_type);
-	(void) printf("Need at least %d vertices\n",
+	rt_log(s, argv[1], es_type);
+	rt_log("Need at least %d vertices\n",
 	min_tuple_size[es_type]);
 	return CMD_BAD;
     }
@@ -1225,13 +1225,13 @@ char	**argv;
 	char *s;
 	
 	s = "ERROR: tuple '%s' length exceeds ARB%d face size of %d\n";
-	(void) printf(s, argv[1], es_type, face_size);
+	rt_log(s, argv[1], es_type, face_size);
 	return CMD_BAD;
     }
     vertex = argv[1][0] - '1';
     if ((vertex < 0) || (vertex >= es_type))
     {
-	(void) printf("ERROR: invalid vertex %c\n", argv[1][0]);
+	rt_log("ERROR: invalid vertex %c\n", argv[1][0]);
 	return CMD_BAD;
     }
     p = (es_type == 4) ? perm4[vertex] :
@@ -1242,7 +1242,7 @@ char	**argv;
     {
 	if (*p == 0)
 	{
-	    (void) printf("ERROR: invalid vertex tuple: '%s'\n", argv[1]);
+	    rt_log("ERROR: invalid vertex tuple: '%s'\n", argv[1]);
 	    return CMD_BAD;
 	}
 	if (strncmp(*p, argv[1], arglen) == 0)
@@ -1264,7 +1264,7 @@ char	**argv;
     }
 
 #if 0
-    printf("After collection...\n");
+    rt_log("After collection...\n");
     for (i = 0; i < 8 ; i++ )
     {
 	char	string[1024];
@@ -1272,7 +1272,7 @@ char	**argv;
 	sprintf(string, "vertex %d", i + 1);
 	VPRINT(string, tarb.pt[i]);
     }
-    printf("...\n");
+    rt_log("...\n");
 #endif
 
     /*
@@ -1314,7 +1314,7 @@ char	**argv;
 	case ARB8:
 	    break;
 	default:
-	    (void) printf("%s: %d: This shouldn't happen\n",
+	    rt_log("%s: %d: This shouldn't happen\n",
 		__FILE__, __LINE__);
 	    return CMD_BAD;
     }

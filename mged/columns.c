@@ -130,7 +130,7 @@ int num_in_list;
 		for( j=0; j < 4; j++) {
 			this_one = j * lines + i;
 			/* Restrict the print to 16 chars per spec. */
-			printf( "%.16s", list_of_names[this_one]->d_namep);
+			rt_log( "%.16s", list_of_names[this_one]->d_namep);
 			namelen = strlen( list_of_names[this_one]->d_namep);
 			if( namelen > 16)
 				namelen = 16;

@@ -77,7 +77,7 @@ register int num_entries;
 	register struct directory **dir_basep;
 
 	if( num_entries < 0) {
-		(void) printf( "dir_getspace: was passed %d, used 0\n",
+		rt_log( "dir_getspace: was passed %d, used 0\n",
 		  num_entries);
 		num_entries = 0;
 	}
@@ -153,9 +153,9 @@ f_memprint(argc, argv)
 int	argc;
 char	**argv;
 {
-	(void)printf("Display manager free map:\n");
+	rt_log("Display manager free map:\n");
 	memprint( &(dmp->dmr_map) );
-	(void)printf("Database free granule map:\n");
+	rt_log("Database free granule map:\n");
 	memprint( &(dbip->dbi_freep) );
 
 	return CMD_OK;
@@ -299,10 +299,10 @@ dir_summary(flag)
 					comb++;
 		}
 	}
-	(void)printf("Summary:\n");
-	(void)printf("  %5d solids\n", sol);
-	(void)printf("  %5d region; %d non-region combinations\n", reg, comb);
-	(void)printf("  %5d total objects\n\n", sol+reg+comb );
+	rt_log("Summary:\n");
+	rt_log("  %5d solids\n", sol);
+	rt_log("  %5d region; %d non-region combinations\n", reg, comb);
+	rt_log("  %5d total objects\n\n", sol+reg+comb );
 
 	if( flag == 0 )
 		return;
@@ -428,7 +428,7 @@ int   maxargs;
 			/* Successful match */
 			/* See if already over the limit */
 			if( *argcp >= maxargs )  {
-				(void)printf("%s: expansion stopped after %d matches (%d args)\n",
+				rt_log("%s: expansion stopped after %d matches (%d args)\n",
 					word, *argcp-orig_numargs, maxargs);
 				break;
 			}
@@ -496,7 +496,7 @@ char	**argv;
 					if( strncmp( rp[j].M.m_instname,
 					    argv[k], NAMESIZE) != 0 )
 						continue;
-					(void)printf("%s:  member of %s\n",
+					rt_log("%s:  member of %s\n",
 						rp[j].M.m_instname,
 						rp[0].c.c_name );
 				}
@@ -531,7 +531,7 @@ char	**argv;
 		}
 
 		if( (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
-			printf("'%s%s' too long, must be less than %d characters.\n",
+			rt_log("'%s%s' too long, must be less than %d characters.\n",
 				argv[1], argv[i],
 				NAMESIZE);
 			argv[i] = "";
@@ -548,7 +548,7 @@ char	**argv;
 		}
 		/*  Change object name in the directory. */
 		if( db_rename( dbip, dp, tempstring ) < 0 )  {
-			printf("error in rename to %s, aborting\n", tempstring );
+			rt_log("error in rename to %s, aborting\n", tempstring );
 			ERROR_RECOVERY_SUGGESTION;
 			return CMD_BAD;
 		}
@@ -632,7 +632,7 @@ char	**argv;
 
 	/* Alert user if named file already exists */
 	if( (keepfp = fopen( argv[1], "r" ) ) != NULL )  {
-		(void)printf("keep:  appending to '%s'\n", argv[1] );
+		rt_log("keep:  appending to '%s'\n", argv[1] );
 		fclose(keepfp);
 	}
 
@@ -668,7 +668,7 @@ char	**argv;
 
 	if( mk_id_units( keepfp, rt_vls_addr(&title), rt_vls_addr(&units) ) < 0 )  {
 		perror("fwrite");
-		(void)printf("mk_id_units() failed\n");
+		rt_log("mk_id_units() failed\n");
 		fclose(keepfp);
 		rt_vls_free( &title );
 		rt_vls_free( &units );
@@ -734,7 +734,7 @@ int cont;		/* non-zero when continuing partly printed line */
 			putchar(' ');
 		cont = 1;
 	}
-	printf("| %s", dp->d_namep);
+	rt_log("| %s", dp->d_namep);
 	if( !(dp->d_flags & DIR_COMB) )  {
 		putchar( '\n' );
 		return;
@@ -812,7 +812,7 @@ char prefix;
 		putchar(' ');
 	}
 
-	printf("%s", dp->d_namep);
+	rt_log("%s", dp->d_namep);
 	/* Output Comb and Region flags (-F?) */
 	if( dp->d_flags & DIR_COMB )
 		putchar('/');
@@ -857,7 +857,7 @@ char	**argv;
 	union record	record;
 
 	if( (int)strlen(argv[2]) > NAMESIZE ) {
-		(void)printf("ERROR: name length limited to %d characters\n",
+		rt_log("ERROR: name length limited to %d characters\n",
 				NAMESIZE);
 		return CMD_BAD;
 	}
@@ -871,7 +871,7 @@ char	**argv;
 	}
 	/*  Change object name in the directory. */
 	if( db_rename( dbip, dp, argv[2] ) < 0 )  {
-		printf("error in rename to %s, aborting\n", argv[2] );
+		rt_log("error in rename to %s, aborting\n", argv[2] );
 		ERROR_RECOVERY_SUGGESTION;
 		return CMD_BAD;
 	}
@@ -957,7 +957,7 @@ again:
 
 					/* Remove this reference */
 					if( db_delrec( dbip, dp, j ) < 0 )  {
-						printf("error in killing reference to '%s', exit MGED and retry\n",
+						rt_log("error in killing reference to '%s', exit MGED and retry\n",
 							argv[k]);
 						ERROR_RECOVERY_SUGGESTION;
 						return CMD_BAD;
@@ -1008,7 +1008,7 @@ killtree( dbip, dp )
 struct db_i	*dbip;
 register struct directory *dp;
 {
-	(void)printf("KILL %s:  %s\n",
+	rt_log("KILL %s:  %s\n",
 		(dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
 		dp->d_namep );
 	eraseobj( dp );

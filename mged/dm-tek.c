@@ -111,7 +111,7 @@ Tek_open()
 {
 	char line[64], line2[64];
 
-	(void)printf("Output tty [stdout]? ");
+	rt_log("Output tty [stdout]? ");
 	(void)fgets( line, sizeof(line), stdin );	/* \n, Null terminated */
 	line[strlen(line)-1] = '\0';			/* remove newline */
 	if( feof(stdin) )  quit();
@@ -163,7 +163,7 @@ Tek_close()
 void
 Tek_restart()
 {
-	(void)printf("Tek_restart\n");
+	rt_log("Tek_restart\n");
 }
 
 /*
@@ -359,14 +359,14 @@ get_cursor()
 		i = read( second_fd, ibuf, sizeof(ibuf) );
 		if (i < 4) {
 			register int j;
-			(void)printf("Short Blit read\n");
+			rt_log("Short Blit read\n");
 			for (j=0 ; j < i ; ++j)
-				(void)printf("%c(%x)\n", ibuf[j], ibuf[j]);
+				rt_log("%c(%x)\n", ibuf[j], ibuf[j]);
 			return;
 		}
 		cp = &ibuf[i-6];
 		if ( i > 4 && (cp[4] != '\n' || cp[5] != 4 )) {
-			(void)printf("saw:%c(%x) %c(%x) %c(%x) %c(%x) %c(%x) %c(%x)\n",
+			rt_log("saw:%c(%x) %c(%x) %c(%x) %c(%x) %c(%x) %c(%x)\n",
 				cp[0], cp[0], cp[1], cp[1], cp[2], cp[2],
 				cp[3], cp[3], cp[4], cp[4], cp[5], cp[5] );
 			return;
@@ -375,7 +375,7 @@ get_cursor()
 		lox = ((int)cp[1]&037)<<2;
 		hiy = ((int)cp[2]&037)<<7;
 		loy = ((int)cp[3]&037)<<2;
-/*		(void)printf("mouse: %d,%d\n",
+/*		rt_log("mouse: %d,%d\n",
 			TEK_TO_GED(hix|lox), TEK_TO_GED(hiy|loy)); */
 
 		xpen = TEK_TO_GED(hix|lox);
@@ -393,14 +393,14 @@ get_cursor()
 		i = read( second_fd, ibuf, sizeof(ibuf) );
 		/* The LAST 6 chars are the string from the tektronix */
 		if( i < 6 )  {
-			(void)printf("short read of %d\n", i);
+			rt_log("short read of %d\n", i);
 			return;		/* Fails if he hits RETURN */
 			
 		}
 		cp = &ibuf[i-6];
 		if( cp[5] != '\n' )  {
-			(void)printf("cursor synch?\n");
-			(void)printf("saw:%c(%x) %c(%x) %c(%x) %c(%x) %c(%x) %c(%x)\n",
+			rt_log("cursor synch?\n");
+			rt_log("saw:%c(%x) %c(%x) %c(%x) %c(%x) %c(%x) %c(%x)\n",
 				cp[0], cp[0], cp[1], cp[1], cp[2], cp[2],
 				cp[3], cp[3], cp[4], cp[4], cp[5], cp[5] );
 			return;
@@ -423,7 +423,7 @@ get_cursor()
 		
 		switch(cp[0])  {
 		case 'Z':
-			(void)printf("x=%d,y=%d\n", xpen, ypen);
+			rt_log("x=%d,y=%d\n", xpen, ypen);
 			break;		/* NOP */
 		case 'b':
 			rt_vls_strcat( &dm_values.dv_string, "zoom 2\n");
@@ -435,7 +435,7 @@ get_cursor()
 			rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
 			break;
 		default:
-			(void)printf("s=smaller, b=bigger, .=slew, space=pick/slew\n");
+			rt_log("s=smaller, b=bigger, .=slew, space=pick/slew\n");
 			return;
 		case ' ':
 			rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
@@ -527,7 +527,7 @@ unsigned
 Tek_load( addr, count )
 unsigned addr, count;
 {
-	(void)printf("Tek_load(x%x, %d.)\n", addr, count );
+	rt_log("Tek_load(x%x, %d.)\n", addr, count );
 	return( 0 );
 }
 

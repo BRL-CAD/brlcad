@@ -96,23 +96,23 @@ HP_open()
 {
 	char s[16];
 
-	(void)printf("\033*j1A");	/* set tablet on-line */
-	(void)printf("\033*s1^");	/* request terminal name */
+	rt_log("\033*j1A");	/* set tablet on-line */
+	rt_log("\033*s1^");	/* request terminal name */
 	(void)fgets(s,16,stdin);	/* read name */
 	if (!strcmp(s,"2627A\n")) {
 	    termtype = HP2627A;
-	    (void)printf("\033*j1C");	/* asynchrous tablet mode */
+	    rt_log("\033*j1C");	/* asynchrous tablet mode */
 	} else {
 	    termtype = HP2397A;
-	    (void)printf("\033*j9F");	/* penpress reports F9 pressed */
+	    rt_log("\033*j9F");	/* penpress reports F9 pressed */
 	}
-	(void)printf("Terminal type: %s\n",s);
-	(void)printf("%c*da",ESC);	/* clear graphics memory */
-	(void)printf("%c*dc",ESC);	/* graphics display on */
-	(void)printf("%c*dk",ESC);	/* graphics cursor on */
-	(void)printf("%c*e0b",ESC);	/* background color */
-	(void)printf("%c*m6x",ESC);	/* line color */
-	(void)printf("%c*n3x",ESC);	/* text color */
+	rt_log("Terminal type: %s\n",s);
+	rt_log("%c*da",ESC);	/* clear graphics memory */
+	rt_log("%c*dc",ESC);	/* graphics display on */
+	rt_log("%c*dk",ESC);	/* graphics cursor on */
+	rt_log("%c*e0b",ESC);	/* background color */
+	rt_log("%c*m6x",ESC);	/* line color */
+	rt_log("%c*n3x",ESC);	/* text color */
 	return(0);		/* OK */
 }
 
@@ -123,12 +123,12 @@ HP_open()
 void
 HP_close()
 {
-	(void)printf("%cH", ESC);	/* cursor home */
-	(void)printf("%cJ", ESC);	/* clear screen */
-	(void)printf("%c&w6S",ESC);	/* Set Dialog to 12 Lines */
-	(void)printf("%c*dD",ESC);	/* graphics off */
-	(void)printf("%c*dT",ESC);	/* graph text off */
-	(void)printf("%c*dE",ESC);	/* alpha on*/
+	rt_log("%cH", ESC);	/* cursor home */
+	rt_log("%cJ", ESC);	/* clear screen */
+	rt_log("%c&w6S",ESC);	/* Set Dialog to 12 Lines */
+	rt_log("%c*dD",ESC);	/* graphics off */
+	rt_log("%c*dT",ESC);	/* graph text off */
+	rt_log("%c*dE",ESC);	/* alpha on*/
 	(void)fflush(stdout);
 }
 
@@ -140,10 +140,10 @@ void
 HP_prolog()
 {
     if (dmaflag) {
-	(void)printf("%c*da",ESC);	/* clear graphics memory */
+	rt_log("%c*da",ESC);	/* clear graphics memory */
 	(void)fflush(stdout);
 	point( 0, 0 );			/* Put up the center point */
-	(void)printf("\033c");		/* disable keyboard */
+	rt_log("\033c");		/* disable keyboard */
     }
 }
 
@@ -155,7 +155,7 @@ void
 HP_epilog()
 {
 	HPmove(XHP_TO_GED(curx),YHP_TO_GED(cury));
-	(void)printf("\033b");			/* enable keyboard */
+	rt_log("\033b");			/* enable keyboard */
 }
 
 /*
@@ -181,12 +181,12 @@ double ratio;
 	int useful = 0;
 
 	if(  sp->s_soldash )
-		printf("%c*m4b",ESC);	/* Dot Dash */
+		rt_log("%c*m4b",ESC);	/* Dot Dash */
 	else	
-		printf("%c*m1b",ESC);	/* Solid Line */
+		rt_log("%c*m1b",ESC);	/* Solid Line */
 
 	color = sp->s_dmindex;
-	printf("%c*m%1dx",ESC,color);
+	rt_log("%c*m%1dx",ESC,color);
 	
 	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 		/* Viewing region is from -1.0 to +1.0 */
@@ -213,7 +213,7 @@ double ratio;
 			useful = 1;
 		}
 	}
-	(void)printf("%c*m6x",ESC);
+	rt_log("%c*m6x",ESC);
 	return(useful);
 }
 
@@ -226,7 +226,7 @@ HP_puts( str, x, y, size, color )
 register u_char *str;
 {
 	HPmove(x,y - 29);
-	(void)printf("\033*l%s\n",str);
+	rt_log("\033*l%s\n",str);
 }
 
 /*
@@ -275,7 +275,7 @@ int		noblock;
 	if ((ch = getchar()) == '\033') {	/* hp2397a penpress */
 	    ch = getchar();			/* what kind of penpress ? */
 	    fflush(stdin);
-	    printf("\033*s3^");		/* ask terminal for cursor position */
+	    rt_log("\033*s3^");		/* ask terminal for cursor position */
 	    scanf("%d,%d",&curx,&cury);
 	    xpen     = XHP_TO_GED(curx);
 	    ypen     = YHP_TO_GED(cury);
@@ -358,16 +358,16 @@ register int x,y;
 
 	ix = XGED_TO_HP(x);
 	iy = YGED_TO_HP(y);
-	(void)printf("%c*d%d,%do",ESC,ix,iy);    /* move cursr */
-	(void)printf("%c*pc",ESC);               /* new point */
+	rt_log("%c*d%d,%do",ESC,ix,iy);    /* move cursr */
+	rt_log("%c*pc",ESC);               /* new point */
 }
 
 static void
 HPmove(xi,yi)
 {
-	printf("%c*pa",ESC);	/* pen up */
+	rt_log("%c*pa",ESC);	/* pen up */
 	HPcont(xi,yi);
-	printf("%c*pb",ESC);	/* pen down */
+	rt_log("%c*pb",ESC);	/* pen down */
 }
 
 static linemod(s)
@@ -391,7 +391,7 @@ register char *s;
 		c = '1';			/* Solid Line */
 		break;
 	}
-	printf("%c*m%cb",ESC,c);		/* Set Line Mode */
+	rt_log("%c*m%cb",ESC,c);		/* Set Line Mode */
 }
 
 static point(xi,yi){

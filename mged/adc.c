@@ -235,7 +235,7 @@ char	**argv;
 			dm_values.dv_flagadc = 1;
 			return CMD_OK;
 		}
-		(void)printf("The 'adc a1' command accepts only 1 argument\n");
+		rt_log("The 'adc a1' command accepts only 1 argument\n");
 		return CMD_BAD;
 	}
 	if( strcmp( parameter, "a2" ) == 0 )  {
@@ -244,7 +244,7 @@ char	**argv;
 			dm_values.dv_flagadc = 1;
 			return CMD_OK;
 		}
-		(void)printf("The 'adc a2' command accepts only 1 argument\n");
+		rt_log("The 'adc a2' command accepts only 1 argument\n");
 		return CMD_BAD;
 	}
 	if(strcmp(parameter, "dst") == 0)  {
@@ -254,7 +254,7 @@ char	**argv;
 			dm_values.dv_flagadc = 1;
 			return CMD_OK;
 		}
-		(void)printf("The 'adc dst' command accepts only 1 argument\n");
+		rt_log("The 'adc dst' command accepts only 1 argument\n");
 		return CMD_BAD;
 	}
 	if( strcmp( parameter, "dh" ) == 0 )  {
@@ -263,7 +263,7 @@ char	**argv;
 			dm_values.dv_flagadc = 1;
 			return CMD_OK;
 		}
-		(void)printf("The 'adc dh' command accepts only 1 argument\n");
+		rt_log("The 'adc dh' command accepts only 1 argument\n");
 		return CMD_BAD;
 	}
 	if( strcmp( parameter, "dv" ) == 0 )  {
@@ -272,7 +272,7 @@ char	**argv;
 			dm_values.dv_flagadc = 1;
 			return CMD_OK;
 		}
-		(void)printf("The 'adc dv' command accepts only 1 argument\n");
+		rt_log("The 'adc dv' command accepts only 1 argument\n");
 		return CMD_BAD;
 	}
 	if( strcmp( parameter, "dx" ) == 0 )  {
@@ -284,7 +284,7 @@ char	**argv;
 			dm_values.dv_flagadc = 1;
 			return CMD_OK;
 		}
-		(void)printf("The 'adc dx' command accepts only 1 argument\n");
+		rt_log("The 'adc dx' command accepts only 1 argument\n");
 		return CMD_BAD;
 	}
 	if( strcmp( parameter, "dy" ) == 0 )  {
@@ -296,7 +296,7 @@ char	**argv;
 			dm_values.dv_flagadc = 1;
 			return CMD_OK;
 		}
-		(void)printf("The 'adc dy' command accepts only 1 argument\n");
+		rt_log("The 'adc dy' command accepts only 1 argument\n");
 		return CMD_BAD;
 	}
 	if( strcmp( parameter, "dz" ) == 0 )  {
@@ -308,7 +308,7 @@ char	**argv;
 			dm_values.dv_flagadc = 1;
 			return CMD_OK;
 		}
-		(void)printf("The 'adc dz' command accepts only 1 argument\n");
+		rt_log("The 'adc dz' command accepts only 1 argument\n");
 		return CMD_BAD;
 	}
 	if( strcmp(parameter, "hv") == 0)  {
@@ -320,7 +320,7 @@ char	**argv;
 			dm_values.dv_flagadc = 1;
 			return CMD_OK;
 		}
-		(void)printf("The 'adc hv' command requires 2 arguments\n");
+		rt_log("The 'adc hv' command requires 2 arguments\n");
 		return CMD_BAD;
 	}
 	if( strcmp(parameter, "xyz") == 0)  {
@@ -333,7 +333,7 @@ char	**argv;
 			dm_values.dv_flagadc = 1;
 			return CMD_OK;
 		}
-		(void)printf("The 'adc xyz' command requires 2 arguments\n");
+		rt_log("The 'adc xyz' command requires 2 arguments\n");
 		return CMD_BAD;
 	}
 	if( strcmp(parameter, "reset") == 0)  {
@@ -344,16 +344,16 @@ char	**argv;
 			dm_values.dv_flagadc = 1;
 			return CMD_OK;
 		}
-		(void)printf("The 'adc reset' command accepts no arguments\n");
+		rt_log("The 'adc reset' command accepts no arguments\n");
 		return CMD_BAD;
 	}
 	if( strcmp(parameter, "help") == 0)  {
-		(void) printf("Usage:\n");
+		rt_log("Usage:\n");
 		(void) fputs(adc_syntax, stdout);
 		return CMD_OK;
 	} else {
-		(void) printf("ADC: unrecognized command: '%s'\n", argv[1]);
-		(void) printf("Usage:\n");
+		rt_log("ADC: unrecognized command: '%s'\n", argv[1]);
+		rt_log("Usage:\n");
 		(void) fputs(adc_syntax, stdout);
 	}
 	return CMD_BAD;

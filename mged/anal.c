@@ -79,7 +79,7 @@ char	*argv[];
 		}
 		ndp = illump->s_path[illump->s_last];
 		if(illump->s_Eflag) {
-			(void)printf("analyze: cannot analyze evaluated region containing %s\n",
+			rt_log("analyze: cannot analyze evaluated region containing %s\n",
 				ndp->d_namep);
 			return CMD_BAD;
 		}
@@ -101,7 +101,7 @@ char	*argv[];
 		mat_mul(new_mat, modelchanges, es_mat);
 
 		if( rt_db_get_internal( &intern, ndp, dbip, new_mat ) < 0 )  {
-			(void)printf("rt_db_get_internal() error\n");
+			rt_log("rt_db_get_internal() error\n");
 			return CMD_BAD;
 		}
 
@@ -117,7 +117,7 @@ char	*argv[];
 			continue;
 
 		if( rt_db_get_internal( &intern, ndp, dbip, rt_identity ) < 0 )  {
-			(void)printf("rt_db_get_internal() error\n");
+			rt_log("rt_db_get_internal() error\n");
 			return CMD_BAD;
 		}
 

@@ -126,7 +126,7 @@ X_open()
 		envp = display;
 	}
 
-	(void)printf("X Display [%s]? ", envp );
+	rt_log("X Display [%s]? ", envp );
 	(void)fgets( line, sizeof(line), stdin );
 	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( feof(stdin) )  quit();
@@ -528,7 +528,7 @@ unsigned
 X_load( addr, count )
 unsigned addr, count;
 {
-	(void)printf("X_load(x%x, %d.)\n", addr, count );
+	rt_log("X_load(x%x, %d.)\n", addr, count );
 	return( 0 );
 }
 
@@ -558,7 +558,7 @@ int	a, b;
 		XSelectInput( dpy, win, ExposureMask|ButtonPressMask|KeyPressMask );
 		break;
 	default:
-		(void)printf("X_statechange: unknown state %s\n", state_str[b]);
+		rt_log("X_statechange: unknown state %s\n", state_str[b]);
 		break;
 	}
 	/*X_viewchange( DM_CHGV_REDO, SOLID_NULL );*/
@@ -580,7 +580,7 @@ void
 X_debug(lvl)
 {
 	XFlush( dpy );
-	printf("flushed\n");
+	rt_log("flushed\n");
 }
 
 void
@@ -681,14 +681,14 @@ char	*name;
 
 	/* Open the display - XXX see what NULL does now */
 	if( (dpy = XOpenDisplay( envp )) == NULL ) {
-		fprintf( stderr, "dm-X: Can't open X display\n" );
+		rt_log( "dm-X: Can't open X display\n" );
 		return -1;
 	}
 
 #if 0
 	/* Load the font to use */
 	/* Answering this extra question all the time is irritating */
-	(void)printf("Font [6x10]? ");
+	rt_log("Font [6x10]? ");
 	(void)fgets( line, sizeof(line), stdin );
 	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( line[0] != NULL )
@@ -704,7 +704,7 @@ char	*name;
 	if( (fontstruct = XLoadQueryFont(dpy, cp)) == NULL ) {
 		/* Try hardcoded backup font */
 		if( (fontstruct = XLoadQueryFont(dpy, FONT2)) == NULL ) {
-			fprintf( stderr, "dm-X: Can't open font '%s' or '%s'\n", cp, FONT2 );
+			rt_log( "dm-X: Can't open font '%s' or '%s'\n", cp, FONT2 );
 			return -1;
 		}
 	}
@@ -722,7 +722,7 @@ char	*name;
 	a_color.blue=0;
 	a_color.flags = DoRed | DoGreen| DoBlue;
 	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-		fprintf( stderr, "dm-X: Can't Allocate red\n");
+		rt_log( "dm-X: Can't Allocate red\n");
 		return -1;
 	}
 	red = a_color.pixel;
@@ -733,7 +733,7 @@ char	*name;
 	a_color.blue=0<<8;
 	a_color.flags = DoRed | DoGreen| DoBlue;
 	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-		fprintf( stderr, "dm-X: Can't Allocate yellow\n");
+		rt_log( "dm-X: Can't Allocate yellow\n");
 		return -1;
 	}
 	yellow = a_color.pixel;
@@ -744,7 +744,7 @@ char	*name;
 	a_color.blue=255<<8;
 	a_color.flags = DoRed | DoGreen| DoBlue;
 	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-		fprintf( stderr, "dm-X: Can't Allocate blue\n");
+		rt_log( "dm-X: Can't Allocate blue\n");
 		return -1;
 	}
 	blue = a_color.pixel;
@@ -755,7 +755,7 @@ char	*name;
 	a_color.blue= 128<<8;
 	a_color.flags = DoRed | DoGreen| DoBlue;
 	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-		fprintf( stderr, "dm-X: Can't Allocate gray\n");
+		rt_log( "dm-X: Can't Allocate gray\n");
 		return -1;
 	}
 	gray = a_color.pixel;
@@ -791,7 +791,7 @@ char	*name;
 		xsh.x, xsh.y, xsh.width, xsh.height,
 		bw, bd, bg );
 	if( win == 0 ) {
-		fprintf( stderr, "dm-X: Can't create window\n" );
+		rt_log( "dm-X: Can't create window\n" );
 		return -1;
 	}
 
@@ -911,7 +911,7 @@ checkevents()
 
 			switch( *keybuf ) {
 			case '?':
-				fprintf( stderr, "\nKey Help Menu:\n\
+				rt_log( "\nKey Help Menu:\n\
 0	Zero 'knobs'\n\
 x	Increase xrot\n\
 y	Increase yrot\n\
@@ -1001,11 +1001,11 @@ F	Toggle faceplate\n\
 					"press 45,45\n");
 				break;
 			default:
-				printf("dm-X: The key '%c' is not defined\n", key);
+				rt_log("dm-X: The key '%c' is not defined\n", key);
 				break;
 			}
 		    }
 		} else
-			fprintf( stderr, "Unknown event type\n" );
+			rt_log( "Unknown event type\n" );
 	}
 }
