@@ -320,15 +320,15 @@ register CONST struct shadework *swp;
 	rt_printb( " sw_inputs", swp->sw_inputs,
 		"\020\4HIT\3LIGHT\2UV\1NORMAL" );
 	rt_log( "\n");
-	for( i=0; i < SW_NLIGHTS; i++ )  {
+	if( swp->sw_inputs & MFI_LIGHT ) for( i=0; i < SW_NLIGHTS; i++ )  {
 		if( swp->sw_visible[i] == (char *)0 )  continue;
+		RT_CK_LIGHT( swp->sw_visible[i] );
 #if RT_MULTISPECTRAL
-		BN_CK_TABDATA(swp->msw_intensity[i]);
 		bu_log("   light %d visible, dir=(%g,%g,%g)\n",
 			i,
 			V3ARGS(&swp->sw_tolight[i*3]) );
+		BN_CK_TABDATA(swp->msw_intensity[i]);
 		rt_pr_tabdata("light intensity", swp->msw_intensity[i] );
-
 #else
 		rt_log("   light %d visible, intensity=%g, dir=(%g,%g,%g)\n",
 			i,
