@@ -68,26 +68,26 @@ int	status;
   int	sig = status & 0x7f;
   int	core = status & 0x80;
   int	ret = status >> 8;
-  struct rt_vls tmp_vls;
+  struct bu_vls tmp_vls;
 
   if( status == 0 )  {
     Tcl_AppendResult(interp, "Normal exit\n", (char *)NULL);
     return;
   }
 
-  rt_vls_init(&tmp_vls);
-  rt_vls_printf(&tmp_vls, "Abnormal exit x%x", status);
+  bu_vls_init(&tmp_vls);
+  bu_vls_printf(&tmp_vls, "Abnormal exit x%x", status);
 
   if( core )
-    rt_vls_printf(&tmp_vls, ", core dumped");
+    bu_vls_printf(&tmp_vls, ", core dumped");
 
   if( sig )
-    rt_vls_printf(&tmp_vls, ", terminating signal = %d", sig );
+    bu_vls_printf(&tmp_vls, ", terminating signal = %d", sig );
   else
-    rt_vls_printf(&tmp_vls, ", return (exit) code = %d", ret );
+    bu_vls_printf(&tmp_vls, ", return (exit) code = %d", ret );
 
-  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), "\n", (char *)NULL);
-  rt_vls_free(&tmp_vls);
+  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), "\n", (char *)NULL);
+  bu_vls_free(&tmp_vls);
 }
 
 /*
@@ -350,7 +350,7 @@ char	**argv;
 	char *dm;
 	int	needs_reattach;
 	char	pstring[32];
-	struct rt_vls cmd;
+	struct bu_vls cmd;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -364,8 +364,8 @@ char	**argv;
 	 * display, so let display go.  We will try to reattach at the end.
 	 */
 	if( (needs_reattach = dmp->dmr_releasedisplay) != 0 ){
-	  rt_vls_init(&cmd);
-	  rt_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
+	  bu_vls_init(&cmd);
+	  bu_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
 	  release(NULL);
 	}
 #endif
@@ -388,13 +388,13 @@ char	**argv;
 #if 0
 	if( needs_reattach && retcode == 0 )  {
 		/* Wait for a return, then reattach display */
-		rt_log("Press RETURN to reattach\007\n");
+		bu_log("Press RETURN to reattach\007\n");
 		while( getchar() != '\n' )
 			/* NIL */  ;
 	}
 	if( needs_reattach ){
 	  cmdline(&cmd, FALSE);
-	  rt_vls_free(&cmd);
+	  bu_vls_free(&cmd);
 	}
 #endif
 
@@ -420,7 +420,7 @@ char	**argv;
 	int	retcode;
 	char	*dm;
 	int	needs_reattach;
-	struct rt_vls cmd;
+	struct bu_vls cmd;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -434,8 +434,8 @@ char	**argv;
 	 * display, so let display go.  We will try to reattach at the end.
 	 */
 	if( needs_reattach = dmp->dmr_releasedisplay ){
-	  rt_vls_init(&cmd);
-	  rt_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
+	  bu_vls_init(&cmd);
+	  bu_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
 	  release(NULL);
 	}
 #endif
@@ -452,13 +452,13 @@ char	**argv;
 /*XXX*/
 	if( needs_reattach && retcode == 0 )  {
 	  /* Wait for a return, then reattach display */
-		rt_log("Press RETURN to reattach\007\n");
+		bu_log("Press RETURN to reattach\007\n");
 		while( getchar() != '\n' )
 			/* NIL */  ;
 	}
 	if( needs_reattach ){
 	  cmdline(&cmd, FALSE);
-	  rt_vls_free(&cmd);
+	  bu_vls_free(&cmd);
 	}
 #endif
 
@@ -949,8 +949,8 @@ static int	rtif_currentframe;
  *  Called on SIGINT from within preview.
  *  Close things down and abort.
  *
- *  WARNING:  If the ^C happened when rt_free() had already done a RES_ACQUIRE,
- *  then any further calls to rt_free() will hang.
+ *  WARNING:  If the ^C happened when bu_free() had already done a RES_ACQUIRE,
+ *  then any further calls to bu_free() will hang.
  *  It isn't clear how to handle this.
  */
 static void
@@ -1018,16 +1018,16 @@ char	**argv;
 			break;
 		default:
 		  {
-		    struct rt_vls tmp_vls;
+		    struct bu_vls tmp_vls;
 
-		    rt_vls_init(&tmp_vls);
-		    rt_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
-		    rt_vls_printf(&tmp_vls, "        -d#     inter-frame delay\n");
-		    rt_vls_printf(&tmp_vls, "        -v      polygon rendering (visual)\n");
-		    rt_vls_printf(&tmp_vls, "        -D#     desired starting frame\n");
-		    rt_vls_printf(&tmp_vls, "        -K#     final frame\n");
-		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		    rt_vls_free(&tmp_vls);
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
+		    bu_vls_printf(&tmp_vls, "        -d#     inter-frame delay\n");
+		    bu_vls_printf(&tmp_vls, "        -v      polygon rendering (visual)\n");
+		    bu_vls_printf(&tmp_vls, "        -D#     desired starting frame\n");
+		    bu_vls_printf(&tmp_vls, "        -K#     final frame\n");
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    bu_vls_free(&tmp_vls);
 		  }
 
 		  break;
@@ -1070,14 +1070,14 @@ char	**argv;
 		if( cmd[0] == '!' )  {
 			if( rtif_currentframe < rtif_desiredframe ||
 			    rtif_finalframe && rtif_currentframe > rtif_finalframe )  {
-				rt_free( cmd, "preview ! cmd" );
+				bu_free( cmd, "preview ! cmd" );
 			    	continue;
 			}
 		}
 		if( rt_do_cmd( (struct rt_i *)0, cmd, cmdtab ) < 0 )
 		   Tcl_AppendResult(interp, "command failed: ", cmd,
 				    "\n", (char *)NULL);
-		rt_free( cmd, "preview cmd" );
+		bu_free( cmd, "preview cmd" );
 	}
 	fclose(rtif_fp);
 	rtif_fp = NULL;
@@ -1180,7 +1180,7 @@ char	**argv;
 			    plus[Z] = sp->s_center[Z] + sp->s_size;
 			    VMAX( extremum[1], plus );
 #if 0
-			    rt_log("(%g,%g,%g)+-%g->(%g,%g,%g)(%g,%g,%g)->(%g,%g,%g)(%g,%g,%g)\n",
+			    bu_log("(%g,%g,%g)+-%g->(%g,%g,%g)(%g,%g,%g)->(%g,%g,%g)(%g,%g,%g)\n",
 				sp->s_center[X], sp->s_center[Y], sp->s_center[Z],
 				sp->s_size,
 				minus[X], minus[Y], minus[Z],
@@ -1525,7 +1525,7 @@ char		**argv;
     register struct solid	*sp;
     double			t;
     double			t_in;
-    struct rt_vls		vls;
+    struct bu_vls		vls;
     point_t			ray_orig;
     vect_t			ray_dir;
     point_t			extremum[2];
@@ -1612,7 +1612,7 @@ char		**argv;
      */
     rt_cmd_vec_len = build_tops(&rt_cmd_vec[0], &rt_cmd_vec[MAXARGS]);
     
-    rt_vls_init(&vls);
+    bu_vls_init(&vls);
     start_catching_output(&vls);
     snames = skewer_solids(rt_cmd_vec_len, rt_cmd_vec, ray_orig, ray_dir, 1);
     stop_catching_output(&vls);
@@ -1620,17 +1620,17 @@ char		**argv;
     if (snames == 0)
     {
 	Tcl_AppendResult(interp, "Error executing skewer_solids: ", (char *)NULL);
-	Tcl_AppendResult(interp, rt_vls_addr(&vls), (char *)NULL);
-	rt_vls_free(&vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 	return (TCL_ERROR);
     }
 
-    rt_vls_free(&vls);
+    bu_vls_free(&vls);
 
     for (i = 0; snames[i] != 0; ++i)
 	Tcl_AppendElement(interp, snames[i]);
     
-    rt_free((char *) snames, "solid names");
+    bu_free((char *) snames, "solid names");
 
     return TCL_OK;
 }

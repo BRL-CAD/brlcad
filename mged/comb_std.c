@@ -46,7 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define	PRINT_USAGE Tcl_AppendResult(interp, "c: usage 'c [-gr] comb_name [bool_expr]'\n",\
 				     (char *)NULL)
 
-static struct rt_vls	vp;			/* The Boolean expression */
+static struct bu_vls	vp;			/* The Boolean expression */
 char			*bool_bufp = 0;
 struct bool_tree_node	*comb_bool_tree;
 
@@ -64,11 +64,11 @@ char *object_name;
     char			*sp;
 
     b = (struct bool_tree_node *)
-	    rt_malloc(sizeof(struct bool_tree_node), "Bool-tree leaf");
+	    bu_malloc(sizeof(struct bool_tree_node), "Bool-tree leaf");
 
     b -> btn_magic = BOOL_TREE_NODE_MAGIC;
     bt_opn(b) = OPN_NULL;
-    sp = rt_malloc(strlen(object_name) + 1, "Bool-tree leaf name");
+    sp = bu_malloc(strlen(object_name) + 1, "Bool-tree leaf name");
 
     RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
     sprintf(sp, "%s", object_name);
@@ -92,11 +92,11 @@ struct bool_tree_node *opd1, *opd2;
 {
     struct bool_tree_node	*b;
 
-    RT_CKMAG(opd1, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
-    RT_CKMAG(opd2, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(opd1, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(opd2, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
     b = (struct bool_tree_node *)
-	    rt_malloc(sizeof(struct bool_tree_node), "Bool-tree leaf");
+	    bu_malloc(sizeof(struct bool_tree_node), "Bool-tree leaf");
 
     b -> btn_magic = BOOL_TREE_NODE_MAGIC;
     switch (opn)
@@ -107,7 +107,7 @@ struct bool_tree_node *opd1, *opd2;
 	    bt_opn(b) = opn;
 	    break;
 	default:
-	    rt_log("%s:%d:bt_create_internal: Illegal operation '%d'\n",
+	    bu_log("%s:%d:bt_create_internal: Illegal operation '%d'\n",
 		__FILE__, __LINE__, opn);
 	    exit (1);
     }
@@ -206,13 +206,13 @@ char	**argv;
 
     if (bool_bufp == 0)
     {
-	rt_vls_init(&vp);
-	bool_bufp = rt_vls_addr(&vp);
+	bu_vls_init(&vp);
+	bool_bufp = bu_vls_addr(&vp);
     }
     else
-	rt_vls_trunc(&vp, 0);
+	bu_vls_trunc(&vp, 0);
 
-    rt_vls_from_argv(&vp, argc, argv);
+    bu_vls_from_argv(&vp, argc, argv);
     Tcl_AppendResult(interp, "Will define ", (region_flag ? "region" : "group"),
 		     " '", comb_name, "' as '", bool_bufp, "'\n", (char *)NULL);
     if (yyparse() != 0)

@@ -205,7 +205,7 @@ X_close()
   if(((struct x_vars *)dm_vars)->l.forw != RT_LIST_NULL)
     RT_LIST_DEQUEUE(&((struct x_vars *)dm_vars)->l);
 
-  rt_free(dm_vars, "X_close: dm_vars");
+  bu_free(dm_vars, "X_close: dm_vars");
 
   if(RT_LIST_IS_EMPTY(&head_x_vars.l))
     Tk_DeleteGenericHandler(X_doevent, (ClientData)NULL);
@@ -512,7 +512,7 @@ XEvent *eventPtr;
   int cnt;
   XComposeStatus compose_stat;
   XWindowAttributes xwa;
-  struct rt_vls cmd;
+  struct bu_vls cmd;
   register struct dm_list *save_dm_list;
   int status = CMD_OK;
 
@@ -552,7 +552,7 @@ XEvent *eventPtr;
   } else if( eventPtr->type == MotionNotify ) {
     int mx, my;
 
-    rt_vls_init(&cmd);
+    bu_vls_init(&cmd);
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
@@ -560,17 +560,17 @@ XEvent *eventPtr;
     case ALT_MOUSE_MODE_OFF:
     case ALT_MOUSE_MODE_ON:
       if(scroll_active && eventPtr->xmotion.state & ((struct x_vars *)dm_vars)->mb_mask)
-	rt_vls_printf( &cmd, "M 1 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
+	bu_vls_printf( &cmd, "M 1 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
       else if(XdoMotion)
 	/* trackball not active so do the regular thing */
 	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
-	rt_vls_printf( &cmd, "M 0 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
+	bu_vls_printf( &cmd, "M 0 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
       else
 	goto end;
 
       break;
     case ALT_MOUSE_MODE_ROTATE:
-       rt_vls_printf( &cmd, "iknob ax %f ay %f\n",
+       bu_vls_printf( &cmd, "iknob ax %f ay %f\n",
 		      (my - ((struct x_vars *)dm_vars)->omy)/512.0,
 		      (mx - ((struct x_vars *)dm_vars)->omx)/512.0 );
       break;
@@ -582,18 +582,18 @@ XEvent *eventPtr;
 	   (edobj || es_edflag > 0)){
 	  fx = (mx/(fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2;
 	  fy = (0.5 - my/(fastf_t)((struct x_vars *)dm_vars)->height) * 2;
-	  rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
+	  bu_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
 	}else{
 	  fx = (mx - ((struct x_vars *)dm_vars)->omx) /
 	    (fastf_t)((struct x_vars *)dm_vars)->width * 2.0;
 	  fy = (((struct x_vars *)dm_vars)->omy - my) /
 	    (fastf_t)((struct x_vars *)dm_vars)->height * 2.0;
-	  rt_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy );
+	  bu_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy );
 	}
       }
       break;
     case ALT_MOUSE_MODE_ZOOM:
-      rt_vls_printf( &cmd, "iknob aS %f\n",
+      bu_vls_printf( &cmd, "iknob aS %f\n",
 		     (((struct x_vars *)dm_vars)->omy - my)/
 		     (fastf_t)((struct x_vars *)dm_vars)->height);
       break;
@@ -611,7 +611,7 @@ XEvent *eventPtr;
   }
 
   status = cmdline(&cmd, FALSE);
-  rt_vls_free(&cmd);
+  bu_vls_free(&cmd);
 end:
   curr_dm_list = save_dm_list;
 
@@ -818,10 +818,10 @@ char	*name;
   Visual *a_visual;
   int a_screen;
   Colormap  a_cmap;
-  struct rt_vls str;
+  struct bu_vls str;
   Display *tmp_dpy;
 
-  rt_vls_init(&str);
+  bu_vls_init(&str);
 
   /* Only need to do this once */
   if(tkwin == NULL)
@@ -836,25 +836,25 @@ char	*name;
 
   RT_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)curr_dm_list->_dm_vars)->l);
 
-  rt_vls_printf(&pathName, ".dm_x%d", count++);
+  bu_vls_printf(&pathName, ".dm_x%d", count++);
 
   /* Make xtkwin a toplevel window */
   ((struct x_vars *)dm_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
-						       rt_vls_addr(&pathName), name);
+						       bu_vls_addr(&pathName), name);
 
   /*
    * Create the X drawing window by calling init_x which
    * is defined in xinit.tcl
    */
-  rt_vls_strcpy(&str, "init_x ");
-  rt_vls_printf(&str, "%s\n", rt_vls_addr(&pathName));
+  bu_vls_strcpy(&str, "init_x ");
+  bu_vls_printf(&str, "%s\n", bu_vls_addr(&pathName));
 
   if(cmdline(&str, FALSE) == CMD_BAD){
-    rt_vls_free(&str);
+    bu_vls_free(&str);
     return -1;
   }
 
-  rt_vls_free(&str);
+  bu_vls_free(&str);
 
   ((struct x_vars *)dm_vars)->dpy = Tk_Display(((struct x_vars *)dm_vars)->xtkwin);
   ((struct x_vars *)dm_vars)->width =
@@ -1076,7 +1076,7 @@ X_configure_window_shape()
 static void
 establish_perspective()
 {
-  rt_vls_printf( &dm_values.dv_string,
+  bu_vls_printf( &dm_values.dv_string,
 		"set perspective %d\n",
 		((struct x_vars *)dm_vars)->mvars.perspective_mode ?
 		perspective_table[((struct x_vars *)dm_vars)->perspective_angle] : -1 );
@@ -1099,7 +1099,7 @@ set_perspective()
     ((struct x_vars *)dm_vars)->perspective_angle = 3;
 
   if(((struct x_vars *)dm_vars)->mvars.perspective_mode)
-    rt_vls_printf( &dm_values.dv_string,
+    bu_vls_printf( &dm_values.dv_string,
 		  "set perspective %d\n",
 		  perspective_table[((struct x_vars *)dm_vars)->perspective_angle] );
 
@@ -1123,7 +1123,7 @@ X_dm(argc, argv)
 int argc;
 char *argv[];
 {
-  struct rt_vls   vls;
+  struct bu_vls   vls;
   int status;
   char *av[4];
   char xstr[32];
@@ -1131,10 +1131,10 @@ char *argv[];
   char zstr[32];
 
   if( !strcmp( argv[0], "set" )){
-    struct rt_vls tmp_vls;
+    struct bu_vls tmp_vls;
 
-    rt_vls_init(&vls);
-    rt_vls_init(&tmp_vls);
+    bu_vls_init(&vls);
+    bu_vls_init(&tmp_vls);
     start_catching_output(&tmp_vls);
 
     if( argc < 2 )  {
@@ -1144,19 +1144,19 @@ char *argv[];
     } else if( argc == 2 ) {
       rt_vls_name_print( &vls, X_vparse, argv[1],
 			 (CONST char *)&((struct x_vars *)dm_vars)->mvars);
-      rt_log( "%s\n", rt_vls_addr(&vls) );
+      bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {
-      rt_vls_printf( &vls, "%s=\"", argv[1] );
-      rt_vls_from_argv( &vls, argc-2, argv+2 );
-      rt_vls_putc( &vls, '\"' );
+      bu_vls_printf( &vls, "%s=\"", argv[1] );
+      bu_vls_from_argv( &vls, argc-2, argv+2 );
+      bu_vls_putc( &vls, '\"' );
       rt_structparse( &vls, X_vparse, (char *)&((struct x_vars *)dm_vars)->mvars);
     }
 
-    rt_vls_free(&vls);
+    bu_vls_free(&vls);
 
     stop_catching_output(&tmp_vls);
-    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-    rt_vls_free(&tmp_vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
     return TCL_OK;
   }
 
@@ -1185,11 +1185,11 @@ char *argv[];
       return TCL_ERROR;
     }
 
-    rt_vls_init(&vls);
-    rt_vls_printf(&vls, "M %s %d %d\n", argv[2],
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "M %s %d %d\n", argv[2],
 		  Xx_TO_GED(atoi(argv[3])), Xy_TO_GED(atoi(argv[4])));
     status = cmdline(&vls, FALSE);
-    rt_vls_free(&vls);
+    bu_vls_free(&vls);
 
     if(status == CMD_OK)
       return TCL_OK;
@@ -1226,14 +1226,14 @@ char *argv[];
 	   (edobj || es_edflag > 0)){
 	  fastf_t fx, fy;
 
-	  rt_vls_init(&vls);
+	  bu_vls_init(&vls);
 	  fx = (((struct x_vars *)dm_vars)->omx/
 		(fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2;
 	  fy = (0.5 - ((struct x_vars *)dm_vars)->omy/
 		(fastf_t)((struct x_vars *)dm_vars)->height) * 2;
-	  rt_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
+	  bu_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
 	  (void)cmdline(&vls, FALSE);
-	  rt_vls_free(&vls);
+	  bu_vls_free(&vls);
 	}
 
 	break;
@@ -1259,7 +1259,7 @@ char *argv[];
 static void
 x_var_init()
 {
-  dm_vars = (char *)rt_malloc(sizeof(struct x_vars), "x_var_init: x_vars");
+  dm_vars = (char *)bu_malloc(sizeof(struct x_vars), "x_var_init: x_vars");
   bzero((void *)dm_vars, sizeof(struct x_vars));
   ((struct x_vars *)dm_vars)->dm_list = curr_dm_list;
   ((struct x_vars *)dm_vars)->perspective_angle = 3;

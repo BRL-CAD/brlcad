@@ -248,19 +248,19 @@ char **argv;
 	grpname[5] = solname[8] = regname[8] = '\0';
 	grpname[8] = solname[11] = regname[11] = '\0';
 /*
-	rt_log("\nX of first road wheel  %10.4f\n",fw[0]);
-	rt_log("X of last road wheel   %10.4f\n",lw[0]);
-	rt_log("Z of road wheels       %10.4f\n",fw[1]);
-	rt_log("radius of road wheels  %10.4f\n",fw[2]);
-	rt_log("\nX of drive wheel       %10.4f\n",dw[0]);
-	rt_log("Z of drive wheel       %10.4f\n",dw[1]);
-	rt_log("radius of drive wheel  %10.4f\n",dw[2]);
-	rt_log("\nX of idler wheel       %10.4f\n",iw[0]);
-	rt_log("Z of idler wheel       %10.4f\n",iw[1]);
-	rt_log("radius of idler wheel  %10.4f\n",iw[2]);
-	rt_log("\nY MIN of track         %10.4f\n",tr[0]);
-	rt_log("Y MAX of track         %10.4f\n",tr[1]);
-	rt_log("thickness of track     %10.4f\n",tr[2]);
+	bu_log("\nX of first road wheel  %10.4f\n",fw[0]);
+	bu_log("X of last road wheel   %10.4f\n",lw[0]);
+	bu_log("Z of road wheels       %10.4f\n",fw[1]);
+	bu_log("radius of road wheels  %10.4f\n",fw[2]);
+	bu_log("\nX of drive wheel       %10.4f\n",dw[0]);
+	bu_log("Z of drive wheel       %10.4f\n",dw[1]);
+	bu_log("radius of drive wheel  %10.4f\n",dw[2]);
+	bu_log("\nX of idler wheel       %10.4f\n",iw[0]);
+	bu_log("Z of idler wheel       %10.4f\n",iw[1]);
+	bu_log("radius of idler wheel  %10.4f\n",iw[2]);
+	bu_log("\nY MIN of track         %10.4f\n",tr[0]);
+	bu_log("Y MAX of track         %10.4f\n",tr[1]);
+	bu_log("thickness of track     %10.4f\n",tr[2]);
 */
 
 /* Check for names to use:

@@ -198,7 +198,7 @@ MGED_EXTERN(int not_state, (int desired, char *str) );
 MGED_EXTERN(int chg_state, (int from, int to, char *str) );
 MGED_EXTERN(void state_err, (char *str) );
 
-MGED_EXTERN(void do_list, (struct rt_vls *outstrp, struct directory *dp, int verbose));
+MGED_EXTERN(void do_list, (struct bu_vls *outstrp, struct directory *dp, int verbose));
 
 /* history.c */
 
@@ -258,6 +258,7 @@ extern char *state_str[];		/* identifying strings */
 #define ST_O_EDIT	6		/* Object Editing */
 #define ST_S_VPICK	7		/* Vertex Pick */
 
+#if 0 /* Using the one provided by bu.h */
 #ifndef GETSTRUCT
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
 #if __STDC__ && !alliant && !apollo
@@ -270,6 +271,7 @@ extern char *state_str[];		/* identifying strings */
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
 # define GETUNION(p,unn) \
 	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct unn")
+#endif
 #endif
 #endif
 
@@ -385,7 +387,7 @@ struct funtab {
 
 struct mged_hist {
   struct rt_list l;
-  struct rt_vls command;
+  struct bu_vls command;
   struct timeval start, finish;
   int status;
 };
@@ -395,8 +397,8 @@ struct cmd_list {
   struct rt_list l;
   struct dm_list *aim;        /* the drawing window being aimed at */
   struct mged_hist *cur_hist;
-  struct rt_vls more_default;
-  struct rt_vls name;
+  struct bu_vls more_default;
+  struct bu_vls name;
 };
 #define CMD_LIST_NULL ((struct cmd_list *)NULL)
 

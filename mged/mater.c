@@ -115,7 +115,7 @@ char	**argv;
 	}
 
 	/* construct the new color record */
-	GETSTRUCT( newp, mater );
+	BU_GETSTRUCT( newp, mater );
 	newp->mt_low = atoi( argv[1] );
 	newp->mt_high = atoi( argv[2] );
 	newp->mt_r = atoi( argv[3] );
@@ -202,7 +202,7 @@ char	**argv;
 		zot = rt_material_head;
 		rt_material_head = rt_material_head->mt_forw;
 		color_zaprec( zot );
-		rt_free( (char *)zot, "mater rec" );
+		bu_free( (char *)zot, "mater rec" );
 	}
 
 	while( fgets(line, sizeof (line), fp) != NULL )  {
@@ -216,7 +216,7 @@ char	**argv;
 				   line, "\n", (char *)NULL);
 			continue;
 		}
-		GETSTRUCT( mp, mater );
+		BU_GETSTRUCT( mp, mater );
 		mp->mt_low = low;
 		mp->mt_high = hi;
 		mp->mt_r = r;

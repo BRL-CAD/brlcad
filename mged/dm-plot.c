@@ -115,7 +115,7 @@ Plot_open()
   setbuf( up_fp, ttybuf );
   pl_space( up_fp, -2048, -2048, 2048, 2048 );
   plot_count = 1;
-  rt_vls_printf(&pathName, ".dm_plot");
+  bu_vls_printf(&pathName, ".dm_plot");
   return TCL_OK;
 }
 
@@ -400,12 +400,12 @@ unsigned
 Plot_load( addr, count )
 unsigned addr, count;
 {
-  struct rt_vls tmp_vls;
+  struct bu_vls tmp_vls;
 
-  rt_vls_init(&tmp_vls);
-  rt_vls_printf(&tmp_vls, "Plot_load(x%x, %d.)\n", addr, count);
-  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-  rt_vls_free(&tmp_vls);
+  bu_vls_init(&tmp_vls);
+  bu_vls_printf(&tmp_vls, "Plot_load(x%x, %d.)\n", addr, count);
+  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+  bu_vls_free(&tmp_vls);
   return( 0 );
 }
 

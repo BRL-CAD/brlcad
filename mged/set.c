@@ -75,14 +75,14 @@ static void
 nmg_eu_dist_set()
 {
   extern double nmg_eue_dist;
-  struct rt_vls tmp_vls;
+  struct bu_vls tmp_vls;
 
   nmg_eue_dist = mged_variables.nmg_eu_dist;
 
-  rt_vls_init(&tmp_vls);
-  rt_vls_printf(&tmp_vls, "New nmg_eue_dist = %g\n", nmg_eue_dist);
-  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-  rt_vls_free(&tmp_vls);
+  bu_vls_init(&tmp_vls);
+  bu_vls_printf(&tmp_vls, "New nmg_eue_dist = %g\n", nmg_eue_dist);
+  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+  bu_vls_free(&tmp_vls);
 }
 
 #define MV_O(_m)	offsetof(struct _mged_variables, _m)
@@ -129,16 +129,16 @@ char *name1, *name2;
 int flags;
 {
     struct structparse *sp = (struct structparse *)clientData;
-    struct rt_vls str;
+    struct bu_vls str;
 
     /* Ask the librt structparser for the value of the variable */
 
-    rt_vls_init( &str );
+    bu_vls_init( &str );
     rt_vls_item_print( &str, sp, (CONST char *)&mged_variables );
 
     /* Next, set the Tcl variable to this value */
 
-    (void)Tcl_SetVar(interp, sp->sp_name, rt_vls_addr(&str),
+    (void)Tcl_SetVar(interp, sp->sp_name, bu_vls_addr(&str),
 		     (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
     return NULL;
 }
@@ -158,13 +158,13 @@ char *name1, *name2;
 int flags;
 {
     struct structparse *sp = (struct structparse *)clientData;
-    struct rt_vls str;
+    struct bu_vls str;
     char *newvalue;
 
     newvalue = Tcl_GetVar(interp, sp->sp_name,
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
-    rt_vls_init( &str );
-    rt_vls_printf( &str, "%s=\"%s\"", name1, newvalue );
+    bu_vls_init( &str );
+    bu_vls_printf( &str, "%s=\"%s\"", name1, newvalue );
     if( rt_structparse( &str, mged_vparse, (char *)&mged_variables ) < 0) {
       Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
 		       " TO ", newvalue, "\n", (char *)NULL);
@@ -237,30 +237,30 @@ Tcl_Interp *interp;
 int argc;
 char *argv[];
 {
-	struct rt_vls vls;
+	struct bu_vls vls;
 	int bad = 0;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	rt_vls_init(&vls);
+	bu_vls_init(&vls);
 
 	if (argc == 1) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
 	  start_catching_output(&tmp_vls);
 	  rt_structprint("mged variables", mged_vparse, (CONST char *)&mged_variables);
-	  rt_log("%s", rt_vls_addr(&vls) );
+	  bu_log("%s", bu_vls_addr(&vls) );
 	  stop_catching_output(&tmp_vls);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	} else if (argc == 2) {
-		rt_vls_strcpy(&vls, argv[1]);
+		bu_vls_strcpy(&vls, argv[1]);
 		rt_structparse(&vls, mged_vparse, (char *)&mged_variables);
 	}
 
-	rt_vls_free(&vls);
+	bu_vls_free(&vls);
 
 	dmaflag = 1;
 	return bad ? TCL_ERROR : TCL_OK;

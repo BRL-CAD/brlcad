@@ -63,11 +63,11 @@ static struct pkg_switch pkgswitch[] = {
 int
 pkg_send_vls( type, vp, pc )
 int		type;
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 struct pkg_conn	*pc;
 {
-	RT_VLS_CHECK(vp);
-	return pkg_send( type, rt_vls_addr(vp), rt_vls_strlen(vp)+1, pc );
+	BU_CK_VLS(vp);
+	return pkg_send( type, bu_vls_addr(vp), bu_vls_strlen(vp)+1, pc );
 }
 
 /*
@@ -78,9 +78,9 @@ struct pkg_conn	*pc;
  */
 int
 vr_event_hook(vp)
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 {
-	RT_VLS_CHECK(vp);
+	BU_CK_VLS(vp);
 
 	if( vrmgr == PKC_NULL )  {
 		cmdline_hook = 0;	/* Relinquish this hook */
@@ -88,7 +88,7 @@ struct rt_vls	*vp;
 	}
 
 	if( pkg_send_vls( VRMSG_EVENT, vp, vrmgr ) < 0 )  {
-		rt_log("event: pkg_send VRMSG_EVENT failed, disconnecting\n");
+		bu_log("event: pkg_send VRMSG_EVENT failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
 		cmdline_hook = 0;	/* Relinquish this hook */
@@ -106,9 +106,9 @@ vr_input_hook()
 
 	val = pkg_suckin(vrmgr);
 	if( val < 0 ) {
-		rt_log("pkg_suckin() error\n");
+		bu_log("pkg_suckin() error\n");
 	} else if( val == 0 )  {
-		rt_log("vrmgr sent us an EOF\n");
+		bu_log("vrmgr sent us an EOF\n");
 	}
 	if( val <= 0 )  {
 		Tk_DeleteFileHandler(vrmgr->pkc_fd);
@@ -117,7 +117,7 @@ vr_input_hook()
 		return;
 	}
 	if( pkg_process( vrmgr ) < 0 )
-		rt_log("vrmgr:  pkg_process error encountered\n");
+		bu_log("vrmgr:  pkg_process error encountered\n");
 }
 
 /*
@@ -126,17 +126,17 @@ vr_input_hook()
 void
 vr_viewpoint_hook()
 {
-	struct rt_vls	str;
+	struct bu_vls	str;
 	quat_t		orient;
 
-	rt_vls_init(&str);
+	bu_vls_init(&str);
 
 	quat_mat2quat( orient, Viewrot );
 
 	/* Need to send current viewpoint to VR mgr */
 	/* XXX more will be needed */
 	/* Eye point, quaturnion for orientation */
-	rt_vls_printf( &str, "pov %e %e %e   %e %e %e %e   %e   %e %e %e  %e\n", 
+	bu_vls_printf( &str, "pov %e %e %e   %e %e %e %e   %e   %e %e %e  %e\n", 
 		-toViewcenter[MDX],
 		-toViewcenter[MDY],
 		-toViewcenter[MDZ],
@@ -147,12 +147,12 @@ vr_viewpoint_hook()
 		);
 
 	if( pkg_send_vls( VRMSG_POV, &str, vrmgr ) < 0 )  {
-		rt_log("viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
+		bu_log("viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
 		viewpoint_hook = 0;	/* Relinquish this hook */
 	}
-	rt_vls_free( &str );
+	bu_vls_free( &str );
 }
 
 /*
@@ -174,12 +174,12 @@ char	*argv[];
 	  return TCL_ERROR;
 
 	if( argc < 1+3+4+1+3+1 )  {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "pov: insufficient args, only got %d\n", argc);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "pov: insufficient args, only got %d\n", argc);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	  return TCL_ERROR;
 	}
 
@@ -215,13 +215,13 @@ Tcl_Interp *interp;
 int	argc;
 char	*argv[];
 {
-	struct rt_vls	str;
+	struct bu_vls	str;
 	char		*role;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	rt_vls_init(&str);
+	bu_vls_init(&str);
 
 	if( vrmgr != PKC_NULL )  {
 	  Tcl_AppendResult(interp, "Closing link to VRmgr ",
@@ -231,7 +231,7 @@ char	*argv[];
 		vr_host = "none";
 	}
 
-	vr_host = rt_strdup(argv[1]);
+	vr_host = bu_strdup(argv[1]);
 	role = argv[2];
 
 	if( strcmp( role, "master" ) == 0 )  {
@@ -252,7 +252,7 @@ char	*argv[];
 	  return TCL_ERROR;
 	}
 
-	rt_vls_from_argv( &str, argc-2, argv+2 );
+	bu_vls_from_argv( &str, argc-2, argv+2 );
 
 	/* Send initial message declaring our role */
 	if( pkg_send_vls( VRMSG_ROLE, &str, vrmgr ) < 0 )  {
@@ -272,7 +272,7 @@ char	*argv[];
 	}
 	Tk_CreateFileHandler(vrmgr->pkc_fd, TK_READABLE,
 			     (Tk_FileProc (*))vr_input_hook, (ClientData)NULL);
-	rt_vls_free( &str );
+	bu_vls_free( &str );
 
 	return TCL_OK;
 }
@@ -287,15 +287,15 @@ ph_cmd(pc, buf)
 register struct pkg_conn *pc;
 char			*buf;
 {
-	struct rt_vls	str;
+	struct bu_vls	str;
 
-	rt_vls_init(&str);
+	bu_vls_init(&str);
 
-	rt_vls_strcpy( &str, buf );
+	bu_vls_strcpy( &str, buf );
 
 	(void)cmdline( &str, FALSE );
 
-	rt_vls_free( &str );
+	bu_vls_free( &str );
 	if(buf) (void)free(buf);
 }
 
@@ -311,16 +311,16 @@ register struct pkg_conn *pc;
 unsigned char		*buf;
 {
 	struct rt_list	vhead;
-	struct rt_vls	name;
+	struct bu_vls	name;
 
-	rt_vls_init(&name);
+	bu_vls_init(&name);
 
 	RT_LIST_INIT( &vhead );
 
 	rt_vlist_import( &vhead, &name, buf );
 
-	invent_solid( rt_vls_addr(&name), &vhead, 0x0000FF00L, 0 );
+	invent_solid( bu_vls_addr(&name), &vhead, 0x0000FF00L, 0 );
 
-	rt_vls_free( &name );
+	bu_vls_free( &name );
 	if(buf) (void)free(buf);
 }

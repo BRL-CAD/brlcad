@@ -123,16 +123,16 @@ char **argv;
 	    (void)unlink( red_tmpfil );
 	    return TCL_ERROR;
 	  }else{ /* eliminate the temporary combination */
-	    struct rt_vls	v;
+	    struct bu_vls	v;
 
-	    rt_vls_init( &v );
-	    rt_vls_strcat( &v, "kill " );
-	    rt_vls_strcat( &v , red_tmpcomb );
-	    rt_vls_strcat( &v , "\n" );
+	    bu_vls_init( &v );
+	    bu_vls_strcat( &v, "kill " );
+	    bu_vls_strcat( &v , red_tmpcomb );
+	    bu_vls_strcat( &v , "\n" );
 
 	    cmdline( &v, FALSE );
 
-	    rt_vls_free( &v );
+	    bu_vls_free( &v );
 	  }
 	}
 
@@ -276,12 +276,12 @@ checkcomb()
 
 		if( relation != '+' && relation != 'u' & relation != '-' )
 		{
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, " %c is not a legal operator\n" , relation );
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, " %c is not a legal operator\n" , relation );
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 		  fclose( fp );
 		  return( 1 );
 		}
@@ -502,7 +502,7 @@ struct directory *dpold;
 	  return( 1 );
 	}
 
-	rt_free( (char *)rp, "record" );
+	bu_free( (char *)rp, "record" );
 	return( 0 );
 }
 
@@ -511,30 +511,30 @@ restore_comb( dp )
 struct directory *dp;
 {
 /* restore a combination that was saved in "red_tmpcomb" */
-	struct rt_vls	v;
+	struct bu_vls	v;
 	char name[NAMESIZE];
 
 	/* Save name of original combo */
 	strcpy( name , dp->d_namep );
 
 	/* Kill original combination */
-	rt_vls_init(&v);
-	rt_vls_strcat( &v , "kill " );
-	rt_vls_strcat( &v , dp->d_namep );
-	rt_vls_strcat( &v , "\n" );
+	bu_vls_init(&v);
+	bu_vls_strcat( &v , "kill " );
+	bu_vls_strcat( &v , dp->d_namep );
+	bu_vls_strcat( &v , "\n" );
 
 	cmdline( &v, FALSE );
 
-	rt_vls_free( &v );
+	bu_vls_free( &v );
 
 	/* Move temp to original */
-	rt_vls_strcat( &v , "mv " );
-	rt_vls_strcat( &v , red_tmpcomb );
-	rt_vls_strcat( &v , " " );
-	rt_vls_strcat( &v , name );
-	rt_vls_strcat( &v , "\n" );
+	bu_vls_strcat( &v , "mv " );
+	bu_vls_strcat( &v , red_tmpcomb );
+	bu_vls_strcat( &v , " " );
+	bu_vls_strcat( &v , name );
+	bu_vls_strcat( &v , "\n" );
 
 	cmdline( &v, FALSE );
 
-	rt_vls_free( &v );
+	bu_vls_free( &v );
 }

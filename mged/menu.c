@@ -86,16 +86,16 @@ char **argv;
 	    Tcl_AppendElement(interp, mptr->menu_string);
     } else {
 	register struct menu_item **m;
-	struct rt_vls result;
+	struct bu_vls result;
 	int status;
 
-	rt_vls_init(&result);
-	rt_vls_strcat(&result, "list");
+	bu_vls_init(&result);
+	bu_vls_strcat(&result, "list");
 	for (m = menu_array; m - menu_array < NMENU; m++)
-	    rt_vls_printf(&result, " [%s %d]", argv[0], m-menu_array);
+	    bu_vls_printf(&result, " [%s %d]", argv[0], m-menu_array);
 
-	status = Tcl_Eval(interp, rt_vls_addr(&result));
-	rt_vls_free(&result);
+	status = Tcl_Eval(interp, bu_vls_addr(&result));
+	bu_vls_free(&result);
 
 	return status;
     }
@@ -133,14 +133,14 @@ int index;
 struct menu_item *value;
 {
     Tcl_DString ds_menu;
-    struct rt_vls menu_string;
+    struct bu_vls menu_string;
 
     menu_array[index] = value;  /* Change the menu internally */
 
-    rt_vls_init(&menu_string);
+    bu_vls_init(&menu_string);
     Tcl_DStringInit(&ds_menu);
 
-    rt_vls_printf(&menu_string, "mmenu_set %d ", index);
+    bu_vls_printf(&menu_string, "mmenu_set %d ", index);
 
     Tcl_DStringStartSublist(&ds_menu);
     if (value != MENU_NULL)
@@ -148,11 +148,11 @@ struct menu_item *value;
 	    (void)Tcl_DStringAppendElement(&ds_menu, value->menu_string);
     Tcl_DStringEndSublist(&ds_menu);
 
-    rt_vls_strcat(&menu_string, Tcl_DStringValue(&ds_menu));
-    (void)Tcl_Eval(interp, rt_vls_addr(&menu_string));
+    bu_vls_strcat(&menu_string, Tcl_DStringValue(&ds_menu));
+    (void)Tcl_Eval(interp, bu_vls_addr(&menu_string));
 
     Tcl_DStringFree(&ds_menu);
-    rt_vls_free(&menu_string);
+    bu_vls_free(&menu_string);
 
     update_views = 1;
 }

@@ -411,7 +411,7 @@ Ogl_close()
   if(((struct ogl_vars *)dm_vars)->l.forw != RT_LIST_NULL)
     RT_LIST_DEQUEUE(&((struct ogl_vars *)dm_vars)->l);
 
-  rt_free(dm_vars, "Ogl_close: dm_vars");
+  bu_free(dm_vars, "Ogl_close: dm_vars");
 
   if(RT_LIST_IS_EMPTY(&head_ogl_vars.l))
     Tk_DeleteGenericHandler(Ogl_doevent, (ClientData)NULL);
@@ -498,17 +498,17 @@ Ogl_epilog()
 
   if(((struct ogl_vars *)dm_vars)->mvars.debug){
     int error;
-    struct rt_vls tmp_vls;
+    struct bu_vls tmp_vls;
 
-    rt_vls_init(&tmp_vls);
-    rt_vls_printf(&tmp_vls, "ANY ERRORS?\n");
+    bu_vls_init(&tmp_vls);
+    bu_vls_printf(&tmp_vls, "ANY ERRORS?\n");
 
     while((error = glGetError())!=0){
-      rt_vls_printf(&tmp_vls, "Error: %x\n", error);
+      bu_vls_printf(&tmp_vls, "Error: %x\n", error);
     }
 
-    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-    rt_vls_free(&tmp_vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
   }
 
   return;
@@ -534,18 +534,18 @@ int which_eye;
 	  Tcl_AppendResult(interp, "Ogl_newrot()\n", (char *)NULL);
 
 	if(((struct ogl_vars *)dm_vars)->mvars.debug){
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
-	  rt_vls_printf(&tmp_vls, "newrot matrix = \n");
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
+	  bu_vls_printf(&tmp_vls, "newrot matrix = \n");
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
 
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	switch(which_eye)  {
@@ -877,24 +877,24 @@ int dashed;
 
 	if(((struct ogl_vars *)dm_vars)->mvars.debug){
 	  GLfloat pmat[16];
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
 	  glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	  rt_vls_printf(&tmp_vls, "projection matrix:\n");
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
+	  bu_vls_printf(&tmp_vls, "projection matrix:\n");
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
 	  glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	  rt_vls_printf(&tmp_vls, "modelview matrix:\n");
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
-	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
+	  bu_vls_printf(&tmp_vls, "modelview matrix:\n");
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
+	  bu_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
 
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	if( dashed )
@@ -919,10 +919,10 @@ XEvent *eventPtr;
   static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   register struct dm_list *save_dm_list;
   register struct dm_list *p;
-  struct rt_vls cmd;
+  struct bu_vls cmd;
   int status = CMD_OK;
 
-  rt_vls_init(&cmd);
+  bu_vls_init(&cmd);
   save_dm_list = curr_dm_list;
 
   curr_dm_list = get_dm_list(eventPtr->xany.window);
@@ -943,7 +943,7 @@ XEvent *eventPtr;
 
     write(dm_pipe[1], buffer, 1);
 
-    rt_vls_free(&cmd);
+    bu_vls_free(&cmd);
     curr_dm_list = save_dm_list;
 
     /* Use this so that these events won't propagate */
@@ -976,17 +976,17 @@ XEvent *eventPtr;
     case ALT_MOUSE_MODE_OFF:
     case ALT_MOUSE_MODE_ON:
       if(scroll_active && eventPtr->xmotion.state & mb_mask)
-	rt_vls_printf( &cmd, "M 1 %d %d\n", irisX2ged(mx), irisY2ged(my));
+	bu_vls_printf( &cmd, "M 1 %d %d\n", irisX2ged(mx), irisY2ged(my));
       else if(OgldoMotion)
 	/* do the regular thing */
 	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
-	rt_vls_printf( &cmd, "M 0 %d %d\n", irisX2ged(mx), irisY2ged(my));
+	bu_vls_printf( &cmd, "M 0 %d %d\n", irisX2ged(mx), irisY2ged(my));
       else /* not doing motion */
 	goto end;
 
       break;
     case ALT_MOUSE_MODE_ROTATE:
-      rt_vls_printf( &cmd, "iknob ax %f ay %f\n",
+      bu_vls_printf( &cmd, "iknob ax %f ay %f\n",
 		     (my - omy)/512.0, (mx - omx)/512.0 );
       break;
     case ALT_MOUSE_MODE_TRANSLATE:
@@ -997,16 +997,16 @@ XEvent *eventPtr;
 	   (edobj || es_edflag > 0)){
 	  fx = (mx/(fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2;
 	  fy = (0.5 - my/(fastf_t)((struct ogl_vars *)dm_vars)->height) * 2;
-	  rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy);
+	  bu_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy);
 	}else{
 	  fx = (mx - omx)/(fastf_t)((struct ogl_vars *)dm_vars)->width * 2.0;
 	  fy = (omy - my)/(fastf_t)((struct ogl_vars *)dm_vars)->height * 2.0;
-	  rt_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy);
+	  bu_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy);
 	}
       }	     
       break;
     case ALT_MOUSE_MODE_ZOOM:
-      rt_vls_printf( &cmd, "iknob aS %f\n",
+      bu_vls_printf( &cmd, "iknob aS %f\n",
 		     (omy - my)/(fastf_t)((struct ogl_vars *)dm_vars)->height);
       break;
     }
@@ -1038,7 +1038,7 @@ XEvent *eventPtr;
 	                  M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd, "knob ang1 %d\n",
+	bu_vls_printf( &cmd, "knob ang1 %d\n",
 		      setting );
       }
       break;
@@ -1052,7 +1052,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob S %f\n",
+	bu_vls_printf( &cmd , "knob S %f\n",
 		       setting / 512.0 );
       }else{
 	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1063,7 +1063,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob aS %f\n",
+	bu_vls_printf( &cmd , "knob aS %f\n",
 		       setting / 512.0 );
       }
       break;
@@ -1077,7 +1077,7 @@ XEvent *eventPtr;
 	                  M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob ang2 %d\n",
+	bu_vls_printf( &cmd , "knob ang2 %d\n",
 		      setting );
       }else {
 	if(mged_variables.rateknobs){
@@ -1089,7 +1089,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob z %f\n",
+	  bu_vls_printf( &cmd , "knob z %f\n",
 		      setting / 512.0 );
 	}else{
 	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1100,7 +1100,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob az %f\n",
+	  bu_vls_printf( &cmd , "knob az %f\n",
 			 setting / 512.0 );
 	}
       }
@@ -1115,7 +1115,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob distadc %d\n",
+	bu_vls_printf( &cmd , "knob distadc %d\n",
 		      setting );
       }else {
 	if(mged_variables.rateknobs){
@@ -1127,7 +1127,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob Z %f\n",
+	  bu_vls_printf( &cmd , "knob Z %f\n",
 			 setting / 512.0 );
 	}else{
 	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1138,7 +1138,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob aZ %f\n",
+	  bu_vls_printf( &cmd , "knob aZ %f\n",
 			 setting / 512.0 );
 	}
       }
@@ -1153,7 +1153,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob yadc %d\n",
+	bu_vls_printf( &cmd , "knob yadc %d\n",
 		      setting );
       }else{
 	if(mged_variables.rateknobs){
@@ -1165,7 +1165,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob y %f\n",
+	  bu_vls_printf( &cmd , "knob y %f\n",
 			 setting / 512.0 );
 	}else{
 	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1176,7 +1176,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob ay %f\n",
+	  bu_vls_printf( &cmd , "knob ay %f\n",
 			 setting / 512.0 );
 	}
       }
@@ -1191,7 +1191,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob Y %f\n",
+	bu_vls_printf( &cmd , "knob Y %f\n",
 		       setting / 512.0 );
       }else{
 	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1202,7 +1202,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob aY %f\n",
+	bu_vls_printf( &cmd , "knob aY %f\n",
 		       setting / 512.0 );
       }
       break;
@@ -1216,7 +1216,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob xadc %d\n",
+	bu_vls_printf( &cmd , "knob xadc %d\n",
 		      setting );
       }else{
 	if(mged_variables.rateknobs){
@@ -1228,7 +1228,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob x %f\n",
+	  bu_vls_printf( &cmd , "knob x %f\n",
 			 setting / 512.0 );
 	}else{
 	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1239,7 +1239,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob ax %f\n",
+	  bu_vls_printf( &cmd , "knob ax %f\n",
 			 setting / 512.0 );
 	}
       }
@@ -1254,7 +1254,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob X %f\n",
+	bu_vls_printf( &cmd , "knob X %f\n",
 		       setting / 512.0 );
       }else{
 	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1265,7 +1265,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob aX %f\n",
+	bu_vls_printf( &cmd , "knob aX %f\n",
 		       setting / 512.0 );
       }
       break;
@@ -1291,10 +1291,10 @@ XEvent *eventPtr;
     if(button0){
       ogl_dbtext(label_button(bmap[B->button - 1]));
     }else if(B->button == 4){
-      rt_vls_strcat(&cmd, "knob zero\n");
+      bu_vls_strcat(&cmd, "knob zero\n");
       set_knob_offset();
     }else
-      rt_vls_printf(&cmd, "press %s\n",
+      bu_vls_printf(&cmd, "press %s\n",
 		    label_button(bmap[B->button - 1]));
   }else if( eventPtr->type == devbuttonrelease ){
     XDeviceButtonEvent *B;
@@ -1312,7 +1312,7 @@ XEvent *eventPtr;
 
   status = cmdline(&cmd, FALSE);
 end:
-  rt_vls_free(&cmd);
+  bu_vls_free(&cmd);
   curr_dm_list = save_dm_list;
 
   if(status == CMD_OK)
@@ -1372,12 +1372,12 @@ unsigned
 Ogl_load( addr, count )
 unsigned addr, count;
 {
-  struct rt_vls tmp_vls;
+  struct bu_vls tmp_vls;
 
-  rt_vls_init(&tmp_vls);
-  rt_vls_printf(&tmp_vls, "Ogl_load(x%x, %d.)\n", addr, count );
-  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-  rt_vls_free(&tmp_vls);
+  bu_vls_init(&tmp_vls);
+  bu_vls_printf(&tmp_vls, "Ogl_load(x%x, %d.)\n", addr, count );
+  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+  bu_vls_free(&tmp_vls);
   return( 0 );
 }
 
@@ -1556,10 +1556,10 @@ char	*name;
   XDevice *dev;
   XEventClass e_class[15];
   XInputClassInfo *cip;
-  struct rt_vls str;
+  struct bu_vls str;
   Display *tmp_dpy;
 
-  rt_vls_init(&str);
+  bu_vls_init(&str);
 
   /* Only need to do this once */
   if(tkwin == NULL)
@@ -1574,14 +1574,14 @@ char	*name;
 
   RT_LIST_APPEND(&head_ogl_vars.l, &((struct ogl_vars *)curr_dm_list->_dm_vars)->l);
 
-  rt_vls_printf(&pathName, ".dm_ogl%d", count++);
+  bu_vls_printf(&pathName, ".dm_ogl%d", count++);
 
   /* this is important so that Ogl_configure_notify knows to set
    * the font */
   fontstruct = NULL;
 
   if((tmp_dpy = XOpenDisplay(name)) == NULL){
-    rt_vls_free(&str);
+    bu_vls_free(&str);
     return -1;
   }
 
@@ -1597,20 +1597,20 @@ char	*name;
   XCloseDisplay(tmp_dpy);
 
   /* Make xtkwin a toplevel window */
-  xtkwin = Tk_CreateWindowFromPath(interp, tkwin, rt_vls_addr(&pathName), name);
+  xtkwin = Tk_CreateWindowFromPath(interp, tkwin, bu_vls_addr(&pathName), name);
 
   /* Open the display - XXX see what NULL does now */
   if( xtkwin == NULL ) {
-    Tcl_AppendResult(interp, "dm-Ogl: Failed to open ", rt_vls_addr(&pathName),
+    Tcl_AppendResult(interp, "dm-Ogl: Failed to open ", bu_vls_addr(&pathName),
 		     "\n", (char *)NULL);
     return -1;
   }
 
-  rt_vls_strcpy(&str, "init_ogl ");
-  rt_vls_printf(&str, "%s\n", rt_vls_addr(&pathName));
+  bu_vls_strcpy(&str, "init_ogl ");
+  bu_vls_printf(&str, "%s\n", bu_vls_addr(&pathName));
 
   if(cmdline(&str, FALSE) == CMD_BAD){
-    rt_vls_free(&str);
+    bu_vls_free(&str);
     return -1;
   }
 
@@ -1995,7 +1995,7 @@ Ogl_dm(argc, argv)
 int	argc;
 char	**argv;
 {
-  struct rt_vls	vls;
+  struct bu_vls	vls;
   int status;
   char *av[4];
   char xstr[32];
@@ -2003,10 +2003,10 @@ char	**argv;
   char zstr[32];
 
   if( !strcmp( argv[0], "set" ) )  {
-    struct rt_vls tmp_vls;
+    struct bu_vls tmp_vls;
 
-    rt_vls_init(&vls);
-    rt_vls_init(&tmp_vls);
+    bu_vls_init(&vls);
+    bu_vls_init(&tmp_vls);
     start_catching_output(&tmp_vls);
 
     if( argc < 2 )  {
@@ -2014,19 +2014,19 @@ char	**argv;
       rt_structprint("dm_ogl internal variables", Ogl_vparse, (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
     } else if( argc == 2 ) {
       rt_vls_name_print( &vls, Ogl_vparse, argv[1], (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
-      rt_log( "%s\n", rt_vls_addr(&vls) );
+      bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {
-      rt_vls_printf( &vls, "%s=\"", argv[1] );
-      rt_vls_from_argv( &vls, argc-2, argv+2 );
-      rt_vls_putc( &vls, '\"' );
+      bu_vls_printf( &vls, "%s=\"", argv[1] );
+      bu_vls_from_argv( &vls, argc-2, argv+2 );
+      bu_vls_putc( &vls, '\"' );
       rt_structparse( &vls, Ogl_vparse, (char *)&((struct ogl_vars *)dm_vars)->mvars );
     }
 
-    rt_vls_free(&vls);
+    bu_vls_free(&vls);
 
     stop_catching_output(&tmp_vls);
-    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-    rt_vls_free(&tmp_vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
     return TCL_OK;
   }
 
@@ -2055,11 +2055,11 @@ char	**argv;
       return TCL_ERROR;
     }
 
-    rt_vls_init(&vls);
-    rt_vls_printf(&vls, "M %s %d %d\n", argv[2],
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "M %s %d %d\n", argv[2],
 		  irisX2ged(atoi(argv[3])), irisY2ged(atoi(argv[4])));
     status = cmdline(&vls, FALSE);
-    rt_vls_free(&vls);
+    bu_vls_free(&vls);
 
     if(status == CMD_OK)
       return TCL_OK;
@@ -2096,12 +2096,12 @@ char	**argv;
 	   (edobj || es_edflag > 0)){
 	  fastf_t fx, fy;
 
-	  rt_vls_init(&vls);
+	  bu_vls_init(&vls);
 	  fx = (omx/(fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2;
 	  fy = (0.5 - omy/(fastf_t)((struct ogl_vars *)dm_vars)->height) * 2;
-	  rt_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
+	  bu_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
 	  (void)cmdline(&vls, FALSE);
-	  rt_vls_free(&vls);
+	  bu_vls_free(&vls);
 	}
 
 	break;
@@ -2191,7 +2191,7 @@ establish_zbuffer()
 static void
 establish_perspective()
 {
-  rt_vls_printf( &dm_values.dv_string,
+  bu_vls_printf( &dm_values.dv_string,
 		 "set perspective %d\n",
 		 ((struct ogl_vars *)dm_vars)->mvars.perspective_mode ?
 		 perspective_table[perspective_angle] :
@@ -2214,7 +2214,7 @@ set_perspective()
     perspective_angle = 3;
 
   if(((struct ogl_vars *)dm_vars)->mvars.perspective_mode)
-    rt_vls_printf( &dm_values.dv_string,
+    bu_vls_printf( &dm_values.dv_string,
 		  "set perspective %d\n",
 		  perspective_table[perspective_angle] );
 
@@ -2413,7 +2413,7 @@ set_knob_offset()
 static void
 ogl_var_init()
 {
-  dm_vars = (char *)rt_malloc(sizeof(struct ogl_vars),
+  dm_vars = (char *)bu_malloc(sizeof(struct ogl_vars),
 					    "ogl_var_init: glx_vars");
   bzero((void *)dm_vars, sizeof(struct ogl_vars));
   devmotionnotify = LASTEvent;

@@ -106,15 +106,15 @@ mged_plot_anim_upcall_handler( file, us )
 char	*file;
 long	us;		/* microseconds of extra delay */
 {
-	struct rt_vls	str;
+	struct bu_vls	str;
 
 	/* Overlay plot file */
-	rt_vls_init( &str );
-	rt_vls_printf( &str, "overlay %s\n", file );
+	bu_vls_init( &str );
+	bu_vls_printf( &str, "overlay %s\n", file );
 
 	(void)cmdline( &str, FALSE );
 
-	rt_vls_free( &str );
+	bu_vls_free( &str );
 
 	do {
 		event_check( 1 );	/* Take any device events */
@@ -239,7 +239,7 @@ int			id;
 
 	  Tcl_AppendResult(interp, "mged_wireframe_leaf(", rt_functab[id].ft_name,
 			   ") path='", sofar, "'\n", (char *)NULL);
-	  rt_free(sofar, "path string");
+	  bu_free(sofar, "path string");
 	}
 
 	if( mged_draw_solid_lines_only )
@@ -291,7 +291,7 @@ int			id;
 	rt_functab[id].ft_ifree( &intern );
 
 	/* Indicate success by returning something other than TREE_NULL */
-	GETUNION( curtree, tree );
+	BU_GETUNION( curtree, tree );
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 
@@ -327,7 +327,7 @@ union tree		*curtree;
 
 	  Tcl_AppendResult(interp, "mged_nmg_region_end() path='", sofar,
 			   "'\n", (char *)NULL);
-	  rt_free(sofar, "path string");
+	  bu_free(sofar, "path string");
 	}
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
@@ -475,12 +475,12 @@ int	kind;
 			break;
 		default:
 		  {
-		    struct rt_vls tmp_vls;
+		    struct bu_vls tmp_vls;
 
-		    rt_vls_init(&tmp_vls);
-		    rt_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
-		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		    rt_vls_free(&tmp_vls);
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    bu_vls_free(&tmp_vls);
 		  }
 
 		  Tcl_AppendResult(interp, "Usage: ev [-dnqstuvwST] [-P ncpu] object(s)\n\
@@ -620,12 +620,12 @@ register struct solid *sp;
 				break;
 			default:
 			  {
-			    struct rt_vls tmp_vls;
+			    struct bu_vls tmp_vls;
 
-			    rt_vls_init(&tmp_vls);
-			    rt_vls_printf(&tmp_vls, "unknown vlist op %d\n", *cmd);
-			    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-			    rt_vls_free(&tmp_vls);
+			    bu_vls_init(&tmp_vls);
+			    bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", *cmd);
+			    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			    bu_vls_free(&tmp_vls);
 			  }
 			}
 		}
@@ -666,7 +666,7 @@ struct solid		*existing_sp;
 
 		  Tcl_AppendResult(interp, "dodraw: path too long, solid ignored.\n\t",
 				   cp, "\n", (char *)NULL);
-		  rt_free(cp, "Path string");
+		  bu_free(cp, "Path string");
 		  return;
 		}
 		/* Handling a new solid */
@@ -785,7 +785,7 @@ matp_t matp;
 				 "/", kidp->d_namep, "\n", (char *)NULL);
 		return;			/* ERROR */
 next_level:
-		rt_free( (char *)rp, "pathHmat recs");
+		bu_free( (char *)rp, "pathHmat recs");
 	}
 }
 
@@ -925,17 +925,17 @@ int			copy;
 	int		i;
 	char		shortname[32];
 	char		namebuf[64];
-	struct rt_vls	str;
+	struct bu_vls	str;
 
 	strncpy( shortname, name, 16-6 );
 	shortname[16-6] = '\0';
 	/* Remove any residue colors from a previous overlay w/same name */
-	rt_vls_init(&str);
-	rt_vls_printf( &str, "kill -f %s*\n", shortname );
+	bu_vls_init(&str);
+	bu_vls_printf( &str, "kill -f %s*\n", shortname );
 
 	(void)cmdline( &str, FALSE );
 
-	rt_vls_free(&str);
+	bu_vls_free(&str);
 
 	for( i=0; i < vbp->nused; i++ )  {
 		if( vbp->rgb[i] == 0 )  continue;
@@ -1063,7 +1063,7 @@ union tree		*curtree;
 
 	  Tcl_AppendResult(interp, "mged_facetize_region_end() path='", sofar,
 			   "'\n", (char *)NULL);
-	  rt_free(sofar, "path string");
+	  bu_free(sofar, "path string");
 	}
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
@@ -1071,7 +1071,7 @@ union tree		*curtree;
 	RES_ACQUIRE( &rt_g.res_model );
 	if( mged_facetize_tree )  {
 		union tree	*tr;
-		tr = (union tree *)rt_calloc(1, sizeof(union tree), "union tree");
+		tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
 		tr->magic = RT_TREE_MAGIC;
 		tr->tr_op = OP_UNION;
 		tr->tr_b.tb_regionp = REGION_NULL;
@@ -1144,15 +1144,15 @@ char	**argv;
 			break;
 		default:
 		  {
-		    struct rt_vls tmp_vls;
+		    struct bu_vls tmp_vls;
 
-		    rt_vls_init(&tmp_vls);
-		    rt_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
-		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls),
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls),
 				     "Usage: facetize [-tT] [-P ncpu] object(s)\n",
 				     "\t-t Perform CSG-to-tNURBS conversion\n",
 				     "\t-T enable triangulator\n", (char *)NULL);
-		    rt_vls_free(&tmp_vls);
+		    bu_vls_free(&tmp_vls);
 		  }
 		  break;
 		}
@@ -1179,14 +1179,14 @@ char	**argv;
 	}
 
 	{
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls,
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls,
 			"facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
 			mged_abs_tol, mged_rel_tol, mged_nrm_tol );
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 	mged_facetize_tree = (union tree *)0;
   	mged_nmg_model = nmg_mm();
@@ -1274,13 +1274,13 @@ char	**argv;
 	}
 
 	{
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "facetize:  wrote %.2f Kbytes to database\n",
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "facetize:  wrote %.2f Kbytes to database\n",
 			ext.ext_nbytes / 1024.0 );
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	db_free_external( &ext );
@@ -1352,12 +1352,12 @@ char	**argv;
 			break;
 		default:
 		  {
-		    struct rt_vls tmp_vls;
+		    struct bu_vls tmp_vls;
 
-		    rt_vls_init(&tmp_vls);
-		    rt_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
-		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		    rt_vls_free(&tmp_vls);
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    bu_vls_free(&tmp_vls);
 		  }
 
 		  break;
@@ -1383,14 +1383,14 @@ char	**argv;
 	}
 
 	{
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls,
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls,
 			"bev:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
 			mged_abs_tol, mged_rel_tol, mged_nrm_tol);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	mged_facetize_tree = (union tree *)0;
@@ -1422,7 +1422,7 @@ char	**argv;
 		{
 			union tree *new_tree;
 
-			GETUNION( new_tree, tree );
+			BU_GETUNION( new_tree, tree );
 
 			new_tree->magic = RT_TREE_MAGIC;
 			new_tree->tr_b.tb_regionp = REGION_NULL;
@@ -1443,13 +1443,13 @@ char	**argv;
 					break;
 				default:
 				  {
-				    struct rt_vls tmp_vls;
+				    struct bu_vls tmp_vls;
 
-				    rt_vls_init(&tmp_vls);
-				    rt_vls_printf(&tmp_vls, "Unrecognized operator: (%c)\n" , op );
-				    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls),
+				    bu_vls_init(&tmp_vls);
+				    bu_vls_printf(&tmp_vls, "Unrecognized operator: (%c)\n" , op );
+				    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls),
 						     "Aborting\n", (char *)NULL);
-				    rt_vls_free(&tmp_vls);
+				    bu_vls_free(&tmp_vls);
 				    db_free_tree( mged_facetize_tree );
 				    nmg_km( mged_nmg_model );
 				    return TCL_ERROR;
@@ -1541,13 +1541,13 @@ char	**argv;
 	}
 
 	{
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "bev:  wrote %.2f Kbytes to database\n",
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "bev:  wrote %.2f Kbytes to database\n",
 			ext.ext_nbytes / 1024.0 );
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	db_free_external( &ext );

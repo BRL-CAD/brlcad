@@ -43,8 +43,8 @@ void		push();
 
 extern struct rt_tol	mged_tol;	/* from ged.c */
 
-RT_EXTERN( struct shell *nmg_dup_shell, ( struct shell *s, long ***trans_tbl ) );
-RT_EXTERN( struct rt_i *rt_new_rti, (struct db_i *dbip) );
+BU_EXTERN( struct shell *nmg_dup_shell, ( struct shell *s, long ***trans_tbl ) );
+BU_EXTERN( struct rt_i *rt_new_rti, (struct db_i *dbip) );
 
 int
 f_shells(clientData, interp, argc, argv )
@@ -88,7 +88,7 @@ char **argv;
 		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
 		{
 			s_tmp = nmg_dup_shell( s, &trans_tbl );
-			rt_free( (char *)trans_tbl, "trans_tbl" );
+			bu_free( (char *)trans_tbl, "trans_tbl" );
 
 			m_tmp = nmg_mmr();
 			r_tmp = RT_LIST_FIRST( nmgregion, &m_tmp->r_hd );
@@ -148,12 +148,12 @@ char **argv;
 	register struct directory *dp;
 	int ngran, nmemb;
 	int i, j, k, kk;
-	struct rt_vls tmp_vls;
+	struct bu_vls tmp_vls;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	rt_vls_init(&tmp_vls);
+	bu_vls_init(&tmp_vls);
 	start_catching_output(&tmp_vls);
 
 	if( setjmp( jmp_env ) == 0 )
@@ -166,44 +166,44 @@ char **argv;
 			continue;
 		if( db_get( dbip, dp, &record, 0, 1) < 0 ) {
 		  stop_catching_output(&tmp_vls);
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 		  TCL_READ_ERR_return;
 		}
 		if(record.u_id == ID_ARS_A) {
-			rt_log("%c %d %s ",record.a.a_id,record.a.a_type,record.a.a_name);
-			rt_log("%d %d %d %d\n",record.a.a_m,record.a.a_n,
+			bu_log("%c %d %s ",record.a.a_id,record.a.a_type,record.a.a_name);
+			bu_log("%d %d %d %d\n",record.a.a_m,record.a.a_n,
 				record.a.a_curlen,record.a.a_totlen);
 			/* the b-records */
 			ngran = record.a.a_totlen;
 			for(j=1; j<=ngran; j++) {
 				if( db_get( dbip, dp, &record, j, 1) < 0 ) {
 				  stop_catching_output(&tmp_vls);
-				  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-				  rt_vls_free(&tmp_vls);
+				  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+				  bu_vls_free(&tmp_vls);
 				  TCL_READ_ERR_return;
 				}
-				rt_log("%c %d %d %d\n",record.b.b_id,record.b.b_type,record.b.b_n,record.b.b_ngranule);
+				bu_log("%c %d %d %d\n",record.b.b_id,record.b.b_type,record.b.b_n,record.b.b_ngranule);
 				for(k=0; k<24; k+=6) {
 					for(kk=k; kk<k+6; kk++)
-						rt_log("%10.4f ",record.b.b_values[kk]*base2local);
-					rt_log("\n");
+						bu_log("%10.4f ",record.b.b_values[kk]*base2local);
+					bu_log("\n");
 				}
 			}
 		}
 
 		if(record.u_id == ID_SOLID) {
-			rt_log("%c %d %s %d\n", record.s.s_id,
+			bu_log("%c %d %s %d\n", record.s.s_id,
 				record.s.s_type,record.s.s_name,
 				record.s.s_cgtype);
 			for(kk=0;kk<24;kk+=6){
 				for(j=kk;j<kk+6;j++)
-					rt_log("%10.4f ",record.s.s_values[j]*base2local);
-				rt_log("\n");
+					bu_log("%10.4f ",record.s.s_values[j]*base2local);
+				bu_log("\n");
 			}
 		}
 		if(record.u_id == ID_COMB) {
-			rt_log("%c '%c' %s %d %d %d %d %d \n",
+			bu_log("%c '%c' %s %d %d %d %d %d \n",
 			record.c.c_id,record.c.c_flags,
 			record.c.c_name,record.c.c_regionid,
 			record.c.c_aircode, dp->d_len-1,
@@ -214,31 +214,31 @@ char **argv;
 
 				if( db_get( dbip, dp, &record, j, 1) < 0 ) {
 				  stop_catching_output(&tmp_vls);
-				  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-				  rt_vls_free(&tmp_vls);
+				  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+				  bu_vls_free(&tmp_vls);
 				  TCL_READ_ERR_return;
 				}
-				rt_log("%c %c %s\n",
+				bu_log("%c %c %s\n",
 					record.M.m_id,
 					record.M.m_relation,
 					record.M.m_instname);
 				rt_mat_dbmat( xmat, record.M.m_mat );
 				matrix_print( xmat );
-				rt_log("\n");
+				bu_log("\n");
 			}
 		}
 		if(record.u_id == ID_P_HEAD) {
-			rt_log("POLYGON: not implemented yet\n");
+			bu_log("POLYGON: not implemented yet\n");
 		}
 
 		if(record.u_id == ID_BSOLID) {
-			rt_log("SPLINE: not implemented yet\n");
+			bu_log("SPLINE: not implemented yet\n");
 		}
 	}
 
 	stop_catching_output(&tmp_vls);
-	Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	rt_vls_free(&tmp_vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
 	return TCL_OK;
 }
 
@@ -491,17 +491,17 @@ int flag;
 	struct directory *nextdp;
 	mat_t new_xlate;
 	int nparts, i, k;
-	struct rt_vls str;
+	struct bu_vls str;
 
-	rt_vls_init( &str );
+	bu_vls_init( &str );
 
 	if( pathpos >= MAX_LEVELS ) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "nesting exceeds %d levels\n",MAX_LEVELS);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "nesting exceeds %d levels\n",MAX_LEVELS);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 
 	  for(i=0; i<MAX_LEVELS; i++)
 	    Tcl_AppendResult(interp, "/", path[i]->d_namep, (char *)NULL);
@@ -568,7 +568,7 @@ int flag;
 	/* do_list will print actual solid name */
 	Tcl_AppendResult(interp, "/", (char *)NULL);
 	do_list( &str, dp, 1 );
-	Tcl_AppendResult(interp, rt_vls_addr(&str), (char *)NULL);
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 }
 
 /*
@@ -581,21 +581,21 @@ matrix_print( m )
 register matp_t m;
 {
   register int i;
-  struct rt_vls tmp_vls;
+  struct bu_vls tmp_vls;
 
-  rt_vls_init(&tmp_vls);
+  bu_vls_init(&tmp_vls);
 
   for(i=0; i<16; i++) {
     if( (i+1)%4 )
-      rt_vls_printf(&tmp_vls, "%f\t",m[i]);
+      bu_vls_printf(&tmp_vls, "%f\t",m[i]);
     else if(i == 15)
-      rt_vls_printf(&tmp_vls, "%f\n",m[i]);
+      bu_vls_printf(&tmp_vls, "%f\n",m[i]);
     else
-      rt_vls_printf(&tmp_vls, "%f\n",m[i]*base2local);
+      bu_vls_printf(&tmp_vls, "%f\n",m[i]*base2local);
   }
 
-  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-  rt_vls_free(&tmp_vls);
+  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+  bu_vls_free(&tmp_vls);
 }
 
 
@@ -643,7 +643,7 @@ int			id;
 
 	  Tcl_AppendResult(interp, "push_leaf(", rt_functab[id].ft_name,
 			   ") path='", sofar, "'\n", (char *)NULL);
-	  rt_free(sofar, "path string");
+	  bu_free(sofar, "path string");
 	}
 /*
  * XXX - This will work but is not the best method.  dp->d_uses tells us
@@ -664,12 +664,12 @@ int			id;
 
 	      Tcl_AppendResult(interp, "push_leaf: matrix mismatch between '", sofar,
 			       "' and prior reference.\n", (char *)NULL);
-	      rt_free(sofar, "path string");
+	      bu_free(sofar, "path string");
 	      push_error = 1;
 	    }
 
 	    RES_RELEASE(&rt_g.res_worker);
-	    GETUNION(curtree, tree);
+	    BU_GETUNION(curtree, tree);
 	    curtree->magic = RT_TREE_MAGIC;
 	    curtree->tr_op = OP_NOP;
 	    return curtree;
@@ -678,7 +678,7 @@ int			id;
 /*
  * This is the first time we have seen this solid.
  */
-	pip = (struct push_id *) rt_malloc(sizeof(struct push_id),
+	pip = (struct push_id *) bu_malloc(sizeof(struct push_id),
 	    "Push ident");
 	pip->magic = MAGIC_PUSH_ID;
 	pip->pi_dir = dp;
@@ -688,7 +688,7 @@ int			id;
 	pip->forw = &pi_head;
 	pip->back->forw = pip;
 	RES_RELEASE(&rt_g.res_worker);
-	GETUNION(curtree, tree);
+	BU_GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 	return curtree;
@@ -836,7 +836,7 @@ char **argv;
 			pip = pi_head.forw;
 			pip->forw->back = pip->back;
 			pip->back->forw = pip->forw;
-			rt_free((char *)pip, "Push ident");
+			bu_free((char *)pip, "Push ident");
 		}
 		rt_g.debug = old_debug;
 		Tcl_AppendResult(interp, "push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions\n", (char *)NULL);
@@ -898,7 +898,7 @@ char **argv;
 		pip = pi_head.forw;
 		pip->forw->back = pip->back;
 		pip->back->forw = pip->forw;
-		rt_free((char *)pip, "Push ident");
+		bu_free((char *)pip, "Push ident");
 	}
 
 	rt_g.debug = old_debug;
@@ -1019,7 +1019,7 @@ struct directory *dp;
 		}
 
 		RT_LIST_DEQUEUE( &use->l );
-		rt_free( (char *)use, "Free_uses: use" );
+		bu_free( (char *)use, "Free_uses: use" );
 	}
 }
 
@@ -1058,7 +1058,7 @@ struct directory *dp;
 	for( use_no=0 ; use_no<dp->d_uses ; use_no++ )
 	{
 		j++;
-		use = (struct object_use *)rt_malloc( sizeof( struct object_use ), "Make_new_name: use" );
+		use = (struct object_use *)bu_malloc( sizeof( struct object_use ), "Make_new_name: use" );
 
 		/* set xform for this object_use to all zeros */
 		mat_zero( use->xform );
@@ -1358,7 +1358,7 @@ char **argv;
 
 				dp2->d_nref++;
 			}
-			rt_free( (char *)rp, "rp[]" );
+			bu_free( (char *)rp, "rp[]" );
 		}
 	}
 
@@ -1424,12 +1424,12 @@ char **argv;
 	union record *rp;
 	int max_count=1;
 	mat_t acc_matrix;
-	struct rt_vls tmp_vls;
+	struct bu_vls tmp_vls;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	rt_vls_init(&tmp_vls);
+	bu_vls_init(&tmp_vls);
 	MAT_IDN( acc_matrix );
 
 	parent = strtok( argv[1], "/" );
@@ -1460,7 +1460,7 @@ char **argv;
 
 				count++;
 				if( count > 1 )
-				  rt_log( "\n\tOccurrence #%d:\n", count );
+				  bu_log( "\n\tOccurrence #%d:\n", count );
 
 				rt_mat_dbmat( matrix, rp[j].M.m_mat );
 				mat_print( "", matrix );
@@ -1474,8 +1474,8 @@ char **argv;
 			}
 		}
 		stop_catching_output(&tmp_vls);
-		Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		rt_vls_free(&tmp_vls);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
 
 		if( !found )
 		{
@@ -1486,7 +1486,7 @@ char **argv;
 		if( count > max_count )
 			max_count = count;
 
-		rt_free( (char *)rp, "f_showmats: rp" );
+		bu_free( (char *)rp, "f_showmats: rp" );
 		parent = child;
 	}
 	Tcl_AppendResult(interp, parent, "\n", (char *)NULL);
@@ -1499,8 +1499,8 @@ char **argv;
 	start_catching_output(&tmp_vls);
 	mat_print( "", acc_matrix );
 	stop_catching_output(&tmp_vls);
-	Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	rt_vls_free(&tmp_vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
 
 	return TCL_OK;
 }
@@ -1628,7 +1628,7 @@ char *argv[];
 	{
 		struct rt_pg_internal *poly_int;
 
-		poly_int = (struct rt_pg_internal *)rt_malloc( sizeof( struct rt_pg_internal ), "f_nmg_simplify: poly_int" );
+		poly_int = (struct rt_pg_internal *)bu_malloc( sizeof( struct rt_pg_internal ), "f_nmg_simplify: poly_int" );
 
 		if( nmg_to_poly( m, poly_int, &mged_tol ) )
 		{
@@ -1759,7 +1759,7 @@ char **argv;
 			Tcl_AppendResult(interp, "db_string_to_path failed for ",
 				argv[i], "\n", (char *)NULL );
 			rt_clean( rtip );
-			rt_free( (char *)rtip, "f_make_bb: rtip" );
+			bu_free( (char *)rtip, "f_make_bb: rtip" );
 			return TCL_ERROR;
 		}
 
@@ -1775,7 +1775,7 @@ char **argv;
 				Tcl_AppendResult(interp, "db_string_to_path failed for ",
 					regp->reg_name, "\n", (char *)NULL );
 				rt_clean( rtip );
-				rt_free( (char *)rtip, "f_make_bb: rtip" );
+				bu_free( (char *)rtip, "f_make_bb: rtip" );
 				return TCL_ERROR;
 			}
 			if( path.fp_names[0] == tmp_path.fp_names[0] )
@@ -1791,7 +1791,7 @@ char **argv;
 			Tcl_AppendResult(interp, "rt_gettree failed for ",
 				argv[i], "\n", (char *)NULL );
 			rt_clean( rtip );
-			rt_free( (char *)rtip, "f_make_bb: rtip" );
+			bu_free( (char *)rtip, "f_make_bb: rtip" );
 			return TCL_ERROR;
 		}
 		db_free_full_path( &path );
@@ -1829,7 +1829,7 @@ char **argv;
 				Tcl_AppendResult(interp, "rt_bound_tree failed for ",
 					regp->reg_name, "\n", (char *)NULL );
 				rt_clean( rtip );
-				rt_free( (char *)rtip, "f_make_bb: rtip" );
+				bu_free( (char *)rtip, "f_make_bb: rtip" );
 				return TCL_ERROR;
 			}
 			VMINMAX( rpp_min, rpp_max, reg_min );
@@ -1858,7 +1858,7 @@ char **argv;
 					Tcl_AppendResult(interp, "rt_bound_tree failed for ",
 						regp->reg_name, "\n", (char *)NULL );
 					rt_clean( rtip );
-					rt_free( (char *)rtip, "f_make_bb: rtip" );
+					bu_free( (char *)rtip, "f_make_bb: rtip" );
 					return TCL_ERROR;
 				}
 				VMINMAX( rpp_min, rpp_max, reg_min );
@@ -1912,7 +1912,7 @@ char **argv;
 	db_free_external( &new_extern );
 
 	rt_clean( rtip );
-	rt_free( (char *)rtip, "f_make_bb: rtip" );
+	bu_free( (char *)rtip, "f_make_bb: rtip" );
 
 	/* use "e" command to get new solid displayed */
 	{
@@ -1973,7 +1973,7 @@ char **argv;
 	int item;
 	struct directory *dp;
 	union record rec;
-	struct rt_vls v;
+	struct bu_vls v;
 	int new_argc;
 	int lim;
 
@@ -1985,9 +1985,9 @@ char **argv;
         else
 	  return TCL_OK;
 
-	rt_vls_init( &v );
+	bu_vls_init( &v );
 
-	rt_vls_strcat( &v, "e" );
+	bu_vls_strcat( &v, "e" );
 	lim = 1;
 
 	for( j=1; j<argc; j++)
@@ -2007,8 +2007,8 @@ char **argv;
 				if( rec.c.c_regionid != item )
 					continue;
 
-				rt_vls_strcat( &v, " " );
-				rt_vls_strcat( &v, dp->d_namep );
+				bu_vls_strcat( &v, " " );
+				bu_vls_strcat( &v, dp->d_namep );
 				lim++;
 			}
 		}
@@ -2018,16 +2018,16 @@ char **argv;
 		int retval;
 		char **new_argv;
 
-		new_argv = (char **)rt_calloc( lim+1, sizeof( char *), "f_eac: new_argv" );
-		new_argc = rt_split_cmd( new_argv, lim+1, rt_vls_addr( &v ) );
+		new_argv = (char **)bu_calloc( lim+1, sizeof( char *), "f_eac: new_argv" );
+		new_argc = rt_split_cmd( new_argv, lim+1, bu_vls_addr( &v ) );
 		retval = f_edit( clientData, interp, new_argc, new_argv );
-		rt_vls_free( &v );
-		rt_free( (char *)new_argv, "f_eac: new_argv" );
+		bu_vls_free( &v );
+		bu_free( (char *)new_argv, "f_eac: new_argv" );
 		return retval;
 	}
 	else
 	{
-		rt_vls_free( &v );
+		bu_vls_free( &v );
 		return TCL_OK;
 	}
 }
@@ -2043,7 +2043,7 @@ char **argv;
 	int item;
 	struct directory *dp;
 	union record rec;
-	struct rt_vls v;
+	struct bu_vls v;
 	int new_argc;
 	int lim;
 
@@ -2055,9 +2055,9 @@ char **argv;
         else
 	  return TCL_OK;
 
-	rt_vls_init( &v );
+	bu_vls_init( &v );
 
-	rt_vls_strcat( &v, "e" );
+	bu_vls_strcat( &v, "e" );
 	lim = 1;
 
 	for( j=1; j<argc; j++)
@@ -2078,8 +2078,8 @@ char **argv;
 					rec.c.c_aircode != item )
 						continue;
 
-				rt_vls_strcat( &v, " " );
-				rt_vls_strcat( &v, dp->d_namep );
+				bu_vls_strcat( &v, " " );
+				bu_vls_strcat( &v, dp->d_namep );
 				lim++;
 			}
 		}
@@ -2090,16 +2090,16 @@ char **argv;
 		int retval;
 		char **new_argv;
 
-		new_argv = (char **)rt_calloc( lim+1, sizeof( char *), "f_eac: new_argv" );
-		new_argc = rt_split_cmd( new_argv, lim+1, rt_vls_addr( &v ) );
+		new_argv = (char **)bu_calloc( lim+1, sizeof( char *), "f_eac: new_argv" );
+		new_argc = rt_split_cmd( new_argv, lim+1, bu_vls_addr( &v ) );
 		retval = f_edit( clientData, interp, new_argc, new_argv );
-		rt_vls_free( &v );
-		rt_free( (char *)new_argv, "f_eac: new_argv" );
+		bu_vls_free( &v );
+		bu_free( (char *)new_argv, "f_eac: new_argv" );
 		return retval;
 	}
 	else
 	{
-		rt_vls_free( &v );
+		bu_vls_free( &v );
 		return TCL_OK;
 	}
 }

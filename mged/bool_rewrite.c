@@ -81,10 +81,10 @@ struct bool_tree_node	*rp;
     int		lop;		/* Left child's operation */
     int		rop;		/* Right   "        "     */
     
-    RT_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
-    RT_CKMAG(bt_opd(rp, BT_LEFT), BOOL_TREE_NODE_MAGIC, "Boolean tree node");
-    RT_CKMAG(bt_opd(rp, BT_RIGHT), BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(bt_opd(rp, BT_LEFT), BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(bt_opd(rp, BT_RIGHT), BOOL_TREE_NODE_MAGIC, "Boolean tree node");
     lop = bt_opn(bt_opd(rp, BT_LEFT));
     rop = bt_opn(bt_opd(rp, BT_RIGHT));
     rule_nm = 0;
@@ -118,7 +118,7 @@ struct bool_tree_node	*rp;
 		}
 	    break;
 	default:
-	    rt_log("Reached %s:%d.  This shouldn't happen\n",
+	    bu_log("Reached %s:%d.  This shouldn't happen\n",
 		    __FILE__, __LINE__);
 	    exit (1);
     }
@@ -141,7 +141,7 @@ static struct bool_tree_node *dup_bool_tree (rp)
 struct bool_tree_node	*rp;
 
 {
-    RT_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
     if (bt_is_leaf(rp))
 	return (rp);
@@ -170,12 +170,12 @@ int			rule_nm;
     struct bool_tree_node	*right;		/* Right  "   "   "   "   */
     struct bool_tree_node	*a, *b, *c;	/* Subtrees unchanged */
 
-    RT_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
     left = bt_opd(rp, BT_LEFT);
     right = bt_opd(rp, BT_RIGHT);
-    RT_CKMAG(left, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
-    RT_CKMAG(right, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(left, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(right, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
     switch (rule_nm)
     {
@@ -219,7 +219,7 @@ int			rule_nm;
 	    bt_opd(right, BT_LEFT) = dup_bool_tree(a);
 	    break;
 	default:
-	    rt_log("Reached %s:%d.  This shouldn't happen\n",
+	    bu_log("Reached %s:%d.  This shouldn't happen\n",
 		    __FILE__, __LINE__);
 	    exit (1);
     }
@@ -245,7 +245,7 @@ struct bool_tree_node	*rp;
     int		rule_nm;
     int		nm_rewrites;
 
-    RT_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
     for (nm_rewrites = 0; rule_nm = find_bool_tree_rewrite(rp); ++nm_rewrites)
 	do_bool_tree_rewrite(rp, rule_nm);
@@ -270,7 +270,7 @@ struct bool_tree_node	*rp;
 {
     int		nm_rewrites;
 
-    RT_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
     if (bt_is_leaf(rp))
 	return (0);
@@ -300,7 +300,7 @@ struct bool_tree_node	*rp;
     int		cnr;		/* Cumulative number of rewrites */
     int		nr;		/* Number of rewrites in this pass */
 
-    RT_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
 
     for (cnr = 0; nr = _cvt_to_gift_bool(rp); cnr += nr) {
@@ -329,7 +329,7 @@ show_gift_bool (rp, new_line)
 struct bool_tree_node	*rp;
 int			new_line;
 {
-  RT_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+  BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
   if (bt_is_leaf(rp))
     Tcl_AppendResult(interp, bt_leaf_name(rp), (char *)NULL);
@@ -347,13 +347,13 @@ int			new_line;
       break;
     default:
       {
-	struct rt_vls tmp_vls;
+	struct bu_vls tmp_vls;
 
-	rt_vls_init(&tmp_vls);
-	rt_vls_printf(&tmp_vls, "%s:%d: Illegal operation type: %d\n",
+	bu_vls_init(&tmp_vls);
+	bu_vls_printf(&tmp_vls, "%s:%d: Illegal operation type: %d\n",
 		      __FILE__, __LINE__, bt_opn(rp));
-	Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	rt_vls_free(&tmp_vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
 
 	exit(1);
       }

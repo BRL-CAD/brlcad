@@ -18,7 +18,7 @@
 #include "rtstring.h"		/* for vls string support */
 
 struct device_values  {
-	struct rt_vls	dv_string;	/* newline-separated "commands" from dm */
+	struct bu_vls	dv_string;	/* newline-separated "commands" from dm */
 };
 extern struct device_values dm_values;
 
@@ -132,7 +132,7 @@ struct dm_list {
 /* New stuff to allow more than one active display manager */
   struct shared_info *s_info;  /* info that can be used by display managers that are tied */
   char *_dm_vars;   /* pointer to dependant display manager variables */
-  struct rt_vls _pathName; /* full name of drawing window */
+  struct bu_vls _pathName; /* full name of drawing window */
   int _dirty;      /* true if received an expose or configuration event */
   int _owner;      /* true if owner of the shared info */
   struct cmd_list *aim;

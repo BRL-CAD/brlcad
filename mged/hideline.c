@@ -253,12 +253,12 @@ char	**argv;
 					VUNITIZE(dir);
 					visible = FALSE;
 					{
-					  struct rt_vls tmp_vls;
+					  struct bu_vls tmp_vls;
 
-					  rt_vls_init(&tmp_vls);
-					  rt_vls_printf(&tmp_vls, "\t\tDraw 0 -> %g, step %g\n", len, step);
-					  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-					  rt_vls_free(&tmp_vls);
+					  bu_vls_init(&tmp_vls);
+					  bu_vls_printf(&tmp_vls, "\t\tDraw 0 -> %g, step %g\n", len, step);
+					  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+					  bu_vls_free(&tmp_vls);
 					}
 					for (u = 0; u <= len; u += step) {
 						VJOIN1(aim_point,last,u,dir);

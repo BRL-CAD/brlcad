@@ -115,7 +115,7 @@ void            slewview();
 int		interactive = 0;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
 
-static struct rt_vls input_str, scratchline, input_str_prefix;
+static struct bu_vls input_str, scratchline, input_str_prefix;
 static int input_str_index = 0;
 
 static int	do_rc();
@@ -134,7 +134,7 @@ static char *units_str[] = {
 	"extra"
 };
 
-struct rt_vls mged_prompt;
+struct bu_vls mged_prompt;
 void pr_prompt(), pr_beep();
 
 #ifdef USE_PROTOTYPES
@@ -195,9 +195,9 @@ char **argv;
 
 	/* If multiple processors might be used, initialize for it.
 	 * Do not run any commands before here.
-	 * Do not use rt_log() or rt_malloc() before here.
+	 * Do not use bu_log() or bu_malloc() before here.
 	 */
-	if( rt_avail_cpus() > 1 )  {
+	if( bu_avail_cpus() > 1 )  {
 		rt_g.rtg_parallel = 1;
 		RES_INIT( &rt_g.res_syscall );
 		RES_INIT( &rt_g.res_worker );
@@ -214,15 +214,15 @@ char **argv;
 
 	bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
 	RT_LIST_INIT(&head_cmd_list.l);
-	rt_vls_init(&head_cmd_list.name);
-	rt_vls_strcpy(&head_cmd_list.name, "mged");
+	bu_vls_init(&head_cmd_list.name);
+	bu_vls_strcpy(&head_cmd_list.name, "mged");
 	curr_cmd_list = &head_cmd_list;
 
 	bzero((void *)&head_dm_list, sizeof(struct dm_list));
 	RT_LIST_INIT( &head_dm_list.l );
 	head_dm_list._dmp = &dm_Null;
 	curr_dm_list = &head_dm_list;
-	curr_dm_list->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
+	curr_dm_list->s_info = (struct shared_info *)bu_malloc(sizeof(struct shared_info),
 							       "shared_info");
 	bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
 #if 1
@@ -231,8 +231,8 @@ char **argv;
 #else
 	mged_variables = default_mged_variables;
 #endif
-	rt_vls_init(&pathName);
-	rt_vls_strcpy(&pathName, "nu");
+	bu_vls_init(&pathName);
+	bu_vls_strcpy(&pathName, "nu");
 	rc = 1;
 	owner = 1;
 
@@ -265,12 +265,12 @@ char **argv;
 	no_memory = 0;		/* memory left */
 	es_edflag = -1;		/* no solid editing just now */
 
-	rt_vls_init( &curr_cmd_list->more_default );
-	rt_vls_init( &dm_values.dv_string );
-	rt_vls_init(&input_str);
-	rt_vls_init(&input_str_prefix);
-	rt_vls_init(&scratchline);
-	rt_vls_init(&mged_prompt);
+	bu_vls_init( &curr_cmd_list->more_default );
+	bu_vls_init( &dm_values.dv_string );
+	bu_vls_init(&input_str);
+	bu_vls_init(&input_str_prefix);
+	bu_vls_init(&scratchline);
+	bu_vls_init(&mged_prompt);
 	input_str_index = 0;
 
 	/* Get set up to use Tcl */
@@ -287,7 +287,7 @@ char **argv;
 	if(f_opendb( (ClientData)NULL, interp, argc, argv ) == TCL_ERROR)
 	  mged_finish(1);
 	else
-	  rt_log("%s", interp->result);
+	  bu_log("%s", interp->result);
 
 #if 0
 	dmp->dmr_window(windowbounds);
@@ -313,10 +313,10 @@ char **argv;
 	    so that access to Tcl/Tk is possible.
 	    */
 	  for(argc -= 2, argv += 2; argc; --argc, ++argv)
-	    rt_vls_printf(&input_str, "%s ", *argv);
+	    bu_vls_printf(&input_str, "%s ", *argv);
 
 	  cmdline(&input_str, TRUE);
-	  rt_vls_free(&input_str);
+	  bu_vls_free(&input_str);
 
 	  f_quit((ClientData)NULL, interp, 1, av);
 	  /* NOTREACHED */
@@ -340,7 +340,7 @@ char **argv;
 
 	(void)signal( SIGINT, SIG_IGN );
 
-	rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
+	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	pr_prompt();
 
 	/****************  M A I N   L O O P   *********************/
@@ -374,13 +374,13 @@ void
 pr_prompt()
 {
 	if( interactive )
-		rt_log("%S", &mged_prompt);
+		bu_log("%S", &mged_prompt);
 }
 
 void
 pr_beep()
 {
-    rt_log("%c", 7);
+    bu_log("%c", 7);
 }
 
 /*
@@ -395,7 +395,7 @@ pr_beep()
  * by setting up the multi_line_sig routine as the SIGINT handler.
  */
 
-extern struct rt_vls *history_prev(), *history_cur(), *history_next();
+extern struct bu_vls *history_prev(), *history_cur(), *history_next();
 
 /*
  * stdin_input
@@ -411,8 +411,8 @@ int mask;
 {
     int count;
     char ch;
-    struct rt_vls *vp;
-    struct rt_vls temp;
+    struct bu_vls *vp;
+    struct bu_vls temp;
     static int escaped = 0;
     static int bracketed = 0;
     static int freshline = 1;
@@ -424,51 +424,51 @@ int mask;
        don't do any command-line manipulation. */
 
     if (!cbreak_mode) {
-	rt_vls_init(&temp);
+	bu_vls_init(&temp);
 
 	/* Get line from stdin */
-	if( rt_vls_gets(&temp, stdin) < 0 )
+	if( bu_vls_gets(&temp, stdin) < 0 )
     		quit();				/* does not return */
-	rt_vls_vlscat(&input_str, &temp);
+	bu_vls_vlscat(&input_str, &temp);
 
 	/* If there are any characters already in the command string (left
 	   over from a CMD_MORE), then prepend them to the new input. */
 
 	/* If no input and a default is supplied then use it */
-	if(!rt_vls_strlen(&input_str) && rt_vls_strlen(&curr_cmd_list->more_default))
-	  rt_vls_printf(&input_str_prefix, "%s%S\n",
-			rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+	if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->more_default))
+	  bu_vls_printf(&input_str_prefix, "%s%S\n",
+			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			&curr_cmd_list->more_default);
 	else
-	  rt_vls_printf(&input_str_prefix, "%s%S\n",
-			rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+	  bu_vls_printf(&input_str_prefix, "%s%S\n",
+			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			&input_str);
 
-	rt_vls_trunc(&curr_cmd_list->more_default, 0);
+	bu_vls_trunc(&curr_cmd_list->more_default, 0);
 
 	/* If a complete line was entered, attempt to execute command. */
 	
-	if (Tcl_CommandComplete(rt_vls_addr(&input_str_prefix))) {
+	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 	    curr_cmd_list = &head_cmd_list;
 	    if(curr_cmd_list->aim)
 	      curr_dm_list = curr_cmd_list->aim;
 	    if (cmdline_hook != NULL) {
 		if ((*cmdline_hook)(&input_str))
 		    pr_prompt();
-		rt_vls_trunc(&input_str, 0);
-		rt_vls_trunc(&input_str_prefix, 0);
+		bu_vls_trunc(&input_str, 0);
+		bu_vls_trunc(&input_str_prefix, 0);
 		(void)signal( SIGINT, SIG_IGN );
 	    } else {
 		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
 		    /* Remove newline */
-		    rt_vls_trunc(&input_str_prefix,
-				 rt_vls_strlen(&input_str_prefix)-1);
-		    rt_vls_trunc(&input_str, 0);
+		    bu_vls_trunc(&input_str_prefix,
+				 bu_vls_strlen(&input_str_prefix)-1);
+		    bu_vls_trunc(&input_str, 0);
 
 		    (void)signal( SIGINT, sig2 );
 		} else {
-		    rt_vls_trunc(&input_str_prefix, 0);
-		    rt_vls_trunc(&input_str, 0);
+		    bu_vls_trunc(&input_str_prefix, 0);
+		    bu_vls_trunc(&input_str, 0);
 		    (void)signal( SIGINT, SIG_IGN );
 		}
 		pr_prompt();
@@ -476,11 +476,11 @@ int mask;
 	    input_str_index = 0;
 	    freshline = 1;
 	} else {
-	    rt_vls_trunc(&input_str, 0);
+	    bu_vls_trunc(&input_str, 0);
 	    /* Allow the user to hit ^C. */
 	    (void)signal( SIGINT, sig2 );
 	}
-	rt_vls_free(&temp);
+	bu_vls_free(&temp);
 	return;
     }
 
@@ -530,27 +530,27 @@ int mask;
 	break;
     case '\n':          /* Carriage return or line feed */
     case '\r':
-	rt_log("\n");   /* Display newline */
+	bu_log("\n");   /* Display newline */
 
 	/* If there are any characters already in the command string (left
 	   over from a CMD_MORE), then prepend them to the new input. */
 
 	/* If no input and a default is supplied then use it */
-	if(!rt_vls_strlen(&input_str) && rt_vls_strlen(&curr_cmd_list->more_default))
-	  rt_vls_printf(&input_str_prefix, "%s%S\n",
-			rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+	if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->more_default))
+	  bu_vls_printf(&input_str_prefix, "%s%S\n",
+			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			&curr_cmd_list->more_default);
 	else
-	  rt_vls_printf(&input_str_prefix, "%s%S\n",
-			rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+	  bu_vls_printf(&input_str_prefix, "%s%S\n",
+			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			&input_str);
 
-	rt_vls_trunc(&curr_cmd_list->more_default, 0);
+	bu_vls_trunc(&curr_cmd_list->more_default, 0);
 
 	/* If this forms a complete command (as far as the Tcl parser is
 	   concerned) then execute it. */
 	
-	if (Tcl_CommandComplete(rt_vls_addr(&input_str_prefix))) {
+	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 	    curr_cmd_list = &head_cmd_list;
 	    if(curr_cmd_list->aim)
 	      curr_dm_list = curr_cmd_list->aim;
@@ -563,30 +563,30 @@ int mask;
 		set_Cbreak(fileno(stdin));
 		clr_Echo(fileno(stdin));
 
-		rt_vls_trunc(&input_str, 0);
-		rt_vls_trunc(&input_str_prefix, 0);
+		bu_vls_trunc(&input_str, 0);
+		bu_vls_trunc(&input_str_prefix, 0);
 		(void)signal( SIGINT, SIG_IGN );
 	    } else {
 		reset_Tty(fileno(stdin)); /* Backwards compatibility */
 		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
 		    /* Remove newline */
-		    rt_vls_trunc(&input_str_prefix,
-				 rt_vls_strlen(&input_str_prefix)-1);
-		    rt_vls_trunc(&input_str, 0);
+		    bu_vls_trunc(&input_str_prefix,
+				 bu_vls_strlen(&input_str_prefix)-1);
+		    bu_vls_trunc(&input_str, 0);
 		    (void)signal( SIGINT, sig2 );
        /* *** The mged_prompt vls now contains prompt for more input. *** */
 		} else {
 		    /* All done; clear all strings. */
-		    rt_vls_trunc(&input_str_prefix, 0);
-		    rt_vls_trunc(&input_str, 0);
+		    bu_vls_trunc(&input_str_prefix, 0);
+		    bu_vls_trunc(&input_str, 0);
 		    (void)signal( SIGINT, SIG_IGN );
 		}
 		set_Cbreak(fileno(stdin)); /* Back to single-character mode */
 		clr_Echo(fileno(stdin));
 	    }
 	} else {
-	    rt_vls_trunc(&input_str, 0);
-	    rt_vls_strcpy(&mged_prompt, "\r? ");
+	    bu_vls_trunc(&input_str, 0);
+	    bu_vls_strcpy(&mged_prompt, "\r? ");
 
 	    /* Allow the user to hit ^C */
 	    (void)signal( SIGINT, sig2 );
@@ -603,18 +603,18 @@ int mask;
 	    break;
 	}
 
-	if (input_str_index == rt_vls_strlen(&input_str)) {
-	    rt_log("\b \b");
-	    rt_vls_trunc(&input_str, rt_vls_strlen(&input_str)-1);
+	if (input_str_index == bu_vls_strlen(&input_str)) {
+	    bu_log("\b \b");
+	    bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1);
 	} else {
-	    rt_vls_init(&temp);
-	    rt_vls_strcat(&temp, rt_vls_addr(&input_str)+input_str_index);
-	    rt_vls_trunc(&input_str, input_str_index-1);
-	    rt_log("\b%S ", &temp);
+	    bu_vls_init(&temp);
+	    bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
+	    bu_vls_trunc(&input_str, input_str_index-1);
+	    bu_log("\b%S ", &temp);
 	    pr_prompt();
-	    rt_log("%S", &input_str);
-	    rt_vls_vlscat(&input_str, &temp);
-	    rt_vls_free(&temp);
+	    bu_log("%S", &input_str);
+	    bu_vls_vlscat(&input_str, &temp);
+	    bu_vls_free(&temp);
 	}
 	--input_str_index;
 	escaped = bracketed = 0;
@@ -625,50 +625,50 @@ int mask;
 	escaped = bracketed = 0;
 	break;
     case CTRL_E:                    /* Go to end of line */
-	if (input_str_index < rt_vls_strlen(&input_str)) {
-	    rt_log("%s", rt_vls_addr(&input_str)+input_str_index);
-	    input_str_index = rt_vls_strlen(&input_str);
+	if (input_str_index < bu_vls_strlen(&input_str)) {
+	    bu_log("%s", bu_vls_addr(&input_str)+input_str_index);
+	    input_str_index = bu_vls_strlen(&input_str);
 	}
 	escaped = bracketed = 0;
 	break;
     case CTRL_D:                    /* Delete character at cursor */
-	if (input_str_index == rt_vls_strlen(&input_str)) {
+	if (input_str_index == bu_vls_strlen(&input_str)) {
 	    pr_beep(); /* Beep if at end of input string */
 	    break;
 	}
-	rt_vls_init(&temp);
-	rt_vls_strcat(&temp, rt_vls_addr(&input_str)+input_str_index+1);
-	rt_vls_trunc(&input_str, input_str_index);
-	rt_log("%S ", &temp);
+	bu_vls_init(&temp);
+	bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index+1);
+	bu_vls_trunc(&input_str, input_str_index);
+	bu_log("%S ", &temp);
 	pr_prompt();
-	rt_log("%S", &input_str);
-	rt_vls_vlscat(&input_str, &temp);
-	rt_vls_free(&temp);
+	bu_log("%S", &input_str);
+	bu_vls_vlscat(&input_str, &temp);
+	bu_vls_free(&temp);
 	escaped = bracketed = 0;
 	break;
     case CTRL_U:                   /* Delete whole line */
 	pr_prompt();
-	rt_log("%*s", rt_vls_strlen(&input_str), SPACES);
+	bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
 	pr_prompt();
-	rt_vls_trunc(&input_str, 0);
+	bu_vls_trunc(&input_str, 0);
 	input_str_index = 0;
 	escaped = bracketed = 0;
 	break;
     case CTRL_K:                    /* Delete to end of line */
-	rt_log("%*s", rt_vls_strlen(&input_str)-input_str_index, SPACES);
-	rt_vls_trunc(&input_str, input_str_index);
+	bu_log("%*s", bu_vls_strlen(&input_str)-input_str_index, SPACES);
+	bu_vls_trunc(&input_str, input_str_index);
 	pr_prompt();
-	rt_log("%S", &input_str);
+	bu_log("%S", &input_str);
 	escaped = bracketed = 0;
 	break;
     case CTRL_L:                   /* Redraw line */
-	rt_log("\n");
+	bu_log("\n");
 	pr_prompt();
-	rt_log("%S", &input_str);
-	if (input_str_index == rt_vls_strlen(&input_str))
+	bu_log("%S", &input_str);
+	if (input_str_index == bu_vls_strlen(&input_str))
 	    break;
 	pr_prompt();
-	rt_log("%*S", input_str_index, &input_str);
+	bu_log("%*S", input_str_index, &input_str);
 	escaped = bracketed = 0;
 	break;
     case CTRL_B:                   /* Back one character */
@@ -677,16 +677,16 @@ int mask;
 	    break;
 	}
 	--input_str_index;
-	rt_log("\b"); /* hopefully non-destructive! */
+	bu_log("\b"); /* hopefully non-destructive! */
 	escaped = bracketed = 0;
 	break;
     case CTRL_F:                   /* Forward one character */
-	if (input_str_index == rt_vls_strlen(&input_str)) {
+	if (input_str_index == bu_vls_strlen(&input_str)) {
 	    pr_beep();
 	    break;
 	}
 
-	rt_log("%c", rt_vls_addr(&input_str)[input_str_index]);
+	bu_log("%c", bu_vls_addr(&input_str)[input_str_index]);
 	++input_str_index;
 	escaped = bracketed = 0;
 	break;
@@ -695,15 +695,15 @@ int mask;
 	    pr_beep();
 	    break;
 	}
-	if (input_str_index == rt_vls_strlen(&input_str)) {
-	    rt_log("\b");
+	if (input_str_index == bu_vls_strlen(&input_str)) {
+	    bu_log("\b");
 	    --input_str_index;
 	}
-	ch = rt_vls_addr(&input_str)[input_str_index];
-	rt_vls_addr(&input_str)[input_str_index] =
-	    rt_vls_addr(&input_str)[input_str_index - 1];
-	rt_vls_addr(&input_str)[input_str_index - 1] = ch;
-	rt_log("\b%*s", 2, rt_vls_addr(&input_str)+input_str_index-1);
+	ch = bu_vls_addr(&input_str)[input_str_index];
+	bu_vls_addr(&input_str)[input_str_index] =
+	    bu_vls_addr(&input_str)[input_str_index - 1];
+	bu_vls_addr(&input_str)[input_str_index - 1] = ch;
+	bu_log("\b%*s", 2, bu_vls_addr(&input_str)+input_str_index-1);
 	++input_str_index;
 	escaped = bracketed = 0;
 	break;
@@ -718,8 +718,8 @@ int mask;
 		    pr_beep();
 		    break;
 		}
-		rt_vls_trunc(&scratchline, 0);
-		rt_vls_vlscat(&scratchline, &input_str);
+		bu_vls_trunc(&scratchline, 0);
+		bu_vls_vlscat(&scratchline, &input_str);
 		freshline = 0;
 	    } else {
 		pr_beep();
@@ -741,14 +741,14 @@ int mask;
 	    }
 	}
 	pr_prompt();
-	rt_log("%*s", rt_vls_strlen(&input_str), SPACES);
+	bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
 	pr_prompt();
-	rt_vls_trunc(&input_str, 0);
-	rt_vls_vlscat(&input_str, vp);
-	if (rt_vls_addr(&input_str)[rt_vls_strlen(&input_str)-1] == '\n')
-	    rt_vls_trunc(&input_str, rt_vls_strlen(&input_str)-1); /* del \n */
-	rt_log("%S", &input_str);
-	input_str_index = rt_vls_strlen(&input_str);
+	bu_vls_trunc(&input_str, 0);
+	bu_vls_vlscat(&input_str, vp);
+	if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
+	    bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
+	bu_log("%S", &input_str);
+	input_str_index = bu_vls_strlen(&input_str);
 	escaped = bracketed = 0;
 	break;
     case '[':
@@ -760,21 +760,21 @@ int mask;
     default:
 	if (!isprint(ch))
 	    break;
-	if (input_str_index == rt_vls_strlen(&input_str)) {
-	    rt_log("%c", (int)ch);
-	    rt_vls_putc(&input_str, (int)ch);
+	if (input_str_index == bu_vls_strlen(&input_str)) {
+	    bu_log("%c", (int)ch);
+	    bu_vls_putc(&input_str, (int)ch);
 	    ++input_str_index;
 	} else {
-	    rt_vls_init(&temp);
-	    rt_vls_strcat(&temp, rt_vls_addr(&input_str)+input_str_index);
-	    rt_vls_trunc(&input_str, input_str_index);
-	    rt_log("%c%S", (int)ch, &temp);
+	    bu_vls_init(&temp);
+	    bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
+	    bu_vls_trunc(&input_str, input_str_index);
+	    bu_log("%c%S", (int)ch, &temp);
 	    pr_prompt();
-	    rt_vls_putc(&input_str, (int)ch);
-	    rt_log("%S", &input_str);
-	    rt_vls_vlscat(&input_str, &temp);
+	    bu_vls_putc(&input_str, (int)ch);
+	    bu_log("%S", &input_str);
+	    bu_vls_vlscat(&input_str, &temp);
 	    ++input_str_index;
-	    rt_vls_free(&temp);
+	    bu_vls_free(&temp);
 	}
 	
 	escaped = bracketed = 0;
@@ -797,12 +797,12 @@ char    **argv;
   if(argc != 2)
     return TCL_ERROR;
 
-  rt_log("\r%s\n", argv[1]);
+  bu_log("\r%s\n", argv[1]);
   pr_prompt();
-  rt_log("%s", rt_vls_addr(&input_str));
+  bu_log("%s", bu_vls_addr(&input_str));
   pr_prompt();
   for(i = 0; i < input_str_index; ++i)
-    rt_log("%c", rt_vls_addr(&input_str)[i]);
+    bu_log("%c", bu_vls_addr(&input_str)[i]);
 
   return TCL_OK;
 }
@@ -840,15 +840,15 @@ int	non_blocking;
 		/* Some commands (e.g. mouse events) queue further events. */
 		int oldlen;
 loopagain:
-		oldlen = rt_vls_strlen( &dm_values.dv_string );
+		oldlen = bu_vls_strlen( &dm_values.dv_string );
 		(void)cmdline( &dm_values.dv_string, FALSE );
-		if( rt_vls_strlen( &dm_values.dv_string ) > oldlen ) {
+		if( bu_vls_strlen( &dm_values.dv_string ) > oldlen ) {
 		    /* Remove cmds already done, and go again */
-		    rt_vls_nibble( &dm_values.dv_string, oldlen );
+		    bu_vls_nibble( &dm_values.dv_string, oldlen );
 		    goto loopagain;
 		}
 	    }
-	    rt_vls_trunc( &dm_values.dv_string, 0 );
+	    bu_vls_trunc( &dm_values.dv_string, 0 );
 	}
     } else {
       Tk_DoOneEvent(TK_ALL_EVENTS);
@@ -868,16 +868,16 @@ loopagain:
 	/* Some commands (e.g. mouse events) queue further events. */
 	int oldlen;
 again:
-	oldlen = rt_vls_strlen( &dm_values.dv_string );
+	oldlen = bu_vls_strlen( &dm_values.dv_string );
 	(void)cmdline( &dm_values.dv_string, FALSE );
-	if( rt_vls_strlen( &dm_values.dv_string ) > oldlen ) {
+	if( bu_vls_strlen( &dm_values.dv_string ) > oldlen ) {
 	    /* Remove cmds already done, and go again */
-	    rt_vls_nibble( &dm_values.dv_string, oldlen );
+	    bu_vls_nibble( &dm_values.dv_string, oldlen );
 	    goto again;
 	}
     }
 
-    rt_vls_trunc( &dm_values.dv_string, 0 );
+    bu_vls_trunc( &dm_values.dv_string, 0 );
     
     /*
      * Set up window so that drawing does not run over into the
@@ -923,17 +923,17 @@ again:
       if( rateflag_zoom )  {
 #if 1
 	int status;
-	struct rt_vls vls;
+	struct bu_vls vls;
 	char *av[3];
 
 	av[0] = "zoom";
 	av[2] = NULL;
 
-	rt_vls_init(&vls);
-	rt_vls_printf(&vls, "%f", 1.0 / (1.0 - (rate_zoom / 10.0)));
-	av[1] = rt_vls_addr(&vls);
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "%f", 1.0 / (1.0 - (rate_zoom / 10.0)));
+	av[1] = bu_vls_addr(&vls);
 	status = f_zoom((ClientData)NULL, interp, 2, av);
-	rt_vls_free(&vls);
+	bu_vls_free(&vls);
 
 	if( status == TCL_OK )
 	  non_blocking++;
@@ -1034,7 +1034,7 @@ refresh()
 		
       dmp->dmr_epilog();
 
-      (void)rt_get_timer( (struct rt_vls *)0, &elapsed_time );
+      (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
       /* Only use reasonable measurements */
       if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
 	/* Smoothly transition to new speed */
@@ -1167,13 +1167,13 @@ void
 aslewview( view_pos )
 vect_t view_pos;
 {
-  struct rt_vls cmd;
+  struct bu_vls cmd;
 
-  rt_vls_init(&cmd);
-  rt_vls_printf(&cmd, "knob aX %f aY %f aZ %f\n",
+  bu_vls_init(&cmd);
+  bu_vls_printf(&cmd, "knob aX %f aY %f aZ %f\n",
 		view_pos[X], view_pos[Y], view_pos[Z]);
   (void)cmdline(&cmd, FALSE);
-  rt_vls_free(&cmd);
+  bu_vls_free(&cmd);
 }
 
 /*
@@ -1187,13 +1187,13 @@ slewview( view_pos )
 vect_t view_pos;
 {
 #if 1
-  struct rt_vls cmd;
+  struct bu_vls cmd;
 
-  rt_vls_init(&cmd);
-  rt_vls_printf(&cmd, "iknob aX %f aY %f aZ %f\n",
+  bu_vls_init(&cmd);
+  bu_vls_printf(&cmd, "iknob aX %f aY %f aZ %f\n",
 		-view_pos[X], -view_pos[Y], -view_pos[Z]);
   (void)cmdline(&cmd, FALSE);
-  rt_vls_free(&cmd);
+  bu_vls_free(&cmd);
 #else
 	point_t	old_model_center;
 	point_t	new_model_center;
@@ -1296,13 +1296,13 @@ void
 sig2()
 {
   /* Truncate input string */
-  rt_vls_trunc(&input_str, 0);
-  rt_vls_trunc(&input_str_prefix, 0);
-  rt_vls_trunc(&curr_cmd_list->more_default, 0);
+  bu_vls_trunc(&input_str, 0);
+  bu_vls_trunc(&input_str_prefix, 0);
+  bu_vls_trunc(&curr_cmd_list->more_default, 0);
   input_str_index = 0;
 
-  rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
-  rt_log("\n");
+  bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
+  bu_log("\n");
   pr_prompt();
 
   (void)signal( SIGINT, SIG_IGN );
@@ -1367,35 +1367,35 @@ do_rc()
 	FILE	*fp;
 	char	*path;
 	int 	found;
-	struct	rt_vls str;
+	struct	bu_vls str;
 	int bogus;
 
 	found = 0;
-	rt_vls_init( &str );
+	bu_vls_init( &str );
 
 #define ENVRC	"MGED_RCFILE"
 #define RCFILE	".gedrc"
 
 	if( (path = getenv(ENVRC)) != (char *)NULL ) {
 		if ((fp = fopen(path, "r")) != NULL ) {
-			rt_vls_strcpy( &str, path );
+			bu_vls_strcpy( &str, path );
 			found = 1;
 		}
 	}
 
 	if( !found ) {
 		if( (path = getenv("HOME")) != (char *)NULL )  {
-			rt_vls_strcpy( &str, path );
-			rt_vls_strcat( &str, "/" );
-			rt_vls_strcat( &str, RCFILE );
+			bu_vls_strcpy( &str, path );
+			bu_vls_strcat( &str, "/" );
+			bu_vls_strcat( &str, RCFILE );
 		}
-		if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+		if( (fp = fopen(bu_vls_addr(&str), "r")) != NULL )
 			found = 1;
 	}
 
 	if( !found ) {
 		if( (fp = fopen( RCFILE, "r" )) != NULL )  {
-			rt_vls_strcpy( &str, RCFILE );
+			bu_vls_strcpy( &str, RCFILE );
 			found = 1;
 		}
 	}
@@ -1419,13 +1419,13 @@ do_rc()
 	
 	fclose( fp );
 	if( bogus ) {
-	    rt_log("\nWARNING: The new format of the \"set\" command is:\n");
-	    rt_log("    set varname value\n");
-	    rt_log("If you are setting variables in your %s, you will ", RCFILE);
-	    rt_log("need to change those\ncommands.\n\n");
+	    bu_log("\nWARNING: The new format of the \"set\" command is:\n");
+	    bu_log("    set varname value\n");
+	    bu_log("If you are setting variables in your %s, you will ", RCFILE);
+	    bu_log("need to change those\ncommands.\n\n");
 	}
-	if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
-	    rt_log("Error reading %s: %s\n", RCFILE, interp->result);
+	if (Tcl_EvalFile( interp, bu_vls_addr(&str) ) == TCL_ERROR) {
+	    bu_log("Error reading %s: %s\n", RCFILE, interp->result);
 	}
 
 	return 0;
@@ -1480,7 +1480,7 @@ char	**argv;
 	  if( isatty(0) ) {
 	    if(first){
 	      perror( argv[1] );
-	      rt_log("Create new database (y|n)[n]? ");
+	      bu_log("Create new database (y|n)[n]? ");
 	      (void)fgets(line, sizeof(line), stdin);
 	      if( line[0] != 'y' && line[0] != 'Y' )
 		exit(0);                /* NOT finish() */
@@ -1490,7 +1490,7 @@ char	**argv;
 
 		Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
 				 (char *)NULL);
-		rt_vls_printf(&curr_cmd_list->more_default, "n");
+		bu_vls_printf(&curr_cmd_list->more_default, "n");
 
 		return TCL_ERROR;
 	      }

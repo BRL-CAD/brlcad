@@ -143,7 +143,7 @@ Tek_open()
 
   setbuf( outfp, ttybuf );
 
-  rt_vls_printf(&pathName, ".dm_tek");
+  bu_vls_printf(&pathName, ".dm_tek");
 
   if(second_fd)
     Tk_CreateFileHandler(second_fd, 1, get_cursor, (ClientData)NULL);
@@ -376,32 +376,32 @@ int mask;
 			register int j;
 			Tcl_AppendResult(interp, "Short Blit read\n", (char *)NULL);
 			for (j=0 ; j < i ; ++j){
-			  struct rt_vls tmp_vls;
+			  struct bu_vls tmp_vls;
 
-			  rt_vls_init(&tmp_vls);
-			  rt_vls_printf(&tmp_vls, "%c(%x)\n", ibuf[j], ibuf[j]);
-			  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-			  rt_vls_free(&tmp_vls);
+			  bu_vls_init(&tmp_vls);
+			  bu_vls_printf(&tmp_vls, "%c(%x)\n", ibuf[j], ibuf[j]);
+			  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			  bu_vls_free(&tmp_vls);
 			}
 			return;
 		}
 		cp = &ibuf[i-6];
 		if ( i > 4 && (cp[4] != '\n' || cp[5] != 4 )) {
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, "saw:%c(%x) %c(%x) %c(%x) %c(%x) %c(%x) %c(%x)\n",
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, "saw:%c(%x) %c(%x) %c(%x) %c(%x) %c(%x) %c(%x)\n",
 				cp[0], cp[0], cp[1], cp[1], cp[2], cp[2],
 				cp[3], cp[3], cp[4], cp[4], cp[5], cp[5] );
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 		  return;
 		}
 		hix = ((int)cp[0]&037)<<7;
 		lox = ((int)cp[1]&037)<<2;
 		hiy = ((int)cp[2]&037)<<7;
 		loy = ((int)cp[3]&037)<<2;
-/*		rt_log("mouse: %d,%d\n",
+/*		bu_log("mouse: %d,%d\n",
 			TEK_TO_GED(hix|lox), TEK_TO_GED(hiy|loy)); */
 
 		xpen = TEK_TO_GED(hix|lox);
@@ -411,7 +411,7 @@ int mask;
 		if( ypen < -2048 || ypen > 2048 )
 			ypen = 0;
 
-		rt_vls_printf( &dm_values.dv_string , "M 1 %d %d\n", xpen, ypen );
+		bu_vls_printf( &dm_values.dv_string , "M 1 %d %d\n", xpen, ypen );
 
 		return;
 	} else {
@@ -419,25 +419,25 @@ int mask;
 		i = read( second_fd, ibuf, sizeof(ibuf) );
 		/* The LAST 6 chars are the string from the tektronix */
 		if( i < 6 )  {
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, "short read of %d\n", i);
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, "short read of %d\n", i);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 		  return;		/* Fails if he hits RETURN */
 			
 		}
 		cp = &ibuf[i-6];
 		if( cp[5] != '\n' )  {
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls,
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls,
 				"cursor synch?\nsaw:%c(%x) %c(%x) %c(%x) %c(%x) %c(%x) %c(%x)\n",
 				cp[0], cp[0], cp[1], cp[1], cp[2], cp[2],
 				cp[3], cp[3], cp[4], cp[4], cp[5], cp[5] );
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		  return;
 		}
 
@@ -459,29 +459,29 @@ int mask;
 		switch(cp[0])  {
 		case 'Z':
 		  {
-		    struct rt_vls tmp_vls;
+		    struct bu_vls tmp_vls;
 
-		    rt_vls_init(&tmp_vls);
-		    rt_vls_printf(&tmp_vls, "x=%d,y=%d\n", xpen, ypen);
-		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		    rt_vls_free(&tmp_vls);
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "x=%d,y=%d\n", xpen, ypen);
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    bu_vls_free(&tmp_vls);
 		  }
 		  break;		/* NOP */
 		case 'b':
-			rt_vls_strcat( &dm_values.dv_string, "zoom 2\n");
+			bu_vls_strcat( &dm_values.dv_string, "zoom 2\n");
 			break;
 		case 's':
-			rt_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
+			bu_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
 			break;
 		case '.':
-			rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
+			bu_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
 			break;
 		default:
 		  Tcl_AppendResult(interp, "s=smaller, b=bigger, .=slew, space=pick/slew\n",
 				   (char *)NULL);
 		  return;
 		case ' ':
-			rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
+			bu_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
 			break;
 		}
 	}
@@ -569,12 +569,12 @@ unsigned
 Tek_load( addr, count )
 unsigned addr, count;
 {
-  struct rt_vls tmp_vls;
+  struct bu_vls tmp_vls;
 
-  rt_vls_init(&tmp_vls);
-  rt_vls_printf(&tmp_vls, "Tek_load(x%x, %d.)\n", addr, count );
-  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-  rt_vls_free(&tmp_vls);
+  bu_vls_init(&tmp_vls);
+  bu_vls_printf(&tmp_vls, "Tek_load(x%x, %d.)\n", addr, count );
+  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+  bu_vls_free(&tmp_vls);
 
   return( 0 );
 }

@@ -116,7 +116,7 @@ HP_open()
 	    termtype = HP2397A;
 	    printf("\033*j9F");	/* penpress reports F9 pressed */
 	}
-	rt_log("Terminal type: %s\n",s);
+	bu_log("Terminal type: %s\n",s);
 	printf("%c*da",ESC);	/* clear graphics memory */
 	printf("%c*dc",ESC);	/* graphics display on */
 	printf("%c*dk",ESC);	/* graphics cursor on */
@@ -294,23 +294,23 @@ int		noblock;
 	    		if( xpen )
 	    		{
 		    		sprintf( str_buf , "knob X %f\n" , (float)xpen/2048.0 );
-	    			rt_vls_strcat( &dm_values.dv_string , str_buf );
+	    			bu_vls_strcat( &dm_values.dv_string , str_buf );
 	    		}
 	    		if( ypen )
 	    		{
 		    		sprintf( str_buf , "knob Y %f\n" , (float)ypen/2048.0 );
-	    			rt_vls_strcat( &dm_values.dv_string , str_buf );
+	    			bu_vls_strcat( &dm_values.dv_string , str_buf );
 	    		}
 		    break;
 		case 'r':
-	    		rt_vls_strcat( &dm_values.dv_string , "zoom 0.5\n" );
+	    		bu_vls_strcat( &dm_values.dv_string , "zoom 0.5\n" );
 		    break;
 		case 's':
-	    		rt_vls_strcat( &dm_values.dv_string , "zoom 2\n" );
+	    		bu_vls_strcat( &dm_values.dv_string , "zoom 2\n" );
 		    break;
 		default:
 	    		sprintf( str_buf , "M 1 %d %d\n", xpen, ypen );
-	    		rt_vls_strcat( &dm_values.dv_string , str_buf );
+	    		bu_vls_strcat( &dm_values.dv_string , str_buf );
 	    	    break;
 	    }
 		FD_CLR( fileno(stdin), input );
@@ -320,7 +320,7 @@ int		noblock;
 	    xpen     = XHP_TO_GED(curx);
 	    ypen     = YHP_TO_GED(cury);
 	    sprintf( str_buf , "M 1 %d %d\n", xpen, ypen );
-	    rt_vls_strcat( &dm_values.dv_string , str_buf );
+	    bu_vls_strcat( &dm_values.dv_string , str_buf );
 		FD_CLR( fileno(stdin), input );
 		return;
 	} else {			/* Not a penpress so */

@@ -421,7 +421,7 @@ char *name;
   int		win_size=1000;
   int		win_o_x=272;
   int		win_o_y=12;
-  struct rt_vls str;
+  struct bu_vls str;
   int j, k;
   int ndevices;
   int nclass = 0;
@@ -432,7 +432,7 @@ char *name;
   GLXconfig *p, *glx_config;
   XVisualInfo *visual_info;
 
-  rt_vls_init(&str);
+  bu_vls_init(&str);
 
   /* Only need to do this once */
   if(tkwin == NULL)
@@ -447,21 +447,21 @@ char *name;
 
   RT_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)curr_dm_list->_dm_vars)->l);
 
-  rt_vls_printf(&pathName, ".dm_glx%d", count++);
-  xtkwin = Tk_CreateWindowFromPath(interp, tkwin, rt_vls_addr(&pathName), name);
+  bu_vls_printf(&pathName, ".dm_glx%d", count++);
+  xtkwin = Tk_CreateWindowFromPath(interp, tkwin, bu_vls_addr(&pathName), name);
   /*
    * Create the X drawing window by calling init_glx which
    * is defined in glxinit.tcl
    */
-  rt_vls_strcpy(&str, "init_glx ");
-  rt_vls_printf(&str, "%s\n", rt_vls_addr(&pathName));
+  bu_vls_strcpy(&str, "init_glx ");
+  bu_vls_printf(&str, "%s\n", bu_vls_addr(&pathName));
 
   if(cmdline(&str, FALSE) == CMD_BAD){
-    rt_vls_free(&str);
+    bu_vls_free(&str);
     return -1;
   }
 
-  rt_vls_free(&str);
+  bu_vls_free(&str);
 
   dpy = Tk_Display(xtkwin);
   winx_size = DisplayWidth(dpy, DefaultScreen(dpy)) - 20;
@@ -683,7 +683,7 @@ Glx_close()
   if(((struct glx_vars *)dm_vars)->l.forw != RT_LIST_NULL)
     RT_LIST_DEQUEUE(&((struct glx_vars *)dm_vars)->l);
 
-  rt_free(dm_vars, "Glx_close: dm_vars");
+  bu_free(dm_vars, "Glx_close: dm_vars");
 
   if(RT_LIST_IS_EMPTY(&head_glx_vars.l))
     Tk_DeleteGenericHandler(Glx_doevent, (ClientData)NULL);
@@ -1162,10 +1162,10 @@ XEvent *eventPtr;
   static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   register struct dm_list *save_dm_list;
   register struct dm_list *p;
-  struct rt_vls cmd;
+  struct bu_vls cmd;
   int status = CMD_OK;
 
-  rt_vls_init(&cmd);
+  bu_vls_init(&cmd);
   save_dm_list = curr_dm_list;
 
   curr_dm_list = get_dm_list(eventPtr->xany.window);
@@ -1184,7 +1184,7 @@ XEvent *eventPtr;
       goto end;
 
     write(dm_pipe[1], buffer, 1);
-    rt_vls_free(&cmd);
+    bu_vls_free(&cmd);
     curr_dm_list = save_dm_list;
 
     /* Use this so that these events won't propagate */
@@ -1216,17 +1216,17 @@ XEvent *eventPtr;
     case ALT_MOUSE_MODE_OFF:
     case ALT_MOUSE_MODE_ON:
       if(scroll_active && eventPtr->xmotion.state & mb_mask)
-	rt_vls_printf( &cmd, "M 1 %d %d\n", irisX2ged(mx), irisY2ged(my));
+	bu_vls_printf( &cmd, "M 1 %d %d\n", irisX2ged(mx), irisY2ged(my));
       else if(GLXdoMotion)
 	/* do the regular thing */
 	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
-	rt_vls_printf( &cmd, "M 0 %d %d\n", irisX2ged(mx), irisY2ged(my));
+	bu_vls_printf( &cmd, "M 0 %d %d\n", irisX2ged(mx), irisY2ged(my));
       else
 	goto end;
 
       break;
     case ALT_MOUSE_MODE_ROTATE:
-      rt_vls_printf( &cmd, "iknob ax %f ay %f\n",
+      bu_vls_printf( &cmd, "iknob ax %f ay %f\n",
 		     (my - omy)/512.0, (mx - omx)/512.0 );
       break;
     case ALT_MOUSE_MODE_TRANSLATE:
@@ -1237,16 +1237,16 @@ XEvent *eventPtr;
 	  (edobj || es_edflag > 0)){
 	  fx = (mx/(fastf_t)winx_size - 0.5) * 2;
 	  fy = (0.5 - my/(fastf_t)winy_size) * 2;
-	  rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
+	  bu_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
 	}else{
 	  fx = (mx - omx)/(fastf_t)winx_size * 2.0;
 	  fy = (omy - my)/(fastf_t)winy_size * 2.0;
-	  rt_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy );
+	  bu_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy );
 	}
       }	     
       break;
     case ALT_MOUSE_MODE_ZOOM:
-      rt_vls_printf( &cmd, "iknob aS %f\n", (omy - my)/(fastf_t)winy_size);
+      bu_vls_printf( &cmd, "iknob aS %f\n", (omy - my)/(fastf_t)winy_size);
       break;
     }
 
@@ -1277,7 +1277,7 @@ XEvent *eventPtr;
 	                  M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd, "knob ang1 %d\n",
+	bu_vls_printf( &cmd, "knob ang1 %d\n",
 		      setting );
       }
       break;
@@ -1291,7 +1291,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob S %f\n",
+	bu_vls_printf( &cmd , "knob S %f\n",
 		       setting / 512.0 );
       }else{
 	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1302,7 +1302,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob aS %f\n",
+	bu_vls_printf( &cmd , "knob aS %f\n",
 		       setting / 512.0 );
       }
       break;
@@ -1316,7 +1316,7 @@ XEvent *eventPtr;
 	                  M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob ang2 %d\n",
+	bu_vls_printf( &cmd , "knob ang2 %d\n",
 		      setting );
       }else {
 	if(mged_variables.rateknobs){
@@ -1328,7 +1328,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob z %f\n",
+	  bu_vls_printf( &cmd , "knob z %f\n",
 		      setting / 512.0 );
 	}else{
 	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1339,7 +1339,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob az %f\n",
+	  bu_vls_printf( &cmd , "knob az %f\n",
 			 setting / 512.0 );
 	}
       }
@@ -1354,7 +1354,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob distadc %d\n",
+	bu_vls_printf( &cmd , "knob distadc %d\n",
 		      setting );
       }else {
 	if(mged_variables.rateknobs){
@@ -1366,7 +1366,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob Z %f\n",
+	  bu_vls_printf( &cmd , "knob Z %f\n",
 			 setting / 512.0 );
 	}else{
 	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1377,7 +1377,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob aZ %f\n",
+	  bu_vls_printf( &cmd , "knob aZ %f\n",
 			 setting / 512.0 );
 	}
       }
@@ -1392,7 +1392,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob yadc %d\n",
+	bu_vls_printf( &cmd , "knob yadc %d\n",
 		      setting );
       }else{
 	if(mged_variables.rateknobs){
@@ -1404,7 +1404,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob y %f\n",
+	  bu_vls_printf( &cmd , "knob y %f\n",
 			 setting / 512.0 );
 	}else{
 	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1415,7 +1415,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob ay %f\n",
+	  bu_vls_printf( &cmd , "knob ay %f\n",
 			 setting / 512.0 );
 	}
       }
@@ -1430,7 +1430,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob Y %f\n",
+	bu_vls_printf( &cmd , "knob Y %f\n",
 		       setting / 512.0 );
       }else{
 	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1441,7 +1441,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob aY %f\n",
+	bu_vls_printf( &cmd , "knob aY %f\n",
 		       setting / 512.0 );
       }
       break;
@@ -1455,7 +1455,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob xadc %d\n",
+	bu_vls_printf( &cmd , "knob xadc %d\n",
 		      setting );
       }else{
 	if(mged_variables.rateknobs){
@@ -1467,7 +1467,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob x %f\n",
+	  bu_vls_printf( &cmd , "knob x %f\n",
 			 setting / 512.0 );
 	}else{
 	  if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1478,7 +1478,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = irlimit(knobs[M->first_axis]);
-	  rt_vls_printf( &cmd , "knob ax %f\n",
+	  bu_vls_printf( &cmd , "knob ax %f\n",
 			 setting / 512.0 );
 	}
       }
@@ -1493,7 +1493,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob X %f\n",
+	bu_vls_printf( &cmd , "knob X %f\n",
 		       setting / 512.0 );
       }else{
 	if(-NOISE < knobs[M->first_axis] && knobs[M->first_axis] < NOISE &&
@@ -1504,7 +1504,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = irlimit(knobs[M->first_axis]);
-	rt_vls_printf( &cmd , "knob aX %f\n",
+	bu_vls_printf( &cmd , "knob aX %f\n",
 		       setting / 512.0 );
       }
       break;
@@ -1530,10 +1530,10 @@ XEvent *eventPtr;
     if(button0){
       glx_dbtext(label_button(bmap[B->button - 1]));
     }else if(B->button == 4){
-      rt_vls_strcat(&cmd, "knob zero\n");
+      bu_vls_strcat(&cmd, "knob zero\n");
       set_knob_offset();
     }else
-      rt_vls_printf(&cmd, "press %s\n",
+      bu_vls_printf(&cmd, "press %s\n",
 		    label_button(bmap[B->button - 1]));
   }else if( eventPtr->type == devbuttonrelease ){
     XDeviceButtonEvent *B;
@@ -1551,7 +1551,7 @@ XEvent *eventPtr;
 
   status = cmdline(&cmd, FALSE);
 end:
-  rt_vls_free(&cmd);
+  bu_vls_free(&cmd);
   curr_dm_list = save_dm_list;
 
   if(status == CMD_OK)
@@ -1624,12 +1624,12 @@ void
 Glx_statechange( a, b )
 {
   if( mvars.debug ){
-    struct rt_vls tmp_vls;
+    struct bu_vls tmp_vls;
 
-    rt_vls_init(&tmp_vls);
-    rt_vls_printf(&tmp_vls, "statechange %d %d\n", a, b );
-    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-    rt_vls_free(&tmp_vls);
+    bu_vls_init(&tmp_vls);
+    bu_vls_printf(&tmp_vls, "statechange %d %d\n", a, b );
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
   }
 
   /*
@@ -1669,12 +1669,12 @@ register int cmd;
 register struct solid *sp;
 {
   if( mvars.debug ){
-    struct rt_vls tmp_vls;
+    struct bu_vls tmp_vls;
 
-    rt_vls_init(&tmp_vls);
-    rt_vls_printf(&tmp_vls, "viewchange( %d, x%x )\n", cmd, sp );
-    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-    rt_vls_free(&tmp_vls);
+    bu_vls_init(&tmp_vls);
+    bu_vls_printf(&tmp_vls, "viewchange( %d, x%x )\n", cmd, sp );
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
   }
 
   switch( cmd ){
@@ -1921,7 +1921,7 @@ kblights()
 static void
 establish_perspective()
 {
-  rt_vls_printf( &dm_values.dv_string,
+  bu_vls_printf( &dm_values.dv_string,
 		"set perspective %d\n",
 		mvars.perspective_mode ?
 		perspective_table[perspective_angle] :
@@ -1944,7 +1944,7 @@ set_perspective()
     perspective_angle = 3;
 
   if(mvars.perspective_mode)
-    rt_vls_printf( &dm_values.dv_string,
+    bu_vls_printf( &dm_values.dv_string,
 		  "set perspective %d\n",
 		  perspective_table[perspective_angle] );
 
@@ -2004,13 +2004,13 @@ glx_clear_to_black()
 #if 0
 /* Handy fakeouts when we don't want to link with -lmpc */
 usinit()	{ 
-	rt_log("usinit\n"); 
+	bu_log("usinit\n"); 
 }
 usnewlock()	{ 
-	rt_log("usnewlock\n"); 
+	bu_log("usnewlock\n"); 
 }
 taskcreate()	{ 
-	rt_log("taskcreate\n"); 
+	bu_log("taskcreate\n"); 
 }
 #endif
 
@@ -2470,7 +2470,7 @@ Glx_dm(argc, argv)
 int	argc;
 char	**argv;
 {
-  struct rt_vls	vls;
+  struct bu_vls	vls;
   int status;
   char *av[4];
   char xstr[32];
@@ -2478,10 +2478,10 @@ char	**argv;
   char zstr[32];
 
   if( !strcmp( argv[0], "set" )){
-    struct rt_vls tmp_vls;
+    struct bu_vls tmp_vls;
 
-    rt_vls_init(&vls);
-    rt_vls_init(&tmp_vls);
+    bu_vls_init(&vls);
+    bu_vls_init(&tmp_vls);
     start_catching_output(&tmp_vls);
 
     if( argc < 2 )  {
@@ -2489,19 +2489,19 @@ char	**argv;
       rt_structprint("dm_4d internal variables", Glx_vparse, (CONST char *)&mvars );
     } else if( argc == 2 ) {
       rt_vls_name_print( &vls, Glx_vparse, argv[1], (CONST char *)&mvars );
-      rt_log( "%s\n", rt_vls_addr(&vls) );
+      bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {
-      rt_vls_printf( &vls, "%s=\"", argv[1] );
-      rt_vls_from_argv( &vls, argc-2, argv+2 );
-      rt_vls_putc( &vls, '\"' );
+      bu_vls_printf( &vls, "%s=\"", argv[1] );
+      bu_vls_from_argv( &vls, argc-2, argv+2 );
+      bu_vls_putc( &vls, '\"' );
       rt_structparse( &vls, Glx_vparse, (char *)&mvars);
     }
 
-    rt_vls_free(&vls);
+    bu_vls_free(&vls);
 
     stop_catching_output(&tmp_vls);
-    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-    rt_vls_free(&tmp_vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
     return TCL_OK;
   }
 
@@ -2530,11 +2530,11 @@ char	**argv;
       return TCL_ERROR;
     }
 
-    rt_vls_init(&vls);
-    rt_vls_printf(&vls, "M %s %d %d\n", argv[2],
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "M %s %d %d\n", argv[2],
 		  irisX2ged(atoi(argv[3])), irisY2ged(atoi(argv[4])));
     status = cmdline(&vls, FALSE);
-    rt_vls_free(&vls);
+    bu_vls_free(&vls);
 
     if(status == CMD_OK)
       return TCL_OK;
@@ -2569,12 +2569,12 @@ char	**argv;
 	   (edobj || es_edflag > 0)){
 	  fastf_t fx, fy;
 
-	  rt_vls_init(&vls);
+	  bu_vls_init(&vls);
 	  fx = (omx/(fastf_t)winx_size - 0.5) * 2;
 	  fy = (0.5 - omy/(fastf_t)winy_size) * 2;
-	  rt_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
+	  bu_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
 	  (void)cmdline(&vls, FALSE);
-	  rt_vls_free(&vls);
+	  bu_vls_free(&vls);
 	}
 
 	break;
@@ -2608,7 +2608,7 @@ set_knob_offset()
 static void
 glx_var_init()
 {
-  dm_vars = rt_malloc(sizeof(struct glx_vars), "glx_var_init: glx_vars");
+  dm_vars = bu_malloc(sizeof(struct glx_vars), "glx_var_init: glx_vars");
   bzero((void *)dm_vars, sizeof(struct glx_vars));
   devmotionnotify = LASTEvent;
   devbuttonpress = LASTEvent;

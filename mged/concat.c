@@ -66,7 +66,7 @@ int			flags;
 	struct directory	*dupdp;
 	char			local[NAMESIZE+2];
 
-	if( input_dbip->dbi_magic != DBI_MAGIC )  rt_bomb("mged_dir_check:  bad dbip\n");
+	if( input_dbip->dbi_magic != DBI_MAGIC )  bu_bomb("mged_dir_check:  bad dbip\n");
 
 	/* Add the prefix, if any */
 	if( ncharadd > 0 )  {
@@ -152,15 +152,15 @@ char	**argv;
 	}
 
 	col_pr4v( dirp0, (int)(dup_dirp - dirp0));
-	rt_free( (char *)dirp0, "dir_getspace array" );
+	bu_free( (char *)dirp0, "dir_getspace array" );
 	
 	{
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "\n -----  %d duplicate names found  -----\n",num_dups);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "\n -----  %d duplicate names found  -----\n",num_dups);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	db_close( newdbp );
@@ -188,7 +188,7 @@ int			flags;
 	union record		*rec;
 	char			local[NAMESIZE+2+2];
 
-	if( input_dbip->dbi_magic != DBI_MAGIC )  rt_bomb("mged_dir_add:  bad dbip\n");
+	if( input_dbip->dbi_magic != DBI_MAGIC )  bu_bomb("mged_dir_add:  bad dbip\n");
 
 	/* Add the prefix, if any */
 	if( ncharadd > 0 )  {
@@ -219,11 +219,11 @@ int			flags;
 				break;
 		}
 		if( c > 'Z' )  {
-			rt_log("mged_dir_add: Duplicate of name '%s', ignored\n",
+			bu_log("mged_dir_add: Duplicate of name '%s', ignored\n",
 				local );
 			return 0;
 		}
-		rt_log("mged_dir_add: Duplicate of '%s' given new name '%s'\nYou should have used the 'dup' command to detect this,\nand then specified a prefix for the 'concat' command.\n",
+		bu_log("mged_dir_add: Duplicate of '%s' given new name '%s'\nYou should have used the 'dup' command to detect this,\nand then specified a prefix for the 'concat' command.\n",
 			loc2, local );
 	}
 
@@ -250,9 +250,9 @@ int			flags;
 
 	/* Update the name, and any references */
 	if( flags & DIR_SOLID )  {
-		rt_log("adding solid '%s'\n", local );
+		bu_log("adding solid '%s'\n", local );
 		if ((ncharadd + strlen(name)) >= (unsigned)NAMESIZE)
-			rt_log("WARNING: solid name \"%s%s\" truncated to \"%s\"\n",
+			bu_log("WARNING: solid name \"%s%s\" truncated to \"%s\"\n",
 				prestr,name, local);
 
 		/* Depends on all kinds of solids having name in same place */
@@ -261,7 +261,7 @@ int			flags;
 		register int i;
 		char	mref[NAMESIZE+2];
 
-		rt_log("adding  comb '%s'\n", local );
+		bu_log("adding  comb '%s'\n", local );
 		NAMEMOVE( local, rec->c.c_name );
 
 		/* Update all the member records */
@@ -280,7 +280,7 @@ int			flags;
 	if( db_put( dbip, dp, rec, 0, len ) < 0 )
 		return(-1);
 
-	rt_free( (char *)rec, "db_getmrec rec" );
+	bu_free( (char *)rec, "db_getmrec rec" );
 	return 0;
 }
 

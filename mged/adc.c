@@ -221,12 +221,12 @@ char	**argv;
 	  }
 
 	  if(mged_variables.scroll_enabled){
-	    struct rt_vls cmd;
+	    struct bu_vls cmd;
 
-	    rt_vls_init(&cmd);
-	    rt_vls_strcpy(&cmd, "sliders on\n");
+	    bu_vls_init(&cmd);
+	    bu_vls_strcpy(&cmd, "sliders on\n");
 	    (void)cmdline(&cmd, False);
-	    rt_vls_free(&cmd);
+	    bu_vls_free(&cmd);
 	  }
 
 	  dmaflag = 1;

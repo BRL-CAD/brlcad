@@ -63,7 +63,7 @@ register struct directory *dp;
 		break;
 	}
 
-	rt_log("%s:  ARB8 (%s)\n", dp->d_namep, s );
+	bu_log("%s:  ARB8 (%s)\n", dp->d_namep, s );
 
 	/* more in edsol.c/pr_solid, called from do_list */
 }

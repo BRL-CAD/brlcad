@@ -437,7 +437,7 @@ Ir_open()
 #endif /* DM_OGL */
 
 	ir_var_init();
-	rt_vls_printf(&pathName, ".dm_4d");
+	bu_vls_printf(&pathName, ".dm_4d");
 
 #if 1
 	{
@@ -465,7 +465,7 @@ Ir_open()
 		switch( inv->type )  {
 		default:
 #if 0
-			rt_log("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n",
+			bu_log("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n",
 			    inv->type);
 #endif
 			/* Since we recognize all the old devices, be
@@ -546,7 +546,7 @@ Ir_open()
 #endif
 
 #if 0
-	rt_log("4D: gt=%d, zbuf=%d, rgb=%d\n", ir_is_gt, mvars.zbuf, mvars.rgb);
+	bu_log("4D: gt=%d, zbuf=%d, rgb=%d\n", ir_is_gt, mvars.zbuf, mvars.rgb);
 #endif
 
 	/* Start out with the usual window */
@@ -798,7 +798,7 @@ Ir_close()
     Tk_DeleteFileHandler(ir_fd);
 
   if(dm_vars)
-    rt_free(dm_vars, "Ir_close: dm_vars");
+    bu_free(dm_vars, "Ir_close: dm_vars");
 
   ir_count = 0;
   return;
@@ -1357,37 +1357,37 @@ int mask;
   static	pending_x = 0;
   static	pending_y = 0;
   register struct dm_list *save_dm_list;
-  struct rt_vls cmd;
+  struct bu_vls cmd;
 
 /*
   if (qtest() == 0)
   return;
 */
 
-  rt_vls_init(&cmd);
+  bu_vls_init(&cmd);
 
   save_dm_list = curr_dm_list;
   curr_dm_list = (struct dm_list *)clientData;
 
   n = blkqread( values, NVAL );	/* n is # of shorts returned */
   if( mvars.debug ){
-    struct rt_vls tmp_vls;
+    struct bu_vls tmp_vls;
 
-    rt_vls_init(&tmp_vls);
-    rt_vls_printf(&tmp_vls, "blkqread gave %d\n", n);
-    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-    rt_vls_free(&tmp_vls);
+    bu_vls_init(&tmp_vls);
+    bu_vls_printf(&tmp_vls, "blkqread gave %d\n", n);
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
   }
   for( valp = values; n > 0; n -= 2, valp += 2 )  {
 
     ret = *valp;
     if( mvars.debug ){
-      struct rt_vls tmp_vls;
+      struct bu_vls tmp_vls;
 
-      rt_vls_init(&tmp_vls);
-      rt_vls_printf(&tmp_vls, "qread ret=%d, val=%d\n", ret, valp[1]);
-      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-      rt_vls_free(&tmp_vls);
+      bu_vls_init(&tmp_vls);
+      bu_vls_printf(&tmp_vls, "qread ret=%d, val=%d\n", ret, valp[1]);
+      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+      bu_vls_free(&tmp_vls);
     }
 #if IR_BUTTONS
     if((ret >= SWBASE && ret < SWBASE+IR_BUTTONS)
@@ -1446,7 +1446,7 @@ continue;
 					knobs[i] = 0;
 				}
 #endif
-				rt_vls_printf(&cmd,
+				bu_vls_printf(&cmd,
 				    "knob zero\n");
 				continue;
 			}
@@ -1462,7 +1462,7 @@ continue;
 					continue;
 				}
 				/* toggle depthcueing and remake colormap */
-				rt_vls_printf(&cmd,
+				bu_vls_printf(&cmd,
 				    "dm set depthcue !\n");
 				continue;
 			} else if(ret == F2KEY)  {
@@ -1473,7 +1473,7 @@ continue;
 					continue;
 				}
 				/* toggle zclipping */
-				rt_vls_printf(&cmd,
+				bu_vls_printf(&cmd,
 				    "dm set zclip !\n");
 				continue;
 			} else if(ret == F3KEY)  {
@@ -1484,7 +1484,7 @@ continue;
 					continue;
 				}
 				perspective_mode = 1-perspective_mode;
-				rt_vls_printf( &cmd,
+				bu_vls_printf( &cmd,
 				    "set perspective %d\n",
 				    perspective_mode ?
 				    perspective_table[perspective_angle] :
@@ -1499,7 +1499,7 @@ continue;
 					continue;
 				}
 				/* toggle zbuffer status */
-				rt_vls_printf(&cmd,
+				bu_vls_printf(&cmd,
 				    "dm set zbuffer !\n");
 				continue;
 			} else if(ret == F5KEY)  {
@@ -1510,7 +1510,7 @@ continue;
 					continue;
 				}
 				/* toggle status */
-				rt_vls_printf(&cmd,
+				bu_vls_printf(&cmd,
 				    "dm set lighting !\n");
 				continue;
 			} else if (ret == F6KEY) {
@@ -1522,7 +1522,7 @@ continue;
 				}
 				/* toggle perspective matrix */
 				if (--perspective_angle < 0) perspective_angle = 3;
-				if(perspective_mode) rt_vls_printf( &cmd,
+				if(perspective_mode) bu_vls_printf( &cmd,
 				    "set perspective %d\n",
 				    perspective_table[perspective_angle] );
 				dmaflag = 1;
@@ -1538,12 +1538,12 @@ continue;
 #if 0
 				no_faceplate = !no_faceplate;
 
-				rt_vls_strcat( &cmd,
+				bu_vls_strcat( &cmd,
 				    no_faceplate ?
 				    "set faceplate 0\n" :
 				    "set faceplate 1\n" );
 #else
-				rt_vls_strcat( &cmd,
+				bu_vls_strcat( &cmd,
 					       "set faceplate !\n" );
 #endif
 				Ir_configure_window_shape();
@@ -1557,7 +1557,7 @@ continue;
 					continue;
 				}
 
-				rt_vls_strcat( &cmd,
+				bu_vls_strcat( &cmd,
 					       "set show_menu !\n" );
 
 				Ir_configure_window_shape();
@@ -1584,11 +1584,11 @@ continue;
 				button(i);
 #				else
 				/* better way -- queue a string command */
-				rt_vls_strcat( &cmd,
+				bu_vls_strcat( &cmd,
 				    "press " );
-				rt_vls_strcat( &cmd,
+				bu_vls_strcat( &cmd,
 				    label_button(i) );
-				rt_vls_strcat( &cmd,
+				bu_vls_strcat( &cmd,
 				    "\n" );
 #				endif
 			}
@@ -1607,7 +1607,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "press 35,25\n");
+	bu_vls_strcat(&cmd, "press 35,25\n");
 	break;
       case FOURKEY:
 	/*  Help mode */
@@ -1616,7 +1616,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "press 45,45\n");
+	bu_vls_strcat(&cmd, "press 45,45\n");
 	break;
       case AKEY:
 	/*  Help mode */
@@ -1625,7 +1625,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "adc\n");
+	bu_vls_strcat(&cmd, "adc\n");
 	break;
       case BKEY:
 	/*  Help mode */
@@ -1634,7 +1634,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "press bottom\n");
+	bu_vls_strcat(&cmd, "press bottom\n");
 	break;
       case EKEY:
 	/*  Help mode */
@@ -1643,7 +1643,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "set e_axes !\n");
+	bu_vls_strcat(&cmd, "set e_axes !\n");
 	break;
       case FKEY:
 	/*  Help mode */
@@ -1652,7 +1652,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "press front\n");
+	bu_vls_strcat(&cmd, "press front\n");
 	break;
       case IKEY:
 	/*  Help mode */
@@ -1661,7 +1661,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "aip f\n");
+	bu_vls_strcat(&cmd, "aip f\n");
 	break;
       case LKEY:
 	/*  Help mode */
@@ -1670,7 +1670,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "press left\n");
+	bu_vls_strcat(&cmd, "press left\n");
 	break;
       case OKEY:
 	/*  Help mode */
@@ -1679,7 +1679,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "press oill\n");
+	bu_vls_strcat(&cmd, "press oill\n");
 	break;
       case PKEY:
 	/*  Help mode */
@@ -1688,7 +1688,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "M 1 0 0\n");
+	bu_vls_strcat(&cmd, "M 1 0 0\n");
 	break;
       case QKEY:
 	/*  Help mode */
@@ -1697,7 +1697,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "press reject\n");
+	bu_vls_strcat(&cmd, "press reject\n");
 	break;
       case RKEY:
 	/*  Help mode */
@@ -1706,7 +1706,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "press right\n");
+	bu_vls_strcat(&cmd, "press right\n");
 	break;
       case SKEY:
 	/*  Help mode */
@@ -1715,7 +1715,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "press sill\n");
+	bu_vls_strcat(&cmd, "press sill\n");
 	break;
       case TKEY:
 	/*  Help mode */
@@ -1724,7 +1724,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "press top\n");
+	bu_vls_strcat(&cmd, "press top\n");
 	break;
       case UKEY:
 	/*  Help mode */
@@ -1733,7 +1733,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "aip b\n");
+	bu_vls_strcat(&cmd, "aip b\n");
 	break;
       case VKEY:
 	/*  Help mode */
@@ -1742,7 +1742,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "set v_axes !\n");
+	bu_vls_strcat(&cmd, "set v_axes !\n");
 	break;
       case WKEY:
 	/*  Help mode */
@@ -1751,7 +1751,7 @@ continue;
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "set w_axes !\n");
+	bu_vls_strcat(&cmd, "set w_axes !\n");
 	break;
       default:
 	break;
@@ -1779,80 +1779,80 @@ continue;
 			switch(ret)  {
 			case DIAL0:
 				if(mged_variables.adcflag) {
-					rt_vls_printf( &cmd, "knob ang1 %d\n",
+					bu_vls_printf( &cmd, "knob ang1 %d\n",
 							setting );
 				}
 				break;
 			case DIAL1:
-				rt_vls_printf( &cmd , "knob S %f\n",
+				bu_vls_printf( &cmd , "knob S %f\n",
 							setting/2048.0 );
 				break;
 			case DIAL2:
 				if(mged_variables.adcflag)
-					rt_vls_printf( &cmd , "knob ang2 %d\n",
+					bu_vls_printf( &cmd , "knob ang2 %d\n",
 							setting );
 				else {
 				  if(mged_variables.rateknobs)
-				    rt_vls_printf( &cmd , "knob z %f\n",
+				    bu_vls_printf( &cmd , "knob z %f\n",
 						   setting/2048.0 );
 				  else
-				    rt_vls_printf( &cmd , "knob az %f\n",
+				    bu_vls_printf( &cmd , "knob az %f\n",
 						   setting/512.0 );
 				}
 				break;
 			case DIAL3:
 				if(mged_variables.adcflag)
-					rt_vls_printf( &cmd , "knob distadc %d\n",
+					bu_vls_printf( &cmd , "knob distadc %d\n",
 							setting );
 				else {
 				  if(mged_variables.rateknobs)
-				    rt_vls_printf( &cmd , "knob Z %f\n",
+				    bu_vls_printf( &cmd , "knob Z %f\n",
 						   setting/2048.0 );
 				  else
-				    rt_vls_printf( &cmd , "knob aZ %f\n",
+				    bu_vls_printf( &cmd , "knob aZ %f\n",
 						   setting/512.0 );
 				}
 				break;
 			case DIAL4:
 				if(mged_variables.adcflag)
-					rt_vls_printf( &cmd , "knob yadc %d\n",
+					bu_vls_printf( &cmd , "knob yadc %d\n",
 							setting );
 				else {
 				  if(mged_variables.rateknobs)
-				    rt_vls_printf( &cmd , "knob y %f\n",
+				    bu_vls_printf( &cmd , "knob y %f\n",
 						   setting/2048.0 );
 				  else
-				    rt_vls_printf( &cmd , "knob ay %f\n",
+				    bu_vls_printf( &cmd , "knob ay %f\n",
 						   setting/512.0 );
 				}
 				break;
 			case DIAL5:
 			        if(mged_variables.rateknobs)
-				  rt_vls_printf( &cmd , "knob Y %f\n",
+				  bu_vls_printf( &cmd , "knob Y %f\n",
 						 setting/2048.0 );
 				else
-				  rt_vls_printf( &cmd , "knob aY %f\n",
+				  bu_vls_printf( &cmd , "knob aY %f\n",
 						 setting/512.0 );
 				break;
 			case DIAL6:
 				if(mged_variables.adcflag)
-					rt_vls_printf( &cmd , "knob xadc %d\n",
+					bu_vls_printf( &cmd , "knob xadc %d\n",
 							setting );
 				else {
 				  if(mged_variables.rateknobs)
-				    rt_vls_printf( &cmd , "knob x %f\n",
+				    bu_vls_printf( &cmd , "knob x %f\n",
 						   setting/2048.0 );
 				  else
-				    rt_vls_printf( &cmd , "knob ax %f\n",
+				    bu_vls_printf( &cmd , "knob ax %f\n",
 						   setting/512.0 );
 				}
 				break;
 			case DIAL7:
 			        if(mged_variables.rateknobs)
-				  rt_vls_printf( &cmd , "knob X %f\n",
+				  bu_vls_printf( &cmd , "knob X %f\n",
 						 setting/2048.0 );
 				else
-				  rt_vls_printf( &cmd , "knob aX %f\n",
+				  bu_vls_printf( &cmd , "knob aX %f\n",
 						 setting/512.0 );
 				break;
 			}
@@ -1898,7 +1898,7 @@ continue;
 			 *  will be zero already, and we just parrot the last
 			 *  X value.
 			 */
-			rt_vls_printf( &cmd, "%c %d %d %d\n",
+			bu_vls_printf( &cmd, "%c %d %d %d\n",
 			    pending_button,
 			    pending_val,
 			    pending_x, pending_y);
@@ -1924,12 +1924,12 @@ continue;
 			break;
 		default:
 		  {
-		    struct rt_vls tmp_vls;
+		    struct bu_vls tmp_vls;
 
-		    rt_vls_init(&tmp_vls);
-		    rt_vls_printf(&tmp_vls, "IRIS device %d gave %d?\n", ret, valp[1]);
-		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		    rt_vls_free(&tmp_vls);
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "IRIS device %d gave %d?\n", ret, valp[1]);
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    bu_vls_free(&tmp_vls);
 		  }
 		  break;
 		}
@@ -1937,7 +1937,7 @@ continue;
 
   scroll_active = 0;
   (void)cmdline(&cmd, FALSE);
-  rt_vls_free(&cmd);
+  bu_vls_free(&cmd);
   curr_dm_list = save_dm_list;
 }
 
@@ -2004,12 +2004,12 @@ void
 Ir_statechange( a, b )
 {
 	if( mvars.debug ){
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "statechange %d %d\n", a, b );
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "statechange %d %d\n", a, b );
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 	/*
 	 *  Based upon new state, possibly do extra stuff,
@@ -2035,12 +2035,12 @@ Ir_statechange( a, b )
 		break;
 	default:
 	  {
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	    rt_vls_init(&tmp_vls);
-	    rt_vls_printf(&tmp_vls, "Ir_statechange: unknown state %s\n", state_str[b]);
-	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	    rt_vls_free(&tmp_vls);
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "Ir_statechange: unknown state %s\n", state_str[b]);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	  }
 	  break;
 	}
@@ -2053,12 +2053,12 @@ register int cmd;
 register struct solid *sp;
 {
 	if( mvars.debug ){
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "viewchange( %d, x%x )\n", cmd, sp );
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "viewchange( %d, x%x )\n", cmd, sp );
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 	switch( cmd )  {
 	case DM_CHGV_ADD:
@@ -2366,13 +2366,13 @@ ir_clear_to_black()
 #if 0
 /* Handy fakeouts when we don't want to link with -lmpc */
 usinit()	{ 
-	rt_log("usinit\n"); 
+	bu_log("usinit\n"); 
 }
 usnewlock()	{ 
-	rt_log("usnewlock\n"); 
+	bu_log("usnewlock\n"); 
 }
 taskcreate()	{ 
-	rt_log("taskcreate\n"); 
+	bu_log("taskcreate\n"); 
 }
 #endif
 
@@ -2832,8 +2832,8 @@ Ir_dm(argc, argv)
 int	argc;
 char	**argv;
 {
-	struct rt_vls	vls;
-	struct rt_vls tmp_vls;
+	struct bu_vls	vls;
+	struct bu_vls tmp_vls;
 
 	if( argc < 1 )  return -1;
 
@@ -2843,36 +2843,36 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	rt_vls_init(&vls);
-	rt_vls_init(&tmp_vls);
+	bu_vls_init(&vls);
+	bu_vls_init(&tmp_vls);
 	start_catching_output(&tmp_vls);
 
 	if( argc < 2 )  {
 		/* Bare set command, print out current settings */
 	  rt_structprint( "dm_4d internal variables", Ir_vparse, (char *)&mvars );
-		rt_log("%s", rt_vls_addr(&vls) );
+		bu_log("%s", bu_vls_addr(&vls) );
 	} else if( argc == 2 ) {
 	  rt_vls_name_print( &vls, Ir_vparse, argv[1], (char *)&mvars );
-		rt_log( "%s\n", rt_vls_addr(&vls) );
+		bu_log( "%s\n", bu_vls_addr(&vls) );
   	} else {
-	        rt_vls_printf( &vls, "%s=\"", argv[1] );
-	        rt_vls_from_argv( &vls, argc-2, argv+2 );
-		rt_vls_putc( &vls, '\"' );
+	        bu_vls_printf( &vls, "%s=\"", argv[1] );
+	        bu_vls_from_argv( &vls, argc-2, argv+2 );
+		bu_vls_putc( &vls, '\"' );
 		rt_structparse( &vls, Ir_vparse, (char *)&mvars );
 	}
 
-	rt_vls_free(&vls);
+	bu_vls_free(&vls);
 
 	stop_catching_output(&tmp_vls);
-	Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	rt_vls_free(&tmp_vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
 	return TCL_OK;
 }
 
 static void
 ir_var_init()
 {
-  dm_vars = (char *)rt_malloc(sizeof(struct ir_vars), "ir_var_init: ir_vars");
+  dm_vars = (char *)bu_malloc(sizeof(struct ir_vars), "ir_var_init: ir_vars");
   bzero((void *)dm_vars, sizeof(struct ir_vars));
   mvars.cueing_on = 1;
   mvars.zclipping_on = 1;

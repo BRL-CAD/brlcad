@@ -181,46 +181,46 @@ char	**argv;
 		(void)fprintf(tabptr,"\n\nNumber Solids = %d  Number Regions = %d\n",
 				numsol,numreg);
 		{
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, "Processed %d Solids and %d Regions\n",
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, "Processed %d Solids and %d Regions\n",
 				numsol,numreg);
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 		}
 
 		(void)fclose( tabptr );
 	}
 
 	else {
-		struct rt_vls	cmd;
+		struct bu_vls	cmd;
 
 		(void)fprintf(tabptr,"* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 		(void)fclose( tabptr );
 
 		{
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, "Processed %d Regions\n",numreg);
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, "Processed %d Regions\n",numreg);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 		}
 
 		/* make ordered idents */
-		rt_vls_init( &cmd );
-		rt_vls_strcpy( &cmd, sortcmd );
-		rt_vls_strcat( &cmd, argv[1] );
-		Tcl_AppendResult(interp, rt_vls_addr(&cmd), "\n", (char *)NULL);
-		(void)system( rt_vls_addr(&cmd) );
+		bu_vls_init( &cmd );
+		bu_vls_strcpy( &cmd, sortcmd );
+		bu_vls_strcat( &cmd, argv[1] );
+		Tcl_AppendResult(interp, bu_vls_addr(&cmd), "\n", (char *)NULL);
+		(void)system( bu_vls_addr(&cmd) );
 
-		rt_vls_trunc( &cmd, 0 );
-		rt_vls_strcpy( &cmd, catcmd );
-		rt_vls_strcat( &cmd, argv[1] );
-		Tcl_AppendResult(interp, rt_vls_addr(&cmd), "\n", (char *)NULL);
-		(void)system( rt_vls_addr(&cmd) );
-		rt_vls_free( &cmd );
+		bu_vls_trunc( &cmd, 0 );
+		bu_vls_strcpy( &cmd, catcmd );
+		bu_vls_strcat( &cmd, argv[1] );
+		Tcl_AppendResult(interp, bu_vls_addr(&cmd), "\n", (char *)NULL);
+		(void)system( bu_vls_addr(&cmd) );
+		bu_vls_free( &cmd );
 
 		(void)unlink( "/tmp/ord_id\0" );
 	}
@@ -264,7 +264,7 @@ char	*argv[];
 
   (void)close(i);
 
-  av = (char **)rt_malloc(sizeof(char *)*(argc + 2), "f_edcodes: av");
+  av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edcodes: av");
   av[0] = "wcodes";
   av[1] = tmpfil;
   for(i = 2; i < argc + 1; ++i)
@@ -274,7 +274,7 @@ char	*argv[];
 
   if( f_wcodes(clientData, interp, argc + 1, av) == TCL_ERROR ){
     (void)unlink(tmpfil);
-    rt_free((char *)av, "f_edcodes: av");
+    bu_free((char *)av, "f_edcodes: av");
     return TCL_ERROR;
   }
 
@@ -287,7 +287,7 @@ char	*argv[];
     status = TCL_ERROR;
 
   (void)unlink(tmpfil);
-  rt_free((char *)av, "f_edcodes: av");
+  bu_free((char *)av, "f_edcodes: av");
   return status;
 }
 
@@ -500,17 +500,17 @@ int flag;
 	int nparts, i, k;
 	int	nsoltemp;
 	int dchar = 0;
-	struct rt_vls str;
+	struct bu_vls str;
 
-	rt_vls_init( &str );
+	bu_vls_init( &str );
 
 	if( pathpos >= MAX_LEVELS ) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "nesting exceeds %d levels\n",MAX_LEVELS);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "nesting exceeds %d levels\n",MAX_LEVELS);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 
 	  for(i=0; i<MAX_LEVELS; i++)
 	    Tcl_AppendResult(interp, "/", path[i]->d_namep, (char *)NULL);
@@ -672,12 +672,12 @@ int flag;
 	discr[numsol++] = dchar;
 	identt.i_index = numsol;
 	if(numsol > MAXARGS) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "tables: number of solids > max (%d)\n",MAXARGS);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "tables: number of solids > max (%d)\n",MAXARGS);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 
 	  exit(10);
 	}
@@ -704,7 +704,7 @@ int flag;
 
 	/* Pretty-print the solid */
 	do_list( &str, dp, 1 );		/* verbose */
-	fprintf(tabptr, rt_vls_addr(&str));
+	fprintf(tabptr, bu_vls_addr(&str));
 }
 
 
@@ -857,13 +857,13 @@ struct directory	*dp;
 			  /* integer was input */
 			  eflag++;
 			  if(lpos < maxpos[field]) {
-			    struct rt_vls tmp_vls;
+			    struct bu_vls tmp_vls;
 
 			    elflag++;
-			    rt_vls_init(&tmp_vls);
-			    rt_vls_printf(&tmp_vls, "%c", c );
-			    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-			    rt_vls_free(&tmp_vls);
+			    bu_vls_init(&tmp_vls);
+			    bu_vls_printf(&tmp_vls, "%c", c );
+			    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			    bu_vls_free(&tmp_vls);
 			    ctemp[lpos++] = c;
 			  }
 			  else {
@@ -880,12 +880,12 @@ struct directory	*dp;
 			  lpos = field = eflag = elflag = 0;
 
 			  {
-			    struct rt_vls tmp_vls;
+			    struct bu_vls tmp_vls;
 
-			    rt_vls_init(&tmp_vls);
-			    rt_vls_printf(&tmp_vls, "\r%-6d%-3d%-3d%-4d\r",item,air,mat,los);
-			    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-			    rt_vls_free(&tmp_vls);
+			    bu_vls_init(&tmp_vls);
+			    bu_vls_printf(&tmp_vls, "\r%-6d%-3d%-3d%-4d\r",item,air,mat,los);
+			    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			    bu_vls_free(&tmp_vls);
 			  }
 
 			  break;
@@ -936,26 +936,26 @@ void
 prfield( num )
 int num;
 {
-  struct rt_vls tmp_vls;
+  struct bu_vls tmp_vls;
 
-  rt_vls_init(&tmp_vls);
+  bu_vls_init(&tmp_vls);
   switch( num ) {
   case 0:
-    rt_vls_printf(&tmp_vls, "%-6d",item);
+    bu_vls_printf(&tmp_vls, "%-6d",item);
     break;
   case 1:
-    rt_vls_printf(&tmp_vls, "%-3d",air);
+    bu_vls_printf(&tmp_vls, "%-3d",air);
     break;
   case 2:
-    rt_vls_printf(&tmp_vls, "%-3d",mat);
+    bu_vls_printf(&tmp_vls, "%-3d",mat);
     break;
   case 3:
-    rt_vls_printf(&tmp_vls, "%-4d",los);
+    bu_vls_printf(&tmp_vls, "%-4d",los);
     break;
   }
 
-  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-  rt_vls_free(&tmp_vls);
+  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+  bu_vls_free(&tmp_vls);
   return;
 }
 

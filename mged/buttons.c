@@ -179,12 +179,12 @@ register int bnum;
 	register struct buttons *bp;
 
 	if( edsol && edobj ){
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	/* Process the button function requested. */
@@ -197,12 +197,12 @@ register int bnum;
 	}
 
 	{
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 	  
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "button(%d):  Not a defined operation\n", bnum);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "button(%d):  Not a defined operation\n", bnum);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 }
 
@@ -219,12 +219,12 @@ char *str;{
 
 
 	if( edsol && edobj ){
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	if(strcmp(str, "help") == 0) {
@@ -286,12 +286,12 @@ int bnum;
 	}
 
 	{
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 	  
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "label_button(%d):  Not a defined operation\n", bnum);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "label_button(%d):  Not a defined operation\n", bnum);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	return("");
@@ -314,12 +314,12 @@ static void bv_rate_toggle()
   mged_variables.rateknobs = !mged_variables.rateknobs;
 
   if(mged_variables.scroll_enabled){
-    struct rt_vls cmd;
+    struct bu_vls cmd;
 
-    rt_vls_init(&cmd);
-    rt_vls_strcpy( &cmd, "sliders on\n");
+    bu_vls_init(&cmd);
+    bu_vls_strcpy( &cmd, "sliders on\n");
     (void)cmdline(&cmd, False);
-    rt_vls_free(&cmd);
+    bu_vls_free(&cmd);
   }
 
   dmaflag = 1;
@@ -386,12 +386,12 @@ static void bv_adcursor()  {
 	}
 
 	if(mged_variables.scroll_enabled){
-	  struct rt_vls cmd;
+	  struct bu_vls cmd;
 
-	  rt_vls_init(&cmd);
-	  rt_vls_strcpy( &cmd, "sliders on\n");
+	  bu_vls_init(&cmd);
+	  bu_vls_strcpy( &cmd, "sliders on\n");
 	  (void)cmdline(&cmd, False);
-	  rt_vls_free(&cmd);
+	  bu_vls_free(&cmd);
 	}
 
 	dmaflag = 1;
@@ -837,12 +837,12 @@ btn_head_menu(i, menu, item)  {
 		break;
 	default:
 	  {
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	    rt_vls_init(&tmp_vls);
-	    rt_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
-	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	    rt_vls_free(&tmp_vls);
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	  }
 
 	  break;
@@ -865,12 +865,12 @@ chg_l2menu(i)  {
 		break;
 	default:
 	  {
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	    rt_vls_init(&tmp_vls);
-	    rt_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
-	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	    rt_vls_free(&tmp_vls);
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	  }
 
 	  break;

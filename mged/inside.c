@@ -52,8 +52,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-RT_EXTERN( void nmg_invert_shell , ( struct shell *s , CONST struct rt_tol *tol ) );
-RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s, fastf_t thick , int normal_ward , int approximate , CONST struct rt_tol *tol ) );
+BU_EXTERN( void nmg_invert_shell , ( struct shell *s , CONST struct rt_tol *tol ) );
+BU_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s, fastf_t thick , int normal_ward , int approximate , CONST struct rt_tol *tol ) );
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 extern struct rt_tol		mged_tol;	/* from ged.c */
@@ -250,12 +250,12 @@ char **argv;
 	  return TCL_ERROR;
 	}
 	if( (int)strlen(argv[arg]) >= NAMESIZE )  {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "Names are limited to %d characters\n", NAMESIZE-1);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "Names are limited to %d characters\n", NAMESIZE-1);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	  return TCL_ERROR;
 	}
 	newname = argv[arg];
@@ -521,53 +521,53 @@ plane_t	planes[6];
 	   */
 	  point_t pt[4];
 	  fastf_t dist0,dist1;
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
 	  
 	  /* calculate the four possible intersect points */
 	  if( rt_mkpoint_3planes( pt[0] , planes[1] , planes[2] , planes[3] ) )
 	    {
-	      rt_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
-	      rt_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 0:\n" );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
-	      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	      rt_vls_free(&tmp_vls);
+	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
+	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 0:\n" );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+	      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
 	  if( rt_mkpoint_3planes( pt[1] , planes[2] , planes[3] , planes[4] ) )
 	    {
-	      rt_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
-	      rt_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 1:\n" );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
-	      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	      rt_vls_free(&tmp_vls);
+	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
+	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 1:\n" );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+	      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
 	  if( rt_mkpoint_3planes( pt[2] , planes[3] , planes[4] , planes[1] ) )
 	    {
-	      rt_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
-	      rt_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 2:\n" );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
-	      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	      rt_vls_free(&tmp_vls);
+	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
+	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 2:\n" );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+	      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
 	  if( rt_mkpoint_3planes( pt[3] , planes[4] , planes[1] , planes[2] ) )
 	    {
-	      rt_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
-	      rt_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 3:\n" );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
-	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
-	      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	      rt_vls_free(&tmp_vls);
+	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
+	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 3:\n" );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+	      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
 			
@@ -673,13 +673,13 @@ plane_t	planes[6];
 			}
 			if( !found )
 			{
-			  struct rt_vls tmp_vls;
+			  struct bu_vls tmp_vls;
 
-			  rt_vls_init(&tmp_vls);
-			  rt_vls_printf(&tmp_vls,"Could not move face plane for arb7, face #%d\n",
+			  bu_vls_init(&tmp_vls);
+			  bu_vls_printf(&tmp_vls,"Could not move face plane for arb7, face #%d\n",
 					i );
-			  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-			  rt_vls_free(&tmp_vls);
+			  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			  bu_vls_free(&tmp_vls);
 			  nmg_km( m );
 			  return( 1 );
 			}
@@ -877,12 +877,12 @@ fastf_t	thick[6];
 
 	for(i=0; i<3; i++) {
 	  if( (nmag[i] = mag[i] - thick[i]) <= 0.0 ){
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	    rt_vls_init(&tmp_vls);
-	    rt_vls_printf(&tmp_vls, "Warning: new vector [%d] length <= 0 \n", i);
-	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	    rt_vls_free(&tmp_vls);
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "Warning: new vector [%d] length <= 0 \n", i);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	  }
 	}
 	VSCALE(ell->a, ell->a, nmag[0]/mag[0]);

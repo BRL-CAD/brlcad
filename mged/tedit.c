@@ -711,7 +711,7 @@ char *file;
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = DEFEDITOR;
 
-		rt_log("Invoking %s...\n", ed);
+		bu_log("Invoking %s...\n", ed);
 		(void)execlp(ed, ed, file, 0);
 		perror(ed);
 		exit(1);
@@ -744,7 +744,7 @@ char *file;
 		(void)signal( SIGQUIT, SIG_DFL );
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = DEFEDITOR;
-		rt_log("Invoking %s...\n", ed);
+		bu_log("Invoking %s...\n", ed);
 		(void)execlp(ed, ed, file, 0);
 		perror(ed);
 		exit(1);

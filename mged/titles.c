@@ -71,12 +71,12 @@ extern struct rt_db_internal	es_int;
  */
 void
 create_text_overlay( vp )
-register struct rt_vls	*vp;
+register struct bu_vls	*vp;
 {
 	struct directory	*dp;
 	register int	i;
 
-	RT_VLS_CHECK(vp);
+	BU_CK_VLS(vp);
 
 	/*
 	 * Set up for character output.  For the best generality, we
@@ -88,19 +88,19 @@ register struct rt_vls	*vp;
 	if( es_edflag >= 0 ) {
 		dp = illump->s_path[illump->s_last];
 
-		rt_vls_strcat( vp, "** SOLID -- " );
-		rt_vls_strcat( vp, dp->d_namep );
-		rt_vls_strcat( vp, ": ");
+		bu_vls_strcat( vp, "** SOLID -- " );
+		bu_vls_strcat( vp, dp->d_namep );
+		bu_vls_strcat( vp, ": ");
 
 		vls_solid( vp, &es_int, rt_identity );
 
 		if(illump->s_last) {
-			rt_vls_strcat( vp, "\n** PATH --  ");
+			bu_vls_strcat( vp, "\n** PATH --  ");
 			for(i=0; i <= illump->s_last; i++) {
-				rt_vls_strcat( vp, "/" );
-				rt_vls_strcat( vp, illump->s_path[i]->d_namep);
+				bu_vls_strcat( vp, "/" );
+				bu_vls_strcat( vp, illump->s_path[i]->d_namep);
 			}
-			rt_vls_strcat( vp, ": " );
+			bu_vls_strcat( vp, ": " );
 
 			/* print the evaluated (path) solid parameters */
 			vls_solid( vp, &es_int, es_mat );
@@ -109,12 +109,12 @@ register struct rt_vls	*vp;
 
 	/* display path info for object editing also */
 	if( state == ST_O_EDIT ) {
-		rt_vls_strcat( vp, "** PATH --  ");
+		bu_vls_strcat( vp, "** PATH --  ");
 		for(i=0; i <= illump->s_last; i++) {
-			rt_vls_strcat( vp, "/" );
-			rt_vls_strcat( vp, illump->s_path[i]->d_namep);
+			bu_vls_strcat( vp, "/" );
+			bu_vls_strcat( vp, illump->s_path[i]->d_namep);
 		}
-		rt_vls_strcat( vp, ": " );
+		bu_vls_strcat( vp, ": " );
 
 		/* print the evaluated (path) solid parameters */
 		if( illump->s_Eflag == 0 ) {
@@ -142,16 +142,16 @@ void
 screen_vls( xbase, ybase, vp )
 int	xbase;
 int	ybase;
-register struct rt_vls	*vp;
+register struct bu_vls	*vp;
 {
 	register char	*start;
 	register char	*end;
 	register int	y;
 
-	RT_VLS_CHECK( vp );
+	BU_CK_VLS( vp );
 	y = ybase;
 
-	start = rt_vls_addr( vp );
+	start = bu_vls_addr( vp );
 	while( *start != '\0' )  {
 		if( (end = strchr( start, '\n' )) == NULL )  return;
 
@@ -191,32 +191,32 @@ int call_dm;
 	register int    yloc, xloc;
 	auto fastf_t	az, el, tw;
 	int		scroll_ybot;
-	struct rt_vls   vls;
+	struct bu_vls   vls;
 	typedef char    c_buf[80];
 	auto c_buf      cent_x, cent_y, cent_z, size, azimuth, elevation,
 	                twist, ang_x, ang_y, ang_z;
 
-	rt_vls_init(&vls);
+	bu_vls_init(&vls);
 	
 	/* Set the Tcl variables to the appropriate values. */
 
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "state", state_str[state],
 		    TCL_GLOBAL_ONLY);
 	if (illump != SOLID_NULL) {
-	    struct rt_vls path_lhs, path_rhs;
+	    struct bu_vls path_lhs, path_rhs;
 
-	    rt_vls_init(&path_lhs);
-	    rt_vls_init(&path_rhs);
+	    bu_vls_init(&path_lhs);
+	    bu_vls_init(&path_rhs);
 	    for (i = 0; i < ipathpos; i++)
-		rt_vls_printf(&path_lhs, "/%s", illump->s_path[i]->d_namep);
+		bu_vls_printf(&path_lhs, "/%s", illump->s_path[i]->d_namep);
 	    for (; i <= illump->s_last; i++)
-		rt_vls_printf(&path_rhs, "/%s", illump->s_path[i]->d_namep);
+		bu_vls_printf(&path_rhs, "/%s", illump->s_path[i]->d_namep);
 	    Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "path_lhs",
-			rt_vls_addr(&path_lhs), TCL_GLOBAL_ONLY);
+			bu_vls_addr(&path_lhs), TCL_GLOBAL_ONLY);
 	    Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "path_rhs",
-			rt_vls_addr(&path_rhs), TCL_GLOBAL_ONLY);
-	    rt_vls_free(&path_rhs);
-	    rt_vls_free(&path_lhs);
+			bu_vls_addr(&path_rhs), TCL_GLOBAL_ONLY);
+	    bu_vls_free(&path_rhs);
+	    bu_vls_free(&path_lhs);
 	} else {
 	    Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "path_lhs", "",
 			TCL_GLOBAL_ONLY);
@@ -228,14 +228,14 @@ int call_dm;
 	sprintf(cent_y, "%.3f", -toViewcenter[MDY]*base2local);
 	sprintf(cent_z, "%.3f", -toViewcenter[MDZ]*base2local);
 
-	rt_vls_printf(&vls, "%s %s %s", cent_x, cent_y, cent_z);
-	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "center", rt_vls_addr(&vls),
+	bu_vls_printf(&vls, "%s %s %s", cent_x, cent_y, cent_z);
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "center", bu_vls_addr(&vls),
 		    TCL_GLOBAL_ONLY);
-	rt_vls_trunc(&vls, 0);
+	bu_vls_trunc(&vls, 0);
 
 	sprintf(size, "%.3f", VIEWSIZE*base2local);
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "size", size, TCL_GLOBAL_ONLY);
-	rt_vls_trunc(&vls, 0);
+	bu_vls_trunc(&vls, 0);
 
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "units",
 		    (char *)rt_units_string(dbip->dbi_local2base),
@@ -265,10 +265,10 @@ int call_dm;
 	sprintf(ang_y, "%.2f", rate_rotate[Y]);
 	sprintf(ang_z, "%.2f", rate_rotate[Z]);
 
-	rt_vls_printf(&vls, "%s %s %s", ang_x, ang_y, ang_z);
-	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "ang", rt_vls_addr(&vls),
+	bu_vls_printf(&vls, "%s %s %s", ang_x, ang_y, ang_z);
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "ang", bu_vls_addr(&vls),
 		    TCL_GLOBAL_ONLY);
-	rt_vls_trunc(&vls, 0);
+	bu_vls_trunc(&vls, 0);
 
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "adc", "", TCL_GLOBAL_ONLY);
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint", "", TCL_GLOBAL_ONLY);
@@ -293,7 +293,7 @@ int call_dm;
 	}
 
 	if (!call_dm) {
-	    rt_vls_free(&vls);
+	    bu_vls_free(&vls);
 	    return;
 	}
 
@@ -383,16 +383,16 @@ int call_dm;
 	/*
 	 * General status information on the next to last line
 	 */
-	rt_vls_printf(&vls,
+	bu_vls_printf(&vls,
 		      " cent=(%s, %s, %s), sz=%s %s, ", cent_x, cent_y, cent_z,
 		      size, rt_units_string(dbip->dbi_local2base));
 
-	rt_vls_printf(&vls,
+	bu_vls_printf(&vls,
 		       "az=%s el=%s tw=%s ang=(%s, %s, %s)",
 		      azimuth, elevation, twist, ang_x, ang_y, ang_z);
-	dmp->dmr_puts( rt_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1,
+	dmp->dmr_puts( bu_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1,
 		       DM_WHITE );
-	rt_vls_trunc(&vls, 0);
+	bu_vls_trunc(&vls, 0);
 	/*
 	 * Second status line
 	 */
@@ -418,47 +418,47 @@ int call_dm;
 		    -toViewcenter[MDZ]);
 		MAT4X3VEC(pt2, Viewrot, center_model);
 		VADD2(pt3, pt1, pt2);
-		rt_vls_printf( &vls,
+		bu_vls_printf( &vls,
 " curs:  a1=%.1f,  a2=%.1f,  dst=%.3f,  cent=(%.3f, %.3f),  delta=(%.3f, %.3f)",
 			angle1 * radtodeg, angle2 * radtodeg,
 			(c_tdist / 2047.0) *Viewscale*base2local,
 			pt3[X]*base2local, pt3[Y]*base2local,
 			(curs_x / 2047.0) *Viewscale*base2local,
 			(curs_y / 2047.0) *Viewscale*base2local );
-		dmp->dmr_puts( rt_vls_addr(&vls), TITLE_XBASE,
+		dmp->dmr_puts( bu_vls_addr(&vls), TITLE_XBASE,
 			      TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "adc",
-			    rt_vls_addr(&vls), TCL_GLOBAL_ONLY);
+			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	} else if( state == ST_S_EDIT || state == ST_O_EDIT )  {
-	        rt_vls_printf( &vls,
+	        bu_vls_printf( &vls,
 			" Keypoint: %s %s: (%g, %g, %g)",
 			rt_functab[es_int.idb_type].ft_name+3,	/* Skip ID_ */
 			es_keytag,
 			es_keypoint[X] * base2local,
 			es_keypoint[Y] * base2local,
 			es_keypoint[Z] * base2local);
-		dmp->dmr_puts( rt_vls_addr(&vls), TITLE_XBASE,
+		dmp->dmr_puts( bu_vls_addr(&vls), TITLE_XBASE,
 			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint",
-			    rt_vls_addr(&vls), TCL_GLOBAL_ONLY);
+			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	} else if( illump != SOLID_NULL )  {
 		/* Illuminated path */
-	        rt_vls_strcat(&vls, " Path: ");
+	        bu_vls_strcat(&vls, " Path: ");
 		for( i=0; i <= illump->s_last; i++ )  {
 			if( i == ipathpos  &&
 			    (state == ST_O_PATH || state == ST_O_EDIT) )
-				rt_vls_strcat( &vls, "/__MATRIX__" );
-			rt_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
+				bu_vls_strcat( &vls, "/__MATRIX__" );
+			bu_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
 		}
-		dmp->dmr_puts( rt_vls_addr(&vls), TITLE_XBASE,
+		dmp->dmr_puts( bu_vls_addr(&vls), TITLE_XBASE,
 			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	} else {
-		rt_vls_printf(&vls, "%.2f fps", 1/frametime );
-		dmp->dmr_puts( rt_vls_addr(&vls), TITLE_XBASE,
+		bu_vls_printf(&vls, "%.2f fps", 1/frametime );
+		dmp->dmr_puts( bu_vls_addr(&vls), TITLE_XBASE,
 			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "fps",
-			    rt_vls_addr(&vls), TCL_GLOBAL_ONLY);
+			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	}
 
-	rt_vls_free(&vls);
+	bu_vls_free(&vls);
 }

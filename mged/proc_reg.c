@@ -141,12 +141,12 @@ char	**argv;
 	}
 
 	{
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "E: %ld vectors in %ld sec\n", nvectors, etime - stime );
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "E: %ld vectors in %ld sec\n", nvectors, etime - stime );
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	dmp->dmr_colorchange();
@@ -208,12 +208,12 @@ struct mater_info *materp;
 	struct mater_info curmater;
 
 	if( pathpos >= MAX_PATH )  {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "nesting exceeds %d levels\n", MAX_PATH );
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "nesting exceeds %d levels\n", MAX_PATH );
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 
 	  for(i=0; i<MAX_PATH; i++)
 	    Tcl_AppendResult(interp, "/", cur_path[i]->d_namep, (char *)NULL);
@@ -233,13 +233,13 @@ struct mater_info *materp;
 		register struct solid *sp;
 
 		if( rt_id_solid( &ext ) == ID_NULL )  {
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, "Edrawobj(%s):  defective database record, type='%c' (0%o) addr=x%x\n",
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, "Edrawobj(%s):  defective database record, type='%c' (0%o) addr=x%x\n",
 				dp->d_namep, rp[0].u_id, rp[0].u_id, dp->d_addr );
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 
 		  goto out;		/* ERROR */
 		}
@@ -304,13 +304,13 @@ struct mater_info *materp;
 	/* Handle combinations which are the top of a "region" */
 	if( rp[0].c.c_flags == 'R' )  {
 	  if( regionid != 0 ){
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	    rt_vls_init(&tmp_vls);
-	    rt_vls_printf(&tmp_vls, "regionid %d overriden by %d\n",
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "regionid %d overriden by %d\n",
 			  regionid, rp[0].c.c_regionid );
-	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	    rt_vls_free(&tmp_vls);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	  }
 
 	  regionid = rp[0].c.c_regionid;
@@ -602,12 +602,12 @@ int flag;
 
 	m_type[memb_count++] = cgtype;
 	if(memb_count > NMEMB) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "proc_reg: region has more than %d members\n", NMEMB);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "proc_reg: region has more than %d members\n", NMEMB);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	  nmemb = param_count = memb_count = 0;
 	  return(-1);	/* ERROR */
 	}
@@ -685,14 +685,14 @@ arbcom:		/* common area for arbs */
 
 	default:
 	  {
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	    rt_vls_init(&tmp_vls);
-	    rt_vls_printf(&tmp_vls, "proc_reg:  Cannot draw solid type %d (%s)\n",
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "proc_reg:  Cannot draw solid type %d (%s)\n",
 			  type, type == TOR ? "TOR":
 			  type == ARS ? "ARS" : "UNKNOWN TYPE" );
-	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	    rt_vls_free(&tmp_vls);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	  }
 
 	  nmemb = param_count = memb_count = 0;
@@ -808,13 +808,13 @@ register int *svec;	/* array of like points */
 
 	default:
 	  {
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	    rt_vls_init(&tmp_vls);
-	    rt_vls_printf(&tmp_vls, "solid: %s  bad number of unique vectors (%d)\n",
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "solid: %s  bad number of unique vectors (%d)\n",
 			  input.s.s_name, numuvec);
-	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	    rt_vls_free(&tmp_vls);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	  }
 
 	  return(0);
@@ -998,13 +998,13 @@ int numvec;
 
 		default:
 		  {
-		    struct rt_vls tmp_vls;
+		    struct bu_vls tmp_vls;
 
-		    rt_vls_init(&tmp_vls);
-		    rt_vls_printf(&tmp_vls, "redoarb %s: unknown arb type (%d)\n",
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "redoarb %s: unknown arb type (%d)\n",
 				  input.s.s_name,input.s.s_cgtype);
-		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		    rt_vls_free(&tmp_vls);
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    bu_vls_free(&tmp_vls);
 		  }
 
 		  return( 0 );
@@ -1469,13 +1469,13 @@ fastf_t *p, *q, *r, *s;
 
 	/* increment plane counter */
 	if(lc >= NPLANES) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 	  
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "tplane: More than %d planes for a region - ABORTING\n",
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "tplane: More than %d planes for a region - ABORTING\n",
 			NPLANES);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	  return;
 	}
 	lc++;		/* Save plane eqn */
@@ -1677,12 +1677,12 @@ int num;
 	ity = &m_type[num];
 	if(*ity==20) *ity=8;
 	if(*ity>19 || amt[*ity-1]==0){
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "solin: Type %d Solid not known\n",*ity);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "solin: Type %d Solid not known\n",*ity);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	  return;
 	}
 	sol_min[0]=sol_min[1]=sol_min[2]=pinf;

@@ -198,7 +198,7 @@ char *name;
 
 	if(name != NULL){
 	  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-	    if(strcmp(name, rt_vls_addr(&p->_pathName)))
+	    if(strcmp(name, bu_vls_addr(&p->_pathName)))
 	      continue;
 
 	    /* found it */
@@ -232,7 +232,7 @@ char *name;
 	dmp->dmr_close();
 
 	if(!--p->s_info->_rc)
-	  rt_free( (char *)p->s_info, "release: s_info" );
+	  bu_free( (char *)p->s_info, "release: s_info" );
 	else if(p->_owner)
 	  find_new_owner(p);
 
@@ -241,9 +241,9 @@ char *name;
 	  if(p_cmd->aim == p)
 	    p_cmd->aim = (struct dm_list *)NULL;
 
-	rt_vls_free(&pathName);
+	bu_vls_free(&pathName);
 	RT_LIST_DEQUEUE( &p->l );
-	rt_free( (char *)p, "release: curr_dm_list" );
+	bu_free( (char *)p, "release: curr_dm_list" );
 
 	if(save_dm_list != DM_LIST_NULL)
 	  curr_dm_list = save_dm_list;
@@ -297,14 +297,14 @@ int		noblock;
 int
 reattach()
 {
-  struct rt_vls cmd;
+  struct bu_vls cmd;
   int status;
 
-  rt_vls_init(&cmd);
-  rt_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
+  bu_vls_init(&cmd);
+  bu_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
   release((char *)NULL);
   status = cmdline(&cmd, FALSE);
-  rt_vls_free(&cmd);
+  bu_vls_free(&cmd);
   return status;
 }
 
@@ -319,20 +319,20 @@ char *name;
   static char ps_default[] = "mged.ps";
 #endif
   char *dm_default;
-  struct rt_vls prompt;
+  struct bu_vls prompt;
 
-  rt_vls_init(&prompt);
+  bu_vls_init(&prompt);
 
   if(!strcmp(name, "plot")){
     dm_default = plot_default;
-    rt_vls_printf(&prompt, "UNIX-Plot filter [pl-fb]? ");
+    bu_vls_printf(&prompt, "UNIX-Plot filter [pl-fb]? ");
   }else if(!strcmp(name, "tek")){
     dm_default = tek_default;
-    rt_vls_printf(&prompt, "Output tty [stdout]? ");
+    bu_vls_printf(&prompt, "Output tty [stdout]? ");
 #if 0
   }else if(!strcmp(name, "ps")){
     dm_default = ps_default;
-    rt_vls_printf(&prompt, "PostScript file [mged.ps]? ");
+    bu_vls_printf(&prompt, "PostScript file [mged.ps]? ");
 #endif
   }else{
     char  hostname[80];
@@ -347,11 +347,11 @@ char *name;
       dm_default = display;
     }
 
-    rt_vls_printf(&prompt, "Display [%s]? ", dm_default);
+    bu_vls_printf(&prompt, "Display [%s]? ", dm_default);
   }
 
-  Tcl_AppendResult(interp, MORE_ARGS_STR, rt_vls_addr(&prompt), (char *)NULL);
-  rt_vls_printf(&curr_cmd_list->more_default, "%s", dm_default);
+  Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&prompt), (char *)NULL);
+  bu_vls_printf(&curr_cmd_list->more_default, "%s", dm_default);
 
   return TCL_ERROR;
 }
@@ -407,11 +407,11 @@ char    **argv;
     }
 
     Tcl_AppendResult(interp, MORE_ARGS_STR, "Display [", envp, "]? ", (char *)NULL);
-    rt_vls_printf(&curr_cmd_list->more_default, "%s", envp);
+    bu_vls_printf(&curr_cmd_list->more_default, "%s", envp);
     return TCL_ERROR;
 #endif
   }else{
-    dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list), "dm_list");
+    dmlp = (struct dm_list *)bu_malloc(sizeof(struct dm_list), "dm_list");
     bzero((void *)dmlp, sizeof(struct dm_list));
     RT_LIST_APPEND(&head_dm_list.l, &dmlp->l);
     o_dm_list = curr_dm_list;
@@ -506,7 +506,7 @@ char    **argv;
         return TCL_ERROR;
 
   for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) )
-    if(!strcmp(argv[1], rt_vls_addr(&p->_pathName)))
+    if(!strcmp(argv[1], bu_vls_addr(&p->_pathName)))
       break;
 
   if(p == &head_dm_list){
@@ -519,7 +519,7 @@ char    **argv;
       --p->s_info->_rc;
       sip = p->s_info;
       find_new_owner(p);
-      p->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
+      p->s_info = (struct shared_info *)bu_malloc(sizeof(struct shared_info),
 						  "shared_info");
       bcopy((void *)sip, (void *)p->s_info, sizeof(struct shared_info));
       p->s_info->_rc = 1;
@@ -530,7 +530,7 @@ char    **argv;
   }else{
     --p->s_info->_rc;
     sip = p->s_info;
-    p->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
+    p->s_info = (struct shared_info *)bu_malloc(sizeof(struct shared_info),
 						"shared_info");
     bcopy((void *)sip, (void *)p->s_info, sizeof(struct shared_info));
     p->s_info->_rc = 1;
@@ -555,9 +555,9 @@ char    **argv;
     return TCL_ERROR;
 
   for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-    if(p1 == (struct dm_list *)NULL && !strcmp(argv[1], rt_vls_addr(&p->_pathName)))
+    if(p1 == (struct dm_list *)NULL && !strcmp(argv[1], bu_vls_addr(&p->_pathName)))
 	p1 = p;
-    else if(p2 == (struct dm_list *)NULL && !strcmp(argv[2], rt_vls_addr(&p->_pathName)))
+    else if(p2 == (struct dm_list *)NULL && !strcmp(argv[2], bu_vls_addr(&p->_pathName)))
       p2 = p;
     else if(p1 != (struct dm_list *)NULL && p2 != (struct dm_list *)NULL)
       break;
@@ -571,7 +571,7 @@ char    **argv;
 
   /* free p1's s_info struct if not being used */
   if(!--p1->s_info->_rc)
-    rt_free( (char *)p1->s_info, "tie: s_info" );
+    bu_free( (char *)p1->s_info, "tie: s_info" );
   /* otherwise if p1's s_info struct is being used and p1 is the owner */
   else if(p1->_owner)
     find_new_owner(p1);
@@ -615,18 +615,18 @@ char *name;
     curr_dm_list->s_info = initial_dm_list->s_info;
     owner = 0;
     ++initial_dm_list->s_info->_rc;
-    rt_vls_init(&pathName);
+    bu_vls_init(&pathName);
     strcpy(dname, name);
   }else{
     int i;
 
-    curr_dm_list->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
+    curr_dm_list->s_info = (struct shared_info *)bu_malloc(sizeof(struct shared_info),
 							    "shared_info");
     bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
     bcopy((void *)&default_mged_variables, (void *)&mged_variables,
 	  sizeof(struct _mged_variables));
 
-    rt_vls_init(&pathName);
+    bu_vls_init(&pathName);
     strcpy(dname, name);
     mat_copy(Viewrot, identity);
     size_reset();
@@ -650,19 +650,19 @@ int     argc;
 char    **argv;
 {
   int i;
-  struct rt_vls vls;
+  struct bu_vls vls;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  rt_vls_init(&vls);
+  bu_vls_init(&vls);
   for(i = 0; i < VIEW_TABLE_SIZE; ++i){
-    rt_vls_strcpy(&vls, view_cmd_str[i]);
+    bu_vls_strcpy(&vls, view_cmd_str[i]);
     (void)cmdline(&vls, False);
     mat_copy(viewrot_table[i], Viewrot);
     viewscale_table[i] = Viewscale;
   }
-  rt_vls_free(&vls);
+  bu_vls_free(&vls);
 
   current_view = 0;
   mat_copy(Viewrot, viewrot_table[current_view]);

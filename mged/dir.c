@@ -81,7 +81,7 @@ register int num_entries;
 	register struct directory **dir_basep;
 
 	if( num_entries < 0) {
-		rt_log( "dir_getspace: was passed %d, used 0\n",
+		bu_log( "dir_getspace: was passed %d, used 0\n",
 		  num_entries);
 		num_entries = 0;
 	}
@@ -93,7 +93,7 @@ register int num_entries;
 	}
 
 	/* Allocate and cast num_entries worth of pointers */
-	dir_basep = (struct directory **) rt_malloc(
+	dir_basep = (struct directory **) bu_malloc(
 		(num_entries+1) * sizeof(struct directory *),
 		"dir_getspace *dir[]" );
 	return(dir_basep);
@@ -115,7 +115,7 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 	struct directory **dirp, **dirp0;
-	struct rt_vls	str;
+	struct bu_vls	str;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -150,11 +150,11 @@ char	**argv;
 			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
 				*dirp++ = dp;
 	}
-	rt_vls_init( &str );
+	bu_vls_init( &str );
 	vls_col_pr4v( &str, dirp0, (int)(dirp - dirp0));
-	rt_free( (char *)dirp0, "dir_getspace dp[]" );
+	bu_free( (char *)dirp0, "dir_getspace dp[]" );
 
-	Tcl_AppendResult(interp, rt_vls_strgrab(&str), (char *)NULL);
+	Tcl_AppendResult(interp, bu_vls_strgrab(&str), (char *)NULL);
 	return TCL_OK;
 }
 
@@ -217,7 +217,7 @@ dir_nref( )
 				    LOOKUP_QUIET)) != DIR_NULL )
 					newdp->d_nref++;
 			}
-			rt_free( (char *)rp, "dir_nref recs" );
+			bu_free( (char *)rp, "dir_nref recs" );
 		}
 	}
 }
@@ -302,7 +302,7 @@ register char *pattern, *string;
  
 int
 regexp_match_all( dest, pattern )
-struct rt_vls *dest;
+struct bu_vls *dest;
 char *pattern;
 {
     register int i, num;
@@ -313,10 +313,10 @@ char *pattern;
 	    if( !regexp_match( pattern, dp->d_namep ) )
 		continue;
 	    if( num == 0 )
-		rt_vls_strcat( dest, dp->d_namep );
+		bu_vls_strcat( dest, dp->d_namep );
 	    else {
-		rt_vls_strcat( dest, " " );
-		rt_vls_strcat( dest, dp->d_namep );
+		bu_vls_strcat( dest, " " );
+		bu_vls_strcat( dest, dp->d_namep );
 	    }
 	    ++num;
 	}
@@ -358,10 +358,10 @@ dir_summary(flag)
 					comb++;
 		}
 	}
-	rt_log("Summary:\n");
-	rt_log("  %5d solids\n", sol);
-	rt_log("  %5d region; %d non-region combinations\n", reg, comb);
-	rt_log("  %5d total objects\n\n", sol+reg+comb );
+	bu_log("Summary:\n");
+	bu_log("  %5d solids\n", sol);
+	bu_log("  %5d region; %d non-region combinations\n", reg, comb);
+	bu_log("  %5d total objects\n\n", sol+reg+comb );
 
 	if( flag == 0 )
 		return;
@@ -379,7 +379,7 @@ dir_summary(flag)
 			if( dp->d_flags & flag )
 				*dirp++ = dp;
 	col_pr4v( dirp0, (int)(dirp - dirp0));
-	rt_free( (char *)dirp0, "dir_getspace" );
+	bu_free( (char *)dirp0, "dir_getspace" );
 }
 
 /*
@@ -426,7 +426,7 @@ char	**argv;
 				*dirp++ = dp;
 			}
 	col_pr4v( dirp0, (int)(dirp - dirp0));
-	rt_free( (char *)dirp0, "dir_getspace" );
+	bu_free( (char *)dirp0, "dir_getspace" );
 
 	return TCL_OK;
 }
@@ -495,7 +495,7 @@ int   maxargs;
 			/* Successful match */
 			/* See if already over the limit */
 			if( *argcp >= maxargs )  {
-				rt_log("%s: expansion stopped after %d matches (%d args)\n",
+				bu_log("%s: expansion stopped after %d matches (%d args)\n",
 					word, *argcp-orig_numargs, maxargs);
 				break;
 			}
@@ -678,7 +678,7 @@ char	**argv;
 							 "\n", (char *)NULL);
 				}
 			}
-			rt_free( (char *)rp, "dir_nref recs" );
+			bu_free( (char *)rp, "dir_nref recs" );
 		}
 	}
 	return TCL_OK;
@@ -713,13 +713,13 @@ char	**argv;
 		}
 
 		if( (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, "'%s%s' too long, must be less than %d characters.\n",
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, "'%s%s' too long, must be less than %d characters.\n",
 				argv[1], argv[i], NAMESIZE);
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 
 		  argv[i] = "";
 		  continue;
@@ -767,7 +767,7 @@ char	**argv;
 					}
 				}
 			}
-			rt_free( (char *)rp, "dir_nref recs" );
+			bu_free( (char *)rp, "dir_nref recs" );
 		}
 	}
 	return TCL_OK;
@@ -797,7 +797,7 @@ register struct directory *dp;
 	want = dp->d_len*sizeof(union record);
 	if( fwrite( (char *)rp, want, 1, keepfp ) != 1 )
 		perror("keep fwrite");
-	rt_free( (char *)rp, "keep rec[]" );
+	bu_free( (char *)rp, "keep rec[]" );
 }
 
 int
@@ -808,8 +808,8 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	struct rt_vls		title;
-	struct rt_vls		units;
+	struct bu_vls		title;
+	struct bu_vls		units;
 	register int		i;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -834,36 +834,36 @@ char	**argv;
 	}
 	
 	/* ident record */
-	rt_vls_init( &title );
-	rt_vls_strcat( &title, "Parts of: " );
-	rt_vls_strcat( &title, dbip->dbi_title );
+	bu_vls_init( &title );
+	bu_vls_strcat( &title, "Parts of: " );
+	bu_vls_strcat( &title, dbip->dbi_title );
 
-	rt_vls_init( &units);
+	bu_vls_init( &units);
 	
 	if( localunit == ID_NO_UNIT)
-		rt_vls_strcat( &units, "none");
+		bu_vls_strcat( &units, "none");
 
 	if( localunit == ID_MM_UNIT)
-		rt_vls_strcat( &units, "mm");
+		bu_vls_strcat( &units, "mm");
 
 	if( localunit == ID_CM_UNIT)
-		rt_vls_strcat( &units, "cm");
+		bu_vls_strcat( &units, "cm");
 
 	if( localunit == ID_M_UNIT)
-		rt_vls_strcat( &units, "m");
+		bu_vls_strcat( &units, "m");
 
 	if( localunit == ID_IN_UNIT)
-		rt_vls_strcat( &units, "in");
+		bu_vls_strcat( &units, "in");
 
 	if( localunit == ID_FT_UNIT)
-		rt_vls_strcat( &units, "ft");
+		bu_vls_strcat( &units, "ft");
 
-	if( mk_id_units( keepfp, rt_vls_addr(&title), rt_vls_addr(&units) ) < 0 )  {
+	if( mk_id_units( keepfp, bu_vls_addr(&title), bu_vls_addr(&units) ) < 0 )  {
 		perror("fwrite");
 		Tcl_AppendResult(interp, "mk_id_units() failed\n", (char *)NULL);
 		fclose(keepfp);
-		rt_vls_free( &title );
-		rt_vls_free( &units );
+		bu_vls_free( &title );
+		bu_vls_free( &units );
 		return TCL_ERROR;
 	}
 
@@ -874,8 +874,8 @@ char	**argv;
 	}
 
 	fclose(keepfp);
-	rt_vls_free( &title );
-	rt_vls_free( &units );
+	bu_vls_free( &title );
+	bu_vls_free( &units );
 
 	return TCL_OK;
 }
@@ -905,7 +905,7 @@ char	**argv;
 
 	for ( j = 1; j < argc; j++) {
 		if( j > 1 )
-			rt_log( "\n" );
+			bu_log( "\n" );
 		if( (dp = db_lookup( dbip, argv[j], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 		printnode(dp, 0, 0);
@@ -930,12 +930,12 @@ int cont;		/* non-zero when continuing partly printed line */
 
 	if( !cont ) {
 		for( i=0; i<(pathpos*(NAMESIZE+2)); i++) 
-			rt_putchar(' ');
+			bu_putchar(' ');
 		cont = 1;
 	}
-	rt_log("| %s", dp->d_namep);
+	bu_log("| %s", dp->d_namep);
 	if( !(dp->d_flags & DIR_COMB) )  {
-		rt_log( "\n" );
+		bu_log( "\n" );
 		return;
 	}
 
@@ -946,10 +946,10 @@ int cont;		/* non-zero when continuing partly printed line */
 	 */
 	i = NAMESIZE - strlen(dp->d_namep);
 	while( i-- > 0 )
-		rt_putchar('_');
+		bu_putchar('_');
 
 	if( dp->d_len <= 1 )
-		rt_log("\n");		/* empty combination */
+		bu_log("\n");		/* empty combination */
 
 	for( i=1; i < dp->d_len; i++ )  {
 		if( (nextdp = db_lookup( dbip, rp[i].M.m_instname, LOOKUP_NOISY ))
@@ -959,7 +959,7 @@ int cont;		/* non-zero when continuing partly printed line */
 		printnode ( nextdp, pathpos+1, cont );
 		cont = 0;
 	}
-	rt_free( (char *)rp, "printnode recs");
+	bu_free( (char *)rp, "printnode recs");
 }
 #else
 /*
@@ -1016,12 +1016,12 @@ char prefix;
 	  Tcl_AppendResult(interp, "\t", (char *)NULL);
 
 	if( prefix ) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "%c ", prefix);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "%c ", prefix);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	Tcl_AppendResult(interp, dp->d_namep, (char *)NULL);
@@ -1049,7 +1049,7 @@ char prefix;
 		prefix = rp[i].M.m_relation;
 		printnode ( nextdp, pathpos+1, prefix );
 	}
-	rt_free( (char *)rp, "printnode recs");
+	bu_free( (char *)rp, "printnode recs");
 }
 #endif
 
@@ -1075,12 +1075,12 @@ char	**argv;
 	  return TCL_ERROR;
 
 	if( (int)strlen(argv[2]) > NAMESIZE ) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "ERROR: name length limited to %d characters\n", NAMESIZE);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "ERROR: name length limited to %d characters\n", NAMESIZE);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	  return TCL_ERROR;
 	}
 
@@ -1131,7 +1131,7 @@ char	**argv;
 					}
 				}
 			}
-			rt_free( (char *)rp, "dir_nref recs" );
+			bu_free( (char *)rp, "dir_nref recs" );
 		}
 	}
 	return TCL_OK;
@@ -1187,11 +1187,11 @@ again:
 					  TCL_ERROR_RECOVERY_SUGGESTION;
 					  return TCL_ERROR;
 					}
-					rt_free( (char *)rp, "dir_nref recs" );
+					bu_free( (char *)rp, "dir_nref recs" );
 					goto again;
 				}
 			}
-			rt_free( (char *)rp, "dir_nref recs" );
+			bu_free( (char *)rp, "dir_nref recs" );
 		}
 	}
 

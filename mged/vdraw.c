@@ -139,7 +139,7 @@ char **argv;
 	int found;
 	long rgb;
 	static long my_rgb;
-	struct rt_vls killstr;
+	struct bu_vls killstr;
 	struct solid *sp, *sp2;
 	struct directory *dp;
 	char result_string[90]; /* make sure there's room */
@@ -463,10 +463,10 @@ char **argv;
 			Tcl_AppendResult(interp, "-1", (char *)NULL);
 			return TCL_OK;
 		}
-		rt_vls_init(&killstr);
-		rt_vls_printf( &killstr, "kill -f %s\n", solid_name );
+		bu_vls_init(&killstr);
+		bu_vls_printf( &killstr, "kill -f %s\n", solid_name );
 		(void)cmdline( &killstr, FALSE );
-		rt_vls_free(&killstr);
+		bu_vls_free(&killstr);
 		index = 0;
 		index = invent_solid( solid_name, &(curhead->vhd), curhead->rgb, 1);
 		sprintf(result_string,"%d",index);
@@ -523,7 +523,7 @@ char **argv;
 			}
 		}
 		if (!curhead) { /* create new entry */
-			GETSTRUCT( rcp, rt_curve );
+			BU_GETSTRUCT( rcp, rt_curve );
 			RT_LIST_APPEND( &vdraw_head, &(rcp->l) );
 			strcpy( rcp->name, temp_name);
 			rcp->name[VDRW_MAXNAME] = (char) NULL;
@@ -553,13 +553,13 @@ char **argv;
 		}
 		switch  (argv[2][0]) {
 		case 'l':
-			rt_vls_init(&killstr);
+			bu_vls_init(&killstr);
 			for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
-				rt_vls_strcat( &killstr, rcp->name);
-				rt_vls_strcat( &killstr, " ");
+				bu_vls_strcat( &killstr, rcp->name);
+				bu_vls_strcat( &killstr, " ");
 			}
 			/* also does free */
-			str = rt_vls_strgrab(&killstr);
+			str = bu_vls_strgrab(&killstr);
 			Tcl_AppendResult(interp, str, (char *)NULL);
 			return TCL_OK;
 		case 'd':
@@ -588,7 +588,7 @@ char **argv;
 				}
 			}
 			RT_FREE_VLIST(&(rcp2->vhd));
-			rt_free((char *) rcp2, "rt_curve");
+			bu_free((char *) rcp2, "rt_curve");
 			return TCL_OK;
 		default:
 			Tcl_AppendResult(interp,"vdraw: unknown option to vdraw vlist", (char *)NULL);

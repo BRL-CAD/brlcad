@@ -564,7 +564,7 @@ static struct funtab funtab[] = {
 /*
  *                        O U T P U T _ C A T C H
  *
- * Gets the output from rt_log and appends it to clientdata vls.
+ * Gets the output from bu_log and appends it to clientdata vls.
  */
 
 HIDDEN int
@@ -586,7 +586,7 @@ genptr_t str;
 /*
  *                 S T A R T _ C A T C H I N G _ O U T P U T
  *
- * Sets up hooks to rt_log so that all output is caught in the given vls.
+ * Sets up hooks to bu_log so that all output is caught in the given vls.
  *
  */
 
@@ -648,7 +648,7 @@ char **argv;
 
     /* We now leave the world of Tcl where everything prints its results
        in the interp->result field.  Here, stuff gets printed with the
-       rt_log command; hence, we must catch such output and stuff it into
+       bu_log command; hence, we must catch such output and stuff it into
        the result string.  Do this *only* if "output_as_return" global
        variable is set.  Make a local copy of this variable in case it's
        changed by our command. */
@@ -705,7 +705,7 @@ char **argv;
 /*
  *                            G U I _ O U T P U T
  *
- * Used as a hook for rt_log output.  Sends output to the Tcl procedure whose
+ * Used as a hook for bu_log output.  Sends output to the Tcl procedure whose
  * name is contained in the vls "tcl_output_hook".  Useful for user interface
  * building.
  */
@@ -720,8 +720,8 @@ genptr_t str;
 
     if (level > 50) {
 	bu_delete_hook(gui_output, clientData);
-	/* Now safe to run rt_log? */
-    	rt_log("Ack! Something horrible just happened recursively.\n");
+	/* Now safe to run bu_log? */
+    	bu_log("Ack! Something horrible just happened recursively.\n");
 	return 0;
     }
 
@@ -1020,7 +1020,7 @@ mged_setup()
 
   /* This runs the init.tcl script */
   if( Tcl_Init(interp) == TCL_ERROR )
-    rt_log("Tcl_Init error %s\n", interp->result);
+    bu_log("Tcl_Init error %s\n", interp->result);
 
   /* register commands */
   cmd_setup();
@@ -1055,13 +1055,13 @@ gui_setup()
     return;
 
   if((tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "MGED", "MGED")) == NULL){
-    rt_log("gui_setup: Failed to create main window.\n");
+    bu_log("gui_setup: Failed to create main window.\n");
     return;
   }
 
   /* This runs the tk.tcl script */
   if (Tk_Init(interp) == TCL_ERROR)
-    rt_log("Tk_Init error %s\n", interp->result);
+    bu_log("Tk_Init error %s\n", interp->result);
 
   gui_initialized = 1;
   Tcl_Eval( interp, "wm withdraw .");
@@ -1071,7 +1071,7 @@ gui_setup()
     return;
 
   if(Tcl_EvalFile( interp, filename ) == TCL_ERROR)
-    rt_log("gui_setup: %s\n", interp->result);
+    bu_log("gui_setup: %s\n", interp->result);
 
   return;
 }
@@ -1094,7 +1094,7 @@ cmd_setup()
 	bu_vls_strcat(&temp, ftp->ft_name);
 	if (Tcl_Eval(interp, bu_vls_addr(&temp)) != TCL_OK ||
 	    interp->result[0] != '\0') {
-	    rt_log("WARNING:  '%s' name collision (%s)\n", ftp->ft_name,
+	    bu_log("WARNING:  '%s' name collision (%s)\n", ftp->ft_name,
 		   interp->result);
 	}
 #endif
@@ -1113,7 +1113,7 @@ cmd_setup()
 	    (void)Tcl_CreateCommand(interp, bu_vls_addr(&temp), cmd_wrapper,
 				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
 #else
-	    rt_log("cmd_setup: %s needs to be Tcl converted\n", ftp->ft_name);
+	    bu_log("cmd_setup: %s needs to be Tcl converted\n", ftp->ft_name);
 #endif
 	}
     }
@@ -1480,7 +1480,7 @@ int record;
     extern struct bu_vls mged_prompt;
     char *cp;
 
-    RT_VLS_CHECK(vp);
+    BU_CK_VLS(vp);
 
     if (bu_vls_strlen(vp) <= 0)
       return CMD_OK;
@@ -1517,7 +1517,7 @@ int record;
 
 	/* If the command had something to say, print it out. */	     
 	if (len > 0)
-	  rt_log("%s%s", interp->result,
+	  bu_log("%s%s", interp->result,
 		 interp->result[len-1] == '\n' ? "" : "\n");
 
 	/* A user typed this command so let everybody see, then record
@@ -1533,7 +1533,7 @@ int record;
 	  bu_vls_free(&tmp_vls);
 	}
       }else
-	rt_log("\n");
+	bu_log("\n");
       
 
       if(record)
@@ -1555,7 +1555,7 @@ int record;
 			    interp->result+sizeof(MORE_ARGS_STR)-1);
 	    }else{
 	      len = cp - interp->result;
-	      rt_log("%*s%s", len, interp->result, interp->result[len-1] == '\n' ? "" : "\n");
+	      bu_log("%*s%s", len, interp->result, interp->result[len-1] == '\n' ? "" : "\n");
 	      bu_vls_trunc(&mged_prompt, 0);
 	      bu_vls_printf(&mged_prompt, "\r%s",
 			    interp->result+sizeof(MORE_ARGS_STR)-1+len);
@@ -1568,7 +1568,7 @@ int record;
     /* Otherwise, it's just a regular old error. */    
 
 	len = strlen(interp->result);
-	if (len > 0) rt_log("%s%s", interp->result,
+	if (len > 0) bu_log("%s%s", interp->result,
 			    interp->result[len-1] == '\n' ? "" : "\n");
 
 	if (record) history_record(vp, &start, &finish, CMD_BAD);
@@ -1998,7 +1998,7 @@ char	**argv;
 /*
  *                          C M D _ E C H O
  *
- * Concatenates its arguments and "rt_log"s the resulting string.
+ * Concatenates its arguments and "bu_log"s the resulting string.
  */
 
 int
@@ -2055,7 +2055,7 @@ char	*argv[];
     return CMD_OK;
   }
 
-  rt_log( "Savedit will only work in an edit state\n");
+  bu_log( "Savedit will only work in an edit state\n");
   bu_vls_free(&str);
   return CMD_BAD;
 }

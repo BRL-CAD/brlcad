@@ -157,7 +157,7 @@ SunPw_open()
 	 * Gets the name of our parent.
 	 */
 	if( we_getgfxwindow(gfxwinname) ) {
-		rt_log( "dm-sun: Must be running suntools\n" );
+		bu_log( "dm-sun: Must be running suntools\n" );
 		return(-1);
 	}
 
@@ -282,7 +282,7 @@ int	color;
 		sun_cmap_color = 5;
 		break;
 	default:
-		rt_log("sun_color:  mged color %d not known\n", color);
+		bu_log("sun_color:  mged color %d not known\n", color);
 		break;
 	}
 }
@@ -411,7 +411,7 @@ double	ratio;
 				break;
 			}
 			if( ++numvec >= MAXVEC ) {
-				(void)rt_log(
+				(void)bu_log(
 					"SunPw_object: nvec %d clipped to %d\n",
 					sp->s_vlen, numvec );
 				break;
@@ -637,23 +637,23 @@ caddr_t	*arg;
 	xpen = SUNPWx_TO_GED(event_x(event));
 	ypen = -SUNPWy_TO_GED(event_y(event));
 	if( sun_debug )
-		rt_log("Event %d at (%d %d)\n",id,event_x(event),event_y(event));
+		bu_log("Event %d at (%d %d)\n",id,event_x(event),event_y(event));
 	switch(id) {
 	case MS_LEFT:
 		if (event_is_down(event)) {
-			rt_vls_strcat( &dm_values.dv_string , "zoom 2\n" );
+			bu_vls_strcat( &dm_values.dv_string , "zoom 2\n" );
 			peripheral_input++;
 		}
 		break;
 	case MS_MIDDLE:
 		if (event_is_down(event)) {
-			rt_vls_printf( &dm_values.dv_string , "M 1 %d %d\n" , xpen, ypen );
+			bu_vls_printf( &dm_values.dv_string , "M 1 %d %d\n" , xpen, ypen );
 			peripheral_input++;
 		}
 		break;
 	case MS_RIGHT:
 		if (event_is_down(event)) {
-			rt_vls_strcat( &dm_values.dv_string , "zoom 0.5\n" );
+			bu_vls_strcat( &dm_values.dv_string , "zoom 0.5\n" );
 			peripheral_input++;
 		}
 		break;
@@ -684,32 +684,32 @@ caddr_t	*arg;
 						if (yval < 0)
 						    zoom = -zoom;
 						sprintf( str_buf , &dm_values.dv_string, "zoom %f\n", zoom );
-						rt_vls_strcat( &dm_values.dv_string, str_buf );
+						bu_vls_strcat( &dm_values.dv_string, str_buf );
 					}
 					break;
 				case X_SLEW_BUTTON:
 					sprintf( str_buf, "knob X %f\n", xval );
-					rt_vls_strcat( &dm_values.dv_string, str_buf );
+					bu_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				case Y_SLEW_BUTTON:
 					sprintf( str_buf, "knob Y %f\n", yval );
-					rt_vls_strcat( &dm_values.dv_string, str_buf );
+					bu_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				case Z_SLEW_BUTTON:
 					sprintf( str_buf, "knob Z %f\n", yval );
-					rt_vls_strcat( &dm_values.dv_string, str_buf );
+					bu_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				case X_ROT_BUTTON:
 					sprintf( str_buf, "knob x %f\n", xval );
-					rt_vls_strcat( &dm_values.dv_string, str_buf );
+					bu_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				case Y_ROT_BUTTON:
 					sprintf( str_buf, "knob y %f\n", yval );
-					rt_vls_strcat( &dm_values.dv_string, str_buf );
+					bu_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				case Z_ROT_BUTTON:
 					sprintf( str_buf, "knob z %f\n", yval );
-					rt_vls_strcat( &dm_values.dv_string, str_buf );
+					bu_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				}
 			}
@@ -818,7 +818,7 @@ unsigned
 SunPw_load(addr, count)
 unsigned	addr, count;
 {
-	rt_log("SunPw_load(x%x, %d.)\n", addr, count);
+	bu_log("SunPw_load(x%x, %d.)\n", addr, count);
 	return (0);
 }
 
@@ -848,7 +848,7 @@ int	a, b;
 		mouse_motion = 0;
 		break;
 	default:
-		rt_log("SunPw_statechange: unknown state %s\n", state_str[b]);
+		bu_log("SunPw_statechange: unknown state %s\n", state_str[b]);
 		break;
 	}
 	/*SunPw_viewchange( DM_CHGV_REDO, SOLID_NULL );*/

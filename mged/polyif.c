@@ -140,13 +140,13 @@ char	**argv;
 				   * XXX poly will end with next POLY_MOVE.
 				   */
 				  if( ph.npts < 3 )  {
-				    struct rt_vls tmp_vls;
+				    struct bu_vls tmp_vls;
 
-				    rt_vls_init(&tmp_vls);
-				    rt_vls_printf(&tmp_vls, "polygon with %d points discarded\n",
+				    bu_vls_init(&tmp_vls);
+				    bu_vls_printf(&tmp_vls, "polygon with %d points discarded\n",
 						  ph.npts);
-				    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-				    rt_vls_free(&tmp_vls);
+				    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+				    bu_vls_free(&tmp_vls);
 				    break;
 				  }
 					if( need_normal )  {

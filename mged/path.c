@@ -158,7 +158,7 @@ matp_t old_xlate;
 		);
 	}
 out:
-	rt_free( (char *)rp, "drawHobj recs");
+	bu_free( (char *)rp, "drawHobj recs");
 }
 
 /*
@@ -208,6 +208,6 @@ matp_t matp;
 			parentp->d_namep, kidp->d_namep );
 		return;			/* ERROR */
 next_level:
-		rt_free( (char *)rp, "pathHmat recs");
+		bu_free( (char *)rp, "pathHmat recs");
 	}
 }

@@ -176,23 +176,23 @@ static struct trail	tE, tF, tG, tH;
 void
 predictor_kill()
 {
-	struct rt_vls	str;
+	struct bu_vls	str;
 
-	rt_vls_init( &str );
-	rt_vls_printf( &str, "d %s\n", PREDICTOR_NAME );
+	bu_vls_init( &str );
+	bu_vls_printf( &str, "d %s\n", PREDICTOR_NAME );
 
 	(void)cmdline( &str, FALSE );
 
-	rt_vls_trunc( &str, 0 );
+	bu_vls_trunc( &str, 0 );
 
-	rt_vls_strcat( &str, "d _PREDIC_TRAIL_LL_\n" );
-	rt_vls_strcat( &str, "d _PREDIC_TRAIL_LR_\n" );
-	rt_vls_strcat( &str, "d _PREDIC_TRAIL_UR_\n" );
-	rt_vls_strcat( &str, "d _PREDIC_TRAIL_UL_\n" );
+	bu_vls_strcat( &str, "d _PREDIC_TRAIL_LL_\n" );
+	bu_vls_strcat( &str, "d _PREDIC_TRAIL_LR_\n" );
+	bu_vls_strcat( &str, "d _PREDIC_TRAIL_UR_\n" );
+	bu_vls_strcat( &str, "d _PREDIC_TRAIL_UL_\n" );
 
         (void)cmdline( &str, FALSE );
 
-	rt_vls_free( &str );
+	bu_vls_free( &str );
 
 	init_trail( &tA );
 	init_trail( &tB );

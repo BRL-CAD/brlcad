@@ -96,7 +96,7 @@ struct scroll_item sl_adc_menu[] = {
 void sl_halt_scroll()
 {
 	/* The 'knob' command will zero the rate_slew[] array, etc. */
-	rt_vls_printf(&dm_values.dv_string, "knob zero\n");
+	bu_vls_printf(&dm_values.dv_string, "knob zero\n");
 }
 
 /*
@@ -104,18 +104,18 @@ void sl_halt_scroll()
  */
 void sl_toggle_scroll()
 {
-  struct rt_vls cmd;
+  struct bu_vls cmd;
 
-  rt_vls_init(&cmd);
+  bu_vls_init(&cmd);
 
   if( mged_variables.scroll_enabled == 0 )
-    rt_vls_strcpy( &cmd, "sliders on\n" );
+    bu_vls_strcpy( &cmd, "sliders on\n" );
   else
-    rt_vls_strcpy( &cmd, "sliders off\n" );
+    bu_vls_strcpy( &cmd, "sliders off\n" );
 
   (void)cmdline(&cmd, False);
 
-  rt_vls_free(&cmd);
+  bu_vls_free(&cmd);
 }
 
 /*
@@ -175,7 +175,7 @@ static void sl_tol( mptr, val )
 register struct scroll_item     *mptr;
 double				val;
 {
-	struct rt_vls cmd;
+	struct bu_vls cmd;
 
 	if( val < -SL_TOL )   {
 		val += SL_TOL;
@@ -185,17 +185,17 @@ double				val;
 		val = 0.0;
 	}
 
-	rt_vls_init( &cmd );
-	rt_vls_printf( &cmd, "%s %f\n", mptr->scroll_cmd, val );
+	bu_vls_init( &cmd );
+	bu_vls_printf( &cmd, "%s %f\n", mptr->scroll_cmd, val );
 	(void)cmdline( &cmd, FALSE );
-	rt_vls_free(&cmd);
+	bu_vls_free(&cmd);
 }
 
 static void sl_itol( mptr, val )
 register struct scroll_item     *mptr;
 double				val;
 {
-	struct rt_vls cmd;
+	struct bu_vls cmd;
 
 	if( val < -SL_TOL )   {
 		val += SL_TOL;
@@ -205,10 +205,10 @@ double				val;
 		val = 0.0;
 	}
 
-	rt_vls_init( &cmd );
-	rt_vls_printf( &cmd, "%s %d\n", mptr->scroll_cmd, (int)(val * 2047.0) );
+	bu_vls_init( &cmd );
+	bu_vls_printf( &cmd, "%s %d\n", mptr->scroll_cmd, (int)(val * 2047.0) );
 	(void)cmdline( &cmd, FALSE );
-	rt_vls_free(&cmd);
+	bu_vls_free(&cmd);
 }
 
 

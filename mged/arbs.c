@@ -104,13 +104,13 @@ char	**argv;
 	}
 
 	if( (int)strlen(argv[1]) >= NAMESIZE ) {
-	  struct rt_vls tmp_str;
+	  struct bu_vls tmp_str;
 
-	  rt_vls_init(&tmp_str);
-	  rt_vls_printf(&tmp_str, "Names are limited to %d characters\n",
+	  bu_vls_init(&tmp_str);
+	  bu_vls_printf(&tmp_str, "Names are limited to %d characters\n",
 			NAMESIZE-1);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_str), (char *)NULL);
-	  rt_vls_free(&tmp_str);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_str), (char *)NULL);
+	  bu_vls_free(&tmp_str);
 
 	  return TCL_ERROR;
 	}
@@ -227,7 +227,7 @@ char	**argv;
 
 	RT_INIT_DB_INTERNAL( &internal );
 	internal.idb_type = ID_ARB8;
-	internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+	internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
 	aip = (struct rt_arb_internal *)internal.idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -373,12 +373,12 @@ char	**argv;
 	}
 
 	if( (int)strlen(argv[1]) >= NAMESIZE ) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "Names are limited to %d charscters\n",NAMESIZE-1);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "Names are limited to %d charscters\n",NAMESIZE-1);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	  return TCL_ERROR;
 	}
 	strcpy( name , argv[1] );
@@ -411,11 +411,11 @@ char	**argv;
 
 	for(i=0; i<3; i++) {
 	  if( argc < 8+3*i ) {
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	    rt_vls_init(&tmp_vls);
-	    rt_vls_printf(&tmp_vls, "POINT %d...\n",i+2);
-	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), MORE_ARGS_STR,
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "POINT %d...\n",i+2);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), MORE_ARGS_STR,
 			     "Enter coordinate to solve for (x, y, or z): ", (char *)NULL);
 	    return TCL_ERROR;
 	  }
@@ -503,7 +503,7 @@ char	**argv;
 
 	RT_INIT_DB_INTERNAL( &internal );
 	internal.idb_type = ID_ARB8;
-	internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+	internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
 	aip = (struct rt_arb_internal *)internal.idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -731,13 +731,13 @@ register int *svec;	/* array of like points */
 
 	default:
 	  {
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	    rt_vls_init(&tmp_vls);
-	    rt_vls_printf(&tmp_vls, "solid: %s  bad number of unique vectors (%d)\n",
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "solid: %s  bad number of unique vectors (%d)\n",
 			  input.s.s_name, numuvec);
-	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	    rt_vls_free(&tmp_vls);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	  }
 
 	  return(0);
@@ -880,23 +880,23 @@ register int *svec;	/* array of like points */
 
 	default:
 	  {
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	    rt_vls_init(&tmp_vls);
-	    rt_vls_printf(&tmp_vls, "rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
 			  numuvec);
-	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	    rt_vls_free(&tmp_vls);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	  }
 
 	  return(0);
 	}
 #if 0
-	rt_log("uvec: ");
-	for(j=0; j<8; j++) rt_log("%d, ", uvec[j]);
-	rt_log("\nsvec: ");
-	for(j=0; j<11; j++ ) rt_log("%d, ", svec[j]);
-	rt_log("\n");
+	bu_log("uvec: ");
+	for(j=0; j<8; j++) bu_log("%d, ", uvec[j]);
+	bu_log("\nsvec: ");
+	for(j=0; j<11; j++ ) bu_log("%d, ", svec[j]);
+	bu_log("\n");
 #endif
 	return( numuvec );
 }

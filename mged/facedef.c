@@ -165,12 +165,12 @@ char **argv;
 			  break;
 		default:
 		  {
-		    struct rt_vls tmp_vls;
+		    struct bu_vls tmp_vls;
 
-		    rt_vls_init(&tmp_vls);
-		    rt_vls_printf(&tmp_vls, "bad face (product=%d)\n", prod);
-		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		    rt_vls_free(&tmp_vls);
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "bad face (product=%d)\n", prod);
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    bu_vls_free(&tmp_vls);
 		    return TCL_ERROR;
 		  }
 	}
@@ -209,12 +209,12 @@ char **argv;
 	      return TCL_ERROR;
 	    }
 	  if( argc < 12 ){           /* total # of args under this option */
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	     rt_vls_init(&tmp_vls);
-	     rt_vls_printf(&tmp_vls, "%s%s %d: ", MORE_ARGS_STR, p_3pts[(argc-3)%3], argc/3);
-	     Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	     rt_vls_free(&tmp_vls);
+	     bu_vls_init(&tmp_vls);
+	     bu_vls_printf(&tmp_vls, "%s%s %d: ", MORE_ARGS_STR, p_3pts[(argc-3)%3], argc/3);
+	     Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	     bu_vls_free(&tmp_vls);
 	     return TCL_ERROR;
 	  }
 	  if( get_3pts( planes[plane], &argv[3], &mged_tol) ){

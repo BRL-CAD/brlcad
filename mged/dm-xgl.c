@@ -117,7 +117,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 				/* are recognized, ON and OFF;  may be	*/
 				/* toggled by mged "redebug" command.	*/
 static int		XGL_debug_level = 0;
-#define	DPRINTF(S)	if(XGL_debug_level) rt_log(S)
+#define	DPRINTF(S)	if(XGL_debug_level) bu_log(S)
 
 /*
  *	NON-dm functions
@@ -930,7 +930,7 @@ int	oldstate, newstate;
 			KeyPressMask|StructureNotifyMask );
 		break;
 	default:
-		rt_log("X_statechange: unknown state %s\n", 
+		bu_log("X_statechange: unknown state %s\n", 
 			state_str[newstate]);
 		break;
 	}
@@ -1083,7 +1083,7 @@ int
 XGL_dm( int argc, char ** argv)
 {
 
-	rt_log(stderr, "No commands implemented\n");
+	bu_log(stderr, "No commands implemented\n");
 	return 0;
 }
 
@@ -1131,7 +1131,7 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 
 	/* Use the DISPLAY environment variable. If not set, it's an error */
 	if ((*dpy = XOpenDisplay (NULL)) == NULL) {
-		rt_log("Could not open X display %s\n", XDisplayName(NULL));
+		bu_log("Could not open X display %s\n", XDisplayName(NULL));
 		return (-1);
 	}
 
@@ -1194,7 +1194,7 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 		CWBorderPixel |CWColormap | CWBackPixel, &xswa);
 
 	if (xwin == NULL) {
-		rt_log("Could not create X window\n");
+		bu_log("Could not create X window\n");
 		return (-1);
 	}
 	xsh.flags = (PSize | PPosition);
@@ -1213,7 +1213,7 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 	wm_protocols_atom = XInternAtom(*dpy, "WM_PROTOCOLS", False);
 	wm_delete_win_atom = XInternAtom(*dpy, "WM_DELETE_WINDOW", True);
 	if (wm_delete_win_atom == None || wm_protocols_atom == None) 
-	    rt_log("Couldn't get WM_PROTOCOLS or WM_DELETE_WINDOW atom\n");
+	    bu_log("Couldn't get WM_PROTOCOLS or WM_DELETE_WINDOW atom\n");
 	else 
 		XSetWMProtocols (*dpy, *win, &wm_delete_win_atom, 1);
 
@@ -1258,7 +1258,7 @@ XGL_setup()
 	sys_state = xgl_open(0);
 
        if (!(inq_info = xgl_inquire(sys_state, &win_desc))) {
-          	rt_log("error in getting inquiry\n");
+          	bu_log("error in getting inquiry\n");
           	exit(1);
         }
 	bufs = inq_info->maximum_buffer;	/* if double buffering, its 2 */
@@ -1287,7 +1287,7 @@ XGL_setup()
 			XGL_WIN_X_PROTO_XLIB ;
 		sys_state = xgl_open(0);
 		if (!(inq_info = xgl_inquire(sys_state, &win_desc))) {
-			rt_log("error in getting inquiry\n");
+			bu_log("error in getting inquiry\n");
 			exit(1);
 		}
 	}
@@ -1489,27 +1489,27 @@ init_check_buffering( int bufs)
 	xgl_object_get(cmap, XGL_CMAP_MAX_COLOR_TABLE_SIZE, &maxsize);
 
 	if(nbufs > 1) {
-		rt_log("\nA total of %d buffers are supported by this\n", 
+		bu_log("\nA total of %d buffers are supported by this\n", 
 				nbufs);
-		rt_log("hardware. Hardware double buffering will be used.\n");
+		bu_log("hardware. Hardware double buffering will be used.\n");
 
 		return(AB_DBUFF);
 	} else if(maxsize == 2) {
 
-		rt_log("\nThis is a MONOCHROME frame buffer. No double \n");
-		rt_log("buffering of any type can be used.\n\n");
+		bu_log("\nThis is a MONOCHROME frame buffer. No double \n");
+		bu_log("buffering of any type can be used.\n\n");
 
 		maxcolors = 2;
 		colortablesize = 2;
 		return(NO_DBUFF);
 
 	} else if(maxsize != 256) {
-		rt_log("\nUnknown frame buffer type ... aborting.\n\n");
+		bu_log("\nUnknown frame buffer type ... aborting.\n\n");
 		return(-1);
 
 	} else {
 		if (color_type == XGL_COLOR_INDEX) {
-			rt_log(
+			bu_log(
 			   "\nUsing colormap double buffering, 8 bit color.\n");
 			switch(DEFAULT_DB) {
 			case OPTION_ZERO:
@@ -1533,7 +1533,7 @@ init_check_buffering( int bufs)
 				colortablesize = 256;
 				break;
 		  	default:
-			       rt_log("Undefined DEFAULT_DB option,exiting\n");
+			       bu_log("Undefined DEFAULT_DB option,exiting\n");
 			       exit(1);
 			}
 		} else {
@@ -1621,7 +1621,7 @@ checkevents()
 			if (event.xclient.message_type == wm_protocols_atom &&
 			    event.xclient.data.l[0] == wm_delete_win_atom) {
 					/* Must have quit from menu */
-			    		rt_vls_printf( 
+			    		bu_vls_printf( 
 						&dm_values.dv_string, 
 						"q\n");
 			}
@@ -1632,7 +1632,7 @@ checkevents()
 			    int	x, y;
 			    x = (event.xmotion.x/(double)width - 0.5) * 4095;
 			    y = (0.5 - event.xmotion.y/(double)height) * 4095;
-			    rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
+			    bu_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
 			    	x, y );
 			}
 			break;
@@ -1646,16 +1646,16 @@ checkevents()
 			switch( event.xbutton.button ) {
 			case Button1:
 			    /* Left mouse: Zoom out */
-			    rt_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
+			    bu_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
 			    break;
 			case Button2:
 			    /* Middle mouse, up to down transition */
-			    rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n",
+			    bu_vls_printf( &dm_values.dv_string, "M 1 %d %d\n",
 			    	x, y);
 			    break;
 			case Button3:
 			    /* Right mouse: Zoom in */
-			    rt_vls_strcat( &dm_values.dv_string, "zoom 2\n");
+			    bu_vls_strcat( &dm_values.dv_string, "zoom 2\n");
 			    break;
 			}
 		    }
@@ -1671,7 +1671,7 @@ checkevents()
 			    break;
 			case Button2:
 			    /* Middle mouse, down to up transition */
-			    rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
+			    bu_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
 			    	x, y);
 			    break;
 			case Button3:
@@ -1694,7 +1694,7 @@ checkevents()
 			else {
 				switch( key ) {
 				case '?':
-					rt_log( "\nKey Help Menu:\n\
+					bu_log( "\nKey Help Menu:\n\
 0	Zero 'knobs'\n\
 x	Increase xrot\n\
 y	Increase yrot\n\
@@ -1719,7 +1719,7 @@ F	Toggle faceplate\n\
 					break;
 				case '0':
 					reset_sundials();
-					rt_vls_printf( &dm_values.dv_string,
+					bu_vls_printf( &dm_values.dv_string,
 						"knob zero\n" );
 					break;
 				case 'x':
@@ -1742,39 +1742,39 @@ F	Toggle faceplate\n\
 					else
 						sprintf(cmd_buf, "knob %c 0.1\n",
 							key);
-					rt_vls_printf( &dm_values.dv_string,
+					bu_vls_printf( &dm_values.dv_string,
 						cmd_buf);
 					break;
 				case 'f':
-					rt_vls_strcat( &dm_values.dv_string,
+					bu_vls_strcat( &dm_values.dv_string,
 						"press front\n");
 					break;
 				case 't':
-					rt_vls_strcat( &dm_values.dv_string,
+					bu_vls_strcat( &dm_values.dv_string,
 						"press top\n");
 					break;
 				case 'b':
-					rt_vls_strcat( &dm_values.dv_string,
+					bu_vls_strcat( &dm_values.dv_string,
 						"press bottom\n");
 					break;
 				case 'l':
-					rt_vls_strcat( &dm_values.dv_string,
+					bu_vls_strcat( &dm_values.dv_string,
 						"press left\n");
 					break;
 				case 'r':
-					rt_vls_strcat( &dm_values.dv_string,
+					bu_vls_strcat( &dm_values.dv_string,
 						"press right\n");
 					break;
 				case 'R':
-					rt_vls_strcat( &dm_values.dv_string,
+					bu_vls_strcat( &dm_values.dv_string,
 						"press rear\n");
 					break;
 				case '3':
-					rt_vls_strcat( &dm_values.dv_string,
+					bu_vls_strcat( &dm_values.dv_string,
 						"press 35,25\n");
 					break;
 				case '4':
-					rt_vls_strcat( &dm_values.dv_string,
+					bu_vls_strcat( &dm_values.dv_string,
 						"press 45,45\n");
 					break;
 				case XK_Shift_L:
@@ -1785,7 +1785,7 @@ F	Toggle faceplate\n\
 				case XK_Shift_Lock:
 					break;	/* ignore */
 				default:
-					rt_log(
+					bu_log(
 					  "dm-X:The key '%c' is not defined\n",
 						key);
 					break;
@@ -1799,7 +1799,7 @@ F	Toggle faceplate\n\
 		    /* No need for action here - we'll get the Expose */
 		    break;
 		default:
-			rt_log( "Unknown event type\n" );
+			bu_log( "Unknown event type\n" );
 		}
 	}
 }
@@ -1896,50 +1896,50 @@ handle_sundials_event(XDeviceMotionEvent *ev)
 	setting = val*2048;
 	
 	if (XGL_debug_level)
-		rt_log( "val = %f, setting = %d\n",val, setting);
+		bu_log( "val = %f, setting = %d\n",val, setting);
 
 	switch (dial_num) {	/* first_axis is button number */
 	case 0:
 		if(adcflag)
-		    rt_vls_printf( &dm_values.dv_string , "knob xadc %d\n",
+		    bu_vls_printf( &dm_values.dv_string , "knob xadc %d\n",
 					setting);
 		else
-		    rt_vls_printf( &dm_values.dv_string , "knob x %f\n", val);
+		    bu_vls_printf( &dm_values.dv_string , "knob x %f\n", val);
 		break;
 	case 1:
 		if(adcflag)
-		    rt_vls_printf( &dm_values.dv_string , "knob yadc %d\n",
+		    bu_vls_printf( &dm_values.dv_string , "knob yadc %d\n",
 					setting);
 		else
-		    rt_vls_printf( &dm_values.dv_string , "knob y %f\n", val);
+		    bu_vls_printf( &dm_values.dv_string , "knob y %f\n", val);
 		break;
 	case 2:
 		if(adcflag)
-		    rt_vls_printf( &dm_values.dv_string , "knob ang2 %d\n",
+		    bu_vls_printf( &dm_values.dv_string , "knob ang2 %d\n",
 					setting);
 		else
-		    rt_vls_printf( &dm_values.dv_string , "knob z %f\n", val);
+		    bu_vls_printf( &dm_values.dv_string , "knob z %f\n", val);
 		break;
 	case 3:
 		if(adcflag)
-		    rt_vls_printf( &dm_values.dv_string, "knob ang1 %d\n",
+		    bu_vls_printf( &dm_values.dv_string, "knob ang1 %d\n",
 					setting);
 		break;
 	case 4:
-		rt_vls_printf( &dm_values.dv_string , "knob X %f\n", val);
+		bu_vls_printf( &dm_values.dv_string , "knob X %f\n", val);
 		break;
 	case 5:
-		rt_vls_printf( &dm_values.dv_string , "knob Y %f\n", val);
+		bu_vls_printf( &dm_values.dv_string , "knob Y %f\n", val);
 		break;
 	case 6:
 		if(adcflag)
-		    rt_vls_printf( &dm_values.dv_string , "knob distadc %d\n",
+		    bu_vls_printf( &dm_values.dv_string , "knob distadc %d\n",
 					setting );
 		else
-		    rt_vls_printf( &dm_values.dv_string , "knob Z %f\n", val);
+		    bu_vls_printf( &dm_values.dv_string , "knob Z %f\n", val);
 		break;
 	case 7:
-		rt_vls_printf( &dm_values.dv_string , "knob S %f\n", val);
+		bu_vls_printf( &dm_values.dv_string , "knob S %f\n", val);
 		break;
 	}
 }
@@ -2003,7 +2003,7 @@ fk_depth_cue()
 	float scale_factors_persp[2]     = {1.0, 0.5};
 	
 	if (color_type == XGL_COLOR_INDEX) {
-		rt_log(
+		bu_log(
 		    "Depth-cue support not available for this frame buffer\n");
 		return;
 	}
@@ -2052,7 +2052,7 @@ fk_perspective()
 {
 	/* 'Borrowed' from dm-4d.c */
 	perspective_mode = 1 - perspective_mode;
-        rt_vls_printf( &dm_values.dv_string, "set perspective %d\n",
+        bu_vls_printf( &dm_values.dv_string, "set perspective %d\n",
         	perspective_mode ? perspective_table[perspective_angle] : -1 );
 	/*
 	 * If depth-cueing is on, re-set the depth-cue scale factors to allow
@@ -2084,7 +2084,7 @@ static void
 fk_lighting()
 {
 	if (color_type == XGL_COLOR_INDEX) {
-		rt_log(
+		bu_log(
 		    "Lighting support not available for this frame buffer\n");
 		return;
 	}
@@ -2144,7 +2144,7 @@ fk_p_angle()
        	if (--perspective_angle < 0) 
 		perspective_angle = NUM_PERSPECTIVE_ANGLES-1;
        	if(perspective_mode) 
-		rt_vls_printf( &dm_values.dv_string,
+		bu_vls_printf( &dm_values.dv_string,
        		"set perspective %d\n", perspective_table[perspective_angle] );
 	dmaflag = 1;
 
@@ -2180,21 +2180,21 @@ static void
 fk_zero_knobs()
 {
 	reset_sundials();
-	rt_vls_printf( &dm_values.dv_string,
+	bu_vls_printf( &dm_values.dv_string,
 		"knob zero\n" );
 }
 
 static void
 fk_nop()
 {
-	rt_log("Function Key Undefined\n");
+	bu_log("Function Key Undefined\n");
 }
 
 static void
 toggle_faceplate()
 {
 	no_faceplate = !no_faceplate;
-	rt_vls_strcat( &dm_values.dv_string,
+	bu_vls_strcat( &dm_values.dv_string,
 		no_faceplate ?
 		"set faceplate 0\n" :
 		"set faceplate 1\n" );
@@ -2410,9 +2410,9 @@ dump_pl(Xgl_pt_list *pl, int n)
         int i, j;
  
         for (i = 0; i < n; i++) {
-                rt_log("PL[%d]: (%d pts)\n",i, pl[i].num_pts);
+                bu_log("PL[%d]: (%d pts)\n",i, pl[i].num_pts);
                 for (j = 0; j < pl[i].num_pts; j++) {
-                        rt_log( "       pt[%d]: %e,%e,%e, %d\n",j,
+                        bu_log( "       pt[%d]: %e,%e,%e, %d\n",j,
                                 pl[i].pts.flag_f3d[j].x,
                                 pl[i].pts.flag_f3d[j].y,
                                 pl[i].pts.flag_f3d[j].z,

@@ -440,7 +440,7 @@ PS_load( addr, count )
 unsigned addr, count;
 {
 #if 0
-	rt_log("PS_load(x%x, %d.)\n", addr, count );
+	bu_log("PS_load(x%x, %d.)\n", addr, count );
 #endif
 	return( 0 );
 }

@@ -49,25 +49,25 @@ static int	col_len;		/* length of previous name */
  */
 void
 vls_col_item( str, cp )
-struct rt_vls	*str;
+struct bu_vls	*str;
 register char	*cp;
 {
 	/* Output newline if last column printed. */
 	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
 		/* line now full */
-		rt_vls_putc( str, '\n' );
+		bu_vls_putc( str, '\n' );
 		col_count = 0;
 	} else if ( col_count != 0 ) {
 		/* Space over before starting new column */
 		do {
-			rt_vls_putc( str, ' ' );
+			bu_vls_putc( str, ' ' );
 			col_len++;
 		}  while ( (col_len % NAMESIZE) != 0 );
 	}
 	/* Output string and save length for next tab. */
 	col_len = 0;
 	while ( *cp != '\0' )  {
-		rt_vls_putc( str, *cp );
+		bu_vls_putc( str, *cp );
 		++cp;
 		++col_len;
 	}
@@ -78,10 +78,10 @@ register char	*cp;
  */
 void
 vls_col_eol( str )
-struct rt_vls	*str;
+struct bu_vls	*str;
 {
 	if ( col_count != 0 )		/* partial line */
-		rt_vls_putc( str, '\n' );
+		bu_vls_putc( str, '\n' );
 	col_count = 0;
 	col_len = 0;
 }
@@ -97,19 +97,19 @@ register char *cp;
 	/* Output newline if last column printed. */
 	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
 		/* line now full */
-		rt_putchar( '\n' );
+		bu_putchar( '\n' );
 		col_count = 0;
 	} else if ( col_count != 0 ) {
 		/* Space over before starting new column */
 		do {
-			rt_putchar( ' ' );
+			bu_putchar( ' ' );
 			col_len++;
 		}  while ( (col_len % NAMESIZE) != 0 );
 	}
 	/* Output string and save length for next tab. */
 	col_len = 0;
 	while ( *cp != '\0' )  {
-		rt_putchar( *cp );
+		bu_putchar( *cp );
 		++cp;
 		++col_len;
 	}
@@ -121,7 +121,7 @@ void
 col_putchar(c)
 char c;
 {
-	rt_putchar(c);
+	bu_putchar(c);
 	col_len++;
 }
 
@@ -129,7 +129,7 @@ void
 col_eol()
 {
 	if ( col_count != 0 )		/* partial line */
-		rt_putchar( '\n' );
+		bu_putchar( '\n' );
 	col_count = 0;
 	col_len = 0;
 }
@@ -177,8 +177,7 @@ int num_in_list;
 		for( j=0; j < 4; j++) {
 			this_one = j * lines + i;
 			/* Restrict the print to 16 chars per spec. */
-			rt_log( "%.16s", list_of_names[this_one]->d_namep); 
-/*			printf( "%.16s", list_of_names[this_one]->d_namep);  */
+			bu_log( "%.16s", list_of_names[this_one]->d_namep); 
 			namelen = strlen( list_of_names[this_one]->d_namep);
 			if( namelen > 16)
 				namelen = 16;
@@ -190,11 +189,11 @@ int num_in_list;
 			 * decision on where to place them before now.
 			 */
 			if(list_of_names[this_one]->d_flags & DIR_COMB) {
-				rt_putchar('/');
+				bu_putchar('/');
 				namelen++;
 			}
 			if(list_of_names[this_one]->d_flags & DIR_REGION) {
-				rt_putchar('R');
+				bu_putchar('R');
 				namelen++;
 			}
 			/*
@@ -203,7 +202,7 @@ int num_in_list;
 			 * that are full too.
 			 */
 			if( this_one + lines >= num_in_list) {
-				rt_log("\n");
+				bu_log("\n");
 				break;
 			} else {
 				/*
@@ -211,7 +210,7 @@ int num_in_list;
 				 * another entry to the right of this one. 
 				 */
 				while( namelen++ < 20)
-					rt_putchar(' ');
+					bu_putchar(' ');
 			}
 		}
 	}
@@ -225,13 +224,13 @@ int num_in_list;
  */
 void
 vls_col_pr4v( str, list_of_names, num_in_list)
-struct rt_vls	*str;
+struct bu_vls	*str;
 struct directory **list_of_names;
 int num_in_list;
 {
 	int lines, i, j, namelen, this_one;
 
-	RT_VLS_CHECK( str );
+	BU_CK_VLS( str );
 
 	qsort( (genptr_t)list_of_names,
 		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
@@ -245,7 +244,7 @@ int num_in_list;
 		for( j=0; j < 4; j++) {
 			this_one = j * lines + i;
 			/* Restrict the print to 16 chars per spec. */
-			rt_vls_printf( str, "%.16s", list_of_names[this_one]->d_namep);
+			bu_vls_printf( str, "%.16s", list_of_names[this_one]->d_namep);
 			namelen = strlen( list_of_names[this_one]->d_namep);
 			if( namelen > 16)
 				namelen = 16;
@@ -257,11 +256,11 @@ int num_in_list;
 			 * decision on where to place them before now.
 			 */
 			if(list_of_names[this_one]->d_flags & DIR_COMB) {
-				rt_vls_putc(str, '/');
+				bu_vls_putc(str, '/');
 				namelen++;
 			}
 			if(list_of_names[this_one]->d_flags & DIR_REGION) {
-				rt_vls_putc(str, 'R');
+				bu_vls_putc(str, 'R');
 				namelen++;
 			}
 			/*
@@ -270,7 +269,7 @@ int num_in_list;
 			 * that are full too.
 			 */
 			if( this_one + lines >= num_in_list) {
-				rt_vls_putc(str, '\n');
+				bu_vls_putc(str, '\n');
 				break;
 			} else {
 				/*
@@ -278,7 +277,7 @@ int num_in_list;
 				 * another entry to the right of this one. 
 				 */
 				while( namelen++ < 20)
-					rt_vls_putc(str, ' ');
+					bu_vls_putc(str, ' ');
 			}
 		}
 	}

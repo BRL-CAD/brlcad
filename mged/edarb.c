@@ -294,7 +294,7 @@ vect_t pos_model;
 
 		/* move the edge */
 /*
-rt_log("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
+bu_log("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
 */
 		if( mv_edge(pos_model, bp1, bp2, pt1, pt2, edge_dir) )
 			goto err;
@@ -315,7 +315,7 @@ rt_log("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
 			p2 = *edptr++;
 			p3 = *edptr++;
 /*
-rt_log("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
+bu_log("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 */
 			if( rt_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
 						arb->pt[p3], &mged_tol ) )
@@ -336,7 +336,7 @@ rt_log("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 			p2 = *iptr++;
 			p3 = *iptr++;
 /*
-rt_log("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
+bu_log("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 */
 			if( rt_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
 					arb->pt[p3], &mged_tol ))
@@ -353,7 +353,7 @@ rt_log("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 			break;
 		/* intersect proper planes to define vertex p1 */
 /*
-rt_log("intersect: type=%d   point = %d\n",es_type,p1+1);
+bu_log("intersect: type=%d   point = %d\n",es_type,p1+1);
 */
 		if( rt_arb_3face_intersect( arb->pt[p1], es_peqn, es_type, p1*3 ))
 			goto err;
@@ -364,7 +364,7 @@ rt_log("intersect: type=%d   point = %d\n",es_type,p1+1);
 	 */
 	if(es_type == ARB7 && es_edflag == PTARB) {
 /*
-rt_log("redo plane 2 == 5,6,7 for ARB7\n");
+bu_log("redo plane 2 == 5,6,7 for ARB7\n");
 */
 		if(  rt_mk_plane_3pts( es_peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], &mged_tol ))
 			goto err;
@@ -401,12 +401,12 @@ rt_log("redo plane 2 == 5,6,7 for ARB7\n");
 err:
 	/* Error handling */
 	{
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "cannot move edge: %d%d\n", pt1+1,pt2+1);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "cannot move edge: %d%d\n", pt1+1,pt2+1);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	es_edflag = IDLE;
@@ -547,12 +547,12 @@ char	**argv;
 	}
 
 	if(es_type != ARB8 && es_type != ARB6 && es_type != ARB4) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n",es_type);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n",es_type);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	  return TCL_ERROR;
 	}
 
@@ -855,12 +855,12 @@ char	**argv;
 	RT_ARB_CK_MAGIC( arb );
 
 	if(es_type != ARB8 && es_type != ARB6) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "ARB%d: mirroring of faces not allowed\n",es_type);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "ARB%d: mirroring of faces not allowed\n",es_type);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 
 	  return TCL_ERROR;
 	}
@@ -1250,12 +1250,12 @@ char	**argv;
 
     if ((es_type < 4) || (es_type > 8))
     {
-      struct rt_vls tmp_vls;
+      struct bu_vls tmp_vls;
       
-      rt_vls_init(&tmp_vls);
-      rt_vls_printf(&tmp_vls, "Permute: es_type=%d\nThis shouldn't happen\n", es_type);
-      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-      rt_vls_free(&tmp_vls);
+      bu_vls_init(&tmp_vls);
+      bu_vls_printf(&tmp_vls, "Permute: es_type=%d\nThis shouldn't happen\n", es_type);
+      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+      bu_vls_free(&tmp_vls);
       return TCL_ERROR;
     }
 
@@ -1272,39 +1272,39 @@ char	**argv;
     arglen = strlen(argv[1]);
     if (arglen < min_tuple_size[es_type])
     {
-      struct rt_vls tmp_vls;
+      struct bu_vls tmp_vls;
 
-      rt_vls_init(&tmp_vls);
-      rt_vls_printf(&tmp_vls, "ERROR: tuple '%s' too short to disambiguate ARB%d face\n",
+      bu_vls_init(&tmp_vls);
+      bu_vls_printf(&tmp_vls, "ERROR: tuple '%s' too short to disambiguate ARB%d face\n",
 		    es_type);
-      rt_vls_printf(&tmp_vls, "Need at least %d vertices\n", min_tuple_size[es_type]);
-      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-      rt_vls_free(&tmp_vls);
+      bu_vls_printf(&tmp_vls, "Need at least %d vertices\n", min_tuple_size[es_type]);
+      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+      bu_vls_free(&tmp_vls);
 
       return TCL_ERROR;
     }
     face_size = (es_type == 4) ? 3 : 4;
     if (arglen > face_size)
     {
-      struct rt_vls tmp_vls;
+      struct bu_vls tmp_vls;
 
-      rt_vls_init(&tmp_vls);
-      rt_vls_printf(&tmp_vls, "ERROR: tuple '%s' length exceeds ARB%d face size of %d\n",
+      bu_vls_init(&tmp_vls);
+      bu_vls_printf(&tmp_vls, "ERROR: tuple '%s' length exceeds ARB%d face size of %d\n",
 		    es_type, face_size);
-      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-      rt_vls_free(&tmp_vls);
+      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+      bu_vls_free(&tmp_vls);
       
       return TCL_ERROR;
     }
     vertex = argv[1][0] - '1';
     if ((vertex < 0) || (vertex >= es_type))
     {
-      struct rt_vls tmp_vls;
+      struct bu_vls tmp_vls;
 
-      rt_vls_init(&tmp_vls);
-      rt_vls_printf(&tmp_vls, "ERROR: invalid vertex %c\n", argv[1][0]);
-      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-      rt_vls_free(&tmp_vls);
+      bu_vls_init(&tmp_vls);
+      bu_vls_printf(&tmp_vls, "ERROR: invalid vertex %c\n", argv[1][0]);
+      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+      bu_vls_free(&tmp_vls);
       return TCL_ERROR;
     }
     p = (es_type == 4) ? perm4[vertex] :
@@ -1338,7 +1338,7 @@ char	**argv;
     }
 
 #if 0
-    rt_log("After collection...\n");
+    bu_log("After collection...\n");
     for (i = 0; i < 8 ; i++ )
     {
 	char	string[1024];
@@ -1346,7 +1346,7 @@ char	**argv;
 	sprintf(string, "vertex %d", i + 1);
 	VPRINT(string, tarb.pt[i]);
     }
-    rt_log("...\n");
+    bu_log("...\n");
 #endif
 
     /*
@@ -1389,12 +1389,12 @@ char	**argv;
 	    break;
 	default:
 	  {
-	    struct rt_vls tmp_vls;
+	    struct bu_vls tmp_vls;
 
-	    rt_vls_init(&tmp_vls);
-	    rt_vls_printf(&tmp_vls, "%s: %d: This shouldn't happen\n", __FILE__, __LINE__);
-	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	    rt_vls_free(&tmp_vls);
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "%s: %d: This shouldn't happen\n", __FILE__, __LINE__);
+	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    bu_vls_free(&tmp_vls);
 	    return TCL_ERROR;
 	  }
     }
@@ -1433,12 +1433,12 @@ CONST struct rt_tol	*tol;
 	/* find new points for entire solid */
 	for(i=0; i<8; i++){
 		if( rt_arb_3face_intersect( pt[i], planes, cgtype, i*3 ) < 0 )  {
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, "rt_arb_calc_points: Intersection of planes fails %d\n", i);
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, "rt_arb_calc_points: Intersection of planes fails %d\n", i);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 		  return -1;			/* FAIL */
 		}
 	}

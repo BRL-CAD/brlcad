@@ -74,8 +74,8 @@ void *v1, *v2;
     struct sol_name_dist	*s1 = v1;
     struct sol_name_dist	*s2 = v2;
 
-    RT_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
-    RT_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    BU_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    BU_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
     return(strcmp(s1 -> name, s2 -> name));
 }
@@ -92,8 +92,8 @@ void *v1, *v2;
     struct sol_name_dist	*s1 = v1;
     struct sol_name_dist	*s2 = v2;
 
-    RT_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
-    RT_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    BU_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    BU_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
     if (s1 -> dist > s2 -> dist)
 	return (1);
@@ -114,10 +114,10 @@ fastf_t	dist;
     struct sol_name_dist	*sp;
 
     sp = (struct sol_name_dist *)
-	    rt_malloc(sizeof(struct sol_name_dist), "solid");
+	    bu_malloc(sizeof(struct sol_name_dist), "solid");
     sp -> magic = SOL_NAME_DIST_MAGIC;
     sp -> name = (char *)
-	    rt_malloc(strlen(name) + 1, "solid name");
+	    bu_malloc(strlen(name) + 1, "solid name");
     (void) strcpy(sp -> name, name);
     sp -> dist = dist;
     return (sp);
@@ -136,11 +136,11 @@ struct sol_name_dist	*sol;
 int			free_name;
 
 {
-    RT_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    BU_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
     if (free_name)
-	rt_free((char *) sol -> name, "solid name");
-    rt_free((char *) sol, "solid");
+	bu_free((char *) sol -> name, "solid name");
+    bu_free((char *) sol, "solid");
 }
 
 /*
@@ -152,15 +152,15 @@ void	*vp;
 int	depth;
 {
     struct sol_name_dist	*sol = vp;
-    struct rt_vls tmp_vls;
+    struct bu_vls tmp_vls;
 
-    RT_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    BU_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
-    rt_vls_init(&tmp_vls);
-    rt_vls_printf(&tmp_vls, "solid %s at distance %g along ray\n",
+    bu_vls_init(&tmp_vls);
+    bu_vls_printf(&tmp_vls, "solid %s at distance %g along ray\n",
 		  sol -> name, sol -> dist);
-    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-    rt_vls_free(&tmp_vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
 }
 
 /*
@@ -185,18 +185,18 @@ struct partition	*ph;
  */
 void
 build_path_name_of_solid(vp, sp)
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 struct solid	*sp;
 {
     int		i;
 
-    rt_vls_trunc(vp, 0);
+    bu_vls_trunc(vp, 0);
     for (i = 0; i < sp -> s_last; ++i)
     {
-	rt_vls_strcat(vp, sp -> s_path[i] -> d_namep);
-	rt_vls_strcat(vp, "/");
+	bu_vls_strcat(vp, sp -> s_path[i] -> d_namep);
+	bu_vls_strcat(vp, "/");
     }
-    rt_vls_strcat(vp, sp -> s_path[sp -> s_last] -> d_namep);
+    bu_vls_strcat(vp, sp -> s_path[sp -> s_last] -> d_namep);
 }
 
 /*
@@ -229,7 +229,7 @@ struct partition	*ph;
     struct solid		*sp;
     struct sol_name_dist	*old_sol;
     struct sol_name_dist	*sol;
-    struct rt_vls		sol_path_name;
+    struct bu_vls		sol_path_name;
     static int			(*orders[])() =
 				{
 				    sol_comp_name,
@@ -243,7 +243,7 @@ struct partition	*ph;
      */
     if ((solids = rb_create("Solid list", 2, orders)) == RB_TREE_NULL)
     {
-	rt_log("%s: %d: rb_create() bombed\n", __FILE__, __LINE__);
+	bu_log("%s: %d: rb_create() bombed\n", __FILE__, __LINE__);
 	exit (1);
     }
     solids -> rbt_print = print_solid;
@@ -253,19 +253,19 @@ struct partition	*ph;
     if (1)
     {
 	printf("HELLO %s:%d\n", __FILE__, __LINE__);
-	rt_vls_init(&sol_path_name);
+	bu_vls_init(&sol_path_name);
 
 	/*
 	 *	Get the list of segments along this ray
 	 *	and seek to its head
 	 */
-	RT_CKMAG(ph, PT_HD_MAGIC, "partition head");
+	BU_CKMAG(ph, PT_HD_MAGIC, "partition head");
 	pp = ph -> pt_forw;
-	RT_CKMAG(pp, PT_MAGIC, "partition structure");
+	BU_CKMAG(pp, PT_MAGIC, "partition structure");
 	for (segh = pp -> pt_inseg;
 		*((long *) segh) != RT_LIST_HEAD_MAGIC;
 		segh = (struct seg *) (segh -> l.forw))
-	    RT_CKMAG(segh, RT_SEG_MAGIC, "segment structure");
+	    BU_CKMAG(segh, RT_SEG_MAGIC, "segment structure");
 
 	/*
 	 *	March down the segment list
@@ -274,20 +274,20 @@ struct partition	*ph;
 		segp != segh;
 		segp = (struct seg *) segp -> l.forw)
 	{
-	    RT_CKMAG(segp, RT_SEG_MAGIC, "seg structure");
+	    BU_CKMAG(segp, RT_SEG_MAGIC, "seg structure");
 	    
-	    rt_vls_trunc(&sol_path_name, 0);
+	    bu_vls_trunc(&sol_path_name, 0);
 	    fp = &(segp -> seg_stp -> st_path);
 	    printf("At line %d, sol_path_name contains '%s'\n",
-		    __LINE__, rt_vls_addr(&sol_path_name));
+		    __LINE__, bu_vls_addr(&sol_path_name));
 	    if (fp -> magic)
-		rt_vls_strcpy(&sol_path_name, db_path_to_string(fp));
+		bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
 	    printf("At line %d, sol_path_name contains '%s'\n",
-		    __LINE__, rt_vls_addr(&sol_path_name));
-	    rt_vls_strcat(&sol_path_name, segp -> seg_stp -> st_name);
+		    __LINE__, bu_vls_addr(&sol_path_name));
+	    bu_vls_strcat(&sol_path_name, segp -> seg_stp -> st_name);
 	    printf("At line %d, sol_path_name contains '%s'\n",
-		    __LINE__, rt_vls_addr(&sol_path_name));
-	    sol = mk_solid(rt_vls_addr(&sol_path_name),
+		    __LINE__, bu_vls_addr(&sol_path_name));
+	    sol = mk_solid(bu_vls_addr(&sol_path_name),
 			segp -> seg_in.hit_dist);
 	    printf("and segp -> seg_stp = %x\n", segp -> seg_stp);
 	    /*
@@ -299,7 +299,7 @@ struct partition	*ph;
 	    {
 		old_sol = (struct sol_name_dist *)
 			    rb_curr(solids, ORDER_BY_NAME);
-		RT_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
+		BU_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
 		    "sol_name_dist structure");
 		if (sol -> dist >= old_sol -> dist)
 		    free_solid(sol, 1);
@@ -315,26 +315,26 @@ struct partition	*ph;
     else
     {
 	printf("HELLO %s:%d\n", __FILE__, __LINE__);
-	rt_vls_init(&sol_path_name);
-	rt_log("Path names for all solids...\n");
+	bu_vls_init(&sol_path_name);
+	bu_log("Path names for all solids...\n");
 	FOR_ALL_SOLIDS(sp)
 	{
 	    build_path_name_of_solid (&sol_path_name, sp);
-	    printf("%s\n", rt_vls_addr(&sol_path_name));
+	    printf("%s\n", bu_vls_addr(&sol_path_name));
 	}
-	rt_log("...the end\n");
+	bu_log("...the end\n");
 
 	/*
 	 *	Get the list of segments along this ray
 	 *	and seek to its head
 	 */
-	RT_CKMAG(ph, PT_HD_MAGIC, "partition head");
+	BU_CKMAG(ph, PT_HD_MAGIC, "partition head");
 	pp = ph -> pt_forw;
-	RT_CKMAG(pp, PT_MAGIC, "partition structure");
+	BU_CKMAG(pp, PT_MAGIC, "partition structure");
 	for (segh = pp -> pt_inseg;
 		*((long *) segh) != RT_LIST_HEAD_MAGIC;
 		segh = (struct seg *) (segh -> l.forw))
-	    RT_CKMAG(segh, RT_SEG_MAGIC, "segment structure");
+	    BU_CKMAG(segh, RT_SEG_MAGIC, "segment structure");
 
 	/*
 	 *	March down the segment list
@@ -343,14 +343,14 @@ struct partition	*ph;
 		segp != segh;
 		segp = (struct seg *) segp -> l.forw)
 	{
-	    RT_CKMAG(segp, RT_SEG_MAGIC, "seg structure");
+	    BU_CKMAG(segp, RT_SEG_MAGIC, "seg structure");
 	    
 	    sol = mk_solid(segp -> seg_stp -> st_name, segp -> seg_in.hit_dist);
 	    if (rb_insert(solids, (void *) sol) < 0)
 	    {
 		old_sol = (struct sol_name_dist *)
 			    rb_curr(solids, ORDER_BY_NAME);
-		RT_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
+		BU_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
 		    "sol_name_dist structure");
 		if (sol -> dist >= old_sol -> dist)
 		    free_solid(sol, 1);
@@ -366,7 +366,7 @@ struct partition	*ph;
     printf("HELLO %s:%d\n", __FILE__, __LINE__);
 
     result = (char **)
-		rt_malloc((solids -> rbt_nm_nodes + 1) * sizeof(char *),
+		bu_malloc((solids -> rbt_nm_nodes + 1) * sizeof(char *),
 			  "names of solids on ray");
     for (sol = (struct sol_name_dist *) rb_min(solids, ORDER_BY_DISTANCE),
 		i=0;
@@ -397,7 +397,7 @@ rpt_miss(ap, ph)
 struct application	*ap;
 struct partition	*ph;
 {
-    ap -> a_uptr = rt_malloc(sizeof(char *), "names of solids on ray");
+    ap -> a_uptr = bu_malloc(sizeof(char *), "names of solids on ray");
     *((char **) (ap -> a_uptr)) = 0;
 
     return (0);
@@ -436,7 +436,7 @@ int		full_path;
 
     if (argc <= 0) {
 	char **ptr;
-	ptr = (char **)rt_malloc(sizeof(char *), "empty solid list");
+	ptr = (char **)bu_malloc(sizeof(char *), "empty solid list");
 	*ptr = 0;
 	return ptr;
     }
@@ -450,7 +450,7 @@ int		full_path;
     rtip -> useair = 1;
     /*
      *	XXX	I've hardwired in here to use a single CPU.
-     *		Should that be rt_avail_cpus()?
+     *		Should that be bu_avail_cpus()?
      */
     if (rt_gettrees(rtip, argc, argv, 1) == -1) {
 	return ((char **) 0);

@@ -151,10 +151,10 @@ matp_t xlate;
 
 		if( db_put( dbip,  cdp, rec, 0, cdp->d_len ) < 0 )
 			WRITE_ERR_return;
-		rt_free( (char *)rec, "union record");
+		bu_free( (char *)rec, "union record");
 		return;
 	}
-	rt_free( (char *)rec, "union record");
+	bu_free( (char *)rec, "union record");
 	Tcl_AppendResult(interp, "moveinst:  couldn't find ", cdp->d_namep,
 			 "/", dp->d_namep, "\n", (char *)NULL);
 	return;				/* ERROR */
@@ -206,7 +206,7 @@ int air;				/* Air code */
 		record.c.c_matparm[0] = '\0';
 		NAMEMOVE( combname, record.c.c_name );
 		if( region_flag ) {       /* creating a region */
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
 		  
 		  record.c.c_flags = 'R';
@@ -214,12 +214,12 @@ int air;				/* Air code */
 		  record.c.c_aircode = air;
 		  record.c.c_los = los_default;
 		  record.c.c_material = mat_default;
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls,
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls,
 				"Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
 				ident, air, los_default, mat_default );
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 		}
 
 		/* finished with combination record - write it out */

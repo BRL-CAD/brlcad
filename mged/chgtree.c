@@ -176,12 +176,12 @@ char	**argv;
 	if( argc == 4 )
 		oper = argv[3][0];
 	if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "bad operation: %c\n", oper );
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "bad operation: %c\n", oper );
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	  return TCL_ERROR;
 	}
 	if( combadd( dp, argv[2], 0, oper, 0, 0 ) == DIR_NULL )
@@ -221,13 +221,13 @@ char	**argv;
 	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) == DIR_NULL ) {
 		/* will attempt to create the region */
 		if(item_default) {
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
 		  item_default++;
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, "Defaulting item number to %d\n", item_default);
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, "Defaulting item number to %d\n", item_default);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 		}
 	}
 
@@ -245,13 +245,13 @@ char	**argv;
 		}
 
 		if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
 				oper, dp->d_namep );
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 		  continue;
 		}
 
@@ -328,12 +328,12 @@ char	**argv;
 		}
 
 		if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
 				oper, dp->d_namep );
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 			continue;
 		}
 
@@ -583,7 +583,7 @@ char	**argv;
 }
 
 /* XXX Move to raytrace.h */
-RT_EXTERN(struct animate	*db_parse_1anim, (struct db_i *dbip,
+BU_EXTERN(struct animate	*db_parse_1anim, (struct db_i *dbip,
 				int argc, CONST char **argv));
 
 /*
@@ -630,8 +630,8 @@ char	**argv;
 #if 0
 	if( anp->an_path.fp_len != 2 )  {
 		char	*thepath = db_path_to_string( &(anp->an_path) );
-		rt_log("arced: '%s' is not a 2-element path spec\n");
-		rt_free( thepath, "path" );
+		bu_log("arced: '%s' is not a 2-element path spec\n");
+		bu_free( thepath, "path" );
 		db_free_1anim( anp );
 		return TCL_ERROR;
 	}
@@ -659,13 +659,13 @@ char	**argv;
 	/* Search for first mention of arc */
 	for( i=1; i < dp->d_len; i++ )  {
 		if( rec[i].u_id != ID_MEMB )  {
-		  struct rt_vls tmp_vls;
+		  struct bu_vls tmp_vls;
 
-		  rt_vls_init(&tmp_vls);
-		  rt_vls_printf(&tmp_vls, "%s: element %d not a member! Database corrupted.\n",
+		  bu_vls_init(&tmp_vls);
+		  bu_vls_printf(&tmp_vls, "%s: element %d not a member! Database corrupted.\n",
 				dp->d_namep, i);
-		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-		  rt_vls_free(&tmp_vls);
+		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		  bu_vls_free(&tmp_vls);
 		  goto fail;
 		}
 		if( strncmp( rec[i].M.m_instname,
@@ -687,7 +687,7 @@ char	**argv;
 		  TCL_ERROR_RECOVERY_SUGGESTION;
 		  goto fail;
 		}
-		rt_free( (char *)rec, "union record []");
+		bu_free( (char *)rec, "union record []");
 		db_free_1anim( anp );
 		return TCL_OK;
 	}
@@ -697,7 +697,7 @@ char	**argv;
 			 anp->an_path.fp_names[0]->d_namep, "', error\n", (char *)NULL);
 		
 fail:
-	rt_free( (char *)rec, "union record []");
+	bu_free( (char *)rec, "union record []");
 	db_free_1anim( anp );
 	return TCL_ERROR;
 }
@@ -720,7 +720,7 @@ int			id;
 
 	Tcl_AppendElement( interp, str );
 
-	rt_free( str, "path string" );
+	bu_free( str, "path string" );
 	return TREE_NULL;
 }
 
@@ -781,12 +781,12 @@ register struct db_full_path	*pathp;
 		count++;
 	}
 	if( count > 1 ){
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls,"find_solid_with_path() found %d matches\n", count);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls,"find_solid_with_path() found %d matches\n", count);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	return ret;
@@ -878,7 +878,7 @@ char      	**argv;
 
 	/* Select the matrix */
 #if 0
-	rt_log("matpick %d\n", lhs.fp_len);
+	bu_log("matpick %d\n", lhs.fp_len);
 #endif
 	sprintf( number, "%d", lhs.fp_len );
 	new_argv[0] = "matpick";
@@ -940,7 +940,7 @@ char	**argv;
     char		*ep;			/* Matrix element */
     char		*eep;			/* End of element */
     char		*newargv[20];
-    struct rt_vls	*avp;
+    struct bu_vls	*avp;
 
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
       return TCL_ERROR;
@@ -957,14 +957,14 @@ char	**argv;
     switch (argc)
     {
 	case 18:
-	    avp = rt_vls_vlsinit();
-	    rt_vls_from_argv(avp, 16, argv + 2);
+	    avp = bu_vls_vlsinit();
+	    bu_vls_from_argv(avp, 16, argv + 2);
 	    break;
 	case 3:
 	    if ((argv[2][0] == 'I') && (argv[2][1] == '\0'))
 	    {
-		avp = rt_vls_vlsinit();
-		rt_vls_printf(avp, "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 ");
+		avp = bu_vls_vlsinit();
+		bu_vls_printf(avp, "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 ");
 		break;
 	    }
 	    /* This case falls through intentionally */
@@ -977,17 +977,17 @@ char	**argv;
     newargv[2] = "matrix";
     newargv[3] = "rarc";
 
-    ep = rt_vls_addr(avp);
+    ep = bu_vls_addr(avp);
     for (i = 0; i < 16; ++i)
     {
 	if ((eep = strchr(ep, ' ')) == NULL)
 	{
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "%s:%d: bad matrix.  This shouldn't happen\n",
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "%s:%d: bad matrix.  This shouldn't happen\n",
 			__FILE__, __LINE__);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  result = TCL_ERROR;
 	  break;
 	}
@@ -999,6 +999,6 @@ char	**argv;
     if (result != TCL_ERROR)
 	result = f_arced(clientData, interp, 20, newargv);
 
-    rt_vls_vlsfree(avp);
+    bu_vls_vlsfree(avp);
     return result;
 }

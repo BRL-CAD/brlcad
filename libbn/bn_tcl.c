@@ -82,28 +82,28 @@ char *str;
 
 static void
 encode_mat(vp, m)
-struct rt_vls *vp;
+struct bu_vls *vp;
 mat_t m;
 {
-	rt_vls_printf(vp, "%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g",
+	bu_vls_printf(vp, "%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g",
 	    m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7],
 	    m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15]);
 }
 
 static void
 encode_quat(vp, q)
-struct rt_vls *vp;
+struct bu_vls *vp;
 quat_t q;
 {
-	rt_vls_printf(vp, "%g %g %g %g", V4ARGS(q));
+	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(q));
 }
 
 static void
 encode_vect(vp, v)
-struct rt_vls *vp;
+struct bu_vls *vp;
 vect_t v;
 {
-	rt_vls_printf(vp, "%g %g %g", V3ARGS(v));
+	bu_vls_printf(vp, "%g %g %g", V3ARGS(v));
 }
 
 static void
@@ -142,16 +142,16 @@ int argc;
 char **argv;
 {
 	void (*math_func)();
-	struct rt_vls result;
+	struct bu_vls result;
 
 	math_func = (void (*)())clientData;
-	rt_vls_init(&result);
+	bu_vls_init(&result);
 
 	if (math_func == mat_mul) {
 		mat_t o, a, b;
 		if (argc < 3 || decode_mat(a, argv[1]) < 16 ||
 		    decode_mat(b, argv[2]) < 16) {
-			rt_vls_printf(&result, "usage: %s matA matB", argv[0]);
+			bu_vls_printf(&result, "usage: %s matA matB", argv[0]);
 			goto error;
 		}
 		(*math_func)(o, a, b);
@@ -160,7 +160,7 @@ char **argv;
 		mat_t o, a;
 
 		if (argc < 2 || decode_mat(a, argv[1]) < 16) {
-			rt_vls_printf(&result, "usage: %s mat", argv[0]);
+			bu_vls_printf(&result, "usage: %s mat", argv[0]);
 			goto error;
 		}
 		(*math_func)(o, a);
@@ -170,7 +170,7 @@ char **argv;
 		double az, el;
 
 		if (argc < 3) {
-			rt_vls_printf(&result, "usage: %s azimuth elevation", argv[0]);
+			bu_vls_printf(&result, "usage: %s azimuth elevation", argv[0]);
 			goto error;
 		}
 		if (Tcl_GetDouble(interp, argv[1], &az) != TCL_OK) goto error;
@@ -183,12 +183,12 @@ char **argv;
 		vect_t v;
 
 		if (argc < 2 || decode_vect(v, argv[1]) < 3) {
-			rt_vls_printf(&result, "usage: %s vect", argv[0]);
+			bu_vls_printf(&result, "usage: %s vect", argv[0]);
 			goto error;
 		}
 
 		(*math_func)(&az, &el, v);
-		rt_vls_printf(&result, "%g %g", az, el);
+		bu_vls_printf(&result, "%g %g", az, el);
 	} else if (math_func == mat_aet_vec) {
 		fastf_t az, el, twist, accuracy;
 		vect_t vec_ae, vec_twist;
@@ -196,19 +196,19 @@ char **argv;
 		if (argc < 4 || decode_vect(vec_ae, argv[1]) < 3 ||
 		    decode_vect(vec_twist, argv[2]) < 3 ||
 		    sscanf(argv[3], "%lf", &accuracy) < 1) {
-		  rt_vls_printf(&result, "usage: %s vec_ae vec_twist accuracy",
+		  bu_vls_printf(&result, "usage: %s vec_ae vec_twist accuracy",
 				argv[0]);
 		  goto error;
 		}
 
 		(*math_func)(&az, &el, &twist, vec_ae, vec_twist, accuracy);
-		rt_vls_printf(&result, "%g %g %g", az, el, twist);
+		bu_vls_printf(&result, "%g %g %g", az, el, twist);
 	} else if (math_func == mat_angles) {
 		mat_t o;
 		double alpha, beta, ggamma;
 
 		if (argc < 4) {
-			rt_vls_printf(&result, "usage: %s alpha beta gamma", argv[0]);
+			bu_vls_printf(&result, "usage: %s alpha beta gamma", argv[0]);
 			goto error;
 		}
 		if (Tcl_GetDouble(interp, argv[1], &alpha) != TCL_OK)  goto error;
@@ -223,7 +223,7 @@ char **argv;
 		double a, b, c;
 
 		if (argc < 4) {
-			rt_vls_printf(&result, "usage: %s a b c", argv[0]);
+			bu_vls_printf(&result, "usage: %s a b c", argv[0]);
 			goto error;
 		}
 		if (Tcl_GetDouble(interp, argv[1], &a) != TCL_OK) goto error;
@@ -232,7 +232,7 @@ char **argv;
 
 		(*math_func)(&val1, &val2, vec1, vec2, (fastf_t)a, (fastf_t)b,
 		    (fastf_t)c);
-		rt_vls_printf(&result, "%g %g {%g %g %g} {%g %g %g}", val1, val2,
+		bu_vls_printf(&result, "%g %g {%g %g %g} {%g %g %g}", val1, val2,
 		    V3ARGS(vec1), V3ARGS(vec2));
 	} else if (math_func == mat_fromto) {
 		mat_t o;
@@ -240,7 +240,7 @@ char **argv;
 
 		if (argc < 3 || decode_vect(from, argv[1]) < 3 ||
 		    decode_vect(to, argv[2]) < 3) {
-			rt_vls_printf(&result, "usage: %s vecFrom vecTo", argv[0]);
+			bu_vls_printf(&result, "usage: %s vecFrom vecTo", argv[0]);
 			goto error;
 		}
 		(*math_func)(o, from, to);
@@ -250,7 +250,7 @@ char **argv;
 		mat_t o;
 		double s, c;
 		if (argc < 3) {
-			rt_vls_printf(&result, "usage: %s sinAngle cosAngle", argv[0]);
+			bu_vls_printf(&result, "usage: %s sinAngle cosAngle", argv[0]);
 			goto error;
 		}
 		if (Tcl_GetDouble(interp, argv[1], &s) != TCL_OK) goto error;
@@ -263,7 +263,7 @@ char **argv;
 		vect_t dir;
 		int yflip;
 		if (argc < 3 || decode_vect(dir, argv[1]) < 3) {
-			rt_vls_printf(&result, "usage: %s dir yflip", argv[0]);
+			bu_vls_printf(&result, "usage: %s dir yflip", argv[0]);
 			goto error;
 		}
 		if (Tcl_GetBoolean(interp, argv[2], &yflip) != TCL_OK) goto error;
@@ -274,7 +274,7 @@ char **argv;
 		vect_t ov, vec;
 
 		if (argc < 2 || decode_vect(vec, argv[1]) < 3) {
-			rt_vls_printf(&result, "usage: %s vec", argv[0]);
+			bu_vls_printf(&result, "usage: %s vec", argv[0]);
 			goto error;
 		}
 
@@ -287,14 +287,14 @@ char **argv;
 		int status;
 
 		if (argc < 3 || decode_vect(v, argv[1]) < 3) {
-			rt_vls_printf(&result, "usage: %s pt scale", argv[0]);
+			bu_vls_printf(&result, "usage: %s pt scale", argv[0]);
 			goto error;
 		}
 		if (Tcl_GetDouble(interp, argv[2], &scale) != TCL_OK) goto error;
 
 		(*math_func)(&status, o, v, scale);
 		if (status != 0) {
-			rt_vls_printf(&result, "error performing calculation");
+			bu_vls_printf(&result, "error performing calculation");
 			goto error;
 		}
 		encode_mat(&result, o);
@@ -304,7 +304,7 @@ char **argv;
 
 		if (argc < 3 || decode_mat(xform, argv[1]) < 16 ||
 		    decode_vect(v, argv[2]) < 3) {
-			rt_vls_printf(&result, "usage: %s xform pt", argv[0]);
+			bu_vls_printf(&result, "usage: %s xform pt", argv[0]);
 			goto error;
 		}
 
@@ -318,7 +318,7 @@ char **argv;
 
 		if (argc < 4 || decode_vect(pt, argv[1]) < 3 ||
 		    decode_vect(dir, argv[2]) < 3) {
-			rt_vls_printf(&result, "usage: %s pt dir angle", argv[0]);
+			bu_vls_printf(&result, "usage: %s pt dir angle", argv[0]);
 			goto error;
 		}
 		if (Tcl_GetDouble(interp, argv[3], &angle) != TCL_OK)
@@ -331,7 +331,7 @@ char **argv;
 		quat_t quat;
 
 		if (argc < 2 || decode_mat(mat, argv[1]) < 16) {
-			rt_vls_printf(&result, "usage: %s mat", argv[0]);
+			bu_vls_printf(&result, "usage: %s mat", argv[0]);
 			goto error;
 		}
 
@@ -342,7 +342,7 @@ char **argv;
 		quat_t quat;
 
 		if (argc < 2 || decode_quat(quat, argv[1]) < 4) {
-			rt_vls_printf(&result, "usage: %s quat", argv[0]);
+			bu_vls_printf(&result, "usage: %s quat", argv[0]);
 			goto error;
 		}
 
@@ -354,19 +354,19 @@ char **argv;
 
 		if (argc < 3 || decode_quat(q1, argv[1]) < 4 ||
 		    decode_quat(q2, argv[2]) < 4) {
-			rt_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
+			bu_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
 			goto error;
 		}
 
 		(*math_func)(&d, q1, q2);
-		rt_vls_printf(&result, "%g", d);
+		bu_vls_printf(&result, "%g", d);
 	} else if (math_func == quat_double || math_func == quat_bisect ||
 	    math_func == quat_make_nearest) {
 		quat_t oqot, q1, q2;
 
 		if (argc < 3 || decode_quat(q1, argv[1]) < 4 ||
 		    decode_quat(q2, argv[2]) < 4) {
-			rt_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
+			bu_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
 			goto error;
 		}
 
@@ -378,7 +378,7 @@ char **argv;
 
 		if (argc < 4 || decode_quat(q1, argv[1]) < 4 ||
 		    decode_quat(q2, argv[2]) < 4) {
-			rt_vls_printf(&result, "usage: %s quat1 quat2 factor", argv[0]);
+			bu_vls_printf(&result, "usage: %s quat1 quat2 factor", argv[0]);
 			goto error;
 		}
 		if (Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
@@ -392,7 +392,7 @@ char **argv;
 		if (argc < 6 || decode_quat(q1, argv[1]) < 4 ||
 		    decode_quat(qa, argv[2]) < 4 || decode_quat(qb, argv[3]) < 4 ||
 		    decode_quat(q2, argv[4]) < 4) {
-			rt_vls_printf(&result, "usage: %s quat1 quatA quatB quat2 factor",
+			bu_vls_printf(&result, "usage: %s quat1 quatA quatB quat2 factor",
 			    argv[0]);
 			goto error;
 		}
@@ -404,24 +404,24 @@ char **argv;
 		quat_t qout, qin;
 
 		if (argc < 2 || decode_quat(qin, argv[1]) < 4) {
-			rt_vls_printf(&result, "usage: %s quat", argv[0]);
+			bu_vls_printf(&result, "usage: %s quat", argv[0]);
 			goto error;
 		}
 
 		(*math_func)(qout, qin);
 		encode_quat(&result, qout);
 	} else {
-		rt_vls_printf(&result, "math function %s not supported yet", argv[0]);
+		bu_vls_printf(&result, "math function %s not supported yet", argv[0]);
 		goto error;
 	}
 
-	Tcl_AppendResult(interp, rt_vls_addr(&result), (char *)NULL);
-	rt_vls_free(&result);
+	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+	bu_vls_free(&result);
 	return TCL_OK;
 
 error:
-	Tcl_AppendResult(interp, rt_vls_addr(&result), (char *)NULL);
-	rt_vls_free(&result);
+	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+	bu_vls_free(&result);
 	return TCL_ERROR;
 }
 

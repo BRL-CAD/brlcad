@@ -69,13 +69,13 @@ char	*argv[];
 	register struct directory *ndp;
 	mat_t new_mat;
 	register int i;
-	struct rt_vls		v;
+	struct bu_vls		v;
 	struct rt_db_internal	intern;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	RT_VLS_INIT(&v);
+	bu_vls_init(&v);
 
 	if( argc == 1 ) {
 		/* use the solid being edited */
@@ -93,8 +93,8 @@ char	*argv[];
 		case ST_S_EDIT:
 		  /* Use already modified version. "new way" */
 		  do_anal(&v, &es_int);
-		  Tcl_AppendResult(interp, rt_vls_addr(&v), (char *)NULL);
-		  rt_vls_free(&v);
+		  Tcl_AppendResult(interp, bu_vls_addr(&v), (char *)NULL);
+		  bu_vls_free(&v);
 		  return TCL_OK;
 
 		case ST_O_EDIT:
@@ -113,8 +113,8 @@ char	*argv[];
 		}
 
 		do_anal(&v, &intern);
-		Tcl_AppendResult(interp, rt_vls_addr(&v), (char *)NULL);
-		rt_vls_free(&v);
+		Tcl_AppendResult(interp, bu_vls_addr(&v), (char *)NULL);
+		bu_vls_free(&v);
 		rt_db_free_internal( &intern );
 		return TCL_OK;
 	}
@@ -129,14 +129,14 @@ char	*argv[];
 		  return TCL_ERROR;
 		}
 
-		rt_vls_trunc( &v, 0 );		
+		bu_vls_trunc( &v, 0 );		
 		do_list( &v, ndp, 1 );
-		Tcl_AppendResult(interp, rt_vls_addr(&v), (char *)NULL);
-		rt_vls_trunc( &v, 0 );
+		Tcl_AppendResult(interp, bu_vls_addr(&v), (char *)NULL);
+		bu_vls_trunc( &v, 0 );
 
 		do_anal(&v, &intern);
-		Tcl_AppendResult(interp, rt_vls_addr(&v), (char *)NULL);
-		rt_vls_free(&v);
+		Tcl_AppendResult(interp, bu_vls_addr(&v), (char *)NULL);
+		bu_vls_free(&v);
 		rt_db_free_internal( &intern );
 	}
 
@@ -147,7 +147,7 @@ char	*argv[];
 /* Analyze solid in internal form */
 static void
 do_anal(vp, ip)
-struct rt_vls		*vp;
+struct bu_vls		*vp;
 CONST struct rt_db_internal	*ip;
 {
 	/* XXX Could give solid name, and current units, here */
@@ -183,7 +183,7 @@ CONST struct rt_db_internal	*ip;
 		break;
 
 	default:
-		rt_vls_printf(vp,"analyze: unable to process %s solid\n",
+		bu_vls_printf(vp,"analyze: unable to process %s solid\n",
 			rt_functab[ip->idb_type].ft_name );
 		break;
 	}
@@ -205,7 +205,7 @@ static CONST int nedge[5][24] = {
  */
 static void
 arb_anal(vp, ip)
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 CONST struct rt_db_internal	*ip;
 {
 	struct rt_arb_internal	*arb = (struct rt_arb_internal *)ip->idb_ptr;
@@ -218,7 +218,7 @@ CONST struct rt_db_internal	*ip;
 
 	/* find the specific arb type, in GIFT order. */
 	if( (cgtype = rt_arb_std_type( ip, &mged_tol )) == 0 ) {
-		rt_vls_printf(vp,"arb_anal: bad ARB\n");
+		bu_vls_printf(vp,"arb_anal: bad ARB\n");
 		return;
 	}
 
@@ -227,19 +227,19 @@ CONST struct rt_db_internal	*ip;
 	type = cgtype - 4;
 
 	/* analyze each face, use center point of arb for reference */
-	rt_vls_printf(vp,"\n------------------------------------------------------------------------------\n");
-	rt_vls_printf(vp,"| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
-	rt_vls_printf(vp,"|------|---------------|----------------------------------|------------------|\n");
+	bu_vls_printf(vp,"\n------------------------------------------------------------------------------\n");
+	bu_vls_printf(vp,"| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
+	bu_vls_printf(vp,"|------|---------------|----------------------------------|------------------|\n");
 	rt_arb_centroid( center_pt, arb, cgtype );
 
 	for(i=0; i<6; i++) 
 		tot_area += anal_face( vp, i, center_pt, arb, type, &mged_tol );
 
-	rt_vls_printf(vp,"------------------------------------------------------------------------------\n");
+	bu_vls_printf(vp,"------------------------------------------------------------------------------\n");
 
 	/* analyze each edge */
-	rt_vls_printf(vp,"    | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   |\n");
-	rt_vls_printf(vp,"    |----------------|----------------|----------------|----------------|\n  ");
+	bu_vls_printf(vp,"    | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   |\n");
+	bu_vls_printf(vp,"    |----------------|----------------|----------------|----------------|\n  ");
 
 	/* set up the records for arb4's and arb6's */
 	{
@@ -257,18 +257,18 @@ CONST struct rt_db_internal	*ip;
 				break;
 		}
 	}
-	rt_vls_printf(vp,"  ---------------------------------------------------------------------\n");
+	bu_vls_printf(vp,"  ---------------------------------------------------------------------\n");
 
 	/* find the volume - break arb8 into 6 arb4s */
 	for(i=0; i<6; i++)
 		tot_vol += find_vol( i, arb, &mged_tol );
 
-	rt_vls_printf(vp,"      | Volume = %18.3f    Surface Area = %15.3f |\n",
+	bu_vls_printf(vp,"      | Volume = %18.3f    Surface Area = %15.3f |\n",
 			tot_vol*base2local*base2local*base2local,
 			tot_area*base2local*base2local);
-	rt_vls_printf(vp,"      |          %18.3f gal                               |\n",
+	bu_vls_printf(vp,"      |          %18.3f gal                               |\n",
 		tot_vol/3787878.79);
-	rt_vls_printf(vp,"      -----------------------------------------------------------------\n");
+	bu_vls_printf(vp,"      -----------------------------------------------------------------\n");
 }
 
 /* ARB face printout array */
@@ -347,7 +347,7 @@ register vect_t		unitv;
  */
 static double
 anal_face( vp, face, center_pt, arb, type, tol )
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 int		face;
 point_t		center_pt;		/* reference center point */
 CONST struct rt_arb_internal	*arb;
@@ -374,7 +374,7 @@ CONST struct rt_tol	*tol;
 	/* find plane eqn for this face */
 	if( rt_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
 	    arb->pt[c], tol ) < 0 )  {
-		rt_vls_printf(vp,"| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
+		bu_vls_printf(vp,"| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
 				a+1,b+1,c+1,d+1);
 		return 0;
 	}
@@ -419,12 +419,12 @@ CONST struct rt_tol	*tol;
 		face_area += area[i];
 	}
 
-	rt_vls_printf(vp,"| %4d |",prface[type][face]);
-	rt_vls_printf(vp," %6.2f %6.2f | %6.3f %6.3f %6.3f %11.3f |",
+	bu_vls_printf(vp,"| %4d |",prface[type][face]);
+	bu_vls_printf(vp," %6.2f %6.2f | %6.3f %6.3f %6.3f %11.3f |",
 		angles[3], angles[4],
 		plane[0],plane[1],plane[2],
 		plane[3]*base2local);
-	rt_vls_printf(vp,"   %13.3f  |\n",
+	bu_vls_printf(vp,"   %13.3f  |\n",
 		(area[0]+area[1])*base2local*base2local);
 	return face_area;
 }
@@ -432,7 +432,7 @@ CONST struct rt_tol	*tol;
 /*	Analyzes arb edges - finds lengths */
 static void
 anal_edge( vp, edge, arb, type )
-struct rt_vls		*vp;
+struct bu_vls		*vp;
 int			edge;
 CONST struct rt_arb_internal	*arb;
 int			type;
@@ -448,23 +448,23 @@ int			type;
 		if( (a = edge%4) == 0 ) 
 			return;
 		if( a == 1 ) {
-			rt_vls_printf(vp,"  |                |                |                |\n  ");
+			bu_vls_printf(vp,"  |                |                |                |\n  ");
 			return;
 		}
 		if( a == 2 ) {
-			rt_vls_printf(vp,"  |                |                |\n  ");
+			bu_vls_printf(vp,"  |                |                |\n  ");
 			return;
 		}
-		rt_vls_printf(vp,"  |                |\n  ");
+		bu_vls_printf(vp,"  |                |\n  ");
 		return;
 	}
 
 	VSUB2(v_temp, arb->pt[b], arb->pt[a]);
-	rt_vls_printf(vp, "  |  %d%d %9.3f",
+	bu_vls_printf(vp, "  |  %d%d %9.3f",
 		a+1, b+1, MAGNITUDE(v_temp)*base2local);
 
 	if( ++edge%4 == 0 )
-		rt_vls_printf(vp,"  |\n  ");
+		bu_vls_printf(vp,"  |\n  ");
 }
 
 
@@ -512,7 +512,7 @@ static double pi = 3.1415926535898;
 /*	analyze a torus	*/
 static void
 tor_anal(vp, ip)
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 CONST struct rt_db_internal	*ip;
 {
 	struct rt_tor_internal	*tor = (struct rt_tor_internal *)ip->idb_ptr;
@@ -526,7 +526,7 @@ CONST struct rt_db_internal	*ip;
 	vol = 2.0 * pi * pi * r1 * r2 * r2;
 	sur_area = 4.0 * pi * pi * r1 * r2;
 
-	rt_vls_printf(vp,"TOR Vol = %.4f (%.4f gal)   Surface Area = %.4f\n",
+	bu_vls_printf(vp,"TOR Vol = %.4f (%.4f gal)   Surface Area = %.4f\n",
 		vol*base2local*base2local*base2local,
 		vol/3787878.79,
 		sur_area*base2local*base2local);
@@ -540,7 +540,7 @@ CONST struct rt_db_internal	*ip;
 /*	analyze an ell	*/
 static void
 ell_anal(vp, ip)
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 CONST struct rt_db_internal	*ip;
 {
 	struct rt_ell_internal	*ell = (struct rt_ell_internal *)ip->idb_ptr;
@@ -564,14 +564,14 @@ CONST struct rt_db_internal	*ip;
 	type = 0;
 
 	vol = 4.0 * pi * ma * mb * mc / 3.0;
-	rt_vls_printf(vp,"ELL Volume = %.4f (%.4f gal)",
+	bu_vls_printf(vp,"ELL Volume = %.4f (%.4f gal)",
 		vol*base2local*base2local*base2local,
 		vol/3787878.79);
 
 	if( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
 		/* have a sphere */
 		sur_area = 4.0 * pi * ma * ma;
-		rt_vls_printf(vp,"   Surface Area = %.4f\n",
+		bu_vls_printf(vp,"   Surface Area = %.4f\n",
 				sur_area*base2local*base2local);
 		return;
 	}
@@ -623,7 +623,7 @@ CONST struct rt_db_internal	*ip;
 		}
 	}
 	else {
-		rt_vls_printf(vp,"   Cannot find surface area\n");
+		bu_vls_printf(vp,"   Cannot find surface area\n");
 		return;
 	}
 	ecc = sqrt(major*major - minor*minor) / major;
@@ -637,7 +637,7 @@ CONST struct rt_db_internal	*ip;
 		sur_area = 0.0;
 	}
 
-	rt_vls_printf(vp,"   Surface Area = %.4f\n",
+	bu_vls_printf(vp,"   Surface Area = %.4f\n",
 			sur_area*base2local*base2local);
 }
 
@@ -648,7 +648,7 @@ CONST struct rt_db_internal	*ip;
 /*	analyze tgc */
 static void
 tgc_anal(vp, ip)
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 CONST struct rt_db_internal	*ip;
 {
 	struct rt_tgc_internal	*tgc = (struct rt_tgc_internal *)ip->idb_ptr;
@@ -694,7 +694,7 @@ CONST struct rt_db_internal	*ip;
 			area_top = area_base;
 			area_side = 2.0 * pi * ma * mh;
 			vol = pi * ma * ma * mh;
-			rt_vls_printf(vp, "RCC ");
+			bu_vls_printf(vp, "RCC ");
 			break;
 
 		case MGED_ANAL_TRC:
@@ -702,7 +702,7 @@ CONST struct rt_db_internal	*ip;
 			area_top = pi * mc * mc;
 			area_side = pi * (ma+mc) * sqrt((ma-mc)*(ma-mc)+(mh*mh));
 			vol = pi * mh * (ma*ma + mc*mc + ma*mc) / 3.0;
-			rt_vls_printf(vp, "TRC ");
+			bu_vls_printf(vp, "TRC ");
 			break;
 
 		case MGED_ANAL_REC:
@@ -711,20 +711,20 @@ CONST struct rt_db_internal	*ip;
 			/* approximate */
 			area_side = 2.0 * pi * mh * sqrt(0.5 * (ma*ma + mb*mb));
 			vol = pi * ma * mb * mh;
-			rt_vls_printf(vp, "REC ");
+			bu_vls_printf(vp, "REC ");
 			break;
 
 		default:
-			rt_vls_printf(vp,"TGC Cannot find areas and volume\n");
+			bu_vls_printf(vp,"TGC Cannot find areas and volume\n");
 			return;
 	}
 
 	/* print the results */
-	rt_vls_printf(vp,"Surface Areas:  base(AxB)=%.4f  top(CxD)=%.4f  side=%.4f\n",
+	bu_vls_printf(vp,"Surface Areas:  base(AxB)=%.4f  top(CxD)=%.4f  side=%.4f\n",
 			area_base*base2local*base2local,
 			area_top*base2local*base2local,
 			area_side*base2local*base2local);
-	rt_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
+	bu_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
 			(area_base+area_top+area_side)*base2local*base2local,
 			vol*base2local*base2local*base2local,vol/3787878.79);
 	/* Print units? */
@@ -737,19 +737,19 @@ CONST struct rt_db_internal	*ip;
 /*	analyze ars */
 static void
 ars_anal(vp, ip)
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 CONST struct rt_db_internal	*ip;
 {
-	rt_vls_printf(vp,"ARS analyze not implemented\n");
+	bu_vls_printf(vp,"ARS analyze not implemented\n");
 }
 
 /*	XXX	analyze spline needed
  * static void
  * spline_anal(vp, ip)
- * struct rt_vls	*vp;
+ * struct bu_vls	*vp;
  * CONST struct rt_db_internal	*ip;
  * {
- * 	rt_vls_printf(vp,"SPLINE analyze not implemented\n");
+ * 	bu_vls_printf(vp,"SPLINE analyze not implemented\n");
  * }
  */
 
@@ -758,7 +758,7 @@ CONST struct rt_db_internal	*ip;
 /*	analyze rpc */
 static void
 rpc_anal(vp, ip)
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 CONST struct rt_db_internal	*ip;
 {
 	fastf_t	area_parab, area_body, b, h, r, vol_parab;
@@ -780,11 +780,11 @@ CONST struct rt_db_internal	*ip;
 	area_body = .5*sqrt(r*r + 4.*b*b) + .25*r*r/b*arcsinh(2.*b/r);
 	area_body *= 2.;
 
-	rt_vls_printf(vp,"Surface Areas:  front(BxR)=%.4f  top(RxH)=%.4f  body=%.4f\n",
+	bu_vls_printf(vp,"Surface Areas:  front(BxR)=%.4f  top(RxH)=%.4f  body=%.4f\n",
 			area_parab*base2local*base2local,
 			2*r*h*base2local*base2local,
 			area_body*base2local*base2local);
-	rt_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
+	bu_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
 			(2*area_parab+2*r*h+area_body)*base2local*base2local,
 			vol_parab*base2local*base2local*base2local,
 			vol_parab/3787878.79);
@@ -793,7 +793,7 @@ CONST struct rt_db_internal	*ip;
 /*	analyze rhc */
 static void
 rhc_anal(vp, ip)
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 CONST struct rt_db_internal	*ip;
 {
 	fastf_t	area_hyperb, area_body, b, c, h, r, vol_hyperb,	work1;
@@ -823,11 +823,11 @@ CONST struct rt_db_internal	*ip;
 	area_body = 2.*(L_eval(r) - L_eval(0.));
 #endif
 
-	rt_vls_printf(vp,"Surface Areas:  front(BxR)=%.4f  top(RxH)=%.4f  body=%.4f\n",
+	bu_vls_printf(vp,"Surface Areas:  front(BxR)=%.4f  top(RxH)=%.4f  body=%.4f\n",
 			area_hyperb*base2local*base2local,
 			2*r*h*base2local*base2local,
 			area_body*base2local*base2local);
-	rt_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
+	bu_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
 			(2*area_hyperb+2*r*h+2*area_body)*base2local*base2local,
 			vol_hyperb*base2local*base2local*base2local,
 			vol_hyperb/3787878.79);

@@ -142,7 +142,7 @@ fastf_t scale;
 {
 	fastf_t tmp_od;
 
-	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+	BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
 
 	/* need to check that the new OD is not less than ID
 	 * of any affected segment.
@@ -174,7 +174,7 @@ fastf_t scale;
 {
 	fastf_t tmp_id;
 
-	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+	BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
 
 	/* need to check that the new ID is not greater than OD */
 	if( scale > 0.0 )
@@ -206,7 +206,7 @@ fastf_t scale;
 	fastf_t old_radius;
 	struct wdb_pipept *head;
 
-	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe point" );
+	BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe point" );
 
 	head = ps;
 	while( head->l.magic != RT_LIST_HEAD_MAGIC )
@@ -272,7 +272,7 @@ fastf_t scale;
 	RT_LIST_INIT( &head );
 	for( RT_LIST_FOR( old_ps, wdb_pipept, &pipe->pipe_segs_head ) )
 	{
-		GETSTRUCT( new_ps, wdb_pipept );
+		BU_GETSTRUCT( new_ps, wdb_pipept );
 		*new_ps = (*old_ps);
 		RT_LIST_APPEND( &head, &new_ps->l );
 	}
@@ -294,7 +294,7 @@ fastf_t scale;
 		{
 			new_ps = RT_LIST_FIRST( wdb_pipept, &head );
 			RT_LIST_DEQUEUE( &new_ps->l );
-			rt_free( (char *)new_ps, "pipe_scale_radius: new_ps" );
+			bu_free( (char *)new_ps, "pipe_scale_radius: new_ps" );
 		}
 		return;
 	}
@@ -304,7 +304,7 @@ fastf_t scale;
 	{
 		new_ps = RT_LIST_FIRST( wdb_pipept, &head );
 		RT_LIST_DEQUEUE( &new_ps->l );
-		rt_free( (char *)new_ps, "pipe_scale_radius: new_ps" );
+		bu_free( (char *)new_ps, "pipe_scale_radius: new_ps" );
 	}
 
 	/* make changes to the original */
@@ -365,7 +365,7 @@ CONST point_t new_pt;
 
 	RT_PIPE_CK_MAGIC( pipe );
 	if( pp )
-		RT_CKMAG( pp, WDB_PIPESEG_MAGIC, "pipe point" )
+		BU_CKMAG( pp, WDB_PIPESEG_MAGIC, "pipe point" )
 
 	if( pp )
 		last = pp;
@@ -375,7 +375,7 @@ CONST point_t new_pt;
 		last = RT_LIST_LAST( wdb_pipept, &pipe->pipe_segs_head );
 		if( last->l.magic == RT_LIST_HEAD_MAGIC )
 		{
-			GETSTRUCT( new, wdb_pipept );
+			BU_GETSTRUCT( new, wdb_pipept );
 			new->l.magic = WDB_PIPESEG_MAGIC;
 			new->pp_od = 30.0;
 			new->pp_id = 0.0;
@@ -387,7 +387,7 @@ CONST point_t new_pt;
 	}
 
 	/* build new point */
-	GETSTRUCT( new, wdb_pipept );
+	BU_GETSTRUCT( new, wdb_pipept );
 	new->l.magic = WDB_PIPESEG_MAGIC;
 	new->pp_od = last->pp_od;
 	new->pp_id = last->pp_id;
@@ -403,7 +403,7 @@ CONST point_t new_pt;
 	{
 		/* won't work here, so refuse to do it */
 		RT_LIST_DEQUEUE( &new->l );
-		rt_free( (char *)new, "add_pipept: new " );
+		bu_free( (char *)new, "add_pipept: new " );
 	}
 }
 
@@ -419,7 +419,7 @@ CONST point_t new_pt;
 
 	RT_PIPE_CK_MAGIC( pipe );
 	if( pp )
-		RT_CKMAG( pp, WDB_PIPESEG_MAGIC, "pipe point" )
+		BU_CKMAG( pp, WDB_PIPESEG_MAGIC, "pipe point" )
 
 	if( pp )
 		first = pp;
@@ -429,7 +429,7 @@ CONST point_t new_pt;
 		first = RT_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
 		if( first->l.magic == RT_LIST_HEAD_MAGIC )
 		{
-			GETSTRUCT( new, wdb_pipept );
+			BU_GETSTRUCT( new, wdb_pipept );
 			new->l.magic = WDB_PIPESEG_MAGIC;
 			new->pp_od = 30.0;
 			new->pp_id = 0.0;
@@ -441,7 +441,7 @@ CONST point_t new_pt;
 	}
 
 	/* build new point */
-	GETSTRUCT( new, wdb_pipept );
+	BU_GETSTRUCT( new, wdb_pipept );
 	new->l.magic = WDB_PIPESEG_MAGIC;
 	new->pp_od = first->pp_od;
 	new->pp_id = first->pp_id;
@@ -457,7 +457,7 @@ CONST point_t new_pt;
 	{
 		/* won't work here, so refuse to do it */
 		RT_LIST_DEQUEUE( &new->l );
-		rt_free( (char *)new, "ins_pipept: new " );
+		bu_free( (char *)new, "ins_pipept: new " );
 	}
 }
 
@@ -469,7 +469,7 @@ struct wdb_pipept *ps;
 	struct wdb_pipept *prev;
 	struct wdb_pipept *head;
 
-	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+	BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
 
 	head = ps;
 	while( head->l.magic != RT_LIST_HEAD_MAGIC )
@@ -504,7 +504,7 @@ struct wdb_pipept *ps;
 		return( ps );
 	}
 	else
-		rt_free( (char *)ps, "del_pipept: ps" );
+		bu_free( (char *)ps, "del_pipept: ps" );
 
 	if( prev )
 		return( prev );
@@ -522,7 +522,7 @@ point_t new_pt;
 	point_t old_pt;
 
 	RT_PIPE_CK_MAGIC( pipe );
-	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+	BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
 
 	VMOVE( old_pt, ps->pp_coord );
 
