@@ -17,6 +17,21 @@
 #define REDBLACK_H seen
 
 /*
+ *  Macros for providing function prototypes, regardless of whether
+ *  the compiler understands them or not.
+ *  It is vital that the argument list given for "args" be enclosed
+ *  in parens.
+ */
+#if __STDC__ || USE_PROTOTYPES
+#	define	RB_EXTERN(type_and_name,args)	extern type_and_name args
+#	define	RB_ARGS(args)			args
+#else
+#	define	RB_EXTERN(type_and_name,args)	extern type_and_name()
+#	define	RB_ARGS(args)			()
+#endif
+
+
+/*
  *			R B _ T R E E
  *
  *	This is the only data structure used in LIBREDBLACK
@@ -100,50 +115,42 @@ struct rb_node
 /*
  *	Applications interface to LIBREDBLACK
  */
-rb_tree *rb_create	(
-			    char	*description,
-			    int 	nm_orders,
-			    int		(**order_funcs)()
-			);
-rb_tree *rb_create1	(
-			    char	*description,
-			    int		(*order_func)()
-			);
-void rb_delete		(
-			    rb_tree	*tree,
-			    int		order
-			);
-void rb_diagnose_tree	(
-			    rb_tree	*tree,
-			    int		order,
-			    int		trav_type
-			);
-void *rb_extreme	(
-			    rb_tree	*tree,
-			    int		order,
-			    int		sense
-			);
-int rb_insert		(
-			    rb_tree	*tree,
-			    void	*data
-			);
-void *rb_neighbor	(
-			    rb_tree	*tree,
-			    int		order,
-			    int		sense
-			);
-void *rb_search		(
-			    rb_tree	*tree,
-			    int		order,
-			    void	*data
-			);
-#define rb_search1(t,d)	rb_search((t), 0, (d))
-void rb_summarize_tree	(   rb_tree	*tree	);
-void rb_walk		(
-			    rb_tree	*tree,
-			    int		order,
-			    void	(*visit)(),
-			    int		trav_type
-			);
+RB_EXTERN(rb_tree *rb_create,	(char		*description,
+				 int 		nm_orders,
+				 int		(**order_funcs)()
+				));
+RB_EXTERN(rb_tree *rb_create1,	(char		*description,
+				 int		(*order_func)()
+				));
+RB_EXTERN(void rb_delete,	(rb_tree	*tree,
+				 int		order
+				));
+RB_EXTERN(void rb_diagnose_tree,(rb_tree	*tree,
+				 int		order,
+				 int		trav_type
+				));
+RB_EXTERN(void *rb_extreme,	(rb_tree	*tree,
+				 int		order,
+				 int		sense
+				));
+RB_EXTERN(int rb_insert,	(rb_tree	*tree,
+				 void		*data
+				));
+RB_EXTERN(void *rb_neighbor,	(rb_tree	*tree,
+				 int		order,
+				 int		sense
+				));
+RB_EXTERN(void *rb_search,	(rb_tree	*tree,
+				 int		order,
+				 void	*data
+				));
+#define		rb_search1(t,d)	rb_search((t), 0, (d))
+RB_EXTERN(void rb_summarize_tree,(rb_tree	*tree
+				 ));
+RB_EXTERN(void rb_walk,		(rb_tree	*tree,
+				 int		order,
+				 void		(*visit)(),
+				 int		trav_type
+				));
 
 #endif /* REDBLACK_H */
