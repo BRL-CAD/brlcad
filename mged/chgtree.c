@@ -92,7 +92,9 @@ char	**argv;
 
 	/* Change name in the file */
 	NAMEMOVE( argv[2], record.c.c_name );
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) { WRITE_ERR; return CMD_BAD; }
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ){
+	  TCL_WRITE_ERR_return;
+	}
 
 	return TCL_OK;
 }
@@ -614,7 +616,7 @@ char	**argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	if( not_state( ST_VIEW, "Arc edit" ) )  return CMD_BAD;
+	if( not_state( ST_VIEW, "Arc edit" ) )  return TCL_ERROR;
 
 	if( !strchr( argv[1], '/' ) )  {
 	  Tcl_AppendResult(interp, "arced: bad path specification '", argv[1],
@@ -631,7 +633,7 @@ char	**argv;
 		rt_log("arced: '%s' is not a 2-element path spec\n");
 		rt_free( thepath, "path" );
 		db_free_1anim( anp );
-		return CMD_BAD;
+		return TCL_ERROR;
 	}
 #endif
 
@@ -882,7 +884,7 @@ char      	**argv;
 	new_argv[0] = "matpick";
 	new_argv[1] = number;
 	new_argv[2] = NULL;
-	if( f_matpick( clientData, interp, 2, new_argv ) != CMD_OK )  {
+	if( f_matpick( clientData, interp, 2, new_argv ) != TCL_OK )  {
 		db_free_full_path( &lhs );
 		db_free_full_path( &rhs );
 		db_free_full_path( &both );
@@ -934,7 +936,7 @@ char	**argv;
 
 {
     int			i;			/* Dummy loop index */
-    int			result = CMD_OK;	/* Return code */
+    int			result = TCL_OK;	/* Return code */
     char		*ep;			/* Matrix element */
     char		*eep;			/* End of element */
     char		*newargv[20];
