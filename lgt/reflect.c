@@ -146,7 +146,14 @@ static bitv_t	hl_bits[1024][1024/HL_BITVBITS];
 static short		*hl_regmap = NULL;
 static unsigned short	*hl_dstmap = NULL;
 
-#define BEHIND_ME_TOL	0.001	/* Is object behind me. */
+/* Is object behind me.  Using values smaller than .01 cause bogus shadows
+	on single-precision math library machines like the IRIS 3030.  This
+	is because in shooting from a surface to the light source, we
+	actually nick the surface because of floating point inaccuracies
+	in the root finder.  BEHIND_ME_TOL must be larger than the distance
+	to the exit from these thin segments.
+ */
+#define BEHIND_ME_TOL	0.01
 #define PT_EMPTY	0
 #define PT_OHIT		1
 #define PT_BEHIND	2
