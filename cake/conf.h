@@ -15,11 +15,19 @@ typedef	int	Cast;
 #define	ULIB		"/lib/cake"
 
 /* command to invoke the C preprocessor */
-#define	CPP		"/lib/cpp"
-
-/* If C preprocessor needs options, define them here.  For example, GNU CPP */
-#if 0
-#	define	CPP_OPTIONS	"-traditional"
+#if 1
+	/*
+	 *  All BRL systems handle cc -E quite nicely.
+	 *  Using cc is necessary for the IBM RS/6000, and is nice on the SGI.
+	 */
+#	define	CPP		"cc"
+#	define CPP_OPTIONS	"-E"
+#else
+#	define	CPP		"/lib/cpp"
+	/* If C preprocessor needs options, define them here.  For example, GNU CPP */
+#	if 0
+#		define	CPP_OPTIONS	"-traditional"
+#	endif
 #endif
 
 /* location of the statistics file - if not defined, no stats kept */
