@@ -3314,6 +3314,7 @@ int after;
 				nmg_tbl( &inside_loops , TBL_FREE , (long *)NULL );
 				return;
 			}
+
 			if( lu->orientation != OT_SAME )
 			{
 				lu = lu_next;
@@ -3325,6 +3326,9 @@ int after;
 			{
 				struct loopuse *lu2;
 				int hole_in_lu=1;
+
+				if( lu1 == lu )
+					continue;
 
 				/* skip loops that are not OT_OPPOSITE */
 				if( lu1->orientation != OT_OPPOSITE )
@@ -3342,6 +3346,10 @@ int after;
 				/* look for another OT_SAME loopuse within lu */
 				for( RT_LIST_FOR( lu2 , loopuse , &fu->lu_hd ) )
 				{
+
+					if( lu2 == lu || lu2 == lu1 )
+						continue;
+
 					if( lu2->orientation != OT_SAME )
 						continue;
 
@@ -3371,9 +3379,12 @@ int after;
 			{
 				lu1 = (struct loopuse *)NMG_TBL_GET( &inside_loops , index );
 				nmg_move_lu_between_fus( new_fu , fu , lu1 );
+				otopp_loops--;
 			}
+			nmg_face_bb( new_fu->f_p, tol );
 			nmg_tbl( &inside_loops , TBL_RST , (long *)NULL );
 			otsame_loops--;
+			lu = lu_next;
 		}
 		nmg_tbl( &inside_loops , TBL_FREE , (long *)NULL );
 	}
@@ -3406,6 +3417,7 @@ int after;
 				}
 				new_fu = nmg_mk_new_face_from_loop( lu );
 				nmg_face_g( new_fu , plane );
+				nmg_face_bb( new_fu->f_p, tol );
 			}
 
 			lu = next_lu;
