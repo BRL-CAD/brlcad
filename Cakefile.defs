@@ -1090,20 +1090,21 @@ set -S2 "/bin/sh"
 #	define	CC	gcc
 #	define	LEX_OPTS	-l
 #	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
-#		define	OPTIMIZER	-O2
+#		define	OPTIMIZER	-O3
 #	else
-#		define	OPTIMIZER	-g
+#		define	OPTIMIZER	-O -g
+#		define	PROFILER	-pg  /* gprof profiling -- build staticly to include libraries */
 #	endif
 #	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support.  */
-#		define	CC_DEFS -pipe -fPIC -Wall
+#		define	CC_DEFS -pipe -fPIC -Wall -pedantic
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bshareable -o
 #		define	STANDARD_LIBES	-lm -Wl,-R -Wl,LIBDIR
 #	else
 /*		Static linked executables */
-#		define	CC_DEFS -pipe -Wall
+#		define	CC_DEFS -pipe -Wall -pedantic
 #	endif
 
 #	define	LIBRT_TIMER	timer42
