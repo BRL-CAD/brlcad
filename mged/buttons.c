@@ -36,6 +36,12 @@ static	edsol;
 static	edobj;		/* object editing */
 int	movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
 
+/* KAA
+ *	define the accumulation solid rot matrix and scale factor
+ */
+mat_t	acc_rot_sol;
+float	acc_sc_sol;
+
 static	sliceflag;	/* 0 = depth cue mode, !0 = "slice" mode */
 
 /*
@@ -380,6 +386,7 @@ ill_common:
 		menuflag = 0;
 		MENU_ON( FALSE );
 		es_edflag = SROT;
+		mat_idn(acc_rot_sol);
 		dmaflag++;
 		break;
 
@@ -409,6 +416,7 @@ ill_common:
 		menuflag = 0;
 		es_edflag = SSCALE;
 		MENU_ON( FALSE );
+		acc_sc_sol = 1.0;
 		dmaflag++;
 		break;
 	}
