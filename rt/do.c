@@ -47,6 +47,7 @@ extern int	rdebug;			/* RT program debugging (not library) */
 /***** Variables shared with viewing model *** */
 extern FILE	*outfp;			/* optional pixel output file */
 extern int	hex_out;		/* Binary or Hex .pix output file */
+extern double	azimuth, elevation;
 extern mat_t	view2model;
 extern mat_t	model2view;
 /***** end of sharing with viewing model *****/
@@ -215,6 +216,11 @@ char	**argv;
 	if( rtip->HeadRegion == REGION_NULL )  {
 		def_tree( rtip );		/* Load the default trees */
 	}
+
+	/* If no matrix or az/el specified yet, use params from cmd line */
+	if( Viewrotscale[15] <= 0.0 )
+		do_ae( azimuth, elevation );
+
 	if( do_frame( curframe ) < 0 )  return(-1);
 	return(0);
 }
@@ -603,9 +609,13 @@ double azim, elev;
 	mat_t	toEye;
 	struct rt_i *rtip = ap.a_rt_i;
 
+	if( rtip->mdl_max[X] >= INFINITY || rtip->mdl_max[X] <= -INFINITY )
+		rt_bomb("do_ae called before rt_gettree");
+
 	mat_idn( Viewrotscale );
 	mat_angles( Viewrotscale, 270.0-elev, 0.0, 270.0+azim );
-	fprintf(stderr,"Viewing %g azimuth, %g elevation off of front view\n",
+	fprintf(stderr,
+		"Viewing %g azimuth, %g elevation off of front view\n",
 		azim, elev);
 
 	/* Look at the center of the model */
