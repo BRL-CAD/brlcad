@@ -241,6 +241,7 @@ struct rt_i		*rtip;
 	fastf_t		hlen;
 	fastf_t		hlen_sq;
 	fastf_t		r_diff;
+	fastf_t		r_diff_sq;
 	fastf_t		sin_theta;
 	fastf_t		cos_theta;
 
@@ -269,6 +270,10 @@ struct rt_i		*rtip;
 
 	/* Compute some essential terms */
 	hlen_sq = MAGSQ(pip->part_H );
+	if( hlen_sq < SMALL )  {
+		bu_log("part(%s): 0-length H vector\n", stp->st_dp->d_namep);
+		return 1;		/* BAD */
+	}
 	hlen = sqrt(hlen_sq);
 	inv_hlen = 1/hlen;
 	VSCALE( Hunit, pip->part_H, inv_hlen );
@@ -278,20 +283,43 @@ struct rt_i		*rtip;
 	/*
 	 *  Compute parameters for the "equivalent cone"
 	 */
-	r_diff = (pip->part_vrad - pip->part_hrad) * inv_hlen;
-	sin_theta = sqrt( 1 - r_diff * r_diff );
-	cos_theta = fabs( r_diff );
-
-	/* This makes them larger */
-	part->part_v_erad = pip->part_vrad / sin_theta;
-	part->part_h_erad = pip->part_hrad / sin_theta;
 
 	/* Calculate changes in terms of the "unit particle" */
-	if( pip->part_vrad > pip->part_hrad )  {
+	if( pip->part_vrad >= pip->part_hrad )  {
+		/* V end is larger, H end is smaller */
+		r_diff = (pip->part_vrad - pip->part_hrad) * inv_hlen;
+		r_diff_sq = r_diff * r_diff;
+		if( r_diff_sq > 1 )  {
+			/* No "equivalent cone" is possible, theta=90deg */
+			sin_theta = 1;
+			cos_theta = 0;
+		} else {
+			sin_theta = sqrt( 1 - r_diff_sq );
+			cos_theta = fabs( r_diff );
+		}
+
+		part->part_v_erad = pip->part_vrad / sin_theta;
+		part->part_h_erad = pip->part_hrad / sin_theta;
+
 		/* Move both plates towards H hemisphere */
 		part->part_v_hdist = cos_theta * pip->part_vrad * inv_hlen;
 		part->part_h_hdist = 1 + cos_theta * pip->part_hrad * inv_hlen;
 	} else {
+		/* H end is larger, V end is smaller */
+		r_diff = (pip->part_hrad - pip->part_vrad) * inv_hlen;
+		r_diff_sq = r_diff * r_diff;
+		if( r_diff_sq > 1 )  {
+			/* No "equivalent cone" is possible, theta=90deg */
+			sin_theta = 1;
+			cos_theta = 0;
+		} else {
+			sin_theta = sqrt( 1 - r_diff_sq );
+			cos_theta = fabs( r_diff );
+		}
+
+		part->part_v_erad = pip->part_vrad / sin_theta;
+		part->part_h_erad = pip->part_hrad / sin_theta;
+
 		/* Move both plates towards V hemisphere */
 		part->part_v_hdist = -cos_theta * pip->part_vrad * inv_hlen;
 		part->part_h_hdist = 1 - cos_theta * pip->part_hrad * inv_hlen;
@@ -365,7 +393,7 @@ register CONST struct soltab *stp;
 		(struct part_specific *)stp->st_specific;
 
 	VPRINT("part_V", part->part_int.part_V );
-	VPRINT("part_H", part->part_int.part_V );
+	VPRINT("part_H", part->part_int.part_H );
 	bu_log("part_vrad=%g\n", part->part_int.part_vrad );
 	bu_log("part_hrad=%g\n", part->part_int.part_hrad );
 
@@ -819,7 +847,7 @@ struct soltab		*stp;
  *  The 'v' coordinate covers the 'height' of the particle,
  *  from V-r1 to (V+H)+r2.
  *
- *  hit_point and hit_normal have already been computed.
+ *  hit_point has already been computed.
  */
 void
 rt_part_uv( ap, stp, hitp, uvp )
@@ -837,6 +865,8 @@ register struct uvcoord	*uvp;
 	fastf_t vrad_unit;
 	fastf_t	r;
 	fastf_t minrad;
+
+	RT_PART_CK_MAGIC(&part->part_int.part_magic);
 
 	hmag_inv = 1.0/MAGNITUDE(part->part_int.part_H);
 	hsize = 1 + (vrad_unit = part->part_v_erad*hmag_inv) +
