@@ -89,6 +89,7 @@ struct wmember  {
 
 /*
  *  Definitions for pipe (wire) segments
+ * XXX Why isn't this in h/rtgeom.h?
  */
 
 struct wdb_pipept {
@@ -287,8 +288,7 @@ int mk_write_color_table( struct rt_wdb *ofp );
 
 
 /* These routines have been replaced by the construction routines below */
-#define mk_comb(fp,name,len,reg,matname,mparam,rgb,flag)	+++error_obsolete_libwdb_routine+++
-#define mk_rcomb(fp,name,len,reg,matname,mparam,rgb,id,air,mater,los,flag)	+++error_obsolete_libwdb_routine+++
+#define mk_rcomb(fp,name,len,reg,shadername,mparam,rgb,id,air,mater,los,flag)	+++error_obsolete_libwdb_routine+++
 #define mk_fcomb(fp,name,len,reg)				+++error_obsolete_libwdb_routine+++
 #define mk_memb(fp,name,map,op)					+++error_obsolete_libwdb_routine+++
 
@@ -298,18 +298,36 @@ int mk_write_color_table( struct rt_wdb *ofp );
  *  First you build a list of nodes with mk_addmember,
  *  then you output the combination.
  */
-WDB_EXTERN(struct wmember *mk_addmember, (const char *name,
-			struct wmember *headp, int op) );
+struct wmember *mk_addmember(
+	const char	*name,
+	struct bu_list	*headp,
+	int		op);
 
-#define mk_lcomb(_fp,_name,_headp,_rf,_matname,_matparm,_rgb,_inh)	\
-	mk_lrcomb(_fp,_name,_headp,_rf,_matname,_matparm,_rgb,0,0,0,0,_inh)
+#define mk_lcomb(_fp,_name,_headp,_rf,_shadername,_shaderargs,_rgb,_inh)	\
+	mk_comb(_fp,_name,&((_headp)->l),_rf,_shadername,_shaderargs,\
+		_rgb,0,0,0,0,_inh,0,0)
 
-WDB_EXTERN(int mk_lrcomb, (struct rt_wdb *fp, const char *name, struct wmember *headp,
-			int region_flag,
-			const char *matname, const char *matparm,
-			const unsigned char *rgb,
-			int id, int air, int material, int los,
-			int inherit_flag) );
+/* mk_lrcomb() would not append, and did not have GIFT semantics */
+/* mk_lrcomb() had (struct wmember *) head, need (struct bu_list *) */
+#define mk_lrcomb(fp, name, _headp, region_flag, shadername, shaderargs, rgb, id, air, material, los, inherit_flag )	\
+	mk_comb( fp, name, &((_headp)->l), region_flag, shadername, shaderargs, \
+		rgb, id, air, material, los, inherit_flag, 0, 0 )
+
+int mk_comb(
+	struct rt_wdb		*wdbp,
+	const char		*combname,
+	struct bu_list		*headp,		/* Made by mk_addmember() */
+	int			region_kind,	/* 1 => region.  'P' and 'V' for FASTGEN */
+	const char		*shadername,	/* shader name, or NULL */
+	const char		*shaderargs,	/* shader args, or NULL */
+	const unsigned char	*rgb,		/* NULL => no color */
+	int			id,		/* region_id */
+	int			air,		/* aircode */
+	int			material,	/* GIFTmater */
+	int			los,
+	int			inherit,
+	int			append_ok,	/* 0 = obj must not exit */
+	int			gift_semantics);	/* 0 = pure, 1 = gift */
 
 /* Convenience routines for quickly making combinations */
 int mk_comb1( struct rt_wdb *fp,
@@ -321,23 +339,13 @@ mk_region1(
 	struct rt_wdb *fp,
 	const char *combname,
 	const char *membname,
-	const char *matname,
-	const char *matparm,
+	const char *shadername,
+	const char *shaderargs,
 	const unsigned char *rgb );
-int
-mk_fastgen_region(
-	struct rt_wdb *fp,
-	const char *name,
-	struct wmember *headp,
-	char mode,
-	const char *matname,
-	const char *matparm,
-	const unsigned char *rgb,
-	int id,
-	int air,
-	int material,
-	int los,
-	int inherit );
+
+#define mk_fastgen_region(fp,name,headp,mode,shadername,shaderargs,rgb,id,air,material,los,inherit)	\
+	mk_comb(fp,name,headp,mode,shadername,shaderargs,rgb,id,air,\
+		material,los,inherit,0,0)
 
 
 /* Values for wm_op.  These must track db.h */
@@ -370,7 +378,8 @@ extern int	mk_version;		/* Which version database to write */
 /*
  *  Internal routines
  */
-WDB_EXTERN(int mk_freemembers, (struct wmember *headp) );
+void mk_freemembers( struct bu_list *headp );
+
 #define mk_fwrite_internal(fp,name,ip)		+++error_obsolete_libwdb_routine+++
 #define mk_export_fwrite(wdbp,name,gp,id)	wdb_export(wdbp,name,gp,id,mk_conv2mm)
 
