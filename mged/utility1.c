@@ -524,7 +524,7 @@ int	argc;
 char	**argv;
 {
 	int count;
-	char solid_name[NAMESIZE];
+	struct bu_vls solid_name;
 	char *nmg_solid_name;
 	char *prefix;
 	char *def_prefix="sh";
@@ -560,7 +560,7 @@ char	**argv;
 	if( argc > 2 )
 	{
 		prefix = argv[2];
-		if( strlen( prefix ) >= (NAMESIZE-3) )
+		if( dbip->dbi_version < 5 && strlen( prefix ) >= (NAMESIZE-3) )
 		{
 			Tcl_AppendResult(interp, "Prefix ", prefix, " is too long", (char *)NULL );
 			return TCL_ERROR;
@@ -583,6 +583,8 @@ char	**argv;
 		Tcl_AppendResult(interp, nmg_solid_name, " is not an NMG solid!", (char *)NULL );
 		return TCL_ERROR;
 	}
+
+	bu_vls_init( &solid_name );
 
 	m = (struct model *)nmg_intern.idb_ptr;
 	NMG_CK_MODEL(m);
@@ -642,17 +644,22 @@ char	**argv;
 
 				/* create name for this shell */
 				count++;
-				strcpy( solid_name, prefix );
+				bu_vls_strcpy( &solid_name, prefix );
 				sprintf( shell_no, "_%d", count );
-				end_prefix = strlen( prefix );
-				if( end_prefix + strlen( shell_no ) >= NAMESIZE )
-					end_prefix = NAMESIZE - strlen( shell_no );
-				solid_name[end_prefix] = '\0';
-				strncat( solid_name, shell_no, NAMESIZE-strlen(solid_name)-1 );
+				if( dbip->dbi_version < 5 ) {
+					end_prefix = strlen( prefix );
+					if( end_prefix + strlen( shell_no ) >= NAMESIZE )
+						end_prefix = NAMESIZE - strlen( shell_no );
+					bu_vls_trunc( &solid_name, end_prefix );
+					bu_vls_strncat( &solid_name, shell_no, NAMESIZE-bu_vls_strlen(&solid_name)-1 );
+				} else {
+					bu_vls_strcat( &solid_name, shell_no );
+				}
 
-				if( db_lookup( dbip, solid_name, LOOKUP_QUIET ) != DIR_NULL )
+				if( db_lookup( dbip, bu_vls_addr( &solid_name ), LOOKUP_QUIET ) != DIR_NULL )
 				{
-					Tcl_AppendResult(interp, "decompose: cannot create unique solid name (", solid_name, ")", (char *)NULL );
+					Tcl_AppendResult(interp, "decompose: cannot create unique solid name (",
+							 bu_vls_addr( &solid_name ), ")", (char *)NULL );
 					Tcl_AppendResult(interp, "decompose: failed" );
 					return TCL_ERROR;
 				}
@@ -664,15 +671,34 @@ char	**argv;
 				new_intern.idb_meth = &rt_functab[ID_NMG];
 				new_intern.idb_ptr = (genptr_t)new_m;
 
-				if( (new_dp=db_diradd( dbip, solid_name, -1, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )
-				{
-					TCL_ALLOC_ERR;
-					return TCL_ERROR;;
+				if( dbip->dbi_version < 5 ) {
+					if( (new_dp=db_diradd( dbip, bu_vls_addr( &solid_name ), -1, 0, DIR_SOLID,
+							       (genptr_t)&new_intern.idb_type)) == DIR_NULL ) {
+						bu_vls_free( &solid_name );
+						TCL_ALLOC_ERR;
+						return TCL_ERROR;;
+					}
+				} else {
+					struct bu_attribute_value_set avs;
+
+					bu_avs_init( &avs, 1, "avs" );
+					if ((new_dp = db_diradd5(wdbp->dbip, bu_vls_addr( &solid_name ), -1L,
+							     new_intern.idb_major_type, new_intern.idb_minor_type,
+							     (unsigned char)'\0', 0, &avs )) == DIR_NULL)  {
+						bu_avs_free( &avs );
+						Tcl_AppendResult(interp, "An error has occured while adding '",
+								 bu_vls_addr( &solid_name ), "' to the database.\n", (char *)NULL);
+						bu_vls_free( &solid_name );
+						TCL_ALLOC_ERR;
+						return TCL_ERROR;
+					}
+					bu_avs_free( &avs );
 				}
 
 				if( rt_db_put_internal( new_dp, dbip, &new_intern, &rt_uniresource ) < 0 )
 				{
 					(void)nmg_km( new_m );
+					bu_vls_free( &solid_name );
 					Tcl_AppendResult(interp, "rt_db_put_internal() failure\n", (char *)NULL);
 					return TCL_ERROR;
 				}
@@ -684,6 +710,7 @@ char	**argv;
 	}
 
 	rt_db_free_internal( &nmg_intern, &rt_uniresource );
+	bu_vls_free( &solid_name );
 
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;

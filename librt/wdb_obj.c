@@ -2487,11 +2487,25 @@ wdb_copy_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	if ((dp=db_diradd(wdbp->dbip, argv[2], -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
-		Tcl_AppendResult(interp,
-				 "An error has occured while adding a new object to the database.",
-				 (char *)NULL);
-		return TCL_ERROR;
+	if( wdbp->dbip->dbi_version < 5 ) {
+		if ((dp=db_diradd(wdbp->dbip, argv[2], -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
+			Tcl_AppendResult(interp,
+					 "An error has occured while adding a new object to the database.",
+					 (char *)NULL);
+			return TCL_ERROR;
+		}
+	} else {
+		struct bu_attribute_value_set avs;
+
+		bu_avs_init( &avs, 1, "avs" );
+		if ((dp = db_diradd5(wdbp->dbip, argv[2], -1L, proto->d_major_type, proto->d_minor_type,
+				     (unsigned char)'\0', 0, &avs )) == DIR_NULL)  {
+			bu_avs_free( &avs );
+			Tcl_AppendResult(interp, "An error has occured while adding '",
+					 argv[2], "' to the database.\n", (char *)NULL);
+			WDB_TCL_ALLOC_ERR_return;
+		}
+		bu_avs_free( &avs );
 	}
 
 	if (db_put_external(&external, dp, wdbp->dbip) < 0) {
@@ -3325,12 +3339,28 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	if ((dp=db_diradd(wdbp->dbip, argv[1], -1L, 0,
-			  wtd.wtd_obj[endpos-1]->d_flags,
-			  (genptr_t)&new_int.idb_type)) == DIR_NULL) {
-		rt_db_free_internal(&internal, &rt_uniresource);
-		rt_db_free_internal(&new_int, &rt_uniresource);
-		WDB_TCL_ALLOC_ERR_return;
+	if( wdbp->dbip->dbi_version < 5 ) {
+		if ((dp=db_diradd(wdbp->dbip, argv[1], -1L, 0,
+				  wtd.wtd_obj[endpos-1]->d_flags,
+				  (genptr_t)&new_int.idb_type)) == DIR_NULL) {
+			rt_db_free_internal(&internal, &rt_uniresource);
+			rt_db_free_internal(&new_int, &rt_uniresource);
+			WDB_TCL_ALLOC_ERR_return;
+		}
+	} else {
+		struct bu_attribute_value_set avs;
+
+		bu_avs_init( &avs, 1, "avs" );
+		if ((dp = db_diradd5(wdbp->dbip, argv[1], -1L, new_int.idb_major_type, new_int.idb_type,
+				     (unsigned char)'\0', 0, &avs )) == DIR_NULL)  {
+			bu_avs_free( &avs );
+			rt_db_free_internal(&internal, &rt_uniresource);
+			rt_db_free_internal(&new_int, &rt_uniresource);
+			Tcl_AppendResult(interp, "An error has occured while adding '",
+					 argv[1], "' to the database.\n", (char *)NULL);
+			WDB_TCL_ALLOC_ERR_return;
+		}
+		bu_avs_free( &avs );
 	}
 
 	if (rt_db_put_internal(dp, wdbp->dbip, &new_int, &rt_uniresource) < 0) {

@@ -224,8 +224,22 @@ char	**argv;
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == DIR_NULL )  {
-	    	TCL_ALLOC_ERR_return;
+	if( dbip->dbi_version < 5 ) {
+		if( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == DIR_NULL )  {
+			TCL_ALLOC_ERR_return;
+		}
+	} else {
+		struct bu_attribute_value_set avs;
+
+		bu_avs_init( &avs, 1, "avs" );
+		if ((dp = db_diradd5(dbip, argv[2], -1L, proto->d_major_type, proto->d_minor_type,
+				     (unsigned char)'\0', 0, &avs )) == DIR_NULL)  {
+			bu_avs_free( &avs );
+			Tcl_AppendResult(interp, "An error has occured while adding '",
+					 argv[2], "' to the database.\n", (char *)NULL);
+			TCL_ALLOC_ERR_return;
+		}
+		bu_avs_free( &avs );
 	}
 	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
