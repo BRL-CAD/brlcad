@@ -179,12 +179,16 @@ static char RCSpart[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 struct part_internal {
+	long	part_magic;
 	point_t	part_V;
 	vect_t	part_H;
 	fastf_t	part_vrad;
 	fastf_t	part_hrad;
 	int	part_type;		/* sphere, cylinder, cone */
 };
+#define RT_PART_INTERNAL_MAGIC	0xaaccee87
+#define RT_PART_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PART_INTERNAL_MAGIC,"part_internal")
+
 #define RT_PARTICLE_TYPE_SPHERE		1
 #define RT_PARTICLE_TYPE_CYLINDER	2
 #define RT_PARTICLE_TYPE_CONE		3
@@ -261,10 +265,12 @@ struct rt_i		*rtip;
 	}
 #endif
 	RT_CK_DB_INTERNAL( ip );
+	pip = (struct part_internal *)ip->idb_ptr;
+	RT_PART_CK_MAGIC(pip);
 
 	GETSTRUCT( part, part_specific );
 	stp->st_specific = (genptr_t)part;
-	part->part_int = *((struct part_internal *)ip->idb_ptr);	/* struct copy */
+	part->part_int = *pip;			/* struct copy */
 	pip = &part->part_int;
 
 	if( pip->part_type == RT_PARTICLE_TYPE_SPHERE )  {
@@ -881,6 +887,7 @@ double		norm_tol;
 #endif
 	RT_CK_DB_INTERNAL(ip);
 	pip = (struct part_internal *)ip->idb_ptr;
+	RT_PART_CK_MAGIC(pip);
 
 	if( pip->part_type == RT_PARTICLE_TYPE_SPHERE )  {
 		/* For the sphere, 3 rings of 16 points */
@@ -1021,6 +1028,7 @@ register mat_t		mat;
 	ip->idb_type = ID_PARTICLE;
 	ip->idb_ptr = rt_malloc( sizeof(struct part_internal), "part_internal");
 	part = (struct part_internal *)ip->idb_ptr;
+	part->part_magic = RT_PART_INTERNAL_MAGIC;
 
 	/* Apply modeling transformations */
 	MAT4X3PNT( part->part_V, mat, v );
@@ -1069,11 +1077,42 @@ register mat_t		mat;
  *			R T _ P A R T _ E X P O R T
  */
 int
-rt_part_export( ep, ip )
+rt_part_export( ep, ip, local2mm )
 struct rt_external	*ep;
 struct rt_db_internal	*ip;
+double			local2mm;
 {
-	return(-1);
+	struct part_internal	*pip;
+	union record		*rec;
+	point_t		vert;
+	vect_t		hi;
+	fastf_t		vrad;
+	fastf_t		hrad;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_PARTICLE )  return(-1);
+	pip = (struct part_internal *)ip->idb_ptr;
+	RT_PART_CK_MAGIC(pip);
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "part external");
+	rec = (union record *)ep->ext_buf;
+
+	/* Convert from user units to mm */
+	VSCALE( vert, pip->part_V, local2mm );
+	VSCALE( hi, pip->part_H, local2mm );
+	vrad = pip->part_vrad * local2mm;
+	hrad = pip->part_hrad * local2mm;
+	/* pip->part_type is not converted -- internal only */
+
+	rec->part.p_id = DBID_PARTICLE;
+	htond( rec->part.p_v, vert, 3 );
+	htond( rec->part.p_h, hi, 3 );
+	htond( rec->part.p_vrad, &vrad, 1 );
+	htond( rec->part.p_hrad, &hrad, 1 );
+
+	return(0);
 }
 
 /*
@@ -1084,41 +1123,62 @@ struct rt_db_internal	*ip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_part_describe( str, ip, verbose )
+rt_part_describe( str, ip, verbose, mm2local )
 struct rt_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
+double			mm2local;
 {
 	register struct part_internal	*pip =
 		(struct part_internal *)ip->idb_ptr;
 	char	buf[256];
 
+	RT_PART_CK_MAGIC(pip);
 	switch( pip->part_type )  {
 	case RT_PARTICLE_TYPE_SPHERE:
 		rt_vls_strcat( str, "spherical particle\n");
-		sprintf(buf, "\tV (%g, %g, %g)\n", V3ARGS(pip->part_V) );
+		sprintf(buf, "\tV (%g, %g, %g)\n",
+			pip->part_V[X] * mm2local,
+			pip->part_V[Y] * mm2local,
+			pip->part_V[Z] * mm2local );
 		rt_vls_strcat( str, buf );
-		sprintf(buf, "\tradius = %g\n", pip->part_vrad );
+		sprintf(buf, "\tradius = %g\n",
+			pip->part_vrad * mm2local );
 		rt_vls_strcat( str, buf );
 		break;
 	case RT_PARTICLE_TYPE_CYLINDER:
 		rt_vls_strcat( str, "cylindrical particle (lozenge)\n");
-		sprintf(buf, "\tV (%g, %g, %g)\n", V3ARGS(pip->part_V) );
+		sprintf(buf, "\tV (%g, %g, %g)\n",
+			pip->part_V[X] * mm2local,
+			pip->part_V[Y] * mm2local,
+			pip->part_V[Z] * mm2local );
 		rt_vls_strcat( str, buf );
-		sprintf(buf, "\tH (%g, %g, %g)\n", V3ARGS(pip->part_H) );
+		sprintf(buf, "\tH (%g, %g, %g)\n",
+			pip->part_H[X] * mm2local,
+			pip->part_H[Y] * mm2local,
+			pip->part_H[Z] * mm2local );
 		rt_vls_strcat( str, buf );
-		sprintf(buf, "\tradius = %g\n", pip->part_vrad );
+		sprintf(buf, "\tradius = %g\n",
+			pip->part_vrad * mm2local );
 		rt_vls_strcat( str, buf );
 		break;
 	case RT_PARTICLE_TYPE_CONE:
 		rt_vls_strcat( str, "conical particle\n");
-		sprintf(buf, "\tV (%g, %g, %g)\n", V3ARGS(pip->part_V) );
+		sprintf(buf, "\tV (%g, %g, %g)\n",
+			pip->part_V[X] * mm2local,
+			pip->part_V[Y] * mm2local,
+			pip->part_V[Z] * mm2local );
 		rt_vls_strcat( str, buf );
-		sprintf(buf, "\tH (%g, %g, %g)\n", V3ARGS(pip->part_H) );
+		sprintf(buf, "\tH (%g, %g, %g)\n",
+			pip->part_H[X] * mm2local,
+			pip->part_H[Y] * mm2local,
+			pip->part_H[Z] * mm2local );
 		rt_vls_strcat( str, buf );
-		sprintf(buf, "\tv end radius = %g\n", pip->part_vrad );
+		sprintf(buf, "\tv end radius = %g\n",
+			pip->part_vrad * mm2local );
 		rt_vls_strcat( str, buf );
-		sprintf(buf, "\th end radius = %g\n", pip->part_hrad );
+		sprintf(buf, "\th end radius = %g\n",
+			pip->part_hrad * mm2local );
 		rt_vls_strcat( str, buf );
 		break;
 	default:
@@ -1129,8 +1189,9 @@ int			verbose;
 }
 
 /*
+ *			R T _ P A R T _ I F R E E
+ *
  *  Free the storage associated with the rt_db_internal version of this solid.
- *  XXX The suffix of this name is temporary.
  */
 void
 rt_part_ifree( ip )
