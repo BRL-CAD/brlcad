@@ -20,13 +20,12 @@ char	sccsTag[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, archive /vld/mo
 #endif
 
 #if defined(sgi)
+#	include <bsd/sys/types.h>
 #	if !defined(mips) || defined(SGI4D_Rel2)
 		/* 3D systems, and Rel2 4D systems. */
-#		include <bsd/sys/types.h>
 #		include <bsd/sys/time.h>
 #	else
 		/* Rel3 4D systems got it right */
-#		include <sys/types.h>
 #		include <sys/time.h>
 #	endif
 #	include "fb.h"
