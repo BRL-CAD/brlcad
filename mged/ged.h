@@ -144,7 +144,7 @@ extern float	angle2;		/* Angle to dashed wiper */
  *	GED functions referenced in more than one source file:
  */
 extern void		dir_build(), buildHrot(), button(), dozoom(),
-			pr_solids();
+			pr_schain();
 extern void		db_getrec(), db_putrec(), db_delete(), db_alloc(),
 			drawHobj(), eraseobj(), finish(), slewview(),
 			htov_move(), mat_copy(), mat_idn(),

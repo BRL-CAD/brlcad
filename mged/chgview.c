@@ -22,7 +22,7 @@
  *	f_attach	attach display device
  *	f_release	release display device
  *	eraseobj	Drop an object from the visible list
- *	pr_solids	Print info about visible list
+ *	pr_schain	Print info about visible list
  *	f_ill		illuminate the named object
  *	f_sed		simulate pressing "solid edit" then illuminate
  *	f_knob		simulate knob twist
@@ -226,7 +226,7 @@ void
 f_debug()
 {
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
-	pr_solids( &HeadSolid );
+	pr_schain( &HeadSolid );
 }
 
 void
@@ -836,14 +836,14 @@ register struct directory *dp;
 }
 
 /*
- *			P R _ S O L I D S
+ *			P R _ S C H A I N
  *
  *  Given a pointer to a member of the circularly linked list of solids
  *  (typically the head), chase the list and print out the information
  *  about each solid structure.
  */
 void
-pr_solids( startp )
+pr_schain( startp )
 struct solid *startp;
 {
 	register struct solid *sp;

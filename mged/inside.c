@@ -48,12 +48,12 @@ extern void aexists();
 extern double atof();
 extern void f_quit();
 
-int		args;		/* total number of args available */
-int		argcnt;		/* holder for number of args added later */
-int		newargs;	/* number of args from getcmd() */
+extern int	args;		/* total number of args available */
+extern int	argcnt;		/* holder for number of args added later */
+extern int	newargs;	/* number of args from getcmd() */
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
-char		**promp;	/* pointer to a pointer to a char */
+extern char	**promp;	/* pointer to a pointer to a char */
 
 static int	nface, np, nm, mp;
 static float	thick[6], pc[3];

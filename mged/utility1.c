@@ -34,17 +34,19 @@ void	aexists();
 extern double atof();
 extern void f_quit();
 
-int		args;		/* total number of args available */
-int		argcnt;		/* holder for number of args added later */
-int		newargs;	/* number of args from getcmd() */
+extern int	args;		/* total number of args available */
+extern int	argcnt;		/* holder for number of args added later */
+extern int	newargs;	/* number of args from getcmd() */
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
-extern void exit(), perror();
-extern char *strcpy(), *strncat();
-extern long time();
+
+extern void	exit(), perror();
+extern char	 *strcpy(), *strncat();
+extern long	time();
 extern struct passwd *getpwuid();
-extern int objfd;
-extern char *filename;		/* data file name */
+
+extern int	objfd;
+extern char	*filename;		/* data file name */
 
 /* structure to distinguish new solids from existing (old) solids */
 struct identt {
@@ -95,7 +97,6 @@ f_tables()
 	register int i;
 	char *timep;
 	long now;
-	struct passwd *getpwuid();
 	static char sortcmd[80] = "sort -n +1 -2 -o /tmp/ord_id < ";
 	static char catcmd[80] = "cat /tmp/ord_id >> ";
 

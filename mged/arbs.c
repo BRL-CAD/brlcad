@@ -48,10 +48,10 @@ double fabs();
 
 extern int 	numargs;
 extern char	*cmd_args[];
-int		newargs;
-int		args;
-int		argcnt;
-char		**promp;
+extern int	newargs;
+extern int	args;
+extern int	argcnt;
+extern char	**promp;
 
 static union record record;
 

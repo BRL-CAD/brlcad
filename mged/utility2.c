@@ -330,7 +330,7 @@ f_copyeval( )
  */
 
 /* current path being traced */
-struct directory *path[MAX_LEVELS];
+extern struct directory *path[MAX_LEVELS];
 
 trace( dp, pathpos, old_xlate, flag)
 register struct directory *dp;

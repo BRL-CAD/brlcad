@@ -31,11 +31,12 @@ double fabs();
 
 extern int 	numargs;
 extern char	*cmd_args[];
-int		newargs;
-int		args;
-int		argcnt;
-int		Trackpos = 0;
-float		plano[4], plant[4];
+extern int	newargs;
+extern int	args;
+extern int	argcnt;
+
+static int	Trackpos = 0;
+static float	plano[4], plant[4];
 
 static union record record;
 
