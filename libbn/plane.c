@@ -2652,3 +2652,81 @@ point_t pt1, pt2;
 	dist[2] =  MAGSQ( diff );
 	return( ret );
 }
+
+/*
+ *			B N _ I S E C T _ P L A N E S
+ *
+ * Calculates the point that is the minimum distance from all the
+ * planes in the "planes" array.  If the planes intersect at a single point,
+ * that point is the solution.
+ *
+ * The method used here is based on:
+ *	An expression for the distance from a point to a plane is VDOT(pt,plane)-plane[H].
+ *	Square that distance and sum for all planes to get the "total" distance.
+ *	For minimum total distance, the partial derivatives of this expression (with
+ *	respect to x, y, and z) must all be zero. 
+ *	This produces a set of three equations in three unknowns (x, y, and z).
+ *	This routine sets up the three equations as [matrix][pt] = [hpq]
+ *	and solves by inverting "matrix" into "inverse" and
+ *	[pt] = [inverse][hpq].
+ *
+ * There is likely a more economical solution rather than matrix inversion, but
+ * bn_mat_inv was handy at the time.
+ *
+ * Checks if these planes form a singular matrix and returns:
+ *	0 - all is well
+ *	1 - planes form a singular matrix (no solution)
+ */
+int
+bn_isect_planes( pt , planes , pl_count )
+point_t pt;
+CONST plane_t planes[];
+CONST int pl_count;
+{
+	mat_t matrix;
+	mat_t inverse;
+	vect_t hpq;
+	fastf_t det;
+	int i;
+
+	if( bu_debug & BU_DEBUG_MATH )  {
+		bu_log( "bn_isect_planes:\n" );
+		for( i=0 ; i<pl_count ; i++ )
+		{
+			bu_log( "Plane #%d (%f %f %f %f)\n" , i , V4ARGS( planes[i] ) );
+		}
+	}
+
+	bn_mat_zero( matrix );
+	VSET( hpq , 0.0 , 0.0 , 0.0 );
+
+	for( i=0 ; i<pl_count ; i++ )
+	{
+		matrix[0] += planes[i][X] * planes[i][X];
+		matrix[5] += planes[i][Y] * planes[i][Y];
+		matrix[10] += planes[i][Z] * planes[i][Z];
+		matrix[1] += planes[i][X] * planes[i][Y];
+		matrix[2] += planes[i][X] * planes[i][Z];
+		matrix[6] += planes[i][Y] * planes[i][Z];
+		hpq[X] += planes[i][X] * planes[i][H];
+		hpq[Y] += planes[i][Y] * planes[i][H];
+		hpq[Z] += planes[i][Z] * planes[i][H];
+	}
+
+	matrix[4] = matrix[1];
+	matrix[8] = matrix[2];
+	matrix[9] = matrix[6];
+	matrix[15] = 1.0;
+
+	/* Check that we don't have a singular matrix */
+	det = bn_mat_determinant( matrix );
+	if( NEAR_ZERO( det , SMALL_FASTF ) )
+		return( 1 );
+
+	bn_mat_inv( inverse , matrix );
+
+	MAT4X3PNT( pt , inverse , hpq );
+
+	return( 0 );
+
+}

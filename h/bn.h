@@ -416,6 +416,9 @@ BU_EXTERN(int		bn_hlf_class, (CONST plane_t half_eqn,
 #define BN_CLASSIFY_INSIDE		0x0001
 #define BN_CLASSIFY_OUTSIDE		0x0003
 
+BU_EXTERN(int			bn_isect_planes, (point_t pt,
+				CONST plane_t planes[], CONST int pl_count));
+
 /*----------------------------------------------------------------------*/
 /* poly.c */
 /*
