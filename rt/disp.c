@@ -47,6 +47,13 @@ Tk_Window	tkwin;
 
 int	doit(), doit1();
 
+/*
+ *
+ *  With no args, returns the number of wavelengths.
+ *  With an integer arg, returns the i-th wavelength.
+ *
+ *  spectrum pointer should be an arg, not implicit.
+ */
 int
 getspectrum( cd, interp, argc, argv )
 ClientData	cd;
@@ -56,16 +63,21 @@ char		*argv[];
 {
 	int	wl;
 
+	RT_CK_SPECTRUM(spectrum);
+
+	if( argc <= 1 )  {
+		sprintf( interp->result, "%d", spectrum->nwave );
+		return TCL_OK;
+	}
 	if( argc != 2 )  {
-		interp->result = "Usage: getspectrum wl";
+		interp->result = "Usage: getspectrum [wl]";
 		return TCL_ERROR;
 	}
 	wl = atoi(argv[2]);
 
-	RT_CK_SPECTRUM(spectrum);
-
-	if( wl < 0 || wl >= spectrum->nwave )  {
-		interp->result = "wavelength out of range";
+	if( wl < 0 || wl > spectrum->nwave )  {
+		sprintf( interp->result, "getspectrum: wavelength %d out of range 0..%d",
+			wl, spectrum->nwave);
 		return TCL_ERROR;
 	}
 	sprintf( interp->result, "%g", spectrum->wavel[wl] );
@@ -167,6 +179,9 @@ Tcl_Interp	*inter;
 
 	Tcl_LinkVar( interp, "width", (char *)&width, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "height", (char *)&height, TCL_LINK_INT );
+
+	/* Source the TCL part of this lashup */
+	tcl_RcFileName = "./disp.tcl";
 
 	return TCL_OK;
 }
