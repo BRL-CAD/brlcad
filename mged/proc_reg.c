@@ -77,7 +77,7 @@ static int	param_count = 0; 	/* location in m_param[] array */
  *  Evaluated Edit something (add to visible display)
  *  Usage: E object(s)
  */
-void
+int
 f_evedit( argc, argv )
 int	argc;
 char	**argv;
@@ -134,6 +134,8 @@ char	**argv;
 	(void)printf("E: %ld vectors in %ld sec\n", nvectors, etime - stime );
 	dmp->dmr_colorchange();
 	dmaflag = 1;
+
+	return CMD_OK;
 }
 
 struct directory	*cur_path[MAX_PATH];	/* Record of current path */
