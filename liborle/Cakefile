@@ -1,9 +1,9 @@
 /*
- *			librle/Cakefile
+ *			liborle/Cakefile
  */
 
-#define PRODUCTS	librle.ARCH_SUF
-#define SRCDIR	librle
+#define PRODUCTS	liborle.ARCH_SUF
+#define SRCDIR	liborle
 #define FILES	rle
 #define	SRCSUFF	.c
 #define MANSECTION	3
