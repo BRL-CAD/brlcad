@@ -8250,7 +8250,7 @@ wdb_smooth_bot_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	if( argc < 2 ) {
+	if( argc < 3 ) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -8287,13 +8287,8 @@ wdb_smooth_bot_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	old_bot_name = argv[arg_index++];
-
-	if( arg_index < argc ) {
-		new_bot_name = argv[arg_index];
-	} else {
-		new_bot_name = old_bot_name;
-	}
+	new_bot_name = argv[arg_index++];
+	old_bot_name = argv[arg_index];
 
 	if( (dp_old=db_lookup( wdbp->dbip, old_bot_name, LOOKUP_QUIET ) ) == DIR_NULL ) {
 		Tcl_AppendResult(interp, old_bot_name, " does not exist!!\n", (char *)NULL );
