@@ -246,6 +246,7 @@ end:
 	 mged_variables->mv_transform == 'e'){
 	int save_edflag = -1;
 
+#if 0
 	if(state == ST_S_EDIT){
 	  save_edflag = es_edflag;
 	  if(!SEDIT_TRAN)
@@ -254,6 +255,7 @@ end:
 	  save_edflag = edobj;
 	  edobj = BE_O_XY;
 	}
+#endif
 
 	MAT4X3PNT(view_pt, view_state->vs_model2view, curr_e_axes_pos);
 	view_pt[X] = fx;
@@ -263,10 +265,12 @@ end:
 	bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	status = Tcl_Eval(interp, bu_vls_addr(&vls));
 
+#if 0
 	if(state == ST_S_EDIT)
 	  es_edflag = save_edflag;
 	else
 	  edobj = save_edflag;
+#endif
 
 	mged_variables->mv_orig_gui = old_orig_gui;
 	bu_vls_free(&vls);
