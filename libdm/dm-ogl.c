@@ -257,8 +257,7 @@ char *argv[];
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = 1;
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fogdensity = 1.0;
 
-  /* this is important so that ogl_configure_notify knows to set
-   * the font */
+  /* this is important so that ogl_configureWindowShape knows to set the font */
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = NULL;
 
   if((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL){
@@ -381,18 +380,15 @@ char *argv[];
   dmp->dm_id = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
 
   /* open GLX context */
-  /* If the sgi display manager has been used, then we must use
-   * an indirect context. Otherwise use direct, since it is usually
-   * faster.
-   */
   if ((((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc =
        glXCreateContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip, 0,
-			ogl_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
+			(GLXContext)NULL, GL_TRUE))==NULL) {
     bu_log("ogl_open: couldn't create glXContext.\n");
     (void)ogl_close(dmp);
     return DM_NULL;
   }
+
   /* If we used an indirect context, then as far as sgi is concerned,
    * gl hasn't been used.
    */
@@ -483,12 +479,7 @@ Done:
   /* This is the applications display list offset */
   dmp->dm_displaylist = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset + 128;
 
-#if 0
-  glDrawBuffer(GL_FRONT_AND_BACK);
-  glClearColor(0.0, 0.0, 0.0, 0.0);
-#else
   ogl_setBGColor(dmp, 0, 0, 0);
-#endif
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer)
@@ -530,6 +521,174 @@ Done:
   return dmp;
 }
 
+/*
+ */
+int
+ogl_share_dlist(dmp1, dmp2)
+struct dm *dmp1;
+struct dm *dmp2;
+{
+  GLfloat backgnd[4];
+  GLfloat vf;
+  GLXContext old_glxContext;
+
+  if (dmp1 == (struct dm *)NULL)
+    return TCL_ERROR;
+
+  if (dmp2 == (struct dm *)NULL) {
+    /* create a new graphics context for dmp1 with private display lists */
+
+    old_glxContext = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc;
+
+    if ((((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc =
+	 glXCreateContext(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy,
+			  ((struct dm_xvars *)dmp1->dm_vars.pub_vars)->vip,
+			  (GLXContext)NULL, GL_TRUE))==NULL) {
+      bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
+      ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
+
+      return TCL_ERROR;
+    }
+
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp1->dm_vars.pub_vars)->win,
+			((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc)){
+      bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
+      ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
+
+      return TCL_ERROR;
+    }
+
+    /* display list (fontOffset + char) will display a given ASCII char */
+    if ((((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset = glGenLists(128))==0){
+      bu_log("dm-ogl: Can't make display lists for font.\nUsing old context\n.");
+      ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
+
+      return TCL_ERROR;
+    }
+
+    /* This is the applications display list offset */
+    dmp1->dm_displaylist = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset + 128;
+
+    ogl_setBGColor(dmp1, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (((struct ogl_vars *)dmp1->dm_vars.priv_vars)->mvars.doublebuffer)
+      glDrawBuffer(GL_BACK);
+    else
+      glDrawBuffer(GL_FRONT);
+
+    /* this is important so that ogl_configureWindowShape knows to set the font */
+    ((struct dm_xvars *)dmp1->dm_vars.pub_vars)->fontstruct = NULL;
+
+    /* do viewport, ortho commands and initialize font */
+    ogl_configureWindowShape(dmp1);
+
+    /* Lines will be solid when stippling disabled, dashed when enabled*/
+    glLineStipple( 1, 0xCF33);
+    glDisable(GL_LINE_STIPPLE);
+
+    backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
+    glFogi(GL_FOG_MODE, GL_LINEAR);
+    glFogf(GL_FOG_START, 0.0);
+    glFogf(GL_FOG_END, 2.0);
+    glFogfv(GL_FOG_COLOR, backgnd);
+
+    /*XXX Need to do something about VIEWFACTOR */
+    vf = 1.0/(*dmp1->dm_vp);
+    glFogf(GL_FOG_DENSITY, vf);
+
+    /* Initialize matrices */
+    /* Leave it in model_view mode normally */
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+    glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->faceplate_mat);
+    glPushMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity(); 
+    glTranslatef(0.0, 0.0, -1.0); 
+    glPushMatrix();
+    glLoadIdentity();
+    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
+
+    /* destroy old context */
+    glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, None, NULL);
+    glXDestroyContext(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, old_glxContext);
+  } else {
+    /* dmp1 will share it's display lists with dmp2 */
+
+    old_glxContext = ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc;
+
+    if ((((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc =
+	 glXCreateContext(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy,
+			  ((struct dm_xvars *)dmp2->dm_vars.pub_vars)->vip,
+			  ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc,
+			  GL_TRUE))==NULL) {
+      bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
+      ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
+
+      return TCL_ERROR;
+    }
+
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp2->dm_vars.pub_vars)->win,
+			((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc)){
+      bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
+      ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
+
+      return TCL_ERROR;
+    }
+
+    ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->fontOffset = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset;
+    dmp2->dm_displaylist = dmp1->dm_displaylist;
+
+    ogl_setBGColor(dmp2, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (((struct ogl_vars *)dmp2->dm_vars.priv_vars)->mvars.doublebuffer)
+      glDrawBuffer(GL_BACK);
+    else
+      glDrawBuffer(GL_FRONT);
+
+    /* do viewport, ortho commands and initialize font */
+    ogl_configureWindowShape(dmp2);
+
+    /* Lines will be solid when stippling disabled, dashed when enabled*/
+    glLineStipple( 1, 0xCF33);
+    glDisable(GL_LINE_STIPPLE);
+
+    backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
+    glFogi(GL_FOG_MODE, GL_LINEAR);
+    glFogf(GL_FOG_START, 0.0);
+    glFogf(GL_FOG_END, 2.0);
+    glFogfv(GL_FOG_COLOR, backgnd);
+
+    /*XXX Need to do something about VIEWFACTOR */
+    vf = 1.0/(*dmp2->dm_vp);
+    glFogf(GL_FOG_DENSITY, vf);
+
+    /* Initialize matrices */
+    /* Leave it in model_view mode normally */
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+    glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->faceplate_mat);
+    glPushMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity(); 
+    glTranslatef(0.0, 0.0, -1.0); 
+    glPushMatrix();
+    glLoadIdentity();
+    ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
+
+    /* destroy old context */
+    glXMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy, None, NULL);
+    glXDestroyContext(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy, old_glxContext);
+  }
+
+  return TCL_OK;
+}
 
 /*
  *  			O G L _ C L O S E

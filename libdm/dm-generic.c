@@ -67,6 +67,37 @@ char *argv[];
   return( (struct dm *)NULL );
 }
 
+/*
+ * Provides a way to (un)share display lists. If dmp2 is
+ * NULL, then dmp1 will no longer share its display lists.
+ */
+int
+dm_share_dlist(dmp1, dmp2)
+struct dm *dmp1;
+struct dm *dmp2;
+{
+  if(dmp1 == (struct dm *)NULL)
+    return TCL_ERROR;
+
+  /*
+   * Only display managers of the same type and using the 
+   * same OGL server are allowed to share display lists.
+   *
+   * XXX - need a better way to check if using the same OGL server.
+   */
+  if(dmp2 != (struct dm *)NULL)
+    if(dmp1->dm_type != dmp2->dm_type ||
+       strcmp(bu_vls_addr(&dmp1->dm_dName), bu_vls_addr(&dmp2->dm_dName)))
+      return TCL_ERROR;
+
+  switch(dmp1->dm_type){
+  case DM_TYPE_OGL:
+    return ogl_share_dlist(dmp1, dmp2);
+  default:
+    return TCL_OK;
+  }
+}
+
 fastf_t
 dm_Xx2Normal(dmp, x)
 struct dm *dmp;
