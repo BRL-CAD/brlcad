@@ -253,8 +253,8 @@ size_reset()
 	mat_idn( toViewcenter );
 	MAT_DELTAS( toViewcenter, -center[X], -center[Y], -center[Z] );
 	Viewscale = radial[X];
-	MAX( Viewscale, radial[Y] );
-	MAX( Viewscale, radial[Z] );
+	V_MAX( Viewscale, radial[Y] );
+	V_MAX( Viewscale, radial[Z] );
 }
 
 /*

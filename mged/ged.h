@@ -243,9 +243,6 @@ extern char *state_str[];		/* identifying strings */
 #define ST_O_EDIT	6		/* Object Editing */
 #define ST_S_VPICK	7		/* Vertex Pick */
 
-#define MIN(a,b)	if( (b) < (a) )  a = b
-#define MAX(a,b)	if( (b) > (a) )  a = b
-
 #ifndef GETSTRUCT
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
 #if __STDC__ && !alliant && !apollo

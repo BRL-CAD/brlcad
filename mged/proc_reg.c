@@ -1221,7 +1221,7 @@ insert:		/* insert gap in ray between existing gaps */
 	if(so < (rego[igap]-tol)) goto novlp;
 
 	/* have overlapping gaps - sort out */
-	MIN(rego[igap],si);
+	V_MIN(rego[igap],si);
 	if(regi[igap+1]>=so) return(1);
 	regi[igap+1]=so;
 	for(lgap=igap;(lgap<ngaps&&so<(rego[lgap]-tol));lgap++)
@@ -1253,12 +1253,12 @@ novlp:		/* no overlapping gaps */
 front:		/* gap starts before beginning of ray */
 	if((so+tol)>ro)
 		return(0);
-	MAX(ri,so);
+	V_MAX(ri,so);
 	if(ngaps<1) return(1);
 	for(igap=0; ((igap<ngaps) && ((ri+tol)>rego[igap])); igap++)
 		;
 	if(igap<1) return(1);
-	MAX(ri, regi[igap]);
+	V_MAX(ri, regi[igap]);
 	lgap=ngaps;
 	ngaps=0;
 	if(igap>=lgap) return(1);
@@ -1269,12 +1269,12 @@ front:		/* gap starts before beginning of ray */
 	return(1);
 
 back:		/* gap ends after end of ray */
-	MIN(ro,si);
+	V_MIN(ro,si);
 	if(ngaps<1) return(1);
 	for(igap=ngaps; (igap>0 && (ro<(regi[igap]+tol))); igap--)
 		;
 	if(igap < ngaps) {
-		MIN(ro, rego[igap]);
+		V_MIN(ro, rego[igap]);
 	}
 	ngaps=igap;
 	return(1);
@@ -1307,12 +1307,12 @@ region(lmemb,umemb)
 			a2=s2[i]/wb[i];
 			if(wb[i] <= 0.){
 				if(a1<tol) return(0);
-				MAX(ri,a2);
-				MIN(ro,a1);
+				V_MAX(ri,a2);
+				V_MIN(ro,a1);
 			} else {
 				if(a2<tol) return(0);
-				MAX(ri,a1);
-				MIN(ro,a2);
+				V_MAX(ri,a1);
+				V_MIN(ro,a2);
 			}
 			if((ri+tol)>=ro) return(0);
 		} else {
@@ -1337,8 +1337,8 @@ region(lmemb,umemb)
 			if( arb() == 0 )
 				return(0);
 			if(ngaps==0){
-				MAX(ri,rin);
-				MIN(ro,rout);
+				V_MAX(ri,rin);
+				V_MIN(ro,rout);
 			} else{
 				if(gap(-pinf, rin) <= 0)
 					return(0);
@@ -1457,10 +1457,10 @@ arb()
 		if(fabs(wbdn)>.001){
 			s=dxbdn/wbdn;
 			if(wbdn > 0.0) {
-				MAX(rin, s);
+				V_MAX(rin, s);
 			}
 			else {
-				MIN(rout,s);
+				V_MIN(rout,s);
 			}
 		}
 		else{
@@ -1469,7 +1469,7 @@ arb()
 		if((rin+tol)>=rout || rout<=tol) return(0);
 	}
 	/* ray starts inside */
-	MAX(rin,0);
+	V_MAX(rin,0);
 	return(1);
 }
 
@@ -1600,14 +1600,14 @@ int flag;	/* 1 if only calculating min,maxs   NO PLANE EQUATIONS */
 		solin(i);
 		if(m_op[i] != '-') {
 			for(j=0;j<3;j++){
-				MAX(reg_min[j],sol_min[j]);
-				MIN(reg_max[j],sol_max[j]);
+				V_MAX(reg_min[j],sol_min[j]);
+				V_MIN(reg_max[j],sol_max[j]);
 			}
 		}
 	}
 	for(i=0;i<3;i++){
-		MAX(tol,fabs(reg_min[i]));
-		MAX(tol,fabs(reg_max[i]));
+		V_MAX(tol,fabs(reg_min[i]));
+		V_MAX(tol,fabs(reg_max[i]));
 	}
 	tol=tol*0.00001;
 
@@ -1644,8 +1644,8 @@ int num;
 	if(*ity<18){
 		for(i=0;i<*ity;i++){
 			for(j=0;j<3;j++){
-				MIN(sol_min[j],*sp);
-				MAX(sol_max[j],*sp);
+				V_MIN(sol_min[j],*sp);
+				V_MAX(sol_max[j],*sp);
 				sp++;
 			}
 		}
@@ -1661,10 +1661,10 @@ int num;
 			d = *(sp+15);
 			v1=sqrt(a*a+b*b);
 			v2=sqrt(c*c+d*d);
-			MIN(sol_min[i],*(sp)-v1);
-			MIN(sol_min[i],vt-v2);
-			MAX(sol_max[i],*(sp)+v1);
-			MAX(sol_max[i],vt+v2);			
+			V_MIN(sol_min[i],*(sp)-v1);
+			V_MIN(sol_min[i],vt-v2);
+			V_MAX(sol_max[i],*(sp)+v1);
+			V_MAX(sol_max[i],vt+v2);			
 		}
 		sp+=15;
 	}
@@ -1678,10 +1678,10 @@ int num;
 			b = *(sp+9);
 			v1=sqrt(a*a+b*b);
 			v2=sqrt(c*c+d*d);
-			MIN(sol_min[i],vb-v1);
-			MIN(sol_min[i],vt-v2);
-			MAX(sol_max[i],vb+v1);
-			MAX(sol_max[i],vt+v2);
+			V_MIN(sol_min[i],vb-v1);
+			V_MIN(sol_min[i],vt-v2);
+			V_MAX(sol_max[i],vb+v1);
+			V_MAX(sol_max[i],vt+v2);
 		}
 		sp+=9;
 	}

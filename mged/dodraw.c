@@ -556,8 +556,8 @@ register struct solid *sp;
 	sp->s_center[Z] = (zmin + zmax) * 0.5;
 
 	sp->s_size = xmax - xmin;
-	MAX( sp->s_size, ymax - ymin );
-	MAX( sp->s_size, zmax - zmin );
+	V_MAX( sp->s_size, ymax - ymin );
+	V_MAX( sp->s_size, zmax - zmin );
 }
 
 /*
