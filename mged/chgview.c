@@ -3840,6 +3840,15 @@ char	**argv;
 {
   struct view_list *vlp;
   struct view_list *lv;
+  struct bu_vls vls;
+
+  if(argc != 1){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help add_view");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
   /* save current Viewrot */
   bn_mat_copy(current_view->vrot_mat, Viewrot);
@@ -3872,6 +3881,16 @@ char	**argv;
 {
   int n;
   struct view_list *vlp;
+
+  struct bu_vls vls;
+
+  if(argc != 2){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help delete_view");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
   /* search for view with id of n */
   n = atoi(argv[1]);
@@ -3925,6 +3944,10 @@ char	**argv;
   struct view_list *vlp;
 
   if(argc < 1 || 2 < argc){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help get_view");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -3938,6 +3961,10 @@ char	**argv;
   }
 
   if(strcmp("-a", argv[1])){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help get_view");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -3962,6 +3989,15 @@ char	**argv;
 {
   int n;
   struct view_list *vlp;
+  struct bu_vls vls;
+
+  if(argc != 2){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help goto_view");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
   /* search for view with id of n */
   n = atoi(argv[1]);
@@ -4005,6 +4041,16 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  struct bu_vls vls;
+
+  if(argc != 1){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help next_view");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
   /* check to see if this is the last view in the list */
   if(BU_LIST_IS_HEAD(current_view->l.forw, &headView.l) &&
      BU_LIST_IS_HEAD(current_view->l.back, &headView.l))
@@ -4037,6 +4083,16 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  struct bu_vls vls;
+
+  if(argc != 1){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help prev_view");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
   /* check to see if this is the last view in the list */
   if(BU_LIST_IS_HEAD(current_view->l.forw, &headView.l) &&
      BU_LIST_IS_HEAD(current_view->l.back, &headView.l))
@@ -4070,6 +4126,15 @@ int	argc;
 char	**argv;
 {
   struct view_list *save_last_view;
+  struct bu_vls vls;
+
+  if(argc != 1){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help toggle_view");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
   /* save current Viewrot */
   bn_mat_copy(current_view->vrot_mat, Viewrot);
