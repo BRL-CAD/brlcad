@@ -104,7 +104,7 @@ int len;
 			continue;
 		}
 		if( record.u_id == ID_MATERIAL )  {
-			color_addrec( &record, addr );
+			rt_color_addrec( &record, addr );
 			continue;
 		}
 		if( record.u_id == ID_P_HEAD )  {

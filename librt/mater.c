@@ -41,11 +41,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 struct mater *MaterHead = MATER_NULL;
 
-void color_addrec();
-static void insert_color();
+static void rt_insert_color();
 
 static void
-pr_mater( mp )
+rt_pr_mater( mp )
 register struct mater *mp;
 {
 	(void)fprintf(stderr, "%5d..%d\t", mp->mt_low, mp->mt_high );
@@ -54,12 +53,12 @@ register struct mater *mp;
 }
 
 /*
- *  			C O L O R _ A D D R E C
+ *  			R T _ C O L O R _ A D D R E C
  *  
  *  Called from rt_dirbuild() when initially scanning database.
  */
 void
-color_addrec( recp, addr )
+rt_color_addrec( recp, addr )
 union record *recp;
 long addr;
 {
@@ -73,7 +72,7 @@ long addr;
 	mp->mt_b = recp->md.md_b;
 /*	mp->mt_handle = rt_strdup( recp->md.md_material ); */
 	mp->mt_daddr = addr;
-	insert_color( mp );
+	rt_insert_color( mp );
 }
 
 /*
@@ -83,7 +82,7 @@ long addr;
  *  it is the responsibility of the caller to color_putrec(newp) if needed.
  */
 static void
-insert_color( newp )
+rt_insert_color( newp )
 register struct mater *newp;
 {
 	register struct mater *mp;
@@ -106,7 +105,7 @@ register struct mater *newp;
 		    mp->mt_high <= newp->mt_high )  {
 			(void)fprintf(stderr,"dropping overwritten entry:\n");
 			newp->mt_forw = mp->mt_forw;
-			pr_mater( mp );
+			rt_pr_mater( mp );
 			*mp = *newp;		/* struct copy */
 			free( newp );
 			newp = mp;
@@ -126,18 +125,18 @@ register struct mater *newp;
 			/* zot->mt_forw = mp->mt_forw; */
 			newp->mt_forw = zot;
 			mp->mt_forw = newp;
-			pr_mater( mp );
-			pr_mater( newp );
-			pr_mater( zot );
+			rt_pr_mater( mp );
+			rt_pr_mater( newp );
+			rt_pr_mater( zot );
 			return;
 		}
 		if( mp->mt_high > newp->mt_low )  {
 			/* Overlap to the left: Shorten preceeding entry */
 			(void)fprintf(stderr,"Shortening lhs range, from:\n");
-			pr_mater( mp );
+			rt_pr_mater( mp );
 			(void)fprintf(stderr,"to:\n");
 			mp->mt_high = newp->mt_low-1;
-			pr_mater( mp );
+			rt_pr_mater( mp );
 			/* Now append */
 			newp->mt_forw = mp->mt_forw;
 			mp->mt_forw = newp;
@@ -151,7 +150,7 @@ register struct mater *newp;
 			goto check_overlap;
 		}
 	}
-	(void)fprintf(stderr,"fell out of insert_color loop, append to end\n");
+	(void)fprintf(stderr,"fell out of rt_insert_color loop, append to end\n");
 	/* Append at end */
 	newp->mt_forw = MATER_NULL;
 	mp->mt_forw = newp;
@@ -166,38 +165,30 @@ check_overlap:
 			zot = newp->mt_forw;
 			newp->mt_forw = zot->mt_forw;
 			(void)fprintf(stderr,"dropping overlaping entry:\n");
-			pr_mater( zot );
+			rt_pr_mater( zot );
 			free( zot );
 			continue;
 		}
 		if( newp->mt_high >= newp->mt_forw->mt_low )  {
 			/* Shorten this mater struct, then done */
 			(void)fprintf(stderr,"Shortening rhs range, from:\n");
-			pr_mater( newp->mt_forw );
+			rt_pr_mater( newp->mt_forw );
 			(void)fprintf(stderr,"to:\n");
 			newp->mt_forw->mt_low = newp->mt_high+1;
-			pr_mater( newp->mt_forw );
+			rt_pr_mater( newp->mt_forw );
 			continue;	/* more conservative than returning */
 		}
 	}
 }
 
-static struct mater default_mater = {
-	0, 32767,
-	99,
-	255, 0, 0,		/* red */
-	"{default mater}",
-	MATER_NO_ADDR, 0
-};
-
 /*
- *  			C O L O R _ M A P
+ *  			R T _ R E G I O N _ C O L O R _ M A P
  *
- *  Map one region description into a material description
- *  mater structure.
+ *  If the GIFT regionid of this region falls into a mapped area
+ *  of regionid-driven color override.
  */
 void
-color_map( regp )
+rt_region_color_map( regp )
 register struct region *regp;
 {
 	register struct mater *mp;
@@ -209,9 +200,11 @@ register struct region *regp;
 	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
 		if( regp->reg_regionid <= mp->mt_high &&
 		    regp->reg_regionid >= mp->mt_low ) {
-			regp->reg_materp = (char *)mp;
+		    	regp->reg_mater.ma_override = 1;
+		    	regp->reg_mater.ma_rgb[0] = mp->mt_r;
+		    	regp->reg_mater.ma_rgb[1] = mp->mt_g;
+		    	regp->reg_mater.ma_rgb[2] = mp->mt_b;
 			return;
 		}
 	}
-	regp->reg_materp = (char *)&default_mater;
 }

@@ -116,8 +116,7 @@ static char idmap[] = {
 
 HIDDEN char *rt_path_str();
 
-extern void color_map();
-
+static struct material rt_no_mater;
 
 /*
  *  			R T _ G E T _ T R E E
@@ -145,7 +144,7 @@ char *node;
 	if( dp == DIR_NULL )
 		return(-1);		/* ERROR */
 
-	curtree = rt_draw_obj( dp, REGION_NULL, 0, mat );
+	curtree = rt_draw_obj( dp, REGION_NULL, 0, mat, &rt_no_mater );
 	if( curtree != TREE_NULL )  {
 		/*  Subtree has not been contained by a region.
 		 *  This should only happen when a top-level solid
@@ -312,10 +311,11 @@ struct tree_list {
  */
 HIDDEN
 union tree *
-rt_draw_obj( dp, argregion, pathpos, old_xlate )
+rt_draw_obj( dp, argregion, pathpos, old_xlate, materp )
 struct directory *dp;
 struct region *argregion;
 matp_t old_xlate;
+struct material *materp;
 {
 	auto union record rec;		/* local copy of this record */
 	register int i;
@@ -326,6 +326,7 @@ matp_t old_xlate;
 	int subtreecount;		/* number of non-null subtrees */
 	struct tree_list *trees;	/* ptr to array of structs */
 	struct tree_list *tlp;		/* cur tree_list */
+	struct material curmater;
 
 	if( pathpos >= MAXLEVELS )  {
 		rt_log("%s: nesting exceeds %d levels\n",
@@ -384,6 +385,25 @@ matp_t old_xlate;
 	}
 	regionp = argregion;
 
+	/* Handle inheritance of material property */
+	curmater = *materp;	/* struct copy */
+	if( rec.c.c_override == 1 || rec.c.c_matname[0] != '\0' )  {
+		if( argregion != REGION_NULL )  {
+			rt_log("Error:  material property spec within region %s\n", argregion->reg_name );
+		} else {
+			if( rec.c.c_override == 1 )  {
+				curmater.ma_override = 1;
+				curmater.ma_rgb[0] = rec.c.c_rgb[0];
+				curmater.ma_rgb[1] = rec.c.c_rgb[1];
+				curmater.ma_rgb[2] = rec.c.c_rgb[2];
+			}
+			if( rec.c.c_matname[0] != '\0' )  {
+				strncpy( curmater.ma_matname, rec.c.c_matname, sizeof(rec.c.c_matname) );
+				strncpy( curmater.ma_matparm, rec.c.c_matparm, sizeof(rec.c.c_matparm) );
+			}
+		}
+	}
+
 	/* Handle combinations which are the top of a "region" */
 	if( rec.c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
@@ -395,8 +415,8 @@ matp_t old_xlate;
 		} else {
 			register struct region *nrp;
 
-			/* HACK:  ignore "air" solids */
-			if( rec.c.c_aircode != 0 )
+			/* Ignore "air" regions unless wanted */
+			if( rt_i.useair == 0 &&  rec.c.c_aircode != 0 )
 				return(TREE_NULL);
 
 			/* Start a new region here */
@@ -406,6 +426,8 @@ matp_t old_xlate;
 			nrp->reg_aircode = rec.c.c_aircode;
 			nrp->reg_material = rec.c.c_material;
 			nrp->reg_name = rt_strdup(rt_path_str(pathpos));
+			nrp->reg_mater = curmater;	/* struct copy */
+			/* Material property processing in rt_add_regtree() */
 			regionp = nrp;
 		}
 	}
@@ -449,7 +471,8 @@ matp_t old_xlate;
 
 		/* Recursive call */
 		if( (tlp->tl_tree = rt_draw_obj(
-		    nextdp, regionp, pathpos+1, new_xlate )) == TREE_NULL )
+		    nextdp, regionp, pathpos+1, new_xlate, &curmater )
+		    ) == TREE_NULL )
 			continue;
 
 		if( regionp == REGION_NULL )  {
@@ -649,9 +672,18 @@ rt_pr_region( rp )
 register struct region *rp;
 {
 	rt_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit );
-	rt_log("id=%d, air=%d, material=%d, los=%d\n",
+	rt_log("id=%d, air=%d, gift_material=%d, los=%d\n",
 		rp->reg_regionid, rp->reg_aircode,
 		rp->reg_material, rp->reg_los );
+	if( rp->reg_mater.ma_override == 1 )
+		rt_log("Color %d %d %d\n",
+			rp->reg_mater.ma_rgb[0],
+			rp->reg_mater.ma_rgb[1],
+			rp->reg_mater.ma_rgb[2] );
+	if( rp->reg_mater.ma_matname[0] != '\0' )
+		rt_log("Material '%s' '%s'\n",
+			rp->reg_mater.ma_matname,
+			rp->reg_mater.ma_matparm );
 	rt_pr_tree( rp->reg_treetop, 0 );
 	rt_log("\n");
 }
@@ -787,10 +819,13 @@ register union tree *tp;
 	/* Add to linked list */
 	regp->reg_forw = rt_i.HeadRegion;
 	rt_i.HeadRegion = regp;
+
 	/* Determine material properties */
-	color_map(regp);
-	/* Add to bit vectors */
-	regp->reg_bit = rt_i.nregions;
+	regp->reg_ufunc = 0;
+	regp->reg_udata = (char *)0;
+	rt_region_color_map(regp);
+
+	regp->reg_bit = rt_i.nregions;	/* Add to bit vectors */
 	/* Will be added to rt_i.Regions[] in final prep stage */
 	rt_i.nregions++;
 	if( rt_g.debug & DEBUG_REGIONS )
