@@ -166,10 +166,10 @@ FILE *fpin, *fpout;
 		fgets(buf, sizeof(buf), fpin);
 	}
 
-	if (strlen(title) < 1) 
+	if (strlen(title) < (unsigned)1) 
 		fprintf(stderr, "Warning: no title\n");
 
-	if (strlen(geom_fname) < 1)
+	if (strlen(geom_fname) < (unsigned)1)
 		rt_bomb("Error: no geometry filename.");
 
 	if ((fgeom = fopen(geom_fname, "r")) == NULL) {
