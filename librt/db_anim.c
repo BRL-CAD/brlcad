@@ -193,11 +193,11 @@ struct mater_info	*materp;
 		}
 		materp->ma_color_valid = 1;	/* XXX - really override? */
 		materp->ma_color[0] =
-		    (((double)anp->an_u.anu_c.anc_rgb[0])+0.5)*bn_inv255;
+		    (((float)anp->an_u.anu_c.anc_rgb[0])+0.5)*bn_inv255;
 		materp->ma_color[1] =
-		    (((double)anp->an_u.anu_c.anc_rgb[1])+0.5)*bn_inv255;
+		    (((float)anp->an_u.anu_c.anc_rgb[1])+0.5)*bn_inv255;
 		materp->ma_color[2] =
-		    (((double)anp->an_u.anu_c.anc_rgb[2])+0.5)*bn_inv255;
+		    (((float)anp->an_u.anu_c.anc_rgb[2])+0.5)*bn_inv255;
 		break;
 	case RT_AN_TEMPERATURE:
 		if( rt_g.debug&DEBUG_ANIM )

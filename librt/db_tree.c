@@ -1874,7 +1874,7 @@ HIDDEN void
 db_walk_subtree( tp, region_start_statepp, leaf_func, client_data )
 register union tree	*tp;
 struct combined_tree_state	**region_start_statepp;
-union tree		 *(*leaf_func)();
+union tree		 *(*leaf_func) BU_ARGS((struct db_tree_state *, struct db_full_path *, struct bu_external *, int, void *));
 genptr_t	client_data;
 {
 	struct combined_tree_state	*ctsp;
