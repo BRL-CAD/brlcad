@@ -283,7 +283,7 @@
         (defined(__sgi) && defined(__mips)) || \
         defined(pyr) || defined(apollo) || defined(aux) || \
         defined(_AIX) || defined(NeXT) || defined(convex) || \
-	defined(hpux) || defined(__hppa)
+	defined(hpux) || defined(__hppa) || defined(__convex__)
 
         /*  These systems already operate in
          *  IEEE format internally, using big-endian order.
