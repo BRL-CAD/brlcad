@@ -376,3 +376,14 @@ materbld()
 	record.md.md_g = g;
 	record.md.md_b = b;
 }
+
+#ifndef BSD42
+
+bzero( str, n )
+register char *str;
+register int n;
+{
+	while( n-- > 0 )
+		*str++ = '\0';
+}
+#endif
