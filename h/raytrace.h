@@ -2825,7 +2825,6 @@ BU_EXTERN(struct bn_vlblock *	rt_vlblock_init, () );
 BU_EXTERN(void			rt_vlblock_free, (struct bn_vlblock *vbp) );
 BU_EXTERN(struct bu_list *	rt_vlblock_find, (struct bn_vlblock *vbp,
 				int r, int g, int b) );
-const char *rt_vlist_cmd_descriptions[];
 int rt_ck_vlist( const struct bu_list *vhead );
 void rt_vlist_copy( struct bu_list *dest, const struct bu_list *src );
 void bn_vlist_cleanup( struct bu_list *hd );
@@ -4365,7 +4364,7 @@ BU_EXTERN(size_t		db5_type_sizeof_n_binu,
  *  Constants provided and used by the RT library.
  */
 extern CONST struct db_tree_state	rt_initial_tree_state;
-extern CONST char   *rt_vlist_cmd_descriptions[];
+extern const char   *rt_vlist_cmd_descriptions[];
 
 /* vers.c (created by librt/Cakefile) */
 extern CONST char   rt_version[];
