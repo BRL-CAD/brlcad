@@ -48,6 +48,7 @@ extern double	atof();
 extern char	*sbrk();
 
 int		rdebug;			/* RT program debugging (not library) */
+static FILE	*plotfp;		/* For plotting into */
 
 int		npsw = 1;		/* Run serially */
 int		interactive = 0;	/* human is watching results */
@@ -96,6 +97,12 @@ char **argv;
 	case 'x':
 		sscanf( argv[1], "%x", &rt_g.debug );
 		fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
+		argc -= 2;
+		argv += 2;
+		break;
+	case 'X':
+		sscanf( argv[1], "%x", &rdebug );
+		fprintf(stderr,"rdebug=x%x\n", rdebug);
 		argc -= 2;
 		argv += 2;
 		break;
@@ -162,6 +169,15 @@ err:
 		argc--;
 		argv++;
 	}
+	rt_prep(rtip);
+
+	if( rdebug&RDEBUG_RAYPLOT )  {
+		if( (plotfp = fopen("rtshot.plot", "w")) == NULL )  {
+			perror("rtshot.plot");
+			exit(1);
+		}
+		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
+	}
 
 	/* Compute r_dir and r_pt from the inputs */
 	if( set_at )  {
@@ -199,7 +215,18 @@ struct partition *PartHeadp;
 	register struct hit *hitp;
 	register struct soltab *stp;
 	struct curvature cur;
+	fastf_t out;
+	vect_t inhit, outhit;
 
+	/* First, plot ray start to inhit */
+	if( rdebug&RDEBUG_RAYPLOT )  {
+		if( hitp->hit_dist > 0.0001 )  {
+			VJOIN1( inhit, ap->a_ray.r_pt,
+				hitp->hit_dist, ap->a_ray.r_dir );
+			pl_color( plotfp, 0, 0, 255 );
+			pdv_3line( plotfp, ap->a_ray.r_pt, inhit );
+		}
+	}
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 		stp = pp->pt_inseg->seg_stp;
 		rt_log("\n--- Hit %s of region %s\n",
@@ -222,13 +249,36 @@ struct partition *PartHeadp;
 		if( pp->pt_outflip )
 			VREVERSE( hitp->hit_normal, hitp->hit_normal );
 		rt_pr_hit( " Out", hitp );
+
+		/* Plot inhit to outhit */
+		if( rdebug&RDEBUG_RAYPLOT )  {
+			if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
+				out = 10000;	/* to imply the direction */
+
+			VJOIN1( inhit, ap->a_ray.r_pt,
+				hitp->hit_dist, ap->a_ray.r_dir );
+			VJOIN1( outhit,
+				ap->a_ray.r_pt, out,
+				ap->a_ray.r_dir );
+			pl_color( plotfp, 0, 255, 255 );
+			pdv_3line( plotfp, inhit, outhit );
+		}
 	}
 	return(0);
 }
 
-miss()
+miss( ap )
+register struct application *ap;
 {
 	rt_log("missed\n");
+	if( rdebug&RDEBUG_RAYPLOT )  {
+		vect_t	out;
+
+		VJOIN1( out, ap->a_ray.r_pt,
+			10000, ap->a_ray.r_dir );	/* to imply direction */
+		pl_color( plotfp, 190, 0, 0 );
+		pdv_3line( plotfp, ap->a_ray.r_pt, out );
+	}
 	return(0);
 }
 
