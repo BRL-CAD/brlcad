@@ -53,10 +53,6 @@ char	*state_str[] = {
 
 extern struct rt_db_internal	es_int;
 
-struct point_labels {
-	char	str[8];
-	point_t	pt;
-};
 
 /*
  *			C R E A T E _ T E X T _ O V E R L A Y
@@ -246,7 +242,7 @@ dotitles()
 	/* Label the vertices of the edited solid */
 	if(es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))  {
 		mat_t			xform;
-		struct point_labels	pl[8+1];
+		struct rt_point_labels	pl[8+1];
 
 		mat_mul( xform, model2objview, es_mat );
 
@@ -349,7 +345,7 @@ dotitles()
  *  XXX This really should use import/export interface!!!  Or be part of it.
  */
 label_edited_solid( pl, max_pl, xform, ip )
-struct point_labels	pl[];
+struct rt_point_labels	pl[];
 int			max_pl;
 CONST mat_t		xform;
 struct rt_db_internal	*ip;
