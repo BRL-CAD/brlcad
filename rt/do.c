@@ -282,14 +282,14 @@ char	**argv;
 	struct animate *anp;
 	struct directory **dir;
 	int i;
-	int	rooted = 0;
+	int	at_root = 0;
 
 	if( argv[1][0] == '/' )
-		rooted = 1;
+		at_root = 1;
 	if( (i = rt_plookup( rtip, &dir, argv[1], LOOKUP_NOISY )) <= 0 )
 		return(-1);		/* error */
-	if( rooted && i == 1 )
-		i = 0;		/* special ROOTED flag to rt_add_anim */
+	if( i > 1 )
+		at_root = 0;
 
 	GETSTRUCT( anp, animate );
 	anp->an_path = dir;
@@ -318,7 +318,7 @@ char	**argv;
 		fprintf(stderr,"cm_anim:  type %s unknown\n", argv[2]);
 		goto bad;
 	}
-	if( rt_add_anim( rtip, anp ) < 0 )  {
+	if( rt_add_anim( rtip, anp, at_root ) < 0 )  {
 		fprintf(stderr,"cm_anim:  %s %s failed\n", argv[1], argv[2]);
 		goto bad;
 	}
