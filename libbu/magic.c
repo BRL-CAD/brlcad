@@ -37,8 +37,7 @@ static char RCSmagic[] = "@(#)$Header$ (BRL)";
 #include "msr.h"
 #include "wdb.h"
 #include "spm.h"
-#include "redblack.h"
-#include "../libredblack/rb_internals.h"
+#include "../libbu/rb_internals.h"
 #include "bu.h"
 #include "bn.h"
 
@@ -84,6 +83,8 @@ register long	magic;
 		return "bu_mapped_file";
 	case BU_EXTERNAL_MAGIC:
 		return "bu_external";
+	case BU_RB_TREE_MAGIC:
+		return "red-black tree";
 
 	/*
 	 *  bn.h
@@ -231,17 +232,11 @@ register long	magic;
 		return "spm.h spm_map_t";
 
 	/*
-	 *  redblack.h
+	 *  ../libbu/rb_internals.h
 	 */
-	case RB_TREE_MAGIC:
-		return "red-black tree";
-
-	/*
-	 *  ../libredblack/rb_internals.h
-	 */
-	case RB_NODE_MAGIC:
+	case BU_RB_NODE_MAGIC:
 		return "red-black node";
-	case RB_PKG_MAGIC:
+	case BU_RB_PKG_MAGIC:
 		return "red-black package";
 
 	}
