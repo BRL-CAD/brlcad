@@ -75,14 +75,16 @@ mlib_init()
  *			M L I B _ S E T U P
  *
  *  Returns -
- *	<0	failed
- *	!0	success
+ *	-1	failed
+ *	 0	indicates that this region should be dropped
+ *	 1	success
  */
 int
 mlib_setup( rp )
 register struct region *rp;
 {
 	register struct mfuncs *mfp;
+	int	ret;
 	char	param[256];
 
 	if( rp->reg_mfuncs != (char *)0 )  {
@@ -106,13 +108,13 @@ found:
 	rp->reg_udata = (char *)0;
 	strncpy( param, rp->reg_mater.ma_matparm, sizeof(rp->reg_mater.ma_matparm) );
 	param[sizeof(rp->reg_mater.ma_matparm)+1] = '\0';
-	if( mfp->mf_setup( rp, param, &rp->reg_udata ) < 0 )  {
+
+	if( (ret = mfp->mf_setup( rp, param, &rp->reg_udata )) < 0 )  {
 		/* What to do if setup fails? */
 		if( mfp != phg_mfuncs )
 			goto def;
-		return(-1);		/* BAD */
 	}
-	return(0);			/* OK */
+	return(ret);		/* Good or bad, as mf_setup says */
 }
 
 /*
@@ -277,10 +279,22 @@ int *base;		/* base address of users structure */
  *			M L I B _ Z E R O
  *
  *  Regardless of arguments, always return zero.
- *  Useful mostly as a stub setup, print, and/or free routine.
+ *  Useful mostly as a stub print, and/or free routine.
  */
 /* VARARGS */
 mlib_zero()
 {
 	return(0);
+}
+
+/*
+ *			M L I B _ O N E
+ *
+ *  Regardless of arguments, always return one.
+ *  Useful mostly as a stub setup routine.
+ */
+/* VARARGS */
+mlib_one()
+{
+	return(1);
 }

@@ -401,21 +401,46 @@ int framenumber;
 		framenumber);
 	set_priority( width*height*(hypersample+1) );
 	if( rtip->needprep )  {
-		/* Allow RT library to prepare itself */
-		rt_prep_timer();
-		rt_prep(rtip);
 
-		/* Initialize the material library for all regions */
-		for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
-			if( mlib_setup( regp ) < 0 )  {
+		/*
+		 *  Initialize the material library for all regions.
+		 *  As this may result in some regions being dropped,
+		 *  (eg, light solids that become "implicit" -- non drawn),
+		 *  this must be done before allowing the library to prep
+		 *  itself.  This is a slight layering violation;  later it
+		 *  may be clear how to repackage this operation.
+		 */
+		for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
+			switch( mlib_setup( regp ) )  {
+			case -1:
+			default:
 				rt_log("mlib_setup failure on %s\n", regp->reg_name);
-			} else {
+				break;
+			case 0:
+				if(rdebug&RDEBUG_MATERIAL)
+					rt_log("mlib_setup: drop region %s\n", regp->reg_name);
+				{
+					struct region *r = regp->reg_forw;
+					/* zap reg_udata? beware of light structs */
+					rt_del_regtree( rtip, regp );
+					regp = r;
+					continue;
+				}
+			case 1:
+				/* Full success */
 				if(rdebug&RDEBUG_MATERIAL)
 					((struct mfuncs *)(regp->reg_mfuncs))->
 						mf_print( regp, regp->reg_udata );
 				/* Perhaps this should be a function? */
+				break;
 			}
+			regp = regp->reg_forw;
 		}
+
+		/* Allow RT library to prepare itself */
+		rt_prep_timer();
+		rt_prep(rtip);
+
 		(void)rt_read_timer( outbuf, sizeof(outbuf) );
 		fprintf(stderr, "PREP: %s\n", outbuf );
 	}
