@@ -1528,6 +1528,12 @@ CONST struct db_i		*dbip;
 	bn_vec_ortho( tip->a, tip->h );
 	VCROSS( tip->b, tip->h, tip->a);
 	VUNITIZE( tip->b );
+	/*
+	 * XXX - This is not normally allowed in vmath macros, having source
+	 * and destination being the same.
+	 */
+	VSCALE(tip->a, tip->a, tip->r_a);
+	VSCALE(tip->b, tip->b, tip->r_b);
 	return 0;
 }
 /*
