@@ -597,3 +597,32 @@ vect_t	dir;
 		return(0.0);
 	return( PTdotD );
 }
+
+/*
+ *			R T _ A R E A _ O F _ T R I A N G L E
+ *
+ *  Returns the area of a triangle.
+ *  Algorithm by Jon Leech 3/24/89.
+ */
+double
+rt_area_of_triangle( a, b, c )
+register point_t a, b, c;
+{
+	register double	t;
+	register double	area;
+
+	t =	a[Y] * (b[Z] - c[Z]) -
+		b[Y] * (a[Z] - c[Z]) +
+		c[Y] * (a[Z] - b[Z]);
+	area  = t*t;
+	t =	a[Z] * (b[X] - c[X]) -
+		b[Z] * (a[X] - c[X]) +
+		c[Z] * (a[X] - b[X]);
+	area += t*t;
+	t = 	a[X] * (b[Y] - c[Y]) -
+		b[X] * (a[Y] - c[Y]) +
+		c[X] * (a[Y] - b[Y]);
+	area += t*t;
+
+	return( 0.5 * sqrt(area) );
+}
