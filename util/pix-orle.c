@@ -16,13 +16,13 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 #include <stdio.h>
 #include "fb.h"
 
-#include "rle.h"
+#include "orle.h"
 
 static FILE	*outfp;
 

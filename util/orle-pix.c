@@ -14,12 +14,12 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 #include <stdio.h>
 #include "fb.h"		/* For Pixel typedef */
-#include "rle.h"
+#include "orle.h"
 
 typedef unsigned char	u_char;
 static char	*usage[] =
