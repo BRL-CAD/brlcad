@@ -265,13 +265,14 @@ void
 f_delmem()
 {
 	register struct directory *dp;
-	register int i, rec;
+	register int i, rec, num_deleted;
 	union record record;
 
 	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	/* Examine all the Member records, one at a time */
+	num_deleted = 0;
 	for( rec = 1; rec < dp->d_len; rec++ )  {
 		db_getrec( dp, &record, rec );
 top:
@@ -281,6 +282,7 @@ top:
 			    strcmp( cmd_args[i], record.M.m_brname ) != 0 )
 				continue;
 			printf("deleting member %s\n", cmd_args[i] );
+			num_deleted++;
 
 			/* If deleting last member, just truncate */
 			if( rec == dp->d_len-1 ) {
@@ -293,5 +295,11 @@ top:
 			db_trunc( dp, 1 );
 			goto top;
 		}
+	}
+	/* go back and undate the header record */
+	if( num_deleted ) {
+		db_getrec(dp, &record, 0);
+		record.c.c_length -= num_deleted;
+		db_putrec(dp, &record, 0);
 	}
 }
