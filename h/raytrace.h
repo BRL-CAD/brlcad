@@ -1901,7 +1901,9 @@ RT_EXTERN(struct vertexuse	*nmg_join_singvu_loop, (struct vertexuse *vu1, struct
 RT_EXTERN(struct vertexuse	*nmg_join_2singvu_loops, (struct vertexuse *vu1, struct vertexuse *vu2) );
 RT_EXTERN(struct loopuse	*nmg_cut_loop, (struct vertexuse *vu1, struct vertexuse *vu2) );
 RT_EXTERN(struct loopuse	*nmg_split_lu_at_vu, (struct loopuse *lu, struct vertexuse *vu) );
-RT_EXTERN(void			nmg_split_touchingloops, (struct loopuse *lu) );
+RT_EXTERN(void			nmg_split_touchingloops, (struct loopuse *lu,
+				CONST struct rt_tol *tol) );
+RT_EXTERN(int			nmg_join_touchingloops, (struct loopuse *lu) );
 RT_EXTERN(void			nmg_simplify_loop, (struct loopuse *lu) );
 RT_EXTERN(int			nmg_kill_snakes, (struct loopuse *lu) );
 RT_EXTERN(void			nmg_mv_lu_between_shells, (struct shell *dest,
