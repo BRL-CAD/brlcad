@@ -762,6 +762,26 @@ struct bu_external	*ep;
 }
 
 /*
+ *		R T _ G E T _ F U N C T A B _ B Y _ L A B E L
+ *
+ *  Given the Tcl 'label' for a given solid type,
+ *  find the appropriate entry in rt_functab[].
+ */
+CONST struct rt_functab *
+rt_get_functab_by_label( label )
+CONST char *label;
+{
+	register int				i;
+	register CONST struct rt_functab	*ftp;
+
+	for( ftp = rt_functab; ftp->magic != 0; ftp++ )  {
+		if( strcmp( label, ftp->ft_label ) == 0 )
+			return ftp;
+	}
+	return NULL;
+}
+
+/*
  *			R T _ G E N E R I C _ X F O R M
  *
  *  Apply a 4x4 transformation matrix to the internal form of a solid.
