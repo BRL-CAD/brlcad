@@ -2641,7 +2641,7 @@ f_binary(     ClientData	clientData,
 
 	if( input_mode + output_mode != 1 ) {
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_binary");
+		bu_vls_printf(&vls, "help binary");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
