@@ -43,11 +43,12 @@ static int	paste_autosize = 0;
 static int	orig_autosize = 0;
 static int	paste_isfile = 0;
 static int	orig_isfile = 0;
+static int	num_bytes = 3;
 
 static char usage[] = "\
 pixpaste: Copyright (C) 1992 Paladin Software\n\
 pixpaste: All rights reserved\n\
-pixpaste: Usage: pixpaste [-v] [-h] [-H] [-a] [-A]\n\
+pixpaste: Usage: pixpaste [-v] [-h] [-H] [-a] [-A] [-# num_bytes]\n\
 		 [-s orig_square_size] [-w orig_width] [-n orig_height]\n\
 		 [-S paste_square_size] [-W paste_width] [-N paste_height]\n\
 		 [-x horizontal] [-y vertical] orig_file paste_file\n\
@@ -59,7 +60,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt(argc, argv, "vahHs:w:n:S:W:N:x:y:" )) != EOF) {
+	while ( (c = getopt(argc, argv, "vahHs:w:n:S:W:N:x:y:#:" )) != EOF) {
 		switch (c) {
 		case 'v':
 			Verbose = 1;
@@ -107,6 +108,9 @@ register char **argv;
 			break;
 		case 'y':
 			base_y = atoi(optarg);
+			break;
+		case '#':
+			num_bytes = atoi(optarg);
 			break;
 		default:		/* '?' */
 			return(0);
@@ -172,7 +176,7 @@ int argc; char **argv;
 	/* Should we autosize the original? */
 	if (orig_isfile && orig_autosize) {
 		int w,h;
-		if (fb_common_file_size(&w, &h, orig_name, 3)) {
+		if (fb_common_file_size(&w, &h, orig_name, num_bytes)) {
 			org_width = w;
 			org_height = h;
 		} else {
@@ -184,7 +188,7 @@ int argc; char **argv;
 	/* Should we autosize the paste file? */
 	if (paste_isfile && paste_autosize) {
 		int w,h;
-		if (fb_common_file_size(&w, &h, paste_name, 3)) {
+		if (fb_common_file_size(&w, &h, paste_name, num_bytes)) {
 			paste_width = w;
 			paste_height = h;
 		} else {
@@ -199,7 +203,7 @@ int argc; char **argv;
 	if (Verbose) {
 		(void) fprintf(stderr,"\
 pixpaste: Copyright (C) 1992 Paladin Software\npixpaste: All rights reserved\n");
-		(void) fprintf(stderr,"pixpaste: Original iamge %dx%d\n",
+		(void) fprintf(stderr,"pixpaste: Original image %dx%d\n",
 		    org_width, org_height);
 		(void) fprintf(stderr,"pixpaste: Inserted image %dx%d\n",
 		    paste_width, paste_height);
@@ -211,7 +215,7 @@ pixpaste: Copyright (C) 1992 Paladin Software\npixpaste: All rights reserved\n")
  * Make a buffer will hold a single scan line of assuming a worst
  * case paste of 1 pixel of overlap.
  */
-	if ((buffer = (unsigned char *)malloc((org_width+paste_width)*3)) == (unsigned char *)NULL ) {
+	if ((buffer = (unsigned char *)malloc((org_width+paste_width)*num_bytes)) == (unsigned char *)NULL ) {
 		(void) fprintf(stderr, "pixpaste: Out of memory (malloc failed)\n");
 		exit(2);
 	}
@@ -229,12 +233,12 @@ pixpaste: new image == original image.\n");
 		}
 		for (i=0; i<org_height; i++) {
 			int E=0;
-			result = fread(buffer, 3, org_width, orig);
+			result = fread(buffer, num_bytes, org_width, orig);
 			if (result != org_width) {
 				E=1;
 				(void)fprintf(stderr,"pixpaste: original file is short.\n");
 			}
-			result = fwrite(buffer, 3, result, paste);
+			result = fwrite(buffer, num_bytes, result, paste);
 			if (!E && result != org_width) {
 				perror("pixpaste: fwrite");
 				E=1;
@@ -246,9 +250,9 @@ pixpaste: new image == original image.\n");
 
 	if (base_x < 0) {
 		pastebuf = buffer;
-		origbuf  = buffer - 3*base_x;
+		origbuf  = buffer - num_bytes*base_x;
 	} else {
-		pastebuf = buffer + 3*base_x;
+		pastebuf = buffer + num_bytes*base_x;
 		origbuf  = buffer;
 	}
 /*
@@ -262,7 +266,7 @@ pixpaste: new image == original image.\n");
 	}
 
 	while (row < 0) {
-		result = fread(pastebuf, 3, paste_width, paste);
+		result = fread(pastebuf, num_bytes, paste_width, paste);
 		if (result != paste_width) {
 			(void)fprintf(stderr,"pixpaste: paste file is short.\n");
 			row=0;
@@ -275,13 +279,13 @@ pixpaste: new image == original image.\n");
  * scan lines from the original to stdout.
  */
 	while (row < base_y) {
-		result=fread(origbuf, 3, org_width, orig);
+		result=fread(origbuf, num_bytes, org_width, orig);
 		if (result != org_width) {
 			(void)fprintf(stderr,"pixpaste: original image is short.\n");
-			(void)fwrite(origbuf, 3, result, stdout);
+			(void)fwrite(origbuf, num_bytes, result, stdout);
 			exit(0);
 		}
-		result = fwrite(origbuf, 3, org_width, stdout);
+		result = fwrite(origbuf, num_bytes, org_width, stdout);
 		if (result != org_width) {
 			perror("pixpaste: fwrite");
 			exit(3);
@@ -294,17 +298,19 @@ pixpaste: new image == original image.\n");
  * If EOF original STOP.  If EOF paste treat as if reached paste_height.
  */
 	while (row < org_height && row < base_y+paste_height) {
-		result=fread(origbuf, 3, org_width, orig);
+		result=fread(origbuf, num_bytes, org_width, orig);
 		if (result != org_width) {
-			(void)fprintf(stderr,"pixpaste: original image is short.\n");
-			org_height = 0;
+			register int jj;
+			for (jj=result; jj<num_bytes*org_width; jj++) {
+				origbuf[jj]=0;
+			}
 		}
-		result=fread(pastebuf, 3, paste_width, paste);
+		result=fread(pastebuf, num_bytes, paste_width, paste);
 		if (result != paste_width) {
 			(void)fprintf(stderr,"pixpaste: paste image is short.\n");
 			base_y = paste_height = 0;
 		}
-		result = fwrite(origbuf, 3, org_width, stdout);
+		result = fwrite(origbuf, num_bytes, org_width, stdout);
 		if (result != org_width) {
 			perror("pixpaste: fwrite");
 			exit(3);
@@ -316,13 +322,14 @@ pixpaste: new image == original image.\n");
  * Output the rest of the original file.
  */
 	while (row < org_height) {
-		result=fread(origbuf, 3, org_width, orig);
+		result=fread(origbuf, num_bytes, org_width, orig);
 		if (result != org_width) {
-			(void) fprintf(stderr,"pixpaste: original image is short.\n");
-			(void)fwrite(origbuf,3,result,stdout);
-			exit(0);
+			register int jj;
+			for (jj=result; jj<num_bytes*org_width; jj++) {
+				origbuf[jj]=0;
+			}
 		}
-		result = fwrite(origbuf, 3, org_width, stdout);
+		result = fwrite(origbuf, num_bytes, org_width, stdout);
 		if (result != org_width) {
 			perror("pixpaste: fwrite");
 			exit(3);
