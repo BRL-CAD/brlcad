@@ -43,7 +43,6 @@ extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
 extern void	sync();
 
-#define MAXARGS		 200	/* Maximum number of args per line */
 int	maxargs = MAXARGS;	/* For dir.c */
 int	inpara;			/* parameter input from keyboard */
 int	numargs;		/* number of args */
@@ -328,7 +327,6 @@ cmdline()
 int
 parse_line()
 {
-#define MAXLINE		512		/* Maximum number of chars per line */
 	register char *lp;
 	register char *lp1;
 	static char line[MAXLINE];
