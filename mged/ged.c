@@ -1720,10 +1720,10 @@ char	**argv;
     Tcl_AppendResult(interp, dbip->dbi_title, " (units=",
 		     units_str[dbip->dbi_localunit], ")\n", (char *)NULL);
 
-#if NOT_READY_YET
-  if( Tcl_Eval( interp, "wdb_close $wdbp" ) != TCL_OK )
-	  return TCL_ERROR;
-#endif
+  /* Close previous databases, if any.  Ignore errors. */
+  (void)Tcl_Eval( interp, "db close; .inmem close" );
+
+  /* Establish TCL access to both disk and in-memory databases */
   if( Tcl_Eval( interp, "set wdbp [wdb_open db disk [get_dbip]]; wdb_open .inmem inmem [get_dbip]" ) != TCL_OK )  {
 	bu_log("%s\n%s\n",
     		interp->result,
