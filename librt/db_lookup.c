@@ -170,14 +170,40 @@ int			flags;
 		return( DIR_NULL );
 	dp->d_magic = RT_DIR_MAGIC;
 	dp->d_namep = bu_strdup( local );
-	dp->d_addr = laddr;
-	dp->d_flags = flags;
+	dp->d_un.file_offset = laddr;
+	dp->d_flags = flags & ~(RT_DIR_INMEM);
 	dp->d_len = len;
 	headp = &(dbip->dbi_Head[db_dirhash(local)]);
 	dp->d_forw = *headp;
 	BU_LIST_INIT( &dp->d_use_hd );
 	*headp = dp;
 	return( dp );
+}
+
+/*
+ *			D B _ I N M E M
+ *
+ *  Transmogrify an existing directory entry to be an in-memory-only
+ *  one, stealing the external representation from 'ext'.
+ */
+void
+db_inmem( dp, ext, flags )
+struct directory	*dp;
+struct bu_external	*ext;
+int			flags;
+{
+	BU_CK_EXTERNAL(ext);
+	RT_CK_DIR(dp);
+
+	if( dp->d_flags & RT_DIR_INMEM )
+		bu_free( dp->d_un.ptr, "db_inmem() ext ptr" );
+	dp->d_un.ptr = ext->ext_buf;
+	dp->d_len = ext->ext_nbytes / 128;	/* DB_MINREC granule size */
+	dp->d_flags = flags | RT_DIR_INMEM;
+
+	/* Empty out the external structure, but leave it w/valid magic */
+	ext->ext_buf = (genptr_t)NULL;
+	ext->ext_nbytes = 0;
 }
 
 /*
@@ -205,6 +231,10 @@ register struct directory	*dp;
 	RT_CK_DIR(dp);
 
 	headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
+
+	if( dp->d_flags & RT_DIR_INMEM )
+		bu_free( dp->d_un.ptr, "db_dirdelete() inmem ptr" );
+
 	if( *headp == dp )  {
 		rt_free( dp->d_namep, "dir name" );
 		*headp = dp->d_forw;
@@ -307,8 +337,9 @@ register CONST struct db_i	*dbip;
 				flags = "COM";
 			else
 				flags = "Bad";
-			bu_log("%.8x %.16s %s addr=%.6x use=%.2d len=%.3d nref=%.2d",
+			bu_log("%.8x %.16s %s %s=%.8x use=%.2d len=%.3d nref=%.2d",
 				dp, dp->d_namep,
+				dp->d_flags & RT_DIR_INMEM ? "ptr" : "d_addr",
 				flags,
 				dp->d_addr,
 				dp->d_uses,
