@@ -116,7 +116,7 @@ rt_botface_w_normals(struct soltab	*stp,
 		return(0);			/* BAD */
 	}		
 
-	if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+	if( (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && vertex_normals ) {
 		trip->tri_normals = (fastf_t *)bu_malloc( 9 * sizeof( fastf_t ), "trip->tri_normals" );
 		for( i=0 ; i<3 ; i++ ) {
 			VMOVE( &trip->tri_normals[i*3], &vertex_normals[i*3] );
@@ -337,8 +337,8 @@ struct rt_i		*rtip;
 		VMINMAX( stp->st_min, stp->st_max, p1 );
 		VMINMAX( stp->st_min, stp->st_max, p2 );
 		VMINMAX( stp->st_min, stp->st_max, p3 );
-		if( (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
-		    (bot_ip->num_normals > 0) && (bot_ip->num_face_normals > tri_index) ) {
+		if( (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot_ip->bot_flags & RT_BOT_USE_NORMALS)
+			&& (bot_ip->num_normals > 0) && (bot_ip->num_face_normals > tri_index) ) {
 			for( i=0 ; i<3 ; i++ ) {
 				int index;
 
@@ -1311,7 +1311,7 @@ register struct xray	*rp;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
-	if( bot->bot_flags && RT_BOT_HAS_SURFACE_NORMALS ) {
+	if( (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && trip->tri_normals ) {
 		fastf_t u, v, w; /*barycentric coords of hit point */
 		int i;
 
@@ -2092,7 +2092,12 @@ double			mm2local;
 	bu_vls_strcat( str, buf );
 	bu_vls_strcat( str, mode );
 	if( (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && bot_ip->num_normals > 0 ) {
-		bu_vls_strcat( str, "\twith surface normals\n" );
+		bu_vls_strcat( str, "\twith surface normals" );
+		if( bot_ip->bot_flags & RT_BOT_USE_NORMALS ) {
+			bu_vls_strcat( str, " (they will be used)\n" );
+		} else {
+			bu_vls_strcat( str, " (they will be ignored)\n" );
+		}
 	}
 
 	if( verbose )
@@ -2488,6 +2493,7 @@ static char *los[]={
  *	db get name nfn		get num_face_normals
  *	db get name mode	get mode (surf, volume, plate, plane_nocos)
  *	db get name orient	get orientation (no, rh, lh)
+ *	db get name flags	get BOT flags
  */
 int
 rt_bot_tclget( interp, intern, attr )
@@ -2509,8 +2515,16 @@ const char			*attr;
 	if( attr == (char *)NULL )
 	{
 		bu_vls_strcpy( &vls, "bot" );
-		bu_vls_printf( &vls, " mode %s orient %s V {",
+		bu_vls_printf( &vls, " mode %s orient %s",
 				modes[bot->mode], orientation[bot->orientation] );
+		bu_vls_printf( &vls, " flags {" );
+		if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+			bu_vls_printf( &vls, " has_normals" );
+		}
+		if( bot->bot_flags & RT_BOT_USE_NORMALS ) {
+			bu_vls_printf( &vls, " use_normals" );
+		}
+		bu_vls_printf( &vls, " } V {" );
 		for( i=0 ; i<bot->num_vertices ; i++ )
 			bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
 				V3ARGS( &bot->vertices[i*3] ) );
@@ -2682,6 +2696,18 @@ const char			*attr;
 				}
 			}
 		}
+		else if( !strcmp( attr, "flags" ) )
+		{
+			bu_vls_printf( &vls, "{" );
+			if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+				bu_vls_printf( &vls, " has_normals" );
+			}
+			if( bot->bot_flags & RT_BOT_USE_NORMALS ) {
+				bu_vls_printf( &vls, " use_normals" );
+			}
+			bu_vls_printf( &vls, " }" );
+			status = TCL_OK;
+		}
 		else if( attr[0] == 'f' )
 		{
 			int indx;
@@ -2821,6 +2847,7 @@ const char			*attr;
  *	db adjust name nn		set num_normals
  *	db adjust name mode		set mode (surf, volume, plate, plane_nocos)
  *	db adjust name orient		set orientation (no, rh, lh)
+ *	db adjust name flags		set flags
  */
 int
 rt_bot_tcladjust( interp, intern, argc, argv )
@@ -3351,6 +3378,25 @@ char			**argv;
 			    return( TCL_ERROR );
 			  }
 		      }
+		  }
+		else if( !strcmp( argv[0], "flags" ) )
+		  {
+			  (void)Tcl_ListObjGetElements( interp, list, &len, &obj_array );
+			  bot->bot_flags = 0;
+			  for( i=0 ; i<len ; i++ ) {
+				  char *str;
+
+				  str = Tcl_GetStringFromObj( obj_array[i], NULL );
+				  if( !strcmp( str, "has_normals" ) ) {
+					  bot->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
+				  } else if( !strcmp( str, "use_normals" ) ) {
+					  bot->bot_flags |= RT_BOT_USE_NORMALS;
+				  } else {
+					  Tcl_SetResult( interp, "unrecognized flag (must be \"has_normals\" or \"use_normals\"!!!", TCL_STATIC );
+					  Tcl_DecrRefCount( list );
+					  return( TCL_ERROR );
+				  }
+			  }
 		  }
 
 		Tcl_DecrRefCount( list );
