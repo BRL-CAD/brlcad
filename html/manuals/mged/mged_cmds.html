@@ -31,7 +31,7 @@ the shell.
 
 <DD> Build an <a href="brlcad_solids.html#ARB">ARB8</a> solid by
 extruding a quadrilateral through a given <I>thickness</I>. The
-parameters may be provided on the command line; if they are not,
+arguments may be provided on the command line; if they are not,
 they will be prompted for.  The <I>x1, y1,</I> and
 <I>z1</I> are the coordinates of one corner of the quadrilateral.
 <I>x2, y2, z2,</I> and <I>x3, y3, z3</I> are the coordinates of two
@@ -57,7 +57,7 @@ the points appear in counter&#173clockwise order.
 	<br><kbd>Enter the X, Y coordinate values:</kbd> <B>0 1</B><br> -- The x and y coordinates of the fourth point are 0 and 1.
 	<br><kbd>Enter thickness for this arb:</kbd> <B>3</B><br> -- The new <a href="brlcad_solids.html#ARB">ARB8</a> will be 3 <a href="#units">units</a> thick.
 	</DD>
-	<DD>mged> <B>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</B><br> -- Same as above example, but with all parameters supplied on the command line.
+	<DD>mged> <B>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</B><br> -- Same as above example, but with all arguments supplied on the command line.
 	</DD>
 	</DL>
 </DD>
@@ -92,7 +92,7 @@ available commands.
 </DD>
 <HR>
 
-<DT><a NAME="B"><B>B</B> &l;<I>objects</I>&gt</DT>
+<DT><a NAME="B"><B>B</B> &lt;<I>objects</I>&gt</DT>
 
 <DD> Clear the <I>mged</I> display of any currently
 displayed objects, then display the list of objects provided in the
@@ -525,7 +525,7 @@ a similar function by changing the viewing direction, but not moving the eye loc
 
 <DT><a NAME="cmd_close"><B>cmd_close</B> <I>id</I></DT>
 <DD>This command releases <I>id</I>'s internal data structures.
-     The parameter, <I>id</I>, refers to a command window.
+     The parameter <I>id</I> refers to a command window.
 
      <DL>
        <DT><big>Examples:</big></DT>
@@ -1222,7 +1222,7 @@ of the attributes are ignored. If the region flag is being set, then the
 <a href="brlcad_glossary.html#SPACE">air_code</a>,
 <a href="brlcad_glossary.html#LOS">los</a>, and
 <a href="brlcad_glossary.html#GIFTMAT">material_code</a> are set
-according to the parameters supplied.
+according to the arguments supplied.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -1255,10 +1255,10 @@ This can only be done while moving an edge of an <a href="brlcad_solids.html#ARB
 <DT><a NAME="edmater"><B>edmater</B> &lt;<I>combinations</I>&gt</DT>
 
 <DD> The ``edmater'' command places the user in an editor ready to edit
-a file filled with with <a href="brlcad_glossary.html#SHADER">shader</a> parameters
+a file filled with <a href="brlcad_glossary.html#SHADER">shader</a> arguments
 for the <a href="brlcad_glossary.html#COMBINATION">combinations</a> listed
-on the command line. The parameters placed in the file for editing are the <I>shader</I>
-name and parameters, <a href="brlcad_glossary.html#RGB">RGB</a> color,
+on the command line. The arguments placed in the file for editing are the <I>shader</I>
+name and its own arguments, <a href="brlcad_glossary.html#RGB">RGB</a> color,
 <I>RGB_valid</I> flag, and the <a href="brlcad_glossary.html#INHERITANCE">inheritance</a>
 flag.
 The editor used is whatever the user has set in the environment variable <I>EDITOR</I>.
@@ -1756,7 +1756,7 @@ either using the mouse to make the selection, or using <a href="#aip">aip</a> an
 
 <DT><a NAME="in"><B>in</B> [<I>-f</I>] [<I>-s</I>] <I>new_solid_name solid_type</I> &lt;<I>parameters</I>&gt</DT>
 
-<DD> The ``in'' command allows the user to type in the parameters needed to create a solid
+<DD> The ``in'' command allows the user to type in the arguments needed to create a solid
 with the name <I>new_solid_name</I> of the type <I>solid_type</I>. The command may be invoked
 with no arguments, and it will prompt the user for all needed information. The <I>-s</I>
 option will invoke the solid edit mode on the new solid immediately after creation.
@@ -2278,30 +2278,30 @@ The information may be included on the command line, otherwise the user
 will be prompted it.
 Some available shaders are:
 <ul>
-<li>plastic -- Phong shader with values set to simulate plastic</li>
-<li>mirror -- Phong shader with values set to simulate mirror</li>
-<li>glass -- Phong shader with values set to simulate glass</li>
-<li>checker -- checkerboard design</li>
-<li>fakestar -- a fake star pattern</li>
-<li>cloud -- 2D Geoffrey Gardner style cloud texture map</li>
-<li>texture -- full color texture mapping</li>
-<li>bwtexture -- black and white texture maps</li>
 <li>bump -- bump maps</li>
-<li>envmap -- environment mapping</li>
+<li>bwtexture -- black and white texture maps</li>
 <li>camo -- camouflage</li>
-<li>fire -- flames simulated with turbulence noise</li>
-<li>light -- light source</li>
-<li>marble -- marble texture</li>
-<li>gravel -- turbulence noise applied to color and surface normal</li>
-<li>turbump -- turbulence noise applied to surface normals</li>
-<li>turcolor -- turbulence noise applied to color</li>
+<li>checker -- checkerboard design</li>
+<li>cloud -- 2D Geoffrey Gardner style cloud texture map</li>
+<li>envmap -- environment mapping</li>
+<li>fakestar -- a fake star pattern</li>
 <li>fbmbump -- fbm noise applied to surface normal</li>
 <li>fbmcolor -- fbm noise applied to color</li>
+<li>fire -- flames simulated with turbulence noise</li>
+<li>glass -- Phong shader with values set to simulate glass</li>
+<li>gravel -- turbulence noise applied to color and surface normal</li>
+<li>light -- light source</li>
+<li>marble -- marble texture</li>
+<li>mirror -- Phong shader with values set to simulate mirror</li>
+<li>plastic -- Phong shader with values set to simulate plastic</li>
 <li>rtrans -- random transparency</li>
 <li>scloud -- 3D cloud shader</li>
 <li>spm -- spherical texture maps</li>
 <li>stack -- allows stacking of shaders</li>
 <li>stxt -- solid texture mapping</li>
+<li>texture -- full color texture mapping</li>
+<li>turbump -- turbulence noise applied to surface normals</li>
+<li>turcolor -- turbulence noise applied to color</li>
 <li>wood -- wood texture</li>
 </ul>
 
@@ -3273,7 +3273,7 @@ first face is extruded normally by the specified thickness to complete the <I>AR
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>mged> <b>rfarb</b><br>
-		-- create a new <I>ARB8</I> solid according to parameters supplied
+		-- create a new <I>ARB8</I> solid according to arguments supplied
 		in answer to prompts.
 	</DD>
 	</DL>
@@ -3578,7 +3578,7 @@ command is a synonym for <a href="#press">press top</a>.
 <DD>The ``shader'' command assigns <a href="brlcad_glossary.html#SHADER">shader</a> parameters
 to the specified <a href="brlcad_glossary.html#COMBINATION">combination</a>.
 The <I>shader_name</I> indicates which <I>shader</I> should be assigned. If
-<I>shader_args</I> are supplied, they will be assigned as parameters to the
+<I>shader_args</I> are supplied, they will be assigned to parameters of the
 indicated shader. This perfomrs a similar function as the <a href="#mater">mater</a>
 command.
 
@@ -3834,10 +3834,10 @@ command performs a similar function for <a href="brlcad_glossary.html#COMBINATIO
      to refer to the tty MGED was started from, or an id associated with
      a Tcl/Tk interface window <a href="#openw"> created with <I>openw</I> </a>.
      The <I>display_window</I> is specified with its Tcl/Tk pathname.
-     If no parameters are given, a listing of the current
+     If no arguments are given, a listing of the current
      <I>command_window</I>/<I>display_window</I> associations is returned.
      If only the <I>command_window</I> is given, the <I>command_window</I>/<I>display_window</I>
-     association is returned. If both parameters are given, the
+     association is returned. If both arguments are given, the
      <I>command_window</I>/<I>display_window</I> association is created. This
      command was designed to be used within a Tcl script.
 
@@ -3990,7 +3990,7 @@ The parameters are (in order):
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>mged> <b>track 500 0 10 10 -50 50 10 550 50 10 -50 -20 2</b><br>
-		-- build a simple track using the provided parameters
+		-- build a simple track using the provided arguments
 	</DD>
 	</DL>
 </DD>
@@ -4069,7 +4069,7 @@ that will be remembered as the preferred editing unit are:
 	<li>foot -- feet</li>
 	<li>feet -- feet</li>
 </ul>
-<I>Units_type</I> strings that my be used, but will not be remembered as the preferred
+<I>Units_type</I> strings that may be used, but will not be remembered as the preferred
 editing units are:
 	<ul>
 	<li>angstrom</li>
