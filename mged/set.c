@@ -93,9 +93,9 @@ struct structparse mged_vparse[] = {
 	{"%f",	1, "perspective",	MV_O(perspective),	refresh_hook },
 	{"%f",  1, "nmg_eu_dist",	MV_O(nmg_eu_dist),	nmg_eu_dist_set },
 	{"%f",  1, "eye_sep_dist",	MV_O(eye_sep_dist),	reattach },
-	{"%s",  MAXLINE, "union_op",	MV_O(union_lexeme),	FUNC_NULL },
-	{"%s",  MAXLINE, "intersection_op",MV_O(intersection_lexeme),	FUNC_NULL },
-	{"%s",  MAXLINE, "difference_op",	MV_O(difference_lexeme),	FUNC_NULL },
+	{"%s",  MAXLINE, "union_op",	MV_O(union_lexeme[0]),	FUNC_NULL },
+	{"%s",  MAXLINE, "intersection_op",MV_O(intersection_lexeme[0]),	FUNC_NULL },
+	{"%s",  MAXLINE, "difference_op",	MV_O(difference_lexeme[0]),	FUNC_NULL },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
