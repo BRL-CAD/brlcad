@@ -751,16 +751,12 @@ CONST struct rt_tol	*tol;
 
 	/* because of pythgorean theorem ... */
 	distsq = MAGSQ(AtoP) - APprABunit * APprABunit;
-
-	if (distsq < 0)
-		distsq = 0.0;
-	else if (distsq > tol->dist_sq)
+	if (distsq > tol->dist_sq)
 		return(-1);	/* dist pt to line too large */
 
 	/* Distance from the point to the line is within tolerance. */
 	*dist = VDOT(AtoP, AtoB) / MAGSQ(AtoB);
 
-	/* XXX This formula does not give a tol->dist radius around endpts */
 	if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
 		return(-2);
 
@@ -775,47 +771,67 @@ CONST struct rt_tol	*tol;
  *
  *	Explicit return
  *	    distance from the point of closest approach on lseg to point
+ *	    0.0 if within tol->dist of A or B or the line segment.
  *
  *	Implicit return
  *	    pca 	the point of closest approach
+ *
+ * XXX For efficiency, a version of this routine that provides the
+ * XXX distance squared would be faster.
  */
 double rt_dist_pt_lseg(pca, a, b, p, tol)
 point_t		pca;
 CONST point_t	a, b, p;
 CONST struct rt_tol *tol;
 {
-	vect_t ENDPTtoP, AtoB;
-	double Pr_prop;		/* proj of a-p onto a-b as proportion of a-b */
-	double distance;	/* distance of point from lseg */
+	vect_t	PtoA;		/* P-A */
+	vect_t	AtoB;		/* B-A */
+	fastf_t	seglen;		/* |B-A| */
+	fastf_t	seglen_sq;
+	fastf_t	t;		/* distance along ray of projection of P */
 	
-	VSUB2(ENDPTtoP, p, a);
+	VSUB2(PtoA, p, a);
 	VSUB2(AtoB, b, a);
+	seglen_sq = MAGSQ(AtoB);
+	seglen = sqrt(seglen_sq);
 
-	/* compute distance along line to pca */
-	Pr_prop = VDOT(ENDPTtoP, AtoB) / MAGSQ(AtoB);
+	/* compute distance (in actual units) along line to pca */
+	t = VDOT(PtoA, AtoB) / seglen;
 
-	/* XXX This does not provide a tol->dist circle around endpoints */
-	if (Pr_prop < 1.0 && Pr_prop > 0.0) {
-		/* pt is along edge of lseg, scale AtoB by Pr_prop to
-		 * get a vector from A to the P.C.A.
-		 */
-		VJOIN1(pca, a, Pr_prop, AtoB);
-		VUNITIZE(AtoB);
-
-		distance = rt_dist_line_point(a, AtoB, p);
-		return(distance);
+	if( t < -tol->dist )  {
+		/* P is "below" A */
+		VMOVE( pca, a );
+		return MAGNITUDE(PtoA);
 	}
-
-	/* pt is closer to an endpoint than to the line segment */
-	if (Pr_prop >= 1.0) {
-		VSUB2(ENDPTtoP, p, b);
-		VMOVE(pca, b);
-	} else {
-		VMOVE(pca, a);
+	if( t < tol->dist )  {
+		/* P is within the tol->dist radius circle around A */
+		VMOVE( pca, a );
+		return 0.0;
 	}
+	if( t < seglen - tol->dist )  {
+		/* P falls between A and B */
+		register fastf_t	dsq;
+		fastf_t			param_dist;	/* parametric dist */
 
-	distance = MAGNITUDE(ENDPTtoP);
-	return(distance);
+		/* Find PCA */
+		param_dist = VDOT(PtoA, AtoB) / seglen_sq;
+		VJOIN1(pca, a, param_dist, AtoB);
+
+		/* Find distance from PCA to line segment */
+		if( (dsq = VDOT( PtoA, PtoA ) - t * t ) <= tol->dist_sq )  {
+			return 0.0;
+		}
+		return sqrt(dsq);
+	}
+	if( t < seglen + tol->dist )  {
+		/* P is within the tol->dist radius circle around B */
+		VMOVE( pca, b );
+		return 0.0;
+	}
+	/* P is "above" B */
+	VMOVE(pca, b);
+	VSUB2(PtoA, p, b);
+	return MAGNITUDE(PtoA);
 }
 
 /*
