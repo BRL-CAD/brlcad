@@ -28,6 +28,11 @@ static char libbu_ptbl_RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include "machine.h"
 #include "bu.h"
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 /*
  *			B U _ P T B L _ I N I T

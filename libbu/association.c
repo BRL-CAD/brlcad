@@ -25,6 +25,9 @@ static char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <math.h>
+#if HAVE_STRING_H
+#include <string.h>
+#endif
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"

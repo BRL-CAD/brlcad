@@ -260,7 +260,7 @@ register genptr_t	ptr;
 unsigned int		cnt;
 CONST char		*str;
 {
-	struct memdebug		*mp;
+	struct memdebug		*mp=NULL;
 	char	*original_ptr = ptr;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )  {

@@ -25,6 +25,7 @@ static char RCSispar[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <math.h>
+#include <signal.h>
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"

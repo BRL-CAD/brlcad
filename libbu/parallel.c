@@ -23,9 +23,23 @@ static char RCSparallel[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
+
+#ifdef __FreeBSD__
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <signal.h>
+#endif
 
 #ifdef CRAY
 # include <sys/category.h>
@@ -124,8 +138,7 @@ void
 bu_nice_set(newnice)
 int	newnice;
 {
-	int opri, npri, chg;
-	int bias;
+	int opri, npri;
 
 #ifdef BSD
 #define	PRIO_PROCESS	0	/* From /usr/include/sys/resource.h */
@@ -133,6 +146,8 @@ int	newnice;
 	setpriority( PRIO_PROCESS, 0, newnice );
 	npri = getpriority( PRIO_PROCESS, 0 );
 #else
+	int bias, chg;
+
 	/* " nice adds the value of incr to the nice value of the process" */
 	/* "The default nice value is 20" */
 	/* "Upon completion, nice returns the new nice value minus 20" */

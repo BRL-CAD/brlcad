@@ -55,7 +55,7 @@ register CONST char	*bits;
 		bu_vls_printf( vls, "%s=0%o <", s, v);
 	else
 		bu_vls_printf( vls, "%s=x%x <", s, v);
-	while (i = *bits++) {
+	while ((i = *bits++)) {
 		if (v & (1L << (i-1))) {
 			if (any)
 				bu_vls_strcat( vls, ",");
