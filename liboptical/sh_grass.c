@@ -24,6 +24,43 @@
 #define grass_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_grass_SP(_p) RT_CKMAG(_p, grass_MAGIC, "grass_specific")
 
+/* compute the Region coordinates of the origin of a cell */
+#define CELL_POS(cell_pos, grass_sp, cell_num) \
+	cell_pos[X] = cell_num[X] * grass_sp->cell[X]; \
+	cell_pos[Y] = cell_num[Y] * grass_sp->cell[Y]
+
+#define BLADE_SEGS_MAX 4
+
+#define LEAF_MAGIC 1024
+#define BLADE_MAGIC 1023
+#define PLANT_MAGIC 1022
+
+struct leaf_segment {
+	long	magic;
+	double len;	/* length of blade segment */
+	vect_t blade;	/* direction of blade growth */ 
+	vect_t	N;	/* surface normal of blade segment */
+};
+
+struct blade {
+	long			magic;
+	double			width;
+	double			tot_len;	/* total length of blade */
+	int			segs;		/* # of segments in blade */
+	struct leaf_segment	leaf[BLADE_SEGS_MAX];	/* segments */
+	point_t			pmin;		/* blade bbox min */
+	point_t			pmax;		/* blade bbox max */
+};
+
+#define BLADE_MAX 4
+struct plant {
+	long		magic;
+	point_t		root;		/* location of base of blade */
+	int 		blades;		/* # of blades from same root */
+	struct blade	b[BLADE_MAX];	/* blades */
+	point_t		pmin;		/* plant bbox min */
+	point_t		pmax;		/* plant bbox max */
+};
 
 #define GRASSRAY_MAGIC 2048
 struct grass_ray {
@@ -57,6 +94,7 @@ struct grass_specific {
 	double	size;		/* size of noise coordinate space */
 	point_t	vscale;		/* size of noise coordinate space */
 	vect_t	delta;
+	struct	plant proto;
 
 	mat_t	m_to_sh;	/* model to shader space matrix */
 	mat_t	sh_to_m;	/* model to shader space matrix */
@@ -69,14 +107,14 @@ struct grass_specific grass_defaults = {
 	{300.0, 300.0},			/* cell */
 	2.0,				/* plants_per_cell */
 	1.0,				/* deviation of plants_per_cell */
-	70.0,				/* "t" mean length of leaf seg */
+	30.0,				/* "t" mean length of leaf seg */
 	3.0,				/* max width (mm) of blade segment */
 	3,				/* # segs per blade */
 	1.0,				/* seg ratio */
 	2.1753974,			/* lacunarity */
 	1.0,				/* h_val */
 	4.0,				/* octaves */
-	1.0,				/* size */
+	.3,				/* size */
 	{ 1.0, 1.0, 1.0 },		/* vscale */
 	{ 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
 	{	0.0, 0.0, 0.0, 0.0,	/* m_to_sh */
@@ -142,6 +180,245 @@ CONST struct mfuncs grass_mfuncs[] = {
 	0,		0,		0,		0 }
 };
 
+static void
+print_plant(str, plant)
+char *str;
+struct plant *plant;
+{
+	int blade, seg;
+
+  	bu_log("%s: %d blades\n", str, plant->blades);
+	bu_log(" root: %g %g %g\n", V3ARGS(plant->root));
+
+  	for (blade=0 ; blade < plant->blades ; blade++) {
+  		bu_log("  blade %d  segs:%d tot_len:%g\n",
+  			blade, plant->b[blade].segs, plant->b[blade].tot_len);
+  		bu_log("    min:%g %g %g  max:%g %g %g\n",
+  			V3ARGS(plant->b[blade].pmin),
+  			V3ARGS(plant->b[blade].pmax));
+  		for (seg=0 ; seg < plant->b[blade].segs ; seg++) {
+  			bu_log("    leaf[%d](%g %g %g) %g\n", seg,
+  				V3ARGS(plant->b[blade].leaf[seg].blade),
+  				plant->b[blade].leaf[seg].len );
+  		}
+  	}
+}
+/*
+ *	Rotate a blade about the Z axis, compute blade bounding box
+ *
+ */
+static void
+blade_rot(o, i, m)
+struct blade *o;
+struct blade *i;
+mat_t m;
+{
+	struct blade tmp;
+	int seg;
+	point_t pt;
+
+	if (i == o) {
+		tmp = *i;	/* struct copy */
+		i = &tmp;
+	}
+	VSETALL(pt, 0.0);
+	VMOVE(o->pmin, pt);
+	VMOVE(o->pmax, pt);
+
+	o->segs = i->segs;
+	o->tot_len = 0.0;
+	for (seg=0 ; seg < i->segs ; seg++) {
+		o->leaf[seg].magic = i->leaf[seg].magic;
+		MAT4X3VEC(o->leaf[seg].blade, m, i->leaf[seg].blade);
+		MAT4X3VEC(o->leaf[seg].N, m, i->leaf[seg].N);
+		o->leaf[seg].len = i->leaf[seg].len;
+		o->tot_len += i->leaf[seg].len;
+
+		VJOIN1(pt, pt, o->leaf[seg].len, o->leaf[seg].blade);
+		VMINMAX(o->pmin, o->pmax, pt);
+	}
+}
+static void
+plant_rot(pl, a)
+struct plant *pl;
+double a;
+{
+	int blade;
+	mat_t m;
+
+	bn_mat_zrot(m, sin(a), cos(a));
+
+	for (blade=0 ; blade < pl->blades ; blade++) {
+		blade_rot(&pl->b[blade], &pl->b[blade], m);
+	}
+}
+
+/*
+ * decide how many blades to use, and how long the blades will be
+ *
+ */
+static void
+plant_scale(pl, w, val)
+struct plant *pl;
+double w;	/* -1 .. 1 */
+double val;
+{
+	int blade, seg;
+
+	if (rdebug&RDEBUG_SHADE)
+		bu_log("plant_scale(%g)\n", w);
+
+	if ( w < .5) pl->blades--;
+
+	if (w >= 0.0) return;
+
+	w *= 2.0;
+
+
+	for (blade=0 ; blade < pl->blades ; blade++) {
+		pl->b[blade].tot_len = 0.0;
+		pl->b[blade].width +=
+			pl->b[blade].width * w;
+
+		for (seg=0; seg < pl->b[blade].segs ; seg++) {
+			pl->b[blade].leaf[seg].len += 
+				pl->b[blade].leaf[seg].len * w;
+
+			pl->b[blade].tot_len += pl->b[blade].leaf[seg].len;
+		}
+	}
+
+}
+
+/*
+ *	Make a prototype blade we can copy for use later
+ *	Doesn't set bounding box.
+ */
+static void
+make_proto(grass_sp)
+struct grass_specific *grass_sp;
+{
+  static CONST point_t z_axis = { 0.0, 0.0, 1.0 };
+  vect_t left;
+  int blade, seg;
+  mat_t m, r;
+  point_t pt;
+  double angle;
+  double val;
+
+  grass_sp->proto.magic = PLANT_MAGIC;
+  VSETALL(grass_sp->proto.root, 0.0);
+  VMOVE(grass_sp->proto.pmin, grass_sp->proto.root);
+  VMOVE(grass_sp->proto.pmax, grass_sp->proto.root);
+
+  grass_sp->proto.blades = BLADE_MAX;
+
+  /* First we make blade 0.  This blade will be used as the prototype
+   * for all the other blades.  Most significantly, the others are just
+   * a rotation of this first one.
+   */
+  blade = 0;
+  grass_sp->proto.b[blade].magic = BLADE_MAGIC;
+  grass_sp->proto.b[blade].tot_len = 0.0;
+  grass_sp->proto.b[blade].segs = 4;
+  grass_sp->proto.b[blade].width = grass_sp->blade_width;
+
+  VSETALL(pt, 0.0);
+  for (seg=0 ; seg < grass_sp->proto.b[blade].segs ; seg++) {
+    grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
+
+    /* Initial blade direction along X axis
+     * compute angle of blade segment.
+     */
+
+	angle = 80.0 / (grass_sp->proto.b[blade].segs-1.0);
+	angle = 70.0 - seg * angle;
+
+
+    angle *= bn_degtorad;
+  
+    VSET(grass_sp->proto.b[blade].leaf[seg].blade, cos(angle), 0.0, sin(angle));
+
+    /* pick a length for the blade segment */
+    grass_sp->proto.b[blade].leaf[seg].len = 
+    	(grass_sp->t*.8) + seg * (grass_sp->t*.5);
+
+    grass_sp->proto.b[blade].tot_len +=
+    	grass_sp->proto.b[blade].leaf[seg].len;
+
+
+    VUNITIZE(grass_sp->proto.b[blade].leaf[seg].blade);
+    VCROSS(left, grass_sp->proto.b[blade].leaf[seg].blade, z_axis);
+    VUNITIZE(left);
+    VCROSS(grass_sp->proto.b[blade].leaf[seg].N,
+      		left, grass_sp->proto.b[blade].leaf[seg].blade);
+    VUNITIZE(grass_sp->proto.b[blade].leaf[seg].N);
+  }
+
+  /* We now create a matrix for producing a 137 degree rotation about
+   * the Z axis.  This rotates the principle blade to other angles to
+   * create the successive blades.
+   *  Prusinkewicz et. al showed that this was a good angle for such 
+   * phenomena.  
+   */
+  bn_mat_zrot(r, sin(bn_degtorad*137.0), cos(bn_degtorad*137.0));
+  bn_mat_copy(m,r);
+
+  /* other blades are just a rotation of primary blade */
+  for (blade=1 ; blade < BLADE_MAX-1 ; blade++) { 
+
+    grass_sp->proto.b[blade].magic = BLADE_MAGIC;
+
+    /* rotate the vectors of blade 0 to form each extra blade */
+    blade_rot(&grass_sp->proto.b[blade], &grass_sp->proto.b[0], m);
+
+    VMINMAX(grass_sp->proto.pmin, grass_sp->proto.pmax, grass_sp->proto.b[blade].pmin);
+    VMINMAX(grass_sp->proto.pmin, grass_sp->proto.pmax, grass_sp->proto.b[blade].pmax);
+
+    bn_mat_mul2(r, m);
+  }
+
+  /* The central stalk is a bit different.  It's basically a straight tall
+   * shaft
+   */
+
+  blade = BLADE_MAX-1;
+  grass_sp->proto.b[blade].magic = BLADE_MAGIC;
+  grass_sp->proto.b[blade].tot_len = 0.0;
+  grass_sp->proto.b[blade].segs = 3;
+  grass_sp->proto.b[blade].width = grass_sp->blade_width * 2.0;
+
+  val = .9;
+  for (seg=0 ; seg < grass_sp->proto.b[blade].segs ; seg++) {
+    grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
+    
+    VSET(grass_sp->proto.b[blade].leaf[seg].blade, 0.0, .1, val);
+    VUNITIZE(grass_sp->proto.b[blade].leaf[seg].blade);
+
+
+    grass_sp->proto.b[blade].leaf[seg].len = 
+#if 0
+	    100 - seg * 20;
+#else
+    	grass_sp->t*1.35 + seg * grass_sp->t * .75;
+#endif
+    grass_sp->proto.b[blade].tot_len += grass_sp->proto.b[blade].leaf[seg].len;
+
+    VCROSS(left, grass_sp->proto.b[blade].leaf[seg].blade, z_axis);
+    VUNITIZE(left);
+    VCROSS(grass_sp->proto.b[blade].leaf[seg].N,
+      		left, grass_sp->proto.b[blade].leaf[seg].blade);
+    VUNITIZE(grass_sp->proto.b[blade].leaf[seg].N);
+
+    val -= (seg+1) * .1;
+  }
+
+  if( rdebug&RDEBUG_SHADE) {
+  	print_plant("proto", &grass_sp->proto);
+  }
+
+
+}
 
 /*	G R A S S _ S E T U P
  *
@@ -200,6 +477,11 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 		mat_print( "sh_to_m", grass_sp->sh_to_m );
 	}
 
+	if (grass_sp->proto.magic != PLANT_MAGIC) {
+		make_proto(grass_sp);
+	}
+
+
 	return(1);
 }
 
@@ -224,216 +506,74 @@ char *cp;
 	rt_free( cp, "grass_specific" );
 }
 
-/* compute the Region coordinates of the origin of a cell */
-#define CELL_POS(cell_pos, grass_sp, cell_num) \
-	cell_pos[X] = cell_num[X] * grass_sp->cell[X]; \
-	cell_pos[Y] = cell_num[Y] * grass_sp->cell[Y]
 
-#define BLADE_SEGS_MAX 4
-
-#define LEAF_MAGIC 1024
-#define BLADE_MAGIC 1023
-#define PLANT_MAGIC 1022
-
-struct leaf_segment {
-	long	magic;
-	double len;
-	vect_t blade;	/* direction of blade growth */ 
-	vect_t	N;	/* surface normal of blade segment */
-};
-
-struct blade {
-	long			magic;
-	double			tot_len;
-	int			segs;
-	struct leaf_segment	leaf[BLADE_SEGS_MAX];
-	point_t			pmin;
-	point_t			pmax;
-};
-
-#define BLADE_MAX 4
-struct plant {
-	long		magic;
-	point_t		root;	/* location of base of blade */
-	int 		blades;
-	struct blade	b[BLADE_MAX];
-	point_t		pmin;
-	point_t		pmax;
-};
-/*
- *
- *
- */
 static void
-make_blade(bl, root, c, cell_pos, grass_sp)
-struct blade *bl;
-point_t		root;	/* location of base of plant */
-point_t		c;	/* derived from cell_num */
-CONST point_t	cell_pos;
-CONST struct grass_specific *grass_sp;
-{
-	static CONST point_t z_axis = { 0.0, 0.0, 1.0 };
-	point_t cl;	/* our local copy of the cell_pos for changing */
-	vect_t	left;
-	int t;
-	double val;
-	vect_t v;
-	point_t seg_start;
-
-	CK_grass_SP(grass_sp);
-
-	if (rdebug&RDEBUG_SHADE)
-		bu_log("\tmake blade..");
-
-	bl->magic = BLADE_MAGIC;
-
-	VMOVE(cl, c);
-
-	bl->segs = grass_sp->nsegs;
-
-	/* get vector for blade growth */
-	bl->leaf[0].magic = LEAF_MAGIC;
-	bn_noise_vec(cl, bl->leaf[0].blade);
-	bl->leaf[0].blade[Z] += 1.0;
-	VUNITIZE(bl->leaf[0].blade);
-	bl->tot_len = bl->leaf[0].len = grass_sp->t + 
-		bn_noise_turb(cl, grass_sp->h_val,
-			grass_sp->lacunarity, grass_sp->octaves) *
-		grass_sp->t;
-
-
-	/* get surface normal for blade */
-	VCROSS(left, bl->leaf[0].blade, z_axis);
-	VUNITIZE(left);
-	VCROSS(bl->leaf[0].N, left, bl->leaf[0].blade);
-	VUNITIZE(bl->leaf[0].N);
-
-	if (rdebug&RDEBUG_SHADE) {
-		bu_log("root:%g %g %g\n\t  blade:%g %g %g N:%g %g %g  len:%g\n",
-			V3ARGS(root), V3ARGS(bl->leaf[0].blade),
-			V3ARGS(bl->leaf[0].N),
-			bl->leaf[0].len);
-	}
-
-	VJOIN1(seg_start, root, bl->leaf[0].len, bl->leaf[0].blade);
-
-	for (t=1; t < bl->segs ; t++) {
-
-		bl->leaf[t].magic = LEAF_MAGIC;
-
-		/* droop the blade */
-		VMOVE(bl->leaf[t].blade, bl->leaf[t-1].blade);
-
-		VJOIN1(v, root, t, bl->leaf[t-1].blade);
-
-		val = bn_noise_turb(v, grass_sp->h_val,
-				grass_sp->lacunarity, grass_sp->octaves);
-		if (val < .3) val = .3;
-		if (val > .9) val = .9;
-
-		bl->leaf[t].blade[Z] *= val;
-
-		VUNITIZE(bl->leaf[t].blade);
-
-		val = 1.0 - val;
-		if (val < .3) val = .3;
-		if (val > .9) val = .9;
-
-		bl->tot_len += bl->leaf[t].len = bl->leaf[t-1].len * val;
-
-		VCROSS(bl->leaf[t].N, left, bl->leaf[t].blade);
-		VUNITIZE(bl->leaf[t].N);
-
-		if (rdebug&RDEBUG_SHADE) {
-	                bu_log("\t  seg:%g %g %g N:%g %g %g  len:%g\n",
-	                	V3ARGS(bl->leaf[t].blade),
-				V3ARGS(bl->leaf[t].N),
-				bl->leaf[t].len);
-		}
-
-		VJOIN1(seg_start, seg_start, bl->leaf[t].len, bl->leaf[t].blade);
-		/* compute bounding box */
-		VMINMAX(bl->pmin, bl->pmax, seg_start);
-	}
-
-
-	if (rdebug&RDEBUG_SHADE) {
-		bu_log("\tbbox: %g %g %g   %g %g %g\n",
-			V3ARGS(bl->pmin), V3ARGS(bl->pmax));
-	}
-
-	for (t = bl->segs ; t < BLADE_SEGS_MAX ; t++)
-		bl->leaf[t].magic = 0;
-
-
-}
-static void
-make_plant(pl, c, cell_pos, grass_sp)
+make_bush(pl, c, cell_pos, grass_sp, w)
 struct plant 			*pl;
 point_t				c;	/* derived from cell_num */
 CONST point_t			cell_pos;
 CONST struct grass_specific 	*grass_sp;
+double w;		/* cell specific weght for count, height */
 {
-	int i, j;
 	point_t pt;
-	double f, g;
+	vect_t left;
+	int blade, seg;
+	double val;
+	double foo;
 
-	CK_grass_SP(grass_sp);
 
-	pl->magic = PLANT_MAGIC;
-	pl->blades = 1;	
-
-	f = bn_noise_turb(c, grass_sp->h_val,
-			grass_sp->lacunarity, grass_sp->octaves);
-
-	g = f * (BLADE_MAX - 1);
-
-	pl->blades = 1 + (g + .5);
-	CLAMP(pl->blades, 0, (BLADE_MAX-1));
-
-	
 	if (rdebug&RDEBUG_SHADE)
-		bu_log("%g means %d blades on plant\n", f, pl->blades);
+		bu_log("make_bush(%g %g %g, ... %g)\n", V3ARGS(c), w);
 
-	/* get position of the root of the blade */
-	pl->root[X] = cell_pos[X] + 
-		grass_sp->cell[X] * bn_noise_perlin(c);
+
+	*pl = grass_sp->proto; /* struct copy */
+
+	VMOVE(pl->root, cell_pos);
+	pl->root[Z] = 0.0;
+
+	VADD2(pl->pmin, pl->pmin, pl->root);
+	VADD2(pl->pmax, pl->pmax, pl->root);
 
 	VSCALE(pt, c, grass_sp->lacunarity);
-	pl->root[Y] = cell_pos[Y] + 
-		grass_sp->cell[Y] * bn_noise_perlin(pt);
-	pl->root[Z] = 0.0;	/* XXX not valid for non-slab grass */
-	
-	VMOVE(pl->pmin, pl->root);
-	VMOVE(pl->pmax, pl->root);
+	val = bn_noise_fbm(pt, grass_sp->h_val, grass_sp->lacunarity,
+			grass_sp->octaves);
 
-	VMOVE(pt, c);
+	VSCALE(pt, pt, grass_sp->lacunarity);
+	foo = bn_noise_fbm(pt, grass_sp->h_val, grass_sp->lacunarity,
+			grass_sp->octaves);
 
-	for (i=0 ; i < pl->blades ; i++ ) {
-		make_blade(&pl->b[i], pl->root, pt, cell_pos, grass_sp);
-		if (i == 0) {
-			VMOVE(pl->pmin, pl->b[i].pmin);
-			VMOVE(pl->pmax, pl->b[i].pmax);
-		} else {
-			VMINMAX(pl->pmin, pl->pmax, pl->b[i].pmin);
-			VMINMAX(pl->pmin, pl->pmax, pl->b[i].pmax);
+	if (rdebug&RDEBUG_SHADE)
+		bu_log("val:%g  foo:%g\n", val, foo);
+#if 1
+	pl->root[X] += val * grass_sp->cell[X];
+	pl->root[Y] += foo * grass_sp->cell[Y];
+#endif
+	val = val * .5 + .5;
+
+	CLAMP(val, 0.0, 1.0);
+
+	plant_scale(pl, w, val);	/* must come first */
+
+	foo *= 180.0;
+	foo *= bn_degtorad;
+	plant_rot(pl, foo);	/* computes bounding box */
+
+
+	/* set bounding boxes */
+	for (blade=0 ; blade < pl->blades ; blade++) {
+		VMOVE(pt, pl->root);
+		for (seg=0 ; seg < pl->b[blade].segs ; seg++ ) {
+			VJOIN1(pt, pt, pl->b[blade].leaf[seg].len,
+				pl->b[blade].leaf[seg].blade);
+
+			VMINMAX(pl->b[blade].pmin, pl->b[blade].pmax, pt);
 		}
-
-		VSCALE(pt, pt, grass_sp->lacunarity);
+		VMINMAX(pl->pmin, pl->pmax, pl->b[blade].pmin);
+		VMINMAX(pl->pmin, pl->pmax, pl->b[blade].pmax);
 	}
-	for (i = pl->blades ; i < BLADE_MAX ; i++) {
-		pl->b[i].magic = 0;
-		for (j=0 ; j < BLADE_SEGS_MAX ; j++)
-			pl->b[i].leaf[i].magic = 0;
-	}
-
-	if (rdebug&RDEBUG_SHADE) {
-		bu_log("\tplant bbox: %g %g %g   %g %g %g\n",
-			V3ARGS(pl->pmin), V3ARGS(pl->pmax));
-	}
-
-
 }
+
+
 
 /*	Intersect ray with leaf segment.  We already know we're within
  *	max width of the segment.
@@ -443,13 +583,14 @@ CONST struct grass_specific 	*grass_sp;
  *		1	hit something
  */
 static int
-hit_blade(bl, r, swp, grass_sp, seg, ldist)
+hit_blade(bl, r, swp, grass_sp, seg, ldist, blade_num)
 CONST struct blade *bl;
 struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
 CONST struct grass_specific *grass_sp;
 int seg;
 double ldist[2];
+int blade_num;
 {
 	CK_grass_SP(grass_sp);
 	BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
@@ -467,6 +608,11 @@ double ldist[2];
 		VJOIN1(r->hit.hit_point, r->r.r_pt, ldist[0], r->r.r_dir);
 		VMOVE(r->hit.hit_normal, bl->leaf[seg].N);
 
+#if 1
+		if (blade_num == BLADE_MAX-1) {
+			VSET(swp->sw_color, .7, .6, .3);
+		}
+#endif
 		if (rdebug&RDEBUG_SHADE) {
 			bu_log("  New closest hit %g < %g\n",
 				ldist[0], r->hit.hit_dist);
@@ -492,12 +638,13 @@ double ldist[2];
  *		1	hit something
  */
 static int
-isect_blade(bl, root, r, swp, grass_sp)
+isect_blade(bl, root, r, swp, grass_sp, blade_num)
 CONST struct blade *bl;
 point_t root;
 struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
 CONST struct grass_specific *grass_sp;
+int blade_num;
 {
 	double ldist[2];
 	point_t pt;
@@ -532,9 +679,16 @@ CONST struct grass_specific *grass_sp;
 		cond = rt_dist_line3_line3(ldist, r->r.r_pt, r->r.r_dir,
 			pt, bl->leaf[seg].blade, &r->tol);
 
-		if (rdebug&RDEBUG_SHADE)
-			bu_log("\t    cond:%d d1:%g d2:%g\n", cond, V2ARGS(ldist));
-
+		if (rdebug&RDEBUG_SHADE) {
+			bu_log("\t    ");
+			switch (cond) {
+			case -2: bu_log("lines paralell  "); break;
+			case -1: bu_log("lines colinear  "); break;
+			case  0: bu_log("lines intersect "); break;
+			case  1: bu_log("lines miss      "); break;
+			}
+			bu_log("d1:%g d2:%g\n", cond, V2ARGS(ldist));
+		}
 		if (ldist[0] < 0.0 		/* behind ray */ || 
 		    ldist[0] >= r->d_max	/* beyond out point */ ||
 		    ldist[1] < 0.0 		/* under ground */ ||
@@ -553,17 +707,19 @@ CONST struct grass_specific *grass_sp;
 		 * fraction of total blade length to PCA.
 		 */
 		fract = (accum_len + ldist[1]) / bl->tot_len;
-		blade_width = grass_sp->blade_width * (1.0 - fract);
+		blade_width = bl->width * (1.0 - fract);
+
 
 		if (dist < (PCA_ray_radius+blade_width)) {
 			if (rdebug&RDEBUG_SHADE)
 				bu_log("\thit grass: %g < (%g + %g)\n",
 					dist, PCA_ray_radius,
-					grass_sp->blade_width);
+					bl->width);
 
-			return hit_blade(bl, r, swp, grass_sp, seg, ldist);
+			return hit_blade(bl, r, swp, grass_sp, seg, ldist,
+				blade_num);
 		}
-		if (rdebug&RDEBUG_SHADE) bu_log("missed aside\n");
+		if (rdebug&RDEBUG_SHADE) bu_log("\t    (missed aside)\n");
 
 iter:
 		/* compute origin of NEXT leaf segment */
@@ -589,9 +745,9 @@ CONST struct grass_specific *grass_sp;
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_log("isect_plant()\n");
-		r->r.r_min = r->r.r_max = 0.0;
+		print_plant("plant", pl);
 	}
-
+	r->r.r_min = r->r.r_max = 0.0;
 	if (! rt_in_rpp(&r->r, r->rev, pl->pmin, pl->pmax) ) {
 		if( rdebug&RDEBUG_SHADE) {
 			point_t in_pt, out_pt;
@@ -605,6 +761,7 @@ CONST struct grass_specific *grass_sp;
 	
 			VJOIN1(out_pt, r->r.r_pt, r->r.r_max, r->r.r_dir);
 			VPRINT("\tout_pt", out_pt);
+			bu_log("MISSED BBox\n");
 		}
 		return 0;
 	} else { 
@@ -625,8 +782,9 @@ CONST struct grass_specific *grass_sp;
 	}
 
 	for (i=0 ; i < pl->blades ; i++) {
-		status = isect_blade(&pl->b[i], pl->root, r, swp, grass_sp);
-		if (status) return status;
+		status = isect_blade(&pl->b[i], pl->root, r, swp, grass_sp, i);
+		if (status) 
+			return status;
 	}
 	return 0;
 }
@@ -677,7 +835,7 @@ double dist_to_cell;
  */
 static int
 isect_cell(cell, r, swp, out_dist, grass_sp)
-long			cell[3];
+long			cell[3];	/* cell number (such as 5,3) */
 struct grass_ray	*r;
 double 			out_dist;
 struct shadework	*swp;
@@ -715,16 +873,17 @@ struct grass_specific	*grass_sp;
 			val, r->radius, r->diverge, dist_to_cell,  val*32.0,
 			V2ARGS(grass_sp->cell));
 
-	val *= 32.0;
-	if (val >= grass_sp->cell[X] || val >= grass_sp->cell[Y])
+	if (val > grass_sp->blade_width * 5)
 		return stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell);
 
 
 	/* Figure out how many plants are in this cell */
-	VMOVE(c, cell); /* int/float conv */
-	val = bn_noise_perlin(c);
+	VSCALE(c, cell, grass_sp->size);  /* int/float conv */
+	val = bn_noise_fbm(c, grass_sp->h_val, grass_sp->lacunarity,
+			grass_sp->octaves);
 	ppc = (int) (grass_sp->ppc + grass_sp->ppcd * val * 2.0);
 
+	VMOVE(c, cell);
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("cell pos(%g,%g .. %g,%g)\n", V2ARGS(cell_pos),
 			cell_pos[X]+grass_sp->cell[X],
@@ -739,7 +898,7 @@ struct grass_specific	*grass_sp;
 		CK_grass_SP(grass_sp);
 		BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
 
-		make_plant(&pl, c, cell_pos, grass_sp);
+		make_bush(&pl, c, cell_pos, grass_sp, val);
 
 		CK_grass_SP(grass_sp);
 		BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
@@ -1073,6 +1232,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 	/* Missed everything */
 	/* setting basecolor to 1.0 prevents "filterglass" effect */
 	VSETALL(swp->sw_basecolor, 1.0); 
+
+
+
 	swp->sw_transmit = 1.0;
 	(void)rr_render( ap, pp, swp );
 
