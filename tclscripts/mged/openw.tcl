@@ -317,7 +317,7 @@ menu .$id.m.file.m -tearoff $do_tearoffs
 .$id.m.file.m add command -label "New..." -underline 0 -command "do_New $id"
 .$id.m.file.m add command -label "Open..." -underline 0 -command "do_Open $id"
 .$id.m.file.m add command -label "Insert..." -underline 0 -command "do_Concat $id"
-.$id.m.file.m add command -label "Extract..." -underline 2 -command "do_Keep $id"
+.$id.m.file.m add command -label "Extract..." -underline 2 -command "init_extractTool $id"
 .$id.m.file.m add separator
 .$id.m.file.m add command -label "Raytrace..." -underline 0 -command "init_Raytrace $id"
 .$id.m.file.m add cascade -label "Save View As" -menu .$id.m.file.m.cm_saveview
@@ -326,15 +326,16 @@ menu .$id.m.file.m -tearoff $do_tearoffs
 .$id.m.file.m add command -label "Exit" -command quit -underline 0
 
 menu .$id.m.file.m.cm_saveview -tearoff $do_tearoffs
-.$id.m.file.m.cm_saveview add command -label "RT script" -command "do_rt_script $id"
-.$id.m.file.m.cm_saveview add command -label "Plot" -command "do_plot $id"
-.$id.m.file.m.cm_saveview add command -label "Postscript" -command "init_psTool $id"
+.$id.m.file.m.cm_saveview add command -label "RT script" -command "init_rtScriptTool $id"
+.$id.m.file.m.cm_saveview add command -label "Plot" -command "init_plotTool $id"
+.$id.m.file.m.cm_saveview add command -label "PostScript" -command "init_psTool $id"
 
 menubutton .$id.m.edit -text "Edit" -underline 0 -menu .$id.m.edit.m
 menu .$id.m.edit.m -tearoff $do_tearoffs
 .$id.m.edit.m add cascade -label "Add" -menu .$id.m.edit.m.cm_add
-.$id.m.edit.m add command -label "Edit Solid" -underline 5 -command "esolmenu"
-.$id.m.edit.m add command -label "Edit Matrix" -underline 5 -command "press oill"
+.$id.m.edit.m add command -label "Solid" -underline 0 -command "esolmenu"
+.$id.m.edit.m add command -label "Matrix" -underline 0 -command "press oill"
+.$id.m.edit.m add command -label "Region" -underline 0 -command "init_red $id"
 #.$id.m.edit.m add separator
 #.$id.m.edit.m add command -label "Reject" -underline 0 -command "press reject" 
 #.$id.m.edit.m add command -label "Accept" -underline 0 -command "press accept"
