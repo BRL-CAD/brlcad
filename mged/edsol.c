@@ -953,6 +953,7 @@ int arg;
 					struct vertex *v2;
 					vect_t edge2;
 					fastf_t dist[2];
+					int ret_val;
 
 					NMG_CK_EDGEUSE( eu2 );
 
@@ -967,10 +968,24 @@ int arg;
 					NMG_CK_VERTEX( v2 );
 					VSUB2( edge2, eu2->eumate_p->vu_p->v_p->vg_p->coord, v2->vg_p->coord );
 
-					if( rt_isect_lseg3_lseg3( dist, v1->vg_p->coord, edge1,
-						v2->vg_p->coord, edge2, &mged_tol ) > (-1) )
+					if( (ret_val=rt_isect_lseg3_lseg3( dist, v1->vg_p->coord, edge1,
+						v2->vg_p->coord, edge2, &mged_tol )) > (-1) )
 					{
 						(void)printf( "Loop crosses itself, cannot extrude\n" );
+						(void)printf( "edge1: pt=( %g %g %g ), dir=( %g %g %g)\n",
+							V3ARGS( v1->vg_p->coord ), V3ARGS( edge1 ) );
+						(void)printf( "edge2: pt=( %g %g %g ), dir=( %g %g %g)\n",
+							V3ARGS( v2->vg_p->coord ), V3ARGS( edge2 ) );
+						if( ret_val == 0 )
+							(void)printf( "edges are collinear and overlap\n" );
+						else
+						{
+							point_t isect_pt;
+
+							VJOIN1( isect_pt, v1->vg_p->coord, dist[0], edge1 );
+							(void)printf( "edges intersect at ( %g %g %g )\n",
+								V3ARGS( isect_pt ) );
+						}
 						return;
 					}
 				}
@@ -2315,6 +2330,7 @@ sedit()
 	case ECMD_NMG_EKILL:
 		{
 			struct model *m;
+			struct edge_g_lseg *eg;
 
 			if( !es_eu )
 			{
@@ -2373,6 +2389,13 @@ sedit()
 				}
 				es_eu = prev_eu;
 				nmg_rebound( m , &mged_tol );
+
+				/* fix edge geometry for modified edge (next_eu ) */
+				eg = next_eu->g.lseg_p;
+				NMG_CK_EDGE_G_LSEG( eg );
+				VMOVE( eg->e_pt , next_eu->vu_p->v_p->vg_p->coord );
+				VSUB2( eg->e_dir, next_eu->eumate_p->vu_p->v_p->vg_p->coord, next_eu->vu_p->v_p->vg_p->coord );
+
 				break;
 			}
 			else if( *es_eu->up.magic_p == NMG_SHELL_MAGIC )
@@ -2387,6 +2410,7 @@ sedit()
 	case ECMD_NMG_ESPLIT:
 		{
 			struct vertex *v=(struct vertex *)NULL;
+			struct edge_g_lseg *eg;
 			struct model *m;
 			point_t new_pt;
 			fastf_t area;
@@ -2452,6 +2476,10 @@ sedit()
 			es_eu = nmg_esplit( v , es_eu , 0 );
 			nmg_vertex_gv( es_eu->vu_p->v_p , new_pt );
 			nmg_rebound( m , &mged_tol );
+			eg = es_eu->g.lseg_p;
+			NMG_CK_EDGE_G_LSEG( eg );
+			VMOVE( eg->e_pt , new_pt );
+			VSUB2( eg->e_dir , es_eu->eumate_p->vu_p->v_p->vg_p->coord , new_pt );
 		}
 		break;
 	case ECMD_NMG_LEXTRU:
@@ -2524,6 +2552,7 @@ sedit()
 
 			m = nmg_find_model( &fu->l.magic );
 			nmg_rebound( m , &mged_tol );
+			(void)nmg_ck_geometry( m , &mged_tol );
 
 			es_eu = (struct edgeuse *)NULL;
 
