@@ -148,6 +148,7 @@ register CONST struct soltab *stp;
 
 	for( ; nurb != (struct nurb_specific *)0; nurb = nurb->next)
 	{
+		/* XXX There is a linked list of Bezier surfaces to print here too */
 		rt_nurb_s_print("NURB", nurb->srf);
 	}
 }
@@ -419,8 +420,25 @@ register struct soltab *stp;
 {
 	register struct nurb_specific *nurb =
 		(struct nurb_specific *)stp->st_specific;
+	register struct nurb_specific *next;
 
-	rt_free( (char *)nurb, "nurb_specific" );
+	if( nurb == (struct nurb_specific *)0)
+		rt_bomb("rt_nurb_free: no surfaces\n");
+
+	for( ; nurb != (struct nurb_specific *)0; nurb = next)  {
+		register struct snurb	*s;
+
+		next = nurb->next;
+
+		/* There is a linked list of surfaces to free for each nurb */
+		while( RT_LIST_WHILE( s, snurb, &nurb->bez_hd ) )  {
+			NMG_CK_SNURB( s );
+			RT_LIST_DEQUEUE( &(s->l) );
+			rt_nurb_free_snurb( s );
+		}
+		rt_nurb_free_snurb( nurb->srf );	/* original surf */
+		rt_free( (char *)nurb, "nurb_specific" );
+	}
 }
 
 /*
@@ -882,6 +900,9 @@ struct snurb * srf;
 	return 1 + k_gran + p_gran;
 }
 
+/*
+ *			R T _ N U R B _ I F R E E
+ */
 void
 rt_nurb_ifree( ip )
 struct rt_db_internal 	*ip;
@@ -898,6 +919,7 @@ struct rt_db_internal 	*ip;
 	{
 		rt_nurb_free_snurb( sip->srfs[i] );
 	}
+	rt_free( (char *)sip->srfs, "nurb surfs[]" );
 	sip->magic = 0;
 	sip->nsrf = 0;
 	rt_free( (char *)sip, "sip ifree");
