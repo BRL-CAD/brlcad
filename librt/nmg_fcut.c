@@ -1846,6 +1846,9 @@ int			other_rs_state;
 	int			e_assessment;
 	int			action;
 
+	nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
+	nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
+
 	vu = rs->vu[pos];
 	NMG_CK_VERTEXUSE(vu);
 	assessment = nmg_assess_vu( rs, pos );
@@ -2162,6 +2165,10 @@ rt_log("force next eu to ray\n");
 	}
 
 	rs->state = new_state;
+
+	/* XXX Verify both faces are still OK */
+	nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
+	nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
 }
 
 /*
