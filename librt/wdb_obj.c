@@ -8880,7 +8880,7 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 	     int		argc,
 	     char 		**argv)
 {
-	char c;
+	int c;
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 	struct directory *dp;
