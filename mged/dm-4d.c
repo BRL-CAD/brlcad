@@ -69,6 +69,7 @@ static int zbuffer_on = 1;	/* Hardware Z buffer is on */
 static int perspective_mode = 0;	/* Perspective flag */
 static int perspective_angle =3;	/* Angle of perspective */
 static int lighting_on = 0;	/* Lighting model on */
+static int no_faceplate = 0;	/* Don't draw faceplate */
 static int ovec = -1;		/* Old color map entry number */
 static mat_t perspect_mat;
 static mat_t nozclip_mat;
@@ -523,6 +524,7 @@ Ir_open()
 	fl_usrqdevice(F4KEY);	/* pf4 for Z buffering */
 	fl_usrqdevice(F5KEY);	/* pf5 for lighting */
 	fl_usrqdevice(F6KEY);	/* pf6 for changing perspective */
+	fl_usrqdevice(F7KEY);	/* pf7 for no faceplate */
 #else
 	qdevice(F1KEY);	/* pf1 key for depthcue switching */
 	qdevice(F2KEY);	/* pf2 for Z clipping */
@@ -530,6 +532,7 @@ Ir_open()
 	qdevice(F4KEY);	/* pf4 for Z buffering */
 	qdevice(F5KEY);	/* pf5 for lighting */
 	qdevice(F6KEY);	/* pf6 for changing perspective */
+	qdevice(F7KEY);	/* pf7 for no faceplate */
 #endif
 	while( getbutton(LEFTMOUSE)||getbutton(MIDDLEMOUSE)||getbutton(RIGHTMOUSE) )  {
 		printf("IRIS_open:  mouse button stuck\n");
@@ -887,6 +890,8 @@ Ir_puts( str, x, y, size, colour )
 register char *str;
 int x,y,size, colour;
 {
+	if( no_faceplate )  return;
+
 	cmov2( GED2IRIS(x), GED2IRIS(y));
 	if( ir_has_rgb )  {
 		RGBcolor( (short)ir_rgbtab[colour].r,
@@ -909,6 +914,9 @@ int x2, y2;
 int dashed;
 {
 	register int nvec;
+
+	if( no_faceplate )  return;
+
 	if( ir_has_rgb )  {
 		/* Yellow */
 		if(cueing_on)  {
@@ -1050,6 +1058,7 @@ checkevents()  {
 		if((ret >= SWBASE && ret < SWBASE+IR_BUTTONS)
 		  || ret == F1KEY || ret == F2KEY || ret == F3KEY
 		  || ret == F4KEY || ret == F5KEY || ret == F6KEY
+		  || ret == F7KEY
 		) {
 			register int	i;
 
@@ -1214,7 +1223,6 @@ checkevents()  {
 
 					lighting_on = 1;
 				}
-				kblights();
 				dmaflag = 1;
 				continue;
 			} else if (ret == F6KEY) {
@@ -1244,6 +1252,17 @@ checkevents()  {
 					    1.0, 0.01, 1.0e10, 1.0 );
 					break;
 				}
+				dmaflag = 1;
+				continue;
+			} else if (ret == F7KEY) {
+				if (!valp[1]) continue; /* Ignore release */
+				/* Help mode */
+				if (button0) {
+					ir_dbtext("NoFace");
+					continue;
+				}
+				/* Toggle faceplate on/off */
+				no_faceplate = !no_faceplate;
 				dmaflag = 1;
 				kblights();
 				continue;
