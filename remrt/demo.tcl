@@ -314,7 +314,31 @@ button .sense_button -text "SENSE" -command sense_servers
 button .reconnect_button -text "RECONNECT" -command reconnect
 button .find_button -text "FIND_DB" -command find_db
 button .rtnode_button -text "Start NODES" -command start_nodes
-pack .sense_button .reconnect_button .find_button .rtnode_button -side left -in .button_fr
+button .restart_button -text "(Restart RTMON)" -command restart_rtmon
+pack .sense_button .reconnect_button .find_button .rtnode_button .restart_button -side left -in .button_fr
+
+proc restart_rtmon {} {
+	global nodes
+	global	fds
+	global status
+
+	puts "restart_rtmon -- all RTSYNC processes had better be dead first."
+	# loop through list of nodes selected, starting each one selected.
+	set j [array startsearch nodes]
+	while { [array anymore nodes $j] } {
+		set host [array nextelement nodes $j]
+		if { $fds($host) == "dead" }  continue
+
+		puts "restarting $host"
+		catch { puts $fds($host) "restart"; flush $fds($host); close $fds($host) }
+
+		set fds($host) "dead"
+		set status($host) "$host -restarted-"
+		set nodes($host) 0
+	}
+	array donesearch nodes $j
+	puts "restart_rtmon finished"
+}
 
 proc start_nodes {} {
 	global rtsync_host
