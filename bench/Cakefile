@@ -11,9 +11,6 @@
 
 #include "../Cakefile.defs"
 
-/* These programs are not really for system-wide installation */
-#define DONT_INSTALL	1
-
 #ifdef NFS
 /* Pick up any shell scripts needed */
 %.sh:					if exist ../SRCDIR/%.sh
