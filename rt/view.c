@@ -96,7 +96,11 @@ extern double AmbientIntensity;
 vect_t	background = { 0.25, 0, 0.5 };	/* Dark Blue Background */
 int	ibackground[3];			/* integer 0..255 version */
 
-static int	buf_mode=0;	/* 0=pixel, 1=line, 2=frame */
+#ifdef RTSRV
+extern int	srv_startpix;		/* offset for view_pixel */
+extern int	srv_scanlen;		/* buf_mode=4 buffer length */
+#endif
+static int	buf_mode=0;	/* 0=pixel, 1=line, 2=frame, ... */
 static int	*npix_left;	/* only used in buf_mode=2 */
 
 void	shade_inputs();
@@ -122,6 +126,7 @@ struct structparse view_parse[] = {
  *	buf_mode = 1	line buffering
  *	buf_mode = 2	full frame buf, dump to fb+file at end of scanline
  *	buf_mode = 3	full frame buf, dump to fb+file at end of frame
+ *	buf_mode = 4	multi-line buffering for RTSRV
  */
 void
 view_pixel(ap)
@@ -216,12 +221,21 @@ register struct application *ap;
 		register char *pixelp;
 		register int do_eol = 0;
 
-		if( buf_mode == 1 )  {
+		switch( buf_mode )  {
+		case 1:
 			/* Here, the buffer is only one line long */
 			pixelp = scanbuf+ap->a_x*3;
-		} else {
+			break;
+		case 2:
+		case 3:
 			/* Buffering a full frame */
 			pixelp = scanbuf+((ap->a_y*width)+ap->a_x)*3;
+#ifdef RTSRV
+		case 4:
+			/* Multi-pixel buffer */
+			pixelp = scanbuf+ 3 * 
+				((ap->a_y*width) + ap->a_x - srv_startpix);
+#endif
 		}
 
 		/* Don't depend on interlocked hardware byte-splice */
@@ -306,6 +320,8 @@ register struct application *ap;
 		return;
 
 	switch( buf_mode )  {
+	case 4:
+		break;
 	case 3:
 		break;
 	case 2:
@@ -955,7 +971,9 @@ register struct application *ap;
 char *file, *obj;
 {
 
-#ifndef RTSRV
+#ifdef RTSRV
+	buf_mode = 4;			/* multi-pixel buffering */
+#else
 	/* buf_mode = 3 presently can't be set, but still is supported */
 	if( incr_mode )  {
 		buf_mode = 2;		/* Frame buffering, write each line */
@@ -963,11 +981,10 @@ char *file, *obj;
 		buf_mode = 2;		/* frame buffering, write each line */
 	} else if( width <= 96 )  {
 		buf_mode = 0;		/* single-pixel I/O */
-	}  else
-#endif not RTSRV
-	{
+	}  else  {
 		buf_mode = 1;		/* line buffering */
 	}
+#endif
 
 	switch( buf_mode )  {
 	case 0:
@@ -975,18 +992,29 @@ char *file, *obj;
 		rt_log("Single pixel I/O, unbuffered\n");
 		break;	
 	case 1:
-		scanbuf = rt_malloc( width*3 + sizeof(long), "scanbuf [line]" );
+		scanbuf = rt_malloc( width*3 + sizeof(long),
+			"scanbuf [line]" );
 		rt_log("Buffering single scanlines\n");
 		break;
 	case 2:
-		scanbuf = rt_malloc( width*height*3 + sizeof(long), "scanbuf [frame]" );
-		npix_left = (int *)rt_malloc( height*sizeof(int), "npix_left[]" );
+		scanbuf = rt_malloc( width*height*3 + sizeof(long),
+			"scanbuf [frame]" );
+		npix_left = (int *)rt_malloc( height*sizeof(int),
+			"npix_left[]" );
 		rt_log("Buffering full frames, fb write at end of line\n");
 		break;
 	case 3:
-		scanbuf = rt_malloc( width*height*3 + sizeof(long), "scanbuf [frame]" );
+		scanbuf = rt_malloc( width*height*3 + sizeof(long),
+			"scanbuf [frame]" );
 		rt_log("Buffering full frames, fb write at end of frame\n");
 		break;
+#ifdef RTSRV
+	case 4:
+		scanbuf = rt_malloc( srv_scanlen*3 + sizeof(long),
+			"scanbuf [multi-line]" );
+		rt_log("Buffering up to %d pixel scanlines\n", srv_scanlen);
+		break;
+#endif
 	default:
 		rt_bomb("bad buf_mode");
 	}
