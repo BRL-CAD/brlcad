@@ -49,8 +49,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./sedit.h"
 
-extern int dm_pipe[];
-
 static void	label();
 static void	draw();
 static int	X_setup();
@@ -104,15 +102,18 @@ struct dm dm_X = {
 	X_statechange,
 	X_viewchange,
 	X_colorchange,
-	X_window, X_debug,
+	X_window, X_debug, X_dm, X_doevent,
 	0,				/* no displaylist */
 	0,				/* multi-window */
 	PLOTBOUND,
 	"X", "X Window System (X11)",
 	0,
-	X_dm
+	0,
+	0,
+	0
 };
 
+extern int dm_pipe[];
 extern struct device_values dm_values;	/* values read from devices */
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
@@ -821,10 +822,6 @@ char	*name;
 
   bu_vls_init(&str);
 
-  /* Only need to do this once */
-  if(tkwin == NULL)
-    gui_setup();
-
   /* Only need to do this once for this display manager */
   if(!count)
     X_load_startup();
@@ -832,7 +829,7 @@ char	*name;
   if(BU_LIST_IS_EMPTY(&head_x_vars.l))
     Tk_CreateGenericHandler(X_doevent, (ClientData)NULL);
 
-  BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)curr_dm_list->_dm_vars)->l);
+  BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dm_vars)->l);
 
   bu_vls_printf(&pathName, ".dm_x%d", count++);
 
@@ -1257,7 +1254,7 @@ char *argv[];
 static void
 x_var_init()
 {
-  dm_vars = (char *)bu_malloc(sizeof(struct x_vars), "x_var_init: x_vars");
+  dm_vars = bu_malloc(sizeof(struct x_vars), "x_var_init: x_vars");
   bzero((void *)dm_vars, sizeof(struct x_vars));
   ((struct x_vars *)dm_vars)->dm_list = curr_dm_list;
   ((struct x_vars *)dm_vars)->perspective_angle = 3;
