@@ -82,14 +82,14 @@ MAINTAINERCLEANFILES = \
 # using home is probably not a great choice..
 .PHONY : rpm
 rpm: dist
-	cp $(PACKAGE)-$(VERSION).tar.gz ${HOME}/rpm/SOURCES/
+	@CP@ $(PACKAGE)-$(VERSION).tar.gz ${HOME}/rpm/SOURCES/
 	rpmbuild -ba $(PACKAGE).spec
-	cp ${HOME}/rpm/RPMS/i386/$(PACKAGE)-$(VERSION)-*.i386.rpm .
-	cp ${HOME}/rpm/SRPMS/$(PACKAGE)-$(VERSION)-*.src.rpm .
+	@CP@ ${HOME}/rpm/RPMS/i386/$(PACKAGE)-$(VERSION)-*.i386.rpm .
+	@CP@ ${HOME}/rpm/SRPMS/$(PACKAGE)-$(VERSION)-*.src.rpm .
 
 packages: rpm
 
 benchmark: all
-	sh $(srcdir)/bench/run.sh
+	@SH@ $(srcdir)/bench/run.sh
 
 bench: benchmark
