@@ -130,7 +130,7 @@ RGBpixel	*pixelp;
 	}
 
 #include <varargs.h>
-#ifdef cray
+#ifdef CRAY
 #define Va_Decl( _func )	_func(fmt, a,b,c,d,e,f,g,h,i) char *fmt;
 #define Va_Start()
 #define Va_End()
