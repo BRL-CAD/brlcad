@@ -934,6 +934,20 @@ char	      **argv;
 	return TCL_OK;
 }
 
+static struct dbcmdstruct {
+	char *cmdname;
+	int (*cmdfunc)();
+} rt_db_cmds[] = {
+	"match",	rt_db_match,
+	"get",		rt_db_get,
+	"put",		rt_db_put,
+	"adjust",	rt_db_adjust,
+	"form",		rt_db_form,
+	"tops",		rt_db_tops,
+	"close",	rt_db_close,
+	(char *)0,	(int (*)())0
+};
+
 /*
  *			R T _ D B
  *
@@ -952,19 +966,6 @@ char **argv;
 {
 	struct dbcmdstruct	*dbcmd;
 	struct rt_wdb		*wdb = (struct rt_wdb *)clientData;
-	struct dbcmdstruct {
-		char *cmdname;
-		int (*cmdfunc)();
-	} rt_db_cmds[] = {
-		"match",	rt_db_match,
-		"get",		rt_db_get,
-		"put",		rt_db_put,
-		"adjust",	rt_db_adjust,
-		"form",		rt_db_form,
-		"tops",		rt_db_tops,
-		"close",	rt_db_close,
-		(char *)0,	(int (*)())0
-	};
 
 	if( argc < 2 ) {
 		Tcl_AppendResult( interp,
