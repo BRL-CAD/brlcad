@@ -497,7 +497,7 @@ CONST struct directory		*dp;
 	if( ip->idb_type == ID_COMBINATION )  {
 		ret = rt_comb_v4_export( &temp, ip, local2mm );
 	} else {
-		ret = rt_functab[ip->idb_type].ft_export( &temp, ip, 1.0 );
+		ret = rt_functab[ip->idb_type].ft_export( &temp, ip, local2mm );
 	}
 	if( ret < 0 )  {
 		bu_log("rt_v4_export(%s): ft_export error %d\n",
@@ -722,4 +722,74 @@ final:
 		rt_pr_tree(curtree, 0);
 	}
 	return( curtree );
+}
+
+/* ------------------------------------------------------------ */
+/* Preliminary V5 wrap/unwrap support */
+/* in-memory form of the standardized object 'wrapper' */
+/* Object's name is stashed in directory, not in internal wrapper */
+struct db_wrapper {
+	long	magic;
+	
+};
+
+/*
+ *			D B _ W R A P _ V 5 _ E X T E R N A L
+ */
+int
+db_wrap_v5_external( op, ip, dp, wp )
+struct bu_external		*op;
+struct bu_external		*ip;
+CONST struct directory		*dp;
+CONST struct db_wrapper		*wp;
+{
+
+	/* First, build up compressible portion of wrapper (header),
+	 * if more than just object body
+	 */
+
+	/* Second, compress compressible portion */
+
+	/* Third, add non-compressible portion of wrapper (header) */
+}
+
+/*
+ *			R T _ V 5 _ E X P O R T
+ */
+int
+rt_v5_export( ep, ip, local2mm, dp, wp )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct directory		*dp;
+CONST struct db_wrapper		*wp;
+{
+	struct bu_external	temp;
+	int			ret;
+
+	RT_CK_DB_INTERNAL(ip);
+	RT_CK_DIR(dp);
+
+	/* XXX need v5 versions.  For testing, use v4 in object body. */
+
+	/* Convert Object Body to external form */
+	if( ip->idb_type == ID_COMBINATION )  {
+		ret = rt_comb_v4_export( &temp, ip, local2mm );
+	} else {
+		ret = rt_functab[ip->idb_type].ft_export( &temp, ip, local2mm );
+	}
+	if( ret < 0 )  {
+		bu_log("rt_v5_export(%s): ft_export error %d\n",
+			dp->d_namep, ret );
+		return ret;
+	}
+
+	if( (ret = db_wrap_v5_external( ep, &temp, dp, wp )) < 0 )  {
+		bu_log("rt_v5_export(%s): db_wrap_v5_external error %d\n",
+			dp->d_namep, ret );
+		return ret;
+	}
+	/* "temp" has been freed by db_wrap_v4_external() */
+	return 0;
+
 }
