@@ -32,6 +32,8 @@ int	size;
 		static int	sgi_size;
 		static FBIO	*sgi_iop;
 #endif
+	if( strcmp( file, "/dev/remote" ) == 0 )
+		file = "/dev/debug";
 	prnt_Event( "Opening device..." );
 	size = size > 512 ? 1024 : 512;
 #ifdef sgi
