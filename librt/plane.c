@@ -570,6 +570,12 @@ CONST struct rt_tol	*tol;
 	fastf_t			hx, hy;		/* A - P */
 	register fastf_t	det;
 	register fastf_t	det1;
+	vect_t			unit_d;
+	vect_t			unit_c;
+	vect_t			unit_h;
+	fastf_t			dot;
+	int			parallel;
+	int			parallel1;
 
 	RT_CK_TOL(tol);
 	if( rt_g.debug & DEBUG_MATH )  {
@@ -638,15 +644,38 @@ CONST struct rt_tol	*tol;
 	hy = a[Y] - p[Y];
 	det1 = (c[X] * hy - hx * c[Y]);
 
+	unit_d[0] = d[0];
+	unit_d[1] = d[1];
+	unit_d[2] = 0.0;
+	VUNITIZE( unit_d );
+	unit_c[0] = c[0];
+	unit_c[1] = c[1];
+	unit_c[2] = 0.0;
+	VUNITIZE( unit_c );
+	unit_h[0] = hx;
+	unit_h[1] = hy;
+	unit_h[2] = 0.0;
+	VUNITIZE( unit_h );
+
+	if( fabs( VDOT( unit_d, unit_c ) ) >= tol->para )
+		parallel = 1;
+	else
+		parallel = 0;
+
+	if( fabs( VDOT( unit_h, unit_c ) ) >= tol->para )
+		parallel1 = 1;
+	else
+		parallel1 = 0;
+
 	/* XXX This zero tolerance here should actually be
 	 * XXX determined by something like
 	 * XXX max(c[X], c[Y], d[X], d[Y]) / MAX_FASTF_DYNAMIC_RANGE
 	 * XXX In any case, nothing smaller than 1e-16
 	 */
 #define DETERMINANT_TOL		1.0e-14		/* XXX caution on non-IEEE machines */
-	if( NEAR_ZERO( det, DETERMINANT_TOL ) )  {
+	if( parallel || NEAR_ZERO( det, DETERMINANT_TOL ) )  {
 		/* Lines are parallel */
-		if( !NEAR_ZERO( det1, DETERMINANT_TOL ) )  {
+		if( !parallel1 && !NEAR_ZERO( det1, DETERMINANT_TOL ) )  {
 			/* Lines are NOT co-linear, just parallel */
 			if( rt_g.debug & DEBUG_MATH )  {
 				rt_log("\tparallel, not co-linear.  det=%e, det1=%g\n", det, det1);
