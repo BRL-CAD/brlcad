@@ -49,23 +49,6 @@ void nmg_pr_radial();
 
 RT_EXTERN( fastf_t mat_determinant, ( mat_t matrix ) );
 
-/* XXX Move to nmg.h */
-
-#define NMG_TBL_LEN(p)	((p)->end)
-
-/* XXX move to rtlist.h */
-#define BU_LIST_FOR_BACKWARDS(p,structure,hp)	\
-	(p)=BU_LIST_LAST(structure,hp); \
-	BU_LIST_NOT_HEAD(p,hp); \
-	(p)=BU_LIST_PLAST(structure,p)
-
-/* Process all the list members except hp and the actual head */
-#define BU_LIST_FOR_CIRC(p,structure,hp)	\
-	(p)=BU_LIST_PNEXT_CIRC(structure,hp); \
-	(p) != (hp); \
-	(p)=BU_LIST_PNEXT_CIRC(structure,p)
-
-
 /* XXX move to nmg_info.c */
 /*
  *			N M G _ F I N D _ O T _ S A M E _ E U _ O F _ E
@@ -2157,7 +2140,7 @@ CONST struct bn_tol		*tol;
 	nmg_e_and_v_tabulate( &edgeuses, &verts, &m->magic );
 
 	/* Repeat the process until no new edgeuses are created */
-	while( NMG_TBL_LEN( &edgeuses ) > 0 )  {
+	while( BU_PTBL_LEN( &edgeuses ) > 0 )  {
 		(void)bu_ptbl_init( &new_edgeuses, 64, " &new_edgeuses");
 
 		for( eup = (struct edgeuse **)BU_PTBL_LASTADDR(&edgeuses);
