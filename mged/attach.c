@@ -337,6 +337,9 @@ char    **argv;
   mged_variable_setup(curr_dm_list);
 #endif
 
+  bu_vls_init(&fps_name);
+  bu_vls_printf(&fps_name, "mged_display(%S,fps)",
+		&curr_dm_list->_dmp->dm_tkName);
   bu_vls_init(&curr_dm_list->_scroll_edit_vls);
   bu_vls_printf(&curr_dm_list->_scroll_edit_vls, "scroll_edit(%S)",
 		&curr_dm_list->_dmp->dm_tkName);
@@ -688,10 +691,11 @@ struct dm_list *initial_dm_list;
 mged_slider_init_vls(p)
 struct dm_list *p;
 {
-  bu_vls_init(&p->s_info->aet_name);
-  bu_vls_init(&p->s_info->ang_name);
-  bu_vls_init(&p->s_info->center_name);
-  bu_vls_init(&p->s_info->size_name);
+  bu_vls_init(&p->s_info->_aet_name);
+  bu_vls_init(&p->s_info->_ang_name);
+  bu_vls_init(&p->s_info->_center_name);
+  bu_vls_init(&p->s_info->_size_name);
+  bu_vls_init(&p->s_info->_adc_name);
   bu_vls_init(&p->s_info->_rate_tran_vls[X]);
   bu_vls_init(&p->s_info->_rate_tran_vls[Y]);
   bu_vls_init(&p->s_info->_rate_tran_vls[Z]);
@@ -716,10 +720,11 @@ struct dm_list *p;
 mged_slider_free_vls(p)
 struct dm_list *p;
 {
-  bu_vls_free(&p->s_info->aet_name);
-  bu_vls_free(&p->s_info->ang_name);
-  bu_vls_free(&p->s_info->center_name);
-  bu_vls_free(&p->s_info->size_name);
+  bu_vls_free(&p->s_info->_aet_name);
+  bu_vls_free(&p->s_info->_ang_name);
+  bu_vls_free(&p->s_info->_center_name);
+  bu_vls_free(&p->s_info->_size_name);
+  bu_vls_free(&p->s_info->_adc_name);
   bu_vls_free(&p->s_info->_rate_tran_vls[X]);
   bu_vls_free(&p->s_info->_rate_tran_vls[Y]);
   bu_vls_free(&p->s_info->_rate_tran_vls[Z]);
@@ -746,13 +751,15 @@ struct dm_list *p;
 {
   mged_slider_init_vls(p);
 
-  bu_vls_printf(&p->s_info->aet_name, "mged_display(%S,aet)",
+  bu_vls_printf(&p->s_info->_aet_name, "mged_display(%S,aet)",
 		&p->_dmp->dm_tkName);
-  bu_vls_printf(&p->s_info->ang_name, "mged_display(%S,ang)",
+  bu_vls_printf(&p->s_info->_ang_name, "mged_display(%S,ang)",
 		&p->_dmp->dm_tkName);
-  bu_vls_printf(&p->s_info->center_name, "mged_display(%S,center)",
+  bu_vls_printf(&p->s_info->_center_name, "mged_display(%S,center)",
 		&p->_dmp->dm_tkName);
-  bu_vls_printf(&p->s_info->size_name, "mged_display(%S,size)",
+  bu_vls_printf(&p->s_info->_size_name, "mged_display(%S,size)",
+		&p->_dmp->dm_tkName);
+  bu_vls_printf(&p->s_info->_adc_name, "mged_display(%S,adc)",
 		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_rate_tran_vls[X], "rate_tran(%S,X)",
 		&p->_dmp->dm_tkName);
