@@ -33,6 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "externs.h"
 
@@ -138,6 +139,8 @@ static int clipped_high=0;
 #define NORM(x) { if(x<0) {x=0; clipped_low++;} \
 		else if (x>255) {x=255; clipped_high++;}}
 
+static double lum_mul = 1.0;
+
 static void error(e)
 enum ERRORS e;
 {
@@ -171,6 +174,7 @@ enum ERRORS e;
 		fprintf(stderr,"     -4 Extract -w1536 -n1024 from Image file [4Base]\n");
 		fprintf(stderr,"     -5 Extract -w3072 -n2048 from Image file [16Base]\n");
 		fprintf(stderr,"     -p Pipe output to pix-fb automaticly\n");
+		fprintf(stderr,"     -l # Multiply luminance value by # (brighten dark photos) default=1\n");
 		fprintf(stderr,"     -h Just print header dimensions\n");
 		break;
 	case E_OPT:    
@@ -274,6 +278,13 @@ char **argv;
 	{
 		opt= (*argv)+1;
 		ASKIP;
+
+		if( strcmp(opt, "l") == 0 )  {
+			opt= (*argv);
+			ASKIP;
+			lum_mul = atof(opt);
+			continue;
+		}
 
 		if( strcmp(opt, "p") == 0 )  {
 			if (!do_pixfb) do_pixfb=1;
@@ -875,7 +886,7 @@ implane *l,*c1,*c2;
 		init=1;
 		for(i=0;i<256;i++)
 		{  
-			XL[i]= 5564 * i + 2048;
+			XL[i]= (5564 * i + 2048) * lum_mul;
 			XC1[i]= 9085 * i - 1417185;
 			XC2[i]= 7461 * i - 1022138;
 			XC1g[i]= 274934 - 1762 * i;
