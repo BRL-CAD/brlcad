@@ -2250,10 +2250,10 @@ proc update_mged_vars { id } {
     }
 
     if {$mged_gui($id,fb)} {
-	.$id.menubar.settings.fb entryconfigure 7 -state normal
+	.$id.menubar.settings.fb entryconfigure 8 -state normal
 	set mged_gui($id,listen) $listen
     } else {
-	.$id.menubar.settings.fb entryconfigure 7 -state disabled
+	.$id.menubar.settings.fb entryconfigure 8 -state disabled
 	set mged_gui($id,listen) $listen
     }
 
@@ -2800,12 +2800,12 @@ proc set_fb { id } {
     mged_apply $id "set fb \$mged_gui($id,fb)"
 
     if {$mged_gui($id,fb)} {
-	.$id.menubar.settings.fb entryconfigure 7 -state normal
+	.$id.menubar.settings.fb entryconfigure 8 -state normal
 	.$id.menubar.modes entryconfigure 4 -state normal
 	set mged_gui($id,listen) 1
 	mged_apply $id "set listen \$mged_gui($id,listen)"
     } else {
-	.$id.menubar.settings.fb entryconfigure 7 -state disabled
+	.$id.menubar.settings.fb entryconfigure 8 -state disabled
 	.$id.menubar.modes entryconfigure 4 -state disabled
 	set mged_gui($id,listen) 0
     }
