@@ -174,7 +174,7 @@ register int bnum;
 	register struct buttons *bp;
 
 	if( edsol && edobj )
-		(void)printf("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
+		(void)rt_log("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
 
 	/* Process the button function requested. */
 	for( bp = button_table; bp->bu_code >= 0; bp++ )  {
@@ -183,7 +183,7 @@ register int bnum;
 		bp->bu_func();
 		return;
 	}
-	(void)printf("button(%d):  Not a defined operation\n", bnum);
+	(void)rt_log("button(%d):  Not a defined operation\n", bnum);
 }
 
 /*
@@ -195,7 +195,7 @@ char *str;{
 	register struct buttons *bp;
 
 	if( edsol && edobj )
-		(void)printf("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
+		(void)rt_log("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
 
 	if(strcmp(str, "help") == 0) {
 		for( bp = button_table; bp->bu_code >= 0; bp++ )
@@ -211,7 +211,7 @@ char *str;{
 		bp->bu_func();
 		return;
 	}
-	(void)printf("press(%s):  Unknown operation, type 'press help' for help\n",
+	(void)rt_log("press(%s):  Unknown operation, type 'press help' for help\n",
 		str);
 }
 /*
@@ -231,7 +231,7 @@ label_button(bnum)
 			continue;
 		return( bp->bu_name );
 	}
-	(void)printf("label_button(%d):  Not a defined operation\n", bnum);
+	(void)rt_log("label_button(%d):  Not a defined operation\n", bnum);
 	return("");
 }
 
@@ -318,7 +318,7 @@ static int ill_common()  {
 	/* Common part of illumination */
 	dmp->dmr_light( LIGHT_ON, BE_REJECT );
 	if( HeadSolid.s_forw == &HeadSolid )  {
-		(void)printf("no solids in view\n");
+		(void)rt_log("no solids in view\n");
 		return(0);	/* BAD */
 	}
 	illump = HeadSolid.s_forw;/* any valid solid would do */
@@ -600,7 +600,7 @@ int desired;
 char *str;
 {
 	if( state != desired ) {
-		(void)printf("Unable to do <%s> from %s state.\n",
+		(void)rt_log("Unable to do <%s> from %s state.\n",
 			str, state_str[state] );
 		return(1);	/* BAD */
 	}
@@ -619,7 +619,7 @@ int from, to;
 char *str;
 {
 	if( state != from ) {
-		(void)printf("Unable to do <%s> going from %s to %s state.\n",
+		(void)rt_log("Unable to do <%s> going from %s to %s state.\n",
 			str, state_str[from], state_str[to] );
 		return(1);	/* BAD */
 	}
@@ -633,7 +633,7 @@ void
 state_err( str )
 char *str;
 {
-	(void)printf("Unable to do <%s> from %s state.\n",
+	(void)rt_log("Unable to do <%s> from %s state.\n",
 		str, state_str[state] );
 }
 
@@ -669,7 +669,7 @@ btn_head_menu(i, menu, item)  {
 		/* nothing happens */
 		break;
 	default:
-		printf("btn_head_menu(%d): bad arg\n", i);
+		rt_log("btn_head_menu(%d): bad arg\n", i);
 		break;
 	}
 	dmaflag = 1;
@@ -685,7 +685,7 @@ chg_l2menu(i)  {
 		menu_array[MENU_L2] = oed_menu;
 		break;
 	default:
-		(void)printf("chg_l2menu(%d): bad arg\n");
+		(void)rt_log("chg_l2menu(%d): bad arg\n");
 		break;
 	}
 }
