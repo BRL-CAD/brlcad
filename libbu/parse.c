@@ -1922,3 +1922,42 @@ struct bu_vls *vls;
 
 	return( ret );
 }
+
+/*
+ *
+ *			B U _ F W R I T E _ E X T E R N A L
+ *
+ *  Take a block of memory, and write it into a file.
+ *
+ *  Caller is responsible for freeing memory of external representation,
+ *  using bu_free_external().
+ *
+ *  Returns -
+ *	<0	error
+ *	0	OK
+ */
+int
+bu_fwrite_external( fp, ep )
+FILE			*fp;
+CONST struct bu_external *ep;
+{
+	BU_CK_EXTERNAL(ep);
+
+	if( fwrite( ep->ext_buf, ep->ext_nbytes, 1, fp ) != 1 )
+		return -1;
+	return 0;
+}
+
+/*
+ *			B U _ F R E E _ E X T E R N A L
+ */
+void
+bu_free_external( ep )
+register struct bu_external	*ep;
+{
+	BU_CK_EXTERNAL(ep);
+	if( ep->ext_buf )  {
+		bu_free( ep->ext_buf, "bu_external ext_buf" );
+		ep->ext_buf = GENPTR_NULL;
+	}
+}
