@@ -16,8 +16,8 @@
 
 /* Explicit composition of each product */
 
-fast4-g: fast4-g.0 LIBRT LIBWDB
-	CC LDFLAGS fast4-g.o LIBRT LIBRT_LIBES LIBES -o fast4-g
+fast4-g: fast4-g.o LIBRT LIBWDB
+	CC LDFLAGS fast4-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o fast4-g
 
 asc2g:	asc2g.o LIBRT LIBWDB
 	CC LDFLAGS asc2g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o asc2g
