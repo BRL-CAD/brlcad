@@ -17,8 +17,7 @@
 #       in all countries except the USA.  All rights reserved.
 #
 # Description -
-#       The Splash class implements a splash screen as described
-#       in the "Effective Tcl/Tk Programming" book.
+#       The Splash class implements a splash screen.
 #
 
 option add *Splash.background blue widgetDefault
@@ -28,46 +27,29 @@ option add *Splash.relief raised widgetDefault
 option add *Splash.cursor watch widgetDefault
 
 class Splash {
-    inherit itk::Toplevel
+    inherit iwidgets::Shell
 
     constructor {args} {}
-    destructor {}
-
-    public method center {} {}
-
-    private variable xmax 0
-    private variable ymax 0
 }
 
 body Splash::constructor {args} {
-    wm withdraw $itk_component(hull)
-    set xmax [winfo screenwidth $itk_component(hull)]
-    set ymax [winfo screenheight $itk_component(hull)]
+    wm overrideredirect $itk_component(hull) 1
 
-    # revive ignored options from Toplevel
+    # revive a few ignored options
     itk_option add hull.borderwidth hull.relief
 
     itk_component add message {
 	label $itk_interior.message
     } {
 	usual
-	keep -height -width
+	rename -width -labelwidth labelwidth Labelwidth
+	rename -height -labelheight labelheight Labelheight
 	rename -text -message message Text
     }
 
+    pack $itk_component(message) -expand yes -fill both
+    center
+
     # process options
     eval itk_initialize $args
-
-    pack $itk_component(message) -expand yes -fill both
-
-    wm overrideredirect $itk_component(hull) 1
-    update idletasks
-    center
-    wm deiconify $itk_component(hull)
-}
-
-body Splash::center {} {
-    set x [expr ($xmax - [winfo reqwidth $itk_component(hull)]) / 2]
-    set y [expr ($ymax - [winfo reqheight $itk_component(hull)]) / 2]
-    wm geometry $itk_component(hull) "+$x+$y"
 }
