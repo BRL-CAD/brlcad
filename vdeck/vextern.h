@@ -1,14 +1,10 @@
 /*
-	SCCS id:	@(#) vextern.h	2.4
-	Last edit: 	12/20/85 at 19:03:47
-	Retrieved: 	6/16/86 at 20:29:50
 	SCCS archive:	/vld/src/vdeck/s.vextern.h
 
-	Author:		Gary S. Moss
+	Author:		???
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
 */
 #include <math.h>
 #include <setjmp.h>
@@ -67,8 +63,20 @@ typedef long	bitv_t;		/* largest integer type */
 /* Size limits.								*/
 #define MAXLN	80	/* max length of input line */
 #define MAXRR	100	/* max regions to remember */
+#ifndef MAXSOL
+#ifdef sel
 #define MAXSOL	4000	/* max solids in description */
+#else
+#define MAXSOL	10000	/* max solids in description */
+#endif
+#endif
+#ifdef sel
+#ifndef NDIR
 #define NDIR	9000	/* max objects in input */
+#else
+#define NDIR	20000	/* max objects in input */
+#endif
+#endif
 #define MAXPATH	32	/* max level of hierarchy */
 #define MAXARG	20	/* max arguments on command line */
 #define ARGSZ	32	/* max length of command line argument */
