@@ -42,6 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 
 extern void set_scroll();   /* defined in set.c */
+extern void set_dirty_flag();
 
 /************************************************************************
  *									*
@@ -116,7 +117,7 @@ sl_halt_scroll()
 void
 sl_toggle_scroll()
 {
-  mged_variables.slidersflag = mged_variables.slidersflag ? 0 : 1;
+  mged_variables->slidersflag = mged_variables->slidersflag ? 0 : 1;
   set_scroll();
 }
 
@@ -149,15 +150,15 @@ char **argv;
   }
 
   if (argc == 1) {
-    Tcl_AppendResult(interp, mged_variables.slidersflag ? "1" : "0", (char *)NULL);
+    Tcl_AppendResult(interp, mged_variables->slidersflag ? "1" : "0", (char *)NULL);
     return TCL_OK;
   }
 
-  if (Tcl_GetBoolean(interp, argv[1], &mged_variables.slidersflag) == TCL_ERROR)
+  if (Tcl_GetBoolean(interp, argv[1], &mged_variables->slidersflag) == TCL_ERROR)
     return TCL_ERROR;
 
-  if (mged_variables.slidersflag) {
-    if(mged_variables.rateknobs)
+  if (mged_variables->slidersflag) {
+    if(mged_variables->rateknobs)
       scroll_array[0] = sl_menu;
     else
       scroll_array[0] = sl_abs_menu;
@@ -166,8 +167,8 @@ char **argv;
     scroll_array[1] = SCROLL_NULL;	
   }
 
-  if(mged_variables.faceplate && mged_variables.orig_gui)
-    dirty = 1;
+  if(mged_variables->faceplate && mged_variables->orig_gui)
+    set_dirty_flag();
 
   return TCL_OK;
 }
@@ -338,7 +339,7 @@ int y_top;
   fastf_t f;
 
   /* XXX this should be driven by the button event */
-  if( mged_variables.adcflag && mged_variables.slidersflag )
+  if( mged_variables->adcflag && mged_variables->slidersflag )
     scroll_array[1] = sl_adc_menu;
   else
     scroll_array[1] = SCROLL_NULL;
@@ -347,7 +348,7 @@ int y_top;
   y = y_top;
 
 #if 1
-  dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+  dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 0);
 #else
   dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
 #endif
@@ -362,18 +363,18 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_xadc / 2047.0;
 	else {
-	  if(EDIT_TRAN && mged_variables.transform == 'e'){
-	    switch(mged_variables.coords){
+	  if(EDIT_TRAN && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
 	    case 'm':
 	    case 'o':
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_model_tran[X];
 	      else
 		f = edit_absolute_model_tran[X];
 	      break;
 	    case 'v':
 	    default:
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_view_tran[X];
 	      else
 		f = edit_absolute_view_tran[X];
@@ -382,13 +383,13 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs){
-	      if(mged_variables.coords == 'm')
+	    if(mged_variables->rateknobs){
+	      if(mged_variables->coords == 'm')
 		f = rate_model_tran[X];
 	      else
 		f = rate_tran[X];
 	    }else{
-	      if(mged_variables.coords == 'm')
+	      if(mged_variables->coords == 'm')
 		f = absolute_model_tran[X];
 	      else
 		f = absolute_tran[X];
@@ -402,17 +403,17 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_yadc / 2047.0;
 	else {
-	  if(EDIT_TRAN && mged_variables.transform == 'e'){
-	    switch(mged_variables.coords){
+	  if(EDIT_TRAN && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
 	    case 'm':
 	    case 'o':
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_model_tran[Y];
 	      else
 		f = edit_absolute_model_tran[Y];
 	      break;
 	    case 'v':
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_view_tran[Y];
 	      else
 		f = edit_absolute_view_tran[Y];
@@ -421,13 +422,13 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs){
-	      if(mged_variables.coords == 'm')
+	    if(mged_variables->rateknobs){
+	      if(mged_variables->coords == 'm')
 		f = rate_model_tran[Y];
 	      else
 		f = rate_tran[Y];
 	    }else{
-	      if(mged_variables.coords == 'm')
+	      if(mged_variables->coords == 'm')
 		f = absolute_model_tran[Y];
 	      else
 		f = absolute_tran[Y];
@@ -441,17 +442,17 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_1adc / 2047.0;
 	else {
-	  if(EDIT_TRAN && mged_variables.transform == 'e'){
-	    switch(mged_variables.coords){
+	  if(EDIT_TRAN && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
 	    case 'm':
 	    case 'o':
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_model_tran[Z];
 	      else
 		f = edit_absolute_model_tran[Z];
 	      break;
 	    case 'v':
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_view_tran[Z];
 	      else
 		f = edit_absolute_view_tran[Z];
@@ -460,13 +461,13 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs){
-	      if(mged_variables.coords == 'm')
+	    if(mged_variables->rateknobs){
+	      if(mged_variables->coords == 'm')
 		f = rate_model_tran[Z];
 	      else
 		f = rate_tran[Z];
 	    }else{
-	      if(mged_variables.coords == 'm')
+	      if(mged_variables->coords == 'm')
 		f = absolute_model_tran[Z];
 	      else
 		f = absolute_tran[Z];
@@ -480,15 +481,15 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_2adc / 2047.0;
 	else {
-	  if(EDIT_SCALE && mged_variables.transform == 'e'){
-	    if(mged_variables.rateknobs)
+	  if(EDIT_SCALE && mged_variables->transform == 'e'){
+	    if(mged_variables->rateknobs)
 	      f = edit_rate_scale;
 	    else
 	      f = edit_absolute_scale;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs)
+	    if(mged_variables->rateknobs)
 	      f = rate_scale;
 	    else
 	      f = absolute_scale;
@@ -501,21 +502,21 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_distadc / 2047.0;
 	else {
-	  if(EDIT_ROTATE && mged_variables.transform == 'e'){
-	    switch(mged_variables.coords){
+	  if(EDIT_ROTATE && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
 	    case 'm':
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_model_rotate[X] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_model_rotate[X] / ABS_ROT_FACTOR;
 	    case 'o':
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_object_rotate[X] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_object_rotate[X] / ABS_ROT_FACTOR;
 	    case 'v':
 	    default:
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_view_rotate[X] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_view_rotate[X] / ABS_ROT_FACTOR;
@@ -524,13 +525,13 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs){
-	      if(mged_variables.coords == 'm')
+	    if(mged_variables->rateknobs){
+	      if(mged_variables->coords == 'm')
 		f = rate_model_rotate[X] / RATE_ROT_FACTOR;
 	      else
 		f = rate_rotate[X] / RATE_ROT_FACTOR;
 	    }else{
-	      if(mged_variables.coords == 'm')
+	      if(mged_variables->coords == 'm')
 		f = absolute_model_rotate[X] / ABS_ROT_FACTOR;
 	      else
 		f = absolute_rotate[X] / ABS_ROT_FACTOR;
@@ -545,23 +546,23 @@ int y_top;
 	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
 			   (char *)NULL);
 	else {
-	  if(EDIT_ROTATE && mged_variables.transform == 'e'){
-	    switch(mged_variables.coords){
+	  if(EDIT_ROTATE && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
 	    case 'm':
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_model_rotate[Y] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_model_rotate[Y] / ABS_ROT_FACTOR;
 	      break;
 	    case 'o':
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_object_rotate[Y] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_object_rotate[Y] / ABS_ROT_FACTOR;
 	      break;
 	    case 'v':
 	    default:
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_view_rotate[Y] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_view_rotate[Y] / ABS_ROT_FACTOR;
@@ -570,13 +571,13 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs){
-	      if(mged_variables.coords == 'm')
+	    if(mged_variables->rateknobs){
+	      if(mged_variables->coords == 'm')
 		f = rate_model_rotate[Y] / RATE_ROT_FACTOR;
 	      else
 		f = rate_rotate[Y] / RATE_ROT_FACTOR;
 	    }else{
-	      if(mged_variables.coords == 'm')
+	      if(mged_variables->coords == 'm')
 		f = absolute_model_rotate[Y] / ABS_ROT_FACTOR;
 	      else
 		f = absolute_rotate[Y] / ABS_ROT_FACTOR;
@@ -591,23 +592,23 @@ int y_top;
 	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
 			   (char *)NULL);
 	else {
-	  if(EDIT_ROTATE && mged_variables.transform == 'e'){
-	    switch(mged_variables.coords){
+	  if(EDIT_ROTATE && mged_variables->transform == 'e'){
+	    switch(mged_variables->coords){
 	    case 'm':
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_model_rotate[Z] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_model_rotate[Z] / ABS_ROT_FACTOR;
 	      break;
 	    case 'o':
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_object_rotate[Z] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_object_rotate[Z] / ABS_ROT_FACTOR;
 	      break;
 	    case 'v':
 	    default:
-	      if(mged_variables.rateknobs)
+	      if(mged_variables->rateknobs)
 		f = edit_rate_view_rotate[Z] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_view_rotate[Z] / ABS_ROT_FACTOR;
@@ -616,13 +617,13 @@ int y_top;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
-	    if(mged_variables.rateknobs){
-	      if(mged_variables.coords == 'm')
+	    if(mged_variables->rateknobs){
+	      if(mged_variables->coords == 'm')
 		f = rate_model_rotate[Z] / RATE_ROT_FACTOR;
 	      else
 		f = rate_rotate[Z] / RATE_ROT_FACTOR;
 	    }else{
-	      if(mged_variables.coords == 'm')
+	      if(mged_variables->coords == 'm')
 		f = absolute_model_rotate[Z] / ABS_ROT_FACTOR;
 	      else
 		f = absolute_rotate[Z] / ABS_ROT_FACTOR;
@@ -683,7 +684,7 @@ int do_func;
 	struct scroll_item	**m;
 	register struct scroll_item     *mptr;
 
-	if( !mged_variables.slidersflag )  return(0);	/* not enabled */
+	if( !mged_variables->slidersflag )  return(0);	/* not enabled */
 
 	if( pen_y > scroll_top )
 		return(-1);	/* pen above menu area */
