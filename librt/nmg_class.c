@@ -1154,6 +1154,88 @@ out:
 	return(status);
 }
 
+/* XXX move to nmg_info.c */
+/*
+ *			N M G _ 2 L U _ I D E N T I C A L
+ *
+ *  Given two edgeuses in different faces that share a common edge,
+ *  determine if they are from identical loops or not.
+ *
+ *  Note that two identical loops in an anti-shared pair of faces
+ *  (faces with opposite orientations) will also have opposite orientations.
+ *
+ *  Returns -
+ *	0	Loops not identical
+ *	1	Loops identical, faces are ON-shared
+ *	2	Loops identical, faces are ON-anti-shared
+ *	3	Loops identical, at least one is a wire loop.
+ */
+int
+nmg_2lu_identical( eu1, eu2 )
+CONST struct edgeuse	*eu1;
+CONST struct edgeuse	*eu2;
+{
+	CONST struct loopuse	*lu1;
+	CONST struct loopuse	*lu2;
+	CONST struct edgeuse	*eu1_first;
+	CONST struct faceuse	*fu1;
+	CONST struct faceuse	*fu2;
+	int			anti;
+
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_EDGEUSE(eu2);
+
+	if( eu1->e_p != eu2->e_p )  rt_bomb("nmg_2lu_identical() differing edges?\n");
+
+	/* get the starting vertex of each edgeuse to be the same. */
+	if (eu2->vu_p->v_p != eu1->vu_p->v_p) {
+		eu2 = eu2->eumate_p;
+		if (eu2->vu_p->v_p != eu1->vu_p->v_p)
+			rt_bomb("nmg_2lu_identical() radial edgeuse doesn't share verticies\n");
+	}
+
+	lu1 = eu1->up.lu_p;
+	lu2 = eu2->up.lu_p;
+
+	NMG_CK_LOOPUSE(lu1);
+	NMG_CK_LOOPUSE(lu2);
+
+    	/* march around the two loops to see if they 
+    	 * are the same all the way around.
+    	 */
+	eu1_first = eu1;
+	do {
+		if( eu1->vu_p->v_p != eu2->vu_p->v_p )  return 0;
+
+		eu1 = RT_LIST_PNEXT_CIRC(edgeuse, &eu1->l);
+		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, &eu2->l);
+	} while ( eu1 != eu1_first );
+
+	if( *lu1->up.magic_p != NMG_FACEUSE_MAGIC ||
+	    *lu2->up.magic_p != NMG_FACEUSE_MAGIC )
+		return 3;	/* one is a wire loop */
+
+	fu1 = lu1->up.fu_p;
+	fu2 = lu2->up.fu_p;
+
+	if( fu1->f_p->fg_p != fu2->f_p->fg_p )  {
+		rt_log("nmg_2lu_identical() loops lu1=x%x lu2=x%x are shared, face geometry is not? fg1=x%x, fg2=x%x\n",
+			lu1, lu2, fu1->f_p->fg_p, fu2->f_p->fg_p);
+		rt_bomb("nmg_2lu_identical() faces should have been fused\n");
+	}
+
+	/* If loopuse and faceuse and face orientations match,
+	 * this is ON-shared */
+	anti = 0;
+	if( lu1->orientation != lu2->orientation )  anti = !anti;
+	if( fu1->orientation != fu2->orientation )  anti = !anti;
+	if( fu1->f_p->flip != fu2->f_p->flip ) anti = !anti;
+
+	if( anti )
+		return 2;
+	return 1;
+}
+
 /*
  *			C L A S S _ L U _ V S _ S
  */
@@ -1169,25 +1251,37 @@ CONST struct rt_tol	*tol;
 	struct loopuse *q_lu;
 	struct vertexuse *vu;
 	long		magic1;
+	char		*reason = "Unknown";
 	int		seen_error = 0;
+	int		status = 0;
 
 	NMG_CK_LOOPUSE(lu);
 	NMG_CK_SHELL(s);
 	RT_CK_TOL(tol);
 
 	/* check to see if loop is already in one of the lists */
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], lu->l_p) )
-		return(INSIDE);
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], lu->l_p) )  {
+		reason = "of classlist";
+		status = INSIDE;
+		goto out;
+	}
 
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], lu->l_p) )
-		return(ON_SURF);
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], lu->l_p) )  {
+		reason = "of classlist";
+		status = ON_SURF;
+		goto out;
+	}
 
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], lu->l_p) )
-		return(OUTSIDE);
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], lu->l_p) )  {
+		reason = "of classlist";
+		status = OUTSIDE;
+		goto out;
+	}
 
 	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
 		/* Loop of a single vertex */
+		reason = "of vertex classification";
 		vu = RT_LIST_PNEXT( vertexuse, &lu->down_hd );
 		NMG_CK_VERTEXUSE(vu);
 		class = class_vu_vs_s(vu, s, classlist, tol);
@@ -1204,7 +1298,8 @@ CONST struct rt_tol	*tol;
 		default:
 			rt_bomb("class_lu_vs_s: bad vertexloop classification\n");
 		}
-		return(class);
+		status = class;
+		goto out;
 	} else if (magic1 != NMG_EDGEUSE_MAGIC) {
 		rt_bomb("class_lu_vs_s: bad child of loopuse\n");
 	}
@@ -1271,16 +1366,20 @@ retry:
 	}
 	if (out > 0) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], lu->l_p);
-		return(OUTSIDE);
+		reason = "all edgeuses were OUT";
+		status = OUTSIDE;
+		goto out;
 	} else if (in > 0) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AinB], lu->l_p);
-		return(INSIDE);
+		reason = "all edgeuses were IN";
+		status = INSIDE;
+		goto out;
 	} else if (on == 0)
 		rt_bomb("class_lu_vs_s: alright, who's the wiseguy that stole my edgeuses?\n");
 
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("\tAll edgeuses of loop are ON");
+		rt_log("\tAll edgeuses of loop are ON\n");
 
 	/* since all of the edgeuses of this loop are "on" the other shell,
 	 * we need to see if this loop is "on" the other shell
@@ -1301,7 +1400,9 @@ retry:
 
 	if (*lu->up.magic_p == NMG_SHELL_MAGIC) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], lu->l_p);
-		return(ON_SURF);
+		reason = "loop is a wire loop in the shell";
+		status = ON_SURF;
+		goto out;
 	}
 
 	NMG_CK_FACEUSE(lu->up.fu_p);
@@ -1309,6 +1410,8 @@ retry:
 	eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
 	eu = eu->radial_p->eumate_p;
 	do {
+		int	code;
+
 		/* if the radial edge is a part of a loop which is part of
 		 * a face, then it's one that we might be "on"
 		 */
@@ -1316,56 +1419,34 @@ retry:
 		    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC && 
 		    eu->up.lu_p->up.fu_p->s_p == s ) {
 
-			p = RT_LIST_FIRST(edgeuse, &lu->down_hd);
-			q = eu;
-			q_lu = q->up.lu_p;
-
-			/* get the starting vertex of each edgeuse to be the
-			 * same.
-			 */
-			if (q->vu_p->v_p != p->vu_p->v_p) {
-				q = eu->eumate_p;
-				if (q->vu_p->v_p != p->vu_p->v_p)
-					rt_bomb("class_lu_vu_s: radial edgeuse doesn't share verticies\n");
-			
-			}
-
-		    	/* march around the two loops to see if they 
-		    	 * are the same all the way around.
-		    	 */
-		/* XXX why isn't "p" also traversed circularly? */
-		    	while (
-		    	    RT_LIST_NOT_HEAD(p, &lu->down_hd) &&
-			    p->vu_p->v_p == q->vu_p->v_p &&
-			    q->up.lu_p == q_lu
-			) {
-				q = RT_LIST_PNEXT_CIRC(edgeuse, &q->l);
-				p = RT_LIST_PNEXT(edgeuse, p);
-			}
-
-			if (!RT_LIST_NOT_HEAD(p, &lu->down_hd)) {
-				vect_t	n, qn;
-
-				/* the two loops are "on" each other.  All
-				 * that remains is to determine
-				 * shared/anti-shared status.
-				 */
-				NMG_CK_FACE_G(q_lu->up.fu_p->f_p->fg_p);
-				NMG_GET_FU_NORMAL( qn, q_lu->up.fu_p );
-				NMG_GET_FU_NORMAL( n, lu->up.fu_p );
-				if (VDOT(qn, n) >= 0) {
-				    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
-				    		lu->l_p );
-					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-						rt_log("Loop is on-shared\n");
-				} else {
-					NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
-						lu->l_p );
-					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-						rt_log("Loop is on-antishared\n");
-				}
-
-				return(ON_SURF);
+		    	q_lu = eu->up.lu_p;
+			code = nmg_2lu_identical( eu,
+				RT_LIST_FIRST(edgeuse, &lu->down_hd) );
+		    	switch(code)  {
+		    	default:
+		    	case 0:
+		    		/* Not identical */
+		    		break;
+		    	case 1:
+		    		/* ON-shared */
+			    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
+			    		lu->l_p );
+				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+					rt_log("Loop is on-shared\n");
+				reason = "edges identical with radial face, normals colinear";
+		    		status = ON_SURF;
+		    		goto out;
+		    	case 2:
+		    		/* ON-antishared */
+				NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
+					lu->l_p );
+				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+					rt_log("Loop is on-antishared\n");
+				reason = "edges identical with radial face, normals opposite";
+				status = ON_SURF;
+				goto out;
+		    	case 3:
+		    		rt_bomb("class_lu_vs_s() unexpected wire ON\n");
 			}
 
 		}
@@ -1396,13 +1477,17 @@ retry:
 			    			lu->l_p );
 					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 						rt_log("Loop is INSIDE\n");
-					return(INSIDE);
+			    		reason = "radial faceuse is OT_OPPOSITE";
+			    		status = INSIDE;
+			    		goto out;
 			    	} else if (p->up.lu_p->up.fu_p->orientation == OT_SAME) {
 			    		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB],
 			    			lu->l_p );
 					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 						rt_log("Loop is OUTSIDE\n");
-					return(OUTSIDE);
+			    		reason = "radial faceuse is OT_SAME";
+			    		status = OUTSIDE;
+					goto out;
 			    	} else {
 			    		rt_bomb("class_lu_vs_s() bad fu orientation\n");
 			    	}
@@ -1414,14 +1499,20 @@ retry:
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		rt_log("Loop is OUTSIDE 'cause it isn't anything else\n");
-	
 
 	/* Since we didn't find any radial faces to classify ourselves against
 	 * and we already know that the edges are all "on" that must mean that
 	 * the loopuse is "on" a wireframe portion of the shell.
 	 */
 	NMG_INDEX_SET( classlist[NMG_CLASS_AoutB], lu->l_p );
-	return(OUTSIDE);
+	reason = "loopuse is ON a wire loop in the shell";
+	status = OUTSIDE;
+out:
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+		rt_log("class_lu_vs_s(lu=x%x) return %s because %s\n",
+			lu, nmg_class_status(status), reason );
+	}
+	return status;
 }
 
 /*
