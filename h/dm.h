@@ -25,6 +25,10 @@
 #define DM_TYPE_GLX	5
 #define DM_TYPE_PEX	6
 
+/* Line Styles */
+#define DM_SOLID_LINE 0
+#define DM_DASHED_LINE 1
+
 #define IS_DM_TYPE_NULL(_t) ((_t) == DM_TYPE_NULL)
 #define IS_DM_TYPE_PLOT(_t) ((_t) == DM_TYPE_PLOT)
 #define IS_DM_TYPE_PS(_t) ((_t) == DM_TYPE_PS)
@@ -119,6 +123,8 @@ struct dm {
   int dm_top;                   /* !0 means toplevel window */
   int dm_width;
   int dm_height;
+  int dm_lineWidth;
+  int dm_lineStyle;
   fastf_t dm_aspect;
   fastf_t *dm_vp;		/* XXX--ogl still depends on this--Viewscale pointer */
   genptr_t dm_vars;		/* pointer to display manager dependant variables */
