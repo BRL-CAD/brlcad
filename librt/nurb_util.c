@@ -20,9 +20,6 @@
 #include "vmath.h"
 #include "nurb.h"
 
-void	rt_nurb_pr_kv();
-void	rt_nurb_pr_mesh();
-
 /* Create a paceholder for a nurb surface. */
 
 struct snurb *
@@ -126,6 +123,7 @@ struct snurb * srf;
 
 /* free routine for a nurb curve */
 
+void
 rt_nurb_free_cnurb( crv)
 struct cnurb * crv;
 {
@@ -137,6 +135,7 @@ struct cnurb * crv;
 
 }
 
+void
 rt_nurb_c_print( crv)
 struct cnurb * crv;
 {
@@ -234,8 +233,9 @@ struct s_mesh * m;
 	}
 }
 
+void
 rt_nurb_print_pt_type(c)
-char c;
+int c;
 {
 	fastf_t flt;
 	int coords, rat;

@@ -13,10 +13,6 @@
 #include "vmath.h"
 #include "nurb.h"	
 
-void	rt_nurb_doolittle();
-void	rt_nurb_forw_solve();
-void	rt_nurb_back_solve();
-
 /* These Procedures take a set of matrices of the form Ax = b and
  * alows one to rt_nurb_solve the system by various means. The rt_nurb_doolittle
  * routine take the system and creates a lu decomposition using

@@ -30,8 +30,10 @@
 
 struct knot_vector *
 rt_nurb_kvknot( order, lower, upper, num)
-int	order, num;
-fastf_t lower, upper;
+int	order;
+fastf_t lower;
+fastf_t upper;
+int	num;
 {
 	register int	i;
 	int	total;

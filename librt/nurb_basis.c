@@ -50,8 +50,6 @@ static char	rcs_ident[] = "$Header$";
  *	Academic Press, New York 1988.
  */
 
-fastf_t rt_nurb_basis_eval();
-
 fastf_t
 rt_nurb_basis_eval( knts, interval, order, mu)
 register struct knot_vector * knts;

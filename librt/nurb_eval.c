@@ -22,8 +22,6 @@
 #include "vmath.h"
 #include "nurb.h"
 
-fastf_t *internal_eval_crv();
-
 /* Algorithm -
  *
  * The algorithm uses the traditional COX-deBoor approach 
@@ -34,7 +32,8 @@ fastf_t *internal_eval_crv();
 fastf_t *
 rt_nurb_s_eval( srf, u, v )
 struct snurb *srf;
-fastf_t	u, v;
+fastf_t	u;
+fastf_t v;
 {
 	fastf_t * mesh_ptr = srf->mesh->ctl_points;
 	fastf_t * curves;
@@ -144,7 +143,7 @@ fastf_t *
 internal_eval_crv( crv, order, param, k_vec, k_index, coords )
 register fastf_t *crv;
 int	order;
-float	param;
+fastf_t	param;
 struct knot_vector *k_vec;
 int	k_index;
 int	coords;

@@ -28,8 +28,6 @@
  * points are divided. 
  */
 
-struct rt_nurb_poly *rt_nurb_mk_poly();
-
 struct rt_nurb_poly *
 rt_nurb_to_poly( srf )
 struct snurb *srf;
@@ -37,7 +35,7 @@ struct snurb *srf;
 	int	coords = srf->mesh->pt_type;
 	fastf_t 	 * p1, *p2, *p3, *p4;
 	fastf_t 	uv1[2], uv2[2], uv3[2], uv4[2];
-	struct rt_nurb_poly *p, *p_head, *rt_nurb_mk_poly();
+	struct rt_nurb_poly *p, *p_head;
 
 	/* Extract the four corners from the mesh */
 

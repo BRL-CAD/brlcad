@@ -24,8 +24,6 @@
 #include "vmath.h"
 #include "nurb.h"
 
-fastf_t internal_crv_flat();
-
 int
 rt_nurb_s_flat( srf, epsilon )
 struct snurb *srf;
