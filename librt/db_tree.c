@@ -201,7 +201,7 @@ struct member		*mp;
 		return(-1);
 	}
 
-	/* Trim m_instname */
+	/* Trim m_instname, and add to the path */
 	strncpy( namebuf, mp->m_instname, NAMESIZE );
 	namebuf[NAMESIZE] = '\0';
 	if( (mdp = db_lookup( tsp->ts_dbip, namebuf, LOOKUP_NOISY )) == DIR_NULL )
@@ -217,17 +217,17 @@ struct member		*mp;
 	/* Check here for animation to apply */
 	if ((mdp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("Animate %s/%s with...\n", sofar, mp->m_instname);
+		rt_log("Animate %s with...\n", sofar);
 		rt_free(sofar, "path string");
 	}
+	/*
+	 *  For each of the animations attached to the mentioned object,
+	 *  see if the current accumulated path matches the path
+	 *  specified in the animation.
+	 *  Comparison is performed right-to-left (from leafward to rootward).
+	 */
 	for( anp = mdp->d_animate; anp != ANIM_NULL; anp = anp->an_forw ) {
-		/*
-		 * pathlen-1 would index the leaf (a
-		 * solid), but the solid is implicit in "path"
-		 * so use pathlen-2 to index
-		 * the combination just above the leaf.
-		 */
-		register int i = anp->an_pathlen-2;
+		register int i = anp->an_pathlen-1;
 		register int j = pathp->fp_len-1;
 
 		if (rt_g.debug & DEBUG_ANIM) {
