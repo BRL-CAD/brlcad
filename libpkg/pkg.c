@@ -1119,6 +1119,7 @@ pkg_get(pc)
 register struct pkg_conn *pc;
 {
 	register int	len;
+	int		ret;
 
 	PKG_CK(pc);
 	if( pkg_debug )  {
@@ -1128,6 +1129,7 @@ register struct pkg_conn *pc;
 			pc );
 		fflush(pkg_debug);
 	}
+top:
 	if( pc->pkc_left < 0 )  {
 		if( pkg_gethdr( pc, (char *)0 ) < 0 )  return(-1);
 		/* Now pkc_left >= 0 */
@@ -1142,7 +1144,17 @@ register struct pkg_conn *pc;
 		pkg_checkin( pc, 0 );
 
 		len = pc->pkc_inend - pc->pkc_incur;	/* amt in input buf */
-		if( len > pc->pkc_left )  len = pc->pkc_left; /* amt wanted */
+		if( len > pc->pkc_left )  {
+			/* There is more in input buf than just this pkg */
+			if( pkg_debug )  {
+				pkg_timestamp();
+				fprintf( pkg_debug,
+					"pkg_get(pc=x%x) taking %d, %d more in buffer\n",
+					pc, pc->pkc_left, len-pc->pkc_left );
+				fflush(pkg_debug);
+			}
+			len = pc->pkc_left; /* trim to amt needed */
+		}
 		if( len > 0 )  {
 			bcopy( &pc->pkc_inbuf[pc->pkc_incur],
 				pc->pkc_curpos, len );
@@ -1155,7 +1167,12 @@ register struct pkg_conn *pc;
 	}
 
 	/* Now, pkc_left == 0, dispatch the message */
-	return( pkg_dispatch(pc) );
+	ret = pkg_dispatch(pc);
+	if( ret <= 0 )  return(ret);		/* something bad happened */
+
+	len = pc->pkc_inend - pc->pkc_incur;	/* amt in input buf */
+	if( len >= sizeof(struct pkg_header) )  goto top;
+	return( 1 );				/* user handler called */
 }
 
 /*
@@ -1300,7 +1317,7 @@ register struct pkg_conn *pc;
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_block( pc=x%x )\n",
+			"pkg_block(pc=x%x)\n",
 			pc );
 		fflush(pkg_debug);
 	}
@@ -1587,6 +1604,13 @@ register struct pkg_conn	*pc;
 		got = avail;
 	}
 	pc->pkc_inend += got;
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_suckin(pc=x%x) incur=%d, inend=%d, inlen=%d\n",
+			pc, pc->pkc_incur, pc->pkc_inend, pc->pkc_inlen );
+		fflush(pkg_debug);
+	}
 	return(1);
 }
 
