@@ -866,18 +866,23 @@ set -S2 "/bin/sh"
 #endif
 
 #ifdef ardent
-/* Ardent/Stardent. This configuration information is based on a preliminary test */
+/* Ardent/Stardent.  "Titan 1" from Kubota Pacific */
+/* This configuration information is based on a preliminary test */
 #	undef	ard
 #	define	MTYPE	ard
 /*	The network code is not tested with BRL-CAD yet */
-#	define	HAS_TCP	0
+#	define	HAS_TCP	1
 #	define	LIBRT_TIMER	timerunix
 /*	Note that -O2 causes multiple compiler failures */
-#	define	OPTIMIZER	-O1
+#	define	BSD	43
+#	define	CC_OPTS	-43
+#	define	LD_OPTS	-43
+/*#	define	OPTIMIZER	-O1*/
+#	define	OPTIMIZER	-g
 /*	Note that a cc -43 option gives a workable BSD environment */
-#	define	LIBFB_CONFIG	-DIF_X
-#	define	LIBFB_OBJS	if_X
-#	define	LIBFB_LIBES	-L/usr/X11/lib -lX11
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X
+#	define	LIBFB_OBJS	if_remote if_X
+#	define	LIBFB_LIBES	LIBPKG -L/usr/X11/lib -lX11
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X
 #	define	MGED_LIBES	-L/usr/X11/lib -lX11
