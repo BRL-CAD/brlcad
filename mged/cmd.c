@@ -255,6 +255,7 @@ static struct cmdtab cmdtab[] = {
 	{"killtree", cmd_killtree},
 	{"knob", f_knob},
 	{"l", cmd_list},
+	{"lt", cmd_lt},
 	{"l_muves", f_l_muves},
 	{"labelvert", f_labelvert},
 	{"left",		bv_left},
@@ -3185,6 +3186,21 @@ cmd_list(ClientData	clientData,
 	} else {
 		return wdb_list_cmd(wdbp, interp, argc, argv);
 	}
+}
+
+/*
+ *			C M D _ L T
+ *
+ *  List object information in a tcl list. The
+ *  tcl list is a list of {op obj} pairs.
+ */
+int
+cmd_lt(ClientData	clientData,
+       Tcl_Interp	*interp,
+       int		argc,
+       char		**argv)
+{
+	return wdb_lt_cmd(wdbp, interp, argc, argv);
 }
 
 /*

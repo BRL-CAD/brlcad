@@ -230,6 +230,7 @@ static int wdb_nmg_collapse_tcl();
 static int wdb_nmg_simplify_tcl();
 static int wdb_summary_tcl();
 static int wdb_pathlist_tcl();
+static int wdb_lt_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -280,6 +281,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"l",		wdb_list_tcl},
 	{"listeval",	wdb_pathsum_tcl},
 	{"ls",		wdb_ls_tcl},
+	{"lt",		wdb_lt_tcl},
 	{"make_bb",	wdb_make_bb_tcl},
 	{"make_name",	wdb_make_name_tcl},
 	{"match",	wdb_match_tcl},
@@ -1640,13 +1642,13 @@ wdb_list_cmd(struct rt_wdb	*wdbp,
 	     int		argc,
 	     char 		**argv)
 {
-	register struct directory *dp;
-	register int arg;
-	struct bu_vls str;
-	int id;
-	int recurse = 0;
-	char *listeval = "listeval";
-	struct rt_db_internal intern;
+	register struct directory	*dp;
+	register int			arg;
+	struct bu_vls			str;
+	int				id;
+	int				recurse = 0;
+	char				*listeval = "listeval";
+	struct rt_db_internal		intern;
 
 	if (argc < 2 || MAXARGS < argc) {
 		struct bu_vls vls;
@@ -4159,6 +4161,124 @@ wdb_title_tcl(ClientData	clientData,
 	return wdb_title_cmd(wdbp, interp, argc-1, argv+1);
 }
 
+static int
+wdb_list_children(struct rt_wdb		*wdbp,
+		  Tcl_Interp		*interp,
+		  register struct directory *dp)
+{
+	register int			i;
+	struct rt_db_internal		intern;
+	struct rt_comb_internal		*comb;
+
+	if (!(dp->d_flags & DIR_COMB))
+		return TCL_OK;
+
+	if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
+		return TCL_ERROR;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+	if (comb->tree) {
+		struct bu_vls vls;
+		int node_count;
+		int actual_count;
+		struct rt_tree_array *rt_tree_array;
+
+		if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+			db_non_union_push(comb->tree, &rt_uniresource);
+			if (db_ck_v4gift_tree(comb->tree) < 0) {
+				Tcl_AppendResult(interp, "Cannot flatten tree for listing", (char *)NULL);
+				return TCL_ERROR;
+			}
+		}
+		node_count = db_tree_nleaves(comb->tree);
+		if (node_count > 0) {
+			rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
+									   sizeof( struct rt_tree_array ), "tree list" );
+			actual_count = (struct rt_tree_array *)db_flatten_tree(
+				rt_tree_array, comb->tree, OP_UNION,
+				1, &rt_uniresource ) - rt_tree_array;
+			BU_ASSERT_PTR( actual_count, ==, node_count );
+			comb->tree = TREE_NULL;
+		} else {
+			actual_count = 0;
+			rt_tree_array = NULL;
+		}
+
+		bu_vls_init(&vls);
+		for (i=0 ; i<actual_count ; i++) {
+			char op;
+
+			switch (rt_tree_array[i].tl_op) {
+			case OP_UNION:
+				op = 'u';
+				break;
+			case OP_INTERSECT:
+				op = '+';
+				break;
+			case OP_SUBTRACT:
+				op = '-';
+				break;
+			default:
+				op = '?';
+				break;
+			}
+
+			bu_vls_printf(&vls, "{%c %s} ", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
+			db_free_tree( rt_tree_array[i].tl_tree, &rt_uniresource );
+		}
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
+		bu_vls_free(&vls);
+
+		if (rt_tree_array)
+			bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
+	}
+	rt_db_free_internal(&intern, &rt_uniresource);
+
+	return TCL_OK;
+}
+
+int
+wdb_lt_cmd(struct rt_wdb	*wdbp,
+	   Tcl_Interp		*interp,
+	   int			argc,
+	   char 		**argv)
+{
+	register struct directory	*dp;
+	struct bu_vls			vls;
+
+	if (argc != 2)
+		goto bad;
+
+	if ((dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
+		goto bad;
+
+	return wdb_list_children(wdbp, interp, dp);
+
+ bad:
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib wdb_lt");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+}
+
+/*
+ * Usage:
+ *        procname lt object
+ */
+static int
+wdb_lt_tcl(ClientData	clientData,
+	   Tcl_Interp	*interp,
+	   int     	argc,
+	   char    	**argv)
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_lt_cmd(wdbp, interp, argc-1, argv+1);
+}
+
 /*
  *			W D B _ P R I N T _ N O D E
  *
@@ -4215,7 +4335,7 @@ wdb_print_node(struct rt_wdb		*wdbp,
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-	if (comb->tree){
+	if (comb->tree) {
 		int node_count;
 		int actual_count;
 		struct rt_tree_array *rt_tree_array;
