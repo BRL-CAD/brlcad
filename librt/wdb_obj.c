@@ -3112,7 +3112,7 @@ wdb_dir_add(register struct db_i	*input_dbip,
 		Tcl_AppendResult(dasp->interp,
 				 "mged_dir_add: Duplicate of '",
 				 loc2, "' given new name '",
-				 local, "'\nYou should have used the 'dup' command to detect this,\nand then specified a prefix for the 'dbconcat' command.\n");
+				 local, "'\nYou should have used the 'dup' command to detect this,\nand then specified a prefix for the 'dbconcat' command.\n", (char *)NULL );
 	}
 
 	/* First, register this object in input database */
