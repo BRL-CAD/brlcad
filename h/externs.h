@@ -67,6 +67,7 @@ extern int	nice();
 extern int	open();
 extern int	pipe();
 extern int	read();
+extern char	*sbrk();
 extern unsigned	sleep();
 extern void	sync();
 extern int	unlink();
