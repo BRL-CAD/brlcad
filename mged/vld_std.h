@@ -75,8 +75,10 @@ typedef char	*pointer;		/* generic pointer */
 					/* log of e to the base 10 */
 #define PHI	1.618033988749894848204586834365638117720309180
 					/* golden ratio */
+#if !defined(PI)	/* sometimes found in math.h */
 #define PI	3.14159265358979323846264338327950288419716939937511
 					/* ratio of circumf. to diam. */
+#endif
 
 /* Useful macros */
 
