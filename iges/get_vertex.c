@@ -47,13 +47,13 @@ struct iges_edge_use *edge;
 	edge_index = edge->index-1;
 	if( edge->orient )
 	{
-		vert_de = e_list->i_edge[edge_index].end_vert_de;
-		vert_index = e_list->i_edge[edge->index-1].end_vert_index - 1;
+		vert_de = e_list->i_edge[edge_index].start_vert_de;
+		vert_index = e_list->i_edge[edge->index-1].start_vert_index - 1;
 	}
 	else
 	{
-		vert_de = e_list->i_edge[edge_index].start_vert_de;
-		vert_index = e_list->i_edge[edge->index-1].start_vert_index - 1;
+		vert_de = e_list->i_edge[edge_index].end_vert_de;
+		vert_index = e_list->i_edge[edge->index-1].end_vert_index - 1;
 	}
 
 	if( (v_list = Get_vertex_list( vert_de )) == NULL )
