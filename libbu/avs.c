@@ -105,25 +105,31 @@ const char	*value;
 
 	BU_CK_AVS(avsp);
 
-	for( BU_AVS_FOR(app, avsp) )  {
-		if( strcmp( app->name, attribute ) != 0 )  continue;
-		if( app->value && AVS_IS_FREEABLE(avsp, app->value) )
-			bu_free( (genptr_t)app->value, "app->value" );
-		if( value )
-			app->value = bu_strdup( value );
-		else
-			app->value = (char *)NULL;
-		return 1;
+	if( avsp->count ) {
+		for( BU_AVS_FOR(app, avsp) )  {
+			if( strcmp( app->name, attribute ) != 0 )  continue;
+			if( app->value && AVS_IS_FREEABLE(avsp, app->value) )
+				bu_free( (genptr_t)app->value, "app->value" );
+			if( value )
+				app->value = bu_strdup( value );
+			else
+				app->value = (char *)NULL;
+			return 1;
+		}
 	}
 
 	if( avsp->count >= avsp->max )  {
 		/* Allocate more space first */
-		avsp->max *= 4;
-		avsp->avp = (struct bu_attribute_value_pair *)bu_realloc(
-			avsp->avp,
-			avsp->max *
-			sizeof(struct bu_attribute_value_pair),
-			"attribute_value_pair.avp[] (add)" );
+		avsp->max += 4;
+		if( avsp->avp ) {
+			avsp->avp = (struct bu_attribute_value_pair *)bu_realloc(
+			  avsp->avp,  avsp->max * sizeof(struct bu_attribute_value_pair),
+				"attribute_value_pair.avp[] (add)" );
+		} else {
+			avsp->avp = (struct bu_attribute_value_pair *)bu_malloc(
+				avsp->max * sizeof(struct bu_attribute_value_pair ),
+			       "attribute_value_pair.avp[] (add)" );
+		}
 	}
 
 	app = &avsp->avp[avsp->count++];
@@ -163,8 +169,10 @@ bu_avs_merge( struct bu_attribute_value_set *dest, const struct bu_attribute_val
 	BU_CK_AVS(dest);
 	BU_CK_AVS(src);
 
-	for( BU_AVS_FOR( app, src ) )  {
-		(void)bu_avs_add( dest, app->name, app->value );
+	if( src->count ) {
+		for( BU_AVS_FOR( app, src ) )  {
+			(void)bu_avs_add( dest, app->name, app->value );
+		}
 	}
 }
 
@@ -204,23 +212,25 @@ const char	*attribute;
 
 	BU_CK_AVS(avsp);
 
-	for( BU_AVS_FOR(app, avsp) )  {
-		if( strcmp( app->name, attribute ) != 0 )  continue;
-		if( AVS_IS_FREEABLE( avsp, app->name ) )
-			bu_free( (genptr_t)app->name, "app->name" );
-		app->name = NULL;	/* sanity */
-		if( AVS_IS_FREEABLE( avsp, app->value ) )
-			bu_free( (genptr_t)app->value, "app->value" );
-		app->value = NULL;	/* sanity */
-
-		/* Move last one down to replace it */
-		epp = &avsp->avp[avsp->count--];
-		if( app != epp )  {
-			*app = *epp;		/* struct copy */
+	if( avsp->count ) {
+		for( BU_AVS_FOR(app, avsp) )  {
+			if( strcmp( app->name, attribute ) != 0 )  continue;
+			if( AVS_IS_FREEABLE( avsp, app->name ) )
+				bu_free( (genptr_t)app->name, "app->name" );
+			app->name = NULL;	/* sanity */
+			if( AVS_IS_FREEABLE( avsp, app->value ) )
+				bu_free( (genptr_t)app->value, "app->value" );
+			app->value = NULL;	/* sanity */
+			
+			/* Move last one down to replace it */
+			epp = &avsp->avp[avsp->count--];
+			if( app != epp )  {
+				*app = *epp;		/* struct copy */
+			}
+			epp->name = NULL;			/* sanity */
+			epp->value = NULL;
+			return 0;
 		}
-		epp->name = NULL;			/* sanity */
-		epp->value = NULL;
-		return 0;
 	}
 	return -1;
 }
@@ -238,13 +248,15 @@ bu_avs_free( struct bu_attribute_value_set *avsp )
 	if( avsp->max < 1 )
 		return;
 
-	for( BU_AVS_FOR(app, avsp) )  {
-		if( AVS_IS_FREEABLE( avsp, app->name ) )
-			bu_free( (genptr_t)app->name, "app->name" );
-		app->name = NULL;	/* sanity */
-		if( app->value && AVS_IS_FREEABLE( avsp, app->value ) )
-			bu_free( (genptr_t)app->value, "app->value" );
-		app->value = NULL;	/* sanity */
+	if( avsp->count ) {
+		for( BU_AVS_FOR(app, avsp) )  {
+			if( AVS_IS_FREEABLE( avsp, app->name ) )
+				bu_free( (genptr_t)app->name, "app->name" );
+			app->name = NULL;	/* sanity */
+			if( app->value && AVS_IS_FREEABLE( avsp, app->value ) )
+				bu_free( (genptr_t)app->value, "app->value" );
+			app->value = NULL;	/* sanity */
+		}
 	}
 	bu_free( (genptr_t)avsp->avp, "bu_avs_free avsp->avp" );
 }
