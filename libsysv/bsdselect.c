@@ -34,6 +34,11 @@
 #	include <sys/timeval.h>
 #endif
 
+#if defined(__sgi)
+#		include <sys/types.h>
+#		include <sys/time.h>
+#endif
+
 #ifdef FD_SET
 /* The 4.3 BSD version */
 bsdselect( readfds, sec, us )
@@ -66,7 +71,7 @@ long readfds;
 bsdselect( readfds, sec, us )
 long readfds;
 {
-#if defined(BSD) || defined(sgi) || defined(stellar) || defined(CRAY)
+#if defined(BSD) || defined(sgi) || defined(stellar) || defined(CRAY) || defined(__sgi)
 	struct timeval tv;
 	int	ret;
 	long	mask;
