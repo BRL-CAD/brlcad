@@ -23,14 +23,14 @@ then
 		echo ...found NFS build
 		RT=../.rt.$MACHINE/rt
 		if test x${DB} != x ; then DB=../.db.$MACHINE ; fi
-		LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
+		LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.liboptical.$MACHINE:../.libitcl3.2.$MACHINE:../.libtcl8.3.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
 	# check for local build
 	elif test -f ../rt/rt
 	then
 		echo ...found local build
 		RT=../rt/rt
 		if test x${DB} != x ; then DB=../db ; fi
-		LD_LIBRARY_PATH=../libbu:../libbn:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
+		LD_LIBRARY_PATH=../libbu:../libbn:../liboptical:../libitcl3.2:../libtcl8.3:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
 	fi
 fi
 
@@ -45,13 +45,13 @@ then
 	then 
 		echo ...found NFS build
 		DB=../.db.$MACHINE
-		LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
+		LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.liboptical.$MACHINE:../.libitcl3.2.$MACHINE:../.libtcl8.3.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
 	# check for local build
 	elif test -f ../db/sphflake.g
 	then
 		echo ...found local build
 		DB=../db
-		LD_LIBRARY_PATH=../libbu:../libbn:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
+		LD_LIBRARY_PATH=../libbu:../libbn:../liboptical:../libitcl3.2:../libtcl8.3:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
 	fi
 
 fi
