@@ -22,9 +22,7 @@
  *      in all countries except the USA.  All rights reserved.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 #include <math.h>

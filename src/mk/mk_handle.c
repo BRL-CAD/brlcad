@@ -11,9 +11,7 @@
 /*  will be centered at (0,0,0) and the height of the handle  */
 /*  will extend in the positive z-direction.  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

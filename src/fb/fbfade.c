@@ -47,9 +47,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 	"\t[ -h ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
 #define	OPTSTR	"f:F:hn:N:s:S:w:W:"
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

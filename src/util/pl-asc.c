@@ -21,9 +21,7 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 
@@ -35,9 +33,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <unistd.h>
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 #include "machine.h"

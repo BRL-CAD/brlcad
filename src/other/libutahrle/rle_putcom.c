@@ -25,11 +25,7 @@
  * Copyright (c) 1987, University of Utah
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-
+#include "common.h"
 
 #include <stdio.h>
 

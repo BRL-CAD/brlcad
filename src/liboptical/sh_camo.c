@@ -12,9 +12,7 @@
  *	t1 <= N < t2		 c2
  *	t2 <= N <= 1		 c3
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

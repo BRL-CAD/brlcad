@@ -14,9 +14,7 @@
 static const char RCSid[] = "@(#) glob.c 2.2, modified 1/5/87 at 16:57:29, archive /vld/moss/src/fbed/s.glob.c";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

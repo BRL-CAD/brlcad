@@ -11,9 +11,7 @@
  *   Cliff Hathaway, University of Arizona Computer Science Dept. 082790
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #include <stdio.h>
 

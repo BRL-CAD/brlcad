@@ -5,9 +5,7 @@
 static const char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

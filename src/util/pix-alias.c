@@ -27,9 +27,7 @@
  *	Run length of 0 seems to be meaningless.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

@@ -26,9 +26,7 @@
  * The U.S. Army Research Laboratory
  * Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

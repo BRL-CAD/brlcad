@@ -10,9 +10,7 @@
  *
  *  Phil Dykstra - 5 Nov 85.
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

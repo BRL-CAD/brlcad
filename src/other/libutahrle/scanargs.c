@@ -40,9 +40,7 @@
  *  to have all "void" functions so declared.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

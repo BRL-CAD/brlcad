@@ -26,9 +26,7 @@
 static const char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

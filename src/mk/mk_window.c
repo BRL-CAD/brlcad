@@ -10,9 +10,7 @@
 /*  four cylinders.  The front of the window is centered at (0,0,0)  */
 /*  and extends in the negative x-direction the depth of the window.  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

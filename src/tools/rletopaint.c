@@ -41,9 +41,7 @@
  * as the two formats number their scanlines oppositely.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

@@ -23,9 +23,7 @@
  * homogeneous points (i.e. [XYZW]) then divide out the W first.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

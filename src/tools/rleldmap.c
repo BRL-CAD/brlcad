@@ -25,9 +25,7 @@
  * Copyright (c) 1986, Spencer W. Thomas
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

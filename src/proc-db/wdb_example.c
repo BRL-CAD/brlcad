@@ -9,9 +9,7 @@
  *  This constrains the arguments to the mk_* routines to also be in 
  *  millimeters.
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

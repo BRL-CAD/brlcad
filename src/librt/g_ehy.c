@@ -141,9 +141,7 @@
 static const char RCSehy[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

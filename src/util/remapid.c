@@ -29,9 +29,7 @@
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -101,9 +99,7 @@ extern BU_FILE			bu_iob[1];
  */
 static const char RCSrtstring[] = "@(#)$Header$ (BRL)";
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #include <stdio.h>
 #include <ctype.h>

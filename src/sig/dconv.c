@@ -11,9 +11,7 @@
  *  are thrown away, while the last M-1 points of each input section
  *  are saved for the next xform.
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

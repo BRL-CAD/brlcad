@@ -21,9 +21,7 @@
 /* |   don't try to make money off it, or pretend that you wrote it.  | */
 /* +------------------------------------------------------------------+ */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

@@ -25,9 +25,7 @@
 static const char RCSid[] = "$Header$";
 static const char RCSrev[] = "$Revision$";
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

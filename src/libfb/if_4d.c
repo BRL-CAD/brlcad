@@ -46,9 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define class	inv_class	/* Map Irix 4 name into Irix 5 name */
 #define type	inv_type	/* Map Irix 4 name into Irix 5 name */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

@@ -20,9 +20,7 @@
 static const char RCSid[] = "@(#)$Header";
 #endif
  
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #include <stdio.h>
 #ifdef USE_STRING_H

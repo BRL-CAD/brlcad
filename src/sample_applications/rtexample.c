@@ -5,9 +5,7 @@
  *
  *    cc -I/usr/include/brlcad -o rtexample rtexample.c librt.a -lm
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

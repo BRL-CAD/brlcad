@@ -3,9 +3,7 @@
  *	Currently builds "wood frame" walls for typical building constructs.
  *	
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

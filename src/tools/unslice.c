@@ -21,9 +21,7 @@
  * are thrown away.  The maximum y of the image must be specified this way.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #include <stdio.h>
 

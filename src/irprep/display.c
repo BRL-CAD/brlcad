@@ -37,9 +37,7 @@
 /*	12 March 1992	 - Add some comments.  */
 /*	30 September 1994- Changed references to see to ir-X.  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

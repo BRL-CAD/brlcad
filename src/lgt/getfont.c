@@ -14,9 +14,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 	getfont.c - Load a new font by reading in the header and directory.
  */ 
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

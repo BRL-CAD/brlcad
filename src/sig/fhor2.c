@@ -4,9 +4,7 @@
  *  given at the same resolution as the screen.
  *  No lines need to be drawn, nor intersection computed!
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

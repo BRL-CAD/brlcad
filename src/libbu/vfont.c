@@ -22,9 +22,7 @@
 static const char libbu_vfont_RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

@@ -27,9 +27,7 @@
  * paper we can use a one dimensional array for the ah.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

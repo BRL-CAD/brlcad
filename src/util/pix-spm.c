@@ -6,9 +6,7 @@
  *  Phil Dykstra
  *  12 Aug 1986
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

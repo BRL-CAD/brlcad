@@ -45,9 +45,7 @@
  * pic.[000-100].[rgb]    :  cat pic.* | rawtorle -w ... -h ... -n 3 -s -r 
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

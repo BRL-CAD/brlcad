@@ -49,9 +49,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define	USAGE	"gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]"
 #define	OPTSTR	"F:ci:ovz"
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

@@ -23,9 +23,7 @@
  *   shifting and masking on the fly would way slow down critical loops.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

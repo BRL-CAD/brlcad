@@ -21,9 +21,7 @@
  */
 static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

@@ -1306,10 +1306,12 @@ AC_CONFIG_FILES([
 	src/other/libtcl/doc/Makefile
 	src/other/libtcl/generic/Makefile
 	src/other/libtcl/unix/Makefile
+	src/other/libtcl/unix/tclConfig.sh
 	src/other/libtk/Makefile
 	src/other/libtk/doc/Makefile
 	src/other/libtk/generic/Makefile
 	src/other/libtk/unix/Makefile
+	src/other/libtk/unix/tkConfig.sh
 	src/other/libtkGLX/Makefile
 	src/other/libutahrle/Makefile
 	src/other/libz/Makefile

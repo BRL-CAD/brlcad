@@ -17,9 +17,7 @@
 static const char RCSid[] = "@(#) fill_buf.c 2.1, modified 12/9/86 at 15:55:48, archive /vld/moss/src/fbed/s.fill_buf.c";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

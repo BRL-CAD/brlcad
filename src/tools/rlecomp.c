@@ -29,9 +29,7 @@
  *    SIGGRAPH 84, p.255.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

@@ -9,9 +9,7 @@
 /*  in mm.  The gas tank is composed of 3 arb8s, 8 spheres, and 12  */
 /*  cylinders.  The gas tank is solid and centered at (0,0,0).  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

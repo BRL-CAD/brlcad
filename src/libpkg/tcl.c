@@ -11,9 +11,7 @@
  * Author -
  *	Robert G. Parker
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 #include "tcl.h"

@@ -23,9 +23,7 @@
 static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

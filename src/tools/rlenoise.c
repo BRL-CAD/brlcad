@@ -19,9 +19,7 @@
  * Default is 4 (because that's what I needed.)
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

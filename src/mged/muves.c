@@ -2,9 +2,7 @@
  *	Routines to support viewing of BRL-CAD models by using MUVES
  *	component/system names
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

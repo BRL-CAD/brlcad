@@ -22,9 +22,7 @@
 static char const libbu_rb_delete_RCSid[] = "@(#) $Header$";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

@@ -11,9 +11,7 @@
  *	that will display the appropriate image on the framebuffer.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

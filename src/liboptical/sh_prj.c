@@ -8,9 +8,7 @@
  *	is far too anemic to support this sort of shader.
  *
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

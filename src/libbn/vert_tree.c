@@ -24,9 +24,7 @@
 static const char bn_RCSvert_tree[] = "@(#)$Header$ (ARL)";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

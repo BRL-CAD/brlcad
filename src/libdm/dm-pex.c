@@ -28,9 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	(c).rgb.green = (g); \
 	(c).rgb.blue = (b);}
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 #include "tk.h"

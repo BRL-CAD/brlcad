@@ -6,9 +6,7 @@
  * Ref: "Procedural Elements for Computer Graphics,"
  *       D. F. Rogers.
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

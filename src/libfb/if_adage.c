@@ -35,9 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  * the user is responsible for changing them (zooming, etc),
  * and writing them to the FBC.
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

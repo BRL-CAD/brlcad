@@ -2,9 +2,7 @@
  *	S H _ T R E E T H E R M . C
  *
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

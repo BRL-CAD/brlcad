@@ -28,9 +28,7 @@
 static char rt_hf_RcSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

@@ -1,7 +1,5 @@
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #define PADCHR		~(1<<15)		/* non data value.*/
 

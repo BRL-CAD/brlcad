@@ -28,9 +28,7 @@
  *	font.src derived from NBS fonts.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

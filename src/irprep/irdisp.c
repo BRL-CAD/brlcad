@@ -6,9 +6,7 @@
 /*  model and/or diplay it using the PRISM temperature output file.  */
 
 /*  Include files.  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

@@ -31,9 +31,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
    just remove the x from xMeldung */
 #define xMELDUNG
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H

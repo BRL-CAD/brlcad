@@ -28,9 +28,7 @@
  * routines someday - this would run MUCH faster for sparse patches.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

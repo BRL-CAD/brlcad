@@ -36,9 +36,7 @@
  *				fact that fortran arrays start at one
  *				and not zero as with c.
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

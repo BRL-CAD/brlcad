@@ -4,9 +4,7 @@
  *  Average Magnitude Difference Function
  *  (Experimental: for pitch extraction)
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

@@ -13,9 +13,7 @@ static const char RCSid[] = "@(#)$Header$";
    Gets the termcap information and complains if there are not enough
    of the basic features on the particular terminal. */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 #include "./jove.h"

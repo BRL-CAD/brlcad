@@ -57,9 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define	_BSD_COMPAT
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

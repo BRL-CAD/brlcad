@@ -16,9 +16,7 @@
  *      This software is Copyright (C) 1986-2004 by the United States Army.
  *      All rights reserved.
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

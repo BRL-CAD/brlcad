@@ -25,9 +25,7 @@
  * Copyright (c) 1990, University of Michigan
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 

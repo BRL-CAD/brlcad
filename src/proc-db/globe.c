@@ -4,9 +4,7 @@
  * unified solid spherical object.  Kinda like an onion, not a cake, an onion.
  *
  */
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "common.h"
 
 
 
