@@ -381,8 +381,18 @@ union tree		*curtree;
 	/* Begin rt_bomb() protection */
 	if( ncpu == 1 && RT_SETJUMP )  {
 		/* Error, bail out */
+		RT_UNSETJUMP;		/* Relinquish the protection */
 		rt_log("bailed out via longjmp\n");
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
+		/*
+		 *  Eliminate whatever stuff is leftover.
+		 *  Basic routines should be sturdy enough that
+		 *  this can be done safely.  If it dumps core,
+		 *  well, that's worth knowing about.
+		 */
+		nmg_km(the_model);
+
+		/* Now, make a new, clean model structure for next pass. */
 		the_model = nmg_mm();	/* sanity -- ignore current memory */
 		return	curtree;
 	}
