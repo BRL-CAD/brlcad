@@ -17,20 +17,20 @@ the package for one location, then move it to another.  Be sure that
 	 	set path=($path /foobar/brlcad/bin)
 
 Compile:
-	% cd brlcad
+	% cd /foobar/brlcad
 	% sh setup.sh
 
 	The next step can take a considerable amount of time on some systems:
 	
 	sh:
-		% cake > cake.log 2>&1
+		make > make.log 2>&1
 	csh:
-		% cake >& cake.log
+		make >& make.log
 
 Install:
-	Review the log of compilation, then type:
+	Review the log of compilation, then run:
 
-		% cake install
+		make install
 
 This process should proceed without problems on the following systems:
 
@@ -38,8 +38,44 @@ This process should proceed without problems on the following systems:
 	FreeBSD 4.5
 	SunOS 5.8 (Solaris)
 	Irix 6.5
-	Mac OS X (With X11 server/libraries/headers installed)
+	Mac OS X (With X11 installed -- see notes below)
 
-For download instructions see:
+For binary and source download instructions see:
 
-	 http://ftp.arl.army.mil/brlcad
+		http://ftp.arl.army.mil/brlcad
+
+
+Max OS X Installation Notes:
+
+Being that this is the newest architecture to be added, there are some
+issues to keep in mind with the installation when building from source.
+First, XFree86 will need to be installed if you want a gui.  The XDarwin
+project will include the X11 libraries and headers necessary to properly
+build Tk (the only component that presently "requires" X) and may be
+found at:
+
+	http://www.xdarwin.org
+
+To build and install, the instructions above will all work with the
+exception of the "make install" step.  Run this instead:
+
+	cake install
+
+If the build and install fails for whatever reason (i.e. if after
+building and installing, mged doesn't start properly when you type 
+'mged"), then the system default Tcl library is most likely getting
+in the way.  You can temporarily move it out of the way by doing:
+
+	sudo mv /usr/lib/libtcl.dylib /usr/lib/libtcl.dylib.backup
+	sudo mv /usr/lib/libtcl8.3.dylib /usr/lib/libtcl8.3.dylib.backup
+	sudo mv /usr/lib/libtclstub8.3.a /usr/lib/libtclstub8.3.a.backup
+	sudo mv /System/Library/Tcl /System/Library/Tcl.backup
+
+Then you should be able to do:
+
+	cake clobber
+	cake
+	cake install
+
+Happy installation!
+
