@@ -36,8 +36,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define	DEFEDITOR	"/bin/ed"
 
-extern int	numargs;	/* number of args */
-
 static char	tmpfil[] = "/tmp/GED.aXXXXX";
 
 void writesolid(), readsolid();
