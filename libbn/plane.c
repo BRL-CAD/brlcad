@@ -622,8 +622,13 @@ rt_log("\thx=%g, hy=%g, det=%g, det1=%g, det2=%g\n", hx, hy, det, det1, (d[X] * 
 		rt_log("\tintersection, t = %g, u = %g\n", dist[0], dist[1] );
 	}
 
-	/*  To prevent errors, check the answer.
-	 *  Not returning bogus results to our caller is worth the extra time.
+#if 0
+	/* XXX This isn't any good.
+	 * 1)  Sometimes, dist[0] is very large.  Only caller can tell whether
+	 *     that is useful to him or not.
+	 * 2)  Sometimes, the difference between the two hit points is
+	 *     not much more than tol->dist.  Either hit point is perfectly
+	 *     good;  the caller just needs to be careful and not use *both*.
 	 */
 	{
 		point_t		hit1, hit2;
@@ -643,6 +648,7 @@ rt_log("\thx=%g, hy=%g, det=%g, det1=%g, det2=%g\n", hx, hy, det, det1, (d[X] * 
 			return -2;	/* s/b -1? */
 		}
 	}
+#endif
 
 	return 1;		/* Intersection found */
 }
