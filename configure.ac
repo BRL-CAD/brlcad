@@ -266,7 +266,6 @@ esac
 AC_SUBST(JAVA_CFLAGS)
 AC_SUBST(JAVA_LDFLAGS)
 
-
 # only build benchmark
 AC_MSG_CHECKING(whether to only build benchmark)
 only_benchmark=no
@@ -299,7 +298,21 @@ if test "x$warn_only_both" != "xno" ; then
 	AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
 fi
 
+
+# run-time debugging 
+dnl has aliases
+build_runtime_debug=yes
+AC_ARG_ENABLE(runtime-debug, AC_HELP_STRING(--disable-runtime-debug,
+		[disable runtime debug for performance (default=no)]),
+	[if test "x$enableval" = "xno" ; then
+		build_runtime_debug=no
+	elif test "x$enableval" = "xyes" ; then
+		build_runtime_debug=yes
+	fi]
+)
+
 # enable 64-bit builds
+dnl has aliases
 build_64bit=auto
 AC_ARG_ENABLE(64bit-build, AC_HELP_STRING(--enable-64bit-build,
 		[enable 64-bit compilation mode (default=auto)]),
@@ -369,7 +382,7 @@ AC_ARG_ENABLE(jove, AC_HELP_STRING(--enable-jove,
 AC_MSG_RESULT($use_jove)
 
 # optimized
-dnl optimized has alias(es)
+dnl optimized has aliases
 use_optimized=no
 AC_ARG_ENABLE(optimized, AC_HELP_STRING(--enable-optimized,
 		[enable optimized compilation (default=no)]),
@@ -379,7 +392,7 @@ AC_ARG_ENABLE(optimized, AC_HELP_STRING(--enable-optimized,
 )
 
 # warnings
-dnl warnings has alias(es)
+dnl warnings has aliases
 use_warnings=no
 AC_ARG_ENABLE(warnings, AC_HELP_STRING(--enable-warnings,
 		[enable verbose compilation warnings (default=no)]),
@@ -389,7 +402,7 @@ AC_ARG_ENABLE(warnings, AC_HELP_STRING(--enable-warnings,
 )
 
 # debug
-dnl debug has alias(es)
+dnl debug has aliases
 use_debug=yes
 AC_ARG_ENABLE(debug, AC_HELP_STRING(--disable-debug,
 		[disable debug symbols (default=no)]),
@@ -399,7 +412,7 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING(--disable-debug,
 )
 
 # profiling
-dnl profiling has alias(es)
+dnl profiling has aliases
 use_profiling=no
 AC_ARG_ENABLE(profiling, AC_HELP_STRING(--enable-profiling,
 		[enable profiling (default=no)]),
@@ -414,6 +427,29 @@ AC_ARG_ENABLE(profiling, AC_HELP_STRING(--enable-profiling,
 # they need to go below here in order for --help to consolidate the
 # blank line to exactly one line in the right place
 ###
+
+# run-time debugging
+AC_ARG_ENABLE(run-time-debug,,
+	[if test "x$enable_run_time_debug" = "xno" ; then
+		build_runtime_debug=no
+	elif test "x$enable_run_time_debug" = "xyes" ; then
+		build_runtime_debug=yes
+	fi]
+)
+AC_ARG_ENABLE(runtime-debugging,,
+	[if test "x$enable_run_time_debug" = "xno" ; then
+		build_runtime_debug=no
+	elif test "x$enable_run_time_debug" = "xyes" ; then
+		build_runtime_debug=yes
+	fi]
+)
+AC_ARG_ENABLE(run-time-debugging,,
+	[if test "x$enable_run_time_debug" = "xno" ; then
+		build_runtime_debug=no
+	elif test "x$enable_run_time_debug" = "xyes" ; then
+		build_runtime_debug=yes
+	fi]
+)
 
 # 64-bit compilation
 AC_ARG_ENABLE(64bit,,
@@ -1601,6 +1637,43 @@ AM_CONDITIONAL(JAVA, [test "x$with_java" != "xno"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$only_rts" != "xno"])
 
+
+dnl Any combination of the different optimizations listed below may individually be 
+dnl optionally turned off by commenting out the unwanted defines in the config file.
+dnl
+dnl NO_BOMBING_MACROS
+dnl      turns off many macros in h/bu.h and h/bn.h that check a condition (such as a
+dnl      magic number) and bu_bomb on failure.  note that turning this flag on will
+dnl      remove the debug capability to catch fatal runtime erros (bugs) and exit
+dnl      gracefully.
+dnl NO_MAGIC_CHECKING
+dnl      turns off allocation of (some) variables and calls to check magic numbers.
+dnl      note that this will hinder memory corrupting bug detection.
+dnl NO_BADRAY_CHECKING
+dnl      is a risky optimization to turn off checking in librt/shoot.c for bad rays 
+dnl      passed in to the expensive shootray() routine.
+dnl NO_DEBUG_CHECKING
+dnl      is an optimization that replaces instances of rt_g.debug in if statements 
+dnl      where checking for a debug level occurs (in order to output a debug message)
+dnl      with the integer constant 0.  note that turning this flag on will remove the
+dnl      capability to output debug messages and commands that take a debug-level args
+dnl      will not output as expected.  see h/raytrace.h for the implementation details.
+
+if test "x$build_runtime_debug" = "xno" ; then
+	AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+	AC_MSG_WARN([While disabling run-time debugging should increase])
+	AC_MSG_WARN([performance, it will likewise remove several])
+	AC_MSG_WARN([data-protection safeguards that are in place to])
+	AC_MSG_WARN([minimize the possibility of corrupted data files])
+	AC_MSG_WARN([in the inevitable event of a user encountering a bug.])
+	AC_MSG_WARN([You have been warned.  Proceed at your own risk.])
+	AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
+	AC_DEFINE(NO_BOMBING_MACROS, 1, [Define to not do anything for macros that only bomb on a fatal error])
+	AC_DEFINE(NO_MAGIC_CHECKING, 1, [Define to not perform magic number checking])
+	AC_DEFINE(NO_BADRAY_CHECKING, 1, [Define to not check for divide by zero during ray shots])
+	AC_DEFINE(NO_DEBUG_CHECKING, 1, [Define to not provide run-time debug facilities via rt_g.debug])
+fi
+
 dnl XXX - These defines are available but not presently necessary
 dnl CALTECH_MALLOC
 dnl DRAND
@@ -1998,7 +2071,7 @@ echo
 echo Java Developer Kit support ...........: $with_java
 echo X11 support ..........................: yes
 echo Open GL support ......................: yes
-echo Enable run-time debugging ............: yes
+echo Enable run-time debugging ............: $build_runtime_debug
 echo
 echo Build 64-bit release .................: $build_brlcad_64bit
 echo Build optimized release ..............: $use_optimized
