@@ -172,7 +172,7 @@ rt_comb_v5_serialize(
 		bcopy( tp->tr_l.tl_name, ssp->leafp, n );
 		ssp->leafp += n;
 
-		if( tp->tr_l.tl_mat )
+		if( tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat) )
 			mi = ssp->mat_num++;
 		else
 			mi = -1;
@@ -180,7 +180,7 @@ rt_comb_v5_serialize(
 		ssp->leafp = db5_encode_length( ssp->leafp, mi, ssp->wid );
 
 		/* Encoding of the matrix */
-		if( tp->tr_l.tl_mat )  {
+		if( mi > -1 )  {
 			htond( ssp->matp,
 				(const unsigned char *)tp->tr_l.tl_mat,
 				ELEMENTS_PER_MAT );
@@ -489,7 +489,10 @@ rt_comb_import5(
 
 			if( mi < 0 )  {
 				/* Signal identity matrix */
-				tp->tr_l.tl_mat = bn_mat_dup( mat );
+				if( bn_mat_is_identity( mat ) ) {
+					tp->tr_l.tl_mat = (matp_t)NULL;
+				} else
+					tp->tr_l.tl_mat = bn_mat_dup( mat );
 			} else {
 				mat_t diskmat;
 
@@ -501,6 +504,10 @@ rt_comb_import5(
 					&matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
 					ELEMENTS_PER_MAT);
 				bn_mat_mul( tp->tr_l.tl_mat, mat, diskmat );
+				if( bn_mat_is_identity( tp->tr_l.tl_mat ) ) {
+					bu_free( (char *)tp->tr_l.tl_mat,"tl_mat");
+					tp->tr_l.tl_mat = (matp_t)NULL;
+				}
 			}
 
 			if( comb->tree == TREE_NULL )  {
