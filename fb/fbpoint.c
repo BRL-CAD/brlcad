@@ -183,5 +183,6 @@ char **argv;
 
 	/* write final location on stdout */
 	fprintf( stdout, "%d %d\n", curX, curY );
-	exit( 0 );    
+	fb_close( fbp );
+	exit( 0 );
 }
