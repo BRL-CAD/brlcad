@@ -27,47 +27,65 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./screen.h"
 #include "./extern.h"
 extern void	rt_parallel();
-/* WARNING: These checks are still necessary in ARSes because of bug in LIBRT
-	which flips normals */
-#define Check_Iflip( _pp, _normal, _rdir, _stp )\
-	{	fastf_t	f;\
+
+#ifndef FLIPPED_NORMALS_BUG
+#define FLIPPED_NORMALS_BUG	FALSE /* Keep an eye out for dark spots. */
+#endif
+#define Fix_Iflip( _pp, _normal, _rdir, _stp )\
+	{\
 	if( _pp->pt_inflip )\
 		{\
-		ScaleVec( _normal, -1.0 );\
+		VREVERSE( _normal, _normal );\
 		_pp->pt_inflip = 0;\
 		}\
-	f = Dot( _rdir, _normal );\
+	Check_Iflip( _pp, _normal, _rdir, _stp );\
+	}
+
+#if FLIPPED_NORMALS_BUG
+#define Check_Iflip( _pp, _normal, _rdir, _stp )\
+	{ fastf_t	f = Dot( _rdir, _normal );\
 	if( f >= 0.0 )\
 		{\
 		if( ! _pp->pt_inflip && (rt_g.debug&DEBUG_NORML) )\
 			{\
-			V_Print( "Fixed flipped entry normal, was", _normal, rt_log );\
+			V_Print( "Fixed flipped entry normal, was",\
+				_normal, rt_log );\
 			rt_log( "Solid type %d\n", _stp->st_id );\
 			}\
-		ScaleVec( _normal, -1.0 );\
+		VREVERSE( _normal, _normal );\
 		}\
 	}
+#else
+#define Check_Iflip( _pp, _normal, _rdir, _stp )	;
+#endif
 
-/* WARNING: These checks are still necessary in ARSes because of bug in LIBRT
-	which flips normals */
-#define Check_Oflip( _pp, _normal, _rdir, _stp )\
-	{	fastf_t	f;\
+#define Fix_Oflip( _pp, _normal, _rdir, _stp )\
+	{\
 	if( _pp->pt_outflip )\
 		{\
-		ScaleVec( _normal, -1.0 );\
+		VREVERSE( _normal, _normal );\
 		_pp->pt_outflip = 0;\
 		}\
-	f = Dot( _rdir, _normal );\
+	Check_Oflip( _pp, _normal, _rdir, _stp );\
+	}
+
+#if FLIPPED_NORMALS_BUG
+#define Check_Oflip( _pp, _normal, _rdir, _stp )\
+	{	fastf_t	f = Dot( _rdir, _normal );\
 	if( f <= 0.0 )\
 		{\
 		if( ! _pp->pt_outflip && (rt_g.debug&DEBUG_NORML) )\
 			{\
-			V_Print( "Fixed flipped exit normal, was", _normal, rt_log );\
+			V_Print( "Fixed flipped exit normal, was",\
+				_normal, rt_log );\
 			rt_log( "Solid type %d\n", _stp->st_id );\
 			}\
-		ScaleVec( _normal, -1.0 );\
+		VREVERSE( _normal, _normal );\
 		}\
 	}
+#else
+#define Check_Oflip( _pp, _normal, _rdir, _stp )	;
+#endif
 
 #define TWO_PI		6.28318530717958647692528676655900576839433879875022
 #define RI_AIR		1.0	/* Refractive index of air.		*/
@@ -175,7 +193,7 @@ void	abort_RT();
 #endif
 
 
-#ifdef cray
+#if defined( cray ) && 0
 #define BYTE_OFFSET(p)	(((long)(p)&0xE000000000000000)>>61)
 #define WORD_ADDR(p)	((long)(p)&0xFFFFFF)
 /* Work around for loop-optimization bug.				*/
@@ -370,7 +388,7 @@ int	cpu;
 					{ /* Parallel rays emanating from grid.	*/
 					Add2Vec( grid_loc, grid_y_inc, aim_pt );
 					Add2Vec( aim_pt, grid_x_inc, a.a_ray.r_pt );
-					Scale2Vec( lgts[0].dir, -1.0, a.a_ray.r_dir );
+					VREVERSE( a.a_ray.r_dir, lgts[0].dir );
 					}
 				else	
 				/* Fire a ray at model from the zeroth point-light-
@@ -445,6 +463,7 @@ struct partition *pt_headp;
 	else
 		{
 		RT_HIT_NORM( ihitp, stp, rp );
+		Fix_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, stp );
 		}
 	prnt_Scroll(	"Hit region \"%s\"\n", regp->reg_name );
 	prnt_Scroll(	"\timpact point: <%8.2f,%8.2f,%8.2f>\n",
@@ -502,7 +521,7 @@ struct partition *pt_headp;
 	stp = pp->pt_inseg->seg_stp;
 	ihitp = pp->pt_inhit;
 	RT_HIT_NORM( ihitp, stp, &(ap->a_ray) );
-	Check_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, stp );
+	Fix_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, stp );
 	ap->a_color[RED] = (ihitp->hit_normal[X] + 1.0) / 2.0;
 	ap->a_color[GRN] = (ihitp->hit_normal[Y] + 1.0) / 2.0;
 	ap->a_color[BLU] = (ihitp->hit_normal[Z] + 1.0) / 2.0;
@@ -543,14 +562,14 @@ struct partition *pt_headp;
 	else
 		{
 		RT_HIT_NORM( ihitp, stp, rp );
+		Fix_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, stp );
 		}
-	Check_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, stp );
 #if 0
 	{	register struct hit	*ohitp;
 	stp = pp->pt_outseg->seg_stp;
 	ohitp = pp->pt_outhit;
 	RT_HIT_NORM( ohitp, stp, &(ap->a_ray) );
-	Check_Oflip( pp, ohitp->hit_normal, ap->a_ray.r_dir, stp );
+	Fix_Oflip( pp, ohitp->hit_normal, ap->a_ray.r_dir, stp );
 	}
 #endif
 
@@ -678,7 +697,7 @@ struct partition *pt_headp;
 		auto fastf_t	view_dir[3];
 
 	/* Calculate view direction.					*/
-	Scale2Vec( ap->a_ray.r_dir, -1.0, view_dir );
+	VREVERSE( view_dir, ap->a_ray.r_dir );
 
 	rgb_coefs[0] = rgb_coefs[1] = rgb_coefs[2] = 0.0;
 	if( (f = 1.0 - (entry->reflectivity + entry->transparency)) > 0.0 )
@@ -846,10 +865,12 @@ register struct partition	*pp;
 		rt_log( "\tmirror_Reflect: level %d grid <%d,%d>\n",
 			ap_hit.a_level, ap_hit.a_x, ap_hit.a_y
 			);
-		rt_log( "\t\tOne hit flag is %s\n", ap_hit.a_onehit ? "ON" : "OFF" );
+		rt_log( "\t\tOne hit flag is %s\n",
+			ap_hit.a_onehit ? "ON" : "OFF" );
 		}
 	/* Calculate reflected incident ray.				*/
-	Scale2Vec( ap->a_ray.r_dir, -1.0, r_dir );
+	VREVERSE( r_dir, ap->a_ray.r_dir );
+
 	{	fastf_t	f = 2.0	* Dot( r_dir, pp->pt_inhit->hit_normal );
 		fastf_t tmp_dir[3];
 	Scale2Vec( pp->pt_inhit->hit_normal, f, tmp_dir );
@@ -1136,11 +1157,12 @@ struct partition *pt_headp;
 	stp = pp->pt_outseg->seg_stp;
 	hitp = pp->pt_outhit;
 	RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
+	Fix_Oflip( pp, hitp->hit_normal, ap->a_ray.r_dir, stp );
 	VMOVE( ap->a_uvec, hitp->hit_normal );
 	VMOVE( ap->a_color, hitp->hit_point );
 	if( ! pp->pt_outflip )
 		{ /* For refraction, want exit normal to point inward.	*/
-		ScaleVec( ap->a_uvec, -1.0 );
+		VREVERSE( ap->a_uvec, ap->a_uvec );
 		}
 	return	1;
 	}
@@ -1191,7 +1213,7 @@ register fastf_t	*v_2;
 		{ /* Past critical angle, total reflection.
 			Calculate reflected (bounced) incident ray.
 		   */
-		Scale2Vec( v_1, -1.0, u );
+		VREVERSE( u, v_1 );
 		beta = 2.0 * Dot( u, norml );
 		Scale2Vec( norml, beta, w );
 		Diff2Vec( w, u, v_2 );
@@ -1240,7 +1262,9 @@ struct partition *pt_headp;
 		ostp = pp->pt_outseg->seg_stp;
 		ohitp = pp->pt_outhit;
 		RT_HIT_NORM( ihitp, istp, &(ap->a_ray) );
+		Fix_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, istp );
 		RT_HIT_NORM( ohitp, ostp, &(ap->a_ray) );
+		Fix_Oflip( pp, ohitp->hit_normal, ap->a_ray.r_dir, ostp );
 		V_Print( "entry normal", ihitp->hit_normal, rt_log );
 		V_Print( "entry point", ihitp->hit_point, rt_log );
 		rt_log( "partition[start %g end %g]\n",
@@ -1765,6 +1789,21 @@ RGBpixel			scanbuf[];
 	if( pix_buffered == B_LINE )
 		{
 		RES_ACQUIRE( &rt_g.res_stats );
+		if( strcmp( fb_file, "/dev/remote" ) == 0 )
+			{	char	ystr[5];
+			(void) sprintf( ystr, "%04d", ap->a_y );
+			if(	write( 1, ystr, 4 ) != 4
+			    ||	write(	1,
+					(char *)(scanbuf+x),
+					ct*sizeof(RGBpixel)
+					) != ct*sizeof(RGBpixel)
+				)
+				{
+				rt_log( "Write of scan line %d failed.\n", ap->a_y );
+				perror( "write" );
+				}
+			}
+		else
 		if( fb_write( fbiop, x, y, scanbuf+x, ct ) == -1 )
 			rt_log( "Write of scan line (%d) failed.\n", ap->a_y );
 		RES_RELEASE( &rt_g.res_stats );
