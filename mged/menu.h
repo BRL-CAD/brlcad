@@ -17,7 +17,9 @@
  */
 
 /*
- * shape of menu array cells
+ * If a menu is installed, menu_on is true, and menu_list is a pointer
+ * to an array of menu items.  The first ([0]) menu item is the title
+ * for the menu, and the remaining items are individual menu entries.
  */
 struct	menu_item  {
 	char	*menu_string;
@@ -25,22 +27,12 @@ struct	menu_item  {
 	int	menu_arg;
 };
 	
-/* defined in e11.c */
-extern int	menu_on;	/* (User || Programmer) controlled by MENU_ON();*/
-extern struct menu_item	*menu_list;	/* Pointer to the current menu list */
+/* defined in menu.c */
+extern int	menu_on;
+extern struct menu_item	*menu_list;	/* Pointer to current menu array */
 
-/*
- * Menu display on/off switch.
- *	TRUE prints the menu,
- *	FALSE removes the display and the ability to call menu functions.
- * Set dozoom to cause update this cycyle
- */
-#define	MENU_ON(setting)	menu_on = (setting);\
-				dmaflag = 1;
-				
-/*
- * Handing over the address of the menu list
- */
+#define MENU_NULL		((struct menu_item *)0)
+#define	MENU_ON(setting)	menu_on = (setting); dmaflag = 1;
 #define MENU_INSTALL(ptr)	menu_list = (ptr)
 
 /* Helpful macros.*/
