@@ -23,7 +23,6 @@ extern FILE *fd; /* file pointer for IGES file */
 extern FILE *fdout; /*file pointer for BRLCAD output file */
 extern struct iges_directory **dir; /* Directory array */
 extern struct reglist *regroot; /* list of regions created from solids of revolution */
-extern char *types[]; /* character strings of entity type names */
-extern int typecount[][2]; /* Count of how many entities of each type actually
+extern struct types typecount[]; /* Count of how many entities of each type actually
 				appear in the IGES file */
 extern char operator[]; /* characters representing operators: 'u', '+', and '-' */
