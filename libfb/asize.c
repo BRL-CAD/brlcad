@@ -3,9 +3,6 @@
  *
  * Image file AutoSizing code.
  *
- *  Currently #included by bw-fb, pix-fb, and others.
- *  Might want to go into a library (libfb?)
- *
  *  Author -
  *	Phil Dykstra
  *  
@@ -27,7 +24,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include <sys/stat.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
+/* This table does not need to include any square sizes */
 struct sizes {
 	int	width;		/* image width in pixels */
 	int	height;		/* image height in pixels */
@@ -55,13 +58,22 @@ struct sizes fb_common_sizes[] = {
 	{ 3072, 2048 },		/* Kodak Photo-CD, level 5, 16*Base */
 	{ 3200, 4000 },		/* 8x10 inches, 400 dpi */
 	{ 3400, 4400 },		/* 8.5x11 inches, 400 dpi */
+	{ 4700, 3300 },		/* A4 size, 11.75x8.25 inches, 400 dpi */
 	{    0,	   0 }
 };
 
 /*
  *			F B _ C O M M O N _ F I L E _ S I Z E
  *
- *  Returns non-zero if it finds a matching size
+ *  If the file name contains size information encoded in it,
+ *  then that size is returned, even if it differs from the actual
+ *  file dimensions.  (It might have been truncated).
+ *  Otherwise, the actual file size is passed to fb_common_image_size()
+ *  to see if this is a plausible image size.
+ *
+ *  Returns -
+ *	0	size unknown
+ *	1	width and height returned
  */
 int
 fb_common_file_size( widthp, heightp, filename, pixel_size )
@@ -72,9 +84,28 @@ int	pixel_size;		/* bytes per pixel */
 {
 	struct	stat	sbuf;
 	int	size;
+	register char	*cp;
+
+	*widthp = *heightp = 0;		/* sanity */
 
 	if( filename == NULL || *filename == '\0' )
 		return	0;
+
+	/* Skip over directory names, if any */
+	cp = strchr( filename, '/' );
+	if( cp )
+		cp++;			/* skip over slash */
+	else
+		cp = filename;		/* no slash */
+	/* File name may have several minus signs in it.  Try repeatedly */
+	while( *cp )  {
+		cp = strchr( cp, '-' );		/* Find a minus sign */
+		if( cp == NULL )  break;
+		if( sscanf(cp, "-w%d-n%d", widthp, heightp ) == 2 )
+			return 1;
+		cp++;				/* skip over the minus */
+	}
+
 	if( stat( filename, &sbuf ) < 0 )
 		return	0;
 
