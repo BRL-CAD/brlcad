@@ -78,6 +78,9 @@ in all countries except the USA.  All rights reserved.";
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
+/* defined in predictor.c */
+extern void predictor_init();
+
 /* defined in cmd.c */
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
@@ -91,7 +94,6 @@ extern struct _mged_variables default_mged_variables;
 int dm_pipe[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 int    update_views = 0;
-mat_t		ModelDelta;		/* Changes to Viewrot this frame */
 int		(*cmdline_hook)() = NULL;
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 jmp_buf	jmp_env;		/* For non-local gotos */
@@ -265,6 +267,11 @@ char **argv;
 	  BU_LIST_APPEND(&head_dm_list.l, &dlp->l);
 	  curr_dm_list = dlp;
 	}
+
+	/* initialize predictor stuff */
+	BU_LIST_INIT(&curr_dm_list->p_vlist);
+	predictor_init();
+
 	BU_GETSTRUCT(dmp, dm);
 	*dmp = dm_Null;
 	bu_vls_init(&pathName);
@@ -273,13 +280,13 @@ char **argv;
 	bu_vls_strcpy(&pathName, "nu");
 	bu_vls_strcpy(&tkName, "nu");
 	BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
-	mged_variables = default_mged_variables;
+	BU_GETSTRUCT(mged_variables, _mged_variables);
+        *mged_variables = default_mged_variables;
 	am_mode = AMM_IDLE;
 	rc = 1;
 	owner = 1;
 	frametime = 1;
 	adc_a1_deg = adc_a2_deg = 45.0;
-	last_v_axes = 2; /* center location */
 	curr_dm_list->s_info->opp = &pathName;
 	mged_view_init(curr_dm_list);
 	BU_GETSTRUCT(curr_dm_list->menu_vars, menu_vars);
@@ -1124,8 +1131,8 @@ int	non_blocking;
       char save_coords;
 
       curr_dm_list = edit_rate_mr_dm_list;
-      save_coords = mged_variables.coords;
-      mged_variables.coords = 'm';
+      save_coords = mged_variables->coords;
+      mged_variables->coords = 'm';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1147,7 +1154,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables.coords = save_coords;
+      mged_variables->coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1159,8 +1166,8 @@ int	non_blocking;
       char save_coords;
 
       curr_dm_list = edit_rate_or_dm_list;
-      save_coords = mged_variables.coords;
-      mged_variables.coords = 'o';
+      save_coords = mged_variables->coords;
+      mged_variables->coords = 'o';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1182,7 +1189,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables.coords = save_coords;
+      mged_variables->coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1194,8 +1201,8 @@ int	non_blocking;
       char save_coords;
 
       curr_dm_list = edit_rate_vr_dm_list;
-      save_coords = mged_variables.coords;
-      mged_variables.coords = 'v';
+      save_coords = mged_variables->coords;
+      mged_variables->coords = 'v';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1217,7 +1224,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables.coords = save_coords;
+      mged_variables->coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1229,8 +1236,8 @@ int	non_blocking;
       struct bu_vls vls;
 
       curr_dm_list = edit_rate_mt_dm_list;
-      save_coords = mged_variables.coords;
-      mged_variables.coords = 'm';
+      save_coords = mged_variables->coords;
+      mged_variables->coords = 'm';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1251,7 +1258,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables.coords = save_coords;
+      mged_variables->coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1263,8 +1270,8 @@ int	non_blocking;
       struct bu_vls vls;
 
       curr_dm_list = edit_rate_vt_dm_list;
-      save_coords = mged_variables.coords;
-      mged_variables.coords = 'v';
+      save_coords = mged_variables->coords;
+      mged_variables->coords = 'v';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1285,7 +1292,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables.coords = save_coords;
+      mged_variables->coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1318,7 +1325,7 @@ int	non_blocking;
 	edobj = save_edflag;
     }
 
-    for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    FOR_ALL_DISPLAYS(p, &head_dm_list.l){
       if(!p->_owner)
 	continue;
 
@@ -1419,7 +1426,7 @@ refresh()
   register int do_overlay = 1;
 
   save_dm_list = curr_dm_list;
-  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
     double	elapsed_time;
 
     /*
@@ -1438,24 +1445,23 @@ refresh()
 
 	/* XXX VR hack */
 	if( viewpoint_hook )  (*viewpoint_hook)();
-
-	rt_prep_timer();
-	elapsed_time = -1;		/* timer running */
-
-	dmp->dm_setWinBounds(dmp, windowbounds);
-
-	if( mged_variables.predictor )
-	  predictor_frame();
       }
 
+      if( mged_variables->predictor )
+	predictor_frame();
+
+      rt_prep_timer();
+      elapsed_time = -1;		/* timer running */
+
       dmp->dm_drawBegin(dmp);	/* update displaylist prolog */
+      dmp->dm_setWinBounds(dmp, windowbounds);
 
       if(dbip != DBI_NULL){
 	/*  Draw each solid in it's proper place on the screen
 	 *  by applying zoom, rotation, & translation.
 	 *  Calls dmp->dm_newrot() and dmp->dm_drawVList().
 	 */
-	if( mged_variables.eye_sep_dist <= 0 )  {
+	if( dmp->dm_stereo == 0 || mged_variables->eye_sep_dist <= 0 )  {
 	  /* Normal viewing */
 	  dozoom(0);
 	} else {
@@ -1468,7 +1474,7 @@ refresh()
 	dmp->dm_normal(dmp);
 
 	/* Compute and display angle/distance cursor */
-	if (mged_variables.adcflag)
+	if (mged_variables->adcflag)
 	  adcursor();
 
 	/* Display titles, etc., if desired */
@@ -1496,7 +1502,7 @@ refresh()
     }
   }
 
-  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) )
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l)
     p->s_info->_dmaflag = 0;
 
   curr_dm_list = save_dm_list;
@@ -1559,7 +1565,7 @@ int	exitcode;
 	(void)sprintf(place, "exit_status=%d", exitcode );
 	log_event( "CEASE", place );
 
-	for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
 	  curr_dm_list = p;
 
 	  dmp->dm_close(dmp);
@@ -1678,7 +1684,7 @@ new_edit_mats()
   struct dm_list *save_dm_list;
 
   save_dm_list = curr_dm_list;
-  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
     if(!p->_owner)
       continue;
 
