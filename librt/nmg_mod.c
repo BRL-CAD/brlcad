@@ -2587,6 +2587,152 @@ top:
 	return count;
 }
 
+/*	N M G _ G E T _ T O U C H I N G _ J A U N T S
+ *
+ * Create a table of EU's. Each EU will be the first EU in 
+ * a touching jaunt (edgeuses from vert A->B->A) where vertex B
+ * appears elswhere in the loopuse lu.
+ *
+ * returns:
+ *	count of touching jaunts found
+ *
+ * The passed pointer to an nmg_ptbl structure may
+ * not be initialized. If no touching jaunts are found,
+ * it will still not be initialized upon return (to avoid
+ * rt_malloc/rt_free pairs for loops with no touching
+ * jaunts. The flag (need_init) lets this routine know
+ * whether the ptbl structure has been initialized
+ */
+
+int
+nmg_get_touching_jaunts( lu, tbl, need_init )
+CONST struct loopuse *lu;
+struct nmg_ptbl *tbl;
+int *need_init;
+{
+	struct edgeuse *eu;
+	int count=0;
+
+	NMG_CK_LOOPUSE( lu );
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return( 0 );
+
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct edgeuse *eu2,*eu3;
+
+		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+		eu3 = RT_LIST_PNEXT_CIRC(edgeuse, &eu2->l);
+
+		/* If it's a 2 vertex crack, stop here */
+		if( eu->vu_p == eu3->vu_p )  break;
+
+		/* If not jaunt, move on */
+		if( eu->vu_p->v_p != eu3->vu_p->v_p )  continue;
+
+		/* It's a jaunt, see if tip touches same loop */
+		if( nmg_find_repeated_v_in_lu(eu2->vu_p) == (struct vertexuse *)NULL )
+			continue;
+
+		/* This is a touching jaunt, add it to the list */
+		if( *need_init )
+		{
+			nmg_tbl( tbl, TBL_INIT, (long *)NULL );
+			*need_init = 0;
+		}
+
+		nmg_tbl( tbl, TBL_INS, (long *)eu );
+		count++;
+	}
+
+	return( count );
+}
+
+static void
+nmg_check_proposed_loop( lu, start_eu, next_start_eu, visit_count, include_or_split, jaunt_tbl, jaunt_no )
+CONST struct loopuse *lu;
+struct edgeuse *start_eu;
+struct edgeuse **next_start_eu;
+int visit_count[];
+int include_or_split[];
+CONST struct nmg_ptbl *jaunt_tbl;
+CONST int jaunt_no;
+{
+	struct edgeuse *loop_eu;
+	struct edgeuse *last_eu;
+	int j;
+
+	NMG_CK_LOOPUSE( lu );
+	NMG_CK_EDGEUSE( start_eu );
+	NMG_CK_PTBL( jaunt_tbl );
+
+	/* Initialize the count */
+	for( j=0 ; j< NMG_TBL_END( jaunt_tbl ) ; j++ )
+		visit_count[j] = 0;
+
+	/* walk through the proposed new loop, updating the visit_count */
+	last_eu = NULL;
+	loop_eu = start_eu;
+	do
+	{
+		for( j=0 ; j<NMG_TBL_END( jaunt_tbl ) ; j++ )
+		{
+			struct edgeuse *jaunt_eu;
+
+			/* Don't worru about this jaunt */
+			if( j == jaunt_no )
+				continue;
+
+			jaunt_eu = (struct edgeuse *)NMG_TBL_GET( jaunt_tbl, j );
+			NMG_CK_EDGEUSE( jaunt_eu );
+
+			if( last_eu && last_eu == jaunt_eu && !include_or_split[j] )
+				include_or_split[j] = (-1);
+
+			/* if this loop_eu has its vertex at the apex of one of
+			 * the touching jaunts, increment the appropriate visit_count.
+			 */
+			if( loop_eu->vu_p->v_p == jaunt_eu->eumate_p->vu_p->v_p )
+				visit_count[j]++;
+		}
+		last_eu = loop_eu;
+		loop_eu = RT_LIST_PNEXT_CIRC(edgeuse, &loop_eu->l);
+	} while( loop_eu->vu_p->v_p != start_eu->vu_p->v_p );
+	*next_start_eu = loop_eu;
+
+	for( j=0 ; j<NMG_TBL_END( jaunt_tbl ) ; j++ )
+	{
+		if( include_or_split[j] == (-1) )
+		{
+			if( visit_count[j] > 1 )
+				include_or_split[j] = 1;
+			else
+				include_or_split[j] = 0;
+		}
+	}
+
+	/* if the first or last eu in the proposed loop is a jaunt eu, the proposed
+	 * loop will split the jaunt, so set its visit_count to 0.
+	 */
+	for( j=0 ; j<NMG_TBL_END( jaunt_tbl ) ; j++ )
+	{
+		struct edgeuse *jaunt_eu;
+		struct edgeuse *jaunt_eu2;
+
+		jaunt_eu = (struct edgeuse *)NMG_TBL_GET( jaunt_tbl, j );
+		jaunt_eu2 = RT_LIST_PNEXT_CIRC( edgeuse, &jaunt_eu->l );
+
+		if( last_eu == jaunt_eu || start_eu == jaunt_eu2 )
+		{
+			visit_count[j] = 0;
+			include_or_split[j] = 1;
+		}
+	}
+
+	return;
+}
+
 /*
  *			N M G _ L O O P _ S P L I T _ A T _ T O U C H I N G _ J A U N T
  *
@@ -2605,53 +2751,159 @@ nmg_loop_split_at_touching_jaunt(lu, tol)
 struct loopuse		*lu;
 CONST struct rt_tol	*tol;
 {
+	struct nmg_ptbl		jaunt_tbl;
+	struct loopuse		*new_lu;
 	struct edgeuse		*eu;
-	int			count = 0;
+	struct edgeuse		*eu2;
+	int			count=0;
+	int			jaunt_count;
+	int			jaunt_no;
+	int			need_init=1;
+	int			*visit_count;
+	int			*include_or_split;
+	int			i,j;
 
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
+
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_loop_split_at_touching_jaunt( lu=x%x ) START\n", lu);
 	}
+
+	visit_count = (int *)NULL;
+	include_or_split = (int *)NULL;
+
 top:
-	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-		goto out;
+	jaunt_count = nmg_get_touching_jaunts( lu, &jaunt_tbl, &need_init );
 
-	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-		struct edgeuse	*eu2;
-		struct edgeuse	*eu3;
-		struct loopuse		*newlu;
+	if( jaunt_count < 0 )
+	{
+		rt_log( "nmg_loop_split_at_touching_jaunt: nmg_get_touching_jaunts() returned %d for lu x%x\n", jaunt_count, lu );
+		rt_bomb( "nmg_loop_split_at_touching_jaunt: bad jaunt count\n" );
+	}
 
+	if( jaunt_count == 0 )
+	{
+		if( visit_count )
+			rt_free( (char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n" );
+		if( include_or_split )
+			rt_free( (char *)include_or_split, "nmg_loop_split_at_touching_jaunt: include_or_split[]\n" );
+		if( !need_init )
+			nmg_tbl( &jaunt_tbl, TBL_FREE, (long *)NULL );
+
+		if (rt_g.NMG_debug & DEBUG_BASIC)  {
+			rt_log("nmg_loop_split_at_touching_jaunt( lu=x%x ) END count=%d\n",
+				lu, count);
+		}
+		return( count );
+	}
+
+	if( jaunt_count == 1 )
+	{
+		/* just one jaunt, split it and return */
+		NMG_CK_PTBL( &jaunt_tbl );
+
+		eu = (struct edgeuse *)NMG_TBL_GET( &jaunt_tbl, 0 );
+		NMG_CK_EDGEUSE( eu );
 		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-		eu3 = RT_LIST_PNEXT_CIRC(edgeuse, &eu2->l);
 
-		/* If it's a 2 vertex crack, stop here */
-		if( eu->vu_p == eu3->vu_p )  break;
+		new_lu = nmg_split_lu_at_vu( lu, eu2->vu_p );
+		count++;
+		NMG_CK_LOOPUSE(new_lu);
+		NMG_CK_LOOP(new_lu->l_p);
+		nmg_loop_g(new_lu->l_p, tol);
 
-		/* If not jaunt, move on */
-		if( eu->vu_p->v_p != eu3->vu_p->v_p )  continue;
+		nmg_tbl( &jaunt_tbl, TBL_FREE, (long *)NULL );
+		if( visit_count )
+			rt_free( (char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n" );
+		if( include_or_split )
+			rt_free( (char *)include_or_split, "nmg_loop_split_at_touching_jaunt: include_or_split[]\n" );
 
-		/* It's a jaunt, see if tip touches same loop */
-		if( nmg_find_repeated_v_in_lu(eu2->vu_p) == (struct vertexuse *)NULL )
+		if (rt_g.NMG_debug & DEBUG_BASIC)  {
+			rt_log("nmg_loop_split_at_touching_jaunt( lu=x%x ) END count=%d\n",
+				lu, count);
+		}
+		return( count );
+	}
+
+	/* if we get here, there are at least two touching jaunts in the loop
+	 * We need to select which order to split them to avoid converting the
+	 * touching jaunt into a crack. To do this, follow the EU's as nmg_split_lu_at_vu()
+	 * would do and count how many times the apex vertex of each touching jaunt is
+	 * encountered. A count of zero means that the new loop is disjoint from
+	 * the touching jaunt. A count of two means that the new loop will have
+	 * the touching jaunt as its own touching jaunt. A count of one means that
+	 * the touching jaunt and the vertex on the loop where it touches are going
+	 * to be seperated if this new loop is created (this will result in a two
+	 * edgeuse crack).
+	 */
+	NMG_CK_PTBL( &jaunt_tbl );
+
+	if( visit_count )
+		rt_free( (char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n" );
+	if( include_or_split )
+		rt_free( (char *)include_or_split, "nmg_loop_split_at_touching_jaunt: include_or_split[]\n" );
+
+	visit_count = (int *)rt_calloc( NMG_TBL_END( &jaunt_tbl ), sizeof( int ),
+			"nmg_loop_split_at_touching_jaunt: visit_count[]" );
+	include_or_split = (int *)rt_calloc( NMG_TBL_END( &jaunt_tbl ), sizeof( int ),
+			"nmg_loop_split_at_touching_jaunt: include_or_split[]" );
+	for( jaunt_no=0 ; jaunt_no<NMG_TBL_END( &jaunt_tbl ) ; jaunt_no++ )
+	{
+		struct edgeuse *start_eu; /* EU that will start a new loop upon split */
+		struct edgeuse *next_start_eu;	/* starting eu for the remaining loop */
+		int do_split=1;
+
+		for( i=0 ; i<NMG_TBL_END( &jaunt_tbl ) ; i++ )
+			include_or_split[i] = 0;
+
+		/* Check this jaunt */
+		eu = (struct edgeuse *)NMG_TBL_GET( &jaunt_tbl, jaunt_no );
+		NMG_CK_EDGEUSE( eu );
+
+		/* get new loop starting edgeuse */
+		start_eu = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+
+		nmg_check_proposed_loop( lu, start_eu, &next_start_eu, visit_count,
+			include_or_split, &jaunt_tbl, jaunt_no );
+
+		/* Still need to check the loop that will be left if we do a split here */
+		start_eu = next_start_eu;
+		nmg_check_proposed_loop( lu, start_eu, &next_start_eu, visit_count,
+			include_or_split, &jaunt_tbl, jaunt_no );
+
+		for( i=0 ; i<NMG_TBL_END( &jaunt_tbl ) ; i++ )
+		{
+			if( !include_or_split[i] )
+			{
+				do_split = 0;
+				break;
+			}
+		}
+
+		if( !do_split )
 			continue;
 
-		/* Tip touches loop.  (What about ring and sleeve?) */
-		newlu = nmg_split_lu_at_vu( lu, eu2->vu_p );
+		/* This touching jaunt passed all the tests, its reward is to be split */
+		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+		new_lu = nmg_split_lu_at_vu( lu, eu2->vu_p );
 		count++;
-		NMG_CK_LOOPUSE(newlu);
-		NMG_CK_LOOP(newlu->l_p);
-		nmg_loop_g(newlu->l_p, tol);
+		NMG_CK_LOOPUSE(new_lu);
+		NMG_CK_LOOP(new_lu->l_p);
+		nmg_loop_g(new_lu->l_p, tol);
+		nmg_tbl( &jaunt_tbl, TBL_RST, (long *)NULL );
 
-		/* Recurse on new loop */
-		count += nmg_loop_split_at_touching_jaunt( newlu, tol );
+		count += nmg_loop_split_at_touching_jaunt( new_lu, tol );
 		goto top;
 	}
-out:
-	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_loop_split_at_touching_jaunt( lu=x%x ) END count=%d\n",
-			lu, count);
-	}
-	return count;
+
+	rt_log( "nmg_loop_split_at_touching_jaunt: Could not find a way to split lu x%x\n", lu );
+	nmg_pr_lu_briefly( lu, " " );
+	nmg_stash_model_to_file( "jaunt.g", nmg_find_model( &lu->l.magic ), "Can't split lu" );
+	rt_bomb( "nmg_loop_split_at_touching_jaunt: Can't split lu\n" );
+
+	/* This return will never execute, but the compilers like it */
+	return( count );
 }
 
 /*			N M G _ S I M P L I F Y _ L O O P
