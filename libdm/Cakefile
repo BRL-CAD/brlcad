@@ -15,15 +15,15 @@
 #endif
 
 #define FILES	\
-	LIBDM_OBJS 
-	dm-generic 
-	dm-ps 
-	dm-plot 
+	LIBDM_OBJS \
+	dm-generic \
+	dm-ps \
+	dm-plot \
 	dm-Null \
-	clip 
-	knob 
-	options 
-	tcl 
+	clip \
+	knob \
+	options \
+	tcl \
 	dm_obj
 
 #define VERSION_VARIABLE	dm_version
