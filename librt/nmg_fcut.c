@@ -54,37 +54,39 @@ static char *nmg_state_names[] = {
 	"TOOBIG"
 };
 
-#define NMG_E_ASSESSMENT_LEFT		1
-#define NMG_E_ASSESSMENT_RIGHT		2
-#define NMG_E_ASSESSMENT_ON		3
+#define NMG_E_ASSESSMENT_LEFT		0
+#define NMG_E_ASSESSMENT_RIGHT		1
+#define NMG_E_ASSESSMENT_ON_FORW	2
+#define NMG_E_ASSESSMENT_ON_REV		3
 
-#define NMG_V_ASSESSMENT_LONE		1
+#define NMG_V_ASSESSMENT_LONE		16
 #define NMG_V_ASSESSMENT_COMBINE(_p,_n)	(((_p)<<2)|(_n))
 
-static char *nmg_v_assessment_names[16] = {
-	"ASSESS_0",
-	"LONE",
-	"ASSESS_2",
-	"ASSESS_3",
-	"Left,0",
+static char *nmg_v_assessment_names[17] = {
 	"Left,Left",
 	"Left,Right",
-	"Left,On",
-	"Right,0",
+	"Left,On_Forw",
+	"Left,On_Rev",
 	"Right,Left",
 	"Right,Right",
-	"Right,On",
-	"On,0",
-	"On,Left",
-	"On,Right",
-	"On,On"
+	"Right,On_Forw",
+	"Right,On_Rev",
+	"On_Forw,Left",
+	"On_Forw,Right",
+	"On_Forw,On_Forw",
+	"On_Forw,On_Rev",
+	"On_Rev,Left",
+	"On_Rev,Right",
+	"On_Rev,On_Forw",
+	"On_Rev,On_Rev",
+	"LONE_V"
 };
 
 static char *nmg_e_assessment_names[4] = {
-	"*ERROR*",
 	"LEFT",
 	"RIGHT",
-	"ON"
+	"ON_FORW",
+	"ON_REV"
 };
 
 struct nmg_ray_state {
@@ -339,21 +341,20 @@ int			pos;
 	v = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v);
 	othereu = eu;
-	do {
-		if( forw )  {
-			othereu = RT_LIST_PNEXT_CIRC( edgeuse, othereu );
-		} else {
-			othereu = RT_LIST_PLAST_CIRC( edgeuse, othereu );
-		}
-		if( othereu == eu )  {
-			/* Back to where search started */
-rt_log("ON: (no edges)\n");
-			ret = NMG_E_ASSESSMENT_ON;
-			goto out;
-		}
-		/* Skip over any edges that stay on this vertex */
-		otherv = othereu->vu_p->v_p;
-	} while( otherv == v );
+	if( forw )  {
+		othereu = RT_LIST_PNEXT_CIRC( edgeuse, othereu );
+	} else {
+		othereu = RT_LIST_PLAST_CIRC( edgeuse, othereu );
+	}
+	if( othereu == eu )  {
+		/* Back to where search started */
+		rt_bomb("nmg_assess_eu() no edges leave the vertex!\n");
+	}
+	otherv = othereu->vu_p->v_p;
+	if( otherv == v )  {
+		/* Edge stays on this vertex -- can't tell if forw or rev! */
+		rt_bomb("nmg_assess_eu() edge runs from&to same vertex!\n");
+	}
 
 	/*  If the other vertex is mentioned anywhere on the ray's vu list,
 	 *  then the edge is "on" the ray.
@@ -361,13 +362,17 @@ rt_log("ON: (no edges)\n");
 	 *  play a factor in choosing the correct scan direction.
 	/* XXX Need to distinguish between OnForw & OnRev.
 	 */
-/**	for( i=rs->nvu-1; i >= 0; i-- )  { **/
-	for( i=0; i < rs->nvu; i++ )  {
-		if( rs->vu[i]->v_p == otherv )  {
+	for( i=rs->nvu-1; i >= 0; i-- )  {
+		if( rs->vu[i]->v_p != otherv )  continue;
+		/* Edge is on the ray.  Which way does it go? */
 rt_log("ON: vu[%d]=x%x otherv=x%x, i=%d\n", pos, rs->vu[pos], otherv, i );
-			ret = NMG_E_ASSESSMENT_ON;
-			goto out;
+		VSUB2( heading, rs->vu[i]->v_p->vg_p->coord, v->vg_p->coord );
+		if( VDOT( heading, rs->dir ) < 0 )  {
+			ret = NMG_E_ASSESSMENT_ON_REV;
+		} else {
+			ret = NMG_E_ASSESSMENT_ON_FORW;
 		}
+		goto out;
 	}
 
 	/*
@@ -413,8 +418,8 @@ int			pos;
 	if( (lu = nmg_lu_of_vu(vu)) == (struct loopuse *)0 )
 		rt_bomb("nmg_assess_vu: no lu\n");
 	this_eu = nmg_eu_with_vu_in_lu( lu, vu );
-	next_ass = nmg_assess_eu( this_eu, 1, rs, pos );
 	prev_ass = nmg_assess_eu( this_eu, 0, rs, pos );
+	next_ass = nmg_assess_eu( this_eu, 1, rs, pos );
 	ass = NMG_V_ASSESSMENT_COMBINE( prev_ass, next_ass );
 	rt_log("nmg_assess_vu() vu[%d]=x%x, v=x%x: %s\n",
 		pos, vu, vu->v_p, nmg_v_assessment_names[ass] );
@@ -628,7 +633,7 @@ VPRINT("left", rs.left);
 			/* Single vertexuse at this dist */
 rt_log("single vertexuse at index %d\n", i);
 (void)nmg_vu_angle_measure( vu[i], rs.ang_x_dir, rs.ang_y_dir );
-			nmg_face_state_transition( vu[i], &rs, i );
+			nmg_face_state_transition( vu[i], &rs, i, 0 );
 			nmg_face_plot( fu1 );
 			j = i+1;
 		} else {
@@ -649,7 +654,7 @@ rt_log("interval from %d to %d\n", i, j );
 			m = nmg_face_vu_sort( &rs, i, j );
 			/* Process vu list, up to cutoff index 'm' */
 			for( k = i; k < m; k++ )  {
-				nmg_face_state_transition( vu[k], &rs, k );
+				nmg_face_state_transition( vu[k], &rs, k, 1 );
 				nmg_face_plot( fu1 );
 			}
 			vu[j-1] = vu[m-1]; /* for next iteration's lookback */
@@ -669,16 +674,18 @@ rt_log("interval from %d to %d\n", i, j );
  *  Indexed by MNG_V_ASSESSMENT values.
  */
 
-#define NMG_ACTION_ERROR	0
-#define NMG_ACTION_NONE		1
-#define NMG_ACTION_VFY_EXT	2
-#define NMG_ACTION_LONE_V_ESPLIT	3
-#define NMG_ACTION_LONE_V_JAUNT	4
-#define NMG_ACTION_CUTJOIN	5
+#define NMG_ACTION_ERROR		0
+#define NMG_ACTION_NONE			1
+#define NMG_ACTION_VFY_EXT		2
+#define NMG_ACTION_VFY_MULTI		3
+#define NMG_ACTION_LONE_V_ESPLIT	4
+#define NMG_ACTION_LONE_V_JAUNT		5
+#define NMG_ACTION_CUTJOIN		6
 static char *action_names[] = {
 	"*ERROR*",
 	"-none-",
 	"VFY_EXT",
+	"VFY_MULTI",
 	"ESPLIT",
 	"JAUNT",
 	"CUTJOIN",
@@ -690,104 +697,113 @@ struct state_transitions {
 	int	action;
 };
 
-static CONST struct state_transitions nmg_state_is_out[16] = {
-	{ /* 0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LONE */		NMG_STATE_OUT,		NMG_ACTION_NONE },
-	{ /* 2 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* 3 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LEFT,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+static CONST struct state_transitions nmg_state_is_out[17] = {
 	{ /* LEFT,LEFT */	NMG_STATE_OUT,		NMG_ACTION_NONE },
-	{ /* LEFT,RIGHT */	NMG_STATE_IN,		NMG_ACTION_NONE },
-	{ /* LEFT,ON */		NMG_STATE_ON_L,		NMG_ACTION_VFY_EXT },
-	{ /* RIGHT,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* RIGHT,LEFT */	NMG_STATE_IN,		NMG_ACTION_NONE },
+	{ /* LEFT,RIGHT */	NMG_STATE_IN,		NMG_ACTION_VFY_EXT },
+	{ /* LEFT,ON_FORW */	NMG_STATE_ON_L,		NMG_ACTION_VFY_EXT },
+	{ /* LEFT,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* RIGHT,LEFT */	NMG_STATE_IN,		NMG_ACTION_VFY_EXT },
 	{ /* RIGHT,RIGHT */	NMG_STATE_OUT,		NMG_ACTION_NONE },
-	{ /* RIGHT,ON */	NMG_STATE_ON_R,		NMG_ACTION_VFY_EXT },
-	{ /* ON,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* ON,LEFT */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* ON,RIGHT */	NMG_STATE_ON_R,		NMG_ACTION_VFY_EXT },
-	{ /* ON,ON */		NMG_STATE_ERROR,	NMG_ACTION_ERROR }
+	{ /* RIGHT,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* RIGHT,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_FORW,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_FORW,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_FORW,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_FORW,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_REV,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_REV,RIGHT */	NMG_STATE_ON_R,		NMG_ACTION_VFY_EXT },
+	{ /* ON_REV,ON_FORW */	NMG_STATE_IN,		NMG_ACTION_VFY_EXT },
+	{ /* ON_REV,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* LONE */		NMG_STATE_OUT,		NMG_ACTION_NONE }
 };
 
-static CONST struct state_transitions nmg_state_is_on_L[16] = {
-	{ /* 0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LONE */		NMG_STATE_ON_L,		NMG_ACTION_LONE_V_ESPLIT },
-	{ /* 2 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* 3 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LEFT,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+static CONST struct state_transitions nmg_state_is_on_L[17] = {
 	{ /* LEFT,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ /* LEFT,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LEFT,ON */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* RIGHT,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* LEFT,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* LEFT,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ /* RIGHT,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ /* RIGHT,RIGHT */	NMG_STATE_ON_L,		NMG_ACTION_NONE },
-	{ /* RIGHT,ON */	NMG_STATE_ON_B,		NMG_ACTION_VFY_EXT },
-	{ /* ON,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* ON,LEFT */		NMG_STATE_OUT,		NMG_ACTION_NONE },
-	{ /* ON,RIGHT */	NMG_STATE_IN,		NMG_ACTION_NONE },
-	{ /* ON,ON */		NMG_STATE_ON_L,		NMG_ACTION_NONE }
+	{ /* RIGHT,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* RIGHT,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_FORW,LEFT */	NMG_STATE_OUT,		NMG_ACTION_NONE },
+	{ /* ON_FORW,RIGHT */	NMG_STATE_IN,		NMG_ACTION_NONE },
+	{ /* ON_FORW,ON_FORW */	NMG_STATE_ON_L,		NMG_ACTION_NONE },
+	{ /* ON_FORW,ON_REV */	NMG_STATE_IN,		NMG_ACTION_NONE },
+	{ /* ON_REV,LEFT */	NMG_STATE_IN,		NMG_ACTION_VFY_MULTI },
+	{ /* ON_REV,RIGHT */	NMG_STATE_ON_B,		NMG_ACTION_VFY_EXT },
+	{ /* ON_REV,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_REV,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* LONE */		NMG_STATE_ON_L,		NMG_ACTION_LONE_V_ESPLIT }
 };
 
-static CONST struct state_transitions nmg_state_is_on_R[16] = {
-	{ /* 0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LONE */		NMG_STATE_ON_R,		NMG_ACTION_LONE_V_ESPLIT },
-	{ /* 2 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* 3 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LEFT,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+static CONST struct state_transitions nmg_state_is_on_R[17] = {
 	{ /* LEFT,LEFT */	NMG_STATE_ON_R,		NMG_ACTION_NONE },
 	{ /* LEFT,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LEFT,ON */		NMG_STATE_ON_B,		NMG_ACTION_VFY_EXT },
-	{ /* RIGHT,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* LEFT,ON_FORW */	NMG_STATE_ON_B,		NMG_ACTION_NONE },
+	{ /* LEFT,ON_REV */	NMG_STATE_IN,		NMG_ACTION_NONE },
 	{ /* RIGHT,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ /* RIGHT,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* RIGHT,ON */	NMG_STATE_OUT,		NMG_ACTION_NONE },
-	{ /* ON,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* ON,LEFT */		NMG_STATE_IN,		NMG_ACTION_NONE },
-	{ /* ON,RIGHT */	NMG_STATE_OUT,		NMG_ACTION_NONE },
-	{ /* ON,ON */		NMG_STATE_ON_R,		NMG_ACTION_NONE }
+	{ /* RIGHT,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* RIGHT,ON_REV */	NMG_STATE_OUT,		NMG_ACTION_NONE },
+	{ /* ON_FORW,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_FORW,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_FORW,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_FORW,ON_REV */	NMG_STATE_IN,		NMG_ACTION_NONE },
+	{ /* ON_REV,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_REV,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_REV,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_REV,ON_REV */	NMG_STATE_ON_R,		NMG_ACTION_NONE },
+	{ /* LONE */		NMG_STATE_ON_R,		NMG_ACTION_LONE_V_ESPLIT }
 };
-static CONST struct state_transitions nmg_state_is_on_B[16] = {
-	{ /* 0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LONE */		NMG_STATE_ON_B,		NMG_ACTION_LONE_V_ESPLIT },
-	{ /* 2 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* 3 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LEFT,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+static CONST struct state_transitions nmg_state_is_on_B[17] = {
 	{ /* LEFT,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ /* LEFT,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LEFT,ON */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* RIGHT,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* LEFT,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* LEFT,ON_REV */	NMG_STATE_IN,		NMG_ACTION_VFY_MULTI },
 	{ /* RIGHT,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ /* RIGHT,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* RIGHT,ON */	NMG_STATE_ON_L,		NMG_ACTION_NONE },
-	{ /* ON,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* ON,LEFT */		NMG_STATE_ON_R,		NMG_ACTION_NONE },
-	{ /* ON,RIGHT */	NMG_STATE_ON_L,		NMG_ACTION_NONE },
-	{ /* ON,ON */		NMG_STATE_ON_B,		NMG_ACTION_NONE }
+	{ /* RIGHT,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* RIGHT,ON_REV */	NMG_STATE_ON_L,		NMG_ACTION_NONE },
+	{ /* ON_FORW,LEFT */	NMG_STATE_ON_R,		NMG_ACTION_NONE },
+	{ /* ON_FORW,RIGHT */	NMG_STATE_IN,		NMG_ACTION_VFY_MULTI },
+	{ /* ON_FORW,ON_FORW */	NMG_STATE_ON_B,		NMG_ACTION_VFY_MULTI },
+	{ /* ON_FORW,ON_REV */	NMG_STATE_IN,		NMG_ACTION_NONE },
+	{ /* ON_REV,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_REV,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_REV,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_REV,ON_REV */	NMG_STATE_ON_B,		NMG_ACTION_VFY_MULTI },
+	{ /* LONE */		NMG_STATE_ON_B,		NMG_ACTION_LONE_V_ESPLIT }
 };
 
-static CONST struct state_transitions nmg_state_is_in[16] = {
-	{ /* 0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LONE */		NMG_STATE_IN,		NMG_ACTION_LONE_V_JAUNT },
-	{ /* 2 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* 3 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* LEFT,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+static CONST struct state_transitions nmg_state_is_in[17] = {
 	{ /* LEFT,LEFT */	NMG_STATE_IN,		NMG_ACTION_CUTJOIN },
 	{ /* LEFT,RIGHT */	NMG_STATE_OUT,		NMG_ACTION_CUTJOIN },
-	{ /* LEFT,ON */		NMG_STATE_ON_R,		NMG_ACTION_CUTJOIN },
-	{ /* RIGHT,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* LEFT,ON_FORW */	NMG_STATE_ON_R,		NMG_ACTION_CUTJOIN },
+	{ /* LEFT,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ /* RIGHT,LEFT */	NMG_STATE_OUT,		NMG_ACTION_CUTJOIN },
 	{ /* RIGHT,RIGHT */	NMG_STATE_IN,		NMG_ACTION_CUTJOIN },
-	{ /* RIGHT,ON */	NMG_STATE_ON_L,		NMG_ACTION_CUTJOIN },
-	{ /* ON,0 */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* ON,LEFT */		NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* ON,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* ON,ON */		NMG_STATE_ERROR,	NMG_ACTION_ERROR }
+	{ /* RIGHT,ON_FORW */	NMG_STATE_ON_L,		NMG_ACTION_CUTJOIN },
+	{ /* RIGHT,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_FORW,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_FORW,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_FORW,ON_FORW */	NMG_STATE_IN,		NMG_ACTION_NONE },
+	{ /* ON_FORW,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_REV,LEFT */	NMG_STATE_ON_R,		NMG_ACTION_CUTJOIN },
+	{ /* ON_REV,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ /* ON_REV,ON_FORW */	NMG_STATE_ON_B,		NMG_ACTION_CUTJOIN },
+	{ /* ON_REV,ON_REV */	NMG_STATE_IN,		NMG_ACTION_NONE },
+	{ /* LONE */		NMG_STATE_IN,		NMG_ACTION_LONE_V_JAUNT }
 };
 
+/*
+ *			N M G _ F A C E _ S T A T E _ T R A N S I T I O N
+ */
 int
-nmg_face_state_transition( vu, rs, pos )
+nmg_face_state_transition( vu, rs, pos, multi )
 struct vertexuse	*vu;
 struct nmg_ray_state	*rs;
+int			multi;
 {
 	int			assessment;
 	int			old;
@@ -829,6 +845,7 @@ nmg_state_names[stp->new_state], action_names[stp->action] );
 	switch( stp->action )  {
 	default:
 	case NMG_ACTION_ERROR:
+	bomb:
 		/* First, print this faceuse */
 		lu = nmg_lu_of_vu( vu );
 		/* Drop a plot file */
@@ -859,6 +876,13 @@ nmg_state_names[stp->new_state], action_names[stp->action] );
 			break;
 		}
 		break;
+	case NMG_ACTION_VFY_MULTI:
+		/*  Ensure that there are multiple vertexuse's at this
+		 *  vertex along the ray.
+		 *  If not, the table entry is illegal.
+		 */
+		if( multi )  break;
+		goto bomb;
 	case NMG_ACTION_LONE_V_ESPLIT:
 		/*
 		 *  Split edge to include vertex from this lone vert loop.
