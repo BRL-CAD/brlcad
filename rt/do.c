@@ -440,12 +440,18 @@ extern struct structparse view_parse[];
  *  By setting the "base address" to zero in the rt_structparse call,
  *  the actual memory address is given here as the structure offset.
  */
+#if __STDC__ && CRAY
+/*	Cray SCC bug prevents using correct expression here */
+#	define byteoffset(_i)	(((int)&(_i)))
+#else
+#	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
+#endif
 struct structparse set_parse[] = {
-	"%d",	"width",	(int)&width,		FUNC_NULL,
-	"%d",	"height",	(int)&height,		FUNC_NULL,
-	"%f",	"angle",	(int)&rt_perspective,	FUNC_NULL,
-	"indir", "View Module",	(int)0,		(void (*)())view_parse,
-	(char *)0,(char *)0,	(int)0,			FUNC_NULL
+	"%d",	"width",	byteoffset(width),		FUNC_NULL,
+	"%d",	"height",	byteoffset(height),		FUNC_NULL,
+	"%f",	"angle",	byteoffset(rt_perspective),	FUNC_NULL,
+	"indir", "View_Module-Specific Parameters", 0, (void (*)())view_parse,
+	(char *)0,(char *)0,	0,				FUNC_NULL
 };
 
 /*
