@@ -407,7 +407,7 @@ int entityno;
 		}
 
 		/* Make the BRLCAD solid */
-		if( mk_arb8( fdout , cutname , (CONST point_t *)pts ) < 0 )  {
+		if( mk_arb8( fdout , cutname , &pts[0][X] ) < 0 )  {
 			printf( "Unable to write ARB8 for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 			return( 0 );

@@ -134,7 +134,7 @@ int entityno;
 
 	/* Now the information is handed off to mk_arb8(). */
 
-	mk_arb8(fdout, dir[entityno]->name, (CONST point_t *)pts);
+	mk_arb8(fdout, dir[entityno]->name, &pts[0][X]);
 
 	return( 1 );
 		
