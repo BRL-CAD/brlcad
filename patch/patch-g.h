@@ -15,6 +15,17 @@ struct input {
 
 } in[10000];
 
+struct patch_verts {
+        struct vertex *vp;
+        point_t coord;
+};
+
+struct patch_faces
+{
+        struct faceuse *fu;
+        fastf_t thick;
+};
+
 struct patches{
 
 	fastf_t x,y,z;
@@ -53,7 +64,7 @@ int debug = 0;
 float mmtin = 25.4;
 fastf_t third = 0.333333333;
 
-char  name[17];
+/* char  name[17];	*/
 char  cname[17];
 char  tname[17];
 char  surf[2];
@@ -67,6 +78,7 @@ int num_unions = 5;	/* number of unions per region */
 char *title = "Untitled MGED database";	/* database title */
 char *top_level = "all"; /* top-level node name in the database */
 int rev_norms = 0;	/* reverse normals for plate mode triangles */
+int polysolid = 0;	/* convert triangle-facetted objects to polysolids */
 
 mat_t	m;
 char *patchfile;
