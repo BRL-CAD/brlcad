@@ -21,7 +21,7 @@ are designed to be "parallel-safe" (sometimes called "mp-safe"),
 to greatly ease code development for multi-processor systems.
 .PP
 The header file
-.I bh.h
+.I bu.h
 contains several "packages" which are implemented entirely by
 macros and have no corresponding source code.
 This includes the portable interface for declaring function prototypes
@@ -122,6 +122,20 @@ including
 .IR bu_vls_fwrite() ,
 and many others.
 .PP
+The red-black package of balanced binary tree operations
+that provides all the basic dynamic set operations
+(e.g., insertion, deletion, search, minimum, maximum,
+predecessor, and successor)
+and order-statistic operations
+(i.e., select and rank)
+with optimal
+--
+that is,
+.IR "O(" "log " "n)"
+--
+performance
+while sorting on multiple keys.
+.PP
 Finally, a set of routines exist for taking text descriptions of
 distance units and converting them to millimeters and back,
 including
@@ -197,7 +211,7 @@ prefix names to their new
 .I bu_
 prefix names.
 .SH "SEE ALSO"
-brlcad(1B), librt(1B), libbn(1B).
+brlcad(1B), librt(1B), libbn(1B), redblack(3B).
 .SH DIAGNOSTICS
 ``bu_malloc: malloc failure'',
 if
@@ -210,6 +224,8 @@ Michael John Muuss
 Lee A. Butler
 .br
 Glenn Durfee
+.br
+Paul J. Tanenbaum
 .SH SOURCE
  The U. S. Army Research Laboratory
  Aberdeen Proving Ground, Maryland  21005-5068  USA

@@ -1,4 +1,4 @@
-/*			B U _ R B _ E X T R E M E . C
+/*			R B _ E X T R E M E . C
  *
  *	Routines to extract mins, maxes, adjacent, and current nodes
  *			from a red-black tree

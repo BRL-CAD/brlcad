@@ -1,4 +1,4 @@
-/*			B U _ R B _ D E L E T E . C
+/*			R B _ D E L E T E . C
  *
  *	    Routines to delete a node from a red-black tree
  *

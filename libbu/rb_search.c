@@ -1,4 +1,4 @@
-/*			B U _ R B _ S E A R C H . C
+/*			R B _ S E A R C H . C
  *
  *	Routines to search for a node in a red-black tree
  *

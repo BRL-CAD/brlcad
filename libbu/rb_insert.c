@@ -1,4 +1,4 @@
-/*			B U _ R B _ I N S E R T . C
+/*			R B _ I N S E R T . C
  *
  *		Routines to insert into a red-black tree
  *

@@ -1,4 +1,4 @@
-/*			B U _ R B _ O R D E R _ S T A T S . C
+/*			R B _ O R D E R _ S T A T S . C
  *
  *	Routines to support order-statistic operations for a red-black tree
  *

@@ -1,4 +1,4 @@
-/*			B U _ R B _ R O T A T E . C
+/*			R B _ R O T A T E . C
  *
  *	    Routines to perform rotations on a red-black tree
  *

@@ -1,4 +1,4 @@
-/*		B U _ R B _ D I A G N O S T I C S . C
+/*			R B _ D I A G . C
  *
  *	Diagnostic routines for red-black tree maintenance
  *

@@ -1,4 +1,4 @@
-/*			B U _ R B _ C R E A T E . C
+/*			R B _ C R E A T E . C
  *
  *		Routines to create a red-black tree
  *

@@ -1,4 +1,4 @@
-/*			B U _ R B _ W A L K . C
+/*			R B _ W A L K . C
  *
  *	    Routines for traversal of red-black trees
  *

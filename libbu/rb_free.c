@@ -1,4 +1,4 @@
-/*			B U _ R B _ F R E E . C
+/*			R B _ F R E E . C
  *
  *		Routine to free a red-black tree
  *
