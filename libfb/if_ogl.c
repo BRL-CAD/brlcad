@@ -60,7 +60,7 @@ static char RCSid[] = "(#)$Header$";
 #include "fb.h"
 #include "./fblocal.h"
 
-#define CJDEBUG 1
+#define CJDEBUG 0
 
 /*WWW these come from Iris gl gl.h*/
 #define XMAXSCREEN	1279
@@ -104,6 +104,7 @@ _LOCAL_ char *visual_class[] = {
 };
 
 /* Internal callbacks etc.*/
+_LOCAL_ void		do_event();
 _LOCAL_ void		expose_callback();
 
 /* Other Internal routines */
@@ -251,7 +252,8 @@ struct oglinfo {
 	GLXContext	glxc;
 	Display	       *dispp;		/* pointer to X display connection */
 	Window		wind;		/* Window identifier */
-	int		firstTime;	/* flag for setup */
+	int		firstTime;
+	int		alive;
 	long		event_mask;	/* event types to be received */
 	short		front_flag;	/* front buffer being used (b-mode) */
 	short		copy_flag;	/* pan and zoom copied from backbuffer */
@@ -312,7 +314,7 @@ struct oglinfo {
 #define MODE_4NODITH	(1<<3)		/* suppress any dithering */
 
 #define MODE_5MASK	(1<<4)
-#define MODE_5NORMAL	(1<<4) /* 1? */	/* fast - assume no multiple windows */
+#define MODE_5NORMAL	(0<<4)	 	/* fast - assume no multiple windows */
 #define MODE_5MULTI	(1<<4)		/* be ready for multiple windows */
 
 #define MODE_7MASK	(1<<6)
@@ -646,7 +648,7 @@ int		npix;
 		glPixelZoom( 1.0, 1.0);
 	}
 
-	if( sw_cmap) { 
+	if( sw_cmap ) { 
 		/* Software colormap each line as it's transmitted */
 		register int	x;
 		register struct ogl_pixel	*oglp;
@@ -683,20 +685,7 @@ int		npix;
 		glRasterPos2i(xbase,ybase);
 		glDrawPixels(npix,nlines,GL_ABGR_EXT,GL_UNSIGNED_BYTE,
 				(const GLvoid *) ifp->if_mem);
-
-
-if (CJDEBUG) {
-	int valid;
-	float rpos[4];
-
-	glGetIntegerv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
-	glGetFloatv(GL_CURRENT_RASTER_POSITION, rpos);
-	printf("Raster position (%g, %g, %g, %g) has validity %d.\n",rpos[0],rpos[1],rpos[2],rpos[3],valid);
-}
-
-
 	}
-
 }
 
 
@@ -822,9 +811,11 @@ int	width, height;
 		if( (f = fork()) > 0 )  {
 			/* Parent process */
 			int k;
+
 			for(k=0; k< 20; k++)  {
 				(void) close(k);
 			}
+
 
 			/*
 			 *  Wait until the child dies, of whatever cause,
@@ -880,7 +871,7 @@ int	width, height;
 	}
 
 	/* Build a descriptive window title bar */
-	(void)sprintf( title, "BRLGGG libfb /dev/ogl %s, %s",
+	(void)sprintf( title, "BRL libfb /dev/ogl %s, %s",
 		((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
 			"Transient Win":
 			"Lingering Win",
@@ -908,6 +899,10 @@ int	width, height;
 		return (-1);
 	}
 	ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
+	if( CJDEBUG ) {
+		printf("Connection opened to X display on fd %d.\n",
+		       ConnectionNumber(OGL(ifp)->dispp));
+	}
 
 	/* Choose an appropriate visual. */
 	if( (OGL(ifp)->vip = ogl_choose_visual(ifp)) == NULL ) {
@@ -952,16 +947,13 @@ int	width, height;
     		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell,256);
 	} else { /* read only colormap */
 		if( CJDEBUG ) {
-			printf("Allocating read-only colormap:");
+			printf("Allocating read-only colormap.");
 		}
 		OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
 					RootWindow(OGL(ifp)->dispp,
 						   OGL(ifp)->vip->screen),
 					OGL(ifp)->vip->visual,
 					AllocNone);
-		if( CJDEBUG ) {
-			printf(" %08X.\n", OGL(ifp)->xcmap);
-		}
 	}
 
 	/* 
@@ -999,19 +991,17 @@ int	width, height;
 	/* Create a window. */
 	memset(&swa, 0, sizeof(swa));
 
-	valuemask = CWBackPixmap | CWBackPixel | CWBorderPixmap |
-		CWBorderPixel | CWEventMask /* | CWColormap */ | CWCursor;
+	valuemask = CWBackPixel | CWBorderPixel | CWEventMask |
+		CWColormap | CWCursor;
 
-	swa.background_pixmap = None;
 	swa.background_pixel = BlackPixel(OGL(ifp)->dispp,
 					  OGL(ifp)->vip->screen);
-	swa.border_pixmap = None;
 	swa.border_pixel = BlackPixel(OGL(ifp)->dispp,
 				      OGL(ifp)->vip->screen);
 	swa.event_mask = OGL(ifp)->event_mask =
 		ExposureMask | KeyPressMask | KeyReleaseMask |
  		ButtonPressMask | ButtonReleaseMask;
-/*	swa.colormap = OGL(ifp)->xcmap; */
+	swa.colormap = OGL(ifp)->xcmap;
 	swa.cursor = OGL(ifp)->cursor;
 
 #define XCreateWindowDebug(display, parent, x, y, width, height, \
@@ -1046,8 +1036,7 @@ int	width, height;
 	(valuemask & CWCursor) ? printf(" cursor = %08X ", (long)((attributes)->cursor)) : 0, \
 	printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : -1;
 
-#if 0	
-	OGL(ifp)->wind = XCreateWindowDebug(OGL(ifp)->dispp,
+	OGL(ifp)->wind = XCreateWindow(OGL(ifp)->dispp,
 				       RootWindow(OGL(ifp)->dispp,
 						  OGL(ifp)->vip->screen),
 				       0, 0, ifp->if_width, ifp->if_height, 0,
@@ -1055,32 +1044,20 @@ int	width, height;
 				       InputOutput,
 				       OGL(ifp)->vip->visual,
 				       valuemask, &swa);
-#else	
-	OGL(ifp)->wind = XCreateWindowDebug(OGL(ifp)->dispp,
-				       RootWindow(OGL(ifp)->dispp,
-						  OGL(ifp)->vip->screen),
-				       0, 0, ifp->if_width, ifp->if_height, 0,
-				       CopyFromParent,
-				       InputOutput,
-				       CopyFromParent,
-				       valuemask, &swa);
-#endif
-	printf("\nOGL(ifp)->wind = %08X\n\n", OGL(ifp)->wind);
+
 	XStoreName(OGL(ifp)->dispp, OGL(ifp)->wind, title);
 
 	/* count windows */
 	ogl_nwindows++;
-
 	XMapRaised(OGL(ifp)->dispp, OGL(ifp)->wind);
 
+	OGL(ifp)->alive = 1;
 	OGL(ifp)->firstTime = 1;
 
 	/* Loop through events until first exposure event is processed */
-	while (1) {
-		XWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind,
-			     OGL(ifp)->event_mask, &event);
-		if (event.type == Expose) break;
-	}
+	while (OGL(ifp)->firstTime == 1)
+		do_event(ifp);
+
 	return 0;
 }
 
@@ -1093,7 +1070,6 @@ FBIO	*ifp;
 	XUndefineCursor(OGL(ifp)->dispp, OGL(ifp)->wind);
 	if( CJDEBUG ) {
 		printf("ogl_final_close: All done...goodbye!\n");
-		sleep(5);
 	}
 	XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->wind);
 	XFreeCursor(OGL(ifp)->dispp, OGL(ifp)->cursor);
@@ -1138,12 +1114,17 @@ FBIO	*ifp;
 	FILE *fp = NULL;
 	int n, scr;
 
+	ogl_flush( ifp );
+
 	/* only the last open window can linger -
 	 * call final_close if not lingering
 	 */
 	if( ogl_nwindows > 1 ||
 	    (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
 		return ogl_final_close( ifp );
+
+	if( CJDEBUG )
+		printf("ogl_close: remaining open to linger awhile.\n");
 
 	/*
 	 *  else:
@@ -1176,9 +1157,11 @@ FBIO	*ifp;
 	(void)signal( SIGQUIT, SIG_IGN );
 	(void)signal( SIGALRM, SIG_IGN );
 
-	return ogl_final_close( ifp );
-}
+	while( OGL(ifp)->alive )
+		do_event(ifp);
 
+	return 0;
+}
 
 /*
  *			O G L _ P O L L
@@ -1189,27 +1172,7 @@ _LOCAL_ int
 ogl_poll(ifp)
 FBIO	*ifp;
 {
-	XEvent event;
-
-	while (XCheckWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind,
-				 OGL(ifp)->event_mask, &event)) {
-		switch (event.type) {
-		case Expose:
-			expose_callback(ifp);
-			break;
-		case ButtonPress:
-			break;
-		case ButtonRelease:
-			/* XXX Quit under certain conditions. */
-			break;
-		case KeyPress:
-			break;
-		case KeyRelease:
-			/* XXX Quit under certain conditions. */
-			break;
-		}
-	}
-
+	do_event(ifp);
 	return(0);
 }
 
@@ -1245,7 +1208,6 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 	register struct ogl_pixel      *oglp;
 	register int			cnt;
 	register int			y;
-	XEvent event;
 
 	if( CJDEBUG ) printf("entering ogl_clear\n");
 
@@ -1320,7 +1282,6 @@ int	xcenter, ycenter;
 int	xzoom, yzoom;
 {
 	struct ogl_clip *clp;
-	XEvent event;
 
 	if(CJDEBUG) printf("entering ogl_view\n");
 
@@ -1395,7 +1356,6 @@ FBIO	*ifp;
 int	*xcenter, *ycenter;
 int	*xzoom, *yzoom;
 {
-	XEvent event;
 	if(CJDEBUG) printf("entering ogl_getview\n");
 
 	*xcenter = ifp->if_xcenter;
@@ -1476,7 +1436,6 @@ int	count;
 	register int		pix_count;	/* # pixels to send */
 	register int		x;
 	register int		y;
-	XEvent event;
 
 	if(CJDEBUG) printf("entering ogl_write\n");
 
@@ -1612,7 +1571,6 @@ CONST unsigned char	*pp;
 	register int		y;
 	register unsigned char	*cp;
 	register struct ogl_pixel	*oglp;
-	XEvent event;
 
 	if(CJDEBUG) printf("entering ogl_writerect\n");
 
@@ -1689,7 +1647,7 @@ register ColorMap	*cmp;
  *  Returns 1 for linear map, 0 for non-linear map
  *  (ie, non-identity map).
  */
-static int
+_LOCAL_ int
 is_linear_cmap(ifp)
 register FBIO	*ifp;
 {
@@ -1729,7 +1687,6 @@ register CONST ColorMap	*cmp;
 {
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
-	XEvent event;
 	XVisualInfo *vi;
     	int num;
 	
@@ -1870,8 +1827,6 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
-	XEvent event;
-
 	/* set values into FBIO structure */
 	fb_sim_cursor(ifp, mode, x, y);
 
@@ -1892,6 +1847,7 @@ ogl_flush( ifp )
 FBIO	*ifp;
 {
 	XFlush(OGL(ifp)->dispp);
+	glFlush();
 	return(0);
 }
 
@@ -1984,8 +1940,33 @@ register FBIO	*ifp;
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  */
 
+_LOCAL_ void
+do_event(ifp)
+FBIO *ifp;	
+{
+	XEvent event;
 
-static void
+	while (XCheckWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind,
+				 OGL(ifp)->event_mask, &event)) {
+		switch (event.type) {
+		case Expose:
+			expose_callback(ifp, &event);
+			break;
+		case ButtonPress:
+			break;
+		case ButtonRelease:
+			OGL(ifp)->alive = 0;
+			break;
+		case KeyPress:
+			break;
+		case KeyRelease:
+			OGL(ifp)->alive = 0;
+			break;
+		}
+	}
+}
+
+_LOCAL_ void
 expose_callback(ifp, eventPtr)
 FBIO *ifp;
 XEvent *eventPtr;
@@ -2318,6 +2299,13 @@ FBIO *ifp;
 	int num, i, j;
 	int m_hard_cmap, m_sing_buf, m_doub_buf;
 	int use, rgba, dbfr;
+	char *visual_class[] = {
+		"StaticGrey",
+		"GreyScale",
+		"StaticColor",
+		"PseudoColor",
+		"TrueColor",
+		"DirectColor" };
 	
 	m_hard_cmap = ((ifp->if_mode & MODE_7MASK)==MODE_7NORMAL);
 	m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
@@ -2357,17 +2345,13 @@ FBIO *ifp;
 			maxvip = vibase + good[0];
 			for (i=1; i<j; i++) {
 				vip = vibase + good[i];
-				if (vip->depth > maxvip->depth) {
+				if (vip->depth >= maxvip->depth) {
 					maxvip = vip;
 				}
 			}
 			/* set flags and return choice */
 			OGL(ifp)->soft_cmap_flag = !m_hard_cmap;
 			SGI(ifp)->mi_doublebuffer = m_doub_buf;
-
-			if (CJDEBUG) {
-				printf("Selected visual: %s depth=%d colormap=%d\n",visual_class[maxvip->class],maxvip->depth,maxvip->colormap_size);
-			}
 			return (maxvip);
 		}
 
