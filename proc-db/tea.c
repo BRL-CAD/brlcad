@@ -100,13 +100,13 @@ pt patch;
  	 */
 	
 
-	rt_free(b_patch->u_kv->knots, "dumping u_kv knots I'm about to realloc");
-	rt_free(b_patch->u_kv, "dumping u_kv I'm about to realloc");
+	rt_free((char *)b_patch->u_kv->knots, "dumping u_kv knots I'm about to realloc");
+	rt_free((char *)b_patch->u_kv, "dumping u_kv I'm about to realloc");
 	b_patch->u_kv = 
 	    (struct knot_vec *) spl_kvknot( 4, 0.0, 1.0, 0);
 
-	rt_free(b_patch->v_kv->knots, "dumping v_kv knots I'm about to realloc");
-	rt_free(b_patch->v_kv, "dumping v_kv I'm about to realloc");
+	rt_free((char *)b_patch->v_kv->knots, "dumping v_kv knots I'm about to realloc");
+	rt_free((char *)b_patch->v_kv, "dumping v_kv I'm about to realloc");
 	b_patch->v_kv = 
 	    (struct knot_vec *) spl_kvknot( 4, 0.0, 1.0, 0);
 
