@@ -55,7 +55,7 @@ char	*args[];
 		default :
 			{	register int	pid;
 				int		stat_loc;
-#if __STDC__ || defined( SYSV )
+#if __STDC__ || defined( SYSV ) || defined( mips )
 				register void	(*istat)(), (*qstat)(), (*cstat)();
 #else
 #ifndef SIGCLD
