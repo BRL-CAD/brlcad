@@ -124,14 +124,10 @@ int
 rt_hf_to_dsp(struct rt_db_internal *db_intern)
 {
 	struct rt_hf_internal	*hip = (struct rt_hf_internal *)db_intern;
-	struct rt_db_internal	intern;
 	struct rt_dsp_internal	*dsp;
 	mat_t 			tmp, mat, matA, matB, matC;
 
-
-	return -1;
-
-	dsp = (struct rt_dsp_internal *)&intern;
+	GETSTRUCT( dsp, rt_dsp_internal );
 	dsp->dsp_xcnt = hip->w;
 	dsp->dsp_ycnt = hip->n;
 
@@ -139,8 +135,8 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 		bu_log("cannot convert float HF to DSP\n");
 		return -1;
 	}
-	bn_mat_idn(matA);
-	MAT_DELTAS_VEC(matA,  hip->v);	/* translate */
+	bn_mat_idn(mat);
+	MAT_DELTAS_VEC(mat,  hip->v);	/* translate */
 
 	/* Apply modeling transformations */
 	MAT4X3PNT( tmp, mat, hip->v );
@@ -153,6 +149,14 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 	hip->ylen /= mat[15];
 	hip->zscale /= mat[15];
 
+	/* XXX There is more logic needed here */
+
+	rt_db_free_internal( db_intern );
+	db_intern->idb_ptr = (genptr_t)dsp;
+	db_intern->idb_type = ID_DSP;
+	db_intern->idb_meth = &rt_functab[ID_DSP];
+
+	return -1;
 
 }
 

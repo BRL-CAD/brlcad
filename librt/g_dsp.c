@@ -2953,7 +2953,7 @@ CONST struct db_i		*dbip;
 
 	/* convert name of data location */
 	bu_vls_init( &dsp_ip->dsp_file );
-	bu_vls_strcpy( &dsp_ip->dsp_file, cp );
+	bu_vls_strcpy( &dsp_ip->dsp_file, (char *)cp );
 
 	if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)) {
 		IMPORT_FAIL("DSP data");
@@ -3019,7 +3019,7 @@ CONST struct db_i		*dbip;
 	bu_pshort( cp, (int)dsp_ip->dsp_smooth );
 	cp += SIZEOF_NETWORK_SHORT;
 
-	strncpy(cp, bu_vls_addr(&dsp_ip->dsp_file), name_len);
+	strncpy((char *)cp, bu_vls_addr(&dsp_ip->dsp_file), name_len);
 
 	return 0; /* OK */
 }

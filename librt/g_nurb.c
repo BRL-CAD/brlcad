@@ -1010,7 +1010,7 @@ CONST struct db_i		*dbip;
 	struct rt_nurb_internal * sip;
 	register int		i;
 	int			s;
-	char			*cp;
+	unsigned char		*cp;
 	fastf_t			tmp_vec[4];
 
 	BU_CK_EXTERNAL( ep );
