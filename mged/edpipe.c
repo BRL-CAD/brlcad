@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -224,7 +224,7 @@ fastf_t scale;
 	  return;
 	}
 
-	if( rt_pipe_ck( head ) )
+	if( rt_pipe_ck( &head->l ) )
 	{
 		/* won't work, go back to original radius */
 		ps->pp_bendradius = old_radius;
@@ -492,7 +492,7 @@ struct wdb_pipept *ps;
 
 	BU_LIST_DEQUEUE( &ps->l );
 
-	if( rt_pipe_ck( head ) )
+	if( rt_pipe_ck( &head->l ) )
 	{
 	  Tcl_AppendResult(interp, "Cannot delete this point, it will result in an illegal pipe\n", (char *)NULL);
 		if( next )
