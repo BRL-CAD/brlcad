@@ -1462,7 +1462,7 @@ register struct edgeuse *eu1;
 		nmg_keg( eu1 );
 	}
 
-	if( eu1->g.magic_p )
+	if( eu2->g.magic_p )
 	{
 		/* Dequeue edgeuse from geometry's list of users */
 		RT_LIST_DEQUEUE( &eu2->l2 );
