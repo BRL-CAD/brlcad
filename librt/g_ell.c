@@ -194,16 +194,16 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is an ELL.
 	 */
-	if( rt_sph_prep( stp, ip, rtip ) == 0 )
-		return(0);		/* OK */
+	if( rt_sph_prep( stp, ip, rtip ) == 0 ) {
+	  return(0);		/* OK */
+	}
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
 	magsq_a = MAGSQ( eip->a );
 	magsq_b = MAGSQ( eip->b );
 	magsq_c = MAGSQ( eip->c );
 
-	/* XXX this coded constant stuff will bite us someday soon */
-	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
+	if( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
 		bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
 			stp->st_name, magsq_a, magsq_b, magsq_c );
 		return(1);		/* BAD */
@@ -219,17 +219,17 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("ell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("ell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("ell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
@@ -759,7 +759,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	magsq_a = MAGSQ( state.eip->a );
 	magsq_b = MAGSQ( state.eip->b );
 	magsq_c = MAGSQ( state.eip->c );
-	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
+	if( magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist ) {
 		bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
 		return(-2);		/* BAD */
 	}
@@ -774,17 +774,17 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  A not perpendicular to B, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  B not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  A not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
@@ -1365,7 +1365,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	magsq_a = MAGSQ( eip->a );
 	magsq_b = MAGSQ( eip->b );
 	magsq_c = MAGSQ( eip->c );
-	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
+	if( magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist ) {
 		bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
 		return(-2);		/* BAD */
 	}
@@ -1380,17 +1380,17 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  A not perpendicular to B, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  B not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, tol->dist) )  {
 		bu_log("ell():  A not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}

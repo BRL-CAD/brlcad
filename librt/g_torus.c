@@ -190,19 +190,19 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	/* Validate that A.B == 0, B.H == 0, A.H == 0 */
 	f = VDOT( tip->a, tip->b )/(tip->r_a*tip->r_b);
 
-	if( ! NEAR_ZERO(f, 0.0001) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("tor(%s):  A not perpendicular to B, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( tip->b, tip->h )/(tip->r_b);
-	if( ! NEAR_ZERO(f, 0.0001) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("tor(%s):  B not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( tip->a, tip->h )/(tip->r_a);
-	if( ! NEAR_ZERO(f, 0.0001) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("tor(%s):  A not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
@@ -433,7 +433,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *  of 't' for the intersections
 	 */
 	for ( j=0, i=0; j < 4; j++ ){
-		if( NEAR_ZERO( val[j].im, 0.0001 ) )
+		if( NEAR_ZERO( val[j].im, ap->a_rt_i->rti_tol.dist ) )
 			k[i++] = val[j].re;
 	}
 
@@ -666,15 +666,15 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	        /* Also reverse translation by adding distance to all 'k' values. */
 		/* Reuse C to hold k values */
 		num_zero = 0;
-		if( NEAR_ZERO( val[i][0].im, 0.0001 ) )
+		if( NEAR_ZERO( val[i][0].im, ap->a_rt_i->rti_tol.dist ) )
 			C[i].cf[num_zero++] = val[i][0].re - cor_proj[i];
-		if( NEAR_ZERO( val[i][1].im, 0.0001 ) ) {
+		if( NEAR_ZERO( val[i][1].im, ap->a_rt_i->rti_tol.dist ) ) {
 			C[i].cf[num_zero++] = val[i][1].re - cor_proj[i];
 		}
-		if( NEAR_ZERO( val[i][2].im, 0.0001 ) ) {
+		if( NEAR_ZERO( val[i][2].im, ap->a_rt_i->rti_tol.dist ) ) {
 			C[i].cf[num_zero++] = val[i][2].re - cor_proj[i];
 		}
-		if( NEAR_ZERO( val[i][3].im, 0.0001 ) ) {
+		if( NEAR_ZERO( val[i][3].im, ap->a_rt_i->rti_tol.dist ) ) {
 			C[i].cf[num_zero++] = val[i][3].re - cor_proj[i];
 		}
 		C[i].dgr   = num_zero;
@@ -816,6 +816,7 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 		( w - 2.0 ) * hitp->hit_vpriv[Y],
 		  w * hitp->hit_vpriv[Z] );
 	VUNITIZE( work );
+
 	MAT3X3VEC( hitp->hit_normal, tor->tor_invR, work );
 }
 
@@ -840,11 +841,11 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	/* vector from V to hit point */
 	VSUB2( w4, hitp->hit_point, tor->tor_V );
 
-	if( !NEAR_ZERO(nz, 0.0001) ) {
+	if( !NEAR_ZERO(nz, 0.00001) ) {
 		z1 = w4[Z]*nx*nx + w4[Z]*ny*ny - w4[X]*nx*nz - w4[Y]*ny*nz;
 		x1 = (nx*(z1-w4[Z])/nz) + w4[X];
 		y1 = (ny*(z1-w4[Z])/nz) + w4[Y];
-	} else if( !NEAR_ZERO(ny, 0.0001) ) {
+	} else if( !NEAR_ZERO(ny, 0.00001) ) {
 		y1 = w4[Y]*nx*nx + w4[Y]*nz*nz - w4[X]*nx*ny - w4[Z]*ny*nz;
 		x1 = (nx*(y1-w4[Y])/ny) + w4[X];
 		z1 = (nz*(y1-w4[Y])/ny) + w4[Z];

@@ -95,7 +95,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	magsq_a = MAGSQ( eip->a );
 	magsq_b = MAGSQ( eip->b );
 	magsq_c = MAGSQ( eip->c );
-	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
+	if( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
 		bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
 			stp->st_name, magsq_a, magsq_b, magsq_c );
 		return(1);		/* BAD */
@@ -122,17 +122,17 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("sph(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("sph(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("sph(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
