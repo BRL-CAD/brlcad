@@ -5,27 +5,17 @@
  *	Intersect a ray with a displacement map
  *
  * Adding a new solid type:
- *	Design disk record
- *
- *	define rt_dsp_internal --- parameters for solid
- *	define dsp_specific --- raytracing form, possibly w/precomuted terms
- *
- *	code import/export/describe/print/ifree/plot/prep/shot/curve/uv/tess
- *
- *	edit db.h add solidrec s_type define
- *	edit rtgeom.h to add rt_dsp_internal
- *	edit table.c:
- *		RT_DECLARE_INTERFACE()
- *		struct rt_functab entry
- *		rt_id_solid()
- *	edit raytrace.h to make ID_DSP, increment ID_MAXIMUM
- *	edit Cakefile to add g_dsp.c to compile
- *
- *	Then:
- *	go to /cad/libwdb and create mk_dsp() routine
- *	go to /cad/mged and create the edit support
  *
  *
+ *	The surfaces of the bounding box of the dsp (in dsp coordinates)
+ *	are 0 .. 6 where:
+ *		0	XMIN
+ *		1	XMAX
+ *		2	YMIN
+ *		3	YMAX
+ *		4	ZMIN
+ *		5	DSP_MAX
+ *		6	DSP_MIN
  *
  *	The top surfaces of the dsp are numbered 0 .. wid*len*2
  *	(2 triangles per ``cell'')
@@ -61,17 +51,38 @@ static char RCSdsp[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 
-#define BBOX_PLANES	6
+#define BBOX_PLANES	7	/* 2 tops & 5 other sides */
 
-/* ray tracing form of solid, including precomputed terms */
+
+/* per-solid ray tracing form of solid, including precomputed terms */
 struct dsp_specific {
 	struct rt_dsp_internal dsp_i;
-	unsigned short dsp_min; 
-	unsigned short dsp_max; 
-	plane_t		dsp_planes[BBOX_PLANES];
-
-	mat_t		dsp_mtos;
+	double		dsp_pl_dist[BBOX_PLANES];
 };
+
+/* per-ray ray tracing information */
+struct isect_stuff {
+	struct bu_list		seglist;
+	struct xray		r;
+	struct application	*ap;
+	struct soltab		*stp;
+	struct bn_tol		*tol;
+	struct dsp_specific	*dsp;
+
+	char	NdotDbits;	/* bit field of non-perpendicular faces */
+	double	NdotD[8];	/* array of VDOT(plane, dir) values */
+	double	recipNdotD[8];
+	double	NdotPt[8];	/* array of VDOT(plane, pt) values */
+
+	double  minbox_dist[2];
+	int  minbox_surf[2];
+
+	double	bbox_dist[2];	/* in/out distances for bounding box */
+	int	bbox_surf[2];	/* in/out surfaces for bounding box */
+};
+
+
+
 
 /* plane equations (minus offset distances) for bounding RPP */
 static CONST plane_t	dsp_pl[BBOX_PLANES] = {
@@ -82,6 +93,7 @@ static CONST plane_t	dsp_pl[BBOX_PLANES] = {
 	{0.0,  1.0, 0.0, 0.0},
 
 	{0.0, 0.0, -1.0, 0.0},
+	{0.0, 0.0,  1.0, 0.0},
 	{0.0, 0.0,  1.0, 0.0},
 };
 
@@ -113,6 +125,58 @@ struct bu_structparse rt_dsp_ptab[] = {
 	{"%f", 16, "stom", DSP_AO(dsp_stom), FUNC_NULL },
 	{"",	0, (char *)0, 0,			FUNC_NULL }
 };
+
+
+static void
+dsp_print(vls, dsp_ip)
+struct bu_vls *vls;
+struct rt_dsp_internal *dsp_ip;
+{
+	point_t pt, v;
+	RT_DSP_CK_MAGIC(dsp_ip);
+
+	bu_vls_init( vls );
+	bu_vls_printf( vls, "Displacement Map\n  file='%s' xc=%d yc=%d\n",
+		dsp_ip->dsp_file, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt);
+
+	VSETALL(pt, 0.0);
+	MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
+	bu_vls_printf( vls, "  V=(%g %g %g)\n", V3ARGS(pt));
+
+	bu_vls_printf( vls, "  stom=\n");
+	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		V4ARGS(dsp_ip->dsp_stom) );
+
+	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		V4ARGS( &dsp_ip->dsp_stom[4]) );
+
+	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		V4ARGS( &dsp_ip->dsp_stom[8]) );
+
+	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		V4ARGS( &dsp_ip->dsp_stom[12]) );
+
+}
+
+/*
+ *			R T _ D S P _ P R I N T
+ */
+void
+rt_dsp_print( stp )
+register CONST struct soltab *stp;
+{
+	register CONST struct dsp_specific *dsp =
+		(struct dsp_specific *)stp->st_specific;
+	struct bu_vls vls;
+ 
+	RT_DSP_CK_MAGIC(dsp);
+
+	dsp_print(&vls, &dsp->dsp_i);
+
+	bu_log("%s", bu_vls_addr( &vls));
+	bu_vls_free( &vls );
+
+}
 
 
 /*
@@ -166,20 +230,19 @@ struct rt_i		*rtip;
 			if ( t < dsp_min ) dsp_min = t;
 		}
 	}
-	dsp->dsp_min = dsp_min;
-	dsp->dsp_max = dsp_max;
 
 	if (rt_g.debug & DEBUG_HF)
 		bu_log("min %d max %d\n", dsp_min, dsp_max);
 
-	/* set the plane equations (in solid coord space) */
-	memcpy(dsp->dsp_planes, dsp_pl, sizeof(dsp_pl));
-	dsp->dsp_planes[1][H] = (fastf_t)dsp_ip->dsp_xcnt;
-	dsp->dsp_planes[3][H] = (fastf_t)dsp_ip->dsp_ycnt;
-	dsp->dsp_planes[5][H] = (fastf_t)dsp_max;
+	dsp->dsp_pl_dist[0] = 0.0;
+	dsp->dsp_pl_dist[1] = (fastf_t)dsp_ip->dsp_xcnt;
+	dsp->dsp_pl_dist[2] = 0.0;
+	dsp->dsp_pl_dist[3] = (fastf_t)dsp_ip->dsp_ycnt;
+	dsp->dsp_pl_dist[4] = 0.0;
+	dsp->dsp_pl_dist[5] = (fastf_t)dsp_max;
+	dsp->dsp_pl_dist[6] = (fastf_t)dsp_min;
 
-	
-	/* compute bounting box and spere */
+	/* compute bounding box and spere */
 
 #define BBOX_PT(_x, _y, _z) \
 	VSET(pt, (fastf_t)_x, (fastf_t)_y, (fastf_t)_z); \
@@ -216,105 +279,129 @@ struct rt_i		*rtip;
 	return 0;
 }
 
-static void
-dsp_print(vls, dsp_ip)
-struct bu_vls *vls;
-struct rt_dsp_internal *dsp_ip;
-{
-	point_t pt, v;
-	RT_DSP_CK_MAGIC(dsp_ip);
 
-	bu_vls_init( vls );
-	bu_vls_printf( vls, "Displacement Map\n  file='%s' xc=%d yc=%d\n",
-		dsp_ip->dsp_file, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt);
 
-	VSETALL(pt, 0.0);
-	MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
-	bu_vls_printf( vls, "  V=(%g %g %g)\n", V3ARGS(pt));
-
-	bu_vls_printf( vls, "  stom=\n");
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS(dsp_ip->dsp_stom) );
-
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS( &dsp_ip->dsp_stom[4]) );
-
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS( &dsp_ip->dsp_stom[8]) );
-
-	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		V4ARGS( &dsp_ip->dsp_stom[12]) );
-
-}
-
-/*
- *			R T _ D S P _ P R I N T
- */
 void
-rt_dsp_print( stp )
-register CONST struct soltab *stp;
-{
-	register CONST struct dsp_specific *dsp =
-		(struct dsp_specific *)stp->st_specific;
-	struct bu_vls vls;
-
-	RT_DSP_CK_MAGIC(dsp);
-
-	dsp_print(&vls, &dsp->dsp_i);
-
-	bu_log("%s", bu_vls_addr( &vls));
-	bu_vls_free( &vls );
-
-}
-void
-isect_ray_dsp(dist, surf, ap, stp, seglist)
-double dist[2];
-int surf[2];
-struct application	*ap;
-struct soltab		*stp;
-struct bu_list		*seglist;
+isect_ray_dsp(isect)
+struct isect_stuff *isect;
 {
 	register struct seg *segp;
-	RT_GET_SEG( segp, ap->a_resource );
-	segp->seg_stp = stp;
-	segp->seg_in.hit_dist = dist[0];
-	segp->seg_in.hit_surfno = surf[0];
 
-	segp->seg_out.hit_dist = dist[1];
-	segp->seg_out.hit_surfno = surf[1];
-	BU_LIST_INSERT( seglist, &(segp->l) );
+	if (isect->minbox_surf[0] < 5 && isect->minbox_surf[1] < 5 ) {
+		/* we actually hit and exit the dsp BELOW the min value
+		 *
+		 *		     ray origin
+		 *	dsp	    o
+		 *    /\    /\     /
+		 *   /	\/\/  \_  / ray
+		 *  |		|/
+		 *  |		*in point
+		 *  |	       /|
+		 *  |	      /	|
+		 *  |	     /	|
+		 *  +-------*---+
+		 *         / out point
+		 *        /
+		 */
+
+
+		RT_GET_SEG( segp, isect->ap->a_resource );
+		segp->seg_stp = isect->stp;
+		segp->seg_in.hit_dist = isect->bbox_dist[0];
+		segp->seg_in.hit_surfno = isect->bbox_surf[0];
+
+		segp->seg_out.hit_dist = isect->bbox_dist[1];
+		segp->seg_out.hit_surfno = isect->bbox_surf[1];
+		BU_LIST_INSERT( &isect->seglist, &(segp->l) );
+
+		return;
+
+	}
+
+
+
+
+#if 0
+
+	point_t	in_pt;
+	int cell[3];
+
+	/* 
+	VJOIN1(in_pt, rp->r_pt, dist[0], rp->r_dir);
+
+
+	VMOVE(cell, in_pt);	/* int/float conversion */
+
+	while (cell[X] 
+
+
+#define	CELL_MINMAX(min, max, cell) {
+
+}
+
+
+	if we don't hit the cell bounding box
+		if "inside"
+			close out a hit partition
+		go to next cell
+	
+	The "base" is the box underneath the lowest height in the cell
+	if we pass through the base without hitting the top
+		if "inside"
+			record new exit
+		else
+			record entrance/exit
+			mark us as "inside"
+		go to next cell
+	
+
+	
+
+
+
+#endif
+
+
+
 }
 
 
 int
-isect_ray_bbox(dt, surf, r, planes, tol)
-fastf_t 	dt[2];
-int		surf[2];
-struct xray 	*r;
-plane_t		planes[6];
-struct bn_tol	*tol;
+isect_ray_bbox(isect)
+struct isect_stuff *isect;
 {
 	register double NdotD;
 	double dist;
 	int i;
-	
-	surf[0] = surf[1] = -1;
-	dt[0] = - (dt[1] = MAX_FASTF);
+	double *dt = isect->bbox_dist;
+	int *surf = isect->bbox_surf;
 	
 	/* intersect the ray with the bounding box */
 	for (i=0 ; i < BBOX_PLANES ; i++) {
 
-		NdotD = VDOT(planes[i], r->r_dir);
+		NdotD = VDOT(dsp_pl[i], isect->r.r_dir);
 
 		/* if N/ray vectors are perp, ray misses plane */
-		if (BN_VECT_ARE_PERP(NdotD, tol)) continue;
+		if (BN_VECT_ARE_PERP(NdotD, isect->tol)) continue;
+
+		isect->NdotDbits |= 1 << i;
+		isect->NdotD[i] = NdotD;
+		isect->recipNdotD[i] = 1.0 / NdotD;
+
+		isect->NdotPt[i] = VDOT(dsp_pl[i], isect->r.r_pt);
 
 		/* ray hits plane, compute distance along ray to plane */
-		dist = - ( (VDOT(planes[i], r->r_pt) - planes[i][H]) / NdotD);
+		dist = - ( (isect->NdotPt[i] - isect->dsp->dsp_pl_dist[i]) *
+			 isect->recipNdotD[i]);
 
 		if (rt_g.debug & DEBUG_HF)
 			bu_log("surf[%d](%g %g %g %g) dot:%g dist:%g\n",
-				i, V4ARGS(planes[i]), NdotD, dist);
+				i, V3ARGS(dsp_pl[i]),
+				isect->dsp->dsp_pl_dist[i],
+				NdotD, dist);
+
+		if ( i > 5) /* dsp_min elevation not valid bbox limit */
+			continue;
 
 		if (NdotD < 0.0) {
 			/* entering */
@@ -331,17 +418,49 @@ struct bn_tol	*tol;
 		}
 	}
 
+
 	if (rt_g.debug & DEBUG_HF) {
-		bu_log("solid rpp in  surf[%d] dist:%g\n", surf[0], dt[0]);
-		bu_log("solid rpp out surf[%d] dist:%g\n", surf[1], dt[1]);
+		bu_log("solid rpp in  surf[%d] dist:%g\n",
+			isect->bbox_surf[0], dt[0]);
+		bu_log("solid rpp out surf[%d] dist:%g\n",
+			isect->bbox_surf[1], dt[1]);
 	}
 	/* validate */
-	if (dt[0] >= dt[1] || surf[0] == -1 || surf[1] == -1 ||
+
+
+	if (dt[0] >= dt[1] || isect->bbox_surf[0] == -1 || isect->bbox_surf[1] == -1 ||
 	    dt[1] >= INFINITY)
 		return 0; /* MISS */
 
-	
+	/* copmute "minbox" the bounding box of the rpp under the lowest
+	 * displacement height
+	 */
 
+	isect->minbox_dist[0] = isect->bbox_dist[0];
+	isect->minbox_surf[0] = isect->bbox_surf[0];
+	isect->minbox_dist[1] = isect->bbox_dist[1];
+	isect->minbox_surf[1] = isect->bbox_surf[1];
+
+	if (NdotD < 0.0) {
+		/* entering */
+		if (dist > isect->bbox_dist[0]) {
+			isect->minbox_dist[0] = dist;
+			isect->minbox_surf[0] = 6;
+		}
+	} else { /*  (NdotD > 0.0) */
+		/* leaving */
+		if (dist < isect->bbox_dist[1]) {
+			isect->minbox_dist[1] = dist;
+			isect->minbox_surf[1] = 6;
+		}
+	}
+
+	if (rt_g.debug & DEBUG_HF) {
+		bu_log("solid minbox rpp in  surf[%d] dist:%g\n",
+			isect->minbox_surf[0], isect->minbox_dist[0]);
+		bu_log("solid minbox rpp out surf[%d] dist:%g\n",
+			isect->minbox_surf[1], isect->minbox_dist[1]);
+	}
 
 	return 1;
 }/*
@@ -365,13 +484,9 @@ struct seg		*seghead;
 	register struct dsp_specific *dsp =
 		(struct dsp_specific *)stp->st_specific;
 	register struct seg *segp;
-	CONST struct rt_tol	*tol = &ap->a_rt_i->rti_tol;
-	struct xray r;
 	int	i;
-	double	dist[2];
-	int	surf[2];
 	vect_t	dir, v;
-	struct bu_list	seglist;
+	struct isect_stuff isect;
 
 	if (rt_g.debug & DEBUG_HF)
 		bu_log("rt_dsp_shot(pt:(%g %g %g)\n\tdir[%g]:(%g %g %g))\n",
@@ -383,37 +498,46 @@ struct seg		*seghead;
 
 
 	/* map the ray into the coordinate system of the dsp */
-	MAT4X3PNT(r.r_pt, dsp->dsp_i.dsp_mtos, rp->r_pt);
+	MAT4X3PNT(isect.r.r_pt, dsp->dsp_i.dsp_mtos, rp->r_pt);
 	MAT4X3VEC(dir, dsp->dsp_i.dsp_mtos, rp->r_dir);
-	VMOVE(r.r_dir, dir);
-	VUNITIZE(r.r_dir);
+	VMOVE(isect.r.r_dir, dir);
+	VUNITIZE(isect.r.r_dir);
 
 	if (rt_g.debug & DEBUG_HF) {
 		bn_mat_print("mtos", dsp->dsp_i.dsp_mtos);
 		bu_log("Solid space ray pt:(%g %g %g)\n\tdir[%g]:[%g %g %g]\n\tu_dir(%g %g %g)\n",
-			V3ARGS(r.r_pt),
+			V3ARGS(isect.r.r_pt),
 			MAGNITUDE(dir),
 			V3ARGS(dir),
-			V3ARGS(r.r_dir));
+			V3ARGS(isect.r.r_dir));
 
 	}
 
+	isect.ap = ap;
+	isect.stp = stp;
+	isect.dsp = (struct dsp_specific *)stp->st_specific;
+	isect.tol = &ap->a_rt_i->rti_tol;
+	isect.NdotDbits = 0;
+	isect.bbox_dist[0] = - (isect.bbox_dist[1] = MAX_FASTF);
+	isect.bbox_surf[0] = 
+	isect.bbox_surf[1] = -1;
+
 	/* intersect ray with bounding cube */
-	if ( isect_ray_bbox(dist, surf, &r, dsp->dsp_planes, tol) == 0)
+	if ( isect_ray_bbox(&isect) == 0)
 		return 0;
 
 
 	/* intersect ray with dsp data */
-	BU_LIST_INIT(&seglist);
+	BU_LIST_INIT(&isect.seglist);
+	isect_ray_dsp(&isect);
 
-	isect_ray_dsp(dist, surf, ap, stp, &seglist);
-
-	if (BU_LIST_IS_EMPTY(&seglist))
+	/* if we missed it all, give up now */
+	if (BU_LIST_IS_EMPTY(&isect.seglist))
 		return 0;
 
 	/* map hit distances back to model space */
 	i = 0;
-	for (BU_LIST_FOR(segp, seg, &seglist)) {
+	for (BU_LIST_FOR(segp, seg, &isect.seglist)) {
 		i += 2;
 		if (rt_g.debug & DEBUG_HF) {
 			bu_log("solid in:%6g out:%6g\n",
@@ -421,11 +545,11 @@ struct seg		*seghead;
 				segp->seg_out.hit_dist);
 		}
 
-		VSCALE(dir, r.r_dir, segp->seg_in.hit_dist);
+		VSCALE(dir, isect.r.r_dir, segp->seg_in.hit_dist);
 		MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir)
 		segp->seg_in.hit_dist = MAGNITUDE(v);
 
-		VSCALE(dir, r.r_dir, segp->seg_out.hit_dist);
+		VSCALE(dir, isect.r.r_dir, segp->seg_out.hit_dist);
 		MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir)
 		segp->seg_out.hit_dist = MAGNITUDE(v);
 
@@ -447,7 +571,7 @@ struct seg		*seghead;
 	}
 
 	/* transfer list of hitpoints */
-	BU_LIST_APPEND_LIST( &(seghead->l), &seglist);
+	BU_LIST_APPEND_LIST( &(seghead->l), &isect.seglist);
 
 	return i;
 }
@@ -493,7 +617,7 @@ register struct xray	*rp;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	MAT4X3VEC( N, dsp->dsp_i.dsp_stom, 
-		dsp->dsp_planes[ hitp->hit_surfno ] );
+		dsp_pl[ hitp->hit_surfno ] );
 
 	VUNITIZE(N);
 	VMOVE(hitp->hit_normal, N);
@@ -503,7 +627,7 @@ register struct xray	*rp;
 		bu_log("surf[%d] pt(%g %g %g) Norm[%g %g %g](%g %g %g)\n",
 			hitp->hit_surfno,
 			V3ARGS(hitp->hit_point),
-			V3ARGS(dsp->dsp_planes[ hitp->hit_surfno ]),
+			V3ARGS(dsp_pl[ hitp->hit_surfno ]),
 			V3ARGS(N));
 }
 
