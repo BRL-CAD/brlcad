@@ -135,6 +135,9 @@ grid_setup()
  */
 do_run( a, b )
 {
+#ifdef alliant
+	register int d7;	/* known to be in d7 */
+#endif
 	int x;
 
 	cur_pixel = a;
@@ -170,8 +173,7 @@ RES_RELEASE( &rt_g.res_worker );
 		asm("	subql		#1,d0");
 		asm("	cstart		d0");
 		asm("super_loop:");
-		/******** need to push index here as arg ******/
-		worker();
+		worker(d7);		/* d7 has current index, like magic */
 		asm("	crepeat		super_loop");
 	}
 #endif
