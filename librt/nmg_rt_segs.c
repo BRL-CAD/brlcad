@@ -1068,6 +1068,7 @@ struct soltab		*stp;
 	    		rt_bomb("Infinite NMG?");
 	    	}
 		a_hit = RT_LIST_FIRST(hitmiss, &rd->rd_hit);
+		NMG_CK_HITMISS(a_hit);
 
 		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 			rt_log("build_seg w/ ray_hit_distance %g (%g %g %g)",
@@ -1084,6 +1085,7 @@ struct soltab		*stp;
 				*(int*)a_hit->hit.hit_private); break;
 			}
 		}
+
 
 		switch (*(int *)a_hit->hit.hit_private) {
 		case NMG_VERTEX_MAGIC:

@@ -35,6 +35,33 @@ struct hitmiss {
 					 */
 };
 
+#define NMG_CK_HITMISS(hm) {\
+	switch (hm->l.magic) { \
+	case NMG_RT_HIT_MAGIC: \
+	case NMG_RT_HIT_SUB_MAGIC: \
+	case NMG_RT_MISS_MAGIC: \
+		break; \
+	case NMG_MISS_LIST: \
+		rt_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
+			__FILE__, __LINE__); \
+		rt_bomb("going down in flames\n"); \
+	case NMG_HIT_LIST: \
+		rt_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
+			__FILE__, __LINE__); \
+		rt_bomb("going down in flames\n"); \
+	default: \
+		rt_log("%s[%d]: bad struct hitmiss magic: %d:(0x%08x)\n", \
+			__FILE__, __LINE__, hm->l.magic, hm->l.magic); \
+		rt_bomb("going down in flames\n"); \
+	}\
+	if (!hm->hit.hit_private) { \
+		rt_log("%s[%d]: NULL hit_private in hitmiss structj\n", \
+			__FILE__, __LINE__); \
+		rt_bomb("going down in flames\n"); \
+	} \
+}
+
+
 /*	Ray Data structure
  *
  * A)	the hitmiss table has one element for each nmg structure in the
