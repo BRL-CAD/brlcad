@@ -82,7 +82,7 @@ struct params {
 typedef struct params params_t;
 
 int count = 0; /* global sphere count */
-FILE *fp;
+struct rt_wdb *fp;
 mat_t IDENT;
 
 /* make the wmember structs, in order to produce individual     
@@ -174,7 +174,7 @@ int main(argc, argv)
   initializeInfo(&params, inter, fileName, depth);
   
   /* now open a file for outputting the database */
-  fp = fopen(params.fileName, "w");
+  fp = wdb_fopen(params.fileName);
   
   /* create the initial id */
   i = mk_id_units(fp, "SphereFlake", "mm");
@@ -211,7 +211,7 @@ int main(argc, argv)
   
   createScene(&params);
   
-  fclose(fp);
+  wdb_close(fp);
   
   return 0;
 }

@@ -61,6 +61,8 @@ void	do_light(char *name, point_t pos, vect_t dir_at, int da_flag,
 
 struct bn_unif	*rbuf;
 
+struct rt_wdb	*outfp;
+
 int
 main(argc, argv)
 char	**argv;
@@ -90,17 +92,18 @@ char	**argv;
 
 	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
 
-	mk_id( stdout, "Procedural Clutter" );
+	outfp = wdb_fopen( "clutter.g" );
+	mk_id( outfp, "Procedural Clutter" );
 
 	/* Create the underpinning */
 	VSET( norm, 0, 0, 1 );
-	mk_half( stdout, "plane", norm, -10.0 );
+	mk_half( outfp, "plane", norm, -10.0 );
 	rgb[0] = 240;	/* gold/brown */
 	rgb[1] = 180;
 	rgb[2] = 64;
 	bn_mat_idn( identity );
 
-	mk_region1( stdout, "plane.r", "plane", NULL, NULL, rgb );
+	mk_region1( outfp, "plane.r", "plane", NULL, NULL, rgb );
 
 	(void)mk_addmember( "plane.r", &head, WMOP_UNION );
 
@@ -157,7 +160,7 @@ char	**argv;
 	do_light( "l4", pos, aim, 1, 100.0, white, &head );
 
 	/* Build the overall combination */
-	mk_lfcomb( stdout, "clut", &head, 0 );
+	mk_lfcomb( outfp, "clut", &head, 0 );
 
 	return 0;
 }
@@ -207,14 +210,14 @@ double	size;
 
 	/* Build the crystal union */
 	sprintf( crystalname, "%scrystal", cname );
-	mk_lfcomb( stdout, crystalname, &head, 0 );
+	mk_lfcomb( outfp, crystalname, &head, 0 );
 
 	/* Make the trimming RPP */
 	esz = size*0.5;	/* dist from ctr to edge of base */
 	VSET( minpt, xc-esz, yc-esz, 10 );
 	VSET( maxpt, xc+esz, yc+esz, height );
 	sprintf( rppname, "%srpp", cname );
-	mk_rpp( stdout, rppname, minpt, maxpt );
+	mk_rpp( outfp, rppname, minpt, maxpt );
 
 	/* Build the final combination */
 	BU_LIST_INIT( &reg_head.l );
@@ -222,7 +225,7 @@ double	size;
 	i = PICK_MAT;
 	(void)mk_addmember( crystalname, &reg_head, WMOP_UNION );
 	(void)mk_addmember( rppname, &reg_head, WMOP_INTERSECT );
-	mk_lcomb( stdout, cname, &reg_head, 1,
+	mk_lcomb( outfp, cname, &reg_head, 1,
 		mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
 	return(height);
 }
@@ -300,7 +303,7 @@ int	nsolids;	/* number of solids for this layer */
 		/* Consider fusing points here, for visual complexity */
 
 		sprintf( name, "%s%d", crname, index++ );
-		mk_arb8( stdout, name, &pt[0][X] );
+		mk_arb8( outfp, name, &pt[0][X] );
 		(void)mk_addmember( name, &head, WMOP_UNION );
 
 		for( i=0; i<8; i++ )  {
@@ -309,7 +312,7 @@ int	nsolids;	/* number of solids for this layer */
 		}
 	}
 
-	mk_lfcomb( stdout, crname, &head, 0 );
+	mk_lfcomb( outfp, crname, &head, 0 );
 	return(height);
 }
 
@@ -330,12 +333,12 @@ double	size;
 	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
 	VSET( minpt, xc-esz, yc-esz, -9 );
 	VSET( maxpt, xc+esz, yc+esz, -1 );
-	mk_rpp( stdout, sname, minpt, maxpt );
+	mk_rpp( outfp, sname, minpt, maxpt );
 
 	/* Needs to be in a region, with color!  */
 	get_rgb(rgb);
 	i = PICK_MAT;
-	mk_region1( stdout, name, sname, 
+	mk_region1( outfp, name, sname, 
 		mtab[i].mt_name, mtab[i].mt_param, rgb );
 }
 
@@ -361,13 +364,13 @@ double	size;
 	for( i=0; i<n; i++ )  {
 		sprintf( name, "%s%c", bname, 'A'+i );
 		VSET( center, xc, yc, size/2+i*size );
-		mk_sph( stdout, name, center, esz/2 );
+		mk_sph( outfp, name, center, esz/2 );
 		(void)mk_addmember( name, &head, WMOP_UNION );
 	}
 
 	/* Build the combination */
 	get_rgb(rgb);
-	mk_lcomb( stdout, bname, &head, 0, (char *)0, "", rgb, 0 );
+	mk_lcomb( outfp, bname, &head, 0, (char *)0, "", rgb, 0 );
 
 	return( n*size );
 }
@@ -408,19 +411,19 @@ double	size;
 		switch(i)  {
 		default:
 			VSET( center, xc, yc, vpos+size/2 );
-			mk_sph( stdout, name, center, size/2 );
+			mk_sph( outfp, name, center, size/2 );
 			vpos += size;
 			break;
 		case 0:
 			VSET( min, xc-size/2, yc-size/2, vpos );
 			VSET( max, xc+size/2, yc+size/2, vpos+height );
-			mk_rpp( stdout, name, min, max );
+			mk_rpp( outfp, name, min, max );
 			vpos += height;
 			break;
 		case 1:
 			VSET( base, xc, yc, vpos );
 			VSET( hvec, 0, 0, height );
-			mk_rcc( stdout, name, base, hvec, size/2 );
+			mk_rcc( outfp, name, base, hvec, size/2 );
 			vpos += height;
 			break;
 		case 2:
@@ -428,7 +431,7 @@ double	size;
 			VSET( pt[1], xbase+size, ybase, vpos);
 			VSET( pt[2], xbase+size/2, ybase+size, vpos);
 			VSET( pt[3], xbase+size/2, ybase+size*sin60/3, vpos+height );
-			mk_arb4( stdout, name, &pt[0][X] );
+			mk_arb4( outfp, name, &pt[0][X] );
 			vpos += height;
 			break;
 		case 3:
@@ -436,7 +439,7 @@ double	size;
 			VSET( pt[0], size/2, 0, 0 );
 			VSET( pt[1], 0, size/2, 0 );
 			VSET( pt[2], 0, 0, height/2 );
-			mk_ell( stdout, name, center,
+			mk_ell( outfp, name, center,
 				pt[0], pt[1], pt[2] );
 			vpos += height;
 			break;
@@ -446,7 +449,7 @@ double	size;
 	/* Build the combination */
 	get_rgb( rgb );
 	i = PICK_MAT;
-	mk_lcomb( stdout, pname, &head, 0,
+	mk_lcomb( outfp, pname, &head, 0,
 		mtab[i].mt_name, mtab[i].mt_param,
 		rgb, 0 );
 	return(vpos);
@@ -475,15 +478,15 @@ int	n;
 		sprintf( sname, "%s%ds", ringname, i );
 		sprintf( rname, "%s%dr", ringname, i );
 
-		mk_tor( stdout, sname, center, normal, r1, r2 );
+		mk_tor( outfp, sname, center, normal, r1, r2 );
 		r1 += incr;
 
 		/* Build the region that contains each solid */
 		get_rgb(rgb);
-		mk_region1( stdout, rname, sname, NULL, NULL, rgb );
+		mk_region1( outfp, rname, sname, NULL, NULL, rgb );
 		(void)mk_addmember( rname, &head, WMOP_UNION );
 	}
 
 	/* Build the group that holds all the regions */
-	mk_lfcomb( stdout, ringname, &head, 0 );
+	mk_lfcomb( outfp, ringname, &head, 0 );
 }

@@ -99,7 +99,7 @@ char *arb="%02d.arb";
 
 void Usage();
 
-FILE *fdout;	/* file for libwdb writes */
+struct rt_wdb *fdout;	/* file for libwdb writes */
 
 void
 Make_name( ptr , form , base , number )
@@ -705,7 +705,7 @@ char *argv[];
 
 	strcpy( name , argv[optind++] ); /* Base name for objects */
 
-	fdout = fopen( argv[optind] , "w" );
+	fdout = wdb_fopen( argv[optind] );
 	if( fdout == NULL )
 	{
 		fprintf( stderr , "Cannot open %s\n" , argv[optind] );

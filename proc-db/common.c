@@ -28,6 +28,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
+extern struct rt_wdb	*outfp;
 
 struct colors {
 	char		*name;
@@ -59,8 +60,7 @@ int	ncolors = sizeof(colortab)/sizeof(struct colors);
 int	curcolor = 0;
 
 void
-get_rgb( rgb )
-register unsigned char	*rgb;
+get_rgb( unsigned char *rgb )
 {
 	register struct colors *cp;
 	if( ++curcolor >= ncolors )  curcolor = 0;
@@ -97,7 +97,7 @@ struct wmember	*headp;
 
 	sprintf( nbuf, "%s.s", name );
 	VSETALL( center, 0 );
-	mk_sph( stdout, nbuf, center, r );
+	mk_sph( outfp, nbuf, center, r );
 
 	/*
 	 * Need to rotate from 0,0,-1 to vect "dir",
@@ -109,6 +109,6 @@ struct wmember	*headp;
 	MAT_DELTAS( xlate, pos[X], pos[Y], pos[Z] );
 	bn_mat_mul( both, xlate, rot );
 
-	mk_region1( stdout, name, nbuf, "light", "shadows=1", rgb );
+	mk_region1( outfp, name, nbuf, "light", "shadows=1", rgb );
 	(void)mk_addmember( name, headp, WMOP_UNION );
 }

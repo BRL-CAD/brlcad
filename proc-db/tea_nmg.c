@@ -48,6 +48,9 @@ static struct bn_tol tol;
 
 void dump_patch();
 
+struct rt_wdb *outfp;
+
+int
 main(argc, argv) 			/* really has no arguments */
 int argc; char *argv[];
 {
@@ -67,10 +70,7 @@ int argc; char *argv[];
 
 	BU_LIST_INIT( &rt_g.rtg_vlfree );
 
-	if (isatty(fileno(stdout))) {
-		(void)fprintf(stderr, "%s: %s\n", *argv, Usage);
-		return(-1);
-	}
+	outfp = wdb_fopen( "tea_nmg.g" );
 
 	rt_g.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on rt_bomb(), but no extra messages */
 
@@ -84,7 +84,7 @@ int argc; char *argv[];
 		}
 	}
 
-	mk_id( stdout, id_name);
+	mk_id( outfp, id_name);
 
 	m = nmg_mm();
 	NMG_CK_MODEL( m );
@@ -106,8 +106,8 @@ int argc; char *argv[];
 	(void)nmg_model_fuse( m , &tol );
 
 	/* write NMG to output file */
-	(void)mk_nmg( stdout , tea_name , m );
-	fflush( stdout );
+	(void)mk_nmg( outfp , tea_name , m );
+	wdb_close(outfp);
 
 	/* Make a vlist drawing of the model */
 	BU_LIST_INIT( &vhead );

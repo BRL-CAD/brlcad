@@ -698,7 +698,7 @@ char *getPrePostName(prefix, base, suffix)
  * as necessary to actually generate the fence.
  *************************************************************/
 int generateFence_s(fp, fencename, startposition, endposition)
-     FILE *fp;
+     struct rt_wdb *fp;
      char *fencename;
      point_t startposition;
      point_t endposition;
@@ -713,7 +713,7 @@ int generateFence_s(fp, fencename, startposition, endposition)
 }
 
 int generateFence(fp, fencename, startposition, heightvector, widthvector)
-     FILE *fp;
+     struct rt_wdb *fp;
      char *fencename;
      point_t startposition;
      vect_t heightvector;
@@ -834,7 +834,7 @@ int generateFence(fp, fencename, startposition, heightvector, widthvector)
  * poles for the scene
  ********************************/
 int generatePoles_s(fp, polename)
-     FILE *fp;
+     struct rt_wdb *fp;
      char *polename;
 {
   vect_t polevector;
@@ -847,7 +847,7 @@ int generatePoles_s(fp, polename)
 }
 
 int generatePoles(fp, polename, startposition, heightvector, widthvector, radius)
-     FILE *fp;
+     struct rt_wdb *fp;
      char *polename;
      point_t startposition;
      vect_t heightvector;
@@ -966,7 +966,7 @@ int generatePoles(fp, polename, startposition, heightvector, widthvector, radius
  * gets attached to the poles (if given).
  *******************************/
 int generateMesh_s(fp, meshname)
-     FILE *fp;
+     struct rt_wdb *fp;
      char *meshname;
 {
   point_t meshstartposition;
@@ -987,7 +987,7 @@ int generateMesh_s(fp, meshname)
 }
 
 int generateMesh(fp, meshname, startposition, heightvector, widthvector)
-     FILE *fp;
+     struct rt_wdb *fp;
      char *meshname;
      point_t startposition;
      vect_t heightvector;
@@ -1111,7 +1111,7 @@ int generateMesh(fp, meshname, startposition, heightvector, widthvector)
  *****************************************/
 
 int generateWire_s(fp, wirename, position)
-     FILE *fp;
+     struct rt_wdb *fp;
      char *wirename;
      point_t position;
 {
@@ -1127,7 +1127,7 @@ int generateWire_s(fp, wirename, position)
 }
 
 int generateWire(fp, wirename, position, fenceheightvector, fencewidthvector, radius, angle, segmentlength)
-     FILE *fp;
+     struct rt_wdb *fp;
      char *wirename;
      point_t position;
      vect_t fenceheightvector;
@@ -1281,7 +1281,7 @@ int generateWire(fp, wirename, position, fenceheightvector, fencewidthvector, ra
  *
  ***************************************************************************************************************/
 int createWire(fp, segmentname, heightvector, widthvector, radius, angle, segmentlength, segmentdepthseparation) 
-     FILE *fp;
+     struct rt_wdb *fp;
      char *segmentname;
      vect_t heightvector;
      vect_t widthvector;
@@ -1898,7 +1898,7 @@ int main(argc, argv)
      int argc;
      char **argv;
 {
-  FILE *fp;
+  struct rt_wdb *fp;
   int errors;
 
   int len = 0;
@@ -1909,8 +1909,8 @@ int main(argc, argv)
 
   (void) parseArguments(argc, argv);
   
-  if ((fp=fopen(outputFilename, "w"))==NULL) {
-    perror("Unable to open output database file");
+  if ((fp=wdb_fopen(outputFilename))==NULL) {
+    perror(outputFilename);
     exit(2);
   }
   else {

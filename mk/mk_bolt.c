@@ -41,7 +41,7 @@ int argc;
 char *argv[];
 
 {
-   FILE *fpw;			/*  File to be written to.  */
+   struct rt_wdb *fpw;		/*  File to be written to.  */
    char filemged[26];		/*  Mged file create.  */
    double hd,hh;		/*  Diameter & height of bolt head.  */
    double wd,wh;		/*  Diameter & height of washer.  */
@@ -284,7 +284,7 @@ char *argv[];
    (void)fflush(stdout);
 
    /*  Open mged file for writing to.  */
-   fpw = fopen(filemged,"w");
+   fpw = wdb_fopen(filemged);
 
    /*  Write ident record.  */
    mk_id(fpw,"bolts");
@@ -476,6 +476,6 @@ char *argv[];
    }							/*  END # 20  */
 
    /*  Close mged file.  */
-   (void)fclose(fpw);
+   wdb_close(fpw);
    return 0;
 }

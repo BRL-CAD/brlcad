@@ -8,9 +8,14 @@
  * 		Aberdeen Proving Ground, Md.
  * Date:	Mon Dec 29 1986
  */
-static char rcs_ident[] = "$Header$";
+static const char rcs_ident[] = "$Header$";
 
 #include "conf.h"
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include <stdio.h>
 #include <math.h>
@@ -45,11 +50,15 @@ char * matname = "plastic";
 char * matparm = "shine=100.0 diffuse=.8 specular=.2";
 
 void	read_data(), process_sphere();
+int	make_bond( int sp1, int sp2 );
 
 struct wmember head;
 
 static CONST char usage[] = "Usage: molecule db_title < mol-cube.dat > mol.g\n";
 
+struct rt_wdb	*outfp;
+
+int
 main(argc, argv)
 int argc;
 char ** argv;
@@ -61,11 +70,15 @@ char ** argv;
 	}
 
 	BU_LIST_INIT( &head.l );
-	mk_id( stdout, argv[1] );
+	outfp = wdb_fopen( "molecule.g" );
+	mk_id( outfp, argv[1] );
 	read_data();
 
 	/* Build the overall combination */
-	mk_lfcomb( stdout, "mol.g", &head, 0 );
+	mk_lfcomb( outfp, "mol.g", &head, 0 );
+
+	wdb_close(outfp);
+	return 0;
 }
 
 /* File format from stdin
@@ -148,13 +161,13 @@ int	sph_type;
 	rgb[2] = atom_list[sph_type].blue;
 
 	sprintf(nm1, "sph.%d", id );
-	mk_sph( stdout, nm1, center, rad );
+	mk_sph( outfp, nm1, center, rad );
 
 	/* Create a region nm to contain the solid nm1 */
 	BU_LIST_INIT( &reg_head.l );
 	(void)mk_addmember( nm1, &reg_head, WMOP_UNION );
 	sprintf(nm, "SPH.%d", id );
-	mk_lcomb( stdout, nm, &reg_head, 1, matname, matparm, rgb, 0 );
+	mk_lcomb( outfp, nm, &reg_head, 1, matname, matparm, rgb, 0 );
 
 	/* Include this region in the larger group */
 	(void)mk_addmember( nm, &head, WMOP_UNION );
@@ -176,8 +189,8 @@ int	sph_type;
 	}
 }
 
-make_bond( sp1, sp2 )
-int sp1, sp2;
+int
+make_bond( int sp1, int sp2 )
 {
 	struct sphere * s1, *s2, *s_ptr;
 	point_t base;
@@ -211,10 +224,10 @@ int sp1, sp2;
 
 #if 1
 	/* Use this for mol-cube.dat */
-	mk_rcc( stdout, nm, base, height, s1->s_rad * 0.15 );
+	mk_rcc( outfp, nm, base, height, s1->s_rad * 0.15 );
 #else
 	/* Use this for chemical molecules */
-	mk_rcc( stdout, nm, base, height, s1->s_rad * 0.5 );
+	mk_rcc( outfp, nm, base, height, s1->s_rad * 0.5 );
 #endif
 
 	BU_LIST_INIT( &reg_head.l );
@@ -222,7 +235,7 @@ int sp1, sp2;
 	(void)mk_addmember( s1->s_name, &reg_head, WMOP_SUBTRACT );
 	(void)mk_addmember( s2->s_name, &reg_head, WMOP_SUBTRACT );
 	sprintf( nm1, "BOND.%d.%d", sp1, sp2);
-	mk_lcomb( stdout, nm1, &reg_head, 1, matname, matparm, rgb, 0 );
+	mk_lcomb( outfp, nm1, &reg_head, 1, matname, matparm, rgb, 0 );
 	(void)mk_addmember( nm1, &head, WMOP_UNION );
 
 	return(0);		/* OK */

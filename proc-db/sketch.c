@@ -38,6 +38,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct rt_sketch_internal *sketch_start();
 
+struct rt_wdb *outfp;
+
+int
 main( argc, argv )
 int argc;
 char *argv[];
@@ -47,8 +50,6 @@ char *argv[];
 	vect_t u_vec, v_vec;
 	struct curve *crv;
 	struct carc_seg *csg;
-	struct line_seg lsg[3];
-	int vert_count=5;
 	point2d_t verts[] = {
 		{ 20, 10 },
 		{ 10, 10 },
@@ -84,6 +85,8 @@ char *argv[];
 	csg->radius = -1.0;
 	csg->orientation = 0;
 
-	mk_id( stdout, "sketch test" );
-	mk_sketch( stdout, "test_sketch", skt );
+	outfp = wdb_fopen( "sketch.g" );
+	mk_id( outfp, "sketch test" );
+	mk_sketch( outfp, "test_sketch", skt );
+	return 0;
 }

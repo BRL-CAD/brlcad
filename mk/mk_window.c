@@ -36,7 +36,7 @@ int argc;
 char *argv[];
 
 {							/*  START # 1  */
-   FILE *fpw;			/*  File to be written to.  */
+   struct rt_wdb *fpw;		/*  File to be written to.  */
    char filemged[26];		/*  Mged file create.  */
    double hgt,wid,dpt;		/*  Height, width, & depth of handle.  */
    double rds;			/*  Radius of the corner of window.  */
@@ -176,7 +176,7 @@ char *argv[];
    (void)fflush(stdout);
 
    /*  Open mged file.  */
-   fpw = fopen(filemged,"w");
+   fpw = wdb_fopen(filemged);
 
    /*  Write ident record.  */
    mk_id(fpw,"windows");
@@ -334,7 +334,7 @@ char *argv[];
    }							/*  START # 2  */
 
    /*  Close file.  */
-   (void)fclose(fpw);
+   wdb_close(fpw);
 
    return 0;
 }							/*  END # 1  */

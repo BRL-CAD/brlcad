@@ -40,7 +40,7 @@ int argc;
 char *argv[];
 
 {							/*  START # 1  */
-   FILE *fpw;			/*  File to be created.  */
+   struct rt_wdb *fpw;		/*  File to be created.  */
    char filemged[26];		/*  Mged file name.  */
    double numseg;		/*  Number of segments.  */
    double strtpt[MAXSEG][3];	/*  Start point of segment.  */
@@ -207,7 +207,7 @@ char *argv[];
    }							/*  END # 5  */
 
    /*  Open mged file.  */
-   fpw = fopen(filemged,"w");
+   fpw = wdb_fopen(filemged);
 
    /*  Write ident record.  */
    mk_id(fpw,"Wiring");
@@ -448,5 +448,6 @@ char *argv[];
    }							/*  END # 50  */
 
    mk_lfcomb(fpw,group,&comb1,0);
+   wdb_close(fpw);
    return 0;
 }							/*  END # 1  */

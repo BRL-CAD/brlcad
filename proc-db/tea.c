@@ -23,11 +23,16 @@
 extern dt ducks[DUCK_COUNT];		/* Vertex data of teapot */
 extern pt patches[PATCH_COUNT];		/* Patch data of teapot */
 
+struct face_g_snurb *surfaces[PATCH_COUNT+2];
+
 char *Usage = "This program ordinarily generates a database on stdout.\n\
 	Your terminal probably wouldn't like it.";
 
 void dump_patch();
 
+struct rt_wdb *outfp;
+
+int
 main(argc, argv) 			/* really has no arguments */
 int argc; char *argv[];
 {
@@ -37,17 +42,14 @@ int argc; char *argv[];
 
 	rt_init_resource( &rt_uniresource, 1 );
 
-	if (isatty(fileno(stdout))) {
-		(void)fprintf(stderr, "%s: %s\n", *argv, Usage);
-		return(-1);
-	}
+	outfp = wdb_fopen("teapot.g");
 
 	while ((i=getopt(argc, argv, "d")) != EOF) {
 		switch (i) {
 		case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
 		default	:
 			(void)fprintf(stderr,
-				"Usage: %s [-d] > database.g\n", *argv);
+				"Usage: %s [-d]\n", *argv);
 			return(-1);
 		}
 	}
@@ -60,8 +62,7 @@ int argc; char *argv[];
 	 *
 	 */
 
-	mk_id( stdout, id_name);
-	mk_bsolid( stdout, tea_name, PATCH_COUNT, 1.0);
+	mk_id( outfp, id_name);
 
 	/* Step through each patch and create a B_SPLINE surface
 	 * representing the patch then dump them out.
@@ -69,8 +70,12 @@ int argc; char *argv[];
 
 	for( i = 0; i < PATCH_COUNT; i++)
 	{
-		dump_patch( patches[i] );
+		dump_patch( &surfaces[i], patches[i] );
 	}
+	surfaces[PATCH_COUNT] = NULL;
+
+	mk_bspline( outfp, tea_name, surfaces );
+
 	return(0);
 }
 
@@ -79,8 +84,7 @@ int argc; char *argv[];
  * and output it to a BRLCAD binary format.
  */
 void
-dump_patch( patch )
-pt patch;
+dump_patch( struct face_g_snurb **surfp, pt patch )
 {
 	struct face_g_snurb * b_patch;
 	int i,j, pt_type;
@@ -97,6 +101,7 @@ pt patch;
 
 	b_patch = (struct face_g_snurb *) rt_nurb_new_snurb( 4, 4, 8, 8, 4, 4,
 		pt_type, &rt_uniresource);
+	*surfp = b_patch;
 	
 	/* Now fill in the pieces */
 
@@ -132,7 +137,4 @@ pt patch;
 		*(mesh_pointer+2) = ducks[patch[i][j]-1].z * 1000;
 		mesh_pointer += 3;
 	}
-
-	/* Output the the b_spline through the libwdb interface */
-	mk_bsurf( stdout, b_patch);
 }

@@ -43,7 +43,7 @@ int argc;
 char *argv[];
 
 {							/*  START # 1  */
-   FILE *fpw;			/*  File to be written to.  */
+   struct rt_wdb *fpw;			/*  File to be written to.  */
    char filemged[26];		/*  Mged file create.  */
    double hgt,len;		/*  Height & length of handle.  */
    double r1,r2;		/*  Radius of tori & radius of cylinders.  */
@@ -221,7 +221,7 @@ char *argv[];
    (void)fflush(stdout);
 
    /*  Open mged file for writing to.  */
-   fpw = fopen(filemged,"w");
+   fpw = wdb_fopen(filemged);
 
    /*  Write ident record.  */
    mk_id(fpw,"handles");
@@ -380,7 +380,7 @@ char *argv[];
    }							/*  END # 2  */
 
    /*  Close mged file.  */
-   (void)fclose(fpw);
+   wdb_close(fpw);
    return 0;
 
 }							/*  END # 1  */

@@ -48,20 +48,24 @@ struct mtab {
 	char	mt_name[64];
 	char	mt_param[96];
 } mtab[] = {
-	"plastic",	"",
-	"glass",	"",
-	"plastic",	"",
-	"mirror",	"",
-	"plastic",	"",
-	"testmap",	"",
-	"plastic",	""
+	{"plastic",	""},
+	{"glass",	""},
+	{"plastic",	""},
+	{"mirror",	""},
+	{"plastic",	""},
+	{"testmap",	""},
+	{"plastic",	""}
 };
 int	nmtab = sizeof(mtab)/sizeof(struct mtab);
 
 #define PICK_MAT	((rand() % nmtab) )
 
 void	make_room(), make_walls(), make_pillar(), make_carpet();
+extern void get_rgb( unsigned char *rgb );
 
+struct rt_wdb	*outfp;
+
+int
 main(argc, argv)
 char	**argv;
 {
@@ -82,7 +86,8 @@ char	**argv;
 	bn_mat_idn( identity );
 	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
 
-	mk_id( stdout, "Procedural Rooms" );
+	outfp = wdb_fopen("room.g");
+	mk_id( outfp, "Procedural Rooms" );
 
 	/* Create the building */
 	VSET( bmin, 0, 0, 0 );
@@ -100,11 +105,11 @@ char	**argv;
 
 	/* Create the golden earth */
 	VSET( norm, 0, 0, 1 );
-	mk_half( stdout, "plane", norm, -bthick[Z]-10.0 );
+	mk_half( outfp, "plane", norm, -bthick[Z]-10.0 );
 	rgb[0] = 240;	/* gold/brown */
 	rgb[1] = 180;
 	rgb[2] = 64;
-	mk_region1( stdout, "plane.r", "plane", NULL, NULL, rgb );
+	mk_region1( outfp, "plane.r", "plane", NULL, NULL, rgb );
 	(void)mk_addmember( "plane.r", &head, WMOP_UNION );
 
 	/* Create the display pillars */
@@ -135,7 +140,7 @@ char	**argv;
 #endif
 
 	/* Build the overall combination */
-	mk_lfcomb( stdout, "room", &head, 0 );
+	mk_lfcomb( outfp, "room", &head, 0 );
 
 	return 0;
 }
@@ -159,14 +164,14 @@ struct wmember *headp;
 	VADD2( omax, imax, thickness );
 
 	sprintf( name, "o%s", rname );
-	mk_rpp( stdout, name, omin, omax );
+	mk_rpp( outfp, name, omin, omax );
 	(void)mk_addmember( name, &head, WMOP_UNION );
 
 	sprintf( name, "i%s", rname );
-	mk_rpp( stdout, name, imin, imax );
+	mk_rpp( outfp, name, imin, imax );
 	mk_addmember( name, &head, WMOP_SUBTRACT );
 
-	mk_lfcomb( stdout, rname, &head, 1 );
+	mk_lfcomb( outfp, rname, &head, 1 );
 	(void)mk_addmember( rname, headp, WMOP_UNION );
 }
 
@@ -234,11 +239,11 @@ struct wmember *headp;
 			wmin[X] = imax[X];
 			break;
 		}
-		mk_rpp( stdout, name, wmin, wmax );
+		mk_rpp( outfp, name, wmin, wmax );
 		(void)mk_addmember( name, &head, WMOP_UNION );
 	}
 
-	mk_lfcomb( stdout, rname, &head, 1 );
+	mk_lfcomb( outfp, rname, &head, 1 );
 	(void)mk_addmember( rname, headp, WMOP_UNION );
 }
 
@@ -269,18 +274,18 @@ struct wmember *headp;
 	min[X] -= lwh[X];
 	min[Y] -= lwh[Y];
 	VADD2( max, center, lwh );
-	mk_rpp( stdout, sname, min, max );
+	mk_rpp( outfp, sname, min, max );
 
 	/* Needs to be in a region, with color!  */
 	get_rgb(rgb);
 	i = PICK_MAT;
-	mk_region1( stdout, rname, sname,
+	mk_region1( outfp, rname, sname,
 		mtab[i].mt_name, mtab[i].mt_param, rgb );
 
 	(void)mk_addmember( rname, &head, WMOP_UNION );
 	wp = mk_addmember( oname, &head, WMOP_UNION );
 	MAT_DELTAS( wp->wm_mat, center[X], center[Y], center[Z]+lwh[Z] );
-	mk_lfcomb( stdout, pilname, &head, 0 );
+	mk_lfcomb( outfp, pilname, &head, 0 );
 
 	(void)mk_addmember( pilname, headp, WMOP_UNION );
 }
@@ -303,8 +308,8 @@ struct wmember *headp;
 
 	sprintf( sname, "%s.s", rname );
 	sprintf( args, "texture file=%s;plastic", file );
-	mk_rpp( stdout, sname, cmin, cmax );
-	mk_region1( stdout, rname, sname,
+	mk_rpp( outfp, sname, cmin, cmax );
+	mk_region1( outfp, rname, sname,
 		"stack", args,
 		(unsigned char *)0 );
 

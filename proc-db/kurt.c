@@ -45,6 +45,8 @@ struct val {
 
 void	do_cell(), draw_rect(), pnorms(), do_light();
 
+struct rt_wdb	*outfp;
+
 int
 main(argc, argv)
 char	**argv;
@@ -55,7 +57,8 @@ char	**argv;
 	double	base;
 	int	quant;
 
-	mk_id( stdout, "Kurt's multi-valued function");
+	outfp = wdb_fopen("kurt.g");
+	mk_id( outfp, "Kurt's multi-valued function");
 
 	/* Create the detail cells */
 	size = 10;	/* mm */
@@ -69,7 +72,9 @@ char	**argv;
 		}
 	}
 	/* Draw cells */
-	mk_polysolid( stdout, "kurt" );
+/* XXX This should be a height field / DSP solid! */
+#if 0
+	mk_polysolid( outfp, "kurt" );
 	for( ix=quant-2; ix>=0; ix-- )  {
 		for( iy=quant-2; iy>=0; iy-- )  {
 			draw_rect( &val[ix][iy],
@@ -78,6 +83,7 @@ char	**argv;
 				   &val[ix+1][iy+1] );
 		}
 	}
+#endif
 
 #ifdef never
 	/* Create some light */
@@ -94,18 +100,18 @@ char	**argv;
 	do_light( "l4", pos, aim, 1, 100.0, white );
 
 	/* Build the overall combination */
-	mk_fcomb( stdout, "clut", quant*quant+1+4, 0 );
-	mk_memb( stdout, "plane.r", identity, UNION );
+	mk_fcomb( outfp, "clut", quant*quant+1+4, 0 );
+	mk_memb( outfp, "plane.r", identity, UNION );
 	for( ix=quant-1; ix>=0; ix-- )  {
 		for( iy=quant-1; iy>=0; iy-- )  {
 			sprintf( name, "x%dy%d", ix, iy );
-			mk_memb( stdout, name, identity, UNION );
+			mk_memb( outfp, name, identity, UNION );
 		}
 	}
-	mk_memb( stdout, "l1", identity, UNION );
-	mk_memb( stdout, "l2", identity, UNION );
-	mk_memb( stdout, "l3", identity, UNION );
-	mk_memb( stdout, "l4", identity, UNION );
+	mk_memb( outfp, "l1", identity, UNION );
+	mk_memb( outfp, "l2", identity, UNION );
+	mk_memb( outfp, "l3", identity, UNION );
+	mk_memb( outfp, "l4", identity, UNION );
 #endif
 	return 0;
 }
@@ -196,19 +202,21 @@ struct val *a, *b, *c, *d;
 	 * For general functions, this may be dangerous, but works fine here.
 	 */
 	for( i=0; i<min; i++ )  {
+#if 0
 		VSET( verts[0], a->v_x, a->v_y, a->v_z[i] );
 		VSET( verts[1], b->v_x, b->v_y, b->v_z[i] );
 		VSET( verts[2], c->v_x, c->v_y, c->v_z[i] );
 		/* even # faces point up, odd#s point down */
 		pnorms( norms, verts, (i&1)?down:up, 3 );
-		mk_poly( stdout, 3, verts, norms );
+		mk_poly( outfp, 3, verts, norms );
 
 		VSET( verts[0], d->v_x, d->v_y, d->v_z[i] );
 		VSET( verts[1], b->v_x, b->v_y, b->v_z[i] );
 		VSET( verts[2], c->v_x, c->v_y, c->v_z[i] );
 		/* even # faces point up, odd#s point down */
 		pnorms( norms, verts, (i&1)?down:up, 3 );
-		mk_poly( stdout, 3, verts, norms );
+		mk_poly( outfp, 3, verts, norms );
+#endif
 	}
 	/* If 0 or 1 corners have something above them, nothing needs drawn */
 	if( ndiff == 0 || ndiff == 1 )  return;
@@ -229,6 +237,7 @@ struct val *a, *b, *c, *d;
 				    vp[i]->v_y != vp[j]->v_y )
 					continue;
 
+#if 0
 				VSET( verts[0],
 					vp[i]->v_x, vp[i]->v_y,
 					vp[i]->v_z[lvl] );
@@ -242,7 +251,7 @@ struct val *a, *b, *c, *d;
 				VSUB2( work, centroid, verts[0] );
 				VUNITIZE( work );
 				pnorms( norms, verts, work, 3 );
-				mk_poly( stdout, 3, verts, norms );
+				mk_poly( outfp, 3, verts, norms );
 
 				VSET( verts[0],
 					vp[i]->v_x, vp[i]->v_y,
@@ -257,7 +266,8 @@ struct val *a, *b, *c, *d;
 				VSUB2( work, centroid, verts[0] );
 				VUNITIZE( work );
 				pnorms( norms, verts, work, 3 );
-				mk_poly( stdout, 3, verts, norms );
+				mk_poly( outfp, 3, verts, norms );
+#endif
 			}
 		}
 	}
@@ -320,7 +330,7 @@ unsigned char	*rgb;
 
 	sprintf( nbuf, "%s.s", name );
 	VSETALL( center, 0 );
-	mk_sph( stdout, nbuf, center, r );
+	mk_sph( outfp, nbuf, center, r );
 
 	/*
 	 * Need to rotate from 0,0,-1 to vect "dir",
@@ -332,5 +342,5 @@ unsigned char	*rgb;
 	MAT_DELTAS( xlate, pos[X], pos[Y], pos[Z] );
 	bn_mat_mul( both, xlate, rot );
 
-	mk_region1( stdout, name, nbuf, "light", "shadows=1", rgb );
+	mk_region1( outfp, name, nbuf, "light", "shadows=1", rgb );
 }

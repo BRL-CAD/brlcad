@@ -15,6 +15,7 @@
 
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 
 /* declarations to support use of getopt() system call */
 char *options = "w:h:d:W:H:sn:t:Du:mc:C:";

@@ -230,19 +230,19 @@ BU_EXTERN(void printMatrix, (FILE *fp, char *n, mat_t m));
 BU_EXTERN(char *getName, (char *base, int id, char *suffix));
 BU_EXTERN(char *getPrePostName, (char *prefix, char *base, char *suffix));
 
-BU_EXTERN(int generateFence_s, (FILE *fp, char *fencename, point_t startpostion, point_t endposition));
-BU_EXTERN(int generateFence, (FILE *fp, char *fencename, point_t startpostion, vect_t heightvector, vect_t widthvector));
+BU_EXTERN(int generateFence_s, (struct rt_wdb *fp, char *fencename, point_t startpostion, point_t endposition));
+BU_EXTERN(int generateFence, (struct rt_wdb *fp, char *fencename, point_t startpostion, vect_t heightvector, vect_t widthvector));
 
-BU_EXTERN(int generatePoles_s, (FILE *fp, char *polename));
-BU_EXTERN(int generatePoles, (FILE *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius));
+BU_EXTERN(int generatePoles_s, (struct rt_wdb *fp, char *polename));
+BU_EXTERN(int generatePoles, (struct rt_wdb *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius));
 
-BU_EXTERN(int generateMesh_s, (FILE *fp, char *meshname));
-BU_EXTERN(int generateMesh, (FILE *fp, char *meshname, point_t startposition, vect_t heightvector, vect_t widthvector));
+BU_EXTERN(int generateMesh_s, (struct rt_wdb *fp, char *meshname));
+BU_EXTERN(int generateMesh, (struct rt_wdb *fp, char *meshname, point_t startposition, vect_t heightvector, vect_t widthvector));
 
-BU_EXTERN(int generateWire_s, (FILE *fp, char *wirename, point_t position));
-BU_EXTERN(int generateWire, (FILE *fp, char *wirename, point_t position, vect_t heightvector, vect_t widthvector, double radius, double angle, double wiresegmentlength));
+BU_EXTERN(int generateWire_s, (struct rt_wdb *fp, char *wirename, point_t position));
+BU_EXTERN(int generateWire, (struct rt_wdb *fp, char *wirename, point_t position, vect_t heightvector, vect_t widthvector, double radius, double angle, double wiresegmentlength));
 
-BU_EXTERN(int createWire, (FILE *fp, char *segmentname, vect_t heightvector, vect_t widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation));
+BU_EXTERN(int createWire, (struct rt_wdb *fp, char *segmentname, vect_t heightvector, vect_t widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation));
 
 
 #ifdef __cplusplus

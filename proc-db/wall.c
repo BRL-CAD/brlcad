@@ -472,7 +472,7 @@ struct boardseg *seglist;
 
 void
 mksolid(fd, pts, wm_hd)
-FILE *fd;
+struct rt_wdb *fd;
 point_t pts[8];
 struct wmember *wm_hd;
 {
@@ -488,7 +488,7 @@ struct wmember *wm_hd;
 
 void
 mk_h_rpp(fd, wm_hd, xmin, xmax, ymin, ymax, zmin, zmax)
-FILE *fd;
+struct rt_wdb *fd;
 struct wmember *wm_hd;
 double xmin, xmax, ymin, ymax, zmin, zmax;
 {
@@ -508,7 +508,7 @@ double xmin, xmax, ymin, ymax, zmin, zmax;
 
 void
 mk_v_rpp(fd, wm_hd, xmin, xmax, ymin, ymax, zmin, zmax)
-FILE *fd;
+struct rt_wdb *fd;
 struct wmember *wm_hd;
 double xmin, xmax, ymin, ymax, zmin, zmax;
 {
@@ -531,7 +531,7 @@ double xmin, xmax, ymin, ymax, zmin, zmax;
  */
 void
 frame_o_sides(fd, wm_hd, op, h)
-FILE *fd;
+struct rt_wdb *fd;
 struct wmember *wm_hd;
 struct opening *op;
 double h;
@@ -596,7 +596,7 @@ double h;
  */
 void
 frame_opening(fd, wm_hd, op)
-FILE *fd;
+struct rt_wdb *fd;
 struct wmember *wm_hd;
 struct opening *op;
 {
@@ -753,7 +753,7 @@ struct opening *op;
 
 void
 frame(fd)
-FILE *fd;
+struct rt_wdb *fd;
 {
 	struct boardseg *s_hd, *seg;
 	struct opening *op;
@@ -876,7 +876,7 @@ FILE *fd;
 
 void
 sheetrock(fd)
-FILE *fd;
+struct rt_wdb *fd;
 {
 	point_t pts[8];
 	struct wmember wm_hd;
@@ -924,7 +924,7 @@ FILE *fd;
 
 void
 mortar_brick(fd)
-FILE *fd;
+struct rt_wdb *fd;
 {
 	struct wmember wm_hd;
 #if 0
@@ -1026,7 +1026,7 @@ FILE *fd;
 
 void
 brick(fd)
-FILE *fd;
+struct rt_wdb *fd;
 {
 	struct wmember wm_hd;
 #if 0
@@ -1087,7 +1087,7 @@ int ac;
 char *av[];
 {
 	struct opening *op;
-	FILE *db_fd;
+	struct rt_wdb *db_fd;
 
 	ol_hd.ex = ol_hd.ez = 0.0;
 
@@ -1097,7 +1097,7 @@ char *av[];
 	if (ac < 2) usage((char *)NULL);
 
 	(void)sprintf(sol_name, "%s.g", obj_name);
-	if ((db_fd = fopen(sol_name, "w")) == (FILE *)NULL) {
+	if ((db_fd = wdb_fopen(sol_name)) == (struct rt_wdb *)NULL) {
 		perror(sol_name);
 		return(-1);
 	}
@@ -1119,5 +1119,6 @@ char *av[];
 		else brick(db_fd);
 	}
 
-	return(fclose(db_fd));
+	wdb_close(db_fd);
+	return 0;
 }

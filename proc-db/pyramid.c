@@ -35,6 +35,8 @@ void	do_leaf(), do_pleaf(), pnorms(), do_tree();
 
 double sin60;
 
+struct rt_wdb *outfp;
+
 int
 main(argc, argv)
 char	**argv;
@@ -48,7 +50,9 @@ char	**argv;
 	depth = atoi( argv[1] );
 	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
 
-	mk_id( stdout, "3-D Pyramids" );
+	outfp = wdb_fopen( "pyramid.g" );
+
+	mk_id( outfp, "3-D Pyramids" );
 
 	do_leaf("leaf");
 #if 0
@@ -71,9 +75,10 @@ char	*name;
 	VSET( pt[2], 50, 100*sin60, 0);
 	VSET( pt[3], 50, 100*sin60/3, 100*sin60 );
 
-	mk_arb4( stdout, name, &pt[0][X] );
+	mk_arb4( outfp, name, &pt[0][X] );
 }
 
+#if 0
 /* Make a leaf node out of 4 polygons */
 void
 do_pleaf(name)
@@ -96,32 +101,33 @@ char	*name;
 	}
 	VSCALE( centroid, centroid, 0.25 );
 
-	mk_polysolid( stdout, name );
+	mk_polysolid( outfp, name );
 
 	VMOVE( verts[0], pt[0] );
 	VMOVE( verts[1], pt[1] );
 	VMOVE( verts[2], pt[2] );
 	pnorms( norms, verts, centroid, 3 );
-	mk_poly( stdout, 3, verts, norms );
+	mk_poly( outfp, 3, verts, norms );
 
 	VMOVE( verts[0], pt[0] );
 	VMOVE( verts[1], pt[1] );
 	VMOVE( verts[2], pt[3] );
 	pnorms( norms, verts, centroid, 3 );
-	mk_poly( stdout, 3, verts, norms );
+	mk_poly( outfp, 3, verts, norms );
 
 	VMOVE( verts[0], pt[0] );
 	VMOVE( verts[1], pt[2] );
 	VMOVE( verts[2], pt[3] );
 	pnorms( norms, verts, centroid, 3 );
-	mk_poly( stdout, 3, verts, norms );
+	mk_poly( outfp, 3, verts, norms );
 
 	VMOVE( verts[0], pt[1] );
 	VMOVE( verts[1], pt[2] );
 	VMOVE( verts[2], pt[3] );
 	pnorms( norms, verts, centroid, 3 );
-	mk_poly( stdout, 3, verts, norms );
+	mk_poly( outfp, 3, verts, norms );
 }
+#endif
 
 /*
  *  Find the single outward pointing normal for a facet.
@@ -197,7 +203,7 @@ int	level;
 	MAT_DELTAS( wp->wm_mat, 0.5*scale, sin60/3*scale, sin60*scale );
 
 	/* Set region flag on lowest level */
-	mk_lcomb( stdout, name, &head, level<=1, NULL, NULL, NULL, 0 );
+	mk_lcomb( outfp, name, &head, level<=1, NULL, NULL, NULL, 0 );
 
 	/* Loop for children if level > 1 */
 	if( level <= 1 )

@@ -18,6 +18,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "wdb.h"
 
 char *progname ="(noname)";
@@ -28,11 +29,11 @@ void usage()
 	exit(-1);
 }
 
+int
 main(int ac, char *av[])
 {
-	FILE *db_fp;
+	struct rt_wdb *db_fp;
 	point_t p1, p2;
-	fastf_t radius;
 	int is_region;
 	unsigned char rgb[3];
 	struct wmember wm_hd; /* defined in wdb.h */
@@ -41,7 +42,7 @@ main(int ac, char *av[])
 
 	if (ac < 2) usage();
 
-	if ((db_fp = fopen(av[1], "w")) == (FILE *)NULL) {
+	if ((db_fp = wdb_fopen(av[1])) == NULL) {
 		perror(av[1]);
 		exit(-1);
 	}
@@ -118,5 +119,6 @@ main(int ac, char *av[])
 		 rgb,		/* item color */
 		 0);		/* inherit (override) flag */
 
-	fclose(db_fp);
+	wdb_close(db_fp);
+	return 0;
 }
