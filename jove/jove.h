@@ -442,7 +442,7 @@ extern int	UpdModLine,	/* Whether we want to update the mode line */
  * which is a quad_t or "long long".
  * It is also delcared in <sys/types.h>
  */
-#if !defined(__bsdi__) && !defined(__NetBSD__)
+#if BSD <= 43
 extern long	lseek();
 #endif
 
