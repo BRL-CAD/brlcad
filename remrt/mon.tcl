@@ -132,7 +132,7 @@ proc reconnect {} {
 		}
 		# fds($host) is now set non-dead, to the actual fd.
 		# establish per-connection state
-		set db_path($name) "unknown"
+		set db_path($host) "unknown"
 
 		server_sense $host
 	}
