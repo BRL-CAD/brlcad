@@ -64,6 +64,7 @@ static const char RCSsketch[] = "@(#)$Header$ (BRL)";
 #endif
 
 fastf_t rt_cnurb_par_edge();
+extern void get_indices( genptr_t seg, int *start, int *end );	/* from g_extrude.c */
 
 int
 rt_check_curve( crv, skt, noisey )
