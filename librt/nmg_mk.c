@@ -2036,8 +2036,10 @@ struct edgeuse	*eu;
 	NMG_CK_VERTEXUSE_A_CNURB( eu->vu_p->a.cnurb_p );
 	NMG_CK_VERTEXUSE_A_CNURB( eu->eumate_p->vu_p->a.cnurb_p );
 
+#if 0
 	if(eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
 		rt_bomb("nmg_edge_g_cnurb_plinear(): edge runs from+to same vertex, 0 len!\n");
+#endif
 
 	if (eu->g.cnurb_p) {
 		rt_bomb("nmg_edge_g_cnurb_plinear() geometry already assigned\n");
