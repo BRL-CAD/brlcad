@@ -146,6 +146,34 @@ struct mater_info	*materp;
 	case RT_AN_MATERIAL:
 		if( rt_g.debug&DEBUG_ANIM )
 			rt_log("property\n");
+		/*
+		 * if the caller does not care about property, a null
+		 * mater pointer is given.
+		 */
+		if (!materp) break;
+		if (*rt_vls_addr(&anp->an_u.anu_p.anp_matname)) {
+			strncpy(materp->ma_matname,
+			    rt_vls_addr(&anp->an_u.anu_p.anp_matname), 32);
+			materp->ma_matname[31] = '\0';
+		}
+		if (*rt_vls_addr(&anp->an_u.anu_p.anp_matparam)) {
+			strncpy(materp->ma_matparm,
+			    rt_vls_addr(&anp->an_u.anu_p.anp_matparam), 60);
+			materp->ma_matparm[59] = '\0';
+		}
+		break;
+	case RT_AN_COLOR:
+		if( rt_g.debug&DEBUG_ANIM )
+			rt_log("color\n");
+		/*
+		 * if the caller does not care about property, a null
+		 * mater pointer is given.
+		 */
+		if (!materp) break;
+		materp->ma_override = 1;	/* XXX - really override? */
+		materp->ma_color[0] = anp->an_u.anu_c.anc_rgb[0];
+		materp->ma_color[1] = anp->an_u.anu_c.anc_rgb[1];
+		materp->ma_color[2] = anp->an_u.anu_c.anc_rgb[2];
 		break;
 	default:
 		if( rt_g.debug&DEBUG_ANIM )
