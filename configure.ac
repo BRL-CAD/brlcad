@@ -447,7 +447,10 @@ AC_SUBST(ITK_LIBS)
 
 dnl detect a useable system regular expression library
 regex_link_works=no
-AC_CHECK_LIB(regex, regcomp, regex_link_works=yes)
+AC_CHECK_LIB(c, regcomp, regex_link_works=yes)
+if test "x$regex_link_works" = "xno" ; then
+	AC_CHECK_LIB(regex, regcomp, regex_link_works=yes)
+fi
 if test "x$regex_link_works" = "xno" ; then
 	AC_CHECK_LIB(compat, regcomp, regex_link_works=yes)
 fi
@@ -725,13 +728,16 @@ AM_CONDITIONAL(JAVA, [! test "x$with_java" = "xno"])
 
 dnl See if regular expression support is available
 regex_works=no
-AC_MSG_CHECKING(for regular expression support)
+AC_MSG_CHECKING(for regular expression functionality)
 AC_TRY_RUN([
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
+#include <sys/types.h>
 #include <regex.h>
-int main() { regex_t re; regcomp(&re, 0, 0); regexec(&re, 0, 0, 0, 0); }
+int main() {
+  regex_t re;
+  regcomp(&re, "abc", REG_EXTENDED);
+  regexec(&re, "", 0, 0, 0);
+  return 0;
+}
         ],
 	[regex_works=yes]
 )
@@ -758,6 +764,7 @@ fi
 AC_MSG_CHECKING(whether to build BRL-CAD's included regular expression library)
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AC_MSG_RESULT($build_brlcad_regex)
+
 
 dnl ***************************
 dnl *** Configure Makefiles ***
