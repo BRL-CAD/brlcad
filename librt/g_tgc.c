@@ -36,11 +36,18 @@ struct  tgc_specific {
 	fastf_t	tgc_C;		/*  magnitude of C vector		*/
 	fastf_t	tgc_D;		/*  magnitude of D vector		*/
 	fastf_t	tgc_ABsq;	/*  (A/B)**2 or (C/D)**2  */
+	fastf_t	tgc_CA_H;	/*  (C-A)/H  X_of_Z */
+	fastf_t tgc_DB_H;	/*  (D-B)/H  Y_of_Z */
 	vect_t	tgc_norm;	/*  normal at 'top' of cone		*/
 	mat_t	tgc_ShoR;	/*  Shear( Rot( vect ))			*/
 	mat_t	tgc_invRoSh;	/*  invRot( trnShear( vect ))		*/
 	char	tgc_AD_CB;	/*  boolean:  A*D == C*B  */
 };
+
+
+#define VLARGE		1000000.0
+#define	Alpha(a,x,y,c,d)     {if ( NEAR_ZERO(c) || NEAR_ZERO(d) ) a = VLARGE;\
+			else  a = (x)*(x)/((c)*(c)) + (y)*(y)/((d)*(d));}
 
 
 /*
@@ -143,17 +150,10 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	/* Apply full 4X4mat to V */
 	MAT4X3PNT( tgc->tgc_V, mat, SP_V );
 
-	/* If the values of the magnitudes are less than SMALL, they
-	 *  may cause glitches in the output (I minimized those as much
-	 *  as I could, but was unable to completely remove them).
-	 *  To aleviate this, I changed  Mag <= SMALL  to  10*SMALL.
-	 *  This will look about the same as 0 and won't produce
-	 *  glitches.
-	 */
-	tgc->tgc_A = NEAR_ZERO( mag_a ) ? 10*SMALL : mag_a;
-	tgc->tgc_B = NEAR_ZERO( mag_b ) ? 10*SMALL : mag_b;
-	tgc->tgc_C = NEAR_ZERO( mag_c ) ? 10*SMALL : mag_c;
-	tgc->tgc_D = NEAR_ZERO( mag_d ) ? 10*SMALL : mag_d;
+	tgc->tgc_A = mag_a;
+	tgc->tgc_B = mag_b;
+	tgc->tgc_C = mag_c;
+	tgc->tgc_D = mag_d;
 
 	/*  If the eccentricities of the two ellipses are the same,
 	 *  then the cone equation reduces to a much simpler quadratic
@@ -162,18 +162,25 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	f = reldiff( (tgc->tgc_A*tgc->tgc_D), (tgc->tgc_C*tgc->tgc_B) );
 	tgc->tgc_AD_CB = (f < EPSILON);		/* A*D == C*B */
 	if ( tgc->tgc_AD_CB )  {
-		if ( !NEAR_ZERO( tgc->tgc_A ) && !NEAR_ZERO( tgc->tgc_B ) ){
+		if ( !NEAR_ZERO( tgc->tgc_B ) )  {
 			tgc->tgc_ABsq = tgc->tgc_A/tgc->tgc_B;
-		} else {
+			tgc->tgc_ABsq *= tgc->tgc_ABsq;		/* (A/B)**2 */
+		} else if( !NEAR_ZERO( tgc->tgc_D ) )  {
 			tgc->tgc_ABsq = tgc->tgc_C/tgc->tgc_D;
+			tgc->tgc_ABsq *= tgc->tgc_ABsq;		/* (A/B)**2 */
+		} else {
+			fprintf(stderr,"tgc: (A/B)**2 is enormous\n");
+			tgc->tgc_ABsq = VLARGE;
 		}
-		tgc->tgc_ABsq *= tgc->tgc_ABsq;		/* (A/B)**2 */
 	} else
 		tgc->tgc_ABsq = 0;			/* safety */
 
 	rotate( A, B, Hv, Rot, iRot, tgc );
 	MAT4X3VEC( nH, Rot, Hv );
 	tgc->tgc_sH = nH[Z];
+
+	tgc->tgc_CA_H = (tgc->tgc_C - tgc->tgc_A) / tgc->tgc_sH;
+	tgc->tgc_DB_H = (tgc->tgc_D - tgc->tgc_B) / tgc->tgc_sH;
 
 	shear( nH, Z, Shr, tShr );
 	mat_mul( tgc->tgc_ShoR, Shr, Rot );
@@ -343,6 +350,8 @@ register struct soltab	*stp;
 	} else {
 		fprintf(stderr, "A*D != C*B.  Quatric equation.\n");
 	}
+	fprintf(stderr, "(C-A)/H = %f\n", tgc->tgc_CA_H );
+	fprintf(stderr, "(D-B)/H = %f\n", tgc->tgc_DB_H );
 }
 
 /*
@@ -414,18 +423,6 @@ register struct xray	*rp;
 #define OUT		0
 #define	IN		1
 
-#define	Alpha(a,x,y,c,d)	( a = (x)*(x)/((c)*(c)) + (y)*(y)/((d)*(d)) )
-
-/***	older, safeguarded version of Alpha.  Hopefully, as a
-	result of changes to tgc_prep, the safeguards will not
-	be needed.  But I'm not throwing this one out yet.
-
-#define VLARGE		1000000.0
-#define	Alpha(a,x,y,c,d)     if ( NEAR_ZERO(c) && NEAR_ZERO(d) ) a = VLARGE; \
-			else if NEAR_ZERO(c)  a = (y)*(y)/((d)*(d)); \
-			else if NEAR_ZERO(d)  a = (x)*(x)/((c)*(c)); \
-			else  a = (x)*(x)/((c)*(c)) + (y)*(y)/((d)*(d));
- ***/
 	/*		Truncation Procedure
 	 *
 	 *  Determine whether any of the intersections found are
@@ -433,7 +430,7 @@ register struct xray	*rp;
 	 */
 	intersect = 0;
 	for ( n=0; n < npts; ++n ){
-		zval = k[n]*dprime[2] + pprime[2];
+		zval = k[n]*dprime[Z] + pprime[Z];
 		if ( zval < tgc->tgc_sH && zval > 0.0 ){
 			if ( ++intersect == 2 )
 				pt[IN] = k[n];
@@ -470,8 +467,8 @@ register struct xray	*rp;
 		 *  plane (in the standard coordinate system), and test
 		 *  whether this lies within the governing ellipse.
 		 */
-		b = ( -pprime[2] )/dprime[2];
-		t = ( tgc->tgc_sH - pprime[2] )/dprime[2];
+		b = ( -pprime[Z] )/dprime[Z];
+		t = ( tgc->tgc_sH - pprime[Z] )/dprime[Z];
 
 		VJOIN1( work, pprime, b, dprime );
 		Alpha( alf1, work[0], work[1], tgc->tgc_A, tgc->tgc_B );
@@ -531,8 +528,8 @@ register struct xray	*rp;
 	if ( NEAR_ZERO( dir ) )
 		return( SEG_NULL );
 
-	b = ( -pprime[2] )/dprime[2];
-	t = ( tgc->tgc_sH - pprime[2] )/dprime[2];
+	b = ( -pprime[Z] )/dprime[Z];
+	t = ( tgc->tgc_sH - pprime[Z] )/dprime[Z];
 
 	VJOIN1( work, pprime, b, dprime );
 	Alpha( alf1, work[0], work[1], tgc->tgc_A, tgc->tgc_B );
@@ -624,11 +621,8 @@ double		t[];
 	Ysqr.cf[2] = pprime[Y] * pprime[Y];
 
 	R.dgr = 1;
-	R.cf[0] = dprime[Z];
-	R.cf[1] = pprime[Z];
-
-	(void) polyScal( &R, ((tgc->tgc_C - tgc->tgc_A)/tgc->tgc_sH) );
-	R.cf[1] += tgc->tgc_A;
+	R.cf[0] = dprime[Z] * tgc->tgc_CA_H;
+	R.cf[1] = (pprime[Z] * tgc->tgc_CA_H) + tgc->tgc_A;
 	(void) polyMul( &R, &R, &Rsqr );
 
 	/*  If the eccentricities of the two ellipses are the same,
@@ -641,10 +635,8 @@ double		t[];
 		(void) polySub( &sum, &Rsqr, &C );
 	} else {
 		Q.dgr = 1;
-		Q.cf[0] = dprime[Z];
-		Q.cf[1] = pprime[Z];
-		(void)polyScal( &Q, ((tgc->tgc_D - tgc->tgc_B)/tgc->tgc_sH) );
-		Q.cf[1] += tgc->tgc_B;
+		Q.cf[0] = dprime[Z] * tgc->tgc_DB_H;
+		Q.cf[1] = (pprime[Z] * tgc->tgc_DB_H) + tgc->tgc_B;
 		(void) polyMul( &Q, &Q, &Qsqr );
 
 		(void) polyMul( &Qsqr, &Xsqr, &T1 );
@@ -760,24 +752,20 @@ LOCAL void
 tgcnormal( norm, hit, tgc )
 register vectp_t		norm, hit;
 register struct tgc_specific	*tgc;
-
 {
 	LOCAL fastf_t	Q, parQ, R, parR;
-	LOCAL fastf_t	X_of_Z, Y_of_Z;
 	LOCAL vect_t	stdnorm;
 
-	X_of_Z = (tgc->tgc_C - tgc->tgc_A)/ tgc->tgc_sH;
-	R      = tgc->tgc_A + X_of_Z*hit[Z];
-	parR   = 2.0*R*X_of_Z;
+	R      = tgc->tgc_A + tgc->tgc_CA_H * hit[Z];
+	parR   = 2.0 * R * tgc->tgc_CA_H;
 
-	Y_of_Z = (tgc->tgc_D - tgc->tgc_B)/ tgc->tgc_sH;
-	Q      = tgc->tgc_B + Y_of_Z*hit[Z];
-	parQ   = 2.0*Q*Y_of_Z;
+	Q      = tgc->tgc_B + tgc->tgc_DB_H * hit[Z];
+	parQ   = 2.0 * Q * tgc->tgc_DB_H;
 
-	stdnorm[X] = 2.0*hit[X]*Q*Q;
-	stdnorm[Y] = 2.0*hit[Y]*R*R;
-	stdnorm[Z] =  parQ*hit[X]*hit[X] + parR*hit[Y]*hit[Y]
-			- R*R*parQ - parR*Q*Q;
+	stdnorm[X] = 2.0 * hit[X] * Q * Q;
+	stdnorm[Y] = 2.0 * hit[Y] * R * R;
+	stdnorm[Z] =  parQ * hit[X] * hit[X] + parR * hit[Y] * hit[Y]
+			- R * R * parQ - parR * Q * Q;
 
 	MAT4X3VEC( norm, tgc->tgc_invRoSh, stdnorm );
 	VUNITIZE( norm );
