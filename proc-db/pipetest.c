@@ -147,7 +147,7 @@ double	od;
 	point_t			my_end, next_start;
 	int			i;
 
-	mk_pipe_init( &head, pts[0], od, 0.0, bend );
+	mk_pipe_init( &head );
 
 	for( i=0; i < npts; i++ )  {
 		mk_add_pipe_pt( &head, pts[i], od, 0.0, bend );
