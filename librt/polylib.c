@@ -11,7 +11,7 @@
  *	synDiv		Divide 1 poly into another using Synthetic Division
  *	quadratic	Solve quadratic formula
  *	cubic		Solve cubic forumla
- *	pr_poly		Print a polynomial
+ *	rt_pr_poly	Print a polynomial
  *
  *  Author -
  *	Jeff Hanes
@@ -35,8 +35,11 @@ static char RCSpolylib[] = "@(#)$Header$ (BRL)";
 #include <setjmp.h>
 #include "machine.h"
 #include "vmath.h"
+#include "rtstring.h"
 #include "./polyno.h"
 #include "./complex.h"
+
+extern void	rt_pr_poly();
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846
@@ -226,6 +229,20 @@ register complex	root[];
 {
 	LOCAL fastf_t	discrim, denom, rad;
 
+	if( NEAR_ZERO( quad->cf[0], SMALL ) )  {
+		/* root = -cf[2] / cf[1] */
+		if( NEAR_ZERO( quad->cf[1], SMALL ) )  {
+			/* No solution.  Now what? */
+			rt_log("quadratic(): ERROR, no solution\n");
+			return;
+		}
+		/* Fake it as a repeated root. */
+		root[0].re = root[1].re = -quad->cf[2]/quad->cf[1];
+		root[0].im = root[1].im = 0.0;
+		return;
+	}
+	/* What to do if cf[1] > SQRT_MAX_FASTF ? */
+
 	discrim = quad->cf[1]*quad->cf[1] - 4.0* quad->cf[0]*quad->cf[2];
 	denom = 0.5 / quad->cf[0];
 	if ( discrim >= 0.0 ){
@@ -311,11 +328,15 @@ register complex	root[];
 #endif
 
 	c1 = eqn->cf[1];
+	if( Abs(c1) > SQRT_MAX_FASTF )  return(0);	/* FAIL */
 	c1_3rd = c1 * THIRD;
 	a = eqn->cf[2] - c1*c1_3rd;
+	if( Abs(a) > SQRT_MAX_FASTF )  return(0);	/* FAIL */
 	b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*INV_TWENTYSEVEN;
+	if( Abs(b) > SQRT_MAX_FASTF )  return(0);	/* FAIL */
 
-	delta = b*b*0.25 + a*a*a*INV_TWENTYSEVEN;
+	if( (delta = a*a) > SQRT_MAX_FASTF ) return(0);	/* FAIL */
+	delta = b*b*0.25 + delta*a*INV_TWENTYSEVEN;
 
 	if ( delta > 0.0 ){
 		LOCAL fastf_t		r_delta, A, B;
@@ -343,23 +364,29 @@ register complex	root[];
 		LOCAL fastf_t		phi, fact;
 		LOCAL fastf_t		cs_phi, sn_phi_s3;
 
-		if( a > 0.0 )  {
-			rt_log("cubic: sqrt(%f)\n", fact);
+		if( a >= 0.0 )  {
 			fact = 0.0;
 			phi = 0.0;
-		} else {	FAST fastf_t	f;
+			cs_phi = 1.0;		/* cos( phi ); */
+			sn_phi_s3 = 0.0;	/* sin( phi ) * SQRT3; */
+		} else {
+			FAST fastf_t	f;
 			a *= -THIRD;
 			fact = sqrt( a );
-			if( (f = b * (-0.5) / (a*fact)) >= 1.0 )
+			if( (f = b * (-0.5) / (a*fact)) >= 1.0 )  {
 				phi = 0.0;
-			else
-			if( f <= -1.0 )
+				cs_phi = 1.0;		/* cos( phi ); */
+				sn_phi_s3 = 0.0;	/* sin( phi ) * SQRT3; */
+			}  else if( f <= -1.0 )  {
 				phi = PI_DIV_3;
-			else
+				cs_phi = cos( phi );
+				sn_phi_s3 = sin( phi ) * SQRT3;
+			}  else  {
 				phi = acos( f ) * THIRD;
+				cs_phi = cos( phi );
+				sn_phi_s3 = sin( phi ) * SQRT3;
+			}
 		}
-		cs_phi = cos( phi );
-		sn_phi_s3 = sin( phi ) * SQRT3;
 
 		root[0].re = 2.0*fact*cs_phi;
 		root[1].re = fact*(  sn_phi_s3 - cs_phi);
@@ -399,24 +426,32 @@ register complex	root[];
 			- eqn->cf[4]*eqn->cf[1]*eqn->cf[1]
 			+ 4*eqn->cf[4]*eqn->cf[2];
 
-	if( !cubic( &cube, u ) )
+	if( !cubic( &cube, u ) )  {
 		return( 0 );		/* FAIL */
+	}
 	if ( u[1].im != 0.0 ){
 		U = u[0].re;
 	} else {
 		U = Max3( u[0].re, u[1].re, u[2].re );
 	}
 
-#define NearZero( a )		{ if ( a < 0.0 && a > -1.0e-8 ) a = 0.0; }
 	p = eqn->cf[1]*eqn->cf[1]*0.25 + U - eqn->cf[2];
 	U *= 0.5;
 	q = U*U - eqn->cf[4];
-	NearZero( p );
-	NearZero( q );
-	if ( p < 0 || q < 0 ){
-		return(0);	/* FAIL */
+	if( p < 0 )  {
+		if( p < -1.0e-8 )  {
+			return(0);	/* FAIL */
+		}
+		p = 0;
 	} else {
 		p = sqrt( p );
+	}
+	if( q < 0 )  {
+		if( q < -1.0e-8 )  {
+			return(0);	/* FAIL */
+		}
+		q = 0;
+	} else {
 		q = sqrt( q );
 	}
 
@@ -434,12 +469,13 @@ register complex	root[];
 		quad1.cf[2] = q1;
 		quad2.cf[2] = q2;
 	} else {
-		p = quad1.cf[1]*q1 + quad2.cf[1]*q2 - eqn->cf[3];
-		if( Abs( p ) < 1.0e-8 ){
+		q = quad1.cf[1]*q1 + quad2.cf[1]*q2 - eqn->cf[3];
+		if( Abs( q ) < 1.0e-8 ){
 			quad1.cf[2] = q2;
 			quad2.cf[2] = q1;
-		} else
+		} else {
 			return(0);	/* FAIL */
+		}
 	}
 
 	quadratic( &quad1, root );
@@ -449,17 +485,65 @@ register complex	root[];
 
 
 /*
- *			P R _ P O L Y
+ *			R T _ P R _ P O L Y
  */
 void
-pr_poly(eqn)
+rt_pr_poly(title, eqn)
+char		*title;
 register poly	*eqn;
 {
 	register int	n;
+	register int	exp;
+	struct rt_vls	str;
+	char		buf[48];
 
-	rt_log("\nDegree of polynomial = %d\n",eqn->dgr);
-	for ( n=0; n<=eqn->dgr; ++n){
-		rt_log(" %g ",eqn->cf[n]);
+	rt_vls_init( &str );
+	rt_vls_extend( &str, 196 );
+	rt_vls_strcat( &str, title );
+	sprintf(buf, " polynomial, degree = %d\n", eqn->dgr);
+	rt_vls_strcat( &str, buf );
+
+	exp = eqn->dgr;
+	for ( n=0; n<=eqn->dgr; n++,exp-- )  {
+		register double coeff = eqn->cf[n];
+		if( n > 0 )  {
+			if( coeff < 0 )  {
+				rt_vls_strcat( &str, " - " );
+				coeff = -coeff;
+			}  else  {
+				rt_vls_strcat( &str, " + " );
+			}
+		}
+		sprintf( buf, "%g", coeff );
+		rt_vls_strcat( &str, buf );
+		if( exp > 1 )  {
+			sprintf( buf, " *X^%d", exp );
+			rt_vls_strcat( &str, buf );
+		} else if( exp == 1 )  {
+
+			rt_vls_strcat( &str, " *X" );
+		} else {
+			/* For constant term, add nothing */
+		}
 	}
-	rt_log("\n");
+	rt_vls_strcat( &str, "\n" );
+	rt_log( "%s", rt_vls_addr(&str) );
+	rt_vls_free( &str );
+}
+
+/*
+ *			R T _ P R _ R O O T S
+ */
+void
+rt_pr_roots( title, roots, n )
+char	*title;
+complex	roots[];
+int	n;
+{
+	register int	i;
+
+	rt_log("%s: %d roots:\n", title, n );
+	for( i=0; i<n; i++ )  {
+		rt_log("%4d %e + i * %e\n", i, roots[i].re, roots[i].im );
+	}
 }
