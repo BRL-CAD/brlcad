@@ -336,6 +336,20 @@ register struct partition *PartHeadp;
 		}
 		comp_thickness = pp->pt_outhit->hit_dist -
 				 pp->pt_inhit->hit_dist;
+
+/* The following code has been added to track an ellusive problem with
+ * negative thicknesses.  It will be removed when the bug is found.
+ */
+
+		if(comp_thickness == 0 || comp_thickness < 0 )  {
+			rt_log("WARNING: comp_thickness=%g at position h=%g, v=%g in partition list:\n",
+				comp_thickness, h , v);
+			rt_pr_partitions(ap->a_rt_i, PartHeadp, "whatdoyouwant?");
+			rt_log("Contact Sue Muuss (sue@brl) with this information\n");
+		}
+
+/* End of bug-report code. */
+			
 		if( nextpp == PartHeadp )  {
 			/* Last partition, no air follows, use code 9 */
 			air_id = 9;
