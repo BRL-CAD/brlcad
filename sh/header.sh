@@ -2,7 +2,7 @@
 #                       H E A D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004 United States Government as represented by the
+# Copyright (C) 2004-2005 United States Government as represented by
 # U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -262,18 +262,10 @@ block="${block}${titleline}
 $c BRL-CAD
 $c"
 
-if [ "x$startyear" != "x$currentyear" ] ; then
-    # longer date wraps the 'the'
-    block="${block}
+block="${block}
 $c Copyright (c) $copyright United States Government as represented by
 $c the U.S. Army Research Laboratory.
 $c"
-else
-    block="${block}
-$c Copyright (c) $copyright United States Government as represented by the
-$c U.S. Army Research Laboratory.
-$c"
-fi
 
 case $LICE in
     BSD)
