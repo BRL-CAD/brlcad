@@ -6222,6 +6222,7 @@ init_objedit_guts()
 	VSETALL( last_edit_absolute_view_tran, 0.0 );
 	edit_absolute_scale = 0.0;
 	acc_sc_sol = 1.0;
+	acc_sc_obj = 1.0;
 	VSETALL( acc_sc, 1.0 );
 
 	VSETALL( edit_rate_model_rotate, 0.0 );
