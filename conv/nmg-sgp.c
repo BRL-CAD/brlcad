@@ -187,12 +187,12 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-
+#if 0
 	if( stats )
 	{
 		edge_len_limits = 
 	}
-
+#endif
 	db_scan(dbip, (int (*)())db_diradd, 1);
 
 	if( out_file == NULL )
@@ -234,7 +234,7 @@ char	*argv[];
 		m = (struct model *)ip.idb_ptr;
 		NMG_CK_MODEL( m );
 
-		write_model_as_sgp( m, fp_out );
+		write_model_as_sgp( m );
 		rt_db_free_internal( &ip );
 	}
 
