@@ -8,20 +8,25 @@ proc check_externs {extern_list} {
     set unsat 0
     set s [info script]
     upvar #0 argv0 app
+    set msg ""
     foreach cmd $extern_list {
-	if {[string length [info command $cmd]] == 0} {
-	    if { [info exists app] } {
-		    puts stderr "Application '$app' unsuited to use Tcl script '$s':"
-	    } else {
-		    puts stderr "Application unsuited to use Tcl script '$s':"
+	if {[info command $cmd] == ""} {
+	    # append this string once
+	    if {$msg == ""} {
+		if {[info exists app]} {
+		    append msg "Application '$app' unsuited to use Tcl script '$s':\n"
+		} else {
+		    append msg "Application unsuited to use Tcl script '$s':\n"
+		}
+
+		append msg " Fails to define the following commands: $cmd"
+		continue
 	    }
-	    puts stderr " Fails to define command '$cmd'"
-	    set unsat 1
+	    append msg ", $cmd"
 	}
     }
-    if {$unsat == 1} {
-	puts "Tcl script '$s' aborting"
-	return -code return
+    if {$msg != ""} {
+	error $msg
     }
 }
 
