@@ -614,7 +614,11 @@ CONST struct bn_tabdata	*in2;
  *  Return the index in the table's x[] array of the interval which
  *  contains 'xval'.
  *
- *  Returns -1 if less than start value, -2 if greater than end value.
+ *  Returns -
+ *	-1	if less than start value
+ *	-2	if greater than end value.
+ *	0..nx-1	otherwise.
+ *		Never returns a value of nx.
  *
  *  A binary search would be more efficient, as the wavelengths (x values)
  *  are known to be sorted in ascending order.
@@ -629,7 +633,8 @@ double			xval;
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_find_x(x%x, %g)\n", tabp, xval );
 	BN_CK_TABLE(tabp);
 
-	if( xval >= tabp->x[tabp->nx-1] )  return -2;
+	if( xval > tabp->x[tabp->nx] )  return -2;
+	if( xval >= tabp->x[tabp->nx-1] )  return tabp->nx-1;
 
 	/* Search for proper interval in input spectrum */
 	for( i = tabp->nx-2; i >=0; i-- )  {
@@ -1513,4 +1518,101 @@ CONST struct bn_table	*b;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_merge2(x%x, x%x) = x%x\n", a, b, new);
 	return new;
+}
+
+/*
+ *		B N _ T A B D A T A _ M K _ L I N E A R _ F I L T E R
+ *
+ *  Create a filter to accept power in a given band.
+ *  The first and last filter values will be in the range 0..1,
+ *  while all the internal filter values will be 1.0,
+ *  and all samples outside the given band will be 0.0.
+ *
+ *  Returns -
+ *	NULL	if given band does not overlap input spectrum
+ *	tabdata*
+ */
+struct bn_tabdata *
+bn_tabdata_mk_linear_filter( spectrum, lower_wavelen, upper_wavelen )
+CONST struct bn_table *spectrum;
+double		lower_wavelen;
+double		upper_wavelen;
+{
+	struct bn_tabdata *filt;
+	int	first;
+	int	last;
+	fastf_t filt_range;
+	fastf_t	cell_range;
+	fastf_t	frac;
+	int	i;
+
+	BN_CK_TABLE(spectrum);
+
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mk_linear_filter(x%x, low=%g, up=%g)\n", spectrum, lower_wavelen, upper_wavelen);
+
+	if( lower_wavelen < spectrum->x[0] )
+	if( upper_wavelen > spectrum->x[spectrum->nx] )
+		bu_log("bn_tabdata_mk_linear_filter() warning, upper_wavelen %g > hightest sampled wavelen %g\n",
+			upper_wavelen, spectrum->x[spectrum->nx] );
+
+	/* First, find first (possibly partial) sample */
+	first = bn_table_find_x( spectrum, lower_wavelen );
+	if( first == -1 )  {
+		first = 0;
+		bu_log("bn_tabdata_mk_linear_filter() warning, lower_wavelen %g < lowest sampled wavelen %g\n",
+			lower_wavelen, spectrum->x[0] );
+	} else if( first <= -2 )  {
+		bu_log("bn_tabdata_mk_linear_filter() ERROR, lower_wavelen %g > highest sampled wavelen %g\n",
+			lower_wavelen, spectrum->x[spectrum->nx] );
+		return NULL;
+	}
+
+	/* Second, find last (possibly partial) sample */
+	last = bn_table_find_x( spectrum, upper_wavelen );
+	if( last == -1 )  {
+		bu_log("bn_tabdata_mk_linear_filter() ERROR, upper_wavelen %g < lowest sampled wavelen %g\n",
+			upper_wavelen, spectrum->x[0] );
+		return NULL;
+	} else if( last <= -2 )  {
+		last = spectrum->nx-1;
+		bu_log("bn_tabdata_mk_linear_filter() warning, upper_wavelen %g > highest sampled wavelen %g\n",
+			upper_wavelen, spectrum->x[spectrum->nx] );
+	}
+
+	/* 'filt' is filled with zeros by default */
+	BN_GET_TABDATA( filt, spectrum );
+
+	/* Special case:  first and last are in same sample cell */
+	if( first == last )  {
+		filt_range = upper_wavelen - lower_wavelen;
+		cell_range = spectrum->x[first+1] - spectrum->x[first];
+		frac = filt_range / cell_range;
+
+		/* Could use a BU_ASSERT_RANGE_FLOAT */
+		BU_ASSERT( (frac >= 0.0) && (frac <= 1.0) );
+
+		filt->y[first] = frac;
+		return filt;
+	}
+
+	/* Calculate fraction 0..1.0 for first and last samples */
+	filt_range = spectrum->x[first+1] - lower_wavelen;
+	cell_range = spectrum->x[first+1] - spectrum->x[first];
+	frac = filt_range / cell_range;
+	if( frac > 1 )  frac = 1;
+	BU_ASSERT( (frac >= 0.0) && (frac <= 1.0) );
+	filt->y[first] = frac;
+
+	filt_range = upper_wavelen - spectrum->x[last];
+	cell_range = spectrum->x[last+1] - spectrum->x[last];
+	frac = filt_range / cell_range;
+	if( frac > 1 )  frac = 1;
+	BU_ASSERT( (frac >= 0.0) && (frac <= 1.0) );
+	filt->y[last] = frac;
+
+	/* Fill in range between with 1.0 values */
+	for( i = first+1; i < last; i++ )
+		filt->y[i] = 1.0;
+
+	return filt;
 }
