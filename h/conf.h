@@ -62,7 +62,8 @@
  *  $Header$
  */
 
-#if __STDC__ || (defined(__sgi) && defined(__mips)) || defined(__convex__)
+#if __STDC__ || (defined(__sgi) && defined(__mips)) || defined(__convex__) \
+    || defined(__cplusplus)
 #	define USE_PROTOTYPES	1
 #endif
 
