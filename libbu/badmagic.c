@@ -9,15 +9,14 @@
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  *  Distribution Status -
  *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
-static char RCSbadmagic[] = "@(#)$Header$ (BRL)";
+static char RCSbadmagic[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -47,9 +46,14 @@ int		line;
 			str, file, line ); 
 		bu_bomb(buf); 
 	}
-	if( *((long *)(ptr)) != (magic) )  { 
-		sprintf(buf, "ERROR: bad pointer x%x: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n", 
-			ptr,
+	if( ((long)(ptr)) & (sizeof(long)-1) )  {
+		sprintf(buf, "ERROR: x%lx mis-aligned %s pointer, file %s, line %d\n", 
+			(long)ptr, str, file, line ); 
+		bu_bomb(buf); 
+	}
+	if( *(ptr) != (magic) )  { 
+		sprintf(buf, "ERROR: bad pointer x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n", 
+			(long)ptr,
 			str, magic,
 			bu_identify_magic( *(ptr) ), *(ptr),
 			file, line ); 
