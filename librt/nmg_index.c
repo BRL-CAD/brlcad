@@ -494,24 +494,6 @@ register long	newindex;
 }
 
 /*
- *			N M G _ P R _ S T R U C T _ C O U N T S
- */
-void
-nmg_pr_struct_counts( ctr, str )
-CONST struct nmg_struct_counts	*ctr;
-/*CONST*/ char			*str;
-{
-	struct rt_vls		vls;
-
-	rt_log("nmg_pr_count(%s)\n", str);
-
-	rt_vls_init( &vls );
-	nmg_vls_struct_counts( &vls, ctr );
-	rt_log("%s", rt_vls_addr( &vls ) );
-	rt_vls_free( &vls );
-}
-
-/*
  *			N M G _ V L S _ S T R U C T _ C O U N T S
  *
  */
@@ -555,6 +537,24 @@ CONST struct nmg_struct_counts	*ctr;
 	rt_vls_printf(str, "\t%6d wire_edges\n", ctr->wire_edges);
 	rt_vls_printf(str, "\t%6d wire_lone_verts\n", ctr->wire_lone_verts);
 	rt_vls_printf(str, "\t%6d shells_of_lone_vert\n", ctr->shells_of_lone_vert);
+}
+
+/*
+ *			N M G _ P R _ S T R U C T _ C O U N T S
+ */
+void
+nmg_pr_struct_counts( ctr, str )
+CONST struct nmg_struct_counts	*ctr;
+/*CONST*/ char			*str;
+{
+	struct rt_vls		vls;
+
+	rt_log("nmg_pr_count(%s)\n", str);
+
+	rt_vls_init( &vls );
+	nmg_vls_struct_counts( &vls, ctr );
+	rt_log("%s", rt_vls_addr( &vls ) );
+	rt_vls_free( &vls );
 }
 
 /*
