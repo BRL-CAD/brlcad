@@ -44,7 +44,6 @@ static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-static int	debug_plots;		/* Make debugging plots */
 static int	ncpu = 1;		/* Number of processors */
 static int	curr_id;		/* Current region ident code */
 static int	face_count;		/* Count of faces output for a region id */
@@ -475,13 +474,10 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:dn:o:r:s:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:n:o:r:s:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
-			break;
-		case 'd':
-			debug_plots = 1;
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
