@@ -26,11 +26,17 @@ everything&::	PRODUCTS
 %.o:	../SRCDIR/%.f 			if exist ../SRCDIR/%.f
 	FC FFLAGS -c ../SRCDIR/%.f
 
+/* There is a conflict here:  When debugging, it's nice to
+ * be able to examine the intermediate .c file that LEX and YACC produce.
+ * When trying to port to a new platform, those leftovers can "trick"
+ * the unwary.
+ */
 
 /* Non-ANSI compilers can't take tab-# */
 %.o:    ../SRCDIR/%.l			if exist ../SRCDIR/%.l
 	-rm -f ./%.c
         LEX -t LEX_OPTS ../SRCDIR/%.l | sed -e 's/^[ 	]#/#/' > ./%.c
+	if test `wc -l < ./%.c` -lt 2; then rm -f ./%.c; exit 1; fi
 	CC CFLAGS -I. -c ./%.c
 
 %.o:    ../SRCDIR/%.y			if exist ../SRCDIR/%.y
