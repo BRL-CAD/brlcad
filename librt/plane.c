@@ -948,7 +948,7 @@ CONST struct rt_tol	*tol;
  *
  *  Explicit Return -
  *	-4	A and B are not distinct points
- *	-2	Intersection exists, < A (t is returned)
+ *	-3	Intersection exists, < A (t is returned)
  *	-2	Intersection exists, > B (t is returned)
  *	-1	Lines do not intersect
  *	 0	Lines are co-linear (t for A is returned)
