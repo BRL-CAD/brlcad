@@ -1958,11 +1958,16 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
     if(es_edflag == ECMD_TGC_MV_H ||
        es_edflag == ECMD_TGC_MV_HH){
       struct rt_tgc_internal  *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
+      point_t tgc_v;
+      vect_t tgc_h;
 
-      VADD2(curr_e_axes_pos, tgc->h, tgc->v);
-      MAT4X3PNT(curr_e_axes_pos, es_mat, curr_e_axes_pos);
-      break;
-    }
+      MAT4X3PNT(tgc_v, es_mat, tgc->v);
+      MAT4X3VEC(tgc_h, es_mat, tgc->h);
+      VADD2(curr_e_axes_pos, tgc_h, tgc_v);
+    }else
+      VMOVE(curr_e_axes_pos, es_keypoint)
+
+    break;
   default:
     VMOVE(curr_e_axes_pos, es_keypoint);
     break;
@@ -2407,6 +2412,10 @@ sedit()
 	static int pnt5;		/* ECMD_ARB_SETUP_ROTFACE, special arb7 case */
 	static int j;
 	static float la, lb, lc, ld;	/* TGC: length of vectors */
+	mat_t	mat;
+	mat_t	mat1;
+	mat_t	edit;
+
 
 	sedraw = 0;
 	update_views = 1;
@@ -2711,8 +2720,17 @@ sedit()
 			arb = (struct rt_arb_internal *)es_int.idb_ptr;
 			RT_ARB_CK_MAGIC( arb );
 
+#ifdef TRY_EDIT_NEW_WAY
+			if(mged_variables.context){
+			  /* apply es_invmat to convert to real model space */
+			  MAT4X3PNT(work,es_invmat,es_para);
+			}else{
+			  VMOVE(work, es_para);
+			}
+#else
 			/* apply es_invmat to convert to real model space */
 			MAT4X3PNT(work,es_invmat,es_para);
+#endif
 			/* change D of planar equation */
 			es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], work);
 			/* find new vertices, put in record in vector notation */
@@ -2815,10 +2833,34 @@ sedit()
 					es_para[2] * degtorad );
 				bn_mat_copy(acc_rot_sol, modelchanges);
 
+#ifdef TRY_EDIT_NEW_WAY
+				/* Borrow incr_change matrix here */
+				bn_mat_mul( incr_change, modelchanges, invsolr );
+				if(mged_variables.context){
+				  /* calculate rotations about keypoint */
+				  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
+
+				  /* We want our final matrix (mat) to xform the original solid
+				   * to the position of this instance of the solid, perform the
+				   * current edit operations, then xform back.
+				   *	mat = es_invmat * edit * es_mat
+				   */
+				  bn_mat_mul( mat1, edit, es_mat );
+				  bn_mat_mul( mat, es_invmat, mat1 );
+				  bn_mat_idn( incr_change );
+				  /* work contains original es_peqn[es_menu][0] */
+				  MAT4X3VEC( eqp, mat, work );
+				}else{
+				  VMOVE( work, eqp );
+				  MAT4X3VEC( eqp, modelchanges, work );
+				}
+#else
 				/* Apply new rotation to face */
 				eqp = &es_peqn[es_menu][0];
+
 				VMOVE( work, eqp );
 				MAT4X3VEC( eqp, modelchanges, work );
+#endif
 			}
 			else if( inpara == 2 ){
 				/* 2 parameters:  rot,fb were given */
@@ -2954,7 +2996,16 @@ sedit()
 			surf = sip->srfs[spl_surfno];
 			NMG_CK_SNURB(surf);
 			fp = &RT_NURB_GET_CONTROL_POINT( surf, spl_ui, spl_vi );
+#ifdef TRY_EDIT_NEW_WAY
+			if(mged_variables.context){
+			  /* apply es_invmat to convert to real model space */
+			  MAT4X3PNT( fp, es_invmat, es_para );
+			}else{
+			  VMOVE( fp, es_para );
+			}
+#else
 			VMOVE( fp, es_para );
+#endif
 		}
 		break;
 
@@ -2969,9 +3020,19 @@ sedit()
 
 			RT_TGC_CK_MAGIC(tgc);
 			if( inpara ) {
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model coordinates */
+			    MAT4X3PNT( work, es_invmat, es_para );
+			    VSUB2(tgc->h, work, tgc->v);
+			  }else{
+			    VSUB2(tgc->h, es_para, tgc->v);
+			  }
+#else
 				/* apply es_invmat to convert to real model coordinates */
 				MAT4X3PNT( work, es_invmat, es_para );
 				VSUB2(tgc->h, work, tgc->v);
+#endif
 			}
 
 			/* check for zero H vector */
@@ -3013,9 +3074,19 @@ sedit()
 
 			RT_TGC_CK_MAGIC(tgc);
 			if( inpara ) {
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model coordinates */
+			    MAT4X3PNT( work, es_invmat, es_para );
+			    VSUB2(tgc->h, work, tgc->v);
+			  }else{
+			    VSUB2(tgc->h, es_para, tgc->v);
+			  }
+#else
 				/* apply es_invmat to convert to real model coordinates */
 				MAT4X3PNT( work, es_invmat, es_para );
 				VSUB2(tgc->h, work, tgc->v);
+#endif
 			}
 
 			/* check for zero H vector */
@@ -3037,8 +3108,17 @@ sedit()
 	case PTARB:	/* move an ARB point */
 	case EARB:   /* edit an ARB edge */
 		if( inpara ) { 
+#ifdef TRY_EDIT_NEW_WAY
+		  if(mged_variables.context){
+		    /* apply es_invmat to convert to real model space */
+		    MAT4X3PNT( work, es_invmat, es_para );
+		  }else{
+		    VMOVE( work, es_para );
+		  }
+#else
 			/* apply es_invmat to convert to real model space */
 			MAT4X3PNT( work, es_invmat, es_para );
+#endif
 			editarb( work );
 		}
 		break;
@@ -3046,10 +3126,6 @@ sedit()
 	case SROT:
 		/* rot solid about vertex */
 		{
-			mat_t	mat;
-			mat_t	mat1;
-			mat_t	edit;
-
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 			if(inpara) {
@@ -3111,8 +3187,51 @@ sedit()
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 
 			RT_TGC_CK_MAGIC(tgc);
-			MAT4X3VEC(work, incr_change, tgc->h);
-			VMOVE(tgc->h, work);
+#ifdef TRY_EDIT_NEW_WAY
+			if(inpara) {
+				static mat_t invsolr;
+				/*
+				 * Keyboard parameters:  absolute x,y,z rotations,
+				 * in degrees.  First, cancel any existing rotations,
+				 * then perform new rotation
+				 */
+				bn_mat_inv( invsolr, acc_rot_sol );
+
+				/* Build completely new rotation change */
+				bn_mat_idn( modelchanges );
+				buildHrot( modelchanges,
+					es_para[0] * degtorad,
+					es_para[1] * degtorad,
+					es_para[2] * degtorad );
+				/* Borrow incr_change matrix here */
+				bn_mat_mul( incr_change, modelchanges, invsolr );
+				bn_mat_copy(acc_rot_sol, modelchanges);
+
+				/* Apply new rotation to solid */
+				/*  Clear out solid rotation */
+				bn_mat_idn( modelchanges );
+			}  else  {
+				/* Apply incremental changes already in incr_change */
+			}
+
+			if(mged_variables.context){
+			  /* calculate rotations about keypoint */
+			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
+
+			  /* We want our final matrix (mat) to xform the original solid
+			   * to the position of this instance of the solid, perform the
+			   * current edit operations, then xform back.
+			   *	mat = es_invmat * edit * es_mat
+			   */
+			  bn_mat_mul( mat1, edit, es_mat );
+			  bn_mat_mul( mat, es_invmat, mat1 );
+			  MAT4X3VEC(tgc->h, mat, tgc->h);
+			}else{
+			  MAT4X3VEC(tgc->h, incr_change, tgc->h);
+			}
+#else
+			MAT4X3VEC(tgc->h, incr_change, tgc->h);
+#endif
 
 			bn_mat_idn( incr_change );
 		}
@@ -3125,7 +3244,55 @@ sedit()
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 
 			RT_TGC_CK_MAGIC(tgc);
+#ifdef TRY_EDIT_NEW_WAY
+			if(inpara) {
+				static mat_t invsolr;
+				/*
+				 * Keyboard parameters:  absolute x,y,z rotations,
+				 * in degrees.  First, cancel any existing rotations,
+				 * then perform new rotation
+				 */
+				bn_mat_inv( invsolr, acc_rot_sol );
 
+				/* Build completely new rotation change */
+				bn_mat_idn( modelchanges );
+				buildHrot( modelchanges,
+					es_para[0] * degtorad,
+					es_para[1] * degtorad,
+					es_para[2] * degtorad );
+				/* Borrow incr_change matrix here */
+				bn_mat_mul( incr_change, modelchanges, invsolr );
+				bn_mat_copy(acc_rot_sol, modelchanges);
+
+				/* Apply new rotation to solid */
+				/*  Clear out solid rotation */
+				bn_mat_idn( modelchanges );
+			}  else  {
+				/* Apply incremental changes already in incr_change */
+			}
+
+			if(mged_variables.context){
+			  /* calculate rotations about keypoint */
+			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
+
+			  /* We want our final matrix (mat) to xform the original solid
+			   * to the position of this instance of the solid, perform the
+			   * current edit operations, then xform back.
+			   *	mat = es_invmat * edit * es_mat
+			   */
+			  bn_mat_mul( mat1, edit, es_mat );
+			  bn_mat_mul( mat, es_invmat, mat1 );
+			  MAT4X3VEC(tgc->a, mat, tgc->a);
+			  MAT4X3VEC(tgc->b, mat, tgc->b);
+			  MAT4X3VEC(tgc->c, mat, tgc->c);
+			  MAT4X3VEC(tgc->d, mat, tgc->d);
+			}else{
+			  MAT4X3VEC(tgc->a, incr_change, tgc->a);
+			  MAT4X3VEC(tgc->b, incr_change, tgc->b);
+			  MAT4X3VEC(tgc->c, incr_change, tgc->c);
+			  MAT4X3VEC(tgc->d, incr_change, tgc->d);
+			}
+#else
 			MAT4X3VEC(work, incr_change, tgc->a);
 			VMOVE(tgc->a, work);
 			MAT4X3VEC(work, incr_change, tgc->b);
@@ -3134,7 +3301,7 @@ sedit()
 			VMOVE(tgc->c, work);
 			MAT4X3VEC(work, incr_change, tgc->d);
 			VMOVE(tgc->d, work);
-
+#endif
 			bn_mat_idn( incr_change );
 		}
 		break;
@@ -3146,8 +3313,53 @@ sedit()
 				(struct rt_eto_internal *)es_int.idb_ptr;
 
 			RT_ETO_CK_MAGIC(eto);
+#ifdef TRY_EDIT_NEW_WAY
+			if(inpara) {
+				static mat_t invsolr;
+				/*
+				 * Keyboard parameters:  absolute x,y,z rotations,
+				 * in degrees.  First, cancel any existing rotations,
+				 * then perform new rotation
+				 */
+				bn_mat_inv( invsolr, acc_rot_sol );
+
+				/* Build completely new rotation change */
+				bn_mat_idn( modelchanges );
+				buildHrot( modelchanges,
+					es_para[0] * degtorad,
+					es_para[1] * degtorad,
+					es_para[2] * degtorad );
+				/* Borrow incr_change matrix here */
+				bn_mat_mul( incr_change, modelchanges, invsolr );
+				bn_mat_copy(acc_rot_sol, modelchanges);
+
+				/* Apply new rotation to solid */
+				/*  Clear out solid rotation */
+				bn_mat_idn( modelchanges );
+			}  else  {
+				/* Apply incremental changes already in incr_change */
+			}
+
+			if(mged_variables.context){
+			  /* calculate rotations about keypoint */
+			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
+
+			  /* We want our final matrix (mat) to xform the original solid
+			   * to the position of this instance of the solid, perform the
+			   * current edit operations, then xform back.
+			   *	mat = es_invmat * edit * es_mat
+			   */
+			  bn_mat_mul( mat1, edit, es_mat );
+			  bn_mat_mul( mat, es_invmat, mat1 );
+			  
+			  MAT4X3VEC(eto->eto_C, mat, eto->eto_C);
+			}else{
+			  MAT4X3VEC(eto->eto_C, incr_change, eto->eto_C);
+			}
+#else
 			MAT4X3VEC(work, incr_change, eto->eto_C);
 			VMOVE(eto->eto_C, work);
+#endif
 		}
 		bn_mat_idn( incr_change );
 		break;
@@ -3169,9 +3381,18 @@ sedit()
 
 			if( es_mvalid )
 				VMOVE( new_pt , es_mparam )
-			else if( inpara == 3 )
-				VMOVE( new_pt , es_para )
-			else if( inpara && inpara != 3 )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt, es_para );
+			  }
+#else
+				VMOVE( new_pt , es_para );
+#endif
+			}else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for edge move\n",
 					   (char *)NULL);
@@ -3326,9 +3547,18 @@ sedit()
 			NMG_CK_MODEL( m );
 			if( es_mvalid )
 				VMOVE( new_pt , es_mparam )
-			else if( inpara == 3 )
-				VMOVE( new_pt , es_para )
-			else if( inpara && inpara != 3 )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
+			  VMOVE( new_pt , es_para );
+#endif
+			}else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for edge split\n",
 					   (char *)NULL);
@@ -4360,7 +4590,7 @@ CONST vect_t	mousevec;
 #endif
     editarb( pos_model );
 
-    update_edit_absolute_tran(mousevec);
+    update_edit_absolute_tran(pos_view);
     break;
   case ECMD_ARB_MOVE_FACE:
 #ifdef TRY_EDIT_NEW_WAY
@@ -4386,7 +4616,7 @@ CONST vect_t	mousevec;
       (void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
     }
 
-    update_edit_absolute_tran(mousevec);
+    update_edit_absolute_tran(pos_view);
     break;
   case ECMD_NMG_EPICK:
     /* XXX Should just leave desired location in es_mparam for sedit() */
@@ -4404,8 +4634,16 @@ CONST vect_t	mousevec;
       tmp_tol.perp = 0.0;
       tmp_tol.para = 1 - tmp_tol.perp;
 
+#ifdef TRY_EDIT_NEW_WAY
+      MAT4X3PNT( pos_view, model2view, e_axes_pos );
+      pos_view[X] = mousevec[X];
+      pos_view[Y] = mousevec[Y];
+      if( (e = nmg_find_e_nearest_pt2( &m->magic, pos_view,
+				       model2view, &tmp_tol )) ==
+#else
       if( (e = nmg_find_e_nearest_pt2( &m->magic, mousevec,
 				       model2view, &tmp_tol )) ==
+#endif
 	  (struct edge *)NULL )  {
 	Tcl_AppendResult(interp, "ECMD_NMG_EPICK: unable to find an edge\n",
 			 (char *)NULL);
@@ -4427,8 +4665,9 @@ CONST vect_t	mousevec;
 	mged_print_result( TCL_ERROR );
 	bu_vls_free(&tmp_vls);
       }
-
-      update_edit_absolute_tran(mousevec);
+#ifdef TRY_EDIT_NEW_WAY
+      update_edit_absolute_tran(pos_view);
+#endif
     }
 
     break;
@@ -4457,7 +4696,7 @@ CONST vect_t	mousevec;
 #endif
     es_mvalid = 1;
 
-    update_edit_absolute_tran(mousevec);
+    update_edit_absolute_tran(pos_view);
     break;
   default:
     Tcl_AppendResult(interp, "mouse press undefined in this solid edit mode\n", (char *)NULL);
@@ -5970,6 +6209,7 @@ vect_t argvect;
     return TCL_ERROR;
   }
 
+#if 0
   if( es_edflag == ECMD_TGC_ROT_H
       || es_edflag == ECMD_TGC_ROT_AB
       || es_edflag == ECMD_ETO_ROT_C ) {
@@ -5978,6 +6218,7 @@ vect_t argvect;
 		     (char *)NULL);
     return TCL_ERROR;
   }
+#endif
 
   inpara = 0;
   for( i = 0; i < argc; i++ )  {
