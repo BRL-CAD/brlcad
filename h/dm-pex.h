@@ -12,7 +12,6 @@
 #define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)((struct pex_vars *)((_dmp)->dmr_vars))->height) * 4095))
 
 #define TRY_DEPTHCUE 0
-#define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
 #define Pex_MV_O(_m) offsetof(struct modifiable_pex_vars, _m)
 
 struct modifiable_pex_vars {
