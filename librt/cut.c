@@ -36,20 +36,26 @@ static char RCScut[] = "@(#)$Header$ (BRL)";
 int rt_cutLen;			/* normal limit on number objs per box node */
 int rt_cutDepth;		/* normal limit on depth of cut tree */
 
-HIDDEN int		rt_ck_overlap RT_ARGS((CONST vect_t min, CONST vect_t max,
-				CONST struct soltab *stp));
-HIDDEN int		rt_ct_box RT_ARGS((struct rt_i *rtip, union cutter *cutp,
-				int axis, double where));
-HIDDEN void		rt_ct_add RT_ARGS((union cutter *cutp, struct soltab *stp,
-				vect_t min, vect_t max, int depth));
-HIDDEN void		rt_ct_optim RT_ARGS((struct rt_i *rtip, union cutter *cutp,
-				int depth));
-HIDDEN void		rt_ct_free RT_ARGS((struct rt_i *rtip, union cutter *cutp));
-HIDDEN void		rt_ct_measure RT_ARGS((struct rt_i *rtip, union cutter *cutp,
-				int depth));
+HIDDEN int		rt_ck_overlap RT_ARGS((CONST vect_t min,
+					       CONST vect_t max,
+					       CONST struct soltab *stp,
+					       CONST struct rt_i *rtip));
+HIDDEN int		rt_ct_box RT_ARGS((struct rt_i *rtip,
+					   union cutter *cutp,
+					   int axis, double where));
+HIDDEN void		rt_ct_add RT_ARGS((union cutter *cutp,
+					   struct soltab *stp,
+					   vect_t min, vect_t max, int depth,
+					   CONST struct rt_i *rtip));
+HIDDEN void		rt_ct_optim RT_ARGS((struct rt_i *rtip,
+					     union cutter *cutp, int depth));
+HIDDEN void		rt_ct_free RT_ARGS((struct rt_i *rtip,
+					    union cutter *cutp));
+HIDDEN void		rt_ct_measure RT_ARGS((struct rt_i *rtip,
+					       union cutter *cutp, int depth));
 HIDDEN union cutter	*rt_ct_get RT_ARGS((struct rt_i *rtip));
 HIDDEN void		rt_plot_cut RT_ARGS((FILE *fp, struct rt_i *rtip,
-				union cutter *cutp, int lvl));
+					     union cutter *cutp, int lvl));
 
 #define AXIS(depth)	((depth)%3)	/* cuts: X, Y, Z, repeat */
 
@@ -102,7 +108,8 @@ struct nugridnode *nuginfop;
 		/* Search all solids for those in this slice */
 		RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 			RT_CHECK_SOLTAB(stp);
-			if( !rt_ck_overlap( box->bn.bn_min, box->bn.bn_max, stp ) )
+			if( !rt_ck_overlap( box->bn.bn_min, box->bn.bn_max,
+					    stp, rtip ) )
 				continue;
 			box->bn.bn_list[box->bn.bn_len++] = stp;
 		} RT_VISIT_ALL_SOLTABS_END
@@ -155,6 +162,54 @@ rt_cut_optimize_parallel()
 	}
 }
 
+#define CMP(p1,p2,memb,ind) \
+	(*(CONST struct soltab **)(p1))->memb[ind] < \
+	(*(CONST struct soltab **)(p2))->memb[ind] ? -1 : \
+	(*(CONST struct soltab **)(p1))->memb[ind] > \
+	(*(CONST struct soltab **)(p2))->memb[ind] ? 1 : 0
+	
+HIDDEN int
+rt_projXmin_comp( p1, p2 )
+CONST void *p1, *p2;
+{
+	return CMP(p1,p2,st_min,X);
+}
+
+HIDDEN int
+rt_projXmax_comp( p1, p2 )
+CONST void *p1, *p2;
+{
+	return CMP(p1,p2,st_max,X);
+}
+
+HIDDEN int
+rt_projYmin_comp( p1, p2 )
+CONST void *p1, *p2;
+{
+	return CMP(p1,p2,st_min,Y);
+}
+
+HIDDEN int
+rt_projYmax_comp( p1, p2 )
+CONST void *p1, *p2;
+{
+	return CMP(p1,p2,st_max,Y);
+}
+
+HIDDEN int
+rt_projZmin_comp( p1, p2 )
+CONST void *p1, *p2;
+{
+	return CMP(p1,p2,st_min,Z);
+}
+
+HIDDEN int
+rt_projZmax_comp( p1, p2 )
+CONST void *p1, *p2;
+{
+	return CMP(p1,p2,st_max,Z);
+}
+
 /*
  *			R T _ N U G R I D _ C U T
  *
@@ -172,10 +227,11 @@ register struct boxnode		*fromp;
 struct rt_i			*rtip;
 int				 just_collect_info;
 {
+#define USE_HIST 0
+#if USE_HIST	
 	struct bu_hist start_hist[3];	/* where solid RPPs start */
 	struct bu_hist end_hist[3];	/* where solid RPPs end */
-	struct bu_hist nu_hist_cellsize;
-	struct boxnode nu_xbox, nu_ybox, nu_zbox;
+#endif	
 	register struct soltab **stpp;
 
 	int	nu_ncells;		/* # cells along one axis */
@@ -183,6 +239,7 @@ int				 just_collect_info;
 	int	nu_max_ncells;		/* hard limit on nu_ncells */
 	register int	i, j, xp, yp, zp;
 	vect_t	xmin, xmax, ymin, ymax, zmin, zmax;
+	struct boxnode nu_xbox, nu_ybox, nu_zbox;
 
 	if( nugnp->nu_type != CUT_NUGRIDNODE )
 		rt_bomb( "rt_nugrid_cut: passed non-nugridnode" );
@@ -248,6 +305,11 @@ int				 just_collect_info;
 
 	nu_ncells = (int)ceil( 2.0 + rtip->rti_nu_gfactor *
 			       pow( (double)fromp->bn_len, 1.0/3.0 ) );
+#define EXPERIMENT 0
+#if EXPERIMENT
+	if( nu_ncells > 10 ) nu_ncells = 10;
+#endif
+		
 	nu_sol_per_cell = (fromp->bn_len + nu_ncells - 1) / nu_ncells;
 	nu_max_ncells = 2*nu_ncells + 8;
 
@@ -256,6 +318,7 @@ int				 just_collect_info;
 	             "\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_ncells=%d\n",
 		     nu_ncells, nu_sol_per_cell, nu_max_ncells );
 	
+#if USE_HIST
 	for( i=0; i<3; i++ ) {
 		bu_hist_init( &start_hist[i],
 			      fromp->bn_min[i],
@@ -267,72 +330,28 @@ int				 just_collect_info;
 			      nu_ncells*100 );
 	}
 
-	if( rt_g.debug&DEBUG_CUT ) {
-		struct bu_hist xhist;
-		struct bu_hist yhist;
-		struct bu_hist zhist;
-		char obuf[128];
-		
-#define	RT_NUGRID_NBINS	120		/* For plotting purposes only */
 
-		bu_hist_init( &xhist, fromp->bn_min[X], fromp->bn_max[X],
-			      RT_NUGRID_NBINS );
-		bu_hist_init( &yhist, fromp->bn_min[Y], fromp->bn_max[Y],
-			      RT_NUGRID_NBINS );
-		bu_hist_init( &zhist, fromp->bn_min[Z], fromp->bn_max[Z],
-			      RT_NUGRID_NBINS );
-		
-		for( i = 0, stpp = fromp->bn_list;
-		     i < fromp->bn_len;
-		     i++, stpp++ ) {
-			register struct soltab *stp = *stpp;
-
-			RT_CK_SOLTAB( stp );
-			if( stp->st_aradius <= 0 )  continue;
-			if( stp->st_aradius >= INFINITY )  continue;
-			bu_hist_range( &xhist, stp->st_min[X],
-				       stp->st_max[X] );
-			bu_hist_range( &yhist, stp->st_min[Y],
-				       stp->st_max[Y] );
-			bu_hist_range( &zhist, stp->st_min[Z],
-				       stp->st_max[Z] );
-
-			for( j=0; j<3; j++ )  {
-				BU_HIST_TALLY( &start_hist[j],stp->st_min[j] );
-				BU_HIST_TALLY( &end_hist[j],  stp->st_max[j] );
-			}
-		}
-		
-		bu_hist_pr( &xhist,
-			    "cut_tree:  solid RPP extent distribution in X" );
-		bu_hist_pr( &yhist,
-			    "cut_tree:  solid RPP extent distribution in Y" );
-		bu_hist_pr( &zhist,
-			    "cut_tree:  solid RPP extent distribution in Z" );
-
-		bu_hist_free( &xhist );
-		bu_hist_free( &yhist );
-		bu_hist_free( &zhist );
-	} else {
-		for( i = 0, stpp = fromp->bn_list;
-		     i < fromp->bn_len;
-		     i++, stpp++ ) {
-			register struct soltab *stp = *stpp;
-			RT_CK_SOLTAB( stp );
-			if( stp->st_aradius <= 0 )  continue;
-			if( stp->st_aradius >= INFINITY )  continue;
-			for( j=0; j<3; j++ )  {
-				BU_HIST_TALLY( &start_hist[j],stp->st_min[j] );
-				BU_HIST_TALLY( &end_hist[j],  stp->st_max[j] );
-			}
+	for( i = 0, stpp = fromp->bn_list;
+	     i < fromp->bn_len;
+	     i++, stpp++ ) {
+		register struct soltab *stp = *stpp;
+		RT_CK_SOLTAB( stp );
+		if( stp->st_aradius <= 0 )  continue;
+		if( stp->st_aradius >= INFINITY )  continue;
+		for( j=0; j<3; j++ )  {
+			BU_HIST_TALLY( &start_hist[j],stp->st_min[j] );
+			BU_HIST_TALLY( &end_hist[j],  stp->st_max[j] );
 		}
 	}
+#endif	
 
 	/* Allocate memory for nugrid axis parition. */
 		
 	for( i=0; i<3; i++ )
-		nugnp->nu_axis[i] = (struct nu_axis *)rt_calloc( nu_max_ncells,
-				       sizeof(struct nu_axis), "NUgrid axis" );
+		nugnp->nu_axis[i] = (struct nu_axis *)bu_malloc(
+			nu_max_ncells*sizeof(struct nu_axis), "NUgrid axis" );
+
+#if USE_HIST
 	/*
 	 *  Next part of NUgrid algorithm:
 	 *  Decide where cell boundaries should be, along each axis.
@@ -399,7 +418,98 @@ int				 just_collect_info;
 		bu_hist_free( &start_hist[i] );
 		bu_hist_free( &end_hist[i] );
 	}
+#else
+	{
+		struct cmp_pair {
+			int (*cmp_min)();
+			int (*cmp_max)();
+		} pairs[] = {
+			{ rt_projXmin_comp, rt_projXmax_comp },
+			{ rt_projYmin_comp, rt_projYmax_comp },
+			{ rt_projZmin_comp, rt_projZmax_comp }
+		};
+		struct soltab **list_min, **list_max;
+		register struct soltab **l1, **l2;
+		register int nstart, nend, axi, len = fromp->bn_len;
+		register fastf_t pos;
 
+		list_min = (struct soltab **)bu_malloc( len *
+						      sizeof(struct soltab *),
+							"min solid list" );
+		list_max = (struct soltab **)bu_malloc( len *
+						      sizeof(struct soltab *),
+							"max solid list" );
+		bcopy( fromp->bn_list, list_min, len*sizeof(struct soltab *) );
+		bcopy( fromp->bn_list, list_max, len*sizeof(struct soltab *) );
+		for( i=0; i<3; i++ ) {
+			qsort( (void *)list_min, len,
+			       sizeof(struct soltab *), pairs[i].cmp_min );
+			qsort( (void *)list_max, len,
+			       sizeof(struct soltab *), pairs[i].cmp_max );
+			nstart = nend = axi = 0;
+			l1 = list_min;
+			l2 = list_max;
+
+			pos = fromp->bn_min[i];
+			nugnp->nu_axis[i][axi].nu_spos = pos;
+			
+			while( l1-list_min < len ||
+			       l2-list_max < len ) {
+				if( l2-list_max >= len ||
+				    (l1-list_min < len &&
+				     (*l1)->st_min[i] < (*l2)->st_max[i]) ) {
+					pos = (*l1++)->st_min[i];
+					++nstart;
+				} else {
+					pos = (*l2++)->st_max[i];
+					++nend;
+				}
+
+#if 1
+				if( nstart < nu_sol_per_cell &&
+				    nend < nu_sol_per_cell )
+#else
+				if( nstart + nend < nu_sol_per_cell )
+#endif					
+					continue;
+
+				/* Don't make really teeny intervals. */
+
+				if( pos <= nugnp->nu_axis[i][axi].nu_spos +
+				           rtip->rti_tol.dist )
+					continue;
+				/* don't make any more cuts if we've gone
+				   past the end. */
+				if( pos >= fromp->bn_max[i] )
+					continue;
+
+				/* End current interval, start new one */
+				nugnp->nu_axis[i][axi].nu_epos = pos;
+				nugnp->nu_axis[i][axi].nu_width =
+					pos - nugnp->nu_axis[i][axi].nu_spos;
+				if( axi >= nu_max_ncells-1 )  {
+					bu_log(
+				      "NUgrid ran off end, axis=%d, axi=%d\n",
+					       i, axi);
+					rt_bomb( "rt_nugrid_cut: NUgrid ran off end" );
+				}
+				nugnp->nu_axis[i][++axi].nu_spos = pos;
+				nstart = 0;
+				nend = 0;
+			}
+			/* End final interval */
+			if( pos < fromp->bn_max[i] ) pos = fromp->bn_max[i]; 
+			nugnp->nu_axis[i][axi].nu_epos = pos;
+			nugnp->nu_axis[i][axi].nu_width =
+				pos - nugnp->nu_axis[i][axi].nu_spos;
+			nugnp->nu_cells_per_axis[i] = axi+1;
+		}
+		bu_free( (genptr_t)list_min, "solid list min sort" );
+		bu_free( (genptr_t)list_max, "solid list max sort" );
+	}
+	
+#endif
+	
 	nugnp->nu_stepsize[X] = 1;
 	nugnp->nu_stepsize[Y] = nugnp->nu_cells_per_axis[X] *
 					nugnp->nu_stepsize[X];
@@ -420,12 +530,10 @@ int				 just_collect_info;
 	}
 
 	/* If we were just asked to collect info, we are done.
-	   The binary space partioning algorithm uses this approach. */
+	   The binary space partioning algorithm (sometimes) needs just this.*/
 
 	if( just_collect_info ) return;
 		
-	bu_hist_init( &nu_hist_cellsize, 0.0, 400.0, 400 );
-
 	/* For the moment, re-use "union cutter" */
 	nugnp->nu_grid = (union cutter *)bu_malloc(
 		nugnp->nu_cells_per_axis[X] *
@@ -461,7 +569,7 @@ int				 just_collect_info;
 		for( i = 0, stpp = fromp->bn_list;
 		     i < fromp->bn_len;
 		     i++, stpp++ ) {
-			if( !rt_ck_overlap( xmin, xmax, *stpp ) )
+			if( !rt_ck_overlap( xmin, xmax, *stpp, rtip ) )
 				continue;
 			nu_xbox.bn_list[nu_xbox.bn_len++] = *stpp;
 		}
@@ -478,7 +586,8 @@ int				 just_collect_info;
 			/* Search X slice for membs of this Y slice */
 			for( i=0; i<nu_xbox.bn_len; i++ )  {
 				if( !rt_ck_overlap( ymin, ymax,
-						    nu_xbox.bn_list[i] ) )
+						    nu_xbox.bn_list[i],
+						    rtip ) )
 					continue;
 				nu_ybox.bn_list[nu_ybox.bn_len++] =
 					nu_xbox.bn_list[i];
@@ -505,29 +614,13 @@ int				 just_collect_info;
 				/* Search Y slice for members of this Z slice*/
 				for( i=0; i<nu_ybox.bn_len; i++ )  {
 					if( !rt_ck_overlap( zmin, zmax,
-							nu_ybox.bn_list[i] ) )
+							    nu_ybox.bn_list[i],
+							    rtip ) )
 						continue;
-
-					if(
-	 rt_functab[nu_ybox.bn_list[i]->st_id].ft_classify(nu_ybox.bn_list[i],
-					   zmin, zmax, &rtip->rti_tol ) ==
-							RT_CLASSIFY_OUTSIDE )
-						continue;
-
-					/* XXX for the time being, infinite
-					   solids are handled
-					   separately */
-
-					if( nu_ybox.bn_list[i]->st_aradius >=
-					    INFINITY )
-						continue;
-						
 					nu_zbox.bn_list[nu_zbox.bn_len++] =
 						nu_ybox.bn_list[i];
 				}
-				/* Record cell size in histogram */
-				BU_HIST_TALLY( &nu_hist_cellsize,
-					       nu_zbox.bn_len );
+
 				if( nu_zbox.bn_len <= 0 )  {
 					/* Empty cell */
 					cutp->bn.bn_list = (struct soltab **)0;
@@ -549,14 +642,20 @@ int				 just_collect_info;
 				       (char *)cutp->bn.bn_list,
 				       nu_zbox.bn_len *
 				       sizeof(struct soltab *) );
+
+				/* Recurse, but only if we're cutting down on
+				   the cellsize. */
+#if EXPERIMENT
+				if( cutp->bn.bn_len > 30 &&
+				    cutp->bn.bn_len < fromp->bn_len>>1 ) {
 #if 0
-				if( cutp->bn.bn_len > 8 ) {
 					/* Make a little NUBSPT node here
 					   to clean things up */
 					union cutter *firstp;
 
 					BU_GETUNION( firstp, cutter );
 					*firstp = *cutp;  /* union copy */
+
 					cutp->cut_type = CUT_NUBSPTNODE;
 					VMOVE( cutp->nubn.nu_min,
 					       firstp->bn.bn_min );
@@ -565,24 +664,26 @@ int				 just_collect_info;
 					cutp->nubn.first_cut = firstp;
 
 					rt_ct_optim( rtip, firstp, 0 );
+#else
+					/* Make a little NUGRID node here
+					   to clean things up */
+					union cutter temp;
+
+					temp = *cutp;  /* union copy */
+					cutp->cut_type = CUT_NUGRIDNODE;
+					/* recursive call! */
+					rt_nugrid_cut( &cutp->nugn,
+						       &temp, rtip, 0 );
+#endif					
 				}
-#endif
+#endif					
 			}
 		}
-	}
-
-	if( rt_g.debug&DEBUG_CUT )  {
-		bu_hist_pr( &nu_hist_cellsize,
-			    "cut_tree: Number of solids per NUgrid cell");
-		/* Just for inspection, print out the 0,0,0 cell */
-		rt_pr_cut( nugnp->nu_grid, 0 );
 	}
 
 	bu_free( (genptr_t)nu_zbox.bn_list, "nu_zbox bn_list[]" );
 	bu_free( (genptr_t)nu_ybox.bn_list, "nu_ybox bn_list[]" );
 	bu_free( (genptr_t)nu_xbox.bn_list, "nu_xbox bn_list[]" );
-
-	bu_hist_free( &nu_hist_cellsize );
 }	
 
 /*
@@ -599,7 +700,7 @@ register struct rt_i	*rtip;
 int			ncpu;
 {
 	register struct soltab *stp;
-	union cutter fin_box;
+	union cutter *finp;
 	FILE *plotfp;
 	
 	/* For plotting, compute a slight enlargement of the model RPP,
@@ -626,10 +727,11 @@ int			ncpu;
 	/* Copy solids into a list for rt_nugrid_cut, and throw infinite
 	   solids into a special box. */
 
-	fin_box.cut_type = CUT_BOXNODE;
-	VMOVE( fin_box.bn.bn_min, rtip->mdl_min );
-	VMOVE( fin_box.bn.bn_max, rtip->mdl_max );
-	fin_box.bn.bn_maxlen = fin_box.bn.bn_len = 0;
+	BU_GETUNION( finp, cutter );
+	finp->cut_type = CUT_BOXNODE;
+	VMOVE( finp->bn.bn_min, rtip->rti_pmin );
+	VMOVE( finp->bn.bn_max, rtip->rti_pmax );
+	finp->bn.bn_maxlen = finp->bn.bn_len = 0;
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip ) {
 		/* Ignore "dead" solids in the list.  (They failed prep) */
 		if( stp->st_aradius <= 0 )  continue;
@@ -637,7 +739,7 @@ int			ncpu;
 			/* Add to infinite solids list for special handling */
 			rt_cut_extend( &rtip->rti_inf_box, stp );
 		} else {
-			rt_cut_extend( &fin_box, stp );
+			rt_cut_extend( finp, stp );
 		}
 	} RT_VISIT_ALL_SOLTABS_END
 
@@ -655,21 +757,20 @@ int			ncpu;
 			rt_cutDepth, rt_cutLen );
 
 	switch( rtip->rti_space_partition ) {
-	case RT_PART_NUGRID: {
+	case RT_PART_NUGRID:
 		rtip->rti_CutHead.cut_type = CUT_NUGRIDNODE;
-		rt_nugrid_cut( &rtip->rti_CutHead.nugn, &fin_box, rtip, 0 );
-		break; }
+		rt_nugrid_cut( &rtip->rti_CutHead.nugn, finp, rtip, 0 );
+		rt_fr_cut( rtip, finp ); /* done with finite solids box */
+		bu_free( (genptr_t)finp, "finite solid box" );
+		break;
 	case RT_PART_NUBSPT: {
 #ifdef NEW_WAY		
 		struct nugridnode nuginfo;
 #endif		
-		union cutter *first_cut;
-
 		rtip->rti_CutHead.cut_type = CUT_NUBSPTNODE;
 		VMOVE( rtip->rti_CutHead.nubn.nu_min, rtip->mdl_min );
 		VMOVE( rtip->rti_CutHead.nubn.nu_max, rtip->mdl_max );
-		BU_GETUNION( first_cut, cutter );
-		rtip->rti_CutHead.nubn.first_cut = first_cut;
+		rtip->rti_CutHead.nubn.first_cut = finp;
 
 #ifdef NEW_WAY		
 		/* Collect statistics to assist binary space partition tree
@@ -690,27 +791,7 @@ int			ncpu;
 		 * benchmark tests seem to be very sensitive to how the space
 		 * partitioning is laid out.  Until we go to full NUgrid, this
 		 * will have to do.  */
-
-			
-			first_cut->bn.bn_type = CUT_BOXNODE;
-			VMOVE( first_cut->bn.bn_min, rtip->mdl_min );
-			VMOVE( first_cut->bn.bn_max, rtip->mdl_max );
-			first_cut->bn.bn_len = 0;
-			first_cut->bn.bn_maxlen = rtip->nsolids+1;
-			first_cut->bn.bn_list =
-				(struct soltab **)bu_malloc(
-					first_cut->bn.bn_maxlen *
-					sizeof(struct soltab *),
-					"rt_cut_it: root list" );
-			RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
-				/* Ignore "dead" solids in the list.
-				   (They failed prep) */
-				if( stp->st_aradius <= 0 )  continue;
-				if( stp->st_aradius < INFINITY )  {
-					rt_cut_extend( first_cut, stp );
-				}
-			} RT_VISIT_ALL_SOLTABS_END
-			rt_ct_optim( rtip, first_cut, 0 );
+			rt_ct_optim( rtip, finp, 0 );
 #ifdef NEW_WAY
 		} else {
 			Needs to be updated for the new union cutter elts.
@@ -740,43 +821,51 @@ int			ncpu;
 			}
 		}
 #endif
-
-		/* Measure the depth of tree, find max # of RPPs in a cut node */
-		bu_hist_init( &rtip->rti_hist_cellsize, 0.0, 400.0, 400 );
-		bu_hist_init( &rtip->rti_hist_cutdepth, 0.0,
-			      (fastf_t)rt_cutDepth+1, rt_cutDepth+1 );
-		rt_ct_measure( rtip, rtip->rti_CutHead.nubn.first_cut, 0 );
-		rt_ct_measure( rtip, &rtip->rti_inf_box, 0 );
-		if(rt_g.debug&DEBUG_CUT)  {
-			bu_log("Cut: maxdepth=%d, nbins=%d, maxlen=%d, avg=%g\n",
-			       rtip->rti_cut_maxdepth,
-			       rtip->rti_cut_nbins,
-			       rtip->rti_cut_maxlen,
-			       ((double)rtip->rti_cut_totobj)/rtip->rti_cut_nbins );
-			bu_hist_pr( &rtip->rti_hist_cellsize, "cut_tree: Number of solids per leaf cell");
-			bu_hist_pr( &rtip->rti_hist_cutdepth, "cut_tree: Depth (height)"); 
-		}
-
-		if(rt_g.debug&DEBUG_CUTDETAIL)  {
-			/* Produce a voluminous listing of the cut tree */
-			rt_pr_cut( rtip->rti_CutHead.nubn.first_cut, 0 );
-		}
 		break; }
 	default:
 		rt_bomb( "rt_cut_it: unknown space partitioning method\n" );
 	}
 
-	if( rt_g.debug&DEBUG_PLOTBOX )  {
+	/* Measure the depth of tree, find max # of RPPs in a cut node */
+
+	bu_hist_init( &rtip->rti_hist_cellsize, 0.0, 400.0, 400 );
+	bu_hist_init( &rtip->rti_hist_cutdepth, 0.0,
+		      (fastf_t)rt_cutDepth+1, rt_cutDepth+1 );
+	bzero( rtip->rti_ncut_by_type, sizeof(rtip->rti_ncut_by_type) );
+	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
+	rt_ct_measure( rtip, &rtip->rti_inf_box, 0 );
+	if( rt_g.debug&DEBUG_CUT ) {
+		bu_log( "Cut: maxdepth=%d, nbins=%d, maxlen=%d, avg=%g\n",
+			rtip->rti_cut_maxdepth,
+			rtip->rti_ncut_by_type[CUT_BOXNODE],
+			rtip->rti_cut_maxlen,
+			((double)rtip->rti_cut_totobj) /
+			rtip->rti_ncut_by_type[CUT_BOXNODE] );
+		bu_hist_pr( &rtip->rti_hist_cellsize,
+			    "cut_tree: Number of solids per leaf cell");
+		bu_hist_pr( &rtip->rti_hist_cutdepth,
+			    "cut_tree: Depth (height)");
+		bu_log( "Counts: %d nubspt nodes, %d nugrid nodes, %d cutnodes, %d boxnodes\n",
+			rtip->rti_ncut_by_type[CUT_NUBSPTNODE],
+			rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
+			rtip->rti_ncut_by_type[CUT_CUTNODE],
+			rtip->rti_ncut_by_type[CUT_BOXNODE] );
+	}
+
+	if( rt_g.debug&DEBUG_CUTDETAIL ) {
+		/* Produce a voluminous listing of the cut tree */
+		rt_pr_cut( rtip->rti_CutHead.nubn.first_cut, 0 );
+	}
+
+	if( rt_g.debug&DEBUG_PLOTBOX ) {
 		/* Debugging code to plot cuts */
-		if( (plotfp=fopen("rtcut.plot", "w"))!=NULL) {
+		if( (plotfp=fopen("rtcut.plot", "w"))!=NULL ) {
 			pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
 				/* Plot all the cutting boxes */
 			rt_plot_cut( plotfp, rtip, &rtip->rti_CutHead, 0 );
 			(void)fclose(plotfp);
 		}
 	}
-
-	bu_free( (char *)fin_box.bn.bn_list, "solid list for rt_nugrid_cut" );
 }
 
 		
@@ -790,11 +879,12 @@ int			ncpu;
  *  so as to retain O(depth) performance.
  */
 HIDDEN void
-rt_ct_add( cutp, stp, min, max, depth )
+rt_ct_add( cutp, stp, min, max, depth, rtip )
 register union cutter *cutp;
 struct soltab *stp;	/* should be object handle & routine addr */
 vect_t min, max;
 int depth;
+CONST struct rt_i *rtip;
 {
 	if(rt_g.debug&DEBUG_CUTDETAIL)bu_log("rt_ct_add(x%x, %s, %d)\n",
 		cutp, stp->st_name, depth);
@@ -804,14 +894,16 @@ int depth;
 		/* Cut to the left of point */
 		VMOVE( temp, max );
 		temp[cutp->cn.cn_axis] = cutp->cn.cn_point;
-		if( rt_ck_overlap( min, temp, stp ) )
-			rt_ct_add( cutp->cn.cn_l, stp, min, temp, depth+1 );
+		if( rt_ck_overlap( min, temp, stp, rtip ) )
+			rt_ct_add( cutp->cn.cn_l, stp, min, temp, depth+1,
+				   rtip );
 
 		/* Cut to the right of point */
 		VMOVE( temp, min );
 		temp[cutp->cn.cn_axis] = cutp->cn.cn_point;
-		if( rt_ck_overlap( temp, max, stp ) )
-			rt_ct_add( cutp->cn.cn_r, stp, temp, max, depth+1 );
+		if( rt_ck_overlap( temp, max, stp, rtip ) )
+			rt_ct_add( cutp->cn.cn_r, stp, temp, max, depth+1,
+				   rtip );
 		return;
 	}
 	if( cutp->cut_type != CUT_BOXNODE )  {
@@ -1060,7 +1152,7 @@ double			where;
 		"rt_ct_box (left list)" );
 	for( i = cutp->bn.bn_len-1; i >= 0; i-- )  {
 		if( !rt_ck_overlap(lhs->bn.bn_min, lhs->bn.bn_max,
-		    cutp->bn.bn_list[i]))
+		    cutp->bn.bn_list[i], rtip))
 			continue;
 		lhs->bn.bn_list[lhs->bn.bn_len++] = cutp->bn.bn_list[i];
 	}
@@ -1078,7 +1170,7 @@ double			where;
 		"rt_ct_box (right list)" );
 	for( i = cutp->bn.bn_len-1; i >= 0; i-- )  {
 		if( !rt_ck_overlap(rhs->bn.bn_min, rhs->bn.bn_max,
-		    cutp->bn.bn_list[i]))
+		    cutp->bn.bn_list[i], rtip))
 			continue;
 		rhs->bn.bn_list[rhs->bn.bn_len++] = cutp->bn.bn_list[i];
 	}
@@ -1123,10 +1215,11 @@ double			where;
  *	0	if no overlap.
  */
 HIDDEN int
-rt_ck_overlap( min, max, stp )
+rt_ck_overlap( min, max, stp, rtip )
 register CONST vect_t	min;
 register CONST vect_t	max;
 register CONST struct soltab *stp;
+register CONST struct rt_i *rtip;
 {
 	RT_CHECK_SOLTAB(stp);
 	if( rt_g.debug&DEBUG_BOXING )  {
@@ -1143,10 +1236,13 @@ register CONST struct soltab *stp;
 		if( rt_g.debug&DEBUG_BOXING )  bu_log("rt_ck_overlap:  TRUE (inf)\n");
 		return(1);
 	}
-	if( stp->st_min[X] > max[X]  || stp->st_max[X] < min[X] )  goto fail;
-	if( stp->st_min[Y] > max[Y]  || stp->st_max[Y] < min[Y] )  goto fail;
-	if( stp->st_min[Z] > max[Z]  || stp->st_max[Z] < min[Z] )  goto fail;
-	/* Need more sophistication here, per-object type */
+	if( stp->st_min[X] >= max[X]  || stp->st_max[X] <= min[X] )  goto fail;
+	if( stp->st_min[Y] >= max[Y]  || stp->st_max[Y] <= min[Y] )  goto fail;
+	if( stp->st_min[Z] >= max[Z]  || stp->st_max[Z] <= min[Z] )  goto fail;
+
+	if( rt_functab[stp->st_id].ft_classify( stp, min, max,
+			  &rtip->rti_tol ) == RT_CLASSIFY_OUTSIDE )  goto fail;
+
 	if( rt_g.debug&DEBUG_BOXING )  bu_log("rt_ck_overlap:  TRUE\n");
 	return(1);
 fail:
@@ -1190,7 +1286,7 @@ int	depth;
 	/**** XXX This test can be improved ****/
 	if( depth >= 6 && cutp->bn.bn_len <= rt_cutLen )
 		return;				/* Fine enough */
-#if 0
+#if NEW_WAY
  /* New way */
 	/*
 	 *  Attempt to make an optimal cut
@@ -1413,6 +1509,9 @@ int lvl;			/* recursion level */
 		}
 		return;
 
+	case CUT_NUGRIDNODE:
+	case CUT_NUBSPTNODE:
+		/* not implemented yet */
 	default:
 		bu_log("Unknown type=x%x\n", cutp->cut_type );
 		break;
@@ -1441,8 +1540,10 @@ register union cutter *cutp;
 	switch( cutp->cut_type )  {
 
 	case CUT_NUBSPTNODE:
-		cutp = cutp->nubn.first_cut;
-		/* fall through */
+		rt_fr_cut( rtip, cutp->nubn.first_cut );
+		rt_ct_free( rtip, cutp->nubn.first_cut );
+		cutp->nubn.first_cut = CUTTER_NULL;
+		return;
 
 	case CUT_CUTNODE:
 		rt_fr_cut( rtip, cutp->cn.cn_l );
@@ -1456,12 +1557,24 @@ register union cutter *cutp;
 
 	case CUT_BOXNODE:
 		if( cutp->bn.bn_maxlen > 0 )
-			rt_free( (char *)cutp->bn.bn_list, "cut_box list");
+			bu_free( (genptr_t)cutp->bn.bn_list, "cut_box list");
 		return;
 
-	case CUT_NUGRIDNODE:
-		/* XXX not implemented yet */
-		return;
+	case CUT_NUGRIDNODE: {
+		register int i, len = cutp->nugn.nu_cells_per_axis[X] *
+			cutp->nugn.nu_cells_per_axis[Y] *
+			cutp->nugn.nu_cells_per_axis[Z];
+		register union cutter *bp;
+		for( i=0, bp=cutp->nugn.nu_grid; i<len; i++, bp++ )
+			rt_fr_cut( rtip, bp );
+		bu_free( (genptr_t)cutp->nugn.nu_grid, "NUGrid children" );
+		cutp->nugn.nu_grid = 0; /* sanity */
+		for( i=0; i<3; i++ ) {
+			bu_free( (genptr_t)cutp->nugn.nu_axis[i],
+				 "NUGrid axis" );
+			cutp->nugn.nu_axis[i] = 0; /* sanity */
+		}
+		return; }
 
 	default:
 		bu_log("rt_fr_cut: Unknown type=x%x\n", cutp->cut_type );
@@ -1484,15 +1597,129 @@ int			lvl;
 	switch( cutp->cut_type )  {
 	case CUT_NUGRIDNODE: {
 		union cutter *bp;
-		int i;
-		if( !cutp->nu_grid ) return;
-		for( i = 0, bp = cutp->nugn.nu_grid;
-		     i < cutp->nugn.nu_cells_per_axis[X]*
-			     cutp->nugn.nu_cells_per_axis[Y]*
-			     cutp->nugn.nu_cells_per_axis[Z];
-		     i++, bp++ ) {
-			rt_plot_cut( fp, rtip, bp, lvl );
+		int i, x, y, z;
+		int xmax = cutp->nugn.nu_cells_per_axis[X],
+		    ymax = cutp->nugn.nu_cells_per_axis[Y],
+		    zmax = cutp->nugn.nu_cells_per_axis[Z];
+		if( !cutp->nugn.nu_grid ) return;
+		/* Don't draw the boxnodes since that produces far too many
+		   segments.  Optimize the output a little by drawing whole
+		   line segments (below). */
+		for( i=0, bp=cutp->nugn.nu_grid; i < xmax*ymax*zmax; i++, bp++ ) {
+			if( bp->cut_type != CUT_BOXNODE )
+				rt_plot_cut( fp, rtip, bp, lvl );
 		}
+		pl_color( fp, 180, 180, 220 );
+		--xmax; --ymax; --zmax;
+		
+		/* XY plane */
+		pd_3line( fp,
+			  cutp->nugn.nu_axis[X][0].nu_spos,
+			  cutp->nugn.nu_axis[Y][0].nu_spos,
+			  cutp->nugn.nu_axis[Z][0].nu_spos,
+			  cutp->nugn.nu_axis[X][0].nu_spos,
+			  cutp->nugn.nu_axis[Y][0].nu_spos,
+			  cutp->nugn.nu_axis[Z][zmax].nu_epos);
+		for( y=0; y<=ymax; y++ ) {
+			pd_3line( fp,
+				  cutp->nugn.nu_axis[X][0].nu_spos,
+				  cutp->nugn.nu_axis[Y][y].nu_epos,
+				  cutp->nugn.nu_axis[Z][0].nu_spos,
+				  cutp->nugn.nu_axis[X][0].nu_spos,
+				  cutp->nugn.nu_axis[Y][y].nu_epos,
+				  cutp->nugn.nu_axis[Z][zmax].nu_epos);
+		}
+		for( x=0; x<=xmax; x++ ) {
+			pd_3line( fp,
+				  cutp->nugn.nu_axis[X][x].nu_epos,
+				  cutp->nugn.nu_axis[Y][0].nu_spos,
+				  cutp->nugn.nu_axis[Z][0].nu_spos,
+				  cutp->nugn.nu_axis[X][x].nu_epos,
+				  cutp->nugn.nu_axis[Y][0].nu_spos,
+				  cutp->nugn.nu_axis[Z][zmax].nu_epos);
+			for( y=0; y<=ymax; y++ ) {
+				pd_3line( fp,
+					  cutp->nugn.nu_axis[X][x].nu_epos,
+					  cutp->nugn.nu_axis[Y][y].nu_epos,
+					  cutp->nugn.nu_axis[Z][0].nu_spos,
+					  cutp->nugn.nu_axis[X][x].nu_epos,
+					  cutp->nugn.nu_axis[Y][y].nu_epos,
+					  cutp->nugn.nu_axis[Z][zmax].nu_epos);
+			}
+		}
+
+		/* YZ plane */
+		pd_3line( fp,
+			  cutp->nugn.nu_axis[X][0].nu_spos,
+			  cutp->nugn.nu_axis[Y][0].nu_spos,
+			  cutp->nugn.nu_axis[Z][0].nu_spos,
+			  cutp->nugn.nu_axis[X][xmax].nu_epos,
+			  cutp->nugn.nu_axis[Y][0].nu_spos,
+			  cutp->nugn.nu_axis[Z][0].nu_spos);
+		for( z=0; z<=zmax; z++ ) {
+			pd_3line( fp,
+				  cutp->nugn.nu_axis[X][0].nu_spos,
+				  cutp->nugn.nu_axis[Y][0].nu_spos,
+				  cutp->nugn.nu_axis[Z][z].nu_epos,
+				  cutp->nugn.nu_axis[X][zmax].nu_epos,
+				  cutp->nugn.nu_axis[Y][0].nu_spos,
+				  cutp->nugn.nu_axis[Z][z].nu_epos);
+		}
+		for( y=0; y<=ymax; y++ ) {
+			pd_3line( fp,
+				  cutp->nugn.nu_axis[X][0].nu_spos,
+				  cutp->nugn.nu_axis[Y][y].nu_epos,
+				  cutp->nugn.nu_axis[Z][0].nu_spos,
+				  cutp->nugn.nu_axis[X][xmax].nu_epos,
+				  cutp->nugn.nu_axis[Y][y].nu_epos,
+				  cutp->nugn.nu_axis[Z][0].nu_spos);
+			for( z=0; z<=zmax; z++ ) {
+				pd_3line( fp,
+					  cutp->nugn.nu_axis[X][0].nu_spos,
+					  cutp->nugn.nu_axis[Y][y].nu_epos,
+					  cutp->nugn.nu_axis[Z][z].nu_epos,
+					  cutp->nugn.nu_axis[X][zmax].nu_epos,
+					  cutp->nugn.nu_axis[Y][y].nu_epos,
+					  cutp->nugn.nu_axis[Z][z].nu_epos);
+			}
+		}
+
+		/* XZ plane */
+		pd_3line( fp,
+			  cutp->nugn.nu_axis[X][0].nu_spos,
+			  cutp->nugn.nu_axis[Y][0].nu_spos,
+			  cutp->nugn.nu_axis[Z][0].nu_spos,
+			  cutp->nugn.nu_axis[X][0].nu_spos,
+			  cutp->nugn.nu_axis[Y][ymax].nu_epos,
+			  cutp->nugn.nu_axis[Z][0].nu_spos);
+		for( z=0; z<=zmax; z++ ) {
+			pd_3line( fp,
+				  cutp->nugn.nu_axis[X][0].nu_spos,
+				  cutp->nugn.nu_axis[Y][0].nu_spos,
+				  cutp->nugn.nu_axis[Z][z].nu_epos,
+				  cutp->nugn.nu_axis[X][0].nu_spos,
+				  cutp->nugn.nu_axis[Y][ymax].nu_epos,
+				  cutp->nugn.nu_axis[Z][z].nu_epos);
+		}
+		for( x=0; x<=xmax; x++ ) {
+			pd_3line( fp,
+				  cutp->nugn.nu_axis[X][x].nu_epos,
+				  cutp->nugn.nu_axis[Y][0].nu_spos,
+				  cutp->nugn.nu_axis[Z][0].nu_spos,
+				  cutp->nugn.nu_axis[X][x].nu_epos,
+				  cutp->nugn.nu_axis[Y][ymax].nu_epos,
+				  cutp->nugn.nu_axis[Z][0].nu_spos);
+			for( z=0; z<=zmax; z++ ) {
+				pd_3line( fp,
+					  cutp->nugn.nu_axis[X][x].nu_epos,
+					  cutp->nugn.nu_axis[Y][0].nu_spos,
+					  cutp->nugn.nu_axis[Z][z].nu_epos,
+					  cutp->nugn.nu_axis[X][x].nu_epos,
+					  cutp->nugn.nu_axis[Y][ymax].nu_epos,
+					  cutp->nugn.nu_axis[Z][z].nu_epos);
+			}
+		}
+			
 		return; }
 	case CUT_NUBSPTNODE:
 		pl_color( fp, 0, 255, 255 );
@@ -1609,28 +1836,40 @@ int			depth;
 	register int	len;
 
 	RT_CK_RTI(rtip);
-	if( cutp->cut_type == CUT_CUTNODE )  {
+	switch( cutp->cut_type ) {
+	case CUT_NUBSPTNODE:
+		rtip->rti_ncut_by_type[CUT_NUBSPTNODE]++;
+		rt_ct_measure( rtip, cutp->nubn.first_cut, depth+1 );
+		return;
+	case CUT_NUGRIDNODE: {
+		register int i;
+		register union cutter *bp;
+		len = cutp->nugn.nu_cells_per_axis[X] *
+			cutp->nugn.nu_cells_per_axis[Y] *
+			cutp->nugn.nu_cells_per_axis[Z];
+		rtip->rti_ncut_by_type[CUT_NUGRIDNODE]++;
+		for( i=0, bp=cutp->nugn.nu_grid; i<len; i++, bp++ )
+			rt_ct_measure( rtip, bp, depth+1 );
+		return; }
+	case CUT_CUTNODE:
+		rtip->rti_ncut_by_type[CUT_CUTNODE]++;
 		rt_ct_measure( rtip, cutp->cn.cn_l, len = (depth+1) );
 		rt_ct_measure( rtip, cutp->cn.cn_r, len );
 		return;
-	}
-	if( cutp->cut_type != CUT_BOXNODE )  {
+	case CUT_BOXNODE:
+		rtip->rti_ncut_by_type[CUT_BOXNODE]++;
+		rtip->rti_cut_totobj += (len = cutp->bn.bn_len);
+		if( rtip->rti_cut_maxlen < len )
+			rtip->rti_cut_maxlen = len;
+		if( rtip->rti_cut_maxdepth < depth )
+			rtip->rti_cut_maxdepth = depth;
+		BU_HIST_TALLY( &rtip->rti_hist_cellsize, len );
+		BU_HIST_TALLY( &rtip->rti_hist_cutdepth, depth );
+		return;
+	default:
 		bu_log("rt_ct_measure: bad node x%x\n", cutp->cut_type);
 		return;
 	}
-	/*
-	 * BOXNODE (leaf)
-	 */
-	rtip->rti_cut_nbins++;
-	rtip->rti_cut_totobj += (len = cutp->bn.bn_len);
-	if( rtip->rti_cut_maxlen < len )
-		rtip->rti_cut_maxlen = len;
-	if( rtip->rti_cut_maxdepth < depth )
-		rtip->rti_cut_maxdepth = depth;
-
-	BU_HIST_TALLY( &rtip->rti_hist_cellsize, len );
-	BU_HIST_TALLY( &rtip->rti_hist_cutdepth, depth ); 
-
 }
 
 /*
