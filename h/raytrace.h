@@ -87,6 +87,7 @@ extern struct seg *FreeSeg;		/* Head of freelist */
  *			S O L T A B
  *
  * Internal information used to keep track of solids in the model
+ * Leaf name and Xform matrix are unique identifier.
  */
 struct soltab {
 	int		st_id;		/* Solid ident */
@@ -94,12 +95,14 @@ struct soltab {
 	fastf_t		st_radsq;	/* Bounding sphere Radius, squared */
 	int		*st_specific;	/* -> ID-specific (private) struct */
 	struct soltab	*st_forw;	/* Linked list of solids */
-	char		*st_name;	/* Name of solid */
+	char		*st_name;	/* Leaf name of solid */
 	struct region	*st_regionp;	/* Pointer to containing region */
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
 	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
 	int		st_bin;		/* Temporary for boolean processing */
 	char		*st_materp;	/* (struct mater *) */
+	int		st_uses;	/* # of refs by tr_stp leaves */
+	mat_t		st_pathmat;	/* Xform matrix on path */
 };
 #define SOLTAB_NULL	((struct soltab *)0)
 
@@ -157,6 +160,7 @@ union tree {
 		vect_t		tu_min;		/* subtree min pt of RPP */
 		vect_t		tu_max;		/* subtree max pt of RPP */
 		struct soltab	*tu_stp;
+		char		*tu_name;	/* full path name of leaf */
 	} tr_a;
 };
 #define tr_left		tr_b.tb_left
@@ -164,6 +168,7 @@ union tree {
 #define tr_min		tr_b.tb_min
 #define tr_max		tr_b.tb_max
 #define tr_stp		tr_a.tu_stp
+#define tr_name		tr_a.tu_name
 #define TREE_NULL	((union tree *)0)
 
 
