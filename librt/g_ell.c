@@ -1170,21 +1170,21 @@ double			mm2local;
 		tip->a[X] * mm2local,
 		tip->a[Y] * mm2local,
 		tip->a[Z] * mm2local,
-		mag_a );
+		mag_a * mm2local);
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
 		tip->b[X] * mm2local,
 		tip->b[Y] * mm2local,
 		tip->b[Z] * mm2local,
-		mag_b );
+		mag_b * mm2local);
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
 		tip->c[X] * mm2local,
 		tip->c[Y] * mm2local,
 		tip->c[Z] * mm2local,
-		mag_c );
+		mag_c * mm2local);
 	rt_vls_strcat( str, buf );
 
 	if( !verbose )  return(0);
