@@ -21,6 +21,9 @@ frame .scale
 frame .entry_line1
 frame .entry_line2
 frame .plot
+frame .spatial_v
+frame .spatial 	-borderwidth 2 -relief ridge
+frame .spectral 	-borderwidth 2 -relief groove
 #pack .buttons -side top
 pack .scale -side top
 pack .entry_line1 -side top
@@ -37,17 +40,15 @@ scale .maxscale -label Max -from 0 -to 1000 -showvalue no -length 400 \
 pack .minscale .maxscale -side top -in .scale
 
 label .min1 -text "Min:"
-entry .min2 -textvariable minval
+label .min2 -textvariable minval
 label .max1 -text "Max:"
-entry .max2 -textvariable maxval
+label .max2 -textvariable maxval
 pack .min1 .min2 .max1 .max2 -side left -in .entry_line1
 
-label .wl1 -text "Wavelen#"
-scale .wl2 -from 0 -to [expr $nwave - 1] -showvalue yes \
-	-orient horizontal -variable wavel -command {update}
+label .wl1 -text "Wavelength of Framebuffer = "
 label .wl3 -textvariable lambda -width 8
 label .wl4 -text "microns"
-pack .wl1 .wl2 .wl3 .wl4 -side left -in .entry_line2
+pack .wl1 .wl3 .wl4 -side left -in .entry_line2
 
 proc update {foo} {
 	global wavel
@@ -72,16 +73,24 @@ proc scalechange {var value} {
 	update 0
 }
 
+label .scanline4 -text "Scanline Plot"
 scale .scanline3 -label Scanline -from $height -to 0 -showvalue yes -length 280 \
 	-orient vertical -variable line_num -command {update}
 canvas .canvas_scanline -width $width -height 280
 
 scale .pixel1 -label Pixel -from 0 -to $width -showvalue yes \
-	-length 280 \
-	-orient vertical -variable pixel_num -command {update}
-canvas .canvas_pixel -width $nwave -height 280
+	-orient horizontal -variable pixel_num -command {update}
 
-pack .canvas_scanline .scanline3 .pixel1 .canvas_pixel -side left -in .plot
+pack .scanline4 .canvas_scanline .pixel1 -side top -in .spatial_v
+pack .spatial_v .scanline3 -side left -in .spatial
+
+label .spatial1 -text "Spectral Plot"
+canvas .canvas_pixel -width $nwave -height 280
+scale .wl2 -label "Wavelen" -from 0 -to [expr $nwave - 1] -showvalue yes \
+	-orient horizontal -variable wavel -command {update}
+pack .spatial1 .canvas_pixel .wl2 -side top -in .spectral
+
+pack .spatial .spectral -side left -in .plot
 
 # Remember: 4th quadrant addressing!
 proc scanline {foo} {
@@ -91,6 +100,7 @@ proc scanline {foo} {
 	global minval
 	global maxval
 	global line_num
+	global pixel_num
 
 	set ymax 256
 
@@ -113,6 +123,7 @@ proc scanline {foo} {
 		set y0 $y1
 ##		puts "$x0 $y0 $x1 $y1"
 	}
+	.canvas_scanline create line $pixel_num [expr $ymax - 4] $pixel_num $ymax -tags T
 }
 
 
@@ -128,6 +139,7 @@ proc pixelplot {foo} {
 	global line_num
 	global pixel_num
 	global nwave
+	global wavel
 
 	set ymax 256
 
@@ -151,6 +163,7 @@ proc pixelplot {foo} {
 		set y0 $y1
 ##		puts "$x0 $y0 $x1 $y1"
 	}
+	.canvas_pixel create line $wavel [expr $ymax - 4] $wavel $ymax -tags T
 }
 
 
