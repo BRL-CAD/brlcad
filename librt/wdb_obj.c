@@ -1035,23 +1035,72 @@ wdb_tops_cmd(struct rt_wdb	*wdbp,
 	     int		argc,
 	     char 		**argv)
 {
-	register struct directory *dp;
-	register int i;
+	register struct directory	*dp;
+	register int			i;
+	struct directory		**dirp;
+	struct directory		**dirp0 = (struct directory **)NULL;
+	struct bu_vls			vls;
+	int				c;
+	int				gflag = 0;
+	int				uflag = 0;
 
 	RT_CK_WDB_TCL(interp, wdbp);
 	RT_CK_DBI_TCL(interp, wdbp->dbip);
 
+	/* process any options */
+	bu_optind = 1;	/* re-init bu_getopt() */
+	while ((c = bu_getopt(argc, argv, "gu")) != EOF) {
+		switch (c) {
+		case 'g':
+			gflag = 1;
+			break;
+		case 'u':
+			uflag = 1;
+			break;
+		default:
+			break;
+		}
+	}
+
+	argc -= (bu_optind - 1);
+	argv += (bu_optind - 1);
+
 	/* Can this be executed only sometimes?
 	   Perhaps a "dirty bit" on the database? */
 	db_update_nref(wdbp->dbip, &rt_uniresource);
-	
-	for (i = 0; i < RT_DBNHASH; i++)
-		for (dp = wdbp->dbip->dbi_Head[i];
-		     dp != DIR_NULL;
-		     dp = dp->d_forw)  {
-			if (dp->d_nref == 0)
-				Tcl_AppendElement( interp, dp->d_namep);
-		}
+
+	/*
+	 * Find number of possible entries and allocate memory
+	 */
+	dirp = wdb_dir_getspace(wdbp->dbip, 0);
+	dirp0 = dirp;
+
+	if (wdbp->dbip->dbi_version < 5) {
+		for (i = 0; i < RT_DBNHASH; i++)
+			for (dp = wdbp->dbip->dbi_Head[i];
+			     dp != DIR_NULL;
+			     dp = dp->d_forw)  {
+				if (dp->d_nref == 0)
+					*dirp++ = dp;
+			}
+	} else {
+		for (i = 0; i < RT_DBNHASH; i++)
+			for (dp = wdbp->dbip->dbi_Head[i];
+			     dp != DIR_NULL;
+			     dp = dp->d_forw)  {
+				if (dp->d_nref == 0 &&
+				    ((!gflag || (gflag && dp->d_major_type == DB5_MAJORTYPE_BRLCAD)) &&
+				     (!uflag || (uflag && !(dp->d_flags & DIR_HIDDEN)))))
+					*dirp++ = dp;
+			}
+	}
+
+	bu_vls_init(&vls);
+	wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
+	bu_vls_free(&vls);
+        bu_free((genptr_t)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
+
 	return TCL_OK;
 }
 
