@@ -2069,7 +2069,7 @@ genptr_t	arg;
  *			struct db_tree_state	*tsp,
  *			struct db_full_path	*pathp,
  *			struct bu_external	*ep,
- *			int			id, /* rt_id_solid() result */
+ *			int			id, /_* rt_id_solid() result *_/
  *			genptr_t		client_data)
  *
  *
