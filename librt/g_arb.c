@@ -126,6 +126,214 @@ struct bu_structparse rt_arb8_parse[] = {
     { "%f", 3, "V8", offsetof(struct rt_arb_internal, pt[7][X]), BU_STRUCTPARSE_FUNC_NULL },
     {0} };
 
+/*  rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid() 
+ *  stolen from mged/arbs.c */
+#define NO	0
+#define YES	1
+	
+/*
+ *			R T _ A R B _ G E T _ C G T Y P E
+ *
+ * C G A R B S :   determines COMGEOM arb types from GED general arbs
+ *
+ *  Inputs -
+ *
+ *  Returns -
+ *	#	Number of distinct edge vectors
+ *		(Number of entries in uvec array)
+ *
+ *  Implicit returns -
+ *	*cgtype		Comgeom type (number range 4..8;  ARB4 .. ARB8).
+ *	uvec[8]
+ *	svec[11]
+ *			Entries [0] and [1] are special
+ */
+int
+rt_arb_get_cgtype( cgtype, arb, tol, uvec, svec )
+int			*cgtype;
+struct rt_arb_internal	*arb;
+CONST struct bn_tol	*tol;
+register int *uvec;	/* array of unique points */
+register int *svec;	/* array of like points */
+{
+	register int i,j;
+	int	numuvec, unique, done;
+	int	si;
+
+	RT_ARB_CK_MAGIC(arb);
+	BN_CK_TOL(tol);
+
+	done = NO;		/* done checking for like vectors */
+
+	svec[0] = svec[1] = 0;
+	si = 2;
+
+	for(i=0; i<7; i++) {
+		unique = YES;
+		if(done == NO)
+			svec[si] = i;
+		for(j=i+1; j<8; j++) {
+			int tmp;
+			vect_t vtmp;
+
+			VSUB2( vtmp, arb->pt[i], arb->pt[j] );
+
+			if( fabs(vtmp[0]) > tol->dist) tmp = 0;
+			else 	if( fabs(vtmp[1]) > tol->dist) tmp = 0;
+			else 	if( fabs(vtmp[2]) > tol->dist) tmp = 0;
+			else tmp = 1;
+
+			if( tmp ) {
+				if( done == NO )
+					svec[++si] = j;
+				unique = NO;
+			}
+		}
+		if( unique == NO ) {  	/* point i not unique */
+			if( si > 2 && si < 6 ) {
+				svec[0] = si - 1;
+				if(si == 5 && svec[5] >= 6)
+					done = YES;
+				si = 6;
+			}
+			if( si > 6 ) {
+				svec[1] = si - 5;
+				done = YES;
+			}
+		}
+	}
+
+	if( si > 2 && si < 6 ) 
+		svec[0] = si - 1;
+	if( si > 6 )
+		svec[1] = si - 5;
+	for(i=1; i<=svec[1]; i++)
+		svec[svec[0]+1+i] = svec[5+i];
+	for(i=svec[0]+svec[1]+2; i<11; i++)
+		svec[i] = -1;
+
+	/* find the unique points */
+	numuvec = 0;
+	for(j=0; j<8; j++) {
+		unique = YES;
+		for(i=2; i<svec[0]+svec[1]+2; i++) {
+			if( j == svec[i] ) {
+				unique = NO;
+				break;
+			}
+		}
+		if( unique == YES )
+			uvec[numuvec++] = j;
+	}
+
+	/* Figure out what kind of ARB this is */
+	switch( numuvec ) {
+
+	case 8:
+		*cgtype = ARB8;		/* ARB8 */
+		break;
+
+	case 6:
+		*cgtype = ARB7;		/* ARB7 */
+		break;
+
+	case 4:
+		if(svec[0] == 2)
+			*cgtype = ARB6;	/* ARB6 */
+		else
+			*cgtype = ARB5;	/* ARB5 */
+		break;
+
+	case 2:
+		*cgtype = ARB4;		/* ARB4 */
+		break;
+
+	default:
+		bu_log( "rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
+			  numuvec);
+
+		return(0);
+	}
+#if 0
+	bu_log("uvec: ");
+	for(j=0; j<8; j++) bu_log("%d, ", uvec[j]);
+	bu_log("\nsvec: ");
+	for(j=0; j<11; j++ ) bu_log("%d, ", svec[j]);
+	bu_log("\n");
+#endif
+	return( numuvec );
+}
+
+/*
+ *			R T _ A R B _ S T D _ T Y P E
+ *
+ *  Given an ARB in internal form, return it's specific ARB type.
+ *
+ *  Set tol.dist = 0.0001 to obtain past behavior.
+ *
+ *  Returns -
+ *	0	Error in input ARB
+ *	4	ARB4
+ *	5	ARB5
+ *	6	ARB6
+ *	7	ARB7
+ *	8	ARB8
+ *
+ *  Implicit return -
+ *	rt_arb_internal pt[] array reorganized into GIFT "standard" order.
+ */
+int
+rt_arb_std_type( ip, tol )
+struct rt_db_internal	*ip;
+CONST struct bn_tol	*tol;
+{
+	struct rt_arb_internal	*arb;
+	int uvec[8], svec[11];
+	int	cgtype = 0;
+
+	RT_CK_DB_INTERNAL(ip);
+	BN_CK_TOL(tol);
+
+	if( ip->idb_type != ID_ARB8 )  bu_bomb("rt_arb_std_type: not ARB!\n");
+
+	arb = (struct rt_arb_internal *)ip->idb_ptr;
+	RT_ARB_CK_MAGIC(arb);
+
+	if( rt_arb_get_cgtype( &cgtype, arb, tol, uvec, svec ) == 0 )
+		return(0);
+
+	return( cgtype );
+}
+
+
+/* 
+ *			R T _ A R B _ C E N T R O I D
+ *
+ * Find the center point for the arb whose values are in the s array,
+ * with the given number of verticies.  Return the point in center_pt.
+ * WARNING: The s array is dbfloat_t's not fastf_t's.
+ */
+void
+rt_arb_centroid( center_pt, arb, npoints )
+point_t			center_pt;
+struct rt_arb_internal	*arb;
+int			npoints;
+{
+	register int	j;
+	fastf_t		div;
+	point_t		sum;
+
+	RT_ARB_CK_MAGIC(arb);
+
+	VSETALL(sum, 0);
+
+	for( j=0; j < npoints; j++ )  {
+		VADD2( sum, sum, arb->pt[j] );
+	}
+	div = 1.0 / npoints;
+	VSCALE( center_pt, sum, div );
+}
+
 /*
  *			R T _ A R B _ A D D _ P T
  *
@@ -1030,29 +1238,108 @@ double			mm2local;
 		(struct rt_arb_internal *)ip->idb_ptr;
 	char	buf[256];
 	int	i;
+	int	arb_type;
+	struct bn_tol tmp_tol;	/* temporay tolerance */
 
 	RT_ARB_CK_MAGIC(aip);
 
-	rt_vls_strcat( str, "ARB8\n");
-	/* XXX For the future, might want to comment on what sub-type
-	 * XXX of ARB this is (e.g., ARB4).
-	 */
+	tmp_tol.magic = RT_TOL_MAGIC;
+	tmp_tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
+	tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+	tmp_tol.perp = 1e-5;
+	tmp_tol.para = 1 - tmp_tol.perp;
 
-	/* Use 1-based numbering, to match vertex labels in MGED */
-	sprintf(buf, "\t1 (%g, %g, %g)\n",
-		aip->pt[0][X] * mm2local,
-		aip->pt[0][Y] * mm2local,
-		aip->pt[0][Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	arb_type = rt_arb_std_type( ip, &tmp_tol );
 
-	if( !verbose )  return(0);
+	if( !arb_type )
+	{
 
-	for( i=1; i < 8; i++ )  {
-		sprintf(buf, "\t%d (%g, %g, %g)\n", i+1,
-			aip->pt[i][X] * mm2local,
-			aip->pt[i][Y] * mm2local,
-			aip->pt[i][Z] * mm2local );
+		rt_vls_strcat( str, "ARB8\n");
+
+		/* Use 1-based numbering, to match vertex labels in MGED */
+		sprintf(buf, "\t1 (%g, %g, %g)\n",
+			aip->pt[0][X] * mm2local,
+			aip->pt[0][Y] * mm2local,
+			aip->pt[0][Z] * mm2local );
 		rt_vls_strcat( str, buf );
+
+		if( !verbose )  return(0);
+
+		for( i=1; i < 8; i++ )  {
+			sprintf(buf, "\t%d (%g, %g, %g)\n", i+1,
+				aip->pt[i][X] * mm2local,
+				aip->pt[i][Y] * mm2local,
+				aip->pt[i][Z] * mm2local );
+			rt_vls_strcat( str, buf );
+		}
+	}
+	else
+	{
+		sprintf( buf, "ARB%d\n", arb_type );
+		rt_vls_strcat( str, buf );
+		switch( arb_type )
+		{
+			case ARB8:
+				for( i=0 ; i<8 ; i++ )
+				{
+					sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
+						aip->pt[i][X] * mm2local,
+						aip->pt[i][Y] * mm2local,
+						aip->pt[i][Z] * mm2local );
+						rt_vls_strcat( str, buf );
+				}
+				break;
+			case ARB7:
+				for( i=0 ; i<7 ; i++ )
+				{
+					sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
+						aip->pt[i][X] * mm2local,
+						aip->pt[i][Y] * mm2local,
+						aip->pt[i][Z] * mm2local );
+						rt_vls_strcat( str, buf );
+				}
+				break;
+			case ARB6:
+				for( i=0 ; i<5 ; i++ )
+				{
+					sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
+						aip->pt[i][X] * mm2local,
+						aip->pt[i][Y] * mm2local,
+						aip->pt[i][Z] * mm2local );
+						rt_vls_strcat( str, buf );
+				}
+				sprintf( buf, "\t6 (%g, %g, %g)\n",
+					aip->pt[6][X] * mm2local,
+					aip->pt[6][Y] * mm2local,
+					aip->pt[6][Z] * mm2local );
+				rt_vls_strcat( str, buf );
+				break;
+			case ARB5:
+				for( i=0 ; i<5 ; i++ )
+				{
+					sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
+						aip->pt[i][X] * mm2local,
+						aip->pt[i][Y] * mm2local,
+						aip->pt[i][Z] * mm2local );
+						rt_vls_strcat( str, buf );
+				}
+				break;
+			case ARB4:
+				for( i=0 ; i<3 ; i++ )
+				{
+					sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
+						aip->pt[i][X] * mm2local,
+						aip->pt[i][Y] * mm2local,
+						aip->pt[i][Z] * mm2local );
+						rt_vls_strcat( str, buf );
+				}
+				sprintf( buf, "\t4 (%g, %g, %g)\n",
+					aip->pt[4][X] * mm2local,
+					aip->pt[4][Y] * mm2local,
+					aip->pt[4][Z] * mm2local );
+				rt_vls_strcat( str, buf );
+				break;
+		}
 	}
 	return(0);
 }
