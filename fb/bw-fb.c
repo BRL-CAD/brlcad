@@ -140,7 +140,7 @@ int argc; char **argv;
 				obuf[x].blue  = ibuf[x];
 		}
 		if( inverted )
-			fbwrite( initx, 511-y, &obuf[0], outsize );
+			fbwrite( initx, default_size-1-y, &obuf[0], outsize );
 		else
 			fbwrite( initx, y, &obuf[0], outsize );
 	}
