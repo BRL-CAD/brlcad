@@ -724,7 +724,6 @@ struct application	*ap;
 
 	/* Process each two segment hit */
 	for(i = 0; i < n; i++){
-		register struct seg;
 
 		if( segp[i].seg_stp == 0) continue;	/* Skip */
 		if( C[i].dgr != 4 )  continue;  /* Not two segment */
