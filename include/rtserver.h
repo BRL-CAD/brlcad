@@ -50,7 +50,7 @@ struct ray_hit {
 
 struct ray_result {
 	struct bu_list l;
-	struct xray *the_ray;		/* the originating ray */
+	struct xray the_ray;		/* the originating ray */
 	struct ray_hit hitHead;		/* the list of components hit along this ray */
 };
 
