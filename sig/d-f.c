@@ -10,9 +10,13 @@
  *
  *  Phil Dykstra - 5 Nov 85.
  */
-#include <stdio.h>
+#include "conf.h"
 
-double	atof();
+#include <stdio.h>
+#include <math.h>
+
+#include "machine.h"
+#include "externs.h"		/* For atof, if math.h doesn't have it */
 
 double	ibuf[512];
 float	obuf[512];

@@ -3,17 +3,20 @@
  *	Options
  *	h	help
  */
-#include <stdio.h>
+#include "conf.h"
 
-#if !defined(SYSV) && defined(BSD) && BSD < 43
-#define strrchr rindex
+#include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
 #endif
+
+#include "machine.h"
+#include "externs.h"			/* For getopt */
 
 /* declarations to support use of getopt() system call */
 char *options = "h";
-extern char *optarg;
-extern int optind, opterr, getopt();
-
 char *progname = "(noname)";
 
 /*
@@ -33,7 +36,6 @@ int ac;
 char *av[];
 {
 	int  c;
-	char *strrchr();
 
 	if (!(progname=strrchr(*av, '/')))
 		progname = *av;

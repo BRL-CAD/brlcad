@@ -24,17 +24,19 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <math.h>
-/* #include "externs.h" */
-
-#if !defined(SYSV) && defined(BSD) && BSD < 43
-#define	strrchr rindex
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
 #endif
+#include <math.h>
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include "machine.h"
+#include "externs.h"
+
 char *progname = "(noname)";
 
 char	*file_name;
@@ -164,7 +166,6 @@ char **argv;
 	register int i;
 	register unsigned int	n;
 	unsigned long clip_high, clip_low;
-	char *strrchr();
 	
 	if (!(progname=strrchr(*argv, '/')))
 		progname = *argv;

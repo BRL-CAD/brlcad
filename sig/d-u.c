@@ -1,7 +1,7 @@
 /*
- *		D - I . C
+ *		D - U . C
  *
- *  Convert doubles to 16bit ints
+ *  Convert doubles to 16bit unsigned ints
  *
  *	% d-i [-n || scale]
  *
@@ -10,9 +10,12 @@
  *
  *  Phil Dykstra - 5 Nov 85.
  */
+#include "conf.h"
+
 #include <stdio.h>
 
-double	atof();
+#include "machine.h"
+#include "externs.h"		/* For atof, if math.h doesn't have it */
 
 double	ibuf[512];
 unsigned short	obuf[512];
