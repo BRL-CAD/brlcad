@@ -4,7 +4,21 @@
  *
  *	Options
  *	h	help
+ *
+ *  Author -
+ *	Lee A. Butler
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -108,14 +122,7 @@ void
 nmg_to_rib(m)
 struct model *m;
 {
-	static struct rt_tol tol = {
-		RT_TOL_MAGIC,
-		0.05,
-		0.0025,
-		0.00001,
-		0.99999
-	};
-		
+	struct rt_tol tol;
 	struct nmgregion *r;
 	struct shell *s;
 	struct faceuse *fu;
@@ -124,7 +131,11 @@ struct model *m;
 	struct rt_vls norms;
 	vect_t fu_normal;
 
-
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.05;
+	tol.dist_sq = 0.0025;
+	tol.perp = 0.00001;
+	tol.para = 0.99999;
 
 
 	if (triangulate)
