@@ -113,7 +113,6 @@ register struct shadework *swp;
 			swp->sw_visible[i++] = (char *)lp;
 		}
 		for( ; i < SW_NLIGHTS; i++ )  {
-			swp->sw_intensity[i] = -1;
 			swp->sw_visible[i] = (char *)NULL;
 		}
 	}
@@ -131,7 +130,6 @@ register struct shadework *swp;
 
 		/* sanity */
 		for( i = SW_NLIGHTS-1; i >= 0; i-- )  {
-			swp->sw_intensity[i] = -1;
 			swp->sw_visible[i] = (char *)NULL;
 		}
 	}
