@@ -54,10 +54,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-#ifndef XMGED
 #include "tcl.h"
-#endif
-
 
 #define BAD_EOF	(-1L)			/* eof_addr not set yet */
 
@@ -516,7 +513,6 @@ int   maxargs;
 	return(0);		/* found nothing */
 }
 
-#ifndef XMGED
 void
 scrape_escapes_AppendResult( interp, str )
 Tcl_Interp *interp;
@@ -616,8 +612,6 @@ char **argv;
 
     return TCL_OK;
 }
-
-#endif
 
 /*
  *  			F _ F I N D
