@@ -1802,7 +1802,7 @@ eraseobjall(dpp)
 
 	update_views = 1;
 
-	for (tmp_dpp = dpp; *tmp_dpp != (struct directory *)NULL; ++tmp_dpp)
+	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)
 		RT_CK_DIR(*tmp_dpp);
 
 	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
@@ -1871,7 +1871,7 @@ eraseobj(dpp)
 
 	update_views = 1;
 
-	for (tmp_dpp = dpp; *tmp_dpp != (struct directory *)NULL; ++tmp_dpp)
+	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)
 		RT_CK_DIR(*tmp_dpp);
 
 	sp = BU_LIST_FIRST(solid, &HeadSolid.l);
