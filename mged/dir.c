@@ -118,6 +118,7 @@ char	**argv;
   int cflag = 0;		/* print combinations */
   int rflag = 0;		/* print regions */
   int sflag = 0;		/* print solids */
+  int lflag = 0;		/* use long format */
   struct directory **dirp;
   struct directory **dirp0 = (struct directory **)NULL;
   struct bu_vls vls;
@@ -133,7 +134,7 @@ char	**argv;
   }
 
   bu_optind = 1;	/* re-init bu_getopt() */
-  while ((c = bu_getopt(argc, argv, "acgrs")) != EOF) {
+  while ((c = bu_getopt(argc, argv, "acgrsl")) != EOF) {
     switch (c) {
     case 'a':
       aflag = 1;
@@ -146,6 +147,9 @@ char	**argv;
       break;
     case 's':
       sflag = 1;
+      break;
+    case 'l':
+      lflag = 1;
       break;
     default:
       bu_vls_init(&vls);
@@ -197,7 +201,9 @@ char	**argv;
 	    }
   }
 
-  if (aflag || cflag || rflag || sflag)
+  if( lflag )
+    vls_long_dpp( &vls, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag );
+  else if (aflag || cflag || rflag || sflag)
     vls_line_dpp(&vls, dirp0, (int)(dirp - dirp0),
 		 aflag, cflag, rflag, sflag);
   else
@@ -827,7 +833,7 @@ genptr_t	ptr;
 
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		READ_ERR_return;
-	if( wdb_export_external( keepfp, &ext, dp->d_namep, dp->d_flags ) < 0 )
+	if( wdb_export_external( keepfp, &ext, dp->d_namep, dp->d_flags, dp->d_minor_type ) < 0 )
 		WRITE_ERR_return;
 }
 
