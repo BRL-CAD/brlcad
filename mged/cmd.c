@@ -35,10 +35,12 @@ void	f_help(), f_center(), f_press(), f_view(), f_blast();
 void	f_edit(), f_evedit(), f_delobj();
 void	f_debug(), f_regdebug(), f_name(), f_copy(), f_instance();
 void	f_region(), f_itemair(), f_modify(), f_kill(), f_list();
-void	f_zap(), f_group(), f_param(), f_mirror(), f_face();
+void	f_zap(), f_group(), f_param(), f_mirror(), f_extrude();
 void	f_delmem(), f_arbdef(), f_return(), f_comm(), f_quit();
 void	f_edcomb(), f_status(), f_rot();
 void	f_refresh(), f_fix(), f_rt();
+void	f_make(), f_attach(), f_release();
+void	f_tedit();
 
 static struct funtab {
 	char *ft_name;
@@ -65,7 +67,7 @@ static struct funtab {
 	"g",f_group,3,20,"g groupname <objects> (group objects)",
 	"p",f_param,2,4,"p dx [dy dz] (set parameters)",
 	"mirror",f_mirror,4,4,"mirror oldsolid newsolid axis",
-	"extrude",f_face,3,3,"extrude #### distance (extrude face)",
+	"extrude",f_extrude,3,3,"extrude #### distance (extrude dist from face)",
 	"rm",f_delmem,3,20,"rm comb <members> (remove members from comb)",
 	"arb",f_arbdef,4,4,"arb name rot fb (make arb8, rotation + fallback)",
 	"\n",f_return,1,1,"NOP",
@@ -81,9 +83,12 @@ static struct funtab {
 	"status",f_status,1,1,"status (debug, get view status)",
 	"fix",f_fix,1,1,"fix (restart display processor after hardware error)",
 	"refresh",f_refresh,1,1,"refresh (debug, send new control list)",
-	"rt",f_rt,1,20,"rt [options] (TEST)"
+	"rt",f_rt,1,20,"rt [options] (do raytrace of view)",
+	"make",f_make,3,3,"make name <arb8|ellg|tor|tgc> (create a primitive)",
+	"attach",f_attach,2,2,"attach <mg|vg> (unimplemented)",
+	"release",f_release,1,1,"release (unimplemented)",
+	"ted",f_tedit,1,1,"ted (text edit a solid's parameters)"
 };
-
 #define NFUNC	( (sizeof(funtab)) / (sizeof(struct funtab)) )
 
 /*

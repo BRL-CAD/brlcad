@@ -31,6 +31,7 @@
 #include "commo.h"
 #include "ged2.h"
 #include "vmath.h"
+#include "dm.h"
 
 extern int	printf();
 
@@ -45,6 +46,7 @@ static union record input;		/* Holds an object file record */
 /* following variables are used in processing regions
  *  for producing edge representations
  */
+#define NMEMB	100	/* max number of members in a region */
 static int	nmemb = 0;		/* actual number of members */
 static int	m_type[NMEMB];		/* member solid types */
 static char	m_op[NMEMB];		/* member operations */
@@ -233,7 +235,6 @@ register int *svec;	/* array of like points */
 	static int numuvec, unique, done;
 	static int si;
 
-#define	sp	(&input.s)
 	done = NO;		/* done checking for like vectors */
 
 	svec[0] = svec[1] = 0;
@@ -244,7 +245,7 @@ register int *svec;	/* array of like points */
 		if(done == NO)
 			svec[si] = i;
 		for(j=i+1; j<8; j++) {
-			if(compar(&sp->s_values[i*3], &sp->s_values[j*3]) == YES) {
+			if(compar(&input.s.s_values[i*3], &input.s.s_values[j*3]) == YES) {
 				if( done == NO )
 					svec[++si] = j;
 				unique = NO;
@@ -629,7 +630,7 @@ dwreg()
 {
 	register int i,j;
 	static int k,l;
-	static int n,m
+	static int n,m;
 	static int itemp;
 	static float pi[3],po[3];
 	static float lenwb;

@@ -333,19 +333,22 @@ float xangle, yangle, zangle;
 		mat_idn( incr_change );
 		buildHrot( incr_change, xangle, yangle, zangle );
 
+		if( es_edflag == SROT )  {
+			sedit();	/* change es_rec only, NOW */
+			return;
+		}
 		/* accumulate change matrices */
 		mat_mul( tempp, incr_change, modelchanges );
 		mat_copy( modelchanges, tempp);
 
 		new_mats();
-		if( state == ST_S_EDIT )
-			sedraw = 1;
 		return;
 	}
 
 	/* NORMAL CASE.
-	 * Change viewing rotation for non-edited parts.
-	 * The view rotates around the view center.
+	 * Apply delta viewing rotation for non-edited parts.
+	 * The view rotates around the VIEW CENTER.
+	 * ***** THIS IS BROKEN!! ****** (rotation is around origin, humbug)
 	 */
 	mat_idn( newrot );
 	buildHrot( newrot, xangle, yangle, zangle );
@@ -371,7 +374,6 @@ int a1, a2, a3;		/* integer angles, in degrees */
 {
 	buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
 	new_mats();
-	dmaflag = 1;
 }
 
 /*
@@ -391,7 +393,6 @@ vect_t view_pos;
 	toViewcenter[MDY] = -model_pos[Y];
 	toViewcenter[MDZ] = -model_pos[Z];
 	new_mats();
-	dmaflag = 1;
 }
 
 /*

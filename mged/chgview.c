@@ -415,3 +415,13 @@ f_rt()
 	(void)printf("done\n");
 }
 #undef LEN
+
+void
+f_attach()
+{
+}
+
+void
+f_release()
+{
+}

@@ -364,21 +364,25 @@ f_mirror()
 	(void)printf("done\n");
 }
 
-/* Face command - project an arb face */
-/* Format: f face distance	*/
+/* Extrude command - project an arb face */
+/* Format: extrude face distance	*/
 void
-f_face()
+f_extrude()
 {
-	static int i, j, face, pt[4], prod;
+	register int i, j;
+	static int face;
+	static int pt[4];
+	static int prod;
 	static float dist;
 	static vect_t work;
+	static struct solidrec lsolid;	/* local copy of solid */
 
 	if( state != ST_S_EDIT )  {
-		state_err( "Face Project" );
+		state_err( "Extrude" );
 		return;
 	}
 	if( es_gentype != GENARB8 )  {
-		(void)printf("ERROR: solid type must be generalized arb8\n");
+		(void)printf("Extrude: solid type must be ARB\n");
 		return;
 	}
 	face = atoi( cmd_args[1] );
@@ -390,10 +394,10 @@ f_face()
 	dist = atof( cmd_args[2] );
 	newedge = 1;
 
-	/* convert to point notation */
-	VMOVE( &work[0], &es_rec.s.s_values[0] );
+	/* convert to point notation in temporary buffer */
+	VMOVE( &lsolid.s_values[0], &es_rec.s.s_values[0] );
 	for( i = 3; i <= 21; i += 3 )  {  
-		VADD2(&es_rec.s.s_values[i], &es_rec.s.s_values[i], work);
+		VADD2(&lsolid.s_values[i], &es_rec.s.s_values[i], &lsolid.s_values[0]);
 	}
 
 	pt[0] = face / 1000;
@@ -423,7 +427,7 @@ f_face()
 		}
 	}
 	/* find plane containing this face */
-	if( (j = plane( pt[0], pt[1], pt[2], pt[3], &es_rec.s )) >= 0 )  {
+	if( (j = plane( pt[0], pt[1], pt[2], pt[3], &lsolid )) >= 0 )  {
 		(void)printf("face: %d is not a plane\n",face);
 		return;
 	}
@@ -437,8 +441,8 @@ f_face()
 	case 24:   /* protrude face 1234 */
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
-			VADD2( &es_rec.s.s_values[j*3],
-				&es_rec.s.s_values[i*3],
+			VADD2( &lsolid.s_values[j*3],
+				&lsolid.s_values[i*3],
 				&es_plant[0]);
 		}
 		break;
@@ -446,75 +450,81 @@ f_face()
 	case 1680:   /* protrude face 5678 */
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
-			VADD2( &es_rec.s.s_values[i*3],
-				&es_rec.s.s_values[j*3],
+			VADD2( &lsolid.s_values[i*3],
+				&lsolid.s_values[j*3],
 				&es_plant[0] );
 		}
 		break;
 
 	case 60:   /* protrude face 1256 */
-		VADD2( &es_rec.s.s_values[9],
-			&es_rec.s.s_values[0],
+		VADD2( &lsolid.s_values[9],
+			&lsolid.s_values[0],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[6],
-			&es_rec.s.s_values[3],
+		VADD2( &lsolid.s_values[6],
+			&lsolid.s_values[3],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[21],
-			&es_rec.s.s_values[12],
+		VADD2( &lsolid.s_values[21],
+			&lsolid.s_values[12],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[18],
-			&es_rec.s.s_values[15],
+		VADD2( &lsolid.s_values[18],
+			&lsolid.s_values[15],
 			&es_plant[0] );
 		break;
 
 	case 672:   /* protrude face 4378 */
-		VADD2( &es_rec.s.s_values[0],
-			&es_rec.s.s_values[9],
+		VADD2( &lsolid.s_values[0],
+			&lsolid.s_values[9],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[3],
-			&es_rec.s.s_values[6],
+		VADD2( &lsolid.s_values[3],
+			&lsolid.s_values[6],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[15],
-			&es_rec.s.s_values[18],
+		VADD2( &lsolid.s_values[15],
+			&lsolid.s_values[18],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[12],
-			&es_rec.s.s_values[21],
+		VADD2( &lsolid.s_values[12],
+			&lsolid.s_values[21],
 			&es_plant[0] );
 		break;
 
 	case 252:   /* protrude face 2367 */
-		VADD2( &es_rec.s.s_values[0],
-			&es_rec.s.s_values[3],
+		VADD2( &lsolid.s_values[0],
+			&lsolid.s_values[3],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[9],
-			&es_rec.s.s_values[6],
+		VADD2( &lsolid.s_values[9],
+			&lsolid.s_values[6],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[12],
-			&es_rec.s.s_values[15],
+		VADD2( &lsolid.s_values[12],
+			&lsolid.s_values[15],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[21],
-			&es_rec.s.s_values[18],
+		VADD2( &lsolid.s_values[21],
+			&lsolid.s_values[18],
 			&es_plant[0] );
 		break;
 
 	case 160:   /* protrude face 1548 */
-		VADD2( &es_rec.s.s_values[3],
-			&es_rec.s.s_values[0],
+		VADD2( &lsolid.s_values[3],
+			&lsolid.s_values[0],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[15],
-			&es_rec.s.s_values[12],
+		VADD2( &lsolid.s_values[15],
+			&lsolid.s_values[12],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[6],
-			&es_rec.s.s_values[9],
+		VADD2( &lsolid.s_values[6],
+			&lsolid.s_values[9],
 			&es_plant[0] );
-		VADD2( &es_rec.s.s_values[18],
-			&es_rec.s.s_values[21],
+		VADD2( &lsolid.s_values[18],
+			&lsolid.s_values[21],
 			&es_plant[0] );
 		break;
 
 	default:
 		(void)printf("bad face: %d\n", face );
 		return;
+	}
+
+	/* Convert back to point&vector notation */
+	VMOVE( &es_rec.s.s_values[0], &lsolid.s_values[0] );
+	for( i = 3; i <= 21; i += 3 )  {  
+		VSUB2( &es_rec.s.s_values[i], &lsolid.s_values[i], &lsolid.s_values[0]);
 	}
 
 	/* draw the new solid */
@@ -678,4 +688,14 @@ aexists( name )
 char	*name;
 {
 	(void)printf( "%s:  already exists\n", name );
+}
+
+/*
+ *  			F _ M A K E
+ *  
+ *  Create a new solid of a given type
+ *  (Generic, or explicit)
+ */
+void
+f_make()  {
 }

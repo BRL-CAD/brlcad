@@ -16,7 +16,7 @@
 #include "dir.h"
 #include "vmath.h"
 #include "commo.h"
-#include "ged2.h"
+#include "dm.h"
 
 extern void	perror();
 extern int	printf(), write();
