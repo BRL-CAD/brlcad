@@ -102,6 +102,7 @@ set -S2 "/bin/sh"
  *  and some pertain to system-specific compiler options	*
  *	CC_DEFS							*
  *	CC_OPTS							*
+ *	LD_OPTS							*
  *	LIBFB_CONFIG						*
  *	LIBFB_OBJS						*
  *	LIBFB_SETUP		(default=undefined)		*
@@ -156,6 +157,7 @@ set -S2 "/bin/sh"
 #	define	CC_OPTS	-ce -DVECTORIZE -l
 #	define	OPTIMIZER -Ogiv
 ***/
+#	define	LD_OPTS	CC_OPTS
 #	define	FC	/usr/alliant/fortran
 #	define	LIBMALLOC	/* use vendor library */
 #	define	RT_LIBES	-lcvec
@@ -168,14 +170,14 @@ set -S2 "/bin/sh"
 #	define	MTYPE	sel
 #	define	UNIXTYPE	BSD
 #	define	HAS_TCP	1
-#	define	CC_OPTS	-m 8
+#	define	LD_OPTS	-m 8
 /*#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_X -I/d/phil/X11*/
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
 /*#	define	LIBFB_OBJS	if_remote pkg if_ptty if_X*/
 #	define	LIBFB_OBJS	if_remote pkg if_ptty
 /*		cp /usr/local/lib/libX11.a PRODUCTS; \*/
 #	define	LIBFB_SETUP	(rm -f PRODUCTS; \
-		AR uv PRODUCTS *.o )
+		AR u PRODUCTS *.o )
 #	define	LIBRT_TIMER	timer42
 #endif
 
@@ -187,6 +189,7 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 /*	set CC_OPTS= -Zf only if Weitek FP chip installed */
 #	define	CC_OPTS	-Zf
+#	define	LD_OPTS	CC_OPTS
 #	define	FC	/bin/f77
 #	define	RANLIB	ranlib
 #	define	MGED_OBJS	dm-ir
@@ -203,7 +206,7 @@ set -S2 "/bin/sh"
 			AR uv ../libfb.a *; \
 			rm -f *; \
 			AR x /usr/lib/libgl2.a; \
-			AR uv ../libfb.a *; \
+			AR u ../libfb.a *; \
 			cd ..; rm -fr tmp)
 #		define	RFBD_CONFIG	-I/usr/include/EXOS -DSGI_EXCELAN
 #		define	MGED_LIBES	../libfb/sgiselect.o -lgl2
@@ -219,7 +222,7 @@ set -S2 "/bin/sh"
 			rm -f select.o; \
 			AR x /usr/lib/libbsd.a; \
 			rm -f __.SYMDEF; \
-			AR uv ../libfb.a *; \
+			AR u ../libfb.a *; \
 			cd ..; rm -fr tmp)
 #		define	RFBD_CONFIG	-I/usr/include/bsd -DBSD
 #		define	MGED_LIBES	-lbsd -lgl2
@@ -230,35 +233,87 @@ set -S2 "/bin/sh"
 
 #if defined(sgi) && defined(mips)
 /*	Silicon Graphics 4D, which uses the MIPS chip */
+/*	Here are the values of SGI_TYPE, set by "setup.sh":
+ *		1)  [4gt] 4D-GT hw on SGI sw Release 3.1
+ *		2)  [4d] non-GT hw on SGI sw Release 3.1
+ *		3)  [4d] non-GT hw on SGI sw Release 2
+ */
 #	undef	sgi
-#	define	MTYPE	4d
+#	define	GFLAG		-G 16
+
+/*	SGI_4D_TYPE_MARKER: don't alter this comment, setup.sh needs it */
+#	define	SGI_TYPE	3
+#	if SGI_TYPE == 1
+/******		Graphics Turbo is installed */
+#		define	MTYPE	4gt
+#		define  CC_OPTS		GFLAG -DSGI4D_GT
+#		define	RT_LIBES	-lmpc
+#		define	MGED_LIBES	-lgl_s
+#		define	LGT_CONFIG	GFLAG -lmpc
+#		define	LIBMALLOC	/* needs malloc() from -lmpc */
+#		define	LIBFB_OBJS	if_remote pkg if_gt
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_GT
+#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
+			rm -f libfb.a; cd tmp; \
+			AR x /usr/lib/libgl_s.a; \
+			mv in_addr.o sgi_addr.o;\
+			rm -f select.o *EBEB*; \
+			AR x /usr/lib/libbsd.a; \
+			AR u ../libfb.a *; \
+			cd ..; rm -fr tmp)
+#	endif
+#	if SGI_TYPE == 2
+/******		No Graphics Turbo, but has NeWS, SGI sw Release 3 */
+#		define	MTYPE	4d
+#		define  CC_OPTS		GFLAG -g
+#		define	RT_LIBES	-lmpc
+#		define	MGED_LIBES	-lgl_s
+#		define	LGT_CONFIG	GFLAG -lmpc
+#		define	LIBMALLOC	/* need parallel malloc() */
+#		define	LIBFB_OBJS	if_remote pkg if_4d
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_4D
+#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
+			rm -f libfb.a; cd tmp; \
+			AR x /usr/lib/libgl.a; \
+			mv in_addr.o sgi_addr.o;\
+			rm -f select.o *EBEB*; \
+			AR x /usr/lib/libbsd.a; \
+			AR u ../libfb.a *; \
+			cd ..; rm -fr tmp)
+#	endif
+#	if SGI_TYPE == 3
+/******		No Graphics Turbo, no News, SGI sw Release 2 */
+#		define	MTYPE	4d2
+#		define  CC_OPTS		GFLAG -DSGI4D_Rel2
+#		define	MGED_LIBES	-lbsd -lgl
+#		define	LGT_CONFIG	GFLAG
+#		define	LIBFB_OBJS	if_remote pkg if_4d
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_4D
+#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
+			rm -f libfb.a; cd tmp; \
+			AR x /usr/lib/libgl.a; \
+			rm -f select.o *EBEB*; \
+			AR x /usr/lib/libbsd.a; \
+			AR u ../libfb.a *; \
+			cd ..; rm -fr tmp)
+#	endif
 #	define	UNIXTYPE	SYSV
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
-#	define  CC_OPTS		-G 16
+#	define	LD_OPTS		GFLAG -g
 #	define	OPTIMIZER	-O2
-#	define	GFLAG		-G 16
 #	define	RANLIB	ar ts
 #	define	GETHOST	hostname
 #	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD
 #	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD
-#	define	LIBFB_OBJS	if_remote pkg if_4d
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_4D
-#	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
-		rm -f libfb.a; cd tmp; \
-		AR x /usr/lib/libgl.a; \
-		mv in_addr.o sgi_addr.o;\
-		rm -f select.o *EBEB*; \
-		AR x /usr/lib/libbsd.a; \
-		AR uv ../libfb.a *; \
-		cd ..; rm -fr tmp)
 #	define	LIBRT_TIMER	timerunix
 #	define	RT_CONFIG	GFLAG
-#	define	RT_LIBES	-lbsd
-#	define	LGT_CONFIG	GFLAG
 #	define	MGED_OBJS	dm-4d
-#	define	MGED_CONFIG	GFLAG -DDM_4D
-#	define	MGED_LIBES	-lbsd -lgl
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D
+/**
+#	define	MGED_OBJS	dm-gt
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_GT
+**/
 #endif
 
 #if defined(sun) && !defined(sparc)
@@ -271,8 +326,8 @@ set -S2 "/bin/sh"
 /*#	define	CC_OPTS	-fswitch*/
 /*#	define	CC_OPTS	-ffpa */
 #	define	CC_OPTS	-f68881
-/* XXX can we use libmalloc yet? */
-#	define	LIBMALLOC	/* use vendor library */
+#	define	LD_OPTS	CC_OPTS
+#	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
 #if 0
 /*		Normal Sun configuration */
@@ -283,7 +338,7 @@ set -S2 "/bin/sh"
 			AR x /usr/lib/libsuntool.a; \
 			AR x /usr/lib/libsunwindow.a; \
 			AR x /usr/lib/libpixrect.a; \
-			AR uv ../libfb.a *; \
+			AR u ../libfb.a *; \
 			cd ..; rm -fr tmp)
 #		define	MGED_OBJS	dm-sun
 #		define	MGED_CONFIG	-DDM_SUNPW
@@ -299,7 +354,7 @@ set -S2 "/bin/sh"
 			AR x /usr/lib/libpixrect.a; \
 			AR x /usr/brl/lib/libX.a; \
 			rm -f __.SYMDEF; \
-			AR uv ../libfb.a *; \
+			AR u ../libfb.a *; \
 			cd ..; rm -fr tmp)
 #		define	MGED_OBJS	dm-sun dm-X
 #		define	MGED_CONFIG	-DDM_SUNPW -DDM_X
@@ -323,7 +378,7 @@ set -S2 "/bin/sh"
 		( cd /usr/tmp/libfb; \
 		cp /usr/lib/libsuntool.a libfb.a; \
 		AR x /usr/lib/libsunwindow.a; \
-		AR uv ../libfb.a *; \
+		AR x /usr/lib/libpixrect.a; \
 		AR u libfb.a * ); \
 		mv /usr/tmp/libfb/libfb.a . ; \
 		rm -fr /usr/tmp/libfb )
@@ -512,6 +567,10 @@ set -S2 "/bin/sh"
 
 #if !defined(CC_OPTS)
 #	define	CC_OPTS	/**/
+#endif
+
+#if !defined(LD_OPTS)
+#	define	LD_OPTS	/**/
 #endif
 
 /* Provide defaults here */
@@ -705,7 +764,7 @@ set -S2 "/bin/sh"
 #else
 #	define CFLAGS	CC_OPTS OPTIMIZER PROFILER -I''INCDIR -DSYSV CC_DEFS CONFIGDEFS
 #endif
-#define	LDFLAGS	OPTIMIZER CC_OPTS CONFIGDEFS
+
 /* Loader flags.  Note that CC is used to do the loading */
 #define	LDFLAGS	OPTIMIZER LD_OPTS CONFIGDEFS
 #define FFLAGS	OPTIMIZER
@@ -773,7 +832,5 @@ set -S2 "/bin/sh"
 #define BASE_FILES	[[echo FILES|tr " " '\\\\012'|sed -e 's,.*''/,,']]
 #define	SRC	[[SUB X X''SRCSUFF FILES]]
 #define	OBJ	[[SUB X X''OBJSUFF BASE_FILES]]
-
-
 #define	OBJSUFF .o
 #define	HDR_DEP	[[cakeinclude.sh ../SRCDIR/%.c INCDIR ../SRCDIR]]
