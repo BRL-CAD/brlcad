@@ -691,14 +691,14 @@ choose:
  *  to the Final partition list.
  *  All partitions on the Final partition list have completely valid
  *  entry and exit information, except for the last partition's exit
- *  information when a_onehit>0 and a_onehit is odd.
+ *  information when a_onehit!=0 and a_onehit is odd.
  *
  *  The flag a_onehit is interpreted as follows:
  *
  *  If a_onehit = 0, then the ray is traced to +infinity, and all
  *  hit points in the final partition list are valid.
  *
- *  If a_onehit > 0, the ray is traced through a_onehit hit points.
+ *  If a_onehit != 0, the ray is traced through a_onehit hit points.
  *  (Recall that each partition has 2 hit points, entry and exit).
  *  Thus, if a_onehit is odd, the value of pt_outhit.hit_dist in
  *  the last partition may be incorrect;  this should not mater because
@@ -706,6 +706,7 @@ choose:
  *  This is most commonly seen when a_onehit = 1, which is useful for
  *  lighting models.  Not having to correctly determine the exit point
  *  can result in a significant savings of computer time.
+ *  If a_onehit is negative, it indicates the number of non-air hits needed.
  *
  *  Returns -
  *	0	If more partitions need to be done
@@ -726,9 +727,10 @@ struct application *ap;
 	register struct partition *pp;
 	register int	claiming_regions;
 	int		hits_avail = 0;
+	int		hits_needed;
 	fastf_t		diff;
 
-#define HITS_TODO	(ap->a_onehit - hits_avail)
+#define HITS_TODO	(hits_needed - hits_avail)
 
 	RT_CK_PT_HD(InputHdp);
 	RT_CK_PT_HD(FinalHdp);
@@ -738,15 +740,22 @@ struct application *ap;
 	if( enddist <= 0 )
 		return(0);		/* not done, behind start point! */
 
-	if( ap->a_onehit > 0 )  {
+	if( ap->a_onehit < 0 )
+		hits_needed = -ap->a_onehit;
+	else
+		hits_needed = ap->a_onehit;
+
+	if( ap->a_onehit != 0 )  {
 		register struct partition *npp = FinalHdp->pt_forw;
 
 		for(; npp != FinalHdp; npp = npp->pt_forw )  {
 			if( npp->pt_inhit->hit_dist < 0.0 )
 				continue;
+			if( ap->a_onehit < 0 && npp->pt_regionp->reg_aircode != 0 )
+				continue;	/* skip air hits */
 			hits_avail += 2;	/* both in and out listed */
 		}
-		if( HITS_TODO <= 0 )
+		if( hits_avail >= hits_needed )
 			return(1);		/* done */
 	}
 
@@ -847,7 +856,7 @@ struct application *ap;
 		if( diff > ap->a_rt_i->rti_tol.dist )  {
 			if(rt_g.debug&DEBUG_PARTITION)bu_log(
 				"partition ends beyond current box end\n");
-			if( ap->a_onehit <= 0 )
+			if( ap->a_onehit == 0 )
 				return(0);
 			if( HITS_TODO > 1 )
 				return(0);
