@@ -1,5 +1,5 @@
 /*
- *			S P H . C
+ *			G _ S P H . C
  *
  *  Purpose -
  *	Intersect a ray with a Sphere
@@ -67,7 +67,7 @@ struct ell_internal  {
 };
 
 /*
- *  			S P H _ P R E P
+ *  			R T _ S P H _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid sphere, and if so, precompute various
@@ -79,11 +79,11 @@ struct ell_internal  {
  *  
  *  Implicit return -
  *  	A struct sph_specific is created, and it's address is stored in
- *  	stp->st_specific for use by sph_shot().
+ *  	stp->st_specific for use by rt_sph_shot().
  *	If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */
 int
-sph_prep( stp, rec, rtip )
+rt_sph_prep( stp, rec, rtip )
 struct soltab		*stp;
 struct rt_i		*rtip;
 union record		*rec;
@@ -97,13 +97,13 @@ union record		*rec;
 
 	if( rec == (union record *)0 )  {
 		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
-		i = ell_import( &ei, rec, stp->st_pathmat );
+		i = rt_ell_import( &ei, rec, stp->st_pathmat );
 		rt_free( (char *)rec, "ell record" );
 	} else {
-		i = ell_import( &ei, rec, stp->st_pathmat );
+		i = rt_ell_import( &ei, rec, stp->st_pathmat );
 	}
 	if( i < 0 )  {
-		rt_log("sph_setup(%s): db import failure\n", stp->st_name);
+		rt_log("rt_sph_setup(%s): db import failure\n", stp->st_name);
 		return(-1);		/* BAD */
 	}
 
@@ -194,8 +194,11 @@ union record		*rec;
 	return(0);			/* OK */
 }
 
+/*
+ *			R T _ S P H _ P R I N T
+ */
 void
-sph_print( stp )
+rt_sph_print( stp )
 register struct soltab *stp;
 {
 	register struct sph_specific *sph =
@@ -209,7 +212,7 @@ register struct soltab *stp;
 }
 
 /*
- *  			S P H _ S H O T
+ *  			R T _ S P H _ S H O T
  *  
  *  Intersect a ray with a sphere.
  *  If an intersection occurs, a struct seg will be acquired
@@ -229,7 +232,7 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-sph_shot( stp, rp, ap )
+rt_sph_shot( stp, rp, ap )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
@@ -273,12 +276,12 @@ struct application	*ap;
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
 /*
- *			S P H _ V S H O T
+ *			R T _ S P H _ V S H O T
  *
  *  This is the Becker vectorized version
  */
 void
-sph_vshot( stp, rp, segp, n, resp)
+rt_sph_vshot( stp, rp, segp, n, resp)
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
@@ -332,12 +335,12 @@ struct resource         *resp; /* pointer to a list of free segs */
 }
 
 /*
- *  			S P H _ N O R M
+ *  			R T _ S P H _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-sph_norm( hitp, stp, rp )
+rt_sph_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
@@ -347,17 +350,16 @@ register struct xray *rp;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	VSUB2( hitp->hit_normal, hitp->hit_point, sph->sph_V );
-	/* XXX is /= more efficient? */
 	VSCALE( hitp->hit_normal, hitp->hit_normal, sph->sph_invrad );
 }
 
 /*
- *			S P H _ C U R V E
+ *			R T _ S P H _ C U R V E
  *
  *  Return the curvature of the sphere.
  */
 void
-sph_curve( cvp, hitp, stp )
+rt_sph_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
@@ -372,7 +374,7 @@ struct soltab *stp;
 }
 
 /*
- *  			S P H _ U V
+ *  			R T _ S P H _ U V
  *  
  *  For a hit on the surface of an SPH, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
@@ -380,7 +382,7 @@ struct soltab *stp;
  *  v = elevation
  */
 void
-sph_uv( ap, stp, hitp, uvp )
+rt_sph_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
@@ -419,10 +421,10 @@ register struct uvcoord *uvp;
 }
 
 /*
- *		S P H _ F R E E
+ *		R T _ S P H _ F R E E
  */
 void
-sph_free( stp )
+rt_sph_free( stp )
 register struct soltab *stp;
 {
 	register struct sph_specific *sph =
@@ -432,19 +434,9 @@ register struct soltab *stp;
 }
 
 int
-sph_class()
+rt_sph_class()
 {
 	return(0);
 }
 
-/* This routine is not used;  ell_plot() is used instead */
-void
-sph_plot()
-{
-}
-
-/* This routine is not used;  ell_tess() is used instead */
-int
-sph_tess()
-{
-}
+/* ELL versions of the plot and tess functions are used */
