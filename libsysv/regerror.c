@@ -172,8 +172,6 @@ const regex_t *preg;
 char *localbuf;
 {
 	register struct rerr *r;
-	register size_t siz;
-	register char *p;
 
 	for (r = rerrs; r->code != 0; r++)
 		if (strcmp(r->name, preg->re_endp) == 0)
