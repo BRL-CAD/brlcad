@@ -2054,8 +2054,6 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	if( fu2->orientation != OT_SAME )  rt_bomb("nmg_isect_edge2p_face2p() fu2 not OT_SAME\n");
 	if( fu1 && fu1->orientation != OT_SAME )  rt_bomb("nmg_isect_edge2p_face2p() fu1 not OT_SAME\n");
 
-#if 0
-/* XXX There may be multiple edges, loops to cut/merge, etc. Can't just cop out here. */
 	/*  See if an edge exists in other face that connects these 2 verts */
 	fu2_eu = nmg_find_eu_in_face( eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p,
 	    fu2, (CONST struct edgeuse *)NULL, 0 );
@@ -2073,7 +2071,6 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 		ret = 0;
 		goto do_ret;
 	}
-#endif
 
 	/* Zap 2d cache, we could be switching faces now */
 	nmg_isect2d_cleanup(is);
