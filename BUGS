@@ -12,6 +12,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* bot-bldxf fails in db_walk_tree(), interface may have changed
+
 * bwmod gives a divide by zero error whenever you use the "-d" option
 
 * mged help seems to be busted
