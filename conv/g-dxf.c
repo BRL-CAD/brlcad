@@ -588,6 +588,7 @@ float color[3];
 	int region_polys=0;
 	int tri_count=0;
 	int color_num;
+	int do_triangulate=0;
 
 	NMG_CK_REGION( r );
 	RT_CK_FULL_PATH(pathp);
@@ -596,13 +597,6 @@ float color[3];
 
 	m = r->m_p;
 	NMG_CK_MODEL( m );
-
-	/* triangulate model */
-	nmg_triangulate_model( m, &tol );
-
-	nmg_vertex_tabulate( &verts, &r->l.magic );
-
-	color_num = find_closest_color( color );
 
 	/* Count triangles */
  	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
@@ -614,6 +608,7 @@ float color[3];
 		for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 		{
 			struct loopuse *lu;
+			int vert_count=0;
 
 			NMG_CK_FACEUSE( fu );
 
@@ -622,10 +617,53 @@ float color[3];
 
 			for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 			{
+				struct edgeuse *eu;
+
+				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					continue;
+
+				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+					vert_count++;
+				}
+
+				if( vert_count > 3 ) {
+					do_triangulate = 1;
+					goto triangulate;
+				}
+
 				tri_count++;
 			}
 		}
 	}
+
+ triangulate:
+	if( do_triangulate ) {
+		/* triangulate model */
+		nmg_triangulate_model( m, &tol );
+
+		/* Count triangles */
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+			struct faceuse *fu;
+
+			for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+				struct loopuse *lu;
+
+				if( fu->orientation != OT_SAME )
+					continue;
+
+				for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+					if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+						continue;
+								
+					tri_count++;
+				}
+			}
+		}
+	}
+
+	nmg_vertex_tabulate( &verts, &r->l.magic );
+
+	color_num = find_closest_color( color );
 
 	if( polyface_mesh ) {
 		int i;
