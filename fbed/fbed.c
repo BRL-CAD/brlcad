@@ -1699,6 +1699,7 @@ fb_Setup()
 		prnt_Debug( "Can't set up cursor." );
 		return	0;
 		}
+	(void) fb_cursor( fbp, 1, cursor_pos.p_x, cursor_pos.p_y );
 	windo_center.p_x = cursor_pos.p_x = image_center.p_x = fb_getwidth(fbp) / 2;
 	windo_center.p_y = cursor_pos.p_y = image_center.p_y = fb_getheight(fbp) / 2;
 	size_viewport = fb_getwidth(fbp);
