@@ -241,6 +241,7 @@ struct servers {
 #define SRST_LOADING	3		/* loading, awaiting ready response */
 #define SRST_READY	4		/* loaded, ready */
 #define SRST_RESTART	5		/* about to restart */
+#define SRST_CLOSING	6		/* Needs to be closed */
 	struct frame	*sr_curframe;	/* ptr to current frame */
 	int		sr_index;	/* fr_servinit[] index */
 	/* Timings */
@@ -668,6 +669,9 @@ struct pkg_conn *pc;
 
 /*
  *			D R O P _ S E R V E R
+ *
+ *  Note that final connection closeout is handled in schedule(),
+ *  to prevent recursion problems.
  */
 void
 drop_server(sp, why)
@@ -697,15 +701,7 @@ char	*why;
 		rt_log("drop_server: fd=%d is unreasonable, forget it!\n", fd);
 		return;
 	}
-	clients &= ~(1<<fd);
-
-	sp->sr_pc = PKC_NULL;
-	sp->sr_state = SRST_UNUSED;
-	sp->sr_index = -1;
-	sp->sr_host = IHOST_NULL;
-
-	/* After most server state has been zapped, close PKG connection */
-	pkg_close(pc);
+	sp->sr_state = SRST_CLOSING;
 
 	if( oldstate != SRST_READY )  return;
 
@@ -1327,17 +1323,33 @@ struct timeval	*nowp;
 
 	if( file_fullname[0] == '\0' )  goto out;
 
-	/* Kick off any new servers */
+	/* Handle various state transitions */
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		if( sp->sr_state != SRST_VERSOK )  continue;
 
-		/* advance this server to SRST_LOADING */
-		send_loglvl(sp);
+		switch( sp->sr_state )  {
+		case SRST_VERSOK:
+			/* advance this server to SRST_LOADING */
+			send_loglvl(sp);
 
-		/* An error may have caused connection to drop */
-		if( sp->sr_pc == PKC_NULL )  continue;
-		send_start(sp);
+			/* An error may have caused connection to drop */
+			if( sp->sr_pc != PKC_NULL )
+				send_start(sp);
+			break;
+
+		case SRST_CLOSING:
+			/* Handle final closing */
+			if(debug) rt_log("final close on %s\n", sp->sr_host->ht_name);
+			clients &= ~(1<<sp->sr_pc->pkc_fd);
+			pkg_close(sp->sr_pc);
+
+			sp->sr_pc = PKC_NULL;
+			sp->sr_state = SRST_UNUSED;
+			sp->sr_index = -1;
+			sp->sr_host = IHOST_NULL;
+
+			break;
+		}
 	}
 
 	/* Look for finished frames */
@@ -1719,6 +1731,11 @@ char *buf;
 	(void)gettimeofday( &tvnow, (struct timezone *)0 );
 
 	sp = &servers[pc->pkc_fd];
+	if( sp->sr_state != SRST_READY )  {
+		rt_log("ignoring package from %s\n", sp->sr_host->ht_name);
+		goto out;
+	}
+
 	if( (sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime )) < 0.1 )
 		sp->sr_l_elapsed = 0.1;
 
@@ -2908,6 +2925,8 @@ char	**argv;
 			rt_log("READY"); break;
 		case SRST_RESTART:
 			rt_log("--about to restart--"); break;
+		case SRST_CLOSING:
+			rt_log("*closing*"); break;
 		default:
 			rt_log("Unknown"); break;
 		}
