@@ -46,3 +46,8 @@ int	spm_save();
 int	spm_pix_load();
 int	spm_pix_save();
 void	spm_dump();
+
+/*----------------------------------------------------------------------*/
+/* sphmap.c */
+extern int spm_px_load( spm_map_t *mapp, char *filename, int nx, int ny);
+
