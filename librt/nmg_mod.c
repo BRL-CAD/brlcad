@@ -2251,18 +2251,16 @@ struct shell	*s;
 	}
 }
 
-
-
-
-
-
-/* XXX This should be dynamic, for PARALLEL operation */
-static long **trans_tbl = (long **)NULL;
-
+/*
+ *			N M G _ D U P _ L O O P
+ *
+ *  Called by nmg_dup_face
+ */
 struct loopuse *
-nmg_dup_loop(lu, parent)
+nmg_dup_loop(lu, parent, trans_tbl)
 struct loopuse *lu;
-long *parent;
+long	*parent;		/* fu or shell ptr */
+long	**trans_tbl;
 {
 	struct loopuse *new_lu = (struct loopuse *)NULL;
 	struct vertexuse *new_vu = (struct vertexuse *)NULL;
@@ -2270,26 +2268,21 @@ long *parent;
 	struct vertex *old_v = (struct vertex *)NULL;
 	struct edgeuse *new_eu = (struct edgeuse *)NULL;
 	struct edgeuse *eu = (struct edgeuse *)NULL;
-	char padstr[32];
 	int i=1;
 
 	NMG_CK_LOOPUSE(lu);
-
-	if (trans_tbl == (long **)NULL)
-		nmg_start_dup(nmg_find_model( (long *)lu ));
 
 	/* if loop is just a vertex, that's simple to duplicate */
 	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		old_vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 		old_v = old_vu->v_p;
 
-
 		if (NMG_INDEX_TEST(trans_tbl, old_v)) {
 			/* this vertex already exists in the new model */
 			new_lu = nmg_mlv(parent,
 				(struct vertex *)NMG_INDEX_VALUE(trans_tbl, old_v->index),
 				lu->orientation);
-			rt_log("nmg_dup_loop() vertex in new model\n");
+			rt_log("nmg_dup_loop() existing vertex in new model\n");
 		} else {
 			/* make a new vertex */
 			rt_log("nmg_dup_loop() new vertex in new model\n");
@@ -2379,6 +2372,11 @@ long *parent;
 	return (new_lu);
 }
 
+/*
+ *			N M G _ D U P _ F A C E
+ *
+ *  Construct a duplicate of a face, 
+ */
 struct faceuse *
 nmg_dup_face(fu, s)
 struct faceuse *fu;
@@ -2386,19 +2384,22 @@ struct shell *s;
 {
 	struct loopuse *new_lu, *lu;
 	struct faceuse *new_fu = (struct faceuse *)NULL;
-	char padstr[32];
+	struct model	*m;
+	long		**trans_tbl;
 
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE(fu->f_p);
 	NMG_CK_SHELL(s);
 
-	if (!trans_tbl) nmg_start_dup(nmg_find_model( (long *)s ));
+	m = nmg_find_model( (long *)s );
+	trans_tbl = (long **)rt_calloc(m->maxindex, sizeof(long *),
+			"nmg_dup_face trans_tbl");
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		if (new_fu) {
-			nmg_dup_loop(lu, new_fu);
+			new_lu = nmg_dup_loop(lu, new_fu, trans_tbl);
 		} else {
-			new_lu = nmg_dup_loop(lu, s);
+			new_lu = nmg_dup_loop(lu, s, trans_tbl);
 			new_fu = nmg_mf(new_lu);
 		}
 	}
@@ -2408,22 +2409,8 @@ struct shell *s;
 	}
 	new_fu->orientation = fu->orientation;
 	new_fu->fumate_p->orientation = fu->fumate_p->orientation;
-	return(new_fu);
-}
 
-nmg_start_dup(m)
-struct model *m;
-{
-	if (trans_tbl)
-		rt_free((char *)trans_tbl, "nmg_dup_face trans_tbl");
-
-	
-	trans_tbl = (long **)rt_calloc(m->maxindex, sizeof(long *),
-			"nmg_dup_face trans_tbl");
-}
-
-nmg_end_dup()
-{
 	rt_free((char *)trans_tbl, "nmg_dup_face trans_tbl");
-	trans_tbl = (long **)NULL;
+
+	return(new_fu);
 }
