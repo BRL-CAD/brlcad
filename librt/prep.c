@@ -54,6 +54,7 @@ register struct rt_i *rtip;
 	register struct region *regp;
 	register struct soltab *stp;
 	register int		i;
+	vect_t			diag;
 
 	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_prep:  bad rtip\n");
 
@@ -102,6 +103,10 @@ register struct rt_i *rtip;
 	rtip->mdl_max[X] = ceil( rtip->mdl_max[X] );
 	rtip->mdl_max[Y] = ceil( rtip->mdl_max[Y] );
 	rtip->mdl_max[Z] = ceil( rtip->mdl_max[Z] );
+
+	/* Compute radius of a model bounding sphere */
+	VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
+	rtip->rti_radius = 0.5 * MAGNITUDE(diag);
 
 	/*  Build array of region pointers indexed by reg_bit.
 	 *  Optimize each region's expression tree.
