@@ -1194,6 +1194,7 @@ BU_EXTERN(void			bu_bitv_to_hex, (struct bu_vls *v,
 				CONST struct bu_bitv *bv));
 BU_EXTERN( struct bu_bitv *	bu_hex_to_bitv, (CONST char *str));
 BU_EXTERN( struct bu_bitv *	bu_bitv_dup, (CONST struct bu_bitv *bv));
+BU_EXTERN( void			bu_bitv_free, (struct bu_bitv *bv));
 
 /* bomb.c */
 BU_EXTERN(void			bu_bomb, (CONST char *str) );
@@ -1397,6 +1398,7 @@ BU_EXTERN(void			bu_ptbl_free, (struct bu_ptbl	*b));
 BU_EXTERN(int			bu_ptbl, (struct bu_ptbl *b, int func, long *p));
 BU_EXTERN(void			bu_pr_ptbl, (CONST char *title,
 				CONST struct bu_ptbl *tbl, int verbose));
+BU_EXTERN(void			bu_ptbl_trunc, (struct bu_ptbl *tbl, int end));
 
 /* rb_create.c */
 BU_EXTERN(bu_rb_tree *bu_rb_create,	(char		*description,

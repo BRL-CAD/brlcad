@@ -45,7 +45,7 @@ CONST struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "A", offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "B", offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "C", offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
+    {0,0,0,0,0} };
 
 static void  nmg_sphere_face_snurb();
 

@@ -2303,6 +2303,7 @@ BU_EXTERN(void rt_bomb, (CONST char *s));
 BU_EXTERN(int rt_in_rpp, (struct xray *rp, CONST fastf_t *invdir,
 		CONST fastf_t *min, CONST fastf_t *max));
 BU_EXTERN(CONST union cutter *rt_cell_n_on_ray, (struct application *ap, int n));
+extern void rt_cut_clean(struct rt_i *rtip);
 
 /* The database library */
 
@@ -2547,6 +2548,8 @@ extern void rt_db_free_internal( struct rt_db_internal *ip );
 extern int rt_db_lookup_internal( struct db_i *dbip, const char *obj_name,
 	struct directory **dpp, struct rt_db_internal *ip, int noisy );
 
+extern void rt_optim_tree(register union tree *tp,
+			  struct resource *resp);
 /* db_comb.c */
 
 /* db_walk.c */
@@ -2629,6 +2632,8 @@ BU_EXTERN(void rt_clean_resource, (struct rt_i *rtip, struct resource *resp));
 /* shoot.c */
 BU_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
 					/* Tally stats into struct rt_i */
+extern void rt_res_pieces_clean(struct resource *resp,
+			   struct rt_i *rtip);
 
 /* vlist.c */
 BU_EXTERN(struct bn_vlblock *	rt_vlblock_init, () );

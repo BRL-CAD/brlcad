@@ -291,7 +291,6 @@ CONST struct db_i	*dbip;
 	for( cur=0; cur<arip->ncurves; cur++ )  {
 		register fastf_t	*fp;
 		int			npts;
-		int			left;
 
 		fp = arip->curves[cur];
 		for( npts=0; npts < arip->pts_per_curve; npts++ )  {
@@ -587,7 +586,7 @@ register CONST struct soltab *stp;
 		VPRINT( "BA x CA", trip->tri_wn );
 		VPRINT( "Normal", trip->tri_N );
 		bu_log("\n");
-	} while( trip = trip->tri_forw );
+	} while( (trip = trip->tri_forw) );
 }
 
 /*

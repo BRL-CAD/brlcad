@@ -44,6 +44,11 @@ static const char RCSarb[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -104,12 +109,12 @@ struct arb_info {
 	int	ai_sub[4];
 };
 static CONST struct arb_info rt_arb_info[6] = {
-	{ "1234", 3, 2, 1, 0 },		/* "bottom" face */
-	{ "8765", 4, 5, 6, 7 },		/* "top" face */
-	{ "1485", 4, 7, 3, 0 },
-	{ "2673", 2, 6, 5, 1 },
-	{ "1562", 1, 5, 4, 0 },
-	{ "4378", 7, 6, 2, 3 }
+	{ "1234", {3, 2, 1, 0} },		/* "bottom" face */
+	{ "8765", {4, 5, 6, 7} },		/* "top" face */
+	{ "1485", {4, 7, 3, 0} },
+	{ "2673", {2, 6, 5, 1} },
+	{ "1562", {1, 5, 4, 0} },
+	{ "4378", {7, 6, 2, 3} }
 };
 
 RT_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );

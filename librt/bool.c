@@ -35,9 +35,15 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "bu.h"
 #include "./debug.h"
 
 /* Boolean values.  Not easy to change, but defined symbolicly */
@@ -45,7 +51,15 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define TRUE	1
 
 RT_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
-
+int rt_tree_max_raynum(register CONST union tree *,
+		       register CONST struct partition *);
+int rt_bool_partition_eligible(register CONST struct bu_ptbl *,
+			       register CONST struct bu_bitv *,
+			       register CONST struct partition *);
+int rt_booleval(register union tree*,
+		struct partition *,
+		struct region **,
+		struct resource *);
 /*
  *			R T _ W E A V E 0 S E G
  *
@@ -584,6 +598,50 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 	}
 }
 
+
+/*
+ *			_ R T _ D E F O V E R L A P
+ *
+ *  The guts of the default overlap callback.
+ *  Returns -
+ *	 0	to eliminate partition with overlap entirely
+ *	 1	to retain partition in output list, claimed by reg1
+ *	 2	to retain partition in output list, claimed by reg2
+ */
+HIDDEN int
+_rt_defoverlap( ap, pp, reg1, reg2, pheadp, verbose )
+register struct application	*ap;
+register struct partition	*pp;
+struct region			*reg1;
+struct region			*reg2;
+struct partition		*pheadp;
+register int			verbose;
+{
+	RT_CK_AP(ap);
+	RT_CK_PT(pp);
+	RT_CK_REGION(reg1);
+	RT_CK_REGION(reg2);
+
+	/*
+	 *  Apply heuristics as to which region should claim partition.
+	 */
+	if( reg1->reg_aircode != 0 )  {
+		/* reg1 was air, replace with reg2 */
+		return 2;
+	}
+	if( pp->pt_back != pheadp ) {
+		/* Repeat a prev region, if that is a choice */
+		if( pp->pt_back->pt_regionp == reg1 )
+			return 1;
+		if( pp->pt_back->pt_regionp == reg2 )
+			return 2;
+	}
+
+	/* To provide some consistency from ray to ray, use lowest bit # */
+	if( reg1->reg_bit < reg2->reg_bit )
+		return 1;
+	return 2;
+}
 /*
  *			R T _ D E F O V E R L A P
  *
@@ -630,50 +688,6 @@ struct partition		*pheadp;
 
 {
     return (_rt_defoverlap(ap, pp, reg1, reg2, pheadp, 0));
-}
-
-/*
- *			_ R T _ D E F O V E R L A P
- *
- *  The guts of the default overlap callback.
- *  Returns -
- *	 0	to eliminate partition with overlap entirely
- *	 1	to retain partition in output list, claimed by reg1
- *	 2	to retain partition in output list, claimed by reg2
- */
-HIDDEN int
-_rt_defoverlap( ap, pp, reg1, reg2, pheadp, verbose )
-register struct application	*ap;
-register struct partition	*pp;
-struct region			*reg1;
-struct region			*reg2;
-struct partition		*pheadp;
-register int			verbose;
-{
-	RT_CK_AP(ap);
-	RT_CK_PT(pp);
-	RT_CK_REGION(reg1);
-	RT_CK_REGION(reg2);
-
-	/*
-	 *  Apply heuristics as to which region should claim partition.
-	 */
-	if( reg1->reg_aircode != 0 )  {
-		/* reg1 was air, replace with reg2 */
-		return 2;
-	}
-	if( pp->pt_back != pheadp ) {
-		/* Repeat a prev region, if that is a choice */
-		if( pp->pt_back->pt_regionp == reg1 )
-			return 1;
-		if( pp->pt_back->pt_regionp == reg2 )
-			return 2;
-	}
-
-	/* To provide some consistency from ray to ray, use lowest bit # */
-	if( reg1->reg_bit < reg2->reg_bit )
-		return 1;
-	return 2;
 }
 
 /*
@@ -1009,6 +1023,8 @@ struct partition	*InputHdp;
 		if( regp == REGION_NULL ) continue;	/* empty slot in table */
 		RT_CK_REGION(regp);
 
+		code = -1;				/* For debug out in policy */
+
 		/*
 		 * Two or more regions claim this partition
 		 */
@@ -1077,7 +1093,7 @@ bu_log("Potential overlay along ray bundle: r1=%d, r2=%d, resolved to %s\n", r1,
 		} else if( code == 1 ) {
 code1:
 			/* Keep partition, claiming region = lastregion */
-			if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_default_multioverlap:  overlap code=%d, p retained in region=%s\n",
+			if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_default_multioverlap:  overlap policy=1, code=%d, p retained in region=%s\n",
 				code, lastregion->reg_name );
 			BU_PTBL_CLEAR_I(regiontable, i);
 		} else {
@@ -1085,7 +1101,7 @@ code2:
 			/* Keep partition, claiming region = regp */
 			bu_ptbl_zero(regiontable, (long *)lastregion);
 			lastregion = regp;
-			if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_default_multioverlap:  overlap code=%d, p retained in region=%s\n",
+			if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_default_multioverlap:  overlap policy!=(0,1) code=%d, p retained in region=%s\n",
 				code, lastregion->reg_name );
 		}
 	}

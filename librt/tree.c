@@ -47,7 +47,7 @@ int		rt_bound_tree();	/* used by rt/sh_light.c */
 
 HIDDEN struct region *rt_getregion();
 HIDDEN void	rt_tree_region_assign();
-
+int rt_tree_elim_nops(register union tree *);
 
 /*
  *  Also used by converters in conv/ directory.
@@ -61,7 +61,7 @@ CONST struct db_tree_state	rt_initial_tree_state = {
 	{
 #endif
 		/* struct mater_info ts_mater */
-		1.0, 1.0, 1.0,		/* color, RGB */
+		{1.0, 1.0, 1.0},	/* color, RGB */
 		-1.0,			/* Temperature */
 		0,			/* ma_color_valid=0 --> use default */
 		DB_INH_LOWER,		/* color inherit */
@@ -71,10 +71,10 @@ CONST struct db_tree_state	rt_initial_tree_state = {
 	}
 #endif
 	,
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0,
+	{1.0, 0.0, 0.0, 0.0},
+	{0.0, 1.0, 0.0, 0.0},
+	{0.0, 0.0, 1.0, 0.0},
+	{0.0, 0.0, 0.0, 1.0},
 	REGION_NON_FASTGEN,		/* ts_is_fastgen */
 	0,				/* ts_stop_at_regions */
 	NULL,				/* ts_region_start_func */

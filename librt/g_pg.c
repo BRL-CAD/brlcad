@@ -185,7 +185,7 @@ register CONST struct soltab *stp;
 		VPRINT( "BA x CA", trip->tri_wn );
 		VPRINT( "Normal", trip->tri_N );
 		bu_log("\n");
-	} while( trip = trip->tri_forw );
+	} while( (trip = trip->tri_forw) );
 }
 
 /*

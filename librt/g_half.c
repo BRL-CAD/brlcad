@@ -59,7 +59,7 @@ struct half_specific  {
 CONST struct bu_structparse rt_hlf_parse[] = {
     { "%f", 3, "N", offsetof(struct rt_half_internal, eqn[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "d", offsetof(struct rt_half_internal, eqn[3]), BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
+    {0,0,0,0,0} };
 /*
  *  			R T _ H L F _ P R E P
  */
@@ -654,7 +654,6 @@ CONST struct db_i               *dbip;
 	struct rt_half_internal	*hip;
 	point_t			tmp_pt, new_pt;
 	plane_t			tmp_plane;
-	fastf_t			tmp_dist;
 	register double		f,t;
 
 	BU_CK_EXTERNAL( ep );
