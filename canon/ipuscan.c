@@ -45,6 +45,19 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #if defined(IRIX) && (IRIX == 4 || IRIX == 5)
 #include "./canon.h"
 
+# define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
+# define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
+# include <sys/types.h>
+# include <ulocks.h>
+/* ulocks.h #include's <limits.h> and <malloc.h> */
+/* ulocks.h #include's <task.h> for getpid stuff */
+/* task.h #include's <sys/prctl.h> */
+# include <malloc.h>
+/* <malloc.h> #include's <stddef.h> */
+static char		lockfile[] = "/var/tmp/ipuscanXXXXXX";
+static usptr_t		*lockstuff = 0;
+
+
 static 	struct dsreq *dsp;
 static	int	fd;
 
@@ -57,68 +70,120 @@ struct chore {
 	unsigned char	obuf[255*1024];
 };
 
-struct chore	chore1;
+struct chore	chores[3];
 
-int step1(chorep, pix_y)
-struct chore	*chorep;
-int		pix_y;
+struct chore	*await1;
+struct chore	*await2;
+struct chore	*await3;
+
+#define GET(item, queue)	{\
+	while( queue == NULL )  sginap(1); \
+	item = queue; \
+	queue = NULL; }
+
+#define PUT(queue, item)	{ \
+	while( queue != NULL )  sginap(1); \
+	queue = item; \
+	item = NULL;  }
+
+void step1(aa,bb)
+void	*aa;
+size_t	bb;
 {
-	int	canon_y;
+	struct chore	*chorep;
+	int		pix_y;
+	int		canon_y;
+	static int	nstarted = 0;
 
-	chorep->pix_y = pix_y;
-	chorep->todo = 255*1024 / (ipu_bytes_per_pixel*width);	/* Limit 255 Kbytes */
-	if( height - pix_y < chorep->todo )  chorep->todo = height - pix_y;
-	chorep->buflen = chorep->todo * ipu_bytes_per_pixel * width;
+	pix_y = 0;
+	for(;;)  {
+		if( nstarted < 3 )  {
+			chorep = &chores[nstarted++];
+		} else {
+			GET( chorep, await1 );
+		}
 
-	canon_y = height - (pix_y+chorep->todo);
+		if( pix_y >= height )  {
+			/* Send through a "done" chore and exit */
+			chorep->pix_y = -1;
+			PUT( await2, chorep );
+			/* Wait for them to percolate through */
+			GET( chorep, await1 );
+			GET( chorep, await1 );
+			break;
+		}
 
-	chorep->cbuf = ipu_get_image(dsp, 1, 0, canon_y, width, chorep->todo);
+		chorep->pix_y = pix_y;
+		chorep->todo = 255*1024 / (ipu_bytes_per_pixel*width);	/* Limit 255 Kbytes */
+		if( height - pix_y < chorep->todo )  chorep->todo = height - pix_y;
+		chorep->buflen = chorep->todo * ipu_bytes_per_pixel * width;
 
-	return pix_y + chorep->todo;
+		canon_y = height - (pix_y+chorep->todo);
+
+		chorep->cbuf = ipu_get_image(dsp, 1, 0, canon_y, width, chorep->todo);
+		pix_y += chorep->todo;
+
+		/* Pass this chore off to next process */
+		PUT( await2, chorep );
+	}
+	exit(0);	/* exit this thread */
 }
 
-void step2(chorep)
-struct chore	*chorep;
+void step2(aa,bb)
+void	*aa;
+size_t	bb;
 {
+	struct chore	*chorep;
 	register unsigned char	*cp;
 	unsigned char *red, *green, *blue;
 	int	buf_y;
 
-	cp = chorep->obuf;
-
-	if( ipu_bytes_per_pixel == 3 )  {
-		green = &chorep->cbuf[width*chorep->todo];
-		blue = &chorep->cbuf[width*chorep->todo*2];
-
-		for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
-			int	offset;
-			register unsigned char	*rp, *gp, *bp;
-			register int		x;
-
-			offset = buf_y * width;
-			rp = &chorep->cbuf[offset];
-			gp = &green[offset];
-			bp = &blue[offset];
-			for( x = width-1; x >= 0; x-- )  {
-				*cp++ = *rp++;
-				*cp++ = *gp++;
-				*cp++ = *bp++;
-			}
-			chorep->pix_y++;	/* Record our progress */
+	for(;;)  {
+		GET(chorep, await2);
+		if( chorep->pix_y < 0 )  {
+			/* Pass on "done" token and exit */
+			PUT( await3, chorep );
+			break;
 		}
-	} else {
-		/* Monochrome */
-		for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
-			int	offset;
-			register unsigned char	*rp;
-			register int		x;
+
+		cp = chorep->obuf;
+
+		if( ipu_bytes_per_pixel == 3 )  {
+			green = &chorep->cbuf[width*chorep->todo];
+			blue = &chorep->cbuf[width*chorep->todo*2];
+
+			for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
+				int	offset;
+				register unsigned char	*rp, *gp, *bp;
+				register int		x;
+
 				offset = buf_y * width;
-			rp = &chorep->cbuf[offset];
-			bcopy( rp, cp, width );
-			cp += width;
-			chorep->pix_y++;	/* Record our progress */
+				rp = &chorep->cbuf[offset];
+				gp = &green[offset];
+				bp = &blue[offset];
+				for( x = width-1; x >= 0; x-- )  {
+					*cp++ = *rp++;
+					*cp++ = *gp++;
+					*cp++ = *bp++;
+				}
+				chorep->pix_y++;	/* Record our progress */
+			}
+		} else {
+			/* Monochrome */
+			for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
+				int	offset;
+				register unsigned char	*rp;
+				register int		x;
+					offset = buf_y * width;
+				rp = &chorep->cbuf[offset];
+				bcopy( rp, cp, width );
+				cp += width;
+				chorep->pix_y++;	/* Record our progress */
+			}
 		}
+		PUT( await3, chorep );
 	}
+	exit(0);
 }
 
 /*
@@ -126,16 +191,28 @@ struct chore	*chorep;
  *  or busy disk drive or (worse yet) is on an NFS partition,
  *  this can take a long time.
  */
-void step3(chorep)
-struct chore	*chorep;
+void step3(aa,bb)
+void	*aa;
+size_t	bb;
 {
-	if( write( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
-		perror("ipuscan write");
-		fprintf(stderr, "buffer write error, line %d\n", chorep->pix_y);
-		exit(2);
+	struct chore	*chorep;
+
+	for(;;)  {
+		GET( chorep, await3 );
+		if( chorep->pix_y < 0 )  {
+			break;	/* "done" token */
+		}
+
+		if( write( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
+			perror("ipuscan write");
+			fprintf(stderr, "buffer write error, line %d\n", chorep->pix_y);
+			exit(2);
+		}
+		(void)free(chorep->cbuf);
+		chorep->cbuf = NULL;
+		PUT( await1, chorep );
 	}
-	(void)free(chorep->cbuf);
-	chorep->cbuf = NULL;
+	exit(0);
 }
 
 
@@ -152,6 +229,7 @@ char *av[];
 	int arg_index;
 	int i;
 	int	pix_y;
+	int	pid[3];
 
 	/* pick the LUN for the scanner this time */
 	(void)strncpy( scsi_device, "/dev/scsi/sc0d6l0", 1024 );
@@ -192,24 +270,37 @@ char *av[];
 				0/*wait*/,scr_xoff,scr_yoff,
 				width,height,&param);
 
-	sleep(15);
-	ipu_acquire(dsp, 120);
+	ipu_acquire(dsp, 30);
 
 	if (ipu_debug)
 		fprintf(stderr, "%s\n", ipu_list_files(dsp));
 
-	/* SCSI Bus can't do large ones all at once.
-	 * Take it in small chunks.
-	 * Also, note that the scanner is quadrant IV,
-	 * while .pix files are quadrant I.
-	 */
-	for( pix_y=0; pix_y < height; )  {
-		struct chore	*chorep = &chore1;
 
-		pix_y = step1( chorep, pix_y );
-		step2( chorep );
-		step3( chorep );
+
+	/* Start three threads, then wait for them to finish */
+	pid[0] = sproc( step1, PR_SALL|PR_SFDS );
+	pid[1] = sproc( step2, PR_SALL|PR_SFDS );
+	pid[2] = sproc( step3, PR_SALL|PR_SFDS );
+
+	for( i=0; i<3; i++ )  {
+		int	this_pid;
+		int	pstat;
+		int	j;
+
+		pstat = 0;
+		if( (this_pid = wait(&pstat)) <= 0  )  {
+			perror("wait");
+			fprintf(stderr, "wait returned %d\n", this_pid);
+			for( j=0; j<3; j++) kill(pid[j], 9);
+			exit(3);
+		}
+		if( (pstat & 0xFF) != 0 )  {
+			fprintf(stderr, "*** child pid %d blew out with error x%x\n", this_pid, pstat);
+			for( j=0; j<3; j++) kill(pid[j], 9);
+			exit(4);
+		}
 	}
+	/* All children are finished */
 
 	close(fd);
 	(void)dsclose(dsp);
