@@ -365,7 +365,9 @@ vect_t	Zenith, Sky_elmt;	/* vectors to zenith and a sky element */
  *	SENT LETTER TO CIE & TOYOTA JULY 7, 1992
  */
 fastf_t
-homogenous_sky_lum()
+homogenous_sky_lum(Sky_elmt, Sun, t_vl)
+vect_t	Sky_elmt, Sun;	/* vectors to a sky element and to sun */
+fastf_t	t_vl;		/* Turbidity factor. */
 {
 	return(0.);
 }
@@ -1898,8 +1900,8 @@ int	lines;		/* How many lines of data in refl[]. */
 		beta_l, beta_h,
 		beta,
 		lambda_h, lambda_l,
-		a, b, l;
-	int	i, j, n;
+		l;
+	int	i, j;
 
 	/* Find low lambda. */
 	for (l = 0, i = 0; l < lambda && i < lines; i++) {
@@ -2342,7 +2344,9 @@ char	*dp;
 		i_refl,			/* Radiance of reflected light. */
 		refl_radiance,		/* Radiance of reflected ray. */
 		rx, ry,
+#if 0
 		solar_radiance,
+#endif
 		specular_light,
 		sun_alt,		/* Altitude of sun over horizon. */
 		sun_dot_n,		/* Sun, Normal dot product. */
@@ -2354,7 +2358,6 @@ char	*dp;
 	register struct	light_specific *lp;
 	struct toyota_specific	*ts =
 		(struct toyota_specific *)dp;
-	struct application	refl_ap;
 	vect_t	Horiz,
 		Reflected,
 		Sun,			/* Vector to sun. */
@@ -2382,9 +2385,11 @@ char	*dp;
 /* VPRINT("Sun", Sun); */
 		/* Altitude of sun above horizon (degrees). */
 		sun_alt = 90 - acos(VDOT(Sun, ts->Zenith))*180/PI;
+#if 0
 		/* Solar radiance. */
 		solar_radiance = sun_radiance(ts->lambda, ts->alpha, ts->beta,
 			sun_alt, ts->sun_sang);
+#endif
 
 		/* Create reflected ray. */
 		i_dot_n = VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir);
@@ -2434,7 +2439,9 @@ rt_log("S . N = %g\n", sun_dot_n);
 		VMOVE( refl_ap.a_ray.r_dir, Reflected );
 		refl_ap.a_purpose = "Toyota reflected sun ray";
 		/* a_hit should be colorview() */
-/**		refl_ap.a_hit = toyota_render;	/* XXX is this right */
+#if 0
+		refl_ap.a_hit = toyota_render;	/* XXX is this right */
+#endif
 		refl_ap.a_miss = toyota_miss;
 		(void)rt_shootray( &refl_ap );
 		/* a_return or a_user to hold hit/miss flag? */
