@@ -270,7 +270,8 @@ char	**argv;
 		VJOIN1( aip->pt[i+4] , aip->pt[i] , thick , norm );
 	}
 
-	if( rt_functab[internal.idb_type].ft_export( &external, &internal, local2base ) < 0 )
+	/* Don't use local2base here, coordinates are already converted to mm above */
+	if( rt_functab[internal.idb_type].ft_export( &external, &internal, (double)1.0 ) < 0 )
 	{
 		rt_log( "f_3ptarb: export failure\n" );
 		rt_functab[internal.idb_type].ft_ifree( &internal );
