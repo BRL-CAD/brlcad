@@ -192,7 +192,9 @@ depend:		${CFILES}
 
 #  Default:  For sites without "cc -M".
 do-depend:		${CFILES}
-	@cp Makefile.loc Makefile.bak
+	@mv -f Makefile.loc Makefile.bak
+	@cp Makefile.bak Makefile.loc
+	@chmod 664 Makefile.loc
 	@for k in ${CFILES}; do \
 		i=`basename $$k .c`; \
 		(echo $$i.o: $$i.c >>makedep; \
