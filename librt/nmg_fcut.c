@@ -3202,8 +3202,8 @@ int			other_rs_state;
 		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, rs->vu[pos]->up.eu_p);
 		NMG_CK_EDGEUSE(first_new_eu);
 		if( eu == first_new_eu )  {
-			if( old_eu )  nmg_radial_join_eu( old_eu, eu, rs->tol );
 			nmg_edge_geom_isect_line( first_new_eu, rs, "CUTJOIN new edge" );
+			if( old_eu )  nmg_radial_join_eu( old_eu, eu, rs->tol );
 		}
 
 		/* Recompute loop geometry.  Bounding box may have expanded */
