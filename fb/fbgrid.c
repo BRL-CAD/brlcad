@@ -1,13 +1,13 @@
 /*
-	SCCS id:	@(#) fbgrid.c	1.6
-	Last edit: 	3/29/85 at 15:38:54	G S M
-	Retrieved: 	8/13/86 at 03:14:17
+	SCCS id:	@(#) fbgrid.c	1.7
+	Last edit: 	4/3/85 at 09:24:36	G S M
+	Retrieved: 	8/13/86 at 03:14:22
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbgrid.c
 
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbgrid.c	1.6	last edit 3/29/85 at 15:38:54";
+char	sccsTag[] = "@(#) fbgrid.c	1.7	last edit 4/3/85 at 09:24:36";
 #endif
 /*
 			F B G R I D
@@ -27,7 +27,8 @@ char	**argv;
 	{
 	register int	x, y;
 	register int	fb_sz;
-	static Pixel	black, white;
+	register int	middle;
+	static Pixel	black, white, red;
 	static int	val;
 
 	if( ! pars_Argv( argc, argv ) )
@@ -42,7 +43,10 @@ char	**argv;
 	fb_sz = fbgetsize();
 	white.red = white.green = white.blue = 255;
 	black.red = black.green = black.blue = 0;
+	red.red = 255;
+	middle = fb_sz/2;
 	fbioinit();
+	if( fb_sz == 512 )
 	for( y = 0; y < fb_sz; y++ )
 		{
 		for( x = 0; x < fb_sz; x++ )
@@ -50,7 +54,27 @@ char	**argv;
 			if( x == y || x == fb_sz - y )
 				(void) fbwpixel( &white );
 			else
+			if( x == middle || y == middle )
+				(void) fbwpixel( &red );
+			else
 			if( (x & 0x7) && (y & 0x7) )
+				(void) fbwpixel( &black );
+			else
+				(void) fbwpixel( &white );
+			}
+		}
+	else
+	for( y = 0; y < fb_sz; y++ )
+		{
+		for( x = 0; x < fb_sz; x++ )
+			{
+			if( x == y || x == fb_sz - y )
+				(void) fbwpixel( &white );
+			else
+			if( x == middle || y == middle )
+				(void) fbwpixel( &red );
+			else
+			if( (x & 0xf) && (y & 0xf) )
 				(void) fbwpixel( &black );
 			else
 				(void) fbwpixel( &white );
