@@ -45,8 +45,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
-RT_EXTERN( struct edgeuse *nmg_find_e, (struct vertex *v1, struct vertex *v2, struct shell *s, struct edge *e ) );
-
+/*
+ *	N M G _ S N U R B _ C A L C _ L U _ U V _ O R I E N T
+ */
 int
 nmg_snurb_calc_lu_uv_orient( lu )
 struct loopuse *lu;
