@@ -22,10 +22,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "raytrace.h"
 #include "spm.h"
-
-char	*malloc();
-char	*calloc();
 
 double	rt_twopi = 6.283185307179586476925286;
 
@@ -76,7 +74,7 @@ int	elsize;
 		total += 2*nx;
 	}
 
-	mapp->_data = (unsigned char *) calloc( (unsigned)total, elsize );
+	mapp->_data = (unsigned char *) rt_calloc( (unsigned)total, elsize, "spm_init data" );
 	if( mapp->_data == NULL ) {
 		spm_free( mapp );
 		return( SPM_NULL );
@@ -292,7 +290,7 @@ int	nx, ny;
 		return( -1 );
 
 	/* Shamelessly suck it all in */
-	buffer = (unsigned char *)malloc( (unsigned)(nx*nx*3) );
+	buffer = (unsigned char *)rt_malloc( (unsigned)(nx*nx*3), "spm_px_load buffer" );
 	/* XXX */
 	(void) fread( (char *)buffer, 3, nx*ny, fp );
 	(void) fclose( fp );
@@ -323,7 +321,7 @@ int	nx, ny;
 			*cp++ = (unsigned char)(blue/count);
 		}
 	}
-	(void) free( (char *)buffer );
+	(void) rt_free( (char *)buffer, "spm buffer" );
 
 	return( 0 );
 }
