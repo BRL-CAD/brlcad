@@ -1312,7 +1312,7 @@ continue;
 				}
 				/* toggle depthcueing and remake colormap */
 				rt_vls_printf(&dm_values.dv_string,
-				    "dm set depthcue=!\n");
+				    "dm set depthcue !\n");
 				continue;
 			} else if(ret == F2KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1323,7 +1323,7 @@ continue;
 				}
 				/* toggle zclipping */
 				rt_vls_printf(&dm_values.dv_string,
-				    "dm set zclip=!\n");
+				    "dm set zclip !\n");
 				continue;
 			} else if(ret == F3KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1349,7 +1349,7 @@ continue;
 				}
 				/* toggle zbuffer status */
 				rt_vls_printf(&dm_values.dv_string,
-				    "dm set zbuffer=!\n");
+				    "dm set zbuffer !\n");
 				continue;
 			} else if(ret == F5KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1360,7 +1360,7 @@ continue;
 				}
 				/* toggle status */
 				rt_vls_printf(&dm_values.dv_string,
-				    "dm set lighting=!\n");
+				    "dm set lighting !\n");
 				continue;
 			} else if (ret == F6KEY) {
 				if (!valp[1]) continue; /* Ignore release */
