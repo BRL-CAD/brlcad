@@ -301,14 +301,14 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 6.0 (on a 64-bit machine) */
 #	undef	sgi
 #	define	MTYPE	7d
-#	if 1	/* PRODUCTION=1 */
+#	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
 #		define	OPTIMIZER	-O2 -OPT:fold_arith_limit=16000 \
 					-OPT:const_copy_limit=16000 \
 					-use_readonly_const \
-					-woff 1032,1174 -Wl,-w
+					-woff 1203 -Wl,-w
 /*		-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
 #	else
 /*		This version for debugging with DBX */
@@ -321,16 +321,17 @@ set -S2 "/bin/sh"
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sharedlibvers.sh
-#		define	BUILD_LIBRARY	ld -shared -o
+#		define	BUILD_LIBRARY	ld -mips4 -shared -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath /usr/lib64:LIBDIR
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
-#		define	LD_OPTS		GFLAG
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
 #	else
 /*		Static linked executables */
+#		define	BUILD_LIBRARY	ld -B static -mips4 -o
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-lm -lmalloc -lc
-#		define	LD_OPTS		GFLAG
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
 #	endif
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=6
