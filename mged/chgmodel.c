@@ -264,7 +264,7 @@ out:
 	}
 	return TCL_OK;
 fail:
-	rt_comb_ifree( &intern );
+	rt_db_free_internal( &intern );
 	return TCL_ERROR;
 }
 
@@ -534,6 +534,7 @@ char	**argv;
 	{
 	  Tcl_AppendResult(interp, "RGB value out of range: ", argv[i + 2],
 			   "\n", (char *)NULL);
+	  rt_db_free_internal( &intern );
 	  return TCL_ERROR;
 	}
 	else
