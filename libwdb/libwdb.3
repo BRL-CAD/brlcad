@@ -1,0 +1,232 @@
+.TH LIBWDB 3 BRL/CAD
+.SH NAME
+libwdb \- library for procedural generation of MGED databases
+.SH SYNOPSIS
+.nf
+\fB#include ``vmath.h''
+.sp
+mk_id( fp, title )
+FILE	*fp;
+char	*title;
+.sp
+mk_half( fp, name, d, norm )
+FILE	*fp;
+char	*name;
+double	d;
+point_t	norm;
+.sp
+mk_rpp( fp, name, min, max )
+FILE	*fp;
+char	*name;
+point_t	min, max;
+.sp
+mk_arb4( fp, name, pts )
+FILE	*fp;
+char	*name;
+point_t	pts[];
+.sp
+mk_arb8( fp, name, pts )
+FILE	*fp;
+char	*name;
+point_t	pts[];
+.sp
+mk_sph( fp, name, point, r)
+FILE	*fp;
+char	*name;
+point_t	point;
+fastf_t	r;
+.sp
+mk_ell( fp, name, point, a, b, c)
+FILE	*fp;
+char	*name;
+point_t	point;
+vect_t	a, b, c;
+.sp
+mk_tor( fp, name, center, n, r1, r2 )
+FILE	*fp;
+char	*name;
+point_t	center;
+vect_t	n;
+double	r1, r2;
+.sp
+mk_rcc( fp, name, base, height, radius )
+FILE	*fp;
+char	*name;
+point_t	base;
+vect_t	height;
+fastf_t	radius;
+.sp
+mk_mcomb( fp, name, len, region, matname, matparm, override, rgb )
+FILE	*fp;
+char	*name;
+char	*matname;
+char	*matparm;
+char	*rgb;
+.sp
+mk_comb( fp, name, len, region )
+FILE	*fp;
+char	*name;
+.sp
+mk_memb( fp, name, mat, op )
+FILE	*fp;
+char	*name;
+mat_t	mat;
+int	op;
+.sp
+mk_polysolid( fp, name )
+FILE	*fp;
+char	*name;
+.sp
+mk_facet( fp, npts, vert, norm )
+FILE	*fp;
+int	npts;
+fastf_t	vert[][3];
+fastf_t	norm[][3];
+.sp
+.SH DESCRIPTION
+This library exists to permit writing MGED databases from
+arbitrary procedures.
+Some of the high-level structure of MGED databases (eg, that
+they start with an ID record, and that COMB records must be
+followed immediately by MEMBER records) is currently implicit
+in the calling routines.
+This library is by no means complete, and routines for writing every
+type of solid do not yet exist.
+While it is expected that this library will grow and change as
+experience is gained, it is not clear what direction that evolution
+will take.  Be prepared for changes in the interface to some of these
+routines in future releases.
+All routines take as their first argument the stdio FILE pointer
+(eg, stdout) on which the generated MGED database record(s) will
+be written with fwrite().
+.P
+.I mk_id\^
+fwrites an IDENT record on the indicated stdio file, with the string
+.I title\^
+associated.  Note that to have a valid database, the
+the first record written must have been an IDENT record such as
+written by this routine.
+.P
+.I mk_half\^
+makes a halfspace with name ``name''.  It is specified by
+the distance ``d'' from the origin, and the outward pointing
+normal vector ``norm''.
+.P
+.I mk_rpp\^
+makes an ARB8 called ``name''
+specified as a right rectangular parallelpiped in
+terms of a minimum point ``min'' and a maximum point ``max''.
+.I mk_arb4\^
+makes an ARB8 called ``name''
+described as an ARB4, ie, by 4 points, the first 3 of which
+lie on a plane, and the fourth is the ``peak''.
+.I mk_arb8\^
+makes an ARB8 called ``name''
+described by an array of 8 points in ``pts''.
+All plates with 4 points must be co-planar.
+If there are degeneracies (ie, all 8 vertices are not distinct),
+then certain requirements must be met.
+If we think of the ARB8 as having a top and a bottom plate,
+the first four points listed must lie on one plate, and
+the second four points listed must lie on the other plate.
+.P
+.I mk_sph\^
+makes a spherical ellipsoid called ``name''
+centered at point ``point'' with radius ``r''.
+.I mk_ell\^
+makes an ellipsoid called ``name'' centered at point ``point''
+with three perpendicular radius vectors.
+The eccentricity of the ellipsoid is controlled by the relative
+lengths of the three radius vectors.
+.P
+.I mk_tor\^
+makes a torus called ``name'' centered at point ``center'',
+with the torus lying in a plane with normal ``n''.
+Radius ``r1'' is the distance from the center point of the torus
+to the center of the solid part, and radius ``f2'' is
+the radius of the solid part.
+.P
+.I mk_rcc\^
+makes a truncated general cone (TGC) with name ``name''
+specified as a right circular cylinder.
+The base plate of the cylinder is centered at ``base'',
+with height vector ``height'' which is perpendicular to
+the two end plates, the length of which defines the location of
+the top plate.
+The radius given as ``radius'' defines the size of the end plates.
+.P
+.I mk_mcomb\^
+defines a conbination of name ``name'', with material properties
+information included.
+``len'' indicated the number of
+.I mk_memb\^
+calls (MEMB records) that will immediately follow.
+``region'' is a boolean that is set to mark this combination
+as a region.
+``matname'' is either a NULL pointer, or a pointer to a string
+containing the material property name.
+``matparm'' is either a NULL pointer, or a pointer to a string
+containing the material property parameter information,
+which is material-specific (and still experimental).
+Color ``override'' is a boolean, and if true, the desired color
+is passed as an array of three unsigned chars in ``rgb''.
+.I mk_comb\^
+makes a simple combination header, with name ``name'', length ``len'',
+and the boolean ``region''.  It functions just like
+.IR mk_mcomb\^ .
+.I mk_memb\^
+calls must immediately follow the call to
+.I mk_mcomb\^
+or
+.IR mk_comb\^ .
+Each call to
+.I mk_memb\^
+adds a reference to object ``name'' to the combination.
+It is transformed by the 4x4 matrix ``mat'', and is combined
+by boolean operation ``op'', chosen from
+the list of:  UNION, INTERSECT, SUBTRACT, from <brlcad/db.h>.
+.P
+.I mk_polysolid\^
+writes the header record for a polygon solid called ``name'',
+which must be immediately
+followed by one or more
+.I mk_facet\^
+calls before using any other
+.I mk_*\^
+routines.
+.I mk_facet\^
+is called with ``npts'' (3 to 5) vertices in the ``vert'' array,
+with a matching number of normals in the ``norm'' array.
+All vertices must be coplanar.
+For the present, note that librt/pg.c only uses the first normal
+in the ``norm'' array, although the intention is to do optional
+normal interpolation for those occasions where it may be desirable
+to have curved-looking polygons.
+.SH EXAMPLE(S)
+.sp
+Several examples of how to use this library can be found
+in the proc-db directory.
+.sp
+.SH "SEE ALSO"
+brlcad(1B), mged(1B), rt(1B)
+.SH DIAGNOSTICS
+None
+.SH AUTHOR(S)
+Michael John Muuss
+.br
+Paul R. Stay
+.SH BUGS
+The library is incomplete.
+The need for the application to know higher-level details
+is unfortunate, but necessary to keep the library simple.
+We may pay for this later.
+.SH SOURCE
+ SECAD/VLD Computing Consortium, Bldg 394
+ The U. S. Army Ballistic Research Laboratory
+ Aberdeen Proving Ground, Maryland  21005
+.SH COPYRIGHT
+This software is Copyright (C) 1987 by the United States Army.
+All rights reserved.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.ARPA>.
