@@ -65,6 +65,9 @@ struct shadework	*swp;
 	fastf_t	attenuation;
 	vect_t	to_eye;
 	int	code;
+#if 0
+	static FILE	*plotfp;
+#endif
 
 	RT_AP_CHECK(ap);
 
@@ -99,6 +102,20 @@ struct shadework	*swp;
 		goto out;
 	}
 	VMOVE( filter_color, swp->sw_basecolor );
+
+#if 0
+/* XXX temp hack -Mike & JRA */
+	if( rdebug&RDEBUG_RAYPLOT )  {
+		static int	count = 0;
+		char		name[128];
+		if( plotfp && plotfp != stdout )  fclose(plotfp);
+		sprintf(name, "rr%d.pl", count++);
+		if( (plotfp = fopen( name, "w" )) == NULL )  {
+			perror(name);
+			plotfp = stdout;
+		}
+	}
+#endif
 
 	if( (swp->sw_inputs & (MFI_HIT|MFI_NORMAL)) != (MFI_HIT|MFI_NORMAL) )
 		shade_inputs( ap, pp, swp, MFI_HIT|MFI_NORMAL );
@@ -241,6 +258,7 @@ do_inside:
 				2, ap, stdout );	/* 2 = ?? */
 		}
 		if( rdebug&RDEBUG_RAYPLOT )  {
+			/* plotfp */
 			pl_color( stdout, 0, 255, 0 );
 			pdv_3line( stdout,
 				sub_ap.a_ray.r_pt,
@@ -364,8 +382,9 @@ do_reflection:
 
 		if( rdebug&RDEBUG_RAYPLOT )  {
 			point_t		endpt;
-			/* Plot the surface normal */
-			pl_color( stdout, 0, 255, 0 );
+			/* Plot the surface normal -- forrest green */
+			/* plotfp */
+			pl_color( stdout, 100, 255, 100 );
 			f = sub_ap.a_rt_i->rti_radius * 0.02;
 			VJOIN1( endpt, sub_ap.a_ray.r_pt,
 				f, swp->sw_hit.hit_normal );
