@@ -58,23 +58,34 @@ extern double	degtorad, radtodeg;	/* Defined in usepen.c */
  * All GED files are stored in a fixed base unit (MM).
  * These factors convert database unit to local (or working) units.
  */
-extern struct db_i	*dbip;			/* defined in ged.c */
+extern struct db_i	*dbip;		       /* defined in ged.c */
 #define	base2local	(dbip->dbi_base2local)
 #define local2base	(dbip->dbi_local2base)
-#define localunit	(dbip->dbi_localunit)	/* current local unit (index) */
-#define	cur_title	(dbip->dbi_title)	/* current model title */
+#define localunit	(dbip->dbi_localunit)  /* current local unit (index) */
+#define	cur_title	(dbip->dbi_title)      /* current model title */
 
-extern int		dmaflag;		/* !0 forces screen update */
+extern int		dmaflag;	       /* !0 forces screen update */
 
-#ifdef XMGED
+
+/* Some useful constants, if they haven't been defined elsewhere. */
+
+#ifndef FALSE
+# define FALSE 0
+#endif
+
+#ifndef TRUE
+# define TRUE 1
+#endif
+
 #ifndef False
-#define False (0)
+# define False (0)
 #endif
 
 #ifndef True
-#define True (1)
+# define True (1)
 #endif
 
+#ifdef XMGED
 /* new I/O routines */
 extern char	*mged_fgets();
 extern char	*mged_gets();
@@ -221,6 +232,10 @@ MGED_EXTERN(void state_err, (char *str) );
 
 MGED_EXTERN(void do_list, (struct rt_vls *outstrp, struct directory *dp, int verbose));
 
+/* history.c */
+
+extern int cmd_prev(), cmd_next();
+extern void history_record();
 
 #ifndef	NULL
 #define	NULL		0
@@ -430,6 +445,7 @@ MGED_EXTERN(int f_aeview, (int argc, char **argv));
 MGED_EXTERN(int f_amtrack, (int argc, char **argv));
 MGED_EXTERN(int f_analyze, (int argc, char **argv));
 MGED_EXTERN(int f_arbdef, (int argc, char **argv));
+MGED_EXTERN(int f_arced, (int argc, char **argv));
 MGED_EXTERN(int f_area, (int argc, char **argv));
 MGED_EXTERN(int f_attach, (int argc, char **argv));
 MGED_EXTERN(int f_bev, (int argc, char **argv));
@@ -453,7 +469,6 @@ MGED_EXTERN(int f_delay, (int argc, char **argv));
 MGED_EXTERN(int f_delobj, (int argc, char **argv));
 MGED_EXTERN(int f_dm, (int argc, char **argv));
 MGED_EXTERN(int f_dup, (int argc, char **argv));
-MGED_EXTERN(int f_echo, (int argc, char **argv));
 MGED_EXTERN(int f_edcodes, (int argc, char **argv));
 MGED_EXTERN(int f_edcolor, (int argc, char **argv));
 MGED_EXTERN(int f_edcomb, (int argc, char **argv));
@@ -490,6 +505,7 @@ MGED_EXTERN(int f_labelvert, (int argc, char **argv));
 MGED_EXTERN(int f_list, (int argc, char **argv));
 MGED_EXTERN(int f_make, (int argc, char **argv));
 MGED_EXTERN(int f_mater, (int argc, char **argv));
+MGED_EXTERN(int f_matpick, (int argc, char **argv));
 MGED_EXTERN(int f_memprint, (int argc, char **argv));
 MGED_EXTERN(int f_mirface, (int argc, char **argv));
 MGED_EXTERN(int f_mirror, (int argc, char **argv));
@@ -533,9 +549,11 @@ MGED_EXTERN(int f_sc_obj, (int argc, char **argv));
 MGED_EXTERN(int f_sed, (int argc, char **argv));
 MGED_EXTERN(int f_set, (int argc, char **argv));
 MGED_EXTERN(int f_shader, (int argc, char **argv));
+MGED_EXTERN(int f_shells, (int argc, char **argv));
 MGED_EXTERN(int f_source, (int argc, char **argv));
 MGED_EXTERN(int f_status, (int argc, char **argv));
 MGED_EXTERN(int f_summary, (int argc, char **argv));
+MGED_EXTERN(int f_sync, (int argc, char **argv));
 MGED_EXTERN(int f_tables, (int argc, char **argv));
 MGED_EXTERN(int f_tabobj, (int argc, char **argv));
 MGED_EXTERN(int f_tedit, (int argc, char **argv));
@@ -550,5 +568,6 @@ MGED_EXTERN(int f_vrmgr, (int argc, char **argv));
 MGED_EXTERN(int f_vrot, (int argc, char **argv));
 MGED_EXTERN(int f_vrot_center, (int argc, char **argv));
 MGED_EXTERN(int f_which_id, (int argc, char **argv));
+MGED_EXTERN(int f_xpush, (int argc, char **argv));
 MGED_EXTERN(int f_zap, (int argc, char **argv));
 MGED_EXTERN(int f_zoom, (int argc, char **argv));
