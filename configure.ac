@@ -995,17 +995,17 @@ AC_SUBST(BN)
 BU='${top_builddir}/src/libbu/libbu.la'
 AC_SUBST(BU)
 
-CURSOR='${top_builddir}/src/libcursor/libcursor.la ${CURSES}'
+CURSOR='${top_builddir}/src/libcursor/libcursor.la'
 AC_SUBST(CURSES)
 AC_SUBST(CURSOR)
 
 DM='${top_builddir}/src/libdm/libdm.la'
 AC_SUBST(DM)
 
-FB='${top_builddir}/src/libfb/libfb.la ${X_LIBS} ${PKG} ${BU} ${GL_LIBS}'
+FB='${top_builddir}/src/libfb/libfb.la'
 AC_SUBST(FB)
 
-FFT='${top_builddir}/src/libfft/libfft.la -lm'
+FFT='${top_builddir}/src/libfft/libfft.la'
 AC_SUBST(FFT)
 
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
@@ -1017,7 +1017,7 @@ AC_SUBST(ORLE)
 PKG='${top_builddir}/src/libpkg/libpkg.la'
 AC_SUBST(PKG)
 
-RLE='${top_builddir}/src/other/libutahrle/libutahrle.la -lm'
+RLE='${top_builddir}/src/other/libutahrle/libutahrle.la'
 AC_SUBST(RLE)
 
 RT='${top_builddir}/src/librt/librt.la'
