@@ -9,6 +9,7 @@
  *	f_extrude	"extrude" command -- project an ARB face
  *	f_arbdef	define ARB8 using rot fb angles to define face
  *	f_mirface	mirror an ARB face
+ *	f_permute	permute ARB8 vertex labels
  *
  *  Author -
  *	Keith A. Applin
@@ -1156,4 +1157,114 @@ register struct solidrec *sp;
 	for(i=0; i<=21; i+=3) {
 		VMOVE(&sp->s_values[i], &tmp.s_values[i]);
 	}
+}
+
+/* Permute command - permute the vertex labels of an ARB8
+/* Format: permute jkl	*/
+void
+f_permute( argc, argv )
+
+int	argc;
+char	**argv;
+
+{
+    /*
+     *	1) Why were all vars declared static?
+     *	2) Recompute plane equations?
+     */
+    register int vertex, i, j, k;
+    int triple;
+    int	modulus;
+    int	*p;
+    struct solidrec lsolid;	/* local copy of solid */
+    struct solidrec tsolid;	/* temporary copy of solid */
+    static int perm_array[8][7] =
+    {
+	{12345678, 12654378, 14325876, 14852376, 15624873, 15842673, 0},
+	{21436587, 21563487, 23416785, 23761485, 26513784, 26731584, 0},
+	{32147658, 32674158, 34127856, 34872156, 37624851, 37842651, 0},
+	{41238567, 41583267, 43218765, 43781265, 48513762, 48731562, 0},
+	{51268437, 51486237, 56218734, 56781234, 58416732, 58761432, 0},
+	{62157348, 62375148, 65127843, 65872143, 67325841, 67852341, 0},
+	{73268415, 73486215, 76238514, 76583214, 78436512, 78563412, 0},
+	{84157326, 84375126, 85147623, 85674123, 87345621, 87654321, 0}
+    };
+
+    if (not_state(ST_S_EDIT, "Permute"))
+	return;
+    if ((es_rec.s.s_type != GENARB8) || (es_type != ARB8))
+    {
+	(void) printf("Permute: solid type must be ARB8\n");
+	return;
+    }
+
+    /*
+     *	Find the encoded form of the specified permutation,
+     *	if it exists
+     */
+    triple = atoi(argv[1]);
+    if ((triple < 123) || (triple > 876))
+    {
+	(void) printf("ERROR: bad vertex triple: %d\n", triple);
+	return;
+    }
+    vertex = triple / 100;
+    for (p = perm_array[vertex - 1]; *p > 0; ++p)
+    {
+	if (*p / 100000 == triple)
+	    break;
+    }
+    if (*p == 0)
+    {
+	(void) printf("ERROR: bad vertex triple: %d\n", triple);
+	return;
+    }
+
+    /* Convert to point notation in temporary buffer */
+    VMOVE(&lsolid.s_values[0], &es_rec.s.s_values[0]);
+    for(i = 3; i <= 21; i += 3)
+    {  
+	VADD2(&lsolid.s_values[i],
+		&es_rec.s.s_values[i], &lsolid.s_values[0]);
+    }
+
+#if 0
+    for (i = 0; i <= 21; i += 3)
+    {
+	char	string[1024];
+
+	sprintf(string, "vertex %d", i / 3 + 1);
+	VPRINT(string, &lsolid.s_values[i]);
+    }
+#endif
+
+    /*
+     *	Collect the vertices in the specified order
+     */
+    modulus = 100000000;
+    for (j = 0; j <= 21; j += 3)
+    {
+	k = ((*p % modulus) * 10) / modulus - 1;
+	VMOVE(&tsolid.s_values[j], &lsolid.s_values[3 * k]);
+	modulus /= 10;
+    }
+    /*
+     *	Reinstall the permuted vertices back into the temporary buffer
+     */
+    for (j = 0; j <= 21; j += 3)
+    {
+	VMOVE(&lsolid.s_values[j], &tsolid.s_values[j]);
+    }
+
+    /* Convert back to point&vector notation */
+    VMOVE(&es_rec.s.s_values[0], &lsolid.s_values[0]);
+    for (i = 3; i <= 21; i += 3)
+    {  
+	VSUB2(&es_rec.s.s_values[i],
+		&lsolid.s_values[i], &lsolid.s_values[0]);
+    }
+
+    /* draw the updated solid */
+    replot_editing_solid();
+    dmaflag = 1;
 }
