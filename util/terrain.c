@@ -15,6 +15,7 @@
  *	o	offset
  */
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -32,7 +33,7 @@ unsigned ydim = 256;
 
 double fbm_lacunarity = 2.1753974;		/* noise_lacunarity */
 double fbm_h = 1.0;
-double fbm_octaves = 4.0;
+double fbm_octaves = 7.0;
 double fbm_size = 1.0;
 vect_t fbm_vscale = {0.0125, 0.0125, 0.0125};
 vect_t fbm_delta = {1000.0, 1000.0, 1000.0};
@@ -269,6 +270,268 @@ func_ridged(unsigned short *buf)
 	}
 }
 
+#define PSCALE(_p, _s) _p[0] *= _s; _p[1] *= _s; _p[2] *= _s
+#define PCOPY(_d, _s) _d[0] = _s[0]; _d[1] = _s[1]; _d[2] = _s[2]
+double
+fiord(point_t point, double h, double lacunarity, double octaves, double offset)
+{
+	int i = 0;
+	point_t pt;
+	double weight, signal, freq, result;
+
+	PCOPY(pt, point);
+	freq = weight = .5;
+	result = 0.0;
+
+	do {
+		signal = fabs(noise_perlin(pt)) * pow(freq, -h);
+		result += signal * weight;
+		weight = result;
+		freq *= lacunarity;
+		PSCALE(pt, lacunarity);
+	} while (++i < octaves);
+
+	return result;
+}
+
+double
+ice(point_t point, double h, double lacunarity, double octaves, double offset)
+{
+	int i = 0;
+	point_t pt;
+	double weight, signal, freq, result;
+	static double lo = 10.0;
+	static double hi = -10.0;
+
+	PCOPY(pt, point);
+	freq =  1.0;
+	weight = 1.0;
+	result = 0.0;
+
+	do {
+		signal = fabs(noise_perlin(pt)) * pow(freq, -h);
+
+		if (signal < lo) {
+			lo = signal;
+			bu_log("new low %g\n", lo);
+		}
+		if (signal > hi) {
+			hi = signal;
+			bu_log("new high %g\n", hi);
+		}
+
+		result += signal * weight;
+		weight -= result;
+		freq *= lacunarity;
+		PSCALE(pt, lacunarity);
+	} while (++i < octaves);
+
+	return 1.0 - result;
+}
+
+double
+lunar2(point_t point, double h, double lacunarity, double octaves, double offset)
+{
+	int i = 0;
+	point_t pt;
+	double weight, signal, freq, result;
+	static double lo = 10.0;
+	static double hi = -10.0;
+
+	PCOPY(pt, point);
+	freq =  1.0;
+	weight = 1.0;
+	result = 0.0;
+
+	do {
+		signal = fabs(noise_perlin(pt));
+		signal *= signal;
+
+		if (signal < lo) {
+			lo = signal;
+			bu_log("new low %g\n", lo);
+		}
+		if (signal > hi) {
+			hi = signal;
+			bu_log("new high %g\n", hi);
+		}
+
+		result += signal * pow(freq, -h);
+		weight -= signal;
+		freq *= lacunarity;
+		PSCALE(pt, lacunarity);
+	} while (++i < octaves);
+
+	return 1.0 - result;
+}
+/***********************************************************************
+ * This one's got detail on the peaks
+ *
+ *
+ */
+double
+land(point_t point, double h, double lacunarity, double octaves, double offset)
+{
+	int i = 0;
+	point_t pt;
+	double weight, signal, freq, result, value;
+	static double lo = 10.0;
+	static double hi = -10.0;
+
+	PCOPY(pt, point);
+	freq =  1.0;
+	weight = 1.0;
+	result = 0.0;
+
+	do {
+		signal = fabs(noise_perlin(pt));
+		signal *= weight;
+
+		result += signal * pow(freq, -h);
+		weight = 0.5 - result;
+		CLAMP(weight, 0.0, 1.0);
+		freq *= lacunarity;
+		PSCALE(pt, lacunarity);
+	} while (++i < octaves);
+
+	
+	return 1.0 - result;
+}
+/***********************************************************************
+ * This one's got detail on the peaks and in the valleys, but not on the
+ * slopes
+ *
+ */
+double
+lee(point_t point, double h, double lacunarity, double octaves, double offset)
+{
+	int i = 0;
+	point_t pt;
+	double weight, signal, freq, result, value;
+	static double lo = 10.0;
+	static double hi = -10.0;
+
+	PCOPY(pt, point);
+	freq =  1.0;
+	weight = 1.0;
+	result = 0.0;
+
+	do {
+		signal = fabs(noise_perlin(pt));
+		signal *=  1.5 * weight;
+
+
+		result += signal * pow(freq, -h);
+		weight = .6 - result;
+		freq *= lacunarity;
+		PSCALE(pt, lacunarity);
+	} while (++i < octaves);
+
+	
+	return 1.2 - result;
+}
+
+/***********************************************************************
+ *
+ *	func_lee
+ *
+ *	Ridged multi-fractal
+ */
+void
+func_lee(unsigned short *buf)
+{
+	point_t pt;
+	int x, y;
+	vect_t t;
+	double v;
+	double lo, hi;
+
+	bu_log("lee\n");
+
+	lo = 10.0;
+	hi = -10.0;
+
+	pt[Z] = 0.0;
+	for (y=0 ; y < ydim ; y++) {
+		pt[Y] = y;
+		for (x=0  ; x < xdim ; x++) {
+			pt[X] = x;
+
+			xform(t, pt);
+
+			v = lee(t, fbm_h, 
+					  fbm_lacunarity, fbm_octaves, 
+					    fbm_offset);
+			if (v < lo) lo = v;
+			if (v > hi) hi = v;
+			v *= 0.5;
+
+			if (v > 1.0 || v < 0.0)
+				bu_log("clamping noise value %g \n", v);
+			CLAMP(v, 0.0, 1.0);
+			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+		}
+	}
+	bu_log("min: %g max: %g\n", lo, hi);
+}
+
+
+/***********************************************************************
+ *
+ *	func_lee
+ *
+ *	Ridged multi-fractal
+ */
+void
+func_lunar(unsigned short *buf)
+{
+	point_t pt;
+	int x, y;
+	vect_t t;
+	double v;
+	double lo, hi;
+
+	bu_log("lee\n");
+
+	lo = 10.0;
+	hi = -10.0;
+
+	pt[Z] = 0.0;
+	for (y=0 ; y < ydim ; y++) {
+		pt[Y] = y;
+		for (x=0  ; x < xdim ; x++) {
+			pt[X] = x;
+
+			xform(t, pt);
+
+			/*
+1 fiord
+2 lunar2
+3 ice
+4 land
+5 lee
+
+			*/
+			v = fiord(t, fbm_h, 
+					  fbm_lacunarity, fbm_octaves, 
+					    fbm_offset);
+			if (v < lo) lo = v;
+			if (v > hi) hi = v;
+
+			if (v > 1.0 || v < 0.0)
+				bu_log("clamping noise value %g \n", v);
+			CLAMP(v, 0.0, 1.0);
+			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+		}
+	}
+	bu_log("min: %g max: %g\n", lo, hi);
+}
+
+
+ 
+
+
+
 void (*terrain_func)();
 
 /*
@@ -321,6 +584,10 @@ char *av[];
 			break;
 		case 'f':
 			switch (*optarg) {
+			case 'L': terrain_func = func_lunar;
+				break;
+			case 'l': terrain_func = func_lee;
+				break;
 			case 'f': terrain_func = func_fbm;
 				break;
 			case 't': terrain_func = func_turb;
