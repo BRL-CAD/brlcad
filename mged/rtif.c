@@ -35,6 +35,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <sys/time.h>		/* For struct timeval */
 
+#include "tcl.h"
+#include "tk.h"
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -1418,4 +1420,228 @@ char	**argv;
 int	argc;
 {
 	return(-1);
+}
+
+/*
+ *			    N O _ O P
+ *
+ *	    Null event handler for use by rt_shootray().
+ *
+ *	Does nothing.  Returns 1.
+ */
+static int no_op (ap, ph)
+
+struct application	*ap;
+struct partition	*ph;
+
+{
+    return (1);
+}
+
+/*
+ *			R P T _ S O L I D S
+ *
+ *		Hit handler for use by rt_shootray().
+ *
+ *	Grabs the first partition it sees, extracting thence
+ *	the segment list.  Rpt_solids() sorts the solids along
+ *	the ray by first encounter.  As a side-effect, rpt_solids()
+ *	fills the rt_list structure pointed to by ap.a_uptr with
+ *	the names of the solids.  It returns 1.
+ */
+
+static int rpt_solids (ap, ph)
+
+struct application	*ap;
+struct partition	*ph;
+
+{
+    rt_log("I hit it!\n");
+    return (1);
+}
+
+/*
+ *		S K E W E R _ S O L I D S
+ *
+ *	Fire a ray at some geometry and return a list of
+ *	the solids encountered, sorted by first intersection.
+ *
+ *	N.B. - It is the caller's responsibility to free the list.
+ */
+struct rt_list *skewer_solids (argc, argv, ray_orig, ray_dir)
+
+int		argc;
+CONST char	**argv;
+point_t		ray_orig;
+vect_t		ray_dir;
+
+{
+    struct application	ap;
+    struct rt_i		*rtip;
+    struct rt_list	*sol_list;
+	
+    if ((rtip = rt_dirbuild(dbip -> dbi_filename, (char *) 0, 0)) == RTI_NULL)
+    {
+	rt_log("Cannot build directory for file '%s'\n",
+	    dbip -> dbi_filename);
+	return ((struct rt_list *) 0);
+    }
+    rtip -> useair = 1;
+    /*
+     *	XXX	I've hardwired in here to use a single CPU.
+     *		Should that be rt_avail_cpus()?
+     */
+    if (rt_gettrees(rtip, argc, argv, 1) == -1)
+	return ((struct rt_list *) 0);
+    rt_prep(rtip);
+
+    /*
+     *	Allocate and initialize the solid list
+     */
+    sol_list = (struct rt_list *)
+		    rt_malloc(sizeof(struct rt_list), "solid list");
+    RT_LIST_INIT(sol_list);
+
+    /*
+     *	Initialize the application
+     */
+    ap.a_hit = rpt_solids;
+    ap.a_miss = no_op;
+    ap.a_resource = RESOURCE_NULL;
+    ap.a_overlap = no_op;
+    ap.a_onehit = 0;
+    ap.a_uptr = (genptr_t) sol_list;
+    ap.a_rt_i = rtip;
+    ap.a_zero1 = ap.a_zero2 = 0;
+    ap.a_purpose = "skewer_solids()";
+    VMOVE(ap.a_ray.r_pt, ray_orig);
+    VMOVE(ap.a_ray.r_dir, ray_dir);
+
+    (void) rt_shootray(&ap);
+    return (sol_list);
+}
+
+int cmd_solids_on_ray (clientData, interp, argc, argv)
+
+ClientData	clientData;
+Tcl_Interp	*interp;
+int		argc;
+char		**argv;
+
+{
+    int				h = 0;
+    int				v = 0;
+    int				i;		/* Dummy loop index */
+    register struct solid	*sp;
+    double			t;
+    double			t_in;
+    struct rt_vls		vls;
+    point_t			ray_orig;
+    vect_t			ray_dir;
+    point_t			extremum[2];
+    point_t			minus, plus;	/* vrts of solid's bnding bx */
+    vect_t			unit_H, unit_V;
+
+    if ((argc != 1) && (argc != 3))
+    {
+	Tcl_SetResult(interp, "Usage: 'solids_on_ray [h v]'", TCL_STATIC);
+	return (TCL_ERROR);
+    }
+    if ((argc == 3) &&
+        ((Tcl_GetInt(interp, argv[1], &h) != TCL_OK)
+      || (Tcl_GetInt(interp, argv[2], &v) != TCL_OK)))
+    {
+	Tcl_AppendResult(interp, "\nUsage: 'solids_on_ray h v'", NULL);
+	return (TCL_ERROR);
+    }
+
+    if ((-2047 > h)  || (h > 2047) || (-2047 > v)  || (v > 2047))
+    {
+	Tcl_AppendResult(interp, "Screen coordinates out of range\n",
+	    "Must be between +/-2048", NULL);
+	return (TCL_ERROR);
+    }
+
+    VSET(ray_orig, -toViewcenter[MDX],
+	-toViewcenter[MDY], -toViewcenter[MDZ]);
+    /*
+     * Compute bounding box of all objects displayed.
+     * Borrowed from size_reset() in chgview.c
+     */
+    for (i = 0; i < 3; ++i)
+    {
+	extremum[0][i] = INFINITY;
+	extremum[1][i] = -INFINITY;
+    }
+    FOR_ALL_SOLIDS (sp)
+    {
+	    minus[X] = sp->s_center[X] - sp->s_size;
+	    minus[Y] = sp->s_center[Y] - sp->s_size;
+	    minus[Z] = sp->s_center[Z] - sp->s_size;
+	    VMIN( extremum[0], minus );
+	    plus[X] = sp->s_center[X] + sp->s_size;
+	    plus[Y] = sp->s_center[Y] + sp->s_size;
+	    plus[Z] = sp->s_center[Z] + sp->s_size;
+	    VMAX( extremum[1], plus );
+    }
+    VMOVEN(ray_dir, Viewrot + 8, 3);
+    VSCALE(ray_dir, ray_dir, -1.0);
+    for (i = 0; i < 3; ++i)
+	if (NEAR_ZERO(ray_dir[i], 1e-10))
+	    ray_dir[i] = 0.0;
+    if ((ray_orig[X] >= extremum[0][X]) &&
+	(ray_orig[X] <= extremum[1][X]) &&
+	(ray_orig[Y] >= extremum[0][Y]) &&
+	(ray_orig[Y] <= extremum[1][Y]) &&
+	(ray_orig[Z] >= extremum[0][Z]) &&
+	(ray_orig[Z] <= extremum[1][Z]))
+    {
+	t_in = -INFINITY;
+	for (i = 0; i < 6; ++i)
+	{
+	    if (ray_dir[i%3] == 0)
+		continue;
+	    t = (extremum[i/3][i%3] - ray_orig[i%3]) /
+		    ray_dir[i%3];
+	    if ((t < 0) && (t > t_in))
+		t_in = t;
+	}
+	VJOIN1(ray_orig, ray_orig, t_in, ray_dir);
+    }
+
+    VMOVEN(unit_H, model2view, 3);
+    VMOVEN(unit_V, model2view + 4, 3);
+    VJOIN1(ray_orig, ray_orig, h * Viewscale / 2047.0, unit_H);
+    VJOIN1(ray_orig, ray_orig, v * Viewscale / 2047.0, unit_V);
+
+    /*
+     *	Build a list of all the top-level objects currently displayed
+     */
+    rt_cmd_vec_len = build_tops(&rt_cmd_vec[0], &rt_cmd_vec[MAXARGS]);
+    skewer_solids(rt_cmd_vec_len, rt_cmd_vec, ray_orig, ray_dir);
+
+#if 0
+    rt_vls_init(&vls);
+    rt_vls_printf(&vls, "%g %g %g", ray_orig[X], ray_orig[Y], ray_orig[Z]);
+    Tcl_SetResult(interp, rt_vls_addr(&vls), TCL_VOLATILE);
+    rt_vls_free(&vls);
+
+    return (TCL_OK);
+#endif
+
+#if 0
+    if (Tcl_GetDouble(interp, argv[1], &viewX) != TCL_OK) return TCL_ERROR;
+
+    /* Do stuff. */
+
+    Tcl_SetResult(interp, "foo", TCL_STATIC);
+
+    Tcl_SetResult(interp, rt_vls_addr(&vls), TCL_VOLATILE);
+    rt_vls_free(&vls);
+
+
+    Tcl_AppendElement(interp, "This { is really \\ fu\"nk}y.");
+#endif
+
+    return TCL_OK;
 }
