@@ -27,8 +27,9 @@ Convtree()
 	int			notdone=2;
 	int			conv=0;
 	int			tottrees=0;
-	struct node		*ptr,*oldptr;
-	struct node		*Readtree(),*Copytree();
+	union tree		*ptr,*oldptr;
+	union tree		*Readtree(),*Copytree();
+	struct rt_comb_internal	*comb;
 	int			no_of_assoc=0;
 	int			no_of_props=0;
 	int			att_de=0;
@@ -54,7 +55,12 @@ Convtree()
 		}
 
 		Readrec( dir[i]->param ); /* read first record into buffer */
-		ptr = Readtree(); /* construct the tree */
+		ptr = Readtree( dir[i]->rot ); /* construct the tree */
+		if( !ptr )	/* failure */
+		{
+			bu_log( "\tFailed to convert Boolean tree at D%07d\n", dir[i]->direct );
+			continue;
+		}
 
 		/* skip over the associativities */
 		Readint( &no_of_assoc , "" );
@@ -79,60 +85,43 @@ Convtree()
 		if( att_de == 0 )
 			brl_att.region_flag = 1;
 
-		oldptr = Copytree( ptr , (struct node *)NULL ); /* save a copy */
-
-		/* keep calling the tree manipulating routines until they
-			stop working	*/
-		notdone = 2;
-		while( notdone )
+		BU_GETSTRUCT( comb, rt_comb_internal );
+		comb->magic = RT_COMB_MAGIC;
+		comb->tree = ptr;
+		if( brl_att.region_flag )
 		{
-			notdone = 2;
-			notdone -= Arrange( ptr );
-			notdone -= Bubbleup( ptr );
+			comb->region_flag = 1;
+			comb->region_id = brl_att.ident;
+			comb->aircode = brl_att.air_code;
+			comb->GIFTmater = brl_att.material_code;
+			comb->los = brl_att.los_density;
 		}
-
-		/* Check for success of above routines */
-		if( Treecheck( ptr ) )
+		if( dir[i]->colorp != 0 )
 		{
-			struct wmember head;
-
-			RT_LIST_INIT( &head.l );
-
-			/* make member records */
-			Makemembers( ptr , &head );
-
-			/* Make the object */
-			if( dir[i]->colorp != 0 )
-				rgb = (unsigned char*)dir[i]->rgb;
-			else
-				rgb = (unsigned char *)0;
-
-			mk_lrcomb( fdout , 
-				dir[i]->name,		/* name */
-				&head,			/* members */
-				brl_att.region_flag,	/* region flag */
-				brl_att.material_name,	/* material name */
-				brl_att.material_params, /* material parameters */
-				rgb,			/* color */
-				brl_att.ident,		/* ident */
-				brl_att.air_code,	/* air code */
-				brl_att.material_code,	/* GIFT material */
-				brl_att.los_density,	/* los density */
-				brl_att.inherit );	/* inherit */
-
-			conv++;
+			comb->rgb_valid = 1;
+			comb->rgb[0] = dir[i]->rgb[0];
+			comb->rgb[1] = dir[i]->rgb[1];
+			comb->rgb[2] = dir[i]->rgb[2];
 		}
-		else
+		comb->inherit = brl_att.inherit;
+		bu_vls_init( &comb->shader );
+		if( brl_att.material_name )
 		{
-			rt_log( "'%s'Tree cannot be converted to BRLCAD format\n",dir[i]->name );
-			rt_log( "\tOriginal tree from IGES file:\n\t" );
-			Showtree( oldptr );
-			rt_log( "\tAfter attempted conversion to BRLCAD format:\n\t" );
-			Showtree( ptr );
+			bu_vls_strcpy( &comb->shader, brl_att.material_name );
+			if( brl_att.material_params )
+			{
+				bu_vls_putc( &comb->shader, ' ' );
+				bu_vls_strcat( &comb->shader, brl_att.material_params );
+			}
 		}
+		bu_vls_init( &comb->material );
 
-		Freetree( ptr );
-		Freetree( oldptr );
+		if( mk_export_fwrite( fdout, dir[i]->name, (genptr_t)comb, ID_COMBINATION ) )
+		{
+			bu_log( "mk_export_fwrite() failed for combination (%s)\n", dir[i]->name );
+			exit( 1 );
+		}
+		conv++;
 	}
 	rt_log( "Converted %d trees successfully out of %d total trees\n", conv , tottrees );
 }

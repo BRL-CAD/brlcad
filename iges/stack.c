@@ -18,7 +18,7 @@
 
 #define	STKBLK	100	/* Allocation block size */
 
-static struct node **stk;
+static union tree **stk;
 static int jtop,stklen;
 
 void
@@ -27,7 +27,7 @@ Initstack()
 
 	jtop = (-1);
 	stklen = STKBLK;
-	stk = (struct node **)rt_malloc( stklen*sizeof( struct node * ), "Initstack: stk" );
+	stk = (union tree **)rt_malloc( stklen*sizeof( union tree * ), "Initstack: stk" );
 	if( stk == NULL )
 	{
 		rt_log( "Cannot allocate stack space\n" );
@@ -40,14 +40,14 @@ Initstack()
 
 void
 Push(ptr)
-struct node *ptr;
+union tree *ptr;
 {
 
 	jtop++;
 	if( jtop == stklen )
 	{
 		stklen += STKBLK;
-		stk = (struct node **)rt_realloc( (char *)stk , stklen*sizeof( struct node *),
+		stk = (union tree **)rt_realloc( (char *)stk , stklen*sizeof( union tree *),
 			"Push: stk" );
 		if( stk == NULL )
 		{
@@ -63,10 +63,10 @@ struct node *ptr;
 /*  This function pops the top of the stack. */
 
 
-struct node *
+union tree *
 Pop()
 {
-	struct node *ptr;
+	union tree *ptr;
 
 	if( jtop == (-1) )
 		ptr=NULL;

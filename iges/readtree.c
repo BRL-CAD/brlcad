@@ -17,43 +17,81 @@
 /*		Read and construct a boolean tree		*/
 
 #include "./iges_struct.h"
+#include "./iges_extern.h"
 
-struct node *Readtree()
+union tree *Readtree( matp )
+mat_t *matp;
 {
-	int length,i,op;
-	struct node *ptr,*Pop();
+	int length,i,k,op;
+	union tree *ptr,*Pop();
+	matp_t new_mat;
 
 	Readint( &i , "" );
 	if( i != 180 )
 	{
 		rt_log( "Expecting a Boolean Tree, found type %d\n" , i );
-		return( (struct node *)NULL );
+		return( (union tree *)NULL );
 	}
 
+	Freestack();
 	Readint( &length , "" );
 	for( i=0 ; i<length ; i++ )
 	{
 		Readint( &op , "" );
 		if( op < 0 )	/* This is an operand */
 		{
-			ptr = (struct node *)rt_malloc( sizeof( struct node ),
+			ptr = (union tree *)rt_malloc( sizeof( union tree ),
 				"Readtree: ptr" );
-			ptr->op = op;
-			ptr->left = NULL;
-			ptr->right = NULL;
-			ptr->parent = NULL;
+			ptr->magic = RT_TREE_MAGIC;
+			ptr->tr_l.tl_op = OP_DB_LEAF;
+			k = ((-op)-1)/2;
+			if( k < 0 || k >= totentities )
+			{
+				bu_log( "Readtree(): pointer in tree is out of bounds (%d)\n", -op );
+				return( (union tree *)NULL );
+			}
+			if( dir[k]->type <= 0 )
+			{
+				bu_log( "Unknown entity type (%d) at D%07d\n", -dir[k]->type, dir[k]->direct );
+				return( (union tree *)NULL );
+			}
+			ptr->tr_l.tl_name = strdup( dir[k]->name );
+			if( matp && dir[k]->rot )
+			{
+				new_mat = (matp_t)rt_malloc( sizeof( mat_t ), "new_mat" );
+				bn_mat_mul( new_mat, *matp, *dir[k]->rot );
+			}
+			else if( dir[k]->rot )
+				new_mat = *dir[k]->rot;
+			else if( matp )
+				new_mat = *matp;
+			else
+				new_mat = (matp_t)NULL;
+			ptr->tr_l.tl_mat = new_mat;
 			Push( ptr );
 		}
 		else	/* This is an operator */
 		{
-			ptr = (struct node *)rt_malloc( sizeof( struct node ),
+			ptr = (union tree *)rt_malloc( sizeof( union tree ),
 				"Readtree: ptr" );
-			ptr->op = op;
-			ptr->right = Pop();
-			ptr->left = Pop();
-			ptr->parent = NULL;
-			ptr->left->parent = ptr;
-			ptr->right->parent = ptr;
+			ptr->magic = RT_TREE_MAGIC;
+			switch( op )
+			{
+				case 1:
+					ptr->tr_b.tb_op = OP_UNION;
+					break;
+				case 2:
+					ptr->tr_b.tb_op = OP_INTERSECT;
+					break;
+				case 3:
+					ptr->tr_b.tb_op = OP_SUBTRACT;
+					break;
+				default:
+					bu_log( "Readtree(): illegal operator code (%d)\n", op );
+					exit( 1 );
+			}
+			ptr->tr_b.tb_right = Pop();
+			ptr->tr_b.tb_left = Pop();
 			Push( ptr );
 		}
 	}

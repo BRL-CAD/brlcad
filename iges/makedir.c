@@ -138,7 +138,11 @@ Makedir()
 			}
 		}
 		if( !found )
+		{
 			typecount[0].count++;
+			if( dir[entcount]->type > 0 )
+				dir[entcount]->type = (-dir[entcount]->type); /* for easy recognition */
+		}
 
 		/* Check if this is a transformation entity */
 		if( dir[entcount]->type == 124 || dir[entcount]->type == 700 )
