@@ -675,7 +675,7 @@ com_table	*ctp;
 
     /* Clean up from previous output destination */
     if (sf_name != def_sf_name)
-	rt_free(sf_name);
+	rt_free(sf_name, "new(now old)statefile");
 
     /* Establish the new destination */
     sf_name = new_name;
