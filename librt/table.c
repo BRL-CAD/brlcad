@@ -38,6 +38,15 @@ static const char RCStree[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
+extern int rt_dsp_tclget(Tcl_Interp *interp,
+			 const struct rt_db_internal *intern,
+			 const char		     *attr);
+
+extern int rt_dsp_tcladjust(Tcl_Interp *interp,
+			    struct rt_db_internal *intern,
+			    int		argc,
+			    char	**argv);
+
 const struct bu_structparse rt_nul_parse[] = {
 	{""}
 };
@@ -843,7 +852,7 @@ const struct rt_functab rt_functab[] = {
 		rt_dsp_import,	rt_dsp_export,	rt_dsp_ifree,
 		rt_dsp_describe,rt_dsp_xform,	rt_dsp_parse,
 		sizeof(struct rt_dsp_internal), RT_DSP_INTERNAL_MAGIC,
-		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+	        rt_dsp_tclget, rt_dsp_tcladjust, 0,
 		NULL,
 	},
 

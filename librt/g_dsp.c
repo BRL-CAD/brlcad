@@ -268,6 +268,11 @@ const struct bu_structparse rt_dsp_ptab[] = {
     {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
+/*
+ *	This one is used by the rt_dsp_tclget()
+ */
+
+
 static int plot_file_num=0;
 
 
@@ -3367,6 +3372,7 @@ rt_dsp_import( ip, ep, mat, dbip )
      */
     dsp_ip->dsp_xcnt = dsp_ip->dsp_ycnt = 0;
 
+    dsp_ip->dsp_cuttype = DSP_CUT_DIR_ADAPT;
     dsp_ip->dsp_smooth = 1;
     MAT_IDN(dsp_ip->dsp_stom);
     MAT_IDN(dsp_ip->dsp_mtos);
@@ -3668,6 +3674,142 @@ rt_dsp_ifree( ip )
     bu_free( (char *)dsp_ip, "dsp ifree" );
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
+
+const struct bu_structparse fake_dsp_printab[] = {
+    {"%c",  1, "src", DSP_O(dsp_datasrc), BU_STRUCTPARSE_FUNC_NULL },
+    {"%S",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",  1, "w",  DSP_O(dsp_xcnt),	 BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",  1, "n",  DSP_O(dsp_ycnt),	 BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
+    {"%c",  1, "cut", DSP_O(dsp_cuttype), BU_STRUCTPARSE_FUNC_NULL },
+    {"%f", 16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
+    {"",    0, (char *)0, 0,		 BU_STRUCTPARSE_FUNC_NULL }
+};
+
+
+/*
+ *			R T _ P A R S E T A B _ T C L G E T
+ *
+ *  This is the generic routine to be listed in rt_functab[].ft_tclget
+ *  for those solid types which are fully described by their ft_parsetab
+ *  entry.
+ *
+ *  'attr' is specified to retrieve only one attribute, rather than all.
+ *  Example:  "db get ell.s B" to get only the B vector.
+ */
+int
+rt_dsp_tclget( interp, intern, attr )
+Tcl_Interp			*interp;
+const struct rt_db_internal	*intern;
+const char			*attr;
+{
+	register const struct bu_structparse	*sp = NULL;
+	const struct rt_dsp_internal *dsp_ip;
+	int                     status;
+	Tcl_DString             ds;
+	struct bu_vls           str;
+
+
+
+	/* XXX if dsp_datasrc == RT_DSP_SRC_V4_FILE we have a V4 dsp
+	 * otherwise, a V5 dsp.  Take advantage of this.
+	 */
+
+	RT_CK_DB_INTERNAL( intern );
+	dsp_ip = (struct rt_dsp_internal *)intern->idb_ptr;
+
+	bu_vls_init( &str );
+	Tcl_DStringInit( &ds );
+
+	if( attr == (char *)0 ) {
+	    /* Print out solid type and all attributes */
+
+	    Tcl_DStringAppendElement( &ds, "dsp" );
+
+
+
+	    switch (dsp_ip->dsp_datasrc) {
+	    case RT_DSP_SRC_V4_FILE:
+		sp = rt_dsp_ptab;
+		break;
+	    case RT_DSP_SRC_FILE:
+	    case RT_DSP_SRC_OBJ:
+		sp = fake_dsp_printab;
+		break;
+	    }
+	    while( sp && sp->sp_name != NULL ) {
+		Tcl_DStringAppendElement( &ds, sp->sp_name );
+		bu_vls_trunc( &str, 0 );
+		bu_vls_struct_item(&str,sp,(char *)intern->idb_ptr,' ');
+		Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
+		++sp;
+	    }
+	    status = TCL_OK;
+
+	} else {
+	    switch (dsp_ip->dsp_datasrc) {
+	    case RT_DSP_SRC_V4_FILE:
+		sp = rt_dsp_ptab;
+	    case RT_DSP_SRC_FILE:
+	    case RT_DSP_SRC_OBJ:
+		sp = fake_dsp_printab;
+		break;
+	    }
+	    if( bu_vls_struct_item_named( &str, sp, attr,
+					  (char *)intern->idb_ptr, ' ') < 0 ) {
+		bu_vls_printf(&str,
+			      "Objects of type %s do not have a %s attribute.",
+			      "dsp", attr);
+		status = TCL_ERROR;
+	    } else {
+		status = TCL_OK;
+	    }
+	    Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
+	}
+
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &str );
+
+	return status;
+}
+
+/*
+ *			R T _ P A R S E T A B _ T C L A D J U S T
+ *
+ *  For those solids entirely defined by their parsetab.
+ *  Invoked via rt_functab[].ft_tcladjust()
+ */
+int
+rt_dsp_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
+{
+	register const struct bu_structparse	*sp = NULL;
+	const struct rt_dsp_internal *dsp_ip;
+
+
+	RT_CK_DB_INTERNAL(intern);
+	dsp_ip = (struct rt_dsp_internal *)intern->idb_ptr;
+
+
+	switch (dsp_ip->dsp_datasrc) {
+	case RT_DSP_SRC_V4_FILE:
+		sp = rt_dsp_ptab;
+	case RT_DSP_SRC_FILE:
+	case RT_DSP_SRC_OBJ:
+		sp = fake_dsp_printab;		
+	    break;
+	}
+
+	if (! sp) return TCL_ERROR;
+
+	return bu_structparse_argv(interp, argc, argv, sp,
+				(char *)intern->idb_ptr );
+}
+
 
 /* Important when concatenating source files together */
 #undef dlog
