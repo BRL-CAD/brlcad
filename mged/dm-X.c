@@ -60,6 +60,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "dm-X.h"
 
+#ifdef DO_SNAP_TO_GRID
+extern void snap_to_grid();
+#endif
+
 #ifdef USE_FRAMEBUFFER
 extern void X24_configureWindow();
 #endif
@@ -72,6 +76,7 @@ extern void zoom_rect_area();
 extern void dm_var_init();
 extern void mged_print_result();
 extern point_t e_axes_pos;
+extern point_t curr_e_axes_pos;
 
 static void	X_statechange();
 static int     X_dm();
@@ -1693,6 +1698,61 @@ end:
 	rect_height = 0.0;
 
 	dirty = 1;
+#endif
+#ifdef DO_SNAP_TO_GRID
+      }else if(mged_variables->grid_snap && !stolen &&
+	       state != ST_S_PICK && state != ST_O_PICK &&
+	       state != ST_O_PATH && !SEDIT_PICK){
+	point_t view_pt;
+	point_t model_pt;
+
+	snap_to_grid(&fx, &fy);
+
+	if((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	   mged_variables->transform == 'e'){
+	  char save_coords;
+	  int save_edflag = -1;
+
+	  save_coords = mged_variables->coords;
+	  mged_variables->coords = 'v';
+
+	  if(state == ST_S_EDIT){
+	    save_edflag = es_edflag;
+	    if(!SEDIT_TRAN)
+	      es_edflag = STRANS;
+	  }else{
+	    save_edflag = edobj;
+	    edobj = BE_O_XY;
+	  }
+
+	  MAT4X3PNT(view_pt, model2view, curr_e_axes_pos);
+	  view_pt[X] = fx;
+	  view_pt[Y] = fy;
+	  MAT4X3PNT(model_pt, view2model, view_pt);
+	  VSCALE(model_pt, model_pt, base2local);
+	  bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
+
+	  mged_variables->coords = save_coords;
+	  if(state == ST_S_EDIT)
+	    es_edflag = save_edflag;
+	  else
+	    edobj = save_edflag;
+
+	  mged_variables->orig_gui = old_orig_gui;
+	  bu_vls_free(&vls);
+	  return status;
+	}else{
+	  point_t vcenter;
+
+	  MAT_DELTAS_GET_NEG(vcenter, toViewcenter);
+	  MAT4X3PNT(view_pt, model2view, vcenter);
+	  view_pt[X] = fx;
+	  view_pt[Y] = fy;
+	  MAT4X3PNT(model_pt, view2model, view_pt);
+	  VSCALE(model_pt, model_pt, base2local);
+	  bu_vls_printf(&vls, "center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	}
 #endif
       }else
 	bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
