@@ -153,9 +153,7 @@ static struct cmdtab cmdtab[] = {
 	"H", f_hideline,
 #endif
 	"history", f_history,
-	"hist_prev", cmd_prev,
-	"hist_next", cmd_next,
-	"hist_add", cmd_hist_add,
+	"hist", cmd_hist,
 	"i", f_instance,
 	"idents", f_tables,
 	"ill", f_ill,
@@ -1973,9 +1971,10 @@ f_pl(clientData, interp, argc, argv)
 }
 
 void
-mged_update()
+mged_update(non_blocking)
+int non_blocking;
 {
-  event_check(0);  /* blocking */
+  event_check(non_blocking);
   refresh();
 }
 
@@ -1986,7 +1985,9 @@ f_update(clientData, interp, argc, argv)
 	int     argc;
 	char    **argv;
 {
-	if(argc < 1 || 1 < argc){
+	int non_blocking;
+
+	if(argc != 2 || sscanf(argv[1], "%d", &non_blocking) != 1){
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1996,7 +1997,7 @@ f_update(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	mged_update();
+	mged_update(non_blocking);
 
 	return TCL_OK;
 }
