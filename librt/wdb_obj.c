@@ -3194,6 +3194,8 @@ wdb_color_zaprec(mp, interp, dbip)
 {
 	struct directory dir;
 
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 4 );
+
 	if (dbip->dbi_read_only || mp->mt_daddr == MATER_NO_ADDR)
 		return;
 
