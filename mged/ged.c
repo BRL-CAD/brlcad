@@ -446,6 +446,9 @@ char **argv;
 	      struct bu_vls vls;
 	      int status;
 
+	      /* make this a process group leader */
+	      setpgid(0, 0);
+
 	      bu_vls_init(&vls);
 	      bu_vls_strcpy(&vls, "gui");
 	      status = Tcl_Eval(interp, bu_vls_addr(&vls));
