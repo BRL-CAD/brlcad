@@ -2688,7 +2688,8 @@ int rt_comb_describe(
 	const struct rt_db_internal *ip,
 	int		verbose,
 	double		mm2local,
-	struct resource *resp);
+	struct resource *resp,
+	struct db_i *db_i);
 void db_wrap_v4_external( struct bu_external *op, const char *name );
 int db_ck_left_heavy_tree(
 	const union tree	*tp,

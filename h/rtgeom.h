@@ -364,9 +364,9 @@ struct rt_dsp_internal{
 	unsigned int	dsp_xcnt;		/* # samples in row of data */
 	unsigned int	dsp_ycnt;		/* # of columns in data */
 	unsigned char	dsp_smooth;		/* bool: surf normal interp */
-#define DSP_CUT_DIR_ADAPT	'0'
-#define DSP_CUT_DIR_llUR	'1'
-#define DSP_CUT_DIR_ULlr	'2'
+#define DSP_CUT_DIR_ADAPT	'a'
+#define DSP_CUT_DIR_llUR	'l'
+#define DSP_CUT_DIR_ULlr	'L'
     unsigned char   dsp_cuttype;		/* type of cut to make */
         
 	mat_t		dsp_mtos;		/* model to solid space */
