@@ -492,6 +492,8 @@ struct model	*m;
 
 /*
  *			N M G _ P R _ S T R U C T _ C O U N T S
+ *
+ *  XXX This version is depricated, in favor of nmg_vls_struct_counts()
  */
 void
 nmg_pr_struct_counts( ctr, str )
@@ -535,6 +537,52 @@ char				*str;
 }
 
 /*
+ *			N M G _ V L S _ S T R U C T _ C O U N T S
+ *
+ */
+void
+nmg_vls_struct_counts( str, ctr )
+struct rt_vls			*str;
+CONST struct nmg_struct_counts	*ctr;
+{
+	RT_VLS_CHECK( str );
+
+	rt_vls_printf(str, " Actual structure counts:\n");
+	rt_vls_printf(str, "\t%6d model\n", ctr->model);
+	rt_vls_printf(str, "\t%6d model_a\n", ctr->model_a);
+	rt_vls_printf(str, "\t%6d region\n", ctr->region);
+	rt_vls_printf(str, "\t%6d region_a\n", ctr->region_a);
+	rt_vls_printf(str, "\t%6d shell\n", ctr->shell);
+	rt_vls_printf(str, "\t%6d shell_a\n", ctr->shell_a);
+	rt_vls_printf(str, "\t%6d face\n", ctr->face);
+	rt_vls_printf(str, "\t%6d face_g\n", ctr->face_g);
+	rt_vls_printf(str, "\t%6d faceuse\n", ctr->faceuse);
+	rt_vls_printf(str, "\t%6d faceuse_a\n", ctr->faceuse_a);
+	rt_vls_printf(str, "\t%6d loopuse\n", ctr->loopuse);
+	rt_vls_printf(str, "\t%6d loopuse_a\n", ctr->loopuse_a);
+	rt_vls_printf(str, "\t%6d loop\n", ctr->loop);
+	rt_vls_printf(str, "\t%6d loop_g\n", ctr->loop_g);
+	rt_vls_printf(str, "\t%6d edgeuse\n", ctr->edgeuse);
+	rt_vls_printf(str, "\t%6d edgeuse_a\n", ctr->edgeuse_a);
+	rt_vls_printf(str, "\t%6d edge\n", ctr->edge);
+	rt_vls_printf(str, "\t%6d edge_g\n", ctr->edge_g);
+	rt_vls_printf(str, "\t%6d vertexuse\n", ctr->vertexuse);
+	rt_vls_printf(str, "\t%6d vertexuse_a\n", ctr->vertexuse_a);
+	rt_vls_printf(str, "\t%6d vertex\n", ctr->vertex);
+	rt_vls_printf(str, "\t%6d vertex_g\n", ctr->vertex_g);
+	rt_vls_printf(str, " Abstractions:\n");
+	rt_vls_printf(str, "\t%6d max_structs\n", ctr->max_structs);
+	rt_vls_printf(str, "\t%6d face_loops\n", ctr->face_loops);
+	rt_vls_printf(str, "\t%6d face_edges\n", ctr->face_edges);
+	rt_vls_printf(str, "\t%6d face_lone_verts\n", ctr->face_lone_verts);
+	rt_vls_printf(str, "\t%6d wire_loops\n", ctr->wire_loops);
+	rt_vls_printf(str, "\t%6d wire_loop_edges\n", ctr->wire_loop_edges);
+	rt_vls_printf(str, "\t%6d wire_edges\n", ctr->wire_edges);
+	rt_vls_printf(str, "\t%6d wire_lone_verts\n", ctr->wire_lone_verts);
+	rt_vls_printf(str, "\t%6d shells_of_lone_vert\n", ctr->shells_of_lone_vert);
+}
+
+/*
  *			N M G _ M _ S T R U C T _ C O U N T
  *
  *  Returns -
@@ -567,9 +615,11 @@ struct model				*m;
 		ctr->_type++; \
 	}
 
+	NMG_CK_MODEL(m);
+	bzero( ctr, sizeof(*ctr) );
+
 	ptrs = (long **)rt_calloc( m->maxindex+1, sizeof(long *), "nmg_m_count ptrs[]" );
 
-	NMG_CK_MODEL(m);
 	NMG_UNIQ_INDEX(m, model);
 	if(m->ma_p)  {
 		NMG_CK_MODEL_A(m->ma_p);
