@@ -42,12 +42,13 @@
 /* Options useful for debugging the library */
 #define DEBUG_ROOTS	0x00001000	/* 13 Print rootfinder details */
 #define DEBUG_PARTITION	0x00002000	/* 14 Info about bool_weave() */
-#define DEBUG_CUT	0x00004000	/* 15 Print space cutting details */
+#define DEBUG_CUT	0x00004000	/* 15 Print space cutting statistics */
 #define DEBUG_BOXING	0x00008000	/* 16 Object/box checking details */
 #define DEBUG_MEM	0x00010000	/* 17 Debug dynamic memory operations */
 #define DEBUG_TESTING	0x00020000	/* 18 One-shot debugging flag */
 #define DEBUG_FDIFF	0x00040000	/* 19 bool/fdiff debugging */
 #define DEBUG_PARALLEL	0x00080000	/* 20 machine.c parallel support */
+#define DEBUG_CUTDETAIL	0x00100000	/* 21 Print space cutting details */
 
 /* These will cause binary debugging output */
 #define DEBUG_PLOTBOX	0x80000000	/* 32 Plot(3) bounding boxes and cuts */
@@ -55,7 +56,7 @@
 /* Format string for rt_printb() */
 #define DEBUG_FORMAT	\
 "\020\040PLOTBOX\
-\024PARALLEL\023FDIFF\022TEST\
+\025CUTDETAIL\024PARALLEL\023FDIFF\022TEST\
 \021MEM\020BOXING\017CUTING\016PARTITION\015ROOTS\014VOL\
 \013EBM\012ANIM\011SPLINE\010ARB8\7REGIONS\6SOLIDS\5DB\
 \2SHOOT\1ALLRAYS"
