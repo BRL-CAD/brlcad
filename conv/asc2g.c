@@ -56,7 +56,7 @@ char **argv;
 
 		/* Check record type */
 		if( debug )
-			fprintf(stderr,"rec %c\n", buf[0] );
+			(void)fprintf(stderr,"rec %c\n", buf[0] );
 		switch( buf[0] )  {
 		case ID_SOLID:
 			solbld();
@@ -103,7 +103,7 @@ char **argv;
 			continue;
 
 		default:
-			(void)fprintf(stderr,"ASC2G: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
+			(void)fprintf(stderr,"asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
 			(void)fprintf(stderr,"%s\n", buf );
 			continue;
 		}
@@ -139,7 +139,7 @@ solbld()	/* Build Solid record */
 	}
 
 	if( debug )  {
-		fprintf(stderr,"%s ty%d [0]=%f,%f,%f [3]=%e,%e,%e\n",
+		(void)fprintf(stderr,"%s ty%d [0]=%f,%f,%f [3]=%e,%e,%e\n",
 			record.s.s_name, record.s.s_type,
 			record.s.s_values[0],
 			record.s.s_values[1],
@@ -655,7 +655,7 @@ bsurfbld()	/* Build d-spline surface description record */
 	/* Malloc and clear memory for the KNOT DATA and read it */
 	nbytes = record.d.d_nknots * sizeof(union record);
 	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		(void)fprintf(stderr, "ASC2G: spline knot malloc error\n");
+		(void)fprintf(stderr, "asc2g: spline knot malloc error\n");
 		exit(1);
 	}
 	fp = vp;
@@ -675,7 +675,7 @@ bsurfbld()	/* Build d-spline surface description record */
 	/* Malloc and clear memory for the CONTROL MESH data and read it */
 	nbytes = record.d.d_nctls * sizeof(union record);
 	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		(void)fprintf(stderr, "ASC2G: control mesh malloc error\n");
+		(void)fprintf(stderr, "asc2g: control mesh malloc error\n");
 		exit(1);
 	}
 	fp = vp;
