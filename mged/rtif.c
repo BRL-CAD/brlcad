@@ -247,7 +247,11 @@ run_rt()
 
 		VSET( temp, 0, 0, 1 );
 		MAT4X3PNT( eye_model, view2model, temp );
+#if 0
+		/* This old way is no longer needed for RT */
 		rt_oldwrite(fp, eye_model );
+#endif
+		rt_write(fp, eye_model );
 	}
 	(void)fclose( fp );
 
@@ -297,7 +301,7 @@ f_rt()
 
 	setup_rt( vp );
 	retcode = run_rt();
-	if( retcode == 0 )  {
+	if( needs_reattach && retcode == 0 )  {
 		/* Wait for a return, then reattach display */
 		printf("Press RETURN to reattach\007\n");
 		while( getchar() != '\n' )
@@ -341,7 +345,7 @@ f_rrt()
 
 	setup_rt( vp );
 	retcode = run_rt();
-	if( retcode == 0 )  {
+	if( needs_reattach && retcode == 0 )  {
 		/* Wait for a return, then reattach display */
 		printf("Press RETURN to reattach\007\n");
 		while( getchar() != '\n' )
@@ -408,7 +412,11 @@ f_rtcheck()
 
 		VSET( temp, 0, 0, 1 );
 		MAT4X3PNT( eye_model, view2model, temp );
+#if 0
+		/* This old way is no longer needed for RT */
 		rt_oldwrite(fp, eye_model );
+#endif
+		rt_write(fp, eye_model );
 	}
 	(void)fclose( fp );
 
