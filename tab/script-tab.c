@@ -165,6 +165,7 @@ int	argc;
 char	**argv;
 {
 	rt_bomb("cm_multiview: not supported\n");
+	return( 0 );	/* for the compilers */
 }
 
 /*

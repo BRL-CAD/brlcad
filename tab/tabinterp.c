@@ -94,6 +94,9 @@ void		accel_interpolate();
 void		go();
 void		output();
 void		pr_ichan();
+void		next_interpolate();
+void		step_interpolate();
+void		quat_interpolate();
 
 struct command_tab cmdtab[] = {
 	"file", "filename chan_num(s)", "load channels from file",
@@ -648,6 +651,7 @@ again:
 /*
  *			N E X T _ I N T E R P O L A T E
  */
+void
 next_interpolate( chp )
 register struct chan	*chp;
 {
@@ -681,6 +685,7 @@ register struct chan	*chp;
  *  This routine takes advantage of (and depends on) the fact that
  *  the input and output is sorted in increasing time values.
  */
+void
 step_interpolate( chp, times )
 register struct chan	*chp;
 register fastf_t	*times;
@@ -1042,6 +1047,7 @@ char	**argv;
  *  This routine depends on the four input channels having identical
  *  time stamps, because only the "x" input times are used.
  */
+void
 quat_interpolate( x, y, z, w, times )
 struct chan	*x, *y, *z, *w;
 register fastf_t	*times;

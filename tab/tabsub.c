@@ -45,6 +45,9 @@ int	debug = 0;
 
 char	*prototype;		/* Contains full text of prototype document */
 
+void	get_proto();
+void	do_lines();
+void	out_mat();
 
 /*
  *			M A I N
@@ -75,6 +78,7 @@ char	**argv;
 	do_lines( table );
 }
 
+void
 get_proto( file )
 char	*file;
 {
@@ -107,6 +111,7 @@ int	nwords;				/* # words in chanwords[] */
 #define NTOKENWORDS	16
 char	*tokenwords[NTOKENWORDS+1];
 
+void
 do_lines( fp )
 FILE	*fp;
 {
@@ -440,6 +445,7 @@ char	*s;
 	return(chan+1);
 }
 
+void
 out_mat( m, fp )
 matp_t	m;
 FILE	*fp;

@@ -158,6 +158,7 @@ fprintf(stderr,"scriptsort: Frame %d(%d)\n",new->number, new->tp);
 }
 
 #ifdef never
+void
 bubblesort()
 {
 	register struct frame *a, *b, *hold;
@@ -184,6 +185,7 @@ bubblesort()
 	}
 }
 #else /* never */
+void
 bubblesort()
 {
 	struct frame *a, *b;
@@ -203,6 +205,7 @@ bubblesort()
 	}
 }
 #endif /* never */
+void
 printframe(fp)
 struct frame *fp;
 {
