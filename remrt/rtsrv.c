@@ -56,11 +56,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../rt/ext.h"
 #include "../rt/rdebug.h"
 
-#include "./list.h"
 #include "./protocol.h"
 
-struct list	*FreeList;
-struct list	WorkHead;
+struct rt_list	WorkHead;
+
+struct pkg_queue {
+	struct rt_list	l;
+	unsigned short	type;
+	char		*buf;
+};
 
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
@@ -320,10 +324,10 @@ char **argv;
 		exit(0);
 	}
 
-	WorkHead.li_forw = WorkHead.li_back = &WorkHead;
+	RT_LIST_INIT( &WorkHead );
 
 	for(;;)  {
-		register struct list	*lp;
+		register struct pkg_queue	*lp;
 		fd_set ifds;
 		struct timeval tv;
 
@@ -336,7 +340,7 @@ char **argv;
 		/* Second, see if any input to read */
 		FD_ZERO(&ifds);
 		FD_SET(pcsrv->pkc_fd, &ifds);
-		tv.tv_sec = WorkHead.li_forw != &WorkHead ? 0L : 9999L;
+		tv.tv_sec = RT_LIST_NON_EMPTY( &WorkHead ) ? 0L : 9999L;
 		tv.tv_usec = 0L;
 
 		if( select(pcsrv->pkc_fd+1, &ifds, (fd_set *)0, (fd_set *)0,
@@ -360,27 +364,27 @@ char **argv;
 		}
 
 		/* Finally, more work may have just arrived, check our list */
-		if( (lp = WorkHead.li_forw) != &WorkHead )  {
-
-			DEQUEUE_LIST( lp );
-			switch( lp->li_start )  {
+		if( RT_LIST_NON_EMPTY( &WorkHead ) )  {
+			lp = RT_LIST_FIRST( pkg_queue, &WorkHead );
+			RT_LIST_DEQUEUE( &lp->l );
+			switch( lp->type )  {
 			case MSG_MATRIX:
-				ph_matrix( (struct pkg_conn *)0, (char *)lp->li_stop );
+				ph_matrix( (struct pkg_conn *)0, lp->buf );
 				break;
 			case MSG_LINES:
-				ph_lines( (struct pkg_conn *)0, (char *)lp->li_stop );
+				ph_lines( (struct pkg_conn *)0, lp->buf );
 				break;
 			case MSG_OPTIONS:
-				ph_options( (struct pkg_conn *)0, (char *)lp->li_stop );
+				ph_options( (struct pkg_conn *)0, lp->buf );
 				break;
 			case MSG_GETTREES:
-				ph_gettrees( (struct pkg_conn *)0, (char *)lp->li_stop );
+				ph_gettrees( (struct pkg_conn *)0, lp->buf );
 				break;
 			default:
-				rt_log("bad list element %d\n", lp->li_start );
+				rt_log("bad list element, type=%d\n", lp->type );
 				exit(33);
 			}
-			FREE_LIST( lp );
+			rt_free( (char *)lp, "struct pkg_queue" );
 		}
 	}
 
@@ -400,15 +404,14 @@ ph_enqueue(pc, buf)
 register struct pkg_conn *pc;
 char	*buf;
 {
-	register struct list	*lp;
+	register struct pkg_queue	*lp;
 
 	if( debug )  fprintf(stderr, "ph_enqueue: %s\n", buf );
 
-	/* XXX This should be a different structure, based on rtlist.h */
-	GET_LIST( lp );
-	lp->li_start = (long)pc->pkc_type;
-	lp->li_stop = (long)buf;
-	APPEND_LIST( lp, WorkHead.li_back );
+	GETSTRUCT( lp, pkg_queue );
+	lp->type = pc->pkc_type;
+	lp->buf = buf;
+	RT_LIST_INSERT( &WorkHead, &lp->l );
 }
 
 void
