@@ -60,6 +60,7 @@ FBIO	*fb_server_fbp = FBIO_NULL;
 fd_set	*fb_server_select_list;
 int	*fb_server_max_fd = (int *)NULL;
 int	fb_server_got_fb_free = 0;	/* !0 => we have received an fb_free */
+int	fb_server_refuse_fb_free = 0;	/* !0 => don't accept fb_free() */
 int	fb_server_retain_on_close = 0;	/* !0 => we are holding a reusable FB open */
 
 CONST struct pkg_switch fb_server_pkg_switch[] = {
@@ -225,8 +226,13 @@ char *buf;
 {
 	char	rbuf[NET_LONG_LEN+1];
 	
-	(void)pkg_plong( &rbuf[0], fb_free( fb_server_fbp ) );
-	fb_server_fbp = FBIO_NULL;
+	if( fb_server_refuse_fb_free )  {
+		(void)pkg_plong( &rbuf[0], -1 );
+	} else {
+		(void)pkg_plong( &rbuf[0], fb_free( fb_server_fbp ) );
+		fb_server_fbp = FBIO_NULL;
+	}
+
 	if( pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp ) != NET_LONG_LEN )
 		fprintf(stderr, "pkg_send fb_free reply\n");
 	if( buf ) (void)free(buf);
