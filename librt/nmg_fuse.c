@@ -1497,5 +1497,5 @@ CONST struct rt_tol	*tol;
 		RT_LIST_DEQUEUE( &rad->l );
 		rt_free( (char *)rad, "nmg_radial" );
 	}
-	if( !RT_LIST_EMPTY( &list1 ) )  rt_bomb("nmg_radial_join_eu_NEW() list2 non-empty\n");
+	if( RT_LIST_NON_EMPTY( &list1 ) )  rt_bomb("nmg_radial_join_eu_NEW() list2 non-empty\n");
 }
