@@ -776,7 +776,11 @@ editit(const char *file)
 		register int i;
 		/* Don't call bu_log() here in the child! */
 
+#if 0
 		for( i=3; i < 20; i++ )
+#else
+		for( i=0; i < 20; i++ )
+#endif
 			(void)close(i);
 
 		(void)signal( SIGINT, SIG_DFL );
