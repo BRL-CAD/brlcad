@@ -809,14 +809,19 @@ struct rt_tol		*tol;
 {
 	register int	i;
 	register int	j;
+	register int	k;
 	struct rt_ars_internal	*arip;
 	struct shell	*s;
 	struct vertex	**verts;
 	struct faceuse	*fu;
+	struct nmg_ptbl	kill_fus;
+	struct nmg_ptbl tbl;
 
 	RT_CK_DB_INTERNAL(ip);
 	arip = (struct rt_ars_internal *)ip->idb_ptr;
 	RT_ARS_CK_MAGIC(arip);
+
+	nmg_tbl( &kill_fus, TBL_INIT, (long *)NULL );
 
 	/* Build the topology of the ARS.  Start by allocating storage */
 
@@ -843,15 +848,31 @@ struct rt_tol		*tol;
 	 *  Draw the "waterlines", by tracing each curve.
 	 *  n+1th point is first point replicated by import code.
 	 */
+	k = arip->pts_per_curve-2;	/* next to last point on curve */
 	for( i = 0; i < arip->ncurves-1; i++ )  {
+		int double_ended;
+
+		if( VAPPROXEQUAL( &arip->curves[i][1*ELEMENTS_PER_VECT], &arip->curves[i][k*ELEMENTS_PER_VECT], tol->dist ) )
+			double_ended = 1;
+		else
+			double_ended = 0;
+
 		for( j = 0; j < arip->pts_per_curve; j++ )  {
 			struct vertex **corners[3];
+
+
+			if( double_ended &&
+			     i != 0 &&
+			     ( j == 0 || j == k || j == arip->pts_per_curve-1 ) )
+					continue;
 
 			/*
 			 *  First triangular face
 			 */
 			if( rt_3pts_distinct( ARS_PT(0,0), ARS_PT(1,1),
-			    ARS_PT(0,1), tol )
+				ARS_PT(0,1), tol )
+			   && !rt_3pts_collinear( ARS_PT(0,0), ARS_PT(1,1),
+				ARS_PT(0,1), tol )
 			)  {
 				/* Locate these points, if previously mentioned */
 				FIND_IJ(0, 0);
@@ -862,6 +883,7 @@ struct rt_tol		*tol;
 				corners[0] = &verts[IJ(0,0)];
 				corners[1] = &verts[IJ(0,1)];
 				corners[2] = &verts[IJ(1,1)];
+
 				if( (fu = nmg_cmface( s, corners, 3 )) == (struct faceuse *)0 )  {
 					rt_log("rt_ars_tess() nmg_cmface failed, skipping face a[%d][%d]\n",
 						i,j);
@@ -872,14 +894,19 @@ struct rt_tol		*tol;
 				ASSOC_GEOM( 1, 0, 1 );
 				ASSOC_GEOM( 2, 1, 1 );
 				if( nmg_calc_face_g( fu ) )
-					nmg_kfu(  fu );
+				{
+					rt_log( "Degenerate face created, will kill it later\n" );
+					nmg_tbl( &kill_fus, TBL_INS, (long *)fu );
+				}
 			}
 
 			/*
 			 *  Second triangular face
 			 */
 			if( rt_3pts_distinct( ARS_PT(1,0), ARS_PT(1,1),
-			    ARS_PT(0,0), tol )
+				ARS_PT(0,0), tol )
+			   && !rt_3pts_collinear( ARS_PT(1,0), ARS_PT(1,1),
+				ARS_PT(0,0), tol )
 			)  {
 				/* Locate these points, if previously mentioned */
 				FIND_IJ(1, 0);
@@ -890,6 +917,7 @@ struct rt_tol		*tol;
 				corners[0] = &verts[IJ(1,0)];
 				corners[1] = &verts[IJ(0,0)];
 				corners[2] = &verts[IJ(1,1)];
+
 				if( (fu = nmg_cmface( s, corners, 3 )) == (struct faceuse *)0 )  {
 					rt_log("rt_ars_tess() nmg_cmface failed, skipping face b[%d][%d]\n",
 						i,j);
@@ -900,9 +928,22 @@ struct rt_tol		*tol;
 				ASSOC_GEOM( 1, 0, 0 );
 				ASSOC_GEOM( 2, 1, 1 );
 				if( nmg_calc_face_g( fu ) )
-					nmg_kfu(  fu );
+				{
+					rt_log( "Degenerate face created, will kill it later\n" );
+					nmg_tbl( &kill_fus, TBL_INS, (long *)fu );
+				}
 			}
 		}
+	}
+
+	rt_free( (char *)verts, "rt_ars_tess *verts[]" );
+
+	/* kill any degenerate faces that may have been created */
+	for( i=0 ; i<NMG_TBL_END( &kill_fus ) ; i++ )
+	{
+		fu = (struct faceuse *)NMG_TBL_GET( &kill_fus, i );
+		NMG_CK_FACEUSE( fu );
+		(void)nmg_kfu( fu );
 	}
 
 	/* ARS solids are often built with incorrect face normals.
@@ -915,8 +956,6 @@ struct rt_tol		*tol;
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
-
-	rt_free( (char *)verts, "rt_ars_tess *verts[]" );
 
 	return(0);
 }
