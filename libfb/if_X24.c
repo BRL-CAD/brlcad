@@ -2567,18 +2567,32 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 
 				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))
 					for (k = x2 - x1 + 1; k; k--) {
+#if 1
+						*line_opix++ =
+							(line_irgb[RED] << 16) |
+							(line_irgb[GRN] << 8) |
+							 line_irgb[BLU];
+#else
 						*line_opix++ =
 							(line_irgb[BLU] << 16) |
 							(line_irgb[GRN] << 8) |
 							 line_irgb[RED];
+#endif
 						line_irgb += sizeof (RGBpixel);
 					}
 				else
 					for (k = x2 - x1 + 1; k; k--) {
+#if 1
+						*line_opix++ =
+							(blu[line_irgb[RED]] << 16) |
+							(grn[line_irgb[GRN]] << 8) |
+							 red[line_irgb[BLU]];
+#else
 						*line_opix++ =
 							(blu[line_irgb[BLU]] << 16) |
 							(grn[line_irgb[GRN]] << 8) |
 							 red[line_irgb[RED]];
+#endif
 						line_irgb += sizeof (RGBpixel);
 					}
 
@@ -2629,10 +2643,15 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 							pxwd = ifp->if_xzoom;
 
 						/* Get/convert pixel */
-
+#if 1
+						pix = (line_irgb[RED] << 16) |
+							(line_irgb[GRN] << 8) |
+							line_irgb[BLU];
+#else
 						pix = (line_irgb[BLU] << 16) |
 							(line_irgb[GRN] << 8) |
 							line_irgb[RED];
+#endif
 
 						line_irgb += sizeof (RGBpixel);
 
@@ -2655,10 +2674,15 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 							pxwd = ifp->if_xzoom;
 
 						/* Get/convert pixel */
-
+#if 1
+						pix = (blu[line_irgb[RED]] << 16) |
+							(grn[line_irgb[GRN]] << 8) |
+							red[line_irgb[BLU]];
+#else
 						pix = (blu[line_irgb[BLU]] << 16) |
 							(grn[line_irgb[GRN]] << 8) |
 							red[line_irgb[RED]];
+#endif
 
 						line_irgb += sizeof (RGBpixel);
 
