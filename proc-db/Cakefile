@@ -8,12 +8,12 @@
 #define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
 			pipetest nmgmodel brickwall wall \
 			mk_bolt mk_handle mk_window mk_winfrm mk_gastank \
-			mk_wire
+			mk_wire pipe
 #define STATIC_PRODUCTS		\
 	../SRCDIR/mol-data.dat ../SRCDIR/mol-data1.dat \
 	../SRCDIR/mol-data2.dat \
 	../SRCDIR/mol-cube.dat \
-	../SRCDIR/mol-gfa2.dat ../SRCDIR/mol-gfa3.dat
+	../SRCDIR/mol-gfa2.dat ../SRCDIR/mol-gfa3.dat ../SRCDIR/pipe_helix.input
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -27,6 +27,9 @@
 #define AFTERINSTALL	rm
 
 /* Explicit composition of each product */
+
+pipe:	pipe.o
+	CC LDFLAGS  pipe.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES -o pipe
 
 tube:	tube.o 
 	CC LDFLAGS  tube.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES -o tube
