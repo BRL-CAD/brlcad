@@ -13,7 +13,14 @@
 #include <math.h>
 #include <setjmp.h>
 
-#include "machine.h"
+typedef float fastf_t		/* Machine.h use to be here
+				 * and seemed to break everything 
+				 * for vdeck since it wanted 
+				 * to use only floats so here is
+				 * a quick fix to make things work
+				 * since we should really not be 
+			 	 * supporting this anyways.
+				 */
 #include "vmath.h"
 #include "db.h"
 
