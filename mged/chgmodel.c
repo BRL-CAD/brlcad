@@ -172,7 +172,7 @@ char	**argv;
 	  else
 	    bu_vls_vlscat(&curr_cmd_list->more_default, &comb->shader);
 
-	  return TCL_ERROR;
+	  goto fail;
 	}
 
 	if(argc >= 4){
@@ -214,7 +214,7 @@ color_prompt:
 
 	  Tcl_AppendResult(interp, MORE_ARGS_STR,
 			   "Color R G B (0..255)? ('del' to delete, CR to skip) ", (char *)NULL);
-	  return TCL_ERROR;
+	  goto fail;
 	}
 
 	if(argc >= 7 - skip_args){
@@ -243,7 +243,7 @@ color_prompt:
 	    break;
 	  }
 
-	  return TCL_ERROR;
+	  goto fail;
 	}
 
 	switch( inherit )  {
@@ -265,6 +265,9 @@ out:
 		TCL_WRITE_ERR_return;
 	}
 	return TCL_OK;
+fail:
+	rt_comb_ifree( &intern );
+	return TCL_ERROR;
 }
 
 int
