@@ -733,7 +733,7 @@ CONST struct rt_functab rt_functab[] = {
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_DSP", "dsp",
-		0,		/* 25 Displacement Map (alt. height field) */
+		1,		/* 25 Displacement Map (alt. height field) */
 		rt_dsp_prep,	rt_dsp_shot,	rt_dsp_print,	rt_dsp_norm,
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_dsp_uv,	rt_dsp_curve,	rt_dsp_class,	rt_dsp_free,
