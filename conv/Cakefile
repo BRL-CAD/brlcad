@@ -6,7 +6,7 @@
 
 #define SRCDIR	conv
 #define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g g-euclid \
-			tankill-g g-tankill viewpoint-g dxf-g g-nmg
+			euclid_format tankill-g g-tankill viewpoint-g dxf-g g-nmg 
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -35,6 +35,9 @@ euclid-g:	euclid-g.o
 
 g-euclid:	g-euclid.o
 	CC LDFLAGS g-euclid.o LIBRT LIBRT_LIBES LIBES -o g-euclid
+
+euclid_format:	euclid_format.o
+	CC LDFLAGS euclid_format.o LIBRT LIBRT_LIBES LIBES -o euclid_format
 
 tankill-g:	tankill-g.o
 	CC LDFLAGS tankill-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o tankill-g
