@@ -47,8 +47,6 @@ static const char RCSid[] = "$Header$";
 #include "plot3.h"
 #include "../librt/debug.h"
 
-#define		NAMESIZE	16	/* from db.h */
-
 #define		LINELEN		128	/* Length of char array for input line */
 
 #define		REGION_LIST_BLOCK	256	/* initial length of array of region ids to process */
@@ -66,7 +64,6 @@ static int	comp_id=(-1);		/* Component identification number from SECTION card *
 static int	region_id=0;		/* Region id number (group id no X 1000 + component id no) */
 static char	field[9];		/* Space for storing one field from an input line */
 static char	vehicle[17];		/* Title for BRLCAD model from VEHICLE card */
-static char	name_name[NAMESIZE+1];	/* Component name built from $NAME card */
 static int	name_count;		/* Count of number of times this name_name has been used */
 static int	pass;			/* Pass number (0 -> only make names, 1-> do geometry ) */
 static int	bot=0;			/* Flag: >0 -> There are BOT's in current component */
@@ -130,7 +127,7 @@ static char	*usage="Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file]
 #define		COMPSPLT	'h'
 
 void make_region_name();
-void make_solid_name();
+char * make_solid_name();
 
 /* convenient macro for building regions */
 #define		MK_REGION( fp , headp , name , r_id ) \
@@ -216,7 +213,7 @@ struct name_tree
 	int mode;		/* PLATE_MODE or VOLUME_MODE */
 	int inner;		/* 0 => this is a base/group name for a FASTGEN element */
 	int in_comp_group;	/* > 0 -> region already in a component group */
-	char name[NAMESIZE+1];
+	char *name;
 	struct name_tree *nleft,*nright,*rleft,*rright;
 } *name_root;
 
@@ -450,7 +447,6 @@ do_compsplt()
 	int gr, co, gr1,  co1;
 	fastf_t z;
 	struct compsplt *splt;
-	char name[NAMESIZE+1];
 
 	strncpy( field, &line[8], 8 );
 	gr = atoi( field );
@@ -484,7 +480,7 @@ do_compsplt()
 	splt->ident_to_split = gr * 1000 + co;
 	splt->new_ident = gr1 * 1000 + co1;
 	splt->z = z;
-	make_region_name( name, gr1, co1 );
+	make_region_name( gr1, co1 );
 }
 
 void
@@ -856,7 +852,7 @@ int inner;
 
 	new_ptr = (struct name_tree *)bu_malloc( sizeof( struct name_tree ) , "Insert_name: new_ptr" );
 
-	strncpy( new_ptr->name , name , NAMESIZE+1 );
+	new_ptr->name = bu_strdup( name );
 	new_ptr->nleft = (struct name_tree *)NULL;
 	new_ptr->nright = (struct name_tree *)NULL;
 	new_ptr->rleft = (struct name_tree *)NULL;
@@ -872,7 +868,7 @@ int inner;
 		return;
 	}
 
-	diff = strncmp( name , ptr->name , NAMESIZE );
+	diff = strcmp( name , ptr->name );
 	if( diff > 0 )
 	{
 		if( ptr->nright )
@@ -932,14 +928,14 @@ int reg_id;
 	new_ptr->mode = mode;
 	new_ptr->inner = -1;
 	new_ptr->in_comp_group = 0;
-	strncpy( new_ptr->name , name , NAMESIZE+1 );
+	new_ptr->name = bu_strdup( name );
 	new_ptr->magic = NAME_TREE_MAGIC;
 
 	if( !name_root )
 		name_root = new_ptr;
 	else
 	{
-		diff = strncmp( name , nptr_model->name , NAMESIZE );
+		diff = strcmp( name , nptr_model->name );
 
 		if( diff > 0 )
 		{
@@ -1009,38 +1005,31 @@ int c_id;
 		return( (char *)NULL );
 }
 
-void
+char *
 make_unique_name( name )
 char *name;
 {
-	char append[10];
-	int append_len;
-	int len;
+	struct bu_vls vls;
 	int found;
 
 	/* make a unique name from what we got off the $NAME card */
 
-	len = strlen( name );
-
 	(void)Search_names( name_root , name , &found );
+	if( !found )
+		return( bu_strdup( name ) );
+
+	bu_vls_init( &vls );
+
 	while( found )
 	{
-		sprintf( append , "_%d" , name_count );
-		name_count++;
-		append_len = strlen( append );
-
-		if( len + append_len < NAMESIZE )
-			strcat( name , append );
-		else
-		{
-			strcpy( &name[NAMESIZE-append_len] , append );
-			name[NAMESIZE] = '\0';
-		}
-
-		(void)Search_names( name_root , name , &found );
+		bu_vls_trunc( &vls, 0 );
+		bu_vls_printf( &vls, "%s_%d", name, name_count );
+		(void)Search_names( name_root , bu_vls_addr( &vls ) , &found );
 	}
 	if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed in make_unique_name\n" );
+
+	return( bu_vls_strgrab( &vls ) );
 }
 
 void
@@ -1064,7 +1053,6 @@ make_comp_group()
 {
 	struct wmember g_head;
 	struct name_tree *ptr;
-	char name[NAMESIZE+1];
 
 	if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed in make_comp_group\n" );
@@ -1099,14 +1087,15 @@ make_comp_group()
 
 	if( BU_LIST_NON_EMPTY( &g_head.l ) )
 	{
-		char *tmp_name;
+		char *name;
+		struct bu_vls vls;
 
-		if( (tmp_name=find_region_name( group_id , comp_id )) )
-			strcpy( name , tmp_name );
-		else
+		if( !(name=find_region_name( group_id , comp_id )) )
 		{
-			sprintf( name , "comp_%d" , region_id );
-			make_unique_name( name );
+			bu_vls_init( &vls );
+			bu_vls_printf( &vls , "comp_%d" , region_id );
+			name = make_unique_name( bu_vls_addr( &vls ) );
+			bu_vls_free( &vls );
 			if( warnings )
 				bu_log( "Creating default name (%s) for group %d component %d\n",
 						name , group_id , comp_id );
@@ -1118,6 +1107,8 @@ make_comp_group()
 			add_to_series( name , region_id );
 		else
 			add_to_holes( name, region_id );
+
+		bu_free( (char *)name, "str_dupped name" );
 	}
 }
 
@@ -1168,7 +1159,7 @@ do_groups()
 
 	for( group_no=0 ; group_no < 11 ; group_no++ )
 	{
-		char name[NAMESIZE+1];
+		char name[20];
 
 		if( BU_LIST_IS_EMPTY( &group_head[group_no].l ) )
 			continue;
@@ -1193,7 +1184,6 @@ do_name()
 	int i,j;
 	int g_id;
 	int c_id;
-	int len;
 	char comp_name[25];
 	char tmp_name[25];
 
@@ -1254,16 +1244,9 @@ do_name()
 	}
 	tmp_name[++j] = '\0';
 
-	len = strlen( tmp_name );
-	if( len <= NAMESIZE )
-		strncpy( name_name , tmp_name , NAMESIZE );
-	else
-		strncpy( name_name , &tmp_name[len-NAMESIZE] , NAMESIZE );
-	name_name[NAMESIZE] = '\0';
-
 	/* reserve this name for group name */
-	make_unique_name( name_name );
-	Insert_region_name( name_name , region_id );
+	make_unique_name( tmp_name );
+	Insert_region_name( tmp_name , region_id );
 
 	name_count = 0;
 	if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
@@ -1271,13 +1254,13 @@ do_name()
 }
 
 void
-make_region_name( name , g_id , c_id )
-char *name;
+make_region_name( g_id , c_id )
 int g_id;
 int c_id;
 {
 	int r_id;
 	char *tmp_name;
+	char *name;
 
 	r_id = g_id * 1000 + c_id;
 
@@ -1286,25 +1269,19 @@ int c_id;
 
 	tmp_name = find_region_name( g_id , c_id );
 	if( tmp_name )
-	{
-		strncpy( name , tmp_name , NAMESIZE+1 );
 		return;
-	}
 
 	/* create a new name */
-	if( name_name[0] )
-		strncpy( name , name_name , NAMESIZE+1 );
-	else
-		sprintf( name , "comp_%04d.r" , r_id );
+	name = (char *)bu_malloc( 12, "make_region_name" );
+	sprintf( name , "comp_%04d.r" , r_id );
 
 	make_unique_name( name );
 
 	Insert_region_name( name , r_id );
 }
 
-void
-get_solid_name( name , type , element_id , c_id , g_id , inner )
-char *name;
+char *
+get_solid_name( type , element_id , c_id , g_id , inner )
 char type;
 int element_id;
 int c_id;
@@ -1312,24 +1289,31 @@ int g_id;
 int inner;
 {
 	int reg_id;
+	struct bu_vls vls;
 
 	reg_id = g_id * 1000 + c_id;
 
-	sprintf( name , "%d.%d.%c%d" , reg_id , element_id , type , inner );
+	bu_vls_init( &vls );
+	bu_vls_printf( &vls , "%d.%d.%c%d" , reg_id , element_id , type , inner );
+
+	return( bu_vls_strgrab( &vls ) );
 }
 
-void
-make_solid_name( name , type , element_id , c_id , g_id , inner )
-char *name;
+char *
+make_solid_name( type , element_id , c_id , g_id , inner )
 char type;
 int element_id;
 int c_id;
 int g_id;
 int inner;
 {
-	get_solid_name( name , type , element_id , c_id , g_id , inner );
+	char *name;
+
+	name = get_solid_name( type , element_id , c_id , g_id , inner );
 
 	Insert_name( &name_root , name, inner );
+
+	return( name );
 }
 
 void
@@ -1384,12 +1368,12 @@ do_sphere()
 	fastf_t thick;
 	fastf_t radius;
 	fastf_t inner_radius;
-	char name[NAMESIZE+1];
+	char *name;
 	struct wmember sphere_group;
 
 	if( !pass )
 	{
-		make_region_name( name , group_id , comp_id );
+		make_region_name( group_id , comp_id );
 		return;
 	}
 
@@ -1422,12 +1406,13 @@ do_sphere()
 
 	if( mode == VOLUME_MODE )
 	{
-		make_solid_name( name , CSPHERE , element_id , comp_id , group_id , 0 );
+		name = make_solid_name( CSPHERE , element_id , comp_id , group_id , 0 );
 		mk_sph( fdout , name , grid_pts[center_pt] , radius );
+		bu_free( name, "solid_name" );
 	}
 	else if( mode == PLATE_MODE )
 	{
-		make_solid_name( name , CSPHERE , element_id , comp_id , group_id , 1 );
+		name = make_solid_name( CSPHERE , element_id , comp_id , group_id , 1 );
 		mk_sph( fdout , name , grid_pts[center_pt] , radius );
 
 		BU_LIST_INIT( &sphere_group.l );
@@ -1437,6 +1422,7 @@ do_sphere()
 			bu_log( "do_sphere: Error in adding %s to sphere group\n" , name );
 			rt_bomb( "do_sphere" );
 		}
+		bu_free( name, "solid_name" );
 
 		inner_radius = radius - thick;
 		if( thick > 0.0 && inner_radius <= 0.0 )
@@ -1446,7 +1432,7 @@ do_sphere()
 			return;
 		}
 
-		make_solid_name( name , CSPHERE , element_id , comp_id , group_id , 2 );
+		name = make_solid_name( CSPHERE , element_id , comp_id , group_id , 2 );
 		mk_sph( fdout , name , grid_pts[center_pt] , inner_radius );
 
 		if( mk_addmember( name , &sphere_group.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
@@ -1454,9 +1440,11 @@ do_sphere()
 			bu_log( "do_sphere: Error in subtracting %s from sphere region\n" , name );
 			rt_bomb( "do_sphere" );
 		}
+		bu_free( name, "solid_name" );
 
-		make_solid_name( name , CSPHERE , element_id , comp_id , group_id , 0 );
+		name = make_solid_name( CSPHERE , element_id , comp_id , group_id , 0 );
 		mk_comb( fdout, name, &sphere_group.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1 );
+		bu_free( name, "solid_name" );
 	}
 }
 
@@ -1478,14 +1466,14 @@ do_cline()
 	fastf_t thick;
 	fastf_t radius;
 	vect_t height;
-	char name[NAMESIZE+1];
+	char *name;
 
 	if( debug )
 		bu_log( "do_cline: %s\n" , line );
 
 	if( !pass )
 	{
-		make_region_name( name , group_id , comp_id );
+		make_region_name( group_id , comp_id );
 		return;
 	}
 
@@ -1525,8 +1513,9 @@ do_cline()
 
 	VSUB2( height , grid_pts[pt2] , grid_pts[pt1] );
 
-	make_solid_name( name , CLINE , element_id , comp_id , group_id , 0 );
+	name = make_solid_name( CLINE , element_id , comp_id , group_id , 0 );
 	mk_cline( fdout , name , grid_pts[pt1] , height , radius, thick );
+	bu_free( name, "solid_name" );
 }
 
 void
@@ -1539,9 +1528,9 @@ do_ccone1()
 	int end1,end2;
 	vect_t height;
 	fastf_t r1,r2;
-	char outer_name[NAMESIZE+1];
-	char inner_name[NAMESIZE+1];
-	char name[NAMESIZE+1];
+	char *outer_name;
+	char *inner_name;
+	char *name;
 	struct wmember r_head;
 
 	strncpy( field , &line[8] , 8 );
@@ -1549,7 +1538,7 @@ do_ccone1()
 
 	if( !pass )
 	{
-		make_region_name( outer_name , group_id , comp_id );
+		make_region_name( group_id , comp_id );
 		if( !getline() )
 		{
 			bu_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
@@ -1651,8 +1640,9 @@ do_ccone1()
 
 	if( mode == VOLUME_MODE )
 	{
-		make_solid_name( outer_name , CCONE1 , element_id , comp_id , group_id , 0 );
+		outer_name = make_solid_name( CCONE1 , element_id , comp_id , group_id , 0 );
 		mk_trc_h( fdout , outer_name , grid_pts[pt1] , height , r1 , r2 );
+		bu_free( outer_name, "solid_name" );
 	}
 	else if( mode == PLATE_MODE )
 	{
@@ -1669,12 +1659,13 @@ do_ccone1()
 		vect_t height_dir;
 
 		/* make outside TGC */
-		make_solid_name( outer_name , CCONE1 , element_id , comp_id , group_id , 1 );
+		outer_name = make_solid_name( CCONE1 , element_id , comp_id , group_id , 1 );
 		mk_trc_h( fdout , outer_name , grid_pts[pt1] , height , r1 , r2 );
 
 		BU_LIST_INIT( &r_head.l );
 		if( mk_addmember( outer_name , &r_head.l , WMOP_UNION ) == (struct wmember *)NULL )
 			rt_bomb( "CCONE1: mk_addmember failed\n" );
+		bu_free( outer_name, "solid_name" );
 
 		length = MAGNITUDE( height );
 		VSCALE( height_dir , height , 1.0/length );
@@ -1742,15 +1733,17 @@ do_ccone1()
 		{
 			/* make inner tgc */
 
-			make_solid_name( inner_name , CCONE1 , element_id , comp_id , group_id , 2 );
+			inner_name = make_solid_name( CCONE1 , element_id , comp_id , group_id , 2 );
 			mk_trc_h( fdout , inner_name , base , inner_height , inner_r1 , inner_r2 );
 
 			if( mk_addmember( inner_name , &r_head.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				rt_bomb( "CCONE1: mk_addmember failed\n" );
+			bu_free( inner_name, "solid_name" );
 		}
 
-		make_solid_name( name , CCONE1 , element_id , comp_id , group_id , 0 );
+		name = make_solid_name( CCONE1 , element_id , comp_id , group_id , 0 );
 		mk_comb( fdout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1 );
+		bu_free( name, "solid_name" );
 	}
 
 }
@@ -1763,7 +1756,7 @@ do_ccone2()
 	int c1,c2;
 	fastf_t ro1,ro2,ri1,ri2;
 	vect_t height;
-	char name[NAMESIZE+1];
+	char *name;
 	struct wmember r_head;
 
 	strncpy( field , &line[8] , 8 );
@@ -1771,7 +1764,7 @@ do_ccone2()
 
 	if( !pass )
 	{
-		make_region_name( name , group_id , comp_id );
+		make_region_name( group_id , comp_id );
 		if( !getline() )
 		{
 			bu_log( "Unexpected EOF while reading continuation card for CCONE2\n" );
@@ -1849,16 +1842,18 @@ do_ccone2()
 
 	if( ri1 <= 0.0 && ri2 <= 0.0 )
 	{
-		make_solid_name( name , CCONE2 , element_id , comp_id , group_id , 0 );
+		name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 0 );
 		mk_trc_h( fdout , name , grid_pts[pt1] , height , ro1 , ro2 );
+		bu_free( name, "solid_name" );
 	}
 	else
 	{
-		make_solid_name( name , CCONE2 , element_id , comp_id , group_id , 1 );
+		name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 1 );
 		mk_trc_h( fdout , name , grid_pts[pt1] , height , ro1 , ro2 );
 
 		if( mk_addmember( name , &r_head.l , WMOP_UNION ) == (struct wmember *)NULL )
 			rt_bomb( "mk_addmember failed!\n" );
+		bu_free( name, "solid_name" );
 
 		if( ri1 < SQRT_SMALL_FASTF )
 			ri1 = SQRT_SMALL_FASTF;
@@ -1866,14 +1861,16 @@ do_ccone2()
 		if( ri2 < SQRT_SMALL_FASTF )
 			ri2 = SQRT_SMALL_FASTF;
 
-		make_solid_name( name , CCONE2 , element_id , comp_id , group_id , 2 );
+		name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 2 );
 		mk_trc_h( fdout , name , grid_pts[pt1] , height , ri1 , ri2 );
 
 		if( mk_addmember( name , &r_head.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 			rt_bomb( "mk_addmember failed!\n" );
+		bu_free( name, "solid_name" );
 
-		make_solid_name( name , CCONE2 , element_id , comp_id , group_id , 0 );
+		name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 0 );
 		mk_comb( fdout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1 );
+		bu_free( name, "solid_name" );
 	}
 }
 
@@ -1882,7 +1879,7 @@ do_ccone3()
 {
 	int element_id;
 	int pt1, pt2, pt3, pt4, i;
-	char name[NAMESIZE+1];
+	char *name;
 	fastf_t ro[4], ri[4], len03, len01, len12, len23;
 	vect_t diff, diff2, diff3, diff4;
 	struct wmember r_head;
@@ -1892,7 +1889,7 @@ do_ccone3()
 
 	if( !pass )
 	{
-		make_region_name( name , group_id , comp_id );
+		make_region_name( group_id , comp_id );
 		if( !getline() )
 		{
 			bu_log( "Unexpected EOF while reading continuation card for CCONE3\n" );
@@ -2036,18 +2033,20 @@ do_ccone3()
 		/* make first cone */
 		if( ro[0] != SQRT_SMALL_FASTF || ro[1] != SQRT_SMALL_FASTF )
 		{
-			make_solid_name( name, CCONE3, element_id, comp_id, group_id, 1 );
+			name = make_solid_name( CCONE3, element_id, comp_id, group_id, 1 );
 			mk_trc_h( fdout, name, grid_pts[pt1], diff, ro[0], ro[1] );
 			if( mk_addmember( name , &r_head.l , WMOP_UNION ) == (struct wmember *)NULL )
 				bu_bomb( "mk_addmember failed!\n" );
+			bu_free( name, "solid_name" );
 
 			/* and the inner cone */
 			if( ri[0] != SQRT_SMALL_FASTF || ri[1] != SQRT_SMALL_FASTF )
 			{
-				make_solid_name( name, CCONE3, element_id, comp_id, group_id, 11 );
+				name = make_solid_name( CCONE3, element_id, comp_id, group_id, 11 );
 				mk_trc_h( fdout, name, grid_pts[pt1], diff, ri[0], ri[1] );
 				if( mk_addmember( name , &r_head.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_bomb( "mk_addmember failed!\n" );
+				bu_free( name, "solid_name" );
 			}
 		}
 	}
@@ -2059,18 +2058,20 @@ do_ccone3()
 		/* make second cone */
 		if( ro[1] != SQRT_SMALL_FASTF || ro[2] != SQRT_SMALL_FASTF )
 		{
-			make_solid_name( name, CCONE3, element_id, comp_id, group_id, 2 );
+			name = make_solid_name( CCONE3, element_id, comp_id, group_id, 2 );
 			mk_trc_h( fdout, name, grid_pts[pt2], diff, ro[1], ro[2] );
 			if( mk_addmember( name , &r_head.l , WMOP_UNION ) == (struct wmember *)NULL )
 				bu_bomb( "mk_addmember failed!\n" );
+			bu_free( name, "solid_name" );
 
 			/* and the inner cone */
 			if( ri[1] != SQRT_SMALL_FASTF || ri[2] != SQRT_SMALL_FASTF )
 			{
-				make_solid_name( name, CCONE3, element_id, comp_id, group_id, 22 );
+				name = make_solid_name( CCONE3, element_id, comp_id, group_id, 22 );
 				mk_trc_h( fdout, name, grid_pts[pt2], diff, ri[1], ri[2] );
 				if( mk_addmember( name , &r_head.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_bomb( "mk_addmember failed!\n" );
+				bu_free( name, "solid_name" );
 			}
 		}
 	}
@@ -2082,24 +2083,27 @@ do_ccone3()
 		/* make third cone */
 		if( ro[2] != SQRT_SMALL_FASTF || ro[3] != SQRT_SMALL_FASTF )
 		{
-			make_solid_name( name, CCONE3, element_id, comp_id, group_id, 3 );
+			name = make_solid_name( CCONE3, element_id, comp_id, group_id, 3 );
 			mk_trc_h( fdout, name, grid_pts[pt3], diff, ro[2], ro[3] );
 			if( mk_addmember( name , &r_head.l , WMOP_UNION ) == (struct wmember *)NULL )
 				bu_bomb( "mk_addmember failed!\n" );
+			bu_free( name, "solid_name" );
 
 			/* and the inner cone */
 			if( ri[2] != SQRT_SMALL_FASTF || ri[3] != SQRT_SMALL_FASTF )
 			{
-				make_solid_name( name, CCONE3, element_id, comp_id, group_id, 33 );
+				name = make_solid_name( CCONE3, element_id, comp_id, group_id, 33 );
 				mk_trc_h( fdout, name, grid_pts[pt3], diff, ri[2], ri[3] );
 				if( mk_addmember( name , &r_head.l , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_bomb( "mk_addmember failed!\n" );
+				bu_free( name, "solid_name" );
 			}
 		}
 	}
 
-	make_solid_name( name , CCONE3 , element_id , comp_id , group_id , 0 );
+	name = make_solid_name( CCONE3 , element_id , comp_id , group_id , 0 );
 	mk_comb( fdout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1 );
+	bu_free( name, "solid_name" );
 }
 
 void
@@ -2520,14 +2524,14 @@ make_bot_object()
 	int num_vertices;
 	struct bu_bitv *bv=NULL;
 	int bot_mode;
-	char name[NAMESIZE+1];
+	char *name;
 	int element_id=bot;
 	int count;
 	struct rt_bot_internal bot_ip;
 
 	if( !pass )
 	{
-		make_region_name( name , group_id , comp_id );
+		make_region_name( group_id , comp_id );
 		return;
 	}
 
@@ -2587,9 +2591,10 @@ make_bot_object()
 	if( count )
 		bu_log( "WARNING: %d duplicate faces eliminated from group %d component %d\n", count, group_id, comp_id );
 
-	make_solid_name( name , BOT , element_id , comp_id , group_id , 0 );
+	name = make_solid_name( BOT , element_id , comp_id , group_id , 0 );
 	mk_bot( fdout, name, bot_mode, RT_BOT_UNORIENTED, 0, bot_ip.num_vertices, bot_ip.num_faces, bot_ip.vertices,
 		bot_ip.faces, bot_ip.thickness, bot_ip.face_mode );
+	bu_free( name, "solid_name" );
 
 	if( mode == PLATE_MODE )
 	{
@@ -2637,8 +2642,6 @@ int final;
 	if( debug )
 		bu_log( "do_section(%d): %s\n", final , line );
 
-	name_name[0] = '\0';
-
 	if( pass )	/* doing geometry */
 	{
 		if( region_id && !skip_region( region_id ) )
@@ -2653,9 +2656,7 @@ int final;
 	}
 	else if( bot )
 	{
-		char	name[NAMESIZE+1];
-
-		make_region_name( name , group_id , comp_id );
+		make_region_name( group_id , comp_id );
 	}
 
 	if( !final )
@@ -2697,9 +2698,6 @@ int final;
 					group_id, comp_id );
 			}
 		}
-		else
-			name_name[0] = '\0';
-
 	}
 
 	bot = 0;
@@ -2819,14 +2817,14 @@ do_hex2()
 	int i;
 	int cont1,cont2;
 	point_t points[8];
-	char name[NAMESIZE+1];
+	char *name;
 
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
 
 	if( !pass )
 	{
-		make_region_name( name , group_id , comp_id );
+		make_region_name( group_id , comp_id );
 		if( !getline() )
 		{
 			bu_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
@@ -2874,8 +2872,10 @@ do_hex2()
 	for( i=0 ; i<8 ; i++ )
 		VMOVE( points[i] , grid_pts[pts[i]] );
 
-	make_solid_name( name , CHEX2 , element_id , comp_id , group_id , 0 );
+	name = make_solid_name( CHEX2 , element_id , comp_id , group_id , 0 );
 	mk_arb8( fdout , name , &points[0][X] );
+	bu_free( name, "solid_name" );
+
 }
 
 void
@@ -3505,7 +3505,6 @@ char *argv[];
 
 	compsplt_root = (struct compsplt *)NULL;
 
-	name_name[0] = '\0';
 	name_count = 0;
 
 	vehicle[0] = '\0';
