@@ -80,6 +80,10 @@ if ![info exists mged_default_comb] {
     set mged_default_comb 0
 }
 
+if ![info exists mged_default_edit_style] {
+    set mged_default_edit_style emacs
+}
+
 set do_tearoffs 0
 
 proc gui_create_default { args } {
@@ -93,6 +97,7 @@ proc gui_create_default { args } {
     global mged_default_display
     global mged_default_gdisplay
     global mged_default_comb
+    global mged_default_edit_style
     global mged_html_dir
     global mged_players
     global mged_collaborators
@@ -119,6 +124,7 @@ proc gui_create_default { args } {
     global mged_apply_to
     global mged_grid_control
     global mged_apply_list
+    global mged_edit_style
     global mged_top
     global mged_dmc
     global mged_active_dm
@@ -141,6 +147,8 @@ proc gui_create_default { args } {
     global status_bar
     global view_ring
     global do_tearoffs
+    global freshline
+    global scratchline
 
 # set defaults
     set save_id [lindex [cmd_get] 2]
@@ -469,6 +477,7 @@ menu .$id.m.settings.m -tearoff $do_tearoffs
 .$id.m.settings.m add cascade -label "Framebuffer" -menu .$id.m.settings.m.cm_fb
 .$id.m.settings.m add cascade -label "Grid" -menu .$id.m.settings.m.cm_grid
 .$id.m.settings.m add cascade -label "View Axes Position" -menu .$id.m.settings.m.cm_vap
+.$id.m.settings.m add cascade -label "Command Line Edit" -menu .$id.m.settings.m.cm_cle
 
 menu .$id.m.settings.m.cm_applyTo -tearoff $do_tearoffs
 .$id.m.settings.m.cm_applyTo add radiobutton -value 0 -variable mged_apply_to($id)\
@@ -605,6 +614,12 @@ menu .$id.m.settings.m.cm_vap -tearoff $do_tearoffs
 .$id.m.settings.m.cm_vap add radiobutton -value 4 -variable mged_v_axes_pos($id)\
 	-label "Lower Right" -command "mged_apply $id \"set v_axes_pos {1750 -1750}\""
 
+menu .$id.m.settings.m.cm_cle -tearoff $do_tearoffs
+.$id.m.settings.m.cm_cle add radiobutton -value emacs -variable mged_edit_style($id)\
+	-label "emacs" -command "set_text_key_bindings $id"
+.$id.m.settings.m.cm_cle add radiobutton -value vi -variable mged_edit_style($id)\
+	-label "vi" -command "set_text_key_bindings $id"
+
 menubutton .$id.m.tools -text "Tools" -menu .$id.m.tools.m
 menu .$id.m.tools.m -tearoff $do_tearoffs
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_adc_draw($id)\
@@ -693,175 +708,26 @@ if {$comb} {
     text .$id.t -relief sunken -bd 2 -yscrollcommand ".$id.s set" -setgrid true
 }
 scrollbar .$id.s -relief flat -command ".$id.t yview"
-do_text_highlight .$id.t
-
-set moveView(.$id.t) 0
 
 bind .$id.t <Enter> "focus .$id.t"
 
-bind .$id.t <1> {
-    do_B1 %W %x %y
-    break
-}
-
-bind .$id.t <B1-Motion> {
-    do_B1_Motion %W %x %y
-    break
-}
-
-bind .$id.t <Double-1> {
-    do_Double1 %W %x %y
-    break
-}
-
-bind .$id.t <Triple-1> {
-    do_Triple1 %W %x %y
-    break
-}
-
-bind .$id.t <Shift-1> {
-    do_Shift1 %W %x %y
-    break
-}
-
-bind .$id.t <Double-Shift-1> {
-    break
-}
-
-bind .$id.t <Triple-Shift-1> {
-    break
-}
-
-bind .$id.t <B1-Leave> {
-    break
-}
-
-bind .$id.t <B1-Enter> {
-    break
-}
-
-bind .$id.t <ButtonRelease-1> {
-    break
-}
-
-bind .$id.t <Control-1> {
-    break
-}
-
-bind .$id.t <ButtonRelease-2> {
-    do_ButtonRelease2 %W
-    break
-}
-
-bind .$id.t <2> {
-    do_B2 %W %x %y
-    break
-}
-
-bind .$id.t <B2-Motion> {
-    do_B2_Motion %W %x %y
-    break
-}
-
-bind .$id.t <Return> {
-    do_return %W
-    break
-}
-
-bind .$id.t <Control-a> {
-    do_ctrl_a %W
-    break
-}
-
-bind .$id.t <Control-b> {
-    do_ctrl_b %W
-    break
-}
-
-bind .$id.t <Control-c> {
-    do_ctrl_c %W
-    break
-}
-
-bind .$id.t <Control-d> {
-    do_ctrl_d %W
-    break
-}
-
-bind .$id.t <Control-e> {
-    do_ctrl_e %W
-    break
-}
-
-bind .$id.t <Control-f> {
-    do_ctrl_f %W
-    break
-}
-
-bind .$id.t <Control-k> {
-    do_ctrl_k %W
-    break
-}
-
-bind .$id.t <Control-n> {
-    do_ctrl_n %W
-    break
-}
-
-bind .$id.t <Control-p> {
-    do_ctrl_p %W
-    break
-}
-
-bind .$id.t <Control-t> {
-    do_ctrl_t %W
-    break
-}
-
-bind .$id.t <Control-u> {
-    do_ctrl_u %W
-    break
-}
-
-bind .$id.t <Control-w> {
-    do_ctrl_w %W
-    break
-}
-
-bind .$id.t <Meta-d> {
-    if [%W compare insert < promptEnd] {
-	break
-    }
-    do_text_highlight %W
-}
-
-bind .$id.t <Meta-BackSpace> {
-    if [%W compare insert <= promptEnd] {
-	break
-    }
-    do_text_highlight %W
-}
-
-bind .$id.t <Delete> {
-    do_delete %W
-    break
-}
-
-bind .$id.t <BackSpace> {
-    do_backspace %W
-    break
-}
+set mged_edit_style($id) $mged_default_edit_style
+set_text_key_bindings $id
+set_text_button_bindings .$id.t
 
 set ia_cmd_prefix($id) ""
 set ia_more_default($id) ""
 mged_print_prompt .$id.t "mged> "
 .$id.t insert insert " "
-do_ctrl_a .$id.t
+beginning_of_line .$id.t
+set moveView(.$id.t) 0
+set freshline(.$id.t) 1
+set scratchline(.$id.t) ""
 
 .$id.t tag configure sel -background #fefe8e
-.$id.t tag configure result -foreground darkBlue
-.$id.t tag configure oldcmd -foreground darkRed
-.$id.t tag configure prompt -foreground red3
+.$id.t tag configure result -foreground blue3
+.$id.t tag configure oldcmd -foreground red3
+.$id.t tag configure prompt -foreground red1
 
 #==============================================================================
 # Pack windows
