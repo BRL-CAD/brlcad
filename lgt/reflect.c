@@ -917,6 +917,10 @@ register Mat_Db_Entry		*entry;
 		}
 	refrac_total++;
 
+	/* Guard against zero refractive index. */
+	if( entry->refrac_index < 0.001 )
+		entry->refrac_index = 1.0;
+
 	if( entry->refrac_index == RI_AIR )
 		{ /* No refraction necessary.				*/
 			struct partition	*pt_headp = pp->pt_back;
@@ -1205,9 +1209,9 @@ register fastf_t	*v_2;
 		V_Print( "\t\tentrance normal", norml, rt_log );
 		rt_log( "\t\trefractive indices leaving:%g, entering:%g\n", ri_1, ri_2 );
 		}
-	if( ri_2 == 0.0 )
+	if( ri_2 < 0.001 || ri_1 < 0.001 )
 		{ /* User probably forgot to specify refractive index.	*/
-		rt_log( "\tZero refractive index." );
+		rt_log( "\tBUG: Zero or negative refractive index, should have been caught earlier.\n" );
 		VMOVE( v_2, v_1 ); /* Just return ray unchanged.	*/
 		return	1;
 		}
