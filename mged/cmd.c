@@ -72,6 +72,7 @@ void	f_plot(), f_area(), f_find(), f_edgedir();
 void	f_regdef(), f_aeview(), f_in(), f_tables(), f_edcodes(), f_dup(), f_cat();
 void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack();
 void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
+void	f_overlay(), f_rtcheck();
 
 static struct funtab {
 	char *ft_name;
@@ -269,7 +270,11 @@ static struct funtab {
 "sync",	"",	"forces UNIX sync",
 	sync, 1, 1,
 "eqn", "A B C", "planar equation coefficients",
-	f_eqn, 4, 4
+	f_eqn, 4, 4,
+"overlay", "file.plot [name]", "Read UNIX-Plot as named overlay",
+	f_overlay, 2, 3,
+"rtcheck", "[options]", "check for overlaps in current view",
+	f_rtcheck,1,MAXARGS
 };
 #define NFUNC	( (sizeof(funtab)) / (sizeof(struct funtab)) )
 
