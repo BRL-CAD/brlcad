@@ -168,13 +168,13 @@ pkg_glong(msgp)
  */
 char *
 pkg_pshort(msgp, s)
-register char *msgp;
-register unsigned short s;
+unsigned char *msgp;
+unsigned short s;
 {
 
 	msgp[1] = s;
 	msgp[0] = s >> 8;
-	return(msgp+2);
+	return((char *)msgp+2);
 }
 
 /*
@@ -182,15 +182,15 @@ register unsigned short s;
  */
 char *
 pkg_plong(msgp, l)
-register char *msgp;
-register unsigned long l;
+unsigned char *msgp;
+unsigned long l;
 {
 
 	msgp[3] = l;
 	msgp[2] = (l >>= 8);
 	msgp[1] = (l >>= 8);
 	msgp[0] = l >> 8;
-	return(msgp+4);
+	return((char *)msgp+4);
 }
 
 /*
