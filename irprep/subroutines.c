@@ -88,7 +88,8 @@ double np[3];
 /*  Subroutine to receive an angle in degrees and return  */
 /*  the angle in radians.  */
 
-double radians(double a)
+double radians(a)
+double a;
 {
 
 	/*  a - Angle in degrees.  */

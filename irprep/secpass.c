@@ -930,9 +930,9 @@ char *argv[];
 
 /*  User supplied hit function.  */
 
-hit(ap,PartHeadp)
+hit(ap_p,PartHeadp)
 
-register struct application *ap;
+register struct application *ap_p;
 struct partition *PartHeadp;
 
 {	/*  START # 1H  */
@@ -959,7 +959,7 @@ struct partition *PartHeadp;
 	/*  Find hit point of entering ray.  */
 	hitp = pp->pt_inhit;
 	stp = pp->pt_inseg->seg_stp;
-	RT_HIT_NORM(hitp,stp,&(ap->a_ray));
+	RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
 	enterpt[X] = hitp->hit_point[X];
 	enterpt[Y] = hitp->hit_point[Y];
 	enterpt[Z] = hitp->hit_point[Z];
@@ -1057,7 +1057,7 @@ struct partition *PartHeadp;
 	/*  Find hit point of leaving ray.  */
 	hitp = pp->pt_outhit;
 	stp = pp->pt_outseg->seg_stp;
-	RT_HIT_NORM(hitp,stp,&(ap->a_ray));
+	RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
 	leavept[X] = hitp->hit_point[X];
 	leavept[Y] = hitp->hit_point[Y];
 	leavept[Z] = hitp->hit_point[Z];
@@ -1081,9 +1081,9 @@ struct partition *PartHeadp;
 
 /*  User supplied miss function.  */
 
-miss(ap)
+miss(ap_p)
 
-register struct application *ap;
+register struct application *ap_p;
 
 {	/*  START # 1M  */
 
@@ -1097,11 +1097,11 @@ register struct application *ap;
 }	/*  END # 1M */
 
 
-ovrlap(ap,PartHeadp,reg1,reg2)
+ovrlap(ap_p,PartHeadp,reg1,reg2)
 
 /*  User supplied overlap function that does nothing.  */
 
-register struct application *ap;
+register struct application *ap_p;
 struct partition *PartHeadp;
 struct region *reg1,*reg2;
 {

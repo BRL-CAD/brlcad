@@ -1612,8 +1612,8 @@ char *argv[];
 }
 
 
-hit(ap,PartHeadp)
-register struct application *ap;
+hit(ap_p,PartHeadp)
+register struct application *ap_p;
 struct partition *PartHeadp;
 {
 
@@ -1686,7 +1686,7 @@ struct partition *PartHeadp;
  */
 		hitp=pp->pt_inhit;
 		stp=pp->pt_inseg->seg_stp;
-		RT_HIT_NORM(hitp,stp,&(ap->a_ray));
+		RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
 		/*  Flip normal if needed.  */
 		if(pp->pt_inflip)
 		{
@@ -1695,9 +1695,9 @@ struct partition *PartHeadp;
 		}
 
 		/*  Find front surface area of region.  */
-		costheta1 = hitp->hit_normal[X] * ap->a_ray.r_dir[X]
-		          + hitp->hit_normal[Y] * ap->a_ray.r_dir[Y]
-		          + hitp->hit_normal[Z] * ap->a_ray.r_dir[Z];
+		costheta1 = hitp->hit_normal[X] * ap_p->a_ray.r_dir[X]
+		          + hitp->hit_normal[Y] * ap_p->a_ray.r_dir[Y]
+		          + hitp->hit_normal[Z] * ap_p->a_ray.r_dir[Z];
 		if(costheta1 < 0) costheta1 = (-costheta1);
 		if( costheta1 > COSTOL)
 		   region[icur].surarea[whichview] += (area/costheta1);
@@ -1722,9 +1722,9 @@ struct partition *PartHeadp;
 			}
 
 			/*  Find surface area. */
-			costheta = lnormal[X]*ap->a_ray.r_dir[X]
-			          + lnormal[Y]*ap->a_ray.r_dir[Y]
-			          + lnormal[Z]*ap->a_ray.r_dir[Z];
+			costheta = lnormal[X]*ap_p->a_ray.r_dir[X]
+			          + lnormal[Y]*ap_p->a_ray.r_dir[Y]
+			          + lnormal[Z]*ap_p->a_ray.r_dir[Z];
 			if( costheta < 0 ) costheta = (-costheta);
 			if( costheta > COSTOL )
 			{
@@ -1769,9 +1769,9 @@ struct partition *PartHeadp;
 		{
 		   if((prevregid == 0) && (pp->pt_regionp->reg_regionid != 0))
 		   {
-			costheta2 = hitp->hit_normal[X] * ap->a_ray.r_dir[X]
-			          + hitp->hit_normal[Y] * ap->a_ray.r_dir[Y]
-			          + hitp->hit_normal[Z] * ap->a_ray.r_dir[Z];
+			costheta2 = hitp->hit_normal[X] * ap_p->a_ray.r_dir[X]
+			          + hitp->hit_normal[Y] * ap_p->a_ray.r_dir[Y]
+			          + hitp->hit_normal[Z] * ap_p->a_ray.r_dir[Z];
 			if(costheta2 < 0.) costheta2=(-costheta2);
 			if(prevair == 1)
 			{
@@ -1806,9 +1806,9 @@ struct partition *PartHeadp;
 		   /*  account.  */
 		   if(iprev != -99)
 		   {
-			costheta2 = lnormal[X] * ap->a_ray.r_dir[X]
-			          + lnormal[Y] * ap->a_ray.r_dir[Y]
-			          + lnormal[Z] * ap->a_ray.r_dir[Z];
+			costheta2 = lnormal[X] * ap_p->a_ray.r_dir[X]
+			          + lnormal[Y] * ap_p->a_ray.r_dir[Y]
+			          + lnormal[Z] * ap_p->a_ray.r_dir[Z];
 			if(costheta2 < 0.) costheta2 = (-costheta2);
 			if(costheta2 > COSTOL)
 			{
@@ -1819,9 +1819,9 @@ struct partition *PartHeadp;
 			}
 		   }
 
-		   costheta2 = hitp->hit_normal[X] * ap->a_ray.r_dir[X]
-		             + hitp->hit_normal[Y] * ap->a_ray.r_dir[Y]
-		             + hitp->hit_normal[Z] * ap->a_ray.r_dir[Z];
+		   costheta2 = hitp->hit_normal[X] * ap_p->a_ray.r_dir[X]
+		             + hitp->hit_normal[Y] * ap_p->a_ray.r_dir[Y]
+		             + hitp->hit_normal[Z] * ap_p->a_ray.r_dir[Z];
 		   if(costheta2 < 0.) costheta2=(-costheta2);
 		   if(costheta2 > COSTOL)
 		   {
@@ -1837,9 +1837,9 @@ struct partition *PartHeadp;
 		/*  A ray entering  a region from air.  */
 		if((pp->pt_regionp->reg_regionid == 0) && (prevregid != 0))
 		{
-		   costheta2 = lnormal[X] * ap->a_ray.r_dir[X]
-		             + lnormal[Y] * ap->a_ray.r_dir[Y]
-		             + lnormal[Z] * ap->a_ray.r_dir[Z];
+		   costheta2 = lnormal[X] * ap_p->a_ray.r_dir[X]
+		             + lnormal[Y] * ap_p->a_ray.r_dir[Y]
+		             + lnormal[Z] * ap_p->a_ray.r_dir[Z];
 		   if(costheta2 < 0.) costheta2=(-costheta2);
 		   if(pp->pt_regionp->reg_aircode == 1)
 		   {
@@ -1886,7 +1886,7 @@ struct partition *PartHeadp;
  */
 		hitp=pp->pt_outhit;
 		stp=pp->pt_outseg->seg_stp;
-		RT_HIT_NORM(hitp,stp,&(ap->a_ray));
+		RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
 		/*  Flip normal if needed.  */
 		if(pp->pt_outflip)
 		{
@@ -1895,9 +1895,9 @@ struct partition *PartHeadp;
 		}
 
 		/*  Find back surface area of regions. */
-		costheta1 = hitp->hit_normal[X] * ap->a_ray.r_dir[X]
-		          + hitp->hit_normal[Y] * ap->a_ray.r_dir[Y]
-		          + hitp->hit_normal[Z] * ap->a_ray.r_dir[Z];
+		costheta1 = hitp->hit_normal[X] * ap_p->a_ray.r_dir[X]
+		          + hitp->hit_normal[Y] * ap_p->a_ray.r_dir[Y]
+		          + hitp->hit_normal[Z] * ap_p->a_ray.r_dir[Z];
 		if( costheta1 < 0 ) costheta1 = (-costheta1);
 		if( costheta1 > COSTOL )
 		   region[icur].surarea[whichview] += (area/costheta1);
@@ -1948,9 +1948,9 @@ struct partition *PartHeadp;
 		if((pp->pt_forw == PartHeadp) &&
 		   (pp->pt_regionp->reg_regionid != 0))
 		{
-		   costheta2 = hitp->hit_normal[X] * ap->a_ray.r_dir[X]
-		             + hitp->hit_normal[Y] * ap->a_ray.r_dir[Y]
-		             + hitp->hit_normal[Z] * ap->a_ray.r_dir[Z];
+		   costheta2 = hitp->hit_normal[X] * ap_p->a_ray.r_dir[X]
+		             + hitp->hit_normal[Y] * ap_p->a_ray.r_dir[Y]
+		             + hitp->hit_normal[Z] * ap_p->a_ray.r_dir[Z];
 		   if(costheta2 < 0.) costheta2=(-costheta2);
 		   if(costheta2 > COSTOL)
 		   {
@@ -1982,11 +1982,11 @@ struct partition *PartHeadp;
 	return (1);
 }
 
-miss(ap)
+miss(ap_p)
 
 /*  User supplied miss function.  */
 
-register struct application *ap;
+register struct application *ap_p;
 {
 /*
  *	(void)printf("It was a miss.\n");
@@ -1995,11 +1995,11 @@ register struct application *ap;
 	return (0);
 }
 
-ovrlap(ap,PartHeadp,reg1,reg2)
+ovrlap(ap_p,PartHeadp,reg1,reg2)
 
 /*  User supplied overlap function.  */
 
-register struct application *ap;
+register struct application *ap_p;
 struct partition *PartHeadp;
 struct region *reg1,*reg2;
 {

@@ -439,9 +439,9 @@ char **argv;
 /*		Hit, miss, and overlap functions.                            */
 /*****************************************************************************/
 
-hit(ap,PartHeadp)
+hit(ap_p,PartHeadp)
 /*  User supplied hit function.  */
-register struct application *ap;
+register struct application *ap_p;
 struct partition *PartHeadp;
 
 {						/*  START # 0H  */
@@ -497,7 +497,7 @@ struct partition *PartHeadp;
 		/*  Find leaving point.  */
 		hitp = pp->pt_outhit;
 		stp = pp->pt_outseg->seg_stp;
-		RT_HIT_NORM(hitp,stp,&(ap->a_ray));
+		RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
 		/*  Flip normal if needed.  */
 		if(pp->pt_outflip)
 		{
@@ -551,7 +551,7 @@ struct partition *PartHeadp;
 		/*  Find leave point.  */
 		hitp = pp->pt_outhit;
 		stp = pp->pt_outseg->seg_stp;
-		RT_HIT_NORM(hitp,stp,&(ap->a_ray));
+		RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
 		/*  Flip normal if needed.  */
 		if(pp->pt_outflip)
 		{
@@ -584,7 +584,7 @@ struct partition *PartHeadp;
 		/*  Find leaving point.  */
 		hitp = pp->pt_outhit;
 		stp = pp->pt_outseg->seg_stp;
-		RT_HIT_NORM(hitp,stp,&(ap->a_ray));
+		RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
 		/*  Flip normal if needed.  */
 		if(pp->pt_outflip)
 		{
@@ -616,7 +616,7 @@ struct partition *PartHeadp;
 		/*  Find leaving point.  */
 		hitp = pp->pt_outhit;
 		stp = pp->pt_outseg->seg_stp;
-		RT_HIT_NORM(hitp,stp,&(ap->a_ray));
+		RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
 		/*  Flip normal if needed.  */
 		if(pp->pt_outflip)
 		{
