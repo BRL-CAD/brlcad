@@ -54,6 +54,7 @@ compare&: [[SUB X X.compare PRODUCTS]]
  */
 #define	MAN_EXISTS	{{ls ../SRCDIR|egrep -s .MANSECTION'$'}}
 #define STUB_EXISTS	{{ls ../SRCDIR|egrep -s .MANSECTION.stub'$'}}
+#define ARG_EXISTS	{{ARGS="%"; test '%' != "$ARGS" -o -f %}}
 
 uninstall&:  uninstall-prod uninstall-man uninstall-stub
 
@@ -94,13 +95,14 @@ install-prod&:
 
 /* Here is where we depend on having /bin/sh as the shell */
 %.install-prod&: %
-	@if cmp -s BINDIR/% %; \
+	@echo ......checking % 1>&2 ; \
+	if cmp -s BINDIR/% %; \
 	then	exit 0; fi; \
 	mv -f BINDIR/% BINDIR/%.bak 2>/dev/null; \
 	if INS % BINDIR/%; \
 	then	if test x''AFTERINSTALL != x'AFTERINSTALL'; \
 		then	AFTERINSTALL BINDIR/%; fi; \
-		echo "++++++INSTALLED" BINDIR/%; \
+		echo "++++++INSTALLED" BINDIR/% 1>&2; \
 		chmod BINPERM BINDIR/%; \
 	fi
 
@@ -136,9 +138,29 @@ do-install-stub&: [[SUB ../SRCDIR/X.stub X.install-stub ../SRCDIR/''*.stub]]
  *  Force installation of copies of all sources,
  *  whether configured in or not, into the distribution tree.
  */
-inst-dist&:
+#ifndef	STATIC_PRODUCTS
+#	define STATIC_PRODUCTS	/**/
+#endif
+#define	INSTALL_PATTERNS	STATIC_PRODUCTS \
+	./Cakefile \\\\*.[hcfs] \\\\*.sh \
+	\\\\*.MANSECTION \\\\*.MANSECTION.stub \\\\*.doc
+#define IS_MASTER	{{test x''MASTERHOST = x`GETHOST`}}
+
+inst-dist&:	inst-dist-main	if IS_MASTER
+
+inst-dist&:			if not IS_MASTER
+	@echo This is not the master CAD source machine, MASTERHOST is.
+
+inst-dist-main&: dist-clobber [[SUB X X.do-inst-dist INSTALL_PATTERNS]]
+
+dist-clobber&:
 	-rm -fr DISTRIBUTION/SRCDIR/''*
-	-INS ./Cakefile *.[hcfs] SHFILES *.MANSECTION *.MANSECTION.stub *.doc DISTRIBUTION/SRCDIR/.
+
+%.do-inst-dist&:  %.inst-dist	if ARG_EXISTS
+%.do-inst-dist&:		if not ARG_EXISTS
+
+%.inst-dist&:
+	-INS % DISTRIBUTION/SRCDIR/.
 
 /*
  *	clean	remove all .o files and by-products
