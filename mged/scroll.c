@@ -25,6 +25,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+
+#include "tcl.h"
+
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
@@ -33,6 +37,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./titles.h"
 #include "./scroll.h"
 #include "./dm.h"
+
+#include "./mgedtcl.h"
 
 static int	scroll_top;	/* screen loc of the first menu item */
 
@@ -95,15 +101,50 @@ void sl_halt_scroll()
  */
 void sl_toggle_scroll()
 {
-
-	scroll_enabled = (scroll_enabled == 0) ? 1 : 0;
-	if( scroll_enabled )  {
-		scroll_array[0] = scr_menu;
-	} else {
-		scroll_array[0] = SCROLL_NULL;	
-		scroll_array[1] = SCROLL_NULL;	
+	if( scroll_enabled == 0 )  {
+ 	        rt_vls_printf( &dm_values.dv_string, "sliders on\n" );
+        } else {
+	        rt_vls_printf( &dm_values.dv_string, "sliders off\n" );
 	}
-	dmaflag++;
+}
+
+/*
+ *                      C M D _ S L I D E R S
+ *
+ * If no arguments are given, returns 1 if the sliders are displayed, and 0
+ * if not.  If one argument is given, parses it as a boolean value and
+ * turns on the sliders if it is 1, and turns them off it is 0.
+ * Otherwise, returns an error;
+ */
+
+int
+cmd_sliders(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+    if (argc > 2) {
+	Tcl_SetResult(interp, "too many arguments: should be \"sliders \
+?onVal?\"", TCL_STATIC);
+	return TCL_ERROR;
+    }
+    
+    if (argc < 2) {
+	Tcl_SetResult(interp, scroll_enabled ? "1" : "0", TCL_STATIC);
+	return TCL_OK;
+    }
+
+    if (Tcl_GetBoolean(interp, argv[1], &scroll_enabled) == TCL_ERROR)
+	return TCL_ERROR;
+
+    if (scroll_enabled) {
+	scroll_array[0] = scr_menu;
+    } else {
+	scroll_array[0] = SCROLL_NULL;	
+	scroll_array[1] = SCROLL_NULL;	
+    }
+    dmaflag++;
 }
 
 /************************************************************************
