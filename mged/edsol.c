@@ -1258,17 +1258,26 @@ mat_t		mat;
 			VSETALL( mpt, 0 );
 			*strp = "(origin)";
 
+			if( RT_LIST_IS_EMPTY( &m->r_hd ) )
+				break;
+
 			r = RT_LIST_FIRST( nmgregion , &m->r_hd );
 			if( !r )
 				break;
 			NMG_CK_REGION( r );
+
+			if( RT_LIST_IS_EMPTY( &r->s_hd ) )
+				break;
 
 			s = RT_LIST_FIRST( shell , &r->s_hd );
 			if( !s )
 				break;
 			NMG_CK_SHELL( s );
 
-			fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
+			if( RT_LIST_IS_EMPTY( &s->fu_hd ) )
+				fu = (struct faceuse *)NULL;
+			else
+				fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
 			if( fu )
 			{
 				NMG_CK_FACEUSE( fu );
@@ -1294,7 +1303,10 @@ mat_t		mat;
 				*strp = "V";
 				break;
 			}
-			lu = RT_LIST_FIRST( loopuse , &s->lu_hd );
+			if( RT_LIST_IS_EMPTY( &s->lu_hd ) )
+				lu = (struct loopuse *)NULL;
+			else
+				lu = RT_LIST_FIRST( loopuse , &s->lu_hd );
 			if( lu )
 			{
 				NMG_CK_LOOPUSE( lu );
@@ -1318,7 +1330,10 @@ mat_t		mat;
 				*strp = "V";
 				break;
 			}
-			eu = RT_LIST_FIRST( edgeuse , &s->eu_hd );
+			if( RT_LIST_IS_EMPTY( &s->eu_hd ) )
+				eu = (struct edgeuse *)NULL;
+			else
+				eu = RT_LIST_FIRST( edgeuse , &s->eu_hd );
 			if( eu )
 			{
 				NMG_CK_EDGEUSE( eu );
