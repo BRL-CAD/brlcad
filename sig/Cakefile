@@ -5,7 +5,7 @@
 #define SRCDIR	sig
 
 #define PRODUCTS	a-d d-a i-d d-i bw-d d-bw f-d d-f f-i i-f c-d i-a \
-			u-a u-d u-f u-bw \
+			u-a u-d u-f u-bw d-u \
 			dwin dauto dmod dfft dconv imod umod \
 			ddisp fhor \
 			dstat dsel \
@@ -29,6 +29,9 @@ i-d: i-d.o
 
 d-i: d-i.o
 	CC LDFLAGS -o d-i d-i.o LIBES
+
+d-u: d-u.o
+	CC LDFLAGS -o d-u d-u.o LIBES
 
 bw-d: bw-d.o
 	CC LDFLAGS -o bw-d bw-d.o LIBES
