@@ -1395,6 +1395,8 @@ CONST struct rt_tol	*tol;
  *
  *  Brute force search of the entire model to find a vertex that
  *  matches this point.
+ *  XXX Shouldn't this return the _closest_ match, not just the
+ *  XXX first match within tolerance?
  */
 struct vertex *
 nmg_find_pt_in_model( m, pt, tol )
