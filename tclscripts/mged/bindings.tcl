@@ -86,7 +86,7 @@ proc do_mouse_bindings { w } {
 
 # default button bindings
     bind $w <1> "winset $w; zoom 0.5"
-    bind $w <2> "winset $w; set tmpstr \[dm m %b %x %y\]; print_return_val \$tmpstr"
+    bind $w <2> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr"
     bind $w <3> "winset $w; zoom 2.0"
 
     bind $w <ButtonRelease> "winset $w; dm idle"
