@@ -307,13 +307,13 @@ unsigned long addr;
 	}
 
 	if( type & (M_TOVFL|M_BOVFL) )  {
-		bu_log("mfree(addr=%d,size=%d)  error type=0%o\n",
+		bu_log("rt_mfree(addr=x%x,size=%d)  ERROR type=0%o\n",
 			addr, size, type );
 		if( prevp )
-			bu_log("prevp: m_addr=%d, m_size=%d\n",
+			bu_log("prevp: m_addr=x%x, m_size=%d\n",
 				prevp->m_addr, prevp->m_size );
 		if( curp )
-			bu_log("curp: m_addr=%d, m_size=%d\n",
+			bu_log("curp: m_addr=x%x, m_size=%d\n",
 				curp->m_addr, curp->m_size );
 		return;
 	}
