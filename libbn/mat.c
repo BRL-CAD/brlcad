@@ -1455,8 +1455,6 @@ bn_mat_is_non_unif(const mat_t m)
     mag[1] = MAGSQ(&m[4]);
     mag[2] = MAGSQ(&m[8]);
 
-    bu_log("%g %g %g\n", V3ARGS(mag));
-
     if (fabs(1.0 - (mag[1]/mag[0])) > .0005 ||
 	fabs(1.0 - (mag[2]/mag[0])) > .0005) {
 
