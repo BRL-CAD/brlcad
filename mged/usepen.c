@@ -222,6 +222,10 @@ char	**argv;
 		dmaflag++;
 		return;
 
+	case ST_S_VPICK:
+		sedit_vpick( mousevec );
+		return;
+
 	case ST_O_EDIT:
 		objedit_mouse( mousevec );
 		return;
