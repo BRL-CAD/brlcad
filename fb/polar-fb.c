@@ -599,6 +599,7 @@ char	*argv[];
 	    (void) fputs("Bad interior.  Shouldn't happen\n",
 			    stderr);
 	    (void) exit (1);
+	    Fill_Func = Fill_Constant;
 	    break;
     }
 
