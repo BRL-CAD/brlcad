@@ -30,7 +30,6 @@ int face_orient;
 	int		loop;
 	int		planar=0;
 	struct faceuse	*fu;			/* NMG face use */
-	struct face_g_snurb	*srf;			/* NURB Surface */
 
 	/* Acquiring Data */
 
@@ -83,7 +82,7 @@ int face_orient;
 	{
 		struct face *f;
 
-		fu = Make_nurb_face( &srf, s, (surf_de-1)/2 );
+		fu = Make_nurb_face( s, (surf_de-1)/2 );
 		NMG_CK_FACEUSE( fu );
 		if( !face_orient )
 		{
@@ -91,12 +90,15 @@ int face_orient;
 			NMG_CK_FACE( f );
 			f->flip = 1;
 		}
+
+NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
 		
 		for( loop=0 ; loop<no_of_loops ; loop++ )
 		{
-			if( !Add_nurb_loop_to_face( s, fu, srf, ((loop_de[loop]-1)/2) , face_orient ))
+			if( !Add_nurb_loop_to_face( s, fu, ((loop_de[loop]-1)/2) , face_orient ))
 				goto err;
 		}
+NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
 	}
 	else
 	{

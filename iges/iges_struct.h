@@ -176,6 +176,7 @@ struct iges_edge_list
 
 RT_EXTERN( char *iges_type, (int type_no ) );
 RT_EXTERN( int Add_loop_to_face , (struct shell *s , struct faceuse *fu , int entityno , int face_orient ));
+RT_EXTERN( int Add_nurb_loop_to_face, ( struct shell *s, struct faceuse *fu, int loop_entityno, int face_orient ) );
 RT_EXTERN( int arb_to_iges , ( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));
 RT_EXTERN( int ell_to_iges , ( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));
 RT_EXTERN( int nmg_to_iges , ( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));
@@ -191,7 +192,7 @@ RT_EXTERN( struct edge_g_cnurb *Get_cnurb_curve, (int curve_de, int *linear ) );
 RT_EXTERN( struct edge_g_cnurb *rt_arc2d_to_cnurb, ( point_t center, point_t start, point_t end, int pt_type, struct rt_tol *tol ) );
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ) );
 RT_EXTERN( struct faceuse *Add_face_to_shell , ( struct shell *s , int entityno , int face_orient) );
-RT_EXTERN( struct faceuse *Make_nurb_face, (struct face_g_snurb **surf, struct shell *s, int surf_entityno ) );
+RT_EXTERN( struct faceuse *Make_nurb_face, ( struct shell *s, int surf_entityno ) );
 RT_EXTERN( struct faceuse *Make_planar_face , ( struct shell *s , int entityno , int face_orient ) );
 RT_EXTERN( struct faceuse *nmg_cmface , ( struct shell *s, struct vertex ***verts, int no_of_edges ) );
 RT_EXTERN( struct iges_edge_list *Get_edge_list , (struct iges_edge_use *edge ) );
@@ -204,7 +205,7 @@ RT_EXTERN( struct model *nmg_mmr , () );
 RT_EXTERN( struct shell *Add_inner_shell , ( struct nmgregion *r, int entityno, int shell_orient ) );
 RT_EXTERN( struct shell *Get_outer_shell , ( struct nmgregion *r, int entityno, int shell_orient ) );
 RT_EXTERN( struct shell *nmg_msv , (struct nmgregion *r) );
-RT_EXTERN( struct face_g_snurb *Get_nurb_surf, (int entity_no ) );
+RT_EXTERN( struct face_g_snurb *Get_nurb_surf, (int entity_no, struct model *m ) );
 RT_EXTERN( struct vertex **Get_vertex , (struct iges_edge_use *edge ) );
 RT_EXTERN( union tree *do_nmg_region_end , (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 RT_EXTERN( void count_refs , ( struct db_i *dbip , struct directory *dp ) );

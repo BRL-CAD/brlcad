@@ -19,10 +19,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./iges_extern.h"
 
 int
-Add_nurb_loop_to_face( s, fu, srf, loop_entityno , face_orient )
+Add_nurb_loop_to_face( s, fu, loop_entityno , face_orient )
 struct shell *s;
 struct faceuse *fu;
-struct face_g_snurb *srf;
 int loop_entityno;
 int face_orient;
 { 
@@ -31,11 +30,20 @@ int face_orient;
 	int no_of_edges;
 	int no_of_param_curves;
 	int vert_no;
+	struct face *f;
+	struct face_g_snurb *srf;
 	struct faceuse *fu_ret;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct vertex **verts;
 	struct iges_edge_use *edge_uses;
+
+	NMG_CK_SHELL( s );
+	NMG_CK_FACEUSE( fu );
+	f = fu->f_p;
+	NMG_CK_FACE( f );
+	srf = f->g.snurb_p;
+	NMG_CK_FACE_G_SNURB( srf );
 
 	if( dir[loop_entityno]->param <= pstart )
 	{
@@ -387,14 +395,15 @@ err:
 }
 
 struct faceuse *
-Make_nurb_face( srf, s, surf_entityno )
-struct face_g_snurb **srf;
+Make_nurb_face( s, surf_entityno )
 struct shell *s;
 int surf_entityno;
 {
 	struct vertex *verts[1];
 	struct loopuse *lu;
 	struct faceuse *fu;
+	struct face_g_snurb *srf;
+	struct model *m;
 
 	if( dir[surf_entityno]->type != 128 )
 	{
@@ -404,7 +413,9 @@ int surf_entityno;
 		return( (struct faceuse *)NULL );
 	}
 
-	if( ((*srf) = Get_nurb_surf( surf_entityno )) == (struct face_g_snurb *)NULL )
+	m = nmg_find_model( &s->l.magic );
+
+	if( (srf = Get_nurb_surf( surf_entityno, m )) == (struct face_g_snurb *)NULL )
 	{
 		rt_log( "Make_nurb_face: Get_nurb_surf failed for surface entity (%d), face ignored\n",	 surf_entityno );
 		return( (struct faceuse *)NULL );
@@ -413,7 +424,7 @@ int surf_entityno;
 	verts[0] = (struct vertex *)NULL;
 
 	fu = nmg_cface( s, verts, 1 );
-	Assign_surface_to_fu( fu, *srf );
+	Assign_surface_to_fu( fu, srf );
 
 	lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
 	(void)nmg_klu( lu );

@@ -30,8 +30,9 @@ static fastf_t v_translation=0.0;
 #define CTL_INDEX(_i,_j)	((_i * n_cols + _j) * ncoords)
 
 struct face_g_snurb *
-Get_nurb_surf( entityno )
+Get_nurb_surf( entityno, m )
 int entityno;
+struct model *m;
 {
 	struct face_g_snurb *srf;
 	point_t pt;
@@ -84,7 +85,38 @@ int entityno;
 
 	n_u = n_cols+u_order;
 	n_v = n_rows+v_order;
-	srf = rt_nurb_new_snurb( u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type );
+	if( !m )
+		srf = rt_nurb_new_snurb( u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type );
+	else
+	{
+		int pnum;
+
+		GET_FACE_G_SNURB( srf, m );
+		RT_LIST_INIT( &srf->l );
+		RT_LIST_INIT( &srf->f_hd );
+		srf->l.magic = NMG_FACE_G_SNURB_MAGIC;
+		srf->order[0] = u_order;
+		srf->order[1] = v_order;
+		srf->dir = RT_NURB_SPLIT_ROW;
+		srf->u.magic = NMG_KNOT_VECTOR_MAGIC;
+		srf->v.magic = NMG_KNOT_VECTOR_MAGIC;
+		srf->u.k_size = n_u;
+		srf->v.k_size = n_v;
+		srf->u.knots = (fastf_t *) rt_malloc ( 
+			n_u * sizeof (fastf_t ), "Get_nurb_surf: u kv knot values");
+		srf->v.knots = (fastf_t *) rt_malloc ( 
+			n_v * sizeof (fastf_t ), "Get_nurb_surf: v kv knot values");
+
+		srf->s_size[0] = n_rows;
+		srf->s_size[1] = n_cols;
+		srf->pt_type = pt_type;
+
+		pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
+		srf->ctl_points = ( fastf_t *) rt_malloc( 
+			pnum, "Get_nurb_surf: control mesh points");
+
+	}
+	NMG_CK_FACE_G_SNURB( srf );
 
 	/* Read knot vectors */
 	for( i=0 ; i<n_u ; i++ )
@@ -411,9 +443,7 @@ struct face_g_snurb *srf;
 			Assign_vu_geom( new_eu->vu_p, pt2[X], pt2[Y], srf );
 
 			/* assign edge geometry */
-			nmg_edge_g_cnurb( eu, 2, 0, (fastf_t *)NULL, 2,
-				RT_NURB_MAKE_PT_TYPE( 2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT),
-				 (fastf_t *)NULL );
+			nmg_edge_g_cnurb_plinear( eu );
 			break;
 		case 100:	/* circular arc */
 			{
@@ -844,33 +874,23 @@ Assign_surface_to_fu( fu, srf )
 struct faceuse *fu;
 struct face_g_snurb *srf;
 {
-	fastf_t *ukv;
-	fastf_t *vkv;
-	fastf_t *mesh;
-	int ncoords;
-	int i;
+	struct face *f;
 
 	NMG_CK_FACEUSE( fu );
 	NMG_CK_SNURB( srf );
 
-	ncoords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
+	f = fu->f_p;
+	NMG_CK_FACE( f );
 
-	ukv = (fastf_t *)rt_calloc( srf->u.k_size, sizeof( fastf_t ), "Assign_surface_to_fu: ukv" );
-	for( i=0 ; i<srf->u.k_size ; i++ )
-		ukv[i] = srf->u.knots[i];
+	if( f->g.snurb_p )
+		rt_bomb( "Assign_surface_to_fu: fu already has geometry\n" );
 
-	vkv = (fastf_t *)rt_calloc( srf->v.k_size, sizeof( fastf_t ), "Assign_surface_to_fu: vkv" );
-	for( i=0 ; i<srf->v.k_size ; i++ )
-		vkv[i] = srf->v.knots[i];
-
-	mesh = (fastf_t *)rt_calloc( srf->s_size[0]*srf->s_size[1]*ncoords, sizeof( fastf_t ),
-		"Assign_surface_to_fu: mesh" );
-
-	for( i=0 ; i<srf->s_size[0]*srf->s_size[1]*ncoords ; i++ )
-		mesh[i] = srf->ctl_points[i];
-
-	nmg_face_g_snurb( fu, srf->order[0], srf->order[1], srf->u.k_size, srf->v.k_size,
-			ukv, vkv, srf->s_size[0], srf->s_size[1], srf->pt_type, mesh );
+	fu->orientation = OT_SAME;
+	fu->fumate_p->orientation = OT_OPPOSITE;
+		
+	f->g.snurb_p = srf;
+	f->flip = 0;
+	RT_LIST_APPEND( &srf->f_hd, &f->l );
 }
 
 struct faceuse *
@@ -878,6 +898,7 @@ trim_surf( entityno , s )
 int entityno;
 struct shell *s;
 {
+	struct model *m;
 	struct face_g_snurb *srf;
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -894,8 +915,12 @@ struct shell *s;
 	int has_outer_boundary,inner_loop_count,outer_loop;
 	int *inner_loop;
 	int i;
+	int lu_uv_orient;
 
 	NMG_CK_SHELL( s );
+
+	m = nmg_find_model( &s->l.magic );
+	NMG_CK_MODEL( m );
 
 	/* Acquiring Data */
 	if( dir[entityno]->param <= pstart )
@@ -923,7 +948,7 @@ struct shell *s;
 			Readint( &inner_loop[i] , "" );
 	}
 
-	if( (srf=Get_nurb_surf( (surf_de-1)/2 )) == (struct face_g_snurb *)NULL )
+	if( (srf=Get_nurb_surf( (surf_de-1)/2, m )) == (struct face_g_snurb *)NULL )
 	{
 		rt_free( (char *)inner_loop , "trim_surf: inner_loop" );
 		return( (struct faceuse *)NULL );
@@ -938,6 +963,7 @@ struct shell *s;
 		verts[i] = (struct vertex *)NULL;
 	fu = nmg_cface( s, verts, 3 );
 	Assign_surface_to_fu( fu, srf );
+
 	kill_lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
 
 	if( !has_outer_boundary )
@@ -947,13 +973,39 @@ struct shell *s;
 
 	(void)nmg_klu( kill_lu );
 
+	/* first loop is an outer loop, orientation must be OT_SAME */
+	lu_uv_orient = nmg_snurb_calc_lu_uv_orient( lu );
+	if( lu_uv_orient == OT_SAME )
+		nmg_set_lu_orientation( lu, 0 );
+	else
+	{
+		nmg_reverse_face( fu );
+		nmg_set_lu_orientation( lu, 0 );
+	}
+
 	for( i=0 ; i<inner_loop_count ; i++ )
+	{
 		lu = Make_loop( (inner_loop[i]-1)/2, OT_OPPOSITE, surf_de, srf, fu );
 
-	rt_nurb_free_snurb( srf );
+		/* These loops must all be OT_OPPOSITE */
+		lu_uv_orient = nmg_snurb_calc_lu_uv_orient( lu );
+		if( (lu_uv_orient == OT_OPPOSITE && !fu->f_p->flip) ||
+		    (lu_uv_orient == OT_SAME && fu->f_p->flip) )
+				continue;
+
+		/* loop is in wrong direction, exchange lu and lu_mate */
+		RT_LIST_DEQUEUE( &lu->l );
+		RT_LIST_DEQUEUE( &lu->lumate_p->l );
+		RT_LIST_APPEND( &fu->lu_hd , &lu->lumate_p->l );
+		lu->lumate_p->up.fu_p = fu;
+		RT_LIST_APPEND( &fu->fumate_p->lu_hd , &lu->l );
+		lu->up.fu_p = fu->fumate_p;
+	}
 
 	if( inner_loop_count )	
 		rt_free( (char *)inner_loop , "trim_surf: inner_loop" );
+
+	NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
 
 	return( fu );
 }
@@ -987,7 +1039,7 @@ Convtrimsurfs()
 			}
 		}
 	}
-	Orient_loops( r );
+
 	rt_log( "Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n" , convsurf , totsurfs );
 
 	(void)nmg_model_vertex_fuse( m, &tol );
