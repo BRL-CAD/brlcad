@@ -790,6 +790,14 @@ register struct rt_i *rtip;
 			bu_free( (genptr_t)regp->reg_mater.ma_shader, "ma_shader" );
 			regp->reg_mater.ma_shader = (char *)NULL;
 		}
+		if( regp->attr_values ) {
+			i = 0;
+			while( regp->attr_values[i] ) {
+				bu_mro_free( regp->attr_values[i] );
+				i++;
+			}
+			bu_free( (char *)regp->attr_values, "regp->attr_values" );
+		}
 		bu_free( (genptr_t)regp, "struct region");
 	}
 	rtip->nregions = 0;
@@ -930,6 +938,14 @@ rt_del_regtree( struct rt_i *rtip, register struct region *delregp, struct resou
 	delregp->reg_treetop = TREE_NULL;
 	bu_free( (char *)delregp->reg_name, "region name str");
 	delregp->reg_name = (char *)0;
+	if( delregp->attr_values ) {
+		int i=0;
+		while( delregp->attr_values[i] ) {
+			bu_mro_free( delregp->attr_values[i] );
+			i++;
+		}
+		bu_free( (char *)delregp->attr_values, "delregp->attr_values" );
+	}
 	bu_free( (char *)delregp, "struct region");
 	return(0);
 }
