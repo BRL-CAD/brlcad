@@ -563,7 +563,6 @@ int		npix;
 						SGI(ifp)->mi_yoff+y+nlines-1,
 						&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
 						    sizeof(struct sgi_pixel)] );
-
 				return;
 			}
 		}
@@ -2125,15 +2124,18 @@ int	y;
 }
 
 
-/* fake_rectwrite is necessary as lrectwrite is not yet supported
- * for non GT hardware in IRIX version 3.1 or earlier. There is
- * however, a stub in the library which states that this yet yet
- * available for these systems. To allow us to  still use
+/*
+ *			F A K E _ L R E C T W R I T E
+ *
+ * fake_rectwrite is necessary as lrectwrite is not yet supported
+ * for non-GT hardware in IRIX version 3.1 or earlier. There is
+ * however, a stub in the library which states that lrectwrite is not yet
+ * available for these systems. To allow us to still use
  * shared libraries and have the same executables across the
- * 4D series of workstations if the system does not contain
- * the GT hardware upgrade than use this fake routine until 
- * a later release.  This routine will eventually go away as
- * IRIX 3.2 will basicly implement lrectwrite the same as below 
+ * 4D series of workstations, if the system does not contain
+ * the GT hardware upgrade then this fake routine is used.
+ * This routine will eventually go away as
+ * IRIX 3.2 will implement lrectwrite the same as below.
  */
 
 static unsigned char Red_pixels[1280];
@@ -2141,7 +2143,8 @@ static unsigned char Green_pixels[1280];
 static unsigned char Blue_pixels[1280];
 
 fake_rectwrite( x1, y1, x2, y2, pixels)
-short x1,y1, x2, y2;
+short	x1, y1;
+short	x2, y2;
 register struct sgi_pixel * pixels;
 {
 	register struct sgi_pixel * p;
@@ -2150,10 +2153,8 @@ register struct sgi_pixel * pixels;
 	p = pixels;
  
 	n = x2  - x1 + 1;
-	for( scan = y1; scan <= y2; scan++)
-	{
-		for ( i = 0; i < n; i++)
-		{
+	for( scan = y1; scan <= y2; scan++)  {
+		for ( i = 0; i < n; i++)  {
 			Red_pixels[i] =   p->red;
 			Green_pixels[i] = p->green;
 			Blue_pixels[i] =  p->blue;
@@ -2164,4 +2165,3 @@ register struct sgi_pixel * pixels;
 		writeRGB( n, Red_pixels, Green_pixels, Blue_pixels);
 	}
 }
-
