@@ -1108,7 +1108,7 @@ struct combined_tree_state	**region_start_statepp;
 			 *  This might be used for ignoring air regions.
 			 */
 			if( tsp->ts_region_start_func && 
-			    tsp->ts_region_start_func( &nts, pathp ) < 0 )  {
+			    tsp->ts_region_start_func( &nts, pathp, comb ) < 0 )  {
 				if(rt_g.debug&DEBUG_TREEWALK)  {
 					char	*sofar = db_path_to_string(pathp);
 					bu_log("db_recurse() ts_region_start_func deletes %s\n",

@@ -113,9 +113,10 @@ CONST struct db_tree_state	rt_initial_tree_state = {
  *  This routine must be prepared to run in parallel.
  */
 /* ARGSUSED */
-HIDDEN int rt_gettree_region_start( tsp, pathp )
+HIDDEN int rt_gettree_region_start( tsp, pathp, combp )
 CONST struct db_tree_state	*tsp;
 CONST struct db_full_path	*pathp;
+CONST struct rt_comb_internal	*combp;
 {
 	RT_CK_RTI(tsp->ts_rtip);
 
