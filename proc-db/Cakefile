@@ -29,6 +29,9 @@
 tube:	tube.o 
 	CC LDFLAGS  tube.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES -o tube
 
+spltest:	spltest.o 
+	CC LDFLAGS  spltest.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES -o spltest
+
 room:	room.o common.o
 	CC LDFLAGS  room.o common.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES -o room
 
