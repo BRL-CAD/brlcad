@@ -66,11 +66,12 @@ cat << EOF > ${IN_FILE}
 #endif
 
 #if defined(unix) && defined(i386) && defined(__bsdi__)
-/* BSDI/386 (Berkeley Software Design, Inc.) */
-	MACHINE=bsdi386;
+/* IBM PC/386 with BSD/386 (Berkeley Software Design, Inc.) */
+#undef bsdi
+	MACHINE=bsdi;
 	UNIXTYPE=BSD;
 	HAS_TCP=1;
-	HAS_SYMLINKS=0;
+	HAS_SYMLINKS=1;
 #endif
 
 
