@@ -310,6 +310,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				break;
 			}
 			case 'i':
+#if 0
 				bu_log(
 			 "Error: %%i not implemented. Contact developers.\n" );
 				Tcl_AppendResult( interp,
@@ -317,6 +318,91 @@ bu_structparse_argv(Tcl_Interp			*interp,
 						  (char *)NULL );
 				bu_vls_free( &str );
 				return TCL_ERROR;
+#else
+				{
+				register short *sh = (short *)loc;
+				register int tmpi;
+				register char const *cp;
+
+				if( argc < 1 ) { /* XXX - when was ii defined */
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str,
+      "not enough values for \"%s\" argument: should have %d",
+						       sdp->sp_name,
+						       sdp->sp_count);
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					bu_vls_free( &str );
+					return TCL_ERROR;
+				}
+
+				Tcl_AppendResult( interp, sdp->sp_name, " ",
+						  (char *)NULL );
+
+				/* Special case:  '=!' toggles a boolean */
+				if( argv[0][0] == '!' ) {
+					*sh = *sh ? 0 : 1;
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str, "%hd ", *sh );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					break;
+				}
+				/* Normal case: an integer */
+				cp = *argv;
+				for( ii = 0; ii < sdp->sp_count; ++ii ) {
+					if( *cp == '\0' ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str,
+		      "not enough values for \"%s\" argument: should have %d",
+							       sdp->sp_name,
+							       sdp->sp_count );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+
+					BU_SP_SKIP_SEP(cp);
+					tmpi = atoi( cp );
+					if( *cp && (*cp == '+' || *cp == '-') )
+						cp++;
+					while( *cp && isdigit(*cp) )
+						cp++; 
+					/* make sure we actually had an
+					 * integer out there
+					 */
+
+					if( cp == *argv ||
+					    (cp == *argv+1 &&
+					     (argv[0][0] == '+' ||
+					      argv[0][0] == '-')) ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str, 
+			       "value \"%s\" to argument %s isn't an integer",
+							       argv,
+							       sdp->sp_name );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					} else {
+						*(sh++) = tmpi;
+					}
+					BU_SP_SKIP_SEP(cp);
+				}
+				Tcl_AppendResult( interp,
+						  sdp->sp_count > 1 ? "{" : "",
+						  argv[0],
+						  sdp->sp_count > 1 ? "}" : "",
+						  " ", (char *)NULL);
+				break; }
+
+#endif
 			case 'd': {
 				register int *ip = (int *)loc;
 				register int tmpi;
