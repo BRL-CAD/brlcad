@@ -215,7 +215,7 @@ struct seg		*seghead;
 	if( dist[2] > reff*reff )
 		return( 0 );	/* missed */
 
-	if( dist[0] <= 0.0 || dist[0] >= 1.0 )
+	if( dist[0] < 0.0 || dist[0] > 1.0 )
 		return( 0 );	/* missed */
 
 	sina = sqrt( 1.0 - cosa*cosa);
