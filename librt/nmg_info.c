@@ -1330,7 +1330,7 @@ CONST struct bn_tol	*tol;
  *
  *  Given an edgeuse, if it is part of a faceuse, return the inward pointing
  *  "left" vector which points into the interior of this loop, and
- *  lies in the plane of the face.
+ *  lies in the plane of the face. The left vector is unitized.
  *
  *  This routine depends on the vertex ordering in an OT_SAME loopuse being
  *  properly CCW for exterior loops, and CW for interior (hole) loops.
@@ -1348,10 +1348,11 @@ CONST struct edgeuse	*eu;
 	CONST struct faceuse	*fu;
 	vect_t			Norm;
 	vect_t			edgevect;
-	vect_t			edge_unit;
 	fastf_t			dot;
 	struct vertex_g		*vg1;
 	struct vertex_g		*vg2;
+	fastf_t			edge_len_sq;
+	fastf_t			sin_sq;
 
 	NMG_CK_EDGEUSE(eu);
 	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )  return -1;
@@ -1370,12 +1371,12 @@ CONST struct edgeuse	*eu;
 	NMG_GET_FU_NORMAL( Norm, fu );
 
 	VSUB2( edgevect, vg2->coord, vg1->coord );
+	edge_len_sq = MAGSQ( edgevect );
 
-	VMOVE( edge_unit, edgevect );
-	VUNITIZE( edge_unit );
+	dot = VDOT( edgevect, Norm );
+	sin_sq = 1.0 - (dot * dot / edge_len_sq);
 
-	dot = 1.0 - fabs( VDOT( edge_unit, Norm ) );
-	if( dot < 0.0001 && dot > (-0.0001) )
+	if( NEAR_ZERO( sin_sq, 0.000001) )	/* we don't have a tol structure available XXX */
 	{
 		CONST struct edgeuse *eu_next;
 		CONST struct edgeuse *eu_prev;
@@ -1460,6 +1461,53 @@ CONST struct edgeuse	*eu;
 	if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
 		bu_log( "\tUnitized left=(%f %f %f)\n", V3ARGS( left ) );
 	}
+	return 0;
+}
+
+/*
+ *		N M G _ F I N D _ E U _ L E F T _ N O N _ U N I T
+ *
+ *  Given an edgeuse, if it is part of a faceuse, return the inward pointing
+ *  "left" vector which points into the interior of this loop, and
+ *  lies in the plane of the face. The left vector is not unitized.
+ *
+ *  This routine depends on the vertex ordering in an OT_SAME loopuse being
+ *  properly CCW for exterior loops, and CW for interior (hole) loops.
+ *
+ *  Returns -
+ *	-1	if edgeuse is not part of a faceuse.
+ *	 0	if left vector successfully computed into caller's array.
+ */
+int
+nmg_find_eu_left_non_unit( left, eu )
+vect_t			left;
+CONST struct edgeuse	*eu;
+{
+	CONST struct loopuse	*lu;
+	CONST struct faceuse	*fu;
+	vect_t			Norm;
+	vect_t			edgevect;
+	fastf_t			dot;
+	fastf_t			edge_len_sq;
+	fastf_t			sin_sq;
+	pointp_t		p1,p2;
+
+	NMG_CK_EDGEUSE(eu);
+	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )  return -1;
+	lu = eu->up.lu_p;
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  return -1;
+	fu = lu->up.fu_p;
+
+	/* Get unit length Normal vector for edgeuse's faceuse */
+	NMG_GET_FU_NORMAL( Norm, fu );
+
+	/* Get vector in direction of edge */
+	p1 = eu->vu_p->v_p->vg_p->coord;
+	p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
+	VSUB2( edgevect, p2, p1 );
+
+	/* left vector is cross-product of face normal and edge direction */
+	VCROSS( left, Norm, edgevect );
 	return 0;
 }
 
