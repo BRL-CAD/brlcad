@@ -185,7 +185,7 @@ char *argv[];
 	char line[MAXLINELEN];
 	float x,y,z,hold,work;
 	char minus;
-	int ity,ity1,ico,isq[8],m,n,k,cc,tmp;
+	int ity,ity1,ico,isq[8],m,n,cc,tmp;
 	int i;
 	int type3_is_donut=0;
 	int c;
