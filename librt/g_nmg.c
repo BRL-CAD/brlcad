@@ -1644,8 +1644,6 @@ register mat_t		mat;
 {
 	struct model			*m;
 	union record			*rp;
-	struct nmg_struct_counts	cntbuf;
-	struct rt_external		count_ext;
 	int				kind_counts[NMG_N_KINDS];
 	char				*cp;
 	long				**real_ptrs;
@@ -1664,21 +1662,10 @@ register mat_t		mat;
 		return(-1);
 	}
 
-	bzero( (char *)&cntbuf, sizeof(cntbuf) );
-	RT_INIT_EXTERNAL(&count_ext);
-	count_ext.ext_nbytes = sizeof(rp->nmg.N_structs);
-	count_ext.ext_buf = rp->nmg.N_structs;
-	if( rt_struct_import( (genptr_t)&cntbuf, rt_nmg_structs_fmt, &count_ext ) <= 0 )  {
-		rt_log("rt_struct_import failure\n");
-		return(-1);
-	}
-#if DEBUG
-	nmg_pr_struct_counts( &cntbuf, "After import" );
-#endif
-
+	/* Obtain counts of each kind of structure */
 	maxindex = 1;
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		kind_counts[kind] = ((long *)&cntbuf)[kind];
+		kind_counts[kind] = rt_glong( rp->nmg.N_structs+4*kind );
 		maxindex += kind_counts[kind];
 	}
 #if DEBUG
@@ -1735,7 +1722,6 @@ double			local2mm;
 	struct model			*m;
 	union record			*rp;
 	struct nmg_struct_counts	cntbuf;
-	struct rt_external		count_ext;
 	long				**ptrs;
 	struct nmg_exp_counts		*ecnt;
 	int				i;
@@ -1752,6 +1738,7 @@ double			local2mm;
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
+	/* As a by-product, this fills in the ptrs[] array! */
 	bzero( (char *)&cntbuf, sizeof(cntbuf) );
 	ptrs = nmg_m_struct_count( &cntbuf, m );
 #if DEBUG
@@ -1834,15 +1821,10 @@ rt_log("Mapping of old index to new index, and kind\n");
 			(genptr_t)(ptrs[i]), ecnt, i, local2mm );
 	}
 
-	RT_INIT_EXTERNAL(&count_ext);
-	if( rt_struct_export( &count_ext, (genptr_t)&cntbuf, rt_nmg_structs_fmt ) < 0 )  {
-		rt_log("rt_struct_export() failure\n");
-		return(-1);
+	/* Record counts of each kind of structure */
+	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
+		(void)rt_plong( rp->nmg.N_structs+4*kind, kind_counts[kind] );
 	}
-	if( count_ext.ext_nbytes > sizeof(rp->nmg.N_structs) )
-		rt_bomb("nmg.N_structs overflow");
-	bcopy( count_ext.ext_buf, rp->nmg.N_structs, count_ext.ext_nbytes );
-	db_free_external( &count_ext );
 
 	return(0);
 }
