@@ -380,8 +380,8 @@ struct rt_sketch_internal
 {
 	long		magic;
 	point_t		V;		/* default embedding of sketch */
-	vect_t		u_vec;
-	vect_t		v_vec;
+	vect_t		u_vec;		/* u_vec and v_vec are unit vectors defining the plane of */
+	vect_t		v_vec;		/* the sketch */
 	int		vert_count;	/* number of vertices in this sketch */
 	point2d_t	*verts;		/* array of 2D vertices that may be used as
 					 * endpoints, centers, or NURB control points */
