@@ -214,8 +214,8 @@ int lvl;			/* recursion level */
 			tp->tr_a.tu_stp->st_bit );
 		return;
 
-		rt_log("REGION 'stp'=x%x\n",
-			tp->tr_a.tu_stp );
+		rt_log("REGION ctsp=x%x\n", tp->tr_c.tc_ctsp );
+		bu_log("REGION ctsp=x%x\n", tp->tr_c.tc_ctsp );
 			tp->tr_l.tl_mat ? " (matrix)" : "" );
 		return;
 
