@@ -3,7 +3,7 @@
 dxf-g \- DXF Translator (DXF to BRL-CAD)
 .SH SYNOPSIS
 .B dxf-g
-[-l] [-n] [-p] [-t tolerance] [-i file.dxf] [-o database.g]
+[-p] [-v] [-t tolerance] [-i file.dxf] [-o database.g]
 .SH DESCRIPTION
 .I dxf-g\^
 converts the specified
@@ -12,20 +12,11 @@ to a BRL-CAD
 .I database.g
 file.
 The
-.I -l
-option prevents processing the DXF file by layers. Some DXF files
-may have different layers for different pieces of the object. This
-option will result in a single object built from the entire DXF file.
-If an input file is not specified, the -l option must be used.
-The
-.I -n
-option directs the code to try to fix surface normal directions. A routine
-will be called after each object is built to insure that the surface normals
-are at least consistent. If the object is a closed surface, the routine
-will assign outward pointing normals to each face.
-The
 .I -p
 option results in a BRLCAD model built from polysolids instead of NMG's.
+The
+.I -v
+option produces very verbose output on stderr.
 The
 .I tolerance
 is the maximum distance (in mm) between two vertices at which the two vertices
@@ -38,7 +29,7 @@ format are 3DFACES and 3DMESH objects (other objects defined for the DXF
 format are 2D drawing entities and are ignored).
 .SH EXAMPLE
 .RS
-$ \|\fIdxf-g \|sample.dxf \|sample.g\fP
+$ \|\fIdxf-g < \|sample.dxf > \|sample.g\fP
 .RE
 .SH "SEE ALSO"
 .I
