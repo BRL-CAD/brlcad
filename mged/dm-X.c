@@ -450,27 +450,32 @@ XEvent *eventPtr;
     char keybuf[4];
     int cnt;
     XComposeStatus compose_stat;
+    XWindowAttributes xwa;
 
     if (eventPtr->xany.window != win)
-	return 0;
+	return TCL_ERROR;
 
-    if (eventPtr->type == Expose || eventPtr->type == ConfigureNotify) {
-	if (eventPtr->xexpose.count == 0) {
-            XWindowAttributes xwa;
-            XGetWindowAttributes( dpy, win, &xwa );
-            height = xwa.height;
-            width = xwa.width;
-	    rt_vls_printf( &dm_values.dv_string, "refresh\n" );
-	}
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0){
+      XGetWindowAttributes( dpy, win, &xwa );
+      height = xwa.height;
+      width = xwa.width;
+      rt_vls_printf( &dm_values.dv_string, "refresh\n" );
+    }else if(eventPtr->type == ConfigureNotify){
+      XGetWindowAttributes( dpy, win, &xwa );
+      height = xwa.height;
+      width = xwa.width;
+      rt_vls_printf( &dm_values.dv_string, "refresh\n" );
     } else if( eventPtr->type == MotionNotify ) {
 	int	x, y;
 	if ( !XdoMotion )
-	    return 1;
+	    return TCL_OK;
 	x = (eventPtr->xmotion.x/(double)width - 0.5) * 4095;
 	y = (0.5 - eventPtr->xmotion.y/(double)height) * 4095;
     	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
 	rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
-    } else if( eventPtr->type == ButtonPress ) {
+    }
+#if 0
+    else if( eventPtr->type == ButtonPress ) {
 	/* There may also be ButtonRelease events */
 	int	x, y;
 	/* In MGED this is a "penpress" */
@@ -596,15 +601,15 @@ F	Toggle faceplate\n\
 		break;
 	    }
 	}
-    } else {
-	XWindowAttributes xwa;
+    }
+#endif
+    else {
 	XGetWindowAttributes( dpy, win, &xwa );
 	height = xwa.height;
 	width = xwa.width;
-	return 1;
     }
 
-    return 1;
+    return TCL_OK;
 }
 	    
 /*
@@ -840,7 +845,7 @@ char	*name;
 #else
     rt_vls_init(&str);
     rt_vls_strcpy(&str, "loadtk\n");
-    cmdline(&str, FALSE);
+    (void)cmdline(&str, FALSE);
     rt_vls_free(&str);
 
     xtkwin = Tk_CreateWindow(interp, tkwin, "mged", name);
@@ -957,13 +962,7 @@ char	*name;
 			  (void (*)())Xdoevent, (ClientData)NULL);
 
 #else
-#if 0
     Tk_CreateGenericHandler(Xdoevent, (ClientData)NULL);
-#else
-    Tk_CreateEventHandler(xtkwin, ExposureMask|PointerMotionMask|
-			  StructureNotifyMask,
-			  (void (*)())Xdoevent, (ClientData)NULL);
-#endif
 #endif
 
     Tk_SetWindowBackground(xtkwin, bg);
