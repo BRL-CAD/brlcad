@@ -27,10 +27,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "vmath.h"
 #include "rtlist.h"
-#include "../libspl/b_spline.h"
+#include "nurb.h"
 #include "wdb.h"			/* after b_spline.h */
 
-extern struct b_spline *spl_new();
+extern struct snurb * rt_nurb_new_snurb();
 
 mat_t	identity;
 double	degtorad = 0.0174532925199433;
@@ -227,7 +227,7 @@ char	*name;
 int	npts;
 double	radius;
 {
-	struct b_spline *bp;
+	struct snurb *bp;
 	register int i;
 	int	nv;
 	int	cur_kv;
@@ -246,25 +246,25 @@ double	radius;
 	 *  The V direction is down the first column,
 	 *  and has NROWS+order[V] positions.
 	 */
-	bp = spl_new( 3,	4,		/* u,v order */
+	bp = rt_nurb_new_snurb( 3,	4,		/* u,v order */
 		N_CIRCLE_KNOTS,	npts+6,		/* u,v knot vector size */
 		npts+2,		NCOLS,		/* nrows, ncols */
-		P4 );
+		MAKE_PT_TYPE(4,2,1));
 
 	/*  Build the U knots */
 	for( i=0; i<N_CIRCLE_KNOTS; i++ )
-		bp->u_kv->knots[i] = circle_knots[i];
+		bp->u_knots->knots[i] = circle_knots[i];
 
 	/* Build the V knots */
 	cur_kv = 0;		/* current knot value */
 	nv = 0;			/* current knot subscript */
 	for( i=0; i<4; i++ )
-		bp->v_kv->knots[nv++] = cur_kv;
+		bp->v_knots->knots[nv++] = cur_kv;
 	cur_kv++;
 	for( i=4; i<(npts+4-2); i++ )
-		bp->v_kv->knots[nv++] = cur_kv++;
+		bp->v_knots->knots[nv++] = cur_kv++;
 	for( i=0; i<4; i++ )
-		bp->v_kv->knots[nv++] = cur_kv;
+		bp->v_knots->knots[nv++] = cur_kv;
 
 	/*
 	 *  The control mesh is stored in row-major order,
@@ -274,7 +274,7 @@ double	radius;
 	 *  The first and last "slice" are the center points that
 	 *  create the end caps.
 	 */
-	meshp = bp->ctl_mesh->mesh;
+	meshp = bp->mesh->ctl_points;
 
 	/* Row 0 */
 	for( col=0; col<9; col++ )  {
@@ -309,7 +309,7 @@ double	radius;
 		
 	mk_bsolid( stdout, name, 1, 0.1 );
 	mk_bsurf( stdout, bp );
-	spl_sfree( bp );
+	rt_nurb_free_snurb( bp );
 }
 
 /* Returns -1 if done, 0 if something to draw */
