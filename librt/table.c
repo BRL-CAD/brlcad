@@ -108,7 +108,7 @@ RT_DECLARE_INTERFACE(ars)
 RT_DECLARE_INTERFACE(hlf)
 RT_DECLARE_INTERFACE(rec)
 RT_DECLARE_INTERFACE(pg)
-RT_DECLARE_INTERFACE(spl)
+RT_DECLARE_INTERFACE(nurb)
 RT_DECLARE_INTERFACE(sph)
 RT_DECLARE_INTERFACE(ebm)
 RT_DECLARE_INTERFACE(vol)
@@ -183,11 +183,11 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_pg_describe,
 
 	"ID_BSPLINE",	1,
-		rt_spl_prep,	rt_spl_shot,	rt_spl_print,	rt_spl_norm,
-		rt_spl_uv,	rt_spl_curve,	rt_spl_class,	rt_spl_free,
-		rt_spl_plot,	rt_vstub,	rt_spl_tess,
-		rt_spl_import,	rt_spl_export,	rt_spl_ifree,
-		rt_spl_describe,
+		rt_nurb_prep,	rt_nurb_shot,	rt_nurb_print,	rt_nurb_norm,
+		rt_nurb_uv,	rt_nurb_curve,	rt_nurb_class,	rt_nurb_free,
+		rt_nurb_plot,	rt_vstub,	rt_nurb_tess,
+		rt_nurb_import,	rt_nurb_export,	rt_nurb_ifree,
+		rt_nurb_describe,
 
 	"ID_SPH",	1,
 		rt_sph_prep,	rt_sph_shot,	rt_sph_print,	rt_sph_norm,
@@ -394,3 +394,4 @@ struct rt_external	*ep;
 	}
 	return(id);
 }
+
