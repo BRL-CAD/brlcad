@@ -61,10 +61,6 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-#if 0
-static void	label();
-static void	draw();
-#endif
 static int	Ogl_xsetup();
 static void	Ogl_configure_window_shape();
 static int	Ogldoevent();
@@ -157,8 +153,6 @@ static int	ogl_has_rgb;		/* 0 if mapped mode must be used */
 static int	ogl_has_doublebuffer;	/* 0 if singlebuffer mode must be used */
 
 
-static int	min_scr_z;		/* based on (glGetIntegerv(XXX_ZMIN, &gdtmp), gdtmp) */
-static int	max_scr_z;		/* based on (glGetIntegerv(XXX_ZMAX, &gdtmp), gdtmp) */
 /* End modifiable variables */
 
 static int	ogl_fd;			/* GL file descriptor to select() on */
@@ -248,10 +242,6 @@ struct structparse Ogl_vparse[] = {
 		"%d",  1, "has_rgb",		(int)&ogl_has_rgb,	Ogl_colorchange 	},
 	{
 		"%d",  1, "has_doublebuffer",	(int)&ogl_has_doublebuffer, refresh_hook 	},
-	{
-		"%d",  1, "min_scr_z",		(int)&min_scr_z,	refresh_hook 	},
-	{
-		"%d",  1, "max_scr_z",		(int)&max_scr_z,	refresh_hook 	},
 	{
 		"%d",  1, "debug",		(int)&ogl_debug,		FUNC_NULL 	},
 	{
@@ -527,20 +517,6 @@ int which_eye;
 	gtmat[15] = *(mptr++);
 
 
-#if 0
-	/* CJXX still necessary? I don't think so */
-	/*
-	 *  Convert between MGED's right handed coordinate system
-	 *  where +Z comes out of the screen to the Silicon Graphics's
-	 *  left handed coordinate system, where +Z goes INTO the screen.
-	 */
-	gtmat[0] = -gtmat[0];
-	gtmat[1] = -gtmat[1];
-	gtmat[2] = -gtmat[2];
-	gtmat[3] = -gtmat[3];
-#endif
-
-	/*CJXX experimental */
 	/* If all the display managers end up doing this maybe it's 
 	 * dozoom that has a bug */
 	gtmat[2]  = -gtmat[2];
@@ -694,7 +670,9 @@ int white_flag;
 
 	if (sp->s_soldash)
 		glEnable(GL_LINE_STIPPLE);		/* set dot-dash */
-	
+
+	if (white_flag && cueing_on)
+		glDisable(GL_FOG);	
 
 	if( ogl_has_rgb )  {
 		register short	r, g, b;
@@ -706,7 +684,7 @@ int white_flag;
 			b = (short)sp->s_color[2];
 		}
 
-		if(lighting_on) /* && ogl_is_gt)*/
+		if(lighting_on)
 		{
 
 			/* Ambient = .2, Diffuse = .6, Specular = .2 */
@@ -725,42 +703,14 @@ int white_flag;
 
 		} else {
 			glColor3ub( r,  g,  b );
-#if 0
-			if (cueing_on){
-				glEnable(GL_FOG);
-			}
-#endif
 		}
 	} else {
-
-		if( white_flag ) {
-			ovec = nvec = MAP_ENTRY(DM_WHITE);
-			/* Use the *next* to the brightest white entry */
-			if(cueing_on)  {
-				glFogi(GL_FOG_INDEX, nvec + 1);
-				glIndexi( nvec+1);
-/*				lshaderange(nvec+1, nvec+1,
-				    min_scr_z, max_scr_z );*/
-			} else {
-				glIndexi(nvec);
-			}
-		} else {
-			if( (nvec = MAP_ENTRY( sp->s_dmindex )) != ovec) {
-				/* Use only the middle 14 to allow for roundoff...
-				 * Pity the poor fool who has defined a black object.
-				 * The code will use the "reserved" color map entries
-				 * to display it when in depthcued mode.
-				 */
-				if(cueing_on)  {
-					glFogi(GL_FOG_INDEX, nvec+14);
-					glIndexi(nvec+1);
-/*					lshaderange(nvec+1, nvec+14,
-					    min_scr_z, max_scr_z );*/
-				} else {
-					glIndexi(nvec);
-				}
-				ovec = nvec;
-			}
+		if (white_flag){
+			ovec = MAP_ENTRY(DM_WHITE);
+			glIndexi(ovec);
+		} else if( (nvec = MAP_ENTRY( sp->s_dmindex )) != ovec) {
+			glIndexi(nvec);
+			ovec = nvec;
 		}
 	}
 
@@ -822,6 +772,10 @@ int white_flag;
 	if (sp->s_soldash)
 		glDisable(GL_LINE_STIPPLE);	/* restore solid lines */
 
+	if (white_flag && cueing_on){
+		glEnable(GL_FOG);
+	}
+
 	return(1);	/* OK */
 
 }
@@ -844,7 +798,8 @@ Ogl_normal()
 	if( ogl_has_rgb )  {
 		glColor3ub( 0,  0,  0 );
 	} else {
-		glIndexi((int) MAP_ENTRY(DM_BLACK));
+		ovec = MAP_ENTRY(DM_BLACK);
+		glIndexi( ovec );
 	}
 
 	if (!ogl_face_flag){
@@ -899,7 +854,8 @@ int x,y,size, colour;
 	if( ogl_has_rgb )  {
 		glColor3ub( (short)ogl_rgbtab[colour].r,  (short)ogl_rgbtab[colour].g,  (short)ogl_rgbtab[colour].b );
 	} else {
-		glIndexi( MAP_ENTRY(colour) );
+		ovec = MAP_ENTRY(colour);
+		glIndexi( ovec );
 	}
 
 /*	glRasterPos2i( x,  y);*/
@@ -929,19 +885,10 @@ int dashed;
 
 		glColor3ub( (short)255,  (short)255,  (short) 0 );
 	} else {
-#if 1
 		if((nvec = MAP_ENTRY(DM_YELLOW)) != ovec) {
-/*			if(cueing_on) lshaderange(nvec, nvec,
-			    min_scr_z, max_scr_z );*/
-			if(cueing_on) {
-				glFogi(GL_FOG_INDEX, nvec + 1);
-				glIndexi(nvec+1);
-			} else {
-				glIndexi( nvec );
-			}
+			glIndexi(nvec);
 			ovec = nvec;
 		}
-#endif
 	}
 	
 /*	glColor3ub( (short)255,  (short)255,  (short) 0 );*/
@@ -1405,7 +1352,7 @@ Ogl_colorchange()
 
 		return;
 	}
-#if 1
+
 	if(cueing_on && (ogl_index_size < 7)) {
 		rt_log("Too few bitplanes: depthcueing disabled\n");
 		cueing_on = 0;
@@ -1434,8 +1381,9 @@ Ogl_colorchange()
 		Ogl_gen_color( i, ogl_rgbtab[i].r, ogl_rgbtab[i].g, ogl_rgbtab[i].b);
 	}
 
-	glIndexi( MAP_ENTRY(DM_WHITE) );
-#endif
+	ovec = MAP_ENTRY(DM_WHITE);
+	glIndexi( ovec );
+
 }
 
 /* ARGSUSED */
@@ -1451,15 +1399,6 @@ void
 Ogl_window(w)
 register int w[];
 {
-#if 0
-	/* Compute the clipping bounds */
-	clipmin[0] = w[1] / 2048.;
-	clipmin[1] = w[3] / 2048.;
-	clipmin[2] = w[5] / 2048.;
-	clipmax[0] = w[0] / 2047.;
-	clipmax[1] = w[2] / 2047.;
-	clipmax[2] = w[4] / 2047.;
-#endif
 }
 
 /* the font used depends on the size of the window opened */
@@ -1505,36 +1444,12 @@ char	*name;
 	}
 	dpy = Tk_Display(xtkwin);
 
-#if 0
-	/*CJXX temporary */
-	if (glXQueryExtension(dpy, NULL, NULL)){
-		printf("glX extension exists\n");
-		glXQueryVersion(dpy, &major, &minor);
-		printf("version %d.%d\n", major, minor);
-	} else {
-		printf("glX extension doesn't exist\n");
-	}
-#endif
-
-	/* must do this before Make Exist */
-
+	/* must do this before MakeExist */
 	if ((vip=ogl_set_visual(xtkwin))==NULL){
 		rt_log("Ogl_open: Can't get an appropriate visual.\n");
 		return -1;
 	}
 
-#if 0
-	if (vip->class == PseudoColor){
-		int npixels = 4096;
-		unsigned long pixels[4096];
-
-		while(!XAllocColorCells(dpy, cmap, 0, NULL, 0, pixels, npixels)){
-			npixels /= 2;
-		}
-		printf("Allocated %d colorcells.\n",npixels);
-	}
-#endif
-		
 	Tk_GeometryRequest(xtkwin, width+10, height+10);
 	Tk_MoveToplevelWindow(xtkwin, 376, 0);
 	Tk_MakeWindowExist(xtkwin);
@@ -1560,85 +1475,6 @@ char	*name;
 	/* set ogl_ogl_used if the context was ever direct */
 	ogl_ogl_used = (ogl_is_direct || ogl_ogl_used);
 
-	/* CJXX We may not want color map indices **/
-	/* In fact, lets rewrite code assuming rgba, and add index support
-	 * later if we feel it's worthwhile 
-	 */
-#if 0
-	if (!ogl_has_rgb){
-		/* Get color map inddices for the colors we use. */
-		black = BlackPixel( dpy, a_screen );
-		white = WhitePixel( dpy, a_screen );
-
-		a_cmap = Tk_Colormap(xtkwin);
-		a_color.red = 255<<8;
-		a_color.green=0;
-		a_color.blue=0;
-		a_color.flags = DoRed | DoGreen| DoBlue;
-		if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-			rt_log( "dm-X: Can't Allocate red\n");
-			return -1;
-		}
-		red = a_color.pixel;
-		if ( red == white ) red = black;
-
-		a_color.red = 200<<8;
-		a_color.green=200<<8;
-		a_color.blue=0<<8;
-		a_color.flags = DoRed | DoGreen| DoBlue;
-		if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-			rt_log( "dm-ogl: Can't Allocate yellow\n");
-			return -1;
-		}
-		yellow = a_color.pixel;
-		if (yellow == white) yellow = black;
-    
-		a_color.red = 0;
-		a_color.green=0;
-		a_color.blue=255<<8;
-		a_color.flags = DoRed | DoGreen| DoBlue;
-		if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-			rt_log( "dm-ogl: Can't Allocate blue\n");
-			return -1;
-		}
-		blue = a_color.pixel;
-		if (blue == white) blue = black;
-
-		a_color.red = 128<<8;
-		a_color.green=128<<8;
-		a_color.blue= 128<<8;
-		a_color.flags = DoRed | DoGreen| DoBlue;
-		if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-			rt_log( "dm-ogl: Can't Allocate gray\n");
-			return -1;
-		}
-		gray = a_color.pixel;
-		if (gray == white) gray = black;
-
-		/* Select border, background, foreground colors,
-		 * and border width.
-		 */
-		/* if( a_visual->class == GrayScale || a_visual->class == StaticGray )  */
-		if( vip->class == GrayScale || vip->class == StaticGray )  {
-			is_monochrome = 1;
-			bd = BlackPixel( dpy, a_screen );
-			bg = WhitePixel( dpy, a_screen );
-			fg = BlackPixel( dpy, a_screen );
-		} else {
-			/* Hey, it's a color server.  Ought to use 'em! */
-			is_monochrome = 0;
-			bd = WhitePixel( dpy, a_screen );
-			bg = BlackPixel( dpy, a_screen );
-			fg = WhitePixel( dpy, a_screen );
-		}
-
-		if( !is_monochrome && fg != red && red != black )  fg = red;
-
-		gcv.foreground = fg;
-		gcv.background = bg;
-	}
-#endif
-
 	/* Register the file descriptor with the Tk event handler */
 #if 0
 	Tk_CreateEventHandler(xtkwin, ExposureMask|ButtonPressMask|KeyPressMask|
@@ -1651,7 +1487,6 @@ char	*name;
 #endif
 
 	Tk_SetWindowBackground(xtkwin, bg);
-
 
 	if (!glXMakeCurrent(dpy, win, glxc)){
 		rt_log("Ogl_open: Couldn't make context current\n");
@@ -1666,7 +1501,6 @@ char	*name;
 
 	Tk_MapWindow(xtkwin);
 
-
 	/* Keep the window square */
 	hints->min_aspect.x = 1;
 	hints->min_aspect.y = 1;
@@ -1676,13 +1510,6 @@ char	*name;
 	XSetWMNormalHints(dpy, win, hints);
 	XFree(hints);
 
-	/* CJXX? */
-	/* Don't draw polygon edges */
-
-	/* CJXX? */
-	/* Take off a smidgeon for wraparound, as suggested by SGI manual */
-	min_scr_z = 0;
-	max_scr_z = 1;
 
 	/* do viewport, ortho commands and initialize font*/
 	Ogl_configure_window_shape();
@@ -1697,6 +1524,8 @@ char	*name;
 	glFogf(GL_FOG_END, 2.0);
 	if (ogl_has_rgb)
 		glFogfv(GL_FOG_COLOR, backgnd);
+	else
+		glFogi(GL_FOG_INDEX, 1 - CMAP_RAMP_WIDTH);
 	glFogf(GL_FOG_DENSITY, VIEWFACTOR);
 	
 
@@ -1708,8 +1537,8 @@ char	*name;
 	glGetDoublev(GL_PROJECTION_MATRIX, faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity(); /* object transformation matrix */
-	glTranslatef( 0.0, 0.0, -1.0); /* new */
+	glLoadIdentity(); 
+	glTranslatef( 0.0, 0.0, -1.0); 
 	glPushMatrix();
 	glLoadIdentity();
 	ogl_face_flag = 1;	/* faceplate matrix is on top of stack */
@@ -1875,17 +1704,13 @@ Ogl_configure_window_shape()
 	glViewport(0,  0, (width), (height));
 	glScissor(0,  0, ( width)+1, ( height)+1);
 
-/* CJXX needed? */
-#if 1
 	if( ogl_has_zbuf ) establish_zbuffer();
 	establish_lighting();
-#endif
 
 #if 0
 	glDrawBuffer(GL_FRONT_AND_BACK);
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
-/*	glClearDepth(0.0);*/
 	if (ogl_has_zbuf)
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	else
@@ -1905,14 +1730,6 @@ Ogl_configure_window_shape()
 	glLoadIdentity();
 	glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
 	glMatrixMode(mm);
-
-
-#if 0
-	/* CJXX not used */
-	/* The glOrtho call really just makes this matrix */
-	aspect_corr[0] = 1/xlim_view;
-	aspect_corr[5] = 1/ylim_view;
-#endif
 
 
 	/* First time through, load a font or quit */
@@ -2026,17 +1843,7 @@ establish_lighting()
 		glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
 		glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 
-/* CJXX positions specified in Ogl_newrot */
-#if 0		
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
-		glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
-		glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
-		glLightfv(GL_LIGHT2, GL_POSITION, light2_position);
-		glLightfv(GL_LIGHT3, GL_POSITION, light3_position);
-		glPopMatrix();
-#endif
+		/* light positions specified in Ogl_newrot */
 
 		glLightfv(GL_LIGHT0, GL_SPECULAR, light0_diffuse);
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
@@ -2056,255 +1863,6 @@ establish_lighting()
 	dmaflag = 1;
 }	
 
-#if 0
-/*
- *  Some initial lighting model stuff
- *  Really, MGED needs to derive it's lighting from the database,
- *  but for now, this hack will suffice.
- *
- *  For materials, the definitions are:
- *	ALPHA		opacity.  1.0=opaque
- *	AMBIENT		ambient reflectance of the material  0..1
- *	DIFFUSE		diffuse reflectance of the material  0..1
- *	SPECULAR	specular reflectance of the material  0..1
- *	EMISSION	emission color ???
- *	SHININESS	specular scattering exponent, integer 0..128
- */
-static float material_default[] = {
-	ALPHA,		1.0,
-	AMBIENT,	0.2, 0.2, 0.2,
-	DIFFUSE,	0.8, 0.8, 0.8,
-	EMISSION,	0.0, 0.0, 0.0,
-	SHININESS,	0.0,
-	SPECULAR,	0.0, 0.0, 0.0,
-	LMNULL   };
-
-/* Something like the RT default phong material */
-static float material_rtdefault[] = {
-	ALPHA,		1.0,	
-	AMBIENT,	0.2, 0.2, 0.2,	/* 0.4 in rt */
-	DIFFUSE,	0.6, 0.6, 0.6,
-	SPECULAR,	0.2, 0.2, 0.2,
-	EMISSION,	0.0, 0.0, 0.0,
-	SHININESS,	10.0,
-	LMNULL   };
-
-/* This was the "default" material in the demo */
-static float material_xdefault[] = {
-	AMBIENT, 0.35, 0.25,  0.1,
-	DIFFUSE, 0.1, 0.5, 0.1,
-	SPECULAR, 0.0, 0.0, 0.0,
-	SHININESS, 5.0,
-	LMNULL   };
-
-static float mat_brass[] = {
-	AMBIENT, 0.35, 0.25,  0.1,
-	DIFFUSE, 0.65, 0.5, 0.35,
-	SPECULAR, 0.0, 0.0, 0.0,
-	SHININESS, 5.0,
-	LMNULL   };
-
-static float mat_shinybrass[] = {
-	AMBIENT, 0.25, 0.15, 0.0,
-	DIFFUSE, 0.65, 0.5, 0.35,
-	SPECULAR, 0.9, 0.6, 0.0,
-	SHININESS, 10.0,
-	LMNULL   };
-
-static float mat_pewter[] = {
-	AMBIENT, 0.0, 0.0,  0.0,
-	DIFFUSE, 0.6, 0.55 , 0.65,
-	SPECULAR, 0.9, 0.9, 0.95,
-	SHININESS, 10.0,
-	LMNULL   };
-
-static float mat_silver[] = {
-	AMBIENT, 0.4, 0.4,  0.4,
-	DIFFUSE, 0.3, 0.3, 0.3,
-	SPECULAR, 0.9, 0.9, 0.95,
-	SHININESS, 30.0,
-	LMNULL   };
-
-static float mat_gold[] = {
-	AMBIENT, 0.4, 0.2, 0.0,
-	DIFFUSE, 0.9, 0.5, 0.0,
-	SPECULAR, 0.7, 0.7, 0.0,
-	SHININESS, 10.0,
-	LMNULL   };
-
-static float mat_shinygold[] = {
-	AMBIENT, 0.4, 0.2,  0.0,
-	DIFFUSE, 0.9, 0.5, 0.0,
-	SPECULAR, 0.9, 0.9, 0.0,
-	SHININESS, 20.0,
-	LMNULL   };
-
-static float mat_plaster[] = {
-	AMBIENT, 0.2, 0.2,  0.2,
-	DIFFUSE, 0.95, 0.95, 0.95,
-	SPECULAR, 0.0, 0.0, 0.0,
-	SHININESS, 1.0,
-	LMNULL   };
-
-static float mat_redplastic[] = {
-	AMBIENT, 0.3, 0.1, 0.1,
-	DIFFUSE, 0.5, 0.1, 0.1,
-	SPECULAR, 0.45, 0.45, 0.45,
-	SHININESS, 30.0,
-	LMNULL   };
-
-static float mat_greenplastic[] = {
-	AMBIENT, 0.1, 0.3, 0.1,
-	DIFFUSE, 0.1, 0.5, 0.1,
-	SPECULAR, 0.45, 0.45, 0.45,
-	SHININESS, 30.0,
-	LMNULL   };
-
-static float mat_blueplastic[] = {
-	AMBIENT, 0.1, 0.1, 0.3,
-	DIFFUSE, 0.1, 0.1, 0.5,
-	SPECULAR, 0.45, 0.45, 0.45,
-	SHININESS, 30.0,
-	LMNULL   };
-
-static float mat_greenflat[] = {
-	EMISSION,   0.0, 0.4, 0.0,
-	AMBIENT,    0.0, 0.0, 0.0,
-	DIFFUSE,    0.0, 0.0, 0.0,
-	SPECULAR,   0.0, 0.6, 0.0,
-	SHININESS, 10.0,
-	LMNULL
-};
-
-static float mat_greenshiny[]= {
-	EMISSION, 0.0, 0.4, 0.0,
-	AMBIENT,  0.1, 0.25, 0.1,
-	DIFFUSE,  0.5, 0.5, 0.5,
-	SPECULAR,  0.25, 0.9, 0.25,
-	SHININESS, 10.0,
-	LMNULL
-};
-
-static float mat_blueflat[] = {
-	EMISSION, 0.0, 0.0, 0.4,
-	AMBIENT,  0.1, 0.25, 0.1,
-	DIFFUSE,  0.0, 0.5, 0.5,
-	SPECULAR,  0.0, 0.0, 0.9,
-	SHININESS, 10.0,
-	LMNULL
-};
-
-static float mat_blueshiny[] = {
-	EMISSION, 0.0, 0.0, 0.6,
-	AMBIENT,  0.1, 0.25, 0.5,
-	DIFFUSE,  0.5, 0.5, 0.5,
-	SPECULAR,  0.5, 0.0, 0.0,
-	SHININESS, 10.0,
-	LMNULL
-};
-
-static float mat_redflat[] = {
-	EMISSION, 0.60, 0.0, 0.0,
-	AMBIENT,  0.1, 0.25, 0.1,
-	DIFFUSE,  0.5, 0.5, 0.5,
-	SPECULAR,  0.5, 0.0, 0.0,
-	SHININESS, 1.0,
-	LMNULL
-};
-
-static float mat_redshiny[] = {
-	EMISSION, 0.60, 0.0, 0.0,
-	AMBIENT,  0.1, 0.25, 0.1,
-	DIFFUSE,  0.5, 0.5, 0.5,
-	SPECULAR,  0.5, 0.0, 0.0,
-	SHININESS, 10.0,
-	LMNULL
-};
-
-static float mat_beigeshiny[] = {
-	EMISSION, 0.5, 0.5, 0.6,
-	AMBIENT,  0.35, 0.35, 0.0,
-	DIFFUSE,  0.5, 0.5, 0.0,
-	SPECULAR,  0.5, 0.5, 0.0,
-	SHININESS, 10.0,
-	LMNULL
-};
-
-/*
- *  Meanings of the parameters:
- *	AMBIENT		ambient light associated with this source ???, 0..1
- *	LCOLOR		light color, 0..1
- *	POSITION	position of light.  w=0 for infinite lights
- */
-static float default_light[] = {
-	AMBIENT,	0.0, 0.0, 0.0, 
-	LCOLOR,		1.0, 1.0, 1.0, 
-	POSITION,	0.0, 0.0, 1.0, 0.0,
-	LMNULL};
-
-
-static float white_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.70, 0.70, 0.70, 
-	POSITION, 100.0, 200.0, 100.0, 0.0, 
-	LMNULL};
-
-
-static float red_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.6, 0.1, 0.1, 
-	POSITION, 100.0, 30.0, 100.0, 0.0, 
-	LMNULL};
-
-static float green_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.3, 0.1, 
-	POSITION, -100.0, 20.0, 20.0, 0.0, 
-	LMNULL};
-
-
-static float blue_inf_light[] = {
-	AMBIENT, 0.0, 0.0, 0.0, 
-	LCOLOR,   0.1, 0.1, 0.3, 
-	POSITION, 0.0, -100.0, -100.0, 0.0, 
-	LMNULL};
-
-static float white_local_light[] = {
-	AMBIENT, 0.0, 1.0, 0.0, 
-	LCOLOR,   0.75, 0.75, 0.75, 
-	POSITION, 0.0, 10.0, 10.0, 5.0, 
-	LMNULL};
-
-
-
-
-
-/*
- *  Lighting model parameters
- *	AMBIENT		amount of ambient light present in the scene, 0..1
- *	ATTENUATION	fixed and variable attenuation factor, 0..1
- *	LOCALVIEWER	1=eye at (0,0,0), 0=eye at (0,0,+inf)
- */
-static float	default_lmodel[] = {
-	AMBIENT,	0.2,  0.2,  0.2,
-	ATTENUATION,	1.0, 0.0, 
-	LOCALVIEWER,	0.0, 
-	LMNULL};
-
-static float infinite[] = {
-	AMBIENT, 0.3,  0.3, 0.3, 
-	LOCALVIEWER, 0.0, 
-	LMNULL};
-
-static float local[] = {
-	AMBIENT, 0.3,  0.3, 0.3, 
-	LOCALVIEWER, 1.0, 
-	ATTENUATION, 1.0, 0.0, 
-	LMNULL};
-
-
-
-#endif
 
 void	
 establish_zbuffer()
@@ -2396,15 +1954,15 @@ int c;
 			fastf_t red, green, blue;
 			XColor cells[16];
 
-			r_inc = ogl_rgbtab[c].r/16;
-			g_inc = ogl_rgbtab[c].g/16;
-			b_inc = ogl_rgbtab[c].b/16;
+			r_inc = ogl_rgbtab[c].r * 16;
+			g_inc = ogl_rgbtab[c].g * 16;
+			b_inc = ogl_rgbtab[c].b * 16;
 
-			red = ogl_rgbtab[c].r;
-			green = ogl_rgbtab[c].g;
-			blue = ogl_rgbtab[c].b;
+			red = ogl_rgbtab[c].r * 256;
+			green = ogl_rgbtab[c].g * 256;
+			blue = ogl_rgbtab[c].b * 256;
 
-			for(i = 15, j = MAP_ENTRY(c) + 15; i >= 0;
+			for(i = 15, j = MAP_ENTRY(c); i >= 0;
 			    i--, j--, red -= r_inc, green -= g_inc, blue -= b_inc){
 			    	cells[i].pixel = j;
 			    	cells[i].red = (short)red;
@@ -2418,16 +1976,11 @@ int c;
 		XColor cell, celltest;
 
 		cell.pixel = c + CMAP_BASE;
-		cell.red = ogl_rgbtab[c].r;
-		cell.green = ogl_rgbtab[c].g;
-		cell.blue = ogl_rgbtab[c].b;
+		cell.red = ogl_rgbtab[c].r * 256;
+		cell.green = ogl_rgbtab[c].g * 256;
+		cell.blue = ogl_rgbtab[c].b * 256;
 		cell.flags = DoRed|DoGreen|DoBlue;
 		XStoreColor(dpy, cmap, &cell);
 
-#if 0
-		celltest.pixel = c + CMAP_BASE;
-		XQueryColor(dpy, cmap, &celltest);
-		printf("cell %d: %d %d %d\n", c + CMAP_BASE, celltest.red, celltest.green, celltest.blue);
-#endif
 	}
 }
