@@ -358,6 +358,39 @@ struct shell *s;
 	return(eu1);
 }
 
+/*
+ *			N M G _ C K _ L I S T
+ *
+ *  Generic list checker.
+ */
+nmg_ck_list( hd, str )
+struct nmg_list	*hd;
+char		*str;
+{
+	struct nmg_list	*cur;
+	int	head_count = 0;
+
+	cur = hd;
+	do  {
+		if( cur->magic == NMG_LIST_MAGIC )  head_count++;
+		if( cur->forw->back != cur )  {
+			rt_log("nmg_ck_list(%s) cur=x%x, cur->forw=x%x, cur->forw->back=x%x\n",
+				str, cur, cur->forw, cur->forw->back );
+			rt_bomb("nmg_ck_list() forw\n");
+		}
+		if( cur->back->forw != cur )  {
+			rt_log("nmg_ck_list(%s) cur=x%x, cur->back=x%x, cur->back->forw=x%x\n",
+				str, cur, cur->back, cur->back->forw );
+			rt_bomb("nmg_ck_list() back\n");
+		}
+		cur = cur->forw;
+	} while( cur != hd );
+
+	if( head_count != 1 )  {
+		rt_log("nmg_ck_list(%s) head_count = %d\n", head_count);
+		rt_bomb("headless!\n");
+	}
+}
 
 
 /*
@@ -728,7 +761,7 @@ struct loopuse *lu1;
 	if (*lu1->up.magic_p != *lu2->up.magic_p)
 		rt_bomb("nmg_klu() loopuses do not have same type of parent!\n");
 
-	if( NMG_LIST_FIRST_MAGIC( &lu1->down_hd ) != 0 )  {
+	if( NMG_LIST_NON_EMPTY( &lu1->down_hd ) )  {
 		long	magic1;
 		/* deal with the children */
 		magic1 = NMG_LIST_FIRST_MAGIC( &lu1->down_hd );
@@ -747,8 +780,10 @@ struct loopuse *lu1;
 				nmg_keu(NMG_LIST_FIRST(edgeuse, &lu1->down_hd) );
 			}
 		}
-		else
+		else {
+			rt_log("nmg_klu(x%x) magic=%s\n", lu1, nmg_identify_magic(magic1) );
 			rt_bomb("nmg_klu: unknown type for loopuse child\n");
+		}
 	}
 
 
@@ -1310,6 +1345,7 @@ struct edgeuse *oldeu;
 			*eu2,
 			*oldeumate;
 	struct shell *s;
+	struct loopuse	*lu;
 
 	NMG_CK_EDGEUSE(oldeu);
 	if (v) {
@@ -1388,12 +1424,20 @@ struct edgeuse *oldeu;
 
 	/* now we know we are in a loop */
 
+	lu = oldeu->up.lu_p;
+	NMG_CK_LOOPUSE(lu);
+
 	/* get a parent shell pointer so we can make a new edge */
-	if (*oldeu->up.lu_p->up.magic_p == NMG_SHELL_MAGIC)
-		s = oldeu->up.lu_p->up.s_p;
+	if (*lu->up.magic_p == NMG_SHELL_MAGIC)
+		s = lu->up.s_p;
+	else if (*lu->up.magic_p == NMG_FACEUSE_MAGIC)
+		s = lu->up.fu_p->s_p;
 	else
-		s = oldeu->up.lu_p->up.fu_p->s_p;
+		rt_bomb("nmg_eusplit() bad lu->up\n");
 	NMG_CK_SHELL(s);
+
+	nmg_ck_list( &s->eu_hd, "eusplit A" );
+	nmg_ck_list( &s->lu_hd, "eusplit lu A" );
 
 	/* make a new edge on the vertex */
 	if (v) {
@@ -1402,6 +1446,8 @@ struct edgeuse *oldeu;
 		eu2 = eu1->eumate_p;
 	} else {
 		/* An edge between two new vertices */
+		nmg_ck_list( &s->eu_hd, "eusplit B" );
+		nmg_ck_list( &s->lu_hd, "eusplit lu B" );
 		eu1 = nmg_me((struct vertex *)NULL, (struct vertex *)NULL, s);
 		eu2 = eu1->eumate_p;
 		/* Make both ends of edge use same vertex.
