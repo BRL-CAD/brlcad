@@ -47,6 +47,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "externs.h"
 
+#define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,DBI_MAGIC,"struct db_i")
+#define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p, RTI_MAGIC, "struct rt_i")
 
 /*
  *			S H _ D I R E C T C H A N G E _ R G B
@@ -116,6 +118,100 @@ bu_log("sh_directchange_rgb() changing %s\n", regp->reg_name);
 }
 
 
+/*
+ *			S H _ D I R E C T C H A N G E _ S H A D E R
+ *
+ *  Go poke the rgb values of a region, on the fly.
+ *  This does not update the inmemory database,
+ *  so any changes will vanish on next re-prep unless other measures
+ *  are taken.
+ */
+sh_directchange_shader( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct rt_i	*rtip;
+	struct region	*regp;
+	struct directory *dp;
+	struct bu_vls	shader;
+	char		buf[64];
+
+	if( argc != 6 )  {
+		Tcl_AppendResult(interp, "Usage: sh_directchange_shader $rtip comb shader_arg(s)\n", NULL);
+		return TCL_ERROR;
+	}
+
+	rtip = (struct rt_i *)atoi(argv[1]);
+	RT_CK_RTI_TCL(rtip);
+
+	if( rtip->needprep )  {
+		Tcl_AppendResult(interp, "rt_prep() hasn't been called yet, error.\n", NULL);
+		return TCL_ERROR;
+	}
+
+	if( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL )  {
+		Tcl_AppendResult(interp, argv[2], ": not found\n", NULL);
+		return TCL_ERROR;
+	}
+
+	bu_vls_init(&shader);
+	bu_vls_from_argv(&shader, argc-3, argv+3);
+
+	/* Find all region names which match /comb/ pattern */
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		if( dp->d_flags & DIR_REGION )  {
+			/* name will occur at end of region string w/leading slash */
+		} else {
+			/* name will occur anywhere, bracked by slashes */
+		}
+
+		/* XXX quick hack */
+		if( strstr( regp->reg_name, argv[2] ) == NULL )  continue;
+
+		/* Modify the region's shader string */
+bu_log("sh_directchange_shader() changing %s\n", regp->reg_name);
+		if( regp->reg_mater.ma_shader )
+			bu_free( (genptr_t)regp->reg_mater.ma_shader, "reg_mater.ma_shader");
+		regp->reg_mater.ma_shader = bu_vls_strdup(&shader);
+
+		/* Update the shader */
+		mlib_free(regp);
+		if( mlib_setup( regp, rtip ) != 1 )  {
+			Tcl_AppendResult(interp, regp->reg_name, ": mlib_setup() failure\n", NULL);
+		}
+	}
+
+	bu_vls_free(&shader);
+	return TCL_OK;
+}
+
+/*
+ *			S H _ O P T
+ *
+ *  Process RT-style command-line options.
+ */
+sh_opt( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct rt_i	*rtip;
+	struct region	*regp;
+	struct directory *dp;
+	float		r,g,b;
+	char		buf[64];
+
+	if( argc < 2 )  {
+		Tcl_AppendResult(interp, "Usage: sh_opt command_line_option(s)\n", NULL);
+		return TCL_ERROR;
+	}
+	if( get_args( argc, argv ) <= 0 )
+		return TCL_ERROR;
+	return TCL_OK;
+}
 
 /*
  *			S H _ T C L _ S E T U P
@@ -128,5 +224,9 @@ sh_tcl_setup(interp)
 Tcl_Interp *interp;
 {
 	(void)Tcl_CreateCommand(interp, "sh_directchange_rgb", sh_directchange_rgb,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "sh_directchange_shader", sh_directchange_shader,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "sh_opt", sh_opt,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 }
