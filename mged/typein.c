@@ -538,7 +538,7 @@ union record	*rp;
 	}
 	*cp++ = '\0';
 
-	rp->ss.ss_id = ID_STRSOL;
+	rp->ss.ss_id = DBID_STRSOL;
 	return(0);		/* OK */
 }
 
