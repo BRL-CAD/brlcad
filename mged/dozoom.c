@@ -34,15 +34,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./dm.h"
 
-#ifdef XMGED
 #define W_AXIS 0
 #define V_AXIS 1
 #define E_AXIS 2
 
 extern point_t e_axis_pos;
+extern void (*axis_color_hook)();
 static void draw_axis();
-void (*axis_color_hook)();
-#endif
 
 /* Variables for dozoom() */
 fastf_t	Viewscale;
@@ -391,13 +389,11 @@ mat_print("pmat", pmat);
 		}
 	}
 
-#ifdef XMGED
   if(mged_variables.w_axis)
     draw_axis(W_AXIS);  /* draw world view axis */
 
   if(mged_variables.v_axis)
     draw_axis(V_AXIS);  /* draw view axis */
-#endif
 
 	/*
 	 *  Draw all solids involved in editing.
@@ -435,13 +431,10 @@ mat_print("pmat", pmat);
 		}
 	}
 
-#ifdef XMGED
   if(mged_variables.e_axis)
     draw_axis(E_AXIS); /* draw edit axis */
-#endif
 }
 
-#ifdef XMGED
 /*
  * Draw view axis or edit axis.
  */
@@ -588,4 +581,3 @@ int axis;
   /* draw axis */
   dmp->dmr_object( &sp, model2view, (double)1.0, color );
 }
-#endif
