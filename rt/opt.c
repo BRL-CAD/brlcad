@@ -100,7 +100,7 @@ register char **argv;
 	optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	"a:b:c:e:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MO:P:SU:V:X:"
+	"a:b:c:e:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:SU:V:X:"
 
 	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
