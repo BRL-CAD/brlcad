@@ -230,8 +230,6 @@ register struct partition *PartHeadp;
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
-
-
 	/*  comp components in partitions */
 	comp_count = 0;
 	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )
@@ -260,6 +258,9 @@ register struct partition *PartHeadp;
 		h = ap->a_x * MAGNITUDE(dx_model);
 		v = ap->a_y * MAGNITUDE(dy_model);
 	}
+
+	/* Single-thread through the printf()s */
+	RES_ACQUIRE( &rt_g.res_syscall );
 
 	/*
 	 *  In RT, rays are launched from the plane of the screen,
@@ -445,11 +446,17 @@ register struct partition *PartHeadp;
 
 	/* If partway through building the line, add a newline */
 	if( card_count > 0 )  {
-		/* May need to zero-fill unused component slots
-		 *  Not needed for COVART III, unknown for COVART II.
+		/*
+		 *  Note that GIFT zero-fills the unused component slots,
+		 *  but neither COVART II nor COVART III require it,
+		 *  so just end the line here.
 		 */
 		putc( '\n', outfp );
 	}
+
+	/* End of single-thread region */
+	RES_RELEASE( &rt_g.res_syscall );
+
 	return(0);
 }
 
