@@ -2400,6 +2400,7 @@ extern CONST double rt_degtorad;
 extern CONST double rt_radtodeg;
 extern CONST mat_t  rt_identity;
 extern CONST char   *rt_vlist_cmd_descriptions[];
+extern CONST char   rt_version[];
 
 #if defined(NMG_H)
 extern CONST struct nmg_visit_handlers  nmg_visit_handlers_null;
