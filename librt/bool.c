@@ -136,7 +136,7 @@ struct application	*ap;
 		lasthit = &segp->seg_in;
 		lastflip = 0;
 		for( pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw ) {
-			register int i;		/* XXX */
+			register int i;
 
 			if( (i=rt_fdiff(lasthit->hit_dist, pp->pt_outhit->hit_dist)) > 0 )  {
 				/* Seg starts beyond the END of the
@@ -348,6 +348,9 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
  *			R T _ D E F O V E R L A P
  *
  *  Default handler for overlaps in rt_boolfinal().
+ *  Returns -
+ *	 0	to eliminate partition with overlap entirely
+ *	!0	to retain partition in output list
  */
 int
 rt_defoverlap( ap, pp, name1, name2 )
@@ -360,6 +363,7 @@ char				*name2;
 		name1, name2,
 		ap->a_x, ap->a_y, ap->a_level );
 	rt_pr_pt( ap->a_rt_i, pp );
+	return(1);
 }
 
 /*
@@ -370,6 +374,9 @@ char				*name2;
  * If 1 region results, a valid hit has occured, so transfer
  * the partition from the Input list to the Final list.
  * If 2 or more regions claim the partition, then an overlap exists.
+ * If the overlap handler gives a non-zero return, then the overlapping
+ * partition is kept, with the region ID being the first one encountered.
+ * Otherwise, the partition is eliminated from further consideration. 
  */
 void
 rt_boolfinal( InputHdp, FinalHdp, startdist, enddist, regionbits, ap )
@@ -475,15 +482,16 @@ struct application *ap;
 			   	 */
 			   	if( ap->a_overlap == RT_AFN_NULL )
 			   		ap->a_overlap = rt_defoverlap;
-				ap->a_overlap(	ap,
-						pp,
-						regp->reg_name,
-						lastregion->reg_name );
+				if( ap->a_overlap( ap, pp,
+				    regp->reg_name, lastregion->reg_name ) )  {
+				    	/* non-zero => retain partition */
+				    	hitcnt--;	/* now = 1 */
+				}
 			} else {
 				/* last region is air, replace with solid */
 				if( lastregion->reg_aircode != 0 )
 					lastregion = regp;
-				hitcnt--;
+				hitcnt--;		/* now = 1 */
 			}
 		}
 		if( hitcnt == 0 )  {
@@ -498,7 +506,7 @@ struct application *ap;
 
 		/* Add this partition to the result queue */
 		{
-			register struct partition *newpp;	/* XXX */
+			register struct partition *newpp;
 
 			newpp = pp;
 			pp=pp->pt_forw;
