@@ -21,7 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "vmath.h"
-#include "ray.h"
+#include "raytrace.h"
 #include "debug.h"
 #include "plane.h"
 
@@ -40,8 +40,6 @@ struct soltab *stp;
 matp_t mat;
 {
 	register fastf_t *op;		/* Used for scanning vectors */
-	static fastf_t xmax, ymax, zmax;/* For finding the bounding spheres */
-	static fastf_t xmin, ymin, zmin;/* For finding the bounding spheres */
 	static fastf_t dx, dy, dz;	/* For finding the bounding spheres */
 	static vect_t	work;		/* Vector addition work area */
 	static vect_t	sum;		/* Sum of all endpoints */
@@ -49,8 +47,8 @@ matp_t mat;
 	static int	i;
 
 	/* init maxima and minima */
-	xmax = ymax = zmax = -INFINITY;
-	xmin = ymin = zmin =  INFINITY;
+	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
+	stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
 
 	/*
 	 * Process an ARB8, which is represented as a vector
@@ -60,17 +58,17 @@ matp_t mat;
 	 * Convert from vector to point notation IN PLACE
 	 * by rotating vectors and adding base vector.
 	 */
-	MAT4X3PNT( work, mat, vec );			/* 4x4: xlate, too */
-	VMOVE( vec, work );				/* base vector */
-	VMOVE( sum, vec );				/* sum=0th element */
-
+	VSET( sum, 0, 0, 0 );
 	op = &vec[1*ELEMENTS_PER_VECT];
 	for( i=1; i<8; i++ )  {
-		MAT3XVEC( work, mat, op );		/* 3x3: rot only */
-		VADD2( op, &vec[0], work );
+		VADD2( work, &vec[0], op );
+		MAT4X3PNT( op, mat, work );
 		VADD2( sum, sum, op );			/* build the sum */
 		op += ELEMENTS_PER_VECT;
 	}
+	MAT4X3PNT( work, mat, vec );			/* first point */
+	VMOVE( vec, work );				/* 1st: IN PLACE*/
+	VADD2( sum, sum, vec );				/* sum=0th element */
 
 	/*
 	 *  Determine a point which is guaranteed to be within the solid.
@@ -116,17 +114,19 @@ matp_t mat;
 	 */
 	op = &vec[0];
 	for( i=0; i< 8; i++ ) {
-		MINMAX( xmin, xmax, *op++ );
-		MINMAX( ymin, ymax, *op++ );
-		MINMAX( zmin, zmax, *op++ );
+		MINMAX( stp->st_min[X], stp->st_max[X], *op++ );
+		MINMAX( stp->st_min[Y], stp->st_max[Y], *op++ );
+		MINMAX( stp->st_min[Z], stp->st_max[Z], *op++ );
 		op++;		/* Depends on ELEMENTS_PER_VECT */
 	}
 	VSET( stp->st_center,
-		(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2 );
+		(stp->st_max[X] + stp->st_min[X])/2,
+		(stp->st_max[Y] + stp->st_min[Y])/2,
+		(stp->st_max[Z] + stp->st_min[Z])/2 );
 
-	dx = (xmax - xmin)/2;
-	dy = (ymax - ymin)/2;
-	dz = (zmax - zmin)/2;
+	dx = (stp->st_max[X] - stp->st_min[X])/2;
+	dy = (stp->st_max[Y] - stp->st_min[Y])/2;
+	dz = (stp->st_max[Z] - stp->st_min[Z])/2;
 	stp->st_radsq = dx*dx + dy*dy + dz*dz;
 	return(0);		/* OK */
 }
@@ -324,7 +324,7 @@ register struct soltab *stp;
 struct seg *
 arb8_shot( stp, rp )
 struct soltab *stp;
-register struct ray *rp;
+register struct xray *rp;
 {
 	register struct plane_specific *plp =
 		(struct plane_specific *)stp->st_specific;
@@ -452,7 +452,7 @@ register int nh;
  */
 pl_shot( plp, rp, hitp, k )
 register struct plane_specific *plp;
-register struct ray *rp;
+register struct xray *rp;
 register struct hit *hitp;
 double	k;			/* dist along ray */
 {
