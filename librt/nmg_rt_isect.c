@@ -144,7 +144,7 @@ point_t plane_pt;
 	}
 
 	bu_log("overlay %s\n", name);
-	b = (long *)rt_calloc( fu->s_p->r_p->m_p->maxindex,
+	b = (long *)bu_calloc( fu->s_p->r_p->m_p->maxindex,
 		sizeof(long), "bit vec"),
 
 	pl_erase(fd);
@@ -161,7 +161,7 @@ point_t plane_pt;
 	pl_color(fd, 255, 50, 50);
 	pdv_3line(fd, pt, plane_pt);
 
-	rt_free((char *)b, "bit vec");
+	bu_free((char *)b, "bit vec");
 	fclose(fd);
 }
 
@@ -186,7 +186,7 @@ point_t plane_pt;
 
 	bu_log("overlay %s\n", name);
 	m = nmg_find_model( eu->up.magic_p );
-	b = (long *)rt_calloc( m->maxindex, sizeof(long), "bit vec");
+	b = (long *)bu_calloc( m->maxindex, sizeof(long), "bit vec");
 
 	pl_erase(fd);
 
@@ -207,7 +207,7 @@ point_t plane_pt;
 	nmg_pl_eu(fd, eu, b, 255, 255, 255);
 	pl_color(fd, 255, 50, 50);
 	pdv_3line(fd, pt, plane_pt);
-	rt_free((char *)b, "bit vec");
+	bu_free((char *)b, "bit vec");
 	fclose(fd);
 }
 static void
@@ -2980,7 +2980,7 @@ struct bn_tol *tol;
 	rd.stp = (struct soltab *)NULL;
 	rd.seghead = (struct seg *)NULL;
 	rd.magic = NMG_RAY_DATA_MAGIC;
-	rd.hitmiss = (struct hitmiss **)rt_calloc( rd.rd_m->maxindex,
+	rd.hitmiss = (struct hitmiss **)bu_calloc( rd.rd_m->maxindex,
 		sizeof(struct hitmiss *), "nmg geom hit list");
 	rd.classifying_ray = 1;
 
@@ -2992,7 +2992,7 @@ struct bn_tol *tol;
 #ifndef FAST_NMG
 	while (BU_LIST_WHILE(a_hit, hitmiss, &rd.rd_miss)) {
 		BU_LIST_DEQUEUE( &a_hit->l );
-		rt_free( (char *)a_hit, "Miss list hitmiss struct" );
+		bu_free( (char *)a_hit, "Miss list hitmiss struct" );
 	}
 #else
 	NMG_FREE_HITLIST( &rd.rd_miss, &ap );
@@ -3086,7 +3086,7 @@ out:
 #ifndef FAST_NMG
 	while (BU_LIST_WHILE(a_hit, hitmiss, &rd.rd_hit)) {
 		BU_LIST_DEQUEUE( &a_hit->l );
-		rt_free( (char *)a_hit, "hit list hitmiss struct" );
+		bu_free( (char *)a_hit, "hit list hitmiss struct" );
 	}
 #else
 	NMG_FREE_HITLIST( &rd.rd_hit, &ap );
@@ -3103,10 +3103,10 @@ out:
 	}
 
 	/* free the hitmiss table */
-	rt_free( (char *)rd.hitmiss, "free nmg geom hit list");
+	bu_free( (char *)rd.hitmiss, "free nmg geom hit list");
 
 	/* free the manifold table */
-	rt_free( (char *)rd.manifolds, "free manifolds table" );
+	bu_free( (char *)rd.manifolds, "free manifolds table" );
 
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 		bu_log("nmg_class_ray_vs_shell() returns %s(%d)\n",

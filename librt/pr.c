@@ -366,7 +366,7 @@ register CONST union tree *tp;
 	case OP_REGION:
 		str = db_path_to_string( &(tp->tr_c.tc_ctsp->cts_p) );
 		bu_vls_strcat( vls, str );
-		rt_free( str, "path string" );
+		bu_free( str, "path string" );
 		return;
 
 	case OP_DB_LEAF:

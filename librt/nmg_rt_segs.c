@@ -1174,12 +1174,12 @@ struct ray_data	*rd;
 	if (a_hit == hd) return 1;
 
 	a_tbl = (struct bu_ptbl *)
-		rt_calloc(1, sizeof(struct bu_ptbl), "a_tbl");
+		bu_calloc(1, sizeof(struct bu_ptbl), "a_tbl");
 	bu_ptbl_init(a_tbl, 64, "a_tbl");
 
 
 	next_tbl = (struct bu_ptbl *)
-		rt_calloc(1, sizeof(struct bu_ptbl), "next_tbl");
+		bu_calloc(1, sizeof(struct bu_ptbl), "next_tbl");
 	bu_ptbl_init(next_tbl, 64, "next_tbl");
 
 	/* check the state transition on the rest of the hit points */
@@ -1243,8 +1243,8 @@ struct ray_data	*rd;
 
 	bu_ptbl_free(next_tbl);
 	bu_ptbl_free(a_tbl);
-	(void)rt_free( (char *)a_tbl, "a_tbl");
-	(void)rt_free( (char *)next_tbl, "next_tbl");
+	(void)bu_free( (char *)a_tbl, "a_tbl");
+	(void)bu_free( (char *)next_tbl, "next_tbl");
 
 	return 0;
 }

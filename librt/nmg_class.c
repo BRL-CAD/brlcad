@@ -384,7 +384,7 @@ out:
 		point_t	mid_pt;
 		point_t	left_pt;
 		fu = eu->up.lu_p->up.fu_p;
-		bits = (long *)rt_calloc( nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
+		bits = (long *)bu_calloc( nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
 		sprintf(buf,"faceclass%d.pl", num++);
 		if( (fp = fopen(buf, "w")) == NULL) rt_bomb(buf);
 		nmg_pl_fu( fp, fu, bits, 0, 0, 255 );	/* blue */
@@ -395,7 +395,7 @@ out:
 		VJOIN1( left_pt, mid_pt, 500, left);
 		pdv_3line( fp, mid_pt, left_pt );
 		fclose(fp);
-		rt_free( (char *)bits, "bits[]");
+		bu_free( (char *)bits, "bits[]");
 		bu_log("wrote %s\n", buf);
 	}
 }
@@ -668,7 +668,7 @@ CONST struct bn_tol	*tol;
 	NMG_CK_MODEL(m);
 	if( !in_or_out_only )
 	{
-		faces_seen = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_class_pt_s faces_seen[]" );
+		faces_seen = (long *)bu_calloc( m->maxindex, sizeof(long), "nmg_class_pt_s faces_seen[]" );
 
 		/*
 		 *  First pass:  Try hard to see if point is ON a face.
@@ -744,7 +744,7 @@ retry:
 
 out:
 	if( !in_or_out_only )
-		rt_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
+		bu_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY )
 		bu_log("nmg_class_pt_s: returning %s, s=x%x, try=%d\n",
@@ -1801,7 +1801,7 @@ retry:
 			struct model	*m;
 
 			m = nmg_find_model(lu->up.magic_p);
-			b = (long *)rt_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
+			b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
 
 			for(BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 				if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
@@ -1825,7 +1825,7 @@ retry:
 			}
 			nmg_pr_lu(lu, "");
 			nmg_stash_model_to_file( "class.g", nmg_find_model((long *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
-			rt_free( (char *)b, "nmg_pl_lu flag[]" );
+			bu_free( (char *)b, "nmg_pl_lu flag[]" );
 		}
 		rt_g.NMG_debug |= DEBUG_CLASSIFY;
 		if(seen_error)
@@ -2795,11 +2795,11 @@ struct bn_tol *tol;
 	/* shell s2 may be inside shell s
 	   Get a point from s2 to classify vs s */
 
-	if( RT_LIST_NON_EMPTY( &s2->fu_hd ) )
+	if( BU_LIST_NON_EMPTY( &s2->fu_hd ) )
 	{
-		fu = RT_LIST_FIRST( faceuse, &s2->fu_hd );
-		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
-		eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+		fu = BU_LIST_FIRST( faceuse, &s2->fu_hd );
+		lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
+		eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 		VMOVE( pt_in_s2, eu->vu_p->v_p->vg_p->coord );
 		class = nmg_class_pt_s(pt_in_s2, s, 0, tol);
 		if( class == NMG_CLASS_AinB )
@@ -2816,10 +2816,10 @@ struct bn_tol *tol;
 			return( NMG_CLASS_AoutB );		/* shell s2 is not inside shell s */
 	}
 
-	if( RT_LIST_NON_EMPTY( &s2->lu_hd ) )
+	if( BU_LIST_NON_EMPTY( &s2->lu_hd ) )
 	{
-		lu = RT_LIST_FIRST( loopuse, &s2->lu_hd );
-		eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+		lu = BU_LIST_FIRST( loopuse, &s2->lu_hd );
+		eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 		VMOVE( pt_in_s2, eu->vu_p->v_p->vg_p->coord );
 		class = nmg_class_pt_s(pt_in_s2, s, 0, tol);
 		if( class == NMG_CLASS_AinB )
@@ -2836,9 +2836,9 @@ struct bn_tol *tol;
 			return( NMG_CLASS_AoutB );		/* shell s2 is not inside shell s */
 	}
 
-	if( RT_LIST_NON_EMPTY( &s2->eu_hd ) )
+	if( BU_LIST_NON_EMPTY( &s2->eu_hd ) )
 	{
-		eu = RT_LIST_FIRST( edgeuse, &s2->eu_hd );
+		eu = BU_LIST_FIRST( edgeuse, &s2->eu_hd );
 		VMOVE( pt_in_s2, eu->vu_p->v_p->vg_p->coord );
 		class = nmg_class_pt_s(pt_in_s2, s, 0, tol);
 		if( class == NMG_CLASS_AinB )

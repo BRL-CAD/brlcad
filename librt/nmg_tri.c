@@ -240,7 +240,7 @@ struct bu_list *tbl2d;
 	}
 
 	bu_log("\tplotting %s\n", name);
-	b = (long *)rt_calloc( fu->s_p->r_p->m_p->maxindex,
+	b = (long *)bu_calloc( fu->s_p->r_p->m_p->maxindex,
 		sizeof(long), "bit vec"),
 
 	pl_erase(fd);
@@ -286,7 +286,7 @@ struct bu_list *tbl2d;
 	}
 
 
-	rt_free((char *)b, "plot table");
+	bu_free((char *)b, "plot table");
 	fclose(fd);
 }
 
@@ -370,7 +370,7 @@ struct faceuse *fu;
 	if (find_pt2d(tbl2d, vu)) return;
 
 
-	np = (struct pt2d *)rt_calloc(1, sizeof(struct pt2d), "pt2d struct");
+	np = (struct pt2d *)bu_calloc(1, sizeof(struct pt2d), "pt2d struct");
 	np->coord[2] = 0.0;
 	np->vu_p = vu;
 	BU_LIST_MAGIC_SET(&np->l, NMG_PT2D_MAGIC);
@@ -431,7 +431,7 @@ struct faceuse *fu;
 		}
 
 		/* add vertexuse to list */
-		p = (struct pt2d *)rt_calloc(1, sizeof(struct pt2d), "pt2d");
+		p = (struct pt2d *)bu_calloc(1, sizeof(struct pt2d), "pt2d");
 		p->vu_p = vu_p;
 		VMOVE(p->coord, np->coord);
 		BU_LIST_MAGIC_SET(&p->l, NMG_PT2D_MAGIC);
@@ -474,7 +474,7 @@ mat_t		TformMat;
 
 	NMG_CK_FACEUSE(fu);
 
-	tbl2d = (struct bu_list *)rt_calloc(1, sizeof(struct bu_list),
+	tbl2d = (struct bu_list *)bu_calloc(1, sizeof(struct bu_list),
 		"2D coordinate list");
 
 	/* we use the 0 index entry in the table as the head of the sorted
@@ -487,10 +487,10 @@ mat_t		TformMat;
 
 	/* construct the matrix that maps the 3D coordinates into 2D space */
 	NMG_GET_FU_NORMAL(Normal, fu);
-	mat_fromto( TformMat, Normal, twoDspace );
+	bn_mat_fromto( TformMat, Normal, twoDspace );
 
 	if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
-		mat_print( "TformMat", TformMat );
+		bn_mat_print( "TformMat", TformMat );
 
 
 	/* convert each vertex in the face to its 2-D equivalent */
@@ -713,7 +713,7 @@ struct bu_list *tbl2d, *tlist;
 		bu_log( "%g %g is polygon start vertex\n",
 				pt->coord[X], pt->coord[Y]);
 
-	new_trap = (struct trap *)rt_calloc(sizeof(struct trap), 1, "new poly_start trap");
+	new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "new poly_start trap");
 	new_trap->top = pt;
 	new_trap->bot = (struct pt2d *)NULL;
 	new_trap->e_left = pt->vu_p->up.eu_p;
@@ -795,7 +795,7 @@ struct bu_list *tlist;
 	tp->bot = pt;
 
 	/* create new trapezoid with other (not upper) edge */
-	new_trap = (struct trap *)rt_calloc(sizeof(struct trap), 1, "new side trap");
+	new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "new side trap");
 	BU_LIST_MAGIC_SET(&new_trap->l, NMG_TRAP_MAGIC);
 	new_trap->top = pt;
 	new_trap->bot = (struct pt2d *)NULL;
@@ -994,7 +994,7 @@ gotit:
 	tp->bot = pt;
 	/* create new left and right trapezoids */
 
-	new_trap = (struct trap *)rt_calloc(sizeof(struct trap), 1, "New hole start trapezoids");
+	new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "New hole start trapezoids");
 	new_trap->top = pt;
 	new_trap->bot = (struct pt2d *)NULL;
 	new_trap->e_left = tp->e_left;
@@ -1002,7 +1002,7 @@ gotit:
 	BU_LIST_MAGIC_SET(&new_trap->l, NMG_TRAP_MAGIC);
 	BU_LIST_APPEND(&tp->l, &new_trap->l);
 
-	new_trap = (struct trap *)rt_calloc(sizeof(struct trap), 1, "New hole start trapezoids");
+	new_trap = (struct trap *)bu_calloc(sizeof(struct trap), 1, "New hole start trapezoids");
 	new_trap->top = pt;
 	new_trap->bot = (struct pt2d *)NULL;
 	new_trap->e_left = pt->vu_p->up.eu_p;
@@ -1094,7 +1094,7 @@ gotem:
 
 	/* start one new trapezoid */
 
-	tp = (struct trap *)rt_calloc(1, sizeof(struct pt2d), "pt2d struct");
+	tp = (struct trap *)bu_calloc(1, sizeof(struct pt2d), "pt2d struct");
 	tp->top = pt;
 	tp->bot = (struct pt2d *)NULL;
 	if (tpnext->e_left == eunext) {
@@ -1175,7 +1175,7 @@ struct vertexuse *vu_p;
 	}
 	/* allocate memory for new 2D point */
 	new_pt2d = (struct pt2d *)
-		rt_calloc(1, sizeof(struct pt2d), "pt2d struct");
+		bu_calloc(1, sizeof(struct pt2d), "pt2d struct");
 
 	/* find another use of the same vertex that is already mapped */
 	for ( BU_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd) ) {
@@ -2758,14 +2758,14 @@ triangulate:
 
 	while (BU_LIST_WHILE(tp, trap, &tlist)) {
 		BU_LIST_DEQUEUE(&tp->l);
-		rt_free((char *)tp, "trapezoid free");
+		bu_free((char *)tp, "trapezoid free");
 	}
 
 	while (BU_LIST_WHILE(pt, pt2d, tbl2d)) {
 		BU_LIST_DEQUEUE(&pt->l);
-		rt_free((char *)pt, "pt2d free");
+		bu_free((char *)pt, "pt2d free");
 	}
-	rt_free((char *)tbl2d, "discard tbl2d");
+	bu_free((char *)tbl2d, "discard tbl2d");
 
 	return;
 }

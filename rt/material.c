@@ -78,7 +78,7 @@ struct rt_i		*rtip;
 {
 	register CONST struct mfuncs *mfp;
 	int		ret;
-	struct rt_vls	param;
+	struct bu_vls	param;
 	CONST char	*material;
 	int		mlen;
 
@@ -86,10 +86,10 @@ struct rt_i		*rtip;
 	RT_CK_RTI(rtip);
 
 	if( rp->reg_mfuncs != (char *)0 )  {
-		rt_log("mlib_setup:  region %s already setup\n", rp->reg_name );
+		bu_log("mlib_setup:  region %s already setup\n", rp->reg_name );
 		return(-1);
 	}
-	rt_vls_init( &param );
+	bu_vls_init( &param );
 	material = rp->reg_mater.ma_shader;
 	if( material == NULL || material[0] == '\0' )  {
 		material = mdefault;
@@ -99,7 +99,7 @@ struct rt_i		*rtip;
 		endp = strchr( material, ' ' );
 		if( endp )  {
 			mlen = endp - material;
-			rt_vls_strcpy( &param, rp->reg_mater.ma_shader+mlen+1 );
+			bu_vls_strcpy( &param, rp->reg_mater.ma_shader+mlen+1 );
 		} else {
 			mlen = strlen(material);
 		}
@@ -111,15 +111,15 @@ retry:
 			continue;
 		goto found;
 	}
-	rt_log("\n*ERROR mlib_setup('%s'):  material not known, default assumed %s\n",
+	bu_log("\n*ERROR mlib_setup('%s'):  material not known, default assumed %s\n",
 		material, rp->reg_name );
 	if( material != mdefault )  {
 		material = mdefault;
 		mlen = strlen(mdefault);
-		rt_vls_trunc( &param, 0 );
+		bu_vls_trunc( &param, 0 );
 		goto retry;
 	}
-	rt_vls_free( &param );
+	bu_vls_free( &param );
 	return(-1);
 found:
 	rp->reg_mfuncs = (char *)mfp;
@@ -128,19 +128,19 @@ found:
 	if(rdebug&RDEBUG_MATERIAL)
 		bu_log("mlib_setup(%s) shader=%s\n", rp->reg_name, mfp->mf_name);
 	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp, rtip, headp )) < 0 )  {
-		rt_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
-			rp->reg_name, material, RT_VLS_ADDR(&param) );
+		bu_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
+			rp->reg_name, material, bu_vls_addr(&param) );
 		if( material != mdefault )  {
 			/* If not default material, change to default & retry */
-			rt_log("\tChanging %s material to default and retrying.\n", rp->reg_name);
+			bu_log("\tChanging %s material to default and retrying.\n", rp->reg_name);
 			material = mdefault;
-			rt_vls_trunc( &param, 0 );
+			bu_vls_trunc( &param, 0 );
 			goto retry;
 		}
 		/* What to do if default setup fails? */
-		rt_log("mlib_setup(%s) error recovery failed.\n", rp->reg_name);
+		bu_log("mlib_setup(%s) error recovery failed.\n", rp->reg_name);
 	}
-	rt_vls_free( &param );
+	bu_vls_free( &param );
 	return(ret);		/* Good or bad, as mf_setup says */
 }
 
@@ -156,11 +156,11 @@ register struct region *rp;
 	register CONST struct mfuncs *mfp = (struct mfuncs *)rp->reg_mfuncs;
 
 	if( mfp == MF_NULL )  {
-		rt_log("mlib_free(%s):  reg_mfuncs NULL\n", rp->reg_name);
+		bu_log("mlib_free(%s):  reg_mfuncs NULL\n", rp->reg_name);
 		return;
 	}
 	if( mfp->mf_magic != MF_MAGIC )  {
-		rt_log("mlib_free(%s):  reg_mfuncs bad magic, %x != %x\n",
+		bu_log("mlib_free(%s):  reg_mfuncs bad magic, %x != %x\n",
 			rp->reg_name,
 			mfp->mf_magic, MF_MAGIC );
 		return;

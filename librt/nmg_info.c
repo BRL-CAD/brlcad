@@ -1261,10 +1261,10 @@ CONST struct bn_tol	*tol;
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
 
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.mindist = INFINITY;
 	VMOVE( st.pt2, pt2 );
-	mat_copy( st.mat, mat );
+	bn_mat_copy( st.mat, mat );
 	st.ep = (struct edge *)NULL;
 	st.tol = tol;
 
@@ -1273,7 +1273,7 @@ CONST struct bn_tol	*tol;
 
 	nmg_visit( magic_p, &htab, &st );
 
-	rt_free( (char *)st.visited, "visited[]" );
+	bu_free( (char *)st.visited, "visited[]" );
 
 	if( st.ep )  {
 		NMG_CK_EDGE(st.ep);
@@ -1321,7 +1321,7 @@ CONST struct bn_tol	*tol;
 	len = 1 / len;
 	VSCALE( zvec, zvec, len );
 
-	mat_vec_perp( xvec, zvec );
+	bn_vec_perp( xvec, zvec );
 	VCROSS( yvec, zvec, xvec );
 }
 
@@ -2093,7 +2093,7 @@ CONST long		*magic_p;
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
 
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.tabl = tab;
 
 	(void)bu_ptbl_init( tab, 64, " tab");
@@ -2102,7 +2102,7 @@ CONST long		*magic_p;
 	handlers.vis_vertex = nmg_2rvf_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
-	rt_free( (char *)st.visited, "visited[]");
+	bu_free( (char *)st.visited, "visited[]");
 }
 
 /*
@@ -2150,7 +2150,7 @@ CONST long		*magic_p;
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
 
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.tabl = tab;
 
 	(void)bu_ptbl_init( tab, 64, " tab");
@@ -2159,7 +2159,7 @@ CONST long		*magic_p;
 	handlers.vis_vertexuse_a = nmg_vert_a_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
-	rt_free( (char *)st.visited, "visited[]");
+	bu_free( (char *)st.visited, "visited[]");
 }
 
 /*
@@ -2204,7 +2204,7 @@ CONST long		*magic_p;
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
 
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.tabl = tab;
 
 	(void)bu_ptbl_init( tab, 64, " tab");
@@ -2213,7 +2213,7 @@ CONST long		*magic_p;
 	handlers.bef_edgeuse = nmg_2edgeuse_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
-	rt_free( (char *)st.visited, "visited[]");
+	bu_free( (char *)st.visited, "visited[]");
 }
 
 /*
@@ -2258,7 +2258,7 @@ CONST long		*magic_p;
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
 
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.tabl = tab;
 
 	(void)bu_ptbl_init( tab, 64, " tab");
@@ -2267,7 +2267,7 @@ CONST long		*magic_p;
 	handlers.vis_edge = nmg_2edge_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
-	rt_free( (char *)st.visited, "visited[]");
+	bu_free( (char *)st.visited, "visited[]");
 }
 
 /*
@@ -2321,7 +2321,7 @@ CONST long		*magic_p;
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
 
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.tabl = tab;
 
 	(void)bu_ptbl_init( tab, 64, " tab");
@@ -2330,7 +2330,7 @@ CONST long		*magic_p;
 	handlers.vis_edge_g = nmg_edge_g_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
-	rt_free( (char *)st.visited, "visited[]");
+	bu_free( (char *)st.visited, "visited[]");
 }
 
 /*
@@ -2375,7 +2375,7 @@ CONST long		*magic_p;
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
 
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.tabl = tab;
 
 	(void)bu_ptbl_init( tab, 64, " tab");
@@ -2384,7 +2384,7 @@ CONST long		*magic_p;
 	handlers.vis_face = nmg_2face_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
-	rt_free( (char *)st.visited, "visited[]");
+	bu_free( (char *)st.visited, "visited[]");
 }
 
 /*
@@ -2498,7 +2498,7 @@ CONST struct bn_tol	*tol;
 	NMG_CK_MODEL(m);
 	BN_CK_TOL(tol);
 
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.tabl = tab;
 	VMOVE( st.pt, pt );
 	VMOVE( st.dir, dir );
@@ -2516,7 +2516,7 @@ CONST struct bn_tol	*tol;
 	handlers.bef_edgeuse = nmg_line_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
-	rt_free( (char *)st.visited, "visited[]");
+	bu_free( (char *)st.visited, "visited[]");
 }
 
 /* XXX Move to nmg_info.c */
@@ -2593,7 +2593,7 @@ CONST long		*magic_p;
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
 
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.edges = eutab;
 	st.verts = vtab;
 
@@ -2605,5 +2605,5 @@ CONST long		*magic_p;
 	handlers.vis_vertex = nmg_v_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
-	rt_free( (char *)st.visited, "visited[]");
+	bu_free( (char *)st.visited, "visited[]");
 }

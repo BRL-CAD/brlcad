@@ -584,7 +584,7 @@ CONST struct model			*m;
 	NMG_CK_MODEL(m);
 	bzero( (char *)ctr, sizeof(*ctr) );
 
-	ptrs = (long **)rt_calloc( m->maxindex+1, sizeof(long *), "nmg_m_count ptrs[]" );
+	ptrs = (long **)bu_calloc( m->maxindex+1, sizeof(long *), "nmg_m_count ptrs[]" );
 
 	NMG_UNIQ_INDEX(m, model);
 	ctr->max_structs = m->maxindex;
@@ -740,7 +740,7 @@ nmg_struct_counts( m, str )
 	NMG_CK_MODEL(m);
 
 	tab = nmg_m_struct_count( &cnts, m );
-	rt_free( (char *)tab, "nmg_m_struct_count" );
+	bu_free( (char *)tab, "nmg_m_struct_count" );
 	nmg_pr_struct_counts( &cnts, str );
 }
 
