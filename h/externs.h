@@ -26,6 +26,7 @@
 /* We need sys/select.h under Irix 5 to get fd_set. */
 
 #ifdef HAVE_SYS_SELECT_H
+#	undef __APPLE_API_PRIVATE
 #	include <sys/select.h>
 #endif
 
