@@ -233,8 +233,12 @@ is essentially a semaphore-protected version of
 except that it uses the standard error (stderr) instead of the standard
 output (stdout).
 .P
-Dynamic memory handling in applications using librt should use
-the functions provided by librt instead of the usual system runtime library
+Dynamic memory handling in applications using
+.I librt
+should use
+the functions provided by
+.I librt
+instead of the usual system runtime library
 routines.  The
 .I librt
 versions do not return to the caller unless they succeed.  If they fail,
@@ -323,6 +327,26 @@ is needed,
 it can be filled in by using the
 .I VJOIN1\^
 macro (see the following example).
+.P
+If the ray contains any overlaps
+(partitions claimed by two or more regions) the
+.I a_overlap
+routine is called for each such partition
+with pointers to the application structure,
+the overlap partition,
+two regions,
+and the remaining partitions along the ray.
+If the
+.I a_overlap
+member is null,
+.I librt
+uses a default overlap handler.
+Additionally,
+.I librt
+provides the routine
+.I rt_overlap_quietly
+which behaves exactly as the default handler,
+excepting that it produces no warning messages on standard error.
 .P
 If the ray does not intersect the model, the
 .I a_miss
