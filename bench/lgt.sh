@@ -10,16 +10,18 @@ if test -f ../.lgt.$MACHINE/lgt
 then
 	LGT=../.lgt.$MACHINE/lgt
 	DB=../.db.$MACHINE
+	LD_LIBRARY_PATH=../.libcursor.$MACHINE:../.libtermio.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
 else
 	if test -f ../lgt/lgt
 	then
-		LGT=../lgt/lgt
-		DB=../db
-	else
 		echo "Can't find LGT"
 		exit 1
 	fi
+	LGT=../lgt/lgt
+	DB=../db
+	LD_LIBRARY_PATH=../libcursor:../libtermio:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
 fi
+export LD_LIBRARY_PATH
 
 CMP=./pixcmp
 if test ! -f $CMP
