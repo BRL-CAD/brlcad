@@ -421,9 +421,10 @@ struct rt_db_internal	*ip;
  *  Create transformed version of internal form.  Free *ip if requested.
  *  Implement this if it's faster than doing an export/import cycle.
  */
-int rt_xxx_xform( op, mat, ip, free )
+int
+rt_xxx_xform( op, mat, ip, free )
 struct rt_db_internal	*op;
-CONT mat_t		mat;
+CONST mat_t		mat;
 struct rt_db_internal	*ip;
 int			free;
 {
