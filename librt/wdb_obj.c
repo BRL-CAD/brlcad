@@ -8565,7 +8565,7 @@ wdb_dir_summary(struct db_i	*dbip,
 	}
 
 	bu_vls_printf(&vls, "Summary:\n");
-	bu_vls_printf(&vls, "  %5d solids\n", sol);
+	bu_vls_printf(&vls, "  %5d primitives\n", sol);
 	bu_vls_printf(&vls, "  %5d region; %d non-region combinations\n", reg, comb);
 	bu_vls_printf(&vls, "  %5d total objects\n\n", sol+reg+comb );
 
