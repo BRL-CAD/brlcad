@@ -856,6 +856,9 @@ static FILE	*rtif_fp;
 static double	rtif_delay;
 static struct mged_variables	rtif_saved_state;	/* saved state variables */
 static int	rtif_mode;
+static int	rtif_desiredframe;
+static int	rtif_finalframe;
+static int	rtif_currentframe;
 
 /*
  *			R T I F _ S I G I N T
@@ -905,19 +908,31 @@ char	**argv;
 
 	rtif_delay = 0;			/* Full speed, by default */
 	rtif_mode = 1;			/* wireframe drawing */
+	rtif_desiredframe = 0;
+	rtif_finalframe = 0;
 
 	/* Parse options */
 	optind = 1;			/* re-init getopt() */
-	while( (c=getopt(argc,argv,"d:v")) != EOF )  {
+	while( (c=getopt(argc,argv,"d:vD:K:")) != EOF )  {
 		switch(c)  {
 		case 'd':
 			rtif_delay = atof(optarg);
+			break;
+		case 'D':
+			rtif_desiredframe = atof(optarg);
+			break;
+		case 'K':
+			rtif_finalframe = atof(optarg);
 			break;
 		case 'v':
 			rtif_mode = 3;	/* Like "ev" */
 			break;
 		default:
 			printf("option '%c' unknown\n", c);
+			printf("	-d#	inter-frame delay\n");
+			printf("	-v	polygon rendering (visual)\n");
+			printf("	-D#	desired starting frame\n");
+			printf("	-K#	final frame\n");
 			break;
 		}
 	}
@@ -951,6 +966,12 @@ char	**argv;
 	(void)signal(SIGINT, rtif_sigint);
 
 	while( ( cmd = rt_read_cmd( rtif_fp )) != NULL )  {
+		/* Hack to prevent running framedone scripts prematurely */
+		if( rtif_currentframe < rtif_desiredframe &&
+		    cmd[0] == '!' )  {
+			rt_free( cmd, "preview cmd" );
+		    	continue;
+		}
 		if( rt_do_cmd( (struct rt_i *)0, cmd, cmdtab ) < 0 )
 			rt_log("command failed: %s\n", cmd);
 		rt_free( cmd, "preview cmd" );
@@ -1117,7 +1138,7 @@ int	argc;
 {
 	if( argc < 2 )
 		return(-1);
-	/* Has frame number */
+	rtif_currentframe = atoi(argv[1]);
 	tree_walk_needed = 0;
 	return(0);
 }
@@ -1213,6 +1234,10 @@ int	argc;
 	vect_t	xm, ym;			/* model x, y */
 	int	move;
 	struct rt_list		*vhead = &rtif_vbp->head[0];
+
+	/* Only display the frames the user is interested in */
+	if( rtif_currentframe < rtif_desiredframe )  return 0;
+	if( rtif_finalframe && rtif_currentframe > rtif_finalframe )  return 0;
 
 	/* Record eye path as a polyline.  Move, then draws */
 	if( RT_LIST_IS_EMPTY( vhead ) )  {
