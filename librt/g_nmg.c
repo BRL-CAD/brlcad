@@ -823,20 +823,27 @@ double		scale;
 	cp = rt_nmg_fastf_p;
 	(void)rt_plong( cp + 0, DISK_DOUBLE_ARRAY_MAGIC );
 	(void)rt_plong( cp + 4, count );
-#if 0
-	if( scale == 1.0 )  {
-#else
-	/* XXX */
-	if(1) {
-#endif
+	if( pt_type == 0 || scale == 1.0 )  {
 		htond( cp + (4+4), (unsigned char *)fp, count );
 	} else {
 		fastf_t		*new;
 
-		/* Blah, need to scale data by 'scale' ! */
-/* XXX Needs stride!  Don't want to scale the homogeneous coord, if present! */
+		/* Need to scale data by 'scale' ! */
 		new = (fastf_t *)rt_malloc( count*sizeof(fastf_t), "rt_nmg_export_fastf" );
-		VSCALEN( new, fp, scale, count );
+		if( RT_NURB_IS_PT_RATIONAL(pt_type) )  {
+			/* Don't scale the homogeneous (rational) coord */
+			register int	i;
+			int		nelem;	/* # elements per tuple */
+
+			nelem = RT_NURB_EXTRACT_COORDS(pt_type);
+			for( i = 0; i < count; i += nelem )  {
+				VSCALEN( &new[i], &fp[i], scale, nelem-1 );
+				new[i+nelem-1] = fp[i+nelem-1];
+			}
+		} else {
+			/* Scale everything as one long array */
+			VSCALEN( new, fp, scale, count );
+		}
 		htond( cp + (4+4), (unsigned char *)new, count );
 		rt_free( (char *)new, "rt_nmg_export_fastf" );
 	}
@@ -889,12 +896,7 @@ int			pt_type;
 		rt_bomb("rt_nmg_import_fastf()\n");
 	}
 	ret = (fastf_t *)rt_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf[]" );
-/* Bypass matrix stuff for now. */
-#if 0
 	if( !mat )  {
-#else
-	{
-#endif
 		ntohd( (unsigned char *)ret, cp + (4+4), count );
 		return ret;
 	}
@@ -906,14 +908,15 @@ int			pt_type;
 	 */
 	tmp = (fastf_t *)rt_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf tmp[]" );
 	ntohd( (unsigned char *)tmp, cp + (4+4), count );
-	/* XXX This isn't quite right */
 	switch( RT_NURB_EXTRACT_COORDS(pt_type) )  {
 	case 3:
+		if( RT_NURB_IS_PT_RATIONAL(pt_type) )  rt_bomb("rt_nmg_import_fastf() Rational 3-tuple?\n");
 		for( count -= 3 ; count >= 0; count -= 3 )  {
 			MAT4X3PNT( &ret[count], mat, &tmp[count] );
 		}
 		break;
 	case 4:
+		if( !RT_NURB_IS_PT_RATIONAL(pt_type) )  rt_bomb("rt_nmg_import_fastf() non-rational 4-tuple?\n");
 		for( count -= 4 ; count >= 0; count -= 4 )  {
 			MAT4X4PNT( &ret[count], mat, &tmp[count] );
 		}
@@ -1139,7 +1142,7 @@ double		local2mm;
 			rt_plong( d->us_size, fg->s_size[0] );
 			rt_plong( d->vs_size, fg->s_size[1] );
 			rt_plong( d->pt_type, fg->pt_type );
-			/* scale ctl_points by local2mm */
+			/* scale XYZ ctl_points by local2mm */
 			rt_plong( d->ctl_points,
 				rt_nmg_export_fastf( fg->ctl_points,
 					fg->s_size[0] * fg->s_size[1],
@@ -1254,14 +1257,16 @@ double		local2mm;
 			rt_plong( d->c_size, eg->c_size );
 			rt_plong( d->pt_type, eg->pt_type );
 			/*
-			 * The curve's control points are in parameter space.
-			 * They do NOT get transformed!
+			 * The curve's control points are in parameter space
+			 * for cnurbs on snurbs, and in XYZ for cnurbs on planar faces.
+			 * UV values do NOT get transformed, XYZ values do!
 			 */
 			rt_plong( d->ctl_points,
 				rt_nmg_export_fastf( eg->ctl_points,
 					eg->c_size,
-					eg->pt_type,
-					1.0 ) );
+					RT_NURB_EXTRACT_PT_TYPE(eg->pt_type) == RT_NURB_PT_UV ?
+						0 : eg->pt_type,
+					local2mm ) );
 		}
 		return;
 	case NMG_KIND_VERTEXUSE:
@@ -1675,9 +1680,19 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			 * The curve's control points are in parameter space.
 			 * They do NOT get transformed!
 			 */
-			eg->ctl_points = rt_nmg_import_fastf( basep, ecnt,
-				rt_glong( d->ctl_points ), (matp_t)NULL,
-				eg->c_size, eg->pt_type );
+			if( RT_NURB_EXTRACT_PT_TYPE(eg->pt_type) == RT_NURB_PT_UV )  {
+				/* UV coords on snurb surface don't get xformed */
+				eg->ctl_points = rt_nmg_import_fastf( basep,
+					ecnt,
+					rt_glong( d->ctl_points ), (matp_t)NULL,
+					eg->c_size, eg->pt_type );
+			} else {
+				/* XYZ coords on planar face DO get xformed */
+				eg->ctl_points = rt_nmg_import_fastf( basep,
+					ecnt,
+					rt_glong( d->ctl_points ), mat,
+					eg->c_size, eg->pt_type );
+			}
 		}
 		return 0;
 	case NMG_KIND_VERTEXUSE:
@@ -2011,8 +2026,9 @@ int			maxindex;
 
 	/* Should have found the first one now */
 	RT_CK_DISKMAGIC( cp + offset, DISK_DOUBLE_ARRAY_MAGIC );
+#if DEBUG
 rt_log("rt_nmg_i2alloc() first one at cp=x%x, offset=%d, subscript=%d\n", cp, offset, subscript );
-
+#endif
 	for( i=0; i < nkind; i++ )  {
 		int	ndouble;
 		RT_CK_DISKMAGIC( cp + offset, DISK_DOUBLE_ARRAY_MAGIC );
