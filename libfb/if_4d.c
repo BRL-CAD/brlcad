@@ -1523,14 +1523,14 @@ int		count;
 	register int		x;
 	register int		y;
 
-	if( pix_count == 0 )			/* lrectwrite dies on 0 count */
-		return 0;
+	/* lrectwrite dies on 0 count */
+	if( (pix_count = count) == 0 )
+		return 0;	/* OK, no pixels transferred */
 	if( pix_count < 0 )
-		return -1;
+		return -1;	/* ERROR */
 
 	x = xstart;
 	ybase = y = ystart;
-	pix_count = count;
 
 	if( x < 0 || x > ifp->if_width ||
 	    y < 0 || y > ifp->if_height)
