@@ -738,6 +738,9 @@ mged_setup()
 	   run with output */
 	bu_vls_init(&tcl_output_hook);
 
+	/* Locate the BRL-CAD-specific Tcl scripts */
+	filename = bu_brlcad_path( "tclscripts" );
+
 	/* Create the interpreter */
 	interp = Tcl_CreateInterp();
 
@@ -891,11 +894,6 @@ mged_setup()
 		    (char *)&edit_absolute_scale, TCL_LINK_DOUBLE);
 #endif
 
-#ifdef BRLCAD_TCL_LIBRARY
-	filename = BRLCAD_TCL_LIBRARY;
-#else
-	filename = "/usr/brlcad/tclscripts";
-#endif
 	bu_vls_init(&str);
 	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %s/mged %s]",
 		      filename, filename);
