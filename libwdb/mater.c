@@ -67,6 +67,6 @@ mk_write_color_table( struct rt_wdb *ofp )
 		(void)fwrite( (char *)&record, sizeof record, 1, ofpxx );
 	}
 #else
-	bu_bomb("mk_write_color_tale() not yet implemented\n");
+	bu_log("mk_write_color_tale() not yet implemented\n");
 #endif
 }
