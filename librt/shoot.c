@@ -1417,6 +1417,9 @@ int	n;		/* First cell is #0 */
 			rt_pr_cut( cutp, 0 );
 		}
 		if( --n <= 0 )  return cutp;
+
+		/* Push ray onwards to next box */
+		ss.box_start = ss.box_end;
 	}
 	return CUTTER_NULL;
 }
