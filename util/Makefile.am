@@ -542,4 +542,4 @@ man_MANS = \
 EXTRA_DIST = $(man_MANS)
 
 pl-X10.1: $(srcdir)/pl-X.1
-	cp $(srcdir)/pl-X.1 $(builddir)/$@
+	cp $? $(srcdir)/$@
