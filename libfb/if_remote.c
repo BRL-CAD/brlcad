@@ -110,7 +110,7 @@ extern unsigned long fbgetlong();
 extern char *fbputshort(), *fbputlong();
 
 /*
- * Open a connection to the remote libfb.
+ * Open a connection to the remotefb.
  * We send NET_LONG_LEN bytes of mode, NET_LONG_LEN bytes of size, then the
  *  devname (or NULL if default).
  */
@@ -134,9 +134,9 @@ int	width, height;
 	for( i = 0; devicename[i] != ':' && i < MAX_HOSTNAME; i++ )
 		hostname[i] = devicename[i];
 	hostname[i] = '\0';
-	if( (pc = pkg_open( hostname, "mfb", pkgswitch, fb_log )) == PKC_ERROR &&
+	if( (pc = pkg_open( hostname, "remotefb", pkgswitch, fb_log )) == PKC_ERROR &&
 	    (pc = pkg_open( hostname, "5558", pkgswitch, fb_log )) == PKC_ERROR ) {
-		fb_log(	"remote_open: can't connect to libfb server on host \"%s\".\n",
+		fb_log(	"remote_open: can't connect to remotefb server on host \"%s\".\n",
 			hostname );
 		return	-1;
 	}
