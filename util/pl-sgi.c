@@ -390,41 +390,33 @@ Coord max[3], min[3];
 	int	x, y, z, x1, y1, z1, x2, y2, z2;
 	int	r, g, b;
 	long	l;
+	char	str[180];
+	double	d[8];
+	/* We have to keep the "current position" ourselves
+	 * for the silly labels, since the SGI can't give
+	 * us the graphics position inside an object!
+	 */
+	double	xp, yp, zp;
 
+	xp = yp = zp = 0;
 	while( (c = getchar()) != EOF ) {
 		switch( c ) {
+		/* One of a kind functions */
 		case 'e':
 			l = getcolor();
 			color( BLACK );
 			clear();
 			color( l );
 			break;
-		case 'p':
-			geti(x);
-			geti(y);
-			pnti( x, y, 0 );
+		case 'f':
+			eat_string();
 			break;
-		case 'm':
-			geti(x);
-			geti(y);
-			movei( x, y, 0 );
+		case 't':
+			get_string( str );
+			cmov( xp, yp, zp );	/* all that for this... */
+			charstr( str );
 			break;
-		case 'n':
-			geti(x);
-			geti(y);
-			drawi( x, y, 0 );
-			break;
-		case 'c':
-			/* CIRCLE! XXX */
-			break;
-		case 'l':
-			geti(x1);
-			geti(y1);
-			geti(x2);
-			geti(y2);
-			movei( x1, y1, 0 );
-			drawi( x2, y2, 0 );
-			break;
+		/* 2D integer */
 		case 's':
 			geti(x1);
 			geti(y1);
@@ -433,6 +425,40 @@ Coord max[3], min[3];
 			min[0] = x1; min[1] = y1;
 			max[0] = x2; max[1] = y2;
 			min[2] = -32768.0; max[2] = 32768.0;
+			break;
+		case 'p':
+			geti(x);
+			geti(y);
+			pnti( x, y, 0 );
+			xp = x; yp = y; zp = 0;
+			break;
+		case 'm':
+			geti(x);
+			geti(y);
+			movei( x, y, 0 );
+			xp = x; yp = y; zp = 0;
+			break;
+		case 'n':
+			geti(x);
+			geti(y);
+			drawi( x, y, 0 );
+			xp = x; yp = y; zp = 0;
+			break;
+		case 'l':
+			geti(x1);
+			geti(y1);
+			geti(x2);
+			geti(y2);
+			movei( x1, y1, 0 );
+			drawi( x2, y2, 0 );
+			xp = x2; yp = y2; zp = 0;
+			break;
+		case 'c':
+			geti(x);
+			geti(y);
+			geti(r);
+			circ( (double)x, (double)y, (double)r );
+			xp = x; yp = y; zp = 0;
 			break;
 		case 'a':
 			geti(x);
@@ -443,38 +469,7 @@ Coord max[3], min[3];
 			geti(y2);
 			/* ARC XXX */
 			break;
-		case 'f':
-		case 't':
-			eat_string();
-			break;
-		case 'M':
-			geti(x);
-			geti(y);
-			geti(z);
-			movei( x, y, z );
-			break;
-		case 'N':
-			geti(x);
-			geti(y);
-			geti(z);
-			drawi( x, y, z );
-			break;
-		case 'P':
-			geti(x);
-			geti(y);
-			geti(z);
-			pnti( x, y, z );
-			break;
-		case 'L':
-			geti(x1);
-			geti(y1);
-			geti(z1);
-			geti(x2);
-			geti(y2);
-			geti(z2);
-			movei( x1, y1, z1 );
-			drawi( x2, y2, z2 );
-			break;
+		/* 3D integer */
 		case 'S':
 			geti(x1);
 			geti(y1);
@@ -485,6 +480,38 @@ Coord max[3], min[3];
 			min[0] = x1; min[1] = y1; min[2] = z1;
 			max[0] = x2; max[1] = y2; max[2] = z2;
 			break;
+		case 'P':
+			geti(x);
+			geti(y);
+			geti(z);
+			pnti( x, y, z );
+			xp = x; yp = y; zp = z;
+			break;
+		case 'M':
+			geti(x);
+			geti(y);
+			geti(z);
+			movei( x, y, z );
+			xp = x; yp = y; zp = z;
+			break;
+		case 'N':
+			geti(x);
+			geti(y);
+			geti(z);
+			drawi( x, y, z );
+			xp = x; yp = y; zp = z;
+			break;
+		case 'L':
+			geti(x1);
+			geti(y1);
+			geti(z1);
+			geti(x2);
+			geti(y2);
+			geti(z2);
+			movei( x1, y1, z1 );
+			drawi( x2, y2, z2 );
+			xp = x2; yp = y2; zp = z2;
+			break;
 		case 'C':
 			r = getb();
 			g = getb();
@@ -494,8 +521,69 @@ Coord max[3], min[3];
 			else
 				color( (b&0xf0)<<4 | (g&0xf0) | (r>>4) );
 			break;
+		/* 2D and 3D IEEE */
+		case 'w':
+			getieee( d, 4 );
+			min[0] = d[0]; min[1] = d[1]; min[2] = -32768.0;
+			max[0] = d[2]; max[1] = d[3]; max[2] = 32768.0;
+			break;
+		case 'W':
+			getieee( d, 6 );
+			min[0] = d[0]; min[1] = d[1]; min[2] = d[2];
+			max[0] = d[3]; max[1] = d[4]; max[2] = d[5];
+			break;
+		case 'o':
+			getieee( d, 2 );
+			xp = d[0]; yp = d[1]; zp = 0;
+			move( xp, yp, 0.0 );
+			break;
+		case 'O':
+			getieee( d, 3 );
+			xp = d[0]; yp = d[1]; zp = d[2];
+			move( xp, yp, zp );
+			break;
+		case 'q':
+			getieee( d, 2 );
+			xp = d[0]; yp = d[1]; zp = 0;
+			draw( xp, yp, 0.0 );
+			break;
+		case 'Q':
+			getieee( d, 3 );
+			xp = d[0]; yp = d[1]; zp = d[2];
+			draw( xp, yp, zp );
+			break;
+		case 'x':
+			getieee( d, 2 );
+			xp = d[0]; yp = d[1]; zp = 0;
+			pnt( xp, yp, 0.0 );
+			break;
+		case 'X':
+			getieee( d, 3 );
+			pnt( d[0], d[1], d[2] );
+			break;
+		case 'v':
+			getieee( d, 4 );
+			move( d[0], d[1], 0.0 );
+			draw( d[2], d[3], 0.0 );
+			xp = d[2]; yp = d[3]; zp = 0;
+			break;
+		case 'V':
+			getieee( d, 6 );
+			move( d[0], d[1], d[2] );
+			draw( d[3], d[4], d[5] );
+			xp = d[3]; yp = d[4]; zp = d[5];
+			break;
+		case 'r':
+			getieee( d, 6 );
+			/*XXX*/
+			break;
+		case 'i':
+			getieee( d, 3 );
+			circ( d[0], d[1], d[2] );
+			xp = d[0]; yp = d[1]; zp = d[2];
+			break;
 		default:
-			fprintf( stderr, "uplot: unrecognized command '%c'\n", c );
+			fprintf( stderr, "tiris: bad command '%c' (0x%02x)\n", c, c );
 			break;
 		}
 	}
@@ -507,6 +595,25 @@ eat_string()
 
 	while( (c = getchar()) != '\n' && c != EOF )
 		;
+}
+
+get_string( s )
+char	*s;
+{
+	int	c;
+
+	while( (c = getchar()) != '\n' && c != EOF )
+		*s++ = c;
+	*s = NULL;
+}
+
+getieee( out, n )
+double	out[];
+int	n;
+{
+	char	in[8*16];
+	fread( in, 8, n, stdin );
+	ntohd( out, in, n );
 }
 
 draw_axis() {
