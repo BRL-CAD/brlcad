@@ -527,8 +527,9 @@ struct partition *PartHeadp;
 
 	/* Check to see if eye is "inside" the solid */
 	/* It might only be worthwhile doing all this in perspective mode */
-#if 0
-	if( hitp->hit_dist < 0.0 )  {
+	/* XXX Note that hit_dist can be faintly negative, e.g. -1e-13 */
+
+	if( hitp->hit_dist < 0.0 && pp->pt_regionp->reg_aircode == 0 ) {
 		struct application sub_ap;
 		FAST fastf_t f;
 
@@ -556,7 +557,7 @@ struct partition *PartHeadp;
 		ap->a_user = 1;		/* Signal view_pixel: HIT */
 		goto out;
 	}
-#endif
+
 	if( rdebug&RDEBUG_RAYWRITE )  {
 		/* Record the approach path */
 		if( hitp->hit_dist > 0.0001 )  {
@@ -816,7 +817,10 @@ char	*framename;
 	ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
 	ap->a_cumlen = 0.0;
 	ap->a_miss = hit_nothing;
-	ap->a_onehit = 1;
+	if (use_air)
+		ap->a_onehit = 3;
+	else
+		ap->a_onehit = 1;
 
 	/* Always allocate the scanline[] array
 	 * (unless we already have one in incremental mode)
