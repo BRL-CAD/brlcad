@@ -164,6 +164,7 @@ struct seg		*seghead;
 	if( ! rt_in_rpp(rp, invdir, P, volp->vol_large ) )
 		return	0;	/* MISS */
 	VJOIN1( P, rp->r_pt, rp->r_min, rp->r_dir );	/* P is hit point */
+if(rt_g.debug&DEBUG_VOL)VPRINT("vol_large", volp->vol_large);
 if(rt_g.debug&DEBUG_VOL)VPRINT("vol_origin", volp->vol_origin);
 if(rt_g.debug&DEBUG_VOL)VPRINT("r_pt", rp->r_pt);
 if(rt_g.debug&DEBUG_VOL)VPRINT("P", P);
@@ -627,7 +628,7 @@ struct rt_i		*rtip;
 	/* Find bounding RPP of rotated local RPP */
 	VSETALL( small, 0 );
 	VSET( volp->vol_large,
-		volp->vol_i.xdim, volp->vol_i.ydim, volp->vol_i.zdim );/* type conversion */
+		volp->vol_i.xdim*vip->cellsize[0], volp->vol_i.ydim*vip->cellsize[1], volp->vol_i.zdim*vip->cellsize[2] );/* type conversion */
 	rt_rotate_bbox( stp->st_min, stp->st_max, vip->mat,
 		small, volp->vol_large );
 
@@ -781,9 +782,6 @@ struct rt_tol		*tol;
 	register short	x,y,z;
 	register short	v1,v2;
 	point_t		a,b,c,d;
-	mat_t		mat;
-
-	mat_idn(mat);	/* XXX hack */
 
 	RT_CK_DB_INTERNAL(ip);
 	vip = (struct rt_vol_internal *)ip->idb_ptr;
@@ -793,16 +791,16 @@ struct rt_tol		*tol;
 	 *  Scan across in Z & X.  For each X position, scan down Y,
 	 *  looking for the longest run of edge.
 	 */
-	for( z=0; z<vip->zdim; z++ )  {
-		for( x=0; x<vip->xdim; x++ )  {
-			for( y=0; y<vip->ydim; y++ )  {
+	for( z=-1; z<=vip->zdim; z++ )  {
+		for( x=-1; x<=vip->xdim; x++ )  {
+			for( y=-1; y<=vip->ydim; y++ )  {
 				v1 = VOL(vip, x,y,z);
 				v2 = VOL(vip, x+1,y,z);
 				if( OK(vip, v1) == OK(vip, v2) )  continue;
 				/* Note start point, continue scan */
 				VSET( a, x+0.5, y-0.5, z-0.5 );
 				VSET( b, x+0.5, y-0.5, z+0.5 );
-				for( ++y; y<vip->ydim; y++ )  {
+				for( ++y; y<=vip->ydim; y++ )  {
 					v1 = VOL(vip, x,y,z);
 					v2 = VOL(vip, x+1,y,z);
 					if( OK(vip, v1) == OK(vip, v2) )
@@ -811,7 +809,7 @@ struct rt_tol		*tol;
 				/* End of run of edge.  One cell beyond. */
 				VSET( c, x+0.5, y-0.5, z+0.5 );
 				VSET( d, x+0.5, y-0.5, z-0.5 );
-				rt_vol_plate( a,b,c,d, mat, vhead, vip );
+				rt_vol_plate( a,b,c,d, vip->mat, vhead, vip );
 			}
 		}
 	}
@@ -819,16 +817,16 @@ struct rt_tol		*tol;
 	/*
 	 *  Scan up in Z & Y.  For each Y position, scan across X
 	 */
-	for( z=0; z<vip->zdim; z++ )  {
-		for( y=0; y<vip->ydim; y++ )  {
-			for( x=0; x<vip->xdim; x++ )  {
+	for( z=-1; z<=vip->zdim; z++ )  {
+		for( y=-1; y<=vip->ydim; y++ )  {
+			for( x=-1; x<=vip->xdim; x++ )  {
 				v1 = VOL(vip, x,y,z);
 				v2 = VOL(vip, x,y+1,z);
 				if( OK(vip, v1) == OK(vip, v2) )  continue;
 				/* Note start point, continue scan */
 				VSET( a, x-0.5, y+0.5, z-0.5 );
 				VSET( b, x-0.5, y+0.5, z+0.5 );
-				for( ++x; x<vip->xdim; x++ )  {
+				for( ++x; x<=vip->xdim; x++ )  {
 					v1 = VOL(vip, x,y,z);
 					v2 = VOL(vip, x,y+1,z);
 					if( OK(vip, v1) == OK(vip, v2) )
@@ -837,7 +835,7 @@ struct rt_tol		*tol;
 				/* End of run of edge.  One cell beyond */
 				VSET( c, (x-0.5), (y+0.5), (z+0.5) );
 				VSET( d, (x-0.5), (y+0.5), (z-0.5) );
-				rt_vol_plate( a,b,c,d, mat, vhead, vip );
+				rt_vol_plate( a,b,c,d, vip->mat, vhead, vip );
 			}
 		}
 	}
@@ -845,25 +843,25 @@ struct rt_tol		*tol;
 	/*
 	 * Scan across in Y & X.  For each X position pair edge, scan up Z.
 	 */
-	for( y=0; y<vip->ydim; y++ )  {
-		for( x=0; x<vip->xdim; x++ )  {
-			for( z=0; z<vip->zdim; z++ )  {
+	for( x=-1; x<=vip->xdim; x++ )  {
+		for( z=-1; z<=vip->zdim; z++ )  {
+			for( y=-1; y<=vip->ydim; y++ )  {
 				v1 = VOL(vip, x,y,z);
-				v2 = VOL(vip, x+1,y,z);
+				v2 = VOL(vip, x,y,z+1);
 				if( OK(vip, v1) == OK(vip, v2) )  continue;
 				/* Note start point, continue scan */
-				VSET( a, (x+0.5), (y-0.5), (z-0.5) );
-				VSET( b, (x+0.5), (y+0.5), (z-0.5) );
-				for( ++z; z<vip->zdim; z++ )  {
+				VSET( a, (x-0.5), (y-0.5), (z+0.5) );
+				VSET( b, (x+0.5), (y-0.5), (z+0.5) );
+				for( ++y; y<=vip->ydim; y++ )  {
 					v1 = VOL(vip, x,y,z);
-					v2 = VOL(vip, x+1,y,z);
+					v2 = VOL(vip, x,y,z+1);
 					if( OK(vip, v1) == OK(vip, v2) )
 						break;
 				}
 				/* End of run of edge.  One cell beyond */
-				VSET( c, (x+0.5), (y+0.5), (z-0.5) );
-				VSET( d, (x+0.5), (y-0.5), (z-0.5) );
-				rt_vol_plate( a,b,c,d, mat, vhead, vip );
+				VSET( c, (x+0.5), (y-0.5), (z+0.5) );
+				VSET( d, (x-0.5), (y-0.5), (z+0.5) );
+				rt_vol_plate( a,b,c,d, vip->mat, vhead, vip );
 			}
 		}
 	}
