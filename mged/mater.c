@@ -297,6 +297,7 @@ register struct mater *mp;
 	/* Fake up a directory entry for db_* routines */
 	dir.d_namep = "color_putrec";
 	dir.d_magic = RT_DIR_MAGIC;
+	dir.d_flags = 0;
 	if( mp->mt_daddr == MATER_NO_ADDR )  {
 		/* Need to allocate new database space */
 		if( db_alloc( dbip, &dir, 1 ) < 0 )  ALLOC_ERR_return;
