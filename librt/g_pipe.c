@@ -1162,7 +1162,7 @@ struct seg		*seghead;
 		(union pipe_specific *)stp->st_specific;
 	register struct pipe_id *pipe;
 	register struct seg *segp;
-	register struct hit_list hit_head;
+	LOCAL struct hit_list hit_head;
 	LOCAL struct hit_list *hitp;
 	LOCAL int hit_count;
 	LOCAL int total_hits=0;
@@ -2697,19 +2697,16 @@ struct rt_tol		*tol;
 
 	for( RT_LIST_FOR( pipe, wdb_pipeseg, &pipe_head->l ) )
 	{
-		struct wdb_pipeseg *prev_pipe=(struct wdb_pipeseg *)NULL;
 
 		switch( pipe->ps_type )
 		{
 			case WDB_PIPESEG_TYPE_LINEAR:
 				tesselate_pipe_linear( pipe, arc_segs, sin_del, cos_del,
 						&outer_loop, &inner_loop, r1, r2, s, tol );
-				prev_pipe = pipe;
 				break;
 			case WDB_PIPESEG_TYPE_BEND:
 				tesselate_pipe_bend( pipe, arc_segs, sin_del, cos_del,
 						&outer_loop, &inner_loop, r1, r2, s, tol, ttol );
-				prev_pipe = pipe;
 				break;
 			case WDB_PIPESEG_TYPE_END:
 				tesselate_pipe_end( pipe, arc_segs, sin_del, cos_del,
@@ -3035,7 +3032,7 @@ struct wdb_pipeseg *headp;
 		}
 		else if( psp->ps_type != WDB_PIPESEG_TYPE_END )
 		{
-			rt_log( "Pipe solid does not end with an END segment\m" );
+			rt_log( "Pipe solid does not end with an END segment\n" );
 			error_count++;
 			return( error_count );
 		}
