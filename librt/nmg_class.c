@@ -1004,7 +1004,7 @@ CONST struct rt_tol	*tol;
 	struct edgeuse *eup;
 	point_t pt;
 	pointp_t eupt, matept;
-	char	*reason;
+	char	*reason = "Unknown";
 	int	class;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -1125,8 +1125,22 @@ CONST struct rt_tol	*tol;
 		status = OUTSIDE;
 		goto out;
 	}
-	NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
-	status = INSIDE;
+	if( euv_cl == INSIDE && matev_cl == INSIDE )  {
+		NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
+		reason = "both verts IN";
+		status = INSIDE;
+		goto out;
+	}
+	if( (euv_cl == INSIDE && matev_cl == ON_SURF) ||
+	    (euv_cl == ON_SURF && matev_cl == INSIDE) )  {
+		NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
+		reason = "one vert IN, one ON";
+		status = INSIDE;
+		goto out;
+	}
+	rt_log("eu's vert is %s, mate's vert is %s\n",
+		nmg_class_status(euv_cl), nmg_class_status(matev_cl) );
+	rt_bomb("class_eu_vs_s() inconsistent edgeuse\n");
 out:
 	if (rt_g.NMG_debug & DEBUG_GRAPHCL)
 		show_broken_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
