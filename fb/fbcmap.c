@@ -1,13 +1,13 @@
 /*
-	SCCS id:	@(#) fbcmap.c	1.7
-	Last edit: 	5/10/85 at 12:52:06	G S M
-	Retrieved: 	8/13/86 at 03:13:21
+	SCCS id:	@(#) fbcmap.c	1.8
+	Last edit: 	7/26/86 at 21:29:38	D A Gwyn
+	Retrieved: 	8/13/86 at 03:13:29
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbcmap.c
 
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbcmap.c	1.7	last edit 5/10/85 at 12:52:06";
+char	sccsTag[] = "@(#) fbcmap.c	1.8	last edit 7/26/86 at 21:29:38";
 #endif
 /*
 	F B C M A P
@@ -16,7 +16,7 @@ char	sccsTag[] = "@(#) fbcmap.c	1.7	last edit 5/10/85 at 12:52:06";
 	VAX version 10/18/83
 
 	Conversion to generic frame buffer utility using libfb(3).
-	In the process, the name has been changed to fbclear from ikclear.
+	In the process, the name has been changed to fbcmap from ikcmap.
 	Gary S. Moss, BRL. 03/12/85
 
 	Compile:	make fbcmap
@@ -68,15 +68,17 @@ char *argv[];
 		return	1;
 
 	switch( flavor )  {
+
 	case 0 : /* Standard - Linear color map.			*/
 		(void) fprintf( stderr,
 				"Color map #0, linear (standard).\n"
 				);
 		cp = (ColorMap *) NULL;
 		break;
+
 	case 1 : /* Reverse linear color map.				*/
 		(void) fprintf( stderr,
-				"Color map #1, reverse-linear.\n"
+				"Color map #1, reverse-linear (negative).\n"
 				);
 		for( i = 0; i < 256; i++ )
 			{
@@ -85,6 +87,7 @@ char *argv[];
 			cp->cm_blue[255-i] = i;
 			}
 		break;
+
 	case 2 :
 		/* Experimental correction, for POLAROID 8x10 print film */
 		(void) fprintf( stderr,
@@ -106,6 +109,7 @@ char *argv[];
 			cp->cm_blue[i] = fudge;	/* R */
 		}
 		break;
+
 	case 3 : /* Standard, with low intensities set to black.	*/
 		(void) fprintf( stderr,
 				"Color map #3, low 100 entries black.\n"
@@ -116,6 +120,7 @@ char *argv[];
 			cp->cm_blue[i] = i;
 		}
 		break;
+
 	case 4 : /* Amplify middle of the range, for Moss's dim pictures */
 #define UPSHIFT	64
 		(void) fprintf( stderr,
@@ -134,6 +139,7 @@ char *argv[];
 			cp->cm_blue[i] = 255;	/* Full Scale */
 		}
 		break;
+
 	case 5 : /* University of Utah's color map.			*/
 		(void) fprintf( stderr,
 			"Color map #5, University of Utah's color map.\n"
@@ -143,6 +149,34 @@ char *argv[];
 			cp->cm_green[i] =
 			cp->cm_blue[i] = utah_cmap[i];
 		break;
+
+	case 10:	/* Black */
+		(void) fprintf( stderr, "Color map #10, solid black.\n" );
+/*		for( i = 0; i < 256; i++ )  {
+			cp->cm_red[i] =
+			cp->cm_green[i] =
+			cp->cm_blue[i] = 0;
+		}
+*/		break;
+
+	case 11:	/* White */
+		(void) fprintf( stderr, "Color map #11, solid white.\n" );
+		for( i = 0; i < 256; i++ )  {
+			cp->cm_red[i] =
+			cp->cm_green[i] =
+			cp->cm_blue[i] = 255;
+		}
+		break;
+
+	case 12:	/* 18% Grey */
+		(void) fprintf( stderr, "Color map #12, 18% neutral grey.\n" );
+		for( i = 0; i < 256; i++ )  {
+			cp->cm_red[i] =
+			cp->cm_green[i] =
+			cp->cm_blue[i] = 46;
+		}
+		break;
+
 	default:
 		(void) fprintf(	stderr,
 				"Color map #%d, flavor not implemented!\n",
@@ -177,4 +211,3 @@ register char	**argv;
 		flavor = atoi( argv[optind] );
 	return	1;
 	}
-
