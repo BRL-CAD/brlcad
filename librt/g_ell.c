@@ -1,5 +1,5 @@
 /*
- *			E L L . C
+ *			G _ E L L . C
  *
  *  Purpose -
  *	Intersect a ray with a Generalized Ellipsoid
@@ -99,17 +99,33 @@ extern int sph_prep();
  *  Map W onto the unit sphere, ie:  W' = S( R( W - V ) ).
  *  
  *  Plane on unit sphere at W' has a normal vector of the same value(!).
+ *  N' = W'
  *  
  *  The plane transforms back to the tangent plane at W, and this
  *  new plane (on the ellipsoid) has a normal vector of N, viz:
  *  
- *  N = inverse[ transpose(invR o invS) ] ( W' )
- *    = inverse[ transpose(invS) o transpose(invR) ] ( W' )
- *    = inverse[ inverse(S) o R ] ( W' )
+ *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
+ *
+ *  because if H is perpendicular to plane Q, and matrix M maps from
+ *  Q to Q', then inverse[ transpose(M) ] (H) is perpendicular to Q'.
+ *  Here, H and Q are in "prime space" with the unit sphere.
+ *  [Somehow, the notation here is backwards].
+ *  So, the mapping matrix M = inverse( S o R ), because
+ *  S o R maps from normal space to the unit sphere.
+ *
+ *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
+ *    = inverse[ transpose(invR o invS) ] ( N' )
+ *    = inverse[ transpose(invS) o transpose(invR) ] ( N' )
+ *    = inverse[ inverse(S) o R ] ( N' )
+ *    = invR o S ( N' )
+ *
  *    = invR o S ( W' )
  *    = invR( S( S( R( W - V ) ) ) )
  *
- *  Note that the normal vector produced above will not have unit length.
+ *  because inverse(R) = transpose(R), so R = transpose( invR ),
+ *  and S = transpose( S ).
+ *
+ *  Note that the normal vector N produced above will not have unit length.
  */
 
 struct ell_specific {
@@ -131,14 +147,14 @@ struct ell_internal  {
 };
 
 /*
- *			E L L _ I M P O R T
+ *			R T _ E L L _ I M P O R T
  *
  *  Import an ellipsoid/sphere from the database format to
  *  the internal structure.
  *  Apply modeling transformations as well.
  */
 int
-ell_import( eip, rp, mat )
+rt_ell_import( eip, rp, mat )
 struct ell_internal	*eip;
 union record		*rp;
 register mat_t		mat;
@@ -147,7 +163,7 @@ register mat_t		mat;
 
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("ell_import: defective record\n");
+		rt_log("rt_ell_import: defective record\n");
 		return(-1);
 	}
 
@@ -164,7 +180,7 @@ register mat_t		mat;
 }
 
 /*
- *  			E L L _ P R E P
+ *  			R T _ E L L _ P R E P
  *  
  *  Given a pointer to a GED database record, and a transformation matrix,
  *  determine if this is a valid ellipsoid, and if so, precompute various
@@ -176,10 +192,10 @@ register mat_t		mat;
  *  
  *  Implicit return -
  *  	A struct ell_specific is created, and it's address is stored in
- *  	stp->st_specific for use by ell_shot().
+ *  	stp->st_specific for use by rt_ell_shot().
  */
 int
-ell_prep( stp, rec, rtip )
+rt_ell_prep( stp, rec, rtip )
 struct soltab		*stp;
 union record		*rec;
 struct rt_i		*rtip;
@@ -206,13 +222,13 @@ struct rt_i		*rtip;
 
 	if( rec == (union record *)0 )  {
 		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
-		i = ell_import( &ei, rec, stp->st_pathmat );
+		i = rt_ell_import( &ei, rec, stp->st_pathmat );
 		rt_free( (char *)rec, "ell record" );
 	} else {
-		i = ell_import( &ei, rec, stp->st_pathmat );
+		i = rt_ell_import( &ei, rec, stp->st_pathmat );
 	}
 	if( i < 0 )  {
-		rt_log("ell_setup(%s): db import failure\n", stp->st_name);
+		rt_log("rt_ell_setup(%s): db import failure\n", stp->st_name);
 		return(-1);		/* BAD */
 	}
 
@@ -329,7 +345,7 @@ struct rt_i		*rtip;
 }
 
 void
-ell_print( stp )
+rt_ell_print( stp )
 register struct soltab *stp;
 {
 	register struct ell_specific *ell =
@@ -341,10 +357,10 @@ register struct soltab *stp;
 }
 
 /*
- *  			E L L _ S H O T
+ *  			R T _ E L L _ S H O T
  *  
  *  Intersect a ray with an ellipsoid, where all constant terms have
- *  been precomputed by ell_prep().  If an intersection occurs,
+ *  been precomputed by rt_ell_prep().  If an intersection occurs,
  *  a struct seg will be acquired and filled in.
  *  
  *  Returns -
@@ -352,7 +368,7 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-ell_shot( stp, rp, ap )
+rt_ell_shot( stp, rp, ap )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
@@ -397,12 +413,12 @@ struct application	*ap;
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
 
 /*
- *			E L L _ V S H O T
+ *			R T _ E L L _ V S H O T
  *
  *  This is the Becker vector version.
  */
 void
-ell_vshot( stp, rp, segp, n, resp)
+rt_ell_vshot( stp, rp, segp, n, resp)
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
@@ -456,12 +472,12 @@ struct resource         *resp; /* pointer to a list of free segs */
 }
 
 /*
- *  			E L L _ N O R M
+ *  			R T _ E L L _ N O R M
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-ell_norm( hitp, stp, rp )
+rt_ell_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
@@ -482,12 +498,12 @@ register struct xray *rp;
 }
 
 /*
- *			E L L _ C U R V E
+ *			R T _ E L L _ C U R V E
  *
  *  Return the curvature of the ellipsoid.
  */
 void
-ell_curve( cvp, hitp, stp )
+rt_ell_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
@@ -522,7 +538,7 @@ struct soltab *stp;
 }
 
 /*
- *  			E L L _ U V
+ *  			R T _ E L L _ U V
  *  
  *  For a hit on the surface of an ELL, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
@@ -530,7 +546,7 @@ struct soltab *stp;
  *  v = elevation
  */
 void
-ell_uv( ap, stp, hitp, uvp )
+rt_ell_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
@@ -569,10 +585,10 @@ register struct uvcoord *uvp;
 }
 
 /*
- *			E L L _ F R E E
+ *			R T _ E L L _ F R E E
  */
 void
-ell_free( stp )
+rt_ell_free( stp )
 register struct soltab *stp;
 {
 	register struct ell_specific *ell =
@@ -582,13 +598,15 @@ register struct soltab *stp;
 }
 
 int
-ell_class()
+rt_ell_class()
 {
 	return(0);
 }
 
 /*
  *			E L L _ 1 6 P T S
+ *
+ * Also used by the TGC code
  */
 #define ELLOUT(n)	ov+(n-1)*3
 void
@@ -630,14 +648,17 @@ fastf_t *A, *B;
 }
 
 /*
- *			E L L _ P L O T
+ *			R T _ E L L _ P L O T
  */
 int
-ell_plot( rp, matp, vhead, dp )
-union record	*rp;
-register matp_t matp;
-struct vlhead	*vhead;
-struct directory *dp;
+rt_ell_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
+union record		*rp;
+register mat_t		mat;
+struct vlhead		*vhead;
+struct directory	*dp;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	register int		i;
 	struct ell_internal	ei;
@@ -646,8 +667,8 @@ struct directory *dp;
 	fastf_t bottom[16*3];
 	fastf_t	points[3*8];
 
-	if( ell_import( &ei, rp, matp ) < 0 )  {
-		rt_log("ell_plot(%s): db import failure\n", dp->d_namep);
+	if( rt_ell_import( &ei, rp, mat ) < 0 )  {
+		rt_log("rt_ell_plot(%s): db import failure\n", dp->d_namep);
 		return(-1);
 	}
 
@@ -697,7 +718,7 @@ static struct usvert {
 };
 
 /*
- *			E L L _ T E S S
+ *			R T _ E L L _ T E S S
  *
  *  Tessellate an ellipsoid.
  *
@@ -706,12 +727,15 @@ static struct usvert {
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-ell_tess( r, m, rp, mat, dp )
+rt_ell_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
 register union record	*rp;
 register mat_t		mat;
 struct directory	*dp;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	struct shell		*s;
 	struct ell_internal	ei;
@@ -719,13 +743,14 @@ struct directory	*dp;
 	struct faceuse		*outfaceuses[8];
 	struct vertex		*verts[6];
 	struct vertex		*vertlist[6];
+	struct vertex		**vertp[4];
 	struct edgeuse		*eu;
 	int			face;
 	plane_t			plane;
 	point_t			pt;
 
-	if( ell_import( &ei, rp, mat ) < 0 )  {
-		rt_log("ell_tess(%s): import failure\n", dp->d_namep);
+	if( rt_ell_import( &ei, rp, mat ) < 0 )  {
+		rt_log("rt_ell_tess(%s): import failure\n", dp->d_namep);
 		return(-1);
 	}
 
@@ -737,13 +762,10 @@ struct directory	*dp;
 	/* Build all 8 faces of the octahedron, 3 verts each */
 	for( i=0; i<8; i++ )  {
 		register struct usvert *ohp = &octahedron[i];
-		vertlist[0] = verts[ohp->a];
-		vertlist[1] = verts[ohp->b];
-		vertlist[2] = verts[ohp->c];
-		outfaceuses[i] = nmg_cface(s, vertlist, 3 );
-		verts[ohp->a] = vertlist[0];
-		verts[ohp->b] = vertlist[1];
-		verts[ohp->c] = vertlist[2];
+		vertp[0] = &verts[ohp->a];
+		vertp[1] = &verts[ohp->b];
+		vertp[2] = &verts[ohp->c];
+		outfaceuses[i] = nmg_cmface(s, vertp, 3 );
 	}
 
 	/* Associate initial vertex geometry:
