@@ -443,6 +443,8 @@ sedit_menu()  {
 	case GENELL:
 		menu_array[MENU_L1] = ell_menu;
 		break;
+
+	/* These two sections are wrong!!  Not solid records at all! */
 	case ARS:
 		menu_array[MENU_L1] = ars_menu;
 		break;
@@ -741,6 +743,13 @@ register struct solidrec *sp;
 		cgtype *= -1;
 
 	switch( sp->s_type ) {
+
+	case HALFSPACE:
+		PR_PT( 0, 'N', &sp->s_values[0]);
+		(void)sprintf( &es_display[1*ES_LINELEN],
+			"\td=%f", sp->s_values[3]);
+		es_nlines = 2;
+		break;
 
 	case ARS:
 	case ARSCONT:

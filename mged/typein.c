@@ -15,14 +15,24 @@
  *	box_in		gets params for BOX and RAW from keyboard
  *	rpp_in		gets params for RPP from keyboard
  *	ars_in		gets ARS param from keyboard
+ *	half_in		gets HALFSPACE params from keyboard
  *	checkv		checks for zero vector from keyboard
  *	getcmd		reads and parses input parameters from keyboard
  *	cvt_ged		converts typed in params to GED database format
+ *
+ * Authors -
+ *	Charles M. Kennedy
+ *	Keith A. Applin
+ *	Michael J. Muuss
  *
  * Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *
+ * Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -50,6 +60,13 @@ extern char	*cmd_args[];	/* array of pointers to args */
 char		**promp;	/* pointer to a pointer to a char */
 
 #define MAXLINE		512	/* Maximum number of chars per line */
+
+char *p_half[] = {
+	"Enter X, Y, Z of outward pointing normal vector: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter the distance from the origin: "
+};
 
 char *p_arb[] = {
 	"Enter X, Y, Z for point 1: ",
@@ -211,9 +228,18 @@ f_in()
 	}
 	/*
 	 * Decide which solid to make and get the rest of the args
-	 * make name <arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|rec|trc|rcc|box|raw|rpp>
+	 * make name <half|arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|
+			rec|trc|rcc|box|raw|rpp>
 	 */
-	if( strcmp( cmd_args[2], "arb8" ) == 0 )  {
+	if( strcmp( cmd_args[2], "half" ) == 0 )  {
+		record.s.s_type = HALFSPACE;
+		record.s.s_cgtype = HALFSPACE;
+		promp = &p_half[0];		/* or promp = p_half */
+		if( half_in() != 0 )  {
+			(void)printf("ERROR, halfspace not made!\n");
+			return;
+		}
+	} else if( strcmp( cmd_args[2], "arb8" ) == 0 )  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB8;
 		promp = &p_arb[0];		/* or promp = p_arb */
@@ -377,21 +403,48 @@ f_in()
 
 	/* Convert to GED notion of database */
 	if( cvt_ged( &record.s ) )  {
-		return;
+		(void)printf("ERROR, cvt_ged failure, database not updated!\n");
+		return;		/* failure */
 	}
 
 	/* don't allow interrupts while we update the database! */
 	(void)signal( SIGINT, SIG_IGN);
  
 	/* Add to in-core directory */
-	if( (dp = dir_add( record.s.s_name, -1, DIR_SOLID, 0 )) == DIR_NULL )
-		return;
+	if( (dp = dir_add( record.s.s_name, -1, DIR_SOLID, 0 )) == DIR_NULL )  {
+		(void)printf("ERROR, dir_add failure, database not updated!\n");
+		return;		/* failure */
+	}
 	db_alloc( dp, 1 );
 
 	db_putrec( dp, &record, 0 );
 	/* draw the "typed-in" solid */
 	drawHobj(dp, ROOT, 0, identity);
 	dmaflag = 1;
+}
+
+/*	H A L F _ I N ( ) :    	reads halfspace parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+half_in()
+{
+	/* Read outward pointing normal vector and distance from origin */
+	while( args < (3 + (3*1 + 1)) )  {
+		(void)printf("%s", promp[args-3] );
+		if( (argcnt = getcmd(args)) < 0 )  {
+			return(1);	/* failure */
+		}
+		args += argcnt;
+	}
+	/* Check for "very small" normal vector */
+	if( checkv(3) )  {
+		(void)printf("ERROR, normal vector is too small!\n");
+		return(1);	/* failure */
+	}
+	vals = 4;
+	return(0);	/* success */
 }
 
 /*	A R B _ I N ( ) :    	reads arb parameters from keyboard
@@ -460,7 +513,7 @@ int type;
 		}
 		/* Check for zero axis length */
 		if( atof(cmd_args[9]) <= 0.0 )  {
-			(void)printf("ERROR, length must be greater than zero!\n");
+			(void)printf("ERROR, axis length must be greater than zero!\n");
 			return(1);	/* failure */
 		}
 		vals = 7;
@@ -477,6 +530,7 @@ int type;
 	}
 	/* Check for zero length vector A */
 	if( checkv(6) )  {
+		(void)printf("ERROR, vector A length must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 	if( type == ELL1 )  {
@@ -507,10 +561,12 @@ int type;
 		}
 		/* Check for zero length vector B */
 		if( checkv(9) )  {
+			(void)printf("ERROR, vector B length must be greater than zero!\n");
 			return(1);	/* failure */
 		}
 		/* Check for zero length vector C */
 		if( checkv(12) )  {
+			(void)printf("ERROR, vector C length must be greater than zero!\n");
 			return(1);	/* failure */
 		}
 		vals = 12;
@@ -540,6 +596,7 @@ tor_in()
 	}
 	/* Check for zero length normal vector */
 	if( checkv(6) )  {
+		(void)printf("ERROR, normal vector length must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 	/* Check for zero radius 1 */
@@ -578,6 +635,7 @@ int type;
 	}
 	/* Check for zero length height vector */
 	if( checkv(6) )  {
+		(void)printf("ERROR, height vector length must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 
@@ -642,10 +700,12 @@ int type;
 	}
 	/* Check for zero length A vector */
 	if( checkv(9) )  {
+		(void)printf("ERROR, A vector length must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 	/* Check for zero length B vector */
 	if( checkv(12) )  {
+		(void)printf("ERROR, B vector length must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 
@@ -714,14 +774,17 @@ box_in()
 	}
 	/* Check for zero H vector */
 	if( checkv(6) )  {
+		(void)printf("ERROR, H vector length must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 	/* Check for zero W vector */
 	if( checkv(9) )  {
+		(void)printf("ERROR, W vector length must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 	/* Check for zero D vector */
 	if( checkv(12) )  {
+		(void)printf("ERROR, D vector length must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 	vals = 12;
@@ -773,7 +836,7 @@ int loc;
 	for(i=0; i<3; i++) {
 		work[i] = atof(cmd_args[(loc+i)]);
 	}
-	if( MAGNITUDE(work) == 0.0 ) {
+	if( MAGNITUDE(work) < 1e-10 ) {
 		(void)printf("ERROR, zero vector ....\n");
 		return(-1);	/* zero vector */
 	}
@@ -914,6 +977,11 @@ struct solidrec *in;
 
 	switch( cgtype )  {
 
+	case HALFSPACE:
+		/* HALFSPACE format is N, d */
+		VUNITIZE( F1 );
+		return(0);	/* Success */
+
 	case RPP:
 		VSET( O1, Xmax, Ymin, Zmin );
 		VSET( O2, Xmax, Ymax, Zmin );
@@ -950,14 +1018,14 @@ struct solidrec *in;
 		for( i=2; i<=8; i++ )  {
 			VSUB2( Fi, Oi, O1 );
 		}
-		return(0);
+		return(0);	/* Success */
 
 	case ARB8:
 	arbcommon:
 		for( i=2; i<=8; i++ )  {
 			VSUB2( Fi, Fi, F1 );
 		}
-		return(0);
+		return(0);	/* Success */
 
 	case ARB7:
 		VMOVE( F8, F5 );
@@ -992,7 +1060,7 @@ struct solidrec *in;
 	case REC:
 		VMOVE( F5, F3 );
 		VMOVE( F6, F4 );
-		return(0);
+		return(0);	/* Success */
 
 		/*
 		 * For the TRC, if the V vector (F1) is of zero length,
@@ -1022,7 +1090,7 @@ struct solidrec *in;
 			m1 = MAGNITUDE( F3 );
 			if( m1 == 0.0 )  {
 				(void)printf("ERROR, magnitude is zero!\n");
-				return(-1);
+				return(-1);	/* failure */
 			}
 		}
 		VSCALE( F3, F3, r1/m1 );
@@ -1031,17 +1099,17 @@ struct solidrec *in;
 		m2 = MAGNITUDE( F4 );
 		if( m2 == 0.0 )  {
 			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);
+			return(-1);	/* failure */
 		}
 		VSCALE( F4, F4, r1/m2 );
 
 		if( r1 == 0.0 )  {
 			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);
+			return(-1);	/* failure */
 		}
 		VSCALE( F5, F3, r2/r1 );
 		VSCALE( F6, F4, r2/r1 );
-		return(0);
+		return(0);	/* success */
 
 	case TEC:
 		/* r1 is a ratio, hence "unitless".  However, during input
@@ -1052,23 +1120,23 @@ struct solidrec *in;
 
 		if( r1 == 0.0 )  {
 			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);
+			return(-1);	/* failure */
 		}
 		VSCALE( F5, F3, (1.0/r1) );
 		VSCALE( F6, F4, (1.0/r1) );
-		return(0);
+		return(0);	/* success */
 
 	case TGC:
 		/* This should have been checked earlier but we'll check */
 		if( (MAGNITUDE( F3 ) == 0.0) || (MAGNITUDE( F4) == 0.0) )  {
 			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);
+			return(-1);	/* failure */
 		}
 		r1 = iv[12] / MAGNITUDE( F3 );	/* A/|A| * C */
 		r2 = iv[13] / MAGNITUDE( F4 );	/* B/|B| * D */
 		VSCALE( F5, F3, r1 );
 		VSCALE( F6, F4, r2 );
-		return(0);
+		return(0);	/* success */
 
 	case SPH:
 		/* SPH format is V, r */
@@ -1076,7 +1144,7 @@ struct solidrec *in;
 		VSET( F2, r1,  0,  0 );
 		VSET( F3,  0, r1,  0 );
 		VSET( F4,  0,  0, r1 );
-		return(0);
+		return(0);	/* success */
 
 	case ELL:
 		/*
@@ -1093,7 +1161,7 @@ struct solidrec *in;
 		/* XXX check this later */
 		if( m1 == 0.0 )  {
 			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);
+			return(-1);	/* failure */
 		}
 		r2 = 0.5 * r1 / m1;
 		VSCALE( O2, O3, r2 );	/* O2 holds A */
@@ -1127,7 +1195,7 @@ struct solidrec *in;
 			m1 = MAGNITUDE( F3 );
 			if( m1 == 0.0 )  {
 				(void)printf("ERROR, magnitude is zero!\n");
-				return(-1);
+				return(-1);	/* failure */
 			}
 		}
 		VSCALE( F3, F3, r1/m1 );
@@ -1136,14 +1204,14 @@ struct solidrec *in;
 		m2 = MAGNITUDE( F4 );
 		if( m2 == 0.0 )  {
 			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);
+			return(-1);	/* failure */
 		}
 		VSCALE( F4, F4, r1/m2 );
-		return(0);
+		return(0);	/* success */
 
 	case ELLG:
 		/* Everything is already okay.  ELLG format is V, A, B, C */
-		return(0);
+		return(0);	/* success */
 
 	case TOR:
 		/* TOR format is V, N, r1, r2 */
@@ -1166,7 +1234,7 @@ struct solidrec *in;
 		m2 = MAGNITUDE( F2 );	/* F2 is NORMAL to Torus, with Radius length */
 		if( m2 == 0.0 )  {
 			(void)printf("ERROR, normal magnitude is zero!\n");
-			return(-1);
+			return(-1);	/* failure */
 		}
 		VSCALE( F2, F2, r2/m2 );
 
@@ -1180,7 +1248,7 @@ struct solidrec *in;
 			m1=MAGNITUDE(F3);
 			if( m1 == 0.0 )  {
 				(void)printf("ERROR, cross product vector is zero!\n");
-				return(-1);
+				return(-1);	/* failure */
 			}
 		}
 		VSCALE(F3,F3,r1/m1);
@@ -1189,7 +1257,7 @@ struct solidrec *in;
 		m3=MAGNITUDE(F4);
 		if( m3 == 0.0 )  {
 			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);
+			return(-1);	 /* failure */
 		}
 
 		VSCALE(F4,F4,r1/m3);
@@ -1198,10 +1266,10 @@ struct solidrec *in;
 		m6 = MAGNITUDE( F4 );
 		if( m5 == 0.0 || m6 == 0.0 )  {
 			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);
+			return(-1);	/* failure */
 		}
 
-		/* F5, F6 are perpindicular, goto inner edge of ellipse */
+		/* F5, F6 are perpendicular, goto inner edge of ellipse */
 		VSCALE( F5, F3, r3/m5 );
 		VSCALE( F6, F4, r3/m6 );
 
@@ -1209,10 +1277,10 @@ struct solidrec *in;
 		VSCALE( F7, F3, r4/m5 );
 		VSCALE( F8, F4, r4/m6 );
  
-		return(0);
+		return(0);	 /* success finally */
 
 	default:
 		(void)printf("cvt_ged(): unknown solid type\n");
-		return(-1);
+		return(-1);	/* failure */
 	}
 }
