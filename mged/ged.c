@@ -259,6 +259,7 @@ char **argv;
 	no_memory = 0;		/* memory left */
 	es_edflag = -1;		/* no solid editing just now */
 
+	rt_vls_init( &curr_cmd_list->more_default );
 	rt_vls_init( &dm_values.dv_string );
 	rt_vls_init(&input_str);
 	rt_vls_init(&input_str_prefix);
@@ -303,7 +304,7 @@ char **argv;
 		   so that access to Tcl/Tk is possible.
 	        */
 		for(argc -= 2, argv += 2; argc; --argc, ++argv)
-		  rt_vls_strcat(&input_str, *argv);
+		  rt_vls_printf(&input_str, "%s ", *argv);
 
 		cmdline(&input_str, TRUE);
 		rt_vls_free(&input_str);
@@ -345,6 +346,7 @@ char **argv;
 		/* Truncate input string */
 		rt_vls_trunc(&input_str, 0);
 		rt_vls_trunc(&input_str_prefix, 0);
+		rt_vls_trunc(&curr_cmd_list->more_default, 0);
 		input_str_index = 0;
 	}
 
@@ -463,7 +465,7 @@ int mask;
 		rt_vls_trunc(&input_str_prefix, 0);
 		input_str_index = 0;
 	    } else {
-		if (cmdline(&input_str, TRUE) == CMD_MORE) {
+		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
 		    /* Remove newline */
 		    rt_vls_trunc(&input_str_prefix,
 				 rt_vls_strlen(&input_str_prefix)-1);
@@ -535,9 +537,18 @@ int mask;
 	
 	rt_vls_trunc(&temp, 0);
 	rt_vls_vlscat(&temp, &input_str_prefix);  /* Make a backup copy */
-	rt_vls_printf(&input_str_prefix, "%s%S\n",
-		      rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-		      &input_str);
+
+	/* If no input and a default is supplied then use it */
+	if(!rt_vls_strlen(&input_str) && rt_vls_strlen(&curr_cmd_list->more_default))
+	  rt_vls_printf(&input_str_prefix, "%s%S\n",
+			rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+			&curr_cmd_list->more_default);
+	else
+	  rt_vls_printf(&input_str_prefix, "%s%S\n",
+			rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+			&input_str);
+
+	rt_vls_trunc(&curr_cmd_list->more_default, 0);
 
 	/* If this forms a complete command (as far as the Tcl parser is
 	   concerned) then execute it. */
