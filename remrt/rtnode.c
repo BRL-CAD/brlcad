@@ -537,6 +537,13 @@ char *buf;
 
 	Tcl_LinkVar(interp, "dbip", (char *)&ap.a_rt_i->rti_dbip, TCL_LINK_INT|TCL_LINK_READ_ONLY);
 	Tcl_LinkVar(interp, "rtip", (char *)&ap.a_rt_i, TCL_LINK_INT|TCL_LINK_READ_ONLY);
+
+	if( Tcl_Eval(interp,
+	    "set wdbp [wdb_open .inmem inmem $dbip]" ) != TCL_OK )  {
+		bu_log("%s\n%s\n",
+	    		interp->result,
+			Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+	}
 }
 
 /*
@@ -774,10 +781,13 @@ rtsync_ph_cmd(pc, buf)
 register struct pkg_conn *pc;
 char			*buf;
 {
-	if( Tcl_Eval(interp, buf) != TCL_OK )
-		bu_log("rtnode Tcl_Eval error: %s\n", interp->result );
-	else
-		bu_log("%s\n", interp->result);	/* may be noisy */
+	if( Tcl_Eval(interp, buf) != TCL_OK )  {
+		bu_log("%s\n",
+			Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+	} else {
+		if(interp->result[1] != '\0' )
+			bu_log("%s\n", interp->result);	/* may be noisy */
+	}
 	free(buf);
 }
 
