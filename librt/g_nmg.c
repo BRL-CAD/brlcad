@@ -63,8 +63,8 @@ struct rt_i		*rtip;
 	struct nmgregion *rp;
 	vect_t work;	
 
-	/* XXX  Cause debugging output always */
-	rt_g.NMG_debug |= DEBUG_NMGRT;	
+	/* XXX  Cause debugging output always
+	rt_g.NMG_debug |= DEBUG_NMGRT;	 */
 
 	RT_CK_DB_INTERNAL(ip);
 	m = (struct model *)ip->idb_ptr;
