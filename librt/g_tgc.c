@@ -75,6 +75,7 @@ struct  tgc_specific {
  *  space to the original space.  This NOT the inverse of the transformation
  *  matrix (if you really want to know why, talk to Ed Davisson).
  */
+int
 tgc_prep( vec, stp, mat, rtip )
 register fastf_t	*vec;
 struct soltab		*stp;
@@ -415,6 +416,7 @@ mat_t	Scl, Inv;
 /*
  *  			T G C _ P R I N T
  */
+void
 tgc_print( stp )
 register struct soltab	*stp;
 {
@@ -871,6 +873,7 @@ register fastf_t t[];
  *  after mapping back to absolute coordinates, we divide the 2 out of
  *  the above expressions.
  */
+void
 tgc_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
@@ -913,13 +916,23 @@ register struct xray *rp;
 	}
 }
 
-tgc_uv()
+void
+tgc_uv( ap, stp, hitp, uvp )
+struct application	*ap;
+struct soltab		*stp;
+register struct hit	*hitp;
+register struct uvcoord	*uvp;
 {
+	/* Do nothing.  Really, should do what REC does. */
+	uvp->uv_u = uvp->uv_v = 0;
+	uvp->uv_du = uvp->uv_dv = 0;
 }
+
 
 /*
  *			T G C _ F R E E
  */
+void
 tgc_free( stp )
 struct soltab *stp;
 {
@@ -929,10 +942,13 @@ struct soltab *stp;
 	rt_free( (char *)tgc, "tgc_specific");
 }
 
+int
 tgc_class()
 {
+	return(0);
 }
 
+void
 tgc_plot()
 {
 }
@@ -942,6 +958,7 @@ tgc_plot()
  *
  *  Return the curvature of the TGC.
  */
+void
 tgc_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;

@@ -95,6 +95,7 @@ register struct rt_i *rtip;
 		rtip->rti_pmax[1] = rtip->mdl_max[1] + diff;
 		rtip->rti_pmax[2] = rtip->mdl_max[2] + diff;
 
+		/* These calcuations no longer needed, kept for compat. */
 #define PL_MIN	(-32767L)
 #define PL_MAX	 (32767L)
 #define PL_DIFF	(PL_MAX-PL_MIN)
@@ -110,23 +111,19 @@ register struct rt_i *rtip;
 
 	/* Debugging code to plot cuts, solid RRPs */
 	if( (plotfp=fopen("rtcut.plot", "w"))!=NULL) {
-		pl_3space( plotfp,
-			PL_MIN, PL_MIN, PL_MIN,
-			PL_MAX, PL_MAX, PL_MAX);
+		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
 		/* First, all the cutting boxes */
 		rt_plot_cut( plotfp, rtip, &rtip->rti_CutHead, 0 );
 		(void)fclose(plotfp);
 	}
 	if( (plotfp=fopen("rtrpp.plot", "w"))!=NULL) {
 		/* Then, all the solid bounding boxes, in white */
-		pl_3space( plotfp,
-			PL_MIN, PL_MIN, PL_MIN,
-			PL_MAX, PL_MAX, PL_MAX);
+		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
 		pl_color( plotfp, 255, 255, 255 );
 		for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
 			if( stp->st_aradius >= INFINITY )
 				continue;
-			rt_draw_box( plotfp, rtip, stp->st_min, stp->st_max );
+			pdv_3box( plotfp, stp->st_min, stp->st_max );
 		}
 		(void)fclose(plotfp);
 	}
@@ -573,39 +570,11 @@ int			lvl;
 			(AXIS(lvl)==0)?255:0,
 			(AXIS(lvl)==1)?255:0,
 			(AXIS(lvl)==2)?255:0 );
-		rt_draw_box( fp, rtip, cutp->bn.bn_min, cutp->bn.bn_max );
+		pdv_3box( fp, cutp->bn.bn_min, cutp->bn.bn_max );
 		return;
 	}
 	return;
 }
-
-/*
- *  			R T _ D R A W _ B O X
- *  
- *  Arrange to efficiently draw the edges of a box (RPP).
- *  Call on UNIX-Plot to do the actual drawing.
- */
-void
-rt_draw_box( fp, rtip, a, b )
-FILE			*fp;
-register struct rt_i	*rtip;
-register vect_t		a, b;
-{
-	long ax, ay, az;
-	long bx, by, bz;
-
-	ax =	(a[X] - rtip->rti_pmin[X])*rtip->rti_pconv;
-	ay =	(a[Y] - rtip->rti_pmin[Y])*rtip->rti_pconv;
-	az =	(a[Z] - rtip->rti_pmin[Z])*rtip->rti_pconv;
-	bx =	(b[X] - rtip->rti_pmin[X])*rtip->rti_pconv;
-	by =	(b[Y] - rtip->rti_pmin[Y])*rtip->rti_pconv;
-	bz =	(b[Z] - rtip->rti_pmin[Z])*rtip->rti_pconv;
-
-	pl_3box( fp,
-		(int)(ax+PL_MIN), (int)(ay+PL_MIN), (int)(az+PL_MIN),
-		(int)(bx+PL_MIN), (int)(by+PL_MIN), (int)(bz+PL_MIN) );
-}
-
 
 /*
  *			R T _ V C L I P
@@ -683,36 +652,4 @@ register fastf_t *min, *max;
 	VJOIN1( b, a, maxdist, diff );		/* b must go first */
 	VJOIN1( a, a, mindist, diff );
 	return(1);		/* HIT */
-}
-
-/*
- *  			R T _ D R A W V E C
- *  
- *  Arrange to draw a vector in 3-space using UNIX-plot.
- */
-void
-rt_drawvec( fp, rtip, aa, bb )
-FILE	*fp;
-register struct rt_i	*rtip;
-register vect_t		aa, bb;
-{
-	long ax, ay, az;
-	long bx, by, bz;
-	vect_t	a, b;
-
-	VMOVE( a, aa );		/* Make local copys, for vclip to change */
-	VMOVE( b, bb );
-	if( rt_vclip( a, b, rtip->rti_pmin, rtip->rti_pmax ) == 0 )
-		return;
-
-	ax =	(a[X] - rtip->rti_pmin[X])*rtip->rti_pconv;
-	ay =	(a[Y] - rtip->rti_pmin[Y])*rtip->rti_pconv;
-	az =	(a[Z] - rtip->rti_pmin[Z])*rtip->rti_pconv;
-	bx =	(b[X] - rtip->rti_pmin[X])*rtip->rti_pconv;
-	by =	(b[Y] - rtip->rti_pmin[Y])*rtip->rti_pconv;
-	bz =	(b[Z] - rtip->rti_pmin[Z])*rtip->rti_pconv;
-
-	pl_3line( fp,
-		(int)(ax+PL_MIN), (int)(ay+PL_MIN), (int)(az+PL_MIN),
-		(int)(bx+PL_MIN), (int)(by+PL_MIN), (int)(bz+PL_MIN) );
 }

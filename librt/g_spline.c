@@ -80,6 +80,9 @@ int hit_count;
  *       --    |---|
  *         --
  */
+void	n_shoot();		/* XXX needs an rt_ or spl_ name */
+void	add_hit();		/* XXX */
+void	interp_uv();		/* XXX */
 
 /* 
  * S P L _ P R E P
@@ -90,10 +93,10 @@ int hit_count;
  */
 
 /* Since the record granuals consist of floating point values
- * we need to decalre some of the read variables as dbfloat_t and not
+ * we need to declare some of the read variables as dbfloat_t and not
  * fastf_t.
  */
-
+int
 spl_prep( vec,  stp,  mat, sp, rtip)
 register fastf_t * vec;
 struct soltab *stp;
@@ -252,7 +255,7 @@ struct rt_i * rtip;
 /*
  * S P L _ P R I N T
  */
-
+void
 spl_print( stp )
 register struct soltab * stp;
 {
@@ -270,6 +273,7 @@ register struct soltab * stp;
 /* 
  *	S P L _ U V
  */
+void
 spl_uv(ap, stp, hitp, uvp)
 struct application *ap;
 struct soltab *stp;
@@ -281,14 +285,21 @@ register struct uvcoord *uvp;
 	return;
 }
 
+int
 spl_class()
 {
+	return(0);
 }
 
+void
 spl_plot()
 {
 }
 
+/*
+ *			S P L _ C U R V E
+ */
+void
 spl_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
@@ -452,6 +463,10 @@ struct soltab *stp;
 	rt_free(uv_eval, "spl_curve:uv_eval");
 }
 
+/*
+ *			S P L _ F R E E
+ */
+void
 spl_free( stp )
 register struct soltab * stp;
 {
@@ -497,9 +512,11 @@ struct b_tree * tree;
 	rt_free( rootp, "n_free: tree structure ");
 
 }
+
 /* 
  *	S P L _ N O R M
  */
+void
 spl_norm(hitp, stp, rp)
 register struct hit * hitp;
 struct soltab * stp;
@@ -686,7 +703,7 @@ struct application * ap;
 
 #define OTHERDIR(dir)	( (dir == 0)? 1:0)
 
-
+void
 n_shoot( rp,  invdir,  tree, ap, dir, level)
 register struct xray *rp;
 fastf_t * invdir;
@@ -801,6 +818,7 @@ struct b_tree * tree;
 
 }
 
+void
 add_hit( hit1 )
 struct local_hit * hit1;
 {
@@ -987,6 +1005,7 @@ point_t a, b, c;
     return plane_p;
 }
 
+void
 interp_uv( p1, itr,uv )
 fastf_t uv[2];
 point_t itr;

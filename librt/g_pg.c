@@ -46,6 +46,7 @@ static char RCSpg[] = "@(#)$Header$ (BRL)";
  *  This routine is unusual in that it has to read additional
  *  database records to obtain all the necessary information.
  */
+int
 pg_prep( vecxx, stp, mat, sp, rtip )
 fastf_t		*vecxx;
 struct soltab	*stp;
@@ -171,6 +172,7 @@ float *np;
 /*
  *  			P G _ P R I N T
  */
+void
 pg_print( stp )
 register struct soltab *stp;
 {
@@ -323,6 +325,7 @@ struct application	*ap;
 	/* NOTREACHED */
 }
 
+void
 pg_hit_sort( h, nh )
 register struct hit h[];
 register int nh;
@@ -344,6 +347,7 @@ register int nh;
 /*
  *			P G _ F R E E
  */
+void
 pg_free( stp )
 struct soltab *stp;
 {
@@ -358,6 +362,10 @@ struct soltab *stp;
 	}
 }
 
+/*
+ *			P G _ N O R M
+ */
+void
 pg_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
@@ -366,18 +374,30 @@ register struct xray *rp;
 	/* Normals computed in pg_shot, nothing to do here */
 }
 
-pg_uv()
+void
+pg_uv( ap, stp, hitp, uvp )
+struct application	*ap;
+struct soltab		*stp;
+register struct hit	*hitp;
+register struct uvcoord	*uvp;
 {
+	/* Do nothing.  Really, should do what ARB does. */
+	uvp->uv_u = uvp->uv_v = 0;
+	uvp->uv_du = uvp->uv_dv = 0;
 }
 
+int
 pg_class()
 {
+	return(0);
 }
 
+void
 pg_plot()
 {
 }
 
+void
 pg_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;

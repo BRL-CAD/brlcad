@@ -51,6 +51,7 @@ struct half_specific  {
 /*
  *  			H L F _ P R E P
  */
+int
 hlf_prep( vec, stp, mat, rtip )
 fastf_t		*vec;
 struct soltab	*stp;
@@ -99,6 +100,7 @@ struct rt_i	*rtip;
 /*
  *  			H L F _ P R I N T
  */
+void
 hlf_print( stp )
 register struct soltab *stp;
 {
@@ -181,6 +183,7 @@ struct application	*ap;
  *  Given ONE ray distance, return the normal and entry/exit point.
  *  The normal is already filled in.
  */
+void
 hlf_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
@@ -213,6 +216,7 @@ register struct xray *rp;
  *  Pick a principle direction orthogonal to normal, and 
  *  indicate no curvature.
  */
+void
 hlf_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
@@ -235,6 +239,7 @@ struct soltab *stp;
  *  Note that a "toroidal" map is established, varying each from
  *  0 up to 1 and then back down to 0 again.
  */
+void
 hlf_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
@@ -306,6 +311,7 @@ register struct uvcoord *uvp;
 /*
  *			H L F _ F R E E
  */
+void
 hlf_free( stp )
 struct soltab *stp;
 {
@@ -315,10 +321,13 @@ struct soltab *stp;
 	rt_free( (char *)halfp, "half_specific");
 }
 
+int
 hlf_class()
 {
+	return(0);
 }
 
+void
 hlf_plot()
 {
 }

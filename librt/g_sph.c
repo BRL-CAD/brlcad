@@ -73,6 +73,7 @@ struct sph_specific {
  *  	stp->st_specific for use by sph_shot().
  *	If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */
+int
 sph_prep( vec, stp, mat, rtip )
 register fastf_t	*vec;
 struct soltab		*stp;
@@ -186,6 +187,7 @@ struct rt_i		*rtip;
 	return(0);			/* OK */
 }
 
+void
 sph_print( stp )
 register struct soltab *stp;
 {
@@ -251,6 +253,7 @@ struct application	*ap;
  *  
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
+void
 sph_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
@@ -270,6 +273,7 @@ register struct xray *rp;
  *
  *  Return the curvature of the sphere.
  */
+void
 sph_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
@@ -295,6 +299,7 @@ struct soltab *stp;
 /*double rt_inv2pi =  0.15915494309189533619;	/* 1/(pi*2) */
 /*double rt_invpi = 0.31830988618379067153;	/* 1/pi */
 
+void
 sph_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
@@ -327,6 +332,7 @@ register struct uvcoord *uvp;
 /*
  *		S P H _ F R E E
  */
+void
 sph_free( stp )
 register struct soltab *stp;
 {
@@ -336,10 +342,13 @@ register struct soltab *stp;
 	rt_free( (char *)sph, "sph_specific" );
 }
 
+int
 sph_class()
 {
+	return(0);
 }
 
+void
 sph_plot()
 {
 }

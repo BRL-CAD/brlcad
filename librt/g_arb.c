@@ -77,6 +77,7 @@ static struct arb_specific *FreeArb;	/* Head of free list */
 /*
  *  			A R B _ P R E P
  */
+int
 arb_prep( vec, stp, mat, rtip )
 fastf_t		*vec;
 struct soltab	*stp;
@@ -363,6 +364,7 @@ int a;
 /*
  *  			A R B _ P R I N T
  */
+void
 arb_print( stp )
 register struct soltab *stp;
 {
@@ -475,6 +477,7 @@ struct application	*ap;
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
+void
 arb_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
@@ -494,6 +497,7 @@ register struct xray *rp;
  *  Pick a principle direction orthogonal to normal, and 
  *  indicate no curvature.
  */
+void
 arb_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
@@ -514,6 +518,7 @@ struct soltab *stp;
  *  u extends along the arb_U direction defined by B-A,
  *  v extends along the arb_V direction defined by Nx(B-A).
  */
+void
 arb_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
@@ -543,6 +548,7 @@ register struct uvcoord *uvp;
 /*
  *			A R B _ F R E E
  */
+void
 arb_free( stp )
 register struct soltab *stp;
 {
@@ -558,10 +564,13 @@ register struct soltab *stp;
 	}
 }
 
+void
 arb_plot()
 {
 }
 
+int
 arb_class()
 {
+	return(0);
 }

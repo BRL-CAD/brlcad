@@ -35,6 +35,8 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 
 extern fastf_t *rd_curve();
 
+void		HitSort();		/* XXX needs rt_ name */
+
 /*
  *			A R S _ P R E P
  *  
@@ -246,7 +248,7 @@ pointp_t ap, bp, cp;
 	    NEAR_ZERO(m3,0.0001) || NEAR_ZERO(m4,0.0001) )  {
 		free( (char *)trip);
 		if( rt_g.debug & DEBUG_ARB8 )
-			(void)rt_log("ars(%s): degenerate facet\n", stp->st_name);
+			rt_log("ars(%s): degenerate facet\n", stp->st_name);
 		return(0);			/* BAD */
 	}		
 
@@ -268,6 +270,7 @@ pointp_t ap, bp, cp;
 /*
  *  			A R S _ P R I N T
  */
+void
 ars_print( stp )
 register struct soltab *stp;
 {
@@ -429,6 +432,7 @@ struct application	*ap;
 	/* NOTREACHED */
 }
 
+void
 HitSort( h, nh )
 register struct hit h[];
 register int nh;
@@ -452,6 +456,7 @@ register int nh;
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
+void
 ars_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
@@ -478,6 +483,7 @@ register struct xray *rp;
  *  Pick a principle direction orthogonal to normal, and 
  *  indicate no curvature.
  */
+void
 ars_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
@@ -498,6 +504,7 @@ struct soltab *stp;
  *  u extends along the Xbasis direction defined by B-A,
  *  v extends along the "Ybasis" direction defined by (B-A)xN.
  */
+void
 ars_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
@@ -532,6 +539,7 @@ register struct uvcoord *uvp;
 /*
  *			A R S _ F R E E
  */
+void
 ars_free( stp )
 register struct soltab *stp;
 {
@@ -546,10 +554,13 @@ register struct soltab *stp;
 	}
 }
 
+int
 ars_class()
 {
+	return(0);
 }
 
+void
 ars_plot()
 {
 }

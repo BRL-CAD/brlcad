@@ -155,6 +155,7 @@ struct tor_specific {
  *  	A struct tor_specific is created, and it's address is stored in
  *  	stp->st_specific for use by tor_shot().
  */
+int
 tor_prep( vec, stp, mat, rtip )
 register fastf_t	*vec;
 struct soltab		*stp;
@@ -305,6 +306,7 @@ struct rt_i		*rtip;
 	return(0);			/* OK */
 }
 
+void
 tor_print( stp )
 register struct soltab *stp;
 {
@@ -524,6 +526,7 @@ struct application	*ap;
  *  Since we rescale the gradient (normal) to unity, we divide the
  *  above equations by four here.
  */
+void
 tor_norm( hitp, stp, rp)
 register struct hit *hitp;
 struct soltab *stp;
@@ -552,6 +555,7 @@ register struct xray *rp;
  *
  *  Return the curvature of the torus.
  */
+void
 tor_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
@@ -596,13 +600,23 @@ struct soltab *stp;
 	VUNITIZE( cvp->crv_pdir );
 }
 
-tor_uv()
+void
+tor_uv( ap, stp, hitp, uvp )
+struct application	*ap;
+struct soltab		*stp;
+register struct hit	*hitp;
+register struct uvcoord	*uvp;
 {
+	/* Do nothing.  Really, should do something like what REC does,
+	 * ie, angle around center & angle around rim */
+	uvp->uv_u = uvp->uv_v = 0;
+	uvp->uv_du = uvp->uv_dv = 0;
 }
 
 /*
  *			T O R _ F R E E
  */
+void
 tor_free( stp )
 struct soltab *stp;
 {
@@ -612,10 +626,13 @@ struct soltab *stp;
 	rt_free( (char *)tor, "tor_specific");
 }
 
+int
 tor_class()
 {
+	return(0);
 }
 
+void
 tor_plot()
 {
 }

@@ -169,6 +169,7 @@ struct rec_specific {
  *  	stp->st_specific for use by rec_shot().
  *	If the TGC is really an REC, stp->st_id is modified to ID_REC.
  */
+int
 rec_prep( vec, stp, mat, rtip )
 register fastf_t	*vec;
 struct soltab		*stp;
@@ -375,6 +376,7 @@ struct rt_i		*rtip;
 /*
  *  			R E C _ P R I N T
  */
+void
 rec_print( stp )
 register struct soltab *stp;
 {
@@ -521,6 +523,7 @@ check_plates:
  *  Given ONE ray distance, return the normal and entry/exit point.
  *  hit_private is a flag indicating if normal needs to be computed or not.
  */
+void
 rec_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
@@ -558,6 +561,7 @@ register struct xray *rp;
  *  indicate no curvature.  Otherwise, compute curvature.
  *  Normal must have been computed before calling this routine.
  */
+void
 rec_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
@@ -603,6 +607,7 @@ struct soltab *stp;
  */
 extern double rt_inv2pi;
 
+void
 rec_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
@@ -651,6 +656,7 @@ register struct uvcoord *uvp;
 /*
  *			R E C _ F R E E
  */
+void
 rec_free( stp )
 struct soltab *stp;
 {
@@ -660,10 +666,13 @@ struct soltab *stp;
 	rt_free( (char *)rec, "rec_specific");
 }
 
+int
 rec_class()
 {
+	return(0);
 }
 
+void
 rec_plot()
 {
 }
