@@ -49,7 +49,7 @@ void	f_make(), f_attach(), f_release();
 void	f_tedit(), f_memprint();
 void	f_mirface(), f_units(), f_title();
 void	f_rot_obj(), f_tr_obj(), f_sc_obj();
-void	f_analyze();
+void	f_analyze(), f_sed();
 void	f_ill(), f_knob(), f_tops(), f_summary();
 
 static struct funtab {
@@ -121,6 +121,8 @@ static struct funtab {
 	f_analyze,1,2,
 "ill", "name", "illuminate object",
 	f_ill,2,2,
+"sed", "solid", "solid-edit named solid",
+	f_sed,2,2,
 "%", "", "escape to interactive shell",
 	f_comm,1,1,
 "q", "", "quit",
