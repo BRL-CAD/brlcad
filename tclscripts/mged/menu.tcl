@@ -161,13 +161,17 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 		-menu .$id.menubar.edit.rotfaces
 	.$id.menubar.edit insert 3 separator
 	.$id.menubar.edit insert 4 radiobutton -variable edit_type \
-		-label "Rotate" -underline 0 -command "press srot"
+		-label "Rotate" -underline 0 -command "press srot; \
+		set mged_transform($id) e; set_transform $id"
 	.$id.menubar.edit insert 5 radiobutton -variable edit_type \
-		-label "Translate" -underline 0 -command "press sxy"
+		-label "Translate" -underline 0 -command "press sxy; \
+		set mged_transform($id) e; set_transform $id"
 	.$id.menubar.edit insert 6 radiobutton -variable edit_type \
-		-label "Scale" -underline 0 -command "press sscale"
+		-label "Scale" -underline 0 -command "press sscale; \
+		set mged_transform($id) e; set_transform $id"
 	.$id.menubar.edit insert 7 radiobutton -variable edit_type \
-		 -label "none of above" -command "press \"edit menu\""
+		 -label "none of above" -command "press \"edit menu\"; \
+		 set mged_transform($id) e; set_transform $id"
 	.$id.menubar.edit insert 8 separator
 	.$id.menubar.edit insert 9 command -label "Reject" -underline 0 \
 		-command "press reject"
@@ -180,7 +184,7 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 	    if {$item != "RETURN"} {
 		.$id.menubar.edit.mvedges add radiobutton -variable edit_type -label $item \
 			-command "press \"edit menu\"; press \"move edges\"; \
-			press \"$item\""
+			press \"$item\"; set mged_transform($id) e; set_transform $id"
 	    }
 	}
 
@@ -189,7 +193,7 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 	    if {$item != "RETURN"} {
 		.$id.menubar.edit.mvfaces add radiobutton -variable edit_type -label $item \
 			-command "press \"edit menu\"; press \"move faces\"; \
-			press \"$item\""
+			press \"$item\"; set mged_transform($id) e; set_transform $id"
 	    }
 	}
     
@@ -198,7 +202,7 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 	    if {$item != "RETURN"} {
 		.$id.menubar.edit.rotfaces add radiobutton -variable edit_type -label $item \
 			-command "press \"edit menu\"; press \"rotate faces\"; \
-			press \"$item\""
+			press \"$item\"; set mged_transform($id) e; set_transform $id"
 	    }
 	}
     }
@@ -242,7 +246,8 @@ proc do_edit_menu { menu1 } {
 	foreach item $menu1 {
 	    if {$item != "RETURN"} {
 		.$id.menubar.edit insert $i radiobutton -variable edit_type \
-			-label $item -command "press \"$item\""
+			-label $item -command "press \"$item\"; \
+			set mged_transform($id) e; set_transform $id"
 		incr i
 	    }
 	}
@@ -254,46 +259,59 @@ proc do_edit_menu { menu1 } {
 
 	if {$mged_display(state) == "SOL EDIT"} {
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "Rotate" -underline 0 -command "press srot"
+		    -label "Rotate" -underline 0 -command "press srot; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "Translate" -underline 0 -command "press sxy"
+		    -label "Translate" -underline 0 -command "press sxy; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "Scale" -underline 0 -command "press sscale"
+		    -label "Scale" -underline 0 -command "press sscale; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "none of above" -command "set edit_solid_flag 0"
+		    -label "none of above" -command "set edit_solid_flag 0; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i separator
 	    incr i
 	} else {
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "Scale" -command "press \"Scale\""
+		    -label "Scale" -command "press \"Scale\"; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "X move" -command "press \"X move\""
+		    -label "X move" -command "press \"X move\"; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "Y move" -command "press \"Y move\""
+		    -label "Y move" -command "press \"Y move\"; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "XY move" -command "press \"XY move\""
+		    -label "XY move" -command "press \"XY move\"; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "Rotate" -command "press \"Rotate\""
+		    -label "Rotate" -command "press \"Rotate\"; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "Scale X" -command "press \"Scale X\""
+		    -label "Scale X" -command "press \"Scale X\"; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "Scale Y" -command "press \"Scale Y\""
+		    -label "Scale Y" -command "press \"Scale Y\"; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "Scale Z" -command "press \"Scale Z\""
+		    -label "Scale Z" -command "press \"Scale Z\"; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "none of above" -command "set edit_object_flag 0"
+		    -label "none of above" -command "set edit_object_flag 0; \
+		    set mged_transform($id) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i separator
 	    incr i
