@@ -2258,6 +2258,189 @@ CONST struct xray	*rp;
 	rt_log("overlay %s\n", buf);
 }
 
+static int
+guess_class_from_hitlist_max(rd, hari_kari)
+struct ray_data *rd;
+int *hari_kari;
+{
+	struct hitmiss *a_hit;
+	struct hitmiss *plus_hit = (struct hitmiss *)NULL;
+	int pt_class;
+
+	*hari_kari = 0;	
+
+	NMG_CK_RD(rd);
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+		rt_log("plus guessing\n");
+	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
+
+		NMG_CK_HITMISS(a_hit);
+		/* if we've got a zero distance hit, that clinches it */
+		if (a_hit->hit.hit_dist <= rd->tol->dist &&
+	    	    a_hit->hit.hit_dist >= -rd->tol->dist) {
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+				rt_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
+	    	    
+	    		return NMG_CLASS_AonBshared;
+	    	}
+
+		if (a_hit->hit.hit_dist < -rd->tol->dist)
+			continue;
+
+		if (a_hit->in_out == HMG_HIT_ANY_ANY)
+			continue;
+
+		if (plus_hit == (struct hitmiss *)NULL) {
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+				rt_log("plus hit = %g (%s)\n", a_hit->hit.hit_dist,
+					nmg_rt_inout_str(a_hit->in_out));
+			plus_hit = a_hit;
+			*hari_kari = 0;
+		} else if (a_hit->hit.hit_dist < plus_hit->hit.hit_dist) {
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+				rt_log("plus hit = %g (%s)\n", a_hit->hit.hit_dist,
+					nmg_rt_inout_str(a_hit->in_out));
+			plus_hit = a_hit;
+			*hari_kari = 0;
+		} else if ( a_hit->hit.hit_dist == plus_hit->hit.hit_dist) {
+			*hari_kari = 1;
+		}
+	}
+
+	/* XXX This needs to be resolved with parity */
+	if (*hari_kari) {
+		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+			rt_log("Contemplating Hari Kari\n");
+		return NMG_CLASS_Unknown;
+	}
+	/* figure out what the status is from plus_hit */
+	if (plus_hit) {
+		switch (plus_hit->in_out) {
+		case HMG_HIT_IN_IN:
+		case HMG_HIT_IN_OUT:
+		case HMG_HIT_IN_ON:
+			pt_class = NMG_CLASS_AinB;
+			break;
+		case HMG_HIT_OUT_IN:
+		case HMG_HIT_OUT_OUT:
+		case HMG_HIT_OUT_ON:
+			pt_class = NMG_CLASS_AoutB;
+			break;
+		case HMG_HIT_ON_IN:
+		case HMG_HIT_ON_ON:
+		case HMG_HIT_ON_OUT:
+			pt_class = NMG_CLASS_AonBshared;
+			break;
+		default:
+			rt_bomb("no-class hitpoint\n");
+			break;
+		}
+	} else {
+		/* since we didn't hit anything in the positive direction,
+		 * we've got to be outside, since we don't allow infinite
+		 * NMG's
+		 */
+		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+			rt_log("Nothing in the plus direction\n");
+		pt_class = NMG_CLASS_AoutB;
+	}
+
+	return pt_class;
+}
+
+static int
+guess_class_from_hitlist_min(rd, hari_kari)
+struct ray_data *rd;
+int *hari_kari;
+{
+	struct hitmiss *a_hit;
+	struct hitmiss *minus_hit = (struct hitmiss *)NULL;
+	int pt_class;
+
+	*hari_kari = 0;
+	
+	NMG_CK_RD(rd);
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+		rt_log("minus guessing\n");
+
+	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
+
+		NMG_CK_HITMISS(a_hit);
+		/* if we've got a zero distance hit, that clinches it */
+		if (a_hit->hit.hit_dist <= rd->tol->dist &&
+	    	    a_hit->hit.hit_dist >= -rd->tol->dist) {
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+				rt_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
+
+	    		return NMG_CLASS_AonBshared;
+	    	}
+
+		if (a_hit->hit.hit_dist > rd->tol->dist)
+			continue;
+
+		if (a_hit->in_out == HMG_HIT_ANY_ANY)
+			continue;
+
+		if (minus_hit == (struct hitmiss *)NULL) {
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+				rt_log("minus hit = %g (%s)\n", a_hit->hit.hit_dist,
+					nmg_rt_inout_str(a_hit->in_out));
+			minus_hit = a_hit;
+			*hari_kari = 0;
+		} else if (a_hit->hit.hit_dist > minus_hit->hit.hit_dist) {
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+				rt_log("minus hit = %g (%s)\n", a_hit->hit.hit_dist,
+					nmg_rt_inout_str(a_hit->in_out));
+			minus_hit = a_hit;
+			*hari_kari = 0;
+		} else if ( a_hit->hit.hit_dist == minus_hit->hit.hit_dist) {
+			*hari_kari = 1;
+		}
+	}
+
+	/* XXX This needs to be resolved with parity */
+	if (*hari_kari) {
+		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+			rt_log("Contemplating Hari Kari\n");
+		return NMG_CLASS_Unknown;
+	}
+
+	/* figure out what the status is from plus_hit */
+	if (minus_hit) {
+		switch (minus_hit->in_out) {
+		case HMG_HIT_IN_IN:
+		case HMG_HIT_OUT_IN:
+		case HMG_HIT_ON_IN:
+			pt_class = NMG_CLASS_AinB;
+			break;
+		case HMG_HIT_OUT_OUT:
+		case HMG_HIT_IN_OUT:
+		case HMG_HIT_ON_OUT:
+			pt_class = NMG_CLASS_AoutB;
+			break;
+		case HMG_HIT_ON_ON:
+		case HMG_HIT_OUT_ON:
+		case HMG_HIT_IN_ON:
+			pt_class = NMG_CLASS_AonBshared;
+			break;
+		default:
+			rt_bomb("no-class hitpoint\n");
+			break;
+		}
+	} else {
+		/* since we didn't hit anything in the positive direction,
+		 * we've got to be outside, since we don't allow infinite
+		 * NMG's
+		 */
+		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+			rt_log("Nothing in the minus direction\n");
+		pt_class = NMG_CLASS_Unknown; /* XXX not AoutB? */
+	}
+
+	return pt_class;
+}
+
+
 /*
  *	N M G _ R A Y _ I S E C T _ S H E L L
  *
@@ -2266,8 +2449,6 @@ CONST struct xray	*rp;
  *	Intersect a ray with a shell and return the number of hitpoints with
  *	positive distance values.
  *
- * XXX Really should run some kind of parity checking on the rd_hit list,
- * XXX to make sure that the ray does not depart with multiple IN_OUT hits, etc.
  */
 int
 nmg_ray_vs_shell(rp, s, tol)
@@ -2279,6 +2460,11 @@ struct rt_tol *tol;
 	struct application ap;
 	struct hitmiss *a_hit;
 	int hit_count = 0;
+	struct hitmiss *minus_hit = (struct hitmiss *)NULL;
+	struct hitmiss *plus_hit = (struct hitmiss *)NULL;
+	int minus_class, plus_class;
+	int hari_kari_minus, hari_kari_plus;
+
 
 	VUNITIZE(rp->r_dir);
 	NMG_CK_SHELL(s);
@@ -2322,7 +2508,7 @@ struct rt_tol *tol;
 	rd.ap = &ap;
 	rd.stp = (struct soltab *)NULL;
 	rd.seghead = (struct seg *)NULL;
-
+	rd.magic = NMG_RAY_DATA_MAGIC;
 	rd.hitmiss = (struct hitmiss **)rt_calloc( rd.rd_m->maxindex,
 		sizeof(struct hitmiss *), "nmg geom hit list");
 
@@ -2355,24 +2541,55 @@ struct rt_tol *tol;
 		nmg_pl_hitmiss_list( "shell-ray", num++, &rd.rd_hit, rp );
 	}
 
-	/* After potentially having printed it, now check it */
-	nmg_ck_hitmiss_list( &rd.rd_hit );
+	minus_class = guess_class_from_hitlist_min(&rd, &hari_kari_minus);
+	plus_class = guess_class_from_hitlist_max(&rd, &hari_kari_plus);
 
-	/* Count and dequeue the list */
-	/* XXX This is an overly simplistic algorithm */
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
+		rt_log("minus_class = (%s)\n", nmg_class_name(minus_class));
+		rt_log("plus_class = (%s)\n", nmg_class_name(plus_class));
+	}
+
 	while (RT_LIST_WHILE(a_hit, hitmiss, &rd.rd_hit)) {
 		RT_LIST_DEQUEUE( &a_hit->l );
-		if ( a_hit->in_out != HMG_HIT_ANY_ANY &&
-		     a_hit->hit.hit_dist >= 0.0) {
-			hit_count++;
-		}
-		rt_free( (char *)a_hit, "Hit list hitmiss struct" );
+		rt_free( (char *)a_hit, "hit list hitmiss struct" );
 	}
 
 	/* free the hitmiss table */
 	rt_free( (char *)rd.hitmiss, "free nmg geom hit list");
 
+
+
+	/* XXX This should be fixed in the guess_* routines
+	 * instead of being fudged here.
+	 */
+	if (hari_kari_minus) {
+		if(hari_kari_plus)
+			rt_bomb("double hari kari");
+		if (plus_class == NMG_CLASS_Unknown)
+			rt_bomb("minus hari kari & plus unknown");
+		minus_class = plus_class;
+
+	} else if (minus_class == NMG_CLASS_Unknown) {
+		if (plus_class == NMG_CLASS_Unknown)
+			rt_bomb("minus hari kari & plus unknown");
+		minus_class = plus_class;
+	} else if (plus_class == NMG_CLASS_Unknown || hari_kari_plus) {
+		plus_class = minus_class;
+	}
+
+
+	if (plus_class != minus_class) {
+		rt_log("%s:%d plus_class (%s) != minus_class (%s)\n",
+			__FILE__, __LINE__,
+			nmg_class_name(plus_class),
+			nmg_class_name(minus_class) );
+		rt_bomb("");
+	}
+
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
-		rt_log("nmg_ray_vs_shell() returns %d\n", hit_count);
-	return hit_count;
+		rt_log("nmg_ray_vs_shell() returns %s(%d)\n",
+			nmg_class_name(plus_class), plus_class);
+	return plus_class;
 }
+
+
