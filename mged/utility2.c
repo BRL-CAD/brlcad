@@ -2118,16 +2118,7 @@ char **argv;
 {
 	CHECK_DBI_NULL;
 
-#if 1
 	return invoke_db_wrapper(interp, argc, argv);
-#else
-	bu_vls_init(&vls);
-	bu_build_cmd_vls(&vls, MGED_DB_NAME, argc, argv);
-	ret = Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-
-	return ret;
-#endif
 }
 
 int
