@@ -7,6 +7,23 @@
  *  Support for the 3030/2400 series ("Iris-3D") is in if_sgi.c
  *  However, both are called /dev/sgi
  *
+ *  In order to use a large chunck of memory with the shared memory 
+ *  system it is necessary to increase the shmmax and shmall paramaters
+ *  of the system. You can do this by changing the defaults in the
+ *  /usr/sysgen/master.d/shm to
+ *
+ * 	#define SHMMAX	5131072
+ *	#define SHMALL	4000
+ *
+ *  refer to the Users Manuals to reconfigure your kernel..
+ *
+ *  There are 4 different Frame Buffer types supported on the 4D/60T or 4D/70
+ *  set your environment FB_FILE to the appropriate Frame buffer type
+ *	/dev/sgi0 	Transient window private memory
+ *	/dev/sgi1	Transient window shared memory ( default )
+ *	/dev/sgi2	Lingering window private memory
+ *	/dev/sgi3	Lingering window shared memory
+ *
  *  Authors -
  *	Paul R. Stay
  *	Michael John Muuss
