@@ -81,7 +81,17 @@ VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 PKG_NAME="${NAME}-${VERSION}"
 TAR_NAME="${PKG_NAME}.bin.tar"
 
-tar cvf  "${TAR_NAME}" "${ARCHIVE}"
+# check for gnu tar
+tar --version > /dev/null 2>&1
+if [ $? != 0 ] ; then
+    # non-gnu tar
+    TAR_OPTS=cvf
+else
+    # gnu tar (P for absolute paths)
+    TAR_OPTS=cvPf
+fi
+
+tar $TAR_OPTS  "${TAR_NAME}" "${ARCHIVE}"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to successfully create a tape archive of $ARCHIVE"
     exit 1
