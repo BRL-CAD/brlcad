@@ -22,14 +22,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include <vfont.h>
-#include <brlcad/fb.h>
 
-#define DISPATCHSIZE		256	/* must be a power of two */
-#define CHARMASK		(DISPATCHSIZE-1)
+#include "fb.h"
+#include "vfont-if.h"
+
 #define NFONTS			25
 #define SPECIALFONT		3
-#define DSIZ			((sizeof *dispatch)*DISPATCHSIZE)
 #define MAXF			4
 
 #define LOCAL_RAILMAG		".railmag"
@@ -57,19 +55,14 @@ char	*buf0p = &buffer[0];	/* Zero origin in circular buffer  */
 
 char	*calloc();
 char	*nalloc();
-char	*allpanic();
-
-struct	header	header;
-struct dispatch *dispatch;
 
 struct	fontdes {
 	int	fnum;
 	int	psize;
-	struct	dispatch *disp;
-	char	*bits;
+	struct vfont	*vfp;
 } fontdes[NFONTS] = {
-	-1,
-	-1
+	{ -1, 10, VFONT_NULL },
+	{ -1, 10, VFONT_NULL },
 };
 
 struct point_sizes {
@@ -96,13 +89,10 @@ struct point_sizes {
 
 int	cur_fb_line;		/*  Output absolute scanline number  */
 
-int	cfnum = -1;		/* current font number */
-int	cpsize = 10;		/* current point size */
 int	cfont = 1;		/* current font index in fontdes[] */
-char	*bits;
-int	nfontnum = -1;
+int	new_font_num = -1;
 int	fontwanted = 1;
-int	npsize = 10;		/* new point size */
+int	new_pt_size = 10;		/* new point size */
 int	last_ssize = 02;
 int	xpos, ypos;
 int	esc, lead, back, verd, mcase, railmag;
@@ -393,6 +383,7 @@ main(argc, argv)
 		if (argc <= 0)
 			break;
 	}
+	fb_close(fbp);
 	exit(0);
 }
 
@@ -405,8 +396,12 @@ readrm()
 
 	if ((rmfd = open(LOCAL_RAILMAG, 0)) < 0)
 		if ((rmfd = open(GLOBAL_RAILMAG, 0)) < 0) {
-			fprintf(stderr, "No railmag file\n");
-			exit(1);
+			/* Defaults */
+			fontname[0] = "R";
+			fontname[1] = "I";
+			fontname[2] = "B";
+			fontname[3] = "S";
+			return;
 		}
 	cp = fnbuf;
 	for (i = 0; i < 4; i++) {
@@ -459,7 +454,7 @@ ofile()
 			back = 0;
 			mcase = 0;
 			railmag = 0;
-			if (loadfont(railmag, cpsize) < 0)
+			if (loadfont(railmag, fontdes[cfont].psize) < 0)
 				fprintf(stderr, "Can't load inital font\n");
 			break;
 
@@ -572,94 +567,64 @@ crail(nrail)
 {
 	register int psize;
 
-	psize = cpsize;
-	if (fontwanted && psize != npsize)
-		psize = npsize;
+	psize = fontdes[cfont].psize;
+	if (fontwanted)
+		psize = new_pt_size;
 	loadfont(nrail, psize);
 }
 
 
+/* Queue up a request to change to a new font */
 loadfont(fnum, size)
-	register int fnum;
-	register int size;
-	{
+register int fnum;
+register int size;
+{
 	register int i;
 	char cbuf[80];
 
 	fontwanted = 0;
-	if (fnum == cfnum && size == cpsize)
-		return(0);
-	for (i = 0; i < NFONTS; i++)
-		if (fontdes[i].fnum == fnum && fontdes[i].psize == size) {
-			cfnum = fontdes[i].fnum;
-			cpsize = fontdes[i].psize;
-			dispatch = &fontdes[i].disp[0];
-			bits = fontdes[i].bits;
-			cfont = i;
-			return (0);
-		}
 	if (fnum < 0 || fnum >= MAXF) {
 		fprintf(stderr, "Internal error: illegal font\n");
 		return(-1);
 	}
-	nfontnum = fnum;
-	npsize = size;
+	if (fnum == fontdes[cfont].fnum && size == fontdes[cfont].psize)
+		return(0);
+	for (i = 0; i < NFONTS; i++)
+		if (fontdes[i].fnum == fnum && fontdes[i].psize == size) {
+			cfont = i;
+			return (0);
+		}
+	new_font_num = fnum;
+	new_pt_size = size;
 	fontwanted++;
 	return (0);
 }
 
 
-getfont()
+readinfont()
 {
+	register struct vfont	*vfp;
 	register int fnum, size, font;
-	int d;
 	char cbuf[BUFSIZ];
 
-	if (!fontwanted)
-		return(0);
-	fnum = nfontnum;
-	size = npsize;
+	fnum = new_font_num;
+	size = new_pt_size;
 	sprintf(cbuf, "%s.%d", fontname[fnum], size);
-	font = open(cbuf, 0);
-	if (font == -1) {
-		perror(cbuf);
+
+	if( (vfp = vfont_get( cbuf )) == VFONT_NULL )  {
 		fontwanted = 0;
 		return (-1);
 	}
-	if (read(font, &header, sizeof header)!=sizeof header || header.magic!=0436)
-		fprintf(stderr, "%s: Bad font file", cbuf);
-	else {
-		cfont = relfont();
-		if (((bits=nalloc(header.size+DSIZ+1,1))== NULL)
-			&& ((bits=allpanic(header.size+DSIZ+1))== NULL)) {
-				fprintf(stderr, "%s: ran out of memory\n", cbuf);
-				exit(1);
-		} else {
-			/*
-			 * have allocated one chunk of mem for font, dispatch.
-			 * get the dispatch addr, align to word boundary.
-			 */
-			d = (int) bits+header.size;
-			d += 1;
-			d &= ~1;
-			if (read(font, d, DSIZ)!=DSIZ
-			  || read(font, bits, header.size)!=header.size)
-				fprintf(stderr, "bad font header");
-			else {
-				close(font);
-				cfnum = fontdes[cfont].fnum = fnum;
-				cpsize = fontdes[cfont].psize = size;
-				fontdes[cfont].bits = bits;
-				fontdes[cfont].disp = (struct dispatch *) d;
-				dispatch = &fontdes[cfont].disp[0];
-				fontwanted = 0;
-				return (0);
-			}
-		}
-	}
-	close(font);
+
+	cfont = relfont();
+
+	fontdes[cfont].fnum = fnum;
+	fontdes[cfont].psize = fontdes[cfont].psize = size;
+	fontdes[cfont].vfp = vfp;
+
 	fontwanted = 0;
-	return(-1);
+	new_font_num = new_pt_size = -1;
+	return (0);
 }
 
 int lastloaded	= -1;
@@ -668,42 +633,32 @@ relfont()
 {
 	register int newfont;
 
+	/* First, see if a font table slot happens to be availible */
+	for( newfont = 0; newfont < NFONTS; newfont++ )  {
+		if( fontdes[newfont].psize > 0 )
+			continue;
+		return(newfont);
+	}
+
+	/* Reuse an existing slot, with Ron's strange heuristic */
+
 	newfont = lastloaded;
 	/*
 	 * optimization for special font.  since we think that usually
 	 * there is only one character at a time from any special math
 	 * font, make it the candidate for removal.
 	 */
-	if (fontdes[cfont].fnum != SPECIALFONT || fontdes[cfont].bits==0)
+	if (fontdes[cfont].fnum != SPECIALFONT || fontdes[cfont].vfp==VFONT_NULL)
 		if (++newfont>=NFONTS)
 			newfont = 0;
 	lastloaded = newfont;
-	if ((int)fontdes[newfont].bits != -1 && fontdes[newfont].bits != 0) {
-		/* fprintf(stderr, "freeing position %d\n", newfont); */
-		nfree(fontdes[newfont].bits);
-	} else
-		/* fprintf(stderr, "taking without freeing position %d\n", newfont); */
-		;
-	fontdes[newfont].bits = 0;
+	if( fontdes[newfont].vfp != VFONT_NULL )
+		vfont_free(fontdes[newfont].vfp);
+		
+	fontdes[newfont].vfp = VFONT_NULL;
+	fontdes[newfont].fnum = -1;
+	fontdes[newfont].psize = -1;
 	return (newfont);
-}
-
-char *
-allpanic(nbytes)
-	int nbytes;
-{
-	register int i;
-
-	for (i = 0; i <= NFONTS; i++)
-		if (fontdes[i].bits != (char *)-1 && fontdes[i].bits != (char *)0)
-			nfree(fontdes[i].bits);
-	lastloaded = cfont;
-	for (i = 0; i <= NFONTS; i++) {
-		fontdes[i].fnum = fontdes[i].psize = -1;
-		fontdes[i].bits = 0;
-		cfnum = cpsize = -1;
-	}
-	return(nalloc(nbytes,1));
 }
 
 int	M[] = { 0xffffffff, 0xfefefefe, 0xfcfcfcfc, 0xf8f8f8f8,
@@ -716,11 +671,11 @@ outc(code)
 	int code;
 {
 	char c;				/* character to print */
-	register struct dispatch *d;	/* ptr to character font record */
-	register char *addr;		/* addr of font data */
+	register struct vfont_dispatch *vdp;	/* ptr to character font record */
+	register unsigned char *addr;	/* addr of font data */
 	int llen;			/* length of each font line */
 	int nlines;			/* number of font lines */
-	register char *scanp;		/* ptr to output buffer */
+	register unsigned char *scanp;	/* ptr to output buffer */
 	int scanp_inc;			/* increment to start of next buffer */
 	int offset;			/* bit offset to start of font data */
 	int i;				/* loop counter */
@@ -729,47 +684,45 @@ outc(code)
 	register int off8;		/* offset + 8 */
 
 	if (fontwanted)
-		getfont();
+		readinfont();
 	if (railmag == SPECIALFONT) {
 		if ((c = spectab[code]) < 0)
 			return(0);
 	} else if ((c = asctab[code]) < 0)
 		return(0);
-	d = dispatch+c;
-	if (d->nbytes) {
-		addr = bits+d->addr;
-		llen = (d->left+d->right+7)/8;
-		nlines = d->up+d->down;
-		if (xpos+d->down >= NLINES)
-			slop_lines(xpos+d->down-NLINES+1);
-		scanp = ((xpos-d->up-1)*BYTES_PER_LINE+(ypos-d->left)/8)+buf0p;
-		if (scanp < &buffer[0])
-			scanp += BUFFER_SIZE;
-		scanp_inc = BYTES_PER_LINE-llen;
-		offset = -((ypos-d->left)&07);
-		off8 = offset+8;
-		for (i = 0; i < nlines; i++) {
-			if (scanp >= &buffer[BUFFER_SIZE])
-				scanp -= BUFFER_SIZE;
-			count = llen;
-			if (scanp + count <= &buffer[BUFFER_SIZE])
-				do {
-					fontdata = *(unsigned *)addr;
-					addr += 4;
-					if (count < 4)
-						fontdata &= ~strim[count];
-					*(unsigned *)scanp |= (fontdata << offset) &~ M[off8];
-					scanp++;
-					*(unsigned *)scanp |= (fontdata << off8) &~ N[off8];
-					scanp += 3;
-					count -= 4;
-				} while (count > 0);
-			scanp += scanp_inc+count;
-			addr += count;
-		}
-		return (1);
+	vdp = &fontdes[cfont].vfp->vf_dispatch[c];
+
+	if (vdp->vd_nbytes <= 0 )
+		return(0);
+
+	addr = &fontdes[cfont].vfp->vf_bits[vdp->vd_addr];
+	llen = (vdp->vd_left + vdp->vd_right+7)/8;
+	nlines = vdp->vd_up + vdp->vd_down;
+	if (xpos+vdp->vd_down >= NLINES)
+		slop_lines(xpos + vdp->vd_down - NLINES + 1);
+	scanp = ( (xpos-vdp->vd_up-1)*BYTES_PER_LINE+
+		(ypos-vdp->vd_left)/8 ) + buf0p;
+	if (scanp < &buffer[0])
+		scanp += BUFFER_SIZE;
+	scanp_inc = BYTES_PER_LINE-llen;
+	offset = -((ypos-vdp->vd_left)&07);
+	off8 = offset+8;
+	for (i = 0; i < nlines; i++) {
+		if (scanp >= &buffer[BUFFER_SIZE])
+			scanp -= BUFFER_SIZE;
+		count = llen;
+		if (scanp + count <= &buffer[BUFFER_SIZE])
+			do {
+				fontdata = *addr++;
+				*scanp |= (fontdata << offset) &~ M[off8];
+				scanp++;
+				*scanp |= (fontdata << off8) &~ N[off8];
+				count--;
+			} while (count > 0);
+		scanp += scanp_inc+count;
+		addr += count;
 	}
-	return (0);
+	return (1);
 }
 
 slop_lines(nlines)
@@ -818,7 +771,7 @@ nfree(cp)
 }
 
 /*
- *  Overlay IKONAS display with indicated lines.
+ *  Overlay framebuffer with indicated lines of bitmap.
  */
 writelines(nlines, buf)
 	int	nlines;		/*  Number of scan lines to put out.  */
@@ -832,6 +785,7 @@ writelines(nlines, buf)
 	for(l = 0; l < nlines; l++)  {
 		if(cur_fb_line < 0 )  {
 			fprintf(stderr, "cat-fb:  Ran off bottom\n");
+			fb_close(fbp);
 			exit(1);
 		}
 		fb_read( fbp, 0, cur_fb_line, scanline, fb_getwidth(fbp) );
