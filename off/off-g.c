@@ -116,9 +116,14 @@ FILE *fgeom;
 	tol.para = 0.999;
 
 	for (i = 0; i < nfaces; i++) {
+		plane_t pl;
+
 		fprintf(stderr, "planeeqning face %d.\n", i);
-		if (nmg_fu_planeeqn(outfaceuses[i], &tol) < 0)
+		if( nmg_loop_plane_area( RT_LIST_FIRST( loopuse , &outfaceuses[i]->lu_hd ) , pl ) < 0.0 )
 			fail = 1;
+		else
+			nmg_face_g( outfaceuses[i] , pl );
+
 	}
 
 	if (fail) return (-1);
