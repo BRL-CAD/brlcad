@@ -4,7 +4,7 @@
  * $Header$
  */
 
-#define	SRCDIR	g_lint
+#define	SRCDIR	gtools
 #define	PRODUCTS	g_lint g_diff
 #define	SRCSUFF		.c
 #define	MANSECTION	1
