@@ -3,7 +3,7 @@
 check_externs "_mged_attach"
 
 if ![info exists use_grid_gm] {
-    set use_grid_gm 0
+    set use_grid_gm 1
 }
 
 if ![info exists debug_setmv] {
