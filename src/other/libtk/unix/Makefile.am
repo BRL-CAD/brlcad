@@ -40,6 +40,7 @@ noinst_HEADERS = \
 EXTRA_DIST = \
 	README \
 	mkLinks \
+	tkAppInit.c \
 	tkConfig.sh.in
 
 MAINTAINERCLEANFILES = \
