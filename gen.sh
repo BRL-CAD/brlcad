@@ -159,13 +159,13 @@ BDIRS="bench \
 	libwdb \
 	libpkg \
 	libfb \
+	libtcl \
+	libtk \
 	rfbd \
 	fbserv \
 	librt \
 	libredblack \
 	libtermio \
-	libtcl \
-	libtk \
 	libtclcad \
 	libdm \
 	conv \
