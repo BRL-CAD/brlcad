@@ -78,7 +78,10 @@ int		dmaflag;		/* Set to 1 to force new screen DMA */
 double		frametime = 1.0;	/* time needed to draw last frame */
 mat_t		ModelDelta;		/* Changes to Viewrot this frame */
 
+int		(*cmdline_hook)() = NULL;
 void		(*viewpoint_hook)() = NULL;
+void		(*extrapoll_hook)() = NULL;
+int		extrapoll_fd;		/* XXX Ultra hack XXX */
 
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
@@ -347,6 +350,15 @@ int	non_blocking;
 	 * either on the device peripherals, or a command has been
 	 * entered on the keyboard, unless the non-blocking flag is set.
 	 */
+#if 0
+/* XXX Need to send extra FD down, instead */
+/* XXX Compensated for by hack in dm-4d.c for now */
+	/* XXX ultra hack */
+	if(extrapoll_fd)  {
+		i = dmp->dmr_input( extrapoll_fd, 1 );	/* don't block */
+		if( i && extrapoll_hook )  (*extrapoll_hook)();
+	}
+#endif
 	i = dmp->dmr_input( 0, non_blocking );	/* fd 0 for cmds */
 	if( i )  {
 		struct rt_vls	str;
@@ -355,6 +367,7 @@ int	non_blocking;
 		/* Read input line */
 		if( rt_vls_gets( &str, stdin ) >= 0 )  {
 			rt_vls_strcat( &str, "\n" );
+if( cmdline_hook )  {if( (*cmdline_hook)(&str)) pr_prompt();} else
 			if( cmdline( &str ) )
 				pr_prompt();
 		} else {
@@ -474,6 +487,7 @@ int	non_blocking;
 	 *  (Or "invented" here, for compatability with old dm's).
 	 *  Each one is expected to be newline terminated.
 	 */
+if( cmdline_hook )  (*cmdline_hook)(&dm_values.dv_string); else
 	(void)cmdline( &dm_values.dv_string );
 	rt_vls_trunc( &dm_values.dv_string, 0 );
 
