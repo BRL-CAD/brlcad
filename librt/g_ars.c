@@ -331,7 +331,7 @@ struct application	*ap;
 		 *  If ray lies directly along the face, drop this face.
 		 */
 		abs_dn = dn >= 0.0 ? dn : (-dn);
-		if( abs_dn <= 0.0001 )
+		if( abs_dn < 1.0e-10 )
 			continue;
 		VSUB2( wxb, trip->tri_A, rp->r_pt );
 		VCROSS( xp, wxb, rp->r_dir );
@@ -359,12 +359,14 @@ struct application	*ap;
 		 *  However, we just assume in/out sorting later will work.
 		 *  Really should mark and check this!
 		 */
-		VJOIN1( hp->hit_point, rp->r_pt, k, rp->r_dir );
-
-		/* HIT is within planar face */
 		hp->hit_dist = k;
+		hp->hit_private = (char *)trip;
+		hp->hit_vpriv[X] = dn;
+#ifdef never
+		VJOIN1( hp->hit_point, rp->r_pt, k, rp->r_dir );
 		VMOVE( hp->hit_normal, trip->tri_N );
-		if(rt_g.debug&DEBUG_ARB8) rt_log("ars: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
+#endif
+		if(rt_g.debug&DEBUG_ARB8) rt_log("ars: hit dist=%f, dn=%f\n", hp->hit_dist, dn );
 		if( nhits++ >= MAXHITS )  {
 			rt_log("ars(%s): too many hits\n", stp->st_name);
 			break;
@@ -381,21 +383,14 @@ struct application	*ap;
 		register int i;
 		/*
 		 * If this condition exists, it is almost certainly due to
-		 * the dn==0 check above.  Thus, we will make the last
-		 * surface infinitely thin and just replicate the entry
-		 * point as the exit point.  This at least makes the
-		 * presence of this solid known.  There may be something
-		 * better we can do.
+		 * the dn==0 check above.  Just log error.
 		 */
-		hits[nhits] = hits[nhits-1];	/* struct copy */
-		VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
-		hits[nhits].hit_dist *= 1.0001;
-		rt_log("ERROR: ars(%s): %d hits, false exit\n",
+		rt_log("ERROR: ars(%s): %d hits odd, skipping solid\n",
 			stp->st_name, nhits);
-		nhits++;
 		for(i=0; i < nhits; i++ )
-			rt_log("%f, ", hits[i].hit_dist );
-		rt_log("\n");
+			rt_log("k=%g dn=%g\n",
+				hits[i].hit_dist, hp->hit_vpriv[X]);
+		return(SEG_NULL);		/* MISS */
 	}
 
 	/* nhits is even, build segments */
@@ -437,9 +432,83 @@ register int nh;
 	}
 }
 
-ars_norm()
+/*
+ *  			A R S _ N O R M
+ *
+ *  Given ONE ray distance, return the normal and entry/exit point.
+ */
+ars_norm( hitp, stp, rp )
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
 {
+	register struct tri_specific *trip =
+		(struct tri_specific *)hitp->hit_private;
+
+	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	VMOVE( hitp->hit_normal, trip->tri_N );
 }
-ars_uv()
+
+/*
+ *			A R S _ C U R V E
+ *
+ *  Return the "curvature" of the ARB face.
+ *  Pick a principle direction orthogonal to normal, and 
+ *  indicate no curvature.
+ */
+ars_curve( cvp, hitp, stp, rp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
+struct xray *rp;
+{
+	register struct tri_specific *trip =
+		(struct tri_specific *)hitp->hit_private;
+
+	rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
+	cvp->crv_c1 = cvp->crv_c2 = 0;
+}
+
+
+/*
+ *  			A R S _ U V
+ *  
+ *  For a hit on a face of an ARB, return the (u,v) coordinates
+ *  of the hit point.  0 <= u,v <= 1.
+ *  u extends along the Xbasis direction defined by B-A,
+ *  v extends along the "Ybasis" direction defined by (B-A)xN.
+ */
+ars_uv( ap, stp, hitp, uvp )
+struct application *ap;
+struct soltab *stp;
+register struct hit *hitp;
+register struct uvcoord *uvp;
+{
+	register struct tri_specific *trip =
+		(struct tri_specific *)hitp->hit_private;
+	LOCAL vect_t P_A;
+	LOCAL fastf_t r;
+	LOCAL fastf_t xxlen, yylen;
+
+	xxlen = MAGNITUDE(trip->tri_BA);
+	yylen = MAGNITUDE(trip->tri_CA);
+
+	VSUB2( P_A, hitp->hit_point, trip->tri_A );
+	/* Flipping v is an artifact of how the faces are built */
+	uvp->uv_u = VDOT( P_A, trip->tri_BA ) * xxlen;
+	uvp->uv_v = 1.0 - ( VDOT( P_A, trip->tri_CA ) * yylen );
+	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
+		if( rt_g.debug )
+			rt_log("ars_uv: bad uv=%f,%f\n", uvp->uv_u, uvp->uv_v);
+		/* Fix it up */
+		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
+		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
+	}
+	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+	uvp->uv_du = r * xxlen;
+	uvp->uv_dv = r * yylen;
+}
+
+ars_class()
 {
 }
