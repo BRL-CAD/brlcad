@@ -72,19 +72,25 @@ extern struct partition *bool_regions();
 
 int debug = DEBUG_OFF;
 int view_only;		/* non-zero if computation is for viewing only */
-int nsolids;		/* total # of solids participating */
+
+long nsolids;		/* total # of solids participating */
+long nregions;		/* total # of regions participating */
+long nshots;		/* # of ray-meets-solid "shots" */
+long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
 
 struct soltab *HeadSolid = SOLTAB_NULL;
 
 struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
 
-static struct seg *HeadSeg = SEG_NULL;
+struct seg *HeadSeg = SEG_NULL;
 
-char usage[] = "Usage:  rt [-f[#]] [-x#] model.vg object [objects]\n";
+char usage[] = 
+"Usage:  rt [-f[#]] [-x#] [-aAz] [-eElev] model.vg object [objects]\n";
 
 /* Used for autosizing */
 static fastf_t xbase, ybase, zbase;
 static fastf_t deltas;
+extern double atof();
 
 vect_t l0vec;		/* 0th light vector */
 vect_t l1vec;		/* 1st light vector */
@@ -101,12 +107,16 @@ char **argv;
 	static int npts;		/* # of points to shoot: x,y */
 	static mat_t viewrot;
 	static mat_t invview;
+	static mat_t mat1, mat2;	/* temporary matrices */
 	static vect_t tempdir;
 	static struct partition *PartHeadp, *pp;
 	static fastf_t distsq;
+	static double azimuth, elevation;
 
-	npts = 200;
+	npts = 512;
 	view_only = 1;
+	azimuth = -35.0;			/* GIFT defaults */
+	elevation = -25.0;
 
 	if( argc < 1 )  {
 		printf(usage);
@@ -126,6 +136,14 @@ char **argv;
 			if( npts < 2 || npts > 1024 )  {
 				npts = 50;
 			}
+			break;
+		case 'a':
+			/* Set azimuth */
+			azimuth = atof( &argv[0][2] );
+			break;
+		case 'e':
+			/* Set elevation */
+			elevation = atof( &argv[0][2] );
 			break;
 		default:
 			printf("Unknown option '%c' ignored\n", argv[0][1]);
@@ -149,17 +167,8 @@ char **argv;
 	argc--; argv++;
 
 	if( !(debug&DEBUG_QUICKIE) )  {
-		/* Prepare the Ikonas display */
-		ikopen();
-		load_map(1);
-		ikclear();
-		if( npts <= 64 )  {
-			ikzoom( 9, 9 );
-			ikwindow( (0)*4, 4063+30 );
-		} else if ( npts <= 256 )  {
-			ikzoom( 1, 1 );
-			ikwindow( (0)*4, 4063+17 );
-		}
+		/* Set up the online display */
+		dev_setup(npts);
 	}
 
 	/* Load the desired portion of the model */
@@ -177,10 +186,16 @@ char **argv;
 	/* Determine a view */
 	GETSTRUCT(rayp, ray);
 
-	mat_angles( invview, 295.0, 0.0, 235.0 );	/* GIFT 35,25 */
+	/*
+	 * Unrotated view is TOP.
+	 * Rotation of 270,0,270 takes us to a front view.
+	 * Standard GIFT view is -35 azimuth, -25 elevation off front.
+	 */
+	mat_angles( invview, 270.0-elevation, 0.0, 270.0+azimuth );
+	printf("Viewing %f azimuth, %f elevation off of front view\n",
+		azimuth, elevation);
 
 	mat_trn( viewrot, invview );		/* inverse */
-	mat_print( "View Rotation", viewrot );
 
 	if( !(debug&DEBUG_QUICKIE) )  {
 		autosize( viewrot, npts );
@@ -207,28 +222,23 @@ char **argv;
 	tempdir[0] = 2 * (xbase);
 	tempdir[1] = (2/2) * (ybase);
 	tempdir[2] = 2 * (zbase + npts*deltas);
-VPRINT("Light0 Pos", tempdir);
 	MAT3XVEC( l0vec, viewrot, tempdir );
 	VUNITIZE(l0vec);
-VPRINT("Light0 Vec", l0vec);
 
 	/* 1: Red, at right edge, 1/2 high */
 	tempdir[0] = 2 * (xbase + npts*deltas);
 	tempdir[1] = (2/2) * (ybase);
 	tempdir[2] = 2 * (zbase + npts*deltas);
-VPRINT("Light1 Pos", tempdir);
 	MAT3XVEC( l1vec, viewrot, tempdir );
 	VUNITIZE(l1vec);
-VPRINT("Light1 Vec", l1vec);
 
 	/* 2:  Green, behind, and overhead */
 	tempdir[0] = 2 * (xbase + (npts/2)*deltas);
 	tempdir[1] = 2 * (ybase + npts*deltas);
 	tempdir[2] = 2 * (zbase + (npts/2)*deltas);
-VPRINT("Light2 Pos", tempdir);
 	MAT3XVEC( l2vec, viewrot, tempdir );
 	VUNITIZE(l2vec);
-VPRINT("Light2 Vec", l2vec);
+
 	fflush(stdout);
 
 	for( yscreen = npts-1; yscreen >= 0; yscreen--)  {
@@ -288,60 +298,16 @@ VPRINT("Light2 Vec", l2vec);
 	{
 		FAST double utime;
 		utime = timer_print("SHOT");
-		printf("%d solids, %d shots in %f sec = %f shots/sec\n",
-			nsolids,
+		printf("%d solids, %d regions\n",
+			nsolids, nregions );
+		printf("%d output rays in %f sec = %f rays/sec\n",
 			npts*npts, utime, (double)(npts*npts/utime) );
+		printf("%d solids shot at, %d shots pruned\n",
+			nshots, nmiss );
+		printf("%d total shots in %f sec = %f shots/sec\n",
+			nshots+nmiss, utime, (double)((nshots+nmiss)/utime) );
 	}
 	return(0);
-}
-
-shootray( rayp )
-register struct ray *rayp;
-{
-	register struct soltab *stp;
-	static vect_t diff;	/* diff between shot base & solid center */
-	FAST fastf_t distsq;	/* distance**2 */
-
-	if(debug&DEBUG_ALLRAYS) {
-		VPRINT("\nRay Start", rayp->r_pt);
-		VPRINT("Ray Direction", rayp->r_dir);
-	}
-
-	HeadSeg = SEG_NULL;	/* Should check, actually */
-
-	/*
-	 * For now, shoot at all solids in model.
-	 * This code is executed more often than any other part!
-	 */
-	for( stp=HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw ) {
-		register struct seg *newseg;		/* XXX */
-
-		/* Consider bounding sphere */
-		VSUB2( diff, stp->st_center, rayp->r_pt );
-		distsq = VDOT(rayp->r_dir, diff);
-		if( (MAGSQ(diff) - distsq*distsq) > stp->st_radsq ) {
-			continue;
-		}
-		newseg = functab[stp->st_id].ft_shot( stp, rayp );
-		if( newseg == SEG_NULL )
-			continue;
-
-		/* First, some checking */
-		if( newseg->seg_in.hit_dist > newseg->seg_out.hit_dist )  {
-			struct hit temp;	/* XXX */
-			printf("ERROR %s %s: in/out reversal (%f,%f)\n",
-				functab[stp->st_id].ft_name,
-				newseg->seg_stp->st_name,
-				newseg->seg_in.hit_dist,
-				newseg->seg_out.hit_dist );
-			temp = newseg->seg_in;		/* struct copy */
-			newseg->seg_in = newseg->seg_out; /* struct copy */
-			newseg->seg_out = temp;		/* struct copy */
-		}
-		/* Add to list */
-		newseg->seg_next = HeadSeg;
-		HeadSeg = newseg;
-	}
 }
 
 autosize( rot, npts )
@@ -390,8 +356,9 @@ int npts;
 
 	deltas = (xmax-xmin)/npts;
 	MAX( deltas, (ymax-ymin)/npts );
-	printf("X(%f,%f), Y(%f,%f), Z(%f,%f)\nDeltas=%f\n",
-		xmin, xmax, ymin, ymax, zmin, zmax, deltas );
+	printf("X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
+		xmin, xmax, ymin, ymax, zmin, zmax );
+	printf("Deltas=%f (units between rays)\n", deltas );
 }
 
 bomb(str)
