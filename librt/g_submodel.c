@@ -115,6 +115,10 @@ struct rt_i		*rtip;
 		/* db_open will cache dbip's via bu_open_mapped_file() */
 		if( (sub_dbip = db_open( sip->file, "r" )) == DBI_NULL )
 		    	return -1;
+
+		/* Save the overhead of stat() calls on subsequent opens */
+		if( sub_dbip->dbi_mf )  sub_dbip->dbi_mf->dont_restat = 1;
+
 		if( !db_is_directory_non_empty(sub_dbip) )  {
 			/* This is first open of db, build directory */
 			if( db_scan( sub_dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
