@@ -342,6 +342,12 @@ matp_t old_xlate;
 				argregion->reg_regionid );
 /***			argregion = REGION_NULL;	/* override! */
 		} else {
+			/* HACK:  ignore "air" solids */
+			if( rec.c.c_aircode != 0 )  {
+				(void)lseek(ged_fd, savepos, 0);
+				return(TREE_NULL);
+			}
+
 			/* Start a new region here */
 			GETSTRUCT( regionp, region );
 			regionp->reg_forw = REGION_NULL;
