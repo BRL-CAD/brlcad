@@ -27,7 +27,8 @@
  * $Id$
  */
 
-#include <rle.h>
+#ifndef RLE_PUT_H
+#define RLE_PUT_H
 
 /* ****************************************************************
  * Dispatch table for different output types.
@@ -41,7 +42,7 @@
 typedef int rle_fn( ARB_ARGS );
 
 struct rle_dispatch_tab {
-    CONST_DECL char   *magic;	/* magic type flags */
+    CONST char   *magic;	/* magic type flags */
     rle_fn *setup,			/* startup function */
 	   *skipBlankLines,
 	   *setColor,
@@ -82,3 +83,5 @@ extern struct rle_dispatch_tab rle_DTable[];
 #define RUN3	2
 #define	RUN4	3
 #define	INRUN	-1
+
+#endif

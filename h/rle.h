@@ -30,17 +30,6 @@
 #ifndef RLE_H
 #define RLE_H
 
-
-#include <stdio.h>		/* Declare FILE. */
-#include "rle_config.h"		/* Configuration parameters. */
-
-#ifdef c_plusplus
-#define USE_PROTOTYPES
-#endif
-#ifndef CONST_DECL
-#define CONST_DECL
-#endif
-
 enum rle_dispatch {
     NO_DISPATCH = -1,
     RUN_DISPATCH = 0
@@ -98,7 +87,7 @@ struct rle_hdr {
 				/* Map only saved if != 0. */
 	    	cmaplen;	/* Log2 of color map length. */
     rle_map    *cmap;		/* Pointer to color map array. */
-    CONST_DECL char **comments;	/* Pointer to array of pointers to comments. */
+    CONST char **comments;	/* Pointer to array of pointers to comments. */
     FILE       *rle_file;	/* Input or output file. */
     /* 
      * Bit map of channels to read/save.  Indexed by (channel mod 256).
@@ -166,8 +155,8 @@ extern rle_hdr rle_dflt_hdr;
      * rle_get_setup.
      */
     extern int rle_get_error( int code,
-			      CONST_DECL char *pgmname,
-			      CONST_DECL char *fname );
+			      CONST char *pgmname,
+			      CONST char *fname );
 			  
     /*****************************************************************
      * TAG( rle_get_setup )
@@ -182,8 +171,8 @@ extern rle_hdr rle_dflt_hdr;
      * code. 
      */
     extern void rle_get_setup_ok( rle_hdr *the_hdr,
-				  CONST_DECL char *prog_name,
-				  CONST_DECL char *file_name);
+				  CONST char *prog_name,
+				  CONST char *file_name);
 
     /*****************************************************************
      * TAG( rle_getrow )
@@ -287,7 +276,7 @@ extern rle_hdr rle_dflt_hdr;
      *
      * Get a specific comment from the image comments.
      */
-    extern char * rle_getcom( CONST_DECL char * name, rle_hdr * the_hdr );
+    extern char * rle_getcom( CONST char * name, rle_hdr * the_hdr );
 
     /* From rle_putcom.c. */
     /*****************************************************************
@@ -295,16 +284,16 @@ extern rle_hdr rle_dflt_hdr;
      *
      * Delete a specific comment from the image comments.
      */
-    extern CONST_DECL char *
-    rle_delcom( CONST_DECL char * name, rle_hdr * the_hdr );
+    extern CONST char *
+    rle_delcom( CONST char * name, rle_hdr * the_hdr );
 
     /*****************************************************************
      * TAG( rle_putcom )
      * 
      * Put (or replace) a comment into the image comments.
      */
-    extern CONST_DECL char *
-    rle_putcom( CONST_DECL char * value, rle_hdr * the_hdr );
+    extern CONST char *
+    rle_putcom( CONST char * value, rle_hdr * the_hdr );
 
     /* From dither.c. */
     /*****************************************************************
@@ -352,9 +341,9 @@ extern rle_hdr rle_dflt_hdr;
      * Open an input/output file with default.
      */
     extern FILE *
-    rle_open_f( CONST_DECL char *prog_name,
-		CONST_DECL char *f_name,
-		CONST_DECL char *mode );
+    rle_open_f( CONST char *prog_name,
+		CONST char *f_name,
+		CONST char *mode );
 
     /*****************************************************************
      * TAG( rle_open_f_noexit )
@@ -362,9 +351,9 @@ extern rle_hdr rle_dflt_hdr;
      * Open an input/output file with default.
      */
     extern FILE *
-    rle_open_f_noexit( CONST_DECL char *prog_name,
-		       CONST_DECL char *f_name,
-		       CONST_DECL char *mode );
+    rle_open_f_noexit( CONST char *prog_name,
+		       CONST char *f_name,
+		       CONST char *mode );
 
     /* From colorquant.c. */
     /*****************************************************************
@@ -399,7 +388,7 @@ extern void rle_addhist( char *argv[],
      */
     extern int scanargs( int argc,
 			 char **argv,
-			 CONST_DECL char *format,
+			 CONST char *format,
 			 ... );
 
 #ifdef NEED_BSTRING
