@@ -66,6 +66,7 @@ extern char	*realloc();
 extern char	*tempnam();
 extern char	*strcpy();
 extern char	*strcat();
+extern char	*strncat();
 extern char	*mktemp();
 
 extern int	atoi();
