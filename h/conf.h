@@ -10,7 +10,6 @@
  * Right now, this include file has predetermined answers for every define.
  * Someday, it will be automatically generated.
  *
-
  *	USE_PROTOTYPES -
  *		When defined, this compiler will accept ANSI-C function
  *		prototypes, even if it isn't a full ANSI compiler.
@@ -107,6 +106,10 @@
 #	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
 #	define _BSD_TYPES		1
 #	define _BSD_TIME		1	/* for good timeval */
+#endif
+
+#if defined(_AIX) || defined(__AIX)
+#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
 #endif
 
 #if defined(__convex__)
