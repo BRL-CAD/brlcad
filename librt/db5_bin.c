@@ -566,3 +566,18 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 
 	return 0;
 }
+
+void
+rt_binunif_make( ftp, intern, diameter )
+const struct rt_functab	*ftp;
+struct rt_db_internal	*intern;
+double			diameter;
+{
+	intern->idb_type = 0;
+	intern->idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
+	BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+
+	intern->idb_meth = ftp;
+	intern->idb_ptr = bu_calloc( ftp->ft_internal_size, 1, "rt_generic_make");
+	*((long *)(intern->idb_ptr)) = ftp->ft_internal_magic;
+}

@@ -314,6 +314,9 @@ BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip,
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
 		const struct rt_db_internal *ip, int verbose,
 		double mm2local, struct resource *resp));
+BU_EXTERN( void rt_binunif_make, (const struct rt_functab *ftp,
+				  struct rt_db_internal	*intern,
+				  double diameter ) );
 
 /* from tcl.c */
 BU_EXTERN(int rt_comb_tclget, (Tcl_Interp *interp,
@@ -958,7 +961,7 @@ const struct rt_functab rt_functab[] = {
 		rt_binunif_describe,rt_generic_xform, NULL,
 		0,				0,
 		rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
-		rt_nul_make,
+		rt_binunif_make,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_BINMIME", "binmime",
