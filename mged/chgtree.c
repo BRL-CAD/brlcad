@@ -187,11 +187,13 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register struct directory *dp;
 	char oper;
+	struct bu_list	head;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
+
+	BU_LIST_INIT(&head);
 
 	if(argc < 3 || 4 < argc){
 	  struct bu_vls vls;
@@ -203,7 +205,7 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( db_lookup( dbip, argv[1], LOOKUP_NOISY ) == DIR_NULL )
 	  return TCL_ERROR;
 
 	oper = WMOP_UNION;
@@ -218,9 +220,19 @@ char	**argv;
 	  bu_vls_free(&tmp_vls);
 	  return TCL_ERROR;
 	}
-	if( combadd( dp, argv[2], 0, oper, 0, 0 ) == DIR_NULL )
-	  return TCL_ERROR;
+	mk_addmember( argv[2], &head, oper );
 
+	if( mk_comb( wdbp, argv[1], &head,
+	    0, NULL, NULL, NULL,
+	    0, 0, 0, 0,
+	    0, 1, 1 ) < 0 )
+	{
+		Tcl_AppendResult(interp,
+			"An error has occured while adding '",
+			argv[1], "' to the database.\n", (char *)NULL);
+		TCL_ERROR_RECOVERY_SUGGESTION;
+		return TCL_ERROR;
+	}
 	return TCL_OK;
 }
 
@@ -238,9 +250,12 @@ char	**argv;
 	int i;
 	int ident, air;
 	char oper;
+	struct bu_list head;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
+
+	BU_LIST_INIT(&head);
 
 	if(argc < 4){
 	  struct bu_vls vls;
@@ -304,19 +319,24 @@ char	**argv;
 				     " is a region\n", (char *)NULL);
 		}
 
-		if( combadd( dp, argv[1], 1, oper, ident, air ) == DIR_NULL )  {
-		  Tcl_AppendResult(interp, "error in combadd\n", (char *)NULL);
-		  return TCL_ERROR;
-		}
+		mk_addmember( argv[i+1], &head, oper );
 	}
 
-	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) == DIR_NULL ) {
+	if( mk_comb( wdbp, argv[1], &head,
+	    1, NULL, NULL, NULL,
+	    ident, air, mat_default, los_default,
+	    0, 1, 1 ) < 0 )
+	{
 		/* failed to create region */
 		if(item_default > 1)
 			item_default--;
+
+		Tcl_AppendResult(interp,
+			"An error has occured while adding '",
+			argv[1], "' to the database.\n", (char *)NULL);
+		TCL_ERROR_RECOVERY_SUGGESTION;
 		return TCL_ERROR;
 	}
-
 	return TCL_OK;
 }
 
@@ -339,9 +359,12 @@ char	**argv;
 	char	*comb_name;
 	register int	i;
 	char	oper;
+	struct bu_list	head;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
+
+	BU_LIST_INIT( &head );
 
 	if(argc < 4){
 	  struct bu_vls vls;
@@ -383,7 +406,7 @@ char	**argv;
 		  continue;
 		}
 
-		if(oper != WMOP_UNION && oper != WMOP_SUBTRACT &&	oper != WMOP_INTERSECT) {
+		if(oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
 		  struct bu_vls tmp_vls;
 
 		  bu_vls_init(&tmp_vls);
@@ -393,18 +416,22 @@ char	**argv;
 			continue;
 		}
 
-		if( combadd( dp, comb_name, 0, oper, 0, 0 ) == DIR_NULL )  {
-		  Tcl_AppendResult(interp, "error in combadd\n", (char *)NULL);
-		  return TCL_ERROR;
-		}
+		/* Add to the list */
+		(void)mk_addmember( argv[i+1], &head, oper );
 	}
 
-	if( db_lookup( dbip, comb_name, LOOKUP_QUIET) == DIR_NULL ) {
-	  Tcl_AppendResult(interp, "Error:  ", comb_name,
-			   " not created\n", (char *)NULL);
-	  return TCL_ERROR;
+	/* Do them all at once */
+	if( mk_comb( wdbp, comb_name, &head,
+	    0, NULL, NULL, NULL,
+	    0, 0, 0, 0,
+	    0, 1, 1 ) < 0 )
+	{
+		Tcl_AppendResult(interp,
+			"An error has occured while adding '",
+			comb_name, "' to the database.\n", (char *)NULL);
+		TCL_ERROR_RECOVERY_SUGGESTION;
+		return TCL_ERROR;
 	}
-
 	return TCL_OK;
 }
 
@@ -471,11 +498,13 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register struct directory *dp;
 	register int i;
+	struct bu_list	head;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
+
+	BU_LIST_INIT(&head);
 
 	if(argc < 3){
 	  struct bu_vls vls;
@@ -489,12 +518,24 @@ char	**argv;
 
 	/* get objects to add to group */
 	for( i = 2; i < argc; i++ )  {
-		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL )  {
-			if( combadd( dp, argv[1], 0,
-				     WMOP_UNION, 0, 0) == DIR_NULL )
-			  return TCL_ERROR;
+		if( db_lookup( dbip,  argv[i], LOOKUP_NOISY) != DIR_NULL )  {
+			/* Add to list */
+			(void)mk_addmember( argv[i], &head, WMOP_UNION );
 		}  else
 		  Tcl_AppendResult(interp, "skip member ", argv[i], "\n", (char *)NULL);
+	}
+
+	/* Do them all at once */
+	if( mk_comb( wdbp, argv[1], &head,
+	    0, NULL, NULL, NULL,
+	    0, 0, 0, 0,
+	    0, 1, 1 ) < 0 )
+	{
+		Tcl_AppendResult(interp,
+			"An error has occured while adding '",
+			argv[1], "' to the database.\n", (char *)NULL);
+		TCL_ERROR_RECOVERY_SUGGESTION;
+		return TCL_ERROR;
 	}
 	return TCL_OK;
 }
