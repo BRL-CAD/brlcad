@@ -404,6 +404,12 @@ Ir_open()
 			ir_has_rgb = 1;
 			ir_has_doublebuffer = 1;
 			break;
+		case INV_GR1BP:
+			ir_has_rgb = 1;
+			break;
+		case INV_GR1ZBUFFER:
+			ir_has_zbuf = 1;
+			break;
 		case INV_GR1BOARD:	/* Persoanl Iris */
 			if ( inv->state & INV_GR1RE2 )
 				ir_is_gt = 1;
