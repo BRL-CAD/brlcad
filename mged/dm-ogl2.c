@@ -361,6 +361,19 @@ register int y;
  * Fire up the display manager, and the display processor.
  *
  */
+#if 1
+Ogl2_open(name)
+char *name;
+{
+  ogl_var_init();
+  rt_vls_init(&pathName);
+
+  if( Ogl2_setup(name) )
+    return(1);		/* BAD */
+
+  return(0);			/* OK */
+}
+#else
 Ogl2_open()
 {
   char	line[82];
@@ -396,6 +409,7 @@ Ogl2_open()
 
   return(0);			/* OK */
 }
+#endif
 
 /*XXX Just experimenting */
 int

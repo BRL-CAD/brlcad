@@ -378,6 +378,18 @@ Glx_configure_window_shape()
  *  message. It doesn't hurt anything.  Silly MEX.
  */
 
+#if 1
+Glx_open(name)
+char *name;
+{
+  glx_var_init();
+
+  if( glx_setup(name) )
+    return(1);		/* BAD */
+
+  return(0);			/* OK */
+}
+#else
 Glx_open()
 {
   char	line[82];
@@ -409,6 +421,7 @@ Glx_open()
 
   return(0);			/* OK */
 }
+#endif
 
 static int
 glx_setup( name )
