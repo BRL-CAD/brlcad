@@ -1,14 +1,14 @@
 /*
- *			N M G _ C O M B . C
+ *			N M G _ F C U T . C
  *
  *  After two faces have been intersected, cut or join loops crossed
- *  by the line of intersection.
+ *  by the line of intersection.  (Formerly nmg_comb.c)
  *
  *  XXX A better name than nmg_face_combine() might be
+ *  XXX nmg_face_cutjoin() or nmg_fcut() or
  *  XXX nmg_face_loop_partition() or nmg_face_loop_split() or something,
  *  XXX since the main goal is not combining faces, but spliting the loops
  *  XXX across the line of intersection.
- *  XXX nmg_split or nmg_weave are other candidates.
  *
  *  The line of intersection ("ray") will divide the face into two sets
  *  of loops.  No one loop may cross the ray after this routine is finished.
@@ -1032,7 +1032,7 @@ int			multi;
 
 			rec.u_id = ID_IDENT;
 			strcpy( rec.i.i_version, ID_VERSION );
-			strcpy( rec.i.i_title, "nmg_comb.c error dump" );
+			strcpy( rec.i.i_title, "nmg_fcut.c error dump" );
 			fwrite( (char *)&rec, sizeof(rec), 1, fp );
 			fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp );
 			fclose(fp);
