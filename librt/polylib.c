@@ -269,8 +269,11 @@ register complex	root[];
  *
  *	Returns 1 for success, 0 for fail.
  */
+static int expecting_fpe = 0;
 static jmp_buf abort_buf;
 static void cubic_catch()  {
+	if( !expecting_fpe )
+		rtbomb("unexpected SIGFPE!\n");
 	longjmp(abort_buf, 1);	/* return error code */
 }
 
@@ -279,13 +282,18 @@ cubic( eqn, root )
 register poly		*eqn;
 register complex	root[];
 {
-	LOCAL fastf_t		a, b, c1, delta;
-	register int		i;
-	void (*sav)();
+	LOCAL fastf_t	a, b, c1, delta;
+	register int	i;
+	static int	first_time = 1;
+	
 
-	sav=signal(SIGFPE, cubic_catch);
+	if( first_time )  {
+		first_time = 0;
+		(void)signal(SIGFPE, cubic_catch);
+	}
+	expecting_fpe = 1;
 	if( setjmp( abort_buf ) )  {
-		signal(SIGFPE, sav);
+		(void)signal(SIGFPE, cubic_catch);
 		if( debug & DEBUG_ROOTS )  {
 			fprintf(stderr,"cubic Floating Point Error on:\n");
 			pr_poly(eqn);
@@ -345,7 +353,7 @@ register complex	root[];
 	for ( i=0; i < 3; ++i ){
 		root[i].re -= c1/3.0;
 	}
-	(void)signal(SIGFPE, sav);
+	expecting_fpe = 0;
 	return(1);		/* OK */
 }
 
