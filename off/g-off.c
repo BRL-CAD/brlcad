@@ -53,6 +53,9 @@ static struct db_tree_state	jack_tree_state;	/* includes tol & model */
 static int	regions_tried = 0;
 static int	regions_done = 0;
 
+static void nmg_to_psurf();
+static void jack_faces();
+
 /*
  *			M A I N
  */
@@ -378,7 +381,7 @@ out:
 *	data is called.
 */
 
-int
+static void
 nmg_to_psurf(r, fp_psurf)
 struct nmgregion *r;		/* NMG region to be converted. */
 FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
@@ -425,6 +428,7 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 *	stored in a heap.  Using this heap and the nmg structure, a
 *	list of face vertices is written to the Jack data base file.
 */
+static void
 jack_faces(r, fp_psurf, map)
 struct nmgregion *r;		/* NMG region to be converted. */
 FILE		*fp_psurf;	/* Jack format file to write face vertices to. */
