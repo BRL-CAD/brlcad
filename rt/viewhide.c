@@ -1,7 +1,7 @@
  /*
  *			V I E W H I D E
  *
- *  Ray Tracing program RT_HIDE bottom half.
+ *  Ray Tracing program RTHIDE bottom half.
  *
  *  This module utilizes the RT library to interrogate a MGED
  *  model.  It consists of a front end that writes a ray data
@@ -17,7 +17,7 @@
  *  This is based on previous work done by Michael John Muuss.
  *
  *  Author -
- *	Dr. Susanne L. Muuss
+ *	Susanne L. Muuss, J.D.
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -56,7 +56,7 @@ struct structparse view_parse[] = {
 
 
 char usage[] = "\
-Usage:  rt_hide [options] model.g objects... >file.ray\n\
+Usage:  rthide [options] model.g objects... >file.ray\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
@@ -87,7 +87,7 @@ char *file, *obj;
 
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
-	ap->a_onehit = 0;
+	ap->a_onehit = 1;
 
 	output_is_binary = 0;		/* output is printable ascii */
 
