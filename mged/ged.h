@@ -470,10 +470,23 @@ struct _mged_variables {
         int	context;
 	int	dlist;
 	int	use_air;
-	int	echo_query_ray_cmd;
+	int	query_ray_cmd_echo;
 	int	query_ray_color_odd[3];
 	int	query_ray_color_even[3];
-	int	query_ray_color_void[3];	
+	int	query_ray_color_void[3];
+	int	query_ray_color_overlap[3];
+	fastf_t adc_xyz[3];
+	fastf_t adc_xyz_grid[2];
+	fastf_t	adc_a1;
+	fastf_t	adc_a2;
+	fastf_t	adc_dst;
+	int	adc_anchor_xyz;
+	int	adc_anchor_a1;
+	fastf_t	adc_anchor_pt_a1[3];
+	int	adc_anchor_a2;
+	fastf_t	adc_anchor_pt_a2[3];
+	int	adc_anchor_tick;
+	fastf_t	adc_anchor_pt_tick[3];
 #ifdef USE_FRAMEBUFFER
 	int	listen;		/* nonzero to listen on port */
 	int	port;		/* port to listen on */
