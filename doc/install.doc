@@ -1,5 +1,6 @@
 .\" $Header$
 .\"	groff -t -ms install.doc | print-postscript
+.\"	groff -X -t -ms install.doc
 .TL
 Installing the BRL-CAD Package
 .br
@@ -135,14 +136,11 @@ center box;
 l l l l l.
 MTYPE	Hardware	Software	Framebuffer	MGED
 _
-fx	Alliant FX/8, /80	Concentrix 3.0, 4.0	net	-
-fy	Alliant FX/2800	Concentrix 5	net	-
 c1	Convex C1	UNIX 6.2.32.2	net	-
 xmp	Cray X-MP,Y-MP,C-90	UNICOS 8	net,X11	X11
 cr2	Cray-2	UNICOS 7	net,X11	X11
 alpha	DEC Alpha	OSF/1 V3.0	net,X11	X11
-vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	adage, net	-
-pyr	Pyramid 9820	OSx Version 4.1	net	-
+vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	net	-
 li	IBM PC	Linux	net,X11	X11
 bsdi	IBM PC	BSDI	net,X11	X11
 nb86	IBM PC  NetBSD/i386 1.0	net,X11	X11
@@ -151,8 +149,7 @@ nb86	IBM PC  NetBSD/i386 1.0	net,X11	X11
 7d	SGI 4D/TFP	Irix 6	sgi,net,X11	X11
 sun3	Sun-3/*	SunOS 4.1.X	net,X11	X11
 sun4	Sun-4/*	SunOS 4.1.X	net,X11	X11
-sun5	Sun-4/*	SunOS 5.3,5.4	net,X11	X11,xgl
-ibm	RS/6000	AIX	net,X11	X11
+sun5	Sun-4/*	SunOS 5.3,5.4	net,X11	xgl,X11
 .TE
 For high-performance graphics, the SGI and Sun (GX) platforms
 work best.
@@ -164,7 +161,7 @@ the hardware options installed, or the version of the software
 being used.
 .TS
 center box;
-l l l.
+l l l l l.
 MTYPE	Hardware	Software
 _
 3d	SGI 3030	Version 3.5, 3.6
@@ -172,10 +169,14 @@ apollo	Apollo	SR10.1
 ard	Stardent Titan	System V
 aux	Apple Mac II	AUX 1.0
 eta	ETA-10	System V
+fx	Alliant FX/8, /80	Concentrix 3.0, 4.0	net	-
+fy	Alliant FX/2800	Concentrix 5	net	-
+ibm	RS/6000	AIX	net,X11	X11
 ipsc	iPSC/860 Hypercube	NX/2
 n16	Encore Multi-Max	System V
 next	NeXT	NeXT 2.0
 np1	Gould NP1	UTX
+pyr	Pyramid 9820	OSx Version 4.1	net	-
 sel	Gould PN6080, PN9080
 stad	Stardent VISTRA	System V
 stl	Stellar	System V
@@ -185,7 +186,7 @@ These systems are not considered ``supported'', but should work with
 little or no effort.
 .IP c)
 Porting this software to a machine which is not
-in one of the ``supported'' lists above
+in one of the two tables above
 will require some additional configuration or programming effort.
 See the section on ``SUPPORTING A NEW MACHINE'', below, for details.
 .PP
