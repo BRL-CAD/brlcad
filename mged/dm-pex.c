@@ -1294,17 +1294,17 @@ char *argv[];
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
-      bu_structprint("dm_X internal variables", Pex_vparse,
+      bu_struct_print("dm_X internal variables", Pex_vparse,
 		     (CONST char *)&((struct pex_vars *)dm_vars)->mvars );
     } else if( argc == 2 ) {
-      bu_vls_name_print( &vls, Pex_vparse, argv[1],
-			 (CONST char *)&((struct pex_vars *)dm_vars)->mvars);
+      bu_vls_struct_item_named( &vls, Pex_vparse, argv[1],
+			 (CONST char *)&((struct pex_vars *)dm_vars)->mvars, ',');
       bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );
       bu_vls_from_argv( &vls, argc-2, argv+2 );
       bu_vls_putc( &vls, '\"' );
-      bu_structparse( &vls, Pex_vparse, (char *)&((struct pex_vars *)dm_vars)->mvars);
+      bu_struct_parse( &vls, Pex_vparse, (char *)&((struct pex_vars *)dm_vars)->mvars);
     }
 
     bu_vls_free(&vls);
