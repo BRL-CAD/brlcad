@@ -902,7 +902,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		if 0
 #			define	LIBFB_LIBES	LIBPKG -lMesaGL -lMesaGLU -lglut -L''XLIBDIR -lX11  -lXi -lXmu
 #		else
-#			define	LIBFB_LIBES	LIBPKG -lMesaGL -lMesaGLU -L''XLIBDIR -lX11  -lXi -lXmu -lpthread
+#			define	LIBFB_LIBES	LIBPKG -lGL -lGLU -L''XLIBDIR -lX11  -lXi -lXmu -lpthread
 #		endif
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #		define	LIBDM_OBJS	dm-X dm-ogl
@@ -910,7 +910,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		if 0
 #			define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl -lMesaGL -lMesaGLU -lglut -L''XLIBDIR -lXi -lXmu
 #		else
-#			define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl -lMesaGL -lMesaGLU -L''XLIBDIR -lXi -lXmu -lpthread
+#			define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl -lGL -lGLU -L''XLIBDIR -lXi -lXmu -lpthread
 #		endif
 #		define	MGED_OBJS	dm-ogl dm-X dm-generic
 #		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
