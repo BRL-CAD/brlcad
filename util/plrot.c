@@ -3,8 +3,9 @@
  *  
  *  Rotate, Translate, and Scale a Unixplot file.
  *
- *  Author -
+ *  Authors -
  *	Phillip Dykstra
+ *	Michael John Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -20,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include <math.h>
 #include "externs.h"
 #include "machine.h"
@@ -42,14 +44,16 @@ char	cbuf[48];		/* COPY and SKIP macro buffer */
 
 mat_t	rmat;			/* rotation matrix to be applied */
 double	scale;			/* scale factor to be applied */
-int	doscale;
-int	verbose;
-int	forced_space;			/* take center and space values from space option */
-point_t	forced_space_min, forced_space_max;	/* min and max coordinates */
 
-int	rpp;			/* indicates new center and space values */
-double	centx, centy, centz;	/* new center of rotation values */
-double	viewsize = 2.0;
+int	verbose;
+
+int	space_set;		/* current space has been explicitly set */
+point_t	space_min, space_max;	/* Current space */
+
+int	forced_space;		/* space is being forced */
+point_t	forced_space_min, forced_space_max;	/* forced space */
+
+int	rpp;			/* flag: indicates new center and space values */
 
 void	dofile(), copy_string();
 void	two_coord_out(), three_coord_out();
@@ -82,7 +86,7 @@ register char **argv;
 	while ( (c = getopt( argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:" )) != EOF )  {
 		switch( c )  {
 		case 'M':
-			/* model RPP! */
+			/* take model RPP from space() command */
 			rpp++;
 			break;
 		case 'g':
@@ -133,9 +137,6 @@ register char **argv;
 			for(i=0; i < 16; i++ )  {
 				rmat[i] = mtmp[i];
 			}
-fprintf(stderr, "rmat[0]=%g, rmat[1]=%g, rmat[3]=%g\n", rmat[0], rmat[1], rmat[3]);
-
-mat_print("rmat", rmat);
 			break;
 		case 'X':
 			mat_idn( tmp );
@@ -157,7 +158,20 @@ mat_print("rmat", rmat);
 			break;
 		case 's':
 			scale *= atof(optarg);
-			doscale++;
+			/*
+			 *  If rpp flag has already been set, defer
+			 *  application of scale until after the
+			 *  xlate to space-center, in model_rpp().
+			 *  Otherwise, do it here, in the sequence
+			 *  seen in the arg list.
+			 */
+			if( !rpp )  {
+				mat_idn( tmp );
+				tmp[15] = 1/scale;
+				mat_copy( m, rmat );
+				mat_mul( rmat, tmp, m );
+				scale = 1.0;
+			}
 			break;
 		case 'v':
 			verbose++;
@@ -168,12 +182,16 @@ mat_print("rmat", rmat);
 				&mtmp[3], &mtmp[4], &mtmp[5]);
 			VSET(forced_space_min, mtmp[0], mtmp[1], mtmp[2]);
 			VSET(forced_space_max, mtmp[3], mtmp[4], mtmp[5]);
-			forced_space++;
+
+			/* Write it now, in case input does not have one */
+			pdv_3space( stdout, forced_space_min, forced_space_max );
+			forced_space = 1;
 			break;
 		default:		/* '?' */
 			return(0);	/* Bad */
 		}
 	}
+
 
 	if( isatty(fileno(stdout))
 	  || (isatty(fileno(stdin)) && (optind >= argc)) )  {
@@ -183,6 +201,9 @@ mat_print("rmat", rmat);
 	return(1);		/* OK */
 }
 
+/*
+ *			M A I N
+ */
 main( argc, argv )
 int	argc;
 char	**argv;
@@ -196,7 +217,6 @@ char	**argv;
 
 	if( verbose )  {
 		mat_print("rmat", rmat);
-		fprintf(stderr, "scale=%g\n", scale);
 	}
 
 	if( optind < argc ) {
@@ -217,6 +237,9 @@ char	**argv;
 	}
 }
 
+/*
+ *			D O F I L E
+ */
 void
 dofile( fp )
 FILE	*fp;
@@ -273,114 +296,86 @@ FILE	*fp;
 			break;
 		case 's':
 			{
-				/* SPACE transform */
-				int	minx, miny, minz, maxx, maxy, maxz;
+				/*  2-D integer SPACE command.
+				 *  This is the only AT&T compatible space
+				 *  command;  be certain to only output
+				 *  with pl_space(), to ensure that output
+				 *  file is AT&T style if input was.
+				 */
+				long	minx, miny, maxx, maxy;
+				point_t	min, max;
 
 				minx = getshort(fp);
-
 				miny = getshort(fp);
 				maxx = getshort(fp);
 				maxy = getshort(fp);
-				minz = -1;
-				maxz = 1;
-				if( rpp ) {
-					short	v;
 
-					model_rpp( (double)minx, (double)miny, (double)minz,
-						(double)maxx, (double)maxy, (double)maxz );
+				VSET( min, minx, miny, -1 );
+				VSET( max, maxx, maxy, -1 );
+				model_rpp( min, max );
 
-					/* output viewsize cube */
-					v = viewsize/2.0 + 0.5;
-					pl_3space( stdout, -v, -v, -v, v, v, v );
-				} else if (forced_space)  {
-					pdv_3space(stdout, forced_space_min, forced_space_max);
-				} else {
-					pl_3space( stdout, minx, miny, -1, maxx, maxy, 1 );
-				}
+				minx = (long)floor( space_min[X] );
+				miny = (long)floor( space_min[Y] );
+				maxx = (long)ceil( space_max[X] );
+				maxy = (long)ceil( space_max[Y] );
+				if( minx < -32768 )  minx = -32768;
+				if( miny < -32768 )  miny = -32768;
+				if( maxx > 32767 )  maxx = 32767;
+				if( maxy > 32767 )  maxy = 32767;
+
+				pl_space( stdout, minx, miny, maxx, maxy );
 			}
 			break;
 		case 'S':
-			if( rpp ) {
-				int	minx, miny, minz, maxx, maxy, maxz;
-				short	v;
+			{
+				/* BRL-extended 3-D integer SPACE command */
+				point_t	min, max;
 
-				minx = getshort(fp);
-				miny = getshort(fp);
-				minz = getshort(fp);
-				maxx = getshort(fp);
-				maxy = getshort(fp);
-				maxz = getshort(fp);
+				min[X] = getshort(fp);
+				min[Y] = getshort(fp);
+				min[Z] = getshort(fp);
+				max[X] = getshort(fp);
+				max[Y] = getshort(fp);
+				max[Z] = getshort(fp);
 
-				model_rpp( (double)minx, (double)miny, (double)minz,
-					(double)maxx, (double)maxy, (double)maxz );
+				model_rpp( min, max );
 
-				/* output viewsize cube */
-				v = viewsize/2.0 + 0.5;
-				pl_3space( stdout, -v, -v, -v, v, v, v );
-			} else if (forced_space)  {
-				SKIP(6*2);
-				pdv_3space(stdout, forced_space_min, forced_space_max);
-			} else {
-				/* leave it unchanged */
-				putchar(c);
-				COPY(6*2);
+				pdv_3space( stdout, space_min, space_max );
 			}
-			/* Third option: rotate and rebound? */
-			/* 4th, universal space? */
 			break;
 		/* 2D and 3D IEEE */
 		case 'w':
 			{
-				/* SPACE transform */
-				double	minx, miny, minz, maxx, maxy, maxz;
+				/* BRL 2-D floating point SPACE command */
+				point_t	min, max;
 
-				minx = getdouble(fp);
-				miny = getdouble(fp);
-				maxx = getdouble(fp);
-				maxy = getdouble(fp);
-				minz = -1.0;
-				maxz = 1.0;
-				if( rpp ) {
-					double	v;
+				min[X] = getdouble(fp);
+				min[Y] = getdouble(fp);
+				min[Z] = -1.0;
+				max[X] = getdouble(fp);
+				max[Y] = getdouble(fp);
+				max[Z] = 1.0;
 
-					model_rpp( minx, miny, minz,
-						maxx, maxy, maxz );
+				model_rpp( min, max );
 
-					/* output viewsize cube */
-					v = viewsize/2.0;
-					pd_3space( stdout, -v, -v, -v, v, v, v );
-				} else if (forced_space)  {
-					pdv_3space(stdout, forced_space_min, forced_space_max);
-				} else {
-					pd_3space( stdout, minx, miny, -1.0, maxx, maxy, 1.0 );
-				}
+				pdv_3space( stdout, space_min, space_max );
 			}
 			break;
 		case 'W':
-			if( rpp ) {
-				double	minx, miny, minz, maxx, maxy, maxz;
-				double	v;
+			{
+				/* BRL 3-D floating point SPACE command */
+				point_t	min, max;
 
-				minx = getdouble(fp);
-				miny = getdouble(fp);
-				minz = getdouble(fp);
-				maxx = getdouble(fp);
-				maxy = getdouble(fp);
-				maxz = getdouble(fp);
+				min[X] = getdouble(fp);
+				min[Y] = getdouble(fp);
+				min[Z] = getdouble(fp);
+				max[X] = getdouble(fp);
+				max[Y] = getdouble(fp);
+				max[Z] = getdouble(fp);
 
-				model_rpp( minx, miny, minz,
-					maxx, maxy, maxz );
+				model_rpp( min, max );
 
-				/* output viewsize cube */
-				v = viewsize/2.0;
-				pd_3space( stdout, -v, -v, -v, v, v, v );
-			} else if (forced_space)  {
-				SKIP(6*8);
-				pdv_3space(stdout, forced_space_min, forced_space_max);
-			} else {
-				/* leave it unchanged */
-				putchar(c);
-				COPY(6*8);
+				pdv_3space( stdout, space_min, space_max );
 			}
 			break;
 		case 'i':
@@ -416,7 +411,9 @@ FILE	*fp;
 			three_dcoord_out( fp, rmat );
 			break;
 		default:
-			fprintf( stderr, "plrot: unrecognized command '%c' (0x%x)\n", c, c );
+			fprintf( stderr, "plrot: unrecognized command '%c' (0x%x)\n",
+				(isascii(c) && isprint(c)) ? c : '?',
+				c );
 			fprintf( stderr, "plrot: ftell = %d\n", ftell(fp) );
 			putchar( c );
 			break;
@@ -424,6 +421,9 @@ FILE	*fp;
 	}
 }
 
+/*
+ *			C O P Y _ S T R I N G
+ */
 void
 copy_string( fp )
 FILE	*fp;
@@ -434,29 +434,118 @@ FILE	*fp;
 		;
 }
 
-model_rpp( minx, miny, minz, maxx, maxy, maxz )
-double	minx, miny, minz, maxx, maxy, maxz;
+/*
+ *			R O T A T E _ B B O X
+ *
+ *  Transform a bounding box (RPP) by the given 4x4 matrix.
+ *  There are 8 corners to the bounding RPP.
+ *  Each one needs to be transformed and min/max'ed.
+ *  This is not minimal, but does fully contain any internal object,
+ *  using an axis-aligned RPP.
+ */
+void
+rotate_bbox( omin, omax, mat, imin, imax )
+point_t		omin;
+point_t		omax;
+CONST mat_t	mat;
+CONST point_t	imin;
+CONST point_t	imax;
 {
-	double	dx, dy, dz;
+	point_t		rmin, rmax;
+	point_t		pt;
 
-	centx = (maxx + minx) / 2.0;
-	centy = (maxy + miny) / 2.0;
-	centz = (maxz + minz) / 2.0;
+	MAT4X3PNT( rmin, mat, imin );
+	MAT4X3PNT( rmax, mat, imax );
 
-	dx = maxx - minx;
-	dy = maxy - miny;
-	dz = maxz - minz;
-	viewsize = sqrt( dx*dx + dy*dy + dz*dz );
+	VSET( omin, rmin[X], rmin[Y], rmin[Z] );
+	VMOVE( omax, omin );
 
-	if( verbose )  {
-		fprintf(stderr, "space (%g, %g, %g) (%g, %g, %g)\n",
-			minx, miny, minz,
-			maxx, maxy, maxz);
-		fprintf(stderr, "  center=(%g, %g, %g), size=%g\n",
-			centx, centy, centz, viewsize);
+	VSET( pt, rmax[X], rmin[Y], rmin[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmin[X], rmax[Y], rmin[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmax[X], rmax[Y], rmin[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmin[X], rmin[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmax[X], rmin[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmin[X], rmax[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmax[X], rmax[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+}
+
+/*
+ *			M O D E L _ R P P
+ *
+ *  Process a space command.
+ *  Behavior depends on setting of several flags.
+ *
+ *  Implicit Returns -
+ *	In all cases, sets space_min and space_max.
+ */
+model_rpp( min, max )
+CONST point_t	min, max;
+{
+
+	if( space_set )  {
+		fprintf(stderr, "plrot:  additional SPACE command ignored\n");
+		fprintf(stderr, "got: space (%g, %g, %g) (%g, %g, %g)\n",
+			V3ARGS(min), V3ARGS(max) );
+		fprintf(stderr, "still using: space (%g, %g, %g) (%g, %g, %g)\n",
+			V3ARGS(space_min), V3ARGS(space_max) );
+		return 0;
 	}
 
-	doscale++;
+	if( rpp )  {
+		point_t	rot_center;		/* center of rotation */
+		mat_t	xlate;
+		mat_t	resize;
+		mat_t	t1, t2;
+
+		VADD2SCALE( rot_center, min, max, 0.5 );
+
+		/* Create the matrix which encodes this */
+		mat_idn( xlate );
+		MAT_DELTAS( xlate, -rot_center[X], -rot_center[Y], -rot_center[Z] );
+		mat_idn( resize );
+		resize[15] = 1/scale;
+		mat_mul( t1, resize, xlate );
+		mat_mul( t2, rmat, t1 );
+		mat_copy( rmat, t2 );
+		if( verbose )  {
+			mat_print("rmat", rmat);
+		}
+
+		/* re-bound the space() rpp after rotating & scaling it */
+		rotate_bbox( space_min, space_max, rmat, min, max );
+		space_set = 1;
+	} else {
+		VMOVE( space_min, min );
+		VMOVE( space_max, max );
+		space_set = 1;
+	}
+
+	if( forced_space )  {
+		/* Put forced space back */
+		VMOVE( space_min, forced_space_min );
+		VMOVE( space_max, forced_space_max );
+		space_set = 1;
+	}
+
+	if( verbose )  {
+		fprintf(stderr, "got: space (%g, %g, %g) (%g, %g, %g)\n",
+			V3ARGS(min), V3ARGS(max) );
+		fprintf(stderr, "put: space (%g, %g, %g) (%g, %g, %g)\n",
+			V3ARGS(space_min), V3ARGS(space_max) );
+	}
 
 	return( 1 );
 }
@@ -474,12 +563,6 @@ mat_t	m;
 	p1[0] = getshort(fp);	/* get X */
 	p1[1] = getshort(fp);	/* and Y */
 	p1[2] = 0;		/* no Z  */
-
-	if( doscale ) {
-		p1[0] = (p1[0] - centx) * scale;
-		p1[1] = (p1[1] - centy) * scale;
-		p1[2] = (p1[2] - centz) * scale;
-	}
 
 	MAT4X3PNT( p2, m, p1 );
 
@@ -499,12 +582,6 @@ mat_t	m;
 	p1[0] = getshort(fp);	/* get X */
 	p1[1] = getshort(fp);	/* and Y */
 	p1[2] = getshort(fp);	/* and Z */
-
-	if( doscale ) {
-		p1[0] = (p1[0] - centx) * scale;
-		p1[1] = (p1[1] - centy) * scale;
-		p1[2] = (p1[2] - centz) * scale;
-	}
 
 	MAT4X3PNT( p2, m, p1 );
 
@@ -526,12 +603,6 @@ mat_t	m;
 	ntohd( p1, buf, 2 );
 	p1[2] = 0;		/* no Z  */
 
-	if( doscale ) {
-		p1[0] = (p1[0] - centx) * scale;
-		p1[1] = (p1[1] - centy) * scale;
-		p1[2] = (p1[2] - centz) * scale;
-	}
-
 	MAT4X3PNT( p2, m, p1 );
 
 	htond( buf, p2, 3 );
@@ -550,16 +621,8 @@ mat_t	m;
 	fread( buf, 1, 3*8, fp );
 	ntohd( p1, buf, 3 );
 
-/*fprintf( stderr, "Before [%g %g %g %g]\n", p1[0], p1[1], p1[2], p1[3] );*/
-	if( doscale ) {
-		p1[0] = (p1[0] - centx) * scale;
-		p1[1] = (p1[1] - centy) * scale;
-		p1[2] = (p1[2] - centz) * scale;
-	}
-
 	MAT4X3PNT( p2, m, p1 );
 
-/*fprintf( stderr, "After [%g %g %g %g]\n", p2[0], p2[1], p2[2], p2[3] );*/
 	htond( buf, p2, 3 );
 	fwrite( buf, 1, 3*8, stdout );
 }
@@ -589,4 +652,3 @@ FILE	*fp;
 	ntohd( &d, buf, 1 );
 	return( d );
 }
-
