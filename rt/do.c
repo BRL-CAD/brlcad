@@ -499,6 +499,10 @@ register struct rt_i	*rtip;
 		rt_log("rt_gettrees(%s) FAILED\n", objtab[0]);
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	rt_log("GETTREE: %s\n", outbuf);
+	if(rdebug&RDEBUG_STATS)  {
+		/* Print additional statistics */
+		rt_pr_lock_stats();
+	}
 
 	rt_log("Additional dynamic memory used=%d. bytes\n",
 		sbrk(0)-beginptr );
