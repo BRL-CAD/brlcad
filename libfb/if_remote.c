@@ -66,7 +66,8 @@ _LOCAL_ int	rem_dopen(),
 		rem_cmwrite(),
 		rem_window_set(),
 		rem_zoom_set(),
-		rem_cmemory_addr();
+		rem_cmemory_addr(),
+		rem_help();
 
 FBIO remote_interface =
 		{
@@ -84,10 +85,11 @@ FBIO remote_interface =
 		fb_null,			/* curs_set		*/
 		rem_cmemory_addr,
 		fb_null,			/* cursor_move_screen_addr */
+		rem_help,
 		"Remote Device Interface",	/* should be filled in	*/
 		1024,				/* " */
 		1024,				/* " */
-		"*remote*",
+		"host:[dev]",
 		512,
 		512,
 		-1,
@@ -353,15 +355,32 @@ ColorMap	*cmap;
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
 
+
+_LOCAL_ int
+rem_help( ifp )
+FBIO	*ifp;
+{
+	char	buf[1*NET_LONG_LEN+1];
+
+	fb_log( "Remote Interface:\n" );
+
+	/* Send Command */
+	(void)fbputlong( 0L, &buf[0*NET_LONG_LEN] );
+	pkg_send( MSG_FBHELP, buf, 1*NET_LONG_LEN, PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
+}
+
 /*
- * This is where we come on
- * asynchronous error messages.
+ *  This is where we come on asynchronous error or log messages.
+ *  We are counting on the remote machine now to prefix his own
+ *  name to messages, so we don't touch them ourselves.
  */
 static void
 pkgerror(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	fb_log( "remote: %s", buf );
+	fb_log( "%s", buf );
 	free(buf);
 }
