@@ -122,14 +122,11 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-    if (argc > 2) {
-	Tcl_SetResult(interp, "too many arguments: should be \"sliders \
-?onVal?\"", TCL_STATIC);
-	return TCL_ERROR;
-    }
-    
-    if (argc < 2) {
-	Tcl_SetResult(interp, scroll_enabled ? "1" : "0", TCL_STATIC);
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
+
+    if (argc == 1) {
+	Tcl_AppendResult(interp, scroll_enabled ? "1" : "0", (char *)NULL);
 	return TCL_OK;
     }
 
@@ -257,21 +254,25 @@ int y_top;
 	      break;
 	    case 5:
 	      if(second_menu)
-		rt_log("scroll_display: 2nd scroll menu is hosed\n");
+		Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
+				 (char *)NULL);
 	      else
 		f = rate_rotate[Y];
 	      break;
 	    case 6:
 	      if(second_menu)
-		rt_log("scroll_display: 2nd scroll menu is hosed\n");
+		Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
+				 (char *)NULL);
 	      else
 		f = rate_rotate[Z];
 	      break;
 	    default:
 	      if(second_menu)
-		rt_log("scroll_display: 2nd scroll menu is hosed\n");
+		Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
+				 (char *)NULL);
 	      else
-		rt_log("scroll_display: first scroll menu is hosed\n");
+		Tcl_AppendResult(interp, "scroll_display: first scroll menu is hosed\n",
+				 (char *)NULL);
 	    }
 
 	    if( f >= 0 )

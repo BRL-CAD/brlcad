@@ -127,10 +127,8 @@ char **argv;
 	static char def_name[] = "_vdraw_sol_";
 	static int real_flag;
 
-	if (argc < 2) {
-		Tcl_SetResult(interp, "vdraw: need a function name\n", TCL_STATIC);
-		return TCL_ERROR;
-	}
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	if (!initialized){
 		if (RT_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
@@ -153,7 +151,7 @@ char **argv;
 	switch ( argv[1][0] ) {
 	case 'w': /*write*/
 		if (argc < 7){
-			Tcl_SetResult(interp, "vdraw: not enough args\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: not enough args\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argv[2][0] == 'n') { /* next */
@@ -180,7 +178,7 @@ char **argv;
 			cp = vp;
 			index = vp->nused;
 		} else if (sscanf(argv[2], "%d", &uind)<1) {
-			Tcl_SetResult(interp, "vdraw: write index not an integer\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: write index not an integer\n", (char *)NULL);
 			return TCL_ERROR;
 		} else {
 			/* uind holds user-specified index */
@@ -199,14 +197,14 @@ char **argv;
 
 			if (RT_LIST_IS_HEAD(vp,&head)){
 				if (uind > 0){
-					Tcl_SetResult(interp, "vdraw: write out of range\n", TCL_STATIC);
+					Tcl_AppendResult(interp, "vdraw: write out of range\n", (char *)NULL);
 					return TCL_ERROR;
 				}
 				RT_GET_VLIST(vp);
 				RT_LIST_INSERT(&head,&(vp->l));
 			}
 			if (uind > vp->nused) {
-				Tcl_SetResult(interp, "vdraw: write out of range\n", TCL_STATIC);
+				Tcl_AppendResult(interp, "vdraw: write out of range\n", (char *)NULL);
 				return TCL_ERROR;
 			}
 			cp = vp;
@@ -214,7 +212,7 @@ char **argv;
 		}
 
 		if(sscanf(argv[3],"%d",&(cp->cmd[index])) < 1){
-			Tcl_SetResult(interp, "vdraw: cmd not an integer\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		cp->pt[index][0] = atof(argv[4]);
@@ -228,11 +226,11 @@ char **argv;
 		break;
 	case 'i': /*insert*/
 		if (argc < 7){
-			Tcl_SetResult(interp, "vdraw: not enough args", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: not enough args", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (sscanf(argv[2], "%d", &uind)<1) {
-			Tcl_SetResult(interp, "vdraw: insert index not an integer\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: insert index not an integer\n", (char *)NULL);
 			return TCL_ERROR;
 		} 
 
@@ -250,14 +248,14 @@ char **argv;
 
 		if (RT_LIST_IS_HEAD(vp,&head)){
 			if (uind > 0){
-				Tcl_SetResult(interp, "vdraw: insert out of range\n", TCL_STATIC);
+				Tcl_AppendResult(interp, "vdraw: insert out of range\n", (char *)NULL);
 				return TCL_ERROR;
 			}
 			RT_GET_VLIST(vp);
 			RT_LIST_INSERT(&head,&(vp->l));
 		}
 		if (uind > vp->nused) {
-			Tcl_SetResult(interp, "vdraw: insert out of range\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: insert out of range\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 
@@ -284,7 +282,7 @@ char **argv;
 			VMOVE(vp->pt[i],vp->pt[i-1]);
 		}
 		if(sscanf(argv[3],"%d",&(vp->cmd[index])) < 1){
-			Tcl_SetResult(interp, "vdraw: cmd not an integer\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		vp->pt[index][0] = atof(argv[4]);
@@ -294,7 +292,7 @@ char **argv;
 		break;
 	case 'd': /*delete*/
 		if (argc < 3){
-			Tcl_SetResult(interp, "vdraw: not enough args\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: not enough args\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argv[2][0] == 'a') {
@@ -315,7 +313,7 @@ char **argv;
 			return TCL_OK;
 		}
 		if (sscanf(argv[2], "%d", &uind)<1) {
-			Tcl_SetResult(interp, "vdraw: delete index not an integer\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: delete index not an integer\n", (char *)NULL);
 			return TCL_ERROR;
 		}  
 
@@ -332,7 +330,7 @@ char **argv;
 		}
 		
 		if (uind >= vp->nused){
-			Tcl_SetResult(interp, "vdraw: delete out of range\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: delete out of range\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 
@@ -360,7 +358,7 @@ char **argv;
 
 		if (vp->nused <= 0) {
 			/* this shouldn't happen */
-			Tcl_SetResult(interp, "vdraw: vlist corrupt", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: vlist corrupt", (char *)NULL);
 			return TCL_ERROR;
 		}
 		vp->nused--;
@@ -369,18 +367,18 @@ char **argv;
 		break;
 	case 'r': /*read*/
 		if (argc < 3) {
-			Tcl_SetResult(interp, "vdraw: need index to read\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: need index to read\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argv[2][0] == 'c') {
 			/* read color of current solid */
 			sprintf(result_string, "%lx", my_rgb);
-			Tcl_SetResult(interp, result_string, TCL_VOLATILE);
+			Tcl_AppendResult(interp, result_string, (char *)NULL);
 			return TCL_OK;
 		}
 		if (argv[2][0] == 'n') {
 			/*read name of currently open solid*/
-			Tcl_SetResult(interp, vdraw_name, TCL_VOLATILE);
+			Tcl_AppendResult(interp, vdraw_name, (char *)NULL);
 			return TCL_OK;
 		}
 		if (argv[2][0] == 'l') {
@@ -392,11 +390,11 @@ char **argv;
 				vp = RT_LIST_PNEXT(rt_vlist, vp);
 			}
 			sprintf(result_string, "%d", length);
-			Tcl_SetResult(interp, result_string, TCL_VOLATILE);
+			Tcl_AppendResult(interp, result_string, (char *)NULL);
 			return TCL_OK;
 		}
 		if (sscanf(argv[2], "%d", &uind) < 1) {
-			Tcl_SetResult(interp, "vdraw: read index not an integer\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: read index not an integer\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 
@@ -413,14 +411,14 @@ char **argv;
 		}
 		
 		if (uind >= vp->nused){
-			Tcl_SetResult(interp, "vdraw: read out of range\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: read out of range\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 
 		sprintf(result_string, "%d %.12e %.12e %.12e", 
 			vp->cmd[uind], vp->pt[uind][0],
 			vp->pt[uind][1],vp->pt[uind][2]);
-		Tcl_SetResult(interp, result_string, TCL_VOLATILE);
+		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 		break;
 	case 's': /*send*/
@@ -431,7 +429,7 @@ char **argv;
 		}
 		if (real_flag){
 			/* solid exists - don't kill */
-			Tcl_SetResult(interp, "-1", TCL_STATIC);
+			Tcl_AppendResult(interp, "-1", (char *)NULL);
 			return TCL_OK;
 		}
 		rt_vls_init(&killstr);
@@ -442,12 +440,12 @@ char **argv;
 		index = invent_solid( vdraw_name, &head, my_rgb, 1);
 		sprintf(result_string,"%d",index);
 		/* 0 means OK, -1 means conflict with real solid name */
-		Tcl_SetResult(interp, result_string, TCL_VOLATILE);
+		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 		break;
 	case 'p':  /* params */
 		if (argc < 4) {
-			Tcl_SetResult(interp, "vdraw: need params to set\n", TCL_STATIC);
+			Tcl_AppendResult(interp, "vdraw: need params to set\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argv[2][0] == 'c'){
@@ -467,7 +465,7 @@ char **argv;
 				uind++;
 			}
 			sprintf(result_string, "%d", uind);
-			Tcl_SetResult(interp, result_string, TCL_VOLATILE);
+			Tcl_AppendResult(interp, result_string, (char *)NULL);
 			return TCL_OK;
 		}
 		if (argv[2][0]=='2'){
@@ -479,7 +477,7 @@ char **argv;
 				uind ++;
 			}
 			sprintf(result_string, "chunk %d nused %d", index, vp->nused);
-			Tcl_SetResult(interp, result_string, TCL_VOLATILE);
+			Tcl_AppendResult(interp, result_string, (char *)NULL);
 			return TCL_OK;
 		}
 		break;
@@ -500,7 +498,7 @@ char **argv;
 			my_rgb = DEF_COLOR;
 			/* new pseudo-solid created */
 			strncpy(vdraw_name, temp_name, MAX_NAME);
-			Tcl_SetResult(interp, "1", TCL_STATIC);
+			Tcl_AppendResult(interp, "1", (char *)NULL);
 			return TCL_OK;
 		} else {
 			found = 0;
@@ -517,7 +515,7 @@ char **argv;
 			}
 			if (!found) {
 				/* solid exists but is not displayed */
-				Tcl_SetResult(interp, "-1", TCL_VOLATILE);
+				Tcl_AppendResult(interp, "-1", (char *)NULL);
 				return TCL_OK;
 			}
 			/* release old list */
@@ -531,12 +529,12 @@ char **argv;
 
 			/* existing displayed solid used */
 			strncpy(vdraw_name, temp_name, MAX_NAME);
-			Tcl_SetResult(interp, "0", TCL_STATIC);
+			Tcl_AppendResult(interp, "0", (char *)NULL);
 			return TCL_OK;
 		}
 		break;
 	default:
-		Tcl_SetResult(interp, "vdraw: see drawline.c for help\n", TCL_STATIC);
+		Tcl_AppendResult(interp, "vdraw: see drawline.c for help\n", (char *)NULL);
 		return TCL_ERROR;
 		break;
 	}
@@ -555,9 +553,12 @@ char **argv;
 	char result_string[90];
 	point_t pos;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	MAT_DELTAS_GET_NEG(pos, toViewcenter);
 	sprintf(result_string,"%.12e %.12e %.12e", pos[0], pos[1], pos[2]);
-	Tcl_SetResult(interp, result_string, TCL_VOLATILE);
+	Tcl_AppendResult(interp, result_string, (char *)NULL);
 	return TCL_OK;
 
 }
@@ -572,8 +573,11 @@ char **argv;
 	char result_string[90];
 	point_t pos;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	sprintf(result_string,"%.12e", Viewscale);
-	Tcl_SetResult(interp, result_string, TCL_VOLATILE);
+	Tcl_AppendResult(interp, result_string, (char *)NULL);
 	return TCL_OK;
 
 }

@@ -150,13 +150,17 @@ static void
 print_solid(vp, depth)
 void	*vp;
 int	depth;
-
 {
     struct sol_name_dist	*sol = vp;
+    struct rt_vls tmp_vls;
 
     RT_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
-    rt_log("solid %s at distance %g along ray\n",
-	sol -> name, sol -> dist);
+
+    rt_vls_init(&tmp_vls);
+    rt_vls_printf(&tmp_vls, "solid %s at distance %g along ray\n",
+		  sol -> name, sol -> dist);
+    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+    rt_vls_free(&tmp_vls);
 }
 
 /*
@@ -439,9 +443,9 @@ int		full_path;
 	
     if ((rtip = rt_dirbuild(dbip -> dbi_filename, (char *) 0, 0)) == RTI_NULL)
     {
-	rt_log("Cannot build directory for file '%s'\n",
-	    dbip -> dbi_filename);
-	return ((char **) 0);
+      Tcl_AppendResult(interp, "Cannot build directory for file '",
+		       dbip -> dbi_filename, "'\n", (char *)NULL);
+      return ((char **) 0);
     }
     rtip -> useair = 1;
     /*

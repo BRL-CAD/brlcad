@@ -70,7 +70,9 @@ char *p_arb3pt[] = {
  *
  */
 int
-f_3ptarb( argc, argv )
+f_3ptarb( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -87,31 +89,41 @@ char	**argv;
 	struct rt_external	external;
 	struct rt_arb_internal	*aip;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	/* interupts */
 	(void)signal( SIGINT, sig2 );
 
 	/* get the arb name */
 	if( argc < 2 ) {
-		rt_log("Enter name for this arb: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name for this arb: ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
-		rt_log("%s:  already exists\n", argv[1]);
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, argv[1], ":  already exists\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( (int)strlen(argv[1]) >= NAMESIZE ) {
-		rt_log("Names are limited to %d charscters\n",NAMESIZE-1);
-		return CMD_BAD;
+	  struct rt_vls tmp_str;
+
+	  rt_vls_init(&tmp_str);
+	  rt_vls_printf(&tmp_str, "Names are limited to %d characters\n",
+			NAMESIZE-1);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_str), (char *)NULL);
+	  rt_vls_free(&tmp_str);
+
+	  return TCL_ERROR;
 	}
 	strcpy( name , argv[1] );
 
 	/* read the three points */
 	promp = &p_arb3pt[0];
 	if( argc < 11 ) {
-		rt_log("%s", promp[argc-2]);
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-2], (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	/* preliminary calculations to check input so far */
@@ -122,32 +134,35 @@ char	**argv;
 	VCROSS(norm, vec1, vec2);
 	length = MAGNITUDE( norm );
 	if(length == 0.0) {
-		rt_log("points are colinear\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "points are colinear\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	VSCALE(norm, norm, 1.0/length);
 
 	if( argc < 12 ) {
-		rt_log("Enter coordinate to solve for (x, y, or z): ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR,
+			   "Enter coordinate to solve for (x, y, or z): ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	switch( argv[11][0] ) {
 
 	case 'x':
 		if(norm[0] == 0.0) {
-			rt_log("X not unique in this face\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "X not unique in this face\n", (char *)NULL);
+		  return TCL_ERROR;
 		}
 		solve = X;
 
 		if( argc < 13 ) {			
-			rt_log("Enter the Y, Z coordinate values: ");
-			return CMD_MORE;
+		  Tcl_AppendResult(interp, MORE_ARGS_STR,
+				   "Enter the Y, Z coordinate values: ", (char *)NULL);
+		  return TCL_ERROR;
 		}
 		if( argc < 14 ) {
-			rt_log("Enter the Z coordinate value: ");
-			return CMD_MORE;
+		  Tcl_AppendResult(interp, MORE_ARGS_STR,
+				   "Enter the Z coordinate value: ", (char *)NULL);
+		  return TCL_ERROR;
 		}
 		pt4[0] = atof( argv[12] ) * local2base;
 		pt4[1] = atof( argv[13] ) * local2base;
@@ -155,18 +170,20 @@ char	**argv;
 
 	case 'y':
 		if(norm[1] == 0.0) {
-			rt_log("Y not unique in this face\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "Y not unique in this face\n", (char *)NULL);
+		  return TCL_ERROR;
 		}
 		solve = Y;
 
 		if ( argc < 13 ) {
-			rt_log("Enter the X, Z coordinate values: ");
-			return CMD_MORE;
+		  Tcl_AppendResult(interp, MORE_ARGS_STR,
+				   "Enter the X, Z coordinate values: ", (char *)NULL);
+		  return TCL_ERROR;
 		}
 		if ( argc < 14 ) {
-			rt_log("Enter the Z coordinate value: ");
-			return CMD_MORE;
+		  Tcl_AppendResult(interp, MORE_ARGS_STR,
+				   "Enter the Z coordinate value: ", (char *)NULL);
+		  return TCL_ERROR;
 		}
 
 		pt4[0] = atof( argv[12] ) * local2base;
@@ -175,37 +192,40 @@ char	**argv;
 
 	case 'z':
 		if(norm[2] == 0.0) {
-			rt_log("Z not unique in this face\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "Z not unique in this face\n", (char *)NULL);
+		  return TCL_ERROR;
 		}
 		solve = Z;
 
 		if ( argc < 13 ) {
-			rt_log("Enter the X, Y coordinate values: ");
-			return CMD_MORE;
+		  Tcl_AppendResult(interp, MORE_ARGS_STR,
+				   "Enter the X, Y coordinate values: ", (char *)NULL);
+		  return TCL_ERROR;
 		}
 		if ( argc < 14 ) {
-			rt_log("Enter the Y coordinate value: ");
-			return CMD_MORE;
+		  Tcl_AppendResult(interp, MORE_ARGS_STR,
+				   "Enter the Y coordinate value: ", (char *)NULL);
+		  return TCL_ERROR;
 		}
 		pt4[0] = atof( argv[12] ) * local2base;
 		pt4[1] = atof( argv[13] ) * local2base;
 		break;
 
 	default:
-		rt_log("coordinate must be x, y, or z\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "coordinate must be x, y, or z\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 
 	if ( argc < 15 ) {
-		rt_log("Enter thickness for this arb: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR,
+			   "Enter thickness for this arb: ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( (thick = (atof( argv[14] ))) == 0.0 ) {
-		rt_log("thickness = 0.0\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "thickness = 0.0\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	RT_INIT_DB_INTERNAL( &internal );
@@ -260,9 +280,8 @@ char	**argv;
 		break;
 
 		default:
-			rt_log("bad coordinate to solve for\n");
-			return CMD_BAD;
-
+		  Tcl_AppendResult(interp, "bad coordinate to solve for\n", (char *)NULL);
+		  return TCL_ERROR;
 	}
 
 	/* calculate the remaining 4 vertices */
@@ -273,9 +292,9 @@ char	**argv;
 	/* Don't use local2base here, coordinates are already converted to mm above */
 	if( rt_functab[internal.idb_type].ft_export( &external, &internal, (double)1.0 ) < 0 )
 	{
-		rt_log( "f_3ptarb: export failure\n" );
-		rt_functab[internal.idb_type].ft_ifree( &internal );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "f_3ptarb: export failure\n", (char *)NULL);
+	  rt_functab[internal.idb_type].ft_ifree( &internal );
+	  return TCL_ERROR;
 	}
 	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
@@ -286,20 +305,18 @@ char	**argv;
 	if( (dp = db_diradd( dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
 	    db_alloc( dbip, dp, 1 ) < 0 ) {
 	    	db_free_external( &external );
-	    	ALLOC_ERR;
-		return CMD_BAD;
+	    	TCL_ALLOC_ERR_return;
 	}
 
 	if (db_put_external( &external, dp, dbip ) < 0 ) 
 	{
 		db_free_external( &external );
-		WRITE_ERR;
-		return CMD_BAD;
+		TCL_WRITE_ERR_return;
 	}
 	db_free_external( &external );
 
 	/* draw the "made" solid */
-	return f_edit( 2, argv ); /* depends on solid name being in argv[1] */
+	return f_edit( clientData, interp, 2, argv ); /* depends on solid name being in argv[1] */
 }
 
 
@@ -318,7 +335,9 @@ char *p_rfin[] = {
  *		4. thickness
  */
 int
-f_rfarb( argc, argv )
+f_rfarb(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -335,42 +354,50 @@ char	**argv;
 	struct rt_external	external;
 	struct rt_arb_internal	*aip;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	/* interupts */
 	(void)signal( SIGINT, sig2 );
 
 	/* get the arb name */
 	if( argc < 2 ) {
-		rt_log("Enter name for this arb: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name for this arb: ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
-		rt_log("%s:  already exists\n", argv[1]);
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, argv[1], ":  already exists\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( (int)strlen(argv[1]) >= NAMESIZE ) {
-		rt_log("Names are limited to %d charscters\n",NAMESIZE-1);
-		return CMD_BAD;
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "Names are limited to %d charscters\n",NAMESIZE-1);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	  return TCL_ERROR;
 	}
 	strcpy( name , argv[1] );
 
 	/* read the known point */
 	promp = &p_rfin[0];
 	if( argc < 5 ) {
-		rt_log("%s", promp[argc-2]);
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-2], (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if ( argc < 6 ) {
-		rt_log("Enter ROTATION angle (deg): ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter ROTATION angle (deg): ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	rota = atof( argv[5] ) * degtorad;
 
 	if ( argc < 7 ) {
-		rt_log("Enter FALL BACK angle (deg): ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter FALL BACK angle (deg): ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	fba = atof( argv[6] ) * degtorad;
@@ -381,27 +408,33 @@ char	**argv;
 	norm[2] = sin(fba);
 
 	for(i=0; i<3; i++) {
-		if( argc < 8+3*i ) {
-			rt_log("POINT %d...",i+2);
-			rt_log("Enter coordinate to solve for (x, y, or z): ");
-			return CMD_MORE;
-		}
+	  if( argc < 8+3*i ) {
+	    struct rt_vls tmp_vls;
 
-		switch( argv[7+3*i][0] ) {
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "POINT %d...\n",i+2);
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), MORE_ARGS_STR,
+			     "Enter coordinate to solve for (x, y, or z): ", (char *)NULL);
+	    return TCL_ERROR;
+	  }
+
+	  switch( argv[7+3*i][0] ) {
 		case 'x':
 			if(norm[0] == 0.0) {
-				rt_log("X not unique in this face\n");
-				return CMD_BAD;
+			  Tcl_AppendResult(interp, "X not unique in this face\n", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			solve[i] = X;
 
 			if( argc < 7+3*i+2 ) {
-				rt_log("Enter the Y, Z coordinate values: ");
-				return CMD_MORE;
+			  Tcl_AppendResult(interp, MORE_ARGS_STR,
+					   "Enter the Y, Z coordinate values: ", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			if( argc < 7+3*i+3 ) {
-				rt_log("Enter the Z coordinate value: ");
-				return CMD_MORE;
+			  Tcl_AppendResult(interp, MORE_ARGS_STR,
+					   "Enter the Z coordinate value: ", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			pt[i][0] = atof( argv[7+3*i+1] ) * local2base;
 			pt[i][1] = atof( argv[7+3*i+2] ) * local2base;
@@ -409,18 +442,20 @@ char	**argv;
 
 		case 'y':
 			if(norm[1] == 0.0) {
-				rt_log("Y not unique in this face\n");
-				return CMD_BAD;
+			  Tcl_AppendResult(interp, "Y not unique in this face\n", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			solve[i] = Y;
 
 			if( argc < 7+3*i+2 ) {
-				rt_log("Enter the X, Z coordinate values: ");
-				return CMD_MORE;
+			  Tcl_AppendResult(interp, MORE_ARGS_STR,
+					   "Enter the X, Z coordinate values: ", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			if( argc < 7+3*i+3 ) {
-				rt_log("Enter the Z coordinate value: ");							
-				return CMD_MORE;
+			  Tcl_AppendResult(interp, MORE_ARGS_STR,
+					   "Enter the Z coordinate value: ", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			pt[i][0] = atof( argv[7+3*i+1] ) * local2base;
 			pt[i][1] = atof( argv[7+3*i+2] ) * local2base;
@@ -428,36 +463,39 @@ char	**argv;
 
 		case 'z':
 			if(norm[2] == 0.0) {
-				rt_log("Z not unique in this face\n");
-				return CMD_BAD;
+			  Tcl_AppendResult(interp, "Z not unique in this face\n", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			solve[i] = Z;
 
 			if( argc < 7+3*i+2 ) {
-				rt_log("Enter the X, Y coordinate values: ");
-				return CMD_MORE;
+			  Tcl_AppendResult(interp, MORE_ARGS_STR,
+					   "Enter the X, Y coordinate values: ", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			if( argc < 7+3*i+3 ) {
-				rt_log("Enter the Y coordinate value: ");
-				return CMD_MORE;
+			  Tcl_AppendResult(interp, MORE_ARGS_STR,
+					   "Enter the Y coordinate value: ", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			pt[i][0] = atof( argv[7+3*i+1] ) * local2base;
 			pt[i][1] = atof( argv[7+3*i+2] ) * local2base;
 			break;
 
 		default:
-			rt_log("coordinate must be x, y, or z\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "coordinate must be x, y, or z\n", (char *)NULL);
+		  return TCL_ERROR;
 		}
 	}
 
 	if( argc < 8+3*3 ) {
-		rt_log("Enter thickness for this arb: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR,
+			   "Enter thickness for this arb: ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( (thick = (atof( argv[7+3*3] ))) == 0.0 ) {
-		rt_log("thickness = 0.0\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "thickness = 0.0\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	thick *= local2base;
 
@@ -507,7 +545,7 @@ char	**argv;
 			break;
 
 			default:
-				return CMD_BAD;
+			  return TCL_ERROR;
 		}
 	}
 
@@ -518,9 +556,9 @@ char	**argv;
 
 	if( rt_functab[internal.idb_type].ft_export( &external, &internal, local2base ) < 0 )
 	{
-		rt_log( "f_3ptarb: export failure\n" );
-		rt_functab[internal.idb_type].ft_ifree( &internal );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "f_3ptarb: export failure\n", (char *)NULL);
+	  rt_functab[internal.idb_type].ft_ifree( &internal );
+	  return TCL_ERROR;
 	}
 	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
@@ -532,20 +570,18 @@ char	**argv;
 	    db_alloc( dbip, dp, 1 ) < 0 )
 	    {
 	    	db_free_external( &external );
-	    	ALLOC_ERR;
-		return CMD_BAD;
+	    	TCL_ALLOC_ERR_return;
 	    }
 
 	if (db_put_external( &external, dp, dbip ) < 0 )
 	{
 		db_free_external( &external );
-		WRITE_ERR;
-		return CMD_BAD;
+		TCL_WRITE_ERR_return;
 	}
 	db_free_external( &external );
 
 	/* draw the "made" solid */
-	return f_edit( 2, argv );	/* depends on solid name being in argv[1] */
+	return f_edit( clientData, interp, 2, argv );	/* depends on solid name being in argv[1] */
 }
 
 /* ------------------------------ old way ------------------------------ */
@@ -684,9 +720,17 @@ register int *svec;	/* array of like points */
 		break;
 
 	default:
-		rt_log("solid: %s  bad number of unique vectors (%d)\n",
-			input.s.s_name, numuvec);
-		return(0);
+	  {
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "solid: %s  bad number of unique vectors (%d)\n",
+			  input.s.s_name, numuvec);
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
+
+	  return(0);
 	}
 	return( numuvec );
 }
@@ -825,9 +869,17 @@ register int *svec;	/* array of like points */
 		break;
 
 	default:
-		rt_log("rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
-			numuvec);
-		return(0);
+	  {
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
+			  numuvec);
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
+
+	  return(0);
 	}
 #if 0
 	rt_log("uvec: ");

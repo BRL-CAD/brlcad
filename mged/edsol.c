@@ -627,14 +627,14 @@ int arg;
 		case MENU_PIPE_NEXT_PT:
 			if( !es_pipept )
 			{
-				rt_log( "No Pipe Segment selected\n" );
-				return;
+			  Tcl_AppendResult(interp, "No Pipe Segment selected\n", (char *)NULL);
+			  return;
 			}
 			next = RT_LIST_NEXT( wdb_pipept, &es_pipept->l );
 			if( next->l.magic == RT_LIST_HEAD_MAGIC )
 			{
-				rt_log( "Current segment is the last\n" );
-				return;
+			  Tcl_AppendResult(interp, "Current segment is the last\n", (char *)NULL);
+			  return;
 			}
 			es_pipept = next;
 			sedraw = 1;
@@ -645,14 +645,14 @@ int arg;
 		case MENU_PIPE_PREV_PT:
 			if( !es_pipept )
 			{
-				rt_log( "No Pipe Segment selected\n" );
-				return;
+			  Tcl_AppendResult(interp, "No Pipe Segment selected\n", (char *)NULL);
+			  return;
 			}
 			prev = RT_LIST_PREV( wdb_pipept, &es_pipept->l );
 			if( prev->l.magic == RT_LIST_HEAD_MAGIC )
 			{
-				rt_log( "Current segment is the first\n" );
-				return;
+			  Tcl_AppendResult(interp, "Current segment is the first\n", (char *)NULL);
+			  return;
 			}
 			es_pipept = prev;
 			sedraw = 1;
@@ -666,9 +666,9 @@ int arg;
 		case MENU_PIPE_MOV_PT:
 			if( !es_pipept )
 			{
-				rt_log( "No Pipe Segment selected\n" );
-				es_edflag = IDLE;
-				return;
+			  Tcl_AppendResult(interp, "No Pipe Segment selected\n", (char *)NULL);
+			  es_edflag = IDLE;
+			  return;
 			}
 			es_menu = arg;
 			es_edflag = ECMD_PIPE_PT_MOVE;
@@ -678,9 +678,9 @@ int arg;
 		case MENU_PIPE_PT_RADIUS:
 			if( !es_pipept )
 			{
-				rt_log( "No Pipe Segment selected\n" );
-				es_edflag = IDLE;
-				return;
+			  Tcl_AppendResult(interp, "No Pipe Segment selected\n", (char *)NULL);
+			  es_edflag = IDLE;
+			  return;
 			}
 			es_menu = arg;
 			es_edflag = PSCALE;
@@ -949,7 +949,7 @@ static void
 ars_ed( arg )
 int arg;
 {
-	rt_log("NOT IMPLEMENTED YET\n");
+  Tcl_AppendResult(interp,"NOT IMPLEMENTED YET\n", (char *)NULL);
 }
 
 
@@ -984,8 +984,8 @@ int arg;
 {
 	switch(arg)  {
 	default:
-		rt_log("nmg_ed: undefined menu event?\n");
-		return;
+	  Tcl_AppendResult(interp, "nmg_ed: undefined menu event?\n", (char *)NULL);
+	  return;
 	case ECMD_NMG_EPICK:
 	case ECMD_NMG_EMOVE:
 	case ECMD_NMG_ESPLIT:
@@ -993,8 +993,8 @@ int arg;
 		break;
 	case ECMD_NMG_EDEBUG:
 		if( !es_eu )  {
-			rt_log("nmg_ed: no edge selected yet\n");
-			return;
+		  Tcl_AppendResult(interp, "nmg_ed: no edge selected yet\n", (char *)NULL);
+		  return;
 		}
 
 		nmg_pr_fu_around_eu( es_eu, &mged_tol );
@@ -1028,14 +1028,23 @@ int arg;
 		return;
 	case ECMD_NMG_FORW:
 		if( !es_eu )  {
-			rt_log("nmg_ed: no edge selected yet\n");
-			return;
+		  Tcl_AppendResult(interp, "nmg_ed: no edge selected yet\n", (char *)NULL);
+		  return;
 		}
 		NMG_CK_EDGEUSE(es_eu);
 		es_eu = RT_LIST_PNEXT_CIRC(edgeuse, es_eu);
-		rt_log("edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n", es_eu,
-			V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
-			V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+
+		{
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n",
+				es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+				V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+		}
+
 		sedraw = 1;
 		return;
 	case ECMD_NMG_BACK:
@@ -1045,9 +1054,18 @@ int arg;
 		}
 		NMG_CK_EDGEUSE(es_eu);
 		es_eu = RT_LIST_PPREV_CIRC(edgeuse, es_eu);
-		rt_log("edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n", es_eu,
-			V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
-			V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+
+		{
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n",
+				es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+				V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+		}
+
 		sedraw = 1;
 		return;
 	case ECMD_NMG_RADIAL:
@@ -1057,9 +1075,18 @@ int arg;
 		}
 		NMG_CK_EDGEUSE(es_eu);
 		es_eu = es_eu->eumate_p->radial_p;
-		rt_log("edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n", es_eu,
-			V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
-			V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+
+		{
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n",
+				es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+				V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+		}
+
 		sedraw = 1;
 		return;
 	case ECMD_NMG_LEXTRU:
@@ -1099,13 +1126,14 @@ int arg;
 
 			if( !wire_loop_count )
 			{
-				rt_log( "No sketch (wire loop) to extrude\n" );
-				return;
+			  Tcl_AppendResult(interp, "No sketch (wire loop) to extrude\n",
+					   (char *)NULL);
+			  return;
 			}
 
 			if( wire_loop_count > 1 )
 			{
-				rt_log( "Too many wire loops!!! Don't know which to extrude!!\n" );
+			  Tcl_AppendResult(interp, "Too many wire loops!!! Don't know which to extrude!!\n", (char *)NULL);
 				return;
 			}
 
@@ -1120,8 +1148,9 @@ int arg;
 
 			if( area < 0.0 )
 			{
-				rt_log( "Cannot extrude loop with no area\n" );
-				return;
+			  Tcl_AppendResult(interp, "Cannot extrude loop with no area\n",
+					   (char *)NULL);
+			  return;
 			}
 
 			/* Check if loop crosses itself */
@@ -1160,22 +1189,34 @@ int arg;
 					if( (ret_val=rt_isect_lseg3_lseg3( dist, v1->vg_p->coord, edge1,
 						v2->vg_p->coord, edge2, &mged_tol )) > (-1) )
 					{
-						rt_log( "Loop crosses itself, cannot extrude\n" );
-						rt_log( "edge1: pt=( %g %g %g ), dir=( %g %g %g)\n",
-							V3ARGS( v1->vg_p->coord ), V3ARGS( edge1 ) );
-						rt_log( "edge2: pt=( %g %g %g ), dir=( %g %g %g)\n",
-							V3ARGS( v2->vg_p->coord ), V3ARGS( edge2 ) );
-						if( ret_val == 0 )
-							rt_log( "edges are collinear and overlap\n" );
-						else
-						{
-							point_t isect_pt;
+					  struct rt_vls tmp_vls;
 
-							VJOIN1( isect_pt, v1->vg_p->coord, dist[0], edge1 );
-							rt_log( "edges intersect at ( %g %g %g )\n",
-								V3ARGS( isect_pt ) );
-						}
-						return;
+					  rt_vls_init(&tmp_vls);
+					  rt_vls_printf(&tmp_vls,
+							"Loop crosses itself, cannot extrude\n" );
+					  rt_vls_printf(&tmp_vls,
+							"edge1: pt=( %g %g %g ), dir=( %g %g %g)\n",
+						  V3ARGS( v1->vg_p->coord ), V3ARGS( edge1 ) );
+					  rt_vls_printf(&tmp_vls,
+							"edge2: pt=( %g %g %g ), dir=( %g %g %g)\n",
+						  V3ARGS( v2->vg_p->coord ), V3ARGS( edge2 ) );
+					  if( ret_val == 0 )
+					    rt_vls_printf(&tmp_vls,
+							  "edges are collinear and overlap\n" );
+					  else
+					    {
+					      point_t isect_pt;
+					      
+					      VJOIN1( isect_pt, v1->vg_p->coord, dist[0], edge1 );
+					      rt_vls_printf(&tmp_vls,
+							    "edges intersect at ( %g %g %g )\n",
+						      V3ARGS( isect_pt ) );
+					    }
+
+					  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls),
+							   (char *)NULL);
+					  rt_vls_free(&tmp_vls);
+					  return;
 					}
 				}
 			}
@@ -1187,9 +1228,9 @@ int arg;
 			lu_copy = nmg_dup_loop( lu , &s_tmp->l.magic , (long **)0 );
 			if( !lu_copy )
 			{
-				rt_log( "Failed to make copy of loop\n" );
-				nmg_km( m_tmp );
-				return;
+			  Tcl_AppendResult(interp, "Failed to make copy of loop\n", (char *)NULL);
+			  nmg_km( m_tmp );
+			  return;
 			}
 
 			/* Get the first vertex in the loop as the basis for extrusion */
@@ -1708,10 +1749,10 @@ mat_t		mat;
 			}
 		}
 	default:
-		rt_log( "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n" );
-		VSETALL( mpt, 0 );
-		*strp = "(origin)";
-		break;
+	  Tcl_AppendResult(interp, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
+	  VSETALL( mpt, 0 );
+	  *strp = "(origin)";
+	  break;
 	}
 	MAT4X3PNT( pt, mat, mpt );
 }
@@ -1743,9 +1784,14 @@ int type;
 		p2 = arb_faces[type][i*4+1];
 		p3 = arb_faces[type][i*4+2];
 		if(planeqn(i, p1, p2, p3, &temprec)) {
-			rt_log("No eqn for face %d%d%d%d\n",
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "No eqn for face %d%d%d%d\n",
 				p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
-			return;
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+		  return;
 		}
 	}
 }
@@ -1767,24 +1813,26 @@ init_sedit()
 	 * Check for a processed region or other illegal solid.
 	 */
 	if( illump->s_Eflag )  {
-		rt_log(
-"Unable to Solid_Edit a processed region;  select a primitive instead\n");
-		return;
+	  Tcl_AppendResult(interp,
+"Unable to Solid_Edit a processed region;  select a primitive instead\n", (char *)NULL);
+	  return;
 	}
 
 	/* Read solid description.  Save copy of original data */
 	RT_INIT_EXTERNAL(&es_ext);
 	RT_INIT_DB_INTERNAL(&es_int);
-	if( db_get_external( &es_ext, illump->s_path[illump->s_last], dbip ) < 0 )
-		READ_ERR_return;
+	if( db_get_external( &es_ext, illump->s_path[illump->s_last], dbip ) < 0 ){
+	  TCL_READ_ERR;
+	  return;
+	}
 
 	id = rt_id_solid( &es_ext );
 	if( rt_functab[id].ft_import( &es_int, &es_ext, rt_identity ) < 0 )  {
-		rt_log("init_sedit(%s):  solid import failure\n",
-			illump->s_path[illump->s_last]->d_namep );
-	    	if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
-		db_free_external( &es_ext );
-		return;				/* FAIL */
+	  Tcl_AppendResult(interp, "init_sedit(", illump->s_path[illump->s_last]->d_namep,
+			   "):  solid import failure\n", (char *)NULL);
+	  if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
+	  db_free_external( &es_ext );
+	  return;				/* FAIL */
 	}
 	RT_CK_DB_INTERNAL( &es_int );
 
@@ -1801,10 +1849,11 @@ init_sedit()
 
 		if( rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol ) )
 		{
-			rt_log( "Cannot calculate plane equations for ARB8\n" );
-			db_free_external( &es_ext );
-			rt_functab[id].ft_ifree( &es_int );
-			return;
+		  Tcl_AppendResult(interp,"Cannot calculate plane equations for ARB8\n",
+				   (char *)NULL);
+		  db_free_external( &es_ext );
+		  rt_functab[id].ft_ifree( &es_int );
+		  return;
 		}
 	}
 	else if( id == ID_BSPLINE )
@@ -1977,13 +2026,13 @@ int type;
 
 	/* find new points for entire solid */
 	for(i=0; i<8; i++){
-		/* use temp_srec until we know intersect doesn't fail */
-		if( intersect(type,i*3,i,&temp_srec) ){
-			rt_log("Intersection of planes fails\n");
-			/* clean up array es_peqn for anyone else */
-			calc_planes( old_srec, type );
-			return;				/* failure */
-		}
+	  /* use temp_srec until we know intersect doesn't fail */
+	  if( intersect(type,i*3,i,&temp_srec) ){
+	    Tcl_AppendResult(interp, "Intersection of planes fails\n", (char *)NULL);
+	    /* clean up array es_peqn for anyone else */
+	    calc_planes( old_srec, type );
+	    return;				/* failure */
+	  }
 	}
 
 	/* back to vector notation */
@@ -2051,8 +2100,8 @@ sedit()
 				mmenu_set( MENU_L1, which_menu[es_type+6] );
 				break;
 			default:
-				rt_log("Bad menu item.\n");
-				return;
+			  Tcl_AppendResult(interp, "Bad menu item.\n", (char *)NULL);
+			  return;
 		}
 		break;
 
@@ -2084,8 +2133,8 @@ sedit()
 		
 		/* special case for arb7 */
 		if( es_type == ARB7  && pnt5 ){
-				rt_log("\nFixed vertex is point 5.\n");
-				fixv = 5;
+		  Tcl_AppendResult(interp, "\nFixed vertex is point 5.\n", (char *)NULL);
+		  fixv = 5;
 		}
 		else{
 			/* find fixed vertex for ECMD_ARB_ROTATE_FACE */
@@ -2179,8 +2228,9 @@ sedit()
 				es_peqn[es_menu][2] = sin(fb);
 			}
 			else{
-				rt_log("Must be < rot fb | xdeg ydeg zdeg >\n");
-				return;
+			  Tcl_AppendResult(interp, "Must be < rot fb | xdeg ydeg zdeg >\n",
+					   (char *)NULL);
+			  return;
 			}
 
 			/* point notation of fixed vertex */
@@ -2309,9 +2359,10 @@ sedit()
 
 			/* check for zero H vector */
 			if( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
-				rt_log("Zero H vector not allowed, resetting to +Z\n");
-				VSET(tgc->h, 0, 0, 1 );
-				break;
+			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
+					   (char *)NULL);
+			  VSET(tgc->h, 0, 0, 1 );
+			  break;
 			}
 
 			/* have new height vector --  redefine rest of tgc */
@@ -2351,9 +2402,10 @@ sedit()
 
 			/* check for zero H vector */
 			if( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
-				rt_log("Zero H vector not allowed, resetting to +Z\n");
-				VSET(tgc->h, 0, 0, 1 );
-				break;
+			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
+					   (char *)NULL);
+			  VSET(tgc->h, 0, 0, 1 );
+			  break;
 			}
 		}
 		break;
@@ -2470,8 +2522,8 @@ sedit()
 
 			if( !es_eu )
 			{
-				rt_log( "No edge selected!\n" );
-				break;
+			  Tcl_AppendResult(interp, "No edge selected!\n", (char *)NULL);
+			  break;
 			}
 			NMG_CK_EDGEUSE( es_eu );
 
@@ -2481,8 +2533,9 @@ sedit()
 				VMOVE( new_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				rt_log( "x y z coordinates required for edge move\n" );
-				break;
+			  Tcl_AppendResult(interp, "x y z coordinates required for edge move\n",
+					   (char *)NULL);
+			  break;
 			}
 			else if( !es_mvalid && !inpara )
 				break;
@@ -2514,8 +2567,8 @@ sedit()
 					/* intersect line through new_pt with plane of loop */
 					if( rt_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
 					{
-						/* line does not intersect plane, don't do an esplit */
-						rt_log( "Edge Move: Cannot place new point in plane of loop\n" );
+					  /* line does not intersect plane, don't do an esplit */
+					  Tcl_AppendResult(interp, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
 						break;
 					}
 					VJOIN1( new_pt , new_pt , dist , view_dir );
@@ -2535,8 +2588,8 @@ sedit()
 
 			if( !es_eu )
 			{
-				rt_log( "No edge selected!\n" );
-				break;
+			  Tcl_AppendResult(interp, "No edge selected!\n", (char *)NULL);
+			  break;
 			}
 			NMG_CK_EDGEUSE( es_eu );
 
@@ -2552,10 +2605,10 @@ sedit()
 
 				if( *lu->up.magic_p != NMG_SHELL_MAGIC )
 				{
-					/* Currently can only kill wire edges or edges in wire loops */
-					rt_log( "Currently, we can only kill wire edges or edges in wire loops\n" );
-					es_edflag = IDLE;
-					break;
+				  /* Currently can only kill wire edges or edges in wire loops */
+				  Tcl_AppendResult(interp, "Currently, we can only kill wire edges or edges in wire loops\n", (char *)NULL);
+				  es_edflag = IDLE;
+				  break;
 				}
 
 				prev_eu = RT_LIST_PPREV_CIRC( edgeuse , &es_eu->l );
@@ -2568,10 +2621,10 @@ sedit()
 					 */
 					if( es_eu->vu_p->v_p == es_eu->eumate_p->vu_p->v_p )
 					{
-						/* refuse to delete last edge that runs
-						 * to/from same vertex
-						 */
-						rt_log( "Cannot delete last edge running to/from same vertex\n" );
+					  /* refuse to delete last edge that runs
+					   * to/from same vertex
+					   */
+					  Tcl_AppendResult(interp, "Cannot delete last edge running to/from same vertex\n", (char *)NULL);
 						break;
 					}
 					NMG_CK_EDGEUSE( es_eu->eumate_p );
@@ -2619,8 +2672,8 @@ sedit()
 
 			if( !es_eu )
 			{
-				rt_log( "No edge selected!\n" );
-				break;
+			  Tcl_AppendResult(interp, "No edge selected!\n", (char *)NULL);
+			  break;
 			}
 			NMG_CK_EDGEUSE( es_eu );
 			m = nmg_find_model( &es_eu->l.magic );
@@ -2631,8 +2684,9 @@ sedit()
 				VMOVE( new_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				rt_log( "x y z coordinates required for edge split\n" );
-				break;
+			  Tcl_AppendResult(interp, "x y z coordinates required for edge split\n",
+					   (char *)NULL);
+			  break;
 			}
 			else if( !es_mvalid && !inpara )
 				break;
@@ -2647,7 +2701,7 @@ sedit()
 				/* Currently, can only split wire edges or edges in wire loops */
 				if( *lu->up.magic_p != NMG_SHELL_MAGIC )
 				{
-					rt_log( "Currently, we can only split wire edges or edges in wire loops\n" );
+				  Tcl_AppendResult(interp, "Currently, we can only split wire edges or edges in wire loops\n", (char *)NULL);
 					es_edflag = IDLE;
 					break;
 				}
@@ -2667,8 +2721,8 @@ sedit()
 					/* intersect line through new_pt with plane of loop */
 					if( rt_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
 					{
-						/* line does not intersect plane, don't do an esplit */
-						rt_log( "Edge Split: Cannot place new point in plane of loop\n" );
+					  /* line does not intersect plane, don't do an esplit */
+					  Tcl_AppendResult(interp, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
 						break;
 					}
 					VJOIN1( new_pt , new_pt , dist , view_dir );
@@ -2700,8 +2754,8 @@ sedit()
 				VMOVE( to_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				rt_log( "x y z coordinates required for loop extrusion\n" );
-				break;
+			  Tcl_AppendResult(interp, "x y z coordinates required for loop extrusion\n", (char *)NULL);
+			  break;
 			}
 			else if( !es_mvalid && !inpara )
 				break;
@@ -2710,8 +2764,8 @@ sedit()
 
 			if( rt_isect_line3_plane( &dist , to_pt , extrude_vec , lu_pl , &mged_tol ) < 1 )
 			{
-				rt_log( "Cannot extrude parallel to plane of loop\n" );
-				return;
+			  Tcl_AppendResult(interp, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
+			  return;
 			}
 
 			if( RT_LIST_NON_EMPTY( &es_s->fu_hd ) )
@@ -2727,8 +2781,8 @@ sedit()
 			area = nmg_loop_plane_area( new_lu , new_lu_pl );
 			if( area < 0.0 )
 			{
-				rt_log( "loop to be extruded as no area!!!\n" );
-				return;
+			  Tcl_AppendResult(interp, "loop to be extruded as no area!!!\n", (char *)NULL);
+			  return;
 			}
 
 			if( VDOT( extrude_vec , new_lu_pl ) > 0.0 )
@@ -2776,15 +2830,15 @@ sedit()
 				VMOVE( new_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				rt_log( "x y z coordinates required for segment selection\n" );
-				break;
+			  Tcl_AppendResult(interp, "x y z coordinates required for segment selection\n", (char *)NULL);
+			  break;
 			}
 			else if( !es_mvalid && !inpara )
 				break;
 
 			es_pipept = find_pipept_nearest_pt( &pipe->pipe_segs_head, new_pt );
 			if( !es_pipept )
-				rt_log( "No PIPE segment selected\n" );
+			  Tcl_AppendResult(interp, "No PIPE segment selected\n", (char *)NULL);
 			else
 				rt_pipept_print( es_pipept, base2local );
 		}
@@ -2803,15 +2857,15 @@ sedit()
 				VMOVE( new_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				rt_log( "x y z coordinates required for segment split\n" );
-				break;
+			  Tcl_AppendResult(interp, "x y z coordinates required for segment split\n", (char *)NULL);
+			  break;
 			}
 			else if( !es_mvalid && !inpara )
 				break;
 
 			if( !es_pipept )
 			{
-				rt_log( "No pipe segment selected\n" );
+			  Tcl_AppendResult(interp, "No pipe segment selected\n", (char *)NULL);
 				break;
 			}
 
@@ -2832,16 +2886,16 @@ sedit()
 				VMOVE( new_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				rt_log( "x y z coordinates required for segment movement\n" );
-				break;
+			  Tcl_AppendResult(interp, "x y z coordinates required for segment movement\n", (char *)NULL);
+			  break;
 			}
 			else if( !es_mvalid && !inpara )
 				break;
 
 			if( !es_pipept )
 			{
-				rt_log( "No pipe segment selected\n" );
-				break;
+			  Tcl_AppendResult(interp, "No pipe segment selected\n", (char *)NULL);
+			  break;
 			}
 
 			move_pipept( pipe, es_pipept, new_pt );
@@ -2861,8 +2915,8 @@ sedit()
 				VMOVE( new_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				rt_log( "x y z coordinates required for 'append segment'\n" );
-				break;
+			  Tcl_AppendResult(interp, "x y z coordinates required for 'append segment'\n", (char *)NULL);
+			  break;
 			}
 			else if( !es_mvalid && !inpara )
 				break;
@@ -2884,8 +2938,8 @@ sedit()
 				VMOVE( new_pt , es_para )
 			else if( inpara && inpara != 3 )
 			{
-				rt_log( "x y z coordinates required for 'prepend segment'\n" );
-				break;
+			  Tcl_AppendResult(interp, "x y z coordinates required for 'prepend segment'\n", (char *)NULL);
+			  break;
 			}
 			else if( !es_mvalid && !inpara )
 				break;
@@ -2897,14 +2951,21 @@ sedit()
 		{
 			if( !es_pipept )
 			{
-				rt_log( "No pipe segment selected\n" );
-				break;
+			  Tcl_AppendResult(interp, "No pipe segment selected\n", (char *)NULL);
+			  break;
 			}
 			es_pipept = del_pipept( es_pipept );
 		}
 		break;
 	default:
-		rt_log("sedit():  unknown edflag = %d.\n", es_edflag );
+	  {
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "sedit():  unknown edflag = %d.\n", es_edflag );
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
 	}
 
 	/* must re-calculate the face plane equations for arbs */
@@ -3097,14 +3158,24 @@ CONST vect_t	mousevec;
 
 			if( (e = nmg_find_e_nearest_pt2( &m->magic, mousevec,
 			    model2view, &tmp_tol )) == (struct edge *)NULL )  {
-				rt_log("ECMD_NMG_EPICK: unable to find an edge\n");
-				return;
+			  Tcl_AppendResult(interp, "ECMD_NMG_EPICK: unable to find an edge\n", (char *)NULL);
+			  return;
 			}
 			es_eu = e->eu_p;
 			NMG_CK_EDGEUSE(es_eu);
-				rt_log("edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n", es_eu,
-				V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
-				V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+
+			{
+			  struct rt_vls tmp_vls;
+
+			  rt_vls_init(&tmp_vls);
+			  rt_vls_printf(&tmp_vls,
+					"edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n",
+					es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+					V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+			  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+			  rt_vls_free(&tmp_vls);
+			}
+
 			sedraw = 1;
 		}
 		break;
@@ -3125,8 +3196,8 @@ CONST vect_t	mousevec;
 		return;
 
 	default:
-		rt_log("mouse press undefined in this solid edit mode\n");
-		break;
+	  Tcl_AppendResult(interp, "mouse press undefined in this solid edit mode\n", (char *)NULL);
+	  break;
 	}
 
 	/* XXX I would prefer to see an explicit call to the guts of sedit()
@@ -3212,8 +3283,8 @@ CONST vect_t	mousevec;
 		mat_copy( oldchanges, modelchanges );
 		mat_mul( modelchanges, incr_change, oldchanges );
 	}  else  {
-		rt_log("No object edit mode selected;  mouse press ignored\n");
-		return;
+	  Tcl_AppendResult(interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
+	  return;
 	}
 	mat_idn( incr_change );
 	new_mats();
@@ -3239,7 +3310,7 @@ CONST mat_t			mat;
 
 	if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
 	    base2local ) < 0 )
-		rt_log("vls_solid: describe error\n");
+	  Tcl_AppendResult(interp, "vls_solid: describe error\n", (char *)NULL);
 
 	if( id == ID_PIPE && es_pipept )
 	{
@@ -3828,29 +3899,29 @@ pscale()
 		}
 		break;
 	case MENU_PIPE_PT_OD:	/* scale OD of one pipe segment */
-		{
-			if( !es_pipept )
-			{
-				rt_log( "pscale: no pipe segment selected for scaling\n" );
-				return;
-			}
+	  {
+	    if( !es_pipept )
+	      {
+		Tcl_AppendResult(interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
+		return;
+	      }
 			
-			if( inpara ) {
-				/* take es_mat[15] (path scaling) into account */
-				if( es_pipept->pp_od > 0.0 )
-					es_scale = es_para[0] * es_mat[15]/es_pipept->pp_od;
-				else
-					es_scale = (-es_para[0] * es_mat[15]);
-			}
-			pipe_seg_scale_od( es_pipept, es_scale );
-		}
-		break;
+	    if( inpara ) {
+	      /* take es_mat[15] (path scaling) into account */
+	      if( es_pipept->pp_od > 0.0 )
+		es_scale = es_para[0] * es_mat[15]/es_pipept->pp_od;
+	      else
+		es_scale = (-es_para[0] * es_mat[15]);
+	    }
+	    pipe_seg_scale_od( es_pipept, es_scale );
+	  }
+	  break;
 	case MENU_PIPE_PT_ID:	/* scale ID of one pipe segment */
 		{
 			if( !es_pipept )
 			{
-				rt_log( "pscale: no pipe segment selected for scaling\n" );
-				return;
+			  Tcl_AppendResult(interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
+			  return;
 			}
 			
 			if( inpara ) {
@@ -3867,8 +3938,8 @@ pscale()
 		{
 			if( !es_pipept )
 			{
-				rt_log( "pscale: no pipe segment selected for scaling\n" );
-				return;
+			  Tcl_AppendResult(interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
+			  return;
 			}
 			
 			if( inpara ) {
@@ -3902,8 +3973,8 @@ pscale()
 
 				if( ps->l.magic == RT_LIST_HEAD_MAGIC )
 				{
-					rt_log( "Entire pipe solid has zero OD!!!!\n" );
-					return;
+				  Tcl_AppendResult(interp, "Entire pipe solid has zero OD!!!!\n", (char *)NULL);
+				  return;
 				}
 
 				es_scale = es_para[0] * es_mat[15]/ps->pp_od;
@@ -4000,19 +4071,19 @@ init_objedit()
 
 	/* Not an evaluated region - just a regular path ending in a solid */
 	if( db_get_external( &es_ext, illump->s_path[illump->s_last], dbip ) < 0 )  {
-		rt_log("init_objedit(%s): db_get_external failure\n",
-			illump->s_path[illump->s_last]->d_namep );
-		button(BE_REJECT);
-		return;
+	  Tcl_AppendResult(interp, "init_objedit(", illump->s_path[illump->s_last]->d_namep,
+			   "): db_get_external failure\n", (char *)NULL);
+	  button(BE_REJECT);
+	  return;
 	}
 
 	id = rt_id_solid( &es_ext );
 	if( rt_functab[id].ft_import( &es_int, &es_ext, rt_identity ) < 0 )  {
-		rt_log("init_objedit(%s):  solid import failure\n",
-			illump->s_path[illump->s_last]->d_namep );
-	    	if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
-		db_free_external( &es_ext );
-		return;				/* FAIL */
+	  Tcl_AppendResult(interp, "init_objedit(", illump->s_path[illump->s_last]->d_namep,
+			   "):  solid import failure\n", (char *)NULL);
+	  if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
+	  db_free_external( &es_ext );
+	  return;				/* FAIL */
 	}
 	RT_CK_DB_INTERNAL( &es_int );
 
@@ -4123,7 +4194,9 @@ oedit_reject()
  * when in solid edit and rotating the face of a GENARB8.
  */
 int
-f_eqn(argc, argv)
+f_eqn(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	*argv[];
 {
@@ -4131,20 +4204,23 @@ char	*argv[];
 	vect_t tempvec;
 	struct rt_arb_internal *arb;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( state != ST_S_EDIT ){
-		rt_log("Eqn: must be in solid edit\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Eqn: must be in solid edit\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( es_int.idb_type != ID_ARB8 )
 	{
-		rt_log("Eqn: type must be GENARB8\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Eqn: type must be GENARB8\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( es_edflag != ECMD_ARB_ROTATE_FACE ){
-		rt_log("Eqn: must be rotating a face\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Eqn: must be rotating a face\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
@@ -4166,7 +4242,7 @@ char	*argv[];
 	/* update display information */
 	dmaflag = 1;
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* Hooks from buttons.c */
@@ -4194,17 +4270,18 @@ sedit_accept()
 
 	/* Scale change on export is 1.0 -- no change */
 	if( rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0 ) < 0 )  {
-		rt_log("sedit_accept(%s):  solid export failure\n", dp->d_namep);
-	    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
-		db_free_external( &es_ext );
-		return;				/* FAIL */
+	  Tcl_AppendResult(interp, "sedit_accept(", dp->d_namep,
+			   "):  solid export failure\n", (char *)NULL);
+	  if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
+	  db_free_external( &es_ext );
+	  return;				/* FAIL */
 	}
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 
 	if( db_put_external( &es_ext, dp, dbip ) < 0 )  {
 		db_free_external( &es_ext );
-		ERROR_RECOVERY_SUGGESTION;
-		WRITE_ERR_return;
+		TCL_WRITE_ERR;
+		return;
 	}
 
 	es_edflag = -1;
@@ -4247,21 +4324,26 @@ sedit_reject()
 /* Input parameter editing changes from keyboard */
 /* Format: p dx [dy dz]		*/
 int
-f_param( argc, argv )
+f_param(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register int i;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( es_edflag <= 0 )  {
-		rt_log("A solid editor option not selected\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "A solid editor option not selected\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( es_edflag == ECMD_TGC_ROT_H
 		|| es_edflag == ECMD_TGC_ROT_AB
 		|| es_edflag == ECMD_ETO_ROT_C ) {
-		rt_log("\"p\" command not defined for this option\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "\"p\" command not defined for this option\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	inpara = 0;
@@ -4275,19 +4357,19 @@ char	**argv;
 		{
 			if( es_para[0] < 0.0 )
 			{
-				rt_log("ERROR: SCALE FACTOR < 0\n");
-				inpara = 0;
-				sedraw = 0;
-				return CMD_BAD;
+			   Tcl_AppendResult(interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
+			   inpara = 0;
+			   sedraw = 0;
+			   return TCL_ERROR;
 			}
 		}
 		else
 		{
 			if(es_para[0] <= 0.0) {
-				rt_log("ERROR: SCALE FACTOR <= 0\n");
-				inpara = 0;
-				sedraw = 0;
-				return CMD_BAD;
+			  Tcl_AppendResult(interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+			  inpara = 0;
+			  sedraw = 0;
+			  return TCL_ERROR;
 			}
 		}
 	}
@@ -4331,7 +4413,7 @@ char	**argv;
 	    set_tran(es_para[0], es_para[1], es_para[2]);
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 
 	/* XXX I would prefer to see an explicit call to the guts of sedit()
 	 * XXX here, rather than littering the place with global variables
@@ -4836,10 +4918,13 @@ CONST struct rt_tol	*tol;
 
 		if( rt_mk_plane_3pts( planes[i],
 		    arb->pt[p1], arb->pt[p2], arb->pt[p3], tol ) < 0 )  {
-			rt_log("rt_arb_calc_planes: No eqn for face %d%d%d%d\n",
-				p1+1, p2+1, p3+1,
-				arb_faces[type][i*4+3]+1);
-			return -1;
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "rt_arb_calc_planes: No eqn for face %d%d%d%d\n",
+				p1+1, p2+1, p3+1, arb_faces[type][i*4+3]+1);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  return -1;
 		}
 	}
 	return 0;
@@ -5096,43 +5181,53 @@ CONST mat_t			mat;
 
 
 int
-f_keypoint (argc, argv)
+f_keypoint (clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	if ((state != ST_S_EDIT) && (state != ST_O_EDIT))
-	{
-	    state_err("keypoint assignment");
-	    return CMD_BAD;
-	}
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+  
+  if ((state != ST_S_EDIT) && (state != ST_O_EDIT)) {
+    state_err("keypoint assignment");
+    return TCL_ERROR;
+  }
 
-	switch (--argc)
-	{
-	    case 0:
-		rt_log("%s (%g, %g, %g)\n", es_keytag, V3ARGS(es_keypoint));
-		break;
-	    case 3:
-		VSET(es_keypoint,
-		    atof( argv[1] ) * local2base,
-		    atof( argv[2] ) * local2base,
-		    atof( argv[3] ) * local2base);
-		es_keytag = "user-specified";
-		es_keyfixed = 1;
-		break;
-	    case 1:
-		if (strcmp(argv[1], "reset") == 0)
-		{
-		    es_keytag = "";
-		    es_keyfixed = 0;
-		    get_solid_keypoint(es_keypoint, &es_keytag,
-					&es_int, es_mat);
-		    break;
-		}
-	    default:
-		rt_log("Usage: 'keypoint [<x y z> | reset]'\n");
-		return CMD_BAD;
-	}
+  switch (--argc) {
+  case 0:
+    {
+      struct rt_vls tmp_vls;
 
-	dmaflag = 1;
-	return CMD_OK;
+      rt_vls_init(&tmp_vls);
+      rt_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", es_keytag, V3ARGS(es_keypoint));
+      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+      rt_vls_free(&tmp_vls);
+    }
+
+    break;
+  case 3:
+    VSET(es_keypoint,
+	 atof( argv[1] ) * local2base,
+	 atof( argv[2] ) * local2base,
+	 atof( argv[3] ) * local2base);
+    es_keytag = "user-specified";
+    es_keyfixed = 1;
+    break;
+  case 1:
+    if (strcmp(argv[1], "reset") == 0) {
+      es_keytag = "";
+      es_keyfixed = 0;
+      get_solid_keypoint(es_keypoint, &es_keytag,
+			 &es_int, es_mat);
+      break;
+    }
+  default:
+    Tcl_AppendResult(interp, "Usage: 'keypoint [<x y z> | reset]'\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  dmaflag = 1;
+  return TCL_ERROR;
 }

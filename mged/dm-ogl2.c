@@ -361,55 +361,12 @@ register int y;
  * Fire up the display manager, and the display processor.
  *
  */
-#if 1
-Ogl2_open(name)
-char *name;
-{
-  ogl_var_init();
-  rt_vls_init(&pathName);
-
-  if( Ogl2_setup(name) )
-    return(1);		/* BAD */
-
-  return(0);			/* OK */
-}
-#else
 Ogl2_open()
 {
-  char	line[82];
-  char	hostname[80];
-  char	display[82];
-  char	*envp;
-
   ogl_var_init();
-  rt_vls_init(&pathName);
 
-  /* get or create the default display */
-  if( (envp = getenv("DISPLAY")) == NULL ) {
-    /* Env not set, use local host */
-    gethostname( hostname, 80 );
-    hostname[79] = '\0';
-    (void)sprintf( display, "%s:0", hostname );
-    envp = display;
-  }
-
-  rt_log("X Display [%s]? ", envp );
-  (void)fgets( line, sizeof(line), stdin );
-  line[strlen(line)-1] = '\0';		/* remove newline */
-  if( feof(stdin) )  quit();
-  if( line[0] != '\0' ) {
-    if( Ogl2_setup(line) ) {
-      return(1);		/* BAD */
-    }
-  } else {
-    if( Ogl2_setup(envp) ) {
-      return(1);	/* BAD */
-    }
-  }
-
-  return(0);			/* OK */
+  return Ogl2_setup(dname);
 }
-#endif
 
 /*XXX Just experimenting */
 int
@@ -470,11 +427,8 @@ Ogl2_load_startup()
     rt_vls_free(&str);
 
     /* Using default */
-    if(Tcl_Eval( interp, ogl_init_str ) == TCL_ERROR){
-      rt_log("ogl2_load_startup: Error interpreting ogl_init_str.\n");
-      rt_log("%s\n", interp->result);
+    if(Tcl_Eval( interp, ogl_init_str ) == TCL_ERROR)
       return -1;
-    }
 
     return 0;
   }
@@ -482,7 +436,6 @@ Ogl2_load_startup()
   fclose( fp );
 
   if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
-    rt_log("Error reading %s: %s\n", filename, interp->result);
     rt_vls_free(&str);
     return -1;
   }
@@ -499,17 +452,23 @@ Ogl2_load_startup()
 void
 Ogl2_close()
 {
-	glDrawBuffer(GL_FRONT);
-	glClearColor(0.0, 0.0, 0.0, 0.0);
-/*	glClearDepth(0.0);*/
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glXDestroyContext(dpy, glxc);
+  if(glxc != NULL){
+    glDrawBuffer(GL_FRONT);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    /*	glClearDepth(0.0);*/
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glXDestroyContext(dpy, glxc);
+  }
 
-	Tk_DestroyWindow(xtkwin);
-	RT_LIST_DEQUEUE(&((struct ogl_vars *)dm_vars)->l);
-	rt_free(dm_vars, "Ogl2_close: dm_vars");
-	rt_vls_free(&pathName);
+  if(xtkwin != NULL)
+    Tk_DestroyWindow(xtkwin);
+
+  if(((struct ogl_vars *)dm_vars)->l.forw != RT_LIST_NULL)
+    RT_LIST_DEQUEUE(&((struct ogl_vars *)dm_vars)->l);
+
+  rt_free(dm_vars, "Ogl2_close: dm_vars");
+
 #if 0
 	Tk_DeleteGenericHandler(Ogl2_doevent, (ClientData)curr_dm_list);
 #else
@@ -532,10 +491,10 @@ Ogl2_prolog()
   GLfloat fogdepth;
 
   if (((struct ogl_vars *)dm_vars)->mvars.debug)
-    rt_log( "Ogl2_prolog\n");
+    Tcl_AppendResult(interp, "Ogl2_prolog\n", (char *)NULL);
 
   if (!glXMakeCurrent(dpy, win, glxc)){
-    rt_log("Ogl2_prolog: Couldn't make context current\n");
+    Tcl_AppendResult(interp, "Ogl2_prolog: Couldn't make context current\n", (char *)NULL);
     return;
   }
 
@@ -578,7 +537,8 @@ void
 Ogl2_epilog()
 {
   if (((struct ogl_vars *)dm_vars)->mvars.debug)
-    rt_log( "Ogl2_epilog\n");
+    Tcl_AppendResult(interp, "Ogl2_epilog\n", (char *)NULL);
+
   /*
    * A Point, in the Center of the Screen.
    * This is drawn last, to always come out on top.
@@ -597,17 +557,22 @@ Ogl2_epilog()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
-
   /* Prevent lag between events and updates */
   XSync(dpy, 0);
 
   if(((struct ogl_vars *)dm_vars)->mvars.debug){
     int error;
+    struct rt_vls tmp_vls;
 
-    rt_log("ANY ERRORS?\n");
-    while(	(error = glGetError())!=0){
-      rt_log("Error: %x\n", error);
+    rt_vls_init(&tmp_vls);
+    rt_vls_printf(&tmp_vls, "ANY ERRORS?\n");
+
+    while((error = glGetError())!=0){
+      rt_vls_printf(&tmp_vls, "Error: %x\n", error);
     }
+
+    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+    rt_vls_free(&tmp_vls);
   }
 
   return;
@@ -630,15 +595,21 @@ int which_eye;
 
 	
 	if (((struct ogl_vars *)dm_vars)->mvars.debug)
-		rt_log( "Ogl2_newrot()\n");
+	  Tcl_AppendResult(interp, "Ogl2_newrot()\n", (char *)NULL);
 
 	if(((struct ogl_vars *)dm_vars)->mvars.debug){
-		printf("which eye = %d\t", which_eye);
-		printf("newrot matrix = \n");
-		printf("%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
-		printf("%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
-		printf("%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
-		printf("%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
+	  rt_vls_printf(&tmp_vls, "newrot matrix = \n");
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
 	}
 
 	switch(which_eye)  {
@@ -724,8 +695,7 @@ int white_flag;
 	int i,j;
 
 	if (((struct ogl_vars *)dm_vars)->mvars.debug)
-		rt_log( "ogl2_Object()\n");
-
+	  Tcl_AppendResult(interp, "ogl2_Object()\n", (char *)NULL);
 
 	/*
 	 *  It is claimed that the "dancing vector disease" of the
@@ -868,7 +838,7 @@ Ogl2_normal()
 	GLint mm; 
 
 	if (((struct ogl_vars *)dm_vars)->mvars.debug)
-		rt_log( "Ogl2_normal\n");
+	  Tcl_AppendResult(interp, "Ogl2_normal\n", (char *)NULL);
 
 	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
 		glColor3ub( 0,  0,  0 );
@@ -903,8 +873,8 @@ Ogl2_normal()
 void
 Ogl2_update()
 {
-	if (((struct ogl_vars *)dm_vars)->mvars.debug)
-		rt_log( "Ogl2_update()\n");
+  if (((struct ogl_vars *)dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "Ogl2_update()\n", (char *)NULL);
 
     XFlush(dpy);
 }
@@ -922,7 +892,7 @@ register char *str;
 int x,y,size, colour;
 {
 	if (((struct ogl_vars *)dm_vars)->mvars.debug)
-		rt_log( "Ogl2_puts()\n");
+	  Tcl_AppendResult(interp, "Ogl2_puts()\n", (char *)NULL);
 
 	
 /*	glRasterPos2f( GED2IRIS(x),  GED2IRIS(y));*/
@@ -954,7 +924,7 @@ int dashed;
 	register int nvec;
 
 	if (((struct ogl_vars *)dm_vars)->mvars.debug)
-		rt_log( "Ogl2_2d_line()\n");
+	  Tcl_AppendResult(interp, "Ogl2_2d_line()\n", (char *)NULL);
 
 	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
 		/* Yellow */
@@ -970,21 +940,27 @@ int dashed;
 /*	glColor3ub( (short)255,  (short)255,  (short) 0 );*/
 
 	if(((struct ogl_vars *)dm_vars)->mvars.debug){
-		GLfloat pmat[16];
-		glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-		printf("projection matrix:\n");
-		printf("%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
-		printf("%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
-		printf("%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
-		printf("%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
-		glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-		printf("modelview matrix:\n");
-		printf("%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
-		printf("%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
-		printf("%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
-		printf("%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
+	  GLfloat pmat[16];
+	  struct rt_vls tmp_vls;
 
+	  rt_vls_init(&tmp_vls);
+	  glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+	  rt_vls_printf(&tmp_vls, "projection matrix:\n");
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
+	  glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
+	  rt_vls_printf(&tmp_vls, "modelview matrix:\n");
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
+
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
 	}
+
 	if( dashed )
 		glEnable(GL_LINE_STIPPLE);
 		
@@ -1019,6 +995,7 @@ XEvent *eventPtr;
   register struct dm_list *save_dm_list;
   register struct dm_list *p;
   struct rt_vls cmd;
+  int status = CMD_OK;
 
   rt_vls_init(&cmd);
   save_dm_list = curr_dm_list;
@@ -1116,7 +1093,7 @@ XEvent *eventPtr;
     M = (XDeviceMotionEvent * ) eventPtr;
 
     if(button0){
-      glx_dbtext(
+      ogl_dbtext(
 		(adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
       goto end;
     }
@@ -1191,7 +1168,7 @@ XEvent *eventPtr;
     }
 
     if(button0){
-      glx_dbtext(label_button(bmap[B->button - 1]));
+      ogl_dbtext(label_button(bmap[B->button - 1]));
     }else if(B->button == 4){
       rt_vls_strcat(&cmd, "knob zero\n");
       set_knob_offset();
@@ -1207,12 +1184,15 @@ XEvent *eventPtr;
       button0 = 0;
   }
 
-  (void)cmdline(&cmd, FALSE);
+  status = cmdline(&cmd, FALSE);
 end:
   rt_vls_free(&cmd);
   curr_dm_list = save_dm_list;
 
-  return TCL_OK;
+  if(status == CMD_OK)
+    return TCL_OK;
+
+  return TCL_ERROR;
 }
 	    
 /*
@@ -1266,8 +1246,8 @@ unsigned
 Ogl2_load( addr, count )
 unsigned addr, count;
 {
-	rt_log("Ogl2_load(x%x, %d.)\n", addr, count );
-	return( 0 );
+  rt_log("Ogl2_load(x%x, %d.)\n", addr, count );
+  return( 0 );
 }
 
 void
@@ -1296,8 +1276,9 @@ int	a, b;
 	    OgldoMotion = 0;
 	    break;
 	default:
-	    rt_log("Ogl2_statechange: unknown state %s\n", state_str[b]);
-	    break;
+	  Tcl_AppendResult(interp, "Ogl2_statechange: unknown state ",
+			   state_str[b], "\n", (char *)NULL);
+	  break;
 	}
 
 	/*Ogl2_viewchange( DM_CHGV_REDO, SOLID_NULL );*/
@@ -1317,7 +1298,8 @@ Ogl2_colorchange()
 	int count = 0;
 	Colormap a_cmap;
 
-	if( ((struct ogl_vars *)dm_vars)->mvars.debug )  rt_log("colorchange\n");
+	if( ((struct ogl_vars *)dm_vars)->mvars.debug )
+	  Tcl_AppendResult(interp, "colorchange\n", (char *)NULL);
 
 	/* Program the builtin colors */
 	ogl_rgbtab[0].r=0; 
@@ -1351,9 +1333,10 @@ Ogl2_colorchange()
 	}
 
 	if(USE_RAMP && (ogl_index_size < 7)) {
-		rt_log("Too few bitplanes: depthcueing and lighting disabled\n");
-		((struct ogl_vars *)dm_vars)->mvars.cueing_on = 0;
-		((struct ogl_vars *)dm_vars)->mvars.lighting_on = 0;
+	  Tcl_AppendResult(interp, "Too few bitplanes: depthcueing and lighting disabled\n",
+			   (char *)NULL);
+	  ((struct ogl_vars *)dm_vars)->mvars.cueing_on = 0;
+	  ((struct ogl_vars *)dm_vars)->mvars.lighting_on = 0;
 	}
 	/* number of slots is 2^indexsize */
 	ogl_nslots = 1<<ogl_index_size;
@@ -1399,9 +1382,9 @@ Ogl2_colorchange()
 void
 Ogl2_debug(lvl)
 {
-	((struct ogl_vars *)dm_vars)->mvars.debug = lvl;
-	XFlush(dpy);
-	rt_log("flushed\n");
+  ((struct ogl_vars *)dm_vars)->mvars.debug = lvl;
+  XFlush(dpy);
+  Tcl_AppendResult(interp, "flushed\n", (char *)NULL);
 }
 
 void
@@ -1496,13 +1479,13 @@ char	*name;
 
   /* Open the display - XXX see what NULL does now */
   if( xtkwin == NULL ) {
-    rt_log( "dm-X: Can't open X display\n" );
+    Tcl_AppendResult(interp, "dm-ogl2: Failed to open ", rt_vls_addr(&pathName),
+		     "\n", (char *)NULL);
     return -1;
   }
 
   rt_vls_strcpy(&str, "init_ogl ");
   rt_vls_printf(&str, "%s\n", rt_vls_addr(&pathName));
-  rt_log("pathname = %s\n", rt_vls_addr(&pathName));
 
   if(cmdline(&str, FALSE) == CMD_BAD){
     rt_vls_free(&str);
@@ -1513,7 +1496,7 @@ char	*name;
 
   /* must do this before MakeExist */
   if ((vip=Ogl2_set_visual(xtkwin))==NULL){
-    rt_log("Ogl2_open: Can't get an appropriate visual.\n");
+    Tcl_AppendResult(interp, "Ogl2_open: Can't get an appropriate visual.\n", (char *)NULL);
     return -1;
   }
 
@@ -1531,14 +1514,15 @@ char	*name;
    * faster.
    */
   if ((glxc = glXCreateContext(dpy, vip, 0, ogl_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
-    rt_log("Ogl2_open: couldn't create glXContext.\n");
-		return -1;
+    Tcl_AppendResult(interp, "Ogl2_open: couldn't create glXContext.\n", (char *)NULL);
+    return -1;
   }
   /* If we used an indirect context, then as far as sgi is concerned,
    * gl hasn't been used.
    */
   ogl_is_direct = (char) glXIsDirect(dpy, glxc);
-  rt_log("Using %s OpenGL rendering context.\n", ogl_is_direct ? "a direct" : "an indirect");
+  Tcl_AppendResult(interp, "Using ", ogl_is_direct ? "a direct" : "an indirect",
+		   " OpenGL rendering context.\n", (char *)NULL);
   /* set ogl_ogl_used if the context was ever direct */
   ogl_ogl_used = (ogl_is_direct || ogl_ogl_used);
 
@@ -1556,7 +1540,7 @@ char	*name;
     if(list->use == IsXExtensionDevice){
       if(!strcmp(list->name, "dial+buttons")){
 	if((dev = XOpenDevice(dpy, list->id)) == (XDevice *)NULL){
-	  rt_log("Glx_open: Couldn't open the dials+buttons\n");
+	  Tcl_AppendResult(interp, "Glx_open: Couldn't open the dials+buttons\n", (char *)NULL);
 	  goto Done;
 	}
 
@@ -1596,13 +1580,13 @@ Done:
 #endif
 
   if (!glXMakeCurrent(dpy, win, glxc)){
-    rt_log("Ogl2_open: Couldn't make context current\n");
+    Tcl_AppendResult(interp, "Ogl2_open: Couldn't make context current\n", (char *)NULL);
     return -1;
   }
 
   /* display list (fontOffset + char) will displays a given ASCII char */
   if ((fontOffset = glGenLists(128))==0){
-    rt_log("dm-ogl: Can't make display lists for font.\n");
+    Tcl_AppendResult(interp, "dm-ogl: Can't make display lists for font.\n", (char *)NULL);
     return -1;
   }
 
@@ -1753,14 +1737,14 @@ Tk_Window tkwin;
 
 		/* if no success at this point, relax a desire and try again */
 		if ( m_stereo ){
-			m_stereo = 0;
-			rt_log("Stereo not available.\n");
+		  m_stereo = 0;
+		  Tcl_AppendResult(interp, "Stereo not available.\n", (char *)NULL);
 		} else if (m_rgba) {
-			m_rgba = 0;
-			rt_log("RGBA not available.\n");
+		  m_rgba = 0;
+		  Tcl_AppendResult(interp, "RGBA not available.\n", (char *)NULL);
 		} else if (m_double) {
-			m_double = 0;
-			rt_log("Doublebuffering not available. \n");
+		  m_double = 0;
+		  Tcl_AppendResult(interp, "Doublebuffering not available. \n", (char *)NULL);
 		} else {
 			return(NULL); /* failure */
 		}
@@ -1825,14 +1809,15 @@ Ogl2_configure_window_shape()
 
 	/* First time through, load a font or quit */
 	if (fontstruct == NULL) {
-		if ((fontstruct = XLoadQueryFont(dpy, FONT9)) == NULL ) {
-			/* Try hardcoded backup font */
-			if ((fontstruct = XLoadQueryFont(dpy, FONTBACK)) == NULL) {
-				rt_log( "dm-ogl: Can't open font '%s' or '%s'\n", FONT9, FONTBACK );
-				return;
-			}
-		}
-		glXUseXFont( fontstruct->fid, 0, 127, fontOffset);
+	  if ((fontstruct = XLoadQueryFont(dpy, FONT9)) == NULL ) {
+	    /* Try hardcoded backup font */
+	    if ((fontstruct = XLoadQueryFont(dpy, FONTBACK)) == NULL) {
+	      Tcl_AppendResult(interp, "dm-ogl2: Can't open font '", FONT9,
+			       "' or '", FONTBACK, "'\n", (char *)NULL);
+	      return;
+	    }
+	  }
+	  glXUseXFont( fontstruct->fid, 0, 127, fontOffset);
 	}
 		
 
@@ -1895,9 +1880,19 @@ int	argc;
 char	**argv;
 {
   struct rt_vls	vls;
+  int status;
+  char *av[4];
+  char xstr[32];
+  char ystr[32];
+  char zstr[32];
 
   if( !strcmp( argv[0], "set" ) )  {
+    struct rt_vls tmp_vls;
+
     rt_vls_init(&vls);
+    rt_vls_init(&tmp_vls);
+    start_catching_output(&tmp_vls);
+
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
       rt_structprint("dm_ogl internal variables", Ogl2_vparse, (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
@@ -1911,89 +1906,98 @@ char	**argv;
       rt_vls_putc( &vls, '\"' );
       rt_structparse( &vls, Ogl2_vparse, (char *)&((struct ogl_vars *)dm_vars)->mvars );
     }
+
     rt_vls_free(&vls);
-    return CMD_OK;
+
+    stop_catching_output(&tmp_vls);
+    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+    rt_vls_free(&tmp_vls);
+    return TCL_OK;
   }
 
   if( !strcmp( argv[0], "mouse" )){
-    {
-      int buttonpress;
-      int xpos;
-      int ypos;
-
-      if( argc < 4){
-	rt_log("dm: need more parameters\n");
-	rt_log("mouse 1|0 xpos ypos\n");
-	return CMD_BAD;
-      }
-
-      buttonpress = atoi(argv[1]);
-      xpos = atoi(argv[2]);
-      ypos = atoi(argv[3]);
-
-      rt_vls_init(&vls);
-      rt_vls_printf(&vls, "M %d %d %d\n",
-		    buttonpress, irisX2ged(xpos), irisY2ged(ypos));
-      (void)cmdline(&vls, FALSE);
-      rt_vls_free(&vls);
+    if( argc < 4){
+      Tcl_AppendResult(interp, "dm: need more parameters\n",
+		       "mouse 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
     }
 
-    return CMD_OK;
+#if 0
+    sprintf(xstr, "%d", irisX2ged(atoi(argv[2])));
+    sprintf(ystr, "%d", irisY2ged(atoi(argv[3])));
+
+    av[0] = "M";
+    av[1] = argv[1];
+    av[2] = xstr;
+    av[3] = ystr;
+    return f_mouse((ClientData)NULL, interp, 4, av);
+#else
+    rt_vls_init(&vls);
+    rt_vls_printf(&vls, "M %s %d %d\n", argv[1],
+		  irisX2ged(atoi(argv[2])), irisY2ged(atoi(argv[3])));
+    status = cmdline(&vls, FALSE);
+    rt_vls_free(&vls);
+
+    if(status == CMD_OK)
+      return TCL_OK;
+
+    return TCL_ERROR;
+#endif
   }
 
+  status = TCL_OK;
   if(((struct ogl_vars *)dm_vars)->mvars.virtual_trackball){
-  if( !strcmp( argv[0], "vtb" )){
-    int buttonpress;
+    if( !strcmp( argv[0], "vtb" )){
+      int buttonpress;
 
-    if( argc < 5){
-      rt_log("dm: need more parameters\n");
-      rt_log("vtb <r|t|z> 1|0 xpos ypos\n");
-      return CMD_BAD;
-    }
-
-    buttonpress = atoi(argv[2]);
-    omx = atoi(argv[3]);
-    omy = atoi(argv[4]);
-
-    if(buttonpress){
-      switch(*argv[1]){
-      case 'r':
-	((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
-	break;
-      case 't':
-	{
-	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-	  rt_vls_init(&vls);
-	  rt_vls_printf( &vls, "tran %f %f %f\n",
-			 (omx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 2,
-			 (0.5 - omy/(double)((struct ogl_vars *)dm_vars)->height) * 2,
-			 tran_z);
-
-	  (void)cmdline(&vls, FALSE);
-	  rt_vls_free(&vls);
-	}
-	break;
-      case 'z':
-	((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
-	break;
-      default:
-	rt_log("dm: need more parameters\n");
-	rt_log("vtb <r|t|z> 1|0 xpos ypos\n");
-	return CMD_BAD;
+      if( argc < 5){
+	Tcl_AppendResult(interp, "dm: need more parameters\n",
+			 "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	return TCL_ERROR;
       }
 
-    }else{
-      ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
+      buttonpress = atoi(argv[2]);
+      omx = atoi(argv[3]);
+      omy = atoi(argv[4]);
+
+      if(buttonpress){
+	switch(*argv[1]){
+	case 'r':
+	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
+	  break;
+	case 't':
+	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
+
+	  sprintf(xstr, "%f", (omx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 2);
+	  sprintf(ystr, "%f", (0.5 - omy/(double)((struct ogl_vars *)dm_vars)->height) * 2);
+	  sprintf(zstr, "%f", tran_z);
+	  av[0] = "tran";
+	  av[1] = xstr;
+	  av[2] = ystr;
+	  av[3] = zstr;
+	  status = f_tran((ClientData)NULL, interp, 4, av);
+	  
+	  break;
+	case 'z':
+	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
+	  break;
+	default:
+	  Tcl_AppendResult(interp, "dm: need more parameters\n",
+			   "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+      }else{
+	((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
     }
 
-    return CMD_OK;
-  }
+    return status;
+    }
   }else{
-    return CMD_OK;
+    return status;
   }
 
-  rt_log("dm: bad command - %s\n", argv[0]);
-  return CMD_BAD;
+  Tcl_AppendResult(interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
+  return TCL_ERROR;
 }
 
 void	
@@ -2045,8 +2049,9 @@ static void
 establish_zbuffer()
 {
 	if( ((struct ogl_vars *)dm_vars)->mvars.zbuf == 0 ) {
-		rt_log("dm-ogl: This machine has no Zbuffer to enable\n");
-		((struct ogl_vars *)dm_vars)->mvars.zbuffer_on = 0;
+	  Tcl_AppendResult(interp, "dm-ogl2: This machine has no Zbuffer to enable\n",
+			   (char *)NULL);
+	  ((struct ogl_vars *)dm_vars)->mvars.zbuffer_on = 0;
 	}
 
 	if (((struct ogl_vars *)dm_vars)->mvars.zbuffer_on)  {
@@ -2151,6 +2156,11 @@ next:
 
 
 #if IR_KNOBS
+ogl_dbtext(str)
+{
+  Tcl_AppendResult(interp, "dm-ogl: You pressed Help key and '",
+		   str, "'\n", (char *)NULL);
+}
 /*
  *			I R L I M I T
  *

@@ -185,7 +185,9 @@ static char	adc_syntax[] = "\
  adc reset	reset angles, location, and tick distance\n\
 ";
 int
-f_adc (argc, argv)
+f_adc (clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -196,6 +198,9 @@ char	**argv;
 	point_t	pt2, pt3;	/* Extra points as needed */
 	fastf_t	view2dm = 2047.0 / Viewscale;
 	int	i;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	if (argc == 1)
 	{
@@ -208,7 +213,7 @@ char	**argv;
 		}
 
 		dmaflag = 1;
-		return CMD_OK;
+		return TCL_OK;
 	}
 
 	parameter = argv[1];
@@ -220,149 +225,147 @@ char	**argv;
 	MAT4X3VEC(center_view, Viewrot, center_model);
 
 	if( strcmp( parameter, "a1" ) == 0 )  {
-		if (argc == 1) {
-			dv_1adc = (1.0 - pt[0] / 45.0) * 2047.0;
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log("The 'adc a1' command accepts only 1 argument\n");
-		return CMD_BAD;
+	  if (argc == 1) {
+	    dv_1adc = (1.0 - pt[0] / 45.0) * 2047.0;
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc a1' command accepts only 1 argument\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp( parameter, "a2" ) == 0 )  {
-		if (argc == 1) {
-			dv_2adc = (1.0 - pt[0] / 45.0) * 2047.0;
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log("The 'adc a2' command accepts only 1 argument\n");
-		return CMD_BAD;
+	  if (argc == 1) {
+	    dv_2adc = (1.0 - pt[0] / 45.0) * 2047.0;
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc a2' command accepts only 1 argument\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if(strcmp(parameter, "dst") == 0)  {
-		if (argc == 1) {
-			dv_distadc = (pt[0] /
-			    (Viewscale * base2local * M_SQRT2) - 1.0) * 2047.0;
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log("The 'adc dst' command accepts only 1 argument\n");
-		return CMD_BAD;
+	  if (argc == 1) {
+	    dv_distadc = (pt[0] /
+			  (Viewscale * base2local * M_SQRT2) - 1.0) * 2047.0;
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc dst' command accepts only 1 argument\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp( parameter, "dh" ) == 0 )  {
-		if (argc == 1) {
-			dv_xadc += pt[0] * 2047.0 / (Viewscale * base2local);
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log("The 'adc dh' command accepts only 1 argument\n");
-		return CMD_BAD;
+	  if (argc == 1) {
+	    dv_xadc += pt[0] * 2047.0 / (Viewscale * base2local);
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc dh' command accepts only 1 argument\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp( parameter, "dv" ) == 0 )  {
-		if (argc == 1) {
-			dv_yadc += pt[0] * 2047.0 / (Viewscale * base2local);
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log("The 'adc dv' command accepts only 1 argument\n");
-		return CMD_BAD;
+	  if (argc == 1) {
+	    dv_yadc += pt[0] * 2047.0 / (Viewscale * base2local);
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc dv' command accepts only 1 argument\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp( parameter, "dx" ) == 0 )  {
-		if (argc == 1) {
-			VSET(pt2, pt[0]*local2base, 0.0, 0.0);
-			MAT4X3VEC(pt3, Viewrot, pt2);
-			dv_xadc += pt3[X] * view2dm;
-			dv_yadc += pt3[Y] * view2dm;
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log("The 'adc dx' command accepts only 1 argument\n");
-		return CMD_BAD;
+	  if (argc == 1) {
+	    VSET(pt2, pt[0]*local2base, 0.0, 0.0);
+	    MAT4X3VEC(pt3, Viewrot, pt2);
+	    dv_xadc += pt3[X] * view2dm;
+	    dv_yadc += pt3[Y] * view2dm;
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc dx' command accepts only 1 argument\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp( parameter, "dy" ) == 0 )  {
-		if (argc == 1) {
-			VSET(pt2, 0.0, pt[0]*local2base, 0.0);
-			MAT4X3VEC(pt3, Viewrot, pt2);
-			dv_xadc += pt3[X] * view2dm;
-			dv_yadc += pt3[Y] * view2dm;
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log("The 'adc dy' command accepts only 1 argument\n");
-		return CMD_BAD;
+	  if (argc == 1) {
+	    VSET(pt2, 0.0, pt[0]*local2base, 0.0);
+	    MAT4X3VEC(pt3, Viewrot, pt2);
+	    dv_xadc += pt3[X] * view2dm;
+	    dv_yadc += pt3[Y] * view2dm;
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc dy' command accepts only 1 argument\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp( parameter, "dz" ) == 0 )  {
-		if (argc == 1) {
-			VSET(pt2, 0.0, 0.0, pt[0]*local2base);
-			MAT4X3VEC(pt3, Viewrot, pt2);
-			dv_xadc += pt3[X] * view2dm;
-			dv_yadc += pt3[Y] * view2dm;
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log("The 'adc dz' command accepts only 1 argument\n");
-		return CMD_BAD;
+	  if (argc == 1) {
+	    VSET(pt2, 0.0, 0.0, pt[0]*local2base);
+	    MAT4X3VEC(pt3, Viewrot, pt2);
+	    dv_xadc += pt3[X] * view2dm;
+	    dv_yadc += pt3[Y] * view2dm;
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc dz' command accepts only 1 argument\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp(parameter, "hv") == 0)  {
-		if (argc == 2) {
-			VSCALE(pt, pt, local2base);
-			VSUB2(pt3, pt, center_view);
-			dv_xadc = pt3[X] * view2dm;
-			dv_yadc = pt3[Y] * view2dm;
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log("The 'adc hv' command requires 2 arguments\n");
-		return CMD_BAD;
+	  if (argc == 2) {
+	    VSCALE(pt, pt, local2base);
+	    VSUB2(pt3, pt, center_view);
+	    dv_xadc = pt3[X] * view2dm;
+	    dv_yadc = pt3[Y] * view2dm;
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc hv' command requires 2 arguments\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp(parameter, "xyz") == 0)  {
-		if (argc == 3) {
-			VSCALE(pt, pt, local2base);
-			VSUB2(pt2, pt, center_model);
-			MAT4X3VEC(pt3, Viewrot, pt2);
-			dv_xadc = pt3[X] * view2dm;
-			dv_yadc = pt3[Y] * view2dm;
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log("The 'adc xyz' command requires 2 arguments\n");
-		return CMD_BAD;
+	  if (argc == 3) {
+	    VSCALE(pt, pt, local2base);
+	    VSUB2(pt2, pt, center_model);
+	    MAT4X3VEC(pt3, Viewrot, pt2);
+	    dv_xadc = pt3[X] * view2dm;
+	    dv_yadc = pt3[Y] * view2dm;
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc xyz' command requires 2 arguments\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp(parameter, "x") == 0 ) {
-		if( argc == 1 ) {
-			dv_xadc = pt[0];
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log( "The 'adc x' command requires one argument\n" );
-		return CMD_BAD;
+	  if( argc == 1 ) {
+	    dv_xadc = pt[0];
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc x' command requires one argument\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp(parameter, "y") == 0 ) {
-		if( argc == 1 ) {
-			dv_yadc = pt[0];
-			dmaflag = 1;
-			return CMD_OK;
-		}
-		rt_log( "The 'adc y' command requires one argument\n" );
-		return CMD_BAD;
+	  if( argc == 1 ) {
+	    dv_yadc = pt[0];
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc y' command requires one argument\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp(parameter, "reset") == 0)  {
-		if (argc == 0) {
-			dv_xadc = dv_yadc = 0;
-			dv_1adc = dv_2adc = 0;
-			dv_distadc = 0;
-			dmaflag = 1;
-
-			return CMD_OK;
-		}
-
-		rt_log("The 'adc reset' command accepts no arguments\n");
-		return CMD_BAD;
+	  if (argc == 0) {
+	    dv_xadc = dv_yadc = 0;
+	    dv_1adc = dv_2adc = 0;
+	    dv_distadc = 0;
+	    dmaflag = 1;
+	    return TCL_OK;
+	  }
+	  Tcl_AppendResult(interp, "The 'adc reset' command accepts no arguments\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( strcmp(parameter, "help") == 0)  {
-		rt_log("Usage:\n%s", adc_syntax);
-		return CMD_OK;
+	  Tcl_AppendResult(interp, "Usage:\n", adc_syntax, (char *)NULL);
+	  return TCL_OK;
 	} else {
-		rt_log("ADC: unrecognized command: '%s'\n", argv[1]);
-		rt_log("Usage:\n%s", adc_syntax);
+	  Tcl_AppendResult(interp, "ADC: unrecognized command: '",
+			   argv[1], "'\nUsage:\n", adc_syntax);
 	}
-	return CMD_BAD;
+	return TCL_ERROR;
 }

@@ -66,20 +66,26 @@ register struct mater *mp;
  *  			F _ P R C O L O R
  */
 int
-f_prcolor( argc, argv )
+f_prcolor(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register struct mater *mp;
+  register struct mater *mp;
 
-	if( rt_material_head == MATER_NULL )  {
-		rt_log("none\n");
-		return CMD_OK;
-	}
-	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )
-		pr_mater( mp );
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	return CMD_OK;
+  if( rt_material_head == MATER_NULL )  {
+    Tcl_AppendResult(interp, "none\n", (char *)NULL);
+    return TCL_OK;
+  }
+
+  for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )
+    pr_mater( mp );
+
+  return TCL_OK;
 }
 
 /*
@@ -88,11 +94,16 @@ char	**argv;
  *  Add a color table entry.
  */
 int
-f_color( argc, argv )
+f_color(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register struct mater *newp,*next_mater;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	/* Delete all color records from the database */
 	newp = rt_material_head;
@@ -126,7 +137,7 @@ char	**argv;
 
 	dmp->dmr_colorchange();
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -138,7 +149,9 @@ char	**argv;
  *  and update database.
  */
 int
-f_edcolor( argc, argv )
+f_edcolor(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -149,10 +162,13 @@ char	**argv;
 	char line[128];
 	static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	(void)mktemp(tempfile);
 	if( (fp = fopen( tempfile, "w" )) == NULL )  {
 		perror(tempfile);
-		return CMD_BAD;
+		return TCL_ERROR;;
 	}
 
 	(void)fprintf( fp, hdr );
@@ -165,20 +181,20 @@ char	**argv;
 	(void)fclose(fp);
 
 	if( !editit( tempfile ) )  {
-		rt_log("Editor returned bad status.  Aborted\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Editor returned bad status.  Aborted\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	/* Read file and process it */
 	if( (fp = fopen( tempfile, "r")) == NULL )  {
-		perror( tempfile );
-		return CMD_BAD;
+	  perror( tempfile );
+	  return TCL_ERROR;
 	}
 
 	if( fgets(line, sizeof (line), fp) == NULL  ||
 	    line[0] != hdr[0] )  {
-		rt_log("Header line damaged, aborting\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Header line damaged, aborting\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	/* Zap all the current records, both in core and on disk */
@@ -196,7 +212,8 @@ char	**argv;
 		cnt = sscanf( line, "%d %d %d %d %d",
 			&low, &hi, &r, &g, &b );
 		if( cnt != 5 )  {
-			rt_log("Discarding %s\n", line );
+		  Tcl_AppendResult(interp, "Discarding ",
+				   line, "\n", (char *)NULL);
 			continue;
 		}
 		GETSTRUCT( mp, mater );
@@ -213,7 +230,7 @@ char	**argv;
 	(void)unlink( tempfile );
 	dmp->dmr_colorchange();
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*

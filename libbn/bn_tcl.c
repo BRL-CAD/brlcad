@@ -414,7 +414,7 @@ char **argv;
 		goto error;
 	}
 
-	Tcl_SetResult(interp, rt_vls_addr(&result), TCL_VOLATILE);
+	Tcl_AppendResult(interp, rt_vls_addr(&result), (char *)NULL);
 	rt_vls_free(&result);
 	return TCL_OK;
 

@@ -86,7 +86,9 @@ static void	illuminate();
  *  is by completing the sequence, or pressing BE_REJECT.
  */
 int
-f_mouse( argc, argv )
+f_mouse(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -95,6 +97,9 @@ char	**argv;
 	int	up = atoi(argv[1]);
 	int	xpos = atoi(argv[2]);
 	int	ypos = atoi(argv[3]);
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	/* Build floating point mouse vector, -1 to +1 */
 	mousevec[X] =  xpos / 2047.0;
@@ -110,12 +115,12 @@ char	**argv;
 		register int i;
 
 		if( (i = scroll_select(xpos, ypos )) < 0 )  {
-			rt_log("mouse press outside valid scroll area\n");
-			return CMD_BAD;
+		   Tcl_AppendResult(interp, "mouse press outside valid scroll area\n", (char *)NULL);
+		   return TCL_ERROR;
 		} 
 		if( i > 0 )  {
 			/* Scroller bars claimed button press */
-			return CMD_OK;
+			return TCL_OK;
 		}
 		/* Otherwise, fall through */
 	}
@@ -127,12 +132,12 @@ char	**argv;
 	if( xpos < MENUXLIM && up )  {
 		register int i;
 		if( (i = mmenu_select( ypos )) < 0 )  {
-			rt_log("mouse press outside valid menu\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "mouse press outside valid menu\n", (char *)NULL);
+		  return TCL_ERROR;
 		}
 		if( i > 0 )  {
-			/* Menu claimed button press */
-			return CMD_OK;
+		  /* Menu claimed button press */
+		  return TCL_OK;
 		}
 		/* Otherwise, fall through */
 	}
@@ -150,52 +155,52 @@ char	**argv;
 	case ST_S_EDIT:
 	case ST_O_EDIT:
 	default:
-		return CMD_OK;		/* Take no action in these states */
+	  return TCL_OK;		/* Take no action in these states */
 
 	case ST_O_PICK:
 	case ST_S_PICK:
-		/*
-		 * Use the mouse for illuminating a solid
-		 */
-		illuminate( ypos );
-		return CMD_OK;
+	  /*
+	   * Use the mouse for illuminating a solid
+	   */
+	  illuminate( ypos );
+	  return TCL_OK;
 
 	case ST_O_PATH:
-		/*
-		 * Convert DT position to path element select
-		 */
-		isave = ipathpos;
-		ipathpos = illump->s_last - (
-			(ypos+2048L) * (illump->s_last+1) / 4096);
-		if( ipathpos != isave )
-			dmaflag++;
-		return CMD_OK;
+	  /*
+	   * Convert DT position to path element select
+	   */
+	  isave = ipathpos;
+	  ipathpos = illump->s_last - (
+				       (ypos+2048L) * (illump->s_last+1) / 4096);
+	  if( ipathpos != isave )
+	    dmaflag++;
+	  return TCL_OK;
 
 	} else switch( state )  {
 
 	case ST_VIEW:
-		/*
-		 * Use the DT for moving view center.
-		 * Make indicated point be new view center (NEW).
-		 */
-		slewview( mousevec );
-		return CMD_OK;
+	  /*
+	   * Use the DT for moving view center.
+	   * Make indicated point be new view center (NEW).
+	   */
+	  slewview( mousevec );
+	  return TCL_OK;
 
 	case ST_O_PICK:
-		ipathpos = 0;
-		(void)chg_state( ST_O_PICK, ST_O_PATH, "mouse press");
-		dmaflag = 1;
-		return CMD_OK;
+	  ipathpos = 0;
+	  (void)chg_state( ST_O_PICK, ST_O_PATH, "mouse press");
+	  dmaflag = 1;
+	  return TCL_OK;
 
 	case ST_S_PICK:
-		/* Check details, Init menu, set state */
-		init_sedit();		/* does chg_state */
-		dmaflag = 1;
-		return CMD_OK;
+	  /* Check details, Init menu, set state */
+	  init_sedit();		/* does chg_state */
+	  dmaflag = 1;
+	  return TCL_OK;
 
 	case ST_S_EDIT:
 	  sedit_mouse( mousevec );
-	  return CMD_OK;
+	  return TCL_OK;
 
 	case ST_O_PATH:
 		/*
@@ -214,22 +219,22 @@ char	**argv;
 			av[0] = "matpick";
 			av[1] = num;
 			av[2] = (char *)NULL;
-			(void)f_matpick( 2, av );
+			(void)f_matpick( clientData, interp, 2, av );
 			/* How to record this in the journal file? */
-			return CMD_OK;
+			return TCL_OK;
 		}
 
 	case ST_S_VPICK:
 		sedit_vpick( mousevec );
-		return CMD_OK;
+		return TCL_OK;
 
 	case ST_O_EDIT:
 		objedit_mouse( mousevec );
-		return CMD_OK;
+		return TCL_OK;
 
 	default:
 		state_err( "mouse press" );
-		return CMD_BAD;
+		return TCL_ERROR;
 	}
 	/* NOTREACHED */
 }
@@ -280,7 +285,9 @@ illuminate( y )  {
  *   advance illump or ipathpos
  */
 int
-f_aip(argc, argv)
+f_aip(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char *argv[];
 {
@@ -288,8 +295,11 @@ char *argv[];
   static count = -1;
   int i;
 
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
   if(!ndrawn || (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH))
-    return CMD_BAD;
+    return TCL_ERROR;
 
   if(state == ST_O_PATH){
     if(argc == 1 || *argv[1] == 'f'){
@@ -301,8 +311,8 @@ char *argv[];
       if(ipathpos < 0)
 	ipathpos = illump->s_last;
     }else{
-      rt_log("aill: bad parameter - %s\n", argv[1]);
-      return CMD_BAD;
+      Tcl_AppendResult(interp, "aill: bad parameter - ", argv[1], "\n", (char *)NULL);
+      return TCL_ERROR;
     }
   }else{
     sp = illump;
@@ -318,8 +328,8 @@ char *argv[];
       else
 	sp = sp->s_back;
     }else{
-      rt_log("aill: bad parameter - %s\n", argv[1]);
-      return CMD_BAD;
+      Tcl_AppendResult(interp, "aill: bad parameter - ", argv[1], "\n", (char *)NULL);
+      return TCL_ERROR;
     }
 
     sp->s_iflag = UP;
@@ -328,7 +338,7 @@ char *argv[];
   }
 
   update_views = 1;
-  return CMD_OK;
+  return TCL_OK;
 }
 
 /*
@@ -519,7 +529,9 @@ register vect_t point, direc;
  *			n = edit arc from s_path[n-1] to [n]
  */
 int
-f_matpick( argc, argv )
+f_matpick(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -527,15 +539,19 @@ char	**argv;
 	char			*cp;
 	register int		j;
 
-	if( not_state( ST_O_PATH, "Object Edit matrix pick" ) )  return CMD_BAD;
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
+	if( not_state( ST_O_PATH, "Object Edit matrix pick" ) )
+	  return TCL_ERROR;
 
 	if( cp = strchr( argv[1], '/' ) )  {
 		struct directory	*d0, *d1;
 		if( (d1 = db_lookup( dbip, cp+1, LOOKUP_NOISY )) == DIR_NULL )
-			return CMD_BAD;
+		  return TCL_ERROR;
 		*cp = '\0';		/* modifies argv[1] */
 		if( (d0 = db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
-			return CMD_BAD;
+		  return TCL_ERROR;
 		/* Find arc on illump path which runs from d0 to d1 */
 		for( j=1; j <= illump->s_last; j++ )  {
 			if( illump->s_path[j-1] != d0 )  continue;
@@ -543,9 +559,10 @@ char	**argv;
 			ipathpos = j;
 			goto got;
 		}
-		rt_log("matpick: unable to find arc %s/%s in current selection.  Re-specify.\n",
-			d0->d_namep, d1->d_namep );
-		return CMD_BAD;
+		Tcl_AppendResult(interp, "matpick: unable to find arc ", d0->d_namep,
+				 "/", d1->d_namep, " in current selection.  Re-specify.\n",
+				 (char *)NULL);
+		return TCL_ERROR;
 	} else {
 		ipathpos = atoi(argv[1]);
 		if( ipathpos < 0 )  ipathpos = 0;
@@ -573,5 +590,5 @@ got:
 	init_objedit();
 
 	dmaflag++;
-	return CMD_OK;
+	return TCL_OK;
 }

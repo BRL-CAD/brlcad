@@ -68,7 +68,9 @@ int		newedge;		/* new edge for arb editing */
 /* Add/modify item and air codes of a region */
 /* Format: I region item <air>	*/
 int
-f_itemair( argc, argv )
+f_itemair(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -76,8 +78,11 @@ char	**argv;
 	int ident, air;
 	union record record;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	air = ident = 0;
 	ident = atoi( argv[2] );
@@ -87,50 +92,53 @@ char	**argv;
 		air = atoi( argv[3] );
 	}
 	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
-		READ_ERR;
-		return CMD_BAD;
+	  TCL_READ_ERR_return;
 	}
 	if( record.u_id != ID_COMB ) {
-		rt_log("%s: not a combination\n", dp->d_namep );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( record.c.c_flags != 'R' ) {
-		rt_log("%s: not a region\n", dp->d_namep );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a region\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	record.c.c_regionid = ident;
 	record.c.c_aircode = air;
 	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
-		WRITE_ERR;
-		return CMD_BAD;
+	  TCL_WRITE_ERR_return;
 	}
 
-	return CMD_OK;
+	return TCL_ERROR;
 }
 
 /* Modify material information */
 /* Usage:  mater name */
 int
-f_mater( argc, argv )
+f_mater(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register struct directory *dp;
 	union record record;
 	int r=0, g=0, b=0;
+	int skip_args = 0;
 	char inherit;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+	
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	if( db_get( dbip, dp, &record, 0 , 1) < 0 ) {
-		READ_ERR;
-		return CMD_BAD;
+	  TCL_READ_ERR_return;
 	}
 
 	if( record.u_id != ID_COMB )  {
-		rt_log("%s: not a combination\n", dp->d_namep );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( argc >= 3 )  {
@@ -138,22 +146,23 @@ char	**argv;
 	    /* Material */
 	    strcpy( record.c.c_matname, argv[2]);
 	  }else{
-	    (void)rt_log( "Was %s %s\n", record.c.c_matname,
-			  record.c.c_matparm);
+	    Tcl_AppendResult(interp, "Was ", record.c.c_matname, " ",
+			     record.c.c_matparm, "\n", (char *)NULL);
 	    record.c.c_matname[0] = '\0';
 	    record.c.c_override = 0;
 	    goto out;
 	  }
 	}else{
 	  /* Material */
-	  (void)rt_log( "Material = %s\nMaterial?  ('del' to delete, CR to skip) ", record.c.c_matname);
+	  Tcl_AppendResult(interp, "Material = ", record.c.c_matname, "\n", MORE_ARGS_STR,
+			   "Material?  ('del' to delete, CR to skip) ", (char *)NULL);
 
 	  if(record.c.c_matname[0] == '\0')
 	    rt_vls_printf(&curr_cmd_list->more_default, "del");
 	  else
 	    rt_vls_printf(&curr_cmd_list->more_default, "%s", record.c.c_matname);
 
-	  return CMD_MORE;
+	  return TCL_ERROR;
 	}
 
 	if(argc >= 4){
@@ -163,20 +172,22 @@ char	**argv;
 	    strcpy( record.c.c_matparm, argv[3]);
 	}else{
 	  /* Parameters */
-	  (void)rt_log( "Param = %s\nParameter string? ('del' to delete, CR to skip) ", record.c.c_matparm);
+	  Tcl_AppendResult(interp, "Param = ", record.c.c_matparm, "\n", MORE_ARGS_STR,
+			   "Parameter string? ('del' to delete, CR to skip) ", (char *)NULL);
 
 	  if(record.c.c_matparm[0] == '\0')
 	    rt_vls_printf(&curr_cmd_list->more_default, "del");
 	  else
 	    rt_vls_printf(&curr_cmd_list->more_default, "%s", record.c.c_matparm);
 
-	  return CMD_MORE;
+	  return TCL_ERROR;
 	}
 
 	if(argc >= 5){
 	  if( strncmp(argv[4], "del", 3) == 0 ){
 	    /* leave color as is */
 	    record.c.c_override = 0;
+	    skip_args = 2;
 	  }else if(argc < 7){	/* prompt for color */
 	    goto color_prompt;
 	  }else{	/* change color */
@@ -192,39 +203,49 @@ char	**argv;
 	/* Color */
 color_prompt:
 	  if( record.c.c_override ){
-	    (void)rt_log( "Color = %d %d %d\n", 
-			  record.c.c_rgb[0],
-			  record.c.c_rgb[1],
-			  record.c.c_rgb[2] );
+	    struct rt_vls tmp_vls;
+	    
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "Color = %d %d %d\n",
+			  record.c.c_rgb[0], record.c.c_rgb[1], record.c.c_rgb[2] );
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+
 	    rt_vls_printf(&curr_cmd_list->more_default, "%d %d %d",
 			  record.c.c_rgb[0],
 			  record.c.c_rgb[1],
 			  record.c.c_rgb[2] );
-	  }else
-	    (void)rt_log( "Color = (No color specified)\n");
+	  }else{
+	    Tcl_AppendResult(interp, "Color = (No color specified)\n", (char *)NULL);
+	    rt_vls_printf(&curr_cmd_list->more_default, "del");
+	  }
 
-	  (void)rt_log( "Color R G B (0..255)? ('del' to delete, CR to skip) ");
-	  return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR,
+			   "Color R G B (0..255)? ('del' to delete, CR to skip) ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	/* Inherit */
 	switch( record.c.c_inherit )  {
 	default:
-		/* This is necessary to clean up old databases with grunge here */
-		record.c.c_inherit = DB_INH_LOWER;
-		/* Fall through */
+	  /* This is necessary to clean up old databases with grunge here */
+	  record.c.c_inherit = DB_INH_LOWER;
+	  /* Fall through */
 	case DB_INH_LOWER:
-		(void)rt_log( "Inherit = 0:  lower nodes (towards leaves) override\n");
-		break;
+	  Tcl_AppendResult(interp, "Inherit = 0:  lower nodes (towards leaves) override\n",
+			   (char *)NULL);
+	  break;
 	case DB_INH_HIGHER:
-		(void)rt_log( "Inherit = 1:  higher nodes (towards root) override\n");
-		break;
+	   Tcl_AppendResult(interp, "Inherit = 1:  higher nodes (towards root) override\n",
+			    (char *)NULL);
+	   break;
 	}
 
-	if(argc >= 8){
-	  record.c.c_inherit = inherit = *argv[7];
+	if(argc >= 8 - skip_args){
+	  record.c.c_inherit = inherit = *argv[7 - skip_args];
 	}else{
-	  (void)rt_log( "Inheritance (0|1)? (CR to skip) ");
+	  Tcl_AppendResult(interp, MORE_ARGS_STR,
+			   "Inheritance (0|1)? (CR to skip) ", (char *)NULL);
 	  switch( record.c.c_inherit ) {
 	  case DB_INH_HIGHER:
 	    rt_vls_printf(&curr_cmd_list->more_default, "1");
@@ -235,7 +256,7 @@ color_prompt:
 	    break;
 	  }
 
-	  return CMD_MORE;
+	  return TCL_ERROR;
 	}
 
 	switch( inherit )  {
@@ -249,16 +270,15 @@ color_prompt:
 	case '\n':
 		break;
 	default:
-		rt_log("Unknown response ignored\n");
-		break;
+	  Tcl_AppendResult(interp, "Unknown response ignored\n", (char *)NULL);
+	  break;
 	}		
 out:
 	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
-		WRITE_ERR;
-		return CMD_BAD;
+	  TCL_WRITE_ERR_return;
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -268,37 +288,40 @@ out:
  *  Usage: ocolor combination R G B
  */
 int
-f_comb_color( argc, argv )
-
+f_comb_color(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
-
 {
     int				i;
     int				val;
     register struct directory	*dp;
     union record		record;
 
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
+
     if ((dp = db_lookup(dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
-	return CMD_BAD;
+      return TCL_ERROR;
 
     if (db_get(dbip,  dp, &record, 0 , 1) < 0)
     {
-	READ_ERR;
-	return CMD_BAD;
+      TCL_READ_ERR_return;
     }
 
     if (record.u_id != ID_COMB)
     {
-	rt_log("%s: not a combination\n", dp->d_namep);
-	return CMD_BAD;
+      Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+      return TCL_ERROR;
     }
 
     for (i = 0; i < 3; ++i)
 	if (((val = atoi(argv[i + 2])) < 0) || (val > 255))
 	{
-	    rt_log("RGB value out of range: %d\n", val);
-	    return CMD_BAD;
+	  Tcl_AppendResult(interp, "RGB value out of range: ", argv[i + 2],
+			   "\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	else
 	    record.c.c_rgb[i] = val;
@@ -306,11 +329,10 @@ char	**argv;
 
     if (db_put( dbip, dp, &record, 0, 1) < 0)
     {
-	WRITE_ERR;
-	return CMD_BAD;
+      TCL_WRITE_ERR_return;
     }
 
-    return CMD_OK;
+    return TCL_OK;
 }
 
 /*
@@ -320,7 +342,9 @@ char	**argv;
  *  Usage: shader combination shader_material [shader_argument(s)]
  */
 int
-f_shader( argc, argv )
+f_shader(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -328,17 +352,19 @@ char	**argv;
 	union record		record;
 	struct rt_vls		args;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
-		READ_ERR;
-		return CMD_BAD;
+	  TCL_READ_ERR_return;
 	}
 
 	if( record.u_id != ID_COMB )  {
-		rt_log("%s: not a combination\n", dp->d_namep );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	strncpy( record.c.c_matname, argv[2], sizeof(record.c.c_matname)-1 );
@@ -352,18 +378,19 @@ char	**argv;
 	rt_vls_free( &args );
 
 	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
-		WRITE_ERR;
-		return CMD_BAD;
+	  TCL_WRITE_ERR_return;
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 
 /* Mirror image */
 /* Format: m oldobject newobject axis	*/
 int
-f_mirror( argc, argv )
+f_mirror(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -374,13 +401,17 @@ char	**argv;
 	mat_t mirmat;
 	mat_t temp;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( argv[2] );
-		return CMD_BAD;
+	  aexists( argv[2] );
+	  return TCL_ERROR;
 	}
+
 	k = -1;
 	if( strcmp( argv[3], "x" ) == 0 )
 		k = 0;
@@ -389,21 +420,19 @@ char	**argv;
 	if( strcmp( argv[3], "z" ) == 0 )
 		k = 2;
 	if( k < 0 ) {
-		rt_log("axis must be x, y or z\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "axis must be x, y or z\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( (rec = db_getmrec( dbip, proto )) == (union record *)0 ) {
-		READ_ERR;
-		return CMD_BAD;
+	  TCL_READ_ERR_return;
 	}
 	if( rec[0].u_id == ID_SOLID ||
 		rec[0].u_id == ID_ARS_A
 	)  {
 		if( (dp = db_diradd( dbip,  argv[2], -1, proto->d_len, proto->d_flags )) == DIR_NULL ||
 		    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
-		    	ALLOC_ERR;
-			return CMD_BAD;
+		  TCL_ALLOC_ERR_return;
 		}
 
 		/* create mirror image */
@@ -419,15 +448,13 @@ char	**argv;
 			NAMEMOVE( argv[2], rec[0].s.s_name );
 		}
 		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 ) {
-			WRITE_ERR;
-			return CMD_BAD;
+		  TCL_WRITE_ERR_return;
 		}
 		rt_free( (char *)rec, "record" );
 	} else if( rec[0].u_id == ID_COMB ) {
 		if( (dp = db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags ) ) == DIR_NULL ||
 		    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
-		    	ALLOC_ERR;
-			return CMD_BAD;
+		  TCL_ALLOC_ERR_return;
 		}
 		NAMEMOVE(argv[2], rec[0].c.c_name);
 		mat_idn( mirmat );
@@ -436,38 +463,38 @@ char	**argv;
 			mat_t	xmat;
 
 			if(rec[i].u_id != ID_MEMB) {
-				rt_log("f_mirror: bad db record\n");
-				return CMD_BAD;
+			  Tcl_AppendResult(interp, "f_mirror: bad db record\n", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			rt_mat_dbmat( xmat, rec[i].M.m_mat );
 			mat_mul(temp, mirmat, xmat);
 			rt_dbmat_mat( rec[i].M.m_mat, temp );
 		}
 		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 ) {
-			WRITE_ERR;
-			return CMD_BAD;
+		  TCL_WRITE_ERR_return;
 		}
 		rt_free( (char *)rec, "record" );
 	} else {
-		rt_log("%s: Cannot mirror\n",argv[2]);
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, argv[2], ": Cannot mirror\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( no_memory )  {
-		rt_log(
-		"Mirror image (%s) created but NO memory left to draw it\n",
-			argv[2] );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Mirror image (", argv[2],
+			   ") created but NO memory left to draw it\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	/* draw the "made" solid */
-	return f_edit( 2, argv+1 ); /* depends on name being in argv[2] ! */
+	return f_edit(clientData, interp, 2, argv+1 ); /* depends on name being in argv[2] ! */
 }
 
 /* Modify Combination record information */
 /* Format: edcomb combname Regionflag regionid air los GIFTmater */
 int
-f_edcomb( argc, argv )
+f_edcomb(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -475,8 +502,11 @@ char	**argv;
 	union record record;
 	int regionid, air, mat, los;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	regionid = atoi( argv[3] );
 	air = atoi( argv[4] );
@@ -484,12 +514,11 @@ char	**argv;
 	mat = atoi( argv[6] );
 
 	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
-		READ_ERR;
-		return CMD_BAD;
+	  TCL_READ_ERR_return;
 	}
 	if( record.u_id != ID_COMB ) {
-		rt_log("%s: not a combination\n", dp->d_namep );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( argv[2][0] == 'R' )
@@ -501,11 +530,10 @@ char	**argv;
 	record.c.c_los = los;
 	record.c.c_material = mat;
 	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
-		WRITE_ERR;
-		return CMD_BAD;
+	  TCL_WRITE_ERR_return;
 	}
 
-	return CMD_OK;
+	return TCL_ERROR;
 }
 
 /*
@@ -516,7 +544,9 @@ char	**argv;
  * that the user works in.
  */
 int
-f_units( argc, argv )
+f_units(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -524,11 +554,19 @@ char	**argv;
 	int	new_unit = 0;
 	CONST char	*str;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( argc < 2 )  {
-		str = rt_units_string(dbip->dbi_local2base);
-		rt_log("You are currently editing in '%s'.  1%s = %gmm \n",
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  str = rt_units_string(dbip->dbi_local2base);
+	  rt_vls_printf(&tmp_vls, "You are currently editing in '%s'.  1%s = %gmm \n",
 			str, str, dbip->dbi_local2base );
-		return CMD_OK;
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	  return TCL_OK;
 	}
 
 	if( strcmp(argv[1], "mm") == 0 ) 
@@ -552,12 +590,14 @@ char	**argv;
 		db_conversions( dbip, new_unit );
 
 		if( db_ident( dbip, dbip->dbi_title, new_unit ) < 0 )
-			rt_log("Warning: unable to stash working units into database\n");
+		  Tcl_AppendResult(interp,
+				   "Warning: unable to stash working units into database\n",
+				   (char *)NULL);
 
 	} else if( (loc2mm = rt_units_conversion(argv[1]) ) <= 0 )  {
-		rt_log("%s: unrecognized unit\n", argv[1]);
-		rt_log("valid units: <mm|cm|m|in|ft|meters|inches|feet>\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, argv[1], ": unrecognized unit\n",
+			   "valid units: <mm|cm|m|in|ft|meters|inches|feet>\n", (char *)NULL);
+	  return TCL_ERROR;
 	} else {
 		/*
 		 *  Can't stash requested units into the database for next session,
@@ -566,45 +606,50 @@ char	**argv;
 		dbip->dbi_localunit = ID_MM_UNIT;
 		dbip->dbi_local2base = loc2mm;
 		dbip->dbi_base2local = 1.0 / loc2mm;
-		rt_log("\
+		Tcl_AppendResult(interp, "\
 Due to a database restriction in the current format of .g files,\n\
-this choice of units will not be remembered on your next editing session.\n");
+this choice of units will not be remembered on your next editing session.\n", (char *)NULL);
 	}
-	rt_log("New editing units = '%s'\n",
-		rt_units_string(dbip->dbi_local2base) );
+	Tcl_AppendResult(interp, "New editing units = '", rt_units_string(dbip->dbi_local2base),
+			 "'\n", (char *)NULL);
 	dmaflag = 1;
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
  *	Change the current title of the description
  */
 int
-f_title( argc, argv )
+f_title(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	struct rt_vls	title;
 	int bad = 0;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( argc < 2 )  {
-		rt_log("%s\n", dbip->dbi_title);
-		return CMD_OK;
+	  Tcl_AppendResult(interp, dbip->dbi_title, "\n", (char *)NULL);
+	  return TCL_OK;
 	}
 
 	rt_vls_init( &title );
 	rt_vls_from_argv( &title, argc-1, argv+1 );
 
 	if( db_ident( dbip, rt_vls_addr(&title), dbip->dbi_localunit ) < 0 ) {
-		rt_log("Error: unable to change database title\n");
-		bad = 1;
+	  Tcl_AppendResult(interp, "Error: unable to change database title\n");
+	  bad = 1;
 	}
 
 	rt_vls_free( &title );
 	dmaflag = 1;
 
-	return bad ? CMD_BAD : CMD_OK;
+	return bad ? TCL_ERROR : TCL_OK;
 }
 
 /* tell him it already exists */
@@ -612,7 +657,7 @@ void
 aexists( name )
 char	*name;
 {
-	rt_log( "%s:  already exists\n", name );
+  Tcl_AppendResult(interp, name, ":  already exists\n", (char *)NULL);
 }
 
 /*
@@ -622,7 +667,9 @@ char	*name;
  *  (Generic, or explicit)
  */
 int
-f_make( argc, argv )
+f_make(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -645,9 +692,12 @@ char	**argv;
 	struct rt_part_internal *part_ip;
 	struct rt_pipe_internal *pipe_ip;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( argv[1] );
-		return CMD_BAD;
+	  aexists( argv[1] );
+	  return TCL_ERROR;
 	}
 
 	RT_INIT_DB_INTERNAL( &internal );
@@ -972,20 +1022,21 @@ char	**argv;
 		   strcmp( argv[2], "arbn" ) == 0 ||
 		   strcmp( argv[2], "nurb" ) == 0 ||
 		   strcmp( argv[2], "spline" ) == 0 )  {
-		rt_log("make %s not implimented yet\n", argv[2]);
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "make ", argv[2], " not implimented yet\n", (char *)NULL);
+	  return TCL_ERROR;
 	} else {
-		rt_log("make:  %s is not a known primitive\n", argv[2]);
-		rt_log("\tchoices are: arb8, arb7, arb6, arb5, arb4, sph, ell, ellg, grip, tor,\n" );
-		rt_log("\t\ttgc, tec, rec, trc, rcc, half, rpc, rhc, epa, ehy, eto, part\n" );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "make:  ", argv[2], " is not a known primitive\n",
+			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, sph, ell, ellg, grip, tor,\n",
+			   "\t\ttgc, tec, rec, trc, rcc, half, rpc, rhc, epa, ehy, eto, part\n",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( rt_functab[internal.idb_type].ft_export( &external, &internal, 1.0 ) < 0 )
 	{
-		rt_log( "f_make: export failure\n" );
-		rt_functab[internal.idb_type].ft_ifree( &internal );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "f_make: export failure\n", (char *)NULL);
+	  rt_functab[internal.idb_type].ft_ifree( &internal );
+	  return TCL_ERROR;
 	}
 	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
@@ -997,33 +1048,36 @@ char	**argv;
 	    db_alloc( dbip, dp, 1 ) < 0 )
 	    {
 	    	db_free_external( &external );
-	    	ALLOC_ERR;
-		return CMD_BAD;
+	    	TCL_ALLOC_ERR_return;
 	    }
 
 	if (db_put_external( &external, dp, dbip ) < 0 )
 	{
 		db_free_external( &external );
-		WRITE_ERR;
-		return CMD_BAD;
+		TCL_WRITE_ERR_return;
 	}
 	db_free_external( &external );
 
 	/* draw the "made" solid */
-	return f_edit( 2, argv );	/* depends on name being in argv[1] */
+	return f_edit( clientData, interp, 2, argv );	/* depends on name being in argv[1] */
 }
 
 /* allow precise changes to object rotation */
 int
-f_rot_obj( argc, argv )
+f_rot_obj(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	mat_t temp;
 	vect_t s_point, point, v_work, model_pt;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( not_state( ST_O_EDIT, "Object Rotation" ) )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	if(!rot_set){
 	  rot_x = atof(argv[1]);
@@ -1076,24 +1130,29 @@ char	**argv;
 
 	new_mats();
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* allow precise changes to object scaling, both local & global */
 int
-f_sc_obj( argc, argv )
+f_sc_obj(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	mat_t incr;
 	vect_t point, temp;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( not_state( ST_O_EDIT, "Object Scaling" ) )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	if( atof(argv[1]) <= 0.0 ) {
-		rt_log("ERROR: scale factor <=  0\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "ERROR: scale factor <=  0\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	update_views = 1;
@@ -1145,12 +1204,14 @@ char	**argv;
 	wrt_point(modelchanges, incr, modelchanges, point);
 	new_mats();
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* allow precise changes to object translation */
 int
-f_tr_obj( argc, argv )
+f_tr_obj(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -1158,8 +1219,11 @@ char	**argv;
 	mat_t incr, old;
 	vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( not_state( ST_O_EDIT, "Object Translation") )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	update_views = 1;
 
@@ -1185,38 +1249,42 @@ char	**argv;
 	mat_mul(modelchanges, incr, old);
 	new_mats();
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* Change the default region ident codes: item air los mat
  */
 int
-f_regdef( argc, argv )
+f_regdef(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	dmaflag = 1;
-	item_default = atoi(argv[1]);
+  dmaflag = 1;
+  item_default = atoi(argv[1]);
 
-	if(argc == 2)
-		return CMD_OK;
+  if(argc == 2)
+    return TCL_OK;
 
-	air_default = atoi(argv[2]);
-	if(air_default) 
-		item_default = 0;
+  air_default = atoi(argv[2]);
+  if(air_default) 
+    item_default = 0;
 
-	if(argc == 3)
-		return CMD_OK;
+  if(argc == 3)
+    return TCL_OK;
 
-	los_default = atoi(argv[3]);
+  los_default = atoi(argv[3]);
 
-	if(argc == 4)
-		return CMD_OK;
+  if(argc == 4)
+    return TCL_OK;
 
-	mat_default = atoi(argv[4]);
+  mat_default = atoi(argv[4]);
 
-	return CMD_OK;
+  return TCL_OK;
 }
 
 static int frac_stat;
@@ -1239,7 +1307,8 @@ struct model *m;
 	}
 
 	if( (new_dp=db_diradd( dbip, newname, -1, 0, DIR_SOLID)) == DIR_NULL )  {
-	    	ALLOC_ERR_return;
+	    	TCL_ALLOC_ERR;
+		return;
 	}
 
 	/* make sure the geometry/bounding boxes are up to date */
@@ -1255,7 +1324,7 @@ struct model *m;
 	if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )  {
 		/* Free memory */
 		nmg_km(m);
-		rt_log("rt_db_put_internal() failure\n");
+		Tcl_AppendResult(interp, "rt_db_put_internal() failure\n", (char *)NULL);
 		frac_stat = 1;
 		return;
 	}
@@ -1272,7 +1341,9 @@ struct model *m;
  *	containing a single shell with a single sub-element.
  */
 int
-f_fracture( argc, argv )
+f_fracture(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -1289,29 +1360,38 @@ char	**argv;
 	struct vertex *v_new, *v;
 	unsigned long tw, tf, tp;
 
-	rt_log("fracture:");
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
+	Tcl_AppendResult(interp, "fracture:", (char *)NULL);
 	for (i=0 ; i < argc ; i++)
-		rt_log(" %s", argv[i]);
-	rt_log("\n");
+		Tcl_AppendResult(interp, " ", argv[i], (char *)NULL);
+	Tcl_AppendResult(interp, "\n", (char *)NULL);
 
 	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
+		return TCL_ERROR;
 
 	if( rt_db_get_internal( &old_intern, old_dp, dbip, rt_identity ) < 0 )  {
-		rt_log("rt_db_get_internal() error\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	m = (struct model *)old_intern.idb_ptr;
 	NMG_CK_MODEL(m);
-
 
 	/* how many characters of the solid names do we reserve for digits? */
 	nmg_count_shell_kids(m, &tf, &tw, &tp);
 	
 	maxdigits = (int)(log10((double)(tf+tw+tp)) + 1.0);
 
-	rt_log("%d = %d digits\n", tf+tw+tp, maxdigits);
+	{
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "%d = %d digits\n", tf+tw+tp, maxdigits);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
 
 	/*	for(maxdigits=1,i=tf+tw+tp ; i > 0 ; i /= 10)
 	 *	maxdigits++;
@@ -1397,12 +1477,12 @@ char	**argv;
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
 
 				mged_add_nmg_part(newname, new_model);
-				if (frac_stat) return CMD_BAD;
+				if (frac_stat) return TCL_ERROR;
 			}
 #endif
 		}
 	}
-	return CMD_OK;
+	return TCL_OK;
 
 }
 /*
@@ -1414,7 +1494,9 @@ char	**argv;
  *	about a specified ray.
  */
 int
-f_qorot( argc, argv )
+f_qorot(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -1422,8 +1504,11 @@ char	**argv;
 	vect_t s_point, point, v_work, model_pt;
 	vect_t	specified_pt, direc;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( not_state( ST_O_EDIT, "Object Rotation" ) )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	if(movedir != ROTARROW) {
 		/* NOT in object rotate mode - put it in obj rot */
@@ -1466,5 +1551,5 @@ char	**argv;
 
 	new_mats();
 
-	return CMD_OK;
+	return TCL_OK;
 }

@@ -95,12 +95,17 @@ int			flags;
  *  Usage:  dup file.g [prefix]
  */
 int
-f_dup( argc, argv )
+f_dup(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	struct db_i		*newdbp;
 	struct directory	**dirp0;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	(void)signal( SIGINT, sig2 );           /* allow interrupts */
 
@@ -118,38 +123,46 @@ char	**argv;
 
 	/* open the input file */
 	if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
-		perror( argv[1] );
-		(void)rt_log( "dup: Can't open %s\n", argv[1]);
-		return CMD_BAD;
+	  perror( argv[1] );
+	  Tcl_AppendResult(interp, "dup: Can't open ", argv[1], "\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
-	rt_log("\n*** Comparing %s with %s for duplicate names\n",
-		dbip->dbi_filename,argv[1]);
+	Tcl_AppendResult(interp, "\n*** Comparing ", dbip->dbi_filename,
+			 "  with ", argv[1], " for duplicate names\n", (char *)NULL);
 	if( ncharadd ) {
-		rt_log("  For comparison, all names in %s prefixed with:  %s\n",
-				argv[1],prestr);
+	  Tcl_AppendResult(interp, "  For comparison, all names in ",
+			   argv[1], " prefixed with:  ", prestr, "\n", (char *)NULL);
 	}
 
 	/* Get array to hold names of duplicates */
 	if( (dup_dirp = dir_getspace(0)) == (struct directory **) 0) {
-		rt_log( "f_dup: unable to get memory\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "f_dup: unable to get memory\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	dirp0 = dup_dirp;
 
 	/* Scan new database for overlaps */
 	if( db_scan( newdbp, mged_dir_check, 0 ) < 0 )  {
-		(void)rt_log( "dup: db_scan failure\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "dup: db_scan failure\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	col_pr4v( dirp0, (int)(dup_dirp - dirp0));
 	rt_free( (char *)dirp0, "dir_getspace array" );
-	rt_log("\n -----  %d duplicate names found  -----\n",num_dups);
+	
+	{
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "\n -----  %d duplicate names found  -----\n",num_dups);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
 
 	db_close( newdbp );
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 
@@ -282,18 +295,24 @@ int			flags;
  *  to prevent inadvertently sucking in a non-prefixed file.
  */
 int
-f_concat( argc, argv )
+f_concat(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	struct db_i		*newdbp;
 	int bad = 0;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	/* get any prefix */
 	if( argc < 3 )  {
-		(void)rt_log(
-			"concat: Enter prefix string or / for no prefix: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR,
+			   "concat: Enter prefix string or / for no prefix: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( strcmp( argv[2], "/" ) == 0 )  {
@@ -311,15 +330,16 @@ char	**argv;
 	/* open the input file */
 	if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
 		perror( argv[1] );
-		(void)rt_log( "concat: Can't open %s\n", argv[1]);
-		return CMD_BAD;
+		Tcl_AppendResult(interp, "concat: Can't open ",
+				 argv[1], "\n", (char *)NULL);
+		return TCL_ERROR;
 	}
 
 	/* Scan new database, adding everything encountered. */
 	if( db_scan( newdbp, mged_dir_add, 1 ) < 0 )  {
-		(void)rt_log( "concat: db_scan failure\n");
-		bad = 1;	
-		/* Fall through, to close off database */
+	  Tcl_AppendResult(interp, "concat: db_scan failure\n", (char *)NULL);
+	  bad = 1;	
+	  /* Fall through, to close off database */
 	}
 
 	/* Free all the directory entries, and close the input database */
@@ -327,5 +347,5 @@ char	**argv;
 
 	sync();		/* just in case... */
 
-	return bad ? CMD_BAD : CMD_OK;
+	return bad ? TCL_ERROR : TCL_OK;
 }

@@ -84,7 +84,7 @@ struct partition *PartHeadp;
 	register fastf_t len;
 
 	if (PartHeadp->pt_forw->pt_forw != PartHeadp)
-		rt_log("hit_headon: multiple partitions\n");
+	  Tcl_AppendResult(interp, "hit_headon: multiple partitions\n", (char *)NULL);
 
 	VJOIN1(PartHeadp->pt_forw->pt_inhit->hit_point,ap->a_ray.r_pt,
 	    PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
@@ -138,7 +138,9 @@ struct partition *PartHeadp;
  *			F _ H I D E L I N E
  */
 int
-f_hideline(argc, argv)
+f_hideline(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -156,10 +158,13 @@ char	**argv;
 	vect_t last,dir;
 	register struct rt_vlist	*vp;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if ((plotfp = fopen(argv[1],"w")) == NULL) {
-		rt_log("f_hideline: unable to open \"%s\" for writing.\n",
-		    argv[1]);
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "f_hideline: unable to open \"", argv[1],
+			   "\" for writing.\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	pl_space(plotfp,-2048,-2048,2048,2048);
 
@@ -174,15 +179,16 @@ char	**argv;
 			objname[numobjs++] = sp->s_path[0]->d_namep;
 	}
 
-	rt_log("Generating hidden-line drawing of the following regions:\n");
+	Tcl_AppendResult(interp, "Generating hidden-line drawing of the following regions:\n",
+			 (char *)NULL);
 	for (i = 0; i < numobjs; i++)
-		rt_log("\t%s\n",objname[i]);
+	  Tcl_AppendResult(interp, "\t", objname[i], "\n", (char *)NULL);
 
 	/* Initialization for librt */
 	if ((rtip = rt_dirbuild(dbip->dbi_filename,title,0)) == RTI_NULL) {
-		rt_log("f_hideline: unable to open model file \"%s\"\n",
-		    dbip->dbi_filename);
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "f_hideline: unable to open model file \"",
+			   dbip->dbi_filename, "\"\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	a.a_hit = hit_headon;
 	a.a_miss = hit_tangent;
@@ -205,8 +211,9 @@ char	**argv;
 	}
 
 	for (i = 0; i < numobjs; i++)
-		if (rt_gettree(rtip,objname[i]) == -1)
-			rt_log("f_hideline: rt_gettree failed on \"%s\"\n",objname[i]);
+	  if (rt_gettree(rtip,objname[i]) == -1)
+	    Tcl_AppendResult(interp, "f_hideline: rt_gettree failed on \"",
+			     objname[i], "\"\n", (char *)NULL);
 
 	/* Crawl along the vectors raytracing as we go */
 	VSET(temp,0,0,-1);				/* looking at model */
@@ -219,14 +226,14 @@ char	**argv;
 		if (ratio >= dmp->dmr_bound || ratio < 0.001)
 			continue;
 
-		rt_log("Solid\n");
+		Tcl_AppendResult(interp, "Solid\n", (char *)NULL);
 		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
 			register point_t *pt = vp->pt;
 			for( i = 0; i < nused; i++,cmd++,pt++ )  {
-				rt_log("\tVector\n");
+			  Tcl_AppendResult(interp, "\tVector\n", (char *)NULL);
 				switch( *cmd )  {
 				case RT_VLIST_POLY_START:
 				case RT_VLIST_POLY_VERTNORM:
@@ -245,7 +252,14 @@ char	**argv;
 					len = MAGNITUDE(dir);
 					VUNITIZE(dir);
 					visible = FALSE;
-					rt_log("\t\tDraw 0 -> %g, step %g\n", len, step);
+					{
+					  struct rt_vls tmp_vls;
+
+					  rt_vls_init(&tmp_vls);
+					  rt_vls_printf(&tmp_vls, "\t\tDraw 0 -> %g, step %g\n", len, step);
+					  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+					  rt_vls_free(&tmp_vls);
+					}
 					for (u = 0; u <= len; u += step) {
 						VJOIN1(aim_point,last,u,dir);
 						MAT4X3PNT(temp,model2view,aim_point);
@@ -271,5 +285,5 @@ char	**argv;
 		}
 	}
 	fclose(plotfp);
-	return CMD_OK;
+	return TCL_OK;
 }

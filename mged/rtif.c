@@ -65,22 +65,29 @@ void
 pr_wait_status( status )
 int	status;
 {
-	int	sig = status & 0x7f;
-	int	core = status & 0x80;
-	int	ret = status >> 8;
+  int	sig = status & 0x7f;
+  int	core = status & 0x80;
+  int	ret = status >> 8;
+  struct rt_vls tmp_vls;
 
-	if( status == 0 )  {
-		rt_log("Normal exit\n");
-		return;
-	}
-	rt_log("Abnormal exit x%x", status);
-	if( core )
-		rt_log(", core dumped");
-	if( sig )
-		rt_log(", terminating signal = %d", sig );
-	else
-		rt_log(", return (exit) code = %d", ret );
-	rt_log("\n");
+  if( status == 0 )  {
+    Tcl_AppendResult(interp, "Normal exit\n", (char *)NULL);
+    return;
+  }
+
+  rt_vls_init(&tmp_vls);
+  rt_vls_printf(&tmp_vls, "Abnormal exit x%x", status);
+
+  if( core )
+    rt_vls_printf(&tmp_vls, ", core dumped");
+
+  if( sig )
+    rt_vls_printf(&tmp_vls, ", terminating signal = %d", sig );
+  else
+    rt_vls_printf(&tmp_vls, ", return (exit) code = %d", ret );
+
+  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), "\n", (char *)NULL);
+  rt_vls_free(&tmp_vls);
 }
 
 /*
@@ -230,9 +237,9 @@ register char **end;
 		if( vp < end )
 			*vp++ = sp->s_path[0]->d_namep;
 		else  {
-			rt_log("mged: ran out of comand vector space  at %s\n",
-				sp->s_path[0]->d_namep );
-			break;
+		  Tcl_AppendResult(interp, "mged: ran out of comand vector space at ",
+				   sp->s_path[0]->d_namep, "\n", (char *)NULL);
+		  break;
 		}
 		sp->s_iflag = UP;
 		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
@@ -257,15 +264,15 @@ void
 setup_rt( vp )
 register char	**vp;
 {
-	rt_cmd_vec_len = vp - rt_cmd_vec;
-	rt_cmd_vec_len += build_tops(vp, &rt_cmd_vec[MAXARGS]);
+  rt_cmd_vec_len = vp - rt_cmd_vec;
+  rt_cmd_vec_len += build_tops(vp, &rt_cmd_vec[MAXARGS]);
 
-	/* Print out the command we are about to run */
-	vp = &rt_cmd_vec[0];
-	while( *vp )
-		rt_log("%s ", *vp++ );
-	rt_log("\n");
+  /* Print out the command we are about to run */
+  vp = &rt_cmd_vec[0];
+  while( *vp )
+    Tcl_AppendResult(interp, *vp++, " ", (char *)NULL);
 
+  Tcl_AppendResult(interp, "\n", (char *)NULL);
 }
 
 /*
@@ -328,7 +335,9 @@ run_rt()
  *			F _ R T
  */
 int
-f_rt( argc, argv )
+f_rt(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -338,17 +347,25 @@ char	**argv;
 	char *dm;
 	int	needs_reattach;
 	char	pstring[32];
+	struct rt_vls cmd;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
+#if 0
 	/*
 	 * This may be a workstation where RT and MGED have to share the
 	 * display, so let display go.  We will try to reattach at the end.
 	 */
-	dm = dmp->dmr_name;
-	if( (needs_reattach = dmp->dmr_releasedisplay) != 0 )
+	if( (needs_reattach = dmp->dmr_releasedisplay) != 0 ){
+	  rt_vls_init(&cmd);
+	  rt_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
 	  release(NULL);
+	}
+#endif
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "rt";
@@ -364,16 +381,21 @@ char	**argv;
 
 	setup_rt( vp );
 	retcode = run_rt();
+
+#if 0
 	if( needs_reattach && retcode == 0 )  {
 		/* Wait for a return, then reattach display */
 		rt_log("Press RETURN to reattach\007\n");
 		while( getchar() != '\n' )
 			/* NIL */  ;
 	}
-	if( needs_reattach )
-		attach( dm );
+	if( needs_reattach ){
+	  cmdline(&cmd, FALSE);
+	  rt_vls_free(&cmd);
+	}
+#endif
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -384,7 +406,9 @@ char	**argv;
  *  Typically used to invoke a remote RT (hence the name).
  */
 int
-f_rrt( argc, argv )
+f_rrt(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -393,17 +417,25 @@ char	**argv;
 	int	retcode;
 	char	*dm;
 	int	needs_reattach;
+	struct rt_vls cmd;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
+#if 0
 	/*
 	 * This may be a workstation where RT and MGED have to share the
 	 * display, so let display go.  We will try to reattach at the end.
 	 */
-	dm = dmp->dmr_name;
-	if( needs_reattach = dmp->dmr_releasedisplay )
+	if( needs_reattach = dmp->dmr_releasedisplay ){
+	  rt_vls_init(&cmd);
+	  rt_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
 	  release(NULL);
+	}
+#endif
 
 	vp = &rt_cmd_vec[0];
 	for( i=1; i < argc; i++ )
@@ -412,16 +444,22 @@ char	**argv;
 
 	setup_rt( vp );
 	retcode = run_rt();
+
+#if 0
+/*XXX*/
 	if( needs_reattach && retcode == 0 )  {
-		/* Wait for a return, then reattach display */
+	  /* Wait for a return, then reattach display */
 		rt_log("Press RETURN to reattach\007\n");
 		while( getchar() != '\n' )
 			/* NIL */  ;
 	}
-	if( needs_reattach )
-		attach( dm );
+	if( needs_reattach ){
+	  cmdline(&cmd, FALSE);
+	  rt_vls_free(&cmd);
+	}
+#endif
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -430,7 +468,9 @@ char	**argv;
  *  Invoke "rtcheck" to find overlaps, and display them as a vector overlay.
  */
 int
-f_rtcheck( argc, argv )
+f_rtcheck(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -444,8 +484,11 @@ char	**argv;
 	struct solid *sp;
 	struct rt_vlblock	*vbp;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( not_state( ST_VIEW, "Overlap check in current view" ) )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "rtcheck";
@@ -514,7 +557,7 @@ char	**argv;
 	rt_vlblock_free(vbp);
 	dmaflag = 1;
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -547,7 +590,9 @@ register char *p1, *suff;
  *			F _ S A V E V I E W
  */
 int
-f_saveview( argc, argv )
+f_saveview(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -556,10 +601,14 @@ char	**argv;
 	register FILE *fp;
 	char *base;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (fp = fopen( argv[1], "a")) == NULL )  {
-		perror(argv[1]);
-		return CMD_BAD;
+	  perror(argv[1]);
+	  return TCL_ERROR;
 	}
+
 	base = basename( argv[1], ".sh" );
 	(void)chmod( argv[1], 0755 );	/* executable */
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
@@ -604,7 +653,7 @@ char	**argv;
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -618,7 +667,9 @@ char	**argv;
  *	1	leave view alone, animate solid named "EYE"
  */
 int
-f_rmats( argc, argv )
+f_rmats(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -635,12 +686,15 @@ char	**argv;
 	mat_t	rot;
 	register struct rt_vlist *vp;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( not_state( ST_VIEW, "animate from matrix file") )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	if( (fp = fopen(argv[1], "r")) == NULL )  {
-		perror(argv[1]);
-		return CMD_BAD;
+	  perror(argv[1]);
+	  return TCL_ERROR;
 	}
 	mode = -1;
 	if( argc > 2 )
@@ -658,18 +712,18 @@ char	**argv;
 			vp = RT_LIST_LAST( rt_vlist, &(sp->s_vlist) );
 			VMOVE( sav_start, vp->pt[vp->nused-1] );
 			VMOVE( sav_center, sp->s_center );
-			rt_log("animating EYE solid\n");
+			Tcl_AppendResult(interp, "animating EYE solid\n", (char *)NULL);
 			goto work;
 		}
 		/* Fall through */
 	default:
 	case -1:
-		mode = -1;
-		rt_log("default mode:  eyepoint at (0,0,1) viewspace\n");
-		break;
+	  mode = -1;
+	  Tcl_AppendResult(interp, "default mode:  eyepoint at (0,0,1) viewspace\n", (char *)NULL);
+	  break;
 	case 0:
-		rt_log("rotation supressed, center is eyepoint\n");
-		break;
+	  Tcl_AppendResult(interp, "rotation supressed, center is eyepoint\n", (char *)NULL);
+	  break;
 	}
 work:
 	/* If user hits ^C, this will stop, but will leave hanging filedes */
@@ -767,12 +821,14 @@ work:
 	dmaflag = 1;
 	fclose(fp);
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* Save a keyframe to a file */
 int
-f_savekey( argc, argv )
+f_savekey(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -781,13 +837,16 @@ char	**argv;
 	vect_t	eye_model;
 	vect_t temp;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (fp = fopen( argv[1], "a")) == NULL )  {
-		perror(argv[1]);
-		return CMD_BAD;
+	  perror(argv[1]);
+	  return TCL_ERROR;
 	}
 	if( argc > 2 ) {
-		time = atof( argv[2] );
-		(void)fprintf(fp,"%f\n", time);
+	  time = atof( argv[2] );
+	  (void)fprintf(fp,"%f\n", time);
 	}
 	/*
 	 *  Eye is in conventional place.
@@ -797,7 +856,7 @@ char	**argv;
 	rt_oldwrite(fp, eye_model);
 	(void)fclose( fp );
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 extern int	cm_start();
@@ -898,13 +957,18 @@ int	num;
  *			F _ P R E V I E W
  */
 int
-f_preview( argc, argv )
+f_preview(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	char	*cmd;
 	int	c;
 	vect_t	temp;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	if( not_state( ST_VIEW, "animate viewpoint from new RT file") )
 		return CMD_BAD;
@@ -935,12 +999,20 @@ char	**argv;
 			rtif_mode = 3;	/* Like "ev" */
 			break;
 		default:
-			rt_log("option '%c' unknown\n", c);
-			rt_log("	-d#	inter-frame delay\n");
-			rt_log("	-v	polygon rendering (visual)\n");
-			rt_log("	-D#	desired starting frame\n");
-			rt_log("	-K#	final frame\n");
-			break;
+		  {
+		    struct rt_vls tmp_vls;
+
+		    rt_vls_init(&tmp_vls);
+		    rt_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
+		    rt_vls_printf(&tmp_vls, "        -d#     inter-frame delay\n");
+		    rt_vls_printf(&tmp_vls, "        -v      polygon rendering (visual)\n");
+		    rt_vls_printf(&tmp_vls, "        -D#     desired starting frame\n");
+		    rt_vls_printf(&tmp_vls, "        -K#     final frame\n");
+		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		    rt_vls_free(&tmp_vls);
+		  }
+
+		  break;
 		}
 	}
 	argc -= optind-1;
@@ -949,8 +1021,8 @@ char	**argv;
 	/* If file is still open from last cmd getting SIGINT, close it */
 	if(rtif_fp)  fclose(rtif_fp);
 	if( (rtif_fp = fopen(argv[1], "r")) == NULL )  {
-		perror(argv[1]);
-		return CMD_BAD;
+	  perror(argv[1]);
+	  return TCL_ERROR;
 	}
 
 	/* Build list of top-level objects in view, in rt_cmd_vec[] */
@@ -959,7 +1031,7 @@ char	**argv;
 
 	rtif_vbp = rt_vlblock_init();
 
-	rt_log("eyepoint at (0,0,1) viewspace\n");
+	Tcl_AppendResult(interp, "eyepoint at (0,0,1) viewspace\n", (char *)NULL);
 
 	/*
 	 *  Initialize the view to the current one in MGED
@@ -982,7 +1054,8 @@ char	**argv;
 			}
 		}
 		if( rt_do_cmd( (struct rt_i *)0, cmd, cmdtab ) < 0 )
-			rt_log("command failed: %s\n", cmd);
+		   Tcl_AppendResult(interp, "command failed: ", cmd,
+				    "\n", (char *)NULL);
 		rt_free( cmd, "preview cmd" );
 	}
 	fclose(rtif_fp);
@@ -998,7 +1071,7 @@ char	**argv;
 	/* Restore state variables */
 	mged_variables = rtif_saved_state;	/* struct copy */
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -1007,7 +1080,9 @@ char	**argv;
  *  Invoke NIRT with the current view & stuff
  */
 int
-f_nirt( argc, argv )
+f_nirt(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -1026,8 +1101,11 @@ char	**argv;
 	vect_t	minus, plus;	/* vers of this solid's bounding box */
 	vect_t	unit_H, unit_V;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( not_state( ST_VIEW, "Single ray-trace from current view" ) )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "nirt";
@@ -1059,7 +1137,8 @@ char	**argv;
 		    -toViewcenter[MDY], -toViewcenter[MDZ]);
 		if (adcflag)
 		{
-		    rt_log("Firing through angle/distance cursor...\n");
+		   Tcl_AppendResult(interp, "Firing through angle/distance cursor...\n",
+				    (char *)NULL);
 		    /*
 		     * Compute bounding box of all objects displayed.
 		     * Borrowed from size_reset() in chgview.c
@@ -1122,7 +1201,7 @@ char	**argv;
 			center_model, curs_y * Viewscale / 2047.0, unit_V);
 		}
 		else
-		    rt_log("Firing from view center...\n");
+		  Tcl_AppendResult(interp, "Firing from view center...\n", (char *)NULL);
 
 		rt_write(fp, center_model );
 	}
@@ -1139,7 +1218,7 @@ char	**argv;
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 cm_start(argc, argv)
@@ -1287,8 +1366,8 @@ int	argc;
 
 	/* If new treewalk is needed, get new objects into view. */
 	if( tree_walk_needed )  {
-		(void)f_zap( 0, 0 );
-		edit_com( rt_cmd_vec_len, rt_cmd_vec, rtif_mode, 0 );
+	  (void)f_zap( (ClientData)NULL, interp, 0, 0 );
+	  edit_com( rt_cmd_vec_len, rt_cmd_vec, rtif_mode, 0 );
 	}
 
 	dmaflag = 1;
@@ -1325,14 +1404,14 @@ int	argc;
 char	**argv;
 {
 
-	if( db_parse_anim( dbip, argc, argv ) < 0 )  {
-		rt_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
-		return(-1);		/* BAD */
-	}
+  if( db_parse_anim( dbip, argc, argv ) < 0 )  {
+    Tcl_AppendResult(interp, "cm_anim:  ", argv[1], " ", argv[2], " failed\n", (char *)NULL);
+    return(-1);		/* BAD */
+  }
 
-	tree_walk_needed = 1;
+  tree_walk_needed = 1;
 
-	return(0);
+  return(0);
 }
 
 /*
@@ -1370,7 +1449,7 @@ cm_clean(argc, argv)
 char	**argv;
 int	argc;
 {
-	f_zap( 0, (char **)0 );
+	f_zap( (ClientData)NULL, interp, 0, (char **)0 );
 
 	/* Free animation structures */
 	db_free_anim(dbip);
@@ -1388,13 +1467,12 @@ int	argc;
 
 extern char **skewer_solids ();
 
-int cmd_solids_on_ray (clientData, interp, argc, argv)
-
+int
+cmd_solids_on_ray (clientData, interp, argc, argv)
 ClientData	clientData;
 Tcl_Interp	*interp;
 int		argc;
 char		**argv;
-
 {
     char			**snames;
     int				h = 0;
@@ -1410,9 +1488,12 @@ char		**argv;
     point_t			minus, plus;	/* vrts of solid's bnding bx */
     vect_t			unit_H, unit_V;
 
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
+
     if ((argc != 1) && (argc != 3))
     {
-	Tcl_SetResult(interp, "Usage: 'solids_on_ray [h v]'", TCL_STATIC);
+	Tcl_AppendResult(interp, "Usage: 'solids_on_ray [h v]'", (char *)NULL);
 	return (TCL_ERROR);
     }
     if ((argc == 3) &&
@@ -1494,7 +1575,7 @@ char		**argv;
 
     if (snames == 0)
     {
-	Tcl_SetResult(interp, "Error executing skewer_solids: ", TCL_STATIC);
+	Tcl_AppendResult(interp, "Error executing skewer_solids: ", (char *)NULL);
 	Tcl_AppendResult(interp, rt_vls_addr(&vls), (char *)NULL);
 	rt_vls_free(&vls);
 	return (TCL_ERROR);

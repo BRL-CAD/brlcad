@@ -83,13 +83,13 @@ fastf_t scale;
 			tmp_od = ps->pp_od*scale;
 		if( ps->pp_id > tmp_od )
 		{
-			rt_log( "Cannot make OD less than ID\n" );
-			return;
+		  Tcl_AppendResult(interp, "Cannot make OD less than ID\n", (char *)NULL);
+		  return;
 		}
 		if( tmp_od > 2.0*ps->pp_bendradius )
 		{
-			rt_log( "Cannot make outer radius greater than bend radius\n" );
-			return;
+		  Tcl_AppendResult(interp, "Cannot make outer radius greater than bend radius\n", (char *)NULL);
+		  return;
 		}
 	}
 
@@ -116,13 +116,13 @@ fastf_t scale;
 			tmp_id = (-scale);
 		if( ps->pp_od < tmp_id )
 		{
-			rt_log( "Cannot make ID greater than OD\n" );
-			return;
+		  Tcl_AppendResult(interp, "Cannot make ID greater than OD\n", (char *)NULL);
+		  return;
 		}
 		if( tmp_id > 2.0*ps->pp_bendradius )
 		{
-			rt_log( "Cannot make inner radius greater than bend radius\n" );
-			return;
+		  Tcl_AppendResult(interp, "Cannot make inner radius greater than bend radius\n", (char *)NULL);
+		  return;
 		}
 	}
 
@@ -153,13 +153,13 @@ fastf_t scale;
 		tmp_od = scale*ps->pp_od;
 	if( ps->pp_id > tmp_od )
 	{
-		rt_log( "Cannot make OD smaller than ID\n" );
-		return;
+	  Tcl_AppendResult(interp, "Cannot make OD smaller than ID\n", (char *)NULL);
+	  return;
 	}
 	if( tmp_od > 2.0*ps->pp_bendradius )
 	{
-		rt_log( "Cannot make outer radius greater than bend radius\n" );
-		return;
+	  Tcl_AppendResult(interp, "Cannot make outer radius greater than bend radius\n", (char *)NULL);
+	  return;
 	}
 
 	if( scale > 0.0 )
@@ -183,13 +183,13 @@ fastf_t scale;
 		tmp_id = (-scale);
 	if( ps->pp_od < tmp_id )
 	{
-		rt_log( "Cannot make ID greater than OD\n" );
-		return;
+	  Tcl_AppendResult(interp, "Cannot make ID greater than OD\n", (char *)NULL);
+	  return;
 	}
 	if( tmp_id > 2.0*ps->pp_bendradius )
 	{
-		rt_log( "Cannot make inner radius greater than bend radius\n" );
-		return;
+	  Tcl_AppendResult(interp, "Cannot make inner radius greater than bend radius\n", (char *)NULL);
+	  return;
 	}
 
 	if( scale > 0.0 )
@@ -221,9 +221,9 @@ fastf_t scale;
 
 	if( ps->pp_bendradius < ps->pp_od * 0.5 )
 	{
-		rt_log( "Cannot make bend radius less than pipe outer radius\n" );
-		ps->pp_bendradius = old_radius;
-		return;
+	  Tcl_AppendResult(interp, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
+	  ps->pp_bendradius = old_radius;
+	  return;
 	}
 
 	if( rt_pipe_ck( head ) )
@@ -254,16 +254,16 @@ fastf_t scale;
 		{
 			if( (-scale) < old_ps->pp_od * 0.5 )
 			{
-				rt_log( "Cannot make bend radius less than pipe outer radius\n" );
-				return;
+			  Tcl_AppendResult(interp, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
+			  return;
 			}
 		}
 		else
 		{
 			if( old_ps->pp_bendradius * scale < old_ps->pp_od * 0.5 )
 			{
-				rt_log( "Cannot make bend radius less than pipe outer radius\n" );
-				return;
+			  Tcl_AppendResult(interp, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
+			  return;
 			}
 		}
 	}
@@ -485,15 +485,15 @@ struct wdb_pipept *ps;
 
 	if( !prev && !next )
 	{
-		rt_log( "Cannot delete last point in pipe\n" );
-		return( ps );
+	  Tcl_AppendResult(interp, "Cannot delete last point in pipe\n", (char *)NULL);
+	  return( ps );
 	}
 
 	RT_LIST_DEQUEUE( &ps->l );
 
 	if( rt_pipe_ck( head ) )
 	{
-		rt_log( "Cannot delete this point, it will result in an illegal pipe\n" );
+	  Tcl_AppendResult(interp, "Cannot delete this point, it will result in an illegal pipe\n", (char *)NULL);
 		if( next )
 			RT_LIST_INSERT( &next->l, &ps->l )
 		else if( prev )
@@ -529,7 +529,7 @@ point_t new_pt;
 	VMOVE( ps->pp_coord, new_pt );
 	if( rt_pipe_ck( &pipe->pipe_segs_head ) )
 	{
-		rt_log( "Cannot move point there\n" );
-		VMOVE( ps->pp_coord, old_pt );
+	  Tcl_AppendResult(interp, "Cannot move point there\n", (char *)NULL);
+	  VMOVE( ps->pp_coord, old_pt );
 	}
 }

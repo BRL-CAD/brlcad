@@ -81,7 +81,9 @@ static int	param_count = 0; 	/* location in m_param[] array */
  *  Usage: E object(s)
  */
 int
-f_evedit( argc, argv )
+f_evedit(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -89,6 +91,9 @@ char	**argv;
 	register int	i;
 	time_t		stime, etime;	/* start & end times */
 	static int	first_time = 1;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	drawreg = 1;
 	regmemb = -1;
@@ -117,11 +122,11 @@ char	**argv;
 		 * unit scale.
 		 */
 		if( no_memory )  {
-			rt_log("No memory left so cannot draw %s\n",
-				dp->d_namep);
-			drawreg = 0;
-			regmemb = -1;
-			continue;
+		  Tcl_AppendResult(interp, "No memory left so cannot draw ",
+				   dp->d_namep, "\n", (char *)NULL);
+		  drawreg = 0;
+		  regmemb = -1;
+		  continue;
 		}
 
 		Edrawtree( dp );
@@ -135,11 +140,19 @@ char	**argv;
 		new_mats();
 	}
 
-	rt_log("E: %ld vectors in %ld sec\n", nvectors, etime - stime );
+	{
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "E: %ld vectors in %ld sec\n", nvectors, etime - stime );
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
+
 	dmp->dmr_colorchange();
 	dmaflag = 1;
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 struct directory	*cur_path[MAX_PATH];	/* Record of current path */
@@ -195,11 +208,18 @@ struct mater_info *materp;
 	struct mater_info curmater;
 
 	if( pathpos >= MAX_PATH )  {
-		rt_log("nesting exceeds %d levels\n", MAX_PATH );
-		for(i=0; i<MAX_PATH; i++)
-			rt_log("/%s", cur_path[i]->d_namep );
-		rt_log("\n");
-		return;			/* ERROR */
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "nesting exceeds %d levels\n", MAX_PATH );
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+
+	  for(i=0; i<MAX_PATH; i++)
+	    Tcl_AppendResult(interp, "/", cur_path[i]->d_namep, (char *)NULL);
+
+	  Tcl_AppendResult(interp, "\n", (char *)NULL);
+	  return;			/* ERROR */
 	}
 
 	/*
@@ -213,10 +233,15 @@ struct mater_info *materp;
 		register struct solid *sp;
 
 		if( rt_id_solid( &ext ) == ID_NULL )  {
-			rt_log("Edrawobj(%s):  defective database record, type='%c' (0%o) addr=x%x\n",
-				dp->d_namep,
-				rp[0].u_id, rp[0].u_id, dp->d_addr );
-			goto out;		/* ERROR */
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "Edrawobj(%s):  defective database record, type='%c' (0%o) addr=x%x\n",
+				dp->d_namep, rp[0].u_id, rp[0].u_id, dp->d_addr );
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+
+		  goto out;		/* ERROR */
 		}
 		/*
 		 * Enter new solid (or processed region) into displaylist.
@@ -237,9 +262,9 @@ struct mater_info *materp;
 	 *  Process a Combination (directory) node
 	 */
 	if( dp->d_len <= 1 )  {
-		rt_log("Warning: combination with zero members \"%s\".\n",
-			dp->d_namep );
-		goto out;			/* non-fatal ERROR */
+	  Tcl_AppendResult(interp, "Warning: combination with zero members \"",
+			   dp->d_namep, "\".\n", (char *)NULL);
+	  goto out;			/* non-fatal ERROR */
 	}
 
 	/*
@@ -250,8 +275,7 @@ struct mater_info *materp;
 	curmater = *materp;	/* struct copy */
 	if( rp[0].c.c_override == 1 )  {
 		if( regionid != 0 )  {
-			rt_log("Edrawobj: ERROR: color override in combination within region %s\n",
-				dp->d_namep );
+		  Tcl_AppendResult(interp, "Edrawobj: ERROR: color override in combination within region ", dp->d_namep, "\n", (char *)NULL);
 		} else {
 			if( curmater.ma_cinherit == DB_INH_LOWER )  {
 				curmater.ma_override = 1;
@@ -267,8 +291,7 @@ struct mater_info *materp;
 	}
 	if( rp[0].c.c_matname[0] != '\0' )  {
 		if( regionid != 0 )  {
-			rt_log("Edrawobj: ERROR: material property spec in combination within region %s\n",
-				dp->d_namep );
+		  Tcl_AppendResult(interp, "Edrawobj: ERROR: material property spec in combination within region ", dp->d_namep, "\n", (char *)NULL);
 		} else {
 			if( curmater.ma_minherit == DB_INH_LOWER )  {
 				strncpy( curmater.ma_matname, rp[0].c.c_matname, sizeof(rp[0].c.c_matname) );
@@ -280,10 +303,17 @@ struct mater_info *materp;
 
 	/* Handle combinations which are the top of a "region" */
 	if( rp[0].c.c_flags == 'R' )  {
-		if( regionid != 0 )
-			rt_log("regionid %d overriden by %d\n",
-				regionid, rp[0].c.c_regionid );
-		regionid = rp[0].c.c_regionid;
+	  if( regionid != 0 ){
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "regionid %d overriden by %d\n",
+			  regionid, rp[0].c.c_regionid );
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
+
+	  regionid = rp[0].c.c_regionid;
 	}
 
 	/*
@@ -291,19 +321,18 @@ struct mater_info *materp;
 	 *  Process all the arcs (eg, directory members).
 	 */
 	if( drawreg && rp[0].c.c_flags == 'R' && dp->d_len > 1 ) {
-		if( regmemb >= 0  ) {
-			rt_log(
-			"ERROR: region (%s) is member of region (%s)\n",
-				dp->d_namep,
-				cur_path[reg_pathpos]->d_namep);
-			goto out;	/* ERROR */
-		}
-		/* Well, we are processing regions and this is a region */
-		/* if region has only 1 member, don't process as a region */
-		if( dp->d_len > 2) {
-			regmemb = dp->d_len-1;
-			reg_pathpos = pathpos;
-		}
+	  if( regmemb >= 0  ) {
+	    Tcl_AppendResult(interp, "ERROR: region (", dp->d_namep,
+			     ") is member of region (", cur_path[reg_pathpos]->d_namep,
+			     ")\n", (char *)NULL);
+	    goto out;	/* ERROR */
+	  }
+	  /* Well, we are processing regions and this is a region */
+	  /* if region has only 1 member, don't process as a region */
+	  if( dp->d_len > 2) {
+	    regmemb = dp->d_len-1;
+	    reg_pathpos = pathpos;
+	  }
 	}
 
 	/* Process all the member records */
@@ -314,9 +343,9 @@ struct mater_info *materp;
 
 		mp = &(rp[i].M);
 		if( mp->m_id != ID_MEMB )  {
-			rt_log("EdrawHobj:  %s bad member rec\n",
-				dp->d_namep);
-			goto out;			/* ERROR */
+		  Tcl_AppendResult(interp, "EdrawHobj:  ", dp->d_namep,
+				   " bad member rec\n", (char *)NULL);
+		  goto out;			/* ERROR */
 		}
 		cur_path[pathpos] = dp;
 		if( regmemb > 0  ) { 
@@ -391,27 +420,27 @@ struct mater_info	*materp;
 		i = proc_region( (union record *)ep->ext_buf, xform, flag );
 
 		if( i < 0 )  {
-			/* error somwhere */
-			rt_log("Error in converting solid %s to ARBN\n",
-					cur_path[reg_pathpos]->d_namep);
-			reg_error = 1;
-			if(regmemb == 0) {
-				regmemb = -1;
-				reg_error = 0;
-			}
-			return(-1);		/* ERROR */
+		  /* error somwhere */
+		  Tcl_AppendResult(interp, "Error in converting solid ",
+				   cur_path[reg_pathpos]->d_namep, " to ARBN\n", (char *)NULL);
+		  reg_error = 1;
+		  if(regmemb == 0) {
+		    regmemb = -1;
+		    reg_error = 0;
+		  }
+		  return(-1);		/* ERROR */
 		}
 		reg_error = 0;		/* reset error flag */
 
 		/* if more member solids to be processed, no drawing was done
 		 */
 		if( regmemb > 0 )
-			return(0);		/* NOP -- more to come */
+		  return(0);		/* NOP -- more to come */
 
 		i = finish_region( &vhead );
 		if( i < 0 )  {
-			rt_log("error in finish_region()\n");
-			return(-1);		/* ERROR */
+		  Tcl_AppendResult(interp, "error in finish_region()\n", (char *)NULL);
+		  return(-1);		/* ERROR */
 		}
 		dashflag = 0;
 	}  else  {
@@ -423,17 +452,17 @@ struct mater_info	*materp;
 
 		id = rt_id_solid( ep );
 		if( id <= 0 || id >= rt_nfunctab )  {
-			rt_log("EdrawHsolid(%s):  unknown database object\n",
-				cur_path[pathpos]->d_namep);
-			return(-1);			/* ERROR */
+		  Tcl_AppendResult(interp, "EdrawHsolid(", cur_path[pathpos]->d_namep,
+				   "):  unknown database object\n", (char *)NULL);
+		  return(-1);			/* ERROR */
 		}
 
 	    	RT_INIT_DB_INTERNAL(&intern);
 		if( rt_functab[id].ft_import( &intern, ep, xform ) < 0 )  {
-			rt_log("%s:  solid import failure\n",
-				cur_path[pathpos]->d_namep);
-		    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-			return(-1);			/* FAIL */
+		  Tcl_AppendResult(interp, cur_path[pathpos]->d_namep,
+				   ":  solid import failure\n", (char *)NULL);
+		  if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		  return(-1);			/* FAIL */
 		}
 		RT_CK_DB_INTERNAL( &intern );
 
@@ -443,10 +472,10 @@ struct mater_info	*materp;
 		ttol.norm = mged_nrm_tol;
 
 		if( rt_functab[id].ft_plot( &vhead,
-		    &intern,
-		    &ttol, &mged_tol ) < 0 )  {
-			rt_log("%s: vector conversion failure\n",
-				cur_path[pathpos]->d_namep);
+					    &intern,
+					    &ttol, &mged_tol ) < 0 )  {
+		  Tcl_AppendResult(interp, cur_path[pathpos]->d_namep,
+				   ": vector conversion failure\n", (char *)NULL);
 		}
 		rt_functab[id].ft_ifree( &intern );
 	}
@@ -496,9 +525,9 @@ struct mater_info	*materp;
 		/* Allocate displaylist storage for object */
 		sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
 		if( sp->s_addr == 0 )  {
-			no_memory = 1;
-			rt_log("Edraw: out of Displaylist\n");
-			sp->s_bytes = 0;	/* not drawn */
+		  no_memory = 1;
+		  Tcl_AppendResult(interp, "Edraw: out of Displaylist\n", (char *)NULL);
+		  sp->s_bytes = 0;	/* not drawn */
 		} else {
 			sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes );
 		}
@@ -573,9 +602,14 @@ int flag;
 
 	m_type[memb_count++] = cgtype;
 	if(memb_count > NMEMB) {
-		rt_log("proc_reg: region has more than %d members\n", NMEMB);
-		nmemb = param_count = memb_count = 0;
-		return(-1);	/* ERROR */
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "proc_reg: region has more than %d members\n", NMEMB);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	  nmemb = param_count = memb_count = 0;
+	  return(-1);	/* ERROR */
 	}
 
 	switch( cgtype )  {
@@ -650,11 +684,19 @@ arbcom:		/* common area for arbs */
 		break;
 
 	default:
-		rt_log("proc_reg:  Cannot draw solid type %d (%s)\n",
-			type, type == TOR ? "TOR":
-			 type == ARS ? "ARS" : "UNKNOWN TYPE" );
-		nmemb = param_count = memb_count = 0;
-		return(-1);	/* ERROR */
+	  {
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "proc_reg:  Cannot draw solid type %d (%s)\n",
+			  type, type == TOR ? "TOR":
+			  type == ARS ? "ARS" : "UNKNOWN TYPE" );
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
+
+	  nmemb = param_count = memb_count = 0;
+	  return(-1);	/* ERROR */
 	}
 	return(0);		/* OK */
 }
@@ -765,9 +807,17 @@ register int *svec;	/* array of like points */
 		break;
 
 	default:
-		rt_log("solid: %s  bad number of unique vectors (%d)\n",
-			input.s.s_name, numuvec);
-		return(0);
+	  {
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "solid: %s  bad number of unique vectors (%d)\n",
+			  input.s.s_name, numuvec);
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
+
+	  return(0);
 	}
 	return( numuvec );
 }
@@ -833,9 +883,9 @@ int numvec;
 				move(3,0,1,2,7,4,5,7);
 				break;
 			default:
-				rt_log("redoarb: %s - bad arb7\n",
-					input.s.s_name);
-				return( 0 );
+			  Tcl_AppendResult(interp, "redoarb: ", input.s.s_name,
+					   " - bad arb7\n", (char *)NULL);
+			  return( 0 );
 			}
 			break;    	/* end of ARB7 case */
 
@@ -895,9 +945,9 @@ int numvec;
 					move(5,1,0,4,2,2,3,3);
 				break;
 			default:
-				rt_log("redoarb: %s: bad arb6\n",
-					input.s.s_name);
-				return( 0 );
+			  Tcl_AppendResult(interp, "redoarb: ", input.s.s_name,
+					   " - bad arb6\n", (char *)NULL);
+			  return( 0 );
 			}
 			break; 		/* end of ARB6 case */
 
@@ -932,9 +982,9 @@ int numvec;
 				move(3,2,6,7,0,0,0,0);
 				break;
 			default:
-				rt_log("redoarb: %s: bad arb5\n",
-					input.s.s_name);
-				return( 0 );
+			  Tcl_AppendResult(interp, "redoarb: ", input.s.s_name,
+					   " - bad arb5\n", (char *)NULL);
+			  return( 0 );
 			}
 			break;		/* end of ARB5 case */
 
@@ -947,9 +997,17 @@ int numvec;
 			break;
 
 		default:
-			rt_log("redoarb %s: unknown arb type (%d)\n",
-				input.s.s_name,input.s.s_cgtype);
-			return( 0 );
+		  {
+		    struct rt_vls tmp_vls;
+
+		    rt_vls_init(&tmp_vls);
+		    rt_vls_printf(&tmp_vls, "redoarb %s: unknown arb type (%d)\n",
+				  input.s.s_name,input.s.s_cgtype);
+		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		    rt_vls_free(&tmp_vls);
+		  }
+
+		  return( 0 );
 	}
 
 	return( 1 );
@@ -1411,8 +1469,14 @@ fastf_t *p, *q, *r, *s;
 
 	/* increment plane counter */
 	if(lc >= NPLANES) {
-		rt_log("tplane: More than %d planes for a region - ABORTING\n", NPLANES);
-		return;
+	  struct rt_vls tmp_vls;
+	  
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "tplane: More than %d planes for a region - ABORTING\n",
+			NPLANES);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	  return;
 	}
 	lc++;		/* Save plane eqn */
 }
@@ -1613,8 +1677,13 @@ int num;
 	ity = &m_type[num];
 	if(*ity==20) *ity=8;
 	if(*ity>19 || amt[*ity-1]==0){
-		rt_log("solin: Type %d Solid not known\n",*ity);
-		return;
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "solin: Type %d Solid not known\n",*ity);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	  return;
 	}
 	sol_min[0]=sol_min[1]=sol_min[2]=pinf;
 	sol_max[0]=sol_max[1]=sol_max[2] = -pinf;

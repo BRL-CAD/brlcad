@@ -224,7 +224,12 @@ char **argv;
 	curr_dm_list->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
 							       "shared_info");
 	bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
+#if 1
+	bcopy((void *)&default_mged_variables, (void *)&mged_variables,
+	      sizeof(struct _mged_variables));
+#else
 	mged_variables = default_mged_variables;
+#endif
 	rt_vls_init(&pathName);
 	rt_vls_strcpy(&pathName, "nu");
 	rc = 1;
@@ -282,7 +287,10 @@ char **argv;
 	windowbounds[5] = -2048;	/* ZLR */
 
 	/* Open the database, attach a display manager */
-	f_opendb( argc, argv );
+	if(f_opendb( (ClientData)NULL, interp, argc, argv ) == TCL_ERROR)
+	  mged_finish(1);
+	else
+	  rt_log("%s", interp->result);
 
 	dmp->dmr_window(windowbounds);
 
@@ -309,7 +317,7 @@ char **argv;
 		cmdline(&input_str, TRUE);
 		rt_vls_free(&input_str);
 #endif
-		f_quit(0, NULL);
+		f_quit((ClientData)NULL, interp, 0, NULL);
 		/* NOTREACHED */
 	}
 
@@ -492,7 +500,7 @@ int mask;
 
     count = read(fd, (void *)&ch, 1);
     if (count <= 0 && feof(stdin))
-	f_quit(0, NULL);
+	f_quit((ClientData)NULL, interp, 0, NULL);
 
     /* Process character */
 #define CTRL_A      1
@@ -1016,12 +1024,17 @@ refresh()
  *  The default is to rotate around the view center: v=(0,0,0).
  */
 int
-f_vrot_center( argc, argv )
+f_vrot_center(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	rt_log("Not ready until tomorrow.\n");
-	return CMD_OK;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  Tcl_AppendResult(interp, "Not ready until tomorrow.\n", (char *)NULL);
+  return TCL_OK;
 }
 
 /*
@@ -1351,47 +1364,74 @@ do_rc()
  *	cmdline()		Only one arg is permitted.
  */
 int
-f_opendb( argc, argv )
+f_opendb(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  static int first = 1;
+
 	if( dbip )  {
-		/* Clear out anything in the display */
-		f_zap( 0, (char **)NULL );
+	  int ac = 1;
+	  char *av[] = { "zap", NULL };
 
-		/* Close current database.  Releases MaterHead, etc. too. */
-		db_close(dbip);
-		dbip = DBI_NULL;
+	  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	    return TCL_ERROR;
 
-		log_event( "CEASE", "(close)" );
+	  /* Clear out anything in the display */
+	  f_zap(clientData, interp, ac, av);
+
+	  /* Close current database.  Releases MaterHead, etc. too. */
+	  db_close(dbip);
+	  dbip = DBI_NULL;
+
+	  log_event( "CEASE", "(close)" );
 	}
 
 	/* Get input file */
 	if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
 	    ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
-		char line[128];
+	  char line[128];
 
-		if( isatty(0) ) {
-		    perror( argv[1] );
-		    rt_log("Create new database (y|n)[n]? ");
-		    (void)fgets(line, sizeof(line), stdin);
-		    if( line[0] != 'y' && line[0] != 'Y' )
-			exit(0);		/* NOT finish() */
-		} else
-		    rt_log("Creating new database \"%s\"\n", argv[1]);
-			
+	  if( isatty(0) ) {
+	    if(first){
+	      perror( argv[1] );
+	      rt_log("Create new database (y|n)[n]? ");
+	      (void)fgets(line, sizeof(line), stdin);
+	      if( line[0] != 'y' && line[0] != 'Y' )
+		exit(0);                /* NOT finish() */
+	    } else {
+	      if(argc == 2){
+		perror( argv[1] );
 
-		if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
-			perror( argv[1] );
-			exit(2);		/* NOT finish() */
-		}
+		Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
+				 (char *)NULL);
+		rt_vls_printf(&curr_cmd_list->more_default, "n");
+
+		return TCL_ERROR;
+	      }
+
+	      if( *argv[2] != 'y' && *argv[2] != 'Y' )
+		exit(0);		/* NOT finish() */
+	    }
+	  }
+
+	  Tcl_AppendResult(interp, "Creating new database \"", argv[1],
+			   "\"\n", (char *)NULL);
+
+	  if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
+	    perror( argv[1] );
+	    exit(2);		/* NOT finish() */
+	  }
 	}
 	if( dbip->dbi_read_only )
-		rt_log("%s:  READ ONLY\n", dbip->dbi_filename );
+	  Tcl_AppendResult(interp, dbip->dbi_filename, ":  READ ONLY\n", (char *)NULL);
 
  	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
 
+#if 0
 	if( interactive && is_dm_null() )  {
 		/*
 		 * This is an interactive mged, with no display yet.
@@ -1399,10 +1439,17 @@ char	**argv;
 		 * Ask this question BEFORE the db_scan, because
 		 * that can take a long time for large models.
 		 */
-#if 0
+
 		get_attached();
-#endif
 	}
+#else
+	if(first){
+	  first = 0;
+	  Tcl_AppendResult(interp, "Note: the attach command can be used\n",
+			   "      to open a display window.\n\n", (char *)NULL);
+	}
+	  
+#endif
 
 	/* --- Scan geometry database and build in-memory directory --- */
 	db_scan( dbip, (int (*)())db_diradd, 1);
@@ -1413,8 +1460,9 @@ char	**argv;
 
 	/* Print title/units information */
 	if( interactive )
-		rt_log("%s (units=%s)\n", dbip->dbi_title,
-			units_str[dbip->dbi_localunit] );
+	  Tcl_AppendResult(interp, dbip->dbi_title, " (units=",
+			   units_str[dbip->dbi_localunit], ")\n", (char *)NULL);
 	
-	return CMD_OK;
+
+	return TCL_OK;
 }

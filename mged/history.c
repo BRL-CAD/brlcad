@@ -144,29 +144,37 @@ struct mged_hist *hptr;
  */
 
 int
-f_journal(argc, argv)
+f_journal(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-    if (argc < 2) {
-	if (journalfp != NULL)
-	    fclose(journalfp);
-	journalfp = NULL;
-	return CMD_OK;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  if (argc < 2) {
+    if (journalfp != NULL)
+      fclose(journalfp);
+    journalfp = NULL;
+    return TCL_OK;
+  } else {
+    if (journalfp != NULL) {
+      Tcl_AppendResult(interp, "First shut off journaling with \"journal\" (no args)\n",
+		       (char *)NULL);
+      return TCL_ERROR;
     } else {
-	if (journalfp != NULL) {
-	    rt_log("First shut off journaling with \"journal\" (no args)\n");
-	    return CMD_BAD;
-	} else {
-	    journalfp = fopen(argv[1], "a+");
-	    if (journalfp == NULL) {
-		rt_log("Error opening %s for appending\n", argv[1]);
-		return CMD_BAD;
-	    }
-	    firstjournal = 1;
-	}
+      journalfp = fopen(argv[1], "a+");
+      if (journalfp == NULL) {
+	Tcl_AppendResult(interp, "Error opening ", argv[1],
+			 " for appending\n", (char *)NULL);
+	return TCL_ERROR;
+      }
+      firstjournal = 1;
     }
-    return CMD_OK;
+  }
+
+  return TCL_ERROR;
 }
 
 /*
@@ -177,17 +185,22 @@ char **argv;
  */
 
 int
-f_delay(argc, argv)
+f_delay(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char **argv;
 {
     struct timeval tv;
 
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
+
     tv.tv_sec = atoi(argv[1]);
     tv.tv_usec = atoi(argv[2]);
     select(0, NULL, NULL, NULL, &tv);
 
-    return CMD_OK;
+    return TCL_OK;
 }
 
 /*
@@ -197,7 +210,9 @@ char **argv;
  */
 
 int
-f_history( argc, argv )
+f_history(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char **argv;
 {
@@ -206,29 +221,33 @@ char **argv;
     struct mged_hist *hp, *hp_prev;
     struct rt_vls str;
     struct timeval tvdiff;
-    
+
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
+
     fp = NULL;
     while( argc >= 2 ) {
 	if( strcmp(argv[1], "-delays") == 0 )
 	    with_delays = 1;
 	else if( strcmp(argv[1], "-outfile") == 0 ) {
 	    if( fp != NULL ) {
-		rt_log( "history: -outfile option given more than once\n" );
-		return CMD_BAD;
+	      Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
+			       (char *)NULL);
+	      return TCL_ERROR;
 	    } else if( argc < 3 || strcmp(argv[2], "-delays") == 0 ) {
-		rt_log( "history: I need a file name\n" );
-		return CMD_BAD;
+	      Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
+	      return TCL_ERROR;
 	    } else {
 		fp = fopen( argv[2], "a+" );
 		if( fp == NULL ) {
-		    rt_log( "history: error opening file" );
-		    return CMD_BAD;
+		  Tcl_AppendResult(interp, "history: error opening file", (char *)NULL);
+		  return TCL_ERROR;
 		}
 		--argc;
 		++argv;
 	    }
 	} else {
-	    rt_log( "Invalid option %s\n", argv[1] );
+	  Tcl_AppendResult(interp, "Invalid option ", argv[1], "\n", (char *)NULL);
 	}
 	--argc;
 	++argv;
@@ -251,13 +270,13 @@ char **argv;
 	if (fp != NULL)
 	    rt_vls_fwrite(fp, &str);
 	else
-	    rt_log("%s", rt_vls_addr(&str));
+	  Tcl_AppendResult(interp, rt_vls_addr(&str), (char *)NULL);
     }
 
     if (fp != NULL)
 	fclose(fp);
 
-    return CMD_OK;
+    return TCL_OK;
 }
 
 /*      H I S T O R Y _ P R E V
@@ -322,11 +341,15 @@ int argc;
 char **argv;
 {
     struct rt_vls *vp;
+
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
+
     vp = history_prev();
     if (vp == NULL)
 	vp = &(curr_cmd_list->cur_hist->command);
 
-    Tcl_SetResult(interp, rt_vls_addr(vp), TCL_VOLATILE);
+    Tcl_AppendResult(interp, rt_vls_addr(vp), (char *)NULL);
     return TCL_OK;
 }
 
@@ -344,11 +367,15 @@ int argc;
 char **argv;
 {
     struct rt_vls *vp;
+
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
+
     vp = history_next();
     if (vp == NULL)
 	vp = &(curr_cmd_list->cur_hist->command);
 
-    Tcl_SetResult(interp, rt_vls_addr(vp), TCL_VOLATILE);
+    Tcl_AppendResult(interp, rt_vls_addr(vp), (char *)NULL);
     return TCL_OK;
 }
 
@@ -362,6 +389,9 @@ char **argv;
 {
     struct timeval zero;
     struct rt_vls vls;
+
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
 
     if (argc < 2)
 	return TCL_OK;

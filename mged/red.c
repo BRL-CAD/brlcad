@@ -51,7 +51,9 @@ static int ident;
 static int air;
 
 int
-f_red( argc , argv )
+f_red(clientData, interp, argc , argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char **argv;
 {
@@ -59,26 +61,24 @@ char **argv;
 	union record record;
 	struct directory *dp;
 
-	if( argc != 2 )
-	{
-		rt_log( "Usage:\n\tred object_name\n" );
-		return CMD_BAD;
-	}
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	if( (dp=db_lookup( dbip , argv[1] , LOOKUP_NOISY )) == DIR_NULL )
 	{
-		rt_log( " Cannot edit: %s\n" , argv[1] );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Cannot edit: ", argv[1], "\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( db_get( dbip , dp , &record , 0 , 1 ) < 0 ) {
-		READ_ERR;
-		return CMD_BAD;
+	  TCL_READ_ERR_return;
+	  return TCL_ERROR;
 	}
 	if( record.u_id != ID_COMB )	/* Not a combination */
 	{
-		rt_log( " %s is not a combination, so cannot be edited this way\n", argv[1] );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, argv[1],
+			   " is not a combination, so cannot be edited this way\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	/* Save for later use in rebuilding */
@@ -92,57 +92,53 @@ char **argv;
 	/* Write the combination components to the file */
 	if( writecomb( dp ) )
 	{
-		rt_log( "Unable to edit %s\n" , argv[1] );
-		unlink( red_tmpfil );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Unable to edit ", argv[1], "\n", (char *)NULL);
+	  unlink( red_tmpfil );
+	  return TCL_ERROR;
 	}
 
 	/* Edit the file */
 	if( editit( red_tmpfil ) )
 	{
-		if( checkcomb() ) /* Do some quick checking on the edited file */
-		{
-			rt_log( "Error in edited region, no changes made\n" );
-			(void)unlink( red_tmpfil );
-			return CMD_BAD;
-		}
-		if( save_comb( dp ) )	/* Save combination to a temp name */
-		{
-			rt_log( "No changes made\n" );
-			(void)unlink( red_tmpfil );
-			return CMD_OK;
-		}
-		if( clear_comb( dp ) )	/* Empty this combination */
-		{
-			rt_log( "Unable to empty %s, original restored\n" , dp->d_namep );
-			restore_comb( dp );
-			(void)unlink( red_tmpfil );
-			return CMD_BAD;
-		}
-		if( build_comb( dp ) )	/* Use comb_add() to rebuild combination */
-		{
-			rt_log( "Unable to construct new %s, original restored\n" , dp->d_namep );
-			restore_comb( dp );
-			(void)unlink( red_tmpfil );
-			return CMD_BAD;
-		}
-		else			/* eliminate the temporary combination */
-		{
-			struct rt_vls	v;
+	  if( checkcomb() ){ /* Do some quick checking on the edited file */
+	    Tcl_AppendResult(interp, "Error in edited region, no changes made\n", (char *)NULL);
+	    (void)unlink( red_tmpfil );
+	    return TCL_ERROR;
+	  }
+	  if( save_comb( dp ) ){ /* Save combination to a temp name */
+	    Tcl_AppendResult(interp, "No changes made\n", (char *)NULL);
+	    (void)unlink( red_tmpfil );
+	    return TCL_OK;
+	  }
+	  if( clear_comb( dp ) ){ /* Empty this combination */
+	    Tcl_AppendResult(interp, "Unable to empty ", dp->d_namep,
+			     ", original restored\n", (char *)NULL);
+	    restore_comb( dp );
+	    (void)unlink( red_tmpfil );
+	    return TCL_ERROR;
+	  }
+	  if( build_comb( dp ) ){ /* Use comb_add() to rebuild combination */
+	    Tcl_AppendResult(interp, "Unable to construct new ", dp->d_namep,
+			     ", original restored\n", (char *)NULL);
+	    restore_comb( dp );
+	    (void)unlink( red_tmpfil );
+	    return TCL_ERROR;
+	  }else{ /* eliminate the temporary combination */
+	    struct rt_vls	v;
 
-			rt_vls_init( &v );
-			rt_vls_strcat( &v, "kill " );
-			rt_vls_strcat( &v , red_tmpcomb );
-			rt_vls_strcat( &v , "\n" );
+	    rt_vls_init( &v );
+	    rt_vls_strcat( &v, "kill " );
+	    rt_vls_strcat( &v , red_tmpcomb );
+	    rt_vls_strcat( &v , "\n" );
 
-			cmdline( &v, FALSE );
+	    cmdline( &v, FALSE );
 
-			rt_vls_free( &v );
-		}
+	    rt_vls_free( &v );
+	  }
 	}
 
 	(void)unlink( red_tmpfil );
-	return CMD_OK;
+	return TCL_OK;
 }
 
 int
@@ -157,9 +153,9 @@ struct directory *dp;
 	/* open the file */
 	if( (fp=fopen( red_tmpfil , "w" )) == NULL )
 	{
-		rt_log( "Cannot open create file for editing\n" );
-		perror( "MGED" );
-		return(1);
+	  Tcl_AppendResult(interp, "Cannot open create file for editing\n", (char *)NULL);
+	  perror( "MGED" );
+	  return(1);
 	}
 
 	/* Get combo info and write it to file */
@@ -167,25 +163,26 @@ struct directory *dp;
 	{
 		if( db_get( dbip , dp , &record , offset , 1 ) )
 		{
-			fclose( fp );
-			rt_log( "Cannot get combination information\n" );
-			return( 1 );
+		  fclose( fp );
+		  Tcl_AppendResult(interp, "Cannot get combination information\n", (char *)NULL);
+		  return( 1 );
 		}
 
 		if( record.u_id != ID_MEMB )
 		{
-			rt_log( "This combination appears to be corrupted\n" );
-			return( 1 );
+		  Tcl_AppendResult(interp, "This combination appears to be corrupted\n",
+				   (char *)NULL);
+		  return( 1 );
 		}
 
-		for( i=0 ; i<ELEMENTS_PER_MAT ; i++ )
-		{
-			if( record.M.m_mat[i] != identity[i] )
-			{
-				rt_log( "Member `%s` has been object edited\n" , record.M.m_instname );
-				rt_log( "\tCombination must be `pushed` before editing\n" );
-				return( 1 );
-			}
+		for( i=0 ; i<ELEMENTS_PER_MAT ; i++ ){
+		  if( record.M.m_mat[i] != identity[i] ){
+		    Tcl_AppendResult(interp, "Member `", record.M.m_instname,
+				     "` has been object edited\n",
+				     "\tCombination must be `pushed` before editing\n",
+				     (char *)NULL);
+		    return( 1 );
+		  }
 		}
 
 		fprintf( fp , " %c %s\n" , record.M.m_relation , record.M.m_instname );
@@ -208,9 +205,9 @@ checkcomb()
 
 	if( (fp=fopen( red_tmpfil , "r" )) == NULL )
 	{
-		rt_log( "Cannot open create file for editing\n" );
-		perror( "MGED" );
-		return(1);
+	  Tcl_AppendResult(interp, "Cannot open create file for editing\n", (char *)NULL);
+	  perror( "MGED" );
+	  return(1);
 	}
 
 	/* Read a line at a time */
@@ -230,8 +227,8 @@ checkcomb()
 		}
 		if( i == MAXLINE )
 		{
-			rt_log( "Line too long in edited file\n" );
-			return( 1 );
+		  Tcl_AppendResult(interp, "Line too long in edited file\n", (char *)NULL);
+		  return( 1 );
 		}
 
 		line[++i] = '\0';
@@ -265,39 +262,45 @@ checkcomb()
 
 		if( line[i] != '\0' )
 		{
-			/* Look for junk on the tail end of the line */
-			while( isspace( line[++i] ) );
-			if( line[i] != '\0' )
-			{
-				/* found some junk */
-				rt_log( "Error in format of edited file\n" );
-				rt_log( "Must be just one operator and object per line\n" );
-				fclose( fp );
-				return( 1 );
-			}
+		  /* Look for junk on the tail end of the line */
+		  while( isspace( line[++i] ) );
+		  if( line[i] != '\0' )
+		    {
+		      /* found some junk */
+		      Tcl_AppendResult(interp, "Error in format of edited file\n",
+				       "Must be just one operator and object per line\n",
+				       (char *)NULL);
+		      fclose( fp );
+		      return( 1 );
+		    }
 		}
 
 		if( relation != '+' && relation != 'u' & relation != '-' )
 		{
-			rt_log( " %c is not a legal operator\n" , relation );
-			fclose( fp );
-			return( 1 );
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, " %c is not a legal operator\n" , relation );
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+		  fclose( fp );
+		  return( 1 );
 		}
 		if( relation != '-' )
 			nonsubs++;
 
 		if( name[0] == '\0' )
 		{
-			rt_log( " operand name missing\n" );
-			fclose( fp );
-			return( 1 );
+		  Tcl_AppendResult(interp, " operand name missing\n", (char *)NULL);
+		  fclose( fp );
+		  return( 1 );
 		}
 
 		if( db_lookup( dbip , name , LOOKUP_NOISY ) == DIR_NULL )
 		{
-			rt_log( " %s does not exist\n" , name );
-			fclose( fp );
-			return( 1 );
+		  Tcl_AppendResult(interp, " ", name, " does not exist\n", (char *)NULL);
+		  fclose( fp );
+		  return( 1 );
 		}
 	}
 
@@ -305,8 +308,9 @@ checkcomb()
 
 	if( nonsubs == 0 )
 	{
-		rt_log( "Cannot create a combination with all subtraction operators\n" );
-		return( 1 );
+	  Tcl_AppendResult(interp, "Cannot create a combination with all subtraction operators\n",
+			   (char *)NULL);
+	  return( 1 );
 	}
 	return( 0 );
 }
@@ -328,14 +332,15 @@ struct directory *dp;
 	{
 		if( db_get( dbip,  dp, &record, 1 , 1) < 0 )
 		{
-			rt_log( "Unable to clear %s\n" , dp->d_namep );
-			return( 1 );
+		  Tcl_AppendResult(interp, "Unable to clear ", dp->d_namep,
+				   "\n", (char *)NULL);
+		  return( 1 );
 		}
 
 		if( db_delrec( dbip, dp, 1 ) < 0 )
 		{
-			rt_log("Error in deleting member.\n");
-			return( 1 );
+		  Tcl_AppendResult(interp, "Error in deleting member.\n", (char *)NULL);
+		  return( 1 );
 		}
 	}
 	return( 0 );
@@ -359,8 +364,9 @@ struct directory *dp;
 
 	if( (fp=fopen( red_tmpfil , "r" )) == NULL )
 	{
-		rt_log( " Cannot open edited file: %s\n" , red_tmpfil );
-		return( 1 );
+	  Tcl_AppendResult(interp, " Cannot open edited file: ",
+			   red_tmpfil, "\n", (char *)NULL);
+	  return( 1 );
 	}
 
 	/* Will need to know whether this is a region later */
@@ -413,15 +419,15 @@ struct directory *dp;
 		/* Check for existence of member */
 		if( (dp1=db_lookup( dbip , name , LOOKUP_NOISY )) == DIR_NULL )
 		{
-			rt_log( " %s does not exist\n" , name );
-			return( 1 );
+		  Tcl_AppendResult(interp, " ", name, " does not exist\n", (char *)NULL);
+		  return( 1 );
 		}
 
 		/* Add it to the combination */
 		if( combadd( dp1 , dp->d_namep , region , relation , ident , air ) == DIR_NULL )
 		{
-			rt_log( " Error in rebuilding combination\n" );
-			return( 1 );
+		  Tcl_AppendResult(interp, " Error in rebuilding combination\n", (char *)NULL);
+		  return( 1 );
 		}
 	}
 	return( 0 );
@@ -475,23 +481,26 @@ struct directory *dpold;
 	/* Following code is lifted from "f_copy()" and slightly modified */
 	if( (rp = db_getmrec( dbip, dpold )) == (union record *)0 )
 	{
-		rt_log( "Cannot save copy of %s, no changes made\n" , dpold->d_namep );
-		return( 1 );
+	  Tcl_AppendResult(interp, "Cannot save copy of ", dpold->d_namep,
+			   ", no changes made\n", (char *)NULL);
+	  return( 1 );
 	}
 
 	if( (dp=db_diradd( dbip, red_tmpcomb, -1, dpold->d_len, dpold->d_flags)) == DIR_NULL ||
 	    db_alloc( dbip, dp, dpold->d_len ) < 0 )
 	{
-		rt_log( "Cannot save copy of %s, no changes made\n" , dp->d_namep );
-		return( 1 );
+	  Tcl_AppendResult(interp, "Cannot save copy of ", dpold->d_namep,
+			   ", no changes made\n", (char *)NULL);
+	  return( 1 );
 	}
 
 	/* All objects have name in the same place */
 	NAMEMOVE( red_tmpcomb, rp->c.c_name );
 	if( db_put( dbip, dp, rp, 0, dpold->d_len ) < 0 )
 	{
-		rt_log( "Cannot save copy of %s, no changes made\n" , dp->d_namep );
-		return( 1 );
+	  Tcl_AppendResult(interp, "Cannot save copy of ", dp->d_namep,
+			   ", no changes made\n", (char *)NULL);
+	  return( 1 );
 	}
 
 	rt_free( (char *)rp, "record" );

@@ -178,8 +178,14 @@ register int bnum;
 {
 	register struct buttons *bp;
 
-	if( edsol && edobj )
-		(void)rt_log("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
+	if( edsol && edobj ){
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
 
 	/* Process the button function requested. */
 	for( bp = button_table; bp->bu_code >= 0; bp++ )  {
@@ -190,7 +196,14 @@ register int bnum;
 		return;
 	}
 
-	(void)rt_log("button(%d):  Not a defined operation\n", bnum);
+	{
+	  struct rt_vls tmp_vls;
+	  
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "button(%d):  Not a defined operation\n", bnum);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
 }
 
 /*
@@ -205,8 +218,14 @@ char *str;{
 	register struct menu_item	*mptr;
 
 
-	if( edsol && edobj )
-		(void)rt_log("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
+	if( edsol && edobj ){
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
 
 	if(strcmp(str, "help") == 0) {
 		for( bp = button_table; bp->bu_code >= 0; bp++ )
@@ -244,8 +263,8 @@ char *str;{
 		}
 	}
 
-	rt_log("press(%s):  Unknown operation, type 'press help' for help\n",
-	       str);
+	Tcl_AppendResult(interp, "press(", str,
+			 "):  Unknown operation, type 'press help' for help\n", (char *)NULL);
 }
 /*
  *  			L A B E L _ B U T T O N
@@ -265,7 +284,16 @@ int bnum;
 			continue;
 		return( bp->bu_name );
 	}
-	(void)rt_log("label_button(%d):  Not a defined operation\n", bnum);
+
+	{
+	  struct rt_vls tmp_vls;
+	  
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "label_button(%d):  Not a defined operation\n", bnum);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
+
 	return("");
 }
 
@@ -371,8 +399,8 @@ ill_common()  {
 	/* Common part of illumination */
 	dmp->dmr_light( LIGHT_ON, BE_REJECT );
 	if( HeadSolid.s_forw == &HeadSolid )  {
-		(void)rt_log("no solids in view\n");
-		return(0);	/* BAD */
+	  Tcl_AppendResult(interp, "no solids in view\n", (char *)NULL);
+	  return(0);	/* BAD */
 	}
 	illump = HeadSolid.s_forw;/* any valid solid would do */
 	edobj = 0;		/* sanity */
@@ -675,12 +703,13 @@ not_state( desired, str )
 int desired;
 char *str;
 {
-	if( state != desired ) {
-		(void)rt_log("Unable to do <%s> from %s state.\n",
-			str, state_str[state] );
-		return(1);	/* BAD */
-	}
-	return(0);		/* GOOD */
+  if( state != desired ) {
+    Tcl_AppendResult(interp, "Unable to do <", str, "> from ",
+		     state_str[state], " state.\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
 }
 
 /*
@@ -695,9 +724,9 @@ int from, to;
 char *str;
 {
 	if( state != from ) {
-		(void)rt_log("Unable to do <%s> going from %s to %s state.\n",
-			str, state_str[from], state_str[to] );
-		return(1);	/* BAD */
+	  Tcl_AppendResult(interp, "Unable to do <", str, "> going from ",
+			   state_str[from], " to ", state_str[to], " state.\n", (char *)NULL);
+	  return(1);	/* BAD */
 	}
 	state = to;
 
@@ -742,8 +771,8 @@ void
 state_err( str )
 char *str;
 {
-	(void)rt_log("Unable to do <%s> from %s state.\n",
-		str, state_str[state] );
+  Tcl_AppendResult(interp, "Unable to do <", str, "> from ", state_str[state],
+		   " state.\n", (char *)NULL);
 }
 
 
@@ -778,8 +807,16 @@ btn_head_menu(i, menu, item)  {
 		/* nothing happens */
 		break;
 	default:
-		rt_log("btn_head_menu(%d): bad arg\n", i);
-		break;
+	  {
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
+
+	  break;
 	}
 
 #if 0
@@ -798,7 +835,15 @@ chg_l2menu(i)  {
 		mmenu_set( MENU_L2, oed_menu );
 		break;
 	default:
-		(void)rt_log("chg_l2menu(%d): bad arg\n");
-		break;
+	  {
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
+
+	  break;
 	}
 }

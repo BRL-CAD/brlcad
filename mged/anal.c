@@ -60,7 +60,9 @@ static void	rhc_anal();
  */
 
 int
-f_analyze(argc, argv)
+f_analyze(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	*argv[];
 {
@@ -70,46 +72,51 @@ char	*argv[];
 	struct rt_vls		v;
 	struct rt_db_internal	intern;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	RT_VLS_INIT(&v);
 
 	if( argc == 1 ) {
 		/* use the solid being edited */
 		if (illump == SOLID_NULL) {
-			state_err( "Default SOLID Analyze" );
-			return CMD_BAD;
+		  state_err( "Default SOLID Analyze" );
+		  return TCL_ERROR;
 		}
 		ndp = illump->s_path[illump->s_last];
 		if(illump->s_Eflag) {
-			rt_log("analyze: cannot analyze evaluated region containing %s\n",
-				ndp->d_namep);
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "analyze: cannot analyze evaluated region containing ",
+				   ndp->d_namep, "\n", (char *)NULL);
+		  return TCL_ERROR;
 		}
 		switch( state ) {
 		case ST_S_EDIT:
-			/* Use already modified version. "new way" */
-			do_anal(&v, &es_int);
-			fputs( rt_vls_addr(&v), stderr );
-			return CMD_OK;
+		  /* Use already modified version. "new way" */
+		  do_anal(&v, &es_int);
+		  Tcl_AppendResult(interp, rt_vls_addr(&v), (char *)NULL);
+		  rt_vls_free(&v);
+		  return TCL_OK;
 
 		case ST_O_EDIT:
 			/* use solid at bottom of path */
 			break;
 
 		default:
-			state_err( "Default SOLID Analyze" );
-			return CMD_BAD;
+		  state_err( "Default SOLID Analyze" );
+		  return TCL_ERROR;
 		}
 		mat_mul(new_mat, modelchanges, es_mat);
 
 		if( rt_db_get_internal( &intern, ndp, dbip, new_mat ) < 0 )  {
-			rt_log("rt_db_get_internal() error\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
+		  return TCL_ERROR;
 		}
 
 		do_anal(&v, &intern);
-		fputs( rt_vls_addr(&v), stderr );
+		Tcl_AppendResult(interp, rt_vls_addr(&v), (char *)NULL);
+		rt_vls_free(&v);
 		rt_db_free_internal( &intern );
-		return CMD_OK;
+		return TCL_OK;
 	}
 
 	/* use the names that were input */
@@ -118,22 +125,22 @@ char	*argv[];
 			continue;
 
 		if( rt_db_get_internal( &intern, ndp, dbip, rt_identity ) < 0 )  {
-			rt_log("rt_db_get_internal() error\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
+		  return TCL_ERROR;
 		}
 
 		rt_vls_trunc( &v, 0 );		
 		do_list( &v, ndp, 1 );
-		rt_log( "%s", rt_vls_addr(&v) );
+		Tcl_AppendResult(interp, rt_vls_addr(&v), (char *)NULL);
 		rt_vls_trunc( &v, 0 );
 
 		do_anal(&v, &intern);
-		rt_log( "%s", rt_vls_addr(&v) );
+		Tcl_AppendResult(interp, rt_vls_addr(&v), (char *)NULL);
 		rt_vls_free(&v);
 		rt_db_free_internal( &intern );
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 

@@ -76,6 +76,7 @@ int f_jhold();
 int f_jsolve();
 int f_jtest();
 
+#if 0
 static struct funtab {
 	char *ft_name;
 	char *ft_parms;
@@ -84,39 +85,41 @@ static struct funtab {
 	int  ft_min;
 	int  ft_max;
 } joint_tab[] = {
-
+#else
+static struct funtab joint_tab[] = {
+#endif
 "joint ", "", "Joint command table",
-	0, 0, 0,
+	0, 0, 0, FALSE,
 "?", "[commands]", "summary of available joint commands",
-	f_jfhelp, 0, MAXARGS,
+	f_jfhelp, 0, MAXARGS, FALSE,
 "accept", "[joints]", "accept a series of moves",
-	f_jaccept, 1, MAXARGS,
+	f_jaccept, 1, MAXARGS, FALSE,
 "debug", "[hex code]", "Show/set debuging bit vector for joints",
-	f_jdebug, 1, 2,
+	f_jdebug, 1, 2, FALSE,
 "help", "[commands]", "give usage message for given joint commands",
-	f_jhelp, 0, MAXARGS,
+	f_jhelp, 0, MAXARGS, FALSE,
 "holds","[names]", "list constraints",
-	f_jhold, 1, MAXARGS,
+	f_jhold, 1, MAXARGS, FALSE,
 "list", "[names]", "list joints.",
-	f_jlist, 1, MAXARGS,
+	f_jlist, 1, MAXARGS, FALSE,
 "load", "file_name", "load a joint/constraint file",
-	f_jload, 2, MAXARGS,
+	f_jload, 2, MAXARGS, FALSE,
 "mesh", "", "Build the grip mesh",
-	f_jmesh, 0, 1,
+	f_jmesh, 0, 1, FALSE,
 "move", "joint_name p1 [p2...p6]", "Manual adjust a joint",
-	f_jmove, 3, 8,
+	f_jmove, 3, 8, FALSE,
 "reject", "[joint_names]", "reject joint motions",
-	f_jreject, 1, MAXARGS,
+	f_jreject, 1, MAXARGS, FALSE,
 "save",	"file_name", "Save joints and constraints to disk",
-	f_jsave, 2, 2,
+	f_jsave, 2, 2, FALSE,
 "solve", "constraint", "Solve a or all constraints",
-	f_jsolve, 1, MAXARGS,
+	f_jsolve, 1, MAXARGS, FALSE,
 "test", "file_name", "test use of rtlex routine.",
-	f_jtest, 2, 2,
+	f_jtest, 2, 2, FALSE,
 "unload", "", "Unload any joint/constrants that have been loaded",
-	f_junload, 1,1,
+	f_junload, 1,1, FALSE,
 0, 0, 0,
-	0,0,0
+	0,0,0, FALSE
 };
 
 #define db_init_full_path(_fp) {\
@@ -127,25 +130,47 @@ f_jdebug(argc, argv)
 int argc;
 char **argv;
 {
-	if (argc >= 2) {
-		sscanf( argv[1], "%x", &joint_debug);
-	} else {
-		rt_printb( "possible flags", 0xffffffffL, JOINT_DEBUG_FORMAT );
-		rt_log("\n");
-	}
-	rt_printb( "joint_debug", joint_debug, JOINT_DEBUG_FORMAT );
-	rt_log("\n");
-	return CMD_OK;
+  struct rt_vls tmp_vls;
+
+  rt_vls_init(&tmp_vls);
+  start_catching_output(&tmp_vls);
+
+  if (argc >= 2) {
+    sscanf( argv[1], "%x", &joint_debug);
+  } else {
+    rt_printb( "possible flags", 0xffffffffL, JOINT_DEBUG_FORMAT );
+    rt_log("\n");
+  }
+  rt_printb( "joint_debug", joint_debug, JOINT_DEBUG_FORMAT );
+  rt_log("\n");
+
+  stop_catching_output(&tmp_vls);
+  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+  rt_vls_free(&tmp_vls);
+
+  return CMD_OK;
 }
 int
-f_joint( argc, argv )
+f_joint(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	argc--;
-	argv++;
+  int status;
 
-	return mged_cmd(argc, argv, &joint_tab[0]);
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  argc--;
+  argv++;
+
+  status = mged_cmd(argc, argv, &joint_tab[0]);
+
+  if(status == CMD_OK)
+    return TCL_OK;
+
+  return TCL_ERROR;
 }
 
 static int
@@ -153,7 +178,14 @@ f_jfhelp(argc, argv)
 int argc;
 char **argv;
 {
-	return f_fhelp2(argc, argv, &joint_tab[0]);
+  int status;
+
+  status = f_fhelp2(argc, argv, &joint_tab[0]);
+
+  if(status == TCL_OK)
+    return CMD_OK;
+  else
+    return CMD_BAD;
 }
 
 static int
@@ -161,7 +193,14 @@ f_jhelp(argc, argv)
 int argc;
 char **argv;
 {
-	return f_help2(argc, argv, &joint_tab[0]);
+  int status;
+
+  status = f_help2(argc, argv, &joint_tab[0]);
+
+  if(status == TCL_OK)
+    return CMD_OK;
+  else
+    return CMD_BAD;
 }
 struct rt_list joint_head = {
 	RT_LIST_HEAD_MAGIC,
@@ -259,9 +298,9 @@ FILE *fip;
 	struct joint		*jp;
 
 	if (!get_line(text, TEXT_LEN, fip)) {
-		rt_log("joint load constraint: unable to read %s type\n",
-		    name);
-		return 0;
+	  Tcl_AppendResult(interp, "joint load constraint: unable to read ",
+			   name, " type\n", (char *)NULL);
+	  return 0;
 	}
 	pp->type = atoi(text);
 	if (pp->type == 1) pp->type = ID_GRIP;
@@ -273,25 +312,31 @@ FILE *fip;
 			"UNKNOWN"};
 		int t = pp->type;
 		if (t < 0 || t > 3) t = 3;
-		rt_log("joint load point: Type is %s\n", names[t]);
+		Tcl_AppendResult(interp, "joint load point: Type is ", names[t],
+				 "\n", (char *)NULL); 
 	}
 	switch (pp->type) {
 	case HOLD_PT_FIXED:
 		if (!get_line(text, TEXT_LEN, fip)) {
-			rt_log("joint load constraint: unable to read %s 3space point\n",
-			    name);
-			return 0;
+		  Tcl_AppendResult(interp, "joint load constraint: unable to read ",
+				   name, " 3space point\n", (char *)NULL);
+		  return 0;
 		}
 
 		if (sscanf(text,"%lg %lg %lg", &pp->point[X], &pp->point[Y],
 		    &pp->point[Z]) != 3) {
-		    	rt_log("joint load constraint: unable to read points for %s.\n",
-		    	    name);
-		    	return 0;
+		  Tcl_AppendResult(interp, "joint load constraint: unable to read points for ",
+				   name, ".\n", (char *)NULL);
+		  return 0;
 		}
 		if (joint_debug & DEBUG_J_LOAD) {
-			rt_log("joint load point: (%g %g %g)\n", pp->point[X],
-			    pp->point[Y], pp->point[Z]);
+		  struct rt_vls tmp_vls;
+		  
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "joint load point: (%g %g %g)\n", pp->point[X],
+				pp->point[Y], pp->point[Z]);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
 		}
 		return 1;
 	case ID_GRIP:
@@ -299,9 +344,9 @@ FILE *fip;
  * XXX - Final method will be top grip_name.  For now, we will just use "arc"
  */
 		if (!get_line(text, TEXT_LEN, fip)) {
-			rt_log("joint load constraint: unable to read %s arc.\n",
-			    name);
-			return 0;
+		  Tcl_AppendResult(interp, "joint load constraint: unable to read ",
+				   name, " arc.\n", (char *)NULL);
+		  return 0;
 		}
 		arc = parse_arc(&arc_last, text);
 		/*
@@ -317,13 +362,13 @@ FILE *fip;
 			pp->path.fp_names[i] = dp;
 		}
 		if (!dp) {
-			rt_log("joint load constraint: arc '%s' for %s is bad.\n",
-			    text, name);
-			for (i=0; i<=arc_last; i++) {
-				rt_free(arc[i], "arc entry");
-			}
-			rt_free((char *) arc, "arc table");
-			return 0;
+		  Tcl_AppendResult(interp, "joint load constraint: arc '", text,
+				   "' for ", name, " is bad.\n", (char *)NULL);
+		  for (i=0; i<=arc_last; i++) {
+		    rt_free(arc[i], "arc entry");
+		  }
+		  rt_free((char *) arc, "arc table");
+		  return 0;
 		}
 		pp->name = arc[arc_last];
 		/*
@@ -340,9 +385,9 @@ FILE *fip;
  * XXX - Final method will be top joint_name.  For now, we will just use "arc"
  */
 		if (!get_line(text, TEXT_LEN, fip)) {
-			rt_log("joint load constraint: unable to read %s arc.\n",
-			    name);
-			return 0;
+		  Tcl_AppendResult(interp, "joint load constraint: unable to read ",
+				   name, " arc.\n", (char *)NULL);
+		  return 0;
 		}
 		arc = parse_arc(&arc_last, text);
 		/*
@@ -369,14 +414,14 @@ FILE *fip;
 					pp->path.fp_names[i] = dp;
 				}
 			} else {
-				rt_log("joint load constraint: %s gave bad joint name.\n",
-				    name);
-				dp = 0;
+			  Tcl_AppendResult(interp, "joint load constraint: ", name,
+					   " gave bad joint name.\n", (char *)NULL);
+			  dp = 0;
 			}
 		}
 		if (!dp) {
-			rt_log("joint load constraint: arc '%s' for %s is bad.\n",
-			    text, name);
+		  Tcl_AppendResult(interp, "joint load constraint: arc '", text,
+				   "' for ", name, " is bad.\n", (char *)NULL);
 			for (i=0; i<arc_last; i++) {
 				rt_free(arc[i], "arc entry");
 			}
@@ -394,10 +439,18 @@ FILE *fip;
 		rt_free((char *) arc, "arc table");
 		return 1;
 	default:
-		rt_log("joint load constrain: Bad type (%d) for %s.\n",
-		    pp->type, name);
-		pp->type = HOLD_PT_FIXED;
-		return 0;
+	  {
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "joint load constrain: Bad type (%d) for %s.\n",
+			  pp->type, name);
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
+
+	  pp->type = HOLD_PT_FIXED;
+	  return 0;
 	}
 	/*NEVERREACHED*/
 }
@@ -437,14 +490,21 @@ char **argv;
 		joints++;
 		RT_LIST_DEQUEUE(&(jp->l));
 		if (joint_debug & DEBUG_J_LOAD) {
-			rt_log("joint unload: unloading '%s'.\n", jp->name);
+		  Tcl_AppendResult(interp, "joint unload: unloading '", 
+				   jp->name, "'.\n", (char *)NULL);
 		}
 		free_joint(jp);
 	}
 	if (joint_debug & DEBUG_J_LOAD) {
-		rt_log("joint unload: unloaded %d joints, %d constraints.\n",
-		    joints, holds);
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "joint unload: unloaded %d joints, %d constraints.\n",
+			joints, holds);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
 	}
+
 	return CMD_OK;
 }
 #define	KEY_JOINT	1
@@ -559,8 +619,13 @@ char *error;
 	int i;
 
 	if (!str->vls_str) {
-		rt_log("%s:%d %s\n",lex_name, lex_line,error);
-		return;
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "%s:%d %s\n",lex_name, lex_line,error);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	  return;
 	}
 	text = rt_malloc(str->vls_offset+2, "error pointer");
 	for (i=0; i<str->vls_offset; i++) {
@@ -569,7 +634,15 @@ char *error;
 	text[str->vls_offset] = '^';
 	text[str->vls_offset+1] = '\0';
 
-	rt_log("%s:%d %s\n%s\n%s\n",lex_name, lex_line,error,str->vls_str,text);
+	{
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "%s:%d %s\n%s\n%s\n",lex_name, lex_line,error,str->vls_str,text);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
+
 	rt_free(text, "error pointer");
 }
 
@@ -581,45 +654,53 @@ struct rt_vls *str;
 struct rt_lex_key *keys;
 struct rt_lex_key *syms;
 {
-	int	used;
-	for (;;) {
-		used = rt_lex(token, str, keys, syms);
-		if (used) break;
-		rt_vls_free(str);
-		lex_line++;
-		used = rt_vls_gets(str,fip);
-		if (used == EOF) return used;
-	}
+  int	used;
+  for (;;) {
+    used = rt_lex(token, str, keys, syms);
+    if (used) break;
+    rt_vls_free(str);
+    lex_line++;
+    used = rt_vls_gets(str,fip);
+    if (used == EOF) return used;
+  }
 
-	rt_vls_nibble(str, used);
+  rt_vls_nibble(str, used);
 
-	if (joint_debug & DEBUG_J_LEX) {
+  {
+    struct rt_vls tmp_vls;
+
+    rt_vls_init(&tmp_vls);
+    if (joint_debug & DEBUG_J_LEX) {
 		register int i;
 		switch (token->type) {
 		case RT_LEX_KEYWORD:
 			for (i=0; keys[i].tok_val != token->t_key.value; i++);
-			rt_log("lex: key(%d)='%s'\n", token->t_key.value,
+			rt_vls_printf(&tmp_vls,"lex: key(%d)='%s'\n", token->t_key.value,
 			    keys[i].string);
 			break;
 		case RT_LEX_SYMBOL:
 			for (i=0; syms[i].tok_val != token->t_key.value; i++);
-			rt_log("lex: symbol(%d)='%c'\n", token->t_key.value,
+			rt_vls_printf(&tmp_vls,"lex: symbol(%d)='%c'\n", token->t_key.value,
 			    *(syms[i].string));
 			break;
 		case RT_LEX_DOUBLE:
-			rt_log("lex: double(%g)\n", token->t_dbl.value);
+			rt_vls_printf(&tmp_vls,"lex: double(%g)\n", token->t_dbl.value);
 			break;
 		case RT_LEX_INT:
-			rt_log("lex: int(%d)\n", token->t_int.value);
+			rt_vls_printf(&tmp_vls,"lex: int(%d)\n", token->t_int.value);
 			break;
 		case RT_LEX_IDENT:
-			rt_log("lex: id(%s)\n", token->t_id.value);
+			rt_vls_printf(&tmp_vls,"lex: id(%s)\n", token->t_id.value);
 			break;
 		}
-	}
+    }
 
-	return used;
+    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+    rt_vls_free(&tmp_vls);
+  }
+    return used;
 }
+
 static int
 gobble_token(type_wanted, value_wanted, fip, str)
 int type_wanted;
@@ -675,7 +756,7 @@ struct rt_vls *str;
 	union rt_lex_token tok;
 	int count = 1;
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("skip_group: Skipping....\n");
+	  Tcl_AppendResult(interp, "skip_group: Skipping....\n", (char *)NULL);
 	}
 
 	while (count) {
@@ -692,7 +773,7 @@ struct rt_vls *str;
 		}
 	}
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("skip_group: Done....\n");
+	  Tcl_AppendResult(interp, "skip_group: Done....\n", (char *)NULL);
 	}
 
 }
@@ -739,7 +820,7 @@ struct rt_vls *str;
 	int max;
 
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_path: open.\n");
+	  Tcl_AppendResult(interp, "parse_path: open.\n", (char *)NULL);
 	}
 	/*
  	 * clear the arc if there is anything there.
@@ -817,7 +898,7 @@ struct rt_vls *str;
 	int max;
 
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_path: open.\n");
+	  Tcl_AppendResult(interp, "parse_path: open.\n", (char *)NULL);
 	}
 	/*
  	 * clear the arc if there is anything there.
@@ -880,7 +961,7 @@ struct rt_vls *str;
 	char *error;
 
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_ARC: open.\n");
+	  Tcl_AppendResult(interp, "parse_ARC: open.\n", (char *)NULL);
 	}
 
 	free_arc(ap);
@@ -915,7 +996,7 @@ struct rt_vls *str;
 		}
 		if (token.t_key.value == SYM_END) {
 			if (joint_debug & DEBUG_J_PARSE) {
-				rt_log("parse_ARC: close.\n");
+			  Tcl_AppendResult(interp, "parse_ARC: close.\n", (char *)NULL);
 			}
 
 			return 1;
@@ -941,7 +1022,7 @@ struct rt_vls *str;
 	sign = 1.0;
 
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_double: open\n");
+	  Tcl_AppendResult(interp, "parse_double: open\n", (char *)NULL);
 	}
 
 	if (get_token(&token, fip, str, keys, syms) == EOF) {
@@ -999,7 +1080,7 @@ struct rt_vls *str;
 	int i;
 
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_vect: open.\n");
+	  Tcl_AppendResult(interp, "parse_vect: open.\n", (char *)NULL);
 	}
 
 	if (!gobble_token(RT_LEX_SYMBOL, SYM_OP_PT, fip, str)) return 0;
@@ -1024,7 +1105,7 @@ struct rt_vls *str;
 	int dirfound=0, upfound = 0, lowfound=0, curfound=0, accfound=0;
 
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_trans: open\n");
+	  Tcl_AppendResult(interp, "parse_trans: open\n", (char *)NULL);
 	}
 
 	if (index >= 3) {
@@ -1042,7 +1123,7 @@ struct rt_vls *str;
 		if (token.type == RT_LEX_SYMBOL && 
 		    token.t_key.value == SYM_CL_GROUP ) {
 		    	if (joint_debug & DEBUG_J_PARSE) {
-		    		rt_log("parse_trans: closing.\n");
+			  Tcl_AppendResult(interp, "parse_trans: closing.\n", (char *)NULL);
 		    	}
 
 		    	if (!dirfound) {
@@ -1186,7 +1267,7 @@ struct rt_vls *str;
 	int dirfound=0, upfound = 0, lowfound=0, curfound=0, accfound=0;
 
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_rots: open\n");
+	  Tcl_AppendResult(interp, "parse_rots: open\n", (char *)NULL);
 	}
 
 	if (index >= 3) {
@@ -1204,7 +1285,7 @@ struct rt_vls *str;
 		if (token.type == RT_LEX_SYMBOL && 
 		    token.t_key.value == SYM_CL_GROUP ) {
 		    	if (joint_debug & DEBUG_J_PARSE) {
-		    		rt_log("parse_rots: closing.\n");
+			  Tcl_AppendResult(interp, "parse_rots: closing.\n", (char *)NULL);
 		    	}
 
 		    	if (!dirfound) {
@@ -1349,7 +1430,7 @@ struct rt_vls *str;
 	int arcfound, locfound;
 
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_joint: reading joint.\n");
+	  Tcl_AppendResult(interp, "parse_joint: reading joint.\n", (char *)NULL);
 	}
 
 	GETSTRUCT(jp, joint);
@@ -1385,7 +1466,7 @@ struct rt_vls *str;
 		if (token.type == RT_LEX_SYMBOL &&
 		    token.t_key.value == SYM_CL_GROUP) {
 		    	if (joint_debug & DEBUG_J_PARSE) {
-		    		rt_log("parse_joint: closing.\n");
+			  Tcl_AppendResult(interp, "parse_joint: closing.\n", (char *)NULL);
 		    	}
 		    	if (!arcfound) {
 		    		parse_error(str,"parse_joint: Arc not defined.");
@@ -1507,7 +1588,7 @@ struct rt_vls *str;
 	int jointfound=0, listfound=0, arcfound=0, pathfound=0;
 
 	if(joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_jset: open\n");
+	  Tcl_AppendResult(interp, "parse_jset: open\n", (char *)NULL);
 	}
 
 	if (!gobble_token(RT_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
@@ -1525,7 +1606,7 @@ struct rt_vls *str;
 				return 0;
 			}
 			if(joint_debug & DEBUG_J_PARSE) {
-				rt_log("parse_jset: close\n");
+			  Tcl_AppendResult(interp, "parse_jset: close\n", (char *)NULL);
 			}
  			return 1;
 		}
@@ -1600,7 +1681,7 @@ struct rt_vls *str;
 	double vertex;
 
 	if(joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_solid: open\n");
+	  Tcl_AppendResult(interp, "parse_solid: open\n", (char *)NULL);
 	}
 
 	if (!gobble_token(RT_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
@@ -1618,7 +1699,7 @@ struct rt_vls *str;
 			}
 			if (!vertexfound) pp->vertex_number = 1;
 			if(joint_debug & DEBUG_J_PARSE) {
-				rt_log("parse_solid: close\n");
+			  Tcl_AppendResult(interp, "parse_solid: close\n", (char *)NULL);
 			}
 
 			return 1;
@@ -1697,7 +1778,7 @@ struct rt_vls *str;
 		return 0;
 	}
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_point: close.\n");
+	  Tcl_AppendResult(interp, "parse_point: close.\n", (char *)NULL);
 	}
 	return 1;
 }
@@ -1711,7 +1792,7 @@ struct rt_vls *str;
 	int jsetfound = 0, efffound=0, goalfound=0, weightfound=0, prifound=0;
 
 	if (joint_debug & DEBUG_J_PARSE) {
-		rt_log("parse_hold: reading constraint\n");
+	  Tcl_AppendResult(interp, "parse_hold: reading constraint\n", (char *)NULL);
 	}
 	GETSTRUCT(hp, hold);
 	hp->l.magic = MAGIC_HOLD_STRUCT;
@@ -1760,7 +1841,7 @@ struct rt_vls *str;
 
 		if (token.type == RT_LEX_SYMBOL && token.t_key.value == SYM_CL_GROUP) {
 			if (joint_debug & DEBUG_J_PARSE) {
-				rt_log("parse_hold: closing.\n");
+			  Tcl_AppendResult(interp, "parse_hold: closing.\n", (char *)NULL);
 			}
 
 			if (!jsetfound) {
@@ -1885,8 +1966,8 @@ char **argv;
 		case 'a': no_apply = 1; break;
 		case 'm': no_mesh = 1; break;
 		default:
-			rt_log("Usage: joint load [-uam] file_name [files]\n");
-			break;
+		  Tcl_AppendResult(interp, "Usage: joint load [-uam] file_name [files]\n", (char *)NULL);
+		  break;
 		}
 	}
 	argv += optind;
@@ -1902,13 +1983,15 @@ char **argv;
 	while (argc) {
 		fip = fopen(*argv, "r");
 		if (fip == NULL) {
-			rt_log("joint load: unable to open '%s'.\n", *argv);
-			++argv;
-			--argc;
-			continue;
+		  Tcl_AppendResult(interp, "joint load: unable to open '", *argv,
+				   "'.\n", (char *)NULL);
+		  ++argv;
+		  --argc;
+		  continue;
 		}
 		if (joint_debug & DEBUG_J_LOAD) {
-			rt_log("joint load: loading from '%s'.\n", *argv);
+		  Tcl_AppendResult(interp, "joint load: loading from '", *argv,
+				   "'.\n", (char *)NULL);
 		}
 		lex_line = 0;
 		lex_name = *argv;
@@ -2034,14 +2117,14 @@ char **argv;
 	++argv;
 
 	if (argc <1) {
-		rt_log("joint save: missing file name");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "joint save: missing file name", (char *)NULL);
+	  return CMD_BAD;
 	}
 	fop = fopen(*argv,"w");
 	if (!fop) {
-		rt_log("joint save: unable to open '%s' for writing.\n",
-		    *argv);
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "joint save: unable to open '", *argv,
+			   "' for writing.\n", (char *)NULL);
+	  return CMD_BAD;
 	}
 	fprintf(fop,"# joints and constraints for '%s'\n",
 	    dbip->dbi_title);
@@ -2126,8 +2209,8 @@ char **argv;
 		switch (c) {
 		case 'm': no_mesh=1;break;
 		default:
-			rt_log("Usage: joint accept [-m] [joint_names]\n");
-			break;
+		  Tcl_AppendResult(interp, "Usage: joint accept [-m] [joint_names]\n", (char *)NULL);
+		  break;
 		}
 	}
 	argc -= optind;
@@ -2163,8 +2246,8 @@ char **argv;
 		switch (c) {
 		case 'm': no_mesh=1;break;
 		default:
-			rt_log("Usage: joint accept [-m] [joint_names]\n");
-			break;
+		  Tcl_AppendResult(interp, "Usage: joint accept [-m] [joint_names]\n", (char *)NULL);
+		  break;
 		}
 	}
 	argc -= optind;
@@ -2238,10 +2321,11 @@ struct hold_point *hp;
 		}
 		jp = joint_lookup(hp->arc.arc[hp->arc.arc_last]);
 		if (!jp) {
-			rt_log("hold_eval: Lost joint!  %s not found!\n",
-			    hp->arc.arc[hp->arc.arc_last]);
-			/* rt_bomb(); */
-			return 0;
+		  Tcl_AppendResult(interp, "hold_eval: Lost joint!  ",
+				   hp->arc.arc[hp->arc.arc_last],
+				   " not found!\n", (char *)NULL);
+		  /* rt_bomb(); */
+		  return 0;
 		}
 		VMOVE(hp->point, jp->location);
 		hp->flag |= HOLD_PT_GOOD;
@@ -2263,21 +2347,26 @@ struct hold *hp;
 	 */
 	if (!hold_point_location(e_loc, &hp->effector)) {
 		if (joint_debug & DEBUG_J_EVAL) {
-			rt_log("hold_eval: unable to find location of effector for %s.\n",
-			    hp->name);
+		  Tcl_AppendResult(interp, "hold_eval: unable to find location of effector for ",
+				   hp->name, ".\n", (char *)NULL);
 		}
 		return 0.0;
 	}
 	if (!hold_point_location(o_loc, &hp->objective)) {
 		if (joint_debug & DEBUG_J_EVAL) {
-			rt_log("hold_eval: unable to find location of objective for %s.\n",
-			    hp->name);
+		  Tcl_AppendResult(interp, "hold_eval: unable to find location of objective for ",
+				   hp->name, ".\n", (char *)NULL);
 		}
 		return 0.0;
 	}
 	value = hp->weight * DIST_PT_PT(e_loc, o_loc);
 	if (joint_debug & DEBUG_J_EVAL) {
-		rt_log("hold_eval: PT->PT of %s is %g\n", hp->name, value);
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "hold_eval: PT->PT of %s is %g\n", hp->name, value);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
 	}
 	return value;
 }
@@ -2320,7 +2409,8 @@ double tol;
 	register struct jointH *jh;
 
 	if (joint_debug & DEBUG_J_SOLVE) {
-		rt_log("part_solve: solving for %s.\n", hp->name);
+	  Tcl_AppendResult(interp, "part_solve: solving for ", hp->name,
+			   ".\n", (char *)NULL);
 	}
 
 	if (RT_LIST_IS_EMPTY(&hp->j_head)) {
@@ -2328,7 +2418,8 @@ double tol;
 		int startjoint;
 		startjoint = -1;
 		if (joint_debug & DEBUG_J_SOLVE) {
-			rt_log("part_solve: looking for joints on arc.\n");
+		  Tcl_AppendResult(interp, "part_solve: looking for joints on arc.\n",
+				   (char *)NULL);
 		}
 		for(RT_LIST_FOR(jp,joint,&joint_head)) {
 			if (hp->j_set.path.type == ARC_LIST) {
@@ -2358,8 +2449,8 @@ double tol;
 			}
 			if (j>jp->path.arc_last) {
 				if (joint_debug & DEBUG_J_SOLVE) {
-					rt_log("part_solve: found %s\n",
-					    jp->name);
+				  Tcl_AppendResult(interp, "part_solve: found ",
+						   jp->name, "\n", (char *)NULL);
 				}
 				GETSTRUCT(jh, jointH);
 				jh->l.magic = MAGIC_JOINT_HANDLE;
@@ -2374,8 +2465,8 @@ double tol;
 			}
 		}
 		if (startjoint < 0) {
-			rt_log("part_solve: %s, joint %s not on arc.\n",
-			    hp->name, hp->joint);
+		  Tcl_AppendResult(interp, "part_solve: ", hp->name,
+				   ", joint ", hp->joint, " not on arc.\n", (char *)NULL);
 		}
 		for (RT_LIST_FOR(jh, jointH, &hp->j_head)) {
 			/*
@@ -2386,8 +2477,8 @@ double tol;
 			if (jh->arc_loc < startjoint) {
 				register struct jointH *hold;
 				if (joint_debug & DEBUG_J_SOLVE) {
-					rt_log("part_solve: dequeuing %s from %s\n",
-					    jh->p->name, hp->name);
+				  Tcl_AppendResult(interp, "part_solve: dequeuing ", jh->p->name,
+						   " from ", hp->name, "\n", (char *)NULL);
 				}
 				hold=(struct jointH *)jh->l.back;
 				RT_LIST_DEQUEUE(&jh->l);
@@ -2399,8 +2490,13 @@ double tol;
 	origvalue = besteval = hold_eval(hp);
 	if (fabs(origvalue) < tol) {
 		if (joint_debug & DEBUG_J_SOLVE) {
-			rt_log("part_solve: solved, original(%g) < tol(%g)\n",
-			    origvalue, tol);
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "part_solve: solved, original(%g) < tol(%g)\n",
+				origvalue, tol);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
 		}
 		return 0;
 	}
@@ -2477,16 +2573,26 @@ double tol;
 			joint_move(jp);
 			if (f0 < besteval) {
 				if (joint_debug & DEBUG_J_SOLVE) {
-					rt_log("part_solve: NEW min %s(%d,%g) %g <%g\n",
+				  struct rt_vls tmp_vls;
+
+				  rt_vls_init(&tmp_vls);
+				  rt_vls_printf(&tmp_vls, "part_solve: NEW min %s(%d,%g) %g <%g\n",
 					    jp->name, i, x0,f0, besteval);
+				  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+				  rt_vls_free(&tmp_vls);
 				}
 				besteval = f0;
 				bestjoint = jp;
 				bestfreedom = i;
 				bestvalue = x0;
 			} else 	if (joint_debug & DEBUG_J_SOLVE) {
-				rt_log("part_solve: OLD min %s(%d,%g)%g >= %g\n",
-				    jp->name, i, x0, f0, besteval);
+			  struct rt_vls tmp_vls;
+
+			  rt_vls_init(&tmp_vls);
+			  rt_vls_printf(&tmp_vls, "part_solve: OLD min %s(%d,%g)%g >= %g\n",
+					jp->name, i, x0, f0, besteval);
+			  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+			  rt_vls_free(&tmp_vls);
 			}
 		}
 		/*
@@ -2553,16 +2659,26 @@ double tol;
 			joint_move(jp);
 			if (f0 < besteval-SQRT_SMALL_FASTF) {
 				if (joint_debug & DEBUG_J_SOLVE) {
-					rt_log("part_solve: NEW min %s(%d,%g) %g <%g delta=%g\n",
+				  struct rt_vls tmp_vls;
+
+				  rt_vls_init(&tmp_vls);
+				  rt_vls_printf(&tmp_vls, "part_solve: NEW min %s(%d,%g) %g <%g delta=%g\n",
 					    jp->name, i+3, x0,f0, besteval, besteval-f0);
+				  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+				  rt_vls_free(&tmp_vls);
 				}
 				besteval = f0;
 				bestjoint = jp;
 				bestfreedom = i + 3;
 				bestvalue = x0;
 			} else 	if (joint_debug & DEBUG_J_SOLVE) {
-				rt_log("part_solve: OLD min %s(%d,%g)%g >= %g\n",
-				    jp->name, i, x0, f0, besteval);
+			  struct rt_vls tmp_vls;
+
+			  rt_vls_init(&tmp_vls);
+			  rt_vls_printf(&tmp_vls, "part_solve: OLD min %s(%d,%g)%g >= %g\n",
+					jp->name, i, x0, f0, besteval);
+			  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+			  rt_vls_free(&tmp_vls);
 			}
 
 		}
@@ -2572,13 +2688,13 @@ double tol;
 	 */
 	if (!bestjoint) {
 		if (joint_debug & DEBUG_J_SOLVE) {
-			rt_log("part_solve: No joint configuration found to be better.\n");
+		  Tcl_AppendResult(interp, "part_solve: No joint configuration found to be better.\n", (char *)NULL);
 		}
 		return 0;
 	}
 	if (origvalue - besteval < (tol/100.0)) {
 		if (joint_debug & DEBUG_J_SOLVE) {
-			rt_log("part_solve: No reasonable improvement found.\n");
+		  Tcl_AppendResult(interp, "part_solve: No reasonable improvement found.\n", (char *)NULL);
 		}
 		return 0;
 	}
@@ -2607,8 +2723,13 @@ reject_move()
 	RT_LIST_POP(solve_stack, &solve_head, ssp);
 	if (!ssp) return;
 	if (joint_debug & DEBUG_J_SYSTEM) {
-		rt_log("reject_move: rejecting %s(%d,%g)->%g\n", ssp->jp->name,
-		    ssp->freedom, ssp->new, ssp->old);
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "reject_move: rejecting %s(%d,%g)->%g\n", ssp->jp->name,
+			ssp->freedom, ssp->new, ssp->old);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
 	}
 	if (ssp->freedom<3) { 
 		ssp->jp->rots[ssp->freedom].current = ssp->old;
@@ -2672,8 +2793,13 @@ double epsilon;
 	if (joint_debug & DEBUG_J_SYSTEM) {
 		for (i=0; i <= pri; i++ ) {
 			if (pri_weights[i] > 0.0) {
-				rt_log("system_solve: priority %d has system weight of %g.\n",
-				    i, pri_weights[i]);
+			  struct rt_vls tmp_vls;
+
+			  rt_vls_init(&tmp_vls);
+			  rt_vls_printf(&tmp_vls, "system_solve: priority %d has system weight of %g.\n",
+					i, pri_weights[i]);
+			  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+			  rt_vls_free(&tmp_vls);
 			}
 		}
 	}
@@ -2704,7 +2830,7 @@ Middle:
 	for (; pri>=0 && pri_weights[pri] < epsilon; pri--);
 	if (pri <0) {
 		if (joint_debug & DEBUG_J_SYSTEM) {
-			rt_log("system_solve: returning 1\n");
+		  Tcl_AppendResult(interp, "system_solve: returning 1\n", (char *)NULL);
 		}
 		return 1;	/* solved */
 	}
@@ -2739,8 +2865,13 @@ Middle:
 		new_eval += hold_eval(hp);
 	}
 	if (joint_debug & DEBUG_J_SYSTEM) {
-		rt_log("system_solve: old eval = %g, new eval = %g\n",
-		    pri_weights[pri], new_eval);
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "system_solve: old eval = %g, new eval = %g\n",
+			pri_weights[pri], new_eval);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
 	}
 	/*
 	 * if the new evaluation is worse then the origianal, back off
@@ -2814,22 +2945,27 @@ Middle:
 		}
 		reject_move();
 		if (joint_debug & DEBUG_J_SYSTEM) {
-			rt_log("system_solve: returning -1\n");
+		  Tcl_AppendResult(interp, "system_solve: returning -1\n", (char *)NULL);
 		}
 		return -1;
 	}
 	if (joint_debug & DEBUG_J_SYSTEM) {
-		rt_log("system_solve: new_weights[%d] = %g, returning ", pri,
-		    new_weights[pri]);
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "system_solve: new_weights[%d] = %g, returning ", pri,
+			new_weights[pri]);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
 	}
 	if (new_weights[pri] < epsilon) {
 		if (joint_debug & DEBUG_J_SYSTEM) {
-			rt_log("1\n");
+		  Tcl_AppendResult(interp, "1\n", (char *)NULL);
 		}
 		return 1;
 	}
 	if (joint_debug & DEBUG_J_SYSTEM) {
-		rt_log("0\n");
+	  Tcl_AppendResult(interp, "0\n", (char *)NULL);
 	}
 	return 0;
 
@@ -2895,29 +3031,38 @@ char **argv;
 	for (RT_LIST_FOR(hp, hold, &hold_head)) hold_clear_flags(hp);
 	found = -1;
 	while (argc) {
-		found = 0;
-		for(RT_LIST_FOR(hp,hold,&hold_head)) {
-			if (strcmp(*argv, hp->name)==0) {
-				found = 1;
-				for (count=0; count<loops; count++) {
-					if (!part_solve(hp,delta,epsilon)) break;
-					if (domesh) {
-						f_jmesh(0,0);
-						refresh();
-					}
-					joint_clear();
-				}
-				rt_log("joint solve: finished %d loops of %s.\n",
-				    count, hp->name);
-				continue;
-			}
+	  found = 0;
+	  for(RT_LIST_FOR(hp,hold,&hold_head)) {
+	    if (strcmp(*argv, hp->name)==0) {
+	      found = 1;
+	      for (count=0; count<loops; count++) {
+		if (!part_solve(hp,delta,epsilon)) break;
+		if (domesh) {
+		  f_jmesh(0,0);
+		  refresh();
 		}
-		if (!found) {
-			rt_log("joint solve: constraint %s not found.\n",
-				*argv);
-		}
-		--argc;
-		++argv;
+		joint_clear();
+	      }
+	      
+	      {
+		struct rt_vls tmp_vls;
+		
+		rt_vls_init(&tmp_vls);
+		rt_vls_printf(&tmp_vls, "joint solve: finished %d loops of %s.\n", 
+			      count, hp->name);
+		Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		rt_vls_free(&tmp_vls);
+	      }
+
+	      continue;
+	    }
+	  }
+	  if (!found) {
+	    Tcl_AppendResult(interp, "joint solve: constraint ", *argv,
+			     " not found.\n", (char *)NULL);
+	  }
+	  --argc;
+	  ++argv;
 	}
 
 	for (count=0; count<myargc; count++) {
@@ -2951,8 +3096,13 @@ char **argv;
 		} else if (result == -1) {
 			delta /= 2.0;
 			if (joint_debug & DEBUG_J_SYSTEM) {
-				rt_log("joint solve: spliting delta (%g)\n",
-				    delta);
+			  struct rt_vls tmp_vls;
+
+			  rt_vls_init(&tmp_vls);
+			  rt_vls_printf(&tmp_vls, "joint solve: spliting delta (%g)\n",
+					delta);
+			  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+			  rt_vls_free(&tmp_vls);
 			}
 			if (delta < epsilon) break;
 		}
@@ -2981,8 +3131,13 @@ char **argv;
 			} else if (result == -1) {
 				delta /= 2.0;
 				if (joint_debug & DEBUG_J_SYSTEM) {
-					rt_log("joint solve: spliting delta (%g)\n",
-					    delta);
+				  struct rt_vls tmp_vls;
+
+				  rt_vls_init(&tmp_vls);
+				  rt_vls_printf(&tmp_vls, "joint solve: spliting delta (%g)\n",
+						delta);
+				  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+				                            rt_vls_free(&tmp_vls);
 				}
 				if (delta < epsilon) break;
 			}
@@ -2994,12 +3149,18 @@ char **argv;
 		}
 	}
 	if (result == 1) {
-		rt_log("joint solve: system has convereged to a result.\n");
+	  Tcl_AppendResult(interp, "joint solve: system has convereged to a result.\n",
+			   (char *)NULL);
 	} else if (result == 0) {
-		rt_log("joint solve: system has not converged in %d loops.\n",
-		    count);
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "joint solve: system has not converged in %d loops.\n",
+			count);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
 	} else {
-		rt_log("joint solve: system will not converge.\n");
+	  Tcl_AppendResult(interp, "joint solve: system will not converge.\n", (char *)NULL);
 	}
 	joint_clear();
 	if (domesh) {
@@ -3043,13 +3204,20 @@ struct hold *hp;
 
 	t1 = hold_point_to_string(&hp->effector);
 	t2 = hold_point_to_string(&hp->objective);
-	rt_log("holds:\t%s with %s\n\tfrom:%s\n\tto: %s", (hp->name) ?
-	    hp->name : "UNNAMED", hp->joint,
-	    t1,t2);
+	Tcl_AppendResult(interp, "holds:\t", (hp->name) ? hp->name : "UNNAMED",
+			 " with ", hp->joint, "\n\tfrom:", t1, "\n\tto: ", t2, (char *)NULL);
 	rt_free(t1, "hold_point_to_string");
 	rt_free(t2, "hold_point_to_string");
-	rt_log("\n\twith a weight: %g, pull %g\n",
-	    hp->weight, hold_eval(hp) );
+
+	{
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls,"\n\twith a weight: %g, pull %g\n",
+			hp->weight, hold_eval(hp) );
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
 }
 int
 f_jhold(argc, argv)
@@ -3122,9 +3290,14 @@ struct joint *jp;
 		jp->anim=anp;
 		db_add_anim(dbip, anp, 0);
 		if (joint_debug & DEBUG_J_MOVE) {
-			sofar = db_path_to_string(&jp->anim->an_path);
-			rt_log("joint move: %s added animate %s to %s(0x%x)\n",
-			    jp->name, sofar, dp->d_namep, dp);
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  sofar = db_path_to_string(&jp->anim->an_path);
+		  rt_vls_printf(&tmp_vls, "joint move: %s added animate %s to %s(0x%x)\n",
+				jp->name, sofar, dp->d_namep, dp);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
 		}
 	}
 
@@ -3151,8 +3324,13 @@ struct joint *jp;
 		tmp = (jp->rots[i].current * rt_degtorad)/2.0;
 		VMOVE(q1, jp->rots[i].quat);
 		if (joint_debug & DEBUG_J_MOVE) {
-			rt_log("joint move: rotating %g around (%g %g %g)\n",
-			    tmp*2*rt_radtodeg, q1[X], q1[Y], q1[Z]);
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "joint move: rotating %g around (%g %g %g)\n",
+				tmp*2*rt_radtodeg, q1[X], q1[Y], q1[Z]);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
 		}
 		{register double srot = sin(tmp);
 			q1[X] *= srot;
@@ -3186,8 +3364,13 @@ struct joint *jp;
 		    jp->dirs[i].unitvec[Z]*tmp);
 
 		if (joint_debug & DEBUG_J_MOVE) {
-			rt_log("joint move: moving %g along (%g %g %g)\n",
-			    tmp*base2local, m2[3], m2[7], m2[11]);
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "joint move: moving %g along (%g %g %g)\n",
+				tmp*base2local, m2[3], m2[7], m2[11]);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
 		}
 		mat_copy(m1, ANIM_MAT);
 		mat_mul(ANIM_MAT, m2, m1);
@@ -3220,8 +3403,8 @@ char **argv;
 
 	jp = joint_lookup(*argv);
 	if (!jp) {
-		rt_log("joint move: %s not found\n", *argv);
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "joint move: ", *argv, " not found\n", (char *)NULL);
+	  return CMD_BAD;
 	}
 
 	argv++;
@@ -3238,19 +3421,29 @@ char **argv;
 		}
 		tmp = atof(*argv);
 		if (joint_debug & DEBUG_J_MOVE) {
-			rt_log("joint move: %s rotate (%g %g %g) %g degrees.\n",
-			    jp->name, jp->rots[i].quat[X],
-			    jp->rots[i].quat[Y], jp->rots[i].quat[Z],
-			    tmp);
-			rt_log("joint move: %s lower=%g, upper=%g\n",
-			    jp->name, jp->rots[i].lower, jp->rots[i].upper);
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "joint move: %s rotate (%g %g %g) %g degrees.\n",
+				jp->name, jp->rots[i].quat[X],
+				jp->rots[i].quat[Y], jp->rots[i].quat[Z],
+				tmp);
+		  rt_vls_printf(&tmp_vls, "joint move: %s lower=%g, upper=%g\n",
+				jp->name, jp->rots[i].lower, jp->rots[i].upper);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
 		}
 		if (tmp <= jp->rots[i].upper &&
 		    tmp >= jp->rots[i].lower) {
 		    	jp->rots[i].current = tmp;
 		} else {
-			rt_log("joint move: %s, rotation %d, %s out of range.\n",
-			    jp->name, i, *argv);
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "joint move: %s, rotation %d, %s out of range.\n",
+				jp->name, i, *argv);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
 		}
 		argv++;
 		argc--;
@@ -3270,8 +3463,13 @@ char **argv;
 		    tmp >= jp->dirs[i].lower) {
 		    	jp->dirs[i].current = tmp;
 		} else {
-			rt_log("joint move: %s, vector %d, %s out of range.\n",
-			    jp->name, i, *argv);
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "joint move: %s, vector %d, %s out of range.\n",
+				jp->name, i, *argv);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
 		}
 	}
 	joint_move(jp);
@@ -3307,9 +3505,10 @@ struct db_full_path	*pathp;
 	struct joint *bestjp;
 
 	if (joint_debug & DEBUG_J_MESH) {
-		char *sofar = db_path_to_string(pathp);
-		rt_log("joint mesh: PATH = '%s'\n",sofar);
-		rt_free(sofar, "path string");
+	  char *sofar = db_path_to_string(pathp);
+
+	  Tcl_AppendResult(interp, "joint mesh: PATH = '", sofar, "'\n", (char *)NULL);
+	  rt_free(sofar, "path string");
 	}
 
 	best = -1;
@@ -3333,14 +3532,14 @@ struct db_full_path	*pathp;
 	}
 	if (best > 0) {
 	    	if (joint_debug & DEBUG_J_MESH) {
-			rt_log("joint mesh: returning joint '%s'\n",
-			    bestjp->name);
+		  Tcl_AppendResult(interp, "joint mesh: returning joint '",
+				   bestjp->name, "'\n", (char *)NULL);
 	    	}
 		return bestjp;
  	}
 
 	if (joint_debug & DEBUG_J_MESH) {
-		rt_log("joint mesh: returning joint 'NULL'\n");
+	  Tcl_AppendResult(interp, "joint mesh: returning joint 'NULL'\n", (char *)NULL);
 	}
 	return (struct joint *) 0;
 }
@@ -3371,10 +3570,9 @@ int			id;
  */
 	RT_INIT_DB_INTERNAL(&internal);
 	if ( rt_functab[id].ft_import( &internal, ep, tsp->ts_mat) < 0 ) {
-		rt_log("%s: solid import failure\n",
-		    dp->d_namep);
-		if (internal.idb_ptr) rt_functab[id].ft_ifree(&internal);
-		return curtree;
+	  Tcl_AppendResult(interp, dp->d_namep, ": solid import failure\n", (char *)NULL);
+	  if (internal.idb_ptr) rt_functab[id].ft_ifree(&internal);
+	  return curtree;
 	}
 	gip = (struct rt_grip_internal *) internal.idb_ptr;
 /*
@@ -3495,8 +3693,13 @@ char **argv;
 			}
 		}
 		if (joint_debug & DEBUG_J_MESH) {
-			rt_log("joint mesh: %s has %d grips.\n",
-			    (jp->joint) ? jp->joint->name: "UNGROUPED",i);
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "joint mesh: %s has %d grips.\n",
+				(jp->joint) ? jp->joint->name: "UNGROUPED",i);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
 		}
 	}
 

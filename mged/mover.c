@@ -80,9 +80,9 @@ matp_t xlate;
 			rt_dbmat_mat( rec[i].M.m_mat, temp );
 		}
 		if( db_put_external( &ext, dp, dbip ) < 0 )  {
-			db_free_external( &ext );
-			ERROR_RECOVERY_SUGGESTION;
-			WRITE_ERR_return;
+		  db_free_external( &ext );
+		  TCL_WRITE_ERR;
+		  return;
 		}
 		db_free_external( &ext );
 		return;				/* OK */
@@ -94,28 +94,28 @@ matp_t xlate;
 	 *  Will work on all solids.
 	 */
 	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
-		rt_log("moveHobj(%s) unable to identify type\n",
-			dp->d_namep );
-		return;				/* FAIL */
+	  Tcl_AppendResult(interp, "moveHobj(", dp->d_namep,
+			   ") unable to identify type\n", (char *)NULL);
+	  return;				/* FAIL */
 	}
 
     	RT_INIT_DB_INTERNAL(&intern);
 	if( rt_functab[id].ft_import( &intern, &ext, xlate ) < 0 )  {
-		rt_log("moveHobj(%s):  solid import failure\n",
-			dp->d_namep );
-	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-		db_free_external( &ext );
-		return;				/* FAIL */
+	  Tcl_AppendResult(interp, "moveHobj(", dp->d_namep,
+			   "):  solid import failure\n", (char *)NULL);
+	  if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	  db_free_external( &ext );
+	  return;				/* FAIL */
 	}
 	RT_CK_DB_INTERNAL( &intern );
 	db_free_external( &ext );
 
 	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
-		rt_log("moveHobj(%s):  solid export failure\n",
-			dp->d_namep );
-		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-		ERROR_RECOVERY_SUGGESTION;
-		WRITE_ERR_return;
+	  Tcl_AppendResult(interp, "moveHobj(", dp->d_namep,
+			   "):  solid export failure\n", (char *)NULL);
+	  if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	  TCL_WRITE_ERR;
+	  return;
 	}
 	return;					/* OK */
 }
@@ -155,8 +155,8 @@ matp_t xlate;
 		return;
 	}
 	rt_free( (char *)rec, "union record");
-	rt_log( "moveinst:  couldn't find %s/%s\n",
-		cdp->d_namep, dp->d_namep );
+	Tcl_AppendResult(interp, "moveinst:  couldn't find ", cdp->d_namep,
+			 "/", dp->d_namep, "\n", (char *)NULL);
 	return;				/* ERROR */
 }
 
@@ -188,10 +188,10 @@ int air;				/* Air code */
 		/* Update the in-core directory */
 		if( (dp = db_diradd( dbip, combname, -1, 2, DIR_COMB )) == DIR_NULL ||
 		    db_alloc( dbip, dp, 2 ) < 0 )  {
-			rt_log("An error has occured while adding '%s' to the database.\n",
-				combname);
-			ERROR_RECOVERY_SUGGESTION;
-			return DIR_NULL;
+		  Tcl_AppendResult(interp, "An error has occured while adding '",
+				   combname, "' to the database.\n", (char *)NULL);
+		  TCL_ERROR_RECOVERY_SUGGESTION;
+		  return DIR_NULL;
 		}
 
 		/* Generate the disk record */
@@ -205,27 +205,34 @@ int air;				/* Air code */
 		record.c.c_matparm[0] = '\0';
 		NAMEMOVE( combname, record.c.c_name );
 		if( region_flag ) {       /* creating a region */
-			record.c.c_flags = 'R';
-			record.c.c_regionid = ident;
-			record.c.c_aircode = air;
-			record.c.c_los = los_default;
-			record.c.c_material = mat_default;
-			rt_log("Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
+		  struct rt_vls tmp_vls;
+
+		  
+		  record.c.c_flags = 'R';
+		  record.c.c_regionid = ident;
+		  record.c.c_aircode = air;
+		  record.c.c_los = los_default;
+		  record.c.c_material = mat_default;
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls,
+				"Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
 				ident, air, los_default, mat_default );
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
 		}
 
 		/* finished with combination record - write it out */
 		if( db_put( dbip,  dp, &record, 0, 1 ) < 0 )  {
-			rt_log("write error, aborting\n");
-			ERROR_RECOVERY_SUGGESTION;
-			return DIR_NULL;
+		  Tcl_AppendResult(interp, "write error, aborting\n", (char *)NULL);
+		  TCL_ERROR_RECOVERY_SUGGESTION;
+		  return DIR_NULL;
 		}
 
 		/* create first member record */
 		if( db_get( dbip,  dp, &record, 1, 1) < 0 )  {
-			rt_log("read error, aborting\n");
-			ERROR_RECOVERY_SUGGESTION;
-			return DIR_NULL;
+		  Tcl_AppendResult(interp, "read error, aborting\n", (char *)NULL);
+		  TCL_ERROR_RECOVERY_SUGGESTION;
+		  return DIR_NULL;
 		}
 		(void)strcpy( record.M.m_instname, objp->d_namep );
 
@@ -234,9 +241,9 @@ int air;				/* Air code */
 		mat_idn( identity );
 		rt_dbmat_mat( record.M.m_mat, identity );
 		if( db_put( dbip,  dp, &record, 1, 1 ) < 0 )  {
-			rt_log("write error, aborting\n");
-			ERROR_RECOVERY_SUGGESTION;
-			return DIR_NULL;
+		  Tcl_AppendResult(interp, "write error, aborting\n", (char *)NULL);
+		  TCL_ERROR_RECOVERY_SUGGESTION;
+		  return DIR_NULL;
 		}
 		return( dp );
 	}
@@ -246,32 +253,32 @@ int air;				/* Air code */
 	 * and verify that this is a combination.
 	 */
 	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  {
-		rt_log("read error, aborting\n");
-		ERROR_RECOVERY_SUGGESTION;
-		return DIR_NULL;
+	  Tcl_AppendResult(interp, "read error, aborting\n", (char *)NULL);
+	  TCL_ERROR_RECOVERY_SUGGESTION;
+	  return DIR_NULL;
 	}
 	if( record.u_id != ID_COMB )  {
-		rt_log("%s:  not a combination\n", combname );
-		return DIR_NULL;
+	  Tcl_AppendResult(interp, combname, ":  not a combination\n", (char *)NULL);
+	  return DIR_NULL;
 	}
 
 	if( region_flag ) {
-		if( record.c.c_flags != 'R' ) {
-			rt_log("%s: not a region\n",combname);
-			return DIR_NULL;
-		}
+	  if( record.c.c_flags != 'R' ) {
+	    Tcl_AppendResult(interp, combname, ": not a region\n", (char *)NULL);
+	    return DIR_NULL;
+	  }
 	}
 	if( db_grow( dbip, dp, 1 ) < 0 )  {
-		rt_log("db_grow error, aborting\n");
-		ERROR_RECOVERY_SUGGESTION;
-		return DIR_NULL;
+	  Tcl_AppendResult(interp, "db_grow error, aborting\n", (char *)NULL);
+	  TCL_ERROR_RECOVERY_SUGGESTION;
+	  return DIR_NULL;
 	}
 
 	/* Fill in new Member record */
 	if( db_get( dbip,  dp, &record, dp->d_len-1, 1) < 0 )  {
-		rt_log("read error, aborting\n");
-		ERROR_RECOVERY_SUGGESTION;
-		return DIR_NULL;
+	  Tcl_AppendResult(interp, "read error, aborting\n", (char *)NULL);
+	  TCL_ERROR_RECOVERY_SUGGESTION;
+	  return DIR_NULL;
 	}
 	record.M.m_id = ID_MEMB;
 	record.M.m_relation = relation;
@@ -280,9 +287,9 @@ int air;				/* Air code */
 	mat_idn( identity );
 	rt_dbmat_mat( record.M.m_mat, identity );
 	if( db_put( dbip,  dp, &record, dp->d_len-1, 1 ) < 0 )  {
-		rt_log("write error, aborting\n");
-		ERROR_RECOVERY_SUGGESTION;
-		return DIR_NULL;
+	  Tcl_AppendResult(interp, "write error, aborting\n", (char *)NULL);
+	  TCL_ERROR_RECOVERY_SUGGESTION;
+	  return DIR_NULL;
 	}
 	return( dp );
 }

@@ -73,7 +73,9 @@ static int	get_3pts();
  * one of four functions before calculating new vertices.
  */
 int
-f_facedef(argc, argv)
+f_facedef(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char **argv;
 {
@@ -84,15 +86,18 @@ char **argv;
 	struct rt_arb_internal	*arbo;
 	plane_t		planes[6];
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	(void)signal( SIGINT, sig2);    /* allow interupts */
 
 	if( state != ST_S_EDIT ){
-		rt_log("Facedef: must be in solid edit mode\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Facedef: must be in solid edit mode\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( es_int.idb_type != ID_ARB8 )  {
-		rt_log("Facedef: solid type must be ARB\n");
-		return CMD_BAD;
+	   Tcl_AppendResult(interp, "Facedef: solid type must be ARB\n");
+	   return TCL_ERROR;
 	}	
 
 	/* apply es_mat editing to parameters.  "new way" */
@@ -103,8 +108,8 @@ char **argv;
 
 	/* find new planes to account for any editing */
 	if( rt_arb_calc_planes( planes, arb, es_type, &mged_tol ) < 0 )  {
-		rt_log("Unable to determine plane equations\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Unable to determine plane equations\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	/* get face, initialize args and argcnt */
@@ -156,93 +161,105 @@ char **argv;
 		case  672:plane=5;		/* face 4378 of arb8 */
 			  break;
 		default:
-			  rt_log("bad face (product=%d)\n", prod);
-			  return CMD_BAD;
+		  {
+		    struct rt_vls tmp_vls;
+
+		    rt_vls_init(&tmp_vls);
+		    rt_vls_printf(&tmp_vls, "bad face (product=%d)\n", prod);
+		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		    rt_vls_free(&tmp_vls);
+		    return TCL_ERROR;
+		  }
 	}
 
 	if( argc < 3 ){
-
-		/* menu of choices for plane equation definition */
-		rt_log("\ta   planar equation\n");
-		rt_log("\tb   3 points\n");
-		rt_log("\tc   rot,fb angles + fixed pt\n");
-		rt_log("\td   same plane thru fixed pt\n");
-		rt_log("\tq   quit\n\n");
-
-		rt_log("Enter form of new face definition: ");
-		return CMD_MORE;
+	  /* menu of choices for plane equation definition */
+	  Tcl_AppendResult(interp,
+			   "\ta   planar equation\n",
+			   "\tb   3 points\n",
+			   "\tc   rot,fb angles + fixed pt\n",
+			   "\td   same plane thru fixed pt\n",
+			   "\tq   quit\n\n",
+			   MORE_ARGS_STR, "Enter form of new face definition: ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	switch( argv[2][0] ){
 	case 'a': 
-		/* special case for arb7, because of 2 4-pt planes meeting */
-		if( es_type == 7 )
-			if( plane!=0 && plane!=3 ){
-				rt_log("Facedef: can't redefine that arb7 plane\n");
-				return CMD_BAD;
-			}
-		if( argc < 7 ){  	/* total # of args under this option */
-			rt_log("%s",p_pleqn[argc-3]);
-			return CMD_MORE;
-		}
-		get_pleqn( planes[plane], &argv[3] );
-		break;
+	  /* special case for arb7, because of 2 4-pt planes meeting */
+	  if( es_type == 7 )
+	    if( plane!=0 && plane!=3 ){
+	      Tcl_AppendResult(interp, "Facedef: can't redefine that arb7 plane\n", (char *)NULL);
+	      return TCL_ERROR;
+	    }
+	  if( argc < 7 ){  	/* total # of args under this option */
+	    Tcl_AppendResult(interp, MORE_ARGS_STR, p_pleqn[argc-3], (char *)NULL);
+	    return TCL_ERROR;
+	  }
+	  get_pleqn( planes[plane], &argv[3] );
+	  break;
 	case 'b': 
-		/* special case for arb7, because of 2 4-pt planes meeting */
-		if( es_type == 7 )
-			if( plane!=0 && plane!=3 ){
-				rt_log("Facedef: can't redefine that arb7 plane\n");
-				return CMD_BAD;
-			}
-		if( argc < 12 ){           /* total # of args under this option */
-			rt_log("%s %d: ", p_3pts[(argc-3)%3], argc/3);
-			return CMD_MORE;
-		}
-		if( get_3pts( planes[plane], &argv[3], &mged_tol) ){
-			return CMD_BAD;			/* failure */
-		}
-		break;
+	  /* special case for arb7, because of 2 4-pt planes meeting */
+	  if( es_type == 7 )
+	    if( plane!=0 && plane!=3 ){
+	      Tcl_AppendResult(interp, "Facedef: can't redefine that arb7 plane\n", (char *)NULL);
+	      return TCL_ERROR;
+	    }
+	  if( argc < 12 ){           /* total # of args under this option */
+	    struct rt_vls tmp_vls;
+
+	     rt_vls_init(&tmp_vls);
+	     rt_vls_printf(&tmp_vls, "%s%s %d: ", MORE_ARGS_STR, p_3pts[(argc-3)%3], argc/3);
+	     Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	     rt_vls_free(&tmp_vls);
+	     return TCL_ERROR;
+	  }
+	  if( get_3pts( planes[plane], &argv[3], &mged_tol) ){
+	    return TCL_ERROR;			/* failure */
+	  }
+	  break;
 	case 'c': 
-		/* special case for arb7, because of 2 4-pt planes meeting */
-		if( es_type == 7 && (plane != 0 && plane != 3) ) {
-			if( argc < 5 ){ 	/* total # of args under this option */
-				rt_log("%s",p_rotfb[argc-3]);
-				return CMD_MORE;
-			}
-			argv[5] = "v5";
-			rt_log("Fixed point is vertex five.\n");
-		}
-                                    /* total # of args under this option */
-		else if( argc < 8 && (argc >= 5 ? argv[5][0] != 'v' : 1)) { 
-			rt_log("%s",p_rotfb[argc-3]);
-			return CMD_MORE;
-		}
-		get_rotfb(planes[plane], &argv[3], arb);
-		break;
+	  /* special case for arb7, because of 2 4-pt planes meeting */
+	  if( es_type == 7 && (plane != 0 && plane != 3) ) {
+	    if( argc < 5 ){ 	/* total # of args under this option */
+	      Tcl_AppendResult(interp, MORE_ARGS_STR, p_rotfb[argc-3], (char *)NULL);
+	      return TCL_ERROR;
+	    }
+
+	    argv[5] = "v5";
+	    Tcl_AppendResult(interp, "Fixed point is vertex five.\n");
+	  }
+	  /* total # of args under this option */
+	  else if( argc < 8 && (argc >= 5 ? argv[5][0] != 'v' : 1)) { 
+	    Tcl_AppendResult(interp, MORE_ARGS_STR, p_rotfb[argc-3], (char *)NULL);
+	    return TCL_ERROR;
+	  }
+	  get_rotfb(planes[plane], &argv[3], arb);
+	  break;
 	case 'd': 
-		/* special case for arb7, because of 2 4-pt planes meeting */
-		if( es_type == 7 )
-			if( plane!=0 && plane!=3 ){
-				rt_log("Facedef: can't redefine that arb7 plane\n");
-				return CMD_BAD;
-			}
-		if( argc < 6 ){  	/* total # of args under this option */
-			rt_log("%s",p_nupnt[argc-3]);
-			return CMD_MORE;
-		}
-		get_nupnt(planes[plane], &argv[3]);
-		break;
+	  /* special case for arb7, because of 2 4-pt planes meeting */
+	  if( es_type == 7 )
+	    if( plane!=0 && plane!=3 ){
+	      Tcl_AppendResult(interp, "Facedef: can't redefine that arb7 plane\n", (char *)NULL);
+	      return TCL_ERROR;
+	    }
+	  if( argc < 6 ){  	/* total # of args under this option */
+	    Tcl_AppendResult(interp, MORE_ARGS_STR, p_nupnt[argc-3], (char *)NULL);
+	    return TCL_ERROR;
+	  }
+	  get_nupnt(planes[plane], &argv[3]);
+	  break;
 	case 'q': 
-		return CMD_OK;
-	default:  
-		rt_log("Facedef: '%s' is not an option\n", argv[2]);
-		return CMD_BAD;
+	  return TCL_OK;
+	default:
+	  Tcl_AppendResult(interp, "Facedef: '", argv[2], "' is not an option\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	/* find all vertices from the plane equations */
 	if( rt_arb_calc_points( arb, es_type, planes, &mged_tol ) < 0 )  {
-		rt_log("facedef:  unable to find points\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "facedef:  unable to find points\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	/* Now have 8 points, which is the internal form of an ARB8. */
 
@@ -258,7 +275,7 @@ char **argv;
 
 	/* draw the new solid */
 	replot_editing_solid();
-	return CMD_OK;				/* everything OK */
+	return TCL_OK;				/* everything OK */
 }
 
 
@@ -311,8 +328,8 @@ CONST struct rt_tol	*tol;
 		c[i] = atof(argv[6+i]) * local2base;
 
 	if( rt_mk_plane_3pts( plane, a, b, c, tol ) < 0 )  {
-		rt_log("Facedef: not a plane\n");
-		return(-1);		/* failure */
+	  Tcl_AppendResult(interp, "Facedef: not a plane\n", (char *)NULL);
+	  return(-1);		/* failure */
 	}
 	return(0);			/* success */
 }

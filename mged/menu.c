@@ -62,8 +62,8 @@ char **argv;
     int index;
     
     if (argc > 2) {
-	Tcl_SetResult(interp, "wrong # args: must be \"mmenu_get ?index?\"",
-		      TCL_STATIC);
+	Tcl_AppendResult(interp, "wrong # args: must be \"mmenu_get ?index?\"",
+			 (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -74,7 +74,7 @@ char **argv;
 	    return TCL_ERROR;
 
 	if (index < 0 || index > NMENU) {
-	    Tcl_SetResult(interp, "index out of range", TCL_STATIC);
+	    Tcl_AppendResult(interp, "index out of range", (char *)NULL);
 	    return TCL_ERROR;
 	}
 

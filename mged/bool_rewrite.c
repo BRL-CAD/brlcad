@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./comb_bool.h"
+#include "./ged.h"
 
 /*
  *	A Boolean expression tree is in GIFT-Boolean form provided
@@ -323,32 +324,44 @@ struct bool_tree_node	*rp;
  *	the specified node.  If the flag is nonzero, it prints a
  *	final newline.
  */
-void show_gift_bool (rp, new_line)
-
+void
+show_gift_bool (rp, new_line)
 struct bool_tree_node	*rp;
 int			new_line;
-
 {
-    RT_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+  RT_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
-    if (bt_is_leaf(rp))
-	rt_log("%s", bt_leaf_name(rp));
-    else
-    {
-	show_gift_bool(bt_opd(rp, BT_LEFT), 0);
-	switch (bt_opn(rp))
-	{
-	    case OPN_UNION:		rt_log(" u "); break;
-	    case OPN_DIFFERENCE:	rt_log(" - "); break;
-	    case OPN_INTERSECTION:	rt_log(" + "); break;
-	    default:
-		rt_log("%s:%d: Illegal operation type: %d\n",
-			__FILE__, __LINE__, bt_opn(rp));
-		exit (1);
-	}
-	show_gift_bool(bt_opd(rp, BT_RIGHT), 0);
+  if (bt_is_leaf(rp))
+    Tcl_AppendResult(interp, bt_leaf_name(rp), (char *)NULL);
+  else{
+    show_gift_bool(bt_opd(rp, BT_LEFT), 0);
+    switch (bt_opn(rp)){
+    case OPN_UNION:
+      Tcl_AppendResult(interp, " u ", (char *)NULL);
+      break;
+    case OPN_DIFFERENCE:
+      Tcl_AppendResult(interp, " - ", (char *)NULL);
+      break;
+    case OPN_INTERSECTION:
+      Tcl_AppendResult(interp, " + ", (char *)NULL);
+      break;
+    default:
+      {
+	struct rt_vls tmp_vls;
+
+	rt_vls_init(&tmp_vls);
+	rt_vls_printf(&tmp_vls, "%s:%d: Illegal operation type: %d\n",
+		      __FILE__, __LINE__, bt_opn(rp));
+	Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	rt_vls_free(&tmp_vls);
+
+	exit(1);
+      }
     }
 
-    if (new_line)
-	(void) putchar('\n');
+    show_gift_bool(bt_opd(rp, BT_RIGHT), 0);
+  }
+
+  if (new_line)
+    Tcl_AppendResult(interp, "\n", (char *)NULL);
 }

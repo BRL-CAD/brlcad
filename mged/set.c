@@ -76,11 +76,15 @@ refresh_hook()
 static void
 nmg_eu_dist_set()
 {
-	extern double nmg_eue_dist;
+  extern double nmg_eue_dist;
+  struct rt_vls tmp_vls;
 
-	nmg_eue_dist = mged_variables.nmg_eu_dist;
+  nmg_eue_dist = mged_variables.nmg_eu_dist;
 
-	rt_log( "New nmg_eue_dist = %g\n", nmg_eue_dist);
+  rt_vls_init(&tmp_vls);
+  rt_vls_printf(&tmp_vls, "New nmg_eue_dist = %g\n", nmg_eue_dist);
+  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+  rt_vls_free(&tmp_vls);
 }
 
 #define MV_O(_m)	offsetof(struct _mged_variables, _m)
@@ -162,8 +166,8 @@ int flags;
     rt_vls_init( &str );
     rt_vls_printf( &str, "%s=\"%s\"", name1, newvalue );
     if( rt_structparse( &str, mged_vparse, (char *)&mged_variables ) < 0) {
-	rt_log("ERROR OCCURED WHEN SETTING %s TO %s\n",
-	       name1, newvalue);
+      Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
+		       " TO ", newvalue, "\n", (char *)NULL);
     }
     return read_var(clientData, interp, name1, name2,
 		    (flags&(~TCL_TRACE_WRITES))|TCL_TRACE_READS);
@@ -188,7 +192,7 @@ int flags;
     if( flags & TCL_INTERP_DESTROYED )
 	return NULL;
 
-    rt_log( "mged variables cannot be unset\n" );
+    Tcl_AppendResult(interp, "mged variables cannot be unset\n", (char *)NULL);
     Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS, read_var,
 		  (ClientData)sp );
     Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES, write_var,
@@ -233,29 +237,39 @@ Tcl_Interp *interp;
 }
 
 int
-f_set(ac,av)
-int ac;
-char *av[];
+f_set(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char *argv[];
 {
 	struct rt_vls vls;
 	int bad = 0;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	rt_vls_init(&vls);
 
-	if (ac <= 1) {
-		rt_structprint("mged variables", mged_vparse, (CONST char *)&mged_variables);
-		rt_log("%s", rt_vls_addr(&vls) );
-	} else if (ac == 2) {
-		rt_vls_strcpy(&vls, av[1]);
+	if (argc == 1) {
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  start_catching_output(&tmp_vls);
+	  rt_structprint("mged variables", mged_vparse, (CONST char *)&mged_variables);
+	  rt_log("%s", rt_vls_addr(&vls) );
+	  stop_catching_output(&tmp_vls);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	} else if (argc == 2) {
+		rt_vls_strcpy(&vls, argv[1]);
 		rt_structparse(&vls, mged_vparse, (char *)&mged_variables);
-	} else {
-		rt_log("Usage: set\t\t- prints all options\n\tset opt=val\t- sets an option\n");
-		bad = 1;
 	}
+
 	rt_vls_free(&vls);
 
 	dmaflag = 1;
-	return bad ? CMD_BAD : CMD_OK;
+	return bad ? TCL_ERROR : TCL_OK;
 }
 
 static void

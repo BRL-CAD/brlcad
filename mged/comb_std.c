@@ -43,7 +43,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtstring.h"
 #include "./comb_bool.h"
 
-#define	PRINT_USAGE	rt_log("c: usage 'c [-gr] comb_name [bool_expr]'\n")
+#define	PRINT_USAGE Tcl_AppendResult(interp, "c: usage 'c [-gr] comb_name [bool_expr]'\n",\
+				     (char *)NULL)
 
 static struct rt_vls	vp;			/* The Boolean expression */
 char			*bool_bufp = 0;
@@ -125,10 +126,11 @@ struct bool_tree_node *opd1, *opd2;
  *	Syntax: c [-gr] comb_name [boolean_expr]
  */
 int
-f_comb_std (argc, argv)
+f_comb_std(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
-
 {
     char			*comb_name;
     int				ch;
@@ -138,6 +140,9 @@ char	**argv;
 
     extern int			optind;
     extern char			*optarg;
+
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
 
     /* Parse options */
     optind = 1;	/* re-init getopt() */
@@ -154,7 +159,7 @@ char	**argv;
 	    case '?':
 	    default:
 		PRINT_USAGE;
-		return (CMD_OK);
+		return TCL_OK;
 	}
     }
     argc -= (optind + 1);
@@ -164,7 +169,7 @@ char	**argv;
     if (argc == -1)
     {
 	PRINT_USAGE;
-	return (CMD_OK);
+	return TCL_OK;
     }
 
     if ((region_flag != -1) && (argc == 0))
@@ -173,24 +178,23 @@ char	**argv;
 	 *	Set/Reset the REGION flag of an existing combination
 	 */
 	if ((dp = db_lookup(dbip, comb_name, LOOKUP_NOISY)) == DIR_NULL)
-	    return (CMD_BAD);
+	  return TCL_ERROR;
 	if (db_get(dbip, dp, &record, 0, 1) < 0)
 	{
-	    READ_ERR;
-	    return (CMD_BAD);
+	  TCL_READ_ERR_return;
 	}
 	if (record.u_id != ID_COMB )
 	{
-	    rt_log("%s:  not a combination\n", comb_name );
-	    return (CMD_OK);
+	  Tcl_AppendResult(interp, comb_name, ":  not a combination\n", (char *)NULL);
+	  return TCL_OK;
 	}
 	record.c.c_flags = region_flag ? 'R' : ' ';
 	if (db_put(dbip, dp, &record, 0, 1) < 0)
 	{
-	    WRITE_ERR;
-	    return (CMD_BAD);
+	    TCL_WRITE_ERR_return;
+	    return TCL_ERROR;
 	}
-	return (CMD_OK);
+	return TCL_OK;
     }
     /*
      *	At this point, we know we have a Boolean expression.
@@ -208,17 +212,18 @@ char	**argv;
     }
     else
 	rt_vls_trunc(&vp, 0);
+
     rt_vls_from_argv(&vp, argc, argv);
-    rt_log("Will define %s '%s' as '%s'\n",
-	(region_flag ? "region" : "group"), comb_name, bool_bufp);
+    Tcl_AppendResult(interp, "Will define ", (region_flag ? "region" : "group"),
+		     " '", comb_name, "' as '", bool_bufp, "'\n", (char *)NULL);
     if (yyparse() != 0)
     {
-	rt_log("Invalid Boolean expression\n");
-	return (CMD_BAD);
+      Tcl_AppendResult(interp, "Invalid Boolean expression\n");
+      return TCL_ERROR;
     }
     show_gift_bool(comb_bool_tree, 1);
 
-    return (CMD_OK);
+    return TCL_OK;
 }
 
 /*

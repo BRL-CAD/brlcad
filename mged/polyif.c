@@ -66,7 +66,9 @@ struct rt_imexport vertex_desc[] = {
  *  Usage:  polybinout file
  */
 int
-f_polybinout( argc, argv )
+f_polybinout(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -80,9 +82,12 @@ char	**argv;
 	int	need_normal = 0;
 	struct	rt_external	obuf;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (fp = fopen( argv[1], "w" )) == NULL )  {
-		perror(argv[1]);
-		return CMD_BAD;
+	  perror(argv[1]);
+	  return TCL_ERROR;
 	}
 
 	FOR_ALL_SOLIDS( sp )  {
@@ -120,24 +125,30 @@ char	**argv;
 				case RT_VLIST_POLY_DRAW:
 					/* Polygon Draw */
 					if( ph.npts >= MAX_VERTS )  {
-						rt_log("excess vertex skipped\n");
-						break;
+					  Tcl_AppendResult(interp, "excess vertex skipped\n",
+							   (char *)NULL);
+					  break;
 					}
 					VMOVE( verts[ph.npts], *pt );
 					ph.npts++;
 					break;
 				case RT_VLIST_POLY_END:
-					/*
-					 *  End Polygon.  Point given is repeat of
-					 *  first one, ignore it.
-					 * XXX note:  if poly_markers was not set,
-					 * XXX poly will end with next POLY_MOVE.
-					 */
-					if( ph.npts < 3 )  {
-						rt_log("polygon with %d points discarded\n",
-							ph.npts);
-						break;
-					}
+				  /*
+				   *  End Polygon.  Point given is repeat of
+				   *  first one, ignore it.
+				   * XXX note:  if poly_markers was not set,
+				   * XXX poly will end with next POLY_MOVE.
+				   */
+				  if( ph.npts < 3 )  {
+				    struct rt_vls tmp_vls;
+
+				    rt_vls_init(&tmp_vls);
+				    rt_vls_printf(&tmp_vls, "polygon with %d points discarded\n",
+						  ph.npts);
+				    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+				    rt_vls_free(&tmp_vls);
+				    break;
+				  }
 					if( need_normal )  {
 						vect_t	e1, e2;
 						VSUB2( e1, verts[0], verts[1] );
@@ -145,8 +156,8 @@ char	**argv;
 						VCROSS( ph.normal, e1, e2 );
 					}
 					if( rt_struct_export( &obuf, (genptr_t)&ph, polygon_desc ) < 0 )  {
-						rt_log("header export error\n");
-						break;
+					  Tcl_AppendResult(interp, "header export error\n", (char *)NULL);
+					  break;
 					}
 					if (rt_struct_put(fp, &obuf) != obuf.ext_nbytes) {
 						perror("rt_struct_put");
@@ -156,8 +167,8 @@ char	**argv;
 					/* Now export the vertices */
 					vertex_desc[0].im_count = ph.npts * 3;
 					if( rt_struct_export( &obuf, (genptr_t)verts, vertex_desc ) < 0 )  {
-						rt_log("vertex export error\n");
-						break;
+					  Tcl_AppendResult(interp, "vertex export error\n", (char *)NULL);
+					  break;
 					}
 					if( rt_struct_put( fp, &obuf ) != obuf.ext_nbytes )  {
 						perror("rt_struct_buf");
@@ -171,5 +182,5 @@ char	**argv;
 		}
 	}
 	fclose( fp );
-	return CMD_OK;
+	return TCL_OK;
 }

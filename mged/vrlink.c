@@ -162,16 +162,27 @@ vr_viewpoint_hook()
  *  XXX this should move to chgview.c when finished.
  */
 int
-f_pov( argc, argv )
+f_pov(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	*argv[];
 {
 	quat_t		orient;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( argc < 1+3+4+1+3+1 )  {
-		rt_log("pov: insufficient args, only got %d\n", argc);
-		return CMD_BAD;
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "pov: insufficient args, only got %d\n", argc);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	  return TCL_ERROR;
 	}
+
 	toViewcenter[MDX] = -atof(argv[1]);
 	toViewcenter[MDY] = -atof(argv[2]);
 	toViewcenter[MDZ] = -atof(argv[3]);
@@ -187,7 +198,7 @@ char	*argv[];
 	mged_variables.perspective = atof(argv[12]);
 	new_mats();
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -198,17 +209,23 @@ char	*argv[];
  *  Syntax:  vrmgr host role
  */
 int
-f_vrmgr( argc, argv )
+f_vrmgr(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	*argv[];
 {
 	struct rt_vls	str;
 	char		*role;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	rt_vls_init(&str);
 
 	if( vrmgr != PKC_NULL )  {
-		rt_log("Closing link to VRmgr %s\n", vr_host);
+	  Tcl_AppendResult(interp, "Closing link to VRmgr ",
+			   vr_host, "\n", (char *)NULL);
 		pkg_close( vrmgr );
 		vrmgr = PKC_NULL;
 		vr_host = "none";
@@ -221,27 +238,28 @@ char	*argv[];
 	} else if( strcmp( role, "slave" ) == 0 )  {
 	} else if( strcmp( role, "overview" ) == 0 )  {
 	} else {
-		rt_log("role '%s' unknown, must be master/slave/overview\n", role);
-		return CMD_BAD;
+	   Tcl_AppendResult(interp, "role '", role, "' unknown, must be master/slave/overview\n",
+			    (char *)NULL);
+	   return TCL_ERROR;
 	}
 
 	vrmgr = pkg_open( vr_host, tcp_port, "tcp", "", "",
 		pkgswitch, NULL );
 	if( vrmgr == PKC_ERROR )  {
-		rt_log( "mged/f_vrmgr: unable to contact %s, port %s\n",
-			vr_host, tcp_port);
-		vrmgr = PKC_NULL;
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "mged/f_vrmgr: unable to contact ", vr_host,
+			   ", port ", tcp_port, "\n", (char *)NULL);
+	  vrmgr = PKC_NULL;
+	  return TCL_ERROR;
 	}
 
 	rt_vls_from_argv( &str, argc-2, argv+2 );
 
 	/* Send initial message declaring our role */
 	if( pkg_send_vls( VRMSG_ROLE, &str, vrmgr ) < 0 )  {
-		rt_log("pkg_send VRMSG_ROLE failed, disconnecting\n");
-		pkg_close(vrmgr);
-		vrmgr = NULL;
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "pkg_send VRMSG_ROLE failed, disconnecting\n", (char *)NULL);
+	  pkg_close(vrmgr);
+	  vrmgr = NULL;
+	  return TCL_ERROR;
 	}
 
 	/* Establish appropriate hooks */
@@ -256,7 +274,7 @@ char	*argv[];
 			     (Tk_FileProc (*))vr_input_hook, (ClientData)NULL);
 	rt_vls_free( &str );
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*

@@ -44,7 +44,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *	grid, 3d w/color, |filter, infinite Z
  */
 int
-f_plot( argc, argv )
+f_plot(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -61,8 +63,11 @@ char	**argv;
 	int floating;			/* 3-D floating point plot */
 	int	is_pipe = 0;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( not_state( ST_VIEW, "UNIX Plot of view" ) )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	/* Process any options */
 	Three_D = 1;				/* 3-D w/color, by default */
@@ -80,24 +85,24 @@ char	**argv;
 			Three_D = 0;		/* 2-D, for portability */
 			break;
 		case 'g':
-			/* do grid */
-			rt_log("grid unimplemented\n");
-			break;
+		  /* do grid */
+		  Tcl_AppendResult(interp, "grid unimplemented\n", (char *)NULL);
+		  break;
 		case 'z':
 		case 'Z':
-			/* Enable Z clipping */
-			rt_log("Clipped in Z to viewing cube\n");
-			Z_clip = 1;
-			break;
+		  /* Enable Z clipping */
+		  Tcl_AppendResult(interp, "Clipped in Z to viewing cube\n", (char *)NULL);
+		  Z_clip = 1;
+		  break;
 		default:
-			rt_log("bad PLOT option %s\n", argv[1] );
-			break;
+		  Tcl_AppendResult(interp, "bad PLOT option ", argv[1], "\n", (char *)NULL);
+		  break;
 		}
 		argv++;
 	}
 	if( argv[1] == (char *)0 )  {
-		rt_log("no filename or filter specified\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "no filename or filter specified\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( argv[1][0] == '|' )  {
 		struct rt_vls	str;
@@ -109,17 +114,20 @@ char	**argv;
 		}
 		if( (fp = popen( rt_vls_addr( &str ), "w" ) ) == NULL )  {
 			perror( rt_vls_addr( &str ) );
-			return CMD_BAD;
+			return TCL_ERROR;
 		}
-		rt_log("piped to %s\n", rt_vls_addr( &str ) );
+
+		Tcl_AppendResult(interp, "piped to ", rt_vls_addr( &str ),
+				 "\n", (char *)NULL);
 		rt_vls_free( &str );
 		is_pipe = 1;
 	}  else  {
 		if( (fp = fopen( argv[1], "w" )) == NULL )  {
-			perror( argv[1] );
-			return CMD_BAD;
+		  perror( argv[1] );
+		  return TCL_ERROR;
 		}
-		rt_log("plot stored in %s\n", argv[1] );
+
+		Tcl_AppendResult(interp, "plot stored in ", argv[1], "\n", (char *)NULL);
 		is_pipe = 0;
 	}
 
@@ -243,11 +251,13 @@ out:
 	else
 		(void)fclose( fp );
 
-	return CMD_OK;
+	return TCL_ERROR;
 }
 
 int
-f_area( argc, argv )
+f_area(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -258,29 +268,37 @@ char	**argv;
 	char buf[128];
 	FILE *fp;
 
-	if( not_state( ST_VIEW, "Presented Area Calculation" ) )
-		return CMD_BAD;
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
+	if( not_state( ST_VIEW, "Presented Area Calculation" ) == TCL_ERROR )
+		return TCL_ERROR;
 
 	FOR_ALL_SOLIDS( sp )  {
-		if( !sp->s_Eflag && sp->s_soldash != 0 )  {
-			rt_log("everything in view must be 'E'ed\n");
-			return CMD_BAD;
-		}
+	  if( !sp->s_Eflag && sp->s_soldash != 0 )  {
+	    Tcl_AppendResult(interp, "everything in view must be 'E'ed\n", (char *)NULL);
+	    return TCL_ERROR;
+	  }
 	}
 
 	/* Create pipes to cad_boundp | cad_parea */
 	if( argc == 2 )  {
-		sprintf( buf, "cad_boundp -t %s | cad_parea", argv[1] );
-		rt_log("Tolerance is %s\n", argv[1] );
+	  sprintf( buf, "cad_boundp -t %s | cad_parea", argv[1] );
+	  Tcl_AppendResult(interp, "Tolerance is ", argv[1], "\n", (char *)NULL);
 	}  else  {
-		double tol = VIEWSIZE * 0.001;
-		sprintf( buf, "cad_boundp -t %e | cad_parea", tol );
-		rt_log("Auto-tolerance of 0.1%% is %e\n", tol );
+	  struct rt_vls tmp_vls;
+	  double tol = VIEWSIZE * 0.001;
+
+	  rt_vls_init(&tmp_vls);
+	  sprintf( buf, "cad_boundp -t %e | cad_parea", tol );
+	  rt_vls_printf(&tmp_vls, "Auto-tolerance of 0.1%% is %e\n", tol);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
 	}
 
 	if( (fp = popen( buf, "w" )) == NULL )  {
-		perror( buf );
-		return CMD_BAD;
+	  perror( buf );
+	  return TCL_ERROR;
 	}
 
 	/*
@@ -321,9 +339,10 @@ char	**argv;
 			}
 		}
 	}
-	rt_log("Presented area from this viewpoint, square %s:\n",
-		rt_units_string(dbip->dbi_local2base) );
+
+	Tcl_AppendResult(interp, "Presented area from this viewpoint, square ",
+			 rt_units_string(dbip->dbi_local2base), ":\n", (char *)NULL);
 	pclose( fp );
 
-	return CMD_OK;
+	return TCL_OK;
 }

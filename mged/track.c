@@ -59,7 +59,9 @@ void		bottom(), top(), crregion(), itoa();
  *
  */
 int
-f_amtrack( argc, argv  )
+f_amtrack(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char **argv;
 {
@@ -74,6 +76,9 @@ char **argv;
 	int arg;
 	int edit_result;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	/* interupts */
 	(void)signal( SIGINT, sig2);    /* allow interupts */
 
@@ -84,135 +89,148 @@ char **argv;
 
 	/* get the roadwheel info */
 	if ( argc < arg+1 ) {
-		rt_log("Enter X of the FIRST roadwheel: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter X of the FIRST roadwheel: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	fw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( argc < arg+1 ) {
-		rt_log("Enter X of the LAST roadwheel: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter X of the LAST roadwheel: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	lw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( fw[0] <= lw[0] ) {
-		rt_log("First wheel after last wheel - STOP\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "First wheel after last wheel - STOP\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( argc < arg+1 ) {
-		rt_log("Enter Z of the roadwheels: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Z of the roadwheels: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	fw[1] = lw[1] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( argc < arg+1 ) {
-		rt_log("Enter radius of the roadwheels: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter radius of the roadwheels: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	fw[2] = lw[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( fw[2] <= 0 ) {
-		rt_log("Radius <= 0 - STOP\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if ( argc < arg+1 ) {
-		/* get the drive wheel info */
-		rt_log("Enter X of the drive (REAR) wheel: ");
-		return CMD_MORE;
+	  /* get the drive wheel info */
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter X of the drive (REAR) wheel: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	dw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( dw[0] >= lw[0] ) {
-		rt_log("DRIVE wheel not in the rear - STOP \n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "DRIVE wheel not in the rear - STOP \n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( argc < arg+1 ) {
-		rt_log("Enter Z of the drive (REAR) wheel: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Z of the drive (REAR) wheel: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	dw[1] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( argc < arg+1 ) {
-		rt_log("Enter radius of the drive (REAR) wheel: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter radius of the drive (REAR) wheel: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	dw[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( dw[2] <= 0 ) {
-		rt_log("Radius <= 0 - STOP\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	
 	/* get the idler wheel info */
 	if( argc < arg+1 ) {
-		rt_log("Enter X of the idler (FRONT) wheel: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter X of the idler (FRONT) wheel: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	iw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( iw[0] <= fw[0] ) {
-		rt_log("IDLER wheel not in the front - STOP \n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "IDLER wheel not in the front - STOP \n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( argc < arg+1 ) {
-		rt_log("Enter Z of the idler (FRONT) wheel: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Z of the idler (FRONT) wheel: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	iw[1] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( argc < arg+1 ) {
-		rt_log("Enter radius of the idler (FRONT) wheel: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter radius of the idler (FRONT) wheel: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	iw[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( iw[2] <= 0 ) {
-		rt_log("Radius <= 0 - STOP\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	/* get track info */
 	if( argc < arg+1 ) {
-		rt_log("Enter Y-MIN of the track: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Y-MIN of the track: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	tr[2] = tr[0] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( argc < arg+1 ) {
-		rt_log("Enter Y-MAX of the track: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Y-MAX of the track: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	tr[1] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( tr[0] == tr[1] ) {
-		rt_log("MIN == MAX ... STOP\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "MIN == MAX ... STOP\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( tr[0] > tr[1] ) {
-		rt_log("MIN > MAX .... will switch\n");
-		tr[1] = tr[0];
-		tr[0] = tr[2];
+	  Tcl_AppendResult(interp, "MIN > MAX .... will switch\n", (char *)NULL);
+	  tr[1] = tr[0];
+	  tr[0] = tr[2];
 	}
 
 	if( argc < arg+1 ) {
-		rt_log("Enter track thickness: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter track thickness: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	tr[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( tr[2] <= 0 ) {
-		rt_log("Track thickness <= 0 - STOP\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Track thickness <= 0 - STOP\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	solname[0] = regname[0] = grpname[0] = 't';
@@ -257,8 +275,9 @@ tryagain:	/* sent here to try next set of names */
 			/* name already exists */
 			solname[8] = regname[8] = '\0';
 			if( (Trackpos += 10) > 500 ) {
-				rt_log("Track: naming error -- STOP\n");
-				return CMD_BAD;
+			  Tcl_AppendResult(interp, "Track: naming error -- STOP\n",
+					   (char *)NULL);
+			  return TCL_ERROR;
 			}
 			goto tryagain;
 		}
@@ -281,7 +300,7 @@ tryagain:	/* sent here to try next set of names */
 	record.s.s_type = GENARB8;
 	record.s.s_cgtype = BOX;		/* BOX */
 	if( wrobj(solname, DIR_SOLID) ) 
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	solname[8] = '\0';
 
@@ -294,7 +313,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 2);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj( solname , DIR_SOLID ) )
-		return CMD_BAD;
+	  return TCL_ERROR;
 	solname[8] = '\0';
 	/* idler dummy rcc */
 	record.s.s_values[6] = iw[2];
@@ -304,7 +323,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 3);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj( solname , DIR_SOLID ) )
-		return CMD_BAD;
+		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* find idler track dummy arb8 */
@@ -316,7 +335,7 @@ tryagain:	/* sent here to try next set of names */
 	record.s.s_cgtype = ARB8;		/* arb8 */
 	crdummy(iw, tr, 1);
 	if( wrobj(solname,DIR_SOLID) )
-		return CMD_BAD;
+	  return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* track slope to drive */
@@ -328,7 +347,7 @@ tryagain:	/* sent here to try next set of names */
 	(void)strcpy(record.s.s_name, solname);
 	record.s.s_cgtype = BOX;		/* box */
 	if(wrobj(solname,DIR_SOLID))
-		return CMD_BAD;
+		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* track around drive */
@@ -340,7 +359,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 6);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj(solname,DIR_SOLID) )
-		return CMD_BAD;
+		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* drive dummy rcc */
@@ -351,7 +370,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 7);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj(solname,DIR_SOLID) )
-		return CMD_BAD;
+		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* drive dummy arb8 */
@@ -363,7 +382,7 @@ tryagain:	/* sent here to try next set of names */
 	record.s.s_cgtype = ARB8;		/* arb8 */
 	crdummy(dw, tr, 2);
 	if( wrobj(solname,DIR_SOLID) )
-		return CMD_BAD;
+		return TCL_ERROR;
 	solname[8] = '\0';
 	
 	/* track bottom */
@@ -373,7 +392,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 9);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj(solname,DIR_SOLID) )
-		return CMD_BAD;
+		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* track top */
@@ -386,7 +405,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 10);
 	(void)strcpy(record.s.s_name, solname);
 	if( wrobj(solname,DIR_SOLID) )
-		return CMD_BAD;
+		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* add the regions */
@@ -404,12 +423,12 @@ tryagain:	/* sent here to try next set of names */
 		crname(regname, i);
 		(void)strcpy(record.c.c_name, regname);
 		if( wrobj(regname,DIR_REGION|DIR_COMB) )
-			return CMD_BAD;
+			return TCL_ERROR;
 		regname[8] = '\0';
 		crname(regname, i+4);
 		(void)strcpy(record.c.c_name, regname);
 		if( wrobj(regname,DIR_REGION|DIR_COMB) )
-			return CMD_BAD;
+			return TCL_ERROR;
 	}
 	regname[8] = '\0';
 
@@ -477,19 +496,21 @@ tryagain:	/* sent here to try next set of names */
 		regname[8] = '\0';
 		crname(regname, i);
 		if( (dp = db_lookup( dbip, regname, LOOKUP_QUIET)) == DIR_NULL ) {
-			rt_log("group: %s will skip member: %s\n",grpname,regname);
-			continue;
+		  Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
+				   regname, "\n", (char *)NULL);
+		  continue;
 		}
 		(void)combadd(dp, grpname, 0, UNION, 0, 0);
 	}
 
 	/* draw this track */
-	rt_log("The track regions are in group %s\n",grpname);
+	Tcl_AppendResult(interp, "The track regions are in group ", grpname,
+			 "\n", (char *)NULL);
 	{
 		char	*arglist[3];
 		arglist[0] = "e";
 		arglist[1] = grpname;
-		edit_result = f_edit( 2, arglist );
+		edit_result = f_edit( clientData, interp, 2, arglist );
 	}
 
 	Trackpos += 10;
@@ -527,15 +548,16 @@ int flags;
 	struct directory *tdp;
 
 	if( db_lookup( dbip, name, LOOKUP_QUIET) != DIR_NULL ) {
-		rt_log("amtrack naming error: %s already exists\n",name);
-		return(-1);
+	  Tcl_AppendResult(interp, "amtrack naming error: ", name,
+			   " already exists\n", (char *)NULL);
+	  return(-1);
 	}
 	if( (tdp = db_diradd( dbip, name, -1, 1, flags)) == DIR_NULL ||
 	    db_alloc( dbip, tdp, 1) < 0 ||
 	    db_put( dbip, tdp, &record, 0, 1 ) < 0 )  {
-	    	rt_log("wrobj(%s):  write error\n", name);
-	    	ERROR_RECOVERY_SUGGESTION;
-		return( -1 );
+	  Tcl_AppendResult(interp, "wrobj(", name, "):  write error\n", (char *)NULL);
+	  TCL_ERROR_RECOVERY_SUGGESTION;
+	  return( -1 );
 	}
 	return(0);
 }
@@ -556,8 +578,8 @@ register fastf_t cir1[], cir2[];
 	if( mag > 1.0e-20 || mag < -1.0e-20 )  {
 		f = 1.0/mag;
 	}  else {
-		rt_log("tancir():  0-length vector!\n");
-		return;
+	  Tcl_AppendResult(interp, "tancir():  0-length vector!\n", (char *)NULL);
+	  return;
 	}
 	VSCALE(work, work, f);
 	temp = acos( work[0] );
@@ -769,18 +791,19 @@ crregion( region, op, members, number, solidname )
 char region[], op[], solidname[];
 int members[], number;
 {
-	struct directory *dp;
-	int i;
+  struct directory *dp;
+  int i;
 
-	for(i=0; i<number; i++) {
-		solidname[8] = '\0';
-		crname(solidname, members[i]);
-		if( (dp = db_lookup( dbip, solidname, LOOKUP_QUIET)) == DIR_NULL ) {
-			rt_log("region: %s will skip member: %s\n",region,solidname);
-			continue;
-		}
-		(void)combadd(dp, region, 1, op[i], 500+Trackpos+i, 0);
-	}
+  for(i=0; i<number; i++) {
+    solidname[8] = '\0';
+    crname(solidname, members[i]);
+    if( (dp = db_lookup( dbip, solidname, LOOKUP_QUIET)) == DIR_NULL ) {
+      Tcl_AppendResult(interp, "region: ", region, " will skip member: ",
+		       solidname, "\n", (char *)NULL);
+      continue;
+    }
+    (void)combadd(dp, region, 1, op[i], 500+Trackpos+i, 0);
+  }
 }
 
 
@@ -804,7 +827,8 @@ int   n,    w;
 	/* blank fill array
 	 */
 	for( j = i; j < w; j++ )	s[j] = ' ';
-	if( i > w )	rt_log( "itoa: field length too small\n" );
+	if( i > w )
+	  Tcl_AppendResult(interp, "itoa: field length too small\n", (char *)NULL);
 	s[w] = '\0';
 	/* reverse the array
 	 */

@@ -80,17 +80,20 @@ double		mged_nrm_tol;			/* normal ang tol, radians */
 RT_EXTERN(int	edit_com, (int argc, char **argv, int kind, int catch_sigint));
 int		f_zap();
 
-
-
 /* Delete an object or several objects from the display */
 /* Format: d object1 object2 .... objectn */
 int
-f_delobj(argc, argv)
+f_delobj(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register struct directory *dp;
 	register int i;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	for( i = 1; i < argc; i++ )  {
 		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
@@ -100,34 +103,44 @@ char	**argv;
 
 	update_views = 1;
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* DEBUG -- force view center */
 /* Format: C x y z	*/
 int
-f_center(argc, argv)
+f_center(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	/* must convert from the local unit to the base unit */
-	toViewcenter[MDX] = -atof( argv[1] ) * local2base;
-	toViewcenter[MDY] = -atof( argv[2] ) * local2base;
-	toViewcenter[MDZ] = -atof( argv[3] ) * local2base;
-	new_mats();
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	return CMD_OK;
+  /* must convert from the local unit to the base unit */
+  toViewcenter[MDX] = -atof( argv[1] ) * local2base;
+  toViewcenter[MDY] = -atof( argv[2] ) * local2base;
+  toViewcenter[MDZ] = -atof( argv[3] ) * local2base;
+  new_mats();
+
+  return TCL_OK;
 }
 
 int
-f_vrot(argc, argv)
+f_vrot(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	/* Actually, it would be nice if this worked all the time */
 	/* usejoy isn't quite the right thing */
 	if( not_state( ST_VIEW, "View Rotate") )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	if(!rot_set){
           rot_x += atof(argv[1]);
@@ -139,68 +152,90 @@ char	**argv;
 		atof(argv[2]) * degtorad,
 		atof(argv[3]) * degtorad );
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* DEBUG -- force viewsize */
 /* Format: view size	*/
 int
-f_view(argc, argv)
+f_view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	fastf_t f;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	f = atof( argv[1] );
 	if( f < 0.0001 ) f = 0.0001;
 	Viewscale = f * 0.5 * local2base;
 	new_mats();
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* ZAP the display -- then edit anew */
 /* Format: B object	*/
 int
-f_blast(argc, argv)
+f_blast(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 
-	if (f_zap(argc, argv) == CMD_BAD) return CMD_BAD;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	if( dmp->dmr_displaylist )  {
-		/*
-		 * Force out the control list with NO solids being drawn,
-		 * then the display processor will not mind when we start
-		 * writing new subroutines out there...
-		 */
-		refresh();
-	}
+  if (f_zap(clientData, interp, argc, argv) == TCL_ERROR)
+    return TCL_ERROR;
 
-	return edit_com( argc, argv, 1, 1 );
+  if( dmp->dmr_displaylist )  {
+    /*
+     * Force out the control list with NO solids being drawn,
+     * then the display processor will not mind when we start
+     * writing new subroutines out there...
+     */
+    refresh();
+  }
+
+  return edit_com( argc, argv, 1, 1 );
 }
 
 /* Edit something (add to visible display) */
 /* Format: e object	*/
 int
-f_edit(argc, argv)
+f_edit(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-        update_views = 1;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	return edit_com( argc, argv, 1, 1 );
+  update_views = 1;
+
+  return edit_com( argc, argv, 1, 1 );
 }
 
 /* Format: ev objects	*/
 int
-f_ev(argc, argv)
+f_ev(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-        update_views = 1;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	return edit_com( argc, argv, 3, 1 );
+  update_views = 1;
+
+  return edit_com( argc, argv, 3, 1 );
 }
 
 #if 0
@@ -216,13 +251,18 @@ char	**argv;
  *  Usage: E object(s)
  */
 int
-f_evedit(argc, argv)
+f_evedit(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-        update_views = 1
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	return edit_com( argc, argv, 2, 1 );
+  update_views = 1;
+
+  return edit_com( argc, argv, 2, 1 );
 }
 #endif
 
@@ -317,7 +357,15 @@ int	catch_sigint;
 	rt_prep_timer();
 	drawtrees( argc, argv, kind );
 	(void)rt_get_timer( (struct rt_vls *)0, &elapsed_time );
-	rt_log("%ld vectors in %g sec\n", nvectors, elapsed_time );
+
+	{
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "%ld vectors in %g sec\n", nvectors, elapsed_time);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
 
 	{
 	  register struct dm_list *p;
@@ -345,86 +393,136 @@ int	catch_sigint;
 	  curr_dm_list = save_dm_list;
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 int
-f_debug( argc, argv )
+f_debug(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	int	lvl = 0;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( argc > 1 )  lvl = atoi(argv[1]);
 
-	rt_log("ndrawn=%d\n", ndrawn);
+	{
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "ndrawn=%d\n", ndrawn);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
+
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 
 	pr_schain( &HeadSolid, lvl );
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 int
-f_regdebug(argc, argv)
+f_regdebug(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	static int regdebug = 0;
 
-	if( argc <= 1 )
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
+	if( argc == 1 )
 		regdebug = !regdebug;	/* toggle */
 	else
 		regdebug = atoi( argv[1] );
-	rt_log("regdebug=%d\n", regdebug);
+
+	Tcl_AppendResult(interp, "regdebug=", argv[1], "\n", (char *)NULL);
+
 	dmp->dmr_debug(regdebug);
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 int
-f_debuglib(argc, argv)
+f_debuglib(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	if( argc >= 2 )  {
-		sscanf( argv[1], "%x", &rt_g.debug );
-	} else {
-		rt_printb( "Possible flags", 0xffffffffL, DEBUG_FORMAT );
-		rt_log("\n");
-	}
-	rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
-	rt_log("\n");
+  struct rt_vls tmp_vls;
 
-	return CMD_OK;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  rt_vls_init(&tmp_vls);
+  start_catching_output(&tmp_vls);
+
+  if( argc >= 2 )  {
+    sscanf( argv[1], "%x", &rt_g.debug );
+  } else {
+    rt_printb( "Possible flags", 0xffffffffL, DEBUG_FORMAT );
+    rt_log("\n");
+  }
+  rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+  rt_log("\n");
+
+  stop_catching_output(&tmp_vls);
+  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+  rt_vls_free(&tmp_vls);
+
+  return TCL_OK;
 }
 
 int
-f_debugmem( argc, argv )
+f_debugmem(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	(void)signal( SIGINT, sig2 );	/* allow interupts */
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	rt_prmem("Invoked via MGED command");
-	return CMD_OK;
+  (void)signal( SIGINT, sig2 );	/* allow interupts */
+
+  rt_prmem("Invoked via MGED command");
+  return TCL_OK;
 }
 
 int
-f_debugnmg(argc, argv)
+f_debugnmg(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	if( argc >= 2 )  {
-		sscanf( argv[1], "%x", &rt_g.NMG_debug );
-	} else {
-		rt_printb( "possible flags", 0xffffffffL, NMG_DEBUG_FORMAT );
-		rt_log("\n");
-	}
-	rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
-	rt_log("\n");
+  struct rt_vls tmp_vls;
 
-	return CMD_OK;
+  rt_vls_init(&tmp_vls);
+  start_catching_output(&tmp_vls);
+
+  if( argc >= 2 )  {
+    sscanf( argv[1], "%x", &rt_g.NMG_debug );
+  } else {
+    rt_printb( "possible flags", 0xffffffffL, NMG_DEBUG_FORMAT );
+    rt_log("\n");
+  }
+  rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+  rt_log("\n");
+
+  stop_catching_output(&tmp_vls);
+  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+  rt_vls_free(&tmp_vls);
+
+  return TCL_OK;
 }
 
 /*
@@ -448,8 +546,9 @@ int	verbose;
 	rt_vls_printf( outstrp, "%s:  ", dp->d_namep );
 	RT_INIT_EXTERNAL(&ext);
 	if( db_get_external( &ext, dp, dbip ) < 0 )  {
-		rt_log("db_get_external(%s) failure\n", dp->d_namep);
-		return;
+	  Tcl_AppendResult(interp, "db_get_external(", dp->d_namep,
+			   ") failure\n", (char *)NULL);
+	  return;
 	}
 	rp = (union record *)ext.ext_buf;
 
@@ -572,13 +671,13 @@ int	verbose;
 	id = rt_id_solid( &ext );
 	mat_idn( ident );
 	if( rt_functab[id].ft_import( &intern, &ext, ident ) < 0 )  {
-		rt_log("%s: database import error\n", dp->d_namep);
-		goto out;
+	  Tcl_AppendResult(interp, dp->d_namep, ": database import error\n", (char *)NULL);
+	  goto out;
 	}
 
 	if( rt_functab[id].ft_describe( &str, &intern,
 	    verbose, base2local ) < 0 )
-		rt_log("%s: describe error\n", dp->d_namep);
+	  Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
 	rt_functab[id].ft_ifree( &intern );
 	rt_vls_vlscat( outstrp, &str );
 
@@ -601,6 +700,8 @@ char	**argv;
 	register int arg;
 	struct rt_vls str;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	rt_vls_init( &str );
 
@@ -612,7 +713,7 @@ char	**argv;
 		do_list( &str, dp, 99 );	/* very verbose */
 	}
 
-	Tcl_SetResult(interp, rt_vls_strdup( &str), TCL_DYNAMIC);
+	Tcl_AppendResult(interp, rt_vls_strdup( &str), (char *)NULL);
 
 	rt_vls_free( &str );
 	return TCL_OK;
@@ -621,13 +722,18 @@ char	**argv;
 /* List object information, briefly */
 /* Format: cat object	*/
 int
-f_cat( argc, argv )
+f_cat(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register struct directory *dp;
 	register int arg;
 	struct rt_vls str;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	rt_vls_init( &str );
 	
@@ -638,12 +744,12 @@ char	**argv;
 
 		rt_vls_trunc( &str, 0 );
 		do_list( &str, dp, 0 );	/* non-verbose */
-		rt_log( "%s", rt_vls_addr(&str) );
+		Tcl_AppendResult(interp, rt_vls_addr(&str), (char *)NULL);
 	}
 
 	rt_vls_free( &str );
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -673,13 +779,18 @@ mged_freemem()
 /* ZAP the display -- everything dropped */
 /* Format: Z	*/
 int
-f_zap(argc, argv)
+f_zap(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register struct solid *sp;
 	register struct solid *nsp;
 	struct directory	*dp;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	update_views = 1;
 	no_memory = 0;
@@ -695,7 +806,7 @@ char	**argv;
 		RT_CK_DIR(dp);
 		if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
 			if( db_dirdelete( dbip, dp ) < 0 )  {
-				rt_log("f_zap: db_dirdelete failed\n");
+			  Tcl_AppendResult(interp, "f_zap: db_dirdelete failed\n", (char *)NULL);
 			}
 		}
 		sp->s_addr = sp->s_bytes = 0;
@@ -710,82 +821,121 @@ char	**argv;
 
 	(void)chg_state( state, state, "zap" );
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 int
-f_status(argc, argv)
+f_status(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	rt_log("STATE=%s, ", state_str[state] );
-	rt_log("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
-	rt_log("base2local=%f\n", base2local);
-	mat_print("toViewcenter", toViewcenter);
-	mat_print("Viewrot", Viewrot);
-	mat_print("model2view", model2view);
-	mat_print("view2model", view2model);
-	if( state != ST_VIEW )  {
-		mat_print("model2objview", model2objview);
-		mat_print("objview2model", objview2model);
-	}
+  struct rt_vls tmp_vls;
 
-	return CMD_OK;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  rt_vls_init(&tmp_vls);
+  start_catching_output(&tmp_vls);
+		   
+  rt_log("STATE=%s, ", state_str[state] );
+  rt_log("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
+  rt_log("base2local=%f\n", base2local);
+  mat_print("toViewcenter", toViewcenter);
+  mat_print("Viewrot", Viewrot);
+  mat_print("model2view", model2view);
+  mat_print("view2model", view2model);
+  if( state != ST_VIEW )  {
+    mat_print("model2objview", model2objview);
+    mat_print("objview2model", objview2model);
+  }
+
+  stop_catching_output(&tmp_vls);
+  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+  rt_vls_free(&tmp_vls);
+  return TCL_OK;
 }
 
 /* Fix the display processor after a hardware error by re-attaching */
 int
-f_fix(argc, argv)
+f_fix(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	attach( dmp->dmr_name );	/* reattach */
-	dmaflag = 1;		/* causes refresh() */
-	return CMD_OK;
+#if 0
+  attach( dmp->dmr_name );	/* reattach */
+  dmaflag = 1;		/* causes refresh() */
+  return CMD_OK;
+#else
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  return reattach();
+#endif
 }
 
 int
-f_refresh(argc, argv)
+f_refresh(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	dmaflag = 1;		/* causes refresh() */
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* set view using azimuth and elevation angles */
 int
-f_aeview(argc, argv)
+f_aeview(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	setview( 270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]) );
-	return CMD_OK;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  setview( 270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]) );
+  return TCL_OK;
 }
 
+#if 0
 int
 f_attach(argc, argv)
 int	argc;
 char	**argv;
 {
-	if (argc == 1)
-		get_attached();
-	else
-		attach( argv[1] );
-	return CMD_OK;
+  if (argc == 1)
+    get_attached();
+  else
+    attach( argv[1] );
+  return CMD_OK;
 }
+#endif
 
 int
-f_release(argc, argv)
+f_release(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
   if(argc == 2)
     release(argv[1]);
   else
     release(NULL);
 
-  return CMD_OK;
+  return TCL_OK;
 }
 
 /*
@@ -824,7 +974,7 @@ register struct directory *dp;
 	}
 	if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
 		if( db_dirdelete( dbip, dp ) < 0 )  {
-			rt_log("eraseobj: db_dirdelete failed\n");
+		  Tcl_AppendResult(interp, "eraseobj: db_dirdelete failed\n", (char *)NULL);
 		}
 	}
 }
@@ -848,30 +998,38 @@ int		lvl;			/* debug level */
 	int			npts;
 
 	for( sp = startp->s_forw; sp != startp; sp = sp->s_forw )  {
-		rt_log( sp->s_flag == UP ? "VIEW ":"-no- " );
-		for( i=0; i <= sp->s_last; i++ )
-			rt_log("/%s", sp->s_path[i]->d_namep);
-		if( sp->s_iflag == UP )
-			rt_log(" ILLUM");
-		rt_log("\n");
+	  Tcl_AppendResult(interp, sp->s_flag == UP ? "VIEW ":"-no- ", (char *)NULL);
+	  for( i=0; i <= sp->s_last; i++ )
+	    Tcl_AppendResult(interp, "/", sp->s_path[i]->d_namep, (char *)NULL);
+	  if( sp->s_iflag == UP )
+	    Tcl_AppendResult(interp, " ILLUM", (char *)NULL);
 
-		if( lvl <= 0 )  continue;
+	  Tcl_AppendResult(interp, "\n", (char *)NULL);
 
-		/* convert to the local unit for printing */
-		rt_log("  cent=(%.3f,%.3f,%.3f) sz=%g ",
-			sp->s_center[X]*base2local,
-			sp->s_center[Y]*base2local, 
-			sp->s_center[Z]*base2local,
-			sp->s_size*base2local );
-		rt_log("reg=%d\n",sp->s_regionid );
-		rt_log("  color=(%d,%d,%d) %d,%d,%d i=%d\n",
-			sp->s_basecolor[0],
-			sp->s_basecolor[1],
-			sp->s_basecolor[2],
-			sp->s_color[0],
-			sp->s_color[1],
-			sp->s_color[2],
-			sp->s_dmindex );
+	  if( lvl <= 0 )  continue;
+
+	  /* convert to the local unit for printing */
+	  {
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "  cent=(%.3f,%.3f,%.3f) sz=%g ",
+			  sp->s_center[X]*base2local,
+			  sp->s_center[Y]*base2local, 
+			  sp->s_center[Z]*base2local,
+			  sp->s_size*base2local );
+	    rt_vls_printf(&tmp_vls, "reg=%d\n",sp->s_regionid );
+	    rt_vls_printf(&tmp_vls, "  color=(%d,%d,%d) %d,%d,%d i=%d\n",
+			  sp->s_basecolor[0],
+			  sp->s_basecolor[1],
+			  sp->s_basecolor[2],
+			  sp->s_color[0],
+			  sp->s_color[1],
+			  sp->s_color[2],
+			  sp->s_dmindex );
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
 
 		if( lvl <= 1 )  continue;
 
@@ -890,14 +1048,26 @@ int		lvl;			/* debug level */
 			if( lvl <= 2 )  continue;
 
 			for( i = 0; i < nused; i++,cmd++,pt++ )  {
-				rt_log("  %s (%g, %g, %g)\n",
+			  struct rt_vls tmp_vls;
+
+			  rt_vls_init(&tmp_vls);
+			  rt_vls_printf(&tmp_vls, "  %s (%g, %g, %g)\n",
 					rt_vlist_cmd_descriptions[*cmd],
 					V3ARGS( *pt ) );
+			  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+			  rt_vls_free(&tmp_vls);
 			}
 		}
-		rt_log("  %d vlist structures, %d pts\n", nvlist, npts );
 
-		rt_log("  %d pts (via rt_ck_vlist)\n", rt_ck_vlist( &(sp->s_vlist) ) );
+		{
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "  %d vlist structures, %d pts\n", nvlist, npts );
+		  rt_vls_printf(&tmp_vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist( &(sp->s_vlist) ) );
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+		}
 	}
 }
 
@@ -905,7 +1075,9 @@ static char ** path_parse ();
 
 /* Illuminate the named object */
 int
-f_ill(argc, argv)
+f_ill(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -919,6 +1091,9 @@ char	**argv;
 	char	*basename;
 	char	*sname;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if (state == ST_S_PICK)
 	{
 	    path_piece = path_parse(argv[1]);
@@ -927,8 +1102,8 @@ char	**argv;
 
 	    if (nm_pieces == 0)
 	    {
-		(void) rt_log("Bad solid path: '%s'\n", argv[1]);
-		goto bail_out;
+	      Tcl_AppendResult(interp, "Bad solid path: '", argv[1], "'\n", (char *)NULL);
+	      goto bail_out;
 	    }
 	    basename = path_piece[nm_pieces - 1];
 	}
@@ -944,8 +1119,8 @@ char	**argv;
 	    case ST_S_PICK:
 		if (!(dp -> d_flags & DIR_SOLID))
 		{
-		    (void) rt_log("%s is not a solid\n", basename);
-		    goto bail_out;
+		  Tcl_AppendResult(interp, basename, " is not a solid\n", (char *)NULL);
+		  goto bail_out;
 		}
 		FOR_ALL_SOLIDS(sp)
 		{
@@ -989,12 +1164,12 @@ char	**argv;
 		goto bail_out;
 	}
 	if( nmatch <= 0 )  {
-		(void) rt_log("%s not being displayed\n", argv[1]);
-		goto bail_out;
+	  Tcl_AppendResult(interp, argv[1], " not being displayed\n", (char *)NULL);
+	  goto bail_out;
 	}
 	if( nmatch > 1 )  {
-		(void) rt_log("%s multiply referenced\n", argv[1]);
-		goto bail_out;
+	  Tcl_AppendResult(interp, argv[1], " multiply referenced\n", (char *)NULL);
+	  goto bail_out;
 	}
 	/* Make the specified solid the illuminated solid */
 	illump = lastfound;
@@ -1013,7 +1188,7 @@ char	**argv;
 		rt_free(path_piece[i], "f_ill: char *");
 	    rt_free((char *) path_piece, "f_ill: char **");
 	}
-	return CMD_OK;
+	return TCL_OK;
 
 bail_out:
     if (state != ST_VIEW)
@@ -1024,26 +1199,31 @@ bail_out:
 	    rt_free(path_piece[i], "f_ill: char *");
 	rt_free((char *) path_piece, "f_ill: char **");
     }
-    return CMD_BAD;
+    return TCL_ERROR;
 }
 
 /* Simulate pressing "Solid Edit" and doing an ILLuminate command */
 int
-f_sed(argc, argv)
+f_sed(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	if( not_state( ST_VIEW, "keyboard solid edit start") )
-		return CMD_BAD;
-	if( HeadSolid.s_forw == &HeadSolid )  {
-		(void)rt_log("no solids being displayed\n");
-		return CMD_BAD;
-	}
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	update_views = 1;
+  if( not_state( ST_VIEW, "keyboard solid edit start") )
+    return TCL_ERROR;
+  if( HeadSolid.s_forw == &HeadSolid )  {
+    Tcl_AppendResult(interp, "no solids being displayed\n",  (char *)NULL);
+    return TCL_ERROR;
+  }
 
-	button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
-	return f_ill(argc, argv);	/* Illuminate named solid --> ST_S_EDIT */
+  update_views = 1;
+
+  button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
+  return f_ill(clientData, interp, argc, argv);	/* Illuminate named solid --> ST_S_EDIT */
 }
 
 void
@@ -1074,7 +1254,9 @@ check_nonzero_rates()
 
 /* Main processing of a knob twist.  "knob id val" */
 int
-f_knob(argc, argv)
+f_knob(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -1085,6 +1267,9 @@ char	**argv;
 	vect_t	aslew;
 #if 1
   int iknob;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
   if(!strcmp(argv[0], "iknob"))
     iknob = 1;
@@ -1304,23 +1489,23 @@ char	**argv;
 		}
 	} else if( strcmp( cmd, "calibrate" ) == 0 ) {
 		VSETALL( absolute_slew, 0.0 );
-		return CMD_OK;
+		return TCL_OK;
 	} else if( strcmp( cmd, "xadc" ) == 0 )  {
 		rt_vls_printf( &dm_values.dv_string, "adc x %d\n" , i );
-		return CMD_OK;
+		return TCL_OK;
 	} else if( strcmp( cmd, "yadc" ) == 0 )  {
 		rt_vls_printf( &dm_values.dv_string, "adc y %d\n" , i );
-		return CMD_OK;
+		return TCL_OK;
 	} else if( strcmp( cmd, "ang1" ) == 0 )  {
 		rt_vls_printf( &dm_values.dv_string, "adc a1 %f\n", 45.0*(1.0-(double)i/2047.0) );
-		return CMD_OK;
+		return TCL_OK;
 	} else if( strcmp( cmd, "ang2" ) == 0 )  {
 		rt_vls_printf( &dm_values.dv_string, "adc a2 %f\n", 45.0*(1.0-(double)i/2047.0) );
-		return CMD_OK;
+		return TCL_OK;
 	} else if( strcmp( cmd, "distadc" ) == 0 )  {
 		rt_vls_printf( &dm_values.dv_string, "adc dst %f\n",
 			((double)i/2047.0 + 1.0)*Viewscale * base2local * M_SQRT2 );
-		return CMD_OK;
+		return TCL_OK;
 	} else if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
 		char	*av[3];
 
@@ -1331,21 +1516,22 @@ char	**argv;
 		av[0] = "adc";
 		av[1] = "reset";
 		av[2] = (char *)NULL;
-		(void)f_adc( 2, av );
+		(void)f_adc( clientData, interp, 2, av );
 
 		if(knob_offset_hook)
 		  knob_offset_hook();
 	} else {
 usage:
-		rt_log("knob: x,y,z for rotation, S for scale, X,Y,Z for slew (rates, range -1..+1)\n");
-		rt_log("knob: ax,ay,az for absolute rotation, aS for absolute scale,\n");
-		rt_log("knob: aX,aY,aZ for absolute skew.  calibrate to set current slew to 0\n");
-		rt_log("knob: xadc, yadc, zadc, ang1, ang2, distadc (values, range -2048..+2047)\n");
-		rt_log("knob: zero (cancel motion)\n");
+	  Tcl_AppendResult(interp,
+		"knob: x,y,z for rotation, S for scale, X,Y,Z for slew (rates, range -1..+1)\n",
+		"knob: ax,ay,az for absolute rotation, aS for absolute scale,\n",
+		"knob: aX,aY,aZ for absolute skew.  calibrate to set current slew to 0\n",
+		"knob: xadc, yadc, zadc, ang1, ang2, distadc (values, range -2048..+2047)\n",
+		"knob: zero (cancel motion)\n", (char *)NULL);
 	}
 
 	check_nonzero_rates();
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -1359,50 +1545,76 @@ usage:
  *  "tol perp #" sets calculational normal tolerance.
  */
 int
-f_tol( argc, argv )
+f_tol(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	double	f;
 	int argind=1;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( argc < 3 )  {
-		rt_log("Current tolerance settings are:\n");
-		rt_log( "Tesselation tolerances:\n" );
-		if( mged_abs_tol > 0.0 )  {
-			rt_log("\tabs %g %s\n",
-				mged_abs_tol * base2local,
-				rt_units_string(dbip->dbi_local2base) );
-		} else {
-			rt_log("\tabs None\n");
-		}
-		if( mged_rel_tol > 0.0 )  {
-			rt_log("\trel %g (%g%%)\n",
-				mged_rel_tol, mged_rel_tol * 100.0 );
-		} else {
-			rt_log("\trel None\n");
-		}
-		if( mged_nrm_tol > 0.0 )  {
-			int	deg, min;
-			double	sec;
+	  Tcl_AppendResult(interp, "Current tolerance settings are:\n", (char *)NULL);
+	  Tcl_AppendResult(interp, "Tesselation tolerances:\n", (char *)NULL );
+	  if( mged_abs_tol > 0.0 )  {
+	    struct rt_vls tmp_vls;
 
-			sec = mged_nrm_tol * rt_radtodeg;
-			deg = (int)(sec);
-			sec = (sec - (double)deg) * 60;
-			min = (int)(sec);
-			sec = (sec - (double)min) * 60;
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "\tabs %g %s\n", mged_abs_tol * base2local,
+			  rt_units_string(dbip->dbi_local2base) );
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  } else {
+	    Tcl_AppendResult(interp, "\tabs None\n", (char *)NULL);
+	  }
+	  if( mged_rel_tol > 0.0 )  {
+	    struct rt_vls tmp_vls;
 
-			rt_log("\tnorm %g degrees (%d deg %d min %g sec)\n",
-				mged_nrm_tol * rt_radtodeg,
-				deg, min, sec );
-		} else {
-			rt_log("\tnorm None\n");
-		}
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "\trel %g (%g%%)\n", mged_rel_tol, mged_rel_tol * 100.0 );
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  } else {
+	    Tcl_AppendResult(interp, "\trel None\n", (char *)NULL);
+	  }
+	  if( mged_nrm_tol > 0.0 )  {
+	    int	deg, min;
+	    double	sec;
+	    struct rt_vls tmp_vls;
 
-		rt_log( "Calculational tolerances:\n" );
-		rt_log( "\tdistance = %g %s\n\tperpendicularity = %g (cosine of %g degrees)\n",
-			mged_tol.dist*base2local, rt_units_string(local2base), mged_tol.perp, acos( mged_tol.perp)*rt_radtodeg );
-		return CMD_OK;
+	    rt_vls_init(&tmp_vls);
+	    sec = mged_nrm_tol * rt_radtodeg;
+	    deg = (int)(sec);
+	    sec = (sec - (double)deg) * 60;
+	    min = (int)(sec);
+	    sec = (sec - (double)min) * 60;
+
+	    rt_vls_printf(&tmp_vls, "\tnorm %g degrees (%d deg %d min %g sec)\n",
+			  mged_nrm_tol * rt_radtodeg, deg, min, sec );
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  } else {
+	    Tcl_AppendResult(interp, "\tnorm None\n", (char *)NULL);
+	  }
+
+	  {
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls,"Calculational tolerances:\n");
+	    rt_vls_printf(&tmp_vls,
+			  "\tdistance = %g %s\n\tperpendicularity = %g (cosine of %g degrees)\n",
+			   mged_tol.dist*base2local, rt_units_string(local2base), mged_tol.perp,
+			  acos(mged_tol.perp)*rt_radtodeg);
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
+
+	  return TCL_OK;
 	}
 
 	while( argind < argc )
@@ -1415,13 +1627,13 @@ char	**argv;
 			        mged_abs_tol = 0.0;	/* None */
 			else
 			        mged_abs_tol = f * local2base;
-			return CMD_OK;
+			return TCL_OK;
 		}
 		else if( argv[argind][0] == 'r' )  {
 			/* Relative */
 			if( f < 0.0 || f >= 1.0 )  {
-				rt_log("relative tolerance must be between 0 and 1, not changed\n");
-				return CMD_BAD;
+			   Tcl_AppendResult(interp, "relative tolerance must be between 0 and 1, not changed\n", (char *)NULL);
+			   return TCL_ERROR;
 			}
 			/* Note that a value of 0.0 will disable relative tolerance */
 			mged_rel_tol = f;
@@ -1429,8 +1641,8 @@ char	**argv;
 		else if( argv[argind][0] == 'n' )  {
 			/* Normal tolerance, in degrees */
 			if( f < 0.0 || f > 90.0 )  {
-				rt_log("Normal tolerance must be in positive degrees, < 90.0\n");
-				return CMD_BAD;
+			  Tcl_AppendResult(interp, "Normal tolerance must be in positive degrees, < 90.0\n", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			/* Note that a value of 0.0 or 360.0 will disable this tol */
 			mged_nrm_tol = f * rt_degtorad;
@@ -1438,8 +1650,8 @@ char	**argv;
 		else if( argv[argind][0] == 'd' ) {
 			/* Calculational distance tolerance */
 			if( f < 0.0 ) {
-				rt_log("Calculational distance tolerance must be positive\n");
-				return CMD_BAD;
+			  Tcl_AppendResult(interp, "Calculational distance tolerance must be positive\n", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			mged_tol.dist = f*local2base;
 			mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
@@ -1447,18 +1659,19 @@ char	**argv;
 		else if( argv[argind][0] == 'p' ) {
 			/* Calculational perpendicularity tolerance */
 			if( f < 0.0 || f > 1.0 ) {
-				rt_log("Calculational perpendicular tolerance must be fromn 0 to 1\n");
-				return CMD_BAD;
+			  Tcl_AppendResult(interp, "Calculational perpendicular tolerance must be from 0 to 1\n", (char *)NULL);
+			  return TCL_ERROR;
 			}
 			mged_tol.perp = f;
 			mged_tol.para = 1.0 - f;
 		}
 		else
-			rt_log("Error, tolerance '%s' unknown\n", argv[argind] );
+		  Tcl_AppendResult(interp, "Error, tolerance '", argv[argind],
+				   "' unknown\n", (char *)NULL);
 
 		argind += 2;
 	}
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -1468,7 +1681,9 @@ char	**argv;
  *  (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
  */
 int
-f_zoom( argc, argv )
+f_zoom(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -1478,15 +1693,18 @@ char	**argv;
 	point_t old_pos;
 	point_t diff;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	MAT_DELTAS_GET(old_pos, toViewcenter);
 
 	val = atof(argv[1]);
 	if( val < SMALL_FASTF || val > INFINITY )  {
-		rt_log("zoom: scale factor out of range\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "zoom: scale factor out of range\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( Viewscale < SMALL_FASTF || Viewscale > INFINITY )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	Viewscale /= val;
 	new_mats();
@@ -1506,7 +1724,7 @@ char	**argv;
 	  tran_z = new_pos[Z];
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -1516,18 +1734,24 @@ char	**argv;
  *  such as might be found in a "saveview" script.
  */
 int
-f_orientation( argc, argv )
+f_orientation(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register int	i;
-	quat_t		quat;
+  register int	i;
+  quat_t		quat;
 
-	for( i=0; i<4; i++ )
-		quat[i] = atof( argv[i+1] );
-	quat_quat2mat( Viewrot, quat );
-	new_mats();
-	return CMD_OK;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  for( i=0; i<4; i++ )
+    quat[i] = atof( argv[i+1] );
+  quat_quat2mat( Viewrot, quat );
+  new_mats();
+
+  return TCL_OK;
 }
 
 /*
@@ -1536,7 +1760,9 @@ char	**argv;
  *  Set view from direction vector and twist angle
  */
 int
-f_qvrot( argc, argv )
+f_qvrot(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -1544,6 +1770,9 @@ char	**argv;
     double	az;
     double	el;
     double	theta;
+
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
 
     dx = atof(argv[1]);
     dy = atof(argv[2]);
@@ -1553,8 +1782,8 @@ char	**argv;
     {
 	if (NEAR_ZERO(dz, 0.00001))
 	{
-	    rt_log("f_qvrot: (dx, dy, dz) may not be the zero vector\n");
-	    return CMD_BAD;
+	  Tcl_AppendResult(interp, "f_qvrot: (dx, dy, dz) may not be the zero vector\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	az = 0.0;
     }
@@ -1567,7 +1796,7 @@ char	**argv;
     theta = atof(argv[4]) * degtorad;
     usejoy(0.0, 0.0, theta);
 
-    return CMD_OK;
+    return TCL_OK;
 }
 
 /*

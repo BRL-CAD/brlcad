@@ -60,47 +60,52 @@ int writesolid(), readsolid();
 int editit();
 
 int
-f_tedit(argc, argv)
+f_tedit(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char **argv;
 {
 	register int i;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	/* Only do this if in solid edit state */
 	if( not_state( ST_S_EDIT, "Solid Text Edit" ) )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	(void)mktemp(tmpfil);
 	i=creat(tmpfil, 0600);
 	if( i < 0 )
 	{
-		perror(tmpfil);
-		return CMD_BAD;
+	  perror(tmpfil);
+	  return TCL_ERROR;
 	}
 	(void)close(i);
 
 	if( writesolid() )
 	{
-		(void)unlink(tmpfil);
-		return CMD_BAD;
+	  (void)unlink(tmpfil);
+	  return TCL_ERROR;
 	}
 
 	if( editit( tmpfil ) )
 	{
 		if( readsolid() )
 		{
-			(void)unlink(tmpfil);
-			return CMD_BAD;
+		  (void)unlink(tmpfil);
+		  return TCL_ERROR;
 		}
 
 		/* Update the display */
 		replot_editing_solid();
 		dmaflag = 1;
-		rt_log("done\n");
+		Tcl_AppendResult(interp, "done\n", (char *)NULL);
 	}
 	(void)unlink(tmpfil);
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* Write numerical parameters of a solid into a file */
@@ -128,9 +133,9 @@ writesolid()
 		struct rt_eto_internal *eto;
 
 		default:
-			rt_log( "Cannot text edit this solid type\n" );
-			(void)fclose(fp);
-			return( 1 );
+		  Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
+		  (void)fclose(fp);
+		  return( 1 );
 		case ID_TOR:
 			tor = (struct rt_tor_internal *)es_int.idb_ptr;
 			(void)fprintf( fp , "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( tor->v ) );
@@ -270,9 +275,9 @@ readsolid()
 		double a,b,c,d;
 
 		default:
-			rt_log( "Cannot text edit this solid type\n" );
-			ret_val = 1;
-			break;
+		  Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
+		  ret_val = 1;
+		  break;
 		case ID_TOR:
 			tor = (struct rt_tor_internal *)es_int.idb_ptr;
 			if( (str=Get_next_line( fp )) == NULL )
@@ -705,6 +710,7 @@ char *file;
 		sigsetmask(omask);
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = DEFEDITOR;
+
 		rt_log("Invoking %s...\n", ed);
 		(void)execlp(ed, ed, file, 0);
 		perror(ed);

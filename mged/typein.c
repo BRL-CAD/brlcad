@@ -334,7 +334,9 @@ char *p_eto[] = {
  *			Used for manual entry of solids.
  */
 int
-f_in(argc, argv)
+f_in(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char **argv;
 {
@@ -355,6 +357,9 @@ char **argv;
 				sph_in(), tec_in(), tgc_in(), tor_in(),
 				trc_in();
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	/* Parse options. */
 	optind = 1;		/* re-init getopt() */
 	while( (c=getopt(argc,argv,"sf")) != EOF )  {
@@ -366,8 +371,16 @@ char **argv;
 			dont_draw = 1;
 			break;
 		default:
-			rt_log("in: option '%c' unknown\n", c);
-			break;
+		  {
+		    struct rt_vls tmp_vls;
+
+		    rt_vls_init(&tmp_vls);
+		    rt_vls_printf(&tmp_vls, "in: option '%c' unknown\n", c);
+		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		    rt_vls_free(&tmp_vls);
+		  }
+
+		  break;
 		}
 	}
 	argc -= optind-1;
@@ -379,24 +392,28 @@ char **argv;
 
 	/* Get the name of the solid to be created */
 	if( argc < 2 )  {
-		rt_log("Enter name of solid: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name of solid: ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( argv[1] );
-		return CMD_BAD;
+	  aexists( argv[1] );
+	  return TCL_ERROR;
 	}
 	if( (int)strlen(argv[1]) >= NAMESIZE )  {
-		rt_log("ERROR, names are limited to %d characters\n", NAMESIZE-1);
-		return CMD_BAD;
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "ERROR, names are limited to %d characters\n", NAMESIZE-1);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  return TCL_ERROR;
 	}
 	/* Save the solid name since argv[] might get bashed */
 	strcpy( name, argv[1] );
 
 	/* Get the solid type to be created and make it */
 	if( argc < 3 )  {
-		rt_log("Enter solid type: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter solid type: ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	RT_INIT_DB_INTERNAL( &internal );
@@ -409,39 +426,39 @@ char **argv;
 	if( strcmp( argv[2], "ebm" ) == 0 )  {
 		switch( strsol_in( &external, "ebm", argc, argv ) ) {
 		case CMD_BAD:
-			rt_log("ERROR, EBM solid not made!\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "ERROR, EBM solid not made!\n", (char *)NULL);
+		  return TCL_ERROR;
 		case CMD_MORE:
-			return CMD_MORE;
+		  return TCL_ERROR;
 		}
 		goto do_extern_update;
 	} else if( strcmp( argv[2], "vol" ) == 0 )  {
 		switch( strsol_in( &external, "vol", argc, argv ) )  {
 		case CMD_BAD:
-			rt_log("ERROR, VOL solid not made!\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "ERROR, VOL solid not made!\n", (char *)NULL);
+		  return TCL_ERROR;
 		case CMD_MORE:
-			return CMD_MORE;
+		  return TCL_ERROR;
 		}
 		goto do_extern_update;
 	} else if( strcmp( argv[2], "hf" ) == 0 )  {
 		switch( strsol_in( &external, "hf", argc, argv ) )  {
 		case CMD_BAD:
-			rt_log("ERROR, HF solid not made!\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "ERROR, HF solid not made!\n", (char *)NULL);
+		  return TCL_ERROR;
 		case CMD_MORE:
-			return CMD_MORE;
+		  return TCL_ERROR;
 		}
 		goto do_extern_update;
 	} else if( strcmp( argv[2], "ars" ) == 0 )  {
 		switch( ars_in(argc, argv, &internal, &p_ars[0]) ) {
 		case CMD_BAD:
-			rt_log("ERROR, ars not made!\n");
-			if(internal.idb_type) rt_functab[internal.idb_type].
-				ft_ifree( &internal );
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "ERROR, ars not made!\n", (char *)NULL);
+		  if(internal.idb_type) rt_functab[internal.idb_type].
+					  ft_ifree( &internal );
+		  return TCL_ERROR;
 		case CMD_MORE:
-			return CMD_MORE;
+		  return TCL_ERROR;
 		}
 		goto do_new_update;
 	} else if( strcmp( argv[2], "half" ) == 0 )  {
@@ -522,30 +539,31 @@ char **argv;
 		menu = p_eto;
 		fn_in = eto_in;
 	} else {
-		rt_log("f_in:  %s is not a known primitive\n", argv[2]);
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "f_in:  ", argv[2], " is not a known primitive\n",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	
 	/* Read arguments */
 	if( argc < 3+nvals )  {
-		rt_log("%s", menu[argc-3]);
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, menu[argc-3], (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if (fn_in(argv, &internal, menu) != 0)  {
-		rt_log("ERROR, %s not made!\n", argv[2]);
-		if(internal.idb_type) rt_functab[internal.idb_type].
-			ft_ifree( &internal );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "ERROR, ", argv[2], " not made!\n", (char *)NULL);
+	  if(internal.idb_type) rt_functab[internal.idb_type].
+				  ft_ifree( &internal );
+	  return TCL_ERROR;
 	}
 
 do_new_update:
 	RT_CK_DB_INTERNAL( &internal );
 	id = internal.idb_type;
 	if( rt_functab[id].ft_export( &external, &internal, local2base ) < 0 )  {
-		rt_log("export failure\n");
-		rt_functab[id].ft_ifree( &internal );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "export failure\n", (char *)NULL);
+	  rt_functab[id].ft_ifree( &internal );
+	  return TCL_ERROR;
 	}
 	rt_functab[id].ft_ifree( &internal );	/* free internal rep */
 
@@ -557,13 +575,11 @@ do_extern_update:
 	if ((dp=db_diradd(dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
 	     db_alloc(dbip, dp, ngran ) < 0) {
 		db_free_external( &external );
-	    	ALLOC_ERR;
-		return CMD_BAD;
+	    	TCL_ALLOC_ERR_return;
 	}
 	if (db_put_external( &external, dp, dbip ) < 0 )  {
 		db_free_external( &external );
-		WRITE_ERR;
-		return CMD_BAD;
+		TCL_WRITE_ERR_return;
 	}
 	db_free_external( &external );
 
@@ -573,16 +589,16 @@ do_extern_update:
 	new_cmd[0] = "e";
 	new_cmd[1] = name;
 	new_cmd[2] = (char *)NULL;
-	(void)f_edit( 2, new_cmd );
+	(void)f_edit( clientData, interp, 2, new_cmd );
 
 	if( do_solid_edit )  {
 		/* Also kick off solid edit mode */
 		new_cmd[0] = "sed";
 		new_cmd[1] = name;
 		new_cmd[2] = (char *)NULL;
-		(void)f_sed( 2, new_cmd );
+		(void)f_sed( clientData, interp, 2, new_cmd );
 	}
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -603,8 +619,8 @@ char 		       **argv;
 
 	/* Read at least one "arg(s)" */
 	if( argc < 3+1 ) {
-		rt_log("%s Arg? ", sol);
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, sol, " Arg? ", (char *)NULL);
+	  return CMD_MORE;
 	}
 
 	RT_INIT_EXTERNAL(ep);
@@ -643,21 +659,21 @@ char			*promp[];
 	int num_pts, num_curves;
 
 	if( argc < 5 ) {
-		rt_log("%s", promp[argc-3]);
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-3], (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	num_pts = atoi(argv[3]);
 	num_curves = atoi(argv[4]);
 
 	if (num_pts < 3 || num_curves < 3 ) {
-	    	rt_log("Invalid number of lines or pts_per_curve\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Invalid number of lines or pts_per_curve\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( argc < 8 ) {
-		rt_log("%s", promp[argc-3]);
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-3], (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 #if 0
@@ -675,16 +691,22 @@ char			*promp[];
 	}
 #else
 	if( argc < 5+3*(num_curves-1)*num_pts ) {
-		rt_log("%s for Waterline %d, Point %d : ",
-			promp[5+(argc-8)%3], 1+(argc-8)/3/num_pts, ((argc-8)/3)%
-			num_pts );
-		return CMD_MORE;
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "%s for Waterline %d, Point %d : ",
+			promp[5+(argc-8)%3], 1+(argc-8)/3/num_pts, ((argc-8)/3)%num_pts );
+
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+
+	  return TCL_ERROR;
 	}
 
 	if( argc < 5+3*num_curves*num_pts ) {
-		rt_log("%s for point of last waterline : ",
-			promp[5+(argc-8)%3]);
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[5+(argc-8)%3],
+			   " for point of last waterline : ", (char *)NULL);
+	  return TCL_ERROR;
 	}
 #endif
 
@@ -760,8 +782,8 @@ struct rt_db_internal	*intern;
 	VUNITIZE( hip->eqn );
 	
 	if (MAGNITUDE(hip->eqn) < RT_LEN_TOL) {
-		rt_log("ERROR, normal vector is too small!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, normal vector is too small!\n", (char *)NULL);
+	  return(1);	/* failure */
 	}
 	
 	return(0);	/* success */
@@ -839,8 +861,8 @@ struct rt_db_internal	*intern;
 	VSET( sip->c, 0., 0., r );
 	
 	if (r < RT_LEN_TOL) {
-		rt_log("ERROR, radius must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, radius must be greater than zero!\n", (char *)NULL);
+	  return(1);	/* failure */
 	}
 	
 	return(0);	/* success */
@@ -893,8 +915,8 @@ struct rt_db_internal	*intern;
 		VSUB2( eip->b, &vals[3], &vals[0] );
 		mag_b = MAGNITUDE( eip->b );
 		if ( NEAR_ZERO( mag_b, RT_LEN_TOL )) {
-			rt_log( "ERROR, foci are coincident!\n");
-			return(1);
+		  Tcl_AppendResult(interp, "ERROR, foci are coincident!\n", (char *)NULL);
+		  return(1);
 		}
 		/* calculate A vector */
 		VSCALE( eip->a, eip->b, .5*len/mag_b );
@@ -946,13 +968,13 @@ struct rt_db_internal	*intern;
 	tip->r_h = atof(cmd_argvs[10]);
 	/* Check for radius 2 >= radius 1 */
 	if( tip->r_a <= tip->r_h )  {
-		rt_log("ERROR, radius 2 >= radius 1 ....\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, radius 2 >= radius 1 ....\n", (char *)NULL);
+	  return(1);	/* failure */
 	}
 	
 	if (MAGNITUDE( tip->h ) < RT_LEN_TOL) {
-		rt_log("ERROR, normal must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, normal must be greater than zero!\n", (char *)NULL);
+	  return(1);	/* failure */
 	}
 	
 	return(0);	/* success */
@@ -990,8 +1012,9 @@ struct rt_db_internal	*intern;
 		|| MAGNITUDE(tip->a) < RT_LEN_TOL
 		|| MAGNITUDE(tip->b) < RT_LEN_TOL
 		|| r1 < RT_LEN_TOL || r2 < RT_LEN_TOL) {
-		rt_log("ERROR, all dimensions must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, all dimensions must be greater than zero!\n",
+			   (char *)NULL);
+	  return(1);	/* failure */
 	}
 
 	/* calculate C */
@@ -1033,8 +1056,9 @@ struct rt_db_internal	*intern;
 	r = atof(cmd_argvs[9]);
 	
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL || r < RT_LEN_TOL) {
-		rt_log("ERROR, all dimensions must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, all dimensions must be greater than zero!\n",
+			   (char *)NULL);
+	  return(1);	/* failure */
 	}
 
 	vec_ortho( tip->a, tip->h );
@@ -1080,8 +1104,9 @@ struct rt_db_internal	*intern;
 		|| MAGNITUDE(tip->a) < RT_LEN_TOL
 		|| MAGNITUDE(tip->b) < RT_LEN_TOL
 		|| ratio < RT_LEN_TOL) {
-		rt_log("ERROR, all dimensions must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, all dimensions must be greater than zero!\n",
+			   (char *)NULL);
+	  return(1);	/* failure */
 	}
 
 	VSCALE( tip->c, tip->a, 1./ratio );	/* C vector */
@@ -1118,8 +1143,9 @@ struct rt_db_internal	*intern;
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL
 		|| MAGNITUDE(tip->a) < RT_LEN_TOL
 		|| MAGNITUDE(tip->b) < RT_LEN_TOL ) {
-		rt_log("ERROR, all dimensions must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, all dimensions must be greater than zero!\n",
+			   (char *)NULL);
+	  return(1);	/* failure */
 	}
 
 	VMOVE( tip->c, tip->a );		/* C vector */
@@ -1156,8 +1182,9 @@ struct rt_db_internal	*intern;
 	
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL
 		|| r1 < RT_LEN_TOL || r2 < RT_LEN_TOL) {
-		rt_log("ERROR, all dimensions must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, all dimensions must be greater than zero!\n",
+			   (char *)NULL);
+	  return(1);	/* failure */
 	}
 
 	vec_ortho( tip->a, tip->h );
@@ -1203,8 +1230,9 @@ struct rt_db_internal	*intern;
 	
 	if (MAGNITUDE(Dpth) < RT_LEN_TOL || MAGNITUDE(Hgt) < RT_LEN_TOL
 		|| MAGNITUDE(Wdth) < RT_LEN_TOL) {
-		rt_log("ERROR, dimensions must all be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, all dimensions must be greater than zero!\n",
+			   (char *)NULL);
+	  return(1);	/* failure */
 	}
 
 	if (!strcmp("box", cmd_argvs[2])) {
@@ -1256,16 +1284,16 @@ struct rt_db_internal	*intern;
 	zmax = atof(cmd_argvs[3+5]);
 
 	if (xmin >= xmax) {
-		rt_log("ERROR, XMIN greater than XMAX!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, XMIN greater than XMAX!\n", (char *)NULL);
+	  return(1);	/* failure */
 	}
 	if (ymin >= ymax) {
-		rt_log("ERROR, YMIN greater than YMAX!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, YMIN greater than YMAX!\n", (char *)NULL);
+	  return(1);	/* failure */
 	}
 	if (zmin >= zmax) {
-		rt_log("ERROR, ZMIN greater than ZMAX!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, ZMIN greater than ZMAX!\n", (char *)NULL);
+	  return(1);	/* failure */
 	}
 
 	VSET( aip->pt[0], xmax, ymin, zmin );
@@ -1308,8 +1336,10 @@ struct rt_db_internal	*intern;
 	if (MAGNITUDE(rip->rpc_H) < RT_LEN_TOL
 		|| MAGNITUDE(rip->rpc_B) < RT_LEN_TOL
 		|| rip->rpc_r <= RT_LEN_TOL) {
-		rt_log("ERROR, height, breadth, and width must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp,
+			   "ERROR, height, breadth, and width must be greater than zero!\n",
+			   (char *)NULL);
+	  return(1);	/* failure */
 	}
 	
 	return(0);	/* success */
@@ -1344,8 +1374,10 @@ struct rt_db_internal	*intern;
 	if (MAGNITUDE(rip->rhc_H) < RT_LEN_TOL
 		|| MAGNITUDE(rip->rhc_B) < RT_LEN_TOL
 		|| rip->rhc_r <= RT_LEN_TOL || rip->rhc_c <= RT_LEN_TOL) {
-		rt_log("ERROR, height, breadth, and width must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp,
+			   "ERROR, height, breadth, and width must be greater than zero!\n",
+			   (char *)NULL);
+	  return(1);	/* failure */
 	}
 	
 	return(0);	/* success */
@@ -1380,13 +1412,14 @@ struct rt_db_internal	*intern;
 	
 	if (MAGNITUDE(rip->epa_H) < RT_LEN_TOL
 		|| rip->epa_r1 <= RT_LEN_TOL || rip->epa_r2 <= RT_LEN_TOL) {
-		rt_log("ERROR, height and axes must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, height and axes must be greater than zero!\n",
+			   (char *)NULL);
+	  return(1);	/* failure */
 	}
 
 	if (rip->epa_r2 > rip->epa_r1) {
-		rt_log("ERROR, |A| must be greater than |B|!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, |A| must be greater than |B|!\n", (char *)NULL);
+	  return(1);	/* failure */
 	}
 	
 	return(0);	/* success */
@@ -1423,13 +1456,13 @@ struct rt_db_internal	*intern;
 	if (MAGNITUDE(rip->ehy_H) < RT_LEN_TOL
 		|| rip->ehy_r1 <= RT_LEN_TOL || rip->ehy_r2 <= RT_LEN_TOL
 		|| rip->ehy_c <= RT_LEN_TOL) {
-		rt_log("ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, height, axes, and distance to asymptotes must be greater than zero!\n", (char *)NULL);
+	  return(1);	/* failure */
 	}
 
 	if (rip->ehy_r2 > rip->ehy_r1) {
-		rt_log("ERROR, |A| must be greater than |B|!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, |A| must be greater than |B|!\n", (char *)NULL);
+	  return(1);	/* failure */
 	}
 	
 	return(0);	/* success */
@@ -1464,13 +1497,15 @@ struct rt_db_internal	*intern;
 	if (MAGNITUDE(eip->eto_N) < RT_LEN_TOL
 		|| MAGNITUDE(eip->eto_C) < RT_LEN_TOL
 		|| eip->eto_r <= RT_LEN_TOL || eip->eto_rd <= RT_LEN_TOL) {
-		rt_log("ERROR, normal, axes, and radii must be greater than zero!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp,
+			   "ERROR, normal, axes, and radii must be greater than zero!\n",
+			   (char *)NULL);
+	  return(1);	/* failure */
 	}
 
 	if (eip->eto_rd > MAGNITUDE(eip->eto_C)) {
-		rt_log("ERROR, |C| must be greater than |D|!\n");
-		return(1);	/* failure */
+	  Tcl_AppendResult(interp, "ERROR, |C| must be greater than |D|!\n", (char *)NULL);
+	  return(1);	/* failure */
 	}
 	
 	return(0);	/* success */

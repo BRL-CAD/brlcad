@@ -171,7 +171,7 @@ struct glx_vars {
   int _devbuttonrelease;
   int _knobs[8];
   int _stereo_is_on;
-  char *_ref;
+  char _ref[32];
   int _glx_is_gt;
   fastf_t _aspect;
   struct modifiable_glx_vars _mvars;
@@ -379,15 +379,11 @@ Glx_configure_window_shape()
  */
 
 #if 1
-Glx_open(name)
-char *name;
+Glx_open()
 {
   glx_var_init();
 
-  if( glx_setup(name) )
-    return(1);		/* BAD */
-
-  return(0);			/* OK */
+  return glx_setup(dname);
 }
 #else
 Glx_open()
@@ -446,11 +442,14 @@ char *name;
   Display *tmp_dpy;
 
   rt_vls_init(&str);
-  rt_vls_init(&pathName);
 
   /* Only need to do this once */
   if(tkwin == NULL){
+#if 0    
     rt_vls_printf(&str, "loadtk %s\n", name);
+#else
+    rt_vls_printf(&str, "loadtk\n");
+#endif
 
     if(cmdline(&str, FALSE) == CMD_BAD){
       rt_vls_free(&str);
@@ -475,7 +474,7 @@ char *name;
   RT_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)curr_dm_list->_dm_vars)->l);
 
   rt_vls_printf(&pathName, ".dm_glx%d", ref_count++);
-  ref = strdup(rt_vls_addr(&pathName));
+  strcpy(ref, rt_vls_addr(&pathName));
   rt_vls_strcat(&pathName, ".win"); 
 
   if((tmp_dpy = XOpenDisplay(name)) == NULL){
@@ -516,7 +515,8 @@ char *name;
 
     dpy = Tk_Display(xtkwin);
   }else{
-    rt_log("Glx_open: ref - %s doesn't exist!!!\n", ref);
+    Tcl_AppendResult(interp, "Glx_open: ref - ", ref,
+		     " doesn't exist!!!\n", (char *)NULL);
     return -1;
   }
 
@@ -631,7 +631,8 @@ char *name;
     if(list->use == IsXExtensionDevice){
       if(!strcmp(list->name, "dial+buttons")){
 	if((dev = XOpenDevice(dpy, list->id)) == (XDevice *)NULL){
-	  rt_log("Glx_open: Couldn't open the dials+buttons\n");
+	  Tcl_AppendResult(interp, "Glx_open: Couldn't open the dials+buttons\n",
+			   (char *)NULL);
 	  goto Done;
 	}
 
@@ -731,11 +732,8 @@ Glx_load_startup()
     rt_vls_free(&str);
 
     /* Using default */
-    if(Tcl_Eval( interp, glx_init_str ) == TCL_ERROR){
-      rt_log("Glx_load_startup: Error interpreting glx_init_str.\n");
-      rt_log("%s\n", interp->result);
+    if(Tcl_Eval( interp, glx_init_str ) == TCL_ERROR)
       return -1;
-    }
 
     return 0;
   }
@@ -743,7 +741,6 @@ Glx_load_startup()
   fclose( fp );
 
   if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
-    rt_log("Error reading %s: %s\n", filename, interp->result);
     rt_vls_free(&str);
     return -1;
   }
@@ -761,6 +758,8 @@ Glx_load_startup()
 void
 Glx_close()
 {
+  if(xtkwin != NULL){
+#if 0
   if(mvars.cueing_on)
     depthcue(0);
 
@@ -776,14 +775,15 @@ Glx_close()
   frontbuffer(1);
   glx_clear_to_black();
   frontbuffer(0);
-
+#endif
 /*XXX*/
   Tk_DestroyWindow(Tk_Parent(xtkwin));
+  }
 
-  RT_LIST_DEQUEUE(&((struct glx_vars *)dm_vars)->l);
+  if(((struct glx_vars *)dm_vars)->l.forw != RT_LIST_NULL)
+    RT_LIST_DEQUEUE(&((struct glx_vars *)dm_vars)->l);
+
   rt_free(dm_vars, "Glx_close: dm_vars");
-  rt_vls_free(&pathName);
-  free(ref);
 
 #if 0
   Tk_DeleteGenericHandler(Glx_doevent, (ClientData)NULL);
@@ -807,7 +807,7 @@ Glx_prolog()
   TkGLXwin_RefWinset(ref, GLX_NORMAL);
 
   if (mvars.debug)
-    rt_log( "Glx_prolog\n");
+    Tcl_AppendResult(interp, "Glx_prolog\n", (char *)NULL);
 
   ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
 
@@ -830,7 +830,7 @@ void
 Glx_normal()
 {
   if (mvars.debug)
-    rt_log( "Glx_normal\n");
+    Tcl_AppendResult(interp, "Glx_normal\n", (char *)NULL);
 
   if( mvars.rgb )  {
     RGBcolor( (short)0, (short)0, (short)0 );
@@ -848,7 +848,7 @@ void
 Glx_epilog()
 {
   if (mvars.debug)
-    rt_log( "Glx_epilog\n");
+    Tcl_AppendResult(interp, "Glx_epilog\n", (char *)NULL);
 
   /*
    * A Point, in the Center of the Screen.
@@ -900,7 +900,7 @@ mat_t	mat;
 	int	i;
 
 	if (mvars.debug)
-		rt_log( "Glx_newrot()\n");
+	  Tcl_AppendResult(interp, "Glx_newrot()\n", (char *)NULL);
 
 	switch(which_eye)  {
 	case 0:
@@ -996,7 +996,7 @@ int		white;
 	int i,j;
 
 	if (mvars.debug)
-		rt_log( "Glx_Object()\n");
+	  Tcl_AppendResult(interp, "Glx_Object()\n", (char *)NULL);
 
 	/*
 	 *  It is claimed that the "dancing vector disease" of the
@@ -1156,7 +1156,8 @@ void
 Glx_update()
 {
 	if (mvars.debug)
-		rt_log( "Glx_update()\n");
+	  Tcl_AppendResult(interp, "Glx_update()\n", (char *)NULL);
+
 	if( !dmaflag )
 		return;
 }
@@ -1173,7 +1174,8 @@ register char *str;
 int x,y,size, colour;
 {
 	if (mvars.debug)
-		rt_log( "Glx_puts()\n");
+	  Tcl_AppendResult(interp, "Glx_puts()\n", (char *)NULL);
+
 	cmov2( GED2IRIS(x), GED2IRIS(y));
 	if( mvars.rgb )  {
 		RGBcolor( (short)glx_rgbtab[colour].r,
@@ -1198,7 +1200,8 @@ int dashed;
 	register int nvec;
 
 	if (mvars.debug)
-		rt_log( "Glx_2d_line()\n");
+	  Tcl_AppendResult(interp, "Glx_2d_line()\n", (char *)NULL);
+
 	if( mvars.rgb )  {
 		/* Yellow */
 		if(mvars.cueing_on)  {
@@ -1265,6 +1268,7 @@ XEvent *eventPtr;
   register struct dm_list *save_dm_list;
   register struct dm_list *p;
   struct rt_vls cmd;
+  int status = CMD_OK;
 
   rt_vls_init(&cmd);
   save_dm_list = curr_dm_list;
@@ -1275,8 +1279,6 @@ XEvent *eventPtr;
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
 
-  if(mvars.debug)
-    rt_log("curr_dm_list: %d\n", (int)curr_dm_list);
 #else
   curr_dm_list = (struct dm_list *)clientData;
   TkGLXwin_RefWinset(ref, GLX_NORMAL);
@@ -1452,12 +1454,15 @@ XEvent *eventPtr;
       button0 = 0;
   }
 
-  (void)cmdline(&cmd, FALSE);
+  status = cmdline(&cmd, FALSE);
 end:
   rt_vls_free(&cmd);
   curr_dm_list = save_dm_list;
 
-  return TCL_OK;
+  if(status == CMD_OK)
+    return TCL_OK;
+
+  return TCL_ERROR;
 }
 
 
@@ -1523,7 +1528,15 @@ unsigned addr, count;
 void
 Glx_statechange( a, b )
 {
-  if( mvars.debug ) rt_log("statechange %d %d\n", a, b );
+  if( mvars.debug ){
+    struct rt_vls tmp_vls;
+
+    rt_vls_init(&tmp_vls);
+    rt_vls_printf(&tmp_vls, "statechange %d %d\n", a, b );
+    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+    rt_vls_free(&tmp_vls);
+  }
+    
   /*
    *  Based upon new state, possibly do extra stuff,
    *  including enabling continuous tablet tracking,
@@ -1552,8 +1565,9 @@ Glx_statechange( a, b )
 		       KeyPressMask|StructureNotifyMask);
 	  break;
 	default:
-		rt_log("Glx_statechange: unknown state %s\n", state_str[b]);
-		break;
+	  Tcl_AppendResult(interp, "Glx_statechange: unknown state ",
+			   state_str[b], "\n", (char *)NULL);
+	  break;
 	}
 
 	Glx_viewchange( DM_CHGV_REDO, SOLID_NULL );
@@ -1564,19 +1578,27 @@ Glx_viewchange( cmd, sp )
 register int cmd;
 register struct solid *sp;
 {
-	if( mvars.debug ) rt_log("viewchange( %d, x%x )\n", cmd, sp );
-	switch( cmd )  {
-	case DM_CHGV_ADD:
-		break;
-	case DM_CHGV_REDO:
-		break;
-	case DM_CHGV_DEL:
-		break;
-	case DM_CHGV_REPL:
-		return;
-	case DM_CHGV_ILLUM:
-		break;
-	}
+  if( mvars.debug ){
+    struct rt_vls tmp_vls;
+
+    rt_vls_init(&tmp_vls);
+    rt_vls_printf(&tmp_vls, "viewchange( %d, x%x )\n", cmd, sp );
+    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+    rt_vls_free(&tmp_vls);
+  }
+
+  switch( cmd ){
+  case DM_CHGV_ADD:
+    break;
+  case DM_CHGV_REDO:
+    break;
+  case DM_CHGV_DEL:
+    break;
+  case DM_CHGV_REPL:
+    return;
+  case DM_CHGV_ILLUM:
+    break;
+  }
 }
 
 void
@@ -1605,7 +1627,8 @@ Glx_colorchange()
 	register int i;
 	register int nramp;
 
-	if( mvars.debug )  rt_log("colorchange\n");
+	if( mvars.debug )
+	  Tcl_AppendResult(interp, "colorchange\n", (char *)NULL);
 
 	/* Program the builtin colors */
 	glx_rgbtab[0].r=0; 
@@ -1640,8 +1663,8 @@ Glx_colorchange()
 
 	glx_nslots = getplanes();
 	if(mvars.cueing_on && (glx_nslots < 7)) {
-		rt_log("Too few bitplanes: depthcueing disabled\n");
-		mvars.cueing_on = 0;
+	  Tcl_AppendResult(interp, "Too few bitplanes: depthcueing disabled\n", (char *)NULL);
+	  mvars.cueing_on = 0;
 	}
 	glx_nslots = 1<<glx_nslots;
 	if( glx_nslots > NSLOTS )  glx_nslots = NSLOTS;
@@ -1738,7 +1761,8 @@ register char *str;
 	*cp = 0;
 	dbtext(buf);
 # else
-	rt_log("dm-4d: You pressed Help key and '%s'\n", str);
+	Tcl_AppendResult(interp, "dm-glx: You pressed Help key and '",
+			 str, "'\n", (char *)NULL);
 # endif
 #else
 	return;
@@ -1843,13 +1867,14 @@ static void
 establish_zbuffer()
 {
 	if( mvars.zbuf == 0 )  {
-		rt_log("dm-4d: This machine has no Zbuffer to enable\n");
-		mvars.zbuffer_on = 0;
+	  Tcl_AppendResult(interp, "dm-4d: This machine has no Zbuffer to enable\n",
+			   (char *)NULL);
+	  mvars.zbuffer_on = 0;
 	}
 	zbuffer( mvars.zbuffer_on );
 	if( mvars.zbuffer_on)  {
-		/* Set screen coords of near and far clipping planes */
-		lsetdepth(mvars.min_scr_z, mvars.max_scr_z);
+	  /* Set screen coords of near and far clipping planes */
+	  lsetdepth(mvars.min_scr_z, mvars.max_scr_z);
 	}
 	dmaflag = 1;
 }
@@ -2365,9 +2390,19 @@ int	argc;
 char	**argv;
 {
   struct rt_vls	vls;
+  int status;
+  char *av[4];
+  char xstr[32];
+  char ystr[32];
+  char zstr[32];
 
   if( !strcmp( argv[0], "set" )){
+    struct rt_vls tmp_vls;
+
     rt_vls_init(&vls);
+    rt_vls_init(&tmp_vls);
+    start_catching_output(&tmp_vls);
+
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
       rt_structprint("dm_4d internal variables", Glx_vparse, (CONST char *)&mvars );
@@ -2381,113 +2416,97 @@ char	**argv;
       rt_vls_putc( &vls, '\"' );
       rt_structparse( &vls, Glx_vparse, (char *)&mvars);
     }
+
     rt_vls_free(&vls);
-    return CMD_OK;
+
+    stop_catching_output(&tmp_vls);
+    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+    rt_vls_free(&tmp_vls);
+    return TCL_OK;
   }
 
   if( !strcmp( argv[0], "mouse" )){
-    {
-      int buttonpress;
-      int xpos;
-      int ypos;
-
-      if( argc < 4){
-	rt_log("dm: need more parameters\n");
-	rt_log("mouse 1|0 xpos ypos\n");
-	return CMD_BAD;
-      }
-
-      buttonpress = atoi(argv[1]);
-      xpos = atoi(argv[2]);
-      ypos = atoi(argv[3]);
-
-      rt_vls_init(&vls);
-      rt_vls_printf(&vls, "M %d %d %d\n",
-		    buttonpress, irisX2ged(xpos), irisY2ged(ypos));
-      (void)cmdline(&vls, FALSE);
-      rt_vls_free(&vls);
+    if( argc < 4){
+      Tcl_AppendResult(interp, "dm: need more parameters\n",
+		       "mouse 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
     }
 
-    return CMD_OK;
+#if 0
+    sprintf(xstr, "%d", irisX2ged(atoi(argv[2])));
+    sprintf(ystr, "%d", irisY2ged(atoi(argv[3])));
+
+    av[0] = "M";
+    av[1] = argv[1];
+    av[2] = xstr;
+    av[3] = ystr;
+    return f_mouse((ClientData)NULL, interp, 4, av);
+#else
+    rt_vls_init(&vls);
+    rt_vls_printf(&vls, "M %s %d %d\n", argv[1],
+		  irisX2ged(atoi(argv[2])), irisY2ged(atoi(argv[3])));
+    status = cmdline(&vls, FALSE);
+    rt_vls_free(&vls);
+
+    if(status == CMD_OK)
+      return TCL_OK;
+
+    return TCL_ERROR;
+#endif
   }
 
+  status = TCL_OK;
   if(mvars.virtual_trackball){
-  if( !strcmp( argv[0], "vtb" )){
-    int buttonpress;
+    if( !strcmp( argv[0], "vtb" )){
+      int buttonpress;
 
-    if( argc < 5){
-      rt_log("dm: need more parameters\n");
-      rt_log("vtb <r|t|z> 1|0 xpos ypos\n");
-      return CMD_BAD;
-    }
+      if( argc < 5){
+	Tcl_AppendResult(interp, "dm: need more parameters\n",
+			 "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	return TCL_ERROR;
+      }
 
-    buttonpress = atoi(argv[2]);
-    omx = atoi(argv[3]);
-    omy = atoi(argv[4]);
+      buttonpress = atoi(argv[2]);
+      omx = atoi(argv[3]);
+      omy = atoi(argv[4]);
 
-    if(buttonpress){
-      switch(*argv[1]){
-      case 'r':
-	mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
-	break;
-      case 't':
-	{
+      if(buttonpress){
+	switch(*argv[1]){
+	case 'r':
+	  mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
+	  break;
+	case 't':
 	  mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-	  rt_vls_init(&vls);
-	  rt_vls_printf( &vls, "tran %f %f %f\n", (omx/(double)winx_size - 0.5) * 2,
-			 (0.5 - omy/(double)winy_size) * 2, tran_z);
 
-	  (void)cmdline(&vls, FALSE);
-	  rt_vls_free(&vls);
+	  sprintf(xstr, "%f", (omx/(double)winx_size - 0.5) * 2);
+	  sprintf(ystr, "%f", (0.5 - omy/(double)winy_size) * 2);
+	  sprintf(zstr, "%f", tran_z);
+	  av[0] = "tran";
+	  av[1] = xstr;
+	  av[2] = ystr;
+	  av[3] = zstr;
+	  status = f_tran((ClientData)NULL, interp, 4, av);
+
+	  break;
+	case 'z':
+	  mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
+	  break;
+	default:
+	  Tcl_AppendResult(interp, "dm: need more parameters\n",
+			   "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
-	break;
-      case 'z':
-	mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
-	break;
-      default:
-	rt_log("dm: need more parameters\n");
-	rt_log("vtb <r|t|z> 1|0 xpos ypos\n");
-	return CMD_BAD;
-      }
+      }else
+	mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
 
-#if 0
-/*XXX This doesn't work properly. The Xserver seems to be freezing the motion
-      events while the mouse button is still depressed. Sooo, I've decided to
-      just select motion events prior to using the virtual trackball stuff. This
-      is done when explicity turning on the virtual trackball stuff
-      (i.e. dm set virtual_trackball 1).
- */
-      if(state != ST_S_PICK && state != ST_O_PICK &&
-	 state != ST_O_PATH && state != ST_S_VPICK){
-
-	/* turn constant tracking ON */
-	XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
-		     KeyPressMask|StructureNotifyMask|PointerMotionMask|ButtonMotionMask);
-
-      }
-#endif
-    }else{
-      mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
-
-#if 0
-      if(state != ST_S_PICK && state != ST_O_PICK &&
-	 state != ST_O_PATH && state != ST_S_VPICK){
-
-	/* turn constant tracking OFF */
-	XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
-		     KeyPressMask|StructureNotifyMask);
-      }
-#endif
+      return status;
     }
-
-    return CMD_OK;
-  }
   }else{
-    return CMD_OK;
+    return status;
   }
 
-  rt_log("dm: bad command - %s\n", argv[0]);
-  return CMD_BAD;
+  Tcl_AppendResult(interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
+  return TCL_ERROR;
 }
 
 static void

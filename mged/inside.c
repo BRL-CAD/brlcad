@@ -142,7 +142,9 @@ static char *p_nmgin[] = {
 /*	F _ I N S I D E ( ) :	control routine...reads all data
  */
 int
-f_inside(argc, argv)
+f_inside(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char **argv;
 {
@@ -156,8 +158,10 @@ char **argv;
 	plane_t	planes[6];
 	struct rt_db_internal	intern;
 	char	*newname;
-
 	int arg = 1;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	(void)signal( SIGINT, sig2);    /* allow interupts */
 
@@ -168,80 +172,88 @@ char **argv;
 	 */
 
 	if( state == ST_S_EDIT ) {
-		/* solid edit mode */
-		/* apply es_mat editing to parameters */
-		transform_editing_solid( &intern, es_mat, &es_int, 0 );
-		outdp = illump->s_path[illump->s_last];
+	  /* solid edit mode */
+	  /* apply es_mat editing to parameters */
+	  transform_editing_solid( &intern, es_mat, &es_int, 0 );
+	  outdp = illump->s_path[illump->s_last];
 
-		rt_log("Outside solid: ");
-		for(i=0; i <= illump->s_last; i++) {
-			rt_log("/%s",illump->s_path[i]->d_namep);
-		}
-		rt_log("\n");
+	  Tcl_AppendResult(interp, "Outside solid: ", (char *)NULL);
+	  for(i=0; i <= illump->s_last; i++) {
+	    Tcl_AppendResult(interp, "/", illump->s_path[i]->d_namep, (char *)NULL);
+	  }
+	  Tcl_AppendResult(interp, "\n", (char *)NULL);
 	}  else if( state == ST_O_EDIT ) {
-		/* object edit mode */
-		if( illump->s_Eflag ) {
-			rt_log("Cannot find inside of a processed (E'd) region\n");
-			return CMD_BAD;
-		}
-		/* use the solid at bottom of path (key solid) */
-		/* apply es_mat and modelchanges editing to parameters */
-		mat_mul(newmat, modelchanges, es_mat);
-		transform_editing_solid( &intern, newmat, &es_int, 0 );
-		outdp = illump->s_path[illump->s_last];
+	  /* object edit mode */
+	  if( illump->s_Eflag ) {
+	     Tcl_AppendResult(interp, "Cannot find inside of a processed (E'd) region\n",
+			      (char *)NULL);
+	     return TCL_ERROR;
+	  }
+	  /* use the solid at bottom of path (key solid) */
+	  /* apply es_mat and modelchanges editing to parameters */
+	  mat_mul(newmat, modelchanges, es_mat);
+	  transform_editing_solid( &intern, newmat, &es_int, 0 );
+	  outdp = illump->s_path[illump->s_last];
 
-		rt_log("Outside solid: ");
-		for(i=0; i <= illump->s_last; i++) {
-			rt_log("/%s",illump->s_path[i]->d_namep);
-		}
-		rt_log("\n");
+	  Tcl_AppendResult(interp, "Outside solid: ", (char *)NULL);
+	  for(i=0; i <= illump->s_last; i++) {
+	    Tcl_AppendResult(interp, "/", illump->s_path[i]->d_namep, (char *)NULL);
+	  }
+	  Tcl_AppendResult(interp, "\n", (char *)NULL);
 	} else {
-		/* Not doing any editing....ask for outside solid */
-		if( argc < arg+1 ) {
-			rt_log("Enter name of outside solid: ");
-			return CMD_MORE;
-		}
-		if( (outdp = db_lookup( dbip,  argv[arg], LOOKUP_NOISY )) == DIR_NULL )  
-			return CMD_BAD;
-		++arg;
+	  /* Not doing any editing....ask for outside solid */
+	  if( argc < arg+1 ) {
+	    Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name of outside solid: ",
+			     (char *)NULL);
+	    return TCL_ERROR;
+	  }
+	  if( (outdp = db_lookup( dbip,  argv[arg], LOOKUP_NOISY )) == DIR_NULL )  
+	    return TCL_ERROR;
+	  ++arg;
 
-		if( rt_db_get_internal( &intern, outdp, dbip, rt_identity ) < 0 ) {
-			READ_ERR;
-			return CMD_BAD;
-		}
+	  if( rt_db_get_internal( &intern, outdp, dbip, rt_identity ) < 0 ) {
+	    TCL_READ_ERR_return;
+	  }
 	}
 
 	if( intern.idb_type == ID_ARB8 )  {
-		/* find the comgeom arb type, & reorganize */
-		int uvec[8],svec[8];
+	  /* find the comgeom arb type, & reorganize */
+	  int uvec[8],svec[8];
 
-		if( rt_arb_get_cgtype( &cgtype , intern.idb_ptr, &mged_tol , uvec , svec ) == 0 ) {
-			rt_log("%s: BAD ARB\n",outdp->d_namep);
-			return CMD_BAD;
-		}
+	  if( rt_arb_get_cgtype( &cgtype , intern.idb_ptr, &mged_tol , uvec , svec ) == 0 ) {
+	    Tcl_AppendResult(interp, outdp->d_namep, ": BAD ARB\n", (char *)NULL);
+	    return TCL_ERROR;
+	  }
 
-		/* must find new plane equations to account for
-		 * any editing in the es_mat matrix or path to this solid.
-		 */
-		if( rt_arb_calc_planes( planes, intern.idb_ptr, cgtype, &mged_tol ) < 0 )  {
-			rt_log("rt_arb_calc_planes(%s): failed\n", outdp->d_namep);
-			return CMD_BAD;
-		}
+	  /* must find new plane equations to account for
+	   * any editing in the es_mat matrix or path to this solid.
+	   */
+	  if( rt_arb_calc_planes( planes, intern.idb_ptr, cgtype, &mged_tol ) < 0 )  {
+	    Tcl_AppendResult(interp, "rt_arb_calc_planes(", outdp->d_namep,
+			     "): failed\n", (char *)NULL);
+	    return TCL_ERROR;
+	  }
 	}
 	/* "intern" is now loaded with the outside solid data */
 
 	/* get the inside solid name */
 	if( argc < arg+1 ) {
-		rt_log("Enter name of the inside solid: ");
-		return CMD_MORE;
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name of the inside solid: ",
+			   (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( db_lookup( dbip, argv[arg], LOOKUP_QUIET ) != DIR_NULL ) {
-		aexists( argv[arg] );
-		return CMD_BAD;
+	  aexists( argv[arg] );
+	  return TCL_ERROR;
 	}
 	if( (int)strlen(argv[arg]) >= NAMESIZE )  {
-		rt_log("Names are limited to %d characters\n", NAMESIZE-1);
-		return CMD_BAD;
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "Names are limited to %d characters\n", NAMESIZE-1);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	  return TCL_ERROR;
 	}
 	newname = argv[arg];
 	++arg;
@@ -284,149 +296,149 @@ char **argv;
 		}
 
 		for(i=0; i<nface; i++) {
-			if( argc < arg+1 ) {
-				rt_log("%s",promp[i]);
-				return CMD_MORE;
-			}
-			thick[i] = atof(argv[arg]) * local2base;
-			++arg;
+		  if( argc < arg+1 ) {
+		    Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
+		    return TCL_ERROR;
+		  }
+		  thick[i] = atof(argv[arg]) * local2base;
+		  ++arg;
 		}
 
 		if( arbin(&intern, thick, nface, cgtype, planes) )
-			return CMD_BAD;
+		  return TCL_ERROR;
 		break;
 	    }
 
 	case ID_TGC:
-		promp = p_tgcin;
-		for(i=0; i<3; i++) {
-			if( argc < arg+1 ) {
-				rt_log("%s",promp[i]);
-				return CMD_MORE;
-			}
-			thick[i] = atof( argv[arg] ) * local2base;
-			++arg;
-		}
+	  promp = p_tgcin;
+	  for(i=0; i<3; i++) {
+	    if( argc < arg+1 ) {
+	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
+	      return TCL_ERROR;
+	    }
+	    thick[i] = atof( argv[arg] ) * local2base;
+	    ++arg;
+	  }
 
-		if( tgcin(&intern, thick) )
-			return CMD_BAD;
-		break;
+	  if( tgcin(&intern, thick) )
+	    return TCL_ERROR;
+	  break;
 
 	case ID_ELL:
-		if( argc < arg+1 ) {
-			rt_log("Enter desired thickness: ");
-			return CMD_MORE;
-		}
-		thick[0] = atof( argv[arg] ) * local2base;
-		++arg;
+	  if( argc < arg+1 ) {
+	    Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter desired thickness: ", (char *)NULL);
+	    return TCL_ERROR;
+	  }
+	  thick[0] = atof( argv[arg] ) * local2base;
+	  ++arg;
 
-		if( ellgin(&intern, thick) )
-			return CMD_BAD;
-		break;
+	  if( ellgin(&intern, thick) )
+	    return TCL_ERROR;
+	  break;
 
 	case ID_TOR:
-		if( argc < arg+1 ) {
-			rt_log("Enter desired thickness: ");
-			return CMD_MORE;
-		}
-		thick[0] = atof( argv[arg] ) * local2base;
-		++arg;
+	  if( argc < arg+1 ) {
+	    Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter desired thickness: ", (char *)NULL);
+	    return TCL_ERROR;
+	  }
+	  thick[0] = atof( argv[arg] ) * local2base;
+	  ++arg;
 
-		if( torin(&intern, thick) )
-			return CMD_BAD;
-		break;
+	  if( torin(&intern, thick) )
+	    return TCL_ERROR;
+	  break;
 
 	case ID_RPC:
-		promp = p_rpcin;
-		for (i = 0; i < 4; i++) {
-			if( argc < arg+1 ) {
-				rt_log("%s",promp[i]);
-				return CMD_MORE;
-			}
-			thick[i] = atof( argv[arg] ) * local2base;
-			++arg;
-		}
+	  promp = p_rpcin;
+	  for (i = 0; i < 4; i++) {
+	    if( argc < arg+1 ) {
+	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
+	      return TCL_ERROR;
+	    }
+	    thick[i] = atof( argv[arg] ) * local2base;
+	    ++arg;
+	  }
 
-		if( rpcin(&intern, thick) )
-			return CMD_BAD;
-		break;
+	  if( rpcin(&intern, thick) )
+	    return TCL_ERROR;
+	  break;
 
 	case ID_RHC:
-		promp = p_rhcin;
-		for (i = 0; i < 4; i++) {
-			if( argc < arg+1 ) {
-				rt_log("%s",promp[i]);
-				return CMD_MORE;
-			}
-			thick[i] = atof( argv[arg] ) * local2base;
-			++arg;
-		}
+	  promp = p_rhcin;
+	  for (i = 0; i < 4; i++) {
+	    if( argc < arg+1 ) {
+	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
+	      return TCL_ERROR;
+	    }
+	    thick[i] = atof( argv[arg] ) * local2base;
+	    ++arg;
+	  }
 
-		if( rhcin(&intern, thick) )
-			return CMD_BAD;
-		break;
+	  if( rhcin(&intern, thick) )
+	    return TCL_ERROR;
+	  break;
 
 	case ID_EPA:
-		promp = p_epain;
-		for (i = 0; i < 2; i++) {
-			if( argc < arg+1 ) {
-				rt_log("%s",promp[i]);
-				return CMD_MORE;
-			}
-			thick[i] = atof( argv[arg] ) * local2base;
-			++arg;
-		}
+	  promp = p_epain;
+	  for (i = 0; i < 2; i++) {
+	    if( argc < arg+1 ) {
+	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
+	      return TCL_ERROR;
+	    }
+	    thick[i] = atof( argv[arg] ) * local2base;
+	    ++arg;
+	  }
 
-		if( epain(&intern, thick) )
-			return CMD_BAD;
-		break;
+	  if( epain(&intern, thick) )
+	    return TCL_ERROR;
+	  break;
 
 	case ID_EHY:
-		promp = p_ehyin;
-		for (i = 0; i < 2; i++) {
-			if( argc < arg+1 ) {
-				rt_log("%s",promp[i]);
-				return CMD_MORE;
-			}
-			thick[i] = atof( argv[arg] ) * local2base;
-			++arg;
-		}
-
-		if( ehyin(&intern, thick) )
-			return CMD_BAD;
-		break;
+	  promp = p_ehyin;
+	  for (i = 0; i < 2; i++) {
+	    if( argc < arg+1 ) {
+	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
+	      return TCL_ERROR;
+	    }
+	    thick[i] = atof( argv[arg] ) * local2base;
+	    ++arg;
+	  }
+	  
+	  if( ehyin(&intern, thick) )
+	    return TCL_ERROR;
+	  break;
 
 	case ID_ETO:
-		promp = p_etoin;
-		for (i = 0; i < 1; i++) {
-			if( argc < arg+1 ) {
-				rt_log("%s",promp[i]);
-				return CMD_MORE;
-			}
-			thick[i] = atof( argv[arg] ) * local2base;
-			++arg;
-		}
+	  promp = p_etoin;
+	  for (i = 0; i < 1; i++) {
+	    if( argc < arg+1 ) {
+	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
+	      return TCL_ERROR;
+	    }
+	    thick[i] = atof( argv[arg] ) * local2base;
+	    ++arg;
+	  }
 
-		if( etoin(&intern, thick) )
-			return CMD_BAD;
-		break;
+	  if( etoin(&intern, thick) )
+	    return TCL_ERROR;
+	  break;
 
 	case ID_NMG:
-		promp = p_nmgin;
-		if( argc < arg+1 ) {
-			rt_log( "%s" , promp[0] );
-			return CMD_MORE;
-		}
-		thick[0] = atof( argv[arg] ) * local2base;
-		++arg;
-		if( nmgin( &intern , thick[0] ) )
-			return CMD_BAD;
-		break;
+	  promp = p_nmgin;
+	  if( argc < arg+1 ) {
+	    Tcl_AppendResult(interp, MORE_ARGS_STR, promp[0], (char *)NULL);
+	    return TCL_ERROR;
+	  }
+	  thick[0] = atof( argv[arg] ) * local2base;
+	  ++arg;
+	  if( nmgin( &intern , thick[0] ) )
+	    return TCL_ERROR;
+	  break;
 
 	default:
-		rt_log("Cannot find inside for '%s' solid\n",
-			rt_functab[intern.idb_type].ft_name );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Cannot find inside for '",
+			   rt_functab[intern.idb_type].ft_name, "' solid\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	/* don't allow interrupts while we update the database! */
@@ -434,12 +446,10 @@ char **argv;
  
 	/* Add to in-core directory */
 	if( (dp = db_diradd( dbip,  newname, -1, 0, DIR_SOLID )) == DIR_NULL )  {
-	    	ALLOC_ERR;
-		return CMD_BAD;
+	  TCL_ALLOC_ERR_return;
 	}
 	if( rt_db_put_internal( dp, dbip, &intern ) < 0 ) {
-		WRITE_ERR;
-		return CMD_BAD;
+	  TCL_WRITE_ERR_return;
 	}
 
 	/* Draw the new solid */
@@ -447,7 +457,7 @@ char **argv;
 		char	*arglist[3];
 		arglist[0] = "e";
 		arglist[1] = newname;
-		return f_edit( 2, arglist );
+		return f_edit(clientData, interp, 2, arglist );
 	}
 }
 
@@ -490,10 +500,10 @@ plane_t	planes[6];
 
 	/* find the new vertices by intersecting the new face planes */
 	for(i=0; i<num_pts; i++) {
-		if( rt_arb_3face_intersect( arb->pt[i], planes, cgtype, i*3 ) < 0 )  {
-			rt_log("cannot find inside arb\n");
-			return(1);
-		}
+	  if( rt_arb_3face_intersect( arb->pt[i], planes, cgtype, i*3 ) < 0 )  {
+	    Tcl_AppendResult(interp, "cannot find inside arb\n", (char *)NULL);
+	    return(1);
+	  }
 	}
 
 	/* The following is code for the special cases of arb5 and arb7
@@ -502,49 +512,60 @@ plane_t	planes[6];
 	 */
 	if( cgtype == 5 )
 	{
-		/* Here we are only concerned with the one vertex where 4 planes intersect
-		 * in the original solid
-		 */
-		point_t pt[4];
-		fastf_t dist0,dist1;
+	  /* Here we are only concerned with the one vertex where 4 planes intersect
+	   * in the original solid
+	   */
+	  point_t pt[4];
+	  fastf_t dist0,dist1;
+	  struct rt_vls tmp_vls;
 
-		/* calculate the four possible intersect points */
-		if( rt_mkpoint_3planes( pt[0] , planes[1] , planes[2] , planes[3] ) )
-		{
-			rt_log( "Cannot find inside arb5\n" );
-			rt_log( "Cannot find intersection of three planes for point 0:\n" );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
-			return( 1 );
-		}
-		if( rt_mkpoint_3planes( pt[1] , planes[2] , planes[3] , planes[4] ) )
-		{
-			rt_log( "Cannot find inside arb5\n" );
-			rt_log( "Cannot find intersection of three planes for point 1:\n" );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
-			return( 1 );
-		}
-		if( rt_mkpoint_3planes( pt[2] , planes[3] , planes[4] , planes[1] ) )
-		{
-			rt_log( "Cannot find inside arb5\n" );
-			rt_log( "Cannot find intersection of three planes for point 2:\n" );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
-			return( 1 );
-		}
-		if( rt_mkpoint_3planes( pt[3] , planes[4] , planes[1] , planes[2] ) )
-		{
-			rt_log( "Cannot find inside arb5\n" );
-			rt_log( "Cannot find intersection of three planes for point 3:\n" );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
-			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
-			return( 1 );
-		}
+	  rt_vls_init(&tmp_vls);
+	  
+	  /* calculate the four possible intersect points */
+	  if( rt_mkpoint_3planes( pt[0] , planes[1] , planes[2] , planes[3] ) )
+	    {
+	      rt_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
+	      rt_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 0:\n" );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+	      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	      rt_vls_free(&tmp_vls);
+	      return( 1 );
+	    }
+	  if( rt_mkpoint_3planes( pt[1] , planes[2] , planes[3] , planes[4] ) )
+	    {
+	      rt_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
+	      rt_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 1:\n" );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+	      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	      rt_vls_free(&tmp_vls);
+	      return( 1 );
+	    }
+	  if( rt_mkpoint_3planes( pt[2] , planes[3] , planes[4] , planes[1] ) )
+	    {
+	      rt_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
+	      rt_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 2:\n" );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+	      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	      rt_vls_free(&tmp_vls);
+	      return( 1 );
+	    }
+	  if( rt_mkpoint_3planes( pt[3] , planes[4] , planes[1] , planes[2] ) )
+	    {
+	      rt_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
+	      rt_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 3:\n" );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+	      rt_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+	      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	      rt_vls_free(&tmp_vls);
+	      return( 1 );
+	    }
 			
 		if( rt_pt3_pt3_equal( pt[0] , pt[1] , &mged_tol ) )
 		{
@@ -608,9 +629,9 @@ plane_t	planes[6];
 		/* get an NMG version of this arb7 */
 		if( rt_functab[ip->idb_type].ft_tessellate( &r , m , ip , &ttol , &mged_tol ) )
 		{
-			rt_log( "Cannot tessellate arb7\n" );
-			rt_functab[ip->idb_type].ft_ifree( ip );
-			return( 1 );
+		  Tcl_AppendResult(interp, "Cannot tessellate arb7\n", (char *)NULL);
+		  rt_functab[ip->idb_type].ft_ifree( ip );
+		  return( 1 );
 		}
 
 		/* move face planes */
@@ -648,9 +669,15 @@ plane_t	planes[6];
 			}
 			if( !found )
 			{
-				rt_log( "Could not move face plane for arb7, face #%d\n" , i );
-				nmg_km( m );
-				return( 1 );
+			  struct rt_vls tmp_vls;
+
+			  rt_vls_init(&tmp_vls);
+			  rt_vls_printf(&tmp_vls,"Could not move face plane for arb7, face #%d\n",
+					i );
+			  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+			  rt_vls_free(&tmp_vls);
+			  nmg_km( m );
+			  return( 1 );
 			}
 		}
 
@@ -668,10 +695,11 @@ plane_t	planes[6];
 
 			if( nmg_in_vert( v , 0 , &mged_tol ) )
 			{
-				rt_log( "Could not find coordinates for inside arb7\n" );
-				nmg_km( m );
-				nmg_tbl( &vert_tab , TBL_FREE , (long *)NULL );
-				return( 1 );
+			  Tcl_AppendResult(interp, "Could not find coordinates for inside arb7\n",
+					   (char *)NULL);
+			  nmg_km( m );
+			  nmg_tbl( &vert_tab , TBL_FREE , (long *)NULL );
+			  return( 1 );
 			}
 		}
 		nmg_tbl( &vert_tab , TBL_FREE , (long *)NULL );
@@ -728,8 +756,8 @@ fastf_t	thick[6];
 
 	VCROSS(hwork, unitA, unitB);
 	if( (dt = VDOT(hwork, unitH)) == 0.0 ) {
-		rt_log("BAD cylinder\n");
-		return(1);
+	  Tcl_AppendResult(interp, "BAD cylinder\n", (char *)NULL);
+	  return(1);
 	}
 	else if( dt < 0.0 )
 		dt = (-dt);
@@ -737,8 +765,8 @@ fastf_t	thick[6];
 	h1 = thick[0] / dt;
 	h2 = thick[1] / dt;
 	if( (ht = dt * mag[0]) == 0.0 ) {
-		rt_log("Cannot find the inside cylinder\n");
-		return(1);
+	  Tcl_AppendResult(interp, "Cannot find the inside cylinder\n", (char *)NULL);
+	  return(1);
 	}
 	dtha = VDOT(unitA, tgc->h);
 	dthb = VDOT(unitB, tgc->h);
@@ -791,14 +819,14 @@ fastf_t			thick[6];
 		return(0);
 
 	if( thick[0] < 0 ) {
-		if( (tor->r_h - thick[0]) > (tor->r_a + .01) ) {
-			rt_log("cannot do: r2 > r1\n");
-			return(1);
-		}
+	  if( (tor->r_h - thick[0]) > (tor->r_a + .01) ) {
+	    Tcl_AppendResult(interp, "cannot do: r2 > r1\n", (char *)NULL);
+	    return(1);
+	  }
 	}
 	if( thick[0] >= tor->r_h ) {
-		rt_log("cannot do: r2 <= 0\n");
-		return(1);
+	  Tcl_AppendResult(interp, "cannot do: r2 <= 0\n", (char *)NULL);
+	  return(1);
 	}
 
 	tor->r_h = tor->r_h - thick[0];
@@ -844,8 +872,14 @@ fastf_t	thick[6];
 		thick[order[2]] = thick[order[2]]/(1.016447*pow(ratio,.071834));
 
 	for(i=0; i<3; i++) {
-		if( (nmag[i] = mag[i] - thick[i]) <= 0.0 )
-			rt_log("Warning: new vector [%d] length <= 0 \n", i);
+	  if( (nmag[i] = mag[i] - thick[i]) <= 0.0 ){
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "Warning: new vector [%d] length <= 0 \n", i);
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
 	}
 	VSCALE(ell->a, ell->a, nmag[0]/mag[0]);
 	VSCALE(ell->b, ell->b, nmag[1]/mag[1]);
@@ -1031,10 +1065,10 @@ fastf_t thick;
 
 	if( RT_LIST_IS_EMPTY( &m->r_hd ) )
 	{
-		rt_log( "No inside created\n" );
-		nmg_km( m );
-		return( 1 );
+	  Tcl_AppendResult(interp, "No inside created\n", (char *)NULL);
+	  nmg_km( m );
+	  return( 1 );
 	}
 	else
-		return( 0 );
+	  return( 0 );
 }

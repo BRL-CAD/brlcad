@@ -39,7 +39,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* Usage:  overlay file.plot [name] */
 int
-f_overlay( argc, argv )
+f_overlay(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -48,14 +50,17 @@ char	**argv;
 	int		ret;
 	struct rt_vlblock	*vbp;
 
-	if( argc <= 2 )
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
+	if( argc == 2 )
 		name = "_PLOT_OVERLAY_";
 	else
 		name = argv[2];
 
 	if( (fp = fopen(argv[1], "r")) == NULL )  {
 		perror(argv[1]);
-		return CMD_BAD;
+		return TCL_ERROR;
 	}
 
 	vbp = rt_vlblock_init();
@@ -63,19 +68,21 @@ char	**argv;
 	fclose(fp);
 	if( ret < 0 )  {
 		rt_vlblock_free(vbp);
-		return CMD_BAD;
+		return TCL_ERROR;
 	}
 
 	cvt_vlblock_to_solids( vbp, name, 0 );
 
 	rt_vlblock_free(vbp);
 	dmaflag = 1;
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* Usage:  labelvert solid(s) */
 int
-f_labelvert( argc, argv )
+f_labelvert(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -84,6 +91,9 @@ char	**argv;
 	struct directory	*dp;
 	mat_t			mat;
 	fastf_t			scale;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	vbp = rt_vlblock_init();
 	mat_idn(mat);
@@ -110,5 +120,5 @@ char	**argv;
 
 	rt_vlblock_free(vbp);
 	dmaflag = 1;
-	return CMD_OK;
+	return TCL_OK;
 }

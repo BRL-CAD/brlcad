@@ -117,6 +117,9 @@ char	**argv;
 	struct directory **dirp, **dirp0;
 	struct rt_vls	str;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	(void)signal( SIGINT, sig2);	/* allow interupts */
 
 	if( argc > 1) {
@@ -148,7 +151,7 @@ char	**argv;
 	vls_col_pr4v( &str, dirp0, (int)(dirp - dirp0));
 	rt_free( (char *)dirp0, "dir_getspace dp[]" );
 
-	Tcl_SetResult(interp, rt_vls_strgrab(&str), TCL_DYNAMIC );
+	Tcl_AppendResult(interp, rt_vls_strgrab(&str), (char *)NULL);
 	return TCL_OK;
 }
 
@@ -158,16 +161,21 @@ char	**argv;
  *  Debugging aid:  dump memory maps
  */
 int
-f_memprint(argc, argv)
+f_memprint(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	rt_log("Display manager free map:\n");
-	rt_memprint( &(dmp->dmr_map) );
-	rt_log("Database free granule map:\n");
-	rt_memprint( &(dbip->dbi_freep) );
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	return CMD_OK;
+  Tcl_AppendResult(interp, "Display manager free map:\n", (char *)NULL);
+  rt_memprint( &(dmp->dmr_map) );
+  Tcl_AppendResult(interp, "Database free granule map:\n", (char *)NULL);
+  rt_memprint( &(dbip->dbi_freep) );
+
+  return TCL_OK;
 }
 
 /*
@@ -375,13 +383,18 @@ dir_summary(flag)
  *  TODO:  Perhaps print all objects, sorted by use count, as an option?
  */
 int
-f_tops(argc, argv)
+f_tops(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register struct directory *dp;
 	register int i;
 	struct directory **dirp, **dirp0;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	(void)signal( SIGINT, sig2);    /* allow interupts */
 
@@ -406,7 +419,7 @@ char	**argv;
 	col_pr4v( dirp0, (int)(dirp - dirp0));
 	rt_free( (char *)dirp0, "dir_getspace" );
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -549,6 +562,9 @@ char **argv;
     register int i, whicharg;
     int regexp, nummatch, thismatch, backslashed;
 
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
+
     nummatch = 0;
     backslashed = 0;
     for ( whicharg = 1; whicharg < argc; whicharg++ ) {
@@ -614,13 +630,18 @@ char **argv;
  *  Find all references to the named objects.
  */
 int
-f_find(argc, argv)
+f_find(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register int	i,j,k;
 	register struct directory *dp;
 	register union record	*rp;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	(void)signal( SIGINT, sig2);    /* allow interupts */
 
@@ -630,8 +651,7 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
-				READ_ERR;
-				return CMD_BAD;
+			  TCL_READ_ERR_return;
 			}
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
@@ -641,15 +661,15 @@ char	**argv;
 					if( strncmp( rp[j].M.m_instname,
 					    argv[k], NAMESIZE) != 0 )
 						continue;
-					rt_log("%s:  member of %s\n",
-						rp[j].M.m_instname,
-						rp[0].c.c_name );
+					Tcl_AppendResult(interp, rp[j].M.m_instname,
+							 ":  member of ", rp[0].c.c_name,
+							 "\n", (char *)NULL);
 				}
 			}
 			rt_free( (char *)rp, "dir_nref recs" );
 		}
 	}
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -659,7 +679,9 @@ char	**argv;
  *  when defining the object, and when referencing it.
  */
 int
-f_prefix(argc, argv)
+f_prefix(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -667,6 +689,9 @@ char	**argv;
 	register union record *rp;
 	register struct directory *dp;
 	char		tempstring[NAMESIZE+2];
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	/* First, check validity, and change node names */
 	for( i = 2; i < argc; i++) {
@@ -676,11 +701,16 @@ char	**argv;
 		}
 
 		if( (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
-			rt_log("'%s%s' too long, must be less than %d characters.\n",
-				argv[1], argv[i],
-				NAMESIZE);
-			argv[i] = "";
-			continue;
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "'%s%s' too long, must be less than %d characters.\n",
+				argv[1], argv[i], NAMESIZE);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+
+		  argv[i] = "";
+		  continue;
 		}
 
 		(void) strcpy( tempstring, argv[1]);
@@ -693,9 +723,10 @@ char	**argv;
 		}
 		/*  Change object name in the directory. */
 		if( db_rename( dbip, dp, tempstring ) < 0 )  {
-			rt_log("error in rename to %s, aborting\n", tempstring );
-			ERROR_RECOVERY_SUGGESTION;
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "error in rename to ", tempstring,
+				   ", aborting\n", (char *)NULL);
+		  TCL_ERROR_RECOVERY_SUGGESTION;
+		  return TCL_ERROR;
 		}
 	}
 
@@ -705,8 +736,7 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
-				READ_ERR;
-				return CMD_BAD;
+			  TCL_READ_ERR_return;
 			}
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
@@ -721,15 +751,14 @@ char	**argv;
 					(void)strncpy(rp[j].M.m_instname,
 						tempstring, NAMESIZE);
 					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 ) {
-						WRITE_ERR;
-						return CMD_BAD;
+					  TCL_WRITE_ERR_return;
 					}
 				}
 			}
 			rt_free( (char *)rp, "dir_nref recs" );
 		}
 	}
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -760,7 +789,9 @@ register struct directory *dp;
 }
 
 int
-f_keep(argc, argv)
+f_keep(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -768,6 +799,9 @@ char	**argv;
 	struct rt_vls		title;
 	struct rt_vls		units;
 	register int		i;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	/* First, clear any existing counts */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -777,13 +811,14 @@ char	**argv;
 
 	/* Alert user if named file already exists */
 	if( (keepfp = fopen( argv[1], "r" ) ) != NULL )  {
-		rt_log("keep:  appending to '%s'\n", argv[1] );
-		fclose(keepfp);
+	  Tcl_AppendResult(interp, "keep:  appending to '", argv[1],
+			   "'\n", (char *)NULL);
+	  fclose(keepfp);
 	}
 
 	if( (keepfp = fopen( argv[1], "a" ) ) == NULL )  {
 		perror( argv[1] );
-		return CMD_BAD;
+		return TCL_ERROR;
 	}
 	
 	/* ident record */
@@ -813,11 +848,11 @@ char	**argv;
 
 	if( mk_id_units( keepfp, rt_vls_addr(&title), rt_vls_addr(&units) ) < 0 )  {
 		perror("fwrite");
-		rt_log("mk_id_units() failed\n");
+		Tcl_AppendResult(interp, "mk_id_units() failed\n", (char *)NULL);
 		fclose(keepfp);
 		rt_vls_free( &title );
 		rt_vls_free( &units );
-		return CMD_BAD;
+		return TCL_ERROR;
 	}
 
 	for(i = 2; i < argc; i++) {
@@ -830,7 +865,7 @@ char	**argv;
 	rt_vls_free( &title );
 	rt_vls_free( &units );
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 #ifdef OLD
@@ -846,6 +881,9 @@ char	**argv;
 {
 	register struct directory *dp;
 	register int j;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	(void)signal( SIGINT, sig2);    /* allow interupts */
 
@@ -914,7 +952,9 @@ int cont;		/* non-zero when continuing partly printed line */
  *	Print out a list of all members and submembers of an object.
  */
 int
-f_tree(argc, argv)
+f_tree(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -925,13 +965,13 @@ char	**argv;
 
 	for ( j = 1; j < argc; j++) {
 		if( j > 1 )
-			rt_log( "\n" );
+		  Tcl_AppendResult(interp, "\n", (char *)NULL);
 		if( (dp = db_lookup( dbip, argv[j], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 		printnode(dp, 0, 0);
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -947,23 +987,31 @@ char prefix;
 	register int	i;
 	register struct directory *nextdp;
 
-	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-		READ_ERR_return;
-
-	for( i=0; i<pathpos; i++) 
-		rt_putchar('\t');
-	if( prefix ) {
-		rt_putchar(prefix);
-		rt_putchar(' ');
+	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ){
+	  TCL_READ_ERR;
+	  return;
 	}
 
-	rt_log("%s", dp->d_namep);
+	for( i=0; i<pathpos; i++) 
+	  Tcl_AppendResult(interp, "\t", (char *)NULL);
+
+	if( prefix ) {
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "%c ", prefix);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
+
+	Tcl_AppendResult(interp, dp->d_namep, (char *)NULL);
 	/* Output Comb and Region flags (-F?) */
 	if( dp->d_flags & DIR_COMB )
-		rt_putchar('/');
+	  Tcl_AppendResult(interp, "/", (char *)NULL);
 	if( dp->d_flags & DIR_REGION )
-		rt_putchar('R');
-	rt_log("\n");
+	  Tcl_AppendResult(interp, "R", (char *)NULL);
+
+	Tcl_AppendResult(interp, "\n", (char *)NULL);
 
 	if( !(dp->d_flags & DIR_COMB) )  {
 		return;
@@ -992,7 +1040,9 @@ char prefix;
  *
  */
 int
-f_mvall(argc, argv)
+f_mvall(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -1001,35 +1051,43 @@ char	**argv;
 	register struct directory *dp;
 	union record	record;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (int)strlen(argv[2]) > NAMESIZE ) {
-		rt_log("ERROR: name length limited to %d characters\n",
-				NAMESIZE);
-		return CMD_BAD;
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "ERROR: name length limited to %d characters\n", NAMESIZE);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	  return TCL_ERROR;
 	}
 
 	/* rename the record itself */
 	if( (dp = db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL)
-		return CMD_BAD;
+	  return TCL_ERROR;
 	if( db_lookup( dbip, argv[2], LOOKUP_QUIET ) != DIR_NULL ) {
-		aexists( argv[2]);
-		return CMD_BAD;
+	  aexists( argv[2]);
+	  return TCL_ERROR;
 	}
 	/*  Change object name in the directory. */
 	if( db_rename( dbip, dp, argv[2] ) < 0 )  {
-		rt_log("error in rename to %s, aborting\n", argv[2] );
-		ERROR_RECOVERY_SUGGESTION;
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "error in rename to ", argv[2],
+			   ", aborting\n", (char *)NULL);
+	  TCL_ERROR_RECOVERY_SUGGESTION;
+	  return TCL_ERROR;
 	}
 
 	/* Change name in the file */
 	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
-		READ_ERR;
-		return CMD_BAD;
+	  TCL_READ_ERR_return;
+	  return TCL_ERROR;
 	}
 	NAMEMOVE( argv[2], record.c.c_name );
 	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
-		WRITE_ERR;
-		return CMD_BAD;
+	  TCL_WRITE_ERR_return;
+	  return TCL_ERROR;
 	}
 
 	/* Examine all COMB nodes */
@@ -1038,8 +1096,7 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
-				READ_ERR;
-				return CMD_BAD;
+			  TCL_READ_ERR_return;
 			}
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
@@ -1052,15 +1109,15 @@ char	**argv;
 					(void)strncpy(rp[j].M.m_instname,
 						argv[2], NAMESIZE);
 					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 ) {
-						WRITE_ERR;
-						return CMD_BAD;
+					  TCL_WRITE_ERR_return;
+					  return TCL_ERROR;
 					}
 				}
 			}
 			rt_free( (char *)rp, "dir_nref recs" );
 		}
 	}
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*	F _ K I L L A L L
@@ -1071,13 +1128,18 @@ char	**argv;
  *
  */
 int
-f_killall(argc, argv)
+f_killall(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register int	i,j,k;
 	register union record *rp;
 	register struct directory *dp;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	(void)signal( SIGINT, sig2);    /* allow interupts */
 
@@ -1088,8 +1150,7 @@ char	**argv;
 				continue;
 again:
 			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
-				READ_ERR;
-				return CMD_BAD;
+			  TCL_READ_ERR_return;
 			}
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
@@ -1102,10 +1163,9 @@ again:
 
 					/* Remove this reference */
 					if( db_delrec( dbip, dp, j ) < 0 )  {
-						rt_log("error in killing reference to '%s', exit MGED and retry\n",
-							argv[k]);
-						ERROR_RECOVERY_SUGGESTION;
-						return CMD_BAD;
+					  Tcl_AppendResult(interp, "error in killing reference to '", argv[k], "', exit MGED and retry\n", (char *)NULL);
+					  TCL_ERROR_RECOVERY_SUGGESTION;
+					  return TCL_ERROR;
 					}
 					rt_free( (char *)rp, "dir_nref recs" );
 					goto again;
@@ -1117,7 +1177,7 @@ again:
 
 	/* ALL references removed...now KILL the object[s] */
 	/* reuse argv[] */
-	return f_kill( argc, argv );
+	return f_kill( clientData, interp, argc, argv );
 }
 
 
@@ -1127,12 +1187,17 @@ again:
  *
  */
 int
-f_killtree(argc, argv)
+f_killtree(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register struct directory *dp;
 	register int i;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	(void)signal( SIGINT, sig2);    /* allow interupts */
 
@@ -1142,7 +1207,7 @@ char	**argv;
 		db_functree( dbip, dp, killtree, killtree );
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -1153,19 +1218,26 @@ killtree( dbip, dp )
 struct db_i	*dbip;
 register struct directory *dp;
 {
-	rt_log("KILL %s:  %s\n",
-		(dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
-		dp->d_namep );
-	eraseobj( dp );
-	if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 )
-		DELETE_ERR_return("");
+  Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+		   ":  ", dp->d_namep, "\n", (char *)NULL);
+
+  eraseobj( dp );
+
+  if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 ){
+    TCL_DELETE_ERR("");
+  }
 }
 
 int
-f_debugdir( argc, argv )
+f_debugdir(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	db_pr_dir( dbip );
-	return CMD_OK;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  db_pr_dir( dbip );
+  return TCL_OK;
 }

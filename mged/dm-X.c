@@ -168,16 +168,11 @@ static int XdoMotion = 0;
  *
  */
 #if 1
-X_open(name)
-char *name;
+X_open()
 {
   x_var_init();
-  rt_vls_init(&pathName);
 
-  if( xsetup(name) )
-    return(1);		/* BAD */
-
-  return(0);			/* OK */
+  return xsetup(dname);
 }
 #else
 X_open()
@@ -233,9 +228,11 @@ X_close()
   if(((struct x_vars *)dm_vars)->xtkwin != 0)
     Tk_DestroyWindow(((struct x_vars *)dm_vars)->xtkwin);
 
-  RT_LIST_DEQUEUE(&((struct x_vars *)dm_vars)->l);
+  if(((struct x_vars *)dm_vars)->l.forw != RT_LIST_NULL)
+    RT_LIST_DEQUEUE(&((struct x_vars *)dm_vars)->l);
+
   rt_free(dm_vars, "X_close: dm_vars");
-  rt_vls_free(&pathName);
+
 #if 0
   Tk_DeleteGenericHandler(Xdoevent, (ClientData)curr_dm_list);
 #else
@@ -551,6 +548,7 @@ XEvent *eventPtr;
   XWindowAttributes xwa;
   struct rt_vls cmd;
   register struct dm_list *save_dm_list;
+  int status = CMD_OK;
 
 #if 1
   save_dm_list = curr_dm_list;
@@ -562,8 +560,6 @@ XEvent *eventPtr;
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
 
-  if(((struct x_vars *)dm_vars)->mvars.debug)
-    rt_log("curr_dm_list: %d\n", (int)curr_dm_list);
 #else
   curr_dm_list = (struct dm_list *)clientData;
 #endif
@@ -655,13 +651,16 @@ XEvent *eventPtr;
     goto end;
   }
 
-  (void)cmdline(&cmd, FALSE);
+  status = cmdline(&cmd, FALSE);
   rt_vls_free(&cmd);
 end:
 #if 1
   curr_dm_list = save_dm_list;
 #endif
-  return TCL_OK;
+  if(status == CMD_OK)
+    return TCL_OK;
+
+  return TCL_ERROR;
 }
 	    
 /*
@@ -697,7 +696,7 @@ X_light( cmd, func )
 int cmd;
 int func;			/* BE_ or BV_ function */
 {
-	return;
+  return;
 }
 
 /* ARGSUSED */
@@ -705,7 +704,7 @@ unsigned
 X_cvtvecs( sp )
 struct solid *sp;
 {
-	return( 0 );
+  return 0;
 }
 
 /*
@@ -715,8 +714,7 @@ unsigned
 X_load( addr, count )
 unsigned addr, count;
 {
-	rt_log("X_load(x%x, %d.)\n", addr, count );
-	return( 0 );
+  return 0;
 }
 
 void
@@ -746,8 +744,9 @@ int	a, b;
 	    XdoMotion = 0;
 	    break;
 	default:
-	    rt_log("X_statechange: unknown state %s\n", state_str[b]);
-	    break;
+	  Tcl_AppendResult(interp, "X_statechange: unknown state ",
+			   state_str[b], "\n", (char *)NULL);
+	  break;
 	}
 
 	/*X_viewchange( DM_CHGV_REDO, SOLID_NULL );*/
@@ -768,8 +767,8 @@ X_colorchange()
 void
 X_debug(lvl)
 {
-	XFlush(((struct x_vars *)dm_vars)->dpy);
-	rt_log("flushed\n");
+  XFlush(((struct x_vars *)dm_vars)->dpy);
+  Tcl_AppendResult(interp, "flushed\n", (char *)NULL);
 }
 
 void
@@ -954,9 +953,7 @@ char	*name;
   rt_vls_printf(&str, "%s %d\n", rt_vls_addr(&pathName), ((struct x_vars *)dm_vars)->width);
 #else
   rt_vls_printf(&str, "%s\n", rt_vls_addr(&pathName));
-  rt_log("pathname = %s\n", rt_vls_addr(&pathName));
 #endif
-
 
   if(cmdline(&str, FALSE) == CMD_BAD){
     rt_vls_free(&str);
@@ -1012,7 +1009,7 @@ char	*name;
   a_color.blue=0;
   a_color.flags = DoRed | DoGreen| DoBlue;
   if ( ! XAllocColor(((struct x_vars *)dm_vars)->dpy, a_cmap, &a_color)) {
-    rt_log( "dm-X: Can't Allocate red\n");
+    Tcl_AppendResult(interp, "dm-X: Can't Allocate red\n", (char *)NULL);
     return -1;
   }
   ((struct x_vars *)dm_vars)->red = a_color.pixel;
@@ -1024,8 +1021,8 @@ char	*name;
     a_color.blue=0<<8;
     a_color.flags = DoRed | DoGreen| DoBlue;
     if ( ! XAllocColor(((struct x_vars *)dm_vars)->dpy, a_cmap, &a_color)) {
-	rt_log( "dm-X: Can't Allocate yellow\n");
-	return -1;
+      Tcl_AppendResult(interp, "dm-X: Can't Allocate yellow\n", (char *)NULL);
+      return -1;
     }
     ((struct x_vars *)dm_vars)->yellow = a_color.pixel;
     if ( ((struct x_vars *)dm_vars)->yellow == ((struct x_vars *)dm_vars)->white )
@@ -1036,8 +1033,8 @@ char	*name;
     a_color.blue=255<<8;
     a_color.flags = DoRed | DoGreen| DoBlue;
     if ( ! XAllocColor(((struct x_vars *)dm_vars)->dpy, a_cmap, &a_color)) {
-	rt_log( "dm-X: Can't Allocate blue\n");
-	return -1;
+      Tcl_AppendResult(interp, "dm-X: Can't Allocate blue\n", (char *)NULL);
+      return -1;
     }
     ((struct x_vars *)dm_vars)->blue = a_color.pixel;
     if ( ((struct x_vars *)dm_vars)->blue == ((struct x_vars *)dm_vars)->white )
@@ -1048,8 +1045,8 @@ char	*name;
     a_color.blue= 128<<8;
     a_color.flags = DoRed | DoGreen| DoBlue;
     if ( ! XAllocColor(((struct x_vars *)dm_vars)->dpy, a_cmap, &a_color)) {
-	rt_log( "dm-X: Can't Allocate gray\n");
-	return -1;
+      Tcl_AppendResult(interp, "dm-X: Can't Allocate gray\n", (char *)NULL);
+      return -1;
     }
     ((struct x_vars *)dm_vars)->gray = a_color.pixel;
     if ( ((struct x_vars *)dm_vars)->gray == ((struct x_vars *)dm_vars)->white )
@@ -1115,7 +1112,8 @@ X_configure_window_shape()
     if ((((struct x_vars *)dm_vars)->fontstruct = XLoadQueryFont(((struct x_vars *)dm_vars)->dpy, FONT9)) == NULL ) {
       /* Try hardcoded backup font */
       if ((((struct x_vars *)dm_vars)->fontstruct = XLoadQueryFont(((struct x_vars *)dm_vars)->dpy, FONTBACK)) == NULL) {
-	rt_log( "dm-X: Can't open font '%s' or '%s'\n", FONT9, FONTBACK );
+	Tcl_AppendResult(interp, "dm-X: Can't open font '", FONT9,
+			 "' or '", FONTBACK, "'\n", (char *)NULL);
 	return;
       }
     }
@@ -1232,9 +1230,18 @@ int argc;
 char *argv[];
 {
   struct rt_vls   vls;
+  int status;
+  char *av[4];
+  char xstr[32];
+  char ystr[32];
+  char zstr[32];
 
   if( !strcmp( argv[0], "set" )){
+    struct rt_vls tmp_vls;
+
     rt_vls_init(&vls);
+    rt_vls_init(&tmp_vls);
+    start_catching_output(&tmp_vls);
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
@@ -1253,83 +1260,99 @@ char *argv[];
     }
 
     rt_vls_free(&vls);
-    return CMD_OK;
+
+    stop_catching_output(&tmp_vls);
+    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+    rt_vls_free(&tmp_vls);
+    return TCL_OK;
   }
 
   if( !strcmp( argv[0], "mouse")){
-    int up;
-    int xpos, ypos;
-
     if( argc < 4){
-      rt_log("dm: need more parameters\n");
-      rt_log("mouse 1|0 xpos ypos\n");
-      return CMD_BAD;
+      Tcl_AppendResult(interp, "dm: need more parameters\n",
+		       "mouse 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
     }
+#if 0
+    sprintf(xstr, "%d", Xx_TO_GED(atoi(argv[2])));
+    sprintf(ystr, "%d", Xy_TO_GED(atoi(argv[3])));
 
-    up = atoi(argv[1]);
-    xpos = atoi(argv[2]);
-    ypos = atoi(argv[3]);
+    av[0] = "M";
+    av[1] = argv[1];
+    av[2] = xstr;
+    av[3] = ystr;
+    return f_mouse((ClientData)NULL, interp, 4, av);
+#else
+    rt_vls_init(&vls);
+    rt_vls_printf(&vls, "M %s %d %d\n", argv[1],
+		  Xx_TO_GED(atoi(argv[2])), Xy_TO_GED(atoi(argv[3])));
+    status = cmdline(&vls, FALSE);
+    rt_vls_free(&vls);
 
-    rt_vls_printf(&dm_values.dv_string, "M %d %d %d\n",
-		  up, Xx_TO_GED(xpos), Xy_TO_GED(ypos));
-    return CMD_OK;
+    if(status == CMD_OK)
+      return TCL_OK;
+
+    return TCL_ERROR;
+#endif
   }
 
+  status = TCL_OK;
   if(((struct x_vars *)dm_vars)->mvars.virtual_trackball){
-  if( !strcmp( argv[0], "vtb" )){
-    int buttonpress;
+    if( !strcmp( argv[0], "vtb" )){
+      int buttonpress;
 
-    if( argc < 5){
-      rt_log("dm: need more parameters\n");
-      rt_log("vtb <r|t|z> 1|0 xpos ypos\n");
-      return CMD_BAD;
-    }
-
-
-    buttonpress = atoi(argv[2]);
-    ((struct x_vars *)dm_vars)->omx = atoi(argv[3]);
-    ((struct x_vars *)dm_vars)->omy = atoi(argv[4]);
-
-    if(buttonpress){
-      switch(*argv[1]){
-      case 'r':
-	((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
-	break;
-      case 't':
-	{
-	  struct rt_vls cmd;
-	  rt_vls_init(&cmd);
-
-	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-	  rt_vls_printf( &cmd, "tran %f %f %f",
-			 ((double)((struct x_vars *)dm_vars)->omx/
-			  ((struct x_vars *)dm_vars)->width - 0.5) * 2,
-			 (0.5 - (double)((struct x_vars *)dm_vars)->omy/
-			  ((struct x_vars *)dm_vars)->height) * 2, tran_z);
-
-	  (void)cmdline(&cmd, FALSE);
-	}
-	break;
-      case 'z':
-	((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
-	break;
-      default:
-	rt_log("dm: need more parameters\n");
-	rt_log("vtb <r|t|z> 1|0 xpos ypos\n");
-	return CMD_BAD;
+      if( argc < 5){
+	Tcl_AppendResult(interp, "dm: need more parameters\n",
+			 "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	return TCL_ERROR;
       }
-    }else{
-      ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
+
+
+      buttonpress = atoi(argv[2]);
+      ((struct x_vars *)dm_vars)->omx = atoi(argv[3]);
+      ((struct x_vars *)dm_vars)->omy = atoi(argv[4]);
+
+      if(buttonpress){
+	switch(*argv[1]){
+	case 'r':
+	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
+	  break;
+	case 't':
+	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
+
+	  sprintf(xstr, "%f", ((double)((struct x_vars *)dm_vars)->omx/
+			       ((struct x_vars *)dm_vars)->width - 0.5) * 2);
+	  sprintf(ystr, "%f", (0.5 - (double)((struct x_vars *)dm_vars)->omy/
+			       ((struct x_vars *)dm_vars)->height) * 2);
+	  sprintf(zstr, "%f", tran_z);
+
+	  av[0] = "tran";
+	  av[1] = xstr;
+	  av[2] = ystr;
+	  av[3] = zstr;
+	  status = f_tran((ClientData)NULL, interp, 4, av);
+
+	  break;
+	case 'z':
+	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
+	  break;
+      default:
+	Tcl_AppendResult(interp, "dm: need more parameters\n",
+			 "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	return TCL_ERROR;
+	}
+      }else{
+	((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
+      }
+
+      return status;
     }
-
-    return CMD_OK;
-  }
   }else{
-    return CMD_OK;
+    return status;
   }
 
-  rt_log("dm: bad command - %s\n", argv[0]);
-  return CMD_BAD;
+  Tcl_AppendResult(interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
+  return TCL_ERROR;
 }
 
 static void
@@ -1400,11 +1423,8 @@ X_load_startup()
     rt_vls_free(&str);
 
     /* Using default */
-    if(Tcl_Eval( interp, x_init_str ) == TCL_ERROR){
-      rt_log("X_load_startup: Error interpreting x_init_str.\n");
-      rt_log("%s\n", interp->result);
+    if(Tcl_Eval( interp, x_init_str ) == TCL_ERROR)
       return -1;
-    }
 
     return 0;
   }
@@ -1412,7 +1432,6 @@ X_load_startup()
   fclose( fp );
 
   if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
-    rt_log("Error reading %s: %s\n", filename, interp->result);
     rt_vls_free(&str);
     return -1;
   }

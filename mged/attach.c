@@ -195,7 +195,7 @@ char *name;
 {
 	register struct solid *sp;
 	struct dm_list *p;
-	struct dm_list *save_dm_list = (struct dm_list *)NULL;
+	struct dm_list *save_dm_list = DM_LIST_NULL;
 
 	if(name != NULL){
 	  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
@@ -211,7 +211,8 @@ char *name;
 	  }
 
 	  if(p == &head_dm_list){
-	    rt_log("release: %s not found\n", name);
+	    Tcl_AppendResult(interp, "release: ", name,
+			     " not found\n", (char *)NULL);
 	    return;
 	  }
 	}else{
@@ -231,25 +232,18 @@ char *name;
 
 	dmp->dmr_close();
 
-	if(save_dm_list == (struct dm_list *)NULL)
-	  curr_dm_list = (struct dm_list *)curr_dm_list->l.forw;
-	else
-	  curr_dm_list = save_dm_list;  /* put it back the way it was */
-
 	if(!--p->s_info->_rc)
 	  rt_free( (char *)p->s_info, "release: s_info" );
 	else if(p->_owner)
 	  find_new_owner(p);
 
+	rt_vls_free(&pathName);
 	RT_LIST_DEQUEUE( &p->l );
 	rt_free( (char *)p, "release: curr_dm_list" );
 
-	/* 
-	 * If there are any more active displays other than that which is
-         * found in head_dm_list, then assign that as the current dm_list.
-	 */
-	if( curr_dm_list == &head_dm_list &&
-	    (struct dm_list *)head_dm_list.l.forw != &head_dm_list)
+	if(save_dm_list != DM_LIST_NULL)
+	  curr_dm_list = save_dm_list;
+	else
 	  curr_dm_list = (struct dm_list *)head_dm_list.l.forw;
 }
 
@@ -396,34 +390,24 @@ get_attached()
 	attach( (*dp)->dmr_name );
 }
 
-void
+int
 reattach()
 {
-  char *name;
-
-#if 0
-  if(curr_dm_list == &head_dm_list)
-    return;
-
-  name = strdup(dmp->dmr_name);
-  release(NULL);
-  attach(name);
-  free((void *)name);
-
-  dmaflag = 1;
-#else
   struct rt_vls cmd;
+  int status;
 
   rt_vls_init(&cmd);
   rt_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
   release(NULL);
-  cmdline(&cmd, FALSE);
+  status = cmdline(&cmd, FALSE);
   rt_vls_free(&cmd);
-#endif
+  return status;
 }
 
 int
-f_attach( argc, argv )
+f_attach(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
@@ -432,15 +416,17 @@ char    **argv;
   register struct dm_list *dmlp;
   register struct dm_list *o_dm_list;
 
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
   if(argc == 1){
-    rt_log("attach (");
     dp = &which_dm[0];
-    rt_log("%s", (*dp++)->dmr_name);
+    Tcl_AppendResult(interp, MORE_ARGS_STR, "attach (", (*dp++)->dmr_name, (char *)NULL);
     for( ; *dp != (struct dm *)0; dp++ )
-      rt_log("|%s", (*dp)->dmr_name);
-    rt_log(")[%s]? ", which_dm[0]->dmr_name);
+      Tcl_AppendResult(interp, "|", (*dp)->dmr_name, (char *)NULL);
+    Tcl_AppendResult(interp, ")? ",  (char *)NULL);
     
-    return CMD_MORE;
+    return TCL_ERROR;
   }
 
   for( dp = &which_dm[0]; *dp != (struct dm *)0; dp++ )
@@ -452,21 +438,7 @@ char    **argv;
 
   /* The Null display manager is already attached */
   if(dp == &which_dm[0])
-    return CMD_OK;
-
-#if 0
-  if(argc == 2){
-    rt_log("X Display: ? ");
-    return CMD_MORE;
-  }
-#endif
-
-  dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list), "dm_list");
-  bzero((void *)dmlp, sizeof(struct dm_list));
-  RT_LIST_APPEND(&head_dm_list.l, &dmlp->l);
-  o_dm_list = curr_dm_list;
-  curr_dm_list = dmlp;
-  dmp = *dp;
+    return TCL_OK;
 
   if(argc == 2){
     char  *envp;
@@ -482,16 +454,25 @@ char    **argv;
       envp = display;
     }
 
-    dm_var_init(o_dm_list, envp);
-  }else
+    Tcl_AppendResult(interp, MORE_ARGS_STR, "Display [", envp, "]? ", (char *)NULL);
+    rt_vls_printf(&curr_cmd_list->more_default, "%s", envp);
+    return TCL_ERROR;
+  }else{
+    dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list), "dm_list");
+    bzero((void *)dmlp, sizeof(struct dm_list));
+    RT_LIST_APPEND(&head_dm_list.l, &dmlp->l);
+    o_dm_list = curr_dm_list;
+    curr_dm_list = dmlp;
+    dmp = *dp;
     dm_var_init(o_dm_list, argv[2]);
+  }
 
   no_memory = 0;
   if( dmp->dmr_open() )
     goto Bad;
 
-  rt_log("ATTACHING %s (%s)\n",
-	 dmp->dmr_name, dmp->dmr_lname);
+  Tcl_AppendResult(interp, "ATTACHING ", dmp->dmr_name, " (", dmp->dmr_lname,
+		   ")\n", (char *)NULL);
 
   FOR_ALL_SOLIDS( sp )  {
     /* Write vector subs into new display processor */
@@ -508,15 +489,15 @@ char    **argv;
   color_soltab();
   dmp->dmr_viewchange( DM_CHGV_REDO, SOLID_NULL );
   ++dmaflag;
-  return CMD_OK;
+  return TCL_OK;
 
 Bad:
-  rt_log("attach(%s): BAD\n", argv[1]);
+  Tcl_AppendResult(interp, "attach(", argv[1], "): BAD\n", (char *)NULL);
 
   if(*dp != (struct dm *)0)
     release(NULL);
 
-  return CMD_BAD;
+  return TCL_ERROR;
 }
 
 
@@ -526,23 +507,22 @@ Bad:
  *  Run a display manager specific command(s).
  */
 int
-f_dm(argc, argv)
+f_dm(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	if( !dmp->dmr_cmd )  {
-		rt_log("The '%s' display manager does not support any local commands.\n", dmp->dmr_name);
-		return CMD_BAD;
-	}
+  if( !dmp->dmr_cmd )  {
+    Tcl_AppendResult(interp, "The '", dmp->dmr_name,
+		     "' display manager does not support any local commands.\n", (char *)NULL);
+    return TCL_ERROR;
+  }
 
-#if 0
-/* mged_cmd already checks for this */
-	if( argc-1 < 1 )  {
-		rt_log("'dm' command requires an argument.\n");
-		return CMD_BAD;
-	}
-#endif
-	return dmp->dmr_cmd( argc-1, argv+1 );
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  return dmp->dmr_cmd( argc-1, argv+1 );
 }
 
 /*
@@ -560,13 +540,18 @@ is_dm_null()
 
 
 int
-f_tie( argc, argv )
+f_tie(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
   struct dm_list *p;
   struct dm_list *p1 = (struct dm_list *)NULL;
   struct dm_list *p2 = (struct dm_list *)NULL;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
   for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     if(p1 == (struct dm_list *)NULL && !strcmp(argv[1], rt_vls_addr(&p->_pathName)))
@@ -578,8 +563,9 @@ char    **argv;
   }
 
   if(p1 == (struct dm_list *)NULL || p2 == (struct dm_list *)NULL){
-    rt_log("Bad pathname(s)\n\tpathName1: %s\t\tpathName2: %s\n", argv[1], argv[2]);
-    return CMD_BAD;
+    Tcl_AppendResult(interp, "Bad pathname(s)\n\tpathName1: ", argv[1],
+		     "\t\tpathName2: ", argv[2], "\n", (char *)NULL);
+    return TCL_ERROR;
   }
 
   /* free p1's s_info struct if not being used */
@@ -598,7 +584,7 @@ char    **argv;
   ++p2->s_info->_rc;
 
   dmaflag = 1;
-  return CMD_OK;
+  return TCL_OK;
 }
 
 void
@@ -615,7 +601,7 @@ struct dm_list *op;
     }
   }
 
-    rt_log("find_new_owner: Failed to find a new owner\n");
+  Tcl_AppendResult(interp, "find_new_owner: Failed to find a new owner\n", (char *)NULL);
 }
 
 
@@ -627,8 +613,14 @@ char *name;
   curr_dm_list->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
 							    "shared_info");
   bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
-  strcpy(dname, name);
+#if 1
+  bcopy((void *)&default_mged_variables, (void *)&mged_variables, sizeof(struct _mged_variables));
+#else
   mged_variables = default_mged_variables;
+#endif
+
+  rt_vls_init(&pathName);
+  strcpy(dname, name);
   mat_copy( Viewrot, initial_dm_list->s_info->_Viewrot );
   size_reset();
   new_mats();

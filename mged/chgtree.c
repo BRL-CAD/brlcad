@@ -61,40 +61,48 @@ void	aexists();
 /* Rename an object */
 /* Format: n oldname newname	*/
 int
-f_name( argc, argv )
+f_name(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register struct directory *dp;
 	union record record;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( argv[2] );
-		return CMD_BAD;
+	  aexists( argv[2] );
+	  return TCL_ERROR;
 	}
 
 	/*  Change object name in the directory. */
 	if( db_rename( dbip, dp, argv[2] ) < 0 ||
 	    db_get( dbip,  dp, &record, 0 , 1) < 0 )  {
-		rt_log("error in rename to %s, aborting\n", argv[2] );
-	    	ERROR_RECOVERY_SUGGESTION;
-	    	return CMD_BAD;
+	  Tcl_AppendResult(interp, "error in rename to ", argv[2],
+			   ", aborting\n", (char *)NULL);
+	  TCL_ERROR_RECOVERY_SUGGESTION;
+	  return TCL_ERROR;
 	}
 
 	/* Change name in the file */
 	NAMEMOVE( argv[2], record.c.c_name );
 	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) { WRITE_ERR; return CMD_BAD; }
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* Copy an object */
 /* Format: cp oldname newname	*/
 int
-f_copy( argc, argv )
+f_copy(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -102,17 +110,19 @@ char	**argv;
 	register struct directory *dp;
 	struct rt_external external;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( argv[2] );
-		return CMD_BAD;
+	  aexists( argv[2] );
+	  return TCL_ERROR;
 	}
 
 	if( db_get_external( &external , proto , dbip ) ) {
-		READ_ERR;
-		return CMD_BAD;
+	  TCL_READ_ERR_return;
 	}
 
 	/* no interuprts */
@@ -120,53 +130,63 @@ char	**argv;
 
 	if( (dp=db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags)) == DIR_NULL ||
 	    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
-	    	ALLOC_ERR;
-		return CMD_BAD;
+	  TCL_ALLOC_ERR_return;
 	}
 
 	if (db_put_external( &external, dp, dbip ) < 0 )
 	{
-		db_free_external( &external );
-		WRITE_ERR;
-		return CMD_BAD;
+	  db_free_external( &external );
+	  TCL_WRITE_ERR_return;
 	}
 	db_free_external( &external );
 
 	/* draw the new object */
-	return f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */
+	return f_edit( clientData, interp, 2, argv+1 );	/* depends on name being in argv[2] ! */
 }
 
 /* Create an instance of something */
 /* Format: i object combname [op]	*/
 int
-f_instance( argc, argv )
+f_instance(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register struct directory *dp;
 	char oper;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	oper = UNION;
 	if( argc == 4 )
 		oper = argv[3][0];
 	if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
-		rt_log("bad operation: %c\n", oper );
-		return CMD_BAD;
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "bad operation: %c\n", oper );
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	  return TCL_ERROR;
 	}
 	if( combadd( dp, argv[2], 0, oper, 0, 0 ) == DIR_NULL )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* add solids to a region or create the region */
 /* and then add solids */
 /* Format: r regionname opr1 sol1 opr2 sol2 ... oprn soln */
 int
-f_region( argc, argv )
+f_region(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -176,58 +196,69 @@ char	**argv;
 	int ident, air;
 	char oper;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
  	ident = item_default;
  	air = air_default;
  
 	/* Check for even number of arguments */
 	if( argc & 01 )  {
-		rt_log("error in number of args!\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "error in number of args!\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) == DIR_NULL ) {
 		/* will attempt to create the region */
 		if(item_default) {
-			item_default++;
-			rt_log("Defaulting item number to %d\n", item_default);
+		  struct rt_vls tmp_vls;
+
+		  item_default++;
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "Defaulting item number to %d\n", item_default);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
 		}
 	}
 
 	/* Get operation and solid name for each solid */
 	for( i = 2; i < argc; i += 2 )  {
 		if( argv[i][1] != '\0' )  {
-			rt_log("bad operation: %s skip member: %s\n",
-				argv[i], argv[i+1] );
-			continue;
+		  Tcl_AppendResult(interp, "bad operation: ", argv[i],
+				   " skip member: ", argv[i+1], "\n", (char *)NULL);
+		  continue;
 		}
 		oper = argv[i][0];
 		if( (dp = db_lookup( dbip,  argv[i+1], LOOKUP_NOISY )) == DIR_NULL )  {
-			rt_log("skipping %s\n", argv[i+1] );
-			continue;
+		  Tcl_AppendResult(interp, "skipping ", argv[i+1], "\n", (char *)NULL);
+		  continue;
 		}
 
 		if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
-			rt_log("bad operation: %c skip member: %s\n",
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
 				oper, dp->d_namep );
-			continue;
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+		  continue;
 		}
 
 		if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
-			READ_ERR;
-			return CMD_BAD;
+		  TCL_READ_ERR_return;
 		}
 		
 		if( record.u_id == ID_COMB ) {
-			if( record.c.c_flags == 'R' ) {
-				rt_log(
-				     "Note: %s is a region\n",
-				     dp->d_namep );
-			}
+		  if( record.c.c_flags == 'R' ) {
+		    Tcl_AppendResult(interp, "Note: ", dp->d_namep,
+				     " is a region\n", (char *)NULL);
+		  }
 		}
 
 		if( combadd( dp, argv[1], 1, oper, ident, air ) == DIR_NULL )  {
-			rt_log("error in combadd\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "error in combadd\n", (char *)NULL);
+		  return TCL_ERROR;
 		}
 	}
 
@@ -235,10 +266,10 @@ char	**argv;
 		/* failed to create region */
 		if(item_default > 1)
 			item_default--;
-		return CMD_BAD;
+		return TCL_ERROR;
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /*
@@ -250,7 +281,9 @@ char	**argv;
  *  Format: comb comb_name sol1 opr2 sol2 ... oprN solN
  */
 int
-f_comb( argc, argv )
+f_comb(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -259,10 +292,13 @@ char	**argv;
 	register int	i;
 	char	oper;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	/* Check for odd number of arguments */
 	if( argc & 01 )  {
-		rt_log("error in number of args!\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "error in number of args!\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	/* Save combination name, for use inside loop */
@@ -271,40 +307,47 @@ char	**argv;
 	/* Get operation and solid name for each solid */
 	for( i = 2; i < argc; i += 2 )  {
 		if( argv[i][1] != '\0' )  {
-			rt_log("bad operation: %s skip member: %s\n",
-				argv[i], argv[i+1] );
-			continue;
+		  Tcl_AppendResult(interp, "bad operation: ", argv[i],
+				   " skip member: ", argv[i+1], "\n", (char *)NULL);
+		  continue;
 		}
 		oper = argv[i][0];
 		if( (dp = db_lookup( dbip,  argv[i+1], LOOKUP_NOISY )) == DIR_NULL )  {
-			rt_log("skipping %s\n", argv[i+1] );
-			continue;
+		  Tcl_AppendResult(interp, "skipping ", argv[i+1], "\n", (char *)NULL);
+		  continue;
 		}
 
 		if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
-			rt_log("bad operation: %c skip member: %s\n",
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
 				oper, dp->d_namep );
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
 			continue;
 		}
 
 		if( combadd( dp, comb_name, 0, oper, 0, 0 ) == DIR_NULL )  {
-			rt_log("error in combadd\n");
-			return CMD_BAD;
+		  Tcl_AppendResult(interp, "error in combadd\n", (char *)NULL);
+		  return TCL_ERROR;
 		}
 	}
 
 	if( db_lookup( dbip, comb_name, LOOKUP_QUIET) == DIR_NULL ) {
-		rt_log("Error:  %s not created\n", comb_name );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Error:  ", comb_name,
+			   " not created\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* Remove an object or several from the description */
 /* Format: kill [-f] object1 object2 .... objectn	*/
 int
-f_kill( argc, argv )
+f_kill(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -312,6 +355,9 @@ char	**argv;
 	register int i;
 	int	is_phony;
 	int	verbose = LOOKUP_NOISY;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	if( argc > 1 && strcmp( argv[1], "-f" ) == 0 )  {
 		verbose = LOOKUP_QUIET;
@@ -328,41 +374,47 @@ char	**argv;
 
 			if( db_delete( dbip, dp ) < 0 ||
 			    db_dirdelete( dbip, dp ) < 0 )  {
-			    	DELETE_ERR(argv[i]);
-			    	/* Abort kill processing on first error */
-				return CMD_BAD;
+			  /* Abort kill processing on first error */
+			  TCL_DELETE_ERR_return(argv[i]);
 			}
 		}
 	}
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* Grouping command */
 /* Format: g groupname object1 object2 .... objectn	*/
 int
-f_group( argc, argv )
+f_group(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
 	register struct directory *dp;
 	register int i;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	/* get objects to add to group */
 	for( i = 2; i < argc; i++ )  {
 		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL )  {
 			if( combadd( dp, argv[1], 0,
-				UNION, 0, 0) == DIR_NULL )
-				return CMD_BAD;
+				     UNION, 0, 0) == DIR_NULL )
+			  return TCL_ERROR;
 		}  else
-			rt_log("skip member %s\n", argv[i]);
+		  Tcl_AppendResult(interp, "skip member ", argv[i], "\n", (char *)NULL);
 	}
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* Delete members of a combination */
 /* Format: D comb memb1 memb2 .... membn	*/
 int
-f_rm( argc, argv )
+f_rm(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -370,33 +422,37 @@ char	**argv;
 	register int i, rec, num_deleted;
 	union record record;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	/* Examine all the Member records, one at a time */
 	num_deleted = 0;
 top:
 	for( rec = 1; rec < dp->d_len; rec++ )  {
 		if( db_get( dbip,  dp, &record, rec , 1) < 0 ) {
-			READ_ERR;
-			return CMD_BAD;
+		  TCL_READ_ERR_return;
 		}
 		/* Compare this member to each command arg */
 		for( i = 2; i < argc; i++ )  {
-			if( strcmp( argv[i], record.M.m_instname ) != 0 )
-				continue;
-			rt_log("deleting member %s\n", argv[i] );
-			if( db_delrec( dbip, dp, rec ) < 0 )  {
-				rt_log("Error in deleting member.\n");
-				ERROR_RECOVERY_SUGGESTION;
-				return CMD_BAD;
-			}
-			num_deleted++;
-			goto top;
+		  if( strcmp( argv[i], record.M.m_instname ) != 0 )
+		    continue;
+
+		  Tcl_AppendResult(interp, "deleting member ", argv[i],
+				   "\n", (char *)NULL);
+		  if( db_delrec( dbip, dp, rec ) < 0 )  {
+		    Tcl_AppendResult(interp, "Error in deleting member.\n", (char *)NULL);
+		    TCL_ERROR_RECOVERY_SUGGESTION;
+		    return TCL_ERROR;
+		  }
+		  num_deleted++;
+		  goto top;
 		}
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* Copy a cylinder and position at end of original cylinder
@@ -406,7 +462,9 @@ top:
  * Format: cpi old new
  */
 int
-f_copy_inv( argc, argv )
+f_copy_inv(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -418,34 +476,38 @@ char	**argv;
 	int id;
 	int ngran;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( argv[2] );
-		return CMD_BAD;
+	  aexists( argv[2] );
+	  return TCL_ERROR;
 	}
 
 	/* get external representation of slid to be copied */
 	if( db_get_external( &external, proto, dbip )) {
-		READ_ERR;
-		return CMD_BAD;
+	  TCL_READ_ERR_return;
 	}
 
 	/* make sure it is a TGC */
 	id = rt_id_solid( &external );
 	if( id != ID_TGC )
 	{
-		rt_log( "f_copy_inv: %d is not a cylinder\n" , argv[1] );
-		db_free_external( &external );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "f_copy_inv: ", argv[1],
+			   " is not a cylinder\n", (char *)NULL);
+	  db_free_external( &external );
+	  return TCL_ERROR;
 	}
 
 	/* import the TGC */
 	if( rt_functab[id].ft_import( &internal , &external , rt_identity ) < 0 )
 	{
-		rt_log( "f_copy_inv: import failure for %s\n" , argv[1] );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "f_copy_inv: import failure for ",
+			   argv[1], "\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	db_free_external( &external );
 
@@ -457,9 +519,9 @@ char	**argv;
 	/* now export the new TGC */
 	if( rt_functab[internal.idb_type].ft_export( &external, &internal, (double)1.0 ) < 0 )
 	{
-		rt_log( "f_copy_inv: export failure\n" );
-		rt_functab[internal.idb_type].ft_ifree( &internal );
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "f_copy_inv: export failure\n", (char *)NULL);
+	  rt_functab[internal.idb_type].ft_ifree( &internal );
+	  return TCL_ERROR;
 	}
 	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
@@ -475,27 +537,25 @@ char	**argv;
 	    db_alloc( dbip, dp, 1 ) < 0 )
 	    {
 	    	db_free_external( &external );
-	    	ALLOC_ERR;
-		return CMD_BAD;
+	    	TCL_ALLOC_ERR_return;
 	    }
 
 	if (db_put_external( &external, dp, dbip ) < 0 )
 	{
 		db_free_external( &external );
-		WRITE_ERR;
-		return CMD_BAD;
+		TCL_WRITE_ERR_return;
 	}
 	db_free_external( &external );
 
 	/* draw the new solid */
-	f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */
+	f_edit( clientData, interp, 2, argv+1 );	/* depends on name being in argv[2] ! */
 
 	if(state == ST_VIEW) {
-		/* solid edit this new cylinder */
-		f_sed( 2, argv+1 );	/* new name in argv[2] */
+	  /* solid edit this new cylinder */
+	  f_sed( clientData, interp, 2, argv+1 );	/* new name in argv[2] */
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* XXX Move to raytrace.h */
@@ -516,7 +576,9 @@ RT_EXTERN(struct animate	*db_parse_1anim, (struct db_i *dbip,
  *  commands from the script language.
  */
 int
-f_arced( argc, argv )
+f_arced(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -527,15 +589,19 @@ char	**argv;
 	union record		*rec;
 	int			i;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( not_state( ST_VIEW, "Arc edit" ) )  return CMD_BAD;
 
 	if( !strchr( argv[1], '/' ) )  {
-		rt_log("arced: bad path specification '%s'\n", argv[1]);
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "arced: bad path specification '", argv[1],
+			   "'\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 	if( !(anp = db_parse_1anim( dbip, argc, (CONST char **)argv ) ) )  {
-		rt_log("arced: unable to parse command\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "arced: unable to parse command\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 #if 0
 	if( anp->an_path.fp_len != 2 )  {
@@ -557,20 +623,26 @@ char	**argv;
 	/* Load the combination into memory */
 	dp = anp->an_path.fp_names[0];
 	if( (rec = db_getmrec( dbip, dp )) == (union record *)NULL )  {
-		READ_ERR;
-		db_free_1anim( anp );
-		return CMD_BAD;
+	  TCL_READ_ERR;
+	  db_free_1anim( anp );
+	  return TCL_ERROR;
 	}
 	if( rec[0].u_id != ID_COMB )  {
-		rt_log("%s: not a combination\n", dp->d_namep );
-		goto fail;
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+	  goto fail;
 	}
 
 	/* Search for first mention of arc */
 	for( i=1; i < dp->d_len; i++ )  {
 		if( rec[i].u_id != ID_MEMB )  {
-			rt_log("%s: element %d not a member! Database corrupted.\n", dp->d_namep, i );
-			goto fail;
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "%s: element %d not a member! Database corrupted.\n",
+				dp->d_namep, i);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+		  goto fail;
 		}
 		if( strncmp( rec[i].M.m_instname,
 		    anp->an_path.fp_names[1]->d_namep,
@@ -587,23 +659,23 @@ char	**argv;
 
 		/* Write back */
 		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 )  {
-			rt_log("arced: write error, aborting\n");
-			ERROR_RECOVERY_SUGGESTION;
-			goto fail;
+		  Tcl_AppendResult(interp, "arced: write error, aborting\n", (char *)NULL);
+		  TCL_ERROR_RECOVERY_SUGGESTION;
+		  goto fail;
 		}
 		rt_free( (char *)rec, "union record []");
 		db_free_1anim( anp );
-		return CMD_OK;
+		return TCL_OK;
 	}
 
-	rt_log("Unable to find instance of '%s' in combination '%s', error\n",
-		anp->an_path.fp_names[1]->d_namep,
-		anp->an_path.fp_names[0]->d_namep );
+	Tcl_AppendResult(interp, "Unable to find instance of '",
+			 anp->an_path.fp_names[1]->d_namep, "' in combination '",
+			 anp->an_path.fp_names[0]->d_namep, "', error\n", (char *)NULL);
 		
 fail:
 	rt_free( (char *)rec, "union record []");
 	db_free_1anim( anp );
-	return CMD_BAD;
+	return TCL_ERROR;
 }
 
 /*
@@ -643,13 +715,16 @@ Tcl_Interp	*interp;
 int		argc;
 char	        **argv;
 {
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	mged_initial_tree_state.ts_ttol = &mged_ttol;
 	mged_initial_tree_state.ts_tol = &mged_tol;
 
 	if( db_walk_tree( dbip, argc-1, (CONST char **)argv+1, 1,
 			 &mged_initial_tree_state,
 			 0, 0, pathlist_leaf_func ) < 0 )  {
-	    	Tcl_SetResult(interp, "db_walk_tree() error", TCL_STATIC);
+	    	Tcl_AppendResult(interp, "db_walk_tree() error", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -681,7 +756,15 @@ register struct db_full_path	*pathp;
 		ret = sp;
 		count++;
 	}
-	if( count > 1 )  rt_log("find_solid_with_path() found %d matches\n", count);
+	if( count > 1 ){
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls,"find_solid_with_path() found %d matches\n", count);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
+
 	return ret;
 }
 
@@ -709,32 +792,31 @@ char      	**argv;
 	char			*new_argv[4];
 	char			number[32];
 
-	if( argc != 3 )  {
-		Tcl_SetResult(interp, "Usage: oed path_lhs path_rhs", TCL_STATIC);
-		return TCL_ERROR;
-	}
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	if( not_state( ST_VIEW, "Object Illuminate" ) )  {
-		Tcl_SetResult(interp, "MGED state is not VIEW", TCL_STATIC);
+		Tcl_AppendResult(interp, "MGED state is not VIEW", (char *)NULL);
 		return TCL_ERROR;
 	}
 	if( HeadSolid.s_forw == &HeadSolid )  {
-		Tcl_SetResult(interp, "no solids in view", TCL_STATIC);
+		Tcl_AppendResult(interp, "no solids in view", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if( db_string_to_path( &lhs, dbip, argv[1] ) < 0 )  {
-		Tcl_SetResult(interp, "bad lhs path", TCL_STATIC);
+		Tcl_AppendResult(interp, "bad lhs path", (char *)NULL);
 		return TCL_ERROR;
 	}
 	if( db_string_to_path( &rhs, dbip, argv[2] ) < 0 )  {
 		db_free_full_path( &lhs );
-		Tcl_SetResult(interp, "bad rhs path", TCL_STATIC);
+		Tcl_AppendResult(interp, "bad rhs path", (char *)NULL);
 		return TCL_ERROR;
 	}
 	if( rhs.fp_len <= 0 )  {
 		db_free_full_path( &lhs );
 		db_free_full_path( &rhs );
-		Tcl_SetResult(interp, "rhs must not be null", TCL_STATIC);
+		Tcl_AppendResult(interp, "rhs must not be null", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -763,7 +845,7 @@ char      	**argv;
 		db_free_full_path( &lhs );
 		db_free_full_path( &rhs );
 		db_free_full_path( &both );
-		Tcl_SetResult(interp, "Unable to find solid matching path", TCL_STATIC);
+		Tcl_AppendResult(interp, "Unable to find solid matching path", (char *)NULL);
 		illump = 0;
 		(void)chg_state( ST_O_PICK, ST_VIEW, "error recovery");
 		return TCL_ERROR;
@@ -778,18 +860,18 @@ char      	**argv;
 	new_argv[0] = "matpick";
 	new_argv[1] = number;
 	new_argv[2] = NULL;
-	if( f_matpick( 2, new_argv ) != CMD_OK )  {
+	if( f_matpick( clientData, interp, 2, new_argv ) != CMD_OK )  {
 		db_free_full_path( &lhs );
 		db_free_full_path( &rhs );
 		db_free_full_path( &both );
-		Tcl_SetResult(interp, "error detected inside f_matpick", TCL_STATIC);
+		Tcl_AppendResult(interp, "error detected inside f_matpick", (char *)NULL);
 		return TCL_ERROR;
 	}
 	if( not_state( ST_O_EDIT, "Object EDIT" ) )  {
 		db_free_full_path( &lhs );
 		db_free_full_path( &rhs );
 		db_free_full_path( &both );
-		Tcl_SetResult(interp, "MGED state did not advance to Object EDIT", TCL_STATIC);
+		Tcl_AppendResult(interp, "MGED state did not advance to Object EDIT", (char *)NULL);
 		return TCL_ERROR;
 	}
 	db_free_full_path( &lhs );
@@ -822,8 +904,9 @@ char      	**argv;
  *
  */
 int
-f_putmat (argc, argv)
-
+f_putmat (clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 
@@ -835,13 +918,17 @@ char	**argv;
     char		*newargv[20];
     struct rt_vls	*avp;
 
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
+
     if (not_state( ST_VIEW, "Command-line matrix replace"))
-	return CMD_BAD;
+      return TCL_ERROR;
 
     if (!strchr( argv[1], '/'))
     {
-	rt_log("putmat: bad path specification '%s'\n", argv[1]);
-	return CMD_BAD;
+      Tcl_AppendResult(interp, "putmat: bad path specification '",
+		       argv[1], "'\n", (char *)NULL);
+      return TCL_ERROR;
     }
     switch (argc)
     {
@@ -858,8 +945,8 @@ char	**argv;
 	    }
 	    /* This case falls through intentionally */
 	default:
-	    rt_log("error in matrix specification\n");
-	    return CMD_BAD;
+	  Tcl_AppendResult(interp, "error in matrix specification\n", (char *)NULL);
+	  return TCL_ERROR;
     }
     newargv[0] = "arced";
     newargv[1] = argv[1];
@@ -871,17 +958,23 @@ char	**argv;
     {
 	if ((eep = strchr(ep, ' ')) == NULL)
 	{
-	    rt_log("%s:%d: bad matrix.  This shouldn't happen\n",
-		__FILE__, __LINE__);
-	    result = CMD_BAD;
-	    break;
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "%s:%d: bad matrix.  This shouldn't happen\n",
+			__FILE__, __LINE__);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  result = TCL_ERROR;
+	  break;
 	}
 	newargv[4 + i] = ep;
 	*eep = '\0';
 	ep = eep + 1;
     }
-    if (result != CMD_BAD)
-	result = f_arced(20, newargv);
+
+    if (result != TCL_ERROR)
+	result = f_arced(clientData, interp, 20, newargv);
+
     rt_vls_vlsfree(avp);
-    return (result);
+    return result;
 }
