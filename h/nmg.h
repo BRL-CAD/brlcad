@@ -53,7 +53,7 @@
 #	define	NMG_EXTERN(type_and_name,args)	extern type_and_name()
 #endif
 
-#define DEBUG_INS	0x00000001	/* 1 nmg_tbl table insert */
+#define DEBUG_PL_ANIM	0x00000001	/* 1 mged animated evaluation */
 #define DEBUG_FINDEU	0x00000002	/* 2 findeu (find edge[use]) */
 #define DEBUG_CMFACE	0x00000004	/* 3 nmg_cmface() */
 #define DEBUG_COMBINE	0x00000008	/* 4 combine() */
@@ -68,12 +68,12 @@
 #define DEBUG_MESH_EU	0x00001000	/* 13 combine() */
 #define DEBUG_POLYTO	0x00002000	/* 14 combine() */
 #define DEBUG_LABEL_PTS 0x00004000	/* 15 label points in plot files */
-#define DEBUG_PL_ANIM	0x00008000	/* 16 mged animate plotting */
+#define DEBUG_INS	0x00008000	/* 16 nmg_tbl table insert */
 
 #define NMG_DEBUG_FORMAT \
-"\020\020PL_ANIM\017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\013GRAZING\
+"\020\020TBL_INS\017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\013GRAZING\
 \012BOOLEVAL\011CLASSIFY\
-\010BOOL\7PLOTEM\6POLYSECT\5CUTLOOP\4COMBINE\3CMFACE\2FINDEU\1TBL_INS"
+\010BOOL\7PLOTEM\6POLYSECT\5CUTLOOP\4COMBINE\3CMFACE\2FINDEU\1PL_ANIM"
 
 /* Boolean operations */
 #define NMG_BOOL_SUB 1		/* subtraction */
@@ -652,11 +652,13 @@ struct nmg_struct_counts {
  *  is not used, to avoid the possibility of integer overflow from
  *  repeated test-and-set operations on one item.
  */
-#define NMG_INDEX_TEST(tab,p)	( (tab)[(p)->index] )
-#define NMG_INDEX_SET(tab,p)	(tab)[(p)->index] = 1
-#define NMG_INDEX_TEST_AND_SET(tab,p)	\
-	( (tab)[(p)->index] == 0 ? ((tab)[(p)->index] = 1) : 0 )
-#define NMG_INDEX_FIRST_TIME(tab,p)	NMG_INDEX_TEST_AND_SET(tab,p)
+#define NMG_INDEX_VALUE(_tab,_index)	((_tab)[_index])
+#define NMG_INDEX_TEST(_tab,_p)		( (_tab)[(_p)->index] )
+#define NMG_INDEX_SET(_tab,_p)		{(_tab)[(_p)->index] = 1;}
+#define NMG_INDEX_TEST_AND_SET(_tab,_p)	\
+	( (_tab)[(_p)->index] == 0 ? ((_tab)[(_p)->index] = 1) : 0 )
+#define NMG_INDEX_IS_SET(_tab,_p)	NMG_INDEX_TEST(_tab,_p)
+#define NMG_INDEX_FIRST_TIME(_tab,_p)	NMG_INDEX_TEST_AND_SET(_tab,_p)
 
 
 /************************************************************************
