@@ -314,6 +314,8 @@ int	frame;
 		 * SERIAL case -- one CPU does all the work.
 		 */
 		render_Scan(0);
+		view_end();
+		(void) signal( SIGINT, norml_sig );
 		return;
 		}
 	/*
