@@ -59,8 +59,6 @@ static const char RCSdsp[] = "@(#)$Header$ (BRL)";
 
 #define ORDERED_ISECT 1
 
-int old_way = 0;
-
 #define DIM_BB_CHILDREN 4
 #define NUM_BB_CHILDREN (DIM_BB_CHILDREN*DIM_BB_CHILDREN)
 
@@ -173,10 +171,6 @@ struct isect_stuff {
     struct bbox_isect	minbox;
 
     int			num_segs;
-
-    struct seg		*sp;		/* the current segment being filled */
-    short		sp_is_valid;	/* boolean: sp allocated, inhit set */
-    short		sp_is_done;	/* boolean: sp has (outhit) content */
 
     int			dmin, dmax;	/* for dsp_in_rpp , {X,Y,Z}MIN/MAX */
 };
@@ -1109,6 +1103,7 @@ add_seg(struct isect_stuff *isect,
 
     return (++isect->num_segs > isect->ap->a_onehit);
 }
+
 
 /*	I S E C T _ R A Y _ T R I A N G L E
  *
@@ -2327,9 +2322,6 @@ struct seg		*seghead;
 	isect.stp = stp;
 	isect.dsp = (struct dsp_specific *)stp->st_specific;
 	isect.tol = &ap->a_rt_i->rti_tol;
-	isect.sp = (struct seg *)NULL;
-	isect.sp_is_valid = 0;
-	isect.sp_is_done = 0;
 	VINVDIR(isect.inv_dir, isect.r.r_dir);
 	BU_LIST_INIT(&isect.seglist);
 
