@@ -71,6 +71,8 @@ char		*def_fmt[] =
 		    "\"OVERLAP: '%s' and '%s' xyz_in=(%g, %g, %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"
 		};
 extern double	base2local;
+extern struct application	ap;
+extern char		local_u_name[];
 
 void format_output (buffer, ctp)
 
@@ -715,8 +717,10 @@ com_table	*ctp;
 
     printf("Dumping NIRT state to file '%s'...", sf_name);
     fprintf(sfPtr, "%c file created by the dump command of nirt\n", CMT_CHAR);
-    fprintf(sfPtr, "dir %g %g %g\n", direct(X), direct(Y), direct(Z));
     fprintf(sfPtr, "xyz %g %g %g\n", target(X), target(Y), target(Z));
+    fprintf(sfPtr, "dir %g %g %g\n", direct(X), direct(Y), direct(Z));
+    fprintf(sfPtr, "useair %s\n", ap.a_rt_i -> useair);
+    fprintf(sfPtr, "units %s\n", local_u_name);
     if (strcmp(dest_string, "stdout") == 0)
 	fputs("dest default\n", sfPtr);
     else
