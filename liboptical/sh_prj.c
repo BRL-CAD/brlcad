@@ -207,12 +207,12 @@ CONST char				*value;	/* string containing value */
 	mat_inv(xform, img_new->i_sh_to_img);
 
 	MAT4X3VEC(img_new->i_plane, xform, v_tmp);
+	VUNITIZE(img_new->i_plane);
 
 	if( rdebug&RDEBUG_SHADE) {
 		point_t pt;		
 
 #if 0
-		VUNITIZE(img_new->i_plane);
 		img_new->i_plane[H] = 
 			VDOT(img_new->i_plane, img_new->i_eye_pt);
 #endif
@@ -586,7 +586,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	fastf_t	divisor;
 	struct pixel_ext r_pe;	/* region coord version of ap->a_pixelext */
 	fastf_t dist;
-
+	fastf_t weight;
 
 
 	/* check the validity of the arguments we got */
@@ -707,8 +707,12 @@ char			*dp;	/* ptr to the shader-specific struct */
 					continue;
 #endif
 		VSCALE(sh_color, sh_color, cs);
-		VADD2(final_color, final_color, sh_color);
-		divisor++;
+		weight = VDOT( r_N, img_sp->i_plane );
+		if( weight > 0.0 )
+		{
+			VJOIN1(final_color, final_color, weight, sh_color);
+			divisor += weight;
+		}
 	}
 
 	if (divisor > 0.0) {
