@@ -1057,7 +1057,6 @@ struct combined_tree_state	**region_start_statepp;
 genptr_t	client_data;
 {
 	struct directory	*dp;
-	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	union tree		*curtree = TREE_NULL;
 
@@ -1090,15 +1089,16 @@ genptr_t	client_data;
 		struct db_tree_state	nts;
 		int			is_region;
 
-		/*  Handle inheritance of material property. */
-		db_dup_db_tree_state( &nts, tsp );
-
+	    	RT_INIT_DB_INTERNAL(&intern);
 		if( rt_db_get_internal( &intern, dp, tsp->ts_dbip, NULL ) < 0 )  {
-			bu_log("db_recurse() rt_db_get_internal(%s) FAIL on combination\n", dp->d_namep);
-			db_free_db_tree_state( &nts );
+			bu_log("db_recurse() rt_db_get_internal(%s) FAIL\n", dp->d_namep);
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
+
+		/*  Handle inheritance of material property. */
+		db_dup_db_tree_state( &nts, tsp );
+
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
 		if( (is_region = db_apply_state_from_comb( &nts, pathp, comb )) < 0 )  {
@@ -1176,25 +1176,18 @@ region_end:
 		db_free_db_tree_state( &nts );
 		if(curtree) RT_CK_TREE(curtree);
 	} else if( dp->d_flags & DIR_SOLID )  {
-		int	id;
-
-		if( db_get_external( &ext, dp, tsp->ts_dbip ) < 0 )  {
-			bu_log("db_recurse() db_get_external(%s) FAIL on solid\n", dp->d_namep);
-			return(TREE_NULL);		/* FAIL */
-		}
-		/* Get solid ID */
-		if( (id = rt_id_solid( &ext )) == ID_NULL )  {
-			bu_log("db_recurse(%s): defective database record, addr=x%x\n",
-				dp->d_namep,
-				dp->d_addr );
-			curtree = TREE_NULL;		/* FAIL */
-			goto out;
-		}
 
 		if( bn_mat_ck( dp->d_namep, tsp->ts_mat ) < 0 )  {
 			bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",
 				dp->d_namep );
 			bn_mat_print("bad matrix", tsp->ts_mat);
+			curtree = TREE_NULL;		/* FAIL */
+			goto out;
+		}
+
+	    	RT_INIT_DB_INTERNAL(&intern);
+		if( rt_db_get_internal( &intern, dp, tsp->ts_dbip, tsp->ts_mat ) < 0 )  {
+			bu_log("db_recurse() rt_db_get_internal(%s) FAIL\n", dp->d_namep);
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
@@ -1235,7 +1228,7 @@ region_end:
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
-		curtree = tsp->ts_leaf_func( tsp, pathp, &ext, id, client_data );
+		curtree = tsp->ts_leaf_func( tsp, pathp, &intern, client_data );
 		if(curtree) RT_CK_TREE(curtree);
 	} else {
 		bu_log("db_recurse:  %s is neither COMB nor SOLID?\n",
@@ -1244,7 +1237,6 @@ region_end:
 	}
 out:
 	if( intern.idb_ptr )  intern.idb_meth->ft_ifree( &intern );
-	db_free_external( &ext );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",
@@ -1874,7 +1866,7 @@ HIDDEN void
 db_walk_subtree( tp, region_start_statepp, leaf_func, client_data )
 register union tree	*tp;
 struct combined_tree_state	**region_start_statepp;
-union tree		 *(*leaf_func) BU_ARGS((struct db_tree_state *, struct db_full_path *, struct bu_external *, int, void *));
+union tree		 *(*leaf_func) BU_ARGS((struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, void *));
 genptr_t	client_data;
 {
 	struct combined_tree_state	*ctsp;
@@ -2102,8 +2094,7 @@ union tree *	(*reg_end_func) BU_ARGS((
 union tree *	(*leaf_func) BU_ARGS((
 			struct db_tree_state * /*tsp*/,
 			struct db_full_path * /*pathp*/,
-			struct bu_external * /*ep*/,
-			int /*id*/,
+			struct rt_db_internal * /*ip*/,
 			genptr_t client_data
 		));
 genptr_t	client_data;

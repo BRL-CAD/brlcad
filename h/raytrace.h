@@ -868,8 +868,7 @@ struct db_tree_state {
 	union tree *	(*ts_leaf_func) BU_ARGS((
 				struct db_tree_state * /*tsp*/,
 				struct db_full_path * /*pathp*/,
-				struct bu_external * /*ep*/,
-				int /*id*/,
+				struct rt_db_internal * /*ip*/,
 				genptr_t client_data
 			));
 	CONST struct rt_tess_tol *ts_ttol;	/* Tessellation tolerance */
@@ -2405,8 +2404,7 @@ BU_EXTERN(int db_walk_tree, (struct db_i *dbip, int argc, CONST char **argv,
 	union tree * (*leaf_func) (
 		struct db_tree_state * /*tsp*/,
 		struct db_full_path * /*pathp*/,
-		struct bu_external * /*ep*/,
-		int /*id*/,
+		struct rt_db_internal * /*ip*/,
 		genptr_t client_data ),
 	genptr_t client_data ));
 BU_EXTERN(int db_path_to_mat, (struct db_i *dbip, struct db_full_path *pathp,
@@ -3264,10 +3262,10 @@ BU_EXTERN(int			nmg_two_region_vertex_fuse, (struct nmgregion *r1,
 				struct nmgregion *r2, CONST struct bn_tol *tol));
 BU_EXTERN(union tree		*nmg_booltree_leaf_tess, (struct db_tree_state *tsp,
 				struct db_full_path *pathp,
-				struct bu_external *ep, int id, genptr_t client_data));
+				struct rt_db_internal *ip, genptr_t client_data));
 BU_EXTERN(union tree		*nmg_booltree_leaf_tnurb, (struct db_tree_state *tsp,
 				struct db_full_path *pathp,
-				struct bu_external *ep, int id, genptr_t client_data));
+				struct rt_db_internal *ip, genptr_t client_data));
 BU_EXTERN(union tree		*nmg_booltree_evaluate, (union tree *tp,
 				CONST struct bn_tol *tol));
 BU_EXTERN(void			nmg_region_v_unique, (struct nmgregion *r1,
