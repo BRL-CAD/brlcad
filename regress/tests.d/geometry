@@ -10,6 +10,10 @@ for PRIM in $PRIMITIVES ; do
 
     rm -f ${PRIM}.*
 
+    if [ "x${PRIM}_IN_ARGS" = "x" ] ; then
+        warn "Primitive ${PRIM}_IN_ARGS has no arguments set, skipping"
+    else
+
     mged -c <<EOF
 
     set glob_compat_mode 0
@@ -353,6 +357,9 @@ EOF
 
     done  
     # end loop over vers
+
+    fi
+    # end of test if primitive has values set
 
 done  
 # end loop over primitives
