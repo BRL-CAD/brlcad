@@ -8,6 +8,7 @@
  *  XXX nmg_face_loop_partition() or nmg_face_loop_split() or something,
  *  XXX since the main goal is not combining faces, but spliting the loops
  *  XXX across the line of intersection.
+ *  XXX nmg_split or nmg_weave are other candidates.
  *
  *  The line of intersection ("ray") will divide the face into two sets
  *  of loops.  No one loop may cross the ray after this routine is finished.
@@ -279,13 +280,16 @@ int			assessment;
 	do {
 		prev_eu = RT_LIST_PLAST_CIRC( edgeuse, prev_eu );
 		if( prev_eu == this_eu )  {
-		if(rt_g.NMG_debug&DEBUG_COMBINE)
-			rt_log("nmg_vu_angle_measure: prev eu is this eu, ang=0\n");
+			if(rt_g.NMG_debug&DEBUG_COMBINE)
+				rt_log("nmg_vu_angle_measure: prev eu is this eu, ang=0\n");
 			return 0;	/* Unable to compute 'vec' */
 		}
 		/* Skip any edges that stay on this vertex */
 	} while( prev_eu->vu_p->v_p == this_eu->vu_p->v_p );
+
+	/* Get vector which represents the inbound edge */
 	VSUB2( vec, prev_eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord );
+
 	ang = rt_angle_measure( vec, x_dir, y_dir );
 	if(rt_g.NMG_debug&DEBUG_COMBINE)
 		rt_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*rt_radtodeg);
@@ -388,6 +392,7 @@ int			pos;
 			rt_log("ON: vu[%d]=x%x otherv=x%x, i=%d\n",
 				pos, rs->vu[pos], otherv, i );
 
+		/* Compute edge vector, for purposes of orienting answer */
 		if( forw )  {
 			/* Edge goes from v to otherv */
 			VSUB2( heading, otherv->vg_p->coord, v->vg_p->coord );
@@ -751,6 +756,9 @@ VPRINT("left", rs.left);
  *
  *  Force the edge geometry structure for a given edge to be that of
  *  the intersection line between the two faces.
+ *
+ *  XXX What about orientation?  Which way should direction vector point?
+ *  XXX What about edgeuse orientation flags?
  */
 void
 nmg_edge_geom_isect_line( e, rs )
