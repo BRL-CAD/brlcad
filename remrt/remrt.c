@@ -301,6 +301,8 @@ struct servers {
 /* Internal Host table */
 struct ihost {
 	char		*ht_name;	/* Official name of host */
+	int		ht_flags;	/* Control info about this host */
+#define HT_HOLD		0x1
 	int		ht_when;	/* When to use this host */
 #define HT_ALWAYS	1		/* Always try to use this one */
 #define HT_NIGHT	2		/* Only use at night */
@@ -927,7 +929,7 @@ struct timeval	*nowp;
 		}
 
 		/* This host is not presently in contact */
-		if( add )  {
+		if( add && !(ihp->ht_flags & HT_HOLD))  {
 			rt_log("%s Auto adding %s\n", stamp(), ihp->ht_name);
 			add_host( ihp );
 		}
@@ -2651,6 +2653,7 @@ void
 add_host( ihp )
 struct ihost	*ihp;
 {
+	if (ihp->ht_flags & HT_HOLD) return;	/* Not allowed to use */
 	/* Send message to helper process */
 	switch( ihp->ht_where )  {
 	case HT_CD:
@@ -2928,6 +2931,7 @@ char	*name;
 	ihp->ht_name = rt_strdup( name );
 
 	/* Default host parameters */
+	ihp->ht_flags = 0x0;
 	ihp->ht_when = HT_PASSIVE;
 	ihp->ht_where = HT_CONVERT;
 	ihp->ht_path = "/tmp";
@@ -3292,7 +3296,7 @@ char	**argv;
 	struct ihost	*ihp;
 
 	for( i=1; i<argc; i++ )  {
-		if( (ihp = host_lookup_by_name( argv[i], 1 )) != IHOST_NULL )  {
+		if( (ihp = host_lookup_by_name( argv[i], 0 )) != IHOST_NULL )  {
 			add_host( ihp );
 		}
 	}
@@ -3309,6 +3313,32 @@ char	**argv;
 	drop_server(sp, "drop command issued");
 }
 
+cd_hold( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct servers *sp;
+	register struct ihost *ihp;
+
+	ihp = host_lookup_by_name( argv[1], 0);
+	if (ihp == IHOST_NULL) return;
+	ihp->ht_flags |= HT_HOLD;
+
+	sp = get_server_by_name( argv[1] );
+	if ( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL) return;
+	drop_server(sp, "hold command issued");
+}
+cd_resume( argc, argv )
+int	argc;
+char	**argv;
+{
+	struct ihost	*ihp;
+
+	ihp = host_lookup_by_name( argv[1], 0);
+	if (ihp == IHOST_NULL ) return;
+	ihp->ht_flags &= ~HT_HOLD;
+	add_host( ihp );
+}
 cd_restart( argc, argv )
 int	argc;
 char	**argv;
@@ -3635,7 +3665,7 @@ char	**argv;
 	if( argc < 5 )  {
 		rt_log("%s Registered Host Table:\n", stamp() );
 		for( ihp = HostHead; ihp != IHOST_NULL; ihp=ihp->ht_next )  {
-			rt_log("  %s ", ihp->ht_name);
+			rt_log("  %s 0x%x ", ihp->ht_name, ihp->ht_flags);
 			switch(ihp->ht_when)  {
 			case HT_ALWAYS:
 				rt_log("always ");
@@ -3767,6 +3797,10 @@ struct command_tab cmd_tab[] = {
 		cd_add,		2, 99,
 	"drop", "host",		"drop first instance of 'host'",
 		cd_drop,	2, 2,
+	"hold", "host",		"Hold a host from processing",
+		cd_hold,	2, 2,
+	"resume","host",	"resume a host processing",
+		cd_resume,	2, 2,
 	"restart", "[host]",	"restart one or all hosts",
 		cd_restart,	1, 2,
 	"go", "",		"start scheduling frames",
