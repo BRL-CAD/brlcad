@@ -1781,7 +1781,6 @@ classify_sketch_loops( struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_s
 	struct bn_tol tol;
 	point2d_t pta, ptb;
 	point2d_t dir;
-	struct curve *crv;
 	genptr_t seg;
 	fastf_t inv_len;
 	int loopa_count=0, loopb_count=0;
@@ -1790,8 +1789,6 @@ classify_sketch_loops( struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_s
 	BU_CK_PTBL( loopa );
 	BU_CK_PTBL( loopb );
 	RT_SKETCH_CK_MAGIC( ip );
-
-	crv = &ip->skt_curve;
 
 	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
