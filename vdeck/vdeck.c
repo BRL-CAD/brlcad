@@ -159,6 +159,8 @@ void			prompt();
 RT_EXTERN(void ewrite, (FILE *fp, CONST char *buf, unsigned bytes) );
 RT_EXTERN(void blank_fill, (FILE *fp, int count) );
 
+static int sortFunc RT_ARGS((CONST genptr_t a, CONST genptr_t b));
+
 /* Head of linked list of solids */
 struct soltab	sol_hd;
 
@@ -185,9 +187,13 @@ char	*fmt;
  */
 static int
 sortFunc( a, b )
-char	**a, **b;
+CONST genptr_t	a;
+CONST genptr_t	b;
 {
-	return( strcmp( *a, *b ) );
+	CONST char **lhs = (CONST char **)a;
+	CONST char **rhs = (CONST char **)b;
+
+	return( strcmp( *lhs, *rhs ) );
 }
 
 /*
