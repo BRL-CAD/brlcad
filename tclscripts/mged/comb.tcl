@@ -12,6 +12,7 @@ proc init_comb { id } {
     global player_screen
     global mged_active_dm
     global comb_control
+    global shader_params
 
     set top .$id.comb
 
@@ -38,29 +39,26 @@ proc init_comb { id } {
 
     toplevel $top -screen $player_screen($id)
 
-    frame $top.gridF
-    frame $top.gridF2
+    frame $top.gridF1
+    frame $top.gridF2 -relief groove -bd 2
     frame $top.gridF3
     frame $top.gridF4
-    frame $top.nameF
-    frame $top.nameFF -relief sunken -bd 2
-    frame $top.idF
-    frame $top.idFF -relief sunken -bd 2
-    frame $top.airF
-    frame $top.airFF -relief sunken -bd 2
-    frame $top.materialF
-    frame $top.materialFF -relief sunken -bd 2
-    frame $top.losF
-    frame $top.losFF -relief sunken -bd 2
-    frame $top.color_F
-    frame $top.shaderF -relief groove -bd 2
-    frame $top.shaderFF -relief sunken -bd 2
+    frame $top.gridF5
+    frame $top.nameF -relief sunken -bd 2
+    frame $top.idF -relief sunken -bd 2
+    frame $top.airF -relief sunken -bd 2
+    frame $top.materialF -relief sunken -bd 2
+    frame $top.losF -relief sunken -bd 2
+    frame $top.shaderF1
+    frame $top.shaderF2
+    frame $top.shaderEF -relief sunken -bd 2
     frame $top.combF
-    frame $top.combFF -relief sunken -bd 2
 
-    set comb_control($id,shader_frame) $top.shaderF
+    set comb_control($id,shader_frame) $top.shaderF2
+    set shader_params($id,shader_name) ""
+    set shader_params($id,window) $comb_control($id,shader_frame)
 
-    label $top.nameL -text "Name" -anchor w
+    label $top.nameL -text "Name" -anchor e
     set hoc_data { { summary "The combination name is the name of a
 region or a group. The region flag must be set
 in order for the combination to be a region.
@@ -116,7 +114,7 @@ the combination in question until the button is
 released. To select a combination, double click with
 the left mouse button." } }
 
-    label $top.idL -text "Region Id" -anchor w
+    label $top.idL -text "Region Id" -anchor e
     set hoc_data { { summary "The region id (i.e. item code) is a number
 that is typically used for grouping regions
 belonging to a particular component. If the
@@ -128,7 +126,7 @@ the kind of air." } }
     entry $top.idE -relief flat -width 12 -textvar comb_control($id,id)
     hoc_register_data $top.idE "Region Id" $hoc_data
 
-    label $top.airL -text "Air Code" -anchor w
+    label $top.airL -text "Air Code" -anchor e
     set hoc_data { { summary "The air code is a number that is typically
 used to designate the kind of air a region
 represents. An air code of \"1\" signifies
@@ -140,7 +138,7 @@ region represents a component." } }
     entry $top.airE -relief flat -width 12 -textvar comb_control($id,air)
     hoc_register_data $top.airE "Air Code" $hoc_data
 
-    label $top.materialL -text "Material Id" -anchor w
+    label $top.materialL -text "Material Id" -anchor e
     set hoc_data { { summary "The material id represents a particular
 material type as identified by a material
 database. In the past, the gift material
@@ -150,7 +148,7 @@ type." } }
     entry $top.materialE -relief flat -width 12 -textvar comb_control($id,material)
     hoc_register_data $top.materialE "Material Id" $hoc_data
 
-    label $top.losL -text "LOS" -anchor w
+    label $top.losL -text "LOS" -anchor e
     set hoc_data { { summary "LOS is a number that represents the
 percentage of material a component region
 is composed of. For example, if some component
@@ -162,7 +160,7 @@ then the region is considered to be composed of
     entry $top.losE -relief flat -width 12 -textvar comb_control($id,los)
     hoc_register_data $top.losE "LOS" $hoc_data
 
-    label $top.colorL -text "Color" -anchor w
+    label $top.colorL -text "Color" -anchor e
     hoc_register_data $top.colorL "Color"\
 	    { { summary "Material color is used by the ray tracer
 when rendering. It is also used by MGED
@@ -175,7 +173,7 @@ drawing an object" } }
 	    comb_control $id,color"\
 	    12 $comb_control($id,color)
 
-    label $top.shaderL -text "Shader" -anchor w
+    label $top.shaderL -text "Shader" -anchor e
     set hoc_data { { summary "Use this to manually enter the shader
 parameters. Note - when entering the
 shader parameters directly, the shader
@@ -184,7 +182,8 @@ GUI will automatically be updated." } }
     entry $top.shaderE -relief flat -width 12 -textvar comb_control($id,shader)
     hoc_register_data $top.shaderE "Shader" $hoc_data
 
-    bind $top.shaderE <KeyRelease> "set_shader_params comb_control($id,shader) $id"
+    bind $top.shaderE <KeyRelease> "set_shader_params comb_control($id,shader) $id; \
+	    comb_callback $id $top.gridF2"
 
     menubutton $top.shaderMB -relief raised -bd 2\
 	    -menu $top.shaderMB.m -indicatoron 1
@@ -194,54 +193,54 @@ Selecting a shader from the menu will
 reconfigure the shader's GUI to take on
 the form of the selected shader type." } }
     menu $top.shaderMB.m -title "Shader" -tearoff 0
-    $top.shaderMB.m add command -label plastic\
-	    -command "comb_shader_gui $id plastic $top.shaderF"
-    hoc_register_menu_data "Shader" plastic "Shader - Plastic"\
+    $top.shaderMB.m add command -label plastic \
+	    -command "comb_shader_gui $id plastic"
+    hoc_register_menu_data "Shader" plastic "Shader - Plastic" \
 	    { { summary "Set shader parameters to make this object appear as plastic." } }
-    $top.shaderMB.m add command -label mirror\
-	    -command "comb_shader_gui $id mirror $top.shaderF"
-    hoc_register_menu_data "Shader" mirror "Shader - Mirror"\
+    $top.shaderMB.m add command -label mirror \
+	    -command "comb_shader_gui $id mirror"
+    hoc_register_menu_data "Shader" mirror "Shader - Mirror" \
 	    { { summary "Set shader parameters to make this object appear as a mirror." } }
-    $top.shaderMB.m add command -label glass\
-	    -command "comb_shader_gui $id glass $top.shaderF"
-    hoc_register_menu_data "Shader" glass "Shader - Glass"\
+    $top.shaderMB.m add command -label glass \
+	    -command "comb_shader_gui $id glass"
+    hoc_register_menu_data "Shader" glass "Shader - Glass" \
 	    { { summary "Set shader parameters to make this object appear as glass." } }
-    $top.shaderMB.m add command -label "texture (color)"\
-	    -command "comb_shader_gui $id texture $top.shaderF"
+    $top.shaderMB.m add command -label "texture (color)" \
+	    -command "comb_shader_gui $id texture"
     hoc_register_menu_data "Shader" "texture (color)" "Shader - Texture (color)"\
 	    { { summary "Map a color texture on this object." } }
-    $top.shaderMB.m add command -label "texture (b/w)"\
-	    -command "comb_shader_gui $id bwtexture $top.shaderF"
-    hoc_register_menu_data "Shader" "texture (b/w)" "Shader - Texture (b/w)"\
+    $top.shaderMB.m add command -label "texture (b/w)" \
+	    -command "comb_shader_gui $id bwtexture"
+    hoc_register_menu_data "Shader" "texture (b/w)" "Shader - Texture (b/w)" \
 	    { { summary "Map a black and white texture on this object." } }
-    $top.shaderMB.m add command -label "bump map"\
-	    -command "comb_shader_gui $id bump $top.shaderF"
-    hoc_register_menu_data "Shader" "bump map" "Shader - Bump"\
+    $top.shaderMB.m add command -label "bump map" \
+	    -command "comb_shader_gui $id bump"
+    hoc_register_menu_data "Shader" "bump map" "Shader - Bump" \
 		{ { summary "Apply a bump map to perturb the surface normals of this object." } }
-    $top.shaderMB.m add command -label "checker"\
-	    -command "comb_shader_gui $id checker $top.shaderF"
-    hoc_register_menu_data "Shader" "checker" "Shader - Checker"\
+    $top.shaderMB.m add command -label "checker" \
+	    -command "comb_shader_gui $id checker"
+    hoc_register_menu_data "Shader" "checker" "Shader - Checker" \
 		{ { summary "texture map a checkerboard pattern on this object." } }
-    $top.shaderMB.m add command -label "test map"\
-	    -command "comb_shader_gui $id testmap $top.shaderF"
-    hoc_register_menu_data "Shader" "test map" "Shader - testmap"\
+    $top.shaderMB.m add command -label "test map" \
+	    -command "comb_shader_gui $id testmap"
+    hoc_register_menu_data "Shader" "test map" "Shader - testmap" \
 		{ { summary "Map a red and blue gradient on this object proportional to 'uv'\n\
 			texture map coordinates." } }
-    $top.shaderMB.m add command -label "fake star pattern"\
-	    -command "comb_shader_gui $id fakestar $top.shaderF"
-    hoc_register_menu_data "Shader" "fake star pattern" "Shader - fakestar"\
+    $top.shaderMB.m add command -label "fake star pattern" \
+	    -command "comb_shader_gui $id fakestar"
+    hoc_register_menu_data "Shader" "fake star pattern" "Shader - fakestar" \
 		{ { summary "Map a fake star field on this object." } }
-    $top.shaderMB.m add command -label "cloud"\
-	-command "comb_shader_gui $id cloud $top.shaderF"
-    hoc_register_menu_data "Shader" "cloud" "Shader - cloud"\
+    $top.shaderMB.m add command -label "cloud" \
+	-command "comb_shader_gui $id cloud"
+    hoc_register_menu_data "Shader" "cloud" "Shader - cloud" \
 	{ { summary "Map a cloud texture on this object." } }
-    $top.shaderMB.m add command -label "stack"\
-	-command "comb_shader_gui $id stack $top.shaderF"
-    hoc_register_menu_data "Shader" "stack" "Shader - stack"\
+    $top.shaderMB.m add command -label "stack" \
+	-command "comb_shader_gui $id stack"
+    hoc_register_menu_data "Shader" "stack" "Shader - stack" \
 	{ { summary "Consecutively apply multiple shaders to this object." } }
-    $top.shaderMB.m add command -label "envmap"\
-	-command "comb_shader_gui $id envmap $top.shaderF"
-    hoc_register_menu_data "Shader" "envmap" "Shader - envmap"\
+    $top.shaderMB.m add command -label "envmap" \
+	-command "comb_shader_gui $id envmap"
+    hoc_register_menu_data "Shader" "envmap" "Shader - envmap" \
 	{ { summary "Apply an environment map using this region." } }
 
     label $top.combL -text "Boolean Expression:" -anchor w
@@ -259,9 +258,9 @@ both objects. Note - an object can be a solid, region
 or group." } }
     hoc_register_data $top.combL "Boolean Expression" $hoc_data
     text $top.combT -relief sunken -bd 2 -width 40 -height 10\
-	    -yscrollcommand "$top.gridF3.s set" -setgrid true
+	    -yscrollcommand "$top.combS set" -setgrid true
     hoc_register_data $top.combT "Edit Boolean Expression" $hoc_data
-    scrollbar $top.gridF3.s -relief flat -command "$top.combT yview"
+    scrollbar $top.combS -relief flat -command "$top.combT yview"
 
     checkbutton $top.isRegionCB -relief raised -text "Is Region"\
 	    -offvalue No -onvalue Yes -variable comb_control($id,isRegion)\
@@ -304,78 +303,76 @@ to the combination." } }
     hoc_register_data $top.resetB "Reset"\
 	    { { summary "Reset the \"Combination Editor\" with data
 from the combination." } }
-    button $top.dismissB -relief raised -text "Dismiss"\
+    button $top.dismissB -relief raised -text "Dismiss" \
 	    -command "comb_dismiss $id $top"
-    hoc_register_data $top.dismissB "Dismiss"\
+    hoc_register_data $top.dismissB "Dismiss" \
 	    { { summary "Dismiss (close) the \"Combination Editor\"." } }
 
-    grid $top.nameL -sticky "ew" -in $top.nameF
-    grid $top.nameE $top.nameMB -sticky "ew" -in $top.nameFF
-    grid $top.nameFF -sticky "ew" -in $top.nameF
-    grid $top.idL -sticky "ew" -in $top.idF
-    grid $top.idE -sticky "ew" -in $top.idFF
-    grid $top.idFF -sticky "ew" -in $top.idF
-    grid $top.nameF x $top.idF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
+    grid $top.nameE $top.nameMB -sticky "ew" -in $top.nameF
     grid columnconfigure $top.nameF 0 -weight 1
-    grid columnconfigure $top.nameFF 0 -weight 1
+    grid $top.idE -sticky "ew" -in $top.idF
     grid columnconfigure $top.idF 0 -weight 1
-    grid columnconfigure $top.idFF 0 -weight 1
+    grid $top.nameL $top.nameF x $top.idL $top.idF \
+	    -sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
 
-    grid $top.colorL -sticky "ew" -in $top.color_F
-    grid $top.colorF -sticky "ew" -in $top.color_F
-    grid $top.airL -sticky "ew" -in $top.airF
-    grid $top.airE -sticky "ew" -in $top.airFF
-    grid $top.airFF -sticky "ew" -in $top.airF
-    grid $top.color_F x $top.airF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
-    grid columnconfigure $top.color_F 0 -weight 1
+    grid $top.airE -sticky "ew" -in $top.airF
     grid columnconfigure $top.airF 0 -weight 1
-    grid columnconfigure $top.airFF 0 -weight 1
+    grid $top.colorL $top.colorF x $top.airL $top.airF \
+	    -sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
 
-    grid $top.materialL -sticky "ew" -in $top.materialF
-    grid $top.materialE -sticky "ew" -in $top.materialFF
-    grid $top.materialFF -sticky "ew" -in $top.materialF
-    grid $top.losL -sticky "ew" -in $top.losF
-    grid $top.losE -sticky "ew" -in $top.losFF
-    grid $top.losFF -sticky "ew" -in $top.losF
-    grid $top.materialF x $top.losF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
+    grid $top.materialE -sticky "ew" -in $top.materialF
     grid columnconfigure $top.materialF 0 -weight 1
-    grid columnconfigure $top.materialFF 0 -weight 1
+    grid $top.losE -sticky "ew" -in $top.losF
     grid columnconfigure $top.losF 0 -weight 1
-    grid columnconfigure $top.losFF 0 -weight 1
+    grid $top.materialL $top.materialF x $top.losL $top.losF \
+	    -sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
 
-    grid $top.shaderL -sticky "ew" -in $top.shaderF\
-	    -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-    grid $top.shaderE $top.shaderMB -sticky "ew" -in $top.shaderFF
-    grid $top.shaderFF -sticky "ew" -in $top.shaderF\
-	    -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-    grid $top.shaderF - - -sticky "ew" -in $top.gridF -pady [expr $comb_control($id,pady) + 4]
-#    grid $top.selectMaterialB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady $comb_control($id,pady)
-    grid columnconfigure $top.shaderF 0 -weight 1
-    grid columnconfigure $top.shaderFF 0 -weight 1
+    grid columnconfigure $top.gridF1 1 -weight 100
+    grid columnconfigure $top.gridF1 2 -weight 1
+    grid columnconfigure $top.gridF1 4 -weight 100
 
-    grid $top.isRegionCB $top.inheritCB x -sticky "ew" -in $top.gridF2\
+    grid $top.shaderE $top.shaderMB \
+	    -sticky "ew" \
+	    -in $top.shaderEF
+    grid columnconfigure $top.shaderEF 0 -weight 1
+
+    grid $top.shaderL $top.shaderEF \
+	    -sticky "ew" \
+	    -in $top.shaderF1
+    grid columnconfigure $top.shaderF1 1 -weight 1
+
+    grid $top.shaderF1 \
+	    -sticky "ew" \
+	    -in $top.gridF2\
+	    -padx $comb_control($id,padx) \
+	    -pady $comb_control($id,pady)
+#    grid $top.shaderF2 \
+#	    -sticky "ew" \
+#	    -in $top.gridF2 \
+#	    -padx $comb_control($id,padx) \
+#	    -pady $comb_control($id,pady)
+    grid columnconfigure $top.gridF2 0 -weight 1
+
+    grid $top.isRegionCB $top.inheritCB x -sticky "ew" -in $top.gridF3\
 	    -ipadx 4 -ipady 4
+    grid columnconfigure $top.gridF3 2 -weight 1
 
-    grid columnconfigure $top.gridF 0 -weight 1
-    grid columnconfigure $top.gridF 1 -minsize 20
-    grid columnconfigure $top.gridF 2 -weight 1
-    grid columnconfigure $top.gridF2 2 -weight 1
-
-    grid $top.combL x -sticky "w" -in $top.gridF3
-    grid $top.combT $top.gridF3.s -sticky "nsew" -in $top.gridF3
-    grid rowconfigure $top.gridF3 1 -weight 1
-    grid columnconfigure $top.gridF3 0 -weight 1
+    grid $top.combL x -sticky "w" -in $top.gridF4
+    grid $top.combT $top.combS -sticky "nsew" -in $top.gridF4
+    grid rowconfigure $top.gridF4 1 -weight 1
+    grid columnconfigure $top.gridF4 0 -weight 1
 
     grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky "ew"\
-	    -in $top.gridF4 -pady $comb_control($id,pady)
-    grid columnconfigure $top.gridF4 2 -weight 1
-    grid columnconfigure $top.gridF4 4 -weight 1
+	    -in $top.gridF5 -pady $comb_control($id,pady)
+    grid columnconfigure $top.gridF5 2 -weight 1
+    grid columnconfigure $top.gridF5 4 -weight 1
 
-    grid $top.gridF -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
+    grid $top.gridF1 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
     grid $top.gridF2 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-    grid $top.gridF3 -sticky "nsew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-    grid $top.gridF4 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-    grid rowconfigure $top 2 -weight 1
+    grid $top.gridF3 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
+    grid $top.gridF4 -sticky "nsew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
+    grid $top.gridF5 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
+    grid rowconfigure $top 3 -weight 1
     grid columnconfigure $top 0 -weight 1
 
     bind $top.nameE <Return> "comb_reset $id; break"
@@ -400,9 +397,9 @@ proc comb_apply { id } {
     set comb_control($id,comb) [$top.combT get 0.0 end]
 
 # apply the parameters in the shader frame to the shader string
-    if { $comb_control($id,shader) != "" } then {
-	do_shader_apply comb_control($id,shader) $id
-    }
+#    if { $comb_control($id,shader) != "" } then {
+#	do_shader_apply comb_control($id,shader) $id
+#    }
 
     if {$comb_control($id,isRegion)} {
 	if {$comb_control($id,id) < 0} {
@@ -428,10 +425,10 @@ proc comb_apply { id } {
 		    "" 0 OK
 	}
 
-	set result [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion)\
-		$comb_control($id,id) $comb_control($id,air) $comb_control($id,material) $comb_control($id,los)\
-		$comb_control($id,color) $comb_control($id,shader) $comb_control($id,inherit)\
-		$comb_control($id,comb)} comb_error]
+	set result [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion) \
+		$comb_control($id,id) $comb_control($id,air) $comb_control($id,material) \
+		$comb_control($id,los) $comb_control($id,color) $comb_control($id,shader) \
+		$comb_control($id,inherit) $comb_control($id,comb)} comb_error]
 
 	if {$result} {
 	    return $comb_error
@@ -500,8 +497,16 @@ proc comb_reset { id } {
     }
 
     if { [llength $comb_control($id,shader)] > 0 } {
-	set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id $comb_control($id,shader_frame)]
+	set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id \
+		$comb_control($id,shader_frame)]
+	grid $comb_control($id,shader_frame) \
+		-row 1 \
+		-sticky "ew" \
+		-in $top.gridF2 \
+		-padx $comb_control($id,padx) \
+		-pady $comb_control($id,pady)
     } else {
+	grid forget $comb_control($id,shader_frame)
 	catch { destroy $comb_control($id,shader_gui) }
     }
 }
@@ -517,91 +522,108 @@ proc comb_toggle_isRegion { id } {
     global comb_control
 
     set top .$id.comb
-    grid remove $top.gridF
+    grid remove $top.gridF1
 
     if {$comb_control($id,isRegion) == "Yes"} {
-	grid forget $top.nameF $top.color_F $top.shaderF
+	grid forget $top.nameL $top.nameF $top.colorL $top.colorF
 
-	frame $top.idF
-	frame $top.idFF -relief sunken -bd 2
-	frame $top.airF
-	frame $top.airFF -relief sunken -bd 2
-	frame $top.materialF
-	frame $top.materialFF -relief sunken -bd 2
-	frame $top.losF
-	frame $top.losFF -relief sunken -bd 2
-
+	frame $top.idF -relief sunken -bd 2
 	label $top.idL -text "Region Id" -anchor w
 	entry $top.idE -relief flat -width 12 -textvar comb_control($id,id)
+	grid $top.idE -sticky "ew" -in $top.idF
+	grid columnconfigure $top.idF 0 -weight 1
 
+	frame $top.airF -relief sunken -bd 2
 	label $top.airL -text "Air Code" -anchor w
 	entry $top.airE -relief flat -width 12 -textvar comb_control($id,air)
+	grid $top.airE -sticky "ew" -in $top.airF
+	grid columnconfigure $top.airF 0 -weight 1
 
+	frame $top.materialF -relief sunken -bd 2
 	label $top.materialL -text "Material" -anchor w
 	entry $top.materialE -relief flat -width 12 -textvar comb_control($id,material)
+	grid $top.materialE -sticky "ew" -in $top.materialF
+	grid columnconfigure $top.materialF 0 -weight 1
 
+	frame $top.losF -relief sunken -bd 2
 	label $top.losL -text "LOS" -anchor w
 	entry $top.losE -relief flat -width 12 -textvar comb_control($id,los)
-
-	grid $top.idL -sticky "ew" -in $top.idF
-	grid $top.idE -sticky "ew" -in $top.idFF
-	grid $top.idFF -sticky "ew" -in $top.idF
-	grid $top.nameF x $top.idF -sticky "ew" -row 0 -in $top.gridF -pady $comb_control($id,pady)
-	grid columnconfigure $top.idF 0 -weight 1
-	grid columnconfigure $top.idFF 0 -weight 1
-
-	grid $top.airL -sticky "ew" -in $top.airF
-	grid $top.airE -sticky "ew" -in $top.airFF
-	grid $top.airFF -sticky "ew" -in $top.airF
-	grid $top.color_F x $top.airF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
-	grid columnconfigure $top.airF 0 -weight 1
-	grid columnconfigure $top.airFF 0 -weight 1
-
-	grid $top.materialL -sticky "ew" -in $top.materialF
-	grid $top.materialE -sticky "ew" -in $top.materialFF
-	grid $top.materialFF -sticky "ew" -in $top.materialF
-	grid $top.losL -sticky "ew" -in $top.losF
-	grid $top.losE -sticky "ew" -in $top.losFF
-	grid $top.losFF -sticky "ew" -in $top.losF
-	grid $top.materialF x $top.losF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
-
-	grid $top.shaderF - - -sticky "ew" -in $top.gridF -pady [expr $comb_control($id,pady) + 4]
+	grid $top.losE -sticky "ew" -in $top.losF
 	grid columnconfigure $top.losF 0 -weight 1
-	grid columnconfigure $top.losFF 0 -weight 1
 
-	grid columnconfigure $top.materialF 0 -weight 1
-	grid columnconfigure $top.materialFF 0 -weight 1
+	grid $top.nameL $top.nameF x $top.idL $top.idF \
+		-sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
+	grid $top.colorL $top.colorF x $top.airL $top.airF \
+		-sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
+	grid $top.materialL $top.materialF x $top.losL $top.losF \
+		-sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
     } else {
-	grid forget $top.nameF $top.idF $top.airF $top.materialF $top.losF\
-		$top.color_F $top.shaderF
+	grid forget $top.nameL $top.nameF \
+		$top.idL $top.idF \
+		$top.colorL $top.colorF \
+		$top.airL $top.airF \
+		$top.materialL $top.materialF \
+		$top.losL $top.losF
 
-	destroy $top.idL $top.idE
-	destroy $top.airL $top.airE
-	destroy $top.materialL $top.materialE
-	destroy $top.losL $top.losE
-	destroy $top.idF $top.idFF
-	destroy $top.airF $top.airFF
-	destroy $top.materialF $top.materialFF
-	destroy $top.losF $top.losFF
+	destroy $top.idL $top.idE $top.idF \
+		$top.airL $top.airE $top.airF \
+		$top.materialL $top.materialE $top.materialF\
+		$top.losL $top.losE $top.losF
 
-	grid $top.nameF - - -sticky "ew" -row 0 -in $top.gridF -pady $comb_control($id,pady)
-	grid $top.color_F - - -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
-	grid $top.shaderF - - -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
+	grid $top.nameL $top.nameF x $top.colorL $top.colorF \
+		-sticky "ew" -row 0 -in $top.gridF1 -pady $comb_control($id,pady)
     }
 
-    grid $top.gridF
+    grid $top.gridF1 -row 0
 }
 
-proc comb_shader_gui { id shader_type shader_frame } {
+proc comb_shader_gui { id shader_type } {
     global comb_control
 
+    set top .$id.comb
     set current_shader_type [lindex $comb_control($id,shader) 0]
 
     if { $current_shader_type != $shader_type } {
 	set comb_control($id,shader) $shader_type
     }
 
-    set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id $shader_frame]
+    set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id \
+	    $comb_control($id,shader_frame)]
+    grid $comb_control($id,shader_frame) \
+	    -row 1 \
+	    -sticky "ew" \
+	    -in $top.gridF2 \
+	    -padx $comb_control($id,padx) \
+	    -pady $comb_control($id,pady)
+}
+
+# This is being called after a call to set_shader_params, which
+# may build the shader GUI.
+proc comb_callback { id master } {
+    global comb_control
+
+    set material [lindex $comb_control($id,shader) 0]
+
+    if [is_good_shader $material] {
+	# If not managing shader frame, then manage it.
+	if { [llength [grid slaves $master] ] <= 1 } {
+	    grid $comb_control($id,shader_frame) \
+		    -row 1 \
+		    -sticky "ew" \
+		    -in $master \
+		    -padx $comb_control($id,padx) \
+		    -pady $comb_control($id,pady)
+	}
+
+	return
+    }
+
+    # We have a bad material type. If managing
+    # the shader frame, then unmanage it.
+    if { [llength [grid slaves $master] ] == 2 } {
+	grid forget $comb_control($id,shader_frame)
+	catch { destroy $comb_control($id,shader_gui) }
+    }
 }
 
 #proc comb_select_material { id } {
@@ -617,9 +639,9 @@ proc comb_shader_gui { id shader_type shader_frame } {
 #
 #    toplevel $top -screen $player_screen($id)
 #
-#    frame $top.gridF
-#    frame $top.gridF2
-#    frame $top.gridF3 -relief groove -bd 2
+#    frame $top.gridF1
+#    frame $top.gridF3
+#    frame $top.gridF4 -relief groove -bd 2
 #
 #    listbox $top.materialLB -selectmode single -yscrollcommand "$top.materialS set"
 #    scrollbar $top.materialS -relief flat -command "$top.materialLB yview"
@@ -633,18 +655,18 @@ proc comb_shader_gui { id shader_type shader_frame } {
 #	    -command "catch { destroy $top }"
 #
 #    grid $top.materialLB $top.materialS -sticky "nsew" -in $top.gridF
-#    grid rowconfigure $top.gridF 0 -weight 1
-#    grid columnconfigure $top.gridF 0 -weight 1
+#    grid rowconfigure $top.gridF1 0 -weight 1
+#    grid columnconfigure $top.gridF1 0 -weight 1
 #
-#    grid $top.materialL x -sticky "ew" -in $top.gridF2
-#    grid $top.materialE $top.resetB -sticky "nsew" -in $top.gridF2
-#    grid columnconfigure $top.gridF2 0 -weight 1
+#    grid $top.materialL x -sticky "ew" -in $top.gridF3
+#    grid $top.materialE $top.resetB -sticky "nsew" -in $top.gridF3
+#    grid columnconfigure $top.gridF3 0 -weight 1
 #
-#    grid $top.dismissB -in $top.gridF3 -pady $comb_control($id,pady)
+#    grid $top.dismissB -in $top.gridF4 -pady $comb_control($id,pady)
 #
-#    grid $top.gridF -sticky "nsew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-#    grid $top.gridF2 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-#    grid $top.gridF3 -sticky "ew"
+#    grid $top.gridF1 -sticky "nsew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
+#    grid $top.gridF3 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
+#    grid $top.gridF4 -sticky "ew"
 #    grid rowconfigure $top 0 -weight 1
 #    grid columnconfigure $top 0 -weight 1
 #
