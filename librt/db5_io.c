@@ -582,6 +582,7 @@ int				zzz;		/* compression, someday */
 
 	out->ext_nbytes = togo;
 	BU_ASSERT_LONG( out->ext_nbytes, >=, 8 );
+if(getuid()==53) bu_hexdump_external(stderr, out, "v5 ext");
 }
 
 /*
@@ -770,13 +771,79 @@ double		local2mm;
 }
 
 /*
+ *			R T _ D B _ C V T _ T O _ E X T E R N A L 5
+ *
+ *  The attributes are taken from ip->idb_avs
+ *
+ *  If present, convert attributes to on-disk format.
+ *  This must happen after exporting the body, in case the
+ *  ft_export5() method happened to extend the attribute set.
+ *  Combinations are one "solid" which does this.
+ *
+ *  The internal representation is NOT freed, that's the caller's job.
+ *
+ *  The 'ext' pointer is accepted in uninitialized form, and
+ *  an initialized structure is always returned, so that
+ *  the caller may free it even when an error return is given.
+ *
+ *  Returns -
+ *	0	OK
+ *	-1	FAIL
+ */
+int
+rt_db_cvt_to_external5(
+	struct bu_external *ext,
+	const char *name,
+	const struct rt_db_internal *ip,
+	double conv2mm,
+	struct db_i *dbip)
+{
+	struct bu_external	attributes;
+	struct bu_external	body;
+	int			major, minor;
+
+	RT_CK_DB_INTERNAL( ip );
+	if(dbip) RT_CK_DBI(dbip);	/* may be null */
+
+	/* Scale change on export is 1.0 -- no change */
+	if( ip->idb_meth->ft_export5( &body, ip, conv2mm, dbip ) < 0 )  {
+		bu_log("rt_db_cvt_to_external5(%s):  ft_export5 failure\n",
+			name);
+		bu_free_external( &body );
+		BU_INIT_EXTERNAL(ext);
+		return -1;		/* FAIL */
+	}
+	BU_CK_EXTERNAL( &body );
+
+	/* If present, convert attributes to on-disk format. */
+	if( ip->idb_avs.magic == BU_AVS_MAGIC )  {
+		db5_export_attributes( &attributes, ip->idb_avs.avp );
+		BU_CK_EXTERNAL( &attributes );
+	} else {
+		BU_INIT_EXTERNAL(&attributes);
+	}
+
+	major = DB5HDR_MAJORTYPE_BRLCAD;
+	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
+
+	db5_export_object3( ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+		name, &attributes, &body,
+		major, minor,
+		DB5HDR_ZZZ_UNCOMPRESSED);
+	BU_CK_EXTERNAL( ext );
+	bu_free_external( &body );
+	bu_free_external( &attributes );
+
+	return 0;		/* OK */
+}
+
+/*
  *			R T _ D B _ P U T _ I N T E R N A L 5
  *
  *  Convert the internal representation of a solid to the external one,
  *  and write it into the database.
- *  On success only, the internal representation is freed.
  *
- *  The attributes are taken from ip->idb_avs
+ *  The internal representation is always freed.
  *
  *  Returns -
  *	<0	error
@@ -788,40 +855,31 @@ struct directory	*dp;
 struct db_i		*dbip;
 struct rt_db_internal	*ip;
 {
-	struct bu_external	body;
 	struct bu_external	ext;
 	int			major, minor;
 	int			ret;
 
-	BU_INIT_EXTERNAL(&ext);
+	RT_CK_DIRECTORY(dp);
+	RT_CK_DBI(dbip);
 	RT_CK_DB_INTERNAL( ip );
 
-	/* Scale change on export is 1.0 -- no change */
-	ret = ip->idb_meth->ft_export5( &body, ip, 1.0, dbip );
-	if( ret < 0 )  {
-		bu_log("rt_db_put_internal5(%s):  solid export failure\n",
+	if( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip ) < 0 )  {
+		bu_log("rt_db_put_internal5(%s):  export failure\n",
 			dp->d_namep);
+		bu_free_external( &ext );
 		rt_db_free_internal( ip );
-		bu_free_external( &body );
-		return -2;		/* FAIL */
+		return -1;		/* FAIL */
 	}
-	rt_db_free_internal( ip );
-
-	major = DB5HDR_MAJORTYPE_BRLCAD;
-	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
-
-	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-		dp->d_namep, ip->idb_avs, &body,
-		major, minor,
-		DB5HDR_ZZZ_UNCOMPRESSED);
-	bu_free_external( &body );
+	BU_CK_EXTERNAL( &ext );
 
 	if( db_put_external( &ext, dp, dbip ) < 0 )  {
 		bu_free_external( &ext );
-		return -1;		/* FAIL */
+		rt_db_free_internal( ip );
+		return -2;		/* FAIL */
 	}
 
 	bu_free_external( &ext );
+	rt_db_free_internal( ip );
 	return 0;			/* OK */
 }
 
@@ -831,6 +889,8 @@ struct rt_db_internal	*ip;
  *  Put an object in internal format out onto a file in external format.
  *  Used by LIBWDB.
  *
+ *  The internal representation is always freed.
+ *
  *  Can't really require a dbip parameter, as many callers won't have one.
  *
  *  Returns -
@@ -839,44 +899,35 @@ struct rt_db_internal	*ip;
  */
 int
 rt_fwrite_internal5( fp, name, ip, conv2mm )
-FILE				*fp;
-CONST char			*name;
-CONST struct rt_db_internal	*ip;
-double				conv2mm;
+FILE			*fp;
+CONST char		*name;
+struct rt_db_internal	*ip;
+double			conv2mm;
 {
-	struct bu_external	body;
 	struct bu_external	ext;
 	int			major, minor;
 
 	RT_CK_DB_INTERNAL(ip);
 	RT_CK_FUNCTAB( ip->idb_meth );
 
-	BU_INIT_EXTERNAL( &body );
-	if( ip->idb_meth->ft_export5( &body, ip, conv2mm, NULL /*dbip*/ ) < 0 )  {
-		bu_log("rt_fwrite_internal5(%s): solid export failure\n",
-			name );
-		bu_free_external( &body );
-		return -2;				/* FAIL */
+	if( rt_db_cvt_to_external5( &ext, name, ip, conv2mm, NULL ) < 0 )  {
+		bu_log("rt_fwrite_internal5(%s):  export failure\n",
+			name);
+		bu_free_external( &ext );
+		rt_db_free_internal( ip );
+		return -1;		/* FAIL */
 	}
-	BU_CK_EXTERNAL( &body );
-
-	major = DB5HDR_MAJORTYPE_BRLCAD;
-	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
-
-	BU_INIT_EXTERNAL( &ext );
-	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-		name, ip->idb_avs, &body,
-		major, minor,
-		DB5HDR_ZZZ_UNCOMPRESSED);
-	bu_free_external( &body );
+	BU_CK_EXTERNAL( &ext );
 
 	if( bu_fwrite_external( fp, &ext ) < 0 )  {
 		bu_log("rt_fwrite_internal5(%s): bu_fwrite_external() error\n",
 			name );
 		bu_free_external( &ext );
-		return -3;
+		rt_db_free_internal( ip );
+		return -2;		/* FAIL */
 	}
 	bu_free_external( &ext );
+	rt_db_free_internal( ip );
 	return 0;
 
 }

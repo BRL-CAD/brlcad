@@ -248,12 +248,12 @@ CONST struct db_i		*dbip;
 	int	wid;
 	unsigned char	*cp;
 	unsigned char	*leafp_end;
-	struct bu_attribute_value_set avs;
+	struct bu_attribute_value_set *avsp;
 	struct bu_vls	value;
 
 	RT_CK_DB_INTERNAL( ip );
 
-	if( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_v4_export() type not ID_COMBINATION");
+	if( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_export5() type not ID_COMBINATION");
 	comb = (struct rt_comb_internal *)ip->idb_ptr;
 	RT_CK_COMB(comb);
 
@@ -333,7 +333,6 @@ wid, tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.leafbytes, tcs.non_union_seen, max_s
 		ss.exprp = NULL;
 
 	rt_comb_v5_serialize( comb->tree, &ss );
-bu_hexdump_external( stderr, ep, "v5comb" );
 
 	BU_ASSERT_LONG( ss.mat_num, ==, tcs.n_mat );
 	BU_ASSERT_PTR( ss.matp, ==, cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) );
@@ -343,47 +342,48 @@ bu_hexdump_external( stderr, ep, "v5comb" );
 
 	/* Encode all the other stuff as attributes. */
 	bu_vls_init( &value );
-	bu_avs_init( &avs, 32, "rt_comb v5 attributes" );
+	avsp = &ip->idb_avs;
+	if( avsp->magic != BU_AVS_MAGIC )
+		bu_avs_init( avsp, 32, "rt_comb v5 attributes" );
 	if( comb->region_flag )  {
 		/* Presence of this attribute means this comb is a region. */
 		/* Current code values are 0, 1, and 2; all are regions. */
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d", comb->is_fastgen );
-		bu_avs_add_vls( &avs, "region", &value );
+		bu_avs_add_vls( avsp, "region", &value );
 	}
 	if( comb->inherit )
-		bu_avs_add( &avs, "inherit", "1" );
+		bu_avs_add( avsp, "inherit", "1" );
 	if( comb->rgb_valid )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d/%d/%d", V3ARGS(comb->rgb) );
-		bu_avs_add_vls( &avs, "rgb", &value );
+		bu_avs_add_vls( avsp, "rgb", &value );
 	}
 	/* optical shader string goes out in Tcl format */
 	if( bu_vls_strlen( &comb->shader ) > 0 )
-		bu_avs_add_vls( &avs, "oshader", &comb->shader );
+		bu_avs_add_vls( avsp, "oshader", &comb->shader );
 	if( bu_vls_strlen( &comb->material ) > 0 )
-		bu_avs_add_vls( &avs, "material", &comb->material );
+		bu_avs_add_vls( avsp, "material", &comb->material );
 	if( comb->temperature > 0 )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%f", comb->temperature );
-		bu_avs_add_vls( &avs, "temp", &value );
+		bu_avs_add_vls( avsp, "temp", &value );
 	}
 	if( comb->region_id != 0 )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d", comb->region_id );
-		bu_avs_add_vls( &avs, "region_id", &value );
+		bu_avs_add_vls( avsp, "region_id", &value );
 	}
 	if( comb->los != 0 )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d", comb->los );
-		bu_avs_add_vls( &avs, "los", &value );
+		bu_avs_add_vls( avsp, "los", &value );
 	}
 
 	/* XXX THere are more still to be converted */
 	/* aircode, GIFTmater */
 
-	/* XXX Where do the attributes get put??? */
-bu_avs_print( &avs, "comb v5 attributes");
+bu_avs_print( avsp, "comb v5 attributes");
 
 	bu_vls_free( &value );
 	return 0;	/* OK */
@@ -391,6 +391,18 @@ bu_avs_print( &avs, "comb v5 attributes");
 
 /*
  *			R T _ C O M B _ I M P O R T 5
+ *
+ *  Read a combination object in v5 external (on-disk) format,
+ *  and convert it into the internal format described in h/rtgeom.h
+ *
+ *  This is an unusual conversion, because some of the data is taken
+ *  from attributes, not just from the object body.
+ *  By the time this is called, the attributes will already have been
+ *  cracked into ip->idb_avs, we get the attributes from there.
+ *
+ *  Returns -
+ *	0	OK
+ *	-1	FAIL
  */
 int
 rt_comb_import5(ip, ep, mat, dbip)
