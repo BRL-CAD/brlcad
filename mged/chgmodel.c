@@ -905,6 +905,7 @@ f_units()
 
 	if( new_unit ) {
 		/* change to the new local unit */
+		db_conversions( dbip, new_unit );
 		db_ident( dbip, dbip->dbi_title, new_unit );
 		if(state == ST_S_EDIT)
 			pr_solid( &es_rec.s );
