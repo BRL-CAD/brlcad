@@ -182,7 +182,7 @@
 #if SUNOS > 55
 #	define USE_PROTOTYPES   1	
 #	define HAVE_SBRK_DECL	1
-#	define HAVE_GETOPT_DECL	1
+/* #	define HAVE_GETOPT_DECL	1 -- is not available if __STDC__ */
 #	define HAVE_MEMORY_H	1
 #	define HAVE_LIMITS_H	1
 #	undef _KERNEL  /* make sure the kernel calls are not used */
