@@ -6,7 +6,7 @@
 .TH LIBREDBLACK 3 BRL/CAD
 .\"
 .SH NAME
-libredblack \- red-black tree subroutines
+libredblack \- red-black tree operations
 .\"
 .SH SYNOPSIS
 \fB#include "machine.h"
@@ -94,6 +94,13 @@ libredblack \- red-black tree subroutines
 .B int sense;
 .\"
 .PP
+.B int rb_rank (tree, order)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
+.\"
+.PP
 .B void *rb_search (tree, order, data)
 .br
 .B rb_tree *tree;
@@ -101,6 +108,15 @@ libredblack \- red-black tree subroutines
 .B int order;
 .br
 .B void *data;
+.\"
+.PP
+.B void *rb_select (tree, order, k)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
+.br
+.B int k;
 .\"
 .PP
 .B void rb_set_uniqv (tree, vec)
@@ -151,11 +167,13 @@ libredblack \- red-black tree subroutines
 .\"
 .\"
 .SH DESCRIPTION
-These subroutines implement red-black trees,
+These routines implement red-black trees,
 a form of balanced binary trees,
 in such a way that all the basic dynamic set operations
 (e.g., insertion, deletion, search, minimum, maximum,
 predecessor, and successor)
+and order-statistic operations
+(i.e., select and rank)
 require no more than
 .IR "O(" "log " "n)"
 time,
@@ -185,7 +203,7 @@ and
 points to the table of comparison functions
 (one for each order).
 These are called with two arguments
-that point to the elements being compared.
+that point to the application data blocks being compared.
 Each function must return an integer
 less than, equal to, or greater than zero
 according as the first argument is to be considered
@@ -195,7 +213,7 @@ returns a pointer to
 an
 .I rb_tree.
 This pointer must be saved,
-as it is a required argument to all the other subroutines.
+as it is a required argument to all the other routines.
 .I rb_create1
 is similar,
 except that it creates a tree that supports only the single order
@@ -352,6 +370,35 @@ available in
 is similar,
 except that it searches the first (perhaps only) order.
 .PP
+.I rb_select
+traverses
+.I tree
+to retrieve the \fIk\fRth order statistic
+(i.e.,
+the data block of rank
+.I k,
+the \fIk\fRth-smallest data block)
+according to the comparison function
+specified by
+.I order,
+where
+.I k
+is between 1 and the number of nodes in
+.I tree,
+inclusive.
+On success,
+.I rb_select
+returns a pointer to the block of data of rank
+.I k.
+Otherwise, it returns
+.I NULL.
+The macro
+.I rb_select1(tree, k),
+available in
+\fI"redblack.h"\fR,
+is similar,
+except that it uses the first (perhaps only) order.
+.PP
 .I rb_walk
 traverses
 .I tree
@@ -404,13 +451,18 @@ The
 .I rb_tree
 structure contains a pointer to
 the node most recently accessed
-(e.g., inserted or discovered in a search).
+(e.g., inserted, discovered in a search, or selected by rank).
+When the most recent access failed,
+this current node is undefined.
 The following commands make use of
-this current node:
+the current node:
 .PP
 .I rb_curr
 returns a pointer to the data in the current node in 
-.I order.
+.I order,
+or
+.I NULL
+if the current node is undefined.
 The macro
 .I rb_curr1(tree),
 available in
@@ -428,8 +480,11 @@ the application specifies
 .I order,
 which indicates the block of data
 (in the current node) to be removed.
+If the current node is defined,
 .I rb_delete
 removes this block of data from every order.
+Otherwise,
+it prints a warning and returns.
 The macro
 .I rb_delete1(tree),
 available in
@@ -438,8 +493,11 @@ is similar,
 except that it removes the block of data in the first (perhaps only) order.
 .PP
 .I rb_neighbor
-finds the node adjacent (in \fIorder\fR) to
-the current node.
+returns a pointer to the data in the node adjacent (in \fIorder\fR) to
+the current node,
+or
+.I NULL
+if the current node is undefined.
 .I sense,
 which may be one of
 .I SENSE_MIN
@@ -455,6 +513,25 @@ available in
 are implemented in terms of
 .I rb_neighbor
 in the obvious way.
+.\"
+.PP
+.I rb_rank
+returns the the rank
+(i.e., position expressed as an integer between
+1 and the number of nodes in
+.I tree,
+inclusive)
+of the current node in
+.I order,
+or
+.I NULL
+if the current node is undefined.
+The macro
+.I rb_rank1(tree),
+available in
+\fI"redblack.h"\fR,
+is similar,
+except that it uses the first (perhaps only) order.
 .\"
 .PP
 The members
@@ -492,6 +569,8 @@ They include
     struct rb_node **rbt_root;      /* The actual trees */
     char           *rbt_unique;     /* Uniqueness flags */
     struct rb_node *rbt_current;    /* Current node */
+    struct rb_list rbt_nodes;       /* All nodes */
+    struct rb_list rbt_packages;    /* All packages */
     struct rb_node *rbt_empty_node; /* Sentinel for nil */
 .PP
 The distinction between classes I and III is not critical,
