@@ -44,7 +44,7 @@ unsigned char ibuf1[512], ibuf2[512], obuf[512];
 void	open_file();
 
 char usage[] = "\
-Usage: bwdiff [-m -g -l -e -n] file1.bw file2.bw (- stdin, . skip)\n";
+Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw (- stdin, . skip)\n";
 
 main( argc, argv )
 int argc; char **argv;
