@@ -31,6 +31,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "externs.h"
 
@@ -139,90 +144,6 @@ register char **argv;
 	return(1);		/* OK */
 }
 
-int
-main( argc, argv )
-int argc; char **argv;
-{
-	int i;
-
-	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
-		(void)fputs(usage, stderr);
-		exit( 1 );
-	}
-
-	if( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
-		fprintf( stderr, "bwscale: bad size\n" );
-		exit( 2 );
-	}
-
-	/* See how many lines we can buffer */
-	scanlen = inx;
-	init_buffer( scanlen );
-
-	if (inx < outx) i = outx;
-	else i = inx;
-
-	if( (outbuf = (unsigned char *)malloc(i)) == (unsigned char *)NULL )
-		exit( 4 );
-
-	/* Here we go */
-	i = scale( stdout, inx, iny, outx, outy );
-
-	free( outbuf );
-	free( buffer );
-	return(0);
-}
-
-/*
- * Determine max number of lines to buffer.
- *  and malloc space for it.
- *  XXX - CHECK FILE SIZE
- */
-void
-init_buffer( scanlen )
-int scanlen;
-{
-	int	max;
-
-	/* See how many we could buffer */
-	max = MAXBUFBYTES / scanlen;
-
-	/*
-	 * XXX We really should see how big
-	 * the input file is to decide if we should buffer
-	 * less than our max.
-	 */
-	if( max > 4096) max = 4096;
-
-	buflines = max;
-	buf_start = (-buflines);
-	if ((buffer = (unsigned char *)malloc( buflines * scanlen ))
-	  == (unsigned char *)NULL) {
-		fprintf(stderr, "Cannot allocate buffer\n");
-		exit(-1);
-	} else {
-		bzero((char *)buffer, buflines * scanlen);
-	}
-}
-
-/*
- * Load the buffer with scan lines centered around
- * the given y coordinate.
- */
-void
-fill_buffer( y )
-int y;
-{
-	buf_start = y - buflines/2;
-	if( buf_start < 0 ) buf_start = 0;
-
-	if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
-		fprintf( stderr, "bwscale: Can't seek to input pixel!\n" );
-/*		exit( 3 ); */
-	}
-	fread( buffer, scanlen, buflines, buffp );
-}
-
 /****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
 
 /* ceiling and floor functions for positive numbers */
@@ -315,6 +236,93 @@ int	ix, iy, ox, oy;
 	}
 	return( 1 );
 }
+
+
+
+int
+main( argc, argv )
+int argc; char **argv;
+{
+	int i;
+
+	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
+	}
+
+	if( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
+		fprintf( stderr, "bwscale: bad size\n" );
+		exit( 2 );
+	}
+
+	/* See how many lines we can buffer */
+	scanlen = inx;
+	init_buffer( scanlen );
+
+	if (inx < outx) i = outx;
+	else i = inx;
+
+	if( (outbuf = (unsigned char *)malloc(i)) == (unsigned char *)NULL )
+		exit( 4 );
+
+	/* Here we go */
+	i = scale( stdout, inx, iny, outx, outy );
+
+	free( outbuf );
+	free( buffer );
+	return(0);
+}
+
+/*
+ * Determine max number of lines to buffer.
+ *  and malloc space for it.
+ *  XXX - CHECK FILE SIZE
+ */
+void
+init_buffer( scanlen )
+int scanlen;
+{
+	int	max;
+
+	/* See how many we could buffer */
+	max = MAXBUFBYTES / scanlen;
+
+	/*
+	 * XXX We really should see how big
+	 * the input file is to decide if we should buffer
+	 * less than our max.
+	 */
+	if( max > 4096) max = 4096;
+
+	buflines = max;
+	buf_start = (-buflines);
+	if ((buffer = (unsigned char *)malloc( buflines * scanlen ))
+	  == (unsigned char *)NULL) {
+		fprintf(stderr, "Cannot allocate buffer\n");
+		exit(-1);
+	} else {
+		bzero((char *)buffer, buflines * scanlen);
+	}
+}
+
+/*
+ * Load the buffer with scan lines centered around
+ * the given y coordinate.
+ */
+void
+fill_buffer( y )
+int y;
+{
+	buf_start = y - buflines/2;
+	if( buf_start < 0 ) buf_start = 0;
+
+	if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
+		fprintf( stderr, "bwscale: Can't seek to input pixel!\n" );
+/*		exit( 3 ); */
+	}
+	fread( buffer, scanlen, buflines, buffp );
+}
+
 
 /*
  * Bilinear Interpolate a file of pixels.
