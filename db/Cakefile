@@ -18,11 +18,14 @@
 	ktank.g moss.g prim.g \
 	star.g truck.g world.g cube.g axis.g \
 	woodsman.g m35.g lgt-test.g
-#define STATIC_PRODUCTS	bldg391.asc crod.asc demo.asc \
-	ktank.asc moss.asc prim.asc \
-	star.asc truck.asc world.asc cube.asc axis.asc \
-	woodsman.asc m35.asc \
-	lgt-test.asc lgt-test.ldb lgt-test.mdb lgt-test.key
+#define STATIC_PRODUCTS		\
+	../SRCDIR/bldg391.asc ../SRCDIR/crod.asc ../SRCDIR/demo.asc \
+	../SRCDIR/ktank.asc ../SRCDIR/moss.asc ../SRCDIR/prim.asc \
+	../SRCDIR/star.asc ../SRCDIR/truck.asc \
+	../SRCDIR/world.asc ../SRCDIR/cube.asc ../SRCDIR/axis.asc \
+	../SRCDIR/pwoodsman.asc ../SRCDIR/m35.asc \
+	../SRCDIR/lgt-test.asc ../SRCDIR/lgt-test.ldb \
+	../SRCDIR/lgt-test.mdb ../SRCDIR/lgt-test.key
 
 #define SRCDIR	db
 #define FILES	/**/
