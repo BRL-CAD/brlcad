@@ -193,6 +193,13 @@ struct timeval	t_assigned;
 struct timeval	t_1st_done;
 struct timeval	t_all_done;
 
+/* Cooked values in ms */
+int		ms_assigned;
+int		ms_1st_done;
+int		ms_all_done;
+int		ms_flush;
+int		ms_total;
+
 static fd_set	select_list;			/* master copy */
 static int	max_fd;
 
@@ -306,6 +313,7 @@ char **argv;
 {
 	int	i;
 	struct bu_vls	str;
+	CONST char	*message;
 
 	if( argc != 2 )  {
 		Tcl_AppendResult(interp, "Usage: get_rtnode ###\n", NULL);
@@ -315,7 +323,7 @@ char **argv;
 	if( i < 0 || i >= MAX_NODES )  {
 		/* Use this as a signal to generate a title. */
 		Tcl_AppendResult(interp,
-			"##: CP ord i_lps w_lps lump busy state", NULL);
+			"##: CP ord i_lps w_lps lump rt/fb/ck state", NULL);
 		return TCL_OK;
 	}
 	if( rtnodes[i].fd <= 0 )  {
@@ -323,21 +331,25 @@ char **argv;
 			argv[1], " index not assigned\n", NULL);
 		return TCL_ERROR;
 	}
+
+	if( rtnodes[i].state == STATE_PREPPED )
+		message = rtnodes[i].busy ? "BUSY" : "wait";
+	else
+		message = states[rtnodes[i].state];
+
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "%2.2d: %2.2d %2.2d %5.5d %5.5d %4.4d %s %9s %s %d/%d/%d",
+	bu_vls_printf(&str, "%2.2d: %2.2d %2.2d %5.5d %5.5d %4.4d %d/%d/%d %s %s",
 		i,
 		rtnodes[i].ncpus,
 		rtnodes[i].finish_order,
 		(int)rtnodes[i].i_lps,
 		(int)rtnodes[i].w_lps,
 		rtnodes[i].lump,
-		rtnodes[i].busy ? "BUSY" : "wait",
-		rtnodes[i].state == STATE_PREPPED ? "ok" :
-			states[rtnodes[i].state],
-		rtnodes[i].host->ht_name,
 		(int)rtnodes[i].rt_time,
 		(int)rtnodes[i].fb_time,
-		(int)rtnodes[i].ck_time
+		(int)rtnodes[i].ck_time,
+		message,
+		rtnodes[i].host->ht_name
 		);
 	Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
 	bu_vls_free(&str);
@@ -1636,17 +1648,19 @@ check_others:
 	(void)gettimeofday( &time_end, (struct timezone *)NULL );
 	interval = tvdiff( &time_end, &frame_start );
 	if( interval <= 0 )  interval = 999;
-	bu_log("%s Complete in %5g sec, %4g Mbps (%4g fps)\n",
+	ms_total = interval * 1000;
+	bu_log("%s Complete in %6d ms, %6.2g Mbps (%6.2g fps)\n",
 		stamp(),
-		interval,
+		ms_total,
 		width * height * 3 * 8 / interval / 1000000.0,
 		1.0/interval );
-	bu_log("\tassignment=%g 1st_done=%g, all_done=%g, flush=%g ms\n",
-		tvdiff( &t_assigned, &frame_start ) * 1000,
-		tvdiff( &t_1st_done, &frame_start ) * 1000,
-		tvdiff( &t_all_done, &frame_start ) * 1000,
-		tvdiff( &time_end, &t_all_done ) * 1000
-		);
+
+	ms_assigned = tvdiff( &t_assigned, &frame_start ) * 1000;
+	ms_1st_done = tvdiff( &t_1st_done, &frame_start ) * 1000;
+	ms_all_done = tvdiff( &t_all_done, &frame_start ) * 1000;
+	ms_flush = tvdiff( &time_end, &t_all_done ) * 1000;
+	bu_log("\tassignment=%d 1st_done=%d, all_done=%d, flush=%d ms\n",
+		ms_assigned, ms_1st_done, ms_all_done, ms_flush );
 
 	/* Trigger TCL code to auto-update cpu status window on major changes */
 	if( sched_update )
