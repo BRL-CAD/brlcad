@@ -45,7 +45,8 @@ HIDDEN void rt_plot_cut();
 #define RT_NUGRID_CELL(_array,_x,_y,_z)		(&(_array)[ \
 	((((_z)*nu_cells_per_axis[Y])+(_y))*nu_cells_per_axis[X])+(_x) ])
 struct nu_axis {
-	fastf_t	nu_pos;		/* cell start pos */
+	fastf_t	nu_spos;	/* cell start pos */
+	fastf_t	nu_epos;	/* cell end pos */
 	fastf_t	nu_width;	/* voxel size */
 };
 struct nu_axis	*nu_axis[3];
@@ -218,7 +219,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 
 		if( shp->hg_min != ehp->hg_min )  rt_bomb("cut_it: hg_min error\n");
 		pos = shp->hg_min;
-		nu_axis[i][axi].nu_pos = pos;
+		nu_axis[i][axi].nu_spos = pos;
 		for( hindex = 0; hindex < shp->hg_nbins; hindex++ )  {
 			if( pos > shp->hg_max )  break;
 			/* Advance interval one more histogram entry */
@@ -229,19 +230,21 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			if( nstart < nu_sol_per_cell &&
 			    nend < nu_sol_per_cell )  continue;
 			/* End current interval, start new one */
-			nu_axis[i][axi].nu_width = pos - nu_axis[i][axi].nu_pos;
+			nu_axis[i][axi].nu_epos = pos;
+			nu_axis[i][axi].nu_width = pos - nu_axis[i][axi].nu_spos;
 			if( axi >= nu_max_ncells-1 )  {
 				rt_log("NUgrid ran off end, axis=%d, axi=%d\n",
 					i, axi);
 				pos = shp->hg_max+1;
 				break;
 			}
-			nu_axis[i][++axi].nu_pos = pos;
+			nu_axis[i][++axi].nu_spos = pos;
 			nstart = 0;
 			nend = 0;
 		}
 		/* End final interval */
-		nu_axis[i][axi].nu_width = pos - nu_axis[i][axi].nu_pos;
+		nu_axis[i][axi].nu_epos = pos;
+		nu_axis[i][axi].nu_width = pos - nu_axis[i][axi].nu_spos;
 		nu_cells_per_axis[i] = axi+1;
 	}
 
@@ -251,8 +254,9 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		rt_log("\nNUgrid %c axis:  %d cells\n",
 			"XYZ*"[i], nu_cells_per_axis[i] );
 		for( j=0; j<nu_cells_per_axis[i]; j++ )  {
-			rt_log("  %g, w=%g\n",
-				nu_axis[i][j].nu_pos,
+			rt_log("  %g .. %g, w=%g\n",
+				nu_axis[i][j].nu_spos,
+				nu_axis[i][j].nu_epos,
 				nu_axis[i][j].nu_width );
 		}
 	}
@@ -283,8 +287,8 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	for( xp = 0; xp < nu_cells_per_axis[X]; xp++ )  {
 		VMOVE( xmin, rtip->mdl_min );
 		VMOVE( xmax, rtip->mdl_max );
-		xmin[X] = nu_axis[X][xp].nu_pos;
-		xmax[X] = xmin[X] + nu_axis[X][xp].nu_width;
+		xmin[X] = nu_axis[X][xp].nu_spos;
+		xmax[X] = nu_axis[X][xp].nu_epos;
 		VMOVE( nu_xbox.bn_min, xmin );
 		VMOVE( nu_xbox.bn_max, xmax );
 		nu_xbox.bn_len = 0;
@@ -299,8 +303,8 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		for( yp = 0; yp < nu_cells_per_axis[Y]; yp++ )  {
 			VMOVE( ymin, xmin );
 			VMOVE( ymax, xmax );
-			ymin[Y] = nu_axis[Y][yp].nu_pos;
-			ymax[Y] = ymin[Y] + nu_axis[Y][yp].nu_width;
+			ymin[Y] = nu_axis[Y][yp].nu_spos;
+			ymax[Y] = nu_axis[Y][yp].nu_epos;
 			VMOVE( nu_ybox.bn_min, ymin );
 			VMOVE( nu_ybox.bn_max, ymax );
 			nu_ybox.bn_len = 0;
@@ -319,8 +323,8 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 					RT_NUGRID_CELL(nu_grid, xp, yp, zp);
 				VMOVE( zmin, ymin );
 				VMOVE( zmax, ymax );
-				zmin[Z] = nu_axis[Z][zp].nu_pos;
-				zmax[Z] = zmin[Z] + nu_axis[Z][zp].nu_width;
+				zmin[Z] = nu_axis[Z][zp].nu_spos;
+				zmax[Z] = nu_axis[Z][zp].nu_epos;
 				cutp->cut_type = CUT_BOXNODE;
 				VMOVE( cutp->bn.bn_min, zmin );
 				VMOVE( cutp->bn.bn_max, zmax );
