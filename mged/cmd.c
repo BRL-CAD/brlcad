@@ -62,11 +62,16 @@ int	f_sync();
 #ifdef MGED_TCL
 int	f_gui();
 
+int gui_mode = 0;
+
 Tcl_Interp *interp;
 Tk_Window tkwin;
 #endif
 
 struct rt_vls history;
+struct rt_vls replay_history;
+struct timeval lastfinish;
+FILE *journalfp;
 
 struct funtab {
 	char *ft_name;
@@ -192,6 +197,8 @@ static struct funtab funtab[] = {
 	f_itemair,3,4,
 "joint", "command [options]", "articualtion/animation commands",
 	f_joint, 1, MAXARGS,
+"journal", "fileName", "record all commands and timings to journal",
+	f_journal, 1, 2,
 "keep", "keep_file object(s)", "save named objects in specified file",
 	f_keep, 3, MAXARGS,
 "keypoint", "[x y z | reset]", "set/see center of editing transformations",
@@ -372,6 +379,82 @@ static struct funtab funtab[] = {
 	0, 0, 0,
 };
 
+/*
+ *	H I S T O R Y _ R E C O R D
+ *
+ * 	Note that this function uses different times for the calculating 
+ *	the time delta and the current time.
+ */
+
+void
+history_record( cmdp, start, finish )
+struct rt_vls *cmdp;
+struct timeval *start, *finish;
+{
+	static int done = 0;
+	struct rt_vls timing;
+
+	rt_vls_vlscat( &history, cmdp );
+
+	rt_vls_init( &timing );
+	if( done != 0 ) {
+		if( lastfinish.tv_usec > start->tv_usec ) {
+			rt_vls_printf( &timing, "delay %d %d\n",
+			    start->tv_sec - lastfinish.tv_sec - 1,
+			    start->tv_usec - lastfinish.tv_usec + 1000000L );
+		} else {
+			rt_vls_printf( &timing, "delay %d %d\n",
+				start->tv_sec - lastfinish.tv_sec,
+				start->tv_usec - lastfinish.tv_usec );
+		}
+	}		
+
+	if( journalfp != NULL ) {
+		rt_vls_fwrite( journalfp, &timing );
+		rt_vls_fwrite( journalfp, cmdp );
+	}
+
+	rt_vls_vlscat( &replay_history, &timing );
+	rt_vls_vlscat( &replay_history, cmdp );
+
+	lastfinish.tv_sec = finish->tv_sec;
+	lastfinish.tv_usec = finish->tv_usec;
+	done = 1;
+
+	rt_vls_free( &timing );
+}		
+
+/*
+ *	F _ J O U R N A L
+ *
+ */
+
+int
+f_journal( argc, argv )
+int argc;
+char **argv;
+{
+	if( argc < 2 ) {
+		if( journalfp != NULL )
+			fclose( journalfp );
+		journalfp = NULL;
+		return CMD_OK;
+	} else {
+		if( journalfp != NULL ) {
+			rt_log("First shut off journaling with \"journal\" (no args)\n");
+			return CMD_BAD;
+		} else {
+			journalfp = fopen(argv[1], "a+");
+			if( journalfp == NULL ) {
+				rt_log( "Error opening %s for appending\n", argv[1] );
+				return CMD_BAD;
+			}
+		}
+	}
+
+	return CMD_OK;
+}
+
 #ifdef MGED_TCL
 
 /*			C M D _ W R A P P E R
@@ -437,17 +520,14 @@ char *str;
 	int ret;
 	char *old;
 
-	old = interp->result; 
-
 	ret = sprintf(buf, ".i.f.text insert insert \"%s\"", str);
 	Tcl_Eval(interp, buf);
 	Tcl_Eval(interp, ".i.f.text yview -pickplace insert");
 	Tcl_Eval(interp, "set printend [.i.f.text index insert]");
 
-	interp->result = old;
-
 	return ret;
 }
+
 
 
 /*
@@ -464,14 +544,20 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	static struct rt_vls argstr;
+	static struct rt_vls argstr, hargstr;
 	static int done = 0;
+	struct timeval start, finish;
+	int result;
 
 	if( done == 0 ) {
 		rt_vls_init( &argstr );
+		rt_vls_init( &hargstr );
 		done = 1;
 		rt_vls_strcpy( &argstr, "" );
+		rt_vls_strcpy( &hargstr, "" );
 	}
+
+	rt_vls_trunc( &hargstr, 0 );
 
 	if( rt_vls_strlen(&argstr) > 0 ) {
 		/* Remove newline */
@@ -481,20 +567,24 @@ char **argv;
 
 	rt_vls_strcat( &argstr, argv[1] );
 
-	switch ( Tcl_Eval(interp, rt_vls_addr(&argstr)) ) {
+	gettimeofday( &start, NULL );
+	result = Tcl_Eval(interp, rt_vls_addr(&argstr));
+	gettimeofday( &finish, NULL );
+	
+	switch( result ) {
 	case TCL_OK:
 		if( strcmp(interp->result, "MGED_Ok") != 0 )
 			rt_log( interp->result );
 			    /* If the command was more than just \n, record. */
 		if( rt_vls_strlen(&argstr) > 1 )
-			rt_vls_vlscat( &history, &argstr );
+			history_record( &argstr, &start, &finish );
 		rt_vls_trunc( &argstr, 0 );
 		pr_prompt();
 		return TCL_OK;
 	case TCL_ERROR:
 		if( strcmp(interp->result, "MGED_Error") == 0 ) {
-			rt_vls_strcat( &history, "# " );
-			rt_vls_vlscat( &history, &argstr );
+			rt_vls_printf(&hargstr, "# %s", rt_vls_addr(&argstr));
+			history_record( &hargstr, &start, &finish );
 			rt_vls_trunc( &argstr, 0 );
 			pr_prompt();
 			return TCL_OK;
@@ -505,8 +595,8 @@ char **argv;
 			tmp = (char *)malloc( strlen(interp->result)+1 );
 			strcpy( tmp, interp->result );
 			rt_log( "%s\n", tmp );
-			rt_vls_strcat( &history, "# " );
-			rt_vls_vlscat( &history, &argstr );
+			rt_vls_printf(&hargstr, "# %s", rt_vls_addr(&argstr));
+			history_record( &hargstr, &start, &finish );
 			rt_vls_trunc( &argstr, 0 );
 			pr_prompt();
 			interp->result = tmp;
@@ -517,6 +607,20 @@ char **argv;
 		interp->result = "MGED: Unknown Error.";
 		return TCL_ERROR;
 	}
+}
+
+/*
+ *	C M D _ P R E V
+ */
+
+int
+cmd_prev( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	;
 }
 
 
@@ -535,38 +639,29 @@ char **argv;
 {
 	FILE *fp;
 
-	if( argc < 2 ) {
-		rt_log("save_history: Need a filename\n");
-		interp->result = "save_history: Need a filename";
+	if( argc < 3 ) {
+		rt_log("save_history: Usage: %s history|replay_history fileName\n", argv[0]);
+		interp->result = "save_history: Insufficient args";
 		return TCL_ERROR;
 	}
 
-	fp = fopen( argv[1], "a+" );
+	fp = fopen( argv[2], "a+" );
 	if( fp == NULL ) {
 		rt_log("save_history: Error opening file\n");
 		interp->result = "save_history: Error opening file";
 		return TCL_ERROR;
 	}
 
-	fprintf( fp, "%s", rt_vls_addr(&history) );	
+	if( strcmp( argv[1], "history" )==0 ) {
+		fprintf( fp, "%s", rt_vls_addr(&history) );
+	} else if( strcmp( argv[1], "replay_history" )==0 ) {
+		fprintf( fp, "%s", rt_vls_addr(&replay_history) );
+	}
 
 	fclose( fp );
 	return TCL_OK;
 }
 
-/*
- *	C M D _ P R E V
- */
-
-int
-cmd_prev( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	;
-}
 
 /*
  *	F _ G U I
@@ -586,10 +681,12 @@ char **argv;
 			  (Tcl_CmdDeleteProc *)NULL);
 	Tcl_CreateCommand(interp, "save_history", save_history,
 			  (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	gui_mode = 1;
 	return CMD_OK;
 }
 
 #endif
+
 
 /* 			C M D _ S E T U P
  *
@@ -607,6 +704,11 @@ int	interactive;
 
 	rt_vls_init( &history );
 	rt_vls_strcpy( &history, "" );
+
+	rt_vls_init( &replay_history );
+	rt_vls_strcpy( &replay_history, "" );
+
+	journalfp = NULL;
 
 #ifdef MGED_TCL
 
@@ -706,6 +808,9 @@ struct rt_vls	*vp;
 	int  	result;
 	int	argc;
 	char 	*argv[MAXARGS+2];
+	struct timeval start, finish;
+
+	struct rt_vls	hadd;
 
 	RT_VLS_CHECK(vp);
 
@@ -717,6 +822,7 @@ struct rt_vls	*vp;
 	rt_vls_init( &cmd );
 	rt_vls_init( &cmd_buf );
 	rt_vls_init( &str );
+	rt_vls_init( &hadd );
 
 	while( cp < end )  {
 		ep = strchr( cp, '\n' );
@@ -729,38 +835,65 @@ struct rt_vls	*vp;
 		rt_vls_strcpy( &cmd_buf, rt_vls_addr(&cmd) );
 		i = parse_line( rt_vls_addr(&cmd_buf), &argc, argv );
 #endif
-
 		while (1) {
+			int done;
+
+			done = 0;
 #ifdef MGED_TCL
+			gettimeofday( &start, NULL );
 			result = Tcl_Eval(interp, rt_vls_addr(&cmd));
-			if (result == TCL_OK) {
-				if (strcmp(interp->result, "MGED_Ok") != 0
-					&& interp->result[0] != '\0') {
+			gettimeofday( &finish, NULL );
+
+			switch( result ) {
+			case TCL_OK:
+	/* If it's TCL's OK, then print out the associated return value. */
+				if( strcmp(interp->result, "MGED_Ok") != 0
+				    && strlen(interp->result) > 0 ) {
 					/* Some TCL value to display */
 					rt_log("%s\n", interp->result);
 				}
-				break;  /* XXX Record, later */
-			}
-			if (result == TCL_ERROR && 
-			    strcmp(interp->result, "MGED_Error") != 0 &&
-			    strcmp(interp->result, "MGED_More") != 0) {
-				rt_log("%s\n", interp->result);
+				rt_vls_strcpy( &hadd, rt_vls_addr(&cmd) );
+				done = 1;
 				break;
-			}
-			if (strcmp(interp->result, "MGED_Error") == 0)  {
-				/* Silent error (we already printed out the
-				   error message) */
+			case TCL_ERROR:
+	/* If it's an MGED error, don't print out an error message. */
+				if(strcmp(interp->result, "MGED_Error") == 0){
+					rt_vls_printf( &hadd, "# %s",
+						rt_vls_addr(&cmd) );
+					done = 1;
+					break;
+				} 
+
+	/* If it's a TCL error, print out the associated error message. */
+				if( strcmp(interp->result, "MGED_More") != 0 ){
+					rt_vls_printf( &hadd, "# %s",
+						rt_vls_addr(&cmd) );
+					rt_log("%s\n", interp->result);
+					done = 1;
+					break;
+				}
+
+	/* Fall through to here iff it's MGED_More. */
+				done = 0;
 				break;
-			}
-			if (strcmp(interp->result, "MGED_More") != 0) {
-				/* Some TCL error of some sort. */
-			rt_log("%s\n", interp->result);
-				break;
+
 			}
 #else
-			if (mged_cmd(argc, argv, funtab) != CMD_MORE)
-				break;
+			gettimeofday( &start, NULL );
+			result = mged_cmd(argc, argv, funtab);
+			gettimeofday( &finish, NULL );
+			if (result != CMD_MORE)
+				done = 1;
+			else
+				done = 0;
 #endif
+
+	/* Record into history and return if we're all done. */
+
+			if( done ) {
+				history_record( &hadd, &start, &finish );
+				break;
+			}
 
 			/* If we get here, it means the command failed due
 			   to insufficient arguments.  In this case, grab some
@@ -784,10 +917,11 @@ struct rt_vls	*vp;
 		need_prompt = 1;
 
 		cp = ep+1;
-		rt_vls_free( &cmd );
-		rt_vls_free( &cmd_buf );
 	}
 	rt_vls_free( &cmd );
+	rt_vls_free( &cmd_buf );
+	rt_vls_free( &str );
+	rt_vls_free( &hadd );
 	return need_prompt;
 }
 
