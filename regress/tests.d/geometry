@@ -148,8 +148,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set grip_IN_ARGS ""
+    set grip_DB_ARGS ""
 
     #
     # () Arguments
@@ -157,8 +157,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set half_IN_ARGS ""
+    set half_DB_ARGS ""
 
     #
     # () Arguments
@@ -166,8 +166,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set hf_IN_ARGS ""
+    set hf_DB_ARGS ""
 
     #
     # () Arguments
