@@ -38,7 +38,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <strings.h>
 #endif
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "raytrace.h"
 #include "./debug.h"
@@ -377,7 +379,7 @@ int				id;
 
 	/* Determine if this matrix is an identity matrix */
 
-	if( !rt_mat_is_equal(tsp->ts_mat, rt_identity, &rt_tree_rtip->rti_tol)) {
+	if( !rt_mat_is_equal(tsp->ts_mat, bn_mat_identity, &rt_tree_rtip->rti_tol)) {
 		/* Not identity matrix */
 		mat = (matp_t)tsp->ts_mat;
 	} else {
@@ -408,7 +410,7 @@ int				id;
 	if( mat )  {
 		mat = stp->st_matp;
 	} else {
-		mat = (matp_t)rt_identity;
+		mat = (matp_t)bn_mat_identity;
 	}
 
 	/*
