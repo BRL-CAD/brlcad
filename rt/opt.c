@@ -384,7 +384,7 @@ register char **argv;
 				else
 					aspect = xx/yy;
 				if( aspect == 0 ) {
-					fprintf(stderr,"Bogus aspect %d, using 1.0\n", aspect);
+					fprintf(stderr,"Bogus aspect %g, using 1.0\n", aspect);
 					aspect = 1;
 				}
 			}
