@@ -6052,6 +6052,10 @@ RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_n_binu,
 #endif
 
 /* defined in wdb_obj.c */
+RT_EXPORT BU_EXTERN(int wdb_create_cmd,
+		    (Tcl_Interp	*interp,
+		     struct rt_wdb *wdbp,
+		     const char	*oname));
 RT_EXPORT BU_EXTERN(void wdb_deleteProc,
 		    (ClientData clientData));
 RT_EXPORT BU_EXTERN(int	wdb_get_tcl,
