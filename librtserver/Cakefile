@@ -15,6 +15,7 @@
 
 #include "../Cakefile.defs"
 
+#undef CONFIGDEFS
 #ifdef __ppc__
 #  undef RANLIB
 #  undef BUILD_LIBRARY
