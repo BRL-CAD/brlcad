@@ -393,9 +393,14 @@ double	r1, r2;
 	NAMEMOVE(name,rec.s.s_name);
 
 	/* Validate that 0 < r2 <= r1 */
-	if( r2 <= 0.0 || r2 > r1 )  {
-		fprintf(stderr, "mk_tor(%s):  illegal r1=%g, r2=%g\n",
-			name, r1, r2);
+	if( r2 <= 0.0 )  {
+		fprintf(stderr, "mk_tor(%s):  illegal r2=%.12e <= 0\n",
+			name, r2);
+		return(-1);
+	}
+	if( r2 > r1 )  {
+		fprintf(stderr, "mk_tor(%s):  illegal r2=%.12e > r1=%.12e\n",
+			name, r2, r1);
 		return(-1);
 	}
 
