@@ -2771,8 +2771,8 @@ register fastf_t *min, *max;
 	register double st;
 	register double mindist, maxdist;
 
-	mindist = -INFINITY;
-	maxdist = INFINITY;
+	mindist = -MAX_FASTF;
+	maxdist = MAX_FASTF;
 	VSUB2( diff, b, a );
 
 	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
