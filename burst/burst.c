@@ -24,8 +24,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ascii.h"
 #include "./extern.h"
 
-#define SIGCLD SIGCHLD
-
 #define DEBUG_BURST	0	/* 1 enables debugging for this module */
 
 /*
@@ -98,7 +96,11 @@ setupSigs()
 				(void) signal( i,  norml_sig );
 				}
 			break;
+#if defined( BSD )
 		case SIGCHLD :
+#else
+		case SIGCLD :
+#endif
 			break; /* leave SIGCLD alone */
 		case SIGPIPE :
 			(void) signal( i, SIG_IGN );

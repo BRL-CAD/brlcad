@@ -234,7 +234,7 @@ FileReadPIX(interp, chan, fileName, format, imageHandle, destX, destY,
 	    return TCL_ERROR;
 	}
 	block.height = 1;
-	Tk_PhotoPutBlock(imageHandle, &block, destX, destY+h-1, width, 1);
+	Tk_PhotoPutBlock(imageHandle, &block, destX, destY+h-1, width, height, 1);
     }
 
     bu_free((char *) pixelPtr, "PIX image buffer");

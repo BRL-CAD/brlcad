@@ -1381,37 +1381,6 @@ typedef struct Interp {
 #define INTERP_TRACE_IN_PROGRESS	0x200
 
 /*
- *----------------------------------------------------------------
- * Data structures related to command parsing. These are used in
- * tclParse.c and its clients.
- *----------------------------------------------------------------
- */
-
-/*
- * The following data structure is used by various parsing procedures
- * to hold information about where to store the results of parsing
- * (e.g. the substituted contents of a quoted argument, or the result
- * of a nested command).  At any given time, the space available
- * for output is fixed, but a procedure may be called to expand the
- * space available if the current space runs out.
- */
-
-typedef struct ParseValue {
-    char *buffer;		/* Address of first character in
-				 * output buffer. */
-    char *next;			/* Place to store next character in
-				 * output buffer. */
-    char *end;			/* Address of the last usable character
-				 * in the buffer. */
-    void (*expandProc) _ANSI_ARGS_((struct ParseValue *pvPtr, int needed));
-				/* Procedure to call when space runs out;
-				 * it will make more space. */
-    ClientData clientData;	/* Arbitrary information for use of
-				 * expandProc. */
-} ParseValue;
-
-
-/*
  * Maximum number of levels of nesting permitted in Tcl commands (used
  * to catch infinite recursion).
  */
@@ -1577,6 +1546,7 @@ extern char *			tclDefaultEncodingDir;
 extern Tcl_ChannelType		tclFileChannelType;
 extern char *			tclMemDumpFileName;
 extern TclPlatformType		tclPlatform;
+extern Tcl_NotifierProcs	tclOriginalNotifier;
 
 /*
  * Variables denoting the Tcl object types defined in the core.
@@ -1594,9 +1564,7 @@ extern Tcl_ObjType	tclStringType;
 extern Tcl_ObjType	tclArraySearchType;
 extern Tcl_ObjType	tclIndexType;
 extern Tcl_ObjType	tclNsNameType;
-#ifndef TCL_WIDE_INT_IS_LONG
 extern Tcl_ObjType	tclWideIntType;
-#endif
 
 /*
  * Variables denoting the hash key types defined in the core.
@@ -2238,6 +2206,26 @@ extern Tcl_Mutex tclObjMutex;
 
 #define TclGetString(objPtr) \
     ((objPtr)->bytes? (objPtr)->bytes : Tcl_GetString((objPtr)))
+
+/*
+ *----------------------------------------------------------------
+ * Macro used by the Tcl core to get a Tcl_WideInt value out of
+ * a Tcl_Obj of the "wideInt" type.  Different implementation on
+ * different platforms depending whether TCL_WIDE_INT_IS_LONG.
+ *----------------------------------------------------------------
+ */
+
+#ifdef TCL_WIDE_INT_IS_LONG
+#    define TclGetWide(resultVar, objPtr) \
+	(resultVar) = (objPtr)->internalRep.longValue
+#    define TclGetLongFromWide(resultVar, objPtr) \
+	(resultVar) = (objPtr)->internalRep.longValue
+#else
+#    define TclGetWide(resultVar, objPtr) \
+	(resultVar) = (objPtr)->internalRep.wideValue
+#    define TclGetLongFromWide(resultVar, objPtr) \
+	(resultVar) = Tcl_WideAsLong((objPtr)->internalRep.wideValue)
+#endif
 
 /*
  *----------------------------------------------------------------

@@ -82,6 +82,12 @@ EXTERN int		Tcl_MacOSXOpenBundleResources _ANSI_ARGS_((
 				Tcl_Interp * interp, CONST char * bundleName, 
 				int hasResourceFile, int maxPathLen, 
 				char * libraryPath));
+/* 1 */
+EXTERN int		Tcl_MacOSXOpenVersionedBundleResources _ANSI_ARGS_((
+				Tcl_Interp * interp, CONST char * bundleName, 
+				CONST char * bundleVersion, 
+				int hasResourceFile, int maxPathLen, 
+				char * libraryPath));
 #endif /* MAC_OSX_TCL */
 
 typedef struct TclPlatStubs {
@@ -105,6 +111,7 @@ typedef struct TclPlatStubs {
 #endif /* MAC_TCL */
 #ifdef MAC_OSX_TCL
     int (*tcl_MacOSXOpenBundleResources) _ANSI_ARGS_((Tcl_Interp * interp, CONST char * bundleName, int hasResourceFile, int maxPathLen, char * libraryPath)); /* 0 */
+    int (*tcl_MacOSXOpenVersionedBundleResources) _ANSI_ARGS_((Tcl_Interp * interp, CONST char * bundleName, CONST char * bundleVersion, int hasResourceFile, int maxPathLen, char * libraryPath)); /* 1 */
 #endif /* MAC_OSX_TCL */
 } TclPlatStubs;
 
@@ -174,6 +181,10 @@ extern TclPlatStubs *tclPlatStubsPtr;
 #ifndef Tcl_MacOSXOpenBundleResources
 #define Tcl_MacOSXOpenBundleResources \
 	(tclPlatStubsPtr->tcl_MacOSXOpenBundleResources) /* 0 */
+#endif
+#ifndef Tcl_MacOSXOpenVersionedBundleResources
+#define Tcl_MacOSXOpenVersionedBundleResources \
+	(tclPlatStubsPtr->tcl_MacOSXOpenVersionedBundleResources) /* 1 */
 #endif
 #endif /* MAC_OSX_TCL */
 
