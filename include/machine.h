@@ -573,7 +573,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 #endif
 
-#ifdef __altix__
+#ifdef __ia64__
 /********************************
  *                              *
  *      SGI Altix               *
