@@ -293,6 +293,7 @@ struct line_list{
 };
 
 struct line_list HeadLines;
+static char newline[] = "\n";
 
 HIDDEN int
 put_tree_into_comb(comb, dp, old_name, new_name, str)
@@ -307,7 +308,6 @@ char *str;
   char *ptr;
   char relation;
   char name[NAMESIZE+1];
-  char newline[] = "\n";
   struct directory *dp1;
   struct rt_tree_array *rt_tree_array;
   struct line_list *llp;

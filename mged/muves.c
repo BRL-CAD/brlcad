@@ -69,8 +69,8 @@ struct muves_sys
 static char *regionmap_delims=" \t";
 static char *sysdef_delims=" \t\n@?!~&-^><|*+";
 
-static struct muves_sys muves_sys_head={ {BU_LIST_HEAD_MAGIC, &muves_sys_head.l, &muves_sys_head.l}, NULL, NULL};
-static struct muves_comp muves_comp_head={ {BU_LIST_HEAD_MAGIC, &muves_comp_head.l, &muves_comp_head.l}, NULL, NULL};
+static struct muves_sys muves_sys_head={ {BU_LIST_HEAD_MAGIC, &muves_sys_head.l, &muves_sys_head.l}, (char *)NULL, { {BU_LIST_HEAD_MAGIC, &muves_sys_head.member_head.l, &muves_sys_head.member_head.l} }};
+static struct muves_comp muves_comp_head={ {BU_LIST_HEAD_MAGIC, &muves_comp_head.l, &muves_comp_head.l}, (char *)NULL, {{BU_LIST_HEAD_MAGIC, &muves_comp_head.comp_head.l, &muves_comp_head.comp_head.l}, (struct directory *)NULL}};
 
 
 void
@@ -423,6 +423,7 @@ char    *argv[];
 			struct member_list *member;
 			struct muves_comp *comp;
 			struct muves_sys *sys;
+			int already_member;
 
 			if( *ptr == '#' )	/* comment */
 				break;
@@ -440,9 +441,41 @@ char    *argv[];
 			}
 
 			if( is_constant )	/* ignore numerical constants */
+			{
+				ptr = strtok( (char *)NULL, sysdef_delims );
 				continue;
+			}
 
 			/* found a system or component name */
+
+			/* check if this is already a member of the current system */
+			already_member = 0;
+			for( BU_LIST_FOR( member, member_list, &new_sys->member_head.l ) )
+			{
+				switch( member->object_type )
+				{
+					case MUVES_COMPONENT:   /* component */
+						if( !strcmp( ptr, member->mem.comp->muves_name ) )
+							already_member = 1;
+						break;
+					case MUVES_SYSTEM:      /* system */
+						if( !strcmp( ptr, member->mem.sys->muves_name ) )
+							already_member = 1;
+						break;
+					default:
+						Tcl_AppendResult(interp, "\t",
+							"ERROR: Unrecognized type of system member\n", (char *)NULL );
+						break;
+				}
+				if( already_member )
+					break;
+			}
+			if( already_member )
+			{
+				ptr = strtok( (char *)NULL, sysdef_delims );
+				continue;
+			}
+
 			member = (struct member_list *)bu_malloc( sizeof( struct member_list ), "member" );
 			member->object_type = MUVES_TYPE_UNKNOWN;
 			for( BU_LIST_FOR( sys, muves_sys, &muves_sys_head.l ) )
@@ -561,7 +594,7 @@ char    *argv[];
 	char **e_argv;
 	int e_argc;
 	int e_argv_len=0;
-	char e_comm[2]={ 'e', '\0'};
+	char *e_comm="e";
 
 	e_argv = (char **)bu_malloc( E_ARGV_BLOCK_LEN * sizeof( char *), "e_argv" );
 	e_argv_len = E_ARGV_BLOCK_LEN;
