@@ -2868,10 +2868,10 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 {
 	int *new_faces;		/* the sorted list of faces to be attached to the BOT at the end of this routine */
 	int new_face_count=0;	/* the current number of faces in the "new_faces" list */
-	int *new_norms;		/* the sorted list of vertex normals corrsponding to the "new_faces" list */
+	int *new_norms = (int*)NULL;		/* the sorted list of vertex normals corrsponding to the "new_faces" list */
 	int *old_faces;		/* a copy of the original face list from the BOT */
 	int *piece;		/* a small face list, for just the faces in the current piece */
-	int *piece_norms;	/* vertex normals for faces in the current piece */
+	int *piece_norms = (int*)NULL;	/* vertex normals for faces in the current piece */
 	int *piece_verts;	/* a list of vertices in the current piece (each vertex appears only once) */
 	unsigned char *vert_count;	/* an array used to hold the number of piece vertices that appear in each BOT face */
 	int faces_left;		/* the number of faces in the "old_faces" array that have not yet been used */
