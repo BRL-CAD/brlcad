@@ -418,7 +418,7 @@ int	reg_id;
 
 	/* fix the normals */
 	s = RT_LIST_FIRST( shell , &r->s_hd );
-	nmg_fix_normals( s );
+	nmg_fix_normals( s, &tol );
 
 	/* if the shell we just built has a void shell inside, nmg_fix_normals will
 	 * point the normals of the void shell in the wrong direction. This section
