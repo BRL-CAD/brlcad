@@ -99,7 +99,16 @@ static char idmap[] = {
 
 HIDDEN char *path_str();
 
-void
+/*
+ *  			G E T _ T R E E
+ *
+ *  User-called function to add a tree hierarchy to the displayed set.
+ *  
+ *  Returns -
+ *  	0	Ordinarily
+ *	-1	On major error
+ */
+int
 get_tree(node)
 char *node;
 {
@@ -111,7 +120,7 @@ char *node;
 
 	dp = dir_lookup( node, LOOKUP_NOISY );
 	if( dp == DIR_NULL )
-		return;		/* ERROR */
+		return(-1);		/* ERROR */
 
 	curtree = drawHobj( dp, REGION_NULL, 0, mat );
 	if( curtree != TREE_NULL )  {
@@ -146,6 +155,7 @@ char *node;
 			rp = rp->reg_forw;
 		}
 	}
+	return(0);	/* OK */
 }
 
 static vect_t xaxis = { 1.0, 0, 0, 0 };
@@ -519,9 +529,10 @@ register float *fp;
 register int n;
 {
 	while( n-- )  {
-		VMOVE( ff, fp );
-		fp += 3;
-		ff += ELEMENTS_PER_VECT;
+		*ff++ = *fp++;
+		*ff++ = *fp++;
+		*ff++ = *fp++;
+		ff += ELEMENTS_PER_VECT-3;
 	}
 }
 
@@ -537,4 +548,33 @@ char *str;
 	fprintf(stderr,"\nrt FATAL ERROR %s.\n", str);
 	fflush(stderr);
 	exit(12);
+}
+
+/*
+ *  			S O L I D _ P O S
+ *  
+ *  Let the user enquire about the position of the Vertex (V vector)
+ *  of a solid.  Useful mostly to find the light sources.
+ *
+ *  Returns:
+ *	0	If solid found and ``pos'' vector filled in.
+ *	-1	If error.  ``pos'' vector left untouched.
+ */
+int
+solid_pos( name, pos )
+char *name;
+vect_t *pos;
+{
+	register struct directory *dp;
+	auto union record rec;		/* local copy of this record */
+
+	if( (dp = dir_lookup( name, LOOKUP_QUIET )) == DIR_NULL )
+		return(-1);	/* BAD */
+	
+	(void)lseek( ged_fd, dp->d_addr, 0 );
+	(void)read( ged_fd, (char *)&rec, sizeof rec );
+
+	if( rec.u_id != ID_SOLID )
+		return(-1);	/* BAD:  too hard */
+	fastf_float( pos, rec.s.s_values, 1 );
 }
