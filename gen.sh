@@ -143,7 +143,6 @@ TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 		gen.sh setup.sh newbindir.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
-# XXX MGED won't run unless "cake install" installs /usr/brlcad/html !!
 ADIRS="h doc pix vfont whetstone awf brlman tclscripts"
 
 # Has no Cakefile, just copy it (and all sub-directories!) verbatim.
@@ -204,6 +203,7 @@ BDIRS="bench \
 	burst \
 "			# This ends the list.
 
+TSDIRS="mged nirt pl-dm"
 TDIRS="libtk libtkGLX"
 
 # If there is no TCP networking, eliminate network-only directories.
@@ -335,8 +335,16 @@ install|install-nobak|uninstall)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
 		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${TARGET} )
-	done;;
+	done
 
+	# This runs Tcl's auto_mkindex to create an directory index
+	$BRLCAD_ROOT/tclscripts/ami.tcl $BRLCAD_ROOT/tclscripts
+
+	for dir in ${TSDIRS}; do
+		echo -------------------------------- ${dir};
+		( cd tclscripts/${dir} && cake -k ${TARGET} )
+		$BRLCAD_ROOT/tclscripts/ami.tcl $BRLCAD_ROOT/tclscripts/$dir
+	done;;
 #  These directives operate in the source directory
 #
 #  inst-dist	BRL-only:  inst sources in dist tree without inst products
@@ -400,6 +408,25 @@ install-tcl)
 	for dir in ${TDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
 		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k install )
+	done;;
+
+ami)
+	$BRLCAD_ROOT/tclscripts/ami.tcl $BRLCAD_ROOT/tclscripts
+
+	for dir in ${TSDIRS}; do
+	    $BRLCAD_ROOT/tclscripts/ami.tcl $BRLCAD_ROOT/tclscripts/$dir
+	done;;
+
+tags)
+	for dir in ${BDIRS}; do
+		echo -------------------------------- ${dir};
+		( cd $dir && cake -k ${TARGET} )
+	done;;
+
+TAGS)
+	for dir in ${BDIRS}; do
+		echo -------------------------------- ${dir};
+		( cd $dir && cake -k ${TARGET} )
 	done;;
 
 shell)
