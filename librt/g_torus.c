@@ -142,51 +142,17 @@ struct tor_specific {
 };
 
 struct tor_internal {
+	long	magic;
 	point_t	v;
-	vect_t	h;
-	vect_t	a;
-	vect_t	b;
+	vect_t	h;		/* r_h length */
+	vect_t	a;		/* r_a length */
+	vect_t	b;		/* r_b length */
+	fastf_t	r_h;		/* radius in H direction */
+	fastf_t	r_a;		/* radius in A direction */
+	fastf_t	r_b;		/* radius in B direction (typ == r_a) */
 };
-
-/*
- *			R T _ T O R _ I M P O R T
- *
- *  Import a torus from the database format to the internal format.
- *  Apply modeling transformations at the same time.
- */
-int
-rt_tor_import( tip, rp, mat )
-struct tor_internal	*tip;
-union record		*rp;
-register mat_t		mat;
-{
-	LOCAL fastf_t	vec[3*4];
-	vect_t		axb;
-
-	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_tor_import: defective record\n");
-		return(-1);
-	}
-
-	/* Convert from database to internal format */
-	rt_fastf_float( vec, rp->s.s_values, 4 );
-
-	/* Apply modeling transformations */
-	MAT4X3PNT( tip->v, mat, &vec[0*3] );
-	MAT4X3VEC( tip->h, mat, &vec[1*3] );
-	MAT4X3VEC( tip->a, mat, &vec[2*3] );
-	MAT4X3VEC( tip->b, mat, &vec[3*3] );
-
-	/* If H does not point in the direction of A cross B, reverse H. */
-	/* Somehow, database records have been written with this problem. */
-	VCROSS( axb, tip->a, tip->b );
-	if( VDOT( axb, tip->h ) < 0 )  {
-		VREVERSE( tip->h, tip->h );
-	}
-
-	return(0);		/* OK */
-}
+#define RT_TOR_INTERNAL_MAGIC	0x9bffed887
+#define RT_TOR_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TOR_INTERNAL_MAGIC,"tor_internal")
 
 /*
  *  			R T _ T O R _ P R E P
@@ -203,62 +169,66 @@ register mat_t		mat;
  *  	A struct tor_specific is created, and it's address is stored in
  *  	stp->st_specific for use by rt_tor_shot().
  */
+#if NEW_IF
+int
+rt_tor_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
+{
+#else
 int
 rt_tor_prep( stp, rec, rtip )
 struct soltab		*stp;
 union record		*rec;
 struct rt_i		*rtip;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	register struct tor_specific *tor;
-	LOCAL fastf_t	magsq_a, magsq_b, magsq_h;
 	LOCAL mat_t	R;
 	LOCAL vect_t	P, w1;	/* for RPP calculation */
 	FAST fastf_t	f;
-	LOCAL fastf_t	r1, r2;	/* primary and secondary radius */
-	LOCAL fastf_t	mag_b;
-	struct tor_internal	ti;
+	struct tor_internal	*tip;
 
-	if( rt_tor_import( &ti, rec, stp->st_pathmat ) < 0 )
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rec;
+	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
+	ip = &intern;
+	if( rt_tor_import( ip, ep, stp->st_pathmat ) < 0 )
 		return(-1);		/* BAD */
-
-	magsq_a = MAGSQ( ti.a );
-	magsq_b = MAGSQ( ti.b );
-	magsq_h = MAGSQ( ti.h );
-	r1 = sqrt(magsq_a);
-	r2 = sqrt(magsq_h);
-	mag_b = sqrt(magsq_b);
-
-	/* Validate that |A| > 0, |B| > 0, |H| > 0 */
-	if( NEAR_ZERO(magsq_a, 0.0001) ||
-	    NEAR_ZERO(magsq_b, 0.0001) ||
-	    NEAR_ZERO(magsq_h, 0.0001) ) {
-		rt_log("tor(%s):  zero length A, B, or H vector\n",
-			stp->st_name );
-		return(1);		/* BAD */
-	}
+	RT_CK_DB_INTERNAL( ip );
+#endif
+	tip = (struct tor_internal *)ip->idb_ptr;
+	RT_TOR_CK_MAGIC(tip);
 
 	/* Validate that |A| == |B| (for now) */
-	if( rt_fdiff( r1, mag_b ) != 0 ) {
+	if( rt_fdiff( tip->r_a, tip->r_b ) != 0 ) {
 		rt_log("tor(%s):  (|A|=%f) != (|B|=%f) \n",
-			stp->st_name, r1, mag_b );
+			stp->st_name, tip->r_a, tip->r_b );
 		return(1);		/* BAD */
 	}
 
 	/* Validate that A.B == 0, B.H == 0, A.H == 0 */
-	f = VDOT( ti.a, ti.b )/(r1*mag_b);
+	f = VDOT( tip->a, tip->b )/(tip->r_a*tip->r_b);
 
 	if( ! NEAR_ZERO(f, 0.0001) )  {
 		rt_log("tor(%s):  A not perpendicular to B, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
-	f = VDOT( ti.b, ti.h )/(mag_b*r2);
+	f = VDOT( tip->b, tip->h )/(tip->r_b*tip->r_h);
 	if( ! NEAR_ZERO(f, 0.0001) )  {
 		rt_log("tor(%s):  B not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
-	f = VDOT( ti.a, ti.h )/(r1*r2);
+	f = VDOT( tip->a, tip->h )/(tip->r_a*tip->r_h);
 	if( ! NEAR_ZERO(f, 0.0001) )  {
 		rt_log("tor(%s):  A not perpendicular to H, f=%f\n",
 			stp->st_name, f);
@@ -266,8 +236,8 @@ struct rt_i		*rtip;
 	}
 
 	/* Validate that 0 < r2 <= r1 for alpha computation */
-	if( 0.0 >= r2  || r2 > r1 )  {
-		rt_log("r1 = %f, r2 = %f\n", r1, r2 );
+	if( 0.0 >= tip->r_h  || tip->r_h > tip->r_a )  {
+		rt_log("r1 = %f, r2 = %f\n", tip->r_a, tip->r_h );
 		rt_log("tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
 		return(1);		/* BAD */
 	}
@@ -276,22 +246,19 @@ struct rt_i		*rtip;
 	GETSTRUCT( tor, tor_specific );
 	stp->st_specific = (genptr_t)tor;
 
-	tor->tor_r1 = r1;
-	tor->tor_r2 = r2;
+	tor->tor_r1 = tip->r_a;
+	tor->tor_r2 = tip->r_h;
 
-	VMOVE( tor->tor_V, ti.v );
-	tor->tor_alpha = r2/tor->tor_r1;
+	VMOVE( tor->tor_V, tip->v );
+	tor->tor_alpha = tip->r_h/tor->tor_r1;
 
 	/* Compute R and invR matrices */
-	VUNITIZE( ti.h );
-	VMOVE( tor->tor_N, ti.h );
+	VSCALE( tor->tor_N, tip->h, 1.0/tip->r_h );
 
 	mat_idn( R );
-	VMOVE( &R[0], ti.a );
-	VUNITIZE( &R[0] );
-	VMOVE( &R[4], ti.b );
-	VUNITIZE( &R[4] );
-	VMOVE( &R[8], ti.h );
+	VSCALE( &R[0], tip->a, 1.0/tip->r_a );
+	VSCALE( &R[4], tip->b, 1.0/tip->r_b );
+	VMOVE( &R[8], tor->tor_N );
 	mat_inv( tor->tor_invR, R );
 
 	/* Compute SoR.  Here, S = I / r1 */
@@ -299,7 +266,7 @@ struct rt_i		*rtip;
 	tor->tor_SoR[15] *= tor->tor_r1;
 
 	VMOVE( stp->st_center, tor->tor_V );
-	stp->st_aradius = stp->st_bradius = tor->tor_r1 + r2;
+	stp->st_aradius = stp->st_bradius = tor->tor_r1 + tip->r_h;
 
 	/*
 	 *  Compute the bounding RPP planes for a circular torus.
@@ -980,6 +947,17 @@ rt_tor_class()
  *	ti.a,ti.b	perpindicular, to CENTER of torus (for top, bottom)
  *
  */
+#if NEW_IF
+int
+rt_tor_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead	*vhead;
+mat_t		mat;
+struct rt_db_internal *ip;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_tor_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
 union record		*rp;
@@ -990,12 +968,15 @@ double			abs_tol;
 double			rel_tol;
 double			norm_tol;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	fastf_t		alpha;
 	fastf_t		beta;
 	fastf_t		cos_alpha, sin_alpha;
 	fastf_t		cos_beta, sin_beta;
 	fastf_t		dist_to_rim;
-	struct tor_internal	ti;
+	struct tor_internal	*tip;
 	int		w;
 	int		nw = 8;
 	int		len;
@@ -1004,14 +985,23 @@ double			norm_tol;
 	vect_t		G;
 	vect_t		radius;
 	vect_t		edge;
-	fastf_t		r1;		/* |A| */
-	fastf_t		r2;		/* |H| */
 
-	if( rt_tor_import( &ti, rp, mat ) < 0 )
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	if( rt_tor_import( &intern, ep, mat ) < 0 )  {
+		rt_log("rt_tor_plot(): db import failure\n");
 		return(-1);		/* BAD */
-
-	r1 = MAGNITUDE(ti.a);
-	r2 = MAGNITUDE(ti.h);
+	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	tip = (struct tor_internal *)ip->idb_ptr;
+	RT_TOR_CK_MAGIC(tip);
 
 	if( rel_tol <= 0.0 || rel_tol >= 1.0 )  {
 		rel_tol = 0.0;		/* none */
@@ -1019,7 +1009,7 @@ double			norm_tol;
 		/* Convert relative tolerance to absolute tolerance
 		 * by scaling w.r.t. the torus diameter.
 		 */
-		rel_tol *= 2*(r1+r2);
+		rel_tol *= 2*(tip->r_a+tip->r_h);
 	}
 	/* Take tighter of two (absolute) tolerances */
 	if( abs_tol <= 0.0 )  {
@@ -1030,15 +1020,15 @@ double			norm_tol;
 			nlen = 16;
 		} else {
 			/* Use the absolute-ized relative tolerance */
-			nlen = rt_num_circular_segments( rel_tol, r1 );
-			nw = rt_num_circular_segments( rel_tol, r2 );
+			nlen = rt_num_circular_segments( rel_tol, tip->r_a );
+			nw = rt_num_circular_segments( rel_tol, tip->r_h );
 		}
 	} else {
 		/* Absolute tolerance was given */
 		if( rel_tol > 0.0 && rel_tol < abs_tol )
 			abs_tol = rel_tol;
-		nlen = rt_num_circular_segments( abs_tol, r1 );
-		nw = rt_num_circular_segments( abs_tol, r2 );
+		nlen = rt_num_circular_segments( abs_tol, tip->r_a );
+		nw = rt_num_circular_segments( abs_tol, tip->r_h );
 	}
 
 	/*
@@ -1056,7 +1046,7 @@ double			norm_tol;
 	}
 
 	/* Compute the points on the surface of the torus */
-	dist_to_rim = r2/r1;
+	dist_to_rim = tip->r_h/tip->r_a;
 	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_plot pts[]" );
 
@@ -1068,15 +1058,15 @@ double			norm_tol;
 		cos_beta = cos(beta);
 		sin_beta = sin(beta);
 		/* G always points out to rim, along radius vector */
-		VCOMB2( radius, cos_beta, ti.a, sin_beta, ti.b );
+		VCOMB2( radius, cos_beta, tip->a, sin_beta, tip->b );
 		/* We assume that |radius| = |A|.  Circular */
 		VSCALE( G, radius, dist_to_rim );
 		for( w = 0; w < nw; w++ )  {
 			alpha = rt_twopi * w / nw;
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
-			VCOMB2( edge, cos_alpha, G, sin_alpha, ti.h );
-			VADD3( PTA(w,len), ti.v, edge, radius );
+			VCOMB2( edge, cos_alpha, G, sin_alpha, tip->h );
+			VADD3( PTA(w,len), tip->v, edge, radius );
 		}
 	}
 
@@ -1104,6 +1094,18 @@ double			norm_tol;
 /*
  *			R T _ T O R _ T E S S
  */
+#if NEW_IF
+int
+rt_tor_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+register mat_t		mat;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_tor_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
@@ -1115,12 +1117,15 @@ double			abs_tol;
 double			rel_tol;
 double			norm_tol;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	fastf_t		alpha;
 	fastf_t		beta;
 	fastf_t		cos_alpha, sin_alpha;
 	fastf_t		cos_beta, sin_beta;
 	fastf_t		dist_to_rim;
-	struct tor_internal	ti;
+	struct tor_internal	*tip;
 	int		w;
 	int		nw = 6;
 	int		len;
@@ -1135,14 +1140,24 @@ double			norm_tol;
 	struct vertex	**vertp[4];
 	int		nfaces;
 	int		i;
-	fastf_t		r1;		/* |A| */
-	fastf_t		r2;		/* |H| */
 
-	if( rt_tor_import( &ti, rp, mat ) < 0 )
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_tor_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_tor_tess(): db import failure\n");
 		return(-1);		/* BAD */
-
-	r1 = MAGNITUDE(ti.a);
-	r2 = MAGNITUDE(ti.h);
+	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	tip = (struct tor_internal *)ip->idb_ptr;
+	RT_TOR_CK_MAGIC(tip);
 
 	if( rel_tol <= 0.0 || rel_tol >= 1.0 )  {
 		rel_tol = 0.0;		/* none */
@@ -1150,7 +1165,7 @@ double			norm_tol;
 		/* Convert relative tolerance to absolute tolerance
 		 * by scaling w.r.t. the torus diameter.
 		 */
-		rel_tol *= 2*(r1+r2);
+		rel_tol *= 2*(tip->r_a+tip->r_h);
 	}
 	/* Take tighter of two (absolute) tolerances */
 	if( abs_tol <= 0.0 )  {
@@ -1161,15 +1176,15 @@ double			norm_tol;
 			nlen = 16;
 		} else {
 			/* Use the absolute-ized relative tolerance */
-			nlen = rt_num_circular_segments( rel_tol, r1 );
-			nw = rt_num_circular_segments( rel_tol, r2 );
+			nlen = rt_num_circular_segments( rel_tol, tip->r_a );
+			nw = rt_num_circular_segments( rel_tol, tip->r_h );
 		}
 	} else {
 		/* Absolute tolerance was given */
 		if( rel_tol > 0.0 && rel_tol < abs_tol )
 			abs_tol = rel_tol;
-		nlen = rt_num_circular_segments( abs_tol, r1 );
-		nw = rt_num_circular_segments( abs_tol, r2 );
+		nlen = rt_num_circular_segments( abs_tol, tip->r_a );
+		nw = rt_num_circular_segments( abs_tol, tip->r_h );
 	}
 
 	/*
@@ -1187,7 +1202,7 @@ double			norm_tol;
 	}
 
 	/* Compute the points on the surface of the torus */
-	dist_to_rim = r2/r1;
+	dist_to_rim = tip->r_h/tip->r_a;
 	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_tess pts[]" );
 
@@ -1196,15 +1211,15 @@ double			norm_tol;
 		cos_beta = cos(beta);
 		sin_beta = sin(beta);
 		/* G always points out to rim, along radius vector */
-		VCOMB2( radius, cos_beta, ti.a, sin_beta, ti.b );
+		VCOMB2( radius, cos_beta, tip->a, sin_beta, tip->b );
 		/* We assume that |radius| = |A|.  Circular */
 		VSCALE( G, radius, dist_to_rim );
 		for( w = 0; w < nw; w++ )  {
 			alpha = rt_twopi * w / nw;
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
-			VCOMB2( edge, cos_alpha, G, sin_alpha, ti.h );
-			VADD3( PTA(w,len), ti.v, edge, radius );
+			VCOMB2( edge, cos_alpha, G, sin_alpha, tip->h );
+			VADD3( PTA(w,len), tip->v, edge, radius );
 		}
 	}
 
@@ -1311,4 +1326,232 @@ double	radius;
 	if( n <= 6 )  return(6);
 	if( n >= 360*10 )  return( 360*10 );
 	return(n);
+}
+
+/*
+ *			R T _ T O R _ I M P O R T
+ *
+ *  Import a torus from the database format to the internal format.
+ *  Apply modeling transformations at the same time.
+ */
+int
+rt_tor_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
+register mat_t		mat;
+{
+	struct tor_internal	*tip;
+	union record		*rp;
+	LOCAL fastf_t		vec[3*4];
+	vect_t			axb;
+	register fastf_t	f;
+
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
+	/* Check record type */
+	if( rp->u_id != ID_SOLID )  {
+		rt_log("rt_tor_import: defective record\n");
+		return(-1);
+	}
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_TOR;
+	ip->idb_ptr = rt_malloc(sizeof(struct tor_internal), "tor_internal");
+	tip = (struct tor_internal *)ip->idb_ptr;
+	tip->magic = RT_TOR_INTERNAL_MAGIC;
+
+	/* Convert from database to internal format */
+	rt_fastf_float( vec, rp->s.s_values, 4 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( tip->v, mat, &vec[0*3] );
+	MAT4X3VEC( tip->h, mat, &vec[1*3] );
+	MAT4X3VEC( tip->a, mat, &vec[2*3] );
+	MAT4X3VEC( tip->b, mat, &vec[3*3] );
+
+	/* Make the vectors unit length */
+	tip->r_a = MAGNITUDE(tip->a);
+	tip->r_b = MAGNITUDE(tip->b);
+	tip->r_h = MAGNITUDE(tip->h);
+	if( tip->r_a < SMALL || tip->r_b < SMALL || tip->r_h < SMALL )  {
+		rt_log("rt_tor_import:  zero length A, B, or H vector\n");
+		return(-1);
+	}
+
+	/* If H does not point in the direction of A cross B, reverse H. */
+	/* Somehow, database records have been written with this problem. */
+	VCROSS( axb, tip->a, tip->b );
+	if( VDOT( axb, tip->h ) < 0 )  {
+		VREVERSE( tip->h, tip->h );
+	}
+
+	return(0);		/* OK */
+}
+
+/*
+ *			R T _ T O R _ E X P O R T
+ *
+ *  The name will be added by the caller.
+ */
+int
+rt_tor_export( ep, ip, local2mm )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+double			local2mm;
+{
+	struct tor_internal	*tip;
+	union record		*rec;
+	vect_t			norm;
+	vect_t			cross1, cross2;
+	fastf_t			r1, r2;
+	fastf_t			r3, r4;
+	double			m2;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_TOR )  return(-1);
+	tip = (struct tor_internal *)ip->idb_ptr;
+	RT_TOR_CK_MAGIC(tip);
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "tor external");
+	rec = (union record *)ep->ext_buf;
+
+	rec->s.s_id = ID_SOLID;
+	rec->s.s_type = TOR;
+
+	r1 = tip->r_a;
+	r2 = tip->r_h;
+
+	/* Validate that 0 < r2 <= r1 */
+	if( r2 <= 0.0 )  {
+		rt_log("rt_tor_export:  illegal r2=%.12e <= 0\n", r2);
+		return(-1);
+	}
+	if( r2 > r1 )  {
+		rt_log("rt_tor_export:  illegal r2=%.12e > r1=%.12e\n",
+			r2, r1);
+		return(-1);
+	}
+
+	r1 *= local2mm;
+	r2 *= local2mm;
+	VSCALE( &rec->s.s_values[0*3], tip->v, local2mm );
+
+	VMOVE( norm, tip->h );
+	m2 = MAGNITUDE( norm );		/* F2 is NORMAL to torus */
+	if( m2 <= SQRT_SMALL_FASTF )  {
+		rt_log("rt_tor_export: normal magnitude is zero!\n");
+		return(-1);		/* failure */
+	}
+	m2 = 1.0/m2;
+	VSCALE( norm, norm, m2 );	/* Give normal unit length */
+	VSCALE( &rec->s.s_values[1*3], norm, r2 ); /* F2: normal radius len */
+
+	/* Create two mutually perpendicular vectors, perpendicular to Norm */
+	vec_ortho( cross1, norm );
+	VCROSS( cross2, cross1, norm );
+	VUNITIZE( cross2 );
+
+	/* F3, F4 are perpendicular, goto center of solid part */
+	VSCALE( &rec->s.s_values[2*3], cross1, r1 );
+	VSCALE( &rec->s.s_values[3*3], cross2, r1 );
+
+	/*
+	 * The rest of these provide no real extra information,
+	 * and exist for compatability with old versions of MGED.
+	 */
+	r3=r1-r2;	/* Radius to inner circular edge */
+	r4=r1+r2;	/* Radius to outer circular edge */
+
+	/* F5, F6 are perpendicular, goto inner edge of ellipse */
+	VSCALE( &rec->s.s_values[4*3], cross1, r3 );
+	VSCALE( &rec->s.s_values[5*3], cross2, r3 );
+
+	/* F7, F8 are perpendicular, goto outer edge of ellipse */
+	VSCALE( &rec->s.s_values[6*3], cross1, r4 );
+	VSCALE( &rec->s.s_values[7*3], cross2, r4 );
+
+	return(0);
+}
+
+/*
+ *			R T _ T O R _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_tor_describe( str, ip, verbose, mm2local )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
+{
+	register int			j;
+	register struct tor_internal	*tip =
+		(struct tor_internal *)ip->idb_ptr;
+	char				buf[256];
+	int				i;
+	double				r3, r4;
+
+	RT_TOR_CK_MAGIC(tip);
+	rt_vls_strcat( str, "torus (TOR)\n");
+
+	sprintf(buf, "\tV (%g, %g, %g), |A|=r1=%g, |H|=r2=%g\n",
+		tip->v[X] * mm2local,
+		tip->v[Y] * mm2local,
+		tip->v[Z] * mm2local,
+		tip->r_a * mm2local, tip->r_h * mm2local );
+	rt_vls_strcat( str, buf );
+
+	sprintf(buf, "\t|H|=(%g, %g, %g)\n",
+		tip->h[X] * mm2local / tip->r_h,
+		tip->h[Y] * mm2local / tip->r_h,
+		tip->h[Z] * mm2local / tip->r_h );
+	rt_vls_strcat( str, buf );
+
+	if( !verbose )  return;
+
+	r3 = tip->r_a - tip->r_h;
+	sprintf(buf, "\tvector to inner edge = (%g, %g, %g)\n",
+		tip->a[X] * mm2local / tip->r_a * r3,
+		tip->a[Y] * mm2local / tip->r_a * r3,
+		tip->a[Z] * mm2local / tip->r_a * r3 );
+	rt_vls_strcat( str, buf );
+
+	r4 = tip->r_a + tip->r_h;
+	sprintf(buf, "\tvector to outer edge = (%g, %g, %g)\n",
+		tip->a[X] * mm2local / tip->r_a * r4,
+		tip->a[Y] * mm2local / tip->r_a * r4,
+		tip->a[Z] * mm2local / tip->r_a * r4 );
+	rt_vls_strcat( str, buf );
+
+	sprintf(buf, "\tH = (%g, %g, %g)\n",
+		tip->h[X] * mm2local,
+		tip->h[Y] * mm2local,
+		tip->h[Z] * mm2local );
+	rt_vls_strcat( str, buf );
+
+	return(0);
+}
+
+/*
+ *			R T _ T O R _ I F R E E
+ *
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ */
+void
+rt_tor_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	register struct tor_internal	*tip;
+
+	RT_CK_DB_INTERNAL(ip);
+	tip = (struct tor_internal *)ip->idb_ptr;
+	RT_TOR_CK_MAGIC(tip);
+
+	rt_free( (char *)tip, "tor ifree" );
+	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
