@@ -90,8 +90,12 @@ struct vertexuse *vu;
 long		*up_magic_p;
 {
 	NMG_CK_VERTEXUSE(vu);
-	if (vu->up.magic_p != up_magic_p)
+	if (vu->up.magic_p != up_magic_p)  {
+		rt_log("nmg_vvu() up is %s, s/b %s\n",
+			rt_identify_magic( *vu->up.magic_p ),
+			rt_identify_magic( *up_magic_p ) );
 		rt_bomb("nmg_vvu() vertexuse denies parent\n");
+	}
 
 	if (!vu->l.forw)
 		rt_bomb("nmg_vvu() vertexuse has null forw pointer\n");
@@ -293,14 +297,18 @@ struct loopuse_a *lua;
 void
 nmg_vlu(hp, up)
 struct rt_list	*hp;
+long		*up;
 {
 	struct loopuse *lu;
 
 	for( RT_LIST_FOR( lu, loopuse, hp ) )  {
 		NMG_CK_LOOPUSE(lu);
 
-		if (*lu->up.magic_p != hp->magic)
+		if (lu->up.magic_p != up)  {
+			rt_log("nmg_vlu() up is x%x, s/b x%x\n",
+				lu->up.magic_p, up );
 			rt_bomb("loopuse denies parentage\n");
+		}
 
 		if (!lu->l.forw)
 			rt_bomb("loopuse has null forw pointer\n");
@@ -456,7 +464,7 @@ struct shell *s;
 		NMG_CK_FACE(fu->f_p);
 		nmg_vface(fu->f_p, fu);
 		
-		nmg_vlu( &fu->lu_hd, fu);
+		nmg_vlu( &fu->lu_hd, &fu->l.magic);
 	}
 }
 
