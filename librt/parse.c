@@ -31,6 +31,12 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 
+#ifdef BSD
+# include <strings.h>
+#else
+# include <string.h>
+#endif
+
 extern void	rt_structparse();
 extern void	rt_structprint();
 
@@ -176,7 +182,6 @@ register char		*cp;
 struct structparse	*parsetab;
 stroff_t		base;		/* base address of users structure */
 {
-	register struct structparse *spp;
 	char	*name;
 	char	*value;
 
