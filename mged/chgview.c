@@ -192,8 +192,6 @@ eedit()
 		}
 
 		drawHobj( dp, ROOT, 0, identity, 0 );
-
-		drawreg = 0;
 		regmemb = -1;
 	}
 	(void)time( &etime );
