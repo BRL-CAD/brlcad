@@ -179,7 +179,7 @@ struct soltab {
 #define ID_POLY		8	/* Polygonal facted object */
 #define ID_BSPLINE	9	/* B-spline object */
 #define ID_SPH		10	/* Sphere */
-#define	ID_STRSOL	11	/* String-defined solid */
+#define	ID_STRINGSOL	11	/* String-defined solid */
 #define ID_EBM		12	/* Extruded bitmap solid */
 
 /*
@@ -461,7 +461,7 @@ struct db_i  {
 	char			*dbi_filename;	/* file name */
 	int			dbi_read_only;	/* !0 => read only file */
 	struct mem_map		*dbi_freep;	/* map of free granules */
-	
+	char			*dbi_inmem;	/* ptr to in-memory copy */
 };
 #define DBI_NULL	((struct db_i *)0)
 #define DBI_MAGIC	0x57204381
