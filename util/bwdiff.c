@@ -42,7 +42,7 @@ int	backgnd = 0;
 unsigned char ibuf1[512], ibuf2[512], obuf[512];
 
 char usage[] = "\
-Usage: bwdiff [-m -g -l -e -n] [-b] file1.bw file2.bw (- stdin, . skip)\n";
+Usage: bwdiff [-m -g -l -e -n] file1.bw file2.bw (- stdin, . skip)\n";
 
 main( argc, argv )
 int argc; char **argv;
