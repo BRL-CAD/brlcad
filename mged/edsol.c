@@ -1810,6 +1810,16 @@ mat_t		mat;
 			*strp = "V";
 			break;
 		}
+	case ID_EXTRUDE:
+		{
+			struct rt_extrude_internal *extr = 
+				(struct rt_extrude_internal *)ip->idb_ptr;
+			RT_EXTRUDE_CK_MAGIC( extr );
+
+			VMOVE( mpt, extr->V );
+			*strp = "V";
+			break;
+		}
 	case ID_NMG:
 		{
 			struct vertex *v;
