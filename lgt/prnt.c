@@ -370,7 +370,57 @@ prnt_Usage()
 	return;
 	}
 
-#include <varargs.h>
+#if __STDC__
+# include <stdarg.h>
+/*	p r n t _ S c r o l l ( )					*/
+/* VARARGS */
+void
+prnt_Scroll( char *fmt, ... )
+	{	va_list		ap;
+	/* We use the same lock as malloc.  Sys-call or mem lock, really */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	va_start( ap, fmt );
+	if( tty )
+		{ /* Only move cursor and scroll if newline is output.	*/
+			static int	newline = 1;
+		if( CS != NULL )
+			{
+			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+			if( newline )
+				{
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void)vfprintf( stdout, fmt, ap );
+			(void) ResetScrlReg();
+			}
+		else
+		if( DL != NULL )
+			{
+			if( newline )
+				{
+				SCROLL_DL_MOVE();
+				(void) DeleteLn();
+				SCROLL_PR_MOVE();
+				(void) ClrEOL();
+				}
+			(void)vfprintf( stdout, fmt, ap );
+			}
+		else
+			(void)vfprintf( stdout, fmt, ap );
+		/* End of line detected by existance of a newline.	*/
+		newline = fmt[strlen( fmt )-1] == '\n';
+		hmredraw();
+		}
+	else
+		(void)vfprintf( stderr, fmt, ap );
+	va_end( ap );
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	return;
+	}
+
+#else /* !__STDC__ */
+
 #if defined( CRAY1 )
 /* VARARGS */
 void
@@ -415,6 +465,7 @@ char *fmt;
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 }
 #else
+# include <varargs.h>
 /*	p r n t _ S c r o l l ( )					*/
 /* VARARGS */
 void
@@ -463,4 +514,5 @@ va_dcl
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
-#endif
+#endif /* !CRAY */
+#endif /* !__STDC__ */
