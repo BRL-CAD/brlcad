@@ -40,50 +40,47 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm-plot.h"
 #include "solid.h"
 
-static int Plot_load_startup();
-
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-struct dm	*Plot_open();
-static int	Plot_close();
-static int	Plot_drawBegin(), Plot_drawEnd();
-static int	Plot_normal(), Plot_newrot();
-static int	Plot_drawString2D(), Plot_drawLine2D();
-static int      Plot_drawVertex2D();
-static int	Plot_drawVList();
-static int      Plot_setColor();
-static int      Plot_setLineAttr();
-static unsigned Plot_cvtvecs(), Plot_load();
-static int	Plot_setWinBounds(), Plot_debug();
+struct dm	*plot_open();
+static int	plot_close();
+static int	plot_drawBegin(), plot_drawEnd();
+static int	plot_normal(), plot_newrot();
+static int	plot_drawString2D(), plot_drawLine2D();
+static int      plot_drawVertex2D();
+static int	plot_drawVList();
+static int      plot_setColor();
+static int      plot_setLineAttr();
+static unsigned plot_cvtvecs(), plot_load();
+static int	plot_setWinBounds(), plot_debug();
 
-struct dm dm_Plot = {
-  Plot_open,
-  Plot_close,
-  Plot_drawBegin,
-  Plot_drawEnd,
-  Plot_normal,
-  Plot_newrot,
-  Plot_drawString2D,
-  Plot_drawLine2D,
-  Plot_drawVertex2D,
-  Plot_drawVList,
-  Plot_setColor,
-  Plot_setLineAttr,
-  Plot_cvtvecs,
-  Plot_load,
-  Plot_setWinBounds,
-  Plot_debug,
+struct dm dm_plot = {
+  plot_close,
+  plot_drawBegin,
+  plot_drawEnd,
+  plot_normal,
+  plot_newrot,
+  plot_drawString2D,
+  plot_drawLine2D,
+  plot_drawVertex2D,
+  plot_drawVList,
+  plot_setColor,
+  plot_setLineAttr,
+  plot_cvtvecs,
+  plot_load,
+  plot_setWinBounds,
+  plot_debug,
   Nu_int0,
   0,			/* no displaylist */
   PLOTBOUND,
   "plot",
   "Screen to UNIX-Plot",
+  DM_TYPE_PLOT,
   0,
   0,
   0,
   1.0, /* aspect ratio */
-  0,
   0,
   0,
   0,
@@ -101,7 +98,7 @@ struct plot_vars head_plot_vars;
  *
  */
 struct dm *
-Plot_open(eventHandler, argc, argv)
+plot_open(eventHandler, argc, argv)
 int (*eventHandler)();
 int argc;
 char *argv[];
@@ -113,12 +110,12 @@ char *argv[];
   if(dmp == DM_NULL)
     return DM_NULL;
 
-  *dmp = dm_Plot;
+  *dmp = dm_plot; /* struct copy */
   dmp->dm_eventHandler = eventHandler;
 
-  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "Plot_init: plot_vars");
+  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "plot_open: plot_vars");
   if(dmp->dm_vars == (genptr_t)NULL){
-    bu_free(dmp, "Plot_open: dmp");
+    bu_free(dmp, "plot_open: dmp");
     return DM_NULL;
   }
 
@@ -127,6 +124,9 @@ char *argv[];
   bu_vls_init(&dmp->dm_tkName);
   bu_vls_printf(&dmp->dm_pathName, ".dm_plot%d", count++);
   bu_vls_printf(&dmp->dm_tkName, "dm_plot%d", count++);
+
+  /* skip first argument */
+  --argc; ++argv;
 
   /* Process any options */
   ((struct plot_vars *)dmp->dm_vars)->is_3D = 1;          /* 3-D w/color, by default */
@@ -153,14 +153,14 @@ char *argv[];
 #endif
     default:
       Tcl_AppendResult(interp, "bad PLOT option ", argv[0], "\n", (char *)NULL);
-      (void)Plot_close(dmp);
+      (void)plot_close(dmp);
       return DM_NULL;
     }
     argv++;
   }
   if( argv[0] == (char *)0 )  {
     Tcl_AppendResult(interp, "no filename or filter specified\n", (char *)NULL);
-    (void)Plot_close(dmp);
+    (void)plot_close(dmp);
     return DM_NULL;
   }
 
@@ -180,7 +180,7 @@ char *argv[];
     if((((struct plot_vars *)dmp->dm_vars)->up_fp =
 	popen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls), "w")) == NULL){
       perror( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls));
-      (void)Plot_close(dmp);
+      (void)plot_close(dmp);
       return DM_NULL;
     }
     
@@ -191,7 +191,7 @@ char *argv[];
     if((((struct plot_vars *)dmp->dm_vars)->up_fp =
 	fopen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls), "w" )) == NULL){
       perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls));
-      (void)Plot_close(dmp);
+      (void)plot_close(dmp);
       return DM_NULL;
     }
 
@@ -219,7 +219,7 @@ char *argv[];
  *  Gracefully release the display.
  */
 static int
-Plot_close(dmp)
+plot_close(dmp)
 struct dm *dmp;
 {
   (void)fflush(((struct plot_vars *)dmp->dm_vars)->up_fp);
@@ -230,8 +230,8 @@ struct dm *dmp;
     fclose(((struct plot_vars *)dmp->dm_vars)->up_fp);
 
   bu_vls_free(&dmp->dm_pathName);
-  bu_free(dmp->dm_vars, "Plot_close: plot_vars");
-  bu_free(dmp, "Plot_close: dmp");
+  bu_free(dmp->dm_vars, "plot_close: plot_vars");
+  bu_free(dmp, "plot_close: dmp");
   return TCL_OK;
 }
 
@@ -241,7 +241,7 @@ struct dm *dmp;
  * There are global variables which are parameters to this routine.
  */
 static int
-Plot_drawBegin(dmp)
+plot_drawBegin(dmp)
 struct dm *dmp;
 {
   /* We expect the screen to be blank so far, from last frame flush */
@@ -253,7 +253,7 @@ struct dm *dmp;
  *			P L O T _ E P I L O G
  */
 static int
-Plot_drawEnd(dmp)
+plot_drawEnd(dmp)
 struct dm *dmp;
 {
   pl_flush( ((struct plot_vars *)dmp->dm_vars)->up_fp ); /* BRL-specific command */
@@ -269,7 +269,7 @@ struct dm *dmp;
  */
 /* ARGSUSED */
 static int
-Plot_newrot(dmp, mat)
+plot_newrot(dmp, mat)
 struct dm *dmp;
 mat_t mat;
 {
@@ -287,7 +287,7 @@ mat_t mat;
  */
 /* ARGSUSED */
 static int
-Plot_drawVList( dmp, vp, mat )
+plot_drawVList( dmp, vp, mat )
 struct dm *dmp;
 register struct rt_vlist *vp;
 mat_t mat;
@@ -366,7 +366,7 @@ mat_t mat;
  * Turns off windowing.
  */
 static int
-Plot_normal(dmp)
+plot_normal(dmp)
 struct dm *dmp;
 {
   return TCL_OK;
@@ -381,7 +381,7 @@ struct dm *dmp;
  */
 /* ARGSUSED */
 static int
-Plot_drawString2D( dmp, str, x, y, size, use_aspect )
+plot_drawString2D( dmp, str, x, y, size, use_aspect )
 struct dm *dmp;
 register char *str;
 int x, y;
@@ -399,7 +399,7 @@ int use_aspect;
  *
  */
 static int
-Plot_drawLine2D( dmp, x1, y1, x2, y2 )
+plot_drawLine2D( dmp, x1, y1, x2, y2 )
 struct dm *dmp;
 int x1, y1;
 int x2, y2;
@@ -412,16 +412,16 @@ int x2, y2;
 
 
 static int
-Plot_drawVertex2D(dmp, x, y)
+plot_drawVertex2D(dmp, x, y)
 struct dm *dmp;
 int x, y;
 {
-  return Plot_drawLine2D( dmp, x, y, x, y );
+  return plot_drawLine2D( dmp, x, y, x, y );
 }
 
 
 static int
-Plot_setColor(dmp, r, g, b, strict)
+plot_setColor(dmp, r, g, b, strict)
 struct dm *dmp;
 register short r, g, b;
 int strict;
@@ -432,7 +432,7 @@ int strict;
 
 
 static int
-Plot_setLineAttr(dmp, width, dashed)
+plot_setLineAttr(dmp, width, dashed)
 struct dm *dmp;
 int width;
 int dashed;
@@ -448,7 +448,7 @@ int dashed;
 
 /* ARGSUSED */
 static unsigned
-Plot_cvtvecs( dmp, sp )
+plot_cvtvecs( dmp, sp )
 struct dm *dmp;
 struct solid *sp;
 {
@@ -459,14 +459,14 @@ struct solid *sp;
  * Loads displaylist
  */
 static unsigned
-Plot_load( dmp, addr, count )
+plot_load( dmp, addr, count )
 struct dm *dmp;
 unsigned addr, count;
 {
   struct bu_vls tmp_vls;
 
   bu_vls_init(&tmp_vls);
-  bu_vls_printf(&tmp_vls, "Plot_load(x%x, %d.)\n", addr, count);
+  bu_vls_printf(&tmp_vls, "plot_load(x%x, %d.)\n", addr, count);
   Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
   bu_vls_free(&tmp_vls);
   return( 0 );
@@ -474,7 +474,7 @@ unsigned addr, count;
 
 /* ARGSUSED */
 static int
-Plot_debug(dmp, lvl)
+plot_debug(dmp, lvl)
 struct dm *dmp;
 {
   (void)fflush(((struct plot_vars *)dmp->dm_vars)->up_fp);
@@ -484,7 +484,7 @@ struct dm *dmp;
 }
 
 static int
-Plot_setWinBounds(dmp, w)
+plot_setWinBounds(dmp, w)
 struct dm *dmp;
 register int w[];
 {
@@ -495,19 +495,6 @@ register int w[];
   ((struct plot_vars *)dmp->dm_vars)->clipmax[0] = w[0] / 2047.;
   ((struct plot_vars *)dmp->dm_vars)->clipmax[1] = w[2] / 2047.;
   ((struct plot_vars *)dmp->dm_vars)->clipmax[2] = w[4] / 2047.;
-
-  return TCL_OK;
-}
-
-static int
-Plot_load_startup(dmp)
-struct dm *dmp;
-{
-  char *filename;
-
-
-  if((filename = getenv("DM_PLOT_RCFILE")) != (char *)NULL )
-    return Tcl_EvalFile(interp, filename);
 
   return TCL_OK;
 }
