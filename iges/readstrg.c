@@ -31,6 +31,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void
 Readstrg( id )
 char *id;
 {

@@ -30,6 +30,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void
 Readflt( inum , id )
 char *id;
 fastf_t *inum;

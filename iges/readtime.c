@@ -36,6 +36,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void
 Readtime( id )
 char *id;
 {
@@ -86,17 +87,29 @@ char *id;
 		num[i] = card[counter++];
 	}
 
-	if( length > 5 )
+	if( length > 5 && length < 16 )
 		printf( "%c%c/%c%c/%c%c" , num[2],num[3],num[4],num[5],
 			num[0],num[1] );
-	else
-		printf( "\n" );
 
-	if( length > 12 )
+	if( length > 12 && length < 16 )
 		printf( " at %c%c:%c%c:%c%c\n" , num[7],num[8],num[9],
 			num[10],num[11],num[12] );
-	else
-		printf( "\n" );
 
-	counter++;
+	if( length > 15 )
+		printf( "%s\n" , num );
+
+	while( card[counter] != eof && card[counter] != eor )
+	{
+		if( counter < lencard )
+			counter++;
+		else
+			Readrec( ++currec );
+	}
+
+	if( card[counter] == eof )
+	{
+		counter++;
+		if( counter > lencard )
+			Readrec( ++ currec );
+	}
 }

@@ -30,6 +30,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void
 Readint( inum , id )
 char *id;
 int *inum;
