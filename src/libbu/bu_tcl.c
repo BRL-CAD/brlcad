@@ -1347,7 +1347,7 @@ bu_tcl_brlcad_path(ClientData	clientData,
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
-	Tcl_AppendResult(interp, bu_brlcad_path(argv[1]), NULL);
+	Tcl_AppendResult(interp, bu_brlcad_path(argv[1], 0), NULL);
 	return TCL_OK;
 }
 
