@@ -208,7 +208,11 @@ reg	int	pid;
 		return status.w_status;
 	}
 
+#if defined(__convexc__)
+	while ((exitpid = wait(&status.w_status)) != -1)
+#else
 	while ((exitpid = wait(&status)) != -1)
+#endif
 	{
 		mutex_lock();
 		ptr  = find_process(exitpid);
