@@ -2435,20 +2435,25 @@ int type;
 
 		if( igrp >= 0 && icmp > 0 )
 		{
-			if( list_ptr )
-			{
-				list_ptr->next = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
-				list_ptr = list_ptr->next;
-			}
+			if( igrp == group && comp == icmp )
+				bu_log( "Hole or wall card references itself (ignoring): (%s)\n", line );
 			else
 			{
-				list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
-				list_start = list_ptr;
-			}
+				if( list_ptr )
+				{
+					list_ptr->next = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
+					list_ptr = list_ptr->next;
+				}
+				else
+				{
+					list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
+					list_start = list_ptr;
+				}
 			
-			list_ptr->group = igrp;
-			list_ptr->component = icmp;
-			list_ptr->next = (struct hole_list *)NULL;
+				list_ptr->group = igrp;
+				list_ptr->component = icmp;
+				list_ptr->next = (struct hole_list *)NULL;
+			}
 		}
 
 		col += 8;
@@ -3309,7 +3314,10 @@ genptr_t	ptr;
 
 	comb2 = (struct rt_comb_internal *)internal2.idb_ptr;
 	RT_CK_COMB( comb2 );
-bu_log( "Fixing region %s\n", dp->d_namep );
+
+	if( debug )
+		bu_log( "Fixing region %s\n", dp->d_namep );
+
 	/* move the second tree into the first */
 	tree2 = comb2->tree;
 	comb->tree = tree2;
@@ -3342,7 +3350,13 @@ char *output_file;
 		return;
 	}
 
+	if( debug )
+		bu_log( "Rescanning file\n" );
+
 	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+
+	if( debug )
+		bu_log( "looking up 'all'\n" );
 
 	if( (dp=db_lookup( dbip, "all", 0 )) == DIR_NULL )
 	{
@@ -3350,7 +3364,14 @@ char *output_file;
 		db_close( dbip );
 		return;
 	}
+
+	if( debug )
+		bu_log( "Calling db_functree\n" );
+
 	db_functree( dbip, dp, fix_regions, 0, NULL );
+
+	if( debug )
+		bu_log( "Post-processing complete\n" );
 }
 
 void
