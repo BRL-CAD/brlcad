@@ -184,10 +184,14 @@ CONST char	*attribute;
 
 	for( BU_AVS_FOR(app, avp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
-		if( app->name < avp->readonly_min || app->name > avp->readonly_max )
+		if( app->name < avp->readonly_min || app->name > avp->readonly_max )  {
 			bu_free( (genptr_t)app->name, "app->name" );
-		if( app->value < avp->readonly_min || app->value > avp->readonly_max )
+			app->name = NULL;	/* sanity */
+		}
+		if( app->value < avp->readonly_min || app->value > avp->readonly_max )  {
 			bu_free( (genptr_t)app->value, "app->value" );
+			app->value = NULL;	/* sanity */
+		}
 
 		/* Move last one down to fit */
 		epp = &avp->avp[avp->count--];
@@ -212,10 +216,14 @@ bu_avs_free( struct bu_attribute_value_set *avp )
 	BU_CK_AVS(avp);
 
 	for( BU_AVS_FOR(app, avp) )  {
-		if( app->name < avp->readonly_min || app->name > avp->readonly_max )
+		if( app->name < avp->readonly_min || app->name > avp->readonly_max )  {
 			bu_free( (genptr_t)app->name, "app->name" );
-		if( app->value < avp->readonly_min || app->value > avp->readonly_max )
+			app->name = NULL;	/* sanity */
+		}
+		if( app->value < avp->readonly_min || app->value > avp->readonly_max )  {
 			bu_free( (genptr_t)app->value, "app->value" );
+			app->value = NULL;	/* sanity */
+		}
 	}
 	bu_free( (genptr_t)avp->avp, "avp->avp" );
 	avp->magic = -1L;
