@@ -1493,7 +1493,8 @@ static int etbl_size = 0;
 
 
 static struct fbm_spec *
-build_spec_tbl(double h_val, double lacunarity, double octaves)
+build_spec_tbl(h_val, lacunarity, octaves)
+double h_val, lacunarity, octaves;
 {
 	struct fbm_spec	*ep;
 	double		*spec_wgts;
