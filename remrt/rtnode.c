@@ -63,6 +63,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "pkg.h"
 #include "fb.h"
+#include "tcl.h"
 
 #include "../librt/debug.h"
 #include "../rt/material.h"
@@ -104,6 +105,8 @@ static char *title_file, *title_obj;	/* name of file and first object */
 
 static int	avail_cpus;		/* # of cpus avail on this system */
 static int	max_cpus;		/* max # cpus for use, <= avail_cpus */
+
+Tcl_Interp	*interp = NULL;
 
 int print_on = 1;
 
@@ -333,6 +336,14 @@ char **argv;
 		pkg_close(pcsrv);
 		exit(0);
 	}
+
+	/* Initialize the Tcl interpreter */
+	interp = Tcl_CreateInterp();
+	/* This runs the init.tcl script */
+	if( Tcl_Init(interp) == TCL_ERROR )
+		bu_log("Tcl_Init error %s\n", interp->result);
+	bn_tcl_setup(interp);
+	rt_tcl_setup(interp);
 
 	/* Send our version string */
 #define PROTOCOL_VERSION	"Version1.0"
