@@ -63,6 +63,7 @@ struct cell {
 #define MISS_DIST	MAX_FASTF
 #define MISS_ID		-1
 
+static unsigned char *edges[MAX_PSW];
 static unsigned char *scanline[MAX_PSW];
 static unsigned char *blendline[MAX_PSW];
 
@@ -253,7 +254,17 @@ view_2init( struct application *ap )
    * a time.
    */
   per_processor_chunk = width;
-  
+
+  /*
+   * Create a edge flag buffer for each processor.
+   */
+  for ( i = 0; i < npsw; ++i ) {
+    if (edges[i] == NULL) {
+      edges[i] = (unsigned char *) bu_calloc( 1, per_processor_chunk, 
+					      "edges buffer" );
+    }	
+  }
+
   /*
    * Use three bytes per pixel.
    */
@@ -324,9 +335,7 @@ view_eol( struct application *ap )
      * If so, write it to the framebuffer.
      */
     for (i = 0; i < per_processor_chunk; ++i) {
-      if (scanline[cpu][i*3+RED] != background[RED] &&
-	  scanline[cpu][i*3+GRN] != background[GRN] &&
-	  scanline[cpu][i*3+BLU] != background[BLU]) {
+      if (edges[cpu][i]) {
 	/*
 	 * Write this pixel
 	 */
@@ -360,9 +369,7 @@ view_eol( struct application *ap )
       /*
        * Is this pixel an edge?
        */
-      if (scanline[cpu][i*3+RED] == foreground[RED] &&
-	  scanline[cpu][i*3+GRN] == foreground[GRN] &&
-	  scanline[cpu][i*3+BLU] == foreground[BLU]) {
+      if (edges[cpu][i]) {
 
 	/*
 	 * The pixel is an edge, retrieve the appropriate
@@ -692,7 +699,9 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
    */
   if (is_edge (ap, &me, &left, &below)) {
     RGBpixel col;
-    
+
+    edges[cpu][ap->a_x] = 1;
+
     choose_color (col, &me, &left, &below);
     
     scanline[cpu][ap->a_x*3+RED] = col[RED];
@@ -700,9 +709,12 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
     scanline[cpu][ap->a_x*3+BLU] = col[BLU];
     edge = 1;
   } else {
+    edges[cpu][ap->a_x] = 0;
+
     scanline[cpu][ap->a_x*3+RED] = background[RED];
     scanline[cpu][ap->a_x*3+GRN] = background[GRN];
     scanline[cpu][ap->a_x*3+BLU] = background[BLU];	  
+
     edge = 0;
   }
   return edge;
