@@ -177,10 +177,10 @@ matp_t input;
 register matp_t output;
 {
 	register int i, j;			/* Indices */
-	static int k;				/* Indices */
-	static int	z[4];			/* Temporary */
-	static fastf_t	b[4];			/* Temporary */
-	static fastf_t	c[4];			/* Temporary */
+	LOCAL int k;				/* Indices */
+	LOCAL int	z[4];			/* Temporary */
+	LOCAL fastf_t	b[4];			/* Temporary */
+	LOCAL fastf_t	c[4];			/* Temporary */
 
 	mat_copy( output, input );	/* Duplicate */
 
@@ -237,7 +237,7 @@ register matp_t output;
 	/*  Second Loop */
 	for( i = 0; i < 4; i++ )  {
 		while( (k = z[i]) != i )  {
-			static int p;			/* Local temp */
+			LOCAL int p;			/* Local temp */
 
 			for( j = 0; j < 4; j++ )  {
 				FAST fastf_t w;		/* Local temp */
@@ -360,8 +360,8 @@ register matp_t m;
 double azimuth;
 double elev;
 {
-	static double sin_az, sin_el;
-	static double cos_az, cos_el;
+	LOCAL double sin_az, sin_el;
+	LOCAL double cos_az, cos_el;
 
 	azimuth *= degtorad;
 	elev *= degtorad;
@@ -401,8 +401,8 @@ mat_angles( mat, alpha, beta, ggamma )
 register matp_t mat;
 double alpha, beta, ggamma;
 {
-	static double calpha, cbeta, cgamma;
-	static double salpha, sbeta, sgamma;
+	LOCAL double calpha, cbeta, cgamma;
+	LOCAL double salpha, sbeta, sgamma;
 
 	if( alpha == 0.0 && beta == 0.0 && ggamma == 0.0 )  {
 		mat_idn( mat );

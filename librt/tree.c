@@ -237,7 +237,7 @@ matp_t old_xlate;
 	(void)lseek( ged_fd, dp->d_addr, 0 );
 	(void)read( ged_fd, (char *)&rec, sizeof rec );
 
-	if( rec.u_id == SOLID || rec.u_id == ARS_A )  {
+	if( rec.u_id == ID_SOLID || rec.u_id == ID_ARS_A )  {
 		register struct soltab *stp;		/* XXX */
 
 		/* Draw a solid */
@@ -256,7 +256,7 @@ matp_t old_xlate;
 		return( curtree );
 	}
 
-	if( rec.u_id != COMB )  {
+	if( rec.u_id != ID_COMB )  {
 		fprintf(stderr,"drawobj:  defective input '%c'\n", rec.u_id );
 		return(TREE_NULL);			/* ERROR */
 	}
@@ -271,6 +271,10 @@ matp_t old_xlate;
 			/* Start a new region here */
 			GETSTRUCT( regionp, region );
 			regionp->reg_forw = regionp->reg_active = REGION_NULL;
+			regionp->reg_regionid = rec.c.c_regionid;
+			regionp->reg_aircode = rec.c.c_aircode;
+			regionp->reg_material = rec.c.c_material;
+			regionp->reg_los = rec.c.c_los;
 		}
 	}
 	curtree = TREE_NULL;

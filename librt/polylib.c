@@ -1,10 +1,11 @@
 /*
  *  		P O L Y L I B . C
  */
-#include	<stdio.h>
-#include	<math.h>
-#include	"./polyno.h"
-#include	"./complex.h"
+#include <stdio.h>
+#include <math.h>
+#include "vmath.h"
+#include "polyno.h"
+#include "complex.h"
 
 static poly	Zpoly = { 0, 0.0 };
 
@@ -59,7 +60,7 @@ poly *
 polyAdd(poly1,poly2,sum)
 register poly	*poly1, *poly2, *sum;
 {
-	static poly		tmp;
+	LOCAL poly		tmp;
 	register int		i, offset;
 
 	offset = Abs(poly1->dgr - poly2->dgr);
@@ -92,7 +93,7 @@ poly *
 polySub(poly1,poly2,diff)
 register poly	*poly1, *poly2, *diff;
 {
-	static poly		tmp;
+	LOCAL poly		tmp;
 	register int		i, offset;
 
 	offset = Abs(poly1->dgr - poly2->dgr);
@@ -162,7 +163,7 @@ quadratic( quad, root )
 register poly		*quad;
 register complex	root[];
 {
-	static double	discrim, denom, rad;
+	LOCAL fastf_t	discrim, denom, rad;
 
 	discrim = quad->cf[1]*quad->cf[1] - 4.0* quad->cf[0]*quad->cf[2];
 	denom = 2.0* quad->cf[0];
@@ -215,7 +216,7 @@ register poly		*eqn;
 register complex	root[];
 
 {
-	static double		a, b, c1, delta;
+	LOCAL fastf_t		a, b, c1, delta;
 	register int		i;
 
 	c1 = eqn->cf[1];
@@ -231,7 +232,7 @@ register complex	root[];
 #define	CubeRoot( a )	( a >= 0.0 ) ? pow( a, third ) : -pow( -a, third )
 
 	if ( delta > 0.0 ){
-		static double		r_delta, A, B;
+		LOCAL fastf_t		r_delta, A, B;
 
 		r_delta = sqrt( delta );
 		A = -b/2.0 + r_delta;
@@ -245,15 +246,15 @@ register complex	root[];
 		root[0].im = 0.0;
 		root[2].im = -( root[1].im = (A - B)*SQRT3/2.0 );
 	} else if ( delta == 0.0 ){
-		static double	b_2;
+		LOCAL fastf_t	b_2;
 		b_2 = -b/2.0;
 
 		root[0].re = 2.0* CubeRoot( b_2 );
 		root[2].re = root[1].re = -root[0].re/2.0;
 		root[2].im = root[1].im = root[0].im = 0.0;
 	} else {
-		static double		cs_3phi, phi, fact;
-		static double		cs_phi, sn_phi;
+		LOCAL fastf_t		cs_3phi, phi, fact;
+		LOCAL fastf_t		cs_phi, sn_phi;
 
 		fact = sqrt( -a/3.0 );
 		cs_3phi = ( -b/2.0 )/( fact*fact*fact );
@@ -284,9 +285,9 @@ register poly		*eqn;
 register complex	root[];
 
 {
-	static poly		cube, quad1, quad2;
-	static complex		u[3];
-	static double		U, p, q, q1, q2;
+	LOCAL poly		cube, quad1, quad2;
+	LOCAL complex		u[3];
+	LOCAL fastf_t		U, p, q, q1, q2;
 #define Max3( a, b, c )		( Max( c, Max( a, b )) )
 
 	cube.dgr = 3;

@@ -154,12 +154,12 @@ struct soltab *stp;
 matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 {
 	register struct tor_specific *tor;
-	static fastf_t	magsq_a, magsq_b, magsq_h;
-	static mat_t	R;
-	static vect_t	A, B, Hv;
-	static vect_t	work, temp;
+	LOCAL fastf_t	magsq_a, magsq_b, magsq_h;
+	LOCAL mat_t	R;
+	LOCAL vect_t	A, B, Hv;
+	LOCAL vect_t	work, temp;
 	FAST fastf_t	f;
-	static fastf_t	r1, r2;	/* primary and secondary radius */
+	LOCAL fastf_t	r1, r2;	/* primary and secondary radius */
 
 #define SP_V	&vec[0*ELEMENTS_PER_VECT]
 #define SP_H	&vec[1*ELEMENTS_PER_VECT]
@@ -343,11 +343,11 @@ register struct xray *rp;
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
 	register struct seg *segp;
-	static vect_t	dprime;		/* D' */
-	static vect_t	pprime;		/* P' */
-	static vect_t	work;		/* temporary vector */
-	static double	k[4];		/* possible intersections */
-	static int	npts;		/* # intersection points */
+	LOCAL vect_t	dprime;		/* D' */
+	LOCAL vect_t	pprime;		/* P' */
+	LOCAL vect_t	work;		/* temporary vector */
+	LOCAL double	k[4];		/* possible intersections */
+	LOCAL int	npts;		/* # intersection points */
 
 	/* out, Mat, vect */
 	MAT3XVEC( dprime, tor->tor_SoR, rp->r_dir );
@@ -448,7 +448,7 @@ register vectp_t norm, hit;
 register struct tor_specific *tor;
 {
 	FAST fastf_t w;
-	static vect_t work;
+	LOCAL vect_t work;
 
 	w = hit[X]*hit[X] + hit[Y]*hit[Y] + hit[Z]*hit[Z] +
 	    1.0 - tor->tor_alpha*tor->tor_alpha;
@@ -487,13 +487,13 @@ stdTorus(Point,Direc,alpha,t)
 vect_t	Point, Direc;
 double	alpha, t[];
 {
-	static poly	C;
-	static complex	val[MAXP];
+	LOCAL poly	C;
+	LOCAL complex	val[MAXP];
 	register int	i, l, npts;
-	static poly	tfun, tsqr[3];
-	static poly	A, Asqr;
-	static poly	X2_Y2;		/* X**2 + Y**2 */
-	static int	m;
+	LOCAL poly	tfun, tsqr[3];
+	LOCAL poly	A, Asqr;
+	LOCAL poly	X2_Y2;		/* X**2 + Y**2 */
+	LOCAL int	m;
 
 	/*  Express each variable (X, Y, and Z) as a linear equation
 	 *  in 't'.  Then square each of those.
@@ -549,7 +549,7 @@ static void
 PtSort( t, npts )
 register double	t[];
 {
-	static double	u;
+	LOCAL double	u;
 	register int	n;
 
 #define XCH(a,b)	{u=a; a=b; b=u;}

@@ -28,27 +28,26 @@ long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
 struct soltab *HeadSolid = SOLTAB_NULL;
 struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
 
-extern struct partition *bool_regions();
-
 /*
  *  			S H O O T R A Y
  *  
  *  Given a ray, shoot it at all the relevant parts of the model,
- *  building the HeadSeg chain (which is the implicit return
- *  from this routine).
+ *  building the HeadSeg chain, and calling the appropriate application
+ *  routine (a_hit, a_miss).
  *
  *  This is where higher-level pruning should be done.
+ *  This code is executed more often than any other part of the RT library.
  *
- *  This code is executed more often than any other part, generally.
+ *  WARNING:  The appliction functions may call shootray() recursively.
  */
 void
 shootray( ap )
 register struct application *ap;
 {
 	register struct soltab *stp;
-	static vect_t diff;	/* diff between shot base & solid center */
+	LOCAL vect_t diff;	/* diff between shot base & solid center */
 	FAST fastf_t distsq;	/* distance**2 */
-	static struct seg *HeadSeg;
+	auto struct seg *HeadSeg;
 
 	if(debug&DEBUG_ALLRAYS) {
 		VPRINT("\nRay Start", ap->a_ray.r_pt);
@@ -72,7 +71,14 @@ register struct application *ap;
 			continue;
 		}
 
-		/* Here we should also consider the bounding RPP */
+#ifdef never
+/*** First, we have to computer the bounding RPPs right! ** */
+		/* Here we also consider the bounding RPP */
+		if( !in_rpp( &ap->a_ray, stp->st_min, stp->st_max ) )  {
+			nmiss++;
+			continue;
+		}
+#endif
 
 		nshots++;
 		newseg = functab[stp->st_id].ft_shot( stp, &ap->a_ray );
@@ -81,7 +87,7 @@ register struct application *ap;
 
 		/* First, some checking */
 		if( newseg->seg_in.hit_dist > newseg->seg_out.hit_dist )  {
-			static struct hit temp;		/* XXX */
+			LOCAL struct hit temp;		/* XXX */
 			fprintf(stderr,"ERROR %s %s: in/out reversal (%f,%f)\n",
 				functab[stp->st_id].ft_name,
 				newseg->seg_stp->st_name,
@@ -105,14 +111,14 @@ register struct application *ap;
 	if( HeadSeg == SEG_NULL )  {
 		ap->a_miss( ap );
 	}  else  {
-		register struct partition *PartHeadp;
+		auto struct partition PartHead;
 		/*
 		 *  All intersections of the ray with the model have
 		 *  been computed.  Evaluate the boolean functions.
 		 */
-		PartHeadp = bool_regions( HeadSeg );
+		bool_regions( HeadSeg, &PartHead );
 
-		if( PartHeadp->pt_forw == PartHeadp )  {
+		if( PartHead.pt_forw == &PartHead )  {
 			ap->a_miss( ap );
 		}  else  {
 			register struct partition *pp;
@@ -120,10 +126,10 @@ register struct application *ap;
 			 * Hand final partitioned intersection list
 			 * to the application.
 			 */
-			ap->a_hit( ap, PartHeadp );
+			ap->a_hit( ap, &PartHead );
 
 			/* Free up partition list */
-			for( pp = PartHeadp->pt_forw; pp != PartHeadp;  )  {
+			for( pp = PartHead.pt_forw; pp != &PartHead;  )  {
 				register struct partition *newpp;
 				newpp = pp;
 				pp = pp->pt_forw;
@@ -143,4 +149,69 @@ register struct application *ap;
 		}
 	}
 	if( debug )  fflush(stderr);
+}
+
+/*
+ *			I N _ R P P . C
+ *
+ *  Compute the intersections of a ray with a rectangular parallelpiped (RPP)
+ *  that has faces parallel to the coordinate planes
+ *
+ *  The algorithm here was developed by Gary Kuehl for GIFT.
+ *
+ * enter_dist = distance from start of ray to point at which ray enters solid
+ * exit_dist  = distance from start of ray to point at which ray leaves solid
+ *
+ *  Returns -
+ *	 0  if ray does not hit RPP,
+ *	!0  if ray hits RPP.
+ */
+in_rpp( rp, min, max )
+register struct xray *rp;
+register vect_t min, max;
+{
+	LOCAL fastf_t enter_dist, exit_dist;
+	LOCAL fastf_t sv;
+	LOCAL fastf_t st;
+	register int i;
+
+	enter_dist = -INFINITY;
+	exit_dist = INFINITY;
+
+	for( i=0; i < 3; i++ )  {
+		if( NEAR_ZERO( rp->r_dir[i] ) )  {
+			/*
+			 *  If direction component along this axis is 0,
+			 *  (ie, this ray is aligned with this axis),
+			 *  merely check against the boundaries.
+			 */
+			if( (min[i] > rp->r_pt[i]) || (max[i] < rp->r_pt[i]) )
+				return(0);	/* MISS */;
+			continue;
+		}
+
+		if( rp->r_dir[i] < 0.0 )  {
+			sv = (min[i] - rp->r_pt[i]) / rp->r_dir[i];
+			if(sv < 0.0)
+				return(0);	/* MISS */
+			st = (max[i] - rp->r_pt[i]) / rp->r_dir[i];
+			if(exit_dist > sv)
+				exit_dist = sv;
+			if(enter_dist < st)
+				enter_dist = st;
+		}  else  {
+			st = (max[i] - rp->r_pt[i]) / rp->r_dir[i];
+			if(st < 0.)
+				return(0);	/* MISS */
+			sv = (min[i] - rp->r_pt[i]) / rp->r_dir[i];
+			if(exit_dist > st)
+				exit_dist = st;
+			if(enter_dist < sv)
+				enter_dist = sv;
+		}
+	}
+#define	TOL .0001
+	if( enter_dist+TOL >= exit_dist )
+		return(0);	/* MISS */
+	return(1);		/* HIT */
 }

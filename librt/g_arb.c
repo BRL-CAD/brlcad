@@ -40,11 +40,11 @@ struct soltab *stp;
 matp_t mat;
 {
 	register fastf_t *op;		/* Used for scanning vectors */
-	static fastf_t dx, dy, dz;	/* For finding the bounding spheres */
-	static vect_t	work;		/* Vector addition work area */
-	static vect_t	sum;		/* Sum of all endpoints */
-	static int	faces;		/* # of faces produced */
-	static int	i;
+	LOCAL fastf_t dx, dy, dz;	/* For finding the bounding spheres */
+	LOCAL vect_t	work;		/* Vector addition work area */
+	LOCAL vect_t	sum;		/* Sum of all endpoints */
+	LOCAL int	faces;		/* # of faces produced */
+	LOCAL int	i;
 
 	/* init maxima and minima */
 	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
@@ -170,7 +170,7 @@ int noise;
 
 	/* Compute the common sub-expression for inside() */
 	for( i=0; i < pts; i++ )  {
-		static fastf_t f;
+		LOCAL fastf_t f;
 		f = (plp->pl_2d_y[i+1] - plp->pl_2d_y[i]);
 		if( NEAR_ZERO(f) )
 			plp->pl_2d_com[i] = 0.0;	/* anything */
@@ -202,9 +202,9 @@ int a;
 int noise;			/* non-0: check 4,> pts for being planar */
 {
 	register int i;
-	static vect_t work;
-	static vect_t P_A;		/* new point - A */
-	static fastf_t f;
+	LOCAL vect_t work;
+	LOCAL vect_t P_A;		/* new point - A */
+	LOCAL fastf_t f;
 
 	/* Verify that this point is not the same as an earlier point */
 	for( i=0; i < plp->pl_npts; i++ )  {
@@ -329,11 +329,11 @@ register struct xray *rp;
 	register struct plane_specific *plp =
 		(struct plane_specific *)stp->st_specific;
 #define MAXHITS 12		/* # surfaces hit, must be even */
-	static struct hit hits[MAXHITS];
+	LOCAL struct hit hits[MAXHITS];
 	register struct hit *hp;
-	static int	nhits;
-	static vect_t	work;
-	static fastf_t	xt, yt;
+	LOCAL int	nhits;
+	LOCAL vect_t	work;
+	LOCAL fastf_t	xt, yt;
 
 	nhits = 0;
 	hp = &hits[0];
@@ -431,7 +431,7 @@ register struct hit h[];
 register int nh;
 {
 	register int i, j;
-	static struct hit temp;
+	LOCAL struct hit temp;
 
 	for( i=0; i < nh-1; i++ )  {
 		for( j=i+1; j < nh; j++ )  {
@@ -456,9 +456,9 @@ register struct xray *rp;
 register struct hit *hitp;
 double	k;			/* dist along ray */
 {
-	static vect_t	hit_pt;		/* ray hits solid here */
-	static vect_t	work;
-	static fastf_t	xt, yt;
+	LOCAL vect_t	hit_pt;		/* ray hits solid here */
+	LOCAL vect_t	work;
+	LOCAL fastf_t	xt, yt;
 
 	VJOIN1( hit_pt, rp->r_pt, k, rp->r_dir );
 	/* Project the hit point onto the plane, making this a 2-d problem */
@@ -511,7 +511,7 @@ register fastf_t *x, *y, *com;
 int n;
 {
 	register fastf_t *xend;
-	static int ret;
+	LOCAL int ret;
 
 	/*
 	 * Starts with 0 intersections, an even number ==> outside.

@@ -139,12 +139,12 @@ char **argv;
 		fprintf(stderr, "No solids remain after prep, exiting.\n");
 		exit(11);
 	}
+	fprintf(stderr,"shooting at %d solids in %d regions\n",
+		nsolids, nregions );
 
 	/* Set up the online display and/or the display file */
 	if( !(debug&DEBUG_QUICKIE) )
 		dev_setup(npts);
-
-	timer_prep();	/* start timing actual run */
 
 	VSET( tempdir, 0, 0, -1 );
 	if( !matflag )  {
@@ -211,6 +211,8 @@ char **argv;
 	MAT4X3VEC( l2vec, view2model, tempdir );
 	VUNITIZE(l2vec);
 
+	timer_prep();	/* start timing actual run */
+
 	fflush(stderr);
 
 	for( ap.a_y = npts-1; ap.a_y >= 0; ap.a_y--)  {
@@ -233,15 +235,12 @@ char **argv;
 	{
 		FAST double utime;
 		utime = timer_print("SHOT");
-		fprintf(stderr,"%d solids, %d regions\n",
-			nsolids, nregions );
 		fprintf(stderr,"%d output rays in %f sec = %f rays/sec\n",
 			npts*npts, utime, (double)(npts*npts/utime) );
-		fprintf(stderr,"%d solids shot at, %ld shots pruned\n",
+		fprintf(stderr,"%ld calls to ft_shot(), %ld calls pruned\n",
 			nshots, (long)nmiss );
-		fprintf(stderr,"%ld total shots in %f sec = %f shots/sec\n",
-			(long)nshots+nmiss,
-			utime, (double)((nshots+nmiss)/utime) );
+		fprintf(stderr,"%ld calls in %f sec = %f calls/sec\n",
+			nshots, utime, (double)(nshots/utime) );
 	}
 	return(0);
 }

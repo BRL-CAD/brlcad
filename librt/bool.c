@@ -3,13 +3,13 @@
  *
  * Ray Tracing program, Boolean region evaluator.
  *
- * Input -
- *	Pointer to first in seg chain, to be processed.
- *	All seg structs should be freed before return.
- *
- * Output -
+ * Inputs -
+ *	Pointer to first segment in seg chain.
  *	Pointer to head of circular doubly-linked list of
  *	partitions of the original ray.
+ *
+ * Outputs -
+ *	Final partitions, queued on doubly-linked list specified.
  *
  * Notes -
  *	It is the responsibility of the CALLER to free the seg chain,
@@ -43,19 +43,17 @@ struct partition *FreePart = PT_NULL;		 /* Head of freelist */
 /*
  *			B O O L _ R E G I O N S
  */
-struct partition *
-bool_regions( segp_in )
+void
+bool_regions( segp_in, FinalHdp )
 struct seg *segp_in;
+struct partition *FinalHdp;	/* Heads final circ list */
 {
 	register struct seg *segp = segp_in;
 	register struct soltab *stp;
 	register struct partition *pp;
-	static struct region ActRegHd;	/* Heads active circular forw list */
-	static int curbin;
-	static struct region *regp;
-	static struct partition PartHd;	/* Heads active circular list */
-	static struct partition FinalHd;	/* Heads final circ list */
-	static int i;
+	LOCAL struct region ActRegHd;	/* Heads active circular forw list */
+	LOCAL int curbin;
+	LOCAL struct partition PartHd;	/* Heads active circular list */
 
 	/* We assume that the region active chains are REGION_NULL */
 	/* We assume that the solid bins st_bin are zero */
@@ -72,6 +70,8 @@ struct seg *segp_in;
 		/* Make sure seg's solid's region is on active list */
 		stp = segp->seg_stp;
 		if( stp->st_bin == 0 )  {
+			register struct region *regp;		/* XXX */
+
 			if( (stp->st_bin = curbin++) >= NBINS )
 				rtbomb("bool_regions:  need > NBINS bins");
 			regp = stp->st_regionp;
@@ -124,6 +124,8 @@ struct seg *segp_in;
 			APPEND_PT( pp, PartHd.pt_back );
 		}
 		for( pp=PartHd.pt_forw; pp != &PartHd; pp=pp->pt_forw ) {
+			register int i;		/* XXX */
+
 			if( fdiff(dist, pp->pt_outdist) >= 0 )  {
 				/* Seg starts after current partition ends,
 				 * or exactly at the end.
@@ -241,12 +243,13 @@ done_weave:	;
 	 * so output a new segment.  If 2 or more regions claim the
 	 * partition, then an overlap exists.
 	 */
-	FinalHd.pt_forw = FinalHd.pt_back = &FinalHd;	/* debug */
+	FinalHdp->pt_forw = FinalHdp->pt_back = FinalHdp;	/* debug */
 
 	pp = PartHd.pt_forw;
 	while( pp != &PartHd )  {
-		static int hitcnt;
-		static struct region *lastregion;
+		LOCAL int hitcnt;
+		LOCAL struct region *lastregion;
+		register struct region *regp;
 
 		hitcnt = 0;
 		if(debug&DEBUG_PARTITION)
@@ -284,13 +287,13 @@ done_weave:	;
 			pp=pp->pt_forw;
 			DEQUEUE_PT( newpp );
 			newpp->pt_regionp = lastregion;
-			APPEND_PT( newpp, FinalHd.pt_back );
+			APPEND_PT( newpp, FinalHdp->pt_back );
 			/* Shameless efficiency hack */
 			if( !debug && one_hit_flag )  break;
 		}
 	}
 	if( debug&DEBUG_PARTITION )
-		pr_partitions( &FinalHd, "Final Partitions" );
+		pr_partitions( FinalHdp, "Final Partitions" );
 
 	/*
 	 * Cleanup:  Put zeros in the bin#s of all the solids that were used,
@@ -300,11 +303,14 @@ done_weave:	;
 		stp = segp->seg_stp;
 		stp->st_bin = FALSE;
 	}
-	for( regp=ActRegHd.reg_active; regp != &ActRegHd; )  {
-		register struct region *newreg;			/* XXX */
-		newreg = regp;
-		regp = regp->reg_active;
-		newreg->reg_active = REGION_NULL;
+	{
+		register struct region *regp;			/* XXX */
+		for( regp=ActRegHd.reg_active; regp != &ActRegHd; )  {
+			register struct region *newreg;		/* XXX */
+			newreg = regp;
+			regp = regp->reg_active;
+			newreg->reg_active = REGION_NULL;
+		}
 	}
 	for( pp = PartHd.pt_forw; pp != &PartHd;  )  {
 		register struct partition *newpp;
@@ -312,9 +318,7 @@ done_weave:	;
 		pp = pp->pt_forw;
 		FREE_PT(newpp);
 	}
-	/* Free seg chain in caller */
-
-	return( &FinalHd );
+	/* Caller must Free seg chain and partition chain */
 }
 
 /*
@@ -459,7 +463,7 @@ double
 reldiff( a, b )
 double	a, b;
 {
-	static double	d;
+	LOCAL double	d;
 
 	d = Max( Abs( a ), Abs( b ) );	/* NOTE: not efficient */
 	return( d == 0.0 ? 0.0 : Abs( a - b ) / d );

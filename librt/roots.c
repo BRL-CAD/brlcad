@@ -1,7 +1,11 @@
-#include  "./polyno.h"
-#include  "./complex.h"
-#include  <math.h>
-#include  <stdio.h>
+/*
+ *  			R O O T S . C
+ */
+#include <math.h>
+#include <stdio.h>
+#include "vmath.h"
+#include "polyno.h"
+#include "complex.h"
 
 int		polyRoots();
 static void	synthetic(), deflate();
@@ -23,7 +27,7 @@ register poly		*eqn;		/* equation to be solved	*/
 register complex	roots[];	/* space to put roots found	*/
 {
 	register int	n;		/* number of roots found	*/
-	static double	factor;		/* scaling factor for copy	*/
+	LOCAL fastf_t	factor;		/* scaling factor for copy	*/
 
 	/* Allocate space for the roots and set the first guess to
 	 * (almost) zero.
@@ -136,13 +140,13 @@ findRoot( eqn, nxZ )
 register poly		*eqn;	/* polynomial			*/
 register complex	*nxZ;	/* initial guess for root	*/
 {
-	static complex  p0, p1, p2;	/* evaluated polynomial+derivatives */
-	static complex	p1_H;		/* p1 - H, temporary */
-	static complex  Z, H;		/* 'Z' and H(Z) in comment	*/
-	static complex  T;		/* temporary for making H */
-	static double	diff;		/* test values for convergence	*/
-	static double	b;		/* floating temps */
-	static int	n;
+	LOCAL complex  p0, p1, p2;	/* evaluated polynomial+derivatives */
+	LOCAL complex	p1_H;		/* p1 - H, temporary */
+	LOCAL complex  cZ, cH;		/* 'Z' and H(Z) in comment	*/
+	LOCAL complex  T;		/* temporary for making H */
+	LOCAL fastf_t	diff;		/* test values for convergence	*/
+	LOCAL fastf_t	b;		/* floating temps */
+	LOCAL int	n;
 	register int	i;		/* iteration counter		*/
 
 	i = 0;
@@ -155,28 +159,28 @@ register complex	*nxZ;	/* initial guess for root	*/
 			return -1;
 		}
 
-		Z = *nxZ;
-		synthetic( &Z, eqn, &p0, &p1, &p2 );
+		cZ = *nxZ;
+		synthetic( &cZ, eqn, &p0, &p1, &p2 );
 
 		/* Compute H for Laguerre's method. */
 		n = eqn->dgr-1;
-		H = p1;
-		CxMul( &H, &p1 );
-		CxScal( &H, (double)(n*n) );
+		cH = p1;
+		CxMul( &cH, &p1 );
+		CxScal( &cH, (double)(n*n) );
 		T = p0;
 		CxMul( &T, &p2 );
 		CxScal( &T, (double)(eqn->dgr*n) );
-		CxSub( &H, &T );
+		CxSub( &cH, &T );
 
 		/* Calculate the next iteration for Laguerre's method.
 		 * Test to see whether addition or subtraction gives the
 		 * larger denominator for the next 'Z' , and use the
 		 * appropriate value in the formula.
 		 */
-		CxSqrt( &H );
+		CxSqrt( &cH );
 		p1_H = p1;
-		CxSub( &p1_H, &H );
-		CxAdd( &p1, &H );		/* p1 <== p1+H */
+		CxSub( &p1_H, &cH );
+		CxAdd( &p1, &cH );		/* p1 <== p1+H */
 		CxScal( &p0, (double)(eqn->dgr) );
 		if ( CxAmplSq( &p1_H ) > CxAmplSq( &p1 ) ){
 			CxDiv( &p0, &p1_H);
@@ -225,26 +229,26 @@ register complex	*nxZ;	/* initial guess for root	*/
  *
  */
 static void
-synthetic( Z, eqn, b, c, d )
+synthetic( cZ, eqn, b, c, d )
 register poly		*eqn;
-register complex	*Z, *b, *c, *d;
+register complex	*cZ, *b, *c, *d;
 {
 	register int	n;
-	static int	m;
+	LOCAL int	m;
 
 	CxCons(b,eqn->cf[0],0.0);
 	*c = *b;
 	*d = *c;
 
 	for ( n=1; ( m = eqn->dgr - n ) >= 0; ++n){
-		CxMul( b, Z );
+		CxMul( b, cZ );
 		b->re += eqn->cf[n];
 		if ( m > 0 ){
-			CxMul( c, Z );
+			CxMul( c, cZ );
 			CxAdd( c, b );
 		}
 		if ( m > 1 ){
-			CxMul( d, Z );
+			CxMul( d, cZ );
 			CxAdd( d, c );
 		}
 	}
@@ -271,7 +275,7 @@ register poly		*eqn;
 register complex	roots[];
 register int		nroots;
 {
-	static complex	epoly;
+	LOCAL complex	epoly;
 	register int	n, m;
 
 	for ( m=0; m < nroots; ++m ){
@@ -297,7 +301,7 @@ deflate( oldP, root )
 register poly		*oldP;
 register complex		*root;
 {
-	static poly	div, rem;
+	LOCAL poly	div, rem;
 
 	/* Make a polynomial out of the given root:  Linear for a real
 	 * root, Quadratic for a complex root (since they come in con-

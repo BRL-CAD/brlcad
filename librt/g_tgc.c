@@ -58,13 +58,13 @@ struct soltab *stp;
 matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 {
 	register struct tgc_specific *tgc;
-	static fastf_t	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
-	static fastf_t	mag_h, mag_a, mag_b, mag_c, mag_d;
-	static mat_t	Rot, Shr;
-	static mat_t	iRot, tShr;
-	static vect_t	Hv, A, B, C, D;
-	static vect_t	nH;
-	static vect_t	work;
+	LOCAL fastf_t	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
+	LOCAL fastf_t	mag_h, mag_a, mag_b, mag_c, mag_d;
+	LOCAL mat_t	Rot, Shr;
+	LOCAL mat_t	iRot, tShr;
+	LOCAL vect_t	Hv, A, B, C, D;
+	LOCAL vect_t	nH;
+	LOCAL vect_t	work;
 	FAST fastf_t	f;
 
 #define SP_V	&vec[0*ELEMENTS_PER_VECT]
@@ -164,8 +164,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Compute bounding sphere */
 	{
-		static fastf_t dx, dy, dz;	/* For bounding sphere */
-		static vect_t temp;
+		LOCAL fastf_t dx, dy, dz;	/* For bounding sphere */
+		LOCAL vect_t temp;
 
 		/* init maxima and minima */
 		stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
@@ -230,8 +230,8 @@ vect_t		A, B, Hv;
 mat_t		Rot, Inv;
 struct tgc_specific	*tgc;
 {
-	static vect_t	uA, uB, uC;	/*  unit vectors		*/
-	static double	mag_ha,		/*  magnitude of H in the	*/
+	LOCAL vect_t	uA, uB, uC;	/*  unit vectors		*/
+	LOCAL fastf_t	mag_ha,		/*  magnitude of H in the	*/
 			mag_hb;		/*    A and B directions	*/
 
 	/* copy A and B, then 'unitize' the results			*/
@@ -349,14 +349,14 @@ register struct xray	*rp;
 	register struct tgc_specific	*tgc =
 		(struct tgc_specific *)stp->st_specific;
 	struct seg		*segp;
-	static vect_t		pprime,
+	LOCAL vect_t		pprime,
 				dprime,
 				norm,
 				work;
-	static double		k[4], pt[2],
+	LOCAL fastf_t		k[4], pt[2],
 				t, b, zval, dir,
 				alf1, alf2;
-	static int		npts, n, intersect;
+	LOCAL int		npts, n, intersect;
 
 	/* find rotated point and direction				*/
 	MAT3XVEC( dprime, tgc->tgc_ShoR, rp->r_dir );
@@ -570,13 +570,13 @@ struct tgc_specific	*tgc;
 double		t[];
 
 {
-	static poly		C;	/*  final equation	*/
+	LOCAL poly		C;	/*  final equation	*/
 			/* space to store intermediate polynomials	*/
-	static poly		tfun[3], Xsqr, Ysqr;
-	static poly		Q, Qsqr, R, Rsqr;
-	static poly		T1, T2, T3, sum;
-	static complex		val[MAXP];	/* roots of final equation */
-	static double		A_B;	/*  eccentricity of bottom ellipse */
+	LOCAL poly		tfun[3], Xsqr, Ysqr;
+	LOCAL poly		Q, Qsqr, R, Rsqr;
+	LOCAL poly		T1, T2, T3, sum;
+	LOCAL complex		val[MAXP];	/* roots of final equation */
+	LOCAL fastf_t		A_B;	/*  eccentricity of bottom ellipse */
 	register int		i, l, npts;
 
 	/*  Express each variable (X, Y, and Z) as a linear equation
@@ -666,7 +666,7 @@ PtSort( t, npts )
 register double	t[];
 
 {
-	static double	u;
+	LOCAL fastf_t	u;
 	register int	n;
 
 #define XCH(a,b)	{ u=a; a=b; b=u; }
@@ -725,15 +725,15 @@ register double	t[];
  *		dQ/dz = (c - a)/|H'|
  *		dR/dz = (d - b)/|H'|
  */
-static void
+LOCAL void
 tgcnormal( norm, hit, tgc )
 register vectp_t		norm, hit;
 register struct tgc_specific	*tgc;
 
 {
-	static double	Q, parQ, R, parR;
-	static double	X_of_Z, Y_of_Z;
-	static vect_t	stdnorm;
+	LOCAL fastf_t	Q, parQ, R, parR;
+	LOCAL fastf_t	X_of_Z, Y_of_Z;
+	LOCAL vect_t	stdnorm;
 
 	X_of_Z = (tgc->tgc_C - tgc->tgc_A)/ tgc->tgc_sH;
 	R      = tgc->tgc_A + X_of_Z*hit[Z];

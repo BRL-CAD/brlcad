@@ -272,15 +272,15 @@ extern void vtoh_move(), htov_move(), mat_print();
  */
 extern struct directory *dir_lookup();	/* Look up name in toc */
 extern struct directory *dir_add();	/* Add name to toc */
-extern char *strdup();				/* Duplicate str w/malloc */
-extern struct partition *bool_regions();	/* Eval booleans */
-extern int bool_eval();				/* Eval bool tree node */
-extern int fdiff();				/* Approx Floating compare */
-extern double reldiff();			/* Relative Difference */
-extern void pr_bins();				/* Print bins */
-extern void pr_region();			/* Print a region */
-extern void pr_tree();				/* Print an expr tree */
-extern void fastf_float();			/* convert float->fastf_t */
+extern char *strdup();			/* Duplicate str w/malloc */
+extern void bool_regions();		/* Eval booleans */
+extern int bool_eval();			/* Eval bool tree node */
+extern int fdiff();			/* Approx Floating compare */
+extern double reldiff();		/* Relative Difference */
+extern void pr_bins();			/* Print bins */
+extern void pr_region();		/* Print a region */
+extern void pr_tree();			/* Print an expr tree */
+extern void fastf_float();		/* convert float->fastf_t */
 
 /*
  *  Library routines used by the RT library.

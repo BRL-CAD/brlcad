@@ -127,15 +127,15 @@ struct soltab *stp;
 matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 {
 	register struct ell_specific *ell;
-	static fastf_t	magsq_a, magsq_b, magsq_c;
-	static mat_t	R;
-	static mat_t	Rinv;
-	static mat_t	SS;
-	static mat_t	mtemp;
-	static vect_t	A, B, C;
-	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
-	static vect_t	work;
-	static fastf_t	f;
+	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
+	LOCAL mat_t	R;
+	LOCAL mat_t	Rinv;
+	LOCAL mat_t	SS;
+	LOCAL mat_t	mtemp;
+	LOCAL vect_t	A, B, C;
+	LOCAL vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
+	LOCAL vect_t	work;
+	LOCAL fastf_t	f;
 
 #define SP_V	&vec[0*ELEMENTS_PER_VECT]
 #define SP_A	&vec[1*ELEMENTS_PER_VECT]
@@ -274,12 +274,12 @@ register struct xray *rp;
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
 	register struct seg *segp;
-	static vect_t	dprime;		/* D' */
-	static vect_t	pprime;		/* P' */
-	static fastf_t	dp, dd, pp;	/* D' dot P', D' dot D', P' dot P' */
-	static fastf_t	root;		/* root of radical */
-	static fastf_t	k1, k2;		/* distance constants of solution */
-	static vect_t	xlated;		/* translated vector */
+	LOCAL vect_t	dprime;		/* D' */
+	LOCAL vect_t	pprime;		/* P' */
+	LOCAL fastf_t	dp, dd, pp;	/* D' dot P', D' dot D', P' dot P' */
+	LOCAL fastf_t	root;		/* root of radical */
+	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
+	LOCAL vect_t	xlated;		/* translated vector */
 
 	/* out, Mat, vect */
 	MAT3XVEC( dprime, ell->ell_SoR, rp->r_dir );
