@@ -11888,6 +11888,37 @@ CONST fastf_t tol_coll;
 				bu_log( "\tMoving v1 to v2 (%g %g %g) -> (%g %g %g)\n", V3ARGS( v1->vg_p->coord ), V3ARGS( v2->vg_p->coord ) );
 #endif
 				/* vertex1 will be moved to vertex2 */
+
+				/* recalculate edge geometry */
+				for( BU_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )
+				{
+					struct faceuse *fu;
+					struct edge_g_lseg *eg;
+					struct vertex_g *v1a;
+					vect_t edge_dir;
+
+					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					eu1 = vu->up.eu_p;
+					fu = nmg_find_fu_of_eu( eu1 );
+					if( !fu )
+						continue;
+
+					if( fu->orientation != OT_SAME )
+						continue;
+
+					if( !eu1->g.magic_p )
+						nmg_edge_g( eu1 );
+					else if( *eu1->g.magic_p != NMG_EDGE_G_LSEG_MAGIC )
+						continue;
+
+					eg = eu1->g.lseg_p;
+					v1a = eu1->eumate_p->vu_p->v_p->vg_p;
+					VSUB2( eg->e_dir, v2->vg_p->coord, v1a->coord );
+					VMOVE( eg->e_pt, v2->vg_p->coord );
+				}
+
 				done = 0;
 				while( !done )
 				{
@@ -11938,6 +11969,36 @@ CONST fastf_t tol_coll;
 				bu_log( "\tMoving v2 to v1 (%g %g %g) -> (%g %g %g)\n", V3ARGS( v2->vg_p->coord ), V3ARGS( v1->vg_p->coord ) );
 #endif
 				/* vertex2 will be moved to vertex1 */
+				/* recalculate edge geometry */
+				for( BU_LIST_FOR( vu, vertexuse, &v2->vu_hd ) )
+				{
+					struct faceuse *fu;
+					struct edge_g_lseg *eg;
+					struct vertex_g *v1a;
+					vect_t edge_dir;
+
+					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					eu1 = vu->up.eu_p;
+					fu = nmg_find_fu_of_eu( eu1 );
+					if( !fu )
+						continue;
+
+					if( fu->orientation != OT_SAME )
+						continue;
+
+					if( !eu1->g.magic_p )
+						nmg_edge_g( eu1 );
+					else if( *eu1->g.magic_p != NMG_EDGE_G_LSEG_MAGIC )
+						continue;
+
+					eg = eu1->g.lseg_p;
+					v1a = eu1->eumate_p->vu_p->v_p->vg_p;
+					VSUB2( eg->e_dir, v1->vg_p->coord, v1a->coord );
+					VMOVE( eg->e_pt, v1->vg_p->coord );
+				}
+
 				done = 0;
 				while( !done )
 				{
