@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle.h	1.5
-	Last edit: 	3/26/85 at 17:47:49	G S M
-	Retrieved: 	8/13/86 at 10:31:09
+	SCCS id:	@(#) rle.h	1.6
+	Last edit: 	5/28/85 at 10:10:45	G S M
+	Retrieved: 	8/13/86 at 10:31:18
 	SCCS archive:	/m/cad/librle/RCS/s.rle.h
 
 	Modified for by :	Gary S. Moss
@@ -77,6 +77,9 @@ typedef struct /* Old RLE format instruction.				*/
 #define LONGP(inst) (inst.opcode & LONG)
 #define DATUM(inst) (0x00ff & inst.datum)
 
+#if defined( gould ) || defined( sem )
+#define BIGENDIAN
+#endif
 #ifdef BIGENDIAN
 #define SWAB(shrt)  (shrt = ((shrt >> 8) & 0xff) | ((shrt << 8) & 0xff00))
 #else
