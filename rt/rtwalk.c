@@ -468,7 +468,8 @@ write_matrix(frame)
 
 	mat_lookat( viewrot, model );
 
-/*	fprintf(outfp, "start %d;\n", frame); */
+#if 0
+	/* Old way */
 	fprintf(outfp, "%g\n", viewsize);
 	fprintf(outfp, "%g %g %g",
 		pt_prev_step[X],
@@ -480,6 +481,23 @@ write_matrix(frame)
 		(void)fprintf( outfp, "%.9e ", viewrot[i] );
 	}
 	(void)fprintf(outfp,"\n\n");
+#else
+	/* New way */
+	fprintf(outfp, "viewsize %g;\n", viewsize);
+	fprintf(outfp, "eye_pt %g %g %g;\n",
+		pt_prev_step[X],
+		pt_prev_step[Y],
+		pt_prev_step[Z]);
+	fprintf(outfp, "viewrot ");
+	for( i=0; i < 16; i++ ) {
+		(void)fprintf(outfp, "%.9e ", viewrot[i] );
+		if( (i%4) == 3 )
+			(void)fprintf(outfp, "\n");
+	}
+	(void)fprintf(outfp,";\n");
+	fprintf(outfp, "start %d;\n", frame);
+	fprintf(outfp, "end;\n\n" );
+#endif
 }
 
 #if defined(SYSV)
