@@ -3307,6 +3307,7 @@ struct nmg_ptbl		*eu2_list;
 	struct nmg_ptbl		eg_list;
 	struct edge_g		**eg1;
 	struct edgeuse		**eu1;
+	struct edgeuse		**eu2;
 	fastf_t			dist[2];
 	int			code;
 	point_t			eg_pt2d;	/* 2D */
@@ -3314,6 +3315,7 @@ struct nmg_ptbl		*eu2_list;
 	struct loopuse		*lu1;
 	point_t			hit3d;
 	point_t			hit2d;		/* 2D */
+	struct edgeuse		*new_eu;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_FACEUSE(fu1);
@@ -3321,7 +3323,7 @@ struct nmg_ptbl		*eu2_list;
 	NMG_CK_PTBL(eu2_list);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_line2_face2pNEW(, fu1=x%x)\n", fu1);
+		rt_log("nmg_isect_line2_face2pNEW(, fu1=x%x) on_eg=x%x\n", fu1, is->on_eg);
 
 	/* Project the intersect line into 2D.  Build matrix first. */
 	nmg_isect2d_prep( is, &fu1->l.magic );
@@ -3357,7 +3359,6 @@ colinear:
 			     eu1 <= (struct edgeuse **)NMG_TBL_LASTADDR(eu1_list);
 			     eu1++
 			)  {
-				register struct edgeuse	**eu2;
 				NMG_CK_EDGEUSE(*eu1);
 				if( (*eu1)->e_p->eg_p != is->on_eg )  continue;
 				/* *eu1 is from fu1 */
@@ -3467,7 +3468,6 @@ colinear:
 		)  {
 			struct vertexuse	*vu1a, *vu1b;
 			struct vertexuse	*vu1_midpt;
-			struct edgeuse		*new_eu;
 			fastf_t			ldist;
 			point_t			eu1_pt2d;	/* 2D */
 			point_t			eu1_end2d;	/* 2D */
@@ -3577,9 +3577,55 @@ hit_b:
 		/* Intersect line with lone vertex vu1 */
 		vu1 = RT_LIST_FIRST( vertexuse, &lu1->down_hd );
 		NMG_CK_VERTEXUSE(vu1);
+
+		/* Needs to be a 3D comparison */
+		if( rt_distsq_line3_pt3( is->pt, is->dir,
+		      vu1->v_p->vg_p->coord ) > is->tol.dist_sq )
+			continue;
+
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			rt_log("\tself-loop vu=x%x lies on line of intersection\n", vu1 );
+		}
+
+		/*  To prevent an OT_BOOLPLACE from being overlooked,
+		 *  break *both* sets of eu's
+		 */
+
+		/* Break all edges from fu1 list */
+		for( eu1 = (struct edgeuse **)NMG_TBL_BASEADDR(eu1_list);
+		     eu1 <= (struct edgeuse **)NMG_TBL_LASTADDR(eu1_list);
+		     eu1++
+		)  {
+			NMG_CK_EDGEUSE(*eu1);
+			if( (*eu1)->e_p->eg_p != is->on_eg )  continue;
+			/* *eu1 is from fu1 and on the intersection line */
+			new_eu = nmg_break_eu_on_v( *eu1, vu1->v_p, fu1, is );
+			if( !new_eu )  continue;
+			nmg_tbl( eu1_list, TBL_INS_UNIQUE, &new_eu->l.magic );
+			nmg_enlist_vu(is, new_eu->vu_p, 0 );
+		}
+
+		/* Break all edges from fu2 list */
+		for( eu2 = (struct edgeuse **)NMG_TBL_BASEADDR(eu2_list);
+		     eu2 <= (struct edgeuse **)NMG_TBL_LASTADDR(eu2_list);
+		     eu2++
+		)  {
+			NMG_CK_EDGEUSE(*eu2);
+			if( (*eu2)->e_p->eg_p != is->on_eg )  continue;
+			/* *eu2 is from fu2 and on the intersection line */
+			new_eu = nmg_break_eu_on_v( *eu2, vu1->v_p, fu1, is );
+			if( !new_eu )  continue;
+			nmg_tbl( eu2_list, TBL_INS_UNIQUE, &new_eu->l.magic );
+			nmg_enlist_vu(is, new_eu->vu_p, 0 );
+		}
+
+#if 0
+		/* OLD WAY: */
 		nmg_isect_line2_vertex2( is, vu1, fu1 );
-		/* Only potential result is a use of vu1 added to the other face */
+		/* Only result is a use of vu1 added to the other face */
+#endif
 	}
+
 	nmg_tbl( &eg_list, TBL_FREE, (long *)0 );
 }
 
