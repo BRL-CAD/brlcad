@@ -135,12 +135,13 @@ struct rt_db_internal	*ip;
 
 /****************************************************************/
 
-/*	Analyze command - prints loads of info about a solid
+/*
+ *			F _ A N A L Y Z E
+ *
+ *	Analyze command - prints loads of info about a solid
  *	Format:	analyze [name]
  *		if 'name' is missing use solid being edited
  */
-
-static union record temp_rec;		/* local copy of es_rec */
 
 void
 f_analyze(argc, argv)
@@ -178,15 +179,6 @@ char	*argv[];
 		}
 		mat_mul(new_mat, modelchanges, es_mat);
 
-		/* XXX start old:  ARB only */
-		temp_rec = es_rec;		/* struct copy */
-		MAT4X3PNT(temp_rec.s.s_values, new_mat, es_rec.s.s_values);
-		for(i=1; i<8; i++) {
-			MAT4X3VEC( &temp_rec.s.s_values[i*3], new_mat,
-					&es_rec.s.s_values[i*3] );
-		}
-		/* XXX end old way */
-
 		if( rt_db_get_internal( &intern, ndp, dbip, new_mat ) < 0 )  {
 			(void)printf("rt_db_get_internal() error\n");
 			return;
@@ -202,9 +194,6 @@ char	*argv[];
 	for( i = 1; i < argc; i++ )  {
 		if( (ndp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
-
-		/* XXX old way */
-		if( db_get( dbip, ndp, &temp_rec, 0, 1) < 0 )  READ_ERR_return;
 
 		if( rt_db_get_internal( &intern, ndp, dbip, rt_identity ) < 0 )  {
 			(void)printf("rt_db_get_internal() error\n");
@@ -260,7 +249,7 @@ struct rt_db_internal	*ip;
 
 
 /* edge definition array */
-static int nedge[5][24] = {
+static CONST int nedge[5][24] = {
 	{0,1, 1,2, 2,0, 0,3, 3,2, 1,3, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},	/* ARB4 */
 	{0,1, 1,2, 2,3, 0,3, 0,4, 1,4, 2,4, 3,4, -1,-1,-1,-1,-1,-1,-1,-1},	/* ARB5 */
 	{0,1, 1,2, 2,3, 0,3, 0,4, 1,4, 2,5, 3,5, 4,5, -1,-1,-1,-1,-1,-1},	/* ARB6 */
@@ -268,45 +257,49 @@ static int nedge[5][24] = {
 	{0,1, 1,2, 2,3, 0,3, 0,4, 4,5, 1,5, 5,6, 6,7, 4,7, 3,7, 2,6},
 };
 
-static int	type;	/* comgeom type, for ARB subs */
-
+/*
+ *			A R B _ A N A L
+ */
 static void
-arb_anal(vp)
+arb_anal(vp, ip)
 struct rt_vls	*vp;
+struct rt_db_internal	*ip;
 {
-	register int i;
-	point_t		cpt;
+	struct rt_arb_internal	*arb = (struct rt_arb_internal *)ip->idb_ptr;
+	register int	i;
+	point_t		center_pt;
 	double		tot_vol;
 	double		tot_area;
+	struct rt_tol	tol;
+	int		cgtype;		/* COMGEOM arb type: # of vertices */
+	int		type;
+
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;	/* 0.005 matches planeqn() val, 0.0001 matches dist checking */
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	/* find the specific arb type, in GIFT order. */
-	if( (type = type_arb( &temp_rec )) == 0 ) {
+	if( (cgtype = rt_arb_std_type( ip, &tol )) == 0 ) {
 		rt_vls_printf(vp,"arb_anal: bad ARB\n");
 		return;
 	}
 
-	/* got the arb - convert to point notation */
-	for(i=3; i<24; i+=3) {
-		VADD2( &temp_rec.s.s_values[i], &temp_rec.s.s_values[i], temp_rec.s.s_values );
-	}
-
 	tot_area = tot_vol = 0.0;
 
-	if( type < 0 )
-		type *= -1;
-	if(type == RPP || type == BOX)
-		type = ARB8;
-	if(type == RAW)
-		type = ARB6;
-	type -= 4;
+	type = cgtype - 4;
 
 	/* analyze each face, use center point of arb for reference */
 	rt_vls_printf(vp,"\n------------------------------------------------------------------------------\n");
 	rt_vls_printf(vp,"| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
 	rt_vls_printf(vp,"|------|---------------|----------------------------------|------------------|\n");
-	arb_center( cpt, temp_rec.s.s_values, type+4 );
+	rt_arb_centroid( center_pt, arb, cgtype );
+VPRINT("center_pt", center_pt);
+
 	for(i=0; i<6; i++) 
-		tot_area += anal_face( vp, i, cpt  );
+		tot_area += anal_face( vp, i, center_pt, arb, type, &tol );
 
 	rt_vls_printf(vp,"------------------------------------------------------------------------------\n");
 
@@ -315,30 +308,26 @@ struct rt_vls	*vp;
 	rt_vls_printf(vp,"    |----------------|----------------|----------------|----------------|\n  ");
 
 	/* set up the records for arb4's and arb6's */
-	if( (type+4) == ARB4 ) {
-		VMOVE(&temp_rec.s.s_values[9], &temp_rec.s.s_values[12]);
-	}
-	if( (type+4) == ARB6 ) {
-		VMOVE(&temp_rec.s.s_values[15], &temp_rec.s.s_values[18]);
-	}
-	for(i=0; i<12; i++) {
-		anal_edge( vp, i );
-		if( nedge[type][i*2] == -1 )
-			break;
-	}
+	{
+		struct rt_arb_internal	earb;
 
+		earb = *arb;		/* struct copy */
+		if( cgtype == 4 ) {
+			VMOVE(earb.pt[3], earb.pt[4]);
+		} else if( cgtype == 6 ) {
+			VMOVE(earb.pt[5], earb.pt[6]);
+		}
+		for(i=0; i<12; i++) {
+			anal_edge( vp, i, &earb, type );
+			if( nedge[type][i*2] == -1 )
+				break;
+		}
+	}
 	rt_vls_printf(vp,"  ---------------------------------------------------------------------\n");
 
-	/* put records back */
-	if( (type+4) == ARB4 ) {
-		VMOVE(&temp_rec.s.s_values[9], &temp_rec.s.s_values[0]);
-	}
-	if( (type+4) == ARB6 ) {
-		VMOVE(&temp_rec.s.s_values[15], &temp_rec.s.s_values[12]);
-	}
 	/* find the volume - break arb8 into 6 arb4s */
 	for(i=0; i<6; i++)
-		tot_vol += find_vol( i );
+		tot_vol += find_vol( i, arb, &tol );
 
 	rt_vls_printf(vp,"      | Volume = %18.3f    Surface Area = %15.3f |\n",
 			tot_vol*base2local*base2local*base2local,
@@ -346,12 +335,10 @@ struct rt_vls	*vp;
 	rt_vls_printf(vp,"      |          %18.3f gal                               |\n",
 		tot_vol/3787878.79);
 	rt_vls_printf(vp,"      -----------------------------------------------------------------\n");
-
-	return;
 }
 
 /* ARB face printout array */
-static int prface[5][6] = {
+static CONST int prface[5][6] = {
 	{123, 124, 234, 134, -111, -111},	/* ARB4 */
 	{1234, 125, 235, 345, 145, -111},	/* ARB5 */
 	{1234, 2365, 1564, 512, 634, -111},	/* ARB6 */
@@ -359,7 +346,7 @@ static int prface[5][6] = {
 	{1234, 5678, 1584, 2376, 1265, 4378},	/* ARB8 */
 };
 /* division of an arb8 into 6 arb4s */
-static int farb4[6][4] = {
+static CONST int farb4[6][4] = {
 	{0, 1, 2, 4},
 	{4, 5, 6, 1},
 	{1, 2, 6, 4},
@@ -372,16 +359,21 @@ static int farb4[6][4] = {
 /* 	Analyzes an arb face
  */
 static double
-anal_face( vp, face, cpt )
+anal_face( vp, face, center_pt, arb, type, tol )
 struct rt_vls	*vp;
-int face;
-vect_t cpt;				/* reference center point */
+int		face;
+point_t		center_pt;		/* reference center point */
+struct rt_arb_internal	*arb;
+int		type;
+struct rt_tol	*tol;
 {
 	register int i, j, k;
-	static int a, b, c, d;		/* 4 points of face to look at */
-	static fastf_t angles[5];	/* direction cosines, rot, fb */
-	static fastf_t temp, area[2], len[6];
-	static vect_t v_temp;
+	int a, b, c, d;		/* 4 points of face to look at */
+	fastf_t	angles[5];	/* direction cosines, rot, fb */
+	fastf_t	temp;
+	fastf_t	area[2], len[6];
+	vect_t	v_temp;
+	plane_t	plane;
 	double	face_area = 0;
 
 	a = arb_faces[type][face*4+0];
@@ -393,8 +385,9 @@ vect_t cpt;				/* reference center point */
 		return 0;
 
 	/* find plane eqn for this face */
-	if( planeqn(6, a, b, c, &temp_rec.s) ) {
-		rt_vls_printf(vp,"| %d%d%d%d    ***NOT A PLANE***                                          |\n",
+	if( rt_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
+	    arb->pt[c], tol ) < 0 )  {
+		rt_vls_printf(vp,"| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
 				a+1,b+1,c+1,d+1);
 		return 0;
 	}
@@ -406,28 +399,28 @@ vect_t cpt;				/* reference center point */
 	 * fallback angles so that they always give the outward
 	 * pointing normal vector.
 	 */
-	if( (es_peqn[6][3] - VDOT(cpt, &es_peqn[6][0])) < 0.0 ){
+	if( (plane[3] - VDOT(center_pt, &plane[0])) < 0.0 ){
 		for( i=0; i<4 ; i++ )
-			es_peqn[6][i] *= -1.0;
+			plane[i] *= -1.0;
 	}
 
-	/* es_peqn[6][] contains normalized eqn of plane of this face
+	/* plane[] contains normalized eqn of plane of this face
 	 * find the dir cos, rot, fb angles
 	 */
-	findang( angles, &es_peqn[6][0] );
+	findang( angles, &plane[0] );
 
 	/* find the surface area of this face */
 	for(i=0; i<3; i++) {
 		j = arb_faces[type][face*4+i];
 		k = arb_faces[type][face*4+i+1];
-		VSUB2(v_temp, &temp_rec.s.s_values[k*3], &temp_rec.s.s_values[j*3]);
+		VSUB2(v_temp, arb->pt[k], arb->pt[j]);
 		len[i] = MAGNITUDE( v_temp );
 	}
 	len[4] = len[2];
 	j = arb_faces[type][face*4+0];
 	for(i=2; i<4; i++) {
 		k = arb_faces[type][face*4+i];
-		VSUB2(v_temp, &temp_rec.s.s_values[k*3], &temp_rec.s.s_values[j*3]);
+		VSUB2(v_temp, arb->pt[k], arb->pt[j]);
 		len[((i*2)-1)] = MAGNITUDE( v_temp );
 	}
 	len[2] = len[3];
@@ -442,8 +435,8 @@ vect_t cpt;				/* reference center point */
 	rt_vls_printf(vp,"| %4d |",prface[type][face]);
 	rt_vls_printf(vp," %6.2f %6.2f | %6.3f %6.3f %6.3f %11.3f |",
 		angles[3], angles[4],
-		es_peqn[6][0],es_peqn[6][1],es_peqn[6][2],
-		es_peqn[6][3]*base2local);
+		plane[0],plane[1],plane[2],
+		plane[3]*base2local);
 	rt_vls_printf(vp,"   %13.3f  |\n",
 		(area[0]+area[1])*base2local*base2local);
 	return face_area;
@@ -451,9 +444,11 @@ vect_t cpt;				/* reference center point */
 
 /*	Analyzes arb edges - finds lengths */
 static void
-anal_edge( vp, edge )
-struct rt_vls	*vp;
-int edge;
+anal_edge( vp, edge, arb, type )
+struct rt_vls		*vp;
+int			edge;
+struct rt_arb_internal	*arb;
+int			type;
 {
 	register int a, b;
 	static vect_t v_temp;
@@ -477,23 +472,26 @@ int edge;
 		return;
 	}
 
-	VSUB2(v_temp, &temp_rec.s.s_values[b*3], &temp_rec.s.s_values[a*3]);
-	rt_vls_printf(vp,"  |  %d%d %9.3f",a+1,b+1,MAGNITUDE(v_temp)*base2local);
+	VSUB2(v_temp, arb->pt[b], arb->pt[a]);
+	rt_vls_printf(vp, "  |  %d%d %9.3f",
+		a+1, b+1, MAGNITUDE(v_temp)*base2local);
 
 	if( ++edge%4 == 0 )
 		rt_vls_printf(vp,"  |\n  ");
-
 }
 
 
 /*	Finds volume of an arb4 defined by farb4[loc][] 	*/
 static double
-find_vol( loc )
-int loc;
+find_vol( loc, arb, tol )
+int	loc;
+struct rt_arb_internal	*arb;
+struct rt_tol		*tol;
 {
 	int a, b, c, d;
 	fastf_t vol, height, len[3], temp, areabase;
-	vect_t v_temp;
+	vect_t	v_temp;
+	plane_t	plane;
 
 	/* a,b,c = base of the arb4 */
 	a = farb4[loc][0];
@@ -503,16 +501,17 @@ int loc;
 	/* d = "top" point of arb4 */
 	d = farb4[loc][3];
 
-	if( planeqn(6, a, b, c, &temp_rec.s) != 0 )
+	if( rt_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
+	    arb->pt[c], tol ) < 0 )
 		return 0.0;
 
 	/* have a good arb4 - find its volume */
-	height = fabs(es_peqn[6][3] - VDOT(&es_peqn[6][0], &temp_rec.s.s_values[d*3]));
-	VSUB2(v_temp, &temp_rec.s.s_values[b*3], &temp_rec.s.s_values[a*3]);
+	height = fabs(plane[3] - VDOT(&plane[0], arb->pt[d]));
+	VSUB2(v_temp, arb->pt[b], arb->pt[a]);
 	len[0] = MAGNITUDE(v_temp);
-	VSUB2(v_temp, &temp_rec.s.s_values[c*3], &temp_rec.s.s_values[a*3]);
+	VSUB2(v_temp, arb->pt[c], arb->pt[a]);
 	len[1] = MAGNITUDE(v_temp);
-	VSUB2(v_temp, &temp_rec.s.s_values[c*3], &temp_rec.s.s_values[b*3]);
+	VSUB2(v_temp, arb->pt[c], arb->pt[b]);
 	len[2] = MAGNITUDE(v_temp);
 	temp = 0.5 * (len[0] + len[1] + len[2]);
 	areabase = sqrt(temp * (temp-len[0]) * (temp-len[1]) * (temp-len[2]));
