@@ -82,6 +82,7 @@ usepen()
 	static vect_t tr_temp;		/* temp translation vector */
 	static vect_t tabvec;		/* tablet vector */
 	static vect_t temp;
+	int isave;
 
 	/*
 	 * If menu is active, and pen press is in menu area,
@@ -131,9 +132,11 @@ usepen()
 		/*
 		 * Convert DT position to path element select
 		 */
+		isave = ipathpos;
 		ipathpos = illump->s_last - (
 			(dm_values.dv_ypen+2048L) * (illump->s_last+1) / 4096);
-		dmaflag++;
+		if( ipathpos != isave )
+			dmaflag++;
 		return;
 
 	} else switch( state )  {
@@ -383,6 +386,9 @@ static void
 illuminate( y )  {
 	register int count;
 	register struct solid *sp;
+	register struct solid *saveillump;
+
+	saveillump = illump;
 
 	/*
 	 * Divide the tablet into 'ndrawn' VERTICAL zones, and use the
@@ -400,7 +406,8 @@ illuminate( y )  {
 			}  else
 				sp->s_iflag = DOWN;
 	}
-	dmaflag++;
+	if( saveillump != illump )
+		dmaflag++;
 }
 
 /*
