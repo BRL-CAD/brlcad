@@ -1017,7 +1017,7 @@ double			norm_tol;
 		nmg_face_g( fu[i], pa.pa_face[i].peqn );
 #else
 		/* For the cautious, ensure topology and geometry match */
-		rt_mk_nmg_planeeqn( fu[i] );
+		rt_mk_nmg_planeeqn( fu[i], pa.pa_tol_sq );
 #endif
 	}
 
@@ -1036,9 +1036,15 @@ double			norm_tol;
  *	B is at eu->last, and
  *	C is at eu->next
  *  as a consequence of the way nmg_cmface() makes the face.
+ *
+ *  Returns -
+ *	0	OK
+ *	-1	failure
  */
-rt_mk_nmg_planeeqn( fu )
+int
+rt_mk_nmg_planeeqn( fu, tol_sq )
 struct faceuse	*fu;
+double		tol_sq;
 {
 	struct edgeuse		*eu, *eu_last, *eu_next;
 	struct loopuse		*lu;
@@ -1067,16 +1073,19 @@ struct faceuse	*fu;
 	NMG_CK_VERTEX_G(b);
 	NMG_CK_VERTEX_G(c);
 
-	if (rt_mk_plane_3pts(plane, a->coord, b->coord, c->coord) < 0 ) {
+	if (rt_mk_plane_3pts(plane, a->coord, b->coord, c->coord, tol_sq) < 0 ) {
 		rt_log("rt_mk_nmg_planeeqn(): rt_mk_plane_3pts failed on (%g,%g,%g) (%g,%g,%g) (%g,%g,%g)\n",
 			V3ARGS( a->coord ),
 			V3ARGS( b->coord ),
 			V3ARGS( c->coord ) );
 	    	HPRINT("plane", plane);
+		return(-1);
 	}
-	else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
+	if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
 		rt_log("rt_mk_nmg_planeeqn():  Bad plane equation from rt_mk_plane_3pts\n" );
 	    	HPRINT("plane", plane);
+		return(-1);
 	}
-	else nmg_face_g( fu, plane);
+	nmg_face_g( fu, plane);
+	return(0);
 }
