@@ -102,7 +102,7 @@ static int dgo_build_tops();
 static void dgo_rt_write();
 static void dgo_rt_set_eye_model();
 
-static void dgo_notify();
+void dgo_notify();
 static void dgo_print_schain();
 
 struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
@@ -2913,7 +2913,7 @@ dgo_run_rt(dgop, vop)
 	return 0;
 }
 
-static void
+void
 dgo_notify(dgop, interp)
      struct dg_obj *dgop;
      Tcl_Interp *interp;
