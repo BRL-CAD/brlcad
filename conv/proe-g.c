@@ -220,7 +220,8 @@ char line[MAX_LINE_LEN];
 			brlcad_name = Get_unique_name( name , obj );
 			if( debug )
 				rt_log( "\tmake assembly ( %s)\n" , brlcad_name );
-			mk_lcomb( stdout , brlcad_name , &head , 0 , (char *)NULL , (char *)NULL , (char *)NULL , 0 );
+			mk_lcomb( stdout , brlcad_name , &head , 0 ,
+			(char *)NULL , (char *)NULL , (unsigned char *)NULL , 0 );
 			break;
 		}
 		else if( !strncmp( &line1[start] , "member" , 6 ) )
