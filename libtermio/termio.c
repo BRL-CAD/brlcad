@@ -1,18 +1,15 @@
 /*LINTLIBRARY*/
 /*
-	SCCS id:	@(#) termio.c	1.5
-	Last edit: 	6/18/86 at 09:57:54
-	Retrieved: 	8/13/86 at 03:18:11
-	SCCS archive:	/m/cad/fb_utils/RCS/s.termio.c
-
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
-			Maryland 21005
-			(301)278-6647 or AV-283-6647
- */
-static
-char	sccsTag[] = "@(#) termio.c	1.5	last edit 6/18/86 at 09:57:54";
+			Maryland 21005-5066
+			(301)278-6647 or AV-298-6647
+*/
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 #include <fcntl.h>
 
@@ -41,8 +38,9 @@ static struct sgttyb	save_tio[_NFILE], curr_tio[_NFILE];
 #endif BSD
 
 static int		fileStatus[_NFILE];
-int			reset_Fil_Stat(), read_Key_Brd();
+int			reset_Fil_Stat();
 void			save_Tty(), reset_Tty();
+void			set_Cbreak(), clr_Cbreak();
 void			set_Raw(), clr_Raw();
 void			set_Echo(), clr_Echo();
 void			set_Tabs(), clr_Tabs();
@@ -51,8 +49,48 @@ void			clr_CRNL();
 void			prnt_Tio();
 static void		copy_Tio();
 
+/*	c l r _ C b r e a k ( )
+	Clear CBREAK mode, for file descriptor 'fd'.
+ */
+void
+clr_Cbreak( fd )
+int	fd;
+	{
+#ifdef BSD
+	curr_tio[fd].sg_flags &= ~CBREAK;	/* CBREAK mode OFF.	*/
+#else
+	curr_tio[fd].c_lflag |= ICANON;		/* Canonical input ON.	*/
+#ifndef CRAY2
+	curr_tio[fd].c_cc[VEOF] = 4;		/* defaults!		*/
+	curr_tio[fd].c_cc[VEOL] = 0;		/*   best we can do.... */
+#endif
+#endif
+	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
+	return;
+	}
+
+/*	s e t _ C b r e a k ( )
+	Set CBREAK mode, 'fd'.
+ */
+void
+set_Cbreak( fd )
+int	fd;
+	{
+#ifdef BSD
+	curr_tio[fd].sg_flags |= CBREAK;	/* CBREAK mode ON.	*/
+#else
+	curr_tio[fd].c_lflag &= ~ICANON;	/* Canonical input OFF. */
+#ifndef CRAY2
+	curr_tio[fd].c_cc[VMIN] = 1;
+	curr_tio[fd].c_cc[VTIME] = 0;
+#endif
+#endif
+	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
+	return;
+	}
+
 /*	c l r _ R a w ( )
-	Set cooked mode, for file descriptor 'fd'.
+	Set cooked mode, 'fd'.
  */
 void
 clr_Raw( fd )
@@ -61,7 +99,7 @@ int	fd;
 #ifdef BSD
 	curr_tio[fd].sg_flags &= ~RAW;		/* Raw mode OFF.	*/
 #else
-	curr_tio[fd].c_lflag |= ICANON;		/* Raw mode OFF.	*/
+	curr_tio[fd].c_lflag |= ICANON;		/* Canonical input ON.	*/
 #ifndef CRAY2
 	curr_tio[fd].c_lflag |= ISIG;		/* Signals ON.		*/
 	curr_tio[fd].c_cc[VEOF] = 4;		/* defaults!		*/
@@ -82,7 +120,7 @@ int	fd;
 #ifdef BSD
 	curr_tio[fd].sg_flags |= RAW;		/* Raw mode ON.		*/
 #else
-	curr_tio[fd].c_lflag &= ~ICANON;	/* Raw mode ON.		*/
+	curr_tio[fd].c_lflag &= ~ICANON;	/* Canonical input OFF. */
 #ifndef CRAY2
 	curr_tio[fd].c_lflag &= ~ISIG;		/* Signals OFF.		*/
 	curr_tio[fd].c_cc[VMIN] = 1;
@@ -261,14 +299,6 @@ set_O_NDELAY( fd )
 int	fd;
 	{
 	return	fcntl( fd, F_SETFL, O_NDELAY );
-	}
-
-/*	r e a d _ K e y _ B r d ( )					*/
-read_Key_Brd()
-	{
-	int	c;
-
-	return	read( 0, (char *) &c, 1 ) == 0 ? 0 : c;
 	}
 
 /*	c o p y _ T i o ( )						*/
