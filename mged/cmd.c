@@ -506,6 +506,8 @@ static struct funtab funtab[] = {
 	f_savekey,2,MAXARGS,FALSE,
 "saveview", "file [args]", "save view in file for RT",
 	f_saveview,2,MAXARGS,FALSE,
+"showmats", "path", "show xform matrices along path",
+	f_showmats,2,2,FALSE,
 "oscale", "factor", "scale object by factor",
 	f_sc_obj,2,2,FALSE,
 "sed", "<path>", "solid-edit named solid",
