@@ -217,7 +217,7 @@ static struct funtab {
 	f_dup, 1, 27,
 "cat", "file {prefix}", "cat 'file' onto end of present data file",
 	f_cat, 1, 27,
-"prefix", "new_prefix object(s)", "prefix each occurence of object name(s)",
+"prefix", "new_prefix object(s)", "prefix each occurrence of object name(s)",
 	f_prefix, 3, MAXARGS,
 "keep", "keep_file object(s)", "save named objects in specified file",
 	f_keep, 3, MAXARGS,
