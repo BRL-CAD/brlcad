@@ -488,15 +488,18 @@ rt_comb_import5(
 
 			if( mi < 0 )  {
 				/* Signal identity matrix */
-				tp->tr_l.tl_mat = NULL;
+				tp->tr_l.tl_mat = bn_mat_dup( mat );
 			} else {
+				mat_t diskmat;
+
 				/* Unpack indicated matrix mi */
 				BU_ASSERT_LONG( mi, <, nmat );
 				tp->tr_l.tl_mat = (matp_t)bu_malloc(
 					sizeof(mat_t), "v5comb mat");
-				ntohd( (unsigned char *)tp->tr_l.tl_mat,
+				ntohd( (unsigned char *)diskmat,
 					&matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
 					ELEMENTS_PER_MAT);
+				bn_mat_mul( tp->tr_l.tl_mat, mat, diskmat );
 			}
 
 			if( comb->tree == TREE_NULL )  {
