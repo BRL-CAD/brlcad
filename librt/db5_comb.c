@@ -117,7 +117,7 @@ rt_comb_v5_serialize_leaves(
 	case OP_DB_LEAF:
 		/*
 		 *  Encoding of the leaf:
-		 *	A null-terminate name string,
+		 *	A null-terminated name string, and
 		 *	the matrix subscript.  -1 == identity.
 		 */
 		n = strlen(tp->tr_l.tl_name) + 1;
@@ -240,19 +240,97 @@ bu_hexdump_external( stderr, ep, "v5comb" );
 	BU_ASSERT_PTR( matp, ==, cp + nmat * (16 * SIZEOF_NETWORK_DOUBLE) );
 	BU_ASSERT_PTR( leafp, <=, ((unsigned char *)ep->ext_buf) + ep->ext_nbytes );
 
+	/* How to encode all the other stuff as attributes??? */
+
 	if( full_expression == 0 )  return 0;	/* OK */
 
 	return -1;	/* FAIL */
 }
 
 /*
+ *			R T _ C O M B _ I M P O R T 5
  */
 int
 rt_comb_import5(ip, ep, mat, dbip)
 struct rt_db_internal	*ip;
-CONST struct bu_external *ep;
-CONST mat_t		mat;
-CONST struct db_i	*dbip;
+const struct bu_external *ep;
+const mat_t		mat;
+const struct db_i	*dbip;
 {
+	struct rt_comb_internal	*comb;
+	unsigned char	*cp;
+	int		wid;
+	long		nmat, nleaf, rpn_len;
+	unsigned char	*matp;
+	unsigned char	*leafp;
+
+	BU_CK_EXTERNAL(ep);
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_COMBINATION;
+	ip->idb_meth = &rt_functab[ID_COMBINATION];
+	BU_GETSTRUCT( comb, rt_comb_internal );
+	ip->idb_ptr = (genptr_t)comb;
+	comb->magic = RT_COMB_MAGIC;
+	bu_vls_init( &comb->shader );
+	bu_vls_init( &comb->material );
+	comb->temperature = -1;
+
+	cp = ep->ext_buf;
+	wid = *cp++;
+	cp += db5_decode_length( &nmat, cp, wid );
+	cp += db5_decode_length( &nleaf, cp, wid );
+	cp += db5_decode_length( &rpn_len, cp, wid );
+	matp = cp;
+	leafp = cp + nmat * (16 * SIZEOF_NETWORK_DOUBLE);
+bu_log("nmat=%d, nleaf=%d, rpn_len=%d\n", nmat, nleaf, rpn_len);
+
+	cp = leafp;
+	if( rpn_len == 0 )  {
+		int	i;
+		for( i = nleaf-1; i >= 0; i-- )  {
+			union tree	*tp;
+			int		mi;
+
+			BU_GETUNION( tp, tree );
+			tp->tr_l.magic = RT_TREE_MAGIC;
+			tp->tr_l.tl_op = OP_DB_LEAF;
+			tp->tr_l.tl_name = bu_strdup( cp );
+			cp += strlen(cp) + 1;
+
+			/* Get matrix index */
+			mi = bu_glong( cp );
+			cp += 4;
+
+			if( mi < 0 )  {
+				/* Signal identity matrix */
+				tp->tr_l.tl_mat = NULL;
+			} else {
+				/* Unpack indicated matrix mi */
+				BU_ASSERT_LONG( mi, <, nmat );
+				tp->tr_l.tl_mat = (matp_t)bu_malloc(
+					sizeof(mat_t), "v5comb mat");
+				ntohd( (unsigned char *)tp->tr_l.tl_mat,
+					&matp[mi*16*SIZEOF_NETWORK_DOUBLE],
+					16);
+			}
+
+			if( comb->tree == TREE_NULL )  {
+				comb->tree = tp;
+			} else {
+				union tree	*unionp;
+				BU_GETUNION( unionp, tree );
+				unionp->tr_b.magic = RT_TREE_MAGIC;
+				unionp->tr_b.tb_op = OP_UNION;
+				unionp->tr_b.tb_left = comb->tree;
+				unionp->tr_b.tb_right = tp;
+				comb->tree = unionp;
+			}
+		}
+		db_ck_tree( comb->tree );
+		rt_pr_tree( comb->tree, 1 );
+		return 0;
+	}
+
 	return -1;
 }
