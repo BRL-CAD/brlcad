@@ -61,8 +61,8 @@ com_table	ComTab[] =
 			"read new state for NIRT from the state file" },
 		    { "print", print_item, "query an output item",
 			"item" },
-		    { "libdebug", cm_libdebug, "set librt debug flags",
-		    	"hexadecimal flag value" },
+		    { "libdebug", cm_libdebug,
+			"set/query librt debug flags", "hex_flag_value" },
 		    { "!", sh_esc, "escape to the shell" },
 		    { "q", quit, "quit" },
 		    { "?", show_menu, "display this help menu" },
@@ -228,7 +228,7 @@ Options:\n\
 ";
 #endif
 char	usage[] = "\
-Usage: 'nirt [-u n] model.g objects...'\n\
+Usage: 'nirt [-u n] [-x f] model.g objects...'\n\
 ";
 
 void printusage() 
