@@ -154,9 +154,12 @@ long			nrays;
 struct resource		*resources;	/* resources[ncpus] */
 {
 	struct rt_many_internal	rmi;
+	int	i;
 
 	RT_CK_APPLICATION(proto_ap);
-	RT_CK_RESOURCE( resources );	/* check first one */
+	for( i=0; i < ncpus; i++ )  {
+		RT_CK_RESOURCE( &resources[i] );
+	}
 
 	rmi.magic = RT_MANY_INTERNAL_MAGIC;
 	rmi.stop_worker = 0;
