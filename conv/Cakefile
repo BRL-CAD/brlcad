@@ -8,7 +8,7 @@
 #define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g \
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
-			asc-nmg nmg-rib
+			asc-nmg nmg-rib g-vrml g-acad
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -19,8 +19,14 @@
 
 /* Explicit composition of each product */
 
+g-acad: g-acad.o LIBRT_DEP LIBWDB_DEP
+	CC LDFLAGS g-acad.o LIBWDB LIBRT LIBRT_LIBES LIBES -o g-acad
+
+test: test.o LIBRT_DEP
+	CC LDFLAGS test.o LIBRT LIBRT_LIBES LIBES -o test
+
 proe-g: proe-g.o LIBRT_DEP LIBWDB_DEP
-	CC LDFLAGS proe-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o proe-g
+	CC LDFLAGS proe-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -lgen -o proe-g
 
 fast4-g: fast4-g.o LIBRT_DEP LIBWDB_DEP
 	CC LDFLAGS fast4-g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o fast4-g
@@ -75,5 +81,8 @@ asc-nmg: asc-nmg.o LIBRT_DEP LIBWDB_DEP
 
 nmg-rib: nmg-rib.o LIBRT_DEP
 	CC LDFLAGS nmg-rib.o LIBWDB LIBRT LIBRT_LIBES LIBES -o nmg-rib
+
+g-vrml: g-vrml.o LIBRT_DEP	
+	CC LDFLAGS g-vrml.o LIBWDB LIBRT LIBRT_LIBES LIBES -o g-vrml
 
 #include "../Cakefile.rules"
