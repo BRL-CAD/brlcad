@@ -1276,10 +1276,17 @@ before the next command will be processed.
 display list so that they will appear on the <I>MGED</I> display.
 The <a href="#e">e</a> command
 is a synonym for <I>draw</I>.
-The <I>-C</I> option provides the user a way to
+
+<ul>
+<li> The <I>-C</I> option provides the user a way to
 specify a color that overrides all other color
 specifications including combination colors and
 region id based colors.
+<li>The <I>-r</I> option specifies that all objects are to be drawn in red,
+which can be useful when examining objects colored black.
+<li>The <I>-s</I> option specifies that subtracted and intersected objects
+should be drawn with solid lines rather than dot-dash lines.
+</ul>
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -1318,7 +1325,8 @@ to insure that there are no name clashes.
 
 <DD> The ``e'' command adds the objects in the argument list to the
 display list so that they will appear on the <I>MGED</I> display. This
-is a synonym for the <a href="#draw">draw</a> command.
+is a synonym for the <a href="#draw">draw</a> command,
+see that entry for a full list of options.
 The <I>-C</I> option provides the user a way to
 specify a color that overrides all other color
 specifications including combination colors and
@@ -1557,7 +1565,10 @@ specified in the <I>objects</I>. The result is then displayed in the <I>MGED</I>
 display according to the specified options:
 
 <ul>
-<li><I>d</I> -- do not perform Boolean operations or any checking</li>
+<li><I>d</I> -- do not perform Boolean operations or any checking,
+	simply convert solids to polygons and draw them.
+	Useful for visualizing BoT and polysolid primitives.</li>
+<li><I>f</I> -- fast path for quickly visualizing polysolid primitives.</li>
 <li><I>w</I> -- draw wireframes (rather than polygons)</li>
 <li><I>n</I> -- draw surface normals as little 'hairs'</li>
 <li><I>s</I> -- draw solid lines only (no dot&#173dash for subtract and intersect)</li>
@@ -1565,7 +1576,11 @@ display according to the specified options:
 <li><I>v</I> -- shade using per&#173vertex normals, when present</li>
 <li><I>u</I> -- draw <a href="brlcad_solids.html#NMG">NMG</a> edgeuses (for debugging)</li>
 <li><I>S</I> -- draw tNURBs with trimming curves only, no surfaces</li>
-<li><I>T</I> -- do not triangulate (may produce unexpected results if not used with the <I>w</I> option</li>
+<li><I>T</I> -- do not triangulate after evaluating boolean (may produce unexpected results if not used with the <I>w</I> option</li>
+<li><I>P</I># -- use # processors in parallel.  Default=1</li>
+<li><I>r</I> -- draw all objects in red.  Useful for examining objects colored black.</li>
+<li><I>C</I>#/#/# -- draw all objects in in the specified rgb color</li>
+
 </ul>
 
 	<DL>
