@@ -36,7 +36,9 @@ static char RCSvol[] = "@(#)$Header$ (BRL)";
 struct vol_specific {
 	char		vol_file[128];
 	unsigned char	*vol_map;
-	int		vol_dim[3];
+	int		vol_xdim;	/* X dimension */
+	int		vol_ydim;	/* Y dimension */
+	int		vol_zdim;	/* Z dimension */
 	vect_t		vol_xnorm;	/* local +X norm in model coords */
 	vect_t		vol_ynorm;
 	vect_t		vol_znorm;
@@ -56,12 +58,12 @@ struct structparse vol_parse[] = {
 #else
 	"%s",	"file",	offsetofarray(struct vol_specific, vol_file),	FUNC_NULL,
 #endif
-	"%d",	"w",		VOL_O(vol_dim[0]),	FUNC_NULL,
-	"%d",	"n",		VOL_O(vol_dim[1]),	FUNC_NULL,
-	"%d",	"d",		VOL_O(vol_dim[2]),	FUNC_NULL,
+	"%d",	"w",		VOL_O(vol_xdim),	FUNC_NULL,
+	"%d",	"n",		VOL_O(vol_ydim),	FUNC_NULL,
+	"%d",	"d",		VOL_O(vol_zdim),	FUNC_NULL,
 	"%d",	"lo",		VOL_O(vol_lo),		FUNC_NULL,
 	"%d",	"hi",		VOL_O(vol_hi),		FUNC_NULL,
-	"%V",	"size",		VOL_O(vol_cellsize[0]),	FUNC_NULL,
+	"%V",	"size",	offsetofarray(struct vol_specific, vol_cellsize), FUNC_NULL,
 	/* XXX might have option for vol_origin */
 	(char *)0,(char *)0,	0,			FUNC_NULL
 };
@@ -91,8 +93,8 @@ struct vol_specific	*vol_import();
 #define	VOL_YWIDEN	2
 #define	VOL_ZWIDEN	2
 #define VOL(xx,yy,zz)	volp->vol_map[ \
-	(((zz)+VOL_ZWIDEN) * (volp->vol_dim[Y] + VOL_YWIDEN*2)+ \
-	 ((yy)+VOL_YWIDEN))* (volp->vol_dim[X] + VOL_XWIDEN*2)+ \
+	(((zz)+VOL_ZWIDEN) * (volp->vol_ydim + VOL_YWIDEN*2)+ \
+	 ((yy)+VOL_YWIDEN))* (volp->vol_xdim + VOL_XWIDEN*2)+ \
 	  (xx)+VOL_XWIDEN ]
 
 #define OK(v)	( (v) >= volp->vol_lo && (v) <= volp->vol_hi )
@@ -178,18 +180,18 @@ if(rt_g.debug&DEBUG_VOL)rt_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r
 	igrid[Z] = (P[Z] - volp->vol_origin[Z]) / volp->vol_cellsize[Z];
 	if( igrid[X] < 0 )  {
 		igrid[X] = 0;
-	} else if( igrid[X] >= volp->vol_dim[X] ) {
-		igrid[X] = volp->vol_dim[X]-1;
+	} else if( igrid[X] >= volp->vol_xdim ) {
+		igrid[X] = volp->vol_xdim-1;
 	}
 	if( igrid[Y] < 0 )  {
 		igrid[Y] = 0;
-	} else if( igrid[Y] >= volp->vol_dim[Y] ) {
-		igrid[Y] = volp->vol_dim[Y]-1;
+	} else if( igrid[Y] >= volp->vol_ydim ) {
+		igrid[Y] = volp->vol_ydim-1;
 	}
 	if( igrid[Z] < 0 )  {
 		igrid[Z] = 0;
-	} else if( igrid[Z] >= volp->vol_dim[Z] ) {
-		igrid[Z] = volp->vol_dim[Z]-1;
+	} else if( igrid[Z] >= volp->vol_zdim ) {
+		igrid[Z] = volp->vol_zdim-1;
 	}
 if(rt_g.debug&DEBUG_VOL)rt_log("igrid=(%d, %d, %d)\n", igrid[X], igrid[Y], igrid[Z]);
 
@@ -430,8 +432,8 @@ union record	*rp;
 	rt_free( str, "ss_str" );
 
 	/* Check for reasonable values */
-	if( volp->vol_file[0] == '\0' || volp->vol_dim[X] < 1 ||
-	    volp->vol_dim[Y] < 1 || volp->vol_dim[Z] < 1 ||
+	if( volp->vol_file[0] == '\0' || volp->vol_xdim < 1 ||
+	    volp->vol_ydim < 1 || volp->vol_zdim < 1 ||
 	    volp->vol_lo < 0 || volp->vol_hi > 255 )  {
 	    	rt_log("Unreasonable VOL parameters\n");
 	    	rt_structprint("unreasonable", vol_parse, (char *)volp );
@@ -440,9 +442,9 @@ union record	*rp;
 	}
 
 	/* Get bit map from .bw(5) file */
-	nbytes = (volp->vol_dim[X]+VOL_XWIDEN*2)*
-		(volp->vol_dim[Y]+VOL_YWIDEN*2)*
-		(volp->vol_dim[Z]+VOL_ZWIDEN*2);
+	nbytes = (volp->vol_xdim+VOL_XWIDEN*2)*
+		(volp->vol_ydim+VOL_YWIDEN*2)*
+		(volp->vol_zdim+VOL_ZWIDEN*2);
 	volp->vol_map = (unsigned char *)rt_malloc( nbytes, "vol_import bitmap" );
 #ifdef SYSV
 	memset( volp->vol_map, 0, nbytes );
@@ -458,9 +460,9 @@ err:
 	}
 
 	/* Because of in-memory padding, read each scanline separately */
-	for( z=0; z < volp->vol_dim[Z]; z++ )  {
-		for( y=0; y < volp->vol_dim[Y]; y++ )  {
-			if( fread( &VOL(0, y, z), volp->vol_dim[X], 1, fp ) < 1 )  {
+	for( z=0; z < volp->vol_zdim; z++ )  {
+		for( y=0; y < volp->vol_ydim; y++ )  {
+			if( fread( &VOL(0, y, z), volp->vol_xdim, 1, fp ) < 1 )  {
 				rt_log("Unable to read whole VOL\n");
 				fclose(fp);
 				goto err;
@@ -512,7 +514,8 @@ struct rt_i	*rtip;
 
 	/* Find bounding RPP of rotated local RPP */
 	VSETALL( small, 0 );
-	VMOVE( volp->vol_large, volp->vol_dim );	/* type conversion */
+	VSET( volp->vol_large,
+		volp->vol_xdim, volp->vol_ydim, volp->vol_zdim );/* type conversion */
 	rt_rot_bound_rpp( stp->st_min, stp->st_max, stp->st_pathmat,
 		small, volp->vol_large );
 
@@ -540,8 +543,8 @@ register struct soltab	*stp;
 
 	rt_log("vol file = %s\n", volp->vol_file );
 	rt_log("dimensions = (%d, %d, %d)\n",
-		volp->vol_dim[X], volp->vol_dim[Y],
-		volp->vol_dim[Z] );
+		volp->vol_xdim, volp->vol_ydim,
+		volp->vol_zdim );
 	VPRINT("model cellsize", volp->vol_cellsize);
 	VPRINT("model grid origin", volp->vol_origin);
 }
@@ -674,16 +677,16 @@ struct directory *dp;
 	 *  Scan across in Z & X.  For each X position, scan down Y,
 	 *  looking for the longest run of edge.
 	 */
-	for( z=0; z<volp->vol_dim[Z]; z++ )  {
-		for( x=0; x<volp->vol_dim[X]; x++ )  {
-			for( y=0; y<volp->vol_dim[Y]; y++ )  {
+	for( z=0; z<volp->vol_zdim; z++ )  {
+		for( x=0; x<volp->vol_xdim; x++ )  {
+			for( y=0; y<volp->vol_ydim; y++ )  {
 				v1 = VOL(x,y,z);
 				v2 = VOL(x+1,y,z);
 				if( OK(v1) == OK(v2) )  continue;
 				/* Note start point, continue scan */
 				VSET( a, x+0.5, y-0.5, z-0.5 );
 				VSET( b, x+0.5, y-0.5, z+0.5 );
-				for( ++y; y<volp->vol_dim[Y]; y++ )  {
+				for( ++y; y<volp->vol_ydim; y++ )  {
 					v1 = VOL(x,y,z);
 					v2 = VOL(x+1,y,z);
 					if( OK(v1) == OK(v2) )
@@ -700,16 +703,16 @@ struct directory *dp;
 	/*
 	 *  Scan up in Z & Y.  For each Y position, scan across X
 	 */
-	for( z=0; z<volp->vol_dim[Z]; z++ )  {
-		for( y=0; y<volp->vol_dim[Y]; y++ )  {
-			for( x=0; x<volp->vol_dim[X]; x++ )  {
+	for( z=0; z<volp->vol_zdim; z++ )  {
+		for( y=0; y<volp->vol_ydim; y++ )  {
+			for( x=0; x<volp->vol_xdim; x++ )  {
 				v1 = VOL(x,y,z);
 				v2 = VOL(x,y+1,z);
 				if( OK(v1) == OK(v2) )  continue;
 				/* Note start point, continue scan */
 				VSET( a, x-0.5, y+0.5, z-0.5 );
 				VSET( b, x-0.5, y+0.5, z+0.5 );
-				for( ++x; x<volp->vol_dim[X]; x++ )  {
+				for( ++x; x<volp->vol_xdim; x++ )  {
 					v1 = VOL(x,y,z);
 					v2 = VOL(x,y+1,z);
 					if( OK(v1) == OK(v2) )
@@ -726,16 +729,16 @@ struct directory *dp;
 	/*
 	 * Scan across in Y & X.  For each X position pair edge, scan up Z.
 	 */
-	for( y=0; y<volp->vol_dim[Y]; y++ )  {
-		for( x=0; x<volp->vol_dim[X]; x++ )  {
-			for( z=0; z<volp->vol_dim[Z]; z++ )  {
+	for( y=0; y<volp->vol_ydim; y++ )  {
+		for( x=0; x<volp->vol_xdim; x++ )  {
+			for( z=0; z<volp->vol_zdim; z++ )  {
 				v1 = VOL(x,y,z);
 				v2 = VOL(x+1,y,z);
 				if( OK(v1) == OK(v2) )  continue;
 				/* Note start point, continue scan */
 				VSET( a, (x+0.5), (y-0.5), (z-0.5) );
 				VSET( b, (x+0.5), (y+0.5), (z-0.5) );
-				for( ++z; z<volp->vol_dim[Z]; z++ )  {
+				for( ++z; z<volp->vol_zdim; z++ )  {
 					v1 = VOL(x,y,z);
 					v2 = VOL(x+1,y,z);
 					if( OK(v1) == OK(v2) )
