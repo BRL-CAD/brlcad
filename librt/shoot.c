@@ -298,7 +298,8 @@ again:				t0 = ssp->tv[out_axis];
 
 			/* Zip through empty cells. */
 			if( cutp->cut_type == CUT_BOXNODE &&
-			    cutp->bn.bn_len <= 0 ) {
+			    cutp->bn.bn_len <= 0 &&
+			    cutp->bn.bn_piecelen <= 0 ) {
 				++ssp->resp->re_nempty_cells;
 				goto again;
 			}
@@ -595,7 +596,8 @@ done:			ssp->lastcut = cutp;
 	 */
 escaped_from_model:
 	curcut = &ssp->ap->a_rt_i->rti_inf_box;
-	if( curcut->bn.bn_len <= 0 )  curcut = CUTTER_NULL;
+	if( curcut->bn.bn_len <= 0 && curcut->bn.bn_piecelen <= 0 )
+		curcut = CUTTER_NULL;
 	ssp->curcut = curcut;
 	return curcut;
 }
@@ -899,7 +901,7 @@ start_cell:
 			rt_pr_cut( cutp, 0 );
 		}
 
-		if( cutp->bn.bn_len <= 0 )  {
+		if( cutp->bn.bn_len <= 0 && cutp->bn.bn_piecelen <= 0 )  {
 			/* Push ray onwards to next box */
 			ss.box_start = ss.box_end;
 			resp->re_nempty_cells++;
@@ -907,59 +909,57 @@ start_cell:
 		}
 
 		/* Consider all "pieces" of all solids within the box */
-#if 0	/* pieces*/
-  {
-		struct rt_piecelist **plpp;
-		plpp = &(cutp->bn.bn_piecelist[cutp->bn.bn_piecelen-1]);
-		for( ; plpp >= cutp->bn.bn_piecelist; plpp-- )  {
-			register struct rt_piecelist *plp = *plpp;
-			struct rt_piecestate *psp;
-			struct soltab	*stp;
-			int piecenum;
+		if( cutp->bn.bn_piecelen > 0 )  {
+			register struct rt_piecelist *plp;
+bu_log("rt_shootray(): bn_piecelen=%d\n", cutp->bn.bn_piecelen );
+			plp = &(cutp->bn.bn_piecelist[cutp->bn.bn_piecelen-1]);
+			for( ; plp >= cutp->bn.bn_piecelist; plp-- )  {
+				struct rt_piecestate *psp;
+				struct soltab	*stp;
+				int piecenum;
 
-			RT_CK_PIECELIST(plp);
+				RT_CK_PIECELIST(plp);
 
-			/* Consider all pieces of this one solid in this cell */
-			stp = plp->stp;
-			RT_CK_SOLTAB(stp);
+				/* Consider all pieces of this one solid in this cell */
+				stp = plp->stp;
+				RT_CK_SOLTAB(stp);
 
-			psp = &(resp->re_pieces[stp->st_piecestate_num]);
-			RT_CK_PIECESTATE(psp);
-			if( psp->ray_seqno != resp->re_nshootray )  {
-				/* state is from an earlier ray, scrub */
-				BU_BITV_ZEROALL(psp->shot);
-				psp->ray_seqno = resp->re_nshootray;
-				psp->oddhit.hit_dist = INFINITY;
-			}
-
-			/* Allow solid to shoot all pieces at once */
-			BU_LIST_INIT( &(new_segs.l) );
-
-			if( rt_functab[stp->st_id].ft_piece_shot(
-			    psp, plp,
-			    &ss.newray, ap, &new_segs, resp ) <= 0 )  {
-			    	/* No hits at all */
-				resp->re_piece_shot_miss++;
-				continue;	/* MISS */
-			}
-
-			/* Add seg chain to list awaiting rt_boolweave() */
-			{
-				register struct seg *s2;
-				while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
-					BU_LIST_DEQUEUE( &(s2->l) );
-					/* Restore to original distance */
-					s2->seg_in.hit_dist += ss.dist_corr;
-					s2->seg_out.hit_dist += ss.dist_corr;
-					s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = &ap->a_ray;
-					BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
+				psp = &(resp->re_pieces[stp->st_piecestate_num]);
+				RT_CK_PIECESTATE(psp);
+				if( psp->ray_seqno != resp->re_nshootray )  {
+					/* state is from an earlier ray, scrub */
+					BU_BITV_ZEROALL(psp->shot);
+					psp->ray_seqno = resp->re_nshootray;
+					psp->oddhit.hit_dist = INFINITY;
 				}
+
+				/* Allow solid to shoot all pieces at once */
+				BU_LIST_INIT( &(new_segs.l) );
+
+				if( rt_functab[stp->st_id].ft_piece_shot(
+				    psp, plp,
+				    &ss.newray, ap, &new_segs, resp ) <= 0 )  {
+				    	/* No hits at all */
+					resp->re_piece_shot_miss++;
+					continue;	/* MISS */
+				}
+
+				/* Add seg chain to list awaiting rt_boolweave() */
+				{
+					register struct seg *s2;
+					while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
+						BU_LIST_DEQUEUE( &(s2->l) );
+						/* Restore to original distance */
+						s2->seg_in.hit_dist += ss.dist_corr;
+						s2->seg_out.hit_dist += ss.dist_corr;
+						s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = &ap->a_ray;
+						BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
+					}
+				}
+				/* There may still be an odd hit left over */
+				resp->re_piece_shot_hit++;
 			}
-			/* There may still be an odd hit left over */
-			resp->re_piece_shot_hit++;
 		}
-  }
-#endif /* pieces*/
 
 		/* Consider all solids within the box */
 		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
@@ -1061,6 +1061,9 @@ start_cell:
 weave:
 	if( rt_g.debug&DEBUG_ADVANCE )
 		bu_log( "rt_shootray: ray has left known space\n" );
+
+/* XXX Need to rescue any dangling hits from solid pieces */
+
 	
 	if( BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 		rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
