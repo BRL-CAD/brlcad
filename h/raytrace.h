@@ -545,6 +545,7 @@ struct region  {
 	genptr_t	reg_udata;	/* User appl. data for material */
 	int		reg_transmit;	/* flag:  material transmits light */
 	int		reg_instnum;	/* instance number, from d_uses */
+	int		reg_all_unions;	/* 1=boolean tree is all unions */
 };
 #define REGION_NULL	((struct region *)0)
 #define RT_REGION_MAGIC	0xdffb8001
