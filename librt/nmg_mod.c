@@ -1908,6 +1908,12 @@ struct vertexuse *vu1, *vu2;
 	if (eu2->up.lu_p != oldlu) {
 		rt_bomb("nmg_cut_loop() vertices not decendants of same loop\n");
 	}
+
+	if( vu1->v_p == vu2->v_p )  {
+		/* The loops touch, use a different routine */
+		return nmg_split_lu_at_vu( oldlu, vu1 );
+	}
+
 	NMG_CK_FACEUSE(oldlu->up.fu_p);
 	m = oldlu->up.fu_p->s_p->r_p->m_p;
 	NMG_CK_MODEL(m);
@@ -2039,20 +2045,13 @@ struct vertexuse	*split_vu;
 	split_v = split_vu->v_p;
 	NMG_CK_VERTEX(split_v);
 
-	/*
-	 *  The vertexuse will appear exactly once in the loop, so
-	 *  find the edgeuse which has the indicated vertexuse.
-	 */
-	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-		return (struct loopuse *)0;	/* FAIL */
+	eu = split_vu->up.eu_p;
+	NMG_CK_EDGEUSE(eu);
 
-	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-		vu = eu->vu_p;
-		NMG_CK_VERTEXUSE(vu);
-		if( vu == split_vu )  goto begin;
+	if( eu->up.lu_p != lu )  {
+		/* Could not find indicated vertex */
+		return (struct loopuse *)0;		/* FAIL */
 	}
-	/* Could not find indicated vertex */
-	return (struct loopuse *)0;		/* FAIL */
 
 begin:
 	/* Make a new loop in the same face */
