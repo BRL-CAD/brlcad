@@ -441,7 +441,7 @@ char	**argv;
 	}
 	db_free_external( &external );
 
-	tgc_ip = internal.idb_ptr;
+	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 
 	/* translate to end of "original" cylinder */
 	VADD2( tgc_ip->v , tgc_ip->v , tgc_ip->h );
