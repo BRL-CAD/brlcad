@@ -25,6 +25,8 @@ extern int rfft_adds, rfft_mults;
 
 #include "externs.h"
 
+#include "./fft.h"
+
 static char usage[] = "\
 Usage: fftc length > fftlength.c\n";
 

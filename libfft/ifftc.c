@@ -23,6 +23,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "externs.h"
 
+#include "./fft.h"
+
 extern int irfft_adds, irfft_mults;
 
 static char usage[] = "\

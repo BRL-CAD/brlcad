@@ -46,6 +46,7 @@ typedef struct {
 
 void	scramble();
 void	butterflies();
+int	init_sintab( int size );
 
 /*
  * Forward Complex Fourier Transform
