@@ -31,7 +31,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tk.h"
 #include <X11/Xutil.h>
 
-#define USE_DIALS_AND_BUTTONS 0
+#define USE_DIALS_AND_BUTTONS 1
 
 #ifdef HAVE_XOSDEFS_H
 #include <X11/Xfuncproto.h>
