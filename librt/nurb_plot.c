@@ -40,11 +40,21 @@ rt_nurb_closefile()
 }
 
 void rt_nurb_s_plot( srf )
-struct snurb * srf;
+CONST struct snurb * srf;
+{
+	rt_nurb_plot_snurb( stdout, srf );
+}
+
+void
+rt_nurb_plot_snurb( fp, srf )
+FILE	*fp;
+CONST struct snurb	*srf;
 {
 	int i,j;
-	fastf_t * m_ptr = srf->ctl_points;
+	CONST fastf_t * m_ptr = srf->ctl_points;
 	int evp = RT_NURB_EXTRACT_COORDS( srf->pt_type);
+
+	NMG_CK_SNURB(srf);
 
 	for( i = 0; i < srf->s_size[0]; i++)
 	{
@@ -52,10 +62,10 @@ struct snurb * srf;
 		{
 			if( j == 0)
 			{
-				pd_3move( stdout, m_ptr[0], m_ptr[1], m_ptr[2]);
+				pdv_3move( fp, m_ptr );
 			} else
-				pd_3cont( stdout, m_ptr[0], m_ptr[1], m_ptr[2]);
-			
+				pdv_3cont( fp, m_ptr );
+
 			m_ptr += evp;
 		}
 	}
@@ -68,11 +78,29 @@ struct snurb * srf;
 		for( i = 0; i < srf->s_size[0]; i++)
 		{
 			if( i == 0)
-				pd_3move( stdout, m_ptr[0], m_ptr[1], m_ptr[2]);
+				pdv_3move( fp, m_ptr );
 			else
-				pd_3cont( stdout, m_ptr[0], m_ptr[1], m_ptr[2]);
+				pdv_3cont( fp, m_ptr );
 
 			m_ptr += stride;
 		}
+	}
+}
+
+void
+rt_nurb_plot_cnurb( fp, crv )
+FILE	*fp;
+CONST struct cnurb	*crv;
+{
+	register int	i;
+	CONST fastf_t * m_ptr = crv->ctl_points;
+	int evp = RT_NURB_EXTRACT_COORDS( crv->pt_type);
+
+	for( i = 0; i < crv->c_size; i++)  {
+		if( i == 0 )
+			pdv_3move( fp, m_ptr );
+		else
+			pdv_3cont( fp, m_ptr );
+		m_ptr += evp;
 	}
 }
