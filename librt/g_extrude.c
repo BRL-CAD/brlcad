@@ -65,6 +65,7 @@ struct extrude_specific {
 	vect_t unit_h;		/* unit vector in direction of extrusion vector */
 	vect_t u_vec;		/* u vector rotated and projected */
 	vect_t v_vec;		/* v vector rotated and projected */
+	fastf_t	uv_scale;	/* length of original, untransformed u_vec */
 	vect_t rot_axis;	/* axis of rotation for rotation matrix */
 	vect_t perp;		/* vector in pl1_rot plane and normal to rot_axis */
 	plane_t pl1, pl2;	/* plane equations of the top and bottom planes (not rotated) */
@@ -138,6 +139,11 @@ struct rt_i		*rtip;
 
 	VMOVE( extr->unit_h, eip->h );
 	VUNITIZE(extr->unit_h );
+
+	/* the length of the u_vec is used for scaling radii of circular arcs
+	 * the u_vec and the v_vec must have the same length
+	 */
+	extr->uv_scale = MAGNITUDE( eip->u_vec );
 
 	/* build a transformation matrix to rotate extrusion vector to z-axis */
 	VSET( tmp, 0, 0, 1 )
@@ -246,7 +252,7 @@ struct rt_i		*rtip;
 		if( csg->magic != CURVE_CARC_MAGIC )
 			continue;
 
-		if( csg->radius <= 0.0 )
+		if( csg->radius <= 0.0 )	/* full circle */
 		{
 			point_t start;
 			fastf_t radius;
@@ -271,7 +277,7 @@ struct rt_i		*rtip;
 				VMINMAX( stp->st_min, stp->st_max, tmp );
 			}
 		}
-		else
+		else	/* circular arc */
 		{
 			point_t start, end, mid;
 			vect_t s_to_m;
@@ -286,22 +292,23 @@ struct rt_i		*rtip;
 			VCROSS( bisector, extr->pl1, s_to_m );
 			VUNITIZE( bisector );
 			magsq_s2m = MAGSQ( s_to_m );
-			if( magsq_s2m > csg->radius*csg->radius )
+			csg_extr->radius = csg->radius * extr->uv_scale;
+			if( magsq_s2m > csg_extr->radius*csg_extr->radius )
 			{
 				fastf_t max_radius;
 
 				max_radius = sqrt( magsq_s2m );
-				if( NEAR_ZERO( max_radius - csg->radius, RT_LEN_TOL ) )
-					csg->radius = max_radius;
+				if( NEAR_ZERO( max_radius - csg_extr->radius, RT_LEN_TOL ) )
+					csg_extr->radius = max_radius;
 				else
 				{
 					bu_log( "Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!!!\n", 
-							stp->st_dp->d_namep, csg->radius, sqrt(magsq_s2m)  );
+							stp->st_dp->d_namep, csg_extr->radius, sqrt(magsq_s2m)  );
 					bu_log( "Difference is %g\n", max_radius - csg->radius );
 					return( -1 );
 				}
 			}
-			dist = sqrt( csg->radius*csg->radius - magsq_s2m );
+			dist = sqrt( csg_extr->radius*csg_extr->radius - magsq_s2m );
 
 			/* save arc center */
 			if( csg->center_is_left )
@@ -313,7 +320,7 @@ struct rt_i		*rtip;
 			curr_vert++;
 
 			for( j=X ; j<=Z ; j++ ) {
-				tmp_f = csg->radius * ldir[j];
+				tmp_f = csg_extr->radius * ldir[j];
 				VJOIN1( tmp, center, tmp_f, xyz[j] );
 				VMINMAX( stp->st_min, stp->st_max, tmp );
 				VADD2( tmp, tmp, eip->h );
@@ -718,7 +725,9 @@ struct seg		*seghead;
 						/* full circle */
 						radius = -csg->radius;
 
-						/* build the ellipse */
+						/* build the ellipse, this actually builds a circle in 3D,
+						 * but the intersection routine only uses the X and Y components
+						 */
 						VSCALE( ra, extr->rot_axis, radius );
 						VSCALE( rb, extr->perp, radius );
 
