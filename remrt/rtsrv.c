@@ -623,7 +623,7 @@ char *buf;
 	struct line_info	info;
 	register struct rt_i	*rtip = ap.a_rt_i;
 	int	len;
-	char	*cp;
+	struct	rt_external	ext;
 
 	if( debug > 1 )  fprintf(stderr, "ph_lines: %s\n", buf );
 	if( !seen_gettrees )  {
@@ -658,8 +658,7 @@ char *buf;
 	info.li_percent = 42.0;	/* for now */
 
 	len = 0;
-	cp = rt_struct_export( &len, (char *)&info, desc_line_info );
-	if( cp == (char *)0 )  {
+	if (!rt_struct_export( &ext, (genptr_t)&info, desc_line_info ) ) {
 		rt_log("ph_lines: rt_struct_export failure\n");
 		exit(98);
 	}
@@ -670,12 +669,12 @@ char *buf;
 			info.li_startpix, info.li_endpix,
 			info.li_nrays, info.li_cpusec);
 	}
-	if( pkg_2send( MSG_PIXELS, cp, len, scanbuf, (b-a+1)*3, pcsrv ) < 0 )  {
+	if( pkg_2send( MSG_PIXELS, ext.ext_buf, ext.ext_nbytes, scanbuf, (b-a+1)*3, pcsrv ) < 0 )  {
 		fprintf(stderr,"MSG_PIXELS send error\n");
-		(void)free(cp);
+		db_free_external(&ext);
 	}
 
-	(void)free(buf);
+	db_free_external(&ext);
 }
 
 int print_on = 1;

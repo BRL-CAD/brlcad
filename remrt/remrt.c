@@ -2094,6 +2094,7 @@ char *buf;
 	int			npix;
 	int			fd;
 	int			cnt;
+	struct	rt_external	ext;
 
 	(void)gettimeofday( &tvnow, (struct timezone *)0 );
 
@@ -2116,10 +2117,11 @@ char *buf;
 
 	/* Consider the next assignment to have been sent "now" */
 	(void)gettimeofday( &sp->sr_sendtime, (struct timezone *)0 );
+	rt_struct_buf(&ext, (genptr_t) buf, pc->pkc_len);
 
-	i = rt_struct_import( (char *)&info, desc_line_info, buf );
-	if( i < 0 || i != info.li_len )  {
-		rt_log("rt_struct_import error, %d, %d\n", i, info.li_len);
+	i = rt_struct_import( (genptr_t)&info, desc_line_info, &ext );
+	if( i < 0 )  {
+		rt_log("rt_struct_import error, %d\n", i);
 		drop_server( sp, "rt_struct_import error" );
 		goto out;
 	}
@@ -2174,10 +2176,10 @@ char *buf;
 	/* Stash pixels in bottom-to-top .pix order */
 	npix = info.li_endpix - info.li_startpix + 1;
 	i = npix*3;
-	if( pc->pkc_len - info.li_len < i )  {
+	if( pc->pkc_len - ext.ext_nbytes < i )  {
 		rt_log("short scanline, s/b=%d, was=%d\n",
-			i, pc->pkc_len - info.li_len );
-		i = pc->pkc_len - info.li_len;
+			i, pc->pkc_len - ext.ext_nbytes );
+		i = pc->pkc_len - ext.ext_nbytes;
 		drop_server( sp, "short scanline" );
 		goto out;
 	}
@@ -2192,7 +2194,7 @@ char *buf;
 		fd = -1;
 		/* The bad fd will trigger a write error, below */
 	}
-	if( (cnt = write( fd, buf+info.li_len, i )) != i )  {
+	if( (cnt = write( fd, buf+ext.ext_nbytes, i )) != i )  {
 		perror( fr->fr_filename );
 		rt_log("write s/b %d, got %d\n", i, cnt );
 		/*
@@ -2215,7 +2217,7 @@ char *buf;
 
 	/* If display attached, also draw it */
 	if( fbp != FBIO_NULL )  {
-		write_fb( buf + info.li_len, fr,
+		write_fb( buf + ext.ext_nbytes, fr,
 			info.li_startpix, info.li_endpix+1 );
 	}
 
@@ -3833,3 +3835,39 @@ struct timezone	*tzp;
 	tvp->tv_usec = 0;
 }
 #endif
+/* XXX ---  This should be part of inout.c */
+
+#define	RT_GETPUT_MAGIC_1	0x15cb
+#define RT_GETPUT_MAGIC_2	0xbc51
+int
+rt_struct_buf( ext, buf )
+struct rt_external *ext;
+genptr_t buf;
+{
+	register long i, len;
+
+	RT_INIT_EXTERNAL(ext);
+	ext->ext_buf = buf;
+	i = (((unsigned char *)(ext->ext_buf))[0] << 8) |
+	     ((unsigned char *)(ext->ext_buf))[1];
+	len = (((unsigned char *)(ext->ext_buf))[2] << 24) |
+	      (((unsigned char *)(ext->ext_buf))[3] << 16) |
+	      (((unsigned char *)(ext->ext_buf))[4] <<  8) |
+	       ((unsigned char *)(ext->ext_buf))[5];
+	if ( i != RT_GETPUT_MAGIC_1) {
+		rt_log("ERROR: bad getput buffer header x%x, s/b x%x, was %s(x%x), file %s, line %d\n",
+		    ext->ext_buf, RT_GETPUT_MAGIC_1,
+		    rt_identify_magic( i), i, __FILE__, __LINE__);
+		rt_bomb("bad getput buffer");
+	}
+	ext->ext_nbytes = len;
+	i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) | 
+	     ((unsigned char *)(ext->ext_buf))[len-1];
+	if ( i != RT_GETPUT_MAGIC_2) {
+		rt_log("ERROR: bad getput buffer x%x, s/b x%x, was %s(x%x), file %s, line %s\n",
+		    ext->ext_buf, RT_GETPUT_MAGIC_2,
+		    rt_identify_magic( i), i, __FILE__, __LINE__);
+		rt_bomb("Bad getput buffer");
+	}
+	return(1);
+}
