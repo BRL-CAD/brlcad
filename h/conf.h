@@ -162,7 +162,7 @@
 #	define HAVE_GETOPT	1
 #endif
 
-#if defined(__NetBSD__) || defined(CRAY1) || defined(__bsdi__) \
+#if defined(__NetBSD__) || defined(CRAY1) || defined(__bsdi__) || \
 		defined(_HPUX_SOURCE)
 #	define HAVE_GETOPT_DECL	1
 #endif
