@@ -59,6 +59,8 @@ set helplib_data(wdb_keep)		{{file object(s)} {save named objects in the specifi
 set helplib_data(wdb_cat)		{{object(s)} {list attributes (brief)}}
 set helplib_data(wdb_instance)		{{obj comb [op]} {add instance of obj to comb}}
 set helplib_data(wdb_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
+set helplib_data(wdb_make_bb)		{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
+set helplib_data(wdb_make_name)		{{template | -s [num]}	{make an object name not occuring in the database}}
 set helplib_data(vo_close)		{{} {close/destroy this view object}}
 set helplib_data(vo_size)		{{vsize} {set/get the view size}}
 set helplib_data(vo_invSize)		{{} {get the inverse view size}}
