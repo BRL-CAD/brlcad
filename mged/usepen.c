@@ -205,9 +205,10 @@ char	**argv;
 	  return TCL_OK;
 
 	case ST_S_EDIT:
-	  if(!SEDIT_ROTATE && es_edflag > IDLE)
+	  if(!SEDIT_ROTATE && es_edflag > IDLE){
+	    mousevec[Z] = absolute_slew[Z];
 	    aslewview( mousevec );
-	  else
+	  }else
 	    slewview( mousevec );
 	  return TCL_OK;
 
