@@ -1122,6 +1122,48 @@ fastf_t x, y, z;
 	nmg_vertex_gv(v, pt);
 }
 
+/*	N M G _ E D G E _ G
+ *
+ *	Compute the equation of the line formed by the edge.
+ */
+void
+nmg_edge_g(e)
+struct edge *e;
+{
+	struct model *m;	
+	struct edge_g *eg_p = (struct edge_g *)NULL;
+	pointp_t	pt;
+
+	NMG_CK_EDGE(e);
+	NMG_CK_EDGEUSE(e->eu_p);
+	NMG_CK_VERTEXUSE(e->eu_p->vu_p);
+	NMG_CK_VERTEX(e->eu_p->vu_p->v_p);
+	NMG_CK_VERTEX_G(e->eu_p->vu_p->v_p->vg_p);
+
+	NMG_CK_EDGEUSE(e->eu_p->eumate_p);
+	NMG_CK_VERTEXUSE(e->eu_p->eumate_p->vu_p);
+	NMG_CK_VERTEX(e->eu_p->eumate_p->vu_p->v_p);
+	NMG_CK_VERTEX_G(e->eu_p->eumate_p->vu_p->v_p->vg_p);
+
+	/* make sure we've got a valid edge_g structure */
+	if (e->eg_p) {
+		NMG_CK_EDGE_G(e->eg_p);
+	} else {
+		m = nmg_find_model(&e->eu_p->l.magic);
+		GET_EDGE_G(eg_p, m);
+		eg_p->magic = NMG_EDGE_G_MAGIC;
+	}
+
+	/* copy the point from the vertex of one of our edgeuses */
+	pt = e->eu_p->vu_p->v_p->vg_p->coord;
+	VMOVE(eg_p->e_pt, pt);
+
+	/* compute the direction from the endpoints of the edgeuse(s) */
+	pt = e->eu_p->eumate_p->vu_p->v_p->vg_p->coord;
+	VSUB2(eg_p->e_dir, eg_p->e_pt, pt);	
+}
+
+
 /*			N M G _ L O O P _ G
  *
  *	Build the bounding box for a loop
