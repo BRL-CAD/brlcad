@@ -16,6 +16,10 @@
  * RCS: @(#) $Id$
  */
 
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #ifndef _TCL
 #define _TCL
 
@@ -1634,12 +1638,12 @@ typedef int (Tcl_FSUtimeProc) _ANSI_ARGS_((Tcl_Obj *pathPtr,
 typedef int (Tcl_FSNormalizePathProc) _ANSI_ARGS_((Tcl_Interp *interp, 
 			 Tcl_Obj *pathPtr, int nextCheckpoint));
 typedef int (Tcl_FSFileAttrsGetProc) _ANSI_ARGS_((Tcl_Interp *interp,
-			    int index2, Tcl_Obj *pathPtr,
+			    int index, Tcl_Obj *pathPtr,
 			    Tcl_Obj **objPtrRef));
 typedef CONST char** (Tcl_FSFileAttrStringsProc) _ANSI_ARGS_((Tcl_Obj *pathPtr, 
 			    Tcl_Obj** objPtrRef));
 typedef int (Tcl_FSFileAttrsSetProc) _ANSI_ARGS_((Tcl_Interp *interp,
-			    int index2, Tcl_Obj *pathPtr,
+			    int index, Tcl_Obj *pathPtr,
 			    Tcl_Obj *objPtr));
 typedef Tcl_Obj* (Tcl_FSLinkProc) _ANSI_ARGS_((Tcl_Obj *pathPtr, 
 					       Tcl_Obj *toPtr, int linkType));
