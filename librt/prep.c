@@ -777,6 +777,35 @@ struct resource	*resp;
 	rt_init_resource( resp, resp->re_cpu, rtip );
 }
 
+struct bu_bitv *
+get_solidbitv( long nbits, struct resource *resp )
+{
+	struct bu_bitv *solidbits;
+	int counter=0;
+
+	if( resp->re_solid_bitv.magic != BU_LIST_HEAD_MAGIC ) {
+		bu_bomb( "Bad magic number in re_solid_btiv list\n" );
+	}
+
+	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
+		solidbits = bu_bitv_new( nbits );
+	} else {
+		for( BU_LIST_FOR( solidbits, bu_bitv, &resp->re_solid_bitv ) ) {
+			if( solidbits->nbits >= nbits ) {
+				BU_LIST_DEQUEUE( &solidbits->l );
+				BU_CK_BITV(solidbits);
+				break;
+			}
+			counter++;
+		}
+		if( solidbits == (struct bu_bitv *)&resp->re_solid_bitv ) {
+			solidbits = bu_bitv_new( nbits );
+		}
+	}
+
+	return( solidbits );
+}
+
 /*
  *			R T _ C L E A N
  *
@@ -1167,98 +1196,6 @@ int rt_load_attrs( struct rt_i *rtip, char **attrs )
 	return( region_count );
 }
 
-/*
- *	R E _ P R E P _ S O L I D S
- *
- *	This routine finds all the soltab structures for the list of solids passed in,
- *	removes those soltabs from the space partitioning tree, repreps those solids,
- *	and inserts the updated soltab structures back into the space partitioning tree.
- *	Obviously, these solids must appear in an already prepped rt_i.
- *
- *	returns:
- *		0 - all is well
- *		>0 - serious problems
- */
-int
-re_prep_solids( struct rt_i *rtip, int num_solids, char **solid_names, struct resource *resp )
-{
-	int solnum;
-	point_t old_min, old_max;
-	fastf_t bb[6];		/* bounding box: 0-2 = min, 3-5 = max */
-	int model_extremes_have_changed=0;
-	int i;
-
-	VMOVE( old_min, rtip->mdl_min );
-	VMOVE( old_max, rtip->mdl_max );
-
-	for( solnum=0 ; solnum < num_solids ; solnum++ ) {
-		struct directory *dp;
-		struct bu_list *mid;
-		struct soltab *stp;
-		struct rt_db_internal intern;
-
-		if( (dp = db_lookup( rtip->rti_dbip, solid_names[solnum], LOOKUP_QUIET ) ) == DIR_NULL ) {
-			bu_log( "Failed to find solid %s, ignoring\n", solid_names[solnum] );
-			continue;
-		}
-
-		for( BU_LIST_FOR( mid, bu_list, &dp->d_use_hd ) ) {
-			stp = BU_LIST_MAIN_PTR( soltab, mid, l2 );
-			RT_CK_SOLTAB(stp);
-
-			if( rt_db_get_internal( &intern, dp, rtip->rti_dbip, stp->st_matp, resp ) < 0 ) {
-				bu_log( "re_prep_solids(): rt_db_get_internal() failed for solid %s\n",
-					dp->d_namep );
-				return( 1 );
-			}
-
-
-			remove_from_bsp( stp, &rtip->rti_inf_box );
-			remove_from_bsp( stp, &rtip->rti_CutHead );
-
-			stp->st_id = intern.idb_type;
-			stp->st_meth = &rt_functab[intern.idb_type];
-			VSETALL( stp->st_max, -INFINITY );
-			VSETALL( stp->st_min,  INFINITY );
-			stp->st_meth->ft_free( stp );
-			stp->st_aradius = 0;
-			stp->st_rtip = rtip;
-			if( stp->st_meth->ft_prep( stp, &intern, rtip ) )  {
-				bu_log( "re_pre_solids(): prep failed for solid %s\n",
-					dp->d_namep );
-				return( 2 );
-			}
-
-			if( stp->st_aradius >= INFINITY ) {
-				insert_in_bsp( stp, &rtip->rti_inf_box, resp, bb );
-			} else {
-				VSETALL( bb, INFINITY );
-				VSETALL( &bb[3], -INFINITY );
-				insert_in_bsp( stp, &rtip->rti_CutHead, resp, bb );
-			}
-		}
-	}
-
-	for( i=0 ; i<3 ; i++ ) {
-		if( rtip->mdl_min[i] != old_min[i] ) {
-			model_extremes_have_changed = 1;
-			break;
-		}
-		if( rtip->mdl_max[i] != old_max[i] ) {
-			model_extremes_have_changed = 1;
-			break;
-		}
-	}
-
-	if( model_extremes_have_changed ) {
-		/* fill out BSP, it must completely fill the model BB */
-		VSETALL( bb, INFINITY );
-		VSETALL( &bb[3], -INFINITY );
-		fill_out_bsp( rtip, &rtip->rti_CutHead, resp, bb );
-	}
-	return( 0 );
-}
-
 /*			R T _ F I N D _ P A T H
  *
  *	Routine called by "rt_find_paths". Used for recursing through a tree to find a path
@@ -1465,9 +1402,12 @@ unprep_leaf( struct db_tree_state *tsp,
 	}
 
 	/* find corresponding soltab structure */
-	for( BU_LIST_FOR( mid, bu_list, &dp->d_use_hd ) )  {
+	mid = BU_LIST_FIRST( bu_list, &dp->d_use_hd );
+	while( mid != &dp->d_use_hd ) {
 		stp = BU_LIST_MAIN_PTR( soltab, mid, l2 );
 		RT_CK_SOLTAB(stp);
+
+		mid = BU_LIST_PNEXT( bu_list, mid );
 
 		if( ((mat == (matp_t)0) && (stp->st_matp == (matp_t)0) ) ||
 		    bn_mat_is_equal( mat, stp->st_matp, &rtip->rti_tol ) ) {
@@ -1496,8 +1436,8 @@ unprep_leaf( struct db_tree_state *tsp,
 				}
 				if( stp->st_uses <= 1 ) {
 					/* soltab structure will actually be freed */
-					remove_from_bsp( stp, &rtip->rti_inf_box );
-					remove_from_bsp( stp, &rtip->rti_CutHead );
+					remove_from_bsp( stp, &rtip->rti_inf_box, &rtip->rti_tol );
+					remove_from_bsp( stp, &rtip->rti_CutHead, &rtip->rti_tol );
 					rtip->rti_Solids[bit] = (struct soltab *)NULL;
 				}
 				rt_free_soltab( stp );
@@ -1580,6 +1520,7 @@ rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 		tree_state->ts_dbip = rtip->rti_dbip;
 		tree_state->ts_resp = resp;
 		tree_state->ts_rtip = rtip;
+		tree_state->ts_tol = &rtip->rti_tol;
 		objs->tsp[i] = tree_state;
 
 		db_full_path_init( &another_path );
@@ -1670,7 +1611,9 @@ rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 			rtip->nregions -= nulls;
 			for( j=i-nulls ; j<rtip->nregions ; j++ ) {
 				rtip->Regions[j] = rtip->Regions[j+nulls];
-				rtip->Regions[j]->reg_bit = j;
+				if( rtip->Regions[j] ) {
+					rtip->Regions[j]->reg_bit = j;
+				}
 			}
 			nulls = 0;
 		} else {
@@ -1682,7 +1625,7 @@ rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 	objs->old_nsolids = rtip->nsolids;
 	objs->nsolids_unprepped = 0;
 	i = 0;
-	while( i < rtip->nsolids ) {
+	while( i < rtip->nsolids) {
 		int nulls=0;
 
 		while( i < rtip->nsolids && !rtip->rti_Solids[i] ) {
@@ -1691,15 +1634,19 @@ rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 			nulls++;
 		}
 		if( nulls ) {
-			rtip->nsolids -= nulls;
-			for( j=i-nulls ; j<rtip->nsolids ; j++ ) {
+			for( j=i-nulls ; j+nulls<rtip->nsolids ; j++ ) {
 				rtip->rti_Solids[j] = rtip->rti_Solids[j+nulls];
-				rtip->rti_Solids[j]->st_bit = j;
+				if( rtip->rti_Solids[j] ) {
+					rtip->rti_Solids[j]->st_bit = j;
+				}
 			}
+			rtip->nsolids -= nulls;
+			i -= nulls;
 		} else {
 			i++;
 		}
 	}
+
 	return( 0 );
 }
 
@@ -1715,25 +1662,11 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 	struct region *rp;
 	struct soltab *stp;
 	fastf_t old_min[3], old_max[3];
-	fastf_t bb[6];
 	int model_extremes_have_changed=0;
-	long old_region_count=0;
-	long reg_count=0;
-	long old_solid_count=0;
-	long sol_count=0;
+	long bitno;
 
 	VMOVE( old_min, rtip->mdl_min );
 	VMOVE( old_max, rtip->mdl_max );
-
-	/* count number of regions currently in rtip's list */
-	for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) ) {
-		old_region_count++;
-	}
-
-	/* count solids */
-	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
-		old_solid_count++;
-	}RT_VISIT_ALL_SOLTABS_END
 
 	rtip->needprep = 1;
 
@@ -1742,9 +1675,12 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 		argv[i] = db_path_to_string( (const struct db_full_path *)BU_PTBL_GET( &(objs->paths), i ));
 	}
 
+	rtip->rti_add_to_new_solids_list = 1;
+	bu_ptbl_init( &rtip->rti_new_solids, 128, "rti_new_solids" );
 	if( rt_gettrees( rtip, BU_PTBL_LEN( &(objs->paths) ), (const char **)argv, 1 ) ) {
 		return( 1 );
 	}
+	rtip->rti_add_to_new_solids_list = 0;
 
 	for( i=0 ; i<BU_PTBL_LEN( &(objs->paths) ) ; i++ ) {
 		bu_free( argv[i], "argv[i]" );
@@ -1756,39 +1692,57 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 	if( rtip->nregions > objs->old_nregions ) {
 		rtip->Regions = (struct region **)bu_realloc( rtip->Regions,
 				     rtip->nregions * sizeof( struct region *), "rtip->Regions" );
-		memset( &rtip->Regions[objs->old_nregions], 0, rtip->nregions - objs->old_nregions );
+		memset( rtip->Regions, 0, rtip->nregions );
 	}
 
 
+	bitno = 0;
 	for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) ) {
-		if( reg_count >= old_region_count ) {
-			rtip->Regions[rp->reg_bit] = rp;
+		rp->reg_bit = bitno;
+		rtip->Regions[bitno] = rp;
+		if( bitno >= objs->old_nregions - objs->nregions_unprepped ) {
+			point_t region_min, region_max;
+
+			if( rt_bound_tree( rp->reg_treetop, region_min, region_max ) ) {
+				bu_log( "rt_reprep(): rt_bound_tree() FAILED for %s\n",
+					rp->reg_name );
+				bu_bomb( "rt_reprep(): rt_bound_tree() FAILED\n" );
+			}
+			if( region_max[X] < INFINITY )  {
+				/* infinite regions are exempted from this */
+				VMINMAX( rtip->mdl_min, rtip->mdl_max, region_min );
+				VMINMAX( rtip->mdl_min, rtip->mdl_max, region_max );
+			}
 			rt_solid_bitfinder( rp->reg_treetop, rp, resp );
 		}
-		reg_count++;
+		bitno++;
 	}
 
 	if( rtip->nsolids > objs->old_nsolids ) {
 		rtip->rti_Solids = (struct soltab **)bu_realloc( rtip->rti_Solids,
 								 rtip->nsolids * sizeof( struct soltab *),
 								 "rtip->rti_Solids" );
-		memset( &rtip->rti_Solids[objs->old_nsolids], 0, rtip->nsolids - objs->old_nsolids );
+		memset( rtip->rti_Solids, 0, rtip->nsolids );
 	}
 
+	bitno = 0;
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
-		sol_count++;
-		if( sol_count >= old_solid_count ) {
-			rtip->rti_Solids[stp->st_bit] = stp;
-			if( stp->st_aradius >= INFINITY ) {
-				insert_in_bsp( stp, &rtip->rti_inf_box, resp, bb );
-			} else {
-				VSETALL( bb, INFINITY );
-				VSETALL( &bb[3], -INFINITY );
-				insert_in_bsp( stp, &rtip->rti_CutHead, resp, bb );
-			}
-		}
+		stp->st_bit = bitno;
+		rtip->rti_Solids[bitno] = stp;
+		bitno++;
 		
 	} RT_VISIT_ALL_SOLTABS_END
+
+	for( i=0 ; i<BU_PTBL_LEN( &rtip->rti_new_solids ) ; i++ ) {
+		stp = (struct soltab * )BU_PTBL_GET( &rtip->rti_new_solids, i );
+		if( stp->st_aradius >= INFINITY ) {
+			insert_in_bsp( stp, &rtip->rti_inf_box );
+		} else {
+			insert_in_bsp( stp, &rtip->rti_CutHead );
+		}
+	}
+
+	bu_ptbl_free( &rtip->rti_new_solids );
 
 	for( i=0 ; i<3 ; i++ ) {
 		if( rtip->mdl_min[i] != old_min[i] ) {
@@ -1803,6 +1757,8 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 
 	if( model_extremes_have_changed ) {
 		/* fill out BSP, it must completely fill the model BB */
+		fastf_t bb[6];
+
 		VSETALL( bb, INFINITY );
 		VSETALL( &bb[3], -INFINITY );
 		fill_out_bsp( rtip, &rtip->rti_CutHead, resp, bb );
@@ -1813,10 +1769,10 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 			struct resource *re;
 
 			re = (struct resource *)BU_PTBL_GET( &rtip->rti_resources, i );
-			if( re )
+			if( re && rtip->rti_nsolids_with_pieces )
 				rt_res_pieces_init( re, rtip );
 		}
-	} else {
+	} else if( rtip->rti_nsolids_with_pieces ) {
 		rt_res_pieces_init( &rt_uniresource, rtip );
 	}
 
