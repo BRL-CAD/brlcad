@@ -1109,7 +1109,7 @@ struct rt_functab {
 	int	(*ft_prep) RT_ARGS((struct soltab *stp, union record *rec,
 			struct rt_i *rtip));
 #else
-	int	(*ft_prep) RT_ARGS((struct soltab *stp, void *rec,
+	int	(*ft_prep) RT_ARGS((struct soltab *stp, genptr_t rec,
 			struct rt_i *rtip));
 #endif
 	int 	(*ft_shot) RT_ARGS((struct soltab *stp, struct xray *rp,
@@ -1128,7 +1128,7 @@ struct rt_functab {
 			struct vlhead *vhead, struct directory *dp,
 			double abs_tol, double rel_tol, double norm_tol));
 #else
-	int	(*ft_plot) RT_ARGS((void *rp, mat_t mat,
+	int	(*ft_plot) RT_ARGS((genptr_t rp, mat_t mat,
 			struct vlhead *vhead, struct directory *dp,
 			double abs_tol, double rel_tol, double norm_tol));
 #endif
@@ -1141,8 +1141,8 @@ struct rt_functab {
 			mat_t mat, struct directory *dp,
 			double abs_tol, double rel_tol, double norm_tol));
 #else
-	int	(*ft_tessellate) RT_ARGS((void **r,
-			void *m, void *rp,
+	int	(*ft_tessellate) RT_ARGS((genptr_t *r,
+			genptr_t m, genptr_t rp,
 			mat_t mat, struct directory *dp,
 			double abs_tol, double rel_tol, double norm_tol));
 #endif
@@ -1339,12 +1339,12 @@ RT_EXTERN(int db_put, ( struct db_i *, struct directory *dp, union record *where
 	int offset, int len ) );
 #else /* RECORD_DEFINED */
 					/* malloc & read records */
-RT_EXTERN(void *db_getmrec, ( struct db_i *, struct directory *dp ) );
+RT_EXTERN(genptr_t db_getmrec, ( struct db_i *, struct directory *dp ) );
 					/* get several records from db */
-RT_EXTERN(int db_get, (struct db_i *, struct directory *dp, void *where,
+RT_EXTERN(int db_get, (struct db_i *, struct directory *dp, genptr_t where,
 	int offset, int len ) );
 					/* put several records into db */
-RT_EXTERN(int db_put, ( struct db_i *, struct directory *dp, void *where,
+RT_EXTERN(int db_put, ( struct db_i *, struct directory *dp, genptr_t where,
 	int offset, int len ) );
 #endif /* RECORD_DEFINED */
 /* db_scan.c */
