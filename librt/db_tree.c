@@ -1584,60 +1584,84 @@ db_non_union_push( register union tree *tp, struct resource *resp )
 		union tree	*lhs = tp->tr_b.tb_left;
 	    	union tree	*rhs;
 
-    		repush_child = 1;
+		A = lhs->tr_b.tb_left;
+		B = lhs->tr_b.tb_right;
 
-		/*  Rewrite intersect and subtraction nodes, such that
-		 *  (A u B) - C  becomes (A - C) u (B - C)
-		 *
-		 * tp->	     -
-		 *	   /   \
-		 * lhs->  u     C
-		 *	 / \
-		 *	A   B
-		 */
-	    	RT_GET_TREE( rhs, resp );
+		if( A->tr_op == OP_NOP && B->tr_op == OP_NOP ) {
+		  /* nothing here, eliminate entire subtree */
+		  db_free_tree( tp->tr_b.tb_left, resp );
+		  db_free_tree( tp->tr_b.tb_right, resp );
+		  tp->tr_op = OP_NOP;
+		  tp->tr_b.tb_left = NULL;
+		  tp->tr_b.tb_right = NULL;
 
-		/* duplicate top node into rhs */
-		*rhs = *tp;		/* struct copy */
-		tp->tr_b.tb_right = rhs;
-		/* rhs->tr_b.tb_right remains unchanged:
-		 *
-		 * tp->	     -
-		 *	   /   \
-		 * lhs->  u     -   <-rhs
-		 *	 / \   / \
-		 *	A   B ?   C
-		 */
+		} else if( A->tr_op == OP_NOP ) {
+		  db_tree_del_lhs( lhs, resp );
 
-		rhs->tr_b.tb_left = lhs->tr_b.tb_right;
-		/*
-		 * tp->	     -
-		 *	   /   \
-		 * lhs->  u     -   <-rhs
-		 *	 / \   / \
-		 *	A   B B   C
-		 */
+		  /* recurse */
+		  db_non_union_push( tp, resp );
+		} else if( B->tr_op == OP_NOP ) {
+		  db_tree_del_rhs( lhs, resp );
 
-		/* exchange left and top operators */
-		tp->tr_op = lhs->tr_op;
-		lhs->tr_op = rhs->tr_op;
-		/*
-		 * tp->	     u
-		 *	   /   \
-		 * lhs->  -     -   <-rhs
-		 *	 / \   / \
-		 *	A   B B   C
-		 */
+		  /* recurse */
+		  db_non_union_push( tp, resp );
+		} else {
 
-		/* Make a duplicate of rhs->tr_b.tb_right */
-		lhs->tr_b.tb_right = db_dup_subtree( rhs->tr_b.tb_right, resp );
-		/*
-		 * tp->	     u
-		 *	   /   \
-		 * lhs->  -     -   <-rhs
-		 *	 / \   / \
-		 *	A  C' B   C
-		 */
+		  repush_child = 1;
+
+		  /*  Rewrite intersect and subtraction nodes, such that
+		   *  (A u B) - C  becomes (A - C) u (B - C)
+		   *
+		   * tp->    -
+		   *	   /   \
+		   * lhs->  u     C
+		   *	 / \
+		   *	A   B
+		   */
+		  RT_GET_TREE( rhs, resp );
+
+		  /* duplicate top node into rhs */
+		  *rhs = *tp;		/* struct copy */
+		  tp->tr_b.tb_right = rhs;
+		  /* rhs->tr_b.tb_right remains unchanged:
+		   *
+		   * tp->    -
+		   *	   /   \
+		   * lhs->  u     -   <-rhs
+		   *	 / \   / \
+		   *	A   B ?   C
+		   */
+
+		  rhs->tr_b.tb_left = lhs->tr_b.tb_right;
+		  /*
+		   * tp->    -
+		   *	   /   \
+		   * lhs->  u     -   <-rhs
+		   *	 / \   / \
+		   *	A   B B   C
+		   */
+
+		  /* exchange left and top operators */
+		  tp->tr_op = lhs->tr_op;
+		  lhs->tr_op = rhs->tr_op;
+		  /*
+		   * tp->    u
+		   *	   /   \
+		   * lhs->  -     -   <-rhs
+		   *	 / \   / \
+		   *	A   B B   C
+		   */
+
+		  /* Make a duplicate of rhs->tr_b.tb_right */
+		  lhs->tr_b.tb_right = db_dup_subtree( rhs->tr_b.tb_right, resp );
+		  /*
+		   * tp->    u
+		   *	   /   \
+		   * lhs->  -     -   <-rhs
+		   *	 / \   / \
+		   *	A  C' B   C
+		   */
+		}
 
 	}
 
@@ -1645,39 +1669,87 @@ db_non_union_push( register union tree *tp, struct resource *resp )
 		tp->tr_b.tb_right->tr_op == OP_UNION )
 	{
 		/* C + (A u B) -> (C + A) u (C + B) */
-
-		repush_child = 1;
+		union tree	*rhs = tp->tr_b.tb_right;
 
 		C = tp->tr_b.tb_left;
 		A = tp->tr_b.tb_right->tr_b.tb_left;
 		B = tp->tr_b.tb_right->tr_b.tb_right;
-		tp->tr_op = OP_UNION;
-		RT_GET_TREE( tmp, resp );
-		tmp->tr_regionp = tp->tr_regionp;
-		tmp->magic = RT_TREE_MAGIC;
-		tmp->tr_op = OP_INTERSECT;
-		tmp->tr_b.tb_left = C;
-		tmp->tr_b.tb_right = A;
-		tp->tr_b.tb_left = tmp;
-		tp->tr_b.tb_right->tr_op = OP_INTERSECT;
-		tp->tr_b.tb_right->tr_b.tb_left = db_dup_subtree( C, resp );
+
+		if( A->tr_op == OP_NOP && B->tr_op == OP_NOP ) {
+		  /* nothing here, eliminate entire subtree */
+		  tp->tr_op = OP_NOP;
+		  db_free_tree( tp->tr_b.tb_left, resp );
+		  db_free_tree( tp->tr_b.tb_right, resp );
+		  tp->tr_b.tb_left = NULL;
+		  tp->tr_b.tb_right = NULL;
+		} else if( A->tr_op == OP_NOP ) {
+		  db_tree_del_lhs( rhs, resp );
+
+		  /* recurse */
+		  db_non_union_push( tp, resp );
+		} else if( B->tr_op == OP_NOP ) {
+		  db_tree_del_rhs( rhs, resp );
+
+		  /* recurse */
+		  db_non_union_push( tp, resp );
+		} else {
+		  repush_child = 1;
+
+		  tp->tr_op = OP_UNION;
+		  RT_GET_TREE( tmp, resp );
+		  tmp->tr_regionp = tp->tr_regionp;
+		  tmp->magic = RT_TREE_MAGIC;
+		  tmp->tr_op = OP_INTERSECT;
+		  tmp->tr_b.tb_left = C;
+		  tmp->tr_b.tb_right = A;
+		  tp->tr_b.tb_left = tmp;
+		  tp->tr_b.tb_right->tr_op = OP_INTERSECT;
+		  tp->tr_b.tb_right->tr_b.tb_left = db_dup_subtree( C, resp );
+		}
 	}
 	else if( tp->tr_op == OP_SUBTRACT &&
 		tp->tr_b.tb_right->tr_op == OP_UNION )
 	{
 		/* C - (A u B) -> C - A - B */
+		union tree	*rhs = tp->tr_b.tb_right;
 
-		repush_child = 1;
 
 		C = tp->tr_b.tb_left;
 		A = tp->tr_b.tb_right->tr_b.tb_left;
 		B = tp->tr_b.tb_right->tr_b.tb_right;
-		tp->tr_b.tb_left = tp->tr_b.tb_right;
-		tp->tr_b.tb_left->tr_op = OP_SUBTRACT;
-		tp->tr_b.tb_right = B;
-		tmp = tp->tr_b.tb_left;
-		tmp->tr_b.tb_left = C;
-		tmp->tr_b.tb_right = A;
+
+		if( C->tr_op == OP_NOP ) {
+		  /* nothing here, eliminate entire subtree */
+		  tp->tr_op = OP_NOP;
+		  db_free_tree( tp->tr_b.tb_left, resp );
+		  db_free_tree( tp->tr_b.tb_right, resp );
+		  tp->tr_b.tb_left = NULL;
+		  tp->tr_b.tb_right = NULL;
+		} else if( A->tr_op == OP_NOP && B->tr_op == OP_NOP ) {
+		  db_tree_del_rhs( tp, resp );
+
+		  /* recurse */
+		  db_non_union_push( tp, resp );
+		} else if( A->tr_op == OP_NOP ) {
+		  db_tree_del_lhs( rhs, resp );
+
+		  /* recurse */
+		  db_non_union_push( tp, resp );
+		} else if( B->tr_op == OP_NOP ) {
+		  db_tree_del_rhs( rhs, resp );
+
+		  /* recurse */
+		  db_non_union_push( tp, resp );
+		} else {
+		  repush_child = 1;
+
+		  tp->tr_b.tb_left = tp->tr_b.tb_right;
+		  tp->tr_b.tb_left->tr_op = OP_SUBTRACT;
+		  tp->tr_b.tb_right = B;
+		  tmp = tp->tr_b.tb_left;
+		  tmp->tr_b.tb_left = C;
+		  tmp->tr_b.tb_right = A;
+		}
 	}
 
 	/* if this operation has moved a UNION operator towards the leaves
