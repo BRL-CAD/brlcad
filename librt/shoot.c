@@ -277,7 +277,7 @@ struct seg **HeadSegp;
 		}
 
 		/* Discard seg entirely behind the start point of the ray */
-		if( newseg->seg_out.hit_dist < 0 )  {
+		if( newseg->seg_out.hit_dist < -EPSILON )  {
 			FREE_SEG( newseg );
 			return( FALSE );	/* MISS */
 		}
