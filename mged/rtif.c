@@ -2026,73 +2026,7 @@ Tcl_Interp	*interp;
 int		argc;
 char 		**argv;
 {
-#if 1
 	CHECK_DBI_NULL;
 
 	return dgo_who_cmd(dgop, interp, argc, argv);
-#else
-	register struct solid *sp;
-	int skip_real, skip_phony;
-
-	if(argc < 1 || 2 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help who");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	skip_real = 0;
-	skip_phony = 1;
-	if (argc > 1) {
-		switch (argv[1][0]) {
-		case 'b':
-			skip_real = 0;
-			skip_phony = 0;
-			break;
-		case 'p':
-			skip_real = 1;
-			skip_phony = 0;
-			break;
-		case 'r':
-			skip_real = 0;
-			skip_phony = 1;
-			break;
-		default:
-			Tcl_AppendResult(interp,"who: argument not understood\n", (char *)NULL);
-			return TCL_ERROR;
-		}
-	}
-		
-
-	/* Find all unique top-level entries.
-	 *  Mark ones already done with s_wflag == UP
-	 */
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
-	  sp->s_wflag = DOWN;
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-	  register struct solid *forw;	/* XXX */
-	  struct directory *dp = FIRST_SOLID(sp);
-
-	  if( sp->s_wflag == UP )
-	    continue;
-	  if (dp->d_addr == RT_DIR_PHONY_ADDR){
-	    if (skip_phony) continue;
-	  } else {
-	    if (skip_real) continue;
-	  }
-	  Tcl_AppendResult(interp, dp->d_namep, " ", (char *)NULL);
-	  sp->s_wflag = UP;
-	  FOR_REST_OF_SOLIDS(forw, sp, &dgop->dgo_headSolid){
-	    if( FIRST_SOLID(forw) == dp )
-	      forw->s_wflag = UP;
-	  }
-	}
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
-		sp->s_wflag = DOWN;
-
-	return TCL_OK;
-#endif
 }
