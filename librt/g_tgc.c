@@ -141,28 +141,45 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		return (1);
 	}
 
-	/* Validate that A.B == 0, C.D == 0				*/
-	f = VDOT( A, B ) / (mag_a * mag_b);
-	if( ! NEAR_ZERO(f, 0.0001) ) {
-		rt_log("tgc(%s):  A not perpendicular to B\n",stp->st_name);
-		return(1);		/* BAD */
-	}
-	f = VDOT( C, D ) / (mag_c * mag_d);
-	if( ! NEAR_ZERO(f, 0.0001) ) {
-		rt_log("tgc(%s):  C not perpendicular to D\n",stp->st_name);
+	/* Validate that both ends are not degenerate */
+	if( mag_a * mag_b <= 0.001 && mag_c*mag_d <= 0.001 )  {
+		rt_log("tgc(%s):  Both ends degenerate\n", stp->st_name);
 		return(1);		/* BAD */
 	}
 
-	/* Validate that  A || C  and  B || D, for parallel planes	*/
-	f = 1.0 - VDOT( A, C ) / (mag_a * mag_c);
-	if( ! NEAR_ZERO(f, 0.0001) ) {
-		rt_log("tgc(%s):  A not parallel to C\n",stp->st_name);
-		return(1);		/* BAD */
+	if( mag_a * mag_b > 0.001 )  {
+		/* Validate that A.B == 0 */
+		f = VDOT( A, B ) / (mag_a * mag_b);
+		if( ! NEAR_ZERO(f, 0.0001) ) {
+			rt_log("tgc(%s):  A not perpendicular to B\n",stp->st_name);
+			return(1);		/* BAD */
+		}
 	}
-	f = 1.0 - VDOT( B, D ) / (mag_b * mag_d);
-	if( ! NEAR_ZERO(f, 0.0001) ) {
-		rt_log("tgc(%s):  B not parallel to D\n",stp->st_name);
-		return(1);		/* BAD */
+	if( mag_c * mag_d > 0.001 )  {
+		/* Validate that C.D == 0 */
+		f = VDOT( C, D ) / (mag_c * mag_d);
+		if( ! NEAR_ZERO(f, 0.0001) ) {
+			rt_log("tgc(%s):  C not perpendicular to D\n",stp->st_name);
+			return(1);		/* BAD */
+		}
+	}
+
+	if( mag_a * mag_c > 0.001 )  {
+		/* Validate that  A || C */
+		f = 1.0 - VDOT( A, C ) / (mag_a * mag_c);
+		if( ! NEAR_ZERO(f, 0.0001) ) {
+			rt_log("tgc(%s):  A not parallel to C\n",stp->st_name);
+			return(1);		/* BAD */
+		}
+	}
+
+	if( mag_b * mag_d > 0.001 )  {
+		/* Validate that  B || D, for parallel planes	*/
+		f = 1.0 - VDOT( B, D ) / (mag_b * mag_d);
+		if( ! NEAR_ZERO(f, 0.0001) ) {
+			rt_log("tgc(%s):  B not parallel to D\n",stp->st_name);
+			return(1);		/* BAD */
+		}
 	}
 
 	/* solid is OK, compute constant terms, etc. */
