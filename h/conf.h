@@ -181,6 +181,7 @@
 #       define HAVE_FLOAT_H     1
 #       define HAVE_LIMITS_H    1
 #	define HAVE_BZERO	1
+#	define HAS_POSIX_THREADS 1
 #endif
 
 #if defined(__bsdi__)
