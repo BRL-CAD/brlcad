@@ -35,6 +35,8 @@ void	widen_line();
 
 extern char *malloc();
 
+void	interp_lines();
+
 char usage[] = "\
 Usage: pixinterp2x [-h] [-s squarefilesize]\n\
 	[-w file_width] [-n file_height] [file.pix]\n";
@@ -162,6 +164,8 @@ int y;
 		*op++ = *cp++;
 	}
 }
+
+void
 interp_lines( out, i1, i2 )
 int out, i1, i2;
 {
