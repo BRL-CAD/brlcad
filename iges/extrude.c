@@ -147,7 +147,7 @@ int entityno;
 			ptr = curv_pts;
 			while( ptr->next != NULL )
 			{
-				if( normal_order == 1 )
+				if( normal_order == 2 )
 				{
 					VMOVE( verts[0] , ptr->pt );
 					VMOVE( verts[1] , ptr->next->pt );
@@ -193,7 +193,7 @@ int entityno;
 				}
 
 				VSUB2( v1 , verts[1] , verts[0] );
-				VSUB2( v2 , verts[1] , verts[2] );
+				VSUB2( v2 , verts[2] , verts[1] );
 				VCROSS( v3 , v1 , v2 );
 				if( VDOT( v3 , edir ) > 0.0 )
 				{
