@@ -40,15 +40,18 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "rtprivate.h"
 #include "../librt/debug.h"
 
-extern int	rdebug;			/* RT program debugging (not library) */
+extern int	rdebug;			/* RT program debugging */
+
+int		rpt_dist = 0;		/* report distance to each pixel */
+int		width;			/* # of pixels in X */
+int		height;			/* # of lines in Y */
+
 
 /***** Variables shared with viewing model *** */
 int		doubles_out = 0;	/* u_char or double .pix output file */
-double		AmbientIntensity = 0.4;	/* Ambient light intensity */
 double		azimuth, elevation;
 int		lightmodel = 0;		/* Select lighting model */
 int		rpt_overlap = 1;	/* report overlapping region names */
-int		rpt_dist = 0;		/* report distance to each pixel */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
@@ -71,8 +74,8 @@ fastf_t		cell_height;		/* model space grid cell height */
 int		cell_newsize=0;		/* new grid cell size */
 point_t		eye_model;		/* model-space location of eye */
 fastf_t         eye_backoff = 1.414;	/* dist from eye to center */
-int		width;			/* # of pixels in X */
-int		height;			/* # of lines in Y */
+extern int		width;			/* # of pixels in X */
+extern int		height;			/* # of lines in Y */
 mat_t		Viewrotscale;
 fastf_t		viewsize=0;
 int		incr_mode = 0;		/* !0 for incremental resolution */
@@ -503,7 +506,7 @@ int get_args( int argc, register char **argv )
 	}
 
 	/* Compat */
-	if( RT_G_DEBUG || rdebug || rt_g.NMG_debug )
+	if( RT_G_DEBUG || R_DEBUG || rt_g.NMG_debug )
 		bu_debug |= BU_DEBUG_COREDUMP;
 
 	if( RT_G_DEBUG & DEBUG_MEM_FULL )  bu_debug |= BU_DEBUG_MEM_CHECK;
@@ -511,7 +514,7 @@ int get_args( int argc, register char **argv )
 	if( RT_G_DEBUG & DEBUG_PARALLEL )  bu_debug |= BU_DEBUG_PARALLEL;
 	if( RT_G_DEBUG & DEBUG_MATH )  bu_debug |= BU_DEBUG_MATH;
 
-	if( rdebug & RDEBUG_RTMEM_END )  bu_debug |= BU_DEBUG_MEM_CHECK;
+	if( R_DEBUG & RDEBUG_RTMEM_END )  bu_debug |= BU_DEBUG_MEM_CHECK;
 
 	return(1);			/* OK */
 }

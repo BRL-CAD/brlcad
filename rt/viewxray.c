@@ -195,7 +195,7 @@ struct partition *PartHeadp;
 		return(0);
 	}
 
-	if(rdebug&RDEBUG_HITS)  {
+	if(R_DEBUG&RDEBUG_HITS)  {
 		rt_pr_pt( ap->a_rt_i, pp );
 	}
 

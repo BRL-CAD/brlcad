@@ -382,7 +382,7 @@ int cm_clean(int argc, char **argv)
 
 	rt_clean( ap.a_rt_i );
 
-	if(rdebug&RDEBUG_RTMEM_END)
+	if(R_DEBUG&RDEBUG_RTMEM_END)
 		bu_prmem( "After cm_clean" );
 	return(0);
 }
@@ -609,7 +609,7 @@ int framenumber;
 			rtip->nsolids, rtip->nregions );
 
 	if (Query_one_pixel) {
-		query_rdebug = rdebug;
+		query_rdebug = R_DEBUG;
 		query_debug = RT_G_DEBUG;
 		rt_g.debug = rdebug = 0;
 	}
@@ -815,7 +815,7 @@ int framenumber;
 	view_2init( &ap, framename );
 
 	/* Just while doing the ray-tracing */
-	if(rdebug&RDEBUG_RTMEM)
+	if(R_DEBUG&RDEBUG_RTMEM)
 		bu_debug |= (BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_LOG);
 
 	rtip->nshots = 0;
@@ -859,7 +859,7 @@ int framenumber;
 	view_end( &ap );
 
 	/* Stop memory debug printing until next frame, leave full checking on */
-	if(rdebug&RDEBUG_RTMEM)
+	if(R_DEBUG&RDEBUG_RTMEM)
 		bu_debug &= ~BU_DEBUG_MEM_LOG;
 
 	/*
@@ -948,7 +948,7 @@ int framenumber;
 #endif
 	}
 
-	if(rdebug&RDEBUG_STATS)  {
+	if(R_DEBUG&RDEBUG_STATS)  {
 		/* Print additional statistics */
 		res_pr();
 	}

@@ -49,7 +49,6 @@ struct floatpixel	*curr_float_frame;	/* buffer of full frame */
 struct floatpixel	*prev_float_frame;
 int		reproj_cur;	/* number of pixels reprojected this frame */
 int		reproj_max;	/* out of total number of pixels */
-/* XXX should record width&height, in case size changes on-the-fly */
 
 /* Local communication with worker() */
 int cur_pixel;			/* current pixel number, 0..last_pixel */

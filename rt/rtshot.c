@@ -74,7 +74,6 @@ Usage:  rtshot [options] model.g objects...\n\
  -R #		Set radius for ray bundle\n\
  -v \"attribute_name1 attribute_name2 ...\" Show attribute values\n";
 
-int		rdebug;			/* RT program debugging (not library) */
 static FILE	*plotfp;		/* For plotting into */
 
 struct application	ap;
@@ -320,7 +319,7 @@ err:
 
 	rt_prep(rtip);
 
-	if( rdebug&RDEBUG_RAYPLOT )  {
+	if( R_DEBUG&RDEBUG_RAYPLOT )  {
 		if( (plotfp = fopen("rtshot.plot", "w")) == NULL )  {
 			perror("rtshot.plot");
 			exit(1);
@@ -408,7 +407,7 @@ struct partition *PartHeadp;
 		rt_rebuild_overlaps( PartHeadp, ap, 0 );
 
 	/* First, plot ray start to inhit */
-	if( rdebug&RDEBUG_RAYPLOT )  {
+	if( R_DEBUG&RDEBUG_RAYPLOT )  {
 		if( pp->pt_inhit->hit_dist > 0.0001 )  {
 			VJOIN1( inpt, ap->a_ray.r_pt,
 				pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
@@ -489,7 +488,7 @@ struct partition *PartHeadp;
 		}
 
 		/* Plot inhit to outhit */
-		if( rdebug&RDEBUG_RAYPLOT )  {
+		if( R_DEBUG&RDEBUG_RAYPLOT )  {
 			if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
 				out = 10000;	/* to imply the direction */
 
@@ -527,7 +526,7 @@ int miss( ap )
 register struct application *ap;
 {
 	bu_log("missed\n");
-	if( rdebug&RDEBUG_RAYPLOT )  {
+	if( R_DEBUG&RDEBUG_RAYPLOT )  {
 		vect_t	out;
 
 		VJOIN1( out, ap->a_ray.r_pt,

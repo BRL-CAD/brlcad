@@ -156,7 +156,7 @@ char *file, *obj;
 
 	output_is_binary = 0;		/* output is printable ascii */
 
-	if(rdebug & RDEBUG_RAYPLOT) {
+	if(R_DEBUG & RDEBUG_RAYPLOT) {
 		plotfp = fopen("rtg3.pl", "w");
 		if( npsw > 1 )  {
 			bu_log("Note: writing rtg3.pl file can only be done using only 1 processor\n");
@@ -422,7 +422,7 @@ register struct partition *PartHeadp;
 	 *  The easy way to activate this is with the harmless -!1 option
 	 *  when running RTG3.
 	 */
-	if( rdebug || bu_debug || RT_G_DEBUG )  {
+	if( R_DEBUG || bu_debug || RT_G_DEBUG )  {
 		bu_vls_printf( &str, "   -b%d,%d -p %26.20e %26.20e %26.20e -d %26.20e %26.20e %26.20e\n",
 			ap->a_x, ap->a_y,
 			V3ARGS(ap->a_ray.r_pt),
@@ -530,7 +530,7 @@ register struct partition *PartHeadp;
 				air_thickness = 0.0;
 			if( !NEAR_ZERO( air_thickness, 0.1 ) )  {
 				air_id = 1;	/* air gap */
-				if( rdebug & RDEBUG_HITS )
+				if( R_DEBUG & RDEBUG_HITS )
 					bu_log("air gap added\n");
 			} else {
 				air_thickness = 0.0;
@@ -641,7 +641,7 @@ out:
 		 * This will always be done single CPU,
 		 * to prevent output garbling.  (See view_init).
 		 */
-		if(rdebug & RDEBUG_RAYPLOT) {
+		if(R_DEBUG & RDEBUG_RAYPLOT) {
 			vect_t     inpt;
 			vect_t     outpt;
 			VJOIN1(inpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,

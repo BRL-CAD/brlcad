@@ -62,8 +62,6 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #include "plot3.h"
 #include "photonmap.h"
 
-int		use_air = 0;		/* Handling of air in librt */
-
 char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
 Options:\n\
@@ -84,6 +82,8 @@ Options:\n\
  -R		Do not report overlaps\n\
 ";
 
+int		use_air = 0;		/* Handling of air in librt */
+
 extern FBIO	*fbp;			/* Framebuffer handle */
 
 extern int	max_bounces;		/* from refract.c */
@@ -93,21 +93,19 @@ extern fastf_t	frame_delta_t;		/* from main.c */
 extern double	airdensity;		/* from opt.c */
 extern double	haze[3];		/* from opt.c */
 
+extern struct floatpixel	*curr_float_frame;	/* buffer of full frame */
+
 extern int viewshade(struct application *ap,
 		     register const struct partition *pp,
 		     register struct shadework *swp);
 
 
 
-struct region	env_region;		/* environment map region */
+extern struct region	env_region;		/* environment map region */
 
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 
-#if 0
-vect_t	background = { 0.25, 0, 0.5 };	/* Dark Blue Background */
-#else
-vect_t	background = { 0, 0, 1.0/255 };	/* Nearly Black */
-#endif
+extern vect_t	background;
 int	ibackground[3];			/* integer 0..255 version */
 int	inonbackground[3];		/* integer non-background */
 
@@ -235,7 +233,7 @@ register struct application *ap;
 		  b= 1;
 	}
 
-	if(rdebug&RDEBUG_HITS) bu_log("rgb=%3d,%3d,%3d xy=%3d,%3d (%g,%g,%g)\n",
+	if(R_DEBUG&RDEBUG_HITS) bu_log("rgb=%3d,%3d,%3d xy=%3d,%3d (%g,%g,%g)\n",
 		r,g,b, ap->a_x, ap->a_y,
 		V3ARGS(ap->a_color) );
 
@@ -579,7 +577,7 @@ struct rt_i	*rtip;
 			bu_log("mlib_setup failure on %s\n", regp->reg_name);
 			break;
 		case 0:
-			if(rdebug&RDEBUG_MATERIAL)
+			if(R_DEBUG&RDEBUG_MATERIAL)
 				bu_log("mlib_setup: drop region %s\n", regp->reg_name);
 			{
 				struct region *r = BU_LIST_NEXT( region, &regp->l );
@@ -590,7 +588,7 @@ struct rt_i	*rtip;
 			}
 		case 1:
 			/* Full success */
-			if( rdebug&RDEBUG_MATERIAL &&
+			if( R_DEBUG&RDEBUG_MATERIAL &&
 			    ((struct mfuncs *)(regp->reg_mfuncs))->mf_print )  {
 				((struct mfuncs *)(regp->reg_mfuncs))->
 					mf_print( regp, regp->reg_udata );
@@ -674,7 +672,7 @@ void view_cleanup(struct rt_i	*rtip)
 static int hit_nothing( ap )
 register struct application *ap;
 {
-	if( rdebug&RDEBUG_MISSPLOT )  {
+	if( R_DEBUG&RDEBUG_MISSPLOT )  {
 		vect_t	out;
 
 		/* XXX length should be 1 model diameter */
@@ -729,7 +727,7 @@ register struct application *ap;
 		VSETALL( u.sw.sw_color, 1 );
 		VSETALL( u.sw.sw_basecolor, 1 );
 
-		if (rdebug&RDEBUG_SHADE)
+		if (R_DEBUG&RDEBUG_SHADE)
 			bu_log("hit_nothing calling viewshade\n");
 
 		(void)viewshade( ap, &u.part, &u.sw );
@@ -791,7 +789,7 @@ struct seg *finished_segs;
 	RT_CK_RAY(hitp->hit_rayp);
 	ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
 
-	if(rdebug&RDEBUG_HITS)  {
+	if(R_DEBUG&RDEBUG_HITS)  {
 		bu_log("colorview: lvl=%d coloring %s\n",
 			ap->a_level,
 			pp->pt_regionp->reg_name);
@@ -820,7 +818,7 @@ struct seg *finished_segs;
 
 		if( pp->pt_outhit->hit_dist >= INFINITY ||
 		    ap->a_level > max_bounces )  {
-		    	if( rdebug&RDEBUG_SHOWERR )  {
+		    	if( R_DEBUG&RDEBUG_SHOWERR )  {
 				VSET( ap->a_color, 9, 0, 0 );	/* RED */
 				bu_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 					pp->pt_regionp->reg_name,
@@ -852,7 +850,7 @@ struct seg *finished_segs;
 		goto out;
 	}
 
-	if( rdebug&RDEBUG_RAYWRITE )  {
+	if( R_DEBUG&RDEBUG_RAYWRITE )  {
 		/* Record the approach path */
 		if( hitp->hit_dist > 0.0001 )  {
 			VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
@@ -863,7 +861,7 @@ struct seg *finished_segs;
 				-1, ap, stdout );	/* -1 = air */
 		}
 	}
-	if( rdebug&(RDEBUG_RAYPLOT|RDEBUG_RAYWRITE|RDEBUG_REFRACT) )  {
+	if( R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_RAYWRITE|RDEBUG_REFRACT) )  {
 		/*  There are two parts to plot here.
 		 *  Ray start to inhit (purple),
 		 *  and inhit to outhit (grey).
@@ -880,7 +878,7 @@ struct seg *finished_segs;
 
 			VJOIN1( inhit, ap->a_ray.r_pt,
 				hitp->hit_dist, ap->a_ray.r_dir );
-			if( rdebug&RDEBUG_RAYPLOT )  {
+			if( R_DEBUG&RDEBUG_RAYPLOT )  {
 				bu_semaphore_acquire( BU_SEM_SYSCALL );
 				pl_color( stdout, i, 0, i );
 				pdv_3line( stdout, ap->a_ray.r_pt, inhit );
@@ -897,7 +895,7 @@ vdraw open oray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 			VJOIN1( outhit,
 				ap->a_ray.r_pt, out,
 				ap->a_ray.r_dir );
-			if( rdebug&RDEBUG_RAYPLOT )  {
+			if( R_DEBUG&RDEBUG_RAYPLOT )  {
 				bu_semaphore_acquire( BU_SEM_SYSCALL );
 				pl_color( stdout, i, i, i );
 				pdv_3line( stdout, inhit, outhit );
@@ -922,7 +920,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	VSETALL( sw.sw_color, 1 );
 	VSETALL( sw.sw_basecolor, 1 );
 
-	if (rdebug&RDEBUG_SHADE)
+	if (R_DEBUG&RDEBUG_SHADE)
 		bu_log("colorview calling viewshade\n");
 
 	/* individual shaders must handle reflection & refraction */
@@ -946,7 +944,7 @@ out:
 	    VJOIN1(ap->a_color, ap->a_color, g, haze);
 	}
 	RT_CK_REGION(ap->a_uptr);
-	if(rdebug&RDEBUG_HITS)  {
+	if(R_DEBUG&RDEBUG_HITS)  {
 		bu_log("colorview: lvl=%d ret a_user=%d %s\n",
 			ap->a_level,
 			ap->a_user,
@@ -1060,7 +1058,7 @@ int viewit(register struct application *ap,
 		break;
 	}
 
-	if(rdebug&RDEBUG_HITS)  {
+	if(R_DEBUG&RDEBUG_HITS)  {
 		rt_pr_hit( " In", hitp );
 		bu_log("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
 		VPRINT("RGB", ap->a_color);
@@ -1499,7 +1497,7 @@ bu_log("mallocing curr_float_frame\n");
 		 */
 		if( BU_LIST_IS_EMPTY( &(LightHead.l) )  ||
 		    BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
-			if(rdebug&RDEBUG_SHOWERR)bu_log("No explicit light\n");
+			if(R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
 			light_maker(3, view2model);
 		}
 		break;
@@ -1547,7 +1545,7 @@ bu_log("mallocing curr_float_frame\n");
 	 * from the soltab structures in the space paritioning tree
 	 */
 	bu_ptbl_init( &stps, 8, "soltabs to delete" );
-	if (rdebug & RDEBUG_LIGHT) {
+	if (R_DEBUG & RDEBUG_LIGHT) {
 		bu_log( "deleting %d invisible light regions\n", BU_PTBL_LEN( &ap->a_rt_i->delete_regs ) );
 	}
 	for( i=0 ; i<BU_PTBL_LEN( &ap->a_rt_i->delete_regs ) ; i++ ) {
@@ -1564,7 +1562,7 @@ bu_log("mallocing curr_float_frame\n");
 		collect_soltabs( &stps, rp->reg_treetop );
 
 		/* remove the invisible light region pointers from the soltab structs */
-		if (rdebug & RDEBUG_LIGHT) {
+		if (R_DEBUG & RDEBUG_LIGHT) {
 			bu_log( "Removing invisible light region pointers from %d soltabs\n",
 				BU_PTBL_LEN( &stps ) );
 		}
@@ -1577,7 +1575,7 @@ bu_log("mallocing curr_float_frame\n");
 			for( ; k>=0 ; k-- ) {
 				rp2 = (struct region *)BU_PTBL_GET( &stp->st_regions, k );
 				if( rp2 == rp ) {
-					if (rdebug & RDEBUG_LIGHT) {
+					if (R_DEBUG & RDEBUG_LIGHT) {
 						bu_log( "\tRemoving region %s from soltab for %s\n", rp2->reg_name, stp->st_dp->d_namep );
 					}
 					bu_ptbl_rm( &stp->st_regions, (long *)rp2 );

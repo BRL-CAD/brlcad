@@ -49,7 +49,7 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 
 extern char	usage[];
 
-int		rdebug;			/* RT program debugging (not library) */
+extern int	rdebug;			/* RT program debugging */
 int		rt_verbosity = -1;	/* blather incesantly by default */
 
 /***** Variables shared with viewing model *** */
@@ -162,6 +162,8 @@ int main(int argc, char **argv)
 #endif
 	azimuth = 35.0;			/* GIFT defaults */
 	elevation = 25.0;
+
+	AmbientIntensity=0.4;
 
 	/* Before option processing, get default number of processors */
 	npsw = bu_avail_cpus();		/* Use all that are present */
@@ -433,7 +435,7 @@ int main(int argc, char **argv)
 		 * called by rt_do_cmd().
 		 */
 		while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
-			if( rdebug&RDEBUG_PARSE )
+			if( R_DEBUG&RDEBUG_PARSE )
 				fprintf(stderr,"cmd: %s\n", buf );
 			ret = rt_do_cmd( rtip, buf, rt_cmdtab );
 			bu_free( buf, "rt_read_cmd command buffer" );
