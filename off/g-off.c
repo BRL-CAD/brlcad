@@ -153,7 +153,7 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+	db_dirbuild(dbip);
 
 	/* Create .fig file name and open it. */
 	fig_file = rt_malloc(sizeof(prefix) + sizeof(argv[0] + 4), "st");
