@@ -81,6 +81,7 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 #define IEEE_FLOAT 1		/* Uses IEEE style floating point */
+#define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 #define FAST	register	/* LOCAL|register, for fastest floats */
@@ -220,6 +221,19 @@ typedef long	bitv_t;		/* largest integer type */
 #define MAX_PSW		1	/* only one processor, max */
 #define DEFAULT_PSW	1
 
+#endif
+
+/*
+ *  Definitions for big-endian -vs- little-endian.
+ *	BIG_ENDIAN:	Byte [0] is on left side of word (msb).
+ *	LITTLE_ENDIAN:	Byte [0] is on right side of word (lsb).
+ */
+#ifdef vax
+# define LITTLE_ENDIAN	1
+#endif
+
+#if !defined(BIG_ENDIAN) && !defined(LITTLE_ENDIAN)
+# define BIG_ENDIAN	1	/* The common case */
 #endif
 
 /*  Bit vector mask */
