@@ -1478,12 +1478,13 @@ int record;
  */
 
 int
-mged_cmd(argc, argv, functions)
+mged_cmd(argc, argv, in_functions)
 int argc;
 char **argv;
-struct funtab functions[];
+struct funtab in_functions[];
 {
     register struct funtab *ftp;
+    struct funtab *functions;
 #ifdef XMGED
     AliasList	curr;
     struct rt_vls	cmd;
@@ -1521,6 +1522,12 @@ struct funtab functions[];
 	    curr = curr->left;
     }
 #endif
+
+    /* if no function table is provided, use the default mged function table */
+    if( in_functions == (struct funtab *)NULL )
+	functions = funtab;
+    else
+	functions = in_functions;
 
     for (ftp = &functions[1]; ftp->ft_name; ftp++) {
 	if (strcmp(ftp->ft_name, argv[0]) != 0)
