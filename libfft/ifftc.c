@@ -1,10 +1,27 @@
 /*
- *  Split Radix Decimation in Freq Inverse FFT C code generator.
+ *  Split Radix Decimation in Freq
+ *  Inverse FFT C code generator.
+ *
+ *  Author -
+ *	Phil Dykstra
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
-extern int irfft_adds, irfft_mults;
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
+#include "conf.h"
 
 #include <stdio.h>
 #include <math.h>
+
+extern int irfft_adds, irfft_mults;
 
 static char usage[] = "\
 Usage: ifftc length > fftlength.c\n";
@@ -14,7 +31,7 @@ int	argc;
 char	**argv;
 {
 	double	x[4097];
-	int	i, n, m;
+	int	n, m;
 
 	if( argc != 2 ) {
 		fprintf( stderr, usage );

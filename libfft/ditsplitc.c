@@ -4,7 +4,24 @@
  *	[ Re(0),Re(1),...,Re(N/2),Im(N/2-1),...,Im(1) ]
  *
  *  Transactions on Acoustics, Speech, and Signal Processing, June 1987.
+ *
+ *  Author -
+ *	Phil Dykstra
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
+#include "conf.h"
+
+#include <stdio.h>
 #include <math.h>
 #include "./complex.h"
 /*#define	TWOPI	6.283185307179586*/
@@ -21,7 +38,6 @@ int	m;	/* n = 2^m */
 	int	i, j, k, n1, n2, n4, n8;
 	int	i0, i1, i2, i3, i4, i5, i6, i7, i8;
 	int	is, id;
-	double	t1, t2, t3, t4, t5, r1, xt;
 	double	cc1, ss1, cc3, ss3, e, a, a3;
 irfft_adds = irfft_mults = 0;
 
