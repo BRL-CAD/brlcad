@@ -386,7 +386,7 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 #define CONST	const
 
-#define MAX_PSW		64
+#define MAX_PSW		256
 #define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
 
