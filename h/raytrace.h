@@ -757,15 +757,21 @@ extern void rt_get_pt(struct rt_i *rtip, struct resource *res);
 extern void rt_get_bitv(struct rt_i *rtip, struct resource *res);
 					/* malloc rounder */
 extern int rt_byte_roundup(int nbytes);
-/* ran out of energy here */
-extern void rt_bitv_or();		/* logical OR on bit vectors */
-extern void rt_cut_it();		/* space partitioning */
-extern void rt_pr_cut();		/* print cut node */
-extern void rt_draw_box();		/* unix-plot an RPP */
-extern void rt_region_color_map();	/* regionid-driven color override */
-extern void rt_color_addrec();		/* process ID_MATERIAL record */
-extern void rt_cut_extend();		/* extend a cut box */
-extern int rt_rpp_region();		/* find RPP of one region */
+					/* logical OR on bit vectors */
+extern void rt_bitv_or(bitv_t *out, bitv_t *in, int nbits);
+					/* space partitioning */
+extern void rt_cut_it(struct rt_i *rtip);
+					/* print cut node */
+extern void rt_pr_cut(union cutter *cutp, int lvl);
+					/* regionid-driven color override */
+extern void rt_region_color_map(struct region *regp);
+					/* process ID_MATERIAL record */
+extern void rt_color_addrec(union record *recp, long addr);
+					/* extend a cut box */
+extern void rt_cut_extend(union cutter *cutp, struct soltab *stp);
+					/* find RPP of one region */
+extern int rt_rpp_region(struct rt_i *rtip, char *reg_name,
+	fastf_t min_rpp, fastf_t max_rpp);
 
 #else
 
