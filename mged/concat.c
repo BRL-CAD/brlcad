@@ -216,7 +216,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	(void)strncpy( mref, prestr, *ncharadd );
 	(void)strncpy( mref+(*ncharadd),
 		comb_leaf->tr_l.tl_name,
-		NAMESIZE-1-(*ncharadd) );
+		NAMESIZE-(*ncharadd) );
 	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
 	comb_leaf->tr_l.tl_name = bu_strdup( mref );
 }
