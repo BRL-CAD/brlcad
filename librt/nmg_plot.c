@@ -462,6 +462,12 @@ vect_t		face_normal;
  *
  *	Given an edgeuse, find an offset for its vertexuse which will place
  *	it "above" and "inside" the area of the face.
+ *
+ *  The point will be offset inwards along the edge
+ *  slightly, to avoid obscuring the vertex, and will be offset off the
+ *  face (in the direction of the face normal) slightly, to avoid
+ *  obscuring the edge itself.
+ *	
  */
 void
 nmg_offset_eu_vert(base, eu, face_normal)
@@ -524,9 +530,13 @@ vect_t		face_normal;
 
 	if (MAGSQ(delta_vec) > VDIVIDE_TOL) {
 		VUNITIZE(delta_vec);
-		VJOIN2(base, cur_pt_p, nmg_eue_dist,delta_vec, nmg_eue_dist,face_normal);
+		VJOIN2(base, cur_pt_p,
+			(nmg_eue_dist*1.3),delta_vec,
+			(nmg_eue_dist*0.8),face_normal);
 	} else {
-		VJOIN2(base, cur_pt_p, nmg_eue_dist,eu_left, nmg_eue_dist,face_normal);
+		VJOIN2(base, cur_pt_p,
+			(nmg_eue_dist*1.3),eu_left,
+			(nmg_eue_dist*0.8),face_normal);
 	}
 }
 
