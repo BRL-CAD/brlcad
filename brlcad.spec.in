@@ -3,10 +3,10 @@ Name: @PACKAGE@
 Version: @VERSION@
 Release: 1
 Copyright: ...
-Vendor: AMSRC-SL-BE (ACST)
-Url: http://ftp.arl.army.mil/brlcad
+Vendor: AMSRD-ARL-SL-BE (ACST)
+Url: http://brlcad.org
 Group: Productivity/Graphics/CAD
-Source0: http://ftp.arl.army.mil/brlcad/@PACKAGE@-@VERSION@.tar.gz
+Source0: http://aleron.dl.sourceforge.net/sourceforge/brlcad/@PACKAGE@-@VERSION@.tar.gz
 Buildroot: /var/tmp/redhat/BUILD/@PACKAGE@
 
 %description
@@ -14,7 +14,7 @@ Buildroot: /var/tmp/redhat/BUILD/@PACKAGE@
 %prep
 %setup -q
 %build
-CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=/usr
+./configure CFLAGS="$RPM_OPT_FLAGS"
 
 make
 
