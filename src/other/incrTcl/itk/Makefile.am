@@ -1,6 +1,6 @@
 # $Id$
 
-SUBDIRS = libary
+SUBDIRS = library
 
 lib_LTLIBRARIES = \
 	libitk3.3.la \
