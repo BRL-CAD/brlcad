@@ -197,7 +197,6 @@ BDIRS="bench \
 	tools \
 	off \
 	halftone \
-	edpix \
 	nirt \
 	irprep \
 	jove \
@@ -216,13 +215,15 @@ then
 					s/fbserv//'`
 fi
 
-# If this is not an SGI 4D with GL, eliminate SGI GL-specific directories
-# The 7d platform (R8000 TFP with Irix 6) does not have GL.
-if test "${MACHINE}" != "4d" -a "${MACHINE}" != "5d" -a "${MACHINE}" != "6d"
-then
-	BDIRS=`echo ${BDIRS} | sed -e  's/edpix//
-				        s/canon//'`
-fi
+# If this is not an SGI, eliminate SGI direct-SCSI-library-specific directories
+case "${MACHINE}" in
+	4d|5d|6d|7d|m3i6*|m4i6*)
+		# These platforms all have libds.a
+		;;
+	*)
+		BDIRS=`echo ${BDIRS} | sed -e  's/canon//' `
+		;;
+esac
 
 if test "$1" = ""
 then	TARGET=all
