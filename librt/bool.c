@@ -108,25 +108,33 @@ struct application	*ap;
 		diff = segp->seg_in.hit_dist - segp->seg_out.hit_dist;
 		if( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
 			if(rt_g.debug&DEBUG_PARTITION)  rt_log(
-				"rt_boolweave:  Zero thickness seg: %s (%.18e,%.18e)\n",
+				"rt_boolweave:  Zero thickness seg: %s (%.18e,%.18e) %d,%d\n",
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
-				segp->seg_out.hit_dist );
+				segp->seg_out.hit_dist,
+				segp->seg_in.hit_surfno,
+				segp->seg_out.hit_surfno );
 			segp->seg_out.hit_dist = segp->seg_in.hit_dist;
 		}
 		if( !(segp->seg_in.hit_dist >= -INFINITY &&
 		    segp->seg_out.hit_dist <= INFINITY) )  {
-		    	rt_log("rt_boolweave:  Defective segment %s (%.18e,%.18e)\n",
+		    	rt_log("rt_boolweave:  Defective %s segment %s (%.18e,%.18e) %d,%d\n",
+		    		rt_functab[segp->seg_stp->st_id].ft_name,
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
-				segp->seg_out.hit_dist );
+				segp->seg_out.hit_dist,
+				segp->seg_in.hit_surfno,
+				segp->seg_out.hit_surfno );
 			continue;
 		}
 		if( segp->seg_in.hit_dist > segp->seg_out.hit_dist )  {
-		    	rt_log("rt_boolweave:  Inside-out segment %s (%.18e,%.18e)\n",
+		    	rt_log("rt_boolweave:  Inside-out %s segment %s (%.18e,%.18e) %d,%d\n",
+		    		rt_functab[segp->seg_stp->st_id].ft_name,
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
-				segp->seg_out.hit_dist );
+				segp->seg_out.hit_dist,
+				segp->seg_in.hit_surfno,
+				segp->seg_out.hit_surfno );
 			continue;
 		}
 
@@ -428,7 +436,7 @@ struct partition		*pheadp;
 	 * Print all verbiage in one call to rt_log(),
 	 * so that messages will be grouped together in parallel runs.
 	 */
-	rt_log( "\
+	rt_log( "\n\
 OVERLAP1: %s\n\
 OVERLAP2: %s\n\
 OVERLAP3: dist=(%g,%g) isol=%s osol=%s\n\
