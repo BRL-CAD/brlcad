@@ -161,6 +161,8 @@ union record		*rp;
 register mat_t		mat;
 {
 	LOCAL fastf_t	vec[3*4];
+	vect_t		axb;
+	fastf_t		dot;
 
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
@@ -176,6 +178,19 @@ register mat_t		mat;
 	MAT4X3VEC( tip->h, mat, &vec[1*3] );
 	MAT4X3VEC( tip->a, mat, &vec[2*3] );
 	MAT4X3VEC( tip->b, mat, &vec[3*3] );
+
+	/* If H does not point in the direction of A cross B, reverse H. */
+	/* Somehow, database records have been written with this problem. */
+	VCROSS( axb, tip->a, tip->b );
+	dot = VDOT( axb, tip->h );
+	rt_log("tor: dot=%g, a=(%g,%g,%g),  b=(%g,%g,%g),  h=(%g,%g,%g)\n",
+		dot,
+		tip->a[0], tip->a[1], tip->a[2],
+		tip->b[0], tip->b[1], tip->b[2],
+		tip->h[0], tip->h[1], tip->h[2] );
+	if( dot < 0 )  {
+		VREVERSE( tip->h, tip->h );
+	}
 
 	return(0);		/* OK */
 }
@@ -1165,13 +1180,14 @@ double			norm_tol;
 		"rt_tor_tess *faces[]" );
 
 	/* Build the topology of the torus */
+	/* Note that increasing 'w' goes to the left (alpha goes ccw) */
 	nfaces = 0;
 	for( w = 0; w < nw; w++ )  {
 		for( len = 0; len < nlen; len++ )  {
 			vertp[0] = &verts[ PT(w+0,len+0) ];
-			vertp[1] = &verts[ PT(w+0,len+1) ];
+			vertp[1] = &verts[ PT(w+1,len+0) ];
 			vertp[2] = &verts[ PT(w+1,len+1) ];
-			vertp[3] = &verts[ PT(w+1,len+0) ];
+			vertp[3] = &verts[ PT(w+0,len+1) ];
 			if( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
 				rt_log("rt_tor_tess() nmg_cmface failed, w=%d/%d, len=%d/%d\n",
 					w, nw, len, nlen );
