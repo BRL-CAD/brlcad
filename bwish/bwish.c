@@ -47,6 +47,7 @@ main(argc, argv)
      int argc;
      char **argv;
 {
+#if 0
 	if (bu_avail_cpus() > 1) {
 		rt_g.rtg_parallel = 1;
 		bu_semaphore_init(RT_SEM_LAST);
@@ -55,7 +56,7 @@ main(argc, argv)
 	/* initialize RT's global state */
 	BU_LIST_INIT(&rt_g.rtg_vlfree);
 	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
-
+#endif
 	/* Create the interpreter */
 	interp = Tcl_CreateInterp();
 	Cad_Main(argc, argv, Cad_AppInit, interp);
