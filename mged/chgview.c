@@ -309,7 +309,7 @@ point_t center;
 /* DEBUG -- force viewsize */
 /* Format: view size	*/
 int
-f_view(clientData, interp, argc, argv)
+f_size(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int	argc;
@@ -1082,7 +1082,7 @@ char	**argv;
   if(dbip == DBI_NULL)
     return TCL_OK;
 
-  if(argc < 1 || 1 < argc){
+  if(argc < 1 || 2 < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1092,25 +1092,464 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  bu_vls_init(&vls);
-  start_catching_output(&vls);
+  if(argc == 1) {
+    bu_vls_init(&vls);
+    start_catching_output(&vls);
 		   
-  bu_log("STATE=%s, ", state_str[state] );
-  bu_log("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
-  bu_log("base2local=%f\n", base2local);
-  bn_mat_print("toViewcenter", toViewcenter);
-  bn_mat_print("Viewrot", Viewrot);
-  bn_mat_print("model2view", model2view);
-  bn_mat_print("view2model", view2model);
-  if( state != ST_VIEW )  {
-    bn_mat_print("model2objview", model2objview);
-    bn_mat_print("objview2model", objview2model);
+    bu_log("STATE=%s, ", state_str[state] );
+    bu_log("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
+    bu_log("base2local=%f\n", base2local);
+    bn_mat_print("toViewcenter", toViewcenter);
+    bn_mat_print("Viewrot", Viewrot);
+    bn_mat_print("model2view", model2view);
+    bn_mat_print("view2model", view2model);
+
+    if( state != ST_VIEW )  {
+      bn_mat_print("model2objview", model2objview);
+      bn_mat_print("objview2model", objview2model);
+    }
+
+    stop_catching_output(&vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
   }
 
-  stop_catching_output(&vls);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  if(!strcmp(argv[1], "state")){
+    Tcl_AppendResult(interp, state_str[state], (char *)NULL);
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "Viewscale")){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%f", Viewscale*base2local);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "base2local")){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%f", base2local);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "local2base")){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%f", local2base);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "toViewcenter")){
+    bu_vls_init(&vls);
+    start_catching_output(&vls);
+    bn_mat_print("toViewcenter", toViewcenter);
+    stop_catching_output(&vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "Viewrot")){
+    bu_vls_init(&vls);
+    start_catching_output(&vls);
+    bn_mat_print("Viewrot", Viewrot);
+    stop_catching_output(&vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "model2view")){
+    bu_vls_init(&vls);
+    start_catching_output(&vls);
+    bn_mat_print("model2view", model2view);
+    stop_catching_output(&vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "view2model")){
+    bu_vls_init(&vls);
+    start_catching_output(&vls);
+    bn_mat_print("view2model", view2model);
+    stop_catching_output(&vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "model2objview")){
+    bu_vls_init(&vls);
+    start_catching_output(&vls);
+    bn_mat_print("model2objview", model2objview);
+    stop_catching_output(&vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "objview2model")){
+    bu_vls_init(&vls);
+    start_catching_output(&vls);
+    bn_mat_print("objview2model", objview2model);
+    stop_catching_output(&vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "help status");
+  Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
-  return TCL_OK;
+
+  if(!strcmp(argv[1], "help"))
+    return TCL_OK;
+
+  return TCL_ERROR;
+}
+
+f_view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  int n;
+  point_t pt;
+  mat_t mat;
+  struct bu_vls vls;
+
+  if(argc < 1 || 6 < argc){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help view");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_ERROR;
+  }
+
+  if(argc == 1){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help view");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "quat")){
+    quat_t quat;
+
+    /* return Viewrot as a quaternion */
+    if(argc == 2){
+      quat_mat2quat(quat, Viewrot);
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.12g %.12g %.12g %.12g", V4ARGS(quat));
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }
+
+    if(argc != 6){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view: quat requires four parameters");
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    /* attempt to set Viewrot given a quaternion */
+    n = sscanf(argv[2], "%lf", quat);
+    n += sscanf(argv[3], "%lf", quat+1);
+    n += sscanf(argv[4], "%lf", quat+2);
+    n += sscanf(argv[5], "%lf", quat+3);
+
+    if(n < 4){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view quat: bad value detected - %s %s %s %s",
+		    argv[2], argv[3], argv[4], argv[5]);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    quat_quat2mat(Viewrot, quat);
+    new_mats();
+
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "ypr")){
+    vect_t ypr;
+
+    /* return Viewrot as yaw, pitch and roll */
+    if(argc == 2){
+      bn_mat_trn(mat, Viewrot);
+      anim_v_unpermute(mat);
+      n = anim_mat2ypr(pt, mat);
+      if(n == 2){
+	Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
+	return TCL_ERROR;
+      }
+      VSCALE(pt, pt, bn_radtodeg);
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.12g %.12g %.12g", V3ARGS(pt));
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }
+
+    if(argc != 5){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view: ypr requires 3 parameters");
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    /* attempt to set Viewrot given yaw, pitch and roll */
+    n = sscanf(argv[2], "%lf", ypr);
+    n += sscanf(argv[3], "%lf", ypr+1);
+    n += sscanf(argv[4], "%lf", ypr+2);
+
+    if(n < 3){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view ypr: bad value detected - %s %s %s",
+		    argv[2], argv[3], argv[4]);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    anim_dy_p_r2mat(mat, V3ARGS(ypr));
+    anim_v_permute(mat);
+    bn_mat_trn(Viewrot, mat);
+    new_mats();
+
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "aet")){
+    vect_t aet;
+
+    /* return Viewrot as azimuth, elevation and twist */
+    if(argc == 2){
+      bn_mat_trn(mat, Viewrot);
+      anim_v_unpermute(mat);
+      n = anim_mat2ypr(pt, mat);
+      if(n == 2){
+	Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
+	return TCL_ERROR;
+      }
+      VSCALE(pt, pt, bn_radtodeg);
+      if(pt[0] >= 180.0 )
+	pt[0] -= 180;
+      if(pt[0] < 180.0 )
+	pt[0] += 180;
+      pt[1] = -pt[1];
+      pt[2] = -pt[2];
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.12g %.12g %.12g", V3ARGS(pt));
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }
+
+    if(argc != 5){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view: aet requires 3 parameters");
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    /* attempt to set Viewrot given azimuth, elevation and twist */
+    n = sscanf(argv[2], "%lf", aet);
+    n += sscanf(argv[3], "%lf", aet+1);
+    n += sscanf(argv[4], "%lf", aet+2);
+
+    if(n < 3){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view aet: bad value detected - %s %s %s",
+		    argv[2], argv[3], argv[4]);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    anim_dy_p_r2mat(mat, aet[0]+180.0, -aet[1], -aet[2]);
+    anim_v_permute(mat);
+    bn_mat_trn(Viewrot, mat);
+    new_mats();
+
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "center")){
+    point_t center;
+
+    /* return view center */
+    if(argc == 2){
+      MAT_DELTAS_GET_NEG(center, toViewcenter);
+      VSCALE(center, center, base2local);
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.12g %.12g %.12g", V3ARGS(center));
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+      return TCL_OK;
+    }
+
+    if(argc != 5){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view: center requires 3 parameters");
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+      return TCL_ERROR;
+    }
+
+    /* attempt to set the view center */
+    n = sscanf(argv[2], "%lf", center);
+    n += sscanf(argv[3], "%lf", center+1);
+    n += sscanf(argv[4], "%lf", center+2);
+
+    if(n < 3){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view center: bad value detected - %s %s %s",
+		    argv[2], argv[3], argv[4]);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    VSCALE(center, center, local2base);
+    MAT_DELTAS_VEC_NEG(toViewcenter, center);
+    new_mats();
+
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "eye")){
+    point_t eye;
+    vect_t dir;
+
+    /* return the eye point */
+    if(argc == 2){
+      VSET(pt, 0.0, 0.0, 1.0);
+      MAT4X3PNT(eye, view2model, pt);
+      VSCALE(eye, eye, base2local);
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.12g %.12g %.12g", V3ARGS(eye));
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }
+
+    if(argc != 5){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view: eye requires 3 parameters");
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    /* attempt to set view center given the eye point */
+    n = sscanf(argv[2], "%lf", eye);
+    n += sscanf(argv[3], "%lf", eye+1);
+    n += sscanf(argv[4], "%lf", eye+2);
+
+    if(n < 3){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view eye: bad value detected - %s %s %s",
+		    argv[2], argv[3], argv[4]);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    VSCALE(eye, eye, local2base);
+    VSET(pt, 0.0, 0.0, Viewscale);
+    bn_mat_trn(mat, Viewrot);
+    MAT4X3PNT(dir, mat, pt);
+    VSUB2(pt, dir, eye);
+    MAT_DELTAS_VEC(toViewcenter, pt);
+    new_mats();
+
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[1], "size")){
+    fastf_t size;
+
+    /* return the view size */
+    if(argc == 2){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%.12g", Viewscale * 2.0 * base2local);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }
+
+    if(argc != 3){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view: size requires 1 parameter");
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    /* attempt to set view size */
+    n = sscanf(argv[2], "%lf", &size);
+
+    if(n < 1){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "view size: bad value detected - %s", argv[2]);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    size *= local2base;
+    if(size < 0.0001)
+      size = 0.0001;
+    Viewscale = size * 0.5;
+    new_mats();
+
+    return TCL_OK;
+  }
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "help view");
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+  return TCL_ERROR;
 }
 
 f_refresh(clientData, interp, argc, argv)
