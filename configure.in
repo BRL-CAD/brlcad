@@ -1,7 +1,7 @@
 dnl $Id$
 
-AC_INIT()
-AC_CANONICAL_SYSTEM
+AC_INIT
+AC_CANONICAL_TARGET([])
 AM_CONFIG_HEADER(h/config.h)
 AM_INIT_AUTOMAKE(brlcad, 6.0)
 
@@ -12,7 +12,6 @@ AC_PROG_LIBTOOL
 AM_PROG_LEX
 
 AM_C_PROTOTYPES
-
 
 CFLAGS="$CFLAGS "'-I$(top_srcdir)/h'
 
@@ -32,7 +31,7 @@ dnl libs
 dnl need curses, would prefer ncurses
 SAVELIBS="${LIBS}"
 LIBS=
-AC_SEARCH_LIBS(initscr, ncurses curses,, AC_ERROR(Need curses!))
+AC_SEARCH_LIBS(initscr, ncurses curses,, AC_MSG_ERROR([Need curses!]))
 CURSES="${LIBS}"
 LIBS="${SAVELIBS}"
 
@@ -76,11 +75,20 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(float.h getopt.h limits.h limits.h memory.h stdarg.h stdlib.h string.h sys/ioctl_compat.h sys/machd.h sys/mman.h sys/select.h sys/socket.h sys/stat.h sys/time.h sys/types.h termcap.h termios.h time.h unistd.h varargs.h xosdefs.h)
 AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
 AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
-AC_STRUCT_ST_BLKSIZE
+AC_DIAGNOSE([obsolete],[AC_STRUCT_ST_BLKSIZE:
+        your code should no longer depend upon `HAVE_ST_BLKSIZE', but
+        `HAVE_STRUCT_STAT_ST_BLKSIZE'.  Remove this warning and
+        the `AC_DEFINE' when you adjust the code.])
+AC_CHECK_MEMBERS([struct stat.st_blksize],[AC_DEFINE(HAVE_ST_BLKSIZE, 1,
+                            [Define to 1 if your `struct stat' has
+                             `st_blksize'.  Deprecated, use
+                             `HAVE_STRUCT_STAT_ST_BLKSIZE' instead.])])
 
+
+JAVA_CFLAGS=
 AC_ARG_WITH(jdk,
         [  --with-jdk=path         Specify location of Java Development Kit],[
-        JAVA_CFLAGS="-I$withval/include"
+        JAVA_CFLAGS="-I$withval/include -I$withval/include/`uname | tr [A-Z] [a-z]`"
         ])
 
 dnl ============================================================
@@ -117,11 +125,12 @@ AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,, Lacking fstatfs)])
 AC_CHECK_FUNC(getopt, AC_DEFINE(HAVE_GETOPT_DECL,1,getopt))
 AC_CHECK_FUNC(popen, AC_DEFINE(HAVE_POPEN_DECL,1,popen))
 AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
-AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(dld, dlopen, DL="-ldld", AC_ERROR(No dynamic loader found)))])
+AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(dld, dlopen, DL="-ldld", AC_MSG_ERROR([No dynamic loader found])))])
 AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strchr getopt writev regex strdup)
-AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_ERROR(No internet socket found))])
+AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_MSG_ERROR([No internet socket found]))])
+AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHEC_LIB(compat, re_comp, REGEX_LIB="-lcompat",)])
 
-dnl this needs to be fixed to actually test...
+dnl TODO this needs to be fixed to actually test...
 case "$target" in
 	i386-* | i686-* | alpha-*)
 		AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique)
@@ -170,7 +179,7 @@ OPTICAL='${top_builddir}/liboptical/liboptical.la'
 ORLE='${top_builddir}/liborle/liborle.la'
 PKG='${top_builddir}/libpkg/libpkg.la'
 RLE='${top_builddir}/libutahrle/libutahrle.la -lm'
-RT='${top_builddir}/librt/librt.la ${BN}'
+RT='${top_builddir}/librt/librt.la ${BN} ${REGEX_LIB}'
 SYSV='${top_builddir}/libsysv/libsysv.la'
 TERMIO='${top_builddir}/libtermio/libtermio.la'
 WDB='${top_builddir}/libwdb/libwdb.la'
@@ -194,6 +203,7 @@ AC_SUBST(ORLE)
 AC_SUBST(PKG)
 AC_SUBST(PNG_LIBS)
 AC_SUBST(PTHREAD_LIBS)
+AC_SUBST(REGEX_LIB)
 AC_SUBST(RLE)
 AC_SUBST(RT)
 AC_SUBST(SGIGL)
@@ -212,7 +222,7 @@ AC_SUBST(WDB)
 AC_SUBST(X_CFLAGS)
 AC_SUBST(X_LIBS)
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
 	Makefile
 	anim/Makefile
 	awf/Makefile
@@ -349,3 +359,4 @@ AC_OUTPUT([
 	vfont/Makefile
 	brlcad.spec
 ])
+AC_OUTPUT
