@@ -81,14 +81,6 @@ mat_t		model2view;
 /* Variables imported from view.c */
 extern int	ibackground[3];			/* integer 0..255 version */
 extern int	inonbackground[3];		/* integer non-background */
-extern int	fullfloat_mode;
-struct floatpixel {
-	double	ff_dist;		/* range to ff_hitpt[], <-INFINITY for miss */
-	float	ff_hitpt[3];
-	char	ff_color[3];
-};
-extern struct floatpixel	*curr_float_frame;
-extern struct floatpixel	*prev_float_frame;
 
 extern void grid_setup();
 extern void worker();
@@ -403,6 +395,8 @@ bu_log("after Tcl_Init\n");
 	Tcl_SetVar( interp, "tcl_interactive", "0", TCL_GLOBAL_ONLY );
 
 	Tcl_LinkVar(interp, "test_fb_speed", (char *)&test_fb_speed, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "fullfloat_mode", (char *)&fullfloat_mode, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "reproject_mode", (char *)&reproject_mode, TCL_LINK_INT);
 	Tcl_LinkVar(interp, "curframe", (char *)&curframe, TCL_LINK_INT);
 	Tcl_LinkVar(interp, "print_on", (char *)&print_on, TCL_LINK_INT);
 	Tcl_LinkVar(interp, "npsw", (char *)&npsw, TCL_LINK_INT);
@@ -856,9 +850,11 @@ char			*buf;
 
 	/* initialize lighting, set buf_mode=BUFMODE_DYNAMIC */
 	fullfloat_mode = 1;	/* sets buf_mode=BUFMODE_FULLFLOAT */
-	print_on = 0;
+	print_on = 0;		/* Disable bu_log ! */
 	view_2init( &ap );
-	print_on = saved_print_on;
+	print_on = saved_print_on;	/* re-enable bu_log */
+
+bu_log("Reprojected %d of %d pixels from previous frame\n", reproj_cur, reproj_max);
 
 	rtip->nshots = 0;
 	rtip->nmiss_model = 0;
@@ -913,6 +909,11 @@ char			*buf;
 				"bigbuf[] full image buffer");
 			op = bigbuf;
 			fp = &curr_float_frame[start_line*width];
+#if 0
+bu_log("frame=%d, rgb=%d/%d/%d, dist=%g, pt=(%g,%g,%g)\n",
+fp->ff_frame, fp->ff_color[0], fp->ff_color[1], fp->ff_color[2],
+fp->ff_dist, V3ARGS(fp->ff_hitpt) );
+#endif
 			for( ; npix > 0; fp++,npix-- )  {
 				*op++ = fp->ff_color[0];
 				*op++ = fp->ff_color[1];
