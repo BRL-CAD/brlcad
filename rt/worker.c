@@ -141,7 +141,8 @@ do_run( a, b )
 #ifdef alliant
 	register int d7;	/* known to be in d7 */
 #endif
-	int x;
+	int	x;
+	int	pid;
 
 	cur_pixel = a;
 	last_pixel = b;
@@ -159,6 +160,9 @@ do_run( a, b )
 	 *  The parallel workers are started and terminated here.
 	 */
 	nworkers = 0;
+#ifndef CRAY_COS
+	pid = getpid();
+#endif CRAY_COS
 #ifdef HEP
 	for( x=1; x<npsw; x++ )  {
 		/* This is more expensive when GEMINUS>1 */
@@ -192,7 +196,22 @@ do_run( a, b )
 	/* Ensure that all the workers are REALLY dead */
 	x = 0;
 	while( nworkers > 0 )  x++;
-	if( x > 0 )  rt_log("do_run(%d,%d): termination took %d extra loops\n", a, b, x);
+	if( x > 0 )  rt_log("do_run(%d,%d): termination took %d extra loops\n", a, b, x);	
+
+#ifndef CRAY_COS
+	/*
+	 * At this point, all multi-tasking activity should have ceased,
+	 * and we should be just a single UNIX process with our original
+	 * PID and open file table (kernel struct u).  If not, then any
+	 * output is going to be written into the wrong file.
+	 * Both CRAY machines are known to get this wrong. XXX
+	 */
+	if( pid != (x=getpid()) )  {
+		rt_log("\n**ERROR** do_run:  PID changed from %d to %d, open file table probably botched!\n\n",
+			pid, x );
+		/* rt_bomb( "files scrambled" ); */
+	}
+#endif CRAY_COS
 }
 
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
