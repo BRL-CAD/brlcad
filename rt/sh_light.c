@@ -687,9 +687,8 @@ out:
  */
 /* ARGSUSED */
 int
-light_miss(ap, PartHeadp)
+light_miss(ap)
 register struct application *ap;
-struct partition *PartHeadp;
 {
 	struct light_specific *lp = (struct light_specific *)(ap->a_uptr);
 
