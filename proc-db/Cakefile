@@ -39,8 +39,8 @@ spltest:	spltest.o
 room:	room.o common.o
 	CC LDFLAGS  room.o common.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o room
 
-clutter:	clutter.o common.o mathtab.o
-	CC LDFLAGS  clutter.o common.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES mathtab.o LIBES -o clutter
+clutter:	clutter.o common.o
+	CC LDFLAGS  clutter.o common.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o clutter
 
 kurt:		kurt.o
 	CC LDFLAGS  kurt.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o kurt
@@ -71,13 +71,5 @@ brickwall:	brickwall.o
 
 wall:	wall.o
 	CC LDFLAGS wall.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o wall
-
-/*
- *  Special rules for additions from other directories
- */
-%.o&:	rt,,%,o			if exist ../rt/%.c
-
-%9,,%,o&:	../%9/%.c HDR_DEP9	if exist ../%9/%.c
-	CC CFLAGS -c ../%9/%.c
 
 #include "../Cakefile.rules"
