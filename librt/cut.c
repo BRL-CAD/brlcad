@@ -514,7 +514,9 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	if( rt_cutDepth > 24 )  rt_cutDepth = 24;		/* !! */
 	if(rt_g.debug&DEBUG_CUT) rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
 
+#if 0
 	if( rtip->nsolids < 50000 )  {
+#endif
 		/* Old way, non-parallel */
 		/*
 		 *  For some reason, this algorithm produces a substantial
@@ -539,6 +541,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			}
 		} RT_VISIT_ALL_SOLTABS_END
 		rt_ct_optim( &rtip->rti_CutHead, 0 );
+#if 0
 	} else {
 		/* New way, mostly parallel */
 		union cutter	*head;
@@ -563,6 +566,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			rt_parallel( rt_cut_optimize_parallel, ncpu );
 		}
 	}
+#endif
 
 	/* Measure the depth of tree, find max # of RPPs in a cut node */
 	rt_hist_init( &rtip->rti_hist_cellsize, 0.0, 399.0, 400 );
