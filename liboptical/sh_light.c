@@ -734,9 +734,7 @@ light_setup(register struct region *rp,
 		light_print(rp, lsp);
 
 	if (lsp->lt_invisible )  {
-		lsp->lt_rp = REGION_NULL;
-		/* Note that *dpp (reg_udata) is left null */
-		return(0);	/* don't show light, destroy it */
+		return(2);	/* don't show light, destroy it later */
 	}
 
 	*dpp = (genptr_t)lsp;	/* Associate lsp with reg_udata */
@@ -906,8 +904,7 @@ light_init(struct application *ap)
 	 */
 	for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 		RT_CK_LIGHT(lsp);
-		if (lsp->lt_visible && 
-		    lsp->lt_shadows > 1 && 
+		if (lsp->lt_shadows > 1 && 
 		    lsp->lt_pt_count < 1)
 			light_gen_sample_pts(ap, lsp);
 	}
@@ -1359,10 +1356,12 @@ register struct application *ap;
 		return(1);		/* light_visible = 1 */
 	}
 
-	bu_log("light ray missed non-infinite, visible light source\n");
-	bu_log("on pixel: %d %d\n", ap->a_x, ap->a_y);
-	bu_log("ray: (%g %g %g) -> %g %g %g\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir) );
-	bu_log("a_level: %d\n", ap->a_level);
+	if (rdebug & RDEBUG_LIGHT) {
+		bu_log("light ray missed non-infinite, visible light source\n");
+		bu_log("on pixel: %d %d\n", ap->a_x, ap->a_y);
+		bu_log("ray: (%g %g %g) -> %g %g %g\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir) );
+		bu_log("a_level: %d\n", ap->a_level);
+	}
 
 	/* Missed light, either via blockage or dither.  Return black */
 	VSETALL( ap->a_color, 0 );
@@ -1491,7 +1490,9 @@ retry:
 
 		/* if we get here, then everything is used or backfacing */
 
-		bu_log("all light sample pts used.  trying to recycle\n");
+		if (rdebug & RDEBUG_LIGHT ) {
+			bu_log("all light sample pts used.  trying to recycle\n");
+		}
 
 		for (k=0 ; k < los->lsp->lt_pt_count ; k++) {
 			if (flags[k] & VF_SEEN ) {
@@ -1501,13 +1502,17 @@ retry:
 			}
 		}
 		if (tryagain) {
-			bu_log("recycling\n");
+			if (rdebug & RDEBUG_LIGHT ) {
+				bu_log("recycling\n");
+			}
 			goto reusept;
 		}
 		/* at this point, we have no candidate points available to 
 		 * shoot at
 		 */
-		bu_log("can't find point to shoot at\n");
+		if (rdebug & RDEBUG_LIGHT ) {
+			bu_log("can't find point to shoot at\n");
+		}
 		return 0;
 	done:
 		/* we've got a point on the surface of the light to shoot at */
@@ -1657,14 +1662,18 @@ retry:
 	if (shot_status < 0) {
 		if (los->lsp->lt_infinite) {
 		}  else if (los->lsp->lt_pt_count > 0) {
-			bu_log("was pt %d\n (%g %g %g) normal %g %g %g\n", k,
-			       V3ARGS(los->lsp->lt_sample_pts[k].lp_pt),
-			       V3ARGS(los->lsp->lt_sample_pts[k].lp_norm) );
+			if (rdebug & RDEBUG_LIGHT) {
+				bu_log("was pt %d\n (%g %g %g) normal %g %g %g\n", k,
+				       V3ARGS(los->lsp->lt_sample_pts[k].lp_pt),
+				       V3ARGS(los->lsp->lt_sample_pts[k].lp_norm) );
+			}
 		} else {
-			bu_log("was radius: %g of (%g) angle: %g\n",
-			       radius, los->lsp->lt_radius, angle);
+			if (rdebug & RDEBUG_LIGHT) {
+				bu_log("was radius: %g of (%g) angle: %g\n",
+				       radius, los->lsp->lt_radius, angle);
 
-			bu_log("re-shooting\n");
+				bu_log("re-shooting\n");
+			}
 			goto retry;
 		}
 	}
