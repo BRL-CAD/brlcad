@@ -726,6 +726,69 @@ vect_t d, d2;
 
 }
 
+void anim_dirz2mat(m,dx,dz)
+mat_t m;
+vect_t dx,dz;
+{
+	vect_t temp;
+	fastf_t hyp, sign,inv,mag;
+	int ret;
+
+	sign = 1.0;
+	mag = MAGNITUDE(dx);
+	if (mag < VDIVIDE_TOL) {
+		fprintf(stderr,"anim_dirz2mat: Need non-zero vector");
+		return;
+	}
+	inv = 1.0/mag;
+	dx[0] *= inv;
+	dx[1] *= inv;
+	dx[2] *= inv;
+	hyp = sqrt(dx[0]*dx[0]+dx[1]*dx[1]);
+	if (hyp < VDIVIDE_TOL) { /* vertical - special handling */
+		sign = (dx[2] < 0) ? -1.0 : 1.0;
+		VSET(temp, dz[0], dz[1], 0.0);
+		mag = MAGNITUDE(temp);
+		if (mag < VDIVIDE_TOL) {
+			/* use default */
+			VSET(temp, -sign, 0.0, 0.0);
+			mag = 1.0;
+		} else {
+			inv = 1.0/mag;
+			temp[0] *= inv;
+			temp[1] *= inv;
+		}
+		m[0] = 0.0;
+		m[4] = 0.0;
+		m[8] = sign;
+		m[1] = temp[1]*sign;
+		m[5] = temp[0]*sign;
+		m[9] = 0.0;
+		m[2] = temp[0];
+		m[6] = temp[1];
+		m[10] = 0.0;
+	        m[3]=m[7]=m[11]=0.0;
+	        m[12]=m[13]=m[14]=0.0;
+	        m[15]=1.0;
+		return;
+	}
+
+	/*else normal*/
+	m[0] = dx[0];
+        m[1] = -dx[1]/hyp;
+        m[2] = -dx[0]*dx[2]/hyp;
+        m[4] = dx[1];
+        m[5] = dx[0]/hyp;
+        m[6] = -dx[1]*dx[2]/hyp;
+        m[8] = dx[2];
+        m[9] = 0.0;
+        m[10] = hyp;
+        m[3]=m[7]=m[11]=0.0;
+        m[12]=m[13]=m[14]=0.0;
+        m[15]=1.0;
+
+}
+
 /***************************************
  * Other animation routines
  ***************************************/
