@@ -180,6 +180,7 @@ char	**argv;
     db_close( newdbp );
     goto end;
   }
+  rt_mempurge( &(newdbp->dbi_freep) );  /* didn't really build a directory */
 
   vls_col_pr4v(&vls, dirp0, (int)(dup_dirp - dirp0));
   bu_vls_printf(&vls, "\n -----  %d duplicate names found  -----\n",num_dups);
