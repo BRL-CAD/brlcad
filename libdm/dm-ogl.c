@@ -157,11 +157,12 @@ static float light2_diffuse[] = {0.10, 0.30, 0.10, 1.0}; /* green */
 static float light3_diffuse[] = {0.10, 0.10, 0.30, 1.0}; /* blue */
 
 void
-ogl_fogHint(dmp)
+ogl_fogHint(dmp, fastfog)
 struct dm *dmp;
+int fastfog;
 {
-  glHint(GL_FOG_HINT,
-	 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog ? GL_FASTEST : GL_NICEST);
+  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
+  glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
 
 /*
@@ -1413,9 +1414,11 @@ struct dm *dmp;
 #endif
 
   if( ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on )
-    ogl_zbuffer(dmp);
+    ogl_zbuffer(dmp,
+		((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
 
-  ogl_lighting(dmp);
+  ogl_lighting(dmp,
+	       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
 
   glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
 	       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
@@ -1512,11 +1515,14 @@ struct dm *dmp;
 }
 
 void	
-ogl_lighting(dmp)
+ogl_lighting(dmp, lighting_on)
 struct dm *dmp;
+int lighting_on;
 {
   if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
     bu_log("ogl_lighting()\n");
+
+  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = lighting_on;
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
@@ -1554,11 +1560,14 @@ struct dm *dmp;
 }	
 
 void	
-ogl_zbuffer(dmp)
+ogl_zbuffer(dmp, zbuffer_on)
 struct dm *dmp;
+int zbuffer_on;
 {
   if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
     bu_log("ogl_zbuffer:\n");
+
+  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = zbuffer_on;
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
@@ -1568,9 +1577,6 @@ struct dm *dmp;
   }
 
   if( ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf == 0 ) {
-#if 0
-    bu_log("dm-Ogl: This machine has no Zbuffer to enable\n");
-#endif
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = 0;
   }
 
