@@ -14,7 +14,7 @@
 
 
 #ifndef SYSV_EXPORT
-#  if defined(WIN32) && !defined(__CYGWIN__)
+#  if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #    ifdef SYSV_EXPORT_DLL
 #      define SYSV_EXPORT __declspec(dllexport)
 #    else
@@ -27,7 +27,11 @@
 
 
 SYSV_EXPORT int
+#ifdef BRLCAD_DEBUG
+Sysv_d_Init(Tcl_Interp *interp)
+#else
 Sysv_Init(Tcl_Interp *interp)
+#endif
 {
     return TCL_OK;
 }
