@@ -2,8 +2,14 @@
 static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
+#include "rndnum.h"
 extern int Debug;
 extern int Levels;
+extern int RandomFlag;
+/*
+ * Dispersed-Dot ordered Dither at 0 degrees (n=4)
+ * 	From page 135 of Digital Halftoning.
+ */
 static unsigned char	ordered[4][4] = {
 	{2,16,3,13},
 	{12,8,9,5},
@@ -21,13 +27,15 @@ static unsigned char	ordered[4][4] = {
  *	New	New row flag.
  *
  * Exit:
- *	returns	0 or 1
+ *	returns	0 to Levels
  *
  * Uses:
- *	None.
+ *	Debug	- Current debug level.
+ *	Levels	- Number of intensity levels.
+ *	RandomFlag - should we toss some random numbers?
  *
  * Calls:
- *	None.
+ *	Random() - to get random numbers from -0.5 to 0.5
  *
  * Method:
  *	straight-forward.
@@ -36,12 +44,14 @@ static unsigned char	ordered[4][4] = {
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.3  90/04/10  16:46:35  cjohnson
+ * Fix Intensity methods 
+ * 
  * Revision 1.2  90/04/10  03:30:45  cjohnson
  * add intensity levels.
  * 
  * Revision 1.1  90/04/10  01:01:51  cjohnson
  * Initial revision
- * 
  * 
  */
 tone_folly(Pix,X,Y,NX,NY,New)
@@ -49,5 +59,10 @@ int	Pix;
 int	X, Y, NX, NY;
 int	New;
 {
-	return ((Pix*Levels + 16*ordered[ X % 4][ Y % 4] )/255);
+	register int threshold = 16*ordered[ X % 4][ Y % 4];
+
+	if (RandomFlag) {
+		threshold += Random(0)*63;
+	}
+	return ((Pix*Levels + threshold)/255);
 }
