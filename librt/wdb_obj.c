@@ -399,7 +399,7 @@ wdb_open_tcl(ClientData	clientData,
 		return TCL_OK;
 	}
 
-	if (argc != 4) {
+	if (argc < 3 || 4 < argc) {
 #if 0
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib wdb_open");
@@ -414,7 +414,8 @@ Usage: wdb_open\n\
        wdb_open newprocname disk_append $dbip\n\
        wdb_open newprocname inmem $dbip\n\
        wdb_open newprocname inmem_append $dbip\n\
-       wdb_open newprocname db filename\n",
+       wdb_open newprocname db filename\n
+       wdb_open newprocname filename\n",
 				 NULL);
 		return TCL_ERROR;
 #endif
@@ -423,37 +424,40 @@ Usage: wdb_open\n\
 	/* Delete previous proc (if any) to release all that memory, first */
 	(void)Tcl_DeleteCommand(interp, argv[1]);
 
-	if (strcmp(argv[2], "file") == 0) {
+	if (argc == 3 || strcmp(argv[2], "db") == 0) {
+		struct db_i	*dbip;
+		int i;
+
+		if (argc == 3)
+			i = 2;
+		else
+			i = 3;
+
+		if ((dbip = wdb_prep_dbip(interp, argv[i])) == DBI_NULL)
+			return TCL_ERROR;
+		RT_CK_DBI_TCL(interp,dbip);
+
+		wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+	} else if (strcmp(argv[2], "file") == 0) {
 		wdbp = wdb_fopen( argv[3] );
 	} else {
 		struct db_i	*dbip;
 
-		if (strcmp(argv[2], "db") == 0) {
-			if ((dbip = wdb_prep_dbip(interp, argv[3])) == DBI_NULL)
-				return TCL_ERROR;
-			RT_CK_DBI_TCL(interp,dbip);
+		if (wdb_decode_dbip(interp, argv[3], &dbip) != TCL_OK)
+			return TCL_ERROR;
 
-			/* --- Scan geometry database and build in-memory directory --- */
-			db_dirbuild(dbip);
-
+		if (strcmp( argv[2], "disk" ) == 0)
 			wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-		} else {
-			if (wdb_decode_dbip(interp, argv[3], &dbip) != TCL_OK)
-				return TCL_ERROR;
-
-			if (strcmp( argv[2], "disk" ) == 0)
-				wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-			else if (strcmp(argv[2], "disk_append") == 0)
-				wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
-			else if (strcmp( argv[2], "inmem" ) == 0)
-				wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
-			else if (strcmp( argv[2], "inmem_append" ) == 0)
-				wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
-			else {
-				Tcl_AppendResult(interp, "wdb_open ", argv[2],
-						 " target type not recognized", NULL);
-				return TCL_ERROR;
-			}
+		else if (strcmp(argv[2], "disk_append") == 0)
+			wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
+		else if (strcmp( argv[2], "inmem" ) == 0)
+			wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+		else if (strcmp( argv[2], "inmem_append" ) == 0)
+			wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
+		else {
+			Tcl_AppendResult(interp, "wdb_open ", argv[2],
+					 " target type not recognized", NULL);
+			return TCL_ERROR;
 		}
 	}
 
@@ -475,6 +479,9 @@ wdb_decode_dbip(interp, dbip_string, dbipp)
 	return TCL_OK;
 }
 
+/*
+ * Open/Create the database and build the in memory directory.
+ */
 struct db_i *
 wdb_prep_dbip(interp, filename)
      Tcl_Interp *interp;
@@ -497,6 +504,7 @@ wdb_prep_dbip(interp, filename)
 #if WIN32
 #endif
 
+		/* db_create does a db_dirbuild */
 		if ((dbip = db_create(filename, 5)) == DBI_NULL) {
 			Tcl_AppendResult(interp,
 					 "wdb_open: failed to create ", filename,
@@ -508,7 +516,10 @@ wdb_prep_dbip(interp, filename)
 
 			return DBI_NULL;
 		}
-	}
+	} else
+		/* --- Scan geometry database and build in-memory directory --- */
+		db_dirbuild(dbip);
+
 
 	return dbip;
 }
