@@ -799,7 +799,7 @@ CONST struct bu_bitv	*solidbits;
 		RT_CK_PT(pp);
 		claiming_regions = 0;
 		if(rt_g.debug&DEBUG_PARTITION)  {
-			bu_log("rt_boolfinal: (%g,%g) x%d y%d lvl%d\n",
+			bu_log("\nrt_boolfinal(%g,%g) x%d y%d lvl%d, next input pp\n",
 				startdist, enddist,
 				ap->a_x, ap->a_y, ap->a_level );
 			rt_pr_pt( ap->a_rt_i, pp );
@@ -1028,6 +1028,8 @@ CONST struct bu_bitv	*solidbits;
 			}
 		 }
 		}
+		if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_boolfinal:  claiming_regions=%d\n",
+			claiming_regions);
 		if( claiming_regions == 0 )  {
 			pp=pp->pt_forw;			/* onwards! */
 			continue;
@@ -1042,7 +1044,7 @@ CONST struct bu_bitv	*solidbits;
 
 			if(rt_g.debug&DEBUG_PARTITION)bu_log("rt_boolfinal discarding overlap partition x%x\n", pp);
 			zap_pp = pp;
-			pp = pp->pt_forw;
+			pp = pp->pt_forw;		/* onwards! */
 			DEQUEUE_PT( zap_pp );
 			FREE_PT( zap_pp, ap->a_resource );
 			continue;
@@ -1059,7 +1061,7 @@ CONST struct bu_bitv	*solidbits;
 			register struct partition	*lastpp;
 
 			newpp = pp;
-			pp=pp->pt_forw;
+			pp=pp->pt_forw;				/* onwards! */
 			DEQUEUE_PT( newpp );
 			RT_CHECK_SEG(newpp->pt_inseg);		/* sanity */
 			RT_CHECK_SEG(newpp->pt_outseg);		/* sanity */
@@ -1106,7 +1108,6 @@ CONST struct bu_bitv	*solidbits;
 		}
 
 		/* See if it's worthwhile breaking out of partition loop early */
-		pp = pp->pt_forw;
 		if( ap->a_onehit != 0 && HITS_TODO <= 0 )  {
 			ret = 1;
 			if( pp == InputHdp )
@@ -1125,9 +1126,15 @@ CONST struct bu_bitv	*solidbits;
 	}
 out:
 	if( rt_g.debug&DEBUG_PARTITION )  {
+		bu_log("rt_boolfinal() ret=%d, %s\n", ret, reason);
 		rt_pr_partitions( ap->a_rt_i, FinalHdp, "rt_boolfinal: Final partition list at return:" );
+		rt_pr_partitions( ap->a_rt_i, InputHdp, "rt_boolfinal: Input/pending partition list at return:" );
 		bu_log("rt_boolfinal() ret=%d, %s\n", ret, reason);
 	}
+
+	/* Sanity check */
+	if( InputHdp->pt_forw != InputHdp && enddist >= INFINITY )
+		rt_bomb("rt_boolfinal() failed to process InputHdp list\n");
 
 	return ret;
 }
