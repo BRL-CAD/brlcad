@@ -648,6 +648,8 @@ register struct application *ap;
 			BU_LIST_INIT(  &resp->re_solid_bitv );
 		if( BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
 			BU_LIST_INIT(  &resp->re_region_ptbl );
+		if( BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
+			BU_LIST_INIT(  &resp->re_nmgfree );
 
 		/*
 		 *  Add this resource structure to the table.
