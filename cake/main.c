@@ -322,10 +322,14 @@ char	**argv;
 	extern	Node	*chase();
 	extern	char	*getenv();
 	extern	char	*dir_setup();
-#if !defined(__convex__) && !__STDC__
+#if !defined(__convex__) && !__STDC__ && !__EXTENSIONS__
 	extern	Pwent	*getpwuid();
 #endif
+#if defined(__sgi) && defined(__mips)
+	extern	unsigned short	geteuid();
+#else
 	extern	int	geteuid();
+#endif
 	extern	FILE	*cake_popen();
 	extern	FILE	*yyin;
 	Stat		statbuf;
