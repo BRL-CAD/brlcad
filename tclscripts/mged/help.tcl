@@ -117,7 +117,7 @@ set mged_help_data(keypoint)	{{[x y z | reset]}	{set/see center of editing trans
 set mged_help_data(kill)	$helplib_data(wdb_kill)
 set mged_help_data(killall)	$helplib_data(wdb_killall)
 set mged_help_data(killtree)	$helplib_data(wdb_killtree)
-set mged_help_data(knob)	{{[-e -i -m -o -v] [id [val]]}	{emulate knob twist}}
+set mged_help_data(knob)	{{[-e -i -m -v] [-o v/m/e/k] [zap|zero|(x|y|z|X|Y|Z|S|ax|ay|az|aX|aY|aZ|aS|xadc|yadc|ang1|ang2|distadc [val])]}	{emulate knob twist (e.g. knob x 1)}}
 set mged_help_data(l)		$helplib_data(wdb_list)
 set mged_help_data(l_muves)	{{MUVES_component1 MUVES_component2 ...} {list the MGED components that make up the specified MUVES components/systems}}
 set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
