@@ -10,13 +10,19 @@
 #
 
 proc mouse_shoot_ray { x y } {
+    global perspective_mode
+
     eval .inmem rt_gettrees ray -i -u [_mged_who]
     ray prep 1
     ray no_bool 1
     set xx [expr $x / 2048.0]
     set yy [expr $y / 2048.0]
     set target [view2model $xx $yy 0]
-    set start [view2model $xx $yy 1]
+    if { $perspective_mode } {
+	set start [view2model 0 0 1]
+    } else {
+	set start [view2model $xx $yy 1]
+    }
 
     return [ray shootray $start at $target]
 }
