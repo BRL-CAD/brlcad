@@ -11,6 +11,10 @@
  *  $Header$
  */
 
+#define DV_PICK		1	/* dv_penpress for pick function */
+#define DV_INZOOM	2	/* dv_penpress for zoom in */
+#define DV_OUTZOOM	4	/* dv_penpress for zoom out */
+#define DV_SLEW		8	/* dv_penpress for view slew */
 struct device_values  {
 	int	dv_buttonpress;		/* Number of button pressed when !0 */
 	float	dv_xjoy;		/* Joystick,  -1.0 <= x <= +1.0 */
