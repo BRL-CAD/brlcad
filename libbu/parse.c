@@ -1570,18 +1570,6 @@ struct bu_vls *vls;
 		{
 			/* stack shader, loop through all shaders in stack */
 			int done=0;
-			int multi=0;
-			char *c;
-
-			c = iptr;
-			while( *++c )
-			{
-				if( *c == ';' )
-				{
-					multi = 1;
-					break;
-				}
-			}
 
 			bu_vls_strcat( vls, "stack {" );
 
@@ -1599,12 +1587,10 @@ struct bu_vls *vls;
 				if( *iptr == '\0' )
 					done = 1;
 				*iptr = '\0';
-				if( multi )
-					bu_vls_putc( vls, '{' );
+				bu_vls_putc( vls, '{' );
 				if( bu_shader_to_tcl_list( shade1, vls ) )
 					return( 1 );
-				if( multi )
-					bu_vls_strcat( vls, "} " );
+				bu_vls_strcat( vls, "} " );
 				if( !done )
 					iptr++;
 			}
