@@ -163,6 +163,9 @@ struct rt_list  {
 /* Test if a doubly linked list is empty, given head pointer */
 #define RT_LIST_IS_EMPTY(hp)	((hp)->forw == (hp))
 #define RT_LIST_NON_EMPTY(hp)	((hp)->forw != (hp))
+#define RT_LIST_IS_CLEAR(hp)	((hp)->magic == 0 && \
+			(hp)->forw == RT_LIST_NULL && \
+			(hp)->back == RT_LIST_NULL)
 
 /* Handle list initialization */
 #define	RT_LIST_UNINITIALIZED(hp)	((hp)->forw == RT_LIST_NULL)
