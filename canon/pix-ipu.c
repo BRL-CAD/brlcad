@@ -1,16 +1,24 @@
 /*
  *			P I X - I P U . C
- *  Author -
+ *
+ *  Print a BRL-CAD .pix or .bw file on the Canon CLC-500 scanner.
+ *
+ *  Authors -
  *	Lee A. Butler
+ *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1992 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1996 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  *
  *	Options
  *	a	autosize image file
@@ -40,7 +48,7 @@
  *	V	verbose;
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -52,6 +60,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 
+#include "machine.h"
+#include "externs.h"
+
+/* Read multiple times until quantity is obtained.  Necessary for pipes */
 static int
 mread(fd, bufp, n)
 int	fd;
@@ -76,10 +88,164 @@ int	n;
 }
 
 #if defined(IRIX) && (IRIX == 4 || IRIX == 5)
+#include "./canon.h"
+
+# define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
+# define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
 #include <sys/types.h>
+# include <ulocks.h>
+/* ulocks.h #include's <limits.h> and <malloc.h> */
+/* ulocks.h #include's <task.h> for getpid stuff */
+/* task.h #include's <sys/prctl.h> */
+# include <malloc.h>
+/* <malloc.h> #include's <stddef.h> */
 #include <fcntl.h>
 #include <stdlib.h>
-#include "./canon.h"
+
+static char		lockfile[] = "/var/tmp/pix-ipuXXXXXX";
+static usptr_t		*lockstuff = 0;
+
+#include "./chore.h"
+
+static 	struct dsreq *dsp;
+static	int	fd;
+
+struct chore	chores[3];
+
+struct chore	*await1;
+struct chore	*await2;
+struct chore	*await3;
+
+/*
+ *  While this step looks innocuous, if the file is located on a slow
+ *  or busy disk drive or (worse yet) is on an NFS partition,
+ *  this can take a long time.
+ */
+void step1(aa,bb)
+void	*aa;
+size_t	bb;
+{
+	struct chore	*chorep;
+	int		pix_y;
+	static int	nstarted = 0;
+
+	pix_y = 0;
+	for(;;)  {
+		if( nstarted < 3 )  {
+			chorep = &chores[nstarted++];
+			chorep->cbuf = malloc( 255*1024 );
+		} else {
+			GET( chorep, await1 );
+		}
+
+		if( pix_y >= height )  {
+			/* Send through a "done" chore and exit */
+			chorep->pix_y = -1;
+			PUT( await2, chorep );
+			/* Wait for them to percolate through */
+			GET( chorep, await1 );
+			GET( chorep, await1 );
+			break;
+		}
+
+		chorep->pix_y = pix_y;
+		chorep->todo = 255*1024 / (ipu_bytes_per_pixel*width);	/* Limit 255 Kbytes */
+		if( height - pix_y < chorep->todo )  chorep->todo = height - pix_y;
+		chorep->buflen = chorep->todo * ipu_bytes_per_pixel * width;
+
+		if( mread( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
+			perror("pix-ipu mread");
+			fprintf(stderr, "buffer read error, line %d\n", chorep->pix_y);
+			exit(2);
+		}
+		pix_y += chorep->todo;
+
+		/* Pass this chore off to next process */
+		PUT( await2, chorep );
+	}
+	exit(0);
+}
+
+/* format conversion */
+void step2(aa,bb)
+void	*aa;
+size_t	bb;
+{
+	struct chore	*chorep;
+	register unsigned char	*cp;
+	unsigned char *red, *green, *blue;
+	int	buf_y;
+
+	for(;;)  {
+		GET(chorep, await2);
+		if( chorep->pix_y < 0 )  {
+			/* Pass on "done" token and exit */
+			PUT( await3, chorep );
+			break;
+		}
+
+		cp = chorep->obuf;
+
+		if( ipu_bytes_per_pixel == 3 )  {
+			green = &chorep->cbuf[width*chorep->todo];
+			blue = &chorep->cbuf[width*chorep->todo*2];
+
+			for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
+				int	offset;
+				register unsigned char	*rp, *gp, *bp;
+				register int		x;
+
+				offset = buf_y * width;
+				rp = &chorep->cbuf[offset];
+				gp = &green[offset];
+				bp = &blue[offset];
+				for( x = width-1; x >= 0; x-- )  {
+					*rp++ = *cp++;
+					*gp++ = *cp++;
+					*bp++ = *cp++;
+				}
+			}
+		} else {
+			/* Monochrome */
+			for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
+				int	offset;
+				register unsigned char	*rp;
+				register int		x;
+					offset = buf_y * width;
+				rp = &chorep->cbuf[offset];
+				bcopy( cp, rp, width );
+				cp += width;
+			}
+		}
+		PUT( await3, chorep );
+	}
+	exit(0);
+}
+
+/* output via SCSI bus to IPU.  This is the time consuming step. */
+void step3(aa,bb)
+void	*aa;
+size_t	bb;
+{
+	struct chore	*chorep;
+	int		canon_y;
+
+	for(;;)  {
+		GET( chorep, await3 );
+		if( chorep->pix_y < 0 )  {
+			break;	/* "done" token */
+		}
+
+		canon_y = height - chorep->pix_y - chorep->todo;
+
+		ipu_put_image_frag(dsp, 1, 0, canon_y, width, chorep->todo, chorep->cbuf);
+
+		/* Pass this chore off to next process for recycling */
+		PUT( await1, chorep );
+	}
+	exit(0);	/* exit this thread */
+}
+
 
 /*
  *	M A I N
@@ -92,10 +258,8 @@ int ac;
 char *av[];
 {
 	int arg_index;
-	struct dsreq *dsp;
-	u_char	*img_buffer = (u_char *)NULL;
-	int	img_bytes;
 	int i;
+	int	pid[3];
 
 	if ((arg_index = parse_args(ac, av)) >= ac) {
 		if (isatty(fileno(stdin)))
@@ -114,16 +278,6 @@ char *av[];
 	    	fprintf(stderr, "unable to autosize\n");
 	}
 
-	/* get a buffer for the image */
-	img_bytes = width * height * ipu_bytes_per_pixel;
-
-	if ( ! (img_buffer=(u_char*)malloc(img_bytes)) ) {
-		(void)fprintf(stderr,
-			"Cannot allocate memory for %d by %d image\n",
-			width, height);
-		return(-1);
-	}
-
 	/* open the printer SCSI device */
 	if ((dsp = dsopen(scsi_device, O_RDWR)) == NULL) {
 		perror(scsi_device);
@@ -131,13 +285,7 @@ char *av[];
 	}
 
 	if (ipu_debug)
-		fprintf(stderr, "Image is %dx%d (%d)\n", width, height, img_bytes);
-
-	/* bring the image into memory */
-	if ((i=mread(0, &img_buffer[0], img_bytes)) != img_bytes) {
-		(void)fprintf(stderr, "%s: Error reading image at %d of %d bytes read\n", progname, i, img_bytes);
-		return(-1);
-	}
+		fprintf(stderr, "Image is %dx%d (%d)\n", width, height, width*height*ipu_bytes_per_pixel);
 
 	if (conv == IPU_RESOLUTION) {
 		if (scr_width)
@@ -164,7 +312,32 @@ char *av[];
 
 	ipu_delete_file(dsp, 1);
 	ipu_create_file(dsp, (char)1, ipu_filetype, width, height, 0);
-	ipu_put_image(dsp, (char)1, width, height, img_buffer);
+
+	/* Stream file into the IPU */
+	/* Start three threads, then wait for them to finish */
+	pid[0] = sproc( step1, PR_SALL|PR_SFDS );
+	pid[1] = sproc( step2, PR_SALL|PR_SFDS );
+	pid[2] = sproc( step3, PR_SALL|PR_SFDS );
+
+	for( i=0; i<3; i++ )  {
+		int	this_pid;
+		int	pstat;
+		int	j;
+
+		pstat = 0;
+		if( (this_pid = wait(&pstat)) <= 0  )  {
+			perror("wait");
+			fprintf(stderr, "wait returned %d\n", this_pid);
+			for( j=0; j<3; j++) kill(pid[j], 9);
+			exit(3);
+		}
+		if( (pstat & 0xFF) != 0 )  {
+			fprintf(stderr, "*** child pid %d blew out with error x%x\n", this_pid, pstat);
+			for( j=0; j<3; j++) kill(pid[j], 9);
+			exit(4);
+		}
+	}
+	/* All children are finished */
 
 	ipu_print_config(dsp, units, divisor, conv,
 			mosaic, ipu_gamma, tray);
@@ -172,7 +345,7 @@ char *av[];
 	if( ipu_filetype == IPU_PALETTE_FILE )
 		ipu_set_palette(dsp, NULL);
 
-	if (!strcmp(progname, "pix-ipu"))
+	if (strcmp(progname, "pix-ipu")==0)
 		ipu_print_file(dsp, (char)1, copies, 0/*wait*/,
 			scr_xoff, scr_yoff, scr_width, scr_height, &param);
 
@@ -190,7 +363,7 @@ int ac;
 char *av[];
 {
 	fprintf(stderr,
-		"%s only works on SGI(tm) systems with dslib support\n", *av);
+		"%s only works on SGI(tm) systems with dslib (direct SCSI library) support\n", *av);
 	return(-1);
 }
 #endif
