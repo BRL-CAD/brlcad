@@ -9,12 +9,11 @@
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
+ *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
+ *	This software is Copyright (C) 1993 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -31,14 +30,125 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* Was nmg_boolstruct, but that name has appeared in nmg.h */
 struct nmg_inter_struct {
+	long		magic;
 	struct nmg_ptbl	*l1;		/* vertexuses on the line of */
 	struct nmg_ptbl *l2;		/* intersection between planes */
 	struct rt_tol	tol;
 	point_t		pt;		/* line of intersection */
 	vect_t		dir;
 	int		coplanar;
-	fastf_t		*vu2d;		/* Array of 2d vu projections */
+	fastf_t		*vert2d;	/* Array of 2d vertex projections [index] */
+	mat_t		proj;		/* Matrix to project onto XY plane */
 };
+#define NMG_INTER_STRUCT_MAGIC	0x99912120
+#define NMG_CK_INTER_STRUCT(_p)	NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
+
+static struct nmg_visit_handlers nmg_isect2d_handlers;	/* null fill, to start */
+
+/*
+ */
+void
+nmg_isect2d_vis_vertex( magicp, state, flag )
+long		*magicp;
+genptr_t	state;
+int		flag;
+{
+	struct vertex	*v = (struct vertex *)magicp;
+	struct nmg_inter_struct	*is = (struct nmg_inter_struct *)state;
+	fastf_t		*opt;
+	point_t		pt;
+	register fastf_t	*pt2d;
+
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_VERTEX(v);
+
+	if( !v->vg_p )  rt_bomb("nmg_isect2d_vis_vertex:  vertex with no geometry!\n");
+	pt2d = &is->vert2d[v->index*3];
+	if( pt2d[2] == 0 )  {
+		/* Flag set.  Been here before */
+		return;
+	}
+
+	opt = v->vg_p->coord;
+	MAT4X3PNT( pt, is->proj, opt );
+	pt2d[0] = pt[0];
+	pt2d[1] = pt[1];
+	pt2d[2] = 0;		/* flag */
+rt_log("%d (%g,%g,%g) becomes (%g,%g) %g\n", v->index, V3ARGS(opt), V3ARGS(pt) );
+}
+
+/*
+ *			N M G _ I S E C T 2 D _ P R E P
+ *
+ *  To intersect two co-planar faces, project all vertices from those
+ *  faces into 2D.
+ *  At the moment, use a memory intensive strategy which allocates a
+ *  (3d) point_t for each "index" item, and subscripts the resulting
+ *  array by the vertices index number.
+ *  Since additional vertices can be created as the intersection process
+ *  operates, 2*maxindex items are originall allocated, as a (generous)
+ *  upper bound on the amount of intersecting that might happen.
+ *
+ *  In the array, the third double of each projected vertex is set to -1 when
+ *  that slot has not been filled yet, and 0 when it has been.
+ */
+void
+nmg_isect2d_prep( is, f1, f2 )
+struct nmg_inter_struct	*is;
+struct face		*f1;
+struct face		*f2;
+{
+	struct model	*m;
+	struct face_g	*fg;
+	int		words;
+	vect_t		to;
+	point_t		centroid;
+	point_t		centroid_proj;
+	register int	i;
+
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_FACE(f1);
+	NMG_CK_FACE(f2);
+	fg = f1->fg_p;
+	NMG_CK_FACE_G(fg);
+
+	m = nmg_find_model( &f1->magic );
+
+	words = 3 * ( 2 * m->maxindex );
+	is->vert2d = (fastf_t *)rt_malloc( words * sizeof(fastf_t), "vert2d[]");
+
+	/*
+	 *  Rotate so that f1's N vector points up +Z.
+	 *  This places all 2D calcuations in the XY plane.
+	 *  Translate so that f1's centroid becomes the 2D origin.
+	 *  Reasoning:  no vertex should be favored by putting it at
+	 *  the origin.  The "desirable" floating point space in the
+	 *  vicinity of the origin should be used to best advantage,
+	 *  by centering calculations around it.
+	 */
+	VSET( to, 0, 0, 1 );
+HPRINT("fg->N", fg->N);
+	mat_fromto( is->proj, fg->N, to );
+	VADD2SCALE( centroid, fg->max_pt, fg->min_pt, 0.5 );
+	MAT4X3PNT( centroid_proj, is->proj, centroid );
+VPRINT("centroid", centroid);
+VPRINT("centroid_proj", centroid_proj);
+	centroid_proj[Z] = fg->N[3];	/* pull dist from origin off newZ */
+	MAT_DELTAS_VEC_NEG( is->proj, centroid_proj );
+mat_print("3d->2d xform matrix", is->proj);
+
+	/* Clear out the 2D vertex array, setting flag in [2] to -1 */
+	for( i = words-1-2; i >= 0; i -= 3 )  {
+		VSET( &is->vert2d[i], 0, 0, -1 );
+	}
+
+	/* Project all the vertices in both faces */
+	nmg_isect2d_handlers.vis_vertex = nmg_isect2d_vis_vertex;
+rt_log("projecting face1:\n");
+	nmg_visit( f1->fu_p, &nmg_isect2d_handlers, (genptr_t)is );
+rt_log("projecting face2:\n");
+	nmg_visit( f2->fu_p, &nmg_isect2d_handlers, (genptr_t)is );
+}
 
 /*
  *			N M G _ F I N D _ 3 V E R T E X _ O N _ 3 F A C E
@@ -78,6 +188,15 @@ struct faceuse *fu;
 	}
 
 	return((struct vertexuse *)NULL);
+}
+
+static void
+nmg_isect_2vertex_2face(bs, vu, fu)
+struct nmg_inter_struct *bs;
+struct vertexuse *vu;
+struct faceuse *fu;
+{
+	rt_bomb("2vertex_2face\n");
 }
 
 /*
@@ -290,6 +409,15 @@ struct vertex	*v1mate;
 			V3ARGS(p1), V3ARGS(p2) );
 	}
 	(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &euforw->vu_p->l.magic);
+}
+
+static void
+nmg_isect_2edge_2face(bs, eu, fu)
+struct nmg_inter_struct *bs;
+struct edgeuse *eu;
+struct faceuse *fu;
+{
+	rt_bomb("XXX YYY ZZZ\n");
 }
 
 /*
@@ -536,12 +664,13 @@ struct faceuse *fu;
 }
 
 /*
- *			N M G _ I S E C T _ 3 L O O P _ 3 F A C E
+ *			N M G _ I S E C T _ P L A N E _ L O O P _ F A C E
  *
  *	Intersect a single loop with another face
+ *	Handles both 3D and 2D cases.
  */
 static void
-nmg_isect_3loop_3face(bs, lu, fu)
+nmg_isect_plane_loop_face(bs, lu, fu)
 struct nmg_inter_struct *bs;
 struct loopuse *lu;
 struct faceuse *fu;
@@ -551,7 +680,7 @@ struct faceuse *fu;
 	struct loopuse	*fulu;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		rt_log("nmg_isect_3loop_3face(, lu=x%x, fu=x%x)\n", lu, fu);
+		rt_log("nmg_isect_plane_loop_face(, lu=x%x, fu=x%x)\n", lu, fu);
 		HPRINT("  fg N", fu->f_p->fg_p->N);
 	}
 
@@ -563,14 +692,17 @@ struct faceuse *fu;
 
 	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
+		struct vertexuse	*vu = RT_LIST_FIRST(vertexuse,&lu->down_hd);
 		/* this is most likely a loop inserted when we split
 		 * up fu2 wrt fu1 (we're now splitting fu1 wrt fu2)
 		 */
-		nmg_isect_3vertex_3face(bs,
-			RT_LIST_FIRST(vertexuse,&lu->down_hd), fu);
+	     	if( bs->coplanar )
+			nmg_isect_2vertex_2face(bs, vu, fu);
+		else
+			nmg_isect_3vertex_3face(bs, vu, fu);
 		return;
 	} else if (magic1 != NMG_EDGEUSE_MAGIC) {
-		rt_bomb("nmg_isect_3loop_3face() Unknown type of NMG loopuse\n");
+		rt_bomb("nmg_isect_plane_loop_face() Unknown type of NMG loopuse\n");
 	}
 
 	/*  Process loop consisting of a list of edgeuses.
@@ -591,19 +723,23 @@ struct faceuse *fu;
 			rt_bomb("edge does not share loop\n");
 		}
 
-		nmg_isect_3edge_3face(bs, eu, fu);
-		nmg_ck_lueu(lu, "nmg_isect_3loop_3face");
+	     	if( bs->coplanar )
+			nmg_isect_2edge_2face(bs, eu, fu);
+	     	else
+			nmg_isect_3edge_3face(bs, eu, fu);
+
+		nmg_ck_lueu(lu, "nmg_isect_plane_loop_face");
 	}
 
 }
 
 /*
- *			N M G _ I S E C T _ T W O _ 3 F A C E S
+ *			N M G _ I S E C T _ T W O _ P L A N A R _ F A C E S
  *
  *	Intersect loops of face 1 with the entirety of face 2
  */
 static void
-nmg_isect_two_3faces(bs, fu1, fu2)
+nmg_isect_two_planar_faces(bs, fu1, fu2)
 struct nmg_inter_struct *bs;
 struct faceuse	*fu1;
 struct faceuse	*fu2;
@@ -612,7 +748,7 @@ struct faceuse	*fu2;
 	struct loop_g	*lg;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_two_3faces(, fu1=x%x, fu2=x%x) START ++++++++++\n", fu1, fu2);
+		rt_log("nmg_isect_two_planar_faces(, fu1=x%x, fu2=x%x) START ++++++++++\n", fu1, fu2);
 
 	NMG_CK_FACE_G(fu2->f_p->fg_p);
 	NMG_CK_FACE_G(fu1->f_p->fg_p);
@@ -621,7 +757,7 @@ struct faceuse	*fu2;
 	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		if (lu->up.fu_p != fu1) {
-			rt_bomb("nmg_isect_two_3faces() Child loop doesn't share parent!\n");
+			rt_bomb("nmg_isect_two_planar_faces() Child loop doesn't share parent!\n");
 		}
 		NMG_CK_LOOP(lu->l_p);
 		lg = lu->l_p->lg_p;
@@ -641,13 +777,12 @@ struct faceuse	*fu2;
 
 			if (NMG_EXTENT_OVERLAP( fu2lg->min_pt, fu2lg->max_pt,
 			    lg->min_pt, lg->max_pt)) {
-				nmg_isect_3loop_3face(bs, lu, fu2);
-				break;
+				nmg_isect_plane_loop_face(bs, lu, fu2);
 			}
 		}
 	}
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_two_3faces(, fu1=x%x, fu2=x%x) RETURN ++++++++++\n\n", fu1, fu2);
+		rt_log("nmg_isect_two_planar_faces(, fu1=x%x, fu2=x%x) RETURN ++++++++++\n\n", fu1, fu2);
 }
 
 /*
@@ -711,6 +846,9 @@ CONST struct rt_tol	*tol;
 	point_t		min_pt;
 	int		status;
 
+	bs.magic = NMG_INTER_STRUCT_MAGIC;
+	bs.vert2d = (fastf_t *)NULL;
+
 	NMG_CK_FACEUSE(fu1);
 	f1 = fu1->f_p;
 	NMG_CK_FACE(f1);
@@ -746,9 +884,11 @@ CONST struct rt_tol	*tol;
 		break;
 	case -1:
 		/* co-planar */
-		rt_log("co-planar faces.  Skipping, for now.\n");
+		rt_log("co-planar faces.\n");
 		bs.coplanar = 1;
-		return;
+		nmg_isect2d_prep( &bs, f1, f2 );
+		rt_log("Skipping, for now.\n");
+		return;	/* XXX break */
 	case -2:
 		/* parallel and distinct, no intersection */
 		return;
@@ -776,7 +916,7 @@ CONST struct rt_tol	*tol;
     	    	nmg_pl_2fu( "Isect_faces%d.pl", fno++, fu1, fu2, 0 );
     	}
 
-	nmg_isect_two_3faces(&bs, fu1, fu2);
+	nmg_isect_two_planar_faces(&bs, fu1, fu2);
 
     	if (rt_g.NMG_debug & DEBUG_FCUT) {
 	    	rt_log("nmg_isect_two_generic_faces(fu1=x%x, fu2=x%x) vert_lists A:\n", fu1, fu2);
@@ -786,7 +926,7 @@ CONST struct rt_tol	*tol;
 
     	bs.l2 = &vert_list1;
     	bs.l1 = &vert_list2;
-	nmg_isect_two_3faces(&bs, fu2, fu1);
+	nmg_isect_two_planar_faces(&bs, fu2, fu1);
 
 	nmg_purge_unwanted_intersection_points(&vert_list1, fu2);
 	nmg_purge_unwanted_intersection_points(&vert_list2, fu1);
@@ -800,9 +940,7 @@ CONST struct rt_tol	*tol;
 
     	if (vert_list1.end == 0) {
     		/* there were no intersections */
-		(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
-		(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
-    		return;
+    		goto out;
     	}
 
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, bs.pt, bs.dir, tol);
@@ -826,14 +964,15 @@ CONST struct rt_tol	*tol;
     	    	nmg_pl_2fu( "After_mesh%d.pl", fno++, fu1, fu2, 1 );
     	}
 
-
-	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
-	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
-
 #if 0
 	show_broken_stuff((long *)fu1, (long **)NULL, 1, 0);
 	show_broken_stuff((long *)fu2, (long **)NULL, 1, 0);
 #endif
+
+out:
+	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
+	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
+	if(bs.vert2d)  rt_free( (char *)bs.vert2d, "vert2d" );
 }
 
 /*
