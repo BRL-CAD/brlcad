@@ -62,17 +62,31 @@ int argc; char **argv;
 	netfd = 0;
 	pcp = pkg_makeconn( netfd, pkg_switch, comm_error );
 #else
-	/*
-	 * Listen for PKG connections.
-	 * This is what we would do if we weren't being started
-	 * by inetd
-	 * XXXXX needs loop to restart afterwards, or something !
-	 */
-	if( (netfd = pkg_initserver("mfb", 0, comm_error)) < 0 )
-		exit(1);
-	pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
-	if( pcp == PKC_ERROR )
-		exit(2);
+	while(1)  {
+		int stat;
+		/*
+		 * Listen for PKG connections, no /etc/inetd
+		 */
+		if( (netfd = pkg_initserver("mfb", 0, comm_error)) < 0 )
+			continue;
+		pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
+		if( pcp == PKC_ERROR )
+			continue;
+		if( fork() == 0 )  {
+			/* Child */
+			if( fork() == 0 )  {
+				/* 2nd level child -- start work! */
+				break;
+			} else {
+				/* 1st level child -- vanish */
+				exit(1);
+			}
+		} else {
+			/* Original server daemon */
+			(void)close(netfd);
+			(void)wait( &stat );
+		}
+	}
 #endif
 
 #ifdef BSD
