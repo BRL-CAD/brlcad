@@ -63,7 +63,7 @@ struct rt_imexport vertex_desc[] = {
  *
  *  Usage:  polybinout file
  */
-void
+int
 f_polybinout( argc, argv )
 int	argc;
 char	**argv;
@@ -80,7 +80,7 @@ char	**argv;
 
 	if( (fp = fopen( argv[1], "w" )) == NULL )  {
 		perror(argv[1]);
-		return;
+		return CMD_BAD;
 	}
 
 	FOR_ALL_SOLIDS( sp )  {
@@ -166,4 +166,5 @@ char	**argv;
 		}
 	}
 	fclose( fp );
+	return CMD_OK;
 }
