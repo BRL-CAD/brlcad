@@ -740,7 +740,7 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
  *
  *  First, a database header object.
  *
- *  Second, an attribute-only object named "_GLOBAL" which
+ *  Second, create a specially named attribute-only object which
  *  contains the attributes "title=" and "units=".
  *
  * Returns -
@@ -776,7 +776,7 @@ double		local2mm;
 
 	db5_export_attributes( &attr, &avs );
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-		"_GLOBAL", &attr, NULL,
+		DB5_GLOBAL_OBJECT_NAME, &attr, NULL,
 		DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
 		DB5_ZZZ_UNCOMPRESSED);
 	bu_fwrite_external( fp, &out );
