@@ -104,6 +104,6 @@ char	**argv;
 	fclose( fp );
 	db_close( dbip );
 
-	fprintf(stderr, "%d objects failed to convert\n", errors);
+	fprintf(stderr, "%ld objects failed to convert\n", errors);
 	return 0;
 }
