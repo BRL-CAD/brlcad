@@ -1,18 +1,22 @@
 /*
-	SCCS id:	@(#) rle-fb.c	1.9
-	Last edit: 	2/4/86 at 16:38:20
-	Retrieved: 	8/13/86 at 03:17:36
-	SCCS archive:	/m/cad/fb_utils/RCS/s.rle-fb.c
-
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005
-			(301)278-6647 or AV-283-6647
+ *			R L E - F B . C
+ *
+ *  Display an RLE image on a framebuffer
+ *
+ *  Author -
+ *	Gary S. Moss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) rle-fb.c	1.9	last edit 2/4/86 at 16:38:20";
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -189,6 +193,7 @@ char	*argv[];
 			}
 		} /* end for */
 	} /* end block */
+	fb_close( fbp );
 	return	0;
 	}
 

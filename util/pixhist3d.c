@@ -61,6 +61,8 @@ main()
 	disp_array( rxg, 0, 0 );
 	disp_array( rxb, 256, 0 );
 	disp_array( bxg, 0, 256 );
+
+	fb_close( fbp );
 }
 
 /*

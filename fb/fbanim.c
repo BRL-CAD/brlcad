@@ -125,6 +125,7 @@ char **argv;
 				newframe(i);
 		}
 	}
+	fb_close( fbp );
 }
 
 newframe(i)
