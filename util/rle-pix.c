@@ -245,10 +245,14 @@ char ** argv;
 	bg_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * screen_width );
 
 	/* Fill in background buffer */
-	for( i=0; i<screen_xlen; i++ )  {
-		bg_buf[i][0] = rle_dflt_hdr.bg_color[0];
-		bg_buf[i][1] = rle_dflt_hdr.bg_color[1];
-		bg_buf[i][2] = rle_dflt_hdr.bg_color[2];
+	if (!rle_dflt_hdr.bg_color) {
+		(void)bzero(bg_buf, sizeof(RGBpixel) * screen_width);
+	} else {
+		for( i=0; i<screen_xlen; i++ )  {
+			bg_buf[i][0] = rle_dflt_hdr.bg_color[0];
+			bg_buf[i][1] = rle_dflt_hdr.bg_color[1];
+			bg_buf[i][2] = rle_dflt_hdr.bg_color[2];
+		}
 	}
 
 	for( i=0; i < ncolors; i++ )
