@@ -323,7 +323,6 @@ fastf_t	radius;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
 	rec.s.s_type = GENELL;
-	rec.s.s_cgtype = SPH;
 	NAMEMOVE(name,rec.s.s_name);
 
 	VSCALE( &rec.s.s_values[0], center, mk_conv2mm );
@@ -391,7 +390,6 @@ double	r1, r2;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
 	rec.s.s_type = TOR;
-	rec.s.s_cgtype = TOR;
 	NAMEMOVE(name,rec.s.s_name);
 
 	if( r1 <= 0 || r2 <= 0 || r1 < r2 )  {
@@ -459,7 +457,6 @@ fastf_t	radius;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
 	rec.s.s_type = GENTGC;
-	rec.s.s_cgtype = RCC;
 	NAMEMOVE(name, rec.s.s_name);
 
 	/* Units conversion */
@@ -501,7 +498,6 @@ vect_t	c, d;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
 	rec.s.s_type = GENTGC;
-	rec.s.s_cgtype = TGC;
 	NAMEMOVE(name, rec.s.s_name);
 
 	/* Really, converting from fastf_t to dbfloat_t here */
@@ -583,7 +579,6 @@ fastf_t	radtop;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
 	rec.s.s_type = GENTGC;
-	rec.s.s_cgtype = TRC;
 	NAMEMOVE(name, rec.s.s_name);
 
 	/* Units conversion */
