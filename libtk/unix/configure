@@ -2101,7 +2101,6 @@ if test "$ok" = "yes" -a "${SHLIB_SUFFIX}" != ""; then
     eval "TK_LIB_FILE=libtk${TCL_SHARED_LIB_SUFFIX}"
     MAKE_LIB="\${SHLIB_LD} -o ${TK_LIB_FILE} \${OBJS} \$(TK_LD_SEARCH_FLAGS) ${SHLIB_LD_LIBS}"
     RANLIB=":"
-    AFTER_MAKE="mv libtk.so libtk.so.11; ../sh/sharedliblink.sh libtk.so.11"
 else
     TK_SHARED_BUILD=0
     TK_SHLIB_CFLAGS=""
