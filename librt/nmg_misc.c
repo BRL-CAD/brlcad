@@ -2335,8 +2335,10 @@ struct rt_tol *tol;
 
 			/* make a face */
 			fu = nmg_cface( s , (struct vertex **)NMG_TBL_BASEADDR(&vert_tbl) , edges_used+1 );
-			if( nmg_fu_planeeqn( fu , tol ) )
+			if( nmg_loop_plane_area( RT_LIST_FIRST( loopuse , &fu->lu_hd ) , pl2 ) < 0.0 )
 				rt_log( "Failed planeeq\n" );
+			else
+				nmg_face_g( fu , pl2 );
 
 			/* add new face to the list of faces */
 			fu_list[fu_counter++] = fu;
