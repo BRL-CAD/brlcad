@@ -85,8 +85,6 @@ struct rt_i		*rtip;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
 	LOCAL vect_t	A, B, C;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-	LOCAL vect_t	work;
-	LOCAL vect_t	vbc;	/* used for bounding RPP */
 	LOCAL fastf_t	f;
 
 #define ELL_V	&vec[0*ELEMENTS_PER_VECT]
@@ -373,9 +371,6 @@ struct soltab *stp;
  *  u = azimuth
  *  v = elevation
  */
-/*double rt_inv2pi =  0.15915494309189533619;	/* 1/(pi*2) */
-/*double rt_invpi = 0.31830988618379067153;	/* 1/pi */
-
 void
 sph_uv( ap, stp, hitp, uvp )
 struct application *ap;
