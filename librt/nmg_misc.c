@@ -8262,3 +8262,121 @@ struct shell *s;
 
 	return( empty_shell );
 }
+
+int
+nmg_kill_zero_length_edgeuses( m )
+struct model *m;
+{
+	struct nmgregion *r;
+	int empty_model=0;
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_kill_zero_length_edgeuses( m=%x )\n", m );
+
+	NMG_CK_MODEL( m );
+
+	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+	while( RT_LIST_NOT_HEAD( r, &m->r_hd ) )
+	{
+		struct nmgregion *next_r;
+		struct shell *s;
+		int empty_region=0;
+
+		NMG_CK_REGION( r );
+
+		next_r = RT_LIST_PNEXT( nmgregion, &r->l );
+
+		s = RT_LIST_FIRST( shell, &r->s_hd );
+		while( RT_LIST_NOT_HEAD( s, &r->s_hd ) )
+		{
+			struct shell *next_s;
+			struct faceuse *fu;
+			int empty_shell=0;
+
+			NMG_CK_SHELL( s );
+
+			next_s = RT_LIST_PNEXT( shell, &s->l );
+
+			fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+			while( RT_LIST_NOT_HEAD( fu, &s->fu_hd ) )
+			{
+				struct loopuse *lu;
+				struct faceuse *next_fu;
+				int empty_fu=0;
+
+				NMG_CK_FACEUSE( fu );
+
+				next_fu = RT_LIST_PNEXT( faceuse, &fu->l );
+				if( next_fu == fu->fumate_p )
+					next_fu = RT_LIST_PNEXT( faceuse, &next_fu->l );
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				while( RT_LIST_NOT_HEAD( lu, &fu->lu_hd ) )
+				{
+					struct edgeuse *eu;
+					struct loopuse *next_lu;
+					int empty_loop=0;
+
+					NMG_CK_LOOPUSE( lu );
+
+					next_lu = RT_LIST_PNEXT( loopuse, &lu->l );
+
+					if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					{
+						lu = next_lu;
+						continue;
+					}
+
+					eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+					while( RT_LIST_NOT_HEAD( eu, &lu->down_hd ) )
+					{
+						struct edgeuse *next_eu;
+						struct edgeuse *next_eu_circ;
+
+						NMG_CK_EDGEUSE( eu );
+
+						next_eu = RT_LIST_PNEXT( edgeuse, &eu->l );
+						next_eu_circ = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+
+						if( eu->vu_p->v_p == next_eu_circ->vu_p->v_p )
+						{
+							/* found a zero length edgeuse */
+							if( nmg_keu( eu ) )
+								empty_loop = 1;
+						}
+						eu = next_eu;
+					}
+					if( empty_loop )
+					{
+						if( nmg_klu( lu ) )
+							empty_fu = 1;
+					}
+					lu = next_lu;
+				}
+				if( empty_fu )
+				{
+					if( nmg_kfu( fu ) )
+						empty_shell = 1;
+				}
+				fu = next_fu;
+			}
+			if( empty_shell )
+			{
+				if( nmg_ks( s ) )
+					empty_region = 1;
+			}
+			s = next_s;
+		}
+		if( empty_region )
+		{
+			if( nmg_kr( r ) )
+				empty_model = 1;
+		}
+		r = next_r;
+	}
+
+	if( empty_model )
+		return( 1 );
+	else
+		return( 0 );
+}
