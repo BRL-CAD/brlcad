@@ -288,7 +288,7 @@ struct mater_info *materp;
 			flag = 999;
 
 		/* The hard part */
-		i = proc_reg( recordp, xform, flag, regmemb, &vhead );
+		i = proc_region( recordp, xform, flag );
 
 		if( i < 0 )  {
 			/* error somwhere */
@@ -305,8 +305,14 @@ struct mater_info *materp;
 
 		/* if more member solids to be processed, no drawing was done
 		 */
-		if( i > 0 )
-			return(0);		/* NOP */
+		if( regmemb > 0 )
+			return(0);		/* NOP -- more to come */
+
+		i = finish_region( &vhead );
+		if( i < 0 )  {
+			(void)printf("error in finish_region()\n");
+			return(-1);		/* ERROR */
+		}
 		dashflag = 0;
 	}  else  {
 		/* Doing a normal solid */

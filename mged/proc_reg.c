@@ -62,11 +62,10 @@ static int	param_count = 0; 	/* location in m_param[] array */
  *	 0	region drawn
  *	 1	more solids follow, please re-invoke w/next solid.
  */
-proc_reg( recordp, xform, flag, more, vhead )
+proc_region( recordp, xform, flag )
 register union record *recordp;
 register mat_t xform;
-int flag, more;
-struct vlhead	*vhead;
+int flag;
 {
 	register int i;
 	register dbfloat_t *op;	/* Used for scanning vectors */
@@ -190,19 +189,22 @@ arbcom:		/* common area for arbs */
 		nmemb = param_count = memb_count = 0;
 		return(-1);	/* ERROR */
 	}
+	return(0);		/* OK */
+}
 
-	if(more == 0) {
-		/* this was the last member solid - draw the region */
-		nmemb = memb_count;
-		param_count = memb_count = 0;
-		if(nmemb == 0) {
-			nmemb = param_count = memb_count = 0;
-			return(-1);	/* ERROR */
-		}
-		dwreg(vhead);
-		return(0);	/* OK, region was drawn */
+int
+finish_region(vhead)
+struct vlhead	*vhead;
+{
+	/* last member solid has been seen, now draw the region */
+	nmemb = memb_count;
+	param_count = memb_count = 0;
+	if(nmemb == 0) {
+		nmemb = param_count = memb_count = 0;
+		return(-1);	/* ERROR */
 	}
-	return(1);		/* MORE solids follow */
+	dwreg(vhead);
+	return(0);		/* OK, region was drawn */
 }
 
 #define NO	0
