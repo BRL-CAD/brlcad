@@ -311,7 +311,9 @@ proc get_leaf { region tree } {
 #	element, then the first element in the returned list will be "/".
 proc get_comb_leaf { path } {
 	set index [string last "/" $path]
-	if { $index > -1 } {
+        if { $index == 0 } {
+	    set ret_list [list "/" [string range $path 1 end]]
+	} elseif { $index > 0 } {
 		set comb [string range $path 0 [expr $index - 1]]
 		set region [string range $path [incr index] end]
 		set ret_list [list $comb $region]
