@@ -1275,7 +1275,7 @@ do_rc()
 	rt_vls_init( &str );
 
 #define ENVRC	"MGED_RCFILE"
-#define RCFILE	".mgedrc"
+#define RCFILE	".gedrc"
 
 	if( (path = getenv(ENVRC)) != (char *)NULL ) {
 		if ((fp = fopen(path, "r")) != NULL ) {
@@ -1323,11 +1323,11 @@ do_rc()
 	if( bogus ) {
 	    rt_log("\nWARNING: The new format of the \"set\" command is:\n");
 	    rt_log("    set varname value\n");
-	    rt_log("If you are setting variables in your .mgedrc, you will ");
+	    rt_log("If you are setting variables in your %s, you will ", RCFILE);
 	    rt_log("need to change those\ncommands.\n\n");
 	}
 	if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
-	    rt_log("Error reading .mgedrc: %s\n", interp->result);
+	    rt_log("Error reading %s: %s\n", RCFILE, interp->result);
 	}
 #else
 	mged_source_file( fp );
