@@ -167,28 +167,31 @@ dir_build()  {
 	register long addr;
 
 	(void)lseek( objfd, 0L, 0 );
-	(void)read( objfd, (char *)&record, sizeof record );
+	if( read( objfd, (char *)&record, sizeof record ) != sizeof record ) {
+		(void)printf("dir_build:  database header read error\n");
+		finish(5);
+		return;
+	}
 	if( record.u_id != ID_IDENT )  {
-		(void)printf("Warning:  File is not a proper GED database\n");
+		(void)printf("ERROR:  %s looks nothing like a GED database\n",
+			filename);
+		finish(6);
+		return;
+	}
+	if( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
+		(void)printf("File is Version %s, Program is version %s\n",
+			record.i.i_version, ID_VERSION );
 		(void)printf("This database should be converted before further use.\n");
 		localunit = 0;
 		local2base = base2local = 1.0;
 	} else {
-		if( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
-			(void)printf("File is Version %s, Program is version %s\n",
-				record.i.i_version, ID_VERSION );
-			(void)printf("This database should be converted before further use.\n");
-			localunit = 0;
-			local2base = base2local = 1.0;
-		} else {
-			/* get the unit conversion factors */
-			localunit = record.i.i_units;
-			conversions( record.i.i_units );
-		}
-		/* save the title */
-		cur_title[0] = '\0';
-		(void)strcat(cur_title, record.i.i_title);
+		/* get the unit conversion factors */
+		localunit = record.i.i_units;
+		conversions( record.i.i_units );
 	}
+	/* save the title */
+	cur_title[0] = '\0';
+	(void)strcat(cur_title, record.i.i_title);
 
 	if( (fp = fopen( filename, "r" )) == NULL )  {
 		(void)printf("dir_build: fopen failed\n");
