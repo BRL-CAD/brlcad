@@ -35,6 +35,34 @@
 #
 ###
 
+PKG_NAME="$1"
+if [ "x$PKG_NAME" = "x" ] ; then
+    echo "Usage: $0 package_name"
+    echo "ERROR: must specify a package name"
+    exit 1
+fi
+
+TAR_NAME="${PKG_NAME}.bin.tar"
+if [ ! -f "${TAR_NAME}" ] ; then
+    echo "ERROR: unable to locate tape archive $TAR_NAME"
+    exit 1
+fi
+if [ ! -r "${TAR_NAME}" ] ; then
+    echo "ERROR: unable to read tape archive $TAR_NAME"
+    exit 1
+fi
+
+gzip "${TAR_NAME}"
+if [ $? != 0 ] ; then
+    echo "ERROR: unable to successfully gzip compress archive \"${TAR_NAME}\""
+    exit 1
+fi
+if [ ! -f "${TAR_NAME}.gz" ] ; then
+    echo "ERROR: compressed tape archive \"${TAR_NAME}.gz\" does not exist"
+    exit 1
+fi
+
+
 # Local Variables:
 # mode: sh
 # tab-width: 8
