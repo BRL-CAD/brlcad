@@ -23,6 +23,23 @@
 #ifndef EXTERNS_H_SEENYET
 #define EXTERNS_H_SEENYET
 
+/*
+ *  First, define all the routines found in BRL-CAD's libsysv
+ */
+#if USE_PROTOTYPES
+extern int	bsdselect( long readfds, int sec, int us );
+extern int	getopt( int argc, char **argv, char *optstr );
+extern char	*re_comp( char *s );
+extern int	re_exec( char *s );
+extern char	*strchr( CONST char *sp, int c );
+#else
+extern int	bsdselect();
+extern int	getopt();
+extern char	*re_comp();
+extern int	re_exec();
+extern char	*strchr();
+#endif
+
 #if (__STDC__ && !apollo) || (sgi && mips)
 	/* SGI has this, even though it isn't ANSI */
 #	include <stdlib.h>
