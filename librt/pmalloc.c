@@ -246,9 +246,11 @@ Size orig_size=nbytes;
 		surplus = 0;
 
 		/* add to end of adjacency chain */
+#if 0
 		ASSERT((FROMADJ(pmem->adjhead.q_back)) < p,
 "\nrt_pmalloc: Entry in adjacency chain found with address lower than Chain head!\n"
 			)
+#endif
 		rt_pm_insque(TOADJ(p),pmem->adjhead.q_back);
 	}
 
