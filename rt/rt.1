@@ -110,6 +110,15 @@ Model 2 displays the surface normals as colors, and is useful
 for examining curvature and surface orientation.
 Model 3 is a three-light diffuse-lighting model, and is intended
 for debugging.
+.TP
+.B \-P#
+Specify the number of processors (in a multi-processor system) to be
+used for this execution.  The default is 1.
+.TP
+.B \-B
+The ``benchmark'' flag.  When specified, all intentional random effects
+such as ray dither, color dither, etc, are turned off, to allow
+benchmark timing comparison and benchmark result comparison.
 .LP
 The
 .B rt

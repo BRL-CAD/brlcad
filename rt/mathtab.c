@@ -32,6 +32,20 @@ double halfpi =	1.570796326794896615;
 
 float *rand_ptr = rand_tab-1;
 
+/*
+ *			M A T H T A B _ C O N S T A N T
+ *
+ *  For benchmarking purposes, make the random number table predictable.
+ *  Setting to all zeros keeps dithered values at their original values.
+ */
+mathtab_constant()
+{
+	register int i;
+
+	for( i=0; i<RANDTABSIZE; i++ )
+		rand_tab[i] = 0.0;
+}
+
 double sin_scale = 325.949323452232;	/* SINTABSIZE / TWOPI */
 float sin_table[SINTABSIZE] = {
 0,		0.00306796,	0.00613588,	0.00920375,

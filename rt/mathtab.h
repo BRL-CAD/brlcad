@@ -30,16 +30,11 @@ extern float rand_tab[];
 extern double sin_scale;
 extern float sin_table[];
 
-#ifdef BENCHMARK
-#define rand_half()	0
-#define rand0to1()	0.5
-#else
 #define rand_half()	\
 	(++rand_ptr >= &rand_tab[RANDTABSIZE] ? \
 		*(rand_ptr = rand_tab) : *rand_ptr)
 
 #define rand0to1()	(rand_half()+0.5)
-#endif
 
 #define tab_sin(a)	(((a) > 0) ? \
 	( sin_table[(int)((0.5 + (a) * sin_scale))%SINTABSIZE] ) :\

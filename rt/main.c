@@ -93,7 +93,7 @@ register char **argv;
 {
 	register int c;
 
-	while( (c=getopt( argc, argv, "SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:" )) != EOF )  {
+	while( (c=getopt( argc, argv, "SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:B" )) != EOF )  {
 		switch( c )  {
 		case 'S':
 			stereo = 1;
@@ -167,6 +167,12 @@ register char **argv;
 				fprintf(stderr,"npsw out of range 1..%d\n", MAX_PSW);
 				npsw = 1;
 			}
+			break;
+		case 'B':
+			/*  Remove all intentional random effects
+			 *  (dither, etc) for benchmarking.
+			 */
+			mathtab_constant();
 			break;
 		default:		/* '?' */
 			fprintf(stderr,"unknown option %c\n", c);
