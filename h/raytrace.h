@@ -318,6 +318,7 @@ struct region  {
 	char		*reg_mfuncs;	/* User appl. funcs for material */
 	char		*reg_udata;	/* User appl. data for material */
 	short		reg_transmit;	/* flag:  material transmits light */
+	short		reg_instnum;	/* instance number, from d_uses */
 };
 #define REGION_NULL	((struct region *)0)
 
