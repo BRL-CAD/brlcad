@@ -96,7 +96,7 @@ struct bn_tol {
 #define BN_VECT_ARE_PERP(_dot,_tol)		\
 	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
-
+#define BN_APPROXEQUAL(_a, _b, _tol) (fabs( (_a) - (_b) ) <= _tol->dist)
 
 /*----------------------------------------------------------------------*/
 /* complex.c */
