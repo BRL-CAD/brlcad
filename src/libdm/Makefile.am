@@ -23,6 +23,7 @@ libdm_la_SOURCES = \
 	vers.c
 
 libdm_la_LDFLAGS = -version-info 19:1
+libdm_la_LIBADD = @PNG_LIBS@
 
 AM_CFLAGS = @X_CFLAGS@ -I$(top_srcdir)/h
 
