@@ -79,6 +79,7 @@ set -S2 "/bin/sh"
  ****************************************************************/
 
 /* #undef NFS */
+#define NFS	1
 
 /****************************************************************
  * B U I L D   O P T I O N S                                    *
@@ -129,7 +130,7 @@ set -S2 "/bin/sh"
 
 
 /* This is the version of Tcl/Tk distributed with BRL-CAD */
-#define	TCLTK_VERS	8.3
+#define	TCLTK_VERS	8.4
 
 /* This is the version of [incr Tcl] distributed with BRL-CAD */
 #define ITCL_VERS	3.2
@@ -325,7 +326,21 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
-#	define  CC_OPTS		GFLAG -xansi -DIRIX=6 
+
+
+/*	Set the following five defines if you want to compile the Unigraphics
+ *	to BRL-CAD converter and you have the unigraphics ugopen module installed.
+ *	This probably will not work if you are compiling 64 bit
+ */
+#if 0
+#	define	UGOPEN_DIR	/p/ugs180
+#	define	UGOPEN_LIB_DIR	UGOPEN_DIR/ugii/uglibs
+#	define	UGOPEN_LIBES	-L UGOPEN_LIB_DIR -lufun
+#	define	UGOPEN_INC	-I''UGOPEN_DIR/ugopen -I''UGOPEN_DIR/ugopenpp
+#	define	LIBUGOPEN_DEP	UGOPEN_LIB_DIR/libufun.so
+#endif
+
+#	define  CC_OPTS		GFLAG -xansi -DIRIX=6 UGOPEN_INC
 #	define	LGT_CONFIG	GFLAG
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
@@ -606,7 +621,7 @@ set -S2 "/bin/sh"
 #if defined(__CAKE__m4i65)
 /*	Silicon Graphics 4D, running IRIX64 6.5 (on a MIPS4 machine) */
 #	undef	sgi
-#	if 1
+#	if 0
 #		define M4I65_USE_64_BIT
 #	else
 /*		Old versions of MUVES can't use the 64-bit compiler */
@@ -679,6 +694,7 @@ set -S2 "/bin/sh"
 #		ifdef M4I65_USE_64_BIT
 #			define	BUILD_LIBRARY	ld -64 -mips4 -shared -o
 #			define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
+#			define	LDSHARED	CC -64 -shared
 #		else
 #			ifdef M4I65_USE_N32
 #				define	BUILD_LIBRARY	ld -n32 -mips4 -shared -multigot -o
@@ -699,7 +715,24 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #	endif
-#	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=65
+/*	Uncomment and set correctly the following defines if you want to compile the Unigraphics
+ *	to BRL-CAD converter and you have the unigraphics ugopen module installed.
+ *	This will not work if you are compiling 64 bit
+ */
+
+#	if defined( M4I65_USE_N32 ) && 0
+#		define	UGOPEN_DIR	/p/ugs180
+#		define	UGOPEN_LIB_DIR	UGOPEN_DIR/ugii/uglibs
+#		define	UGOPEN_LIBES	-L UGOPEN_LIB_DIR -lufun
+#		define	UGOPEN_INC	-I''UGOPEN_DIR/ugopen -I''UGOPEN_DIR/ugopenpp
+#		define	LIBUGOPEN_DEP	UGOPEN_LIB_DIR/libufun.so
+#		define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=65  UGOPEN_INC
+#	else
+#		define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=65
+#	endif
+
+
+
 #	define	LGT_CONFIG	GFLAG
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
@@ -908,12 +941,6 @@ set -S2 "/bin/sh"
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
-#	define	LIBZ_DIR	_use_system_z_
-#	define	LIBZ		-lz
-#	define	LIBZ_DEP	/**/
-/*#	define	LIBPNG_DIR	_use_system_png_*/
-/*#	define	LIBPNG		-lpng*/
-/*#	define	LIBPNG_DEP	*/
 #endif
 
 #if defined(CRAY1)
@@ -1010,13 +1037,12 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
 #	define	CC	gcc
-#	define	CC_DEFS -pipe -fPIC -Wall -pedantic
+#	define	CC_DEFS -pipe -fPIC -Wall
 /*			-std=iso9899:199409 */
 #	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
 #	else
-#		define	OPTIMIZER	-O -g
-#		define	PROFILER	-pg  /* gprof profiling -- build staticly to include libraries */
+#		define	OPTIMIZER	-g
 #	endif
 #	if BUILD_SHARED	
 /*		Shared library version support.  Requires ELF for Linux. */
@@ -1085,12 +1111,6 @@ set -S2 "/bin/sh"
 #		define	LIBTK		-ltk8.0
 #		define	LIBTK_DEP	/**/
 #	endif
-#	define	LIBZ_DIR	_use_system_z_
-#	define	LIBZ		-lz
-#	define	LIBZ_DEP	/**/
-#	define	LIBPNG_DIR	_use_system_png_
-#	define	LIBPNG		-lpng
-#	define	LIBPNG_DEP	/**/
 #endif
 
 #if defined(__CAKE__fbsd)
@@ -1162,12 +1182,6 @@ set -S2 "/bin/sh"
 #	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 /*	Use the system-provided libz and libpng */
-#	define	LIBZ_DIR	_use_system_z_
-#	define	LIBZ		-lz
-#	define	LIBZ_DEP	/**/
-#	define	LIBPNG_DIR	_use_system_png_
-#	define	LIBPNG		-L/usr/local/lib -lpng
-#	define	LIBPNG_DEP	/**/
 #endif
 
 #if defined(__CAKE__pmac)
@@ -1187,7 +1201,7 @@ set -S2 "/bin/sh"
 #	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3  -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations /* -faltivec */
 #	else
-#		define	OPTIMIZER	-g -pg -O -fno-common
+#		define	OPTIMIZER	-g -fno-common
 #	endif
 #	if BUILD_SHARED	
 /*		Shared library version support.  */
@@ -1200,11 +1214,12 @@ set -S2 "/bin/sh"
 /* #		define	BUILD_LIBRARY	cc -bundle -flat_namespace -undefined suppress -o */
 /*#		define	BUILD_LIBRARY	libtool -dynamic -o */
 /*#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR*/
-/*#		define  RANLIB	ranlib -c -s*/
+#		define  RANLIB	true
 #	else
 /*		Static linked executables */
 #		define	CC_DEFS -pipe -Wall
-#		define  RANLIB	ranlib -c
+#		define  RANLIB	ranlib
+#		define	STANDARD_LIBES -lm -lc -framework Foundation
 #	endif
 
 #	define	LIBTERMLIB	-lcurses
@@ -1247,7 +1262,7 @@ set -S2 "/bin/sh"
 #		endif
 #	endif
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 /*	Use the system-provided libz and libpng */
 #	define	LIBZ_DIR	_use_system_z_
@@ -1282,6 +1297,108 @@ set -S2 "/bin/sh"
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" -ldl \$"(XLIBDIR)" -lXi -lXext -lX11
+#endif
+
+#if defined(__CAKE__sp3)
+/*	IBM SP3 running AIX */
+#undef	sp3
+#	ifndef __sp3__ /* is not defined until we get to cc, so define for use in Cakefile */
+#	define __sp3__
+#	endif
+#	define	MTYPE	sp3
+#	define	HAS_TCP	1
+#	define	HAS_SYMLINKS 1
+#	define	BSD	44
+#	define	CC	cc_r
+#	define  USE_64 1
+#	if USE_64
+#		define CC_OPTS -D__sp3__ -qlanglvl=ansi -q64 -qstrict
+#	else
+#		define CC_OPTS -D__sp3__ -qlanglvl=ansi -qstrict
+#	endif
+#	define LD_OPTS -lc -lm
+#	define	GETHOST	hostname
+#	define	LIBRT_TIMER	timerunix
+#	if BUILD_OPTIMIZED
+#		define OPTIMIZER -O5
+#	endif
+#	if USE_64
+#		define GFLAG -q64
+#		define LDFLAGS -q64 LD_OPTS
+#	else
+#		define LDFLAGS LD_OPTS
+#	endif
+/*	BUILD_SHARED is not quite working yet, so set BUILD_SHARED to 0 */
+/*	to get a static build (but it's over 600 MBytes installed) */
+#	if BUILD_SHARED
+#		define	RESOLVE_LIBRARIES
+/* 		-fPIC ignored for AIX (all code is position independent) */
+/*		define	CC_DEFS	-fPIC	*/
+#		define	ARCH_SUF	so
+#		define	LIBVERS	../sh/sharedlibvers.sh
+/*#		define	BUILD_LIBRARY	cc -G -L LIBDIR:/usr/lib -o*/
+#		if USE_64
+#			define	LDSHARED	ldAix.sh /bin/ld -b64 -bhalt:4 -bM:SRE -bE:lib.exp -H512 -T512 -bnoentry -lc -lm
+#		else
+#			define	LDSHARED	ldAix.sh /bin/ld -b32 -bhalt:4 -bM:SRE -bE:lib.exp -H512 -T512 -bnoentry -lc -lm
+
+#		endif
+#		define	BUILD_LIBRARY	LDSHARED -o
+/*#		define	EXTRA_OBJ_NO_DEPENDENCY	-lX11 -lpthread -lm -lc */
+#		define	RANLIB	true
+#		define	STANDARD_LIBES	-Wl,-G -L LIBDIR:/usr/lib -lm -lc
+/* #		define	LD_OPTS		GFLAG	*/
+#	else
+#		define	ARCH_SUF	a
+#		define	LIBVERS	../sh/newvers.sh
+#		define	RANLIB	ranlib5.sh
+#		define	STANDARD_LIBES	-lc -lm -lpthreads 
+/* #		define	STANDARD_LIBES	-lm -lmalloc	*/
+/* #		define	LD_OPTS		GFLAG	*/
+#	endif
+#	define	XINCDIR	/usr/include/X11
+#	define	XLIBDIR	/usr/lib
+#	define  LIBTERMLIB      -lcurses
+#	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
+#	if BUILD_OPENGL
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR -DIF_OGL
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lGL
+#		define	LIBDM_OBJS	color query dm-X dm-ogl
+#		define	LIBDM_CONFIG	-DDM_X -DDM_OGL
+#		define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
+#		define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR -DDM_OGL
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -L''XLIBDIR -lXi -lXext
+#	else	/* just use X */
+#		if BUILD_XWINDOWS
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	LIBDM_OBJS	color query dm-X
+#		define	LIBDM_CONFIG	-DDM_X
+#		define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
+#		define	MGED_OBJS	doevent update dm-X dm-generic
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -L''XLIBDIR -lXi -lXext
+#		else	/* no X */
+#		define	LIBFB_OBJS	if_remote if_ab
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
+#		define	LIBFB_LIBES	LIBPKG
+#		define	LIBDM_OBJS	
+#		define	LIBDM_CONFIG	
+#		define	LIBDM_LIBES	LIBTCL LIBTCL_LIBES
+#		define	MGED_OBJS	
+#		define	MGED_CONFIG	
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES
+#		define	LIBTK		/**/
+#		define	LIBTK_DEP	/**/
+#		define	NO_LIBTK
+#		endif
+#	endif
+#	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
+#	define	LIBDM_SAMPLE_LIBES	\$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" -ldl \$"(XLIBDIR)" -lXi -lXext -lX11
 #endif
 
 #if defined(__CAKE__ibm)
@@ -2181,7 +2298,7 @@ set -S2 "/bin/sh"
 #endif
 
 #ifndef LIBVERS
-#	define	LIBVERS	echo
+#	define	LIBVERS	/bin/echo
 #endif
 
 /*
@@ -2375,7 +2492,7 @@ set -S2 "/bin/sh"
 #		define	LIBITK		-L''LIBITK_DIR -litk''ITCL_VERS
 #		define	LIBITK_DEP	[[LIBVERS LIBITK_DIR/libitk''ITCL_VERS.''ARCH_SUF]]
 #	endif
-#	if !defined(LIBITCL_DIR)
+#	if !defined(LIBITK_DIR)
 #		define	LIBITK_DIR	../libitcl''ITCL_VERS/itk
 #	endif
 #	define  LIBTCLCAD_DIR	../libtclcad

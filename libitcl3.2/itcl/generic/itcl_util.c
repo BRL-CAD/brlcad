@@ -29,7 +29,6 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 #include "itclInt.h"
-#include "tclCompile.h"
 
 /*
  *  POOL OF LIST ELEMENTS FOR LINKED LIST
@@ -52,7 +51,7 @@ typedef struct ItclPreservedData {
 } ItclPreservedData;
 
 static Tcl_HashTable *ItclPreservedList = NULL;
-
+TCL_DECLARE_MUTEX(ItclPreservedListLock)
 
 /*
  *  This structure is used to take a snapshot of the interpreter
@@ -556,6 +555,7 @@ Itcl_EventuallyFree(cdata, fproc)
      *  If a list has not yet been created to manage bits of
      *  preserved data, then create it.
      */
+    Tcl_MutexLock(&ItclPreservedListLock);
     if (!ItclPreservedList) {
         ItclPreservedList = (Tcl_HashTable*)ckalloc(
             (unsigned)sizeof(Tcl_HashTable)
@@ -585,12 +585,15 @@ Itcl_EventuallyFree(cdata, fproc)
      *  If the usage count is zero, then delete the data now.
      */
     if (chunk->usage == 0) {
-        chunk->usage = -1;  /* cannot preserve/release anymore */
+	chunk->usage = -1;  /* cannot preserve/release anymore */
 
-        (*chunk->fproc)((char*)chunk->data);
-        Tcl_DeleteHashEntry(entry);
-        ckfree((char*)chunk);
+	Tcl_MutexUnlock(&ItclPreservedListLock);
+	(*chunk->fproc)((char*)chunk->data);
+	Tcl_MutexLock(&ItclPreservedListLock);
+	Tcl_DeleteHashEntry(entry);
+	ckfree((char*)chunk);
     }
+    Tcl_MutexUnlock(&ItclPreservedListLock);
 }
 
 /*
@@ -624,6 +627,7 @@ Itcl_PreserveData(cdata)
      *  If a list has not yet been created to manage bits of
      *  preserved data, then create it.
      */
+    Tcl_MutexLock(&ItclPreservedListLock);
     if (!ItclPreservedList) {
         ItclPreservedList = (Tcl_HashTable*)ckalloc(
             (unsigned)sizeof(Tcl_HashTable)
@@ -657,6 +661,7 @@ Itcl_PreserveData(cdata)
     if (chunk->usage >= 0) {
         chunk->usage++;
     }
+    Tcl_MutexUnlock(&ItclPreservedListLock);
 }
 
 /*
@@ -688,10 +693,12 @@ Itcl_ReleaseData(cdata)
      *  decrement its usage count.
      */
     entry = NULL;
+    Tcl_MutexLock(&ItclPreservedListLock);
     if (ItclPreservedList) {
         entry = Tcl_FindHashEntry(ItclPreservedList,(char*)cdata);
     }
     if (!entry) {
+	Tcl_MutexUnlock(&ItclPreservedListLock);
         panic("Itcl_ReleaseData can't find reference for 0x%x", cdata);
     }
 
@@ -705,14 +712,17 @@ Itcl_ReleaseData(cdata)
     chunk = (ItclPreservedData*)Tcl_GetHashValue(entry);
     if (chunk->usage > 0 && --chunk->usage == 0) {
 
-        if (chunk->fproc) {
-            chunk->usage = -1;  /* cannot preserve/release anymore */
-            (*chunk->fproc)((char*)chunk->data);
+	if (chunk->fproc) {
+	    chunk->usage = -1;  /* cannot preserve/release anymore */
+	    Tcl_MutexUnlock(&ItclPreservedListLock);
+	    (*chunk->fproc)((char*)chunk->data);
+	    Tcl_MutexLock(&ItclPreservedListLock);
         }
 
         Tcl_DeleteHashEntry(entry);
         ckfree((char*)chunk);
     }
+    Tcl_MutexUnlock(&ItclPreservedListLock);
 }
 
 

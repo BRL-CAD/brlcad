@@ -16,6 +16,10 @@
 # See the file "license.terms" for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
+proc ::itcl::delete_helper { name args } {
+    ::itcl::delete object $name
+}
+
 # ----------------------------------------------------------------------
 #  USAGE:  local <className> <objName> ?<arg> <arg>...?
 #
@@ -31,7 +35,7 @@ proc ::itcl::local {class name args} {
     uplevel [list set itcl-local-$ptr $ptr]
     set cmd [uplevel namespace which -command $ptr]
     uplevel [list trace variable itcl-local-$ptr u \
-        "itcl::delete object $cmd; list"]
+        "::itcl::delete_helper $cmd"]
     return $ptr
 }
 

@@ -31,7 +31,6 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 #include "itclInt.h"
-#include "tclCompile.h"
 
 /*
  *  FORWARD DECLARATIONS
@@ -1339,7 +1338,7 @@ Itcl_GetMemberFuncUsage(mfunc, contextObj, objPtr)
     Tcl_Obj *objPtr;            /* returns: string showing usage */
 {
     int argcount;
-    char *name;
+    CONST char *name;
     CompiledLocal *arglist, *argPtr;
     Tcl_HashEntry *entry;
     ItclMemberFunc *mf;

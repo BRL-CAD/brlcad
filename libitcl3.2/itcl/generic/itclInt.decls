@@ -152,7 +152,7 @@ declare 34 generic {
         int objc, Tcl_Obj *CONST objv[])
 }
 declare 35 generic {
-    int Itcl_ClassCmdResolver (Tcl_Interp *interp, char* name, \
+    int Itcl_ClassCmdResolver (Tcl_Interp *interp, CONST char* name, \
         Tcl_Namespace *context, int flags, Tcl_Command *rPtr)
 }
 declare 36 generic {

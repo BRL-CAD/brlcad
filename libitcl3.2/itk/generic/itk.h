@@ -55,7 +55,7 @@
  * and procedure declarations, that occur below.
  */
 
-#ifndef RESOURCE_INCLUDED
+#ifndef RC_INVOKED
 
 #include "itclInt.h"
 #include "tk.h"
@@ -101,7 +101,7 @@ typedef struct ItkClassOption {
 
 #ifdef USE_ITK_STUBS
 
-char *		Itk_InitStubs _ANSI_ARGS_((Tcl_Interp *interp,
+CONST char *		Itk_InitStubs _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *version, int exact));
 #endif
 
@@ -112,5 +112,5 @@ char *		Itk_InitStubs _ANSI_ARGS_((Tcl_Interp *interp,
 # undef TCL_STORAGE_CLASS
 # define TCL_STORAGE_CLASS DLLIMPORT
 
-#endif /* RESOURCE INCLUDED */
+#endif /* RC_INVOKED */
 #endif /* ITK_H */

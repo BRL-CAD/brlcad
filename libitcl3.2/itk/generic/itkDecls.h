@@ -1,7 +1,7 @@
 /*
  * itkDecls.h --
  *
- *	Declarations of functions in the platform independent public Tcl API.
+ *	Declarations of functions in the platform independent public Itk API.
  *
  * Copyright (c) 1998-1999 by XXXX
  *
@@ -33,7 +33,8 @@
 
 /* 0 */
 EXTERN int		Itk_Init _ANSI_ARGS_((Tcl_Interp * interp));
-/* Slot 1 is reserved */
+/* 1 */
+EXTERN int		Itk_SafeInit _ANSI_ARGS_((Tcl_Interp * interp));
 /* 2 */
 EXTERN int		Itk_ConfigBodyCmd _ANSI_ARGS_((ClientData cdata, 
 				Tcl_Interp * interp, int objc, 
@@ -91,7 +92,7 @@ typedef struct ItkStubs {
     struct ItkStubHooks *hooks;
 
     int (*itk_Init) _ANSI_ARGS_((Tcl_Interp * interp)); /* 0 */
-    void *reserved1;
+    int (*itk_SafeInit) _ANSI_ARGS_((Tcl_Interp * interp)); /* 1 */
     int (*itk_ConfigBodyCmd) _ANSI_ARGS_((ClientData cdata, Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[])); /* 2 */
     int (*itk_UsualCmd) _ANSI_ARGS_((ClientData cdata, Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[])); /* 3 */
     int (*itk_ClassOptionDefineCmd) _ANSI_ARGS_((ClientData cdata, Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[])); /* 4 */
@@ -128,7 +129,10 @@ extern ItkStubs *itkStubsPtr;
 #define Itk_Init \
 	(itkStubsPtr->itk_Init) /* 0 */
 #endif
-/* Slot 1 is reserved */
+#ifndef Itk_SafeInit
+#define Itk_SafeInit \
+	(itkStubsPtr->itk_SafeInit) /* 1 */
+#endif
 #ifndef Itk_ConfigBodyCmd
 #define Itk_ConfigBodyCmd \
 	(itkStubsPtr->itk_ConfigBodyCmd) /* 2 */

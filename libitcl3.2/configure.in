@@ -18,7 +18,7 @@ AC_PREREQ(2.0)
 AC_PREFIX_DEFAULT(/usr/local)
 AC_PREFIX_PROGRAM(itclsh)
 
-AC_CONFIG_SUBDIRS(itcl itk iwidgets2.2.0 iwidgets3.0.0)
+AC_CONFIG_SUBDIRS(itcl itk)
 
 
 AC_OUTPUT(Makefile,

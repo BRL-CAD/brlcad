@@ -847,7 +847,9 @@ Itcl_BiInfoClassCmd(dummy, interp, objc, objv)
       contextNs = contextClass->namesp;
     }
 
-    if (contextNs->parentPtr == activeNs) {
+    if (!contextNs) {
+        name = activeNs->fullName;
+    } else if (contextNs->parentPtr == activeNs) {
         name = contextNs->name;
     } else {
         name = contextNs->fullName;

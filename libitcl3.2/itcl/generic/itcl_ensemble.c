@@ -91,11 +91,6 @@ Tcl_ObjType itclEnsInvocType = {
     SetEnsInvocFromAny                  /* setFromAnyProc */
 };
 
-/*
- *  Boolean flag indicating whether or not the "ensemble" object
- *  type has been registered with the Tcl compiler.
- */
-static int ensInitialized = 0;
 
 /*
  *  Forward declarations for the procedures used in this file.
@@ -166,9 +161,8 @@ int
 Itcl_EnsembleInit(interp)
     Tcl_Interp *interp;         /* interpreter being initialized */
 {
-    if (!ensInitialized) {
+    if (Tcl_GetObjType(itclEnsInvocType.name) == NULL) {
         Tcl_RegisterObjType(&itclEnsInvocType);
-        ensInitialized = 1;
     }
 
     Tcl_CreateObjCommand(interp, "::itcl::ensemble",
@@ -819,7 +813,11 @@ CreateEnsemble(interp, parentEnsData, ensName)
     cmdPtr->clientData = NULL;
     cmdPtr->deleteProc = DeleteEnsemble;
     cmdPtr->deleteData = cmdPtr->objClientData;
-    cmdPtr->deleted = 0;
+    #if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 4)
+      cmdPtr->deleted = 0;
+    #else
+      cmdPtr->flags = 0;
+    #endif
     cmdPtr->importRefPtr = NULL;
 
     ensPart->cmdPtr = cmdPtr;
@@ -896,7 +894,11 @@ AddEnsemblePart(interp, ensData, partName, usageInfo,
     cmdPtr->clientData = NULL;
     cmdPtr->deleteProc = deleteProc;
     cmdPtr->deleteData = (ClientData)clientData;
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 4)
     cmdPtr->deleted = 0;
+#else
+    cmdPtr->flags = 0;
+#endif
     cmdPtr->importRefPtr = NULL;
 
     ensPart->cmdPtr = cmdPtr;
