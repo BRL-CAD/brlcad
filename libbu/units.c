@@ -32,6 +32,7 @@ static CONST struct cvt_tab {
 	double	val;
 	char	name[32];
 } bu_units_tab[] = {
+	0.0,		"none",
 	1.0e-7,		"angstrom",
 	1.0e-6,		"nm",
 	1.0e-6,		"nanometer",
@@ -66,8 +67,9 @@ static CONST struct cvt_tab {
 	9.460730e+18,	"lightyear",
 	3.085678e+19,	"pc",
 	3.085678e+19,	"parsec",
-	0.0,		"",			/* LAST ENTRY */
+	0.0,		""			/* LAST ENTRY */
 };
+#define BU_UNITS_TABLE_SIZE (sizeof(bu_units_tab) / sizeof(struct cvt_tab) - 1)
 
 /*
  *			B U _ U N I T S _ C O N V E R S I O N
@@ -173,3 +175,25 @@ CONST char				*value;	/* string containing value */
 	/* reconvert with optional units */
 	*p = bu_mm_value(value);
 }
+
+#if 0
+CONST char *
+bu_units_id_string(id)
+	int id;
+{
+	if (id >= BU_UNITS_TABLE_SIZE)
+		return bu_units_tab[0].name; /* none */
+
+	return bu_units_tab[id].name;
+}
+
+int
+bu_units_id_valid(id)
+	int id;
+{
+	if (0 <= id && id < BU_UNITS_TABLE_SIZE)
+		return 1;	/* valid */
+
+	return 0;		/* not valid */
+}
+#endif
