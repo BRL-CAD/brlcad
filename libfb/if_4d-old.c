@@ -508,8 +508,7 @@ register FBIO	*ifp;
 		if ( MIPS(ifp)->mi_cmap_flag == FALSE )  {
 			n = xwidth;
 
-			while( n > 0 )
-			{
+			while( n > 0 )  {
 				amount = n > 30 ? 30 : n;
 
 				im_passthru( amount + amount + amount + 2);
@@ -517,8 +516,7 @@ register FBIO	*ifp;
 				im_outshort( amount );
 				
 				n -= amount;
-				while( --amount != -1 )
-				{
+				while( --amount != -1 )  {
 					im_outshort( *ip++ );
 					im_outshort( *ip++ );
 					im_outshort( *ip++ );
@@ -529,8 +527,7 @@ register FBIO	*ifp;
 		} else {
 			n = xwidth;
 
-			while( n > 0 )
-			{
+			while( n > 0 )  {
 				amount = n > 30 ? 30 : n;
 
 				im_passthru( amount + amount + amount + 2);
@@ -538,8 +535,7 @@ register FBIO	*ifp;
 				im_outshort( amount );
 				
 				n -= amount;
-				while( --amount != -1 )
-				{
+				while( --amount != -1 )  {
 					im_outshort( CMR(ifp)[*ip++] );
 					im_outshort( CMG(ifp)[*ip++] );
 					im_outshort( CMB(ifp)[*ip++] );
@@ -1180,14 +1176,12 @@ int	xmem, ymem;
 RGBpixel *pixelp;
 int	count;
 {
-	register short scan_count;	/* # pixels on this scanline */
-	int xscr, yscr;
-	register int i;
+	register scan_count;	/* # pixels on this scanline */
+	int	xscr, yscr;
 	register unsigned char *cp;
-	register unsigned char *op;
-	int ret;
-	int hfwidth = (ifp->if_width/MIPS(ifp)->mi_xzoom)/2;
-	int hfheight = (ifp->if_height/MIPS(ifp)->mi_yzoom)/2;
+	int	ret;
+	int	hfwidth = (ifp->if_width/MIPS(ifp)->mi_xzoom)/2;
+	int	hfheight = (ifp->if_height/MIPS(ifp)->mi_yzoom)/2;
 	im_setup;
 
 	if( qtest() )
@@ -1208,43 +1202,49 @@ int	count;
 		else
 			scan_count = count;
 
-		op = (unsigned char *)&ifp->if_mem[(ymem*MIPS(ifp)->mi_memwidth+xmem)*sizeof(RGBpixel)];
+		/* First, copy pixels on this scanline to "shared" memory */
+		memcpy( &ifp->if_mem[
+		    (ymem * MIPS(ifp)->mi_memwidth + xmem) * sizeof(RGBpixel) ],
+		    cp, scan_count*3 );
 
 		if( ifp->if_zoomflag )  {
-			register Scoord l, b, r, t;
-			int todraw = (ifp->if_width-xscr)/MIPS(ifp)->mi_xzoom;
-			int tocopy;
+			register Scoord	l, b, r, t;
+			register int	todraw;
 
+			todraw = (ifp->if_width-xscr)/MIPS(ifp)->mi_xzoom;
 			if( todraw > scan_count )  todraw = scan_count;
-			tocopy = scan_count - todraw;
 
 			l = xscr;
 			b = yscr;
 			t = b + MIPS(ifp)->mi_yzoom - 1;
-			for( i = todraw; i > 0; i-- )  {
-				if ( MIPS(ifp)->mi_cmap_flag == FALSE ) {
- 					RGBcolor( cp[RED], cp[GRN], cp[BLU]);
-				} else {
-				    	RGBcolor( CMR(ifp)[cp[RED]], 
-						CMG(ifp)[cp[GRN]], 
-						CMB(ifp)[cp[BLU]] );
+			if ( MIPS(ifp)->mi_cmap_flag == FALSE ) {
+				register int	i;
+				for( i = todraw; i > 0; i-- )  {
+					im_passcmd(4,FBCRGBcolor);
+					im_outshort(cp[RED]);
+					im_outshort(cp[GRN]);
+					im_last_outshort(cp[BLU]);
+
+					r = l + MIPS(ifp)->mi_xzoom - 1;
+					im_rectfs( l, b, r, t ); 
+					l = r + 1;
+					cp += 3;
 				}
-
-				r = l + MIPS(ifp)->mi_xzoom - 1;
-
-				im_rectfs( l, b, r, t ); 
-
-				l = r + 1;
-
-				*op++ = *cp++;
-				*op++ = *cp++;
-				*op++ = *cp++;
+			} else {
+				register int	i;
+				for( i = todraw; i > 0; i-- )  {
+					im_passcmd(4,FBCRGBcolor);
+					im_outshort(CMR(ifp)[cp[RED]]);
+					im_outshort(CMG(ifp)[cp[GRN]]);
+					im_last_outshort(CMB(ifp)[cp[BLU]]);
+					r = l + MIPS(ifp)->mi_xzoom - 1;
+					im_rectfs( l, b, r, t ); 
+					l = r + 1;
+					cp += 3;
+				}
 			}
-			for( i = tocopy; i > 0; i-- )  {
-				*op++ = *cp++;
-				*op++ = *cp++;
-				*op++ = *cp++;
-			}				
+			GEWAIT;
+			cp += (scan_count - todraw) * 3;
 			count -= scan_count;
 			ret += scan_count;
 			xmem = 0;
@@ -1254,16 +1254,14 @@ int	count;
 			yscr += MIPS(ifp)->mi_yzoom;
 			continue;
 		}
+
 		/* Non-zoomed case */
 		cmov2s( xscr, yscr );
-
-		if ( MIPS(ifp)->mi_cmap_flag == FALSE )  
-		{
-			long amount, n;
+		if ( MIPS(ifp)->mi_cmap_flag == FALSE )  {
+			register long amount, n;
 			n = scan_count;
 
-			while( n > 0 )
-			{
+			while( n > 0 )  {
 				amount = n > 30 ? 30 : n;
 
 				im_passthru( amount + amount + amount + 2);
@@ -1271,22 +1269,20 @@ int	count;
 				im_outshort( amount );
 				
 				n -= amount;
-				while( --amount != -1 )
-				{
-					im_outshort(  *op++ = *cp++ );
-					im_outshort(  *op++ = *cp++ );
-					im_outshort(  *op++ = *cp++ );
+				while( --amount != -1 )  {
+					im_outshort( cp[RED] );
+					im_outshort( cp[GRN] );
+					im_outshort( cp[BLU] );
+					cp += 3;
 				}
-				amount = amount;
 			}
 			im_freepipe;
 			GEWAIT;
 		} else {
-			long amount, n;
+			register long amount, n;
 			n = scan_count;
 
-			while( n > 0 )
-			{
+			while( n > 0 )  {
 				amount = n > 30 ? 30 : n;
 
 				im_passthru( amount + amount + amount + 2);
@@ -1294,13 +1290,12 @@ int	count;
 				im_outshort( amount );
 				
 				n -= amount;
-				while( --amount != -1 )
-				{
-					im_outshort(CMR(ifp)[*op++ = *cp++] );
-					im_outshort(CMG(ifp)[*op++ = *cp++] );
-					im_outshort(CMB(ifp)[*op++ = *cp++] );
+				while( --amount != -1 )  {
+					im_outshort(CMR(ifp)[cp[RED]] );
+					im_outshort(CMG(ifp)[cp[GRN]] );
+					im_outshort(CMB(ifp)[cp[BLU]] );
+					cp += 3;
 				}
-				amount = amount;
 			}
 			im_freepipe;
 			GEWAIT;
