@@ -22,6 +22,10 @@
 #include "fb.h"
 #endif
 
+#if ! defined(INCL_HM)
+#include "./hmenu.h"
+#endif
+
 /* Functions.								*/
 #if defined( BSD )
 extern char		*tmpnam(), *gets(), *strtok();
@@ -58,6 +62,7 @@ extern void		exit_Neatly();
 extern void		free();
 extern void		fb_Zoom_Window();
 extern void		grid_Rotate();
+extern void		init_Status();
 extern void		loc_Perror();
 extern void		perror();
 extern void		prnt_Event();
@@ -77,6 +82,7 @@ extern void		prnt3vec();
 extern void		render_Model();
 extern void		ring_Bell();
 extern void		rt_log();
+extern void		update_Screen();
 extern void		user_Interaction();
 
 /* Variables.								*/
@@ -88,6 +94,7 @@ extern RGBpixel		*ir_table;
 extern char		*CS, *DL;
 extern char		*beginptr;
 extern char		*ged_file;
+extern char		**template;
 
 extern char		err_file[];
 extern char		fb_file[];
@@ -146,11 +153,11 @@ extern int		ir_mapping;
 extern int		lgt_db_size;
 extern int		li;
 extern int		max_bounce;
-extern int		nprocessors;
 #ifdef PARALLEL
 extern int		npsw;
 #endif
 extern int		pix_buffered;
+extern int		query_region;
 extern int		report_overlaps;
 extern int		save_view_flag;
 extern int		tracking_cursor;
