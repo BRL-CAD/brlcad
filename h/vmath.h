@@ -831,6 +831,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5]) * _f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6]) * _f; }
 
+/* Test a vector for non-unit length */
+#define BN_VEC_NON_UNIT_LEN(_vec)	\
+	(fabs(MAGSQ(_vec)) < 0.0001 || fabs(fabs(MAGSQ(_vec))-1) < 0.0001)
+
 /* Compare two vectors for EXACT equality.  Use carefully. */
 #define VEQUAL(a,b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z])
 
