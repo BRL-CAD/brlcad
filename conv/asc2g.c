@@ -1262,6 +1262,7 @@ polyhbld()
 	long	nlines;
 	struct rt_pg_internal	*pg;
 	struct rt_db_internal	intern;
+	struct bn_tol	tol;
 
 	(void)strtok( buf, " " );	/* skip the ident character */
 	cp = strtok( NULL, " \n" );
@@ -1321,7 +1322,17 @@ polyhbld()
 	intern.idb_type = ID_POLY;
 	intern.idb_meth = &rt_functab[ID_POLY];
 	intern.idb_ptr = pg;
-	if( rt_pg_to_bot( &intern, &ofp->wdb_tol, &rt_uniresource ) < 0 )
+
+	/* this tolerance structure is only used for converting polysolids to BOT's
+	 * use zero distance to avoid losing any polysolid facets
+	 */
+        tol.magic = BN_TOL_MAGIC;
+        tol.dist = 0.0;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 1e-6;
+        tol.para = 1 - tol.perp;
+
+	if( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) < 0 )
 		bu_bomb("rt_pg_to_bot() failed\n");
 	/* The polysolid is freed by the converter */
 
