@@ -268,6 +268,45 @@ int	nwords;
 		out_mat( mat, stdout );
 		return(0);
 	}
+	if( strcmp( words[0], "rot_at" ) == 0 )  {
+		register int i;
+		mat_t	mat;
+		mat_t	mat1;
+		mat_t	mat2;
+		mat_t	mat3;
+
+		/* JG - Expects x, y, z, rx, ry, rz               */
+		/* Translation back to the origin by (-x,-y,-z)   */
+		/* is done first, then the rotation, and finally  */
+		/* back into the original position by (+x,+y,+z). */
+
+		if( nwords < 7 )  return(-1);
+
+		mat_idn( mat1 );
+		mat_idn( mat2 );
+		mat_idn( mat3 );
+
+		MAT_DELTAS( mat1, 
+		    -atof( words[1] ),
+		    -atof( words[2] ),
+		    -atof( words[3] ) );
+
+		mat_angles( mat2, 
+		    atof( words[4] ),
+		    atof( words[5] ),
+		    atof( words[6] ) );
+
+		MAT_DELTAS( mat3, 
+		    atof( words[1] ),
+		    atof( words[2] ),
+		    atof( words[3] ) );
+
+		mat_mul( mat, mat2, mat1 );
+		mat_mul2( mat3, mat );
+
+		out_mat( mat, stdout );
+		return(0);
+	}
 	if( strcmp( words[0], "orient" ) == 0 )  {
 		register int i;
 		mat_t	mat;
