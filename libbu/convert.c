@@ -60,16 +60,11 @@ typedef void *genptr_t;
 #define IND_ILL		3		/* PDP-11 */
 #define IND_CRAY	4
 
-#define DBL_IEEE	1
-#define DBL_OTHER	2
-
 #if defined(sun) || (defined(alliant) && ! defined(i860)) || \
 	defined(ardent) || \
 	defined(stellar) || defined(sparc) || defined(mips) || \
 	defined(pyr) || defined(apollo) || defined(aux)
-#	define DBL_FORMAT	DBL_IEEE
-#else
-#	define DBL_FORMAT	DBL_OTHER
+#	define DOUBLE_FORMAT_IS_IEEE	1
 #endif
 
 /* cv_cookie	Set's a bit vector after parsing an input string.
@@ -355,8 +350,9 @@ register int	cookie;
 
 	switch(fmt)  {
 	case CV_D:
-		if( DBL_FORMAT == DBL_IEEE )
+#		if DOUBLE_FORMAT_IS_IEEE
 			cookie |= CV_HOST_MASK;	/* host uses network fmt */
+#		endif
 		return cookie;
 	case CV_8:
 		return cookie | CV_HOST_MASK;	/* bytes already host format */
