@@ -33,12 +33,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "db.h"
 #include "wdb.h"
-#include "rtlist.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 
 
-mat_t	id_mat = {
+CONST mat_t	id_mat = {
 	1.0, 0.0, 0.0, 0.0,
 	0.0, 1.0, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
@@ -60,12 +59,44 @@ void	strsol_dump();
 
 union record	record;		/* GED database record */
 
+static char usage[] = "\
+Usage: g2asc < file.g > file.asc\n\
+   or  g2asc file.g file.asc\n\
+ Convert a binary BRL-CAD database to machine-independent ASCII form\n\
+";
+
+FILE	*ifp;
+FILE	*ofp;
+
 main(argc, argv)
 char **argv;
 {
+	ifp = stdin;
+	ofp = stdout;
+
+#if 0
+	if( argc == 2 || argc == 4 )
+		debug = 1;
+#endif
+
+	if( argc >= 3 ) {
+		ifp = fopen(argv[1],"r");
+		if( !ifp )  perror(argv[1]);
+		ofp = fopen(argv[2],"w");
+		if( !ofp )  perror(argv[2]);
+		if (ifp == NULL || ofp == NULL) {
+			(void)fprintf(stderr, "g2asc: can't open files.");
+			exit(1);
+		}
+	}
+	if (isatty(fileno(ifp))) {
+		(void)fprintf(stderr, usage);
+		exit(1);
+	}
+
 	/* Read database file */
-	while( fread( (char *)&record, sizeof record, 1, stdin ) == 1  &&
-	    !feof(stdin) )  {
+	while( fread( (char *)&record, sizeof record, 1, ifp ) == 1  &&
+	    !feof(ifp) )  {
 top:
 	    	if( argc > 1 )
 			(void)fprintf(stderr,"0%o (%c)\n", record.u_id, record.u_id);
@@ -139,7 +170,7 @@ top:
  *
  *  Take "ngran" granueles, and put them in memory.
  *  The first granule comes from the global extern "record",
- *  the remainder are read from stdin.
+ *  the remainder are read from ifp.
  */
 void
 get_ext( ep, ngran )
@@ -158,7 +189,7 @@ int			ngran;
 	if( ngran <= 1 )  return;
 
 	count = fread( ((char *)ep->ext_buf)+sizeof(union record),
-		sizeof(union record), ngran-1, stdin);
+		sizeof(union record), ngran-1, ifp);
 	if( count != ngran-1 )  {
 		fprintf(stderr,
 			"g2asc: get_ext:  wanted to read %d granules, got %d\n",
@@ -190,7 +221,7 @@ nmg_dump()
 		struct_count[j] = bu_glong( &record.nmg.N_structs[j*4] );
 
 	/* output some header info */
-	(void)printf( "%c %d %.16s %ld\n",
+	(void)fprintf(ofp,  "%c %d %.16s %ld\n",
 		record.nmg.N_id,	/* N */
 		record.nmg.N_version,	/* NMG version */
 		record.nmg.N_name,	/* solid name */
@@ -198,7 +229,7 @@ nmg_dump()
 
 	/* output the structure counts */
 	for( j=0 ; j<26 ; j++ )
-		(void)printf( " %ld" , struct_count[j] );
+		(void)fprintf(ofp,  " %ld" , struct_count[j] );
 	(void)putchar( '\n' );
 
 	/* dump the reminder in hex format */
@@ -206,9 +237,9 @@ nmg_dump()
 	{
 		char *cp;
 		/* Read the record */
-		if( !fread( (char *)&rec, sizeof record, 1, stdin ) )
+		if( !fread( (char *)&rec, sizeof record, 1, ifp ) )
 		{
-			(void)fprintf( stderr , "Error reading nmg granules\n" );
+			(void)fprintf(stderr , "Error reading nmg granules\n" );
 			exit( -1 );
 		}
 		cp = (char *)&rec;
@@ -217,7 +248,7 @@ nmg_dump()
 		for( k=0 ; k<sizeof( union record)/32 ; k++ )
 		{
 			for( j=0 ; j<32 ; j++ )
-				printf( "%02x" , *cp++ );	 /* two hex digits per byte */
+				fprintf(ofp,  "%02x" , *cp++ );	 /* two hex digits per byte */
 			putchar( '\n' );
 		}
 	}
@@ -232,10 +263,10 @@ strsol_dump()	/* print out strsol solid info */
 	/* get all the strsol granules */
 	rec[0] = record;	/* struct copy the current record */
 
-	/* read the rest from stdin */
-	if( !fread( (char *)&rec[1], sizeof record, DB_SS_NGRAN-1, stdin ) )
+	/* read the rest from ifp */
+	if( !fread( (char *)&rec[1], sizeof record, DB_SS_NGRAN-1, ifp ) )
 	{
-		(void)fprintf( stderr , "Error reading strsol granules\n" );
+		(void)fprintf(stderr , "Error reading strsol granules\n" );
 		exit( -1 );
 	}
 
@@ -244,7 +275,7 @@ strsol_dump()	/* print out strsol solid info */
 	cp += (sizeof( union record ) - 1);
 	*cp = '\0';
 
-	(void)printf( "%c %.16s %.16s %s\n",
+	(void)fprintf(ofp,  "%c %.16s %.16s %s\n",
 		rec[0].ss.ss_id,	/* s */
 		rec[0].ss.ss_keyword,	/* "ebm", "vol", or ??? */
 		rec[0].ss.ss_name,	/* solid name */
@@ -255,12 +286,12 @@ strsol_dump()	/* print out strsol solid info */
 void
 idendump()	/* Print out Ident record information */
 {
-	(void)printf( "%c %d %.6s\n",
+	(void)fprintf(ofp,  "%c %d %.6s\n",
 		record.i.i_id,			/* I */
 		record.i.i_units,		/* units */
 		CH(record.i.i_version)		/* version */
 	);
-	(void)printf( "%.72s\n",
+	(void)fprintf(ofp,  "%.72s\n",
 		CH(record.i.i_title)	/* title or description */
 	);
 
@@ -275,9 +306,9 @@ idendump()	/* Print out Ident record information */
 void
 polyhead()	/* Print out Polyhead record information */
 {
-	(void)printf("%c ", record.p.p_id );		/* P */
-	(void)printf("%.16s", name(record.p.p_name) );	/* unique name */
-	(void)printf("\n");			/* Terminate w/ a newline */
+	(void)fprintf(ofp, "%c ", record.p.p_id );		/* P */
+	(void)fprintf(ofp, "%.16s", name(record.p.p_name) );	/* unique name */
+	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 }
 
 void
@@ -285,19 +316,19 @@ polydata()	/* Print out Polydata record information */
 {
 	register int i, j;
 
-	(void)printf("%c ", record.q.q_id );		/* Q */
-	(void)printf("%d ", record.q.q_count );		/* # of vertices <= 5 */
+	(void)fprintf(ofp, "%c ", record.q.q_id );		/* Q */
+	(void)fprintf(ofp, "%d ", record.q.q_count );		/* # of vertices <= 5 */
 	for( i = 0; i < 5; i++ )  {			/* [5][3] vertices */
 		for( j = 0; j < 3; j++ ) {
-			(void)printf("%.12e ", record.q.q_verts[i][j] );
+			(void)fprintf(ofp, "%.12e ", record.q.q_verts[i][j] );
 		}
 	}
 	for( i = 0; i < 5; i++ )  {			/* [5][3] normals */
 		for( j = 0; j < 3; j++ ) {
-			(void)printf("%.12e ", record.q.q_norms[i][j] );
+			(void)fprintf(ofp, "%.12e ", record.q.q_norms[i][j] );
 		}
 	}
-	(void)printf("\n");			/* Terminate w/ a newline */
+	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 }
 
 void
@@ -305,13 +336,13 @@ soldump()	/* Print out Solid record information */
 {
 	register int i;
 
-	(void)printf("%c ", record.s.s_id );	/* S */
-	(void)printf("%d ", record.s.s_type );	/* GED primitive type */
-	(void)printf("%.16s ", name(record.s.s_name) );	/* unique name */
-	(void)printf("%d ", record.s.s_cgtype );/* COMGEOM solid type */
+	(void)fprintf(ofp, "%c ", record.s.s_id );	/* S */
+	(void)fprintf(ofp, "%d ", record.s.s_type );	/* GED primitive type */
+	(void)fprintf(ofp, "%.16s ", name(record.s.s_name) );	/* unique name */
+	(void)fprintf(ofp, "%d ", record.s.s_cgtype );/* COMGEOM solid type */
 	for( i = 0; i < 24; i++ )
-		(void)printf("%.12e ", record.s.s_values[i] ); /* parameters */
-	(void)printf("\n");			/* Terminate w/ a newline */
+		(void)fprintf(ofp, "%.12e ", record.s.s_values[i] ); /* parameters */
+	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 }
 
 void
@@ -337,12 +368,12 @@ fgp_dump()
 	plt = (struct rt_fgp_internal *)intern.idb_ptr;
 	RT_FGP_CK_MAGIC(plt);
 
-	(void)printf("%c ", DBID_FGP );	/* f */
-	(void)printf("%.16s ", name );	/* unique name */
-	(void)printf("%.16s ", plt->referenced_solid );	/* name of referenced solid */
-	(void)printf("%.12e ", plt->thickness );	/* fgp thickness */
-	(void)printf("%d ", plt->mode );		/* fgp mode */
-	(void)printf("\n");			/* Terminate w/ a newline */
+	(void)fprintf(ofp, "%c ", DBID_FGP );	/* f */
+	(void)fprintf(ofp, "%.16s ", name );	/* unique name */
+	(void)fprintf(ofp, "%.16s ", plt->referenced_solid );	/* name of referenced solid */
+	(void)fprintf(ofp, "%.12e ", plt->thickness );	/* fgp thickness */
+	(void)fprintf(ofp, "%d ", plt->mode );		/* fgp mode */
+	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 
 	rt_fgp_ifree( &intern );
 	db_free_external( &ext );
@@ -371,33 +402,33 @@ bot_dump()
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
 
-	(void)printf("%c ", DBID_BOT );	/* t */
-	(void)printf("%.16s ", name );	/* unique name */
-	(void)printf("%d ", bot->mode );
-	(void)printf("%d ", bot->orientation );
-	(void)printf("%d ", bot->error_mode );
-	(void)printf("%d ", bot->num_vertices );
-	(void)printf("%d ", bot->num_faces );
-	(void)printf("\n");
+	(void)fprintf(ofp, "%c ", DBID_BOT );	/* t */
+	(void)fprintf(ofp, "%.16s ", name );	/* unique name */
+	(void)fprintf(ofp, "%d ", bot->mode );
+	(void)fprintf(ofp, "%d ", bot->orientation );
+	(void)fprintf(ofp, "%d ", bot->error_mode );
+	(void)fprintf(ofp, "%d ", bot->num_vertices );
+	(void)fprintf(ofp, "%d ", bot->num_faces );
+	(void)fprintf(ofp, "\n");
 
 	for( i=0 ; i<bot->num_vertices ; i++ )
-		printf( "	%d: %26.20e %26.20e %26.20e\n", i, V3ARGS( &bot->vertices[i*3] ) );
+		fprintf(ofp,  "	%d: %26.20e %26.20e %26.20e\n", i, V3ARGS( &bot->vertices[i*3] ) );
 	if( bot->mode == RT_BOT_PLATE )
 	{
 		struct bu_vls vls;
 
 		for( i=0 ; i<bot->num_faces ; i++ )
-			printf( "	%d: %d %d %d %26.20e\n", i, V3ARGS( &bot->faces[i*3] ),
+			fprintf(ofp,  "	%d: %d %d %d %26.20e\n", i, V3ARGS( &bot->faces[i*3] ),
 				bot->thickness[i] );
 		bu_vls_init( &vls );
 		bu_bitv_to_hex( &vls, bot->face_mode );
-		printf( "	%s\n", bu_vls_addr( &vls ) );
+		fprintf(ofp,  "	%s\n", bu_vls_addr( &vls ) );
 		bu_vls_free( &vls );
 	}
 	else
 	{
 		for( i=0 ; i<bot->num_faces ; i++ )
-			printf( "	%d: %d %d %d\n", i, V3ARGS( &bot->faces[i*3] ) );
+			fprintf(ofp,  "	%d: %d %d %d\n", i, V3ARGS( &bot->faces[i*3] ) );
 	}
 
 	rt_bot_ifree( &intern );
@@ -446,15 +477,15 @@ struct bu_list	*headp;
 
 	struct wdb_pipept	*sp;
 
-	printf("%c %.16s\n", DBID_PIPE, name);
+	fprintf(ofp, "%c %.16s\n", DBID_PIPE, name);
 
 	/* print parameters for each point: one point per line */
 
 	for( BU_LIST_FOR( sp, wdb_pipept, headp ) )  {
-			printf( "%26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
+			fprintf(ofp,  "%26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 				sp->pp_id, sp->pp_od, sp->pp_bendradius, V3ARGS( sp->pp_coord ) );
 	}
-	printf( "END_PIPE %s\n", name );
+	fprintf(ofp,  "END_PIPE %s\n", name );
 }
 
 /*
@@ -495,7 +526,7 @@ particle_dump()
 		exit(-1);
 	}
 
-	printf("%c %.16s %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
+	fprintf(ofp, "%c %.16s %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 		record.part.p_id, record.part.p_name,
 		part->part_V[X],
 		part->part_V[Y],
@@ -536,9 +567,9 @@ arbn_dump()
 	arbn = (struct rt_arbn_internal *)intern.idb_ptr;
 	RT_ARBN_CK_MAGIC(arbn);
 
-	fprintf(stdout, "%c %.16s %d\n", 'n', name, arbn->neqn);
+	fprintf(ofp, "%c %.16s %d\n", 'n', name, arbn->neqn);
 	for( i = 0; i < arbn->neqn; i++ )  {
-		printf("n %26.20e %20.26e %26.20e %26.20e\n",
+		fprintf(ofp, "n %26.20e %20.26e %26.20e %26.20e\n",
 			arbn->eqn[i][X], arbn->eqn[i][Y],
 			arbn->eqn[i][Z], arbn->eqn[i][3]);
 	}
@@ -580,8 +611,8 @@ combdump()	/* Print out Combination record information */
 	mcount = 0;
 	while(1)  {
 		BU_GETSTRUCT( mp, mchain );
-		if( fread( (char *)&mp->r, sizeof(mp->r), 1, stdin ) != 1
-		    || feof( stdin ) )
+		if( fread( (char *)&mp->r, sizeof(mp->r), 1, ifp ) != 1
+		    || feof( ifp ) )
 			break;
 		if( mp->r.u_id != ID_MEMB )  {
 			ret_mp = mp;	/* Handle it later */
@@ -594,23 +625,23 @@ combdump()	/* Print out Combination record information */
 	/*
 	 *  Output the combination
 	 */
-	(void)printf("%c ", record.c.c_id );		/* C */
+	(void)fprintf(ofp, "%c ", record.c.c_id );		/* C */
 	if( record.c.c_flags == 'R' )			/* set region flag */
-		(void)printf("Y ");			/* Y if `R' */
+		(void)fprintf(ofp, "Y ");			/* Y if `R' */
 	else
-		(void)printf("N ");			/* N if ` ' */
-	(void)printf("%.16s ", name(record.c.c_name) );	/* unique name */
-	(void)printf("%d ", record.c.c_regionid );	/* region ID code */
-	(void)printf("%d ", record.c.c_aircode );	/* air space code */
-	(void)printf("%d ", mcount );       		/* DEPRECATED: # of members */
+		(void)fprintf(ofp, "N ");			/* N if ` ' */
+	(void)fprintf(ofp, "%.16s ", name(record.c.c_name) );	/* unique name */
+	(void)fprintf(ofp, "%d ", record.c.c_regionid );	/* region ID code */
+	(void)fprintf(ofp, "%d ", record.c.c_aircode );	/* air space code */
+	(void)fprintf(ofp, "%d ", mcount );       		/* DEPRECATED: # of members */
 #if 1
-	(void)printf("%d ", 0 );			/* DEPRECATED: COMGEOM region # */
+	(void)fprintf(ofp, "%d ", 0 );			/* DEPRECATED: COMGEOM region # */
 #else
-	(void)printf("%d ", record.c.c_num );           /* DEPRECATED: COMGEOM region # */
+	(void)fprintf(ofp, "%d ", record.c.c_num );           /* DEPRECATED: COMGEOM region # */
 #endif
-	(void)printf("%d ", record.c.c_material );	/* material code */
-	(void)printf("%d ", record.c.c_los );		/* equiv. LOS est. */
-	(void)printf("%d %d %d %d ",
+	(void)fprintf(ofp, "%d ", record.c.c_material );	/* material code */
+	(void)fprintf(ofp, "%d ", record.c.c_los );		/* equiv. LOS est. */
+	(void)fprintf(ofp, "%d %d %d %d ",
 		record.c.c_override ? 1 : 0,
 		record.c.c_rgb[0],
 		record.c.c_rgb[1],
@@ -621,22 +652,22 @@ combdump()	/* Print out Combination record information */
 		if( record.c.c_matparm[0] )
 			m2 = 1;
 	}
-	printf("%d %d ", m1, m2 );
+	fprintf(ofp, "%d %d ", m1, m2 );
 	switch( record.c.c_inherit )  {
 	case DB_INH_HIGHER:
-		printf("%d ", DB_INH_HIGHER );
+		fprintf(ofp, "%d ", DB_INH_HIGHER );
 		break;
 	default:
 	case DB_INH_LOWER:
-		printf("%d ", DB_INH_LOWER );
+		fprintf(ofp, "%d ", DB_INH_LOWER );
 		break;
 	}
-	(void)printf("\n");			/* Terminate w/ a newline */
+	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 
 	if( m1 )
-		(void)printf("%.32s\n", CH(record.c.c_matname) );
+		(void)fprintf(ofp, "%.32s\n", CH(record.c.c_matname) );
 	if( m2 )
-		(void)printf("%.60s\n", CH(record.c.c_matparm) );
+		(void)fprintf(ofp, "%.60s\n", CH(record.c.c_matparm) );
 
 	/*
 	 *  Output the member records now
@@ -667,13 +698,13 @@ union record	*rp;
 {
 	register int i;
 
-	(void)printf("%c ", rp->M.m_id );		/* M */
-	(void)printf("%c ", rp->M.m_relation );	/* Boolean oper. */
-	(void)printf("%.16s ", name(rp->M.m_instname) );	/* referred-to obj. */
+	(void)fprintf(ofp, "%c ", rp->M.m_id );		/* M */
+	(void)fprintf(ofp, "%c ", rp->M.m_relation );	/* Boolean oper. */
+	(void)fprintf(ofp, "%.16s ", name(rp->M.m_instname) );	/* referred-to obj. */
 	for( i = 0; i < 16; i++ )			/* homogeneous transform matrix */
-		(void)printf("%.12e ", rp->M.m_mat[i] );
-	(void)printf("%d ", 0 );			/* was COMGEOM solid # */
-	(void)printf("\n");				/* Terminate w/ nl */
+		(void)fprintf(ofp, "%.12e ", rp->M.m_mat[i] );
+	(void)fprintf(ofp, "%d ", 0 );			/* was COMGEOM solid # */
+	(void)fprintf(ofp, "\n");				/* Terminate w/ nl */
 }
 
 void
@@ -682,20 +713,20 @@ arsadump()	/* Print out ARS record information */
 	register int i;
 	register int length;	/* Keep track of number of ARS B records */
 
-	(void)printf("%c ", record.a.a_id );	/* A */
-	(void)printf("%d ", record.a.a_type );	/* primitive type */
-	(void)printf("%.16s ", name(record.a.a_name) );	/* unique name */
-	(void)printf("%d ", record.a.a_m );	/* # of curves */
-	(void)printf("%d ", record.a.a_n );	/* # of points per curve */
-	(void)printf("%d ", record.a.a_curlen );/* # of granules per curve */
-	(void)printf("%d ", record.a.a_totlen );/* # of granules for ARS */
-	(void)printf("%.12e ", record.a.a_xmax );	/* max x coordinate */
-	(void)printf("%.12e ", record.a.a_xmin );	/* min x coordinate */
-	(void)printf("%.12e ", record.a.a_ymax );	/* max y coordinate */
-	(void)printf("%.12e ", record.a.a_ymin );	/* min y coordinate */
-	(void)printf("%.12e ", record.a.a_zmax );	/* max z coordinate */
-	(void)printf("%.12e ", record.a.a_zmin );	/* min z coordinate */
-	(void)printf("\n");			/* Terminate w/ a newline */
+	(void)fprintf(ofp, "%c ", record.a.a_id );	/* A */
+	(void)fprintf(ofp, "%d ", record.a.a_type );	/* primitive type */
+	(void)fprintf(ofp, "%.16s ", name(record.a.a_name) );	/* unique name */
+	(void)fprintf(ofp, "%d ", record.a.a_m );	/* # of curves */
+	(void)fprintf(ofp, "%d ", record.a.a_n );	/* # of points per curve */
+	(void)fprintf(ofp, "%d ", record.a.a_curlen );/* # of granules per curve */
+	(void)fprintf(ofp, "%d ", record.a.a_totlen );/* # of granules for ARS */
+	(void)fprintf(ofp, "%.12e ", record.a.a_xmax );	/* max x coordinate */
+	(void)fprintf(ofp, "%.12e ", record.a.a_xmin );	/* min x coordinate */
+	(void)fprintf(ofp, "%.12e ", record.a.a_ymax );	/* max y coordinate */
+	(void)fprintf(ofp, "%.12e ", record.a.a_ymin );	/* min y coordinate */
+	(void)fprintf(ofp, "%.12e ", record.a.a_zmax );	/* max z coordinate */
+	(void)fprintf(ofp, "%.12e ", record.a.a_zmin );	/* min z coordinate */
+	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 			
 	length = (int)record.a.a_totlen;	/* Get # of ARS B records */
 
@@ -710,21 +741,21 @@ arsbdump()	/* Print out ARS B record information */
 	register int i;
 	
 	/* Read in a member record for processing */
-	(void)fread( (char *)&record, sizeof record, 1, stdin );
-	(void)printf("%c ", record.b.b_id );		/* B */
-	(void)printf("%d ", record.b.b_type );		/* primitive type */
-	(void)printf("%d ", record.b.b_n );		/* current curve # */
-	(void)printf("%d ", record.b.b_ngranule );	/* current granule */
+	(void)fread( (char *)&record, sizeof record, 1, ifp );
+	(void)fprintf(ofp, "%c ", record.b.b_id );		/* B */
+	(void)fprintf(ofp, "%d ", record.b.b_type );		/* primitive type */
+	(void)fprintf(ofp, "%d ", record.b.b_n );		/* current curve # */
+	(void)fprintf(ofp, "%d ", record.b.b_ngranule );	/* current granule */
 	for( i = 0; i < 24; i++ )  {			/* [8*3] vectors */
-		(void)printf("%.12e ", record.b.b_values[i] );
+		(void)fprintf(ofp, "%.12e ", record.b.b_values[i] );
 	}
-	(void)printf("\n");			/* Terminate w/ a newline */
+	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 }
 
 void
 materdump()	/* Print out material description record information */
 {
-	(void)printf( "%c %d %d %d %d %d %d\n",
+	(void)fprintf(ofp,  "%c %d %d %d %d %d %d\n",
 		record.md.md_id,			/* m */
 		record.md.md_flags,			/* UNUSED */
 		record.md.md_low,	/* low end of region IDs affected */
@@ -737,7 +768,7 @@ materdump()	/* Print out material description record information */
 void
 bspldump()	/* Print out B-spline solid description record information */
 {
-	(void)printf( "%c %.16s %d %.12e\n",
+	(void)fprintf(ofp,  "%c %.16s %d %.12e\n",
 		record.B.B_id,		/* b */
 		name(record.B.B_name),	/* unique name */
 		record.B.B_nsurf,	/* # of surfaces in this solid */
@@ -752,7 +783,7 @@ bsurfdump()	/* Print d-spline surface description record information */
 	int nbytes, count;
 	float *fp;
 
-	(void)printf( "%c %d %d %d %d %d %d %d %d %d\n",
+	(void)fprintf(ofp,  "%c %d %d %d %d %d %d %d %d %d\n",
 		record.d.d_id,		/* D */
 		record.d.d_order[0],	/* order of u and v directions */
 		record.d.d_order[1],	/* order of u and v directions */
@@ -787,7 +818,7 @@ bsurfdump()	/* Print d-spline surface description record information */
 	}
 	fp = vp;
 	(void)bzero( (char *)fp, nbytes );
-	count = fread( (char *)fp, 1, nbytes, stdin );
+	count = fread( (char *)fp, 1, nbytes, ifp );
 	if( count != nbytes )  {
 		(void)fprintf(stderr, "g2asc: spline knot read failure\n");
 		exit(1);
@@ -795,7 +826,7 @@ bsurfdump()	/* Print d-spline surface description record information */
 	/* Print the knot vector information */
 	count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
 	for( i = 0; i < count; i++ )  {
-		(void)printf("%.12e\n", *vp++);
+		(void)fprintf(ofp, "%.12e\n", *vp++);
 	}
 	/* Free the knot data memory */
 	(void)free( (char *)fp );
@@ -808,7 +839,7 @@ bsurfdump()	/* Print d-spline surface description record information */
 	}
 	fp = vp;
 	(void)bzero( (char *)fp, nbytes );
-	count = fread( (char *)fp, 1, nbytes, stdin );
+	count = fread( (char *)fp, 1, nbytes, ifp );
 	if( count != nbytes )  {
 		(void)fprintf(stderr, "g2asc: control mesh read failure\n");
 		exit(1);
@@ -817,7 +848,7 @@ bsurfdump()	/* Print d-spline surface description record information */
 	count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
 		record.d.d_geom_type;
 	for( i = 0; i < count; i++ )  {
-		(void)printf("%.12e\n", *vp++);
+		(void)fprintf(ofp, "%.12e\n", *vp++);
 	}
 	/* Free the control mesh memory */
 	(void)free( (char *)fp );
