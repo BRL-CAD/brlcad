@@ -158,10 +158,11 @@ unsigned char *get_color (unsigned char *ucp, unsigned long x)
  *	The function returns the number of possible problems it
  *	discovers.
  */
-static int rpt_hit (ap, ph)
+static int rpt_hit (ap, ph, dummy)
 
 struct application	*ap;
 struct partition	*ph;
+struct seg		*dummy;
 
 {
     struct partition	*pp;
@@ -446,10 +447,19 @@ struct partition	*ph;
  *
  *	Does nothing.  Returns 1.
  */
-static int no_op (ap, ph)
+static int no_op_hit (ap, ph, dummy)
 
 struct application	*ap;
 struct partition	*ph;
+struct seg		*dummy;
+
+{
+    return (1);
+}
+
+static int no_op_miss (ap)
+
+struct application	*ap;
 
 {
     return (1);
@@ -725,12 +735,12 @@ char	**argv;
     /* Initialize the application structure */
     ap.a_hit =
 	(control.glc_what_to_report & ~G_LINT_OVLP) ? rpt_hit
-						    : no_op;
-    ap.a_miss = no_op;
+						    : no_op_hit;
+    ap.a_miss = no_op_miss;
     ap.a_resource = RESOURCE_NULL;
     ap.a_overlap =
 	(control.glc_what_to_report & G_LINT_OVLP) ? rpt_ovlp
-						   : no_op;
+						   : no_op_hit;
     ap.a_onehit = 0;		/* Don't stop at first partition */
     ap.a_uptr = (char *) &control;
     ap.a_rt_i = rtip;
