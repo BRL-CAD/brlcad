@@ -270,7 +270,7 @@ long		offset;
 
 	RT_CK_DBI(dbip);
 	if(rt_g.debug&DEBUG_DB)  {
-		bu_log("db_write(dbip=x%x, addr=x%x, count=%d., offset=%d.)\n",
+		bu_log("db_write(dbip=x%x, addr=x%x, count=%d., offset=x%x)\n",
 			dbip, addr, count, offset );
 	}
 	if( dbip->dbi_read_only )  {
@@ -296,7 +296,7 @@ long		offset;
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	if( got != count )  {
 		perror("db_write");
-		bu_log("db_write(%s):  write error.  Wanted %d, got %d bytes.  File forced read-only.\n",
+		bu_log("db_write(%s):  write error.  Wanted %d, got %d bytes.\nFile forced read-only.\n",
 			dbip->dbi_filename, count, got );
 		dbip->dbi_read_only = 1;
 		return(-1);
