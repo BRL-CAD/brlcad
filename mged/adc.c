@@ -97,7 +97,6 @@ adc_grid_To_adc_view()
 static void
 adc_view_To_adc_grid()
 {
-  fastf_t f;
   point_t model_pt;
   point_t view_pt;
 
@@ -125,7 +124,6 @@ static void
 calc_adc_a1()
 {
   if(adc_state->adc_anchor_a1){
-    fastf_t angle;
     fastf_t dx, dy;
     point_t view_pt;
 
@@ -144,7 +142,6 @@ static void
 calc_adc_a2()
 {
   if(adc_state->adc_anchor_a2){
-    fastf_t angle;
     fastf_t dx, dy;
     point_t view_pt;
 
@@ -258,9 +255,7 @@ adcursor()
   fastf_t x3, y3;
   fastf_t x4, y4;
   fastf_t d1, d2;
-  fastf_t t1, t2;
   fastf_t angle1, angle2;
-  long idxy[2];
 
   calc_adc_pos();
   calc_adc_a1();
@@ -402,10 +397,7 @@ char	**argv;
   struct bu_vls vls;
   char *parameter;
   char **argp = argv;
-  point_t view_pt;
-  point_t model_pt;
   point_t user_pt;		/* Value(s) provided by user */
-  point_t diff;
   point_t scaled_pos;
   int incr_flag;
   int i;

@@ -2597,7 +2597,7 @@ dsp_scale(dsp, idx)
 struct rt_dsp_internal *dsp;
 int idx;
 {
-	mat_t m, mat, mat2, scalemat;
+	mat_t m, scalemat;
 
 	RT_DSP_CK_MAGIC(dsp);
 
@@ -2646,7 +2646,6 @@ sedit()
 	static vect_t work;
 	register int i;
 	static int pnt5;		/* ECMD_ARB_SETUP_ROTFACE, special arb7 case */
-	static int j;
 	static float la, lb, lc, ld;	/* TGC: length of vectors */
 	mat_t	mat;
 	mat_t	mat1;
@@ -3146,8 +3145,6 @@ sedit()
 
 			if( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
 			{
-				int ret_tcl;
-
 				/* setting thickness for all faces */
 				if( !inpara )
 					break;
@@ -3211,8 +3208,6 @@ sedit()
 
 			if( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
 			{
-				int ret_tcl;
-
 				/* setting mode for all faces */
 				(void)Tcl_VarEval( interp, "cad_dialog ", ".bot_err ",
 					"$mged_gui(mged,screen) ", "{Setting Mode for All Faces} ",
@@ -4344,7 +4339,6 @@ sedit()
 		{
 			struct rt_pipe_internal *pipe=
 				(struct rt_pipe_internal *)es_int.idb_ptr;
-			struct wdb_pipept *next;
 			point_t new_pt;
 
 			RT_PIPE_CK_MAGIC( pipe );
@@ -5510,7 +5504,6 @@ CONST vect_t	mousevec;
   		int i, hits, ret_tcl;
   		int v1, v2, v3;
   		point_t pt1, pt2, pt3;
-  		fastf_t dist;
 		struct bu_vls vls;
 
   		RT_BOT_CK_MAGIC( bot );
@@ -6917,7 +6910,6 @@ init_objedit_guts()
 {
 	int			id;
 	char			*strp="";
-	struct menu_item        *mip;
 
 	/* for safety sake */
 	es_menu = 0;
@@ -7024,8 +7016,6 @@ void
 oedit_accept()
 {
 	register struct solid *sp;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 	/* matrices used to accept editing done from a depth
 	 *	>= 2 from the top of the illuminated path
 	 */
@@ -7195,8 +7185,6 @@ void
 sedit_accept()
 {
 	struct directory	*dp;
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
 
 	if(dbip == DBI_NULL)
 	  return;
@@ -7293,9 +7281,6 @@ sedit_accept()
 void
 sedit_reject()
 {
-	register struct dm_list *dmlp;
-	register struct dm_list *save_dmlp;
-
 	if( not_state( ST_S_EDIT, "Solid edit reject" ) )  return;
 
 	if( sedraw > 0)
@@ -7970,7 +7955,6 @@ struct rt_db_internal	*ip;
 		{
 			register struct rt_pipe_internal *pipe =
 				(struct rt_pipe_internal *)es_int.idb_ptr;
-			struct wdb_pipept *next;
 
 			RT_PIPE_CK_MAGIC( pipe );
 
