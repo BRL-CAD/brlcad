@@ -27,9 +27,6 @@ Recent Bugs
 
 * you can't run a make benchmark unless you're compiling in place
 
-* benchmark may report environment garbage into the summary file if
-  the benchmark run is aborted.
-
 * X11 framebuffer often fails to display on certain middle bit depth
   displays. (e.g. 15 or 16 bit depth)
 
