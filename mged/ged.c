@@ -310,6 +310,7 @@ int
 event_check( non_blocking )
 int	non_blocking;
 {
+	fd_set		input;
 	vect_t		knobvec;	/* knob slew */
 	int		i;
 	int		len;
@@ -322,17 +323,19 @@ int	non_blocking;
 	 * either on the device peripherals, or a command has been
 	 * entered on the keyboard, unless the non-blocking flag is set.
 	 */
-#if 0
-/* XXX Need to send extra FD down, instead */
-/* XXX Compensated for by hack in dm-4d.c for now */
-	/* XXX ultra hack */
-	if(extrapoll_fd)  {
-		i = dmp->dmr_input( extrapoll_fd, 1 );	/* don't block */
-		if( i && extrapoll_hook )  (*extrapoll_hook)();
+	FD_ZERO( &input );
+	if( extrapoll_fd )  FD_SET( extrapoll_fd, &input );
+	FD_SET( fileno(stdin), &input );
+
+	/* await an input event. Bits will be set in 'input' as appropriate */
+	dmp->dmr_input( &input, non_blocking );
+
+	if(extrapoll_fd && FD_ISSET(extrapoll_fd,&input) && extrapoll_hook)  {
+		(*extrapoll_hook)();
 	}
-#endif
-	i = dmp->dmr_input( 0, non_blocking );	/* fd 0 for cmds */
-	if( i )  {
+
+	/* Acquire anything present on stdin */
+	if( FD_ISSET( fileno(stdin), &input ) )  {
 		struct rt_vls	str;
 		rt_vls_init(&str);
 

@@ -48,6 +48,7 @@ is different from the factory default.
 
 
 #include <stdio.h>
+#include <sys/time.h>		/* for struct timeval */
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -62,7 +63,7 @@ is different from the factory default.
 #define TEKBOUND	1000.0	/* Max magnification in Rot matrix */
 int	T49_open();
 void	T49_close();
-int	T49_input();
+MGED_EXTERN(void	T49_input, (fd_set *input, int noblock) );
 void	T49_prolog(), T49_epilog();
 void	T49_normal(), T49_newrot();
 void	T49_update();
@@ -466,46 +467,51 @@ t49get_cursor()
  * has occured on either the command stream, or a device event has
  * occured, unless "noblock" is set.
  *
- * The GED "generic input" structure is filled in.
- *
- * Returns:
- *	0 if no command waiting to be read,
- *	1 if command is waiting to be read.
+ * Implicit Return -
+ *	If any files are ready for input, their bits will be set in 'input'.
+ *	Otherwise, 'input' will be all zeros.
  */
-T49_input( cmd_fd, noblock )
+void
+T49_input( input, noblock )
+fd_set		*input;
+int		noblock;
 {
-	static long readfds;
+	struct timeval	tv;
+	int		width;
+	int		cnt;
+
+	if( (width = getdtablesize()) <= 0 )
+		width = 32;
+
+	if( second_fd )  FD_SET( second_fd, input );
 
 	/*
-	 * Check for input on the keyboard or on the polled registers.
+	 * Check for input on the keyboard
 	 *
 	 * Suspend execution until either
 	 *  1)  User types a full line
-	 *  2)  A change in peripheral status occurs
-	 *  3)  The timelimit on SELECT has expired
+	 *  2)  The timelimit on SELECT has expired
 	 *
 	 * If a RATE operation is in progress (zoom, rotate, slew)
-	 * in which the peripherals (rate setting) may not be changed,
-	 * but we still have to update the display,
+	 * in which we still have to update the display,
 	 * do not suspend execution.
 	 */
-	readfds = (1<<cmd_fd);
-	if( second_fd )
-		readfds |= (1<<second_fd);
-
-	if( noblock )
-		readfds = bsdselect( readfds, 0, 0 );
-	else
-		readfds = bsdselect( readfds, 30*60, 0 );
+	tv.tv_sec = 0;
+	if( noblock )  {
+		tv.tv_usec = 0;
+	}  else  {
+		/* 1/20th second */
+		tv.tv_usec = 50000;
+	}
+	cnt = select( width, input, (fd_set *)0,  (fd_set *)0, &tv );
+	if( cnt < 0 )  {
+		perror("dm-tek/select");
+	}
 
 	dm_values.dv_penpress = 0;
-	if( second_fd && readfds & (1<<second_fd) )
-		t49get_cursor();
 
-	if( readfds & (1<<cmd_fd) )
-		return(1);		/* command awaits */
-	else
-		return(0);		/* just peripheral stuff */
+	if( second_fd && FD_ISSET(second_fd, input) )
+		t49get_cursor();
 }
 
 /* 

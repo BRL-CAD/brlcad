@@ -23,13 +23,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <sys/time.h>		/* for struct timeval */
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
-#include "externs.h"
 #include "./solid.h"
 #include <X11/X.h>
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
@@ -46,7 +47,7 @@ static int	xsetup();
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
 int	X_open();
 void	X_close();
-int	X_input();
+MGED_EXTERN(void	X_input, (fd_set *input, int noblock) );
 void	X_prolog(), X_epilog();
 void	X_normal(), X_newrot();
 void	X_update();
@@ -412,14 +413,27 @@ int dashed;
  * has occured on either the command stream,
  * unless "noblock" is set.
  *
- * Returns:
- *	0 if no command waiting to be read,
- *	1 if command is waiting to be read.
+ *
+ * Implicit Return -
+ *	If any files are ready for input, their bits will be set in 'input'.
+ *	Otherwise, 'input' will be all zeros.
  */
-X_input( cmd_fd, noblock )
+void
+X_input( input, noblock )
+fd_set		*input;
+int		noblock;
 {
-	register long readfds;
+	struct timeval	tv;
+	fd_set		files;
+	int		width;
+	int		cnt;
 	register int	i;
+
+	if( (width = getdtablesize()) <= 0 )
+		width = 32;
+
+	files = *input;		/* save, for restore on each loop */
+	FD_SET( dpy->fd, &files );	/* check X fd too */
 
 	/*
 	 * Check for input on the keyboard, mouse, or window system.
@@ -434,34 +448,44 @@ X_input( cmd_fd, noblock )
 	 * do not suspend execution.
 	 */
 	do {
-		readfds = 0;
+		*input = files;
 		i = XPending( dpy );
 		if( i > 0 ) {
 			/* Don't select if we have some input! */
+			FD_ZERO( input );
+			FD_SET( dpy->fd, input );
+			goto input_waiting;
+			/* Any other input will be found on next call */
+		}
+
+		tv.tv_sec = 0;
+		if( noblock )  {
+			tv.tv_usec = 0;
+		}  else  {
+			/* 1/20th second */
+			tv.tv_usec = 50000;
+		}
+		cnt = select( width, input, (fd_set *)0,  (fd_set *)0, &tv );
+		if( cnt < 0 )  {
+			perror("dm-X.c/select");
 			break;
 		}
-		readfds = (1<<cmd_fd) | (1<<dpy->fd);
-		if( noblock ) {
-			readfds = bsdselect( readfds, 0, 0 );
-		} else {
-			readfds = bsdselect( readfds, 30*60, 0 );
+		if( noblock )  break;
+		for( i=0; i<width; i++ )  {
+			if( FD_ISSET(i, input) )  goto input_waiting;
 		}
-		if( readfds != 0 )
-			break;
 	} while( noblock == 0 );
 
+input_waiting:
 	/* "rest" state */
 	dm_values.dv_buttonpress = 0;
 	dm_values.dv_flagadc = 0;
 	dm_values.dv_penpress = 0;
 
-	if( (i != 0) || (readfds & (1<<dpy->fd)) )
+	if( FD_ISSET( dpy->fd, input ) )
 		checkevents();
 
-	if( readfds & (1<<cmd_fd) )
-		return(1);		/* command awaits */
-	else
-		return(0);		/* just peripheral stuff */
+	return;
 }
 
 /* 

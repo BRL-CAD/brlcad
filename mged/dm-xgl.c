@@ -196,7 +196,7 @@ extern struct device_values	dm_values;	/* values read from devices */
 
 int		XGL_open();
 void		XGL_close();
-int		XGL_input();
+MGED_EXTERN(void	XGL_input, (fd_set *input, int noblock) );
 void		XGL_prolog(), XGL_epilog();
 void		XGL_normal(), XGL_newrot();
 void		XGL_update();
@@ -740,13 +740,14 @@ int dashed;
  * has occured on either the command stream,
  * unless "noblock" is set.
  *
- * Returns:
- *	0 if no command waiting to be read,
- *	1 if command is waiting to be read.
+ * Implicit Return -
+ *	If any files are ready for input, their bits will be set in 'input'.
+ *	Otherwise, 'input' will be all zeros.
  */
-int
-XGL_input(input_fd, noblock)
-int	input_fd, noblock;
+void
+XGL_input( input, noblock )
+fd_set		*input;
+int		noblock;
 {
 	static int		once = 0;
 	struct itimerval	timeout;
@@ -801,7 +802,10 @@ int	input_fd, noblock;
 		++busy;
 	}
 	XFlush(display);
-	return(input_poll(input_fd));
+
+	/* XXX This won't work well, do select() here! */
+	(void)input_poll(fileno(stdin));
+	return;
 }
 
 /* 

@@ -24,16 +24,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <sys/time.h>		/* for struct timeval */
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
-#include "db.h"
 #include "raytrace.h"
 #include "./ged.h"
-#include "externs.h"
 #include "./solid.h"
 #include "./dm.h"
 
-static int	Nu_input();	/* Quite necessary */
+MGED_EXTERN(void	Nu_input, (fd_set *input, int noblock) );
 static void	Nu_void();
 static int	Nu_int0();
 static unsigned Nu_unsign();
@@ -218,13 +218,39 @@ static int Nu_int0() { return(0); }
 static void Nu_void() { ; }
 static unsigned Nu_unsign() { return(0); }
 
-/* ARGSUSED */
-static int
-Nu_input( fd, noblock )
+/*
+ *
+ * Implicit Return -
+ *	If any files are ready for input, their bits will be set in 'input'.
+ *	Otherwise, 'input' will be all zeros.
+ */
+void
+Nu_input( input, noblock )
+fd_set		*input;
+int		noblock;
 {
-	if( isatty(fd) )
-		(void)bsdselect( 1<<fd, 9999999, 0 );
-	return(1);
+	struct timeval	tv;
+	int		width;
+	int		cnt;
+
+	if( !isatty(fileno(stdin)) )  return;	/* input awaits! */
+
+	if( (width = getdtablesize()) <= 0 )
+		width = 32;
+
+	if( noblock )  {
+		/* 1/20th second */
+		tv.tv_sec = 0;
+		tv.tv_usec = 50000;
+	} else {
+		/* Wait a VERY long time for user to type something */
+		tv.tv_sec = 9999999;
+		tv.tv_usec = 0;
+	}
+	cnt = select( width, input, (fd_set *)0,  (fd_set *)0, &tv );
+	if( cnt < 0 )  {
+		perror("Nu_input/select()");
+	}
 }
 
 /*

@@ -28,13 +28,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <sys/time.h>		/* for struct timeval */
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
-#include "externs.h"
 #include "./solid.h"
 
 /* Display Manager package interface */
@@ -42,7 +43,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
 int	Plot_open();
 void	Plot_close();
-int	Plot_input();
+MGED_EXTERN(void	Plot_input, (fd_set *input, int noblock) );
 void	Plot_prolog(), Plot_epilog();
 void	Plot_normal(), Plot_newrot();
 void	Plot_update();
@@ -324,16 +325,24 @@ int dashed;
  * has occured on either the command stream,
  * unless "noblock" is set.
  *
- * Returns:
- *	0 if no command waiting to be read,
- *	1 if command is waiting to be read.
+ * Implicit Return -
+ *	If any files are ready for input, their bits will be set in 'input'.
+ *	Otherwise, 'input' will be all zeros.
  */
-Plot_input( cmd_fd, noblock )
+void
+Plot_input( input, noblock )
+fd_set		*input;
+int		noblock;
 {
-	register long readfds;
+	struct timeval	tv;
+	int		width;
+	int		cnt;
+
+	if( (width = getdtablesize()) <= 0 )
+		width = 32;
 
 	/*
-	 * Check for input on the keyboard or on the polled registers.
+	 * Check for input on the keyboard
 	 *
 	 * Suspend execution until either
 	 *  1)  User types a full line
@@ -343,18 +352,19 @@ Plot_input( cmd_fd, noblock )
 	 * in which we still have to update the display,
 	 * do not suspend execution.
 	 */
-	readfds = (1<<cmd_fd);
-	if( noblock )
-		readfds = bsdselect( readfds, 0, 0 );
-	else
-		readfds = bsdselect( readfds, 30*60, 0 );	/* 30 mins */
+	tv.tv_sec = 0;
+	if( noblock )  {
+		tv.tv_usec = 0;
+	}  else  {
+		/* 1/20th second */
+		tv.tv_usec = 50000;
+	}
+	cnt = select( width, input, (fd_set *)0,  (fd_set *)0, &tv );
+	if( cnt < 0 )  {
+		perror("dm/select");
+	}
 
 	dm_values.dv_penpress = 0;
-
-	if( readfds & (1<<cmd_fd) )
-		return(1);		/* command awaits */
-	else
-		return(0);		/* just peripheral stuff */
 }
 
 /* 

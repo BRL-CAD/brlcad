@@ -31,7 +31,7 @@ typedef unsigned char u_char;
 
 int	HP_open();
 void	HP_close();
-int	HP_input();
+MGED_EXTERN(void	HP_input, (fd_set *input, int noblock) );
 void	HP_prolog(), HP_epilog();
 void	HP_normal(), HP_newrot();
 void	HP_update();
@@ -256,11 +256,19 @@ int dashed;
  * indicating no command awaits. Otherwise, put character back on stdin and
  * return indicating that a command does await.
  *
+ * Implicit Return -
+ *	If any files are ready for input, their bits will be set in 'input'.
+ *	Otherwise, 'input' will be all zeros.
+ *
  */
-
-HP_input( cmd_fd, noblock )
+void
+HP_input( input, noblock )
+fd_set		*input;
+int		noblock;
 {
 	int ch;
+
+	/* XXX No select() processing here */
 
 	if ((ch = getchar()) == '\033') {	/* hp2397a penpress */
 	    switch ((ch = getchar())) {		/* what kind of penpress ? */
@@ -281,17 +289,20 @@ HP_input( cmd_fd, noblock )
 	    scanf("%d,%d",&curx,&cury);
 	    dm_values.dv_xpen     = XHP_TO_GED(curx);
 	    dm_values.dv_ypen     = YHP_TO_GED(cury);
-	    return(0);
+		FD_CLR( fileno(stdin), input );
+		return;
 	} else if (ch == '+') {		/* hp2627a penpress */
 	    scanf("%d,%d",&curx,&cury);
 	    dm_values.dv_xpen     = XHP_TO_GED(curx);
 	    dm_values.dv_ypen     = YHP_TO_GED(cury);
 	    dm_values.dv_penpress = DV_PICK;
-	    return(0);
+		FD_CLR( fileno(stdin), input );
+		return;
 	} else {			/* Not a penpress so */
 	    ungetc(ch,stdin);		/* put character back on stdin. */
 	    dm_values.dv_penpress = 0;
-	    return(1);
+		FD_SET( fileno(stdin), input );
+		return;
 	}
 /* NOTREACHED */
 }

@@ -65,7 +65,7 @@ extern inventory_t	*getinvent();
 
 int	Ir_open();
 void	Ir_close();
-int	Ir_input();
+MGED_EXTERN(void	Ir_input, (fd_set *input, int noblock) );
 void	Ir_prolog(), Ir_epilog();
 void	Ir_normal(), Ir_newrot();
 void	Ir_update();
@@ -1098,26 +1098,27 @@ int dashed;
  * has occured on either the command stream, or a device event has
  * occured, unless "noblock" is set.
  *
- * The GED "generic input" structure is filled in.
- *
- * Returns:
- *	0 if no command waiting to be read,
- *	1 if command is waiting to be read.
+ * Implicit Return -
+ *	If any files are ready for input, their bits will be set in 'input'.
+ *	Otherwise, 'input' will be all zeros.
  */
-Ir_input( cmd_fd, rateflg )
+void
+Ir_input( input, noblock )
+fd_set		*input;
+int		noblock;
 {
 	static int cnt;
 	register int i;
 	struct timeval	tv;
 	fd_set		files;
 	int		width;
-/*XXX*/	extern void		(*extrapoll_hook)();	/* ged.c */
-/*XXX*/	extern int		extrapoll_fd;
 
 	if (ir_debug)
 		fprintf(stderr, "Ir_input()\n");
 	if( (width = getdtablesize()) <= 0 )
 		width = 32;
+	files = *input;		/* save, for restore on each loop */
+	/* FD_SET( gl_fd, &files ); */
 
 	/*
 	 * Check for input on the keyboard or on the polled registers.
@@ -1135,34 +1136,31 @@ Ir_input( cmd_fd, rateflg )
 	do  {
 		cnt = 0;
 		i = qtest();
-		if( i != 0 )
+		if( i != 0 )  {
+			FD_ZERO( input );
 			break;		/* There is device input */
-		FD_ZERO( &files );
-		FD_SET( cmd_fd, &files );
-/*XXX*/		if(extrapoll_fd) FD_SET( extrapoll_fd, &files );
-		tv.tv_sec = 0;
+		}
+		*input = files;
 
-		if( rateflg )  {
+		tv.tv_sec = 0;
+		if( noblock )  {
 			tv.tv_usec = 0;
 		}  else  {
 			/* 1/20th second */
 			tv.tv_usec = 50000;
 		}
-		cnt = select( width, &files, (fd_set *)0,  (fd_set *)0, &tv );
+		cnt = select( width, input, (fd_set *)0,  (fd_set *)0, &tv );
 		if( cnt < 0 )  {
 			perror("dm-4d.c/select");
 			break;
 		}
-/*XXX*/		if(extrapoll_fd&&FD_ISSET(extrapoll_fd,&files)&&extrapoll_hook)  {
-/*XXX*/			(*extrapoll_hook)();
-/*XXX*/			cnt = FD_ISSET(cmd_fd, &files);
-/*XXX*/			break;
-/*XXX*/		}
-		cnt = FD_ISSET(cmd_fd, &files);
-		if( cnt != 0 )
-			break;		/* There is keyboard input */
-	} while( rateflg == 0 );
+		if( noblock )  break;
+		for( i=0; i<width; i++ )  {
+			if( FD_ISSET(i, input) )  goto input_waiting;
+		}
+	} while( noblock == 0 );
 
+input_waiting:
 	/*
 	 * Set device interface structure for GED to "rest" state.
 	 * First, process any messages that came in.
@@ -1174,10 +1172,7 @@ Ir_input( cmd_fd, rateflg )
 	if( i != 0 )
 		checkevents();
 
-	if( cnt > 0 )
-		return(1);		/* command awaits */
-	else
-		return(0);		/* just peripheral stuff */
+	return;
 }
 /*
  *  C H E C K E V E N T S

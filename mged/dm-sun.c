@@ -56,7 +56,7 @@ extern void     perror();
 #define SUNPWBOUND	1000.0	/* Max magnification in Rot matrix */
 int             SunPw_open();
 void            SunPw_close();
-int             SunPw_input();
+MGED_EXTERN(void	SunPw_input, (fd_set *input, int noblock) );
 void            SunPw_prolog(), SunPw_epilog();
 void            SunPw_normal(), SunPw_newrot();
 void            SunPw_update();
@@ -535,16 +535,27 @@ int	dashed;
  * went back to a short timeout select loop and avoided the do_dispatch
  * and stop business.  It works better this way.
  *
- * Returns:
- *	0 if no command waiting to be read,
- *	1 if command is waiting to be read.
+ *
+ * Implicit Return -
+ *	If any files are ready for input, their bits will be set in 'input'.
+ *	Otherwise, 'input' will be all zeros.
  */
-SunPw_input(cmd_fd, noblock)
-int	cmd_fd;
-int	noblock;	/* !0 => poll */
+void
+SunPw_input( input, noblock)
+fd_set		*input;
+int		noblock;	/* !0 => poll */
 {
-	long            readfds;
-	struct timeval  timeout;
+	struct timeval  tv;
+	fd_set		files;
+	int		width;
+	int		cnt;
+	int		i;
+
+	if( (width = getdtablesize()) <= 0 )
+		width = 32;
+	files = *input;		/* save, for restore on each loop */
+
+	FD_SET( sun_win_fd, &files );
 
 	/*
 	 * Set device interface structure for GED to "rest" state.
@@ -567,36 +578,37 @@ int	noblock;	/* !0 => poll */
 	 * do not suspend execution.
 	 */
 	if (noblock) {
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 0;
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
 	} else {
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 200000;
+		tv.tv_sec = 0;
+		tv.tv_usec = 200000;
 	}
 	for( ;; ) {
-		readfds = (1 << cmd_fd) | (1 << sun_win_fd);
-		/*notify_do_dispatch(); Unsafe!*/
-		readfds = bsdselect(readfds, timeout.tv_sec, timeout.tv_usec);
-		/*printf("readfds = %d (cmd %d, win %d)\n",
-			readfds, 1<<cmd_fd, 1<<sun_win_fd );*/
-		(void) notify_dispatch();
-		if( readfds & (1 << cmd_fd) ) {
-			/*printf("Returning command\n");*/
-			return (1);		/* command awaits */
+		*input = files;
+		cnt = select( width, input, (fd_set *)0,  (fd_set *)0, &tv );
+		if( cnt < 0 )  {
+			perror("dm-sun.c/select");
+			break;
 		}
+
+		(void) notify_dispatch();
 		if( peripheral_input ) {
 			/*printf("Returning peripherals\n");*/
 			peripheral_input = 0;
-			return (0);		/* just peripheral stuff */
+			return;		/* just peripheral stuff */
 		}
-		if( readfds & (1 << sun_win_fd) ) {
+		if( FD_SET(sun_win_fd, input) ) {
 			/* check for more input events before redisplay */
 			/*printf("Loop d'loop\n");*/
 			continue;
 		}
 		if( noblock ) {
 			/*printf("Returning noblock\n");*/
-			return (0);
+			return;
+		}
+		for( i=0; i<width; i++ )  {
+			if( FD_ISSET(i, input) )  return;
 		}
 	}
 }
