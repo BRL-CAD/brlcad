@@ -87,6 +87,7 @@ struct sched_param param;
 int		debug = 0;
 
 char		*our_hostname;
+char		*machinetype;
 
 FILE		*ifp;
 FILE		*ofp;
@@ -133,6 +134,29 @@ bu_get_1cpu_speed()
 }
 
 /*
+ *			G E T _ M A C H I N E T Y P E
+ */
+void
+get_machinetype()
+{
+	FILE	*fp;
+	struct bu_vls	str;
+
+	if( (fp = popen( "machinetype.sh -m", "r" )) == NULL )  {
+		machinetype = "???1";
+		return;
+	}
+	bu_vls_init( &str );
+	if( bu_vls_gets( &str, fp ) <= 0 )  {
+		machinetype = "???2";
+		fclose(fp);
+		return;
+	}
+	machinetype = bu_vls_strgrab( &str );
+	bu_vls_free( &str );
+}
+
+/*
  *			S E N D _ S T A T U S
  */
 void
@@ -144,8 +168,9 @@ int	fd;
 	bu_vls_init(&str);
 
 	bu_vls_printf( &str, "hostname %s", our_hostname );
+	bu_vls_printf( &str, " type %s", machinetype );
 	bu_vls_printf( &str, " ncpu %d", bu_avail_cpus() );
-	bu_vls_printf( &str, " pub_cpu %d", bu_get_public_cpus() );
+	bu_vls_printf( &str, " pub %d", bu_get_public_cpus() );
 	bu_vls_printf( &str, " load %g", bu_get_load_average() );
 	bu_vls_printf( &str, " realt %d", bu_set_realtime() );
 #if 0
@@ -159,14 +184,10 @@ int	fd;
 	bu_vls_free( &str );
 }
 
-CONST char *prog_paths[] = {
+char *prog_paths[] = {
 	".",
-	"/m/cad/.remrt.m4i64",
-	"/n/vapor/m/cad/.remrt.m4i64",
-	"/m/cad/.remrt.m3i62",
-	"/n/vapor/m/cad/.remrt.m3i62",
-	"/m/cad/.remrt.7d",
-	"/n/vapor/m/cad/.remrt.7d",
+	"/m/cad/.remrt.%s",
+	"/n/vapor/m/cad/.remrt.%s",
 	"/m/cad/.remrt.6d",
 	"/n/vapor/m/cad/.remrt.6d",
 	"/usr/brlcad/bin",
@@ -183,7 +204,7 @@ int	argc;
 char	**argv;
 char	*program;	/* name of program to run */
 {
-	CONST char **pp;
+	char **pp;
 	struct bu_vls	path;
 
 	bu_vls_init(&path);
@@ -206,7 +227,8 @@ char	*program;	/* name of program to run */
 		int	stat;
 		int	pid;
 
-		bu_vls_strcpy( &path, *pp );
+		bu_vls_trunc( &path, 0 );
+		bu_vls_printf( &path, *pp, machinetype );
 		bu_vls_putc( &path, '/' );
 		bu_vls_strcat( &path, program );
 		if( access( bu_vls_addr(&path), X_OK ) )  continue;
@@ -375,6 +397,9 @@ int	fd;
 			him->ht_name);
 		exit(0);
 	}
+
+	/* Determine machine type */
+	get_machinetype();
 
 	/* Main loop:  process commands. */
 	bu_vls_init(&str);
