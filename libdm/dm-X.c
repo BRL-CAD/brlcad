@@ -118,6 +118,7 @@ struct dm dm_X = {
   0,				/* clipmin */
   0,				/* clipmax */
   0,				/* no debugging */
+  0,				/* no perspective */
   0				/* no zclipping */
 };
 
@@ -568,10 +569,9 @@ int which_eye;
  */
 
 static int
-X_drawVList( dmp, vp, perspective )
+X_drawVList(dmp, vp)
 struct dm *dmp;
 register struct rt_vlist *vp;
-double perspective;
 {
     static vect_t spnt, lpnt, pnt;
     register struct rt_vlist *tvp;
@@ -585,7 +585,7 @@ double perspective;
 
     if (dmp->dm_debugLevel) {
       bu_log("X_drawVList()\n");
-      bu_log("vp - %lu, perspective - %g\n", vp, perspective);
+      bu_log("vp - %lu, perspective - %d\n", vp, dmp->dm_perspective);
     }
 
     /* delta is used in clipping to insure clipped endpoint is slightly
@@ -624,7 +624,7 @@ double perspective;
 		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		}
 
-		if( perspective > 0.0 )
+		if (dmp->dm_perspective > 0)
 	    	{
 	    		/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
@@ -659,7 +659,7 @@ double perspective;
 		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		}
 
-		if( perspective > 0.0 )
+		if (dmp->dm_perspective > 0)
 	    	{
 	    		/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!

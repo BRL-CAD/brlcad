@@ -98,6 +98,7 @@ struct dm dm_ps = {
   0,				/* clipmin */
   0,				/* clipmax */
   0,				/* no debugging */
+  0,				/* no perspective */
   0				/* no zclipping */
 };
 
@@ -411,10 +412,9 @@ int which_eye;
  */
 /* ARGSUSED */
 static int
-ps_drawVList( dmp, vp, perspective )
+ps_drawVList(dmp, vp)
 struct dm *dmp;
 register struct rt_vlist *vp;
-double perspective;
 {
   static vect_t			last;
   register struct rt_vlist	*tvp;
@@ -458,7 +458,7 @@ double perspective;
       case RT_VLIST_POLY_MOVE:
       case RT_VLIST_LINE_MOVE:
 	/* Move, not draw */
-		if( perspective > 0.0 )
+		if (dmp->dm_perspective > 0)
 	    	{
 	    		/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
@@ -484,7 +484,7 @@ double perspective;
       case RT_VLIST_POLY_END:
       case RT_VLIST_LINE_DRAW:
 	/* draw */
-		if( perspective > 0.0 )
+		if (dmp->dm_perspective > 0)
 	    	{
 	    		/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!

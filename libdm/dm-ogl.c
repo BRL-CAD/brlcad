@@ -135,11 +135,11 @@ struct dm dm_ogl = {
   0,				/* clipmin */
   0,				/* clipmax */
   0,				/* no debugging */
+  0,				/* no perspective */
   0				/* no zclipping */
 };
 
 static fastf_t default_viewscale = 1000.0;
-static int perspective_mode = 0;
 static double	xlim_view = 1.0;	/* args for glOrtho*/
 static double	ylim_view = 1.0;
 
@@ -212,7 +212,6 @@ char *argv[];
   }
 
   dmp->dm_vp = &default_viewscale;
-  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->perspective_mode = &perspective_mode;
 
   bu_vls_init(&dmp->dm_pathName);
   bu_vls_init(&dmp->dm_tkName);
@@ -752,8 +751,7 @@ struct dm *dmp;
       fogdepth = (GLfloat) (0.5*((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fogdensity/
 			    (*dmp->dm_vp));
       glFogf(GL_FOG_DENSITY, fogdepth);
-      glFogi(GL_FOG_MODE, *((struct ogl_vars *)dmp->dm_vars.priv_vars)->perspective_mode ?
-	     GL_EXP : GL_LINEAR);
+      glFogi(GL_FOG_MODE, dmp->dm_perspective ? GL_EXP : GL_LINEAR);
     }
     if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on){
       glEnable(GL_LIGHTING);
@@ -920,10 +918,9 @@ int which_eye;
 
 /* ARGSUSED */
 static int
-ogl_drawVList( dmp, vp, perspective )
+ogl_drawVList(dmp, vp)
 struct dm *dmp;
 register struct rt_vlist *vp;
-double perspective;
 {
   register struct rt_vlist *tvp;
   int first;
@@ -940,7 +937,7 @@ double perspective;
     register int	*cmd = tvp->cmd;
     register point_t *pt = tvp->pt;
     for( i = 0; i < nused; i++,cmd++,pt++ )  {
-      if (dmp->dm_debugLevel)
+      if (dmp->dm_debugLevel > 2)
 	bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
       switch( *cmd )  {
       case RT_VLIST_LINE_MOVE:
