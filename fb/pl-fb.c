@@ -3,52 +3,65 @@
  *
  *	Program to take 3-D UNIX plot data and output on a framebuffer.
  *
- *	Joseph C. Pistritto JCP@BRL
- *	US Army Ballistic Research Laboratory
+ *  Authors -
+ *	Joseph C. Pistritto
+ *	Michael John Muuss
+ *	Douglas A. Gwyn
  *
-Function:
-	Reads device-independent plot data from specified input file;
-	for each frame, builds an image file containing raster data then
-	sends the frame output to the output device.
-
-	Edge-limiting is done here; use "rot" if clipping is desired.
-
-Method:
-	Inputs vector data and builds a rasterization descriptor for
-	each visible stroke.  (Strokes are limited to frame boundaries.)
-	X goes down the page, Y goes from left to right.  To obtain a
-	different orientation, pre-process data with the "rot" filter.
-	(Quadrant 1 graphics devices)
-
-	The frame image file of SCANS scans is considered artificially
-	divided into BANDS bands, each containing lines_per_band scans.
-	Each band has a linked list of descriptors for
-	not-yet-rasterized strokes that start in the band.
-
-	Space for descriptors is obtained via "malloc".  When no more
-	space is available, the image file is updated as follows, then
-	"malloc" is tried again ("must" work the second time):
-
-	Each band in increasing X order becomes "active"; if no
-	descriptors exist for the band it is skipped, otherwise its
-	existing raster data is re-read from the image file into a
-	buffer and each descriptor is processed to rasterize its stroke.
-	If the stroke terminates in the band its descriptor is freed,
-	otherwise the descriptor is linked into the following band's
-	list.  When the descriptor list for the active band becomes
-	empty (must happen), the band's raster data is flushed back to
-	the image file and the next band becomes active.  This process
-	continues until all vectors have been input and rasterized.
-
-Acknowledgment:
-	Based rather heavily on Doug Gwyn's Versatec PLOT rasterizer VPL.C
-	which was
-	Based very loosely on Mike Muuss's Versatec TIGpack interpreter.
+ * Function:
+ * 	Reads device-independent plot data from specified input file;
+ * 	for each frame, builds an image file containing raster data then
+ * 	sends the frame output to the output device.
+ * 
+ * 	Edge-limiting is done here; use "rot" if clipping is desired.
+ * 
+ * Method:
+ * 	Inputs vector data and builds a rasterization descriptor for
+ * 	each visible stroke.  (Strokes are limited to frame boundaries.)
+ * 	X goes down the page, Y goes from left to right.  To obtain a
+ * 	different orientation, pre-process data with the "rot" filter.
+ * 	(Quadrant 1 graphics devices)
+ * 
+ * 	The frame image file of SCANS scans is considered artificially
+ * 	divided into BANDS bands, each containing lines_per_band scans.
+ * 	Each band has a linked list of descriptors for
+ * 	not-yet-rasterized strokes that start in the band.
+ * 
+ * 	Space for descriptors is obtained via "malloc".  When no more
+ * 	space is available, the image file is updated as follows, then
+ * 	"malloc" is tried again ("must" work the second time):
+ * 
+ * 	Each band in increasing X order becomes "active"; if no
+ * 	descriptors exist for the band it is skipped, otherwise its
+ * 	existing raster data is re-read from the image file into a
+ * 	buffer and each descriptor is processed to rasterize its stroke.
+ * 	If the stroke terminates in the band its descriptor is freed,
+ * 	otherwise the descriptor is linked into the following band's
+ * 	list.  When the descriptor list for the active band becomes
+ * 	empty (must happen), the band's raster data is flushed back to
+ * 	the image file and the next band becomes active.  This process
+ * 	continues until all vectors have been input and rasterized.
+ * 
+ * Acknowledgment:
+ * 	Based rather heavily on Doug Gwyn's Versatec PLOT rasterizer VPL.C
+ * 	which was based on Mike Muuss's Versatec TIGpack interpreter.
  *
  *  Note:
  *	UNIX-Plot files are defined to be machine-independent, with
  *	"little-endian" (eg, VAX) byte-ordering.
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #define STATIC	/* nothing, for debugging */
 
