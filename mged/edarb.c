@@ -273,7 +273,7 @@ vect_t pos_model;
 
 		/* move the edge */
 /*
-printf("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
+rt_log("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
 */
 		if( mv_edge(pos_model, bp1, bp2, pt1, pt2, edge_dir) )
 			goto err;
@@ -294,7 +294,7 @@ printf("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
 			p2 = *edptr++;
 			p3 = *edptr++;
 /*
-printf("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
+rt_log("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 */
 			if( rt_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
 						arb->pt[p3], &mged_tol ) )
@@ -315,7 +315,7 @@ printf("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 			p2 = *iptr++;
 			p3 = *iptr++;
 /*
-printf("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
+rt_log("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 */
 			if( rt_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
 					arb->pt[p3], &mged_tol ))
@@ -332,7 +332,7 @@ printf("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 			break;
 		/* intersect proper planes to define vertex p1 */
 /*
-printf("intersect: type=%d   point = %d\n",es_type,p1+1);
+rt_log("intersect: type=%d   point = %d\n",es_type,p1+1);
 */
 		if( rt_arb_3face_intersect( arb->pt[p1], es_peqn, es_type, p1*3 ))
 			goto err;
@@ -343,7 +343,7 @@ printf("intersect: type=%d   point = %d\n",es_type,p1+1);
 	 */
 	if(es_type == ARB7 && es_edflag == PTARB) {
 /*
-printf("redo plane 2 == 5,6,7 for ARB7\n");
+rt_log("redo plane 2 == 5,6,7 for ARB7\n");
 */
 		if(  rt_mk_plane_3pts( es_peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], &mged_tol ))
 			goto err;

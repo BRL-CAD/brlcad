@@ -57,7 +57,7 @@ nmg_eu_dist_set()
 
 	nmg_eue_dist = mged_variables.nmg_eu_dist;
 
-	fprintf(stderr, "New nmg_eue_dist = %g\n", nmg_eue_dist);
+	rt_log( "New nmg_eue_dist = %g\n", nmg_eue_dist);
 }
 #define MV_O(_m)	offsetof(struct mged_variables, _m)
 struct structparse mged_vparse[] = {
@@ -87,13 +87,13 @@ char *av[];
 
 	if (ac <= 1) {
 		rt_structprint("mged variables", mged_vparse, (CONST char *)&mged_variables);
-		printf("%s", rt_vls_addr(&vls) );
+		rt_log("%s", rt_vls_addr(&vls) );
 		fflush(stdout);
 	} else if (ac == 2) {
 		rt_vls_strcpy(&vls, av[1]);
 		rt_structparse(&vls, mged_vparse, (char *)&mged_variables);
 	} else {
-		printf("Usage: set\t\t- prints all options\n\tset opt=val\t- sets an option\n");
+		rt_log("Usage: set\t\t- prints all options\n\tset opt=val\t- sets an option\n");
 		bad = 1;
 		fflush(stdout);
 	}

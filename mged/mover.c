@@ -94,7 +94,7 @@ matp_t xlate;
 	 *  Will work on all solids.
 	 */
 	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
-		(void)printf("moveHobj(%s) unable to identify type\n",
+		rt_log("moveHobj(%s) unable to identify type\n",
 			dp->d_namep );
 		return;				/* FAIL */
 	}
@@ -155,7 +155,7 @@ matp_t xlate;
 		return;
 	}
 	rt_free( (char *)rec, "union record");
-	(void)printf( "moveinst:  couldn't find %s/%s\n",
+	rt_log( "moveinst:  couldn't find %s/%s\n",
 		cdp->d_namep, dp->d_namep );
 	return;				/* ERROR */
 }
@@ -188,7 +188,7 @@ int air;				/* Air code */
 		/* Update the in-core directory */
 		if( (dp = db_diradd( dbip, combname, -1, 2, DIR_COMB )) == DIR_NULL ||
 		    db_alloc( dbip, dp, 2 ) < 0 )  {
-			(void)printf("An error has occured while adding '%s' to the database.\n",
+			rt_log("An error has occured while adding '%s' to the database.\n",
 				combname);
 			ERROR_RECOVERY_SUGGESTION;
 			return DIR_NULL;
@@ -210,20 +210,20 @@ int air;				/* Air code */
 			record.c.c_aircode = air;
 			record.c.c_los = los_default;
 			record.c.c_material = mat_default;
-			(void)printf("Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
+			rt_log("Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
 				ident, air, los_default, mat_default );
 		}
 
 		/* finished with combination record - write it out */
 		if( db_put( dbip,  dp, &record, 0, 1 ) < 0 )  {
-			printf("write error, aborting\n");
+			rt_log("write error, aborting\n");
 			ERROR_RECOVERY_SUGGESTION;
 			return DIR_NULL;
 		}
 
 		/* create first member record */
 		if( db_get( dbip,  dp, &record, 1, 1) < 0 )  {
-			printf("read error, aborting\n");
+			rt_log("read error, aborting\n");
 			ERROR_RECOVERY_SUGGESTION;
 			return DIR_NULL;
 		}
@@ -234,7 +234,7 @@ int air;				/* Air code */
 		mat_idn( identity );
 		rt_dbmat_mat( record.M.m_mat, identity );
 		if( db_put( dbip,  dp, &record, 1, 1 ) < 0 )  {
-			printf("write error, aborting\n");
+			rt_log("write error, aborting\n");
 			ERROR_RECOVERY_SUGGESTION;
 			return DIR_NULL;
 		}
@@ -246,30 +246,30 @@ int air;				/* Air code */
 	 * and verify that this is a combination.
 	 */
 	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  {
-		printf("read error, aborting\n");
+		rt_log("read error, aborting\n");
 		ERROR_RECOVERY_SUGGESTION;
 		return DIR_NULL;
 	}
 	if( record.u_id != ID_COMB )  {
-		(void)printf("%s:  not a combination\n", combname );
+		rt_log("%s:  not a combination\n", combname );
 		return DIR_NULL;
 	}
 
 	if( region_flag ) {
 		if( record.c.c_flags != 'R' ) {
-			(void)printf("%s: not a region\n",combname);
+			rt_log("%s: not a region\n",combname);
 			return DIR_NULL;
 		}
 	}
 	if( db_grow( dbip, dp, 1 ) < 0 )  {
-		printf("db_grow error, aborting\n");
+		rt_log("db_grow error, aborting\n");
 		ERROR_RECOVERY_SUGGESTION;
 		return DIR_NULL;
 	}
 
 	/* Fill in new Member record */
 	if( db_get( dbip,  dp, &record, dp->d_len-1, 1) < 0 )  {
-		printf("read error, aborting\n");
+		rt_log("read error, aborting\n");
 		ERROR_RECOVERY_SUGGESTION;
 		return DIR_NULL;
 	}
@@ -280,7 +280,7 @@ int air;				/* Air code */
 	mat_idn( identity );
 	rt_dbmat_mat( record.M.m_mat, identity );
 	if( db_put( dbip,  dp, &record, dp->d_len-1, 1 ) < 0 )  {
-		printf("write error, aborting\n");
+		rt_log("write error, aborting\n");
 		ERROR_RECOVERY_SUGGESTION;
 		return DIR_NULL;
 	}

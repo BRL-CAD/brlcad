@@ -116,7 +116,7 @@ char	**argv;
 		 * unit scale.
 		 */
 		if( no_memory )  {
-			(void)printf("No memory left so cannot draw %s\n",
+			rt_log("No memory left so cannot draw %s\n",
 				dp->d_namep);
 			drawreg = 0;
 			regmemb = -1;
@@ -133,7 +133,7 @@ char	**argv;
 		new_mats();
 	}
 
-	(void)printf("E: %ld vectors in %ld sec\n", nvectors, etime - stime );
+	rt_log("E: %ld vectors in %ld sec\n", nvectors, etime - stime );
 	dmp->dmr_colorchange();
 	dmaflag = 1;
 
@@ -193,9 +193,9 @@ struct mater_info *materp;
 	struct mater_info curmater;
 
 	if( pathpos >= MAX_PATH )  {
-		(void)printf("nesting exceeds %d levels\n", MAX_PATH );
+		rt_log("nesting exceeds %d levels\n", MAX_PATH );
 		for(i=0; i<MAX_PATH; i++)
-			(void)printf("/%s", cur_path[i]->d_namep );
+			rt_log("/%s", cur_path[i]->d_namep );
 		(void)putchar('\n');
 		return;			/* ERROR */
 	}
@@ -211,7 +211,7 @@ struct mater_info *materp;
 		register struct solid *sp;
 
 		if( rt_id_solid( &ext ) == ID_NULL )  {
-			(void)printf("Edrawobj(%s):  defective database record, type='%c' (0%o) addr=x%x\n",
+			rt_log("Edrawobj(%s):  defective database record, type='%c' (0%o) addr=x%x\n",
 				dp->d_namep,
 				rp[0].u_id, rp[0].u_id, dp->d_addr );
 			goto out;		/* ERROR */
@@ -235,7 +235,7 @@ struct mater_info *materp;
 	 *  Process a Combination (directory) node
 	 */
 	if( dp->d_len <= 1 )  {
-		(void)printf("Warning: combination with zero members \"%s\".\n",
+		rt_log("Warning: combination with zero members \"%s\".\n",
 			dp->d_namep );
 		goto out;			/* non-fatal ERROR */
 	}
@@ -279,7 +279,7 @@ struct mater_info *materp;
 	/* Handle combinations which are the top of a "region" */
 	if( rp[0].c.c_flags == 'R' )  {
 		if( regionid != 0 )
-			(void)printf("regionid %d overriden by %d\n",
+			rt_log("regionid %d overriden by %d\n",
 				regionid, rp[0].c.c_regionid );
 		regionid = rp[0].c.c_regionid;
 	}
@@ -290,7 +290,7 @@ struct mater_info *materp;
 	 */
 	if( drawreg && rp[0].c.c_flags == 'R' && dp->d_len > 1 ) {
 		if( regmemb >= 0  ) {
-			(void)printf(
+			rt_log(
 			"ERROR: region (%s) is member of region (%s)\n",
 				dp->d_namep,
 				cur_path[reg_pathpos]->d_namep);
@@ -312,7 +312,7 @@ struct mater_info *materp;
 
 		mp = &(rp[i].M);
 		if( mp->m_id != ID_MEMB )  {
-			fprintf(stderr,"EdrawHobj:  %s bad member rec\n",
+			rt_log("EdrawHobj:  %s bad member rec\n",
 				dp->d_namep);
 			goto out;			/* ERROR */
 		}
@@ -391,7 +391,7 @@ struct mater_info	*materp;
 
 		if( i < 0 )  {
 			/* error somwhere */
-			(void)printf("Error in converting solid %s to ARBN\n",
+			rt_log("Error in converting solid %s to ARBN\n",
 					cur_path[reg_pathpos]->d_namep);
 			reg_error = 1;
 			if(regmemb == 0) {
@@ -409,7 +409,7 @@ struct mater_info	*materp;
 
 		i = finish_region( &vhead );
 		if( i < 0 )  {
-			(void)printf("error in finish_region()\n");
+			rt_log("error in finish_region()\n");
 			return(-1);		/* ERROR */
 		}
 		dashflag = 0;
@@ -422,7 +422,7 @@ struct mater_info	*materp;
 
 		id = rt_id_solid( ep );
 		if( id <= 0 || id >= rt_nfunctab )  {
-			printf("EdrawHsolid(%s):  unknown database object\n",
+			rt_log("EdrawHsolid(%s):  unknown database object\n",
 				cur_path[pathpos]->d_namep);
 			return(-1);			/* ERROR */
 		}
@@ -451,7 +451,7 @@ struct mater_info	*materp;
 		if( rt_functab[id].ft_plot( &vhead,
 		    &intern,
 		    &ttol, &toler ) < 0 )  {
-			printf("%s: vector conversion failure\n",
+			rt_log("%s: vector conversion failure\n",
 				cur_path[pathpos]->d_namep);
 		}
 		rt_functab[id].ft_ifree( &intern );
@@ -503,7 +503,7 @@ struct mater_info	*materp;
 		sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
 		if( sp->s_addr == 0 )  {
 			no_memory = 1;
-			(void)printf("Edraw: out of Displaylist\n");
+			rt_log("Edraw: out of Displaylist\n");
 			sp->s_bytes = 0;	/* not drawn */
 		} else {
 			sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes );
@@ -579,7 +579,7 @@ int flag;
 
 	m_type[memb_count++] = cgtype;
 	if(memb_count > NMEMB) {
-		(void)printf("proc_reg: region has more than %d members\n", NMEMB);
+		rt_log("proc_reg: region has more than %d members\n", NMEMB);
 		nmemb = param_count = memb_count = 0;
 		return(-1);	/* ERROR */
 	}
@@ -656,7 +656,7 @@ arbcom:		/* common area for arbs */
 		break;
 
 	default:
-		(void)printf("proc_reg:  Cannot draw solid type %d (%s)\n",
+		rt_log("proc_reg:  Cannot draw solid type %d (%s)\n",
 			type, type == TOR ? "TOR":
 			 type == ARS ? "ARS" : "UNKNOWN TYPE" );
 		nmemb = param_count = memb_count = 0;
@@ -771,7 +771,7 @@ register int *svec;	/* array of like points */
 		break;
 
 	default:
-		(void)printf("solid: %s  bad number of unique vectors (%d)\n",
+		rt_log("solid: %s  bad number of unique vectors (%d)\n",
 			input.s.s_name, numuvec);
 		return(0);
 	}
@@ -839,7 +839,7 @@ int numvec;
 				move(3,0,1,2,7,4,5,7);
 				break;
 			default:
-				(void)printf("redoarb: %s - bad arb7\n",
+				rt_log("redoarb: %s - bad arb7\n",
 					input.s.s_name);
 				return( 0 );
 			}
@@ -901,7 +901,7 @@ int numvec;
 					move(5,1,0,4,2,2,3,3);
 				break;
 			default:
-				(void)printf("redoarb: %s: bad arb6\n",
+				rt_log("redoarb: %s: bad arb6\n",
 					input.s.s_name);
 				return( 0 );
 			}
@@ -938,7 +938,7 @@ int numvec;
 				move(3,2,6,7,0,0,0,0);
 				break;
 			default:
-				(void)printf("redoarb: %s: bad arb5\n",
+				rt_log("redoarb: %s: bad arb5\n",
 					input.s.s_name);
 				return( 0 );
 			}
@@ -953,7 +953,7 @@ int numvec;
 			break;
 
 		default:
-			(void)printf("redoarb %s: unknown arb type (%d)\n",
+			rt_log("redoarb %s: unknown arb type (%d)\n",
 				input.s.s_name,input.s.s_cgtype);
 			return( 0 );
 	}
@@ -1430,7 +1430,7 @@ fastf_t *p, *q, *r, *s;
 
 	/* increment plane counter */
 	if(lc >= NPLANES) {
-		(void)printf("tplane: More than %d planes for a region - ABORTING\n", NPLANES);
+		rt_log("tplane: More than %d planes for a region - ABORTING\n", NPLANES);
 		return;
 	}
 	lc++;		/* Save plane eqn */
@@ -1632,7 +1632,7 @@ int num;
 	ity = &m_type[num];
 	if(*ity==20) *ity=8;
 	if(*ity>19 || amt[*ity-1]==0){
-		(void)printf("solin: Type %d Solid not known\n",*ity);
+		rt_log("solin: Type %d Solid not known\n",*ity);
 		return;
 	}
 	sol_min[0]=sol_min[1]=sol_min[2]=pinf;

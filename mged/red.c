@@ -61,13 +61,13 @@ char **argv;
 
 	if( argc != 2 )
 	{
-		(void)printf( "Usage:\n\tred object_name\n" );
+		rt_log( "Usage:\n\tred object_name\n" );
 		return CMD_BAD;
 	}
 
 	if( (dp=db_lookup( dbip , argv[1] , LOOKUP_NOISY )) == DIR_NULL )
 	{
-		(void)printf( " Cannot edit: %s\n" , argv[1] );
+		rt_log( " Cannot edit: %s\n" , argv[1] );
 		return CMD_BAD;
 	}
 
@@ -77,7 +77,7 @@ char **argv;
 	}
 	if( record.u_id != ID_COMB )	/* Not a combination */
 	{
-		(void)printf( " %s is not a combination, so cannot be edited this way\n", argv[1] );
+		rt_log( " %s is not a combination, so cannot be edited this way\n", argv[1] );
 		return CMD_BAD;
 	}
 
@@ -92,7 +92,7 @@ char **argv;
 	/* Write the combination components to the file */
 	if( writecomb( dp ) )
 	{
-		(void)printf( "Unable to edit %s\n" , argv[1] );
+		rt_log( "Unable to edit %s\n" , argv[1] );
 		unlink( red_tmpfil );
 		return CMD_BAD;
 	}
@@ -102,26 +102,26 @@ char **argv;
 	{
 		if( checkcomb() ) /* Do some quick checking on the edited file */
 		{
-			(void)printf( "Error in edited region, no changes made\n" );
+			rt_log( "Error in edited region, no changes made\n" );
 			(void)unlink( red_tmpfil );
 			return CMD_BAD;
 		}
 		if( save_comb( dp ) )	/* Save combination to a temp name */
 		{
-			(void)printf( "No changes made\n" );
+			rt_log( "No changes made\n" );
 			(void)unlink( red_tmpfil );
 			return CMD_OK;
 		}
 		if( clear_comb( dp ) )	/* Empty this combination */
 		{
-			(void)printf( "Unable to empty %s, original restored\n" , dp->d_namep );
+			rt_log( "Unable to empty %s, original restored\n" , dp->d_namep );
 			restore_comb( dp );
 			(void)unlink( red_tmpfil );
 			return CMD_BAD;
 		}
 		if( build_comb( dp ) )	/* Use comb_add() to rebuild combination */
 		{
-			(void)printf( "Unable to construct new %s, original restored\n" , dp->d_namep );
+			rt_log( "Unable to construct new %s, original restored\n" , dp->d_namep );
 			restore_comb( dp );
 			(void)unlink( red_tmpfil );
 			return CMD_BAD;
@@ -155,7 +155,7 @@ struct directory *dp;
 	/* open the file */
 	if( (fp=fopen( red_tmpfil , "w" )) == NULL )
 	{
-		(void)printf( "Cannot open create file for editing\n" );
+		rt_log( "Cannot open create file for editing\n" );
 		perror( "MGED" );
 		return(1);
 	}
@@ -166,13 +166,13 @@ struct directory *dp;
 		if( db_get( dbip , dp , &record , offset , 1 ) )
 		{
 			fclose( fp );
-			(void)printf( "Cannot get combination information\n" );
+			rt_log( "Cannot get combination information\n" );
 			return( 1 );
 		}
 
 		if( record.u_id != ID_MEMB )
 		{
-			(void)printf( "This combination appears to be corrupted\n" );
+			rt_log( "This combination appears to be corrupted\n" );
 			return( 1 );
 		}
 
@@ -180,8 +180,8 @@ struct directory *dp;
 		{
 			if( record.M.m_mat[i] != identity[i] )
 			{
-				(void)printf( "Member `%s` has been object edited\n" , record.M.m_instname );
-				(void)printf( "\tCombination must be `pushed` before editing\n" );
+				rt_log( "Member `%s` has been object edited\n" , record.M.m_instname );
+				rt_log( "\tCombination must be `pushed` before editing\n" );
 				return( 1 );
 			}
 		}
@@ -206,7 +206,7 @@ checkcomb()
 
 	if( (fp=fopen( red_tmpfil , "r" )) == NULL )
 	{
-		(void)printf( "Cannot open create file for editing\n" );
+		rt_log( "Cannot open create file for editing\n" );
 		perror( "MGED" );
 		return(1);
 	}
@@ -227,7 +227,7 @@ checkcomb()
 		}
 		if( i == MAXLINE )
 		{
-			(void)printf( "Line too long in edited file\n" );
+			rt_log( "Line too long in edited file\n" );
 			return( 1 );
 		}
 
@@ -267,8 +267,8 @@ checkcomb()
 			if( line[i] != '\0' )
 			{
 				/* found some junk */
-				(void)printf( "Error in format of edited file\n" );
-				(void)printf( "Must be just one operator and object per line\n" );
+				rt_log( "Error in format of edited file\n" );
+				rt_log( "Must be just one operator and object per line\n" );
 				fclose( fp );
 				return( 1 );
 			}
@@ -276,7 +276,7 @@ checkcomb()
 
 		if( relation != '+' && relation != 'u' & relation != '-' )
 		{
-			(void)printf( " %c is not a legal operator\n" , relation );
+			rt_log( " %c is not a legal operator\n" , relation );
 			fclose( fp );
 			return( 1 );
 		}
@@ -285,14 +285,14 @@ checkcomb()
 
 		if( name[0] == '\0' )
 		{
-			(void)printf( " operand name missing\n" );
+			rt_log( " operand name missing\n" );
 			fclose( fp );
 			return( 1 );
 		}
 
 		if( db_lookup( dbip , name , LOOKUP_NOISY ) == DIR_NULL )
 		{
-			(void)printf( " %s does not exist\n" , name );
+			rt_log( " %s does not exist\n" , name );
 			fclose( fp );
 			return( 1 );
 		}
@@ -302,7 +302,7 @@ checkcomb()
 
 	if( nonsubs == 0 )
 	{
-		(void)printf( "Cannot create a combination with all subtraction operators\n" );
+		rt_log( "Cannot create a combination with all subtraction operators\n" );
 		return( 1 );
 	}
 	return( 0 );
@@ -325,13 +325,13 @@ struct directory *dp;
 	{
 		if( db_get( dbip,  dp, &record, 1 , 1) < 0 )
 		{
-			(void)printf( "Unable to clear %s\n" , dp->d_namep );
+			rt_log( "Unable to clear %s\n" , dp->d_namep );
 			return( 1 );
 		}
 
 		if( db_delrec( dbip, dp, 1 ) < 0 )
 		{
-			(void)printf("Error in deleting member.\n");
+			rt_log("Error in deleting member.\n");
 			return( 1 );
 		}
 	}
@@ -356,7 +356,7 @@ struct directory *dp;
 
 	if( (fp=fopen( red_tmpfil , "r" )) == NULL )
 	{
-		(void)printf( " Cannot open edited file: %s\n" , red_tmpfil );
+		rt_log( " Cannot open edited file: %s\n" , red_tmpfil );
 		return( 1 );
 	}
 
@@ -409,14 +409,14 @@ struct directory *dp;
 		/* Check for existence of member */
 		if( (dp1=db_lookup( dbip , name , LOOKUP_NOISY )) == DIR_NULL )
 		{
-			(void)printf( " %s does not exist\n" , name );
+			rt_log( " %s does not exist\n" , name );
 			return( 1 );
 		}
 
 		/* Add it to the combination */
 		if( combadd( dp1 , dp->d_namep , region , relation , ident , air ) == DIR_NULL )
 		{
-			(void)printf( " Error in rebuilding combination\n" );
+			rt_log( " Error in rebuilding combination\n" );
 			return( 1 );
 		}
 	}
@@ -471,14 +471,14 @@ struct directory *dpold;
 	/* Following code is lifted from "f_copy()" and slightly modified */
 	if( (rp = db_getmrec( dbip, dpold )) == (union record *)0 )
 	{
-		(void)printf( "Cannot save copy of %s, no changes made\n" , dpold->d_namep );
+		rt_log( "Cannot save copy of %s, no changes made\n" , dpold->d_namep );
 		return( 1 );
 	}
 
 	if( (dp=db_diradd( dbip, red_tmpcomb, -1, dpold->d_len, dpold->d_flags)) == DIR_NULL ||
 	    db_alloc( dbip, dp, dpold->d_len ) < 0 )
 	{
-		(void)printf( "Cannot save copy of %s, no changes made\n" , dp->d_namep );
+		rt_log( "Cannot save copy of %s, no changes made\n" , dp->d_namep );
 		return( 1 );
 	}
 
@@ -486,7 +486,7 @@ struct directory *dpold;
 	NAMEMOVE( red_tmpcomb, rp->c.c_name );
 	if( db_put( dbip, dp, rp, 0, dpold->d_len ) < 0 )
 	{
-		(void)printf( "Cannot save copy of %s, no changes made\n" , dp->d_namep );
+		rt_log( "Cannot save copy of %s, no changes made\n" , dp->d_namep );
 		return( 1 );
 	}
 

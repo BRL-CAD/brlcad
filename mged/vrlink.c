@@ -87,7 +87,7 @@ struct rt_vls	*vp;
 	}
 
 	if( pkg_send_vls( VRMSG_EVENT, vp, vrmgr ) < 0 )  {
-		fprintf(stderr,"event: pkg_send VRMSG_EVENT failed, disconnecting\n");
+		rt_log("event: pkg_send VRMSG_EVENT failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
 		cmdline_hook = 0;	/* Relinquish this hook */
@@ -145,7 +145,7 @@ vr_viewpoint_hook()
 		V3ARGS(eye_pos_scr) );
 
 	if( pkg_send_vls( VRMSG_POV, &str, vrmgr ) < 0 )  {
-		fprintf(stderr,"viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
+		rt_log("viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
 		viewpoint_hook = 0;	/* Relinquish this hook */
@@ -167,7 +167,7 @@ char	*argv[];
 	quat_t		orient;
 
 	if( argc < 1+3+4+1+3 )  {
-		printf("pov: insufficient args\n");
+		rt_log("pov: insufficient args\n");
 		return CMD_BAD;
 	}
 	toViewcenter[MDX] = -atof(argv[1]);
@@ -205,7 +205,7 @@ char	*argv[];
 	rt_vls_init(&str);
 
 	if( vrmgr != PKC_NULL )  {
-		fprintf(stderr,"Closing link to VRmgr %s\n", vr_host);
+		rt_log("Closing link to VRmgr %s\n", vr_host);
 		pkg_close( vrmgr );
 		vrmgr = PKC_NULL;
 		vr_host = "none";
@@ -218,14 +218,14 @@ char	*argv[];
 	} else if( strcmp( role, "slave" ) == 0 )  {
 	} else if( strcmp( role, "overview" ) == 0 )  {
 	} else {
-		fprintf(stderr,"role '%s' unknown, must be master/slave/overview\n", role);
+		rt_log("role '%s' unknown, must be master/slave/overview\n", role);
 		return CMD_BAD;
 	}
 
 	vrmgr = pkg_open( vr_host, tcp_port, "tcp", "", "",
 		pkgswitch, NULL );
 	if( vrmgr == PKC_ERROR )  {
-		fprintf(stderr, "mged/f_vrmgr: unable to contact %s, port %s\n",
+		rt_log( "mged/f_vrmgr: unable to contact %s, port %s\n",
 			vr_host, tcp_port);
 		vrmgr = PKC_NULL;
 		return CMD_BAD;
@@ -235,7 +235,7 @@ char	*argv[];
 
 	/* Send initial message declaring our role */
 	if( pkg_send_vls( VRMSG_ROLE, &str, vrmgr ) < 0 )  {
-		printf("pkg_send VRMSG_ROLE failed, disconnecting\n");
+		rt_log("pkg_send VRMSG_ROLE failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = NULL;
 		return CMD_BAD;

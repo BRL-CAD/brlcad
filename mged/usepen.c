@@ -103,7 +103,7 @@ char	**argv;
 		register int i;
 
 		if( (i = scroll_select(xpos, ypos )) < 0 )  {
-			(void)printf("mouse press outside valid scroll area\n");
+			rt_log("mouse press outside valid scroll area\n");
 			return CMD_BAD;
 		} 
 		if( i > 0 )  {
@@ -120,7 +120,7 @@ char	**argv;
 	if( xpos < MENUXLIM && up )  {
 		register int i;
 		if( (i = mmenu_select( ypos )) < 0 )  {
-			(void)printf("mouse press outside valid menu\n");
+			rt_log("mouse press outside valid menu\n");
 			return CMD_BAD;
 		}
 		if( i > 0 )  {

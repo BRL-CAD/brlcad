@@ -366,7 +366,7 @@ char **argv;
 			dont_draw = 1;
 			break;
 		default:
-			printf("in: option '%c' unknown\n", c);
+			rt_log("in: option '%c' unknown\n", c);
 			break;
 		}
 	}
@@ -379,7 +379,7 @@ char **argv;
 
 	/* Get the name of the solid to be created */
 	if( argc < 2 )  {
-		(void)printf("Enter name of solid: ");
+		rt_log("Enter name of solid: ");
 		return CMD_MORE;
 	}
 	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
@@ -387,7 +387,7 @@ char **argv;
 		return CMD_BAD;
 	}
 	if( (int)strlen(argv[1]) >= NAMESIZE )  {
-		(void)printf("ERROR, names are limited to %d characters\n", NAMESIZE-1);
+		rt_log("ERROR, names are limited to %d characters\n", NAMESIZE-1);
 		return CMD_BAD;
 	}
 	/* Save the solid name since argv[] might get bashed */
@@ -395,7 +395,7 @@ char **argv;
 
 	/* Get the solid type to be created and make it */
 	if( argc < 3 )  {
-		(void)printf("Enter solid type: ");
+		rt_log("Enter solid type: ");
 		return CMD_MORE;
 	}
 
@@ -409,7 +409,7 @@ char **argv;
 	if( strcmp( argv[2], "ebm" ) == 0 )  {
 		switch( strsol_in( &external, "ebm", argc, argv ) ) {
 		case CMD_BAD:
-			(void)printf("ERROR, EBM solid not made!\n");
+			rt_log("ERROR, EBM solid not made!\n");
 			return CMD_BAD;
 		case CMD_MORE:
 			return CMD_MORE;
@@ -418,7 +418,7 @@ char **argv;
 	} else if( strcmp( argv[2], "vol" ) == 0 )  {
 		switch( strsol_in( &external, "vol", argc, argv ) )  {
 		case CMD_BAD:
-			(void)printf("ERROR, VOL solid not made!\n");
+			rt_log("ERROR, VOL solid not made!\n");
 			return CMD_BAD;
 		case CMD_MORE:
 			return CMD_MORE;
@@ -427,7 +427,7 @@ char **argv;
 	} else if( strcmp( argv[2], "hf" ) == 0 )  {
 		switch( strsol_in( &external, "hf", argc, argv ) )  {
 		case CMD_BAD:
-			(void)printf("ERROR, HF solid not made!\n");
+			rt_log("ERROR, HF solid not made!\n");
 			return CMD_BAD;
 		case CMD_MORE:
 			return CMD_MORE;
@@ -436,7 +436,7 @@ char **argv;
 	} else if( strcmp( argv[2], "ars" ) == 0 )  {
 		switch( ars_in(argc, argv, &internal, &p_ars[0]) ) {
 		case CMD_BAD:
-			(void)printf("ERROR, ars not made!\n");
+			rt_log("ERROR, ars not made!\n");
 			if(internal.idb_type) rt_functab[internal.idb_type].
 				ft_ifree( &internal );
 			return CMD_BAD;
@@ -522,18 +522,18 @@ char **argv;
 		menu = p_eto;
 		fn_in = eto_in;
 	} else {
-		(void)printf("f_in:  %s is not a known primitive\n", argv[2]);
+		rt_log("f_in:  %s is not a known primitive\n", argv[2]);
 		return CMD_BAD;
 	}
 	
 	/* Read arguments */
 	if( argc < 3+nvals )  {
-		(void)printf("%s", menu[argc-3]);
+		rt_log("%s", menu[argc-3]);
 		return CMD_MORE;
 	}
 
 	if (fn_in(argv, &internal, menu) != 0)  {
-		(void)printf("ERROR, %s not made!\n", argv[2]);
+		rt_log("ERROR, %s not made!\n", argv[2]);
 		if(internal.idb_type) rt_functab[internal.idb_type].
 			ft_ifree( &internal );
 		return CMD_BAD;
@@ -543,7 +543,7 @@ do_new_update:
 	RT_CK_DB_INTERNAL( &internal );
 	id = internal.idb_type;
 	if( rt_functab[id].ft_export( &external, &internal, local2base ) < 0 )  {
-		printf("export failure\n");
+		rt_log("export failure\n");
 		rt_functab[id].ft_ifree( &internal );
 		return CMD_BAD;
 	}
@@ -603,7 +603,7 @@ char 		       **argv;
 
 	/* Read at least one "arg(s)" */
 	if( argc < 3+1 ) {
-		(void)printf("%s Arg? ", sol);
+		rt_log("%s Arg? ", sol);
 		return CMD_MORE;
 	}
 
@@ -643,7 +643,7 @@ char			*promp[];
 	int num_pts, num_curves;
 
 	if( argc < 5 ) {
-		(void)printf("%s", promp[argc-3]);
+		rt_log("%s", promp[argc-3]);
 		return CMD_MORE;
 	}
 
@@ -651,24 +651,24 @@ char			*promp[];
 	num_curves = atoi(argv[4]);
 
 	if (num_pts < 3 || num_curves < 3 ) {
-	    	printf("Invalid number of lines or pts_per_curve\n");
+	    	rt_log("Invalid number of lines or pts_per_curve\n");
 		return CMD_BAD;
 	}
 
 	if( argc < 8 ) {
-		(void)printf("%s", promp[argc-3]);
+		rt_log("%s", promp[argc-3]);
 		return CMD_MORE;
 	}
 
 	if( argc < 8+((num_curves-2)*num_pts*3) ) {
-		(void)printf("%s for Waterline %d, Point %d : ",
+		rt_log("%s for Waterline %d, Point %d : ",
 			promp[5+(argc-8)%3], 1+(argc-8)/3/num_pts, ((argc-8)/3)%
 			num_pts );
 		return CMD_MORE;
 	}
 
 	if( argc < 8+((num_curves-2)*num_pts*3+3)) {
-		(void)printf("%s for point of last waterline : ",
+		rt_log("%s for point of last waterline : ",
 			promp[5+(argc-8)%3]);
 		return CMD_MORE;
 	}
@@ -745,7 +745,7 @@ struct rt_db_internal	*intern;
 	VUNITIZE( hip->eqn );
 	
 	if (MAGNITUDE(hip->eqn) < RT_LEN_TOL) {
-		(void)printf("ERROR, normal vector is too small!\n");
+		rt_log("ERROR, normal vector is too small!\n");
 		return(1);	/* failure */
 	}
 	
@@ -824,7 +824,7 @@ struct rt_db_internal	*intern;
 	VSET( sip->c, 0., 0., r );
 	
 	if (r < RT_LEN_TOL) {
-		(void)printf("ERROR, radius must be greater than zero!\n");
+		rt_log("ERROR, radius must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 	
@@ -878,7 +878,7 @@ struct rt_db_internal	*intern;
 		VSUB2( eip->b, &vals[3], &vals[0] );
 		mag_b = MAGNITUDE( eip->b );
 		if ( NEAR_ZERO( mag_b, RT_LEN_TOL )) {
-			fprintf(stderr, "ERROR, foci are coincident!\n");
+			rt_log( "ERROR, foci are coincident!\n");
 			return(1);
 		}
 		/* calculate A vector */
@@ -931,12 +931,12 @@ struct rt_db_internal	*intern;
 	tip->r_h = atof(cmd_argvs[10]);
 	/* Check for radius 2 >= radius 1 */
 	if( tip->r_a <= tip->r_h )  {
-		(void)printf("ERROR, radius 2 >= radius 1 ....\n");
+		rt_log("ERROR, radius 2 >= radius 1 ....\n");
 		return(1);	/* failure */
 	}
 	
 	if (MAGNITUDE( tip->h ) < RT_LEN_TOL) {
-		(void)printf("ERROR, normal must be greater than zero!\n");
+		rt_log("ERROR, normal must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 	
@@ -975,7 +975,7 @@ struct rt_db_internal	*intern;
 		|| MAGNITUDE(tip->a) < RT_LEN_TOL
 		|| MAGNITUDE(tip->b) < RT_LEN_TOL
 		|| r1 < RT_LEN_TOL || r2 < RT_LEN_TOL) {
-		(void)printf("ERROR, all dimensions must be greater than zero!\n");
+		rt_log("ERROR, all dimensions must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 
@@ -1018,7 +1018,7 @@ struct rt_db_internal	*intern;
 	r = atof(cmd_argvs[9]);
 	
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL || r < RT_LEN_TOL) {
-		(void)printf("ERROR, all dimensions must be greater than zero!\n");
+		rt_log("ERROR, all dimensions must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 
@@ -1065,7 +1065,7 @@ struct rt_db_internal	*intern;
 		|| MAGNITUDE(tip->a) < RT_LEN_TOL
 		|| MAGNITUDE(tip->b) < RT_LEN_TOL
 		|| ratio < RT_LEN_TOL) {
-		(void)printf("ERROR, all dimensions must be greater than zero!\n");
+		rt_log("ERROR, all dimensions must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 
@@ -1103,7 +1103,7 @@ struct rt_db_internal	*intern;
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL
 		|| MAGNITUDE(tip->a) < RT_LEN_TOL
 		|| MAGNITUDE(tip->b) < RT_LEN_TOL ) {
-		(void)printf("ERROR, all dimensions must be greater than zero!\n");
+		rt_log("ERROR, all dimensions must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 
@@ -1141,7 +1141,7 @@ struct rt_db_internal	*intern;
 	
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL
 		|| r1 < RT_LEN_TOL || r2 < RT_LEN_TOL) {
-		(void)printf("ERROR, all dimensions must be greater than zero!\n");
+		rt_log("ERROR, all dimensions must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 
@@ -1188,7 +1188,7 @@ struct rt_db_internal	*intern;
 	
 	if (MAGNITUDE(Dpth) < RT_LEN_TOL || MAGNITUDE(Hgt) < RT_LEN_TOL
 		|| MAGNITUDE(Wdth) < RT_LEN_TOL) {
-		(void)printf("ERROR, dimensions must all be greater than zero!\n");
+		rt_log("ERROR, dimensions must all be greater than zero!\n");
 		return(1);	/* failure */
 	}
 
@@ -1241,15 +1241,15 @@ struct rt_db_internal	*intern;
 	zmax = atof(cmd_argvs[3+5]);
 
 	if (xmin >= xmax) {
-		(void)printf("ERROR, XMIN greater than XMAX!\n");
+		rt_log("ERROR, XMIN greater than XMAX!\n");
 		return(1);	/* failure */
 	}
 	if (ymin >= ymax) {
-		(void)printf("ERROR, YMIN greater than YMAX!\n");
+		rt_log("ERROR, YMIN greater than YMAX!\n");
 		return(1);	/* failure */
 	}
 	if (zmin >= zmax) {
-		(void)printf("ERROR, ZMIN greater than ZMAX!\n");
+		rt_log("ERROR, ZMIN greater than ZMAX!\n");
 		return(1);	/* failure */
 	}
 
@@ -1293,7 +1293,7 @@ struct rt_db_internal	*intern;
 	if (MAGNITUDE(rip->rpc_H) < RT_LEN_TOL
 		|| MAGNITUDE(rip->rpc_B) < RT_LEN_TOL
 		|| rip->rpc_r <= RT_LEN_TOL) {
-		(void)printf("ERROR, height, breadth, and width must be greater than zero!\n");
+		rt_log("ERROR, height, breadth, and width must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 	
@@ -1329,7 +1329,7 @@ struct rt_db_internal	*intern;
 	if (MAGNITUDE(rip->rhc_H) < RT_LEN_TOL
 		|| MAGNITUDE(rip->rhc_B) < RT_LEN_TOL
 		|| rip->rhc_r <= RT_LEN_TOL || rip->rhc_c <= RT_LEN_TOL) {
-		(void)printf("ERROR, height, breadth, and width must be greater than zero!\n");
+		rt_log("ERROR, height, breadth, and width must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 	
@@ -1365,12 +1365,12 @@ struct rt_db_internal	*intern;
 	
 	if (MAGNITUDE(rip->epa_H) < RT_LEN_TOL
 		|| rip->epa_r1 <= RT_LEN_TOL || rip->epa_r2 <= RT_LEN_TOL) {
-		(void)printf("ERROR, height and axes must be greater than zero!\n");
+		rt_log("ERROR, height and axes must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 
 	if (rip->epa_r2 > rip->epa_r1) {
-		(void)printf("ERROR, |A| must be greater than |B|!\n");
+		rt_log("ERROR, |A| must be greater than |B|!\n");
 		return(1);	/* failure */
 	}
 	
@@ -1408,12 +1408,12 @@ struct rt_db_internal	*intern;
 	if (MAGNITUDE(rip->ehy_H) < RT_LEN_TOL
 		|| rip->ehy_r1 <= RT_LEN_TOL || rip->ehy_r2 <= RT_LEN_TOL
 		|| rip->ehy_c <= RT_LEN_TOL) {
-		(void)printf("ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
+		rt_log("ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 
 	if (rip->ehy_r2 > rip->ehy_r1) {
-		(void)printf("ERROR, |A| must be greater than |B|!\n");
+		rt_log("ERROR, |A| must be greater than |B|!\n");
 		return(1);	/* failure */
 	}
 	
@@ -1449,12 +1449,12 @@ struct rt_db_internal	*intern;
 	if (MAGNITUDE(eip->eto_N) < RT_LEN_TOL
 		|| MAGNITUDE(eip->eto_C) < RT_LEN_TOL
 		|| eip->eto_r <= RT_LEN_TOL || eip->eto_rd <= RT_LEN_TOL) {
-		(void)printf("ERROR, normal, axes, and radii must be greater than zero!\n");
+		rt_log("ERROR, normal, axes, and radii must be greater than zero!\n");
 		return(1);	/* failure */
 	}
 
 	if (eip->eto_rd > MAGNITUDE(eip->eto_C)) {
-		(void)printf("ERROR, |C| must be greater than |D|!\n");
+		rt_log("ERROR, |C| must be greater than |D|!\n");
 		return(1);	/* failure */
 	}
 	

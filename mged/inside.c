@@ -181,15 +181,15 @@ char **argv;
 		transform_editing_solid( &intern, es_mat, &es_int, 0 );
 		outdp = illump->s_path[illump->s_last];
 
-		(void)printf("Outside solid: ");
+		rt_log("Outside solid: ");
 		for(i=0; i <= illump->s_last; i++) {
-			(void)printf("/%s",illump->s_path[i]->d_namep);
+			rt_log("/%s",illump->s_path[i]->d_namep);
 		}
-		(void)printf("\n");
+		rt_log("\n");
 	}  else if( state == ST_O_EDIT ) {
 		/* object edit mode */
 		if( illump->s_Eflag ) {
-			(void)printf("Cannot find inside of a processed (E'd) region\n");
+			rt_log("Cannot find inside of a processed (E'd) region\n");
 			return CMD_BAD;
 		}
 		/* use the solid at bottom of path (key solid) */
@@ -198,15 +198,15 @@ char **argv;
 		transform_editing_solid( &intern, newmat, &es_int, 0 );
 		outdp = illump->s_path[illump->s_last];
 
-		(void)printf("Outside solid: ");
+		rt_log("Outside solid: ");
 		for(i=0; i <= illump->s_last; i++) {
-			(void)printf("/%s",illump->s_path[i]->d_namep);
+			rt_log("/%s",illump->s_path[i]->d_namep);
 		}
-		(void)printf("\n");
+		rt_log("\n");
 	} else {
 		/* Not doing any editing....ask for outside solid */
 		if( argc < arg+1 ) {
-			(void)printf("Enter name of outside solid: ");
+			rt_log("Enter name of outside solid: ");
 			return CMD_MORE;
 		}
 		if( (outdp = db_lookup( dbip,  argv[arg], LOOKUP_NOISY )) == DIR_NULL )  
@@ -240,7 +240,7 @@ char **argv;
 
 	/* get the inside solid name */
 	if( argc < arg+1 ) {
-		(void)printf("Enter name of the inside solid: ");
+		rt_log("Enter name of the inside solid: ");
 		return CMD_MORE;
 	}
 	if( db_lookup( dbip, argv[arg], LOOKUP_QUIET ) != DIR_NULL ) {
@@ -248,7 +248,7 @@ char **argv;
 		return CMD_BAD;
 	}
 	if( (int)strlen(argv[arg]) >= NAMESIZE )  {
-		(void)printf("Names are limited to %d characters\n", NAMESIZE-1);
+		rt_log("Names are limited to %d characters\n", NAMESIZE-1);
 		return CMD_BAD;
 	}
 	newname = argv[arg];
@@ -293,7 +293,7 @@ char **argv;
 
 		for(i=0; i<nface; i++) {
 			if( argc < arg+1 ) {
-				(void)printf("%s",promp[i]);
+				rt_log("%s",promp[i]);
 				return CMD_MORE;
 			}
 			thick[i] = atof(argv[arg]) * local2base;
@@ -309,7 +309,7 @@ char **argv;
 		promp = p_tgcin;
 		for(i=0; i<3; i++) {
 			if( argc < arg+1 ) {
-				(void)printf("%s",promp[i]);
+				rt_log("%s",promp[i]);
 				return CMD_MORE;
 			}
 			thick[i] = atof( argv[arg] ) * local2base;
@@ -322,7 +322,7 @@ char **argv;
 
 	case ID_ELL:
 		if( argc < arg+1 ) {
-			(void)printf("Enter desired thickness: ");
+			rt_log("Enter desired thickness: ");
 			return CMD_MORE;
 		}
 		thick[0] = atof( argv[arg] ) * local2base;
@@ -334,7 +334,7 @@ char **argv;
 
 	case ID_TOR:
 		if( argc < arg+1 ) {
-			(void)printf("Enter desired thickness: ");
+			rt_log("Enter desired thickness: ");
 			return CMD_MORE;
 		}
 		thick[0] = atof( argv[arg] ) * local2base;
@@ -348,7 +348,7 @@ char **argv;
 		promp = p_rpcin;
 		for (i = 0; i < 4; i++) {
 			if( argc < arg+1 ) {
-				(void)printf("%s",promp[i]);
+				rt_log("%s",promp[i]);
 				return CMD_MORE;
 			}
 			thick[i] = atof( argv[arg] ) * local2base;
@@ -363,7 +363,7 @@ char **argv;
 		promp = p_rhcin;
 		for (i = 0; i < 4; i++) {
 			if( argc < arg+1 ) {
-				(void)printf("%s",promp[i]);
+				rt_log("%s",promp[i]);
 				return CMD_MORE;
 			}
 			thick[i] = atof( argv[arg] ) * local2base;
@@ -378,7 +378,7 @@ char **argv;
 		promp = p_epain;
 		for (i = 0; i < 2; i++) {
 			if( argc < arg+1 ) {
-				(void)printf("%s",promp[i]);
+				rt_log("%s",promp[i]);
 				return CMD_MORE;
 			}
 			thick[i] = atof( argv[arg] ) * local2base;
@@ -393,7 +393,7 @@ char **argv;
 		promp = p_ehyin;
 		for (i = 0; i < 2; i++) {
 			if( argc < arg+1 ) {
-				(void)printf("%s",promp[i]);
+				rt_log("%s",promp[i]);
 				return CMD_MORE;
 			}
 			thick[i] = atof( argv[arg] ) * local2base;
@@ -408,7 +408,7 @@ char **argv;
 		promp = p_etoin;
 		for (i = 0; i < 1; i++) {
 			if( argc < arg+1 ) {
-				(void)printf("%s",promp[i]);
+				rt_log("%s",promp[i]);
 				return CMD_MORE;
 			}
 			thick[i] = atof( argv[arg] ) * local2base;
@@ -422,7 +422,7 @@ char **argv;
 	case ID_NMG:
 		promp = p_nmgin;
 		if( argc < arg+1 ) {
-			(void)printf( "%s" , promp[0] );
+			rt_log( "%s" , promp[0] );
 			return CMD_MORE;
 		}
 		thick[0] = atof( argv[arg] ) * local2base;
@@ -432,7 +432,7 @@ char **argv;
 		break;
 
 	default:
-		(void)printf("Cannot find inside for '%s' solid\n",
+		rt_log("Cannot find inside for '%s' solid\n",
 			rt_functab[intern.idb_type].ft_name );
 		return CMD_BAD;
 	}
@@ -499,7 +499,7 @@ plane_t	planes[6];
 	/* find the new vertices by intersecting the new face planes */
 	for(i=0; i<num_pts; i++) {
 		if( rt_arb_3face_intersect( arb->pt[i], planes, cgtype, i*3 ) < 0 )  {
-			(void)printf("cannot find inside arb\n");
+			rt_log("cannot find inside arb\n");
 			return(1);
 		}
 	}
@@ -519,38 +519,38 @@ plane_t	planes[6];
 		/* calculate the four possible intersect points */
 		if( rt_mkpoint_3planes( pt[0] , planes[1] , planes[2] , planes[3] ) )
 		{
-			(void)printf( "Cannot find inside arb5\n" );
-			(void)printf( "Cannot find intersection of three planes for point 0:\n" );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+			rt_log( "Cannot find inside arb5\n" );
+			rt_log( "Cannot find intersection of three planes for point 0:\n" );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
 			return( 1 );
 		}
 		if( rt_mkpoint_3planes( pt[1] , planes[2] , planes[3] , planes[4] ) )
 		{
-			(void)printf( "Cannot find inside arb5\n" );
-			(void)printf( "Cannot find intersection of three planes for point 1:\n" );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+			rt_log( "Cannot find inside arb5\n" );
+			rt_log( "Cannot find intersection of three planes for point 1:\n" );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
 			return( 1 );
 		}
 		if( rt_mkpoint_3planes( pt[2] , planes[3] , planes[4] , planes[1] ) )
 		{
-			(void)printf( "Cannot find inside arb5\n" );
-			(void)printf( "Cannot find intersection of three planes for point 2:\n" );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+			rt_log( "Cannot find inside arb5\n" );
+			rt_log( "Cannot find intersection of three planes for point 2:\n" );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
 			return( 1 );
 		}
 		if( rt_mkpoint_3planes( pt[3] , planes[4] , planes[1] , planes[2] ) )
 		{
-			(void)printf( "Cannot find inside arb5\n" );
-			(void)printf( "Cannot find intersection of three planes for point 3:\n" );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
-			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+			rt_log( "Cannot find inside arb5\n" );
+			rt_log( "Cannot find intersection of three planes for point 3:\n" );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+			rt_log( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
 			return( 1 );
 		}
 			
@@ -616,7 +616,7 @@ plane_t	planes[6];
 		/* get an NMG version of this arb7 */
 		if( rt_functab[ip->idb_type].ft_tessellate( &r , m , ip , &ttol , &mged_tol ) )
 		{
-			(void)printf( "Cannot tessellate arb7\n" );
+			rt_log( "Cannot tessellate arb7\n" );
 			rt_functab[ip->idb_type].ft_ifree( ip );
 			return( 1 );
 		}
@@ -656,7 +656,7 @@ plane_t	planes[6];
 			}
 			if( !found )
 			{
-				(void)printf( "Could not move face plane for arb7, face #%d\n" , i );
+				rt_log( "Could not move face plane for arb7, face #%d\n" , i );
 				nmg_km( m );
 				return( 1 );
 			}
@@ -676,7 +676,7 @@ plane_t	planes[6];
 
 			if( nmg_in_vert( v , 0 , &mged_tol ) )
 			{
-				(void)printf( "Could not find coordinates for inside arb7\n" );
+				rt_log( "Could not find coordinates for inside arb7\n" );
 				nmg_km( m );
 				nmg_tbl( &vert_tab , TBL_FREE , (long *)NULL );
 				return( 1 );
@@ -736,7 +736,7 @@ fastf_t	thick[6];
 
 	VCROSS(hwork, unitA, unitB);
 	if( (dt = VDOT(hwork, unitH)) == 0.0 ) {
-		(void)printf("BAD cylinder\n");
+		rt_log("BAD cylinder\n");
 		return(1);
 	}
 	else if( dt < 0.0 )
@@ -745,7 +745,7 @@ fastf_t	thick[6];
 	h1 = thick[0] / dt;
 	h2 = thick[1] / dt;
 	if( (ht = dt * mag[0]) == 0.0 ) {
-		(void)printf("Cannot find the inside cylinder\n");
+		rt_log("Cannot find the inside cylinder\n");
 		return(1);
 	}
 	dtha = VDOT(unitA, tgc->h);
@@ -800,12 +800,12 @@ fastf_t			thick[6];
 
 	if( thick[0] < 0 ) {
 		if( (tor->r_h - thick[0]) > (tor->r_a + .01) ) {
-			(void)printf("cannot do: r2 > r1\n");
+			rt_log("cannot do: r2 > r1\n");
 			return(1);
 		}
 	}
 	if( thick[0] >= tor->r_h ) {
-		(void)printf("cannot do: r2 <= 0\n");
+		rt_log("cannot do: r2 <= 0\n");
 		return(1);
 	}
 
@@ -853,7 +853,7 @@ fastf_t	thick[6];
 
 	for(i=0; i<3; i++) {
 		if( (nmag[i] = mag[i] - thick[i]) <= 0.0 )
-			(void)printf("Warning: new vector [%d] length <= 0 \n", i);
+			rt_log("Warning: new vector [%d] length <= 0 \n", i);
 	}
 	VSCALE(ell->a, ell->a, nmag[0]/mag[0]);
 	VSCALE(ell->b, ell->b, nmag[1]/mag[1]);
@@ -1039,7 +1039,7 @@ fastf_t thick;
 
 	if( RT_LIST_IS_EMPTY( &m->r_hd ) )
 	{
-		(void)printf( "No inside created\n" );
+		rt_log( "No inside created\n" );
 		nmg_km( m );
 		return( 1 );
 	}

@@ -95,7 +95,7 @@ char **argv;
 		/* Update the display */
 		replot_editing_solid();
 		dmaflag = 1;
-		(void)printf("done\n");
+		rt_log("done\n");
 	}
 	(void)unlink(tmpfil);
 
@@ -127,7 +127,7 @@ writesolid()
 		struct rt_eto_internal *eto;
 
 		default:
-			(void)printf( "Cannot text edit this solid type\n" );
+			rt_log( "Cannot text edit this solid type\n" );
 			(void)fclose(fp);
 			return( 1 );
 		case ID_TOR:
@@ -269,7 +269,7 @@ readsolid()
 		double a,b,c,d;
 
 		default:
-			(void)printf( "Cannot text edit this solid type\n" );
+			rt_log( "Cannot text edit this solid type\n" );
 			ret_val = 1;
 			break;
 		case ID_TOR:
@@ -704,7 +704,7 @@ char *file;
 		sigsetmask(omask);
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = DEFEDITOR;
-		(void)printf("Invoking %s...\n", ed);
+		rt_log("Invoking %s...\n", ed);
 		(void)execlp(ed, ed, file, 0);
 		perror(ed);
 		exit(1);
@@ -737,7 +737,7 @@ char *file;
 		(void)signal( SIGQUIT, SIG_DFL );
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = DEFEDITOR;
-		(void)printf("Invoking %s...\n", ed);
+		rt_log("Invoking %s...\n", ed);
 		(void)execlp(ed, ed, file, 0);
 		perror(ed);
 		exit(1);

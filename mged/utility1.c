@@ -108,7 +108,7 @@ char	**argv;
 	}
 	else {
 		/* should never reach here */
-		(void)printf("tables:  input error\n");
+		rt_log("tables:  input error\n");
 		return CMD_BAD;
 	}
 
@@ -117,7 +117,7 @@ char	**argv;
 
 	/* open the file */
 	if( (tabptr=fopen(argv[1], "w+")) == NULL ) {
-		(void)fprintf(stderr,"Can't open %s\n",argv[1]);
+		(void)rt_log("Can't open %s\n",argv[1]);
 		return CMD_BAD;
 	}
 
@@ -155,17 +155,17 @@ char	**argv;
 		if( (dp = db_lookup( dbip, argv[i],LOOKUP_NOISY)) != DIR_NULL )
 			tables(dp, 0, identity, flag);
 		else
-			(void)printf(" skip this object\n");
+			rt_log(" skip this object\n");
 	}
 
-	(void)printf("Summary written in: %s\n",argv[1]);
+	rt_log("Summary written in: %s\n",argv[1]);
 
 	if( flag == SOL_TABLE || flag == REG_TABLE ) {
 		/* remove the temp file */
 		(void)unlink( "/tmp/mged_discr\0" );
 		(void)fprintf(tabptr,"\n\nNumber Solids = %d  Number Regions = %d\n",
 				numsol,numreg);
-		(void)printf("Processed %d Solids and %d Regions\n",numsol,numreg);
+		rt_log("Processed %d Solids and %d Regions\n",numsol,numreg);
 		(void)fclose( tabptr );
 	}
 
@@ -174,19 +174,19 @@ char	**argv;
 
 		(void)fprintf(tabptr,"* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 		(void)fclose( tabptr );
-		(void)printf("Processed %d Regions\n",numreg);
+		rt_log("Processed %d Regions\n",numreg);
 
 		/* make ordered idents */
 		rt_vls_init( &cmd );
 		rt_vls_strcpy( &cmd, sortcmd );
 		rt_vls_strcat( &cmd, argv[1] );
-		printf("%s\n", rt_vls_addr(&cmd) );
+		rt_log("%s\n", rt_vls_addr(&cmd) );
 		(void)system( rt_vls_addr(&cmd) );
 
 		rt_vls_trunc( &cmd, 0 );
 		rt_vls_strcpy( &cmd, catcmd );
 		rt_vls_strcat( &cmd, argv[1] );
-		printf("%s\n", rt_vls_addr(&cmd) );
+		rt_log("%s\n", rt_vls_addr(&cmd) );
 		(void)system( rt_vls_addr(&cmd) );
 		rt_vls_free( &cmd );
 
@@ -220,7 +220,7 @@ char	**argv;
 
 	/* need user interaction for this command */
 	if( isatty(0) == 0 ) {
-		(void)printf("Need user interaction for the 'edcodes' command\n");
+		rt_log("Need user interaction for the 'edcodes' command\n");
 		return CMD_BAD;
 	}
 
@@ -234,7 +234,7 @@ char	**argv;
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL )
 			edcodes(dp, 0);
 		else
-			(void)printf(" skip this object\n");
+			rt_log(" skip this object\n");
 	}
 
 	/* put terminal back in cooked mode  -  need "nice" way to do this */
@@ -281,10 +281,10 @@ int flag;
 	int dchar = 0;
 
 	if( pathpos >= MAX_LEVELS ) {
-		(void)printf("nesting exceeds %d levels\n",MAX_LEVELS);
+		rt_log("nesting exceeds %d levels\n",MAX_LEVELS);
 		for(i=0; i<MAX_LEVELS; i++)
-			(void)printf("/%s", path[i]->d_namep);
-		(void)printf("\n");
+			rt_log("/%s", path[i]->d_namep);
+		rt_log("\n");
 		return;
 	}
 
@@ -298,10 +298,10 @@ int flag;
 					(void)fprintf(tabptr,"   RG %c %s\n",operate,record.c.c_name);
 			}
 			else {
-				(void)printf("**WARNING** group= %s is member of region= ",record.c.c_name);
+				rt_log("**WARNING** group= %s is member of region= ",record.c.c_name);
 				for(k=0;k<pathpos;k++)
-					(void)printf("/%s",path[k]->d_namep);
-				(void)printf("\n");
+					rt_log("/%s",path[k]->d_namep);
+				rt_log("\n");
 			}
 			if(lastmemb)
 				regflag = lastmemb = 0;
@@ -359,17 +359,17 @@ int flag;
 
 	if(regflag == 0) {
 		/* have a solid that's not part of a region */
-		(void)printf("**WARNING** following path (solid) has no region:\n");
+		rt_log("**WARNING** following path (solid) has no region:\n");
 		for(k=0;k<=pathpos;k++)
-			(void)printf("/%s",path[k]->d_namep);
-		(void)printf("\n");
+			rt_log("/%s",path[k]->d_namep);
+		rt_log("\n");
 	}
 
 	if( regflag && lastmemb && oper_ok == 0 ) {
-		(void)printf("**WARNING** following region has only '-' oprations:\n");
+		rt_log("**WARNING** following region has only '-' oprations:\n");
 		for(k=0; k<pathpos; k++)
-			(void)printf("/%s",path[k]->d_namep);
-		(void)printf("\n");
+			rt_log("/%s",path[k]->d_namep);
+		rt_log("\n");
 	}
 
 	if(flag == ID_TABLE) {
@@ -423,7 +423,7 @@ int flag;
 	discr[numsol++] = dchar;
 	identt.i_index = numsol;
 	if(numsol > MAXSOL) {
-		(void)printf("tables: number of solids > max (%d)\n",MAXSOL);
+		rt_log("tables: number of solids > max (%d)\n",MAXSOL);
 		exit(10);
 	}
 	(void)lseek(idfd, 0L, 2);
@@ -475,10 +475,10 @@ int pathpos;
 		return;
 
 	if( pathpos >= MAX_LEVELS ) {
-		(void)printf("nesting exceeds %d levels\n",MAX_LEVELS);
+		rt_log("nesting exceeds %d levels\n",MAX_LEVELS);
 		for(i=0; i<MAX_LEVELS; i++)
-			(void)printf("/%s", path[i]->d_namep);
-		(void)printf("\n");
+			rt_log("/%s", path[i]->d_namep);
+		rt_log("\n");
 		regflag = ABORTED;
 		return;
 	}
@@ -490,10 +490,10 @@ int pathpos;
 			if(record.c.c_flags == 'R') 
 				oper_ok++;
 			else {
-				(void)printf("**WARNING** group= %s is member of region= ",record.c.c_name);
+				rt_log("**WARNING** group= %s is member of region= ",record.c.c_name);
 				for(i=0;i<pathpos;i++)
-					(void)printf("/%s",path[i]->d_namep);
-				(void)printf("\n\r");
+					rt_log("/%s",path[i]->d_namep);
+				rt_log("\n\r");
 			}
 			if(lastmemb)
 				regflag = lastmemb = 0;
@@ -510,17 +510,17 @@ int pathpos;
 
 			oper_ok = 0;
 
-			(void)fprintf(stdout,"%-6d%-3d%-3d%-4d  ",record.c.c_regionid,
+			(void)rt_log("%-6d%-3d%-3d%-4d  ",record.c.c_regionid,
 					record.c.c_aircode,record.c.c_material,
 					record.c.c_los);
 			for(i=0;i<pathpos;i++) {
-				(void)fprintf(stdout,"/%s",path[i]->d_namep);
+				(void)rt_log("/%s",path[i]->d_namep);
 			}
-			(void)fprintf(stdout,"/%s%s\r",record.c.c_name,
+			(void)rt_log("/%s%s\r",record.c.c_name,
 					nparts==0 ? " **DUMMY REGION**" : "");
 			/*edit this line */
 			if( editline(dp) ) {
-				(void)printf("aborted\n");
+				rt_log("aborted\n");
 				regflag = ABORTED;
 				return;
 			}
@@ -681,7 +681,7 @@ struct directory	*dp;
 					record.c.c_los = los;
 					/* write out all changes */
 					if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  {
-						(void)printf("Database write error, aborting.\n");
+						rt_log("Database write error, aborting.\n");
 						ERROR_RECOVERY_SUGGESTION;
 						return(1);
 					}
@@ -728,7 +728,7 @@ struct directory	*dp;
 				lpos = field = eflag = elflag = 0;
 
 				(void)putchar('\r');
-				(void)fprintf(stdout,"%-6d%-3d%-3d%-4d",item,air,mat,los);
+				(void)rt_log("%-6d%-3d%-3d%-4d",item,air,mat,los);
 				(void)putchar('\r');
 
 			break;
@@ -782,19 +782,19 @@ int num;
 	switch( num ) {
 
 		case 0:
-			(void)fprintf(stdout,"%-6d",item);
+			(void)rt_log("%-6d",item);
 		break;
 
 		case 1:
-			(void)fprintf(stdout,"%-3d",air);
+			(void)rt_log("%-3d",air);
 		break;
 
 		case 2:
-			(void)fprintf(stdout,"%-3d",mat);
+			(void)rt_log("%-3d",mat);
 		break;
 
 		case 3:
-			(void)fprintf(stdout,"%-4d",los);
+			(void)rt_log("%-4d",los);
 		break;
 	}
 
@@ -820,7 +820,7 @@ char	**argv;
 
 	for( j=1; j<argc; j++) {
 		item = atoi( argv[j] );
-		(void)printf("Region[s] with ident %d:\n",item);
+		rt_log("Region[s] with ident %d:\n",item);
 
 		/* Examine all COMB nodes */
 		for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -834,7 +834,7 @@ char	**argv;
 				}
 				if( rec.c.c_regionid != item )
 					continue;
-				(void)printf("   %s\n",rec.c.c_name);
+				rt_log("   %s\n",rec.c.c_name);
 			}
 		}
 	}

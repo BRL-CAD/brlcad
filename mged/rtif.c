@@ -67,16 +67,16 @@ int	status;
 	int	ret = status >> 8;
 
 	if( status == 0 )  {
-		(void)printf("Normal exit\n");
+		rt_log("Normal exit\n");
 		return;
 	}
-	(void)printf("Abnormal exit x%x", status);
+	rt_log("Abnormal exit x%x", status);
 	if( core )
-		(void)printf(", core dumped");
+		rt_log(", core dumped");
 	if( sig )
-		(void)printf(", terminating signal = %d", sig );
+		rt_log(", terminating signal = %d", sig );
 	else
-		(void)printf(", return (exit) code = %d", ret );
+		rt_log(", return (exit) code = %d", ret );
 	(void)putchar('\n');
 }
 
@@ -261,8 +261,8 @@ register char	**vp;
 	/* Print out the command we are about to run */
 	vp = &rt_cmd_vec[0];
 	while( *vp )
-		(void)printf("%s ", *vp++ );
-	(void)printf("\n");
+		rt_log("%s ", *vp++ );
+	rt_log("\n");
 
 }
 
@@ -363,7 +363,7 @@ char	**argv;
 	retcode = run_rt();
 	if( needs_reattach && retcode == 0 )  {
 		/* Wait for a return, then reattach display */
-		printf("Press RETURN to reattach\007\n");
+		rt_log("Press RETURN to reattach\007\n");
 		while( getchar() != '\n' )
 			/* NIL */  ;
 	}
@@ -411,7 +411,7 @@ char	**argv;
 	retcode = run_rt();
 	if( needs_reattach && retcode == 0 )  {
 		/* Wait for a return, then reattach display */
-		printf("Press RETURN to reattach\007\n");
+		rt_log("Press RETURN to reattach\007\n");
 		while( getchar() != '\n' )
 			/* NIL */  ;
 	}
@@ -654,17 +654,17 @@ char	**argv;
 			vp = RT_LIST_LAST( rt_vlist, &(sp->s_vlist) );
 			VMOVE( sav_start, vp->pt[vp->nused-1] );
 			VMOVE( sav_center, sp->s_center );
-			printf("animating EYE solid\n");
+			rt_log("animating EYE solid\n");
 			goto work;
 		}
 		/* Fall through */
 	default:
 	case -1:
 		mode = -1;
-		printf("default mode:  eyepoint at (0,0,1) viewspace\n");
+		rt_log("default mode:  eyepoint at (0,0,1) viewspace\n");
 		break;
 	case 0:
-		printf("rotation supressed, center is eyepoint\n");
+		rt_log("rotation supressed, center is eyepoint\n");
 		break;
 	}
 work:
@@ -929,11 +929,11 @@ char	**argv;
 			rtif_mode = 3;	/* Like "ev" */
 			break;
 		default:
-			printf("option '%c' unknown\n", c);
-			printf("	-d#	inter-frame delay\n");
-			printf("	-v	polygon rendering (visual)\n");
-			printf("	-D#	desired starting frame\n");
-			printf("	-K#	final frame\n");
+			rt_log("option '%c' unknown\n", c);
+			rt_log("	-d#	inter-frame delay\n");
+			rt_log("	-v	polygon rendering (visual)\n");
+			rt_log("	-D#	desired starting frame\n");
+			rt_log("	-K#	final frame\n");
 			break;
 		}
 	}
@@ -953,7 +953,7 @@ char	**argv;
 
 	rtif_vbp = rt_vlblock_init();
 
-	printf("eyepoint at (0,0,1) viewspace\n");
+	rt_log("eyepoint at (0,0,1) viewspace\n");
 
 	/*
 	 *  Initialize the view to the current one in MGED
@@ -1053,7 +1053,7 @@ char	**argv;
 		    -toViewcenter[MDY], -toViewcenter[MDZ]);
 		if (adcflag)
 		{
-		    (void) printf("Firing through angle/distance cursor...\n");
+		    rt_log("Firing through angle/distance cursor...\n");
 		    /*
 		     * Compute bounding box of all objects displayed.
 		     * Borrowed from size_reset() in chgview.c
@@ -1074,7 +1074,7 @@ char	**argv;
 			    plus[Z] = sp->s_center[Z] + sp->s_size;
 			    VMAX( extremum[1], plus );
 #if 0
-			    printf("(%g,%g,%g)+-%g->(%g,%g,%g)(%g,%g,%g)->(%g,%g,%g)(%g,%g,%g)\n",
+			    rt_log("(%g,%g,%g)+-%g->(%g,%g,%g)(%g,%g,%g)->(%g,%g,%g)(%g,%g,%g)\n",
 				sp->s_center[X], sp->s_center[Y], sp->s_center[Z],
 				sp->s_size,
 				minus[X], minus[Y], minus[Z],
@@ -1116,7 +1116,7 @@ char	**argv;
 			center_model, curs_y * Viewscale / 2047.0, unit_V);
 		}
 		else
-		    (void) printf("Firing from view center...\n");
+		    rt_log("Firing from view center...\n");
 		fflush(stdout);
 		rt_write(fp, center_model );
 	}

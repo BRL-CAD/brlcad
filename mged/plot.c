@@ -81,22 +81,22 @@ char	**argv;
 			break;
 		case 'g':
 			/* do grid */
-			(void)printf("grid unimplemented\n");
+			rt_log("grid unimplemented\n");
 			break;
 		case 'z':
 		case 'Z':
 			/* Enable Z clipping */
-			(void)printf("Clipped in Z to viewing cube\n");
+			rt_log("Clipped in Z to viewing cube\n");
 			Z_clip = 1;
 			break;
 		default:
-			(void)printf("bad PLOT option %s\n", argv[1] );
+			rt_log("bad PLOT option %s\n", argv[1] );
 			break;
 		}
 		argv++;
 	}
 	if( argv[1] == (char *)0 )  {
-		printf("no filename or filter specified\n");
+		rt_log("no filename or filter specified\n");
 		return CMD_BAD;
 	}
 	if( argv[1][0] == '|' )  {
@@ -111,7 +111,7 @@ char	**argv;
 			perror( rt_vls_addr( &str ) );
 			return CMD_BAD;
 		}
-		(void)printf("piped to %s\n", rt_vls_addr( &str ) );
+		rt_log("piped to %s\n", rt_vls_addr( &str ) );
 		rt_vls_free( &str );
 		is_pipe = 1;
 	}  else  {
@@ -119,7 +119,7 @@ char	**argv;
 			perror( argv[1] );
 			return CMD_BAD;
 		}
-		(void)printf("plot stored in %s\n", argv[1] );
+		rt_log("plot stored in %s\n", argv[1] );
 		is_pipe = 0;
 	}
 
@@ -262,7 +262,7 @@ char	**argv;
 
 	FOR_ALL_SOLIDS( sp )  {
 		if( !sp->s_Eflag && sp->s_soldash != 0 )  {
-			printf("everything in view must be 'E'ed\n");
+			rt_log("everything in view must be 'E'ed\n");
 			return CMD_BAD;
 		}
 	}
@@ -270,11 +270,11 @@ char	**argv;
 	/* Create pipes to cad_boundp | cad_parea */
 	if( argc == 2 )  {
 		sprintf( buf, "cad_boundp -t %s | cad_parea", argv[1] );
-		(void)printf("Tolerance is %s\n", argv[1] );
+		rt_log("Tolerance is %s\n", argv[1] );
 	}  else  {
 		double tol = VIEWSIZE * 0.001;
 		sprintf( buf, "cad_boundp -t %e | cad_parea", tol );
-		(void)printf("Auto-tolerance of 0.1%% is %e\n", tol );
+		rt_log("Auto-tolerance of 0.1%% is %e\n", tol );
 	}
 
 	if( (fp = popen( buf, "w" )) == NULL )  {
@@ -319,7 +319,7 @@ char	**argv;
 			}
 		}
 	}
-	(void)printf("Presented area from this viewpoint, square %s:\n",
+	rt_log("Presented area from this viewpoint, square %s:\n",
 		rt_units_string(dbip->dbi_local2base) );
 	pclose( fp );
 

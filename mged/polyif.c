@@ -117,7 +117,7 @@ char	**argv;
 				case RT_VLIST_POLY_DRAW:
 					/* Polygon Draw */
 					if( ph.npts >= MAX_VERTS )  {
-						printf("excess vertex skipped\n");
+						rt_log("excess vertex skipped\n");
 						break;
 					}
 					VMOVE( verts[ph.npts], *pt );
@@ -131,7 +131,7 @@ char	**argv;
 					 * XXX poly will end with next POLY_MOVE.
 					 */
 					if( ph.npts < 3 )  {
-						printf("polygon with %d points discarded\n",
+						rt_log("polygon with %d points discarded\n",
 							ph.npts);
 						break;
 					}
@@ -142,7 +142,7 @@ char	**argv;
 						VCROSS( ph.normal, e1, e2 );
 					}
 					if( rt_struct_export( &obuf, (genptr_t)&ph, polygon_desc ) < 0 )  {
-						printf("header export error\n");
+						rt_log("header export error\n");
 						break;
 					}
 					if (rt_struct_put(fp, &obuf) != obuf.ext_nbytes) {
@@ -153,7 +153,7 @@ char	**argv;
 					/* Now export the vertices */
 					vertex_desc[0].im_count = ph.npts * 3;
 					if( rt_struct_export( &obuf, (genptr_t)verts, vertex_desc ) < 0 )  {
-						printf("vertex export error\n");
+						rt_log("vertex export error\n");
 						break;
 					}
 					if( rt_struct_put( fp, &obuf ) != obuf.ext_nbytes )  {

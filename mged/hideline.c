@@ -79,7 +79,7 @@ struct partition *PartHeadp;
 	register fastf_t len;
 
 	if (PartHeadp->pt_forw->pt_forw != PartHeadp)
-		printf("hit_headon: multiple partitions\n");
+		rt_log("hit_headon: multiple partitions\n");
 
 	VJOIN1(PartHeadp->pt_forw->pt_inhit->hit_point,ap->a_ray.r_pt,
 	    PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
@@ -153,7 +153,7 @@ char	**argv;
 	register struct rt_vlist	*vp;
 
 	if ((plotfp = fopen(argv[1],"w")) == NULL) {
-		(void)printf("f_hideline: unable to open \"%s\" for writing.\n",
+		rt_log("f_hideline: unable to open \"%s\" for writing.\n",
 		    argv[1]);
 		return CMD_BAD;
 	}
@@ -170,13 +170,13 @@ char	**argv;
 			objname[numobjs++] = sp->s_path[0]->d_namep;
 	}
 
-	(void)printf("Generating hidden-line drawing of the following regions:\n");
+	rt_log("Generating hidden-line drawing of the following regions:\n");
 	for (i = 0; i < numobjs; i++)
-		printf("\t%s\n",objname[i]);
+		rt_log("\t%s\n",objname[i]);
 
 	/* Initialization for librt */
 	if ((rtip = rt_dirbuild(dbip->dbi_filename,title,0)) == RTI_NULL) {
-		printf("f_hideline: unable to open model file \"%s\"\n",
+		rt_log("f_hideline: unable to open model file \"%s\"\n",
 		    dbip->dbi_filename);
 		return CMD_BAD;
 	}
@@ -202,7 +202,7 @@ char	**argv;
 
 	for (i = 0; i < numobjs; i++)
 		if (rt_gettree(rtip,objname[i]) == -1)
-			printf("f_hideline: rt_gettree failed on \"%s\"\n",objname[i]);
+			rt_log("f_hideline: rt_gettree failed on \"%s\"\n",objname[i]);
 
 	/* Crawl along the vectors raytracing as we go */
 	VSET(temp,0,0,-1);				/* looking at model */
@@ -215,14 +215,14 @@ char	**argv;
 		if (ratio >= dmp->dmr_bound || ratio < 0.001)
 			continue;
 
-		printf("Solid\n");
+		rt_log("Solid\n");
 		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
 			register point_t *pt = vp->pt;
 			for( i = 0; i < nused; i++,cmd++,pt++ )  {
-				printf("\tVector\n");
+				rt_log("\tVector\n");
 				switch( *cmd )  {
 				case RT_VLIST_POLY_START:
 					break;
@@ -240,7 +240,7 @@ char	**argv;
 					len = MAGNITUDE(dir);
 					VUNITIZE(dir);
 					visible = FALSE;
-					printf("\t\tDraw 0 -> %g, step %g\n", len, step);
+					rt_log("\t\tDraw 0 -> %g, step %g\n", len, step);
 					for (u = 0; u <= len; u += step) {
 						VJOIN1(aim_point,last,u,dir);
 						MAT4X3PNT(temp,model2view,aim_point);

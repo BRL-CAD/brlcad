@@ -59,8 +59,8 @@ char **argv;
 			return CMD_BAD;
 		}
 		if(record.u_id == ID_ARS_A) {
-			(void)printf("%c %d %s ",record.a.a_id,record.a.a_type,record.a.a_name);
-			(void)printf("%d %d %d %d\n",record.a.a_m,record.a.a_n,
+			rt_log("%c %d %s ",record.a.a_id,record.a.a_type,record.a.a_name);
+			rt_log("%d %d %d %d\n",record.a.a_m,record.a.a_n,
 				record.a.a_curlen,record.a.a_totlen);
 			/* the b-records */
 			ngran = record.a.a_totlen;
@@ -69,27 +69,27 @@ char **argv;
 					READ_ERR;
 					return CMD_BAD;
 				}
-				(void)printf("%c %d %d %d\n",record.b.b_id,record.b.b_type,record.b.b_n,record.b.b_ngranule);
+				rt_log("%c %d %d %d\n",record.b.b_id,record.b.b_type,record.b.b_n,record.b.b_ngranule);
 				for(k=0; k<24; k+=6) {
 					for(kk=k; kk<k+6; kk++)
-						(void)printf("%10.4f ",record.b.b_values[kk]*base2local);
-					(void)printf("\n");
+						rt_log("%10.4f ",record.b.b_values[kk]*base2local);
+					rt_log("\n");
 				}
 			}
 		}
 
 		if(record.u_id == ID_SOLID) {
-			(void)printf("%c %d %s %d\n", record.s.s_id,
+			rt_log("%c %d %s %d\n", record.s.s_id,
 				record.s.s_type,record.s.s_name,
 				record.s.s_cgtype);
 			for(kk=0;kk<24;kk+=6){
 				for(j=kk;j<kk+6;j++)
-					(void)printf("%10.4f ",record.s.s_values[j]*base2local);
-				(void)printf("\n");
+					rt_log("%10.4f ",record.s.s_values[j]*base2local);
+				rt_log("\n");
 			}
 		}
 		if(record.u_id == ID_COMB) {
-			(void)printf("%c '%c' %s %d %d %d %d %d \n",
+			rt_log("%c '%c' %s %d %d %d %d %d \n",
 			record.c.c_id,record.c.c_flags,
 			record.c.c_name,record.c.c_regionid,
 			record.c.c_aircode, dp->d_len-1,
@@ -102,7 +102,7 @@ char **argv;
 					READ_ERR;
 					return CMD_BAD;
 				}
-				(void)printf("%c %c %s\n",
+				rt_log("%c %c %s\n",
 					record.M.m_id,
 					record.M.m_relation,
 					record.M.m_instname);
@@ -112,11 +112,11 @@ char **argv;
 			}
 		}
 		if(record.u_id == ID_P_HEAD) {
-			(void)printf("POLYGON: not implemented yet\n");
+			rt_log("POLYGON: not implemented yet\n");
 		}
 
 		if(record.u_id == ID_BSOLID) {
-			(void)printf("SPLINE: not implemented yet\n");
+			rt_log("SPLINE: not implemented yet\n");
 		}
 	}
 	return CMD_OK;
@@ -174,7 +174,7 @@ char	**argv;
 
 	if( argc < 2 )  {
 		/* get the path */
-		(void)printf("Enter the path (space is delimiter): ");
+		rt_log("Enter the path (space is delimiter): ");
 		return CMD_MORE;
 	}
 
@@ -194,10 +194,10 @@ char	**argv;
 
 	if(prflag == 0) {
 		/* path not found */
-		(void)printf("PATH:  ");
+		rt_log("PATH:  ");
 		for(i=0; i<objpos; i++)
-			(void)printf("/%s",obj[i]->d_namep);
-		(void)printf("  NOT FOUND\n");
+			rt_log("/%s",obj[i]->d_namep);
+		rt_log("  NOT FOUND\n");
 	}
 
 	return CMD_OK;
@@ -225,14 +225,14 @@ char **argv;
 
 	if( argc < 3 )
 	{
-		printf( "Enter new_solid_name and full path to old_solid (seperate path components with spaces not /)\n" );
+		rt_log( "Enter new_solid_name and full path to old_solid (seperate path components with spaces not /)\n" );
 		return CMD_MORE;
 	}
 
 	/* check if new solid name already exists in description */
 	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL )
 	{
-		(void)printf("%s: already exists\n",argv[1]);
+		rt_log("%s: already exists\n",argv[1]);
 		return CMD_BAD;
 	}
 
@@ -277,10 +277,10 @@ char **argv;
 	trace(obj[0], 0, start_mat, CPEVAL);
 
 	if(prflag == 0) {
-		(void)printf("PATH:  ");
+		rt_log("PATH:  ");
 		for(i=0; i<objpos; i++)
-			(void)printf("/%s",obj[i]->d_namep);
-		(void)printf("  NOT FOUND\n");
+			rt_log("/%s",obj[i]->d_namep);
+		rt_log("  NOT FOUND\n");
 		db_free_external( &external );
 		return CMD_BAD;
 	}
@@ -351,10 +351,10 @@ int flag;
 	int nparts, i, k;
 
 	if( pathpos >= MAX_LEVELS ) {
-		(void)printf("nesting exceeds %d levels\n",MAX_LEVELS);
+		rt_log("nesting exceeds %d levels\n",MAX_LEVELS);
 		for(i=0; i<MAX_LEVELS; i++)
-			(void)printf("/%s", path[i]->d_namep);
-		(void)printf("\n");
+			rt_log("/%s", path[i]->d_namep);
+		rt_log("\n");
 		return;
 	}
 
@@ -405,15 +405,15 @@ int flag;
 
 	/* print the path */
 	for(k=0; k<pathpos; k++)
-		(void)printf("/%s",path[k]->d_namep);
+		rt_log("/%s",path[k]->d_namep);
 	if(flag == LISTPATH) {
-		(void)printf("/%s\n",record.s.s_name);
+		rt_log("/%s\n",record.s.s_name);
 		return;
 	}
 
 	/* NOTE - only reach here if flag == LISTEVAL */
 	/* do_list will print actual solid name */
-	(void)printf("/");
+	rt_log("/");
 	do_list( stdout, dp, 1 );
 }
 
@@ -430,11 +430,11 @@ register matp_t m;
 
 	for(i=0; i<16; i++) {
 		if( (i+1)%4 )
-			(void)printf("%f\t",m[i]);
+			rt_log("%f\t",m[i]);
 		else if(i == 15)
-			(void)printf("%f\t",m[i]);
+			rt_log("%f\t",m[i]);
 		else
-			(void)printf("%f\n",m[i]*base2local);
+			rt_log("%f\n",m[i]*base2local);
 	}
 }
 
@@ -629,7 +629,7 @@ char **argv;
 			break;
 		case '?':
 		default:
-			printf("push: usage push [-l levels] [-P processors] [-d] root [root2 ...]\n");
+			rt_log("push: usage push [-l levels] [-P processors] [-d] root [root2 ...]\n");
 			break;
 		}
 	}

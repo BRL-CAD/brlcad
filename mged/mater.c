@@ -73,7 +73,7 @@ char	**argv;
 	register struct mater *mp;
 
 	if( MaterHead == MATER_NULL )  {
-		(void)printf("none\n");
+		rt_log("none\n");
 		return CMD_OK;
 	}
 	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )
@@ -165,7 +165,7 @@ char	**argv;
 	(void)fclose(fp);
 
 	if( !editit( tempfile ) )  {
-		(void)printf("Editor returned bad status.  Aborted\n");
+		rt_log("Editor returned bad status.  Aborted\n");
 		return CMD_BAD;
 	}
 
@@ -176,7 +176,7 @@ char	**argv;
 	}
 	if( fgets(line, sizeof (line), fp) == NULL  ||
 	    line[0] != hdr[0] )  {
-		(void)printf("Header line damaged, aborting\n");
+		rt_log("Header line damaged, aborting\n");
 		return CMD_BAD;
 	}
 
@@ -195,7 +195,7 @@ char	**argv;
 		cnt = sscanf( line, "%d %d %d %d %d",
 			&low, &hi, &r, &g, &b );
 		if( cnt != 5 )  {
-			(void)printf("Discarding %s\n", line );
+			rt_log("Discarding %s\n", line );
 			continue;
 		}
 		GETSTRUCT( mp, mater );

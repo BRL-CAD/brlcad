@@ -66,134 +66,134 @@ char **argv;
 
 	/* get the roadwheel info */
 	if ( argc < arg+1 ) {
-		(void)printf("Enter X of the FIRST roadwheel: ");
+		rt_log("Enter X of the FIRST roadwheel: ");
 		return CMD_MORE;
 	}
 	fw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( argc < arg+1 ) {
-		(void)printf("Enter X of the LAST roadwheel: ");
+		rt_log("Enter X of the LAST roadwheel: ");
 		return CMD_MORE;
 	}
 	lw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( fw[0] <= lw[0] ) {
-		(void)printf("First wheel after last wheel - STOP\n");
+		rt_log("First wheel after last wheel - STOP\n");
 		return CMD_BAD;
 	}
 
 	if( argc < arg+1 ) {
-		(void)printf("Enter Z of the roadwheels: ");
+		rt_log("Enter Z of the roadwheels: ");
 		return CMD_MORE;
 	}
 	fw[1] = lw[1] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( argc < arg+1 ) {
-		(void)printf("Enter radius of the roadwheels: ");
+		rt_log("Enter radius of the roadwheels: ");
 		return CMD_MORE;
 	}
 	fw[2] = lw[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( fw[2] <= 0 ) {
-		(void)printf("Radius <= 0 - STOP\n");
+		rt_log("Radius <= 0 - STOP\n");
 		return CMD_BAD;
 	}
 
 	if ( argc < arg+1 ) {
 		/* get the drive wheel info */
-		(void)printf("Enter X of the drive (REAR) wheel: ");
+		rt_log("Enter X of the drive (REAR) wheel: ");
 		return CMD_MORE;
 	}
 	dw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( dw[0] >= lw[0] ) {
-		(void)printf("DRIVE wheel not in the rear - STOP \n");
+		rt_log("DRIVE wheel not in the rear - STOP \n");
 		return CMD_BAD;
 	}
 
 	if( argc < arg+1 ) {
-		(void)printf("Enter Z of the drive (REAR) wheel: ");
+		rt_log("Enter Z of the drive (REAR) wheel: ");
 		return CMD_MORE;
 	}
 	dw[1] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( argc < arg+1 ) {
-		(void)printf("Enter radius of the drive (REAR) wheel: ");
+		rt_log("Enter radius of the drive (REAR) wheel: ");
 		return CMD_MORE;
 	}
 	dw[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( dw[2] <= 0 ) {
-		(void)printf("Radius <= 0 - STOP\n");
+		rt_log("Radius <= 0 - STOP\n");
 		return CMD_BAD;
 	}
 	
 	/* get the idler wheel info */
 	if( argc < arg+1 ) {
-		(void)printf("Enter X of the idler (FRONT) wheel: ");
+		rt_log("Enter X of the idler (FRONT) wheel: ");
 		return CMD_MORE;
 	}
 	iw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( iw[0] <= fw[0] ) {
-		(void)printf("IDLER wheel not in the front - STOP \n");
+		rt_log("IDLER wheel not in the front - STOP \n");
 		return CMD_BAD;
 	}
 
 	if( argc < arg+1 ) {
-		(void)printf("Enter Z of the idler (FRONT) wheel: ");
+		rt_log("Enter Z of the idler (FRONT) wheel: ");
 		return CMD_MORE;
 	}
 	iw[1] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( argc < arg+1 ) {
-		(void)printf("Enter radius of the idler (FRONT) wheel: ");
+		rt_log("Enter radius of the idler (FRONT) wheel: ");
 		return CMD_MORE;
 	}
 	iw[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( iw[2] <= 0 ) {
-		(void)printf("Radius <= 0 - STOP\n");
+		rt_log("Radius <= 0 - STOP\n");
 		return CMD_BAD;
 	}
 
 	/* get track info */
 	if( argc < arg+1 ) {
-		(void)printf("Enter Y-MIN of the track: ");
+		rt_log("Enter Y-MIN of the track: ");
 		return CMD_MORE;
 	}
 	tr[2] = tr[0] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( argc < arg+1 ) {
-		(void)printf("Enter Y-MAX of the track: ");
+		rt_log("Enter Y-MAX of the track: ");
 		return CMD_MORE;
 	}
 	tr[1] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( tr[0] == tr[1] ) {
-		(void)printf("MIN == MAX ... STOP\n");
+		rt_log("MIN == MAX ... STOP\n");
 		return CMD_BAD;
 	}
 	if( tr[0] > tr[1] ) {
-		(void)printf("MIN > MAX .... will switch\n");
+		rt_log("MIN > MAX .... will switch\n");
 		tr[1] = tr[0];
 		tr[0] = tr[2];
 	}
 
 	if( argc < arg+1 ) {
-		(void)printf("Enter track thickness: ");
+		rt_log("Enter track thickness: ");
 		return CMD_MORE;
 	}
 	tr[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( tr[2] <= 0 ) {
-		(void)printf("Track thickness <= 0 - STOP\n");
+		rt_log("Track thickness <= 0 - STOP\n");
 		return CMD_BAD;
 	}
 
@@ -209,19 +209,19 @@ char **argv;
 	grpname[5] = solname[8] = regname[8] = '\0';
 	grpname[8] = solname[11] = regname[11] = '\0';
 /*
-	(void)printf("\nX of first road wheel  %10.4f\n",fw[0]);
-	(void)printf("X of last road wheel   %10.4f\n",lw[0]);
-	(void)printf("Z of road wheels       %10.4f\n",fw[1]);
-	(void)printf("radius of road wheels  %10.4f\n",fw[2]);
-	(void)printf("\nX of drive wheel       %10.4f\n",dw[0]);
-	(void)printf("Z of drive wheel       %10.4f\n",dw[1]);
-	(void)printf("radius of drive wheel  %10.4f\n",dw[2]);
-	(void)printf("\nX of idler wheel       %10.4f\n",iw[0]);
-	(void)printf("Z of idler wheel       %10.4f\n",iw[1]);
-	(void)printf("radius of idler wheel  %10.4f\n",iw[2]);
-	(void)printf("\nY MIN of track         %10.4f\n",tr[0]);
-	(void)printf("Y MAX of track         %10.4f\n",tr[1]);
-	(void)printf("thickness of track     %10.4f\n",tr[2]);
+	rt_log("\nX of first road wheel  %10.4f\n",fw[0]);
+	rt_log("X of last road wheel   %10.4f\n",lw[0]);
+	rt_log("Z of road wheels       %10.4f\n",fw[1]);
+	rt_log("radius of road wheels  %10.4f\n",fw[2]);
+	rt_log("\nX of drive wheel       %10.4f\n",dw[0]);
+	rt_log("Z of drive wheel       %10.4f\n",dw[1]);
+	rt_log("radius of drive wheel  %10.4f\n",dw[2]);
+	rt_log("\nX of idler wheel       %10.4f\n",iw[0]);
+	rt_log("Z of idler wheel       %10.4f\n",iw[1]);
+	rt_log("radius of idler wheel  %10.4f\n",iw[2]);
+	rt_log("\nY MIN of track         %10.4f\n",tr[0]);
+	rt_log("Y MAX of track         %10.4f\n",tr[1]);
+	rt_log("thickness of track     %10.4f\n",tr[2]);
 */
 
 /* Check for names to use:
@@ -239,7 +239,7 @@ tryagain:	/* sent here to try next set of names */
 			/* name already exists */
 			solname[8] = regname[8] = '\0';
 			if( (Trackpos += 10) > 500 ) {
-				(void)printf("Track: naming error -- STOP\n");
+				rt_log("Track: naming error -- STOP\n");
 				return CMD_BAD;
 			}
 			goto tryagain;
@@ -459,14 +459,14 @@ tryagain:	/* sent here to try next set of names */
 		regname[8] = '\0';
 		crname(regname, i);
 		if( (dp = db_lookup( dbip, regname, LOOKUP_QUIET)) == DIR_NULL ) {
-			(void)printf("group: %s will skip member: %s\n",grpname,regname);
+			rt_log("group: %s will skip member: %s\n",grpname,regname);
 			continue;
 		}
 		(void)combadd(dp, grpname, 0, UNION, 0, 0);
 	}
 
 	/* draw this track */
-	(void)printf("The track regions are in group %s\n",grpname);
+	rt_log("The track regions are in group %s\n",grpname);
 	{
 		char	*arglist[3];
 		arglist[0] = "e";
@@ -509,13 +509,13 @@ int flags;
 	struct directory *tdp;
 
 	if( db_lookup( dbip, name, LOOKUP_QUIET) != DIR_NULL ) {
-		(void)printf("amtrack naming error: %s already exists\n",name);
+		rt_log("amtrack naming error: %s already exists\n",name);
 		return(-1);
 	}
 	if( (tdp = db_diradd( dbip, name, -1, 1, flags)) == DIR_NULL ||
 	    db_alloc( dbip, tdp, 1) < 0 ||
 	    db_put( dbip, tdp, &record, 0, 1 ) < 0 )  {
-	    	(void)printf("wrobj(%s):  write error\n", name);
+	    	rt_log("wrobj(%s):  write error\n", name);
 	    	ERROR_RECOVERY_SUGGESTION;
 		return( -1 );
 	}
@@ -538,7 +538,7 @@ register fastf_t cir1[], cir2[];
 	if( mag > 1.0e-20 || mag < -1.0e-20 )  {
 		f = 1.0/mag;
 	}  else {
-		fprintf(stderr,"tancir():  0-length vector!\n");
+		rt_log("tancir():  0-length vector!\n");
 		return;
 	}
 	VSCALE(work, work, f);
@@ -758,7 +758,7 @@ int members[], number;
 		solidname[8] = '\0';
 		crname(solidname, members[i]);
 		if( (dp = db_lookup( dbip, solidname, LOOKUP_QUIET)) == DIR_NULL ) {
-			(void)printf("region: %s will skip member: %s\n",region,solidname);
+			rt_log("region: %s will skip member: %s\n",region,solidname);
 			continue;
 		}
 		(void)combadd(dp, region, 1, op[i], 500+Trackpos+i, 0);
@@ -786,7 +786,7 @@ int   n,    w;
 	/* blank fill array
 	 */
 	for( j = i; j < w; j++ )	s[j] = ' ';
-	if( i > w )	(void)printf( "itoa: field length too small\n" );
+	if( i > w )	rt_log( "itoa: field length too small\n" );
 	s[w] = '\0';
 	/* reverse the array
 	 */
