@@ -149,7 +149,6 @@ print_trap(tp, tbl2d)
 struct trap *tp;
 struct rt_list *tbl2d;
 {
-	struct pt2d *pt, *pt_next;
 	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_TRAP(tp);
 
@@ -177,7 +176,6 @@ print_tlist(tbl2d, tlist)
 struct rt_list *tbl2d, *tlist;
 {
 	struct trap *tp;
-	struct pt2d *pt, *pt_next;
 	NMG_CK_TBL2D(tbl2d);
 
 	rt_log("Trapezoid list start ----------\n");
@@ -351,11 +349,9 @@ struct rt_list *tbl2d;
 mat_t mat;
 struct faceuse *fu;
 {
-	point_t	pt;
 	struct vertex_g *vg;
 	struct vertexuse *vu_p;
 	struct vertex *vp;
-	struct edgeuse *eu;
 	struct pt2d *p, *np;
 
 	NMG_CK_TBL2D(tbl2d);
@@ -579,7 +575,6 @@ struct pt2d *v;
 struct rt_list *tbl2d;
 {
 	struct pt2d *p, *n;	/* previous/this edge endpoints */
-	struct edgeuse *eu;
 	struct loopuse *lu;
 
 	NMG_CK_TBL2D(tbl2d);
@@ -691,7 +686,6 @@ struct pt2d *pt;
 struct rt_list *tbl2d, *tlist;
 {
 	struct trap *new_trap;
-	struct edgeuse *eu;
 
 	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_PT2D(pt);
@@ -1734,10 +1728,6 @@ int void_ok;
 	struct loopuse *new_lu;
 	struct loopuse *old_lu;
 	struct edgeuse *eu;
-	struct vertexuse *vu;
-	struct vertex *v;
-	struct pt2d *new_pt2d, *p;
-
 
 	NMG_CK_TBL2D(tbl2d);
 	RT_CK_TOL(tol);
@@ -2021,8 +2011,6 @@ CONST struct faceuse	*fu;
 CONST struct rt_tol	*tol;
 {
 	struct trap *tp;
-	struct pt2d *top_next, *bot_next;
-	struct pt2d *top, *bot;
 
 	static CONST int cut_color[3] = {255, 80, 80};
 	static CONST int join_color[3] = {80, 80, 255};
@@ -2030,7 +2018,6 @@ CONST struct rt_tol	*tol;
 	extern struct loopuse *nmg_find_lu_of_vu();
 	struct loopuse *toplu, *botlu;
 	struct loopuse *lu;
-	struct faceuse *fu_p;
 
 	NMG_CK_TBL2D(tbl2d);
 	RT_CK_TOL(tol);
@@ -2066,9 +2053,6 @@ CONST struct rt_tol	*tol;
 			continue;
 		}
 
-		top = tp->top;
-		bot = tp->bot;
-
 		if (rt_g.NMG_debug & DEBUG_TRI) {
 			rt_log("trying to cut ...\n");
 			print_trap(tp, tbl2d);
@@ -2084,9 +2068,6 @@ CONST struct rt_tol	*tol;
 		NMG_CK_LOOPUSE(botlu);
 
 		if (toplu == botlu){
-			struct loopuse *new_lu;
-			register struct pt2d *bot_next;
-
 
 			/* if points are the same, this is a split-loop op */
 			if (tp->top->vu_p->v_p == tp->bot->vu_p->v_p) {
@@ -2180,7 +2161,7 @@ struct rt_list *tbl2d, *tlist;
 struct loopuse *lu;
 CONST struct rt_tol *tol;
 {
-	struct pt2d *min, *max, *new, *first, *prev, *next, *current, *save;
+	struct pt2d *min, *max, *new, *first, *prev, *next, *current;
 	struct edgeuse *eu;
 	int verts=0;
 	static CONST int cut_color[3] = { 90, 255, 90};
