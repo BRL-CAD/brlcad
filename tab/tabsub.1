@@ -212,6 +212,8 @@ lookat_pt @(3) @(4) @(5);
 viewsize @(7);
 anim all.g/actor.g matrix rmul
  @(xlate @0 @1 @2);
+anim all.g/light.r material rparam 
+ inten=@(6) angle=70 invisible=1;
 end;
 ! framedone.sh actor.pix.@(line);
 
@@ -244,6 +246,8 @@ command, and the viewsize (zoom lens setting) is changed by substituting
 channel 7 into the
 .I viewsize
 command.
+The argument to the light region's material property string
+is replaced with a new string that spells out the current light parameters.
 After the
 .I end
 command, a
