@@ -1,6 +1,6 @@
 /*
- *	@(#) vdeck.c		retrieved 8/13/86 at 08:03:47,
- *	@(#) version 1.2		  created 2/23/83 at 14:47:47.
+ *	@(#) vdeck.c		retrieved 8/13/86 at 08:04:19,
+ *	@(#) version 1.3		  created 2/24/83 at 13:07:51.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -16,6 +16,7 @@
  */
 #include <stdio.h>
 #include <signal.h>
+#include <setjmp.h>
 #include "ged_types.h"
 #include "3d.h"
 #include "deck.h"
@@ -63,13 +64,11 @@ main( argc, argv )	char	*argv[];
 		menu( usage );
 		exit( 10 );
 	} else	objfile = argv[1];
-	
 	builddir();	/* Build directory from object file.	 	*/
-	
-	toc();	/* Traverse directory and build table of contents.	*/
-	
-	/* Add solids listed on command line to current list.		*/
-	if( argc > 1 ) {
+	toc();		/* Build table of contents from directory.	*/
+
+	if( argc > 1 )
+	{	/* Add objects from command line to current list.	*/
 		pars_arg( argv, argc );
 		insert( arg_list, arg_ct );
 	}
@@ -145,6 +144,7 @@ main( argc, argv )	char	*argv[];
 		case TOC:
 			list_toc( arg_list );
 			break;
+		case EOF:
 		case QUIT:
 			prompt( "quitting...\n" );
 			exit( 0 );
@@ -188,7 +188,7 @@ matp_t	old_xlate;
 	}
 	savepos = lseek( objfd, 0L, 1 );
 	lseek( objfd, dp->d_addr, 0 );
-	read( objfd, &rec, sizeof rec );
+	readF( objfd, &rec, sizeof rec );
 
 	if( rec.u_id == COMB )  { /* We have a group.			*/
 		if( regflag > 0 ) {
@@ -220,7 +220,7 @@ matp_t	old_xlate;
 			 */
 			lseek( rd_rrfd, 0L, 0 );
 			for( j = 1; j <= nnr; j++ ) {
-				read( rd_rrfd, name, 16 );
+				readF( rd_rrfd, name, 16 );
 				if( strcmp( name, rec.c.c_name ) == 0 ) {
 					/* region is #j
 					 */
@@ -304,16 +304,16 @@ matp_t	old_xlate;
 				/* first OR doesn't count, throw away
 				 * first member
 				 */
-				read( objfd, &rec, sizeof rec );
+				readF( objfd, &rec, sizeof rec );
 				for( i = 2; i <= nparts; i++ ) {
-					read( objfd, &rec, sizeof rec );
+					readF( objfd, &rec, sizeof rec );
 					if( rec.M.m_relation == UNION ) {
 						orflag = 1;
 						break;
 					}
 				}
 				lseek( objfd, dp->d_addr, 0 );
-				read( objfd, &rec, sizeof rec );
+				readF( objfd, &rec, sizeof rec );
 			}
 
 			/* write region ident table
@@ -355,7 +355,7 @@ matp_t	old_xlate;
 		isave = 0;
 		for( i = 1; i <= nparts; i++ )  {
 			if( ++isave == nparts )	isave = -isave;
-			read( objfd, &rec, sizeof rec );
+			readF( objfd, &rec, sizeof rec );
 			mp = &rec.M;
  
 			/* save this operation
@@ -437,7 +437,7 @@ matp_t	old_xlate;
 			/* quick look match - check further
 			 */
 			lseek( rd_idfd, ((long)i) * sizeof ident, 0);
-			read( rd_idfd, &idbuf, sizeof ident );
+			readF( rd_idfd, &idbuf, sizeof ident );
 			ident.i_index = i + 1;
 			if( check( &ident, &idbuf ) == 1 ) {
 				/*really is an old solid
@@ -851,7 +851,7 @@ addtgc( rec )
 register
 Record *rec;
 {
-	int	i;
+	register int	i;
 	float	work[3], axb[3], cxd[3];
 	vect_t	v_work, v_workk;
 	float	ma, mb, mc, md, maxb, mcxd, mh;
@@ -976,7 +976,7 @@ Record *rec;
 	for( granule = 1; granule <= totlen; granule++ ) {
 		/* read a granule (ars extension record 'B')
 		 */
-		read( objfd, rec, sizeof record );
+		readF( objfd, rec, sizeof record );
 
 		/* find number of points in this granule
 		 */
@@ -1173,8 +1173,27 @@ register float *v,*h;
 /*	==== p r o m p t ( )
  *	Flush stdout after the printf.
  */
+#ifndef prompt
 prompt( a0, a1, a2, a3, a4, a5, a6, a7, a8, a9 )
 {
 	printf( a0, a1, a2, a3, a4, a5, a6, a7, a8, a9 );
 	fflush( stdout );
+}
+#endif
+
+/*	==== r e a d F ( )
+ *	Read with error checking and debugging.
+ */
+readF(	fd, buf, bytes )
+int	fd,	 bytes;
+char	   *buf;
+{ register int	bytesRead;
+	if( (bytesRead = read( fd, buf, bytes )) != bytes ) {
+		;
+#ifdef debug
+	fprintf( stderr, "Read failed! Only %d bytes read.\n",
+				bytesRead );
+#endif
+	}
+	return( bytesRead );
 }
