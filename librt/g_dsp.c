@@ -52,23 +52,25 @@ static char RCSdsp[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-#if 0
-/* parameters for solid, internal representation
- * This goes in rtgeom.h
- */
-/* parameters for solid, internal representation */
-struct rt_dsp_internal {
-	long	magic;
-	vect_t	v;
-};
-#define RT_DSP_INTERNAL_MAGIC	0dsp
-#define RT_DSP_CK_MAGIC(_p)	RT_CKMAG(_p,RT_DSP_INTERNAL_MAGIC,"rt_dsp_internal")
-#endif
 
 /* ray tracing form of solid, including precomputed terms */
 struct dsp_specific {
-	vect_t	dsp_V;
+	struct rt_dsp_internal dsp_i;
 };
+
+#define DSP_O(m) offsetof(struct rt_dsp_internal, m)
+#define DSP_AO(a) offsetofarray(struct rt_dsp_internal, a)
+
+static struct bu_structparse rt_dsp_parse[] = {
+	{"%s",	DSP_NAME_LEN, "file", DSP_AO(dsp_file), FUNC_NULL },
+	{"%d",	1, "xc", DSP_O(dsp_xcnt), FUNC_NULL },
+	{"%d",	1, "yc", DSP_O(dsp_ycnt), FUNC_NULL },
+	{"%d",	1, "xs", DSP_O(dsp_xs), FUNC_NULL },
+	{"%d",	1, "ys", DSP_O(dsp_ys), FUNC_NULL },
+	{"%d",	1, "ys", DSP_O(dsp_zs), FUNC_NULL },
+	{"",	0, (char *)0, 0,			FUNC_NULL }
+};
+
 
 /*
  *  			R T _ D S P _ P R E P
@@ -291,9 +293,10 @@ register CONST mat_t		mat;
 	LOCAL struct rt_dsp_internal	*dsp_ip;
 	union record			*rp;
 	struct bu_vls			str;
+	mat_t tmp;
 
 #define IMPORT_FAIL(s) \
-	bu_log("rt_ebm_import() '%s' %s\n", dsp_ip->file, s); \
+	bu_log("rt_ebm_import() '%s' %s\n", dsp_ip->dsp_file, s); \
 	bu_free( (char *)dsp_ip , "rt_dsp_import: dsp_ip" ); \
 	ip->idb_type = ID_NULL; \
 	ip->idb_ptr = (genptr_t)NULL; \
@@ -303,7 +306,7 @@ register CONST mat_t		mat;
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != DSID_STRSOL )  {
+	if( rp->u_id != DBID_STRSOL )  {
 		rt_log("rt_dsp_import: defective record\n");
 		return(-1);
 	}
@@ -320,7 +323,7 @@ register CONST mat_t		mat;
 	mat_idn(&dsp_ip->dsp_mtos);
 	mat_idn(&dsp_ip->dsp_stom);
 	bu_vls_init( &str );
-	bu_vls_strcpy(, &str, rp->ss.ss_args );
+	bu_vls_strcpy( &str, rp->ss.ss_args );
 	if (bu_struct_parse( &str, rt_dsp_parse, (char *)dsp_ip ) < 0) {
 		bu_vls_free( &str );
 		IMPORT_FAIL("parse error");
@@ -328,7 +331,7 @@ register CONST mat_t		mat;
 	bu_vls_free( &str );
 	
 	/* Validate parameters */
-	if (dsp_ip->xcnt == 0 || dsp_ip->ycnt == 0) {
+	if (dsp_ip->dsp_xcnt == 0 || dsp_ip->dsp_ycnt == 0) {
 		IMPORT_FAIL("zero dimension on map");
 	}
 	
@@ -337,10 +340,10 @@ register CONST mat_t		mat;
 	mat_mul(dsp_ip->dsp_mtos, mat, dsp_ip->dsp_mtos);
 	
 	/* get file */
-	if( !(dsp_ip->mp = rt_open_mapped_file( dsp_ip->file, "dsp" )) )  {
+	if( !(dsp_ip->dsp_mp = rt_open_mapped_file( dsp_ip->dsp_file, "dsp" )) )  {
 		IMPORT_FAIL("unable to open");
 	}
-	if (dsp_ip->mp->buflen != dsp_ip->xcnt*dsp_ip->ycnt*2) {
+	if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
 		IMPORT_FAIL("buffer wrong size");
 	}
 	
@@ -374,8 +377,9 @@ double				local2mm;
 	rec = (union record *)ep->ext_buf;
 
 	rec->s.s_id = ID_SOLID;
+#if 0
 	rec->s.s_type = DSP;	/* GED primitive type from db.h */
-
+#endif
 	/* Since libwdb users may want to operate in units other
 	 * than mm, we offer the opportunity to scale the solid
 	 * (to get it into mm) on the way out.
@@ -387,9 +391,10 @@ double				local2mm;
 	 *
 	 * Warning: type conversion: double to float
 	 */
+#if 0
 	VSCALE( &rec->s.s_values[0], dsp_ip->dsp_V, local2mm );
 	rec->s.s_values[3] = dsp_ip->dsp_radius * local2mm;
-
+#endif
 	return(0);
 }
 
@@ -409,16 +414,29 @@ double			mm2local;
 {
 	register struct rt_dsp_internal	*dsp_ip =
 		(struct rt_dsp_internal *)ip->idb_ptr;
-	char	buf[256];
+	struct bu_vls vls;
+
+
 
 	RT_DSP_CK_MAGIC(dsp_ip);
-	rt_vls_strcat( str, "truncated general dsp (DSP)\n");
 
+	bu_vls_init( &vls );
+
+	rt_vls_strcat( str, "Displacement Map\n");
+
+	bu_vls_printf( &vls, "  file='%s' xc=%d yc=%d\n",
+		dsp_ip->dsp_file, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt);
+
+	bu_vls_vlscat( str, &vls );
+	bu_vls_free( &vls );
+
+#if 0
 	sprintf(buf, "\tV (%g, %g, %g)\n",
 		dsp_ip->v[X] * mm2local,
 		dsp_ip->v[Y] * mm2local,
 		dsp_ip->v[Z] * mm2local );
 	rt_vls_strcat( str, buf );
+#endif
 
 	return(0);
 }
