@@ -188,7 +188,7 @@ double	t;
  *	with vertex and face geometry already associated.
  *
  *  The two edgeuses being joined might well be from separate shells,
- *  so the issue of preserving faceuse orientation parity
+ *  so the issue of preserving (simple) faceuse orientation parity
  *  (SAME, OPPOSITE, OPPOSITE, SAME, ...)
  *  can't be used here -- that only applies to faceuses from the same shell.
  *
@@ -203,6 +203,8 @@ CONST struct rt_tol	*tol;
 	struct edgeuse	*original_eu1 = eu1;
 	struct edgeuse	*nexteu;
 	struct edgeuse	*eur;
+	struct faceuse	*fu1;
+	struct faceuse	*fu2;
 	int		iteration1, iteration2;
 	vect_t		xvec, yvec, zvec;
 	fastf_t		abs1;
@@ -224,10 +226,11 @@ CONST struct rt_tol	*tol;
 	    	/* Both edgeuses are oriented in the same direction */
 	} else if( eu1->vu_p->v_p == eu2->eumate_p->vu_p->v_p &&
 	    eu1->eumate_p->vu_p->v_p == eu2->vu_p->v_p )  {
-	    	/* Edgeuses are oriented in opposite directions */
-		if (rt_g.NMG_debug & DEBUG_MESH_EU)
-			rt_log("nmg_radial_join_eu() FLIP eu2\n");
-	    	eu2 = eu2->eumate_p;
+		/*
+		 *  Edgeuses are oriented in opposite directions.  This is OK.
+	    	 *  Taking edgeuse mate here would be disasterous, because
+	    	 *  that would switch over to the opposite faceuse!
+	    	 */
 	} else {
 		rt_bomb("nmg_radial_join_eu(): edgeuses don't share both vertices\n");
 	}
@@ -237,6 +240,14 @@ CONST struct rt_tol	*tol;
 	if( rt_pt3_pt3_equal( eu1->vu_p->v_p->vg_p->coord,
 	    eu1->eumate_p->vu_p->v_p->vg_p->coord, tol ) )
 		rt_bomb("nmg_radial_join_eu(): 0 length edge (geometry)\n");
+
+	/* Ensure faces are of same orientation, if both eu's have faces */
+	fu1 = nmg_find_fu_of_eu(eu1);
+	fu2 = nmg_find_fu_of_eu(eu2);
+	if( fu1 && fu2 )  {
+		if( fu1->orientation != fu2->orientation )
+			rt_bomb("nmg_radial_join_eu(): faceuse orientations don't match\n");
+	}
 
 	/*  Construct local coordinate system for this edge,
 	 *  so all angles can be measured relative to a common reference.
@@ -271,7 +282,7 @@ CONST struct rt_tol	*tol;
 
 		/* find a place to insert eu2 around eu1's edge */
 		for ( iteration2=0; iteration2 < 10000; iteration2++ ) {
-			struct faceuse	*fu1, *fu2, *fur;
+			struct faceuse	*fur;
 
 			abs1 = abs2 = absr = -rt_twopi;
 
