@@ -95,15 +95,19 @@ struct frame {
 	struct frame	*fr_forw;
 	struct frame	*fr_back;
 	int		fr_number;	/* frame number */
+	/* options */
 	int		fr_width;	/* frame width (pixels) */
 	int		fr_height;	/* frame height (pixels) */
-	char		*fr_picture;	/* ptr to picture buffer */
-	struct list	fr_todo;	/* work still to be done */
-	long		fr_start;	/* start time */
-	long		fr_end;		/* end time */
 	int		fr_hyper;	/* hypersampling */
 	int		fr_benchmark;	/* Benchmark flag */
 	double		fr_perspective;	/* perspective angle */
+	char		*fr_picture;	/* ptr to picture buffer */
+	struct list	fr_todo;	/* work still to be done */
+	/* Timings */
+	struct timeval	fr_start;	/* start time */
+	struct timeval	fr_end;		/* end time */
+	long		fr_nrays;	/* rays fired so far */
+	double		fr_cpu;		/* CPU seconds used so far */
 	/* Current view */
 	double		fr_viewsize;
 	double		fr_eye_model[3];
@@ -117,15 +121,24 @@ struct frame *FreeFrame;
 struct servers {
 	struct pkg_conn	*sr_pc;		/* PKC_NULL means slot not in use */
 	struct list	sr_work;
-	int		sr_speed;	/* # lines to send at once */
+	int		sr_lump;	/* # lines to send at once */
 	int		sr_started;
 #define SRST_NEW	1		/* connected, no model loaded yet */
 #define SRST_LOADING	2		/* loading, awaiting ready response */
 #define SRST_READY	3		/* loaded, ready */
 	struct frame	*sr_curframe;	/* ptr to current frame */
 	long		sr_addr;	/* NET order inet addr */
-	char		sr_name[32];	/* host name */
+	char		sr_name[64];	/* host name */
 	int		sr_index;	/* fr_servinit[] index */
+	/* Timings */
+	struct timeval	sr_sendtime;	/* time of last sending */
+	double		sr_l_elapsed;	/* elapsed sec for last scanline */
+	double		sr_w_elapsed;	/* weighted average of elapsed times */
+	double		sr_s_elapsed;	/* sum of all elapsed times */
+	double		sr_sq_elapsed;	/* sum of all elapsed times squared */
+	double		sr_l_cpu;	/* cpu sec for last scanline */
+	double		sr_s_cpu;	/* sum of all cpu times */
+	int		sr_nlines;	/* number of lines summed over */
 } servers[MAXSERVERS];
 #define SERVERS_NULL	((struct servers *)0)
 
@@ -160,6 +173,33 @@ char *str;
 	char buf[256];		/* a generous output line */
 
 	(void)fprintf( stderr, str, a, b, c, d, e, f, g, h );
+}
+
+/*
+ *			T V S U B
+ */
+void
+tvsub(tdiff, t1, t0)
+struct timeval *tdiff, *t1, *t0;
+{
+
+	tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
+	tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
+	if (tdiff->tv_usec < 0)
+		tdiff->tv_sec--, tdiff->tv_usec += 1000000;
+}
+
+/*
+ *			T V D I F F
+ *
+ *  Return t1 - t0, as a floating-point number of seconds.
+ */
+double
+tvdiff(t1, t0)
+struct timeval	*t1, *t0;
+{
+	return( (t1->tv_sec - t0->tv_sec) +
+		(t1->tv_usec - t0->tv_usec) / 1000000. );
 }
 
 /*
@@ -268,11 +308,12 @@ struct pkg_conn *pc;
 	clients |= 1<<fd;
 
 	sp = &servers[fd];
+	bzero( (char *)sp, sizeof(*sp) );
 	sp->sr_pc = pc;
 	sp->sr_work.li_forw = sp->sr_work.li_back = &(sp->sr_work);
 	sp->sr_started = SRST_NEW;
 	sp->sr_curframe = FRAME_NULL;
-	sp->sr_speed = 3;
+	sp->sr_lump = 3;
 	sp->sr_index = fd;
 #ifdef CRAY
 	sp->sr_addr = from.sin_addr;
@@ -725,14 +766,16 @@ FILE *fp;
 		/* Sumarize frames waiting */
 		printf("Frames waiting:\n");
 		for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
-			printf(" %4d  ", fr->fr_number);
+			printf("%5d\t", fr->fr_number);
 			printf("width=%d, height=%d, perspective angle=%f, ",
 				fr->fr_width, fr->fr_height, fr->fr_perspective );
 			printf("viewsize = %f\n", fr->fr_viewsize);
 			printf("\thypersample = %d, ", fr->fr_hyper);
 			printf("benchmark = %d, ", fr->fr_benchmark);
 			if( fr->fr_picture )  printf(" (Pic)");
-			printf("\n       servinit: ");
+			printf("\n");
+			printf("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
+			printf("       servinit: ");
 			for( i=0; i<MAXSERVERS; i++ )
 				printf("%d ", fr->fr_servinit[i]);
 			printf("\n");
@@ -743,6 +786,7 @@ FILE *fp;
 	if( strcmp( cmd_args[0], "stat" ) == 0 ||
 	    strcmp( cmd_args[0], "status" ) == 0 )  {
 		register struct servers *sp;
+	    	int	num;
 
 		if( start_cmd[0] == '\0' )
 			printf("No model loaded yet\n");
@@ -780,6 +824,16 @@ FILE *fp;
 				printf(" frame %d\n", sp->sr_curframe->fr_number);
 			else
 				printf("\n");
+			num = sp->sr_nlines<=0 ? 1 : sp->sr_nlines;
+			printf("\tlast:  elapsed=%g, cpu=%g\n",
+				sp->sr_l_elapsed,
+				sp->sr_l_cpu );
+			printf("\t avg:  elapsed=%g, weighted=%g, cpu=%g clump=%d\n",
+				sp->sr_s_elapsed/num,
+				sp->sr_w_elapsed,
+				sp->sr_s_cpu/num,
+				sp->sr_lump );
+
 			pr_list( &(sp->sr_work) );
 		}
 		return;
@@ -854,6 +908,11 @@ register struct frame *fr;
 	fr->fr_picture = (char *)0;
 	bzero( fr->fr_servinit, sizeof(fr->fr_servinit) );
 
+	fr->fr_start.tv_sec = fr->fr_end.tv_sec = 0;
+	fr->fr_start.tv_usec = fr->fr_end.tv_usec = 0;
+	fr->fr_nrays = 0;
+	fr->fr_cpu = 0.0;
+
 	/* Build work list */
 	fr->fr_todo.li_forw = fr->fr_todo.li_back = &(fr->fr_todo);
 	GET_LIST(lp);
@@ -900,6 +959,7 @@ schedule()
 	int fd, cnt;
 	char name[256];
 	int going;			/* number of servers still going */
+	double	delta;
 
 	if( start_cmd[0] == '\0' )  return;
 	going = 0;
@@ -917,10 +977,18 @@ schedule()
 			}
 		}
 		/* Frame has just been completed */
-		fr->fr_end = time(0);
-		printf("frame %d DONE in %d seconds\n",
+		(void)gettimeofday( &fr->fr_end, (struct timezone *)0 );
+		delta = tvdiff( &fr->fr_end, &fr->fr_start);
+		if( delta < 0.0001 )  delta=0.0001;
+		printf("frame %d DONE: %g elapsed sec, %d rays/%g cpu sec\n",
 			fr->fr_number,
-			fr->fr_end - fr->fr_start);
+			delta,
+			fr->fr_nrays,
+			fr->fr_cpu );
+		printf("  RTFMc=%g rays/s RTFMe=%g rays/sec\n",
+			fr->fr_nrays/fr->fr_cpu,
+			fr->fr_nrays/delta );
+
 		if( out_file[0] != '\0' )  {
 			sprintf(name, "%s.%d", out_file, fr->fr_number);
 			cnt = fr->fr_width*fr->fr_height*3;
@@ -989,7 +1057,7 @@ top:
 			}
 
 			a = lp->li_start;
-			b = a+sp->sr_speed-1;	/* work increment */
+			b = a+sp->sr_lump-1;	/* work increment */
 			if( b >= lp->li_stop )  {
 				b = lp->li_stop;
 				DEQUEUE_LIST( lp );
@@ -1007,8 +1075,9 @@ top:
 			lp->li_start = a;
 			lp->li_stop = b;
 			APPEND_LIST( lp, &(sp->sr_work) );
-			if( a == 0 )
-				fr->fr_start = time(0);
+			if( a == 0 )  {
+				(void)gettimeofday( &fr->fr_start, (struct timezone *)0 );
+			}
 			send_do_lines( sp, a, b );
 			goto top;
 		}
@@ -1171,6 +1240,9 @@ char *buf;
 	register struct servers *sp;
 	register struct frame *fr;
 	struct line_info	info;
+	struct timeval		tvnow;
+
+	(void)gettimeofday( &tvnow, (struct timezone *)0 );
 
 	sp = &servers[pc->pkc_fd];
 	fr = sp->sr_curframe;
@@ -1218,7 +1290,16 @@ fprintf(stderr,"PIXELS y=%d, rays=%d, cpu=%g\n", info.li_y, info.li_nrays, info.
 	if(buf) (void)free(buf);
 
 	/* Stash the statistics that came back */
-	/* li_nrays, li_cpusec */
+	fr->fr_nrays += info.li_nrays;
+	fr->fr_cpu += info.li_cpusec;
+	sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime );
+	sp->sr_w_elapsed = 0.9 * sp->sr_w_elapsed + 0.1 * sp->sr_l_elapsed;
+	sp->sr_sendtime = tvnow;		/* struct copy */
+	sp->sr_l_cpu = info.li_cpusec;
+	sp->sr_s_cpu += info.li_cpusec;
+	sp->sr_s_elapsed += sp->sr_l_elapsed;
+	sp->sr_sq_elapsed += sp->sr_l_elapsed * sp->sr_l_elapsed;
+	sp->sr_nlines++;
 
 	/* Remove from work list */
 	list_remove( &(sp->sr_work), info.li_y );
@@ -1397,6 +1478,8 @@ register struct servers *sp;
 	sprintf( obuf, "%d %d", start, stop );
 	if( pkg_send( MSG_LINES, obuf, strlen(obuf)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
+
+	(void)gettimeofday( &sp->sr_sendtime, (struct timezone *)0 );
 }
 
 /*
