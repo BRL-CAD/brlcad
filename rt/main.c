@@ -37,7 +37,6 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 # undef stderr
 # define stderr stdout
 # define PARALLEL 1
-# define MAX_PSW 128
 #endif
 
 extern char usage[];
@@ -67,8 +66,6 @@ vect_t	dy_model;	/* view delta-Y as model-space vector */
 point_t	eye_model;	/* model-space location of eye */
 point_t	viewbase_model;	/* model-space location of viewplane corner */
 int npts;	/* # of points to shoot: x,y */
-int cur_pixel;		/* current pixel number, 0..last_pixel */
-int last_pixel;		/* last pixel number */
 mat_t Viewrotscale;
 mat_t toEye;
 fastf_t viewsize;
@@ -76,25 +73,11 @@ fastf_t	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 
 #ifdef PARALLEL
 char *scanbuf;		/*** Output buffering, for parallelism */
-#ifdef cray
-#define MAX_PSW		4
-struct taskcontrol {
-	int	tsk_len;
-	int	tsk_id;
-	int	tsk_value;
-} taskcontrol[MAX_PSW];
 #endif
 
-#ifdef alliant
-#define MAX_PSW	8
-#endif
-#endif
+/* Eventually, npsw = MAX_PSW by default */
+int npsw = 1;		/* number of worker PSWs to run */
 /***** end variables shared with worker() */
-
-static int npsw = 1;		/* number of worker PSWs to run */
-#ifndef MAX_PSW
-#define MAX_PSW 1
-#endif
 
 /*
  *			M A I N
@@ -209,7 +192,9 @@ char **argv;
 	RES_INIT( &rt_g.res_seg );
 	RES_INIT( &rt_g.res_malloc );
 	RES_INIT( &rt_g.res_bitv );
-	RES_INIT( &rt_g.res_printf );	/* HACK: used by worker */
+	RES_INIT( &rt_g.res_printf );
+	RES_INIT( &rt_g.res_worker );
+	RES_INIT( &rt_g.res_stats );
 #ifdef PARALLEL
 	scanbuf = rt_malloc( npts*npts*3 + sizeof(long), "scanbuf" );
 #endif
@@ -282,16 +267,13 @@ char **argv;
 	rt_free( rt_malloc( (20+npsw)*8192, "worker prefetch"), "worker");
 #endif
 
-	fprintf(stderr,"PARALLEL: %d workers\n", npsw );
-	for( x=0; x<npsw; x++ )  {
+	fprintf(stderr,"PARALLEL: npsw=%d\n", npsw );
 #ifdef HEP
+	for( x=0; x<npsw; x++ )  {
+		/* This is expensive when GEMINUS>1 */
 		Dcreate( worker );
-#endif
-#ifdef cray
-		taskcontrol[x].tsk_len = 3;
-		taskcontrol[x].tsk_value = x;
-#endif
 	}
+#endif
 	fprintf(stderr,"initial memory use=%d.\n",sbrk(0) );
 #endif
 
@@ -368,39 +350,13 @@ do_more:
 	fflush(stdout);
 	fflush(stderr);
 
-	cur_pixel = 0;
-	last_pixel = npts*npts - 1;
-
 	/*
 	 *  Compute the image
+	 *  It may prove desirable to do this in chunks
 	 */
-	rt_prep_timer();	/* start timing actual run */
-#ifdef PARALLEL
-#ifdef cray
-	/* Create any extra worker tasks */
-	for( x=0; x<npsw; x++ ) {
-		TSKSTART( &taskcontrol[x], worker );
-	}
-	/* Wait for them to finish */
-	for( x=0; x<npsw; x++ )  {
-		TSKWAIT( &taskcontrol[x] );
-	}
-#endif
-#ifdef alliant
-	{
-		asm("	cstart	_npsw");
-		asm("super_loop:");
-			asm("	cawait	cs1,#0");
-			asm("	cadvance	cs1");
-			worker();
-		asm("	crepeat	super_loop");
-	}
-#endif
-#else
-	/* Simple serial case */
-	worker();
-#endif
-	utime = rt_read_timer( outbuf, sizeof(outbuf) );	/* final time */
+	rt_prep_timer();
+	do_run( 0, npts*npts - 1 );
+	utime = rt_read_timer( outbuf, sizeof(outbuf) );
 
 #ifndef PARALLEL
 	view_end( &ap );		/* End of application */
@@ -484,6 +440,7 @@ register int *p;
 	asm("	bne	loop");
 #endif
 }
+
 #ifdef never
 MAT4X3PNT( o, m, i )
 register fastf_t *o;	/* a5 */

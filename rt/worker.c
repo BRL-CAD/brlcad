@@ -24,13 +24,14 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./mathtab.h"
+#include "../rt/mathtab.h"
 
 /***** view.c variables imported from rt.c *****/
 extern mat_t view2model;
 extern mat_t model2view;
 
 /***** worker.c variables imported from rt.c *****/
+extern void worker();
 extern struct application ap;
 extern int	stereo;		/* stereo viewing */
 extern vect_t left_eye_delta;
@@ -41,15 +42,31 @@ extern vect_t	dy_model;	/* view delta-Y as model-space vector */
 extern point_t	eye_model;	/* model-space location of eye */
 extern point_t	viewbase_model;	/* model-space location of viewplane corner */
 extern int npts;	/* # of points to shoot: x,y */
-extern int cur_pixel;		/* current pixel number, 0..last_pixel */
-extern int last_pixel;		/* last pixel number */
 extern mat_t Viewrotscale;
 extern mat_t toEye;
 extern fastf_t viewsize;
 extern fastf_t zoomout;
+extern int npsw;
 
+#ifdef RTSRV
+extern char scanbuf[];
+#else
 #ifdef PARALLEL
 char *scanbuf;		/*** Output buffering, for parallelism */
+#endif
+#endif
+
+/* Local communication with worker() */
+HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
+HIDDEN int last_pixel;		/* last pixel number */
+HIDDEN int nworkers;		/* number of workers now running */
+
+#ifdef cray
+struct taskcontrol {
+	int	tsk_len;
+	int	tsk_id;
+	int	tsk_value;
+} taskcontrol[MAX_PSW];
 #endif
 
 /*
@@ -103,6 +120,66 @@ grid_setup()
 	MAT4X3PNT( viewbase_model, view2model, temp );
 }
 
+/*
+ *			D O _ R U N
+ *
+ *  Compute a run of pixels, in parallel if the hardware permits it.
+ *
+ *  Don't use registers in this function.  At least on the Alliant,
+ *  register context is NOT preserved when exiting the parallel mode,
+ *  because the serial portion resumes on some arbitrary processor,
+ *  not necessarily the one that serial execution started on.
+ *  The registers are not shared.
+ */
+do_run( a, b )
+{
+	int x;
+
+	cur_pixel = a;
+	last_pixel = b;
+
+#ifdef PARALLEL
+	/*
+	 *  Parallel case.  This is different for each system.
+	 *  In the case of the HEP, the workers were started in
+	 *  the mainline;  for other systems, the workers are
+	 *  started and terminated here.
+	 */
+	nworkers = 0;
+#ifdef cray
+	/* Create any extra worker tasks */
+
+	for( x=0; x<npsw; x++ ) {
+		taskcontrol[x].tsk_len = 3;
+		taskcontrol[x].tsk_value = x;
+		TSKSTART( &taskcontrol[x], worker );
+	}
+	/* Wait for them to finish */
+	for( x=0; x<npsw; x++ )  {
+		TSKWAIT( &taskcontrol[x] );
+	}
+#endif
+#ifdef alliant
+	{
+		asm("	movl		_npsw,d0");
+		asm("	subql		#1,d0");
+		asm("	cstart		d0");
+		asm("super_loop:");
+		worker();
+		asm("	crepeat		super_loop");
+	}
+#endif
+	/* Ensure that all the workers are REALLY dead */
+	x = 0;
+	while( nworkers > 0 )  x++;
+	if( x > 0 )  rt_log("y=%d: termination took %d extra loops\n", y, x);
+#else
+	/*
+	 * SERIAL case -- one CPU does all the work.
+	 */
+	worker();
+#endif
+}
 
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
 #define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])
@@ -120,14 +197,19 @@ worker()
 	LOCAL vect_t colorsum;
 	register int com;
 
+	RES_ACQUIRE( &rt_g.res_worker );
+	nworkers++;
+	RES_RELEASE( &rt_g.res_worker );
+
 	a.a_onehit = 1;
 	while(1)  {
-		RES_ACQUIRE( &rt_g.res_printf );	/* HACK */
+		RES_ACQUIRE( &rt_g.res_worker );
 		com = cur_pixel++;
-		RES_RELEASE( &rt_g.res_printf );	/* HACK */
+		RES_RELEASE( &rt_g.res_worker );
 
-		if( com > last_pixel )  return;
-		/* Note: ap.... not valid until first time here */
+		if( com > last_pixel )
+			break;
+		/* Note: ap.... may not be valid until first time here */
 		a.a_x = com%npts;
 		a.a_y = com/npts;
 		a.a_hit = ap.a_hit;
@@ -188,16 +270,23 @@ worker()
 			f = 1.0 / (hypersample+1);
 			VSCALE( a.a_color, colorsum, f );
 		}
-#ifndef PARALLEL
+#if !defined(PARALLEL) && !defined(RTSRV)
 		view_pixel( &a );
 		if( a.a_x == npts-1 )
 			view_eol( &a );		/* End of scan line */
-#else
+#endif
+#if defined(PARALLEL) || defined(RTSRV)
 		{
 			register char *pixelp;
 			register int r,g,b;
+
 			/* .pix files go bottom to top */
+#ifdef RTSRV
+			/* Here, the buffer is only one line long */
+			pixelp = scanbuf+a.a_x*3;
+#else
 			pixelp = scanbuf+((a.a_y*npts)+a.a_x)*3;
+#endif
 			r = a.a_color[0]*255.+rand_half();
 			g = a.a_color[1]*255.+rand_half();
 			b = a.a_color[2]*255.+rand_half();
@@ -217,4 +306,7 @@ worker()
 		}
 #endif
 	}
+	RES_ACQUIRE( &rt_g.res_worker );
+	nworkers--;
+	RES_RELEASE( &rt_g.res_worker );
 }
