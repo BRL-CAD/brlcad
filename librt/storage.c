@@ -57,8 +57,6 @@ void
 rt_free(ptr,str)
 char *ptr;
 {
-	extern void free();
-
 	RES_ACQUIRE( &rt_g.res_malloc );		/* lock */
 	*((int *)ptr) = -1;	/* zappo! */
 	free(ptr);
