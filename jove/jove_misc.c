@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  87/04/14  22:46:43  dpk
+ * Fixed bug in paragraph justification.
+ * 
  * Revision 2.2  87/04/14  20:19:12  dpk
  * Fixed casting on RunEdit call
  * 
@@ -65,7 +68,7 @@ FourTime()
 int	FastPrompt = 0;
 static char	*StrToShow;
 static int	siged = 0;
-
+void
 slowpoke()
 {
 	s_mess("%s", StrToShow);
@@ -104,7 +107,7 @@ EscPrefix()
 	} else
 		c = waitfor(2, "M-");
 
-	if (c == CTL(G)) {
+	if (c == CTL('G')) {
 		PrefAbort("Prefix-1");
 		return;
 	}
@@ -510,7 +513,7 @@ CtlxPrefix()
 	} else
 		c = waitfor(2, "C-X ");
 
-	if (c == CTL(G)) {
+	if (c == CTL('G')) {
 		PrefAbort("Prefix-2");
 		return;
 	}
@@ -547,7 +550,7 @@ int	(*InputFunc)();
 
 	do {
 		NumArg *= 4;
-	} while ((c = (*InputFunc)()) == CTL(U));
+	} while ((c = (*InputFunc)()) == CTL('U'));
 	return c;
 }
 
@@ -602,49 +605,49 @@ int	(*HowToRead)();
 	char	*tcp;
 
 	switch (c) {
-	case CTL(@):
+	case CTL('@'):
 		break;
 
-	case CTL(A):
+	case CTL('A'):
 		cp = begin;
 		break;
 
-	case CTL(B):
+	case CTL('B'):
 		if (cp > begin)
 			--cp;
 		break;
 
-	case CTL(D):
+	case CTL('D'):
 		if (!*cp)
 			break;
 		cp++;
 		goto delchar;
 
-	case CTL(E):
+	case CTL('E'):
 		while (*cp)
 			cp++;
 		break;
 
-	case CTL(F):
+	case CTL('F'):
 		if (*cp)
 			cp++;
 		break;
 
-	case CTL(G):
+	case CTL('G'):
 		return (char *) -1;
 
-	case CTL(K):
+	case CTL('K'):
 		*cp = '\0';
 		break;
 
-	case CTL(N):
-	case CTL(P):
-		ArgIns(begin, c == CTL(N));
+	case CTL('N'):
+	case CTL('P'):
+		ArgIns(begin, c == CTL('N'));
 		cp = begin + strlen(begin);
 		break;
 
 	case '\177':
-	case CTL(H):
+	case CTL('H'):
 delchar:
 		if (cp == begin)
 			break;
@@ -652,8 +655,8 @@ delchar:
 		cp--;
 		break;
 
-	case META(\177):	/* Delete previous word */
-	case CTL(W):
+	case META('\177'):	/* Delete previous word */
+	case CTL('W'):
 	    {
 		char	*bp = backup(begin, cp);
 
@@ -662,23 +665,23 @@ delchar:
 	    }
 		break;
 
-	case META(D):
-	case META(d):
+	case META('D'):
+	case META('d'):
 		strcpy(cp, jumpup(cp));
 		break;		/* Pretty neat huh */
 
-	case META(B):
-	case META(b):
+	case META('B'):
+	case META('b'):
 		cp = backup(begin, cp);
 		break;
 
-	case META(F):
-	case META(f):
+	case META('F'):
+	case META('f'):
 		cp = jumpup(cp);
 		break;
 
-	case CTL(Y):
-	case CTL(R):
+	case CTL('Y'):
+	case CTL('R'):
 		if (!def || !*def) {
 			rbell();
 			break;
@@ -690,8 +693,8 @@ delchar:
 		}
 		break;
 
-	case CTL(^):
-	case CTL(Q):
+	case CTL('^'):
+	case CTL('Q'):
 		c = (*HowToRead)();
 		/* Fall into... */
 
@@ -743,7 +746,7 @@ char	*aa, *bb, *cc;
 		NumArg = 1;	/* If not otherwise specified */
 		if (c == '\033')	/* Maybe a number */
 			c = GetArg(HowToRead);
-		else if (c == CTL(U))
+		else if (c == CTL('U'))
 			c = GetFour(HowToRead);
 		if (c == '\033')	/* Again */
 			c = (*HowToRead)() | 0200;

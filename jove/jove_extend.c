@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  87/04/14  20:18:43  dpk
+ * Fixed casting on RunEdit call
+ * 
  * Revision 2.1  86/04/13  22:02:57  gwyn
  * fixed getchar type bug
  * 
@@ -64,9 +67,9 @@ struct function	*funcs;
 	if ((c = (*Getchar)()) == EOF)
 		return;
 	s_mess("%s%s %c%s", prompt, funcs[command].f_name, c,
-				(c == '\033' || c == CTL(X)) ? "-" : "");
+				(c == '\033' || c == CTL('X')) ? "-" : "");
 	Asking = strlen(mesgbuf);
-	if (c != '\033' && c != CTL(X))
+	if (c != '\033' && c != CTL('X'))
 		mainmap[c] = &funcs[command];
 	else {
 		int	next = (*Getchar)();
@@ -74,7 +77,7 @@ struct function	*funcs;
 		if (next == EOF)
 			return;
 		ignore(sprintf(&mesgbuf[strlen(mesgbuf)], "%c", next));
-		if (c == CTL(X))
+		if (c == CTL('X'))
 			pref2map[next] = &funcs[command];
 		else
 			pref1map[next] = &funcs[command];
@@ -275,7 +278,7 @@ char	*prompt;
 		case EOF:
 			return EOF;
 
-		case CTL(U):
+		case CTL('U'):
 			cp = begin;
 			*cp = 0;
 			break;

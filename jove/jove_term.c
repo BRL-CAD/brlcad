@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  88/03/10  05:25:30  phil
+ * ignore ll if li != winsize
+ * 
  * Revision 2.2  87/04/14  21:58:07  dpk
  * Added TERMINFO fix for sys5.  Strips %p# strings.
  * 
@@ -45,7 +48,7 @@ static char RCSid[] = "@(#)$Header$";
 #include <sgtty.h>
 #else
 #include <termio.h>
-#endif SYS5
+#endif
 
 /* Termcap definitions */
 
@@ -122,7 +125,7 @@ getTERM()
 	struct sgttyb tty;
 #else
 	struct termio tty;
-#endif SYS5
+#endif
 	char	termbuf[32],
 		*termname,
 		*termp = tspace,
@@ -133,7 +136,7 @@ getTERM()
 	if (ioctl (0, TCGETA, &tty))
 #else
 	if (gtty(0, &tty))
-#endif SYS5
+#endif
 		TermError("ioctl fails");
 #ifdef SYS5
 	TABS = !((tty.c_oflag & TAB3) == TAB3);
@@ -141,7 +144,7 @@ getTERM()
 #else
 	TABS = !(tty.sg_flags & XTABS);
 	ospeed = tty.sg_ospeed;
-#endif SYS5
+#endif
 
 	termname = getenv("TERM");
 	if (termname == 0 || *termname == 0) {
@@ -184,7 +187,7 @@ getTERM()
 	if (M_DL) TERMINFOfix(M_DL);
 	if (M_IC) TERMINFOfix(M_IC);
 	if (M_DC) TERMINFOfix(M_DC);
-#endif SYS5				
+#endif
 	if (XS)
 		SO = SE = 0;
 
@@ -211,7 +214,7 @@ char *cp;
 			cp++;
 	}
 }
-#endif SYS5				
+#endif
 /*
    Deals with output to the terminal, setting up the amount of characters
    to be buffered depending on the output baud rate.  Why it's in a 

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  87/04/14  20:27:17  dpk
+ * Commented out the bcopy routine.  Will use memcpy for bcopy.
+ * 
  * Revision 2.1  86/09/23  22:28:40  mike
  * Externs now declared properly.
  * I/O fixes for SysV
@@ -460,7 +463,7 @@ char *fname;
 
 	if (strlen(cp) > 13)
 		complain("Cannot make backup name; \"%s\" too long", cp);
-#endif V4_2BSD
+#endif
 	cp = emalloc (len+2);
 	strncpy (cp, fname, len);
 	cp[len] = '~';
@@ -540,7 +543,11 @@ int	DOLsave = 0;	/* Do Lsave flag.  If lines aren't being save
 
 tmpinit()
 {
+#ifdef SYS5_SGI
+	tfname = (char *) xtempnam(NULL, TempFile);
+#else
 	tfname = mktemp(TempFile);
+#endif
 	tline = 2;
 	iblock1 = oblock = iblock2 = -1;
 	hitin2 = ichng1 = ichng2 = 0;
@@ -703,7 +710,7 @@ bcopy(from, to, count)
 	while ((--count) >= 0)
 		*to++ = *from++;
 }
-#endif notdef
+#endif 
 
 /*
  * Save the current contents of linebuf, if it has changed.

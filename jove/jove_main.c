@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.11  87/09/16  21:28:40  mike
+ * Hopefully, the Final Word on the SysV "poll" for input
+ * code.
+ * 
  * Revision 2.10  87/09/10  00:23:01  mike
  * Hopefully, the fix for the "scramble the input" bug on the Crays
  * and other SysV machines.
@@ -70,7 +74,7 @@ static char RCSid[] = "@(#)$Header$";
 #else
 #include <termio.h>
 #include <fcntl.h>
-#endif SYS5
+#endif 
 #include <errno.h>
 
 extern char	*version;
@@ -82,21 +86,22 @@ extern char	*sprint();
 
 #ifndef	BRLUNIX			/* this is not found on a BRL pdp-11.	*/
 /***** #include <sys/ioctl.h> *****/
-#endif BRLUNIX
+#endif
 
 #ifdef TIOCSLTC
 struct ltchars	ls1, ls2;
-#endif TIOCSLTC
+#endif 
 
 #ifndef SYS5
 struct tchars	tc1, tc2;
-#endif SYS5
+#endif
 
 int	errormsg;
 
 int	iniargc;
 char	**iniargv;
 char	*StdShell;
+
 
 /***** Global storage declarations *****/
 int	BufSize;
@@ -135,6 +140,7 @@ struct function	*mainmap[0200],
 int	LastKeyStruck;
 /***************************************/
 
+void
 finish(code)
 {
 	if (code == SIGINT) {
@@ -206,7 +212,7 @@ getchar()
 			 || (nchars < 0 && errno == EINTR));
 #else
 		} while (nchars < 0 && errno == EINTR);
-#endif SYS5
+#endif
 		if(nchars <= 0) {
 			if (Input)
 				return EOF;
@@ -234,7 +240,7 @@ charp()
 			return( 1 );
 		else
 			return( 0 );
-#else BRLUNIX
+#else 
 #ifdef FIONREAD
 		long c;
 
@@ -258,15 +264,15 @@ charp()
 		if (c > 0)
 			nchars += c;
 		(void)fcntl( Input, F_SETFL, flags );
-#else SYS5
+#else
 		int c;
 
 		if (ioctl(0, TIOCEMPTY, (char *) &c) == -1)
 			c = 0;
-#endif SYS5
-#endif FIONREAD
+#endif
+#endif
 		return (c > 0);
-#endif BRLUNIX
+#endif
 	}
 }
 
@@ -361,9 +367,9 @@ int	OKXonXoff = 0;		/* ^S and ^Q initially DON'T work */
 #ifndef	BRLUNIX
 #ifdef SYS5
 struct termio	oldtty, newtty;
-#else SYS5
+#else
 struct sgttyb	oldtty, newtty;
-#endif SYS5
+#endif
 #else
 struct sg_brl	oldtty, newtty;
 #endif
@@ -372,12 +378,12 @@ ttsetup() {
 #ifndef BRLUNIX
 #ifdef SYS5
 	if (ioctl (0, TCGETA, &oldtty) < 0) {
-#else SYS5
+#else
 	if (ioctl(0, TIOCGETP, (char *) &oldtty) == -1) {
-#endif SYS5
+#endif
 #else
 	if (gtty(0, &oldtty) < 0) {
-#endif BRLUNIX
+#endif
 		putstr("Input not a terminal");
 		byebye(1);
 	}
@@ -388,14 +394,14 @@ ttsetup() {
 #ifndef SYS5
 	newtty.sg_flags &= ~(ECHO | CRMOD);
 	newtty.sg_flags |= CBREAK;
-#else SYS5
+#else
 	newtty.c_iflag &= ~(INLCR|ICRNL);
 	newtty.c_lflag &= ~(ISIG|ICANON|ECHO);
 	newtty.c_oflag &= ~(OLCUC|ONLCR|OCRNL|ONOCR|ONLRET|OFILL);	/* DAG -- bug fix (was missing) */
 	/* VMIN = 0 causes us to loop in getchar() */
 	newtty.c_cc[VMIN] = 1;
 	newtty.c_cc[VTIME] = 0;
-#endif SYS5
+#endif
 #else
 	newtty.sg_flags &= ~(ECHO | CRMOD);
 	newtty.sg_flags |= CBREAK;
@@ -458,7 +464,7 @@ ttinit()
 		tc2.t_stopc = (char) -1;
 		tc2.t_startc = (char) -1;
 	}
-#endif TIOCGETC
+#endif
 	ttyset(1);
 
 	/* Go into cbreak, and -echo and -CRMOD */
@@ -480,7 +486,7 @@ ttyset(n)
 	struct termio	tty;
 #else
 	struct sgttyb	tty;
-#endif SYS5
+#endif
 
 	if (n)
 		tty = newtty;
@@ -491,14 +497,14 @@ ttyset(n)
 	if (ioctl(0, TIOCSETN, (char *) &tty) == -1)
 #else
 	if (ioctl (0, TCSETAW, (char *) &tty) == -1)
-#endif SYS5
+#endif
 	{
 		putstr("ioctl error?");
 		byebye(1);
 	}
 #ifdef TIOCSETC
 	ioctl(0, TIOCSETC, n == 0 ? (char *) &tc1 : (char *) &tc2);
-#endif TIOCSETC
+#endif
 #ifdef TIOCSLTC
 	ioctl(0, TIOCSLTC, n == 0 ? (char *) &ls1 : (char *) &ls2);
 #endif

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:46:12  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:08:08  dpk
  * Added distinctive RCS header
  * 
@@ -18,6 +21,9 @@ static char RCSid[] = "@(#)$Header$";
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:46:12  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:08:08  dpk
  * Added distinctive RCS header
  * 
@@ -373,7 +379,8 @@ InitFuncs()
 	DefVar("visible-bell", &VisBell);
 	DefVar("write-files-on-make", &WtOnMk);
 	DefVar((char *) 0, (int *) 0);
-};
+}
+
 
 struct function *
 FindFunc(func)
@@ -414,7 +421,7 @@ FUNC	func;
 
 	for (i = ' '; i < 0177; i++)
 		BindFunc(mainmap, i, func);
-	BindFunc(mainmap, CTL(I), func);
+	BindFunc(mainmap, CTL('I'), func);
 }
 
 InitBindings()
@@ -422,48 +429,48 @@ InitBindings()
 	/* Most just insert themselves */
 	BindInserts(SelfInsert);
 
-	BindFunc(mainmap, CTL(@), SetMark);
-	BindFunc(mainmap, CTL(A), Bol);
-	BindFunc(mainmap, CTL(B), BackChar);
-	BindFunc(mainmap, CTL(C), CapChar);
-	BindFunc(mainmap, CTL(D), DelNChar);
-	BindFunc(mainmap, CTL(E), Eol);
-	BindFunc(mainmap, CTL(F), ForChar);
-	BindFunc(mainmap, CTL(G), Beep);
-	BindFunc(mainmap, CTL(H), DelPChar);
-	BindFunc(mainmap, CTL(I), CTab);
-	BindFunc(mainmap, CTL(J), LineAI);
-	BindFunc(mainmap, CTL(K), KillEOL);
-	BindFunc(mainmap, CTL(L), ClAndRedraw);
-	BindFunc(mainmap, CTL(M), Newline);
-	BindFunc(mainmap, CTL(N), NextLine);
-	BindFunc(mainmap, CTL(O), OpenLine);
-	BindFunc(mainmap, CTL(P), PrevLine);
-	BindFunc(mainmap, CTL(Q), QuotChar);
-	BindFunc(mainmap, CTL(^), QuotChar);
-	BindFunc(mainmap, CTL(R), IncRSearch);
-	BindFunc(mainmap, CTL(S), IncFSearch);
-	BindFunc(mainmap, CTL(\\), IncFSearch);
-	BindFunc(mainmap, CTL(T), TransChar);	
-	BindFunc(mainmap, CTL(U), FourTime);
-	BindFunc(mainmap, CTL(V), NextPage);
-	BindFunc(mainmap, CTL(W), DelPWord);
-	BindFunc(mainmap, CTL(X), CtlxPrefix);
-	BindFunc(mainmap, CTL(Y), Yank);
-	BindFunc(mainmap, CTL(Z), UpScroll);
-	BindFunc(mainmap, CTL([), EscPrefix);
+	BindFunc(mainmap, CTL('@'), SetMark);
+	BindFunc(mainmap, CTL('A'), Bol);
+	BindFunc(mainmap, CTL('B'), BackChar);
+	BindFunc(mainmap, CTL('C'), CapChar);
+	BindFunc(mainmap, CTL('D'), DelNChar);
+	BindFunc(mainmap, CTL('E'), Eol);
+	BindFunc(mainmap, CTL('F'), ForChar);
+	BindFunc(mainmap, CTL('G'), Beep);
+	BindFunc(mainmap, CTL('H'), DelPChar);
+	BindFunc(mainmap, CTL('I'), CTab);
+	BindFunc(mainmap, CTL('J'), LineAI);
+	BindFunc(mainmap, CTL('K'), KillEOL);
+	BindFunc(mainmap, CTL('L'), ClAndRedraw);
+	BindFunc(mainmap, CTL('M'), Newline);
+	BindFunc(mainmap, CTL('N'), NextLine);
+	BindFunc(mainmap, CTL('O'), OpenLine);
+	BindFunc(mainmap, CTL('P'), PrevLine);
+	BindFunc(mainmap, CTL('Q'), QuotChar);
+	BindFunc(mainmap, CTL('^'), QuotChar);
+	BindFunc(mainmap, CTL('R'), IncRSearch);
+	BindFunc(mainmap, CTL('S'), IncFSearch);
+	BindFunc(mainmap, CTL('\\'), IncFSearch);
+	BindFunc(mainmap, CTL('T'), TransChar);	
+	BindFunc(mainmap, CTL('U'), FourTime);
+	BindFunc(mainmap, CTL('V'), NextPage);
+	BindFunc(mainmap, CTL('W'), DelPWord);
+	BindFunc(mainmap, CTL('X'), CtlxPrefix);
+	BindFunc(mainmap, CTL('Y'), Yank);
+	BindFunc(mainmap, CTL('Z'), UpScroll);
+	BindFunc(mainmap, CTL('['), EscPrefix);
 	BindFunc(mainmap, ')', DoParen);
 	BindFunc(mainmap, '}', DoParen);
 	BindFunc(mainmap, '\177', DelPChar);
 
 	/* Escape Prefix */
 
-	BindFunc(pref1map, CTL(B), Bparen);
-	BindFunc(pref1map, CTL(E), RepSearch);
-	BindFunc(pref1map, CTL(F), Fparen);
-	BindFunc(pref1map, CTL(H), DelPWord);
-	BindFunc(pref1map, CTL(L), RedrawDisplay);
-	BindFunc(pref1map, CTL(V), PageNWind);
+	BindFunc(pref1map, CTL('B'), Bparen);
+	BindFunc(pref1map, CTL('E'), RepSearch);
+	BindFunc(pref1map, CTL('F'), Fparen);
+	BindFunc(pref1map, CTL('H'), DelPWord);
+	BindFunc(pref1map, CTL('L'), RedrawDisplay);
+	BindFunc(pref1map, CTL('V'), PageNWind);
 	BindFunc(pref1map, '<', Bof);
 	BindFunc(pref1map, '>', Eof);
 	BindFunc(pref1map, '?', DescCom);
@@ -517,27 +524,27 @@ InitBindings()
 	BindFunc(pref1map, '.', Eow);
 	BindFunc(pref1map, ',', Bow);
 
-	/* CTLX prefix */
+	/* CTLX' 'prefix */
 
 	ZeroMap(pref2map);
-	BindFunc(pref2map, CTL(B), BufList);
-	BindFunc(pref2map, CTL(C), Leave);
-	BindFunc(pref2map, CTL(E), MakeErrors);
-	BindFunc(pref2map, CTL(F), FindFile);
-	BindFunc(pref2map, CTL(I), InsFile);
-	BindFunc(pref2map, CTL(K), DelReg);
-	BindFunc(pref2map, CTL(L), CasRegLower);
-	BindFunc(pref2map, CTL(M), WtModBuf);
-	BindFunc(pref2map, CTL(N), NextError);
-	BindFunc(pref2map, CTL(O), DelBlnkLines);
-	BindFunc(pref2map, CTL(R), ReadFile);
-	BindFunc(pref2map, CTL(S), SaveFile);
-	BindFunc(pref2map, CTL(T), FindTag);
-	BindFunc(pref2map, CTL(U), CasRegUpper);
-	BindFunc(pref2map, CTL(V), FindFile);
-	BindFunc(pref2map, CTL(W), WriteFile);
-	BindFunc(pref2map, CTL(X), PtToMark);
-	BindFunc(pref2map, CTL(\\), SaveFile);
+	BindFunc(pref2map, CTL('B'), BufList);
+	BindFunc(pref2map, CTL('C'), Leave);
+	BindFunc(pref2map, CTL('E'), MakeErrors);
+	BindFunc(pref2map, CTL('F'), FindFile);
+	BindFunc(pref2map, CTL('I'), InsFile);
+	BindFunc(pref2map, CTL('K'), DelReg);
+	BindFunc(pref2map, CTL('L'), CasRegLower);
+	BindFunc(pref2map, CTL('M'), WtModBuf);
+	BindFunc(pref2map, CTL('N'), NextError);
+	BindFunc(pref2map, CTL('O'), DelBlnkLines);
+	BindFunc(pref2map, CTL('R'), ReadFile);
+	BindFunc(pref2map, CTL('S'), SaveFile);
+	BindFunc(pref2map, CTL('T'), FindTag);
+	BindFunc(pref2map, CTL('U'), CasRegUpper);
+	BindFunc(pref2map, CTL('V'), FindFile);
+	BindFunc(pref2map, CTL('W'), WriteFile);
+	BindFunc(pref2map, CTL('X'), PtToMark);
+	BindFunc(pref2map, CTL('\\'), SaveFile);
 	BindFunc(pref2map, '?', KeyDesc);
 	BindFunc(pref2map, '1', OneWindow);
 	BindFunc(pref2map, '2', SplitWind);

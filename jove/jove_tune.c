@@ -2,8 +2,11 @@
  *		J O V E _ T U N E . C
  */
 
-char	*TempFile	= "/tmp/jovetXXXXXX";
-			/* Where jove should put the temp file */
+#ifdef SYS5_SGI
+char	*TempFile	= "jovetXXXXXX";
+#else
+char	*TempFile	= "/usr/tmp/jovetXXXXXX";
+#endif			/* Where jove should put the temp file */
 char	*ProcTmp	= "/tmp/jovepXXXXXX";
 			/* Where jove should put process temp files */
 char	*BinShell	= "/bin/sh";	/* /bin/sh or /bin/csh */

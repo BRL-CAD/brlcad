@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:45:00  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:07:12  dpk
  * Added distinctive RCS header
  * 
@@ -173,13 +176,13 @@ int	*flags;
 		BindFunc(mainmap, ')', SelfInsert);
 	}
 	if (IsFlagSet(flags, CMODE))
-		BindFunc(mainmap, CTL(I), CTab);
+		BindFunc(mainmap, CTL('I'), CTab);
 	else
-		BindFunc(mainmap, CTL(I), SelfInsert);
+		BindFunc(mainmap, CTL('I'), SelfInsert);
 	if (IsFlagSet(flags, AUTOIND))
-		BindFunc(mainmap, CTL(M), LineAI);
+		BindFunc(mainmap, CTL('M'), LineAI);
 	else
-		BindFunc(mainmap, CTL(M), Newline);
+		BindFunc(mainmap, CTL('M'), Newline);
 }
 
 noflags(f)

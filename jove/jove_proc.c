@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  87/04/14  20:11:25  dpk
+ * Added hack for supporting CRAY.
+ * 
  * Revision 2.1  86/04/06  06:20:27  gwyn
  * SpellCom was using sprintf return value, non-portable.
  * 
@@ -299,7 +302,7 @@ MakeErrors()
 		ErrParse(cerrfmt);
 #else
 		ErrParse(lerrfmt);
-#endif VMUNIX
+#endif
 
 	if (thiserror)
 		NextError();
@@ -465,8 +468,8 @@ char	*bufname,
 				}
 #else
 				mess = "Chugging along...";
-#endif JOBCONTROL
-#endif VMUNIX
+#endif
+#endif
 				message(mess);
 				redisplay();
 			}
@@ -478,7 +481,6 @@ char	*bufname,
 		ttyset(1);
 		return status;
 	}
-	return 0;
 }
 
 /* Send a region to shell.  Now we can beautify C and sort programs */

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:47:42  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:09:27  dpk
  * Added distinctive RCS header
  * 
@@ -826,16 +829,16 @@ isearch(direction, failing, ctls)
 		c = (*Getchar)();
 		switch (c) {
 		case '\177':
-		case CTL(H):
+		case CTL('H'):
 			if (!ctls)	/* If we didn't repeated the command */
 				if (incp > IncBuf)
 					*--incp = 0;
 			return;
 
-		case CTL(\\):
-			c = CTL(S);
-		case CTL(R):
-		case CTL(S):
+		case CTL('\\'):
+			c = CTL('S');
+		case CTL('R'):
+		case CTL('S'):
 			if (FirstInc && incp) {	/* We have been here before */
 				FirstInc = 0;
 				strcpy(IncBuf, searchbuf);
@@ -846,31 +849,31 @@ isearch(direction, failing, ctls)
 			   are changing direction, then allow another
 			   search */
 
-			if (!failing || ((direction == -1 && c == CTL(S)) ||
-					(direction == 1 && c == CTL(R)))) {
-				newdot = dosearch(IncBuf, c == CTL(R) ? -1 : 1, 0);
+			if (!failing || ((direction == -1 && c == CTL('S')) ||
+					(direction == 1 && c == CTL('R')))) {
+				newdot = dosearch(IncBuf, c == CTL('R') ? -1 : 1, 0);
 				if (newdot) {
 					SetDot(newdot);
 					nextfail = 0;
 				} else
 					nextfail = 1;
-				isearch(c == CTL(R) ? -1 : 1, nextfail, 1);
+				isearch(c == CTL('R') ? -1 : 1, nextfail, 1);
 				nextfail = failing;
 			} else
 				rbell();
 			break;
 
-		case CTL(G):
+		case CTL('G'):
 			longjmp(incjmp, GOBACK);
 			/* Easy way out! */
 
-		case CTL(J):
-		case CTL(M):
+		case CTL('J'):
+		case CTL('M'):
 			longjmp(incjmp, FOUND);
 			/* End gracefully on carriage return or linefeed */
 
-		case CTL(Q):
-		case CTL(^):
+		case CTL('Q'):
+		case CTL('^'):
 			c = (*Getchar)() | 0200;	/* Tricky! */
 		default:
 			if (c & 0200)

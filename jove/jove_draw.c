@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:45:54  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:07:48  dpk
  * Added distinctive RCS header
  * 
@@ -126,7 +129,7 @@ WINDOW	*w;
 {
 	int	lineno = FLine(w) + SIZE(w),
 		i;
-	char	line[132];
+	char	line[512];
 
 	int	*flags = w->w_bufp->b_flags;
 
@@ -334,7 +337,7 @@ char	*string;
 		case ' ':
 			break;
 
-		case CTL(G):
+		case CTL('G'):
 		case '\177':
 			if (!Gobble)
 				ignore(Ungetc(c));
