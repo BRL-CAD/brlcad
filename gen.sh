@@ -251,7 +251,15 @@ clean|noprod|clobber|lint)
 		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k ${TARGET} )
 	done;;
 
+# Listing of source directories
 ls)
+	for dir in ${ADIRS} ${BDIRS} ${CDIRS}; do
+		echo -------------------------------- ${dir};
+		( cd ${dir}; ls -al )
+	done;;
+
+# Listing of binary directories
+ls-bin)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
 		( cd ${DIRPRE}${dir}${DIRSUF}; ls -al )
