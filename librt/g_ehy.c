@@ -172,7 +172,7 @@ struct pt_node {
 RT_EXTERN(void	rt_ell, (fastf_t *ov, CONST fastf_t *V, CONST fastf_t *A,
 			CONST fastf_t *B, int sides) );
 
-struct bu_structparse rt_ehy_parse[] = {
+CONST struct bu_structparse rt_ehy_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_ehy_internal, ehy_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",   offsetof(struct rt_ehy_internal, ehy_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "A",   offsetof(struct rt_ehy_internal, ehy_Au[X]), BU_STRUCTPARSE_FUNC_NULL },

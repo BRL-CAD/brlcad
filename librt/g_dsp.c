@@ -217,7 +217,7 @@ static CONST vect_t	dsp_pl[BBOX_PLANES] = {
 #define DSP_O(m) offsetof(struct rt_dsp_internal, m)
 #define DSP_AO(a) bu_offsetofarray(struct rt_dsp_internal, a)
 
-struct bu_structparse rt_dsp_parse[] = {
+CONST struct bu_structparse rt_dsp_parse[] = {
 	{"%s",	DSP_NAME_LEN, "file", DSP_AO(dsp_file), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
@@ -226,7 +226,7 @@ struct bu_structparse rt_dsp_parse[] = {
 	{"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-struct bu_structparse rt_dsp_ptab[] = {
+CONST struct bu_structparse rt_dsp_ptab[] = {
 	{"%s",	DSP_NAME_LEN, "file", DSP_AO(dsp_file), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },

@@ -56,7 +56,7 @@ static char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 
 #define RT_SUBMODEL_O(m)	offsetof(struct rt_submodel_internal, m)
 
-struct bu_structparse rt_submodel_parse[] = {
+CONST struct bu_structparse rt_submodel_parse[] = {
 	{"%s",	128, "file",	bu_offsetofarray(struct rt_submodel_internal, file), BU_STRUCTPARSE_FUNC_NULL },
 	{"%s",	128, "treetop", bu_offsetofarray(struct rt_submodel_internal, treetop), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "meth",	RT_SUBMODEL_O(meth),		BU_STRUCTPARSE_FUNC_NULL },

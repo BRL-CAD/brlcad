@@ -49,7 +49,7 @@ struct rt_ebm_specific {
 
 #define RT_EBM_O(m)	offsetof(struct rt_ebm_internal, m)
 
-struct bu_structparse rt_ebm_parse[] = {
+CONST struct bu_structparse rt_ebm_parse[] = {
 #if CRAY && !__STDC__
 	{"%s",	RT_EBM_NAME_LEN, "file",	1,	BU_STRUCTPARSE_FUNC_NULL },
 #else

@@ -45,7 +45,7 @@ static char RCStorus[] = "@(#)$Header$ (BRL)";
  *
  */
 
-struct bu_structparse rt_tor_parse[] = {
+CONST struct bu_structparse rt_tor_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_tor_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",   offsetof(struct rt_tor_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_a", offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL },

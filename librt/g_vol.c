@@ -50,7 +50,7 @@ struct rt_vol_specific {
 
 #define VOL_O(m)	offsetof(struct rt_vol_internal, m)
 
-struct bu_structparse rt_vol_parse[] = {
+CONST struct bu_structparse rt_vol_parse[] = {
 #if CRAY && !__STDC__
 	{"%s",	RT_VOL_NAME_LEN, "file",	1,		BU_STRUCTPARSE_FUNC_NULL },
 #else

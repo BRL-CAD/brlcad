@@ -46,7 +46,7 @@ struct fgp_specific {
 
 #define	RT_FGP_O(m)	offsetof( struct rt_fgp_internal, m )
 
-struct bu_structparse rt_fgp_parse[] = {
+CONST struct bu_structparse rt_fgp_parse[] = {
 	{ "%s", NAMELEN, "solid", bu_offsetofarray(struct rt_fgp_internal, referenced_solid), BU_STRUCTPARSE_FUNC_NULL },
 	{ "%f", 1, "t", RT_FGP_O( thickness ), BU_STRUCTPARSE_FUNC_NULL },
 	{ "%d", 1, "m", RT_FGP_O( mode ), BU_STRUCTPARSE_FUNC_NULL },
