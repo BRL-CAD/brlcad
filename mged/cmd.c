@@ -155,6 +155,7 @@ static struct cmdtab cmdtab[] = {
 "%", f_comm,
 "3ptarb", f_3ptarb,
 "adc", f_adc,
+"add_view", f_add_view,
 "ae", f_aetview,
 "aim", f_aim,
 "aip", f_aip,
@@ -186,6 +187,7 @@ static struct cmdtab cmdtab[] = {
 "debugnmg", f_debugnmg,
 "decompose", f_decompose,
 "delay", f_delay,
+"delete_view", f_delete_view,
 "dm", f_dm,
 "draw", f_edit,
 "dup", f_dup,
@@ -212,7 +214,8 @@ static struct cmdtab cmdtab[] = {
 "fix", f_fix,
 "fracture", f_fracture,
 "g", f_group,
-"getknob", cmd_getknob,
+"get_view", f_get_view,
+"goto_view", f_goto_view,
 "output_hook", cmd_output_hook,
 #ifdef HIDELINE
 "H", f_hideline,
@@ -239,11 +242,11 @@ static struct cmdtab cmdtab[] = {
 "L", cmd_left_mouse,
 "labelvert", f_labelvert,
 "listeval", f_pathsum,
-"load_dv", f_load_dv,
 "loadtk", cmd_tk,
 "lookat", f_lookat,
 "ls", dir_print,
 "M", f_mouse,
+"mrot", f_mrot,
 "make", f_make,
 "make_bb", f_make_bb,
 "mater", f_mater,
@@ -254,6 +257,7 @@ static struct cmdtab cmdtab[] = {
 "model2view", f_model2view,
 "mv", f_name,
 "mvall", f_mvall,
+"next_view", f_next_view,
 "nirt", f_nirt,
 "nmg_simplify", f_nmg_simplify,
 "oed", cmd_oed,
@@ -272,6 +276,7 @@ static struct cmdtab cmdtab[] = {
 "pov", f_pov,
 "prcolor", f_prcolor,
 "prefix", f_prefix,
+"prev_view", f_prev_view,
 "preview", f_preview,
 "press", f_press,
 "ps", f_ps,
@@ -308,6 +313,7 @@ static struct cmdtab cmdtab[] = {
 "setview", f_setview,
 "shells", f_shells,
 "shader", f_shader,
+"share_menu", f_share_menu,
 "size", f_view,
 "sliders", cmd_sliders,
 "solids", f_tables,
@@ -321,6 +327,7 @@ static struct cmdtab cmdtab[] = {
 "ted", f_tedit,
 "tie", f_tie,
 "title", f_title,
+"toggle_view", f_toggle_view,
 "tol", f_tol,
 "tops", f_tops,
 "track", f_amtrack,
@@ -1929,12 +1936,17 @@ char *argv[];
   sip = curr_dm_list->s_info;  /* save state info pointer */
   curr_dm_list->s_info = dml->s_info;  /* use dml's state info */
   mged_variables = dml->_mged_variables; /* struct copy */
+#if 1
+  bu_free((genptr_t)curr_dm_list->menu_vars,"f_ps: menu_vars");
+  curr_dm_list->menu_vars = dml->menu_vars;
+#else
   bcopy((void *)dml->_menu_array, (void *)menu_array,
 	sizeof(struct menu_item *) * NMENU);
   menuflag = dml->_menuflag;
   menu_top = dml->_menu_top;
   cur_menu = dml->_cur_menu;
   cur_item = dml->_cur_menu_item;
+#endif
   scroll_top = dml->_scroll_top;
   scroll_active = dml->_scroll_active;
   scroll_y = dml->_scroll_y;
@@ -1989,12 +2001,17 @@ char *argv[];
   sip = curr_dm_list->s_info;  /* save state info pointer */
   curr_dm_list->s_info = dml->s_info;  /* use dml's state info */
   mged_variables = dml->_mged_variables; /* struct copy */
+#if 1
+  bu_free((genptr_t)curr_dm_list->menu_vars,"f_pl: menu_vars");
+  curr_dm_list->menu_vars = dml->menu_vars;
+#else
   bcopy((void *)dml->_menu_array, (void *)menu_array,
 	sizeof(struct menu_item *) * NMENU);
   menuflag = dml->_menuflag;
   menu_top = dml->_menu_top;
   cur_menu = dml->_cur_menu;
   cur_item = dml->_cur_menu_item;
+#endif
   scroll_top = dml->_scroll_top;
   scroll_active = dml->_scroll_active;
   scroll_y = dml->_scroll_y;
@@ -2062,7 +2079,7 @@ char    **argv;
 
   /* print pathname of drawing window with primary focus */
   if( argc == 1 ){
-    Tcl_AppendResult(interp, bu_vls_addr(&pathName), "\n", (char *)NULL);
+    Tcl_AppendResult(interp, bu_vls_addr(&pathName), (char *)NULL);
     return TCL_OK;
   }
 
