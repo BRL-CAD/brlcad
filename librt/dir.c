@@ -230,3 +230,45 @@ struct rt_db_internal	*ip;
     	if( ip->idb_ptr )  rt_functab[ip->idb_type].ft_ifree( ip );
 	RT_INIT_DB_INTERNAL(ip);
 }
+
+/*
+ *		R T _ D B _ L O O K U P _ I N T E R N A L
+ *
+ *	    Convert an object name to a rt_db_internal pointer
+ *
+ *	Looks up the named object in the directory of the specified model,
+ *	obtaining a directory pointer.  Then gets that object from the
+ *	database and constructs its internal representation.  Returns
+ *	ID_NULL on error, otherwise returns the type of the object.
+ */
+int
+rt_db_lookup_internal (dbip, obj_name, dpp, ip, noisy)
+
+struct db_i		*dbip;
+char			*obj_name;
+struct directory	**dpp;
+struct rt_db_internal	*ip;
+int			noisy;
+
+{
+    struct directory		*dp;
+
+    if (obj_name == (char *) 0)
+    {
+	if (noisy == LOOKUP_NOISY)
+	    bu_log("No object specified\n");
+	return ID_NULL;
+    }
+    if ((dp = db_lookup(dbip, obj_name, noisy)) == DIR_NULL)
+	return ID_NULL;
+    if (rt_db_get_internal(ip, dp, dbip, (mat_t *) NULL ) < 0 )
+    {
+	if (noisy == LOOKUP_NOISY)
+	    bu_log("Failed to get internal form of object '%s'\n",
+		dp -> d_namep);
+	return ID_NULL;
+    }
+
+    *dpp = dp;
+    return (ip -> idb_type);
+}
