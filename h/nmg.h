@@ -842,6 +842,7 @@ struct nmg_struct_counts {
 #define NMG_VLIST_STYLE_POLYGON			1
 #define NMG_VLIST_STYLE_VISUALIZE_NORMALS	2
 #define NMG_VLIST_STYLE_USE_VU_NORMALS		4
+#define NMG_VLIST_STYLE_NO_SURFACES		8
 
 /*
  *  Function table, for use with nmg_visit()
