@@ -1001,7 +1001,7 @@ mged_setup()
 #ifdef MGED_TCL_LIBRARY
     filename = MGED_TCL_LIBRARY;
 #else
-    filename = "/m/cad/tclscripts";
+    filename = "/usr/brlcad/tclscripts";
 #endif
   bu_vls_init(&str);
   bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %s]", filename);
