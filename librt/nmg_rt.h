@@ -8,17 +8,18 @@
 /* These values are for the hitmiss "in_out" variable and indicate the
  * nature of the hit when known
  */
-#define NMG_HIT_INBOUND 1
-#define NMG_HIT_OUTBOUND -1
+#define NMG_RAY_STATE_INSIDE	1
+#define NMG_RAY_STATE_ON	2
+#define NMG_RAY_STATE_OUTSIDE	4
 
-#define HMG_HIT_IN_IN	1
-#define HMG_HIT_IN_OUT	2
-#define HMG_HIT_OUT_IN	4
-#define HMG_HIT_OUT_OUT 8	/* vertex/edge grazing */
-#define HMG_HIT_IN_ON	16
-#define HMG_HIT_ON_IN	32
-#define HMG_HIT_OUT_ON	64
-#define HMG_HIT_ON_OUT	128
+#define HMG_HIT_IN_IN	0x11	/* hit internal structure */
+#define HMG_HIT_IN_OUT	0x14	/* breaking out */
+#define HMG_HIT_OUT_IN	0x41	/* breaking in */
+#define HMG_HIT_OUT_OUT 0x44	/* edge/vertex graze */
+#define HMG_HIT_IN_ON	0x12
+#define HMG_HIT_ON_IN	0x21
+#define HMG_HIT_OUT_ON	0x42
+#define HMG_HIT_ON_OUT	0x24
 
 #define	NMG_VERT_ENTER 1
 #define NMG_VERT_ENTER_LEAVE 0
