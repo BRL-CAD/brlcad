@@ -10,8 +10,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include <assert.h>
-#include "./extern.h"
+#include "./extern.h"	/* includes <assert.h> */
 #include "./vecmath.h"
 #include "./ascii.h"
 #include "./tree.h"
