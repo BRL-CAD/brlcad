@@ -2994,7 +2994,7 @@ colinear:
 		if( code == 0 )  {
 			/* Geometry says lines are colinear.  Egads!  This can't be! */
 			if( is->on_eg )  {
-				rt_log("nmg_isect_line2_face2pNEW() edge_g not shared, geometry says lines are colinear.  Unresolvable inconsistency.\n");
+				rt_log("nmg_isect_line2_face2pNEW() edge_g not shared, geometry says lines are colinear.\n");
 				goto fixup;
 			}
 			/* on_eg wasn't set, use it and continue on */
@@ -3316,6 +3316,133 @@ CONST struct rt_tol	*tol;
 }
 
 /*
+ *			N M G _ F I N D _ E G _ B E T W E E N _ 2 F G
+ *
+ *  Perform a topology search to determine if two face geometries (specified
+ *  by their faceuses) share an edge geometry in common.
+ *  The edge_g is returned, even if there are no existing uses of it
+ *  in *either* fu1 or fu2.
+ *
+ *  If there are multiple edgeuses in common, ensure that they all refer
+ *  to the same edge_g geometry structure.  The intersection of two planes
+ *  (non-coplanar) must be a single line.
+ *
+ *  Calling this routine when the two faces share face geometry
+ *  is illegal.
+ *
+ *  NULL is returned if no common edge geometry could be found.
+ */
+struct edge_g *
+nmg_find_eg_between_2fg(ofu1, fu2, tol)
+CONST struct faceuse	*ofu1;
+CONST struct faceuse	*fu2;
+CONST struct rt_tol	*tol;
+{
+	CONST struct faceuse	*fu1;
+	CONST struct loopuse	*lu1;
+	CONST struct face_g	*fg1;
+	CONST struct face_g	*fg2;
+	CONST struct face	*f1;
+	struct edgeuse		*ret = (struct edgeuse *)NULL;
+	int			coincident;
+
+	NMG_CK_FACEUSE(ofu1);
+	NMG_CK_FACEUSE(fu2);
+	RT_CK_TOL(tol);
+
+	fg1 = ofu1->f_p->fg_p;
+	fg2 = fu2->f_p->fg_p;
+	NMG_CK_FACE_G(fg1);
+	NMG_CK_FACE_G(fg2);
+
+	if( fg1 == fg2 )  rt_bomb("nmg_find_eg_between_2fg() face_g shared, infinitely many results\n");
+
+	/* For all faces using fg1 */
+	for( RT_LIST_FOR( f1, face, &fg1->f_hd ) )  {
+		NMG_CK_FACE(f1);
+
+		/* Arbitrarily pick one of the two fu's using f1 */
+		fu1 = f1->fu_p;
+		NMG_CK_FACEUSE(fu1);
+
+		for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
+			CONST struct edgeuse	*eu1;
+			NMG_CK_LOOPUSE(lu1);
+			if( RT_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_VERTEXUSE_MAGIC )
+				continue;
+			for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
+				struct edgeuse *eur;
+
+				NMG_CK_EDGEUSE(eu1);
+				/* Walk radially around the edge */
+				for(
+				    eur = eu1->radial_p;
+				    eur != eu1->eumate_p;
+				    eur = eur->eumate_p->radial_p
+				)  {
+					CONST struct faceuse	*tfu;
+
+					if (*eur->up.magic_p != NMG_LOOPUSE_MAGIC ) continue;
+					if( *eur->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )  continue;
+					tfu = eur->up.lu_p->up.fu_p;
+					if( tfu->f_p->fg_p != fg2 )  continue;
+
+				    	/* Found the other face on this edge! */
+				    	if( !ret )  {
+				    		/* First common edge found */
+				    		ret = eur;
+				    		continue;
+				    	}
+
+			    		/* Previous edge found, check edge_g */
+			    		if( eur->e_p->eg_p == ret->e_p->eg_p )  continue;
+					if( eur->e_p == ret->e_p )  continue;
+
+					/* Edge geometry differs. vu's same? */
+					if( NMG_ARE_EUS_ADJACENT(eur, ret) )  {
+						if (rt_g.NMG_debug & DEBUG_BASIC)  {
+							rt_log("nmg_find_eg_between_2fg() joining edges eur=x%x, ret=x%x\n");
+						}
+						nmg_radial_join_eu(ret, eur, tol);
+						continue;
+					}
+
+					/* This condition "shouldn't happen */
+		    			rt_log("eur=x%x, eg_p=x%x;  ret=x%x, eg_p=x%x\n",
+		    				eur, eur->e_p->eg_p,
+		    				ret, ret->e_p->eg_p);
+		    			nmg_pr_eg( eur->e_p->eg_p, 0 );
+		    			nmg_pr_eg( ret->e_p->eg_p, 0 );
+		    			nmg_pr_eu_endpoints( eur, 0 );
+		    			nmg_pr_eu_endpoints( ret, 0 );
+
+					coincident = nmg_2edge_g_coincident( eur->e_p, ret->e_p, tol );
+					if( coincident )  {
+						/* Change eur to use ret's eg */
+						rt_log("nmg_find_eg_between_2fg() belatedly fusing e1=x%x, eg1=x%x, e2=x%x, eg2=x%x\n",
+							eur->e_p, eur->e_p->eg_p,
+							ret->e_p, ret->e_p->eg_p );
+						nmg_move_eg( eur->e_p->eg_p, ret->e_p->eg_p, nmg_find_s_of_eu(eur) );
+						/* See if there are any others. */
+						nmg_model_fuse( nmg_find_model(&eur->l.magic), tol );
+					} else {
+			    			rt_bomb("nmg_find_eg_between_2fg() 2 faces intersect with differing edge geometries?\n");
+					}
+					/* Advance to next radial edgeuse */
+				}
+			}
+		}
+	}
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_find_eg_between_2fg(fu1=x%x, fu2=x%x) edge_g=x%x\n",
+			ofu1, fu2, ret ? ret->e_p->eg_p : 0);
+	}
+	if( ret )
+		return ret->e_p->eg_p;
+	return (struct edge_g *)NULL;
+}
+
+/*
  *			N M G _ I S E C T _ T W O _ F A C E 3 P
  *
  *  Handle the complete mutual intersection of
@@ -3336,7 +3463,7 @@ struct faceuse		*fu1, *fu2;
 	struct nmg_ptbl	on_line;	/* List of eu's on the line */
 	int	again;		/* Need to do it again? */
 	int	trips;		/* Number of trips through loop */
-	CONST struct edgeuse	*on_eu;
+	CONST struct edgeuse_g	*on_eg;
 	struct nmg_ptbl		eu1_list;	/* all eu's in fu1 */
 	struct nmg_ptbl		eu2_list;	/* all eu's in fu2 */
 
@@ -3367,9 +3494,9 @@ struct faceuse		*fu1, *fu2;
 
 	/* Topology search */
 	/* See if 2 faces share an edge already.  If so, get edge_geom line */
-	if( (on_eu = nmg_find_edge_between_2fu(fu1, fu2, &(is->tol))) )  {
-		is->on_eg = on_eu->e_p->eg_p;
+	if( (is->on_eg = nmg_find_eg_between_2fg(fu1, fu2, &(is->tol))) )  {
 		NMG_CK_EDGE_G(is->on_eg);
+#if 0
 		/* Check this edge w.r.t. the line geometry */
 		if( !nmg_is_eu_on_line3( on_eu, is->pt, is->dir, &(is->tol) ) )  {
 			rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
@@ -3380,6 +3507,7 @@ struct faceuse		*fu1, *fu2;
 			rt_bomb("bad line\n");
 			/* XXX How about resetting is->pt to eg->pt, etc.? */
 		}
+#endif
 	} else {
 		/* Geometry search */
 		if( !(is->on_eg = nmg_find_eg_on_line( &fu1->l.magic, is->pt, is->dir, &(is->tol) ) ) )  {
