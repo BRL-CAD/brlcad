@@ -1,11 +1,14 @@
 #!/bin/sh
 
 # Regardless of file type, show it on the framebuffer.
-# The flags are for the display program.
+# Mostly uses BRL-CAD LIBFB ($FB_FILE) display;
+# some programs may use X Windows $DISPLAY instead.
+# The args (flags) are for the display program.
 
 if test "$1" = ""
 then
 	echo "Usage: show.sh file.pix [flags]"
+	echo "	Regardless of file type, try to show it on the framebuffer."
 	exit 1
 fi
 
@@ -62,8 +65,15 @@ gif)
 	fi;;
 pr|ras)
 	sun-pix $FILE | pix-fb -i -w$WIDTH -n$HEIGHT;;
+gl)
+	xviewgl $FILE;;
+dl)
+	xdl $FILE;;
+grasp)
+	xgrasp $FILE;;
+mpg)
+	mpeg_play $FILE;;
 *)
 	echo "$SUFFIX is not supported by this script"
 	exit 1
 esac
-
