@@ -494,11 +494,21 @@ char	*dp;
 	j = swp->sw_uv.uv_v * (tp->tx_n-1);
 	cp = (unsigned char *)(tp->tx_pixels +
 	     (j) * tp->tx_w * 3  +  i * 3);
-	pertU = (*cp - 128) / 128.0;
-	pertV = (*(cp+2) - 128) / 128.0;
+	pertU = ((fastf_t)(*cp) - 128.0) / 128.0;
+	pertV = ((fastf_t)(*(cp+2)) - 128.0) / 128.0;
 
+	if( rdebug&RDEBUG_LIGHT ) {
+		VPRINT("normal", swp->sw_hit.hit_normal);
+		VPRINT("u", u );
+		VPRINT("v", v );
+		rt_log("cu = %d, cv = %d\n", *cp, *(cp+2));
+		rt_log("pertU = %g, pertV = %g\n", pertU, pertV);
+	}
 	VJOIN2( swp->sw_hit.hit_normal, swp->sw_hit.hit_normal, pertU, u, pertV, v );
 	VUNITIZE( swp->sw_hit.hit_normal );
+	if( rdebug&RDEBUG_LIGHT ) {
+		VPRINT("after", swp->sw_hit.hit_normal);
+	}
 
 	/*phong_render( ap, pp, swp, &junk );*/
 	return(1);
