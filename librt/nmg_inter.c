@@ -3005,7 +3005,8 @@ colinear:
 				goto fixup;
 			}
 			/* on_eg wasn't set, use it and continue on */
-			rt_log("NOTICE: setting on_eg to eg1 and continuing with colinear case.\n");
+			if( rt_g.NMG_debug & DEBUG_POLYSECT )
+				rt_log("NOTICE: setting on_eg to eg1 and continuing with colinear case.\n");
 			is->on_eg = (*eg1);
 			goto colinear;
 		}
