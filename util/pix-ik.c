@@ -42,6 +42,7 @@ char **argv;
 	if( strcmp( argv[1], "-h" ) == 0 )  {
 		nlines = 1024;
 		argc--; argv++;
+		ikhires = 1;
 	}
 	if( (infd = open( argv[1], 0 )) < 0 )  {
 		perror( argv[1] );
