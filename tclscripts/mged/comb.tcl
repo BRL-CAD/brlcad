@@ -229,15 +229,19 @@ the form of the selected shader type." } }
 	    -command "comb_shader_gui $id checker $top.shaderF"
     hoc_register_menu_data "Shader" "checker" "Shader - Checker"\
 		{ { summary "texture map a checkerboard pattern on this object." } }
-    $top.shaderMB.m add command -label "Test Map"\
+    $top.shaderMB.m add command -label "test map"\
 	    -command "comb_shader_gui $id testmap $top.shaderF"
-    hoc_register_menu_data "Shader" "Test Map" "Shader - testmap"\
+    hoc_register_menu_data "Shader" "test map" "Shader - testmap"\
 		{ { summary "Map a red and blue gradient on this object proportional to 'uv'\n\
 			texture map coordinates." } }
-    $top.shaderMB.m add command -label "Fake Star Pattern"\
+    $top.shaderMB.m add command -label "fake star pattern"\
 	    -command "comb_shader_gui $id fakestar $top.shaderF"
-    hoc_register_menu_data "Shader" "Fake Star" "Shader - fakestar"\
+    hoc_register_menu_data "Shader" "fake star pattern" "Shader - fakestar"\
 		{ { summary "Map a fake star field on this object." } }
+    $top.shaderMB.m add command -label "stack"\
+	-command "comb_shader_gui $id stack $top.shaderF"
+    hoc_register_menu_data "Shader" "stack" "Shader - stack"\
+	{ { summary "Consecutively apply multiple shaders to this object." } }
 
     label $top.combL -text "Boolean Expression:" -anchor w
     hoc_register_data $top.combL "Boolean Expression"\
@@ -385,7 +389,9 @@ proc comb_apply { id } {
     set comb_control($id,comb) [$top.combT get 0.0 end]
 
 # apply the parameters in the shader frame to the shader string
-    do_shader_apply comb_control($id,shader) $id
+    if { $comb_control($id,shader) != "" } then {
+	do_shader_apply comb_control($id,shader) $id
+    }
 
     if {$comb_control($id,isRegion)} {
 	if {$comb_control($id,id) < 0} {

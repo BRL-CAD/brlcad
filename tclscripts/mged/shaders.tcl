@@ -9,8 +9,10 @@
 #	1. add the new shader to the 'switch' in 'do_shader_apply'
 #	2. add the new shader to the 'switch' in 'do_shader'
 #	3. add the new shader to the 'switch' in 'set_shader_params'
-#	3. add a menu item for the new shader in 'init_comb' (comb.tcl)
-#	4. add the following routines:
+#	4. add the new shader to the switch command in 'stack_add', if this shader is
+#		appropriate for being in a stack
+#	5. add a menu item for the new shader in 'init_comb' (comb.tcl)
+#	6. add the following routines:
 
 # proc do_newshader { shade_var id } - Creates the frame to hold the shader widgets and
 #	creates the labels, entries, buttons... Also registers 'help-in-context' data
@@ -36,7 +38,7 @@ proc do_fakestar { shade_var id } {
 	frame $shader_params($id,window).fr
 
 	label $shader_params($id,window).fr.fakestar_m -text "There are no parameters to set for the fakestar texture map"
-	hoc_register_data $shader_params($id,window).fr.tst_m "Fake Star" {
+	hoc_register_data $shader_params($id,window).fr.fakestar_m "Fake Star" {
 		{summary "The Fake Star texture maps an imaginary star field onto the object."}
 	}
 
@@ -177,7 +179,7 @@ proc do_checker_apply { shade_var id } {
 		if { $shader_params($id,ckr_b) != $shader_params($id,def_ckr_b) } then {
 			lappend params b $shader_params($id,ckr_b) } }
 
-	set shader [list $shader_params($id,shader_name) $params ]
+	set shader [list checker $params ]
 }
 
 proc set_checker_defaults { id } {
@@ -397,6 +399,18 @@ proc do_phong { shade_var id } {
 	return $shader_params($id,window).fr
 }
 
+proc set_plastic_values { shader_str id } {
+	set_phong_values $shader_str $id
+}
+
+proc set_glass_values { shader_str id } {
+	set_phong_values $shader_str $id
+}
+
+proc set_mirror_values { shader_str id } {
+	set_phong_values $shader_str $id
+}
+
 proc set_phong_values { shader_str id } {
 	global shader_params
 
@@ -469,9 +483,33 @@ proc set_phong_values { shader_str id } {
 	}
 }
 
-proc do_phong_apply { shade_var id } {
-	global shader_params
+proc do_plastic_apply { shade_var id } {
 	upvar #0 $shade_var shader
+
+	set params [do_phong_apply $id]
+
+	set shader [list plastic $params]
+}
+
+proc do_glass_apply { shade_var id } {
+	upvar #0 $shade_var shader
+
+	set params [do_phong_apply $id]
+
+	set shader [list glass $params]
+}
+
+proc do_mirror_apply { shade_var id } {
+	upvar #0 $shade_var shader
+
+	set params [do_phong_apply $id]
+
+	set shader [list mirror $params]
+}
+
+
+proc do_phong_apply { id } {
+	global shader_params
 
 	set params ""
 
@@ -499,45 +537,43 @@ proc do_phong_apply { shade_var id } {
 		if { [expr $shader_params($id,ext) != $shader_params($id,def_ext)] } then {
 			lappend params ex $shader_params($id,ext) } }
 
-	set shader [list $shader_params($id,shader_name) $params ]
+	return "$params"
 }
 
-proc set_phong_defaults { id } {
+proc set_plastic_defaults { id } {
 	global shader_params
 
-	switch $shader_params($id,shader_name) {
+	set shader_params($id,def_shine) 10
+	set shader_params($id,def_spec) 0.7
+	set shader_params($id,def_diff) 0.3
+	set shader_params($id,def_trans) 0
+	set shader_params($id,def_refl) 0
+	set shader_params($id,def_ri) 1.0
+	set shader_params($id,def_ext) 0
+}
 
-		plastic {
-			set shader_params($id,def_shine) 10
-			set shader_params($id,def_spec) 0.7
-			set shader_params($id,def_diff) 0.3
-			set shader_params($id,def_trans) 0
-			set shader_params($id,def_refl) 0
-			set shader_params($id,def_ri) 1.0
-			set shader_params($id,def_ext) 0
-		}
+proc set_mirror_defaults { id } {
+	global shader_params
 
-		mirror {
-			set shader_params($id,def_shine) 4
-			set shader_params($id,def_spec) 0.6
-			set shader_params($id,def_diff) 0.4
-			set shader_params($id,def_trans) 0
-			set shader_params($id,def_refl) 0.75
-			set shader_params($id,def_ri) 1.65
-			set shader_params($id,def_ext) 0
-		}
+	set shader_params($id,def_shine) 4
+	set shader_params($id,def_spec) 0.6
+	set shader_params($id,def_diff) 0.4
+	set shader_params($id,def_trans) 0
+	set shader_params($id,def_refl) 0.75
+	set shader_params($id,def_ri) 1.65
+	set shader_params($id,def_ext) 0
+}
 
-		glass {
-			set shader_params($id,def_shine) 4
-			set shader_params($id,def_spec) 0.7
-			set shader_params($id,def_diff) 0.3
-			set shader_params($id,def_trans) 0.8
-			set shader_params($id,def_refl) 0.1
-			set shader_params($id,def_ri) 1.65
-			set shader_params($id,def_ext) 0
-		}
-	}
+proc set_glass_defaults { id } {
+	global shader_params
 
+	set shader_params($id,def_shine) 4
+	set shader_params($id,def_spec) 0.7
+	set shader_params($id,def_diff) 0.3
+	set shader_params($id,def_trans) 0.8
+	set shader_params($id,def_refl) 0.1
+	set shader_params($id,def_ri) 1.65
+	set shader_params($id,def_ext) 0
 }
 
 # TEXTURE MAP routines
@@ -545,14 +581,8 @@ proc set_phong_defaults { id } {
 proc set_texture_defaults { id } {
 	global shader_params
 
-	switch $shader_params($id,shader_name) {
-		bump -
-		bwtexture -
-		texture {
-			set shader_params($id,def_width) 512
-			set shader_params($id,def_height) 512
-		}
-	}
+	set shader_params($id,def_width) 512
+	set shader_params($id,def_height) 512
 }
 
 proc set_texture_values { shader_str id } {
@@ -709,6 +739,167 @@ proc do_texture { shade_var id } {
 	return $shader_params($id,window).fr
 }
 
+# STACK routines
+
+proc do_stack_apply { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shade_str
+
+	set params ""
+
+	set index 0
+	for {set index 0} {$index < $shader_params($id,stack_len)} {incr index} {
+		if {$shader_params($id,stk_$index,shader_name) == "" } {continue}
+		set shade_str $shader_params($id,stk_$index,shader_name)
+		do_shader_apply $shade_var $id,stk_$index
+		lappend params $shade_str
+	}
+
+	if {$params == "" } {
+		tk_messageBox -type ok -icon error -title "ERROR: Empty stack"\
+			-message "The stack shader is meaningless without placing other shaders in the stack"
+		set shade_str stack
+	} else {
+		set shade_str "stack {$params}"
+	}
+}
+
+proc set_stack_defaults { id } {
+	global shader_params
+
+	set shader_params($id,stack_len) 0
+}
+
+proc stack_delete { index id } {
+	global shader_params
+
+# destroy the shader subwindow
+puts "destroying window ($index) $shader_params($id,stk_$index,window)"
+	catch {destroy $shader_params($id,stk_$index,window) }
+
+# remove the shader from the 'delete' menu
+	catch {$shader_params($id,window).fr.del.m delete $index}
+
+# adjust the shader list
+	set shader_params($id,stk_$index,window) deleted
+	set shader_params($id,stk_$index,shader_name) ""
+}
+
+proc stack_add { shader shade_var id } {
+	global shader_params
+
+	set index $shader_params($id,stack_len)
+	incr shader_params($id,stack_len)
+	frame $shader_params($id,window).fr.stk_$index -relief raised -bd 3
+	set shader_params($id,stk_$index,window) $shader_params($id,window).fr.stk_$index
+
+	label $shader_params($id,window).fr.stk_$index.lab -text $shader
+	grid $shader_params($id,window).fr.stk_$index.lab -columnspan 4
+	set shader_params($id,stk_$index,shader_name) $shader
+
+	set index_lab [expr $index + 1]
+	$shader_params($id,window).fr.del.m add command -label "#$index_lab $shader"\
+		-command "stack_delete $index $id"
+
+	switch $shader {
+		plastic {
+			set_plastic_defaults "$id,stk_$index"
+			set tmp_win [do_phong $shade_var $id,stk_$index]
+		}
+		glass {
+			set_glass_defaults "$id,stk_$index"
+			set tmp_win [do_phong $shade_var $id,stk_$index]
+		}
+		mirror {
+			set_mirror_defaults "$id,stk_$index"
+			set tmp_win [do_phong $shade_var $id,stk_$index]
+		}
+		fakestar {
+			set_fakestar_defaults "$id,stk_$index"
+			set tmp_win [do_fakestar $shade_var $id,stk_$index]
+		}
+		bump -
+		bwtexture -
+		texture {
+			set_texture_defaults "$id,stk_$index"
+			set tmp_win [do_texture $shade_var $id,stk_$index]
+		}
+		checker {
+			set_checker_defaults "$id,stk_$index"
+			set tmp_win [do_checker $shade_var $id,stk_$index]
+		}
+		testmap {
+			set_testmap_defaults "$id,stk_$index"
+			set tmp_win [do_testmap $shade_var $id,stk_$index]
+		}
+	}
+
+	grid $shader_params($id,window).fr.stk_$index -columnspan 2
+}
+
+proc set_stack_values { shade_str id } {
+	global shader_params
+
+	set shade_length [llength $shade_str]
+	if {$shade_length < 2 } {return}
+	set shader_list [lindex $shade_str 1]
+	set no_of_shaders [llength $shader_list]
+	for {set index 0} {$index < $no_of_shaders} {incr index } {
+		set sub_str [lindex $shader_list $index]
+		set shader [lindex $sub_str 0]
+		if { $index >= $shader_params($id,stack_len) } {
+			stack_add $shader $shader_params($id,shade_var) $id
+			set_${shader}_values $sub_str $id,stk_$index
+		}
+	}
+}
+
+proc do_stack { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shade_str
+
+	catch { destroy $shader_params($id,window).fr }
+	frame $shader_params($id,window).fr
+
+	set shader_params($id,shade_var) $shade_var
+
+	menubutton $shader_params($id,window).fr.add\
+		-menu $shader_params($id,window).fr.add.m\
+		-text "Add shader" -relief raised
+
+	menu $shader_params($id,window).fr.add.m -tearoff 0
+	$shader_params($id,window).fr.add.m add command \
+		-label plastic -command "stack_add plastic $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
+		-label glass -command "stack_add glass $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
+		-label mirror -command "stack_add mirror $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
+		-label "bump map" -command "stack_add bump $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
+		-label texture -command "stack_add texture $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
+		-label bwtexture -command "stack_add bwtexture $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
+		-label fakestar -command "stack_add fakestar $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
+		-label testmap -command "stack_add testmap $shade_var $id"
+
+	menubutton $shader_params($id,window).fr.del\
+		-menu $shader_params($id,window).fr.del.m\
+		-text "Delete shader" -relief raised
+
+	menu $shader_params($id,window).fr.del.m -tearoff 0
+
+	grid $shader_params($id,window).fr.add $shader_params($id,window).fr.del
+
+	grid $shader_params($id,window).fr
+
+	set_stack_values $shade_str $id
+
+	return $shader_params($id,window).fr
+}
+
 proc set_shader_params { shade_var id } {
 	upvar #0 $shade_var shade_str
 	global shader_params
@@ -746,6 +937,9 @@ proc set_shader_params { shade_var id } {
 		fakestar {
 			set_fakestar_values $shade_str $id
 		}
+		stack {
+			set_stack_values $shade_sr $id
+		}
 	}
 }
 
@@ -768,10 +962,16 @@ proc do_shader { shade_var id frame_name } {
 		set material [lindex $shade_str 0]
 		set shader_params($id,shader_name) $material
 		switch $material {
-			glass -
-			mirror -
+			glass {
+				set_glass_defaults $id
+				set my_win [do_phong $shade_var $id]
+			}
+			mirror {
+				set_mirror_defaults $id
+				set my_win [do_phong $shade_var $id]
+			}
 			plastic {
-				set_phong_defaults $id
+				set_plastic_defaults $id
 				set my_win [do_phong $shade_var $id]
 			}
 			bump -
@@ -792,6 +992,10 @@ proc do_shader { shade_var id frame_name } {
 				set_fakestar_defaults $id
 				set my_win [do_fakestar $shade_var $id]
 			}
+			stack {
+				set_stack_defaults $id
+				set my_win [do_stack $shade_var $id]
+			}
 
 			default {
 				tk_messageBox -title "Shader Name Error" -type ok -icon error \
@@ -808,14 +1012,19 @@ proc do_shader { shade_var id frame_name } {
 proc do_shader_apply { shade_var id } {
 	upvar #0 $shade_var shader_str
 
+	if { [string length $shader_str] == 0 } { return }
 	set current_shader_type [lindex $shader_str 0]
 
 	switch $current_shader_type {
 
-		plastic -
-		mirror -
+		plastic {
+			do_plastic_apply $shade_var $id
+		}
+		mirror {
+			do_mirror_apply $shade_var $id
+		}
 		glass {
-			do_phong_apply $shade_var $id
+			do_glass_apply $shade_var $id
 		}
 
 		bump -
@@ -831,6 +1040,9 @@ proc do_shader_apply { shade_var id } {
 		}
 		fakestar {
 			do_fakestar_apply $shade_var $id
+		}
+		stack {
+			do_stack_apply $shade_var $id
 		}
 	}
 }
