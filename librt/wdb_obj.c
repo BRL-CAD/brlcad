@@ -4269,6 +4269,7 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 	struct wdb_id_names *inp;
 	int isAir;
 	int sflag;
+	
 
 	if (argc < 2 || MAXARGS < argc) {
 		struct bu_vls vls;
@@ -4369,12 +4370,6 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 				return TCL_ERROR;
 			}
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
-			if (comb->region_id != 0 && comb->aircode != 0) {
-				Tcl_AppendResult(interp, "ERROR: ", dp->d_namep,
-						 " has id and aircode!!!\n", (char *)NULL);
-				continue;
-			}
-
 			/* check to see if the region id or air code matches one in our list */
 			for (BU_LIST_FOR(itnp,wdb_id_to_names,&headIdName.l)) {
 				if ((!isAir && comb->region_id == itnp->id) ||
