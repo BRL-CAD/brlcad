@@ -37,6 +37,7 @@ void	Tek_update();
 void	Tek_puts(), Tek_2d_line(), Tek_light();
 int	Tek_object();
 unsigned Tek_cvtvecs(), Tek_load();
+void	Tek_statechange(), Tek_viewchange();
 
 struct dm dm_Tek = {
 	Tek_open, Tek_close, Tek_restart,
@@ -48,6 +49,9 @@ struct dm dm_Tek = {
 	Tek_light,
 	Tek_object,
 	Tek_cvtvecs, Tek_load,
+	Tek_statechange,
+	Tek_viewchange,
+	0,				/* no displaylist */
 	TEKBOUND,
 	"tek", "Tektronix 4014"
 };
@@ -487,6 +491,17 @@ unsigned addr, count;
 	printf("Tek_load(x%x, %d.)\n", addr, count );
 	return( 0 );
 }
+
+void
+Tek_statechange()
+{
+}
+
+void
+Tek_viewchange()
+{
+}
+
 /*
  *	This program performs the interpretation function
  * for the Tektronix 4014-1 with Extended Graphics Option.
@@ -579,8 +594,10 @@ erase(){
 	fflush(outfp);
 
 	/* If 2 FD's, it's probably a BLIT, otherwise assume real Tek */
+#ifdef BLIT
 	if( !second_fd )
-		sleep(2);
+#endif
+		sleep(3);
 }
 
 label(s)

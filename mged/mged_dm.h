@@ -59,6 +59,9 @@ struct dm {
 	int	(*dmr_object)();	/* Invoke an object subroutine */
 	unsigned (*dmr_cvtvecs)();	/* returns size requirement of subr */
 	unsigned (*dmr_load)();		/* DMA the subr to device */
+	void	(*dmr_statechange)();	/* called on editor state change */
+	void	(*dmr_viewchange)();	/* add/drop solids from view */
+	int	dmr_displaylist;	/* !0 means device has displaylist */
 	float	dmr_bound;		/* zoom-in limit */
 	char	*dmr_name;		/* short name of device */
 	char	*dmr_lname;		/* long name of device */
