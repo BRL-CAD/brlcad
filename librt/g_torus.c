@@ -461,10 +461,7 @@ struct application	*ap;
 	/* Sort most distant to least distant. */
 	rt_pt_sort( k, i );
 
-	/* Now, t[0] > t[npts-1].  See if this is an easy out. */
-	if( k[0] <= 0.0 )
-		return(SEG_NULL);		/* No hit out front. */
-
+	/* Now, t[0] > t[npts-1] */
 	/* k[1] is entry point, and k[0] is farthest exit point */
 	GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -524,7 +521,8 @@ struct resource         *resp; /* pointer to a list of free segs */
 
 	/* Allocate space for polys and roots */
         C = (poly *)rt_malloc(n * sizeof(poly), "tor poly");
-	val = (complex (*)[MAXP])rt_malloc(n * sizeof(complex (*)[MAXP]), "tor complex");
+	val = (complex (*)[MAXP])rt_malloc(n * sizeof(complex) * MAXP,
+		"tor complex");
 	cor_proj = (fastf_t *)rt_malloc(n * sizeof(fastf_t), "tor proj");
 
 	/* Initialize seg_stp to assume hit (zero will then flag miss) */
@@ -534,9 +532,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 	/* for each ray/torus pair */
 #	include "noalias.h"
 	for(i = 0; i < n; i++){
-#if !CRAY	/* currently prevents vectorization on cray */
-	 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
-#endif
+		if( segp[i].seg_stp == 0) continue;	/* Skip */
 		tor = (struct tor_specific *)stp[i]->st_specific;
 
 		/* Convert vector into the space of the unit torus */
@@ -616,23 +612,19 @@ struct resource         *resp; /* pointer to a list of free segs */
 		C[i].dgr	= 4;
 		C[i].cf[0] = Asqr.cf[0];
 		C[i].cf[1] = Asqr.cf[1];
-		C[i].cf[2] = Asqr.cf[2];
-		C[i].cf[3] = Asqr.cf[3];
-		C[i].cf[4] = Asqr.cf[4];
-		C[i].cf[2] -= X2_Y2.cf[0];
-		C[i].cf[3] -= X2_Y2.cf[1];
-		C[i].cf[4] -= X2_Y2.cf[2];
-
+		C[i].cf[2] = Asqr.cf[2] - X2_Y2.cf[0];
+		C[i].cf[3] = Asqr.cf[3] - X2_Y2.cf[1];
+		C[i].cf[4] = Asqr.cf[4] - X2_Y2.cf[2];
 	}
 
 	/* Unfortunately finding the 4th order roots are too ugly to inline */
 	for(i = 0; i < n; i++){
-		if (stp[i] != 0) continue; /* stp[i] == 0 signals skip ray */
+		if( segp[i].seg_stp == 0) continue;	/* Skip */
 
 		/*  It is known that the equation is 4th order.  Therefore,
 	 	*  if the root finder returns other than 4 roots, error.
 	 	*/
-		if ( (num_roots = polyRoots( &C[i], val[i] )) != 4 ){
+		if ( (num_roots = polyRoots( &(C[i]), &(val[i][0]) )) != 4 ){
 			if( num_roots != 0 )  {
 				rt_log("tor:  polyRoots() 4!=%d\n", num_roots);
 				rt_pr_roots( num_roots, val );
@@ -644,7 +636,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 	/* for each ray/torus pair */
 #	include "noalias.h"
 	for(i = 0; i < n; i++){
-		if (stp[i] == 0 || segp[i].seg_stp == 0) continue; /* Skip */
+		if( segp[i].seg_stp == 0) continue; /* Skip */
 
 		/*  Only real roots indicate an intersection in real space.
 	 	 *
@@ -681,100 +673,82 @@ struct resource         *resp; /* pointer to a list of free segs */
 		}
 	}
 
-	/* Process each two segment hit */
+	/* Process each one segment hit */
 #	include "noalias.h"
 	for(i = 0; i < n; i++){
-		if (stp[i] == 0 || segp[i].seg_stp == 0) continue; /* Skip */
-
+		if( segp[i].seg_stp == 0) continue; /* Skip */
 		if( C[i].dgr != 2 )  continue;  /* Not one segment */
 
-		if (C[i].cf[0] <= 0.0 && C[i].cf[1] <= 0.0) {
-			SEG_MISS(segp[i]);		/* MISS */
-		}
-		else {
-			segp[i].seg_next = SEG_NULL;
-			segp[i].seg_stp = stp[i];
+		tor = (struct tor_specific *)stp[i]->st_specific;
+		segp[i].seg_next = SEG_NULL;
 
+		/* segp[i].seg_in.hit_normal holds dprime */
+		/* segp[i].seg_out.hit_normal holds pprime */
+		if (C[i].cf[1] < C[i].cf[0]) {
 			/* C[i].cf[1] is entry point */
-			/* segp[r].seg_in.hit_normal holds dprime */
-			/* segp[r].seg_out.hit_normal holds pprime */
-			if (C[i].cf[1] < C[i].cf[0]) {
-				segp[i].seg_in.hit_dist = C[i].cf[1]*tor->tor_r1;
-				segp[i].seg_out.hit_dist = C[i].cf[0]*tor->tor_r1;
-				/* Set aside vector for tor_norm() later */
-				VJOIN1( segp[i].seg_in.hit_vpriv,
-					segp[i].seg_out.hit_normal,
-					C[i].cf[1], segp[i].seg_in.hit_normal );
-				VJOIN1( segp[i].seg_out.hit_vpriv,
-					segp[i].seg_out.hit_normal,
-					C[i].cf[0], segp[i].seg_in.hit_normal );
-
-			} else { /* C[i].cf[0] is entry point */
-				segp[i].seg_in.hit_dist = C[i].cf[0]*tor->tor_r1;
-				segp[i].seg_out.hit_dist = C[i].cf[1]*tor->tor_r1;
-				/* Set aside vector for tor_norm() later */
-				VJOIN1( segp[i].seg_in.hit_vpriv,
-					segp[i].seg_out.hit_normal,
-					C[i].cf[0], segp[i].seg_in.hit_normal );
-				VJOIN1( segp[i].seg_out.hit_vpriv,
-					segp[i].seg_out.hit_normal,
-					C[i].cf[1], segp[i].seg_in.hit_normal );
-
-			}
+			segp[i].seg_in.hit_dist = C[i].cf[1]*tor->tor_r1;
+			segp[i].seg_out.hit_dist = C[i].cf[0]*tor->tor_r1;
+			/* Set aside vector for tor_norm() later */
+			VJOIN1( segp[i].seg_in.hit_vpriv,
+				segp[i].seg_out.hit_normal,
+				C[i].cf[1], segp[i].seg_in.hit_normal );
+			VJOIN1( segp[i].seg_out.hit_vpriv,
+				segp[i].seg_out.hit_normal,
+				C[i].cf[0], segp[i].seg_in.hit_normal );
+		} else {
+			/* C[i].cf[0] is entry point */
+			segp[i].seg_in.hit_dist = C[i].cf[0]*tor->tor_r1;
+			segp[i].seg_out.hit_dist = C[i].cf[1]*tor->tor_r1;
+			/* Set aside vector for tor_norm() later */
+			VJOIN1( segp[i].seg_in.hit_vpriv,
+				segp[i].seg_out.hit_normal,
+				C[i].cf[0], segp[i].seg_in.hit_normal );
+			VJOIN1( segp[i].seg_out.hit_vpriv,
+				segp[i].seg_out.hit_normal,
+				C[i].cf[1], segp[i].seg_in.hit_normal );
 		}
 	}
 
 	/* Process each two segment hit */
 	for(i = 0; i < n; i++){
-		if (stp[i] == 0 || segp[i].seg_stp == 0) continue; /* Skip */
+		register struct seg *seg2p;
 
+		if( segp[i].seg_stp == 0) continue;	/* Skip */
 		if( C[i].dgr != 4 )  continue;  /* Not two segment */
+
+		tor = (struct tor_specific *)stp[i]->st_specific;
 
 		/* Sort most distant to least distant. */
 		rt_pt_sort( C[i].cf, 4 );
+		/* Now, t[0] > t[npts-1] */
 
-		/* Now, t[0] > t[npts-1].  See if this is an easy out. */
-		if( C[i].cf[0] <= 0.0 ) {
-			SEG_MISS(segp[C[i].dgr]);		/* MISS */
-		} else {
-			register int r;
-			register struct seg *seg2p;		/* XXX */
+		/* segp[i].seg_in.hit_normal holds dprime */
+		VMOVE( dprime, segp[i].seg_in.hit_normal );
+		/* segp[i].seg_out.hit_normal holds pprime */
+		VMOVE( pprime, segp[i].seg_out.hit_normal );
 
-			r = C[i].dgr; /* holds the ray/torus pair number */
+		/* C[i].cf[1] is entry point */
+		segp[i].seg_in.hit_dist =  C[i].cf[1]*tor->tor_r1;
+		segp[i].seg_out.hit_dist = C[i].cf[0]*tor->tor_r1;
+		/* Set aside vector for tor_norm() later */
+		VJOIN1(segp[i].seg_in.hit_vpriv, pprime, C[i].cf[1], dprime );
+		VJOIN1(segp[i].seg_out.hit_vpriv, pprime, C[i].cf[0], dprime);
 
-			/* Attach second hit to segment chain */
-			GET_SEG(seg2p, resp);
-			segp[r].seg_next = seg2p;
-
-			/* segp[r].seg_in.hit_normal holds dprime */
-			VMOVE( dprime, segp[r].seg_in.hit_normal );
-
-			/* segp[r].seg_out.hit_normal holds pprime */
-			VMOVE( pprime, segp[r].seg_out.hit_normal );
-
-			segp[r].seg_next = SEG_NULL;
-			segp[r].seg_stp = stp[r];
-
-			/* C[i].cf[1] is entry point */
-			segp[r].seg_in.hit_dist = C[i].cf[1]*tor->tor_r1;
-			segp[r].seg_out.hit_dist = C[i].cf[0]*tor->tor_r1;
-			/* Set aside vector for tor_norm() later */
-			VJOIN1(segp[r].seg_in.hit_vpriv, pprime, C[i].cf[1], dprime );
-			VJOIN1(segp[r].seg_out.hit_vpriv, pprime, C[i].cf[0], dprime);
-
-			/* C[i].cf[2] is entry point */
-			seg2p->seg_stp = stp[r];
-			seg2p->seg_in.hit_dist = C[i].cf[3]*tor->tor_r1;
-			seg2p->seg_out.hit_dist = C[i].cf[2]*tor->tor_r1;
-			VJOIN1( seg2p->seg_in.hit_vpriv, pprime, C[i].cf[3], dprime );
-			VJOIN1(seg2p->seg_out.hit_vpriv, pprime, C[i].cf[2], dprime );
-		}
+		/* C[i].cf[3] is entry point */
+		/* Attach second hit to segment chain */
+		GET_SEG(seg2p, resp);
+		segp[i].seg_next = seg2p;
+		seg2p->seg_stp = stp[i];
+		seg2p->seg_in.hit_dist =  C[i].cf[3]*tor->tor_r1;
+		seg2p->seg_out.hit_dist = C[i].cf[2]*tor->tor_r1;
+		VJOIN1( seg2p->seg_in.hit_vpriv, pprime, C[i].cf[3], dprime );
+		VJOIN1(seg2p->seg_out.hit_vpriv, pprime, C[i].cf[2], dprime );
 	}
 
 	/* Free tmp space used */
-	free(C);
-	free(val);
-	free(cor_proj);
+	rt_free( (char *)C, "tor C");
+	rt_free( (char *)val, "tor val");
+	rt_free( (char *)cor_proj, "tor cor_proj");
 }
 
 /*
