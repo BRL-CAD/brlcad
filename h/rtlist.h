@@ -138,6 +138,7 @@ struct rt_list  {
 	(hp)->forw = (hp)->back = (hp); \
 	(hp)->magic = RT_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
 #define RT_LIST_MAGIC_SET(hp,val)	{(hp)->magic = (val);}
+#define RT_LIST_MAGIC_OK(hp,val)	((hp)->magic == (val))
 #define RT_LIST_MAGIC_WRONG(hp,val)	((hp)->magic != (val))
 
 /* Return re-cast pointer to first element on list.
