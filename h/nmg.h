@@ -551,14 +551,14 @@ struct vertexuse_a {
 
 
 /*
- * model storage allocation and de-allocation support
+ * storage allocation and de-allocation support
  */
-extern char *rt_calloc();
-
 #if __STDC__ && !alliant && !apollo
+    extern char *rt_calloc(unsigned nelem, unsigned elsize, char *str);
 #   define NMG_GETSTRUCT(p,str) \
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
 #else
+    extern char *rt_calloc();
 #   define NMG_GETSTRUCT(p,str) \
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
 #endif
