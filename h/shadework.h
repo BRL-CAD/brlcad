@@ -1,3 +1,5 @@
+#ifndef SHADEWORK_H
+#define SHADEWORK_H
 /*
  *			S H A D E W O R K . H
  *  
@@ -49,3 +51,4 @@ struct shadework {
 };
 
 BU_EXTERN(void		pr_shadework, (CONST char *str, CONST struct shadework *swp));
+#endif

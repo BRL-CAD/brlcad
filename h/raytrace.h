@@ -2286,6 +2286,12 @@ BU_EXTERN(void rt_pr_cut, (CONST union cutter *cutp, int lvl) );
 BU_EXTERN(void rt_fr_cut, (struct rt_i *rtip, union cutter *cutp) );
 					/* regionid-driven color override */
 
+/* bool.c */
+extern void rt_rebuild_overlaps(struct partition	*PartHdp,
+				struct application	*ap,
+				int		rebuild_fastgen_plates_only);
+
+
 /* mater.c */
 BU_EXTERN(void rt_region_color_map, (struct region *regp) );
 					/* process ID_MATERIAL record */

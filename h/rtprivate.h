@@ -1,4 +1,3 @@
-
 /*	R T . H  --- header file for the "rt" program
  *
  *
@@ -6,27 +5,24 @@
  *	Things to support the "rt" program and the link to liboptical
  *
  */
-/* wray.c */
-extern void wray(register struct partition *pp,
-		 register struct application *ap,
-		 FILE *fp,
-		 const vect_t	inormal);
 
-extern void wraypts(vect_t	in,
-		    vect_t	inorm,
-		    vect_t	out,
-		    int		id,
-		    struct application *ap,
-		    FILE	*fp);
+/* ../liboptical */
+#include "shadefuncs.h"
+#include "shadework.h"
+extern void optical_shader_init(struct mfuncs	**headp);
 
-extern void wraypaint(vect_t start,
-		      vect_t norm,
-		      int paint, 
-		      struct application *ap,
-		      FILE *fp);
+/* do.c */
+extern void do_ae(double azim, double elev);
+extern int do_frame( int framenumber );
+extern void def_tree( register struct rt_i *rtip );
+extern int old_way( FILE *fp );
 
 /* shade.c */
-
+extern void
+shade_inputs(struct application		*ap, 
+	     const struct partition	*pp,
+	     struct shadework		*swp,
+	     int			want);
 
 /* opt.c */
 extern int get_args( int argc, char **argv );
@@ -61,11 +57,26 @@ extern void view_end();
 extern int view_init();
 
 #endif
-/* do.c */
-extern void do_ae(double azim, double elev);
-extern int do_frame( int framenumber );
-extern void def_tree( register struct rt_i *rtip );
-extern int old_way( FILE *fp );
+
+/* wray.c */
+extern void wray(register struct partition *pp,
+		 register struct application *ap,
+		 FILE *fp,
+		 const vect_t	inormal);
+
+extern void wraypts(vect_t	in,
+		    vect_t	inorm,
+		    vect_t	out,
+		    int		id,
+		    struct application *ap,
+		    FILE	*fp);
+
+extern void wraypaint(vect_t start,
+		      vect_t norm,
+		      int paint, 
+		      struct application *ap,
+		      FILE *fp);
+
 
 /* material.c */
 struct mfuncs *load_dynamic_shader(const char *material, const int mlen);

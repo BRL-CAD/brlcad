@@ -1,3 +1,5 @@
+#ifndef SHADEFUNCS 
+#define SHADEFUNCS
 /*
  *			S H A D E F U N C S . H
  *  
@@ -50,3 +52,4 @@ BU_EXTERN(int		mlib_setup, (struct mfuncs **headp,
 				struct region *rp,
 				struct rt_i *rtip));
 BU_EXTERN(void		mlib_free, (struct region *rp));
+#endif
