@@ -37,6 +37,7 @@ install:	cake
 		-if test -f $(BINDIR)/cake; then \
 			mv -f $(BINDIR)/cake $(BINDIR)/cake.bak; fi
 		mv cake $(BINDIR)/cake
+		ln $(BINDIR)/cake $(BINDIR)/fake
 
 $(OBJ):		$(HDR)
 $(GOBJ):	$(HDR)
