@@ -217,6 +217,12 @@ int	order;
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
 
+    if (tree -> rbt_nm_nodes <= 0)
+    {
+	rt_log("Error: Attempt to delete from tree with %d nodes\n",
+		tree -> rbt_nm_nodes);
+	exit (0);
+    }
     nm_orders = tree -> rbt_nm_orders;
     package = (rb_current(tree) -> rbn_package)[order];
 
@@ -232,6 +238,7 @@ int	order;
     for (order = 0; order < nm_orders; ++order)
 	_rb_delete(tree, node[order], order);
 
+    --(tree -> rbt_nm_nodes);
     rb_free_package(package);
     rt_free((char *) node, "node list");
 }

@@ -213,6 +213,7 @@ void	*data;
 	for (order = 0; order < nm_orders; ++order)
 	    result += _rb_insert(tree, order, node);
 
+    ++(tree -> rbt_nm_nodes);
     rb_current(tree) = node;
     return (result);
 }

@@ -43,6 +43,7 @@ typedef struct
     long	 	rbt_magic;	  /* Magic no. for integrity check */
     char		*rbt_description; /* Comment for diagnostics */
     int		 	rbt_nm_orders;	  /* Number of simultaneous orders */
+    int			rbt_nm_nodes;	  /* Number of nodes */
     int			(**rbt_order)();  /* Comparison functions */
     void		(*rbt_print)();	  /* Data pretty-print function */
     struct rb_node	**rbt_root;	  /* The actual trees */

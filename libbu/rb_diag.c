@@ -110,9 +110,10 @@ rb_tree	*tree;
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
 
     rt_log("-------- Red-black tree <%x> summary --------\n", tree);
-    rt_log("Description: '%s'\n", tree -> rbt_description);
-    rt_log("Current:     <%x>\n", tree -> rbt_current);
-    rt_log("Empty node:  <%x>\n", tree -> rbt_empty_node);
+    rt_log("Description:      '%s'\n", tree -> rbt_description);
+    rt_log("Current:          <%x>\n", tree -> rbt_current);
+    rt_log("Empty node:       <%x>\n", tree -> rbt_empty_node);
+    rt_log("Size (in nodes):  <%x>\n", tree -> rbt_nm_nodes);
     if (tree -> rbt_nm_orders <= 0)
 	fputs("No orders\n", stderr);
     else
