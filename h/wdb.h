@@ -34,7 +34,7 @@
  *  It is vital that the argument list given for "args" be enclosed
  *  in parens.
  */
-#if __STDC__
+#if __STDC__ || USE_PROTOTYPES
 #	define	WDB_EXTERN(type_and_name,args)	extern type_and_name args
 #	define	WDB_ARGS(args)			args
 #else
@@ -101,11 +101,11 @@ WDB_EXTERN(int mk_arbn, (FILE *fp, char *name, int neqn, plane_t eqn[]) );
 WDB_EXTERN(int mk_ars, (FILE *fp, char *name, int ncurves, int pts_per_curve,
 			fastf_t	*curves[]) );
 WDB_EXTERN(int mk_bsolid, (FILE *fp, char *name, int nsurf, double res) );
-#if defined(__STDC__) && defined(B_SPLINE_DEFINED)
+#if defined(B_SPLINE_DEFINED)
 WDB_EXTERN(int mk_bsurf, (FILE *fp, struct b_spline *bp) );
-#else /* !__STDC__ || !B_SPLINE_DEFINED */
+#else /* !B_SPLINE_DEFINED */
 WDB_EXTERN(int mk_bsurf, (FILE *fp, genptr_t bp) );
-#endif /* __STDC__ && B_SPLINE_DEFINED */
+#endif /* B_SPLINE_DEFINED */
 WDB_EXTERN(int mk_particle, (FILE *fp, char *name, point_t vertex,
 			vect_t height, double vradius, double hradius) );
 WDB_EXTERN(int mk_pipe, (FILE *fp, char *name, struct wdb_pipeseg *headp) );
@@ -147,7 +147,7 @@ WDB_EXTERN(int mk_lrcomb, (FILE *fp, char *name, struct wmember *headp,
  */
 WDB_EXTERN(int mk_conversion, (char *units_string) );
 WDB_EXTERN(int mk_set_conversion, (double val) );
-WDB_EXTERN(double mk_cvt_factor, (char *units_string) );
+#define mk_cvt_factor(_str)     rt_units_conversion(_str)
 
 /*
  * This internal variable should not be directly modified;
