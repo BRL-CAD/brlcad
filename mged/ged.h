@@ -318,6 +318,7 @@ struct mged_variables {
 	int	predictor;
 	double	predictor_advance;
 	double	predictor_length;
+	double	perspective;
 };
 
 extern struct mged_variables mged_variables;

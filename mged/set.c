@@ -32,7 +32,8 @@ struct mged_variables mged_variables = {
 /* faceplate */		1,
 /* predictor */		0,
 /* predictor_advance */	1.0,
-/* predictor_length */	2.0
+/* predictor_length */	2.0,
+/* perspective */	-1
 };
 
 /*
@@ -53,6 +54,7 @@ struct structparse mged_vparse[] = {
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
 	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
+	{"%f",	1, "perspective",	MV_O(perspective),	refresh_hook },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
