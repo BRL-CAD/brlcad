@@ -791,9 +791,6 @@ double		local2mm;
 			rt_plong( d->magic, DISK_MODEL_MAGIC );
 			INDEX( d, m, ma_p );
 			INDEXL( d, m, r_hd );
-rt_log("model ma_p index=%d\n", rt_glong(d->ma_p) );
-rt_log("model r_hd.forw=%d\n", rt_glong(d->r_hd.forw) );
-rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 		}
 		return;
 	case NMG_KIND_MODEL_A:
@@ -868,6 +865,9 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 			struct disk_faceuse	*d;
 			d = &((struct disk_faceuse *)op)[oindex];
 			NMG_CK_FACEUSE(fu);
+			NMG_CK_FACEUSE(fu->fumate_p);
+			NMG_CK_FACE(fu->f_p);
+			if( fu->f_p != fu->fumate_p->f_p )  rt_log("faceuse export, differing faces\n");
 			rt_plong( d->magic, DISK_FACEUSE_MAGIC );
 			INDEXL( d, fu, l );
 			INDEX( d, fu, s_p );
@@ -876,6 +876,8 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 			INDEX( d, fu, f_p );
 			INDEX( d, fu, fua_p );
 			INDEXL( d, fu, lu_hd );
+rt_log("fu disk_index=%d, fumate=%d, f=%d\n", ecnt[index].new_subscript,
+ rt_glong(d->fumate_p), rt_glong(d->f_p) );
 		}
 		return;
 	case NMG_KIND_FACEUSE_A:
@@ -1019,7 +1021,7 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 			d = &((struct disk_vertexuse *)op)[oindex];
 			NMG_CK_VERTEXUSE(vu);
 			rt_plong( d->magic, DISK_VERTEXUSE_MAGIC );
-		/***	INDEXL( d, vu, l ); ***/	/* tough */
+			INDEXL( d, vu, l );
 			rt_plong( d->up, rt_nmg_reindex(vu->up.magic_p, ecnt) );
 			INDEX( d, vu, v_p );
 			INDEX( d, vu, vua_p );
@@ -1079,9 +1081,6 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
  *  but here take from "o" (outboard) variable and put in "i" (internal).
  */
 #define INDEX(o,i,ty,elem)	(i)->elem = (struct ty *)ptrs[rt_glong((o)->elem)]
-#define INDEXL(oo,ii,elem)	{ \
-	(ii)->elem.forw = (struct rt_list *)ptrs[rt_glong((oo)->elem.forw)]; \
-	(ii)->elem.back = (struct rt_list *)ptrs[rt_glong((oo)->elem.back)]; }
 #define INDEXL_HD(oo,ii,elem,hd)	{ \
 	register int	sub; \
 	if( (sub = rt_glong((oo)->elem.forw)) < 0 ) \
@@ -1102,7 +1101,6 @@ mat_t		mat;
 {
 	int	iindex;		/* index in ip */
 
-/**	iindex = ecnt[index].per_struct_index; **/
 	iindex = 0;
 	switch(ecnt[index].kind)  {
 	case NMG_KIND_MODEL:
@@ -1114,9 +1112,6 @@ mat_t		mat;
 			RT_CK_DISKMAGIC( d->magic, DISK_MODEL_MAGIC );
 			INDEX( d, m, model_a, ma_p );
 			INDEXL_HD( d, m, r_hd, m->r_hd );
-rt_log("model ma_p index=%d\n", rt_glong(d->ma_p) );
-rt_log("model r_hd.forw=%d\n", rt_glong(d->r_hd.forw) );
-rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 		}
 		return;
 	case NMG_KIND_MODEL_A:
@@ -1200,6 +1195,9 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 			INDEXL_HD( d, fu, lu_hd, fu->lu_hd );
 			INDEXL_HD( d, fu, l, fu->s_p->fu_hd ); /* after fu->s_p */
 			NMG_CK_FACE(fu->f_p);
+			NMG_CK_FACEUSE(fu->fumate_p);
+rt_log("fu index=%d, fumate=%d, f=%d\n",
+ fu->index, fu->fumate_p->index, fu->f_p->index );
 		}
 		return;
 	case NMG_KIND_FACEUSE_A:
@@ -1324,6 +1322,8 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 				INDEXL_HD( d, eu, l, eu->up.s_p->eu_hd );
 			} else rt_log("bad edgeuse up, index=%d, kind=%d\n", up_index, up_kind);
 			NMG_CK_EDGE(eu->e_p);
+			NMG_CK_EDGEUSE(eu->eumate_p);
+			NMG_CK_EDGEUSE(eu->radial_p);
 			NMG_CK_VERTEXUSE(eu->vu_p);
 		}
 		return;
@@ -1364,7 +1364,7 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 			d = &((struct disk_vertexuse *)ip)[iindex];
 			NMG_CK_VERTEXUSE(vu);
 			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_MAGIC );
-		/***	INDEXL( d, vu, l ); ***/	/* tough */
+			INDEXL_HD( d, vu, l, vu->l );
 			vu->up.magic_p = (long *)ptrs[rt_glong(d->up)];
 			INDEX( d, vu, vertex, v_p );
 			INDEX( d, vu, vertexuse_a, vua_p );
@@ -1484,24 +1484,24 @@ register mat_t		mat;
 	subscript = 1;
 	cp = (char *)(rp+1);	/* start at first granule in */
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		rt_log("%d of kind %s (%d)\n",
-			kind_counts[kind], rt_nmg_kind_names[kind], kind);
+		rt_log("%d  %s\n",
+			kind_counts[kind], rt_nmg_kind_names[kind] );
 		if( kind_counts[kind] <= 0 )  {
 			disk_arrays[kind] = GENPTR_NULL;
 			continue;
 		}
 		disk_arrays[kind] = (genptr_t)cp;
-rt_log("  magic=%4.4s\n", cp );
 		/* Mark off all the entries of this kind */
 		for( j = 0; j < kind_counts[kind]; j++ )  {
-rt_log("   index=%d, kind=%s (%d)\n", subscript, rt_nmg_kind_names[kind], kind );
 			ecnt[subscript].kind = kind;
 			ecnt[subscript].per_struct_index = j+1;
-			ecnt[subscript].new_subscript = 0;
+			ecnt[subscript].new_subscript = 0; /* unused on import */
 			switch( kind )  {
 			case NMG_KIND_MODEL:
 				if( m )  rt_bomb("multiple models?");
 				m = nmg_mm();
+				/* Keep disk indices & new indices equal... */
+				m->maxindex++;
 				ptrs[subscript] = (long *)m;
 				break;
 			case NMG_KIND_MODEL_A:
@@ -1677,6 +1677,10 @@ rt_log("   index=%d, kind=%s (%d)\n", subscript, rt_nmg_kind_names[kind], kind )
 				ptrs[subscript] = (long *)0;
 				break;
 			}
+rt_log("   disk_index=%d, kind=%s, ptr=x%x, final_index=%d\n",
+subscript, rt_nmg_kind_names[kind],
+ptrs[subscript], rt_nmg_index_of_struct(ptrs[subscript]) );
+			ecnt[subscript].new_subscript = rt_nmg_index_of_struct(ptrs[subscript]);
 			subscript++;
 		}
 		cp += kind_counts[kind] * rt_disk_sizes[kind];
