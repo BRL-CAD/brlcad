@@ -17,6 +17,7 @@
 #define PRODUCTS	libitcl3.0.a& itclsh& libitk3.0.a& itkwish&
 #define	AFTER_MAKE	/**/
 #else
+/* Shared library case */
 #define ITCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/ --enable-shared --quiet \
 			 --cache-file cache.MTYPE \
 			 --exec-prefix=BASEDIR --prefix=BASEDIR \
@@ -46,8 +47,9 @@ Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYP
 		\A\F\T\E\R\_\M\A\K\E=\"AFTER_MAKE\"; \
 		\R\A\N\L\I\B=\"RANLIB\"; \
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
-		\B\U\I\L\D\_\L\I\B\R\A\R\Y=\"BUILD_LIBRARY\"; \
-		 export INSTALL \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \B\U\I\L\D\_\L\I\B\R\A\R\Y \A\F\T\E\R\_\M\A\K\E; \
+		\S\H\L\I\B\_\L\D=\"BUILD_LIBRARY\"; \
+		 export INSTALL \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S; \
+		 export \S\H\L\I\B\_\L\D \A\F\T\E\R\_\M\A\K\E; \
 		 echo ../SRCDIR/configure ITCL_OPTS; \
 		 ../SRCDIR/configure ITCL_OPTS; \
 		 echo ../SRCDIR/fix_makefile.sh '>' Makefile.MTYPE; \
