@@ -13,8 +13,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -30,6 +28,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
@@ -37,6 +36,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mat_db.h"
 #include "./tree.h"
 #include "./screen.h"
+
+
 #define TWO_PI		6.28318530717958647692528676655900576839433879875022
 #define RI_AIR		1.0  /* refractive index of air */
 
@@ -189,11 +190,22 @@ STATIC fastf_t myIpow(register fastf_t d, register int n);
 STATIC fastf_t correct_Lgt(register struct application *ap, register struct partition *pp, register Lgt_Source *lgt_entry);
 
 /* "Hit" application routines to pass to "rt_shootray()". */
-STATIC int f_Model(register struct application *ap, struct partition *pt_headp), f_Probe(register struct application *ap, struct partition *pt_headp), f_Shadow(register struct application *ap, struct partition *pt_headp), f_HL_Hit(register struct application *ap, struct partition *pt_headp), f_Region(register struct application *ap, struct partition *pt_headp);
+STATIC int f_Model(register struct application *ap, struct partition *pt_headp, struct seg *unused);
+STATIC int f_Probe(register struct application *ap, struct partition *pt_headp, struct seg *unused);
+STATIC int f_Shadow(register struct application *ap, struct partition *pt_headp, struct seg *unused);
+STATIC int f_HL_Hit(register struct application *ap, struct partition *pt_headp, struct seg *unused);
+STATIC int f_Region(register struct application *ap, struct partition *pt_headp, struct seg *unused);
+
 /* "Miss" application routines to pass to "rt_shootray()". */
-STATIC int f_Backgr(register struct application *ap), f_Error(register struct application *ap), f_Lit(register struct application *ap), f_HL_Miss(register struct application *ap), f_R_Miss(register struct application *ap);
+STATIC int f_Backgr(register struct application *ap);
+STATIC int f_Error(register struct application *ap);
+STATIC int f_Lit(register struct application *ap);
+STATIC int f_HL_Miss(register struct application *ap);
+STATIC int f_R_Miss(register struct application *ap);
+
 /* "Overlap" application routines to pass to "rt_shootray()". */
-STATIC int f_Overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2), f_NulOverlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2);
+STATIC int f_Overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2);
+STATIC int f_NulOverlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2);
 
 STATIC int refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri_2, register fastf_t *v_2);
 
@@ -519,7 +531,7 @@ f_R_Miss(register struct application *ap)
 	}
 
 STATIC int
-f_Region(register struct application *ap, struct partition *pt_headp)
+f_Region(register struct application *ap, struct partition *pt_headp, struct seg *unused)
 {	register struct partition *pp;
 		register struct region *regp;
 		register struct soltab *stp;
@@ -591,7 +603,7 @@ f_HL_Miss(register struct application *ap)
 	}
 
 STATIC int
-f_HL_Hit(register struct application *ap, struct partition *pt_headp)
+f_HL_Hit(register struct application *ap, struct partition *pt_headp, struct seg *unused)
 {	register struct partition *pp;
 		register struct soltab *stp;
 		register struct hit *ihitp;
@@ -710,14 +722,14 @@ getMaMID(struct mater_info *map, int *id)
 
 /*
 	int f_Model( register struct application *ap,
-			struct partition *pt_headp )
+			struct partition *pt_headp, struct seg *unused )
 
 	'Hit' application specific routine for 'rt_shootray()' from
 	observer or a bounced ray.
 
  */
 STATIC int
-f_Model(register struct application *ap, struct partition *pt_headp)
+f_Model(register struct application *ap, struct partition *pt_headp, struct seg *unused)
 {	register struct partition *pp;
 		register Mat_Db_Entry *entry;
 		register struct soltab *stp;
@@ -1133,7 +1145,7 @@ glass_Refract(register struct application *ap, register struct partition *pp, re
 			 */
 			DEQUEUE_PT( pp );
 			FREE_PT( pp, ap->a_resource );
-			f_Model( &ap_hit, pt_headp );
+			f_Model( &ap_hit, pt_headp, NULL );
 			VMOVE( ap->a_color, ap_hit.a_color );
 			if( RT_G_DEBUG & DEBUG_REFRACT )
 				{
@@ -1343,10 +1355,10 @@ f_Lit(register struct application *ap)
 
 /*
 	int f_Probe( register struct application *ap,
-			struct partition *pt_headp )
+			struct partition *pt_headp, struct seg *unused )
 */
 STATIC int
-f_Probe(register struct application *ap, struct partition *pt_headp)
+f_Probe(register struct application *ap, struct partition *pt_headp, struct seg *unused)
 {	register struct partition *pp;
 		register struct hit *hitp;
 		register struct soltab *stp;
@@ -1438,14 +1450,14 @@ refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri
 
 /*
 	int f_Shadow( register struct application *ap,
-			struct partition *pt_headp )
+			struct partition *pt_headp, struct seg * unused )
 
 	'Hit' application specific routine for 'rt_shootray()' to
 	light source for shadowing. Returns attenuated light intensity in
 	"ap->a_diverge".
  */
 STATIC int
-f_Shadow(register struct application *ap, struct partition *pt_headp)
+f_Shadow(register struct application *ap, struct partition *pt_headp, struct seg * unused)
 {	register struct partition *pp;
 		register Mat_Db_Entry *entry;
 	Get_Partition( ap, pp, pt_headp, "f_Shadow" );
