@@ -2,7 +2,15 @@
  *			D M . H
  *
  * Header file for communication with the display manager.
+ *  
+ * Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *
+ *  $Header$
  */
+
 struct device_values  {
 	int	dv_buttonpress;		/* Number of button pressed when !0 */
 	float	dv_xjoy;		/* Joystick,  -1.0 <= x <= +1.0 */
@@ -21,28 +29,50 @@ struct device_values  {
 	int	dv_distadc;		/* Tick distance */
 	int	dv_flagadc;		/* A/D cursor "changed" flag */
 };
+extern struct device_values dm_values;
 
+/* Interface to a specific Display Manager */
+struct dm {
+	void	(*dmr_open)();
+	void	(*dmr_close)();
+	void	(*dmr_restart)();
+	int	(*dmr_input)();
+	void	(*dmr_prolog)();
+	void	(*dmr_epilog)();
+	void	(*dmr_normal)();
+	void	(*dmr_newrot)();
+	void	(*dmr_update)();
+	void	(*dmr_puts)();
+	void	(*dmr_2d_line)();
+	void	(*dmr_light)();
+	int	(*dmr_object)();	/* Invoke an object subroutine */
+	unsigned (*dmr_cvtvecs)();	/* returns size requirement of subr */
+	unsigned (*dmr_load)();		/* DMA the subr to device */
+	float	dmr_bound;		/* zoom-in limit */
+	char	*dmr_name;		/* short name of device */
+	char	*dmr_lname;		/* long name of device */
+};
+extern struct dm *dmp;			/* ptr to current display mgr */
 
-/* Display manager routines */
-extern void	dm_open(), dm_init(), dm_restart();
-extern void	dm_prolog(), dm_epilog(), dm_call();
-extern void	dm_normal(), dm_newrot(), dm_update();
-extern void	dm_finish(), dm_puts(), dm_2d_line();
-extern void	dm_light();
-extern float	dm_bound;		/* zoom-in limit */
-extern int	dm_object();		/* Set up for an object */
+/* Format of a vector list */
+struct veclist {
+	float	vl_pnt[3];	/* X, Y, Z of point in Model space */
+	char	vl_pen;		/* PEN_DOWN==draw, PEN_UP==move */
+};
+extern struct veclist *vlp;	/* pointer to first free veclist element */
+extern struct veclist *vlend;	/* pointer to first invalid veclist element */
+#define VLIST_NULL	((struct veclist *)0)
 
-/* Global solid center & sizing information */
-extern float	dl_xcent, dl_ycent, dl_zcent;
-extern float	dl_scale;
+/*
+ * Record an absolute vector and "pen" position in veclist array.
+ */
+#define DM_GOTO(p,pen)	if(vlp>=vlend) \
+	printf("%s/%d:  veclist overrun\n", __FILE__, __LINE__); \
+	else { VMOVE( vlp->vl_pnt, p ); (vlp++)->vl_pen = pen; }
 
-/* Functions to generate displaylist */
-extern void dl_preamble();
-extern void dl_epilogue();
-extern unsigned dl_load();
-extern unsigned dl_size();
-extern void	dl_goto();	/* Produce optimized absolute vectors */
-
+/* Virtual Pen settings */
+#define PEN_UP		0
+#define PEN_DOWN	1
 
 /*
  * Definitions for dealing with the buttons and lights.
