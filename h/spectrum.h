@@ -12,6 +12,7 @@
  *  any measured "curve" or "function" or "table" with one independent
  *  variable and scalar dependent variable(s).
  *  It is unclear how to properly generalize the names....  Ahh, packaging.
+ *  Perhaps the "table" package?
  *
  *  The context is kept in an 'rt_spectrum' structure, and
  *  the data for one particular sample are kept in an 'rt_spectral_sample'
@@ -139,8 +140,18 @@ RT_EXTERN( void			rt_spect_make_CIE_XYZ, (
 					struct rt_spect_sample **y,
 					struct rt_spect_sample **z,
 					CONST struct rt_spectrum *spect));
+RT_EXTERN( fastf_t		rt_spect_evaluate, (CONST struct rt_spect_sample *samp,
+					double wl));
+RT_EXTERN( struct rt_spect_sample *rt_spect_resample, (
+					CONST struct rt_spectrum *newspect,
+					CONST struct rt_spect_sample *oldsamp));
+RT_EXTERN( int			rt_write_spectrum, (CONST char *filename,
+					CONST struct rt_spectrum *spect));
+RT_EXTERN( struct rt_spectrum	*rt_read_spectrum, (CONST char *filename));
 RT_EXTERN( int			rt_write_spect_sample, (CONST char *filename,
 					CONST struct rt_spect_sample *ss));
+RT_EXTERN( struct rt_spect_sample *rt_read_spectrum_and_samples, (
+					CONST char *filename));
 RT_EXTERN( void			rt_spect_black_body, (struct rt_spect_sample *ss,
 					double temp, unsigned int n));
 RT_EXTERN( void			rt_spect_black_body_fast, (
@@ -149,3 +160,5 @@ RT_EXTERN( void			rt_spect_black_body_fast, (
 RT_EXTERN( struct rt_spect_sample *rt_get_spect_sample_array, (
 					CONST struct rt_spectrum *spect,
 					int num));
+RT_EXTERN( void			rt_spect_copy, (struct rt_spect_sample *out,
+					CONST struct rt_spect_sample *in));
