@@ -124,22 +124,16 @@ test canvPs-3.2 {test ps generation with an embedded window not mapped} {} {
     file exists bar.ps
 } 1
 
+test canvPs-4.1 {test ps generation with single-point uncolored poly, bug 734498} {} {
+    destroy .c
+    pack [canvas .c]
+    .c create poly 10 20 10 20
+    catch {.c postscript}
+} 0
+
 # cleanup
 removeFile foo.ps
 removeFile bar.ps
 deleteWindows
 ::tcltest::cleanupTests
 return
-
-
-
-
-
-
-
-
-
-
-
-
-

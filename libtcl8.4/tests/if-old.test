@@ -45,22 +45,22 @@ test if-old-1.5 {taking proper branch} {
     if 0 {set a 1} else {}
     set a
 } {}
-test if-old-1.5 {taking proper branch} {
+test if-old-1.6 {taking proper branch} {
     set a {}
     if 0 {set a 1} elseif 1 {set a 2} elseif 1 {set a 3} else {set a 4}
     set a
 } {2}
-test if-old-1.6 {taking proper branch} {
+test if-old-1.7 {taking proper branch} {
     set a {}
     if 0 {set a 1} elseif 0 {set a 2} elseif 1 {set a 3} else {set a 4}
     set a
 } {3}
-test if-old-1.7 {taking proper branch} {
+test if-old-1.8 {taking proper branch} {
     set a {}
     if 0 {set a 1} elseif 0 {set a 2} elseif 0 {set a 3} else {set a 4}
     set a
 } {4}
-test if-old-1.8 {taking proper branch, multiline test expr} {
+test if-old-1.9 {taking proper branch, multiline test expr} {
     set a {}
     if {($tcl_platform(platform) != "foobar1") && \
 	($tcl_platform(platform) != "foobar2")} {set a 3} else {set a 4}
@@ -162,15 +162,3 @@ test if-old-4.11 {error conditions} {
 # cleanup
 ::tcltest::cleanupTests
 return
-
-
-
-
-
-
-
-
-
-
-
-

@@ -496,7 +496,9 @@ MenuCmd(clientData, interp, objc, objv)
     }
 
     /*
-     * Initialize the data structure for the menu.
+     * Initialize the data structure for the menu.  Note that the
+     * menuPtr is eventually freed in 'TkMenuEventProc' in tkMenuDraw.c,
+     * when Tcl_EventuallyFree is called.
      */
 
     menuPtr = (TkMenu *) ckalloc(sizeof(TkMenu));
@@ -1186,7 +1188,9 @@ DestroyMenuInstance(menuPtr)
     TkpDestroyMenu(menuPtr);
     cascadePtr = menuPtr->menuRefPtr->parentEntryPtr;
     menuPtr->menuRefPtr->menuPtr = NULL;
-    TkFreeMenuReferences(menuPtr->menuRefPtr);
+    if (TkFreeMenuReferences(menuPtr->menuRefPtr)) {
+	menuPtr->menuRefPtr = NULL;
+    }
 
     for (; cascadePtr != NULL; cascadePtr = nextCascadePtr) {
     	nextCascadePtr = cascadePtr->nextCascadePtr;
@@ -1252,6 +1256,11 @@ DestroyMenuInstance(menuPtr)
     TkMenuFreeDrawOptions(menuPtr);
     Tk_FreeConfigOptions((char *) menuPtr, 
 	    menuPtr->optionTablesPtr->menuOptionTable, menuPtr->tkwin);
+    if (menuPtr->tkwin != NULL) {
+	Tk_Window tkwin = menuPtr->tkwin;
+	menuPtr->tkwin = NULL;
+	Tk_DestroyWindow(tkwin);
+    }
 }
 
 /*
@@ -1285,6 +1294,8 @@ TkDestroyMenu(menuPtr)
     	return;
     }
 
+    Tcl_Preserve(menuPtr);
+    
     /*
      * Now destroy all non-tearoff instances of this menu if this is a 
      * parent menu. Is this loop safe enough? Are there going to be
@@ -1292,30 +1303,38 @@ TkDestroyMenu(menuPtr)
      * we have to do a slightly more complex scheme.
      */
 
+    menuPtr->menuFlags |= MENU_DELETION_PENDING;
+    if (menuPtr->menuRefPtr != NULL) {
+	/*
+	 * If any toplevel widgets have this menu as their menubar,
+	 * the geometry of the window may have to be recalculated.
+	 */
+	topLevelListPtr = menuPtr->menuRefPtr->topLevelListPtr;
+	while (topLevelListPtr != NULL) {
+	    nextTopLevelPtr = topLevelListPtr->nextPtr;
+	    TkpSetWindowMenuBar(topLevelListPtr->tkwin, NULL);
+	    topLevelListPtr = nextTopLevelPtr;
+	}
+    }
     if (menuPtr->masterMenuPtr == menuPtr) {
-    	menuPtr->menuFlags |= MENU_DELETION_PENDING;
 	while (menuPtr->nextInstancePtr != NULL) {
 	    menuInstancePtr = menuPtr->nextInstancePtr;
 	    menuPtr->nextInstancePtr = menuInstancePtr->nextInstancePtr;
     	    if (menuInstancePtr->tkwin != NULL) {
-	     	Tk_DestroyWindow(menuInstancePtr->tkwin);
+		Tk_Window tkwin = menuInstancePtr->tkwin;
+		/* 
+		 * Note: it may be desirable to NULL out the tkwin
+		 * field of menuInstancePtr here:
+		 * menuInstancePtr->tkwin = NULL;
+		 */
+	     	Tk_DestroyWindow(tkwin);
 	    }
 	}
-    	menuPtr->menuFlags &= ~MENU_DELETION_PENDING;
     }
 
-    /*
-     * If any toplevel widgets have this menu as their menubar,
-     * the geometry of the window may have to be recalculated.
-     */
-
-    topLevelListPtr = menuPtr->menuRefPtr->topLevelListPtr;
-    while (topLevelListPtr != NULL) {
-         nextTopLevelPtr = topLevelListPtr->nextPtr;
-         TkpSetWindowMenuBar(topLevelListPtr->tkwin, NULL);
-    	 topLevelListPtr = nextTopLevelPtr;
-    }
     DestroyMenuInstance(menuPtr);
+
+    Tcl_Release(menuPtr);
 }
 
 /*
@@ -1326,6 +1345,10 @@ TkDestroyMenu(menuPtr)
  *	This entry is removed from the list of entries that point to the
  *	cascade menu. This is done in preparation for changing the menu
  *	that this entry points to.
+ *	
+ *	At the end of this function, the menu entry no longer contains
+ *	a reference to a 'TkMenuReferences' structure, and therefore
+ *	no such structure contains a reference to this menu entry either.
  *
  * Results:
  *	None
@@ -1352,6 +1375,8 @@ UnhookCascadeEntry(mePtr)
     
     cascadeEntryPtr = menuRefPtr->parentEntryPtr;
     if (cascadeEntryPtr == NULL) {
+	TkFreeMenuReferences(menuRefPtr);
+	mePtr->childMenuRefPtr = NULL;
     	return;
     }
     
@@ -1370,6 +1395,10 @@ UnhookCascadeEntry(mePtr)
 	     */
 	
 	    menuRefPtr->parentEntryPtr = NULL;
+	    /* 
+	     * The original field is set to zero below, after it is
+	     * freed.
+	     */
 	    TkFreeMenuReferences(menuRefPtr);
     	} else {
     	    menuRefPtr->parentEntryPtr = cascadeEntryPtr->nextCascadePtr;
@@ -1388,6 +1417,7 @@ UnhookCascadeEntry(mePtr)
     	    	break;
     	    }
         }
+	mePtr->nextCascadePtr = NULL;
     }
     mePtr->childMenuRefPtr = NULL;
 }
@@ -1435,7 +1465,40 @@ DestroyMenuEntry(memPtr)
      */
 
     if (mePtr->type == CASCADE_ENTRY) {
-        UnhookCascadeEntry(mePtr);
+	if (menuPtr->masterMenuPtr != menuPtr) {
+	    TkMenu *destroyThis = NULL;
+	    /* 
+	     * The menu as a whole is a clone.  We must delete the clone
+	     * of the cascaded menu for the particular entry we are
+	     * destroying.
+	     */
+	    TkMenuReferences *menuRefPtr = mePtr->childMenuRefPtr;
+	    if (menuRefPtr != NULL) {
+		destroyThis = menuRefPtr->menuPtr;
+		/* 
+		 * But only if it is a clone.  What can happen is that
+		 * we are in the middle of deleting a menu and this
+		 * menu pointer has already been reset to point to the
+		 * original menu.  In that case we have nothing special
+		 * to do.
+		 */
+		if ((destroyThis != NULL) 
+		  && (destroyThis->masterMenuPtr == destroyThis)) {
+		    destroyThis = NULL;
+		}
+	    }
+	    UnhookCascadeEntry(mePtr);
+	    if (menuRefPtr != NULL) {
+	        if (menuRefPtr->menuPtr == destroyThis) {
+	            menuRefPtr->menuPtr = NULL;
+	        }
+		if (destroyThis != NULL) {
+		    TkDestroyMenu(destroyThis);
+		}
+	    }
+	} else {
+	    UnhookCascadeEntry(mePtr);
+	}
     }
     if (mePtr->image != NULL) {
 	Tk_FreeImage(mePtr->image);
@@ -2198,6 +2261,11 @@ MenuCmdDeletedProc(clientData)
      */
 
     if (tkwin != NULL) {
+	/* 
+	 * Note: it may be desirable to NULL out the tkwin
+	 * field of menuPtr here:
+	 * menuPtr->tkwin = NULL;
+	 */
 	Tk_DestroyWindow(tkwin);
     }
 }
@@ -2935,6 +3003,13 @@ RecursivelyDeleteMenu(menuPtr)
     int i;
     TkMenuEntry *mePtr;
     
+    /* 
+     * It is not 100% clear that this preserve/release pair is
+     * required, but we have added them for safety in this
+     * very complex code.
+     */
+    Tcl_Preserve(menuPtr);
+    
     for (i = 0; i < menuPtr->numEntries; i++) {
     	mePtr = menuPtr->entries[i];
     	if ((mePtr->type == CASCADE_ENTRY)
@@ -2943,7 +3018,11 @@ RecursivelyDeleteMenu(menuPtr)
     	    RecursivelyDeleteMenu(mePtr->childMenuRefPtr->menuPtr);
     	}
     }
-    Tk_DestroyWindow(menuPtr->tkwin);
+    if (menuPtr->tkwin != NULL) {
+	Tk_DestroyWindow(menuPtr->tkwin);
+    }
+    
+    Tcl_Release(menuPtr);
 }
 
 /*
@@ -3095,18 +3174,14 @@ TkSetWindowMenuBar(interp, tkwin, oldMenuName, menuName)
 	     * that reference this menu.
  	     */
  
-            for (topLevelListPtr = menuRefPtr->topLevelListPtr,
-		    prevTopLevelPtr = NULL;
-		    (topLevelListPtr != NULL) 
-            	    && (topLevelListPtr->tkwin != tkwin);
-		    prevTopLevelPtr = topLevelListPtr,
-		    topLevelListPtr = topLevelListPtr->nextPtr) {
-
-		/*
-		 * Empty loop body.
-		 */
-		
-            }
+	    topLevelListPtr = menuRefPtr->topLevelListPtr;
+	    prevTopLevelPtr = NULL;
+	    
+            while ((topLevelListPtr != NULL) 
+		   && (topLevelListPtr->tkwin != tkwin)) {
+		prevTopLevelPtr = topLevelListPtr;
+		topLevelListPtr = topLevelListPtr->nextPtr;
+	    }
 
 	    /*
 	     * Now we have found the toplevel reference that matches the
@@ -3377,7 +3452,8 @@ TkFindMenuReferencesObj(interp, objPtr)
  *	is cleared. It cleans up the ref if it is now empty.
  *
  * Results:
- *	None.
+ *	Returns 1 if the references structure was freed, and 0 
+ *	otherwise.
  *
  * Side effects:
  *	If this is the last field to be cleared, the menu ref is
@@ -3386,7 +3462,7 @@ TkFindMenuReferencesObj(interp, objPtr)
  *----------------------------------------------------------------------
  */
 
-void
+int
 TkFreeMenuReferences(menuRefPtr)
     TkMenuReferences *menuRefPtr;		/* The menu reference to
 						 * free */
@@ -3396,7 +3472,9 @@ TkFreeMenuReferences(menuRefPtr)
     	    && (menuRefPtr->topLevelListPtr == NULL)) {
     	Tcl_DeleteHashEntry(menuRefPtr->hashEntryPtr);
     	ckfree((char *) menuRefPtr);
+	return 1;
     }
+    return 0;
 }
 
 /*
@@ -3453,28 +3531,28 @@ DeleteMenuCloneEntries(menuPtr, first, last)
     }
 }
 
-/*
- *----------------------------------------------------------------------
- *
- * TkMenuCleanup --
- *
- *	Resets menusInitialized to allow Tk to be finalized and reused
- *	without the DLL being unloaded.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
+/* 
+ *---------------------------------------------------------------------- 
+ * 
+ * TkMenuCleanup -- 
+ * 
+ *      Resets menusInitialized to allow Tk to be finalized and reused 
+ *      without the DLL being unloaded. 
+ * 
+ * Results: 
+ *      None. 
+ * 
+ * Side effects: 
+ *      None. 
+ * 
+ *---------------------------------------------------------------------- 
+ */ 
 
-static void
-TkMenuCleanup(ClientData unused)
-{
-    menusInitialized = 0;
-}
+static void 
+TkMenuCleanup(ClientData unused) 
+{ 
+    menusInitialized = 0; 
+} 
 
 /*
  *----------------------------------------------------------------------
@@ -3498,17 +3576,17 @@ TkMenuInit()
 {
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
-
+    
     if (!menusInitialized) {
 	Tcl_MutexLock(&menuMutex);
 	if (!menusInitialized) {
 	    TkpMenuInit();
 	    menusInitialized = 1;
 	}
-	/*
-	 * Make sure we cleanup on finalize.
-	 */
-	Tcl_CreateExitHandler((Tcl_ExitProc *) TkMenuCleanup, NULL);
+	/* 
+	 * Make sure we cleanup on finalize. 
+	 */ 
+	Tcl_CreateExitHandler((Tcl_ExitProc *) TkMenuCleanup, NULL); 
 	Tcl_MutexUnlock(&menuMutex);
     }
     if (!tsdPtr->menusInitialized) {

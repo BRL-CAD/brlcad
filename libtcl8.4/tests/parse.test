@@ -731,7 +731,7 @@ test parse-15.57 {CommandComplete procedure} {
 test parse-15.58 {CommandComplete procedure, memory leaks} {
     info complete "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22"
 } 1
-test parse-15.58 {CommandComplete procedure} {
+test parse-15.59 {CommandComplete procedure} {
     # Test for Tcl Bug 684744
     info complete [encoding convertfrom identity "\x00;if 1 \{"]
 } 0

@@ -55,7 +55,7 @@ specifiers and the arguments:
 The first argument is a list of four numbers, but because of the count
 of 3 for the associated field specifier, only the first three will be
 used. The second argument is associated with the second field
-specifier. The resulting binary string contains the four numbers 10,
+specifier. The resulting binary string contains the four numbers 1.0,
 2.0, 3.0 and 0.1.
 .PP
 Each type-count pair moves an imaginary cursor through the binary
@@ -65,6 +65,12 @@ position 0 at the beginning of the data.  The type may be any one of
 the following characters:
 .IP \fBa\fR 5
 Stores a character string of length \fIcount\fR in the output string.
+Every character is taken as modulo 256 (i.e. the low byte of every
+character is used, and the high byte discarded) so when storing
+character strings not wholly expressible using the characters \\u0000-\\u00ff,
+the \fBencoding convertto\fR command should be used
+first if this truncation is not desired (i.e. if the characters are
+not part of the ISO 8859-1 character set.)
 If \fIarg\fR has fewer than \fIcount\fR bytes, then additional zero
 bytes are used to pad out the field.  If \fIarg\fR is longer than the
 specified length, the extra characters will be ignored.  If
@@ -213,7 +219,7 @@ will return a string equivalent to
 .RE
 .IP \fBw\fR 5
 .VS 8.4
-This form is the same as \fBw\fR except that it stores one or more
+This form is the same as \fBc\fR except that it stores one or more
 64-bit integers in little-endian byte order in the output string.  The
 low-order 64-bits of each integer are stored as an eight-byte value at
 the cursor position with the least significant byte stored first.  For
@@ -230,7 +236,7 @@ or more 64-bit integers in big-endian byte order in the output string.
 For example,
 .RS
 .CS
-\fBbinary format W 4785469626960341345\fR
+\fBbinary format Wc 4785469626960341345 110\fR
 .CE
 will return the string \fBBigEndian\fR
 .VE
@@ -383,7 +389,11 @@ the following characters:
 The data is a character string of length \fIcount\fR.  If \fIcount\fR
 is \fB*\fR, then all of the remaining bytes in \fIstring\fR will be
 scanned into the variable.  If \fIcount\fR is omitted, then one
-character will be scanned.  For example,
+character will be scanned.
+All characters scanned will be interpreted as being in the
+range \\u0000-\\u00ff so the \fBencoding convertfrom\fR command might be
+needed if the string is not an ISO 8859\-1 string.
+For example,
 .RS
 .CS
 \fBbinary scan abcde\\000fghi a6a10 var1 var2\fR

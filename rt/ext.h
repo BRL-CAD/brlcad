@@ -23,9 +23,12 @@
 extern int		use_air;		/* Handling of air in librt */
 /***** end of sharing with viewing model *****/
 
+/***** Variables declared in liboptical *****/
+extern vect_t		background;		/* background color */
+extern double		AmbientIntensity;	/* Ambient light intensity */
+
 /***** Variables declared in opt.c *****/
 extern char		*framebuffer;		/* desired framebuffer */
-extern double		AmbientIntensity;	/* Ambient light intensity */
 extern double		azimuth, elevation;
 extern int		lightmodel;		/* Select lighting model */
 extern int		rpt_overlap;		/* Warn about overlaps? */

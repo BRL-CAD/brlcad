@@ -143,8 +143,8 @@ TkpInit(interp)
      * FIXME: Should we come up with a more generic way of doing this?
      */
      
-    result = Tcl_MacOSXOpenBundleResources(interp, "com.tcltk.tklibrary", 
-                1, 1024, tkLibPath);
+    result = Tcl_MacOSXOpenVersionedBundleResources(interp, 
+    	    "com.tcltk.tklibrary", TK_VERSION, 1, 1024, tkLibPath);
      
     if (result != TCL_ERROR) {
         Tcl_SetVar(interp, "tk_library", tkLibPath, TCL_GLOBAL_ONLY);

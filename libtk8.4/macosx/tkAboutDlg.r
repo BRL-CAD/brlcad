@@ -13,16 +13,6 @@
  * RCS: @(#) $Id$
  */
 
-
-
-/*
- * New style DLOG templates have an extra field for the positioning
- * options for the Dialog Box.  We will not use this, for now, so we
- * turn it off here.
- */
- 
-#define DLOG_RezTemplateVersion 0
-
 /*
  * The folowing include and defines help construct
  * the version string for Tcl.
@@ -33,22 +23,6 @@
 #include <tcl.h>
 #include "tk.h"
 
-#if (TK_RELEASE_LEVEL == 0)
-#   define RELEASE_LEVEL alpha
-#elif (TK_RELEASE_LEVEL == 1)
-#   define RELEASE_LEVEL beta
-#elif (TK_RELEASE_LEVEL == 2)
-#   define RELEASE_LEVEL final
-#endif
-
-#if (TK_RELEASE_LEVEL == 2)
-#   define MINOR_VERSION (TK_MINOR_VERSION * 16) + TK_RELEASE_SERIAL
-#else
-#   define MINOR_VERSION TK_MINOR_VERSION * 16
-#endif
-
-#define RELEASE_CODE 0x00
-
 /*
  * The following two resources define the default "About Box" for Mac Tk.
  * This dialog appears if the "About Tk..." menu item is selected from
@@ -58,19 +32,29 @@
  * create and manage an About Dialog box.
  */
  
-data 'DLOG' (128, "Default About Box", purgeable) {
-	$"0055 006B 00F3 0196 0001 0100 0100 0000"
-	$"0000 0081 0000 280A"
+resource 'DLOG' (128, "About Box", purgeable) {
+    {60, 40, 300, 404},
+    movableDBoxProc,
+    visible,
+    noGoAway,
+    0x0,
+    128,
+    "About Tcl & Tk",
+    centerMainScreen
 };
 
-resource 'DITL' (129, "About Box", purgeable) {
+resource 'DITL' (128, "About Box", purgeable) {
     {
-	{128, 128, 148, 186}, Button	    {enabled, "Ok"},
-	{ 14, 108, 117, 298}, StaticText    {disabled, 
-	    "Wish - Windowing Shell" "\n" "based on Tcl " 
-	    TCL_PATCH_LEVEL " & Tk " TK_PATCH_LEVEL "\n\n" "Jim Ingham & Ray Johnson"
-	    "Scriptics Inc." "\n" "jingham@cygnus.com"},	    
-        { 11,  24, 111,  92}, Picture  {enabled, 128}
+	{200, 147, 220, 217}, Button	    {enabled, "Ok"},
+	{ 20, 108, 180, 344}, StaticText    {disabled, 
+	    "Tcl " TCL_PATCH_LEVEL " & Tk " TK_PATCH_LEVEL "\n\n" 
+	    "© 2003 Tcl Core Team." "\n\n" 
+	    "Jim Ingham & Ian Reid" "\n"
+	    "© 2001-2002 Apple Computer, Inc." "\n\n" 
+	    "Jim Ingham & Ray Johnson" "\n"
+	    "© 1998-2000 Scriptics Inc." "\n"
+	    "© 1996-1997 Sun Microsystems Inc."},	    
+	{ 20,  24, 120, 92}, Picture  {enabled, 128}
     }
 };
 

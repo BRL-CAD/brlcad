@@ -355,6 +355,10 @@ TkpDisplayButton(clientData)
 				 * move up and down as the relief changes. */
     int textXOffset = 0, textYOffset = 0; /* text offsets for use with
 					   * compound buttons and focus ring */
+    int imageWidth, imageHeight;
+    int imageXOffset = 0, imageYOffset = 0; /* image information that will
+					     * be used to restrict disabled
+					     * pixmap as well */
     DWORD *boxesPalette;
 
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
@@ -459,16 +463,13 @@ TkpDisplayButton(clientData)
 	Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
 	haveImage = 1;
     }
+    imageWidth  = width;
+    imageHeight = height;
 
     haveText = (butPtr->textWidth != 0 && butPtr->textHeight != 0);
-    
+
     if (butPtr->compound != COMPOUND_NONE && haveImage && haveText) {
-	int imageXOffset, imageYOffset, fullWidth,
-	    fullHeight;
-	imageXOffset = 0;
-	imageYOffset = 0;
-	fullWidth = 0;
-	fullHeight = 0;
+	int fullWidth = 0, fullHeight = 0;
 
 	switch ((enum compound) butPtr->compound) {
 	    case COMPOUND_TOP: 
@@ -523,28 +524,26 @@ TkpDisplayButton(clientData)
 	    x += offset;
 	    y += offset;
 	}
-
+	imageXOffset += x;
+	imageYOffset += y;
 	if (butPtr->image != NULL) {
 	    if ((butPtr->selectImage != NULL) && (butPtr->flags & SELECTED)) {
 		Tk_RedrawImage(butPtr->selectImage, 0, 0,
-			width, height, pixmap, x + imageXOffset,
-			y + imageYOffset);
+			width, height, pixmap, imageXOffset, imageYOffset);
 	    } else {
-		Tk_RedrawImage(butPtr->image, 0, 0, width,
-			height, pixmap, x + imageXOffset, y + imageYOffset);
+		Tk_RedrawImage(butPtr->image, 0, 0,
+			width, height, pixmap, imageXOffset, imageYOffset);
 	    }
 	} else {
-	    XSetClipOrigin(butPtr->display, gc, x + imageXOffset,
-		    y + imageYOffset);
+	    XSetClipOrigin(butPtr->display, gc, imageXOffset, imageYOffset);
 	    XCopyPlane(butPtr->display, butPtr->bitmap, pixmap, gc,
-		    0, 0, (unsigned int) width,
-		    (unsigned int) height, x + imageXOffset,
-		    y + imageYOffset, 1);
+		    0, 0, (unsigned int) width, (unsigned int) height,
+		    imageXOffset, imageYOffset, 1);
 	    XSetClipOrigin(butPtr->display, gc, 0, 0);
 	}
-	
-	Tk_DrawTextLayout(butPtr->display, pixmap, gc, butPtr->textLayout,
-		x + textXOffset, y + textYOffset, 0, -1);
+
+	Tk_DrawTextLayout(butPtr->display, pixmap, gc,
+		butPtr->textLayout, x + textXOffset, y + textYOffset, 0, -1);
 	Tk_UnderlineTextLayout(butPtr->display, pixmap, gc,
 		butPtr->textLayout, x + textXOffset, y + textYOffset,
 		butPtr->underline);
@@ -560,6 +559,8 @@ TkpDisplayButton(clientData)
 		x += offset;
 		y += offset;
 	    }
+	    imageXOffset += x;
+	    imageXOffset += y;
 	    if (butPtr->image != NULL) {
 		if ((butPtr->selectImage != NULL) &&
 			(butPtr->flags & SELECTED)) {
@@ -575,7 +576,6 @@ TkpDisplayButton(clientData)
 			(unsigned int) width, (unsigned int) height, x, y, 1);
 		XSetClipOrigin(butPtr->display, gc, 0, 0);
 	    }
-		        
 	} else {
 	    TkComputeAnchor(butPtr->anchor, tkwin, butPtr->padX, butPtr->padY,
 		    butPtr->indicatorSpace + butPtr->textWidth,
@@ -643,7 +643,7 @@ TkpDisplayButton(clientData)
 	    xSrc += tsdPtr->boxWidth*2;
 	}
 	ySrc = (butPtr->type == TYPE_RADIO_BUTTON) ? 0 : tsdPtr->boxHeight;
-		
+
 	/*
 	 * Update the palette in the boxes bitmap to reflect the current
 	 * button colors.  Note that this code relies on the layout of the
@@ -653,7 +653,13 @@ TkpDisplayButton(clientData)
 	 * be placed into the palette.
 	 */
 
-	boxesPalette[PAL_CHECK] = FlipColor(gc->foreground);
+	if ((butPtr->state == STATE_DISABLED)
+		&& (butPtr->disabledFg == NULL)) {
+	    boxesPalette[PAL_CHECK] = FlipColor(TkWinGetBorderPixels(tkwin,
+		    border, TK_3D_DARK_GC));
+	} else {
+	    boxesPalette[PAL_CHECK] = FlipColor(gc->foreground);
+	}
 	boxesPalette[PAL_TOP_OUTER] = FlipColor(TkWinGetBorderPixels(tkwin,
 		border, TK_3D_DARK_GC));
 	boxesPalette[PAL_TOP_INNER] = FlipColor(TkWinGetBorderPixels(tkwin,
@@ -686,23 +692,31 @@ TkpDisplayButton(clientData)
      * If the button is disabled with a stipple rather than a special
      * foreground color, generate the stippled effect.  If the widget
      * is selected and we use a different background color when selected,
-     * must temporarily modify the GC.
+     * must temporarily modify the GC so the stippling is the right color.
      */
 
     if ((butPtr->state == STATE_DISABLED)
 	    && ((butPtr->disabledFg == NULL) || (butPtr->image != NULL))) {
 	if ((butPtr->flags & SELECTED) && !butPtr->indicatorOn
 		&& (butPtr->selectBorder != NULL)) {
-	    XSetForeground(butPtr->display, butPtr->disabledGC,
+	    XSetForeground(butPtr->display, butPtr->stippleGC,
 		    Tk_3DBorderColor(butPtr->selectBorder)->pixel);
 	}
-	XFillRectangle(butPtr->display, pixmap, butPtr->disabledGC,
-		butPtr->inset, butPtr->inset,
-		(unsigned) (Tk_Width(tkwin) - 2*butPtr->inset),
-		(unsigned) (Tk_Height(tkwin) - 2*butPtr->inset));
+	/*
+	 * Stipple the whole button if no disabledFg was specified,
+	 * otherwise restrict stippling only to displayed image
+	 */
+	if (butPtr->disabledFg == NULL) {
+	    XFillRectangle(butPtr->display, pixmap, butPtr->stippleGC, 0, 0,
+		    (unsigned) Tk_Width(tkwin), (unsigned) Tk_Height(tkwin));
+	} else {
+	    XFillRectangle(butPtr->display, pixmap, butPtr->stippleGC,
+		    imageXOffset, imageYOffset,
+		    (unsigned) imageWidth, (unsigned) imageHeight);
+	}
 	if ((butPtr->flags & SELECTED) && !butPtr->indicatorOn
 		&& (butPtr->selectBorder != NULL)) {
-	    XSetForeground(butPtr->display, butPtr->disabledGC,
+	    XSetForeground(butPtr->display, butPtr->stippleGC,
 		    Tk_3DBorderColor(butPtr->normalBorder)->pixel);
 	}
     }

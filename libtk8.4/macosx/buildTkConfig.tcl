@@ -27,7 +27,7 @@ proc main {tclConfigFile tkConfigFileIn tkConfigFile} {
 		regsub -line -- "^TK_$var=.*\$" $tkConfig "TK_$var=$val" tkConfig
 	}
 	regsub -line -all -- {@[^@]+@} $tkConfig {} tkConfig
-	regsub -line -all -- {/[^/]+\.build/Tk.build} $tkConfig {} tkConfig
+	regsub -line -all -- {(/tk)/(?:Development|Deployment)} $tkConfig {\1} tkConfig
 	regsub -line {^(TK_DEFS=')} $tkConfig {\1 -DMAC_OSX_TK} tkConfig
 	
 	set out [open $tkConfigFile w]

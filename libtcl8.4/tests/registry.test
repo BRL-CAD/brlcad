@@ -13,7 +13,7 @@
 # RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+    package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
@@ -29,13 +29,9 @@ if {$tcl_platform(platform) == "windows"} {
 }
 
 # determine the current locale
-set old [testlocale all]
-if {![string compare [testlocale all ""] "English_United States.1252"]} {
-	# error messages from registry package are already localized.
-    set ::tcltest::testConstraints(english) 1
-}
-testlocale all $old
-unset old
+testConstraint english [expr {[llength [info commands testlocale]]
+	&& [string equal [testlocale all ""] "English_United States.1252"]
+}]
 
 set hostname [info hostname]
 

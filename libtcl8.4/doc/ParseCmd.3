@@ -38,7 +38,7 @@ CONST char *
 Tcl_Obj *
 \fBTcl_EvalTokens\fR(\fIinterp, tokenPtr, numTokens\fR)
 .sp
-Tcl_Obj *
+int
 \fBTcl_EvalTokensStandard\fR(\fIinterp, tokenPtr, numTokens\fR)
 .SH ARGUMENTS
 .AS Tcl_Interp *usedParsePtr
@@ -190,7 +190,8 @@ substitutions requested by the tokens and concatenates the
 resulting values. 
 The return value from \fBTcl_EvalTokensStandard\fR is a Tcl completion
 code with one of the values \fBTCL_OK\fR, \fBTCL_ERROR\fR,
-\fBTCL_RETURN\fR, \fBTCL_BREAK\fR, or \fBTCL_CONTINUE\fR.
+\fBTCL_RETURN\fR, \fBTCL_BREAK\fR, or \fBTCL_CONTINUE\fR, or possibly
+some other integer value originating in an extension.
 In addition, a result value or error message is left in \fIinterp\fR's
 result; it can be retrieved using \fBTcl_GetObjResult\fR.
 .PP
@@ -211,9 +212,9 @@ of \fBTcl_EvalTokens\fR is deprecated.
 return parse information in two data structures, Tcl_Parse and Tcl_Token:
 .CS
 typedef struct Tcl_Parse {
-	char *\fIcommentStart\fR;
+	CONST char *\fIcommentStart\fR;
 	int \fIcommentSize\fR;
-	char *\fIcommandStart\fR;
+	CONST char *\fIcommandStart\fR;
 	int \fIcommandSize\fR;
 	int \fInumWords\fR;
 	Tcl_Token *\fItokenPtr\fR;
@@ -223,7 +224,7 @@ typedef struct Tcl_Parse {
 
 typedef struct Tcl_Token {
     int \fItype\fR;
-    char *\fIstart\fR;
+    CONST char *\fIstart\fR;
     int \fIsize\fR;
     int \fInumComponents\fR;
 } Tcl_Token;

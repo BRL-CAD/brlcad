@@ -1852,13 +1852,16 @@ PolygonToPostscript(interp, canvas, itemPtr, prepass)
     }
     if (polyPtr->numPoints==2) {
 	char string[128];
+	if (color == NULL) {
+	    return TCL_OK;
+	}
+
 	sprintf(string, "%.15g %.15g translate %.15g %.15g",
 		polyPtr->coordPtr[0], Tk_CanvasPsY(canvas, polyPtr->coordPtr[1]),
 		width/2.0, width/2.0);
 	Tcl_AppendResult(interp, "matrix currentmatrix\n",string,
 		" scale 1 0 moveto 0 0 1 0 360 arc\nsetmatrix\n", (char *) NULL);
-	if (Tk_CanvasPsColor(interp, canvas, color)
-		!= TCL_OK) {
+	if (Tk_CanvasPsColor(interp, canvas, color) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 	if (stipple != None) {

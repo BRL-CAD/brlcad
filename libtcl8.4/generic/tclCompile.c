@@ -989,12 +989,19 @@ TclCompileScript(interp, script, numBytes, nested, envPtr)
 			        && (cmdPtr->compileProc != NULL)
 			        && !(cmdPtr->flags & CMD_HAS_EXEC_TRACES)
 			        && !(iPtr->flags & DONT_COMPILE_CMDS_INLINE)) {
+			    int savedNumCmds = envPtr->numCommands;
+
 			    code = (*(cmdPtr->compileProc))(interp, &parse,
 			            envPtr);
 			    if (code == TCL_OK) {
 				goto finishCommand;
 			    } else if (code == TCL_OUT_LINE_COMPILE) {
-				/* do nothing */
+				/*
+				 * Restore numCommands to its correct value, removing
+				 * any commands compiled before TCL_OUT_LINE_COMPILE
+				 * [Bug 705406]
+				 */
+				envPtr->numCommands = savedNumCmds;
 			    } else { /* an error */
 				/*
 				 * There was a compilation error, the last
@@ -1455,15 +1462,10 @@ TclCompileExprWords(interp, tokenPtr, numWords, envPtr)
 
     /*
      * If the expression is a single word that doesn't require
-     * substitutions, just compile it's string into inline instructions.
+     * substitutions, just compile its string into inline instructions.
      */
 
     if ((numWords == 1) && (tokenPtr->type == TCL_TOKEN_SIMPLE_WORD)) {
-	/*
-	 * Temporarily overwrite the character just after the end of the
-	 * string with a 0 byte.
-	 */
-
 	script = tokenPtr[1].start;
 	numBytes = tokenPtr[1].size;
 	code = TclCompileExpr(interp, script, numBytes, envPtr);
@@ -1724,6 +1726,14 @@ LogCompilationInfo(interp, script, command, length)
     if (length > 150) {
 	length = 150;
 	ellipsis = "...";
+    }
+    while ( (command[length] & 0xC0) == 0x80 ) {
+        /*
+	 * Back up truncation point so that we don't truncate in the
+	 * middle of a multi-byte character (in UTF-8)
+	 */
+	 length--;
+	 ellipsis = "...";
     }
     sprintf(buffer, "\n    while compiling\n\"%.*s%s\"",
 	    length, command, ellipsis);

@@ -140,10 +140,15 @@ If the creation of the new slave interpreter failed, \fBNULL\fR is returned.
 with the \fBTCL_SAFE_INTERPRETER\fR flag specified),
 \fB0\fR otherwise.
 .PP
-\fBTcl_MakeSafe\fR makes \fIinterp\fR ``safe'' by removing all
-non-core and core unsafe functionality. Note that if you call this after
-adding some extension to an interpreter, all traces of that extension will
-be removed from the interpreter.
+\fBTcl_MakeSafe\fR marks \fIinterp\fR as ``safe'', so that future
+calls to \fBTcl_IsSafe\fR will return 1.  It also removes all known
+potentially-unsafe core functionality (both commands and variables)
+from \fIinterp\fR.  However, it cannot know what parts of an extension
+or application are safe and does not make any attempt to remove those
+parts, so safety is not guaranteed after calling \fBTcl_MakeSafe\fR.
+Callers will want to take care with their use of \fBTcl_MakeSafe\fR
+to avoid false claims of safety.  For many situations, \fBTcl_CreateSlave\fR
+may be a better choice, since it creates interpreters in a known-safe state.
 .PP
 \fBTcl_GetSlave\fR returns a pointer to a slave interpreter of
 \fIinterp\fR. The slave interpreter is identified by \fIslaveName\fR.

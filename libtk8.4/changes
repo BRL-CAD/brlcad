@@ -5480,3 +5480,67 @@ of the event structure when that field is valid for that event type. (fellows)
 	*** POTENTIAL INCOMPATIBILITY ***
 
 --- Released 8.4.2, March 3, 2002 --- See ChangeLog for details ---
+
+2003-03-14 (bug fix)[701812] Stop buttons from being very wide when a
+tk_messageBox has a lot of content on Unix
+
+2003-03-18 (bug fix) Fixed crash in [winfo server] on Mac OS X
+
+2003-04-25 (bug fix)[477740] Correct compound button display in the
+disabled state
+
+2003-05-10 (bug fix)[734498] Correct crash when generating postscript for a
+single-line polygon (point) with no color.
+
+2003-05-13 (feature enhancement)[736774] Use new versioned bundle resource
+API to get tk runtime library for TK_VERSION on Mac OS X
+
+2003-05-14 (bug fix)[737790] Updated French message catalog
+
+2003-05-15 (bug fix)[557030] Use gb2312-raw as the alias for gb2312*
+charset fonts.  gb2312.enc was made to be euc-cn for Tcl because that is
+what is most often meant, but X really wants the original (-raw) gb2312
+encoding.
+
+--- Released 8.4.3, May 20, 2002 --- See ChangeLog for details ---
+
+2003-07-07 (bug fix)[749353] Improve deletion of images on exit.
+
+2003-07-15 (bug fix)[465324] Fixed complex bug in menu clone cleanup.
+
+2003-07-15 (bug fix)[755530] Don't test for XCloseIM bug when the XFree86
+version is newer than 4.0 since the layout of the XIM structure has
+changed.
+
+2003-07-16 (bug fix)[748277, 702230, 738143] Numerous panedwindow fixes.
+Ensure that the last pane shrinks instead of being clipped when resized
+below the reqsize.  Ensure that we can share GCs between a panedwindow and
+its sash proxy, even if the panedwindow is in a toplevel with a different
+visual.  Ensure that panedwindows get their geometry right even when their
+children don't know their initial size.  Use widget-specific Priv slots for
+pwAfterId and panecursor items to correctly handle cursor changes with
+adjacant panedwindows.
+
+2003-07-17 (bug fix)[697652] Make sure all options of a frame can be set to
+their default value.
+
+2003-07-17 (bug fix)[404421] Try harder to avoid zero-length mallocs() when
+creating images.
+
+2003-07-17 (feature enhancement) MacOSX build system rewrite.
+
+2003-07-18 (bug fix) Do not make XGetGeometry call that prevents overwidth
+lines drawing on unix as it requires a roundtrip call to the X server for
+every string drawn.  Hard-code max width to 32768 until a beter solution to
+get max width is made.
+
+2003-07-18 (bug fix)[742660] correct XCreateIC call for TK_XIM_SPOT usage
+on unix.
+
+2003-07-18 (bug fix)[420510] Provide consistency between unix and windows
+-cursor option.
+
+2003-07-19 (bug fix)[706765] Correctly handle the -sliderrelief option
+while moving the thumb.
+
+--- Released 8.4.4, July 22, 2003 --- See ChangeLog for details ---

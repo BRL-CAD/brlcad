@@ -332,7 +332,7 @@ fconfigure $fid -encoding binary
 puts -nonewline $fid $::iso2022encData
 close $fid
 
-test encoding-23.2 {iso2022-jp escape encoding test} {
+test encoding-23.1 {iso2022-jp escape encoding test} {
     string equal $::iso2022uniData $::iso2022uniData2
 } 1
 test encoding-23.2 {iso2022-jp escape encoding test} {

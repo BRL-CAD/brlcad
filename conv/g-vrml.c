@@ -1010,7 +1010,7 @@ genptr_t		client_data;
 		return( nmg_region_end(tsp, pathp, curtree, client_data) );
 	}
 
-	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
+	if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 		bu_log("\nConverted %d%% so far (%d of %d)\n",
 			regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
 		       regions_converted, regions_tried );
@@ -1045,7 +1045,7 @@ genptr_t		client_data;
 	BARRIER_CHECK;
 	BU_LIST_INIT(&vhead);
 
-	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
+	if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 		bu_log("\nConverted %d%% so far (%d of %d)\n",
 			regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
 		       regions_converted, regions_tried );

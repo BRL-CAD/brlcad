@@ -272,7 +272,9 @@ proc pkg_mkIndex {args} {
 		    set ::tcl::namespaces($::tcl::x) 1
 		}
 		foreach ::tcl::x [package names] {
-		    set ::tcl::packages($::tcl::x) 1
+		    if {[string compare [package provide $::tcl::x] ""]} {
+			set ::tcl::packages($::tcl::x) 1
+		    }
 		}
 		set ::tcl::origCmds [info commands]
 
@@ -366,7 +368,9 @@ proc pkg_mkIndex {args} {
 	    set cmds [lsort [$c eval array names ::tcl::newCmds]]
 	    set pkgs [$c eval set ::tcl::newPkgs]
 	    if {$doVerbose} {
-		tclLog "commands provided were $cmds"
+		if { !$::tcl::direct } {
+		    tclLog "commands provided were $cmds"
+		}
 		tclLog "packages provided were $pkgs"
 	    }
 	    if {[llength $pkgs] > 1} {

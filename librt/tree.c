@@ -518,6 +518,10 @@ genptr_t			client_data;
 		goto found_it;
 	}
 
+	if( rtip->rti_add_to_new_solids_list ) {
+		bu_ptbl_ins( &rtip->rti_new_solids, (long *)stp );
+	}
+
 	stp->st_id = ip->idb_type;
 	stp->st_meth = &rt_functab[ip->idb_type];
 	if( mat )  {

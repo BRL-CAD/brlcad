@@ -164,6 +164,8 @@ int main(int argc, char **argv)
 	elevation = 25.0;
 
 	AmbientIntensity=0.4;
+	background[0] = background[1] = 0.0;
+	background[2] = 1.0/255.0; /* slightly non-black */
 
 	/* Before option processing, get default number of processors */
 	npsw = bu_avail_cpus();		/* Use all that are present */
@@ -272,8 +274,8 @@ int main(int argc, char **argv)
 		bu_log("\n");
 	}
 
-	if( rt_g.debug )  {
-		bu_printb( "librt RT_G_DEBUG", rt_g.debug, DEBUG_FORMAT );
+	if( RT_G_DEBUG )  {
+		bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
 		bu_log("\n");
 	}
 	if( rdebug )  {

@@ -81,8 +81,9 @@ TkSelGetSelection(
         }
         if (length > 0) {
             Tcl_DString encodedText;
+            char *data;
 
-            buf = (char *)ckalloc(length+1);
+            buf = (char *) ckalloc(length + 1);
 	    buf[length] = 0;
 	    err = GetScrapFlavorData(scrapRef, 'TEXT', &length, buf);
             if (err != noErr) {
@@ -90,7 +91,17 @@ TkSelGetSelection(
                         " GetScrapFlavorData failed.", (char *) NULL);
                     return TCL_ERROR;
             }
+            
+            /* 
+             * Tcl expects '\n' not '\r' as the line break character.
+             */
 
+            for (data = buf; *data != '\0'; data++) {
+                if (*data == '\r') {
+                    *data = '\n';
+                }
+            }
+            
             Tcl_ExternalToUtfDString(TkMacOSXCarbonEncoding, buf, length, 
 				     &encodedText);
             result = (*proc)(clientData, interp,

@@ -323,12 +323,10 @@ Tcl_IncrObjCmd(dummy, interp, objc, objv)
     if (objc == 2) {
 	incrAmount = 1;
     } else {
-#ifdef TCL_WIDE_INT_IS_LONG
 	if (Tcl_GetLongFromObj(interp, objv[2], &incrAmount) != TCL_OK) {
 	    Tcl_AddErrorInfo(interp, "\n    (reading increment)");
 	    return TCL_ERROR;
 	}
-#else
 	/*
 	 * Need to be a bit cautious to ensure that [expr]-like rules
 	 * are enforced for interpretation of wide integers, despite
@@ -337,7 +335,7 @@ Tcl_IncrObjCmd(dummy, interp, objc, objv)
 	if (objv[2]->typePtr == &tclIntType) {
 	    incrAmount = objv[2]->internalRep.longValue;
 	} else if (objv[2]->typePtr == &tclWideIntType) {
-	    incrAmount = Tcl_WideAsLong(objv[2]->internalRep.wideValue);
+	    TclGetLongFromWide(incrAmount,objv[2]);
 	} else {
 	    Tcl_WideInt wide;
 
@@ -352,7 +350,6 @@ Tcl_IncrObjCmd(dummy, interp, objc, objv)
 		objv[2]->internalRep.longValue = incrAmount;
 	    }
 	}
-#endif
     }
     
     /*
@@ -3702,7 +3699,7 @@ SortCompare(objPtr1, objPtr2, infoPtr)
 		Tcl_GetObjResult(infoPtr->interp), &order) != TCL_OK) {
 	    Tcl_ResetResult(infoPtr->interp);
 	    Tcl_AppendToObj(Tcl_GetObjResult(infoPtr->interp),
-		    "-compare command returned non-numeric result", -1);
+		    "-compare command returned non-integer result", -1);
 	    infoPtr->resultCode = TCL_ERROR;
 	    return order;
 	}

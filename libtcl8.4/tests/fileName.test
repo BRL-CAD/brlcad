@@ -1333,6 +1333,13 @@ test filename-11.21 {Tcl_GlobCmd} {
     list [catch {lsort [glob -type d -path $globname *]} msg] $msg
 } [list 0 [lsort [list $globname]]]
 
+test filename-11.21.1 {Tcl_GlobCmd} {
+    close [open {[tcl].testremains} w]
+    set res [list [catch {lsort [glob -path {[tcl]} *]} msg] $msg]
+    file delete -force {[tcl].testremains}
+    set res
+} [list 0 {{[tcl].testremains}}]
+
 # Get rid of file/dir if it exists, since it will have
 # been left behind by a previous failed run.
 if {[file exists $horribleglobname]} {

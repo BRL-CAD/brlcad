@@ -142,11 +142,7 @@ wdb_dbopen( struct db_i *dbip, int mode )
  *  NON-PARALLEL because of rt_uniresource
  */
 int
-wdb_import(
-	struct rt_wdb *wdbp,
-	struct rt_db_internal *internp,
-	const char *name,
-	const mat_t mat )
+wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name, const mat_t mat )
 {
 	struct directory	*dp;
 

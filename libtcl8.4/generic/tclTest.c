@@ -2795,14 +2795,12 @@ TestMathFunc2(clientData, interp, args, resultPtr)
 
 	    resultPtr->type = TCL_DOUBLE;
 	    resultPtr->doubleValue = ((d0 > d1)? d0 : d1);
-#ifndef TCL_WIDE_INT_IS_LONG
 	} else if (args[1].type == TCL_WIDE_INT) {
 	    Tcl_WideInt w0 = Tcl_LongAsWide(i0);
 	    Tcl_WideInt w1 = args[1].wideValue;
 
 	    resultPtr->type = TCL_WIDE_INT;
 	    resultPtr->wideValue = ((w0 > w1)? w0 : w1);
-#endif
 	} else {
 	    Tcl_SetResult(interp, "T3: wrong type for arg 2", TCL_STATIC);
 	    result = TCL_ERROR;
@@ -2820,18 +2818,15 @@ TestMathFunc2(clientData, interp, args, resultPtr)
 
 	    resultPtr->type = TCL_DOUBLE;
 	    resultPtr->doubleValue = ((d0 > d1)? d0 : d1);
-#ifndef TCL_WIDE_INT_IS_LONG
 	} else if (args[1].type == TCL_WIDE_INT) {
 	    double d1 = Tcl_WideAsDouble(args[1].wideValue);
 
 	    resultPtr->type = TCL_DOUBLE;
 	    resultPtr->doubleValue = ((d0 > d1)? d0 : d1);
-#endif
 	} else {
 	    Tcl_SetResult(interp, "T3: wrong type for arg 2", TCL_STATIC);
 	    result = TCL_ERROR;
 	}
-#ifndef TCL_WIDE_INT_IS_LONG
     } else if (args[0].type == TCL_WIDE_INT) {
 	Tcl_WideInt w0 = args[0].wideValue;
 	
@@ -2855,7 +2850,6 @@ TestMathFunc2(clientData, interp, args, resultPtr)
 	    Tcl_SetResult(interp, "T3: wrong type for arg 2", TCL_STATIC);
 	    result = TCL_ERROR;
 	}
-#endif
     } else {
 	Tcl_SetResult(interp, "T3: wrong type for arg 1", TCL_STATIC);
 	result = TCL_ERROR;

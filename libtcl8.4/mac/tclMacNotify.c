@@ -48,6 +48,7 @@ extern pascal QHdrPtr GetEventQueue(void)
  */
  
 extern TclStubs tclStubs;
+extern Tcl_NotifierProcs tclOriginalNotifier;
 
 /*
  * The follwing static indicates whether this module has been initialized.
@@ -339,7 +340,7 @@ Tcl_SetTimer(
      * on the Mac, but mirrors the UNIX hook.
      */
 
-    if (tclStubs.tcl_SetTimer != Tcl_SetTimer) {
+    if (tclStubs.tcl_SetTimer != tclOriginalNotifier.setTimerProc) {
 	tclStubs.tcl_SetTimer(timePtr);
 	return;
     }
@@ -420,7 +421,7 @@ Tcl_WaitForEvent(
      * sense on the Mac, but mirrors the UNIX hook.
      */
 
-    if (tclStubs.tcl_WaitForEvent != Tcl_WaitForEvent) {
+    if (tclStubs.tcl_WaitForEvent != tclOriginalNotifier.waitForEventProc) {
 	return tclStubs.tcl_WaitForEvent(timePtr);
     }
 

@@ -1743,7 +1743,7 @@ ConfigureSlaves(interp, tkwin, objc, objv)
 			TCL_EXACT, &side) != TCL_OK) {
 		    return TCL_ERROR;
 		}
-		slavePtr->side = side;
+		slavePtr->side = (Side) side;
 	    }
 	}
 

@@ -481,7 +481,7 @@ test proc-old-7.14 {return with special completion code} {
 } {1 {couldn't open "_bad_file_name": no such file or directory} {couldn't open "_bad_file_name": no such file or directory
     while executing
 "tproc2"} none}
-test proc-old-7.14 {return with special completion code} {
+test proc-old-7.15 {return with special completion code} {
     list [catch {return -badOption foo message} msg] $msg
 } {1 {bad option "-badOption": must be -code, -errorcode, or -errorinfo}}
 

@@ -24,7 +24,7 @@ namespace eval tcltest {
     # When the version number changes, be sure to update the pkgIndex.tcl file,
     # and the install directory in the Makefiles.  When the minor version
     # changes (new feature) be sure to update the man page as well.
-    variable Version 2.2.2
+    variable Version 2.2.4
 
     # Compatibility support for dumb variables defined in tcltest 1
     # Do not use these.  Call [package provide Tcl] and [info patchlevel]
@@ -1431,7 +1431,7 @@ proc tcltest::ProcessFlags {flagArray} {
 		    # but keep going
 		    if {[llength $moreOptions]} {
 			append msg ", "
-			append msg [join [lrange $moreOptions 0 end -1] ", "]
+			append msg [join [lrange $moreOptions 0 end-1] ", "]
 			append msg "or [lindex $moreOptions end]"
 		    }
 		    Warn $msg
@@ -1605,26 +1605,16 @@ proc tcltest::Eval {script {ignoreOutput 1}} {
     if {!$ignoreOutput} {
 	set outData {}
 	set errData {}
-	set callerHasPuts [llength [uplevel 1 {
-		::info commands [::namespace current]::puts
-	}]]
-	if {$callerHasPuts} {
-	    uplevel 1 [list ::rename puts [namespace current]::Replace::Puts]
-	} else {
-	    interp alias {} [namespace current]::Replace::Puts {} ::puts
-	}
-	uplevel 1 [list ::namespace import [namespace origin Replace::puts]]
+	rename ::puts [namespace current]::Replace::Puts
+	namespace eval :: \
+		[list namespace import [namespace origin Replace::puts]]
 	namespace import Replace::puts
     }
     set result [uplevel 1 $script]
     if {!$ignoreOutput} {
 	namespace forget puts
-	uplevel 1 ::namespace forget puts
-	if {$callerHasPuts} {
-	    uplevel 1 [list ::rename [namespace current]::Replace::Puts puts]
-	} else {
-	    interp alias {} [namespace current]::Replace::Puts {}
-	}
+	namespace eval :: namespace forget puts
+	rename [namespace current]::Replace::Puts ::puts
     }
     return $result
 }
@@ -1842,6 +1832,13 @@ proc tcltest::test {name description args} {
     variable testLevel
     variable coreModTime
     DebugPuts 3 "test $name $args"
+    DebugDo 1 {
+	variable TestNames
+	catch {
+	    puts "test name '$name' re-used; prior use in $TestNames($name)"
+	}
+	set TestNames($name) [info script]
+    }
 
     FillFilesExisted
     incr testLevel
@@ -1912,11 +1909,9 @@ proc tcltest::test {name description args} {
 	}
 
 	# Replace symbolic valies supplied for -returnCodes
-	regsub -nocase normal $returnCodes 0 returnCodes
-	regsub -nocase error $returnCodes 1 returnCodes
-	regsub -nocase return $returnCodes 2 returnCodes
-	regsub -nocase break $returnCodes 3 returnCodes
-	regsub -nocase continue $returnCodes 4 returnCodes
+	foreach {strcode numcode} {ok 0 normal 0 error 1 return 2 break 3 continue 4} {
+	    set returnCodes [string map -nocase [list $strcode $numcode] $returnCodes]
+	}
     } else {
 	# This is parsing for the old test command format; it is here
 	# for backward compatibility.
@@ -2004,11 +1999,17 @@ proc tcltest::test {name description args} {
 	}
     }
 
+    # check if the return code matched the expected return code
+    set codeFailure 0
+    if {!$setupFailure && [lsearch -exact $returnCodes $returnCode] == -1} {
+	set codeFailure 1
+    }
+
     # If expected output/error strings exist, we have to compare
     # them.  If the comparison fails, then so did the test.
     set outputFailure 0
     variable outData
-    if {[info exists output]} {
+    if {[info exists output] && !$codeFailure} {
 	if {[set outputCompare [catch {
 	    CompareStrings $outData $output $match
 	} outputMatch]] == 0} {
@@ -2020,7 +2021,7 @@ proc tcltest::test {name description args} {
 
     set errorFailure 0
     variable errData
-    if {[info exists errorOutput]} {
+    if {[info exists errorOutput] && !$codeFailure} {
 	if {[set errorCompare [catch {
 	    CompareStrings $errData $errorOutput $match
 	} errorMatch]] == 0} {
@@ -2030,15 +2031,9 @@ proc tcltest::test {name description args} {
 	}
     }
 
-    # check if the return code matched the expected return code
-    set codeFailure 0
-    if {!$setupFailure && [lsearch -exact $returnCodes $returnCode] == -1} {
-	set codeFailure 1
-    }
-
     # check if the answer matched the expected answer
     # Only check if we ran the body of the test (no setup failure)
-    if {$setupFailure} {
+    if {$setupFailure || $codeFailure} {
 	set scriptFailure 0
     } elseif {[set scriptCompare [catch {
 	CompareStrings $actualAnswer $result $match
@@ -2882,9 +2877,8 @@ proc tcltest::restoreState {} {
 
 proc tcltest::normalizeMsg {msg} {
     regsub "\n$" [string tolower $msg] "" msg
-    regsub -all "\n\n" $msg "\n" msg
-    regsub -all "\n\}" $msg "\}" msg
-    return $msg
+    set msg [string map [list "\n\n" "\n"] $msg]
+    return [string map [list "\n\}" "\}"] $msg]
 }
 
 # tcltest::makeFile --

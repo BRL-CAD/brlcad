@@ -3,6 +3,7 @@ bin_PROGRAMS = a-d d-a i-d d-i bw-d d-bw f-d d-f f-i i-f c-d i-a u-a u-d u-f u-b
 
 BU=$(top_builddir)/libbu/libbu.la @TCL_LIBS@ @PTHREAD_LIBS@ -lm 
 FB=$(top_builddir)/libfb/libfb.la @X_LIBS@ $(PKG) $(BU)
+FFT=$(top_builddir)/libfft/libfft.la -lm
 PKG=$(top_builddir)/libpkg/libpkg.la
 
 a_d_SOURCES = a-d.c
@@ -33,8 +34,9 @@ dauto_SOURCES = dauto.c
 dmod_SOURCES = dmod.c
 dmod_LDADD = -lm
 dfft_SOURCES = dfft.c interp.c butter.c
-dfft_LDADD = -lm
+dfft_LDADD = $(FFT)
 dconv_SOURCES = dconv.c
+dconv_LDADD = $(FFT)
 
 
 ddisp_SOURCES = ddisp.c 

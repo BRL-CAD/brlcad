@@ -621,7 +621,7 @@ XGetImage(display, d, x, y, width, height, plane_mask, format)
 	infoPtr->bmiHeader.biPlanes		= 1;
 	infoPtr->bmiHeader.biBitCount		= 1;
 	infoPtr->bmiHeader.biCompression	= BI_RGB;
-	infoPtr->bmiHeader.biCompression	= 0;
+	infoPtr->bmiHeader.biSizeImage          = 0;
 	infoPtr->bmiHeader.biXPelsPerMeter	= 0;
 	infoPtr->bmiHeader.biYPelsPerMeter	= 0;
 	infoPtr->bmiHeader.biClrUsed		= 0;

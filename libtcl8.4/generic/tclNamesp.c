@@ -908,9 +908,7 @@ Tcl_Export(interp, namespacePtr, pattern, resetListFirst)
 				  * in the specified namespace may be
 				  * exported. */
     int resetListFirst;		 /* If nonzero, resets the namespace's
-				  * export list before appending.
-				  * If 0, return an error if an imported
-				  * cmd conflicts with an existing one. */
+				  * export list before appending. */
 {
 #define INIT_EXPORT_PATTERNS 5    
     Namespace *nsPtr, *exportNsPtr, *dummyPtr;

@@ -168,7 +168,7 @@ TkpDisplayButton(
     int y, relief;
     register Tk_Window tkwin = butPtr->tkwin;
     int width, height, fullWidth, fullHeight;
-    int imageXOffset, imageYOffset, textXOffset, textYOffset;
+    int textXOffset, textYOffset;
     int haveImage = 0, haveText = 0;
     int offset;			/* 0 means this is a normal widget.  1 means
 				 * it is an image button, so we offset the
@@ -179,6 +179,10 @@ TkpDisplayButton(
     GDHandle saveDevice;
     GWorldPtr destPort;
     int drawType, borderWidth;
+    int imageWidth, imageHeight;
+    int imageXOffset = 0, imageYOffset = 0; /* image information that will
+					     * be used to restrict disabled
+					     * pixmap as well */
 
     GetGWorld(&saveWorld, &saveDevice);
 
@@ -339,11 +343,11 @@ TkpDisplayButton(
 	    Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
 	    haveImage = 1;
 	}
-	haveText = (butPtr->textWidth != 0 && butPtr->textHeight != 0);
+	imageWidth  = width;
+	imageHeight = height;
 
+	haveText = (butPtr->textWidth != 0 && butPtr->textHeight != 0);
 	if (butPtr->compound != COMPOUND_NONE && haveImage && haveText) {
-	    imageXOffset = 0;
-	    imageYOffset = 0;
 	    textXOffset = 0;
 	    textYOffset = 0;
 	    fullWidth = 0;
@@ -409,25 +413,23 @@ TkpDisplayButton(
 		x += offset;
 		y += offset;
 	    }
-	    
+	    imageXOffset += x;
+	    imageYOffset += y;
 	    if (butPtr->image != NULL) {
 		if ((butPtr->selectImage != NULL) &&
 			(butPtr->flags & SELECTED)) {
 		    Tk_RedrawImage(butPtr->selectImage, 0, 0,
-			    width, height, pixmap, x + imageXOffset,
-			    y + imageYOffset);
+			    width, height, pixmap, imageXOffset, imageYOffset);
 		} else {
 		    Tk_RedrawImage(butPtr->image, 0, 0, width,
-			    height, pixmap, x + imageXOffset,
-			    y + imageYOffset);
+			    height, pixmap, imageXOffset, imageYOffset);
 		}
 	    } else {
-		XSetClipOrigin(butPtr->display, gc, x + imageXOffset,
-			y + imageYOffset);
+		XSetClipOrigin(butPtr->display, gc,
+			imageXOffset, imageYOffset);
 		XCopyPlane(butPtr->display, butPtr->bitmap, pixmap, gc,
-			0, 0, (unsigned int) width,
-			(unsigned int) height, x + imageXOffset,
-			y + imageYOffset, 1);
+			0, 0, (unsigned int) width, (unsigned int) height,
+			imageXOffset, imageYOffset, 1);
 		XSetClipOrigin(butPtr->display, gc, 0, 0);
 	    }
 	    
@@ -452,6 +454,8 @@ TkpDisplayButton(
 		    x += offset;
 		    y += offset;
 		}
+		imageXOffset += x;
+		imageXOffset += y;
 		if (butPtr->image != NULL) {
 		    if ((butPtr->selectImage != NULL) &&
 			    (butPtr->flags & SELECTED)) {
@@ -488,23 +492,31 @@ TkpDisplayButton(
      * If the button is disabled with a stipple rather than a special
      * foreground color, generate the stippled effect.	If the widget
      * is selected and we use a different background color when selected,
-     * must temporarily modify the GC.
+     * must temporarily modify the GC so the stippling is the right color.
      */
 
     if ((butPtr->state == STATE_DISABLED)
 	    && ((butPtr->disabledFg == NULL) || (butPtr->image != NULL))) {
 	if ((butPtr->flags & SELECTED) && !butPtr->indicatorOn
 		&& (butPtr->selectBorder != NULL)) {
-	    XSetForeground(butPtr->display, butPtr->disabledGC,
+	    XSetForeground(butPtr->display, butPtr->stippleGC,
 		    Tk_3DBorderColor(butPtr->selectBorder)->pixel);
 	}
-	XFillRectangle(butPtr->display, pixmap, butPtr->disabledGC,
-		butPtr->inset, butPtr->inset,
-		(unsigned) (Tk_Width(tkwin) - 2*butPtr->inset),
-		(unsigned) (Tk_Height(tkwin) - 2*butPtr->inset));
+	/*
+	 * Stipple the whole button if no disabledFg was specified,
+	 * otherwise restrict stippling only to displayed image
+	 */
+	if (butPtr->disabledFg == NULL) {
+	    XFillRectangle(butPtr->display, pixmap, butPtr->stippleGC, 0, 0,
+		    (unsigned) Tk_Width(tkwin), (unsigned) Tk_Height(tkwin));
+	} else {
+	    XFillRectangle(butPtr->display, pixmap, butPtr->stippleGC,
+		    imageXOffset, imageYOffset,
+		    (unsigned) imageWidth, (unsigned) imageHeight);
+	}
 	if ((butPtr->flags & SELECTED) && !butPtr->indicatorOn
 		&& (butPtr->selectBorder != NULL)) {
-	    XSetForeground(butPtr->display, butPtr->disabledGC,
+	    XSetForeground(butPtr->display, butPtr->stippleGC,
 		    Tk_3DBorderColor(butPtr->normalBorder)->pixel);
 	}
     }

@@ -176,7 +176,7 @@ static Tcl_ThreadDataKey dataKey;
  */
  
 static EncodingAlias encodingAliases[] = {
-    {"gb2312",		"gb2312*"},
+    {"gb2312-raw",	"gb2312*"},
     {"big5",		"big5*"},
     {"cns11643-1",	"cns11643*-1"},
     {"cns11643-1",	"cns11643*.1-0"},
@@ -1158,19 +1158,21 @@ Tk_DrawChars(display, drawable, gc, tkfont, source, numBytes, x, y)
     SubFont *thisSubFontPtr, *lastSubFontPtr;
     Tcl_DString runString;
     CONST char *p, *end, *next;
-    int xStart, needWidth, window_width;
+    int xStart, needWidth, window_width, do_width;
     Tcl_UniChar ch;
     FontFamily *familyPtr;
+#ifdef TK_DRAW_CHAR_XWINDOW_CHECK
     int rx, ry;
     unsigned int width, height, border_width, depth;
-    int do_width;
     Drawable root;
+#endif
 
     fontPtr = (UnixFont *) tkfont;
     lastSubFontPtr = &fontPtr->subFontArray[0];
 
     xStart = x;
 
+#ifdef TK_DRAW_CHAR_XWINDOW_CHECK
     /*
      * Get the window width so we can abort drawing outside of the window
      */
@@ -1180,6 +1182,13 @@ Tk_DrawChars(display, drawable, gc, tkfont, source, numBytes, x, y)
     } else {
 	window_width = width;
     }
+#else
+    /*
+     * This is used by default until we find a solution that doesn't
+     * round-trip to the X server (need to get Tk cached window width).
+     */
+    window_width = 32768;
+#endif
 
     end = source + numBytes;
     needWidth = fontPtr->font.fa.underline + fontPtr->font.fa.overstrike;

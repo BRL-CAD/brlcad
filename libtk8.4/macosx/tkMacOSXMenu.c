@@ -180,10 +180,6 @@ static Tk_Window currentMenuBarOwner;
 static char elipsisString[TCL_UTF_MAX + 1];
 				/* The UTF representation of the elipsis (...) 
 				 * character. */
-static int helpItemCount;	/* The number of items in the help menu. 
-				 * -1 means that the help menu is
-				 * unavailable. This does not include
-				 * the automatically generated separator. */
 static int inPostMenu;		/* We cannot be re-entrant like X
 				 * windows. */
 static short lastMenuID;	/* To pass to NewMenu; need to figure out
@@ -203,6 +199,11 @@ static struct TearoffSelect {
     Rect excludeRect;		/* We don't want to drag tearoff highlights
     				 * when we are in this menu */
 } tearoffStruct;
+
+struct MenuCommandHandlerData { /* This is the ClientData we pass to */
+    TkMenu *menuPtr;            /* Tcl_DoWhenIdle to move handling */
+    int index;                  /* menu commands to the event loop. */
+};
 
 static RgnHandle totalMenuRgn = NULL;
 				/* Used to update windows which have been
@@ -261,6 +262,7 @@ static void		DrawTearoffEntry _ANSI_ARGS_((TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Drawable d, GC gc, 
 			    Tk_Font tkfont, CONST Tk_FontMetrics *fmPtr, 
 			    int x, int y, int width, int height));
+static void 	EventuallyInvokeMenu (ClientData data);
 static void		GetEntryText _ANSI_ARGS_((TkMenuEntry *mePtr,
 			    Tcl_DString *dStringPtr));
 static void		GetMenuAccelGeometry _ANSI_ARGS_((TkMenu *menuPtr,
@@ -640,8 +642,8 @@ TkpDestroyMenu(
     		&& (helpMenuHdl != NULL)) {
     	    int i, count = CountMenuItems(helpMenuHdl);
     	    
-    	    for (i = helpItemCount; i <= count; i++) {
-    	    	DeleteMenuItem(helpMenuHdl, helpItemCount);
+    	    for (i = helpIndex; i <= count; i++) {
+    	    	DeleteMenuItem(helpMenuHdl, helpIndex);
     	    }
     	}
     	currentHelpMenuID = 0;
@@ -1036,7 +1038,8 @@ ReconfigureIndividualMenu(
     				 * be the help menu. */
     int base)			/* The last index that we do not want
     				 * touched. 0 for normal menus;
-    				 * helpMenuItemCount for help menus. */
+    				 * # of system help menu items
+    				 * for help menus. */
 {
     int count;
     int index;
@@ -1290,7 +1293,8 @@ ReconfigureMacintoshMenu(
         MenuItemIndex helpIndex;
     	HMGetHelpMenu(&helpMenuHdl,&helpIndex);
     	if (helpMenuHdl != NULL) {
-    	    ReconfigureIndividualMenu(menuPtr, helpMenuHdl, helpItemCount);
+    	    ReconfigureIndividualMenu(menuPtr, helpMenuHdl, 
+	            helpIndex - 1);
     	}
     }
 
@@ -2074,6 +2078,35 @@ TkpSetWindowMenuBar(
     }
 }
 
+static void 
+/*
+ *----------------------------------------------------------------------
+ *
+ * EventuallyInvokeMenu --
+ *
+ *	This IdleTime callback actually invokes the menu command
+ *      scheduled in TkMacOSXDispatchMenuEvent.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Commands get executed.
+ *
+ *----------------------------------------------------------------------
+ */
+
+EventuallyInvokeMenu (ClientData data)
+{
+    struct MenuCommandHandlerData *realData
+            = (struct MenuCommandHandlerData *) data;
+
+    Tcl_Release(realData->menuPtr->interp);
+    Tcl_Release(realData->menuPtr);
+    TkInvokeMenu(realData->menuPtr->interp, realData->menuPtr,
+            realData->index);
+}
+
 /*
  *----------------------------------------------------------------------
  *
@@ -2086,7 +2119,7 @@ TkpSetWindowMenuBar(
  *	None.
  *
  * Side effects:
- *	Commands get executed.
+ *	Commands for the event are scheduled for execution at idle time.
  *
  *----------------------------------------------------------------------
  */
@@ -2109,7 +2142,10 @@ TkMacOSXDispatchMenuEvent(
     	    		helpMenuName);
     	    	ckfree(helpMenuName);
     	    	if ((helpMenuRef != NULL) && (helpMenuRef->menuPtr != NULL)) {
-    	    	    int newIndex = index - helpItemCount - 1;
+    	    	    MenuRef outHelpMenu;
+    	    	    MenuItemIndex itemIndex;
+    	    	    HMGetHelpMenu(&outHelpMenu, &itemIndex);
+    	    	    int newIndex = index - itemIndex;
     	    	    result = TkInvokeMenu(currentMenuBarInterp,
     	    	    	    helpMenuRef->menuPtr, newIndex);
     	    	}
@@ -2126,7 +2162,16 @@ TkMacOSXDispatchMenuEvent(
                     GetMenuItemText(GetMenuHandle(menuID), index, itemText);
                     result = TCL_OK;
                 } else {
-                    result = TkInvokeMenu(menuPtr->interp, menuPtr, index - 1);
+                    struct MenuCommandHandlerData *data
+                            = (struct MenuCommandHandlerData *)
+                            ckalloc(sizeof(struct MenuCommandHandlerData));
+                    Tcl_Preserve(menuPtr->interp);
+                    Tcl_Preserve(menuPtr);
+                    data->menuPtr = menuPtr;
+                    data->index = index - 1;
+                    Tcl_DoWhenIdle (EventuallyInvokeMenu,
+                            (ClientData) data);
+                    /* result = TkInvokeMenu(menuPtr->interp, menuPtr, index - 1); */
                 }
             } else {
                 return TCL_ERROR;
@@ -2881,12 +2926,15 @@ DrawTearoffEntry(
  *	Has to be called after the first call to InsertMenu. Sets
  *	up the global variable for the number of items in the
  *	unmodified help menu.
+ *      NB. Nobody uses this any more, since you can get the number
+ *      of system help items from HMGetHelpMenu trivially.
+ *      But it is in the stubs table...
  *
  * Results:
  *	None.
  *
  * Side effects:
- *	Sets the global helpItemCount.
+ *	Nothing.
  *
  *----------------------------------------------------------------------
  */
@@ -2894,16 +2942,6 @@ DrawTearoffEntry(
 void 
 TkMacOSXSetHelpMenuItemCount()
 {
-    MenuRef helpMenuHandle;
-    MenuItemIndex itemIndex;
-    
-    if ((HMGetHelpMenu(&helpMenuHandle,&itemIndex) != noErr) 
-    	    || (helpMenuHandle == NULL)) {
-    	helpItemCount = -1;
-    } else {
-    	helpItemCount = CountMenuItems(helpMenuHandle);
-        DeleteMenuItem(helpMenuHandle, helpItemCount);
-    }
 }
 
 /*

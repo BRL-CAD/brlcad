@@ -207,7 +207,7 @@ test clock-4.18 {clock scan, ISO 8601 point in time format} {
 # We use 5am PST, 31-12-1999 as the base for these scans because irrespective
 # of your local timezone it should always give us times on December 31, 1999
 set 5amPST 946645200
-test clock-4.18 {clock scan, number meridian} {
+test clock-4.19 {clock scan, number meridian} {
     set t1 [clock scan "5 am" -base $5amPST -gmt true]
     set t2 [clock scan "5 pm" -base $5amPST -gmt true]
     set t3 [clock scan "5 a.m." -base $5amPST -gmt true]
@@ -219,86 +219,86 @@ test clock-4.18 {clock scan, number meridian} {
 	    [clock format $t4 -format {%b %d, %Y %H:%M:%S} -gmt true]
 } [list "Dec 31, 1999 05:00:00" "Dec 31, 1999 17:00:00" \
 	"Dec 31, 1999 05:00:00" "Dec 31, 1999 17:00:00"]
-test clock-4.19 {clock scan, number:number meridian} {
+test clock-4.20 {clock scan, number:number meridian} {
     clock format [clock scan "5:30 pm" -base $5amPST -gmt true] \
 	    -format {%b %d, %Y %H:%M:%S} -gmt true
 } "Dec 31, 1999 17:30:00"
-test clock-4.20 {clock scan, number:number-timezone} {
+test clock-4.21 {clock scan, number:number-timezone} {
     clock format [clock scan "00:00-0800" -gmt true -base $5amPST] \
 	    -format {%b %d, %Y %H:%M:%S} -gmt true
 } "Dec 31, 1999 08:00:00"
-test clock-4.21 {clock scan, number:number:number o_merid} {
+test clock-4.22 {clock scan, number:number:number o_merid} {
     clock format [clock scan "8:00:00" -gmt true -base $5amPST] \
 	    -format {%b %d, %Y %H:%M:%S} -gmt true
 } "Dec 31, 1999 08:00:00"
-test clock-4.22 {clock scan, number:number:number o_merid} {
+test clock-4.23 {clock scan, number:number:number o_merid} {
     clock format [clock scan "8:00:00 am" -gmt true -base $5amPST] \
 	    -format {%b %d, %Y %H:%M:%S} -gmt true
 } "Dec 31, 1999 08:00:00"
-test clock-4.23 {clock scan, number:number:number o_merid} {
+test clock-4.24 {clock scan, number:number:number o_merid} {
     clock format [clock scan "8:00:00 pm" -gmt true -base $5amPST] \
 	    -format {%b %d, %Y %H:%M:%S} -gmt true
 } "Dec 31, 1999 20:00:00"
-test clock-4.24 {clock scan, number:number:number-timezone} {
+test clock-4.25 {clock scan, number:number:number-timezone} {
     clock format [clock scan "00:00:30-0800" -gmt true -base $5amPST] \
 	    -format {%b %d, %Y %H:%M:%S} -gmt true
 } "Dec 31, 1999 08:00:30"
-test clock-4.25 {clock scan, DST for days} {
+test clock-4.26 {clock scan, DST for days} {
     clock scan "tomorrow" -base [clock scan "19991031 00:00:00"]
 } [clock scan "19991101 00:00:00"]
-test clock-4.26 {clock scan, DST for days} {
+test clock-4.27 {clock scan, DST for days} {
     clock scan "yesterday" -base [clock scan "19991101 00:00:00"]
 } [clock scan "19991031 00:00:00"]
-test clock-4.27 {clock scan, day} knownBug {
+test clock-4.28 {clock scan, day} knownBug {
     clock format [clock scan "Monday" -gmt true -base 946627200] \
 	    -format {%b %d, %Y %H:%M:%S} -gmt true
 } "Jan 03, 2000 00:00:00"
-test clock-4.28 {clock scan, number/number} {
+test clock-4.29 {clock scan, number/number} {
     clock format [clock scan "1/1" -gmt true -base 946627200] \
 	    -format {%b %d, %Y %H:%M:%S} -gmt true
 } "Jan 01, 1999 00:00:00"
-test clock-4.28 {clock scan, number/number} {
+test clock-4.30 {clock scan, number/number} {
     clock format [clock scan "1/1/1999" -gmt true -base 946627200] \
 	    -format {%b %d, %Y %H:%M:%S} -gmt true
 } "Jan 01, 1999 00:00:00"
-test clock-4.28 {clock scan, number/number} {
+test clock-4.31 {clock scan, number/number} {
     clock format [clock scan "19990101" -gmt true -base 946627200] \
 	    -format {%b %d, %Y %H:%M:%S} -gmt true
 } "Jan 01, 1999 00:00:00"
-test clock-4.29 {clock scan, relative minutes} {
+test clock-4.32 {clock scan, relative minutes} {
     clock scan "now + 1 minute" -base 946627200
 } 946627260
-test clock-4.30 {clock scan, relative minutes} {
+test clock-4.33 {clock scan, relative minutes} {
     clock scan "now +1 minute" -base 946627200
 } 946627260
-test clock-4.31 {clock scan, relative minutes} {
+test clock-4.34 {clock scan, relative minutes} {
     clock scan "now 1 minute" -base 946627200
 } 946627260
-test clock-4.32 {clock scan, relative minutes} {
+test clock-4.35 {clock scan, relative minutes} {
     clock scan "now - 1 minute" -base 946627200
 } 946627140
-test clock-4.33 {clock scan, relative minutes} {
+test clock-4.36 {clock scan, relative minutes} {
     clock scan "now -1 minute" -base 946627200
 } 946627140
-test clock-4.34 {clock scan, day of week} {
+test clock-4.37 {clock scan, day of week} {
     clock format [clock scan "wednesday" -base [clock scan 20000112]] \
 	    -format {%b %d, %Y}
 } "Jan 12, 2000"
-test clock-4.35 {clock scan, next day of week} {
+test clock-4.38 {clock scan, next day of week} {
     clock format [clock scan "next wednesday" -base [clock scan 20000112]] \
 	    -format {%b %d, %Y}
 } "Jan 19, 2000"
-test clock-4.36 {clock scan, day of week} {
+test clock-4.39 {clock scan, day of week} {
     clock format [clock scan "thursday" -base [clock scan 20000112]] \
 	    -format {%b %d, %Y}
 } "Jan 13, 2000"
-test clock-4.37 {clock scan, next day of week} {
+test clock-4.40 {clock scan, next day of week} {
     clock format [clock scan "next thursday" -base [clock scan 20000112]] \
 	    -format {%b %d, %Y}
 } "Jan 20, 2000"
 
 # weekday specification and base.
-test clock-4.38 {2nd monday in november} {
+test clock-4.41 {2nd monday in november} {
     set res {}
     foreach i {91 92 93 94 95 96} {
       set nov8th [clock scan 11/8/$i]
@@ -307,7 +307,7 @@ test clock-4.38 {2nd monday in november} {
     }
     set res
 } {1991-11-11 1992-11-09 1993-11-08 1994-11-14 1995-11-13 1996-11-11}
-test clock-4.39 {2nd monday in november (2nd try)} {
+test clock-4.42 {2nd monday in november (2nd try)} {
     set res {}
     foreach i {91 92 93 94 95 96} {
       set nov1th [clock scan 11/1/$i]
@@ -316,7 +316,7 @@ test clock-4.39 {2nd monday in november (2nd try)} {
     }
     set res
 } {1991-11-11 1992-11-09 1993-11-08 1994-11-14 1995-11-13 1996-11-11}
-test clock-4.40 {last monday in november} {
+test clock-4.43 {last monday in november} {
     set res {}
     foreach i {91 92 93 94 95 96} {
       set dec1th [clock scan 12/1/$i]
@@ -326,7 +326,7 @@ test clock-4.40 {last monday in november} {
     set res
 } {1991-11-25 1992-11-30 1993-11-29 1994-11-28 1995-11-27 1996-11-25}
 
-test clock-4.40 {2nd monday in november} knownBug {
+test clock-4.44 {2nd monday in november} knownBug {
     set res {}
     foreach i {91 92 93 94 95 96} {
       set nov8th [clock scan 11/8/$i -gmt 1]
@@ -335,7 +335,7 @@ test clock-4.40 {2nd monday in november} knownBug {
     }
     set res
 } {1991-11-11 1992-11-09 1993-11-08 1994-11-14 1995-11-13 1996-11-11}
-test clock-4.41 {2nd monday in november (2nd try)} knownBug {
+test clock-4.45 {2nd monday in november (2nd try)} knownBug {
     set res {}
     foreach i {91 92 93 94 95 96} {
       set nov1th [clock scan 11/1/$i -gmt 1]
@@ -344,7 +344,7 @@ test clock-4.41 {2nd monday in november (2nd try)} knownBug {
     }
     set res
 } {1991-11-11 1992-11-09 1993-11-08 1994-11-14 1995-11-13 1996-11-11}
-test clock-4.40 {last monday in november} knownBug {
+test clock-4.46 {last monday in november} knownBug {
     set res {}
     foreach i {91 92 93 94 95 96} {
       set dec1th [clock scan 12/1/$i -gmt 1]
@@ -353,7 +353,7 @@ test clock-4.40 {last monday in november} knownBug {
     }
     set res
 } {1991-11-25 1992-11-30 1993-11-29 1994-11-28 1995-11-27 1996-11-25}
-test clock-4.41 {ago with multiple relative units} {
+test clock-4.47 {ago with multiple relative units} {
     set base [clock scan "12/31/1999 00:00:00"]
     set res [clock scan "2 days 2 hours ago" -base $base]
     expr {$base - $res}

@@ -113,14 +113,14 @@ test ioUtil-1.8 {TclStatDeleteProc: Verify that all procs have been deleted.} {t
 
 eval $unsetScript
 
-test ioUtil-1.1 {TclAccess: Check that none of the test procs are there.} {
+test ioUtil-1.9 {TclAccess: Check that none of the test procs are there.} {
     catch {file exists testAccess1%.fil} err1
     catch {file exists testAccess2%.fil} err2
     catch {file exists testAccess3%.fil} err3
     list $err1 $err2 $err3
 } {0 0 0}
 
-test ioUtil-1.2 {TclAccessInsertProc: Insert the 3 test TclAccess_ procedures.} {testaccessproc} {
+test ioUtil-1.10 {TclAccessInsertProc: Insert the 3 test TclAccess_ procedures.} {testaccessproc} {
     catch {testaccessproc insert TclpAccess} err1
     testaccessproc insert TestAccessProc1
     testaccessproc insert TestAccessProc2

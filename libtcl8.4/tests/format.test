@@ -84,37 +84,37 @@ test format-2.5 {string formatting, embedded nulls} {
 test format-2.6 {string formatting, international chars} {
     format "%10s" abc\ufeffdef
 } "   abc\ufeffdef"
-test format-2.6 {string formatting, international chars} {
+test format-2.7 {string formatting, international chars} {
     format "%.5s" abc\ufeffdef
 } "abc\ufeffd"
-test format-2.7 {string formatting, international chars} {
+test format-2.8 {string formatting, international chars} {
     format "foo\ufeffbar%s" baz
 } "foo\ufeffbarbaz"
-test format-2.8 {string formatting, width} {
+test format-2.9 {string formatting, width} {
     format "a%5sa" f
 } "a    fa"
-test format-2.8 {string formatting, width} {
+test format-2.10 {string formatting, width} {
     format "a%-5sa" f
 } "af    a"
-test format-2.8 {string formatting, width} {
+test format-2.11 {string formatting, width} {
     format "a%2sa" foo
 } "afooa"
-test format-2.8 {string formatting, width} {
+test format-2.12 {string formatting, width} {
     format "a%0sa" foo
 } "afooa"
-test format-2.8 {string formatting, precision} {
+test format-2.13 {string formatting, precision} {
     format "a%.2sa" foobarbaz
 } "afoa"
-test format-2.8 {string formatting, precision} {
+test format-2.14 {string formatting, precision} {
     format "a%.sa" foobarbaz
 } "aa"
-test format-2.8 {string formatting, precision} {
+test format-2.15 {string formatting, precision} {
     list [catch {format "a%.-2sa" foobarbaz} msg] $msg
 } {1 {bad field specifier "-"}}
-test format-2.8 {string formatting, width and precision} {
+test format-2.16 {string formatting, width and precision} {
     format "a%5.2sa" foobarbaz
 } "a   foa"
-test format-2.8 {string formatting, width and precision} {
+test format-2.17 {string formatting, width and precision} {
     format "a%5.7sa" foobarbaz
 } "afoobarba"
 
@@ -501,6 +501,39 @@ test format-17.2 {testing %ld with wide} {64bitInts} {
 test format-17.3 {testing %ld with non-wide} {64bitInts} {
     format %ld 42
 } 42
+test format-17.4 {testing %l with non-integer} {
+    format %lf 1
+} 1.000000
+test format-17.5 {type conversions with wides} {
+    set a 0xAAAAAAAA ;# NB: Careful to make separate objects here!
+    set b 0xAAAAAAA; append b A
+    set result [expr {$a == $b}]
+    format %x $a
+    lappend result [expr {$a == $b}]
+} {1 1}
+
+test format-18.1 {do not demote existing numeric values} {
+    set a 0xaaaaaaaa
+    # Ensure $a and $b are separate objects
+    set b 0xaaaa
+    append b aaaa
+
+    set result [expr {$a == $b}]
+    format %08lx $b
+    lappend result [expr {$a == $b}]
+
+    set b 0xaaaa
+    append b aaaa
+
+    lappend result [expr {$a == $b}]
+    format %08x $b
+    lappend result [expr {$a == $b}]
+} {1 1 1 1}
+test format-18.2 {do not demote existing numeric values} {wideIntExpressions} {
+    set a [expr {0xaaaaaaaaaa + 1}]
+    set b 0xaaaaaaaaab
+    list [catch {format %08x $a} msg] $msg [expr {$a == $b}]
+} {1 {integer value too large to represent} 1}
 
 # cleanup
 catch {unset a}

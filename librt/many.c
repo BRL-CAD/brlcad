@@ -59,9 +59,7 @@ struct rt_many_internal  {
  *  a multiple pixel block may be removed from the work queue at once.
  */
 void
-rt_shoot_many_rays_worker(cpu, arg)
-int		cpu;
-genptr_t	arg;
+rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 {
 	LOCAL struct application app;
 	struct rt_many_internal *rmip = (struct rt_many_internal *)arg;

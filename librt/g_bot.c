@@ -2868,10 +2868,10 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 {
 	int *new_faces;		/* the sorted list of faces to be attached to the BOT at the end of this routine */
 	int new_face_count=0;	/* the current number of faces in the "new_faces" list */
-	int *new_norms;		/* the sorted list of vertex normals corrsponding to the "new_faces" list */
+	int *new_norms = (int*)NULL;		/* the sorted list of vertex normals corrsponding to the "new_faces" list */
 	int *old_faces;		/* a copy of the original face list from the BOT */
 	int *piece;		/* a small face list, for just the faces in the current piece */
-	int *piece_norms;	/* vertex normals for faces in the current piece */
+	int *piece_norms = (int*)NULL;	/* vertex normals for faces in the current piece */
 	int *piece_verts;	/* a list of vertices in the current piece (each vertex appears only once) */
 	unsigned char *vert_count;	/* an array used to hold the number of piece vertices that appear in each BOT face */
 	int faces_left;		/* the number of faces in the "old_faces" array that have not yet been used */
@@ -3478,7 +3478,7 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 		}
 	}
 
-	if( max_chord_error > SMALL_FASTF || max_normal_error > SMALL_FASTF ) {
+	if( max_chord_error > -1.0 || max_normal_error > -1.0 ) {
 		/* check if surface is within max_chord_error of vertex to be eliminated */
 		/* loop through all affected faces */
 		for( i=0 ; i<affected_count ; i++ ) {
@@ -3521,13 +3521,13 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 
 			/* max_normal_error is actually a minimum dot product */
 			dot = VDOT( pla, plb );
-			if( max_normal_error > SMALL_FASTF && dot < max_normal_error ) {
+			if( max_normal_error > -1.0 && dot < max_normal_error ) {
 				return 0;
 			}
 
 			/* check the distance between this new plane and vertex v1 */
 			dist = fabs( DIST_PT_PLANE( &vertices[v1*3], pla ) );
-			if( max_chord_error > SMALL_FASTF && dist > max_chord_error ) {
+			if( max_chord_error > -1.0 && dist > max_chord_error ) {
 				return 0;
 			}
 		}
@@ -3571,13 +3571,14 @@ rt_bot_decimate( struct rt_bot_internal *bot,	/* BOT to be decimated */
 
 	RT_BOT_CK_MAGIC( bot );
 
+#if 0
 	if( max_chord_error <= SMALL_FASTF &&
 	    max_normal_error <= SMALL_FASTF &&
 	    min_edge_length <= SMALL_FASTF )
 		return 0;
-
+#endif
 	/* convert normal error to something useful (a minimum dot product) */
-	if( max_normal_error > SMALL_FASTF ) {
+	if( max_normal_error > -1.0 ) {
 		max_normal_error = cos( max_normal_error * M_PI / 180.0 );
 	}
 

@@ -32,7 +32,8 @@ specified before \fIlist\fR to control the sorting process (unique
 abbreviations are accepted):
 .TP 20
 \fB\-ascii\fR
-Use string comparison with ASCII collation order.  This is the default.
+Use string comparison with Unicode code-point collation order (the
+name is for backward-compatability reasons.)  This is the default.
 .TP 20
 \fB\-dictionary\fR
 Use dictionary-style comparison.  This is the same as \fB\-ascii\fR

@@ -46,11 +46,11 @@ Arbitrary one-word value to pass to \fIproc\fR when it is invoked.
 .AP int *numArgsPtr out
 Points to a variable that will be set to contain the number of
 arguments to the function.
-.AP Tcl_ValueType *argTypesPtr out
+.AP Tcl_ValueType **argTypesPtr out
 Points to a variable that will be set to contain a pointer to an array
 giving the permissible types for each argument to the function which
 will need to be freed up using \fITcl_Free\fR.
-.AP Tcl_MathProc *procPtr out
+.AP Tcl_MathProc **procPtr out
 Points to a variable that will be set to contain a pointer to the
 implementation code for the function (or NULL if the function is
 implemented directly in bytecode.)
@@ -73,9 +73,13 @@ to those already provided by Tcl or to replace existing functions.
 If \fIname\fR doesn't already exist as a function then a new function
 is created.  If it does exist, then the existing function is replaced.
 \fINumArgs\fR and \fIargTypes\fR describe the arguments to the function.
-Each entry in the \fIargTypes\fR array must be either TCL_INT, TCL_DOUBLE,
+Each entry in the \fIargTypes\fR array must be
+.VS 8.4
+one of TCL_INT, TCL_DOUBLE, TCL_WIDE_INT,
 or TCL_EITHER to indicate whether the corresponding argument must be an
-integer, a double-precision floating value, or either, respectively.
+integer, a double-precision floating value, a wide (64-bit) integer,
+or any, respectively.
+.VE 8.4
 .PP
 Whenever the function is invoked in an expression Tcl will invoke
 \fIproc\fR.  \fIProc\fR should have arguments and result that match
@@ -92,27 +96,36 @@ When \fIproc\fR is invoked the \fIclientData\fR and \fIinterp\fR
 arguments will be the same as those passed to \fBTcl_CreateMathFunc\fR.
 \fIArgs\fR will point to an array of \fInumArgs\fR Tcl_Value structures,
 which describe the actual arguments to the function:
+.VS 8.4
 .CS
 typedef struct Tcl_Value {
 	Tcl_ValueType \fItype\fR;
 	long \fIintValue\fR;
 	double \fIdoubleValue\fR;
+	Tcl_WideInt \fIwideValue\fR;
 } Tcl_Value;
 .CE
 .PP
 The \fItype\fR field indicates the type of the argument and is
-either TCL_INT or TCL_DOUBLE.
+one of TCL_INT, TCL_DOUBLE or TCL_WIDE_INT.
+.VE 8.4
 It will match the \fIargTypes\fR value specified for the function unless
 the \fIargTypes\fR value was TCL_EITHER. Tcl converts
 the argument supplied in the expression to the type requested in
 \fIargTypes\fR, if that is necessary.
-Depending on the value of the \fItype\fR field, the \fIintValue\fR
-or \fIdoubleValue\fR field will contain the actual value of the argument.
+Depending on the value of the \fItype\fR field, the \fIintValue\fR,
+.VS 8.4
+\fIdoubleValue\fR or \fIwideValue\fR
+.VE 8.4
+field will contain the actual value of the argument.
 .PP
 \fIProc\fR should compute its result and store it either as an integer
 in \fIresultPtr->intValue\fR or as a floating value in
 \fIresultPtr->doubleValue\fR.
-It should set also \fIresultPtr->type\fR to either TCL_INT or TCL_DOUBLE
+It should set also \fIresultPtr->type\fR to one of
+.VS 8.4
+TCL_INT, TCL_DOUBLE or TCL_WIDE_INT
+.VE 8.4
 to indicate which value was set.
 Under normal circumstances \fIproc\fR should return TCL_OK.
 If an error occurs while executing the function, \fIproc\fR should

@@ -233,8 +233,7 @@ Tcl_Release(clientData)
 		refArray[i] = refArray[inUse];
 	    }
 	    if (mustFree) {
-		if ((freeProc == TCL_DYNAMIC) ||
-                        (freeProc == (Tcl_FreeProc *) free)) {
+		if (freeProc == TCL_DYNAMIC) {
 		    ckfree((char *) clientData);
 		} else {
 		    Tcl_MutexUnlock(&preserveMutex);
@@ -306,8 +305,7 @@ Tcl_EventuallyFree(clientData, freeProc)
      * No reference for this block.  Free it now.
      */
 
-    if ((freeProc == TCL_DYNAMIC)
-	    || (freeProc == (Tcl_FreeProc *) free)) {
+    if (freeProc == TCL_DYNAMIC) {
 	ckfree((char *) clientData);
     } else {
 	(*freeProc)((char *)clientData);

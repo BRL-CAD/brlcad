@@ -161,16 +161,16 @@ Tcl_CreateThread(idPtr, proc, clientData, stackSize, flags)
  */
 
 int
-Tcl_JoinThread(id, state)
-    Tcl_ThreadId id;	/* Id of the thread to wait upon */
-    int*     state;	/* Reference to the storage the result
-			 * of the thread we wait upon will be
-			 * written into. */
+Tcl_JoinThread(threadId, state)
+    Tcl_ThreadId threadId; /* Id of the thread to wait upon */
+    int*     state;	   /* Reference to the storage the result
+			    * of the thread we wait upon will be
+			    * written into. */
 {
 #ifdef TCL_THREADS
     int result;
 
-    result = pthread_join ((pthread_t) id, (VOID**) state);
+    result = pthread_join ((pthread_t) threadId, (VOID**) state);
     return (result == 0) ? TCL_OK : TCL_ERROR;
 #else
     return TCL_ERROR;
@@ -819,7 +819,7 @@ TclpReaddir(DIR * dir)
 #   endif /* HAVE_STRUCT_DIRENT64 */
     if (ent != NULL) {
 	memcpy((VOID *) &tsdPtr->rdbuf.ent, (VOID *) ent,
-		sizeof(&tsdPtr->rdbuf));
+		sizeof(tsdPtr->rdbuf));
 	ent = &tsdPtr->rdbuf.ent;
     }
     Tcl_MutexUnlock(&rdMutex);

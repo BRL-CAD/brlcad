@@ -1744,8 +1744,7 @@ Tcl_DStringGetResult(interp, dsPtr)
 
     dsPtr->length = strlen(iPtr->result);
     if (iPtr->freeProc != NULL) {
-	if ((iPtr->freeProc == TCL_DYNAMIC)
-		|| (iPtr->freeProc == (Tcl_FreeProc *) free)) {
+	if (iPtr->freeProc == TCL_DYNAMIC) {
 	    dsPtr->string = iPtr->result;
 	    dsPtr->spaceAvl = dsPtr->length+1;
 	} else {
@@ -2220,9 +2219,7 @@ TclGetIntForIndex(interp, objPtr, endValue, indexPtr)
 {
     char *bytes;
     int offset;
-#ifndef TCL_WIDE_INT_IS_LONG
     Tcl_WideInt wideOffset;
-#endif
 
     /*
      * If the object is already an integer, use it.
@@ -2237,16 +2234,14 @@ TclGetIntForIndex(interp, objPtr, endValue, indexPtr)
      * If the object is already a wide-int, and it is not out of range
      * for an integer, use it. [Bug #526717]
      */
-#ifndef TCL_WIDE_INT_IS_LONG
     if (objPtr->typePtr == &tclWideIntType) {
-	Tcl_WideInt wideOffset = objPtr->internalRep.wideValue;
+	TclGetWide(wideOffset,objPtr);
 	if (wideOffset >= Tcl_LongAsWide(INT_MIN)
 	    && wideOffset <= Tcl_LongAsWide(INT_MAX)) {
 	    *indexPtr = (int) Tcl_WideAsLong(wideOffset);
 	    return TCL_OK;
 	}
     }
-#endif /* TCL_WIDE_INT_IS_LONG */
 
     if (SetEndOffsetFromAny(NULL, objPtr) == TCL_OK) {
 	/*
@@ -2256,15 +2251,6 @@ TclGetIntForIndex(interp, objPtr, endValue, indexPtr)
 
 	*indexPtr = endValue + objPtr->internalRep.longValue;
 
-#ifdef TCL_WIDE_INT_IS_LONG
-    } else if (Tcl_GetIntFromObj(NULL, objPtr, &offset) == TCL_OK) {
-	/*
-	 * If the object can be converted to an integer, use that.
-	 */
-
-	*indexPtr = offset;
-
-#else /* !TCL_WIDE_INT_IS_LONG */
     } else if (Tcl_GetWideIntFromObj(NULL, objPtr, &wideOffset) == TCL_OK) {
 	/*
 	 * If the object can be converted to a wide integer, use
@@ -2283,7 +2269,6 @@ TclGetIntForIndex(interp, objPtr, endValue, indexPtr)
 	}
 	*indexPtr = offset;
 
-#endif /* TCL_WIDE_INT_IS_LONG */
     } else {
 	/*
 	 * Report a parse error.

@@ -95,13 +95,13 @@ Tcl errors.
 \fBTCL_LINK_STRING\fR
 The C variable is of type \fBchar *\fR.
 .VS
-If its value is not null then it must be a pointer to a string
+If its value is not NULL then it must be a pointer to a string
 allocated with \fBTcl_Alloc\fR or \fBckalloc\fR.
 .VE
 Whenever the Tcl variable is modified the current C string will be
 freed and new memory will be allocated to hold a copy of the variable's
 new value.
-If the C variable contains a null pointer then the Tcl variable
+If the C variable contains a NULL pointer then the Tcl variable
 will read as ``NULL''.
 .PP
 If the TCL_LINK_READ_ONLY flag is present in \fItype\fR then the

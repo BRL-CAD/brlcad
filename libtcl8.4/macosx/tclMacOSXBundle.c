@@ -83,8 +83,44 @@ Tcl_MacOSXOpenBundleResources(
     int         maxPathLen,
     char       *libraryPath)
 {
+    return Tcl_MacOSXOpenVersionedBundleResources(interp, bundleName,
+    	    NULL, hasResourceFile, maxPathLen, libraryPath);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tcl_MacOSXOpenVersionedBundleResources --
+ *
+ *	Given the bundle and version name for a shared library (version
+ *	name can be NULL to indicate latest version), this routine sets 
+ *	libraryPath to the Resources/Scripts directory in the framework
+ *	package.  If hasResourceFile is true, it will also open the main
+ *	resource file for the bundle.
+ *
+ *
+ * Results:
+ *	TCL_OK if the bundle could be opened, and the Scripts folder found.
+ *      TCL_ERROR otherwise.
+ *
+ * Side effects:
+ *	libraryVariableName may be set, and the resource file opened.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+Tcl_MacOSXOpenVersionedBundleResources(
+    Tcl_Interp *interp,
+    CONST char *bundleName,
+    CONST char *bundleVersion,
+    int         hasResourceFile,
+    int         maxPathLen,
+    char       *libraryPath)
+{
     CFBundleRef bundleRef;
     CFStringRef bundleNameRef;
+    CFURLRef libURL;
 
     libraryPath[0] = '\0';
 
@@ -94,11 +130,42 @@ Tcl_MacOSXOpenBundleResources(
     bundleRef = CFBundleGetBundleWithIdentifier(bundleNameRef);
     CFRelease(bundleNameRef);
 
-    if (bundleRef == 0) {
-	return TCL_ERROR;
-    } else {
-	CFURLRef libURL;
+    if (bundleVersion && bundleRef) {
+        /* create bundle from bundleVersion subdirectory of 'Versions' */
+    	CFBundleRef versionedBundleRef = NULL;
+	CFURLRef versionedBundleURL = NULL;
+	CFStringRef bundleVersionRef = CFStringCreateWithCString(NULL,
+		bundleVersion, kCFStringEncodingUTF8);
+	CFURLRef bundleURL = CFBundleCopyBundleURL(bundleRef);
+	if (bundleURL) {
+	    CFStringRef bundleTailRef = CFURLCopyLastPathComponent(bundleURL);
+	    if (bundleTailRef) {
+		if (CFStringCompare(bundleTailRef,bundleVersionRef,0)
+			== kCFCompareEqualTo) {
+		    versionedBundleRef = bundleRef;
+		}
+		CFRelease(bundleTailRef);
+	    }
+	}
+	if (bundleURL && !versionedBundleRef) {
+	    CFURLRef versURL = CFURLCreateCopyAppendingPathComponent(NULL,
+	    	    bundleURL, CFSTR("Versions"), TRUE);
+	    if (versURL) {
+		versionedBundleURL = CFURLCreateCopyAppendingPathComponent(
+			NULL, versURL, bundleVersionRef, TRUE);
+		CFRelease(versURL);
+	    }
+	    CFRelease(bundleURL);
+	}
+	CFRelease(bundleVersionRef);
+	if (versionedBundleURL) {
+	    versionedBundleRef = CFBundleCreate(NULL, versionedBundleURL);
+	    CFRelease(versionedBundleURL);
+	}
+	bundleRef = versionedBundleRef;
+    }
 
+    if (bundleRef) {	
 	if (hasResourceFile) {
 	    short refNum;
 	    refNum = CFBundleOpenBundleResourceMap(bundleRef);
@@ -107,20 +174,21 @@ Tcl_MacOSXOpenBundleResources(
 	libURL = CFBundleCopyResourceURL(bundleRef,
 		CFSTR("Scripts"), NULL, NULL);
 
-	if (libURL != NULL) {
+	if (libURL) {
 	    /*
 	     * FIXME: This is a quick fix, it is probably not right
 	     * for internationalization.
 	     */
 
-	    if (CFURLGetFileSystemRepresentation(libURL, true,
-		    libraryPath, maxPathLen)) {
-	    }
+	    CFURLGetFileSystemRepresentation(libURL, TRUE,
+		    libraryPath, maxPathLen);
 	    CFRelease(libURL);
-	} else {
-	    return TCL_ERROR;
 	}
     }
-
-    return TCL_OK;
+    
+    if (libraryPath[0]) {
+        return TCL_OK;
+    } else {
+	return TCL_ERROR;
+    }
 }

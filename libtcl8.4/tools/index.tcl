@@ -63,7 +63,7 @@ proc getSections {pkg} {
     lsort [array names temp]
 }
 
-# getSections --
+# getTopics --
 #
 # Generate a sorted list of topics in the specified section of the
 # specified package from the topics array.

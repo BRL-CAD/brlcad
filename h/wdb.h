@@ -410,6 +410,24 @@ void mk_freemembers( struct bu_list *headp );
 #define mk_fwrite_internal(fp,name,ip)		+++error_obsolete_libwdb_routine+++
 #define mk_export_fwrite(wdbp,name,gp,id)	wdb_export(wdbp,name,gp,id,mk_conv2mm)
 
+/*
+ *	Dynamic geometry routines
+ */
+WDB_EXTERN( int make_hole, ( struct rt_wdb *wdbp,
+			     point_t hole_start,
+			     vect_t hole_depth,
+			     fastf_t hole_radius,
+			     int num_objs,
+			     struct directory **dp ) );
+
+WDB_EXTERN( int make_hole_in_prepped_regions, ( struct rt_wdb *wdbp,
+						struct rt_i *rtip,
+						point_t hole_start,
+						vect_t hole_depth,
+						fastf_t radius,
+						struct bu_ptbl *regions ) );
+
+
 #ifdef __cplusplus
 }
 #endif

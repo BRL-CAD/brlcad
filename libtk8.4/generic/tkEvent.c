@@ -912,8 +912,7 @@ Tk_HandleEvent(eventPtr)
 			    XNPreeditAttributes, preedit_attr,
 			    NULL);
 		    XFree(preedit_attr);
-		} else
-#endif
+		} else {
 		    if (winPtr->inputContext != NULL)
 		        panic("inputContext not NULL");
 		    winPtr->inputContext = XCreateIC(dispPtr->inputMethod,
@@ -921,6 +920,16 @@ Tk_HandleEvent(eventPtr)
 			    XNClientWindow, winPtr->window,
 			    XNFocusWindow, winPtr->window,
 			    NULL);
+		}
+#else
+		if (winPtr->inputContext != NULL)
+		    panic("inputContext not NULL");
+		winPtr->inputContext = XCreateIC(dispPtr->inputMethod,
+			XNInputStyle, XIMPreeditNothing|XIMStatusNothing,
+			XNClientWindow, winPtr->window,
+			XNFocusWindow, winPtr->window,
+			NULL);
+#endif
 	    }
 	}
 	if (XFilterEvent(eventPtr, None)) {

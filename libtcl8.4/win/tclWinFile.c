@@ -128,6 +128,26 @@ typedef struct {
     WCHAR  dummyBuf[MAX_PATH*3];
 } DUMMY_REPARSE_BUFFER;
 
+#if defined(_MSC_VER) && ( _MSC_VER <= 1100 )
+#define HAVE_NO_FINDEX_ENUMS
+#elif !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0400)
+#define HAVE_NO_FINDEX_ENUMS
+#endif
+
+#ifdef HAVE_NO_FINDEX_ENUMS
+/* These two aren't in VC++ 5.2 headers */
+typedef enum _FINDEX_INFO_LEVELS {
+	FindExInfoStandard,
+	FindExInfoMaxInfoLevel
+} FINDEX_INFO_LEVELS;
+typedef enum _FINDEX_SEARCH_OPS {
+	FindExSearchNameMatch,
+	FindExSearchLimitToDirectories,
+	FindExSearchLimitToDevices,
+	FindExSearchMaxSearchOp
+} FINDEX_SEARCH_OPS;
+#endif /* HAVE_NO_FINDEX_ENUMS */
+
 /* Other typedefs required by this code */
 
 static time_t		ToCTime(FILETIME fileTime);
@@ -140,6 +160,8 @@ typedef NET_API_STATUS NET_API_FUNCTION NETAPIBUFFERFREEPROC
 
 typedef NET_API_STATUS NET_API_FUNCTION NETGETDCNAMEPROC
 	(LPWSTR servername, LPWSTR domainname, LPBYTE *bufptr);
+
+extern Tcl_FSDupInternalRepProc NativeDupInternalRep;
 
 /*
  * Declarations for local procedures defined in this file:
@@ -162,7 +184,6 @@ static int WinLink(CONST TCHAR* LinkSource, CONST TCHAR* LinkTarget,
 		   int linkAction);
 static int WinSymLinkDirectory(CONST TCHAR* LinkDirectory, 
 			       CONST TCHAR* LinkTarget);
-
 
 /*
  *--------------------------------------------------------------------
@@ -249,8 +270,7 @@ WinLink(LinkSource, LinkTarget, linkAction)
  *
  * WinReadLink
  *
- * What does 'LinkSource' point to?  We need the original 'pathPtr'
- * just so we can construct a path object in the correct filesystem.
+ * What does 'LinkSource' point to? 
  *--------------------------------------------------------------------
  */
 static Tcl_Obj* 
@@ -429,7 +449,11 @@ TclWinSymLinkDelete(LinkOriginal, linkOnly)
  *
  * Assumption that LinkDirectory is a valid, existing directory.
  * 
- * Returns a Tcl_Obj with refCount of 1 (i.e. owned by the caller).
+ * Returns a Tcl_Obj with refCount of 1 (i.e. owned by the caller),
+ * or NULL if anything went wrong.
+ * 
+ * In the future we should enhance this to return a path object
+ * rather than a string.
  *--------------------------------------------------------------------
  */
 static Tcl_Obj* 
@@ -457,28 +481,77 @@ WinReadLinkDirectory(LinkDirectory)
 	    Tcl_DString ds;
 	    CONST char *copy;
 	    int len;
+	    int offset = 0;
 	    
-	    Tcl_WinTCharToUtf( 
-		(CONST char*)reparseBuffer->SymbolicLinkReparseBuffer.PathBuffer, 
-		(int)reparseBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength, 
-		&ds);
-	
-	    copy = Tcl_DStringValue(&ds);
-	    len = Tcl_DStringLength(&ds);
 	    /* 
-	     * Certain native path representations on Windows have this special
-	     * prefix to indicate that they are to be treated specially.  For
-	     * example extremely long paths, or symlinks 
+	     * Certain native path representations on Windows have a
+	     * special prefix to indicate that they are to be treated
+	     * specially.  For example extremely long paths, or symlinks,
+	     * or volumes mounted inside directories.
+	     * 
+	     * There is an assumption in this code that 'wide' interfaces
+	     * are being used (see tclWin32Dll.c), which is true for the
+	     * only systems which support reparse tags at present.  If
+	     * that changes in the future, this code will have to be
+	     * generalised.
 	     */
-	    if (*copy == '\\') {
-		if (0 == strncmp(copy,"\\??\\",4)) {
-		    copy += 4;
-		    len -= 4;
-		} else if (0 == strncmp(copy,"\\\\?\\",4)) {
-		    copy += 4;
-		    len -= 4;
+	    if (reparseBuffer->SymbolicLinkReparseBuffer.PathBuffer[0] 
+		                                                 == L'\\') {
+		/* Check whether this is a mounted volume */
+		if (wcsncmp(reparseBuffer->SymbolicLinkReparseBuffer.PathBuffer, 
+			    L"\\??\\Volume{",11) == 0) {
+		    char drive;
+		    /* 
+		     * There is some confusion between \??\ and \\?\ which
+		     * we have to fix here.  It doesn't seem very well
+		     * documented.
+		     */
+		    reparseBuffer->SymbolicLinkReparseBuffer
+		                                      .PathBuffer[1] = L'\\';
+		    /* 
+		     * Check if a corresponding drive letter exists, and
+		     * use that if it is found
+		     */
+		    drive = TclWinDriveLetterForVolMountPoint(reparseBuffer
+					->SymbolicLinkReparseBuffer.PathBuffer);
+		    if (drive != -1) {
+			char driveSpec[3] = {
+			    drive, ':', '\0'
+			};
+			retVal = Tcl_NewStringObj(driveSpec,2);
+			Tcl_IncrRefCount(retVal);
+			return retVal;
+		    }
+		    /* 
+		     * This is actually a mounted drive, which doesn't
+		     * exists as a DOS drive letter.  This means the path
+		     * isn't actually a link, although we partially treat
+		     * it like one ('file type' will return 'link'), but
+		     * then the link will actually just be treated like
+		     * an ordinary directory.  I don't believe any
+		     * serious inconsistency will arise from this, but it
+		     * is something to be aware of.
+		     */
+		    Tcl_SetErrno(EINVAL);
+		    return NULL;
+		} else if (wcsncmp(reparseBuffer->SymbolicLinkReparseBuffer
+				   .PathBuffer, L"\\\\?\\",4) == 0) {
+		    /* Strip off the prefix */
+		    offset = 4;
+		} else if (wcsncmp(reparseBuffer->SymbolicLinkReparseBuffer
+				   .PathBuffer, L"\\??\\",4) == 0) {
+		    /* Strip off the prefix */
+		    offset = 4;
 		}
 	    }
+	    
+	    Tcl_WinTCharToUtf(
+		(CONST char*)reparseBuffer->SymbolicLinkReparseBuffer.PathBuffer, 
+		(int)reparseBuffer->SymbolicLinkReparseBuffer
+		.SubstituteNameLength, &ds);
+	
+	    copy = Tcl_DStringValue(&ds)+offset;
+	    len = Tcl_DStringLength(&ds)-offset;
 	    retVal = Tcl_NewStringObj(copy,len);
 	    Tcl_IncrRefCount(retVal);
 	    Tcl_DStringFree(&ds);
@@ -942,10 +1015,9 @@ WinIsDrive(
  * volume, because for NTFS root volumes, the getFileAttributesProc
  * returns a 'hidden' attribute when it should not.
  * 
- * We only ever make one call to a 'get attributes' routine here,
- * so that this function is as fast as possible.  Unfortunately,
- * it still means we have to make the call for every single file
- * we return from 'glob', which is not ideal.
+ * We never make any calss to a 'get attributes' routine here,
+ * since we have arranged things so that our caller already knows
+ * such information.
  * 
  * Results:
  *  0 = file doesn't match
@@ -1323,9 +1395,24 @@ TclpObjChdir(pathPtr)
 {
     int result;
     CONST TCHAR *nativePath;
+#ifdef __CYGWIN__
+    extern int cygwin_conv_to_posix_path 
+	_ANSI_ARGS_((CONST char *, char *));
+    char posixPath[MAX_PATH+1];
+    CONST char *path;
+    Tcl_DString ds;
+#endif /* __CYGWIN__ */
 
     nativePath = (CONST TCHAR *) Tcl_FSGetNativePath(pathPtr);
+#ifdef __CYGWIN__
+    /* Cygwin chdir only groks POSIX path. */
+    path = Tcl_WinTCharToUtf(nativePath, -1, &ds);
+    cygwin_conv_to_posix_path(path, posixPath);
+    result = (chdir(posixPath) == 0 ? 1 : 0);
+    Tcl_DStringFree(&ds);
+#else /* __CYGWIN__ */
     result = (*tclWinProcs->setCurrentDirectoryProc)(nativePath);
+#endif /* __CYGWIN__ */
 
     if (result == 0) {
 	TclWinConvertError(GetLastError());

@@ -828,13 +828,13 @@ test trace-14.11 {trace command, "trace variable" errors} {
 } [list 1 "bad operations \"y\": should be one or more of rwua"]
 
 
-test trace-14.9 {trace command ("remove variable" option)} {
+test trace-14.12 {trace command ("remove variable" option)} {
     catch {unset x}
     set info {}
     trace add variable x write traceProc
     trace remove variable x write traceProc
 } {}
-test trace-14.10 {trace command ("remove variable" option)} {
+test trace-14.13 {trace command ("remove variable" option)} {
     catch {unset x}
     set info {}
     trace add variable x write traceProc
@@ -842,7 +842,7 @@ test trace-14.10 {trace command ("remove variable" option)} {
     set x 12345
     set info
 } {}
-test trace-14.11 {trace command ("remove variable" option)} {
+test trace-14.14 {trace command ("remove variable" option)} {
     catch {unset x}
     set info {}
     trace add variable x write {traceTag 1}
@@ -857,7 +857,7 @@ test trace-14.11 {trace command ("remove variable" option)} {
     set x gorp
     set info
 } {2 x {} write 1 2 1 2}
-test trace-14.12 {trace command ("remove variable" option)} {
+test trace-14.15 {trace command ("remove variable" option)} {
     catch {unset x}
     set info {}
     trace add variable x write {traceTag 1}
@@ -865,27 +865,27 @@ test trace-14.12 {trace command ("remove variable" option)} {
     set x 12345
     set info
 } {1}
-test trace-14.15 {trace command ("info variable" option)} {
+test trace-14.16 {trace command ("info variable" option)} {
     catch {unset x}
     trace add variable x write {traceTag 1}
     trace add variable x write traceProc
     trace add variable x write {traceTag 2}
     trace info variable x
 } {{write {traceTag 2}} {write traceProc} {write {traceTag 1}}}
-test trace-14.16 {trace command ("info variable" option)} {
+test trace-14.17 {trace command ("info variable" option)} {
     catch {unset x}
     trace info variable x
 } {}
-test trace-14.17 {trace command ("info variable" option)} {
+test trace-14.18 {trace command ("info variable" option)} {
     catch {unset x}
     trace info variable x(0)
 } {}
-test trace-14.18 {trace command ("info variable" option)} {
+test trace-14.19 {trace command ("info variable" option)} {
     catch {unset x}
     set x 44
     trace info variable x(0)
 } {}
-test trace-14.19 {trace command ("info variable" option)} {
+test trace-14.20 {trace command ("info variable" option)} {
     catch {unset x}
     set x 44
     trace add variable x write {traceTag 1}
@@ -1165,12 +1165,12 @@ test trace-18.2 {namespace delete / trace vdelete combo} {
 catch {unset x}
 catch {unset y}
 
-test trace-18.2 {trace add command (command existence)} {
+test trace-18.3 {trace add command (command existence)} {
     # Just in case!
     catch {rename nosuchname ""}
     list [catch {trace add command nosuchname rename traceCommand} msg] $msg
 } {1 {unknown command "nosuchname"}}
-test trace-18.3 {trace add command (command existence in ns)} {
+test trace-18.4 {trace add command (command existence in ns)} {
     list [catch {trace add command nosuchns::nosuchname rename traceCommand} msg] $msg
 } {1 {unknown command "nosuchns::nosuchname"}}
 
@@ -2105,4 +2105,3 @@ catch {unset info}
 # cleanup
 ::tcltest::cleanupTests
 return
-

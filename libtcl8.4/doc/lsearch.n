@@ -37,8 +37,9 @@ matching values if \fB\-inline\fR is specified as well.)
 .VE 8.4
 .TP
 \fB\-ascii\fR
-The list elements are to be examined as ASCII strings.  This option is only
-meaningful when used with \fB\-exact\fR or \fB\-sorted\fR.
+The list elements are to be examined as Unicode strings (the name is
+for backward-compatability reasons.)  This option is only meaningful
+when used with \fB\-exact\fR or \fB\-sorted\fR.
 .TP
 \fB\-decreasing\fR
 The list elements are sorted in decreasing order.  This option is only

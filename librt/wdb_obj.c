@@ -9598,12 +9598,30 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 		switch(c) {
 			case 'c':
 				max_chord_error = atof( bu_optarg );
+				if( max_chord_error < 0.0 ) {
+					Tcl_AppendResult(interp,
+							 "Maximum chord error cannot be less than zero",
+							 (char *)NULL );
+					return TCL_ERROR;
+				}
 				break;
 			case 'n':
 				max_normal_error = atof( bu_optarg );
+				if( max_normal_error < 0.0 ) {
+					Tcl_AppendResult(interp,
+							 "Maximum normal error cannot be less than zero",
+							 (char *)NULL );
+					return TCL_ERROR;
+				}
 				break;
 			case 'e':
 				min_edge_length = atof( bu_optarg );
+				if( min_edge_length < 0.0 ) {
+					Tcl_AppendResult(interp,
+							 "minumum edge length cannot be less than zero",
+							 (char *)NULL );
+					return TCL_ERROR;
+				}
 				break;
 			default:
 				{
@@ -9617,18 +9635,6 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 					return TCL_ERROR;
 				}
 		}
-	}
-
-	if( max_chord_error <= SMALL_FASTF &&
-	    max_normal_error <= SMALL_FASTF &&
-	    min_edge_length <= SMALL_FASTF ) {
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib_alias wdb_bot_decimate %s", argv[0]);
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
 	}
 
 	argc -= bu_optind;

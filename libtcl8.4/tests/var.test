@@ -262,6 +262,16 @@ test var-3.9 {MakeUpvar, my var has invalid ns name} {
     set aaaaa 789789
     list [catch {upvar #0 aaaaa test_ns_fred::lnk} msg] $msg
 } {1 {can't create "test_ns_fred::lnk": parent namespace doesn't exist}}
+test var-3.10 {MakeUpvar, } {
+    namespace eval {} {
+	set bar 0
+	namespace eval foo upvar bar bar
+	set foo::bar 1
+	catch {list $bar $foo::bar} msg
+	unset ::aaaaa
+	set msg
+    }
+} {1 1}
 
 if {[info commands testgetvarfullname] != {}} {
     test var-4.1 {Tcl_GetVariableName, global variable} {
@@ -669,6 +679,20 @@ test var-13.1 {Tcl_UnsetVar2, unset array with trace set on element} {
 test var-14.1 {array names syntax} -body {
     array names foo bar baz snafu
 } -returnCodes 1 -match glob -result *
+
+test var-15.1 {segfault in [unset], [Bug 735335]} {
+    proc A { name } {
+	upvar $name var
+	set var $name
+    }
+    #
+    # Note that the variable name has to be 
+    # unused previously for the segfault to
+    # be triggered.
+    #
+    namespace eval test A useSomeUnlikelyNameHere
+    namespace eval test unset useSomeUnlikelyNameHere
+} {}
 
 catch {namespace delete ns}
 catch {unset arr}

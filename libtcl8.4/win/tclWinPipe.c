@@ -1208,9 +1208,7 @@ TclpCreateProcess(
 		char *start,*end;
 		Tcl_DString pipeDll;
 		Tcl_DStringInit(&pipeDll);
-		Tcl_DStringAppend(&pipeDll, TCL_PREFIX_IDENT "tclpip"
-		    STRINGIFY(TCL_MAJOR_VERSION) STRINGIFY(TCL_MINOR_VERSION)
-		    STRINGIFY(TCL_DEBUG_IDENT) ".dll ", -1);
+		Tcl_DStringAppend(&pipeDll, TCL_PIPE_DLL, -1);
 		tclExePtr = Tcl_NewStringObj(TclpFindExecutable(""), -1);
 		start = Tcl_GetStringFromObj(tclExePtr, &i);
 		for (end = start + (i-1); end > start; end--) {

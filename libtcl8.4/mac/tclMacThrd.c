@@ -168,17 +168,17 @@ Tcl_CreateThread(idPtr, proc, clientData, stackSize, flags)
  */
 
 int
-Tcl_JoinThread(id, result)
-    Tcl_ThreadId id;	/* Id of the thread to wait upon */
-    int*     result;	/* Reference to the storage the result
-			 * of the thread we wait upon will be
-			 * written into. */
+Tcl_JoinThread(threadId, result)
+    Tcl_ThreadId threadId; /* Id of the thread to wait upon */
+    int*     result;	   /* Reference to the storage the result
+			    * of the thread we wait upon will be
+			    * written into. */
 {
     if (!TclMacHaveThreads()) {
         return TCL_ERROR;
     }
 
-    return TclJoinThread (id, result);
+    return TclJoinThread (threadId, result);
 }
 
 /*

@@ -176,7 +176,7 @@ TCLSTUBLIB	= $(OUT_DIR)\$(TCLSTUBLIBNAME)
 
 TCLSHNAME	= $(PROJECT)sh$(VERSION)$(SUFX).exe
 TCLSH		= $(OUT_DIR)\$(TCLSHNAME)
-TCLPIPEDLLNAME	= $(PROJECT)pip$(VERSION).dll
+TCLPIPEDLLNAME	= $(PROJECT)pip$(VERSION)$(SUFX:t=).dll
 TCLPIPEDLL	= $(OUT_DIR)\$(TCLPIPEDLLNAME)
 
 TCLREGLIBNAME	= $(PROJECT)reg$(REGVERSION)$(SUFX:t=).$(EXT)
@@ -355,7 +355,8 @@ crt = -MTd
 !endif
 
 TCL_INCLUDES	= -I"$(WINDIR)" -I"$(GENERICDIR)"
-BASE_CLFAGS	= $(cflags) $(cdebug) $(crt) $(TCL_INCLUDES)
+BASE_CLFAGS	= $(cflags) $(cdebug) $(crt) $(TCL_INCLUDES) \
+			-DTCL_PIPE_DLL=\"$(TCLPIPEDLLNAME)\"
 CON_CFLAGS	= $(cflags) $(cdebug) $(crt) -DCONSOLE
 TCL_CFLAGS	= $(BASE_CLFAGS) $(OPTDEFINES)
 
@@ -421,9 +422,9 @@ install:    install-binaries install-libraries install-docs
 test: setup $(TCLTEST) dlls $(CAT32)
 	set TCL_LIBRARY=$(ROOT)/library
 !if "$(OS)" == "Windows_NT"  || "$(MSVCDIR)" == "IDE"
-	$(TCLTEST) $(ROOT)/tests/all.tcl $(TESTFLAGS)
+	$(TCLTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS)
 !else
-	$(TCLTEST) $(ROOT)/tests/all.tcl $(TESTFLAGS) > tests.log
+	$(TCLTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) > tests.log
 	type tests.log | more
 !endif
 

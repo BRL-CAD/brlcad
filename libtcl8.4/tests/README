@@ -6,7 +6,9 @@ Contents:
 ---------
 
     1. Introduction
-    2. Incompatibilities with prior Tcl versions
+    2. Running tests
+    3. Adding tests
+    4. Incompatibilities with prior Tcl versions
 
 1. Introduction:
 ----------------
@@ -18,24 +20,36 @@ file that corresponds to the file prefix.  The C functions and/or Tcl
 commands tested by a given file are listed in the first line of the
 file.
 
-You can run the tests in three ways:
+2. Running tests:
+-----------------
 
-    (a) type "make test" in ../unix; this will create the tcltest
-	executable and run all of the tests.  At least "make tcltest"
-	must be run to create the tcltest executable for the other
-	options.
+We recommend that you use the "test" target of Tcl's Makefile to run
+the test suite.  From the directory in which you build Tcl, simply
+type "make test".  This will create a special executable named
+tcltest in which the testing scripts will be evaluated.  To create
+the tcltest executable without running the test suite, simple type
+"make tcltest".
 
-    (b) type "tcltest <testFile> ?<option> <value>?
+All the configuration options of the tcltest package are available
+during a "make test" by defining the TESTFLAGS environment variable.
+For example,if you wish to run only those tests in the file append.test,
+you can type:
 
-	where the options and values are the configuration options
-	of the tcltest package.
- 
-    (c) start up tcltest in this directory, then "source" the test
-        file (for example, type "source parse.test").  To run all
-	of the tests, type "source all.tcl".  To use the options in
-	interactive mode, you can set them with the tcltest::configure
-	command.  Set constraints with the tcltest::testConstraints
-	command.
+	make test TESTFLAGS="-file append.test"
+
+For interactive testing, the Tcl Makefile provides the "runtest" target.
+Type "make runtest" in your build directory, and the tcltest executable
+will be created, if necessary, then it will run interactively.  At the
+command prompt, you may type any Tcl commands.  If you type
+"source ../tests/all.tcl", the test suite will run.  You may use the
+tcltest::configure command to configure the test suite run as an
+alternative to command line options via TESTFLAGS.  You might also
+wish to use the tcltest::testConstraint command to select the constraints
+that govern which tests are run.  See the documentation for the tcltest
+package for details.
+
+3. Adding tests:
+----------------
 
 Please see the tcltest man page for more information regarding how to
 write and run tests.
@@ -60,7 +74,7 @@ as well as an installation environment.  If your test file contains
 tests that should not be run in one or more of those cases, please use
 the constraints mechanism to skip those tests.
 
-2. Incompatibilities of package tcltest 2.1 with 
+4. Incompatibilities of package tcltest 2.1 with 
    testing machinery of very old versions of Tcl:
 ------------------------------------------------
 
@@ -88,3 +102,8 @@ the constraints mechanism to skip those tests.
    command line flag.  If you are running interactively, you can run
    [tcltest::testConstraint nonPortable 1] (after loading the tcltest
    package).
+
+7) Direct evaluation of the *.test files by the "source" command is no
+   longer recommended.  Instead, "source all.tcl" and use the "-file" and
+   "-notfile" options of tcltest::configure to control which *.test files
+   are evaluated.

@@ -37,7 +37,7 @@ int
 \fBTcl_GlobalEval\fR(\fIinterp, script\fR)
 .sp
 int
-\fBTcl_GlobalEvalObj\fR(\fIinterp, objPtr, flags\fR)
+\fBTcl_GlobalEvalObj\fR(\fIinterp, objPtr\fR)
 .sp
 int
 \fBTcl_VarEval\fR(\fIinterp, string, string, ... \fB(char *) NULL\fR)
@@ -67,7 +67,7 @@ The number of bytes in \fIscript\fR, not including any
 null terminating character.  If \-1, then all characters up to the
 first null byte are used.
 .AP "CONST char" *script in
-Points to first byte of script to execute (NULL terminated and UTF-8).
+Points to first byte of script to execute (null-terminated and UTF-8).
 .AP char *string in
 String forming part of a Tcl script.
 .AP va_list argList in
@@ -91,7 +91,8 @@ can be skipped if the object is evaluated again in the future.
 The return value from \fBTcl_EvalObjEx\fR (and all the other procedures
 described here) is a Tcl completion code with
 one of the values \fBTCL_OK\fR, \fBTCL_ERROR\fR, \fBTCL_RETURN\fR,
-\fBTCL_BREAK\fR, or \fBTCL_CONTINUE\fR.
+\fBTCL_BREAK\fR, or \fBTCL_CONTINUE\fR, or possibly some other
+integer value originating in an extension.
 In addition, a result value or error message is left in \fIinterp\fR's
 result; it can be retrieved using \fBTcl_GetObjResult\fR.
 .PP

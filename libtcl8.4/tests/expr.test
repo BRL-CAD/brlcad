@@ -297,8 +297,8 @@ test expr-8.11 {CompileEqualityExpr: error compiling equality arm} {
     catch {expr 2!=x} msg
     set msg
 } {syntax error in expression "2!=x": variable references require preceding $}
-test expr-8.14 {CompileBitAndExpr: equality expr} {expr {"a"eq"a"}} 1
-test expr-8.14 {CompileBitAndExpr: equality expr} {expr {"\374" eq "ü"}} 1
+test expr-8.12 {CompileBitAndExpr: equality expr} {expr {"a"eq"a"}} 1
+test expr-8.13 {CompileBitAndExpr: equality expr} {expr {"\374" eq "ü"}} 1
 test expr-8.14 {CompileBitAndExpr: equality expr} {expr 3eq2} 0
 test expr-8.15 {CompileBitAndExpr: equality expr} {expr 2.0eq2} 0
 test expr-8.16 {CompileBitAndExpr: equality expr} {expr 3.2ne2.2} 1

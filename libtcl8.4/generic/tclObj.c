@@ -63,9 +63,9 @@ static int		SetIntFromAny _ANSI_ARGS_((Tcl_Interp *interp,
 static void		UpdateStringOfBoolean _ANSI_ARGS_((Tcl_Obj *objPtr));
 static void		UpdateStringOfDouble _ANSI_ARGS_((Tcl_Obj *objPtr));
 static void		UpdateStringOfInt _ANSI_ARGS_((Tcl_Obj *objPtr));
-#ifndef TCL_WIDE_INT_IS_LONG
 static int		SetWideIntFromAny _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Obj *objPtr));
+#ifndef TCL_WIDE_INT_IS_LONG
 static void		UpdateStringOfWideInt _ANSI_ARGS_((Tcl_Obj *objPtr));
 #endif
 
@@ -126,15 +126,17 @@ Tcl_ObjType tclIntType = {
     SetIntFromAny			/* setFromAnyProc */
 };
 
-#ifndef TCL_WIDE_INT_IS_LONG
 Tcl_ObjType tclWideIntType = {
     "wideInt",				/* name */
     (Tcl_FreeInternalRepProc *) NULL,   /* freeIntRepProc */
     (Tcl_DupInternalRepProc *) NULL,	/* dupIntRepProc */
+#ifdef TCL_WIDE_INT_IS_LONG
+    UpdateStringOfInt,			/* updateStringProc */
+#else /* !TCL_WIDE_INT_IS_LONG */
     UpdateStringOfWideInt,		/* updateStringProc */
+#endif
     SetWideIntFromAny			/* setFromAnyProc */
 };
-#endif
 
 /*
  * The structure below defines the Tcl obj hash key type.
@@ -154,6 +156,13 @@ Tcl_HashKeyType tclObjHashKeyType = {
  * type cache the Command pointer that results from looking up command names
  * in the command hashtable. Such objects appear as the zeroth ("command
  * name") argument in a Tcl command.
+ *
+ * NOTE: the ResolvedCmdName that gets cached is stored in the
+ * twoPtrValue.ptr1 field, and the twoPtrValue.ptr2 field is unused.
+ * You might think you could use the simpler otherValuePtr field to
+ * store the single ResolvedCmdName pointer, but DO NOT DO THIS.  It
+ * seems that some extensions use the second internal pointer field
+ * of the twoPtrValue field for their own purposes.
  */
 
 static Tcl_ObjType tclCmdNameType = {
@@ -233,9 +242,7 @@ TclInitObjSubsystem()
     Tcl_RegisterObjType(&tclDoubleType);
     Tcl_RegisterObjType(&tclEndOffsetType);
     Tcl_RegisterObjType(&tclIntType);
-#ifndef TCL_WIDE_INT_IS_LONG
     Tcl_RegisterObjType(&tclWideIntType);
-#endif
     Tcl_RegisterObjType(&tclStringType);
     Tcl_RegisterObjType(&tclListType);
     Tcl_RegisterObjType(&tclByteCodeType);
@@ -1107,8 +1114,10 @@ SetBooleanFromAny(interp, objPtr)
 	newBool = (objPtr->internalRep.longValue != 0);
     } else if (objPtr->typePtr == &tclDoubleType) {
 	newBool = (objPtr->internalRep.doubleValue != 0.0);
-#ifndef TCL_WIDE_INT_IS_LONG
     } else if (objPtr->typePtr == &tclWideIntType) {
+#ifdef TCL_WIDE_INT_IS_LONG
+	newBool = (objPtr->internalRep.longValue != 0);
+#else /* !TCL_WIDE_INT_IS_LONG */
 	newBool = (objPtr->internalRep.wideValue != Tcl_LongAsWide(0));
 #endif /* TCL_WIDE_INT_IS_LONG */
     } else {
@@ -2133,12 +2142,12 @@ Tcl_GetLongFromObj(interp, objPtr, longPtr)
  *----------------------------------------------------------------------
  */
 
-#ifndef TCL_WIDE_INT_IS_LONG
 static int
 SetWideIntFromAny(interp, objPtr)
     Tcl_Interp *interp;		/* Used for error reporting if not NULL. */
     register Tcl_Obj *objPtr;	/* The object to convert. */
 {
+#ifndef TCL_WIDE_INT_IS_LONG
     Tcl_ObjType *oldTypePtr = objPtr->typePtr;
     char *string, *end;
     int length;
@@ -2224,10 +2233,14 @@ SetWideIntFromAny(interp, objPtr)
     }
     
     objPtr->internalRep.wideValue = newWide;
+#else 
+    if (TCL_ERROR == SetIntFromAny(interp, objPtr)) {
+	return TCL_ERROR;
+    }
+#endif
     objPtr->typePtr = &tclWideIntType;
     return TCL_OK;
 }
-#endif
 
 /*
  *----------------------------------------------------------------------
@@ -2314,9 +2327,6 @@ Tcl_NewWideIntObj(wideValue)
     register Tcl_WideInt wideValue;	/* Wide integer used to initialize
 					 * the new object. */
 {
-#ifdef TCL_WIDE_INT_IS_LONG
-    return Tcl_NewLongObj(wideValue);
-#else
     register Tcl_Obj *objPtr;
 
     TclNewObj(objPtr);
@@ -2325,7 +2335,6 @@ Tcl_NewWideIntObj(wideValue)
     objPtr->internalRep.wideValue = wideValue;
     objPtr->typePtr = &tclWideIntType;
     return objPtr;
-#endif /* TCL_WIDE_INT_IS_LONG */
 }
 #endif /* if TCL_MEM_DEBUG */
 
@@ -2375,9 +2384,6 @@ Tcl_DbNewWideIntObj(wideValue, file, line)
     int line;				/* Line number in the source file;
 					 * used for debugging. */
 {
-#ifdef TCL_WIDE_INT_IS_LONG
-    return Tcl_DbNewLongObj(wideValue, file, line);
-#else
     register Tcl_Obj *objPtr;
 
     TclDbNewObj(objPtr, file, line);
@@ -2386,7 +2392,6 @@ Tcl_DbNewWideIntObj(wideValue, file, line)
     objPtr->internalRep.wideValue = wideValue;
     objPtr->typePtr = &tclWideIntType;
     return objPtr;
-#endif
 }
 
 #else /* if not TCL_MEM_DEBUG */
@@ -2429,9 +2434,6 @@ Tcl_SetWideIntObj(objPtr, wideValue)
     register Tcl_WideInt wideValue;	/* Wide integer used to initialize
 					 * the object's value. */
 {
-#ifdef TCL_WIDE_INT_IS_LONG
-    Tcl_SetLongObj(objPtr, wideValue);
-#else
     register Tcl_ObjType *oldTypePtr = objPtr->typePtr;
 
     if (Tcl_IsShared(objPtr)) {
@@ -2445,7 +2447,6 @@ Tcl_SetWideIntObj(objPtr, wideValue)
     objPtr->internalRep.wideValue = wideValue;
     objPtr->typePtr = &tclWideIntType;
     Tcl_InvalidateStringRep(objPtr);
-#endif
 }
 
 /*
@@ -2475,12 +2476,6 @@ Tcl_GetWideIntFromObj(interp, objPtr, wideIntPtr)
     register Tcl_Obj *objPtr;	/* Object from which to get a wide int. */
     register Tcl_WideInt *wideIntPtr; /* Place to store resulting long. */
 {
-#ifdef TCL_WIDE_INT_IS_LONG
-    /*
-     * Next line is type-safe because we only do this when long = Tcl_WideInt
-     */
-    return Tcl_GetLongFromObj(interp, objPtr, wideIntPtr);
-#else
     register int result;
 
     if (objPtr->typePtr == &tclWideIntType) {
@@ -2492,7 +2487,6 @@ Tcl_GetWideIntFromObj(interp, objPtr, wideIntPtr)
 	*wideIntPtr = objPtr->internalRep.wideValue;
     }
     return result;
-#endif
 }
 
 /*
@@ -2896,7 +2890,7 @@ Tcl_GetCommandFromObj(interp, objPtr)
             return (Tcl_Command) NULL;
         }
     }
-    resPtr = (ResolvedCmdName *) objPtr->internalRep.otherValuePtr;
+    resPtr = (ResolvedCmdName *) objPtr->internalRep.twoPtrValue.ptr1;
 
     /*
      * Get the current namespace.
@@ -2935,7 +2929,7 @@ Tcl_GetCommandFromObj(interp, objPtr)
 	    iPtr->varFramePtr = savedFramePtr;
             return (Tcl_Command) NULL;
         }
-        resPtr = (ResolvedCmdName *) objPtr->internalRep.otherValuePtr;
+        resPtr = (ResolvedCmdName *) objPtr->internalRep.twoPtrValue.ptr1;
         if (resPtr != NULL) {
             cmdPtr = resPtr->cmdPtr;
         }
@@ -3036,7 +3030,7 @@ FreeCmdNameInternalRep(objPtr)
 				 * representation to free. */
 {
     register ResolvedCmdName *resPtr =
-	(ResolvedCmdName *) objPtr->internalRep.otherValuePtr;
+	(ResolvedCmdName *) objPtr->internalRep.twoPtrValue.ptr1;
 
     if (resPtr != NULL) {
 	/*
@@ -3085,7 +3079,7 @@ DupCmdNameInternalRep(srcPtr, copyPtr)
     register Tcl_Obj *copyPtr;	/* Object with internal rep to set. */
 {
     register ResolvedCmdName *resPtr =
-        (ResolvedCmdName *) srcPtr->internalRep.otherValuePtr;
+        (ResolvedCmdName *) srcPtr->internalRep.twoPtrValue.ptr1;
 
     copyPtr->internalRep.twoPtrValue.ptr1 = (VOID *) resPtr;
     copyPtr->internalRep.twoPtrValue.ptr2 = NULL;

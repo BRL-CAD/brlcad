@@ -417,7 +417,7 @@ char *argv[];
 			nmg_rebound( m , &tol );
 
 			/* write the nmg to the output file */
-			mk_nmg( out_fp , curr_name  , m );
+			mk_bot_from_nmg( out_fp , curr_name  , s );
 		}
 		else
 			bu_log( "Object %s has no faces\n" , curr_name );

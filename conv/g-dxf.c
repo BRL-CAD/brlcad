@@ -56,7 +56,7 @@ BU_EXTERN(union tree *get_layer, (struct db_tree_state *tsp, struct db_full_path
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
 static char	usage[] = "\
-Usage: %s [-v][-i][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
+Usage: %s [-v][-i][-p][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
 [-D dist_calc_tol] [-o output_file_name.dxf] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */

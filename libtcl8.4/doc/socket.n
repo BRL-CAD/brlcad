@@ -29,6 +29,13 @@ releases may include support for additional protocols.
 The \fBsocket\fR command may be used to open either the client or
 server side of a connection, depending on whether the \fB\-server\fR
 switch is specified.
+.PP
+Note that the default encoding for \fIall\fR sockets is the system
+encoding, as returned by \fBencoding system\fR.  Most of the time, you
+will need to use \fBfconfigure\fR to alter this to something else,
+such as \fIutf\-8\fR (ideal for communicating with other Tcl
+processes) or \fIiso8859\-1\fR (useful for many network protocols,
+especially the older ones).
 
 .SH "CLIENT SOCKETS"
 .PP
@@ -138,7 +145,7 @@ list is identical to the address, its first element.
 .PP
 
 .SH "SEE ALSO"
-flush(n), open(n), read(n)
+fconfigure(n), flush(n), open(n), read(n)
 
 .SH KEYWORDS
 bind, channel, connection, domain name, host, network address, socket, tcp

@@ -1,8 +1,8 @@
 #!/bin/sh
 # The next line is executed by /bin/sh, but not tcl \
-exec tclsh8.2 "$0" ${1+"$@"}
+exec tclsh8.4 "$0" ${1+"$@"}
 
-package require Tcl 8.2
+package require Tcl 8.4
 
 # Convert Ousterhout format man pages into highly crosslinked
 # hypertext.
@@ -65,24 +65,22 @@ package require Tcl 8.2
 #  Oct 24, 1997 - moved from 8.0b1 to 8.0 release
 #
 
-set Version "0.30"
+set Version "0.32"
 
 proc parse_command_line {} {
     global argv Version
 
     # These variables determine where the man pages come from and where
     # the converted pages go to.
-    global tcltkdir tkdir tcldir webdir
+    global tcltkdir tkdir tcldir webdir build_tcl build_tk
 
     # Set defaults based on original code.
     set tcltkdir ../..
     set tkdir {}
     set tcldir {}
     set webdir ../html
-
-    # Directory names for Tcl and Tk, in priority order.
-    set tclDirList {tcl8.4 tcl8.3 tcl8.2 tcl8.1 tcl8.0 tcl}
-    set tkDirList {tk8.4 tk8.3 tk8.2 tk8.1 tk8.0 tk}
+    set build_tcl 0
+    set build_tk 0
 
     # Handle arguments a la GNU:
     #   --version
@@ -103,6 +101,8 @@ proc parse_command_line {} {
 		puts "  --version           print version number, then exit"
 		puts "  --srcdir=DIR        find tcl and tk source below DIR"
 		puts "  --htmldir=DIR       put generated HTML in DIR"
+		puts "  --tcl               build tcl help"
+		puts "  --tk                build tk help"
 		exit 0
 	    }
 
@@ -116,6 +116,14 @@ proc parse_command_line {} {
 		set webdir [string range $option 10 end]
 	    }
 
+	    --tcl {
+		set build_tcl 1
+	    }
+
+	    --tk {
+		set build_tk 1
+	    }
+
 	    default {
 		puts stderr "tcltk-man-html: unrecognized option -- `$option'"
 		exit 1
@@ -123,33 +131,37 @@ proc parse_command_line {} {
 	}
     }
 
+    if {!$build_tcl && !$build_tk} {set build_tcl 1; set build_tk 1}
+
+    if {$build_tcl} {
     # Find Tcl.
-    foreach dir $tclDirList {
-	if {[file isdirectory $tcltkdir/$dir]} then {
-	    set tcldir $dir
-	    break
-	}
-    }
+    set tcldir [lindex [lsort [glob -nocomplain -tails -type d \
+		-directory $tcltkdir {tcl{,[8-9].[0-9]{,.[0-9]}}}]] end]
     if {$tcldir == ""} then {
 	puts stderr "tcltk-man-html: couldn't find Tcl below $tcltkdir"
 	exit 1
     }
-
-    # Find Tk.
-    foreach dir $tkDirList {
-	if {[file isdirectory $tcltkdir/$dir]} then {
-	    set tkdir $dir
-	    break
-	}
+    puts "using Tcl source directory $tcldir"
     }
+
+    if {$build_tk} {
+    # Find Tk.
+    set tkdir [lindex [lsort [glob -nocomplain -tails -type d \
+		-directory $tcltkdir {tk{,[8-9].[0-9]{,.[0-9]}}}]] end]
     if {$tkdir == ""} then {
 	puts stderr "tcltk-man-html: couldn't find Tk below $tcltkdir"
 	exit 1
     }
+    puts "using Tk source directory $tkdir"
+    }
 
     # the title for the man pages overall
     global overall_title
-    set overall_title "[capitalize $tcldir]/[capitalize $tkdir] Manual"
+    set overall_title ""
+    if {$build_tcl} {append overall_title "[capitalize $tcldir]"}
+    if {$build_tcl && $build_tk} {append overall_title "/"}
+    if {$build_tk} {append overall_title "[capitalize $tkdir]"}
+    append overall_title " Manual"
 }
 
 proc capitalize {string} {
@@ -666,6 +678,7 @@ proc cross-reference {ref} {
 	foreach name {array file history info interp string trace
 	after clipboard grab image option pack place selection tk tkwait update winfo wm} {
 	    if {[regexp "^$name \[a-z0-9]*\$" $lref] && \
+		    [info exists manual(name-$name)] && \
 		    [string compare $manual(tail) "$name.n"]} {
 		return "<A HREF=\"../$manual(name-$name).htm\">$ref</A>"
 	    }
@@ -1275,7 +1288,7 @@ proc makedirhier {dir} {
 ## specified by html.
 ##
 proc make-man-pages {html args} {
-    global env manual overall_title
+    global env manual overall_title tcltkdesc
     makedirhier $html
     set manual(short-toc-n) 1
     set manual(short-toc-fp) [open $html/contents.htm w]
@@ -1283,6 +1296,7 @@ proc make-man-pages {html args} {
     puts $manual(short-toc-fp) "<BODY><HR><H3>$overall_title</H3><HR><DL>"
     set manual(merge-copyrights) {}
     foreach arg $args {
+	if {$arg == ""} {continue}
 	set manual(wing-glob) [lindex $arg 0]
 	set manual(wing-name) [lindex $arg 1]
 	set manual(wing-file) [lindex $arg 2]
@@ -1568,15 +1582,15 @@ proc make-man-pages {html args} {
     set keys [lsort -command strcasecmp [array names manual keyword-*]]
     makedirhier $html/Keywords
     catch {eval file delete -- [glob $html/Keywords/*]}
-    puts $manual(short-toc-fp) {<DT><A HREF="Keywords/contents.htm">Keywords</A><DD>The keywords from the Tcl/Tk man pages.}
+    puts $manual(short-toc-fp) "<DT><A HREF=\"Keywords/contents.htm\">Keywords</A><DD>The keywords from the $tcltkdesc man pages."
     set keyfp [open $html/Keywords/contents.htm w]
-    puts $keyfp "<HTML><HEAD><TITLE>Tcl/Tk Keywords</TITLE></HEAD>"
-    puts $keyfp "<BODY><HR><H3>Tcl/Tk Keywords</H3><HR><H2>"
+    puts $keyfp "<HTML><HEAD><TITLE>$tcltkdesc Keywords</TITLE></HEAD>"
+    puts $keyfp "<BODY><HR><H3>$tcltkdesc Keywords</H3><HR><H2>"
     foreach a {A B C D E F G H I J K L M N O P Q R S T U V W X Y Z} {
 	puts $keyfp "<A HREF=\"$a.htm\">$a</A>"
 	set afp [open $html/Keywords/$a.htm w]
-	puts $afp "<HTML><HEAD><TITLE>Tcl/Tk Keywords - $a</TITLE></HEAD>"
-	puts $afp "<BODY><HR><H3>Tcl/Tk Keywords - $a</H3><HR><H2>"
+	puts $afp "<HTML><HEAD><TITLE>$tcltkdesc Keywords - $a</TITLE></HEAD>"
+	puts $afp "<BODY><HR><H3>$tcltkdesc Keywords - $a</H3><HR><H2>"
 	foreach b {A B C D E F G H I J K L M N O P Q R S T U V W X Y Z} {
 	    puts $afp "<A HREF=\"$b.htm\">$b</A>"
 	}
@@ -1667,22 +1681,27 @@ proc make-man-pages {html args} {
     return {}
 }
 
-set usercmddesc {The interpreters which implement Tcl and Tk.}
+parse_command_line
+
+set tcltkdesc ""; set cmdesc ""; set appdir ""
+if {$build_tcl} {append tcltkdesc "Tcl"; append cmdesc "Tcl"; append appdir "$tcldir"}
+if {$build_tcl && $build_tk} {append tcltkdesc "/"; append cmdesc " and "; append appdir ","}
+if {$build_tk} {append tcltkdesc "Tk"; append cmdesc "Tk"; append appdir "$tkdir"}
+
+set usercmddesc "The interpreters which implement $cmdesc."
 set tclcmddesc {The commands which the <B>tclsh</B> interpreter implements.}
 set tkcmddesc {The additional commands which the <B>wish</B> interpreter implements.}
 set tcllibdesc {The C functions which a Tcl extended C program may use.}
 set tklibdesc {The additional C functions which a Tk extended C program may use.}
 		
-parse_command_line
-
 if {1} {
     if {[catch {
 	make-man-pages $webdir \
-	    "$tcltkdir/{$tkdir,$tcldir}/doc/*.1 {Tcl/Tk Applications} UserCmd {$usercmddesc}" \
-	    "$tcltkdir/$tcldir/doc/*.n {Tcl Commands} TclCmd {$tclcmddesc}" \
-	    "$tcltkdir/$tkdir/doc/*.n {Tk Commands} TkCmd {$tkcmddesc}" \
-	    "$tcltkdir/$tcldir/doc/*.3 {Tcl Library} TclLib {$tcllibdesc}" \
-	    "$tcltkdir/$tkdir/doc/*.3 {Tk Library} TkLib {$tklibdesc}"
+	    "$tcltkdir/{$appdir}/doc/*.1 \"$tcltkdesc Applications\" UserCmd {$usercmddesc}" \
+	    [expr {$build_tcl ? "$tcltkdir/$tcldir/doc/*.n {Tcl Commands} TclCmd {$tclcmddesc}" : ""}] \
+	    [expr {$build_tk ? "$tcltkdir/$tkdir/doc/*.n {Tk Commands} TkCmd {$tkcmddesc}" : ""}] \
+	    [expr {$build_tcl ? "$tcltkdir/$tcldir/doc/*.3 {Tcl Library} TclLib {$tcllibdesc}" : ""}] \
+	    [expr {$build_tk ? "$tcltkdir/$tkdir/doc/*.3 {Tk Library} TkLib {$tklibdesc}" : ""}]
     } error]} {
 	puts $error\n$errorInfo
     }

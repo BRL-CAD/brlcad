@@ -46,8 +46,7 @@ extern "C" {
  * win/makefile.vc	(not patchlevel) 2 LOC
  * README		(sections 0 and 2)
  * mac/README		(2 LOC, not patchlevel)
- * macosx/Tcl.pbproj/project.pbxproj
- * 			(7 LOC total, 2 LOC patch)
+ * macosx/Tcl.pbproj/project.pbxproj (not patchlevel) 2 LOC
  * win/README.binary	(sections 0-4)
  * win/README		(not patchlevel) (sections 0 and 2)
  * unix/tcl.spec	(2 LOC Major/Minor, 1 LOC patch)
@@ -59,13 +58,10 @@ extern "C" {
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   4
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  2
-
-#define TCL_PREFIX_IDENT ""
-#define TCL_DEBUG_IDENT TCL_DBGX
+#define TCL_RELEASE_SERIAL  4
 
 #define TCL_VERSION	    "8.4"
-#define TCL_PATCH_LEVEL	    "8.4.2"
+#define TCL_PATCH_LEVEL	    "8.4.4"
 
 /*
  * The following definitions set up the proper options for Windows
@@ -633,18 +629,13 @@ typedef struct stat *Tcl_OldStat_;
  */
 typedef enum {
     TCL_INT, TCL_DOUBLE, TCL_EITHER, TCL_WIDE_INT
-#ifdef TCL_WIDE_INT_IS_LONG
-    = TCL_INT
-#endif
 } Tcl_ValueType;
 typedef struct Tcl_Value {
     Tcl_ValueType type;		/* Indicates intValue or doubleValue is
 				 * valid, or both. */
     long intValue;		/* Integer value. */
     double doubleValue;		/* Double-precision floating value. */
-#ifndef TCL_WIDE_INT_IS_LONG
     Tcl_WideInt wideValue;	/* Wide (min. 64-bit) integer value. */
-#endif
 } Tcl_Value;
 
 /*
@@ -2177,18 +2168,34 @@ typedef struct Tcl_Parse {
 #define TCL_CONVERT_UNKNOWN		-3
 #define TCL_CONVERT_NOSPACE		-4
 
-
 /*
  * The maximum number of bytes that are necessary to represent a single
- * Unicode character in UTF-8.
+ * Unicode character in UTF-8.  The valid values should be 3 or 6 (or
+ * perhaps 1 if we want to support a non-unicode enabled core).
+ * If 3, then Tcl_UniChar must be 2-bytes in size (UCS-2). (default)
+ * If 6, then Tcl_UniChar must be 4-bytes in size (UCS-4).
+ * At this time UCS-2 mode is the default and recommended mode.
+ * UCS-4 is experimental and not recommended.  It works for the core,
+ * but most extensions expect UCS-2.
  */
+#ifndef TCL_UTF_MAX
 #define TCL_UTF_MAX		3
+#endif
 
 /*
  * This represents a Unicode character.  Any changes to this should
  * also be reflected in regcustom.h.
  */
+#if TCL_UTF_MAX > 3
+    /*
+     * unsigned int isn't 100% accurate as it should be a strict 4-byte
+     * value (perhaps wchar_t).  64-bit systems may have troubles.  The
+     * size of this value must be reflected correctly in regcustom.h.
+     */
+typedef unsigned int Tcl_UniChar;
+#else
 typedef unsigned short Tcl_UniChar;
+#endif
 
 
 /*

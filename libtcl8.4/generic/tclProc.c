@@ -1229,6 +1229,14 @@ TclProcCompileProc(interp, procPtr, bodyPtr, nsPtr, description, procName)
  		    numChars = 50;
  		    ellipsis = "...";
  		}
+		while ( (procName[numChars] & 0xC0) == 0x80 ) {
+	            /*
+		     * Back up truncation point so that we don't truncate
+		     * in the middle of a multi-byte character (in UTF-8)
+		     */
+		    numChars--;
+		    ellipsis = "...";
+		}
  		sprintf(buf, "\n    (compiling %s \"%.*s%s\", line %d)",
  			description, numChars, procName, ellipsis,
  			interp->errorLine);
@@ -1311,6 +1319,14 @@ ProcessProcResultCode(interp, procName, nameLen, returnCode)
     }
     if (nameLen > 60) {
 	nameLen = 60;
+	ellipsis = "...";
+    }
+    while ( (procName[nameLen] & 0xC0) == 0x80 ) {
+        /*
+	 * Back up truncation point so that we don't truncate in the
+	 * middle of a multi-byte character (in UTF-8)
+	 */
+	nameLen--;
 	ellipsis = "...";
     }
     sprintf(msg, "\n    (procedure \"%.*s%s\" line %d)", nameLen, procName,

@@ -106,8 +106,8 @@ extern struct region	env_region;		/* environment map region */
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 
 extern vect_t	background;
-int	ibackground[3];			/* integer 0..255 version */
-int	inonbackground[3];		/* integer non-background */
+int	ibackground[3] = {0};			/* integer 0..255 version */
+int	inonbackground[3] = {0};		/* integer non-background */
 
 #ifdef RTSRV
 extern int	srv_startpix;		/* offset for view_pixel */
@@ -229,8 +229,8 @@ register struct application *ap;
 		}
 
 		/* Make sure it's never perfect black */
-		if (b == 0)
-		  b= 1;
+		if (r==0 && g==0 && b==0 && benchmark==0)
+		  b = 1;
 	}
 
 	if(R_DEBUG&RDEBUG_HITS) bu_log("rgb=%3d,%3d,%3d xy=%3d,%3d (%g,%g,%g)\n",
@@ -609,16 +609,16 @@ struct rt_i	*rtip;
  *			V I E W _ R E _ S E T U P
  *
  *	This routine is used to do a "mlib_setup" on reprepped regions.
- *	only regions whose bit number is greater than "old_nregions" will be processed.
+ *	only regions with a NULL reg_mfuncs pointer will be processed.
  */
 void
-view_re_setup( struct rt_i *rtip, int old_nregions, struct resource *resp )
+view_re_setup( struct rt_i *rtip )
 {
 	struct region *rp;
 
 	rp = BU_LIST_FIRST( region, &(rtip->HeadRegion) );
 	while( BU_LIST_NOT_HEAD( rp, &(rtip->HeadRegion) ) ) {
-		if( rp->reg_bit >= old_nregions ) {
+		if( !rp->reg_mfuncs ) {
 			switch( mlib_setup( &mfHead, rp, rtip ) ) {
 			default:
 			case -1:

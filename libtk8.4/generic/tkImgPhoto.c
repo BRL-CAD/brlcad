@@ -686,11 +686,11 @@ ImgPhotoCmd(clientData, interp, objc, objv)
 
 	if (objc == 2) {
 	    Tk_PhotoBlank(masterPtr);
+	    return TCL_OK;
 	} else {
 	    Tcl_WrongNumArgs(interp, 2, objv, (char *) NULL);
 	    return TCL_ERROR;
 	}
-	break;
 
     case PHOTO_CGET: {
 	char *arg;
@@ -704,17 +704,15 @@ ImgPhotoCmd(clientData, interp, objc, objv)
 	    if (masterPtr->dataString) {
 		Tcl_SetObjResult(interp, masterPtr->dataString);
 	    }
-	    return TCL_OK;
-	}
-	if (strncmp(arg,"-format", length) == 0) {
+	} else if (strncmp(arg,"-format", length) == 0) {
 	    if (masterPtr->format) {
 		Tcl_SetObjResult(interp, masterPtr->format);
 	    }
-	    return TCL_OK;
+	} else {
+	    Tk_ConfigureValue(interp, Tk_MainWindow(interp), configSpecs,
+		    (char *) masterPtr, Tcl_GetString(objv[2]), 0);
 	}
-	Tk_ConfigureValue(interp, Tk_MainWindow(interp), configSpecs,
-		(char *) masterPtr, Tcl_GetString(objv[2]), 0);
-	break;
+	return TCL_OK;
     }
 
     case PHOTO_CONFIGURE:
@@ -882,8 +880,7 @@ ImgPhotoCmd(clientData, interp, objc, objv)
 		options.toY2 - options.toY, options.zoomX, options.zoomY,
 		options.subsampleX, options.subsampleY,
 		options.compositingRule);
-
-	break;
+	return TCL_OK;
 
     case PHOTO_DATA: {
 	char *data;
@@ -968,7 +965,6 @@ ImgPhotoCmd(clientData, interp, objc, objv)
 	    ckfree(data);
 	}
 	return result;
-	break;
     }
 
     case PHOTO_GET: {
@@ -1001,7 +997,7 @@ ImgPhotoCmd(clientData, interp, objc, objv)
 	sprintf(string, "%d %d %d", pixelPtr[0], pixelPtr[1],
 		pixelPtr[2]);
 	Tcl_AppendResult(interp, string, (char *) NULL);
-	break;
+	return TCL_OK;
     }
 
     case PHOTO_PUT:
@@ -1071,6 +1067,12 @@ ImgPhotoCmd(clientData, interp, objc, objv)
 		break;
 	    }
 	    if (y == 0) {
+		if (listArgc == 0) {
+		    /*
+		     * Lines must be non-empty...
+		     */
+		    break;
+		}
 		dataWidth = listArgc;
 		pixelPtr = (unsigned char *)
 			ckalloc((unsigned) dataWidth * dataHeight * 3);
@@ -1129,7 +1131,7 @@ ImgPhotoCmd(clientData, interp, objc, objv)
 		options.toX, options.toY, options.toX2 - options.toX,
 		options.toY2 - options.toY, TK_PHOTO_COMPOSITE_SET);
 	ckfree((char *) block.pixelPtr);
-	break;
+	return TCL_OK;
 
     case PHOTO_READ: {
 	Tcl_Obj *format;
@@ -1240,7 +1242,6 @@ ImgPhotoCmd(clientData, interp, objc, objv)
 	    Tcl_Close(NULL, chan);
 	}
 	return result;
-	break;
     }
 
     case PHOTO_REDITHER:
@@ -1276,7 +1277,7 @@ ImgPhotoCmd(clientData, interp, objc, objv)
 		    (masterPtr->width - x), (masterPtr->height - y),
 		    masterPtr->width, masterPtr->height);
 	}
-	break;
+	return TCL_OK;
 
     case PHOTO_TRANS: {
 	static CONST char *photoTransOptions[] = {
@@ -1391,10 +1392,11 @@ ImgPhotoCmd(clientData, interp, objc, objv)
 	    Tk_ImageChanged(masterPtr->tkMaster, x, y, 1, 1,
 		    masterPtr->width, masterPtr->height);
 	    masterPtr->flags &= ~IMAGE_CHANGED;
+	    return TCL_OK;
+	}
 	}
 
-	}
-	return TCL_OK;
+	panic("unexpected fallthrough");
     }
 
     case PHOTO_WRITE: {
@@ -1516,7 +1518,8 @@ ImgPhotoCmd(clientData, interp, objc, objv)
     }
 
     }
-    return TCL_OK;
+    panic("unexpected fallthrough");
+    return TCL_ERROR; /* NOT REACHED */
 }
 
 /*
@@ -2666,13 +2669,16 @@ ImgPhotoSetSize(masterPtr, width, height)
 	 */
 	unsigned /*long*/ newPixSize = (unsigned /*long*/) (height * pitch);
 
-	newPix32 = (unsigned char *) attemptckalloc(newPixSize);
 	/*
-	 * The result could validly be NULL if the number of bytes
-	 * requested was 0. [Bug 619544]
+	 * Some mallocs() really hate allocating zero bytes. [Bug 619544]
 	 */
-	if (newPix32 == NULL && newPixSize != 0) {
-	    return TCL_ERROR;
+	if (newPixSize == 0) {
+	    newPix32 = NULL;
+	} else {
+	    newPix32 = (unsigned char *) attemptckalloc(newPixSize);
+	    if (newPix32 == NULL) {
+		return TCL_ERROR;
+	    }
 	}
     }
 
@@ -2870,30 +2876,34 @@ ImgPhotoInstanceSetSize(instancePtr)
 	    || (instancePtr->height != masterPtr->height)
 	    || (instancePtr->error == NULL)) {
 
-	newError = (schar *) ckalloc((unsigned)
-		(masterPtr->height * masterPtr->width * 3 * sizeof(schar)));
+	if (masterPtr->height > 0 && masterPtr->width > 0) {
+	    newError = (schar *) ckalloc((unsigned)
+		    masterPtr->height * masterPtr->width * 3 * sizeof(schar));
 
-	/*
-	 * Zero the new array so that we don't get bogus error values
-	 * propagating into areas we dither later.
-	 */
+	    /*
+	     * Zero the new array so that we don't get bogus error
+	     * values propagating into areas we dither later.
+	     */
 
-	if ((instancePtr->error != NULL)
-	    && ((instancePtr->width == masterPtr->width)
-		|| (validBox.width == masterPtr->width))) {
-	    if (validBox.y > 0) {
+	    if ((instancePtr->error != NULL)
+		    && ((instancePtr->width == masterPtr->width)
+		    || (validBox.width == masterPtr->width))) {
+		if (validBox.y > 0) {
+		    memset((VOID *) newError, 0, (size_t)
+			    validBox.y * masterPtr->width * 3 * sizeof(schar));
+		}
+		h = validBox.y + validBox.height;
+		if (h < masterPtr->height) {
+		    memset((VOID *) (newError + h * masterPtr->width * 3), 0,
+			    (size_t) (masterPtr->height - h)
+			    * masterPtr->width * 3 * sizeof(schar));
+		}
+	    } else {
 		memset((VOID *) newError, 0, (size_t)
-			(validBox.y * masterPtr->width * 3 * sizeof(schar)));
-	    }
-	    h = validBox.y + validBox.height;
-	    if (h < masterPtr->height) {
-		memset((VOID *) (newError + h * masterPtr->width * 3), 0,
-			(size_t) ((masterPtr->height - h)
-			    * masterPtr->width * 3 * sizeof(schar)));
+			masterPtr->height * masterPtr->width * 3 * sizeof(schar));
 	    }
 	} else {
-	    memset((VOID *) newError, 0, (size_t)
-		    (masterPtr->height * masterPtr->width * 3 * sizeof(schar)));
+	    newError = NULL;
 	}
 
 	if (instancePtr->error != NULL) {

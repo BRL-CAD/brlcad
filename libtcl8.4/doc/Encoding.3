@@ -174,7 +174,7 @@ and delete it from the database.
 .PP
 \fBTcl_ExternalToUtfDString\fR converts a source buffer \fIsrc\fR from the
 specified \fIencoding\fR into UTF-8.  The converted bytes are stored in 
-\fIdstPtr\fR, which is then NULL terminated.  The caller should eventually
+\fIdstPtr\fR, which is then null-terminated.  The caller should eventually
 call \fBTcl_DStringFree\fR to free any information stored in \fIdstPtr\fR.
 When converting, if any of the characters in the source buffer cannot be
 represented in the target encoding, a default fallback character will be
@@ -212,7 +212,7 @@ the target encoding and TCL_ENCODING_STOPONERROR was specified.
 \fBTcl_UtfToExternalDString\fR converts a source buffer \fIsrc\fR from UTF-8 
 into the specified \fIencoding\fR.  The converted bytes are stored in
 \fIdstPtr\fR, which is then terminated with the appropriate encoding-specific
-NULL.  The caller should eventually call \fBTcl_DStringFree\fR to free any
+null.  The caller should eventually call \fBTcl_DStringFree\fR to free any
 information stored in \fIdstPtr\fR.  When converting, if any of the
 characters in the source buffer cannot be represented in the target
 encoding, a default fallback character will be used.  The return value is
