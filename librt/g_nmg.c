@@ -1515,7 +1515,7 @@ struct rt_tol		*tol;
 #define DISK_INDEX_NULL		0
 #define DISK_INDEX_LISTHEAD	-1
 
-typedef	char		index_t[4];
+typedef	unsigned char	index_t[4];
 struct disk_rt_list  {
 	index_t		forw;
 	index_t		back;
@@ -1523,19 +1523,19 @@ struct disk_rt_list  {
 
 #define DISK_MODEL_MAGIC	0x4e6d6f64	/* Nmod */
 struct disk_model {
-	char			magic[4];
+	unsigned char		magic[4];
 	index_t			ma_p;
 	struct disk_rt_list	r_hd;
 };
 
 #define DISK_MODEL_A_MAGIC	0x4e6d5f61	/* Nm_a */
 struct disk_model_a {
-	char			magic[4];
+	unsigned char		magic[4];
 };
 
 #define DISK_REGION_MAGIC	0x4e726567	/* Nreg */
 struct disk_nmgregion {
-	char			magic[4];
+	unsigned char		magic[4];
 	struct disk_rt_list	l;
 	index_t   		m_p;
 	index_t			ra_p;
@@ -1544,14 +1544,14 @@ struct disk_nmgregion {
 
 #define DISK_REGION_A_MAGIC	0x4e725f61	/* Nr_a */
 struct disk_nmgregion_a {
-	char			magic[4];
-	char			min_pt[3*8];
-	char			max_pt[3*8];
+	unsigned char		magic[4];
+	unsigned char		min_pt[3*8];
+	unsigned char		max_pt[3*8];
 };
 
 #define DISK_SHELL_MAGIC	0x4e73686c	/* Nshl */
 struct disk_shell {
-	char			magic[4];
+	unsigned char		magic[4];
 	struct disk_rt_list	l;
 	index_t			r_p;
 	index_t			sa_p;
@@ -1563,22 +1563,22 @@ struct disk_shell {
 
 #define DISK_SHELL_A_MAGIC	0x4e735f61	/* Ns_a */
 struct disk_shell_a {
-	char			magic[4];
-	char			min_pt[3*8];
-	char			max_pt[3*8];
+	unsigned char		magic[4];
+	unsigned char		min_pt[3*8];
+	unsigned char		max_pt[3*8];
 };
 
 #define DISK_FACE_MAGIC		0x4e666163	/* Nfac */
 struct disk_face {
-	char			magic[4];
+	unsigned char		magic[4];
 	index_t			fu_p;
 	index_t			fg_p;
 };
 
 #define DISK_FACE_G_MAGIC	0x4e665f61	/* Nf_a */
 struct disk_face_g {
-	char			magic[4];
-	char			N[4*8];
+	unsigned char		magic[4];
+	unsigned char		N[4*8];
 	/*
 	 * Note that min_pt and max_pt are not stored on disk,
 	 * regardless of "compact" flag setting.
@@ -1587,11 +1587,11 @@ struct disk_face_g {
 
 #define DISK_FACEUSE_MAGIC	0x4e667520	/* Nfu */
 struct disk_faceuse {
-	char			magic[4];
+	unsigned char		magic[4];
 	struct disk_rt_list	l;
 	index_t			s_p;
 	index_t			fumate_p;
-	char			orientation[4];
+	unsigned char		orientation[4];
 	index_t			f_p;
 	index_t			fua_p;
 	struct disk_rt_list	lu_hd;
@@ -1599,30 +1599,30 @@ struct disk_faceuse {
 
 #define DISK_FACEUSE_A_MAGIC	0x4e667561	/* Nfua */
 struct disk_faceuse_a {
-	char			magic[4];
+	unsigned char		magic[4];
 };
 
 #define DISK_LOOP_MAGIC		0x4e6c6f70	/* Nlop */
 struct disk_loop {
-	char			magic[4];
+	unsigned char		magic[4];
 	index_t			lu_p;
 	index_t			lg_p;
 };
 
 #define DISK_LOOP_G_MAGIC	0x4e6c5f67	/* Nl_g */
 struct disk_loop_g {
-	char			magic[4];
-	char			min_pt[3*8];
-	char			max_pt[3*8];
+	unsigned char		magic[4];
+	unsigned char		min_pt[3*8];
+	unsigned char		max_pt[3*8];
 };
 
 #define DISK_LOOPUSE_MAGIC	0x4e6c7520	/* Nlu */
 struct disk_loopuse {
-	char			magic[4];
+	unsigned char		magic[4];
 	struct disk_rt_list	l;
 	index_t			up;
 	index_t			lumate_p;
-	char			orientation[4];
+	unsigned char		orientation[4];
 	index_t			l_p;
 	index_t			lua_p;
 	struct disk_rt_list	down_hd;
@@ -1630,59 +1630,59 @@ struct disk_loopuse {
 
 #define DISK_LOOPUSE_A_MAGIC	0x4e6c7561	/* Nlua */
 struct disk_loopuse_a {
-	char			magic[4];
+	unsigned char		magic[4];
 };
 
 #define DISK_EDGE_MAGIC		0x4e656467	/* Nedg */
 struct disk_edge {
-	char			magic[4];
+	unsigned char		magic[4];
 	index_t			eu_p;
 	index_t			eg_p;
-	char			is_real[4];
+	unsigned char		is_real[4];
 };
 
 #define DISK_EDGE_G_MAGIC	0x4e655f67	/* Ne_g */
 struct disk_edge_g {
-	char			magic[4];
-	char			usage[4];
-	char			e_pt[3*8];
-	char			e_dir[3*8];
+	unsigned char		magic[4];
+	unsigned char		usage[4];
+	unsigned char		e_pt[3*8];
+	unsigned char		e_dir[3*8];
 };
 
 #define DISK_EDGEUSE_MAGIC	0x4e657520	/* Neu */
 struct disk_edgeuse {
-	char			magic[4];
+	unsigned char		magic[4];
 	struct disk_rt_list	l;
 	index_t			up;
 	index_t			eumate_p;
 	index_t			radial_p;
 	index_t			e_p;
 	index_t			eua_p;
-	char	  		orientation[4];
+	unsigned char  		orientation[4];
 	index_t			vu_p;
 };
 
 #define DISK_EDGEUSE_A_MAGIC	0x4e657561	/* Neua */
 struct disk_edgeuse_a {
-	char			magic[4];
+	unsigned char		magic[4];
 };
 
 #define DISK_VERTEX_MAGIC	0x4e767274	/* Nvrt */
 struct disk_vertex {
-	char			magic[4];
+	unsigned char		magic[4];
 	struct disk_rt_list	vu_hd;
 	index_t			vg_p;
 };
 
 #define DISK_VERTEX_G_MAGIC	0x4e765f67	/* Nv_g */
 struct disk_vertex_g {
-	char			magic[4];
-	char			coord[3*8];
+	unsigned char		magic[4];
+	unsigned char		coord[3*8];
 };
 
 #define DISK_VERTEXUSE_MAGIC	0x4e767520	/* Nvu */
 struct disk_vertexuse {
-	char			magic[4];
+	unsigned char		magic[4];
 	struct disk_rt_list	l;
 	index_t			up;
 	index_t			v_p;
@@ -1691,8 +1691,8 @@ struct disk_vertexuse {
 
 #define DISK_VERTEXUSE_A_MAGIC	0x4e767561	/* Nvua */
 struct disk_vertexuse_a {
-	char			magic[4];
-	char			N[3*8];
+	unsigned char		magic[4];
+	unsigned char		N[3*8];
 };
 
 /* ---------------------------------------------------------------------- */
@@ -1877,12 +1877,13 @@ struct nmg_exp_counts	*ecnt;
 
 /* forw may never be null;  back may be null for loopuse (sigh) */
 #define INDEX(o,i,elem)	\
-	(void)rt_plong((o)->elem, rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
+	(void)rt_plong(&(o)->elem[0], rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
 #define INDEXL(oo,ii,elem)	{ \
 	register long _f = rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt); \
 	if( _f == DISK_INDEX_NULL )  rt_bomb("rt_nmg_edisk: reindex forw to null?\n"); \
 	(void)rt_plong( (oo)->elem.forw, _f ); \
 	(void)rt_plong( (oo)->elem.back, rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt) ); }
+#define PUTMAGIC(_magic)	(void)rt_plong( &d->magic[0], _magic )
 
 /*
  *			R T _ N M G _ E D I S K
@@ -1907,7 +1908,7 @@ double		local2mm;
 			struct disk_model	*d;
 			d = &((struct disk_model *)op)[oindex];
 			NMG_CK_MODEL(m);
-			rt_plong( d->magic, DISK_MODEL_MAGIC );
+			PUTMAGIC( DISK_MODEL_MAGIC );
 			INDEX( d, m, ma_p );
 			INDEXL( d, m, r_hd );
 		}
@@ -1918,7 +1919,7 @@ double		local2mm;
 			struct disk_model_a	*d;
 			d = &((struct disk_model_a *)op)[oindex];
 			NMG_CK_MODEL_A(ma);
-			rt_plong( d->magic, DISK_MODEL_A_MAGIC );
+			PUTMAGIC( DISK_MODEL_A_MAGIC );
 		}
 		return;
 	case NMG_KIND_NMGREGION:
@@ -1927,7 +1928,7 @@ double		local2mm;
 			struct disk_nmgregion	*d;
 			d = &((struct disk_nmgregion *)op)[oindex];
 			NMG_CK_REGION(r);
-			rt_plong( d->magic, DISK_REGION_MAGIC );
+			PUTMAGIC( DISK_REGION_MAGIC );
 			INDEXL( d, r, l );
 			INDEX( d, r, m_p );
 			INDEX( d, r, ra_p );
@@ -1941,7 +1942,7 @@ double		local2mm;
 			point_t			min, max;
 			d = &((struct disk_nmgregion_a *)op)[oindex];
 			NMG_CK_REGION_A(r);
-			rt_plong( d->magic, DISK_REGION_A_MAGIC );
+			PUTMAGIC( DISK_REGION_A_MAGIC );
 			VSCALE( min, r->min_pt, local2mm );
 			VSCALE( max, r->max_pt, local2mm );
 			htond( d->min_pt, min, 3 );
@@ -1954,7 +1955,7 @@ double		local2mm;
 			struct disk_shell	*d;
 			d = &((struct disk_shell *)op)[oindex];
 			NMG_CK_SHELL(s);
-			rt_plong( d->magic, DISK_SHELL_MAGIC );
+			PUTMAGIC( DISK_SHELL_MAGIC );
 			INDEXL( d, s, l );
 			INDEX( d, s, r_p );
 			INDEX( d, s, sa_p );
@@ -1971,7 +1972,7 @@ double		local2mm;
 			point_t			min, max;
 			d = &((struct disk_shell_a *)op)[oindex];
 			NMG_CK_SHELL_A(sa);
-			rt_plong( d->magic, DISK_SHELL_A_MAGIC );
+			PUTMAGIC( DISK_SHELL_A_MAGIC );
 			VSCALE( min, sa->min_pt, local2mm );
 			VSCALE( max, sa->max_pt, local2mm );
 			htond( d->min_pt, min, 3 );
@@ -1987,7 +1988,7 @@ double		local2mm;
 			NMG_CK_FACEUSE(fu->fumate_p);
 			NMG_CK_FACE(fu->f_p);
 			if( fu->f_p != fu->fumate_p->f_p )  rt_log("faceuse export, differing faces\n");
-			rt_plong( d->magic, DISK_FACEUSE_MAGIC );
+			PUTMAGIC( DISK_FACEUSE_MAGIC );
 			INDEXL( d, fu, l );
 			INDEX( d, fu, s_p );
 			INDEX( d, fu, fumate_p );
@@ -2003,7 +2004,7 @@ double		local2mm;
 			struct disk_faceuse_a	*d;
 			d = &((struct disk_faceuse_a *)op)[oindex];
 			NMG_CK_FACEUSE_A(fua);
-			rt_plong( d->magic, DISK_FACEUSE_A_MAGIC );
+			PUTMAGIC( DISK_FACEUSE_A_MAGIC );
 		}
 		return;
 	case NMG_KIND_FACE:
@@ -2012,7 +2013,7 @@ double		local2mm;
 			struct disk_face	*d;
 			d = &((struct disk_face *)op)[oindex];
 			NMG_CK_FACE(f);
-			rt_plong( d->magic, DISK_FACE_MAGIC );
+			PUTMAGIC( DISK_FACE_MAGIC );
 			INDEX( d, f, fu_p );
 			INDEX( d, f, fg_p );
 		}
@@ -2024,7 +2025,7 @@ double		local2mm;
 			plane_t			plane;
 			d = &((struct disk_face_g *)op)[oindex];
 			NMG_CK_FACE_G(fg);
-			rt_plong( d->magic, DISK_FACE_G_MAGIC );
+			PUTMAGIC( DISK_FACE_G_MAGIC );
 			VMOVE( plane, fg->N );
 			plane[3] = fg->N[3] * local2mm;
 			htond( d->N, plane, 4 );
@@ -2036,7 +2037,7 @@ double		local2mm;
 			struct disk_loopuse	*d;
 			d = &((struct disk_loopuse *)op)[oindex];
 			NMG_CK_LOOPUSE(lu);
-			rt_plong( d->magic, DISK_LOOPUSE_MAGIC );
+			PUTMAGIC( DISK_LOOPUSE_MAGIC );
 			INDEXL( d, lu, l );
 			rt_plong( d->up, rt_nmg_reindex((genptr_t)(lu->up.magic_p), ecnt) );
 			INDEX( d, lu, lumate_p );
@@ -2052,7 +2053,7 @@ double		local2mm;
 			struct disk_loopuse_a	*d;
 			d = &((struct disk_loopuse_a *)op)[oindex];
 			NMG_CK_LOOPUSE_A(lua);
-			rt_plong( d->magic, DISK_LOOPUSE_A_MAGIC );
+			PUTMAGIC( DISK_LOOPUSE_A_MAGIC );
 		}
 		return;
 	case NMG_KIND_LOOP:
@@ -2061,7 +2062,7 @@ double		local2mm;
 			struct disk_loop	*d;
 			d = &((struct disk_loop *)op)[oindex];
 			NMG_CK_LOOP(loop);
-			rt_plong( d->magic, DISK_LOOP_MAGIC );
+			PUTMAGIC( DISK_LOOP_MAGIC );
 			INDEX( d, loop, lu_p );
 			INDEX( d, loop, lg_p );
 		}
@@ -2073,7 +2074,7 @@ double		local2mm;
 			point_t			min, max;
 			d = &((struct disk_loop_g *)op)[oindex];
 			NMG_CK_LOOP_G(lg);
-			rt_plong( d->magic, DISK_LOOP_G_MAGIC );
+			PUTMAGIC( DISK_LOOP_G_MAGIC );
 			VSCALE( min, lg->min_pt, local2mm );
 			VSCALE( max, lg->max_pt, local2mm );
 			htond( d->min_pt, min, 3 );
@@ -2086,7 +2087,7 @@ double		local2mm;
 			struct disk_edgeuse	*d;
 			d = &((struct disk_edgeuse *)op)[oindex];
 			NMG_CK_EDGEUSE(eu);
-			rt_plong( d->magic, DISK_EDGEUSE_MAGIC );
+			PUTMAGIC( DISK_EDGEUSE_MAGIC );
 			INDEXL( d, eu, l );
 			rt_plong( d->up, rt_nmg_reindex((genptr_t)(eu->up.magic_p), ecnt) );
 			INDEX( d, eu, eumate_p );
@@ -2103,7 +2104,7 @@ double		local2mm;
 			struct disk_edgeuse_a	*d;
 			d = &((struct disk_edgeuse_a *)op)[oindex];
 			NMG_CK_EDGEUSE_A(eua);
-			rt_plong( d->magic, DISK_EDGEUSE_A_MAGIC );
+			PUTMAGIC( DISK_EDGEUSE_A_MAGIC );
 		}
 		return;
 	case NMG_KIND_EDGE:
@@ -2112,7 +2113,7 @@ double		local2mm;
 			struct disk_edge	*d;
 			d = &((struct disk_edge *)op)[oindex];
 			NMG_CK_EDGE(e);
-			rt_plong( d->magic, DISK_EDGE_MAGIC );
+			PUTMAGIC( DISK_EDGE_MAGIC );
 			rt_plong( d->is_real, e->is_real );
 			INDEX( d, e, eu_p );
 			INDEX( d, e, eg_p );
@@ -2124,7 +2125,7 @@ double		local2mm;
 			struct disk_edge_g	*d;
 			d = &((struct disk_edge_g *)op)[oindex];
 			NMG_CK_EDGE_G(eg);
-			rt_plong( d->magic, DISK_EDGE_G_MAGIC );
+			PUTMAGIC( DISK_EDGE_G_MAGIC );
 			rt_plong( d->usage, eg->usage );
 			htond( d->e_pt, eg->e_pt, 3);
 			htond( d->e_dir, eg->e_dir, 3);
@@ -2136,7 +2137,7 @@ double		local2mm;
 			struct disk_vertexuse	*d;
 			d = &((struct disk_vertexuse *)op)[oindex];
 			NMG_CK_VERTEXUSE(vu);
-			rt_plong( d->magic, DISK_VERTEXUSE_MAGIC );
+			PUTMAGIC( DISK_VERTEXUSE_MAGIC );
 			INDEXL( d, vu, l );
 			rt_plong( d->up, rt_nmg_reindex((genptr_t)(vu->up.magic_p), ecnt) );
 			INDEX( d, vu, v_p );
@@ -2150,7 +2151,7 @@ double		local2mm;
 			plane_t			plane;
 			d = &((struct disk_vertexuse_a *)op)[oindex];
 			NMG_CK_VERTEXUSE_A(vua);
-			rt_plong( d->magic, DISK_VERTEXUSE_A_MAGIC );
+			PUTMAGIC( DISK_VERTEXUSE_A_MAGIC );
 			VMOVE( plane, vua->N );
 			plane[3] = vua->N[3] * local2mm;
 			htond( d->N, plane, 4 );
@@ -2162,7 +2163,7 @@ double		local2mm;
 			struct disk_vertex	*d;
 			d = &((struct disk_vertex *)op)[oindex];
 			NMG_CK_VERTEX(v);
-			rt_plong( d->magic, DISK_VERTEX_MAGIC );
+			PUTMAGIC( DISK_VERTEX_MAGIC );
 			INDEXL( d, v, vu_hd );
 			INDEX( d, v, vg_p );
 		}
@@ -2174,7 +2175,7 @@ double		local2mm;
 			point_t			pt;
 			d = &((struct disk_vertex_g *)op)[oindex];
 			NMG_CK_VERTEX_G(vg);
-			rt_plong( d->magic, DISK_VERTEX_G_MAGIC );
+			PUTMAGIC( DISK_VERTEX_G_MAGIC );
 			VSCALE( pt, vg->coord, local2mm );
 			htond( d->coord, pt, 3 );
 		}
@@ -2801,7 +2802,7 @@ int				rebound;
 	/* Obtain counts of each kind of structure */
 	maxindex = 1;
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		kind_counts[kind] = rt_glong( rp->nmg.N_structs+4*kind );
+		kind_counts[kind] = rt_glong( (unsigned char *) rp->nmg.N_structs+4*kind );
 		maxindex += kind_counts[kind];
 	}
 #if DEBUG
@@ -2984,11 +2985,11 @@ rt_log("Mapping of old index to new index, and kind\n");
 	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "nmg external");
 	rp = (union record *)ep->ext_buf;
 	rp->nmg.N_id = DBID_NMG;
-	(void)rt_plong( rp->nmg.N_count, additional_grans );
+	(void)rt_plong( (unsigned char *)rp->nmg.N_count, additional_grans );
 
 	/* Record counts of each kind of structure */
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		(void)rt_plong( rp->nmg.N_structs+4*kind, kind_counts[kind] );
+		(void)rt_plong( (unsigned char *)rp->nmg.N_structs+4*kind, kind_counts[kind] );
 	}
 
 	cp = (char *)(rp+1);	/* advance one granule */
