@@ -33,8 +33,9 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"
-#include "vmath.h"
 #include "bu.h"
+#include "vmath.h"
+#include "bn.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "./ext.h"
@@ -102,9 +103,10 @@ char **argv;
 	bu_setlinebuf( stderr );
 
 	/* Identify the versions of the libraries we are using. */
-	(void)fprintf(stderr, "%s%s%s\n",
+	(void)fprintf(stderr, "%s%s%s%s\n",
 		version+5,
 		rt_version+5,
+		bn_version+5,
 		bu_version+5
 	      );	/* +5 to skip @(#) */
 
