@@ -28,14 +28,6 @@
 #define DO_SINGLE_DISPLAY_LIST
 #endif
 
-struct device_values  {
-	struct bu_vls	dv_string;	/* newline-separated "commands" from dm */
-};
-extern struct device_values dm_values;
-
-/* defined in ged.c */
-extern int dm_pipe[];
-
 #define DEGRAD  57.2957795130823208767981548141051703324054724665642
 #define SL_TOL 0.031265266  /* size of dead spot - 64/2047 */
 
@@ -219,12 +211,8 @@ struct dm_list {
   int (*_cmd_hook)();
   void (*_state_hook)();
   void (*_viewpoint_hook)();
-  int (*dm_init)();
+  int (*_eventHandler)();
 };
-
-extern int update_views;   /* from ged.c */
-extern struct dm_list head_dm_list;  /* list of active display managers */
-extern struct dm_list *curr_dm_list;
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
 #define dmp curr_dm_list->_dmp
@@ -244,6 +232,7 @@ extern struct dm_list *curr_dm_list;
 #define cmd_hook curr_dm_list->_cmd_hook
 #define state_hook curr_dm_list->_state_hook
 #define viewpoint_hook curr_dm_list->_viewpoint_hook
+#define eventHandler curr_dm_list->_eventHandler
 #define mged_variables curr_dm_list->_mged_variables
 
 #if 1
@@ -407,19 +396,31 @@ extern struct dm_list *curr_dm_list;
 
 #define BV_MAXFUNC	64	/* largest code used */
 
-#define GET_DM_LIST(p,structure,w) { \
-	register struct dm_list *tp; \
-	for(BU_LIST_FOR(tp, dm_list, &head_dm_list.l)) { \
-		if(w == ((struct structure *)tp->_dmp->dm_vars)->win) { \
-			(p) = tp; \
-			break; \
-		} \
-	} \
+#define MGED_EVENT_HANDLER_NULL (int (*)())NULL
+#define DM_EVENTHANDLER(_dmp,_clientData,_eventPtr) _dmp->dm_eventHandler(_clientData,_eventPtr)
+
+#define FOR_ALL_DISPLAYS(p,hp) \
+	for(BU_LIST_FOR(p,dm_list,hp))
+
+#define GET_DM_LIST(p,id) { \
+		register struct dm_list *tp; \
 \
-	if(BU_LIST_IS_HEAD(tp, &head_dm_list.l))\
-		p = DM_LIST_NULL;\
+		FOR_ALL_DISPLAYS(tp, &head_dm_list.l) { \
+			if((id) == tp->_dmp->dm_id) { \
+				(p) = tp; \
+				break; \
+			} \
+		} \
+\
+		if(BU_LIST_IS_HEAD(tp, &head_dm_list.l)) \
+			(p) = DM_LIST_NULL; \
 	}
 
+extern int doEvent(); /* defined in doevent.c */
+extern int dm_pipe[];  /* defined in ged.c */
+extern int update_views;   /* defined in ged.c */
+extern struct dm_list head_dm_list;  /* list of active display managers */
+extern struct dm_list *curr_dm_list;
 
 struct w_dm {
   int type;
@@ -431,8 +432,5 @@ extern struct w_dm which_dm[];  /* defined in attach.c */
 /* indices into which_dm[] */
 #define DM_PLOT_INDEX 0
 #define DM_PS_INDEX 1
-
-#define FOR_ALL_DISPLAYS(p,hp) \
-	for(BU_LIST_FOR(p,dm_list,hp))
 
 #endif /* SEEN_MGED_DM_H */
