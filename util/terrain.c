@@ -601,7 +601,7 @@ char *av[];
 			default:
 				fprintf(stderr, 
 					"Unknown noise terrain_function: \"%s\"\n",
-					*optarg);
+					optarg);
 				exit(-1);
 				break;
 			}
