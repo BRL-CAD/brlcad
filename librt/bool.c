@@ -83,7 +83,11 @@ struct application	*ap;
 
 		segp = RT_LIST_FIRST( seg, &(in_hd->l) );
 		RT_CHECK_SEG(segp);
-		if(rt_g.debug&DEBUG_PARTITION) rt_pr_seg(segp);
+		if(rt_g.debug&DEBUG_PARTITION)  {
+			rt_pr_seg(segp);
+			rt_pr_hit(" In", &segp->seg_in );
+			rt_pr_hit("Out", &segp->seg_out );
+		}
 		if( segp->seg_stp->st_bit >= rtip->nsolids) rt_bomb("rt_boolweave: st_bit");
 
 		RT_LIST_DEQUEUE( &(segp->l) );
@@ -219,7 +223,7 @@ struct application	*ap;
 				newpp->pt_outhit = &segp->seg_in;
 				newpp->pt_outflip = 1;
 				INSERT_PT( newpp, pp );
-				if(rt_g.debug&DEBUG_PARTITION) rt_log("seg starts after p starts, ends after p ends. Split p in two, advance.\n");
+				if(rt_g.debug&DEBUG_PARTITION) rt_log("seg starts within p. Split p at seg start, advance.\n");
 				goto equal_start;
 			}
 			if( diff > -(ap->a_rt_i->rti_tol.dist) )  {
@@ -426,12 +430,13 @@ struct region			*reg2;
 	rt_log( "\
 OVERLAP1: %s\n\
 OVERLAP2: %s\n\
-OVERLAP3: isol=%s osol=%s\n\
+OVERLAP3: isol=%s osol=%s dist=(%g,%g)\n\
 OVERLAP4: depth %.5fmm at (%g,%g,%g) x%d y%d lvl%d\n",
 		reg1->reg_name,
 		reg2->reg_name,
 		pp->pt_inseg->seg_stp->st_name,
 		pp->pt_outseg->seg_stp->st_name,
+		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist,
 		depth, pt[X], pt[Y], pt[Z],
 		ap->a_x, ap->a_y, ap->a_level );
 	return(1);
@@ -550,11 +555,12 @@ struct application *ap;
 				ap->a_x, ap->a_y, ap->a_level );
 			rt_pr_partitions( ap->a_rt_i, InputHdp, "With problem" );
 		}
-		if( pp->pt_forw != InputHdp )  {
+		if( pp->pt_forw != InputHdp &&
+		    pp->pt_outhit->hit_dist != pp->pt_forw->pt_inhit->hit_dist )  {
 			diff = pp->pt_outhit->hit_dist - pp->pt_forw->pt_inhit->hit_dist;
 			if( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
-				if(rt_g.debug&DEBUG_PARTITION)  rt_log("rt_boolfinal:  fusing 2 partitions x%d y%d lvl%d\n",
-					ap->a_x, ap->a_y, ap->a_level );
+				if(rt_g.debug&DEBUG_PARTITION)  rt_log("rt_boolfinal:  fusing 2 partitions x%x x%x\n",
+					pp, pp->pt_forw );
 				pp->pt_forw->pt_inhit->hit_dist = pp->pt_outhit->hit_dist;
 			} else if( diff > 0 )  {
 				rt_log("rt_boolfinal:  sorting defect %e > %e! x%d y%d lvl%d\n",
@@ -691,10 +697,24 @@ struct application *ap;
 			   	if( ap->a_overlap == RT_AFN_NULL )
 			   		ap->a_overlap = rt_defoverlap;
 				if( ap->a_overlap(ap, pp, regp, lastregion) )  {
-				    	/* non-zero => retain last partition */
-					if( lastregion->reg_aircode != 0 )
+				    	/* non-zero => retain the partition */
+					if( lastregion->reg_aircode != 0 )  {
+						/* Last was air, replace */
 						lastregion = regp;
+					} else if( pp->pt_back != InputHdp ) {
+						/* Repeat prev region, if that is a choice */
+						if( pp->pt_back->pt_regionp == regp )
+							lastregion = regp;
+					} else {
+						/* Keep lastregion as is */
+					}
 				    	claiming_regions--;	/* now = 1 */
+					if(rt_g.debug&DEBUG_PARTITION)  rt_log("rt_boolfinal:  overlap p retained, as region=%s\n",
+						lastregion->reg_namep );
+				} else {
+					/* zero => delete the partition.
+					 * The dirty work happens below.
+					 */
 				}
 			} else {
 				/* last region is air, replace with solid */
@@ -755,6 +775,7 @@ struct application *ap;
 				RT_CHECK_PT(lastpp);
 				RT_CHECK_SEG(lastpp->pt_inseg);	/* sanity */
 				RT_CHECK_SEG(lastpp->pt_outseg);/* sanity */
+				if(rt_g.debug&DEBUG_PARTITION)rt_log("rt_boolfinal collapsing %x %x\n", lastpp, newpp);
 				lastpp->pt_outhit = newpp->pt_outhit;
 				lastpp->pt_outflip = newpp->pt_outflip;
 				lastpp->pt_outseg = newpp->pt_outseg;
