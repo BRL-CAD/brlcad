@@ -10,11 +10,11 @@
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g g-nff \
 			asc-nmg nmg-rib g-vrml g-x3d g-acad cy-g nastran-g g-wave g-stl \
 			nmg-bot g-shell.rect stl-g poly-bot dbupgrade enf-g bot_shell-vtk \
-			g-dxf g-xxx g-xxx_facets
+			g-dxf
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
-#define STATIC_PRODUCTS ../SRCDIR/pro_engineer
+#define STATIC_PRODUCTS ../SRCDIR/g-xxx.c ../SRCDIR/g-xxx_facets.c
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
