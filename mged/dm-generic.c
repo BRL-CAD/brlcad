@@ -249,6 +249,8 @@ end:
 	bu_vls_printf(&vls, "ray_build_edit_menu s %d %d", x, y);
       }else if(mged_variables->mouse_behavior == 'o' && !stolen){
 	bu_vls_printf(&vls, "ray_build_edit_menu o %d %d", x, y);
+      }else if(mged_variables->mouse_behavior == 'c' && !stolen){
+	bu_vls_printf(&vls, "ray_build_comb_menu %d %d", x, y);
       }else
 	bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
 
