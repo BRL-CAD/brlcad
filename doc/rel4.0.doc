@@ -1,13 +1,6 @@
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa14048; 6 Nov 89 23:04 EST
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id ab01268; 6 Nov 89 22:53 EST
-Received: from sem.brl.mil by VMB.BRL.MIL id aa01266; 6 Nov 89 22:50 EST
 Date:     Mon, 6 Nov 89 22:50:11 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
-cc:       Bill Kish <kish@porthos.rutgers.edu>
 Subject:  Re:  CAD interchange formats, BRL-CAD, IGES, MEDUSSA, ...
-Message-ID:  <8911062250.aa13931@SEM.BRL.MIL>
 
 I found this message on COMP.GRAPHCIS.  Attached is my reply, for those
 of you who don't read netnews.
@@ -16,15 +9,10 @@ of you who don't read netnews.
 
 ----- Forwarded message # 1:
 
-Received: from smoke.brl.mil by SEM.BRL.MIL id aa05944; 3 Nov 89 13:33 EST
-Received: from adm.brl.mil by SMOKE.BRL.MIL id aa27640; 3 Nov 89 13:06 EST
-Received: from USENET by ADM.BRL.MIL id aa16764; 3 Nov 89 12:29 EST
 From: Bill Kish <kish@porthos.rutgers.edu>
 Newsgroups: comp.graphics
 Subject: CAD interchange formats, BRL-CAD, IGES, MEDUSSA, ...
-Message-ID: <Nov.3.09.36.16.1989.8832@porthos.rutgers.edu>
 Date: 3 Nov 89 14:36:18 GMT
-To:       brl-comp-graphics@smoke.brl.mil
 
 
 I'm trying to take a CAD application which is currently maintained by
@@ -126,16 +114,9 @@ the <CAD@BRL.MIL> mailing list.
 	  BRL-CAD Architect
 
 ----- End of forwarded messages
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa19090; 7 Nov 89 16:32 EST
 Date:     Tue, 7 Nov 89 16:22:33 EST
 From:     Keith Applin (VLD/VMB) <keith@BRL.MIL>
-To:       phd@BRL.MIL
-cc:       john@BRL.MIL, robert@BRL.MIL, keith@BRL.MIL, davisson@BRL.MIL, 
-          jill@BRL.MIL, darleen@BRL.MIL, mike@BRL.MIL
 Subject:  DISUM and TAP for CAD Symposium - draft
-Message-ID:  <8911071622.aa13489@VMB.BRL.MIL>
 
 
 .nf
@@ -169,16 +150,9 @@ planned developments.
 BG Malcom O'Neill, commander of LABCOM, presented the keynote address.
 The symposium was closed with a panel question and answer session.
 
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa18690; 15 Nov 89 3:39 EST
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa07754; 15 Nov 89 3:35 EST
-Received: from spark.brl.mil by VMB.BRL.MIL id aa07746; 15 Nov 89 3:21 EST
 Date:     Wed, 15 Nov 89 3:18:00 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  remrt
-Message-ID:  <8911150318.aa10794@SPARK.BRL.MIL>
 
 I made a variety of improvements to LIBPKG (replacing pkg_get with
 a new pkg_process, plus calls to pkg_suckin).  This addresses some
@@ -194,17 +168,9 @@ More on this in a few days, after Chris has had a chance to put
 it through the wringer.
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa01348; 16 Nov 89 1:56 EST
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa21432; 16 Nov 89 1:50 EST
-Received: from sem.brl.mil by VMB.BRL.MIL id aa21412; 16 Nov 89 1:40 EST
 Date:     Thu, 16 Nov 89 1:31:20 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       "Scott L. Henry" <shenry@BRL.MIL>
-cc:       cad@BRL.MIL
 Subject:  Re:  fb-rle -F flag
-Message-ID:  <8911160131.aa01261@SEM.BRL.MIL>
 
 Thanks for pointing that out.  The string "F:" was missing from the getopt()
 arg list;  all the supporting code was present.  I have fixed the source code,
@@ -212,17 +178,10 @@ and it seems to perform as expected now.
 
 	Best,
 	 -Mike
-
-
-Received: from smoke.brl.mil by SEM.BRL.MIL id aa20703; 22 Nov 89 9:12 EST
-Received: from adm.brl.mil by SMOKE.BRL.MIL id ab02515; 22 Nov 89 9:00 EST
-Received: from USENET by ADM.BRL.MIL id aa07026; 22 Nov 89 8:44 EST
 From: GEORGE_A_MANEY@cup.portal.com
 Newsgroups: comp.graphics
 Subject: Re: Information on IGES files wanted...ok
-Message-ID: <24330@cup.portal.com>
 Date: 22 Nov 89 02:12:38 GMT
-To:       brl-comp-graphics@smoke.brl.mil
 
 IGES is an NBS publication.  I got IGES v3.0 (NBSIR-3359) from
 
@@ -236,14 +195,9 @@ The cost was about $40.  I believe that version 4 is now available.
 
 				George Maney
 				FMC Corporate Tecnology Center
-
-
 Date:     Fri, 24 Nov 89 16:00:43 EST
 From:     Mike Muuss  <mike@brl.mil>
-To:       Nikolaos Fotis <theseas!nfotis@relay.eu.net>
-cc:       Mike Muuss <mike@brl.mil>
 Subject:  Details on CAD distribution terms
-Message-ID:  <8911241600.aa11246@SEM.BRL.MIL>
 
 This letter should answer your questions.
 
@@ -319,16 +273,9 @@ software has been put to.
 
 	Best,
 	 -Mike
-
-
 Date:     Fri, 8 Dec 89 19:07:53 EST
 From:     Mike Muuss  <mike@brl.mil>
-To:       John H Suckling <john@brl.mil>
-cc:       Joe Ploskonka <plos@brl.mil>, phd@BRL.MIL, ljohnson@pica.army.mil,
-          john@BRL.MIL, Robert@BRL, Keith@BRL, Davisson@BRL, Jill@BRL,
-          Mike@BRL, Darleen@BRL, Phil@BRL
 Subject:  Re:  Some Thoughts....
-Message-ID:  <8912081907.aa05020@SEM.BRL.MIL>
 
 In my mind there are two parts to the issue:
 
@@ -377,15 +324,9 @@ then BRL-CAD, perhaps with embellishments, should be a fine solution.
 Can somebody who knows TACOM better than I do please comment?
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa20722; 9 Dec 89 3:01 EST
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa28952; 9 Dec 89 2:37 EST
 Date:     Sat, 9 Dec 89 2:22:57 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  ARBN Progress
-Message-ID:  <8912090222.aa28790@VMB.BRL.MIL>
 
 I am happy to report that this evening culminated a rather successful
 few weeks of code housekeeping.
@@ -415,14 +356,9 @@ In the meantime, *polygons*!
 
 	Best,
 	 -Mike
-
-
 Date:     Tue, 12 Dec 89 17:05:39 EST
 From:     Mike Muuss  <mike@brl.mil>
-To:       facello@crabcake.cs.jhu.edu
-cc:       Mike@BRL
 Subject:  Re:  BRL Program
-Message-ID:  <8912121705.aa19297@SEM.BRL.MIL>
 
 Hi.  I got your phone message.  I'll be away on travel for the rest of the
 week, so I'll try to give you some answers here.
@@ -505,15 +441,9 @@ Does this help?
 
 	Best,
 	 -Mike
-
-
-Received: from vim.brl.mil by SEM.BRL.MIL id aa17237; 18 Dec 89 9:39 EST
 Date:     Mon, 18 Dec 89 9:31:29 EST
 From:     Paul Tanenbaum <pjt@BRL.MIL>
-To:       sue@BRL.MIL, mike@BRL.MIL
-cc:       pjt@BRL.MIL
 Subject:  RTG3 Paper
-Message-ID:  <8912180931.aa00824@VIM.BRL.MIL>
 
 
      I have a comment about the method you give on page 10 to obtain azimuth
@@ -531,17 +461,9 @@ the faceplate in response to knob twists might call for the simpler form.
 
      +++paul
 
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa22499; 18 Dec 89 17:57 EST
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id ae00088; 18 Dec 89 17:50 EST
-Received: from sem.brl.mil by VMB.BRL.MIL id aa00406; 18 Dec 89 16:27 EST
 Date:     Mon, 18 Dec 89 15:59:30 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       Paul Tanenbaum <pjt@BRL.MIL>
-cc:       CAD@BRL.MIL
 Subject:  Re:  RTG3 Paper
-Message-ID:  <8912181559.aa20573@SEM.BRL.MIL>
 
 Paul -
 
@@ -568,16 +490,9 @@ built upon it use only atan2().
 I am indebted to Doug Gwyn for first calling this issue to my attention.
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa04127; 29 Dec 89 17:54 EST
-Received: from VMB.BRL.MIL by VMB.brl.MIL id aa23672; 29 Dec 89 17:53 EST
-Received: from spark.brl.mil by VMB.BRL.MIL id aa23664; 29 Dec 89 17:48 EST
 Date:     Fri, 29 Dec 89 17:41:13 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  LIBFB_LIBES
-Message-ID:  <8912291741.aa04296@SPARK.BRL.MIL>
 
 On Spark, I have changed all the Cakefiles so that LIBFB no longer contains
 "local vendor" type libraries.  Instead, Cakefile.defs defines a new symbol,
@@ -594,15 +509,10 @@ permits more flexibility in working around oddities (like BLD on the Crays).
 Please note that this change applies only to the development version so far.
 	Best,
 	 -Mike
-
-
-Received: from spark.brl.mil by SEM.BRL.MIL id aa07181; 30 Dec 89 5:27 EST
 Date:     Sat, 30 Dec 89 5:19:36 EST
 From:     Mike Muuss <mike@BRL.MIL>
-[To]:     Moss@BRL.MIL
 Subject:  raytrace.h
 BCC:      
-Message-ID:  <8912300519.ab06272@SPARK.BRL.MIL>
 
 Gary -
 
@@ -620,17 +530,9 @@ due to this change, I'd be interested in hearing about it.
 Stay tuned for more librt work this week.
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa18899; 5 Jan 90 8:48 EST
-Received: from VMB.BRL.MIL by VMB.brl.MIL id aa19895; 5 Jan 90 8:40 EST
-Received: from vim.brl.mil by VMB.BRL.MIL id aa18952; 5 Jan 90 8:21 EST
 Date:     Fri, 5 Jan 90 8:14:38 EST
 From:     Paul Tanenbaum <pjt@BRL.MIL>
-To:       Doug Gwyn <gwyn@BRL.MIL>
-cc:       Mike Muuss <mike@BRL.MIL>, CAD@BRL.MIL
 Subject:  [Doug Gwyn: Re: RTG3 Paper]
-Message-ID:  <9001050814.aa26170@VIM.BRL.MIL>
 
 
 > One of "Gwyn's rules of numerical computation" (unpublished, alas)
@@ -643,17 +545,9 @@ begins...
 
      +++paul
 
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa13728; 4 Jan 90 19:20 EST
-Received: from VMB.BRL.MIL by VMB.brl.MIL id ab15130; 4 Jan 90 19:17 EST
-Received: from vgr.brl.mil by VMB.BRL.MIL id aa15053; 4 Jan 90 18:36 EST
 Date:     Thu, 4 Jan 90 18:34:54 EST
 From:     Doug Gwyn (VLD/VMB) <gwyn@BRL.MIL>
-To:       Mike Muuss <mike@BRL.MIL>
-cc:       Paul Tanenbaum <pjt@BRL.MIL>, CAD@BRL.MIL
 Subject:  Re:  RTG3 Paper
-Message-ID:  <9001041834.aa18905@VGR.BRL.MIL>
 
 Another advantage of atan2() in many applications is that it gets the
 quadrant right.
@@ -663,17 +557,9 @@ is: "The only inverse trig function you should ever use is atan2()."
 Like most rules, there are valid exceptions, but they are quite rare
 and one should understand the reasons for the rule before deciding to
 violate it.
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa06592; 11 Jan 90 1:09 EST
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa15861; 11 Jan 90 0:36 EST
-Received: from sem.brl.mil by VMB.BRL.MIL id aa15820; 11 Jan 90 0:31 EST
 Date:     Thu, 11 Jan 90 0:23:19 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       facello%crabcake@crabcake.cs.jhu.edu
-cc:       CAD@BRL.MIL
 Subject:  Interesting LIBRT details
-Message-ID:  <9001110023.aa06307@SEM.BRL.MIL>
 
 Greetings -
 
@@ -889,16 +775,9 @@ overlap handler uses (a).
 
 	Hope this helps,
 	 -Mike
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa27212; 17 Oct 89 15:53 EDT
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa04231; 17 Oct 89 15:44 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa04129; 17 Oct 89 15:28 EDT
 Date:     Tue, 17 Oct 89 15:17:45 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  cakeinclude.sh replaced
-Message-ID:  <8910171517.aa12537@SPARK.BRL.MIL>
 
 This afternoon, I have replaced "cakeinclude.sh" with the C
 program "cakeinclude" that Lee Butler recently wrote.  It is compiled
@@ -926,17 +805,10 @@ voyage	util	3.2u 11.0s 0:20 68%	1.2u 4.0s 0:10 48%	2.0X
 My thanks to Lee for this important development-performance boost!
 	Best,
 	 -Mike
-
-
-Received: from smoke.brl.mil by SEM.BRL.MIL id aa01980; 26 Sep 89 1:05 EDT
-Received: from adm.brl.mil by SMOKE.BRL.MIL id aa15646; 26 Sep 89 0:29 EDT
-Received: from USENET by ADM.BRL.MIL id aa26384; 26 Sep 89 0:19 EDT
 From: "Phil Dykstra <phil>" <phil@sem.brl.mil>
 Newsgroups: comp.graphics
 Subject: Re: Raytracer performance on machines?
-Message-ID: <751@sem.BRL.MIL>
 Date: 26 Sep 89 03:20:19 GMT
-To:       brl-comp-graphics@smoke.brl.mil
 
 > The whole BRL-CAD package is public domain, ...
 
@@ -954,16 +826,9 @@ bounding planes, non-uniform space partitioning, parallel *and*
 network distributed capability very ancient.
 
 - Phil
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa22891; 12 Aug 89 8:05 EDT
-Received: from VMB.BRL.MIL by VMB.brl.MIL id aa19462; 12 Aug 89 7:44 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa19456; 12 Aug 89 7:39 EDT
 Date:     Sat, 12 Aug 89 7:36:06 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  Quaternions added
-Message-ID:  <8908120736.aa18357@SPARK.BRL.MIL>
 
 I have taken Phil's Quaternion math package, and added many of the
 remaining features from Ken Shoemake's May '89 paper (ln, exp, stable
@@ -975,16 +840,9 @@ for something, thus testing them.
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by SEM.BRL.MIL id aa01584; 23 Aug 89 15:08 EDT
-Received: from VMB.BRL.MIL by VMB.brl.MIL id aa13030; 23 Aug 89 15:02 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa12712; 23 Aug 89 14:52 EDT
 Date:     Wed, 23 Aug 89 14:44:25 EDT
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  UnixPlot utilities in BRL-CAD
-Message-ID:  <8908231444.aa13313@SPARK.BRL.MIL>
 
 This note is to address a couple of the questions/problems posted
 recently about UnixPlot (plot(5)) utilities.
@@ -1011,15 +869,9 @@ command.  This provides an alternative way to view them under X
 for the time being.
 
 - Phil
-
-
-Received: from spark.brl.mil by VMB.BRL.MIL id aa05205; 3 Mar 90 3:58 EST
 Date:     Sat, 3 Mar 90 3:53:32 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       ACST@BRL.MIL
-cc:       PHD@BRL.MIL
 Subject:  MGED & lighting model
-Message-ID:  <9003030353.aa10730@SPARK.BRL.MIL>
 
 I have a very preliminary version of lighting model support in MGED,
 to help debug the NMG tesselation routines.  It uses 4 infinite lights
@@ -1035,14 +887,9 @@ algorithm that Paul Stay gave me a copy of.
 
 	Onwards!
 	 -Mike
-
-
-Received: from VMB.BRL.MIL by VMB.brl.MIL id aa27070; 5 Mar 90 21:17 EST
 Date:     Mon, 5 Mar 90 21:03:39 EST
 From:     Mike Muuss  <mike@brl.mil>
-To:       CAD@BRL.MIL
 Subject:  comgeom-g
-Message-ID:  <9003052103.aa26985@VMB.BRL.MIL>
 
 A new database converter program now exists, called COMGEOM-G.
 It replaces the old "Cvt4" and "Cvt5" converters.
@@ -1061,16 +908,9 @@ ARBN support.  However, the latest version of LIBRT raytraces ARBNs
 just fine.
 	Best,
 	 -Mike
-
-
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa17974; 22 Mar 90 18:17 EST
-Received: from spark.brl.mil by VMB.BRL.MIL id aa17471; 22 Mar 90 17:45 EST
 Date:     Thu, 22 Mar 90 17:39:05 EST
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       Paul Tanenbaum <pjt@BRL.MIL>
-cc:       cad@BRL.MIL
 Subject:  Re:  Irksome warning
-Message-ID:  <9003221739.aa28569@SPARK.BRL.MIL>
 
 Paul,
 
@@ -1100,16 +940,9 @@ At that point it would be best to make your own resource struct.
 [The RESOURCE_MAGIC deal is an unfortunate technical detail.]
 
 - Phil
-
-
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa00773; 23 Mar 90 13:03 EST
-Received: from smoke.brl.mil by VMB.BRL.MIL id aa00762; 23 Mar 90 12:54 EST
-Received: from atc.boeing.com by SMOKE.BRL.MIL id aa16497; 23 Mar 90 11:12 EST
-Received: by atc.boeing.com on Fri, 23 Mar 90 08:12:01 PST
 Date: Fri, 23 Mar 90 08:12:01 PST
 From: Vince Skahan <vince@atc.boeing.com>
 Message-Id: <9003231612.AA11158@atc.boeing.com>
-To: cad@BRL.MIL
 Subject: ray tracing
 
 
@@ -1123,15 +956,9 @@ for a response.
 					Thanks, 
 						Steve Pirollo
 						Boeing Helicopters
-
-
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa03286; 23 Mar 90 14:52 EST
 Date:     Fri, 23 Mar 90 14:45:30 EST
 From:     "Lee A. Butler" <butler@brl.mil>
-To:       Vince Skahan <vince@atc.boeing.com>
-cc:       cad@brl.mil
 Subject:  Re:  ray tracing
-Message-ID:  <9003231445.aa03281@VMB.BRL.MIL>
 
 The key is to set your environment variable FB_FILE to something like
 "/dev/sgil" before you run mged, OR when you run rt, specify the option:
@@ -1145,16 +972,9 @@ SLCBR-VL-V					Internet: butler@brl.mil
 Ballistic Research Laboratory			   Phone: (301) 278-8740
 Aberdeen Proving Grounds, MD 21005-5066
 
-
-
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa01855; 23 Mar 90 19:03 EST
-Received: from spark.brl.mil by VMB.BRL.MIL id aa01852; 23 Mar 90 18:53 EST
 Date:     Fri, 23 Mar 90 18:49:44 EST
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       Vince Skahan <vince@atc.boeing.com>
-cc:       cad@BRL.MIL
 Subject:  Re:  ray tracing
-Message-ID:  <9003231849.aa03851@SPARK.BRL.MIL>
 
 In brief, here is why the window goes away:
 
@@ -1175,19 +995,10 @@ frame buffer daemon" currently called "rfbd").
 
 ps: If you use the "l" option I would also suggest the "p" or private
     memory option as well (-F /dev/sgipl).
-
-
-Received: from VMB.BRL.MIL by VMB.brl.MIL id aa15408; 25 Mar 90 23:59 EST
-Received: from smoke.brl.mil by VMB.BRL.MIL id aa15237; 25 Mar 90 23:48 EST
-Received: from ux1.cso.uiuc.edu by SMOKE.BRL.MIL id aa28239; 25 Mar 90 22:42 EST
-Received: from uxh.cso.uiuc.edu by ux1.cso.uiuc.edu with SMTP
 	(5.61+/IDA-1.2.8) id AA16584; Sun, 25 Mar 90 21:43:57 -0600
-Received: by uxh.cso.uiuc.edu (5.51/9.7)
 	id AA04154; Sun, 25 Mar 90 21:41:13 CST
 Date: Sun, 25 Mar 90 21:41:13 CST
 From: Luke Lin <lukelin@uxh.cso.uiuc.edu>
-Message-Id: <9003260341.AA04154@uxh.cso.uiuc.edu>
-To: cad@BRL.MIL
 Subject: BRL-CAD on a Mac II
 
 
@@ -1206,15 +1017,9 @@ Luke Lin
 Electomagnetics Lab
 University of Illinois
 Urbana
-
-
-Received: from VMB.BRL.MIL by VMB.brl.MIL id aa02288; 26 Mar 90 13:33 EST
 Date:     Mon, 26 Mar 90 13:21:44 EST
 From:     "Lee A. Butler" <butler@brl.mil>
-To:       Luke Lin <lukelin@uxh.cso.uiuc.edu>
-cc:       cad@BRL
 Subject:  Re:  BRL-CAD on a Mac II
-Message-ID:  <9003261321.aa02217@VMB.BRL.MIL>
 
 The only person I personally know with any experience running BRLCAD on a
 Mac II under AUX is on vacation right now, so I can't refer him to you, or you
@@ -1231,16 +1036,9 @@ Lee A. Butler
 SLCBR-VL-V					Internet: butler@brl.mil
 Ballistic Research Laboratory			   Phone: (301) 278-6674
 Aberdeen Proving Grounds, MD 21005-5066
-
-
-Received: from VMB.BRL.MIL by VMB.brl.MIL id ab02288; 26 Mar 90 13:34 EST
-Received: from smoke.brl.mil by VMB.BRL.MIL id aa02228; 26 Mar 90 13:22 EST
 Date:     Mon, 26 Mar 90 13:22:28 EST
 From:     "Christopher T. Johnson" <cjohnson@BRL.MIL>
-To:       Luke Lin <lukelin@uxh.cso.uiuc.edu>
-cc:       cad@BRL.MIL
 Subject:  Re:  BRL-CAD on a Mac II
-Message-ID:  <9003261322.aa13868@SMOKE.BRL.MIL>
 
 Luke,
 I ported BRLCAD 3.x to a MacII running AUX 1.0.  The rt parts and the utilities
@@ -1256,22 +1054,12 @@ soon as we can access a 24 bit card and have A/UX 2.0.
 
 If you have any questions please feel free to send e-mail and I will
 try to help.
+
 Chris Johnson
-
-
-Received: from VMB.BRL.MIL by VMB.BRL.MIL id aa03264; 26 Mar 90 14:17 EST
-Received: from smoke.brl.mil by VMB.BRL.MIL id aa03232; 26 Mar 90 14:09 EST
-Received: from ux1.cso.uiuc.edu by SMOKE.BRL.MIL id aa14857; 26 Mar 90 13:51 EST
-Received: from uxh.cso.uiuc.edu by ux1.cso.uiuc.edu with SMTP
-	(5.61+/IDA-1.2.8) id AA05375; Mon, 26 Mar 90 12:52:50 -0600
-Received: by uxh.cso.uiuc.edu (5.51/9.7)
-	id AA03662; Mon, 26 Mar 90 12:50:03 CST
+
 Date: Mon, 26 Mar 90 12:50:03 CST
 From: Luke Lin <lukelin@uxh.cso.uiuc.edu>
-Message-Id: <9003261850.AA03662@uxh.cso.uiuc.edu>
-To: cjohnson@BRL.MIL, lukelin@uxh.cso.uiuc.edu
 Subject: Re:  BRL-CAD on a Mac II
-Cc: cad@BRL.MIL
 
 Will the next release of BRL-CAD have better support for the Mac II?  I guess
 the bottom line is: will the Mac II version of BRL-CAD be anywhere near the
@@ -1290,15 +1078,9 @@ Thanks.
 Luke Lin
 Electromagnetics Lab
 University of Illinois
-
-
-Received: from VMB.BRL.MIL by VMB.brl.MIL id aa08941; 27 Mar 90 10:19 EST
 Date:     Tue, 27 Mar 90 10:05:35 EST
 From:     Bill Mermagen Jr. (VLD/VMB)  <wm@BRL.MIL>
-To:       Luke Lin <lukelin@uxh.cso.uiuc.edu>
-cc:       cad@BRL
 Subject:  Re:  BRL-CAD on a Mac II
-Message-ID:  <9003271005.aa08782@VMB.BRL.MIL>
 
 Luke,
 
@@ -1315,16 +1097,9 @@ BRL-CAD platform. However, it will not beat a SGI 4D based system.
 
 
 				Bill
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa02688; 27 Mar 90 18:41 EST
-Received: from smoke.brl.mil by VMB.BRL.MIL id aa02679; 27 Mar 90 18:32 EST
 Date:     Tue, 27 Mar 90 18:32:47 EST
 From:     "Christopher T. Johnson" <cjohnson@BRL.MIL>
-To:       lukelin@uxh.cso.uiuc.edu
-cc:       cjohnson@BRL.MIL, lukelin@uxh.cso.uiuc.edu, cad@BRL.MIL
 Subject:  Re:  BRL-CAD on a Mac II
-Message-ID:  <9003271832.aa16873@SMOKE.BRL.MIL>
 
 Luke,
 I expect that future versions of BRLCAD will have better support
@@ -1354,15 +1129,9 @@ for A/UX.  At this time there are a few problems with a BRLCAD on a Mac.
    the MacOS program is not checking input as it is waiting on a child).
 
 Chris Johnson
-
-
-Received: from vmb.brl.mil by VMB.brl.MIL id aa07279; 26 Apr 90 2:06 EDT
 Date:     Thu, 26 Apr 90 1:55:03 EDT
 From:     Mike Muuss  <mike@brl.mil>
-To:       MARCHESF%PACEVM.BITNET@cunyvm.cuny.edu
-cc:       cad@BRL.MIL
 Subject:  Re:  Help needed
-Message-ID:  <9004260155.aa07260@VMB.BRL.MIL>
 
 Since the message was
 
@@ -1381,15 +1150,9 @@ directory information on the tape as it goes, then you have a good
 tape.
 	Best,
 	-Mike
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa07500; 26 Apr 90 2:45 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa07477; 26 Apr 90 2:30 EDT
 Date:     Thu, 26 Apr 90 2:23:36 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  Tolerance-based drawing
-Message-ID:  <9004260223.aa13437@SPARK.BRL.MIL>
 
 Over the past two days, I have added support to MGED to permit
 the resolution of the display wireframes and NMG tessellated solids
@@ -1421,15 +1184,9 @@ Also note that this feature only exists on the development copy of
 the software, expect it in "The Next Release".
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa11941; 26 Apr 90 11:10 EDT
 Date:     Thu, 26 Apr 90 11:01:27 EDT
 From:     Mike Muuss  <mike@brl.mil>
-To:       Doug Gwyn <gwyn@brl.mil>
-cc:       MARCHESF%PACEVM.BITNET@cunyvm.cuny.edu, cad@BRL.MIL
 Subject:  Re:  Help needed
-Message-ID:  <9004261101.aa11875@VMB.BRL.MIL>
 
 On every System V UNIX that has the 14 character filename limit
 that I have encountered, the system just silently truncates the
@@ -1438,16 +1195,9 @@ away?  If so, I'll change the names on the tape, otherwise,
 all that matters is uniqueness in the first 14 characters,
 which *is* checked for.
 	-Mike
-
-
-Received: from spark.brl.mil by VMB.BRL.MIL id aa25988; 25 Apr 90 3:39 EDT
 Date:     Wed, 25 Apr 90 3:30:19 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       ACST@BRL.MIL
-cc:       PHD@BRL.MIL, Gwyn@BRL.MIL, Keith@BRL.MIL, Moss@BRL.MIL, 
-          CJohnson@BRL.MIL
 Subject:  Parallel "prepping"
-Message-ID:  <9004250330.aa08011@SPARK.BRL.MIL>
 
 This evening I got "parallel prepping" to work, although more properly,
 it is "parallel gettree'ing" -- the part marked these days as "PREP" is
@@ -1507,15 +1257,9 @@ not be expected.
 GR_OSVIEW) pre processor.
 
 3)  More optimization is possible.
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa22692; 27 Apr 90 3:57 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa22676; 27 Apr 90 3:43 EDT
 Date:     Fri, 27 Apr 90 3:47:29 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  New Tree Walker
-Message-ID:  <9004270347.aa19534@SPARK.BRL.MIL>
 
 On and off for the past two weeks, one of my projects has been the
 implementation of a new, general purpose "tree walker" for BRL-CAD model
@@ -1612,15 +1356,9 @@ It will be part of "The Next Release".
 
 	Best,
 	 -Mike
-
-
-Received: from spark.brl.mil by VMB.BRL.MIL id aa23001; 27 Apr 90 4:38 EDT
 Date:     Fri, 27 Apr 90 4:37:30 EDT
 From:     Doug Gwyn (VLD/VMB) <gwyn@BRL.MIL>
-To:       mike@BRL.MIL
-cc:       moss@BRL.MIL
 Subject:  potential portability problem in librt
-Message-ID:  <9004270437.aa20081@SPARK.BRL.MIL>
 
 I notice you're using rt_calloc() to obtain a vector of elements of
 various types, initialized to "zero".  Unfortunately, bzero() does not
@@ -1645,15 +1383,9 @@ I notice also that you're relying on C compiler supporting "flexnames"
 characters of significance (except for external linkage), this should
 not cause long-term problems, although I bet there are still some C
 compilers on commercial systems that don't support flexnames.
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa22692; 27 Apr 90 3:57 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa22676; 27 Apr 90 3:43 EDT
 Date:     Fri, 27 Apr 90 3:47:29 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  New Tree Walker
-Message-ID:  <9004270347.aa19534@SPARK.BRL.MIL>
 
 On and off for the past two weeks, one of my projects has been the
 implementation of a new, general purpose "tree walker" for BRL-CAD model
@@ -1750,15 +1482,9 @@ It will be part of "The Next Release".
 
 	Best,
 	 -Mike
-
-
-Received: from spark.brl.mil by VMB.BRL.MIL id aa08823; 28 Apr 90 3:48 EDT
 Date:     Sat, 28 Apr 90 3:43:42 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       ACST@BRL.MIL, PHD@BRL.MIL
-cc:       CJohnson@BRL.MIL
 Subject:  PolySolid Tessellator
-Message-ID:  <9004280343.aa26652@SPARK.BRL.MIL>
 
 This evening, with a little help from Lee, I wrote the first draft
 of the PolySolid "tessellator".  The challenge for this one was not
@@ -1775,15 +1501,9 @@ The viewing of it ran in real time on the SGI at about 5fps.
 
 	Neat stuff!
 	 -Mike
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa05136; 1 May 90 3:34 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa05089; 1 May 90 3:18 EDT
 Date:     Tue, 1 May 90 3:12:35 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  Tolerance on Normals
-Message-ID:  <9005010312.aa05637@SPARK.BRL.MIL>
 
 A few days ago, I reported that MGED had gained a "tol" command to
 specify relative and/or absolute tolerances for use when plotting
@@ -1802,15 +1522,9 @@ surface! In a large model, this could get to be a lot of polygons.
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa04279; 1 May 90 2:10 EDT
 Date:     Tue, 1 May 90 1:48:49 EDT
 From:     Mike Muuss  <mike@brl.mil>
-To:       Luke Lin <lukelin@uxh.cso.uiuc.edu>
-cc:       CAD@BRL
 Subject:  Re:  RT error message
-Message-ID:  <9005010148.aa04229@VMB.BRL.MIL>
 
 The message you got:
 
@@ -1823,16 +1537,9 @@ I would be interested in seeing a test case that exhibits the problem.
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa08239; 7 May 90 21:14 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa07651; 7 May 90 19:19 EDT
 Date:     Mon, 7 May 90 19:00:54 EDT
 From:     Mike Muuss  <mike@brl.mil>
-To:       GJACKSON@tacom-emh2.army.mil
-cc:       info-iris@vmb.brl.mil
 Subject:  Re:  BRLCAD available on Power Series?
-Message-ID:  <9005071900.aa07545@VMB.BRL.MIL>
 
 Let me add to Phils remarks.  First, BRL-CAD works fine on the SGI Power
 Series.  The machine on my desk is a Power Series 4D/240.
@@ -1917,28 +1624,17 @@ o Neutron Transport Code
 o Link to PATRAN [TM] and hence to ADINA, EPIC-2, NASTRAN, etc.
 	for structural/stress analysis
 o X-Ray calculation
-
-
-Received: from spark.brl.mil by VMB.BRL.MIL id aa04726; 9 May 90 20:09 EDT
 Date:     Wed, 9 May 90 20:01:59 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       ACST@BRL.MIL, Keith@BRL.MIL
 Subject:  enmg -> ev
-Message-ID:  <9005092001.aa15825@SPARK.BRL.MIL>
 
 In the most recent copy of MGED, I have renamed the "enmg" command to
 be "ev".  This stands for EValuate.  Few mged users will be likely
 to remember what NMGs are, and "enmg" is hard to type.
 	-M
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa12402; 15 May 90 22:42 EDT
 Date:     Tue, 15 May 90 22:32:43 EDT
 From:     Mike Muuss  <mike@brl.mil>
-To:       Patrick J. Jonke <jonke@brl.mil>
-cc:       cad@BRL.MIL
 Subject:  Re:  Bug in MGED
-Message-ID:  <9005152232.aa12360@VMB.BRL.MIL>
 
 The big-E command is notorious for having difficulties.  It is often handy
 for a "quick look", but does not handle quite a few cases.  The big-E
@@ -1964,28 +1660,15 @@ use it's output as a definitive representation of the shape.
 Thanks for the bug report!
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id ae11237; 15 May 90 20:07 EDT
-Received: from vgr.brl.mil by VMB.BRL.MIL id aa11069; 15 May 90 19:34 EDT
 Date:     Tue, 15 May 90 18:59:12 EDT
 From:     Doug Gwyn (VLD/VMB) <gwyn@BRL.MIL>
-To:       cad@BRL.MIL
 Subject:  problem with /usr/brlcad/lib/libplot3.a on WAFFLE
-Message-ID:  <9005151859.aa02686@VGR.BRL.MIL>
 
 This library doesn't seem to provide space3(), line3(), color(), etc.
 I thought it was supposed to be a superset of /usr/5lib/libplot.a?
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa12815; 16 May 90 0:00 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa12781; 15 May 90 23:46 EDT
 Date:     Tue, 15 May 90 23:37:46 EDT
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       Doug Gwyn <gwyn@BRL.MIL>
-cc:       cad@BRL.MIL
 Subject:  Re:  problem with /usr/brlcad/lib/libplot3.a on WAFFLE
-Message-ID:  <9005152337.aa02366@SPARK.BRL.MIL>
 
      This library doesn't seem to provide space3(), line3(), color(), etc.
      I thought it was supposed to be a superset of /usr/5lib/libplot.a?
@@ -2007,14 +1690,9 @@ a simple set of #define's to map xxx(...) into pl_xxx(stdout,...).
 [I used to have one of these but a quick search didn't turn it up.]
 
 - Phil
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa14201; 21 May 90 16:13 EDT
 Date:     Mon, 21 May 90 16:12:53 EDT
 From:     Gary S. Moss (VLD/VMB)  <moss@BRL.MIL>
-To:       vmb@BRL.MIL
 Subject:  Demoing BRLCAD images on a IRIS 4D.
-Message-ID:  <9005211612.aa13811@VMB.BRL.MIL>
 
 Hi,
 	John Anderson just asked me a question that probably has been
@@ -2055,15 +1733,9 @@ note.
 
 	-Gary
 
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab00636; 22 May 90 15:15 EDT
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa00416; 22 May 90 14:57 EDT
 Date:     Tue, 22 May 90 14:53:53 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  mged color plot overlays
-Message-ID:  <9005221453.aa07823@WOLF.BRL.MIL>
 
 I have just revised the development version of MGED so that when the
 "overlay" command is used to overlay a UNIX-plot file on top of the
@@ -2074,18 +1746,11 @@ This has proved helpful for examining some of the NMG debugging.
 
 	Best,
 	 -Mike
-
-
-Received: from adm.brl.mil by VMB.BRL.MIL id ab06640; 23 May 90 15:26 EDT
-Received: from ADM.BRL.MIL by ADM.BRL.MIL id aa17310; 23 May 90 15:18 EDT
-Received: from USENET by ADM.BRL.MIL id aa17217; 23 May 90 15:10 EDT
 From:  Phil Dykstra <phil@BRL.MIL>
 Newsgroups: brl.support
 Subject: Re:  /usr/include/brlcad vs. /usr/brlcad/include
-Message-ID: <23413@adm.BRL.MIL>
 Date: 23 May 90 19:10:41 GMT
 Sender: news@adm.brl.mil
-To:       support@BRL.MIL
 
 
     Why don't you check with the BRL-CAD folks instead of guessing.
@@ -2112,19 +1777,10 @@ The last release of BRL-CAD was not configured this way.  The next
 one will be.  But the symlink will stay.
 
 - Phil
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab13363; 29 May 90 17:50 EDT
-Received: from vgr.brl.mil by VMB.BRL.MIL id aa13245; 29 May 90 17:39 EDT
-Received: from REDSTONE-EMH2.ARMY.MIL by VGR.BRL.MIL id aa24684;
           29 May 90 17:37 EDT
-Received: from ssdd by redstone-emh2.army.mil. id aa14703; 29 May 90 21:28 GMT
 Date:     Tue, 29 May 90 16:25:59 CDT
 From:     Mbowden@redstone-emh2.army.mil
-To:       cad@BRL.MIL
-cc:       mbowden@redstone-emh2.army.mil
 Subject:  Monotonic Non-decreasing Database Sizes
-Message-ID:  <9005291737.aa24684@VGR.BRL.MIL>
 
 Apparently, deleting objects within mged does not actually remove data from
 the model database. If this is indeed the case, is there a good way to compact
@@ -2132,16 +1788,9 @@ the mged databases?
 
 					Mark Huston Bowden
 					<Mbowden.ssdd@REDSTONE-EMH2.ARMY.MIL>
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa01659; 29 May 90 22:24 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa01577; 29 May 90 22:10 EDT
 Date:     Tue, 29 May 90 22:09:32 EDT
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       Mbowden@redstone-emh2.army.mil
-cc:       cad@BRL.MIL
 Subject:  Re:  Monotonic Non-decreasing Database Sizes
-Message-ID:  <9005292209.aa18756@SPARK.BRL.MIL>
 
 You are correct that the on disk database is not compacted when
 objects are deleted.  The empty slots will be used however by
@@ -2152,15 +1801,9 @@ If you do wish to compact it one way that comes to mind would be:
 	g2asc < orig.g | asc2g > compacted.g
 
 - Phil
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa18796; 4 Jun 90 11:10 EDT
-Received: from vim.brl.mil by VMB.BRL.MIL id aa18539; 4 Jun 90 10:46 EDT
 Date:     Mon, 4 Jun 90 10:35:28 EDT
 From:     Paul Tanenbaum <pjt@BRL.MIL>
-To:       cad@BRL.MIL
 Subject:  Compiling on victor.brl.mil
-Message-ID:  <9006041035.aa07492@VIM.BRL.MIL>
 
 
 Tried to compile a fairly simple program on a 4D running BRLCAD 3.2,
@@ -2185,14 +1828,9 @@ $ exit
 
 script done on Fri Jun  1 15:04:23 1990
 
-
-
 Date:     Mon, 4 Jun 90 21:55:03 EDT
 From:     Mike Muuss  <mike@brl.mil>
-To:       Robert M. Cahoon <rmc@brl.mil>
-cc:       ACST@BRL, Gwyn@BRL
 Subject:  final word: brlcad includes
-Message-ID:  <9006042155.aa29863@VMB.BRL.MIL>
 
 I determine the tree structure.
 
@@ -2211,16 +1849,9 @@ transition period (ie, both arrangements can currently be found).
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa01388; 5 Jun 90 2:25 EDT
-Received: by VMB.BRL.MIL id ah00499; 5 Jun 90 2:08 EDT
 Date:     Mon, 4 Jun 90 22:09:39 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       Paul Tanenbaum <pjt@BRL.MIL>
-cc:       cad@BRL.MIL
 Subject:  Re:  Compiling on victor.brl.mil
-Message-ID:  <9006042209.aa29924@VMB.BRL.MIL>
 
 When building an application that uses LIBRT, you must also
 link against the library listed as LIBRT_LIBES in Cakefile.defs.
@@ -2255,19 +1886,9 @@ is one of the reasons that we switched from MAKE to CAKE.
 PS:  Note that for compatability with older Cakefiles, :
 
 #define RT_LIBES        LIBRT_LIBES     /* compat w/old Cakefiles */
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa07469; 10 Jul 90 20:02 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab17137; 10 Jul 90 19:41 EDT
-Received: from vgr.brl.mil by VMB.BRL.MIL id aa17127; 10 Jul 90 19:24 EDT
-Received: from icdc.llnl.gov by VGR.BRL.MIL id aa07202; 10 Jul 90 19:17 EDT
 Date: Tue, 10 Jul 90 16:16 PDT
 From: LAGUNA@icdc.llnl.gov
 Subject: Choosing Workstations for Use with BRL-CAD
-To: cad@BRL.MIL
-Message-id: <68778AA9BEF7202077@icdc.llnl.gov>
-X-Envelope-to: cad@brl.MIL
-X-VMS-To: IN%"cad@brl.mil"
 
 
 We are considering the purchase of several workstations for use by
@@ -2294,18 +1915,9 @@ the CAD Package and when that release might be expected.  Thanks.
 
 
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa03919; 10 Jul 90 9:33 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id ad03569; 10 Jul 90 9:11 EDT
-Received: from vgr.brl.mil by VMB.BRL.MIL id aa03156; 10 Jul 90 8:41 EDT
-Received: from decpa.pa.dec.com by VGR.BRL.MIL id aa04240; 10 Jul 90 8:20 EDT
-Received: by decpa.pa.dec.com; id AA07850; Tue, 10 Jul 90 04:28:59 -0700
 Message-Id: <9007101128.AA07850@decpa.pa.dec.com>
-Received: from tle.enet; by decwrl.enet; Tue, 10 Jul 90 04:29:00 PDT
 Date: Tue, 10 Jul 90 04:29:00 PDT
 From: "Mgr. Open System Migration Program, LSE, PDF, SCA  10-Jul-1990 0707" <ellenberger@tle.enet.dec.com>
-To: cad@BRL.MIL
 Subject: Rookie Questions
 
 I haven't seen any "READ THIS BEFORE POSTING" mail in this group, so
@@ -2334,17 +1946,9 @@ spending an hour or two with the package:
 
 Sorry if these are too naive, but I'm taking advantage of the "I'm
 just a rookie" excuse while I still can...
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa08089; 10 Jul 90 22:24 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa18104; 10 Jul 90 22:16 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa18044; 10 Jul 90 22:02 EDT
 Date:     Tue, 10 Jul 90 21:54:00 EDT
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       "Mgr. Open System Migration Program, LSE, PDF, SCA 10-Jul-1990 0707" <ellenberger@tle.enet.dec.com>
-cc:       cad@BRL.MIL
 Subject:  Re:  Rookie Questions
-Message-ID:  <9007102154.aa00990@SPARK.BRL.MIL>
 
     1) Has anyone done the Cakefile.defs and other changes necessary
        to install brl on a DECstation rather than a VAX?
@@ -2380,18 +1984,9 @@ places it is used in Cakefile.defs for an example of how to add it
 to your configuration.
 
 - Phil
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa00614; 19 Jul 90 6:55 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa06742; 19 Jul 90 6:45 EDT
-Received: from vgr.brl.mil by VMB.BRL.MIL id aa06721; 19 Jul 90 6:35 EDT
-Received: from decpa.pa.dec.com by VGR.BRL.MIL id aa15301; 19 Jul 90 6:13 EDT
-Received: by decpa.pa.dec.com; id AA24250; Thu, 19 Jul 90 03:13:00 -0700
 Message-Id: <9007191013.AA24250@decpa.pa.dec.com>
-Received: from tle.enet; by decwrl.enet; Thu, 19 Jul 90 03:13:10 PDT
 Date: Thu, 19 Jul 90 03:13:10 PDT
 From: "Mgr. Open System Migration Program, LSE, PDF, SCA  19-Jul-1990 0556" <ellenberger@tle.enet.dec.com>
-To: cad@BRL.MIL
 Subject: More Rookie Questions
 
 1) I gather from reading one of the documents that there is X support for
@@ -2407,17 +2002,9 @@ Subject: More Rookie Questions
 4) Is there a document that I missed that provides up-to-date information
    such as 1)?  I think I read or at least scanned most of the documents
    and I didn't find the data.
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa12777; 26 Jul 90 6:24 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab00485; 26 Jul 90 6:14 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id ab00264; 26 Jul 90 6:04 EDT
 Date:     Thu, 26 Jul 90 4:36:52 EDT
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       "Mgr. Open System Migration Program, LSE, PDF, SCA 19-Jul-1990 0556" <ellenberger@tle.enet.dec.com>
-cc:       cad@BRL.MIL
 Subject:  Re:  More Rookie Questions
-Message-ID:  <9007260436.aa14140@SPARK.BRL.MIL>
 
 > 1) I gather from reading one of the documents that there is X support for
 >    rt, but I can't figure out from reading docs and header files how to
@@ -2447,19 +2034,9 @@ Libfb(3) has some, and brlcad(1) has some, but "fbhelp" is the best
 place to start.
 
 - Phil
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa07469; 10 Jul 90 20:02 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab17137; 10 Jul 90 19:41 EDT
-Received: from vgr.brl.mil by VMB.BRL.MIL id aa17127; 10 Jul 90 19:24 EDT
-Received: from icdc.llnl.gov by VGR.BRL.MIL id aa07202; 10 Jul 90 19:17 EDT
 Date: Tue, 10 Jul 90 16:16 PDT
 From: LAGUNA@icdc.llnl.gov
 Subject: Choosing Workstations for Use with BRL-CAD
-To: cad@BRL.MIL
-Message-id: <68778AA9BEF7202077@icdc.llnl.gov>
-X-Envelope-to: cad@brl.MIL
-X-VMS-To: IN%"cad@brl.mil"
 
 
 We are considering the purchase of several workstations for use by
@@ -2486,17 +2063,9 @@ the CAD Package and when that release might be expected.  Thanks.
 
 
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa08154; 10 Jul 90 22:36 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa18233; 10 Jul 90 22:31 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa18222; 10 Jul 90 22:23 EDT
 Date:     Tue, 10 Jul 90 22:19:07 EDT
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       LAGUNA@icdc.llnl.gov
-cc:       cad@BRL.MIL
 Subject:  Re:  Choosing Workstations for Use with BRL-CAD
-Message-ID:  <9007102219.aa01151@SPARK.BRL.MIL>
 
 I think it will be a long time (if ever) until an X interface to
 BRL-CAD will have as high of performance as a platform specific one
@@ -2521,17 +2090,9 @@ I can't see it comming out sooner than September, which may mean
 Thanksgiving, but I hope it's before then.
 
 - Phil
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa18734; 26 Jul 90 21:52 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa05565; 26 Jul 90 21:50 EDT
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa05466; 26 Jul 90 21:28 EDT
 Date:     Thu, 26 Jul 90 21:27:22 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       Natalie Eberius <barker@BRL.MIL>
-Cc:	  cad@BRL.MIL
 Subject:  Re:  rt_shootray()
-Message-ID:  <9007262127.aa18513@WOLF.BRL.MIL>
 
 You can see if the start point lies within the model RPP with
 this bit of code:
@@ -2546,14 +2107,9 @@ if( (pt[X] >= rtip->mdl_min[X] && pt[X] <= rtip->mdl_max[X]) &
 
 	Best,
 	 -Mike
-
-
 Date:     Sat, 25 Aug 90 11:35:20 EDT
 From:     Mike Muuss  <mike@brl.mil>
-To:       nfotis%theseas.ntua.gr@uunet.uu.net
-cc:       Mike@BRL
 Subject:  Re:  Various (repost, with additions)
-Message-ID:  <9008251135.aa21688@WOLF.BRL.MIL>
 
 Greetings!
 
@@ -2625,15 +2181,9 @@ Interface Management System (G-UIMS), for Release 4.n where n>0.
 	Best,
 	 -Mike
 
-
-
-Received: from smoke.brl.mil by WOLF.BRL.MIL id aa02881; 27 Aug 90 11:55 EDT
 Date:     Mon, 27 Aug 90 11:55:07 EDT
 From:     "Christopher T. Johnson" <cjohnson@BRL.MIL>
-To:       Keith Goldfarb <keith%celia.uucp@usc.edu>
-cc:       Mike Muuss <mike@BRL.MIL>
 Subject:  Re:  [Keith Goldfarb: Re: GIFs]
-Message-ID:  <9008271155.aa15007@SMOKE.BRL.MIL>
 
 Hello Keith,
 
@@ -2713,14 +2263,9 @@ Good luck and if you have any questions feel free to e-mail them
 to me and or mike.
 
 Chris Johnson	<cjohnson@brl.mil>
-
-
 Date:     Thu, 27 Sep 90 10:16:15 EDT
 From:     Paul Stay  <stay@brl.mil>
-To:       dome@BRL.MIL
-cc:       stay@BRL.MIL, mike@BRL.MIL
 Subject:  re:Spline Solids
-Message-ID:  <9009271016.aa00785@WOLF.BRL.MIL>
 
 
 The teapot program is good example for creating a b-spline solid
@@ -2758,17 +2303,9 @@ Thus a spline solid database record consists
 -Paul
 	
 		
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa09930; 18 Sep 90 9:34 EDT
 Date:     Tue, 18 Sep 90 9:28:55 EDT
 From:     Robert Shnidman (VLD/VMB) <robert@BRL.MIL>
-To:       Paul H Deitz - Chief VMB/VLD <phd@BRL.MIL>
-cc:       john@BRL.MIL, robert@BRL.MIL, keith@BRL.MIL, davisson@BRL.MIL, 
-          jill@BRL.MIL, mike@BRL.MIL, darleen@BRL.MIL, butler@BRL.MIL, 
-          kermit@BRL.MIL, stay@BRL.MIL, moss@BRL.MIL, phil@BRL.MIL
 Subject:  Re:  [J. Terrence Klopcic: [J. Terrence Klopcic: Ullyatt]]
-Message-ID:  <9009180928.aa01344@VMB.BRL.MIL>
 
 Paul,
 	Correct answers ought to be at least as important an issue as
@@ -2780,15 +2317,9 @@ the overlap was assigned to BOTH of the overlapping regions.  If only real
 armor were that good.
 
 				Bob
-
-
-Received: from vat.brl.mil by WOLF.BRL.MIL id aa18919; 24 Oct 90 8:15 EDT
 Date:     Wed, 24 Oct 90 8:16:31 EDT
 From:     "John R. Anderson" (VLD/ASB) <jra@BRL.MIL>
-To:       mike@BRL.MIL
-cc:       sue@BRL.MIL, earl@BRL.MIL
 Subject:  BRLCAD on a Sparcstation 1+
-Message-ID:  <9010240816.aa12651@VAT.BRL.MIL>
 
 	Out of curiosity I installed BRLCAD on my new SParcstation 1+. 
 I have included the bechmark results below.  Everything compiled fine
@@ -2797,16 +2328,9 @@ SUNVIEW.  The operating system is SunOS 4.1.
 
 Abs	whisper.brl.mil	1118.35	561.81	473.52	439.76	509.26	620.54	Tue Oct 23 18:18:24 EDT 1990
 *vgr	whisper.brl.mil	8.69	10.31	10.48	10.89	10.38	10.15	
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa05793; 3 Nov 90 16:39 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa14658; 3 Nov 90 16:27 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa14620; 3 Nov 90 16:21 EST
 Date:     Sat, 3 Nov 90 16:13:48 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  Minor additions
-Message-ID:  <9011031613.aa04922@WOLF.BRL.MIL>
 
 This afternoon, pix-fb, bw-fb, and pixhalve all got a "-a" flag,
 which invokes an AUTOSIZE option.  A table of common image sizes
@@ -2850,13 +2374,9 @@ can be done.
 
 	Best,
 	 -Mike
-
-
 Date:     Thu, 22 Nov 90 3:37:41 EST
 From:     Mike Muuss  <mike@brl.mil>
-To:       ACST@BRL.MIL
 Subject:  rtsrv looping on exit: fixed
-Message-ID:  <9011220337.aa18489@WOLF.BRL.MIL>
 
 This evening I discovered why RTSRV, when aborted, often seems to
 leave one CPU spinning:  while trying to send a last message via rt_log(),
@@ -2869,19 +2389,10 @@ libpkg messages being sent.  (Generally pointless, anyways).
 
 	Best,
 	 -Mike
-
-
-Received: from smoke.brl.mil by WOLF.BRL.MIL id aa13179; 22 Nov 90 0:01 EST
-Received: from ADM.BRL.MIL by SMOKE.BRL.MIL id aa21968; 21 Nov 90 23:56 EST
-Received: from USENET by ADM.BRL.MIL id aa19783; 21 Nov 90 23:46 EST
 From: "Michael John Muuss <mike>" <mike@BRL.MIL>
 Newsgroups: comp.graphics
 Subject: 3/4" -vs- S-VHS, etc.
-Keywords: NTSC, video, videotape, recording
-Message-ID: <14556@smoke.brl.mil>
 Date: 22 Nov 90 03:55:05 GMT
-Sender: news@smoke.brl.mil
-To:       brl-comp-graphics@smoke.brl.mil
 
 (I wrote this rather lengthy response, to INFO-IRIS.  It seemed worthwhile
 to share it with this somewhat larger community as well.  Please note that
@@ -3083,18 +2594,11 @@ image filtering software, Lyon-Lamb controller software, etc are all
 included as a small, but significant, part of the BRL-CAD Package,
 which we make available for free.  See SGI's software partners catalog
 for details, or send E-mail.
-
-
-Received: from SMOKE.BRL.MIL by WOLF.BRL.MIL id aa27230; 23 Nov 90 4:49 EST
-Received: from adm.brl.mil by SMOKE.BRL.MIL id aa00398; 23 Nov 90 4:37 EST
-Received: from USENET by ADM.BRL.MIL id aa04426; 23 Nov 90 4:35 EST
 From: Dave Martindale <dave@imax.com>
 Newsgroups: comp.graphics
 Subject: Re: 3/4" -vs- S-VHS, etc.
 Keywords: NTSC, video, videotape, recording
-Message-ID: <1990Nov23.052059.28481@imax.com>
 Date: 23 Nov 90 05:20:59 GMT
-To:       brl-comp-graphics@smoke.brl.mil
 
 In article <14556@smoke.brl.mil> mike@brl.mil writes:
 
@@ -3150,15 +2654,9 @@ most (or all) consumer TV sets discard it, limiting both I and Q
 to 500 kHz.
 
 	Dave Martindale
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa15178; 26 Nov 90 13:30 EST
 Date:     Mon, 26 Nov 90 13:26:49 EST
 From:     "Gary S. Moss" (VLD/VMB) <moss@BRL.MIL>
-To:       Mike Muuss <mike@BRL.MIL>
-cc:       moss@BRL.MIL
 Subject:  Re:  lgt on Sun3
-Message-ID:  <9011261326.aa05055@VMB.BRL.MIL>
 
 Mike,
 	I fixed the warnings generated on vision (under SunOS 4 Sun fixed 
@@ -3173,17 +2671,9 @@ machine types; It's hard to predict when various vendors will fix this.
 Thanks for the bug report,
 -Gary
 
-
-
-Received: from adm.brl.mil by WOLF.BRL.MIL id aa16442; 29 Nov 90 22:07 EST
-Received: from ADM.BRL.MIL by ADM.BRL.MIL id aa17808; 29 Nov 90 22:01 EST
-Received: from spark.brl.mil by ADM.BRL.MIL id aa17772; 29 Nov 90 21:56 EST
 Date:     Thu, 29 Nov 90 21:48:44 EST
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       Theodore M Muehl <muehl@BRL.MIL>
-cc:       Support@BRL.MIL
 Subject:  Re:  a troff link with CAD?
-Message-ID:  <9011292148.aa24720@SPARK.BRL.MIL>
 
 I use a package called "psfig" under Latex (or TeX) for including
 postscript figures in reports.  BW and PIX files, as well as MGED
@@ -3198,17 +2688,9 @@ believe that Mike Muuss <mike> and Lee Butler <butler> have used it
 before so you may want to ask them for details.
 
 - Phil
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa17335; 30 Nov 90 1:32 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa04900; 30 Nov 90 1:07 EST
-Received: from spark.brl.mil by VMB.BRL.MIL id aa04879; 30 Nov 90 1:01 EST
 Date:     Fri, 30 Nov 90 0:57:15 EST
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       A J Annala <annala%neuro.usc.edu@usc.edu>
-cc:       cad@BRL.MIL
 Subject:  Re:  sun 386i
-Message-ID:  <9011300057.aa25299@SPARK.BRL.MIL>
 
 While none of us at BRL has tried it, I know a couple of people
 that seem to have compiled BRL-CAD successfully on PC/AT's running
@@ -3218,16 +2700,9 @@ changes.  I can send you the changes I got thanks to Garry Paxinos.
 me about it.]
 
 - Phil
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa01489; 5 Dec 90 6:36 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa06566; 5 Dec 90 6:19 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa06423; 5 Dec 90 6:00 EST
 Date:     Wed, 5 Dec 90 5:51:46 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  new g2asc, asc2g
-Message-ID:  <9012050551.aa29427@WOLF.BRL.MIL>
 
 This evening, I spent several hours testing new versions of g2asc and
 asc2g that were provided by Sue.  These new versions have two
@@ -3273,15 +2748,9 @@ the old converters.  Please speak up if you can break them.
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa09059; 25 Jun 90 14:12 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab19573; 25 Jun 90 13:49 EDT
 Date:     Mon, 25 Jun 90 13:42:56 EDT
 From:     Carl Moore (VLD/VMB) <cmoore@BRL.MIL>
-To:       ged@BRL.MIL
 Subject:  MGED not giving some READ-ONLY messages?
-Message-ID:  <9006251342.aa19358@VMB.BRL.MIL>
 
 
 Someone just got confused when edcodes failed to update the
@@ -3321,17 +2790,9 @@ Untitled MGED Database (units=mm)
 mged> tops
 r1/R
 mged>
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa20811; 7 Dec 90 23:32 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa14749; 7 Dec 90 23:26 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa14743; 7 Dec 90 23:24 EST
 Date:     Fri, 7 Dec 90 23:17:07 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       Carl Moore <cmoore@BRL.MIL>
-cc:       ged@BRL.MIL
 Subject:  Re:  MGED not giving some READ-ONLY messages?
-Message-ID:  <9012072317.aa20749@WOLF.BRL.MIL>
 
 Carl -
 
@@ -3393,9 +2854,7 @@ internal testing in a few weeks.  Just in time for Christmas!)
 ------------------------------------------------------------
 Date:     Mon, 25 Jun 90 13:42:56 EDT
 From:     Carl Moore (VLD/VMB) <cmoore@BRL.MIL>
-To:       ged@BRL.MIL
 Subject:  MGED not giving some READ-ONLY messages?
-Message-ID:  <9006251342.aa19358@VMB.BRL.MIL>
 
 
 Someone just got confused when edcodes failed to update the
@@ -3436,17 +2895,10 @@ Untitled MGED Database (units=mm)
 mged> tops
 r1/R
 mged>
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa20831; 7 Dec 90 23:33 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab14749; 7 Dec 90 23:26 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id ab14743; 7 Dec 90 23:24 EST
 Date:     Fri, 7 Dec 90 23:23:45 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       GED@BRL.MIL
 Subject:  [Carl Moore:  error message in mged]
           [Daniel C. Dender:  Re: error message in mged]
-Message-ID:  <9012072323.aa20760@WOLF.BRL.MIL>
 
 This message addresses the issues raised by Carl and Dan, below.
 
@@ -3469,13 +2921,9 @@ mv A_tor torus3
 
 ----- Forwarded message # 1:
 
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa05302; 1 Nov 90 12:48 EST
-Received: from wumpus.brl.mil by VMB.BRL.MIL id aa12133; 1 Nov 90 12:44 EST
 Date:     Thu, 1 Nov 90 12:11:55 EST
 From:     Carl Moore (VLD/VMB) <cmoore@BRL.MIL>
-To:       GED <ged-outbound@vmb.brl.mil>
 Subject:  error message in mged
-Message-ID:  <9011011211.aa00537@WUMPUS.BRL.MIL>
 
 I made 2 ".g" files via the converting of old ".vg" files.  Now I am getting
 messages like this which do not go away even if I keep group "hepro" in a
@@ -3486,14 +2934,9 @@ db_diradd( x10039ef0, hepro, addr=x8480, len=5, flags=x2) duplicates entry x1008
 
 ----- Forwarded message # 2:
 
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa27979; 3 Nov 90 0:15 EST
-Received: from VIM.BRL.MIL by VMB.BRL.MIL id aa09050; 3 Nov 90 0:10 EST
 Date:     Fri, 2 Nov 90 23:32:38 EST
 From:     "Daniel C. Dender" (SE|andr) <dender@BRL.MIL>
-To:       Carl Moore <cmoore@BRL.MIL>
-cc:       GED <ged-outbound@vmb.brl.mil>
 Subject:  Re:  error message in mged
-Message-ID:  <9011022332.aa04163@VIM.BRL.MIL>
 
 
 > What is the meaning
@@ -3541,17 +2984,9 @@ Dan Dender
 
 
 ----- End of forwarded messages
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa25287; 7 Dec 90 13:56 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa08845; 7 Dec 90 13:50 EST
-Received: from VIM.BRL.MIL by VMB.BRL.MIL id aa08630; 7 Dec 90 13:38 EST
 Date:     Fri, 7 Dec 90 13:41:32 EST
 From:     Natalie Eberius <barker@BRL.MIL>
-To:       cad@BRL.MIL
-cc:       barker@BRL.MIL
 Subject:  Multiple Processors
-Message-ID:  <9012071341.aa28280@VIM.BRL.MIL>
 
 I have written an application that uses raytracing and I
 am interested in utilizing multiple processors.  What do 
@@ -3561,14 +2996,9 @@ option on rt?
 		Thanks,
 		Natalie Eberius <barker@brl>
 		6980
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa17039; 13 Dec 90 6:14 EST
 Date:     Thu, 13 Dec 90 6:13:32 EST
 From:     "Lee A. Butler" <butler@BRL.MIL>
-To:       acst@BRL.MIL
 Subject:  Changes to MGED for blit
-Message-ID:  <9012130613.aa18202@VMB.BRL.MIL>
 
 This morning I've made some modifications to mged's tek4014 display manager
 that allow it to be more conveniently used with the ATT 5620 terminals (for
@@ -3582,21 +3012,11 @@ cross-hair cursor, and typing a return will send the cursor position to mged.
 The tek4014 emulator should be started with the "-e" option.
 
 Lee
-
-
-Received: from adm.brl.mil by WOLF.BRL.MIL id aa15402; 6 Dec 90 16:56 EST
 Path: adm!smoke!gwyn
 From: Doug Gwyn <gwyn@smoke.brl.mil>
 Newsgroups: comp.bugs.4bsd
 Subject: SunOS 4.0 frexp() bug
-Keywords: frexp bug
-Message-ID: <14671@smoke.brl.mil>
 Date: 6 Dec 90 21:34:06 GMT
-Organization: U.S. Army Ballistic Research Laboratory (BRL), APG, MD.
-Lines: 8
-Resent-Date:  Thu, 6 Dec 90 16:48:21 EST
-Resent-From:  news@BRL.MIL
-Resent-To:  mike@BRL.MIL
 
 We recently tried using a Sun-4 for the first time and immediately
 discovered that frexp(0.0,...) goes into an infinite loop.  The
@@ -3606,14 +3026,9 @@ obtained via BSD, which is why I'm posting this here.
 
 One wonders how frexp() could possibly have passed its pre-release
 tests..
-
-
 Date:     Thu, 6 Dec 90 20:08:44 EST
 From:     Mike Muuss  <mike@brl.mil>
-To:       ACST@BRL.MIL
-cc:       CMoore@BRL
 Subject:  mged big-E working (again)
-Message-ID:  <9012062008.aa17419@WOLF.BRL.MIL>
 
 I'm pleased to be able to report that MGED's big-E command
 in the current development MGED is working again.
@@ -3636,17 +3051,9 @@ before the release cycle gets really underway.
 
 	Onwards!
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa19375; 13 Dec 90 16:24 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa05495; 13 Dec 90 16:18 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa05406; 13 Dec 90 16:09 EST
 Date:     Thu, 13 Dec 90 16:04:45 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       Natalie Eberius <barker@BRL.MIL>
-cc:       CAD@BRL.MIL
 Subject:  Re:  Multiple Processors
-Message-ID:  <9012131604.aa19012@WOLF.BRL.MIL>
 
 > I have written an application that uses raytracing and I
 > am interested in utilizing multiple processors.  What do 
@@ -3862,17 +3269,9 @@ application.
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa04228; 26 Dec 90 21:07 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa00458; 26 Dec 90 20:06 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa00437; 26 Dec 90 19:59 EST
 Date:     Wed, 26 Dec 90 19:54:42 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       jxf@lanl.gov
-cc:       CAD@BRL.MIL
 Subject:  cad/Cakefile.lib fix
-Message-ID:  <9012261954.aa02690@WOLF.BRL.MIL>
 
 Dear John -
 
@@ -3916,16 +3315,9 @@ Here is the context diff:
 
 Best,
  -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa26769; 19 Dec 90 7:04 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa00500; 19 Dec 90 6:58 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa00494; 19 Dec 90 6:43 EST
 Date:     Wed, 19 Dec 90 6:37:18 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  New SGI 4D libfb: parallel!
-Message-ID:  <9012190637.aa26606@WOLF.BRL.MIL>
 
 This evening I removed the bug-check code in libfb/if_4d.c which
 checked to make sure that only single-thread (uniprocessor) programs
@@ -3949,17 +3341,9 @@ capability working!  But, at least it is here now.
 ...Working hard on BRL-CAD Release 4.0...
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa04228; 26 Dec 90 21:07 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa00458; 26 Dec 90 20:06 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa00437; 26 Dec 90 19:59 EST
 Date:     Wed, 26 Dec 90 19:54:42 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       jxf@lanl.gov
-cc:       CAD@BRL.MIL
 Subject:  cad/Cakefile.lib fix
-Message-ID:  <9012261954.aa02690@WOLF.BRL.MIL>
 
 Dear John -
 
@@ -4003,13 +3387,9 @@ Here is the context diff:
 
 Best,
  -Mike
-
-
 Date:     Thu, 10 Jan 91 22:27:24 EST
 From:     Mike Muuss  <mike@brl.mil>
-To:       ACST@BRL.MIL
 Subject:  fbclear -c
-Message-ID:  <9101102227.aa23647@WOLF.BRL.MIL>
 
 I have thought about this a lot, (and I've been burned by it a lot
 lately), so I have reversed the sense of the -c flag on fbclear.
@@ -4027,31 +3407,17 @@ putting the gamma ramp back in.
 
 	Comments?
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa04836; 11 Jan 91 10:16 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa26200; 11 Jan 91 10:11 EST
-Received: from VIM.BRL.MIL by VMB.BRL.MIL id aa25831; 11 Jan 91 9:51 EST
 Date:     Fri, 11 Jan 91 9:48:21 EST
 From:     Patrick Jonke <jonke@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  MGED Question
-Message-ID:  <9101110948.aa02705@VIM.BRL.MIL>
 
 Is it possible for two people working on different terminals
 to edit the same mged file simultaneously?  The mged file in
 question is located on a file server, and each of the terminals
 is a Personal Iris.
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa00389; 11 Jan 91 12:27 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa27188; 11 Jan 91 11:21 EST
 Date:     Fri, 11 Jan 91 11:12:46 EST
 From:     Carl Moore (VLD/VMB) <cmoore@BRL.MIL>
-To:       Patrick Jonke <jonke@BRL.MIL>
-cc:       cad@BRL.MIL
 Subject:  Re:  MGED Question
-Message-ID:  <9101111112.aa26486@VMB.BRL.MIL>
 
 Patrick Jonke asks what if 2 people on different terminals are editing
 the same mged file.  It appears to me that you might end up with some
@@ -4074,17 +3440,9 @@ I tested by editing the same mged file in
    MGED, I seem to have a working version of the file AND a saved version
    which gets updated immediately; and these versions should be the same
    if only one person is running MGED on that file.
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa00532; 11 Jan 91 14:26 EST
-Received: from vmb.brl.mil by VMB.brl.MIL id ac02596; 11 Jan 91 14:20 EST
-Received: from VIM.BRL.MIL by VMB.BRL.MIL id ab02397; 11 Jan 91 14:03 EST
 Date:     Fri, 11 Jan 91 14:01:47 EST
 From:     "Daniel C. Dender" (SE|andr) <dender@BRL.MIL>
-To:       Carl Moore <cmoore@BRL.MIL>
-cc:       cad@BRL.MIL
 Subject:  Re:  MGED Question
-Message-ID:  <9101111401.aa04342@VIM.BRL.MIL>
 
 Carl Moore writes:
 
@@ -4124,15 +3482,9 @@ So the rule (at least for now) is don't let it happen!
 
 Dan Dender
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa00599; 11 Jan 91 14:51 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa03098; 11 Jan 91 14:48 EST
 Date:     Fri, 11 Jan 91 14:33:15 EST
 From:     Carl Moore (VLD/VMB) <cmoore@BRL.MIL>
-To:       ged@BRL.MIL
 Subject:  Re:  MGED Question
-Message-ID:  <9101111433.aa02593@VMB.BRL.MIL>
 
 Yes, I see the item about my experiment changing only the name fields
 of existing solids.  But, to respond to Dan Dender, I did not intend
@@ -4152,17 +3504,9 @@ then re-entered MGED, the solid was called "second".
 
 So as you have already heard:  Know what you are doing if you want to
 run more than one MGED at the same time on the same file, or don't do it!
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa00972; 11 Jan 91 16:50 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa04306; 11 Jan 91 16:39 EST
-Received: from spark.brl.mil by VMB.BRL.MIL id aa04225; 11 Jan 91 16:30 EST
 Date:     Fri, 11 Jan 91 16:21:09 EST
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       Patrick Jonke <jonke@BRL.MIL>
-cc:       CAD@BRL.MIL
 Subject:  Re:  MGED Question
-Message-ID:  <9101111621.aa06056@SPARK.BRL.MIL>
 
 Knowing what MGED is doing inside, the answer is pretty clearly no,
 i.e. only one MGED can edit a single database at a time.
@@ -4184,17 +3528,9 @@ In general, I would suggest that you copy some or all of the database,
 work seperately on those copies, and then merge the results back together.
 
 - Phil
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa18920; 17 Jan 91 18:19 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id ac20764; 17 Jan 91 18:16 EST
-Received: from spark.brl.mil by VMB.BRL.MIL id aa20761; 17 Jan 91 18:07 EST
 Date:     Thu, 17 Jan 91 17:57:09 EST
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       David Grossman <grossman@oscar.tn.cornell.edu>
-cc:       cad@BRL.MIL
 Subject:  Re:  brl on rs/6000
-Message-ID:  <9101171757.aa26210@SPARK.BRL.MIL>
 
 A couple of us independently tried to put BRL-CAD on the R6000
 several months ago.  At that time the process was very difficult
@@ -4204,25 +3540,17 @@ better, but no one here has tried again recently.  I will take a
 shot at testing our next release against it.
 
 - Phil
-
-
 Date:     Sat, 26 Jan 91 5:12:42 EST
 From:     Mike Muuss  <mike@brl.mil>
-To:       ACST@BRL.MIL
 Subject:  librt import/export
-Message-ID:  <9101260512.aa05232@WOLF.BRL.MIL>
 
 This evening I converted all the geometry modules over to the new
 import/export interface.  This is already starting to have a simplifying
 effect on some of the more difficult code elsewhere.
 	-M
-
-
 Date:     Tue, 29 Jan 91 0:33:07 EST
 From:     Mike Muuss  <mike@brl.mil>
-To:       ACST@BRL.MIL
 Subject:  new vlist structure
-Message-ID:  <9101290033.aa07808@WOLF.BRL.MIL>
 
 This evening, I instituted the new "chunky" vlist structures.
 LIBRT and RT directories have been converted over,
@@ -4230,16 +3558,10 @@ but MGED will need some work.
 Lee and I will continue on this Tuesday.
 	Best,
 	 -Mike
-
-
-Received: from spark.brl.mil by WOLF.BRL.MIL id aa17422; 27 Jan 91 12:54 EST
-Received: from slc1.brl.mil by SPARK.BRL.MIL id aa22597; 27 Jan 91 12:53 EST
-Received: by slc1.brl.mil (5.59/1.35)
 	id AA13004; Sun, 27 Jan 91 12:54:26 EST
 Date: Sun, 27 Jan 91 12:54:26 EST
 From: "Christopher T. Johnson" <cjohnson@slc1.brl.mil>
 Message-Id: <9101271754.AA13004@slc1.brl.mil>
-To: acst@BRL.MIL
 Subject: Mged projective mode, sgi-4d
 
 Hello,
@@ -4260,16 +3582,9 @@ This was done to allow for the previewing of rt anim scripts at
 different prospectives.
 
 	Chris
-
-
-Received: from spark.brl.mil by WOLF.BRL.MIL id aa17948; 27 Jan 91 13:15 EST
-Received: from slc1.brl.mil by SPARK.BRL.MIL id aa22620; 27 Jan 91 13:04 EST
-Received: by slc1.brl.mil (5.59/1.35)
 	id AA13012; Sun, 27 Jan 91 13:05:37 EST
 Date: Sun, 27 Jan 91 13:05:37 EST
 From: "Christopher T. Johnson" <cjohnson@slc1.brl.mil>
-Message-Id: <9101271805.AA13012@slc1.brl.mil>
-To: mike@BRL.MIL, stay@BRL.MIL
 Subject: rtsrv et al
 
 Mike, Paul,
@@ -4299,16 +3614,9 @@ correct remrt will drop wizard at the next time check.
 
 Thanks,
 	Chris
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa00676; 6 Feb 91 15:58 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa07879; 6 Feb 91 15:56 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa07820; 6 Feb 91 15:49 EST
 Date:     Wed, 6 Feb 91 15:41:59 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  remrt: /tmp/public_cpus
-Message-ID:  <9102061541.aa29466@WOLF.BRL.MIL>
 
 REMRT's distributed raytracing server, named RTSRV, has gained a new
 feature.  When starting up, it reads the file /tmp/public_cpus
@@ -4328,45 +3636,24 @@ a given machine for RTSRV.
 	Best,
 	 -Mike
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa00858; 6 Feb 91 16:20 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa08219; 6 Feb 91 16:18 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa08144; 6 Feb 91 16:09 EST
 Date:     Wed, 6 Feb 91 16:07:34 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  correction: /usr/tmp/public_cpus
-Message-ID:  <9102061607.aa00752@WOLF.BRL.MIL>
 
 Oops, wrong path name.  The public_cpus file actually lives in /usr/tmp,
 so that it persists across reboots.
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa19500; 7 Feb 91 1:08 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa02263; 7 Feb 91 1:06 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa02232; 7 Feb 91 0:53 EST
 Date:     Thu, 7 Feb 91 0:51:58 EST
 From:     "Lee A. Butler" <butler@BRL.MIL>
-To:       cad@BRL.MIL
 Subject:  ERIM solids
-Organization:  Doubly-Linked_List
-Message-ID:  <9102070051.aa18771@WOLF.BRL.MIL>
 
 The first of the ERIM solids has been implemented.  More to come.
 
 Lee
-
-
-Received: from spark.brl.mil by WOLF.BRL.MIL id aa06955; 11 Feb 91 17:19 EST
 Date:     Mon, 11 Feb 91 17:13:30 EST
 From:     "Robert J. Reschly Jr." <reschly@BRL.MIL>
-To:       Mike Muuss <mike@BRL.MIL>
-cc:       CAD@BRL.MIL
 Subject:  Re: correction: /usr/tmp/public_cpus
-Message-ID:  <9102111713.aa01669@SPARK.BRL.MIL>
 
 
       Mike,
@@ -4386,14 +3673,9 @@ the two.
 				Later,
 				    Bob
 
-
-
 Date:     Mon, 11 Feb 91 20:34:35 EST
 From:     Mike Muuss  <mike@brl.mil>
-To:       Robert J. Reschly Jr. <reschly@brl.mil>
-cc:       Mike Muuss <mike@brl.mil>, CAD@BRL.MIL
 Subject:  Re:  correction: /usr/tmp/public_cpus
-Message-ID:  <9102112034.aa12466@WOLF.BRL.MIL>
 
 A couple of items:
 
@@ -4412,17 +3694,9 @@ I'm not sure what the "right" long term implementation should be.
 
 	Thoughts?
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa03917; 12 Feb 91 10:02 EST
-Received: from vmb.brl.mil by VMB.brl.MIL id ab00451; 12 Feb 91 9:54 EST
-Received: from vim.brl.mil by VMB.BRL.MIL id aa00288; 12 Feb 91 9:47 EST
 Date:     Tue, 12 Feb 91 9:39:30 EST
 From:     Sue Muuss (VLD/ASB) <sue@BRL.MIL>
-To:       cad@BRL.MIL
-cc:       sue@BRL.MIL
 Subject:  Arbns
-Message-ID:  <9102120939.aa07846@VIM.BRL.MIL>
 
 This morning I checked in a new set of asc2g and g2asc: this version supports
 arbns.
@@ -4430,16 +3704,9 @@ arbns.
 				Cheers,
 
 					Sue
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa27877; 20 Feb 91 0:48 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa27550; 20 Feb 91 0:45 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa27496; 20 Feb 91 0:27 EST
 Date:     Wed, 20 Feb 91 0:25:45 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  SGI 4d improvements
-Message-ID:  <9102200025.aa27050@WOLF.BRL.MIL>
 
 These new features have been added to the experimental MGED's SGI 4D
 software:
@@ -4458,23 +3725,11 @@ scrmask().  Until now, a bit of trivia that had escaped me.
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa07126; 20 Feb 91 18:23 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa08423; 20 Feb 91 18:04 EST
-Received: from vgr.brl.mil by VMB.BRL.MIL id aa08408; 20 Feb 91 17:54 EST
-Received: from itnsg1.cineca.it by VGR.BRL.MIL id aa07437; 20 Feb 91 17:39 EST
-Received: by itnsg1.cineca.it (5.64-bind 1.5+ida UNSUPPORTED PROTOTYPE/901025.SGI.UNSUPPORTED.PROTOTYPE)
 	(for cad@brl.mil) id AA01186; Wed, 20 Feb 91 23:41:23 +0100
 From: Valter Cavecchia <root@itnsg1.cineca.it>
-Message-Id: <9102202241.AA01186@itnsg1.cineca.it>
 Subject: Some problems
-To: cad@BRL.MIL
 Date: Wed, 20 Feb 91 23:41:21 MET
-Cc: Valter Cavecchia <valter@itnsg1.cineca.it>
 Organization: Laboratorio di Fisica Computazionale I.N.F.M.
-Address: Loc. Pante`, I - 38050 Povo (TN) Italy
-X-Mailer: ELM [version 2.3 PL9]
 
 I'm a novice user of brl-cad so please apologize...
 I have compiled the package on a Silicon Graphics Personal Iris, it follows
@@ -4533,17 +3788,9 @@ p.s.:
 |  I-38050 Povo (TN) - Italy    | Decnet:       itnvax::cavecchia (37.65)   |
  ---------------------------------------------------------------------------
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa09050; 20 Feb 91 22:25 EST
-Received: from vmb.brl.mil by VMB.brl.MIL id aa10289; 20 Feb 91 22:13 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa10268; 20 Feb 91 22:01 EST
 Date:     Wed, 20 Feb 91 21:57:16 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       Valter Cavecchia <root@itnsg1.cineca.it>
-cc:       CAD@BRL.MIL
 Subject:  Re:  Some problems
-Message-ID:  <9102202157.aa08675@WOLF.BRL.MIL>
 
 Valter -
 
@@ -4580,14 +3827,9 @@ Do other framebuffer programs operate correctly, like "fbclear 200 0 200" ?
 
 	Best,
 	 -Mike
-
-
 Date:     Sat, 23 Feb 91 5:27:04 EST
 From:     Mike Muuss  <mike@brl.mil>
-To:       Brent Bates ViGYAN AAD/TAB <blbates@aero36.larc.nasa.gov>
-cc:       mike@BRL.MIL, blbates@aero36.larc.nasa.gov, butler@BRL.MIL
 Subject:  Re:  BRL-CAD
-Message-ID:  <9102230527.aa06070@WOLF.BRL.MIL>
 
 OK, I've been prodded.   Here are the answers to your questions.
 
@@ -4741,16 +3983,9 @@ Best Wishes,
 
 Advanced Computer Systems
 ArpaNet:  <Mike @ BRL.ARPA>
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa12777; 28 Feb 91 16:23 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa08523; 28 Feb 91 16:20 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa08184; 28 Feb 91 16:08 EST
 Date:     Thu, 28 Feb 91 15:58:07 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  RT options
-Message-ID:  <9102281558.aa11927@WOLF.BRL.MIL>
 
 This afternoon, I added a few new options to RT, at the request of
 several users.  First, the "-c" option, which allows any RT animation
@@ -4786,17 +4021,9 @@ this, please send me E-mail by 6-March.
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa01966; 4 Mar 91 21:55 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab22152; 4 Mar 91 21:49 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa22141; 4 Mar 91 21:45 EST
 Date:     Mon, 4 Mar 91 21:35:16 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       Earl Weaver <earl@BRL.MIL>
-cc:       CAD@BRL.MIL
 Subject:  Re:  RT options
-Message-ID:  <9103042135.aa01500@WOLF.BRL.MIL>
 
 The 0/0/1 choice is so that the checkpoint/restart code can tell the
 difference between unwritten pixels in the middle of the image
@@ -4810,15 +4037,9 @@ so that keen-eyed watchers would be less likely to see it than, say,
 
 	Best,
 	 -Mike
-
-
-Received: from spark.brl.mil by WOLF.BRL.MIL id aa03180; 5 Mar 91 3:14 EST
-Received: from wolf.brl.mil by SPARK.BRL.MIL id aa26528; 5 Mar 91 3:12 EST
 Date:     Tue, 5 Mar 91 3:11:36 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       Phil Dykstra <phil@BRL.MIL>
 Subject:  Re:  RT options
-Message-ID:  <9103050311.aa03143@WOLF.BRL.MIL>
 
 I'm not sure I understand yet.  Yes, REMRT (in particular) does
 seek around in the file, and gets big black gaps where CPUs have
@@ -4843,15 +4064,9 @@ and how I should deal with the checkpoint restart issue then.
 I'm genuinely concerned that I've missed some important point!
 	Best,
 	 -Mike
-
-
-Received: from vim.brl.mil by WOLF.BRL.MIL id aa10368; 6 Mar 91 13:26 EST
 Date:     Wed, 6 Mar 91 13:17:37 EST
 From:     Paul Tanenbaum <pjt@BRL.MIL>
-To:       mike@BRL.MIL
-cc:       pjt@BRL.MIL
 Subject:  Re: FBZOOM(1) bug
-Message-ID:  <9103061317.aa16579@VIM.BRL.MIL>
 
 
 Mike,
@@ -4870,16 +4085,9 @@ same flag.  If this ever came to pass, I guess it would end up in
 brlcad.1 as well.
      +++paul
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa02216; 6 Mar 91 21:26 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab27290; 6 Mar 91 21:21 EST
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa27249; 6 Mar 91 21:11 EST
 Date:     Wed, 6 Mar 91 21:02:35 EST
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  IGES opinion from net
-Message-ID:  <9103062102.aa01907@WOLF.BRL.MIL>
 
 FYI, a good terse summary of IGES.  Not entirely accurate, but close.
 	-M
@@ -4890,7 +4098,6 @@ From: Bret Strain <brets@hpnmdla.hp.com>
 Newsgroups: comp.graphics
 Subject: Re: IGES
 Date: 6 Mar 91 16:09:55 GMT
-To:       brl-comp-graphics@smoke.brl.mil
 
 >In comp.graphics, pdbourke@ccu1.aukuni.ac.nz (Bourke) writes:
 >
@@ -4930,15 +4137,9 @@ Does not handle 3D solid geometry.
 The standard is "rich" (i.e. complex in many ways).
 
 ----- End of forwarded messages
-
-
-Received: from vim.brl.mil by WOLF.BRL.MIL id aa16964; 8 Mar 91 10:55 EST
 Date:     Fri, 8 Mar 91 10:45:14 EST
 From:     Earl Weaver (VLD/ASB) <earl@BRL.MIL>
-To:       Mike Muuss <mike@BRL.MIL>
-cc:       CAD@BRL.MIL
 Subject:  Re:  IGES opinion from net
-Message-ID:  <9103081045.aa09202@VIM.BRL.MIL>
 
 Perhaps a little more details on the "inaccuracies" is
 in order.
@@ -4962,17 +4163,9 @@ We are planning on working with IGES to implement extentions
 to the primitive set such that the cones and cylinders
 would be more general (corresponding to the BRLCAD TGC),
 and adding a general polyhedron, and an ARB8.
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa25105; 8 Mar 91 15:39 EST
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab23878; 8 Mar 91 15:27 EST
-Received: from spark.brl.mil by VMB.BRL.MIL id aa23732; 8 Mar 91 15:11 EST
 Date:     Fri, 8 Mar 91 15:04:34 EST
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       Ferd Brundick <fsbrn@BRL.MIL>
-cc:       cad@BRL.MIL
 Subject:  Re:  plot-fb
-Message-ID:  <9103081504.aa04811@SPARK.BRL.MIL>
 
 It is called "pl-fb" now (since Jan '88) and it does work into any
 frame buffer - including the SGI.  On the SGI though, there is also
@@ -4980,14 +4173,9 @@ frame buffer - including the SGI.  On the SGI though, there is also
 See also: plrot, pl-pl, pl-ps, pldebug.
 
 - Phil
-
-
 Date:     Fri, 8 Mar 91 20:13:12 EST
 From:     Mike Muuss  <mike@brl>
-To:       Alex Woo <woo@ra-iris.arc.nasa.gov>
-cc:       Mike@BRL, Earl@BRL, u10480@u2.ncsa.uiuc.edu
 Subject:  Re:  IGES solids
-Message-ID:  <9103082013.aa02345@WOLF.BRL.MIL>
 
 I have no information on the ACAD converter.  I know they were working
 on it.  It is unclear how they convert their Bezier patches into
@@ -5021,18 +4209,10 @@ a total hiring freeze condition for > 1.5 years now).
 
 	Best,
 	 -Mike
-
-
-Received: from smoke.brl.mil by WOLF.BRL.MIL id aa22125; 14 Mar 91 5:28 EST
-Received: from adm.brl.mil by SMOKE.BRL.MIL id aa24751; 14 Mar 91 5:16 EST
-Received: from USENET by ADM.BRL.MIL id aa22158; 14 Mar 91 5:07 EST
 From: "David R. Blythe" <drb@eecg.toronto.edu>
 Newsgroups: comp.graphics.visualization
 Subject: Re: apE and AVS pricing
-Keywords: apE, AVS
-Message-ID: <1991Mar13.233202.25268@jarvis.csri.toronto.edu>
 Date: 14 Mar 91 04:32:02 GMT
-To:       brl-comp-graphics@smoke.brl.mil
 
 In article <38945@netnews.upenn.edu> joe@retina.anatomy.upenn.edu (Joseph Panico) writes:
 >in MOVIE.BYU format. Where can I get MOVIE.BYU and the data formats for
@@ -5070,20 +4250,10 @@ visualizer?
 	david blythe
 	ontario centre for large scale computation
 	drb@clsc.utoronto.ca
-
-
-Received: from smoke.brl.mil by WOLF.BRL.MIL id aa22204; 14 Mar 91 6:01 EST
-Received: from adm.brl.mil by SMOKE.BRL.MIL id aa25203; 14 Mar 91 5:50 EST
-Received: from USENET by ADM.BRL.MIL id aa23679; 14 Mar 91 5:45 EST
 From: Gautam Mehrotra <gautamm@ncsa.uiuc.edu>
 Newsgroups: comp.graphics.visualization
 Subject: Wavefront's File format( was Re: apE and AVS pricing )
-Keywords: apE, AVS
-Message-ID: <1991Mar14.061123.8781@ncsa.uiuc.edu>
 Date: 14 Mar 91 06:11:23 GMT
-Sender: News <usenet@ux1.cso.uiuc.edu>
-Originator: gautamm@harriett
-To:       brl-comp-graphics@smoke.brl.mil
 
 In article <1991Mar13.233202.25268@jarvis.csri.toronto.edu> drb@eecg.toronto.edu (David R. Blythe) writes:
 >In article <38945@netnews.upenn.edu> joe@retina.anatomy.upenn.edu (Joseph Panico) writes:
@@ -5223,15 +4393,9 @@ National Center for Supercomputing Applications, Univ of Illinois.
 e-mail:	gautamm@ncsa.uiuc.edu
 
 ----------------------------------------------------------
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa06476; 15 Apr 91 9:06 EDT
 Date:     Mon, 15 Apr 91 9:01:31 EDT
 From:     "Gary S. Moss" (VLD/VMB) <moss@BRL.MIL>
-To:       Mike Muuss <mike@BRL.MIL>
-cc:       moss@BRL.MIL
 Subject:  Re:  vdeck?
-Message-ID:  <9104150901.aa03045@VMB.BRL.MIL>
 
 |> Just out of curiosity, what changed in VDECK?
 Nothing really. Vdeck statically allocates arrays to hold info about objects
@@ -5245,19 +4409,10 @@ Cakefile.
 
 -Gary
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa03322; 23 Apr 91 22:44 EDT
-Received: from vmb.brl.mil by VMB.brl.MIL id aa21833; 23 Apr 91 21:45 EDT
-Received: from vgr.brl.mil by VMB.BRL.MIL id aa21799; 23 Apr 91 21:35 EDT
-Received: from willow.ccsf.caltech.edu by VGR.BRL.MIL id aa29473;
           23 Apr 91 21:22 EDT
-Received: by willow.ccsf.caltech.edu (4.1/SMI-4.1)
 	id AA28296; Tue, 23 Apr 91 18:19:34 PDT
 Date: Tue, 23 Apr 91 18:19:34 PDT
 From: Roy Williams <roy@sampson.ccsf.caltech.edu>
-Message-Id: <9104240119.AA28296@willow.ccsf.caltech.edu>
-To: cad@BRL.MIL
 Subject: color in brlcad
 
 
@@ -5269,17 +4424,9 @@ Thanx
 
 Roy Williams
 Caltech Concurrent Computation Project
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa04346; 24 Apr 91 4:57 EDT
-Received: from vmb.brl.mil by VMB.brl.MIL id aa23536; 24 Apr 91 4:29 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa23525; 24 Apr 91 4:20 EDT
 Date:     Wed, 24 Apr 91 4:17:57 EDT
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       Roy Williams <roy@sampson.ccsf.caltech.edu>
-cc:       cad@BRL.MIL
 Subject:  Re:  color in brlcad
-Message-ID:  <9104240417.aa00295@SPARK.BRL.MIL>
 
 Material properties, including color, are assigned to "regions" -
 combinations with a special bit set indicating that they, and
@@ -5305,17 +4452,9 @@ I hope that helps.  In case you are just looking for overlaps, note
 that there is the rtoverlap utility.
 
 - Phil
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa12425; 29 May 91 0:36 EDT
-Received: from vmb.brl.mil by VMB.brl.MIL id aa00197; 29 May 91 0:30 EDT
-Received: from spark.brl.mil by VMB.BRL.MIL id aa00173; 29 May 91 0:21 EDT
 Date:     Wed, 29 May 91 0:09:54 EDT
 From:     Susan Muuss (VLD) <sue@BRL.MIL>
-To:       cad@BRL.MIL
-cc:       sue@BRL.MIL, temper@BRL.MIL, brucew@BRL.MIL, hask@BRL.MIL
 Subject:  RTRANGE
-Message-ID:  <9105290009.aa26422@SPARK.BRL.MIL>
 
 This weekend, on my own time, I wrote RTRANGE.  This program takes
 advantage of the RTUIF I reported on at the BRL-CAD Symposium and
@@ -5328,29 +4467,16 @@ new BRL-CAD analysis tool will prove very useful to them in their
 work.
 
 			-Sue
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa08593; 31 May 91 12:26 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa07351; 31 May 91 12:15 EDT
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa07280; 31 May 91 12:02 EDT
 Date:     Fri, 31 May 91 11:48:59 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  TIG-PACK and LIBPLOT3
-Message-ID:  <9105311148.aa07314@WOLF.BRL.MIL>
 
 While rolling things up for the release, I have moved all the TIG-PACK
 routines (from LIBTIG) into LIBPLOT3.
 	-Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa02493; 10 Jun 91 10:13 EDT
 Date:     Mon, 10 Jun 91 10:09:44 EDT
 From:     "Gary S. Moss" (VLD/VMB) <moss@BRL.MIL>
-To:       Dick Wiley <dick@arisia.ta52.lanl.gov>
-cc:       mike@BRL.MIL, moss@BRL.MIL
 Subject:  Re:  [Dick Wiley - System: CAD on SunOS v4.1.1]
-Message-ID:  <9106101009.aa07734@VMB.BRL.MIL>
 
 Dick,
 	I have already addressed these problems in the current sources
@@ -5459,16 +4585,9 @@ I already have. :-{
 Thanks for the detailed bug reports.
 
 -Gary
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa28180; 12 Jun 91 7:14 EDT
-Received: from vmb.brl.mil by VMB.brl.MIL id aa18301; 12 Jun 91 7:12 EDT
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa18295; 12 Jun 91 7:08 EDT
 Date:     Wed, 12 Jun 91 7:04:23 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  CAKE Fixed
-Message-ID:  <9106120704.aa28085@WOLF.BRL.MIL>
 
 This evening, I fixed CAKE so that internally, a number of subroutines no
 longer return a union Wait, but instead return an integer.
@@ -5477,16 +4596,9 @@ It seems that /bin/cc on UNICOS 5.1 has some difficulty with this construct,
 and this is the reason that CAKE has not worked on Eglin's YMP.
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa07890; 13 Jun 91 8:38 EDT
-Received: from vmb.brl.mil by VMB.brl.MIL id ab04261; 13 Jun 91 8:21 EDT
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa03976; 13 Jun 91 8:11 EDT
 Date:     Thu, 13 Jun 91 8:03:58 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  VDECK & Geom Export
-Message-ID:  <9106130803.aa07068@WOLF.BRL.MIL>
 
 Over the last few evenings, I have modified the VDECK program to
 use the new LIBRT geometry import/export interface.
@@ -5521,14 +4633,9 @@ have in common), or for other CSG-capable systems.
 
 	Onwards!
 	 -Mike
-
-
 Date:     Fri, 14 Jun 91 2:03:58 EDT
 From:     Mike Muuss  <mike@brl>
-To:       Jim <jehunt@brl.mil>
-cc:       VLD-LTTB@BRL, Mike@BRL
 Subject:  Release 4.0 schedule etc
-Message-ID:  <9106140203.aa18389@WOLF.BRL.MIL>
 
 Jim -
 
@@ -5553,16 +4660,9 @@ copy of your precious files, rather than on your original!
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa28920; 14 Jun 91 7:27 EDT
-Received: from vmb.brl.mil by VMB.brl.MIL id aa12681; 14 Jun 91 7:20 EDT
-Received: from wolf.brl.mil by VMB.BRL.MIL id aa12598; 14 Jun 91 7:04 EDT
 Date:     Fri, 14 Jun 91 7:03:11 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  LIBRT identity matricies
-Message-ID:  <9106140703.aa27893@WOLF.BRL.MIL>
 
 My project for this evening was to act on a suggestion made by Harry Reed.
 As you may recall, Harry builds very large MGED databases, and he uses
@@ -5580,16 +4680,9 @@ this change also makes the "prep" phase go a little faster, too.
 
 	Best,
 	-Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa02356; 14 Jun 91 9:17 EDT
-Received: from vmb.brl.mil by VMB.brl.MIL id ac14594; 14 Jun 91 9:11 EDT
-Received: from vim.brl.mil by VMB.BRL.MIL id aa14501; 14 Jun 91 8:57 EDT
 Date:     Fri, 14 Jun 91 8:46:37 EDT
 From:     Paul Tanenbaum <pjt@BRL.MIL>
-To:       cad@BRL.MIL
 Subject:  ADC Command added to MGED(1)
-Message-ID:  <9106140846.aa06833@VIM.BRL.MIL>
 
 
      I've just installed a command which allows keyboard control
@@ -5606,16 +4699,9 @@ of the angle/distance cursor.  It has the following synopsis:
 You will see it in release 4.0.
      +++paul
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa04859; 14 Jun 91 14:14 EDT
-Received: from vmb.brl.mil by VMB.brl.MIL id aa20807; 14 Jun 91 14:01 EDT
-Received: from vat.brl.mil by VMB.BRL.MIL id aa19927; 14 Jun 91 13:38 EDT
 Date:     Fri, 14 Jun 91 13:33:32 EDT
 From:     "John R. Anderson" (VLD/ASB) <jra@BRL.MIL>
-To:       cad@BRL.MIL
 Subject:  IGES-to-BRLCAD Translator
-Message-ID:  <9106141333.aa17219@VAT.BRL.MIL>
 
 
      Thanks to some help from Mr. Muuss, the  IGES-to-BRLCAD
@@ -5650,16 +4736,9 @@ referenced by other objects.
 
 				-John
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa21580; 7 Jun 91 16:05 EDT
 Date:     Fri, 7 Jun 91 15:12:51 EDT
 From:     "Jill H. Smith" <jill@BRL.MIL>
-To:       silirie@BRL.MIL
-cc:       mike@BRL.MIL, keith@BRL.MIL, davisson@BRL.MIL, john@BRL.MIL, 
-          gil@BRL.MIL, phd@BRL.MIL
 Subject:  TAP Report
-Message-ID:  <9106071512.aa28001@VMB.BRL.MIL>
 
                          BRL-CAD Release 4.0
 
@@ -5723,13 +4802,9 @@ IRPREP will be released in the upcoming 4.0 Release of the BRL-CAD package.
 POC: Edwin Davisson, Ext. 6711 
 
 
-
-
 Date:     Sun, 23 Jun 91 1:53:33 EDT
 From:     Mike Muuss  <mike@brl>
-To:       ACST@BRL.MIL
 Subject:  "brlman"
-Message-ID:  <9106230153.aa13541@WOLF.BRL.MIL>
 
 For those systems that install BRL-CAD and don't have NROFF or DWB,
 the "brlman" command should solve the problem.  It is a simple
@@ -5743,17 +4818,9 @@ reference the on-line manual pages.
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa02221; 1 Jul 91 14:49 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa17912; 1 Jul 91 14:25 EDT
-Received: from wolf16.brl.mil by VMB.BRL.MIL id aa17747; 1 Jul 91 14:15 EDT
 Date:     Mon, 1 Jul 91 14:08:19 EDT
 From:     Susan Muuss (VLD/ASB) <sue@BRL.MIL>
-To:       cad@BRL.MIL
-cc:       sue@BRL.MIL
 Subject:  Cell Plot overlays
-Message-ID:  <9107011408.aa01802@WOLF.BRL.MIL>
 
 I am pleased to announce that BRL-CAD now has the ability to do quick cell-plot
 overlays.  Cell-fb now has a logging option which prints out information 
@@ -5769,15 +4836,9 @@ enjoy.
 			Cheers,
 
 				Sue
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa28359; 2 Jul 91 14:22 EDT
 Date:     Tue, 2 Jul 91 14:16:55 EDT
 From:     Susan Coates (VLD) <scoates@BRL.MIL>
-To:       acst@BRL.MIL
-cc:       wm@BRL.MIL, davisson@BRL.MIL, scoates@BRL.MIL
 Subject:  BRL-CAD 4.0 alpha test
-Message-ID:  <9107021416.aa05400@VMB.BRL.MIL>
 
 
 
@@ -5814,15 +4875,9 @@ If you need more information please let me know.
 
                                          Sue
 
-
-
-Received: from waffle.brl.mil by WOLF.BRL.MIL id aa28591; 2 Jul 91 14:37 EDT
 Date:     Tue, 2 Jul 91 14:36:41 EDT
 From:     Paul Stay <stay@BRL.MIL>
-To:       Susan Coates <scoates@BRL.MIL>
-cc:       acst@BRL.MIL, wm@BRL.MIL, davisson@BRL.MIL, scoates@BRL.MIL
 Subject:  Re:  BRL-CAD 4.0 alpha test
-Message-ID:  <9107021436.aa17663@WAFFLE.BRL.MIL>
 
 Sue-
 
@@ -5835,15 +4890,9 @@ cc stick.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a -lmpc -lm -o stick
 
 -Paul
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa29396; 2 Jul 91 16:00 EDT
 Date:     Tue, 2 Jul 91 15:50:44 EDT
 From:     "Gary S. Moss" (VLD/VMB) <moss@BRL.MIL>
-To:       mike@BRL.MIL
-cc:       acst@BRL.MIL
 Subject:  Lgt fixed for 3.10.
-Message-ID:  <9107021550.aa07698@VMB.BRL.MIL>
 
 Mike,
 	Lgt did not initialize the res_model semaphore, so it was dumping
@@ -5865,38 +4914,19 @@ of a workaround that is no longer necessary, so I removed it, but it may
 also deserve mention in the release notes.
 
 -Gary
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa13879; 3 Jul 91 13:29 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa22491; 3 Jul 91 13:00 EDT
 Date:     Wed, 3 Jul 91 12:51:14 EDT
 From:     William Potter (Summer|shenry) <wpotter@BRL.MIL>
-To:       cad@BRL.MIL
 Subject:  Window Size
-Message-ID:  <9107031251.aa22462@VMB.BRL.MIL>
 
 Why is the new MGED window smaller than the earlier version's window?
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa13879; 3 Jul 91 13:29 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa22491; 3 Jul 91 13:00 EDT
 Date:     Wed, 3 Jul 91 12:51:14 EDT
 From:     William Potter (Summer|shenry) <wpotter@BRL.MIL>
-To:       cad@BRL.MIL
 Subject:  Window Size
-Message-ID:  <9107031251.aa22462@VMB.BRL.MIL>
 
 Why is the new MGED window smaller than the earlier version's window?
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa14811; 3 Jul 91 14:49 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa24084; 3 Jul 91 14:43 EDT
 Date:     Wed, 3 Jul 91 14:36:23 EDT
 From:     Paul Stay <stay@BRL.MIL>
-To:       William Potter <wpotter@BRL.MIL>
-cc:       cad@BRL.MIL
 Subject:  Re:  Window Size
-Message-ID:  <9107031436.aa23997@VMB.BRL.MIL>
 
 One of the features of teh new mged is that the window can be resized.
 The smaller size is due to the fact that many individuals exressed
@@ -5905,16 +4935,9 @@ shell window which is used for mged commands. If you want a larger
 window you should be able to resize it.
 
 -Paul
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa15057; 6 Jul 91 2:41 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa10333; 6 Jul 91 2:05 EDT
-Received: from wolf16.brl.mil by VMB.BRL.MIL id aa10300; 6 Jul 91 1:51 EDT
 Date:     Sat, 6 Jul 91 1:45:42 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  util & fb split
-Message-ID:  <9107060145.aa07743@WOLF.BRL.MIL>
 
 The "util" directory in the source tree of the CAD Package has begun to
 overflow with utilities.  In order to get the directory size back down
@@ -5927,14 +4950,9 @@ try looking in "fb" as well.
 
 	Best,
 	 -Mike
-
-
 Date:     Tue, 9 Jul 91 2:28:05 EDT
 From:     Mike Muuss  <mike@brl>
-To:       Keith Applin <keith@brl.mil>
-cc:       ACST@BRL
 Subject:  Re:  Alpha release comments
-Message-ID:  <9107090228.aa07749@WOLF.BRL.MIL>
 
 Thanks for the detailed comments!
 
@@ -5958,17 +4976,9 @@ UNIX-plot (next release), then it will output that.
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa14302; 9 Jul 91 3:13 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab11162; 9 Jul 91 2:40 EDT
-Received: from wolf16.brl.mil by VMB.BRL.MIL id aa11147; 9 Jul 91 2:34 EDT
 Date:     Tue, 9 Jul 91 2:30:57 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       William Potter <wpotter@BRL.MIL>
-cc:       cad@BRL.MIL
 Subject:  Re:  Keyboard Lights
-Message-ID:  <9107090230.aa07812@WOLF.BRL.MIL>
 
 Thanks for the report on the alpha-test software.  There are now 7 function
 buttons active on the SGI 4D, and only 4 lights.  In addition, setting
@@ -5978,28 +4988,17 @@ release, the keyboard lights will not be used.
 
 	Best,
 	 -Mike
-
-
 Date:     Tue, 9 Jul 91 22:02:27 EDT
 From:     Mike Muuss  <mike@brl>
-To:       Paul Tanenbaum <pjt@brl.mil>
-cc:       acst@BRL.MIL, pjt@BRL.MIL
 Subject:  Re:  Title in the MGED faceplate
-Message-ID:  <9107092202.aa23954@WOLF.BRL.MIL>
 
 The title has been removed, to increase drawing efficiency.
 Harry Reed correctly noted that all the text on the screen can
 noticably slow down the screen drawing rate.
 	-Mike
-
-
 Date:     Thu, 11 Jul 91 0:02:37 EDT
 From:     Mike Muuss  <mike@brl>
-To:       Mike Muuss <mike@brl>
-cc:       Phil@BRL.MIL, ACST@BRL.MIL, PJT@BRL.MIL, Sue@BRL.MIL,
-          CJohnson@BRL.MIL
 Subject:  Re:  librt/qmath bug az=90!
-Message-ID:  <9107110002.aa22324@WOLF.BRL.MIL>
 
 The code in qmath.c for mat2quat was from Ken's 1985 paper.  In his
 1989 paper, he gives a different algorithm which looks to be stable
@@ -6009,13 +5008,9 @@ I typed it in, as a replacement in librt/qmath.c
 This seems to have solved the problem Sue reported;  hopefully it won't
 produce any new problems...
 	-Mike
-
-
 Date:     Mon, 15 Jul 91 22:35:00 EDT
 From:     Mike Muuss  <mike@brl>
-To:       Mike@BRL.MIL
 Subject:  [Sue Muuss:  [Donald F. Haskell: [Abdul Kiwan: [Abdul Kiwan: TAP report]]]]
-Message-ID:  <9107152235.aa04917@WOLF.BRL.MIL>
 
            BRL DEVELOPS IGES-TO-BRLCAD TRANSLATOR
 
@@ -6094,16 +5089,9 @@ theoretical NACA shape than can be effected in metal fabrication by
 airframe manufacturers.  The spline shape is then cast into the BRL-CAD
 spline solid and thus is compatible with both current BRL-CAD models as
 well as new models.  POC is Dr. Donald Haskell, (301) 278-2608. 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa19846; 16 Jul 91 2:17 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa15594; 16 Jul 91 2:10 EDT
-Received: from wolf16.brl.mil by VMB.BRL.MIL id aa15367; 16 Jul 91 1:57 EDT
 Date:     Tue, 16 Jul 91 1:56:08 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  MGED window size
-Message-ID:  <9107160156.aa16255@WOLF.BRL.MIL>
 
 There seems to be quite a debate over the desired initial size of the
 MGED window.  Some users want it small, some medium, and some full-screen.
@@ -6114,29 +5102,17 @@ In the next release, this should be user settable with some sort of
 per-user configuration file, perhaps called .mgedrc !
 	Best,
 	 -Mike
-
-
-Received: from spark.brl.mil by WOLF.BRL.MIL id aa23590; 16 Jul 91 14:06 EDT
 Date:     Tue, 16 Jul 91 14:00:35 EDT
 From:     Phil Dykstra <phil@BRL.MIL>
-To:       Susan Coates <scoates@BRL.MIL>
-cc:       acst@BRL.MIL, wpotter@BRL.MIL, davisson@BRL.MIL, scoates@BRL.MIL
 Subject:  Re:  [Mike Muuss: Re: mged]
-Message-ID:  <9107161400.aa22872@SPARK.BRL.MIL>
 
 A thought: Why not make "title" print out the current title (rather
 than the help message) and "title This is a title" set it.
 
 - Phil
-
-
 Date:     Thu, 18 Jul 91 13:55:52 EDT
 From:     Mike Muuss  <mike@brl>
-To:       Paul Tanenbaum <pjt@brl.mil>
-cc:       Lee A. Butler <butler@brl.mil>, acst@BRL.MIL, natalie@BRL.MIL,
-          pjt@BRL.MIL
 Subject:  Re:  nirt & librt
-Message-ID:  <9107181355.aa28898@WOLF.BRL.MIL>
 
 There are two issues:
 
@@ -6152,42 +5128,26 @@ done freely, as you wish.
 I hope this removes some of your concerns, and clarifies the rules.
 	Best,
 	 -Mike
-
-
 Date:     Tue, 23 Jul 91 2:55:56 EDT
 From:     Mike Muuss  <mike@brl>
-To:       ACST@BRL.MIL
 Subject:  pl-tek
-Message-ID:  <9107230255.aa04782@WOLF.BRL.MIL>
 
 This evening, I got tired of having to RSH to VMB to print unix-plot files,
 so I wrote pl-tek, and added it to the UTIL directory.  It seems to work,
 and even has a man page.
 	-Mike
-
-
 Date:     Thu, 25 Jul 91 3:23:55 EDT
 From:     Mike Muuss  <mike@brl>
-To:       ACST@BRL.MIL
 Subject:  cv
-Message-ID:  <9107250323.aa18038@WOLF.BRL.MIL>
 
 Using Chris' new data format converter routines, I have written
 a generalized file converter, "cv", and stuck it in the util/ directory.
 It promises to handle a lot of miscellaneous conversion chores for us.
 
 	-Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa08575; 16 Aug 91 15:47 EDT
 Date:     Fri, 16 Aug 91 15:38:21 EDT
 From:     "Lee A. Butler" <butler@BRL.MIL>
-To:       kathy@BRL.MIL
-cc:       acst@BRL.MIL, scoates@BRL.MIL, lane@BRL.MIL, muehl@BRL.MIL, 
-          ryan@BRL.MIL, plos@BRL.MIL, jill@BRL.MIL
 Subject:  Re: cell-fb changes
-Organization:  Doubly-Linked_List
-Message-ID:  <9108161538.aa11271@VMB.BRL.MIL>
 
 Kathy,
 
@@ -6208,15 +5168,9 @@ specify "-h" or something like "-S 0" on the command line to cell-fb.
 
 Lee Butler
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa14938; 25 Aug 91 3:33 EDT
 Date:     Sun, 25 Aug 91 3:29:27 EDT
 From:     "Lee A. Butler" <butler@BRL.MIL>
-To:       acst@BRL.MIL
 Subject:  warning messages from fbclear
-Organization:  Doubly-Linked_List
-Message-ID:  <9108250329.aa10044@VMB.BRL.MIL>
 
 This evening, I changed the notices printed by fbclear:
 
@@ -6232,16 +5186,9 @@ For each message, I have selected more "neutral" language:
  fbclear:  NOTE: framebuffer is zoomed.  -c will un-zoom.
 
 Lee
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa13410; 28 Aug 91 4:56 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa12462; 28 Aug 91 4:55 EDT
-Received: from wolf16.brl.mil by VMB.BRL.MIL id aa12434; 28 Aug 91 4:49 EDT
 Date:     Wed, 28 Aug 91 4:41:32 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  mged 4.0 feature
-Message-ID:  <9108280441.aa13376@WOLF.BRL.MIL>
 
 In response to some of the numerous suggestions from Ed Davission and
 his team, Lee and I have added a last-minute feature to mged:  the
@@ -6259,15 +5206,9 @@ mechanism for future additions.
 
 	Best,
 	 -Mike
-
-
-Received: from vim.brl.mil by WOLF.BRL.MIL id aa27249; 30 Aug 91 9:22 EDT
 Date:     Fri, 30 Aug 91 9:13:07 EDT
 From:     Paul Tanenbaum <pjt@BRL.MIL>
-To:       acst@BRL.MIL
-cc:       pjt@BRL.MIL
 Subject:  NIRT(1) enhancement
-Message-ID:  <9108300913.aa09221@VIM.BRL.MIL>
 
 
      I added twelve new "output items" to NIRT.  A highly placed
@@ -6289,16 +5230,9 @@ and <loc> is in
 Of course, nirt.1 has been updated accordingly.
      +++paul
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa08271; 31 Aug 91 3:59 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab05022; 31 Aug 91 3:52 EDT
-Received: from wolf16.brl.mil by VMB.BRL.MIL id ab05014; 31 Aug 91 3:45 EDT
 Date:     Sat, 31 Aug 91 3:43:41 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       CAD@BRL.MIL
 Subject:  Stardent port
-Message-ID:  <9108310343.aa08152@WOLF.BRL.MIL>
 
 Thanks to Phil Dykstra and John Grosh kindly providing me with network
 access to a Stardent VISTRA 800 workstation, BRL-CAD has been ported
@@ -6314,14 +5248,9 @@ In the process, I also ported JOVE to the Stardent and IBM RS/6000,
 which will be quite handy to have around.
 	Best,
 	 -Mike
-
-
 Date:     Sat, 31 Aug 91 7:13:25 EDT
 From:     Mike Muuss  <mike@brl>
-To:       Gary S. Moss <moss@brl.mil>
-cc:       mike@BRL.MIL, acst@BRL.MIL, moss@BRL.MIL
 Subject:  Re:  BRLCAD 4.0beta librt bug.
-Message-ID:  <9108310713.aa13816@WOLF.BRL.MIL>
 
 Gary -
 
@@ -6423,14 +5352,9 @@ between 3.7 and 4.0, and will leave you free to resume RIPing away.
 	Best,
 	 -Mike
 
-
-
 Date:     Tue, 17 Sep 91 18:51:27 EDT
 From:     Mike Muuss  <mike@brl>
-To:       Holly Anne O'Neill <hollyo@brl.mil>
-cc:       acst@BRL.MIL, vmb@BRL.MIL, vld@BRL.MIL, scoates@BRL.MIL
 Subject:  Re:  Brlcad4.0
-Message-ID:  <9109171851.aa09129@WOLF.BRL.MIL>
 
 Dear Holly -
 
@@ -6506,17 +5430,9 @@ we are not cluttering the mailboxes of the whole Division, e.g. <vld>.
 	Best,
 	 -Mike
 
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa15302; 19 Sep 91 16:50 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id aa25001; 19 Sep 91 16:42 EDT
-Received: from wolf16.brl.mil by VMB.BRL.MIL id aa24881; 19 Sep 91 16:40 EDT
 Date:     Thu, 19 Sep 91 16:32:38 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       SCoates@BRL.MIL
-cc:       VMB@BRL.MIL
 Subject:  g2asc update
-Message-ID:  <9109191632.aa14888@WOLF.BRL.MIL>
 
 Thanks for your note a week or two ago, reporting that the TACOM "FRED"
 program was not able to read new format .asc file.  I have modified the
@@ -6531,17 +5447,9 @@ might encounter.
 
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa21210; 20 Sep 91 16:35 EDT
-Received: from vmb.brl.mil by VMB.BRL.MIL id ab07376; 20 Sep 91 16:29 EDT
-Received: from wolf16.brl.mil by VMB.BRL.MIL id aa07306; 20 Sep 91 16:22 EDT
 Date:     Fri, 20 Sep 91 16:13:05 EDT
 From:     Mike Muuss <mike@BRL.MIL>
-To:       wilhelm@rpal.com
-cc:       cad@BRL.MIL
 Subject:  Re:  area command in MGED
-Message-ID:  <9109201613.aa20923@WOLF.BRL.MIL>
 
 Thanks for your bug report of 6-Aug.  The problem you reported
 (boundp and parea not being included in the distribution)
@@ -6550,16 +5458,9 @@ has been rectified in the 4.0 Release of BRL-CAD.
 Thanks for pointing this out.
 	Best,
 	 -Mike
-
-
-Received: from vmb.brl.mil by WOLF.BRL.MIL id aa22252; 20 Sep 91 19:59 EDT
 Date:     Fri, 20 Sep 91 19:50:52 EDT
 From:     "Lee A. Butler" <butler@BRL.MIL>
-To:       jehunt@BRL.MIL
-cc:       acst@BRL.MIL
 Subject:  Re: Angle Distance Cursor in MGED
-Organization:  Doubly-Linked_List
-Message-ID:  <9109201950.aa09060@VMB.BRL.MIL>
 
 Jim,
 
@@ -6570,17 +5471,9 @@ ABSOLUTE position will be reported as "cent=(x, y)" and the RELATIVE position
 "delta=(x, y)".
 
 Lee Butler
-
-
-Received: from vim.brl.mil by WOLF.BRL.MIL id aa03869; 15 Jul 91 18:13 EDT
-Received: from VIM.BRL.MIL by VIM.BRL.MIL id aa14993; 15 Jul 91 18:06 EDT
-Received: from vmb.brl.mil by VIM.BRL.MIL id aa14906; 15 Jul 91 17:59 EDT
 Date:     Mon, 15 Jul 91 17:48:48 EDT
 From:     "Lee A. Butler" <butler@BRL.MIL>
-To:       vld@BRL.MIL
 Subject:  Size of BRLCAD 4.0
-Organization:  Doubly-Linked_List
-Message-ID:  <9107151748.aa11166@VMB.BRL.MIL>
 
 Many of us have noticed that BRLCAD 4.0beta requires substantially more disk
 space than 3.7.  In some cases, utilities have more than doubled in size.
@@ -6601,14 +5494,9 @@ Lee A. Butler
 SLCBR-VL-V					Internet: butler@brl.mil
 Ballistic Research Laboratory			   Phone: (301) 278-9200
 Aberdeen Proving Ground, MD 21005-5066
-
-
 Date:     Mon, 23 Sep 91 2:13:00 EDT
 From:     Mike Muuss  <mike@brl>
-To:       Susan Coates <scoates@brl.mil>
-cc:       acst@BRL.MIL, vmb@BRL.MIL, scoates@BRL.MIL
 Subject:  Re:  BRL-CAD Release
-Message-ID:  <9109230213.aa09274@WOLF.BRL.MIL>
 
 Dear Sue -
 
@@ -6637,4 +5525,3 @@ so your work-around is a good general practice.
 
 	Best,
 	 -Mike
-
