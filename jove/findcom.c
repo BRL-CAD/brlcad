@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:44:29  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:07:05  dpk
  * Added distinctive RCS header
  * 
@@ -14,7 +17,6 @@ static char RCSid[] = "@(#)$Header$";
 
 #include <stdio.h>
 
-extern char	_sobuf[];
 extern char	*Describe;
 
 main(argc, argv)
@@ -38,7 +40,6 @@ char	*argv[];
 	com = argv[1];
 	len = strlen(com);
 
-	setbuf(stdout, _sobuf);
 	while (fgets(line, 200, fp)) {
 		if (line[0] != '\n')
 			continue;
