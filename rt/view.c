@@ -39,6 +39,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "debug.h"
+#include "../h/mater.h"
 
 /* /vld/include/ray.h -- ray segment data format (D A Gwyn) */
 /* binary ray segment data record; see ray(4V) */
@@ -403,7 +404,13 @@ struct partition *PartHeadp;
 	cosS = VDOT( reflected, to_eye );
 
 	/* Get default color-by-ident for region.			*/
-	lookupColor( &red, &grn, &blu, pp->pt_regionp->reg_regionid );
+	{
+		register struct mater *mp;
+		mp = ((struct mater *)pp->pt_inseg->seg_stp->st_materp);
+		red = mp->mt_r;
+		grn = mp->mt_g;
+		blu = mp->mt_b;
+	}
 
 	/* Apply secondary (ambient) (white) lighting. */
 	r = (double) red * Rd2;
@@ -645,108 +652,4 @@ VPRINT("LIGHT0 at", l0pos);
 			outfp = fdopen( outfd, "w" );
 		else
 			rtbomb("No output file specified");
-}
-
-/********/
-/*
- *  These routines map GIFT region ID values to
- *  an RGB color.  This belongs in a separate file.
- */
-
-/* Standard colors defined in 'spectra[]' in 'glob.c'.			*/
-#define BLACK		0
-#define PURPLE		1
-#define AZURE		2
-#define	BLUE		3
-#define LT_BLUE		4
-#define LAVENDER	5
-#define GREEN		6
-#define	LT_GREEN	7
-#define YELLOW		8
-#define ORANGE		9
-#define	RED		10
-#define PINK		11
-#define WHITE		12
-#define LT_ORANGE	13
-#define INDIGO		14
-#define GRAY		15
-
-#define MAX_COLOR	15
-
-#define GRAD_SLOPE	0.6
-
-/* Ikonas frame buffer style pixels.					*/
-typedef struct { /* Intensities (0-255) in each color.			*/
-	unsigned char	R; /* Red.					*/
-	unsigned char	G; /* Green.					*/
-	unsigned char	B; /* Blue.					*/
-	unsigned char	U; /* Unused memory.				*/
-} Pixel;
-
-Pixel	spectra[] = {
-      {   0,   0,   0,   0 },	/* Black */
-      { 180,  90, 180,   0 },   /* Purple */
-      {  80, 100, 255,   0 },   /* Azure */
-      {  80, 150, 230,   0 },   /* Blue */
-      { 100, 190, 190,   0 },   /* Light blue */
-      { 255, 100, 255,   0 },	/* Lavender */    
-      {	100, 210, 100,   0 },   /* Green */	
-      { 167, 255,  80,   0 },   /* Light green */
-      { 240, 240,   0,   0 },   /* Yellow */
-      { 240, 120,  80,   0 },   /* Red-orange */
-      {	255, 100, 100,   0 },   /* Red */
-      { 255, 120, 120,   0 },	/* Pink */
-      { 255, 255, 255,   0 },	/* White */
-      { 255, 170,  30,   0 },   /* Light orange */
-      {  50,  50, 200,   0 },   /* Dark blue */
-      { 200, 200, 200,   0 }	/* Gray */
-};
-	
-#define getColor(c)	*redP=spectra[c].R;\
-			*grnP=spectra[c].G;\
-			*bluP=spectra[c].B;
-
-/*	l o o k u p C o l o r ( )
-	Get default color for by number.
- */
-lookupColor( redP, grnP, bluP, id )
-register int	*redP, *grnP, *bluP;
-register int	id;
-{
-	if( id >=    1 && id <= 599  ) {
-		getColor( PURPLE );
-	} else
-	if( id >=  600 && id <= 999  ) {
-		getColor( AZURE );
-	} else
-	if( id >= 1000 && id <= 1999 ) {
-		getColor( BLUE );
-	} else
-	if( id >= 2000 && id <= 2999 ) {
-		getColor( LT_BLUE );
-	} else
-	if( id >= 3000 && id <= 3999 ) {
-		getColor( LAVENDER );
-	} else
-	if( id >= 4000 && id <= 4999 ) {
-		getColor( GREEN );
-	} else
-	if( id >= 5000 && id <= 5999 ) {
-		getColor( LT_GREEN );
-	} else
-	if( id >= 6000 && id <= 6999 ) {
-		getColor( YELLOW );
-	} else
-	if( id >= 7000 && id <= 7999 ) {
-		getColor( ORANGE );
-	} else
-	if( id >= 8000 && id <= 8999 ) {
-		getColor( RED );
-	} else
-	if( id >= 9000 && id <= 9999 ) {
-		getColor( PINK );
-	} else { /* default color */
-		getColor( WHITE );
-	}
-	return;
 }

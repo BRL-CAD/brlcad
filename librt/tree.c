@@ -148,6 +148,7 @@ char *node;
 		HeadRegion = regionp;
 		nregions++;
 	}
+	color_soltab();			/* associate soltab w/material */
 
 	if( debug & DEBUG_REGIONS )  {
 		register struct region *rp = HeadRegion;	/* XXX */
