@@ -1334,33 +1334,52 @@ HIDDEN void
 rt_optim_tree( tp )
 register union tree *tp;
 {
+#define STACKDEPTH	10000
+	LOCAL union tree *stackpile[STACKDEPTH];
+	register union tree **sp;
 	register union tree *low;
 
-	switch( tp->tr_op )  {
-	case OP_SOLID:
-		return;
-	case OP_SUBTRACT:
-		while( (low=tp->tr_b.tb_left)->tr_op == OP_SUBTRACT )  {
-			/* Rewrite X - A - B as X - ( A union B ) */
-			tp->tr_b.tb_left = low->tr_b.tb_left;
-			low->tr_op = OP_UNION;
-			low->tr_b.tb_left = low->tr_b.tb_right;
-			low->tr_b.tb_right = tp->tr_b.tb_right;
-			tp->tr_b.tb_right = low;
+	sp = stackpile;
+	*sp++ = TREE_NULL;
+	*sp++ = tp;
+	while( (tp = *--sp) != TREE_NULL ) {
+		switch( tp->tr_op )  {
+		case OP_SOLID:
+			break;
+		case OP_SUBTRACT:
+			while( (low=tp->tr_b.tb_left)->tr_op == OP_SUBTRACT )  {
+				/* Rewrite X - A - B as X - ( A union B ) */
+				tp->tr_b.tb_left = low->tr_b.tb_left;
+				low->tr_op = OP_UNION;
+				low->tr_b.tb_left = low->tr_b.tb_right;
+				low->tr_b.tb_right = tp->tr_b.tb_right;
+				tp->tr_b.tb_right = low;
+			}
+			/* push both nodes - search left first */
+			*sp++ = tp->tr_b.tb_right;
+			*sp++ = tp->tr_b.tb_left;
+			if( sp >= &stackpile[STACKDEPTH-1] )  {
+				rt_log("rt_optim_tree: stack overflow!\n");
+				return;
+			}
+			break;
+		case OP_UNION:
+		case OP_INTERSECT:
+		case OP_XOR:
+			/* Need to look at 3-level optimizations here, both sides */
+			/* push both nodes - search left first */
+			*sp++ = tp->tr_b.tb_right;
+			*sp++ = tp->tr_b.tb_left;
+			if( sp >= &stackpile[STACKDEPTH-1] )  {
+				rt_log("rt_optim_tree: stack overflow!\n");
+				return;
+			}
+			break;
+		default:
+			rt_log("rt_optim_tree: bad op x%x\n", tp->tr_op);
+			break;
 		}
-		goto binary;
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_XOR:
-		/* Need to look at 3-level optimizations here, both sides */
-		goto binary;
-	default:
-		rt_log("rt_optim_tree: bad op x%x\n", tp->tr_op);
-		return;
 	}
-binary:
-	rt_optim_tree( tp->tr_b.tb_left );
-	rt_optim_tree( tp->tr_b.tb_right );
 }
 
 /*
@@ -1402,32 +1421,44 @@ rt_solid_bitfinder( treep, regbit )
 register union tree *treep;
 register int regbit;
 {
+#define STACKDEPTH	10000
+	LOCAL union tree *stackpile[STACKDEPTH];
+	register union tree **sp;
 	register struct soltab *stp;
 
-	switch( treep->tr_op )  {
-	case OP_SOLID:
-		stp = treep->tr_a.tu_stp;
-		BITSET( stp->st_regions, regbit );
-		if( !BITTEST( stp->st_regions, regbit ) )
-			rt_bomb("BITSET failure\n");	/* sanity check */
-		if( regbit+1 > stp->st_maxreg )  stp->st_maxreg = regbit+1;
-		if( rt_g.debug&DEBUG_REGIONS )  {
-			rt_pr_bitv( stp->st_name, stp->st_regions,
-				stp->st_maxreg );
+	sp = stackpile;
+	*sp++ = TREE_NULL;
+	*sp++ = treep;
+	while( (treep = *--sp) != TREE_NULL ) {
+		switch( treep->tr_op )  {
+		case OP_SOLID:
+			stp = treep->tr_a.tu_stp;
+			BITSET( stp->st_regions, regbit );
+			if( !BITTEST( stp->st_regions, regbit ) )
+				rt_bomb("BITSET failure\n");	/* sanity check */
+			if( regbit+1 > stp->st_maxreg )  stp->st_maxreg = regbit+1;
+			if( rt_g.debug&DEBUG_REGIONS )  {
+				rt_pr_bitv( stp->st_name, stp->st_regions,
+					stp->st_maxreg );
+			}
+			break;
+		case OP_UNION:
+		case OP_INTERSECT:
+		case OP_SUBTRACT:
+			/* BINARY type */
+			/* push both nodes - search left first */
+			*sp++ = treep->tr_b.tb_right;
+			*sp++ = treep->tr_b.tb_left;
+			if( sp >= &stackpile[STACKDEPTH-1] )  {
+				rt_log("rt_optim_tree: stack overflow!\n");
+				return;
+			}
+			break;
+		default:
+			rt_log("rt_solid_bitfinder:  op=x%x\n", treep->tr_op);
+			break;
 		}
-		return;
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-		/* BINARY type */
-		rt_solid_bitfinder( treep->tr_b.tb_left, regbit );
-		rt_solid_bitfinder( treep->tr_b.tb_right, regbit );
-		return;
-	default:
-		rt_log("rt_solid_bitfinder:  op=x%x\n", treep->tr_op);
-		return;
 	}
-	/* NOTREACHED */
 }
 
 /*
