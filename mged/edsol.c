@@ -7556,30 +7556,75 @@ char **argv;
     return TCL_ERROR;
 
   bu_vls_init(&vls);
-  bu_vls_printf(&vls, "{");
 
   switch( es_int.idb_type ) {
   case ID_ARB8:
-    /* build "move edge" menu */
-    mip = which_menu[es_type-4];
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+    {
+      struct bu_vls vls2;
 
-    /* end "move edge" menu and start "move face" menu */
-    bu_vls_printf(&vls, " } {");
+      bu_vls_init(&vls2);
 
-    /* build "move face" menu */
-    mip = which_menu[es_type+1];
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+      /* title */
+      bu_vls_printf(&vls, "{{ARB MENU} {}}");
 
-    /* end "move face" menu and start "rotate face" menu */
-    bu_vls_printf(&vls, " } {");
+      /* build "move edge" menu */
+      mip = which_menu[es_type-4];
+      /* submenu title */
+      bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
+      for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
 
-    /* build "rotate face" menu */
-    mip = which_menu[es_type+6];
-    for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+      bu_vls_printf(&vls, " {{move edges} {%s}}", bu_vls_addr(&vls2));
+      bu_vls_trunc(&vls2, 0);
+
+      /* build "move face" menu */
+      mip = which_menu[es_type+1];
+      /* submenu title */
+      bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
+      for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
+
+      bu_vls_printf(&vls, " {{move faces} {%s}}", bu_vls_addr(&vls2));
+      bu_vls_trunc(&vls2, 0);
+
+      /* build "rotate face" menu */
+      mip = which_menu[es_type+6];
+      /* submenu title */
+      bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
+      for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
+
+      bu_vls_printf(&vls, " {{rotate faces} {%s}}", bu_vls_addr(&vls2));
+      bu_vls_free(&vls2);
+    }
+
+    break;
+  case ID_ARS:
+    {
+      struct bu_vls vls2;
+
+      /* build ARS PICK MENU Tcl list */
+      bu_vls_init(&vls2);
+
+      mip = ars_pick_menu;
+      /* title */
+      bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
+      for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
+
+      mip = ars_menu;
+      /* title */
+      bu_vls_printf(&vls, " {{%s} {}}", mip->menu_string);
+
+      /* pick vertex menu */
+      bu_vls_printf(&vls, " {{%s} {%s}}", (++mip)->menu_string,
+		    bu_vls_addr(&vls2));
+
+      for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
+	bu_vls_printf(&vls, " {{%s} {}}", mip->menu_string);
+
+      bu_vls_free(&vls2);
+    }
 
     break;
   default:
@@ -7592,9 +7637,6 @@ char **argv;
       break;
     case ID_ELL:
       mip = ell_menu;
-      break;
-    case ID_ARS:
-      mip = ars_menu;
       break;
     case ID_BSPLINE:
       mip = spline_menu;
@@ -7637,13 +7679,15 @@ char **argv;
     if(mip == (struct menu_item *)NULL)
       break;
 
+    /* title */
+    bu_vls_printf(&vls, " {{%s} {}}", mip->menu_string);
+
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
-      bu_vls_printf(&vls, " {%s}", mip->menu_string);
+      bu_vls_printf(&vls, " {{%s} {}}", mip->menu_string);
 
     break;
   }
 
-  bu_vls_printf(&vls, " }");
   Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
   bu_vls_free(&vls);
 
@@ -7769,9 +7813,10 @@ char **argv;
     context = 0;
 
   stlp = rt_get_parsetab_by_name( argv[1] );
-  if( stlp == NULL ) {
-    Tcl_AppendResult( interp,
-		      "put_edit_solid: unknown object type",
+  if( stlp == NULL ||
+      stlp->parsetab == (struct bu_structparse *)NULL) {
+    Tcl_AppendResult( interp, "put_edit_solid: ", stlp->label,
+		      "object type is not supported",
 		      (char *)0 );
     return TCL_ERROR;
   }
