@@ -180,6 +180,7 @@ set -S2 "/bin/sh"
 #	define	GFLAG		-G 7
 /*	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=4
+#	define	IRIX	4
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
@@ -258,6 +259,7 @@ set -S2 "/bin/sh"
 #	endif
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
+#	define	IRIX	5
 #	define	LGT_CONFIG	GFLAG
 
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
@@ -317,6 +319,7 @@ set -S2 "/bin/sh"
 #	endif
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=6
+#	define	IRIX	6
 #	define	LGT_CONFIG	GFLAG
 
 /* GAK!  No GL library in 64-bit mode, only OpenGL!  ARRRRGH! */
