@@ -825,6 +825,19 @@ union tree {
 #define RT_TREE_MAGIC	0x91191191
 #define RT_CK_TREE(_p)	BU_CKMAG(_p, RT_TREE_MAGIC, "union tree")
 
+
+/*		R T _ T R E E _ A R R A Y
+ *
+ *	flattened version of the union tree
+ */
+struct rt_tree_array
+{
+	union tree	*tl_tree;
+	int		tl_op;
+};
+
+#define TREE_LIST_NULL	((struct tree_list *)0)
+
 /*
  *			A N I M A T E
  *
