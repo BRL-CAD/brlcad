@@ -2339,6 +2339,10 @@ BU_EXTERN(void db_close, ( struct db_i *dbip ) );
 BU_EXTERN(int db_dump, (struct rt_wdb *wdbp, struct db_i *dbip));
 BU_EXTERN(struct db_i *db_clone_dbi, (struct db_i *dbip, long *client));
 
+/* db5_io.c */
+BU_EXTERN(int rt_fwrite_internal5, (FILE *, CONST char *, struct rt_db_internal *, double));
+BU_EXTERN(int db5_fwrite_ident, (FILE *, CONST char *, double));
+
 /* db_io.c */
 /* It is normal to test for __STDC__ when using *_DEFINED tests but in
  * in this case "union record" is used for db_getmrec's return type.  This
@@ -2388,8 +2392,10 @@ BU_EXTERN(struct directory *db_diradd, ( struct db_i *, CONST char *name, long l
 	int len, int flags, genptr_t ptr ) );
 					/* delete entry from directory */
 BU_EXTERN(int db_dirdelete, ( struct db_i *, struct directory *dp ) );
-BU_EXTERN(int db_rename, ( struct db_i *, struct directory *, CONST char *newname) );
+BU_EXTERN(int db_fwrite_ident, (FILE *, CONST char *, double));
 BU_EXTERN(void db_pr_dir, ( CONST struct db_i *dbip ) );
+BU_EXTERN(int db_rename, ( struct db_i *, struct directory *, CONST char *newname) );
+
 
 /* db_match.c */
 BU_EXTERN(int db_regexp_match, (CONST char *pattern, CONST char *string));
