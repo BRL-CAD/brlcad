@@ -55,13 +55,16 @@ HIDDEN void	shade_inputs();
 int
 viewshade( ap, pp, swp )
 struct application *ap;
-register struct partition *pp;
+register CONST struct partition *pp;
 register struct shadework *swp;
 {
 	register struct mfuncs *mfp;
 	register struct region *rp;
 	register struct light_specific *lp;
 	register int	want;
+
+	RT_AP_CHECK(ap);
+	RT_CK_RTI(ap->a_rt_i);
 
 	swp->sw_hit = *(pp->pt_inhit);		/* struct copy */
 
@@ -74,10 +77,9 @@ register struct shadework *swp;
 			mfp->mf_magic, MF_MAGIC );
 		return(0);
 	}
-	if( (rp=pp->pt_regionp) == REGION_NULL )  {
-		rt_log("viewshade: bad region pointer\n");
-		return(0);
-	}
+
+	rp = pp->pt_regionp;
+	RT_CK_REGION(rp);
 
 	/* Default color is white (uncolored) */
 	if( rp->reg_mater.ma_override )  {
@@ -103,8 +105,10 @@ register struct shadework *swp;
 			swp->sw_intensity[i] = 1;
 
 		i=0;
-		for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )
+		for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+			RT_CK_LIGHT(lp);
 			swp->sw_visible[i++] = (char *)lp;
+		}
 	}
 
 	/* If optional inputs are required, have them computed */
@@ -241,6 +245,7 @@ register int	want;
 		intensity = swp->sw_intensity;
 		tolight = swp->sw_tolight;
 		for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+			RT_CK_LIGHT(lp);
 			/* compute the light direction */
 			if( lp->lt_infinite ) {
 				/* Infinite lights are point sources, no fuzzy penumbra */
