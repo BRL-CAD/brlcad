@@ -111,7 +111,7 @@ static struct funtab {
 "attach", "[device]", "attach to a display processor, or NU",
 	f_attach,1,2,
 "autosize", "[0|1]",
-	"toggle/set automatic center/size of display for new geometry",
+	"toggle/set automatic sizing/centering of display for new geometry",
 	f_autosize,1,2,
 "B", "<objects>", "clear screen, edit objects",
 	f_blast,2,MAXARGS,
