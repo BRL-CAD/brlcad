@@ -70,7 +70,9 @@ static int air_no=1;		/* Air numbers */
 static int debug=0;		/* Debug flag */
 static int cut_count=0;		/* count of assembly cut HAF solids created */
 static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
+#if 0
 static int do_simplify=0;	/* flag to try to simplify solids */
+#endif
 static regex_t reg_cmp;		/* compiled regular expression */
 static char *proe_usage="%s [-darS] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
@@ -762,7 +764,7 @@ char line[MAX_LINE_LEN];
 	char *brlcad_name;
 	struct wmember head;
 	struct wmember *wmem;
-	vect_t normal;
+	vect_t normal={0,0,0};
 	int solid_in_region=0;
 	point_t part_max,part_min;	/* Part RPP */
 
@@ -975,6 +977,7 @@ char line[MAX_LINE_LEN];
 				bu_log( "Making Face:\n" );
 				for( n=0 ; n<3; n++ )
 					bu_log( "\tvertex #%d: ( %g %g %g )\n", tmp_face[n], V3ARGS( &bot_verts[3*tmp_face[n]] ) );
+				VPRINT(" normal", normal);
 			}
 
 			Add_face( tmp_face );
@@ -1239,31 +1242,13 @@ Rm_nulls()
 			if( changed )
 			{
 				char name[NAMESIZE+1];
-				int flags;
 
 				strncpy( name, dp->d_namep, NAMESIZE );
-				flags = dp->d_flags;
 
 				if( actual_count )
 					comb->tree = (union tree *)db_mkgift_tree( tree_list, actual_count, (struct db_tree_state *)NULL );
 				else
 					comb->tree = (union tree *)NULL;
-
-/* XXX Why delete and re-add, why not just put the new version? */
-#if 0
-				if( db_delete( dbip, dp ) || db_dirdelete( dbip, dp ) )
-				{
-					bu_log( "Failed to delete combination (%s)\n", dp->d_namep );
-					rt_db_free_internal( &intern );
-					continue;
-				}
-				if( (dp=db_diradd( dbip, name, -1, 0, flags, NULL)) == DIR_NULL )
-				{
-					bu_log( "Could not add modified '%s' to directory\n", dp->d_namep );
-					rt_comb_ifree( &intern );
-					continue;
-				}
-#endif
 
 				if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
 				{
@@ -1377,9 +1362,11 @@ char	*argv[];
 		case 'r':
 			do_reorient = 0;
 			break;
+#if 0
 		case 's':
 			do_simplify = 1;
 			break;
+#endif
 		default:
 			bu_log( usage, argv[0]);
 			exit(1);
