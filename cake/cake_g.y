@@ -176,6 +176,7 @@ empty_l	:	EMPTYLINE
 
 %%
 
+void
 yyerror(s)
 char	*s;
 {
