@@ -1003,7 +1003,7 @@ char line[MAX_LINE_LEN];
 			bu_log( "\t%d faces were too small\n", small_count );
 	}
 
-	mk_bot( fd_out, solid_name, RT_BOT_SOLID, RT_BOT_CCW, 0, bot_vcurr, bot_fcurr, bot_verts, bot_faces, NULL, NULL );
+	mk_bot( fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, bot_vcurr, bot_fcurr, bot_verts, bot_faces, NULL, NULL );
 
 	if( face_count && !solid_in_region )
 	{
