@@ -699,12 +699,11 @@ CONST mat_t	matp;
  *			M G E D _ T R E E _ D E S C R I B E
  */
 void
-mged_tree_describe( vls, tp, indented, lvl, verbose )
+mged_tree_describe( vls, tp, indented, lvl )
 struct bu_vls		*vls;
 CONST union tree	*tp;
 int			indented;
 int			lvl;
-int			verbose;
 {
 	int	status;
 
@@ -715,117 +714,77 @@ int			verbose;
 	case OP_DB_LEAF:
 		status = mat_categorize( tp->tr_l.tl_mat );
 
-		if( verbose )  {
-			/* One per line, out onto the vls */
-			if( !indented )  bu_vls_spaces( vls, 2*lvl );
-			bu_vls_strcat( vls, tp->tr_l.tl_name );
-			if( status & STAT_ROT ) {
-				fastf_t	az, el;
-				ae_vec( &az, &el, tp->tr_l.tl_mat ?
-					tp->tr_l.tl_mat : rt_identity );
-				bu_vls_printf( vls, 
-					" az=%g, el=%g, ",
-					az, el );
-			}
-			if( status & STAT_XLATE ) {
-				bu_vls_printf( vls, " [%g,%g,%g]",
-					tp->tr_l.tl_mat[MDX]*base2local,
-					tp->tr_l.tl_mat[MDY]*base2local,
-					tp->tr_l.tl_mat[MDZ]*base2local);
-			}
-			if( status & STAT_SCALE ) {
-				bu_vls_printf( vls, " scale %g",
-					1.0/tp->tr_l.tl_mat[15] );
-			}
-			if( status & STAT_PERSP ) {
-				bu_vls_printf( vls, 
-					" Perspective=[%g,%g,%g]??",
-					tp->tr_l.tl_mat[12],
-					tp->tr_l.tl_mat[13],
-					tp->tr_l.tl_mat[14] );
-			}
-			bu_vls_printf( vls, "\n" );
-		} else {
-			/* Many per line, using columnation */
-			if( status )  {
-				register char	*cp;
-				struct bu_vls	str;
-				char	buf[8];
-
-				bu_vls_init( &str );
-				bu_vls_strcpy( &str, tp->tr_l.tl_name );
-				cp = buf;
-				*cp++ = '/';
-				if( status & STAT_ROT )  *cp++ = 'R';
-				if( status & STAT_XLATE) *cp++ = 'T';
-				if( status & STAT_SCALE) *cp++ = 'S';
-				if( status & STAT_PERSP) *cp++ = 'P';
-				*cp = '\0';
-				bu_vls_strcat( vls, buf );
-				vls_col_item( vls, bu_vls_addr(&str) );
-				bu_vls_trunc( &str, 0 );
-			} else {
-				vls_col_item( vls, tp->tr_l.tl_name );
-			}
+		/* One per line, out onto the vls */
+		if( !indented )  bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, tp->tr_l.tl_name );
+		if( status & STAT_ROT ) {
+			fastf_t	az, el;
+			ae_vec( &az, &el, tp->tr_l.tl_mat ?
+				tp->tr_l.tl_mat : rt_identity );
+			bu_vls_printf( vls, 
+				" az=%g, el=%g, ",
+				az, el );
 		}
+		if( status & STAT_XLATE ) {
+			bu_vls_printf( vls, " [%g,%g,%g]",
+				tp->tr_l.tl_mat[MDX]*base2local,
+				tp->tr_l.tl_mat[MDY]*base2local,
+				tp->tr_l.tl_mat[MDZ]*base2local);
+		}
+		if( status & STAT_SCALE ) {
+			bu_vls_printf( vls, " scale %g",
+				1.0/tp->tr_l.tl_mat[15] );
+		}
+		if( status & STAT_PERSP ) {
+			bu_vls_printf( vls, 
+				" Perspective=[%g,%g,%g]??",
+				tp->tr_l.tl_mat[12],
+				tp->tr_l.tl_mat[13],
+				tp->tr_l.tl_mat[14] );
+		}
+		bu_vls_printf( vls, "\n" );
 		return;
 
 		/* This node is known to be a binary op */
 	case OP_UNION:
-		if( verbose )  {
-			if(!indented) bu_vls_spaces( vls, 2*lvl );
-			bu_vls_strcat( vls, "u " );
-		}
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "u " );
 		goto bin;
 	case OP_INTERSECT:
-		if( verbose )  {
-			if(!indented) bu_vls_spaces( vls, 2*lvl );
-			bu_vls_strcat( vls, "+ " );
-		}
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "+ " );
 		goto bin;
 	case OP_SUBTRACT:
-		if( verbose )  {
-			if(!indented) bu_vls_spaces( vls, 2*lvl );
-			bu_vls_strcat( vls, "- " );
-		}
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "- " );
 		goto bin;
 	case OP_XOR:
-		if( verbose )  {
-			if(!indented) bu_vls_spaces( vls, 2*lvl );
-			bu_vls_strcat( vls, "^ " );
-		}
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "^ " );
 bin:
-		mged_tree_describe( vls, tp->tr_b.tb_left, 1, lvl+1, verbose );
-		mged_tree_describe( vls, tp->tr_b.tb_right, 0, lvl+1, verbose );
+		mged_tree_describe( vls, tp->tr_b.tb_left, 1, lvl+1 );
+		mged_tree_describe( vls, tp->tr_b.tb_right, 0, lvl+1 );
 		return;
 
 		/* This node is known to be a unary op */
 	case OP_NOT:
-		if( verbose )  {
-			if(!indented) bu_vls_spaces( vls, 2*lvl );
-			bu_vls_strcat( vls, "! " );
-		}
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "! " );
 		goto unary;
 	case OP_GUARD:
-		if( verbose )  {
-			if(!indented) bu_vls_spaces( vls, 2*lvl );
-			bu_vls_strcat( vls, "G " );
-		}
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "G " );
 		goto unary;
 	case OP_XNOP:
-		if( verbose )  {
-			if(!indented) bu_vls_spaces( vls, 2*lvl );
-			bu_vls_strcat( vls, "X " );
-		}
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "X " );
 unary:
 		mged_tree_describe( vls, tp->tr_b.tb_left, 1, lvl+1 );
 		return;
 
 	case OP_NOP:
-		if( verbose )  {
-			if(!indented) bu_vls_spaces( vls, 2*lvl );
-			bu_vls_strcat( vls, "NOP\n" );
-		}
+		if(!indented) bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "NOP\n" );
 		return;
 
 	default:
@@ -875,8 +834,11 @@ int	verbose;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
 		mged_comb_describe( outstrp, comb );
-		mged_tree_describe( outstrp, comb->tree, 0, 1, verbose );
-		if( !verbose )  vls_col_eol( outstrp );
+		if( verbose )  {
+			mged_tree_describe( outstrp, comb->tree, 0, 1 );
+		} else {
+			rt_pr_tree_vls( outstrp, comb->tree );
+		}
 		rt_comb_ifree( &intern );
 		goto out;
 	}
