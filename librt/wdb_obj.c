@@ -1,10 +1,10 @@
 /*
  *				W D B _ O B J . C
  *
- * A database object contains the attributes and
- * methods for controlling a BRLCAD database.
+ *  A database object contains the attributes and
+ *  methods for controlling a BRLCAD database.
  * 
- * Authors -
+ *  Authors -
  *	Michael John Muuss
  *      Glenn Durfee
  *	Robert G. Parker
@@ -23,10 +23,15 @@
  *	in all countries except the USA.  All rights reserved.
  */
 
+#include "conf.h"
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <fcntl.h>
 #include <math.h>
 #include <sys/errno.h>
-#include "conf.h"
 #include "tcl.h"
 #include "machine.h"
 #include "externs.h"
@@ -37,12 +42,18 @@
 
 #include "./debug.h"
 
+#define WDB_MAX_LEVELS 12
+#define WDB_CPEVAL	0
+#define WDB_LISTPATH	1
+#define WDB_LISTEVAL	2
+
 /* from librt/tcl.c */
 extern int rt_tcl_rt();
 extern int rt_tcl_import_from_path();
 extern void rt_generic_make();
 
 HIDDEN int wdb_open_tcl();
+HIDDEN int wdb_close_tcl();
 HIDDEN int wdb_decode_dbip();
 HIDDEN struct db_i *wdb_prep_dbip();
 
@@ -57,17 +68,37 @@ HIDDEN int wdb_rt_gettrees_tcl();
 HIDDEN int wdb_dump_tcl();
 HIDDEN int wdb_dbip_tcl();
 HIDDEN int wdb_ls_tcl();
-HIDDEN int wdb_close_tcl();
+HIDDEN int wdb_list_tcl();
+HIDDEN int wdb_pathsum_tcl();
+HIDDEN int wdb_expand_tcl();
 
 HIDDEN void wdb_deleteProc();
 HIDDEN void wdb_deleteProc_rt();
+
+HIDDEN void wdb_do_trace();
+HIDDEN void wdb_trace();
 
 HIDDEN int wdb_cmpdirname();
 HIDDEN void wdb_vls_col_pr4v();
 HIDDEN void wdb_vls_line_dpp();
 HIDDEN struct directory ** wdb_getspace();
+HIDDEN void wdb_do_list();
 
 struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
+
+HIDDEN Tcl_Interp *curr_interp;		/* current Tcl interpreter */
+
+/* input path */
+HIDDEN struct directory *wdb_objects[WDB_MAX_LEVELS];
+HIDDEN int wdb_objpos;
+
+/* print flag */
+HIDDEN int wdb_prflag;
+
+/* path transformation matrix ... calculated in trace() */
+HIDDEN mat_t wdb_xform;
+
+HIDDEN struct directory *wdb_path[WDB_MAX_LEVELS];
 
 HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"match",	wdb_match_tcl,
@@ -80,19 +111,23 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"dump",		wdb_dump_tcl,
 	"dbip",		wdb_dbip_tcl,
 	"ls",		wdb_ls_tcl,
+	"l",		wdb_list_tcl,
+	"listeval",	wdb_pathsum_tcl,
+	"paths",	wdb_pathsum_tcl,
+	"expand",	wdb_expand_tcl,
 	"close",	wdb_close_tcl,
-       (char *)0,	(int (*)())0
+	(char *)0,	(int (*)())0
 };
 
 int
 Wdb_Init(interp)
-Tcl_Interp *interp;
+     Tcl_Interp *interp;
 {
-  BU_LIST_INIT(&HeadWDBObj.l);
-  (void)Tcl_CreateCommand(interp, "wdb_open", wdb_open_tcl,
-			  (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	BU_LIST_INIT(&HeadWDBObj.l);
+	(void)Tcl_CreateCommand(interp, "wdb_open", wdb_open_tcl,
+				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-  return TCL_OK;
+	return TCL_OK;
 }
 
 /*
@@ -106,12 +141,12 @@ Tcl_Interp *interp;
  */
 HIDDEN int
 wdb_cmd(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
 {
-  return bu_cmd(clientData, interp, argc, argv, wdb_cmds, 1);
+	return bu_cmd(clientData, interp, argc, argv, wdb_cmds, 1);
 }
 
 /*
@@ -187,10 +222,10 @@ wdb_close_tcl(clientData, interp, argc, argv)
  */
 HIDDEN int
 wdb_open_tcl(clientData, interp, argc, argv)
-ClientData	clientData;
-Tcl_Interp	*interp;
-int		argc;
-char		**argv;
+     ClientData	clientData;
+     Tcl_Interp	*interp;
+     int		argc;
+     char		**argv;
 {
 	struct wdb_obj *wdbop;
 	struct rt_wdb	*wdbp;
@@ -219,7 +254,7 @@ Usage: wdb_open\n\
        wdb_open newprocname inmem $dbip\n\
        wdb_open newprocname inmem_append $dbip\n\
        wdb_open newprocname db filename\n",
-		NULL);
+				 NULL);
 		return TCL_ERROR;
 #endif
 	}
@@ -237,19 +272,19 @@ Usage: wdb_open\n\
 				return TCL_ERROR;
 			RT_CK_DBI_TCL(interp,dbip);
 
-			wdbp = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK );
+			wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 		} else {
 			if (wdb_decode_dbip(interp, argv[3], &dbip) != TCL_OK)
 				return TCL_ERROR;
 
 			if (strcmp( argv[2], "disk" ) == 0)
-				wdbp = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK );
+				wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 			else if (strcmp(argv[2], "disk_append") == 0)
-				wdbp = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY );
+				wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
 			else if (strcmp( argv[2], "inmem" ) == 0)
-				wdbp = wdb_dbopen( dbip, RT_WDB_TYPE_DB_INMEM );
+				wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
 			else if (strcmp( argv[2], "inmem_append" ) == 0)
-				wdbp = wdb_dbopen( dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY );
+				wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 			else {
 				Tcl_AppendResult(interp, "wdb_open ", argv[2],
 						 " target type not recognized\n", NULL);
@@ -279,7 +314,7 @@ Usage: wdb_open\n\
 				(ClientData)wdbop, wdb_deleteProc);
 
 	/* Return new function name as result */
-	Tcl_AppendResult( interp, argv[1], (char *)NULL );
+	Tcl_AppendResult(interp, argv[1], (char *)NULL);
 	
 	return TCL_OK;
 }
@@ -346,10 +381,10 @@ wdb_prep_dbip(interp, filename)
 
 HIDDEN int
 wdb_match_tcl( clientData, interp, argc, argv )
-ClientData	clientData;
-Tcl_Interp     *interp;
-int		argc;
-char	      **argv;
+     ClientData	clientData;
+     Tcl_Interp     *interp;
+     int		argc;
+     char	      **argv;
 {
 	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
 	struct rt_wdb  *wdb = wdbop->wdb_wp;
@@ -392,10 +427,10 @@ char	      **argv;
 
 HIDDEN int
 wdb_get_tcl(clientData, interp, argc, argv)
-ClientData	clientData;
-Tcl_Interp     *interp;
-int		argc;
-char	      **argv;
+     ClientData	clientData;
+     Tcl_Interp     *interp;
+     int		argc;
+     char	      **argv;
 {
 	register struct directory	       *dp;
 	register struct bu_structparse	       *sp = NULL;
@@ -445,10 +480,10 @@ char	      **argv;
 
 HIDDEN int
 wdb_put_tcl(clientData, interp, argc, argv)
-ClientData	clientData;
-Tcl_Interp     *interp;
-int		argc;
-char	      **argv;
+     ClientData	clientData;
+     Tcl_Interp     *interp;
+     int		argc;
+     char	      **argv;
 {
 	struct rt_db_internal			intern;
 	register CONST struct rt_functab	*ftp;
@@ -464,7 +499,7 @@ char	      **argv;
 
 	if( argc < 2 ) {
 		Tcl_AppendResult( interp,
- 	               "wrong # args: should be db put objName objType attrs",
+				  "wrong # args: should be db put objName objType attrs",
 				  (char *)NULL );
 		return TCL_ERROR;
 	}
@@ -485,7 +520,7 @@ char	      **argv;
 
 	for( i = 0; argv[2][i] != 0 && i < 16; i++ ) {
 		type[i] = isupper(argv[2][i]) ? tolower(argv[2][i]) :
-			  argv[2][i];
+			argv[2][i];
 	}
 	type[i] = 0;
 
@@ -537,10 +572,10 @@ char	      **argv;
 
 HIDDEN int
 wdb_adjust_tcl( clientData, interp, argc, argv )
-ClientData	clientData;
-Tcl_Interp     *interp;
-int		argc;
-char	      **argv;
+     ClientData	clientData;
+     Tcl_Interp     *interp;
+     int		argc;
+     char	      **argv;
 {
 	register struct directory	*dp;
 	register CONST struct bu_structparse	*sp = NULL;
@@ -554,7 +589,7 @@ char	      **argv;
 
 	if( argc < 5 ) {
 		Tcl_AppendResult( interp,
-		"wrong # args: should be \"db adjust objName attr value ?attr? ?value?...\"",
+				  "wrong # args: should be \"db adjust objName attr value ?attr? ?value?...\"",
 				  (char *)NULL );
 		return TCL_ERROR;
 	}
@@ -600,10 +635,10 @@ char	      **argv;
  */
 HIDDEN int
 wdb_form_tcl( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int argc;
+     char **argv;
 {
 	CONST struct bu_structparse	*sp = NULL;
 	CONST struct rt_functab		*ftp;
@@ -619,7 +654,7 @@ char **argv;
 
 	if( (ftp = rt_get_functab_by_label(argv[1])) == NULL )  {
 		Tcl_AppendResult(interp, "There is no geometric object type \"",
-			argv[1], "\".", (char *)NULL);
+				 argv[1], "\".", (char *)NULL);
 		return TCL_ERROR;
 	}
 	return ftp->ft_tclform( ftp, interp );
@@ -630,10 +665,10 @@ char **argv;
  */
 HIDDEN int
 wdb_tops_tcl( clientData, interp, argc, argv )
-ClientData	clientData;
-Tcl_Interp     *interp;
-int		argc;
-char	      **argv;
+     ClientData	clientData;
+     Tcl_Interp     *interp;
+     int		argc;
+     char	      **argv;
 {
 	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
 	struct rt_wdb  *wdp = wdbop->wdb_wp;
@@ -663,7 +698,7 @@ char	      **argv;
  */
 HIDDEN void
 wdb_deleteProc_rt(clientData)
-ClientData clientData;
+     ClientData clientData;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -691,10 +726,10 @@ ClientData clientData;
  */
 HIDDEN int
 wdb_rt_gettrees_tcl( clientData, interp, argc, argv )
-ClientData	clientData;
-Tcl_Interp     *interp;
-int		argc;
-char	      **argv;
+     ClientData	clientData;
+     Tcl_Interp     *interp;
+     int		argc;
+     char	      **argv;
 {
 	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
 	struct rt_wdb  *wdp = wdbop->wdb_wp;
@@ -708,9 +743,9 @@ char	      **argv;
 
 	if( argc < 4 )  {
 		Tcl_AppendResult( interp,
-			"rt_gettrees: wrong # args: should be \"",
-			argv[0], " ", argv[1],
-			" newprocname [-i] [-u] treetops...\"\n", (char *)NULL );
+				  "rt_gettrees: wrong # args: should be \"",
+				  argv[0], " ", argv[1],
+				  " newprocname [-i] [-u] treetops...\"\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
@@ -738,7 +773,7 @@ char	      **argv;
 
 	if( rt_gettrees( rtip, argc-3, (CONST char **)&argv[3], 1 ) < 0 )  {
 		Tcl_AppendResult( interp,
-			"rt_gettrees() returned error\n", (char *)NULL );
+				  "rt_gettrees() returned error\n", (char *)NULL );
 		rt_free_rti( rtip );
 		return TCL_ERROR;
 	}
@@ -788,10 +823,10 @@ char	      **argv;
  */
 HIDDEN int
 wdb_dump_tcl( clientData, interp, argc, argv )
-ClientData	clientData;
-Tcl_Interp     *interp;
-int		argc;
-char	      **argv;
+     ClientData	clientData;
+     Tcl_Interp     *interp;
+     int		argc;
+     char	      **argv;
 {
 	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
 	struct rt_wdb  *wdp = wdbop->wdb_wp;
@@ -803,23 +838,23 @@ char	      **argv;
 
 	if( argc != 3 )  {
 		Tcl_AppendResult( interp,
-			"dump: wrong # args: should be \"",
-			argv[0], "dump filename.g\n", (char *)NULL );
+				  "dump: wrong # args: should be \"",
+				  argv[0], "dump filename.g\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
 	if( (op = wdb_fopen( argv[2] )) == RT_WDB_NULL )  {
 		Tcl_AppendResult( interp,
-			argv[0], " dump:  ", argv[2], ": cannot create\n",
-			(char *)NULL );
+				  argv[0], " dump:  ", argv[2], ": cannot create\n",
+				  (char *)NULL );
 		return TCL_ERROR;
 	}
 	ret = db_dump(op, wdp->dbip);
 	wdb_close( op );
 	if( ret < 0 )  {
 		Tcl_AppendResult( interp,
-			argv[0], " dump ", argv[2], ": db_dump() error\n",
-			(char *)NULL );
+				  argv[0], " dump ", argv[2], ": db_dump() error\n",
+				  (char *)NULL );
 		return TCL_ERROR;
 	}
 	return TCL_OK;
@@ -834,27 +869,27 @@ char	      **argv;
  */
 HIDDEN int
 wdb_dbip_tcl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
 {
-  struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
-  struct bu_vls vls;
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	struct bu_vls vls;
 
-  bu_vls_init(&vls);
+	bu_vls_init(&vls);
 
-  if (argc != 2) {
-    bu_vls_printf(&vls, "helplib wdb_dbip");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	if (argc != 2) {
+		bu_vls_printf(&vls, "helplib wdb_dbip");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  bu_vls_printf(&vls, "%lu", (unsigned long)wdbop->wdb_wp->dbip);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
-  return TCL_OK;
+	bu_vls_printf(&vls, "%lu", (unsigned long)wdbop->wdb_wp->dbip);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	return TCL_OK;
 }
 
 /*
@@ -863,103 +898,531 @@ char    **argv;
  *        procname ls [args]
  *
  * Returns: list objects in this database object.
- * The guts of this routine were lifted from mged/dir.c.
  */
 HIDDEN int
 wdb_ls_tcl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
 {
-  struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
-  struct bu_vls vls;
-  register struct directory *dp;
-  register int i;
-  int c;
-  int aflag = 0;		/* print all objects without formatting */
-  int cflag = 0;		/* print combinations */
-  int rflag = 0;		/* print regions */
-  int sflag = 0;		/* print solids */
-  struct directory **dirp;
-  struct directory **dirp0 = (struct directory **)NULL;
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	struct bu_vls vls;
+	register struct directory *dp;
+	register int i;
+	int c;
+	int aflag = 0;		/* print all objects without formatting */
+	int cflag = 0;		/* print combinations */
+	int rflag = 0;		/* print regions */
+	int sflag = 0;		/* print solids */
+	struct directory **dirp;
+	struct directory **dirp0 = (struct directory **)NULL;
 
-  bu_vls_init(&vls);
+	bu_vls_init(&vls);
 
-  /* skip past procname */
-  --argc;
-  ++argv;
+	/* skip past procname */
+	--argc;
+	++argv;
 
-  if(argc < 1 || MAXARGS < argc){
-    bu_vls_printf(&vls, "helplib wdb_ls");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	if(argc < 1 || MAXARGS < argc){
+		bu_vls_printf(&vls, "helplib wdb_ls");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  bu_optind = 1;	/* re-init bu_getopt() */
-  while ((c = bu_getopt(argc, argv, "acgrs")) != EOF) {
-    switch (c) {
-    case 'a':
-      aflag = 1;
-      break;
-    case 'c':
-      cflag = 1;
-      break;
-    case 'r':
-      rflag = 1;
-      break;
-    case 's':
-      sflag = 1;
-      break;
-    default:
-      bu_vls_printf(&vls, "Unrecognized option - %c\n", c);
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-      return TCL_ERROR;
-    }
-  }
-  argc -= (bu_optind - 1);
-  argv += (bu_optind - 1);
+	bu_optind = 1;	/* re-init bu_getopt() */
+	while ((c = bu_getopt(argc, argv, "acgrs")) != EOF) {
+		switch (c) {
+		case 'a':
+			aflag = 1;
+			break;
+		case 'c':
+			cflag = 1;
+			break;
+		case 'r':
+			rflag = 1;
+			break;
+		case 's':
+			sflag = 1;
+			break;
+		default:
+			bu_vls_printf(&vls, "Unrecognized option - %c\n", c);
+			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+			bu_vls_free(&vls);
+			return TCL_ERROR;
+		}
+	}
+	argc -= (bu_optind - 1);
+	argv += (bu_optind - 1);
 
-  /* create list of objects in database */
-  if (argc > 1) {
-    /* Just list specified names */
-    dirp = wdb_getspace(wdbop->wdb_wp->dbip, argc-1);
-    dirp0 = dirp;
-    /*
-     * Verify the names, and add pointers to them to the array.
-     */
-    for (i = 1; i < argc; i++) {
-      if ((dp = db_lookup(wdbop->wdb_wp->dbip, argv[i], LOOKUP_NOISY)) ==
-	  DIR_NULL)
-	continue;
-      *dirp++ = dp;
-    }
-  } else {
-    /* Full table of contents */
-    dirp = wdb_getspace(wdbop->wdb_wp->dbip, 0);	/* Enough for all */
-    dirp0 = dirp;
-    /*
-     * Walk the directory list adding pointers (to the directory
-     * entries) to the array.
-     */
-    for (i = 0; i < RT_DBNHASH; i++)
-      for (dp = wdbop->wdb_wp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
-	*dirp++ = dp;
-  }
+	/* create list of objects in database */
+	if (argc > 1) {
+		/* Just list specified names */
+		dirp = wdb_getspace(wdbop->wdb_wp->dbip, argc-1);
+		dirp0 = dirp;
+		/*
+		 * Verify the names, and add pointers to them to the array.
+		 */
+		for (i = 1; i < argc; i++) {
+			if ((dp = db_lookup(wdbop->wdb_wp->dbip, argv[i], LOOKUP_NOISY)) ==
+			    DIR_NULL)
+				continue;
+			*dirp++ = dp;
+		}
+	} else {
+		/* Full table of contents */
+		dirp = wdb_getspace(wdbop->wdb_wp->dbip, 0);	/* Enough for all */
+		dirp0 = dirp;
+		/*
+		 * Walk the directory list adding pointers (to the directory
+		 * entries) to the array.
+		 */
+		for (i = 0; i < RT_DBNHASH; i++)
+			for (dp = wdbop->wdb_wp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+				*dirp++ = dp;
+	}
 
-  if (aflag || cflag || rflag || sflag)
-    wdb_vls_line_dpp(&vls, dirp0, (int)(dirp - dirp0),
-		 aflag, cflag, rflag, sflag);
-  else
-    wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
+	if (aflag || cflag || rflag || sflag)
+		wdb_vls_line_dpp(&vls, dirp0, (int)(dirp - dirp0),
+				 aflag, cflag, rflag, sflag);
+	else
+		wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
 
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
-  bu_free( (genptr_t)dirp0, "wdb_getspace dp[]" );
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	bu_free( (genptr_t)dirp0, "wdb_getspace dp[]" );
 
-  return TCL_OK;
+	return TCL_OK;
+}
+
+/*
+ *
+ *  Usage:
+ *        procname l [-r] arg(s)
+ *
+ *  List object information, verbose.
+ */
+HIDDEN int
+wdb_list_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	register struct directory *dp;
+	register int arg;
+	struct bu_vls str;
+	int id;
+	int recurse = 0;
+	char *listeval = "listeval";
+	struct rt_db_internal intern;
+
+	if (argc < 3 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_list");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (argc > 2 && strcmp(argv[2], "-r") == 0) {
+		recurse = 1;
+
+		/* skip past used args */
+		argc -= 1;
+		argv += 1;
+	}
+
+	/* skip past used args */
+	argc -= 2;
+	argv += 2;
+
+	bu_vls_init( &str );
+
+	for (arg = 0; arg < argc; arg++) {
+		if (recurse) {
+			char *tmp_argv[4];
+
+			tmp_argv[0] = "bogus";
+			tmp_argv[1] = listeval;
+			tmp_argv[2] = argv[arg];
+			tmp_argv[3] = (char *)NULL;
+
+			wdb_pathsum_tcl(clientData, interp, 3, tmp_argv);
+		} else if (strchr(argv[arg], '/')) {
+			struct db_tree_state ts;
+			struct db_full_path path;
+
+			bzero( (char *)&ts, sizeof( ts ) );
+			db_full_path_init( &path );
+
+			ts.ts_dbip = wdbop->wdb_wp->dbip;
+			bn_mat_idn(ts.ts_mat);
+
+			if (db_follow_path_for_state(&ts, &path, argv[arg], 1))
+				continue;
+
+			dp = DB_FULL_PATH_CUR_DIR( &path );
+
+			if ((id = rt_db_get_internal(&intern, dp, wdbop->wdb_wp->dbip, ts.ts_mat)) < 0) {
+				Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
+						 ") failure\n", (char *)NULL );
+				continue;
+			}
+
+			db_free_full_path( &path );
+
+			bu_vls_printf( &str, "%s:  ", argv[arg] );
+
+			if (rt_functab[id].ft_describe(&str, &intern, 99, wdbop->wdb_wp->dbip->dbi_base2local) < 0)
+				Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
+
+			rt_functab[id].ft_ifree(&intern);
+		} else {
+			if ((dp = db_lookup(wdbop->wdb_wp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
+				continue;
+
+			wdb_do_list(wdbop->wdb_wp->dbip, interp, &str, dp, 99);	/* very verbose */
+		}
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+
+	return TCL_OK;
+}
+
+/*
+ */
+HIDDEN void
+wdb_do_trace(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
+     struct db_i		*dbip;
+     struct rt_comb_internal *comb;
+     union tree		*comb_leaf;
+     genptr_t		user_ptr1, user_ptr2, user_ptr3;
+{
+	int			*pathpos;
+	int			*flag;
+	matp_t			old_xlate;
+	mat_t			new_xlate;
+	struct directory	*nextdp;
+
+	RT_CK_DBI(dbip);
+	RT_CK_TREE(comb_leaf);
+
+	pathpos = (int *)user_ptr1;
+	old_xlate = (matp_t)user_ptr2;
+	flag = (int *)user_ptr3;
+
+	if (comb_leaf->tr_l.tl_mat)  {
+		bn_mat_mul(new_xlate, old_xlate, comb_leaf->tr_l.tl_mat);
+	} else {
+		bn_mat_copy(new_xlate, old_xlate);
+	}
+	if ((nextdp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+		return;
+
+	wdb_trace(dbip, nextdp, (*pathpos)+1, new_xlate, *flag);
+}
+
+/*
+ */
+HIDDEN void
+wdb_trace(dbip, dp, pathpos, old_xlate, flag)
+     struct db_i		*dbip;
+     register struct directory *dp;
+     int pathpos;
+     mat_t old_xlate;
+     int flag;
+{
+	struct directory *nextdp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	mat_t new_xlate;
+	int nparts, i, k;
+	int id;
+	struct bu_vls str;
+
+	bu_vls_init( &str );
+	
+	if (pathpos >= WDB_MAX_LEVELS) {
+		struct bu_vls tmp_vls;
+
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "nesting exceeds %d levels\n", WDB_MAX_LEVELS);
+		Tcl_AppendResult(curr_interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+
+		for(i=0; i < WDB_MAX_LEVELS; i++)
+			Tcl_AppendResult(curr_interp, "/", wdb_path[i]->d_namep, (char *)NULL);
+
+		Tcl_AppendResult(curr_interp, "\n", (char *)NULL);
+		return;
+	}
+
+	if (dp->d_flags & DIR_COMB) {
+		if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) {
+			Tcl_AppendResult(curr_interp, "Database read error, aborting\n", (char *)NULL);
+			return;
+		}
+
+		wdb_path[pathpos] = dp;
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		if (comb->tree)
+			db_tree_funcleaf(dbip, comb, comb->tree, wdb_do_trace,
+					 (genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)&flag);
+		rt_comb_ifree(&intern);
+		return;
+	}
+
+	/* not a combination  -  should have a solid */
+
+	/* last (bottom) position */
+	wdb_path[pathpos] = dp;
+
+	/* check for desired path */
+	for (k=0; k<wdb_objpos; k++) {
+		if (wdb_path[k]->d_addr != wdb_objects[k]->d_addr) {
+			/* not the desired path */
+			return;
+		}
+	}
+
+	/* have the desired path up to wdb_objpos */
+	bn_mat_copy(wdb_xform, old_xlate);
+	wdb_prflag = 1;
+
+	if (flag == WDB_CPEVAL)
+		return;
+
+	/* print the path */
+	for (k=0; k<pathpos; k++)
+		Tcl_AppendResult(curr_interp, "/", wdb_path[k]->d_namep, (char *)NULL);
+
+	if (flag == WDB_LISTPATH) {
+		bu_vls_printf( &str, "/%16s:\n", dp->d_namep );
+		Tcl_AppendResult(curr_interp, bu_vls_addr(&str), (char *)NULL);
+		bu_vls_free(&str);
+		return;
+	}
+
+	/* NOTE - only reach here if flag == WDB_LISTEVAL */
+	Tcl_AppendResult(curr_interp, "/", (char *)NULL);
+	if ((id=rt_db_get_internal(&intern, dp, dbip, wdb_xform)) < 0) {
+		Tcl_AppendResult(curr_interp, "rt_db_get_internal(", dp->d_namep,
+				 ") failure", (char *)NULL );
+		return;
+	}
+	bu_vls_printf(&str, "%16s:\n", dp->d_namep);
+	if (rt_functab[id].ft_describe(&str, &intern, 1, dbip->dbi_base2local) < 0)
+		Tcl_AppendResult(curr_interp, dp->d_namep, ": describe error\n", (char *)NULL);
+	rt_functab[id].ft_ifree(&intern);
+	Tcl_AppendResult(curr_interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+}
+
+/*
+ *  1.  produces path for purposes of matching
+ *  2.  gives all paths matching the input path OR
+ *  3.  gives a summary of all paths matching the input path
+ *	including the final parameters of the solids at the bottom
+ *	of the matching paths
+ *
+ * Usage:
+ *        procname (WDB_LISTEVAL|paths) args(s)
+ */
+HIDDEN int
+wdb_pathsum_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	int i, flag, pos_in;
+
+	if (argc < 3 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help %s%s", "wdb_", argv[1]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	--argc;
+	++argv;
+	curr_interp = interp;
+
+	/* pos_in = first member of path entered
+	 *
+	 *	paths are matched up to last input member
+	 *      ANY path the same up to this point is considered as matching
+	 */
+	wdb_prflag = 0;
+
+	/* find out which command was entered */
+	if (strcmp(argv[0], "paths") == 0) {
+		/* want to list all matching paths */
+		flag = WDB_LISTPATH;
+	}
+	if (strcmp(argv[0], "WDB_LISTEVAL") == 0) {
+		/* want to list evaluated solid[s] */
+		flag = WDB_LISTEVAL;
+	}
+
+	pos_in = 1;
+
+	if (argc == 2 && strchr(argv[1], '/')) {
+		char *tok;
+		wdb_objpos = 0;
+
+		tok = strtok( argv[1], "/" );
+		while (tok) {
+			if ((wdb_objects[wdb_objpos++] = db_lookup(wdbop->wdb_wp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
+				return TCL_ERROR;
+			tok = strtok( (char *)NULL, "/" );
+		}
+	} else {
+		wdb_objpos = argc-1;
+
+		/* build directory pointer array for desired path */
+		for (i=0; i<wdb_objpos; i++) {
+			if ((wdb_objects[i] = db_lookup(wdbop->wdb_wp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
+				return TCL_ERROR;
+		}
+	}
+
+	bn_mat_idn( wdb_xform );
+
+	wdb_trace(wdbop->wdb_wp->dbip, wdb_objects[0], 0, bn_mat_identity, flag);
+
+	if (wdb_prflag == 0) {
+		/* path not found */
+		Tcl_AppendResult(interp, "PATH:  ", (char *)NULL);
+		for (i=0; i<wdb_objpos; i++)
+			Tcl_AppendResult(interp, "/", wdb_objects[i]->d_namep, (char *)NULL);
+
+		Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
+	}
+
+	return TCL_OK;
+}
+
+HIDDEN void
+dgo_scrape_escapes_AppendResult(interp, str)
+     Tcl_Interp *interp;
+     char *str;
+{
+	char buf[2];
+	buf[1] = '\0';
+    
+	while (*str) {
+		buf[0] = *str;
+		if (*str != '\\') {
+			Tcl_AppendResult(interp, buf, NULL);
+		} else if (*(str+1) == '\\') {
+			Tcl_AppendResult(interp, buf, NULL);
+			++str;
+		}
+		if (*str == '\0')
+			break;
+		++str;
+	}
+}
+
+/*
+ * Performs wildcard expansion (matched to the database elements)
+ * on its given arguments.  The result is returned in interp->result.
+ *
+ * Usage:
+ *        procname expand [args]
+ */
+HIDDEN int
+wdb_expand_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	register char *pattern;
+	register struct directory *dp;
+	register int i, whicharg;
+	int regexp, nummatch, thismatch, backslashed;
+
+	if (argc < 2 || MAXARGS < argc){
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help wdb_expand");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	nummatch = 0;
+	backslashed = 0;
+	for (whicharg = 2; whicharg < argc; whicharg++) {
+		/* If * ? or [ are present, this is a regular expression */
+		pattern = argv[whicharg];
+		regexp = 0;
+		do {
+			if ((*pattern == '*' || *pattern == '?' || *pattern == '[') &&
+			    !backslashed) {
+				regexp = 1;
+				break;
+			}
+			if (*pattern == '\\' && !backslashed)
+				backslashed = 1;
+			else
+				backslashed = 0;
+		} while (*pattern++);
+
+		/* If it isn't a regexp, copy directly and continue */
+		if (regexp == 0) {
+			if (nummatch > 0)
+				Tcl_AppendResult(interp, " ", NULL);
+			dgo_scrape_escapes_AppendResult(interp, argv[whicharg]);
+			++nummatch;
+			continue;
+		}
+	
+		/* Search for pattern matches.
+		 * If any matches are found, we do not have to worry about
+		 * '\' escapes since the match coming from dp->d_namep will be
+		 * clean. In the case of no matches, just copy the argument
+		 * directly.
+		 */
+
+		pattern = argv[whicharg];
+		thismatch = 0;
+		for (i = 0; i < RT_DBNHASH; i++) {
+			for (dp = wdbop->wdb_wp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+				if (!db_regexp_match(pattern, dp->d_namep))
+					continue;
+				/* Successful match */
+				if (nummatch == 0)
+					Tcl_AppendResult(interp, dp->d_namep, NULL);
+				else 
+					Tcl_AppendResult(interp, " ", dp->d_namep, NULL);
+				++nummatch;
+				++thismatch;
+			}
+		}
+		if (thismatch == 0) {
+			if (nummatch > 0)
+				Tcl_AppendResult(interp, " ", NULL);
+			dgo_scrape_escapes_AppendResult(interp, argv[whicharg]);
+		}
+	}
+
+	return TCL_OK;
 }
 
 /****************** utility routines ********************/
@@ -972,8 +1435,8 @@ char    **argv;
  */
 int
 wdb_cmpdirname(a, b)
-CONST genptr_t a;
-CONST genptr_t b;
+     CONST genptr_t a;
+     CONST genptr_t b;
 {
 	register struct directory **dp1, **dp2;
 
@@ -991,62 +1454,62 @@ CONST genptr_t b;
  */
 HIDDEN void
 wdb_vls_col_pr4v(vls, list_of_names, num_in_list)
-struct bu_vls *vls;
-struct directory **list_of_names;
-int num_in_list;
+     struct bu_vls *vls;
+     struct directory **list_of_names;
+     int num_in_list;
 {
-  int lines, i, j, namelen, this_one;
+	int lines, i, j, namelen, this_one;
 
-  qsort( (genptr_t)list_of_names,
-	 (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	 (int (*)())wdb_cmpdirname);
+	qsort( (genptr_t)list_of_names,
+	       (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	       (int (*)())wdb_cmpdirname);
 
-  /*
-   * For the number of (full and partial) lines that will be needed,
-   * print in vertical format.
-   */
-  lines = (num_in_list + 3) / 4;
-  for( i=0; i < lines; i++) {
-    for( j=0; j < 4; j++) {
-      this_one = j * lines + i;
-      /* Restrict the print to 16 chars per spec. */
-      bu_vls_printf(vls,  "%.16s", list_of_names[this_one]->d_namep);
-      namelen = strlen( list_of_names[this_one]->d_namep);
-      if( namelen > 16)
-	namelen = 16;
-      /*
-       * Region and ident checks here....  Since the code
-       * has been modified to push and sort on pointers,
-       * the printing of the region and ident flags must
-       * be delayed until now.  There is no way to make the
-       * decision on where to place them before now.
-       */
-      if(list_of_names[this_one]->d_flags & DIR_COMB) {
-	bu_vls_putc(vls, '/');
-	namelen++;
-      }
-      if(list_of_names[this_one]->d_flags & DIR_REGION) {
-	bu_vls_putc(vls, 'R');
-	namelen++;
-      }
-      /*
-       * Size check (partial lines), and line termination.
-       * Note that this will catch the end of the lines
-       * that are full too.
-       */
-      if( this_one + lines >= num_in_list) {
-	bu_vls_putc(vls, '\n');
-	break;
-      } else {
 	/*
-	 * Pad to next boundary as there will be
-	 * another entry to the right of this one. 
+	 * For the number of (full and partial) lines that will be needed,
+	 * print in vertical format.
 	 */
-	while( namelen++ < 20)
-	  bu_vls_putc(vls, ' ');
-      }
-    }
-  }
+	lines = (num_in_list + 3) / 4;
+	for( i=0; i < lines; i++) {
+		for( j=0; j < 4; j++) {
+			this_one = j * lines + i;
+			/* Restrict the print to 16 chars per spec. */
+			bu_vls_printf(vls,  "%.16s", list_of_names[this_one]->d_namep);
+			namelen = strlen( list_of_names[this_one]->d_namep);
+			if( namelen > 16)
+				namelen = 16;
+			/*
+			 * Region and ident checks here....  Since the code
+			 * has been modified to push and sort on pointers,
+			 * the printing of the region and ident flags must
+			 * be delayed until now.  There is no way to make the
+			 * decision on where to place them before now.
+			 */
+			if(list_of_names[this_one]->d_flags & DIR_COMB) {
+				bu_vls_putc(vls, '/');
+				namelen++;
+			}
+			if(list_of_names[this_one]->d_flags & DIR_REGION) {
+				bu_vls_putc(vls, 'R');
+				namelen++;
+			}
+			/*
+			 * Size check (partial lines), and line termination.
+			 * Note that this will catch the end of the lines
+			 * that are full too.
+			 */
+			if( this_one + lines >= num_in_list) {
+				bu_vls_putc(vls, '\n');
+				break;
+			} else {
+				/*
+				 * Pad to next boundary as there will be
+				 * another entry to the right of this one. 
+				 */
+				while( namelen++ < 20)
+					bu_vls_putc(vls, ' ');
+			}
+		}
+	}
 }
 
 /*
@@ -1058,48 +1521,48 @@ int num_in_list;
  */
 HIDDEN void
 wdb_vls_line_dpp(vls, list_of_names, num_in_list, aflag, cflag, rflag, sflag)
-struct bu_vls *vls;
-struct directory **list_of_names;
-int num_in_list;
-int aflag;	/* print all objects */
-int cflag;	/* print combinations */
-int rflag;	/* print regions */
-int sflag;	/* print solids */
+     struct bu_vls *vls;
+     struct directory **list_of_names;
+     int num_in_list;
+     int aflag;	/* print all objects */
+     int cflag;	/* print combinations */
+     int rflag;	/* print regions */
+     int sflag;	/* print solids */
 {
-  int i;
-  int isComb, isRegion;
-  int isSolid;
+	int i;
+	int isComb, isRegion;
+	int isSolid;
 
-  qsort( (genptr_t)list_of_names,
-	 (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	 (int (*)())wdb_cmpdirname);
+	qsort( (genptr_t)list_of_names,
+	       (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	       (int (*)())wdb_cmpdirname);
 
-  /*
-   * i - tracks the list item
-   */
-  for (i=0; i < num_in_list; ++i) {
-    if (list_of_names[i]->d_flags & DIR_COMB) {
-      isComb = 1;
-      isSolid = 0;
+	/*
+	 * i - tracks the list item
+	 */
+	for (i=0; i < num_in_list; ++i) {
+		if (list_of_names[i]->d_flags & DIR_COMB) {
+			isComb = 1;
+			isSolid = 0;
 
-      if (list_of_names[i]->d_flags & DIR_REGION)
-	isRegion = 1;
-      else
-	isRegion = 0;
-    } else {
-      isComb = isRegion = 0;
-      isSolid = 1;
-    }
+			if (list_of_names[i]->d_flags & DIR_REGION)
+				isRegion = 1;
+			else
+				isRegion = 0;
+		} else {
+			isComb = isRegion = 0;
+			isSolid = 1;
+		}
 
-    /* print list item i */
-    if (aflag ||
-	!cflag && !rflag && !sflag ||
-	cflag && isComb ||
-	rflag && isRegion ||
-	sflag && isSolid) {
-      bu_vls_printf(vls,  "%s ", list_of_names[i]->d_namep);
-    }
-  }
+		/* print list item i */
+		if (aflag ||
+		    !cflag && !rflag && !sflag ||
+		    cflag && isComb ||
+		    rflag && isRegion ||
+		    sflag && isSolid) {
+			bu_vls_printf(vls,  "%s ", list_of_names[i]->d_namep);
+		}
+	}
 }
 
 /*
@@ -1113,29 +1576,59 @@ int sflag;	/* print solids */
  */
 HIDDEN struct directory **
 wdb_getspace(dbip, num_entries)
-struct db_i *dbip;
-register int num_entries;
+     struct db_i *dbip;
+     register int num_entries;
 {
-  register struct directory *dp;
-  register int i;
-  register struct directory **dir_basep;
+	register struct directory *dp;
+	register int i;
+	register struct directory **dir_basep;
 
-  if (num_entries < 0) {
-    bu_log("wdb_getspace: was passed %d, used 0\n",
-	   num_entries);
-    num_entries = 0;
-  }
+	if (num_entries < 0) {
+		bu_log("wdb_getspace: was passed %d, used 0\n",
+		       num_entries);
+		num_entries = 0;
+	}
 
-  if (num_entries == 0) {
-    /* Set num_entries to the number of entries */
-    for (i = 0; i < RT_DBNHASH; i++)
-      for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
-	num_entries++;
-  }
+	if (num_entries == 0) {
+		/* Set num_entries to the number of entries */
+		for (i = 0; i < RT_DBNHASH; i++)
+			for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+				num_entries++;
+	}
 
-  /* Allocate and cast num_entries worth of pointers */
-  dir_basep = (struct directory **) bu_malloc(
-	      (num_entries+1) * sizeof(struct directory *),
-	      "wdb_getspace *dir[]" );
-  return(dir_basep);
+	/* Allocate and cast num_entries worth of pointers */
+	dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
+						    "wdb_getspace *dir[]" );
+	return(dir_basep);
+}
+
+/*
+ *			W D B _ D O _ L I S T
+ */
+void
+wdb_do_list(dbip, interp, outstrp, dp, verbose)
+     struct db_i *dbip;
+     Tcl_Interp *interp;
+     struct bu_vls *outstrp;
+     register struct directory *dp;
+     int verbose;
+{
+	int			id;
+	struct rt_db_internal	intern;
+
+	if (dbip == DBI_NULL)
+		return;
+
+	if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL)) < 0) {
+		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
+				 ") failure\n", (char *)NULL);
+		return;
+	}
+
+	bu_vls_printf(outstrp, "%s:  ", dp->d_namep);
+
+	if (rt_functab[id].ft_describe(outstrp, &intern,
+				       verbose, dbip->dbi_base2local) < 0)
+		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
+	rt_functab[id].ft_ifree(&intern);
 }
