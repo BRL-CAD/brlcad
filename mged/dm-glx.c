@@ -69,13 +69,9 @@ static void     establish_lighting();
 static void     establish_perspective();
 static void     set_perspective();
 static void     refresh_hook();
-static void     set_linewidth();
-static void     set_linestyle();
 static void     set_knob_offset();
 
 struct bu_structparse Glx_vparse[] = {
-	{"%d",  1, "linewidth",		Glx_MV_O(linewidth),	set_linewidth },
-	{"%d",  1, "linestyle",		Glx_MV_O(linestyle),	set_linestyle },
 	{"%d",	1, "depthcue",		Glx_MV_O(cueing_on),	Glx_colorchange },
 	{"%d",  1, "zclip",		Glx_MV_O(zclipping_on),	refresh_hook },
 	{"%d",  1, "zbuffer",		Glx_MV_O(zbuffer_on),	establish_zbuffer },
@@ -195,6 +191,7 @@ XEvent *eventPtr;
   struct bu_vls cmd;
   struct glx_vars *p;
   int status = TCL_OK;
+  int save_edflag = -1;
   fastf_t f;
 
   GET_DM(p, glx_vars, eventPtr->xany.window, &head_glx_vars.l);
@@ -254,7 +251,7 @@ XEvent *eventPtr;
     my = eventPtr->xmotion.y;
 
     switch(am_mode){
-    case ALT_MOUSE_MODE_IDLE:
+    case AMM_IDLE:
       if(scroll_active && eventPtr->xmotion.state & ((struct glx_vars *)dmp->dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n",
 		       glx_irisX2ged(dmp, mx, 0), glx_irisY2ged(dmp, my));
@@ -267,13 +264,13 @@ XEvent *eventPtr;
 	goto end;
 
       break;
-    case ALT_MOUSE_MODE_ROTATE:
+    case AMM_ROT:
       bu_vls_printf( &cmd, "knob -i ax %f ay %f\n",
 		     (my - ((struct glx_vars *)dmp->dm_vars)->omy) * 0.25,
 		     (mx - ((struct glx_vars *)dmp->dm_vars)->omx) * 0.25 );
       break;
-    case ALT_MOUSE_MODE_TRANSLATE:
-      if(EDIT_TRAN && mged_variables.edit){
+    case AMM_TRAN:
+      if(EDIT_TRAN && mged_variables.transform == 'e'){
 	vect_t view_pos;
 #if 0
 	view_pos[X] = (mx/(fastf_t)dmp->dm_width
@@ -311,9 +308,36 @@ XEvent *eventPtr;
       }
 
       break;
-    case ALT_MOUSE_MODE_ZOOM:
+    case AMM_SCALE:
       bu_vls_printf( &cmd, "knob -i aS %f\n", (((struct glx_vars *)dmp->dm_vars)->omy - my)/
 		     (fastf_t)dmp->dm_height);
+      break;
+    case AMM_CON_ROT_X:
+      bu_vls_printf( &cmd, "knob -i ax %f\n",
+		     (mx - ((struct glx_vars *)dmp->dm_vars)->omx) * 0.25 );
+      break;
+    case AMM_CON_ROT_Y:
+      bu_vls_printf( &cmd, "knob -i ay %f\n",
+		     (mx - ((struct glx_vars *)dmp->dm_vars)->omx) * 0.25 );
+      break;
+    case AMM_CON_ROT_Z:
+      bu_vls_printf( &cmd, "knob -i az %f\n",
+		     (mx - ((struct glx_vars *)dmp->dm_vars)->omx) * 0.25 );
+      break;
+    case AMM_CON_TRAN_X:
+      bu_vls_printf( &cmd, "knob -i aX %f\n",
+		     (mx - ((struct glx_vars *)dmp->dm_vars)->omx) /
+		     (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0 );
+      break;
+    case AMM_CON_TRAN_Y:
+      bu_vls_printf( &cmd, "knob -i aY %f\n",
+		     (mx - ((struct glx_vars *)dmp->dm_vars)->omx) /
+		     (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0 );
+      break;
+    case AMM_CON_TRAN_Z:
+      bu_vls_printf( &cmd, "knob -i aZ %f\n",
+		     (mx - ((struct glx_vars *)dmp->dm_vars)->omx) /
+		     (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0 );
       break;
     }
 
@@ -351,7 +375,7 @@ XEvent *eventPtr;
 		       45.0 - 45.0*((double)setting)/2047.0);
       }else{
 	if(mged_variables.rateknobs){
-	  f = rate_azimuth;
+	  f = rate_model_rotate[Z];
 
 	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -364,9 +388,9 @@ XEvent *eventPtr;
 	       M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd, "knob azim %f\n", setting / 512.0 );
+	  bu_vls_printf( &cmd, "knob -m z %f\n", setting / 512.0 );
 	}else{
-	  f = curr_dm_list->s_info->azimuth;
+	  f = absolute_model_rotate[Z];
 
 	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -376,19 +400,19 @@ XEvent *eventPtr;
 	  else
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	      dm_unlimit((int)(2.847 * f)) +
-	       M->axis_data[0] - knob_values[M->first_axis];
+	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  f = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 1024.0;
-	  bu_vls_printf( &cmd, "knob aazim %f\n", f * 360.0);
+	  f = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
+	  bu_vls_printf( &cmd, "knob -m az %f\n", dm_wrap(f) * 180.0);
 	}
       }
       break;
     case DIAL1:
       if(mged_variables.rateknobs){
-	if(EDIT_SCALE && mged_variables.edit)
+	if(EDIT_SCALE && mged_variables.transform == 'e')
 	  f = edit_rate_scale;
 	else
-	  f = rate_zoom;
+	  f = rate_scale;
 
 	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -403,10 +427,10 @@ XEvent *eventPtr;
 	setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd, "knob S %f\n", setting / 512.0 );
       }else{
-	if(EDIT_SCALE && mged_variables.edit)
+	if(EDIT_SCALE && mged_variables.transform == 'e')
 	  f = edit_absolute_scale;
 	else
-	  f = absolute_zoom;
+	  f = absolute_scale;
 
 	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -438,8 +462,34 @@ XEvent *eventPtr;
 		       45.0 - 45.0*((double)setting)/2047.0);
       }else {
 	if(mged_variables.rateknobs){
-	  if(EDIT_ROTATE && mged_variables.edit)
-	    f = edit_rate_rotate[Z];
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables.transform == 'e'){
+	    switch(mged_variables.coords){
+	    case 'm':
+	      f = edit_rate_model_rotate[Z];
+	      break;
+	    case 'o':
+	      f = edit_rate_object_rotate[Z];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_rate_view_rotate[Z];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+#if 0
+	      save_movedir = movedir;
+	      movedir = ROTARROW;
+#endif
+	    }
+	  }else if(mged_variables.coords == 'm')
+	    f = rate_model_rotate[Z];
 	  else
 	    f = rate_rotate[Z];
 
@@ -456,8 +506,34 @@ XEvent *eventPtr;
 	  setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd, "knob z %f\n", setting / 512.0 );
 	}else{
-	  if(EDIT_ROTATE && mged_variables.edit)
-	    f = edit_absolute_rotate[Z];
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables.transform == 'e'){
+	    switch(mged_variables.coords){
+	    case 'm':
+	      f = edit_absolute_model_rotate[Z];
+	      break;
+	    case 'o':
+	      f = edit_absolute_object_rotate[Z];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_absolute_view_rotate[Z];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+#if 0
+	      save_movedir = movedir;
+	      movedir = ROTARROW;
+#endif
+	    }
+	  }else if(mged_variables.coords == 'm')
+	    f = absolute_model_rotate[Z];
 	  else
 	    f = absolute_rotate[Z];
 
@@ -491,10 +567,34 @@ XEvent *eventPtr;
 	bu_vls_printf( &cmd, "knob distadc %d\n", setting );
       }else {
 	if(mged_variables.rateknobs){
-	  if(EDIT_TRAN && mged_variables.edit)
-	    f = edit_rate_tran[Z];
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables.transform == 'e'){
+	    switch(mged_variables.coords){
+	    case 'm':
+	    case 'o':
+	      f = edit_rate_model_tran[Z];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_rate_view_tran[Z];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_TRAN){
+	      save_edflag = es_edflag;
+	      es_edflag = STRANS;
+	    }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	      save_edflag = edobj;
+	      edobj = BE_O_XY;
+#if 0
+	      save_movedir = movedir;
+	      movedir = UARROW | RARROW;
+#endif
+	    }
+	  }else if(mged_variables.coords == 'm')
+	    f = rate_model_tran[Z];
 	  else
-	    f = rate_slew[Z];
+	    f = rate_tran[Z];
 
 	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -509,10 +609,34 @@ XEvent *eventPtr;
 	  setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd, "knob Z %f\n", setting / 512.0 );
 	}else{
-	  if(EDIT_TRAN && mged_variables.edit)
-	    f = edit_absolute_tran[Z];
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables.transform == 'e'){
+	    switch(mged_variables.coords){
+	    case 'm':
+	    case 'o':
+	      f = edit_absolute_model_tran[Z];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_absolute_view_tran[Z];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_TRAN){
+	      save_edflag = es_edflag;
+	      es_edflag = STRANS;
+	    }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	      save_edflag = edobj;
+	      edobj = BE_O_XY;
+#if 0
+	      save_movedir = movedir;
+	      movedir = UARROW | RARROW;
+#endif
+	    }
+	  }else if(mged_variables.coords == 'm')
+	    f = absolute_model_tran[Z];
 	  else
-	    f = absolute_slew[Z];
+	    f = absolute_tran[Z];
 
 	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -525,7 +649,7 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 
 	  setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd, "knob aZ %f\n", setting / 512.0 );
+	  bu_vls_printf(&cmd, "knob aZ %f\n", setting / 512.0 * Viewscale * base2local);
 	}
       }
       break;
@@ -544,8 +668,34 @@ XEvent *eventPtr;
 	bu_vls_printf( &cmd, "knob yadc %d\n", setting );
       }else{
 	if(mged_variables.rateknobs){
-	  if(EDIT_ROTATE && mged_variables.edit)
-	    f = edit_rate_rotate[Y];
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables.transform == 'e'){
+	    switch(mged_variables.coords){
+	    case 'm':
+	      f = edit_rate_model_rotate[Y];
+	      break;
+	    case 'o':
+	      f = edit_rate_object_rotate[Y];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_rate_view_rotate[Y];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+#if 0
+	      save_movedir = movedir;
+	      movedir = ROTARROW;
+#endif
+	    }
+	  }else if(mged_variables.coords == 'm')
+	    f = rate_model_rotate[Y];
 	  else
 	    f = rate_rotate[Y];
 
@@ -562,8 +712,34 @@ XEvent *eventPtr;
 	  setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd, "knob y %f\n", setting / 512.0 );
 	}else{
-	  if(EDIT_ROTATE && mged_variables.edit)
-	    f = edit_absolute_rotate[Y];
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables.transform == 'e'){
+	    switch(mged_variables.coords){
+	    case 'm':
+	      f = edit_absolute_model_rotate[Y];
+	      break;
+	    case 'o':
+	      f = edit_absolute_object_rotate[Y];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_absolute_view_rotate[Y];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+#if 0
+	      save_movedir = movedir;
+	      movedir = ROTARROW;
+#endif
+	    }
+	  }else if(mged_variables.coords == 'm')
+	    f = absolute_model_rotate[Y];
 	  else
 	    f = absolute_rotate[Y];
 
@@ -584,10 +760,34 @@ XEvent *eventPtr;
       break;
     case DIAL5:
       if(mged_variables.rateknobs){
-	  if(EDIT_TRAN && mged_variables.edit)
-	    f = edit_rate_tran[Y];
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables.transform == 'e'){
+	    switch(mged_variables.coords){
+	    case 'm':
+	    case 'o':
+	      f = edit_rate_model_tran[Y];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_rate_view_tran[Y];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_TRAN){
+	      save_edflag = es_edflag;
+	      es_edflag = STRANS;
+	    }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	      save_edflag = edobj;
+	      edobj = BE_O_XY;
+#if 0
+	      save_movedir = movedir;
+	      movedir = UARROW | RARROW;
+#endif
+	    }
+	  }else if(mged_variables.coords == 'm')
+	    f = rate_model_tran[Y];
 	  else
-	    f = rate_slew[Y];
+	    f = rate_tran[Y];
 
 	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -602,24 +802,48 @@ XEvent *eventPtr;
 	  setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd, "knob Y %f\n", setting / 512.0 );
       }else{
-	  if(EDIT_TRAN && mged_variables.edit)
-	    f = edit_absolute_tran[Y];
-	  else
-	    f = absolute_slew[Y];
+	if((state == ST_S_EDIT || state == ST_O_EDIT)
+	   && mged_variables.transform == 'e'){
+	  switch(mged_variables.coords){
+	  case 'm':
+	  case 'o':
+	    f = edit_absolute_model_tran[Y];
+	    break;
+	  case 'v':
+	  default:
+	    f = edit_absolute_view_tran[Y];
+	    break;
+	  }
 
-	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
-	     !f )
-	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
-	      M->axis_data[0] -
-	      knob_values[M->first_axis];
-	  else
-	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] =
-	      dm_unlimit((int)(512.5 * f)) +
-	      M->axis_data[0] - knob_values[M->first_axis];
+	  if(state == ST_S_EDIT && !SEDIT_TRAN){
+	    save_edflag = es_edflag;
+	    es_edflag = STRANS;
+	  }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	    save_edflag = edobj;
+	    edobj = BE_O_XY;
+#if 0
+	    save_movedir = movedir;
+	    movedir = UARROW | RARROW;
+#endif
+	  }
+	}else if(mged_variables.coords == 'm')
+	  f = absolute_model_tran[Y];
+	else
+	  f = absolute_tran[Y];
 
-	  setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd, "knob aY %f\n", setting / 512.0 );
+	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
+	   !f )
+	  ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
+	    M->axis_data[0] -
+	    knob_values[M->first_axis];
+	else
+	  ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] =
+	    dm_unlimit((int)(512.5 * f)) +
+	    M->axis_data[0] - knob_values[M->first_axis];
+
+	setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
+	bu_vls_printf(&cmd, "knob aY %f\n", setting / 512.0 * Viewscale * base2local);
       }
       break;
     case DIAL6:
@@ -637,8 +861,34 @@ XEvent *eventPtr;
 	bu_vls_printf( &cmd, "knob xadc %d\n", setting );
       }else{
 	if(mged_variables.rateknobs){
-	  if(EDIT_ROTATE && mged_variables.edit)
-	    f = edit_rate_rotate[X];
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables.transform == 'e'){
+	    switch(mged_variables.coords){
+	    case 'm':
+	      f = edit_rate_model_rotate[X];
+	      break;
+	    case 'o':
+	      f = edit_rate_object_rotate[X];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_rate_view_rotate[X];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+#if 0
+	      save_movedir = movedir;
+	      movedir = ROTARROW;
+#endif
+	    }
+	  }else if(mged_variables.coords == 'm')
+	    f = rate_model_rotate[X];
 	  else
 	    f = rate_rotate[X];
 
@@ -655,8 +905,34 @@ XEvent *eventPtr;
 	  setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd, "knob x %f\n", setting / 512.0);
 	}else{
-	  if(EDIT_ROTATE && mged_variables.edit)
-	    f = edit_absolute_rotate[X];
+	  if((state == ST_S_EDIT || state == ST_O_EDIT)
+	     && mged_variables.transform == 'e'){
+	    switch(mged_variables.coords){
+	    case 'm':
+	      f = edit_absolute_model_rotate[X];
+	      break;
+	    case 'o':
+	      f = edit_absolute_object_rotate[X];
+	      break;
+	    case 'v':
+	    default:
+	      f = edit_absolute_view_rotate[X];
+	      break;
+	    }
+
+	    if(state == ST_S_EDIT && !SEDIT_ROTATE){
+	      save_edflag = es_edflag;
+	      es_edflag = SROT;
+	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
+	      save_edflag = edobj;
+	      edobj = BE_O_ROTATE;
+#if 0
+	      save_movedir = movedir;
+	      movedir = ROTARROW;
+#endif
+	    }
+	  }else if(mged_variables.coords == 'm')
+	    f = absolute_model_rotate[X];
 	  else
 	    f = absolute_rotate[X];
 
@@ -677,10 +953,34 @@ XEvent *eventPtr;
       break;
     case DIAL7:
       if(mged_variables.rateknobs){
-	if(EDIT_TRAN && mged_variables.edit)
-	  f = edit_rate_tran[X];
+	if((state == ST_S_EDIT || state == ST_O_EDIT)
+	   && mged_variables.transform == 'e'){
+	  switch(mged_variables.coords){
+	  case 'm':
+	  case 'o':
+	    f = edit_rate_model_tran[X];
+	    break;
+	  case 'v':
+	  default:
+	    f = edit_rate_view_tran[X];
+	    break;
+	  }
+
+	  if(state == ST_S_EDIT && !SEDIT_TRAN){
+	    save_edflag = es_edflag;
+	    es_edflag = STRANS;
+	  }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	    save_edflag = edobj;
+	    edobj = BE_O_XY;
+#if 0
+	    save_movedir = movedir;
+	    movedir = UARROW | RARROW;
+#endif
+	  }
+	}else if(mged_variables.coords == 'm')
+	  f = rate_model_tran[X];
 	else
-	  f = rate_slew[X];
+	  f = rate_tran[X];
 
 	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -695,10 +995,34 @@ XEvent *eventPtr;
 	setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd, "knob X %f\n", setting / 512.0 );
       }else{
-	if(EDIT_TRAN && mged_variables.edit)
-	  f = edit_absolute_tran[X];
+	if((state == ST_S_EDIT || state == ST_O_EDIT)
+	   && mged_variables.transform == 'e'){
+	  switch(mged_variables.coords){
+	  case 'm':
+	  case 'o':
+	    f = edit_absolute_model_tran[X];
+	    break;
+	  case 'v':
+	  default:
+	    f = edit_absolute_view_tran[X];
+	    break;
+	  }
+
+	  if(state == ST_S_EDIT && !SEDIT_TRAN){
+	    save_edflag = es_edflag;
+	    es_edflag = STRANS;
+	  }else if(state == ST_O_EDIT && !OEDIT_TRAN){
+	    save_edflag = edobj;
+	    edobj = BE_O_XY;
+#if 0
+	    save_movedir = movedir;
+	    movedir = UARROW | RARROW;
+#endif
+	  }
+	}else if(mged_variables.coords == 'm')
+	  f = absolute_model_tran[X];
 	else
-	  f = absolute_slew[X];
+	  f = absolute_tran[X];
 
 	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
 	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
@@ -711,7 +1035,7 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd, "knob aX %f\n", setting / 512.0 );
+	bu_vls_printf(&cmd, "knob aX %f\n", setting / 512.0 * Viewscale * base2local);
       }
       break;
     default:
@@ -753,7 +1077,7 @@ XEvent *eventPtr;
   }
 #endif
   else{
-    /*XXX Hack to prevent Tk from choking on Ctrl-c */
+    /*XXX Hack to prevent Tk from choking on certain control sequences */
     if(eventPtr->type == KeyPress && eventPtr->xkey.state & ControlMask){
       char buffer[1];
       KeySym keysym;
@@ -761,7 +1085,8 @@ XEvent *eventPtr;
       XLookupString(&(eventPtr->xkey), buffer, 1,
 		    &keysym, (XComposeStatus *)NULL);
 
-      if(keysym == XK_c){
+      if(keysym == XK_c || keysym == XK_t || keysym == XK_v ||
+	 keysym == XK_w || keysym == XK_x || keysym == XK_y){
 	bu_vls_free(&cmd);
 	curr_dm_list = save_dm_list;
 
@@ -900,15 +1225,15 @@ char	**argv;
     {
       int x;
       int y;
-      int old_show_menu;
+      int old_orig_gui;
 
-      old_show_menu = mged_variables.show_menu;
+      old_orig_gui = mged_variables.orig_gui;
 
       x = glx_irisX2ged(dmp, atoi(argv[3]), 0);
       y = glx_irisY2ged(dmp, atoi(argv[4]));
 
       if(mged_variables.faceplate &&
-	 mged_variables.show_menu &&
+	 mged_variables.orig_gui &&
 	 *argv[2] == '1'){
 #define        MENUXLIM        (-1250)
 	if(scroll_active)
@@ -922,12 +1247,12 @@ char	**argv;
       }
 
       x = glx_irisX2ged(dmp, atoi(argv[3]), 1);
-      mged_variables.show_menu = 0;
+      mged_variables.orig_gui = 0;
 end:
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "M %s %d %d", argv[2], x, y);
       status = Tcl_Eval(interp, bu_vls_addr(&vls));
-      mged_variables.show_menu = old_show_menu;
+      mged_variables.orig_gui = old_orig_gui;
       bu_vls_free(&vls);
 
       return status;
@@ -953,11 +1278,11 @@ end:
     if(buttonpress){
       switch(*argv[1]){
       case 'r':
-	am_mode = ALT_MOUSE_MODE_ROTATE;
+	am_mode = AMM_ROT;
 	break;
       case 't':
-	am_mode = ALT_MOUSE_MODE_TRANSLATE;
-	if(EDIT_TRAN && mged_variables.edit){
+	am_mode = AMM_TRAN;
+	if(EDIT_TRAN && mged_variables.transform == 'e'){
 	  vect_t view_pos;
 
 #if 0
@@ -981,7 +1306,7 @@ end:
 
 	break;
       case 'z':
-	am_mode = ALT_MOUSE_MODE_ZOOM;
+	am_mode = AMM_SCALE;
 	break;
       default:
 	Tcl_AppendResult(interp, "dm am: need more parameters\n",
@@ -989,9 +1314,73 @@ end:
 	return TCL_ERROR;
       }
     }else
-      am_mode = ALT_MOUSE_MODE_IDLE;
+      am_mode = AMM_IDLE;
 
     return status;
+  }
+
+  if(!strcmp(argv[0], "con")){
+    int buttonpress;
+
+    scroll_active = 0;
+
+    if( argc < 6){
+      Tcl_AppendResult(interp, "dm con: need more parameters\n",
+		       "dm con type x|y|z 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    buttonpress = atoi(argv[3]);
+    ((struct glx_vars *)dmp->dm_vars)->omx = atoi(argv[4]);
+    ((struct glx_vars *)dmp->dm_vars)->omy = atoi(argv[5]);
+
+    if(buttonpress){
+      switch(*argv[1]){
+      case 'r':
+	switch(*argv[2]){
+	case 'x':
+	  am_mode = AMM_CON_ROT_X;
+	  break;
+	case 'y':
+	  am_mode = AMM_CON_ROT_Y;
+	  break;
+	case 'z':
+	  am_mode = AMM_CON_ROT_Z;
+	  break;
+	default:
+	  Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
+			 "\ndm con type x|y|z 1|0 xpos ypos\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+	break;
+      case 't':
+	switch(*argv[2]){
+	case 'x':
+	  am_mode = AMM_CON_TRAN_X;
+	  break;
+	case 'y':
+	  am_mode = AMM_CON_TRAN_Y;
+	  break;
+	case 'z':
+	  am_mode = AMM_CON_TRAN_Z;
+	  break;
+	default:
+	  Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
+			 "\ndm con type x|y|z 1|0 xpos ypos\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+	break;
+      default:
+	Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[1],
+			 "\ndm con type x|y|z 1|0 xpos ypos\n", (char *)NULL);
+	return TCL_ERROR;
+      }
+
+      return TCL_OK;
+    }
+
+    am_mode = AMM_IDLE;
+    return TCL_OK;
   }
 
   if( !strcmp( argv[0], "size" )){
@@ -1082,24 +1471,6 @@ static void
 set_perspective()
 {
   glx_set_perspective(dmp);
-  ++dmaflag;
-}
-
-static void
-set_linewidth()
-{
-  dmp->dm_setLineAttr(dmp,
-		      ((struct glx_vars *)dmp->dm_vars)->mvars.linewidth,
-		      dmp->dm_lineStyle);
-  ++dmaflag;
-}
-
-static void
-set_linestyle()
-{
-  dmp->dm_setLineAttr(dmp,
-		      dmp->dm_lineWidth,
-		      ((struct glx_vars *)dmp->dm_vars)->mvars.linestyle);
   ++dmaflag;
 }
 
