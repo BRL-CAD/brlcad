@@ -32,7 +32,7 @@ static char	*framebuffer = NULL;
 static FBIO	*fbp;
 static int	scr_width = 0;		/* use default size */
 static int	scr_height = 0;
-static int	clear_only = 0;
+static int	clear_and_reset = 0;
 
 #define u_char	unsigned char
 
@@ -53,7 +53,7 @@ register char **argv;
 			break;
 		case 'c':
 			/* clear only, no cmap, pan, and zoom */
-			clear_only++;
+			clear_and_reset++;
 			break;
 		case 'F':
 			framebuffer = optarg;
@@ -94,10 +94,22 @@ char **argv;
 	scr_width = fb_getwidth(fbp);
 	scr_height = fb_getheight(fbp);
 
-	if( !clear_only ) {
-		if( fb_wmap( fbp, COLORMAP_NULL ) == -1 )
+	if( clear_and_reset ) {
+		if( fb_wmap( fbp, COLORMAP_NULL ) < 0 )
 			exit(3);
-		(void)fb_view( fbp, fb_getwidth(fbp)/2, fb_getheight(fbp)/2, 1, 1 );
+		(void)fb_view( fbp, scr_width/2, scr_height/2, 1, 1 );
+	} else {
+		ColorMap	cmap;
+		int		xcent, ycent, xzoom, yzoom;
+		if( fb_rmap( fbp, &cmap ) >= 0 )  {
+			if( !fb_is_linear_cmap( &cmap ) )  {
+				fprintf(stderr, "fbclear: NOTE: non-linear colormap in effect.  -c flag can correct this.\n");
+			}
+		}
+		(void)fb_getview( fbp, &xcent, &ycent, &xzoom, &yzoom );
+		if( xzoom != 1 || yzoom != 1 )  {
+			fprintf(stderr, "fbclear:  NOTE: framebuffer is zoomed.  -c can correct this.\n");
+		}
 	}
 
 	if( optind+3 == argc ) {

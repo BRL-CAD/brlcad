@@ -16,10 +16,12 @@ fbclear \- clear a frame buffer image
 .I Fbclear
 is used to erase a frame buffer using whatever method is efficient for the
 device being accessed.
-A standard linear colormap will be loaded and the pan and zoom values
-will be reset, unless the
+By default, the selected color will be flooded into the color planes.
+If the
 .B \-c
-option is used, in which case only the color planes are cleared.
+option is used,
+a standard linear colormap will be loaded and the pan and zoom values
+will be reset.
 .PP
 If the optional color values are given,
 .I fbclear
