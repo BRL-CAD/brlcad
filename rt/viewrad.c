@@ -43,8 +43,12 @@ extern	int	width;
 extern	int	height;
 
 /* Pacify RT */
-mlib_setup() { return(1); }
-mlib_free() {}
+int	mlib_setup() { return(1); }
+void	mlib_free() {}
+
+void		dumpray();
+void		dumpall();
+static int	isvisible();
 
 char usage[] = "\
 Usage:  rtrad [options] model.g objects... >file.rad\n\
@@ -97,6 +101,7 @@ char *file, *obj;
 }
 
 /* beginning of a frame */
+void
 view_2init( ap )
 struct application *ap;
 {
@@ -139,12 +144,13 @@ struct application *ap;
 }
 
 /* end of each pixel */
-view_pixel() {}
+void	view_pixel() {}
 
 /* end of each line */
-view_eol() {}
+void	view_eol() {}
 
 /* end of a frame */
+void
 view_end()
 {
 	/* flush any partial output record */
@@ -362,6 +368,7 @@ struct hit *hitp;
 }
 
 /************** Output Routines ***************/
+void
 dumpall( ap, depth )
 struct application *ap;
 int depth;
@@ -423,6 +430,7 @@ int depth;
 	writerec( &r, outfp );
 }
 
+void
 dumpray( rp )
 struct rayinfo *rp;
 {
@@ -468,6 +476,7 @@ struct rayinfo *rp;
  *
  *  Outputs the current physical record if full.
  */
+int
 writerec( rp, fp )
 union radrec *rp;
 FILE *fp;
@@ -493,6 +502,7 @@ FILE *fp;
  *
  *  Turns on -1 flags in unused logical records
  */
+int
 writephysrec( fp )
 FILE *fp;
 {

@@ -44,8 +44,9 @@ struct light_specific *LightHeadp = LIGHT_NULL;		/* Linked list of lights */
 
 extern double AmbientIntensity;
 
-HIDDEN int light_setup(), light_render(), light_print();
-int light_free();
+HIDDEN int	light_setup(), light_render();
+HIDDEN void	light_print();
+void		light_free();
 
 struct mfuncs light_mfuncs[] = {
 	"light",	0,		0,		MFI_NORMAL,
@@ -90,6 +91,7 @@ char	*dp;
 		f = (f+0.5) * lp->lt_fraction;
 	}
 	VSCALE( swp->sw_color, lp->lt_color, f );
+	return(1);
 }
 
 /*
@@ -188,7 +190,7 @@ char	**dpp;
 /*
  *			L I G H T _ P R I N T
  */
-HIDDEN int
+HIDDEN void
 light_print( rp, dp )
 register struct region *rp;
 char	*dp;
@@ -199,7 +201,7 @@ char	*dp;
 /*
  *			L I G H T _ F R E E
  */
-int
+void
 light_free( cp )
 char *cp;
 {
@@ -237,6 +239,7 @@ found:
  *
  *  Special hook called by view_2init to build 1 or 3 debugging lights.
  */
+void
 light_maker(num, v2m)
 int	num;
 mat_t	v2m;

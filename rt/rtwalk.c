@@ -87,6 +87,9 @@ extern int hit(), miss();
 FILE		*plotfp = stdout;
 FILE		*outfp = NULL;
 
+void		proj_goal();
+void		write_matrix();
+
 /*
  *			G E T _ A R G S
  */
@@ -422,6 +425,7 @@ miss()
  *  which should keep things moving in the right general direction,
  *  except perhaps for concave objects.
  */
+void
 proj_goal()
 {
 	vect_t	goal_dir;
@@ -450,6 +454,7 @@ proj_goal()
 /*
  *			W R I T E _ M A T R I X
  */
+void
 write_matrix(frame)
 {
 	mat_t	viewrot;

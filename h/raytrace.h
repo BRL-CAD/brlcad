@@ -94,7 +94,7 @@ struct curvature {
 		rt_log("stp=x%x, id=%d.\n", stp, id); \
 		rt_bomb("RT_CURVE:  bad st_id"); \
 	} \
-	(void)rt_functab[id].ft_curve( curvp, hitp, stp ); }
+	rt_functab[id].ft_curve( curvp, hitp, stp ); }
 
 /*
  *			U V C O O R D
@@ -292,7 +292,7 @@ struct region  {
 		rt_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", stp, id, hitp, rayp); \
 		rt_bomb("RT_HIT_NORM:  bad st_id");\
 	} \
-	(void)rt_functab[id].ft_norm(hitp, stp, rayp); }
+	rt_functab[id].ft_norm(hitp, stp, rayp); }
 
 struct partition {
 	struct seg	*pt_inseg;		/* IN seg ptr (gives stp) */

@@ -347,7 +347,7 @@ next_one: ;
 	stp->st_id = id;
 	if( rec->u_id == ID_SOLID )  {
 		/* Convert from database (float) to fastf_t */
-		rt_fastf_float( v, rec->s.s_values, 8 );
+		rt_fastf_float( (fastf_t *)v, rec->s.s_values, 8 );
 	}
 	stp->st_name = name;
 	stp->st_specific = (int *)0;
@@ -358,7 +358,7 @@ next_one: ;
 
 	if( rt_functab[id].ft_prep( v, stp, mat, &(rec->s), rtip ) )  {
 		/* Error, solid no good */
-		rt_free(stp, "struct soltab");
+		rt_free( (char *)stp, "struct soltab");
 		return( SOLTAB_NULL );		/* BAD */
 	}
 

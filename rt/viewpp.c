@@ -51,7 +51,8 @@ static int last_ihigh;			/* last inten_high */
 static int ntomiss;			/* number of pixels to miss */
 static int col;				/* column; for PP 75 char/line crap */
 
-view_pixel() {}
+void	view_pixel() {}
+void	pknum();
 
 /* Support for pretty-picture files */
 int
@@ -116,6 +117,7 @@ ppmiss()  {
 	return(0);
 }
 
+void
 view_eol()
 {
 	pchar( '.' );		/* End of scanline */
@@ -126,6 +128,7 @@ view_eol()
 /*
  *  Called when the picture is finally done.
  */
+void
 view_end()
 {
 	fprintf( stdout, "/\n" );	/* end of view */
@@ -139,6 +142,7 @@ view_end()
  *  Number is written 5 bits at a time, right to left (low to high)
  *  until there are no more non-zero bits remaining.
  */
+void
 pknum( arg )
 int arg;
 {
@@ -153,6 +157,7 @@ int arg;
 /*
  *  			V I E W _ I N I T
  */
+int
 view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
@@ -172,8 +177,8 @@ char *file, *obj;
 	return(0);		/* no framebuffer needed */
 }
 
-view_2init()  {;}
+void	view_2init()  {;}
 
-mlib_setup() { return(1); }
+int	mlib_setup() { return(1); }
 
-mlib_free() { ; }
+void	mlib_free() { ; }

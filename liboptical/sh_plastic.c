@@ -67,8 +67,8 @@ struct matparse phong_parse[] = {
 
 HIDDEN int phong_setup(), mirror_setup(), glass_setup();
 HIDDEN int phong_render();
-HIDDEN int phong_print();
-HIDDEN int phong_free();
+HIDDEN void	phong_print();
+HIDDEN void	phong_free();
 
 struct mfuncs phg_mfuncs[] = {
 	"plastic",	0,		0,		MFI_NORMAL|MFI_LIGHT,
@@ -179,7 +179,7 @@ char	**dpp;
 /*
  *			P H O N G _ P R I N T
  */
-HIDDEN int
+HIDDEN void
 phong_print( rp, dp )
 register struct region *rp;
 char	*dp;
@@ -190,7 +190,7 @@ char	*dp;
 /*
  *			P H O N G _ F R E E
  */
-HIDDEN int
+HIDDEN void
 phong_free( cp )
 char *cp;
 {

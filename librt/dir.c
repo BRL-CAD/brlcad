@@ -259,6 +259,7 @@ long		laddr;
 /*
  *			R T _ P R _ D I R
  */
+void
 rt_pr_dir( rtip )
 register struct rt_i *rtip;
 {

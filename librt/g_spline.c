@@ -457,12 +457,12 @@ struct soltab *stp;
 	VCOMB2( cvp->crv_pdir, vec1[X], uvec, vec1[Y], vvec );
 	VUNITIZE( cvp->crv_pdir );
 
-	rt_free(s_eval, "spl_curve:s_eval");
-	rt_free(u_eval, "spl_curve:u_eval");
-	rt_free(v_eval, "spl_curve:v_eval");
-	rt_free(u2_eval, "spl_curve:u2_eval");
-	rt_free(v2_eval, "spl_curve:v2_eval");
-	rt_free(uv_eval, "spl_curve:uv_eval");
+	rt_free( (char *)s_eval, "spl_curve:s_eval");
+	rt_free( (char *)u_eval, "spl_curve:u_eval");
+	rt_free( (char *)v_eval, "spl_curve:v_eval");
+	rt_free( (char *)u2_eval, "spl_curve:u2_eval");
+	rt_free( (char *)v2_eval, "spl_curve:v2_eval");
+	rt_free( (char *)uv_eval, "spl_curve:uv_eval");
 }
 
 /*
@@ -483,7 +483,7 @@ register struct soltab * stp;
 		spl_sfree( nlist->root);
 		spl_sfree( nlist->u_diff);
 		spl_sfree( nlist->v_diff);
-		rt_free( nlist, "spl_free: b_head structure");
+		rt_free( (char *)nlist, "spl_free: b_head structure");
 	}
 
 	return;
@@ -512,7 +512,7 @@ struct b_tree * tree;
 	if ( rootp->root != (struct b_spline *) 0 )
 		spl_sfree( rootp->root );
 
-	rt_free( rootp, "n_free: tree structure ");
+	rt_free( (char *)rootp, "n_free: tree structure ");
 
 }
 
@@ -591,7 +591,7 @@ register struct xray *rp;
 		VCROSS( norm, u_norm, v_norm );
 		VUNITIZE( norm);
 		VMOVE(hitp->hit_normal, norm);
-		rt_free( spl_eval, "ray_poly: spl_eval" );
+		rt_free( (char *)spl_eval, "ray_poly: spl_eval" );
 	}
 
 	if ( hitp->hit_vpriv[2] )
@@ -599,8 +599,8 @@ register struct xray *rp;
 		VREVERSE( hitp->hit_normal, norm );
 	}
 
-	rt_free( u_eval, "ray_poly: u_eval" );
-	rt_free( v_eval, "ray_poly: v_eval" );
+	rt_free( (char *)u_eval, "ray_poly: u_eval" );
+	rt_free( (char *)v_eval, "ray_poly: v_eval" );
 
 	return;
 }
@@ -680,7 +680,7 @@ struct application * ap;
 			VMOVE(segp->seg_out.hit_point, hit2->hit_point );
 			VMOVE(segp->seg_out.hit_vpriv,hit2->hit_vpriv);
 			segp->seg_out.hit_private = hit2->hit_private;
-			rt_free( hit2, "spl_shot: hit point");
+			rt_free( (char *)hit2, "spl_shot: hit point");
 		} else	/* Fake it */
 		{
 			segp->seg_out.hit_dist = hit1->hit_dist + .01;
@@ -691,7 +691,7 @@ struct application * ap;
 			segp->seg_out.hit_private = hit1->hit_private;
 		}
 
-		rt_free( hit1, "spl_shot: hit point");
+		rt_free( (char *)hit1, "spl_shot: hit point");
 
 		if ( spl_hit_head != NULLHIT)
 		{
@@ -811,7 +811,7 @@ struct b_tree * tree;
 	{
 		tmp = p;
 		p = p->next;
-		rt_free( tmp, "shot_poly: polygon" );
+		rt_free( (char *)tmp, "shot_poly: polygon" );
 	}
 
 	if ( !hit_count && rt_g.debug & DEBUG_SPLINE )

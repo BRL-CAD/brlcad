@@ -26,7 +26,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./material.h"
 #include "./rdebug.h"
 
-HIDDEN int stk_setup(), stk_render(), stk_print(), stk_free();
+HIDDEN int	stk_setup(), stk_render();
+HIDDEN void	stk_print(), stk_free();
 
 struct mfuncs stk_mfuncs[] = {
 	"stack",	0,		0,		0,
@@ -137,14 +138,15 @@ char	*dp;
 	int	i;
 
 	for( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
-		sp->mfuncs[i]->mf_render( ap, pp, swp, sp->udata[i] );
+		(void)(sp->mfuncs[i]->mf_render( ap, pp, swp, sp->udata[i] ));
 	}
+	return(1);
 }
 
 /*
  *			S T K _ P R I N T
  */
-HIDDEN int
+HIDDEN void
 stk_print( rp, dp )
 register struct region *rp;
 char	*dp;
@@ -155,7 +157,7 @@ char	*dp;
 /*
  *			S T K _ F R E E
  */
-HIDDEN int
+HIDDEN void
 stk_free( cp )
 char *cp;
 {

@@ -47,7 +47,8 @@ struct matparse spm_parse[] = {
 	(char *)0,	(mp_off_ty)0,			(char *)0
 };
 
-HIDDEN int spm_setup(), spm_render(), spm_print(), spm_mfree();
+HIDDEN int	spm_setup(), spm_render();
+HIDDEN void	spm_print(), spm_mfree();
 
 struct mfuncs spm_mfuncs[] = {
 	"spm",		0,		0,		MFI_UV,
@@ -81,6 +82,7 @@ char	*dp;
 	x = swp->sw_uv.uv_u * spp->sp_map->nx[y];
 	cp = &(spp->sp_map->xbin[y][x*3]);
 	VSET( swp->sw_color, cp[RED]/256., cp[GRN]/256., cp[BLU]/256. );
+	return(1);
 }
 
 /*
@@ -120,7 +122,7 @@ fail:
 /*
  *			S P M _ P R I N T
  */
-HIDDEN int
+HIDDEN void
 spm_print( rp, dp )
 register struct region *rp;
 char	*dp;
@@ -129,7 +131,7 @@ char	*dp;
 	/* Should be more here */
 }
 
-HIDDEN int
+HIDDEN void
 spm_mfree( cp )
 char *cp;
 {

@@ -29,13 +29,17 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 
 struct region	env_region;
 
-HIDDEN int txt_setup(), txt_render(), txt_print(), txt_free();
-HIDDEN int ckr_setup(), ckr_render(), ckr_print(), ckr_free();
-HIDDEN int bmp_setup(), bmp_render(), bmp_print(), bmp_free();
+HIDDEN int	txt_setup(), txt_render();
+HIDDEN int	ckr_setup(), ckr_render();
+HIDDEN int	bmp_setup(), bmp_render();
+HIDDEN void	txt_print(), txt_free();
+HIDDEN void	ckr_print(), ckr_free();
+HIDDEN void	bmp_print(), bmp_free();
 HIDDEN int tstm_render();
 HIDDEN int star_render();
 HIDDEN int envmap_setup();
 extern int mlib_zero(), mlib_one();
+extern void	mlib_void();
 
 struct mfuncs txt_mfuncs[] = {
 	"texture",	0,		0,		MFI_UV,
@@ -45,16 +49,16 @@ struct mfuncs txt_mfuncs[] = {
 	ckr_setup,	ckr_render,	ckr_print,	ckr_free,
 
 	"testmap",	0,		0,		MFI_UV,
-	mlib_one,	tstm_render,	mlib_zero,	mlib_zero,
+	mlib_one,	tstm_render,	mlib_void,	mlib_void,
 
 	"fakestar",	0,		0,		0,
-	mlib_one,	star_render,	mlib_zero,	mlib_zero,
+	mlib_one,	star_render,	mlib_void,	mlib_void,
 
 	"bump",		0,		0,		MFI_UV|MFI_NORMAL,
 	txt_setup,	bmp_render,	txt_print,	txt_free,
 
 	"envmap",	0,		0,		0,
-	envmap_setup,	mlib_zero,	mlib_zero,	mlib_zero,
+	envmap_setup,	mlib_zero,	mlib_void,	mlib_void,
 
 	(char *)0,	0,		0,		0,
 	0,		0,		0,		0
@@ -131,7 +135,7 @@ register struct txt_specific *tp;
  *  Note that .pix files are stored left-to-right, bottom-to-top,
  *  which works out very naturally for the indexing scheme.
  */
-HIDDEN
+HIDDEN int
 txt_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
@@ -253,7 +257,7 @@ char	**dpp;
 /*
  *			T X T _ P R I N T
  */
-HIDDEN int
+HIDDEN void
 txt_print( rp )
 register struct region *rp;
 {
@@ -263,7 +267,7 @@ register struct region *rp;
 /*
  *			T X T _ F R E E
  */
-HIDDEN int
+HIDDEN void
 txt_free( cp )
 char *cp;
 {
@@ -314,6 +318,7 @@ char	*dp;
 		(cp[0]+0.5) * rt_inv255,
 		(cp[1]+0.5) * rt_inv255,
 		(cp[2]+0.5) * rt_inv255 );
+	return(1);
 }
 
 /*
@@ -338,7 +343,7 @@ char	**dpp;
 /*
  *			C K R _ P R I N T
  */
-HIDDEN int
+HIDDEN void
 ckr_print( rp )
 register struct region *rp;
 {
@@ -348,7 +353,7 @@ register struct region *rp;
 /*
  *			C K R _ F R E E
  */
-HIDDEN int
+HIDDEN void
 ckr_free( cp )
 char *cp;
 {
@@ -410,6 +415,7 @@ char	*dp;
 	} else {
 		VSETALL( swp->sw_color, 0 );
 	}
+	return(1);
 }
 
 struct phong_specific {

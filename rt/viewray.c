@@ -44,11 +44,12 @@ Options:\n\
 ";
 
 /* Null function -- handle a miss */
-raymiss() { ; }
+int	raymiss() { return(0); }
 
-view_pixel() {}
+void	view_pixel() {}
 
 /* Write a hit to the ray file */
+int
 rayhit( ap, PartHeadp )
 struct application *ap;
 register struct partition *PartHeadp;
@@ -60,11 +61,13 @@ register struct partition *PartHeadp;
 		RT_HIT_NORM( pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray) );
 		wray( pp, ap, stdout );
 	}
+	return(0);
 }
 
 /*
  *  			V I E W _ I N I T
  */
+int
 view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
@@ -78,16 +81,16 @@ char *file, *obj;
 	return(0);		/* No framebuffer needed */
 }
 
-view_eol() {
-}
+void	view_eol() {;}
 
+void
 view_end()
 {
 	fflush(stdout);
 }
 
-view_2init()  {;}
+void	view_2init()  {;}
 
-mlib_setup() { return(1); }
+int	mlib_setup() { return(1); }
 
-mlib_free() { ; }
+void	mlib_free() { ; }

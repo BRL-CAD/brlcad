@@ -85,6 +85,9 @@ extern char	*outputfile;		/* name of base of output file */
 extern int	interactive;		/* human is watching results */
 /***** end variables shared with rt.c *****/
 
+void		def_tree();
+void		do_ae();
+
 /*
  *			O L D _ W A Y
  * 
@@ -366,6 +369,7 @@ char	**argv;
  *
  *  Load default tree list, from command line.
  */
+void
 def_tree( rtip )
 register struct rt_i	*rtip;
 {
@@ -659,6 +663,7 @@ int framenumber;
  *  Note that GIFT azim/elev values are the negatives of
  *  this interpretation.
  */
+void
 do_ae( azim, elev )
 double azim, elev;
 {
@@ -715,6 +720,7 @@ double azim, elev;
 /*
  *			R E S _ P R
  */
+void
 res_pr()
 {
 	register struct resource *res;

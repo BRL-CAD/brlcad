@@ -215,11 +215,13 @@ struct partition *PartHeadp;
 			VREVERSE( hitp->hit_normal, hitp->hit_normal );
 		rt_pr_hit( " Out", hitp );
 	}
+	return(0);
 }
 
 miss()
 {
 	rt_log("missed\n");
+	return(0);
 }
 
 #if defined(SYSV)

@@ -128,6 +128,7 @@ grid_setup()
  *  Compute a run of pixels, in parallel if the hardware permits it.
  *
  */
+void
 do_run( a, b )
 {
 	int	x;

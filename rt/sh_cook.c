@@ -72,8 +72,8 @@ struct matparse cook_parse[] = {
 
 HIDDEN int cook_setup(), cmirror_setup(), cglass_setup();
 HIDDEN int cook_render();
-HIDDEN int cook_print();
-HIDDEN int cook_free();
+HIDDEN void	cook_print();
+HIDDEN void	cook_free();
 HIDDEN double fresnel();
 HIDDEN double beckmann();
 
@@ -220,7 +220,7 @@ char	**dpp;
 /*
  *			C O O K _ P R I N T
  */
-HIDDEN int
+HIDDEN void
 cook_print( rp, dp )
 register struct region *rp;
 char	*dp;
@@ -231,7 +231,7 @@ char	*dp;
 /*
  *			C O O K _ F R E E
  */
-HIDDEN int
+HIDDEN void
 cook_free( cp )
 char *cp;
 {

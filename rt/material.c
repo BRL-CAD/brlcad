@@ -52,6 +52,7 @@ register struct mfuncs *mfp;
  *  Enrole the various materials.  Single point of explicit interface with
  *  the materials modules.
  */
+void
 mlib_init()
 {
 	extern struct mfuncs phg_mfuncs[];
@@ -122,6 +123,7 @@ found:
  *
  *  Routine to free material-property specific data
  */
+void
 mlib_free( rp )
 register struct region *rp;
 {
@@ -171,6 +173,7 @@ register char *str;
 /*
  *			M L I B _ P A R S E
  */
+void
 mlib_parse( cp, parsetab, base )
 register char *cp;
 struct matparse *parsetab;
@@ -227,6 +230,7 @@ out:		;
 /*
  *			M L I B _ P R I N T
  */
+void
 mlib_print( title, parsetab, base )
 char *title;
 struct matparse *parsetab;
@@ -282,6 +286,7 @@ int *base;		/* base address of users structure */
  *  Useful mostly as a stub print, and/or free routine.
  */
 /* VARARGS */
+int
 mlib_zero()
 {
 	return(0);
@@ -294,7 +299,17 @@ mlib_zero()
  *  Useful mostly as a stub setup routine.
  */
 /* VARARGS */
+int
 mlib_one()
 {
 	return(1);
+}
+
+/*
+ *			M L I B _ V O I D
+ */
+/* VARARGS */
+void
+mlib_void()
+{
 }

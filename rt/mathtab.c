@@ -38,6 +38,7 @@ float *rand_ptr = rand_tab-1;
  *  For benchmarking purposes, make the random number table predictable.
  *  Setting to all zeros keeps dithered values at their original values.
  */
+void
 mathtab_constant()
 {
 	register int i;

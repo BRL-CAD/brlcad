@@ -93,6 +93,8 @@ int	ibackground[3];			/* integer 0..255 version */
 static int	buf_mode=0;	/* 0=pixel, 1=line, 2=frame */
 static int	*npix_left;	/* only used in buf_mode=2 */
 
+void	shade_inputs();
+
 /*
  *  			V I E W _ P I X E L
  *  
@@ -107,6 +109,7 @@ static int	*npix_left;	/* only used in buf_mode=2 */
  *	buf_mode = 2	full frame buffering, dump to fb at end of scanline
  *	buf_mode = 3	full frame buffering, dump to fb at end of frame
  */
+void
 view_pixel(ap)
 register struct application *ap;
 {
@@ -242,6 +245,7 @@ register struct application *ap;
  *  has been finished.  When in parallel mode, there is no guarantee
  *  that the last few pixels are done -- just send off the buffer.
  */
+void
 view_eol(ap)
 register struct application *ap;
 {
@@ -578,6 +582,7 @@ register struct shadework *swp;
  *  If MFI_LIGHT is not on, the presumption is that the sw_visible[]
  *  array is not needed, or has been handled elsewhere.
  */
+void
 shade_inputs( ap, pp, swp, want )
 struct application *ap;
 register struct partition *pp;
@@ -929,6 +934,7 @@ char *file, *obj;
  *
  *  Called each time a new image is about to be done.
  */
+void
 view_2init( ap )
 register struct application *ap;
 {
