@@ -479,7 +479,6 @@ int framenumber;
 			if( matflag )  return(0);	/* OK */
 			return(-1);			/* Bad */
 		}
-		chmod( framename, 0444 );
 #endif CRAY_COS
 		fprintf(stderr,"Output file is '%s'\n", framename);
 	}
@@ -570,6 +569,9 @@ int framenumber;
 			dn, framename, status );
 		fprintf(stderr, "%s\n", message);
 		remark(message);	/* Send to log files */
+#else
+		/* Protect finished product */
+		chmod( framename, 0444 );
 #endif CRAY_COS
 	}
 
