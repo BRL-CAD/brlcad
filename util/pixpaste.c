@@ -197,7 +197,7 @@ int argc; char **argv;
  * Spew some interesting info at the people...
  */
 	if (Verbose) {
-		(void) fprintf(stderr,"
+		(void) fprintf(stderr,"\
 pixpaste: Copyright (C) 1992 Paladin Software\npixpaste: All rights reserved\n");
 		(void) fprintf(stderr,"pixpaste: Original iamge %dx%d\n",
 		    org_width, org_height);
