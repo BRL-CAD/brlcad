@@ -110,7 +110,7 @@ proc dbupgrade {args} {
 
     # first time through only
     if {![info exists dbupgrade_priv(dbname)]} {
-	if {[dbversion] != 4} {
+	if {[dbversion] > 4} {
 	    error "[opendb] is already current!"
 	}
 
@@ -222,6 +222,7 @@ proc dbupgrade {args} {
 		    unset dbupgrade_priv(dbname)
 		    return
 		}
+
 	    } else {
 		set_more_default n
 		error "more arguments needed::overwrite $dbname\R4?\[y|n\]  \[n\]:"
