@@ -215,6 +215,14 @@ end:
       }
       
       bu_vls_printf(&vls, "mouse_comb_edit_select %d %d", x, y);
+    } else if(mged_variables->mv_mouse_behavior == 'o' && !stolen){
+      if(grid_state->gr_snap){
+	snap_to_grid(&fx, &fy);
+	x = fx * GED_MAX;
+	y = fy * GED_MAX;
+      }
+      
+      bu_vls_printf(&vls, "mouse_rt_obj_select %d %d", x, y);
     }else if(adc_state->adc_draw && mged_variables->mv_transform == 'a' && !stolen) {
       point_t model_pt;
       point_t view_pt;
