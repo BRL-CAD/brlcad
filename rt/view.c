@@ -764,7 +764,7 @@ struct seg *finished_segs;
 				-1, ap, stdout );	/* -1 = air */
 		}
 	}
-	if( rdebug&RDEBUG_RAYPLOT )  {
+	if( rdebug&(RDEBUG_RAYPLOT|RDEBUG_RAYWRITE|RDEBUG_REFRACT) )  {
 		/*  There are two parts to plot here.
 		 *  Ray start to inhit (purple),
 		 *  and inhit to outhit (grey).
@@ -781,16 +781,29 @@ struct seg *finished_segs;
 
 			VJOIN1( inhit, ap->a_ray.r_pt,
 				hitp->hit_dist, ap->a_ray.r_dir );
-			pl_color( stdout, i, 0, i );
-			pdv_3line( stdout, ap->a_ray.r_pt, inhit );
+			if( rdebug&RDEBUG_RAYPLOT )  {
+				pl_color( stdout, i, 0, i );
+				pdv_3line( stdout, ap->a_ray.r_pt, inhit );
+			}
+			bu_log("From ray start to inhit (purple):\n \
+vdraw o oray;vdraw p c %2.2x%2.2x%2.2x;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
+				i, 0, i,
+				V3ARGS(ap->a_ray.r_pt),
+				V3ARGS(inhit) );
 
 			if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
 				out = 10000;	/* to imply the direction */
 			VJOIN1( outhit,
 				ap->a_ray.r_pt, out,
 				ap->a_ray.r_dir );
-			pl_color( stdout, i, i, i );
-			pdv_3line( stdout, inhit, outhit );
+			if( rdebug&RDEBUG_RAYPLOT )  {
+				pl_color( stdout, i, i, i );
+				pdv_3line( stdout, inhit, outhit );
+			}
+			bu_log("From inhit to outhit (grey):\n \
+vdraw o iray;vdraw p c %2.2x%2.2x%2.2x;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
+				i, i, i,
+				V3ARGS(inhit), V3ARGS(outhit) );
 		}
 	}
 
