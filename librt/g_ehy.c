@@ -1385,10 +1385,33 @@ double				local2mm;
 	ehy->s.s_id = ID_SOLID;
 	ehy->s.s_type = EHY;
 
+	if (!NEAR_ZERO( MAGNITUDE(xip->ehy_Au) - 1., RT_LEN_TOL)) {
+		rt_log("rt_ehy_export: Au not a unit vector!\n");
+		return(-1);
+	}
+
+	if (MAGNITUDE(xip->ehy_H) < RT_LEN_TOL
+		|| xip->ehy_c < RT_LEN_TOL
+		|| xip->ehy_r1 < RT_LEN_TOL
+		|| xip->ehy_r2 < RT_LEN_TOL) {
+		rt_log("rt_ehy_export: not all dimensions positive!\n");
+		return(-1);
+	}
+	
+	if ( !NEAR_ZERO( VDOT(xip->ehy_Au, xip->ehy_H), RT_DOT_TOL) ) {
+		rt_log("rt_ehy_export: Au and H are not perpendicular!\n");
+		return(-1);
+	}
+	
+	if (xip->ehy_r2 > xip->ehy_r1) {
+		rt_log("rt_ehy_export: semi-minor axis cannot be longer than semi-major axis!\n");
+		return(-1);
+	}
+
 	/* Warning:  type conversion */
-	VMOVE( &ehy->s.s_values[0*3], xip->ehy_V );
-	VMOVE( &ehy->s.s_values[1*3], xip->ehy_H );
-	VMOVE( &ehy->s.s_values[2*3], xip->ehy_Au );
+	VSCALE( &ehy->s.s_values[0*3], xip->ehy_V, local2mm );
+	VSCALE( &ehy->s.s_values[1*3], xip->ehy_H, local2mm );
+	VSCALE( &ehy->s.s_values[2*3], xip->ehy_Au, local2mm );
 	ehy->s.s_values[3*3] = xip->ehy_r1;
 	ehy->s.s_values[3*3+1] = xip->ehy_r2;
 	ehy->s.s_values[3*3+2] = xip->ehy_c;

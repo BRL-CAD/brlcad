@@ -1165,6 +1165,18 @@ double				local2mm;
 
 	rpc->s.s_id = ID_SOLID;
 	rpc->s.s_type = RPC;
+	
+	if (MAGNITUDE(xip->rpc_B) < RT_LEN_TOL
+		|| MAGNITUDE(xip->rpc_H) < RT_LEN_TOL
+		|| xip->rpc_r < RT_LEN_TOL) {
+		rt_log("rt_rpc_export: not all dimensions positive!\n");
+		return(-1);
+	}
+	
+	if ( !NEAR_ZERO( VDOT(xip->rpc_B, xip->rpc_H), RT_DOT_TOL) ) {
+		rt_log("rt_rpc_export: B and H are not perpendicular!\n");
+		return(-1);
+	}
 
 	/* Warning:  type conversion */
 	VSCALE( &rpc->s.s_values[0*3], xip->rpc_V, local2mm );

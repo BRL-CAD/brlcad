@@ -1163,10 +1163,23 @@ double				local2mm;
 	rhc->s.s_id = ID_SOLID;
 	rhc->s.s_type = RHC;
 
+	if (MAGNITUDE(xip->rhc_B) < RT_LEN_TOL
+		|| MAGNITUDE(xip->rhc_H) < RT_LEN_TOL
+		|| xip->rhc_r < RT_LEN_TOL
+		|| xip->rhc_c < RT_LEN_TOL) {
+		rt_log("rt_rhc_export: not all dimensions positive!\n");
+		return(-1);
+	}
+	
+	if ( !NEAR_ZERO( VDOT(xip->rhc_B, xip->rhc_H), RT_DOT_TOL) ) {
+		rt_log("rt_rhc_export: B and H are not perpendicular!\n");
+		return(-1);
+	}
+
 	/* Warning:  type conversion */
-	VMOVE( &rhc->s.s_values[0*3], xip->rhc_V );
-	VMOVE( &rhc->s.s_values[1*3], xip->rhc_H );
-	VMOVE( &rhc->s.s_values[2*3], xip->rhc_B );
+	VSCALE( &rhc->s.s_values[0*3], xip->rhc_V, local2mm );
+	VSCALE( &rhc->s.s_values[1*3], xip->rhc_H, local2mm );
+	VSCALE( &rhc->s.s_values[2*3], xip->rhc_B, local2mm );
 	rhc->s.s_values[3*3] = xip->rhc_r;
 	rhc->s.s_values[3*3+1] = xip->rhc_c;
 

@@ -1235,10 +1235,23 @@ double				local2mm;
 	eto->s.s_id = ID_SOLID;
 	eto->s.s_type = ETO;
 
+	if (MAGNITUDE(tip->eto_C) < RT_LEN_TOL
+		|| MAGNITUDE(tip->eto_N) < RT_LEN_TOL
+		|| tip->eto_r < RT_LEN_TOL
+		|| tip->eto_rd < RT_LEN_TOL) {
+		rt_log("rt_eto_export: not all dimensions positive!\n");
+		return(-1);
+	}
+	
+	if (tip->eto_rd > MAGNITUDE(tip->eto_C) ) {
+		rt_log("rt_eto_export: semi-minor axis cannot be longer than semi-major axis!\n");
+		return(-1);
+	}
+
 	/* Warning:  type conversion */
-	VMOVE( &eto->s.s_values[0*3], tip->eto_V );
-	VMOVE( &eto->s.s_values[1*3], tip->eto_N );
-	VMOVE( &eto->s.s_values[2*3], tip->eto_C );
+	VSCALE( &eto->s.s_values[0*3], tip->eto_V, local2mm );
+	VSCALE( &eto->s.s_values[1*3], tip->eto_N, local2mm );
+	VSCALE( &eto->s.s_values[2*3], tip->eto_C, local2mm );
 	eto->s.s_values[3*3] = tip->eto_r;
 	eto->s.s_values[3*3+1] = tip->eto_rd;
 

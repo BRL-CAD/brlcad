@@ -241,10 +241,6 @@ struct rt_i		*rtip;
 	VCROSS(   epa->epa_Bunit, epa->epa_Aunit, epa->epa_Hunit );
 
 	VMOVE( epa->epa_V, xip->epa_V );
-VPRINT("prep: V",xip->epa_V);
-VPRINT("H",xip->epa_H);
-VPRINT("Au",xip->epa_Au);
-fprintf(stderr,"r1 = %g, r2 = %g\n",xip->epa_r1,xip->epa_r2);
 
 	/* Compute R and Rinv matrices */
 	mat_idn( R );
@@ -1394,12 +1390,6 @@ register CONST mat_t		mat;
 	VMOVE( xip->epa_Au, &rp->s.s_values[2*3] );
 	xip->epa_r1 = rp->s.s_values[3*3];
 	xip->epa_r2 = rp->s.s_values[3*3+1];
-VPRINT("import: V",xip->epa_V);
-VPRINT("H",xip->epa_H);
-VPRINT("Au",xip->epa_Au);
-fprintf(stderr,"r1 = %g, r2 = %g\n",xip->epa_r1,xip->epa_r2);
-#if 0
-#endif
 
 	return(0);			/* OK */
 }
@@ -1431,10 +1421,32 @@ double				local2mm;
 	epa->s.s_id = ID_SOLID;
 	epa->s.s_type = EPA;
 
+	if (!NEAR_ZERO( MAGNITUDE(xip->epa_Au) - 1., RT_LEN_TOL)) {
+		rt_log("rt_epa_export: Au not a unit vector!\n");
+		return(-1);
+	}
+	
+	if (MAGNITUDE(xip->epa_H) < RT_LEN_TOL
+		|| xip->epa_r1 < RT_LEN_TOL
+		|| xip->epa_r2 < RT_LEN_TOL) {
+		rt_log("rt_epa_export: not all dimensions positive!\n");
+		return(-1);
+	}
+	
+	if ( !NEAR_ZERO( VDOT(xip->epa_Au, xip->epa_H), RT_DOT_TOL) ) {
+		rt_log("rt_epa_export: Au and H are not perpendicular!\n");
+		return(-1);
+	}
+	
+	if (xip->epa_r2 > xip->epa_r1) {
+		rt_log("rt_epa_export: semi-minor axis cannot be longer than semi-major axis!\n");
+		return(-1);
+	}
+
 	/* Warning:  type conversion */
-	VMOVE( &epa->s.s_values[0*3], xip->epa_V );
-	VMOVE( &epa->s.s_values[1*3], xip->epa_H );
-	VMOVE( &epa->s.s_values[2*3], xip->epa_Au );
+	VSCALE( &epa->s.s_values[0*3], xip->epa_V, local2mm );
+	VSCALE( &epa->s.s_values[1*3], xip->epa_H, local2mm );
+	VSCALE( &epa->s.s_values[2*3], xip->epa_Au, local2mm );
 	epa->s.s_values[3*3] = xip->epa_r1;
 	epa->s.s_values[3*3+1] = xip->epa_r2;
 
