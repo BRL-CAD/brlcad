@@ -186,7 +186,8 @@ set -S2 "/bin/sh"
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lgl -lGL
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -lgl -lGL
-#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
+#		define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
+#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	GFLAG		
@@ -244,7 +245,7 @@ set -S2 "/bin/sh"
 					-OPT:const_copy_limit=16000 \
 					-use_readonly_const \
 					-woff 1203,1048,1110,1209
-#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
+#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
@@ -338,6 +339,7 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
+#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -404,6 +406,7 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
+#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -466,6 +469,7 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -476,7 +480,6 @@ set -S2 "/bin/sh"
 #	define	LGT_CONFIG	GFLAG
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
-#	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
 #	define	LIBDM_OBJS	dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DUSE_RT_ASPECT
@@ -530,6 +533,7 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -682,7 +686,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
 #		define	RANLIB		true
 #		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R /usr/lib:LIBDIR
-#		define	LIBBU_LIBES	-lthread LIBTCL LIBTCL_LIBES
+#		define	LIBBU_LIBES	-lthread LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 #		define  ARCH_SUF	a
 #		define	LIBVERS		../sh/newvers.sh
@@ -845,7 +849,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBRT_TIMER	timer42
 /*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux, RedHat) */
 #	define	LIBTERMLIB	-lncurses
-#	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
+#	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
@@ -894,7 +898,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	BUILD_LIBRARY	ld -Bshareable -o
 #		define	STANDARD_LIBES	-lm -Wl,-R -Wl,LIBDIR
 /*		LIBBU needs LIBTCL, even if it's not used. */
-#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
+#		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
 #	else
 /*		Static linked executables */
 #		define	CC_DEFS -pipe
