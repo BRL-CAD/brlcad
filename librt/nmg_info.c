@@ -192,10 +192,11 @@ CONST struct vertexuse *vu;
  *									*
  ************************************************************************/
 
-/*	N M G _ F I N D _ F U _ O F _ E U
+/*
+ *			N M G _ F I N D _ F U _ O F _ E U
  *
  *	return a pointer to the faceuse that is the super-parent of this
- *	edgeuse.  If edgeuse has no super-parent faceuse, return NULL.
+ *	edgeuse.  If edgeuse has no grandparent faceuse, return NULL.
  */
 struct faceuse *
 nmg_find_fu_of_eu(eu)
@@ -279,6 +280,7 @@ CONST struct vertexuse *vu;
  *  fu2 and has the same orientation.
  *  This may be an OT_OPPOSITE faceuse, depending on orientation.
  *  Returns NULL if no such faceuse can be found in s1.
+ *  fu2 may be in s1, or in some other shell.
  */
 struct faceuse *
 nmg_find_fu_with_fg_in_s( s1, fu2 )
@@ -309,6 +311,8 @@ CONST struct faceuse	*fu2;
 		NMG_CK_FACE_G(fg1);
 
 		if( fg1 != fg2 )  continue;
+
+		if( fu1 == fu2 || fu1->fumate_p == fu2 )  continue;
 
 		/* Face geometry matches, select fu1 or it's mate */
 		flip1 = (fu1->orientation != OT_SAME) != (f1->flip != 0);
