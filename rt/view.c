@@ -109,7 +109,6 @@ static struct scanline {
 	int	sl_left;		/* # pixels left on this scanline */
 	char	*sl_buf;		/* ptr to buffer for scanline */
 } *scanline;
-static int	pixel_width = 3;	/* # bytes/pixel */
 
 /* Viewing module specific "set" variables */
 struct structparse view_parse[] = {
@@ -506,7 +505,6 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-	register struct mfuncs *mfp;
 	struct shadework sw;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
@@ -641,8 +639,6 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-	LOCAL fastf_t diffuse2, cosI2;
-	LOCAL fastf_t diffuse1, cosI1;
 	LOCAL fastf_t diffuse0, cosI0;
 	LOCAL vect_t work0, work1;
 	LOCAL struct light_specific *lp;
@@ -686,7 +682,6 @@ struct partition *PartHeadp;
 	 	{
 			LOCAL struct curvature cv;
 			FAST fastf_t f;
-			auto int ival;
 
 			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp );
 	
@@ -707,8 +702,6 @@ struct partition *PartHeadp;
 	case 5:
 	 	{
 			LOCAL struct curvature cv;
-			FAST fastf_t f;
-			auto int ival;
 
 			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp );
 
