@@ -6476,13 +6476,13 @@ CONST mat_t			mat;
 	if( id != ID_ARS && id != ID_POLY && id != ID_BOT )
 	{
 		if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
-		    base2local ) < 0 )
+		    base2local, &rt_uniresource ) < 0 )
 		  Tcl_AppendResult(interp, "vls_solid: describe error\n", (char *)NULL);
 	}
 	else
 	{
 		if( rt_functab[id].ft_describe( vp, &intern, 0 /* not verbose */,
-		    base2local ) < 0 )
+		    base2local, &rt_uniresource ) < 0 )
 		  Tcl_AppendResult(interp, "vls_solid: describe error\n", (char *)NULL);
 	}
 

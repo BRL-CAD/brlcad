@@ -51,6 +51,7 @@ HIDDEN void	rt_tree_region_assign();
  *  Don't forget to initialize ts_dbip before use.
  */
 CONST struct db_tree_state	rt_initial_tree_state = {
+	RT_DBTS_MAGIC,		/* magic */
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
 	0, 0, 0, 0,		/* region, air, gmater, LOS */
@@ -431,6 +432,7 @@ genptr_t			client_data;
 	int			i;
 	struct rt_i		*rtip;
 
+	RT_CK_DBTS(tsp);
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_DB_INTERNAL(ip);
@@ -545,7 +547,7 @@ genptr_t			client_data;
 		bu_log("\n---Solid %d: %s\n", stp->st_bit, dp->d_namep);
 		bu_vls_init( &str );
 		/* verbose=1, mm2local=1.0 */
-		if( stp->st_meth->ft_describe( &str, ip, 1, 1.0 ) < 0 )  {
+		if( stp->st_meth->ft_describe( &str, ip, 1, 1.0, tsp->ts_resp ) < 0 )  {
 			bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
 				dp->d_namep );
 		}

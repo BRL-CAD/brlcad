@@ -931,6 +931,7 @@ struct rt_binunif_internal {
  *  and related user-provided handler routines.
  */
 struct db_tree_state {
+	long		magic;
 	struct db_i	*ts_dbip;
 	int		ts_sofar;		/* Flag bits */
 
@@ -940,6 +941,7 @@ struct db_tree_state {
 	int		ts_los;		/* equivalent LOS estimate .. */
 	struct mater_info ts_mater;	/* material properties */
 
+			/* XXX ts_mat should be a matrix pointer, not a matrix */
 	mat_t		ts_mat;		/* transform matrix */
 	int		ts_is_fastgen;	/* REGION_NON_FASTGEN/_PLATE/_VOLUME */
 
@@ -975,6 +977,9 @@ struct db_tree_state {
 #define TS_SOFAR_MINUS	1		/* Subtraction encountered above */
 #define TS_SOFAR_INTER	2		/* Intersection encountered above */
 #define TS_SOFAR_REGION	4		/* Region encountered above */
+
+#define RT_DBTS_MAGIC	0x64627473	/* "dbts" */
+#define RT_CK_DBTS(_p)	BU_CKMAG(_p, RT_DBTS_MAGIC, "db_tree_state")
 
 /*
  *			C O M B I N E D _ T R E E _ S T A T E
@@ -1900,7 +1905,8 @@ struct rt_functab {
 	int	(*ft_describe) BU_ARGS((struct bu_vls * /*str*/,
 			CONST struct rt_db_internal * /*ip*/,
 			int /*verbose*/,
-			double /*mm2local*/));
+			double /*mm2local*/,
+			struct resource * /*resp*/));
 	int	(*ft_xform) BU_ARGS((struct rt_db_internal * /*op*/,
 			CONST mat_t /*mat*/, struct rt_db_internal * /*ip*/,
 			int /*free*/, struct db_i * /*dbip*/,
@@ -2466,11 +2472,18 @@ BU_EXTERN(void db_dup_full_path, (struct db_full_path *newp,
 	CONST struct db_full_path *oldp) );
 BU_EXTERN(char *db_path_to_string, (CONST struct db_full_path *pp) );
 BU_EXTERN(void db_free_full_path, (struct db_full_path *pp) );
-BU_EXTERN(int db_region_mat, (mat_t m, CONST struct db_i *dbip,
-				CONST char *name) );
-BU_EXTERN(int db_shader_mat, (mat_t model_to_shader, CONST struct rt_i *rtip,
-				CONST struct region *rp, point_t p_min,
-				point_t p_max) );
+int db_region_mat(
+	mat_t		m,		/* result */
+	struct db_i	*dbip,
+	const char	*name,
+	struct resource *resp);
+int db_shader_mat(
+	mat_t			model_to_shader,	/* result */
+	const struct rt_i	*rtip,
+	const struct region	*rp,
+	point_t			p_min,	/* input/output: shader/region min point */
+	point_t			p_max,	/* input/output: shader/region max point */
+	struct resource		*resp);
 int db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str);
 void db_full_path_init( struct db_full_path *pathp );
 void db_append_full_path( struct db_full_path *dest, const struct db_full_path *src );
@@ -2723,7 +2736,7 @@ BU_EXTERN(int db_zapper, ( struct db_i *, struct directory *dp, int start ) );
 /* db_tree.c */
 void db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *itsp);
 void db_free_db_tree_state( struct db_tree_state *tsp );
-void db_init_db_tree_state( struct db_tree_state *tsp, struct db_i *dbip );
+void db_init_db_tree_state( struct db_tree_state *tsp, struct db_i *dbip, struct resource *resp );
 BU_EXTERN(struct combined_tree_state *db_new_combined_tree_state,
 	(CONST struct db_tree_state *tsp, CONST struct db_full_path *pathp));
 BU_EXTERN(struct combined_tree_state *db_dup_combined_tree_state,
@@ -2798,12 +2811,15 @@ BU_EXTERN(int db_walk_tree, (struct db_i *dbip, int argc, CONST char **argv,
 		struct rt_db_internal * /*ip*/,
 		genptr_t client_data ),
 	genptr_t client_data ));
-BU_EXTERN(int db_path_to_mat, (struct db_i *dbip, struct db_full_path *pathp,
-	mat_t mat, int depth));
+int db_path_to_mat(
+	struct db_i		*dbip,
+	struct db_full_path	*pathp,
+	mat_t			mat,		/* result */
+	int			depth,		/* number of arcs */
+	struct resource		*resp);
 BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct directory *dp, mat_t stck, mat_t arc,
 	struct mater_info *materp));
-int db_region_mat( mat_t m, const struct db_i *dbip, const char *name );
 /* XXX db_shader_mat, should be called rt_shader_mat */
 
 /* dir.c */

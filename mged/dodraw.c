@@ -63,6 +63,7 @@ unsigned char geometry_default_color[] = { 255, 0, 0 };
  *  Red is a one-gun color, avoiding convergence problems too.
  */
 struct db_tree_state	mged_initial_tree_state = {
+	RT_DBTS_MAGIC,		/* magic */
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
 	0, 0, 0,		/* region, air, gmater */
@@ -85,6 +86,16 @@ struct db_tree_state	mged_initial_tree_state = {
 	0.0, 1.0, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0},
+	REGION_NON_FASTGEN,		/* ts_is_fastgen */
+	0,				/* ts_stop_at_regions */
+	NULL,				/* ts_region_start_func */
+	NULL,				/* ts_region_end_func */
+	NULL,				/* ts_leaf_func */
+	NULL,				/* ts_ttol */
+	NULL,				/* ts_tol */
+	NULL,				/* ts_m */
+	NULL,				/* ts_rtip */
+	NULL				/* ts_resp */
 };
 
 static int		mged_draw_nmg_only;

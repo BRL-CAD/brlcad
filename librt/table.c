@@ -98,7 +98,7 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, \
 			CONST struct rt_db_internal *ip, int verbose, \
-			double mm2local)); \
+			double mm2local, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, \
 			CONST mat_t mat, struct rt_db_internal *ip, \
 			int free, struct db_i *dbip, \
@@ -157,7 +157,7 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			struct resource *resp)); \
 	BU_EXTERN(int rt_/**/name/**/_describe, (struct bu_vls *str, \
 			CONST struct rt_db_internal *ip, int verbose, \
-			double mm2local)); \
+			double mm2local, struct resource *resp)); \
 	BU_EXTERN(int rt_/**/name/**/_xform, (struct rt_db_internal *op, \
 			CONST mat_t mat, struct rt_db_internal *ip, \
 			int free, struct db_i *dbip, \
@@ -252,12 +252,19 @@ RT_DECLARE_INTERFACE(cline)
 
 RT_DECLARE_INTERFACE(bot)
 
-/* from db_comb.c */
-BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip,
-		CONST struct bu_external *ep, CONST mat_t mat, CONST struct db_i *dbip ));
-BU_EXTERN(int rt_comb_export5, (struct bu_external *ep,
-		CONST struct rt_db_internal *ip,
-		double local2mm, CONST struct db_i *dbip ));
+/* from db5_comb.c */
+int rt_comb_export5(
+	struct bu_external		*ep,
+	const struct rt_db_internal	*ip,
+	double				local2mm,
+	const struct db_i		*dbip,
+	struct resource			*resp);
+int rt_comb_import5(
+	struct rt_db_internal	*ip,
+	const struct bu_external *ep,
+	const mat_t		mat,
+	const struct db_i	*dbip,
+	struct resource		*resp);
 
 /* from db5_bin.c */
 BU_EXTERN(int rt_binexpm_import5, (struct rt_db_internal *ip,
@@ -276,7 +283,7 @@ BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip,
 		struct resource *resp));
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
 		CONST struct rt_db_internal *ip, int verbose,
-		double mm2local));
+		double mm2local, struct resource *resp));
 
 /* from tcl.c */
 BU_EXTERN(int rt_comb_tclget, (Tcl_Interp *interp,
@@ -980,7 +987,7 @@ int NDEF(rt_nul_export,(struct bu_external *ep,
 void DEF(rt_nul_ifree,(struct rt_db_internal *ip, struct resource *resp))
 int NDEF(rt_nul_describe,(struct bu_vls *str,
 			CONST struct rt_db_internal *ip,
-			int verbose, double mm2local))
+			int verbose, double mm2local, struct resource *resp))
 int NDEF(rt_nul_xform, (struct rt_db_internal *op,
 			CONST mat_t mat, struct rt_db_internal *ip,
 			int free, struct db_i *dbip, struct resource *resp))

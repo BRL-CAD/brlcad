@@ -1241,7 +1241,7 @@ wdb_list_tcl(clientData, interp, argc, argv)
 
 			bu_vls_printf( &str, "%s:  ", argv[arg] );
 
-			if (rt_functab[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local) < 0)
+			if (rt_functab[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local, &rt_uniresource) < 0)
 				Tcl_AppendResult(interp, dp->d_namep, ": describe error", (char *)NULL);
 
 			rt_db_free_internal(&intern, &rt_uniresource);
@@ -1287,7 +1287,7 @@ wdb_trace(interp, dbip, old_xlate, flag, wdb_xform, des_path)
 	RT_CK_FULL_PATH(des_path);
 
 	db_full_path_init(&accumulated_path);
-	db_init_db_tree_state( &ts, dbip );
+	db_init_db_tree_state( &ts, dbip, &rt_uniresource );
 	bn_mat_copy( ts.ts_mat, old_xlate );
 	if( db_follow_path( &ts, &accumulated_path, des_path, LOOKUP_NOISY, 0 ) < 0 )  {
 		ret = 0;
@@ -4380,7 +4380,7 @@ wdb_do_list(dbip, interp, outstrp, dp, verbose)
 	bu_vls_printf(outstrp, "%s:  ", dp->d_namep);
 
 	if (rt_functab[id].ft_describe(outstrp, &intern,
-				       verbose, dbip->dbi_base2local) < 0)
+				       verbose, dbip->dbi_base2local, &rt_uniresource) < 0)
 		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
 	rt_db_free_internal(&intern, &rt_uniresource);
 }

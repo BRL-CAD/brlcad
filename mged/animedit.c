@@ -2280,7 +2280,7 @@ struct hold_point *hp;
 		return 1;
 	case ID_GRIP:
 		if (hp->flag & HOLD_PT_GOOD) {
-			db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-2);
+			db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
 			MAT4X3PNT(loc, mat, hp->point);
 			return 1;
 		}
@@ -2295,11 +2295,11 @@ struct hold_point *hp;
 		hp->flag |= HOLD_PT_GOOD;
 		rt_db_free_internal( &intern, &rt_uniresource );
 
-		db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-2);
+		db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
 		MAT4X3PNT(loc, mat, hp->point);
 		return 1;
 	case ID_JOINT:
-		db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-3);
+		db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-3, &rt_uniresource);
 		if (hp->flag & HOLD_PT_GOOD) {
 			MAT4X3VEC(loc, mat, hp->point);
 			return 1;
@@ -3612,6 +3612,7 @@ genptr_t			client_data;
 	return curtree;
 }
 static struct db_tree_state mesh_initial_tree_state = {
+	RT_DBTS_MAGIC,		/* magic */
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
 	0,0,0,			/* region, air, gmater */
@@ -3630,6 +3631,16 @@ static struct db_tree_state mesh_initial_tree_state = {
 	0.0, 1.0, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0},
+	REGION_NON_FASTGEN,		/* ts_is_fastgen */
+	0,				/* ts_stop_at_regions */
+	NULL,				/* ts_region_start_func */
+	NULL,				/* ts_region_end_func */
+	NULL,				/* ts_leaf_func */
+	NULL,				/* ts_ttol */
+	NULL,				/* ts_tol */
+	NULL,				/* ts_m */
+	NULL,				/* ts_rtip */
+	NULL				/* ts_resp */
 };
 int
 f_jmesh(argc, argv)

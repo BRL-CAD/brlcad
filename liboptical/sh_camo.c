@@ -224,7 +224,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	/* Optional:  get the matrix which maps model space into
 	 *  "region" or "shader" space
 	 */
-	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
+	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
 	/* add the noise-space scaling */
 	bn_mat_idn(tmp);
@@ -369,7 +369,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	/* Optional:  get the matrix which maps model space into
 	 *  "region" or "shader" space
 	 */
-	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
+	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
 	/* add the noise-space scaling */
 	bn_mat_idn(tmp);

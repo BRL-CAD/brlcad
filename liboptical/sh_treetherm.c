@@ -427,7 +427,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 *
 	 * Shading is done in "region coordinates":
 	 */
-	db_region_mat(tthrm_sp->tthrm_m_to_sh, rtip->rti_dbip, rp->reg_name);
+	db_region_mat(tthrm_sp->tthrm_m_to_sh, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
 	if (rdebug&RDEBUG_SHADE) {
 		bu_log("min_temp: %17.14e  max_temp %17.14e temp_scale: %17.14e\n",

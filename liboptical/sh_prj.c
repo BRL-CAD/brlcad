@@ -412,8 +412,10 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * db_region_mat returns a matrix which maps points on/in the region
 	 * as it exists where the region is defined (as opposed to the 
 	 * (possibly transformed) one we are rendering.
+	 *
+	 *  Non-PARALLEL, which is OK, because shaders are prepped serially.
 	 */
-	db_region_mat(prj_sp->prj_m_to_sh, rtip->rti_dbip, rp->reg_name);
+	db_region_mat(prj_sp->prj_m_to_sh, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
 
 	if (rdebug&RDEBUG_SHADE) {

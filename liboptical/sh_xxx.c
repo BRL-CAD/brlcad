@@ -191,7 +191,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * Alternatively, shading may be done in "region coordinates"
 	 * if desired:
 	 *
-*	db_region_mat(xxx_sp->xxx_m_to_r, rtip->rti_dbip, rp->reg_name);
+*	db_region_mat(xxx_sp->xxx_m_to_r, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 	 *
 	 */
 

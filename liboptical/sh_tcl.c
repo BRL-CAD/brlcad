@@ -145,7 +145,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 *
 	 * Shading is be done in "region coordinates":
 	 */
-	db_region_mat(tcl_sp->tcl_m_to_r, rtip->rti_dbip, rp->reg_name);
+	db_region_mat(tcl_sp->tcl_m_to_r, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
 
 	if (rdebug&RDEBUG_SHADE) {

@@ -565,7 +565,7 @@ int flag;
 		return;
 	}
 	bu_vls_printf( &str, "%16s:\n", dp->d_namep );
-	if( rt_functab[id].ft_describe( &str, &intern, 1, base2local ) < 0 )
+	if( rt_functab[id].ft_describe( &str, &intern, 1, base2local, &rt_uniresource ) < 0 )
 		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
 	rt_db_free_internal( &intern, &rt_uniresource );
 	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
@@ -712,6 +712,7 @@ genptr_t		client_data;
  */
 
 static struct db_tree_state push_initial_tree_state = {
+	RT_DBTS_MAGIC,		/* magic */
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
 	0,0,0,			/* region, air, gmater */
@@ -738,6 +739,16 @@ static struct db_tree_state push_initial_tree_state = {
 	0.0, 1.0, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0},
+	REGION_NON_FASTGEN,		/* ts_is_fastgen */
+	0,				/* ts_stop_at_regions */
+	NULL,				/* ts_region_start_func */
+	NULL,				/* ts_region_end_func */
+	NULL,				/* ts_leaf_func */
+	NULL,				/* ts_ttol */
+	NULL,				/* ts_tol */
+	NULL,				/* ts_m */
+	NULL,				/* ts_rtip */
+	NULL				/* ts_resp */
 };
 
 /*			F _ P U S H

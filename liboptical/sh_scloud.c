@@ -162,7 +162,7 @@ struct rt_i		*rtip;
 		/* bad thing */
 		rt_bomb("db_string_to_path() error");
 	}
-	if(! db_path_to_mat(rtip->rti_dbip, &full_path, region_to_model, 0)) {
+	if(! db_path_to_mat(rtip->rti_dbip, &full_path, region_to_model, 0, &rt_uniresource)) {
 		/* bad thing */
 		rt_bomb("db_path_to_mat() error");
 	}

@@ -902,7 +902,7 @@ int	verbose;
 	bu_vls_printf( outstrp, "%s:  ", dp->d_namep );
 
 	if( rt_functab[id].ft_describe( outstrp, &intern,
-	    verbose, base2local ) < 0 )
+	    verbose, base2local, &rt_uniresource ) < 0 )
 	  Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
 	rt_db_free_internal( &intern, &rt_uniresource );
 }
@@ -959,7 +959,7 @@ int recurse;
 
       bu_vls_printf( &str, "%s:  ", argv[arg] );
 
-      if (intern.idb_meth->ft_describe(&str, &intern, 99, base2local) < 0)
+      if (intern.idb_meth->ft_describe(&str, &intern, 99, base2local, &rt_uniresource) < 0)
 	Tcl_AppendResult(interp, dp->d_namep, ": ft_describe error\n", (char *)NULL);
     	rt_db_free_internal( &intern, &rt_uniresource );
     } else {

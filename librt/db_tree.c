@@ -54,6 +54,7 @@ db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *its
 {
 	int		shader_len=0;
 
+	RT_CK_DBTS(itsp);
 	RT_CK_DBI(itsp->ts_dbip);
 
 	*otsp = *itsp;			/* struct copy */
@@ -77,6 +78,7 @@ db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *its
 void
 db_free_db_tree_state( struct db_tree_state *tsp )
 {
+	RT_CK_DBTS(tsp);
 	RT_CK_DBI(tsp->ts_dbip);
 	if( tsp->ts_mater.ma_shader )  {
 		bu_free( tsp->ts_mater.ma_shader, "db_free_combined_tree_state: ma_shader" );
@@ -93,12 +95,15 @@ db_free_db_tree_state( struct db_tree_state *tsp )
  *  and then set ts_dbip in your copy.
  */
 void
-db_init_db_tree_state( struct db_tree_state *tsp, struct db_i *dbip )
+db_init_db_tree_state( struct db_tree_state *tsp, struct db_i *dbip, struct resource *resp )
 {
 	RT_CK_DBI(dbip);
+	RT_CK_RESOURCE(resp);
 
 	bzero( (char *)tsp, sizeof(*tsp) );
+	tsp->magic = RT_DBTS_MAGIC;
 	tsp->ts_dbip = dbip;
+	tsp->ts_resp = resp;
 	bn_mat_idn( tsp->ts_mat );	/* XXX should use null pointer convention! */
 }
 
@@ -112,6 +117,7 @@ register CONST struct db_full_path	*pathp;
 {
 	struct combined_tree_state	*new;
 
+	RT_CK_DBTS(tsp);
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_DBI(tsp->ts_dbip);
 
@@ -162,6 +168,8 @@ void
 db_pr_tree_state( tsp )
 register CONST struct db_tree_state	*tsp;
 {
+	RT_CK_DBTS(tsp);
+
 	bu_log("db_pr_tree_state(x%x):\n", tsp);
 	bu_log(" ts_dbip=x%x\n", tsp->ts_dbip);
 	bu_printb(" ts_sofar", tsp->ts_sofar, "\020\3REGION\2INTER\1MINUS" );
@@ -214,6 +222,7 @@ struct db_tree_state		*tsp;
 CONST struct db_full_path	*pathp;
 register CONST struct rt_comb_internal	*comb;
 {
+	RT_CK_DBTS(tsp);
 	RT_CK_COMB(comb);
 
 	if( comb->rgb_valid == 1 )  {
@@ -337,6 +346,7 @@ CONST union tree	*tp;
 	mat_t			xmat;
 	mat_t			old_xlate;
 
+	RT_CK_DBTS(tsp);
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_TREE(tp);
 
@@ -387,6 +397,7 @@ db_apply_state_from_one_member(
 {
 	int	ret;
 
+	RT_CK_DBTS(tsp);
 	RT_CHECK_DBI( tsp->ts_dbip );
 	RT_CK_FULL_PATH( pathp );
 	RT_CK_TREE(tp);
@@ -777,6 +788,7 @@ db_follow_path(
 	struct directory	*dp;		/* element's dp */
 	int			j;
 
+	RT_CK_DBTS(tsp);
 	RT_CHECK_DBI( tsp->ts_dbip );
 	RT_CK_FULL_PATH( total_path );
 	RT_CK_FULL_PATH( new_path );
@@ -934,6 +946,8 @@ int			noisy;
 	struct db_full_path	new_path;
 	int			ret;
 
+	RT_CK_DBTS(tsp);
+
 	if( *orig_str == '\0' )  return 0;		/* Null string */
 
 	if( db_string_to_path( &new_path, tsp->ts_dbip, orig_str ) < 0 )
@@ -965,6 +979,7 @@ genptr_t	client_data;
 	union tree		*subtree;
 
 	RT_CK_TREE(tp);
+	RT_CK_DBTS(msp);
 	RT_CK_RESOURCE(msp->ts_resp);
 	db_dup_db_tree_state( &memb_state, msp );
 
@@ -1052,6 +1067,7 @@ genptr_t	client_data;
 	struct rt_db_internal	intern;
 	union tree		*curtree = TREE_NULL;
 
+	RT_CK_DBTS(tsp);
 	RT_CHECK_DBI( tsp->ts_dbip );
 	RT_CK_RESOURCE(tsp->ts_resp);
 	RT_CK_FULL_PATH(pathp);
@@ -1823,6 +1839,7 @@ union tree		*curtree;
 genptr_t		client_data;
 {
 
+	RT_CK_DBTS(tsp);
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_RESOURCE(tsp->ts_resp);
@@ -1843,6 +1860,7 @@ genptr_t		client_data;
 {
 	register union tree	*curtree;
 
+	RT_CK_DBTS(tsp);
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_DB_INTERNAL(ip);
@@ -2138,6 +2156,7 @@ genptr_t	client_data;
 	struct db_walk_parallel_state	wps;
 	struct resource		*resp;
 
+	RT_CK_DBTS(init_state);
 	RT_CHECK_DBI(dbip);
 
 	if( init_state->ts_rtip == NULL && ncpu == 1 )  {
@@ -2319,11 +2338,12 @@ genptr_t	client_data;
  *  Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
  */
 int
-db_path_to_mat( dbip, pathp, mat, depth)
-struct db_i	*dbip;
-struct db_full_path *pathp;
-mat_t mat;
-int depth;			/* number of arcs */
+db_path_to_mat(
+	struct db_i		*dbip,
+	struct db_full_path	*pathp,
+	mat_t			mat,		/* result */
+	int			depth,		/* number of arcs */
+	struct resource		*resp)
 {
 	struct db_tree_state	ts;
 	struct db_full_path	null_path;
@@ -2334,7 +2354,7 @@ int depth;			/* number of arcs */
 	if( !mat ) rt_bomb("db_path_to_mat() NULL matrix pointer\n");
 
 	db_full_path_init( &null_path );
-	db_init_db_tree_state( &ts, dbip );
+	db_init_db_tree_state( &ts, dbip, resp );
 
 	ret = db_follow_path( &ts, &null_path, pathp, LOOKUP_NOISY, depth );
 	db_free_full_path( &null_path );
@@ -2429,7 +2449,11 @@ struct mater_info *materp;
  *	<0	Failure
  */
 int
-db_region_mat( mat_t m, const struct db_i *dbip, const char *name )
+db_region_mat(
+	mat_t		m,		/* result */
+	struct db_i	*dbip,
+	const char	*name,
+	struct resource *resp)
 {
 	struct db_full_path		full_path;
 	mat_t	region_to_model;
@@ -2440,7 +2464,7 @@ db_region_mat( mat_t m, const struct db_i *dbip, const char *name )
 		bu_log("db_region_mat: db_string_to_path(%s) error\n", name);
 		return -1;
 	}
-	if(! db_path_to_mat((struct db_i *)dbip, &full_path, region_to_model, 0)) {
+	if(! db_path_to_mat(dbip, &full_path, region_to_model, 0, resp)) {
 		/* bad thing */
 		bu_log("db_region_mat: db_path_to_mat(%s) error", name);
 		return -2;
@@ -2473,12 +2497,13 @@ db_region_mat( mat_t m, const struct db_i *dbip, const char *name )
  *	<0	Failure
  */
 int
-db_shader_mat(model_to_shader, rtip, rp, p_min, p_max)
-mat_t model_to_shader;
-CONST struct rt_i *rtip;
-CONST struct region *rp;
-point_t p_min;	/* shader/region min point */
-point_t p_max;	/* shader/region max point */
+db_shader_mat(
+	mat_t			model_to_shader,	/* result */
+	const struct rt_i	*rtip,
+	const struct region	*rp,
+	point_t			p_min,	/* input/output: shader/region min point */
+	point_t			p_max,	/* input/output: shader/region max point */
+	struct resource		*resp)
 {
 	mat_t	model_to_region;
 	mat_t	m_xlate;
@@ -2488,12 +2513,15 @@ point_t p_max;	/* shader/region max point */
 	struct	rt_i *my_rtip;
 	CONST char	*reg_name;
 
+	RT_CK_RTI(rtip);
+	RT_CK_RESOURCE(resp);
+
 	reg_name = rt_basename(rp->reg_name);
 #ifdef DEBUG_SHADER_MAT
 	bu_log("db_shader_mat(%s)\n", rp->reg_name);
 #endif
 	/* get model-to-region space mapping */
-	if( db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name) < 0 )
+	if( db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0 )
 		return -1;
 
 #ifdef DEBUG_SHADER_MAT

@@ -271,7 +271,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 found:
 	noise_sp->shader_number = i;
 
-	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
+	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
 	bn_mat_idn(tmp);
 	if (noise_sp->size != 1.0) {
