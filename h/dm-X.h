@@ -11,10 +11,10 @@
  *  GED is using -2048..+2048,
  *  X is 0..width,0..height
  */
-#define	GED_TO_Xx(_dmp, x) ((int)(((x)/4096.0+0.5)*((struct x_vars *)((_dmp)->dm_vars))->width))
-#define	GED_TO_Xy(_dmp, x) ((int)((0.5-(x)/4096.0)*((struct x_vars *)((_dmp)->dm_vars))->height))
-#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)((struct x_vars *)((_dmp)->dm_vars))->width - 0.5) * 4095))
-#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)((struct x_vars *)((_dmp)->dm_vars))->height) * 4095))
+#define	GED_TO_Xx(_dmp, x) ((int)(((x)/4095.0+0.5)*_dmp->dm_width))
+#define	GED_TO_Xy(_dmp, x) ((int)((0.5-(x)/4095.0)*_dmp->dm_height))
+#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->dm_width - 0.5) * 4095))
+#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->dm_height) * 4095))
 
 #define X_MV_O(_m) offsetof(struct modifiable_x_vars, _m)
 
@@ -28,9 +28,8 @@ struct x_vars {
   struct bu_list l;
   Display *dpy;
   Window win;
+  Tk_Window top;
   Tk_Window xtkwin;
-  int width;
-  int height;
   int depth;
   int omx, omy;
   unsigned int mb_mask;
@@ -46,9 +45,11 @@ struct x_vars {
   struct modifiable_x_vars mvars;
 };
 
+extern struct dm *X_open();
 extern void X_configure_window_shape();
 extern void X_establish_perspective();
 extern void X_set_perspective();
+extern int X_drawString2D();
 extern struct dm dm_X;
 extern struct x_vars head_x_vars;
 
