@@ -1,6 +1,6 @@
 # $Id$
 
-# SUBDIRS = clock
+SUBDIRS = clock
 
 bin_PROGRAMS = \
 	applymap \
