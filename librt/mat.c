@@ -667,8 +667,23 @@ CONST vect_t	to;
 	VMOVE( unit_to, to );
 	VUNITIZE( unit_to );		/* aka "w" */
 
-	VCROSS( N, unit_from, unit_to );
-	VUNITIZE( N );			/* should be unnecessary */
+	/*  If from and to are the same or opposite, special handling
+	 *  is needed, because the cross product isn't defined.
+	 *  asin(0.00001) = 0.0005729 degrees (1/2000 degree)
+	 */
+	dot = VDOT(unit_from, unit_to);
+	if( dot > 1.0-0.00001 )  {
+		/* dot == 1, return identity matrix */
+		mat_idn(m);
+		return;
+	}
+	if( dot < -1.0+0.00001 )  {
+		/* dot == -1, select random perpendicular N vector */
+		mat_vec_perp( N, unit_from );
+	} else {
+		VCROSS( N, unit_from, unit_to );
+		VUNITIZE( N );			/* should be unnecessary */
+	}
 	VCROSS( M, N, unit_from );
 	VUNITIZE( M );			/* should be unnecessary */
 
@@ -919,8 +934,8 @@ register CONST vect_t	in;
 /*
  *			M A T _ V E C _ P E R P
  *
- *  Given a vector, create another vector which is perpendicular to it,
- *  but may not have unit length.
+ *  Given a vector, create another vector which is perpendicular to it.
+ *  The output vector will have unit length only if the input vector did.
  */
 void
 mat_vec_perp( new, old )
