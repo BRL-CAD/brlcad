@@ -126,7 +126,7 @@ cat > "${PKG_NAME}.pkg/Contents/Info.plist" <<EOF
         <key>IFPkgFlagAllowBackRev</key>
         <true/>
         <key>IFPkgFlagAuthorizationAction</key>
-        <string>AdminAuthorization</string>
+        <string>RootAuthorization</string>
         <key>IFPkgFlagDefaultLocation</key>
         <string>/</string>
         <key>IFPkgFlagInstallFat</key>
@@ -225,7 +225,7 @@ DeleteWarning Don't do it... untested.
 
 ### Package Flags
 
-NeedsAuthorization NO
+NeedsAuthorization YES
 Required YES
 Relocatable NO
 RequiresReboot NO
