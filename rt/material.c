@@ -22,17 +22,12 @@ static const char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/param.h>
 #include <ctype.h>
 #include <math.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
-#endif
-#ifdef HAVE_DLOPEN
-#include <dlfcn.h>
 #endif
 
 #include "machine.h"
@@ -42,6 +37,13 @@ static const char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "rtprivate.h"
+
+#ifdef HAVE_DLOPEN
+# undef BSD
+# include <sys/param.h>
+# include <dlfcn.h>
+#endif
+
 
 static CONST char *mdefault = "default"; /* Name of default material */
 
@@ -216,7 +218,9 @@ mlib_setup( struct mfuncs **headp,
 	struct rt_i *rtip )
 {
 	register CONST struct mfuncs *mfp;
+#ifdef HAVE_DLOPEN
 	register struct mfuncs *mfp_new;
+#endif
 	int		ret;
 	struct bu_vls	param;
 	CONST char	*material;
