@@ -108,7 +108,7 @@ char **argv;
 					record.M.m_instname);
 				rt_mat_dbmat( xmat, record.M.m_mat );
 				matrix_print( xmat );
-				(void)putchar('\n');
+				rt_log("\n");
 			}
 		}
 		if(record.u_id == ID_P_HEAD) {

@@ -628,19 +628,19 @@ struct directory	*dp;
 					prfield(field);
 				else {
 					for(i=0;i<(maxpos[field] - lpos); i++)
-						(void)putchar(' ');
+						rt_log(" ");
 				}
 
 				lpos = 0;
 				if(++field > 3) {
-					(void)putchar('\r');
+					rt_log("\r");
 					field = 0;
 				}
 			break;
 
 			case BACKSPACE:
 				if(lpos > 0) {
-					(void)putchar('\b');
+					rt_log("\b");
 					lpos--;
 				}
 				else {
@@ -654,19 +654,18 @@ struct directory	*dp;
 						prfield(field);
 						elflag = 0;
 						for(i=0;i<maxpos[field];i++)
-							(void)putchar('\b');
+							rt_log("\b");
 					}
 					if(field == 0)
 						break;
 					field--;
 					for(i=0; i<maxpos[field]; i++)
-						(void)putchar('\b');
+						rt_log("\b");
 				}
 			break;
 
 			case CRETURN:
-				(void)putchar('\r');
-				(void)putchar('\n');
+				rt_log("\r\n");
 				if(eflag) {
 					if(elflag) {
 						/* change present field */
@@ -692,8 +691,7 @@ struct directory	*dp;
 			case QUIT_q:
 				/* 'q' entered ==> quit the editing */
 			case CONTROLC:
-				(void)putchar('\r');
-				(void)putchar('\n');
+				rt_log("\r\n");
 				return(1);
 
 			case 48:
@@ -710,12 +708,11 @@ struct directory	*dp;
 				eflag++;
 				if(lpos < maxpos[field]) {
 					elflag++;
-					(void)putchar( c );
+					rt_log( "%c", c );
 					ctemp[lpos++] = c;
 				}
 				else {
-					(void)putchar(7);	/* bell */
-					(void)putchar(7);	/* bell */
+					rt_log("\a\a");	/* bell */
 				}
 			break;
 
@@ -727,14 +724,12 @@ struct directory	*dp;
 				los = record.c.c_los;
 				lpos = field = eflag = elflag = 0;
 
-				(void)putchar('\r');
-				(void)rt_log("%-6d%-3d%-3d%-4d",item,air,mat,los);
-				(void)putchar('\r');
+				rt_log("\r%-6d%-3d%-3d%-4d\r",item,air,mat,los);
 
 			break;
 
 			default:
-				(void)putchar(7); 	/* ring bell */
+				rt_log("\a"); 	/* ring bell */
 			break;
 		}	/* end of switch */
 	}	/* end of while loop */
