@@ -30,6 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <signal.h>
 #include <math.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -48,7 +49,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-void	ext4to6();
+void	ext4to6(),old_ext4to6();
+
+static int new_way = 1;
+extern struct rt_external	es_ext;
+extern struct rt_db_internal	es_int;
+extern struct rt_db_internal	es_int_orig;
+extern struct rt_tol		mged_tol;		/* from ged.c */
 
 /* face definitions for each arb type */
 int arb_faces[5][24] = {
@@ -185,6 +192,10 @@ vect_t pos_model;
 	short *final;		/* location of points to redo */
 	register dbfloat_t *op;
 	static int i, *iptr;
+	struct rt_arb_internal *arb;
+
+	arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	RT_ARB_CK_MAGIC( arb );
 
 	/* set the pointer */
 	switch( es_type ) {
@@ -234,17 +245,24 @@ vect_t pos_model;
 		return(1);
 	}
 
-	/* convert to point notation (in place ----- DANGEROUS) */
-	for(i=3; i<=21; i+=3) {
-		op = &es_rec.s.s_values[i];
-		VADD2( op, op, &es_rec.s.s_values[0] );
+	if( !new_way )
+	{
+		/* convert to point notation (in place ----- DANGEROUS) */
+		for(i=3; i<=21; i+=3)
+		{
+			op = &es_rec.s.s_values[i];
+			VADD2( op, op, &es_rec.s.s_values[0] );
+		}
 	}
 
 	/* do the arb editing */
 
 	if( es_edflag == PTARB ) {
 		/* moving a point - not an edge */
-		VMOVE(&es_rec.s.s_values[es_menu*3], &pos_model[0]);
+		if( new_way )
+			VMOVE( arb->pt[es_menu] , pos_model )
+		else
+			VMOVE(&es_rec.s.s_values[es_menu*3], &pos_model[0])
 		edptr += 4;
 	} else if( es_edflag == EARB ) {
 		vect_t	edge_dir;
@@ -253,14 +271,29 @@ vect_t pos_model;
 		pt1 = *edptr++;
 		pt2 = *edptr++;
 		/* direction of this edge */
-		if( newedge ) {
-			/* edge direction comes from edgedir() in pos_model */
-			VMOVE( edge_dir, pos_model );
-			VMOVE(pos_model, &es_rec.s.s_values[pt1*3]);
-			newedge = 0;
-		} else {
-			/* must calculate edge direction */
-			VSUB2(edge_dir, &es_rec.s.s_values[3*pt2], &es_rec.s.s_values[3*pt1]);
+		if( new_way )
+		{
+			if( newedge ) {
+				/* edge direction comes from edgedir() in pos_model */
+				VMOVE( edge_dir, pos_model );
+				VMOVE(pos_model, arb->pt[pt1]);
+				newedge = 0;
+			} else {
+				/* must calculate edge direction */
+				VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
+			}
+		}
+		else
+		{
+			if( newedge ) {
+				/* edge direction comes from edgedir() in pos_model */
+				VMOVE( edge_dir, pos_model );
+				VMOVE(pos_model, &es_rec.s.s_values[pt1*3]);
+				newedge = 0;
+			} else {
+				/* must calculate edge direction */
+				VSUB2(edge_dir, &es_rec.s.s_values[3*pt2], &es_rec.s.s_values[3*pt1]);
+			}
 		}
 		if(MAGNITUDE(edge_dir) == 0.0) 
 			goto err;
@@ -279,21 +312,30 @@ printf("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
 	/* editing is done - insure planar faces */
 	/* redo plane eqns that changed */
 	newp = *edptr++; 	/* plane to redo */
-	if( newp == 9 ) {
-		/* special flag --> redo all the planes */
-		iptr = &arb_faces[es_type-4][0];
-		for(i=0; i<6; i++) {
-			p1 = *iptr++;
-			p2 = *iptr++;
-			p3 = *iptr++;
-			iptr++;
+	if( new_way )
+	{
+		if( newp == 9 )	/* special flag --> redo all the planes */
+			if( rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol ) )
+				goto err;
+	}
+	else
+	{
+		if( newp == 9 ) {
+			/* special flag --> redo all the planes */
+			iptr = &arb_faces[es_type-4][0];
+			for(i=0; i<6; i++) {
+				p1 = *iptr++;
+				p2 = *iptr++;
+				p3 = *iptr++;
+				iptr++;
 /*
 printf("REDO plane %d with points %d %d %d\n",i+1,p1+1,p2+1,p3+1);
 */
-			if( planeqn(i, p1, p2, p3, &es_rec.s) )
-				goto err;
-			if( *iptr == -1 )
-				break;		/* finished */
+				if( planeqn(i, p1, p2, p3, &es_rec.s) )
+					goto err;
+				if( *iptr == -1 )
+					break;		/* finished */
+			}
 		}
 	}
 	if(newp >= 0 && newp < 6) {
@@ -305,8 +347,17 @@ printf("REDO plane %d with points %d %d %d\n",i+1,p1+1,p2+1,p3+1);
 /*
 printf("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 */
-			if( planeqn(newp, p1, p2, p3, &es_rec.s) )
-				goto err;
+			if( new_way )
+			{
+				if( rt_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
+							arb->pt[p3], &mged_tol ) )
+					goto err;
+			}
+			else
+			{
+				if( planeqn(newp, p1, p2, p3, &es_rec.s) )
+					goto err;
+			}
 			/* next plane */
 			if( (newp = *edptr++) == -1 || newp == 8 )
 				break;
@@ -324,8 +375,15 @@ printf("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 /*
 printf("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 */
-			if( planeqn(newp, p1, p2, p3, &es_rec.s) )
-				goto err;
+			if( new_way )
+			{
+				if( rt_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
+						arb->pt[p3], &mged_tol ))
+					goto err;
+			}
+			else
+				if( planeqn(newp, p1, p2, p3, &es_rec.s) )
+					goto err;
 		}
 	}
 
@@ -340,8 +398,12 @@ printf("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 /*
 printf("intersect: type=%d   point = %d\n",es_type,p1+1);
 */
-		if( intersect( es_type, p1*3, p1, &es_rec.s ) )
-			goto err;
+		if( new_way )
+			if( rt_arb_3face_intersect( arb->pt[p1], es_peqn, es_type, p1*3 ))
+				goto err;
+		else
+			if( intersect( es_type, p1*3, p1, &es_rec.s ) )
+				goto err;
 	}
 
 	/* Special case for ARB7: move point 5 .... must
@@ -351,8 +413,12 @@ printf("intersect: type=%d   point = %d\n",es_type,p1+1);
 /*
 printf("redo plane 2 == 5,6,7 for ARB7\n");
 */
-		if( planeqn(2, 4, 5, 6, &es_rec.s) )
-			goto err;
+		if( new_way )
+			if(  rt_mk_plane_3pts( es_peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], &mged_tol ))
+				goto err;
+		else
+			if( planeqn(2, 4, 5, 6, &es_rec.s) )
+				goto err;
 	}
 
 	/* carry along any like points */
@@ -361,32 +427,62 @@ printf("redo plane 2 == 5,6,7 for ARB7\n");
 		break;
 
 		case ARB7:
-			VMOVE(&es_rec.s.s_values[21], &es_rec.s.s_values[12]);
+			if( new_way )
+				VMOVE( arb->pt[7] , arb->pt[4] )
+			else
+				VMOVE(&es_rec.s.s_values[21], &es_rec.s.s_values[12])
 		break;
 
 		case ARB6:
-			VMOVE(&es_rec.s.s_values[15], &es_rec.s.s_values[12]);
-			VMOVE(&es_rec.s.s_values[21], &es_rec.s.s_values[18]);
+			if( new_way )
+			{
+				VMOVE( arb->pt[5] , arb->pt[4] );
+				VMOVE( arb->pt[7] , arb->pt[6] );
+			}
+			else
+			{
+				VMOVE(&es_rec.s.s_values[15], &es_rec.s.s_values[12]);
+				VMOVE(&es_rec.s.s_values[21], &es_rec.s.s_values[18]);
+			}
 		break;
 
 		case ARB5:
-			for(i=15; i<=21; i+=3) {
-				VMOVE(&es_rec.s.s_values[i], &es_rec.s.s_values[12]);
+			if( new_way )
+			{
+				for( i=5 ; i<8 ; i++ )
+					VMOVE( arb->pt[i] , arb->pt[4] );
+			}
+			else
+			{
+				for(i=15; i<=21; i+=3)
+					VMOVE(&es_rec.s.s_values[i], &es_rec.s.s_values[12])
 			}
 		break;
 
 		case ARB4:
-			VMOVE(&es_rec.s.s_values[9], &es_rec.s.s_values[0]);
-			for(i=15; i<=21; i+=3) {
-				VMOVE(&es_rec.s.s_values[i], &es_rec.s.s_values[12]);
+			if( new_way )
+			{
+				VMOVE( arb->pt[3] , arb->pt[0] );
+				for( i=5 ; i<8 ; i++ )
+					VMOVE( arb->pt[i] , arb->pt[4] );
+			}
+			else
+			{
+				VMOVE(&es_rec.s.s_values[9], &es_rec.s.s_values[0]);
+				for(i=15; i<=21; i+=3)
+					VMOVE(&es_rec.s.s_values[i], &es_rec.s.s_values[12])
 			}
 		break;
 	}
 
 	/* back to vector notation */
-	for(i=3; i<=21; i+=3) {
-		op = &es_rec.s.s_values[i];
-		VSUB2( op, op, &es_rec.s.s_values[0] );
+	if( !new_way )
+	{
+		for(i=3; i<=21; i+=3)
+		{
+			op = &es_rec.s.s_values[i];
+			VSUB2( op, op, &es_rec.s.s_values[0] );
+		}
 	}
 	return(0);		/* OK */
 
@@ -396,9 +492,13 @@ err:
 	es_edflag = IDLE;
 
 	/* back to vector notation */
-	for(i=3; i<=21; i+=3) {
-		op = &es_rec.s.s_values[i];
-		VSUB2(op, op, &es_rec.s.s_values[0]);
+	if( !new_way )
+	{
+		for(i=3; i<=21; i+=3)
+		{
+			op = &es_rec.s.s_values[i];
+			VSUB2(op, op, &es_rec.s.s_values[0]);
+		}
 	}
 	return(1);		/* BAD */
 }
@@ -473,7 +573,18 @@ struct solidrec *sp;
 	if( rt_mkpoint_3planes( vec1, es_peqn[i1], es_peqn[i2],
 	    es_peqn[i3] ) < 0 )
 		return(1);
-	VMOVE( &sp->s_values[pos*3], vec1 );	/* XXX type conversion too */
+
+	if( new_way )
+	{
+		struct rt_arb_internal *arb;
+
+		arb = (struct rt_arb_internal *)es_int.idb_ptr;
+		RT_ARB_CK_MAGIC( arb );
+		VMOVE( arb->pt[pos] , vec1 )
+	}
+	else
+		VMOVE( &sp->s_values[pos*3], vec1 )	/* XXX type conversion too */
+
 	return( 0 );
 }
 
@@ -492,7 +603,6 @@ vect_t thru;
 int bp1, bp2, end1, end2;
 vect_t	dir;
 {
-	dbfloat_t *op;
 	fastf_t	t1, t2;
 	struct rt_tol	tol;
 
@@ -509,11 +619,26 @@ vect_t	dir;
 		return( 1 );
 	}
 
-	op = &es_rec.s.s_values[end1*3];
-	VJOIN1( op, thru, t1, dir );
+	if( new_way )
+	{
+		struct rt_arb_internal *arb;
 
-	op = &es_rec.s.s_values[end2*3];
-	VJOIN1( op, thru, t2, dir );
+		arb = (struct rt_arb_internal *)es_int.idb_ptr;
+		RT_ARB_CK_MAGIC( arb );
+
+		VJOIN1( arb->pt[end1] , thru, t1, dir );
+		VJOIN1( arb->pt[end2] , thru, t2, dir );
+	}
+	else
+	{
+		dbfloat_t *op;
+
+		op = &es_rec.s.s_values[end1*3];
+		VJOIN1( op, thru, t1, dir );
+
+		op = &es_rec.s.s_values[end2*3];
+		VJOIN1( op, thru, t2, dir );
+	}
 
 	return( 0 );
 }
@@ -531,13 +656,25 @@ char	**argv;
 	static int prod;
 	static fastf_t dist;
 	static struct solidrec lsolid;	/* local copy of solid */
+	struct rt_arb_internal larb;	/* local copy of arb for new way */
 
 	if( not_state( ST_S_EDIT, "Extrude" ) )
 		return CMD_BAD;
 
-	if( es_rec.s.s_type != GENARB8 )  {
-		(void)printf("Extrude: solid type must be ARB\n");
-		return CMD_BAD;
+	if( new_way )
+	{
+		if( es_int.idb_type != ID_ARB8 )
+		{
+			(void)printf("Extrude: solid type must be ARB\n");
+			return CMD_BAD;
+		}
+	}
+	else
+	{
+		if( es_rec.s.s_type != GENARB8 )  {
+			(void)printf("Extrude: solid type must be ARB\n");
+			return CMD_BAD;
+		}
 	}
 
 	if(es_type != ARB8 && es_type != ARB6 && es_type != ARB4) {
@@ -553,10 +690,17 @@ char	**argv;
 	/* convert from the local unit (as input) to the base unit */
 	dist = dist * es_mat[15] * local2base;
 
-	/* convert to point notation in temporary buffer */
-	VMOVE( &lsolid.s_values[0], &es_rec.s.s_values[0] );
-	for( i = 3; i <= 21; i += 3 )  {  
-		VADD2(&lsolid.s_values[i], &es_rec.s.s_values[i], &lsolid.s_values[0]);
+	if( new_way )
+	{
+		bcopy( es_int.idb_ptr , &larb , sizeof( struct rt_arb_internal ) );
+	}
+	else
+	{
+		/* convert to point notation in temporary buffer */
+		VMOVE( &lsolid.s_values[0], &es_rec.s.s_values[0] );
+		for( i = 3; i <= 21; i += 3 )  {  
+			VADD2(&lsolid.s_values[i], &es_rec.s.s_values[i], &lsolid.s_values[0]);
+		}
 	}
 
 	if( (es_type == ARB6 || es_type == ARB4) && face < 1000 ) {
@@ -609,9 +753,21 @@ char	**argv;
 	}
 
 	/* find plane containing this face */
-	if( planeqn(6, pt[0], pt[1], pt[2], &lsolid) ) {
-		(void)printf("face: %d is not a plane\n",face);
-		return CMD_BAD;
+	if( new_way )
+	{
+		if( rt_mk_plane_3pts( es_peqn[6], larb.pt[pt[0]], larb.pt[pt[1]],
+					larb.pt[pt[2]], &mged_tol ) )
+		{
+			(void)printf("face: %d is not a plane\n",face);
+			return CMD_BAD;
+		}
+	}
+	else
+	{
+		if( planeqn(6, pt[0], pt[1], pt[2], &lsolid) ) {
+			(void)printf("face: %d is not a plane\n",face);
+			return CMD_BAD;
+		}
 	}
 	/* get normal vector of length == dist */
 	for( i = 0; i < 3; i++ )
@@ -630,9 +786,10 @@ char	**argv;
 
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
-			VADD2( &lsolid.s_values[j*3],
-				&lsolid.s_values[i*3],
-				&es_peqn[6][0]);
+			if( new_way )
+				VADD2( larb.pt[j] , larb.pt[i] , es_peqn[6] )
+			else
+				VADD2( &lsolid.s_values[j*3],&lsolid.s_values[i*3],&es_peqn[6][0])
 		}
 		break;
 
@@ -640,80 +797,97 @@ char	**argv;
 	case 8:		/* extrude ARB4 face 124 to make ARB6 */
 	case 12:	/* extrude ARB4 face 134 to Make ARB6 */
 a4toa6:
-		ext4to6(pt[0], pt[1], pt[2], &lsolid);
-		es_rec.s.s_cgtype = ARB6;
+		if( new_way )
+		{
+			ext4to6(pt[0], pt[1], pt[2], &larb);
+			es_type = ARB6;
+		}
+		else
+		{
+			old_ext4to6(pt[0], pt[1], pt[2], &lsolid);
+			es_rec.s.s_cgtype = ARB6;
+		}
 		sedit_menu();
 	break;
 
 	case 1680:   /* protrude face 5678 */
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
-			VADD2( &lsolid.s_values[i*3],
-				&lsolid.s_values[j*3],
-				&es_peqn[6][0] );
+			if( new_way )
+				VADD2( larb.pt[i] , larb.pt[j] , es_peqn[6] )
+			else
+				VADD2( &lsolid.s_values[i*3],&lsolid.s_values[j*3],&es_peqn[6][0] )
 		}
 		break;
 
 	case 60:   /* protrude face 1256 */
 	case 10:   /* extrude face 125 of ARB6 */
-		VADD2( &lsolid.s_values[9],
-			&lsolid.s_values[0],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[6],
-			&lsolid.s_values[3],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[21],
-			&lsolid.s_values[12],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[18],
-			&lsolid.s_values[15],
-			&es_peqn[6][0] );
+		if( new_way )
+		{
+			VADD2( larb.pt[3] , larb.pt[0] , es_peqn[6] );
+			VADD2( larb.pt[2] , larb.pt[1] , es_peqn[6] );
+			VADD2( larb.pt[7] , larb.pt[4] , es_peqn[6] );
+			VADD2( larb.pt[6] , larb.pt[5] , es_peqn[6] );
+		}
+		else
+		{
+			VADD2( &lsolid.s_values[9],&lsolid.s_values[0],	&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[6],&lsolid.s_values[3],	&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[21],&lsolid.s_values[12],&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[18],&lsolid.s_values[15],&es_peqn[6][0] );
+		}
 		break;
 
 	case 672:   /* protrude face 4378 */
 	case 72:	/* extrude face 346 of ARB6 */
-		VADD2( &lsolid.s_values[0],
-			&lsolid.s_values[9],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[3],
-			&lsolid.s_values[6],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[15],
-			&lsolid.s_values[18],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[12],
-			&lsolid.s_values[21],
-			&es_peqn[6][0] );
+		if( new_way )
+		{
+			VADD2( larb.pt[0] , larb.pt[3] , es_peqn[6] );
+			VADD2( larb.pt[1] , larb.pt[2] , es_peqn[6] );
+			VADD2( larb.pt[5] , larb.pt[6] , es_peqn[6] );
+			VADD2( larb.pt[4] , larb.pt[7] , es_peqn[6] );
+		}
+		else
+		{
+			VADD2( &lsolid.s_values[0],&lsolid.s_values[9],	&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[3],&lsolid.s_values[6],	&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[15],&lsolid.s_values[18],&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[12],&lsolid.s_values[21],&es_peqn[6][0] );
+		}
 		break;
 
 	case 252:   /* protrude face 2367 */
-		VADD2( &lsolid.s_values[0],
-			&lsolid.s_values[3],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[9],
-			&lsolid.s_values[6],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[12],
-			&lsolid.s_values[15],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[21],
-			&lsolid.s_values[18],
-			&es_peqn[6][0] );
+		if( new_way )
+		{
+			VADD2( larb.pt[0] , larb.pt[1] , es_peqn[6] );
+			VADD2( larb.pt[3] , larb.pt[2] , es_peqn[6] );
+			VADD2( larb.pt[4] , larb.pt[5] , es_peqn[6] );
+			VADD2( larb.pt[7] , larb.pt[6] , es_peqn[6] );
+		}
+		else
+		{
+			VADD2( &lsolid.s_values[0],&lsolid.s_values[3],&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[9],&lsolid.s_values[6],&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[12],&lsolid.s_values[15],&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[21],&lsolid.s_values[18],&es_peqn[6][0] );
+		}
 		break;
 
 	case 160:   /* protrude face 1548 */
-		VADD2( &lsolid.s_values[3],
-			&lsolid.s_values[0],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[15],
-			&lsolid.s_values[12],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[6],
-			&lsolid.s_values[9],
-			&es_peqn[6][0] );
-		VADD2( &lsolid.s_values[18],
-			&lsolid.s_values[21],
-			&es_peqn[6][0] );
+		if( new_way )
+		{
+			VADD2( larb.pt[1] , larb.pt[0] , es_peqn[6] );
+			VADD2( larb.pt[5] , larb.pt[4] , es_peqn[6] );
+			VADD2( larb.pt[2] , larb.pt[3] , es_peqn[6] );
+			VADD2( larb.pt[6] , larb.pt[7] , es_peqn[6] );
+		}
+		else
+		{
+			VADD2( &lsolid.s_values[3],&lsolid.s_values[0],&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[15],&lsolid.s_values[12],&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[6],&lsolid.s_values[9],	&es_peqn[6][0] );
+			VADD2( &lsolid.s_values[18],&lsolid.s_values[21],&es_peqn[6][0] );
+		}
 		break;
 
 	case 120:
@@ -726,24 +900,40 @@ a4toa6:
 		return CMD_BAD;
 	}
 
-	/* redo the plane equations */
-	for(i=0; i<6; i++) {
-		if(arb_faces[es_type-4][i*4] == -1)
-			break;
-		pt[0] = arb_faces[es_type-4][i*4];
-		pt[1] = arb_faces[es_type-4][i*4+1];
-		pt[2] = arb_faces[es_type-4][i*4+2];
-		if(planeqn(i, pt[0], pt[1], pt[2], &lsolid)) {
-			(void)printf("No equation for face %d%d%d%d\n",
-				pt[0]+1,pt[1]+1,pt[2]+1,arb_faces[es_type-4][i*4+3]);
+	if( new_way )
+	{
+		/* redo the plane equations */
+		if( rt_arb_calc_planes( es_peqn , &larb , es_type , &mged_tol ) )
+		{
+			(void)printf( "Cannot calculate new plane equations for faces\n" );
 			return CMD_BAD;
 		}
-	}
 
-	/* Convert back to point&vector notation */
-	VMOVE( &es_rec.s.s_values[0], &lsolid.s_values[0] );
-	for( i = 3; i <= 21; i += 3 )  {  
-		VSUB2( &es_rec.s.s_values[i], &lsolid.s_values[i], &lsolid.s_values[0]);
+		/* copy local copy back to original */
+		bcopy( &larb , es_int.idb_ptr , sizeof( struct rt_arb_internal ) );
+		
+	}
+	else
+	{
+		/* redo the plane equations */
+		for(i=0; i<6; i++) {
+			if(arb_faces[es_type-4][i*4] == -1)
+				break;
+			pt[0] = arb_faces[es_type-4][i*4];
+			pt[1] = arb_faces[es_type-4][i*4+1];
+			pt[2] = arb_faces[es_type-4][i*4+2];
+			if(planeqn(i, pt[0], pt[1], pt[2], &lsolid)) {
+				(void)printf("No equation for face %d%d%d%d\n",
+					pt[0]+1,pt[1]+1,pt[2]+1,arb_faces[es_type-4][i*4+3]);
+				return CMD_BAD;
+			}
+		}
+
+		/* Convert back to point&vector notation */
+		VMOVE( &es_rec.s.s_values[0], &lsolid.s_values[0] );
+		for( i = 3; i <= 21; i += 3 )  {  
+			VSUB2( &es_rec.s.s_values[i], &lsolid.s_values[i], &lsolid.s_values[0]);
+		}
 	}
 
 	/* draw the updated solid */
@@ -761,6 +951,9 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
+	struct rt_db_internal	internal;
+	struct rt_external	external;
+	struct rt_arb_internal	arb;
 	union record record;
 	int i, j;
 	fastf_t rota, fb;
@@ -777,66 +970,135 @@ char	**argv;
 	/* get fallback angle */
 	fb = atof( argv[3] ) * degtorad;
 
-	if( (dp = db_diradd( dbip,  argv[1], -1, 1, DIR_SOLID )) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0 )  {
-		ALLOC_ERR;
-		return CMD_BAD;
+	if( new_way )
+	{
+		vect_t norm1,norm2,norm3;
+		int ngran;
+
+		RT_INIT_DB_INTERNAL( &internal );
+		internal.idb_type = ID_ARB8;
+		internal.idb_ptr = (genptr_t)&arb;
+		arb.magic = RT_ARB_INTERNAL_MAGIC;
+
+		/* put vertex of new solid at center of screen */
+		VSET( arb.pt[0] , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ] );
+
+		/* calculate normal vector defined by rot,fb */
+		norm1[0] = cos(fb) * cos(rota);
+		norm1[1] = cos(fb) * sin(rota);
+		norm1[2] = sin(fb);
+
+		/* find two perpendicular vectors which are perpendicular to norm */
+		j = 0;
+		for( i = 0; i < 3; i++ )  {
+			if( fabs(norm1[i]) < fabs(norm1[j]) )
+				j = i;
+		}
+		VSET( norm2 , 0.0 , 0.0 , 0.0 );
+		norm2[j] = 1.0;
+		VCROSS( norm3 , norm2 , norm1 );
+		VCROSS( norm2 , norm3 , norm1 );
+
+		/* create new rpp 20x20x2 */
+		/* the 20x20 faces are in rot,fb plane */
+		VUNITIZE( norm2 );
+		VUNITIZE( norm3 );
+		VJOIN1( arb.pt[1] , arb.pt[0] , 508.0 , norm2 );
+		VJOIN1( arb.pt[3] , arb.pt[0] , -508.0 , norm3 );
+		VJOIN2( arb.pt[2] , arb.pt[0] , 508.0 , norm2 , -508.0 , norm3 );
+		for( i=0 ; i<4 ; i++ )
+			VJOIN1( arb.pt[i+4] , arb.pt[i] , -50.8 , norm1 );
+
+		if( rt_functab[internal.idb_type].ft_export( &external, &internal, 1.0 ) < 0 )
+		{
+			rt_log( "f_make: export failure\n" );
+			return CMD_BAD;
+		}
+
+		/* no interuprts */
+		(void)signal( SIGINT, SIG_IGN );
+
+		ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
+		if( (dp = db_diradd( dbip, argv[1], -1L, ngran, DIR_SOLID)) == DIR_NULL ||
+		    db_alloc( dbip, dp, 1 ) < 0 )
+		    {
+		    	db_free_external( &external );
+		    	ALLOC_ERR;
+			return CMD_BAD;
+		    }
+
+		if (db_put_external( &external, dp, dbip ) < 0 )
+		{
+			db_free_external( &external );
+			WRITE_ERR;
+			return CMD_BAD;
+		}
+		db_free_external( &external );
 	}
-	NAMEMOVE( argv[1], record.s.s_name );
-	record.s.s_id = ID_SOLID;
-	record.s.s_type = GENARB8;
-	record.s.s_cgtype = ARB8;
+	else
+	{
+		if( (dp = db_diradd( dbip,  argv[1], -1, 1, DIR_SOLID )) == DIR_NULL ||
+		    db_alloc( dbip, dp, 1 ) < 0 )  {
+			ALLOC_ERR;
+			return CMD_BAD;
+		}
+		NAMEMOVE( argv[1], record.s.s_name );
+		record.s.s_id = ID_SOLID;
+		record.s.s_type = GENARB8;
+		record.s.s_cgtype = ARB8;
 
-	/* put vertex of new solid at center of screen */
-	record.s.s_values[0] = -toViewcenter[MDX];
-	record.s.s_values[1] = -toViewcenter[MDY];
-	record.s.s_values[2] = -toViewcenter[MDZ];
+		/* put vertex of new solid at center of screen */
+		record.s.s_values[0] = -toViewcenter[MDX];
+		record.s.s_values[1] = -toViewcenter[MDY];
+		record.s.s_values[2] = -toViewcenter[MDZ];
 
-	/* calculate normal vector (length = 2) defined by rot,fb */
-	norm[0] = cos(fb) * cos(rota) * -50.8;
-	norm[1] = cos(fb) * sin(rota) * -50.8;
-	norm[2] = sin(fb) * -50.8;
+		/* calculate normal vector (length = 2) defined by rot,fb */
+		norm[0] = cos(fb) * cos(rota) * -50.8;
+		norm[1] = cos(fb) * sin(rota) * -50.8;
+		norm[2] = sin(fb) * -50.8;
 
-	for( i = 3; i < 24; i++ )
-		record.s.s_values[i] = 0.0;
+		for( i = 3; i < 24; i++ )
+			record.s.s_values[i] = 0.0;
 
-	/* find two perpendicular vectors which are perpendicular to norm */
-	j = 0;
-	for( i = 0; i < 3; i++ )  {
-		if( fabs(norm[i]) < fabs(norm[j]) )
-			j = i;
+		/* find two perpendicular vectors which are perpendicular to norm */
+		j = 0;
+		for( i = 0; i < 3; i++ )  {
+			if( fabs(norm[i]) < fabs(norm[j]) )
+				j = i;
+		}
+		record.s.s_values[j+3] = 1.0;
+		VCROSS( &record.s.s_values[9], &record.s.s_values[3], norm );
+		VCROSS( &record.s.s_values[3], &record.s.s_values[9], norm );
+
+		/* create new rpp 20x20x2 */
+		/* the 20x20 faces are in rot,fb plane */
+		VUNITIZE( &record.s.s_values[3] );
+		VUNITIZE( &record.s.s_values[9] );
+		VSCALE(&record.s.s_values[3], &record.s.s_values[3], 508.0);
+		VSCALE(&record.s.s_values[9], &record.s.s_values[9], 508.0);
+		VADD2( &record.s.s_values[6],
+			&record.s.s_values[3],
+			&record.s.s_values[9] );
+		VMOVE( &record.s.s_values[12], norm );
+		for( i = 3; i < 12; i += 3 )  {
+			j = i + 12;
+			VADD2( &record.s.s_values[j], &record.s.s_values[i], norm );
+		}
+
+		/* update dbip->dbi_fd and draw new arb8 */
+		if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
+			WRITE_ERR;
+			return CMD_BAD;
+		}
+
+		if( no_memory )  {
+			(void)printf(
+				"ARB8 (%s) created but no memory left to draw it\n",
+				argv[1] );
+			return CMD_BAD;
+		}
 	}
-	record.s.s_values[j+3] = 1.0;
-	VCROSS( &record.s.s_values[9], &record.s.s_values[3], norm );
-	VCROSS( &record.s.s_values[3], &record.s.s_values[9], norm );
 
-	/* create new rpp 20x20x2 */
-	/* the 20x20 faces are in rot,fb plane */
-	VUNITIZE( &record.s.s_values[3] );
-	VUNITIZE( &record.s.s_values[9] );
-	VSCALE(&record.s.s_values[3], &record.s.s_values[3], 508.0);
-	VSCALE(&record.s.s_values[9], &record.s.s_values[9], 508.0);
-	VADD2( &record.s.s_values[6],
-		&record.s.s_values[3],
-		&record.s.s_values[9] );
-	VMOVE( &record.s.s_values[12], norm );
-	for( i = 3; i < 12; i += 3 )  {
-		j = i + 12;
-		VADD2( &record.s.s_values[j], &record.s.s_values[i], norm );
-	}
-
-	/* update dbip->dbi_fd and draw new arb8 */
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
-		WRITE_ERR;
-		return CMD_BAD;
-	}
-
-	if( no_memory )  {
-		(void)printf(
-			"ARB8 (%s) created but no memory left to draw it\n",
-			argv[1] );
-		return CMD_BAD;
-	}
 
 	/* draw the "made" solid */
 	return f_edit( 2, argv );	/* depends on name being in argv[1] */
@@ -855,13 +1117,29 @@ char	**argv;
 	static int prod;
 	static vect_t work;
 	static struct solidrec lsolid;	/* local copy of solid */
+	struct rt_arb_internal *arb;
+	struct rt_arb_internal larb;	/* local copy of solid */
 
 	if( not_state( ST_S_EDIT, "Mirface" ) )
 		return CMD_BAD;
 
-	if( es_rec.s.s_type != GENARB8 )  {
-		(void)printf("Mirface: solid type must be ARB\n");
-		return CMD_BAD;
+	if( new_way )
+	{
+		if( es_int.idb_type != ID_ARB8 )
+		{
+			(void)printf("Mirface: solid type must be ARB\n");
+			return CMD_BAD;
+		}
+
+		arb = (struct rt_arb_internal *)es_int.idb_ptr;
+		RT_ARB_CK_MAGIC( arb );
+	}
+	else
+	{
+		if( es_rec.s.s_type != GENARB8 )  {
+			(void)printf("Mirface: solid type must be ARB\n");
+			return CMD_BAD;
+		}
 	}
 
 	if(es_type != ARB8 && es_type != ARB6) {
@@ -889,10 +1167,18 @@ char	**argv;
 	work[0] = work[1] = work[2] = 1.0;
 	work[k] = -1.0;
 
-	/* convert to point notation in temporary buffer */
-	VMOVE( &lsolid.s_values[0], &es_rec.s.s_values[0] );
-	for( i = 3; i <= 21; i += 3 )  {  
-		VADD2(&lsolid.s_values[i], &es_rec.s.s_values[i], &lsolid.s_values[0]);
+	if( new_way )
+	{
+		/* make local copy of arb */
+		bcopy( arb , &larb , sizeof( struct rt_arb_internal ) );
+	}
+	else
+	{
+		/* convert to point notation in temporary buffer */
+		VMOVE( &lsolid.s_values[0], &es_rec.s.s_values[0] );
+		for( i = 3; i <= 21; i += 3 )  {  
+			VADD2(&lsolid.s_values[i], &es_rec.s.s_values[i], &lsolid.s_values[0]);
+		}
 	}
 
 	if(es_type == ARB6 && face < 1000) { 	/* 3 point face */
@@ -943,81 +1229,91 @@ char	**argv;
 		}
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
-			VELMUL( &lsolid.s_values[j*3],
-				&lsolid.s_values[i*3],
-				work);
+			if( new_way )
+				VELMUL( larb.pt[j] , larb.pt[i] , work )
+			else
+				VELMUL( &lsolid.s_values[j*3],&lsolid.s_values[i*3],work)
 		}
 		break;
 
 	case 1680:   /* mirror face 5678 */
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
-			VELMUL( &lsolid.s_values[i*3],
-				&lsolid.s_values[j*3],
-				work );
+			if( new_way )
+				VELMUL( larb.pt[i] , larb.pt[j] , work )
+			else
+				VELMUL( &lsolid.s_values[i*3],&lsolid.s_values[j*3],work )
 		}
 		break;
 
 	case 60:   /* mirror face 1256 */
 	case 10:	/* mirror face 125 of ARB6 */
-		VELMUL( &lsolid.s_values[9],
-			&lsolid.s_values[0],
-			work );
-		VELMUL( &lsolid.s_values[6],
-			&lsolid.s_values[3],
-			work );
-		VELMUL( &lsolid.s_values[21],
-			&lsolid.s_values[12],
-			work );
-		VELMUL( &lsolid.s_values[18],
-			&lsolid.s_values[15],
-			work );
+		if( new_way )
+		{
+			VELMUL( larb.pt[3] , larb.pt[0] , work );
+			VELMUL( larb.pt[2] , larb.pt[1] , work );
+			VELMUL( larb.pt[7] , larb.pt[4] , work );
+			VELMUL( larb.pt[6] , larb.pt[5] , work );
+		}
+		else
+		{
+			VELMUL( &lsolid.s_values[9],&lsolid.s_values[0],work );
+			VELMUL( &lsolid.s_values[6],&lsolid.s_values[3],work );
+			VELMUL( &lsolid.s_values[21],&lsolid.s_values[12],work );
+			VELMUL( &lsolid.s_values[18],&lsolid.s_values[15],work );
+		}
 		break;
 
 	case 672:   /* mirror face 4378 */
 	case 72:	/* mirror face 346 of ARB6 */
-		VELMUL( &lsolid.s_values[0],
-			&lsolid.s_values[9],
-			work );
-		VELMUL( &lsolid.s_values[3],
-			&lsolid.s_values[6],
-			work );
-		VELMUL( &lsolid.s_values[15],
-			&lsolid.s_values[18],
-			work );
-		VELMUL( &lsolid.s_values[12],
-			&lsolid.s_values[21],
-			work );
+		if( new_way )
+		{
+			VELMUL( larb.pt[0] , larb.pt[3] , work );
+			VELMUL( larb.pt[1] , larb.pt[2] , work );
+			VELMUL( larb.pt[5] , larb.pt[6] , work );
+			VELMUL( larb.pt[4] , larb.pt[7] , work );
+		}
+		else
+		{
+			VELMUL( &lsolid.s_values[0],&lsolid.s_values[9],work );
+			VELMUL( &lsolid.s_values[3],&lsolid.s_values[6],work );
+			VELMUL( &lsolid.s_values[15],&lsolid.s_values[18],work );
+			VELMUL( &lsolid.s_values[12],&lsolid.s_values[21],work );
+		}
 		break;
 
 	case 252:   /* mirror face 2367 */
-		VELMUL( &lsolid.s_values[0],
-			&lsolid.s_values[3],
-			work );
-		VELMUL( &lsolid.s_values[9],
-			&lsolid.s_values[6],
-			work );
-		VELMUL( &lsolid.s_values[12],
-			&lsolid.s_values[15],
-			work );
-		VELMUL( &lsolid.s_values[21],
-			&lsolid.s_values[18],
-			work );
+		if( new_way )
+		{
+			VELMUL( larb.pt[0] , larb.pt[1] , work );
+			VELMUL( larb.pt[3] , larb.pt[2] , work );
+			VELMUL( larb.pt[4] , larb.pt[5] , work );
+			VELMUL( larb.pt[7] , larb.pt[6] , work );
+		}
+		else
+		{
+			VELMUL( &lsolid.s_values[0],&lsolid.s_values[3],work );
+			VELMUL( &lsolid.s_values[9],&lsolid.s_values[6],work );
+			VELMUL( &lsolid.s_values[12],&lsolid.s_values[15],work );
+			VELMUL( &lsolid.s_values[21],&lsolid.s_values[18],work );
+		}
 		break;
 
 	case 160:   /* mirror face 1548 */
-		VELMUL( &lsolid.s_values[3],
-			&lsolid.s_values[0],
-			work );
-		VELMUL( &lsolid.s_values[15],
-			&lsolid.s_values[12],
-			work );
-		VELMUL( &lsolid.s_values[6],
-			&lsolid.s_values[9],
-			work );
-		VELMUL( &lsolid.s_values[18],
-			&lsolid.s_values[21],
-			work );
+		if( new_way )
+		{
+			VELMUL( larb.pt[1] , larb.pt[0] , work );
+			VELMUL( larb.pt[5] , larb.pt[4] , work );
+			VELMUL( larb.pt[2] , larb.pt[3] , work );
+			VELMUL( larb.pt[6] , larb.pt[7] , work );
+		}
+		else
+		{
+			VELMUL( &lsolid.s_values[3],&lsolid.s_values[0],work );
+			VELMUL( &lsolid.s_values[15],&lsolid.s_values[12],work );
+			VELMUL( &lsolid.s_values[6],&lsolid.s_values[9],work );
+			VELMUL( &lsolid.s_values[18],&lsolid.s_values[21],work );
+		}
 		break;
 
 	case 120:
@@ -1031,23 +1327,34 @@ char	**argv;
 	}
 
 	/* redo the plane equations */
-	for(i=0; i<6; i++) {
-		if(arb_faces[es_type-4][i*4] == -1)
-			break;
-		pt[0] = arb_faces[es_type-4][i*4];
-		pt[1] = arb_faces[es_type-4][i*4+1];
-		pt[2] = arb_faces[es_type-4][i*4+2];
-		if(planeqn(i, pt[0], pt[1], pt[2], &lsolid)) {
-			(void)printf("No equation for face %d%d%d%d\n",
-				pt[0]+1,pt[1]+1,pt[2]+1,arb_faces[es_type-4][i*4+3]);
+	if( new_way )
+	{
+		if( rt_arb_calc_planes( es_peqn , &larb , es_type , &mged_tol ) )
 			return CMD_BAD;
-		}
-	}
 
-	/* Convert back to point&vector notation */
-	VMOVE( &es_rec.s.s_values[0], &lsolid.s_values[0] );
-	for( i = 3; i <= 21; i += 3 )  {  
-		VSUB2( &es_rec.s.s_values[i], &lsolid.s_values[i], &lsolid.s_values[0]);
+		/* copy to original */
+		bcopy( &larb , arb , sizeof( struct rt_arb_internal ) );
+	}
+	else
+	{
+		for(i=0; i<6; i++) {
+			if(arb_faces[es_type-4][i*4] == -1)
+				break;
+			pt[0] = arb_faces[es_type-4][i*4];
+			pt[1] = arb_faces[es_type-4][i*4+1];
+			pt[2] = arb_faces[es_type-4][i*4+2];
+			if(planeqn(i, pt[0], pt[1], pt[2], &lsolid)) {
+				(void)printf("No equation for face %d%d%d%d\n",
+					pt[0]+1,pt[1]+1,pt[2]+1,arb_faces[es_type-4][i*4+3]);
+				return CMD_BAD;
+			}
+		}
+
+		/* Convert back to point&vector notation */
+		VMOVE( &es_rec.s.s_values[0], &lsolid.s_values[0] );
+		for( i = 3; i <= 21; i += 3 )  {  
+			VSUB2( &es_rec.s.s_values[i], &lsolid.s_values[i], &lsolid.s_values[0]);
+		}
 	}
 
 	/* draw the updated solid */
@@ -1079,9 +1386,20 @@ char	**argv;
 		return CMD_BAD;
 	}
 
-	if( es_rec.s.s_type != GENARB8 ) {
-		(void)printf("Edgedir: solid type must be an ARB\n");
-		return CMD_BAD;
+	if( new_way )
+	{
+		if( es_int.idb_type != ID_ARB8 )
+		{
+			(void)printf("Edgedir: solid type must be an ARB\n");
+			return CMD_BAD;
+		}
+	}
+	else
+	{
+		if( es_rec.s.s_type != GENARB8 ) {
+			(void)printf("Edgedir: solid type must be an ARB\n");
+			return CMD_BAD;
+		}
 	}
 
 	/* set up slope -
@@ -1117,10 +1435,34 @@ char	**argv;
 
 
 /*	EXT4TO6():	extrudes face pt1 pt2 pt3 of an ARB4 "distance"
- *			to produce ARB6 using solid record "sp"
+ *			to produce ARB6
  */
 void
-ext4to6(pt1, pt2, pt3, sp)
+ext4to6(pt1, pt2, pt3, arb)
+int pt1, pt2, pt3;
+register struct rt_arb_internal *arb;
+{
+	point_t pts[8];
+	register int i;
+
+	VMOVE(pts[0], arb->pt[pt1]);
+	VMOVE(pts[1], arb->pt[pt2]);
+	VMOVE(pts[4], arb->pt[pt3]);
+	VMOVE(pts[5], arb->pt[pt3]);
+
+	/* extrude "distance" to get remaining points */
+	VADD2(pts[2], pts[1], &es_peqn[6][0]);
+	VADD2(pts[3], pts[0], &es_peqn[6][0]);
+	VADD2(pts[6], pts[4], &es_peqn[6][0]);
+	VMOVE(pts[7], pts[6]);
+
+	/* copy to the original record */
+	for( i=0 ; i<8 ; i++ )
+		VMOVE(arb->pt[i], pts[i])
+
+}
+void
+old_ext4to6(pt1, pt2, pt3, sp)
 int pt1, pt2, pt3;
 register struct solidrec *sp;
 {
