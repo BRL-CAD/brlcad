@@ -99,7 +99,7 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=1;
 #endif
 
-#if defined(sgi) && defined(mips)
+#if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
 /*	Silicon Graphics 4D, which uses the MIPS chip */
 #	undef	sgi
 #	if defined(__sgi)
