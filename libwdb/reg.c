@@ -114,6 +114,9 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	int actual_count;
 	int new_nodes;
 
+	if( (new_nodes = bu_list_len( member_hd )) <= 0 )
+		return 0;	/* OK, nothing to do */
+
 	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
 	{
 		db_non_union_push( comb->tree );
@@ -123,8 +126,6 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 			return -1;
 		}
 	}
-
-	new_nodes = bu_list_len( member_hd );
 
 	/* make space for an extra leaf */
 	node_count = db_tree_nleaves( comb->tree ) ;
