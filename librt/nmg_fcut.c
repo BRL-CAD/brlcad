@@ -456,8 +456,8 @@ int			pos;
 		/* Edge is on the ray.  Which way does it go? */
 /* XXX How to detect leaving the current vertex groups? */
 		if(rt_g.NMG_debug&DEBUG_COMBINE)
-			rt_log("ON: vu[%d]=x%x otherv=x%x,
-				i=%d\n", pos, rs->vu[pos], otherv, i );
+			rt_log("ON: vu[%d]=x%x otherv=x%x, i=%d\n",
+				pos, rs->vu[pos], otherv, i );
 
 		if( forw )  {
 			/* Edge goes from v to otherv */
