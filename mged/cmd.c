@@ -96,8 +96,6 @@ extern int gui_setup();				/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;			/* in ged.c */
 extern int bot_vertex_fuse(), bot_condense();
-extern int vectorThreshold;
-
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
@@ -810,9 +808,6 @@ cmd_setup()
 	bu_vls_strcpy(&temp, "output_as_return");
 	Tcl_LinkVar(interp, bu_vls_addr(&temp), (char *)&output_as_return,
 		    TCL_LINK_BOOLEAN);
-	bu_vls_strcpy(&temp, "mged_default(vectorThreshold)");
-	Tcl_LinkVar(interp, bu_vls_addr(&temp), (char *)&vectorThreshold,
-		    TCL_LINK_INT);
 
 	/* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
 	bu_tcl_setup( interp );

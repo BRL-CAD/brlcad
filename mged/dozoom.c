@@ -39,7 +39,6 @@ mat_t	perspective_mat;
 mat_t	incr_change;
 mat_t	modelchanges;
 mat_t	identity;
-int	vectorThreshold = 1000;
 
 /* This is a holding place for the current display managers default wireframe color */
 extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
@@ -269,7 +268,6 @@ int	which_eye;
 	short 			r = -1;
 	short 			g = -1;
 	short 			b = -1;
-	int 			nvectors = 0;
 
 	ndrawn = 0;
 	inv_viewsize = 1 / VIEWSIZE;
@@ -429,13 +427,6 @@ bn_mat_print("perspective_mat", perspective_mat);
 			ndrawn++;
 		}
 #endif
-		nvectors += ((struct bn_vlist *)&sp->s_vlist)->nused;
-		if (nvectors >= vectorThreshold) {
-			nvectors = 0;
-
-			/* Handle events in the queue */
-			while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-		}
 	}
 
 	/* draw predictor vlist */
@@ -506,13 +497,6 @@ bn_mat_print("perspective_mat", perspective_mat);
 			ndrawn++;
 		}
 #endif
-		nvectors += ((struct bn_vlist *)&sp->s_vlist)->nused;
-		if (nvectors >= vectorThreshold) {
-			nvectors = 0;
-
-			/* Handle events in the queue */
-			while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-		}
 	}
 }
 
