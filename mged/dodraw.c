@@ -79,6 +79,7 @@ static struct db_tree_state	mged_initial_tree_state = {
 	0.0, 0.0, 0.0, 1.0,
 };
 
+static int		mged_draw_nmg_only;
 static int		mged_nmg_triangulate;
 static int		mged_draw_wireframes;
 static int		mged_draw_normals;
@@ -330,10 +331,12 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol );
-	if( failed )  {
-		db_free_tree( curtree );
-		return (union tree *)NULL;
+	if ( ! mged_draw_nmg_only ) {
+		failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol );
+		if( failed )  {
+			db_free_tree( curtree );
+			return (union tree *)NULL;
+		}
 	}
 	r = curtree->tr_d.td_r;
 	NMG_CK_REGION(r);
@@ -422,7 +425,7 @@ int	kind;
 
 	/* Parse options. */
 	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"nqsuvwTP:")) != EOF )  {
+	while( (c=getopt(argc,argv,"dnqsuvwTP:")) != EOF )  {
 		switch(c)  {
 		case 'u':
 			mged_draw_edge_uses = 1;
@@ -448,9 +451,13 @@ int	kind;
 		case 'q':
 			mged_do_not_draw_nmg_solids_during_debugging = 1;
 			break;
+		case 'd':
+			mged_draw_nmg_only = 1;
+			break;
 		default:
 			rt_log("option '%c' unknown\n", c);
-			rt_log("Usage: ev [-uwTnq] object(s)\n\
+			rt_log("Usage: ev [-dnqsuvwT] [-P ncpu] object(s)\n\
+	-d draw nmg without performing boolean operations\n\
 	-w draw wireframes (rather than polygons)\n\
 	-n draw surface normals as little 'hairs'\n\
 	-s draw solid lines only (no dot-dash for subtract and intersect)\n\
