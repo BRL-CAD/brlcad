@@ -75,7 +75,7 @@ struct node *root;
 				ptr2->op = Intersect;
 				ptr2->left = ptra;
 				ptr2->right = ptrb;
-				ptr1->right - ptrc;
+				ptr1->right = ptrc;
 				ptr1->op = Intersect;
 				ptr->op = Union;
 				ptr1->left = Copytree( ptra , ptr1 );
