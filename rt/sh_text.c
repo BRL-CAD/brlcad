@@ -78,7 +78,6 @@ struct txt_specific {
 	int	tx_transp[3];	/* RGB for transparency */
 	char	tx_file[TXT_NAME_LEN];	/* Filename */
 	int	tx_w;		/* Width of texture in pixels */
-	int	tx_fw;		/* File width of texture in pixels */
 	int	tx_n;		/* Number of scanlines */
 	int	tx_trans_valid;	/* boolean: is tx_transp valid ? */
 	struct rt_mapped_file	*mp;
@@ -92,7 +91,6 @@ struct structparse txt_parse[] = {
 	{"%d",	1, "w",		TX_O(tx_w),		FUNC_NULL },
 	{"%d",	1, "n",		TX_O(tx_n),		FUNC_NULL },
 	{"%d",	1, "l",		TX_O(tx_n),		FUNC_NULL }, /*compat*/
-	{"%d",	1, "fw",	TX_O(tx_fw),		FUNC_NULL },
 	{"%d",	1, "trans_valid",	TX_O(tx_trans_valid),	FUNC_NULL },
 	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
@@ -320,13 +318,14 @@ struct rt_vls		*matparm;
 char			**dpp;
 {
 	register struct txt_specific *tp;
+	int		pixelbytes = 3;
 
 	RT_VLS_CHECK( matparm );
 	GETSTRUCT( tp, txt_specific );
 	*dpp = (char *)tp;
 
 	tp->tx_file[0] = '\0';
-	tp->tx_w = tp->tx_fw = tp->tx_n = -1;
+	tp->tx_w = tp->tx_n = -1;
 	tp->tx_trans_valid = 0;
 	if( rt_structparse( matparm, txt_parse, (char *)tp ) < 0 )  {
 		rt_free( (char *)tp, "txt_specific" );
@@ -334,15 +333,28 @@ char			**dpp;
 	}
 	if( tp->tx_w < 0 )  tp->tx_w = 512;
 	if( tp->tx_n < 0 )  tp->tx_n = tp->tx_w;
-	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
 
 	if( tp->tx_trans_valid )
 		rp->reg_transmit = 1;
 
 	if( tp->tx_file[0] == '\0' )  return -1;	/* FAIL, no file */
-	if( tp->mp = rt_open_mapped_file( tp->tx_file, NULL ) )
-		return 1;				/* OK */
-	return -1;					/* FAIL */
+	if( !(tp->mp = rt_open_mapped_file( tp->tx_file, NULL )) )
+		return -1;				/* FAIL */
+
+	/* Ensure file is large enough */
+	if( strcmp( rp->reg_mater.ma_matname, "bwtexture" ) == 0 )
+		pixelbytes = 1;
+	if( tp->mp->buflen < tp->tx_w * tp->tx_n * pixelbytes )  {
+		rt_log("\nERROR %s %s needs %d bytes, '%s' only has %d\n",
+			rp->reg_name,
+			rp->reg_mater.ma_matname,
+			tp->tx_w * tp->tx_n * pixelbytes,
+			tp->mp->name,
+			tp->mp->buflen );
+		return -1;				/* FAIL */
+	}
+
+	return 1;				/* OK */
 }
 
 /*
