@@ -21,6 +21,7 @@
 #define P_LE_V(_p, _v) \
 	(((_p)->coord[Y] < (_v)->coord[Y]) || ((_p)->coord[Y] == (_v)->coord[Y] && (_p)->coord[X] >= (_v)->coord[X]))
 
+
 #define NMG_PT2D_MAGIC	0x2d2d2d2d
 #define NMG_TRAP_MAGIC  0x1ab1ab
 #define	NMG_CK_PT2D(_p)	NMG_CKMAG(_p, NMG_PT2D_MAGIC, "pt2d")
@@ -34,6 +35,9 @@
 			__FILE__, __LINE__, &(_p)->l);\
 		rt_bomb("aborting");\
 	}}
+
+#define NMG_TBL2D_MAGIC 0x3e3e3e3e
+#define NMG_CK_TBL2D(_p) NMG_CKMAG(_p, NMG_TBL2D_MAGIC, "tbl2d")
 
 /* macros to retrieve the next/previous 2D point about loop */
 #define PT2D_NEXT(tbl, pt) pt2d_pn(tbl, pt, 1)
@@ -105,7 +109,7 @@ struct edgeuse *eu;
 struct rt_list *tbl2d;
 {
 	struct pt2d *pt, *pt_next;
-
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_EDGEUSE(eu);
 
 	pt = find_pt2d(tbl2d, eu->vu_p);
@@ -122,7 +126,7 @@ struct trap *tp;
 struct rt_list *tbl2d;
 {
 	struct pt2d *pt, *pt_next;
-
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_TRAP(tp);
 
 	rt_log("trap top pt2d:0x%08x %g %g vu:0x%08x\n",
@@ -149,6 +153,7 @@ struct rt_list *tbl2d, *tlist;
 {
 	struct trap *tp;
 	struct pt2d *pt, *pt_next;
+	NMG_CK_TBL2D(tbl2d);
 
 	rt_log("Trapezoid list start ----------\n");
 	for (RT_LIST_FOR(tp, trap, tlist)) {
@@ -166,6 +171,7 @@ struct rt_list *tbl2d;
 struct vertexuse *vu;
 {
 	struct pt2d *p;
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_VERTEXUSE(vu);
 
 	for (RT_LIST_FOR(p, pt2d, tbl2d)) {
@@ -181,7 +187,7 @@ plfu( fu, tbl2d )
 struct faceuse *fu;
 struct rt_list *tbl2d;
 {
-	static int fileno=0;
+	static int file_number=0;
 	FILE *fd;
 	char name[25];
 	char buf[80];
@@ -190,10 +196,11 @@ struct rt_list *tbl2d;
 	struct edgeuse *eu;
 	struct vertexuse *vu;
 	struct pt2d *p;
-	
+
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_FACEUSE(fu);
 	
-	sprintf(name, "tri%02d.pl", fileno++);
+	sprintf(name, "tri%02d.pl", file_number++);
 	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
 		abort();
@@ -262,6 +269,7 @@ int dir;
 	struct edgeuse *eu, *eu_other;
 	struct pt2d *new_pt;
 
+	NMG_CK_TBL2D(tbl);
 	NMG_CK_PT2D( pt );
 	NMG_CK_VERTEXUSE( (pt)->vu_p );
 
@@ -317,6 +325,7 @@ struct faceuse *fu;
 	struct edgeuse *eu;
 	struct pt2d *p, *np;
 
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_FACEUSE(fu);
 
@@ -422,7 +431,7 @@ nmg_flatten_face(fu, TformMat)
 struct faceuse *fu;
 mat_t		TformMat;
 {
-	CONST vect_t twoDspace = { 0.0, 0.0, 1.0 };
+	static CONST vect_t twoDspace = { 0.0, 0.0, 1.0 };
 	struct rt_list *tbl2d;
 	struct vertexuse *vu;
 	struct loopuse *lu;
@@ -440,6 +449,7 @@ mat_t		TformMat;
 	 */
 
 	RT_LIST_INIT( tbl2d );
+	RT_LIST_MAGIC_SET(tbl2d, NMG_TBL2D_MAGIC);
 
 	/* construct the matrix that maps the 3D coordinates into 2D space */
 	NMG_GET_FU_NORMAL(Normal, fu);
@@ -529,6 +539,7 @@ struct rt_list *tbl2d;
 	struct edgeuse *eu;
 	struct loopuse *lu;
 
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_PT2D(v);
 
 	/* get the next/previous points relative to v */
@@ -613,6 +624,7 @@ struct rt_list *tbl2d, *tlist;
 	struct trap *new_trap;
 	struct edgeuse *eu;
 
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_PT2D(pt);
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		rt_log( "%g %g is polygon start vertex\n",
@@ -650,6 +662,7 @@ struct rt_list *tlist;
 	struct edgeuse *upper_edge, *lower_edge;
 	struct pt2d *pnext, *plast;
 
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_PT2D(pt);
 	pnext = PT2D_NEXT(tbl2d, pt);
 	plast = PT2D_PREV(tbl2d, pt);
@@ -735,6 +748,7 @@ struct rt_list *tbl2d, *tlist;
 	struct edgeuse *e_left, *e_right;
 	struct pt2d *pprev;
 
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_PT2D(pt);
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		rt_log( "%g %g is polygon end vertex\n",
@@ -797,6 +811,7 @@ struct rt_list *tlist, *tbl2d;
 	vect_t pv, ev, n;
 	struct pt2d *e_pt, *next_pt;
 
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_PT2D(pt);
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		rt_log( "%g %g is hole start vertex\n", 
@@ -897,6 +912,7 @@ struct rt_list *tlist, *tbl2d;
 	struct edgeuse *eunext, *euprev;
 	struct trap *tp, *tpnext, *tpprev;
 
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_PT2D(pt);
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		rt_log( "%g %g is hole end vertex\n",
@@ -982,6 +998,8 @@ struct rt_list *tbl2d, *tlist;
 {
 	struct pt2d *pt;
 
+	NMG_CK_TBL2D(tbl2d);
+
 	for (RT_LIST_FOR(pt, pt2d, tbl2d)) {
 		NMG_CK_PT2D(pt);
 		switch(vtype2d(pt, tbl2d)) {
@@ -1019,6 +1037,7 @@ struct vertexuse *vu_p;
 	struct vertexuse *vu;
 	struct pt2d *p, *new_pt2d;
 
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_VERTEXUSE(vu_p);
 
 	/* if it's already mapped we're outta here! */
@@ -1488,6 +1507,8 @@ CONST struct rt_tol *tol;
 	struct faceuse *fu;
 	vect_t dir;
 
+	NMG_CK_TBL2D(tbl2d);
+
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		rt_log("\tpick_pt2d_for_cutjoin()\n");
 
@@ -1587,6 +1608,7 @@ int void_ok;
 	struct pt2d *new_pt2d, *p;
 
 
+	NMG_CK_TBL2D(tbl2d);
 	RT_CK_TOL(tol);
 	NMG_CK_PT2D(p1);
 	NMG_CK_PT2D(p2);
@@ -1625,12 +1647,12 @@ int void_ok;
 	new_lu = nmg_cut_loop(p1->vu_p, p2->vu_p);
 	NMG_CK_LOOPUSE(new_lu);
 
-	/* XXX Does anyone care about loopuse orientations at this stage?
+/* XXX Does anyone care about loopuse orientations at this stage?
 	nmg_lu_reorient( old_lu, tol );
 	nmg_lu_reorient( new_lu, tol );
  */
 	/* get the edgeuse of the new vertexuse we just created */
-	eu = RT_LIST_PREV(edgeuse, &new_lu->down_hd);
+	eu = RT_LIST_PPREV_CIRC(edgeuse, &new_lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 
 	/* map it to the 2D plane */
@@ -1640,7 +1662,7 @@ int void_ok;
 	NMG_CK_EDGEUSE(eu->radial_p);
 	map_new_vertexuse(tbl2d, eu->radial_p->vu_p);
 
-	eu = RT_LIST_PREV( edgeuse, &(p1->vu_p->up.eu_p->l));
+	eu = RT_LIST_PPREV_CIRC( edgeuse, &(p1->vu_p->up.eu_p->l));
 	return find_pt2d(tbl2d, eu->vu_p);
 }
 
@@ -1656,6 +1678,7 @@ CONST struct rt_tol	*tol;
 	struct edgeuse *eu;
 	struct loopuse *lu;
 
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_PT2D(p1);
 	NMG_CK_PT2D(p2);
 	RT_CK_TOL(tol);
@@ -1730,12 +1753,13 @@ CONST struct rt_tol	*tol;
 	struct pt2d *top_next, *bot_next;
 	struct pt2d *top, *bot;
 
-	int cut_color[3] = {255, 80, 80};
-	int join_color[3] = {80, 80, 255};
+	static CONST int cut_color[3] = {255, 80, 80};
+	static CONST int join_color[3] = {80, 80, 255};
 
 	extern struct loopuse *nmg_find_lu_of_vu();
 	struct loopuse *toplu, *botlu;
 
+	NMG_CK_TBL2D(tbl2d);
 	RT_CK_TOL(tol);
 
 	/* Convert trap list to unimonotone polygons */
@@ -1752,7 +1776,8 @@ CONST struct rt_tol	*tol;
 
 		if (top_next == tp->bot || bot_next == tp->top ||
 		    top_next == bot || bot_next == top) {
-			rt_log("skipping %g %g/%g %g because pts on same edge\n",
+		    	if (rt_g.NMG_debug & DEBUG_TRI)
+				rt_log("skipping %g %g/%g %g because pts on same edge\n",
 					tp->top->coord[X],
 					tp->top->coord[Y],
 					tp->bot->coord[X],
@@ -1858,9 +1883,10 @@ CONST struct rt_tol *tol;
 	struct pt2d *min, *max, *new, *first, *prev, *next, *current, *save;
 	struct edgeuse *eu;
 	int verts=0;
-	int cut_color[3] = { 90, 255, 90};
-	int join_color[3] = { 190, 255, 190};
+	static CONST int cut_color[3] = { 90, 255, 90};
+	static CONST int join_color[3] = { 190, 255, 190};
 
+	NMG_CK_TBL2D(tbl2d);
 	RT_CK_TOL(tol);
 	NMG_CK_LOOPUSE(lu);
 
@@ -1963,6 +1989,7 @@ struct rt_list *tbl2d;
 	vect_t pt;
 	struct pt2d *p, *pn;
 
+	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_FACEUSE(fu);
 
 	if (!plot_fd && (plot_fd = popen("pl-fb", "w")) == (FILE *)NULL) {
