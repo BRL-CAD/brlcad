@@ -2561,6 +2561,7 @@ struct faceuse		*fu2;
 	MAT4X3PNT( is->pt2d, is->proj, is->pt );
 	MAT4X3VEC( is->dir2d, is->proj, is->dir );
 
+nmg_ck_face_worthless_edges( fu1 );
 nmg_fu_touchingloops(fu1);
 nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
 	/* Split all edges that cross the line of intersection */
@@ -2864,6 +2865,8 @@ nmg_region_v_unique( fu1->s_p->r_p, &bs.tol );
 nmg_region_v_unique( fu2->s_p->r_p, &bs.tol );
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
+nmg_ck_face_worthless_edges( fu1 );
+nmg_ck_face_worthless_edges( fu2 );
 	}
 }
 
