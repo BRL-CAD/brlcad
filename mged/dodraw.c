@@ -61,6 +61,7 @@ static struct db_tree_state	mged_initial_tree_state = {
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
 	0, 0, 0,		/* region, air, gmater */
+	100,			/* GIFT los */
 	1.0, 0.0, 0.0,		/* color, RGB */
 	0,			/* override */
 	DB_INH_LOWER,		/* color inherit */
