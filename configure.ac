@@ -155,13 +155,13 @@ only_benchmark=no
 AC_ARG_ENABLE(only-benchmark,
 	AC_HELP_STRING(--enable-only-benchmark,
 		[Only build the components necessary for the benchmark suite (default=no)]),
-	[if ! test "x$enableval" = "xno" ; then
+	[if test "x$enableval" != "xno" ; then
 		only_benchmark=yes
 	fi]
 )
 AC_MSG_RESULT($only_benchmark)
 
-AM_CONDITIONAL(ONLY_BENCHMARK, [! test "x$only_benchmark" = "xno"])
+AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$only_benchmark" != "xno"])
 
 # only build librtserver
 AC_MSG_CHECKING(whether to only build librtserver)
@@ -170,16 +170,16 @@ warn_only_both=no
 AC_ARG_ENABLE(only-rtserver,
 	AC_HELP_STRING(--enable-only-rtserver,
 		[Only build the components necessary for the raytrace server (default=no)]),
-	[if ! test "x$enableval" = "xno" ; then
+	[if test "x$enableval" != "xno" ; then
 		only_rts=yes
-		if ! test "x$only_benchmark" = "xno" ; then
+		if test "x$only_benchmark" != "xno" ; then
 			warn_only_both=yes
 		fi
 	fi]
 )
 AC_MSG_RESULT($only_rts)
-AM_CONDITIONAL(ONLY_RTS, [! test "x$only_rts" = "xno"])
-if ! test "x$warn_only_both" = "xno" ; then
+AM_CONDITIONAL(ONLY_RTS, [test "x$only_rts" != "xno"])
+if test "x$warn_only_both" != "xno" ; then
 	AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 	AC_MSG_WARN(Requesting BOTH benchmark and librtserver "only"?)
 	AC_MSG_WARN(Building both benchmark and librtserver)
@@ -235,7 +235,7 @@ use_doxygen=no
 AC_ARG_ENABLE(doxygen,
 	AC_HELP_STRING(--enable-doxygen,
 		[enable documentation generation with doxygen (default=no)]),
-	[if ! test "xenable_doxygen" = "xno" ; then
+	[if test "xenable_doxygen" != "xno" ; then
 		use_doxygen=yes
 	fi]
 )
@@ -247,7 +247,7 @@ use_optimized=no
 AC_ARG_ENABLE(optimized,
 	AC_HELP_STRING(--enable-optimized,
 		[enable optimized compilation (default=no)]),
-	[if ! test "x$enable_optimized" = "xno" ; then
+	[if test "x$enable_optimized" != "xno" ; then
 		use_optimized=yes
 	fi]
 )
@@ -259,7 +259,7 @@ use_warnings=no
 AC_ARG_ENABLE(warnings,
 	AC_HELP_STRING(--enable-warnings,
 		[enable verbose compilation warnings (default=no)]),
-	[if ! test "x$enable_warnings" = "xno" ; then
+	[if test "x$enable_warnings" != "xno" ; then
 		use_warnings=yes
 	fi]
 )
@@ -271,7 +271,7 @@ use_debug=no
 AC_ARG_ENABLE(debug,
 	AC_HELP_STRING(--enable-debug,
 		[enable debug symbols (default=no)]),
-	[if ! test "x$enable_debug" = "xno" ; then
+	[if test "x$enable_debug" != "xno" ; then
 		use_debug=yes
 	fi]
 )
@@ -283,12 +283,12 @@ use_profiling=no
 AC_ARG_ENABLE(profiling,
 	AC_HELP_STRING(--enable-profiling,
 		[enable profiling (default=no)]),
-	[if ! test "x$enable_profiling" = "xno" ; then
+	[if test "x$enable_profiling" != "xno" ; then
 		use_profiling=yes
 	fi]
 )
 AC_ARG_ENABLE(profile,,
-	[if ! test "x$enable_profile" = "xno" ; then
+	[if test "x$enable_profile" != "xno" ; then
 		use_profiling=yes
 	fi]
 )
@@ -299,7 +299,7 @@ use_jove=no
 AC_ARG_ENABLE(jove,
 	AC_HELP_STRING(--enable-jove,
 		[enable compilation of jove (default=no)]),
-	[if ! test "x$enable_jove" = "xno" ; then
+	[if test "x$enable_jove" != "xno" ; then
 		use_jove=yes
 	fi]
 )
@@ -349,7 +349,6 @@ else
 	AC_MSG_RESULT([not found])
 fi
 
-
 AC_DEFINE(DM_X,1,[Display for X])
 AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
 AC_DEFINE(DM_OGL,1,[yeah, GL])
@@ -384,7 +383,7 @@ AC_PATH_PROG(CP, cp)
 AC_PATH_PROG(RM, rm)
 
 dnl figure out which compiler is seems like we are using
-dnl supported values include: gcc, mipspro, icc, sunw
+dnl supported values include: gcc, mipspro, sunpro
 compiler=unknown
 
 dnl Determine whether we are using GCC
@@ -407,6 +406,24 @@ int main() { return 0; }
 	fi
 fi
 
+dnl Determine whether we are using the SUNWspro Sun Workshop compiler
+if test "x$build_vendor" = "xsun" ; then
+	AC_MSG_CHECKING([whether we are using the SUNWspro compiler])
+	using_sunpro=no
+	AC_LINK_IFELSE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
+If we get here, we are using the SUNWspro compiler (and the link should fail).
+#endif
+int main() { return 0; }
+	], [using_sunpro=no], [using_sunpro=yes])
+	AC_MSG_RESULT($using_sunpro)
+	if test "x$using_sunpro" = "xyes" ; then
+		AR="CC -xar"
+		LD="CC -G"
+		export AR LD
+		compiler=sunpro
+	fi
+fi
+
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
 if test "x$use_doxygen" = "xyes" ; then
@@ -424,9 +441,12 @@ dnl unless we are on sgi, where bash may choke on sed syntax in the cache
 AC_MSG_CHECKING(what cache file is set to)
 CONFIG_CACHE=""
 if test "x$cache_file" = "x/dev/null" ; then
-	if ! test "x$host_os" = "xirix6.5" ; then
-		compiler="`echo $CC | awk '{print $1}'`"
-		cache_file="config.cache.${compiler}.${host_os}"
+	if test "x$host_os" != "xirix6.5" ; then
+		compsys="`echo $CC | tr '/' ' ' | awk '{print $1}'`"
+		if test "x$compsys" = "x" ; then
+			compsys="$compiler"
+		fi
+		cache_file="config.cache.${compsys}.${host_os}"
 		CONFIG_CACHE="$cache_file"
 	fi
 fi
@@ -600,10 +620,10 @@ AC_CHECK_HEADER(jni.h,
 		found_jni_h=yes )
 search_for_jni_h_more=no
 if test "x$found_jni_h" = "xno" ; then
-	if ! test "x$with_java" = "xno" ; then
+	if test "x$with_java" != "xno" ; then
 		with_java=no
 		serach_for_jni_h_more=yes
-		if ! test "x$only_benchmark" = "xno" ; then
+		if test "x$only_benchmark" != "xno" ; then
 			if test "x$only_rts" = "xno" ; then
 				search_for_jni_h_more=no
 			fi
@@ -611,11 +631,11 @@ if test "x$found_jni_h" = "xno" ; then
 	fi
 else
 	# even though --with-jdk was not given, header was found and is needed
-	if ! test "x$only_rts" = "xno" ; then
+	if test "x$only_rts" != "xno" ; then
 		with_java=yes
 	fi
 fi
-if ! test "x$search_for_jni_h_more" = "xno" ; then
+if test "x$search_for_jni_h_more" != "xno" ; then
 	# darwin systems may have a prior jni.h stashed away elsewhere
 	pre_cppflags="$CPPFLAGS"
 	macjvmdir=/System/Library/Frameworks/JavaVM.framework/Versions
@@ -635,7 +655,7 @@ if ! test "x$search_for_jni_h_more" = "xno" ; then
 				  [Define to 1 if you have the `<jni.h>' header file])
 			found_jni_h=yes )
 
-	if ! test "x$found_jni_h" = "xno" ; then
+	if test "x$found_jni_h" != "xno" ; then
 		with_java=yes
 		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 		AC_MSG_WARN([jni.h was found by hunting through the JavaVM framework])
@@ -676,7 +696,7 @@ AC_CACHE_VAL(tcl_cv_union_wait,
     AC_TRY_LINK([#include <sys/types.h>
 #include <sys/wait.h>], [
 union wait x;
-WIFEXITED(x);           /* Generates compiler error if WIFEXITED
+WIFEXITED(x);           /* Generates an error if WIFEXITED
                          * uses an int. */
     ], tcl_cv_union_wait=yes, tcl_cv_union_wait=no))
 AC_MSG_RESULT($tcl_cv_union_wait)
@@ -698,7 +718,7 @@ dnl ******************************************
 dnl *** Check for compiler characteristics ***
 dnl ******************************************
 
-dnl flags that should work across any compiler
+dnl flags that should work across all known compilers
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/include"
 
 dnl flags that are required but not tied to a compilation style
@@ -709,7 +729,7 @@ case "x$compiler" in
 esac
 
 dnl optimization flags
-if ! test "x$use_optimized" = "xno" ; then
+if test "x$use_optimized" != "xno" ; then
 	case "x$compiler" in
 		xgcc*)
 			CFLAGS="$CFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
@@ -729,7 +749,7 @@ if ! test "x$use_optimized" = "xno" ; then
 fi
 
 dnl debug flags
-if ! test "x$use_debug" = "xno" ; then
+if test "x$use_debug" != "xno" ; then
 	case "x$compiler" in
 		xgcc*)
 			CFLAGS="$CFLAGS -g"
@@ -749,7 +769,7 @@ if ! test "x$use_debug" = "xno" ; then
 fi
 
 dnl profile flags
-if ! test "x$use_profiling" = "xno" ; then
+if test "x$use_profiling" != "xno" ; then
 	case "x$compiler" in
 		xgcc*)
 			CFLAGS="$CFLAGS -pg"
@@ -762,7 +782,7 @@ if ! test "x$use_profiling" = "xno" ; then
 fi
 
 dnl verbose warning flags
-if ! test "x$use_warnings" = "xno" ; then
+if test "x$use_warnings" != "xno" ; then
 	case "x$compiler" in
 		xgcc*)
 			CFLAGS="$CFLAGS -W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion"
@@ -896,14 +916,14 @@ dnl *********************************
 AC_PATH_X
 AC_PATH_XTRA
 
-if ! test "x$only_rts" = "xno" ; then
+if test "x$only_rts" != "xno" ; then
 	if test "x$with_java" = "xno" ; then
 		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	fi
 fi
-AM_CONDITIONAL(JAVA, [! test "x$with_java" = "xno"])
+AM_CONDITIONAL(JAVA, [test "x$with_java" != "xno"])
 
 dnl *** libpng ***
 
@@ -927,7 +947,7 @@ if test "x$build_png" = "xyes" ; then
 	build_brlcad_png=yes
 else
 	if test "x$build_png" = "xno" ; then
-		if ! test "x$png_works" = "xyes" ; then
+		if test "x$png_works" != "xyes" ; then
 			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 			AC_MSG_NOTICE([Try adding --enable-png-build])
 			AC_MSG_ERROR([*** Building libpng was disabled, yet no system png library was found ***])
@@ -976,7 +996,7 @@ if test "x$build_regex" = "xyes" ; then
 	build_brlcad_bregex=yes
 else
 	if test "x$build_regex" = "xno" ; then
-		if ! test "x$regex_works" = "xyes" ; then
+		if test "x$regex_works" != "xyes" ; then
 			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 			AC_MSG_NOTICE([Try adding --enable-regex-build])
 			AC_MSG_ERROR([*** Building libregex was disabled, yet no system regex was found ***])
@@ -1020,7 +1040,7 @@ if test "x$build_zlib" = "xyes" ; then
 	build_brlcad_zlib=yes
 else
 	if test "x$build_zlib" = "xno" ; then
-		if ! test "x$zlib_works" = "xyes" ; then
+		if test "x$zlib_works" != "xyes" ; then
 			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 			AC_MSG_NOTICE([Try adding --enable-zlib-build])
 			AC_MSG_ERROR([*** Building libz was disabled, yet no system zlib compression was found ***])
@@ -1322,7 +1342,7 @@ echo Only build benchmark suite ...........: $only_benchmark
 echo Only build librtserver ...............: $only_rts
 echo Generate doxygen documentation .......: $use_doxygen
 echo
-if ! test "x$time_elapsed" = "xunknown" ; then
+if test "x$time_elapsed" != "xunknown" ; then
 echo Elapsed configuration time ...........: $time_elapsed
 fi
 echo ---
