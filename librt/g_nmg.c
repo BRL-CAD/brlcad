@@ -1,12 +1,3 @@
-/* XXX Move to nmg.h */
-#define NMG_CK2MAG(_ptr, _magic1, _magic2, _str)	\
-	if( !(_ptr) || (*((long *)(_ptr)) != (_magic1) && *((long *)(_ptr)) != (_magic2) ) )  { \
-		rt_badmagic( (long *)(_ptr), _magic1, _str, __FILE__, __LINE__ ); \
-	}
-#define NMG_CK_FACE_G_EITHER(_p)	NMG_CK2MAG(_p, NMG_FACE_G_PLANE_MAGIC, NMG_FACE_G_SNURB_MAGIC, "face_g_plane|face_g_snurb")
-#define NMG_CK_EDGE_G_EITHER(_p)	NMG_CK2MAG(_p, NMG_EDGE_G_LSEG_MAGIC, NMG_EDGE_G_CNURB_MAGIC, "edge_g_lseg|edge_g_cnurb")
-
-
 #define DEBUG	0
 /*
  *			G _ N M G . C
@@ -43,7 +34,7 @@ static char RCSnmg[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "nurb.h"
 #include "./debug.h"
-#include "./nmg_rt.h"		/* XXX Why do we need this? */
+#include "./nmg_rt.h"
 
 /* rt_nmg_internal is just "model", from nmg.h */
 
