@@ -132,7 +132,7 @@ char **argv;
 	prep_timer();		/* Start timing preparations */
 
 	/* Build directory of GED database */
-	if( dir_build( argv[0] ) < 0 )
+	if( dir_build( argv[0], 1 ) < 0 )
 		rtbomb("Unable to continue");
 	argc--; argv++;
 
@@ -255,31 +255,6 @@ char **argv;
 		npts*npts, utime, (double)(npts*npts/utime) );
 	return(0);
 }
-#ifdef never
-/*
- *			A U T O S I Z E
- */
-autosize( m2v, n )
-register matp_t m2v;
-int n;
-{
-	register struct soltab *stp;
-	vect_t top;
-	double f;
-
-	MAT4X3PNT( base, m2v, mdl_min );
-	MAT4X3PNT( top, m2v, mdl_max );
-
-	deltas = (top[X]-base[X])/n;
-	f = (top[Y]-base[Y])/n;
-	if( f > deltas )  deltas = f;
-	fprintf(stderr,"view  X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
-		base[X], top[X],
-		base[Y], top[Y],
-		base[Z], top[Z] );
-	fprintf(stderr,"Deltas=%f (units between rays)\n", deltas );
-}
-#else
 
 /*
  *			A U T O S I Z E
@@ -293,7 +268,23 @@ int n;
 	static fastf_t ymin, ymax;
 	static fastf_t zmin, zmax;
 	static vect_t xlated;
+	vect_t top;
+	FAST double f;
 
+	/* NEW WAY */
+	MAT4X3PNT( base, m2v, mdl_min );
+	MAT4X3PNT( top, m2v, mdl_max );
+
+	deltas = (top[X]-base[X])/n;
+	f = (top[Y]-base[Y])/n;
+	if( f > deltas )  deltas = f;
+	fprintf(stderr,"view  X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
+		base[X], top[X],
+		base[Y], top[Y],
+		base[Z], top[Z] );
+	fprintf(stderr,"Deltas=%f (units between rays)\n", deltas );
+
+	/* OLD WAY */
 	/* init maxima and minima */
 	xmax = ymax = zmax = -100000000.0;
 	xmin = ymin = zmin =  100000000.0;
@@ -325,8 +316,7 @@ int n;
 
 	deltas = (xmax-xmin)/n;
 	MAX( deltas, (ymax-ymin)/n );
-	fprintf(stderr,"view X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
+	fprintf(stderr,"Oview X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
 		xmin, xmax, ymin, ymax, zmin, zmax );
-	fprintf(stderr,"Deltas=%f (units between rays)\n", deltas );
+	fprintf(stderr,"ODeltas=%f (units between rays)\n", deltas );
 }
-#endif

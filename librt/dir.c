@@ -59,8 +59,9 @@ static char *units_str[] = {
  *	-1	Fatal Error
  */
 int
-dir_build(filename)
+dir_build(filename, noisy)
 char *filename;
+int noisy;
 {
 	static union record	record;
 	static long	addr;
@@ -88,9 +89,10 @@ char *filename;
 				(void)fprintf(stderr,"File is Version %s, Program is version %s\n",
 					record.i.i_version, ID_VERSION );
 			}
-			(void)fprintf(stderr,"%s (units=%s)\n",
-				record.i.i_title,
-				units_str[record.i.i_units] );
+			if(noisy)
+				(void)fprintf(stderr,"%s (units=%s)\n",
+					record.i.i_title,
+					units_str[record.i.i_units] );
 			continue;
 		}
 		if( record.u_id == ID_FREE )  {
