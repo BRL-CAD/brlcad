@@ -669,14 +669,17 @@ top:		nextpp = pp->pt_forw;
 		}
 
 		/* Eliminate the gap by collapsing the two partitions
-		 * into one.
+		 * into one.  The below lines have been commented out but
+		 * should be retained for debugging purposes.
 		 */
-		rt_log("part_comp: collapsing gap of %e mm between id=%d and id=%d\n",
-			gap, pp->pt_regionp->reg_regionid, 
-			nextpp->pt_regionp->reg_regionid);
-		pp->pt_outseg = nextpp->pt_outseg;
-		pp->pt_outhit = nextpp->pt_outhit;
-		pp->pt_outflip = nextpp->pt_outflip;
+
+		 /* rt_log("part_comp: collapsing gap of %e mm between id=%d and id=%d\n",
+		  *	gap, pp->pt_regionp->reg_regionid, 
+		  *	nextpp->pt_regionp->reg_regionid);
+		  * pp->pt_outseg = nextpp->pt_outseg;
+		  * pp->pt_outhit = nextpp->pt_outhit;
+		  * pp->pt_outflip = nextpp->pt_outflip;
+		  */
 
 		/*
 		 *  Dequeue and free the unwanted partition structure.
