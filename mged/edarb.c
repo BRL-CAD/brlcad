@@ -1517,8 +1517,9 @@ char	**argv;
     int			arglen;
     int			face_size;	/* # vertices in THE face */
     char		**p;
-    struct solidrec	lsolid;		/* local copy of solid */
-    struct solidrec	tsolid;		/* temporary copy of solid */
+    struct rt_arb_internal	*arb;
+    struct rt_arb_internal	larb;		/* local copy of solid */
+    struct rt_arb_internal	tarb;		/* temporary copy of solid */
     static int		min_tuple_size[9] = {0, 0, 0, 0, 3, 2, 2, 1, 3};
     /*
      *			The Permutations
@@ -1604,17 +1605,25 @@ char	**argv;
 
     if (not_state(ST_S_EDIT, "Permute"))
 	return CMD_BAD;
-    if (es_rec.s.s_type != GENARB8)
+
+    if( es_int.idb_type != ID_ARB8 )
     {
 	(void) printf("Permute: solid type must be an ARB\n");
 	return CMD_BAD;
     }
+
     if ((es_type < 4) || (es_type > 8))
     {
 	(void) printf("Permute: es_type=%d\nThis shouldn't happen\n",
 		      es_type);
 	return CMD_BAD;
     }
+
+	arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	RT_ARB_CK_MAGIC( arb );
+
+	/* make a local copy of the solid */
+	bcopy( arb , &larb , sizeof( struct rt_arb_internal ) );
 
     /*
      *	Find the encoded form of the specified permutation,
@@ -1661,39 +1670,28 @@ char	**argv;
 	    break;
     }
 
-    /* Convert to point notation in temporary buffer */
-    VMOVE(&lsolid.s_values[0], &es_rec.s.s_values[0]);
-    for(i = 3; i <= 21; i += 3)
-    {  
-	VADD2(&lsolid.s_values[i],
-		&es_rec.s.s_values[i], &lsolid.s_values[0]);
-    }
-
     /*
      *	Collect the vertices in the specified order
      */
     for (i = 0; i < 8; ++i)
     {
 	char	buf[2];
-	int	a, b;
 
 	if ((*p)[i] == '*')
 	    continue;
 	sprintf(buf, "%c", (*p)[i]);
 	k = atoi(buf);
-	a = 3 * i;
-	b = 3 * ARB_VERT_LOC(es_type, k);
-	VMOVE(&tsolid.s_values[a], &lsolid.s_values[b]);
+	VMOVE( tarb.pt[i], larb.pt[ARB_VERT_LOC(es_type, k)]);
     }
 
 #if 0
     printf("After collection...\n");
-    for (i = 0; i <= 21; i += 3)
+    for (i = 0; i < 8 ; i++ )
     {
 	char	string[1024];
 
-	sprintf(string, "vertex %d", i / 3 + 1);
-	VPRINT(string, &tsolid.s_values[i]);
+	sprintf(string, "vertex %d", i + 1);
+	VPRINT(string, tarb.pt[i]);
     }
     printf("...\n");
 #endif
@@ -1713,26 +1711,26 @@ char	**argv;
      *		 ARB8  |
      *		-------+-------------------------
      */
-    for (i = 0; i <= 21; i += 3)
+    for (i = 0; i < 8; i++ )
     {
-	VMOVE(&lsolid.s_values[i], &tsolid.s_values[i]);
+	VMOVE( larb.pt[i], tarb.pt[i]);
     }
     switch (es_type)
     {
 	case ARB4:
-	    VMOVE(&lsolid.s_values[9], &lsolid.s_values[0]);
+	    VMOVE(larb.pt[3], larb.pt[0]);
 	    /* break intentionally left out */
 	case ARB5:
-	    VMOVE(&lsolid.s_values[15], &lsolid.s_values[12]);
-	    VMOVE(&lsolid.s_values[18], &lsolid.s_values[12]);
-	    VMOVE(&lsolid.s_values[21], &lsolid.s_values[12]);
+	    VMOVE(larb.pt[5], larb.pt[4]);
+	    VMOVE(larb.pt[6], larb.pt[4]);
+	    VMOVE(larb.pt[7], larb.pt[4]);
 	    break;
 	case ARB6:
-	    VMOVE(&lsolid.s_values[15], &lsolid.s_values[12]);
-	    VMOVE(&lsolid.s_values[21], &lsolid.s_values[18]);
+	    VMOVE(larb.pt[5], larb.pt[4]);
+	    VMOVE(larb.pt[7], larb.pt[6]);
 	    break;
 	case ARB7:
-	    VMOVE(&lsolid.s_values[21], &lsolid.s_values[12]);
+	    VMOVE(larb.pt[7], larb.pt[4]);
 	    break;
 	case ARB8:
 	    break;
@@ -1742,13 +1740,8 @@ char	**argv;
 	    return CMD_BAD;
     }
 
-    /* Convert back to point&vector notation */
-    VMOVE(&es_rec.s.s_values[0], &lsolid.s_values[0]);
-    for (i = 3; i <= 21; i += 3)
-    {  
-	VSUB2(&es_rec.s.s_values[i],
-		&lsolid.s_values[i], &lsolid.s_values[0]);
-    }
+	/* copy back to original arb */
+	bcopy( &larb , arb , sizeof( struct rt_arb_internal ) );
 
     /* draw the updated solid */
     replot_editing_solid();

@@ -53,7 +53,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
-static int	new_way = 0;	/* Set 1 for import/export handling */
+static int	new_way = 1;	/* Set 1 for import/export handling */
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
 static void	nmg_ed();
@@ -1101,55 +1101,78 @@ init_sedit()
 	RT_CK_DB_INTERNAL( &es_int );
 
 	es_menu = 0;
-	new_way = 0;
-	bcopy( (char *)es_ext.ext_buf, (char *)&es_rec, sizeof(es_rec) );
+	if( new_way )
+	{
+		if( id == ID_ARB8 )
+		{
+			struct rt_arb_internal *arb;
 
-	if( es_rec.u_id == ID_SOLID )  {
-		struct solidrec temprec;	/* copy of solid to determine type */
+			arb = (struct rt_arb_internal *)es_int.idb_ptr;
+			RT_ARB_CK_MAGIC( arb );
 
-		temprec = es_rec.s;		/* struct copy */
-		VMOVE( es_keypoint, es_rec.s.s_values );
-		es_keyfixed = 0;
-
-		if( (type = es_rec.s.s_cgtype) < 0 )
-			type *= -1;
-		if(type == BOX || type == RPP)
-			type = ARB8;
-		if(type == RAW) {
-			/* rearrange vectors to correspond to the
-			 *  	"standard" ARB6
-			 */
-			register struct solidrec *trp = &temprec;
-			VMOVE(&trp->s_values[3], &es_rec.s.s_values[9]);
-			VMOVE(&trp->s_values[6], &es_rec.s.s_values[21]);
-			VMOVE(&trp->s_values[9], &es_rec.s.s_values[12]);
-			VMOVE(&trp->s_values[12], &es_rec.s.s_values[3]);
-			VMOVE(&trp->s_values[15], &es_rec.s.s_values[6]);
-			VMOVE(&trp->s_values[18], &es_rec.s.s_values[18]);
-			VMOVE(&trp->s_values[21], &es_rec.s.s_values[15]);
-			es_rec.s = *trp;	/* struct copy */
-			type = ARB6;
-		}
-		es_rec.s.s_cgtype = type;
-
-		if( es_rec.s.s_type == GENARB8 ) {
-			/* find the comgeom arb type */
-			if( (type = type_arb( &es_rec )) == 0 ) {
-				(void)printf("%s: BAD ARB\n",es_rec.s.s_name);
+			type = rt_arb_std_type( &es_int , &mged_tol );
+			es_type = type;
+			if( rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol ) )
+			{
+				(void) printf( "Cannot calculate plane equations for ARB8\n" );
+				db_free_external( &es_ext );
+				rt_functab[id].ft_ifree( &es_int );
 				return;
 			}
+		}
+	}
+	else
+	{
+		bcopy( (char *)es_ext.ext_buf, (char *)&es_rec, sizeof(es_rec) );
 
-			temprec = es_rec.s;
+		if( es_rec.u_id == ID_SOLID )  {
+			struct solidrec temprec;	/* copy of solid to determine type */
+
+			temprec = es_rec.s;		/* struct copy */
+			VMOVE( es_keypoint, es_rec.s.s_values );
+			es_keyfixed = 0;
+
+			if( (type = es_rec.s.s_cgtype) < 0 )
+				type *= -1;
+			if(type == BOX || type == RPP)
+				type = ARB8;
+			if(type == RAW) {
+				/* rearrange vectors to correspond to the
+				 *  	"standard" ARB6
+				 */
+				register struct solidrec *trp = &temprec;
+				VMOVE(&trp->s_values[3], &es_rec.s.s_values[9]);
+				VMOVE(&trp->s_values[6], &es_rec.s.s_values[21]);
+				VMOVE(&trp->s_values[9], &es_rec.s.s_values[12]);
+				VMOVE(&trp->s_values[12], &es_rec.s.s_values[3]);
+				VMOVE(&trp->s_values[15], &es_rec.s.s_values[6]);
+				VMOVE(&trp->s_values[18], &es_rec.s.s_values[18]);
+				VMOVE(&trp->s_values[21], &es_rec.s.s_values[15]);
+				es_rec.s = *trp;	/* struct copy */
+				type = ARB6;
+			}
 			es_rec.s.s_cgtype = type;
-			es_type = type;	/* !!! Needed for facedef.c */
 
-			/* find the plane equations */
-			calc_planes( &es_rec.s, type );
+			if( es_rec.s.s_type == GENARB8 ) {
+				/* find the comgeom arb type */
+				if( (type = type_arb( &es_rec )) == 0 ) {
+					(void)printf("%s: BAD ARB\n",es_rec.s.s_name);
+					return;
+				}
+
+				temprec = es_rec.s;
+				es_rec.s.s_cgtype = type;
+				es_type = type;	/* !!! Needed for facedef.c */
+
+				/* find the plane equations */
+				calc_planes( &es_rec.s, type );
+			}
 		}
 	}
 #if 1
 	/* Experimental, but working. */
 	switch( id )  {
+	case ID_ARB8:
 	case ID_ELL:
 	case ID_EHY:
 	case ID_EPA:
@@ -1452,12 +1475,10 @@ sedit()
 			es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], work);
 			/* find new vertices, put in record in vector notation */
 			(void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
-			new_way = 1;
 		}
 		break;
 
 	case ECMD_ARB_SETUP_ROTFACE:
-		new_way = 1;
 		arb = (struct rt_arb_internal *)es_int.idb_ptr;
 
 		/* check if point 5 is in the face */
@@ -1519,7 +1540,6 @@ sedit()
 		/* rotate a GENARB8 defining plane through a fixed vertex */
 
 		arb = (struct rt_arb_internal *)es_int.idb_ptr;
-		new_way = 1;
 
 		if(inpara) {
 			static mat_t invsolr;
@@ -1948,7 +1968,6 @@ CONST vect_t	mousevec;
 	vect_t	pos_model;		/* Rotated screen space pos */
 	vect_t	tr_temp;		/* temp translation vector */
 	vect_t	temp;
-	struct rt_arb_internal *arb;
 
 	if( es_edflag <= 0 )  return;
 	switch( es_edflag )  {
@@ -2055,7 +2074,15 @@ CONST vect_t	mousevec;
 	case PTARB:
 		/* move an arb point to indicated point */
 		/* point is located at es_values[es_menu*3] */
-		VADD2(temp, es_rec.s.s_values, &es_rec.s.s_values[es_menu*3]);
+		if( new_way )
+		{
+			struct rt_arb_internal *arb=
+				(struct rt_arb_internal *)es_int.idb_ptr;
+
+			VMOVE( temp , arb->pt[es_menu] );
+		}
+		else
+			VADD2(temp, es_rec.s.s_values, &es_rec.s.s_values[es_menu*3]);
 		MAT4X3PNT(pos_model, es_mat, temp);
 		MAT4X3PNT(pos_view, model2view, pos_model);
 		pos_view[X] = mousevec[X];
@@ -3273,7 +3300,7 @@ sedit_accept()
 	es_edflag = -1;
 	menuflag = 0;
 	movedir = 0;
-	new_way = 0;
+/*	new_way = 0;	*/
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
@@ -3291,7 +3318,7 @@ sedit_reject()
 	menuflag = 0;
 	movedir = 0;
 	es_edflag = -1;
-	new_way = 0;
+/*	new_way = 0;	*/
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
