@@ -121,13 +121,17 @@ char				*value;		/* string containing value */
 		    && spp->sp_fmt[0] != 'i' )
 			continue;
 
+#if CRAY && !__STDC__
+		loc = (char *)(base + ((int)spp->sp_offset*sizeof(int)));
+#else
 		loc = (char *)(base + ((int)spp->sp_offset));
+#endif
 
 		switch( spp->sp_fmt[0] )  {
 		case 'i':
 			/* Indirect to another structure */
 			if( rt_struct_lookup(
-				(struct structparse *)spp->sp_hook,
+				(struct structparse *)spp->sp_offset,
 				name, base, value )
 			    == 0 )
 				return(0);	/* found */
@@ -237,12 +241,16 @@ char			*base;		/* base address of users structure */
 			continue;
 		lastoff = spp->sp_offset;
 
+#if CRAY && !__STDC__
+		loc = (char *)(base + ((int)spp->sp_offset*sizeof(int)));
+#else
 		loc = (char *)(base + ((int)spp->sp_offset));
+#endif
 
 		switch( spp->sp_fmt[0] )  {
 		case 'i':
 			rt_structprint( spp->sp_name,
-				(struct structparse *)spp->sp_hook,
+				(struct structparse *)spp->sp_offset,
 				base );
 			break;
 		case '%':
