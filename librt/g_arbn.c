@@ -25,22 +25,14 @@ static char RCSarbn[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "db.h"
 #include "raytrace.h"
 #include "nmg.h"
-#include "db.h"
+#include "rtgeom.h"
 #include "./debug.h"
-
 
 #define DIST_TOL	(1.0e-8)
 #define DIST_TOL_SQ	(1.0e-10)
-
-struct arbn_internal  {
-	long	magic;
-	int	neqn;
-	plane_t	*eqn;
-};
-#define RT_ARBN_INTERNAL_MAGIC	0x18236461
-#define RT_ARBN_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARBN_INTERNAL_MAGIC,"arbn_internal")
 
 RT_EXTERN(void rt_arbn_print, (struct soltab *stp) );
 RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
