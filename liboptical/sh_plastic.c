@@ -50,6 +50,7 @@ struct phong_specific {
 	double	reflect;	/* Moss "transmission" */
 	double	refrac_index;
 	double	extinction;
+	struct mfuncs *mfp;
 };
 #define PL_MAGIC	0xbeef00d
 #define PL_NULL	((struct phong_specific *)0)
@@ -79,16 +80,16 @@ HIDDEN void	phong_print();
 HIDDEN void	phong_free();
 
 struct mfuncs phg_mfuncs[] = {
-	{"default",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
+	{"default",	0,		0,		MFI_NORMAL,	0,
 	phong_setup,	phong_render,	phong_print,	phong_free },
 
-	{"plastic",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
+	{"plastic",	0,		0,		MFI_NORMAL,	0,
 	phong_setup,	phong_render,	phong_print,	phong_free },
 
-	{"mirror",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
+	{"mirror",	0,		0,		MFI_NORMAL,	0,
 	mirror_setup,	phong_render,	phong_print,	phong_free },
 
-	{"glass",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
+	{"glass",	0,		0,		MFI_NORMAL,	0,
 	glass_setup,	phong_render,	phong_print,	phong_free },
 
 	{(char *)0,	0,		0,		0,	0,
@@ -126,6 +127,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	pp->reflect = 0.0;
 	pp->refrac_index = RI_AIR;
 	pp->extinction = 0.0;
+	pp->mfp = mfp;
 
 	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "phong_specific" );
@@ -162,6 +164,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	pp->reflect = 0.75;
 	pp->refrac_index = 1.65;
 	pp->extinction = 0.0;
+	pp->mfp = mfp;
 
 	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "phong_specific" );
@@ -199,6 +202,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	/* leaving 0.1 for diffuse/specular */
 	pp->refrac_index = 1.65;
 	pp->extinction = 0.0;
+	pp->mfp = mfp;
 
 	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "phong_specific" );
@@ -327,8 +331,10 @@ char	*dp;
 	swp->sw_refrac_index = ps->refrac_index;
 	swp->sw_extinction = ps->extinction;
 	if( swp->sw_xmitonly ) {
-		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 ) {
+			bu_log("calling rr_render from phong\n");
 			(void)rr_render( ap, pp, swp );
+		}
 		return(1);	/* done */
 	}
 
@@ -346,6 +352,13 @@ char	*dp;
 	} else {
 		VSETALL( swp->sw_color, 0 );
 	}
+
+	/* With the advent of procedural shaders, the caller can no longer
+	 * provide us reliable light visibility information.  The hit point
+	 * may have been changed by another shader in a stack.  There is no
+	 * way that anyone else can tell us whether lights are visible.
+	 */
+	light_visibility(ap, swp, ps->mfp->mf_inputs);
 
 	/* Consider effects of each light source */
 	for( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
