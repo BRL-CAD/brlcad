@@ -43,7 +43,7 @@ void		push();
 
 /*  	F _ T A B O B J :   tabs objects as they appear in data file
  */
-void
+int
 f_tabobj( )
 {
 	register struct directory *dp;
@@ -56,7 +56,10 @@ f_tabobj( )
 	for(i=1; i<numargs; i++) {
 		if( (dp = db_lookup( dbip, cmd_args[i], LOOKUP_NOISY)) == DIR_NULL )
 			continue;
-		if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
+		if( db_get( dbip, dp, &record, 0, 1) < 0 ) {
+			READ_ERR;
+			return CMD_BAD;
+		}
 		if(record.u_id == ID_ARS_A) {
 			(void)printf("%c %d %s ",record.a.a_id,record.a.a_type,record.a.a_name);
 			(void)printf("%d %d %d %d\n",record.a.a_m,record.a.a_n,
@@ -64,7 +67,10 @@ f_tabobj( )
 			/* the b-records */
 			ngran = record.a.a_totlen;
 			for(j=1; j<=ngran; j++) {
-				if( db_get( dbip, dp, &record, j, 1) < 0 )  READ_ERR_return;
+				if( db_get( dbip, dp, &record, j, 1) < 0 ) {
+					READ_ERR;
+					return CMD_BAD;
+				}
 				(void)printf("%c %d %d %d\n",record.b.b_id,record.b.b_type,record.b.b_n,record.b.b_ngranule);
 				for(k=0; k<24; k+=6) {
 					for(kk=k; kk<k+6; kk++)
@@ -94,7 +100,10 @@ f_tabobj( )
 			for(j=1; j<=nmemb; j++) {
 				mat_t	xmat;
 
-				if( db_get( dbip, dp, &record, j, 1) < 0 )  READ_ERR_return;
+				if( db_get( dbip, dp, &record, j, 1) < 0 ) {
+					READ_ERR;
+					return CMD_BAD;
+				}
 				(void)printf("%c %c %s\n",
 					record.M.m_id,
 					record.M.m_relation,
@@ -112,7 +121,7 @@ f_tabobj( )
 			(void)printf("SPLINE: not implemented yet\n");
 		}
 	}
-	return;
+	return CMD_OK;
 }
 
 
@@ -138,7 +147,7 @@ mat_t xform;
  *		    including the final parameters of the solids at the bottom
  *		    of the matching paths
  */
-void
+int
 f_pathsum(argc, argv)
 int	argc;
 char	**argv;
@@ -181,7 +190,7 @@ char	**argv;
 	/* build directory pointer array for desired path */
 	for(i=0; i<objpos; i++) {
 		if( (obj[i] = db_lookup( dbip, cmd_args[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
-			return;
+			return CMD_BAD;
 	}
 
 	mat_idn(identity);
@@ -196,6 +205,8 @@ char	**argv;
 			(void)printf("/%s",obj[i]->d_namep);
 		(void)printf("  NOT FOUND\n");
 	}
+
+	return CMD_OK;
 }
 
 
@@ -205,7 +216,7 @@ char	**argv;
 
 static union record saverec;
 
-void
+int
 f_copyeval( )
 {
 
@@ -234,7 +245,7 @@ f_copyeval( )
 	/* build directory pointer array for desired path */
 	for(i=0; i<objpos; i++) {
 		if( (obj[i] = db_lookup( dbip, cmd_args[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
-			return;
+			return CMD_BAD;
 	}
 
 	/* check if last path member is a solid */
@@ -242,7 +253,7 @@ f_copyeval( )
 	if(record.u_id != ID_SOLID && record.u_id != ID_ARS_A &&
 		record.u_id != ID_BSOLID && record.u_id != ID_P_HEAD) {
 		(void)printf("Bottom of path is not a solid\n");
-		return;
+		return CMD_BAD;
 	}
 
 	/* get the new solid name */
@@ -252,7 +263,7 @@ f_copyeval( )
 	/* check if new solid name already exists in description */
 	if( db_lookup( dbip, cmd_args[args], LOOKUP_QUIET) != DIR_NULL ) {
 		(void)printf("%s: already exists\n",cmd_args[args]);
-		return;
+		return CMD_BAD;
 	}
 
 	mat_idn( identity );
@@ -265,7 +276,7 @@ f_copyeval( )
 		for(i=0; i<objpos; i++)
 			(void)printf("/%s",obj[i]->d_namep);
 		(void)printf("  NOT FOUND\n");
-		return;
+		return CMD_BAD;
 	}
 
 	/* No interupts */
@@ -280,15 +291,20 @@ f_copyeval( )
 		ngran = saverec.a.a_totlen;
 		if( (dp = db_diradd( dbip, saverec.a.a_name, -1, ngran+1, DIR_SOLID)) == DIR_NULL ||
 		    db_alloc( dbip, dp, ngran+1 ) < 0 )  {
-		    	ALLOC_ERR_return;
+		    	ALLOC_ERR;
+			return CMD_BAD;
 		}
-		if( db_put( dbip, dp, &saverec, 0, 1 ) < 0 )
-			WRITE_ERR_return;
+		if( db_put( dbip, dp, &saverec, 0, 1 ) < 0 ) {
+			WRITE_ERR;
+			return CMD_BAD;
+		}
 
 		/* apply transformation to the b-records */
 		for(i=1; i<=ngran; i++) {
-			if( db_get( dbip, obj[objpos-1], &record, i , 1) < 0 )
-				READ_ERR_return;
+			if( db_get( dbip, obj[objpos-1], &record, i , 1) < 0 ) {
+				READ_ERR;
+				return CMD_BAD;
+			}
 			if(i == 1) {
 				/* vertex */
 				MAT4X3PNT( vec, xform,
@@ -307,26 +323,30 @@ f_copyeval( )
 			kk = 0;
 
 			/* write this b-record */
-			if( db_put( dbip, dp, &record, i, 1) < 0 )  WRITE_ERR_return;
+			if( db_put( dbip, dp, &record, i, 1) < 0 ) {
+				WRITE_ERR;
+				return CMD_BAD;
+			}
 		}
-		return;
+		return CMD_OK;
 	}
 
 	if(saverec.u_id == ID_BSOLID) {
 		(void)printf("B-SPLINEs not implemented\n");
-		return;
+		return CMD_BAD;
 	}
 
 	if(saverec.u_id == ID_P_HEAD) {
 		(void)printf("POLYGONs not implemented\n");
-		return;
+		return CMD_BAD;
 	}
 
 	if(saverec.u_id == ID_SOLID) {
 		NAMEMOVE(cmd_args[args], saverec.s.s_name);
 		if( (dp = db_diradd( dbip, saverec.s.s_name, -1, 1, DIR_SOLID)) == DIR_NULL ||
 		    db_alloc( dbip, dp, 1 ) < 0 )  {
-			ALLOC_ERR_return;
+			ALLOC_ERR;
+			return CMD_BAD;
 		}
 		MAT4X3PNT( vec, xform, &saverec.s.s_values[0] );
 		VMOVE(&saverec.s.s_values[0], vec);
@@ -334,10 +354,14 @@ f_copyeval( )
 			MAT4X3VEC( vec, xform, &saverec.s.s_values[i] );
 			VMOVE(&saverec.s.s_values[i], vec);
 		}
-		if( db_put( dbip, dp, &saverec, 0, 1 ) < 0 )  WRITE_ERR_return;
-		return;
+		if( db_put( dbip, dp, &saverec, 0, 1 ) < 0 ){
+			WRITE_ERR;
+			return CMD_BAD;
+		}
+		return CMD_OK;
 	}
 
+	return CMD_BAD;
 }
 
 
@@ -685,7 +709,7 @@ char **argv;
 		}
 		rt_g.debug = old_debug;
 		rt_log("push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions\n");
-		return -1;
+		return CMD_BAD;
 	}
 /*
  * We've built the push solid list, now all we need to do is apply
@@ -746,7 +770,7 @@ char **argv;
 	}
 
 	rt_g.debug = old_debug;
-	return push_error;
+	return push_error ? CMD_BAD : CMD_OK;
 }
 
 /*
