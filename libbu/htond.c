@@ -73,6 +73,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *
  *  Host to Network Doubles
  */
+void
 htond( out, in, count )
 register unsigned char	*out;
 register unsigned char	*in;
@@ -356,6 +357,7 @@ ibm_normalized:
  *
  *  Network to Host Doubles
  */
+void
 ntohd( out, in, count )
 register unsigned char	*out;
 register unsigned char	*in;
