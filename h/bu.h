@@ -192,10 +192,10 @@ struct bu_bitv {
 #define BU_PTBL_ZERO	8	/* replace all occurrences of an item by 0 */
 
 struct bu_ptbl {
-	long	magic;	/* magic */
-	int	end;	/* index into buffer of first available location */
-	int	blen;	/* # of (long *)'s worth of storage at *buffer */
-	long  **buffer;	/* data storage area */
+	struct rt_list	l;	/* linked list for caller's use */
+	int		end;	/* index into buffer of first available location */
+	int		blen;	/* # of (long *)'s worth of storage at *buffer */
+	long 		**buffer; /* data storage area */
 };
 #define BU_PTBL_MAGIC		0x7074626c		/* "ptbl" */
 #define BU_CK_PTBL(_p)		BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
