@@ -65,8 +65,11 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
+extern int vectorThreshold;	/* defined in libdm/tcl.c */ 
+
 extern Tk_Window tkwin;
 
+static int ogl_actively_drawing;
 HIDDEN XVisualInfo *ogl_choose_visual();
 
 /* Display Manager package interface */
@@ -729,8 +732,14 @@ struct dm *dmp;
 {
   GLfloat fogdepth;
 
-  if (dmp->dm_debugLevel)
+  if (dmp->dm_debugLevel) {
     bu_log("ogl_drawBegin\n");
+
+    if (ogl_actively_drawing)
+	    bu_log("ogl_drawBegin: already actively drawing\n");
+  }
+
+  ogl_actively_drawing = 1;
 
   if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
@@ -804,6 +813,7 @@ struct dm *dmp;
   glFinish();
 #endif
 
+  ogl_actively_drawing = 0;
   return TCL_OK;
 }
 
@@ -912,64 +922,87 @@ int which_eye;
  */
 HIDDEN int
 ogl_drawVList(dmp, vp)
-struct dm *dmp;
-register struct rt_vlist *vp;
+     struct dm			*dmp;
+     register struct rt_vlist	*vp;
 {
-  register struct rt_vlist *tvp;
-  int first;
+	register struct rt_vlist	*tvp;
+	int				first;
+	static int			nvectors = 0;
 
-  if (dmp->dm_debugLevel)
-    bu_log("ogl_drawVList()\n");
+	if (dmp->dm_debugLevel)
+		bu_log("ogl_drawVList()\n");
 
-  /* Viewing region is from -1.0 to +1.0 */
-  first = 1;
-  for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
-    register int	i;
-    register int	nused = tvp->nused;
-    register int	*cmd = tvp->cmd;
-    register point_t *pt = tvp->pt;
-    for( i = 0; i < nused; i++,cmd++,pt++ )  {
-      if (dmp->dm_debugLevel > 2)
-	bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
-      switch( *cmd )  {
-      case RT_VLIST_LINE_MOVE:
-	/* Move, start line */
-	if( first == 0 )
-	  glEnd();
-	first = 0;
-	glBegin(GL_LINE_STRIP);
-	glVertex3dv( *pt );
-	break;
-      case RT_VLIST_POLY_START:
-	/* Start poly marker & normal */
-	if( first == 0 )
-	  glEnd();
-	glBegin(GL_POLYGON);
-	/* Set surface normal (vl_pnt points outward) */
-	glNormal3dv( *pt );
-	break;
-      case RT_VLIST_LINE_DRAW:
-      case RT_VLIST_POLY_MOVE:
-      case RT_VLIST_POLY_DRAW:
-	glVertex3dv( *pt );
-	break;
-      case RT_VLIST_POLY_END:
-	/* Draw, End Polygon */
-	glVertex3dv( *pt );
-	glEnd();
+	/* Viewing region is from -1.0 to +1.0 */
 	first = 1;
-	break;
-      case RT_VLIST_POLY_VERTNORM:
-	/* Set per-vertex normal.  Given before vert. */
-	glNormal3dv( *pt );
-	break;
-      }
-    }
-  }
-  if( first == 0 )
-    glEnd();
+	for (BU_LIST_FOR(tvp, rt_vlist, &vp->l)) {
+		register int	i;
+		register int	nused = tvp->nused;
+		register int	*cmd = tvp->cmd;
+		register point_t *pt = tvp->pt;
+		for (i = 0; i < nused; i++,cmd++,pt++) {
+			if (dmp->dm_debugLevel > 2)
+				bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+			switch (*cmd) {
+			case RT_VLIST_LINE_MOVE:
+				/* Move, start line */
+				if (first == 0)
+					glEnd();
+				first = 0;
+				glBegin(GL_LINE_STRIP);
+				glVertex3dv(*pt);
+				break;
+			case RT_VLIST_POLY_START:
+				/* Start poly marker & normal */
+				if (first == 0)
+					glEnd();
+				glBegin(GL_POLYGON);
+				/* Set surface normal (vl_pnt points outward) */
+				glNormal3dv(*pt);
+				break;
+			case RT_VLIST_LINE_DRAW:
+			case RT_VLIST_POLY_MOVE:
+			case RT_VLIST_POLY_DRAW:
+				glVertex3dv(*pt);
+				break;
+			case RT_VLIST_POLY_END:
+				/* Draw, End Polygon */
+				glVertex3dv(*pt);
+				glEnd();
+				first = 1;
+				break;
+			case RT_VLIST_POLY_VERTNORM:
+				/* Set per-vertex normal.  Given before vert. */
+				glNormal3dv(*pt);
+				break;
+			}
+		}
 
-  return TCL_OK;
+#if 0
+/*XXX The Tcl_DoOneEvent below causes the following error:
+X Error of failed request:  GLXBadContextState
+*/
+
+		nvectors += nused;
+
+		if (nvectors >= vectorThreshold) {
+			if (dmp->dm_debugLevel)
+				bu_log("ogl_drawVList(): handle Tcl events\n");
+
+			nvectors = 0;
+
+			/* Handle events in the queue */
+			while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
+
+			if (dmp->dm_debugLevel)
+				bu_log("ogl_drawVList(): handled Tcl events successfully\n");
+		}
+#endif
+	}
+
+	if (first == 0)
+		glEnd();
+
+	return TCL_OK;
 }
 
 /*

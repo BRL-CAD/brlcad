@@ -31,6 +31,8 @@ extern int Dmo_Init();
 HIDDEN int dm_validXType_tcl();
 HIDDEN int dm_bestXType_tcl();
 
+int vectorThreshold = 100000;
+
 HIDDEN struct bu_cmdtab cmdtab[] = {
 	{"dm_validXType",	dm_validXType_tcl},
 	{"dm_bestXType",	dm_bestXType_tcl},
@@ -39,22 +41,29 @@ HIDDEN struct bu_cmdtab cmdtab[] = {
 
 int
 Dm_Init(interp)
-Tcl_Interp *interp;
+     Tcl_Interp *interp;
 {
-  char *version_number;
+	char		*version_number;
+	struct bu_vls	vls;
 
-  /* register commands */
-  bu_register_cmds(interp, cmdtab);
+	/* register commands */
+	bu_register_cmds(interp, cmdtab);
 
-  /* initialize display manager object code */
-  Dmo_Init(interp);
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "vectorThreshold");
+	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&vectorThreshold,
+		    TCL_LINK_INT);
+	bu_vls_free(&vls);
 
-  Tcl_SetVar(interp, "dm_version", (char *)dm_version+5, TCL_GLOBAL_ONLY);
-  Tcl_Eval(interp, "lindex $dm_version 2");
-  version_number = Tcl_GetStringResult(interp);
-  Tcl_PkgProvide(interp,  "Dm", version_number);
+	/* initialize display manager object code */
+	Dmo_Init(interp);
 
-  return TCL_OK;
+	Tcl_SetVar(interp, "dm_version", (char *)dm_version+5, TCL_GLOBAL_ONLY);
+	Tcl_Eval(interp, "lindex $dm_version 2");
+	version_number = Tcl_GetStringResult(interp);
+	Tcl_PkgProvide(interp,  "Dm", version_number);
+
+	return TCL_OK;
 }
 
 HIDDEN int
