@@ -8,7 +8,7 @@
 #define SRCDIR	rt
 #define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck \
 			rtg3 rtcell rtxray rthide rtfrac rtrange \
-			rtregis rtscale
+			rtregis rtscale rtsil
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -150,6 +150,13 @@ rttherm:	RTTHERM_OBJ LIBRT_DEP LIBFB_DEP
 	sh ../newvers.sh version "Thermal RT"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTTHERM_OBJ vers.o LIBRT LIBFB LIBFB_LIBES LIBRT_LIBES LIBES -o rttherm
+
+#define RTSIL_OBJ	RTUIF viewsil.o
+
+rtsil:	RTSIL_OBJ LIBRT_DEP LIBFB_DEP
+	sh ../newvers.sh version "RT Silhouette"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTSIL_OBJ vers.o LIBRT LIBFB LIBFB_LIBES LIBRT_LIBES LIBES -o rtsil
 
 /* Temp hack -Mike */
 disp:	disp.o LIBRT_DEP LIBFB_DEP LIBTCL_DEP LIBTK_DEP spectrum.o
