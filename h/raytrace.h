@@ -1302,6 +1302,7 @@ extern int rt_nfunctab;
 					/* Read named MGED db, build toc */
 RT_EXTERN(struct rt_i *rt_dirbuild, (char *filename, char *buf, int len) );
 					/* Prepare for raytracing */
+RT_EXTERN(struct rt_i *rt_new_rti, (struct db_i *dbip));
 RT_EXTERN(void rt_prep, (struct rt_i *rtip) );
 RT_EXTERN(void rt_prep_parallel, (struct rt_i *rtip, int ncpu) );
 					/* Handle overlap w/o logging */
