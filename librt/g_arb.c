@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "raytrace.h"
@@ -31,14 +32,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* Describe algorithm here */
 
 #define MAXPTS	4			/* All we need are 4 points */
-#define pl_A	pl_points[0]		/* Synonym for A point */
+static point_t	points[MAXPTS];		/* Actual points on plane */
 
 struct arb_specific  {
 	int	pl_npts;		/* number of points on plane */
-	point_t	pl_points[MAXPTS];	/* Actual points on plane */
+	vect_t	pl_A;			/* "A" point */
 	vect_t	pl_Xbasis;		/* X (B-A) vector (for 2d coords) */
+	vect_t	pl_Ybasis;		/* "Y" vector (perp to N and X) */
 	vect_t	pl_N;			/* Unit-length Normal (outward) */
 	fastf_t	pl_NdotA;		/* Normal dot A */
+	fastf_t	pl_XXlen;		/* 1/(Xbasis dot Xbasis) */
+	fastf_t	pl_YYlen;		/* 1/(Ybasis dot Ybasis) */
 	struct arb_specific *pl_forw;	/* Forward link */
 	char	pl_code[MAXPTS+1];	/* Face code string.  Decorative. */
 };
@@ -63,7 +67,8 @@ matp_t mat;
 	LOCAL vect_t	work;		/* Vector addition work area */
 	LOCAL vect_t	sum;		/* Sum of all endpoints */
 	LOCAL int	faces;		/* # of faces produced */
-	LOCAL int	i;
+	register int	i;
+	LOCAL fastf_t	f;
 
 	/*
 	 * Process an ARB8, which is represented as a vector
@@ -115,7 +120,7 @@ matp_t mat;
 #undef P
 
 	if( faces < 4  || faces > 6 )  {
-		fprintf(stderr,"arb(%s):  only %d faces present\n",
+		rtlog("arb(%s):  only %d faces present\n",
 			stp->st_name, faces);
 		/* Should free storage for good faces */
 		return(1);			/* Error */
@@ -140,9 +145,13 @@ matp_t mat;
 		(stp->st_max[Z] + stp->st_min[Z])/2 );
 
 	dx = (stp->st_max[X] - stp->st_min[X])/2;
+	f = dx;
 	dy = (stp->st_max[Y] - stp->st_min[Y])/2;
+	if( dy > f )  f = dy;
 	dz = (stp->st_max[Z] - stp->st_min[Z])/2;
-	stp->st_radsq = dx*dx + dy*dy + dz*dz;
+	if( dz > f )  f = dz;
+	stp->st_aradius = f;
+	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
 	return(0);		/* OK */
 }
 
@@ -210,21 +219,23 @@ int noise;			/* non-0: check 4,> pts for being planar */
 
 	/* Verify that this point is not the same as an earlier point */
 	for( i=0; i < plp->pl_npts; i++ )  {
-		VSUB2( work, point, plp->pl_points[i] );
+		VSUB2( work, point, points[i] );
 		if( MAGSQ( work ) < EPSILON )
 			return(0);			/* BAD */
 	}
 	i = plp->pl_npts++;		/* Current point number */
-	VMOVE( plp->pl_points[i], point );
+	VMOVE( points[i], point );
 	plp->pl_code[i] = '0'+a;
 	plp->pl_code[i+1] = '\0';
 
 	/* The first 3 points are treated differently */
 	switch( i )  {
 	case 0:
+		VMOVE( plp->pl_A, point );
 		return(1);				/* OK */
 	case 1:
 		VSUB2( plp->pl_Xbasis, point, plp->pl_A );	/* B-A */
+		plp->pl_XXlen = 1.0 / VDOT( plp->pl_Xbasis, plp->pl_Xbasis );
 		return(1);				/* OK */
 	case 2:
 		VSUB2( P_A, point, plp->pl_A );	/* C-A */
@@ -237,6 +248,8 @@ int noise;			/* non-0: check 4,> pts for being planar */
 			return(0);			/* BAD */
 		}
 		VUNITIZE( plp->pl_N );
+		VCROSS( plp->pl_Ybasis, plp->pl_N, plp->pl_Xbasis );
+		plp->pl_YYlen = 1.0 / VDOT( plp->pl_Ybasis, plp->pl_Ybasis );
 
 		/*
 		 *  If C-A is clockwise from B-A, then the normal
@@ -256,7 +269,7 @@ int noise;			/* non-0: check 4,> pts for being planar */
 		if( ! NEAR_ZERO(f) )  {
 			/* Non-planar face */
 			if( noise )  {
-				fprintf(stderr,"ERROR: arb(%s) face %s non-planar, dot=%f\n",
+				rtlog("ERROR: arb(%s) face %s non-planar, dot=%f\n",
 				stp->st_name, plp->pl_code, f );
 			}
 #ifdef CONSERVATIVE
@@ -280,19 +293,20 @@ register struct soltab *stp;
 	register int i;
 
 	if( plp == (struct arb_specific *)0 )  {
-		fprintf(stderr,"arb(%s):  no faces\n", stp->st_name);
+		rtlog("arb(%s):  no faces\n", stp->st_name);
 		return;
 	}
 	do {
-		fprintf(stderr, "......Face %s\n", plp->pl_code );
-		fprintf(stderr, "%d vertices:\n", plp->pl_npts );
-		for( i=0; i < plp->pl_npts; i++ )  {
-			VPRINT( "", plp->pl_points[i] );
-		}
+		rtlog( "......Face %s\n", plp->pl_code );
+		rtlog( "%d vertices:\n", plp->pl_npts );
+		VPRINT( "A", plp->pl_A );
 		VPRINT( "Xbasis", plp->pl_Xbasis );
+		VPRINT( "Ybasis", plp->pl_Ybasis );
+		rtlog("XX fact =%f, YY fact = %f\n",
+			plp->pl_XXlen, plp->pl_YYlen);
 		VPRINT( "Normal", plp->pl_N );
-		fprintf(stderr, "N.A = %f\n", plp->pl_NdotA );
-		putc('\n',stderr);
+		rtlog( "N.A = %f\n", plp->pl_NdotA );
+		rtlog("\n");
 	} while( plp = plp->pl_forw );
 }
 
@@ -337,7 +351,7 @@ register struct xray *rp;
 		dn = -VDOT( plp->pl_N, rp->r_dir );
 		dxbdn = VDOT( plp->pl_N, rp->r_pt ) - plp->pl_NdotA;
 		if( debug & DEBUG_ARB8 )
-			fprintf(stderr,"arb: face %s.  N.Dir=%f dxbdn=%f\n", plp->pl_code, dn, dxbdn );
+			rtlog("arb: face %s.  N.Dir=%f dxbdn=%f\n", plp->pl_code, dn, dxbdn );
 
 		if( dn < -EPSILON )  {
 			/* exit point, when dir.N < 0.  out = min(out,s) */
@@ -358,13 +372,13 @@ register struct xray *rp;
 				return( SEG_NULL );	/* MISS */
 		}
 		if( debug & DEBUG_ARB8 )
-			fprintf(stderr,"arb: in=%f, out=%f\n", in, out);
+			rtlog("arb: in=%f, out=%f\n", in, out);
 		if( in > out )
 			return( SEG_NULL );	/* MISS */
 	}
 	/* Validate */
 	if( iplane == PLANE_NULL || oplane == PLANE_NULL )  {
-		fprintf(stderr,"ERROR: arb(%s): 1 hit => MISS\n",
+		rtlog("ERROR: arb(%s): 1 hit => MISS\n",
 			stp->st_name);
 		return( SEG_NULL );	/* MISS */
 	}
@@ -373,13 +387,65 @@ register struct xray *rp;
 
 	GET_SEG( segp );
 	segp->seg_stp = stp;
-	segp->seg_flag = SEG_IN|SEG_OUT;
 	segp->seg_in.hit_dist = in;
-	VJOIN1( segp->seg_in.hit_point, rp->r_pt, in, rp->r_dir );
-	VMOVE( segp->seg_in.hit_normal, iplane->pl_N );
+	segp->seg_in.hit_private = (char *)iplane;
 
 	segp->seg_out.hit_dist = out;
-	VJOIN1( segp->seg_out.hit_point, rp->r_pt, out, rp->r_dir );
-	VMOVE( segp->seg_out.hit_normal, oplane->pl_N );
+	segp->seg_out.hit_private = (char *)oplane;
 	return(segp);			/* HIT */
+}
+
+/*
+ *  			A R B _ N O R M
+ *
+ *  Given ONE ray distance, return the normal and entry/exit point.
+ */
+arb_norm( hitp, stp, rp )
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
+{
+	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	VMOVE( hitp->hit_normal,
+		((struct arb_specific *)hitp->hit_private)->pl_N );
+}
+
+/*
+ *  			A R B _ U V
+ *  
+ *  For a hit on a face of an ARB, return the (u,v) coordinates
+ *  of the hit point.  0 <= u,v <= 1.
+ *  u extends along the Xbasis direction defined by B-A,
+ *  v extends along the "Ybasis" direction defined by (B-A)xN.
+ */
+arb_uv( stp, hitp, uvp )
+struct soltab *stp;
+register struct hit *hitp;
+register fastf_t *uvp;
+{
+	register struct arb_specific *plp =
+		(struct arb_specific *)stp->st_specific;
+	LOCAL vect_t P_A;
+
+	/* First, find which face was involved.  Match normals */
+	for( ; plp; plp = plp->pl_forw )  {
+		if( plp->pl_N[X] == hitp->hit_normal[X] &&
+		    plp->pl_N[Y] == hitp->hit_normal[Y] &&
+   		    plp->pl_N[Z] == hitp->hit_normal[Z] )
+			goto found;
+	}
+	rtlog("arb_uv:  face not found!\n");
+	uvp[0] = uvp[1] = 0.0;
+	return;
+found:
+	VSUB2( P_A, hitp->hit_point, plp->pl_A );
+	/* Flipping v is an artifact of how the faces are built */
+	uvp[0] = VDOT( P_A, plp->pl_Xbasis ) * plp->pl_XXlen;
+	uvp[1] = 1.0 - ( VDOT( P_A, plp->pl_Ybasis ) * plp->pl_YYlen );
+	if( uvp[0] < 0 || uvp[1] < 0 )  {
+		rtlog("arb_uv: bad uv=%f,%f\n", uvp[0], uvp[1]);
+		/* Fix it up */
+		if( uvp[0] < 0 )  uvp[0] = (-uvp[0]);
+		if( uvp[1] < 0 )  uvp[1] = (-uvp[1]);
+	}
 }

@@ -170,7 +170,11 @@ register char *str;
 	register struct directory *dp;
 
 	for( dp = DirHead; dp != DIR_NULL; dp=dp->d_forw )  {
-		if ( strcmp( str, dp->d_namep ) == 0 )
+		if(
+			str[0] == dp->d_namep[0]  &&	/* speed */
+			str[1] == dp->d_namep[1]  &&	/* speed */
+			strcmp( str, dp->d_namep ) == 0
+		)
 			return(dp);
 	}
 

@@ -57,7 +57,6 @@ struct xray {
 	vect_t		r_dir;		/* Direction of ray (UNIT Length) */
 	fastf_t		r_min;		/* entry dist to bounding sphere */
 	fastf_t		r_max;		/* exit dist from bounding sphere */
-	struct xray	*r_forw;	/* !0 -> ray after deflection */
 };
 #define RAY_NULL	((struct xray *)0)
 
@@ -70,9 +69,11 @@ struct xray {
  * Important Note:  Surface Normals always point OUT of a solid.
  */
 struct hit {
+	fastf_t		hit_dist;	/* dist from r_pt to hit_point */
 	point_t		hit_point;	/* Intersection point */
 	vect_t		hit_normal;	/* Surface Normal at hit_point */
-	fastf_t		hit_dist;	/* dist from r_pt to hit_point */
+	vect_t		hit_vpriv;	/* private vector for xxx_*() */
+	char		*hit_private;	/* private handle for xxx_shot() */
 };
 #define HIT_NULL	((struct hit *)0)
 
@@ -89,13 +90,9 @@ struct hit {
  * a ray through a torus).
  */
 struct seg {
-	int		seg_flag;
-#define SEG_IN		0x4		/* IN point, normal, computed */
-#define SEG_OUT		0x8		/* OUT point, normal, computed */
 	struct hit	seg_in;		/* IN information */
 	struct hit	seg_out;	/* OUT information */
 	struct soltab	*seg_stp;	/* pointer back to soltab */
-	union tree	*seg_tp;	/* pointer to solid leaf node */
 	struct seg	*seg_next;	/* non-zero if more segments */
 };
 #define SEG_NULL	((struct seg *)0)
@@ -119,16 +116,17 @@ extern struct seg *FreeSeg;		/* Head of freelist */
  */
 struct soltab {
 	int		st_id;		/* Solid ident */
-	vect_t		st_center;	/* Center of bounding Sphere */
-	fastf_t		st_radsq;	/* Bounding sphere Radius, squared */
+	vect_t		st_center;	/* Centroid of solid */
+	fastf_t		st_aradius;	/* Radius of APPROXIMATING sphere */
+	fastf_t		st_bradius;	/* Radius of BOUNDING sphere */
 	int		*st_specific;	/* -> ID-specific (private) struct */
 	struct soltab	*st_forw;	/* Linked list of solids */
 	char		*st_name;	/* Leaf name of solid */
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
 	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
-/*** bin is NOT PARALLEL ** */
-	int		st_bin;		/* Temporary for boolean processing */
-	int		st_uses;	/* # of refs by tr_stp leaves */
+	int		st_bit;		/* solids bit vector index (const) */
+	int		st_maxreg;	/* highest bit set in st_regions */
+	bitv_t		*st_regions;	/* bit vect of region #'s (const) */
 	mat_t		st_pathmat;	/* Xform matrix on path */
 };
 #define SOLTAB_NULL	((struct soltab *)0)
@@ -144,69 +142,60 @@ struct soltab {
 #define ID_ARS		5	/* ARS */
 #define ID_HALF		6	/* Half-space */
 #define ID_REC		7	/* Right Elliptical Cylinder [TGC special] */
+#define ID_POLY		8	/* Polygonal facted object */
+#define ID_BSPLINE	9	/* B-spline object */
 
 struct functab {
 	int		(*ft_prep)();
 	struct seg 	*((*ft_shot)());
 	int		(*ft_print)();
+	int		(*ft_norm)();
+	int		(*ft_uv)();
 	char		*ft_name;
 };
 extern struct functab functab[];
 
 #define EPSILON		0.0001
 #define NEAR_ZERO(f)	( ((f) > -EPSILON) && ((f) < EPSILON) )
-#define INFINITY	100000000.0
+#define INFINITY	1000000000.0
 
 
 /*
  *			T R E E
  *
- *  Binary trees representing the Boolean operations which
- *  combine one or more solids into a region.
+ *  Binary trees representing the Boolean operations between solids.
  */
-#define MKOP(x)		((x)<<1)
-#define OP_BINARY	0x01			/* Binary/Unary (leaf) flag */
-#define BINOP(x)	((x)->tr_op & OP_BINARY)
+#define MKOP(x)		((x))
 
-#define OP_SOLID	MKOP(1)			/* Leaf:  tr_stp -> solid */
-#define OP_UNION	MKOP(2)|OP_BINARY	/* Binary: L union R */
-#define OP_INTERSECT	MKOP(3)|OP_BINARY	/* Binary: L intersect R */
-#define OP_SUBTRACT	MKOP(4)|OP_BINARY	/* Binary: L subtract R */
-
-#define TFLAG_NOBOUND	1			/* skip bounding RPP check */
+#define OP_SOLID	MKOP(1)		/* Leaf:  tr_stp -> solid */
+#define OP_UNION	MKOP(2)		/* Binary: L union R */
+#define OP_INTERSECT	MKOP(3)		/* Binary: L intersect R */
+#define OP_SUBTRACT	MKOP(4)		/* Binary: L subtract R */
+#define OP_XOR		MKOP(5)		/* Binary: L xor R, not both*/
+/* Internal */
+#define OP_NOT		MKOP(6)		/* Unary:  not L */
+#define OP_GUARD	MKOP(7)		/* Unary:  not L, or else! */
+#define OP_XNOP		MKOP(8)		/* Unary:  L, mark region */
 
 union tree {
 	int	tr_op;		/* Operation */
-	struct tree_binary {
-		int		tb_op;		/* | OP_BINARY */
-		int		tb_flags;
-		vect_t		tb_min;		/* subtree min pt of RPP */
-		vect_t		tb_max;		/* subtree max pt of RPP */
+	struct tree_node {
+		int		tb_op;		/* non-leaf */
+		struct region	*tb_regionp;	/* ptr to containing region */
 		union tree	*tb_left;
 		union tree	*tb_right;
 	} tr_b;
-	struct tree_unary {
+	struct tree_leaf {
 		int		tu_op;		/* leaf, OP_SOLID */
-		int		tu_flags;
-		vect_t		tu_min;		/* subtree min pt of RPP */
-		vect_t		tu_max;		/* subtree max pt of RPP */
-		struct soltab	*tu_stp;
 		struct region	*tu_regionp;	/* ptr to containing region */
+		struct soltab	*tu_stp;
 		char		*tu_name;	/* full path name of leaf */
-		char		*tu_materp;	/* (struct mater *) */
 	} tr_a;
 };
-#define tr_left		tr_b.tb_left
-#define tr_right	tr_b.tb_right
-#define tr_flags	tr_b.tb_flags
-#define tr_min		tr_b.tb_min
-#define tr_max		tr_b.tb_max
-#define tr_stp		tr_a.tu_stp
+/* Things which are in the same place in both structures */
 #define tr_regionp	tr_a.tu_regionp
-#define tr_name		tr_a.tu_name
-#define tr_materp	tr_a.tu_materp
-#define TREE_NULL	((union tree *)0)
 
+#define TREE_NULL	((union tree *)0)
 
 
 /*
@@ -217,26 +206,29 @@ union tree {
 struct region  {
 	char		*reg_name;	/* Identifying string */
 	union tree	*reg_treetop;	/* Pointer to boolean tree */
+	short		reg_bit;	/* constant index into Regions[] */
 	short		reg_regionid;	/* Region ID code;  index to ? */
 	short		reg_aircode;	/* ?? */
 	short		reg_material;	/* Material */
 	short		reg_los;	/* equivalent LOS estimate ?? */
 	struct region	*reg_forw;	/* linked list of all regions */
-	struct region	*reg_active;	/* linked list of hit regions */
+	char		*reg_materp;	/* material structure */
 };
 #define REGION_NULL	((struct region *)0)
 
+extern struct region **Regions;		/* ptrs to regions [reg_bit] */
+extern long nregions;			/* total # of regions participating */
 
 
 /*
  *  			P A R T I T I O N
  *
  *  Partitions of a ray
+ *
+ *  NOTE:  get_pt allows enough storage at the end of the partition
+ *  for a bit vector of "nsolids" bits in length.
  */
-#define NBINS	200			/* # bins: # solids hit in ray */
-
 struct partition {
-	unsigned char	pt_solhit[NBINS];	/* marks for solids hit */
 	struct seg	*pt_inseg;		/* IN seg ptr (gives stp) */
 	struct hit	*pt_inhit;		/* IN hit pointer */
 	struct seg	*pt_outseg;		/* OUT seg pointer */
@@ -246,16 +238,20 @@ struct partition {
 	struct partition *pt_back;		/* backwards link */
 	char		pt_inflip;		/* flip inhit->hit_normal */
 	char		pt_outflip;		/* flip outhit->hit_normal */
+	long		pt_solhit[2];		/* VAR bit array:solids hit */
 };
-#define pt_indist	pt_inhit->hit_dist
-#define pt_outdist	pt_outhit->hit_dist
 
 #define PT_NULL	((struct partition *)0)
 extern struct partition *FreePart;		 /* Head of freelist */
 
-/* Initialize all the bins to FALSE, clear out structure */
+#define PT_BYTES	(sizeof(struct partition) + \
+			 ((nsolids)+BITV_MASK)/8 + sizeof(bitv_t))
+
+#define COPY_PT(out,in)	bcopy((char *)in, (char *)out, PT_BYTES)
+
+/* Initialize all the bits to FALSE, clear out structure */
 #define GET_PT_INIT(p)	\
-	{ GET_PT(p);bzero( ((char *) (p)), sizeof(struct partition) ); }
+	{ GET_PT(p); bzero( ((char *) (p)), PT_BYTES ); }
 
 #define GET_PT(p)   { RES_ACQUIRE(&res_pt); \
 			while( ((p)=FreePart) == PT_NULL ) \
@@ -286,6 +282,16 @@ extern struct partition *FreePart;		 /* Head of freelist */
 	(cur)->pt_back->pt_forw = (cur)->pt_forw;  }
 
 /*
+ *  Bit-string manipulators for arbitrarily long bit strings
+ *  stored as an array of bitv_t's.
+ *  BITV_SHIFT and BITV_MASK are defined in machine.h
+ */
+#define BITTEST(lp,bit)	(lp[bit>>BITV_SHIFT] & (1<<(bit&BITV_MASK)))
+#define BITSET(lp,bit)	(lp[bit>>BITV_SHIFT] |= (1<<(bit&BITV_MASK)))
+#define BITCLR(lp,bit)	(lp[bit>>BITV_SHIFT] &= ~(1<<(bit&BITV_MASK)))
+#define BITZERO(lp,bits) bzero((char *)lp, ((bits)+BITV_MASK)/8 )
+
+/*
  *		A P P L I C A T I O N
  *
  * Note:  When calling shootray(), these fields are mandatory:
@@ -294,27 +300,26 @@ extern struct partition *FreePart;		 /* Head of freelist */
  *	a_hit		Routine to call when something is hit
  *	a_miss		Routine to call when ray misses everything
  *
- * Also note that shootray() returns the return of a_hit/a_miss().
+ * Also note that shootray() returns the (int) return of a_hit()/a_miss().
  */
 struct application  {
 	/* THESE ELEMENTS ARE MANDATORY */
 	struct xray a_ray;	/* Actual ray to be shot */
 	int	(*a_hit)();	/* routine to call when shot hits model */
 	int	(*a_miss)();	/* routine to call when shot misses */
+	int	a_level;	/* recursion level */
+	int	a_onehit;	/* flag to stop on first hit */
 	/* THE FOLLOWING ROUTINES ARE MAINLINE & APPLICATION SPECIFIC */
 	int	a_x;		/* Screen X of ray, where applicable */
 	int	a_y;		/* Screen Y of ray, where applicable */
 	int	a_user;		/* application-specific value */
-	int	(*a_init)();	/* routine to init application */
-	int	(*a_eol)();	/* routine for end of scan-line */
-	int	(*a_end)();	/* routine to end application */
+	point_t	a_color;	/* application-specific color */
 };
 
 /*
  *  Global variables used by the RT library.
  */
 extern int ged_fd;		/* fd of object file */
-extern int one_hit_flag;	/* non-zero to return first hit only */
 extern int debug;		/* non-zero for debugging, see debug.h */
 extern long nsolids;		/* total # of solids participating */
 extern long nregions;		/* total # of regions participating */
@@ -331,14 +336,18 @@ extern vect_t mdl_max;		/* max corner of model bounding RPP */
 /*
  *  Global routines to interface with the RT library.
  */
+extern void rtbomb();			/* Fatal error */
+extern void rtlog();			/* Log message */
+
 extern int get_tree();			/* Get expr tree for object */
+extern void rt_prep();			/* Prepare for raytracing */
 extern int shootray();			/* Shoot a ray */
-extern void rtbomb();			/* Exit with error message */
 extern void prep_timer();		/* Start the timer */
 extern double pr_timer();		/* Stop timer, print, return time */
 extern int dir_build();			/* Read named GED db, build toc */
 extern void pr_seg();			/* Print seg struct */
 extern void pr_partitions();		/* Print the partitions */
+extern void viewbounds();		/* Find bounding view-space RPP */
 
 extern char *vmalloc();			/* visible malloc() */
 extern void vfree();			/* visible free() */
@@ -359,7 +368,6 @@ extern void bool_regions();		/* Eval booleans */
 extern int bool_eval();			/* Eval bool tree node */
 extern int fdiff();			/* Approx Floating compare */
 extern double reldiff();		/* Relative Difference */
-extern void pr_bins();			/* Print bins */
 extern void pr_region();		/* Print a region */
 extern void pr_tree();			/* Print an expr tree */
 extern void fastf_float();		/* convert float->fastf_t */

@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "../h/db.h"
@@ -79,6 +80,7 @@ struct solidrec *sp;
 	LOCAL vect_t base_vect;
 	LOCAL struct tri_specific *plp;
 	LOCAL int pts;			/* return from arsface() */
+	LOCAL fastf_t f;
 
 	ap = (struct ars_rec *) sp;	/* PUN for record.anything */
 	ncurves = ap->a_m;
@@ -142,9 +144,13 @@ struct solidrec *sp;
 		(stp->st_max[Z] + stp->st_min[Z])/2 );
 
 	dx = (stp->st_max[X] - stp->st_min[X])/2;
+	f = dx;
 	dy = (stp->st_max[Y] - stp->st_min[Y])/2;
+	if( dy > f )  f = dy;
 	dz = (stp->st_max[Z] - stp->st_min[Z])/2;
-	stp->st_radsq = dx*dx + dy*dy + dz*dz;
+	if( dz > f )  f = dz;
+	stp->st_aradius = f;
+	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
 	stp->st_specific = (int *) 0;
 
 	/*
@@ -209,7 +215,7 @@ int npts;
 			rtbomb("ars.c/rd_curve():  read error");
 
 		if( r.b.b_id != ID_ARS_B )  {
-			fprintf(stderr,"ars.c/rd_curve():  non-ARS_B record!\n");
+			rtlog("ars.c/rd_curve():  non-ARS_B record!\n");
 			break;
 		}
 		lim = (npts>8) ? 8 : npts;
@@ -257,7 +263,7 @@ pointp_t ap, bp, cp;
 	    NEAR_ZERO(m3) || NEAR_ZERO(m4) )  {
 		free( (char *)trip);
 		if( debug & DEBUG_ARB8 )
-			(void)fprintf(stderr,"ars(%s): degenerate facet\n", stp->st_name);
+			(void)rtlog("ars(%s): degenerate facet\n", stp->st_name);
 		return(0);			/* BAD */
 	}		
 
@@ -287,7 +293,7 @@ register struct soltab *stp;
 	register int i;
 
 	if( trip == (struct tri_specific *)0 )  {
-		fprintf(stderr,"ars(%s):  no faces\n", stp->st_name);
+		rtlog("ars(%s):  no faces\n", stp->st_name);
 		return;
 	}
 	do {
@@ -296,7 +302,7 @@ register struct soltab *stp;
 		VPRINT( "C-A", trip->tri_CA );
 		VPRINT( "BA x CA", trip->tri_wn );
 		VPRINT( "Normal", trip->tri_N );
-		putc('\n',stderr);
+		rtlog("\n");
 	} while( trip = trip->tri_forw );
 }
 
@@ -340,7 +346,7 @@ register struct xray *rp;
 		 */
 		dn = VDOT( trip->tri_wn, rp->r_dir );
 		if( debug & DEBUG_ARB8 )
-			fprintf(stderr,"Face N.Dir=%f\n", dn );
+			rtlog("Face N.Dir=%f\n", dn );
 		/*
 		 *  If ray lies directly along the face, drop this face.
 		 */
@@ -378,9 +384,9 @@ register struct xray *rp;
 		/* HIT is within planar face */
 		hp->hit_dist = k;
 		VMOVE( hp->hit_normal, trip->tri_N );
-		if(debug&DEBUG_ARB8) fprintf(stderr,"ars: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
+		if(debug&DEBUG_ARB8) rtlog("ars: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
 		if( nhits++ >= MAXHITS )  {
-			fprintf(stderr,"ars(%s): too many hits\n", stp->st_name);
+			rtlog("ars(%s): too many hits\n", stp->st_name);
 			break;
 		}
 		hp++;
@@ -404,12 +410,12 @@ register struct xray *rp;
 		hits[nhits] = hits[nhits-1];	/* struct copy */
 		VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
 		hits[nhits].hit_dist *= 1.0001;
-		fprintf(stderr,"ERROR: ars(%s): %d hits, false exit\n",
+		rtlog("ERROR: ars(%s): %d hits, false exit\n",
 			stp->st_name, nhits);
 		nhits++;
 		for(i=0; i < nhits; i++ )
-			fprintf(stderr,"%f, ", hits[i].hit_dist );
-		fprintf(stderr,"\n");
+			rtlog("%f, ", hits[i].hit_dist );
+		rtlog("\n");
 	}
 
 	/* nhits is even, build segments */
@@ -422,7 +428,6 @@ register struct xray *rp;
 			newseg->seg_next = segp;
 			segp = newseg;
 			segp->seg_stp = stp;
-			segp->seg_flag = SEG_IN|SEG_OUT;
 			segp->seg_in = hits[nhits-2];	/* struct copy */
 			segp->seg_out = hits[nhits-1];	/* struct copy */
 			nhits -= 2;
@@ -448,4 +453,11 @@ register int nh;
 			h[i] = temp;		/* struct copy */
 		}
 	}
+}
+
+ars_norm()
+{
+}
+ars_uv()
+{
 }

@@ -41,14 +41,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define FALSE	0
 #define TRUE	1
 
-int one_hit_flag;	/* non-zero if computation is for viewing only */
-
-struct partition *FreePart = PT_NULL;		 /* Head of freelist */
+struct partition *FreePart = PT_NULL;		/* Head of freelist */
+extern struct region *HeadRegion;		/* READ-ONLY */
 
 /*
- *			B O O L _ R E G I O N S
+ *			B O O L _ W E A V E
  *
- *  Weave the segments into the partitions.
+ *  Weave a chain of segments into an existing set of partitions.
  *  The edge of each partition is an inhit or outhit of some solid (seg).
  *
  *  NOTE:  When the final partitions are completed, it is the users
@@ -56,85 +55,77 @@ struct partition *FreePart = PT_NULL;		 /* Head of freelist */
  *  not be flipped here because an outflip=1 edge and an inflip=0 edge
  *  following it may in fact be the same edge.  This could be dealt with
  *  by giving the partition struct a COPY of the inhit and outhit rather
- *  than a pointer, but that's more cycles than it's worth.
+ *  than a pointer, but that's more cycles than the neatness is worth.
  */
 void
-bool_regions( segp_in, FinalHdp )
+bool_weave( segp_in, PartHdp )
 struct seg *segp_in;
-struct partition *FinalHdp;	/* Heads final circ list */
+struct partition *PartHdp;
 {
 	register struct seg *segp;
 	register struct partition *pp;
-	LOCAL struct region ActRegHd;	/* Heads active circular forw list */
-	LOCAL struct partition PartHd;	/* Heads active circular list */
 
-	/* We assume that the region active chains are REGION_NULL */
-	/* We assume that the solid bins st_bin are zero */
-	/* bin 0 is always FALSE */
-
-	ActRegHd.reg_active = &ActRegHd;	/* Circular forw list */
-	PartHd.pt_forw = PartHd.pt_back = &PartHd;
-
-	if(debug&DEBUG_PARTITION) fprintf(stderr,"-------------------BOOL_REGIONS\n");
+	if(debug&DEBUG_PARTITION) rtlog("-------------------BOOL_WEAVE\n");
 	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
 		register struct partition *newpp;		/* XXX */
 		register struct seg *lastseg;
 		register struct hit *lasthit;
 		LOCAL lastflip;
 
-		if( segp->seg_stp->st_bin == 0 )
-			rtbomb("zero bin in bool_regions");
-		/* Make sure seg's solid's region is on active list */
-		if( segp->seg_stp->st_bin < 0 )  {
-			register struct region *regp;		/* XXX */
-
-			segp->seg_stp->st_bin = -(segp->seg_stp->st_bin);
-			regp = segp->seg_tp->tr_regionp;
-			if( (regp != REGION_NULL) &&
-			   (regp->reg_active == REGION_NULL) )  {
-				regp->reg_active = ActRegHd.reg_active;
-				ActRegHd.reg_active = regp;
-			}
-		}
 		if(debug&DEBUG_PARTITION) pr_seg(segp);
+
+		/* Totally ignore things behind the start position */
+		if( segp->seg_out.hit_dist <= 0 )
+			continue;
+
+		/*  Eliminate very thin segments, or they will cause
+		 *  trouble below.
+		 */
+		if( fdiff(segp->seg_in.hit_dist,segp->seg_out.hit_dist)==0 ) {
+			rtlog("bool_weave:  Thin seg discarded: %s (%f,%f)\n",
+				segp->seg_stp->st_name,
+				segp->seg_in.hit_dist,
+				segp->seg_out.hit_dist );
+			continue;
+		}
 
 		/*
 		 * Weave this segment into the existing partitions,
 		 * creating new partitions as necessary.
 		 */
-		if( PartHd.pt_forw == &PartHd )  {
+		if( PartHdp->pt_forw == PartHdp )  {
 			/* No partitions yet, simple! */
 			GET_PT_INIT( pp );
-			pp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+			BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
 			pp->pt_outseg = segp;
 			pp->pt_outhit = &segp->seg_out;
-			APPEND_PT( pp, &PartHd );
+			APPEND_PT( pp, PartHdp );
 			goto done_weave;
 		}
-		if( segp->seg_in.hit_dist >= PartHd.pt_back->pt_outdist )  {
+		if( segp->seg_in.hit_dist >= PartHdp->pt_back->pt_outhit->hit_dist )  {
 			/*
 			 * Segment starts exactly at last partition's end,
 			 * or beyond last partitions end.  Make new partition.
 			 */
 			GET_PT_INIT( pp );
-			pp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+			BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
 			pp->pt_outseg = segp;
 			pp->pt_outhit = &segp->seg_out;
-			APPEND_PT( pp, PartHd.pt_back );
+			APPEND_PT( pp, PartHdp->pt_back );
 			goto done_weave;
 		}
 
 		lastseg = segp;
 		lasthit = &segp->seg_in;
 		lastflip = 0;
-		for( pp=PartHd.pt_forw; pp != &PartHd; pp=pp->pt_forw ) {
+		for( pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw ) {
 			register int i;		/* XXX */
 
-			if( (i=fdiff(lasthit->hit_dist, pp->pt_outdist)) > 0 )  {
+			if( (i=fdiff(lasthit->hit_dist, pp->pt_outhit->hit_dist)) > 0 )  {
 				/* Seg starts beyond the END of the
 				 * current partition.
 				 *	PPPP
@@ -162,7 +153,7 @@ struct partition *FinalHdp;	/* Heads final circ list */
 			 *	  SSSS...
 			 */
 
-			if( (i=fdiff(lasthit->hit_dist, pp->pt_indist)) == 0){
+			if( (i=fdiff(lasthit->hit_dist, pp->pt_inhit->hit_dist)) == 0){
 equal_start:
 				/*
 				 * Segment and partition start at
@@ -172,14 +163,14 @@ equal_start:
 				 * points MUST be forced to become
 				 * exactly equal!
 				 */
-				if( (i = fdiff(segp->seg_out.hit_dist, pp->pt_outdist)) == 0 )  {
+				if( (i = fdiff(segp->seg_out.hit_dist, pp->pt_outhit->hit_dist)) == 0 )  {
 					/*
 					 * Segment and partition start & end
 					 * (nearly) together.
 					 *	PPPP
 					 *	SSSS
 					 */
-					pp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+					BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 					goto done_weave;
 				}
 				if( i > 0 )  {
@@ -191,7 +182,7 @@ equal_start:
 					 *	SSSSSSSS
 					 *	pp  |  newpp
 					 */
-					pp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+					BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 					lasthit = pp->pt_outhit;
 					lastseg = pp->pt_outseg;
 					lastflip = 1;
@@ -205,9 +196,9 @@ equal_start:
 				 *	newpp| pp
 				 */
 				GET_PT( newpp );
-				*newpp = *pp;		/* struct copy */
+				COPY_PT(newpp,pp);
 				/* new partition contains segment */
-				newpp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+				BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 				newpp->pt_outseg = segp;
 				newpp->pt_outhit = &segp->seg_out;
 				newpp->pt_outflip = 0;
@@ -226,11 +217,11 @@ equal_start:
 				 *	newpp|pp
 				 */
 				GET_PT_INIT( newpp );
-				newpp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+				BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 				newpp->pt_inseg = lastseg;
 				newpp->pt_inhit = lasthit;
 				newpp->pt_inflip = lastflip;
-				if( segp->seg_out.hit_dist <= pp->pt_indist ){
+				if( (i=fdiff(segp->seg_out.hit_dist, pp->pt_inhit->hit_dist)) < 0 ){
 					/*
 					 * Seg starts and ends before current
 					 * partition, but after previous
@@ -238,17 +229,24 @@ equal_start:
 					 *		SSSS
 					 *	pppp		PPPPP...
 					 *		newpp	pp
-					 *
-					 * Seg starts before current
-					 * partition starts, and ends
-					 * at the start of the partition.
-					 * (diff == 0).
+					 */
+					newpp->pt_outseg = segp;
+					newpp->pt_outhit = &segp->seg_out;
+					newpp->pt_outflip = 0;
+					INSERT_PT( newpp, pp );
+					goto done_weave;
+				}
+				if( i==0 )  {
+					/* Seg starts before current
+					 * partition starts, and ends at or
+					 * near the start of the partition.
+					 * (diff == 0).  FUSE the points.
 					 *	SSSSSS
 					 *	     PPPPP
 					 *	newpp|pp
 					 */
 					newpp->pt_outseg = segp;
-					newpp->pt_outhit = &segp->seg_out;
+					newpp->pt_outhit = pp->pt_inhit;/*!!*/
 					newpp->pt_outflip = 0;
 					INSERT_PT( newpp, pp );
 					goto done_weave;
@@ -273,7 +271,7 @@ equal_start:
 			/*
 			 * i > 0
 			 *
-			 * lasthit->hit_dist > pp->pt_indist
+			 * lasthit->hit_dist > pp->pt_inhit->hit_dist
 			 *
 			 *  Segment starts after partition starts,
 			 *  but before the end of the partition.
@@ -283,7 +281,7 @@ equal_start:
 			 *	newpp|pp
 			 */
 			GET_PT( newpp );
-			*newpp = *pp;			/* struct copy */
+			COPY_PT( newpp, pp );
 			/* new part. is the span before seg joins partition */
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
@@ -302,78 +300,114 @@ equal_start:
 		 *  	     SSSSS
 		 */
 		GET_PT_INIT( newpp );
-		newpp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+		BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 		newpp->pt_inseg = lastseg;
 		newpp->pt_inhit = lasthit;
 		newpp->pt_inflip = lastflip;
 		newpp->pt_outseg = segp;
 		newpp->pt_outhit = &segp->seg_out;
-		APPEND_PT( newpp, PartHd.pt_back );
+		APPEND_PT( newpp, PartHdp->pt_back );
 
 done_weave:	; /* Sorry about the goto's, but they give clarity */
 		if(debug&DEBUG_PARTITION)
-			pr_partitions( &PartHd, "After weave" );
+			pr_partitions( PartHdp, "After weave" );
 	}
-	if(debug&DEBUG_PARTITION)  {
-		pr_act_regions( &ActRegHd );
-		pr_bins();
-	}
+}
 
-	/*
-	 * For each partition, evaluate the boolean expression for
-	 * all the regions.  If 0 regions result, continue with next
-	 * partition.  If 1 region results, a valid hit has occured,
-	 * so output a new segment.  If 2 or more regions claim the
-	 * partition, then an overlap exists.
-	 */
-	FinalHdp->pt_forw = FinalHdp->pt_back = FinalHdp;
+/*
+ *  			B O O L _ F I N A L
+ *
+ * For each partition, evaluate the boolean expression tree.
+ * If 0 regions result, continue with next partition.
+ * If 1 region results, a valid hit has occured, so transfer
+ * the partition from the Input list to the Final list.
+ * If 2 or more regions claim the partition, then an overlap exists.
+ */
+bool_final( InputHdp, FinalHdp, startdist, enddist, regionbits, ap )
+struct partition *InputHdp;
+struct partition *FinalHdp;
+double startdist, enddist;
+bitv_t *regionbits;
+struct application *ap;
+{
+	register struct partition *pp;
+	LOCAL struct region *lastregion;
+	register int hitcnt;
+	LOCAL struct region *TrueRg[2];
+	register int i;
+	extern union tree *RootTree;
 
-	pp = PartHd.pt_forw;
-	while( pp != &PartHd )  {
-		register struct region *lastregion;
-		register struct region *regp;
-		LOCAL int hitcnt;
-
+	pp = InputHdp->pt_forw;
+	while( pp != InputHdp )  {
 		hitcnt = 0;
-		if(debug&DEBUG_PARTITION)
-			fprintf(stderr,"considering partition %.8x\n", pp );
+		if(debug&DEBUG_PARTITION)  {
+			rtlog("bool_final: (%f,%f)\n", startdist, enddist );
+			pr_pt( pp );
+		}
 
 		/* Sanity checks on sorting.  Remove later. */
-		if( pp->pt_indist >= pp->pt_outdist )  {
-			fprintf(stderr,"bool_regions: thin inverted partition %.8x\n", pp);
-			pr_partitions( &PartHd, "With problem" );
+		if( pp->pt_inhit->hit_dist >= pp->pt_outhit->hit_dist )  {
+			rtlog("bool_final: thin or inverted partition %.8x\n", pp);
+			pr_partitions( InputHdp, "With problem" );
 		}
-		if( pp->pt_forw != &PartHd && pp->pt_outdist > pp->pt_forw->pt_indist )  {
-			auto struct partition FakeHead;
-			auto odebug;
-			fprintf(stderr,"bool_regions:  sorting defect!\n");
-			if( debug & DEBUG_PARTITION ) return; /* give up */
-			for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
-				pr_seg(segp);
-			}
-			pr_partitions( &PartHd, "With DEFECT" );
-			odebug = debug;
-			debug |= DEBUG_PARTITION;
-			bool_regions( segp_in, &FakeHead );
-			debug = odebug;
-			/* Wastes some dynamic memory */
+		if( pp->pt_forw != InputHdp && pp->pt_outhit->hit_dist > pp->pt_forw->pt_inhit->hit_dist )  {
+			rtlog("bool_final:  sorting defect!\n");
+			if( !(debug & DEBUG_PARTITION) )
+				pr_partitions( InputHdp, "With DEFECT" );
+			return; /* give up */
 		}
 
-		regp = ActRegHd.reg_active;
-		for( ; regp != &ActRegHd; regp = regp->reg_active )  {
-			if(debug&DEBUG_PARTITION)  {
-				fprintf(stderr,"%.8x: %s\n", regp, regp->reg_name );
-				pr_tree( regp->reg_treetop, 0 );
+		/* If partition begins beyond current box, stop */
+		if( pp->pt_inhit->hit_dist > enddist )
+			return;
+
+		/*
+		 * If partition exists entirely behind start position, or
+		 * if partition ends before current box starts,
+		 * discard it, as we should never need to look back.
+		 */
+		if( pp->pt_outhit->hit_dist <= 0.0
+		    || pp->pt_outhit->hit_dist < startdist
+		)  {
+			register struct partition *zappp;
+			if(debug&DEBUG_PARTITION)rtlog("bool_final discarding partition x%x\n", pp);
+			zappp = pp;
+			pp = pp->pt_forw;
+			DEQUEUE_PT(zappp);
+			FREE_PT(zappp);
+			continue;
+		}
+
+#ifndef NEW
+		/* Evaluate the boolean trees of any regions involved */
+		for( i=0; i < nregions; i++ )  {
+			register struct region *regp;
+
+/**			if( !BITTEST(regionbits, i) )  continue; **/
+			{
+				register int j;
+				if( (j = regionbits[i>>BITV_SHIFT])==0 )  {
+					i = ((i+1+BITV_MASK)&(~BITV_MASK))-1;
+					continue;
+				}
+				if( !(j & (1<<(i&BITV_MASK))) )  continue;
 			}
-			if( bool_eval( regp->reg_treetop, pp ) == FALSE )
+			regp = Regions[i];
+			if(debug&DEBUG_PARTITION)
+				rtlog("%.8x=%s: ", regp, regp->reg_name );
+			if( bool_eval( regp->reg_treetop, pp, TrueRg ) == FALSE )  {
+				if(debug&DEBUG_PARTITION) rtlog("FALSE\n");
 				continue;
+			} else {
+				if(debug&DEBUG_PARTITION) rtlog("TRUE\n");
+			}
 			/* region claims partition */
 			if( ++hitcnt > 1 ) {
-				fprintf(stderr,"OVERLAP: %s %s (%f,%f)\n",
+				rtlog("OVERLAP: %s %s (x%d y%d lvl%d)\n",
 					regp->reg_name,
 					lastregion->reg_name,
-					pp->pt_indist,
-					pp->pt_outdist );
+					ap->a_x, ap->a_y, ap->a_level );
+				pr_pt( pp );
 			} else {
 				lastregion = regp;
 			}
@@ -382,7 +416,24 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 			pp=pp->pt_forw;			/* onwards! */
 			continue;
 		}
-		if( pp->pt_outdist <= EPSILON )  {
+#else
+		if( (hitcnt = bool_eval( RootTree, pp, TrueRg )) == FALSE )  {
+			if(debug&DEBUG_PARTITION) rtlog("FALSE\n");
+			pp = pp->pt_forw;
+			continue;
+		}
+		if( hitcnt < 0 )  {
+			/*  GUARD error:  overlap */
+			rtlog("OVERLAP: %s %s (%f,%f)\n",
+				TrueRg[0]->reg_name,
+				TrueRg[1]->reg_name,
+				pp->pt_inhit->hit_dist,
+				pp->pt_outhit->hit_dist );
+		}
+		lastregion = TrueRg[0];
+		if(debug&DEBUG_PARTITION) rtlog("TRUE\n");
+#endif
+		if( pp->pt_outhit->hit_dist <= EPSILON )  {
 			/* partition is behind start point (k=0), ignore */
 			pp=pp->pt_forw;
 			continue;
@@ -403,79 +454,163 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 			 * the first hit beyond the start point is
 			 * all we care about.
 			 */
-			if( one_hit_flag && newpp->pt_indist > 0.0 )
+			if( ap->a_onehit && newpp->pt_inhit->hit_dist > 0.0 )
 				break;
 		}
 	}
 	if( debug&DEBUG_PARTITION )
-		pr_partitions( FinalHdp, "Final Partitions" );
-
-	/*
-	 * Cleanup:  zap the reg_active chain.
-	 */
-	{
-		register struct region *regp;			/* XXX */
-		for( regp=ActRegHd.reg_active; regp != &ActRegHd; )  {
-			register struct region *newreg;		/* XXX */
-			newreg = regp;
-			regp = regp->reg_active;
-			newreg->reg_active = REGION_NULL;
-		}
-	}
-	for( pp = PartHd.pt_forw; pp != &PartHd;  )  {
-		register struct partition *newpp;
-		newpp = pp;
-		pp = pp->pt_forw;
-		FREE_PT(newpp);
-	}
-	/* Caller must Free seg chain and partition chain */
+		pr_partitions( FinalHdp, "bool_final: Partitions returned" );
+	/* Caller must free both partition chains */
 }
 
 /*
  *  			B O O L _ E V A L
  *  
- *  Function -
- *  	Given a tree node, evaluate it, possibly recursing.
+ *  Using a stack to recall state, evaluate a boolean expression
+ *  without recursion.
+ *
+ *  For use with XOR, a pointer to the "first valid subtree" would
+ *  be a useful addition, for bool_regions().
+ *
+ *  Returns -
+ *	!0	tree is TRUE
+ *	 0	tree is FALSE
+ *	-1	tree is in error (GUARD)
  */
 int
-bool_eval( treep, partp )
-register union tree *treep;
-register struct partition *partp;
+bool_eval( treep, partp, trueregp )
+register union tree *treep;	/* Tree to evaluate */
+struct partition *partp;	/* Partition to evaluate */
+struct region **trueregp;	/* XOR true (and overlap) return */
 {
+#define STACKDEPTH	128
+	LOCAL union tree *stackpile[STACKDEPTH];
+	static union tree tree_not;		/* for OP_NOT nodes */
+	static union tree tree_guard;		/* for OP_GUARD nodes */
+	static union tree tree_xnop;		/* for OP_XNOP nodes */
+	register union tree **sp;
 	register int ret;
 
+	if( treep->tr_op != OP_XOR )
+		trueregp[0] = treep->tr_regionp;
+	else
+		trueregp[0] = trueregp[1] = REGION_NULL;
+	sp = stackpile;
+	*sp++ = TREE_NULL;
+stack:
 	switch( treep->tr_op )  {
-
 	case OP_SOLID:
-		ret = ( partp->pt_solhit[treep->tr_stp->st_bin] );
-		break;
-
+		ret = treep->tr_a.tu_stp->st_bit;	/* register temp */
+		ret = BITTEST( partp->pt_solhit, ret );
+		goto pop;
 	case OP_UNION:
-		ret =	bool_eval( treep->tr_left, partp )  ||
-			bool_eval( treep->tr_right, partp ) ;
-		break;
-
 	case OP_INTERSECT:
-		ret =	bool_eval( treep->tr_left, partp )  &&
-			bool_eval( treep->tr_right, partp ) ;
-		break;
-
 	case OP_SUBTRACT:
-		if( bool_eval( treep->tr_left, partp ) == FALSE )
-			ret = FALSE;		/* FALSE = FALSE - X */
-		else  {
-			/* TRUE = TRUE - FALSE */
-			/* FALSE = TRUE - TRUE */
-			ret = !bool_eval( treep->tr_right, partp );
+	case OP_XOR:
+		*sp++ = treep;
+		if( sp >= &stackpile[STACKDEPTH] )  {
+			rtlog("bool_eval: stack overflow!\n");
+			return(TRUE);	/* screw up output */
 		}
-		break;
-
+		treep = treep->tr_b.tb_left;
+		goto stack;
 	default:
-		fprintf(stderr,"bool_eval: bad op=x%x", treep->tr_op );
-		ret = TRUE;		/* screw up output, get it fixed! */
-		break;
+		rtlog("bool_eval:  bad stack op x%x\n",treep->tr_op);
+		return(TRUE);	/* screw up output */
 	}
-	return( ret );
+pop:
+	if( (treep = *--sp) == TREE_NULL )
+		return(ret);		/* top of tree again */
+	/*
+	 *  Here, each operation will look at the operation just
+	 *  completed (the left branch of the tree generally),
+	 *  and rewrite the top of the stack and/or branch
+	 *  accordingly.
+	 */
+	switch( treep->tr_op )  {
+	case OP_SOLID:
+		rtlog("bool_eval:  pop SOLID?\n");
+		return(TRUE);	/* screw up output */
+	case OP_UNION:
+		if( ret )  goto pop;	/* TRUE, we are done */
+		/* lhs was false, rewrite as rhs tree */
+		treep = treep->tr_b.tb_right;
+		goto stack;
+	case OP_INTERSECT:
+		if( !ret )  {
+			ret = FALSE;
+			goto pop;
+		}
+		/* lhs was true, rewrite as rhs tree */
+		treep = treep->tr_b.tb_right;
+		goto stack;
+	case OP_SUBTRACT:
+		if( !ret )  goto pop;	/* FALSE, we are done */
+		/* lhs was true, rewrite as NOT of rhs tree */
+		/* We introduce the special NOT operator here */
+		tree_not.tr_op = OP_NOT;
+		*sp++ = &tree_not;
+		treep = treep->tr_b.tb_right;
+		goto stack;
+	case OP_NOT:
+		/* Special operation for subtraction */
+		ret = !ret;
+		goto pop;
+	case OP_XOR:
+		if( ret )  {
+			/* lhs was true, rhs better not be, or we have
+			 * an overlap condition.  Rewrite as guard node
+			 * followed by rhs.
+			 */
+			if( treep->tr_b.tb_left->tr_regionp )
+				trueregp[0] = treep->tr_b.tb_left->tr_regionp;
+			tree_guard.tr_op = OP_GUARD;
+			treep = treep->tr_b.tb_right;
+			*sp++ = treep;		/* temp val for guard node */
+			*sp++ = &tree_guard;
+		} else {
+			/* lhs was false, rewrite as xnop node and
+			 * result of rhs.
+			 */
+			tree_xnop.tr_op = OP_XNOP;
+			treep = treep->tr_b.tb_right;
+			*sp++ = treep;		/* temp val for xnop */
+			*sp++ = &tree_xnop;
+		}
+		goto stack;
+	case OP_GUARD:
+		/*
+		 *  Special operation for XOR.  lhs was true.
+		 *  If rhs subtree was true, an
+		 *  overlap condition exists (both sides of the XOR are
+		 *  TRUE).  Return error condition.
+		 *  If subtree is false, then return TRUE (from lhs).
+		 */
+		if( ret )  {
+			/* stacked temp val: rhs */
+			if( sp[-1]->tr_regionp )
+				trueregp[1] = sp[-1]->tr_regionp;
+			return(-1);	/* GUARD error */
+		}
+		ret = TRUE;
+		sp--;			/* pop temp val */
+		goto pop;
+	case OP_XNOP:
+		/*
+		 *  Special NOP for XOR.  lhs was false.
+		 *  If rhs is true, take note of it's regionp.
+		 */
+		sp--;			/* pop temp val */
+		if( ret )  {
+			if( (*sp)->tr_regionp )
+				trueregp[0] = (*sp)->tr_regionp;
+		}
+		goto pop;
+	default:
+		rtlog("bool_eval:  bad pop op x%x\n",treep->tr_op);
+		return(TRUE);	/* screw up output */
+	}
+	/* NOTREACHED */
 }
 
 /* Called with address of head of chain */
@@ -487,48 +622,44 @@ char *title;
 	register struct partition *pp;
 	register int i;
 
-	fprintf(stderr,"----Partitions: %s\n", title);
-	fprintf(stderr,"%.8x: forw=%.8x back=%.8x (HEAD)\n",
-		phead, phead->pt_forw, phead->pt_back );
+	rtlog("------%s\n", title);
 	for( pp = phead->pt_forw; pp != phead; pp = pp->pt_forw ) {
-		fprintf(stderr,"%.8x: forw=%.8x back=%.8x (%f,%f)",
-			pp, pp->pt_forw, pp->pt_back,
-			pp->pt_indist, pp->pt_outdist );
-		fprintf(stderr,"%s%s\n",
-			pp->pt_inflip ? " Iflip" : "",
-			pp->pt_outflip ?" Oflip" : "" );
-#ifdef never
-		fprintf(stderr,"\t Nin=[%f,%f,%f] Nout=[%f,%f,%f]\n",
-			pp->pt_inhit->hit_normal[0],
-			pp->pt_inhit->hit_normal[1],
-			pp->pt_inhit->hit_normal[2],
-			pp->pt_outhit->hit_normal[0],
-			pp->pt_outhit->hit_normal[1],
-			pp->pt_outhit->hit_normal[2] );
-#endif
-		fprintf(stderr,"Bins: ");
-		for( i=0; i<NBINS; i++ )
-			if( pp->pt_solhit[i] )
-				fprintf(stderr,"%d, ", i );
-		putc('\n',stderr);
+		pr_pt(pp);
 	}
-	fprintf(stderr,"----\n");
+	rtlog("------\n");
 }
 
-static
-pr_act_regions(headp)
-register struct region *headp;
+pr_pt( pp )
+register struct partition *pp;
 {
-	register struct region *regp;
-
-	fprintf(stderr,"Active Regions:\n");
-	for( regp=headp->reg_active; regp != headp; regp=regp->reg_active )  {
-		fprintf(stderr,"%.8x %s\n", regp, regp->reg_name );
-	}
+	rtlog("%.8x: PT %s %s (%f,%f)",
+		pp,
+		pp->pt_inseg->seg_stp->st_name,
+		pp->pt_outseg->seg_stp->st_name,
+		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist );
+	rtlog("%s%s\n",
+		pp->pt_inflip ? " Iflip" : "",
+		pp->pt_outflip ?" Oflip" : "" );
+	pr_bitv( "Solids", pp->pt_solhit, nsolids );
 }
 
-#define	Abs( a )	((a) >= 0 ? (a) : -(a))
-#define	Max( a, b )	((a) >= (b) ? (a) : (b))
+/*
+ *  			P R _ B I T V
+ *
+ *  Print the bits set in a bit vector.
+ */
+pr_bitv( str, bv, len )
+char *str;
+register bitv_t *bv;
+register int len;
+{
+	register int i;
+	rtlog("%s: ", str);
+	for( i=0; i<len; i++ )
+		if( BITTEST(bv,i) )
+			rtlog("%d, ", i );
+	rtlog("\n");
+}
 
 /*
  *  			F D I F F
@@ -563,7 +694,8 @@ double a, b;
 		if( (-b) > d )  d = (-b);
 	if( d <= EPSILON )
 		return(0);	/* both nearly zero */
-	if( Abs(diff) < EPSILON * d )
+	if( diff < 0.0 )  diff = -diff;
+	if( diff < EPSILON * d )
 		return( 0 );	/* relative difference is small */
 	if( a < b )
 		return(-1);
@@ -584,24 +716,19 @@ double
 reldiff( a, b )
 double	a, b;
 {
-	LOCAL double	d;
+	FAST fastf_t	d;
+	FAST fastf_t	diff;
 
-	d = Max( Abs( a ), Abs( b ) );	/* NOTE: not efficient */
-	return( d == 0.0 ? 0.0 : Abs( a - b ) / d );
-}
-
-void
-pr_bins()
-{
-	register struct soltab *stp;
-	extern struct soltab *HeadSolid;
-
-	fprintf(stderr,"Bins:\n");
-	for( stp=HeadSolid; stp != 0; stp=stp->st_forw ) {
-		if( stp->st_bin == 0 )
-			continue;
-		fprintf(stderr,"%d: %s\n", stp->st_bin, stp->st_name );
-	}
+	/* d = Max(Abs(a),Abs(b)) */
+	d = (a >= 0.0) ? a : -a;
+	if( b >= 0.0 )
+		if( b > d )  d = b;
+	else
+		if( (-b) > d )  d = (-b);
+	if( d==0.0 )
+		return( 0.0 );
+	if( (diff = a - b) < 0.0 )  diff = -diff;
+	return( diff / d );
 }
 
 /*
@@ -611,10 +738,23 @@ void
 pr_seg(segp)
 register struct seg *segp;
 {
-	fprintf(stderr,"%.8x: SEG %s (%f,%f) bin=%d\n",
+	rtlog("%.8x: SEG %s (%f,%f) bit=%d\n",
 		segp,
 		segp->seg_stp->st_name,
 		segp->seg_in.hit_dist,
 		segp->seg_out.hit_dist,
-		segp->seg_stp->st_bin );
+		segp->seg_stp->st_bit );
+}
+
+/*
+ *  			P R _ H I T
+ */
+void
+pr_hit( str, hitp )
+char *str;
+register struct hit *hitp;
+{
+	rtlog("HIT %s dist=%f\n", str, hitp->hit_dist );
+	VPRINT("HIT Point ", hitp->hit_point );
+	VPRINT("HIT Normal", hitp->hit_normal );
 }
