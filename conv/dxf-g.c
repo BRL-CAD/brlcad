@@ -141,7 +141,7 @@ static int invisible=0;
 #define LINELEN	2050
 char line[LINELEN];
 
-static char *usage="dxf-g [-d] [-v] [-t tolerance] input_dxf_file output_file.g\n";
+static char *usage="dxf-g [-d] [-v] [-t tolerance] [-s scale_factor] input_dxf_file output_file.g\n";
 
 static FILE *dxf;
 static struct rt_wdb *out_fp;
@@ -156,6 +156,7 @@ static int segs_per_circle=32;
 static fastf_t sin_delta, cos_delta;
 static fastf_t delta_angle;
 static point_t *circle_pts;
+static fastf_t scale_factor;
 
 #define TRI_BLOCK 512			/* number of triangles to malloc per call */
 
@@ -806,7 +807,7 @@ process_blocks_code( int code )
 	case 30:
 		if( curr_block ) {
 			coord = code / 10 - 1;
-			curr_block->base[coord] = atof( line ) * units_conv[units];
+			curr_block->base[coord] = atof( line ) * units_conv[units] * scale_factor;
 		}
 		break;
 	}
@@ -941,13 +942,13 @@ process_entities_polyline_vertex_code( int code )
 		printf( "%s\n", line );
 		break;
 	case 10:
-		x = atof( line ) * units_conv[units];
+		x = atof( line ) * units_conv[units] * scale_factor;
 		break;
 	case 20:
-		y = atof( line ) * units_conv[units];
+		y = atof( line ) * units_conv[units] * scale_factor;
 		break;
 	case 30:
-		z = atof( line ) * units_conv[units];
+		z = atof( line ) * units_conv[units] * scale_factor;
 		break;
 	case 62:	/* color number */
 		curr_color = atoi( line );
@@ -1332,7 +1333,7 @@ process_line_entities_code( int code )
 	case 31:
 		vert_no = code % 10;
 		coord = code / 10 - 1;
-		line_pt[vert_no][coord] = atof( line ) * units_conv[units];
+		line_pt[vert_no][coord] = atof( line ) * units_conv[units] * scale_factor;
 		if( verbose ) {
 			bu_log( "LINE vertex #%d coord #%d = %g\n", vert_no, coord, line_pt[vert_no][coord] );
 		}
@@ -1391,13 +1392,13 @@ process_circle_entities_code( int code )
 	case 20:
 	case 30:
 		coord = code / 10 - 1;
-		center[coord] = atof( line ) * units_conv[units];
+		center[coord] = atof( line ) * units_conv[units] * scale_factor;
 		if( verbose ) {
 			bu_log( "CIRCLE center coord #%d = %g\n", coord, center[coord] );
 		}
 		break;
 	case 40:
-		radius = atof( line ) * units_conv[units];
+		radius = atof( line ) * units_conv[units] * scale_factor;
 		break;
 	case 62:	/* color number */
 		curr_color = atoi( line );
@@ -1474,7 +1475,7 @@ process_dimension_entities_code( int code )
 	case 20:
 	case 30:
 		coord = (code / 10) - 1;
-		def_pt[coord] = atof( line ) * units_conv[units];
+		def_pt[coord] = atof( line ) * units_conv[units] * scale_factor;
 		break;
 	case 8:		/* layer name */
 		if( curr_layer_name ) {
@@ -1551,13 +1552,13 @@ process_arc_entities_code( int code )
 	case 20:
 	case 30:
 		coord = code / 10 - 1;
-		center[coord] = atof( line ) * units_conv[units];
+		center[coord] = atof( line ) * units_conv[units] * scale_factor;
 		if( verbose ) {
 			bu_log( "ARC center coord #%d = %g\n", coord, center[coord] );
 		}
 		break;
 	case 40:
-		radius = atof( line ) * units_conv[units];
+		radius = atof( line ) * units_conv[units] * scale_factor;
 		if( verbose) {
 			bu_log( "ARC radius = %g\n", radius );
 		}
@@ -1699,7 +1700,7 @@ process_3dface_entities_code( int code )
 	case 33:
 		vert_no = code % 10;
 		coord = code / 10 - 1;
-		pts[vert_no][coord] = atof( line ) * units_conv[units];
+		pts[vert_no][coord] = atof( line ) * units_conv[units] * scale_factor;
 		if( verbose ) {
 			bu_log( "3dface vertex #%d coord #%d = %g\n", vert_no, coord, pts[vert_no][coord] );
 		}
@@ -1847,10 +1848,18 @@ main( int argc, char *argv[] )
 	cos_delta = cos( delta_angle );
 
 	/* get command line arguments */
-	while ((c = getopt(argc, argv, "cdvt:")) != EOF)
+	while ((c = getopt(argc, argv, "cdvt:s:")) != EOF)
 	{
 		switch( c )
 		{
+		        case 's':	/* scale factor */
+				scale_factor = atof( optarg );
+				if( scale_factor < SQRT_SMALL_FASTF ) {
+					bu_log( "scale factor too small\n" );
+					bu_log( "%s", usage );
+					exit( 1 );
+				}
+				break;
 		        case 'c':	/* ignore colors */
 				ignore_colors = 1;
 				break;
