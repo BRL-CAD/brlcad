@@ -8,6 +8,7 @@
 static const char RCStimer_nt[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "common.h"
 
 #include <stdio.h>
 #include <string.h>

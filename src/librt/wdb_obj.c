@@ -63,6 +63,13 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./debug.h"
 
+/*
+ * rt_comb_ifree() should NOT be used here because
+ * it doesn't know how to free attributes.
+ * rt_db_free_internal() should be used instead.
+ */
+#define USE_RT_COMB_IFREE 0
+
 /* defined in mater.c */
 extern void rt_insert_color( struct mater *newp );
 
@@ -259,6 +266,7 @@ static int wdb_bot_decimate_tcl(ClientData clientData, Tcl_Interp *interp, int a
 static int wdb_move_arb_edge_tcl();
 static int wdb_move_arb_face_tcl();
 static int wdb_rotate_arb_face_tcl();
+static int wdb_rmap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static void wdb_deleteProc(ClientData clientData);
 static void wdb_deleteProc_rt(ClientData clientData);
@@ -336,6 +344,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"put",		wdb_put_tcl},
 	{"r",		wdb_region_tcl},
 	{"rm",		wdb_remove_tcl},
+	{"rmap",	wdb_rmap_tcl},
 	{"rotate_arb_face",	wdb_rotate_arb_face_tcl},
 	{"rt_gettrees",	wdb_rt_gettrees_tcl},
 	{"shells",	wdb_shells_tcl},
@@ -1561,7 +1570,11 @@ wdb_showmats_cmd(struct rt_wdb	*wdbp,
 		if (comb->tree)
 			db_tree_funcleaf(wdbp->dbip, comb, comb->tree, Do_showmats,
 					 (genptr_t)&sm_data, (genptr_t)NULL, (genptr_t)NULL);
+#if USE_RT_COMB_IFREE
 		rt_comb_ifree(&intern, &rt_uniresource);
+#else
+		rt_db_free_internal(&intern, &rt_uniresource);
+#endif
 
 		if (!sm_data.smd_count) {
 			Tcl_AppendResult(interp, sm_data.smd_child, " is not a member of ",
@@ -2158,7 +2171,11 @@ wdb_trace(register struct directory	*dp,
 		if (comb->tree)
 			db_tree_funcleaf(wtdp->wtd_dbip, comb, comb->tree, wdb_do_trace,
 				(genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)wtdp);
+#if USE_RT_COMB_IFREE
 		rt_comb_ifree(&intern, &rt_uniresource);
+#else
+		rt_db_free_internal(&intern, &rt_uniresource);
+#endif
 		return;
 	}
 
@@ -4337,6 +4354,141 @@ struct wdb_id_to_names {
 };
 
 int
+wdb_rmap_cmd(struct rt_wdb	*wdbp,
+	     Tcl_Interp		*interp,
+	     int		argc,
+	     char 		**argv)
+{
+    register int i;
+    register struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    struct wdb_id_to_names headIdName;
+    struct wdb_id_to_names *itnp;
+    struct wdb_id_names *inp;
+    Tcl_DString ds;
+	
+
+    if (argc != 1) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias wdb_rmap %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    Tcl_DStringInit(&ds);
+
+    if (wdbp->dbip->dbi_version < 5) {
+	Tcl_DStringAppend(&ds, argv[0], -1);
+	Tcl_DStringAppend(&ds, " is not available prior to dbversion 5\n", -1);
+	Tcl_DStringResult(interp, &ds);
+	return TCL_ERROR;
+    }
+
+    BU_LIST_INIT(&headIdName.l);
+
+    /* For all regions */
+    for (i = 0; i < RT_DBNHASH; i++) {
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	    int found = 0;
+
+	    if (!(dp->d_flags & DIR_REGION))
+		continue;
+
+	    if (rt_db_get_internal(&intern,
+				   dp,
+				   wdbp->dbip,
+				   (fastf_t *)NULL,
+				   &rt_uniresource) < 0) {
+		Tcl_DStringAppend(&ds, "Database read error, aborting", -1);
+		Tcl_DStringResult(interp, &ds);
+		return TCL_ERROR;
+	    }
+
+	    comb = (struct rt_comb_internal *)intern.idb_ptr;
+	    /* check to see if the region id or air code matches one in our list */
+	    for (BU_LIST_FOR(itnp,wdb_id_to_names,&headIdName.l)) {
+		if ((comb->region_id == itnp->id) ||
+		    (-comb->aircode == itnp->id)) {
+		    /* add region name to our name list for this region */
+		    BU_GETSTRUCT(inp,wdb_id_names);
+		    bu_vls_init(&inp->name);
+		    bu_vls_strcpy(&inp->name, dp->d_namep);
+		    BU_LIST_INSERT(&itnp->headName.l,&inp->l);
+		    found = 1;
+		    break;
+		}
+	    }
+
+	    if (!found) {
+		/* create new id_to_names node */
+		BU_GETSTRUCT(itnp,wdb_id_to_names);
+		if (0 < comb->region_id)
+		    itnp->id = comb->region_id;
+		else
+		    itnp->id = -comb->aircode;
+		BU_LIST_INSERT(&headIdName.l,&itnp->l);
+		BU_LIST_INIT(&itnp->headName.l);
+
+		/* add region name to our name list for this region */
+		BU_GETSTRUCT(inp,wdb_id_names);
+		bu_vls_init(&inp->name);
+		bu_vls_strcpy(&inp->name, dp->d_namep);
+		BU_LIST_INSERT(&itnp->headName.l,&inp->l);
+	    }
+
+#if USE_RT_COMB_IFREE
+	    rt_comb_ifree(&intern, &rt_uniresource);
+#else
+	    rt_db_free_internal(&intern, &rt_uniresource);
+#endif
+	}
+    }
+
+    /* place data in a dynamic tcl string */
+    while (BU_LIST_WHILE(itnp,wdb_id_to_names,&headIdName.l)) {
+	char buf[32];
+
+	/* add this id to the list */
+	sprintf(buf, "%d", itnp->id);
+	Tcl_DStringAppendElement(&ds, buf);
+
+	/* start sublist of names associated with this id */
+	Tcl_DStringStartSublist(&ds);
+	while (BU_LIST_WHILE(inp,wdb_id_names,&itnp->headName.l)) {
+	    /* add the this name to this sublist */
+	    Tcl_DStringAppendElement(&ds, bu_vls_addr(&inp->name));
+
+	    BU_LIST_DEQUEUE(&inp->l);
+	    bu_vls_free(&inp->name);
+	    bu_free((genptr_t)inp, "rmap: inp");
+	}
+	Tcl_DStringEndSublist(&ds);
+
+	BU_LIST_DEQUEUE(&itnp->l);
+	bu_free((genptr_t)itnp, "rmap: itnp");
+    }
+
+    Tcl_DStringResult(interp, &ds);
+    return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname rmap
+ */
+static int
+wdb_rmap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+	struct rt_wdb	*wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_rmap_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
 wdb_which_cmd(struct rt_wdb	*wdbp,
 	      Tcl_Interp	*interp,
 	      int		argc,
@@ -4465,7 +4617,11 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 				}
 			}
 
+#if USE_RT_COMB_IFREE
 			rt_comb_ifree( &intern, &rt_uniresource );
+#else
+			rt_db_free_internal(&intern, &rt_uniresource);
+#endif
 		}
 	}
 
@@ -5990,7 +6146,11 @@ Copy_comb(struct db_i		*dbip,
 	if (rt_db_put_internal(found, dbip, &intern, &rt_uniresource) < 0) {
 		Tcl_AppendResult(interp, "rt_db_put_internal failed for ", dp->d_namep,
 				 "\n", (char *)NULL);
+#if USE_RT_COMB_IFREE
 		rt_comb_ifree(&intern, &rt_uniresource);
+#else
+		rt_db_free_internal(&intern, &rt_uniresource);
+#endif
 		return(DIR_NULL);
 	}
 
@@ -6096,7 +6256,11 @@ wdb_xpush_cmd(struct rt_wdb	*wdbp,
 			if (comb->tree)
 				db_tree_funcleaf(wdbp->dbip, comb, comb->tree, Do_ref_incr,
 						 (genptr_t )NULL, (genptr_t )NULL, (genptr_t )NULL);
+#if USE_RT_COMB_IFREE
 			rt_comb_ifree(&intern, &rt_uniresource);
+#else
+			rt_db_free_internal(&intern, &rt_uniresource);
+#endif
 		}
 	}
 
@@ -6165,7 +6329,11 @@ wdb_xpush_cmd(struct rt_wdb	*wdbp,
 	if (rt_db_put_internal(old_dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
 		Tcl_AppendResult(interp, "rt_db_put_internal failed for ", old_dp->d_namep,
 				 "\n", (char *)NULL);
+#if USE_RT_COMB_IFREE
 		rt_comb_ifree(&intern, &rt_uniresource);
+#else
+		rt_db_free_internal(&intern, &rt_uniresource);
+#endif
 		Free_uses( wdbp->dbip );
 		return TCL_ERROR;
 	}
@@ -6219,7 +6387,11 @@ wdb_whatid_cmd(struct rt_wdb	*wdbp,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%d", comb->region_id);
+#if USE_RT_COMB_IFREE
 	rt_comb_ifree(&intern, &rt_uniresource);
+#else
+	rt_db_free_internal(&intern, &rt_uniresource);
+#endif
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
