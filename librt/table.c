@@ -1031,7 +1031,7 @@ struct bu_external	*ep;
 
 	switch( rec->u_id )  {
 	case ID_SOLID:
-		id = idmap[rec->s.s_type];
+		id = idmap[(int)(rec->s.s_type)];
 		break;
 	case ID_ARS_A:
 		id = ID_ARS;
@@ -1157,6 +1157,7 @@ struct db_i		*dbip;
 	}
 	if( (free || op == ip) )  rt_db_free_internal(ip);
 
+	RT_INIT_DB_INTERNAL(op);
 	if( rt_functab[id].ft_import( op, &ext, mat, dbip ) < 0 )  {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
