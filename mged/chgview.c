@@ -77,20 +77,6 @@ double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
 
-#ifndef MULTI_ATTACH
-int		rateflag_slew;
-vect_t		rate_slew;
-vect_t		absolute_slew;
-
-int		rateflag_rotate;
-vect_t		rate_rotate;
-vect_t		absolute_rotate;	/* selected by mged_variables.rateknobs */
-
-int		rateflag_zoom;
-fastf_t		rate_zoom;
-fastf_t		absolute_zoom;
-#endif
-
 RT_EXTERN(int	edit_com, (int argc, char **argv, int kind, int catch_sigint));
 int		f_zap();
 
@@ -106,16 +92,13 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 
-#ifdef MULTI_ATTACH
-	update_views = 1;
-#endif
-
 	for( i = 1; i < argc; i++ )  {
 		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
 			eraseobj( dp );
 	}
 	no_memory = 0;
-	dmaflag = 1;
+
+	update_views = 1;
 
 	return CMD_OK;
 }
@@ -132,7 +115,6 @@ char	**argv;
 	toViewcenter[MDY] = -atof( argv[2] ) * local2base;
 	toViewcenter[MDZ] = -atof( argv[3] ) * local2base;
 	new_mats();
-	dmaflag++;
 
 	return CMD_OK;
 }
@@ -147,13 +129,11 @@ char	**argv;
 	if( not_state( ST_VIEW, "View Rotate") )
 		return CMD_BAD;
 
-#ifdef VIRTUAL_TRACKBALL 
 	if(!rot_set){
           rot_x += atof(argv[1]);
           rot_y += atof(argv[2]);
           rot_z += atof(argv[3]);
         }
-#endif
 
 	usejoy(	atof(argv[1]) * degtorad,
 		atof(argv[2]) * degtorad,
@@ -174,7 +154,6 @@ char	**argv;
 	if( f < 0.0001 ) f = 0.0001;
 	Viewscale = f * 0.5 * local2base;
 	new_mats();
-	dmaflag++;
 
 	return CMD_OK;
 }
@@ -208,9 +187,7 @@ f_edit(argc, argv)
 int	argc;
 char	**argv;
 {
-#ifdef MULTI_ATTACH
         update_views = 1;
-#endif
 
 	return edit_com( argc, argv, 1, 1 );
 }
@@ -221,9 +198,7 @@ f_ev(argc, argv)
 int	argc;
 char	**argv;
 {
-#ifdef MULTI_ATTACH
         update_views = 1;
-#endif
 
 	return edit_com( argc, argv, 3, 1 );
 }
@@ -245,9 +220,7 @@ f_evedit(argc, argv)
 int	argc;
 char	**argv;
 {
-#ifdef MULTI_ATTACH
         update_views = 1
-#endif
 
 	return edit_com( argc, argv, 2, 1 );
 }
@@ -331,11 +304,10 @@ int	catch_sigint;
 		}
 	}
 
-	dmaflag = 1;
 	if( dmp->dmr_displaylist )  {
 		/* Force displaylist update before starting new drawing */
-		dmaflag = 1;
-		refresh();
+	  update_views = 1;
+	  refresh();
 	}
 
 	if( catch_sigint )
@@ -347,7 +319,6 @@ int	catch_sigint;
 	(void)rt_get_timer( (struct rt_vls *)0, &elapsed_time );
 	rt_log("%ld vectors in %g sec\n", nvectors, elapsed_time );
 
-#ifdef MULTI_ATTACH
 	{
 	  register struct dm_list *p;
 	  struct dm_list *save_dm_list;
@@ -362,38 +333,18 @@ int	catch_sigint;
 	      size_reset();
 	      new_mats();
 
-#ifdef VIRTUAL_TRACKBALL
 	      MAT_DELTAS_GET(orig_pos, toViewcenter);
 	      tran_x = 0.0;
 	      tran_y = 0.0;
 	      tran_z = 0.0;
-#endif
 	    }
 
 	    dmp->dmr_colorchange();
-	    dmaflag = 1;
 	  }
 
 	  curr_dm_list = save_dm_list;
 	}
-#else	
-	/* If we went from blank screen to non-blank, resize */
-	if (mged_variables.autosize  && initial_blank_screen &&
-	    HeadSolid.s_forw != &HeadSolid)  {
-		size_reset();
-		new_mats();
 
-#ifdef VIRTUAL_TRACKBALL
-		MAT_DELTAS_GET(orig_pos, toViewcenter);
-		tran_x = 0.0;
-		tran_y = 0.0;
-		tran_z = 0.0;
-#endif
-	}
-
-	dmp->dmr_colorchange();
-	dmaflag = 1;
-#endif
 	return CMD_OK;
 }
 
@@ -730,9 +681,7 @@ char	**argv;
 	register struct solid *nsp;
 	struct directory	*dp;
 
-#ifdef MULTI_ATTACH
 	update_views = 1;
-#endif
 	no_memory = 0;
 
 	/* FIRST, reject any editing in progress */
@@ -760,7 +709,6 @@ char	**argv;
 	if( rt_g.debug )  mged_freemem();
 
 	(void)chg_state( state, state, "zap" );
-	dmaflag = 1;
 
 	return CMD_OK;
 }
@@ -832,15 +780,12 @@ f_release(argc, argv)
 int	argc;
 char	**argv;
 {
-#ifdef MULTI_ATTACH
   if(argc == 2)
     release(argv[1]);
   else
     release(NULL);
-#else
-	release();
-#endif
-	return CMD_OK;
+
+  return CMD_OK;
 }
 
 /*
@@ -857,9 +802,8 @@ register struct directory *dp;
 	static struct solid *nsp;
 	register int i;
 
-#ifdef MULTI_ATTACH
 	update_views = 1;
-#endif
+
 	RT_CK_DIR(dp);
 	sp=HeadSolid.s_forw;
 	while( sp != &HeadSolid )  {
@@ -873,7 +817,7 @@ register struct directory *dp;
 			rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 			DEQUEUE_SOLID( sp );
 			FREE_SOLID( sp );
-			dmaflag = 1;
+
 			break;
 		}
 		sp = nsp;
@@ -1062,7 +1006,7 @@ char	**argv;
 		/* Check details, Init menu, set state=ST_S_EDIT */
 		init_sedit();
 	}
-	dmaflag = 1;
+	update_views = 1;
 	if (path_piece)
 	{
 	    for (i = 0; path_piece[i] != 0; ++i)
@@ -1096,9 +1040,7 @@ char	**argv;
 		return CMD_BAD;
 	}
 
-#ifdef MULTI_ATTACH
 	update_views = 1;
-#endif
 
 	button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
 	return f_ill(argc, argv);	/* Illuminate named solid --> ST_S_EDIT */
@@ -1148,13 +1090,6 @@ char	**argv;
     iknob = 1;
   else
     iknob = 0;
-
-#ifndef MULTI_ATTACH
-  if( !aslewflag ) {
-    VSETALL( absolute_slew, 0.0 );
-    aslewflag = 1;
-  }
-#endif
 
   if(argc == 2)  {
     i = 0;
@@ -1538,14 +1473,12 @@ int	argc;
 char	**argv;
 {
 	double	val;
-#ifdef VIRTUAL_TRACKBALL
 	vect_t view_pos;
 	point_t new_pos;
 	point_t old_pos;
 	point_t diff;
 
 	MAT_DELTAS_GET(old_pos, toViewcenter);
-#endif
 
 	val = atof(argv[1]);
 	if( val < SMALL_FASTF || val > INFINITY )  {
@@ -1558,7 +1491,6 @@ char	**argv;
 	Viewscale /= val;
 	new_mats();
 
-#ifdef VIRTUAL_TRACKBALL
 	if(state == ST_S_EDIT || state == ST_O_EDIT){
 	  tran_x *= val;
 	  tran_y *= val;
@@ -1573,7 +1505,6 @@ char	**argv;
 	  tran_y = new_pos[Y];
 	  tran_z = new_pos[Z];
 	}
-#endif
 
 	return CMD_OK;
 }

@@ -38,10 +38,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./sedit.h"
 
-#ifndef MULTI_ATTACH
-int	adcflag;	/* angle/distance cursor in use */
-#endif
-
 /* This flag indicates that SOLID editing is in effect.
  * edobj may not be set at the same time.
  * It is set to the 0 if off, or the value of the button function
@@ -244,8 +240,6 @@ char *str;{
 		    if( mptr->menu_func != ((void (*)())0) )
 			(*(mptr->menu_func))(mptr->menu_arg, menu, item);
 
-		    if(mged_variables.show_menu)
-		      dmaflag = 1;
 		    return;
 		}
 	}
@@ -279,14 +273,12 @@ static void bv_zoomin()
 {
 	Viewscale *= 0.5;
 	new_mats();
-	dmaflag = 1;
 }
 
 static void bv_zoomout()
 {
 	Viewscale *= 2;
 	new_mats();
-	dmaflag = 1;
 }
 
 static void bv_rate_toggle()
@@ -332,7 +324,6 @@ static void bv_vrestore()  {
 		mat_copy( Viewrot, sav_viewrot );
 		mat_copy( toViewcenter, sav_toviewcenter );
 		new_mats();
-		dmaflag++;
 	}
 }
 
@@ -375,7 +366,8 @@ static void bv_35_25()  {
 }
 
 /* returns 0 if error, !0 if success */
-static int ill_common()  {
+static int
+ill_common()  {
 	/* Common part of illumination */
 	dmp->dmr_light( LIGHT_ON, BE_REJECT );
 	if( HeadSolid.s_forw == &HeadSolid )  {
@@ -387,14 +379,13 @@ static int ill_common()  {
 	edsol = 0;		/* sanity */
 	movedir = 0;		/* No edit modes set */
 	mat_idn( modelchanges );	/* No changes yet */
-	dmaflag++;
-#ifdef MULTI_ATTACH
+
 	update_views = 1;
-#endif
 	return(1);		/* OK */
 }
 
-static void be_o_illuminate()  {
+static void
+be_o_illuminate()  {
 	if( not_state( ST_VIEW, "Object Illuminate" ) )
 		return;
 
@@ -405,9 +396,12 @@ static void be_o_illuminate()  {
 	}
 	/* reset accumulation local scale factors */
 	acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
+
+	update_views = 1;
 }
 
-static void be_s_illuminate()  {
+static void
+be_s_illuminate()  {
 	if( not_state( ST_VIEW, "Solid Illuminate" ) )
 		return;
 
@@ -416,95 +410,102 @@ static void be_s_illuminate()  {
 		(void)chg_state( ST_VIEW, ST_S_PICK, "Solid Illuminate" );
 		new_mats();
 	}
+
+	update_views = 1;
 }
 
-static void be_o_scale()  {
+static void
+be_o_scale()  {
 	if( not_state( ST_O_EDIT, "Object Scale" ) )
 		return;
 
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_SCALE );
 	movedir = SARROW;
-	dmaflag++;
+	update_views = 1;
 }
 
-static void be_o_xscale()  {
+static void
+be_o_xscale()  {
 	if( not_state( ST_O_EDIT, "Object Local X Scale" ) )
 		return;
 
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_XSCALE );
 	movedir = SARROW;
-	dmaflag++;
+	update_views = 1;
 }
 
-static void be_o_yscale()  {
+static void
+be_o_yscale()  {
 	if( not_state( ST_O_EDIT, "Object Local Y Scale" ) )
 		return;
 
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_YSCALE );
 	movedir = SARROW;
-	dmaflag++;
+	update_views = 1;
 }
 
-static void be_o_zscale()  {
+static void
+be_o_zscale()  {
 	if( not_state( ST_O_EDIT, "Object Local Z Scale" ) )
 		return;
 
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_ZSCALE );
 	movedir = SARROW;
-	dmaflag++;
+	update_views = 1;
 }
 
-static void be_o_x()  {
+static void
+be_o_x()  {
 	if( not_state( ST_O_EDIT, "Object X Motion" ) )
 		return;
 
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_X );
 	movedir = RARROW;
-	dmaflag++;
+	update_views = 1;
 }
 
-static void be_o_y()  {
+static void
+be_o_y()  {
 	if( not_state( ST_O_EDIT, "Object Y Motion" ) )
 		return;
 
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_Y );
 	movedir = UARROW;
-	dmaflag++;
+	update_views = 1;
 }
 
 
-static void be_o_xy()  {
+static void
+be_o_xy()  {
 	if( not_state( ST_O_EDIT, "Object XY Motion" ) )
 		return;
 
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_XY );
 	movedir = UARROW | RARROW;
-	dmaflag++;
+	update_views = 1;
 }
 
-static void be_o_rotate()  {
+static void
+be_o_rotate()  {
 	if( not_state( ST_O_EDIT, "Object Rotation" ) )
 		return;
 
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_ROTATE );
 	movedir = ROTARROW;
-	dmaflag++;
+	update_views = 1;
 }
 
-static void be_accept()  {
+static void
+be_accept()  {
 	register struct solid *sp;
-
-#ifdef MULTI_ATTACH
-	update_views = 1;
-#endif
 
 	mmenu_set( MENU_L2, MENU_NULL );
 	if( state == ST_S_EDIT )  {
@@ -526,7 +527,6 @@ static void be_accept()  {
 		illump = SOLID_NULL;
 		dmp->dmr_colorchange();
 		(void)chg_state( ST_S_EDIT, ST_VIEW, "Edit Accept" );
-		dmaflag = 1;		/* show completion */
 	}  else if( state == ST_O_EDIT )  {
 		/* Accept an object edit */
 		dmp->dmr_light( LIGHT_OFF, BE_ACCEPT );
@@ -540,19 +540,17 @@ static void be_accept()  {
 		illump = SOLID_NULL;
 		dmp->dmr_colorchange();
 		(void)chg_state( ST_O_EDIT, ST_VIEW, "Edit Accept" );
-		dmaflag = 1;		/* show completion */
 	} else {
 		(void)not_state( ST_S_EDIT, "Edit Accept" );
 		return;
 	}
 }
 
-static void be_reject()  {
+static void
+be_reject()  {
 	register struct solid *sp;
 
-#ifdef MULTI_ATTACH
 	update_views = 1;
-#endif
 
 	/* Reject edit */
 	dmp->dmr_light( LIGHT_OFF, BE_ACCEPT );
@@ -597,7 +595,6 @@ static void be_reject()  {
 	edobj = 0;
 	es_edflag = -1;
 	illump = SOLID_NULL;		/* None selected */
-	dmaflag = 1;
 
 	/* Clear illumination flags */
 	FOR_ALL_SOLIDS( sp )
@@ -606,10 +603,12 @@ static void be_reject()  {
 	(void)chg_state( state, ST_VIEW, "Edit Reject" );
 }
 
-static void bv_slicemode() {
+static void
+bv_slicemode() {
 }
 
-static void be_s_edit()  {
+static void
+be_s_edit()  {
 	/* solid editing */
 	if( not_state( ST_S_EDIT, "Solid Edit (Menu)" ) )
 		return;
@@ -618,11 +617,12 @@ static void be_s_edit()  {
 		dmp->dmr_light( LIGHT_OFF, edsol );
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_EDIT );
 	sedit_menu();		/* Install appropriate menu */
-	dmaflag++;
+
 	set_e_axis_pos();
 }
 
-static void be_s_rotate()  {
+static void
+be_s_rotate()  {
 	/* rotate solid */
 	if( not_state( ST_S_EDIT, "Solid Rotate" ) )
 		return;
@@ -632,11 +632,12 @@ static void be_s_rotate()  {
 	mmenu_set( MENU_L1, MENU_NULL );
 	es_edflag = SROT;
 	mat_idn(acc_rot_sol);
-	dmaflag++;
+
         set_e_axis_pos();
 }
 
-static void be_s_trans()  {
+static void
+be_s_trans()  {
 	/* translate solid */
 	if( not_state( ST_S_EDIT, "Solid Translate" ) )
 		return;
@@ -646,11 +647,11 @@ static void be_s_trans()  {
 	es_edflag = STRANS;
 	movedir = UARROW | RARROW;
 	mmenu_set( MENU_L1, MENU_NULL );
-	dmaflag++;
         set_e_axis_pos();
 }
 
-static void be_s_scale()  {
+static void
+be_s_scale()  {
 	/* scale solid */
 	if( not_state( ST_S_EDIT, "Solid Scale" ) )
 		return;
@@ -660,7 +661,6 @@ static void be_s_scale()  {
 	es_edflag = SSCALE;
 	mmenu_set( MENU_L1, MENU_NULL );
 	acc_sc_sol = 1.0;
-	dmaflag++;
         set_e_axis_pos();
 }
 
@@ -701,7 +701,6 @@ char *str;
 	}
 	state = to;
 
-#ifdef MULTI_ATTACH
 	{
 	  register struct dm_list *p;
 	  struct dm_list *save_dm_list;
@@ -712,7 +711,7 @@ char *str;
 
 	    /* Advise display manager of state change */
 	    dmp->dmr_statechange( from, to );
-#ifdef VIRTUAL_TRACKBALL
+
 	    if(to == ST_VIEW){
 	      mat_t o_toViewcenter;
 	      fastf_t o_Viewscale;
@@ -729,36 +728,12 @@ char *str;
 	      mat_copy(toViewcenter, o_toViewcenter);
 	      Viewscale = o_Viewscale;
 	    }
-#endif
 
 	    new_mats();
 	  }
 
 	  curr_dm_list = save_dm_list;
 	}
-#else
-	/* Advise display manager of state change */
-	dmp->dmr_statechange( from, to );
-
-#ifdef VIRTUAL_TRACKBALL
-	if(to == ST_VIEW){
-	  mat_t o_toViewcenter;
-	  fastf_t o_Viewscale;
-
-	  /* save toViewcenter and Viewscale */
-	  mat_copy(o_toViewcenter, toViewcenter);
-	  o_Viewscale = Viewscale;
-
-	  /* get new orig_pos */
-	  size_reset();
-	  MAT_DELTAS_GET(orig_pos, toViewcenter);
-
-	  /* restore old toViewcenter and Viewscale */
-	  mat_copy(toViewcenter, o_toViewcenter);
-	  Viewscale = o_Viewscale;
-	}
-#endif
-#endif
 
 	return(0);		/* GOOD */
 }
@@ -807,8 +782,10 @@ btn_head_menu(i, menu, item)  {
 		break;
 	}
 
+#if 0
 	if(mged_variables.show_menu)
 	  dmaflag = 1;
+#endif
 }
 
 void

@@ -150,6 +150,7 @@ struct menu_item *value;
     Tcl_DStringFree(&ds_menu);
     rt_vls_free(&menu_string);
 
+    update_views = 1;
 }
 
 /*
@@ -232,11 +233,7 @@ register int pen_y;
 		     	 * if no arrow is desired */
 			if( mptr->menu_func != ((void (*)())0) )
 				(*(mptr->menu_func))(mptr->menu_arg, menu, item);
-#ifdef MULTI_ATTACH
-			update_views = 1;
-#else
-			dmaflag = 1;
-#endif
+
 			return( 1 );		/* menu claims pen value */
 		}
 	}

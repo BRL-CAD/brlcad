@@ -22,11 +22,8 @@ struct device_values  {
 };
 extern struct device_values dm_values;
 
-#ifdef SEND_KEY_DOWN_PIPE
 extern int dm_pipe[];
-#endif
 
-#ifdef VIRTUAL_TRACKBALL
 #define VIRTUAL_TRACKBALL_OFF 0
 #define VIRTUAL_TRACKBALL_ON 1
 #define VIRTUAL_TRACKBALL_ROTATE 2 
@@ -36,7 +33,6 @@ extern int dm_pipe[];
 #define VIRTUAL_TRACKBALL_NOT_ACTIVE(_type,_name)\
   ((_type)dm_vars)->_name == VIRTUAL_TRACKBALL_OFF ||\
   ((_type)dm_vars)->_name == VIRTUAL_TRACKBALL_ON
-#endif
 
 /* Interface to a specific Display Manager */
 struct dm {
@@ -68,7 +64,6 @@ struct dm {
 	int	(*dmr_cmd)();		/* dm-specific cmds to perform */
 };
 
-#ifdef MULTI_ATTACH
 struct shared_info {
   fastf_t _Viewscale;
   mat_t   _Viewrot;
@@ -105,7 +100,6 @@ struct shared_info {
   fastf_t  _rate_zoom;
   fastf_t  _absolute_zoom;
 
-#ifdef VIRTUAL_TRACKBALL
 /* Virtual trackball stuff */
   double _rot_x;
   double _rot_y;
@@ -114,7 +108,6 @@ struct shared_info {
   double _tran_y;
   double _tran_z;
   point_t _orig_pos;
-#endif
 
   int _rot_set;
   int _tran_set;
@@ -132,6 +125,7 @@ struct dm_list {
   char *_dm_vars;   /* pointer to dependant display manager variables */
   struct rt_vls _pathName; /* full name of drawing window */
   int _dirty;      /* true if received an expose or configuration event */
+  int _owner;
   void (*_knob_offset_hook)();
   void (*_axis_color_hook)();
 };
@@ -145,6 +139,7 @@ extern struct dm_list *curr_dm_list;
 #define dm_vars curr_dm_list->_dm_vars
 #define pathName curr_dm_list->_pathName
 #define dirty curr_dm_list->_dirty
+#define owner curr_dm_list->_owner
 #define knob_offset_hook curr_dm_list->_knob_offset_hook
 #define axis_color_hook curr_dm_list->_axis_color_hook
 
@@ -180,7 +175,6 @@ extern struct dm_list *curr_dm_list;
 #define model2objview curr_dm_list->s_info->_model2objview
 #define objview2model curr_dm_list->s_info->_objview2model
 
-#ifdef VIRTUAL_TRACKBALL
 #define rot_x curr_dm_list->s_info->_rot_x
 #define rot_y curr_dm_list->s_info->_rot_y
 #define rot_z curr_dm_list->s_info->_rot_z
@@ -188,19 +182,11 @@ extern struct dm_list *curr_dm_list;
 #define tran_y curr_dm_list->s_info->_tran_y
 #define tran_z curr_dm_list->s_info->_tran_z
 #define orig_pos curr_dm_list->s_info->_orig_pos
-#endif
 
 #define rot_set curr_dm_list->s_info->_rot_set
 #define tran_set curr_dm_list->s_info->_tran_set
 #define dmaflag curr_dm_list->s_info->_dmaflag
 #define rc curr_dm_list->s_info->_rc
-
-#else
-/* Not MULTI_ATTACH */
-
-extern struct dm *dmp;			/* ptr to current display mgr */
-
-#endif
 
 /*
  * Definitions for dealing with the buttons and lights.

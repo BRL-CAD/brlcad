@@ -1,4 +1,3 @@
-#ifdef MULTI_ATTACH
  /*
  *			D M - O G L . C
  *
@@ -66,9 +65,7 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-#ifdef SEND_KEY_DOWN_PIPE
 extern int dm_pipe[];
-#endif
 
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
@@ -138,10 +135,8 @@ struct dm dm_ogl2 = {
 #define dpy (((struct ogl_vars *)dm_vars)->_dpy)
 #define win (((struct ogl_vars *)dm_vars)->_win)
 #define xtkwin (((struct ogl_vars *)dm_vars)->_xtkwin)
-#ifdef VIRTUAL_TRACKBALL
 #define omx (((struct ogl_vars *)dm_vars)->_omx)
 #define omy (((struct ogl_vars *)dm_vars)->_omy)
-#endif
 #define perspective_angle (((struct ogl_vars *)dm_vars)->_perspective_angle)
 #define devmotionnotify (((struct ogl_vars *)dm_vars)->_devmotionnotify)
 #define devbuttonpress (((struct ogl_vars *)dm_vars)->_devbuttonpress)
@@ -174,9 +169,7 @@ struct modifiable_ogl_vars {
   int linewidth;
   int fastfog;
   double fogdensity;
-#ifdef VIRTUAL_TRACKBALL
   int virtual_trackball;
-#endif
 };
 
 struct ogl_vars {
@@ -190,9 +183,7 @@ struct ogl_vars {
   int face_flag;
   int width;
   int height;
-#ifdef VIRTUAL_TRACKBALL
   int _omx, _omy;
-#endif
   int _perspective_angle;
   int _devmotionnotify;
   int _devbuttonpress;
@@ -317,9 +308,7 @@ struct structparse Ogl2_vparse[] = {
 	{"%d",  1, "linewidth",		OGL2_MV_O(linewidth),	do_linewidth },
 	{"%d",  1, "fastfog",		OGL2_MV_O(fastfog),	do_fog },
 	{"%f",  1, "density",		OGL2_MV_O(fogdensity),	refresh_hook },
-#ifdef VIRTUAL_TRACKBALL
 	{"%d",  1, "virtual_trackball",	OGL2_MV_O(virtual_trackball),FUNC_NULL },
-#endif
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
@@ -1025,7 +1014,6 @@ XEvent *eventPtr;
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
 
-#ifdef SEND_KEY_DOWN_PIPE
   if(mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
     KeySym keysym;
@@ -1043,7 +1031,6 @@ XEvent *eventPtr;
     /* Use this so that these events won't propagate */
     return TCL_RETURN;
   }
-#endif
 
   if ( eventPtr->type == Expose && eventPtr->xexpose.count == 0 ) {
 #if 0
@@ -1072,7 +1059,6 @@ XEvent *eventPtr;
     refresh();
     goto end;
   } else if( eventPtr->type == MotionNotify ) {
-#ifdef VIRTUAL_TRACKBALL
     int mx, my;
 
     if( !OgldoMotion &&
@@ -1109,14 +1095,6 @@ XEvent *eventPtr;
 
     omx = mx;
     omy = my;
-#else
-	int	x, y;
-	if ( !OgldoMotion )
-	    return 1;
-	x = (eventPtr->xmotion.x/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 4095;
-	y = (0.5 - eventPtr->xmotion.y/(double)((struct ogl_vars *)dm_vars)->height) * 4095;
-	rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
-#endif
   }else if( eventPtr->type == devmotionnotify ){
     XDeviceMotionEvent *M;
     int setting;
@@ -1949,7 +1927,6 @@ char	**argv;
     return CMD_OK;
   }
 
-#ifdef VIRTUAL_TRACKBALL  
   if(((struct ogl_vars *)dm_vars)->mvars.virtual_trackball){
   if( !strcmp( argv[0], "vtb" )){
     int buttonpress;
@@ -2000,7 +1977,6 @@ char	**argv;
   }else{
     return CMD_OK;
   }
-#endif
 
   rt_log("dm: bad command - %s\n", argv[0]);
   return CMD_BAD;
@@ -2109,14 +2085,11 @@ set_perspective()
 }
 
 
-#ifdef VIRTUAL_TRACKBALL
 static void
 establish_vtb()
 {
   return;
 }
-#endif
-
 
 static void
 Ogl2_colorit()
@@ -2312,39 +2285,17 @@ static struct dm_list *
 get_dm_list(window)
 Window window;
 {
-#if 0
-  register struct dm_list *p;
-
-  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-    if(window == ((struct ogl_vars *)p->_dm_vars)->_win)
-      if (!glXMakeCurrent(((struct ogl_vars *)p->_dm_vars)->_dpy,
-			  ((struct ogl_vars *)p->_dm_vars)->_win,
-			  ((struct ogl_vars *)p->_dm_vars)->_glxc)){
-#if 0
-	rt_log("get_dm_list: Couldn't make context current\n");
-#endif
-	return DM_LIST_NULL;
-      }
-
-      return p;
-  }
-#else
   register struct ogl_vars *p;
 
   for( RT_LIST_FOR(p, ogl_vars, &head_ogl_vars.l) ){
     if(window == p->_win){
       if (!glXMakeCurrent(p->_dpy, p->_win, p->_glxc)){
-#if 0
-	rt_log("get_dm_list: Couldn't make context current\n");
-#endif
 	return DM_LIST_NULL;
       }
 
       return p->dm_list;
     }
   }
-#endif
 
   return DM_LIST_NULL;
 }
-#endif

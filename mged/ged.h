@@ -64,11 +64,6 @@ extern struct db_i	*dbip;		       /* defined in ged.c */
 #define localunit	(dbip->dbi_localunit)  /* current local unit (index) */
 #define	cur_title	(dbip->dbi_title)      /* current model title */
 
-#ifndef MULTI_ATTACH
-extern int		dmaflag;	       /* !0 forces screen update */
-#endif
-
-
 /* Some useful constants, if they haven't been defined elsewhere. */
 
 #ifndef FALSE
@@ -127,13 +122,6 @@ extern int	los_default;
  *
  *  These are allocated storage in dozoom.c
  */
-#ifndef MULTI_ATTACH
-extern fastf_t	Viewscale;		/* dist from center to edge of RPP */
-extern mat_t	Viewrot;
-extern mat_t	toViewcenter;
-extern mat_t	model2view, view2model;
-extern mat_t	model2objview, objview2model;
-#endif
 
 extern mat_t	modelchanges;		/* full changes this edit */
 extern mat_t	incr_change;		/* change(s) from last cycle */
@@ -157,31 +145,6 @@ extern int	no_memory;	/* flag indicating memory for drawing is used up */
 
 /* defined in menu.c */
 extern int	menuflag;	/* flag indicating if a menu item is selected */
-
-#ifndef MULTI_ATTACH
-/* defined in chgview.c */
-extern int	rateflag_slew;
-extern vect_t	rate_slew;
-extern vect_t	absolute_slew;
-
-extern int	rateflag_rotate;
-extern vect_t	rate_rotate;
-extern vect_t	absolute_rotate;
-
-extern int	rateflag_zoom;
-extern fastf_t	rate_zoom;
-extern fastf_t	absolute_zoom;
-
-/*
- * These variables are global for the benefit of
- * the display portion of dozoom. - defined in adc.c
- */
-extern fastf_t	curs_x;		/* cursor X position */
-extern fastf_t	curs_y;		/* cursor Y position */
-extern fastf_t	c_tdist;	/* Cursor tick distance */
-extern fastf_t	angle1;		/* Angle to solid wiper */
-extern fastf_t	angle2;		/* Angle to dashed wiper */
-#endif
 
 /* defined in ged.c */
 extern FILE *infile;
@@ -250,11 +213,6 @@ extern void start_catching_output(), stop_catching_output();
  */
 extern struct solid	*illump;/* == 0 if none, else points to ill. solid */
 extern int	sedraw;		/* apply solid editing changes */
-
-/* defined in buttons.c */
-#ifndef MULTI_ATTACH
-extern int	adcflag;	/* angle/distance cursor in use */
-#endif
 
 /* defined in chgview.c */
 extern int	inpara;		/* parameter input from keyboard flag */
@@ -360,11 +318,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 
 /* mged command variables for affecting the user environment */
-#ifdef MULTI_ATTACH
 struct _mged_variables {
-#else
-struct mged_variables {
-#endif
 	int	autosize;
 	int	rateknobs;
     	int	sgi_win_size;
@@ -374,10 +328,8 @@ struct mged_variables {
 	int     w_axis;  /* world view axis */
 	int     v_axis;  /* view axis */
 	int     e_axis;  /* edit axis */
-#ifdef SEND_KEY_DOWN_PIPE
         int     send_key;
         int     hot_key;
-#endif
 	int     view;
 	int	predictor;
 	double	predictor_advance;
@@ -389,10 +341,6 @@ struct mged_variables {
 	char	intersection_lexeme[1024];
 	char	difference_lexeme[1024];
 };
-
-#ifndef MULTI_ATTACH
-extern struct mged_variables mged_variables;
-#endif
 
 #define	MAXARGS		9000	/* Maximum number of args per line */
 
@@ -549,10 +497,8 @@ MGED_EXTERN(int f_vrmgr, (int argc, char **argv));
 MGED_EXTERN(int f_vrot, (int argc, char **argv));
 MGED_EXTERN(int f_vrot_center, (int argc, char **argv));
 MGED_EXTERN(int f_which_id, (int argc, char **argv));
-#ifdef MULTI_ATTACH
 MGED_EXTERN(int f_tie, (int argc, char **argv));
 MGED_EXTERN(int f_winset, (int argc, char **argv));
-#endif
 MGED_EXTERN(int f_xpush, (int argc, char **argv));
 MGED_EXTERN(int f_zap, (int argc, char **argv));
 MGED_EXTERN(int f_zoom, (int argc, char **argv));
