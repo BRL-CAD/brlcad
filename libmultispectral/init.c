@@ -57,6 +57,7 @@ struct mfuncs	**headp;
 
 	/* Compiled from sources in liboptical */
 	MFUNCS( phg_mfuncs );
+	MFUNCS( stk_mfuncs );
 	MFUNCS( light_mfuncs );
 	MFUNCS( camo_mfuncs );
 	MFUNCS( noise_mfuncs );
@@ -64,7 +65,6 @@ struct mfuncs	**headp;
 	MFUNCS( cloud_mfuncs );
 	MFUNCS( spm_mfuncs );
 	MFUNCS( txt_mfuncs );
-	MFUNCS( stk_mfuncs );
 	MFUNCS( cook_mfuncs );
 	MFUNCS( marble_mfuncs );
 	MFUNCS( stxt_mfuncs );
