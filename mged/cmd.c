@@ -72,6 +72,7 @@ struct rt_vls history;
 struct rt_vls replay_history;
 struct timeval lastfinish;
 FILE *journalfp;
+int firstjournal;
 
 struct funtab {
 	char *ft_name;
@@ -137,6 +138,8 @@ static struct funtab funtab[] = {
 	f_debugmem, 1, 1,
 "debugnmg", "[hex code]", "Show/set debugging bit vector for NMG",
 	f_debugnmg,1,2,
+"delay", "sec usec", "Delay for the specified amount of time",
+	f_delay,3,3,
 "dm", "set var=val", "Do display-manager specific command",
 	f_dm, 2, MAXARGS,
 "dup", "file [prefix]", "check for dup names in 'file'",
@@ -183,6 +186,8 @@ static struct funtab funtab[] = {
 #endif
 "help", "[commands]", "give usage message for given commands",
 	f_help,0,MAXARGS,
+"history", "[-delays]", "describe command history",
+	f_history, 1, 2,
 "i", "obj combination [operation]", "add instance of obj to comb",
 	f_instance,3,4,
 "idents", "file object(s)", "make ascii summary of region idents",
@@ -382,8 +387,6 @@ static struct funtab funtab[] = {
 /*
  *	H I S T O R Y _ R E C O R D
  *
- * 	Note that this function uses different times for the calculating 
- *	the time delta and the current time.
  */
 
 void
@@ -399,17 +402,17 @@ struct timeval *start, *finish;
 	rt_vls_init( &timing );
 	if( done != 0 ) {
 		if( lastfinish.tv_usec > start->tv_usec ) {
-			rt_vls_printf( &timing, "delay %d %d\n",
+			rt_vls_printf( &timing, "delay %ld %ld\n",
 			    start->tv_sec - lastfinish.tv_sec - 1,
 			    start->tv_usec - lastfinish.tv_usec + 1000000L );
 		} else {
-			rt_vls_printf( &timing, "delay %d %d\n",
+			rt_vls_printf( &timing, "delay %ld %ld\n",
 				start->tv_sec - lastfinish.tv_sec,
 				start->tv_usec - lastfinish.tv_usec );
 		}
 	}		
 
-	if( journalfp != NULL ) {
+	if( journalfp != NULL && !firstjournal ) {
 		rt_vls_fwrite( journalfp, &timing );
 		rt_vls_fwrite( journalfp, cmdp );
 	}
@@ -420,6 +423,7 @@ struct timeval *start, *finish;
 	lastfinish.tv_sec = finish->tv_sec;
 	lastfinish.tv_usec = finish->tv_usec;
 	done = 1;
+	firstjournal = 0;
 
 	rt_vls_free( &timing );
 }		
@@ -449,8 +453,53 @@ char **argv;
 				rt_log( "Error opening %s for appending\n", argv[1] );
 				return CMD_BAD;
 			}
+			firstjournal = 1;
 		}
 	}
+
+	return CMD_OK;
+}
+
+/*
+ *	F _ D E L A Y
+ *
+ * 	Uses select to delay for the specified amount of time.
+ */
+
+int
+f_delay( argc, argv )
+int argc;
+char **argv;
+{
+	struct timeval tv;
+
+	tv.tv_sec = atoi( argv[1] );
+	tv.tv_usec = atoi( argv[2] );
+	select( 0, NULL, NULL, NULL, &tv );
+
+	return CMD_OK;
+}
+
+/*
+ *	F _ H I S T O R Y
+ *
+ *	Prints out the command history. 
+ */
+
+int
+f_history( argc, argv )
+int argc;
+char **argv;
+{
+	if( argc == 2 )
+		if( strcmp(argv[1], "-delays") == 0 )
+			rt_log( rt_vls_addr(&replay_history) );
+		else {
+			rt_log( "history: invalid option %s\n", argv[1] );
+			return CMD_BAD;
+		}
+	else
+		rt_log( rt_vls_addr(&history) );
 
 	return CMD_OK;
 }
@@ -699,8 +748,10 @@ void
 cmd_setup(interactive)
 int	interactive;
 {
+#ifdef MGED_TCL
         register struct funtab *ftp;
 	char	buf[512];
+#endif
 
 	rt_vls_init( &history );
 	rt_vls_strcpy( &history, "" );
@@ -882,16 +933,28 @@ struct rt_vls	*vp;
 			gettimeofday( &start, NULL );
 			result = mged_cmd(argc, argv, funtab);
 			gettimeofday( &finish, NULL );
-			if (result != CMD_MORE)
+			switch( result ) {
+			case CMD_OK:
+				rt_vls_strcpy( &hadd, rt_vls_addr(&cmd) );
 				done = 1;
-			else
+				break;
+			case CMD_BAD:
+				rt_vls_printf( &hadd, "# %s",
+					rt_vls_addr(&cmd) );
+				done = 1;
+				break;
+			case CMD_MORE:
 				done = 0;
+				break;
+			}
 #endif
 
 	/* Record into history and return if we're all done. */
 
 			if( done ) {
-				history_record( &hadd, &start, &finish );
+					/* Record non-newline commands */
+				if( rt_vls_strlen(&hadd) > 1 )
+				    history_record( &hadd, &start, &finish );
 				break;
 			}
 
