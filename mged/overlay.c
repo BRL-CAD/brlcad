@@ -3,7 +3,6 @@
  *
  * Functions -
  *	f_overlay		Read a UNIX-Plot file as an overlay
- *	invent_solid		Turn list of vectors into phony solid
  *	uplot_vlist		Read UNIX-Plot, create list of vectors
  *	getshort		Read VAX-order 16-bit number
  *
