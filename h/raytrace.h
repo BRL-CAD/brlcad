@@ -2440,6 +2440,19 @@ RT_EXTERN(void			nmg_merge_models, (struct model *m1,
 							struct model *m2) );
 /* From nmg_rt.c */
 
+/* From rt_dspline.c */
+RT_EXTERN(void			rt_dspline_matrix, (mat_t m,CONST char *type,
+					CONST double	tension,
+					CONST double	bias) );
+RT_EXTERN(double		rt_dspline4, (mat_t m, double a, double b,
+					double c, double d, double alpha) );
+RT_EXTERN(void			rt_dspline4v, (double *pt, mat_t m, double *a,
+					double *b, double *c, double *d,
+					int depth, double alpha) );
+RT_EXTERN(void			rt_dspline_n, (double *r, CONST mat_t m,
+					CONST double *knots, CONST int n,
+					CONST int depth, CONST double alpha));
+
 #endif
 
 /*
