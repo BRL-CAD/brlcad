@@ -239,8 +239,8 @@ int method;
 {
 	struct msr_gauss *p;
 	p = (struct msr_gauss *) rt_malloc(sizeof(struct msr_gauss),"msr_guass");
-	p->msr_gausses=(double *) malloc(MSRMAXTBL*sizeof(double));
-	p->msr_gauss_doubles=(double *) malloc(MSRMAXTBL*sizeof(double));
+	p->msr_gausses=(double *) rt_malloc(MSRMAXTBL*sizeof(double),"msr guass table");
+	p->msr_gauss_doubles=(double *) rt_malloc(MSRMAXTBL*sizeof(double),"msr guass doubles");
 	p->msr_gauss_seed = 1;
 	p->msr_gauss_ptr = 0;
 	p->msr_gauss_dbl_ptr = 0;
