@@ -4,10 +4,10 @@
  *  The Princeton memory allocater.
  *
  *  Functions -
- *	pmalloc
- *	pfree
- *	prealloc
- *	forget
+ *	rt_pmalloc
+ *	rt_pfree
+ *	rt_prealloc
+ *	rt_forget
  *
  *  Author -
  *	Wiliam L. Sebok
@@ -40,7 +40,7 @@
  *	new memory needed is allocated.  Any old free memory left after an
  *	allocation is returned to the free list.
  *
- *	  All memory areas (free or busy) handled by pmalloc are also chained
+ *	  All memory areas (free or busy) handled by rt_pmalloc are also chained
  *	sequentially by increasing address (the adjacency chain).  When memory
  *	is freed it is merged with adjacent free areas, if any.  If a free area
  *	of memory ends at the end of memory (i.e. at the break), and if the
@@ -113,17 +113,17 @@ extern char *brk();
 #define	MAGIC_BUSY	0xc139569a
 
 #if 0
-#define NBUCKETS	18
+#define RT_PM_NBUCKETS	18
 
-struct qelem {
-	struct qelem *q_forw;
-	struct qelem *q_back;
+struct rt_qelem {
+	struct rt_qelem *q_forw;
+	struct rt_qelem *q_back;
 };
 
 #endif
 struct overhead {
-	struct qelem	ov_adj;		/* adjacency chain pointers */ 
-	struct qelem	ov_buk;		/* bucket chain pointers */
+	struct rt_qelem	ov_adj;		/* adjacency chain pointers */ 
+	struct rt_qelem	ov_buk;		/* bucket chain pointers */
 	long		ov_magic;
 	Size		ov_length;
 };
@@ -131,22 +131,22 @@ struct overhead {
 /*
  * The following macros depend on the order of the elements in struct overhead
  */
-#define TOADJ(p)	((struct qelem *)(p))
+#define TOADJ(p)	((struct rt_qelem *)(p))
 #define FROMADJ(p)	((struct overhead *)(p))
-#define FROMBUK(p)	((struct overhead *)( (char *)p - sizeof(struct qelem)))
-#define TOBUK(p)	((struct qelem *)( (char *)p + sizeof(struct qelem)))
+#define FROMBUK(p)	((struct overhead *)( (char *)p - sizeof(struct rt_qelem)))
+#define TOBUK(p)	((struct rt_qelem *)( (char *)p + sizeof(struct rt_qelem)))
 
 extern char endfree;
 
 static Size mlindx();
-static void insque(), remque();
+static void rt_pm_insque(), rt_pm_remque();
 static void mllcerr();
 static void mlfree_end();
 
 extern void (*mlabort)();
 
-extern void pfree();
-extern char *pmalloc(), *prealloc();
+extern void rt_pfree();
+extern char *rt_pmalloc(), *rt_prealloc();
 
 #define debug 1
 #ifdef debug
@@ -170,17 +170,17 @@ extern char *pmalloc(), *prealloc();
 char endfree = 0;
 
 /* sizes of buckets currently proportional to log 2() */
-static Size mlsizes[NBUCKETS] = {
+static Size mlsizes[RT_PM_NBUCKETS] = {
 	0, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768,
 	65536, 131072, 262144, 524288, 1048576, 2097152, 4194304
 };
 
 #if 0
 /* head of adjacency chain */
-static struct qelem adjhead = { &adjhead, &adjhead };
+static struct rt_qelem adjhead = { &adjhead, &adjhead };
 
 /* head of bucket chains */
-static struct qelem buck[NBUCKETS] = {
+static struct rt_qelem buck[RT_PM_NBUCKETS] = {
 	&buck[0],  &buck[0],	&buck[1],  &buck[1],
 	&buck[2],  &buck[2],	&buck[3],  &buck[3],
 	&buck[4],  &buck[4],	&buck[5],  &buck[5],
@@ -196,12 +196,12 @@ static struct qelem buck[NBUCKETS] = {
 void (*mlabort)() = {0};	/* ptr to optional user-provided error handler */
 
 char *
-pmalloc(nbytes, pmem)
+rt_pmalloc(nbytes, pmem)
 Size nbytes;
-struct pm_res *pmem;
+struct rt_pm_res *pmem;
 {
 	register struct overhead *p, *q;
-	register struct qelem *bucket;
+	register struct rt_qelem *bucket;
 	register Size surplus;
 Size orig_size=nbytes;
 
@@ -210,16 +210,16 @@ Size orig_size=nbytes;
 
 	for (
 	    bucket = &pmem->buckets[mlindx(nbytes)];
-	    bucket < &pmem->buckets[NBUCKETS];
+	    bucket < &pmem->buckets[RT_PM_NBUCKETS];
 	    bucket++
 	) { 
-		register struct qelem *b;
+		register struct rt_qelem *b;
 		for(b = bucket->q_forw; b != bucket; b = b->q_forw) {
 			p = FROMBUK(b);
 			ASSERT(p->ov_magic == MAGIC_FREE,
-"\npmalloc: Entry not marked FREE found on Free List!\n")
+"\nrt_pmalloc: Entry not marked FREE found on Free List!\n")
 			if (p->ov_length >= nbytes) {
-				remque(b);
+				rt_pm_remque(b);
 				surplus = p->ov_length - nbytes;
 				goto foundit;
 			}
@@ -240,16 +240,16 @@ Size orig_size=nbytes;
 		bu_semaphore_release( BU_SEM_SYSCALL );
 
 		if( ret )
-			bu_bomb( "pmalloc: Insufficient memory available!\n" );
+			bu_bomb( "rt_pmalloc: Insufficient memory available!\n" );
 
 		p->ov_length = nbytes;
 		surplus = 0;
 
 		/* add to end of adjacency chain */
 		ASSERT((FROMADJ(pmem->adjhead.q_back)) < p,
-"\npmalloc: Entry in adjacency chain found with address lower than Chain head!\n"
+"\nrt_pmalloc: Entry in adjacency chain found with address lower than Chain head!\n"
 			)
-		insque(TOADJ(p),pmem->adjhead.q_back);
+		rt_pm_insque(TOADJ(p),pmem->adjhead.q_back);
 	}
 
 foundit:
@@ -263,10 +263,10 @@ foundit:
 		q->ov_magic = MAGIC_FREE;
 
 		/* add surplus into adjacency chain */
-		insque(TOADJ(q),TOADJ(p));
+		rt_pm_insque(TOADJ(q),TOADJ(p));
 
 		/* add surplus into bucket chain */
-		insque(TOBUK(q),&pmem->buckets[mlindx(surplus)]);
+		rt_pm_insque(TOBUK(q),&pmem->buckets[mlindx(surplus)]);
 	}
 
 	p->ov_magic = MAGIC_BUSY;
@@ -283,7 +283,7 @@ register Size n;
 {
 	register Size *p, *q, *r;
 	p = &mlsizes[0];
-	r = &mlsizes[NBUCKETS];
+	r = &mlsizes[RT_PM_NBUCKETS];
 	/* binary search */
 	while ((q = (p + (r-p)/2)) > p) {
 		if (n < *q)
@@ -294,7 +294,7 @@ register Size n;
 	return(q - &mlsizes[0]);
 }
 #else
-/* this version of mlindx() will only work with the original NBUCKETS
+/* this version of mlindx() will only work with the original RT_PM_NBUCKETS
  * and mlsizes[]
  */
 static Size
@@ -303,8 +303,8 @@ register Size n;
 {
 	register Size index=0, shifter;
 
-	if( n >= mlsizes[NBUCKETS-1] )
-		index = NBUCKETS-1;
+	if( n >= mlsizes[RT_PM_NBUCKETS-1] )
+		index = RT_PM_NBUCKETS-1;
 	else if( n < mlsizes[1] )
 		index = 0;
 	else
@@ -339,16 +339,16 @@ char *p;
  * The vax has wondrous instructions for inserting and removing items into
  * doubly linked queues.  On the vax the assembler output of the C compiler is
  * massaged by an sed script to turn these function calls into invocations of
- * the insque and remque machine instructions.
+ * the rt_pm_insque and rt_pm_remque machine instructions.
  *  In BRL's version, all machines use these functions.  No assembler.
  */
 
 static void
-insque(item,queu)
-register struct qelem *item, *queu;
+rt_pm_insque(item,queu)
+register struct rt_qelem *item, *queu;
 /* insert "item" after "queu" */
 {
-	register struct qelem *pueu;
+	register struct rt_qelem *pueu;
 	pueu = queu->q_forw;
 	item->q_forw = pueu;
 	item->q_back = queu;
@@ -357,11 +357,11 @@ register struct qelem *item, *queu;
 }
 
 static void
-remque(item)
-register struct qelem *item;
+rt_pm_remque(item)
+register struct rt_qelem *item;
 /* remove "item" */
 {
-	register struct qelem *queu, *pueu;
+	register struct rt_qelem *queu, *pueu;
 	pueu = item->q_forw;
 	queu = item->q_back;
 	queu->q_forw = pueu;
@@ -369,16 +369,16 @@ register struct qelem *item;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *  pfree					William L. Sebok
+ *  rt_pfree					William L. Sebok
  * A "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30,1986
  *
- * 	pfree takes a previously pmalloc-allocated area at mem and frees it.
+ * 	rt_pfree takes a previously rt_pmalloc-allocated area at mem and frees it.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 void
-pfree(mem, pmem)
+rt_pfree(mem, pmem)
 register char *mem;
-register struct pm_res *pmem;
+register struct rt_pm_res *pmem;
 {
 	register struct overhead *p, *q;
 
@@ -392,27 +392,27 @@ register struct pm_res *pmem;
 		return;
 
 	if (p->ov_magic != MAGIC_BUSY)
-		mllcerr("pfree: attempt to free memory not allocated with pmalloc!\n");
+		mllcerr("rt_pfree: attempt to free memory not allocated with rt_pmalloc!\n");
 
 	/* try to merge with previous free area */
 	q = FROMADJ((TOADJ(p))->q_back);
 
 	if (q != FROMADJ(&pmem->adjhead)) {
 		ASSERT(q < p,
-"\npfree: While trying to merge a free area with a lower adjacent free area,\n\
+"\nrt_pfree: While trying to merge a free area with a lower adjacent free area,\n\
  addresses were found out of order!\n")
 		/* If lower segment can be merged */
 		if (   q->ov_magic == MAGIC_FREE
 		   && (char *)q + q->ov_length == (char *)p
 		) {
 			/* remove lower address area from bucket chain */
-			remque(TOBUK(q));
+			rt_pm_remque(TOBUK(q));
 
 			/* remove upper address area from adjacency chain */
-			remque(TOADJ(p));
+			rt_pm_remque(TOADJ(p));
 
 			q->ov_length += p->ov_length;
-			p->ov_magic = NULL;	/* decommission */
+			p->ov_magic = 0;	/* decommission */
 			p = q;
 		}
 	}
@@ -423,26 +423,26 @@ register struct pm_res *pmem;
 	if (q != FROMADJ(&pmem->adjhead)) {
 		/* upper segment can be merged */
 		ASSERT(q > p,
-"\npfree: While trying to merge a free area with a higher adjacent free area,\n\
+"\nrt_pfree: While trying to merge a free area with a higher adjacent free area,\n\
  addresses were found out of order!\n")
 		if ( 	q->ov_magic == MAGIC_FREE
 		   &&	(char *)p + p->ov_length == (char *)q
 		) {
 			/* remove upper from bucket chain */
-			remque(TOBUK(q));
+			rt_pm_remque(TOBUK(q));
 
 			/* remove upper from adjacency chain */
-			remque(TOADJ(q));
+			rt_pm_remque(TOADJ(q));
 
 			p->ov_length += q->ov_length;
-			q->ov_magic = NULL;	/* decommission */
+			q->ov_magic = 0;	/* decommission */
 		}
 	}
 
 	p->ov_magic = MAGIC_FREE;
 
 	/* place in bucket chain */
-	insque(TOBUK(p),&pmem->buckets[mlindx(p->ov_length)]);
+	rt_pm_insque(TOBUK(p),&pmem->buckets[mlindx(p->ov_length)]);
 
 	if (endfree)
 		mlfree_end( pmem );
@@ -452,7 +452,7 @@ register struct pm_res *pmem;
 
 static void
 mlfree_end( pmem )
-register struct pm_res *pmem;
+register struct rt_pm_res *pmem;
 {
 	register struct overhead *p;
 
@@ -465,13 +465,13 @@ register struct pm_res *pmem;
 	{
 		/* area is free and at end of memory */
 
-		p->ov_magic = NULL;	/* decommission (just in case) */
+		p->ov_magic = 0;	/* decommission (just in case) */
 
 		/* remove from end of adjacency chain */
-		remque(TOADJ(p));
+		rt_pm_remque(TOADJ(p));
 
 		/* remove from bucket chain */
-		remque(TOBUK(p));
+		rt_pm_remque(TOBUK(p));
 
 		/* release memory to system */
 		(void)BRK((char *)p);
@@ -482,18 +482,18 @@ register struct pm_res *pmem;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *  prealloc				William L. Sebok
+ *  rt_prealloc				William L. Sebok
  * A  "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30,1986
  *
- *	prealloc takes previously pmalloc-allocated area at mem, and tries
+ *	rt_prealloc takes previously rt_pmalloc-allocated area at mem, and tries
  *	 to change its size to nbytes bytes, moving it and copying its
  *	 contents if necessary.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 char *
-prealloc(mem,nbytes, pmem)
+rt_prealloc(mem,nbytes, pmem)
 register char *mem; unsigned nbytes;
-register struct pm_res *pmem;
+register struct rt_pm_res *pmem;
 {
 	register char *newmem;
 	register struct overhead *p, *q;
@@ -501,7 +501,7 @@ register struct pm_res *pmem;
 	char oendfree;
 
 	if (mem == NULL)
-		return(pmalloc(nbytes, pmem));
+		return(rt_pmalloc(nbytes, pmem));
 
 	/* if beyond current arena it has to be bad */
 	if(mem > (char*)FROMADJ(pmem->adjhead.q_back) + sizeof(struct overhead))
@@ -518,7 +518,7 @@ register struct pm_res *pmem;
 
 	if (p->ov_magic == MAGIC_BUSY) {
 		oendfree = endfree;	endfree = 0;
-		pfree(mem);	/* free it but don't let it contract break */
+		rt_pfree(mem);	/* free it but don't let it contract break */
 		endfree = oendfree;
 	}
 
@@ -531,12 +531,12 @@ register struct pm_res *pmem;
 				+ sizeof(struct overhead));
 			q->ov_length = surplus;
 			q->ov_magic = MAGIC_FREE;
-			insque(TOADJ(q),TOADJ(p));
-			insque(TOBUK(q),&pmem->buckets[mlindx(surplus)]);
+			rt_pm_insque(TOADJ(q),TOADJ(p));
+			rt_pm_insque(TOBUK(q),&pmem->buckets[mlindx(surplus)]);
 			p->ov_length -= surplus;
 		}
 		/* declare it to be busy */
-		remque(TOBUK(p));
+		rt_pm_remque(TOBUK(p));
 		p->ov_magic = MAGIC_BUSY;
 
 		if (endfree)
@@ -555,14 +555,14 @@ register struct pm_res *pmem;
 
 		p->ov_length = nbytes;
 		/* declare it to be busy */
-		remque(TOBUK(p));
+		rt_pm_remque(TOBUK(p));
 		p->ov_magic = MAGIC_BUSY;
 		return(mem);
 	}
 	else
 		bu_semaphore_release( BU_SEM_SYSCALL );
 
-	newmem = pmalloc(nbytes, pmem);
+	newmem = rt_pmalloc(nbytes, pmem);
 
 	if (newmem != mem && newmem != NULL) {
 		register Size n;
@@ -583,17 +583,17 @@ register struct pm_res *pmem;
 
 #if 0
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *  forget				William L. Sebok
+ *  rt_forget				William L. Sebok
  * A "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30,1986
  *
- *	forget returns to the pmalloc arena all memory allocated by sbrk()
+ *	rt_forget returns to the rt_pmalloc arena all memory allocated by sbrk()
  *	 above "bpnt".
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 void
-forget(bpnt, pmem)
+rt_forget(bpnt, pmem)
 char *bpnt;
-struct pm_res *pmem;
+struct rt_pm_res *pmem;
 {
 	register struct overhead *p, *q, *r, *b;
 	register Size l;
@@ -601,11 +601,11 @@ struct pm_res *pmem;
 	char pinvalid, oendfree;
 
 	/*
-	 * b = forget point
+	 * b = rt_forget point
 	 * p = beginning of entry
 	 * q = end of entry, beginning of gap
 	 * r = end of gap, beginning of next entry (or the break)
-	 * pinvalid = true when groveling at forget point
+	 * pinvalid = true when groveling at rt_forget point
 	 */
 
 	pinvalid = 0;
@@ -629,7 +629,7 @@ struct pm_res *pmem;
 			continue;
 
 		ASSERT(q < r,
-"\nforget: addresses in adjacency chain are out of order!\n")
+"\nrt_forget: addresses in adjacency chain are out of order!\n")
 
 		/* end of gap is at break */
 		if (oendfree && r == crbrk) {
@@ -656,14 +656,14 @@ struct pm_res *pmem;
 			/* construct busy entry and free it */
 			q->ov_magic = MAGIC_BUSY;
 			q->ov_length = l;
-			insque(TOADJ(q),TOADJ(p));
-			pfree((char *)q + sizeof(struct overhead));
+			rt_pm_insque(TOADJ(q),TOADJ(p));
+			rt_pfree((char *)q + sizeof(struct overhead));
 		} else if (pinvalid == 0) {
 			/* append it to previous entry */
 			p->ov_length += l;
 			if (p->ov_magic == MAGIC_FREE) {
-				remque(TOBUK(p));
-				insque(TOBUK(p),&pmem->buckets[mlindx(p->ov_length)]);
+				rt_pm_remque(TOBUK(p));
+				rt_pm_insque(TOBUK(p),&pmem->buckets[mlindx(p->ov_length)]);
 			}
 		}
 	}
@@ -679,14 +679,14 @@ struct pm_res *pmem;
  *  Malloc() a block of memory, and clear it.
  */
 char *
-pcalloc(num, size, pmem)
+rt_pcalloc(num, size, pmem)
 register unsigned num, size;
-register struct pm_res *pmem;
+register struct rt_pm_res *pmem;
 {
 	register char *p;
 
 	size *= num;
-	if (p = pmalloc(size, pmem))  {
+	if (p = rt_pmalloc(size, pmem))  {
 #ifdef BSD
 		bzero(p, size);
 #else
@@ -697,11 +697,11 @@ register struct pm_res *pmem;
 }
 
 void
-cfree(p, num, size, pmem)
+rt_cfree(p, num, size, pmem)
 char *p;
 unsigned num;
 unsigned size;
-struct pm_res *pmem;
+struct rt_pm_res *pmem;
 {
-	pfree(p, pmem);
+	rt_pfree(p, pmem);
 }
