@@ -13,3 +13,5 @@ stuff_DATA = \
 
 EXTRA_DIST = \
 	$(stuff_DATA)
+
+MAINTAINERCLEANFILES = Makefile.in
