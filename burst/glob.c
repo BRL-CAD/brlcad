@@ -36,7 +36,6 @@ RGBpixel pixbhit  = { 200, 255, 200 }; /* burst ray hit non-critical comps */
 RGBpixel pixbkgr  = { 150, 100, 255 }; /* outside grid */
 RGBpixel pixblack = {   0,   0,   0 }; /* black */
 RGBpixel pixcrit  = { 255, 200, 200 }; /* burst ray hit critical component */
-RGBpixel pixgrnd  = {   0, 255,   0 }; /* ground plane grid */
 RGBpixel pixghit  = { 255,   0, 255 }; /* ground burst */
 RGBpixel pixmiss  = { 200, 200, 200 }; /* shot missed target */
 RGBpixel pixtarg  = { 255, 255, 255 }; /* shot hit target */
@@ -100,6 +99,11 @@ fastf_t grndfr = 0.0;	/* distance to front border of ground plane (+X) */
 fastf_t grndlf = 0.0;	/* distance to left border of ground plane (+Y) */
 fastf_t grndrt = 0.0;	/* distance to right border of ground plane (-Y) */
 fastf_t	modlcntr[3];	/* centroid of target's bounding RPP */
+fastf_t modldn = 0.0;	/* distance in model coordinates from origin to bottom
+				 extent of projection of model in grid plane */
+fastf_t modllf = 0.0;	/* distance to left extent */
+fastf_t modlrt = 0.0;	/* distance to right extent */
+fastf_t modlup = 0.0;	/* distance to top extent */
 fastf_t raysolidangle;	/* solid angle per spall sampling ray */
 fastf_t	standoff;	/* distance from model origin to grid */
 fastf_t	unitconv = 1.0;	/* units conversion factor (mm to "units") */

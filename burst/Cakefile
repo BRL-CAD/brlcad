@@ -12,13 +12,12 @@
  * FONTDIR is pathname to font file (times.r.6) which is included with sources
  * but on real BSD systems is found in /usr/lib/vfont.
  */
-#define CONFIGDEFS	LGT_CONFIG -D_LOCAL_= -I.
+#define CONFIGDEFS	LGT_CONFIG -DDEBUG -I.
 
 #define SRCDIR	burst
 #define PRODUCTS	burst
 #define	SRCSUFF	.c
 #define MANSECTION	1
-
 #define FILES	burst error fb glob grid gridrotate idents\
 		paint plot prnt trie ui
 #define MYLIBES	Hm/libHm.a Sc/libSc.a Tc/libTc.a
@@ -27,10 +26,19 @@
 
 /* Explicit composition of each product */
 
-burst:	OBJ
-	CC LDFLAGS -o burst OBJ LIBRT RT_LIBES LIBFB LIBTERMLIB LIBES MYLIBES	-ltermlib -lm
+Hm/libHm.a:
+	cd Hm; make install
 
-test:	burst
-	./burst -b < tfiles/ktank.in
+Sc/libSc.a:
+	cd Sc; make install
+
+Tc/libTc.a:
+	cd Tc; make install
+
+burst:	OBJ MYLIBES
+	CC LDFLAGS -o burst OBJ LIBRT RT_LIBES LIBFB LIBTERMLIB LIBES MYLIBES -ltermlib -lm
+
+test&:	burst
+	./burst < tfiles/ktank.in
 
 #include "../Cakefile.rules"

@@ -93,12 +93,13 @@ typedef char *pointer;			/* generic pointer */
 #define MAXDEVWID	1024	/* maximum width of frame buffer */
 
 #define CHAR_COMMENT	'#'
+#define CMD_COMMENT	"comment"
 
 /* default parameters */
 #define DFL_AZIMUTH	0.0
 #define DFL_BARRIERS	100
 #define DFL_BDIST	0.0
-#define DFL_CELLSIZE	1.0
+#define DFL_CELLSIZE	101.6
 #define DFL_CONEANGLE	(45.0/DEGRAD)
 #define DFL_DEFLECT	false
 #define DFL_DITHER	false

@@ -112,6 +112,7 @@ STATIC void MburstDist();
 STATIC void MburstFile();
 STATIC void McellSize();
 STATIC void McolorFile();
+STATIC void Mcomment();
 STATIC void MconeHalfAngle();
 STATIC void McritComp();
 STATIC void MdeflectSpallCone();
@@ -333,7 +334,8 @@ Ftable	filemenu[] =
 	{ "plot-file",
 		"name UNIX plot output file", 0, MplotFile },
 	{ "write-input-file",
-		"save input up to this point in a file", 0, MwriteCmdFile },
+		"save input up to this point in a session file",
+		0, MwriteCmdFile },
 	{ 0 }
 	};
 
@@ -350,6 +352,7 @@ Ftable	mainmenu[] =
 		"shotline generation (grid specification)", shotlnmenu, 0 },
 	{ "burst points",
 		"burst point generation", burstmenu, 0 },
+	{ CMD_COMMENT, "add a comment to the session file", 0, Mcomment },
 	{ "execute", "begin ray tracing", 0, Mexecute },
 	{ "preferences",
 		"options for tailoring behavior of user interface",
@@ -733,6 +736,30 @@ HmItem *itemp;
 	notify( "Reading ident-to-color mappings", NOTIFY_APPEND );
 	readColors( &colorids, colorfp );
 	notify( NULL, NOTIFY_DELETE );
+	return;
+	}
+
+/*ARGSUSED*/
+STATIC void
+Mcomment( itemp )
+HmItem *itemp;
+	{	static Input input[] =
+			{
+			{ "Comment", " ", "%s", 0 },
+			};
+		register Input *ip = input;
+	if( ! batchmode )
+		{
+		if( getInput( ip ) )
+			{
+			(void) sprintf( scrbuf, "%c%s",
+					CHAR_COMMENT, ip->buffer );
+			logCmd( scrbuf );
+			(void) strcpy( ip->buffer, " " ); /* restore default */
+			}
+		}
+	else
+		logCmd( cmdptr );
 	return;
 	}
 
@@ -1125,9 +1152,9 @@ MinputBurst( itemp )
 HmItem *itemp;
 	{	static Input input[] =
 			{
-			{ "Burst point (X)", "", "%lf", 0 },
-			{ "Burst point (Y)", "", "%lf", 0 },
-			{ "Burst point (Z)", "", "%lf", 0 },
+			{ "X-coordinate of burst point", "", "%lf", 0 },
+			{ "Y-coordinate of burst point", "", "%lf", 0 },
+			{ "Z-coordinate of burst point", "", "%lf", 0 },
 			};
 		register Input *ip = input;
 	GetVar( burstpoint[X], ip, unitconv );
@@ -1151,8 +1178,8 @@ Minput2dShot( itemp )
 HmItem *itemp;
 	{	static Input input[] =
 			{
-			{ "Firing coordinate (X)", "", "%lf", 0 },
-			{ "Firing coordinate (Y)", "", "%lf", 0 },
+			{ "Y'-coordinate of shotline", "", "%lf", 0 },
+			{ "Z'-coordinate of shotline", "", "%lf", 0 },
 			};
 		register Input *ip = input;
 	GetVar( fire[X], ip, unitconv );
@@ -1173,9 +1200,9 @@ Minput3dShot( itemp )
 HmItem *itemp;
 	{	static Input input[] =
 			{
-			{ "Firing coordinate (X)", "", "%lf", 0 },
-			{ "Firing coordinate (Y)", "", "%lf", 0 },
-			{ "Firing coordinate (Z)", "", "%lf", 0 },
+			{ "X-coordinate of shotline", "", "%lf", 0 },
+			{ "Y-coordinate of shotline", "", "%lf", 0 },
+			{ "Z-coordinate of shotline", "", "%lf", 0 },
 			};
 		register Input *ip = input;
 	GetVar( fire[X], ip, unitconv );

@@ -187,13 +187,23 @@ int	mode;
  */
 void
 prntAspectInit()
-	{
+	{	fastf_t projarea;	/* projected area */
+	/* Convert to user units before squaring cell size. */
+	projarea = cellsz*unitconv;
+	projarea *= projarea;
 	if(	outfile[0] != NUL
 	    &&	fprintf(outfp,
-			"%c % 8.4f % 8.4f\n",
+			"%c % 8.4f % 8.4f % 4.1f % 10.2f %-6s\n",
 			PB_ASPECT_INIT,
 			viewazim*DEGRAD, /* attack azimuth in degrees */
-			viewelev*DEGRAD	 /* attack elevation in degrees */
+			viewelev*DEGRAD, /* attack elevation in degrees */
+			bdist*unitconv,  /* BDIST */
+			projarea, /* projected area associated with burst pt. */
+			units == U_INCHES ?      "inches" :
+			units == U_FEET ?        "feet" :
+			units == U_MILLIMETERS ? "mm" :
+			units == U_CENTIMETERS ? "cm" :
+			units == U_METERS ?      "meters" : "units?"
 			) < 0
 		)
 		{
@@ -203,15 +213,20 @@ prntAspectInit()
 		}
 	if(	shotlnfile[0] != NUL
 	    &&	fprintf(shotlnfp,
-			"%c % 8.4f % 8.4f % 7.2f % 7.2f %7.2f %7.2f %7.2f\n",
+		     "%c % 8.4f % 8.4f % 7.2f % 7.2f %7.2f %7.2f %7.2f %-6s\n",
 			PS_ASPECT_INIT,
 			viewazim*DEGRAD, /* attack azimuth in degrees */
 			viewelev*DEGRAD, /* attack elevation in degrees */
 			cellsz*unitconv, /* shotline separation */
-			gridrt*unitconv, /* maximum Y'-coordinate of target */
-			gridlf*unitconv, /* minimum Y'-coordinate of target */
-			gridup*unitconv, /* maximum Z'-coordinate of target */
-			griddn*unitconv  /* minimum Z'-coordinate of target */
+			modlrt*unitconv, /* maximum Y'-coordinate of target */
+			modllf*unitconv, /* minimum Y'-coordinate of target */
+			modlup*unitconv, /* maximum Z'-coordinate of target */
+			modldn*unitconv, /* minimum Z'-coordinate of target */
+			units == U_INCHES ?      "inches" :
+			units == U_FEET ?        "feet" :
+			units == U_MILLIMETERS ? "mm" :
+			units == U_CENTIMETERS ? "cm" :
+			units == U_METERS ?      "meters" : "units?"
 			) < 0
 		)
 		{
@@ -223,31 +238,23 @@ prntAspectInit()
 	}
 
 /*
-	void prntCellIdent( struct application *ap, struct partition *pt_headp )
+	void prntCellIdent( struct application *ap )
 
 	Burst Point Library and Shotline file: information about shotline.
 	Ref. Figure 20., Line Number 2 and Figure 19., Line Number 2 of ICD.
  */
 void
-prntCellIdent( ap, pt_headp )
-register struct application	*ap;
-struct partition		*pt_headp;
-	{	fastf_t projarea;	/* projected area */
-	/* Convert to user units before squaring cell size. */
-	projarea = cellsz*unitconv;
-	projarea *= projarea;
-
+prntCellIdent( ap )
+register struct application *ap;
+	{
 	if(	outfile[0] != NUL
 	    &&	fprintf(outfp,
-			"%c % 7.2f % 7.2f % 4.1f % 10.2f\n",
+			"%c % 8.2f % 8.2f\n",
 			PB_CELL_IDENT,
 			ap->a_uvec[X]*unitconv,
 			 	/* horizontal coordinate of shotline (Y') */
-			ap->a_uvec[Y]*unitconv,
+			ap->a_uvec[Y]*unitconv
 			 	/* vertical coordinate of shotline (Z') */
-			bdist*unitconv, /* BDIST */
-			/* projected area associated with burst point */
-			projarea
 			) < 0
 		)
 		{
@@ -338,13 +345,14 @@ fixed_entry_normal:
 
 	if(	outfile[0] != NUL
 	    &&	fprintf( outfp,
-			"%c % 8.2f % 8.2f %4d % 7.3f % 7.3f % 7.3f\n",
+			"%c % 8.2f % 8.2f %4d %2d % 7.3f % 7.3f % 7.3f\n",
 			PB_RAY_INTERSECT,
-			ihitp->hit_dist*unitconv,
+			(standoff-ihitp->hit_dist)*unitconv,
 					/* X'-coordinate of intersection */
 			los,		/* LOS thickness of component */
 			cpp->pt_regionp->reg_regionid,
 					/* component code number */
+			space,		/* space code */
 			sinfbangle,	/* sine of fallback angle */
 			rotangle,	/* rotation angle in degrees */
 			cosobliquity	/* cosine of obliquity angle at entry */
@@ -407,7 +415,7 @@ fixed_exit_normal:
 	if( fprintf( shotlnfp,
 	       "%c % 8.2f % 7.3f % 7.3f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
 			PS_SHOT_INTERSECT,
-			ihitp->hit_dist*unitconv,
+			(standoff-ihitp->hit_dist)*unitconv,
 					/* X'-coordinate of intersection */
 			sinfbangle,	/* sine of fallback angle */
 			rotangle,	/* rotation angle in degrees */
@@ -741,12 +749,13 @@ fastf_t	los;		/* LOS of space */
 	{
 	if(	outfile[0] != NUL
 	    &&	fprintf( outfp,
-			"%c % 8.2f % 8.2f %4d % 7.3f % 7.3f % 7.3f\n",
+			"%c % 8.2f % 8.2f %4d %2d % 7.3f % 7.3f % 7.3f\n",
 			PB_RAY_INTERSECT,
-			hitp->hit_dist*unitconv,
-				/* X' coordinate of intersection */
+			(standoff-hitp->hit_dist)*unitconv,
+				/* X'-coordinate of intersection */
 			0.0,	/* LOS thickness of component */
 			PHANTOM_ARMOR, /* component code number */
+			space,	/* space code */
 			0.0,	/* sine of fallback angle */
 			0.0,	/* rotation angle (degrees) */
 			0.0 /* cosine of obliquity angle at entry */
@@ -761,7 +770,7 @@ fastf_t	los;		/* LOS of space */
 	    &&	fprintf( shotlnfp,
 	       "%c % 8.2f % 7.3f % 7.3f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
 			PS_SHOT_INTERSECT,
-			hitp->hit_dist*unitconv,
+			(standoff-hitp->hit_dist)*unitconv,
 					/* X'-coordinate of intersection */
 			0.0,		/* sine of fallback angle */
 			0.0,		/* rotation angle in degrees */

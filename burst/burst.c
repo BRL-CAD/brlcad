@@ -53,15 +53,23 @@ FILE *fp;
 	assert( buf != NULL );
 	assert( fp != NULL );
 	while( fgets( buf, len, fp ) != NULL )
-		if(	buf[0] != CHAR_COMMENT
-		     &&	sscanf( buf, "%s", name ) == 1
-			)
+		{
+		if( buf[0] != CHAR_COMMENT )
 			{
-			buf[strlen(buf)-1] = NUL; /* clobber newline */
+			if( sscanf( buf, "%s", name ) == 1 )
+				{
+				buf[strlen(buf)-1] = NUL; /* clobber newline */
+				return	true;
+				}
+			else /* Skip over blank lines. */
+				continue;
+			}
+		else
+			{ /* Generate comment command. */
+			(void) strcpy( name, CMD_COMMENT );
 			return	true;
 			}
-		else /* skip over comments and blank lines */
-			continue;
+		}
 	return	false; /* EOF */
 	}
 
@@ -169,6 +177,12 @@ FILE *fp;
 			for( i = 0; i < len; i++ )
 				rt_log( " " );
 			rt_log( "^\n" );
+			}
+		else
+		if( strcmp( cmdname, CMD_COMMENT ) == 0 )
+			{ /* special handling for comments */
+			cmdptr = cmdbuf;
+			(*cmdfunc)( (HmItem *) 0 );
 			}
 		else
 			{ /* Advance pointer past nul at end of

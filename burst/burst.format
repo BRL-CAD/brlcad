@@ -3,7 +3,7 @@ Shotline file output format from burst program:
 record type:	1
 description:	header line for each aspect
 ICD reference:	Line Number 1, Figure 19.
-format:		'1',2(1x,f8.4),5(1x,f7.2)
+format:		'1',2(1x,f8.4),5(1x,f7.2),1x,6a
 data:		attack azimuth in degrees
 		attack elevation in degrees
 		shotline separation
@@ -11,6 +11,7 @@ data:		attack azimuth in degrees
 		minimum Y'-coordinate of target
 		maximum Z'-coordinate of target
 		minimum Z'-coordinate of target
+		units (mm,cm,inches,feet,meters)
 
 record type:	2
 description:	information about shotline
@@ -36,26 +37,28 @@ Burst Point Library output format from burst program:
 record type:	1
 description:	header line for each aspect
 ICD reference:	Line Number 1, Figure 20.
-format:		'1',2(1x,f8.4)
+format:		'1',2(1x,f8.4),1x,f4.1,1x,f10.2,1x,6a
 data:		attack azimuth in degrees
 		attack elevation in degrees
+		burst distance
+		projected area associated with burst point
+		units (mm,cm,inches,feet,meters)
 
 record type:	2
 description:	information about shotline
 ICD reference:	Line Number 2, Figure 20.
-format:		'2',2(1x,f7.2),1x,f4.1,1x,f10.2
+format:		'2',2(1x,f8.2)
 data:		horizontal coordinate of shotline in grid plane (Y')
 		vertical coordinate of shotline in grid plane (Z')
-		burst distance
-		projected area associated with burst point
 
 record type:	3
 description:	information about component intersected by shotline
 ICD reference:	Line Number 3, Figure 20.
-format:		'3',2(1x,f8.2),1x,i4,3(1x,f7.3)
+format:		'3',2(1x,f8.2),1x,i4,1x,i2,3(1x,f7.3)
 data:		distance to first contact with component (X' of intersection)
 		line-of-sight thickness of component
 		component code number
+		space code
 		sine of fallback angle of component entry normal
 		rotation angle in degrees of component entry normal
 		cosine of obliquity angle at entry to component

@@ -351,7 +351,7 @@ struct partition *pt_headp;
 			(int) pp->pt_regionp->reg_aircode );
 #endif
 	/* Output cell identification. */
-	prntCellIdent( ap, pt_headp );
+	prntCellIdent( ap );
 	/* Color cell if making frame buffer image. */
 	if( fbfile[0] != NUL )
 		paintCellFb( ap, pixtarg, zoom == 1 ? pixblack : pixbkgr );
@@ -868,6 +868,7 @@ gridInit()
 			CopyVec( modelmin, rtip->mdl_min );
 			CopyVec( modelmax, rtip->mdl_max );
 			}
+		/* Calculate extent of grid. */
 		gridrt = max(	gridhor[X] * modelmax[X],
 				gridhor[X] * modelmin[X]
 				) +
@@ -904,6 +905,53 @@ gridInit()
 			  min(	gridver[Z] * modelmax[Z],
 				gridver[Z] * modelmin[Z]
 				);
+		/* Calculate extent of model in plane of grid. */
+		if( groundburst )
+			{
+			modlrt = max(	gridhor[X] * rtip->mdl_max[X],
+					gridhor[X] * rtip->mdl_min[X]
+					) +
+				  max(	gridhor[Y] * rtip->mdl_max[Y],
+					gridhor[Y] * rtip->mdl_min[Y]
+					) +
+				  max(	gridhor[Z] * rtip->mdl_max[Z],
+					gridhor[Z] * rtip->mdl_min[Z]
+					);
+			modllf = min(	gridhor[X] * rtip->mdl_max[X],
+					gridhor[X] * rtip->mdl_min[X]
+					) +
+				  min(	gridhor[Y] * rtip->mdl_max[Y],
+					gridhor[Y] * rtip->mdl_min[Y]
+					) +
+				  min(	gridhor[Z] * rtip->mdl_max[Z],
+					gridhor[Z] * rtip->mdl_min[Z]
+					);
+			modlup = max(	gridver[X] * rtip->mdl_max[X],
+					gridver[X] * rtip->mdl_min[X]
+					) +
+				  max(	gridver[Y] * rtip->mdl_max[Y],
+					gridver[Y] * rtip->mdl_min[Y]
+					) +
+				  max(	gridver[Z] * rtip->mdl_max[Z],
+					gridver[Z] * rtip->mdl_min[Z]
+					);
+			modldn = min(	gridver[X] * rtip->mdl_max[X],
+					gridver[X] * rtip->mdl_min[X]
+					) +
+				  min(	gridver[Y] * rtip->mdl_max[Y],
+					gridver[Y] * rtip->mdl_min[Y]
+					) +
+				  min(	gridver[Z] * rtip->mdl_max[Z],
+					gridver[Z] * rtip->mdl_min[Z]
+				);
+			}
+		else
+			{
+			modlrt = gridrt;
+			modllf = gridlf;
+			modlup = gridup;
+			modldn = griddn;
+			}
 		}
 	gridxorg = gridlf / cellsz;
 	gridxfin = gridrt / cellsz;
