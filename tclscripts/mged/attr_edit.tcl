@@ -44,6 +44,9 @@ class Attr_editor {
     # convenient name for attribute name entry widget
     private variable attrn
 
+    # name of frame containing widgets for new attributes
+    private variable fnew
+
     # convenient name for the pane containing the attribute name listbox
     private variable name_pane
 
@@ -52,6 +55,9 @@ class Attr_editor {
 
     # text variable for the attribute name entry widget
     private variable cur_attr_name ""
+
+    # text variable for the attribute entry label
+    private variable attr_entry_label "Attribute Name:"
 
     constructor { args } {
 	# only arg is an optional object name
@@ -76,12 +82,12 @@ class Attr_editor {
 
 	# build the widgets
 	itk_initialize
-	$this configure -title "Attribute Editor"
+	$this configure -title "Attribute Editor ($this)"
 
 
 	# frame containing the database object name
 	itk_component add frame_obj {
-	    frame $itk_interior.fr_obj -relief groove -bd 3
+	    frame $itk_interior.fr_obj -relief flat -bd 3
 	}
 	label $itk_interior.fr_obj.obj_l -text "Object:" -width 7 -anchor w
 	entry $itk_interior.fr_obj.obj_e -textvariable [scope obj_name]
@@ -93,122 +99,97 @@ class Attr_editor {
 	grid $itk_interior.fr_obj -row 0 -column 0 -sticky new -pad 3
 
 
-	# frame containing new attribute button and entry widget
-	itk_component add frame_new_attr {
-	    frame $itk_interior.fr_new_attr -relief groove -bd 3
+	# frame for all attribute related stuff
+	itk_component add frame_attr {
+	    frame $itk_interior.fr_attr -relief sunken -bd 3
 	}
-	button $itk_interior.fr_new_attr.new -text "New Attribute"\
-		-command [code $this new_attr]
-	label $itk_interior.fr_new_attr.attr_l -text "Attribute Name:"
-	entry $itk_interior.fr_new_attr.attr_e\
-		-textvariable [scope cur_attr_name]
-	set attrn $itk_interior.fr_new_attr.attr_e
-	grid $itk_interior.fr_new_attr.new -row 0 -column 0 -padx 3 -pady 3
-	grid $itk_interior.fr_new_attr.attr_l -row 0 -column 1 -padx 3\
-		-pady 3 -sticky e
-	grid $itk_interior.fr_new_attr.attr_e -row 0 -column 2 -padx 3\
-		-pady 3 -sticky ew
-	grid $itk_interior.fr_new_attr -row 1 -column 0 -sticky ew -pad 3
-	grid columnconfigure $itk_interior.fr_new_attr 2 -weight 1 -pad 3
-
-
-	if { 1 } {
-	    # use paned window
-	    # paned widget to contain attribute names listbox and values text
-	    itk_component add pane_attrs {
-		iwidgets::panedwindow $itk_interior.pane_attrs -orient vertical \
-			-height 100 -thickness 6 -sashborderwidth 6
-	    }
-
-	    set name_pane [$itk_interior.pane_attrs add names]
-	    listbox $name_pane.attrs -height 10 -listvar [scope cur_attrs]\
-		    -yscrollcommand [code $name_pane.asb set]\
-		    -exportselection false
-	    set listb $name_pane.attrs
-	    scrollbar $name_pane.asb -command [code $name_pane.attrs yview]
-
-	    set value_pane [$itk_interior.pane_attrs add values]
-	    text $value_pane.txt -width 40 -height 10\
-		    -yscrollcommand [code $value_pane.sbt set]
-	    set textb $value_pane.txt
-	    scrollbar $value_pane.sbt -command [code $value_pane.txt yview]
-	    if { 1 } {
-		# use placer
-		place $name_pane.asb -x 0 -y 0\
-			-width 20 -relheight 1.0
-		place $name_pane.attrs -x 20 -y 0\
-			-relwidth 1.0 -relheight 1.0
-		place $value_pane.sbt -x 0 -y 0\
-			-width 20 -relheight 1.0
-		place $value_pane.txt -x 20 -y 0\
-			-relwidth 1.0 -relheight 1.0
-		place $name_pane -x 0 -y 0\
-			-relwidth 1.0 -relheight 1.0
-		place $value_pane -x 0 -y 0\
-			-relwidth 1.0 -relheight 1.0
-		$itk_interior.pane_attrs fraction 20 80
-	    } else {
-		# packer does not seem to work :-(
-		pack $name_pane.asb -side left -expand yes -fill y -anchor w
-		pack $name_pane.attrs -side left -expand yes -fill both
-		pack $value_pane.txt -side left -expand yes -fill both
-		pack $value_pane.sbt -side left -expand yes -fill y -anchor e
-		pack $name_pane -expand yes -fill both
-		pack $value_pane -expand yes -fill both
-		$itk_interior.pane_attrs fraction 20 80
-	    }
 	
-	    grid $itk_interior.pane_attrs -row 2 -column 0\
-		    -padx 3 -pady 3 -sticky nsew
-	    grid rowconfigure $itk_interior.pane_attrs 0 -weight 1
-	    grid columnconfigure $itk_interior.pane_attrs 0 -weight 1
-	} else {
-	    # no paned window
-	    itk_component add attrs {
-		frame $itk_interior.fr_attrs -relief groove -bd 3
-	    }
-	    listbox $itk_interior.fr_attrs.attrs -height 10 -listvar [scope cur_attrs]\
-		    -yscrollcommand [code $itk_interior.fr_attrs.asb set]\
-		    -exportselection false
-	    set listb $itk_interior.fr_attrs.attrs
-	    scrollbar $itk_interior.fr_attrs.asb -command [code $itk_interior.fr_attrs.attrs yview]
 
-	    text $itk_interior.fr_attrs.txt -width 40 -height 10\
-		    -yscrollcommand [code $itk_interior.fr_attrs.sbt set]
-	    set textb $itk_interior.fr_attrs.txt
-	    scrollbar $itk_interior.fr_attrs.sbt -command [code $itk_interior.fr_attrs.txt yview]
-	    grid $itk_interior.fr_attrs.asb -row 0 -column 0 -pad 3 -sticky nse
-	    grid $listb -row 0 -column 1 -pad 3 -sticky nsew
-	    grid $textb -row 0 -column 2 -pad 3 -sticky nsew
-	    grid $itk_interior.fr_attrs.sbt -row 0 -column 3 -pad 3 -sticky nsw
-	    grid columnconfigure $itk_interior.fr_attrs 1 -weight 1
-	    grid columnconfigure $itk_interior.fr_attrs 2 -weight 1
-	    grid rowconfigure $itk_interior.fr_attrs 0 -weight 1
-	    grid $itk_interior.fr_attrs -row 2 -column 0 -sticky nsew -pad 3
-	}
+	# frame containing new attribute button and entry widget
+	set fnew [frame $itk_interior.fr_attr.fr_new -relief flat -bd 3]
 
+	button $fnew.new -text "New Attribute"\
+		-command [code $this new_attr]
+	label $fnew.attr_l -textvariable [scope attr_entry_label] -width 19 -anchor e
+	entry $fnew.attr_e\
+		-textvariable [scope cur_attr_name]
+	set attrn $fnew.attr_e
+	grid $fnew.new -row 0 -column 0 -padx 3 -pady 3
+	grid $fnew.attr_l -row 0 -column 1 -padx 3\
+		-pady 3 -sticky e
+	grid $fnew.attr_e -row 0 -column 2 -padx 3\
+		-pady 3 -sticky ew
+	grid $fnew -row 0 -column 0 -sticky ew -pad 3
+	grid columnconfigure $fnew 2 -weight 1 -pad 3
+
+	set fr_pane [frame $itk_interior.fr_attr.fr_pane -relief groove -bd 3]
+
+	# paned widget to contain attribute names listbox and values text
+	iwidgets::panedwindow $fr_pane.pane_attrs -orient vertical \
+		-height 150 -width 250 -thickness 3 -sashborderwidth 3
+	
+	$fr_pane.pane_attrs add names
+	set name_pane [$fr_pane.pane_attrs childsite names]
+	label $name_pane.lbl -text "Attribute Names"
+	listbox $name_pane.attrs -height 10 -listvar [scope cur_attrs]\
+		-yscrollcommand [code $name_pane.asb set]\
+		-exportselection false
+	set listb $name_pane.attrs
+	scrollbar $name_pane.asb -command [code $name_pane.attrs yview]
+
+	$fr_pane.pane_attrs add values
+	set value_pane [$fr_pane.pane_attrs childsite values]
+	label $value_pane.lbl -text "Attribute Value"
+	text $value_pane.txt -width 40 -height 10\
+		-yscrollcommand [code $value_pane.sbt set]
+	set textb $value_pane.txt
+	scrollbar $value_pane.sbt -command [code $value_pane.txt yview]
+
+	grid $name_pane.lbl -row 0 -column 1
+	grid $name_pane.asb -row 1 -column 0 -sticky nsw
+	grid $name_pane.attrs -row 1 -column 1 -sticky nsew
+	grid $value_pane.lbl -row 0 -column 0
+	grid $value_pane.txt -row 1 -column 0 -sticky nsew
+	grid $value_pane.sbt -row 1 -column 1 -sticky nse
+	grid columnconfigure $name_pane 1 -weight 1
+	grid rowconfigure $name_pane 1 -weight 1
+	grid columnconfigure $value_pane 0 -weight 1
+	grid rowconfigure $value_pane 1 -weight 1
+	$fr_pane.pane_attrs fraction 40 60
+	
+	grid $fr_pane.pane_attrs -row 0 -column 0\
+		-sticky nsew
+	grid rowconfigure $fr_pane.pane_attrs 0 -weight 1
+	grid columnconfigure $fr_pane.pane_attrs 0 -weight 1
+
+	grid $fr_pane -row 1 -column 0 -columnspan 3 -sticky nsew
+	grid columnconfigure $fr_pane 0 -weight 1
+	grid rowconfigure $fr_pane 0 -weight 1
 
 	# frame containing reset and delete buttons
-	itk_component add controls1 {
-	    frame $itk_interior.frc1 -relief groove -bd 3
-	}
-	button $itk_interior.frc1.reset_all -text "reset all"\
+	frame $itk_interior.fr_attr.frc1 -relief flat -bd 3
+
+	button $itk_interior.fr_attr.frc1.reset_all -text "reset all"\
 		-command [code $this do_reset_all]
-	button $itk_interior.frc1.reset_sel -text "reset selected"\
+	button $itk_interior.fr_attr.frc1.reset_sel -text "reset selected"\
 		-command [code $this do_reset_selected]
-	button $itk_interior.frc1.delete_selected -text "delete selected"\
+	button $itk_interior.fr_attr.frc1.delete_selected -text "delete selected"\
 		-command [code $this do_delete_sel]
-	grid $itk_interior.frc1.reset_all -row 0 -column 0 -padx 3 -pady 3
-	grid $itk_interior.frc1.reset_sel -row 0 -column 1 -padx 3 -pady 3
-	grid $itk_interior.frc1.delete_selected -row 0 -column 2\
+	grid $itk_interior.fr_attr.frc1.reset_all -row 0 -column 0 -padx 3 -pady 3
+	grid $itk_interior.fr_attr.frc1.reset_sel -row 0 -column 1 -padx 3 -pady 3
+	grid $itk_interior.fr_attr.frc1.delete_selected -row 0 -column 2\
 		-padx 3 -pady 3
-	grid columnconfigure $itk_interior.frc1 { 0 1 2 } -weight 1 -pad 3
-	grid $itk_interior.frc1 -row 3 -column 0 -sticky sew -padx 3 -pady 3
+	grid columnconfigure $itk_interior.fr_attr.frc1 { 0 1 2 } -weight 1 -pad 3
+	grid $itk_interior.fr_attr.frc1 -row 2 -column 0 -sticky sew -padx 3 -pady 3
+
+	grid $itk_interior.fr_attr -row 1 -column 0 -sticky nsew -padx 5 -pady 5
+	grid columnconfigure $itk_interior.fr_attr 0 -weight 1
+	grid rowconfigure $itk_interior.fr_attr 1 -weight 1
 
 
-	# from containing ok, apply, and dismiss buttons
+	# frame containing ok, apply, and dismiss buttons
 	itk_component add controls {
-	    frame $itk_interior.frc -relief groove -bd 3
+	    frame $itk_interior.frc -relief flat -bd 3
 	}
 	button $itk_interior.frc.ok -text "ok" -command [code $this do_ok]
 	button $itk_interior.frc.apply -text "apply" -command [code $this do_apply]
@@ -216,12 +197,12 @@ class Attr_editor {
 	grid $itk_interior.frc.ok -row 0 -column 0 -padx 3 -pady 3
 	grid $itk_interior.frc.apply -row 0 -column 1 -padx 3 -pady 3
 	grid $itk_interior.frc.dismiss -row 0 -column 2 -padx 3 -pady 3
-	grid $itk_interior.frc -row 4 -column 0 -sticky sew -padx 3 -pady 3
+	grid $itk_interior.frc -row 2 -column 0 -sticky sew -padx 3 -pady 3
 	grid columnconfigure $itk_interior.frc { 0 1 2 } -weight 1 -pad 3
 
 	# configure row and column containing the attributes to expand
 	grid columnconfigure $itk_interior 0 -weight 1
-	grid rowconfigure $itk_interior 2 -weight 1
+	grid rowconfigure $itk_interior 1 -weight 1
 
 	# this keeps the attribute name entry widget current when a selection is made
 	# in the attribute name list box
@@ -248,9 +229,9 @@ class Attr_editor {
 		    button first, any currently pending attribute edit operations performed in this\n\
 		    editor will be forgotten."}
 	}
-	hoc_register_data $itk_interior.fr_new_attr.new "New Attribute" {
+	hoc_register_data $fnew.new "New Attribute" {
 	    {summary "Use this button to create a new attribute. After pressing this button,\n\
-		    Type the name of the new attribute into the \"Attribute Name\" window and\n\
+		    Type the name of the new attribute into the \"New Attribute Name\" window and\n\
 		    hit \"ENTER\". The new attribute name will be added to the local copy of\n\
 		    attributes for the currently select database object. You may then enter a\n\
 		    value for the new attribute by typing into the attribute value window.\n\
@@ -289,12 +270,12 @@ class Attr_editor {
 		    attribute edits are not saved to the database until \"ok\" or \"apply\"\n\
 		    is selected."} 
 	}
-	hoc_register_data $itk_interior.frc1.reset_sel "reset selected" {
+	hoc_register_data $itk_interior.fr_attr.frc1.reset_sel "reset selected" {
 	    {summary "Press this button to reset the value of the local copy of the currently selected\n\
 		    attribute to that stored in the database. Remember, attribute edits are not saved to\n\
 		    the database until \"ok\" or \"apply\" is selected."}
 	}
-	hoc_register_data $itk_interior.frc1.reset_all "reset all" {
+	hoc_register_data $itk_interior.fr_attr.frc1.reset_all "reset all" {
 	    {summary "Press this button to reset the local copy of the attributes of the currently selected\n\
 		    object to those stored in the database. Remember, attribute edits are not saved to\n\
 		    the database until \"ok\" or \"apply\" is selected."}
@@ -303,7 +284,7 @@ class Attr_editor {
 	    {summary "Press this button to dismiss the attribute editor window without saving any\n\
 		    currently pending attribute edits to the database."}
 	}
-	hoc_register_data $itk_interior.frc1.delete_selected "delete selected" {
+	hoc_register_data $itk_interior.fr_attr.frc1.delete_selected "delete selected" {
 	    {summary "Press this button to delete the currently selected attribute from the local\n\
 		    copy of the currently selected object attributes. Remember, attribute edits are\n\
 		    not saved to the database until \"ok\" or \"apply\" is selected."}
@@ -345,7 +326,15 @@ class Attr_editor {
     }
 
     method create_new_attribute {} {
-	grab release $itk_interior.fr_new_attr.attr_e
+#	grab release $fnew.attr_e
+	if { [string length $cur_attr_name] == 0 } {
+	    # restore normal binding for attribute name entry widget
+	    bind $fnew.attr_e <Key-Return> [code $this update_cur_attr_name]
+	    $fnew.attr_e configure -bg #d9d9d9
+	    set attr_entry_label "Attribute Name:"
+	    return
+	}
+
 	if { [attr_name_is_valid $cur_attr_name] == 0 } {
 	   tk_messageBox -icon error -type ok -title "Error: illegal attribute name"\
               -message "Attribute names must not have imbedded white space nor non-printable characters"
@@ -361,19 +350,27 @@ class Attr_editor {
 	update_attr_text
 
 	# restore normal binding for attribute name entry widget
-	bind $itk_interior.fr_new_attr.attr_e <Key-Return> [code $this update_cur_attr_name]
+	bind $fnew.attr_e <Key-Return> [code $this update_cur_attr_name]
+	$fnew.attr_e configure -bg #d9d9d9
+	set attr_entry_label "Attribute Name:"
 
 	focus $textb
     }
 
     method new_attr {} {
+
+	# cannot create a new attribute if we do ot have an object
+	if { $obj_name == "" } return
 	set cur_index -1
 	set cur_attr_name ""
 	$textb delete 1.0 end
+	$listb selection clear 0 end
 
-	bind $itk_interior.fr_new_attr.attr_e <Key-Return> [code $this create_new_attribute]
-	focus $itk_interior.fr_new_attr.attr_e
-	grab set $itk_interior.fr_new_attr.attr_e
+	bind $fnew.attr_e <Key-Return> [code $this create_new_attribute]
+#	grab set $fnew.attr_e
+	focus $fnew.attr_e
+	$fnew.attr_e configure -bg #f3c846
+	set attr_entry_label "New Attribute Name:"
     }
 
     # attribute names may not contain embedded white space nor non-priontable chars
