@@ -59,6 +59,7 @@ int status;
 unsigned bsize=16384;
 FILE *fopen();
 int debug = 0;
+void get_includes();
 
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
@@ -204,6 +205,7 @@ label:	for (k = bufpos ;
 /*
  *			G E T _ I N C L U D E S
  */
+void
 get_includes(s)
 char *s;
 {
@@ -219,7 +221,7 @@ char *s;
 	}
 
 	if (debug)
-		(void)fprintf(stderr, "Visiting \"%s\"\n", s);
+		(void)fprintf(stderr, "cakeinclude visiting \"%s\"\n", s);
 
 	/* This part might be done in a loop, to match usage message? */
 
@@ -251,7 +253,7 @@ char *s;
 
 	(void)fclose(fd);
 	if (debug)
-		(void)fprintf(stderr, "leaving \"%s\"\n", s);
+		(void)fprintf(stderr, "cakeinclude leaving \"%s\"\n", s);
 }
 
 
