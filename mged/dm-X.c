@@ -908,32 +908,34 @@ F	Toggle faceplate\n\
 					"set faceplate=1\n" );
 				break;
 			case '0':
-				dm_values.dv_xjoy = 0;
-				dm_values.dv_yjoy = 0;
-				dm_values.dv_zjoy = 0;
-				dm_values.dv_xslew = 0;
-				dm_values.dv_yslew = 0;
-				dm_values.dv_zslew = 0;
+				rt_vls_printf( &dm_values.dv_string,
+					"knob zero\n" );
 				break;
 			case 'x':
 				/* 6 degrees per unit */
-				dm_values.dv_xjoy += 0.1;
+				rt_vls_printf( &dm_values.dv_string,
+					"knob +x 0.1\n" );
 				break;
 			case 'y':
-				dm_values.dv_yjoy += 0.1;
+				rt_vls_printf( &dm_values.dv_string,
+					"knob +y 0.1\n" );
 				break;
 			case 'z':
-				dm_values.dv_zjoy += 0.1;
+				rt_vls_printf( &dm_values.dv_string,
+					"knob +z 0.1\n" );
 				break;
 			case 'X':
 				/* viewsize per unit */
-				dm_values.dv_xslew += 0.1;
+				rt_vls_printf( &dm_values.dv_string,
+					"knob +X 0.1\n" );
 				break;
 			case 'Y':
-				dm_values.dv_yslew += 0.1;
+				rt_vls_printf( &dm_values.dv_string,
+					"knob +Y 0.1\n" );
 				break;
 			case 'Z':
-				dm_values.dv_zslew += 0.1;
+				rt_vls_printf( &dm_values.dv_string,
+					"knob +Z 0.1\n" );
 				break;
 			case 'f':
 				rt_vls_strcat( &dm_values.dv_string,
