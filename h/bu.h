@@ -379,7 +379,7 @@ BU_EXTERN(void			bu_printb, (CONST char *s, unsigned long v,
 				CONST char *bits));
 
 /* ptbl.c */
-BU_EXTERN(void			bu_ptbl_init, (struct bu_ptbl	*b));
+BU_EXTERN(void			bu_ptbl_init, (struct bu_ptbl *b, int len));
 BU_EXTERN(void			bu_ptbl_reset, (struct bu_ptbl	*b));
 BU_EXTERN(int			bu_ptbl_ins, (struct bu_ptbl *b, long *p));
 BU_EXTERN(int			bu_ptbl_locate, (struct bu_ptbl *b, long *p));
@@ -393,6 +393,8 @@ BU_EXTERN(void			bu_ptbl_cat_uniq, (struct bu_ptbl *dest,
 				CONST struct bu_ptbl *src));
 BU_EXTERN(void			bu_ptbl_free, (struct bu_ptbl	*b));
 BU_EXTERN(int			bu_ptbl, (struct bu_ptbl *b, int func, long *p));
+BU_EXTERN(void			bu_pr_ptbl, (CONST char *title,
+				CONST struct bu_ptbl *tbl, int verbose));
 
 /* semaphore.c */
 BU_EXTERN(void			bu_semaphore_init, (unsigned int nsemaphores));
