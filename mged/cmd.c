@@ -841,7 +841,9 @@ mged_setup()
   btn_head_menu(0,0,0);		/* unlabeled menu */
 
   history_setup();
+#if !TRY_NEW_MGED_VARS
   mged_variable_setup(interp);
+#endif
 
   Tcl_LinkVar(interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
 
@@ -1096,6 +1098,9 @@ char **argv;
 
   if(!curr_cmd_list->aim){
     Tcl_AppendElement(interp, bu_vls_addr(curr_dm_list->s_info->opp));
+    if(curr_dm_list->aim)
+      Tcl_AppendElement(interp, bu_vls_addr(&curr_dm_list->aim->name));
+    else
     Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->name));
 
     return TCL_OK;
