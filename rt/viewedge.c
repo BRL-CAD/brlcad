@@ -1,5 +1,5 @@
 /*
-  *			V I E W E D G E
+ *			V I E W E D G E
  *
  *  Ray Tracing program RTEDGE bottom half.
  *
@@ -8,6 +8,9 @@
  *  hidden line 'edges' of the geometry. An edge exists whenever
  *  there is a change in region ID, or a significant change in
  *  obliquity or line-of-sight distance.
+ *
+ *  XXX - Get parallel processing working.
+ *  XXX - Add support for detecting changes in specified attributes.
  *
  *  Author -
  *	Ronald A. Bowers
@@ -49,7 +52,7 @@ static	int pixsize = 0;		/* bytes per pixel in scanline */
 
 struct cell {
         int	c_ishit;
-	double	c_dist;			/* distance from emanation plane to in_hit */
+	fastf_t	c_dist;			/* distance from emanation plane to in_hit */
 	int	c_id;			/* region_id of component hit */
 	point_t	c_hit;			/* 3-space hit point of ray */
 	vect_t	c_normal;		/* surface normal at the hit point */
@@ -59,7 +62,8 @@ struct cell {
 #define MISS_DIST	-1
 #define MISS_ID		-1
 
-static unsigned char *scanline;
+static unsigned char *scanline[MAX_PSW];
+
 int   		nEdges = 0;
 int   		nPixels = 0;
 fastf_t		pit_depth;		/* min. distance for drawing pits/mountains */
@@ -111,6 +115,7 @@ register struct application *ap;
 char *file, *obj;
 int minus_o;
 {
+	int i;
 	/*
 	 *  We need to work to get the output pixels and scanlines
 	 *  in order before we can run in parallel.  Something like
@@ -122,13 +127,17 @@ int minus_o;
 	}
 
 	pixsize = 3;		/* Frame buffer */
-	
-	
-	if( pixsize ) {
-		scanline = (unsigned char *)
-			bu_malloc( width*pixsize, "scanline buffer" );
-	}
 
+	/*
+	 *  Allocate a scanline for each processor.
+	 */
+	for ( i = 0; i < npsw; ++i ) {
+	    if (scanline[i] == NULL) {
+	        scanline[i] = (unsigned char *)
+			bu_malloc( width*pixsize, "scanline buffer" );
+	    }	
+	}
+	
 	if( minus_o ) {
 		/* output is to a file */
 		return(0);		/* don't open frame buffer */
@@ -160,11 +169,13 @@ void
 view_eol( ap )
 register struct application *ap;
 {
+    int		cpu = ap->a_resource->re_cpu;
+
     bu_semaphore_acquire( BU_SEM_SYSCALL );
 	if( outfp != NULL ) {
-	    fwrite( scanline, pixsize, width, outfp );
+	    fwrite( scanline[cpu], pixsize, width, outfp );
 	} else if( fbp != FBIO_NULL ) {
-	    fb_write( fbp, 0, ap->a_y, scanline, width );
+	    fb_write( fbp, 0, ap->a_y, scanline[cpu], width );
 	}
     bu_semaphore_release( BU_SEM_SYSCALL );
 }
@@ -260,7 +271,7 @@ raymiss2( register struct application *ap )
 int
 is_edge(struct cell *here, struct cell *left, struct cell *below)
 {
-    double  max_dist = (cell_width*ARCTAN_87)+2;
+    fastf_t  max_dist = (cell_width*ARCTAN_87)+2;
 
     if( here->c_id == -1 && left->c_id == -1 && below->c_id == -1) {
 	/*
@@ -304,12 +315,15 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 	LOCAL struct cell		me;
 	LOCAL struct cell		below;
 	LOCAL struct cell		left;
-	LOCAL int			edge;	
+	LOCAL int			edge;
+	LOCAL int			cpu;	
 
 	bzero (&a2, sizeof(struct application));
 	bzero (&me, sizeof(struct cell));
 	bzero (&below, sizeof(struct cell));
-	bzero (&left, sizeof(struct cell));	
+	bzero (&left, sizeof(struct cell));
+	
+	cpu = ap->a_resource->re_cpu;	
 	
 	if (PartHeadp == NULL) {
 	    /* The main shotline missed.
@@ -361,15 +375,15 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 	 */
 	if (is_edge (&me, &left, &below)) {
 	    bu_semaphore_acquire (RT_SEM_RESULTS);	
-	    	scanline[ap->a_x*3+RED] = 255;
-		scanline[ap->a_x*3+GRN] = 255;
-		scanline[ap->a_x*3+BLU] = 255;
+	    	scanline[cpu][ap->a_x*3+RED] = 255;
+		scanline[cpu][ap->a_x*3+GRN] = 255;
+		scanline[cpu][ap->a_x*3+BLU] = 255;
 	    bu_semaphore_release (RT_SEM_RESULTS);
 	} else {
 	    bu_semaphore_acquire (RT_SEM_RESULTS);
-	       	scanline[ap->a_x*3+RED] = 0;
-		scanline[ap->a_x*3+GRN] = 0;
-		scanline[ap->a_x*3+BLU] = 0;
+	       	scanline[cpu][ap->a_x*3+RED] = 0;
+		scanline[cpu][ap->a_x*3+GRN] = 0;
+		scanline[cpu][ap->a_x*3+BLU] = 0;
 	    bu_semaphore_release (RT_SEM_RESULTS);
 	}
 	return edge;
