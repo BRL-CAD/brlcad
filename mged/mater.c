@@ -63,7 +63,7 @@ register struct mater *mp;
 /*
  *  			F _ P R C O L O R
  */
-void
+int
 f_prcolor( argc, argv )
 int	argc;
 char	**argv;
@@ -72,10 +72,12 @@ char	**argv;
 
 	if( MaterHead == MATER_NULL )  {
 		(void)printf("none\n");
-		return;
+		return CMD_OK;
 	}
 	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )
 		pr_mater( mp );
+
+	return CMD_OK;
 }
 
 /*
@@ -83,7 +85,7 @@ char	**argv;
  *  
  *  Add a color table entry.
  */
-void
+int
 f_color( argc, argv )
 int	argc;
 char	**argv;
@@ -100,6 +102,8 @@ char	**argv;
 	rt_insert_color( newp );
 	color_putrec( newp );			/* write to database */
 	dmp->dmr_colorchange();
+
+	return CMD_OK;
 }
 
 /*
@@ -110,7 +114,7 @@ char	**argv;
  *  fiddle, then reload incore structures from file,
  *  and update database.
  */
-void
+int
 f_edcolor( argc, argv )
 int	argc;
 char	**argv;
@@ -125,7 +129,7 @@ char	**argv;
 	(void)mktemp(tempfile);
 	if( (fp = fopen( tempfile, "w" )) == NULL )  {
 		perror(tempfile);
-		return;
+		return CMD_BAD;
 	}
 
 	(void)fprintf( fp, hdr );
@@ -139,18 +143,18 @@ char	**argv;
 
 	if( !editit( tempfile ) )  {
 		(void)printf("Editor returned bad status.  Aborted\n");
-		return;
+		return CMD_BAD;
 	}
 
 	/* Read file and process it */
 	if( (fp = fopen( tempfile, "r")) == NULL )  {
 		perror( tempfile );
-		return;
+		return CMD_BAD;
 	}
 	if( fgets(line, sizeof (line), fp) == NULL  ||
 	    line[0] != hdr[0] )  {
 		(void)printf("Header line damaged, aborting\n");
-		return;
+		return CMD_BAD;
 	}
 
 	/* Zap all the current records, both in core and on disk */
@@ -184,6 +188,8 @@ char	**argv;
 	(void)fclose(fp);
 	(void)unlink( tempfile );
 	dmp->dmr_colorchange();
+
+	return CMD_OK;
 }
 
 /*
