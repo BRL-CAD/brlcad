@@ -53,7 +53,7 @@ void
 rt_bomb(s)
 CONST char *s;
 {
-	if(rt_g.debug || rt_g.NMG_debug)
+	if(rt_g.debug || rt_g.NMG_debug || rdebug)
 		bu_debug |= BU_DEBUG_COREDUMP;
 	bu_bomb(s);
 }

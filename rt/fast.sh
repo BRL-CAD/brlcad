@@ -8,7 +8,6 @@
 cake \
  do.o \
  material.o \
- mathtab.o \
  opt.o \
  refract.o &
 
@@ -29,8 +28,10 @@ cake \
 
 cake \
  main.o \
+ bomb.o \
  rtshot.o \
  rtwalk.o &
 
 wait
+echo --- Collecting any stragglers.
 cake rt
