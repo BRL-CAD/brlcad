@@ -159,14 +159,21 @@ goodstatus()
 	select(fd+1, &readfds, (int *)0, &xcptfd, timeout);
 	if( (readfds & (1<<fd)) !=0) {
 		mread(fd, status, 4);
-		if ((status[0]&0xf) == 0 &&
+		if (status[0]&0x1)  printf("No vertical sync\n");
+		if (status[0]&0x2)  printf("8x10 not ready\n");
+		if (status[0]&0x4)  printf("Expose in wrong mode\n");
+		if (status[0]&0x8)  printf("Aux camera out of film\n");
+		if (status[1]&0x1)  printf("B/W mode\n");
+		if (status[1]&0x2)  printf("Separate mode\n");
+		if (status[2]&0x1)  printf("Y-smoothing off\n");
+
+		if ((status[0]&0xf) == 0x0 &&
 		    (status[1]&0x3) == 0x0 )
 			return 1;	/* status is ok */
-		else {
-			printf("\007dunnsnap: status error from camera\n");
-			printf("status[0]= 0x%x [1]= 0x%x [2]= 0x%x [3]= 0x%x\n",status[0]&0xf,status[1]&0xf,
-				status[2]&0x3,status[3]&0x7f);
-		}
+		printf("\007dunnsnap: status error from camera\n");
+		printf("status[0]= 0x%x [1]= 0x%x [2]= 0x%x [3]= 0x%x\n",
+			status[0]&0xf,status[1]&0xf,
+			status[2]&0x3,status[3]&0x7f);
 	} else
 		printf("\007dunnsnap: status request timed out\n");
 	return 0;	/* status is bad or request timed out */
