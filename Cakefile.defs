@@ -476,6 +476,7 @@ set -S2 "/bin/sh"
 #	define	LGT_CONFIG	GFLAG
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
+#	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
 #	define	LIBDM_OBJS	dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DUSE_RT_ASPECT
