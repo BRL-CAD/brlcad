@@ -27,7 +27,6 @@ static char RCSpg[] = "@(#)$Header$ (BRL)";
 #include "../h/db.h"
 #include "../h/raytrace.h"
 #include "debug.h"
-#include "rtdir.h"
 #include "plane.h"
 
 /* Describe algorithm here */

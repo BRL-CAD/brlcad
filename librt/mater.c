@@ -30,7 +30,6 @@ static char RCSmater[] = "@(#)$Header$ (BRL)";
 #include "../h/vmath.h"
 #include "../h/db.h"
 #include "../h/mater.h"
-#include "rtdir.h"
 #include "../h/raytrace.h"
 #include "debug.h"
 
