@@ -243,7 +243,7 @@ register complex	root[];
 #define SQRT3			1.732050808
 #define THIRD			0.333333333333333333333333333
 #define INV_TWENTYSEVEN		0.037037037037037037037037037
-#define	CUBEROOT( a )	( a >= 0.0 ) ? pow( a, THIRD ) : -pow( -a, THIRD )
+#define	CUBEROOT( a )	(( a >= 0.0 ) ? pow( a, THIRD ) : -pow( -a, THIRD ))
 
 /*	>>>  c u b i c ( )  <<<
  *

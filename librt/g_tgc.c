@@ -37,8 +37,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 HIDDEN int	stdCone();
 HIDDEN void	tgcnormal();
-static void	rotate(), shear(), TgcPtSort();
-static void	scale();
+static void	tgc_rotate(), tgc_shear(), tgc_sort();
+static void	tgc_scale();
+static void	tgc_minmax();
 
 struct  tgc_specific {
 	vect_t	tgc_V;		/*  Vector to center of base of TGC	*/
@@ -59,8 +60,9 @@ struct  tgc_specific {
 
 
 #define VLARGE		1000000.0
-#define	Alpha(a,x,y,c,d)     {if ( NEAR_ZERO(c) || NEAR_ZERO(d) ) a = VLARGE;\
-			else  a = (x)*(x)/((c)*(c)) + (y)*(y)/((d)*(d));}
+
+#define	Alpha(x,y,c,d)     (( NEAR_ZERO(c) || NEAR_ZERO(d) ) ? VLARGE :\
+			( (x)*(x)/((c)*(c)) + (y)*(y)/((d)*(d))) )
 
 
 /*
@@ -162,7 +164,10 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	stp->st_specific = (int *)tgc;
 
 	/* Apply full 4X4mat to V */
-	MAT4X3PNT( tgc->tgc_V, mat, SP_V );
+	{
+		register fastf_t *p = SP_V;
+		MAT4X3PNT( tgc->tgc_V, mat, p );
+	}
 
 	tgc->tgc_A = mag_a;
 	tgc->tgc_B = mag_b;
@@ -189,7 +194,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	} else
 		tgc->tgc_ABsq = 0;			/* safety */
 
-	rotate( A, B, Hv, Rot, iRot, tgc );
+	tgc_rotate( A, B, Hv, Rot, iRot, tgc );
 	MAT4X3VEC( nH, Rot, Hv );
 	tgc->tgc_sH = nH[Z];
 
@@ -197,18 +202,18 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	tgc->tgc_DB_H = tgc->tgc_D/tgc->tgc_B - 1.0;
 
 	/*
-		Added iShr parameter to shear().
-		Added a matrix to tgc_specific for inverse transformation
-			of std. solid intersection points (tgc_inv_ScShR)
-			which includes a the inverse of a scaling transform.
-		Changed inverse transformation of normal vectors of std.
-			solid intersection to include shear inverse
-			(tgc_invRtShSc).
-		Fold in scaling transformation into the transformation to std.
-			space from target space (tgc_ScShR).
+	 *	Added iShr parameter to tgc_shear().
+	 *	Added a matrix to tgc_specific for inverse transformation
+	 *		of std. solid intersection points (tgc_inv_ScShR)
+	 *		which includes a the inverse of a scaling transform.
+	 *	Changed inverse transformation of normal vectors of std.
+	 *		solid intersection to include shear inverse
+	 *		(tgc_invRtShSc).
+	 *	Fold in scaling transformation into the transformation to std.
+	 *		space from target space (tgc_ScShR).
 	 */
-	shear( nH, Z, Shr, tShr, iShr );
-	scale( tgc->tgc_A, tgc->tgc_B, tgc->tgc_sH, Scl, iScl );
+	tgc_shear( nH, Z, Shr, tShr, iShr );
+	tgc_scale( tgc->tgc_A, tgc->tgc_B, tgc->tgc_sH, Scl, iScl );
 	mat_mul( tmp, Shr, Rot );
 	mat_mul( tgc->tgc_ScShR, Scl, tmp );
 
@@ -223,32 +228,32 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		LOCAL fastf_t dx, dy, dz;	/* For bounding sphere */
 		LOCAL vect_t temp;
 
-#define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
-			if( (ftemp = (c)) < (a) )  a = ftemp;\
-			if( ftemp > (b) )  b = ftemp; }
-
-#define MM(v)	MINMAX( stp->st_min[X], stp->st_max[X], v[X] ); \
-		MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
-		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
-
 		/* There are 8 corners to the bounding RPP */
 		/* This may not be minimal, but does fully contain the TGC */
 		VADD2( temp, tgc->tgc_V, A );
-		VADD2( work, temp, B ); MM( work );	/* V + A + B */
-		VSUB2( work, temp, B ); MM( work );	/* V + A - B */
+		VADD2( work, temp, B );
+		tgc_minmax( stp, work );	/* V + A + B */
+		VSUB2( work, temp, B );
+		tgc_minmax( stp, work );	/* V + A - B */
 
 		VSUB2( temp, tgc->tgc_V, A );
-		VADD2( work, temp, B ); MM( work );	/* V - A + B */
-		VSUB2( work, temp, B ); MM( work );	/* V - A - B */
+		VADD2( work, temp, B );
+		tgc_minmax( stp, work );	/* V - A + B */
+		VSUB2( work, temp, B );
+		tgc_minmax( stp, work );	/* V - A - B */
 
 		VADD3( temp, tgc->tgc_V, Hv, C );
-		VADD2( work, temp, D ); MM( work );	/* V + H + C + D */
-		VSUB2( work, temp, D ); MM( work );	/* V + H + C - D */
+		VADD2( work, temp, D );
+		tgc_minmax( stp, work );	/* V + H + C + D */
+		VSUB2( work, temp, D );
+		tgc_minmax( stp, work );	/* V + H + C - D */
 
 		VADD2( temp, tgc->tgc_V, Hv );
 		VSUB2( temp, temp, C );
-		VADD2( work, temp, D ); MM( work );	/* V + H - C + D */
-		VSUB2( work, temp, D ); MM( work );	/* V + H - C - D */
+		VADD2( work, temp, D );
+		tgc_minmax( stp, work );	/* V + H - C + D */
+		VSUB2( work, temp, D );
+		tgc_minmax( stp, work );	/* V + H - C - D */
 
 		VSET( stp->st_center,
 			(stp->st_max[X] + stp->st_min[X])/2,
@@ -285,7 +290,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
  *  the normal for the planar sections of the truncated cone.
  */
 static void
-rotate( A, B, Hv, Rot, Inv, tgc )
+tgc_rotate( A, B, Hv, Rot, Inv, tgc )
 vect_t		A, B, Hv;
 mat_t		Rot, Inv;
 struct tgc_specific	*tgc;
@@ -342,7 +347,7 @@ struct tgc_specific	*tgc;
  * Begin changes GSM, EOD -- Added INVERSE (Inv) calculation.
  */
 static void
-shear( vect, axis, Shr, Trn, Inv )
+tgc_shear( vect, axis, Shr, Trn, Inv )
 vect_t	vect;
 int	axis;
 mat_t	Shr, Trn, Inv;
@@ -366,7 +371,7 @@ mat_t	Shr, Trn, Inv;
 /*	s c a l e ( )
  */
 static void
-scale( a, b, h, Scl, Inv )
+tgc_scale( a, b, h, Scl, Inv )
 fastf_t	a, b, h;
 mat_t	Scl, Inv;
 {
@@ -484,7 +489,7 @@ register struct xray	*rp;
 	}
 
 	/* Most distant to least distant	*/
-	TgcPtSort( k, npts );
+	tgc_sort( k, npts );
 
 	/* Now, t[0] > t[npts-1].  See if this is an easy out. */
 	if( k[0] <= 0.0 )
@@ -560,16 +565,12 @@ register struct xray	*rp;
 
 		VJOIN1( work, pprime, b, dprime );
 		/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
-		Alpha( alf1, work[0], work[1], 1.0, 1.0 );
+		/* alf1 = Alpha(work[0], work[1], 1.0, 1.0 ) */
+		alf1 = work[0]*work[0] + work[1]*work[1];
 
 		VJOIN1( work, pprime, t, dprime );
 		/* Must scale C and D vectors */
-		Alpha(	alf2,
-			work[0],
-			work[1],
-			tgc->tgc_C/tgc->tgc_A,
-			tgc->tgc_D/tgc->tgc_B
-			);
+		alf2 = Alpha(work[0],work[1],tgc->tgc_C/tgc->tgc_A,tgc->tgc_D/tgc->tgc_B);
 
 		if ( alf1 <= 1.0 ){
 			pt[IN] = b;
@@ -651,16 +652,12 @@ register struct xray	*rp;
 
 	VJOIN1( work, pprime, b, dprime );
 	/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
-	Alpha( alf1, work[0], work[1], 1.0, 1.0 );
+	/* alpf = Alpha(work[0], work[1], 1.0, 1.0 ) */
+	alf1 = work[0]*work[0] + work[1]*work[1];
 
 	VJOIN1( work, pprime, t, dprime );
 	/* Must scale C and D vectors. */
-	Alpha(	alf2,
-		work[0],
-		work[1],
-		tgc->tgc_C/tgc->tgc_A,
-		tgc->tgc_D/tgc->tgc_B
-		);
+	alf2 = Alpha(work[0],work[1],tgc->tgc_C/tgc->tgc_A,tgc->tgc_D/tgc->tgc_B);
 
 	/*  It should not be possible for one planar intersection
 	 *  to be outside its ellipse while the other is inside ...
@@ -840,7 +837,7 @@ double		t[];
  *  address of the first 't' in the array.
  */
 static void
-TgcPtSort( t, npts )
+tgc_sort( t, npts )
 register double	t[];
 
 {
@@ -924,4 +921,19 @@ register struct tgc_specific	*tgc;
 
 	MAT4X3VEC( norm, tgc->tgc_invRtShSc, stdnorm );
 	VUNITIZE( norm );
+}
+
+#define MINMAX(a,b,c)	{if( (ftemp = (c)) < (a) )  a = ftemp;\
+			if( ftemp > (b) )  b = ftemp; }
+
+static void
+tgc_minmax(stp, v)
+register struct soltab *stp;
+vectp_t v;
+{
+	FAST fastf_t ftemp;
+
+	MINMAX( stp->st_min[X], stp->st_max[X], v[X] );
+	MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] );
+	MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] );
 }
