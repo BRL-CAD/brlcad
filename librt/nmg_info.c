@@ -1175,7 +1175,7 @@ CONST struct rt_tol	*tol;
 				    			nmg_pr_eu_endpoints( eur, 0 );
 				    			nmg_pr_eu_endpoints( ret, 0 );
 
-							coincident = nmg_2edge_g_coincident( eur->e_p, ret->e_p, tol );
+							coincident = nmg_2edgeuse_g_coincident( eur, ret, tol );
 							if( coincident )  {
 								/* Change eur to use ret's eg */
 								rt_log("nmg_find_edge_between_2fu() belatedly fusing e1=x%x, eg1=x%x, e2=x%x, eg2=x%x\n",
