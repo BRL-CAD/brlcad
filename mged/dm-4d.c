@@ -1426,49 +1426,53 @@ continue;
 			switch(ret)  {
 			case DIAL0:
 				if(adcflag) {
-					dm_values.dv_1adc = setting;
-					dm_values.dv_flagadc =1;
+					rt_vls_printf( &dm_values.dv_string, "knob ang1 %d\n",
+							setting );
 				}
 				break;
 			case DIAL1:
-				dm_values.dv_zoom = setting / 2048.0;
+				rt_vls_printf( &dm_values.dv_string , "knob S %f\n",
+							setting/2048.0 );
 				break;
 			case DIAL2:
-				if(adcflag) {
-					dm_values.dv_2adc = setting;
-					dm_values.dv_flagadc =1;
-				} else {
-					dm_values.dv_zjoy = setting/2048.0;
-				}
+				if(adcflag)
+					rt_vls_printf( &dm_values.dv_string , "knob ang2 %d\n",
+							setting );
+				else
+					rt_vls_printf( &dm_values.dv_string , "knob z %f\n",
+							setting/2048.0 );
 				break;
 			case DIAL3:
-				if(adcflag) {
-					dm_values.dv_distadc = setting;
-					dm_values.dv_flagadc =1;
-				}
-				else dm_values.dv_zslew = setting/2048.0;
+				if(adcflag)
+					rt_vls_printf( &dm_values.dv_string , "knob distadc %d\n",
+							setting );
+				else
+					rt_vls_printf( &dm_values.dv_string , "knob Z %f\n",
+							setting/2048.0 );
 				break;
 			case DIAL4:
-				if(adcflag) {
-					dm_values.dv_yadc = setting;
-					dm_values.dv_flagadc =1;
-				} else {
-					dm_values.dv_yjoy = setting/2048.0;
-				}
+				if(adcflag)
+					rt_vls_printf( &dm_values.dv_string , "knob yadc %d\n",
+							setting );
+				else
+					rt_vls_printf( &dm_values.dv_string , "knob y %f\n",
+							setting/2048.0 );
 				break;
 			case DIAL5:
-				dm_values.dv_yslew = setting/2048.0;
+				rt_vls_printf( &dm_values.dv_string , "knob Y %f\n",
+							setting/2048.0 );
 				break;
 			case DIAL6:
-				if(adcflag) {
-					dm_values.dv_xadc = setting;
-					dm_values.dv_flagadc =1;
-				} else {
-					dm_values.dv_xjoy = setting/2048.0;
-				}
+				if(adcflag)
+					rt_vls_printf( &dm_values.dv_string , "knob xadc %d\n",
+							setting );
+				else
+					rt_vls_printf( &dm_values.dv_string , "knob x %f\n",
+							setting/2048.0 );
 				break;
 			case DIAL7:
-				dm_values.dv_xslew = setting/2048.0;
+				rt_vls_printf( &dm_values.dv_string , "knob X %f\n",
+							setting/2048.0 );
 				break;
 			}
 			continue;
