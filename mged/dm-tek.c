@@ -110,7 +110,6 @@ static void	teklabel(), teklinemod(), tekpoint();
 Tek_open()
 {
 	char line[64], line2[64];
-	int i;
 
 	(void)printf("Output tty [stdout]? ");
 	(void)fgets( line, sizeof(line), stdin );	/* \n, Null terminated */

@@ -497,8 +497,10 @@ register coords *coop;		/* -> coordinates */
 		    );
 #endif
 		p = NewPoint( coop );
-		/*		if ( p == NULL )
-/*			return NULL;	/* out of heap space */
+#if 0
+			if ( p == NULL )
+			return NULL;	/* out of heap space */
+#endif
 	}
 
 	return p;			/* -> point list entry */

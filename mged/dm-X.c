@@ -78,7 +78,6 @@ struct dm dm_X = {
 
 extern struct device_values dm_values;	/* values read from devices */
 
-static vect_t clipmin, clipmax;		/* for vector clipping */
 static int	height, width;
 
 static Display	*dpy;			/* X display pointer */
@@ -234,7 +233,6 @@ double ratio;
 		/* 2^(31-11) = 2^20 ~= 1e6 */
 		/* Integerize and let the X server do the clipping */
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
-			static vect_t	start, fin;
 			switch( *cmd )  {
 			case RT_VLIST_POLY_START:
 				continue;
@@ -576,6 +574,7 @@ void
 X_window(w)
 register int w[];
 {
+#if 0
 	/* Compute the clipping bounds */
 	clipmin[0] = w[1] / 2048.;
 	clipmin[1] = w[3] / 2048.;
@@ -583,6 +582,7 @@ register int w[];
 	clipmax[0] = w[0] / 2047.;
 	clipmax[1] = w[2] / 2047.;
 	clipmax[2] = w[4] / 2047.;
+#endif
 }
 
 /*********XXX**********/
@@ -644,7 +644,6 @@ char	*name;
 	char	hostname[80];
 	char	display[80];
 	char	*envp, *cp;
-	char	line[80];
 	unsigned long	bd, bg, fg, bw;
 	XSizeHints xsh;
 	XEvent	event;
@@ -737,7 +736,7 @@ char	*name;
 
 	a_color.red = 128<<8;
 	a_color.green=128<<8;
-	a_color.blue=128<<8<<8;
+	a_color.blue= 128<<8;
 	a_color.flags = DoRed | DoGreen| DoBlue;
 	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
 		fprintf( stderr, "dm-X: Can't Allocate gray\n");

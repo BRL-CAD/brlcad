@@ -580,7 +580,6 @@ t49cont(x,y)
 register int x,y;
 {
 	int hix,hiy,lox,loy,extra;
-	int n;
 
 	x = GED_TO_TEK4109(x);
 	y = GED_TO_TEK4109(y);
@@ -590,7 +589,9 @@ register int x,y;
 	lox = (x>>2)&037;
 	loy=(y>>2)&037;
 	extra=x&03+(y<<2)&014;
+#if 0
 	n = (abs(hix-ohix) + abs(hiy-ohiy) + 6) / 12;
+#endif
 	if(hiy != ohiy){
 		(void)putc(hiy|040,outfp);
 		ohiy=hiy;
@@ -616,8 +617,10 @@ register int x,y;
 		}
 	}
 	(void)putc(lox|0100,outfp);
-/*	while(n--)
-		(void)putc(0,outfp);  */
+#if 0
+	while(n--)
+		(void)putc(0,outfp);
+#endif
 }
 
 static void
