@@ -1017,7 +1017,6 @@ char *file, *obj;
 	case 4:
 		scanbuf = rt_malloc( srv_scanlen*3 + sizeof(long),
 			"scanbuf [multi-line]" );
-		rt_log("Buffering up to %d pixel scanlines\n", srv_scanlen);
 		break;
 #endif
 	default:
