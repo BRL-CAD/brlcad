@@ -110,7 +110,7 @@ struct partition *PartHeadp;
 		return(1);
 	}
 	/* Check to see if eye is "inside" the solid */
-	if( hitp->hit_dist < 0.0 )  {
+	if( hitp->hit_dist < -1.0e-10 )  {
 		/* XXX */
 		rt_log("radhit:  GAK, eye inside solid (%g)\n", hitp->hit_dist );
 		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
