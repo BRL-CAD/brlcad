@@ -36,9 +36,11 @@ extern double nmg_eue_dist;		/* from nmg_plot.c */
 
 static char	usage[] = "\
 Usage: %s [-v] [-d] [-xX lvl] [-u eu_dist]\n\
-	[-a abs_tol] [-r rel_tol] [-n norm_tol]\n\
+	[-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n\
+	[-D dist_calc_tol]\n\
 	[-p prefix] brlcad_db.g object(s)\n";
 
+static fastf_t	dist_calc_tol = 0; /* arg of -D */
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	debug_plots;	/* Make debugging plots */
@@ -116,7 +118,7 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:dn:p:r:u:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:dn:p:r:u:vx:D:P:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
@@ -145,6 +147,11 @@ char	*argv[];
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
+			break;
+		case 'D':
+			tol.dist = atof(optarg);
+			tol.dist_sq = tol.dist * tol.dist;
+			rt_pr_tol( &tol );
 			break;
 		case 'X':
 			sscanf( optarg, "%x", &rt_g.NMG_debug );
@@ -198,6 +205,9 @@ char	*argv[];
 	}
 	fprintf(fp_fig, "figure {\n");
 	rt_vls_init(&base_seg);		/* .fig figure file's main segment. */
+
+RT_CK_TOL(jack_tree_state.ts_tol);
+RT_CK_TESS_TOL(jack_tree_state.ts_ttol);
 
 	/* Walk indicated tree(s).  Each region will be output separately */
 	ret = db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
