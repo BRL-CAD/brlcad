@@ -775,9 +775,10 @@ struct rt_piecestate	*psp;
 	if( psp ) {
 		(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
 		hits = psp->htab.hits;
-	} else if( nhits + 1 >= MAXHITS ) {
+	}
+	if( !psp && (nhits + 1 >= MAXHITS) ) {
 		bu_log( "rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep );
-		i++;
+		nhits--;
 	} else {
 		hits[nhits] = hits[nhits-1];	/* struct copy */
 		hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
