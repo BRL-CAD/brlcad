@@ -1585,12 +1585,16 @@ CONST struct rt_tol *tol;
 	struct faceuse *fu1,*fu2;
 	struct edgeuse *eu;
 	struct neighbor	closest;
+	int same_loop;
 
 	NMG_CK_LOOPUSE( lu1 );
 	NMG_CK_LOOPUSE( lu2 );
 	RT_CK_TOL( tol );
 
-	if( lu1 == lu2 )
+	if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+		rt_log( "nmg_classify_lu_lu( lu1=x%x , lu2=x%x )\n", lu1, lu2 );
+
+	if( lu1 == lu2 || lu1 == lu2->lumate_p )
 		return( NMG_CLASS_AonBshared );
 
 	if( *lu1->up.magic_p != NMG_FACEUSE_MAGIC )
@@ -1614,7 +1618,73 @@ CONST struct rt_tol *tol;
 		return( -1 );
 	}
 
-	/* find the closest approach in this face to the projected point */
+	/* do simple check for two loops of the same vertices */
+	if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_EDGEUSE_MAGIC &&
+	    RT_LIST_FIRST_MAGIC( &lu2->down_hd ) == NMG_EDGEUSE_MAGIC )
+	{
+		struct edgeuse *eu1_start,*eu2_start;
+		struct edgeuse *eu1,*eu2;
+
+		same_loop = 1;
+		eu1_start = RT_LIST_FIRST( edgeuse , &lu1->down_hd );
+		eu2_start = RT_LIST_FIRST( edgeuse , &lu2->down_hd );
+		while( eu2_start->vu_p->v_p != eu1_start->vu_p->v_p &&
+			RT_LIST_NOT_HEAD( eu2_start , &lu2->down_hd ) )
+				eu2_start = RT_LIST_PNEXT( edgeuse , &eu2_start->l );
+
+		if( eu1_start->vu_p->v_p == eu2_start->vu_p->v_p )
+		{
+			/* check the rest of the loop */
+			eu1 = eu1_start;
+			eu2 = eu2_start;
+			while( RT_LIST_NOT_HEAD( eu1 , &lu1->down_hd ) )
+			{
+				if( eu1->vu_p->v_p != eu2->vu_p->v_p )
+				{
+					same_loop = 0;
+					break;
+				}
+				eu1 = RT_LIST_PNEXT( edgeuse , &eu1->l );
+				eu2 = RT_LIST_PNEXT_CIRC( edgeuse , &eu2->l );
+			}
+
+			if( same_loop )
+				return( NMG_CLASS_AonBshared );
+
+			/* maybe the other way round */
+			same_loop = 1;
+			eu1 = eu1_start;
+			eu2 = eu2_start;
+			while( RT_LIST_NOT_HEAD( eu1 , &lu1->down_hd ) )
+			{
+				if( eu1->vu_p->v_p != eu2->vu_p->v_p )
+				{
+					same_loop = 0;
+					break;
+				}
+				eu1 = RT_LIST_PNEXT( edgeuse , &eu1->l );
+				eu2 = RT_LIST_PPREV_CIRC( edgeuse , &eu2->l );
+			}
+
+			if( same_loop )
+				return( NMG_CLASS_AonBshared );
+		}
+	}
+	else if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC &&
+		 RT_LIST_FIRST_MAGIC( &lu2->down_hd ) == NMG_VERTEXUSE_MAGIC )
+	{
+		struct vertexuse *vu1,*vu2;
+
+		vu1 = RT_LIST_FIRST( vertexuse , &lu1->down_hd );
+		vu2 = RT_LIST_FIRST( vertexuse , &lu2->down_hd );
+
+		if( vu1->v_p == vu2->v_p )
+			return( NMG_CLASS_AonBshared );
+		else
+			return( NMG_CLASS_AoutB );
+	}
+
+	/* initialize the "closest" structure */
 	closest.dist = MAX_FASTF;
 	closest.p.eu = (struct edgeuse *)NULL;
 	closest.class = NMG_CLASS_AoutB;	/* default return */
