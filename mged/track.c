@@ -301,7 +301,8 @@ tryagain:	/* sent here to try next set of names */
 			if( (Trackpos += 10) > 500 ) {
 			  Tcl_AppendResult(interp, "Track: naming error -- STOP\n",
 					   (char *)NULL);
-			  return TCL_ERROR;
+			  edit_result = TCL_ERROR;
+			  goto end;
 			}
 			goto tryagain;
 		}

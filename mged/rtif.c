@@ -935,7 +935,7 @@ char	**argv;
 	  return TCL_ERROR;
 
 	if( not_state( ST_VIEW, "animate viewpoint from new RT file") )
-		return CMD_BAD;
+	  return TCL_ERROR;
 
 	/* Save any state variables we plan on changing */
 	rtif_saved_state = mged_variables;	/* struct copy */

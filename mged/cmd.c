@@ -1414,111 +1414,115 @@ cmdline(vp, record)
 struct bu_vls *vp;
 int record;
 {
-    int	status;
-    struct bu_vls globbed;
-    struct timeval start, finish;
-    size_t len;
-    extern struct bu_vls mged_prompt;
-    char *cp;
+  int	status;
+  struct bu_vls globbed;
+  struct bu_vls tmp_vls;
+  struct timeval start, finish;
+  size_t len;
+  extern struct bu_vls mged_prompt;
+  char *cp;
 
-    BU_CK_VLS(vp);
+  BU_CK_VLS(vp);
 
-    if (bu_vls_strlen(vp) <= 0)
-      return CMD_OK;
+  if (bu_vls_strlen(vp) <= 0)
+    return CMD_OK;
 		
-    bu_vls_init(&globbed);
+  bu_vls_init(&globbed);
+  bu_vls_init(&tmp_vls);
 
-
-    /* MUST MAKE A BACKUP OF THE INPUT STRING AND USE THAT IN THE CALL TO
-       Tcl_Eval!!!
+  /* MUST MAKE A BACKUP OF THE INPUT STRING AND USE THAT IN THE CALL TO
+     Tcl_Eval!!!
        
-       You never know who might change the string (append to it...)
-       (f_mouse is notorious for adding things to the input string)
-       If it were to change while it was still being evaluated, Horrible Things
-       could happen.
-    */
+     You never know who might change the string (append to it...)
+     (f_mouse is notorious for adding things to the input string)
+     If it were to change while it was still being evaluated, Horrible Things
+     could happen.
+   */
 
-    
-    if (glob_compat_mode)
-	mged_compat(&globbed, vp);
-    else
-	bu_vls_vlscat(&globbed, vp);
+  if (glob_compat_mode)
+    mged_compat(&globbed, vp);
+  else
+    bu_vls_vlscat(&globbed, vp);
 
-    gettimeofday(&start, (struct timezone *)NULL);
-    status = Tcl_Eval(interp, bu_vls_addr(&globbed));
-    gettimeofday(&finish, (struct timezone *)NULL);
+  gettimeofday(&start, (struct timezone *)NULL);
+  status = Tcl_Eval(interp, bu_vls_addr(&globbed));
+  gettimeofday(&finish, (struct timezone *)NULL);
 
-    /* Contemplate the result reported by the Tcl interpreter. */
+  /* Contemplate the result reported by the Tcl interpreter. */
 
-    switch (status) {
-    case TCL_OK:
-      if( setjmp( jmp_env ) == 0 ){
-	(void)signal( SIGINT, sig3);  /* allow interupts */
-	len = strlen(interp->result);
+  switch (status) {
+  case TCL_OK:
+    if( setjmp( jmp_env ) == 0 ){
+      (void)signal( SIGINT, sig3);  /* allow interupts */
+      len = strlen(interp->result);
 
-	/* If the command had something to say, print it out. */	     
-	if (len > 0)
-	  bu_log("%s%s", interp->result,
-		 interp->result[len-1] == '\n' ? "" : "\n");
+      /* If the command had something to say, print it out. */	     
+      if (len > 0)
+	bu_log("%s%s", interp->result,
+	       interp->result[len-1] == '\n' ? "" : "\n");
 
-	/* A user typed this command so let everybody see, then record
-	   it in the history. */
-	if (record && tkwin != NULL) {
-	  struct bu_vls tmp_vls;
+      /* A user typed this command so let everybody see, then record
+	 it in the history. */
+      if (record && tkwin != NULL) {
+	bu_vls_printf(&tmp_vls, "distribute_text {} {%s} {%s}",
+		      bu_vls_addr(&globbed), interp->result);
+	Tcl_Eval(interp, bu_vls_addr(&tmp_vls));
+	Tcl_SetResult(interp, "", TCL_STATIC);
+      }
 
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "distribute_text {} {%s} {%s}",
-			bu_vls_addr(&globbed), interp->result);
-	  Tcl_Eval(interp, bu_vls_addr(&tmp_vls));
-	  Tcl_SetResult(interp, "", TCL_STATIC);
-	  bu_vls_free(&tmp_vls);
-	}
-
-	(void)signal( SIGINT, SIG_IGN );
-      }else
-	bu_log("\n");
-      
+      (void)signal( SIGINT, SIG_IGN );
 
       if(record)
 	history_record(vp, &start, &finish, CMD_OK);
 
-      bu_vls_free(&globbed);
-      bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
-      return CMD_OK;
+    }else
+      bu_log("\n");
+      
+    bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
+    status = CMD_OK;
+    goto end;
 
-    case TCL_ERROR:
-    default:
+  case TCL_ERROR:
+  default:
 
-    /* First check to see if it's a secret message from cmd_wrapper. */
+    /* First check to see if it's a secret message. */
 
-	if ((cp = strstr(interp->result, MORE_ARGS_STR)) != NULL) {
-	    if(cp == interp->result){
-	      bu_vls_trunc(&mged_prompt, 0);
-	      bu_vls_printf(&mged_prompt, "\r%s",
-			    interp->result+sizeof(MORE_ARGS_STR)-1);
-	    }else{
-	      len = cp - interp->result;
-	      bu_log("%*s%s", len, interp->result, interp->result[len-1] == '\n' ? "" : "\n");
-	      bu_vls_trunc(&mged_prompt, 0);
-	      bu_vls_printf(&mged_prompt, "\r%s",
-			    interp->result+sizeof(MORE_ARGS_STR)-1+len);
-	    }
+    if ((cp = strstr(interp->result, MORE_ARGS_STR)) != NULL) {
+      if(cp == interp->result){
+	bu_vls_trunc(&mged_prompt, 0);
+	bu_vls_printf(&mged_prompt, "\r%s",
+		      interp->result+sizeof(MORE_ARGS_STR)-1);
+      }else{
+	len = cp - interp->result;
+	bu_log("%*s%s", len, interp->result, interp->result[len-1] == '\n' ? "" : "\n");
+	bu_vls_trunc(&mged_prompt, 0);
+	bu_vls_printf(&mged_prompt, "\r%s",
+		      interp->result+sizeof(MORE_ARGS_STR)-1+len);
+      }
 
-	    bu_vls_free(&globbed);
-	    return CMD_MORE;
-	}
+      status = CMD_MORE;
+      goto end;
+    }
 
     /* Otherwise, it's just a regular old error. */    
 
-	len = strlen(interp->result);
-	if (len > 0) bu_log("%s%s", interp->result,
-			    interp->result[len-1] == '\n' ? "" : "\n");
+    len = strlen(interp->result);
+    if (len > 0) bu_log("%s%s", interp->result,
+			interp->result[len-1] == '\n' ? "" : "\n");
 
-	if (record) history_record(vp, &start, &finish, CMD_BAD);
-	bu_vls_free(&globbed);
-	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
-	return CMD_BAD;
-    }
+    if (record)
+      history_record(vp, &start, &finish, CMD_BAD);
+
+    bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
+    status = CMD_BAD;
+
+    /* Fall through to end */
+  }
+
+end:
+  bu_vls_free(&globbed);
+  bu_vls_free(&tmp_vls);
+  return status;
 }
 
 /*
@@ -1847,8 +1851,7 @@ char	**argv;
 	}
 	vls_col_eol( &str );
 
-	/* XXX should be bu_vls_strgrab() */
-	Tcl_AppendResult(interp, bu_vls_strdup( &str), (char *)NULL);
+	Tcl_AppendResult(interp, bu_vls_addr( &str), (char *)NULL);
 
 	bu_vls_free(&str);
 	return TCL_OK;
