@@ -45,6 +45,11 @@ static char RCSextrude[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "tcl.h"
 #include "machine.h"
 #include "vmath.h"
@@ -1279,6 +1284,7 @@ CONST struct db_i		*dbip;
 
 	ptr = (char *)rp;
 	ptr += sizeof( struct extr_rec );
+	extrude_ip->sketch_name = (char *)bu_calloc( 17, sizeof( char ), "Extrude sketch name" );
 	strncpy( extrude_ip->sketch_name, ptr, 16 );
 
 	return(0);			/* OK */
@@ -1327,9 +1333,116 @@ CONST struct db_i		*dbip;
 	ptr = (unsigned char *)rec;
 	ptr += sizeof( struct extr_rec );
 
-	strncpy( (char *)ptr, extrude_ip->sketch_name, 16 );
+	strcpy( (char *)ptr, extrude_ip->sketch_name );
 
 	return(0);
+}
+
+
+/*
+ *			R T _ E X T R U D E _ E X P O R T 5
+ *
+ *  The name is added by the caller, in the usual place.
+ */
+int
+rt_extrude_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_extrude_internal	*extrude_ip;
+	vect_t				tmp_vec[4];
+	unsigned char			*ptr;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_EXTRUDE )  return(-1);
+
+	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
+	RT_EXTRUDE_CK_MAGIC(extrude_ip);
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = 4 * 3 * SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG + strlen( extrude_ip->sketch_name ) + 1;
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "extrusion external");
+	ptr = (unsigned char *)ep->ext_buf;
+
+	VSCALE( tmp_vec[0], extrude_ip->V, local2mm );
+	VSCALE( tmp_vec[1], extrude_ip->h, local2mm );
+	VSCALE( tmp_vec[2], extrude_ip->u_vec, local2mm );
+	VSCALE( tmp_vec[3], extrude_ip->v_vec, local2mm );
+	htond( ptr, (unsigned char *)tmp_vec, 3*4 );
+	ptr += 3 * 4 * SIZEOF_NETWORK_DOUBLE;
+	bu_plong( ptr, extrude_ip->keypoint );
+	ptr += SIZEOF_NETWORK_LONG;
+	strcpy( (char *)ptr, extrude_ip->sketch_name );
+
+	return(0);
+}
+
+
+/*
+ *			R T _ E X T R U D E _ I M P O R T 5
+ *
+ *  Import an EXTRUDE from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_extrude_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	LOCAL struct rt_extrude_internal	*extrude_ip;
+	struct rt_db_internal			tmp_ip;
+	struct directory			*dp;
+	char					*sketch_name;
+	unsigned char				*ptr;
+	point_t					tmp_vec[4];
+
+	BU_CK_EXTERNAL( ep );
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_EXTRUDE;
+	ip->idb_meth = &rt_functab[ID_EXTRUDE];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_extrude_internal), "rt_extrude_internal");
+	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
+	extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
+
+	ptr = (unsigned char *)ep->ext_buf;
+	sketch_name = (char *)ptr + 3*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
+	if( !dbip )
+		extrude_ip->skt = (struct rt_sketch_internal *)NULL;
+	else if( (dp=db_lookup( dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL )
+	{
+		bu_log( "rt_extrude_import: ERROR: Cannot find sketch (%s) for extrusion\n",
+			sketch_name );
+		extrude_ip->skt = (struct rt_sketch_internal *)NULL;
+	}
+	else
+	{
+		if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity ) != ID_SKETCH )
+		{
+			bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%s) for extrusion\n",
+				sketch_name );
+			bu_free( ip->idb_ptr, "extrusion" );
+			return( -1 );
+		}
+		else
+			extrude_ip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
+	}
+
+	ntohd( (unsigned char *)tmp_vec, ptr, 3*4 );
+	MAT4X3PNT( extrude_ip->V, mat, tmp_vec[0] );
+	MAT4X3VEC( extrude_ip->h, mat, tmp_vec[1] );
+	MAT4X3VEC( extrude_ip->u_vec, mat, tmp_vec[2] );
+	MAT4X3VEC( extrude_ip->v_vec, mat, tmp_vec[3] );
+	ptr += 3 * 4 * SIZEOF_NETWORK_DOUBLE;
+	extrude_ip->keypoint = bu_glong( ptr );
+	ptr += SIZEOF_NETWORK_LONG;
+	extrude_ip->sketch_name = strdup( ptr );
+
+	return(0);			/* OK */
 }
 
 /*
@@ -1364,7 +1477,7 @@ double			mm2local;
 		V3ARGS( u ),
 		V3ARGS( v ) );
 	bu_vls_strcat( str, buf );
-	sprintf( buf, "\tsketch name: %.16s\n",
+	sprintf( buf, "\tsketch name: %s\n",
 		extrude_ip->sketch_name );
 	bu_vls_strcat( str, buf );
 	
@@ -1397,6 +1510,7 @@ struct rt_db_internal	*ip;
 	}
 	extrude_ip->magic = 0;			/* sanity */
 
+	bu_free( extrude_ip->sketch_name, "Extrude sketch_name" );
 	bu_free( (char *)extrude_ip, "extrude ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
