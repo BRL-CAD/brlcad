@@ -16,6 +16,9 @@
  *  $Header$
  */
 
+#ifndef MACHINE_H
+#define MACHINE_H seen
+
 /*
  *  Machine specific definitions, for maximum speed.
  */
@@ -42,3 +45,5 @@ typedef long	bitv_t;		/* largest integer type */
 #else
 #define HIDDEN	/***/		/* (nil)|static, for func's local to 1 file */
 #endif
+
+#endif MACHINE_H

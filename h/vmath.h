@@ -17,6 +17,9 @@
  *  $Header$
  */
 
+#ifndef VMATH_H
+#define VMATH_H seen
+
 /*
  * Types for matrixes and vectors.
  */
@@ -200,3 +203,5 @@ extern double sqrt();
 
 /* Compare two vectors for EXACT equality.  Use carefully. */
 #define VEQUAL(a,b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z])
+
+#endif VMATH_H

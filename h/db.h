@@ -18,6 +18,9 @@
  *  $Header$
  */
 
+#ifndef DB_H
+#define DB_H seen
+
 #define NAMESIZE		16
 #define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
 extern char *strncpy();
@@ -223,3 +226,5 @@ union record  {
 		float	b_values[8*3];		/* vectors */
 	}  b;
 };
+
+#endif DB_H

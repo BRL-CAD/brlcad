@@ -18,6 +18,9 @@
  *  $Header$
  */
 
+#ifndef RAYTRACE_H
+#define RAYTRACE_H seen
+
 #ifdef HEP
 /* full means resource free, empty means resource busy */
 #define	RES_ACQUIRE(ptr)	(void)Daread(ptr)	/* wait full set empty */
@@ -148,8 +151,7 @@ struct rt_functab {
 };
 extern struct rt_functab rt_functab[];
 
-#define EPSILON		0.0001
-#define NEAR_ZERO(f)	( ((f) > -EPSILON) && ((f) < EPSILON) )
+#define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
 #define INFINITY	(1.0e20)
 
 
@@ -211,7 +213,7 @@ struct region  {
 	short		reg_bit;	/* constant index into Regions[] */
 	short		reg_regionid;	/* Region ID code;  index to ? */
 	short		reg_aircode;	/* ?? */
-	short		reg_material;	/* GIFT Material code */
+	short		reg_gmater;	/* GIFT Material code */
 	short		reg_los;	/* equivalent LOS estimate ?? */
 	struct region	*reg_forw;	/* linked list of all regions */
 	struct material	reg_mater;	/* Real material information */
@@ -328,6 +330,7 @@ struct application  {
 	int	(*a_miss)();	/* routine to call when shot misses */
 	int	a_level;	/* recursion level (for printing) */
 	int	a_onehit;	/* flag to stop on first hit */
+	struct rt_i *a_rt_i;	/* this librt instance */
 	/* THE FOLLOWING ROUTINES ARE MAINLINE & APPLICATION SPECIFIC */
 	int	a_x;		/* Screen X of ray, where applicable */
 	int	a_y;		/* Screen Y of ray, where applicable */
@@ -414,9 +417,9 @@ extern void vtoh_move(), htov_move(), mat_print();
  */
 extern struct directory *rt_dir_lookup();/* Look up name in toc */
 extern struct directory *rt_dir_add();	/* Add name to toc */
-extern void rt_bool_weave();		/* Weave segs into partitions */
-extern void rt_bool_final();		/* Eval booleans over partitions */
-extern int rt_bool_eval();		/* Eval bool tree node */
+extern void rt_boolweave();		/* Weave segs into partitions */
+extern void rt_boolfinal();		/* Eval booleans over partitions */
+extern int rt_booleval();		/* Eval bool tree node */
 extern int rt_fdiff();			/* Approx Floating compare */
 extern double rt_reldiff();		/* Relative Difference */
 extern void rt_pr_region();		/* Print a region */
@@ -440,9 +443,16 @@ extern void rt_color_addrec();		/* process ID_MATERIAL record */
 extern void rt_pr_roots();		/* print complex roots */
 
 /*
- *  Library routines used by the RT library.
+ *  Variables and constants used by the RT library, not for external use.
+ */
+double rt_invpi, rt_inv2pi;
+
+/*
+ *  System library routines used by the RT library.
  */
 extern long	lseek();
 extern int	read(), write();
 extern char	*malloc();
 extern void	free();
+
+#endif RAYTRACE_H
