@@ -164,16 +164,15 @@ char **argv;
     if (isatty(0))
     {
 	if (silent_flag != SILENT_YES)
-	{
 	    silent_flag = SILENT_NO;
-	    (void) fputs(version + 5, stdout);	/* skip @(#) */
-	}
     }
     else	/* stdin is not a TTY */
     {
 	if (silent_flag != SILENT_NO)
 	    silent_flag = SILENT_YES;
     }
+    if (silent_flag != SILENT_YES)
+	(void) fputs(version + 5, stdout);	/* skip @(#) */
 
     if (use_of_air && (use_of_air != 1))
     {
