@@ -41,7 +41,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 extern double	atof();
 extern char	*sbrk();
 
-int		rdebug;			/* RT program debugging (not library) */
+extern int	rdebug;			/* RT program debugging (not library) */
 
 /***** Variables shared with viewing model *** */
 extern FILE	*outfp;			/* optional pixel output file */
