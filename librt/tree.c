@@ -361,6 +361,7 @@ next_one: ;
 		rt_free( (char *)stp, "struct soltab");
 		return( SOLTAB_NULL );		/* BAD */
 	}
+	id = stp->st_id;	/* type may have changed in prep */
 
 	/* For now, just link them all onto the same list */
 	stp->st_forw = rtip->HeadSolid;
@@ -383,8 +384,8 @@ next_one: ;
 
 	stp->st_bit = rtip->nsolids++;
 	if(rt_g.debug&DEBUG_SOLIDS)  {
-		rt_log("-------------- %s (bit %d) -------------\n",
-			stp->st_name, stp->st_bit );
+		rt_log("------------ %s (bit %d) %s ------------\n",
+			stp->st_name, stp->st_bit, rt_functab[id].ft_name );
 		VPRINT("Bound Sph CENTER", stp->st_center);
 		rt_log("Approx Sph Radius = %g\n", stp->st_aradius);
 		rt_log("Bounding Sph Radius = %g\n", stp->st_bradius);
