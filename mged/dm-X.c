@@ -1503,12 +1503,17 @@ char *argv[];
     return TCL_OK;
   }
 
+  if(!strcmp(argv[0], "idle")){
+    am_mode = AMM_IDLE;
+    return TCL_OK;
+  }
+
   if( !strcmp( argv[0], "m" )){
     scroll_active = 0;
 
-    if( argc < 5){
+    if( argc < 4){
       Tcl_AppendResult(interp, "dm m: need more parameters\n",
-		       "dm m button 1|0 xpos ypos\n", (char *)NULL);
+		       "dm m button xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
 
@@ -1535,12 +1540,11 @@ char *argv[];
 
       old_orig_gui = mged_variables->orig_gui;
 
-      x = dm_X2Normal(dmp, atoi(argv[3]), 0) * 2047.0;
-      y = dm_Y2Normal(dmp, atoi(argv[4])) * 2047.0;
+      x = dm_X2Normal(dmp, atoi(argv[2]), 0) * 2047.0;
+      y = dm_Y2Normal(dmp, atoi(argv[3])) * 2047.0;
 
       if(mged_variables->faceplate &&
-	 mged_variables->orig_gui &&
-	 *argv[2] == '1'){
+	 mged_variables->orig_gui){
 #define        MENUXLIM        (-1250)
 	if(scroll_active)
 	   goto end;
@@ -1553,11 +1557,11 @@ char *argv[];
       }
 
       mged_variables->orig_gui = 0;
-      x = dm_X2Normal(dmp, atoi(argv[3]), 1) * 2047.0;
+      x = dm_X2Normal(dmp, atoi(argv[2]), 1) * 2047.0;
 
 end:
       bu_vls_init(&vls);
-      bu_vls_printf(&vls, "M %s %d %d\n", argv[2], x, y);
+      bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
       status = Tcl_Eval(interp, bu_vls_addr(&vls));
       mged_variables->orig_gui = old_orig_gui;
       bu_vls_free(&vls);
@@ -1567,302 +1571,291 @@ end:
   }
 
   if(!strcmp(argv[0], "am")){
-    int buttonpress;
-
     scroll_active = 0;
 
-    if( argc < 5){
+    if( argc < 4){
       Tcl_AppendResult(interp, "dm am: need more parameters\n",
-		       "dm am <r|t|s> 1|0 xpos ypos\n", (char *)NULL);
+		       "dm am <r|t|s> xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
 
-    buttonpress = atoi(argv[2]);
-    ((struct x_vars *)dmp->dm_vars)->omx = atoi(argv[3]);
-    ((struct x_vars *)dmp->dm_vars)->omy = atoi(argv[4]);
+    ((struct x_vars *)dmp->dm_vars)->omx = atoi(argv[2]);
+    ((struct x_vars *)dmp->dm_vars)->omy = atoi(argv[3]);
 
-    if(buttonpress){
-      switch(*argv[1]){
-      case 'r':
-	am_mode = AMM_ROT;
-	break;
-      case 't':
-	am_mode = AMM_TRAN;
+    switch(*argv[1]){
+    case 'r':
+      am_mode = AMM_ROT;
+      break;
+    case 't':
+      am_mode = AMM_TRAN;
 
-	if(EDIT_TRAN && mged_variables->transform == 'e'){
-	  char save_coords;
-	  point_t mouse_view_pos;
-	  point_t ea_view_pos;
-	  point_t diff;
+      if(EDIT_TRAN && mged_variables->transform == 'e'){
+	char save_coords;
+	point_t mouse_view_pos;
+	point_t ea_view_pos;
+	point_t diff;
 
-	  save_coords = mged_variables->coords;
-	  mged_variables->coords = 'v';
+	save_coords = mged_variables->coords;
+	mged_variables->coords = 'v';
 
-	  MAT4X3PNT(ea_view_pos, model2view, e_axes_pos);
-	  mouse_view_pos[X] = (((struct x_vars *)dmp->dm_vars)->omx /
-			       (fastf_t)dmp->dm_width - 0.5) / dmp->dm_aspect * 2.0;
-	  mouse_view_pos[Y] = (0.5 - ((struct x_vars *)dmp->dm_vars)->omy /
-			       (fastf_t)dmp->dm_height) * 2.0;
-	  mouse_view_pos[Z] = ea_view_pos[Z];
-	  VSUB2(diff, mouse_view_pos, ea_view_pos);
-	  VSCALE(diff, diff, Viewscale * base2local);
+	MAT4X3PNT(ea_view_pos, model2view, e_axes_pos);
+	mouse_view_pos[X] = dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1);
+	mouse_view_pos[Y] = dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy);
+	mouse_view_pos[Z] = ea_view_pos[Z];
+	VSUB2(diff, mouse_view_pos, ea_view_pos);
+	VSCALE(diff, diff, Viewscale * base2local);
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "knob aX %lf aY %lf\n", diff[X], diff[Y]);
-	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  mged_variables->coords = save_coords;
-	}
-
-	break;
-      case 's':
-	if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
-	   NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
-	  acc_sc_sol = 1.0;
-	else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
-	  edit_absolute_scale = acc_sc_obj - 1.0;
-	  if(edit_absolute_scale > 0.0)
-	    edit_absolute_scale /= 3.0;
-	}
-
-	am_mode = AMM_SCALE;
-	break;
-      default:
-	Tcl_AppendResult(interp, "dm am: need more parameters\n",
-			 "dm am <r|t|s> 1|0 xpos ypos\n", (char *)NULL);
-	return TCL_ERROR;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "knob aX %lf aY %lf\n", diff[X], diff[Y]);
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	mged_variables->coords = save_coords;
       }
 
-      return TCL_OK;
+      break;
+    case 's':
+      if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
+	 NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+	acc_sc_sol = 1.0;
+      else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
+	edit_absolute_scale = acc_sc_obj - 1.0;
+	if(edit_absolute_scale > 0.0)
+	  edit_absolute_scale /= 3.0;
+      }
+
+      am_mode = AMM_SCALE;
+      break;
+    default:
+      Tcl_AppendResult(interp, "dm am: need more parameters\n",
+		       "dm am <r|t|s> xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
     }
 
-    am_mode = AMM_IDLE;
     return TCL_OK;
   }
 
   if(!strcmp(argv[0], "adc")){
-    int buttonpress;
     fastf_t fx, fy;
     fastf_t td; /* tick distance */
 
     scroll_active = 0;
 
-    if(argc < 5){
+    if(argc < 4){
       Tcl_AppendResult(interp, "dm adc: need more parameters\n",
-		       "dm adc 1|2|t|d 1|0 xpos ypos\n", (char *)NULL);
+		       "dm adc 1|2|t|d xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
 
-    buttonpress = atoi(argv[2]);
-    ((struct x_vars *)dmp->dm_vars)->omx = atoi(argv[3]);
-    ((struct x_vars *)dmp->dm_vars)->omy = atoi(argv[4]);
+    ((struct x_vars *)dmp->dm_vars)->omx = atoi(argv[2]);
+    ((struct x_vars *)dmp->dm_vars)->omy = atoi(argv[3]);
 
-    if(buttonpress){
-      switch(*argv[1]){
-      case '1':
-	fx = dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
-	fy = dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "adc a1 %lf\n", DEGRAD*atan2(fy, fx));
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+    switch(*argv[1]){
+    case '1':
+      fx = dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "adc a1 %lf\n", DEGRAD*atan2(fy, fx));
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
 
-	am_mode = AMM_ADC_ANG1;
-	break;
-      case '2':
-	fx = dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
-	fy = dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "adc a2 %lf\n", DEGRAD*atan2(fy, fx));
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+      am_mode = AMM_ADC_ANG1;
+      break;
+    case '2':
+      fx = dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "adc a2 %lf\n", DEGRAD*atan2(fy, fx));
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
 
-	am_mode = AMM_ADC_ANG2;
-	break;
-      case 't':
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "adc hv %lf %lf\n",
-		      dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) *
-		      Viewscale * base2local,
-		      dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) *
-		      Viewscale * base2local);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+      am_mode = AMM_ADC_ANG2;
+      break;
+    case 't':
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "adc hv %lf %lf\n",
+		    dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) *
+		    Viewscale * base2local,
+		    dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) *
+		    Viewscale * base2local);
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
 
-	am_mode = AMM_ADC_TRAN;
-	break;
-      case 'd':
-	fx = (dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 -
-	      dv_xadc) * Viewscale * base2local / 2047.0;
-	fy = (dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 -
-	      dv_yadc) * Viewscale * base2local / 2047.0;
+      am_mode = AMM_ADC_TRAN;
+      break;
+    case 'd':
+      fx = (dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 -
+	    dv_xadc) * Viewscale * base2local / 2047.0;
+      fy = (dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 -
+	    dv_yadc) * Viewscale * base2local / 2047.0;
 
-	td = sqrt(fx * fx + fy * fy);
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "adc dst %lf\n", td);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+      td = sqrt(fx * fx + fy * fy);
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "adc dst %lf\n", td);
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
 
-	am_mode = AMM_ADC_DIST;
-	break;
-      default:
-	Tcl_AppendResult(interp, "dm adc: unrecognized parameter - ", argv[1],
-			  "\ndm adc 1|2|t|d 1|0 xpos ypos\n", (char *)NULL);
-	return TCL_ERROR;
-      }
-
-      return TCL_OK;
+      am_mode = AMM_ADC_DIST;
+      break;
+    default:
+      Tcl_AppendResult(interp, "dm adc: unrecognized parameter - ", argv[1],
+		       "\ndm adc 1|2|t|d xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
     }
 
-    am_mode = AMM_IDLE;
     return TCL_OK;
   }
 
   if(!strcmp(argv[0], "con")){
-    int buttonpress;
-
     scroll_active = 0;
 
-    if(argc < 6){
+    if(argc < 5){
       Tcl_AppendResult(interp, "dm con: need more parameters\n",
-		       "dm con r|t|s x|y|z 1|0 xpos ypos\n",
-		       "dm con a x|y|1|2|d 1|0 xpos ypos\n", (char *)NULL);
+		       "dm con r|t|s x|y|z xpos ypos\n",
+		       "dm con a x|y|1|2|d xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
 
-    buttonpress = atoi(argv[3]);
-    ((struct x_vars *)dmp->dm_vars)->omx = atoi(argv[4]);
-    ((struct x_vars *)dmp->dm_vars)->omy = atoi(argv[5]);
+    ((struct x_vars *)dmp->dm_vars)->omx = atoi(argv[3]);
+    ((struct x_vars *)dmp->dm_vars)->omy = atoi(argv[4]);
 
-    if(buttonpress){
-      switch(*argv[1]){
-      case 'a':
-	switch(*argv[2]){
-	case 'x':
-	  am_mode = AMM_CON_XADC;
-	  break;
-	case 'y':
-	  am_mode = AMM_CON_YADC;
-	  break;
-	case '1':
-	  am_mode = AMM_CON_ANG1;
-	  break;
-	case '2':
-	  am_mode = AMM_CON_ANG2;
-	  break;
-	case 'd':
-	  am_mode = AMM_CON_DIST;
-	  break;
-	default:
-	  Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
-			   "\ndm con a x|y|1|2|d 1|0 xpos ypos\n", (char *)NULL);
-	}
+    switch(*argv[1]){
+    case 'a':
+      switch(*argv[2]){
+      case 'x':
+	am_mode = AMM_CON_XADC;
 	break;
-      case 'r':
-	switch(*argv[2]){
-	case 'x':
-	  am_mode = AMM_CON_ROT_X;
-	  break;
-	case 'y':
-	  am_mode = AMM_CON_ROT_Y;
-	  break;
-	case 'z':
-	  am_mode = AMM_CON_ROT_Z;
-	  break;
-	default:
-	  Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
-			 "\ndm con r|t|s x|y|z 1|0 xpos ypos\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
+      case 'y':
+	am_mode = AMM_CON_YADC;
 	break;
-      case 't':
-	switch(*argv[2]){
-	case 'x':
-	  am_mode = AMM_CON_TRAN_X;
-	  break;
-	case 'y':
-	  am_mode = AMM_CON_TRAN_Y;
-	  break;
-	case 'z':
-	  am_mode = AMM_CON_TRAN_Z;
-	  break;
-	default:
-	  Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
-			 "\ndm con r|t|s x|y|z 1|0 xpos ypos\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
+      case '1':
+	am_mode = AMM_CON_ANG1;
 	break;
-      case 's':
-	switch(*argv[2]){
-	case 'x':
-	  if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
-	     NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
-	    acc_sc_sol = 1.0;
-	  else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
-	    edit_absolute_scale = acc_sc[0] - 1.0;
-	    if(edit_absolute_scale > 0.0)
-	      edit_absolute_scale /= 3.0;
-	  }
-
-	  am_mode = AMM_CON_SCALE_X;
-	  break;
-	case 'y':
-	  if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
-	     NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
-	    acc_sc_sol = 1.0;
-	  else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
-	    edit_absolute_scale = acc_sc[1] - 1.0;
-	    if(edit_absolute_scale > 0.0)
-	      edit_absolute_scale /= 3.0;
-	  }
-
-	  am_mode = AMM_CON_SCALE_Y;
-	  break;
-	case 'z':
-	  if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
-	     NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
-	    acc_sc_sol = 1.0;
-	  else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
-	    edit_absolute_scale = acc_sc[2] - 1.0;
-	    if(edit_absolute_scale > 0.0)
-	      edit_absolute_scale /= 3.0;
-	  }
-
-	  am_mode = AMM_CON_SCALE_Z;
-	  break;
-	default:
-	  Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
-			 "\ndm con r|t|s x|y|z 1|0 xpos ypos\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
+      case '2':
+	am_mode = AMM_CON_ANG2;
+	break;
+      case 'd':
+	am_mode = AMM_CON_DIST;
 	break;
       default:
-	Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[1],
-			 "\ndm con r|t|s x|y|z 1|0 xpos ypos\n", (char *)NULL);
+	Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
+			 "\ndm con a x|y|1|2|d xpos ypos\n", (char *)NULL);
+      }
+      break;
+    case 'r':
+      switch(*argv[2]){
+      case 'x':
+	am_mode = AMM_CON_ROT_X;
+	break;
+      case 'y':
+	am_mode = AMM_CON_ROT_Y;
+	break;
+      case 'z':
+	am_mode = AMM_CON_ROT_Z;
+	break;
+      default:
+	Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
+			 "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
+	return TCL_ERROR;
+      }
+      break;
+    case 't':
+      switch(*argv[2]){
+      case 'x':
+	am_mode = AMM_CON_TRAN_X;
+	break;
+      case 'y':
+	am_mode = AMM_CON_TRAN_Y;
+	break;
+      case 'z':
+	am_mode = AMM_CON_TRAN_Z;
+	break;
+      default:
+	Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
+			 "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
+	return TCL_ERROR;
+      }
+      break;
+    case 's':
+      switch(*argv[2]){
+      case 'x':
+	if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
+	   NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+	  acc_sc_sol = 1.0;
+	else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
+	  edit_absolute_scale = acc_sc[0] - 1.0;
+	  if(edit_absolute_scale > 0.0)
+	    edit_absolute_scale /= 3.0;
+	}
+
+	am_mode = AMM_CON_SCALE_X;
+	break;
+      case 'y':
+	if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
+	   NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+	  acc_sc_sol = 1.0;
+	else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
+	  edit_absolute_scale = acc_sc[1] - 1.0;
+	  if(edit_absolute_scale > 0.0)
+	    edit_absolute_scale /= 3.0;
+	}
+
+	am_mode = AMM_CON_SCALE_Y;
+	break;
+      case 'z':
+	if(state == ST_S_EDIT && mged_variables->transform == 'e' &&
+	   NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+	  acc_sc_sol = 1.0;
+	else if(state == ST_O_EDIT && mged_variables->transform == 'e'){
+	  edit_absolute_scale = acc_sc[2] - 1.0;
+	  if(edit_absolute_scale > 0.0)
+	    edit_absolute_scale /= 3.0;
+	}
+
+	am_mode = AMM_CON_SCALE_Z;
+	break;
+      default:
+	Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
+			 "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
 	return TCL_ERROR;
       }
 
-      return TCL_OK;
+      break;
+    default:
+      Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[1],
+		       "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
     }
 
-    am_mode = AMM_IDLE;
     return TCL_OK;
   }
 
   if( !strcmp( argv[0], "size" )){
     int width, height;
 
-    if( argc < 3 ){
-      Tcl_AppendResult(interp, "Usage: dm size width height\n", (char *)NULL);
-      return TCL_ERROR;
+    /* get the window size */
+    if( argc == 1 ){
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%d %d", dmp->dm_width, dmp->dm_height);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
     }
 
-    width = atoi( argv[1] );
-    height = atoi( argv[2] );
+    /* set the window size */
+    if( argc == 3 ){
+      width = atoi( argv[1] );
+      height = atoi( argv[2] );
 
-    Tk_GeometryRequest(((struct x_vars *)dmp->dm_vars)->xtkwin, width, height);
+      Tk_GeometryRequest(((struct x_vars *)dmp->dm_vars)->xtkwin, width, height);
 
-    return TCL_OK;
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp, "Usage: dm size [width height]\n", (char *)NULL);
+    return TCL_ERROR;
   }
 
   Tcl_AppendResult(interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
