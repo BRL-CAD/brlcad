@@ -857,7 +857,7 @@ register CONST char	*name;
 /*
  *			R T _ O P T I M _ T R E E
  */
-HIDDEN void
+void
 rt_optim_tree( tp, resp )
 register union tree	*tp;
 struct resource		*resp;
