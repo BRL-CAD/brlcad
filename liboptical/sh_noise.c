@@ -499,7 +499,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 		VSCALE(swp->sw_color, swp->sw_color, val);
 		break;
-		break;
 	}
 
 
