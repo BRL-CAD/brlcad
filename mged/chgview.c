@@ -3354,7 +3354,7 @@ cmd_zoom(ClientData	clientData,
 }
 
 /*
- *			F _ O R I E N T A T I O N
+ *			C M D _ O R I E N T A T I O N
  *
  *  Set current view direction from a quaternion,
  *  such as might be found in a "saveview" script.
