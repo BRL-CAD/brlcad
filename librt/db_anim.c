@@ -72,6 +72,16 @@ int	root;
 	return(0);			/* OK */
 }
 
+static char	*db_anim_matrix_strings[] = {
+	"(nope)",
+	"ANM_RSTACK",
+	"ANM_RARC",
+	"ANM_LMUL",
+	"ANM_RMUL",
+	"ANM_RBOTH",
+	"eh?"
+};
+
 /*
  *			D B _ D O _ A N I M
  *
@@ -92,11 +102,14 @@ struct mater_info	*materp;
 	switch( anp->an_type )  {
 	case RT_AN_MATRIX:
 		if( rt_g.debug&DEBUG_ANIM )  {
-			rt_log("matrix, op=%d\n", anp->an_u.anu_m.anm_op);
-#if 0
-			mat_print("on original arc", arc);
-			mat_print("on original stack", stack);
-#endif
+			int	op = anp->an_u.anu_m.anm_op;
+			if( op < 0 )  op = 0;
+			rt_log("matrix, op=%s (%d)\n",
+				db_anim_matrix_strings[op], op);
+			if( rt_g.debug&DEBUG_ANIM_FULL )  {
+				mat_print("on original arc", arc);
+				mat_print("on original stack", stack);
+			}
 		}
 		switch( anp->an_u.anu_m.anm_op )  {
 		case ANM_RSTACK:
@@ -122,12 +135,10 @@ struct mater_info	*materp;
 		default:
 			return(-1);		/* BAD */
 		}
-#if 0
-		if( rt_g.debug&DEBUG_ANIM )  {
+		if( rt_g.debug&DEBUG_ANIM_FULL )  {
 			mat_print("arc result", arc);
 			mat_print("stack result", stack);
 		}
-#endif
 		break;
 	case RT_AN_MATERIAL:
 		if( rt_g.debug&DEBUG_ANIM )
