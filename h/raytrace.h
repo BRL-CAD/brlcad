@@ -30,8 +30,8 @@
 
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
 #define GETSTRUCT(p,str) \
-	p = (struct str *)rt_malloc(sizeof(struct str), "getstruct str"); \
-	if( p == (struct str *)0 ) \
+	if( (p = (struct str *)rt_malloc(sizeof(struct str), \
+	    "getstruct str")) == (struct str *)0 ) \
 		exit(17); \
 	bzero( (char *)p, sizeof(struct str));
 
@@ -89,8 +89,13 @@ struct curvature {
  *  Use this macro after having computed the normal, to
  *  compute the curvature at a hit point.
  */
-#define RT_CURVE( curvp, hitp, stp, rayp ) \
-	rt_functab[(stp)->st_id].ft_curve( curvp, hitp, stp, rayp )
+#define RT_CURVE( curvp, hitp, stp, rayp )  { \
+	register int id = (stp)->st_id; \
+	if( id < 0 || id >= rt_nfunctab )  { \
+		rt_log("stp=x%x, id=%d.\n", stp, id); \
+		rt_bomb("RT_CURVE:  bad st_id"); \
+	} \
+	(void)rt_functab[id].ft_curve( curvp, hitp, stp, rayp ); }
 
 /*
  *			U V C O O R D
@@ -181,6 +186,7 @@ struct soltab {
  *  Table is indexed by ID_xxx value of particular solid.
  */
 struct rt_functab {
+	char		*ft_name;
 	int		ft_use_rpp;
 	int		(*ft_prep)();
 	struct seg 	*((*ft_shot)());
@@ -189,9 +195,11 @@ struct rt_functab {
 	int		(*ft_uv)();
 	int		(*ft_curve)();
 	int		(*ft_classify)();
-	char		*ft_name;
+	int		(*ft_free)();
+	int		(*ft_plot)();
 };
 extern struct rt_functab rt_functab[];
+extern int rt_nfunctab;
 
 
 /*
@@ -242,6 +250,23 @@ struct mater_info {
 };
 
 /*
+ *			M F U N C S
+ *
+ *  The interface to the various material property & texture routines.
+ */
+struct mfuncs {
+	char		*mf_name;	/* Keyword for material */
+	int		mf_magic;	/* To validate structure */
+	struct mfuncs	*mf_forw;	/* Forward link */
+	int		(*mf_setup)();	/* Routine for preparing */
+	int		(*mf_render)();	/* Routine for rendering */
+	int		(*mf_print)();	/* Routine for printing */
+	int		(*mf_free)();	/* Routine for releasing storage */
+};
+#define MF_MAGIC	0x55968058
+#define MF_NULL		((struct mfuncs *)0)
+
+/*
  *			R E G I O N
  *
  *  The region structure.
@@ -256,7 +281,7 @@ struct region  {
 	short		reg_los;	/* equivalent LOS estimate ?? */
 	struct region	*reg_forw;	/* linked list of all regions */
 	struct mater_info reg_mater;	/* Real material information */
-	int		(*reg_ufunc)();	/* User appl. func for material */
+	struct mfuncs	*reg_mfuncs;	/* User appl. funcs for material */
 	char		*reg_udata;	/* User appl. data for material */
 };
 #define REGION_NULL	((struct region *)0)
@@ -275,8 +300,13 @@ struct region  {
  *  NOTE:  rt_get_pt allows enough storage at the end of the partition
  *  for a bit vector of "rt_i.nsolids" bits in length.
  */
-#define RT_HIT_NORM( hitp, stp, rayp ) \
-	rt_functab[(stp)->st_id].ft_norm(hitp, stp, rayp)
+#define RT_HIT_NORM( hitp, stp, rayp )  { \
+	register int id = (stp)->st_id; \
+	if( id < 0 || id >= rt_nfunctab ) { \
+		rt_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", stp, id, hitp, rayp); \
+		rt_bomb("RT_HIT_NORM:  bad st_id");\
+	} \
+	(void)rt_functab[id].ft_norm(hitp, stp, rayp); }
 
 struct partition {
 	struct seg	*pt_inseg;		/* IN seg ptr (gives stp) */
@@ -288,22 +318,20 @@ struct partition {
 	struct partition *pt_back;		/* backwards link */
 	char		pt_inflip;		/* flip inhit->hit_normal */
 	char		pt_outflip;		/* flip outhit->hit_normal */
-	long		pt_solhit[2];		/* VAR bit array:solids hit */
+	bitv_t		pt_solhit[1];		/* VAR bit array:solids hit */
 };
-#define PT_NULL	((struct partition *)0)
+#define PT_NULL		((struct partition *)0)
 
-#define PT_BYTES	(sizeof(struct partition) + \
-			 BITS2BYTES(rt_i.nsolids) + sizeof(bitv_t))
-
-#define COPY_PT(out,in)	bcopy((char *)in, (char *)out, PT_BYTES)
+#define COPY_PT(ip,out,in)	{ \
+	bcopy((char *)in, (char *)out, ip->rti_pt_bytes); }
 
 /* Initialize all the bits to FALSE, clear out structure */
-#define GET_PT_INIT(p,res)	\
-	{ GET_PT(p,res); bzero( ((char *) (p)), PT_BYTES ); }
+#define GET_PT_INIT(ip,p,res)	{\
+	GET_PT(ip,p,res); bzero( ((char *) (p)), (ip)->rti_pt_bytes ); }
 
-#define GET_PT(p,res)   { \
+#define GET_PT(ip,p,res)   { \
 			while( ((p)=res->re_part) == PT_NULL ) \
-				rt_get_pt(res); \
+				rt_get_pt(ip, res); \
 			res->re_part = (p)->pt_forw; \
 			res->re_partget++; }
 
@@ -340,9 +368,9 @@ union bitv_elem {
 };
 #define BITV_NULL	((union bitv_elem *)0)
 
-#define GET_BITV(p,res)  { \
+#define GET_BITV(ip,p,res)  { \
 			while( ((p)=res->re_bitv) == BITV_NULL ) \
-				rt_get_bitv(res); \
+				rt_get_bitv(ip,res); \
 			res->re_bitv = (p)->be_next; \
 			p->be_next = BITV_NULL; \
 			res->re_bitvget++; }
@@ -500,10 +528,12 @@ struct application  {
 	int		a_x;		/* Screen X of ray, if applicable */
 	int		a_y;		/* Screen Y of ray, if applicable */
 	int		a_user;		/* application-specific value */
-	point_t		a_color;	/* application-specific color */
-	vect_t		a_uvec;		/* application-specific vector */
+	char		*a_uptr;	/* application-specific pointer */
 	fastf_t		a_rbeam;	/* initial beam radius (mm) */
 	fastf_t		a_diverge;	/* slope of beam divergance/mm */
+	fastf_t		a_color[9];	/* application-specific color */
+	vect_t		a_uvec;		/* application-specific vector */
+	vect_t		a_vvec;		/* application-specific vector */
 };
 
 /*
@@ -516,24 +546,25 @@ struct rt_g {
 	int		debug;		/* non-zero for debug, see debug.h */
 	union cutter	*rtg_CutFree;	/* cut Freelist */
 	/*  Definitions necessary to interlock in a parallel environment */
-	int		res_malloc;	/* lock on memory allocation */
+	int		res_syscall;	/* lock on system calls */
 	int		res_worker;	/* lock on work to do */
 	int		res_stats;	/* lock on statistics */
+	int		res_results;	/* lock on result buffer */
+	int		res_model;	/* lock on model growth (splines) */
 };
 extern struct rt_g rt_g;
 
 /*
  *			R T _ I
  *
- *  Definitions for librt.a which are specific to the
- *  particular model being processed;  ultimately,
- *  there could be several instances of this structure.
+ *  Definitions for librt which are specific to the
+ *  particular model being processed, one copy for each model.
+ *  Initially, a pointer to this is returned from rt_dirbuild().
  */
 struct rt_i {
 	struct region	**Regions;	/* ptrs to regions [reg_bit] */
 	struct soltab	*HeadSolid;	/* ptr to list of solids in model */
 	struct region	*HeadRegion;	/* ptr of list of regions in model */
-	union tree	*RootTree;	/* ptr to total tree (non-region) */
 	char		*file;		/* name of file */
 	FILE		*fp;		/* file handle of database */
 	vect_t		mdl_min;	/* min corner of model bounding RPP */
@@ -554,10 +585,12 @@ struct rt_i {
 	struct directory *rti_DirHead;	/* directory for this DB */
 	union record	*rti_db;	/* in-core database, when needed */
 	struct animate	*rti_anroot;	/* heads list of anim at root lvl */
+	int		rti_pt_bytes;	/* length of partition struct */
+	int		rti_bv_bytes;	/* length of BITV array */
+	long		rti_magic;	/* magic # for integrity check */
 };
 #define RTI_NULL	((struct rt_i *)0)
-
-extern struct rt_i rt_i;	/* Eventually, will be a return value */
+#define RTI_MAGIC	0x01016580	/* magic # for integrity check */
 
 /*
  *  Replacements for definitions from ../h/vmath.h
@@ -577,14 +610,13 @@ extern struct rt_i rt_i;	/* Eventually, will be a return value */
 extern void rt_bomb();			/* Fatal error */
 extern void rt_log();			/* Log message */
 
-extern struct rt_i *rt_dirbuild();	/* Read named GED db, build toc */
+extern struct rt_i *rt_dirbuild();	/* Read named MGED db, build toc */
 extern void rt_prep();			/* Prepare for raytracing */
 extern int rt_shootray();		/* Shoot a ray */
 
 extern int rt_gettree();		/* Get expr tree for object */
 extern void rt_pr_seg();		/* Print seg struct */
 extern void rt_pr_partitions();		/* Print the partitions */
-extern void rt_viewbounds();		/* Find bounding view-space RPP */
 extern struct soltab *rt_find_solid();	/* Find solid by leaf name */
 
 extern void rt_prep_timer();		/* Start the timer */
