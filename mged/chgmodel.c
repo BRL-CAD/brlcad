@@ -117,12 +117,12 @@ f_mater()
 		record.c.c_matname[0] = '\0';
 	} else {
 		strncpy( record.c.c_matname, cmd_args[2],
-			sizeof(record.c.c_matname));
+			sizeof(record.c.c_matname)-1);
 
 		(void)printf("Parameter string? ");
 		fflush(stdout);
 		(void)gets(line);
-		strncpy( record.c.c_matparm, line, sizeof(record.c.c_matparm) );
+		strncpy( record.c.c_matparm, line, sizeof(record.c.c_matparm)-1 );
 
 		(void)printf("Override material color (y|n)[n]? ");
 		fflush(stdout);
