@@ -67,7 +67,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  endif	/* BSD */
 
 #  ifdef SYSV
-#	if !defined(__sparc)
+#	if !defined(__sparc) && !defined(CRAY1)
 		struct timeval {
 			int	tv_sec;
 			int	tv_usec;
