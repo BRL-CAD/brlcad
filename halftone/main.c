@@ -3,6 +3,9 @@ static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
 #include <ctype.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 #include "msr.h"
 /*	halftone	given a bw file, generate a ht file.
  *
@@ -49,6 +52,10 @@ static char rcsid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 2.2  91/06/22  05:41:08  cjohnson
+ * Add -a flag (Autosizing)
+ * Change from local Random numbers to msr_* code from librt
+ * 
  * Revision 2.1  90/04/13  01:22:48  cjohnson
  * First Relese.
  * 
