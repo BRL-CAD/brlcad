@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.8
-	Last edit: 	5/28/85 at 10:10:48	G S M
-	Retrieved: 	8/13/86 at 10:28:21
+	SCCS id:	@(#) librle.c	1.9
+	Last edit: 	6/6/85 at 17:30:53	G S M
+	Retrieved: 	8/13/86 at 10:28:38
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -15,7 +15,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.8	last edit 5/28/85 at 10:10:48";
+char	sccsTag[] = "@(#) librle.c	1.9	last edit 6/6/85 at 17:30:53";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -112,7 +112,7 @@ int	_pixelbits = 8;	/* Default : (8) bits per pixel.		*/
 int	rle_debug = 0;
 int	rle_verbose = 0;
 
-#define HIDDEN
+#define HIDDEN static
 HIDDEN void	_put_Data();
 HIDDEN int	_put_Color_Map_Seg();
 HIDDEN int	_put_Std_Map();
@@ -127,85 +127,68 @@ HIDDEN int	_get_New_Inst();	/* New extended inst. reader.	*/
 static Xtnd_Rle_Header	w_setup;	/* Header being written out.	*/
 static Xtnd_Rle_Header	r_setup;	/* Header being read in.	*/
 
-/*	r l e _ w h d r ( )
- 	This routine should be called after 'setfbsize()', unless the
-	framebuffer image is the default size (512).
-	This routine should be called before 'rle_encode_ln()' to set up
-	the global data: _bg_flag, _bw_flag, _cm_flag, and _bg_pixel.
-	Returns -1 for failure, 0 otherwise.
- */
-rle_whdr( fp, ncolors, bgflag, cmflag, bgpixel )
-FILE		*fp;
-int		ncolors, bgflag, cmflag;
-Pixel		*bgpixel;
+void
+rle_rlen( xlen, ylen )
+int	*xlen, *ylen;
 	{
-	/* Magic numbers for output file.				*/
-	register int	bbw;
-	static short	x_magic = XtndRMAGIC; /* Extended magic number.	*/
+	*xlen = r_setup.h_xlen;
+	*ylen = r_setup.h_ylen;
+	}
 
-	/* If black and white mode, compute NTSC value of background.	*/
-	if( ncolors == 1 )
+void
+rle_wlen( xlen, ylen, mode )
+int	xlen, ylen, mode;
+	{
+	if( mode == 0 )		/* Read mode.				*/
 		{
-		if( rle_verbose )
-			(void) fprintf( stderr,
-					"Image being saved as monochrome.\n"
-					);
-		bbw = 0.35*bgpixel->red+0.55*bgpixel->green+0.1*bgpixel->blue;
+		r_setup.h_xlen = xlen;
+		r_setup.h_ylen = ylen;
 		}
-	w_setup.h_xpos = 0;
-	w_setup.h_ypos = 0;
-	w_setup.h_xlen = _fbsize;
-	w_setup.h_ylen = _fbsize;
-	w_setup.h_flags = bgflag ? H_CLEARFIRST : 0;
-	w_setup.h_ncolors = ncolors;
-	w_setup.h_pixelbits = _pixelbits;
-	w_setup.h_ncmap = cmflag ? _ncmap : 0;
-	w_setup.h_cmaplen = _cmaplen;
-	w_setup.h_background[0] = ncolors == 0 ? bbw : bgpixel->red;
-	w_setup.h_background[1] = ncolors == 0 ? bbw : bgpixel->green;
-	w_setup.h_background[2] = ncolors == 0 ? bbw : bgpixel->blue;
+	else			/* Write mode.				*/
+		{
+		w_setup.h_xlen = xlen;
+		w_setup.h_ylen = ylen;
+		}
+	return;
+	}
 
-	if( fseek( fp, 0L, 0 ) == -1 )
+void
+rle_rpos( xpos, ypos )
+int	*xpos, *ypos;
+	{
+	*xpos = r_setup.h_xpos;
+	*ypos = r_setup.h_ypos;
+	}
+
+void
+rle_wpos( xpos, ypos, mode )
+int	xpos, ypos, mode;
+	{
+	if( mode == 0 )		/* Read mode.				*/
 		{
-		(void) fprintf( stderr, "Seek to RLE header failed!\n" );
-		return	-1;
+		r_setup.h_xpos = xpos;
+		r_setup.h_ypos = ypos;
 		}
-	if( fwrite( (char *) &x_magic, sizeof(short), 1, fp ) != 1 )
+	else			/* Write mode.				*/
 		{
-		(void) fprintf( stderr, "Write of magic number failed!\n" );
-		return	-1;
+		w_setup.h_xpos = xpos;
+		w_setup.h_ypos = ypos;
 		}
-	if( fwrite( (char *) &w_setup, sizeof w_setup, 1, fp ) != 1 )
-		{
-		(void) fprintf( stderr, "Write of RLE header failed!\n" );
-		return	-1;
-		}
-	if( rle_debug )
-		{
-		(void) fprintf( stderr, "Magic=0x%x\n", x_magic );
-		prnt_XSetup( "Setup structure written", &w_setup );
-		}
-	_bg_flag = bgflag;
-	_bw_flag = ncolors == 1;
-	_cm_flag = cmflag;
-	_bg_pixel = *bgpixel;
-	return	0;
+	return;
 	}
 
 /*	r l e _ r h d r ( )
 	This routine should be called before 'rle_decode_ln()' or 'rle_rmap()'
 	to position the file pointer correctily and set up the global flags
 	_bw_flag and _cm_flag, and to fill in _bg_pixel if necessary, and
-	to pass information back to the caller in flags, bgpixel, xlen,
-	ylen, xpos and ypos.
+	to pass information back to the caller in flags and bgpixel.
+
 	Returns -1 for failure, 0 otherwise.
  */
-rle_rhdr( fp, flags, bgpixel, xlen, ylen, xpos, ypos )
+rle_rhdr( fp, flags, bgpixel )
 FILE		*fp;
 int		*flags;
 register Pixel	*bgpixel;
-int		*xlen, *ylen;
-int		*xpos, *ypos;
 	{
 	static short	x_magic;
 	static char	*verbage[] =
@@ -326,15 +309,72 @@ int		*xpos, *ypos;
 		*flags |= NO_COLORMAP;
 	if( r_setup.h_ncolors == 0 )
 		*flags |= NO_IMAGE;
-	*xlen = r_setup.h_xlen;
-	*ylen = r_setup.h_ylen;
-	*xpos = r_setup.h_xpos;
-	*ypos = r_setup.h_ypos;
 	if( rle_debug )
 		{
 		(void) fprintf( stderr, "Magic=0x%x\n", x_magic );
 		prnt_XSetup( "Setup structure read", &r_setup );
 		}
+	return	0;
+	}
+
+/*	r l e _ w h d r ( )
+ 	This routine should be called after 'setfbsize()', unless the
+	framebuffer image is the default size (512).
+	This routine should be called before 'rle_encode_ln()' to set up
+	the global data: _bg_flag, _bw_flag, _cm_flag, and _bg_pixel.
+	Returns -1 for failure, 0 otherwise.
+ */
+rle_whdr( fp, ncolors, bgflag, cmflag, bgpixel )
+FILE		*fp;
+int		ncolors, bgflag, cmflag;
+Pixel		*bgpixel;
+	{
+	/* Magic numbers for output file.				*/
+	register int	bbw;
+	static short	x_magic = XtndRMAGIC; /* Extended magic number.	*/
+
+	/* If black and white mode, compute NTSC value of background.	*/
+	if( ncolors == 1 )
+		{
+		if( rle_verbose )
+			(void) fprintf( stderr,
+					"Image being saved as monochrome.\n"
+					);
+		bbw = 0.35*bgpixel->red+0.55*bgpixel->green+0.1*bgpixel->blue;
+		}
+	w_setup.h_flags = bgflag ? H_CLEARFIRST : 0;
+	w_setup.h_ncolors = ncolors;
+	w_setup.h_pixelbits = _pixelbits;
+	w_setup.h_ncmap = cmflag ? _ncmap : 0;
+	w_setup.h_cmaplen = _cmaplen;
+	w_setup.h_background[0] = ncolors == 0 ? bbw : bgpixel->red;
+	w_setup.h_background[1] = ncolors == 0 ? bbw : bgpixel->green;
+	w_setup.h_background[2] = ncolors == 0 ? bbw : bgpixel->blue;
+
+	if( fseek( fp, 0L, 0 ) == -1 )
+		{
+		(void) fprintf( stderr, "Seek to RLE header failed!\n" );
+		return	-1;
+		}
+	if( fwrite( (char *) &x_magic, sizeof(short), 1, fp ) != 1 )
+		{
+		(void) fprintf( stderr, "Write of magic number failed!\n" );
+		return	-1;
+		}
+	if( fwrite( (char *) &w_setup, sizeof w_setup, 1, fp ) != 1 )
+		{
+		(void) fprintf( stderr, "Write of RLE header failed!\n" );
+		return	-1;
+		}
+	if( rle_debug )
+		{
+		(void) fprintf( stderr, "Magic=0x%x\n", x_magic );
+		prnt_XSetup( "Setup structure written", &w_setup );
+		}
+	_bg_flag = bgflag;
+	_bw_flag = ncolors == 1;
+	_cm_flag = cmflag;
+	_bg_pixel = *bgpixel;
 	return	0;
 	}
 
@@ -405,7 +445,7 @@ Pixel	*scan_buf;
 	static short	word;
 
 	register int	n;
-	register u_char	*pp = (u_char *) scan_buf; /* Pointer into pixel. */
+	register u_char	*pp;
 	register int	dirty_flag = 0;
 
 	if( lines_to_skip > 0 )
@@ -413,6 +453,7 @@ Pixel	*scan_buf;
 		lines_to_skip--;
 		return	dirty_flag;
 		}
+	pp = (u_char *) (scan_buf+r_setup.h_xpos); /* Pointer into pixel. */
 	while( (*_func_Get_Inst)( fp, &opcode, &datum ) != EOF )
 		{
 		switch( opcode )
@@ -436,13 +477,13 @@ Pixel	*scan_buf;
 			switch( (n = _bw_flag ? 0 : datum) )
 				{
 			case 0:
-				pp = &(scan_buf->red);
+				pp = &((scan_buf+r_setup.h_xpos)->red);
 				break;
 			case 1:
-				pp = &(scan_buf->green);
+				pp = &((scan_buf+r_setup.h_xpos)->green);
 				break;
 			case 2:
-				pp = &(scan_buf->blue);
+				pp = &((scan_buf+r_setup.h_xpos)->blue);
 				break;
 			default:
 				(void) fprintf( stderr,	"Bad color %d\n", n );
@@ -548,10 +589,10 @@ Pixel	*scan_buf;
  */
 rle_encode_ln( fp, scan_buf )
 register FILE	*fp;
-Pixel	*scan_buf;
+Pixel		*scan_buf;
 	{
-	register Pixel *scan_p = scan_buf;
-	register Pixel *last_p = &scan_buf[w_setup.h_xlen];
+	register Pixel *scan_p = &scan_buf[w_setup.h_xpos];
+	register Pixel *last_p = &scan_buf[w_setup.h_xpos+w_setup.h_xlen];
 	register int	i;
 	register int	color;		/* holds current color */
 	register int	nseg;		/* number of non-bg run segments */
@@ -876,6 +917,7 @@ FILE	*fp;
 	return	0;
 	}
 
+HIDDEN
 _get_New_Inst( fp, opcode, datum )
 register FILE	*fp;
 register int	*opcode;
@@ -898,6 +940,7 @@ register int	*datum;
 	return	1;
 	}
 
+HIDDEN
 _get_Old_Inst( fp, opcode, datum )
 register FILE	*fp;
 register int	*opcode;
