@@ -1,0 +1,42 @@
+.\" -*- Text -*-
+.\" Copyright (c) 1992, University of Michigan
+.TH ALIASTORLE 1 "March, 1992" 1
+.UC 4 
+.SH NAME
+aliastorle \- Convert Alias\(tm raster files to RLE format.
+.SH SYNOPSIS
+.B aliastorle
+[
+.B \-v
+] [
+.B \-o 
+.I outfile
+] [
+.I infile 
+]
+.SH DESCRIPTION
+This program converts an image in Alias\(tm "pix" format to
+.IR RLE (5)
+format.  Since "pix" and \fIRLE\fP differ on the origin location, the
+program flips the image top to bottom.
+.SH OPTIONS
+.TP
+.BI \-o " outfile"
+If specified, the output will be written to this file.  If 
+.I outfile
+is "\-", or if it is not specified, the output will be written to the
+standard output stream.
+.B \-v
+Verbose output.
+.TP
+.I infile
+The input will be read from this file.  If
+.I infile
+is "\-" or is not specified, the input will be read from the standard
+input stream.
+.SH SEE ALSO
+.IR rletoalias (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Raul Rivero, Mathematics Department, University of Oviedo.

@@ -1,0 +1,165 @@
+.TH DVIRLE 1 "May 12, 1987" 1
+.SH NAME
+dvirle \- convert dvi version 2 files, produced by TeX82, to RLE images
+.SH SYNOPSIS
+.B dvirle
+[
+.B \-m
+.I number
+] [
+.B \-h
+] [
+.B \-s
+] [
+.B \-d
+.I number
+] [
+.B \-x
+.I xfilter
+] [
+.B \-y
+.I yfilter
+]
+.I infile.dvi
+.SH DESCRIPTION
+.I Dvirle
+converts .dvi files produced by
+.IR TeX (1)
+to
+.IR RLE (5)
+format.  The basic process involves two passes.  In the first
+pass, the .dvi file is converted into a list of characters.
+The second pass takes this list and converts it to
+.IR RLE .
+The image is filtered to produce gray-scale letters.  300dpi fonts are
+used, producing an unfiltered page size of approximately 2500\(mu3500
+pixels.  The default is to average this by 5 pixels in the X direction
+and 5 in the Y, producing a 510\(mu708 image.  The filtering parameters can be
+altered with the 
+.B \-x
+and
+.B \-y
+flags.
+
+The
+.B \-m
+.I number
+option is used to change the device magnification (which is in addition to
+any magnification defined in the TeX source file).
+.I Number
+should be replaced by an integer which is 1000 times the magnification
+you want.
+for example,
+.B \-m 1315
+would produce output magnified to 131.5% of true size.  The default is
+no magnification (1000).  Note, however, that a site will only
+support particular magnifications.  If you get error messages indicating that
+fonts are missing when using this option, you probably have picked an
+unsupported magnification.
+
+The
+.B \-h
+flag, when
+supplied, causes the image to be converted "on its side" (rotated by
+90 degrees).
+
+Normally the first pass prints the page numbers from the .dvi file.  The
+.B \-s
+flag suppresses these.
+
+The default
+.I maxdrift
+parameter is 2 pixels (1/100th of an inch); the
+.B \-d
+option may be used to alter this.  The
+.I maxdrift
+parameter determines just how much font spacing is allowed to
+influence character positioning.  The default value 2 allows a small
+amount of variation within words without allowing any letters to
+become too far out of position.
+
+The output file contains a number of separate 
+.I RLE
+images concatenated, one for each page in the input.  These can be
+separated with
+.IR rlesplit (1).
+The output images have a single image channel and
+an identical "alpha" channel.  For compositing with a colored
+background, it will be necessary to use 
+.IR rleswap (1)
+to expand it to 3 color channels.
+
+The shell script 
+.I topcrop
+will crop off the top 384 lines of the output image (assuming the
+default \fILaTeX\fP page size and \fIdvirle\fP filtering parameters),
+making it suitable for viewing on a (384\(mu512) frame buffer.
+.nf
+    topcrop <file.rle >cropfile.rle
+.fi
+
+A better solution is to use something like the following \fILaTeX\fP
+macros to set the page size so that, with the default filter
+parameters, the output images will be 510\(mu384.
+.nf
+.ta 1in 4in
+\\newcommand{\\maxpage}{	%% Make page as large as possible
+	\\setlength{\\topmargin}{0in}
+	\\setlength{\\oddsidemargin}{0pt}
+	\\setlength{\\evensidemargin}{0pt}
+	\\setlength{\\marginparwidth}{0pt}
+	\\setlength{\\marginparsep}{0pt}
+	\\setlength{\\headheight}{0pt}
+	\\setlength{\\headsep}{0pt}
+	\\setlength{\\textwidth}{6.5in}}
+\\newcommand{\\plainpage}{	%% Page with space for headers
+	\\pagestyle{plain}
+	\\setlength{\\textheight}{4.0667in}
+	\\setlength{\\footheight}{12pt}
+	\\setlength{\\footskip}{24pt}
+	\\maxpage}
+			
+\\newcommand{\\headingspage}{	%% Page with headers
+	\\pagestyle{headings}
+	\\setlength{\\textheight}{4.0667in}
+	\\setlength{\\footheight}{12pt}
+	\\setlength{\\footskip}{24pt}
+	\\maxpage}
+\\newcommand{\\emptypage}{	%% Page with no headers
+	\\pagestyle{empty}
+	\\setlength{\\textheight}{4.4in}
+	\\setlength{\\footheight}{0pt}
+	\\setlength{\\footskip}{0pt}
+	\\maxpage}
+.fi
+.SH FILES
+.IR dvirle1 "    first pass"
+.br
+.IR dvirle2 "    second pass"
+.SH SEE ALSO
+.na
+.IR rleflip (1),
+.IR rlesplit (1), 
+.IR rleswap (1), 
+.IR urt (1), 
+.IR RLE (5).
+.ad b
+.SH AUTHOR
+The original (Versatec) version was written by Janet Incerpi of Brown
+University.  Richard Furuta and Carl Binding of the University of
+Washington modified the programs for DVI version 2 files.  Chris Torek
+of the University of Maryland rewrote both passes in order to make
+them run at reasonable speeds.  Spencer W. Thomas of the University of
+Utah converted it to produce RLE images as output.
+.SH BUGS
+The \fB\-h\fP option doesn't work properly.  Use 
+.IR rleflip (1)
+instead.
+
+Truncates pages wider than 2550 pixels (8.5 inches).
+
+Doesn't handle missing fonts gracefully.
+
+Should be a single program, instead of a shell script and two
+programs.  Doesn't use the usual RLE argument and file name
+conventions.  Should output the TeX page numbers as picture comments.

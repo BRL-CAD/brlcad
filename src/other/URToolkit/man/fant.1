@@ -1,0 +1,114 @@
+.\" Copyright (c) 1986, University of Utah
+.TH FANT 1 "Dec 4, 1990" 
+.UC 4 
+.SH NAME
+fant \- perform simple spatial transforms on an image
+.SH SYNOPSIS
+.HP
+.B fant
+.\" sample options...
+[
+.B \-a
+.I "angle"
+] 
+[
+.B \-b blurfactor
+]
+[
+.B \-o
+.I "outfile"
+]
+[
+.B \-p
+.I "xoff yoff"
+]
+[
+.B \-s 
+.I "xscale yscale"
+]
+[
+.B \-S
+.I "xsize ysize"
+]
+[
+.B \-v
+]
+[ 
+.I infile
+] 
+.SH DESCRIPTION
+.IR Fant
+rotates or scales an image by an arbitrary amount.  It does this by
+using pixel integration (if the image size is reduced) or pixel interpolation
+if the image size is increased.  Because it works with subpixel precision,
+aliasing artifacts are not introduced (hah! see BUGS).  
+.I Fant
+uses a two-pass 
+sampling technique to perform the transformation.  If
+.I infile
+is "\-" or absent, input is read from the standard input.
+.SH OPTIONS
+.TP
+.BI \-a " angle"
+Amount to rotate image by, a real number from 0 to 45 degrees (positive
+numbers rotate clockwise).  Use rleflip(1) first to rotate an image by larger
+amounts.
+.TP
+.BI \-b " blur_factor"
+Control the amount of blurring in the output image.  
+If the blur factor is greater than one, image blurring will increase.
+If the blur factor is smaller than one, image blurring will decrease
+but aliasing artifacts may be visible.
+
+.TP
+.BI \-o " outfile"
+Specifies where to place the resulting image.  The default is to write
+to stdout.  If
+.I outfile
+is "\-", the output will be written to the standard output stream.
+.TP
+.BI \-p " xoff yoff"
+Specifies where the origin of the image is \- the image is rotated or scaled
+about this point.  If no origin is specified, the center of the image is used.
+.TP
+.BI \-s " xscale yscale"
+The amount (in real numbers) to scale an image by.  This is often
+useful for correcting the aspect of an image for display on a frame
+buffer with non square pixels.  For this use, the origin should be
+specified as 0, 0 (see \fB\-p\fP above).  If an image is only scaled
+in Y and no rotation is performed,
+.IR fant 
+only uses one sampling pass over the image, cutting the computation time
+in half.
+.TP
+.BI \-S " xsize ysize"
+An alternate method of specifying the scale factors.  
+.I xsize
+and
+.I ysize
+give the desired output image size.
+
+The \fB\-S\fP option can not be used in combination with \fB\-a\fP, \fB\-p\fP,
+or \fB\-s\fP.
+
+.TP
+.B "\-v"
+Verbose output.  Primarily for debugging.
+.LP
+.SH SEE ALSO
+.IR avg4 (1), 
+.IR rleflip (1),
+.IR rlezoom (1),
+.IR urt (1),
+.IR RLE (5),
+.br
+Fant, Karl M. "A Nonaliasing, Real-Time, Spatial Transform Technique",
+\fIIEEE CG&A\fP, January, 1986, p. 71.
+.SH AUTHORS
+John W. Peterson,
+James S. Painter
+.SH BUGS
+.IR Fant
+uses a rather poor anti-aliasing filter (a triangle filter).  This is usually
+good enough but will exhibit noticeable aliasing artifacts on nasty
+input images.

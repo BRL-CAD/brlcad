@@ -1,0 +1,42 @@
+.\" Copyright (c) 1988, University of Utah
+.TH RASTORLE 1 "21 June 1988" 1
+.SH NAME
+rastorle \- Convert sun raster file image to an RLE format file.
+.SH SYNOPSIS
+.B rastorle
+[
+.B \-a
+] [
+.B \-o
+.I outfile
+] [ 
+.I infile.ras
+] 
+.SH DESCRIPTION
+.I Rastorle
+converts a sun raster file to a file in the
+Utah Raster Toolkit 
+.IR RLE (5)
+format.  It understands both the original unencoded format and the
+"type 2" (run length encoded) format raster files.  Since Sun raster
+files and RLE images disagree on where the origin is, the program
+automatically flips the image.
+.SH OPTIONS
+.TP
+.I infile.ras
+The input sun raster will be read from this file, otherwise, input will
+be taken from stdin.
+.TP
+.B \-a
+If specified, an alpha channel will be "faked".  That is, the alpha
+channel will be zero wherever the input is black (0), and 255
+elsewhere.
+.BI \-o " outfile"
+If specified, output will be written to this file, otherwise it will
+go to stdout.
+.SH SEE ALSO
+.IR rletorast (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Berry Kercheval

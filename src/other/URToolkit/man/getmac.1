@@ -1,0 +1,46 @@
+.\" Copyright (c) 1986, University of Utah
+.TH GETMAC 1 "Jun 22, 1988" 1
+.UC 4 
+.SH NAME
+getmac \- Display RLE images on a MacIntosh display.
+.SH SYNOPSIS
+.B getmac
+[
+.B \-d
+] [ 
+.I infile
+]
+.SH DESCRIPTION
+This program displays an
+.IR RLE (5)
+file on a MacIntosh display.
+It uses a dithering technique to take a
+full-color or gray scale image into the limited number of colors
+available.
+
+Clicking on the close box or typing a
+.B q
+exits the program and returns to the MPW shell.  All other event
+processing is suspended until the program exits.
+.SH OPTIONS
+.TP
+.B \-d
+Disables dithering.
+.TP
+.B infile
+Name of the
+.IR RLE (5)
+file to display.  If not specified, the image will be read from the
+standard input.
+.SH SEE ALSO
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Spencer W. Thomas, University of Utah
+.PP 
+John Peterson, Apple Computer Inc.
+.SH BUGS
+Behaves unpredictably when it runs out of memory.
+If you have 2mb or less, don't run under multifinder.
+.SH DEFICIENCIES
+Ignores the color map.

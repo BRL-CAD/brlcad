@@ -1,0 +1,42 @@
+.\" Copyright (c) 1986, University of Utah
+.TH RLENOISE 1 "June 15, 1988" 1
+.UC 4 
+.SH NAME
+rlenoise \- Add random noise to an image
+.SH SYNOPSIS
+.B rlenoise
+[
+.B \-n
+.I amount
+] [
+.B \-o
+.I outfile
+] [ 
+.I infile
+] 
+.SH DESCRIPTION
+.I Rlenoise
+adds uniform random noise to an image.  The peak-to-peak amplitude of
+the noise can be specified with the
+.B \-n
+flag, the default value is 4.  This program may be
+useful for trying to deal with quantization in an output device, if
+you are able to trade spatial resolution for color resolution, and you
+don't have a good characterization of the quantization function.
+.SH OPTIONS
+.TP
+.I infile
+The input will be read from this file, otherwise, input will
+be taken from stdin.
+.TP
+.BI \-o " outfile"
+If specified, output will be written to this file, otherwise it will
+go to stdout.
+.SH SEE ALSO
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Spencer W. Thomas, University of Michigan.
+.SH BUGS
+Of limited utility.
+

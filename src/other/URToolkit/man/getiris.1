@@ -1,0 +1,35 @@
+.\" Copyright (c) 1986, University of Utah
+.TH GETIRIS 1 "Jan 20, 1987" 1
+.UC 4 
+.SH NAME
+getiris \- display an RLE image on a Silicon Graphics Iris Workstation.
+.SH SYNOPSIS
+.B getiris
+[
+.I infile
+]
+.SH DESCRIPTION
+This program displays an
+.IR RLE (5)
+file on a
+.I Silicon Graphics Iris
+that is not running the 
+window manager.  It uses the full 24 bits of color available on an iris.
+After the picture is displayed, press any mouse button to erase the screen.
+.I Getiris
+does not work on the 4D series, only on the 2400 (or, I assume, 3000) series
+machines.
+.SH OPTIONS
+.TP
+.I infile
+Name of the
+.IR RLE (5)
+file to display.  If not specified, the image will be read from the
+standard input.
+.SH SEE ALSO
+.IR get4d (1),
+.IR getmex (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Glenn McMinn and Rod Bogart, University of Utah.

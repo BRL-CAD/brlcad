@@ -1,0 +1,81 @@
+.\" Copyright (c) 1986, University of Utah
+.TH RLEGRID 1 "November 26, 1990" 1
+.UC 4 
+.SH NAME
+rlegrid \- create grids and checkerboards in rle format
+.SH SYNOPSIS
+.B rlegrid
+.\" sample options...
+[
+.B \-b 
+.I "bg_color"
+]
+[ 
+.B \-c
+]
+[
+.B \-f
+.I "fg_color"
+]
+[
+.B \-o
+.I "outfile"
+]
+[
+.B \-s 
+.I "xsize ysize"
+]
+[
+.B \-w
+.I "width"
+]
+
+.SH DESCRIPTION
+.IR rlegrid
+generates simple grid and checkboard patterns.  
+
+
+.SH OPTIONS
+.TP
+.BI \-b " bg_color"
+Specifies the background color value.  Should between 0 and 255.
+Default is 0.
+.TP
+.B \-c 
+Generate checkboards.  With the 
+.B -c 
+option, rlegrid will generate
+a checkboard with squares of size 
+.I "width"
+on a side.  Squares will alternate between the foreground and background
+colors.
+
+Without the 
+.B -c 
+option, rlegrid will generate a grid.  Grid lines will be 
+.I width
+apart and will be in the foreground color.  The remainder
+of the image will be in the background color.
+.TP
+.BI \-f " fg_color"
+Specifies the background color value.  Should between 0 and 255.
+Default is 255.
+.TP
+.BI \-o " outfile"
+Specifies where to place the resulting image.  The default is to write
+to stdout.  If
+.I outfile
+is "\-", the output will be written to the standard output stream.
+.TP
+.BI \-s " xsize yssize"
+This is the size of the resulting image.  Default is 512x512.
+.TP
+.BI \-w " width"
+The spacing between grid lines or checkboard squares.  The default is 16.
+
+.LP
+.SH SEE ALSO
+.IR rlebg (1), 
+.br
+.SH AUTHOR
+James S. Painter

@@ -1,0 +1,60 @@
+.\" -*- Text -*-
+.\" Copyright (c) 1990, University of Michigan
+.\" Template man page.  
+.TH PROGNAME 1 "Month DD, YYYY" 1
+.UC 4 
+.SH NAME
+progname \- a prog for naming
+.SH SYNOPSIS
+.B progname
+.\" sample options, they should be alphabetized...
+.\" Flags are bold, args are italics
+[
+.B \-l
+] [
+.B \-o 
+.I outfile
+] [
+.B \-p
+.I "x y"
+] [
+.B \-v
+] [ 
+.I infile 
+]
+.SH DESCRIPTION
+This program accepts an
+.\" .IR refers to another man entry
+.IR RLE (5)
+file and does something interesting with it.
+.\" An option mentioned in-line
+One nice feature is the \fB\-l\fR option.
+.SH OPTIONS
+.TP
+.BI \-o " outfile"
+If specified, the output will be written to this file.  If 
+.I outfile
+is "\-", or if it is not specified, the output will be written to the
+standard output stream.
+.TP
+.BI \-p " x y"
+Reposition the image. 
+.TP
+.B \-v
+Verbose output.
+.TP
+.I infile
+The input will be read from this file.  If
+.I infile
+is "\-" or is not specified, the input will be read from the standard
+input stream.
+.SH FILES
+list files here
+.SH SEE ALSO
+.IR otherprog (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Your name here
+.SH BUGS
+Dirty laundry here.

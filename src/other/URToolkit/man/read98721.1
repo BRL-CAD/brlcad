@@ -1,0 +1,88 @@
+.\" Copyright (c), Program of Computer Graphics, Cornell University.
+.TH READ98721 1 "Jun 11, 1987" 1
+.UC 4 
+.SH NAME
+read98721 \- read an image from the HP\-98721 frame buffer
+.SH SYNOPSIS
+.B read98721
+[
+.B \-b
+.I "red green blue"
+] [
+.B \-d
+.I display
+] [
+.B \-m
+] [
+.B \-o
+.I outfile
+] [
+.B \-p
+.I "xpos ypos"
+] [
+.B \-s
+.I "xsize ysize"
+] [
+.B \-x
+.I driver
+] [
+.B \-O
+] [
+.I comments
+]
+.SH DESCRIPTION
+This program reads an image from a
+.I "HP\-98721"
+frame buffer and writes it to an
+.IR RLE (5)
+file. The file will contain three channels of 8 bits each for red, green,
+and blue respectively. If an output file name is not specified the image
+will be written to the standard output.  The default display device
+and device driver are respectively
+.I /dev/crt98721
+and
+.I hp98721.
+
+.SH OPTIONS
+.TP
+.BI \-b " red green blue"
+Specifies red, green and blue pixel values for the background.
+.TP
+.BI \-d " display"
+Gives the name of the display device from which the image is to be read.
+.TP
+.BI \-m
+Saves the device color maps. By default, no color maps are saved.
+.TP
+.BI \-o " outfile"
+Writes the image to
+.IR outfile.
+.TP
+.BI \-p " xpos ypos"
+Specifies the lower left corner of the portion of the screen to be
+saved. The origin is the lower left corner of the display, which is
+taken as the default starting position if this option is not specified.
+.TP
+.BI \-s " xsize ysize"
+Specifies the size of the image to be read.
+.TP
+.BI \-x " driver"
+Gives the name of the device driver to be used to communicate with
+the display device.
+.TP
+.BI \-O
+Specifies that the image has no background.
+.LP
+The remaining arguments are taken to be comment strings of the form
+.IR name=value
+, and are inserted in the header of the
+.IR RLE (5)
+output file.
+.SH SEE ALSO
+.IR getren (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Filippo Tampieri, Program of Computer Graphics, Cornell University.
+
+

@@ -1,0 +1,172 @@
+.\" Copyright (c) 1990, University of Michigan
+.TH RLEQUANT 1 "June 12, 1990" 1
+.UC 4 
+.SH NAME
+rlequant \- variance based color quantization for RLE images
+.SH SYNOPSIS
+.HP
+.B rlequant
+[
+.B \-b
+.I bits
+] [
+.B \-c
+] [
+.B \-d
+] [
+.B \-f
+] [
+.B \-i
+.I cubeside
+] [
+.B \-m
+] [
+.B \-n
+.I colors
+] [
+.B \-r
+.I mapfile
+] [
+.B \-o
+.I outfile
+] [ 
+.I infile
+] 
+.SH DESCRIPTION
+This program quantizes the colors in an RLE image using a
+variance-based method.  See 
+.IR colorquant (3)
+for more details on the method.
+.TP
+.BI \-b " bits"
+The colors in the input image will be "prequantized" to this many bits
+before applying the variance-based method.  Two internal tables of
+size 
+.BR "2^(3*" bits ")"
+are allocated, so values of
+.I bits
+greater than 6 are likely to cause thrashing or may prevent the
+program from running at all.  The default value of
+.I bits
+is 5.  It must be less than or equal to 8 and greater than 0.
+.TP
+.B \-c
+Only the color map will be output; the image will not be digitized.
+The output file will be a 0x0 
+.IR RLE
+file with a color map, suitable for input to 
+.IR rleldmap (1),
+.IR rledither (1),
+or
+.IR "rlequant -r" .
+.TP
+.B \-d
+Floyd Steinberg dithering is performed on the output.  This is very helpful
+for images being quantized to a small number of colors.
+.TP
+.B \-f
+If this option is specified, a faster approximation will be used.  In
+most cases, the error so introduced will be barely noticeable.
+.TP
+.BI \-i " cubeside"
+Initializes the output color map with a "color cube" of size
+\fIcubeside\fP^3.  I.e., if \fI-i 2\fP were specified, the 8 corners of the
+color cube (black, red, green, blue, yellow, cyan, magenta, white)
+would be added to the output colormap.  This reduces the number of
+colors available for quantization.  The color cube will be used to
+quantize the output image, but will not otherwise affect the choice of
+representative colors.
+.TP
+.B \-m
+Computes a single color map suitable for quantizing all the input
+images.  This is useful when the quantized images will be used as a
+"movie" (e.g., with the 
+.B \-m
+flag of
+.IR getx11 (1)).
+The input may not come from a pipe when this option is specified,
+unless
+.B \-c
+is also specified.
+.TP
+.BI \-n " colors"
+The output image will be quantized to at most
+.I colors
+colors.  It might have fewer if the input image has only a few colors
+itself.  The default value of
+.I colors
+is 256 \- \fIcubesize\fP^3 \- \fImapsize\fP.  It must be less than or
+equal to 256.  If a color cube (\fB\-c\fP) or an input map (\fB\-r\fP)
+is given, \fIcolors\fP may be 0; otherwise it must be greater than 0.
+.TP
+.BI \-r " mapfile"
+The color map from the RLE file \fImapfile\fP will be added to the
+output color map.  The number of colors in the input color map,
+\fImapsize\fP is calculated as follows: If a \fIcolor_map_length\fP
+comment is present in \fImapfile\fP, its value is used.  If not, the
+size of the color map (usually 256) is used (the \fIrlehdr\fP(1)
+program will display the color map size and the comment, if present).
+The input color map will be used to quantize the output image, but
+will not otherwise affect the choice of representative colors.  If the
+combination \fI-n 0 -r mapfile\fP is specified, then \fIrlequant\fP
+will just quantize (and dither, if requested) the input images to the
+given colormap.  This is usually faster than using \fIrledither\fP.
+.TP
+.BI \-o " outfile"
+The output will be written to the file
+.IR outfile .
+If not specified, or if
+.I outfile
+is "\-", the output will be written to the standard output stream.
+.TP
+.I infile
+This file contains one or more concatenated RLE images.  Each will be
+processed in turn.  A separate quantization map will be constructed
+for each image.  If not specified, or if
+.I infile
+is "\-", the image(s) will be read from the standard input stream.
+.SH EXAMPLES
+.TP
+rlequant file.rle
+Quantizes \fIfile.rle\fP to 256 colors using a 5-bit pre-quantization.
+If \fIfile.rle\fP has multiple images, each will get its own
+(different) colormap.
+.TP
+rlequant \-m file.rle
+Quantizes \fIfile.rle\fP to 256 colors using a 5-bit pre-quantization.
+If \fIfile.rle\fP has multiple images, they will all be used to choose
+the color map, and will all be quantized to the same color map.
+.TP
+cat *.rle | rlequant \-m \-c >map.rle ; 
+	cat *.rle | rlequant \-n 0 \-r map.rle 
+.br
+Computes a single colormap based on all the images in the files
+\fI*.rle\fP, then quantizes each image to that color map.  The output
+is the stream of quantized images.
+.TP
+rlequant -i 4 -d file.rle 
+Compute 192 representative colors for each image in \fIfile.rle\fP,
+add a 4x4x4 color cube to the resulting color map, and then quantize
+the image to the resulting set of colors with dithering.
+.TP
+rlequant -b 6 file.rle
+Quantize file.rle to 256 colors using a 6-bit prequantization.  This
+provides slightly more precision in color matching than does a 5-bit
+prequantization.  It also runs significantly slower and requires
+approximately 8 times the memory for its intermediate storage.
+.SH SEE ALSO
+.na
+.IR mcut (1),
+.IR rledither (1),
+.IR rlehdr (1),
+.IR urt (1),
+.IR colorquant (3),
+.IR RLE (5).
+.ad b
+.SH AUTHOR
+Spencer W. Thomas
+.br
+Craig Kolb (Yale University) wrote the color quantization code.
+.br
+Rod Bogart wrote the dithering code.
+

@@ -1,0 +1,255 @@
+.\" Copyright (c) 1986, University of Utah
+.TH GETX10 1 "Jan 20, 1987" 1
+.UC 4 
+.SH NAME
+getx10 \- get RLE images to an X display
+.SH SYNOPSIS
+.B getx10
+[
+.B \-{bB}
+] [
+.B \-{cwW}
+] [
+.B \-D
+] [
+.B \-f
+] [
+.B \-m
+] [
+.B \-p
+] [
+.B \-z
+] [
+.B \-=
+.I window_geometry
+] [
+.B \-d
+.I display
+] [
+.B \-{iI}
+.I image_gamma
+] [
+.B \-g
+.I display_gamma
+] [
+.B \-l 
+.I levels
+] [ 
+.I infile
+]
+
+.SH DESCRIPTION
+This program displays an
+.IR RLE (5)
+file on an 
+.I X Version 10
+display.  It uses a dithering technique to take a
+full-color or gray scale image into the limited number of colors
+typically available under
+.IR X .
+Its default behavior is to try to
+display the image in color with as many brightness levels as possible
+(except on a one bit deep display), options are provided to limit the
+number of levels or to force black and white display.  Several
+.I getx10
+processes running simultaneously with the same color resolution will
+share color map entries.
+
+Other options allow control over the gamma, or contrast, of the image.
+The dithering process assumes that the incoming image has a gamma of
+1.0 (i.e., a 200 in the input represents an intensity twice that of
+a 100.)  If this is not the case, the input values must be adjusted
+before dithering via the
+.B \-i
+or 
+.B \-I
+option.  The input file may also specify the gamma of the image via a
+picture comment (see below).  The output display is assumed to have a gamma of
+2.5 (standard for color TV monitors).  This may be modified via the
+.B \-g
+option if a display with a different gamma is used.
+
+.I Getx10
+uses the standard 
+.I X
+window creation procedure to create a window with a location and size
+specified by the user, with the restriction that the window must be at
+least as large as the input image.  If the window is turned into an
+icon, a smaller version of the image will be displayed in the icon.  A
+shifted mouse click on either the window or icon will cause the image
+to be removed.
+.SH OPTIONS
+.TP
+.B \-b
+After displaying the image in a window, 
+.I getx10
+will attempt to set your "root" window background tiling pattern to
+the image.  There are some strict limitations on image size for this
+to work (at least in X10).  A color or gray-scale image must be
+smaller than 256x256, and a black and white 
+.RB ( \-W )
+image smaller than
+about 720x720.  If the image is larger than this, a strip from the top
+of the image will be displayed in the background.  Note that if you
+kill the 
+.I getx10
+window, the color map entries will not be protected; any other program
+that asks for a color map entry will likely get one that is being used
+by the background image.
+.TP
+.B \-B
+Loads the image into the background as above, but does not display it
+in a window.
+.I Getx10
+exits after loading the background, leaving the color map unprotected,
+as above.
+.TP
+.B \-c
+This flag suppresses all dithering, and causes
+.I getx10
+to load the color map in the image file directly into the display.
+Channel 0 of the image will be treated as a set of indices into the
+color map.  If there are not enough color map entries available in the
+display, as many as fit will be loaded and all other "colors" will be
+mapped to black.  The picture comment 
+.BI color_map_length= maplen
+can be used to specify the exact number of relevant color map entries.
+.TP
+.B \-D
+"Debug mode".  The operations in the input
+.IR RLE (5)
+file will be printed as they are read.
+.TP
+.B \-f
+Normally,
+.I getx10
+will fork itself after putting the image on the screen, so that the
+parent process may return the shell, leaving an "invisible" child to
+keep the image refreshed.  If 
+.B \-f
+is specified, 
+.I getx10
+will not exit to the shell until the image is removed.
+.TP
+.B \-m
+Just loads the color map.  This may be suitable for fixing up the
+color map used by the root background.
+.TP
+.B \-p
+.I Getx10
+tries to copy the image to an off-screen pixmap for quick refresh.  On
+some displays, this will fail if no off-screen memory is available.
+The image will disappear shortly after it is completed when this
+happens.  You should specify 
+.I \-p
+to prevent the attempt to use a pixmap.
+.TP
+.B \-w
+This flag forces
+.I getx10
+to produce a gray scale dithered image instead of a color image.
+Color input will be transformed to black and white via the
+.I NTSC Y
+transform.  On a low color resolution display (a display with only 4
+bits, for example), this will produce a much smoother looking image
+than color dithering.  It may be used in conjunction with
+.B \-l
+to produce an image with a specified number of gray levels.
+.TP
+.B \-W
+This flag forces
+.I getx10
+to display the image as a black and white bitmap image.  This is the
+only mode available on monochrome (non gray scale) displays (and is
+the default there).  Black pixels will be displayed with pixel value 0
+and white with pixel value 1 (note that these may not be black and
+white on certain displays, or if they have been modified with 
+.IR xset .)
+.TP
+.B \-z
+This flag creates a zoom window for the image.  The new window is created by 
+the standard 
+.I X
+window creation process.  The mouse can be used in the image window to select
+the area to zoom.  Pressing any button will reset the center of the zoom
+window to be the selected pixel.  A clickdrag in the image window will resize
+the zoom window to enclose the selected region.  Pressing the left button in
+the zoom window will decrease the zoom factor, but will keep the same number 
+of pixels zoomed.  The right button increases the zoom factor.  If the middle
+button is pressed in the zoom window, position information will be printed
+for the selected zoom pixel.  Note that the info will be printed only if
+.B \-f
+is given with the
+.B \-z
+option.  One may also resize the zoom window to change the number of pixels
+that are zoomed.
+.TP
+.BI \-d " display"
+Give the name of the 
+.I X
+display to display the image on.  Defaults to the value of the
+environment variable
+.IR DISPLAY .
+.TP
+.BI \-= " window_geometry"
+Specify the geometry of the window in which the image will be
+displayed.  This is useful mostly for giving the location of the
+window, as the size of the window will be at least as large as the
+size of the image.  The
+.I window_geometry
+specification need not begin with an "=" sign.
+.TP
+.BI \-i " image_gamma"
+Specify the gamma (contrast) of the image.  A low contrast image,
+suited for direct display without compensation on a high contrast
+monitor (as most monitors are) will have a gamma of less than one.
+The default image gamma is 1.0.  Image gamma may also be specified by
+a picture comment in the
+.I RLE (5)
+file of the form
+.BI image_gamma= gamma.
+The command line argument will override the value in the file if specified.
+.TP
+.BI \-I " image_gamma"
+An alternate method of specifying the image gamma, the number
+following
+.B \-I
+is the gamma of the display for which the image was originally
+computed (and is therefore 1.0 divided by the actual gamma of the
+image).  Image display gamma may also be specified by
+a picture comment in the
+.I RLE (5)
+file of the form
+.BI display_gamma= gamma.
+The command line argument will override the value in the file if specified.
+.TP
+.BI \-g " display_gamma"
+Specify the gamma of the 
+.I X
+display monitor.  The default value is 2.5, suitable for most color TV
+monitors (this is the gamma value assumed by the NTSC video standard).
+.TP
+.BI \-l " levels"
+Specify the number of gray or color levels to be used in the dithering
+process.  If not this many levels are available,
+.I getx10
+will try successively fewer levels until it is able to allocate enough
+color map entries.
+.TP
+.I infile
+Name of the
+.IR RLE (5)
+file to display.  If not specified, the image will be read from the
+standard input.
+.SH SEE ALSO
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Spencer W. Thomas, University of Utah
+.SH BUGS
+It gets an X error when displaying an image only one line high.
+.SH DEFICIENCIES
+It totally ignores the 
+.I .Xdefaults 
+file.
+
