@@ -101,6 +101,8 @@ struct rt_tabdata {
  * Routines
  */
 
+BU_EXTERN( void			rt_table_free, (struct rt_table	*tabp));
+BU_EXTERN( void			rt_tabdata_free, (struct rt_tabdata *data));
 BU_EXTERN( void			rt_ck_table, (CONST struct rt_table *tabp));
 BU_EXTERN( struct rt_table	*rt_table_make_uniform, (int num, double first,
 					double last));
@@ -159,6 +161,10 @@ BU_EXTERN(struct rt_tabdata	*rt_tabdata_dup, (CONST struct rt_tabdata *in));
 BU_EXTERN(struct rt_tabdata	*rt_tabdata_get_constval, (double val,
 					CONST struct rt_table	*tabp));
 BU_EXTERN(void			rt_tabdata_constval, (struct rt_tabdata	*data, double val));
+BU_EXTERN(struct rt_tabdata	*rt_tabdata_from_array, (CONST double *array));
+BU_EXTERN(struct rt_table	*rt_table_merge2, (CONST struct rt_table *a,
+				CONST struct rt_table *b));
+
 
 #ifdef __cplusplus
 }
