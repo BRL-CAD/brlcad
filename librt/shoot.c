@@ -922,9 +922,8 @@ out:
  *  The computation of entry and exit distance is mandatory, as the final
  *  test catches the majority of misses.
  *
- * Important note -
- *  This version is optimized to return a "miss" if the ray enters the
- *  RPP *behind* the start point.  In general this is not a good idea.
+ * Note -
+ *  A hit is returned if the intersect is behind the start point.
  *
  *  Returns -
  *	 0  if ray does not hit RPP,
@@ -952,18 +951,14 @@ register fastf_t *max;
 	if( rp->r_dir[X] < 0.0 )  {
 		/* Heading towards smaller numbers */
 		/* if( *min > *pt )  miss */
-		if( (sv = (*min - *pt) * *invdir) < 0.0 )
-			return(0);	/* MISS */
-		if(rp->r_max > sv)
+		if(rp->r_max > (sv = (*min - *pt) * *invdir) )
 			rp->r_max = sv;
 		if( rp->r_min < (st = (*max - *pt) * *invdir) )
 			rp->r_min = st;
 	}  else if( rp->r_dir[X] > 0.0 )  {
 		/* Heading towards larger numbers */
 		/* if( *max < *pt )  miss */
-		if( (st = (*max - *pt) * *invdir) < 0.0 )
-			return(0);	/* MISS */
-		if(rp->r_max > st)
+		if(rp->r_max > (st = (*max - *pt) * *invdir) )
 			rp->r_max = st;
 		if( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
 			rp->r_min = sv;
@@ -980,16 +975,12 @@ register fastf_t *max;
 	/* Y axis */
 	pt++; invdir++; max++; min++;
 	if( rp->r_dir[Y] < 0.0 )  {
-		if( (sv = (*min - *pt) * *invdir) < 0.0 )
-			return(0);	/* MISS */
-		if(rp->r_max > sv)
+		if(rp->r_max > (sv = (*min - *pt) * *invdir) )
 			rp->r_max = sv;
 		if( rp->r_min < (st = (*max - *pt) * *invdir) )
 			rp->r_min = st;
 	}  else if( rp->r_dir[Y] > 0.0 )  {
-		if( (st = (*max - *pt) * *invdir) < 0.0 )
-			return(0);	/* MISS */
-		if(rp->r_max > st)
+		if(rp->r_max > (st = (*max - *pt) * *invdir) )
 			rp->r_max = st;
 		if( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
 			rp->r_min = sv;
@@ -1001,16 +992,12 @@ register fastf_t *max;
 	/* Z axis */
 	pt++; invdir++; max++; min++;
 	if( rp->r_dir[Z] < 0.0 )  {
-		if( (sv = (*min - *pt) * *invdir) < 0.0 )
-			return(0);	/* MISS */
-		if(rp->r_max > sv)
+		if(rp->r_max > (sv = (*min - *pt) * *invdir) )
 			rp->r_max = sv;
 		if( rp->r_min < (st = (*max - *pt) * *invdir) )
 			rp->r_min = st;
 	}  else if( rp->r_dir[Z] > 0.0 )  {
-		if( (st = (*max - *pt) * *invdir) < 0.0 )
-			return(0);	/* MISS */
-		if(rp->r_max > st)
+		if(rp->r_max > (st = (*max - *pt) * *invdir) )
 			rp->r_max = st;
 		if( rp->r_min < ((sv = (*min - *pt) * *invdir)) )
 			rp->r_min = sv;
@@ -1109,8 +1096,6 @@ VPRINT("max  ", max);
 		/* if( *min > *pt )  miss */
 		sv = (*min - *pt) * *invdir;
 rt_log("sv=%g, r_max=%g\n", sv, rp->r_max);
-		if( sv < 0.0 )
-			goto miss;
 		if(rp->r_max > sv)
 			rp->r_max = sv;
 		st = (*max - *pt) * *invdir;
@@ -1123,8 +1108,6 @@ rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 		/* if( *max < *pt )  miss */
 		st = (*max - *pt) * *invdir;
 rt_log("st=%g, r_max=%g\n", st, rp->r_max);
-		if( st < 0.0 )
-			goto miss;
 		if(rp->r_max > st)
 			rp->r_max = st;
 		sv = (*min - *pt) * *invdir;
@@ -1149,8 +1132,6 @@ rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 		/* if( *min > *pt )  miss */
 		sv = (*min - *pt) * *invdir;
 rt_log("sv=%g, r_max=%g\n", sv, rp->r_max);
-		if( sv < 0.0 )
-			goto miss;
 		if(rp->r_max > sv)
 			rp->r_max = sv;
 		st = (*max - *pt) * *invdir;
@@ -1163,8 +1144,6 @@ rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 		/* if( *max < *pt )  miss */
 		st = (*max - *pt) * *invdir;
 rt_log("st=%g, r_max=%g\n", st, rp->r_max);
-		if( st < 0.0 )
-			goto miss;
 		if(rp->r_max > st)
 			rp->r_max = st;
 		sv = (*min - *pt) * *invdir;
@@ -1184,8 +1163,6 @@ rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 		/* if( *min > *pt )  miss */
 		sv = (*min - *pt) * *invdir;
 rt_log("sv=%g, r_max=%g\n", sv, rp->r_max);
-		if( sv < 0.0 )
-			goto miss;
 		if(rp->r_max > sv)
 			rp->r_max = sv;
 		st = (*max - *pt) * *invdir;
@@ -1198,8 +1175,6 @@ rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 		/* if( *max < *pt )  miss */
 		st = (*max - *pt) * *invdir;
 rt_log("st=%g, r_max=%g\n", st, rp->r_max);
-		if( st < 0.0 )
-			goto miss;
 		if(rp->r_max > st)
 			rp->r_max = st;
 		sv = (*min - *pt) * *invdir;
