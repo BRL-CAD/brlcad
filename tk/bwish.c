@@ -117,6 +117,35 @@ Tcl_AppInit(interp)
 	return TCL_ERROR;
     }
 
+#if 0
+    /* Initialize [incr Tcl] */
+    if (Itcl_Init(interp) == TCL_ERROR)
+      return TCL_ERROR;
+    if (Itk_Init(interp) == TCL_ERROR)
+      return TCL_ERROR;
+
+#if 0
+    Tcl_StaticPackage(interp, "Itcl", Itcl_Init, Itcl_SafeInit);
+    Tcl_StaticPackage(interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
+#endif
+
+    /*
+     *  This is itkwish, so import all [incr Tcl] commands by
+     *  default into the global namespace.  Fix up the autoloader
+     *  to do the same.
+     */
+    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		   "::itk::*", /* allowOverwrite */ 1) != TCL_OK)
+      return TCL_ERROR;
+
+    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+            "::itcl::*", /* allowOverwrite */ 1) != TCL_OK)
+      return TCL_ERROR;
+
+    if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* ::itk::* }") != TCL_OK)
+      return TCL_ERROR;
+#endif
+
     /*
      * Call the init procedures for included packages.  Each call should
      * look like this:
