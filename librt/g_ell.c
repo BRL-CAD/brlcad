@@ -492,9 +492,6 @@ struct soltab *stp;
  *  u = azimuth
  *  v = elevation
  */
-double rt_inv2pi =  0.15915494309189533619;	/* 1/(pi*2) */
-double rt_invpi = 0.31830988618379067153;	/* 1/pi */
-
 void
 ell_uv( ap, stp, hitp, uvp )
 struct application *ap;
@@ -517,7 +514,9 @@ register struct uvcoord *uvp;
 	/* Assert that pprime has unit length */
 
 	/* U is azimuth, atan() range: -pi to +pi */
-	uvp->uv_u = mat_atan2( pprime[Y], pprime[X] ) * rt_inv2pi + 0.5;
+	uvp->uv_u = mat_atan2( pprime[Y], pprime[X] ) * rt_inv2pi;
+	if( uvp->uv_u < 0 )
+		uvp->uv_u += 1.0;
 	/*
 	 *  V is elevation, atan() range: -pi/2 to +pi/2,
 	 *  because sqrt() ensures that X parameter is always >0
