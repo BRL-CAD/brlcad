@@ -17,9 +17,23 @@
 #								#
 #################################################################
 
+SHELL		= /bin/sh
+
+# Label number for this CAD Release
+RELEASE		= 2.4
+# RCS main Revision number
+RCS_REVISION	= 8
+# Release 1.20 was Revision 1
+# Release 1.24 was Revision 5
+# Release 2.0 was Revision 6
+# Release 2.3 was Revision 7
+
 DISTDIR		= /m/dist/.
-FTPDIR		= /usr/spool/ftp/arch
 ARCHDIR		= /m/.
+ARCHIVE		= ${ARCHDIR}/cad${RELEASE}.tar
+
+TOP_FILES	= README Makefile Makefile.defs Makefile.rules \
+		cray.sh cray-ar.sh
 
 # NOTE:  The following directories contain code which may not compile
 # on all systems.  In that case, they should be removed from $DIRS:
@@ -44,6 +58,7 @@ DIRS		= h \
 		  librle \
 		  libspl librt rt \
 		  mged \
+		  proc-db \
 		  util \
 		  fbed \
 		  lgt \
@@ -51,6 +66,7 @@ DIRS		= h \
 		  whetstone dhrystone
 
 all:
+	@echo; echo "Release ${RELEASE}.  make $@"
 	-@for dir in ${DIRS}; \
 	do	echo " "; \
 		echo ---------- $$dir; \
@@ -58,6 +74,7 @@ all:
 	done
 
 benchmark:
+	@echo; echo "Release ${RELEASE}.  make $@"
 	cd libsysv; make depend; make -k
 	cd libmalloc; make depend; make -k
 	cd conv; make -k
@@ -71,24 +88,28 @@ benchmark:
 	cd rt; make depend; make -k
 
 depend:
+	@echo; echo "Release ${RELEASE}.  make $@"
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k depend) \
 	done
 
 install:
+	@echo; echo "Release ${RELEASE}.  make $@"
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k install) \
 	done
 
 inst-man:
+	@echo; echo "Release ${RELEASE}.  make $@"
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k inst-man) \
 	done
 
 uninstall:
+	@echo; echo "Release ${RELEASE}.  make $@"
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k uninstall) \
@@ -108,26 +129,26 @@ typeset:
 
 # BRL-only:  install sources in distribution tree without installing products
 inst-dist:
+	@echo; echo "Release ${RELEASE}.  make $@"
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k inst-dist) \
 	done
 
-MESSAGE		= "-mRelease 2.3"
-REV_NO		= -r7
-TOP_FILES	= README Makefile Makefile.defs Makefile.rules
 checkin:
+	@echo; echo "Release ${RELEASE}, RCS_Revision ${RCS_REVISION}.  make $@"
 	rcs -l ${TOP_FILES}
-	ci -u -f ${REV_NO} -sRel ${MESSAGE} ${TOP_FILES}
+	ci -u -f -r${RCS_REVISION} -sRel "-MRelease ${RELEASE}" ${TOP_FILES}
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; rm -f Makefile.bak; \
 		rcs -l *.[cshf1-9] Makefile*; \
-		ci -u -f ${REV_NO} -sRel ${MESSAGE} *.[cshf1-9] Makefile* ) \
+		ci -u -f -r${RCS_REVISION} -sRel "-MRelease ${RELEASE}" *.[cshf1-9] Makefile* ) \
 	done
 
 # Remove all binary files (clean, noprod)
 clobber:
+	@echo; echo "Release ${RELEASE}.  make $@"
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k clobber) \
@@ -135,6 +156,7 @@ clobber:
 
 # Remove all .o files, leave products
 clean:
+	@echo; echo "Release ${RELEASE}.  make $@"
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k clean) \
@@ -142,12 +164,14 @@ clean:
 
 # Remove all products, leave all .o files
 noprod:
+	@echo; echo "Release ${RELEASE}.  make $@"
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k noprod) \
 	done
 
 lint:
+	@echo; echo "Release ${RELEASE}.  make $@"
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k lint) \
@@ -157,22 +181,23 @@ lint:
 #
 # Use "make dist" as step 2 of making a distribution.
 dist:
-	cp Copyright* README Makefile* cray-ar.sh ${DISTDIR}
+	@echo; echo "Release ${RELEASE}.  make $@"
+	cp Copyright* README Makefile* cray.sh cray-ar.sh ${DISTDIR}
 	(cd bench; make clobber; make install)
 	cd ${DISTDIR}; du -a > Contents
 
-# Use as step 3 of making a distribution -- write the archive or tape
+# Use as step 3 of making a distribution -- write the archive
 arch:
-	-mv -f ${ARCHDIR}/cad.tar ${ARCHDIR}/cad.tar.bak
-	cd ${DISTDIR}; tar cfv ${ARCHDIR}/cad.tar *
-	chmod 444 ${ARCHDIR}/cad*.tar
-	echo "Please rename this tar file with the release number"
+	@echo; echo "Release ${RELEASE}.  make $@"
+	cd ${DISTDIR}; tar cfv ${ARCHIVE} *
+	# $4 will be file size in bytes, pad to 200K byte boundary for SGI
+	set -- `ls -l ${ARCHIVE}` ; \
+		PADBYTES=`echo "204800 $4 204800 %-p" | dc` ; \
+		if test ${PADBYTES} -lt 204800 ; then \
+			gencolor -r${PADBYTES} 0 >> ${ARCHIVE} ; \
+		fi
+	chmod 444 ${ARCHIVE}
 
-tape0:
-	cd ${DISTDIR}; tar cvf /dev/rmt0 *
-
-tape1:
-	cd ${DISTDIR}; tar cvf /dev/rmt1 *
 
 # Here, we assume that all the machine-specific files have been set up.
 #
