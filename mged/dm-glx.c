@@ -78,8 +78,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "dm-glx.h"
 
+extern void dm_var_init();
 extern void mged_print_result();
-struct dm *Glx_dm_init();
 
 static int      Glx_doevent();
 static int      Glx_dm();
@@ -154,8 +154,9 @@ static char	*kn2_knobs[] = {
 
 static int GlxdoMotion = 0;
 
-struct dm *
-Glx_dm_init(argc, argv)
+int
+Glx_dm_init(o_dm_list, argc, argv)
+struct dm_list *o_dm_list;
 int argc;
 char *argv[];
 {
@@ -190,8 +191,17 @@ char *argv[];
   argv[i-2] = "-i";
   argv[i-1] = "mged_bind_dm";
 
-#if 0
-  return Glx_open(Glx_doevent, argc, argv);
+#if DO_NEW_LIBDM_OPEN
+  dm_var_init(o_dm_list);
+  Tk_DeleteGenericHandler(Glx_doevent, (ClientData)DM_TYPE_GLX);
+  if((dmp = Glx_open(DM_EVENT_HANDLER_NULL, argc, argv)) == DM_NULL)
+    return TCL_ERROR;
+
+  dmp->dm_eventHandler = Glx_doevent;
+  curr_dm_list->s_info->opp = &pathName;
+  Tk_CreateGenericHandler(Glx_doevent, (ClientData)DM_TYPE_GLX);
+
+  return TCL_OK;
 #else
   dmp->dm_eventHandler = Glx_doevent;
   return Glx_open(dmp, argc, argv);
@@ -274,11 +284,13 @@ XEvent *eventPtr;
     switch(am_mode){
     case ALT_MOUSE_MODE_IDLE:
       if(scroll_active && eventPtr->xmotion.state & ((struct glx_vars *)dmp->dm_vars)->mb_mask)
-	bu_vls_printf( &cmd, "M 1 %d %d\n", Glx_irisX2ged(dmp, mx), Glx_irisY2ged(dmp, my));
+	bu_vls_printf( &cmd, "M 1 %d %d\n",
+		       Glx_irisX2ged(dmp, mx, 0), Glx_irisY2ged(dmp, my));
       else if(GlxdoMotion)
 	/* do the regular thing */
 	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
-	bu_vls_printf( &cmd, "M 0 %d %d\n", Glx_irisX2ged(dmp, mx), Glx_irisY2ged(dmp, my));
+	bu_vls_printf( &cmd, "M 0 %d %d\n",
+		       Glx_irisX2ged(dmp, mx, 1), Glx_irisY2ged(dmp, my));
       else
 	goto end;
 
@@ -291,9 +303,14 @@ XEvent *eventPtr;
     case ALT_MOUSE_MODE_TRANSLATE:
       if(EDIT_TRAN && mged_variables.edit){
 	vect_t view_pos;
-
+#if 0
 	view_pos[X] = (mx/(fastf_t)((struct glx_vars *)dmp->dm_vars)->width
 		       - 0.5) * 2.0;
+#else
+	view_pos[X] = (mx /
+		       (fastf_t)((struct glx_vars *)dmp->dm_vars)->width - 0.5) /
+		       ((struct glx_vars *)dmp->dm_vars)->aspect * 2.0;
+#endif
 	view_pos[Y] = (0.5 - my/
 		       (fastf_t)((struct glx_vars *)dmp->dm_vars)->height) * 2.0;
 	view_pos[Z] = 0.0;
@@ -307,10 +324,17 @@ XEvent *eventPtr;
       }else{
 	fastf_t fx, fy;
 
+#if 0
 	fx = (mx - ((struct glx_vars *)dmp->dm_vars)->omx)/
 	  (fastf_t)((struct glx_vars *)dmp->dm_vars)->width * 2.0;
+#else
+	fx = (mx - ((struct glx_vars *)dmp->dm_vars)->omx) /
+             (fastf_t)((struct glx_vars *)dmp->dm_vars)->width /
+	     ((struct glx_vars *)dmp->dm_vars)->aspect * 2.0;
+#endif
 	fy = (((struct glx_vars *)dmp->dm_vars)->omy - my)/
 	  (fastf_t)((struct glx_vars *)dmp->dm_vars)->height * 2.0;
+
 	bu_vls_printf( &cmd, "knob -i aX %f aY %f\n", fx, fy );
       }
 
@@ -852,15 +876,40 @@ char	**argv;
       return TCL_ERROR;
     }
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "M %s %d %d", argv[2],
-		  Glx_irisX2ged(dmp, atoi(argv[3])),
-		  Glx_irisY2ged(dmp, atoi(argv[4])));
-    status = Tcl_Eval(interp, bu_vls_addr(&vls));
-#if 0
-    mged_print_result(status);
-#endif
-    return status;
+    {
+      int x;
+      int y;
+      int old_show_menu;
+
+      old_show_menu = mged_variables.show_menu;
+
+      x = Glx_irisX2ged(dmp, atoi(argv[3]), 0);
+      y = Glx_irisY2ged(dmp, atoi(argv[4]));
+
+      if(mged_variables.faceplate &&
+	 mged_variables.show_menu &&
+	 *argv[2] == '1'){
+#define        MENUXLIM        (-1250)
+	if(scroll_active)
+	   goto end;
+
+	if(x >= MENUXLIM && scroll_select( x, y, 0 ))
+	  goto end;
+
+	if(x < MENUXLIM && mmenu_select( y, 0))
+	  goto end;
+      }
+
+      x = Glx_irisX2ged(dmp, atoi(argv[3]), 1);
+      mged_variables.show_menu = 0;
+end:
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "M %s %d %d", argv[2], x, y);
+      status = Tcl_Eval(interp, bu_vls_addr(&vls));
+      mged_variables.show_menu = old_show_menu;
+
+      return status;
+    }
   }
 
   status = TCL_OK;
@@ -889,9 +938,15 @@ char	**argv;
 	if(EDIT_TRAN && mged_variables.edit){
 	  vect_t view_pos;
 
+#if 0
 	  view_pos[X] = (((struct glx_vars *)dmp->dm_vars)->omx /
 			 (fastf_t)((struct glx_vars *)dmp->dm_vars)->width -
 			 0.5) * 2.0;
+#else
+	  view_pos[X] = (((struct glx_vars *)dmp->dm_vars)->omx /
+			(fastf_t)((struct glx_vars *)dmp->dm_vars)->width - 0.5) /
+	                ((struct glx_vars *)dmp->dm_vars)->aspect * 2.0;
+#endif
 	  view_pos[Y] = (0.5 - ((struct glx_vars *)dmp->dm_vars)->omy /
 			 (fastf_t)((struct glx_vars *)dmp->dm_vars)->height) * 2.0;
 	  view_pos[Z] = 0.0;
