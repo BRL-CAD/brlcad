@@ -109,13 +109,14 @@ long		*p;
  */
 int
 bu_ptbl_locate(b, p)
-struct bu_ptbl	*b;
-long		*p;
+CONST struct bu_ptbl	*b;
+CONST long		*p;
 {
-	register int	k;
-	register long	**pp = b->buffer;
+	register int		k;
+	register CONST long	**pp;
 
 	BU_CK_PTBL(b);
+	pp = (CONST long **)b->buffer;
 #	include "noalias.h"
 	for( k = b->end-1; k >= 0; k-- )
 		if (pp[k] == p) return(k);
@@ -132,12 +133,13 @@ long		*p;
 void
 bu_ptbl_zero(b, p)
 struct bu_ptbl	*b;
-long		*p;
+CONST long	*p;
 {
-	register int	k;
-	register long	**pp = b->buffer;
+	register int		k;
+	register CONST long	**pp;
 
 	BU_CK_PTBL(b);
+	pp = (CONST long **)b->buffer;
 #	include "noalias.h"
 	for( k = b->end-1; k >= 0; k-- )
 		if (pp[k] == p) pp[k] = (long *)0;
@@ -200,7 +202,7 @@ long		*p;
 int
 bu_ptbl_rm(b, p)
 struct bu_ptbl	*b;
-long		*p;
+CONST long	*p;
 {
 	register int end = b->end, j, k, l;
 	register long **pp = b->buffer;
