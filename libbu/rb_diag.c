@@ -57,12 +57,13 @@ static void describe_node (struct rb_node *node, int depth)
 
 /*		    R B _ D I A G N O S E _ T R E E ( )
  *
- *	Produce an inorder diagnostic printout of a red-black tree
+ *	    Produce a diagnostic printout of a red-black tree
  *
- *	This function has two parameters: the root and order of the tree
- *	to print out.
+ *	This function has three parameters: the root and order of the tree
+ *	to print out and the type of traversal (preorder, inorder, or
+ *	postorder).
  */
-void rb_diagnose_tree (rb_tree *tree, int order)
+void rb_diagnose_tree (rb_tree *tree, int order, int trav_type)
 {
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
@@ -73,7 +74,7 @@ void rb_diagnose_tree (rb_tree *tree, int order)
     rt_log("Current:     <%x>\n", tree -> rbt_current);
     rt_log("Empty node:  <%x>\n", tree -> rbt_empty_node);
     d_order = order;
-    _rb_walk(tree, order, describe_node, WALK_NODES, INORDER);
+    _rb_walk(tree, order, describe_node, WALK_NODES, trav_type);
     rt_log("--------------------------------------------------\n");
 }
 
