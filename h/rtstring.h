@@ -42,6 +42,11 @@ struct rt_vls  {
 };
 #define RT_VLS_MAGIC		0x89333bbb
 
+#define RT_VLS_CHECK(_vls_p) { if (_vls_p->vls_magic != RT_VLS_MAGIC) { \
+				fprintf(stderr, \
+				"in %s at line %d RT_VLS_CHECK fails\n", \
+				__FILE__, __LINE__); abort(); }}
+
 /* This macro is used to get a pointer to the current vls string */
 #define RT_VLS_ADDR(_vp)	((_vp)->vls_str)
 
