@@ -1005,10 +1005,17 @@ mged_setup()
 
 #ifdef MGED_TCL_LIBRARY
   bu_vls_init(&str);
+#if 0
   filename = getenv("MGED_TCL_LIBRARY");
   bu_vls_printf(&str, "set auto_path \\[linsert $auto_path 0 %s\\];\
 set junk \"\"", filename ? filename : MGED_TCL_LIBRARY);
   (void)cmdline(&str, False);
+#else
+  if((filename = getenv("MGED_TCL_LIBRARY")) == NULL)
+    filename = MGED_TCL_LIBRARY;
+  bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %s]", filename);
+  (void)Tcl_Eval(interp, bu_vls_addr(&str));
+#endif
   bu_vls_free(&str);
   Tcl_ResetResult(interp);
 #endif
@@ -1529,6 +1536,7 @@ int status;
   int len;
   extern void pr_prompt();
 
+#if 0
   switch (status) {
   case TCL_OK:
     len = strlen(interp->result);
@@ -1555,6 +1563,15 @@ int status;
 
     break;
   }
+#else
+  len = strlen(interp->result);
+  if (len > 0){
+    bu_log("%s%s", interp->result,
+	   interp->result[len-1] == '\n' ? "" : "\n");
+
+    pr_prompt();
+  }
+#endif
 
   Tcl_ResetResult(interp);
 }
