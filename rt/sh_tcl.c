@@ -50,9 +50,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 extern struct mfuncs	*mfHead;	/* rt/view.c */
 
-#define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,DBI_MAGIC,"struct db_i")
-#define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p, RTI_MAGIC, "struct rt_i")
-
 /*
  *			S H _ D I R E C T C H A N G E _ R G B
  *
@@ -83,7 +80,7 @@ char **argv;
 	b = atoi(argv[3+2]) / 255.;
 
 	rtip = (struct rt_i *)atoi(argv[1]);
-	RT_CK_RTI_TCL(rtip);
+	RT_CK_RTI_TCL(interp, rtip);
 
 	if( rtip->needprep )  {
 		Tcl_AppendResult(interp, "rt_prep() hasn't been called yet, error.\n", NULL);
@@ -147,7 +144,7 @@ char **argv;
 	}
 
 	rtip = (struct rt_i *)atoi(argv[1]);
-	RT_CK_RTI_TCL(rtip);
+	RT_CK_RTI_TCL(interp, rtip);
 
 	if( rtip->needprep )  {
 		Tcl_AppendResult(interp, "rt_prep() hasn't been called yet, error.\n", NULL);
