@@ -8,21 +8,18 @@
  *	output integers with zeros.  There is no attempt to prevent 
  *	"infinite" loops.
  *
- *  Author -
+ *  Authors -
  *	John Grosh, Phil Dykstra, and Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
- *	All rights reserved.
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
-
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
