@@ -34,14 +34,12 @@ static char RCSid[] = "@(#)$Header$";
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
+#include "db.h"		/* for ID_CM_UNIT, etc. */
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "rtlex.h"
 #include "./ged.h"
 #include "./mged_solid.h"
-#include "./sedit.h"	/* ??? */
-#include "./mged_dm.h"	/* ??? */
 #include "./joints.h"
 
 extern struct db_i	*dbip;	/* database instance pointer */
