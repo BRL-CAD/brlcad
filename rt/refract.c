@@ -57,12 +57,17 @@ char	*dp;
 		goto finish;
 	if( ap->a_level >= MAX_BOUNCE )  {
 		/* Nothing more to do for this ray */
+#ifdef debug
 		rt_log("rr_render: lvl=%d, stopping at %s\n",
 			ap->a_level,
 			pp->pt_inseg->seg_stp->st_name);
 		VSET( swp->sw_color, 99, 99, 0 );
+#else
+		VSETALL( swp->sw_color, 0 );
+#endif
 		goto finish;
 	}
+	VMOVE( filter_color, swp->sw_color );
 
 	/*
 	 *  Diminish base color appropriately, and add in
@@ -86,6 +91,7 @@ char	*dp;
 		VSCALE( work, swp->sw_hit.hit_normal, f );
 		/* I have been told this has unit length */
 		VSUB2( sub_ap.a_ray.r_dir, work, to_eye );
+		sub_ap.a_purpose = "reflected ray";
 		(void)rt_shootray( &sub_ap );
 
 		/* a_user has hit/miss flag! */
@@ -113,7 +119,6 @@ char	*dp;
 			VSETALL( filter_color, 1 );
 			goto do_exit;
 		}
-		VMOVE( filter_color, pp->pt_regionp->reg_mater.ma_transmit );
 
 		/*
 		 *  Find new exit point from the inside. 
@@ -124,6 +129,7 @@ char	*dp;
 do_inside:
 		sub_ap.a_hit =  rr_hit;
 		sub_ap.a_miss = rr_miss;
+		sub_ap.a_purpose = "internal reflection";
 		if( rt_shootray( &sub_ap ) == 0 )  {
 			if(rdebug&RDEBUG_HITS)rt_log("rr_render: Refracted ray missed '%s' -- RETRYING, lvl=%d\n",
 				pp->pt_inseg->seg_stp->st_name,
@@ -132,6 +138,7 @@ do_inside:
 			/* Useful when striking exactly in corners */
 			VJOIN1( sub_ap.a_ray.r_pt, sub_ap.a_ray.r_pt,
 				-0.5, incident_dir );
+			sub_ap.a_purpose = "backed off, internal reflection";
 			if( rt_shootray( &sub_ap ) == 0 )  {
 				rt_log("rr_render: Refracted ray missed 2x '%s', lvl=%d\n",
 					pp->pt_inseg->seg_stp->st_name,
@@ -184,6 +191,7 @@ do_exit:
 		sub_ap.a_hit =  ap->a_hit;
 		sub_ap.a_miss = ap->a_miss;
 		sub_ap.a_level++;
+		sub_ap.a_purpose = "escaping refracted ray";
 		(void) rt_shootray( &sub_ap );
 
 		/* a_user has hit/miss flag! */
