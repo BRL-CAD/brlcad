@@ -45,12 +45,11 @@ extern vect_t	background;
 /*
  *			R R _ R E N D E R
  */
-HIDDEN int
-rr_render( ap, pp, swp, dp )
+int
+rr_render( ap, pp, swp )
 register struct application *ap;
-struct partition *pp;
+struct partition	*pp;
 struct shadework	*swp;
-char		*dp;
 {
 	struct application sub_ap;
 	vect_t	work;
@@ -63,6 +62,9 @@ char		*dp;
 	fastf_t	transmit;
 	vect_t	transmit_color;
 	fastf_t	attenuation;
+	vect_t	to_eye;
+
+	RT_AP_CHECK(ap);
 
 	reflect = swp->sw_reflect;
 	transmit = swp->sw_transmit;
@@ -313,7 +315,6 @@ do_exit:
 	 */
 do_reflection:
 	if( reflect > 0 )  {
-		LOCAL vect_t		to_eye;
 		register fastf_t	f;
 
 		/* Mirror reflection */
@@ -372,6 +373,7 @@ rr_miss( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
+	RT_AP_CHECK(ap);
 	return(1);	/* treat as escaping ray */
 }
 
@@ -405,6 +407,10 @@ struct partition *PartHeadp;
 	register struct hit	*hitp;
 	register struct soltab	*stp;
 	struct partition	*psave;				
+	struct shadework	sw;
+	struct application	appl;
+
+	RT_AP_CHECK(ap);
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist > 0.0 )  break;
@@ -513,14 +519,13 @@ struct partition *PartHeadp;
 		register fastf_t	d;
 		d = pp->pt_forw->pt_inhit->hit_dist - hitp->hit_dist;
 		if( NEAR_ZERO( d, AIR_GAP_TOL ) )  {
-			struct shadework	sw;
-			struct application	appl;
-
-			/* Make private copy of application struct,
-			 * because viewshade() may change various fields. ???
+			/*
+			 * Make a private copy of the application struct,
+			 * because viewshade() may change various fields.
 			 */
 			appl = *ap;			/* struct copy */
 
+			bzero( (char *)&sw, sizeof(sw) );
 			sw.sw_transmit = sw.sw_reflect = 0.0;
 			sw.sw_refrac_index = 1.0;
 			sw.sw_xmitonly = 1;		/* want XMIT data only */
