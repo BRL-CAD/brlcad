@@ -391,7 +391,7 @@ struct db_full_path *pathp;
 
 					rt_log( "\tShell x%x is a void shell\n" , s2 );
 					s_next = RT_LIST_PNEXT( shell , s2 );
-					nmg_merge_shells( s , s2 );
+					nmg_js( s , s2 , &tol );
 					s2 = s_next;
 				}
 				else
