@@ -101,16 +101,17 @@ found:
 	rp->reg_udata = (char *)0;
 
 	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata )) < 0 )  {
-		rt_log("mlib_setup(%s) failure, material='%s', param='%s'\n",
+		rt_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
 			rp->reg_name, material, RT_VLS_ADDR(&param) );
 		if( material != mdefault )  {
 			/* If not default material, change to default & retry */
+			rt_log("\tChanging %s material to default and retrying.\n", rp->reg_name);
 			material = mdefault;
 			rt_vls_trunc( &param, 0 );
 			goto retry;
 		}
 		/* What to do if default setup fails? */
-		rt_log("mlib_setup(%s) error recovery fails\n", rp->reg_name);
+		rt_log("mlib_setup(%s) error recovery failed.\n", rp->reg_name);
 	}
 	rt_vls_free( &param );
 	return(ret);		/* Good or bad, as mf_setup says */
