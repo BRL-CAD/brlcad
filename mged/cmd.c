@@ -327,6 +327,7 @@ static struct cmdtab cmdtab[] = {
 "tran", f_tran,
 "translate", f_tr_obj,
 "tree", f_tree,
+"unaim", f_unaim,
 "units", f_units,
 "untie", f_untie,
 "mged_update", f_update,
@@ -1851,6 +1852,44 @@ char *argv[];
   Tcl_AppendResult(interp, bu_vls_addr(&clp->name), " ---> ",
 		   bu_vls_addr(&clp->aim->_dmp->dm_pathName),
 		   "\n", (char *)NULL);
+
+  return TCL_OK;
+}
+
+int
+f_unaim(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char *argv[];
+{
+  struct cmd_list *clp;
+
+  if(argc != 2){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help unaim");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+  for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+    if(!strcmp(bu_vls_addr(&clp->name), argv[1]))
+      break;
+
+  if(clp == &head_cmd_list &&
+     (strcmp(bu_vls_addr(&head_cmd_list.name), argv[1]))){
+    Tcl_AppendResult(interp, "f_unaim: unrecognized command_window - ", argv[1],
+		     "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(clp->aim)
+    clp->aim->aim = (struct cmd_list *)NULL;
+
+  clp->aim = (struct dm_list *)NULL;
 
   return TCL_OK;
 }
