@@ -80,15 +80,15 @@ CONST struct rt_tol	*tol;
 }
 
 /*
- *			N M G _ R E G I O N _ S E L F _ V F U S E
+ *			N M G _ P T B L _ V F U S E
  *
  *  Working from the end to the front, scan for geometric duplications
  *  within a single list of vertex structures.
  *
- *  Exists primarily as a support routine for nmg_two_region_vertex_fuse().
+ *  Exists primarily as a support routine for nmg_model_vertex_fuse().
  */
 int
-nmg_region_self_vfuse( t, tol )
+nmg_ptbl_vfuse( t, tol )
 struct nmg_ptbl		*t;
 CONST struct rt_tol	*tol;
 {
@@ -116,7 +116,6 @@ CONST struct rt_tol	*tol;
 			break;
 		}
 	}
-if(count)rt_log("nmg_region_self_vfuse() %d\n", count);
 	return count;
 }
 
@@ -168,7 +167,6 @@ CONST struct rt_tol	*tol;
 			count++;
 		}
 	}
-if(count)rt_log("nmg_region_both_vfuse() %d\n", count);
 	return count;
 }
 
@@ -197,7 +195,7 @@ CONST struct rt_tol	*tol;
 	nmg_vertex_tabulate( &t1, &r1->l.magic );
 	nmg_vertex_tabulate( &t2, &r2->l.magic );
 
-	total = nmg_region_self_vfuse( &t1, tol );
+	total = nmg_ptbl_vfuse( &t1, tol );
 	total += nmg_region_both_vfuse( &t1, &t2, tol );
 
 	nmg_tbl( &t1, TBL_FREE, 0 );
@@ -226,10 +224,11 @@ CONST struct rt_tol	*tol;
 
 	nmg_vertex_tabulate( &t1, &m->magic );
 
-	total = nmg_region_self_vfuse( &t1, tol );
+	total = nmg_ptbl_vfuse( &t1, tol );
 
 	nmg_tbl( &t1, TBL_FREE, 0 );
 
+if(total)rt_log("nmg_model_vertex_fuse() %d\n", total);
 	return total;
 }
 
@@ -418,6 +417,8 @@ CONST struct rt_tol	*tol;
 			if (rt_g.NMG_debug & DEBUG_MESH)  {
 				rt_log("nmg_two_face_fuse(x%x, x%x) delta dist from origin=%g \n",
 					f1, f2, dist);
+				PLPRINT(" fg1", fg1->N);
+				PLPRINT(" fg2", fg2->N);
 			}
 			return 0;
 		}
@@ -429,6 +430,8 @@ CONST struct rt_tol	*tol;
 			if (rt_g.NMG_debug & DEBUG_MESH)  {
 				rt_log("nmg_two_face_fuse(x%x, x%x) A vdot=%g, tol=%g \n",
 					f1, f2, dist, tol->para);
+				PLPRINT(" fg1", fg1->N);
+				PLPRINT(" fg2", fg2->N);
 			}
 			return 0;
 		}
@@ -441,14 +444,31 @@ CONST struct rt_tol	*tol;
 		 */
 		dist = VDOT( fg1->N, fg2->N );
 		if( !(dist >= tol->para) )  {
-			if (rt_g.NMG_debug & DEBUG_MESH)  {
-				rt_log("nmg_two_face_fuse(x%x, x%x) B vdot=%g, tol=%g \n",
-					f1, f2, dist, tol->para);
+			if( NEAR_ZERO( fg1->N[3], tol->dist ) )  {
+				/* Plane runs through origin, need to check both signs */
+				if( !(-dist >= tol->para) )  {
+					if (rt_g.NMG_debug & DEBUG_MESH)  {
+						rt_log("nmg_two_face_fuse(x%x, x%x) B vdot=%g, tol=%g \n",
+							f1, f2, dist, tol->para);
+						PLPRINT(" fg1", fg1->N);
+						PLPRINT(" fg2", fg2->N);
+					}
+					return 0;
+				}
+				/* Geometric match, with flipped signs */
+				flip2 = 1;
+			} else {
+				if (rt_g.NMG_debug & DEBUG_MESH)  {
+					rt_log("nmg_two_face_fuse(x%x, x%x) C vdot=%g, tol=%g \n",
+						f1, f2, dist, tol->para);
+					PLPRINT(" fg1", fg1->N);
+					PLPRINT(" fg2", fg2->N);
+				}
+				return 0;
 			}
-			return 0;
+		} else {
+			/* Geometric match, same sign */
 		}
-
-		/* Geometric match, same sign */
 	}
 	if (rt_g.NMG_debug & DEBUG_MESH)  {
 		rt_log("nmg_two_face_fuse: plane eqns match, flip2=%d\n", flip2);
