@@ -610,7 +610,7 @@ com_table	*ctp;
     int 	i = 0;      /* current position on the *buffer        */
     FILE	*newf;
     static char	*new_dest;
-#ifndef CRAY2
+#if !defined(HAVE_POPEN_DECL) && !defined(CRAY2)
     RT_EXTERN(FILE *popen, (CONST char *command, CONST char *type) );
 #endif
     static FILE	*(*openfunc)() = 0;
