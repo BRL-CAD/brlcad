@@ -953,7 +953,6 @@ int		lvl;			/* debug level */
 static char ** path_parse ();
 
 /* Illuminate the named object */
-/* TODO:  allow path specification on cmd line */
 int
 f_ill(argc, argv)
 int	argc;
@@ -962,54 +961,97 @@ char	**argv;
 	register struct directory *dp;
 	register struct solid *sp;
 	struct solid *lastfound = SOLID_NULL;
-	register int i;
+	register int i, j;
 	int nmatch;
-	char	**path_piece;
+	int	nm_pieces;
+	char	**path_piece = 0;
 	char	*basename;
+	char	*sname;
 
-	/*
-	 *	XXX
-	 *
-	 *	Have to reject before returning??
-	 */
-
-	path_piece = path_parse(argv[1]);
-	for (i = 0; path_piece[i] != 0; ++i)
-	    rt_log("OK, next piece is '%s'\n", path_piece[i]);
-
-	if (i == 0)
+	if (state == ST_S_PICK)
 	{
-	    rt_log("Bad solid path: '%s'\n", argv[1]);
-	    return CMD_BAD;
+	    path_piece = path_parse(argv[1]);
+	    for (nm_pieces = 0; path_piece[nm_pieces] != 0; ++nm_pieces)
+		rt_log("OK, next piece is '%s'\n", path_piece[nm_pieces]);
+
+	    if (nm_pieces == 0)
+	    {
+		rt_log("Bad solid path: '%s'\n", argv[1]);
+		goto bail_out;
+	    }
+	    basename = path_piece[nm_pieces - 1];
+	    rt_log("OK, now, basename is '%s'\n", basename);
 	}
-	basename = path_piece[i - 1];
-	rt_log("OK, now, basename is '%s'\n", basename);
 
 	if( (dp = db_lookup( dbip,  basename, LOOKUP_NOISY )) == DIR_NULL )
-		return CMD_BAD;
-	if( state != ST_O_PICK && state != ST_S_PICK )  {
-		state_err("keyboard illuminate pick");
-		return CMD_BAD;
-	}
+		goto bail_out;
+
 	nmatch = 0;
-	FOR_ALL_SOLIDS (sp)
+	switch (state)
 	{
-	    for (i = 0; i <= sp -> s_last; i++)
-		if (sp -> s_path[i] == dp)
+	    case ST_S_PICK:
+		if (!(dp -> d_flags & DIR_SOLID))
 		{
-		    lastfound = sp;
-		    nmatch++;
-		    break;
+		    rt_log("%s is not a solid\n", basename);
+		    goto bail_out;
 		}
-	    sp -> s_iflag = DOWN;
+		FOR_ALL_SOLIDS(sp)
+		{
+		    int	a_new_match;
+
+		    i = sp -> s_last;
+		    if (sp -> s_path[i] == dp)
+		    {
+			a_new_match = 1;
+			j = nm_pieces - 1;
+			for ( ; a_new_match && (i >= 0) && (j >= 0); --i, --j)
+			{
+			    sname = sp -> s_path[i] -> d_namep;
+			    if ((*sname != *(path_piece[j]))
+			     || strcmp(sname, path_piece[j]))
+			    {
+			        a_new_match = 0;
+				rt_log("strcmp(%s, %s) != 0\n",
+				    sname, path_piece[j]);
+			    }
+			    else
+				rt_log("strcmp(%s, %s) == 0\n",
+				    sname, path_piece[j]);
+			}
+			if (a_new_match && ((i >= 0) || (j < 0)))
+			{
+			    lastfound = sp;
+			    ++nmatch;
+			}
+			rt_log("a_new_match=%d, j=%d, i=%d\n",
+			    a_new_match, j, i);
+		    }
+		    sp->s_iflag = DOWN;
+		}
+		break;
+	    case ST_O_PICK:
+		FOR_ALL_SOLIDS( sp )  {
+			for( i=0; i<=sp->s_last; i++ )  {
+				if( sp->s_path[i] == dp )  {
+					lastfound = sp;
+					nmatch++;
+					break;
+				}
+			}
+			sp->s_iflag = DOWN;
+		}
+		break;
+	    default:
+		state_err("keyboard illuminate pick");
+		goto bail_out;
 	}
 	if( nmatch <= 0 )  {
 		rt_log("%s not being displayed\n", argv[1]);
-		return CMD_BAD;
+		goto bail_out;
 	}
 	if( nmatch > 1 )  {
 		rt_log("%s multiply referenced\n", argv[1]);
-		return CMD_BAD;
+		goto bail_out;
 	}
 	/* Make the specified solid the illuminated solid */
 	illump = lastfound;
@@ -1022,7 +1064,24 @@ char	**argv;
 		init_sedit();
 	}
 	dmaflag = 1;
+	if (path_piece)
+	{
+	    while (*path_piece != 0)
+		rt_free(*path_piece++, "f_ill: char *");
+	    rt_free((char *) path_piece, "f_ill: char **");
+	}
 	return CMD_OK;
+
+bail_out:
+    if (state != ST_VIEW)
+	button(BE_REJECT);
+    if (path_piece)
+    {
+	while (*path_piece != 0)
+	    rt_free(*path_piece++, "f_ill: char *");
+	rt_free((char *) path_piece, "f_ill: char **");
+    }
+    return CMD_BAD;
 }
 
 /* Simulate pressing "Solid Edit" and doing an ILLuminate command */
@@ -1033,6 +1092,10 @@ char	**argv;
 {
 	if( not_state( ST_VIEW, "keyboard solid edit start") )
 		return CMD_BAD;
+	if( HeadSolid.s_forw == &HeadSolid )  {
+		(void)rt_log("no solids being displayed\n");
+		return CMD_BAD;
+	}
 
 #ifdef XMGED
 	update_views = 1;
