@@ -197,6 +197,7 @@ grid_setup()
  *
  *  Compute a run of pixels, in parallel if the hardware permits it.
  *
+ *  For a general-purpose version, see LIBRT rt_shoot_many_rays()
  */
 void
 do_run( a, b )
@@ -243,6 +244,8 @@ int	stop_worker = 0;
  *
  *  In order to reduce the traffic through the res_worker critical section,
  *  a multiple pixel block may be removed from the work queue at once.
+ *
+ *  For a general-purpose version, see LIBRT rt_shoot_many_rays()
  */
 void
 worker(cpu, arg)
