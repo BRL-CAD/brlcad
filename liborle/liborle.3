@@ -1,12 +1,10 @@
-.TH LIBRLE 3V VMB
-'\"	last edit:	85/08/15	G S Moss
-'\"	SCCS ID:	@(#)librle.3	1.7
+.TH LIBRLE 3 BRL/CAD
 .SH NAME
 librle \- run-length encoded image library
 .SH SYNOPSIS
 .nf
-.B #include ``/vld/include/rle.h''
-.B #include ``/vld/include/fb.h''
+.B #include <fb.h>
+.B #include <rle.h>
 .P
 .B "int rle_rhdr( stream, flags, bgpixel )"
 .B FILE *stream;
@@ -62,7 +60,7 @@ scheme being used.
 This library does not need to know anything about
 the available frame buffer hardware.
 The frame buffer library,
-.IR libfb\^ (3V),
+.IR libfb\^ (3),
 can also be used to free programs of hardware dependence.
 .P
 The following routines are used to decode an
@@ -209,8 +207,18 @@ data types are defined in
 .BR fb.h .
 The color map and scanlines can be conveniently read from or written to
 a file or supported frame buffer with compatible functions found in
-.IR libfb\^ (3V).
+.IR libfb\^ (3).
 .SH WARNINGS
+The current version of this library reads Edition-1 and Edition-2
+RLE files.
+The University of Utah is currently preparing Edition-3 of
+this format.
+All encoding is in Edition-2 format.
+Note that Edition-1 formats are byte-order sensitive, so that they
+can not be transported around the network with
+.IR rcp (1)
+with abandon.
+.P
 The
 RLE
 files must be decoded seqentially from the bottom up, as it is the convention
@@ -223,7 +231,9 @@ Encoding an
 RLE
 file from the top down is considered anti-social behavior and will lead
 to confusion if the installed frame buffer utilities are used.
-The functions must be used in sequence to read/write the header, followed
+.P
+The library functions must be used
+\fIin sequence\fR to read/write the header, followed
 by the color map (if one exists) and then the image.
 It is safe to process multiple images as long as the proper sequence
 is followed.
@@ -256,19 +266,14 @@ can be used to reposition the file pointer.
 .SH EXAMPLE
 The library may be loaded as follows:
 .RS
-$ \|\fIcc \|\-I/vld/include \|program.c \|\/vld/lib/librle.a\fP
+\|\fIcc \|program.c \|\-lrle.a\fP
 .RE
-.SH FILES
-/vld/include/rle.h
-.br
-/vld/include/fb.h
-.br
-/vld/lib/librle.a
 .SH "SEE ALSO"
-libfb(3V).
+rle-fb(1), fb-rle(1),
+libfb(3).
 .SH DIAGNOSTICS
 Upon error, all functions print a message and return \-1.
-.SH AUTHOR
+.SH AUTHORS
 Gary S. Moss, BRL/VLD-VMB
 .br
 Mike J. Muuss, BRL/SECAD
@@ -279,3 +284,12 @@ It would be nice to fix the problem of asynchronous calls by passing a
 pointer to storage for the setup structure to the read/write header and
 read/write scanline routines so that there is no global information
 to contend with.
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.ARPA>.
