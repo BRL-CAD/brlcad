@@ -48,7 +48,7 @@ char *argv[];
 {
   dm_var_init(o_dm_list);
 
-  if((dmp = PS_open(DM_EVENT_HANDLER_NULL, argc - 1, argv + 1)) == DM_NULL)
+  if((dmp = dm_open(DM_TYPE_PS, DM_EVENT_HANDLER_NULL, argc, argv)) == DM_NULL)
     return TCL_ERROR;
 
   curr_dm_list->s_info->opp = &tkName;
