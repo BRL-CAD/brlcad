@@ -32,12 +32,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #include <math.h>
+#include "png.h"
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "png.h"
 #include "zlib.h"
 
 static png_color_16 def_backgrd={ 0,0,0,0,0 };

@@ -27,12 +27,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "png.h"
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "png.h"
 #include "zlib.h"
 
 static char *usage="Usage:\n\t%s png__file\n";
@@ -52,7 +52,7 @@ char *argv[];
 	png_color_16p input_backgrd;
 	double gamma;
 	int file_width, file_height;
-	png_uint_32 xoff, yoff;
+	png_int_32 xoff, yoff;
 	png_uint_32 xres, yres;
 	int unit_type;
 	int rgb_intent;

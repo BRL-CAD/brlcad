@@ -27,13 +27,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "zlib.h"
+#include "pngconf.h"
+#include "png.h"
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "png.h"
-#include "zlib.h"
 
 static int	file_width = 512;		/* default input width */
 static int	file_height = 512;		/* default input height */
