@@ -32,7 +32,7 @@ class RtControl {
     itk_option define -omode omode Omode {}
     itk_option define -nproc nproc Nproc 1
     itk_option define -hsample hsample Hsample 0
-    itk_option define -jitter jitter Jitter "None"
+    itk_option define -jitter jitter Jitter 0
     itk_option define -lmodel lmodel Lmodel 0
     itk_option define -other other Other {}
     itk_option define -size size Size 512
@@ -50,6 +50,7 @@ class RtControl {
     private method set_dest {pane}
     private method set_size {size}
     private method set_jitter {j}
+    private method set_lmodel {lm}
     private method cook_dest {dest}
     private method fb_mode {}
     private method ok {}
@@ -66,11 +67,6 @@ class RtControl {
     private variable raw_src ""
     private variable win_geom ""
     private variable win_geom_adv ""
-
-    # This variable is used to determine
-    # what value gets passed to rt
-    private variable jitter_val 0
-    private variable jitter_name 0
 
     constructor {args} {}
 }
@@ -289,22 +285,44 @@ body RtControl::constructor {args} {
     # process options
     eval itk_initialize $args
 
-    # Disable the source CombBox's entry widget
-    configure -sourceState disabled
+    # Disable the source, jitter and lmodel CombBox's entry widgets
+    configure -sourceState disabled -jitterState disabled -lmodelState disabled
 
     # Link the ComboBox's entry widgets to this class' variables
     $itk_component(sizeCB) configure -entryvariable [scope itk_option(-size)]
     $itk_component(bgcolorCB) configure -entryvariable [scope itk_option(-color)]
     $itk_component(destCB) configure -entryvariable [scope itk_option(-dest)]
-    $itk_component(adv_jitterCB) configure -entryvariable [scope jitter_name]
-    $itk_component(adv_lmodelCB) configure -entryvariable [scope itk_option(-lmodel)]
 
     wm withdraw $itk_component(hull)
     center
 }
 
+configbody RtControl::nproc {
+    if {![regexp "^\[0-9\]+$" $itk_option(-nproc)]} {
+	error "Bad value - $itk_option(-nproc)"
+    }
+}
+
+configbody RtControl::hsample {
+    if {![regexp "^\[0-9\]+$" $itk_option(-hsample)]} {
+	error "Bad value - $itk_option(-hsample)"
+    }
+}
+
 configbody RtControl::jitter {
     set_jitter $itk_option(-jitter)
+}
+
+configbody RtControl::lmodel {
+    set_lmodel $itk_option(-lmodel)
+}
+
+configbody RtControl::size {
+    set_size $itk_option(-size)
+}
+
+configbody RtControl::color {
+    eval $itk_component(bgcolorCB) setColor $itk_option(-color)
 }
 
 configbody RtControl::mged {
@@ -418,33 +436,64 @@ itcl::body RtControl::set_size {size} {
 	return
     }
 
+    if {![regexp "^(\[ \]*\[0-9\]+)((\[ \]*\[xX\]?\[ \]*)|(\[ \]+))(\[0-9\]*\[ \]*)$" $size]} {
+	error "Bad size - $size"
+    }
     set itk_option(-size) $size
 }
 
 itcl::body RtControl::set_jitter {j} {
     switch -- $j {
-	0 -
-	None {
-	    set jitter_val 0
-	    set jitter_name "None"
+	0 {
+	    set itk_option(-jitter) 0
+	    $itk_component(adv_jitterCB) setText "None"
 	}
-	1 -
-	Cell {
-	    set jitter_val 1
-	    set jitter_name "Cell"
+	1 {
+	    set itk_option(-jitter) 1
+	    $itk_component(adv_jitterCB) setText "Cell"
 	}
-	2 -
-	Frame {
-	    set jitter_val 2
-	    set jitter_name "Frame"
+	2 {
+	    set itk_option(-jitter) 2
+	    $itk_component(adv_jitterCB) setText "Frame"
 	}
-	3 -
-	Both {
-	    set jitter_val 3
-	    set jitter_name "Both"
+	3 {
+	    set itk_option(-jitter) 3
+	    $itk_component(adv_jitterCB) setText "Both"
 	}
 	default {
 	    error "RtControl::set_jitter: bad value - $j"
+	}
+    }
+}
+
+itcl::body RtControl::set_lmodel {lm} {
+    switch -- $lm {
+	0 {
+	    set itk_option(-lmodel) 0
+	    $itk_component(adv_lmodelCB) setText "Full"
+	}
+	1 {
+	    set itk_option(-lmodel) 1
+	    $itk_component(adv_lmodelCB) setText "Diffuse"
+	}
+	2 {
+	    set itk_option(-lmodel) 2
+	    $itk_component(adv_lmodelCB) setText "Surface Normals"
+	}
+	3 {
+	    set itk_option(-lmodel) 3
+	    $itk_component(adv_lmodelCB) setText "Diffuse - 3 light"
+	}
+	4 {
+	    set itk_option(-lmodel) 4
+	    $itk_component(adv_lmodelCB) setText "Curvature - inverse radius"
+	}
+	5 {
+	    set itk_option(-lmodel) 5
+	    $itk_component(adv_lmodelCB) setText "Curvature - directioin vector"
+	}
+	default {
+	    error "RtControl::set_lmodel: bad value - $lm"
 	}
     }
 }
@@ -542,7 +591,7 @@ itcl::body RtControl::raytrace {} {
 	append rt_cmd " -H$itk_option(-hsample)"
     }
 
-    append rt_cmd " -J$jitter_val"
+    append rt_cmd " -J$itk_option(-jitter)"
 
     if {$itk_option(-lmodel) != ""} {
 	append rt_cmd " -l$itk_option(-lmodel)"
@@ -714,13 +763,13 @@ itcl::body RtControl::build_adv {} {
 
     # populate jitter's combobox menu
     $itk_component(adv_jitterCB) add command -label "None" \
-	    -command [code $this set_jitter "None"]
+	    -command [code $this set_jitter 0]
     $itk_component(adv_jitterCB) add command -label "Cell" \
-	    -command [code $this set_jitter "Cell"]
+	    -command [code $this set_jitter 1]
     $itk_component(adv_jitterCB) add command -label "Frame" \
-	    -command [code $this set_jitter "Frame"]
+	    -command [code $this set_jitter 2]
     $itk_component(adv_jitterCB) add command -label "Both" \
-	    -command [code $this set_jitter "Both"]
+	    -command [code $this set_jitter 3]
 
     itk_component add adv_lmodelL {
 	label $itk_component(adv).lightL -text "Light Model" -anchor e
@@ -733,6 +782,20 @@ itcl::body RtControl::build_adv {} {
     } {
 	rename -state -lmodelState lmodelState LmodelState
     }
+
+    # populate lmodel's combobox menu
+    $itk_component(adv_lmodelCB) add command -label "Full" \
+	    -command [code $this set_lmodel 0]
+    $itk_component(adv_lmodelCB) add command -label "Diffuse" \
+	    -command [code $this set_lmodel 1]
+    $itk_component(adv_lmodelCB) add command -label "Surface Normals" \
+	    -command [code $this set_lmodel 2]
+    $itk_component(adv_lmodelCB) add command -label "Diffuse - 3 light" \
+	    -command [code $this set_lmodel 3]
+    $itk_component(adv_lmodelCB) add command -label "Curvature - inverse radius" \
+	    -command [code $this set_lmodel 4]
+    $itk_component(adv_lmodelCB) add command -label "Curvature - direction vector" \
+	    -command [code $this set_lmodel 5]
 
     itk_component add adv_otherL {
 	label $itk_component(adv).otherL -text "Other Options" -anchor e
