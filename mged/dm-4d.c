@@ -391,7 +391,7 @@ Ir_open()
 		switch( inv->type )  {
 		default:
 #if 0
-			printf("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n",
+			rt_log("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n",
 			    inv->type);
 #endif
 			/* Since we recognize all the old devices, be
@@ -470,7 +470,7 @@ Ir_open()
 	}
 	endinvent();		/* frees internal inventory memory */
 #if 0
-	printf("4D: gt=%d, zbuf=%d, rgb=%d\n", ir_is_gt, ir_has_zbuf, ir_has_rgb);
+	rt_log("4D: gt=%d, zbuf=%d, rgb=%d\n", ir_is_gt, ir_has_zbuf, ir_has_rgb);
 #endif
 
 	/* Start out with the usual window */
@@ -491,7 +491,7 @@ Ir_open()
 	prefposition( 376, 376+900, 112, 112+900 );	/* new, smaller size */
 #endif
 	if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
-		printf( "No more graphics ports available.\n" );
+		rt_log( "No more graphics ports available.\n" );
 		return	-1;
 	}
 	keepaspect(1,1);	/* enforce 1:1 aspect ratio */
@@ -503,7 +503,7 @@ Ir_open()
 			setmonitor(STR_RECT);
 			stereo_is_on = 1;
 		} else {
-			printf("NOTICE: This SGI does not have stereo display capability\n");
+			rt_log("NOTICE: This SGI does not have stereo display capability\n");
 			stereo_is_on = 0;
 		}
 	}
@@ -531,7 +531,7 @@ Ir_open()
 		prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
 #endif
 		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
-			printf( "No more graphics ports available.\n" );
+			rt_log( "No more graphics ports available.\n" );
 			return	-1;
 		}
 		break;
@@ -546,7 +546,7 @@ Ir_open()
 		prefposition( 0, XMAX170, 0, YMAX170 );
 		foreground();
 		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
-			printf( "No more graphics ports available.\n" );
+			rt_log( "No more graphics ports available.\n" );
 			return	-1;
 		}
 		break;
@@ -556,7 +556,7 @@ Ir_open()
 		prefposition( 0, XMAXPAL, 0, YMAXPAL );
 		foreground();
 		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
-			printf( "No more graphics ports available.\n" );
+			rt_log( "No more graphics ports available.\n" );
 			return	-1;
 		}
 		break;
@@ -643,7 +643,7 @@ Ir_open()
 	qdevice(F6KEY);	/* pf6 for changing perspective */
 	qdevice(F7KEY);	/* pf7 for no faceplate */
 	while( getbutton(LEFTMOUSE)||getbutton(MIDDLEMOUSE)||getbutton(RIGHTMOUSE) )  {
-		printf("IRIS_open:  mouse button stuck\n");
+		rt_log("IRIS_open:  mouse button stuck\n");
 		sleep(1);
 	}
 
@@ -690,7 +690,7 @@ void
 Ir_prolog()
 {
 	if (ir_debug)
-		fprintf(stderr, "Ir_prolog\n");
+		rt_log( "Ir_prolog\n");
 #if 0
 	ortho2( -1.0,1.0, -1.0,1.0);	/* L R Bot Top */
 #else
@@ -716,7 +716,7 @@ void
 Ir_normal()
 {
 	if (ir_debug)
-		fprintf(stderr, "Ir_normal\n");
+		rt_log( "Ir_normal\n");
 
 	if( ir_has_rgb )  {
 		RGBcolor( (short)0, (short)0, (short)0 );
@@ -738,7 +738,7 @@ void
 Ir_epilog()
 {
 	if (ir_debug)
-		fprintf(stderr, "Ir_epilog\n");
+		rt_log( "Ir_epilog\n");
 	/*
 	 * A Point, in the Center of the Screen.
 	 * This is drawn last, to always come out on top.
@@ -790,7 +790,7 @@ mat_t	mat;
 	int	i;
 
 	if (ir_debug)
-		fprintf(stderr, "Ir_newrot()\n");
+		rt_log( "Ir_newrot()\n");
 
 	switch(which_eye)  {
 	case 0:
@@ -894,7 +894,7 @@ int		white;
 	int i,j;
 
 	if (ir_debug)
-		fprintf(stderr, "Ir_Object()\n");
+		rt_log( "Ir_Object()\n");
 
 	/*
 	 *  It is claimed that the "dancing vector disease" of the
@@ -1049,7 +1049,7 @@ void
 Ir_update()
 {
 	if (ir_debug)
-		fprintf(stderr, "Ir_update()\n");
+		rt_log( "Ir_update()\n");
 	if( !dmaflag )
 		return;
 }
@@ -1066,7 +1066,7 @@ register char *str;
 int x,y,size, colour;
 {
 	if (ir_debug)
-		fprintf(stderr, "Ir_puts()\n");
+		rt_log( "Ir_puts()\n");
 	cmov2( GED2IRIS(x), GED2IRIS(y));
 	if( ir_has_rgb )  {
 		RGBcolor( (short)ir_rgbtab[colour].r,
@@ -1091,7 +1091,7 @@ int dashed;
 	register int nvec;
 
 	if (ir_debug)
-		fprintf(stderr, "Ir_2d_line()\n");
+		rt_log( "Ir_2d_line()\n");
 	if( ir_has_rgb )  {
 		/* Yellow */
 		if(cueing_on)  {
@@ -1143,7 +1143,7 @@ int		noblock;
 	int		width;
 
 	if (ir_debug)
-		fprintf(stderr, "Ir_input()\n");
+		rt_log( "Ir_input()\n");
 	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
 		width = 32;
 	files = *input;		/* save, for restore on each loop */
@@ -1221,11 +1221,11 @@ checkevents()  {
 	static	pending_y = 0;
 
 	n = blkqread( values, NVAL );	/* n is # of shorts returned */
-	if( ir_debug ) printf("blkqread gave %d\n", n);
+	if( ir_debug ) rt_log("blkqread gave %d\n", n);
 	for( valp = values; n > 0; n -= 2, valp += 2 )  {
 
 		ret = *valp;
-		if( ir_debug ) printf("qread ret=%d, val=%d\n", ret, valp[1]);
+		if( ir_debug ) rt_log("qread ret=%d, val=%d\n", ret, valp[1]);
 #if IR_BUTTONS
 		if((ret >= SWBASE && ret < SWBASE+IR_BUTTONS)
 		    || ret == F1KEY || ret == F2KEY || ret == F3KEY
@@ -1542,7 +1542,7 @@ continue;
 			/* This guy speaks, but has nothing to say */
 			break;
 		default:
-			printf("IRIS device %d gave %d?\n", ret, valp[1]);
+			rt_log("IRIS device %d gave %d?\n", ret, valp[1]);
 			break;
 		}
 	}
@@ -1610,7 +1610,7 @@ unsigned addr, count;
 void
 Ir_statechange( a, b )
 {
-	if( ir_debug ) printf("statechange %d %d\n", a, b );
+	if( ir_debug ) rt_log("statechange %d %d\n", a, b );
 	/*
 	 *  Based upon new state, possibly do extra stuff,
 	 *  including enabling continuous tablet tracking,
@@ -1634,7 +1634,7 @@ Ir_statechange( a, b )
 		unqdevice( MOUSEY );	/* constant tracking OFF */
 		break;
 	default:
-		(void)printf("Ir_statechange: unknown state %s\n", state_str[b]);
+		rt_log("Ir_statechange: unknown state %s\n", state_str[b]);
 		break;
 	}
 	Ir_viewchange( DM_CHGV_REDO, SOLID_NULL );
@@ -1645,7 +1645,7 @@ Ir_viewchange( cmd, sp )
 register int cmd;
 register struct solid *sp;
 {
-	if( ir_debug ) printf("viewchange( %d, x%x )\n", cmd, sp );
+	if( ir_debug ) rt_log("viewchange( %d, x%x )\n", cmd, sp );
 	switch( cmd )  {
 	case DM_CHGV_ADD:
 		break;
@@ -1686,7 +1686,7 @@ Ir_colorchange()
 	register int i;
 	register int nramp;
 
-	if( ir_debug )  printf("colorchange\n");
+	if( ir_debug )  rt_log("colorchange\n");
 
 	/* Program the builtin colors */
 	ir_rgbtab[0].r=0; 
@@ -1721,7 +1721,7 @@ Ir_colorchange()
 
 	ir_nslots = getplanes();
 	if(cueing_on && (ir_nslots < 7)) {
-		printf("Too few bitplanes: depthcueing disabled\n");
+		rt_log("Too few bitplanes: depthcueing disabled\n");
 		cueing_on = 0;
 	}
 	ir_nslots = 1<<ir_nslots;
@@ -1819,7 +1819,7 @@ register char *str;
 	*cp = 0;
 	dbtext(buf);
 # else
-	printf("dm-4d: You pressed Help key and '%s'\n", str);
+	rt_log("dm-4d: You pressed Help key and '%s'\n", str);
 # endif
 #else
 	return;
@@ -1914,7 +1914,7 @@ static void
 establish_zbuffer()
 {
 	if( ir_has_zbuf == 0 )  {
-		printf("dm-4d: This machine has no Zbuffer to enable\n");
+		rt_log("dm-4d: This machine has no Zbuffer to enable\n");
 		zbuffer_on = 0;
 	}
 	zbuffer( zbuffer_on );
@@ -1950,13 +1950,13 @@ ir_clear_to_black()
 #if 0
 /* Handy fakeouts when we don't want to link with -lmpc */
 usinit()	{ 
-	printf("usinit\n"); 
+	rt_log("usinit\n"); 
 }
 usnewlock()	{ 
-	printf("usnewlock\n"); 
+	rt_log("usnewlock\n"); 
 }
 taskcreate()	{ 
-	printf("taskcreate\n"); 
+	rt_log("taskcreate\n"); 
 }
 #endif
 
@@ -2422,7 +2422,7 @@ char	**argv;
 
 	/* For now, only "set" command is implemented */
 	if( strcmp( argv[0], "set" ) != 0 )  {
-		printf("dm: command is not 'set'\n");
+		rt_log("dm: command is not 'set'\n");
 		return -1;
 	}
 
@@ -2430,7 +2430,7 @@ char	**argv;
 	if( argc < 2 )  {
 		/* Bare set command, print out current settings */
 		rt_structprint("dm_4d internal variables", Ir_vparse, (char *)0 );
-		printf("%s", rt_vls_addr(&vls) );
+		rt_log("%s", rt_vls_addr(&vls) );
 		fflush(stdout);
 	} else {
 		rt_vls_from_argv( &vls, argc-1, argv+1 );

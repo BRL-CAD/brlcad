@@ -632,7 +632,7 @@ f_vrot_center( argc, argv )
 int	argc;
 char	**argv;
 {
-	printf("Not ready until tomorrow.\n");
+	rt_log("Not ready until tomorrow.\n");
 	return CMD_OK;
 }
 
@@ -934,7 +934,7 @@ char	**argv;
 		}
 	}
 	if( dbip->dbi_read_only )
-		(void)printf("%s:  READ ONLY\n", dbip->dbi_filename );
+		rt_log("%s:  READ ONLY\n", dbip->dbi_filename );
 
 	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
@@ -958,7 +958,7 @@ char	**argv;
 
 	/* Print title/units information */
 	if( interactive )
-		(void)printf("%s (units=%s)\n", dbip->dbi_title,
+		rt_log("%s (units=%s)\n", dbip->dbi_title,
 			units_str[dbip->dbi_localunit] );
 	
 	return CMD_OK;
@@ -1001,7 +1001,7 @@ char	**argv;
     if ((pipe && ((fp = popen(path, "r")) == NULL))
      || (!pipe && ((fp = fopen(path, "r")) == NULL)))
     {
-	(void) fprintf(stderr,
+	(void) rt_log(
 	    "f_source: Cannot open %s '%s'\n",
 	    pipe ? "pipe" : "command file", path);
 	return(CMD_BAD);
@@ -1011,7 +1011,7 @@ char	**argv;
     {
 	rt_vls_free(&str);
 	if (status = pclose(fp))
-	    (void) fprintf(stderr,
+	    (void) rt_log(
 		"f_source: Exit status of pipe: %d\n", status);
     }
     else
