@@ -193,19 +193,25 @@ register struct application *ap;
 			ary_seg[i].seg_next = SEG_NULL;
 		}
 		/* bounding box check */
-		/* bit vector check */
+		/* bit vector per ray check */
 		/* mark elements to be skipped with ary_stp[] = SOLTAB_NULL */
+		ap->a_rt_i->nshots += nsol;	/* later: skipped ones */
 		rt_functab[id].ft_vshot(
 			ary_stp, ary_rp, ary_seg,
-			rtip->rti_nsol_by_type[id], ap->a_resource );
+			nsol, ap->a_resource );
 
-		/* set bits for all solids shot at */
+		/* set bits for all solids shot at for each ray */
 
 		/* append resulting seg list to input for boolweave */
 		for( i = nsol-1; i >= 0; i-- )  {
 			register struct seg	*seg2;
 
-			if( ary_seg[i].seg_stp == SOLTAB_NULL )  continue;	/* MISS */
+			if( ary_seg[i].seg_stp == SOLTAB_NULL )  {
+				/* MISS */
+				ap->a_rt_i->nmiss++;
+				continue;
+			}
+			ap->a_rt_i->nhits++;
 
 			/* For now, do it the slow way.  sb [ray] */
 			/* MUST dup it -- all segs have to live till after a_hit() */
