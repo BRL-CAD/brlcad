@@ -42,7 +42,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 #include "./sedit.h"
 
-#define RATE_ROT_MULT 6.0
+#define RATE_ROT_FACTOR 6.0
+#define ABS_ROT_FACTOR 180.0
 
 /************************************************************************
  *									*
@@ -207,7 +208,7 @@ double val;
   }
 
   bu_vls_init(&vls);
-  bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val * RATE_ROT_MULT);
+  bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val * RATE_ROT_FACTOR);
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
 }
@@ -229,7 +230,7 @@ double val;
   }
 
   bu_vls_init(&vls);
-  bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*180.0);
+  bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*ABS_ROT_FACTOR);
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
 }
@@ -410,16 +411,16 @@ int y_top;
 	else {
 	  if(EDIT_ROTATE && mged_variables.edit){
 	    if(mged_variables.rateknobs)
-	      f = edit_rate_rotate[X] / RATE_ROT_MULT;
+	      f = edit_rate_rotate[X] / RATE_ROT_FACTOR;
 	    else
-	      f = edit_absolute_rotate[X] / 180.0;
+	      f = edit_absolute_rotate[X] / ABS_ROT_FACTOR;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
 	    if(mged_variables.rateknobs)
-	      f = rate_rotate[X] / RATE_ROT_MULT;
+	      f = rate_rotate[X] / RATE_ROT_FACTOR;
 	    else
-	      f = absolute_rotate[X] / 180.0;
+	      f = absolute_rotate[X] / ABS_ROT_FACTOR;
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
 	  }
@@ -432,16 +433,16 @@ int y_top;
 	else {
 	  if(EDIT_ROTATE && mged_variables.edit){
 	    if(mged_variables.rateknobs)
-	      f = edit_rate_rotate[Y] / RATE_ROT_MULT;
+	      f = edit_rate_rotate[Y] / RATE_ROT_FACTOR;
 	    else
-	      f = edit_absolute_rotate[Y] / 180.0;
+	      f = edit_absolute_rotate[Y] / ABS_ROT_FACTOR;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
 	    if(mged_variables.rateknobs)
-	      f = rate_rotate[Y] / RATE_ROT_MULT;
+	      f = rate_rotate[Y] / RATE_ROT_FACTOR;
 	    else
-	      f = absolute_rotate[Y] / 180.0;
+	      f = absolute_rotate[Y] / ABS_ROT_FACTOR;
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
 	  }
@@ -454,16 +455,16 @@ int y_top;
 	else {
 	  if(EDIT_ROTATE && mged_variables.edit){
 	    if(mged_variables.rateknobs)
-	      f = edit_rate_rotate[Z] / RATE_ROT_MULT;
+	      f = edit_rate_rotate[Z] / RATE_ROT_FACTOR;
 	    else
-	      f = edit_absolute_rotate[Z] / 180.0;
+	      f = edit_absolute_rotate[Z] / ABS_ROT_FACTOR;
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
 	    if(mged_variables.rateknobs)
-	      f = rate_rotate[Z] / RATE_ROT_MULT;
+	      f = rate_rotate[Z] / RATE_ROT_FACTOR;
 	    else
-	      f = absolute_rotate[Z] / 180.0;
+	      f = absolute_rotate[Z] / ABS_ROT_FACTOR;
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
 	  }
