@@ -270,6 +270,17 @@ AC_ARG_ENABLE(profile,,
 )
 AC_MSG_RESULT($use_profiling)
 
+AC_MSG_CHECKING(whether to compile jove or not)
+use_jove=no
+AC_ARG_ENABLE(jove,
+	AC_HELP_STRING(--enable-jove,
+		[enable compilation of jove (default=no)]),
+	[if ! test "x$enable_jove" = "xno" ; then
+		use_jove=yes
+	fi]
+)
+AC_MSG_RESULT($use_jove)
+AM_CONDITIONAL(BUILD_JOVE, [test "x$use_jove" = "xyes"])
 
 # XXX pthread lib stuff should go away (and be made proper lib check)
 case "$target" in
@@ -1101,6 +1112,7 @@ echo Build Tk .............................: yes
 echo Build libpng .........................: ${build_brlcad_png}
 echo Build libregex .......................: ${build_brlcad_regex}
 echo Build libz ...........................: ${build_brlcad_zlib}
+echo Build jove ...........................: ${use_jove}
 echo 
 echo Java Developer Kit support ...........: $with_java
 echo X11 support ..........................: yes

@@ -25,6 +25,12 @@ else !IRIX
 TKGLX=
 endif
 
+if BUILD_JOVE
+JOVEDIR=jove
+else !BUILD_JOVE
+JOVEDIR=
+endif
+
 if ONLY_BENCHMARK
 SUBDIRS = libtcl
 
@@ -41,7 +47,7 @@ SUBDIRS = \
 	${TKGLX} \
 	awf \
 	iwidgets \
-	jove \
+	${JOVEDIR} \
 	libitcl \
 	liborle \
 	libtcl \
