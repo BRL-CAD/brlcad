@@ -12,7 +12,9 @@
 
 	-DSTATIC=
  */
-/* #define CONFIGDEFS	-DSTATIC= */	/* debugging only */
+#if 0
+# define CONFIGDEFS	-DSTATIC=	/* debugging only */
+#endif
 
 #define SRCDIR	fbed
 #define PRODUCTS	fbed
