@@ -172,7 +172,7 @@ db_diradd5(
 	case DB5_MAJORTYPE_BINARY_UNIF:
 	case DB5_MAJORTYPE_BINARY_MIME:
 		/* XXX Do we want to define extra flags for this? */
-		dp->d_flags = 0;
+		dp->d_flags = DIR_NON_GEOM;
 		break;
 	case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		dp->d_flags = 0;
@@ -246,7 +246,7 @@ db5_diradd(
 	case DB5_MAJORTYPE_BINARY_UNIF:
 	case DB5_MAJORTYPE_BINARY_MIME:
 		/* XXX Do we want to define extra flags for this? */
-		dp->d_flags = 0;
+		dp->d_flags = DIR_NON_GEOM;
 		break;
 	case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		dp->d_flags = 0;
