@@ -53,8 +53,7 @@ struct wmember *head;
 			entno = (-(1+ptr->op)/2); /* entity number */
 
 			/* make the member record */
-			wmem = mk_addmember( dir[entno]->name , head );
-			wmem->wm_op = operator[op];
+			wmem = mk_addmember( dir[entno]->name , head, operator[op] );
 			flt = (fastf_t *)dir[entno]->rot;
 			for( i=0 ; i<16 ; i++ )
 			{
