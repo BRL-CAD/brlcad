@@ -42,8 +42,8 @@ proc build_edit_menu_all { type } {
     set paths [_mged_x -1]
     if {![llength $paths]} {
 	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
-		"No solids are being displayed!"\
-		"No solids are being displayed!"\
+		"No primitives are being displayed!"\
+		"No primitives are being displayed!"\
 		"" 0 OK
 	return
     }
@@ -138,7 +138,7 @@ proc build_solid_menu { type id paths } {
 	lappend rpaths [lindex $paths $i]
     }
 
-    create_listbox $top $screen Solid $rpaths "destroy $top"
+    create_listbox $top $screen Primitive $rpaths "destroy $top"
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top <B1-Motion> \

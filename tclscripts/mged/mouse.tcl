@@ -61,7 +61,7 @@ proc mouse_get_spath { x y } {
 	set screen [winfo screen $win]
     }
 
-    create_listbox $top $screen Solid $paths "mouse_spath_destroy $id $top"
+    create_listbox $top $screen Primitive $paths "mouse_spath_destroy $id $top"
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<B1-Motion>"\

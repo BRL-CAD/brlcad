@@ -61,11 +61,11 @@ proc dsp_create { id } {
 		is available. The displacements are expected to be unsigned short integers (2 bytes each), stored\n\
 		in binary format in a file."
 
-	label $top.nameL -text "Solid name:"
+	label $top.nameL -text "Primitive name:"
 	entry $top.nameE -relief sunken -bd 2 -textvar mged_gui($id,solid_name)
 	set tmp_hoc [list [list summary $dsp_dscr] [list description "This is the BRL-CAD name for this solid (it must be unique)" ]]
-	hoc_register_data $top.nameL "Solid Name" $tmp_hoc
-	hoc_register_data $top.nameE "Solid Name" $tmp_hoc
+	hoc_register_data $top.nameL "Primitive Name" $tmp_hoc
+	hoc_register_data $top.nameE "Primitive Name" $tmp_hoc
 	label $top.fileL -text "File name:"
 	entry $top.fileE -relief sunken -bd 2 -textvar mged_gui($id,dsp_file_name)
 	set tmp_hoc [list [list summary $dsp_dscr] [list description "This is the name of the file containing the displacements" ]]
@@ -132,7 +132,7 @@ proc dsp_create { id } {
 
     place_near_mouse $top
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
-    wm title $top "Enter Dsp Solid Name"
+    wm title $top "Enter Dsp Primitive Name"
 }
 
 proc init_solid_create { id type } {
@@ -176,7 +176,7 @@ proc init_solid_create { id type } {
 
     place_near_mouse $top
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
-    wm title $top "Enter Solid Name"
+    wm title $top "Enter Primitive Name"
 }
 
 proc solid_auto_name { id } {

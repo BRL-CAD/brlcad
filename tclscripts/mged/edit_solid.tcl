@@ -14,12 +14,12 @@
 #       The BRL-CAD Package" agreement.
 #
 # Description -
-#	This is a solid editor for MGED that can be used to both edit and
-#	create solids.
+#	This is a primitive editor for MGED that can be used to both edit and
+#	create primitives.
 #
 # Acknowledgements -
-#	This editor is based on Glen Durfee's editobj.tcl (to edit solids)
-#	and solcreate.tcl (to create solids).
+#	This editor is based on Glen Durfee's editobj.tcl (to edit primitives)
+#	and solcreate.tcl (to create primitives).
 #
 
 ## - init_edit_solid
@@ -79,32 +79,32 @@ proc init_edit_solid { id args } {
     frame $w._F$row -relief flat -bd 2
     frame $w.nameF
     label $w.nameL -text "Name:" -anchor e
-    set hoc_data { { summary "The name of a solid must be unique
+    set hoc_data { { summary "The name of a primitive must be unique
 within a database." } }
-    hoc_register_data $w.nameL "Solid Name" $hoc_data
+    hoc_register_data $w.nameL "Primitive Name" $hoc_data
     entry $w.nameE -relief sunken -bd 2 -textvar esol_control($id,name)
-    hoc_register_data $w.nameE "Solid Name" $hoc_data
+    hoc_register_data $w.nameE "Primitive Name" $hoc_data
     grid $w.nameL $w.nameE -in $w.nameF
     bind $w.nameE <Return> "esol_reset $id $w 0"
     #
     frame $w.typeF
     label $w.typeL -text "Type:" -anchor e
-    hoc_register_data $w.typeL "Solid Type"\
-	    { { summary "The supported solid types are: arb8, sph,
+    hoc_register_data $w.typeL "Primitive Type"\
+	    { { summary "The supported primitive types are: arb8, sph,
 ell, tor, rec, half, rpc, rhc, epa, ehy, eto
 part, dsp, ebm and vol." } }
     menubutton $w.typeMB -relief raised -bd 2 -textvariable esol_control($id,type)\
 	    -menu $w.typeMB.m -indicatoron 1
-    hoc_register_data $w.typeMB "Solid Type"\
-	    { { summary "Indicates the current solid type. Note that
+    hoc_register_data $w.typeMB "Primitive Type"\
+	    { { summary "Indicates the current primitive type. Note that
 the left mouse button will pop up a menu
-of the supported solid types." } }
-    menu $w.typeMB.m -title "Solid Type" -tearoff 0
+of the supported primitive types." } }
+    menu $w.typeMB.m -title "Primitive Type" -tearoff 0
     foreach type $solid_data(types) {
 	$w.typeMB.m add command -label $type\
 		-command "esol_process_type $id $w.sformF $type"
-	hoc_register_menu_data "Solid Type" $type "Solid Type - $type"\
-		"\"synopsis \\\"Change solid type to $type.\\\"\"
+	hoc_register_menu_data "Primitive Type" $type "Primitive Type - $type"\
+		"\"synopsis \\\"Change primitive type to $type.\\\"\"
 	         \"description \\\"$solid_data(hoc,$type)\\\"\""
     }
     grid $w.typeL $w.typeMB -in $w.typeF
@@ -128,8 +128,8 @@ of the supported solid types." } }
     #
     frame $w.decF
     set hoc_data { { summary "The decrement equation is used to modify
-the solid parameter values. Note that \"$val\"
-represents the current value in a solid
+the primitive parameter values. Note that \"$val\"
+represents the current value in a primitive
 parameter entry widget and must be present
 somewhere in the equation." } }
     label $w.decL -text "-operator:" -width 9 -anchor e
@@ -142,8 +142,8 @@ somewhere in the equation." } }
     #
     frame $w.incF
     set hoc_data { { summary "The increment equation is used to modify
-the solid parameter values. Note that \"$val\"
-represents the current value in a solid
+the primitive parameter values. Note that \"$val\"
+represents the current value in a primitive
 parameter entry widget and must be present
 somewhere in the equation." } }
     label $w.incL -text "+operator:" -width 9 -anchor e
@@ -157,7 +157,7 @@ somewhere in the equation." } }
     frame $w.fmtF
     set hoc_data { { summary "This string is used with the Tcl
 format command to format the values
-of the solid parameter entries." }
+of the primitive parameter entries." }
               { see_also format } }
     label $w.fmtL -text "format:" -width 9 -anchor e
     hoc_register_data $w.fmtL "Format" $hoc_data
@@ -180,7 +180,7 @@ of the solid parameter entries." }
     checkbutton $w.drawCB -relief flat -bd 2 -text "Draw"\
 	    -offvalue 0 -onvalue 1 -variable esol_control($id,draw)
     hoc_register_data $w.drawCB "Draw"\
-	    { { summary "Toggle drawing/updating the solid
+	    { { summary "Toggle drawing/updating the primitive
 in the panes (geometry windows)." } }
     grid $w.drawCB -row $row -column 0 -sticky nsew -padx 8
     grid rowconfigure $w $row -weight 0
@@ -192,15 +192,15 @@ in the panes (geometry windows)." } }
 	    -command "esol_ok $id $w $w.sformF"
     hoc_register_data $w.okB "Ok"\
 	    { { summary "Apply the control panel settings to the
-database solid, then dismiss/close the
+database primitive, then dismiss/close the
 control panel." } }
     button $w.applyB -text "Apply" -command "esol_apply $id $w $w.sformF"
     hoc_register_data $w.applyB "Apply"\
 	    { { summary "Apply the control panel settings
-to the database solid." } }
+to the database primitive." } }
     button $w.resetB -text "Reset" -command "esol_reset $id $w 1"
     hoc_register_data $w.resetB "Reset"\
-	    { { summary "Reset the solid parameter entries
+	    { { summary "Reset the primitive parameter entries
 with values from the database." } }
     button $w.dismissB -text "Dismiss" -command "destroy $w"
     hoc_register_data $w.dismissB "Dismiss"\
@@ -217,21 +217,21 @@ with values from the database." } }
 
     place_near_mouse $w
     wm protocol $w WM_DELETE_WINDOW "catch { destroy $w }"
-    wm title $w "Solid Editor ($id)"
+    wm title $w "Primitive Editor ($id)"
 }
 
 ## - esol_build_default_form
 #
-# Using $esol_control($id,name), determine if a solid exists by this name.
+# Using $esol_control($id,name), determine if a primitive exists by this name.
 # If so, then use its values to initialize the form. Otherwise, use
-# the default values for the current solid type to initialize the form.
+# the default values for the current primitive type to initialize the form.
 #
 proc esol_build_default_form { id w } {
     global solid_data
     global esol_control
 
     if [catch {set vals [db get $esol_control($id,name)]} msg] {
-	# This solid doesn't exist yet, so use the last solid type
+	# This primitive doesn't exist yet, so use the last primitive type
 	#   to get attributes and their values.
 	set vals $solid_data(attr,$esol_control($id,type))
 
@@ -243,7 +243,7 @@ proc esol_build_default_form { id w } {
 	set esol_control($id,type) [lindex $vals 0]
 	set esol_control($id,cmd) "db adjust $esol_control($id,name)"
 
-	# skip solid type
+	# skip primitive type
 	set vals [lrange $vals 1 end]
     }
 
@@ -252,7 +252,7 @@ proc esol_build_default_form { id w } {
 
 ## - esol_build_form
 #
-# This proc builds a solid form for creating/editing solids.
+# This proc builds a primitive form for creating/editing primitives.
 #
 proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
     global base2local
@@ -435,7 +435,7 @@ proc esol_apply { id w sform } {
 			0 $last db put $esol_control($id,name) $esol_control($id,type)]"
 	    }
 	} else {
-	    # This solid doesn't exist.
+	    # This primitive doesn't exist.
 	    set tmp_db_cmd [lreplace $esol_control($id,cmd)\
 		    0 $last db put $esol_control($id,name) $esol_control($id,type)]
 	}
@@ -530,24 +530,24 @@ proc esol_process_type { id w newType } {
     }
 
     if [catch {db get $esol_control($id,name)} vals] {
-	# This solid doesn't exist.
+	# This primitive doesn't exist.
 
 	# create mode
 	set esol_control($id,edit) 0
 	set esol_control($id,cmd) "db put $esol_control($id,name) $newType"
 	set vals $solid_data(attr,$newType)
     } else {
-	# This solid exists
+	# This primitive exists
 
 	if { $newType == [lindex $vals 0] } {
-	    # going back to original type, so use values from solid
+	    # going back to original type, so use values from primitive
 	    # skip type
 	    set vals [lrange $vals 1 end]
 
 	    set esol_control($id,edit) 1
 	    set esol_control($id,cmd) "db adjust $esol_control($id,name)"
 	} else {
-	    # changing solid type, so use default values
+	    # changing primitive type, so use default values
 	    set vals $solid_data(attr,$newType)
 
 	    set esol_control($id,edit) 2
@@ -573,7 +573,7 @@ proc esol_reset { id w reset_entry_values } {
     global esol_control
 
     if [catch {db get $esol_control($id,name)} vals] {
-	# This solid doesn't exist.
+	# This primitive doesn't exist.
 
 	# create mode
 	set esol_control($id,edit) 0
@@ -589,7 +589,7 @@ proc esol_reset { id w reset_entry_values } {
 	    esol_build_form $id $w.sformF $esol_control($id,type) {} 0 1 0
 	}
     } else {
-	# This solid exists
+	# This primitive exists
 
 	# edit mode
 	set esol_control($id,edit) 1

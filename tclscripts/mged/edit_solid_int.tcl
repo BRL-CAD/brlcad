@@ -161,7 +161,7 @@ proc init_edit_solid_int { id } {
 
     wm protocol $w WM_DELETE_WINDOW "catch { destroy $w }"
     wm geometry $w $mged_gui($id,edit_info_pos)
-    wm title $w "Internal Solid Editor ($id)"
+    wm title $w "Internal Primitive Editor ($id)"
 }
 
 ## - esolint_build_form
