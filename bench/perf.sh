@@ -40,10 +40,11 @@ RATIO_LIST=""
 # and CURVALS are all positive (ie, no leading dashes), so this is safe.
 set $CURVALS
 
-if test $# != 5
-then	echo "${NAME}: Error, only $# times found"
-	exit 1
-fi
+while test $# != 5
+do	echo "${NAME}: Warning, only $# times found, using zeros"
+	CURVALS="$CURVALS 0"
+	set $CURVALS
+done
 
 for ref in $VGRREF
 do
