@@ -520,7 +520,7 @@
 </FONT><TT><P>$</TT><FONT SIZE=2> <B>exit</B> <BR>
 -- Exit the shell. <BR>
 </P>
-</FONT><TT><P>mged</TT><FONT SIZE=2> <BR>
+</FONT><TT><P>mged&gt;</TT><FONT SIZE=2> <BR>
 -- Continue editing in <I>mged</I>. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -554,7 +554,7 @@
 </FONT><TT><P>Enter thickness for this arb:</TT><FONT SIZE=2> <B>3</B> <BR>
 -- The new </FONT><A HREF="#ARB"><FONT SIZE=2>ARB8</FONT></A><FONT SIZE=2> will be 3 </FONT><A HREF="#units"><FONT SIZE=2>units</FONT></A><FONT SIZE=2> thick. <BR>
 </P>
-</FONT><TT><P>mged</TT><FONT SIZE=2> <B>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</B> <BR>
+</FONT><TT><P>mged&gt;</TT><FONT SIZE=2> <B>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</B> <BR>
 -- Same as above example, but with all arguments supplied on the command line. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -593,7 +593,7 @@
 
 </B><FONT SIZE=2><P>-- Clear the display, then display the object named <I>some_object</I>. </P>
 
-</FONT><FONT FACE="Courier" SIZE=2><P>mged</FONT><FONT SIZE=2> <B>B -A -o Comment {First comment} Comment {Second comment}</P>
+</FONT><FONT FACE="Courier" SIZE=2><P>mged&gt;</FONT><FONT SIZE=2> <B>B -A -o Comment {First comment} Comment {Second comment}</P>
 </B><P>-- Clear the display, then draw objects that have a &quot;Comment&quot; attribute with a value of either &quot;First comment&quot; or &quot;Second comment.&quot;</P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -683,14 +683,14 @@
 </B><FONT SIZE=2><P>-- Toggle display of the angle/distance cursor <BR>
 </P><DIR>
 
-</FONT><TT><P>mged</TT><FONT SIZE=2> <B>adc a1 37.5</B> <BR>
+</FONT><TT><P>mged&gt;</TT><FONT SIZE=2> <B>adc a1 37.5</B> <BR>
 -- Set angle1 to 37.5&#730;. <BR>
 </P>
-</FONT><TT><P>mged</TT><FONT SIZE=2> <B>adc a1</B> <BR>
+</FONT><TT><P>mged&gt;</TT><FONT SIZE=2> <B>adc a1</B> <BR>
 37.5 <BR>
 -- Get angle1. <BR>
 </P>
-</FONT><TT><P>mged</TT><FONT SIZE=2> <B>adc xyz 100 0 0</B> <BR>
+</FONT><TT><P>mged&gt;</TT><FONT SIZE=2> <B>adc xyz 100 0 0</B> <BR>
 -- Move ADC position to (100, 0, 0), model coordinates and local units. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -825,13 +825,13 @@
 
 </B><FONT SIZE=2><P>-- Open an ogl display window named .dm_ogl0 (assuming this is the first ogl display window opened using the default naming scheme). <BR>
 </P>
-</FONT><TT><P>mged</TT><FONT SIZE=2> <B>attach ogl</B> <BR>
+</FONT><TT><P>mged&gt;</TT><FONT SIZE=2> <B>attach ogl</B> <BR>
 -- Open a ogl display window named .dm_ogl1. <BR>
 </P>
-</FONT><TT><P>mged</TT><FONT SIZE=2> <B>attach -n myOgl -W 720 -N 486 ogl</B> <BR>
+</FONT><TT><P>mged&gt;</TT><FONT SIZE=2> <B>attach -n myOgl -W 720 -N 486 ogl</B> <BR>
 -- Open a 720x486 OpenGL display window named myOgl. <BR>
 </P>
-</FONT><TT><P>mged</TT><FONT SIZE=2> <B>attach -n myX -d remote_host:0 -i myInit X</B> <BR>
+</FONT><TT><P>mged&gt;</TT><FONT SIZE=2> <B>attach -n myX -d remote_host:0 -i myInit X</B> <BR>
 -- Open an X display window named myX on remote_host that is initialized by myInit. <BR>
 -- myInit might contain user specified bindings like those found in the </FONT><A HREF=""><FONT SIZE=2>default bindings</FONT></A><FONT SIZE=2>. </P>
 <P><BR>
@@ -862,11 +862,11 @@
 <DD></DD>
 <FONT SIZE=4><DD>Examples: </DD>
 </FONT><DT></DT>
-<FONT FACE="Courier" SIZE=2><DD>mged</FONT> <B>attr set region_1 comment {This is a comment for region_1}</DD>
+<FONT FACE="Courier" SIZE=2><DD>mged&gt;</FONT> <B>attr set region_1 comment {This is a comment for region_1}</DD>
 </B><DD>-- Assign an attribute named &quot;comment&quot; to <I>region_1</I>, its value is &quot;This is a</DD>
 <DD>comment for region_1&quot;</DD>
 <DD></DD>
-<FONT FACE="Courier" SIZE=2><DD>mged</FONT> <B>attr show region_1 comment</DD>
+<FONT FACE="Courier" SIZE=2><DD>mged&gt;</FONT> <B>attr show region_1 comment</DD>
 </B><DD>-- List all the attributes for <I>region_1</DD>
 </I><DD><HR ALIGN="RIGHT"></DD>
 <B><DT><A NAME="autoview"></A>autoview </DT>
@@ -874,7 +874,7 @@
 <DD></DD>
 <FONT SIZE=4><DD>Examples: </DD>
 </FONT><DT></DT>
-<FONT FACE="Courier" SIZE=2><DD>mged</FONT> <B>autoview</DD>
+<FONT FACE="Courier" SIZE=2><DD>mged&gt;</FONT> <B>autoview</DD>
 </B><DD>-- Adjust the view to see everything displayed.</DD>
 <DT></DT>
 <DD><HR ALIGN="RIGHT"></DD>
@@ -899,7 +899,7 @@
 <DD></DD>
 <FONT SIZE=4><DD>Examples: </DD>
 </FONT><DT></DT>
-<FONT FACE="Courier" SIZE=2><DD>mged</FONT> <B>bot_decimate -c 0.5 -n 10.0 bot.new abot</DD>
+<FONT FACE="Courier" SIZE=2><DD>mged&gt;</FONT> <B>bot_decimate -c 0.5 -n 10.0 bot.new abot</DD>
 </B><DD>-- Create a new BOT primitive named <I>bot.new</I> by reducing the number of triangles</DD>
 <DD>in <I>abot</I> while keeping the resulting surface within 0.5 units of the surface of <I>abot</I> and</DD>
 <DD>keeping the surface normals within 10 degrees. </DD>
@@ -909,12 +909,12 @@
 <DD>command on its own BOT output will result in a final BOT primitive that has</DD>
 <DD>unknown relationships to the original BOT primitive. For example: </DD>
 <DT></DT>
-<FONT FACE="Courier" SIZE=2><DD>mged</FONT> <B>bot_decimate -c 10.0 bot_b bot_a</DD>
-</B><FONT FACE="Courier" SIZE=2><DD>mged</FONT> <B>bot_decimate -c 10.0 bot_c bot_b</DD>
+<FONT FACE="Courier" SIZE=2><DD>mged&gt;</FONT> <B>bot_decimate -c 10.0 bot_b bot_a</DD>
+</B><FONT FACE="Courier" SIZE=2><DD>mged&gt;</FONT> <B>bot_decimate -c 10.0 bot_c bot_b</DD>
 </B><DD>-- This sequence of commands will produce primitive &quot;bot_c&quot; with up to 20.0 units</DD>
 <DD>of chord error between &quot;bot_a&quot; and &quot;bot_c&quot;.</DD>
 <DD></DD>
-<FONT FACE="Courier" SIZE=2><DD>mged</FONT> <B>bot_decimate -c 10.0 bot_b bot_a</DD>
+<FONT FACE="Courier" SIZE=2><DD>mged&gt;</FONT> <B>bot_decimate -c 10.0 bot_b bot_a</DD>
 </B><FONT FACE="Courier" SIZE=2><DD>mged&gt; </FONT><B>bot_decimate -n 5.0 bot_c bot_b</DD>
 </B><DD>-- This sequence of commands will produce primitive &quot;bot_c&quot; with no guaranteed</DD>
 <DD>relationships to &quot;bot_a&quot;. </DD>
@@ -987,12 +987,12 @@
 </B><FONT SIZE=2><P>-- Print out the coordinates of the center of the <I>mged</I> display. </P>
 <P>&nbsp;</P>
 </FONT><TT><DL>
-<DD>mged</TT> <B>center 12.5 5.6 8.7</DD>
+<DD>mged&gt;</TT> <B>center 12.5 5.6 8.7</DD>
 </DL>
 </B><FONT SIZE=2><P>-- Move the center of the <I>mged</I> display to the point (12.5, 5.6, 8.7). </P>
 <P>&nbsp;</P>
 </FONT><TT><DL>
-<DD>mged</TT> <B>set oldcent [center]</B><BR>
+<DD>mged&gt;</TT> <B>set oldcent [center]</B><BR>
 -- Set the Tcl variable $oldcent to the display center coordinates. </DD>
 <TT><DD>mged&gt;</TT> <B>set glob_compat_mode 0</DD>
 </B><TT><DD>mged&gt;</TT> <B>units mm</B> </DD>
@@ -1290,7 +1290,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>dm size</B> <BR>
 -- Return the size to the display manager. <BR>
 </P>
-</FONT><TT><P>mged</TT><FONT SIZE=2> <B>dm size 900 900</B> <BR>
+</FONT><TT><P>mged&gt;</TT><FONT SIZE=2> <B>dm size 900 900</B> <BR>
 -- Request that the display manager window be resized to 900x900. </P>
 <P><BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>dm m 2 100 200</B> <BR>
@@ -1328,10 +1328,10 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </DL>
 </B><FONT SIZE=2><P>-- Draw <I>object1</I> and <I>object2</I> in the <I>MGED</I> display. </P>
 
-</FONT><FONT FACE="Courier New" SIZE=2><P>mged</FONT><FONT SIZE=2> <B>draw -C 255/255/255 object2</P>
+</FONT><FONT FACE="Courier New" SIZE=2><P>mged&gt;</FONT><FONT SIZE=2> <B>draw -C 255/255/255 object2</P>
 </B><P>-- Draw <I>object2</I> in white.</P>
 
-</FONT><FONT FACE="Courier" SIZE=2><P>mged</FONT><FONT SIZE=2> <B>draw -A -o Comment {First comment} Comment {Second comment}</P><DIR>
+</FONT><FONT FACE="Courier" SIZE=2><P>mged&gt;</FONT><FONT SIZE=2> <B>draw -A -o Comment {First comment} Comment {Second comment}</P><DIR>
 
 <P>-- </B>Draw objects that have a &quot;Comment&quot; attribute with a value of either &quot;First comment&quot; or &quot;Second comment.&quot;</P>
 </DIR>
@@ -1346,7 +1346,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Check <I>other_model.g</I> for names duplicating those in the current model. <BR>
 </P><DIR>
 
-</FONT><TT><P>mged</TT><FONT SIZE=2> <B>dup other_model.g abc</B> <BR>
+</FONT><TT><P>mged&gt;</TT><FONT SIZE=2> <B>dup other_model.g abc</B> <BR>
 -- Do the same check as above, but prefix all the names in <I>other_model.g</I> with <I>abc</I> before comparing with the names in the current model. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -1358,7 +1358,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </DL>
 </B><FONT SIZE=2><P>-- Draw <I>object1</I> and <I>object2</I> in the <I>MGED</I> display. </P>
 
-</FONT><FONT FACE="Courier" SIZE=2><P>mged</FONT><FONT SIZE=2> <B>e-A -o Comment {First comment} Comment {Second comment}</P><DIR>
+</FONT><FONT FACE="Courier" SIZE=2><P>mged&gt;</FONT><FONT SIZE=2> <B>e-A -o Comment {First comment} Comment {Second comment}</P><DIR>
 
 </B><P>-- Draw objects that have a &quot;Comment&quot; attribute with a value of either &quot;First comment&quot; or &quot;Second comment&quot;.</P>
 </DIR>
@@ -1968,10 +1968,10 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <DD></DD>
 <FONT SIZE=4><DT>Examples:  </DT>
 </FONT><DD></DD>
-<DT>&#9;<FONT FACE="Courier" SIZE=2>mged</FONT> <B>lm engine</DT>
+<DT>&#9;<FONT FACE="Courier" SIZE=2>mged&gt;</FONT> <B>lm engine</DT>
 </B><DD>--List all regions with &quot;MUVES_Component&quot; attribute having a value of &quot;engine&quot;.</DD>
 <DT></DT>
-<FONT FACE="Courier" SIZE=2><DD>mged</FONT> <B>lm –1 engine pilot</DD><DIR>
+<FONT FACE="Courier" SIZE=2><DD>mged&gt;</FONT> <B>lm –1 engine pilot</DD><DIR>
 
 </B><DT>--List all regions with &quot;MUVES_Component&quot; attribute having a value of &quot;engine&quot; or &quot;pilot,&quot; and use the long format.</DT>
 <DD></DD>
@@ -2031,7 +2031,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ls -c suspension*</B> <BR>
 -- List all combinations with names beginning with &quot;suspension.&quot; </P>
 
-</FONT><FONT FACE="Courier" SIZE=2><P>mged</FONT><FONT SIZE=2> <B>ls -A -o -r Comment {First comment} Comment {Second comment}</P>
+</FONT><FONT FACE="Courier" SIZE=2><P>mged&gt;</FONT><FONT SIZE=2> <B>ls -A -o -r Comment {First comment} Comment {Second comment}</P>
 </B><P>-- List all regions that have a &quot;Comment&quot; attribute that is set to either &quot;First comment&quot; or &quot;Second comment.&quot;</P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -3456,7 +3456,7 @@ All textual arguments may be abbreviated by their first letter. </P>
 <DD></DD>
 <FONT SIZE=4><DD>Examples: </DD>
 </FONT><TT><DD></DD>
-<DD>mged</TT> <B>viewsize 250</DD>
+<DD>mged&gt;</TT> <B>viewsize 250</DD>
 </B><DD>-- Set the mged display to be 250 <A HREF="#nirt">units</A> across.</DD>
 <DT><HR ALIGN="RIGHT"></DT>
 <B><DT><A NAME="vnirt"></A>vnirt</B> [<I>nirt args</I>] <I>x y</DT>
