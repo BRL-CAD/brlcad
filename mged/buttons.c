@@ -752,6 +752,7 @@ char *str;
 	{
 	  register struct dm_list *p;
 	  struct dm_list *save_dm_list;
+	  point_t new_pos;
 
 	  save_dm_list = curr_dm_list;
 	  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
@@ -775,9 +776,14 @@ char *str;
 	      /* restore old toViewcenter and Viewscale */
 	      mat_copy(toViewcenter, o_toViewcenter);
 	      Viewscale = o_Viewscale;
+
 	    }
 
 	    new_mats();
+
+	    /* recompute absolute_slew */
+	    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+	    MAT4X3PNT(absolute_slew, model2view, new_pos);
 	  }
 
 	  curr_dm_list = save_dm_list;
