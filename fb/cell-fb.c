@@ -209,6 +209,7 @@ STATIC void	init_Globs();
 STATIC void	prnt_Usage();
 STATIC void	val_To_RGB();
 STATIC void	log_Run();
+STATIC bool	display_Cells();
 
 main (argc, argv)
 
