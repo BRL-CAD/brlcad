@@ -17,8 +17,8 @@
 ascript: ascript.o anim.o
 	CC LDFLAGS ascript.o anim.o LIBRT -lm -lmpc -o ascript
 
-convert: convert.o
-	CC LDFLAGS convert.o -lm -o convert
+convert: convert.o anim.o
+	CC LDFLAGS convert.o anim.o -lm -o convert
 
 fly: fly.o
 	CC LDFLAGS fly.o -lm -o fly
@@ -31,6 +31,9 @@ offset: offset.o anim.o
 
 qinterp: qinterp.o 
 	CC LDFLAGS qinterp.o LIBES -o qinterp
+
+scriptsort: scriptsort.o
+	CC LDFLAGS scriptsort.o -o scriptsort
 
 turn: turn.o anim.o
 	CC LDFLAGS turn.o anim.o LIBRT -lm -lmpc -o turn
