@@ -676,12 +676,14 @@ FILE			*fp;
 register int		c;		/* the value to process */
 double			char_size;
 {
-	mat_t	mat;
+	mat_t			mat;
 	CONST struct uplot	*up;
-	char	carg[256];
-	fastf_t	arg[6];
-	vect_t	a,b;
-	point_t	last_pos;
+	char			carg[256];
+	fastf_t			arg[6];
+	vect_t			a,b;
+	point_t			last_pos;
+	static point_t		lpnt;		/* last point of a move/draw series */
+	static int		moved = 0;	/* moved since color change */
 
 	/* look it up */
 	if( c < 'A' || c > 'z' ) {
@@ -711,22 +713,46 @@ double			char_size;
 		/* 2-D move */
 		arg[Z] = 0;
 		BN_ADD_VLIST( vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_MOVE );
+		VMOVE(lpnt, arg);
+		moved = 1;
 		break;
 	case 'M':
 	case 'O':
 		/* 3-D move */
 		BN_ADD_VLIST( vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_MOVE );
+		VMOVE(lpnt, arg);
+		moved = 1;
 		break;
 	case 'n':
 	case 'q':
+		/*
+		 * If no move command was issued since the last color change,
+		 * insert one now using the last point from a move/draw.
+		 */
+		if (!moved) {
+			BN_ADD_VLIST( vbp->free_vlist_hd, *vhead, lpnt, BN_VLIST_LINE_MOVE );
+			moved = 1;
+		}
+
 		/* 2-D draw */
 		arg[Z] = 0;
 		BN_ADD_VLIST( vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_DRAW );
+		VMOVE(lpnt, arg);
 		break;
 	case 'N':
 	case 'Q':
+		/*
+		 * If no move command was issued since the last color change,
+		 * insert one now using the last point from a move/draw.
+		 */
+		if (!moved) {
+			BN_ADD_VLIST( vbp->free_vlist_hd, *vhead, lpnt, BN_VLIST_LINE_MOVE );
+			moved = 1;
+		}
+
 		/* 3-D draw */
 		BN_ADD_VLIST( vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_DRAW );
+		VMOVE(lpnt, arg);
 		break;
 	case 'l':
 	case 'v':
@@ -761,6 +787,7 @@ double			char_size;
 		/* Color */
 		*vhead = rt_vlblock_find( vbp,
 			carg[0], carg[1], carg[2] );
+		moved = 0;
 		break;
 	case 't':
 		/* Text string */
