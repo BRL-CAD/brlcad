@@ -353,11 +353,11 @@ TCLVER=8.4
 TCL=libtcl${TCLVER}
 case "$target" in
 	powerpc-apple-darwin*)
-		TCL_LIBS='-L${top_builddir}/src/other/libtcl/build -ltcl${TCLVER} ${DL} ${SOCKET} -lm'
+		TCL_LIBS='-L${top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} ${DL} ${SOCKET} -lm'
 dnl -compatibility_version 20 -current_version 20.1
 		;;
 	*)
-		TCL_LIBS='-L${top_builddir}/src/other/libtcl/build -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
+		TCL_LIBS='-L${top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
 		;;
 esac
 TCL_LIBRARY="$prefix/tcl${TCLVER}"
@@ -375,7 +375,7 @@ AC_SUBST(TCL_LIBS)
 
 dnl tk
 TKVER="8.4"
-TK_LIBS='-L${top_builddir}/src/other/libtk/build -ltk${TKVER} ${TCL_LIBS} ${X_LIBS}'
+TK_LIBS='-L${top_builddir}/src/other/libtk/unix -ltk${TKVER} ${TCL_LIBS} ${X_LIBS}'
 TK_LIBRARY="$prefix/tk${TKVER}"
 AC_SUBST(TKVER)
 AC_SUBST(TK_LIBRARY)
@@ -767,6 +767,7 @@ AC_CONFIG_FILES([
 	Makefile
 	bench/Makefile
 	db/Makefile
+	db/include/Makefile
 	doc/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
