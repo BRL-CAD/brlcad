@@ -359,6 +359,7 @@ struct seg		*seghead;
 				segp->seg_out.hit_vpriv[Y] = bot->bot_orientation;
 				segp->seg_out.hit_vpriv[Z] = -1; /* a clue for rt_bot_norm that this is an exit */
 				segp->seg_out.hit_private = segp->seg_in.hit_private;
+				segp->seg_out.hit_rayp = &ap->a_ray;
 
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 			}
@@ -703,6 +704,7 @@ struct seg		*seghead;
 		hp->hit_vpriv[X] = VDOT( trip->tri_N, rp->r_dir );
 		hp->hit_vpriv[Y] = bot->bot_orientation;
 		hp->hit_surfno = trip->tri_surfno;
+		hp->hit_rayp = &ap->a_ray;
 		if( ++nhits >= MAXHITS )  {
 			bu_log("rt_bot_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
 			break;
