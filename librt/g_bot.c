@@ -938,7 +938,8 @@ register struct soltab *stp;
 		(struct bot_specific *)stp->st_specific;
 	register struct tri_specific *tri, *ptr;
 
-	bu_free( (char *)bot->bot_facearray, "bot_facearray" );
+	if( bot->bot_facearray )
+		bu_free( (char *)bot->bot_facearray, "bot_facearray" );
 
 	if( bot->bot_thickness )
 		bu_free( (char *)bot->bot_thickness, "bot_thickness" );
@@ -948,7 +949,8 @@ register struct soltab *stp;
 	while( ptr )
 	{
 		tri = ptr->tri_forw;
-		bu_free( (char *)tri, "bot tri_specific" );
+		if( tri )
+			bu_free( (char *)tri, "bot tri_specific" );
 		ptr = tri;
 	}
 	bu_free( (char *)bot, "bot_specific" );
