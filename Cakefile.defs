@@ -546,10 +546,12 @@ set -S2 "/bin/sh"
 /*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1412 is "destination type of cast is too small to hold all pointers: truncation possible" */
 /*		Warning 1167 is "pointer points outside of underlying object" (tab/script.l) */
+/*		Warning 1174 is "The variable "X" is declared but never referenced" */
+/*		Warning 1552 is "The variable "X" is set but never used" */
 #		define	OPTIMIZER	-O3 -r10000 \
 			-OPT:const_copy_limit=20000:Olimit=0 \
 			-use_readonly_const \
-			-woff 1429,1203,1048,1110,1412,1167,1209 \
+			-woff 1429,1203,1110,1412,1167,1209,1174,1552 \
 			-Wl,-w
 /*		-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
 #	else
