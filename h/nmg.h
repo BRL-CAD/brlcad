@@ -606,17 +606,17 @@ struct nmg_boolstruct {
 
 
 struct nmg_struct_counts {
-	/* Actual structure counts */
+	/* Actual structure counts (Xuse, then X) */
 	long	model;
 	long	model_a;
 	long	region;
 	long	region_a;
 	long	shell;
 	long	shell_a;
-	long	face;
-	long	face_g;
 	long	faceuse;
 	long	faceuse_a;
+	long	face;
+	long	face_g;
 	long	loopuse;
 	long	loopuse_a;
 	long	loop;
