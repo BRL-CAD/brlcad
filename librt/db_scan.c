@@ -345,38 +345,30 @@ genptr_t		client_data;	/* argument for handler */
 }
 
 /*
- *			D B _ I D E N T
+ *			D B _ U P D A T E _ I D E N T
  *
- *  Update the IDENT record with new title and units.
+ *  Update the existing v4 IDENT record with new title and units.
  *  To permit using db_get and db_put, a custom directory entry is crafted.
  *
  *  Note:  Special care is required, because the "title" arg may actually
  *  be passed in as dbip->dbi_title.
- *
- *  Note:  requires v4 database code for 'units' parameter.
- *  Should be changed to accept a local2mm scale factor, and
- *  cope with it from there.
- *
- * Returns -
- *	 0	Success
- *	-1	Fatal Error
  */
 int
-db_ident( dbip, new_title, units )
-struct db_i	*dbip;
-char		*new_title;
-int		units;
+db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
 {
 	struct directory	dir;
 	union record		rec;
 	char			*old_title;
+	int			v4units;
 
 	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_ident( x%x, '%s', %d )\n",
-		dbip, new_title, units );
+	if(rt_g.debug&DEBUG_DB) bu_log("db_update_ident( x%x, '%s', %g )\n",
+		dbip, new_title, local2mm );
 
 	if( dbip->dbi_read_only )
 		return(-1);
+
+	if( dbip->dbi_version > 4 )  return db5_update_ident( dbip, new_title, local2mm );
 
 	dir.d_namep = "/IDENT/";
 	dir.d_addr = 0L;
@@ -384,20 +376,34 @@ int		units;
 	dir.d_magic = RT_DIR_MAGIC;
 	dir.d_flags = 0;
 	if( db_get( dbip, &dir, &rec, 0, 1 ) < 0 ||
-	    rec.u_id != ID_IDENT )
+	    rec.u_id != ID_IDENT )  {
+	    	bu_log("db_update_ident() corrupted database header!\n");
+	    	dbip->dbi_read_only = 1;
 		return(-1);
+	}
 
 	rec.i.i_title[0] = '\0';
 	(void)strncpy(rec.i.i_title, new_title, sizeof(rec.i.i_title)-1 );
 
 	old_title = dbip->dbi_title;
 	dbip->dbi_title = bu_strdup( new_title );
-	rec.i.i_units = units;
+
+	if( (v4units = db_v4_get_units_code(bu_units_string(local2mm))) < 0 )  {
+		bu_log("db_update_ident(): \
+Due to a database restriction in the v4 format of .g files, your\n\
+editing units %g will not be remembered on your next editing session.\n\
+This will not harm the integrity of your database.\n\
+You may wish to consider upgrading your database to v5 format.\n",
+			local2mm);
+		v4units = ID_MM_UNIT;
+	}
+	rec.i.i_units = v4units;
 
 	if( old_title )
 		bu_free( old_title, "old dbi_title" );
 
 	return( db_put( dbip, &dir, &rec, 0, 1 ) );
+
 }
 
 /*
@@ -407,15 +413,15 @@ int		units;
  *  Attempts to map the editing scale into a v4 database unit
  *  as best it can.  No harm done if it doesn't map.
  *
+ *  This should be called by db_create() only.
+ *  All others should call db_update_ident().
+ *
  * Returns -
  *	 0	Success
  *	-1	Fatal Error
  */
 int
-db_fwrite_ident( fp, title, local2mm )
-FILE		*fp;
-CONST char	*title;
-double		local2mm;
+db_fwrite_ident( FILE *fp, const char *title, double local2mm )
 {
 	union record		rec;
 	int			code;
@@ -520,8 +526,7 @@ int local;					/* one of ID_??_UNIT */
  *	#	The V4 database code number
  */
 int
-db_v4_get_units_code( str )
-CONST char *str;
+db_v4_get_units_code( const char *str )
 {
 	if( !str )  return ID_NO_UNIT;	/* no units specified */
 

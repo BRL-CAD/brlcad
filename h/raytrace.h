@@ -2412,7 +2412,11 @@ BU_EXTERN(int db_scan, ( struct db_i *,
 	int nrec, int flags, genptr_t client_data)),
 	int do_old_matter, genptr_t client_data ) );
 					/* update db unit conversions */
+#define db_ident(a,b,c)		+++error+++
+int db_update_ident( struct db_i *dbip, const char *title, double local2mm );
+int db_fwrite_ident( FILE *fp, const char *title, double local2mm );
 BU_EXTERN(void db_conversions, ( struct db_i *, int units ) );
+int db_v4_get_units_code( const char *str );
 
 /* db5_scan.c */
 int db_dirbuild( struct db_i *dbip );
