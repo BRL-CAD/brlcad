@@ -923,6 +923,10 @@ process_entities_polyline_vertex_code( int code )
 		break;
 	case 70:	/* vertex flag */
 		vertex_flag = atoi( line );
+		face[0] = 0;
+		face[1] = 0;
+		face[2] = 0;
+		face[3] = 0;
 		break;
 	case 71:
 	case 72:
