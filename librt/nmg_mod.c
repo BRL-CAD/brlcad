@@ -3009,7 +3009,10 @@ long	**trans_tbl;
 	 * XXX change the vertex geometry anyway (e.g. by extrusion dist).
 	 */
 	for(RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		NMG_CK_EDGEUSE( eu );
 		new_eu = NMG_INDEX_GETP(edgeuse, trans_tbl, eu );
+		NMG_CK_EDGEUSE(new_eu);
+		NMG_CK_EDGE(new_eu->e_p);
 		if( new_eu->e_p->eg_p )  continue;
 		nmg_edge_g(new_eu->e_p);
 	}
