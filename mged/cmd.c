@@ -168,10 +168,8 @@ static struct funtab funtab[] = {
 "adc", "[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> value(s)]",
 	"control the angle/distance cursor",
         f_adc, 1, 5, TRUE,
-"ae", "azim elev", "set view using azim and elev angles",
-	f_aeview, 3, 3, TRUE,
-"aet", "[-i] azim elev twist", "set view using azim, elev and twist angles",
-	f_aetview, 4, 5, TRUE,
+"ae", "[-i] azim elev [twist]", "set view using azim, elev and twist angles",
+	f_aetview, 3, 5, TRUE,
 "aim", "[command_window [pathName]]", "aims command_window at pathName",
         f_aim, 1, 3, TRUE,
 "aip", "[fb]", "advance illumination pointer or path position forward or backward",
@@ -368,8 +366,8 @@ static struct funtab funtab[] = {
 	f_opendb, 2, 3, TRUE,
 "orientation", "x y z w", "Set view direction from quaternion",
 	f_orientation, 5, 5,TRUE,
-"orot", "xdeg ydeg zdeg", "rotate object being edited",
-	f_rot_obj, 4, 4,TRUE,
+"orot", "[-i] xdeg ydeg zdeg", "rotate object being edited",
+	f_rot_obj, 4, 5,TRUE,
 "oscale", "factor", "scale object by factor",
 	f_sc_obj,2,2,TRUE,
 "overlay", "file.plot [name]", "Read UNIX-Plot as named overlay",
@@ -438,8 +436,8 @@ static struct funtab funtab[] = {
         f_rmater, 2, 2, TRUE,
 "rmats", "file", "load views from file (experimental)",
 	f_rmats,2,MAXARGS,TRUE,
-"rotobj", "xdeg ydeg zdeg", "rotate object being edited",
-	f_rot_obj, 4, 4,TRUE,
+"rotobj", "[-i] xdeg ydeg zdeg", "rotate object being edited",
+	f_rot_obj, 4, 5,TRUE,
 "rrt", "prog [options]", "invoke prog with view",
 	f_rrt,2,MAXARGS,TRUE,
 "rt", "[options]", "do raytrace of view",
@@ -1005,11 +1003,11 @@ mged_setup()
   history_setup();
   mged_variable_setup(interp);
 
-#ifdef MGED_LIBRARY
+#ifdef MGED_TCL_LIBRARY
   bu_vls_init(&str);
   filename = getenv("MGED_TCL_LIBRARY");
   bu_vls_printf(&str, "set auto_path \\[linsert $auto_path 0 %s\\];\
-set junk \"\"", filename ? filename : MGED_LIBRARY);
+set junk \"\"", filename ? filename : MGED_TCL_LIBRARY);
   (void)cmdline(&str, False);
   bu_vls_free(&str);
   Tcl_ResetResult(interp);
@@ -2542,13 +2540,14 @@ vect_t view_pos;
 }
 
 int
-irot(x, y, z)
+irot(x, y, z, iflag)
 fastf_t x, y, z;
+int iflag;
 {
   point_t model_pos;
   point_t new_pos;
   int status;
-  char *av[5];
+  char *av[6];
   struct bu_vls xval, yval, zval;
 
   bu_vls_init(&xval);
@@ -2580,8 +2579,16 @@ fastf_t x, y, z;
     av[0] = "p";
     status = f_param((ClientData)NULL, interp, 4, av);
   }else if(state == ST_O_EDIT){
-    av[0] = "rotobj";
-    status = f_rot_obj((ClientData)NULL, interp, 4, av);
+    av[0] = "orot";
+    if(iflag){
+      av[1] = "-i";
+      av[2] = bu_vls_addr(&xval);
+      av[3] = bu_vls_addr(&yval);
+      av[4] = bu_vls_addr(&zval);
+      av[5] = NULL;
+      status = f_rot_obj((ClientData)NULL, interp, 5, av);
+    }else
+      status = f_rot_obj((ClientData)NULL, interp, 4, av);
   }
 
   bu_vls_free(&xval);
