@@ -161,6 +161,7 @@ matp_t		mat;
 
 	/* Validate that matrix preserves perpendicularity of axis */
 	/* by checking that A.B == 0, B.C == 0, A.C == 0 */
+	/* XXX these vectors should just be grabbed out of the matrix */
 	MAT4X3VEC( A, mat, xaxis );
 	MAT4X3VEC( B, mat, yaxis );
 	MAT4X3VEC( C, mat, zaxis );
@@ -388,8 +389,10 @@ struct mater_info *materp;
 			register struct region *nrp;
 
 			/* Ignore "air" regions unless wanted */
-			if( rtip->useair == 0 &&  rp->c.c_aircode != 0 )
+			if( rtip->useair == 0 &&  rp->c.c_aircode != 0 )  {
+				rtip->rti_air_discards++;
 				goto null;
+			}
 
 			/* Start a new region here */
 			GETSTRUCT( nrp, region );
