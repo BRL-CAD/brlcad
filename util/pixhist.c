@@ -38,7 +38,7 @@ static char *Usage = "usage: pixhist [-v] [file.pix]\n";
 
 long	max;
 double	scale;
-Pixel	line[512];
+RGBpixel	line[512];
 FILE	*fp;
 
 main( argc, argv )
@@ -108,20 +108,20 @@ char **argv;
 
 		level = (int)((double)bin_r[i]*scale);
 		if( level > 511 )  level = 511;
-		for( j = 0; j < level; j++ )  line[j].red = 255;
-		for( ; j < 512; j++ )  line[j].red = 0;
+		for( j = 0; j < level; j++ )  line[j][RED] = 255;
+		for( ; j < 512; j++ )  line[j][RED] = 0;
 		npix = level;
 
 		level = (int)((double)bin_g[i]*scale);
 		if( level > 511 )  level = 511;
-		for( j = 0; j < level; j++ )  line[j].green = 255;
-		for( ; j < 512; j++ )  line[j].green = 0;
+		for( j = 0; j < level; j++ )  line[j][GRN] = 255;
+		for( ; j < 512; j++ )  line[j][GRN] = 0;
 		if( level > npix )  npix = level;
 
 		level = (int)((double)bin_b[i]*scale);
 		if( level > 511 )  level = 511;
-		for( j = 0; j < level; j++ )  line[j].blue = 255;
-		for( ; j < 512; j++ )  line[j].blue = 0;
+		for( j = 0; j < level; j++ )  line[j][BLU] = 255;
+		for( ; j < 512; j++ )  line[j][BLU] = 0;
 		if( level > npix )  npix = level;
 
 		fb_write( fbp, 0, 2*i, line, npix );
