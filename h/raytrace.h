@@ -843,6 +843,7 @@ struct resource {
 
 struct structparse {
 	char		*sp_fmt;		/* "indir" or "%f", etc */
+	int		sp_count;		/* number of elements */
 	char		*sp_name;		/* Element's symbolic name */
 	int		sp_offset;		/* Byte offset in struct */
 	void		(*sp_hook)();		/* Optional hooked function, or indir ptr */
@@ -980,7 +981,6 @@ struct rt_i {
 	long		rti_magic;	/* magic # for integrity check */
 	vect_t		rti_pmin;	/* for plotting, min RPP */
 	vect_t		rti_pmax;	/* for plotting, max RPP */
-	fastf_t		rti_pconv;	/* scale from rti_pmin */
 	int		rti_nlights;	/* number of light sources */
 	int		rti_cut_maxlen;	/* max len RPP list in 1 cut bin */
 	int		rti_cut_nbins;	/* number of cut bins (leaves) */
