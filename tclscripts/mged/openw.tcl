@@ -1707,6 +1707,11 @@ hoc_register_menu_data "Tools" "Raytrace Control Panel" "Raytrace Control Panel"
 	{ { summary "Tool for raytracing." }
           { see_also rt } }
 
+.$id.menubar.tools add command -label "Build Pattern Tool" -underline 0\
+	-command "pattern_control .#auto"
+hoc_register_menu_data "Tools" "Build Pattern Tool" "Build Pattern Tool"\
+	{ { summary "A tool for building a repetitive pattern from an existing object." } }
+
 .$id.menubar.tools add command -label "Overlap Tool" -underline 0\
 	-command "overlap_tool $id"
 hoc_register_menu_data "Tools" "Overlap Tool" "Overlap Tool"\
