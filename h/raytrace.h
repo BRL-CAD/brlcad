@@ -1888,7 +1888,8 @@ RT_EXTERN(void			nmg_mv_eu_between_shells, (struct shell *dest,
 				struct shell *src, struct edgeuse *eu) );
 RT_EXTERN(void			nmg_mv_vu_between_shells, (struct shell *dest,
 				struct shell *src, struct vertexuse *vu) );
-RT_EXTERN(void			nmg_merge_2faces, (struct faceuse *dest_fu, struct faceuse *src_fu) );
+RT_EXTERN(void			nmg_jf, (struct faceuse *dest_fu,
+				struct faceuse *src_fu) );
 RT_EXTERN(struct edgeuse	*nmg_eu_with_vu_in_lu, (struct loopuse *lu, struct vertexuse *vu) );
 RT_EXTERN(void			nmg_move_eg, (struct edge_g *old_eg, struct edge_g *new_eg, struct shell *s) );
 RT_EXTERN(struct loopuse	*nmg_dup_loop, (struct loopuse *lu,

@@ -2185,14 +2185,15 @@ register struct faceuse	*src_fu;
 }
 
 /*
- *			N M G _ M E R G E _ 2 F A C E S
+ *			N M G _ J F
  *
- *  Move everything from the source face and mate into the
- *  destination face and mate, taking into account face orientations.
- *  XXX should be called nmg_jf().
+ *  Join two faces together by
+ *  moving everything from the source faceuse and mate into the
+ *  destination faceuse and mate, taking into account face orientations.
+ *  The source face is destroyed by this operation.
  */
 void
-nmg_merge_2faces(dest_fu, src_fu)
+nmg_jf(dest_fu, src_fu)
 register struct faceuse	*dest_fu;
 register struct faceuse	*src_fu;
 {
@@ -2209,7 +2210,7 @@ register struct faceuse	*src_fu;
 		nmg_move_fu_fu(dest_fu, src_fu->fumate_p);
 		nmg_move_fu_fu(dest_fu->fumate_p, src_fu);
 	}
-
+	/* The src_fu is invalid here, having an empty lu_hd list */
 	nmg_kfu(src_fu);
 }
 
