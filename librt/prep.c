@@ -303,13 +303,14 @@ register struct rt_i *rtip;
 	/*
 	 *  Clear out the solid table
 	 */
-	while( RT_LIST_LOOP( stp, soltab, &(rtip->rti_headsolid) ) )  {
+	while( RT_LIST_WHILE( stp, soltab, &(rtip->rti_headsolid) ) )  {
 		RT_CHECK_SOLTAB(stp);
 		RT_LIST_DEQUEUE( &(stp->l) );
 		if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
 			rt_bomb("rt_clean:  bad st_id");
 		rt_functab[stp->st_id].ft_free( stp );
 		rt_free( (char *)stp->st_regions, "st_regions bitv" );
+		stp->st_regions = (bitv_t *)0;
 		stp->st_dp = DIR_NULL;		/* was ptr to directory */
 		rt_free( (char *)stp, "struct soltab");
 	}
@@ -323,6 +324,7 @@ register struct rt_i *rtip;
 
 		rt_fr_tree( regp->reg_treetop );
 		rt_free( regp->reg_name, "region name str");
+		regp->reg_name = (char *)0;
 		rt_free( (char *)regp, "struct region");
 		regp = nextregp;
 	}
@@ -431,6 +433,7 @@ register struct region *delregp;
 zot:
 	rt_fr_tree( delregp->reg_treetop );
 	rt_free( delregp->reg_name, "region name str");
+	delregp->reg_name = (char *)0;
 	rt_free( (char *)delregp, "struct region");
 	return(0);
 }
@@ -439,6 +442,8 @@ zot:
  *			R T _ F R  _ T R E E
  *
  *  Free a boolean operation tree.
+ *  Pointers to children are nulled out, to prevent any stray references
+ *  to this tree node from being sucessful.
  *  XXX should iterate, rather than recurse.
  */
 HIDDEN void
@@ -449,6 +454,8 @@ register union tree *tp;
 	switch( tp->tr_op )  {
 	case OP_SOLID:
 		rt_free( tp->tr_a.tu_name, "leaf name" );
+		tp->tr_a.tu_name = (char *)0;
+		tp->tr_op = 0;
 		rt_free( (char *)tp, "leaf tree union");
 		return;
 	case OP_SUBTRACT:
@@ -456,7 +463,10 @@ register union tree *tp;
 	case OP_INTERSECT:
 	case OP_XOR:
 		rt_fr_tree( tp->tr_b.tb_left );
+		tp->tr_b.tb_left = TREE_NULL;
 		rt_fr_tree( tp->tr_b.tb_right );
+		tp->tr_b.tb_right = TREE_NULL;
+		tp->tr_op = 0;
 		rt_free( (char *)tp, "binary tree union");
 		return;
 	default:
