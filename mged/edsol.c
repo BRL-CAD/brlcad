@@ -6905,6 +6905,8 @@ pscale()
 			}
 			if (epa->epa_r1 * es_scale >= epa->epa_r2)
 				epa->epa_r1 *= es_scale;
+			else
+				bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 		}
 		break;
 
@@ -6922,6 +6924,8 @@ pscale()
 			}
 			if (epa->epa_r2 * es_scale <= epa->epa_r1)
 				epa->epa_r2 *= es_scale;
+			else
+				bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 		}
 		break;
 
@@ -6955,6 +6959,8 @@ pscale()
 			}
 			if (ehy->ehy_r1 * es_scale >= ehy->ehy_r2)
 				ehy->ehy_r1 *= es_scale;
+			else
+				bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 		}
 		break;
 
@@ -6972,6 +6978,8 @@ pscale()
 			}
 			if (ehy->ehy_r2 * es_scale <= ehy->ehy_r1)
 				ehy->ehy_r2 *= es_scale;
+			else
+				bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 		}
 		break;
 
