@@ -73,6 +73,7 @@ int		using_mlib = 0;		/* Material routines NOT used */
 	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
  };
 
+FILE            *plotfp;		/* optional plotting file */
 
 extern FILE	*outfp;			/* optional output file */
 
@@ -97,7 +98,8 @@ int	rayhit(), raymiss();
  *  			V I E W _ I N I T
  *
  *  This routine is called by main().  It prints the overall shotline
- *  header.
+ *  header. Furthermore, pointers to rayhit() and raymiss() are set up
+ *  and are later called from do_run().
  */
 int
 view_init( ap, file, obj, minus_o )
@@ -120,7 +122,11 @@ char *file, *obj;
 	 *	number of views, title
 	 *  Initially, do only one view per run of RTG3.
 	 */
-        fprintf(outfp,"%5d %s %s\n", 1, file, obj);
+	if(rdebug & RDEBUG_RAYPLOT) {
+		plotfp = fopen("rtg3.pl", "w");
+	}
+
+	fprintf(outfp,"%5d %s %s\n", 1, file, obj);
 
 	return(0);		/* No framebuffer needed */
 }
@@ -175,6 +181,8 @@ raymiss()
 
 /*
  *			V I E W _ P I X E L
+ *
+ *  This routine is called from do_run(), and in this case does nothing.
  */
 void
 view_pixel()
@@ -185,8 +193,14 @@ view_pixel()
 /*
  *			R A Y H I T
  *
- *  Write a hit to the ray file.
- *  Also generate various forms of "paint".
+ *  Rayhit() is called by rt_shootray() when a hit is detected.  It
+ *  writes a hit to the ray file.
+ *  This routine sets up the grid that will be used to fire rays at
+ *  the model.  First, the grid origen is moved to the model's center
+ *  to satisfy GIFT.  Likewise, the ray's starting position is adjusted
+ *  to coincide with the cell-center, rather than its lower left corner.
+ *  This too is a GIFT requirement.
+ *  Finally, the individual ray headers are written.
  */
 int
 rayhit( ap, PartHeadp )
@@ -381,6 +395,24 @@ register struct partition *PartHeadp;
 			putc( '\n', outfp );
 			card_count = 0;
 		}
+
+		if(rdebug & RDEBUG_RAYPLOT) {
+			vect_t     inpt;
+			vect_t     outpt;
+			VJOIN(inpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
+				ap->a_ray.r_dir);
+			VJOIN(outpt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
+				ap->a_ray.r_dir);
+			pd3v_line(plotfp, inpt,outpt);
+			
+			if(air_thickness > 0) {
+				vect_t     air_end;
+				VJOIN(air_end, ap->a_ray.r_pt,
+					pp->pt_outhit->hit_dist + air_thickness,
+					ap->a_ray.r_dir);
+				pd3v_move(plotfp, air_end);
+			}
+		}
 	}
 
 	/* If partway through building the line, add a newline */
@@ -395,6 +427,9 @@ register struct partition *PartHeadp;
 
 /*
  *			V I E W _ E O L
+ *
+ *  View_eol() is called by rt_shootray() in do_run().  In this case,
+ *  it does nothing.
  */
 void	view_eol()
 {
@@ -403,7 +438,8 @@ void	view_eol()
 /*
  *			V I E W _ E N D
  *
- *  Output special 999.9 "end of view" marker, composed of
+ *  View_end() is called by rt_shootray in do_run().  It
+ *  outputs a special 999.9 "end of view" marker, composed of
  *  a "999.9" shotline header, with one
  *  all-zero component record.
  */
