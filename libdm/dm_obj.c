@@ -272,12 +272,15 @@ dmo_open_tcl(clientData, interp, argc, argv)
 	else if (!strcmp(argv[2], "ogl"))
 		type = DM_TYPE_OGL;
 #endif
+#if 0
+	/* XXX - not yet ready to handle these display types */
 	else if (!strcmp(argv[2], "ps"))
 		type = DM_TYPE_PS;
 	else if (!strcmp(argv[2], "plot"))
 		type = DM_TYPE_PLOT;
 	else if (!strcmp(argv[2], "nu"))
 		type = DM_TYPE_NULL;
+#endif
 	else {
 		Tcl_AppendResult(interp,
 				 "Unsupported display manager type - ",
