@@ -39,7 +39,6 @@ static char RCScell[] = "@(#)$Header$ (BRL)";
 extern fastf_t	gift_grid_rounding;
 extern point_t	viewbase_model;
 
-extern double	mat_radtodeg;
 extern int	npsw;			/* number of worker PSWs to run */
 
 int		use_air = 0;		/* Handling of air in librt */
