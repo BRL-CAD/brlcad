@@ -1571,6 +1571,8 @@ releases earlier than 4.0 \(em they don't work well.
 Similarly, IRIX 6.0 had not been released at the time BRL-CAD Release 4.4
 was being finalized, so it is unclear how well this combination will work.
 Contact ARL for an errata sheet when IRIX 6.0 is available.
+.NH 3
+SGI IRIX 4.0.5
 .PP
 When compiling on IRIX 4.0.5, the module \fBlibrt/machine.c\fR
 trips over an SGI C compiler bug, producing the following warning:
@@ -1596,6 +1598,26 @@ Warning: _setoserror: multiply defined
         new (ignored) definition from '/usr/lib/libc_s.a'
 .fi
 These warnings can safely be ignored;  we could find no way to suppress them.
+.NH 3
+SGI IRIX 5.2
+.PP
+When compiling on IRIX 5.2 using shared libraries, many times
+the SGI loader will produce the following warning(s):
+.nf
+ld:
+The shared object /usr/lib/libm.so did not resolve any symbols.
+        You may want to remove it from your link line.
+The shared object ../libsysv/libsysv.so did not resolve any symbols.
+        You may want to remove it from your link line.
+.fi
+This warning can safely be ignored.
+The documentation states that the \fB-S\fR option given to the loader
+will suppress loader warnings like this, but when specified, causes
+the loader to issue an additional warning stating that the \fB-S\fR
+option is unimplemented.
+.PP
+Also note that \fBirprep/firpass.c\fR can not be optimized because
+it is too large.
 .NH 2
 ALLIANT WARNINGS
 .PP
