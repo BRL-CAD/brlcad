@@ -1,6 +1,28 @@
-/*	N M G _ T R I . C --- Triangulate the faces of a polygonal NMG
+/*
+ *			N M G _ T R I . C
+ *
+ *  Triangulate the faces of a polygonal NMG
  * 
+ *  Author -
+ *	Lee A. Butler
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1994 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include "conf.h"
 #include <stdio.h>
 #include <math.h>
@@ -72,7 +94,7 @@ struct nmg_ray_state {
 	int			nvu;		/* len of vu[] */
 	point_t			pt;		/* The ray */
 	vect_t			dir;
-	struct edge_g		*eg_p;		/* Edge geom of the ray */
+	struct edge_g_lseg	*eg_p;		/* Edge geom of the ray */
 	struct shell		*sA;
 	struct shell		*sB;
 	struct faceuse		*fu1;

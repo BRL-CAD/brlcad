@@ -2085,7 +2085,7 @@ genptr_t	state;
 int		first;
 {
 	register struct vf_state *sp = (struct vf_state *)state;
-	register struct edge_g_lseg	*eg = (struct edge_g *)ep;
+	register struct edge_g_lseg	*eg = (struct edge_g_lseg *)ep;
 
 	NMG_CK_EDGE_G_LSEG(eg);
 	/* If this edge has been processed before, do nothing more */
