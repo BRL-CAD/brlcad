@@ -2510,7 +2510,7 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 	maxindex = 1;
 	for (kind =0 ; kind < NMG_N_KINDS; kind++) {
 		kind_counts[kind] = bu_glong( dp );
-		dp+= SIZEOF_NETWORK_DOUBLE;
+		dp+= SIZEOF_NETWORK_LONG;
 		maxindex += kind_counts[kind];
 	}
 
