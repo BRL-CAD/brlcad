@@ -29,8 +29,9 @@ proc solclick { } {
     }
 }
 
+catch { destroy .metasolclick }
+
 toplevel .metasolclick
 wm title .metasolclick "My 1st menu"
-button .metasolclick.s0 -text "SOLID CLICK" \
-	-command "solclick"
+button .metasolclick.s0 -text "SOLID CLICK" -command "solclick"
 pack .metasolclick.s0 -side top -fill x
