@@ -72,18 +72,18 @@ int argc; char **argv;
 	printf("Scanline length in input file: ");
 	scanf( "%d", &scanlen );
 	if( scanlen <= 0 ) {
-		fprintf("bwcrop: scanlen = %d, don't be rediculous", scanlen );
+		fprintf("bwcrop: scanlen = %d, don't be ridiculous\n", scanlen );
 		exit( 4 );
 	}
-	printf("Line Length and Number of scan lines (in new file): ");
+	printf("Line Length and Number of scan lines (in new file)?: ");
 	scanf( "%f%f", &xnum, &ynum );
-	printf("Upper left corner in input file (x,y): ");
+	printf("Upper left corner in input file (x,y)?: ");
 	scanf( "%f%f", &ulx, &uly );
-	printf("Upper right corner (x,y): ");
+	printf("Upper right corner (x,y)?: ");
 	scanf( "%f%f", &urx, &ury );
-	printf("Lower right (x,y): ");
+	printf("Lower right (x,y)?: ");
 	scanf( "%f%f", &lrx, &lry );
-	printf("Lower left (x,y): ");
+	printf("Lower left (x,y)?: ");
 	scanf( "%f%f", &llx, &lly );
 
 	/* See how many lines we can buffer */
