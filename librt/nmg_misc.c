@@ -891,9 +891,7 @@ struct shell *s;
 	if( NMG_LIST_IS_EMPTY( &s->fu_hd ) &&
 	    NMG_LIST_IS_EMPTY( &s->lu_hd ) &&
 	    NMG_LIST_IS_EMPTY( &s->eu_hd ) && !s->vu_p) {
-		rt_log("At %d in %s shell has no children\n",
-			__LINE__, __FILE__);
-		/* rt_bomb("exiting\n"); */
+	    	rt_log("WARNING nmg_pl_s() shell has no children\n");
 	}
 
 	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
@@ -1118,7 +1116,7 @@ struct nmgregion *r;
 
 	/* get number of points & number of facets in file */
 	if (fscanf(fd, "%d %d", &num_pts, &num_facets) != 2)
-		rt_bomb("Error in first line of poly file\n");
+		rt_bomb("polytonmg() Error in first line of poly file\n");
 	else
 		if (rt_g.NMG_debug & DEBUG_POLYTO)
 			rt_log("points: %d  facets: %d\n",
@@ -1137,7 +1135,7 @@ struct nmgregion *r;
 	/* read in the coordinates of the vertices */
 	for (i=0 ; i < num_pts ; ++i) {
 		if (fscanf(fd, "%lg %lg %lg", &p[0], &p[1], &p[2]) != 3)
-			rt_bomb("Error reading point");
+			rt_bomb("polytonmg() Error reading point");
 		else
 			if (rt_g.NMG_debug & DEBUG_POLYTO)
 				rt_log("read vertex #%d (%g %g %g)\n",
@@ -1151,7 +1149,7 @@ struct nmgregion *r;
 
 	for (facet = 0 ; facet < num_facets ; ++facet) {
 		if (fscanf(fd, "%d", &pts_this_face) != 1)
-			rt_bomb("error getting pt count for this face");
+			rt_bomb("polytonmg() error getting pt count for this face");
 
 		if (rt_g.NMG_debug & DEBUG_POLYTO)
 			rt_log("facet %d pts in face %d\n",
@@ -1166,7 +1164,7 @@ struct nmgregion *r;
 
 		for (i=0 ; i < pts_this_face ; ++i) {
 			if (fscanf(fd, "%d", &j) != 1)
-				rt_bomb("error getting point index for v in f");
+				rt_bomb("polytonmg() error getting point index for v in f");
 			vl[i] = v[j-1];
 		}
 
@@ -1558,9 +1556,7 @@ struct shell *s;
 			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 				;
 			} else {
-				rt_log("in %s at %d bad loopuse child\n",
-					__FILE__, __LINE__);
-				rt_bomb("BAD NMG struct\n");
+				rt_bomb("nmg_pl_isect() bad loopuse down\n");
 			}
 		}
 	}
