@@ -71,7 +71,8 @@ FBIO disk_interface =
 		0,
 		0L,
 		0L,
-		0L
+		0L,
+		0
 		};
 
 _LOCAL_ int

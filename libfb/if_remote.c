@@ -98,7 +98,8 @@ FBIO remote_interface =
 		0,
 		0L,
 		0L,
-		0L
+		0L,
+		0
 		};
 
 void	pkg_queue(), flush_queue();
