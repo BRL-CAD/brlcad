@@ -966,7 +966,6 @@ struct dm_list *initial_dm_list;
   frametime = 1;
   mapped = 1;
   adc_a1_deg = adc_a2_deg = 45.0;
-  mged_variables->v_axes_pos = initial_dm_list->_mged_variables->v_axes_pos;
   mged_view_init(curr_dm_list);
 
   BU_GETSTRUCT(curr_dm_list->menu_vars, menu_vars);
