@@ -83,7 +83,8 @@ int		line;
  * but takes the arguments as lists, a more Tcl-friendly method.
  * Also knows about the Tcl result string, so it can make more informative
  * error messages.
- * XXX move to libbu/bu_tcl.c
+ *
+ *  Operates on argv[0] and argv[1], then on argv[2] and argv[3], ...
  */
 
 int
