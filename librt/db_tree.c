@@ -146,7 +146,7 @@ register CONST struct combined_tree_state	*ctsp;
  *	 1	success, this is the top of a new region.
  */
 int
-db_apply_state_from_combNEW( tsp, pathp, comb )
+db_apply_state_from_comb( tsp, pathp, comb )
 struct db_tree_state		*tsp;
 CONST struct db_full_path	*pathp;
 register CONST struct rt_comb_internal	*comb;
@@ -230,7 +230,7 @@ register CONST struct rt_comb_internal	*comb;
  *	 0	success, member pushed on path
  */
 int
-db_apply_state_from_memb_new( tsp, pathp, tp )
+db_apply_state_from_memb( tsp, pathp, tp )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 CONST union tree	*tp;
@@ -333,7 +333,7 @@ CONST union tree	*tp;
 		if( strcmp( cp, tp->tr_l.tl_name ) != 0 )
 			return 0;		/* NO-OP */
 		tsp->ts_sofar |= sofar;
-		if( db_apply_state_from_memb_new( tsp, pathp, tp ) < 0 )
+		if( db_apply_state_from_memb( tsp, pathp, tp ) < 0 )
 			return -1;		/* FAIL */
 		return 1;			/* success */
 
@@ -519,7 +519,7 @@ int			noisy;
 		}
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
-		if( db_apply_state_from_combNEW( tsp, pathp, comb ) < 0 )
+		if( db_apply_state_from_comb( tsp, pathp, comb ) < 0 )
 			goto fail;
 
 		/* Crawl tree searching for specified leaf */
@@ -605,7 +605,7 @@ struct combined_tree_state	**region_start_statepp;
 	switch( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-		if( db_apply_state_from_memb_new( &memb_state, pathp, tp ) < 0 )
+		if( db_apply_state_from_memb( &memb_state, pathp, tp ) < 0 )
 			return;		/* error? */
 
 		/* Recursive call */
@@ -711,7 +711,7 @@ struct combined_tree_state	**region_start_statepp;
 		}
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
-		if( (is_region = db_apply_state_from_combNEW( &nts, pathp, comb )) < 0 )  {
+		if( (is_region = db_apply_state_from_comb( &nts, pathp, comb )) < 0 )  {
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
