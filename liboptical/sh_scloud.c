@@ -39,7 +39,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define M_PI            3.14159265358979323846
 #endif
 
-#define CLAMP(_x,_a,_b)	(_x < _a ? _a : (_x > _b ? _b : _x))
 #define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )
 #define CEIL(x)		(  (int)(x) + (  (x) > 0 && (x) != (int)(x)  )  )
 
@@ -51,7 +50,9 @@ struct scloud_specific {
 	point_t	vscale;
 	vect_t	delta;	/* xlatd in noise space (where interesting noise is)*/
 	double	max_d_p_mm;	/* maximum density per millimeter */
-	mat_t	xform;
+	double	min_d_p_mm;	/* background density per millimeter */
+	mat_t	mtos;		/* model to shader */
+	mat_t	stom;		/* shader to model */
 };
 
 static struct scloud_specific scloud_defaults = {
@@ -61,7 +62,8 @@ static struct scloud_specific scloud_defaults = {
 	1.0,		/* scale */
 	{ 1.0, 1.0, 1.0 },	/* vscale */
 	{ 1000.0, 1200.0, 2100.0 },	/* delta */
-	0.01			/* max_d_p_mm */
+	0.01,			/* max_d_p_mm */
+	0.0
 	};
 
 #define SHDR_NULL	((struct scloud_specific *)0)
@@ -75,6 +77,8 @@ struct bu_structparse scloud_pr[] = {
 	{"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 struct bu_structparse scloud_parse[] = {
@@ -84,7 +88,10 @@ struct bu_structparse scloud_parse[] = {
 	{"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "m", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "M", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "m", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "s",			SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  3, "vs",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
@@ -138,13 +145,13 @@ struct rt_i		*rtip;
 	}
 
 	memcpy(scloud, &scloud_defaults, sizeof(struct scloud_specific) );
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("scloud_setup\n");
 
-	if( bu_struct_parse( matparm, scloud_parse, (char *)scloud ) < 0 )
+	if (bu_struct_parse( matparm, scloud_parse, (char *)scloud ) < 0 )
 		return(-1);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		(void)bu_struct_print( rp->reg_name, scloud_parse, (char *)scloud );
 
 	/* get transformation between world and "region" coordinates */
@@ -157,11 +164,8 @@ struct rt_i		*rtip;
 		rt_bomb("db_path_to_mat() error");
 	}
 
-	/* get matrix to map points from model (world) space
-	 * to "region" space
-	 */
+	/* get matrix to map points from model space to "region" space */
 	bn_mat_inv(model_to_region, region_to_model);
-
 
 	/* add the noise-space scaling */
 	bn_mat_idn(tmp);
@@ -173,14 +177,15 @@ struct rt_i		*rtip;
 		tmp[10] = 1.0 / (scloud->vscale[2]);
 	}
 
-	bn_mat_mul(scloud->xform, tmp, model_to_region);
+	bn_mat_mul(scloud->mtos, tmp, model_to_region);
 
 	/* add the translation within noise space */
 	bn_mat_idn(tmp);
 	tmp[MDX] = scloud->delta[0];
 	tmp[MDY] = scloud->delta[1];
 	tmp[MDZ] = scloud->delta[2];
-	bn_mat_mul2(tmp, scloud->xform);
+	bn_mat_mul2(tmp, scloud->mtos);
+	bn_mat_inv(scloud->stom, scloud->mtos);
 
 	return(1);
 }
@@ -232,13 +237,14 @@ char	*dp;
 
 
 	/* just shade the surface with a transparency */
-	MAT4X3PNT(in_pt, scloud_sp->xform, swp->sw_hit.hit_point);
+	MAT4X3PNT(in_pt, scloud_sp->mtos, swp->sw_hit.hit_point);
 	val = bn_noise_fbm(in_pt, scloud_sp->h_val,
 			scloud_sp->lacunarity, scloud_sp->octaves );
-	swp->sw_transmit = 1.0 - CLAMP(val, 0.0, 1.0);
+	CLAMP(val, 0.0, 1.0);
+	swp->sw_transmit = 1.0 - val;
 
 
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 	return 1;
@@ -269,6 +275,11 @@ char	*dp;
 	double  val;
 	double	trans;
 	point_t	incident_light;
+	double	delta_dpmm;
+	double density;
+	struct shadework sub_sw;
+	struct application sub_ap;
+	struct light_specific *lp;
 
 	RT_CHECK_PT(pp);
 	RT_AP_CHECK(ap);
@@ -278,10 +289,10 @@ char	*dp;
 	 * and transform them into "shader space" coordinates 
 	 */
 	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	MAT4X3PNT(in_pt, scloud_sp->xform, pt);
+	MAT4X3PNT(in_pt, scloud_sp->mtos, pt);
 
 	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
-	MAT4X3PNT(out_pt, scloud_sp->xform, pt);
+	MAT4X3PNT(out_pt, scloud_sp->mtos, pt);
 
 
 	/* get ray/solid intersection vector (in noise space)
@@ -307,31 +318,72 @@ char	*dp;
 	steps = pow(scloud_sp->lacunarity, scloud_sp->octaves-1) * 4;
 	step_delta = thickness / (double)steps;
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("steps=%d  delta=%g  thickness=%g\n",
 			steps, step_delta, thickness);
 
 	VUNITIZE(v_cloud);
 	VMOVE(pt, in_pt);
 	trans = 1.0;
+
+	delta_dpmm = scloud_sp->max_d_p_mm - scloud_sp->min_d_p_mm;
+
+	sub_sw = *swp; /* struct copy */
+	sub_sw.sw_inputs = MFI_HIT;
+
+	sub_ap = *ap; /* struct copy */
+	sub_ap.a_diverge = 0.0; /* light rays shouldn't diverge */
+
 	for (i=0 ; i < steps ; i++ ) {
 		/* compute the next point in the cloud space */
 		VJOIN1(pt, in_pt, i*step_delta, v_cloud);
 
+		/* get turbulence value (0 .. 1) */
 		val = bn_noise_turb(pt, scloud_sp->h_val, 
 			scloud_sp->lacunarity, scloud_sp->octaves );
 
-		val -= .5;
-		val = CLAMP(val, 0.0, 1.0);
-		val *= 2.0;
+		if (rdebug&RDEBUG_SHADE)
+			
+		density = scloud_sp->min_d_p_mm + val * delta_dpmm;
 
-		val = exp( - val * scloud_sp->max_d_p_mm * step_delta);
+		val = exp( - density * step_delta);
 		trans *= val;
+
+		if (swp->sw_xmitonly) continue;
+
+		/* need to set the hit in our fake shadework structure */
+		MAT4X3PNT(sub_sw.sw_hit.hit_point, scloud_sp->stom, pt);
+		sub_sw.sw_transmit = trans;
+
+		sub_sw.sw_inputs = MFI_HIT;
+
+		light_obs( ap, &sub_sw, swp->sw_inputs );
+		/* now we know how much light has arrived from each
+		 * light source to this point
+		 */
+		for (i=ap->a_rt_i->rti_nlights-1  ; i >= 0 ; i--) {
+			lp = (struct light_specific *)swp->sw_visible[i];
+			if (lp == LIGHT_NULL ) continue;
+
+			/* compute how much light has arrived at 
+			 * this location
+			 */
+			incident_light[0] += sub_sw.sw_intensity[3*i+0] *
+				lp->lt_color[0] * sub_sw.sw_lightfract[i];
+			incident_light[1] += sub_sw.sw_intensity[3*i+1] *
+				lp->lt_color[1] * sub_sw.sw_lightfract[i];
+			incident_light[2] += sub_sw.sw_intensity[3*i+2] *
+				lp->lt_color[2] * sub_sw.sw_lightfract[i];
+		}
+
+		VSCALE(incident_light, incident_light, trans);
+
+
 	}
 
 	/* scloud is basically a white object with partial transparency */
 	swp->sw_transmit = trans;
-	if( swp->sw_xmitonly )  return 1;
+	if (swp->sw_xmitonly )  return 1;
 
 
 	/*
@@ -345,11 +397,11 @@ char	*dp;
  		ap->a_ray.r_dir);
 	VREVERSE( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
 	swp->sw_inputs |= MFI_HIT | MFI_NORMAL;
-	light_visibility( ap, swp, swp->sw_inputs );
+	light_obs( ap, swp, swp->sw_inputs );
 	VSETALL(incident_light, 0 );
 	for( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
 		struct light_specific	*lp;
-		if( (lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
+		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
 			continue;
 		/* XXX don't have a macro for this */
 		incident_light[0] += swp->sw_intensity[3*i+0] * lp->lt_color[0];
@@ -359,11 +411,11 @@ char	*dp;
 	VELMUL( swp->sw_color, swp->sw_color, incident_light );
 
 
-	if( rdebug&RDEBUG_SHADE ) {
+	if (rdebug&RDEBUG_SHADE ) {
 		pr_shadework( "scloud: after light vis, before rr_render", swp);
 	}
 
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 	return(1);

@@ -363,7 +363,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	 *	Parse the MATPARM field
 	 */
 
-	if( bu_struct_parse( matparm, wood_parse, (char *)wd ) < 0 )  {
+	if (bu_struct_parse( matparm, wood_parse, (char *)wd ) < 0 )  {
 		bu_free( (char *)wd, "wood_specific" );
 		return(-1);
 		}

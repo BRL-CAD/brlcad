@@ -112,16 +112,16 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 
 	spp->sp_file[0] = '\0';
 	spp->sp_w = -1;
-	if( bu_struct_parse( matparm, spm_parse, (char *)spp ) < 0 )  {
+	if (bu_struct_parse( matparm, spm_parse, (char *)spp ) < 0 )  {
 		bu_free( (char *)spp, "spm_specific" );
 		return(-1);
 	}
-	if( spp->sp_w < 0 )  spp->sp_w = 512;
-	if( spp->sp_file[0] == '\0' )
+	if (spp->sp_w < 0 )  spp->sp_w = 512;
+	if (spp->sp_file[0] == '\0' )
 		goto fail;
-	if( (spp->sp_map = spm_init( spp->sp_w, sizeof(RGBpixel) )) == SPM_NULL )
+	if ((spp->sp_map = spm_init( spp->sp_w, sizeof(RGBpixel) )) == SPM_NULL )
 		goto fail;
-	if( spm_load( spp->sp_map, spp->sp_file ) < 0 )
+	if (spm_load( spp->sp_map, spp->sp_file ) < 0 )
 		goto fail;
 	return(1);
 fail:
@@ -143,7 +143,7 @@ char	*dp;
 
 	bu_log("spm_print(rp=x%x, dp=x%x)\n", rp, dp);
 	(void)bu_struct_print("spm_print", spm_parse, (char *)dp);
-	if( spm->sp_map )  spm_dump( spm->sp_map, 0 );
+	if (spm->sp_map )  spm_dump( spm->sp_map, 0 );
 }
 
 HIDDEN void
@@ -154,7 +154,7 @@ char *cp;
 
 	spm = (struct spm_specific *)cp;
 
-	if( spm->sp_map )  spm_free( spm->sp_map );
+	if (spm->sp_map )  spm_free( spm->sp_map );
 	spm->sp_map = NULL;
 	bu_free( cp, "spm_specific" );
 }

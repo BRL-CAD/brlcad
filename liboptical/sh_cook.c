@@ -136,13 +136,13 @@ struct rt_i	*rtip;
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
 
-	if( bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )  {
+	if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )  {
 		bu_free( (char *)pp, "cook_specific" );
 		return(-1);
 	}
 
 	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
-	if( pp->transmit > 0 )
+	if (pp->transmit > 0 )
 		rp->reg_transmit = 1;
 	return(1);
 }
@@ -180,11 +180,11 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
 
-	if( bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
+	if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
 		return(-1);
 
 	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
-	if( pp->transmit > 0 )
+	if (pp->transmit > 0 )
 		rp->reg_transmit = 1;
 	return(1);
 }
@@ -222,11 +222,11 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
 
-	if( bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
+	if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
 		return(-1);
 
 	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
-	if( pp->transmit > 0 )
+	if (pp->transmit > 0 )
 		rp->reg_transmit = 1;
 	return(1);
 }
@@ -291,8 +291,8 @@ char	*dp;
 
 	/* XXX - Reflection coefficients - hack until RR_ is changed */
 	f = ps->transmit + ps->reflect;
-	if( f < 0 ) f = 0;
-	if( f > 1.0 ) f = 1.0;
+	if (f < 0 ) f = 0;
+	if (f > 1.0 ) f = 1.0;
 	/*swp->sw_reflect = ps->reflect;*/
 	cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
 	swp->sw_reflect = fresnel( cosine, ps->refrac_index );
@@ -301,9 +301,9 @@ char	*dp;
 
 	swp->sw_refrac_index = ps->refrac_index;
 	swp->sw_extinction = ps->extinction;
-	if( swp->sw_xmitonly )
+	if (swp->sw_xmitonly )
 	{
-		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);	/* done */
 	}
@@ -314,7 +314,7 @@ char	*dp;
 	VSCALE( swp->sw_color, matcolor, AmbientIntensity );
 
 	n_dot_e = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
-	if( n_dot_e < 0 ) {
+	if (n_dot_e < 0 ) {
 		/* Yow, we can't see this point, how did we hit it? */
 		bu_log( "cook: N.E < 0\n" );
 	}
@@ -322,7 +322,7 @@ char	*dp;
 	/* Consider effects of each light source */
 	for( i=ap->a_rt_i->rti_nlights-1; i >= 0; i-- )  {
 
-		if( (lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
+		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
 			continue;	/* shadowed */
 	
 		/* Light is not shadowed -- add this contribution */
@@ -330,7 +330,7 @@ char	*dp;
 		to_light = swp->sw_tolight+3*i;
 
 		n_dot_l = VDOT( swp->sw_hit.hit_normal, to_light );
-		if( n_dot_l < 0 ) {
+		if (n_dot_l < 0 ) {
 			/* light through back */
 			/*VSET( swp->sw_color, 0, 1, 0 );*/
 			continue;
@@ -375,7 +375,7 @@ char	*dp;
 		VADD2( swp->sw_color, swp->sw_color, work );
 #endif
 	}
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 	return(1);
@@ -388,12 +388,12 @@ double	n;	/* index of refraction */
 {
 	double	g, gpc, gmc, t1, t2, f;
 
-	if( n < 1.0 ) {
+	if (n < 1.0 ) {
 		fprintf( stderr, "fresnel: can't handle n < 1.0\n" );
 		return( 0.0 );
 	}
 	/* avoid divide by zero.  limit -> 1.0 as theta -> pi/2 */
-	if( c < 1.0e-10 )
+	if (c < 1.0e-10 )
 		return( 1.0 );
 
 	g = sqrt( n*n + c*c - 1.0 );
@@ -441,7 +441,7 @@ double	m2;		/* rms slope squared (m^2) */
 	double	t1, t2;
 
 	t1 = cos4(a);		/* note: no m^2 term */
-	if( t1 < 1.0e-20 )	/* avoid divide by zero */
+	if (t1 < 1.0e-20 )	/* avoid divide by zero */
 		return( 0.0 );
 
 	t2 = exp( -tan2(a)/m2 );

@@ -196,7 +196,7 @@ int op;
 				bu_log( "Non-ellipse \"union\" solid of \"%s\" being ignored\n",
 					tb->name);
 
-			if( rdebug&RDEBUG_SHADE)
+			if (rdebug&RDEBUG_SHADE)
 				bu_log(" got a solid type %d \"%s\".  This solid ain't no ellipse bucko!\n",
 					sol_id, rt_functab[sol_id].ft_name);
 
@@ -206,14 +206,14 @@ int op;
 
 		ell_p = (struct rt_ell_internal *)dbint->ip.idb_ptr;
 
-		if( rdebug&RDEBUG_SHADE)
+		if (rdebug&RDEBUG_SHADE)
 			bu_log(" got a solid type %d \"%s\"\n",
 				sol_id,
 				rt_functab[sol_id].ft_name);
 
 		RT_ELL_CK_MAGIC(ell_p);
 
-		if( rdebug&RDEBUG_SHADE) {
+		if (rdebug&RDEBUG_SHADE) {
 			VPRINT("point", ell_p->v); 
 			VPRINT("a", ell_p->a); 
 			VPRINT("b", ell_p->b); 
@@ -247,7 +247,7 @@ int op;
 			MAGNITUDE(ell_p->c) / tb->gs->gauss_sigma);
 
 
-		if( rdebug&RDEBUG_SHADE) {
+		if (rdebug&RDEBUG_SHADE) {
 			VPRINT("sigma", dbint->one_sigma);
 		}
 		BU_LIST_APPEND(tb->l, &(dbint->l) );
@@ -307,7 +307,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	RT_CK_REGION(rp);
 
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("gauss_setup(%s)\n", rp->reg_name);
 
 	if (! rtip->useair)
@@ -322,7 +322,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	memcpy(gauss_sp, &gauss_defaults, sizeof(struct gauss_specific) );
 
 	/* parse the user's arguments for this use of the shader. */
-	if( bu_struct_parse( matparm, gauss_parse_tab, (char *)gauss_sp ) < 0 )
+	if (bu_struct_parse( matparm, gauss_parse_tab, (char *)gauss_sp ) < 0 )
 		return(-1);
 
 	/* We have to pick up the parameters for the gaussian puff now.
@@ -351,7 +351,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
  */
 
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_struct_print( " Parameters:", gauss_print_tab, (char *)gauss_sp );
 		bn_mat_print( "m_to_sh", gauss_sp->gauss_m_to_sh );
 	}
@@ -421,7 +421,7 @@ vect_t sigma;
 
 	val = exp( -0.5 * term2 );
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("pt(%g %g %g) term2:%g val:%g\n",
 			V3ARGS(pt), term2, val);
 
@@ -461,7 +461,7 @@ struct seg *seg_p;
 	step_dist = span / (double)steps;
 
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("Evaluating Segment:\n");
 		bu_log("dist_in:%g dist_out:%g span:%g step_dist:%g steps:%d\n",
 			seg_p->seg_in.hit_dist,
@@ -507,7 +507,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	RT_CHECK_PT(pp);
 	CK_gauss_SP(gauss_sp);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_struct_print( "gauss_render Parameters:", gauss_print_tab, (char *)gauss_sp );
 
 		bu_log("r_pt(%g %g %g)  r_dir(%g %g %g)\n",
@@ -522,7 +522,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	/* look at each segment that participated in the ray partition(s) */
 	for (BU_LIST_FOR(seg_p, seg, &swp->sw_segs->l) ) {
 
-		if( rdebug&RDEBUG_SHADE) {
+		if (rdebug&RDEBUG_SHADE) {
 			bu_log("seg %g -> %g\n",
 				seg_p->seg_in.hit_dist,
 				seg_p->seg_out.hit_dist);
@@ -531,7 +531,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 		RT_CK_SOLTAB(seg_p->seg_stp);
 
 		/* check to see if the seg/solid is in this partition */
-		if( bu_ptbl_locate( &pp->pt_seglist, (long *)seg_p ) != -1 )  {
+		if (bu_ptbl_locate( &pp->pt_seglist, (long *)seg_p ) != -1 )  {
 
 			/* XXX You might use a bu_ptbl list of the solid pointers... */
 			/* check to see if the solid is from this region */
@@ -551,13 +551,13 @@ char			*dp;	/* ptr to the shader-specific struct */
 				}
 			}
 		} else {
-				if( rdebug&RDEBUG_SHADE)
+				if (rdebug&RDEBUG_SHADE)
 					bu_log("gauss_render() bittest failed\n");
 		}
 	}
 
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("Optical Density %g\n", optical_density);
 
 	/* get the path length right */
@@ -578,7 +578,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	 * 0 < swp->sw_transmit <= 1 causes transmission computations
 	 * 0 < swp->sw_reflect <= 1 causes reflection computations
 	 */
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 	return(1);

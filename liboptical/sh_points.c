@@ -100,21 +100,21 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	/* get or default shader parameters */
 	ptp->pt_file[0] = '\0';
 	ptp->pt_size = -1;
-	if( bu_struct_parse( matparm, points_parse, (char *)ptp ) < 0 )  {
+	if (bu_struct_parse( matparm, points_parse, (char *)ptp ) < 0 )  {
 		bu_free( (char *)ptp, "points_specific" );
 		return(-1);
 	}
-	if( ptp->pt_size < 0 )
+	if (ptp->pt_size < 0 )
 		ptp->pt_size = 512;
-	if( ptp->pt_file[0] == '\0' )
+	if (ptp->pt_file[0] == '\0' )
 		strcpy( ptp->pt_file, "points.ascii" );
 
 	/* create a spherical data structure to bin point lists into */
-	if( (ptp->pt_map = spm_init( ptp->pt_size, sizeof(struct points) )) == SPM_NULL )
+	if ((ptp->pt_map = spm_init( ptp->pt_size, sizeof(struct points) )) == SPM_NULL )
 		goto fail;
 
 	/* read in the data */
-	if( (fp = fopen(ptp->pt_file, "r")) == NULL ) {
+	if ((fp = fopen(ptp->pt_file, "r")) == NULL ) {
 		bu_log("points_setup: can't open \"%s\"\n", ptp->pt_file);
 		goto fail;
 	}
@@ -122,7 +122,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 		double	u, v, mag;
 		struct points	*headp, *pp;
 
-		if( buf[0] == '#' )
+		if (buf[0] == '#' )
 			continue;		/* comment */
 
 		pp = (struct points *)bu_calloc(1, sizeof(struct points), "point");
@@ -178,10 +178,10 @@ swp->sw_uv.uv_dv = ap->a_diverge;
 	umax = swp->sw_uv.uv_u + swp->sw_uv.uv_du;
 	vmin = swp->sw_uv.uv_v - swp->sw_uv.uv_dv;
 	vmax = swp->sw_uv.uv_v + swp->sw_uv.uv_dv;
-	if( umin < 0 )  umin = 0;
-	if( vmin < 0 )  vmin = 0;
-	if( umax > 1 )  umax = 1;
-	if( vmax > 1 )  vmax = 1;
+	if (umin < 0 )  umin = 0;
+	if (vmin < 0 )  vmin = 0;
+	if (umax > 1 )  umax = 1;
+	if (vmax > 1 )  vmax = 1;
 
 	mapp = ptp->pt_map;
 
@@ -196,7 +196,7 @@ swp->sw_uv.uv_dv = ap->a_diverge;
 		for( x = xmin; x < xmax; x++ ) {
 			pp = (struct points *)&(mapp->xbin[y][x*mapp->elsize]);
 			while( pp != NULL ) {
-				if(  pp->u < umax && pp->u >= umin
+				if ( pp->u < umax && pp->u >= umin
 				  && pp->v < vmax && pp->v >= vmin
 				  && pp->color[0] > mag ) {
 					mag = pp->color[0];
@@ -209,7 +209,7 @@ swp->sw_uv.uv_dv = ap->a_diverge;
 	/*bu_log( "points_render ([%g %g][%g %g]) = %g\n",
 		umin, umax, vmin, vmax, mag );*/
 
-	if( mag == 0 ) {
+	if (mag == 0 ) {
 		VSET( swp->sw_color, 0, 0, 0 );
 	} else {
 		VSET( swp->sw_color, mag/255.0, mag/255.0, mag/255.0 );

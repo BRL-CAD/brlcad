@@ -139,12 +139,12 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	pp->extinction = 0.0;
 	pp->mfp = mfp;
 
-	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
+	if (bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		bu_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}
 
-	if( pp->transmit > 0 )
+	if (pp->transmit > 0 )
 		rp->reg_transmit = 1;
 	return(1);
 }
@@ -176,12 +176,12 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	pp->extinction = 0.0;
 	pp->mfp = mfp;
 
-	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
+	if (bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		bu_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}
 
-	if( pp->transmit > 0 )
+	if (pp->transmit > 0 )
 		rp->reg_transmit = 1;
 	return(1);
 }
@@ -214,12 +214,12 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	pp->extinction = 0.0;
 	pp->mfp = mfp;
 
-	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
+	if (bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		bu_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}
 
-	if( pp->transmit > 0 )
+	if (pp->transmit > 0 )
 		rp->reg_transmit = 1;
 	return(1);
 }
@@ -338,20 +338,20 @@ char	*dp;
 	struct phong_specific *ps =
 		(struct phong_specific *)dp;
 
-	if( ps->magic != PL_MAGIC )  bu_log("phong_render: bad magic\n");
+	if (ps->magic != PL_MAGIC )  bu_log("phong_render: bad magic\n");
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( "phong_render", phong_parse, (char *)ps );
 
 	swp->sw_transmit = ps->transmit;
 	swp->sw_reflect = ps->reflect;
 	swp->sw_refrac_index = ps->refrac_index;
 	swp->sw_extinction = ps->extinction;
-	if( swp->sw_xmitonly ) {
-		if( swp->sw_xmitonly > 1 )
+	if (swp->sw_xmitonly ) {
+		if (swp->sw_xmitonly > 1 )
 			return(1);	/* done -- wanted parameters only */
-		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 ) {
-			if( rdebug&RDEBUG_SHADE)
+		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 ) {
+			if (rdebug&RDEBUG_SHADE)
 				bu_log("calling rr_render from phong, sw_xmitonly\n");
 			(void)rr_render( ap, pp, swp );
 		}
@@ -365,8 +365,8 @@ char	*dp;
 #endif
 
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
-	if( (cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
-		if( cosine > 1.00001 )  {
+	if ((cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
+		if (cosine > 1.00001 )  {
 			bu_log("cosAmb=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
 				ap->a_x, ap->a_y, ap->a_level);
 			cosine = 1;
@@ -395,7 +395,7 @@ char	*dp;
 	/* Consider effects of each light source */
 	for( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
 
-		if( (lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
+		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
 			continue;
 	
 		/* Light is not shadowed -- add this contribution */
@@ -407,8 +407,8 @@ char	*dp;
 		to_light = swp->sw_tolight+3*i;
 
 		/* Diffuse reflectance from this light source. */
-		if( (cosine=VDOT(swp->sw_hit.hit_normal, to_light)) > 0.0 )  {
-			if( cosine > 1.00001 )  {
+		if ((cosine=VDOT(swp->sw_hit.hit_normal, to_light)) > 0.0 )  {
+			if (cosine > 1.00001 )  {
 				bu_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
 					ap->a_x, ap->a_y, ap->a_level);
 				cosine = 1;
@@ -434,8 +434,8 @@ char	*dp;
 		cosine *= 2;
 		VSCALE( work, swp->sw_hit.hit_normal, cosine );
 		VSUB2( reflected, work, to_light );
-		if( (cosine = -VDOT( reflected, ap->a_ray.r_dir )) > 0 )  {
-			if( cosine > 1.00001 )  {
+		if ((cosine = -VDOT( reflected, ap->a_ray.r_dir )) > 0 )  {
+			if (cosine > 1.00001 )  {
 				bu_log("cosS=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
 					ap->a_x, ap->a_y, ap->a_level);
 				cosine = 1;
@@ -465,7 +465,7 @@ char	*dp;
 #endif
 		}
 	}
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 #if RT_MULTISPECTRAL
@@ -487,8 +487,8 @@ register int cnt;
 {
 	FAST fastf_t input, result;
 
-	if( (input=d) < 1e-8 )  return(0.0);
-	if( cnt < 0 || cnt > 200 )  {
+	if ((input=d) < 1e-8 )  return(0.0);
+	if (cnt < 0 || cnt > 200 )  {
 		bu_log("phg_ipow(%g,%d) bad\n", d, cnt);
 		return(d);
 	}

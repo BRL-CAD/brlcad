@@ -96,7 +96,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct air_specific	*air_sp;
 
-	if( rdebug&RDEBUG_SHADE) bu_log("air_setup\n");
+	if (rdebug&RDEBUG_SHADE) bu_log("air_setup\n");
 
 	RT_CHECK_RTI(rtip);
 	BU_CK_VLS( matparm );
@@ -115,7 +115,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	}
 
 	if (rdebug&RDEBUG_SHADE) bu_log("\"%s\"\n", bu_vls_addr(matparm) );
-	if( bu_struct_parse( matparm, air_parse, (char *)air_sp ) < 0 )
+	if (bu_struct_parse( matparm, air_parse, (char *)air_sp ) < 0 )
 		return(-1);
 
 	if (rdebug&RDEBUG_SHADE) air_print(rp, air_sp);
@@ -141,7 +141,7 @@ HIDDEN void
 air_free( cp )
 char *cp;
 {
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("air_free(%s:%d)\n", __FILE__, __LINE__);
 	bu_free( cp, "air_specific" );
 }
@@ -168,7 +168,7 @@ char	*dp;
 	RT_CHECK_PT(pp);
 	CK_air_SP(air_sp);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_struct_print( "air_specific", air_parse, (char *)air_sp );
 
 		bu_log("air in(%g) out%g)\n",
@@ -207,7 +207,7 @@ char	*dp;
 	RT_CHECK_PT(pp);
 	CK_air_SP(air_sp);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_struct_print( "air_specific", air_parse, (char *)air_sp );
 		bu_log("air in(%g) out(%g) r_pt(%g %g %g)\n",
 			pp->pt_inhit->hit_dist,
@@ -236,10 +236,10 @@ char	*dp;
 	 * the "color of the air".
 	 */
 
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("air o dist:%gmm tau:%g transmit:%g\n",
 			dist, tau, swp->sw_transmit);
 
@@ -346,7 +346,7 @@ char	*dp;
 	if (swp->sw_transmit > 1.0) swp->sw_transmit = 1.0;
 	else if (swp->sw_transmit < 0.0) swp->sw_transmit = 0.0;
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("tmist transmit = %g\n", swp->sw_transmit);
 
 	return(1);
@@ -421,7 +421,7 @@ char	*dp;
 	if (swp->sw_transmit > 1.0) swp->sw_transmit = 1.0;
 	else if (swp->sw_transmit < 0.0) swp->sw_transmit = 0.0;
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("emist transmit = %g\n", swp->sw_transmit);
 
 	return(1);

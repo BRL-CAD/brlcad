@@ -28,7 +28,6 @@
 #endif
 
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
-#define CLAMP(v, l, h)  if (v < l) v = l; if (v > h) v = h
 
 #if RT_MULTISPECTRAL
 extern CONST struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
@@ -214,12 +213,12 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	BU_GETSTRUCT( camo_sp, camo_specific );
 	*dpp = (char *)camo_sp;
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("camouflage parameters = '%s'\n", bu_vls_addr(matparm));
 	}
 	memcpy(camo_sp, &camo_defaults, sizeof(struct camo_specific) );
 
-	if( bu_struct_parse( matparm, camo_parse, (char *)camo_sp ) < 0 )
+	if (bu_struct_parse( matparm, camo_parse, (char *)camo_sp ) < 0 )
 		return(-1);
 
 	/* Optional:  get the matrix which maps model space into
@@ -249,7 +248,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	tmp[MDZ] = camo_sp->noise_delta[2];
 	bn_mat_mul2(tmp, camo_sp->xform);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_struct_print( rp->reg_name, camo_print_tab,
 			(char *)camo_sp );
 		bn_mat_print( "xform", camo_sp->xform );
@@ -301,7 +300,7 @@ char	*dp;
 	RT_CHECK_PT(pp);
 	CK_camo_SP(camo_sp);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( "foo", camo_parse, (char *)camo_sp );
 
 	/* Optional: transform hit point into "shader-space coordinates" */
@@ -359,12 +358,12 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	BU_GETSTRUCT( camo_sp, camo_specific );
 	*dpp = (char *)camo_sp;
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("marble parameters = '%s'\n", bu_vls_addr(matparm));
 	}
 	memcpy(camo_sp, &marble_defaults, sizeof(struct camo_specific) );
 
-	if( bu_struct_parse( matparm, camo_parse, (char *)camo_sp ) < 0 )
+	if (bu_struct_parse( matparm, camo_parse, (char *)camo_sp ) < 0 )
 		return(-1);
 
 	/* Optional:  get the matrix which maps model space into
@@ -394,7 +393,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	tmp[MDZ] = camo_sp->noise_delta[2];
 	bn_mat_mul2(tmp, camo_sp->xform);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_struct_print( rp->reg_name, camo_print_tab,
 			(char *)camo_sp );
 		bn_mat_print( "xform", camo_sp->xform );
@@ -427,7 +426,7 @@ char	*dp;
 	RT_CHECK_PT(pp);
 	CK_camo_SP(camo_sp);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( "foo", camo_parse, (char *)camo_sp );
 
 	/* Optional: transform hit point into "shader-space coordinates" */

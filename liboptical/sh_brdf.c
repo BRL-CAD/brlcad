@@ -123,7 +123,7 @@ struct rt_i	*rtip;
 	pp->extinction = 0.0;
 	pp->rms_slope = 0.05;
 
-	if( bu_struct_parse( matparm, brdf_parse, (char *)pp ) < 0 )  {
+	if (bu_struct_parse( matparm, brdf_parse, (char *)pp ) < 0 )  {
 		bu_free( (char *)pp, "brdf_specific" );
 		return(-1);
 	}
@@ -218,17 +218,17 @@ char	*dp;
 	struct brdf_specific *ps =
 		(struct brdf_specific *)dp;
 
-	if( ps->magic != BRDF_MAGIC )  bu_log("brdf_render: bad magic\n");
+	if (ps->magic != BRDF_MAGIC )  bu_log("brdf_render: bad magic\n");
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( "brdf_render", brdf_parse, (char *)ps );
 
 	swp->sw_transmit = ps->transmit;
 	swp->sw_reflect = ps->reflect;
 	swp->sw_refrac_index = ps->refrac_index;
 	swp->sw_extinction = ps->extinction;
-	if( swp->sw_xmitonly ) {
-		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_xmitonly ) {
+		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);	/* done */
 	}
@@ -236,8 +236,8 @@ char	*dp;
 	VMOVE( matcolor, swp->sw_color );
 
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
-	if( (cosr = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
-		if( cosr > 1.00001 )  {
+	if ((cosr = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
+		if (cosr > 1.00001 )  {
 			bu_log("cosAmb=1+%g (x%d,y%d,lvl%d)\n", cosr-1,
 				ap->a_x, ap->a_y, ap->a_level);
 			cosr = 1;
@@ -256,15 +256,15 @@ char	*dp;
 		fastf_t tan_sq;
 		double exponent;
 
-		if( (lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
+		if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
 			continue;
 	
 		/* Light is not shadowed -- add this contribution */
 		intensity = swp->sw_intensity+3*i;
 		to_light = swp->sw_tolight+3*i;
 
-		if( (cosi = VDOT( swp->sw_hit.hit_normal, to_light )) > 0.0 )  {
-			if( cosi > 1.00001 )  {
+		if ((cosi = VDOT( swp->sw_hit.hit_normal, to_light )) > 0.0 )  {
+			if (cosi > 1.00001 )  {
 				bu_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosi-1,
 					ap->a_x, ap->a_y, ap->a_level);
 				cosi = 1;
@@ -279,22 +279,22 @@ char	*dp;
 				refl, cprod );
 
 			/* Calculate specular reflectance. */
-			if( NEAR_ZERO( ps->rms_sq, SMALL_FASTF ) )
+			if (NEAR_ZERO( ps->rms_sq, SMALL_FASTF ) )
 				continue;
 			VADD2( h_dir, to_eye, to_light )
 			VUNITIZE( h_dir );
 			cos_tmp = VDOT( h_dir, swp->sw_hit.hit_normal );
-			if( cos_tmp <= 0.0 )
+			if (cos_tmp <= 0.0 )
 				continue;
 			cos_tmp *= cos_tmp;
-			if( NEAR_ZERO( cos_tmp, SMALL_FASTF ) )
+			if (NEAR_ZERO( cos_tmp, SMALL_FASTF ) )
 				continue;
 
 			tan_sq = (1.0-cos_tmp)/cos_tmp;
 			exponent = (-tan_sq/ps->rms_sq );
 			refl = ps->specular_refl * lp->lt_fraction * exp( exponent ) /
 				sqrt( cosi * cosr ) / ps->denom;
-			if( refl > 1.0 )
+			if (refl > 1.0 )
 				refl = 1.0;
 
 			VELMUL( work, lp->lt_color, intensity );
@@ -303,7 +303,7 @@ char	*dp;
 		}
 	}
 
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 	return(1);
 }

@@ -95,12 +95,12 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	memcpy(rtrans_sp, &rtrans_defaults, sizeof(struct rtrans_specific) );
 
-	if( bu_struct_parse( matparm, rtrans_parse, (char *)rtrans_sp ) < 0 )
+	if (bu_struct_parse( matparm, rtrans_parse, (char *)rtrans_sp ) < 0 )
 		return(-1);
 
 	BN_RANDSEED(rtrans_sp->next_rand, 3);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( rp->reg_name, rtrans_parse, (char *)rtrans_sp );
 
 	return(1);
@@ -147,10 +147,10 @@ char	*dp;
 	RT_CHECK_PT(pp);
 	CK_RTRANS_SP(rtrans_sp);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( "random transparency", rtrans_parse, (char *)rtrans_sp );
 
-	if( rtrans_sp->threshold >= 1.0 ||
+	if (rtrans_sp->threshold >= 1.0 ||
 	    BN_RANDOM(rtrans_sp->next_rand)  < rtrans_sp->threshold )
 	{
 		swp->sw_transmit = 1.0;
@@ -158,7 +158,7 @@ char	*dp;
 		swp->sw_refrac_index = 1.0;
 		VSETALL( swp->sw_basecolor, 1.0 );
 
-		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 	}
 

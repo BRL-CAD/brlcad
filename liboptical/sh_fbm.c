@@ -102,13 +102,13 @@ char	**dpp;
 	*dpp = (char *)fbm;
 
 	memcpy(fbm, &fbm_defaults, sizeof(struct fbm_specific) );
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("fbm_setup\n");
 
-	if( bu_struct_parse( matparm, fbm_parse, (char *)fbm ) < 0 )
+	if (bu_struct_parse( matparm, fbm_parse, (char *)fbm ) < 0 )
 		return(-1);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( rp->reg_name, fbm_parse, (char *)fbm );
 
 	return(1);
@@ -150,7 +150,7 @@ char	*dp;
 	vect_t v_noise;
 	point_t pt;
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( "foo", fbm_parse, (char *)fbm_sp );
 
 	pt[0] = swp->sw_hit.hit_point[0] * fbm_sp->scale[0];
@@ -161,7 +161,7 @@ char	*dp;
 
 	VSCALE(v_noise, v_noise, fbm_sp->distortion);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("fbm_render: point (%g %g %g) becomes (%g %g %g)\n\tv_noise (%g %g %g)\n",
 			V3ARGS(swp->sw_hit.hit_point),
 			V3ARGS(pt),

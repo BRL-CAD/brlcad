@@ -2268,7 +2268,7 @@ if (i_dot_n >= 1.) i_dot_n = .9999;
  *			bg_radiance = return val from hit or miss
  */
 #else
-			if( rdebug&RDEBUG_RAYPLOT )  {
+			if (rdebug&RDEBUG_RAYPLOT )  {
 				VSCALE(work, Sky_elmnt, 200.);
 				VADD2(work,swp->sw_hit.hit_point,work);
 				pl_color( stdout, 0, 255, 0 );
@@ -2310,7 +2310,7 @@ bu_log("irradiance = %g\n", irradiance);
 	bg_radiance = skylight_spectral_dist(lambda, ts->Zenith, Ctr,
 		Sun, ts->weather, t_vl);
 #endif
-	if( rdebug&RDEBUG_RAYPLOT )  {
+	if (rdebug&RDEBUG_RAYPLOT )  {
 		VSCALE(work, Ctr, 200.);
 		VADD2(work,swp->sw_hit.hit_point,work);
 		pl_color( stdout, 255, 50, 0 );
@@ -2456,7 +2456,7 @@ bu_log("S . N = %g\n", sun_dot_n);
 		/* a_return or a_user to hold hit/miss flag? */
 #else
 		/* XXX Hack:  it always misses */
-		if( rdebug&RDEBUG_RAYPLOT )  {
+		if (rdebug&RDEBUG_RAYPLOT )  {
 			VSCALE(work, Reflected, 200.);
 			VADD2(work,swp->sw_hit.hit_point,work);
 			pl_color( stdout, 0, 150, 255 );

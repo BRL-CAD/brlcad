@@ -56,12 +56,12 @@ CONST char				*value;	/* string containing value */
 {
 	double *p = (double *)(base+sdp->sp_offset);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("%s value %s ", name, value);
 	/* reconvert with optional units */
 	*p = rt_mm_value(value);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log(" %g\n", *p);
 
 }
@@ -241,7 +241,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	RT_CK_REGION(rp);
 
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("noise_setup(%s, %s) (%s)\n",
 			rp->reg_name, bu_vls_addr(matparm),
 			rp->reg_mater.ma_shader);
@@ -254,7 +254,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	memcpy(noise_sp, &noise_defaults, sizeof(struct noise_specific) );
 
 	/* parse the user's arguments for this use of the shader. */
-	if( bu_struct_parse( matparm, noise_parse_tab, (char *)noise_sp ) < 0 )
+	if (bu_struct_parse( matparm, noise_parse_tab, (char *)noise_sp ) < 0 )
 		return(-1);
 
 	/* figure out which shader is really being called */
@@ -296,7 +296,7 @@ found:
 	noise_sp->nsd = 1.0 / 
 		pow(noise_sp->lacunarity, noise_sp->octaves);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_struct_print( " Parameters:", noise_print_tab, (char *)noise_sp );
 		bn_mat_print( "m_to_sh", noise_sp->m_to_sh );
 	}
@@ -350,12 +350,12 @@ int rescale;
 	 * Convert the normal to shader space, get u,v coordinate system
 	 */
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		VPRINT("Model space Normal", swp->sw_hit.hit_normal);
 	}
 	MAT4X3VEC(N, noise_sp->m_to_sh, swp->sw_hit.hit_normal);
 	VUNITIZE(N);
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		VPRINT("Shader space Normal", N);
 	}
 
@@ -389,13 +389,13 @@ int rescale;
 
 	MAT4X3VEC(N, v_mat, tmp);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		VPRINT("old normal", swp->sw_hit.hit_normal);
 	}
 
 	MAT4X3VEC(swp->sw_hit.hit_normal, noise_sp->sh_to_m, N);
 	VUNITIZE(swp->sw_hit.hit_normal);
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		VPRINT("new normal", swp->sw_hit.hit_normal);
 	}
 }
@@ -424,7 +424,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	RT_CHECK_PT(pp);
 	CK_noise_SP(noise_sp);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( "noise_render Parameters:", noise_print_tab, (char *)noise_sp );
 
 	/* If we are performing the shading in "region" space, we must 
@@ -433,7 +433,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	 */
 	MAT4X3PNT(pt, noise_sp->m_to_sh, swp->sw_hit.hit_point);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("%s:%d noise_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n", 
 		__FILE__, __LINE__,
 		noise_mfuncs[noise_sp->shader_number].mf_name,
@@ -523,7 +523,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	 * 0 < swp->sw_transmit <= 1 causes transmission computations
 	 * 0 < swp->sw_reflect <= 1 causes reflection computations
 	 */
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 	return(1);

@@ -90,7 +90,7 @@ struct mfuncs	**headp;
 	bu_vls_strncpy( &parameter_data, (char *)parameter_file->buf,
 		parameter_file->buflen );
 
-	if( rdebug&RDEBUG_SHADE ) {
+	if (rdebug&RDEBUG_SHADE ) {
 		bu_log("ext_setup(%s): {%s}\n",
 			filename, bu_vls_addr(&parameter_data));
 	}
@@ -139,14 +139,14 @@ struct mfuncs	**headp;
 	i = 0;
 	start = cp = bu_vls_addr(matparm);
 	while( *cp != '\0' ) {
-		if( *cp == ';' ) {
+		if (*cp == ';' ) {
 			*cp = '\0';
-			if( i >= 16 ) {
+			if (i >= 16 ) {
 				bu_log( "stk_setup: max levels exceeded\n" );
 				return( 0 );
 			}
 			/* add one */
-			if( stk_dosetup(start, rp, &sp->udata[i],
+			if (stk_dosetup(start, rp, &sp->udata[i],
 				&sp->mfuncs[i], rtip, headp) == 0 )  {
 					inputs |= sp->mfuncs[i]->mf_inputs;
 					i++;
@@ -159,13 +159,13 @@ struct mfuncs	**headp;
 			cp++;
 		}
 	}
-	if( start != cp ) {
-		if( i >= 16 ) {
+	if (start != cp ) {
+		if (i >= 16 ) {
 			bu_log( "stk_setup: max levels exceeded\n" );
 			return( 0 );
 		}
 		/* add one */
-		if( stk_dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i],
+		if (stk_dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i],
 		    rtip, headp ) == 0 )  {
 			inputs |= sp->mfuncs[i]->mf_inputs;
 			i++;
@@ -205,7 +205,7 @@ char	*dp;
 	char	tmp[128];
 
 	for( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
-		if( rdebug&RDEBUG_SHADE)  {
+		if (rdebug&RDEBUG_SHADE)  {
 			sprintf(tmp, "before stacked \"%s\" shader", sp->mfuncs[i]->mf_name);
 
 			pr_shadework( tmp, swp );
@@ -290,7 +290,7 @@ struct mfuncs	**headp;
 		cp++;
 
 	for( i = 0; i < 31 && *cp != '\0'; i++, cp++ ) {
-		if( *cp == ' ' || *cp == '\t' ) {
+		if (*cp == ' ' || *cp == '\t' ) {
 			matname[i++] = '\0';
 			break;
 		} else
@@ -299,7 +299,7 @@ struct mfuncs	**headp;
 	matname[i] = '\0';	/* ensure null termination */
 
 	for( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
-		if( matname[0] != mfp->mf_name[0]  ||
+		if (matname[0] != mfp->mf_name[0]  ||
 		    strcmp( matname, mfp->mf_name ) != 0 )
 			continue;
 		goto found;
@@ -314,9 +314,9 @@ found:
 	bu_vls_init( &arg );
 	if (*cp != '\0' )
 		bu_vls_strcat( &arg, ++cp );
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("calling %s with %s\n", mfp->mf_name, bu_vls_addr(&arg));
-	if( mfp->mf_setup( rp, &arg, dpp, mfp, rtip, headp ) < 0 )  {
+	if (mfp->mf_setup( rp, &arg, dpp, mfp, rtip, headp ) < 0 )  {
 		/* What to do if setup fails? */
 		return(-1);		/* BAD */
 	}

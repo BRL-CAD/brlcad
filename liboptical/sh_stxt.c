@@ -140,7 +140,7 @@ register struct stxt_specific *stp;
 
 		sprintf(name, "%s.%d", stp->stx_file, frame);
 
-		if( (fp = fopen(name, "r")) == NULL )  {
+		if ((fp = fopen(name, "r")) == NULL )  {
 			bu_log("stxt_read(%s):  can't open\n", name);
 			stp->stx_file[0] = '\0';
 			return(0);
@@ -148,7 +148,7 @@ register struct stxt_specific *stp;
 		linebuf = bu_malloc(stp->stx_fw*3,"texture file line");
 
 		for( i = 0; i < stp->stx_n; i++ )  {
-			if( (rd = fread(linebuf,1,stp->stx_fw*3,fp)) != stp->stx_fw*3 ) {
+			if ((rd = fread(linebuf,1,stp->stx_fw*3,fp)) != stp->stx_fw*3 ) {
 				bu_log("stxt_read: read error on %s\n", name);
 				stp->stx_file[0] = '\0';
 				(void)fclose(fp);
@@ -187,24 +187,24 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	stp->stx_file[0] = '\0';
 	stp->stx_w = stp->stx_fw = stp->stx_n = stp->stx_d = -1;
 
-	if( rt_bound_tree(rp->reg_treetop, stp->stx_min, stp->stx_max) < 0 )
+	if (rt_bound_tree(rp->reg_treetop, stp->stx_min, stp->stx_max) < 0 )
 		return(-1);
 
 	/**	Get input values  **/
-	if( bu_struct_parse( matparm, stxt_parse, (char *)stp ) < 0 )  {
+	if (bu_struct_parse( matparm, stxt_parse, (char *)stp ) < 0 )  {
 		bu_free( (char *)stp, "stxt_specific" );
 		return(-1);
 	}
 	/*** DEFAULT SIZE OF STXT FILES ***/
-	if( stp->stx_w < 0 )  stp->stx_w = 512;
-	if( stp->stx_n < 0 )  stp->stx_n = stp->stx_w;
+	if (stp->stx_w < 0 )  stp->stx_w = 512;
+	if (stp->stx_n < 0 )  stp->stx_n = stp->stx_w;
 
 	/**  Defaults to an orthogonal projection??  **/
-	if( stp->stx_d < 0 )  stp->stx_d = 1;
+	if (stp->stx_d < 0 )  stp->stx_d = 1;
 
-	if( stp->stx_fw < 0 )  stp->stx_fw = stp->stx_w;
+	if (stp->stx_fw < 0 )  stp->stx_fw = stp->stx_w;
 	stp->stx_pixels = (char *)0;
-	if( stp->trans_valid )
+	if (stp->trans_valid )
 		rp->reg_transmit = 1;
 
 	/**	Read in texture file/s  **/
@@ -221,9 +221,9 @@ char	*cp;
 	register struct stxt_specific *stp =
 		(struct stxt_specific *)cp;
 
-	if( stp->stx_magic != STXT_MAGIC )  bu_log("stxt_free(): bad magic\n");
+	if (stp->stx_magic != STXT_MAGIC )  bu_log("stxt_free(): bad magic\n");
 
-	if( stp->stx_pixels )
+	if (stp->stx_pixels )
 		bu_free( stp->stx_pixels, "solid texture pixel array" );
 	bu_free( cp, "stx_specific" );
 }
@@ -258,13 +258,13 @@ char	*dp;
 	int u1, u2, u3;
 	register unsigned char *cp;
 
-	if( stp->stx_magic != STXT_MAGIC )  bu_log("brick_render(): bad magic\n");
+	if (stp->stx_magic != STXT_MAGIC )  bu_log("brick_render(): bad magic\n");
 
 	/*
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
 	 */
-	if( stp->stx_file[0] == '\0'  ||
+	if (stp->stx_file[0] == '\0'  ||
 	    ( stp->stx_pixels == (char *)0 && stxt_read(stp) == 0 ) )  {
 		VSET( swp->sw_color, 1, 0, 1 );
 		return(1);
@@ -276,33 +276,33 @@ char	*dp;
 	VSET( lz, 0, 0, 1 );
 
 	f = VDOT( swp->sw_hit.hit_point, lx ) / (float)stp->stx_w;
-	if( f < 0 ) f = -f;
+	if (f < 0 ) f = -f;
 	f = modf( f, &iptr );
 	sx=f;
 /********************************
-*	if( f < 0.5 )
+*	if (f < 0.5 )
 *		sx = 2 * f;
 *	else
 *		sx = 2 * ( 1 - f );
 *********************************/
 
 	f = VDOT( swp->sw_hit.hit_point, ly ) / (float)stp->stx_n;
-	if( f < 0 ) f = -f;
+	if (f < 0 ) f = -f;
 	f = modf( f, &iptr );
 	sy=f;
 /*********************************
-*	if( f < 0.5 )
+*	if (f < 0.5 )
 *		sy = 2 * f;
 *	else
 *		sy = 2 * ( 1 - f );
 **********************************/
 
 	f = VDOT( swp->sw_hit.hit_point, lz ) / (float)stp->stx_d;
-	if( f < 0 ) f = -f;
+	if (f < 0 ) f = -f;
 	f = modf( f, &iptr );
 	sz=f;
 /*********************************
-*	if( f < 0.5 )
+*	if (f < 0.5 )
 *		sz = 2 * f;
 *	else
 *		sz = 2 * ( 1 - f );
@@ -354,13 +354,13 @@ char	*dp;
 	int u1, u2, u3;
 	register unsigned char *cp;
 
-	if( stp->stx_magic != STXT_MAGIC )  bu_log("rbound_render(): bad magic\n");
+	if (stp->stx_magic != STXT_MAGIC )  bu_log("rbound_render(): bad magic\n");
 
 	/*
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
 	 */
-	if( stp->stx_file[0] == '\0'  ||
+	if (stp->stx_file[0] == '\0'  ||
 	    ( stp->stx_pixels == (char *)0 && stxt_read(stp) == 0 ) )  {
 		VSET( swp->sw_color, 1, 0, 1 );
 		return(1);
@@ -428,13 +428,13 @@ char	*dp;
 	int u1, u2, u3;
 	register unsigned char *cp;
 
-	if( stp->stx_magic != STXT_MAGIC )  bu_log("mbound_render(): bad magic\n");
+	if (stp->stx_magic != STXT_MAGIC )  bu_log("mbound_render(): bad magic\n");
 
 	/*
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
 	 */
-	if( stp->stx_file[0] == '\0'  ||
+	if (stp->stx_file[0] == '\0'  ||
 	    ( stp->stx_pixels == (char *)0 && stxt_read(stp) == 0 ) )  {
 		VSET( swp->sw_color, 1, 0, 1 );
 		return(1);

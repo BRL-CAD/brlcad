@@ -43,7 +43,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define SHADE_ABORT_GRASS	1	/* bit_flag */
 #define SHADE_ABORT_STACK	2	/* bit_flag */
 
-#define CLAMP(_x,_a,_b)     (_x < _a ? _a : (_x > _b ? _b : _x))
 
 #define grass_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_grass_SP(_p) BU_CKMAG(_p, grass_MAGIC, "grass_specific")
@@ -231,7 +230,7 @@ struct grass_specific *grass_sp;
 	val = fabs(bn_noise_fbm(c, grass_sp->h_val, grass_sp->lacunarity,
 			grass_sp->octaves));
 	
-	val = CLAMP(val, 0.0, 1.0);
+	CLAMP(val, 0.0, 1.0);
 
 	return val;
 }
@@ -330,7 +329,7 @@ double w;	/* 0..1, */
 	/* decide the number of blades */
 	if (d < .8) {
 		pl->blades -= d * pl->blades * .5;
-		pl->blades = CLAMP(pl->blades, 1, BLADE_LAST);
+		CLAMP(pl->blades, 1, BLADE_LAST);
 	} 
 
 	for (blade=0 ; blade < pl->blades ; blade++) {
@@ -466,7 +465,7 @@ struct grass_specific *grass_sp;
     val -= tmp * .4;
   }
 
-  if( rdebug&RDEBUG_SHADE) {
+  if (rdebug&RDEBUG_SHADE) {
   	print_plant("proto", &grass_sp->proto);
   }
 
@@ -495,7 +494,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	RT_CK_REGION(rp);
 
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("grass_setup(%s)\n", rp->reg_name);
 
 	/* Get memory for the shader parameters and shader-specific data */
@@ -513,7 +512,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	}
 
 	/* parse the user's arguments for this use of the shader. */
-	if( bu_struct_parse( matparm, grass_parse_tab, (char *)grass_sp ) < 0 )
+	if (bu_struct_parse( matparm, grass_parse_tab, (char *)grass_sp ) < 0 )
 		return(-1);
 
 	/* The shader needs to operate in a coordinate system which stays
@@ -524,7 +523,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	bn_mat_inv(grass_sp->sh_to_m, grass_sp->m_to_sh);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 
 		bu_struct_print( " Parameters:", grass_print_tab, (char *)grass_sp );
 		bn_mat_print( "m_to_sh", grass_sp->m_to_sh );
@@ -850,14 +849,14 @@ CONST struct grass_specific *grass_sp;
 	BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
 	BU_CKMAG(pl, PLANT_MAGIC, "plant");
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("isect_plant()\n");
 		print_plant("plant", pl);
 	}
 
 	r->r.r_min = r->r.r_max = 0.0;
 	if (! rt_in_rpp(&r->r, r->rev, pl->pmin, pl->pmax) ) {
-		if( rdebug&RDEBUG_SHADE) {
+		if (rdebug&RDEBUG_SHADE) {
 			point_t in_pt, out_pt;
 			bu_log("min:%g max:%g\n", r->r.r_min, r->r.r_max);
 
@@ -873,7 +872,7 @@ CONST struct grass_specific *grass_sp;
 		}
 		return;
 	} else { 
-		if( rdebug&RDEBUG_SHADE) {
+		if (rdebug&RDEBUG_SHADE) {
 			point_t in_pt, out_pt;
 			bu_log("min:%g max:%g\n", r->r.r_min, r->r.r_max);
 			bu_log("ray %g %g %g->%g %g %g hit:\n\trpp %g %g %g, %g %g %g\n",
@@ -1008,7 +1007,7 @@ double curr_dist;
 
 	CK_grass_SP(grass_sp);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		static int plot_num = 0;
 		char buf[32];
 		point_t cell_in_pt;
@@ -1140,7 +1139,7 @@ double			curr_dist;
 	CK_grass_SP(grass_sp);
 	BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("do_cells(%ld,%ld)\n", V2ARGS(cell_num));
 
 	for (y=-1; y < 2 ; y++) {
@@ -1151,7 +1150,7 @@ double			curr_dist;
 			cell[X] = cell_num[X] + x;
 			cell[Y] = cell_num[Y] + y;
 
-			if( rdebug&RDEBUG_SHADE)
+			if (rdebug&RDEBUG_SHADE)
 				bu_log("checking relative cell %2d,%2d at(%d,%d)\n",
 					x, y, V2ARGS(cell));
 
@@ -1197,7 +1196,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	RT_CHECK_PT(pp);
 	CK_grass_SP(grass_sp);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( "grass_render Parameters:", grass_print_tab, (char *)grass_sp );
 
 	swp->sw_transmit = 1.0;
@@ -1267,7 +1266,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	VMOVE(gr.hit.hit_point, out_pt);
 	MAT4X3VEC(gr.hit.hit_normal, grass_sp->m_to_sh, swp->sw_hit.hit_normal);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("Pt: (%g %g %g)\nRPt:(%g %g %g)\n",
 			V3ARGS(ap->a_ray.r_pt),
 			V3ARGS(gr.r.r_pt));
@@ -1308,7 +1307,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 		t[n] = in_pt[n] - 
 			floor(in_pt[n]/grass_sp->cell[n]) *
 				       grass_sp->cell[n];
-		if( rdebug&RDEBUG_SHADE)
+		if (rdebug&RDEBUG_SHADE)
 			bu_log("t[%s]:%g = in_pt[%s]:%g - floor():%g * cell[%s]%g\n",
 				s, t[n], s, in_pt[n],
 				floor(in_pt[n]/grass_sp->cell[n]),
@@ -1332,7 +1331,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	}
 	
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("t[X]:%g tD[X]:%g\n", t[X], tD[X]);
 		bu_log("t[Y]:%g tD[Y]:%g\n\n", t[Y], tD[Y]);
 	}
@@ -1359,17 +1358,17 @@ char			*dp;	/* ptr to the shader-specific struct */
 	while (curr_dist < out_dist) {
 
 
-		if( rdebug&RDEBUG_SHADE) {
+		if (rdebug&RDEBUG_SHADE) {
 			point_t	cell_pos; /* cell origin position */
 
-			if( rdebug&RDEBUG_SHADE) {
+			if (rdebug&RDEBUG_SHADE) {
 				bu_log("dist:%g (%g %g %g)\n", curr_dist,
 					V3ARGS(curr_pt));
 				bu_log("cell num: %d %d\n", V2ARGS(cell_num));
 			}
 			CELL_POS(cell_pos, grass_sp, cell_num);
 
-			if( rdebug&RDEBUG_SHADE)
+			if (rdebug&RDEBUG_SHADE)
 				bu_log("cell pos: %g %g\n", V2ARGS(cell_pos));
 		}
 
@@ -1379,7 +1378,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 			goto done;
 
 		if (t[X] < t[Y]) {
-			if( rdebug&RDEBUG_SHADE)
+			if (rdebug&RDEBUG_SHADE)
 				bu_log("stepping X %le\n", t[X]);
 			if (gr.r.r_dir[X] < 0.0) {
 				flags = 0111;
@@ -1390,7 +1389,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 			}
 			n = X;
 		} else {
-			if( rdebug&RDEBUG_SHADE)
+			if (rdebug&RDEBUG_SHADE)
 				bu_log("stepping Y %le\n", t[Y]);
 			if (gr.r.r_dir[Y] < 0.0) {
 				flags = 0007;
@@ -1412,7 +1411,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	}
 
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("Missed grass blades\n");
 
 	/* Missed everything */
@@ -1425,7 +1424,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 		double bc;
 
 		bc =  plants_this_cell(cell_num, grass_sp);
-		bc = CLAMP(bc, 0.0, 1.0);
+		CLAMP(bc, 0.0, 1.0);
 		bc = .25 * bc + .7;
 
 		if ((cell_num[X] + cell_num[Y]) & 1) {
@@ -1455,7 +1454,7 @@ done:
 	/* Tell stacker to abort shading */
 	return 0;
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("Hit grass blades\n");
 
 
@@ -1477,7 +1476,7 @@ done:
 	swp->sw_transmit = 0.0;
 
 	if (status & SHADE_ABORT_STACK) {
-		if( rdebug&RDEBUG_SHADE)
+		if (rdebug&RDEBUG_SHADE)
 			bu_log("Aborting stack (statistical grass)\n");
 		return 0;
 	}
@@ -1485,13 +1484,13 @@ done:
 
 	if (swp->sw_xmitonly) return 0;
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("normal before xform:(%g %g %g)\n",
 			V3ARGS(swp->sw_hit.hit_normal));
 
 	MAT4X3VEC(swp->sw_hit.hit_normal, grass_sp->sh_to_m, gr.hit.hit_normal);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		VPRINT("Rnormal", gr.hit.hit_normal);
 		VPRINT("Mnormal", swp->sw_hit.hit_normal);
 		bu_log("MAG(Rnormal)%g, MAG(Mnormal)%g\n", MAGNITUDE(gr.hit.hit_normal), MAGNITUDE(swp->sw_hit.hit_normal));

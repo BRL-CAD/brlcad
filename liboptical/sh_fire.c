@@ -230,7 +230,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	RT_CK_REGION(rp);
 
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("fire_setup(%s)\n", rp->reg_name);
 
 	/* Get memory for the shader parameters and shader-specific data */
@@ -241,7 +241,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	memcpy(fire_sp, &fire_defaults, sizeof(struct fire_specific) );
 
 	/* parse the user's arguments for this use of the shader. */
-	if( bu_struct_parse( matparm, fire_parse_tab, (char *)fire_sp ) < 0 )
+	if (bu_struct_parse( matparm, fire_parse_tab, (char *)fire_sp ) < 0 )
 		return(-1);
 
 	if (fire_sp->noise_size != -1.0) {
@@ -271,7 +271,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 
 
-	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
+	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
 		bu_struct_print( " FIRE Parameters:", fire_print_tab, (char *)fire_sp );
 		bn_mat_print( "m_to_sh", fire_sp->fire_m_to_sh );
 		bn_mat_print( "sh_to_noise", fire_sp->fire_sh_to_noise );
@@ -317,7 +317,7 @@ struct shadework	*swp;	/* defined in material.h */
 char			*dp;	/* ptr to the shader-specific struct */
 {
 #define DEBUG_SPACE_PRINT(str, i_pt, o_pt) \
-	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) { \
+	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) { \
 		bu_log("fire_render() %s space \n", str); \
 		bu_log("fire_render() i_pt(%g %g %g)\n", V3ARGS(i_pt) ); \
 		bu_log("fire_render() o_pt(%g %g %g)\n", V3ARGS(o_pt) ); \
@@ -363,7 +363,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	RT_CHECK_PT(pp);
 	CK_fire_SP(fire_sp);
 
-	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
+	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
 /*		bu_struct_print( "fire_render Parameters:", fire_print_tab, (char *)fire_sp ); */
 		bu_log("fire_render()\n");
 	}
@@ -393,7 +393,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	noise_r_thick = MAGNITUDE(noise_r_dir);
 
-	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
+	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
 		bu_log("fire_render() noise_r_dir (%g %g %g)\n",
 			V3ARGS(noise_r_dir) );
 		bu_log("fire_render() noise_r_thick %g\n", noise_r_thick);
@@ -419,7 +419,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	if (samples < 1) samples = 1;
 
-	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
+	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
 		bu_log("samples:%d\n", samples);
 		bu_log("samples_per_unit_noise %g\n", samples_per_unit_noise);
 		bu_log("noise_dist_per_sample %g\n", noise_dist_per_sample);
@@ -446,7 +446,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 		noise_val = bn_noise_turb(noise_pt, fire_sp->noise_h_val,
 			fire_sp->noise_lacunarity, fire_sp->noise_octaves);
 
-		if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
+		if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
 			bu_log("bn_noise_turb(%g %g %g) = %g\n",
 				V3ARGS(noise_pt),
 				noise_val);
@@ -462,7 +462,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 			register double t;
 			t = lumens;
 			lumens += noise_val * 0.025 *  (1.0 -shader_pt[Z]);
-			if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
+			if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
 				bu_log("lumens:%g = %g + %g * %g\n",
 					lumens, t, noise_val,
 					0.025 * (1.0 - shader_pt[Z]) );
@@ -470,14 +470,14 @@ char			*dp;	/* ptr to the shader-specific struct */
 		}
 		if (lumens >= 1.0) {
 			lumens = 1.0;
-			if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
+			if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
 				bu_log("early exit from lumens loop\n");
 			break;
 		}
 
 	}
 	
-	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
+	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
 		bu_log("lumens = %g\n", lumens);
 
 	if (lumens < 0.0) lumens = 0.0;
@@ -491,7 +491,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 /*	VSETALL(swp->sw_basecolor, 1.0);*/
 
 	swp->sw_transmit = 1.0 - (lumens * 4.);
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 	return(1);

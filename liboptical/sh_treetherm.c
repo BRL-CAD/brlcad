@@ -235,7 +235,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("tthrm_setup(Region:\"%s\", tthrm(%s))\n",
 			rp->reg_name, bu_vls_addr(matparm));
 
@@ -248,7 +248,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	tthrm_sp->tt_min_temp = tthrm_sp->tt_max_temp = 0.0;
 
 	bu_log("Parsing: (%s)\n", bu_vls_addr(matparm));
-	if( bu_struct_parse( matparm, tthrm_parse, (char *)tthrm_sp ) < 0 ) {
+	if (bu_struct_parse( matparm, tthrm_parse, (char *)tthrm_sp ) < 0 ) {
 		bu_bomb(__FILE__);
 	}
 	if (tthrm_sp->tt_name[0] == '\0') {
@@ -266,7 +266,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	tthrm_sp->tt_max_seg = cyl_tot = *((long *)tt_data);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("tthrm_setup() data: %08lx total cyl: %ld\n",
 			(unsigned long)tt_data, cyl_tot);
 
@@ -357,7 +357,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 		VSCALE(center, center, 1000.0);
 		VSCALE(tthrm_sp->tt_segs[tseg].pt, center, inv_nodes);
 
-		if( rdebug&RDEBUG_SHADE) {
+		if (rdebug&RDEBUG_SHADE) {
 			bu_log("Center: (%g %g %g)\n", 
 					V3ARGS(tthrm_sp->tt_segs[tseg].pt));
 		}
@@ -414,7 +414,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 */
 	db_region_mat(tthrm_sp->tthrm_m_to_sh, rtip->rti_dbip, rp->reg_name);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("min_temp: %17.14e  max_temp %17.14e temp_scale: %17.14e\n",
 			tthrm_sp->tt_min_temp, 
 			tthrm_sp->tt_max_temp, 
@@ -539,7 +539,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	 */
 	MAT4X3PNT(pt, tthrm_sp->tthrm_m_to_sh, swp->sw_hit.hit_point);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log( "tthrm_render(%s, %g %g %g)\n", tthrm_sp->tt_name,
 			V3ARGS(pt));
 
@@ -585,7 +585,7 @@ too large.  Probable mis-match between geometry and thermal data\n"
 	}
 
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		vect_t unit_H;
 		VMOVE(unit_H, part_p->part_H);
 		VUNITIZE(unit_H);
@@ -653,7 +653,7 @@ too large.  Probable mis-match between geometry and thermal data\n"
 		VSET(swp->sw_color, best_val, best_val, best_val);
 	}
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("closest point is: (%g %g %g) temp: %17.14e\n",
 			V3ARGS(thrm_seg->node[best_idx]),
 			thrm_seg->temperature[best_idx]);
@@ -667,7 +667,7 @@ too large.  Probable mis-match between geometry and thermal data\n"
 	}
 
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("tthrm_render()\n\t  model:(%g %g %g)\n\t shader:(%g %g %g)\n", 
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(pt) );

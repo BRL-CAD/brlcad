@@ -140,7 +140,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	RT_CK_REGION(rp);
 
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("xxx_setup(%s)\n", rp->reg_name);
 
 	/* Get memory for the shader parameters and shader-specific data */
@@ -151,7 +151,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	memcpy(xxx_sp, &xxx_defaults, sizeof(struct xxx_specific) );
 
 	/* parse the user's arguments for this use of the shader. */
-	if( bu_struct_parse( matparm, xxx_parse_tab, (char *)xxx_sp ) < 0 )
+	if (bu_struct_parse( matparm, xxx_parse_tab, (char *)xxx_sp ) < 0 )
 		return(-1);
 
 	/* Optional:
@@ -176,7 +176,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 *
 	 */
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_struct_print( " Parameters:", xxx_print_tab, (char *)xxx_sp );
 		bn_mat_print( "m_to_sh", xxx_sp->xxx_m_to_sh );
 	}
@@ -228,7 +228,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	RT_CHECK_PT(pp);
 	CK_xxx_SP(xxx_sp);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_struct_print( "xxx_render Parameters:", xxx_print_tab, (char *)xxx_sp );
 
 	/* If we are performing the shading in "region" space, we must 
@@ -238,7 +238,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	MAT4X3PNT(pt, xxx_sp->xxx_m_to_r, swp->sw_hit.hit_point);
 	 */
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("xxx_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(pt) );
@@ -252,7 +252,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	 * 0 < swp->sw_transmit <= 1 causes transmission computations
 	 * 0 < swp->sw_reflect <= 1 causes reflection computations
 	 */
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
 	return(1);

@@ -203,7 +203,7 @@ CONST char				*value;	/* string containing value */
 	MAT4X3VEC(img_new->i_plane, xform, v_tmp);
 	VUNITIZE(img_new->i_plane);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		point_t pt;		
 
 #if 0
@@ -333,7 +333,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
 
-	if( rdebug&RDEBUG_SHADE)
+	if (rdebug&RDEBUG_SHADE)
 		bu_log("prj_setup(%s) matparm:\"%s\"\n",
 			rp->reg_name, bu_vls_addr(matparm));
 
@@ -345,7 +345,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	BU_LIST_INIT(&prj_sp->prj_images.l);
 
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		if ((prj_sp->prj_plfd=fopen("prj.pl", "w")) == (FILE *)NULL) {
 			bu_log("ERROR creating plot file prj.pl");
 		}
@@ -371,7 +371,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	bu_vls_strncpy( &parameter_data, (char *)parameter_file->buf,
 		parameter_file->buflen );
 
-	if( rdebug&RDEBUG_SHADE ) {
+	if (rdebug&RDEBUG_SHADE ) {
 		bu_log("parsing: %s\n", bu_vls_addr(&parameter_data));
 	}
 
@@ -392,7 +392,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 */
 	for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
 		if (img_sp->i_antialias) {
-			if( rdebug&RDEBUG_SHADE)
+			if (rdebug&RDEBUG_SHADE)
 				bu_log("setting prismtrace 1");
 			rtip->rti_prismtrace = 1;
 			break;
@@ -415,7 +415,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	db_region_mat(prj_sp->prj_m_to_sh, rtip->rti_dbip, rp->reg_name);
 
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 
 		prj_print(rp, (char *)prj_sp );
 	}
@@ -520,7 +520,7 @@ point_t r_pt;
 	MAT4X3PNT(sh_pt, img_sp->i_sh_to_img, r_pt);
 	VADD2(sh_pt, sh_pt, delta);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		VPRINT("sh_pt", sh_pt);
 	}
 	x = sh_pt[X] * (img_sp->i_width-1);
@@ -537,7 +537,7 @@ point_t r_pt;
 		return 1;
 	}
 
-	if( rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
+	if (rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
 		/* plot projection direction */
 		pl_color(prj_sp->prj_plfd, V3ARGS(pixel));
 		pdv_3move(prj_sp->prj_plfd, r_pt);
@@ -586,7 +586,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	RT_CHECK_PT(pp);
 	CK_prj_SP(prj_sp);
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("shading with prj\n");
 		prj_print(pp->pt_regionp, dp);
 	}
@@ -600,7 +600,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	
 
 
-	if( rdebug&RDEBUG_SHADE) {
+	if (rdebug&RDEBUG_SHADE) {
 		bu_log("prj_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(r_pt) );
@@ -665,7 +665,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 		if ( ! img_sp->i_through && VDOT(r_N, img_sp->i_plane) < 0.0) {
 			/* normal and projection dir don't match, skip on */
 
-			if( rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
+			if (rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
 				/* plot hit normal */
 				pl_color(prj_sp->prj_plfd, 255, 255, 255);
 				pdv_3move(prj_sp->prj_plfd, r_pt);
@@ -700,9 +700,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 #endif
 		VSCALE(sh_color, sh_color, cs);
 		weight = VDOT( r_N, img_sp->i_plane );
-		if( img_sp->i_through )
+		if (img_sp->i_through )
 			weight = (weight < 0.0 ? -weight : weight );
-		if( weight > 0.0 )
+		if (weight > 0.0 )
 		{
 			VJOIN1(final_color, final_color, weight, sh_color);
 			divisor += weight;

@@ -127,7 +127,7 @@ struct rt_i	*rtip;
 
 	cp->cl_thresh = 0.35;
 	cp->cl_range = 0.3;
-	if( bu_struct_parse( matparm, cloud_parse, (char *)cp ) < 0 )
+	if (bu_struct_parse( matparm, cloud_parse, (char *)cp ) < 0 )
 		return(-1);
 
 	return(1);
@@ -179,9 +179,9 @@ char	*dp;
 		1.0, 2.0, 1.0 );
 
 	/* Intensity is normalized - check bounds */
-	if( intensity > 1.0 )
+	if (intensity > 1.0 )
 		intensity = 1.0;
-	else if( intensity < 0.0 )
+	else if (intensity < 0.0 )
 		intensity = 0.0;
 
 	/* Compute Translucency Function */
