@@ -14,6 +14,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "rtlist.h"
 #include "nurb.h"
+#include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"
 
@@ -26,7 +27,7 @@ char	**argv;
 
 	si.magic = RT_NURB_INTERNAL_MAGIC;
 	si.nsrf = 0;
-	si.srfs = (struct snurb **)bu_malloc( sizeof(struct snurb *)*100, "snurb ptrs");
+	si.srfs = (struct face_g_snurb **)bu_malloc( sizeof(struct face_g_snurb *)*100, "snurb ptrs");
 
 	mk_id( stdout, "Mike's Spline Test" );
 
@@ -40,38 +41,39 @@ char	**argv;
 	mk_export_fwrite( stdout, "spl", (genptr_t)&si, ID_BSPLINE );
 }
 
+void
 make_face( a, b, c, d, order )
 point_t	a,b,c,d;
 int	order;
 {
-	register struct snurb	*srf;
+	register struct face_g_snurb	*srf;
 	int	interior_pts = 0;
 	int	cur_kv;
 	int	i;
 	int	ki;
 	register fastf_t	*fp;
-	point_t	mid;
 
 	srf = rt_nurb_new_snurb( order, order,
 		2*order+interior_pts, 2*order+interior_pts,	/* # knots */
 		2+interior_pts, 2+interior_pts,
-		RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT ) );
+		RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT ),
+		&rt_uniresource );
 
 	/* Build both knot vectors */
 	cur_kv = 0;		/* current knot value */
 	ki = 0;			/* current knot index */
 	for( i=0; i<order; i++, ki++ )  {
-		srf->u_knots.knots[ki] = srf->v_knots.knots[ki] = cur_kv;
+		srf->u.knots[ki] = srf->v.knots[ki] = cur_kv;
 	}
 	cur_kv++;
 	for( i=0; i<interior_pts; i++, ki++ )  {
-		srf->u_knots.knots[ki] = srf->v_knots.knots[ki] = cur_kv++;
+		srf->u.knots[ki] = srf->v.knots[ki] = cur_kv++;
 	}
 	for( i=0; i<order; i++, ki++ )  {
-		srf->u_knots.knots[ki] = srf->v_knots.knots[ki] = cur_kv;
+		srf->u.knots[ki] = srf->v.knots[ki] = cur_kv;
 	}
 
-	rt_nurb_pr_kv( &srf->u_knots );
+	rt_nurb_pr_kv( &srf->u );
 
 	/*
 	 *  The control mesh is stored in row-major order.
@@ -89,7 +91,7 @@ int	order;
 	fp = &srf->ctl_points[((_col*srf->s_size[1])+_row)*3]; \
 	VMOVE( fp, _val ); }
 
-	VADD2SCALE( mid, a, b, 0.5 );
+	/* VADD2SCALE( mid, a, b, 0.5 ); */
 	SSET( 0, 0, a );
 	SSET( 0, 1, b );
 	SSET( 1, 0, d );
