@@ -249,7 +249,7 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 
 	/* Make a list of all the edgeuse structs in the model */
-	nmg_edgeuse_tabulate( &eutab, m );
+	nmg_edgeuse_tabulate( &eutab, &m->magic );
 
 	for( i = NMG_TBL_END(&eutab)-1; i >= 0; i-- )  {
 		register struct edgeuse	*eu1;
@@ -315,7 +315,7 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 
 	/* Make a list of all the face structs in the model */
-	nmg_face_tabulate( &ftab, m );
+	nmg_face_tabulate( &ftab, &m->magic );
 
 	for( i = NMG_TBL_END(&ftab)-1; i >= 0; i-- )  {
 		register struct face	*f1;
