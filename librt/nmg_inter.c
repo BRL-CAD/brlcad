@@ -3175,6 +3175,12 @@ fixup:
 
 				if( !NEAR_ZERO( dist1 , is->tol.dist ) || !NEAR_ZERO( dist2 , is->tol.dist ) )  {
 					rt_log("WARNING fu1 dist1=%g, fu2 dist2=%g.  Intersect not in plane of face, skipping.\n", dist1, dist2);
+nmg_pr_fu_briefly( fu1 , "FU1: " );
+rt_log( "fu1 plane = ( %g %g %g %g )\n" , V4ARGS( n1 ) );
+nmg_pr_fu_briefly( fu2 , "FU2: " );
+rt_log( "fu2 plane = ( %g %g %g %g )\n" , V4ARGS( n2 ) );
+rt_log( "Intersect vertex is x%x ( %g %g %g )\n", hit_v, V3ARGS( hit_v->vg_p->coord ) );
+nmg_stash_model_to_file( "isect.g", nmg_find_model( &fu1->l.magic ), "Intersect not in plane of face" );
 rt_bomb("nmg_isect_line2_face2pNEW()\n");
 					continue;
 				}
