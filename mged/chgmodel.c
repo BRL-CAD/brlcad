@@ -858,6 +858,7 @@ char	**argv;
 		s = RT_LIST_FIRST( shell , &r->s_hd );
 		nmg_vertex_g( s->vu_p->v_p, -toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ]);
 		(void)nmg_meonvu( s->vu_p );
+		(void)nmg_ml( s );
 		internal.idb_type = ID_NMG;
 		internal.idb_ptr = (genptr_t)m;
 	} else if( strcmp( argv[2], "ars" ) == 0 ||
