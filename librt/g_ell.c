@@ -732,8 +732,16 @@ struct ell_state {
 	mat_t		invRoS;
 	fastf_t		hunt_tol;
 	fastf_t		hunt_tol_sq;
-	vect_t		theta_tol;
-	fastf_t		normal_theta;
+	fastf_t		theta_tol;
+};
+
+struct vert_strip {
+	int		nverts_per_strip;
+	int		nverts;
+	struct vertex	**vp;
+	int		nfaces_per_strip;
+	int		nfaces;
+	struct faceuse	**fu;
 };
 
 /*
@@ -749,6 +757,21 @@ struct ell_state {
  *  a factor of 4.
  *  Level 3 (128 polygons) is a good tradeoff if gouraud
  *  shading is used to render the database.
+ *
+ *  At the start, points ABC lie on surface of the unit sphere.
+ *  Pick DEF as the midpoints of the three edges of ABC.
+ *  Normalize the new points to lie on surface of the unit sphere.
+ *
+ *	  1
+ *	  B
+ *	 /\
+ *    3 /  \ 4
+ *    D/____\E
+ *    /\    /\
+ *   /	\  /  \
+ *  /____\/____\
+ * A      F     C
+ * 0      5     2
  *
  *  Returns -
  *	-1	failure
@@ -777,6 +800,10 @@ double			norm_tol;
 	struct ell_state	state;
 	register int		i;
 	fastf_t		radius;
+	int		nsegs;
+	int		nstrips;
+	struct vert_strip	*strips;
+	int		j;
 
 	if( rt_ell_import( &state.ei, rp, mat ) < 0 )  {
 		rt_log("rt_ell_tess(%s): import failure\n", dp->d_namep);
@@ -801,6 +828,9 @@ double			norm_tol;
 	invClen = 1.0/(Clen = sqrt(magsq_c));
 	VSCALE( Cu, state.ei.c, invClen );
 rt_log("ell radii A=%g, B=%g, C=%g\n", Alen, Blen, Clen);
+VPRINT("Au", Au);
+VPRINT("Bu", Bu);
+VPRINT("Cu", Cu);
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
@@ -817,6 +847,17 @@ rt_log("ell radii A=%g, B=%g, C=%g\n", Alen, Blen, Clen);
 	if( ! NEAR_ZERO(f, 0.005) )  {
 		rt_log("ell(%s):  A not perpendicular to C, f=%f\n",dp->d_namep, f);
 		return(-3);		/* BAD */
+	}
+
+	{
+		vect_t	axb;
+		VCROSS( axb, Au, Bu );
+		f = VDOT( axb, Cu );
+rt_log("AxB dot C = %g\n", f);
+		if( f < 0 )  {
+			VREVERSE( Cu, Cu );
+			VREVERSE( state.ei.c, state.ei.c );
+		}
 	}
 
 	/* Compute R and Rinv matrices */
@@ -848,12 +889,11 @@ mat_print("invRinvS", state.invRinvS);
 	mat_mul( state.invRoS, invR, S );
 
 	/* Compute radius of bounding sphere */
-	f = magsq_a;
-	if( magsq_b > f )
-		f = magsq_b;
-	if( magsq_c > f )
-		f = magsq_c;
-	radius = sqrt(f);
+	radius = Alen;
+	if( Blen > radius )
+		radius = Blen;
+	if( Clen > radius )
+		radius = Clen;
 
 	/*
 	 *  Establish tolerances
@@ -867,7 +907,7 @@ mat_print("invRinvS", state.invRinvS);
 	if( abs_tol <= 0.0 )  {
 		if( rel_tol <= 0.0 )  {
 			/* No tolerance given, use a default */
-			abs_tol = 0.2*radius;	/* 10% */
+			abs_tol = 2 * 0.10 * radius;	/* 10% */
 		} else {
 			/* Use absolute-ized relative tolerance */
 			abs_tol = rel_tol;
@@ -877,20 +917,20 @@ mat_print("invRinvS", state.invRinvS);
 		if( rel_tol > 0.0 && rel_tol < abs_tol )
 			abs_tol = rel_tol;
 	}
-rt_log("ell abs_tol=%g\n", abs_tol);
-	VSET( state.theta_tol,
-		2 * acos( 1.0 - abs_tol / Alen ),
-		2 * acos( 1.0 - abs_tol / Blen ),
-		2 * acos( 1.0 - abs_tol / Clen ) );
-VPRINT("state.theta_tol", state.theta_tol );
+	/*
+	 *  Converte distance tolerance into a maximum permissible
+	 *  angle tolerance.  'radius' is largest radius.
+	 */
+	
+	state.theta_tol = 2 * acos( 1.0 - abs_tol / radius );
+rt_log("ell abs_tol=%g, state.theta_tol=%g\n", abs_tol, state.theta_tol);
 
-	if( norm_tol > 0.0 )  {
-		/* To ensure normal tolerance, remain below this angle */
-		state.normal_theta = norm_tol;
-	} else {
-		state.normal_theta = rt_twopi;	/* monsterously large */
+	/* To ensure normal tolerance, remain below this angle */
+	if( norm_tol > 0.0 && norm_tol < state.theta_tol )  {
+		state.theta_tol = norm_tol;
+		abs_tol = radius * ( 1 - cos( state.theta_tol * 0.5 ) );
+rt_log("norm_tol abs_tol=%g, state.theta_tol=%g\n", abs_tol, state.theta_tol);
 	}
-rt_log("normal_theta = %g (%g deg)\n", state.normal_theta, state.normal_theta * rt_radtodeg);
 
 	state.hunt_tol = abs_tol * 0.01;
 	state.hunt_tol_sq = state.hunt_tol * state.hunt_tol;
@@ -899,14 +939,170 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	state.s = m->r_p->s_p;
 
-	/* Recurse on each of the 8 faces of the octahedron */
-	for( i=0; i<8; i++ )  {
-		register struct usvert *ohp = &octahedron[i];
-		rt_ell_refine(
-			octa_verts[ohp->a],
-			octa_verts[ohp->b],
-			octa_verts[ohp->c],
-			&state, 0 );
+	/* Find the number of segments to divide 90 degrees worth into */
+	nsegs = rt_halfpi / state.theta_tol + 0.999;
+	if( nsegs < 2 )  nsegs = 2;
+
+	/*  Find total number of strips of vertices that will be needed.
+	 *  nsegs for each hemisphere, plus the equator.
+	 */
+	nstrips = 2 * nsegs + 1;
+	strips = (struct vert_strip *)rt_malloc(
+		nstrips * sizeof(struct vert_strip), "strips[]" );
+
+	/* North pole */
+	strips[0].nverts = 1;
+	strips[0].nverts_per_strip = 0;
+	strips[0].nfaces = 0;
+	strips[0].nfaces_per_strip = 0;
+	strips[0].fu = (struct faceuse **)0;
+	/* South pole */
+	strips[nstrips-1].nverts = 1;
+	strips[nstrips-1].nverts_per_strip = 0;
+	strips[nstrips-1].nfaces = 0;
+	strips[nstrips-1].nfaces_per_strip = 0;
+	strips[nstrips-1].fu = (struct faceuse **)0;
+	/* equator */
+	strips[nsegs].nverts = nsegs * 4;
+	strips[nsegs].nverts_per_strip = nsegs;
+	strips[nsegs].nfaces_per_strip = 2 * nsegs - 1;
+	strips[nsegs].nfaces = (2 * nsegs - 1)*4;
+
+	for( i=1; i<nsegs; i++ )  {
+		strips[i].nverts_per_strip =
+			strips[nstrips-1-i].nverts_per_strip = i;
+		strips[i].nverts =
+			strips[nstrips-1-i].nverts = i * 4;
+		strips[i].nfaces_per_strip =
+			strips[nstrips-1-i].nfaces_per_strip = 2 * i - 1;
+		strips[i].nfaces =
+			strips[nstrips-1-i].nfaces = (2 * i - 1)*4;
+	}
+	/* All strips have vertices */
+	for( i=0; i<nstrips; i++ )  {
+		strips[i].vp = (struct vertex **)rt_calloc( strips[i].nverts,
+			sizeof(struct vertex *), "strip vertex[]" );
+	}
+	/* All strips have faces, except for the poles */
+	for( i=1; i < nstrips-1; i++ )  {
+		strips[i].fu = (struct faceuse **)rt_calloc( strips[i].nfaces,
+			sizeof(struct faceuse *), "strip faceuse[]" );
+	}
+
+	/* First, build the triangular mesh topology */
+	/* XXX top half only -- other half is upside-down! */
+	for( i = 1; i < nsegs+1; i++ )  {
+		int	faceno = 0;
+		int	stripno;
+		int	boff;		/* base offset */
+		int	toff;		/* top offset */
+		struct vertex		**vertp[4];
+
+#if 0
+rt_log("\n*** STRIP i=%d, nverts=%d, nverts_per_strip=%d, nfaces=%d, nfaces_per_strip=%d\n",
+i, strips[i].nverts, strips[i].nverts_per_strip,
+strips[i].nfaces, strips[i].nfaces_per_strip );
+#endif
+		for( stripno=0; stripno<4; stripno++ )  {
+			toff = stripno * strips[i-1].nverts_per_strip;
+			boff = stripno * strips[i].nverts_per_strip;
+
+			/* Connect this quarter strip */
+			for( j = 0; j < strips[i].nverts_per_strip; j++ )  {
+#if 0
+rt_log("  i=%d, stripno=%d, boff=%d, toff=%d, j=%d\n", i, stripno, boff, toff, j);
+#endif
+
+				/* "Right-side-up" triangle */
+				vertp[0] = &(strips[i].vp[j+boff]);
+				vertp[1] = &(strips[i-1].vp[(j+toff)%strips[i-1].nverts]);
+				vertp[2] = &(strips[i].vp[(j+1+boff)%strips[i].nverts]);
+#if 0
+rt_log("\t%d/%d\\%d\n",
+	j+boff, (j+toff)%strips[i-1].nverts, (j+1+boff)%strips[i].nverts );
+#endif
+				if( (strips[i].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+					rt_log("rt_ell_tess() nmg_cmface failure\n");
+					faceno--;
+				}
+				if( j+1 >= strips[i].nverts_per_strip )  break;
+
+				/* Follow with interior "Up-side-down" triangle */
+				vertp[0] = &(strips[i].vp[(j+1+boff)%strips[i].nverts]);
+				vertp[1] = &(strips[i-1].vp[(j+toff)%strips[i-1].nverts]);
+				vertp[2] = &(strips[i-1].vp[(j+1+toff)%strips[i-1].nverts]);
+#if 0
+rt_log("\t\t%d\\%d/%d\n",
+	(j+1+boff)%strips[i].nverts,
+	(j+toff)%strips[i-1].nverts,
+	(j+1+toff)%strips[i-1].nverts );
+#endif
+				if( (strips[i].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+					rt_log("rt_ell_tess() nmg_cmface failure\n");
+					faceno--;
+				}
+			}
+		}
+		if( faceno != strips[i].nfaces )  {
+			rt_log("seg=%d, faceno=%d != nfaces=%d\n", i, faceno, strips[i].nfaces );
+		}
+	}
+
+	/*  Compute the geometry of each vertex.
+	 *  Start with the location in the unit sphere, and project back.
+	 *  i=0 is "straight up" along +B.
+	 */
+	/* XXX top half only */
+	for( i=0; i < nsegs+1; i++ )  {
+		double	alpha;		/* decline down from B to A */
+		double	beta;		/* angle around equator (azimuth) */
+		fastf_t		cos_alpha, sin_alpha;
+		fastf_t		cos_beta, sin_beta;
+		point_t		P, Q;
+
+		alpha = (((double)i) / (nstrips-1));
+		cos_alpha = cos(alpha*rt_pi);
+		sin_alpha = sin(alpha*rt_pi);
+		VSET( P, sin_alpha, cos_alpha, 0 );
+		VSET( Q,         0, cos_alpha, sin_alpha );
+VPRINT("P", P);
+VPRINT("Q", Q);
+		for( j=0; j < strips[i].nverts; j++ )  {
+			point_t		sphere_pt;
+			point_t		model_pt;
+
+			beta = ((double)j) / strips[i].nverts;
+			cos_beta = cos(beta*rt_twopi);
+			sin_beta = sin(beta*rt_twopi);
+			VSET( sphere_pt,
+				cos_beta * sin_alpha,
+				cos_alpha,
+				sin_beta * sin_alpha );
+			/* Convert from ideal sphere coordinates */
+			MAT4X3PNT( model_pt, state.invRinvS, sphere_pt );
+			VADD2( model_pt, model_pt, state.ei.v );
+rt_log("    i=%d, j=%d, alpha=%g, beta=%g, cos_beta=%g, sin_beta=%g\n",
+i, j, alpha, beta, cos_beta, sin_beta );
+VPRINT("	sphere_pt", sphere_pt);
+			/* Associate vertex geometry */
+			if( strips[i].vp[j] )
+				nmg_vertex_gv( strips[i].vp[j], sphere_pt );
+		}
+	}
+	{
+		/* Hack for spike at +B */
+		point_t	p;
+		VSETALL( p, 0 );
+		VPRINT("+B vertex", strips[0].vp[0]->vg_p->coord );
+		nmg_vertex_gv(strips[0].vp[0], p );
+	}
+
+	/* Associate face geometry */
+	for( i=1; i < nsegs+1; i++ )  {
+		for( j=0; j < strips[i].nfaces; j++ )  {
+			if( strips[i].fu[j] )
+				rt_mk_nmg_planeeqn( strips[i].fu[j] );
+		}
 	}
 
 	/* Compute "geometry" for region and shell */
@@ -915,6 +1111,8 @@ rt_log("ell done\n");
 
 	return(0);
 }
+
+#if 0
 
 extern struct vertex *rt_nmg_find_pt_in_shell(); /* XXX from g_pg.c */
 
@@ -954,22 +1152,6 @@ int	lvl;
 
 rt_log("rt_ell_refine(%g,%g,%g) (%g,%g,%g) (%g,%g,%g)\n",
 a[X], a[Y], a[Z], b[X], b[Y], b[Z], c[X], c[Y], c[Z] );
-	/*
-	 *  At the start, points ABC lie on surface of the unit sphere.
-	 *  Pick DEF as the midpoints of the three edges of ABC.
-	 *  Normalize the new points to lie on surface of the unit sphere.
-	 *
-	 *	  1
-	 *	  B
-	 *	 /\
-	 *    3 /  \ 4
-	 *    D/____\E
-	 *    /\    /\
-	 *   /	\  /  \
-	 *  /____\/____\
-	 * A      F     C
-	 * 0      5     2
-	 */
 	VADD2SCALE( d, a, b, 0.5 );
 	VADD2SCALE( e, b, c, 0.5 );
 	VADD2SCALE( f, a, c, 0.5 );
@@ -1055,7 +1237,6 @@ a[X], a[Y], a[Z], b[X], b[Y], b[Z], c[X], c[Y], c[Z] );
 	rt_mk_nmg_planeeqn( fu4 );
 }
 
-#if 0
 /*
  * sphere - generate a polygon mesh approximating a sphere by
  *  recursive subdivision. First approximation is an octahedron;
