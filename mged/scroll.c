@@ -145,6 +145,8 @@ char **argv;
 	scroll_array[1] = SCROLL_NULL;	
     }
     dmaflag++;
+
+    return TCL_OK;
 }
 
 /************************************************************************
