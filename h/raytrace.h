@@ -2067,7 +2067,7 @@ RT_EXTERN(void			nmg_jeg, (struct edge_g_lseg *dest_eg,
 /* From nmg_mod.c */
 /*	SHELL Routines */
 RT_EXTERN(int			nmg_simplify_shell, (struct shell *s) );
-RT_EXTERN(void			nmg_rm_redundancies, (struct shell *s ) );
+RT_EXTERN(void			nmg_rm_redundancies, (struct shell *s, CONST struct rt_tol *tol ) );
 RT_EXTERN(void			nmg_sanitize_s_lv, (struct shell *s,
 				int orient) );
 RT_EXTERN(void			nmg_s_split_touchingloops, (struct shell *s,
