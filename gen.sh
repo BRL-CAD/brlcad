@@ -392,7 +392,7 @@ tcl)
 	done;;
 
 install-tcl)
-	cp libtcl/library/* /usr/brlcad/tcl
+	cp -r libtcl/library/* /usr/brlcad/tcl
 	cp -r libtk/library/* /usr/brlcad/tk
 	for dir in ${TDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
