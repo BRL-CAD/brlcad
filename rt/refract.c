@@ -487,6 +487,8 @@ do_reflection:
 		register fastf_t	f;
 
 		/* Mirror reflection */
+		if(rdebug&RDEBUG_REFRACT)
+			bu_log("rr_render: calculating mirror reflection off of %s\n", pp->pt_regionp->reg_name);
 		sub_ap = *ap;		/* struct copy */
 #if RT_MULTISPECTRAL
 		sub_ap.a_spectrum = bn_tabdata_dup( (struct bn_tabdata *)ap->a_spectrum );
@@ -505,15 +507,15 @@ do_reflection:
 
 		if( rdebug&(RDEBUG_RAYPLOT|RDEBUG_REFRACT) )  {
 			point_t		endpt;
-			/* Plot the surface normal -- forrest green */
+			/* Plot the surface normal -- green/blue */
 			/* plotfp */
-			if(rdebug&RDEBUG_RAYPLOT) pl_color( stdout, 192, 255, 192 );
+			if(rdebug&RDEBUG_RAYPLOT) pl_color( stdout, 0, 255, 255 );
 			f = sub_ap.a_rt_i->rti_radius * 0.02;
 			VJOIN1( endpt, sub_ap.a_ray.r_pt,
 				f, swp->sw_hit.hit_normal );
 			if(rdebug&RDEBUG_RAYPLOT) pdv_3line( stdout, sub_ap.a_ray.r_pt, endpt );
-			bu_log("Surface normal:\n\
-vdraw o rrnorm;vdraw p c c0ffc0;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
+			bu_log("Surface normal for reflection:\n\
+vdraw o rrnorm;vdraw p c 00ffff;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
 				V3ARGS(sub_ap.a_ray.r_pt),
 				V3ARGS(endpt) );
 
@@ -777,8 +779,15 @@ struct partition *PartHeadp;
 
 			bzero( (char *)&sw, sizeof(sw) );
 			sw.sw_transmit = sw.sw_reflect = 0.0;
+
+			/* Set default in case shader doesn't fill this in. */
 			sw.sw_refrac_index = RI_AIR;
-			sw.sw_xmitonly = 1;		/* want XMIT data only */
+
+			/* Set special flag so that we get only shader
+			 * parameters (refractive index, in this case).
+			 * We don't even care about transmitted energy.
+			 */
+			sw.sw_xmitonly = 2;
 			sw.sw_inputs = 0;		/* no fields filled yet */
 #if RT_MULTISPECTRAL
 			sw.msw_color = bn_tabdata_get_constval( 1.0, spectrum );
@@ -790,10 +799,6 @@ struct partition *PartHeadp;
 
 			if (rdebug&(RDEBUG_SHADE|RDEBUG_REFRACT))
 				bu_log("rr_hit calling viewshade to discover refractive index\n");
-			/* XXX Need better flag here, to keep viewshade
-			 * XXX from feeing the need to fire extra rays, etc.
-			 * XXX We need even less info that "sw_xmitonly".
-			 */
 
 			(void)viewshade( &appl, pp->pt_forw, &sw );
 
