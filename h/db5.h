@@ -102,9 +102,4 @@ struct db5_raw_internal {
 };
 #define DB5_RAW_INTERNAL_MAGIC	0x64357269	/* "d5ri" */
 
-struct attribute_value_pair {
-	char	*name;
-	char	*value;
-};
-
 #endif	/* DB5_H */
