@@ -26,6 +26,9 @@
  * 
  * $Header$
  * $Log$
+ * Revision 1.1  88/09/10  05:33:25  mike
+ * Initial revision
+ * 
  * Revision 2.7  86/11/10  11:25:18  thomas
  * Add rle_get_setup return codes.
  * Add is_seek flag to make pipe input work.
