@@ -265,7 +265,8 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 	} p;
 	int i;
 
-#if 0
+	(void)nmg_tbl(&faces, TBL_INIT, (long *)NULL);
+
 	classified_shell_loops[0] = AinB;
 	classified_shell_loops[1] = AonB;
 	classified_shell_loops[2] = AoutB;
@@ -278,67 +279,18 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 			subtraction_actions[i],
 			sA, sB );
 	}
-#endif
 
-	(void)nmg_tbl(&faces, TBL_INIT, (long *)NULL);
-
-#if 0
-	/* first we toss out the unwanted faces from both shells */
-	p.l = AinB->buffer;
-	nmg_toss_loops(p.lu, AinB->end);
-
-	p.l = BonA->buffer;
-	nmg_toss_loops(p.lu, BonA->end);
-
-	p.l = BoutA->buffer;
-	nmg_toss_loops(p.lu, BoutA->end);
-
-	p.l = BinA->buffer;
-	for (i=0 ; i < BinA->end ; ++i) {
-		lu = p.lu[i];
-		NMG_CK_LOOPUSE(lu);
-		fu = lu->up.fu_p;
-		NMG_CK_FACEUSE(fu);
-		if (nmg_tbl(&faces, TBL_LOC, &fu->magic) < 0) {
-			/* Move fu from shell B to A, flip normal */
-			nmg_mv_fu_between_shells( sA, sB, fu );
-			nmg_reverse_face( fu );
-		}
-	}
-#else
-	nmg_act_on_loop( AinB, BACTION_KILL, sA, sB );
-	nmg_act_on_loop( AonB, BACTION_RETAIN, sA, sB );	/* if opposite */
-	nmg_act_on_loop( AoutB, BACTION_RETAIN, sA, sB );
-	nmg_act_on_loop( BinA, BACTION_RETAIN_AND_FLIP, sA, sB );
-	nmg_act_on_loop( BonA, BACTION_KILL, sA, sB );
-	nmg_act_on_loop( BoutA, BACTION_KILL, sA, sB );
-#endif
-
+	/* Plot the result */
 	if (rt_g.NMG_debug & DEBUG_SUBTRACT) {
-		FILE *fd, *fopen();
-		struct nmg_ptbl junk;
+		FILE *fp, *fopen();
 
-		(void)nmg_tbl(&junk, TBL_INIT, (long *)NULL);
-
-		if ((fd=fopen("sub.pl", "w")) == (FILE *)NULL) {
+		if ((fp=fopen("sub.pl", "w")) == (FILE *)NULL) {
 			(void)perror("sub.pl");
 			exit(-1);
 		}
     		rt_log("plotting sub.pl\n");
-
-		for (i=0 ; i < AoutB->end ; ++i) {
-			p.l = &	AoutB->buffer[i];
-			nmg_pl_lu(fd, *p.lu, &junk, 200, 200, 200);
-		}
-
-		for (i=0 ; i < BinA->end ; ++i) {
-			p.l = &	BinA->buffer[i];
-			nmg_pl_lu(fd, *p.lu, &junk, 200, 200, 200);
-		}
-
-
-		(void)nmg_tbl(&junk, TBL_FREE, (long *)NULL);
-		(void)fclose(fd);
+		nmg_pl_s( fp, sA );
+		(void)fclose(fp);
 	}
 
 
@@ -376,31 +328,17 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 
 	(void)nmg_tbl(&faces, TBL_INIT, (long *)NULL);
 
-	/* first we toss out the unwanted faces from both shells */
-	p.l = AinB->buffer;
-	nmg_toss_loops(p.lu, AinB->end);
+	classified_shell_loops[0] = AinB;
+	classified_shell_loops[1] = AonB;
+	classified_shell_loops[2] = AoutB;
+	classified_shell_loops[3] = BinA;
+	classified_shell_loops[4] = BonA;
+	classified_shell_loops[5] = BoutA;
 
-	p.l = BinA->buffer;
-	nmg_toss_loops(p.lu, BinA->end);
-
-	/* Here we handle the delicat issue of combining faces of A and B
-	 * which are "ON" each other
-	 *
-	 * Unimlpemented
-	 */
-
-
-	/* combine faces of B with A */
-	p.l = BoutA->buffer;
-	for (i=0 ; i < BoutA->end ; ++i) {
-		lu = p.lu[i];
-		NMG_CK_LOOPUSE(lu);
-		fu = lu->up.fu_p;
-		NMG_CK_FACEUSE(fu);
-		if (nmg_tbl(&faces, TBL_LOC, &fu->magic) < 0) {
-			/* Move fu from shell B to A */
-			nmg_mv_fu_between_shells( sA, sB, fu );
-		}
+	for( i=0; i<6; i++ )  {
+		nmg_act_on_loop( classified_shell_loops[i],
+			union_actions[i],
+			sA, sB );
 	}
 
 	if (sB->fu_p) {
@@ -432,29 +370,17 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 
 	(void)nmg_tbl(&faces, TBL_INIT, (long *)NULL);
 
-	/* first we toss out the unwanted faces from both shells */
-	p.l = AoutB->buffer;
-	nmg_toss_loops(p.lu, AoutB->end);
+	classified_shell_loops[0] = AinB;
+	classified_shell_loops[1] = AonB;
+	classified_shell_loops[2] = AoutB;
+	classified_shell_loops[3] = BinA;
+	classified_shell_loops[4] = BonA;
+	classified_shell_loops[5] = BoutA;
 
-	p.l = BoutA->buffer;
-	nmg_toss_loops(p.lu, BoutA->end);
-
-	/* we need to handle the "ON" faces here
-	 *
-	 * unimplemented
-	 */
-
-	/* now we combine the faces of B with A */
-	p.l = BinA->buffer;
-	for (i=0 ; i < BinA->end ; ++i) {
-		lu = p.lu[i];
-		NMG_CK_LOOPUSE(lu);
-		fu = lu->up.fu_p;
-		NMG_CK_FACEUSE(fu);
-		if (nmg_tbl(&faces, TBL_LOC, &fu->magic) < 0) {
-			/* Move fu from shell B to A */
-			nmg_mv_fu_between_shells( sA, sB, fu );
-		}
+	for( i=0; i<6; i++ )  {
+		nmg_act_on_loop( classified_shell_loops[i],
+			intersect_actions[i],
+			sA, sB );
 	}
 
 	if (sB->fu_p) {
