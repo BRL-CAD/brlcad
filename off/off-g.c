@@ -41,9 +41,7 @@ static struct bn_tol tol;
  *  vertices and faces.
  */
 
-int read_faces(m, fgeom)
-struct model *m;
-FILE *fgeom;	
+int read_faces(struct model *m, FILE *fgeom)
 {
 	int 		   nverts, nfaces, nedges;
 	register int 	   i, j, fail=0;
@@ -135,9 +133,7 @@ FILE *fgeom;
 
 
 
-int off2nmg(fpin, fpout)
-FILE *fpin;
-struct rt_wdb *fpout;
+int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 {
 	char title[64], geom_fname[64];
 	char rname[67], sname[67];
@@ -192,9 +188,7 @@ struct rt_wdb *fpout;
 }
 		
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 	FILE *fpin;
 	struct rt_wdb *fpout;

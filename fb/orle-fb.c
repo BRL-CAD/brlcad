@@ -47,25 +47,23 @@ static FILE	*fp;
 static RGBpixel	bgpixel;
 static int	bgflag = 0;
 static int	olflag = 0;
-static int	pars_Argv();
+static int	pars_Argv(int argc, register char **argv);
 static int	xlen = -1, ylen = -1;
 static int	xpos = -1, ypos = -1;
-static void	prnt_Cmap();
-static void	prnt_Usage();
+static void	prnt_Cmap(ColorMap *cmap);
+static void	prnt_Usage(void);
 static int	width = 512;
 static int	height = 512;
 static int	topdown = 0;
 static int	pixels_per_buffer;
 static char	*fb_file = (char *)NULL;
 
-void		fill_Buffer();
+void		fill_Buffer(register char *dest, register char *src, register int scan_bytes, register int repeat);
 
 /*	m a i n ( )							*/
 int
-main( argc, argv )
-int	argc;
-char	*argv[];
-	{	register int	y;
+main(int argc, char **argv)
+{	register int	y;
 		register int	lines_per_buffer;
 		register unsigned char *scanbuf;
 		static RGBpixel	bg_scan[8192+1];
@@ -248,12 +246,8 @@ char	*argv[];
 	Fill cluster buffer from scanline (as fast as possible).
  */
 void
-fill_Buffer( dest, src, scan_bytes, repeat )
-register char	*dest;
-register char	*src;
-register int	scan_bytes;
-register int	repeat;
-	{	register int	i;
+fill_Buffer(register char *dest, register char *src, register int scan_bytes, register int repeat)
+{	register int	i;
 	for( i = 0; i < repeat; ++i )
 		{
 		bcopy( src, dest, scan_bytes );
@@ -264,9 +258,8 @@ register int	repeat;
 
 /*	p a r s _ A r g v ( )						*/
 static int
-pars_Argv( argc, argv )
-register char	**argv;
-	{	register int	c;
+pars_Argv(int argc, register char **argv)
+{	register int	c;
 	/* Parse options.						*/
 	while( (c = getopt( argc, argv, "tOF:b:dp:v" )) != EOF )
 		{
@@ -358,17 +351,16 @@ register char	**argv;
 	Print usage message.
  */
 static void
-prnt_Usage()
-	{	register char	**p = usage;
+prnt_Usage(void)
+{	register char	**p = usage;
 	while( *p )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
 	}
 
 static void
-prnt_Cmap( cmap )
-ColorMap	*cmap;
-	{	register unsigned short	*cp;
+prnt_Cmap(ColorMap *cmap)
+{	register unsigned short	*cp;
 		register int	i;
 	(void) fprintf( stderr, "\t\t\t_________ Color map __________\n" );
 	(void) fprintf( stderr, "Red segment :\n" );

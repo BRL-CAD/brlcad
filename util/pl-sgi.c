@@ -155,9 +155,7 @@ Usage: pl-sgi [options] [-t thickness] [-{s|S} shellcmd] [file.plot]\n\
 #endif /* sgi */
 
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 #if HAS_SGIGL
 	Coord	max[3], min[3];

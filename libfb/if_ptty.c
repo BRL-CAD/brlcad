@@ -35,19 +35,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define B_NTSC			(0.10*INTENSITY_FACTOR)
 static int	over_sampl;
 
-_LOCAL_ int	ptty_open(),
-		ptty_close(),
-		ptty_clear(),
-		ptty_read(),
-		ptty_write(),
-		ptty_view(),
-		ptty_window_set(),	/* OLD */
-		ptty_zoom_set(),	/* OLD */
-		ptty_cursor(),
+_LOCAL_ int	ptty_open(FBIO *ifp, char *ptty_name, int width, int height),
+		ptty_close(FBIO *ifp),
+		ptty_clear(FBIO *ifp, RGBpixel (*bgpp)),
+		ptty_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct),
+		ptty_write(register FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct),
+		ptty_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
+		ptty_window_set(FBIO *ifp, int x, int y),	/* OLD */
+		ptty_zoom_set(FBIO *ifp, int x, int y),	/* OLD */
+		ptty_cursor(FBIO *ifp, int mode, int x, int y),
 		ptty_background_set(),
 		ptty_animate(),
-		ptty_setsize(),
-		ptty_help();
+		ptty_setsize(FBIO *ifp, int width, int height),
+		ptty_help(FBIO *ifp);
 
 FBIO ptty_interface = {
 	0,
@@ -92,16 +92,13 @@ FBIO ptty_interface = {
 	0
 };
 
-_LOCAL_	int	output_Scan();
-_LOCAL_ int	put_Run();
-_LOCAL_ int	rgb_To_Dither_Val();
+_LOCAL_	int	output_Scan(FBIO *ifp, register RGBpixel (*pixels), int ct);
+_LOCAL_ int	put_Run(register FBIO *ifp, register int ct, int val);
+_LOCAL_ int	rgb_To_Dither_Val(register RGBpixel (*pixel));
 
 /*ARGSUSED*/
 _LOCAL_ int
-ptty_open( ifp, ptty_name, width, height )
-FBIO	*ifp;
-char	*ptty_name;
-int	width, height;
+ptty_open(FBIO *ifp, char *ptty_name, int width, int height)
 {
 	FB_CK_FBIO(ifp);
 
@@ -121,16 +118,13 @@ int	width, height;
 }
 
 _LOCAL_ int
-ptty_close( ifp )
-FBIO	*ifp;
+ptty_close(FBIO *ifp)
 {
 	return	close( ifp->if_fd ) == -1 ? -1 : 0;
 }
 
 _LOCAL_ int
-ptty_clear( ifp, bgpp )
-FBIO	*ifp;
-RGBpixel	*bgpp;
+ptty_clear(FBIO *ifp, RGBpixel (*bgpp))
 {
 	static char	ptty_buf[2] = { PT_CLEAR, NULL };
 
@@ -138,11 +132,7 @@ RGBpixel	*bgpp;
 }
 
 _LOCAL_ int
-ptty_write( ifp, x, y, pixelp, ct )
-register FBIO	*ifp;
-int		x, y;
-RGBpixel		*pixelp;
-long		ct;
+ptty_write(register FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct)
 {
 	static char	ptty_buf[10];
 	register int	scan_ct;
@@ -165,11 +155,7 @@ long		ct;
 }
 
 _LOCAL_ int
-ptty_read( ifp, x, y, pixelp, ct )
-FBIO	*ifp;
-int	x, y;
-RGBpixel	*pixelp;
-long	ct;
+ptty_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct)
 {
 /*	y = ifp->if_width-1-y;		/* 1st quadrant */
 #if 0 /* Not yet implemented. */
@@ -182,9 +168,7 @@ long	ct;
 }
 
 _LOCAL_ int
-ptty_setsize( ifp, width, height )
-FBIO	*ifp;
-int	width, height;
+ptty_setsize(FBIO *ifp, int width, int height)
 {
 	static char	ptty_buf[10];
 
@@ -195,10 +179,7 @@ int	width, height;
 }
 
 _LOCAL_ int
-ptty_view( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	xcenter, ycenter;
-int	xzoom, yzoom;
+ptty_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
 	ptty_window_set(ifp, xcenter, ycenter);
@@ -207,9 +188,7 @@ int	xzoom, yzoom;
 }
 
 _LOCAL_ int
-ptty_window_set( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
+ptty_window_set(FBIO *ifp, int x, int y)
 {
 	static char	ptty_buf[10];
 
@@ -219,9 +198,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-ptty_zoom_set( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
+ptty_zoom_set(FBIO *ifp, int x, int y)
 {
 	static char	ptty_buf[10];
 
@@ -232,10 +209,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-ptty_cursor( ifp, mode, x, y )
-FBIO	*ifp;
-int	mode;
-int	x, y;
+ptty_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	static char	ptty_buf[11];
 
@@ -269,10 +243,7 @@ int	nframes, framesz, fps;
 	Output to stdout.
  */
 _LOCAL_ int
-output_Scan( ifp, pixels, ct )
-FBIO		*ifp;
-register RGBpixel	*pixels;
-int		ct;
+output_Scan(FBIO *ifp, register RGBpixel (*pixels), int ct)
 {
 	register int	i, j;
 	static char	output_buf[MAX_DIMENSION+1];
@@ -319,10 +290,7 @@ int		ct;
 }
 
 _LOCAL_ int
-put_Run( ifp, ct, val )
-register FBIO	*ifp;
-register int	ct;
-int		val;
+put_Run(register FBIO *ifp, register int ct, int val)
 {
 	static char	ptty_buf[4];
 /*	(void) fprintf( stderr, "put_Run( %d, %d )\n", ct, val ); */
@@ -340,16 +308,14 @@ int		val;
 }
 
 _LOCAL_ int
-rgb_To_Dither_Val( pixel )
-register RGBpixel	*pixel;
+rgb_To_Dither_Val(register RGBpixel (*pixel))
 {
 	return	(R_NTSC * (*pixel)[RED] + G_NTSC * (*pixel)[GRN]
 		+ B_NTSC * (*pixel)[BLU]);
 }
 
 _LOCAL_ int
-ptty_help( ifp )
-FBIO	*ifp;
+ptty_help(FBIO *ifp)
 {
 	fb_log( "Description: %s\n", ptty_interface.if_type );
 	fb_log( "Device: %s\n", ifp->if_name );

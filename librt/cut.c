@@ -85,13 +85,7 @@ HIDDEN int		rt_ct_old_assess(register union cutter *,
  *  Each span runs from [min].nu_spos to [max].nu_epos.
  */
 union cutter *
-rt_cut_one_axis( boxes, rtip, axis, min, max, nuginfop )
-struct bu_ptbl	*boxes;
-struct rt_i	*rtip;
-int		axis;
-int		min;
-int		max;
-struct nugridnode *nuginfop;
+rt_cut_one_axis(struct bu_ptbl *boxes, struct rt_i *rtip, int axis, int min, int max, struct nugridnode *nuginfop)
 {
 	register struct soltab *stp;
 	union cutter	*box;
@@ -151,9 +145,7 @@ struct nugridnode *nuginfop;
  *  This routine is run in parallel.
  */
 void
-rt_cut_optimize_parallel( cpu, arg )
-int		cpu;
-genptr_t	arg;
+rt_cut_optimize_parallel(int cpu, genptr_t arg)
 {
 	struct rt_i	*rtip = (struct rt_i *)arg;
 	union cutter	*cp;
@@ -190,43 +182,37 @@ HIDDEN int rt_projZmin_comp BU_ARGS((const void * p1, const void * p2));
 HIDDEN int rt_projZmax_comp BU_ARGS((const void * p1, const void * p2));
 
 HIDDEN int
-rt_projXmin_comp( p1, p2 )
-const void * p1, * p2;
+rt_projXmin_comp(const void *p1, const void *p2)
 {
 	return CMP(p1,p2,st_min,X);
 }
 
 HIDDEN int
-rt_projXmax_comp( p1, p2 )
-const void * p1, * p2;
+rt_projXmax_comp(const void *p1, const void *p2)
 {
 	return CMP(p1,p2,st_max,X);
 }
 
 HIDDEN int
-rt_projYmin_comp( p1, p2 )
-const void * p1, * p2;
+rt_projYmin_comp(const void *p1, const void *p2)
 {
 	return CMP(p1,p2,st_min,Y);
 }
 
 HIDDEN int
-rt_projYmax_comp( p1, p2 )
-const void * p1, * p2;
+rt_projYmax_comp(const void *p1, const void *p2)
 {
 	return CMP(p1,p2,st_max,Y);
 }
 
 HIDDEN int
-rt_projZmin_comp( p1, p2 )
-const void * p1, * p2;
+rt_projZmin_comp(const void *p1, const void *p2)
 {
 	return CMP(p1,p2,st_min,Z);
 }
 
 HIDDEN int
-rt_projZmax_comp( p1, p2 )
-const void * p1, * p2;
+rt_projZmax_comp(const void *p1, const void *p2)
 {
 	return CMP(p1,p2,st_max,Z);
 }
@@ -248,11 +234,7 @@ static struct cmp_pair {
  */
 
 void
-rt_nugrid_cut( nugnp, fromp, rtip, just_collect_info, depth )
-register struct nugridnode	*nugnp;
-register struct boxnode		*fromp;
-struct rt_i			*rtip;
-int				 just_collect_info, depth;
+rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp, struct rt_i *rtip, int just_collect_info, int depth)
 {
 #define USE_HIST 0
 #if USE_HIST	
@@ -716,9 +698,7 @@ int				 just_collect_info, depth;
  *  This is the main entry point into space partitioning from rt_prep().
  */
 void
-rt_cut_it(rtip, ncpu)
-register struct rt_i	*rtip;
-int			ncpu;
+rt_cut_it(register struct rt_i *rtip, int ncpu)
 {
 	register struct soltab *stp;
 	union cutter *finp;	/* holds the finite solids */
@@ -872,10 +852,7 @@ int			ncpu;
  *  Solids with pieces go onto a special list.
  */
 void
-rt_cut_extend( cutp, stp, rtip )
-register union cutter	*cutp;
-struct soltab		*stp;
-const struct rt_i	*rtip;
+rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i *rtip)
 {
 	RT_CK_SOLTAB(stp);
 	RT_CK_RTI(rtip);
@@ -949,10 +926,7 @@ const struct rt_i	*rtip;
  *	 0	Node has been cut
  */
 HIDDEN int
-rt_ct_plan( rtip, cutp, depth )
-struct rt_i	*rtip;
-union cutter	*cutp;
-int		depth;
+rt_ct_plan(struct rt_i *rtip, union cutter *cutp, int depth)
 {
 	int	axis;
 	int	status[3];
@@ -1011,11 +985,7 @@ int		depth;
  *		*offcenter	is distance from "optimum" cut location.
  */
 HIDDEN int
-rt_ct_assess( cutp, axis, where_p, offcenter_p )
-register union cutter *cutp;
-register int	axis;
-double		*where_p;
-double		*offcenter_p;
+rt_ct_assess(register union cutter *cutp, register int axis, double *where_p, double *offcenter_p)
 {
 	register int	i;
 	register double	val;
@@ -1098,10 +1068,7 @@ double		*offcenter_p;
  *	1	if outp has fewer items than inp
  */
 HIDDEN int
-rt_ct_populate_box( outp, inp, rtip )
-union cutter		*outp;
-const union cutter	*inp;
-struct rt_i		*rtip;
+rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rtip)
 {
 	register int	i;
 	int success = 0;
@@ -1194,11 +1161,7 @@ struct rt_i		*rtip;
  *	1	success
  */
 HIDDEN int
-rt_ct_box( rtip, cutp, axis, where )
-struct rt_i		*rtip;
-register union cutter	*cutp;
-register int		axis;
-double			where;
+rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, double where)
 {
 	register union cutter	*rhs, *lhs;
 	int success = 0;
@@ -1271,11 +1234,7 @@ double			where;
  *	0	if no overlap.
  */
 HIDDEN int
-rt_ck_overlap( min, max, stp, rtip )
-register const vect_t	min;
-register const vect_t	max;
-register const struct soltab *stp;
-register const struct rt_i *rtip;
+rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register const struct soltab *stp, register const struct rt_i *rtip)
 {
 	RT_CHECK_SOLTAB(stp);
 	if( RT_G_DEBUG&DEBUG_BOXING )  {
@@ -1311,8 +1270,7 @@ fail:
  *  Returns the total number of solids and solid "pieces" in a boxnode.
  */
 HIDDEN int
-rt_ct_piececount( cutp )
-const union cutter *cutp;
+rt_ct_piececount(const union cutter *cutp)
 {
 	int	i;
 	int	count;
@@ -1339,10 +1297,7 @@ const union cutter *cutp;
  *  space.
  */
 HIDDEN void
-rt_ct_optim( rtip, cutp, depth )
-struct rt_i		*rtip;
-register union cutter *cutp;
-int	depth;
+rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, int depth)
 {
  	int oldlen;
 
@@ -1428,11 +1383,7 @@ int	depth;
  *  while new vewsion results in nbins=42, maxlen=3, avg=1.667 (on moss.g).
  */
 HIDDEN int
-rt_ct_old_assess( cutp, axis, where_p, offcenter_p )
-register union cutter *cutp;
-register int axis;
-double	*where_p;
-double	*offcenter_p;
+rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p, double *offcenter_p)
 {
 	double		val;
 	double		offcenter;		/* Closest distance from midpoint */
@@ -1524,8 +1475,7 @@ double	*offcenter_p;
  *  This routine must run in parallel
  */
 HIDDEN union cutter *
-rt_ct_get(rtip)
-struct rt_i	*rtip;
+rt_ct_get(struct rt_i *rtip)
 {
 	register union cutter *cutp;
 
@@ -1562,8 +1512,7 @@ struct rt_i	*rtip;
  *  Release subordinate storage
  */
 HIDDEN void
-rt_ct_release_storage( cutp )
-register union cutter	*cutp;
+rt_ct_release_storage(register union cutter *cutp)
 {
 	int i;
 
@@ -1616,9 +1565,7 @@ register union cutter	*cutp;
  *  This routine must run in parallel
  */
 HIDDEN void
-rt_ct_free( rtip, cutp )
-struct rt_i		*rtip;
-register union cutter	*cutp;
+rt_ct_free(struct rt_i *rtip, register union cutter *cutp)
 {
 	RT_CK_RTI(rtip);
 
@@ -1637,9 +1584,9 @@ register union cutter	*cutp;
  *  Print out a cut tree.
  */
 void
-rt_pr_cut( cutp, lvl )
-register const union cutter *cutp;
-int lvl;			/* recursion level */
+rt_pr_cut(register const union cutter *cutp, int lvl)
+                                  
+        			/* recursion level */
 {
 	register int i,j;
 
@@ -1733,9 +1680,7 @@ int lvl;			/* recursion level */
  *  node, so as not to clobber rti_CutHead !
  */
 void
-rt_fr_cut( rtip, cutp )
-struct rt_i		*rtip;
-register union cutter *cutp;
+rt_fr_cut(struct rt_i *rtip, register union cutter *cutp)
 {
 	RT_CK_RTI(rtip);
 	if( cutp == CUTTER_NULL )  {
@@ -1786,11 +1731,7 @@ register union cutter *cutp;
  *  			R T _ P L O T _ C U T
  */
 HIDDEN void
-rt_plot_cut( fp, rtip, cutp, lvl )
-FILE			*fp;
-struct rt_i		*rtip;
-register union cutter	*cutp;
-int			lvl;
+rt_plot_cut(FILE *fp, struct rt_i *rtip, register union cutter *cutp, int lvl)
 {
 	RT_CK_RTI(rtip);
 	switch( cutp->cut_type )  {
@@ -1943,10 +1884,7 @@ int			lvl;
  *  and other interesting statistics.
  */
 HIDDEN void
-rt_ct_measure( rtip, cutp, depth )
-register struct rt_i	*rtip;
-register union cutter	*cutp;
-int			depth;
+rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, int depth)
 {
 	register int	len;
 
@@ -1995,8 +1933,7 @@ int			depth;
  *  so it must be prepared for uninitialized items.
  */
 void
-rt_cut_clean(rtip)
-struct rt_i	*rtip;
+rt_cut_clean(struct rt_i *rtip)
 {
 	genptr_t	*p;
 

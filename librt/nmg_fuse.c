@@ -67,9 +67,7 @@ BU_EXTERN(void			nmg_split_trim,
  * XXX Won't catch sharing of faces with only self-loops and no edge loops.
  */
 int
-nmg_is_common_bigloop( f1, f2 )
-const struct face	*f1;
-const struct face	*f2;
+nmg_is_common_bigloop(const struct face *f1, const struct face *f2)
 {
 	const struct faceuse	*fu1;
 	const struct loopuse	*lu1;
@@ -128,9 +126,7 @@ const struct face	*f2;
  *  and should remain true throughout the intersection process.
  */
 void
-nmg_region_v_unique( r1, tol )
-struct nmgregion	*r1;
-const struct bn_tol	*tol;
+nmg_region_v_unique(struct nmgregion *r1, const struct bn_tol *tol)
 {
 	int	i;
 	int	j;
@@ -173,9 +169,7 @@ const struct bn_tol	*tol;
  *  Exists primarily as a support routine for nmg_model_vertex_fuse().
  */
 int
-nmg_ptbl_vfuse( t, tol )
-struct bu_ptbl		*t;
-const struct bn_tol	*tol;
+nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
 {
 	int	count = 0;
 	int	i;
@@ -216,10 +210,7 @@ const struct bn_tol	*tol;
  *  Exists as a support routine for nmg_two_region_vertex_fuse()
  */
 int
-nmg_region_both_vfuse( t1, t2, tol )
-struct bu_ptbl		*t1;
-struct bu_ptbl		*t2;
-const struct bn_tol	*tol;
+nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_tol *tol)
 {
 	int	count = 0;
 	int	i;
@@ -297,9 +288,7 @@ const struct bn_tol	*tol;
  *  identical, within the tolerance.
  */
 int
-nmg_model_vertex_fuse( m, tol )
-struct model		*m;
-const struct bn_tol	*tol;
+nmg_model_vertex_fuse(struct model *m, const struct bn_tol *tol)
 {
 	struct bu_ptbl	t1;
 	int		total = 0;
@@ -329,8 +318,7 @@ const struct bn_tol	*tol;
  */
 
 int
-nmg_cnurb_is_linear( cnrb )
-const struct edge_g_cnurb *cnrb;
+nmg_cnurb_is_linear(const struct edge_g_cnurb *cnrb)
 {
 	int i;
 	int coords;
@@ -394,9 +382,7 @@ out:
  */
 
 int
-nmg_snurb_is_planar( srf, tol )
-const struct face_g_snurb *srf;
-const struct bn_tol *tol;
+nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 {
 	plane_t pl;
 	int i;
@@ -557,10 +543,7 @@ out:
 }
 
 void
-nmg_eval_linear_trim_curve( snrb, uvw, xyz )
-const struct face_g_snurb *snrb;
-const fastf_t uvw[3];
-point_t xyz;
+nmg_eval_linear_trim_curve(const struct face_g_snurb *snrb, const fastf_t *uvw, fastf_t *xyz)
 {
 	int coords;
 	hpoint_t xyz1;
@@ -587,11 +570,7 @@ point_t xyz;
 }
 
 void
-nmg_eval_trim_curve( cnrb, snrb, t, xyz )
-const struct edge_g_cnurb *cnrb;
-const struct face_g_snurb *snrb;
-const fastf_t t;
-point_t xyz;
+nmg_eval_trim_curve(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb, const fastf_t t, fastf_t *xyz)
 {
 	hpoint_t uvw;
 	hpoint_t xyz1;
@@ -641,12 +620,7 @@ point_t xyz;
 }
 
 void
-nmg_split_trim( cnrb, snrb, t, pt0, pt1, tol )
-const struct edge_g_cnurb *cnrb;
-const struct face_g_snurb *snrb;
-fastf_t t;
-struct pt_list *pt0,*pt1;
-const struct bn_tol *tol;
+nmg_split_trim(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb, fastf_t t, struct pt_list *pt0, struct pt_list *pt1, const struct bn_tol *tol)
 {
 	struct pt_list *pt_new;
 	fastf_t t_sub;
@@ -706,12 +680,7 @@ const struct bn_tol *tol;
 }
 
 void
-nmg_eval_trim_to_tol( cnrb, snrb, t0, t1, head, tol )
-const struct edge_g_cnurb *cnrb;
-const struct face_g_snurb *snrb;
-const fastf_t t0,t1;
-struct bu_list *head;
-const struct bn_tol *tol;
+nmg_eval_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb, const fastf_t t0, const fastf_t t1, struct bu_list *head, const struct bn_tol *tol)
 {
 	fastf_t t;
 	struct pt_list *pt0,*pt1;
@@ -743,14 +712,7 @@ const struct bn_tol *tol;
 }
 
 void
-nmg_split_linear_trim( snrb, uvw1, uvw, uvw2, pt0, pt1, tol )
-const struct face_g_snurb *snrb;
-const fastf_t uvw1[3];
-const fastf_t uvw[3];
-const fastf_t uvw2[3];
-struct pt_list *pt0;
-struct pt_list *pt1;
-const struct bn_tol *tol;
+nmg_split_linear_trim(const struct face_g_snurb *snrb, const fastf_t *uvw1, const fastf_t *uvw, const fastf_t *uvw2, struct pt_list *pt0, struct pt_list *pt1, const struct bn_tol *tol)
 {
 	struct pt_list *pt_new;
 	fastf_t t_sub;
@@ -813,13 +775,7 @@ const struct bn_tol *tol;
 }
 
 void
-nmg_eval_linear_trim_to_tol( cnrb, snrb, uvw1, uvw2, head, tol )
-const struct edge_g_cnurb *cnrb;
-const struct face_g_snurb *snrb;
-const fastf_t uvw1[3];
-const fastf_t uvw2[3];
-struct bu_list *head;
-const struct bn_tol *tol;
+nmg_eval_linear_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb, const fastf_t *uvw1, const fastf_t *uvw2, struct bu_list *head, const struct bn_tol *tol)
 {
 	fastf_t uvw[3];
 	struct pt_list *pt0,*pt1;
@@ -870,13 +826,7 @@ const struct bn_tol *tol;
  *		1 - coincident
  */
 int
-nmg_cnurb_lseg_coincident( eu1, cnrb, snrb, pt1, pt2, tol )
-const struct edgeuse *eu1;
-const struct edge_g_cnurb *cnrb;
-const struct face_g_snurb *snrb;
-const point_t pt1;
-const point_t pt2;
-const struct bn_tol *tol;
+nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb, const fastf_t *pt1, const fastf_t *pt2, const struct bn_tol *tol)
 {
 	fastf_t t0,t1,t;
 	fastf_t delt;
@@ -1014,12 +964,7 @@ const struct bn_tol *tol;
  *		 1 - cnurb is on curve
  */
 int
-nmg_cnurb_is_on_crv( eu, cnrb, snrb, head, tol )
-const struct edgeuse *eu;
-const struct edge_g_cnurb *cnrb;
-const struct face_g_snurb *snrb;
-const struct bu_list *head;
-const struct bn_tol *tol;
+nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb, const struct bu_list *head, const struct bn_tol *tol)
 {
 	int i;
 	int coincident;
@@ -1291,9 +1236,7 @@ again:
 }
 #else
 int
-nmg_model_edge_fuse( m, tol )
-struct model *m;
-const struct bn_tol *tol;
+nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
 {
 	struct bu_ptbl edges;
 	int i, j;
@@ -1357,9 +1300,7 @@ const struct bn_tol *tol;
  *  edge_g structs in the model, and comparing *them* pairwise.
  */
 int
-nmg_model_edge_g_fuse( m, tol )
-struct model		*m;
-const struct bn_tol	*tol;
+nmg_model_edge_g_fuse(struct model *m, const struct bn_tol *tol)
 {
 	struct bu_ptbl	etab;
 	int		total = 0;
@@ -1437,10 +1378,7 @@ const struct bn_tol	*tol;
  *  XXX It would be more efficient to use nmg_vist() for this.
  */
 int
-nmg_ck_fu_verts( fu1, f2, tol )
-struct faceuse	*fu1;
-struct face	*f2;
-const struct bn_tol	*tol;
+nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 {
 	const struct face_g_plane	*fg2;
 	struct bu_ptbl		vtab;
@@ -1513,10 +1451,7 @@ const struct bn_tol	*tol;
  *
  */
 int
-nmg_ck_fg_verts( fu1 , f2 , tol )
-struct faceuse *fu1;
-struct face *f2;
-const struct bn_tol *tol;
+nmg_ck_fg_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 {
 	struct face_g_plane *fg1;
 	struct faceuse *fu;
@@ -1563,10 +1498,7 @@ const struct bn_tol *tol;
  *	>0	Faces were successfully fused.
  */
 int
-nmg_two_face_fuse( f1, f2, tol )
-struct face	*f1;
-struct face	*f2;
-const struct bn_tol	*tol;
+nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
 {
 	register struct face_g_plane	*fg1;
 	register struct face_g_plane	*fg2;
@@ -1710,9 +1642,7 @@ must_fuse:
  *	   distance tolerance of the 1st face's plane equation.
  */
 int
-nmg_model_face_fuse( m, tol )
-struct model		*m;
-const struct bn_tol	*tol;
+nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
 {
 	struct bu_ptbl	ftab;
 	int		total = 0;
@@ -1771,10 +1701,7 @@ const struct bn_tol	*tol;
 }
 
 int
-nmg_break_all_es_on_v( magic_p, v, tol )
-long *magic_p;
-struct vertex *v;
-const struct bn_tol *tol;
+nmg_break_all_es_on_v(long int *magic_p, struct vertex *v, const struct bn_tol *tol)
 {
 	struct bu_ptbl eus;
 	int i;
@@ -1866,9 +1793,7 @@ const struct bn_tol *tol;
  *	Number of edges broken.
  */
 int
-nmg_model_break_e_on_v( m, tol )
-struct model			*m;
-const struct bn_tol		*tol;
+nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
 {
 	int		count = 0;
 	struct bu_ptbl	verts;
@@ -1971,9 +1896,7 @@ const struct bn_tol		*tol;
  *  XXX with a single traversal of the model.
  */
 int
-nmg_model_fuse( m, tol )
-struct model		*m;
-const struct bn_tol	*tol;
+nmg_model_fuse(struct model *m, const struct bn_tol *tol)
 {
 	int	total = 0;
 
@@ -2046,9 +1969,7 @@ const struct bn_tol	*tol;
  *  to break the tie.
  */
 void
-nmg_radial_sorted_list_insert( hd, rad )
-struct bu_list		*hd;
-struct nmg_radial	*rad;
+nmg_radial_sorted_list_insert(struct bu_list *hd, struct nmg_radial *rad)
 {
 	struct nmg_radial	*cur;
 	register fastf_t	rad_ang;
@@ -2097,9 +2018,7 @@ struct nmg_radial	*rad;
  *  pointer integrity still exists.
  */
 void
-nmg_radial_verify_pointers( hd, tol )
-const struct bu_list	*hd;
-const struct bn_tol	*tol;
+nmg_radial_verify_pointers(const struct bu_list *hd, const struct bn_tol *tol)
 {
 	register struct nmg_radial	*rad;
 	register fastf_t		amin = -64;
@@ -2140,9 +2059,7 @@ const struct bn_tol	*tol;
  *  Wire edgeuses are ignored.
  */
 void
-nmg_radial_verify_monotone( hd, tol )
-const struct bu_list	*hd;
-const struct bn_tol	*tol;
+nmg_radial_verify_monotone(const struct bu_list *hd, const struct bn_tol *tol)
 {
 	register struct nmg_radial	*rad;
 	register fastf_t		amin = -64;
@@ -2170,10 +2087,7 @@ const struct bn_tol	*tol;
  * XXX Isn't the word "ensure"?
  */
 void
-nmg_insure_radial_list_is_increasing( hd, amin, amax )
-struct bu_list	*hd;
-fastf_t amin;
-fastf_t amax;
+nmg_insure_radial_list_is_increasing(struct bu_list *hd, fastf_t amin, fastf_t amax)
 {
 	struct nmg_radial *rad;
 	fastf_t cur_value=(-MAX_FASTF);
@@ -2253,15 +2167,15 @@ fastf_t amax;
  *  r4->eu		r3->eu->radial_p->eumate_p	r1->eu->eumate_p->radial_p
  */
 void
-nmg_radial_build_list( hd, shell_tbl, existing, eu, xvec, yvec, zvec, tol )
-struct bu_list		*hd;
-struct bu_ptbl		*shell_tbl;	/* may be null */
-int			existing;
-struct edgeuse		*eu;
-const vect_t		xvec;
-const vect_t		yvec;
-const vect_t		zvec;
-const struct bn_tol	*tol;		/* for printing */
+nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existing, struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *tol)
+              		    
+              		           	/* may be null */
+   			         
+              		    
+            		     
+            		     
+            		     
+                   	     		/* for printing */
 {
 	struct edgeuse		*teu;
 	struct nmg_radial	*rad;
@@ -2418,10 +2332,7 @@ const struct bn_tol	*tol;		/* for printing */
  *  Merge all of the src list into the dest list, sorting by angles.
  */
 void
-nmg_radial_merge_lists( dest, src, tol )
-struct bu_list		*dest;
-struct bu_list		*src;
-const struct bn_tol	*tol;
+nmg_radial_merge_lists(struct bu_list *dest, struct bu_list *src, const struct bn_tol *tol)
 {
 	struct nmg_radial	*rad;
 
@@ -2488,9 +2399,7 @@ const struct bn_tol	*tol;
  *  up to the caller, and is not checked for here.
  */
 int
-nmg_is_crack_outie( eu, tol )
-const struct edgeuse	*eu;
-const struct bn_tol	*tol;
+nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
 {
 	const struct loopuse	*lu;
 	const struct edge	*e;
@@ -2585,9 +2494,7 @@ const struct bn_tol	*tol;
  *			N M G _ F I N D _ R A D I A L _ E U
  */
 struct nmg_radial *
-nmg_find_radial_eu( hd, eu )
-const struct bu_list	*hd;
-const struct edgeuse	*eu;
+nmg_find_radial_eu(const struct bu_list *hd, const struct edgeuse *eu)
 {
 	register struct nmg_radial	*rad;
 
@@ -2611,10 +2518,10 @@ const struct edgeuse	*eu;
  *  The second edge pointer may be NULL.
  */
 const struct edgeuse *
-nmg_find_next_use_of_2e_in_lu( eu, e1, e2 )
-const struct edgeuse	*eu;
-const struct edge	*e1;
-const struct edge	*e2;		/* may be NULL */
+nmg_find_next_use_of_2e_in_lu(const struct edgeuse *eu, const struct edge *e1, const struct edge *e2)
+                    	    
+                 	    
+                 	    		/* may be NULL */
 {
 	register const struct edgeuse	*neu;
 
@@ -2648,11 +2555,11 @@ const struct edge	*e2;		/* may be NULL */
  *  in the loopuses's edgeuse order.
  */
 void
-nmg_radial_mark_cracks( hd, e1, e2, tol )
-struct bu_list		*hd;
-const struct edge	*e1;
-const struct edge	*e2;		/* may be NULL */
-const struct bn_tol	*tol;
+nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct edge *e2, const struct bn_tol *tol)
+              		    
+                 	    
+                 	    		/* may be NULL */
+                   	     
 {
 	struct nmg_radial	*rad;
 	struct nmg_radial	*other;
@@ -2770,10 +2677,7 @@ const struct bn_tol	*tol;
  *	nmg_radial*	An original, else first newbie, else a newbie crack.
  */
 struct nmg_radial *
-nmg_radial_find_an_original( hd, s, tol )
-const struct bu_list	*hd;
-const struct shell	*s;
-const struct bn_tol	*tol;
+nmg_radial_find_an_original(const struct bu_list *hd, const struct shell *s, const struct bn_tol *tol)
 {
 	register struct nmg_radial	*rad;
 	struct nmg_radial	*fallback = (struct nmg_radial *)NULL;
@@ -2842,10 +2746,7 @@ const struct bn_tol	*tol;
  *  and then mark parity violators with a "flip" flag.
  */
 int
-nmg_radial_mark_flips( hd, s, tol )
-struct bu_list		*hd;
-const struct shell	*s;
-const struct bn_tol	*tol;
+nmg_radial_mark_flips(struct bu_list *hd, const struct shell *s, const struct bn_tol *tol)
 {
 	struct nmg_radial	*rad;
 	struct nmg_radial	*orig;
@@ -2944,10 +2845,7 @@ const struct bn_tol	*tol;
  *  For each shell, check orientation parity of edgeuses within that shell.
  */
 int
-nmg_radial_check_parity( hd, shells, tol )
-const struct bu_list	*hd;
-const struct bu_ptbl	*shells;
-const struct bn_tol	*tol;
+nmg_radial_check_parity(const struct bu_list *hd, const struct bu_ptbl *shells, const struct bn_tol *tol)
 {
 	struct nmg_radial	*rad;
 	struct shell		**sp;
@@ -3005,11 +2903,11 @@ const struct bn_tol	*tol;
  *  place around the destination edge.
  */
 void
-nmg_radial_implement_decisions( hd, tol, eu1, xvec, yvec, zvec )
-struct bu_list		*hd;
-const struct bn_tol	*tol;		/* for printing */
-struct edgeuse		*eu1;	/* temp */
-vect_t			xvec, yvec, zvec;	/*** temp ***/
+nmg_radial_implement_decisions(struct bu_list *hd, const struct bn_tol *tol, struct edgeuse *eu1, fastf_t *xvec, fastf_t *yvec, fastf_t *zvec)
+              		    
+                   	     		/* for printing */
+              		     	/* temp */
+      			                 	/*** temp ***/
 {
 	struct nmg_radial	*rad;
 	struct nmg_radial	*prev;
@@ -3075,9 +2973,7 @@ again:
  *			N M G _ P R _ R A D I A L
  */
 void
-nmg_pr_radial( title, rad )
-const char		*title;
-const struct nmg_radial	*rad;
+nmg_pr_radial(const char *title, const struct nmg_radial *rad)
 {
 	struct face		*f;
 	int			orient;
@@ -3113,9 +3009,9 @@ const struct nmg_radial	*rad;
  *  Patterned after nmg_pr_fu_around_eu_vecs(), with similar format.
  */
 void
-nmg_pr_radial_list( hd, tol )
-const struct bu_list	*hd;
-const struct bn_tol	*tol;		/* for printing */
+nmg_pr_radial_list(const struct bu_list *hd, const struct bn_tol *tol)
+                    	    
+                   	     		/* for printing */
 {
 	struct nmg_radial	*rad;
 
@@ -3138,8 +3034,7 @@ const struct bn_tol	*tol;		/* for printing */
  *	are not at that same angle
  */
 void
-nmg_do_radial_flips( hd )
-struct bu_list *hd;
+nmg_do_radial_flips(struct bu_list *hd)
 {
 	struct nmg_radial	*start_same;
 	struct bn_tol	tol;
@@ -3241,11 +3136,7 @@ struct bu_list *hd;
  */
 
 void
-nmg_do_radial_join( hd, eu1ref, xvec, yvec, zvec, tol )
-struct bu_list *hd;
-struct edgeuse *eu1ref;
-vect_t xvec, yvec, zvec;
-const struct bn_tol *tol;
+nmg_do_radial_join(struct bu_list *hd, struct edgeuse *eu1ref, fastf_t *xvec, fastf_t *yvec, fastf_t *zvec, const struct bn_tol *tol)
 {
 	struct nmg_radial	*rad;
 	struct nmg_radial	*prev;
@@ -3354,10 +3245,7 @@ top:
  *  to plan the operations to be performed.
  */
 void
-nmg_radial_join_eu_NEW(eu1, eu2, tol)
-struct edgeuse		*eu1;
-struct edgeuse		*eu2;
-const struct bn_tol	*tol;
+nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol *tol)
 {
 	struct edgeuse		*eu1ref;		/* reference eu for eu1 */
 	struct edgeuse		*eu2ref;
@@ -3536,9 +3424,9 @@ const struct bn_tol	*tol;
  *  Exchange eu and eu->eumate_p on the radial list, where marked.
  */
 void
-nmg_radial_exchange_marked( hd, tol )
-struct bu_list		*hd;
-const struct bn_tol	*tol;		/* for printing */
+nmg_radial_exchange_marked(struct bu_list *hd, const struct bn_tol *tol)
+              		    
+                   	     		/* for printing */
 {
 	struct nmg_radial	*rad;
 
@@ -3586,9 +3474,7 @@ const struct bn_tol	*tol;		/* for printing */
  *  due to a boolean operation or whatever, fix it.
  */
 void
-nmg_s_radial_harmonize( s, tol )
-struct shell		*s;
-const struct bn_tol	*tol;
+nmg_s_radial_harmonize(struct shell *s, const struct bn_tol *tol)
 {
 	struct bu_ptbl	edges;
 	struct edgeuse	*eu;
@@ -3651,10 +3537,7 @@ const struct bn_tol	*tol;
  *	!0	Radial parity problem detected
  */
 int
-nmg_eu_radial_check( eu, s, tol )
-const struct edgeuse	*eu;
-const struct shell	*s;
-const struct bn_tol	*tol;
+nmg_eu_radial_check(const struct edgeuse *eu, const struct shell *s, const struct bn_tol *tol)
 {
 #if 1
 	return( 0 );
@@ -3720,9 +3603,7 @@ const struct bn_tol	*tol;
  *  Visit each edge in this shell exactly once, and check it.
  */
 void
-nmg_s_radial_check( s, tol )
-struct shell		*s;
-const struct bn_tol	*tol;
+nmg_s_radial_check(struct shell *s, const struct bn_tol *tol)
 {
 	struct bu_ptbl	edges;
 	struct edgeuse	*eu;
@@ -3753,9 +3634,7 @@ const struct bn_tol	*tol;
  *			N M G _ R _ R A D I A L _ C H E C K
  */
 void
-nmg_r_radial_check( r, tol )
-const struct nmgregion	*r;
-const struct bn_tol	*tol;
+nmg_r_radial_check(const struct nmgregion *r, const struct bn_tol *tol)
 {
 	struct shell	*s;
 

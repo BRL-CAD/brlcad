@@ -49,19 +49,19 @@ const mat_t	id_mat = {
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0};	/* identity matrix for pipes */
 
-char *name();
-char *strchop();
+char *name(char *str);
+char *strchop(char *str, int len);
 #define CH(x)	strchop(x,sizeof(x))
 
-int	combdump();
-void	idendump(), polyhead(), polydata();
-void	soldump(), extrdump(), sketchdump();
-void	membdump(), arsadump(), arsbdump();
-void	materdump(), bspldump(), bsurfdump();
-void	pipe_dump(), particle_dump(), dump_pipe_segs();
-void	arbn_dump(), cline_dump(), bot_dump();
-void	nmg_dump();
-void	strsol_dump();
+int	combdump(void);
+void	idendump(void), polyhead(void), polydata(void);
+void	soldump(void), extrdump(void), sketchdump(void);
+void	membdump(union record *rp), arsadump(void), arsbdump(void);
+void	materdump(void), bspldump(void), bsurfdump(void);
+void	pipe_dump(void), particle_dump(void), dump_pipe_segs(char *name, struct bu_list *headp);
+void	arbn_dump(void), cline_dump(void), bot_dump(void);
+void	nmg_dump(void);
+void	strsol_dump(void);
 
 union record	record;		/* GED database record */
 
@@ -76,8 +76,7 @@ FILE	*ofp;
 char	*iname = "-";
 
 int
-main(argc, argv)
-char **argv;
+main(int argc, char **argv)
 {
 	int i;
 
@@ -330,9 +329,7 @@ top:
  *  the remainder are read from ifp.
  */
 void
-get_ext( ep, ngran )
-struct bu_external	*ep;
-int			ngran;
+get_ext(struct bu_external *ep, int ngran)
 {
 	int	count;
 
@@ -356,7 +353,7 @@ int			ngran;
 }
 
 void
-nmg_dump()
+nmg_dump(void)
 {
 	union record		rec;
 	long			i,granules;
@@ -412,7 +409,7 @@ nmg_dump()
 }
 
 void
-strsol_dump()	/* print out strsol solid info */
+strsol_dump(void)	/* print out strsol solid info */
 {
 	union record rec[DB_SS_NGRAN];
 	char *cp;
@@ -441,7 +438,7 @@ strsol_dump()	/* print out strsol solid info */
 }
 
 void
-idendump()	/* Print out Ident record information */
+idendump(void)	/* Print out Ident record information */
 {
 	(void)fprintf(ofp,  "%c %d %.6s\n",
 		record.i.i_id,			/* I */
@@ -461,7 +458,7 @@ idendump()	/* Print out Ident record information */
 }
 
 void
-polyhead()	/* Print out Polyhead record information */
+polyhead(void)	/* Print out Polyhead record information */
 {
 	(void)fprintf(ofp, "%c ", record.p.p_id );		/* P */
 	(void)fprintf(ofp, "%.16s", name(record.p.p_name) );	/* unique name */
@@ -469,7 +466,7 @@ polyhead()	/* Print out Polyhead record information */
 }
 
 void
-polydata()	/* Print out Polydata record information */
+polydata(void)	/* Print out Polydata record information */
 {
 	register int i, j;
 
@@ -489,7 +486,7 @@ polydata()	/* Print out Polydata record information */
 }
 
 void
-soldump()	/* Print out Solid record information */
+soldump(void)	/* Print out Solid record information */
 {
 	register int i;
 
@@ -503,7 +500,7 @@ soldump()	/* Print out Solid record information */
 }
 
 void
-cline_dump()
+cline_dump(void)
 {
 	int				ngranules;	/* number of granules, total */
 	char				*name;
@@ -538,7 +535,7 @@ cline_dump()
 }
 
 void
-bot_dump()
+bot_dump(void)
 {
 	int				ngranules;
 	char				*name;
@@ -595,7 +592,7 @@ bot_dump()
 }
 
 void
-pipe_dump()	/* Print out Pipe record information */
+pipe_dump(void)	/* Print out Pipe record information */
 {
 
 	int			ngranules;	/* number of granules, total */
@@ -630,9 +627,7 @@ pipe_dump()	/* Print out Pipe record information */
 }
 
 void
-dump_pipe_segs(name, headp)
-char			*name;
-struct bu_list	*headp;
+dump_pipe_segs(char *name, struct bu_list *headp)
 {
 
 	struct wdb_pipept	*sp;
@@ -653,7 +648,7 @@ struct bu_list	*headp;
  * Note that particles fit into one granule only.
  */
 void
-particle_dump()
+particle_dump(void)
 {
 	struct rt_part_internal 	*part;	/* head for the structure */
 	struct bu_external	ext;
@@ -705,7 +700,7 @@ particle_dump()
  *
  */
 void
-arbn_dump()
+arbn_dump(void)
 {
 	int		ngranules;	/* number of granules to be read */
 	int		i;		/* a counter */
@@ -753,7 +748,7 @@ arbn_dump()
  *	1	converted OK, left next record in global "record" for reuse.
  */
 int
-combdump()	/* Print out Combination record information */
+combdump(void)	/* Print out Combination record information */
 {
 	int	m1, m2;		/* material property flags */
 	struct bu_list	head;
@@ -866,8 +861,7 @@ combdump()	/* Print out Combination record information */
  *  Intented to be called by combdump only.
  */
 void
-membdump(rp)
-union record	*rp;
+membdump(union record *rp)
 {
 	register int i;
 
@@ -881,7 +875,7 @@ union record	*rp;
 }
 
 void
-arsadump()	/* Print out ARS record information */
+arsadump(void)	/* Print out ARS record information */
 {
 	register int i;
 	register int length;	/* Keep track of number of ARS B records */
@@ -909,7 +903,7 @@ arsadump()	/* Print out ARS record information */
 }
 
 void
-arsbdump()	/* Print out ARS B record information */
+arsbdump(void)	/* Print out ARS B record information */
 {
 	register int i;
 	
@@ -926,7 +920,7 @@ arsbdump()	/* Print out ARS B record information */
 }
 
 void
-materdump()	/* Print out material description record information */
+materdump(void)	/* Print out material description record information */
 {
 	(void)fprintf(ofp,  "%c %d %d %d %d %d %d\n",
 		record.md.md_id,			/* m */
@@ -939,7 +933,7 @@ materdump()	/* Print out material description record information */
 }
 
 void
-bspldump()	/* Print out B-spline solid description record information */
+bspldump(void)	/* Print out B-spline solid description record information */
 {
 	(void)fprintf(ofp,  "%c %.16s %d %.12e\n",
 		record.B.B_id,		/* b */
@@ -949,7 +943,7 @@ bspldump()	/* Print out B-spline solid description record information */
 }
 
 void
-bsurfdump()	/* Print d-spline surface description record information */
+bsurfdump(void)	/* Print d-spline surface description record information */
 {
 	register int i;
 	register float *vp;
@@ -1034,8 +1028,7 @@ bsurfdump()	/* Print d-spline surface description record information */
  *  converting unprintable characters to something printable.
  *  Here we deal with NAMESIZE long names not being null-terminated.
  */
-char *name( str )
-char *str;
+char *name(char *str)
 {
 	static char buf[NAMESIZE+2];
 	register char *ip = str;
@@ -1073,8 +1066,7 @@ char *str;
  *  Take a string and a length, and null terminate,
  *  converting unprintable characters to something printable.
  */
-char *strchop( str, len )
-char *str;
+char *strchop(char *str, int len)
 {
 	static char buf[1024];
 	register char *ip = str;
@@ -1110,7 +1102,7 @@ char *str;
 }
 
 void
-extrdump()
+extrdump(void)
 {
 	struct rt_extrude_internal	*extr;
 	int				ngranules;
@@ -1143,7 +1135,7 @@ extrdump()
 }
 
 void
-sketchdump()
+sketchdump(void)
 {
 	struct rt_sketch_internal	*skt;
 	int				ngranules;

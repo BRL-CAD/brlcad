@@ -38,7 +38,7 @@ fastf_t grid[10][10][3];
 char *Usage = "This program ordinarily generates a database on stdout.\n\
 	Your terminal probably wouldn't like it.";
 
-void interpolate_data();
+void interpolate_data(void);
 
 struct face_g_snurb *surfs[100];
 int nsurf = 0;
@@ -54,8 +54,7 @@ double drand48() {
 #endif
 
 int
-main(argc, argv)
-int argc; char * argv[];
+main(int argc, char **argv)
 {
 
 	char * id_name = "terrain database";
@@ -93,7 +92,7 @@ int argc; char * argv[];
 		for( j = 0; j < 10; j++)
 		{
 			fastf_t		v;
-			fastf_t		drand48();
+			fastf_t		drand48(void);
 
 			v = (hscale * drand48()) + 10.0;
 
@@ -112,7 +111,7 @@ int argc; char * argv[];
 
 /* Interpoate the data using b-splines */
 void
-interpolate_data()
+interpolate_data(void)
 {
 	struct face_g_snurb *srf;
 	fastf_t * data;

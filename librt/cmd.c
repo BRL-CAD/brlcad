@@ -47,8 +47,7 @@ static const char RCScmd[] = "@(#)$Header$ (BRL)";
  *	char *	On good read
  */
 char *
-rt_read_cmd( fp )
-register FILE	*fp;
+rt_read_cmd(register FILE *fp)
 {
 	register int	c;
 	register char	*buf;
@@ -113,10 +112,7 @@ register FILE	*fp;
  *	nwords	number of words of input, now in argv[]
  */
 int
-rt_split_cmd( argv, lim, lp )
-char		**argv;
-int		lim;
-register char	*lp;
+rt_split_cmd(char **argv, int lim, register char *lp)
 {
 	register int	nwords;			/* number of words seen */
 	register char	*lp1;
@@ -177,10 +173,10 @@ register char	*lp;
  *  Based heavily on mged/cmd.c by Chuck Kennedy.
  */
 int
-rt_do_cmd( rtip, lp, tp )
-struct rt_i		*rtip;			/* FUTURE:  for globbing */
-register char		*lp;
-register const struct command_tab	*tp;
+rt_do_cmd(struct rt_i *rtip, register char *lp, register const struct command_tab *tp)
+           		      			/* FUTURE:  for globbing */
+             		    
+                                 	    
 {
 	register int	nwords;			/* number of words seen */
 	char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */
@@ -189,11 +185,9 @@ register const struct command_tab	*tp;
 	if( nwords <= 0 )
 		return(0);	/* No command to process */
 
-
 	for( ; tp->ct_cmd != (char *)0; tp++ )  {
 		if( cmd_args[0][0] != tp->ct_cmd[0] ||
-				/* the length of "n" is not significant, just needs to be big enough */
-		    strncmp( cmd_args[0], tp->ct_cmd, MAXWORDS ) != 0 )
+		    strcmp( cmd_args[0], tp->ct_cmd ) != 0 )
 			continue;
 		if( (nwords >= tp->ct_min) &&
 		    (nwords <= tp->ct_max) )  {

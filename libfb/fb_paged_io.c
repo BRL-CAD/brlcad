@@ -50,8 +50,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  I/O routines in this file are used.
  */
 int
-fb_ioinit( ifp )
-register FBIO	*ifp;
+fb_ioinit(register FBIO *ifp)
 {
 	if( ifp->if_debug & FB_DEBUG_BIO ) {
 		fb_log( "fb_ioinit( 0x%lx )\n", (unsigned long)ifp );
@@ -76,9 +75,7 @@ register FBIO	*ifp;
 }
 
 int
-fb_seek( ifp, x, y )
-register FBIO	*ifp;
-int	x, y;
+fb_seek(register FBIO *ifp, int x, int y)
 {
 	long	pixelnum;
 	long	pagepixel;
@@ -109,9 +106,7 @@ int	x, y;
 }
 
 int
-fb_tell( ifp, xp, yp )
-register FBIO	*ifp;
-int	*xp, *yp;
+fb_tell(register FBIO *ifp, int *xp, int *yp)
 {
 	*yp = (int) (ifp->if_pixcur / ifp->if_width);
 	*xp = (int) (ifp->if_pixcur % ifp->if_width);
@@ -125,9 +120,7 @@ int	*xp, *yp;
 }
 
 int
-fb_wpixel( ifp, pixelp )
-register FBIO	*ifp;
-unsigned char 	*pixelp;
+fb_wpixel(register FBIO *ifp, unsigned char *pixelp)
 {
 #ifdef NEVER
 	if( ifp->if_debug & FB_DEBUG_BRW ) {
@@ -154,9 +147,7 @@ unsigned char 	*pixelp;
 }
 
 int
-fb_rpixel( ifp, pixelp )
-register FBIO	*ifp;
-unsigned char	*pixelp;
+fb_rpixel(register FBIO *ifp, unsigned char *pixelp)
 {
 	if( ifp->if_pno == -1 )
 		if( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) <= -1 )
@@ -183,8 +174,7 @@ unsigned char	*pixelp;
 }
 
 int
-fb_flush( ifp )
-register FBIO	*ifp;
+fb_flush(register FBIO *ifp)
 {
 	_fb_pgflush(ifp);
 
@@ -196,8 +186,7 @@ register FBIO	*ifp;
 }
 
 int
-_fb_pgflush( ifp )
-register FBIO	*ifp;
+_fb_pgflush(register FBIO *ifp)
 {
 	if( ifp->if_debug & FB_DEBUG_BIO ) {
 		fb_log( "_fb_pgflush( 0x%lx )\n", (unsigned long)ifp );
@@ -213,8 +202,7 @@ register FBIO	*ifp;
 }
 
 int
-_fb_pgout( ifp )
-register FBIO	*ifp;
+_fb_pgout(register FBIO *ifp)
 {
 	int	scans, first_scan;
 
@@ -238,9 +226,7 @@ register FBIO	*ifp;
 }
 
 int
-_fb_pgin( ifp, pageno )
-register FBIO	*ifp;
-int	pageno;
+_fb_pgin(register FBIO *ifp, int pageno)
 {
 	int	scans, first_scan;
 

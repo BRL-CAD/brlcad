@@ -250,7 +250,7 @@ wdb_export_external(
 			return -3;
 		}
 
-		db_inmem( dp, ep, flags, wdbp->dbip );
+		db_inmem( dp, ep, flags );
 		/* ep->buf has been stolen, replaced with null. */
 		break;
 
@@ -267,7 +267,7 @@ wdb_export_external(
 			dp->d_flags = (dp->d_flags & ~7) | flags;
 		}
 
-		db_inmem( dp, ep, flags, wdbp->dbip );
+		db_inmem( dp, ep, flags );
 		/* ep->buf has been stolen, replaced with null. */
 		break;
 	}

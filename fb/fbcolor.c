@@ -47,9 +47,9 @@ static FBIO	*fbp;
 static int	scr_height;
 static int	scr_width;
 
-void	new_rgb(), rgbhsv(), hsvrgb();
-int	pars_Argv();
-int	doKeyPad();
+void	new_rgb(void), rgbhsv(register int *rgb, register int *hsv), hsvrgb(register int *hsv, register int *rgb);
+int	pars_Argv(int argc, register char **argv);
+int	doKeyPad(void);
 
 static char usage[] = "\
 Usage: fbcolor [-h] [-F framebuffer]\n\
@@ -57,8 +57,7 @@ Usage: fbcolor [-h] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n";
 
 int
-main(argc, argv )
-char **argv;
+main(int argc, char **argv)
 {
 	register int i;
 
@@ -174,7 +173,7 @@ q	quit\r\n\
 \\n	Exit\r\n";
 
 int
-doKeyPad()
+doKeyPad(void)
 { 
 	register int ch;	
 
@@ -247,7 +246,7 @@ doKeyPad()
 }
 
 void
-new_rgb()  {
+new_rgb(void) {
 	/* Wrap values to stay in range 0..255 */
 	if( col[curchan] < 0 ) col[curchan] = 255;
 	if( col[curchan] > 255 ) col[curchan] = 0;
@@ -261,8 +260,7 @@ new_rgb()  {
 /*	p a r s _ A r g v ( )
  */
 int
-pars_Argv( argc, argv )
-register char	**argv;
+pars_Argv(int argc, register char **argv)
 {
 	register int	c;
 	while( (c = getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != EOF )  {
@@ -297,9 +295,7 @@ register char	**argv;
  * convert red green blue to hue saturation value
  */
 void
-rgbhsv(rgb, hsv)
-register int *rgb;
-register int *hsv;
+rgbhsv(register int *rgb, register int *hsv)
 {
         int	s, v;
         int	r, g, b;
@@ -351,22 +347,20 @@ register int *hsv;
  * convert hue saturation and value to red, green, blue
  */
 
-double modf();
+double modf(double, double *);
 
 void
-hsvrgb(hsv, rgb)
-register int *hsv;
-register int *rgb;
+hsvrgb(register int *hsv, register int *rgb)
 {
-        int r, g, b, m, n, k, foo;
-        double h, s, v;
+  	int r, g, b, m, n, k;
+        double h, s, v, foo;
         double f;
 
 	if(hsv[1] != 0) 
         {
             s = (double)hsv[1] / 255.;
             h = (double)hsv[0] / 42.666;
-            f = modf(h, &foo);
+            f = modf(h, &(foo));
             v = (double)hsv[2];
             m = (int) (v * (1. - s) + .5);
             n = (int) (v * (1. - s*f) + .5);

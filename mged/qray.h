@@ -58,5 +58,5 @@ extern char qray_effects;
 extern int qray_cmd_echo;
 extern struct qray_fmt *qray_fmts;
 
-extern void qray_data_to_vlist();
+extern void qray_data_to_vlist(struct bn_vlblock *vbp, struct qray_dataList *headp, fastf_t *dir, int do_overlaps);
 #endif

@@ -64,7 +64,7 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit(), raymiss();
+int	rayhit(register struct application *ap, struct partition *PartHeadp), raymiss(register struct application *ap);
 
 /*
  *  			V I E W _ I N I T
@@ -78,9 +78,7 @@ int	rayhit(), raymiss();
  */
 
 int
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
+view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 
 	ap->a_hit = rayhit;
@@ -106,8 +104,7 @@ char *file, *obj;
  */
 
 void
-view_2init( ap )
-struct application	*ap;
+view_2init(struct application *ap)
 {
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
@@ -134,8 +131,7 @@ struct application	*ap;
  */
 
 int
-raymiss( ap )
-register struct application	*ap;
+raymiss(register struct application *ap)
 {
 
 	struct	cell	*posp;		/* store the current cell position */
@@ -157,13 +153,13 @@ register struct application	*ap;
  */
 
 void
-view_pixel()
+view_pixel(void)
 {
 	return;
 }
 
-void view_setup() {}
-void view_cleanup() {}
+void view_setup(void) {}
+void view_cleanup(void) {}
 
 
 /*
@@ -176,9 +172,7 @@ void view_cleanup() {}
  */
 
  int
-rayhit( ap, PartHeadp )
-struct application *ap;
-register struct partition *PartHeadp;
+rayhit(struct application *ap, register struct partition *PartHeadp)
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 
@@ -223,9 +217,7 @@ register struct partition *PartHeadp;
  *  is a full buffer in memory, the hit distances ar plotted.
  */
 
-void	view_eol(ap)
-struct application *ap;
-
+void	view_eol(struct application *ap)
 {
  
 
@@ -239,12 +231,11 @@ struct application *ap;
  */
 
 void
-view_end(ap)
-struct application *ap;
+view_end(struct application *ap)
 {
 
 	fflush(outfp);
 }
 
 
-void application_init () {}
+void application_init (void) {}

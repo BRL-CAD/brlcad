@@ -32,16 +32,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "db.h"
 
-void	mat_pr();
+void	mat_pr(char *title, float *mp);
 
 union record rec;
 
 char line[256];
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
 	static int ifd, ofd;
 	static int units;
@@ -211,9 +209,7 @@ after_read:
 }
 
 void
-mat_pr( title, mp )
-char *title;
-float *mp;
+mat_pr(char *title, float *mp)
 {
 	register int i;
 

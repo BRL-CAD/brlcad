@@ -41,18 +41,14 @@ struct site
 #define	SITE_MAGIC	0x73697465
 #define s_magic		l.magic
 
-void print_usage ()
+void print_usage (void)
 {
 #define OPT_STRING	"ns:t?"
 
     bu_log("Usage: 'bary [-nt] [-s \"x y z\"] [file]'\n");
 }
 
-void enqueue_site (sl, x, y, z)
-
-struct bu_list	*sl;
-fastf_t		x, y, z;
-
+void enqueue_site (struct bu_list *sl, fastf_t x, fastf_t y, fastf_t z)
 {
     struct site	*sp;
 
@@ -67,10 +63,7 @@ fastf_t		x, y, z;
     BU_LIST_INSERT(sl, &(sp -> l));
 }
 
-void show_sites (sl)
-
-struct bu_list	*sl;
-
+void show_sites (struct bu_list *sl)
 {
     struct site	*sp;
 
@@ -83,14 +76,7 @@ struct bu_list	*sl;
     }
 }
 
-int read_point (fp, c_p, c_len, normalize, tail)
-
-FILE		*fp;
-fastf_t		*c_p;
-int		c_len;
-int		normalize;
-struct bu_vls	*tail;
-
+int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls *tail)
 {
     char		*cp = NULL;
     fastf_t		sum;
@@ -152,11 +138,7 @@ struct bu_vls	*tail;
 }
 
 int
-main (argc, argv)
-
-int	argc;
-char	*argv[];
-
+main (int argc, char **argv)
 {
     char		*inf_name;
     int			ch;

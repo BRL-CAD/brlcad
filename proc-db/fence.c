@@ -37,7 +37,7 @@
  */
 char *options="IiDdVvO:o:N:n:U:u:H:h:L:l:R:r:J:j:A:a:T:t:B:b:C:c:F:f:P:p:M:m:W:w:S:s:E:e:G:g:XxZz";
 extern char *optarg;
-extern int optind, opterr, getopt();
+extern int optind, opterr, getopt(int, char *const *, const char *);
 
 /* these variables control the "behavior" of this program's output
  *   if debug is set, debug information (extra "useful" output is given) is
@@ -117,10 +117,7 @@ size_t maxWireSegments=DEFAULT_MAXWIRESEGMENTS;
  * an invalid command line argument is entered or if the user explicitly
  * requests assistance.
  ***************************************/
-void argumentHelp(fp, progname, message)
-     FILE *fp;
-     char *progname;
-     char *message;
+void argumentHelp(FILE *fp, char *progname, char *message)
 {
 
   fflush(stdout);
@@ -166,9 +163,7 @@ void argumentHelp(fp, progname, message)
  * argumentExamples() outputs some examples of using the command line
  * arguments in a useful manner
  **********************************/
-void argumentExamples(fp, progname)
-     FILE *fp;
-     char *progname;
+void argumentExamples(FILE *fp, char *progname)
 {
   fprintf(fp, "Usage Examples: \n\n");
 
@@ -222,8 +217,7 @@ void argumentExamples(fp, progname)
  * given file pointer.
  *
  ***********************/
-void defaultSettings(fp)
-     FILE *fp;
+void defaultSettings(FILE *fp)
 {
   fprintf(fp, "Default values:\n\n");
   fprintf(fp, "\tVerbose mode is %s\n", verbose ? "on" : "off");
@@ -259,9 +253,7 @@ void defaultSettings(fp)
  * arguments that the user specifies.  The args that are read set variables 
  * which, in turn, are used as fence parameters.
  *****************************/
-int parseArguments(argc, argv)
-     int argc;
-     char **argv;
+int parseArguments(int argc, char **argv)
 {
   int c = 0;
 
@@ -653,10 +645,7 @@ int parseArguments(argc, argv)
  * printMatrix() does just that, it prints out a matrix and a label passed to
  * some fp (usually DEFAULT_DEBUG_OUTPUT or DEFAULT_VERBOSE_OUTPUT).
  *************************/
-void printMatrix(fp, n, m) 
-     FILE *fp;
-     char *n;
-     mat_t m;
+void printMatrix(FILE *fp, char *n, fastf_t *m)
 {
   int i = 0;
   fprintf(fp, "\n-----%s------\n", n);
@@ -675,10 +664,7 @@ void printMatrix(fp, n, m)
  * objects and groups.  (i.e. base="rcc", id="5"==> returns "rcc005.s" or 
  * something like that)
  ***********************************/
-char *getName(base, id, paramstring)
-     char *base;
-     int id;
-     char *paramstring;
+char *getName(char *base, int id, char *paramstring)
 {
   static char name[DEFAULT_MAXNAMELENGTH];
   
@@ -700,10 +686,7 @@ char *getName(base, id, paramstring)
  * the base, prefix, and suffix of the name.  any three are optional by
  * sending a NULL parameter
  *****************************************/
-char *getPrePostName(prefix, base, suffix)
-     char *prefix;
-     char *base;
-     char *suffix;
+char *getPrePostName(char *prefix, char *base, char *suffix)
 {
   static char newname[DEFAULT_MAXNAMELENGTH];
   
@@ -723,11 +706,7 @@ char *getPrePostName(prefix, base, suffix)
  * interface to generating fence.  That is, the function may be called with as few parameters
  * as necessary to actually generate the fence.
  *************************************************************/
-int generateFence_s(fp, fencename, startposition, endposition)
-     struct rt_wdb *fp;
-     char *fencename;
-     point_t startposition;
-     point_t endposition;
+int generateFence_s(struct rt_wdb *fp, char *fencename, fastf_t *startposition, fastf_t *endposition)
 {
   vect_t widthvector;
   vect_t heightvector;
@@ -738,12 +717,7 @@ int generateFence_s(fp, fencename, startposition, endposition)
   return generateFence(fp, fencename, startposition, heightvector, widthvector);
 }
 
-int generateFence(fp, fencename, startposition, heightvector, widthvector)
-     struct rt_wdb *fp;
-     char *fencename;
-     point_t startposition;
-     vect_t heightvector;
-     vect_t widthvector;
+int generateFence(struct rt_wdb *fp, char *fencename, fastf_t *startposition, fastf_t *heightvector, fastf_t *widthvector)
 {
   int errors=0;
   int poleerrors=0;
@@ -858,9 +832,7 @@ int generateFence(fp, fencename, startposition, heightvector, widthvector)
  * generatePoles() is the function that actually generates all of the 
  * poles for the scene
  ********************************/
-int generatePoles_s(fp, polename)
-     struct rt_wdb *fp;
-     char *polename;
+int generatePoles_s(struct rt_wdb *fp, char *polename)
 {
   vect_t polevector;
   
@@ -871,13 +843,7 @@ int generatePoles_s(fp, polename)
   return generatePoles(fp, polename, fenceStartPosition, polevector, fenceWidth, poleRadius);
 }
 
-int generatePoles(fp, polename, startposition, heightvector, widthvector, radius)
-     struct rt_wdb *fp;
-     char *polename;
-     point_t startposition;
-     vect_t heightvector;
-     vect_t widthvector;
-     double radius;
+int generatePoles(struct rt_wdb *fp, char *polename, fastf_t *startposition, fastf_t *heightvector, fastf_t *widthvector, double radius)
 {
   int count=0;
   int errors=0;
@@ -990,9 +956,7 @@ int generatePoles(fp, polename, startposition, heightvector, widthvector, radius
  * generateMesh() generates the wire mesh (the actual fence mesh) that 
  * gets attached to the poles (if given).
  *******************************/
-int generateMesh_s(fp, meshname)
-     struct rt_wdb *fp;
-     char *meshname;
+int generateMesh_s(struct rt_wdb *fp, char *meshname)
 {
   point_t meshstartposition;
   vect_t meshheightvector;
@@ -1011,12 +975,7 @@ int generateMesh_s(fp, meshname)
   return generateMesh(fp, meshname, meshstartposition, meshheightvector, meshwidthvector);
 }
 
-int generateMesh(fp, meshname, startposition, heightvector, widthvector)
-     struct rt_wdb *fp;
-     char *meshname;
-     point_t startposition;
-     vect_t heightvector;
-     vect_t widthvector;
+int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fastf_t *heightvector, fastf_t *widthvector)
 {
   int count=0;
   int count2=0;
@@ -1135,10 +1094,7 @@ int generateMesh(fp, meshname, startposition, heightvector, widthvector)
  *
  *****************************************/
 
-int generateWire_s(fp, wirename, position)
-     struct rt_wdb *fp;
-     char *wirename;
-     point_t position;
+int generateWire_s(struct rt_wdb *fp, char *wirename, fastf_t *position)
 {
   vect_t wirevector;
   vect_t widthvector;
@@ -1151,15 +1107,7 @@ int generateWire_s(fp, wirename, position)
   return generateWire(fp, wirename, position, wirevector, widthvector, wireRadius, wireAngle, wireSegmentLength);
 }
 
-int generateWire(fp, wirename, position, fenceheightvector, fencewidthvector, radius, angle, segmentlength)
-     struct rt_wdb *fp;
-     char *wirename;
-     point_t position;
-     vect_t fenceheightvector;
-     vect_t fencewidthvector;
-     double radius;
-     double angle;
-     double segmentlength;
+int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *fenceheightvector, fastf_t *fencewidthvector, double radius, double angle, double segmentlength)
 {
   double height;
   vect_t heightvector, widthvector;
@@ -1305,15 +1253,7 @@ int generateWire(fp, wirename, position, fenceheightvector, fencewidthvector, ra
  * form the twists and straits of the wire.
  *
  ***************************************************************************************************************/
-int createWire(fp, segmentname, heightvector, widthvector, radius, angle, segmentlength, segmentdepthseparation) 
-     struct rt_wdb *fp;
-     char *segmentname;
-     vect_t heightvector;
-     vect_t widthvector;
-     double radius;
-     double angle;
-     double segmentlength;
-     double segmentdepthseparation;
+int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fastf_t *widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation)
 {
   int count=0;
   int errors=0;
@@ -1919,9 +1859,7 @@ int createWire(fp, segmentname, heightvector, widthvector, radius, angle, segmen
  * defaults according to what the user has specified and offers the opportunity to enter
  * data in an interactive mode
  *******************/
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc, char **argv)
 {
   struct rt_wdb *fp;
   int errors;

@@ -111,11 +111,7 @@ static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
  *
  */
 int
-rt_vol_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	register struct rt_vol_specific *volp =
 		(struct rt_vol_specific *)stp->st_specific;
@@ -397,11 +393,7 @@ if(RT_G_DEBUG&DEBUG_VOL)bu_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
  *  and set up some of the associated internal variables.
  */
 int
-rt_vol_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-const mat_t			mat;
-const struct db_i		*dbip;
+rt_vol_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
 	union record	*rp;
 	register struct rt_vol_internal *vip;
@@ -499,11 +491,7 @@ const struct db_i		*dbip;
  *  The name will be added by the caller.
  */
 int
-rt_vol_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_vol_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_vol_internal	*vip;
 	struct rt_vol_internal	vol;	/* scaled version */
@@ -543,11 +531,7 @@ const struct db_i		*dbip;
  *  and set up some of the associated internal variables.
  */
 int
-rt_vol_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-const mat_t			mat;
-const struct db_i		*dbip;
+rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
 	register struct rt_vol_internal *vip;
 	struct bu_vls	str;
@@ -639,11 +623,7 @@ const struct db_i		*dbip;
  *  The name will be added by the caller.
  */
 int
-rt_vol_export5( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_vol_internal	*vip;
 	struct rt_vol_internal	vol;	/* scaled version */
@@ -679,11 +659,7 @@ const struct db_i		*dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_vol_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register struct rt_vol_internal	*vip =
 		(struct rt_vol_internal *)ip->idb_ptr;
@@ -725,8 +701,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_vol_ifree( ip )
-struct rt_db_internal	*ip;
+rt_vol_ifree(struct rt_db_internal *ip)
 {
 	register struct rt_vol_internal	*vip;
 
@@ -754,10 +729,7 @@ struct rt_db_internal	*ip;
  *	in stp->st_specific for use by rt_vol_shot().
  */
 int
-rt_vol_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_vol_internal	*vip;
 	register struct rt_vol_specific *volp;
@@ -809,8 +781,7 @@ struct rt_i		*rtip;
  *			R T _ V O L _ P R I N T
  */
 void
-rt_vol_print( stp )
-register const struct soltab	*stp;
+rt_vol_print(register const struct soltab *stp)
 {
 	register const struct rt_vol_specific *volp =
 		(struct rt_vol_specific *)stp->st_specific;
@@ -832,10 +803,7 @@ register const struct soltab	*stp;
  *  code into the proper normal.
  */
 void
-rt_vol_norm( hitp, stp, rp )
-register struct hit	*hitp;
-struct soltab		*stp;
-register struct xray	*rp;
+rt_vol_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	register struct rt_vol_specific *volp =
 		(struct rt_vol_specific *)stp->st_specific;
@@ -878,10 +846,7 @@ register struct xray	*rp;
  *  Everything has sharp edges.  This makes things easy.
  */
 void
-rt_vol_curve( cvp, hitp, stp )
-register struct curvature	*cvp;
-register struct hit		*hitp;
-struct soltab			*stp;
+rt_vol_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 /*	register struct rt_vol_specific *volp =
 		(struct rt_vol_specific *)stp->st_specific; */
@@ -897,11 +862,7 @@ struct soltab			*stp;
  *  untransformed X becomes U, and Y becomes V.
  */
 void
-rt_vol_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+rt_vol_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 /*	register struct rt_vol_specific *volp =
 		(struct rt_vol_specific *)stp->st_specific;*/
@@ -913,8 +874,7 @@ register struct uvcoord	*uvp;
  * 			R T _ V O L _ F R E E
  */
 void
-rt_vol_free( stp )
-struct soltab	*stp;
+rt_vol_free(struct soltab *stp)
 {
 	register struct rt_vol_specific *volp =
 		(struct rt_vol_specific *)stp->st_specific;
@@ -924,7 +884,7 @@ struct soltab	*stp;
 }
 
 int
-rt_vol_class()
+rt_vol_class(void)
 {
 	return(0);
 }
@@ -933,11 +893,7 @@ rt_vol_class()
  *			R T _ V O L _ P L O T
  */
 int
-rt_vol_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	register struct rt_vol_internal *vip;
 	register short	x,y,z;
@@ -1033,11 +989,7 @@ const struct bn_tol		*tol;
  *			R T _ V O L _ P L A T E
  */
 void
-rt_vol_plate( a,b,c,d, mat, vhead, vip )
-point_t			a,b,c,d;
-register mat_t		mat;
-register struct bu_list	*vhead;
-register struct rt_vol_internal	*vip;
+rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *mat, register struct bu_list *vhead, register struct rt_vol_internal *vip)
 {
 	LOCAL point_t	s;		/* scaled original point */
 	LOCAL point_t	arot, prot;
@@ -1065,12 +1017,7 @@ register struct rt_vol_internal	*vip;
  *			R T _ V O L _ T E S S
  */
 int
-rt_vol_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	struct rt_vol_internal	*vip;
 	register int	x,y,z;

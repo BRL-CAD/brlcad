@@ -554,7 +554,7 @@ main()
 
 #else	/* !defined(IRIX) */
 #include <stdio.h>
-main()
+main(void)
 {
 	fprintf(stderr,"see2: This program only works on an SGI workstation\n");
 	exit(1);

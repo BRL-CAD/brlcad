@@ -44,8 +44,7 @@ Usage:	pixautosize [-b bytes_per_sample] [-f file_name]\n\
 or	pixautosize [-b bytes_per_sample] [-l file_length]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -72,9 +71,7 @@ register char **argv;
 }
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int	ret = 0;
 	int	nsamp;

@@ -23,9 +23,7 @@
 #include "rle.h"
 
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     char *out_fname = NULL;
     float real, imaginary, width, step;

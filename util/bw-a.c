@@ -51,9 +51,7 @@ Usage: bw-a [a] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[file.bw]\n";
 
 int
-get_args( argc, argv )
-int argc;
-char **argv;
+get_args(int argc, char **argv)
 {
 	int c;
 
@@ -100,9 +98,7 @@ char **argv;
 }
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int c;
 	int cur_width = 0;

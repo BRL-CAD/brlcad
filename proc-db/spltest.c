@@ -21,8 +21,7 @@ struct rt_nurb_internal	si;
 
 void make_face( point_t a, point_t b, point_t c, point_t d, int order);
 
-main(argc, argv)
-char	**argv;
+main(int argc, char **argv)
 {
 	point_t	a,b,c,d;
 
@@ -43,9 +42,7 @@ char	**argv;
 }
 
 void
-make_face( a, b, c, d, order )
-point_t	a,b,c,d;
-int	order;
+make_face(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, int order)
 {
 	register struct face_g_snurb	*srf;
 	int	interior_pts = 0;

@@ -51,8 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *  Verify vertex geometry
  */
 void
-nmg_vvg(vg)
-const struct vertex_g *vg;
+nmg_vvg(const struct vertex_g *vg)
 {
 	NMG_CK_VERTEX_G(vg);
 }
@@ -63,9 +62,7 @@ const struct vertex_g *vg;
  *  Verify a vertex
  */
 void
-nmg_vvertex(v, vup)
-const struct vertex *v;
-const struct vertexuse *vup;
+nmg_vvertex(const struct vertex *v, const struct vertexuse *vup)
 {
 	struct vertexuse *vu;
 	int vup_is_in_list = 0;
@@ -86,8 +83,7 @@ const struct vertexuse *vup;
 
 /* Verify vertex attributes */
 void
-nmg_vvua(vua)
-const long *vua;
+nmg_vvua(const long int *vua)
 {
 	NMG_CK_VERTEXUSE_A_EITHER(vua);
 }
@@ -98,9 +94,7 @@ const long *vua;
  *  Verify vertexuse
  */
 void
-nmg_vvu(vu, up_magic_p)
-const struct vertexuse *vu;
-const long		*up_magic_p;
+nmg_vvu(const struct vertexuse *vu, const long int *up_magic_p)
 {
 	long	magic;
 
@@ -129,8 +123,7 @@ const long		*up_magic_p;
 
 /* Verify edge geometry */
 void
-nmg_veg(eg)
-const long *eg;
+nmg_veg(const long int *eg)
 {
 	struct bu_list	*eu2;
 
@@ -170,9 +163,7 @@ const long *eg;
  *  Verify edge
  */
 void
-nmg_vedge(e, eup)
-const struct edge *e;
-const struct edgeuse *eup;
+nmg_vedge(const struct edge *e, const struct edgeuse *eup)
 {
 	const struct edgeuse *eu;
 	int is_use = 0;		/* flag: eup is in edge's use list */
@@ -241,9 +232,7 @@ const struct edgeuse *eup;
  *  Verify edgeuse list.
  */
 void
-nmg_veu(hp, up_magic_p)
-const struct bu_list	*hp;
-const long	*up_magic_p;
+nmg_veu(const struct bu_list *hp, const long int *up_magic_p)
 {
 	struct edgeuse	*eu;
 	struct edgeuse	*eunext;
@@ -373,8 +362,7 @@ const long	*up_magic_p;
  *  Verify loop geometry
  */
 void
-nmg_vlg(lg)
-const struct loop_g *lg;
+nmg_vlg(const struct loop_g *lg)
 {
 	int i;
 	
@@ -391,9 +379,7 @@ const struct loop_g *lg;
  *  Verify loop
  */
 void
-nmg_vloop(l, lup)
-const struct loop *l;
-const struct loopuse *lup;
+nmg_vloop(const struct loop *l, const struct loopuse *lup)
 {
 
 	NMG_CK_LOOP(l);
@@ -422,9 +408,7 @@ const struct loopuse *lup;
  *  Verify loopuse
  */
 void
-nmg_vlu(hp, up)
-const struct bu_list	*hp;
-const long		*up;
+nmg_vlu(const struct bu_list *hp, const long int *up)
 {
 	struct loopuse *lu;
 
@@ -484,8 +468,7 @@ const long		*up;
  *  Verify face geometry
  */
 void
-nmg_vfg(fg)
-const struct face_g_plane *fg;
+nmg_vfg(const struct face_g_plane *fg)
 {
 	NMG_CK_FACE_G_EITHER(fg);
 
@@ -510,9 +493,7 @@ const struct face_g_plane *fg;
  *  Verify face
  */
 void
-nmg_vface(f, fup)
-const struct face *f;
-const struct faceuse *fup;
+nmg_vface(const struct face *f, const struct faceuse *fup)
 {
 	int		i;
 
@@ -545,9 +526,7 @@ const struct faceuse *fup;
  *	Validate a list of faceuses
  */
 void
-nmg_vfu(hp, s)
-const struct bu_list	*hp;
-const struct shell *s;
+nmg_vfu(const struct bu_list *hp, const struct shell *s)
 {
 	struct faceuse *fu;
 
@@ -602,9 +581,7 @@ const struct shell *s;
  *	validate a list of shells and all elements under them
  */
 void
-nmg_vshell(hp, r)
-const struct bu_list	*hp;
-const struct nmgregion *r;
+nmg_vshell(const struct bu_list *hp, const struct nmgregion *r)
 {
 	struct shell *s;
 	pointp_t lpt, hpt;
@@ -671,9 +648,7 @@ const struct nmgregion *r;
  *	validate a list of nmgregions and all elements under them
  */
 void
-nmg_vregion(hp, m)
-const struct bu_list	*hp;
-const struct model *m;
+nmg_vregion(const struct bu_list *hp, const struct model *m)
 {
 	struct nmgregion *r;
 
@@ -702,8 +677,7 @@ const struct model *m;
  *	validate an NMG model and all elements in it.
  */
 void
-nmg_vmodel(m)
-const struct model *m;
+nmg_vmodel(const struct model *m)
 {
 	NMG_CK_MODEL(m);
 	nmg_vregion( &m->r_hd, m);
@@ -720,10 +694,7 @@ const struct model *m;
  *			N M G _ C K _ E
  */
 void
-nmg_ck_e(eu, e, str)
-const struct edgeuse *eu;
-const struct edge *e;
-const char *str;
+nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
 {
 	char *errstr;
 	struct edgeuse *eparent;
@@ -753,10 +724,7 @@ const char *str;
  *			N M G _ C K _ V U
  */
 void
-nmg_ck_vu(parent, vu, str)
-const long *parent;
-const struct vertexuse *vu;
-const char *str;
+nmg_ck_vu(const long int *parent, const struct vertexuse *vu, const char *str)
 {
 	char *errstr;
 
@@ -773,10 +741,7 @@ const char *str;
  *			N M G _ C K _ E U
  */
 void
-nmg_ck_eu(parent, eu, str)
-const long *parent;
-const struct edgeuse *eu;
-const char *str;
+nmg_ck_eu(const long int *parent, const struct edgeuse *eu, const char *str)
 {
 	char *errstr;
 	struct edgeuse *eur, *eu_next, *eu_last;	
@@ -841,10 +806,7 @@ const char *str;
  *			N M G _ C K _ L G
  */
 void
-nmg_ck_lg(l, lg, str)
-const struct loop *l;
-const struct loop_g *lg;
-const char *str;
+nmg_ck_lg(const struct loop *l, const struct loop_g *lg, const char *str)
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_lg error str");
@@ -860,10 +822,7 @@ const char *str;
  *			N M G _ C K _ L
  */
 void
-nmg_ck_l(lu, l, str)
-const struct loopuse *lu;
-const struct loop *l;
-const char *str;
+nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_l error str");
@@ -884,10 +843,7 @@ const char *str;
  *			N M G _ C K _ L U
  */
 void
-nmg_ck_lu(parent, lu, str)
-const long *parent;
-const struct loopuse *lu;
-const char *str;
+nmg_ck_lu(const long int *parent, const struct loopuse *lu, const char *str)
 {
 	struct edgeuse *eu;
 	struct vertexuse *vu;
@@ -946,10 +902,7 @@ const char *str;
  *			N M G _ C K _ F G
  */
 void
-nmg_ck_fg(f, fg, str)
-const struct face *f;
-const struct face_g_plane *fg;
-const char *str;
+nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_fg error str");
@@ -970,10 +923,7 @@ const char *str;
  *			N M G _ C K _ F
  */
 void
-nmg_ck_f(fu, f, str)
-const struct faceuse *fu;
-const struct face *f;
-const char *str;
+nmg_ck_f(const struct faceuse *fu, const struct face *f, const char *str)
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_f error str");
@@ -994,10 +944,7 @@ const char *str;
  *			N M G _ C K _ F U
  */
 void
-nmg_ck_fu(s, fu, str)
-const struct shell *s;
-const struct faceuse *fu;
-const char *str;
+nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
 {
 	char *errstr;
 	int l;
@@ -1048,9 +995,7 @@ const char *str;
  */
 
 int
-nmg_ck_eg_verts( eg , tol )
-const struct edge_g_lseg *eg;
-const struct bn_tol *tol;
+nmg_ck_eg_verts(const struct edge_g_lseg *eg, const struct bn_tol *tol)
 {
 	struct bu_list *eu2;
 	vect_t e_dir;
@@ -1107,9 +1052,7 @@ const struct bn_tol *tol;
  * returns number of vertices that do not lie on geometry
  */
 int
-nmg_ck_geometry( m , tol )
-const struct model *m;
-const struct bn_tol *tol;
+nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 {
 	struct bu_ptbl g_tbl;
 	int i;
@@ -1171,8 +1114,7 @@ const struct bn_tol *tol;
  *  vertex results in a null edge being created.
  */
 int
-nmg_ck_face_worthless_edges( fu )
-const struct faceuse	*fu;
+nmg_ck_face_worthless_edges(const struct faceuse *fu)
 {
 	const struct loopuse	*lu;
 
@@ -1213,9 +1155,7 @@ const struct faceuse	*fu;
  *	check all the edgeuses of a loopuse to make sure these children
  *	know who thier parent really is.
  */
-void nmg_ck_lueu(cklu, s)
-const struct loopuse *cklu;
-const char *s;
+void nmg_ck_lueu(const struct loopuse *cklu, const char *s)
 {
 	struct edgeuse *eu;
 
@@ -1290,9 +1230,7 @@ const char *s;
  *	2	unclosed space
  */
 int
-nmg_check_radial(eu, tol)
-const struct edgeuse	*eu;
-const struct bn_tol	*tol;
+nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 {
 	const struct shell	*s;
 
@@ -1420,11 +1358,7 @@ const struct bn_tol	*tol;
  *	!0	Bad orientation parity.
  */
 int
-nmg_eu_2s_orient_bad(eu, s1, s2, tol)
-const struct edgeuse	*eu;
-const struct shell	*s1;
-const struct shell	*s2;
-const struct bn_tol	*tol;
+nmg_eu_2s_orient_bad(const struct edgeuse *eu, const struct shell *s1, const struct shell *s2, const struct bn_tol *tol)
 {
 	char			curr_orient;
 	const struct edgeuse	*eu_orig;
@@ -1537,9 +1471,7 @@ out:
  *	!0	Problem.
  */
 int
-nmg_ck_closed_surf(s, tol)
-const struct shell	*s;
-const struct bn_tol	*tol;
+nmg_ck_closed_surf(const struct shell *s, const struct bn_tol *tol)
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -1585,9 +1517,7 @@ const struct bn_tol	*tol;
  *	!0	status code from nmg_check_radial()
  */
 int
-nmg_ck_closed_region(r, tol)
-const struct nmgregion	*r;
-const struct bn_tol	*tol;
+nmg_ck_closed_region(const struct nmgregion *r, const struct bn_tol *tol)
 {
 	const struct shell	*s;
 	int		ret;
@@ -1613,11 +1543,7 @@ const struct bn_tol	*tol;
  */
 
 void
-nmg_ck_v_in_2fus( vp , fu1 , fu2 , tol )
-const struct vertex *vp;
-const struct faceuse *fu1;
-const struct faceuse *fu2;
-const struct bn_tol *tol;
+nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struct faceuse *fu2, const struct bn_tol *tol)
 {
 	struct bu_vls str;
 	struct faceuse *fu;
@@ -1688,10 +1614,7 @@ struct v_ck_state {
 };
 
 static void
-nmg_ck_v_in_fus( vp , state , first )
-long			*vp;
-genptr_t	        state;
-int			first;
+nmg_ck_v_in_fus(long int *vp, genptr_t state, int first)
 {
         register struct v_ck_state *sp = (struct v_ck_state *)state;
         register struct vertex  *v = (struct vertex *)vp;
@@ -1734,9 +1657,7 @@ int			first;
 }
 
 void
-nmg_ck_vs_in_region( r , tol )
-const struct nmgregion *r;
-const struct bn_tol *tol;
+nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
 {
 	struct model			*m;
 	struct v_ck_state		st;

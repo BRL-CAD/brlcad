@@ -33,8 +33,7 @@ int	linelen;
 char	*buf;			/* output scanline buffer, malloc'd */
 
 int
-main(argc, argv)
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	FILE	*ifp, *ofp;
 	int	row;

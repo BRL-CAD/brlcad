@@ -268,8 +268,7 @@ rt_clr__cspace_to_xyz (const point_t	cspace[4],
  *  Only high-quality television-studio monitors are like this, but...
  */
 void
-rt_make_ntsc_xyz2rgb( xyz2rgb )
-mat_t	xyz2rgb;
+rt_make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 {
 	mat_t	rgb2xyz;
 	point_t	tst, new;
@@ -373,12 +372,7 @@ rt_log(" tab_area = %g\n", tab_area);
  *  XXX This is completely wrong, don't do this.
  */
 void
-rt_spect_rgb_to_curve( tabp, rgb, ntsc_r, ntsc_g, ntsc_b )
-struct bn_tabdata	*tabp;
-const point_t		rgb;
-const struct bn_tabdata	*ntsc_r;
-const struct bn_tabdata	*ntsc_g;
-const struct bn_tabdata	*ntsc_b;
+rt_spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct bn_tabdata *ntsc_r, const struct bn_tabdata *ntsc_g, const struct bn_tabdata *ntsc_b)
 {
 	bn_tabdata_blend3( tabp,
 		rgb[0], ntsc_r,
@@ -397,12 +391,7 @@ XXX This routine is probably wrong.  Or at least, it needs different curves.
 XXX Converting rgb to a curve, directly, should be easy.
  */
 void
-rt_spect_xyz_to_curve( tabp, xyz, cie_x, cie_y, cie_z )
-struct bn_tabdata	*tabp;
-const point_t		xyz;
-const struct bn_tabdata	*cie_x;
-const struct bn_tabdata	*cie_y;
-const struct bn_tabdata	*cie_z;
+rt_spect_xyz_to_curve(struct bn_tabdata *tabp, const fastf_t *xyz, const struct bn_tabdata *cie_x, const struct bn_tabdata *cie_y, const struct bn_tabdata *cie_z)
 {
 	bn_tabdata_blend3( tabp,
 		xyz[X], cie_x,
@@ -416,11 +405,7 @@ const struct bn_tabdata	*cie_z;
  *  A quick hack to make sure there are enough samples in the visible band.
  */
 struct bn_table *
-bn_table_make_visible_and_uniform( num, first, last, vis_nsamp )
-int	num;
-double	first;
-double	last;
-int	vis_nsamp;
+bn_table_make_visible_and_uniform(int num, double first, double last, int vis_nsamp)
 {
 	struct bn_table	*new;
 	struct bn_table *uniform;

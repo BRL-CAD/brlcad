@@ -24,9 +24,7 @@ static const char rcs_ident[] = "$Header$";
 char *progname;
 
 int
-main(argc, argv)
-int  argc;
-char *argv[];
+main(int argc, char **argv)
 {
     char * infname = NULL, * outfname = NULL, * maskfname = NULL;
     FILE * outfile = stdout;
@@ -40,7 +38,7 @@ char *argv[];
     float *maskmult;
     float *mask_mult_table;
     rle_hdr out_hdr;
-    float total, *mask, *gauss_mask(), *read_mask();
+    float total, *mask, *gauss_mask(int siz), *read_mask(int *size, char *fname, int no_norm);
     int newvalue;
     rle_pixel *rastptr, *rasterbase, *centerpxl, *calcpxl;
     rle_pixel *outrastptr, *outrasterbase, *outpxl, *tempbase;
@@ -325,8 +323,7 @@ char *argv[];
 }
 
 float *
-gauss_mask(siz)
-int siz;
+gauss_mask(int siz)
 {
     int i,j;
     float w[5];
@@ -357,10 +354,7 @@ int siz;
 }
 
 float *
-read_mask(size, fname, no_norm)
-int * size;
-char * fname;
-int no_norm;
+read_mask(int *size, char *fname, int no_norm)
 {
     FILE * maskfile;
     int i,j,masksize;

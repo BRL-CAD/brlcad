@@ -51,8 +51,7 @@ static const char RCSregionfix[] = "@(#)$Header$ (BRL)";
  *  Called once, from rt_prep(), before raytracing begins.
  */
 void
-rt_regionfix( rtip )
-struct rt_i	*rtip;
+rt_regionfix(struct rt_i *rtip)
 {
 	FILE	*fp;
 	char	*file;

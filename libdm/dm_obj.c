@@ -71,32 +71,32 @@ extern int fb_refresh();
 
 #endif /* DM_X */
 
-static int dmo_open_tcl();
+static int dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 #if 0
 static int dmo_close_tcl();
 #endif
-static int dmo_drawBegin_tcl();
-static int dmo_drawEnd_tcl();
-static int dmo_clear_tcl();
-static int dmo_normal_tcl();
-static int dmo_loadmat_tcl();
-static int dmo_drawString_tcl();
-static int dmo_drawPoint_tcl();
-static int dmo_drawLine_tcl();
-static int dmo_drawVList_tcl();
-static int dmo_drawSList_tcl();
-static int dmo_drawGeom_tcl();
-static int dmo_fg_tcl();
-static int dmo_bg_tcl();
-static int dmo_lineWidth_tcl();
-static int dmo_lineStyle_tcl();
-static int dmo_configure_tcl();
-static int dmo_zclip_tcl();
-static int dmo_zbuffer_tcl();
-static int dmo_light_tcl();
-static int dmo_bounds_tcl();
-static int dmo_perspective_tcl();
-static int dmo_debug_tcl();
+static int dmo_drawBegin_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_drawEnd_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_normal_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_loadmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_drawString_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_drawPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_drawLine_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_drawSList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_drawGeom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_bg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_lineStyle_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_zclip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_zbuffer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_light_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 #ifdef USE_FBSERV
 static int dmo_openFb();
 static int dmo_closeFb();
@@ -104,11 +104,11 @@ static int dmo_listen_tcl();
 static int dmo_refreshFb_tcl();
 static void dmo_fbs_callback();
 #endif
-static int dmo_flush_tcl();
-static int dmo_sync_tcl();
-static int dmo_size_tcl();
-static int dmo_get_aspect_tcl();
-static int dmo_observer_tcl();
+static int dmo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_sync_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_get_aspect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static struct dm_obj HeadDMObj;	/* head of display manager object list */
 
@@ -162,18 +162,13 @@ static struct bu_cmdtab dmo_cmds[] = {
  * Returns: result of DM command.
  */
 static int
-dmo_cmd(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	return bu_cmd(clientData, interp, argc, argv, dmo_cmds, 1);
 }
 
 int
-Dmo_Init(interp)
-     Tcl_Interp	*interp;
+Dmo_Init(Tcl_Interp *interp)
 {
 	BU_LIST_INIT(&HeadDMObj.l);
 	(void)Tcl_CreateCommand(interp, "dm_open", dmo_open_tcl,
@@ -186,8 +181,7 @@ Dmo_Init(interp)
  * Called by Tcl when the object is destroyed.
  */
 static void
-dmo_deleteProc(clientData)
-     ClientData	clientData;
+dmo_deleteProc(ClientData clientData)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -245,11 +239,7 @@ dmo_close_tcl(clientData, interp, argc, argv)
  *	  dm_open [name type [args]]
  */
 static int
-dmo_open_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj		*dmop;
 	struct dm		*dmp;
@@ -412,11 +402,7 @@ dmo_open_tcl(clientData, interp, argc, argv)
 }
 
 static int
-dmo_drawBegin_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_drawBegin_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -424,11 +410,7 @@ dmo_drawBegin_tcl(clientData, interp, argc, argv)
 }
 
 static int
-dmo_drawEnd_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_drawEnd_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -436,11 +418,7 @@ dmo_drawEnd_tcl(clientData, interp, argc, argv)
 }
 
 static int
-dmo_clear_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 	int status;
@@ -452,11 +430,7 @@ dmo_clear_tcl(clientData, interp, argc, argv)
 }
 
 static int
-dmo_normal_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_normal_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -464,11 +438,7 @@ dmo_normal_tcl(clientData, interp, argc, argv)
 }
 
 static int
-dmo_loadmat_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_loadmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	mat_t		mat;
@@ -504,11 +474,7 @@ dmo_loadmat_tcl(clientData, interp, argc, argv)
 }
 
 static int
-dmo_drawString_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_drawString_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 	fastf_t x, y;
@@ -535,11 +501,7 @@ dmo_drawString_tcl(clientData, interp, argc, argv)
 }
 
 static int
-dmo_drawPoint_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_drawPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	fastf_t		x, y;
@@ -562,11 +524,7 @@ dmo_drawPoint_tcl(clientData, interp, argc, argv)
 }
 
 static int
-dmo_drawLine_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_drawLine_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 	fastf_t x1, y1, x2, y2;
@@ -595,11 +553,7 @@ dmo_drawLine_tcl(clientData, interp, argc, argv)
  *	  procname drawVList vid
  */
 static int
-dmo_drawVList_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp *interp;
-     int	argc;
-     char	**argv;
+dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 	struct rt_vlist *vp;
@@ -637,9 +591,7 @@ dmo_drawVList_tcl(clientData, interp, argc, argv)
  *	  procname drawSList hsp
  */
 static int
-dmo_drawSList(dmop, hsp)
-     struct dm_obj	*dmop;
-     struct bu_list	*hsp;
+dmo_drawSList(struct dm_obj *dmop, struct bu_list *hsp)
 {
 	struct solid *sp;
 	int linestyle = -1;
@@ -669,11 +621,7 @@ dmo_drawSList(dmop, hsp)
  *	  procname drawSList sid
  */
 static int
-dmo_drawSList_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp *interp;
-     int	argc;
-     char	**argv;
+dmo_drawSList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_list	*hsp;
@@ -713,11 +661,7 @@ dmo_drawSList_tcl(clientData, interp, argc, argv)
  *	  procname drawGeom dg_obj(s)
  */
 static int
-dmo_drawGeom_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
+dmo_drawGeom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 	struct dg_obj *dgop;
@@ -753,11 +697,7 @@ dmo_drawGeom_tcl(clientData, interp, argc, argv)
  *	  procname fg [rgb]
  */
 static int
-dmo_fg_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -820,11 +760,7 @@ dmo_fg_tcl(clientData, interp, argc, argv)
  *	  procname bg [rgb]
  */
 static int
-dmo_bg_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_bg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -887,11 +823,7 @@ dmo_bg_tcl(clientData, interp, argc, argv)
  *	  procname linewidth [n]
  */
 static int
-dmo_lineWidth_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -949,11 +881,7 @@ dmo_lineWidth_tcl(clientData, interp, argc, argv)
  *	  procname linestyle [0|1]
  */
 static int
-dmo_lineStyle_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_lineStyle_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -1012,11 +940,7 @@ dmo_lineStyle_tcl(clientData, interp, argc, argv)
  *	  procname configure
  */
 static int
-dmo_configure_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	int		status;
@@ -1052,11 +976,7 @@ dmo_configure_tcl(clientData, interp, argc, argv)
  *	  procname zclip [0|1]
  */
 static int
-dmo_zclip_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_zclip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -1105,11 +1025,7 @@ dmo_zclip_tcl(clientData, interp, argc, argv)
  *	  procname zbuffer [0|1]
  */
 static int
-dmo_zbuffer_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_zbuffer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -1158,11 +1074,7 @@ dmo_zbuffer_tcl(clientData, interp, argc, argv)
  *	  procname light [0|1]
  */
 static int
-dmo_light_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_light_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -1212,11 +1124,7 @@ dmo_light_tcl(clientData, interp, argc, argv)
  *	  procname bounds ["xmin xmax ymin ymax zmin zmax"]
  */
 static int
-dmo_bounds_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -1276,11 +1184,7 @@ dmo_bounds_tcl(clientData, interp, argc, argv)
  *	  procname perspective [n]
  */
 static int
-dmo_perspective_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -1331,11 +1235,7 @@ dmo_perspective_tcl(clientData, interp, argc, argv)
  *	  procname debug [n]
  */
 static int
-dmo_debug_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -1629,11 +1529,7 @@ dmo_refreshFb_tcl(clientData, interp, argc, argv)
  *
  */
 static int
-dmo_flush_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef DM_X
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1652,11 +1548,7 @@ dmo_flush_tcl(clientData, interp, argc, argv)
  *
  */
 static int
-dmo_sync_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_sync_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef DM_X
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
@@ -1675,11 +1567,7 @@ dmo_sync_tcl(clientData, interp, argc, argv)
  *
  */
 static int
-dmo_size_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -1744,11 +1632,7 @@ dmo_size_tcl(clientData, interp, argc, argv)
  *
  */
 static int
-dmo_get_aspect_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_get_aspect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj	*dmop = (struct dm_obj *)clientData;
 	struct bu_vls	vls;
@@ -1783,11 +1667,7 @@ dmo_get_aspect_tcl(clientData, interp, argc, argv)
  *
  */
 static int
-dmo_observer_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+dmo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 

@@ -71,9 +71,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *	db_i *		success
  */
 struct db_i *
-db_open( name, mode )
-const char	*name;
-const char	*mode;
+db_open(const char *name, const char *mode)
 {
 	register struct db_i	*dbip = DBI_NULL;
 	register int		i;
@@ -234,9 +232,7 @@ db_create( const char *name, int version )
  *  De-register a client of this database instance, and close out the instance.
  */
 void
-db_close_client( dbip, client )
-struct db_i	*dbip;
-long		*client;
+db_close_client(struct db_i *dbip, long int *client)
 {
 	RT_CK_DBI(dbip);
 	(void)bu_ptbl_rm( &dbip->dbi_clients, client );
@@ -250,8 +246,7 @@ long		*client;
  *  Wait until last user is done, though.
  */
 void
-db_close( dbip )
-register struct db_i	*dbip;
+db_close(register struct db_i *dbip)
 {
 	register int		i;
 	register struct directory *dp, *nextdp;
@@ -335,9 +330,9 @@ register struct db_i	*dbip;
  *	0	success
  */
 int
-db_dump( wdbp, dbip )
-struct rt_wdb	*wdbp;		/* output */
-struct db_i	*dbip;		/* input */
+db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
+             	      		/* output */
+           	      		/* input */
 {
 	register int		i;
 	register struct directory *dp;
@@ -373,9 +368,7 @@ struct db_i	*dbip;		/* input */
  *  The new client is registered at the same time.
  */
 struct db_i *
-db_clone_dbi( dbip, client )
-struct db_i	*dbip;
-long		*client;
+db_clone_dbi(struct db_i *dbip, long int *client)
 {
 	RT_CK_DBI(dbip);
 
@@ -391,8 +384,7 @@ long		*client;
  *  out of the operating system's cache.
  */
 void
-db_sync( dbip )
-struct db_i	*dbip;
+db_sync(struct db_i *dbip)
 {
 	RT_CK_DBI(dbip);
 

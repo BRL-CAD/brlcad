@@ -96,7 +96,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../libfb/pkgtypes.h"
 
 /* These symbols are provided by libfb/server.c */
-extern const struct pkg_switch fb_server_pkg_switch[];
+extern struct pkg_switch fb_server_pkg_switch[];
 extern FBIO	*fb_server_fbp;
 extern fd_set	*fb_server_select_list;			/* master copy */
 extern int	*fb_server_max_fd;
@@ -108,10 +108,10 @@ int	max_fd;
 
 extern	int	_fb_disk_enable;
 
-static  void	main_loop();
-static	void	comm_error();
-static	void	init_syslog();
-static	void	setup_socket();
+static  void	main_loop(void);
+static	void	comm_error(char *str);
+static	void	init_syslog(void);
+static	void	setup_socket(int fd);
 static	int	use_syslog;	/* error messages to stderr if 0 */
 
 static	char	*framebuffer = NULL;	/* frame buffer name */
@@ -138,8 +138,7 @@ Usage: fbserv port_num\n\
 ";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -199,10 +198,10 @@ register char **argv;
  * open socket connection on fd 0.
  */
 int
-is_socket(fd)
-int fd;
+is_socket(int fd)
 {
 	struct sockaddr saddr;
+	/* Should be: socklen_t namelen but SGI's are complaining... */
 	int namelen;
 
 	if( getsockname(fd,&saddr,&namelen) == 0 )
@@ -212,8 +211,7 @@ int fd;
 }
 
 static void
-sigalarm(code)
-int	code;
+sigalarm(int code)
 {
 	printf("alarm %s\n", fb_server_fbp ? "FBP" : "NULL");
 	if( fb_server_fbp != FBIO_NULL )
@@ -226,8 +224,7 @@ int	code;
  *			N E W _ C L I E N T
  */
 void
-new_client(pcp)
-struct pkg_conn	*pcp;
+new_client(struct pkg_conn *pcp)
 {
 	register int	i;
 
@@ -251,8 +248,7 @@ struct pkg_conn	*pcp;
  *			D R O P _ C L I E N T
  */
 void
-drop_client( sub )
-int	sub;
+drop_client(int sub)
 {
 	int fd = clients[sub]->pkc_fd;
 
@@ -268,8 +264,7 @@ int	sub;
  *			M A I N
  */
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	char	portname[32];
 
@@ -398,7 +393,7 @@ int argc; char **argv;
  *  wants it that way.
  */
 static void
-main_loop()
+main_loop(void)
 {
 	int	nopens = 0;
 	int	ncloses = 0;
@@ -457,7 +452,7 @@ main_loop()
 }
 
 static void
-init_syslog()
+init_syslog(void)
 {
 	use_syslog = 1;
 #if defined(BSD) && !defined(CRAY2)
@@ -470,8 +465,7 @@ init_syslog()
 }
 
 static void
-setup_socket(fd)
-int	fd;
+setup_socket(int fd)
 {
 	int	on = 1;
 
@@ -513,8 +507,7 @@ int	fd;
  *  Don't send one down the wire, this can cause loops.
  */
 static void
-comm_error( str )
-char *str;
+comm_error(char *str)
 {
 #if defined(BSD) && !defined(CRAY2)
 	if( use_syslog )

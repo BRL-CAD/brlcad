@@ -14,12 +14,10 @@ Usage: dsel num\n\
 
 #define INTEGER_MAX ( ((int) ~0) >> 1 )
 
-void	skip();
-void	keep();
+void	skip(register int num);
+void	keep(register int num);
 
-int main( argc, argv )
-int	argc;
-char	**argv;
+int main(int argc, char **argv)
 {
 	int	nskip;	/* number to skip */
 	int	nkeep;	/* number to keep */
@@ -57,8 +55,7 @@ char	**argv;
 }
 
 void
-skip( num )
-register int num;
+skip(register int num)
 {
 	register int	n, m;
 
@@ -71,8 +68,7 @@ register int num;
 }
 
 void
-keep( num )
-register int num;
+keep(register int num)
 {
 	register int	n, m;
 

@@ -39,8 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 static char usage[] = "Usage: plline2 x1 y1 x2 y2 [r g b]\n";
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int	c;
 	double	x1, y1, x2, y2;

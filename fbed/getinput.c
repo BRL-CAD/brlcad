@@ -29,11 +29,11 @@ static const char RCSid[] = "@(#) getinput.c 2.1, modified 12/9/86 at 15:56:41, 
 #include "./try.h"
 #include "./extern.h"
 
-extern char *char_To_String();
+extern char *char_To_String(int i);
 
 void
-ring_Bell()
-	{
+ring_Bell(void)
+{
 	(void) putchar( BEL );
 	return;
 	}
@@ -42,11 +42,8 @@ ring_Bell()
 	Get a line of input.
  */
 int
-get_Input( inbuf, bufsz, msg )
-char  *inbuf;
-int  bufsz;
-char *msg;
-	{	static char buffer[BUFSIZ];
+get_Input(char *inbuf, int bufsz, char *msg)
+{	static char buffer[BUFSIZ];
 		register char *p = buffer;
 		register int c;
 	if( *cptr != NUL && *cptr != '@' )
@@ -262,12 +259,9 @@ char *msg;
 	TENEX-style command completion.
  */
 Func_Tab *
-get_Func_Name( inbuf, bufsz, msg )
-char  *inbuf;
-int  bufsz;
-char *msg;
-	{	extern Try	*try_rootp;
-		extern Func_Tab	*get_Try();
+get_Func_Name(char *inbuf, int bufsz, char *msg)
+{	extern Try	*try_rootp;
+		extern Func_Tab	*get_Try(register char *name, register Try *tryp);
 		static char buffer[BUFSIZ];
 		register char *p = buffer;
 		register int c;

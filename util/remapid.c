@@ -147,11 +147,7 @@ BU_FILE	bu_iob[1] = {
  *			B U _ F O P E N
  *
  */
-BU_FILE *bu_fopen (fname, type)
-
-register char	*fname;
-register char	*type;
-
+BU_FILE *bu_fopen (register char *fname, register char *type)
 {
     BU_FILE	*bfp;
     FILE	*fp;
@@ -179,10 +175,7 @@ register char	*type;
  *
  *	Close the file and free the associated memory
  */
-int bu_fclose (bfp)
-
-register BU_FILE	*bfp;
-
+int bu_fclose (register BU_FILE *bfp)
 {
     int	close_status;
 
@@ -206,10 +199,7 @@ register BU_FILE	*bfp;
  *			B U _ F G E T C
  *
  */
-int bu_fgetc (bfp)
-
-register BU_FILE	*bfp;
-
+int bu_fgetc (register BU_FILE *bfp)
 {
     char	*cp = (char *)NULL;
     int		comment_char;	/* The comment character */
@@ -265,10 +255,7 @@ register BU_FILE	*bfp;
  *
  *	Diagnostic routine to print out the contents of a struct bu_file
  */
-void bu_printfile (bfp)
-
-register BU_FILE	*bfp;
-
+void bu_printfile (register BU_FILE *bfp)
 {
     BU_CK_FILE(bfp);
 
@@ -289,12 +276,7 @@ register BU_FILE	*bfp;
  *
  *	Print out a syntax error message about a BU_FILE
  */
-void bu_file_err (bfp, text1, text2, cursor_pos)
-
-register BU_FILE	*bfp;
-register char		*text1, *text2;
-register int		cursor_pos;
-
+void bu_file_err (register BU_FILE *bfp, register char *text1, register char *text2, register int cursor_pos)
 {
     char		*cp;
     int			buflen;
@@ -458,10 +440,7 @@ static int		debug = 0;
  *			     M K _ C U R R _ I D ( )
  *
  */
-struct curr_id *mk_curr_id (region_id)
-
-int	region_id;
-
+struct curr_id *mk_curr_id (int region_id)
 {
     struct curr_id	*cip;
 
@@ -479,11 +458,7 @@ int	region_id;
  *			  P R I N T _ C U R R _ I D ( )
  *
  */
-void print_curr_id (v, depth)
-
-void	*v;
-int	depth;
-
+void print_curr_id (void *v, int depth)
 {
     struct curr_id	*cip = (struct curr_id *) v;
     struct remap_reg	*rp;
@@ -504,11 +479,7 @@ int	depth;
  *		P R I N T _ N O N E M P T Y _ C U R R _ I D ( )
  *
  */
-void print_nonempty_curr_id (v, depth)
-
-void	*v;
-int	depth;
-
+void print_nonempty_curr_id (void *v, int depth)
 {
     struct curr_id	*cip = (struct curr_id *) v;
     struct remap_reg	*rp;
@@ -532,10 +503,7 @@ int	depth;
  *		F R E E _ C U R R _ I D ( )
  *
  */
-void free_curr_id (cip)
-
-struct curr_id	*cip;
-
+void free_curr_id (struct curr_id *cip)
 {
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
     bu_free((genptr_t) cip, "curr_id");
@@ -548,10 +516,7 @@ struct curr_id	*cip;
  *	If it's not found there, add it to the tree.  In either
  *	event, return a pointer to it.
  */
-struct curr_id *lookup_curr_id(region_id)
-
-int	region_id;
-
+struct curr_id *lookup_curr_id(int region_id)
 {
     int			rc;	/* Return code from bu_rb_insert() */
     struct curr_id	*qcip;	/* The query */
@@ -589,10 +554,7 @@ int	region_id;
  *		M K _ R E M A P _ R E G ( )
  *
  */
-struct remap_reg *mk_remap_reg (region_name)
-
-char	*region_name;
-
+struct remap_reg *mk_remap_reg (char *region_name)
 {
     struct remap_reg	*rp;
 
@@ -613,10 +575,7 @@ char	*region_name;
  *		F R E E _ R E M A P _ R E G ( )
  *
  */
-void free_remap_reg (rp)
-
-struct remap_reg	*rp;
-
+void free_remap_reg (struct remap_reg *rp)
 {
     BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
     bu_free((genptr_t) rp -> rr_name, "region name");
@@ -633,11 +592,7 @@ struct remap_reg	*rp;
 /*
  *		C O M P A R E _ C U R R _ I D S ( )
  */
-int compare_curr_ids (v1, v2)
-
-void	*v1;
-void	*v2;
-
+int compare_curr_ids (void *v1, void *v2)
 {
     struct curr_id	*id1 = (struct curr_id *) v1;
     struct curr_id	*id2 = (struct curr_id *) v2;
@@ -657,11 +612,11 @@ void	*v2;
 /*
  *			  R E A D _ I N T ( )
  */
-int read_int (sfp, ch, n)
+int read_int (BU_FILE *sfp, int *ch, int *n)
 
-BU_FILE	*sfp;
-int	*ch;
-int	*n;		/* The result */
+       	     
+   	    
+   	   		/* The result */
 
 {
     int	got_digit = 0;	/* Did we actually succeed in reading a number? */
@@ -697,12 +652,7 @@ int	*n;		/* The result */
 /*
  *			  R E A D _ B L O C K ( )
  */
-int read_block (sfp, ch, n1, n2)
-
-BU_FILE	*sfp;
-int	*ch;
-int	*n1, *n2;
-
+int read_block (BU_FILE *sfp, int *ch, int *n1, int *n2)
 {
     BU_CK_FILE(sfp);
 
@@ -733,11 +683,7 @@ int	*n1, *n2;
 /*
  *			  R E A D _ S P E C ( )
  */
-int read_spec (sfp, sf_name)
-
-BU_FILE	*sfp;
-char	*sf_name;
-
+int read_spec (BU_FILE *sfp, char *sf_name)
 {
     int			ch;
     int			i;
@@ -830,13 +776,7 @@ char	*sf_name;
  *									*
  ************************************************************************/
 
-void record_region (region_name, region_id, dp, ip)
-
-char			*region_name;
-int			region_id;
-struct directory	*dp;
-struct rt_db_internal	*ip;
-
+void record_region (char *region_name, int region_id, struct directory *dp, struct rt_db_internal *ip)
 {
     struct curr_id	*cip;
     struct remap_reg	*rp;
@@ -848,10 +788,7 @@ struct rt_db_internal	*ip;
     BU_LIST_INSERT(&(cip -> ci_regions), &(rp -> l));
 }
 
-void db_init(db_name)
-
-char	*db_name;
-
+void db_init(char *db_name)
 {
     int				i;
     struct directory		*dp;
@@ -889,11 +826,7 @@ char	*db_name;
  *		W R I T E _ A S S I G N M E N T ( )
  *
  */
-void write_assignment (v, depth)
-
-void	*v;
-int	depth;
-
+void write_assignment (void *v, int depth)
 {
     int				region_id;
     struct curr_id		*cip = (struct curr_id *) v;
@@ -925,8 +858,7 @@ int	depth;
 }
 
 static void
-tankill_reassign( db_name )
-char *db_name;
+tankill_reassign(char *db_name)
 {
 	FILE *fd_in;
 	int vertex_count, id, surr_code;
@@ -988,7 +920,7 @@ char *db_name;
 /*
  *			   P R I N T _ U S A G E ( )
  */
-void print_usage ()
+void print_usage (void)
 {
 #define OPT_STRING	"gt?"
 
@@ -1002,11 +934,7 @@ void print_usage ()
  *                                M A I N ( )
  */
 int
-main (argc, argv)
-
-int	argc;
-char	*argv[];
-
+main (int argc, char **argv)
 {
     char		*db_name;	/* Name of database */
     char		*sf_name = NULL;	/* Name of spec file */

@@ -145,7 +145,7 @@ HIDDEN int convert_pt( const point_t pt, struct coord_sys *cs, point_t out_pt );
 #define		FIELD_LENGTH	17
 
 HIDDEN void
-reset_input()
+reset_input(void)
 {
 	int i;
 	char *tmp;
@@ -167,7 +167,7 @@ reset_input()
 }
 
 HIDDEN void
-write_fields()
+write_fields(void)
 {
 	int i, j;
 
@@ -189,7 +189,7 @@ write_fields()
 }
 
 HIDDEN void
-do_silly_nastran_shortcuts()
+do_silly_nastran_shortcuts(void)
 {
 	int field_no;
 
@@ -234,9 +234,7 @@ do_silly_nastran_shortcuts()
 }
 
 HIDDEN void
-get_large_field_input( fd, write_flag )
-FILE *fd;
-int write_flag;
+get_large_field_input(FILE *fd, int write_flag)
 {
 	char **tmp_rec;
 	int field_no;
@@ -298,9 +296,7 @@ int write_flag;
 }
 
 HIDDEN void
-get_small_field_input( fd, write_flag )
-FILE *fd;
-int write_flag;
+get_small_field_input(FILE *fd, int write_flag)
 {
 	char **tmp_rec;
 	int field_no;
@@ -355,9 +351,7 @@ int write_flag;
 }
 
 HIDDEN void
-get_free_form_input( fd, write_flag )
-FILE *fd;
-int write_flag;
+get_free_form_input(FILE *fd, int write_flag)
 {
 	char **tmp_rec;
 	int field_no;
@@ -537,8 +531,7 @@ get_next_record( FILE *fd, int call_input, int write_flag )
 }
 
 HIDDEN void
-log_line( str )
-char *str;
+log_line(char *str)
 {
 	int i;
 
@@ -552,7 +545,7 @@ char *str;
 }
 
 HIDDEN void
-convert_input()
+convert_input(void)
 {
 
 	reset_input();
@@ -561,8 +554,7 @@ convert_input()
 }
 
 HIDDEN int
-convert_cs( cs )
-struct coord_sys *cs;
+convert_cs(struct coord_sys *cs)
 {
 	struct coord_sys *cs2;
 	point_t tmp_orig, tmp_pt1, tmp_pt2;
@@ -654,8 +646,7 @@ convert_pt( const point_t pt, struct coord_sys *cs, point_t out_pt )
  */
 
 HIDDEN int
-convert_grid( index )
-int index;
+convert_grid(int index)
 {
 	struct coord_sys *cs;
 	point_t tmp_pt;
@@ -686,8 +677,7 @@ int index;
 }
 
 HIDDEN int
-get_gridi( gid )
-int gid;
+get_gridi(int gid)
 {
 	int i;
 	int found=(-1);
@@ -720,9 +710,7 @@ int gid;
 }
 
 HIDDEN void
-get_grid( gid, pt )
-int gid;
-point_t pt;
+get_grid(int gid, fastf_t *pt)
 {
 	int i;
 	int found=(-1);
@@ -755,7 +743,7 @@ point_t pt;
 }
 
 HIDDEN void
-get_coord_sys()
+get_coord_sys(void)
 {
 	int form;
 	char type;
@@ -867,7 +855,7 @@ get_coord_sys()
 }
 
 HIDDEN int
-convert_all_cs()
+convert_all_cs(void)
 {
 	int ret=0;
 	struct coord_sys *cs;
@@ -882,7 +870,7 @@ convert_all_cs()
 }
 
 HIDDEN int
-convert_all_pts()
+convert_all_pts(void)
 {
 	int i;
 	int ret=0;
@@ -897,8 +885,7 @@ convert_all_pts()
 }
 
 HIDDEN int
-get_pid_index( pid )
-int pid;
+get_pid_index(int pid)
 {
 	struct pshell *psh;
 	int index=0;
@@ -917,7 +904,7 @@ int pid;
 }
 
 HIDDEN void
-get_cquad4()
+get_cquad4(void)
 {
 	int pid;
 	int g1, g2, g3, g4;
@@ -1023,7 +1010,7 @@ get_cquad4()
 }
 
 HIDDEN void
-get_ctria3()
+get_ctria3(void)
 {
 	int pid;
 	int g1, g2, g3;
@@ -1116,7 +1103,7 @@ get_ctria3()
 }
 
 HIDDEN void
-get_cbar()
+get_cbar(void)
 {
 	int eid, pid;
 	int g1, g2;
@@ -1171,9 +1158,7 @@ get_cbar()
 }
 
 int
-main( argc, argv )
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
 	int c;
 	int i;

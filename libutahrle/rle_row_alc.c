@@ -58,9 +58,7 @@
  *	usage.
  */
 int
-rle_row_alloc( the_hdr, scanp )
-rle_hdr *the_hdr;
-rle_pixel ***scanp;
+rle_row_alloc(rle_hdr *the_hdr, rle_pixel ***scanp)
 {
     rle_pixel ** scanbuf, * pixbuf;
     int rowlen, nchan = 0, i, ncol;
@@ -116,9 +114,7 @@ rle_pixel ***scanp;
  * 	free scanp[0] and scanp.
  */
 void
-rle_row_free( the_hdr, scanp )
-rle_hdr *the_hdr;
-rle_pixel **scanp;
+rle_row_free(rle_hdr *the_hdr, rle_pixel **scanp)
 {
     int i;
 

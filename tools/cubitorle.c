@@ -34,18 +34,16 @@
 #include "externs.h"
 #include "rle.h"
 
-void read_cubi_hdr(), read_cubi_row(), read_cubi_chan(), bit_read();
+void read_cubi_hdr(FILE **cubifiles, short int *xlen, short int *ylen), read_cubi_row(FILE **cubifiles, rle_pixel **rows), read_cubi_chan(FILE *infile, rle_pixel **rows, int chan), bit_read(FILE *infile, char headchar, int bit, rle_pixel **rows, int chan, int *xpos);
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
     FILE *cubifiles[4];
     int i, j, oflag=0;
     rle_pixel ** rows;
     int xlen;
-    int cubi_xlen, cubi_ylen;
+    short int cubi_xlen, cubi_ylen;
     char *infname = NULL, *outfname = NULL;
     char filename[256];
 
@@ -89,9 +87,7 @@ char	*argv[];
 }
 
 void
-read_cubi_hdr(cubifiles, xlen, ylen)
-FILE *cubifiles[];
-short *xlen, *ylen;
+read_cubi_hdr(FILE **cubifiles, short int *xlen, short int *ylen)
 {
     char junk[128];
     short xmin, ymin, xmax, ymax;
@@ -110,9 +106,7 @@ short *xlen, *ylen;
 }
 
 void
-read_cubi_row(cubifiles, rows)
-FILE *cubifiles[];
-rle_pixel ** rows;
+read_cubi_row(FILE **cubifiles, rle_pixel **rows)
 {
     read_cubi_chan(cubifiles[0],rows,0);
     read_cubi_chan(cubifiles[1],rows,1);
@@ -120,10 +114,7 @@ rle_pixel ** rows;
 }
 
 void
-read_cubi_chan(infile, rows, chan)
-FILE * infile;
-rle_pixel **rows;
-int chan;
+read_cubi_chan(FILE *infile, rle_pixel **rows, int chan)
 {
     static char headchar[3];
     static int scanfull[3] = {-1, -1, -1};
@@ -149,11 +140,7 @@ int chan;
 }
 
 void
-bit_read(infile, headchar, bit, rows, chan, xpos)
-FILE * infile;
-char headchar;
-int bit, chan, *xpos;
-rle_pixel **rows;
+bit_read(FILE *infile, char headchar, int bit, rle_pixel **rows, int chan, int *xpos)
 {
     unsigned char runlength, rundata, bytedata;
     int i;

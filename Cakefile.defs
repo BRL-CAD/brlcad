@@ -1012,7 +1012,7 @@ set -S2 "/bin/sh"
 #	define	HAS_SYMLINKS 1
 #	define	CC	gcc
 #	define	CC_DEFS -pipe -fPIC -Wall -pedantic
-/*			-std=iso9899:199409 */
+/*			-std=iso9899:199409  -Wimplicit -Wstrict-prototypes */
 #	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
 #	else

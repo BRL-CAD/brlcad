@@ -57,7 +57,7 @@ extern int	bu_optopt;
 extern char	*bu_optarg;
 
 int readcodes(), writecodes();
-int loadcodes(), printcodes();
+int loadcodes(), printcodes(FILE *fp, struct directory *dp, int pathpos);
 void		tables(), edcodes(), changes(), prfield();
 
 #define LINELEN 256
@@ -128,11 +128,7 @@ reg_compare( const void *p1, const void *p2 )
  *
  */
 int
-f_edcodes(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	*argv[];
+f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   int i;
   int status;
@@ -278,11 +274,7 @@ char	*argv[];
 
 /* write codes to a file */
 int
-f_wcodes(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	*argv[];
+f_wcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   register int i;
   int status;
@@ -324,11 +316,7 @@ char	*argv[];
 
 /* read codes from a file and load them into the database */
 int
-f_rcodes(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int		 argc;
-char		*argv[];
+f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   int item, air, mat, los;
   char name[MAX_LEVELS * NAMESIZE];
@@ -428,11 +416,7 @@ char		*argv[];
 }
 
 HIDDEN void
-Do_printnode( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
-struct db_i		*dbip;
-struct rt_comb_internal *comb;
-union tree		*comb_leaf;
-genptr_t		user_ptr1, user_ptr2, user_ptr3;
+Do_printnode(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
 {
 	FILE *fp;
 	int *pathpos;
@@ -453,10 +437,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 }
 
 int
-printcodes(fp, dp, pathpos)
-FILE *fp;
-struct directory *dp;
-int pathpos;
+printcodes(FILE *fp, struct directory *dp, int pathpos)
 {
 	int i;
 	struct rt_db_internal intern;
@@ -517,8 +498,7 @@ int pathpos;
  */
 
 int
-check( a, b )
-register char *a, *b;
+check(register char *a, register char *b)
 {
 
 	register int	c= sizeof( struct identt );
@@ -544,11 +524,7 @@ struct id_to_names {
  *	Finds all combinations using the given shaders
  */
 int
-f_which_shader(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_which_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int	i,j;
 	register struct directory *dp;
@@ -633,11 +609,7 @@ char	**argv;
  */
 
 int
-f_decompose(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_decompose(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	int count;
 	struct bu_vls solid_name;
@@ -816,10 +788,7 @@ char	**argv;
 }
 
 HIDDEN int
-sol_number( matrix, name, old )
-matp_t matrix;
-char *name;
-int *old;
+sol_number(matp_t matrix, char *name, int *old)
 {
 	int i;
 	struct identt idbuf1, idbuf2;
@@ -852,11 +821,7 @@ int *old;
 }
 
 HIDDEN void
-new_tables( dp, cur_path, old_mat, flag)
-struct directory *dp;
-struct bu_ptbl *cur_path;
-mat_t old_mat;
-int flag;
+new_tables(struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag)
 {
 	struct rt_db_internal intern;	
 	struct rt_comb_internal *comb;
@@ -1058,11 +1023,7 @@ out:
 }
 
 int
-f_tables(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	static const char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
 	static const char catcmd[] = "cat /tmp/ord_id >> ";

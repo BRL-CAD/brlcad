@@ -17,14 +17,12 @@
 struct application	ap;
 
 /* routines for shootray() to call on hit or miss */
-extern int hit(), miss();
+extern int hit(struct application *ap, struct partition *PartHeadp), miss(register struct application *ap);
 
 char	usage[] = "\
 Usage:  rtexample model.g objects...\n";
 
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	static struct rt_i *rtip;	/* rt_dirbuild returns this */
 	char idbuf[132];		/* First ID record info */
@@ -97,9 +95,7 @@ char **argv;
  *  (see raytrace.h), and a circular linked list of partitions,
  *  each one describing one in and out segment of one region.
  */
-hit( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
+hit(register struct application *ap, struct partition *PartHeadp)
 {
 	/* see raytrace.h for all of these guys */
 	register struct partition *pp;
@@ -168,8 +164,7 @@ struct partition *PartHeadp;
 /*
  * rt_shootray() was told to call this on a miss.
  */
-miss( ap )
-register struct application *ap;
+miss(register struct application *ap)
 {
 	bu_log("missed\n");
 	return(0);

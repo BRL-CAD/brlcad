@@ -41,17 +41,17 @@
 #include "rle_put.h"
 #include "rle.h"
 
-extern int	RunSetup( ARB_ARGS ),
-		RunSkipBlankLines( ARB_ARGS ),
-		RunSetColor( ARB_ARGS ),
-		RunSkipPixels( ARB_ARGS ),
-		RunNewScanLine( ARB_ARGS ),
-		Runputdata( ARB_ARGS ),
-		Runputrun( ARB_ARGS ),
-		RunputEof( ARB_ARGS );
+extern int	RunSetup(register rle_hdr *the_hdr),
+		RunSkipBlankLines(int nblank, register rle_hdr *the_hdr),
+		RunSetColor(int c, register rle_hdr *the_hdr),
+		RunSkipPixels(int nskip, int last, int wasrun, register rle_hdr *the_hdr),
+		RunNewScanLine(int flag, register rle_hdr *the_hdr),
+		Runputdata(rle_pixel *buf, int n, register rle_hdr *the_hdr),
+		Runputrun(int color, int n, int last, register rle_hdr *the_hdr),
+		RunputEof(register rle_hdr *the_hdr);
 
-extern int	DefaultBlockHook( ARB_ARGS );
-extern void	NullputEof( ARB_ARGS );
+extern int	DefaultBlockHook(rle_hdr *the_hdr);
+extern void	NullputEof(rle_hdr *the_hdr);
 
 struct rle_dispatch_tab rle_DTable[] = {
     {
@@ -96,8 +96,7 @@ rle_hdr rle_dflt_hdr = {
 
 /* ARGSUSED */
 void
-NullputEof(the_hdr)
-rle_hdr * the_hdr;
+NullputEof(rle_hdr *the_hdr)
 {
 				/* do nothing */
 }

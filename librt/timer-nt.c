@@ -14,7 +14,7 @@ static const char RCStimer_nt[] = "@(#)$Header$ (BRL)";
  *			P R E P _ T I M E R
  */
 void
-rt_prep_timer()
+rt_prep_timer(void)
 {
 
 }
@@ -25,8 +25,7 @@ rt_prep_timer()
  * 
  */
 double
-rt_read_timer(str,len)
-char *str;
+rt_read_timer(char *str, int len)
 {
 	char line[132];
 

@@ -31,15 +31,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
-void	do_leaf(), do_pleaf(), pnorms(), do_tree();
+void	do_leaf(char *name), do_pleaf(), pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts), do_tree(char *name, char *lname, int level);
 
 double sin60;
 
 struct rt_wdb *outfp;
 
 int
-main(argc, argv)
-char	**argv;
+main(int argc, char **argv)
 {
 	int depth;
 
@@ -65,8 +64,7 @@ char	**argv;
 
 /* Make a leaf node out of an ARB4 */
 void
-do_leaf(name)
-char	*name;
+do_leaf(char *name)
 {
 	point_t pt[4];
 
@@ -134,11 +132,7 @@ char	*name;
  *  Assumes all points are coplanar (they better be!).
  */
 void
-pnorms( norms, verts, centroid, npts )
-fastf_t	norms[5][3];
-fastf_t	verts[5][3];
-point_t	centroid;
-int	npts;
+pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts)
 {
 	register int i;
 	vect_t	ab, ac;
@@ -163,10 +157,7 @@ int	npts;
 }
 
 void
-do_tree(name, lname, level)
-char	*name;
-char	*lname;
-int	level;
+do_tree(char *name, char *lname, int level)
 {
 	register int i;
 	char nm[64];

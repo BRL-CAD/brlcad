@@ -44,14 +44,13 @@ int	mode = DIFF;
 int	backgnd = 0;
 unsigned char ibuf1[512], ibuf2[512], obuf[512];
 
-void	open_file();
+void	open_file(FILE **fp, char *name);
 
 char usage[] = "\
 Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw (- stdin, . skip)\n";
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	register unsigned char *p1, *p2, *op;
 	int	i, n, m;
@@ -179,9 +178,7 @@ int argc; char **argv;
 }
 
 void
-open_file( fp, name )
-FILE **fp;
-char *name;
+open_file(FILE **fp, char *name)
 {
 	/* check for special names */
 	if( strcmp( name, "-" ) == 0 ) {

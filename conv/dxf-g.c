@@ -22,9 +22,7 @@
 static char *usage="dxf-g [-v] [-d] [-p] [-t tolerance] [-i input_file] [-o output_file_name]";
 
 int
-main( argc , argv )
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
 	register int c;
 	FILE *dxf;

@@ -49,7 +49,7 @@ static const char libbu_bu_tcl_RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 
 /* defined in libbu/cmdhist_obj.c */
-extern int Cho_Init();
+extern int Cho_Init(Tcl_Interp *interp);
 
 static struct bu_cmdtab bu_cmds[] = {
 	{"bu_units_conversion",		bu_tcl_units_conversion},

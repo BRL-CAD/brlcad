@@ -78,9 +78,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 struct application ap;	/*  Structure passed between functions.  */
 
-extern int hit();	/*  User supplied hit function.  */
-extern int miss();	/*  User supplied miss function.  */
-extern int overlap();	/*  User supplied overlap function.  */
+extern int hit(register struct application *ap_p, struct partition *PartHeadp);	/*  User supplied hit function.  */
+extern int miss(void);	/*  User supplied miss function.  */
+extern int overlap(void);	/*  User supplied overlap function.  */
 
 /*  Define structure to hold all information needed.  */
 struct table
@@ -109,11 +109,7 @@ double drand48() {
 }
 #endif
 
-int main(argc,argv)
-
-int argc;
-char **argv;
-
+int main(int argc, char **argv)
 {
    extern struct table info[];	/*  Structure is external.  */
    struct rt_i *rtip;
@@ -777,10 +773,10 @@ char **argv;
 /*****************************************************************************/
 
 int
-hit(ap_p,PartHeadp)
+hit(register struct application *ap_p, struct partition *PartHeadp)
 /*  User supplied hit function.  */
-register struct application *ap_p;
-struct partition *PartHeadp;
+                                  
+                            
 
 {						/*  START # 0H  */
    extern struct table info[];	/*  Structure is external.  */
@@ -1001,7 +997,7 @@ struct partition *PartHeadp;
 }						/*  END # 0H  */
 
 int
-miss()
+miss(void)
 /*  User supplied miss function.  */
 {
 /*
@@ -1015,7 +1011,7 @@ miss()
 }
 
 int
-overlap()
+overlap(void)
 /*  User supplied overlap function.  */
 {
 /*

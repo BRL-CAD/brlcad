@@ -47,12 +47,12 @@ Usage: 'pixclump [-c R/G/B] [-f color_file] [-x debug_flags]\n\
 		 [infile.pix [outfile.pix]]'\n";
 #define OPT_STRING	"c:f:x:?"
 
-static void print_usage ()
+static void print_usage (void)
 {
     (void) bu_log("%s", usage);
 }
 
-static void print_debug_usage ()
+static void print_debug_usage (void)
 {
     static char	*flag_denotation[] =
 		{
@@ -69,10 +69,7 @@ static void print_debug_usage ()
 	bu_log("0x%04x	%s\n", 1 << (i-1), flag_denotation[i]);
 }
 
-static void add_to_table (rgb)
-
-unsigned char	*rgb;
-
+static void add_to_table (unsigned char *rgb)
 {
     /*
      *	Ensure that the color table can accomodate the new entry
@@ -89,10 +86,7 @@ unsigned char	*rgb;
     ++next_color;
 }
 
-static void fill_table (f_name)
-
-char	*f_name;
-
+static void fill_table (char *f_name)
 {
     char		*bp;
     FILE		*fp;
@@ -124,8 +118,7 @@ char	*f_name;
     }
 }
 
-static void print_table ()
-
+static void print_table (void)
 {
     int	i;
 
@@ -143,11 +136,7 @@ static void print_table ()
  *	between a specified pixel (R/G/B triple) and a specified
  *	entry in the color table.
  */
-static int color_diff (pix, i)
-
-unsigned char	*pix;
-int		i;
-
+static int color_diff (unsigned char *pix, int i)
 {
     unsigned char	*cte;	/* The specified entry in the color table */
 
@@ -161,11 +150,7 @@ int		i;
 }
 
 int
-main (argc, argv)
-
-int	argc;
-char	*argv[];
-
+main (int argc, char **argv)
 {
     char		*cf_name = 0;	/* name of color file */
     char		*inf_name;	/* name of input stream */

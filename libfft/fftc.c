@@ -31,9 +31,7 @@ static char usage[] = "\
 Usage: fftc length > fftlength.c\n";
 
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	double	x[4097];
 	int	n, m;

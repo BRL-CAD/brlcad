@@ -158,11 +158,14 @@ struct rt_pg_internal {
 
 /* ID_BSPLINE */
 #ifdef NMG_H				/* Only if we have seen struct face_g_snurb */
+#ifndef SEEN_RT_NURB_INTERNAL
+#define SEEN_RT_NURB_INTERNAL
 struct rt_nurb_internal {
 	long		magic;
 	int	 	nsrf;		/* number of surfaces */
 	struct face_g_snurb **srfs;	/* The surfaces themselves */
 };
+#endif
 
 #define RT_NURB_INTERNAL_MAGIC	0x002b2bdd
 #define RT_NURB_CK_MAGIC( _p) BU_CKMAG(_p,RT_NURB_INTERNAL_MAGIC,"rt_nurb_internal");

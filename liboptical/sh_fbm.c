@@ -73,8 +73,8 @@ struct bu_structparse fbm_parse[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	fbm_setup(), fbm_render();
-HIDDEN void	fbm_print(), fbm_free();
+HIDDEN int	fbm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp), fbm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void	fbm_print(register struct region *rp, char *dp), fbm_free(char *cp);
 
 struct mfuncs fbm_mfuncs[] = {
 	{"bump_fbm",	0,		0,		MFI_NORMAL|MFI_HIT|MFI_UV,
@@ -90,10 +90,7 @@ struct mfuncs fbm_mfuncs[] = {
  *	F B M _ S E T U P
  */
 HIDDEN int
-fbm_setup( rp, matparm, dpp )
-register struct region *rp;
-struct bu_vls	*matparm;
-char	**dpp;
+fbm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp)
 {
 	register struct fbm_specific *fbm;
 
@@ -118,9 +115,7 @@ char	**dpp;
  *	F B M _ P R I N T
  */
 HIDDEN void
-fbm_print( rp, dp )
-register struct region *rp;
-char	*dp;
+fbm_print(register struct region *rp, char *dp)
 {
 	bu_struct_print( rp->reg_name, fbm_parse, (char *)dp );
 }
@@ -129,8 +124,7 @@ char	*dp;
  *	F B M _ F R E E
  */
 HIDDEN void
-fbm_free( cp )
-char *cp;
+fbm_free(char *cp)
 {
 	bu_free( cp, "fbm_specific" );
 }
@@ -139,11 +133,7 @@ char *cp;
  *	F B M _ R E N D E R
  */
 int
-fbm_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;
-char	*dp;
+fbm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct fbm_specific *fbm_sp =
 		(struct fbm_specific *)dp;

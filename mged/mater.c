@@ -53,8 +53,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct mater *rt_material_head;	/* now defined in librt/mater.c */
 extern void rt_insert_color( struct mater *newp );
 
-void color_soltab();
-void color_putrec(), color_zaprec();
+void color_soltab(void);
+void color_putrec(register struct mater *mp), color_zaprec(register struct mater *mp);
 
 static char	tmpfil[17];
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
@@ -68,11 +68,7 @@ static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
  *  and update database.
  */
 int
-f_edcolor(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct mater *mp;
 	register struct mater *zot;
@@ -213,8 +209,7 @@ char	**argv;
  *  In some cases, storage will need to be allocated.
  */
 void
-color_putrec( mp )
-register struct mater *mp;
+color_putrec(register struct mater *mp)
 {
 	struct directory dir;
 	union record rec;
@@ -252,8 +247,7 @@ register struct mater *mp;
  *  Used to release database resources occupied by a material record.
  */
 void
-color_zaprec( mp )
-register struct mater *mp;
+color_zaprec(register struct mater *mp)
 {
 	struct directory dir;
 

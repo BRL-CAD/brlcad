@@ -77,9 +77,7 @@ static char buf[MAXPATHLEN+1];
  *	[None]
  */
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     rle_hdr out_hdr;
     char * fname = NULL, * out_fname = NULL;

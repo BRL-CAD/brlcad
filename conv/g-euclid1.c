@@ -67,10 +67,7 @@ struct facets
 };
 
 void
-fastf_print( fp_out, length, f )
-FILE *fp_out;
-int length;
-fastf_t f;
+fastf_print(FILE *fp_out, int length, fastf_t f)
 {
 	char buffer[128];
 	char *ptr;
@@ -106,19 +103,13 @@ fastf_t f;
 }
 
 void
-handler( code)
-int code;
+handler(int code)
 {
 	rt_bomb( "ALARM boolean evaluation aborted\n" );
 }
 
 static void
-Write_euclid_face( lu , facet_type , regionid , face_number , fp_out )
-const struct loopuse *lu;
-const int facet_type;
-const int regionid;
-const int face_number;
-FILE *fp_out;
+Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regionid, const int face_number, FILE *fp_out)
 {
 	struct faceuse *fu;
 	struct edgeuse *eu;
@@ -167,10 +158,7 @@ FILE *fp_out;
 
 /*	Routine to write an nmgregion in the Euclid "decoded" format */
 static void
-Write_euclid_region( r , tsp , fp_out )
-struct nmgregion *r;
-struct db_tree_state *tsp;
-FILE *fp_out;
+Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp, FILE *fp_out)
 {
 	struct shell *s;
 	struct facets *faces = NULL;
@@ -426,9 +414,7 @@ FILE *fp_out;
  *			M A I N
  */
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
 	register int	c;
 	double		percent;
@@ -566,11 +552,7 @@ char	*argv[];
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(tsp, pathp, curtree, client_data)
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-genptr_t		client_data;
+union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
 	FILE			*fp_out;
 	struct nmgregion	*r;

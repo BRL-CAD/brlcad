@@ -38,7 +38,7 @@ static	int	Xleft, Yleft, Xright, Yright;		/* XXX */
 
 FBIO	*fbp;	/* XXX - debug */
 
-fhinit()
+fhinit(void)
 {
 	int	i;
 
@@ -55,8 +55,7 @@ fhinit()
  * Add another Z cut to the display.
  *  This one goes "behind" the last one.
  */
-fhnewz( f, num )
-int	f[], num;
+fhnewz(int *f, int num)
 {
 	int	x, y, Xprev, Yprev, Xi, Yi;
 	int	Previously, Currently;
@@ -115,8 +114,7 @@ int	f[], num;
  *	    1 if visible above upper horizon.
  *	   -1 if visible below lower horizon.
  */
-fhvis( x, y )
-int x, y;
+fhvis(int x, int y)
 {
 	/* See if hidden behind horizons */
 	if( y < upper[x] && y > lower[x] )
@@ -132,7 +130,7 @@ int x, y;
  * INTERNAL Edge fill routine.
  * NOT DONE YET.
  */
-Efill()
+Efill(void)
 {
 }
 
@@ -140,8 +138,7 @@ Efill()
  * Fill the upper and lower horizon arrays from x1 to x2
  *  with a line spanning (x1,y1) to (x2,y2).
  */
-Horizon( x1, y1, x2, y2 )
-int	x1, y1, x2, y2;
+Horizon(int x1, int y1, int x2, int y2)
 {
 	int	xinc, x, y;
 	double	slope;
@@ -165,10 +162,7 @@ int	x1, y1, x2, y2;
  * Find the intersection (xi,yi) between the line (x1,y1)->(x2,y2)
  *  and the horizon hor[].
  */
-Intersect( x1, y1, x2, y2, hor, xi, yi )
-int	x1, y1, x2, y2;
-int	hor[];
-int	*xi, *yi;
+Intersect(int x1, int y1, int x2, int y2, int *hor, int *xi, int *yi)
 {
 	int	xinc, ysign, denom;
 	int	slope;
@@ -220,8 +214,7 @@ fflush( stdout );
 /*printf("(%3d,%3d)\n", *xi, *yi );*/
 }
 
-sign( i )
-int	i;
+sign(int i)
 {
 	if( i > 0 )
 		return( 1 );
@@ -235,8 +228,7 @@ int	i;
  * DRAW - plot a line from (x1,y1) to (x2,y2)
  *  An integer Bresenham algorithm for any quadrant.
  */
-Draw( x1, y1, x2, y2 )
-int	x1, y1, x2, y2;
+Draw(int x1, int y1, int x2, int y2)
 {
 	int	x, y, deltx, delty, error, i;
 	int	temp, s1, s2, interchange;
@@ -317,9 +309,7 @@ int main()
 static char usage[] = "\
 Usage: fhor [width] < doubles\n";
 
-int main( argc, argv )
-int	argc;
-char	**argv;
+int main(int argc, char **argv)
 {
 	double	inbuf[512];
 	int	f[512];

@@ -41,12 +41,7 @@ static const char libbu_rb_order_stats_RCSid[] = "@(#) $Header$";
  *	_rb_select() returns the discovered node.  It is an implemenation
  *	of the routine OS-SELECT on p. 282 of Cormen et al.
  */
-static struct bu_rb_node *_rb_select (root, order, k)
-
-struct bu_rb_node	*root;
-int			order;
-int			k;
-
+static struct bu_rb_node *_rb_select (struct bu_rb_node *root, int order, int k)
 {
     int		rank;
 
@@ -74,12 +69,7 @@ int			k;
  *	On success, bu_rb_select() returns a pointer to the data block in
  *	the discovered node.  Otherwise, it returns NULL.
  */
-void *bu_rb_select (tree, order, k)
-
-bu_rb_tree	*tree;
-int		order;
-int		k;
-
+void *bu_rb_select (bu_rb_tree *tree, int order, int k)
 {
     struct bu_rb_node	*node;
 
@@ -113,11 +103,7 @@ int		k;
  *	of the current node in the specified order.  bu_rb_rank() is an
  *	implementation of the routine OS-RANK on p. 283 of Cormen et al.
  */
-int bu_rb_rank (tree, order)
-
-bu_rb_tree	*tree;
-int		order;
-
+int bu_rb_rank (bu_rb_tree *tree, int order)
 {
     int			rank;
     struct bu_rb_node	*node;

@@ -76,11 +76,11 @@ struct sizes fb_common_sizes[] = {
  *	1	width and height returned
  */
 int
-fb_common_file_size( widthp, heightp, filename, pixel_size )
-int	*widthp;		/* pointer to returned width */
-int	*heightp;		/* pointer to returned height */
-char	*filename;		/* image file to stat */
-int	pixel_size;		/* bytes per pixel */
+fb_common_file_size(int *widthp, int *heightp, char *filename, int pixel_size)
+   	        		/* pointer to returned width */
+   	         		/* pointer to returned height */
+    	          		/* image file to stat */
+   	           		/* bytes per pixel */
 {
 	struct	stat	sbuf;
 	int	size;
@@ -126,10 +126,10 @@ int	pixel_size;		/* bytes per pixel */
  *	1	width and height returned
  */
 int
-fb_common_image_size( widthp, heightp, npixels )
-int	*widthp;		/* pointer to returned width */
-int	*heightp;		/* pointer to returned height */
-register int	npixels;	/* Number of pixels */
+fb_common_image_size(int *widthp, int *heightp, register int npixels)
+   	        		/* pointer to returned width */
+   	         		/* pointer to returned height */
+            	        	/* Number of pixels */
 {
 	register struct	sizes	*sp;
 	int			root;

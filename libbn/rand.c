@@ -3607,7 +3607,7 @@ float	bn_rand_poison_[] = {
  *  Setting to all zeros keeps dithered values at their original values.
  */
 void
-bn_mathtab_constant()
+bn_mathtab_constant(void)
 {
 	register int i;
 

@@ -86,11 +86,7 @@ Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
  *
  *	Read in an HSV triple.
  */
-static int read_hsv (hsvp, buf)
-
-fastf_t *hsvp;
-char	*buf;
-
+static int read_hsv (fastf_t *hsvp, char *buf)
 {
     double	tmp[3];
 
@@ -109,12 +105,7 @@ char	*buf;
 /*
  *		    R E A D _ R O W ( )
  */
-static int read_row (rp, file_width, infp)
-
-unsigned char	*rp;
-int		file_width;
-FILE		*infp;
-
+static int read_row (unsigned char *rp, int file_width, FILE *infp)
 {
     if (fread(rp + 3, 3, file_width, infp) != file_width)
 	return (0);
@@ -141,11 +132,7 @@ FILE		*infp;
 /*
  *		R G B _ T O _ H S V ( )
  */
-static void rgb_to_hsv (rgb, hsv)
-
-unsigned char	*rgb;
-fastf_t		*hsv;
-
+static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 {
     fastf_t	red, grn, blu;
     fastf_t	*hue = &hsv[HUE];
@@ -208,11 +195,7 @@ fastf_t		*hsv;
 /*
  *		H S V _ T O _ R G B ( )
  */
-int hsv_to_rgb (hsv, rgb)
-
-fastf_t		*hsv;
-unsigned char	*rgb;
-
+int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t	float_rgb[3];
     fastf_t	hue, sat, val;
@@ -268,11 +251,7 @@ unsigned char	*rgb;
 /*
  *		    S A M E _ R G B ( )
  */
-static int same_rgb (color1, color2)
-
-unsigned char	*color1;
-unsigned char	*color2;
-
+static int same_rgb (unsigned char *color1, unsigned char *color2)
 {
     return ((abs(color1[RED] - color2[RED]) <= (int) rgb_tol[RED]) &&
 	    (abs(color1[GRN] - color2[GRN]) <= (int) rgb_tol[GRN]) &&
@@ -282,11 +261,7 @@ unsigned char	*color2;
 /*
  *		    S A M E _ H S V ( )
  */
-static int same_hsv (color1, color2)
-
-fastf_t	*color1;
-fastf_t	*color2;
-
+static int same_hsv (fastf_t *color1, fastf_t *color2)
 {
     return ((fabs(color1[HUE] - color2[HUE]) <= hsv_tol[HUE]) &&
 	    (fabs(color1[SAT] - color2[SAT]) <= hsv_tol[SAT]) &&
@@ -296,10 +271,7 @@ fastf_t	*color2;
 /*
  *			I S _ I N T E R I O R ( )
  */
-static int is_interior (pix_rgb)
-
-unsigned char	*pix_rgb;
-
+static int is_interior (unsigned char *pix_rgb)
 {
     if (tol_using_rgb)
 	return ((colors_specified == COLORS_EXTERIOR)	?
@@ -319,10 +291,7 @@ unsigned char	*pix_rgb;
 /*
  *			I S _ E X T E R I O R ( )
  */
-static int is_exterior (pix_rgb)
-
-unsigned char	*pix_rgb;
-
+static int is_exterior (unsigned char *pix_rgb)
 {
     if (tol_using_rgb)
 	return ((colors_specified == COLORS_INTERIOR)	?
@@ -342,12 +311,12 @@ unsigned char	*pix_rgb;
 /*
  *		    I S _ B O R D E R ( )
  */
-static int is_border (prp, trp, nrp, col_nm)
+static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp, int col_nm)
 
-unsigned char	*prp;		/* Previous row */
-unsigned char	*trp;		/* Current (this) row */
-unsigned char	*nrp;		/* Next row */
-int		col_nm;		/* Current column */
+             	     		/* Previous row */
+             	     		/* Current (this) row */
+             	     		/* Next row */
+   		       		/* Current column */
 
 {
     unsigned char	pix_rgb[3];
@@ -390,11 +359,7 @@ int		col_nm;		/* Current column */
  *		    G E T _ A R G S ( )
  */
 static int
-get_args (argc, argv)
-
-int		argc;
-register char **argv;
-
+get_args (int argc, register char **argv)
 {
     register int c;
 
@@ -545,11 +510,7 @@ register char **argv;
  *			M A I N ( )
  */
 int
-main (argc, argv)
-
-int	argc;
-char	*argv[];
-
+main (int argc, char **argv)
 {
     char		*outbuf;
     unsigned char	*inrow[3];

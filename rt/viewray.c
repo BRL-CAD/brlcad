@@ -61,10 +61,10 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-void	view_pixel() {}
+void	view_pixel(void) {}
 
-void	view_setup() {}
-void	view_cleanup() {}
+void	view_setup(void) {}
+void	view_cleanup(void) {}
 
 /* "paint" types are negative ==> interpret as "special" air codes */
 #define PAINT_FIRST_ENTRY	(-999)
@@ -75,8 +75,7 @@ void	view_cleanup() {}
 
 /* Handle a miss */
 int
-raymiss(ap)
-struct application *ap;
+raymiss(struct application *ap)
 {
 	return(0);
 }
@@ -88,10 +87,7 @@ struct application *ap;
  *  Also generate various forms of "paint".
  */
 int
-rayhit( ap, PartHeadp, segHeadp )
-struct application *ap;
-register struct partition *PartHeadp;
-struct seg		*segHeadp;
+rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segHeadp)
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	struct partition	*np;	/* next partition */
@@ -190,9 +186,7 @@ struct seg		*segHeadp;
  *  			V I E W _ I N I T
  */
 int
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
+view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
@@ -201,21 +195,20 @@ char *file, *obj;
 	return(0);		/* No framebuffer needed */
 }
 
-void	view_eol() {;}
+void	view_eol(void) {;}
 
 void
-view_end()
+view_end(void)
 {
 	fflush(outfp);
 }
 
 void
-view_2init( ap )
-struct application	*ap;
+view_2init(struct application *ap)
 {
 
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
 }
 
-void application_init () {}
+void application_init (void) {}

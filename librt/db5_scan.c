@@ -421,8 +421,7 @@ bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
 }
 
 int
-db_get_version( dbip )
-struct db_i *dbip;
+db_get_version(struct db_i *dbip)
 {
 	unsigned char	header[8];
 

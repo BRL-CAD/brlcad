@@ -64,10 +64,7 @@
  *	integers for the length buffer.
  */
 int
-rle_raw_alloc( the_hdr, scanp, nrawp )
-rle_hdr *the_hdr;
-rle_op ***scanp;
-int **nrawp;
+rle_raw_alloc(rle_hdr *the_hdr, rle_op ***scanp, int **nrawp)
 {
     rle_op ** scanbuf, * opbuf;
     int rowlen, nchan = 0, i, ncol;
@@ -134,10 +131,7 @@ int **nrawp;
  * 	free scanp[0], scanp, and nrawp.
  */
 void
-rle_raw_free( the_hdr, scanp, nrawp )
-rle_hdr *the_hdr;
-rle_op **scanp;
-int *nrawp ;
+rle_raw_free(rle_hdr *the_hdr, rle_op **scanp, int *nrawp)
 {
     int i;
 

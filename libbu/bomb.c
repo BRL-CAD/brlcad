@@ -65,8 +65,7 @@ jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
  *  Only produce a core-dump when that debugging bit is set.
  */
 void
-bu_bomb(str)
-const char *str;
+bu_bomb(const char *str)
 {
 
 	/* First thing, always always always try to print the string */

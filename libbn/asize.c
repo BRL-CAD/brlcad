@@ -82,11 +82,11 @@ struct sizes fb_common_sizes[] = {
  *	1	width and height returned
  */
 int
-bn_common_file_size( widthp, heightp, filename, pixel_size )
-int	*widthp;		/* pointer to returned width */
-int	*heightp;		/* pointer to returned height */
-const char	*filename;	/* image file to stat */
-int	pixel_size;		/* bytes per pixel */
+bn_common_file_size(int *widthp, int *heightp, const char *filename, int pixel_size)
+   	        		/* pointer to returned width */
+   	         		/* pointer to returned height */
+          	          	/* image file to stat */
+   	           		/* bytes per pixel */
 {
 	struct	stat	sbuf;
 	int	size;
@@ -128,10 +128,10 @@ int	pixel_size;		/* bytes per pixel */
  */
 
 int
-bn_common_name_size( widthp, heightp, name )
-int	*widthp;		/* pointer to returned width */
-int	*heightp;		/* pointer to returned height */
-const char	*name;		        /* name to parse */
+bn_common_name_size(int *widthp, int *heightp, const char *name)
+   	        		/* pointer to returned width */
+   	         		/* pointer to returned height */
+          	      		        /* name to parse */
 {
     register const char *cp = name;
     
@@ -163,10 +163,10 @@ const char	*name;		        /* name to parse */
  *	1	width and height returned
  */
 int
-bn_common_image_size( widthp, heightp, npixels )
-int	*widthp;		/* pointer to returned width */
-int	*heightp;		/* pointer to returned height */
-register int	npixels;	/* Number of pixels */
+bn_common_image_size(int *widthp, int *heightp, register int npixels)
+   	        		/* pointer to returned width */
+   	         		/* pointer to returned height */
+            	        	/* Number of pixels */
 {
 	register struct	sizes	*sp;
 	int			root;

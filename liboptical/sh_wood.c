@@ -89,8 +89,8 @@ extern	fastf_t	turb_table[20][20][20];
  *	Sundry routine declarations
  */
 
-HIDDEN int	wood_init(), wood_setup(), wood_render();
-HIDDEN void	wood_print();
+HIDDEN int	wood_init(void), wood_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), wood_render(struct application *ap, struct partition *partp, struct shadework *swp, char *dp);
+HIDDEN void	wood_print(register struct region *rp);
 HIDDEN void	wood_free RT_ARGS(( char * ));
 
 HIDDEN void	wood_V_set RT_ARGS((const struct bu_structparse *, const char *, const char *, char *));
@@ -234,7 +234,7 @@ static	int	wood_done = 0;
  *	the noise table. 
  */
 
-HIDDEN int wood_init ()
+HIDDEN int wood_init (void)
 {
 
 	/*
@@ -257,11 +257,7 @@ HIDDEN int wood_init ()
  *	to set flag bits, indicating the presence of actual parsed values.
  */
 
-HIDDEN void wood_V_set (sdp, name, base, value)
-const struct bu_structparse *sdp;
-const char *name;
-const char *base;
-char *value;
+HIDDEN void wood_V_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
 {
 	register struct wood_specific *wd =
 		(struct wood_specific *)base;
@@ -269,11 +265,7 @@ char *value;
 	wd->flags |= EXPLICIT_VERTEX;
 }
 
-HIDDEN void wood_D_set (sdp, name, base, value)
-const struct bu_structparse *sdp;
-const char *name;
-const char *base;
-char *value;
+HIDDEN void wood_D_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
 {
 	register struct wood_specific *wd =
 		(struct wood_specific *)base;
@@ -284,12 +276,12 @@ char *value;
 /*
  *			W O O D _ S E T U P
  */
-HIDDEN int wood_setup( rp, matparm, dpp, mfp, rtip )
-register struct region	*rp;
-struct bu_vls		*matparm;
-char			**dpp;
-struct mfuncs           *mfp;
-struct rt_i             *rtip;  /* New since 4.4 release */
+HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+                      	    
+             		         
+    			      
+                             
+                                /* New since 4.4 release */
 {
 	register int i;
 	register struct wood_specific *wd;
@@ -469,8 +461,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
  *	Phase 2 setup routine
  */
 
-HIDDEN void wood_setup_2 (wd)
-struct wood_specific *wd;
+HIDDEN void wood_setup_2 (struct wood_specific *wd)
 {
 	mat_t	xlate;
 	int	i;
@@ -521,8 +512,7 @@ struct wood_specific *wd;
 /*
  *			W O O D _ P R I N T
  */
-HIDDEN void wood_print( rp )
-register struct region *rp;
+HIDDEN void wood_print(register struct region *rp)
 {
 	bu_struct_print(rp->reg_name, wood_parse, (char *)rp->reg_udata);
 }
@@ -534,8 +524,7 @@ register struct region *rp;
  *	of a frame, as well as clean up any references to objects on
  *	the Wood_Chain list.
  */
-HIDDEN void wood_free (cp)
-char *cp;
+HIDDEN void wood_free (char *cp)
 {
 	register struct wood_specific *wd =
 		(struct wood_specific *)cp;
@@ -570,9 +559,7 @@ char *cp;
  *  dealing with noise and turbulence.
  */
 
-HIDDEN double wood_noise (x, y, z, wd)
-double x, y, z;
-struct wood_specific	*wd;
+HIDDEN double wood_noise (double x, double y, double z, struct wood_specific *wd)
 {
 	int	xi, yi, zi;
 	double	xr, yr, zr;
@@ -603,9 +590,7 @@ struct wood_specific	*wd;
 	return (noise);
 }
 
-HIDDEN double wood_turb (x, y, z, wd)
-double x, y, z;
-struct wood_specific *wd;
+HIDDEN double wood_turb (double x, double y, double z, struct wood_specific *wd)
 {
 	extern struct resource		rt_uniresource;
 	register struct resource	*resp = &rt_uniresource;
@@ -642,11 +627,7 @@ struct wood_specific *wd;
  *  which is then used to compute the distance from the ring center.  This
  *  distance is then multiplied by a velocity coefficient that is sined.
  */
-HIDDEN int wood_render( ap, partp, swp, dp )
-struct application	*ap;
-struct partition	*partp;
-struct shadework	*swp;
-char			*dp;
+HIDDEN int wood_render(struct application *ap, struct partition *partp, struct shadework *swp, char *dp)
 {
 	register struct wood_specific *wd =
 		(struct wood_specific *)dp;

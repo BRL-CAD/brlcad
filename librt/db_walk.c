@@ -40,13 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 void
-db_functree_subtree( dbip, tp, comb_func, leaf_func, resp, client_data )
-struct db_i	*dbip;
-union tree	*tp;
-void		(*comb_func)BU_ARGS((struct db_i *, struct directory *, genptr_t));
-void		(*leaf_func)BU_ARGS((struct db_i *, struct directory *, genptr_t));
-struct resource *resp;
-genptr_t	client_data;
+db_functree_subtree(struct db_i *dbip, union tree *tp, void (*comb_func) (struct db_i *, struct directory *, genptr_t), void (*leaf_func) (struct db_i *, struct directory *, genptr_t), struct resource *resp, genptr_t client_data)
 {
 	struct directory *dp;
 
@@ -89,13 +83,7 @@ genptr_t	client_data;
  *  
  */
 void
-db_functree( dbip, dp, comb_func, leaf_func, resp, client_data)
-struct db_i	*dbip;
-struct directory *dp;
-void		(*comb_func)BU_ARGS((struct db_i *, struct directory *, genptr_t));
-void		(*leaf_func)BU_ARGS((struct db_i *, struct directory *, genptr_t));
-struct resource *resp;
-genptr_t	client_data;
+db_functree(struct db_i *dbip, struct directory *dp, void (*comb_func) (struct db_i *, struct directory *, genptr_t), void (*leaf_func) (struct db_i *, struct directory *, genptr_t), struct resource *resp, genptr_t client_data)
 {
 	register int		i;
 

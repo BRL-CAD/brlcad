@@ -28,9 +28,9 @@
 #include "nurb.h"
 
 int
-rt_nurb_s_flat( srf, epsilon )
-struct face_g_snurb *srf;
-fastf_t epsilon;		/* Epsilon value for flatness testing */
+rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
+                         
+                		/* Epsilon value for flatness testing */
 {
 	register fastf_t 	max_row_dist;
 	register fastf_t 	max_col_dist;
@@ -183,10 +183,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 
 
 fastf_t 
-rt_nurb_crv_flat( crv, size, pt_type )
-fastf_t *crv;
-int	size;
-int	pt_type;
+rt_nurb_crv_flat(fastf_t *crv, int size, int pt_type)
 {
 	point_t         p1, p2;
 	vect_t          ln;

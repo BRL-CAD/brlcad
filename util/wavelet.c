@@ -62,7 +62,7 @@
 /* declarations to support use of getopt() system call */
 char *options = "W:S:s:w:n:t:#:D:12drR:";
 extern char *optarg;
-extern int optind, opterr, getopt();
+extern int optind, opterr, getopt(int, char *const *, const char *);
 
 char *progname = "(noname)";
 int img_space=1;
@@ -81,8 +81,7 @@ int	decomp_recon;
  *	U S A G E --- tell user how to invoke this program, then exit
  */
 void
-usage(s)
-char *s;
+usage(char *s)
 {
 	if (s) (void)fputs(s, stderr);
 
@@ -99,12 +98,10 @@ char *s;
  *	P A R S E _ A R G S --- Parse through command line flags
  */
 int
-parse_args(ac, av)
-int ac;
-char *av[];
+parse_args(int ac, char **av)
 {
 	int  c;
-	char *strrchr();
+	char *strrchr(const char *, int);
 
 	if ( (progname=strrchr(*av, '/')) )
 		progname++;
@@ -170,7 +167,7 @@ char *av[];
 
 
 void
-wlt_decompose_1d()
+wlt_decompose_1d(void)
 {
 	genptr_t buf, tbuf;
 	unsigned long int i, n;
@@ -230,7 +227,7 @@ wlt_decompose_1d()
 }
 
 void
-wlt_decompose_2d()
+wlt_decompose_2d(void)
 {
 	genptr_t buf, tbuf;
 	unsigned long int sample_size;
@@ -295,7 +292,7 @@ wlt_decompose_2d()
 
 
 void
-wlt_reconstruct_1d()
+wlt_reconstruct_1d(void)
 {
 	genptr_t buf, tbuf;
 	unsigned long int i, n;
@@ -360,7 +357,7 @@ wlt_reconstruct_1d()
 
 
 void
-wlt_reconstruct_2d()
+wlt_reconstruct_2d(void)
 {
 	genptr_t buf, tbuf;
 	unsigned long int sample_size;
@@ -424,9 +421,7 @@ wlt_reconstruct_2d()
  *	process input.
  */
 int
-main(ac,av)
-int ac;
-char *av[];
+main(int ac, char **av)
 {
 
 	/* parse command flags, and make sure there are arguments

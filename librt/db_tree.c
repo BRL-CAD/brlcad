@@ -126,9 +126,7 @@ db_init_db_tree_state( struct db_tree_state *tsp, struct db_i *dbip, struct reso
  *			D B _ N E W _ C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state *
-db_new_combined_tree_state( tsp, pathp )
-register const struct db_tree_state	*tsp;
-register const struct db_full_path	*pathp;
+db_new_combined_tree_state(register const struct db_tree_state *tsp, register const struct db_full_path *pathp)
 {
 	struct combined_tree_state	*new;
 
@@ -148,8 +146,7 @@ register const struct db_full_path	*pathp;
  *			D B _ D U P _ C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state *
-db_dup_combined_tree_state( old )
-const struct combined_tree_state	*old;
+db_dup_combined_tree_state(const struct combined_tree_state *old)
 {
 	struct combined_tree_state	*new;
 
@@ -166,8 +163,7 @@ const struct combined_tree_state	*old;
  *			D B _ F R E E _ C O M B I N E D _ T R E E _ S T A T E
  */
 void
-db_free_combined_tree_state( ctsp )
-register struct combined_tree_state	*ctsp;
+db_free_combined_tree_state(register struct combined_tree_state *ctsp)
 {
  	RT_CK_CTS(ctsp);
 	db_free_full_path( &(ctsp->cts_p) );
@@ -180,8 +176,7 @@ register struct combined_tree_state	*ctsp;
  *			D B _ P R _ T R E E _ S T A T E
  */
 void
-db_pr_tree_state( tsp )
-register const struct db_tree_state	*tsp;
+db_pr_tree_state(register const struct db_tree_state *tsp)
 {
 	int i;
 
@@ -212,8 +207,7 @@ register const struct db_tree_state	*tsp;
  *			D B _ P R _ C O M B I N E D _ T R E E _ S T A T E
  */
 void
-db_pr_combined_tree_state( ctsp )
-register const struct combined_tree_state	*ctsp;
+db_pr_combined_tree_state(register const struct combined_tree_state *ctsp)
 {
 	char	*str;
 
@@ -237,10 +231,7 @@ register const struct combined_tree_state	*ctsp;
  *	 1	success, this is the top of a new region.
  */
 int
-db_apply_state_from_comb( tsp, pathp, comb )
-struct db_tree_state		*tsp;
-const struct db_full_path	*pathp;
-register const struct rt_comb_internal	*comb;
+db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *pathp, register const struct rt_comb_internal *comb)
 {
 	RT_CK_DBTS(tsp);
 	RT_CK_COMB(comb);
@@ -357,10 +348,7 @@ register const struct rt_comb_internal	*comb;
  *	 0	success, member pushed on path
  */
 int
-db_apply_state_from_memb( tsp, pathp, tp )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-const union tree	*tp;
+db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, const union tree *tp)
 {
 	register struct directory *mdp;
 	mat_t			xmat;
@@ -959,11 +947,7 @@ fail:
  *	-1	error (*tsp values are not useful)
  */
 int
-db_follow_path_for_state( tsp, total_path, orig_str, noisy )
-struct db_tree_state	*tsp;
-struct db_full_path	*total_path;
-const char		*orig_str;
-int			noisy;
+db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_path, const char *orig_str, int noisy)
 {
 	struct db_full_path	new_path;
 	int			ret;
@@ -990,12 +974,7 @@ int			noisy;
  *  Helper routine for db_recurse()
  */
 HIDDEN void
-db_recurse_subtree( tp, msp, pathp, region_start_statepp, client_data )
-union tree		*tp;
-struct db_tree_state	*msp;
-struct db_full_path	*pathp;
-struct combined_tree_state	**region_start_statepp;
-genptr_t	client_data;
+db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, genptr_t client_data)
 {
 	struct db_tree_state	memb_state;
 	union tree		*subtree;
@@ -1079,11 +1058,7 @@ out:
  *  It is not intended to be used for collecting state.
  */
 union tree *
-db_recurse( tsp, pathp, region_start_statepp, client_data )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-struct combined_tree_state	**region_start_statepp;
-genptr_t	client_data;
+db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, genptr_t client_data)
 {
 	struct directory	*dp;
 	struct rt_db_internal	intern;
@@ -1943,11 +1918,7 @@ db_tally_subtree_regions(
 
 /* ============================== */
 
-HIDDEN union tree *db_gettree_region_end( tsp, pathp, curtree, client_data )
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-genptr_t		client_data;
+HIDDEN union tree *db_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
 
 	RT_CK_DBTS(tsp);
@@ -1963,11 +1934,7 @@ genptr_t		client_data;
 	return(curtree);
 }
 
-HIDDEN union tree *db_gettree_leaf( tsp, pathp, ip, client_data )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-struct rt_db_internal	*ip;
-genptr_t		client_data;
+HIDDEN union tree *db_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
 	register union tree	*curtree;
 
@@ -2106,9 +2073,7 @@ db_walk_subtree(
  *  Pick off the next region's tree, and walk it.
  */
 HIDDEN void
-db_walk_dispatcher( cpu, arg )
-int		cpu;
-genptr_t	arg;
+db_walk_dispatcher(int cpu, genptr_t arg)
 {
 	struct combined_tree_state	*region_start_statep;
 	int		mine;
@@ -2234,31 +2199,31 @@ genptr_t	arg;
  *	 0	OK
  */
 int
-db_walk_tree( dbip, argc, argv, ncpu, init_state, reg_start_func, reg_end_func, leaf_func, client_data )
-struct db_i	*dbip;
-int		argc;
-const char	**argv;
-int		ncpu;
-const struct db_tree_state *init_state;
-int		(*reg_start_func) BU_ARGS((
-			struct db_tree_state * /*tsp*/,
-			struct db_full_path * /*pathp*/,
-			const struct rt_comb_internal * /* combp */,
-			genptr_t client_data
-		));
-union tree *	(*reg_end_func) BU_ARGS((
-			struct db_tree_state * /*tsp*/,
-			struct db_full_path * /*pathp*/,
-			union tree * /*curtree*/,
-			genptr_t client_data
-		));
-union tree *	(*leaf_func) BU_ARGS((
-			struct db_tree_state * /*tsp*/,
-			struct db_full_path * /*pathp*/,
-			struct rt_db_internal * /*ip*/,
-			genptr_t client_data
-		));
-genptr_t	client_data;
+db_walk_tree(struct db_i *dbip, int argc, const char **argv, int ncpu, const struct db_tree_state *init_state, int (*reg_start_func) (struct db_tree_state *, struct db_full_path *, const struct rt_comb_internal *, genptr_t), union tree *(*reg_end_func) (struct db_tree_state *, struct db_full_path *, union tree *, genptr_t), union tree *(*leaf_func) (struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, genptr_t), genptr_t client_data)
+           	      
+   		     
+          	       
+   		     
+                                       
+   		                           
+			                       /*tsp*/ 
+			                      /*pathp*/ 
+			                                /* combp */ 
+			                    
+		   
+            	                         
+			                       /*tsp*/ 
+			                      /*pathp*/ 
+			             /*curtree*/ 
+			                    
+		   
+            	                      
+			                       /*tsp*/ 
+			                      /*pathp*/ 
+			                        /*ip*/ 
+			                    
+		   
+        	            
 {
 	union tree		*whole_tree = TREE_NULL;
 	int			new_reg_count;
@@ -2502,12 +2467,7 @@ db_path_to_mat(
  *  the region has already been finalized above this point in the tree.
  */
 void
-db_apply_anims(pathp, dp, stack, arc, materp)
-struct db_full_path *pathp;
-struct directory *dp;
-mat_t	stack;
-mat_t	arc;
-struct mater_info *materp;
+db_apply_anims(struct db_full_path *pathp, struct directory *dp, fastf_t *stack, fastf_t *arc, struct mater_info *materp)
 {
 	register struct animate *anp;
 	register int i,j;

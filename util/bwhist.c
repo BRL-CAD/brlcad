@@ -41,9 +41,7 @@ FBIO	*fbp;
 static char *Usage = "usage: bwhist [-v] [file.bw]\n";
 
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	register int i;
 	int	n;

@@ -41,15 +41,13 @@ char *options = "uhs:w:n:f:";
 char *progname = "(noname)";
 char *filename = "(stdin)";
 
-void shrink_image(), usample_image();
+void shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor), usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor);
 
 /*	R E A D _ I M A G E
  *
  *	read image into memory
  */
-UCHAR *read_image(scanlen, Width, Height, buffer)
-int scanlen, Width, Height;
-UCHAR *buffer;
+UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
 {
 	int total_bytes, in_bytes;
 	int	count = 0;
@@ -79,9 +77,7 @@ UCHAR *buffer;
  *
  *
  */
-void write_image(Width, Height, buffer)
-int Width, Height;
-UCHAR *buffer;
+void write_image(int Width, int Height, unsigned char *buffer)
 {
 	int	count = 0;
 	int	out_bytes, total_bytes;
@@ -104,9 +100,7 @@ UCHAR *buffer;
  *	
  */
 void
-shrink_image(scanlen, Width, Height, buffer, Factor)
-UCHAR *buffer;
-int scanlen, Factor, Width, Height;
+shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor)
 {
 	UCHAR *pixelp, *finalpixel;
 	unsigned int p[3];
@@ -146,9 +140,7 @@ int scanlen, Factor, Width, Height;
  *	Undersample image pixels
  */
 void
-usample_image(scanlen, Width, Height, buffer, Factor)
-UCHAR *buffer;
-int scanlen, Factor, Width, Height;
+usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor)
 {
 	register int t, x, y;
 
@@ -178,7 +170,7 @@ int method = METH_BOXCAR;
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
-void usage()
+void usage(void)
 {
 	(void) fprintf(stderr,
 "Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
@@ -190,9 +182,7 @@ void usage()
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
  */
-void parse_args(ac, av)
-int ac;
-char *av[];
+void parse_args(int ac, char **av)
 {
 	int  c;
 
@@ -248,9 +238,7 @@ char *av[];
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(ac,av)
-int ac;
-char *av[];
+int main(int ac, char **av)
 {
 	UCHAR *buffer = (UCHAR *)NULL;
 

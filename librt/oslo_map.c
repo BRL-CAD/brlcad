@@ -35,14 +35,14 @@
  */
 
 void
-rt_nurb_map_oslo( oslo, old_pts, new_pts, o_stride, n_stride, lower, upper, pt_type)
-struct oslo_mat *oslo;			/* Oslo matrix  */
-fastf_t *old_pts;			/* Old control points */
-fastf_t *new_pts;			/* New control points */
-int	o_stride;			/* inc to next point of old mesh*/
-int	n_stride;			/* inc to next point of new mesh*/
-int	lower,  upper;	/* Upper and lower bounds for curve generation */
-int	pt_type;
+rt_nurb_map_oslo(struct oslo_mat *oslo, fastf_t *old_pts, fastf_t *new_pts, int o_stride, int n_stride, int lower, int upper, int pt_type)
+                      			/* Oslo matrix  */
+                 			/* Old control points */
+                 			/* New control points */
+   	         			/* inc to next point of old mesh*/
+   	         			/* inc to next point of new mesh*/
+   	              	/* Upper and lower bounds for curve generation */
+   	        
 {
 	register fastf_t *c_ptr;		/* new curve pointer */
 	register fastf_t *o_pts;

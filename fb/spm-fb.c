@@ -37,8 +37,8 @@ static char	*file_name;
 static int	square = 0;
 static int	vsize;
 
-void spm_fb();
-void spm_square();
+void spm_fb(spm_map_t *mapp);
+void spm_square(register spm_map_t *mapp);
 
 static char usage[] = "\
 Usage: spm-fb [-h -s] [-F framebuffer]\n\
@@ -46,8 +46,7 @@ Usage: spm-fb [-h -s] [-F framebuffer]\n\
 	vsize [filename]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -100,9 +99,7 @@ register char **argv;
  *			M A I N
  */
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	register spm_map_t	*mp;
 
@@ -138,8 +135,7 @@ char	**argv;
  *  Displays a sphere map on a framebuffer.
  */
 void
-spm_fb( mapp )
-spm_map_t *mapp;
+spm_fb(spm_map_t *mapp)
 {
 	register int	j;
 
@@ -162,8 +158,7 @@ spm_map_t *mapp;
  *  Display a square sphere map on a framebuffer.
  */
 void
-spm_square( mapp )
-register spm_map_t *mapp;
+spm_square(register spm_map_t *mapp)
 {
 	register int	x, y;
 	register unsigned char	*scanline;

@@ -165,15 +165,14 @@
 #define     REOF		    mk_inst_1(REOFOp,0)
 					/* Really opcode only */
 
-extern char *vax_pshort();
+extern char *vax_pshort(register char *msgp, register short unsigned int s);
 
 /*****************************************************************
  * TAG( RunSetup )
  * Put out initial setup data for RLE files.
  */
 void
-RunSetup(the_hdr)
-register rle_hdr * the_hdr;
+RunSetup(register rle_hdr *the_hdr)
 {
     struct XtndRsetup setup;
     register FILE * rle_fd = the_hdr->rle_file;
@@ -271,9 +270,7 @@ register rle_hdr * the_hdr;
  * Skip one or more blank lines in the RLE file.
  */
 void
-RunSkipBlankLines(nblank, the_hdr)
-int nblank;
-register rle_hdr * the_hdr;
+RunSkipBlankLines(int nblank, register rle_hdr *the_hdr)
 {
     register FILE * rle_fd = the_hdr->rle_file;
     RSkipLines(nblank);
@@ -285,9 +282,7 @@ register rle_hdr * the_hdr;
  * color: 0 = Red, 1 = Green, 2 = Blue.
  */
 void
-RunSetColor(c, the_hdr)
-int c;
-register rle_hdr * the_hdr;
+RunSetColor(int c, register rle_hdr *the_hdr)
 {
     register FILE * rle_fd = the_hdr->rle_file;
     RSetColor(c);
@@ -300,9 +295,7 @@ register rle_hdr * the_hdr;
 
 /* ARGSUSED */
 void
-RunSkipPixels(nskip, last, wasrun, the_hdr)
-int nskip, last, wasrun;
-register rle_hdr * the_hdr;
+RunSkipPixels(int nskip, int last, int wasrun, register rle_hdr *the_hdr)
 {
     register FILE * rle_fd = the_hdr->rle_file;
     if (! last && nskip > 0)
@@ -317,9 +310,7 @@ register rle_hdr * the_hdr;
  * operation, only generate code if the newline flag is true.
  */
 void
-RunNewScanLine(flag, the_hdr)
-int flag;
-register rle_hdr * the_hdr;
+RunNewScanLine(int flag, register rle_hdr *the_hdr)
 {
     register FILE * rle_fd = the_hdr->rle_file;
     if (flag)
@@ -333,10 +324,7 @@ register rle_hdr * the_hdr;
  * Put one or more pixels of byte data into the output file.
  */
 void
-Runputdata(buf, n, the_hdr)
-rle_pixel * buf;
-int n;
-register rle_hdr * the_hdr;
+Runputdata(rle_pixel *buf, int n, register rle_hdr *the_hdr)
 {
     register FILE * rle_fd = the_hdr->rle_file;
     if (n == 0)
@@ -355,9 +343,7 @@ register rle_hdr * the_hdr;
 
 /* ARGSUSED */
 void
-Runputrun(color, n, last, the_hdr)
-int color, n, last;
-register rle_hdr * the_hdr;
+Runputrun(int color, int n, int last, register rle_hdr *the_hdr)
 {
     register FILE * rle_fd = the_hdr->rle_file;
     RRunData(n-1,color);
@@ -369,8 +355,7 @@ register rle_hdr * the_hdr;
  * Output an EOF opcode
  */
 void
-RunputEof( the_hdr )
-register rle_hdr * the_hdr;
+RunputEof(register rle_hdr *the_hdr)
 {
     register FILE * rle_fd = the_hdr->rle_file;
     REOF;

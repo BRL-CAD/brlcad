@@ -57,8 +57,7 @@ short iobuf[BUFLEN];		/* input buffer */
 int mapbuf[65536];		/* translation buffer/lookup table */
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 	double	d;
@@ -129,7 +128,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
-void mk_trans_tbl()
+void mk_trans_tbl(void)
 {
 	register int i, j;
 	register double d;
@@ -159,9 +158,7 @@ void mk_trans_tbl()
 	}
 }
 
-int main( argc, argv )
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 	register short *p, *q;
 	register int i;

@@ -43,7 +43,7 @@ static char			host[128];
 static rle_pixel		**rows;
 static time_t			now;
 static char			*who;
-extern char			*getenv();
+extern char			*getenv(const char *);
 
 static FILE	*infp;
 static char	*infile;
@@ -65,8 +65,7 @@ and the .rle file is written to stdout\n";
  *			G E T _ A R G S
  */
 static int
-get_args( argc, argv )
-register char	**argv;
+get_args(int argc, register char **argv)
 {
 	register int	c;
 
@@ -136,9 +135,7 @@ register char	**argv;
  *			M A I N
  */
 int
-main( argc, argv )
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
 	register RGBpixel *scan_buf;
 	register int	y;

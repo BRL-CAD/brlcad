@@ -50,10 +50,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define M_SQRT2_DIV2       0.70710678118654752440
 #endif
 
-static void adc_print_vars();
+static void adc_print_vars(void);
 
 void
-adc_set_dirty_flag()
+adc_set_dirty_flag(void)
 {
   struct dm_list *dmlp;
 
@@ -63,7 +63,7 @@ adc_set_dirty_flag()
 }
 
 void
-adc_set_scroll()
+adc_set_scroll(void)
 {
   struct dm_list *dmlp;
   struct dm_list *save_dmlp;
@@ -81,7 +81,7 @@ adc_set_scroll()
 }
 
 static void
-adc_model_To_adc_view()
+adc_model_To_adc_view(void)
 {
   MAT4X3PNT(adc_state->adc_pos_view, view_state->vs_vop->vo_model2view, adc_state->adc_pos_model);
   adc_state->adc_dv_x = adc_state->adc_pos_view[X] * GED_MAX;
@@ -89,7 +89,7 @@ adc_model_To_adc_view()
 }
 
 static void
-adc_grid_To_adc_view()
+adc_grid_To_adc_view(void)
 {
   point_t model_pt;
   point_t view_pt;
@@ -102,7 +102,7 @@ adc_grid_To_adc_view()
 }
 
 static void
-adc_view_To_adc_grid()
+adc_view_To_adc_grid(void)
 {
   point_t model_pt;
   point_t view_pt;
@@ -113,7 +113,7 @@ adc_view_To_adc_grid()
 }
 
 static void
-calc_adc_pos()
+calc_adc_pos(void)
 {
   if(adc_state->adc_anchor_pos == 1){
     adc_model_To_adc_view();
@@ -128,7 +128,7 @@ calc_adc_pos()
 }
 
 static void
-calc_adc_a1()
+calc_adc_a1(void)
 {
   if(adc_state->adc_anchor_a1){
     fastf_t dx, dy;
@@ -146,7 +146,7 @@ calc_adc_a1()
 }
 
 static void
-calc_adc_a2()
+calc_adc_a2(void)
 {
   if(adc_state->adc_anchor_a2){
     fastf_t dx, dy;
@@ -164,7 +164,7 @@ calc_adc_a2()
 }
 
 static void
-calc_adc_dst()
+calc_adc_dst(void)
 {
   if(adc_state->adc_anchor_dst){
     fastf_t dist;
@@ -183,8 +183,7 @@ calc_adc_dst()
 }
 
 static void
-draw_ticks(angle)
-fastf_t angle;
+draw_ticks(fastf_t angle)
 {
   fastf_t c_tdist;
   fastf_t d1, d2;
@@ -255,7 +254,7 @@ fastf_t angle;
  * Compute and display the angle/distance cursor.
  */
 void
-adcursor()
+adcursor(void)
 {
   fastf_t x1, Y1;	/* not "y1", due to conflict with math lib */
   fastf_t x2, y2;
@@ -339,7 +338,7 @@ adcursor()
 }
 
 static void
-adc_reset()
+adc_reset(void)
 {
   adc_state->adc_dv_x = adc_state->adc_dv_y = 0;
   adc_state->adc_dv_a1 = adc_state->adc_dv_a2 = 0;
@@ -1024,7 +1023,7 @@ f_adc (
 }
 
 static void
-adc_print_vars()
+adc_print_vars(void)
 {
   struct bu_vls vls;
 

@@ -53,7 +53,7 @@ double	add, mul, pre_gam, post_gam;	/* globals */
  *			D O _ F I L E
  */
 void
-do_file()
+do_file(void)
 {
 	char	*output_file;
 	FILE	*ifp, *ofp;
@@ -95,7 +95,7 @@ do_file()
  *			D O _ F B
  */
 void
-do_fb()
+do_fb(void)
 {
 	FBIO	*fbp;
 
@@ -111,9 +111,7 @@ do_fb()
  *			M A I N
  */
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	double	rexp, gexp, bexp;
 	double	radd, gadd, badd;

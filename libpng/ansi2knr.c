@@ -281,8 +281,8 @@ BY ANY OTHER PARTY.
      extern char *malloc();
      extern void free();
 #  else
-     extern char *malloc();
-     extern int free();
+     extern char *malloc(size_t);
+     extern int free(void *);
 #  endif
 # endif
 
@@ -312,16 +312,14 @@ BY ANY OTHER PARTY.
 #define isidfirstchar(ch) (is_alpha(ch) || (ch) == '_')
 
 /* Forward references */
-char *skipspace();
-int writeblanks();
-int test1();
-int convert1();
+char *skipspace(register char *p, register int dir);
+int writeblanks(char *start, char *end);
+int test1(char *buf);
+int convert1(char *buf, FILE *out, int header, int convert_varargs);
 
 /* The main program */
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char **argv)
 {	FILE *in, *out;
 #define bufsize 5000			/* arbitrary size */
 	char *buf;
@@ -427,9 +425,9 @@ wl:			fputs(buf, out);
 
 /* Skip over space and comments, in either direction. */
 char *
-skipspace(p, dir)
-    register char *p;
-    register int dir;			/* 1 for forward, -1 for backward */
+skipspace(register char *p, register int dir)
+                     
+                     			/* 1 for forward, -1 for backward */
 {	for ( ; ; )
 	   {	while ( is_space(*p) )
 		  p += dir;
@@ -451,9 +449,7 @@ skipspace(p, dir)
  * Don't overwrite end-of-line characters.
  */
 int
-writeblanks(start, end)
-    char *start;
-    char *end;
+writeblanks(char *start, char *end)
 {	char *p;
 	for ( p = start; p < end; p++ )
 	  if ( *p != '\r' && *p != '\n' )
@@ -475,8 +471,7 @@ writeblanks(start, end)
  * prototypes, and confuse the algorithms.
  */
 int
-test1(buf)
-    char *buf;
+test1(char *buf)
 {	register char *p = buf;
 	char *bend;
 	char *endfn;
@@ -527,11 +522,11 @@ test1(buf)
 
 /* Convert a recognized function definition or header to K&R syntax. */
 int
-convert1(buf, out, header, convert_varargs)
-    char *buf;
-    FILE *out;
-    int header;			/* Boolean */
-    int convert_varargs;	/* Boolean */
+convert1(char *buf, FILE *out, int header, int convert_varargs)
+              
+              
+               			/* Boolean */
+                        	/* Boolean */
 {	char *endfn;
 	register char *p;
 	char **breaks;

@@ -49,7 +49,7 @@ struct atoms atom_list[50];
 char * matname = "plastic";
 char * matparm = "shine=100.0 diffuse=.8 specular=.2";
 
-void	read_data(), process_sphere();
+void	read_data(void), process_sphere(int id, fastf_t *center, double rad, int sph_type);
 int	make_bond( int sp1, int sp2 );
 
 struct wmember head;
@@ -59,9 +59,7 @@ static const char usage[] = "Usage: molecule db_title < mol-cube.dat > mol.g\n";
 struct rt_wdb	*outfp;
 
 int
-main(argc, argv)
-int argc;
-char ** argv;
+main(int argc, char **argv)
 {
 
 	if( argc != 2 )  {
@@ -94,7 +92,7 @@ char ** argv;
  * ATOM_NAME = Character pointer to name value.
  */
 void
-read_data( )
+read_data(void)
 {
 
 	int             data_type;
@@ -144,11 +142,7 @@ read_data( )
 }
 
 void
-process_sphere(id, center, rad, sph_type)
-int	id;
-point_t	center;
-double	rad;
-int	sph_type;
+process_sphere(int id, fastf_t *center, double rad, int sph_type)
 {
 	struct sphere * new = (struct sphere *)
 	    malloc( sizeof ( struct sphere) );

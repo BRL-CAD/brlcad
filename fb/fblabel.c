@@ -62,11 +62,10 @@ static char	*textstring;
 static int	debug;
 static int	alias_off;
 
-void	do_char(), do_line(), squash(), fill_buf();
+void	do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y), do_line(register struct vfont *vfp, register char *line), squash(register int *buf0, register int *buf1, register int *buf2, register float *ret_buf, register int n), fill_buf(register int wid, register int *buf, register char *bitrow);
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 
 	register int c;
@@ -152,9 +151,7 @@ register char **argv;
 
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	struct	vfont	*vfp;
 
@@ -185,9 +182,7 @@ char **argv;
 }
 
 void
-do_line( vfp, line )
-register struct vfont	*vfp;
-register char		*line;
+do_line(register struct vfont *vfp, register char *line)
 {
 	register int    currx;
 	register int    char_count, char_id;
@@ -238,10 +233,7 @@ register char		*line;
 }
 
 void
-do_char( vfp, vdp, x, y )
-struct vfont	*vfp;
-struct vfont_dispatch	*vdp;
-int x, y;
+do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
 {	
 	register int    i, j;
 	int		base;
@@ -313,9 +305,7 @@ int x, y;
 	 Extract a bit field from a bit string.
   */
 int
-bitx( bitstring, posn )
-register char *bitstring;
-register int posn;
+bitx(register char *bitstring, register int posn)
 {
 	for (; posn >= 8; posn -= 8, bitstring++);
 #if defined( CANT_DO_ZERO_SHIFT )
@@ -347,10 +337,7 @@ register int posn;
 	assumed to be only 0 or 1.
  */
 void
-squash( buf0, buf1, buf2, ret_buf, n )
-register int	*buf0, *buf1, *buf2;	
-register float	*ret_buf;
-register int	n;
+squash(register int *buf0, register int *buf1, register int *buf2, register float *ret_buf, register int n)
 {
 	register int    j;
 
@@ -383,10 +370,7 @@ register int	n;
 	correct position.
  */
 void
-fill_buf( wid, buf, bitrow )
-register int	wid;
-register int	*buf;
-register char	*bitrow;
+fill_buf(register int wid, register int *buf, register char *bitrow)
 {
 	register int    j;
 

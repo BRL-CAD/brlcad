@@ -27,26 +27,26 @@
 #include "externs.h"
 #include "./fblocal.h"
 
-_LOCAL_ int	DEVNAME_open(),
-		DEVNAME_close(),
-		DEVNAME_clear(),
-		DEVNAME_read(),
-		DEVNAME_write(),
-		DEVNAME_rmap(),
-		DEVNAME_wmap(),
-		DEVNAME_view(),
-		DEVNAME_getview(),
-		DEVNAME_setcursor(),
-		DEVNAME_cursor(),
-		DEVNAME_getcursor(),
-		DEVNAME_readrect(),
-		DEVNAME_writerect(),
+_LOCAL_ int	DEVNAME_open(FBIO *ifp, char *file, int width, int height),
+		DEVNAME_close(FBIO *ifp),
+		DEVNAME_clear(FBIO *ifp, unsigned char *pp),
+		DEVNAME_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
+		DEVNAME_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
+		DEVNAME_rmap(FBIO *ifp, ColorMap *cmp),
+		DEVNAME_wmap(FBIO *ifp, const ColorMap *cmp),
+		DEVNAME_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
+		DEVNAME_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
+		DEVNAME_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
+		DEVNAME_cursor(FBIO *ifp, int mode, int x, int y),
+		DEVNAME_getcursor(FBIO *ifp, int *mode, int *x, int *y),
+		DEVNAME_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
+		DEVNAME_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
 		DEVNAME_bwreadrect(),
 		DEVNAME_bwwriterect(),
-		DEVNAME_poll(),
-		DEVNAME_flush(),
-		DEVNAME_free(),
-		DEVNAME_help();
+		DEVNAME_poll(FBIO *ifp),
+		DEVNAME_flush(FBIO *ifp),
+		DEVNAME_free(FBIO *ifp),
+		DEVNAME_help(FBIO *ifp);
 
 /* This is the ONLY thing that we normally "export" */
 FBIO DEVNAME_interface =  {
@@ -93,156 +93,110 @@ FBIO DEVNAME_interface =  {
 };
 
 _LOCAL_ int
-DEVNAME_open( ifp, file, width, height )
-FBIO	*ifp;
-char	*file;
-int	width, height;
+DEVNAME_open(FBIO *ifp, char *file, int width, int height)
 {
 	FB_CK_FBIO(ifp);
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_close( ifp )
-FBIO	*ifp;
+DEVNAME_close(FBIO *ifp)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_clear( ifp, pp )
-FBIO	*ifp;
-unsigned char	*pp;
+DEVNAME_clear(FBIO *ifp, unsigned char *pp)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_read( ifp, x, y, pixelp, count )
-FBIO	*ifp;
-int	x, y;
-unsigned char	*pixelp;
-int	count;
+DEVNAME_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
 	return(count);
 }
 
 _LOCAL_ int
-DEVNAME_write( ifp, x, y, pixelp, count )
-FBIO	*ifp;
-int	x, y;
-const unsigned char	*pixelp;
-int	count;
+DEVNAME_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
 	return(count);
 }
 
 _LOCAL_ int
-DEVNAME_rmap( ifp, cmp )
-FBIO	*ifp;
-ColorMap	*cmp;
+DEVNAME_rmap(FBIO *ifp, ColorMap *cmp)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_wmap( ifp, cmp )
-FBIO	*ifp;
-const ColorMap	*cmp;
+DEVNAME_wmap(FBIO *ifp, const ColorMap *cmp)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_view( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	xcenter, ycenter;
-int	xzoom, yzoom;
+DEVNAME_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_getview( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	*xcenter, *ycenter;
-int	*xzoom, *yzoom;
+DEVNAME_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
-FBIO	*ifp;
-const unsigned char *bits;
-int	xbits, ybits;
-int	xorig, yorig;
+DEVNAME_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_cursor( ifp, mode, x, y )
-FBIO	*ifp;
-int	mode;
-int	x, y;
+DEVNAME_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_getcursor( ifp, mode, x, y )
-FBIO	*ifp;
-int	*mode;
-int	*x, *y;
+DEVNAME_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_readrect( ifp, xmin, ymin, width, height, pp )
-FBIO	*ifp;
-int	xmin, ymin;
-int	width, height;
-unsigned char	*pp;
+DEVNAME_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	return( width*height );
 }
 
 _LOCAL_ int
-DEVNAME_writerect( ifp, xmin, ymin, width, height, pp )
-FBIO	*ifp;
-int	xmin, ymin;
-int	width, height;
-const unsigned char	*pp;
+DEVNAME_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	return( width*height );
 }
 
 _LOCAL_ int
-DEVNAME_poll( ifp )
-FBIO	*ifp;
+DEVNAME_poll(FBIO *ifp)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_flush( ifp )
-FBIO	*ifp;
+DEVNAME_flush(FBIO *ifp)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_free( ifp )
-FBIO	*ifp;
+DEVNAME_free(FBIO *ifp)
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_help( ifp )
-FBIO	*ifp;
+DEVNAME_help(FBIO *ifp)
 {
 	fb_log( "Description: %s\n", DEVNAME_interface.if_type );
 	fb_log( "Device: %s\n", ifp->if_name );

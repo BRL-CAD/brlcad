@@ -29,9 +29,7 @@ float	obuf[512];
 static char usage[] = "\
 Usage: i-f [-n || scale] < shorts > floats\n";
 
-int main( argc, argv )
-int	argc;
-char	**argv;
+int main(int argc, char **argv)
 {
 	int	i, num;
 	double	scale;

@@ -37,26 +37,26 @@
 #include "fbserv_obj.h"
 
 /* defined in libfb/tcl.c */
-extern int fb_refresh();
+extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 
-static int fbo_open_tcl();
-static int fbo_cell_tcl();
-static int fbo_clear_tcl();
-static int fbo_close_tcl();
-static int fbo_cursor_tcl();
-static int fbo_getcursor_tcl();
-static int fbo_getheight_tcl();
-static int fbo_getsize_tcl();
-static int fbo_getwidth_tcl();
-static int fbo_pixel_tcl();
-static int fbo_flush_tcl();
-static int fbo_listen_tcl();
-static int fbo_refresh_tcl();
-static int fbo_rect_tcl();
-static int fbo_configure_tcl();
+static int fbo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_cursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_getcursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_getheight_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_getsize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_getwidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_pixel_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_refresh_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_rect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int fbo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
-static int fbo_coords_ok();
-static int fbo_tcllist2color();
+static int fbo_coords_ok(Tcl_Interp *interp, FBIO *fbp, int x, int y);
+static int fbo_tcllist2color(Tcl_Interp *interp, char *string, unsigned char *pixel);
 
 #define FBO_CONSTRAIN(_v, _a, _b)\
 	((_v > _a) ? (_v < _b ? _v : _b) : _a)
@@ -97,18 +97,13 @@ static struct bu_cmdtab fbo_cmds[] = {
  * Returns: result of FB command.
  */
 static int
-fbo_cmd(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+fbo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	return bu_cmd(clientData, interp, argc, argv, fbo_cmds, 1);
 }
 
 int
-Fbo_Init(interp)
-Tcl_Interp *interp;
+Fbo_Init(Tcl_Interp *interp)
 {
 	BU_LIST_INIT(&HeadFBObj.l);
 	(void)Tcl_CreateCommand(interp, "fb_open", fbo_open_tcl,
@@ -121,8 +116,7 @@ Tcl_Interp *interp;
  * Called by Tcl when the object is destroyed.
  */
 static void
-fbo_deleteProc(clientData)
-     ClientData clientData;
+fbo_deleteProc(ClientData clientData)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 
@@ -141,11 +135,7 @@ fbo_deleteProc(clientData)
  *	  procname close
  */
 static int
-fbo_close_tcl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	struct bu_vls vls;
@@ -171,11 +161,7 @@ char    **argv;
  *	  fb_open [name device [args]]
  */
 static int
-fbo_open_tcl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+fbo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop;
 	FBIO *ifp;
@@ -267,11 +253,7 @@ char **argv;
  *	  procname clear [rgb]
  */
 static int
-fbo_clear_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+fbo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	int status;
@@ -318,11 +300,7 @@ fbo_clear_tcl(clientData, interp, argc, argv)
  *	  procname cursor mode x y
  */
 static int
-fbo_cursor_tcl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+fbo_cursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	int mode;
@@ -368,11 +346,7 @@ char **argv;
  *	  procname getcursor
  */
 static int
-fbo_getcursor_tcl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+fbo_getcursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	int status;
@@ -408,11 +382,7 @@ char **argv;
  *	  procname refresh [rect]
  */
 static int
-fbo_refresh_tcl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+fbo_refresh_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	int x, y, w, h;		       /* rectangle to be refreshed */
@@ -454,11 +424,7 @@ char **argv;
  *
  */
 static int
-fbo_listen_tcl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+fbo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	struct bu_vls vls;
@@ -516,11 +482,7 @@ char    **argv;
  *	  procname pixel x y [rgb]
  */
 static int
-fbo_pixel_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+fbo_pixel_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	struct bu_vls vls;
@@ -595,11 +557,7 @@ error:
  *	  procname cell xmin ymin width height color
  */
 static int
-fbo_cell_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	struct bu_vls vls;
@@ -687,11 +645,7 @@ fbo_cell_tcl(clientData, interp, argc, argv)
  *	  procname flush
  */
 static int
-fbo_flush_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+fbo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 
@@ -717,11 +671,7 @@ fbo_flush_tcl(clientData, interp, argc, argv)
  *	  procname getheight
  */
 static int
-fbo_getheight_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+fbo_getheight_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	struct bu_vls vls;
@@ -748,11 +698,7 @@ fbo_getheight_tcl(clientData, interp, argc, argv)
  *	  procname getwidth
  */
 static int
-fbo_getwidth_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+fbo_getwidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	struct bu_vls vls;
@@ -779,11 +725,7 @@ fbo_getwidth_tcl(clientData, interp, argc, argv)
  *	  procname getsize
  */
 static int
-fbo_getsize_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+fbo_getsize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	struct bu_vls vls;
@@ -813,11 +755,7 @@ fbo_getsize_tcl(clientData, interp, argc, argv)
  *	  procname cell xmin ymin width height color
  */
 static int
-fbo_rect_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+fbo_rect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	struct bu_vls vls;
@@ -914,11 +852,7 @@ fbo_rect_tcl(clientData, interp, argc, argv)
  *	  procname configure width height
  */
 int
-fbo_configure_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+fbo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
 	int width, height;
@@ -973,11 +907,7 @@ fbo__tcl(clientData, interp, argc, argv)
 
 /****************** utility routines ********************/
 static int
-fbo_coords_ok(interp, fbp, x, y) 
-     Tcl_Interp *interp;
-     FBIO *fbp;
-     int x;
-     int y;
+fbo_coords_ok(Tcl_Interp *interp, FBIO *fbp, int x, int y)
 {
 	int	    width;
 	int	    height;
@@ -1019,10 +949,7 @@ fbo_coords_ok(interp, fbp, x, y)
 }
 
 static int
-fbo_tcllist2color(interp, string, pixel)
-     Tcl_Interp *interp;
-     char *string;
-     RGBpixel pixel;
+fbo_tcllist2color(Tcl_Interp *interp, char *string, unsigned char *pixel)
 {
     int r, g, b;
 

@@ -98,10 +98,7 @@ static struct overlap_list *olist=NULL;	/* root of the list */
  */
 /*ARGSUSED*/
 int
-hit( ap, PartHeadp, segHeadp )
-struct application *ap;
-register struct partition *PartHeadp;
-struct seg		*segHeadp;
+hit(struct application *ap, register struct partition *PartHeadp, struct seg *segHeadp)
 {
 	return	1;
 }
@@ -113,8 +110,7 @@ struct seg		*segHeadp;
  */
 /*ARGSUSED*/
 int
-miss( ap )
-struct application *ap;
+miss(struct application *ap)
 {
 	return	0;
 }
@@ -127,11 +123,7 @@ struct application *ap;
  *  from the boolean evaluation.
  */
 int
-overlap( ap, pp, reg1, reg2 )
-struct application	*ap;
-struct partition	*pp;
-struct region		*reg1;
-struct region		*reg2;
+overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2)
 {	
 	register struct xray	*rp = &ap->a_ray;
 	register struct hit	*ihitp = pp->pt_inhit;
@@ -229,10 +221,7 @@ struct region		*reg2;
  *  Called once for this run.
  */
 int
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
-int minus_o;
+view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 	ap->a_hit = hit;
 	ap->a_miss = miss;
@@ -250,8 +239,7 @@ int minus_o;
  *  Called at the beginning of each frame
  */
 void
-view_2init( ap )
-register struct application *ap;
+view_2init(register struct application *ap)
 {
 	register struct rt_i *rtip = ap->a_rt_i;
 	
@@ -321,7 +309,7 @@ static void print_overlap_summary(void) {
  *  Called at the end of each frame
  */
 void
-view_end() {
+view_end(void) {
 	pl_flush(outfp);
 	fflush(outfp);
 	/*	bu_log("%d overlap%c detected\n\n", noverlaps, (noverlaps==1)?(char)NULL:'s');*/
@@ -403,10 +391,10 @@ view_end() {
 /*
  *	Stubs
  */
-void view_pixel() {}
+void view_pixel(void) {}
 
-void view_eol() {}
+void view_eol(void) {}
 
-void view_setup() {}
-void view_cleanup() {}
-void application_init () {}
+void view_setup(void) {}
+void view_cleanup(void) {}
+void application_init (void) {}

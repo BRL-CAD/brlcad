@@ -24,9 +24,7 @@
 #include <stdio.h>
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	double addend, temp;
 	int i,j,doit, of, count, val, *col_list;

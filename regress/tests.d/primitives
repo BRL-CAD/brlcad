@@ -754,7 +754,7 @@ if [ $? != 0 ] ; then
     return 1
 fi
 
-cat > moss.asc << EOF
+cat << EOF | $BIN/asc2g - moss.g
 I 0 v4
 Gary Moss\'s "World on a Platter"
 S 16 tor 6 4.916235923767e+00 -3.280223083496e+01 3.171177673340e+01 0.000000000000e+00 5.079999923706e+00 0.000000000000e+00 -1.796051025391e+01 0.000000000000e+00 1.796051025391e+01 -1.796051025391e+01 0.000000000000e+00 -1.796051025391e+01 -1.436841011047e+01 0.000000000000e+00 1.436841011047e+01 -1.436840915680e+01 0.000000000000e+00 -1.436840915680e+01 -2.155261230469e+01 0.000000000000e+00 2.155261230469e+01 -2.155261230469e+01 0.000000000000e+00 -2.155261230469e+01 
@@ -784,7 +784,6 @@ M u ellipse.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.4679292
 M u tor.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0 
 M u light.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0 
 EOF
-$BIN/asc2g moss.asc moss.g
 
 if [ $? != 0 ] ; then
     warn "asc2g failed"
@@ -832,7 +831,7 @@ mater arb7.r "plastic" 200 120 120 0
 
 in arb8.s arb8 0 -128 0 0 -64 0 0 -64 32 0 -128 32 -64 -128 0 -64 -64 0 -64 -64 32 -64 -128 32
 r arb8.r u arb8.s
-mater arb8.r "plastic di=.9 sp=.5" 200 180 0 0
+mater arb8.r "plastic {di .9 sp .5}" 200 180 0 0
 
 
 #
@@ -842,9 +841,9 @@ in sph.s sph -32 0 32 32
 r sph.r u sph.s
 mater sph.r "plastic re=0.2" 255 255 255 0
 
-in ell.s ell -32 0 96 8 0 0 0 16 0 0 0 32
+in ellg.s ell -32 0 96 8 0 0 0 16 0 0 0 32
 r ell.r u ell.s
-mater ell.r "plastic sp=.4 di=.6" 255 120 120 0
+mater ellg.r "plastic {sp .4 di .6}" 255 120 120 0
 
 #
 #  Tori
@@ -855,7 +854,7 @@ mater tor.r plastic 200 200 255 0
 
 in eto.s eto 64 0 32 0 0 1 12 0 12 24 4
 r eto.r u eto.s
-mater eto.r "plastic sp=.4 di=.9" 155 155 255 0
+mater eto.r "plastic {sp .4 di .9}" 155 155 255 0
 
 #
 # Cylinders
@@ -874,7 +873,7 @@ mater trc.r plastic 50 200 200 0
 
 in rec.s rec 54 -80 32 0 0 16 0 12 0 8 0 0
 r rec.r u rec.s
-mater rec.r "plastic sp=.4 di=.9 re=.1" 250 250 210 0
+mater rec.r "plastic {sp .4 di .9 re .1}" 250 250 210 0
 
 
 #
@@ -902,8 +901,7 @@ mater rpc.r plastic 128 128 255 0
 #
 # Extruded bit-map
 #
-#db put ebm.s ebm file ebm.bw w 32 n 32 d 32 mat {1 0 0 -82  0 1 0 -64   0 0 1 0  0 0 0 0.05}
-db put ebm.s ebm F ebm.bw W 32 N 32 H 32 M {1 0 0 -82  0 1 0 -64   0 0 1 0  0 0 0 0.05}
+db put ebm.s ebm file ebm.bw w 32 n 32 d 32 mat {1 0 0 -82  0 1 0 -64   0 0 1 0  0 0 0 0.05}
 r ebm.r u ebm.s
 
 #
@@ -924,7 +922,7 @@ mater particle.r plastic 255 100 100 0
 
 in light1.s sph 141.642 12.8892 176.202 10
 r light1.r u light1.s
-mater light1.r "light shadows=1" 255 255 255 0
+mater light1.r "light shadow=1" 255 255 255 0
 
 # Group it all together
 g all.g *.r
@@ -947,19 +945,19 @@ fi
 mv solids.view solids.orig
 sed "s,^rt,$BIN/rt -B -P 1 ," < solids.orig > solids.view
 rm solids.orig
-chmod a+x ./solids.view
+chmod 775 solids
 
 log 'rendering solids...'
 ./solids.view
-if [ ! -f solids.view.pix ] ; then
+if [ ! -f solids.pix ] ; then
 	warn "solids raytrace failed"
         return 1
 else
-	if [ ! -f $REGRESS_DIR/tests.d/ref/solids.pix ] ; then
+	if [ ! -f $REGRESS_DIR/tests.d/reference/solids.pix ] ; then
 		warn "No reference file for solids.pix"
                 return 1
 	else
-		$BIN/pixdiff solids.view.pix $REGRESS_DIR/tests.d/ref/solids.pix \
+		$BIN/pixdiff solids.pix $REGRESS_DIR/tests.d/reference/solids.pix \
 		> solids.pix.diff \
 		2>> solids-diff.log
 
@@ -986,12 +984,12 @@ if [ ! -f moss.pix ] ; then
 	warn "moss raytrace failed"
         return 1
 else
-	if [ ! -f $REGRESS_DIR/tests.d/ref/moss.pix ] ; then
+	if [ ! -f $REGRESS_DIR/brlcad/regress/tests.d/reference/moss.pix ] ; then
 		warn "No reference file for moss.pix"
                 return 1
 	else
 		$BIN/pixdiff moss.pix \
-			$REGRESS_DIR/tests.d/ref/moss.pix \
+			$REGRESS_DIR/tests.d/reference/moss.pix \
 			> moss.pix.diff \
 			2> moss-diff.log
 
@@ -1003,13 +1001,6 @@ fi
 return 0
 }
 
-
-clean ( ) {
-	rm -f dsp.dat ebm.bw solids.view solids.g solids.log solids.pix solids.pix.diff moss.pix moss.pix.diff moss.pix.log
-	rm -f moss-diff.log mged_solids.log moss.asc moss.g solids.view.log solids.view.pix
-
-	return 0
-}
 
 status ( ) {
     if [ ! -f $REGRESS_DIR/dsp.dat ] ; then

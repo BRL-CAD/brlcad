@@ -51,8 +51,7 @@ Usage: fb-bw [-h -i]\n\
 	[-s squaresize] [-w width] [-n height] [file.bw]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -109,8 +108,7 @@ register char **argv;
 }
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int	x, y;
 	int	xin, yin;		/* number of sceen output lines */

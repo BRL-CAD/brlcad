@@ -59,11 +59,7 @@
  *	be addressed by an rle_pixel).
  */
 rle_pixel **
-buildmap( the_hdr, minmap, orig_gamma, new_gamma )
-rle_hdr *the_hdr;
-int minmap;
-double orig_gamma;
-double new_gamma;
+buildmap(rle_hdr *the_hdr, int minmap, double orig_gamma, double new_gamma)
 {
     rle_pixel ** cmap, * gammap;
     double gamma;

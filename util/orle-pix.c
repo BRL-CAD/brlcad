@@ -42,18 +42,16 @@ static char	*usage[] =
 static FILE	*fp;
 static RGBpixel	bgpixel;
 static int	bgflag = 0;
-static int	pars_Argv();
+static int	pars_Argv(int argc, register char **argv);
 static int	xpos, ypos;
 static int	xlen = -1, ylen = -1;
-static void	prnt_Cmap();
-static void	prnt_Usage();
+static void	prnt_Cmap(ColorMap *cmap);
+static void	prnt_Usage(void);
 static int	non_linear_cmap = 0;
 
 /*	m a i n ( )							*/
 int
-main( argc, argv )
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {	
 	register int	scan_ln;
 	register int	fb_size = 512;
@@ -149,9 +147,8 @@ char	*argv[];
 
 /*	p a r s _ A r g v ( )						*/
 static int
-pars_Argv( argc, argv )
-register char	**argv;
-	{	register int	c;
+pars_Argv(int argc, register char **argv)
+{	register int	c;
 		extern int	optind;
 		extern char	*optarg;
 	/* Parse options.						*/
@@ -225,17 +222,16 @@ register char	**argv;
 	Print usage message.
  */
 static void
-prnt_Usage()
-	{	register char	**p = usage;
+prnt_Usage(void)
+{	register char	**p = usage;
 	while( *p )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
 	}
 
 static void
-prnt_Cmap( cmap )
-ColorMap	*cmap;
-	{	register unsigned short	*cp;
+prnt_Cmap(ColorMap *cmap)
+{	register unsigned short	*cp;
 		register int	i;
 	(void) fprintf( stderr, "\t\t\t_________ Color map __________\n" );
 	(void) fprintf( stderr, "Red segment :\n" );

@@ -30,8 +30,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtgeom.h"
 #include "wdb.h"
 
-static int ascii_to_brlcad();
-static void descr_to_nmg();
+static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name);
+static void descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext);
 
 char		usage[] = "Usage: %s [file]\n";
 extern char	*optarg;
@@ -43,9 +43,7 @@ extern int	optind;
  *	Get ascii input file and output file names.
  */
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
 	char		*afile, *bfile = "nmg.g";
 	FILE		*fpin;
@@ -90,10 +88,7 @@ char	*argv[];
  *	Write the nmg to a brl-cad style data base.
  */
 void
-create_brlcad_db(fpout, m, reg_name, grp_name)
-struct rt_wdb	*fpout;
-char		*grp_name, *reg_name;
-struct model	*m;
+create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name)
 {
 	char	*rname, *sname;
 
@@ -117,10 +112,7 @@ struct model	*m;
  *	Convert an ascii nmg description into a BRL-CAD data base.
  */
 static int
-ascii_to_brlcad(fpin, fpout, reg_name, grp_name)
-FILE	*fpin;
-struct rt_wdb *fpout;
-char	*reg_name, *grp_name;
+ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name)
 {
 	struct model	*m;
 	struct nmgregion	*r;
@@ -172,10 +164,10 @@ char	*reg_name, *grp_name;
  *	(This should be done with lex and yacc.)
  */
 static void
-descr_to_nmg(s, fp, Ext)
-struct shell	*s;	/* NMG shell to add loops to. */
-FILE		*fp;	/* File pointer for ascii nmg file. */
-vect_t		Ext;	/* Extrusion vector. */
+descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
+            	   	/* NMG shell to add loops to. */
+    		    	/* File pointer for ascii nmg file. */
+      		    	/* Extrusion vector. */
 {
 #define MAXV	1024
 

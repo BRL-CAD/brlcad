@@ -74,9 +74,7 @@ rt_ars_class(const struct soltab	*stp,
  *  to a malloc()'ed memory area of fastf_t's to hold the curve.
  */
 fastf_t *
-rt_ars_rd_curve(rp, npts)
-union record	*rp;
-int		npts;
+rt_ars_rd_curve(union record *rp, int npts)
 {
 	LOCAL int lim;
 	LOCAL fastf_t *base;
@@ -120,11 +118,7 @@ int		npts;
  *  as the last point, to make processing the data easier.
  */
 int
-rt_ars_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-const mat_t			mat;
-const struct db_i		*dbip;
+rt_ars_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_ars_internal *ari;
 	union record	*rp;
@@ -196,11 +190,7 @@ const struct db_i		*dbip;
  *  Generally, only libwdb will set conv2mm != 1.0
  */
 int
-rt_ars_export( ep, ip, local2mm, dbip )
-struct bu_external	*ep;
-const struct rt_db_internal	*ip;
-double			local2mm;
-const struct db_i	*dbip;
+rt_ars_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_ars_internal	*arip;
 	union record		*rec;
@@ -276,11 +266,7 @@ const struct db_i	*dbip;
  *  as the last point, to make processing the data easier.
  */
 int
-rt_ars_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-const mat_t			mat;
-const struct db_i		*dbip;
+rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_ars_internal *ari;
 	register int		i, j;
@@ -332,11 +318,7 @@ const struct db_i		*dbip;
  *  Generally, only libwdb will set conv2mm != 1.0
  */
 int
-rt_ars_export5( ep, ip, local2mm, dbip )
-struct bu_external	*ep;
-const struct rt_db_internal	*ip;
-double			local2mm;
-const struct db_i	*dbip;
+rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_ars_internal	*arip;
 	unsigned char	*cp;
@@ -382,11 +364,7 @@ const struct db_i	*dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_ars_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register int			j;
 	register struct rt_ars_internal	*arip =
@@ -436,8 +414,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_ars_ifree( ip )
-struct rt_db_internal	*ip;
+rt_ars_ifree(struct rt_db_internal *ip)
 {
 	register struct rt_ars_internal	*arip;
 	register int			i;
@@ -473,10 +450,7 @@ struct rt_db_internal	*ip;
  *  database records to obtain all the necessary information.
  */
 int
-rt_ars_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 #if 1
     struct rt_db_internal intern;
@@ -641,8 +615,7 @@ struct rt_i		*rtip;
  *  			R T _ A R S _ P R I N T
  */
 void
-rt_ars_print( stp )
-register const struct soltab *stp;
+rt_ars_print(register const struct soltab *stp)
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -672,11 +645,7 @@ register const struct soltab *stp;
  *  	!0	HIT
  */
 int
-rt_ars_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -872,9 +841,7 @@ struct seg		*seghead;
  *  Sort an array of hits into ascending order.
  */
 void
-rt_hitsort( h, nh )
-register struct hit h[];
-register int nh;
+rt_hitsort(register struct hit *h, register int nh)
 {
 	register int i, j;
 	LOCAL struct hit temp;
@@ -896,10 +863,7 @@ register int nh;
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_ars_norm( hitp, stp, rp )
-register struct hit *hitp;
-struct soltab *stp;
-register struct xray *rp;
+rt_ars_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)hitp->hit_private;
@@ -916,10 +880,7 @@ register struct xray *rp;
  *  indicate no curvature.
  */
 void
-rt_ars_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit *hitp;
-struct soltab *stp;
+rt_ars_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 /*	register struct tri_specific *trip =
  *		(struct tri_specific *)hitp->hit_private;
@@ -937,11 +898,7 @@ struct soltab *stp;
  *  v extends along the "Ybasis" direction defined by (B-A)xN.
  */
 void
-rt_ars_uv( ap, stp, hitp, uvp )
-struct application *ap;
-struct soltab *stp;
-register struct hit *hitp;
-register struct uvcoord *uvp;
+rt_ars_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)hitp->hit_private;
@@ -973,11 +930,7 @@ register struct uvcoord *uvp;
  *			R T _ A R S _ P L O T
  */
 int
-rt_ars_plot( vhead, ip, ttol, tol )
-struct bu_list	*vhead;
-struct rt_db_internal *ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	register int	i;
 	register int	j;
@@ -1028,12 +981,7 @@ const struct bn_tol		*tol;
  *			R T _ A R S _ T E S S
  */
 int
-rt_ars_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	register int	i;
 	register int	j;
@@ -1210,10 +1158,7 @@ const struct bn_tol	*tol;
 }
 
 int
-rt_ars_tclget( interp, intern, attr )
-Tcl_Interp			*interp;
-const struct rt_db_internal	*intern;
-const char			*attr;
+rt_ars_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
 	register struct rt_ars_internal *ars=(struct rt_ars_internal *)intern->idb_ptr;
 	Tcl_DString	ds;
@@ -1295,11 +1240,7 @@ const char			*attr;
 }
 
 int
-rt_ars_tcladjust( interp, intern, argc, argv )
-Tcl_Interp		*interp;
-struct rt_db_internal	*intern;
-int			argc;
-char			**argv;
+rt_ars_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
 {
 	struct rt_ars_internal		*ars;
 	int				i,j,k;

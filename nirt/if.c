@@ -22,20 +22,17 @@ extern double		base2local;
 extern double		local2base;
 overlap			ovlp_list;
 
-overlap			*find_ovlp();
-void			del_ovlp();
-void			init_ovlp();
+overlap			*find_ovlp(struct partition *pp);
+void			del_ovlp(overlap *op);
+void			init_ovlp(void);
 
 extern int	rt_defoverlap( struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp );
 	
 
-int if_hit(ap, part_head, finished_segs)
-struct application	*ap;
-struct partition 	*part_head;
-struct seg		*finished_segs;
+int if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
 {
     struct partition	*part;
-    char		*basename();
+    char		*basename(char *string);
     fastf_t		ar = azimuth() * deg2rad;
     fastf_t		er = elevation() * deg2rad;
     int			i;
@@ -45,7 +42,7 @@ struct seg		*finished_segs;
     point_t		onormal;
     struct bu_vls	claimant_list;	/* Names of the claiming regions */
     int			need_to_free = 0;	/* Clean up the bu_vls? */
-    fastf_t		get_obliq();
+    fastf_t		get_obliq(fastf_t *ray, fastf_t *normal);
     struct bu_vls       *vls;
     struct bu_vls       attr_vls;
     struct bu_mro **attr_values;
@@ -229,7 +226,7 @@ struct seg		*finished_segs;
     return( HIT );
 }
 
-int if_miss()
+int if_miss(void)
 { 
     report(FMT_RAY);
     report(FMT_MISS);
@@ -249,13 +246,7 @@ int if_miss()
  *	Date stolen:	29 March 1990
  */
 int
-if_overlap( ap, pp, reg1, reg2, InputHdp )
-register struct application	*ap;
-register struct partition	*pp;
-struct region			*reg1;
-struct region			*reg2;
-struct partition		*InputHdp;
-
+if_overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp)
 {
     overlap	*new_ovlp;
 
@@ -288,10 +279,7 @@ struct partition		*InputHdp;
  *		The callbacks used by backup()
  *
  */
-int if_bhit(ap, part_head, finished_segs)
-struct application	*ap;
-struct partition 	*part_head;
-struct seg		*finished_segs;
+int if_bhit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
 {
     struct partition	*part;
     vect_t		dir;
@@ -334,16 +322,12 @@ struct seg		*finished_segs;
     return( HIT );
 }
 
-int if_bmiss()
+int if_bmiss(void)
 { 
     return ( MISS );
 }
 
-fastf_t get_obliq (ray, normal)
-
-vect_t	ray;
-vect_t	normal;
-
+fastf_t get_obliq (fastf_t *ray, fastf_t *normal)
 {
     double	cos_obl;
     fastf_t	obliquity;
@@ -375,10 +359,7 @@ vect_t	normal;
     return (obliquity);
 }
 
-overlap *find_ovlp (pp)
-
-struct partition	*pp;
-
+overlap *find_ovlp (struct partition *pp)
 {
     overlap	*op;
 
@@ -393,28 +374,20 @@ struct partition	*pp;
     return ((op == &ovlp_list) ? OVERLAP_NULL : op);
 }
 
-void del_ovlp (op)
-
-overlap	*op;
-
+void del_ovlp (overlap *op)
 {
     op -> forw -> backw = op -> backw;
     op -> backw -> forw = op -> forw;
     rt_free((char *)op, "free op in del_ovlp");
 }
 
-void init_ovlp()
+void init_ovlp(void)
 {
     ovlp_list.forw = ovlp_list.backw = &ovlp_list;
 }
 
 int
-if_boverlap( ap, pp, reg1, reg2 )
-register struct application     *ap;
-register struct partition       *pp;
-struct region                   *reg1;
-struct region                   *reg2;
-
+if_boverlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2)
 {
 	return 1;
 }

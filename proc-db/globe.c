@@ -18,7 +18,7 @@
 
 char *progname ="globe";
 
-void usage()
+void usage(void)
 {
 	fprintf(stderr, "Usage: %s db_file.g [stepSize [finalSize [initialSize]]]\n", progname);
 	exit(-1);

@@ -64,10 +64,7 @@ static unsigned char	ordered[4][4] = {
  *	Christopher T. Johnson	- 90/03/21
  */
 int
-tone_folly(pix,x,y,nx,ny,new)
-int	pix;
-int	x, y, nx, ny;
-int	new;
+tone_folly(int pix, int x, int y, int nx, int ny, int new)
 {
 	register int threshold = 16*ordered[ x % 4][ y % 4];
 

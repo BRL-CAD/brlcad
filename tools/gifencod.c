@@ -33,13 +33,13 @@ static long CountDown;
 static int Pass = 0;
 static int Interlace;
 
-void	Putword();
+void	Putword(int w, FILE *fp);
 
 /*
  * Bump the 'curx' and 'cury' to point to the next pixel
  */
 static void
-BumpPixel()
+BumpPixel(void)
 {
 	/*
 	 * Bump the current X position
@@ -96,8 +96,7 @@ BumpPixel()
  * Return the next pixel from the image
  */
 int
-GIFNextPixel( getpixel )
-ifunptr getpixel;
+GIFNextPixel(ifunptr getpixel)
 {
 	int r;
 
@@ -115,16 +114,7 @@ ifunptr getpixel;
 
 /* public */
 void
-GIFEncode( FName, GWidth, GHeight, GInterlace, Background, 
-	   BitsPerPixel, Red, Green, Blue, GetPixel )
-	 
-char *FName;
-int GWidth, GHeight;
-int GInterlace;
-int Background;
-int BitsPerPixel;
-short int Red[], Green[], Blue[];
-ifunptr GetPixel;
+GIFEncode(char *FName, int GWidth, int GHeight, int GInterlace, int Background, int BitsPerPixel, unsigned short int *Red, unsigned short int *Green, unsigned short int *Blue, ifunptr GetPixel)
 {
 	FILE *fp;
 	int B;
@@ -276,9 +266,7 @@ ifunptr GetPixel;
  * Write out a word to the GIF file
  */
 void
-Putword( w, fp )
-int w;
-FILE *fp;
+Putword(int w, FILE *fp)
 {
 	fputc( w & 0xff, fp );
     fputc( (w >> 8) & 0xff, fp );

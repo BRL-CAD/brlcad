@@ -187,7 +187,7 @@ double *end_table = &table[10];
 /*
  *   D O I T --- convert stdin pix file to stdout rasterfile
  */
-void doit()
+void doit(void)
 {
     int i, cx, cy;
     unsigned char *pix, *rast;
@@ -284,7 +284,7 @@ void doit()
     free(rast);
 }
 
-void usage()
+void usage(void)
 {
 
     (void)fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
@@ -298,9 +298,7 @@ void usage()
  *   Perform miscelaneous tasks such as argument parsing and
  *   I/O setup and then call "doit" to perform the task at hand
  */
-int main(ac,av)
-int ac;
-char *av[];
+int main(int ac, char **av)
 {
     int	c, optlen;
 

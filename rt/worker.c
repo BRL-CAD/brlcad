@@ -71,7 +71,7 @@ extern int		query_debug;
  *  and one or the other parameter be provided.
  */
 void
-grid_setup()
+grid_setup(void)
 {
 	vect_t temp;
 	mat_t toEye;
@@ -496,9 +496,7 @@ void do_pixel(int cpu,
  *  For a general-purpose version, see LIBRT rt_shoot_many_rays()
  */
 void
-worker(cpu, arg)
-int		cpu;
-genptr_t	arg;
+worker(int cpu, genptr_t arg)
 {
 	int	pixel_start;
 	int	pixelnum;

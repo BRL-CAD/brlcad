@@ -242,7 +242,7 @@ static struct vertexuse *nmg_mvvu RT_ARGS( (long *upptr, struct model *m) );
  *	index into the "ptab".
  */
 struct model *
-nmg_mm()
+nmg_mm(void)
 {
 	struct model *m;
 
@@ -274,7 +274,7 @@ nmg_mm()
  *	The new region is found with BU_LIST_FIRST( nmgregion, &m->r_hd );
  */
 struct model *
-nmg_mmr()
+nmg_mmr(void)
 {
 	struct model *m;
 	struct nmgregion *r;
@@ -313,8 +313,7 @@ nmg_mmr()
  *	The new vertexuse is s->vu_p;
  */
 struct nmgregion *
-nmg_mrsv(m)
-struct model *m;
+nmg_mrsv(struct model *m)
 {
 	struct nmgregion *r;
 
@@ -354,8 +353,7 @@ struct model *m;
  *	The new vertexuse is s->vu_p;
  */
 struct shell *
-nmg_msv(r)
-struct nmgregion	*r;
+nmg_msv(struct nmgregion *r)
 {
 	struct shell 		*s;
 	struct vertexuse	*vu;
@@ -401,8 +399,7 @@ struct nmgregion	*r;
  *	The second faceuse follows:  fu2=BU_LIST_NEXT( faceuse, &fu1->l.magic );
  */
 struct faceuse *
-nmg_mf(lu1)
-struct loopuse *lu1;
+nmg_mf(struct loopuse *lu1)
 {
 	struct face *f;
 	struct faceuse *fu1, *fu2;
@@ -503,10 +500,7 @@ struct loopuse *lu1;
  * The v==NULL convention is used only in nmg_mod.c.
  */
 struct loopuse *
-nmg_mlv(magic, v, orientation)
-long		*magic;
-struct vertex	*v;
-int		orientation;
+nmg_mlv(long int *magic, struct vertex *v, int orientation)
 {
 	struct loop	*l;
 	struct loopuse	*lu1, *lu2;
@@ -619,10 +613,10 @@ int		orientation;
  *  structure.  This is "bad" and requires the caller to fix.
  */
 static struct vertexuse *
-nmg_mvu(v, upptr, m)
-struct vertex	*v;
-long		*upptr;		/* pointer to parent struct */
-struct model	*m;
+nmg_mvu(struct vertex *v, long int *upptr, struct model *m)
+             	   
+    		       		/* pointer to parent struct */
+            	   
 {
 	struct vertexuse *vu;
 
@@ -665,9 +659,7 @@ struct model	*m;
  *  structure.  This is "bad" and requires the caller to fix.
  */
 static struct vertexuse *
-nmg_mvvu(upptr, m)
-long		*upptr;
-struct model	*m;
+nmg_mvvu(long int *upptr, struct model *m)
 {
 	struct vertex	*v;
 	struct vertexuse *ret_vu;
@@ -712,9 +704,7 @@ struct model	*m;
  *	eu_hd list, followed immediately by the mate.
  */
 struct edgeuse *
-nmg_me(v1, v2, s)
-struct vertex *v1, *v2;
-struct shell *s;
+nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 {
 	struct edge		*e;
 	struct edgeuse		*eu1;
@@ -815,8 +805,7 @@ struct shell *s;
  *  the original vertex.
  */
 struct edgeuse *
-nmg_meonvu(vu)
-struct vertexuse *vu;
+nmg_meonvu(struct vertexuse *vu)
 {
 	struct edge *e;
 	struct edgeuse *eu1, *eu2;
@@ -944,8 +933,7 @@ struct vertexuse *vu;
  *	to the loop, and the two loopuses are inserted into the shell.
  */
 struct loopuse *
-nmg_ml(s)
-struct shell *s;
+nmg_ml(struct shell *s)
 {
 	struct loop *l;
 	struct loopuse *lu1, *lu2;
@@ -1112,8 +1100,7 @@ struct shell *s;
  *	1	If parent is empty, and is thus "illegal"
  */
 int
-nmg_kvu(vu)
-register struct vertexuse *vu;
+nmg_kvu(register struct vertexuse *vu)
 {
 	struct vertex	*v;
 	int		ret = 0;
@@ -1170,8 +1157,7 @@ register struct vertexuse *vu;
  *  Internal routine to release face geometry when no more faces use it.
  */
 static void
-nmg_kfg( magic_p )
-long	*magic_p;
+nmg_kfg(long int *magic_p)
 {
 	switch( *magic_p ) {
 	case NMG_FACE_G_PLANE_MAGIC:
@@ -1213,8 +1199,7 @@ long	*magic_p;
  *	1	If parent shell is now empty, and is thus "illegal"
  */
 int
-nmg_kfu(fu1)
-struct faceuse *fu1;
+nmg_kfu(struct faceuse *fu1)
 {
 	struct faceuse *fu2;
 	struct face	*f1;
@@ -1278,8 +1263,7 @@ struct faceuse *fu1;
  *	1	If parent is empty, and is thus "illegal"
  */
 int
-nmg_klu(lu1)
-struct loopuse *lu1;
+nmg_klu(struct loopuse *lu1)
 {
 	struct loopuse *lu2;
 	long	magic1;
@@ -1363,8 +1347,7 @@ struct loopuse *lu1;
  *  However, nmg_mod.c needs it for nmg_eusplit().  (Drat!)
  */
 /**static**/ int
-nmg_keg( eu )
-struct edgeuse	*eu;
+nmg_keg(struct edgeuse *eu)
 {
 	NMG_CK_EDGEUSE(eu);
 
@@ -1409,8 +1392,7 @@ struct edgeuse	*eu;
  *		can't be handled at this level, but must be done by the caller).
  */
 int
-nmg_keu(eu1)
-register struct edgeuse *eu1;
+nmg_keu(register struct edgeuse *eu1)
 {
 	register struct edgeuse *eu2;
 	struct edge		*e;
@@ -1542,8 +1524,7 @@ register struct edgeuse *eu1;
  *		an empty region is probably worthy of note.
  */
 int
-nmg_ks(s)
-struct shell *s;
+nmg_ks(struct shell *s)
 {
 	struct nmgregion	*r;
 
@@ -1584,8 +1565,7 @@ struct shell *s;
  *		an empty model is probably worthy of note.
  */
 int
-nmg_kr(r)
-struct nmgregion *r;
+nmg_kr(struct nmgregion *r)
 {
 	struct model	*m;
 
@@ -1618,8 +1598,7 @@ struct nmgregion *r;
  *	Kill an entire model.  Nothing is left.
  */
 void
-nmg_km(m)
-struct model *m;
+nmg_km(struct model *m)
 {
 	NMG_CK_MODEL(m);
 
@@ -1643,9 +1622,7 @@ struct model *m;
  *	Associate point_t ("vector") coordinates with a vertex
  */
 void
-nmg_vertex_gv(v, pt)
-struct vertex	*v;
-const point_t	pt;
+nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
 {
 	struct vertex_g *vg;
 	struct model	*m;
@@ -1677,9 +1654,7 @@ const point_t	pt;
  *	array.  Mostly useful for quick and dirty programs.
  */
 void
-nmg_vertex_g(v, x, y, z)
-register struct vertex *v;
-fastf_t x, y, z;
+nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
 {
 	point_t pt;
 	
@@ -1699,9 +1674,7 @@ fastf_t x, y, z;
  *	Assign a normal vector to a vertexuse
  */
 void
-nmg_vertexuse_nv( vu , norm )
-struct vertexuse *vu;
-const vect_t norm;
+nmg_vertexuse_nv(struct vertexuse *vu, const fastf_t *norm)
 {
 	struct model *m;
 
@@ -1740,9 +1713,7 @@ const vect_t norm;
  *  will have individual vertexuse_a_cnurb structures.
  */
 void
-nmg_vertexuse_a_cnurb( vu, uvw )
-struct vertexuse	*vu;
-const fastf_t		*uvw;
+nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
 {
 	struct vertexuse_a_cnurb	*vua;
 	struct model	*m;
@@ -1774,8 +1745,7 @@ const fastf_t		*uvw;
  *  XXX This isn't the best name.  nmg_edge_g_lseg() ?
  */
 void
-nmg_edge_g(eu)
-struct edgeuse *eu;
+nmg_edge_g(struct edgeuse *eu)
 {
 	struct model *m;	
 	struct edge_g_lseg *eg_p = (struct edge_g_lseg *)NULL;
@@ -1887,14 +1857,7 @@ struct edgeuse *eu;
  *  at either end of the edgeuse.
  */
 void
-nmg_edge_g_cnurb(eu, order, n_knots, kv, n_pts, pt_type, points)
-struct edgeuse	*eu;
-int		order;
-int		n_knots;
-fastf_t		*kv;
-int		n_pts;
-int		pt_type;
-fastf_t		*points;
+nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_pts, int pt_type, fastf_t *points)
 {
 	struct model	*m;
 	struct edge_g_cnurb *eg;
@@ -2017,8 +1980,7 @@ fastf_t		*points;
  *  This special condition is indicated by order == 0.  See nmg.h for details.
  */
 void
-nmg_edge_g_cnurb_plinear(eu)
-struct edgeuse	*eu;
+nmg_edge_g_cnurb_plinear(struct edgeuse *eu)
 {
 	struct model	*m;
 	struct edge_g_cnurb *eg;
@@ -2092,9 +2054,7 @@ struct edgeuse	*eu;
  *	1	If the old edge geometry has been destroyed. Caller beware!
  */
 int
-nmg_use_edge_g( eu, magic_p )
-struct edgeuse	*eu;
-long		*magic_p;
+nmg_use_edge_g(struct edgeuse *eu, long int *magic_p)
 {
 	struct edge_g_lseg	*old;
 	/* eg->eu_hd2 is a pun for eu_hd2 in either _lseg or _cnurb */
@@ -2183,9 +2143,7 @@ long		*magic_p;
  * XXX it gets something more to do.
  */
 void
-nmg_loop_g(l, tol)
-struct loop		*l;
-const struct bn_tol	*tol;
+nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 {
 	struct edgeuse	*eu;
 	struct vertex_g	*vg;
@@ -2265,9 +2223,7 @@ const struct bn_tol	*tol;
  *  In the interest of modularity this no longer calls nmg_face_bb().
  */
 void
-nmg_face_g(fu, p)
-struct faceuse *fu;
-const plane_t p;
+nmg_face_g(struct faceuse *fu, const fastf_t *p)
 {
 	int i;
 	struct face_g_plane	*fg;
@@ -2314,9 +2270,7 @@ const plane_t p;
  *	geometry for this face, then make a new geometry for this face.
  */
 void
-nmg_face_new_g( fu, pl )
-struct faceuse *fu;
-const plane_t pl;
+nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
 {
 	struct face *f;
 	struct face *f_tmp;
@@ -2384,18 +2338,7 @@ const plane_t pl;
  *  This is the NMG parallel to rt_nurb_new_snurb().
  */
 void
-nmg_face_g_snurb(fu, u_order, v_order, n_u_knots, n_v_knots, ukv, vkv, n_rows, n_cols, pt_type, mesh)
-struct faceuse	*fu;
-int		u_order;
-int		v_order;
-int		n_u_knots;
-int		n_v_knots;
-fastf_t		*ukv;
-fastf_t		*vkv;
-int		n_rows;
-int		n_cols;
-int		pt_type;
-fastf_t		*mesh;
+nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots, int n_v_knots, fastf_t *ukv, fastf_t *vkv, int n_rows, int n_cols, int pt_type, fastf_t *mesh)
 {
 	struct face_g_snurb	*fg;
 	struct face	*f;
@@ -2470,9 +2413,7 @@ fastf_t		*mesh;
  *
  */
 void
-nmg_face_bb(f, tol)
-struct face		*f;
-const struct bn_tol	*tol;
+nmg_face_bb(struct face *f, const struct bn_tol *tol)
 {
 	struct loopuse	*lu;
 	struct faceuse	*fu;
@@ -2525,9 +2466,7 @@ const struct bn_tol	*tol;
  *
  */
 void
-nmg_shell_a(s, tol)
-struct shell		*s;
-const struct bn_tol	*tol;
+nmg_shell_a(struct shell *s, const struct bn_tol *tol)
 {
 	struct shell_a *sa;
 	struct vertex_g *vg;
@@ -2611,9 +2550,7 @@ const struct bn_tol	*tol;
  *
  */
 void
-nmg_region_a(r, tol)
-struct nmgregion	*r;
-const struct bn_tol	*tol;
+nmg_region_a(struct nmgregion *r, const struct bn_tol *tol)
 {
 	register struct shell	*s;
 	struct nmgregion_a	*ra;
@@ -2667,8 +2604,7 @@ const struct bn_tol	*tol;
  *	1	If parent is empty, and is thus "illegal".  Still successful.
  */
 int
-nmg_demote_lu(lu1)
-struct loopuse *lu1;
+nmg_demote_lu(struct loopuse *lu1)
 {
 	struct edgeuse *eu1;
 	struct shell *s;
@@ -2732,8 +2668,7 @@ struct loopuse *lu1;
  *	1	If shell is empty, and is thus "illegal".
  */
 int
-nmg_demote_eu(eu)
-struct edgeuse *eu;
+nmg_demote_eu(struct edgeuse *eu)
 {
 	struct shell	*s;
 	struct vertex	*v;
@@ -2783,9 +2718,7 @@ struct edgeuse *eu;
  * XXX nmg_jvu() as a better name?
  */
 void
-nmg_movevu(vu, v)
-struct vertexuse *vu;
-struct vertex *v;
+nmg_movevu(struct vertexuse *vu, struct vertex *v)
 {
 	struct vertex	*oldv;
 
@@ -2822,8 +2755,7 @@ struct vertex *v;
  *	This routine was formerly called nmg_moveeu().
  */
 void
-nmg_je(eudst, eusrc)
-struct edgeuse *eudst, *eusrc;
+nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 {
 	struct edgeuse	*eudst_mate;
 	struct edgeuse	*eusrc_mate;
@@ -2910,8 +2842,7 @@ struct edgeuse *eudst, *eusrc;
  *  geometry across a split, and nmg_esplit() which does not.
  */
 void
-nmg_unglueedge(eu)
-struct edgeuse *eu;
+nmg_unglueedge(struct edgeuse *eu)
 {
 	struct edge	*old_e;
 	struct edge	*new_e;
@@ -2963,9 +2894,7 @@ struct edgeuse *eu;
  *	and v2 is then destroyed.
  */
 void
-nmg_jv(v1, v2)
-register struct vertex	*v1;
-register struct vertex	*v2;
+nmg_jv(register struct vertex *v1, register struct vertex *v2)
 {
 	register struct vertexuse	*vu;
 
@@ -3016,9 +2945,7 @@ register struct vertex	*v2;
  *  is made to share the geometry of the other.
  */
 void
-nmg_jfg( f1, f2 )
-struct face	*f1;
-struct face	*f2;
+nmg_jfg(struct face *f1, struct face *f2)
 {
 	struct face_g_plane	*fg1;
 	struct face_g_plane	*fg2;
@@ -3097,9 +3024,7 @@ struct face	*f2;
  *  those only make sense in the parameter space of their associated face.
  */
 void
-nmg_jeg( dest_eg, src_eg )
-struct edge_g_lseg	*dest_eg;
-struct edge_g_lseg	*src_eg;
+nmg_jeg(struct edge_g_lseg *dest_eg, struct edge_g_lseg *src_eg)
 {
 	register struct edgeuse		*eu;
 

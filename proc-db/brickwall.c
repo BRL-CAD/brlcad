@@ -38,8 +38,7 @@ char mortar_color[32] = "190 190 190";
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(s)
-char *s;
+void usage(char *s)
 {
 	if (s) (void)fputs(s, stderr);
 
@@ -57,9 +56,7 @@ char *s;
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(ac, av)
-int ac;
-char *av[];
+int parse_args(int ac, char **av)
 {
 	int  c;
 	double d;
@@ -144,11 +141,7 @@ char *av[];
 	return(optind);
 }
 
-void gen_mortar(horiz_bricks, vert_bricks, horiz_spacing, vert_spacing)
-int horiz_bricks;
-int vert_bricks;
-double horiz_spacing;
-double vert_spacing;
+void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double vert_spacing)
 {
 	int row;
 	int i;
@@ -228,11 +221,7 @@ double vert_spacing;
  *	generate the brick solids, regions thereof, groups for rows
  *	and a group for the wall as a whole.
  */
-void gen_bricks(horiz_bricks, vert_bricks, horiz_spacing, vert_spacing)
-int horiz_bricks;
-int vert_bricks;
-double horiz_spacing;
-double vert_spacing;
+void gen_bricks(int horiz_bricks, int vert_bricks, double horiz_spacing, double vert_spacing)
 {
 	int row;
 	int brick;
@@ -284,9 +273,7 @@ double vert_spacing;
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(ac,av)
-int ac;
-char *av[];
+int main(int ac, char **av)
 {
 	int horiz_bricks;
 	int vert_bricks;

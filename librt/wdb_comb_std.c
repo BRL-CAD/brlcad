@@ -59,8 +59,7 @@ struct tokens {
 #define	WDB_TOK_TREE	6
 
 HIDDEN void
-wdb_free_tokens(hp)
-     struct bu_list *hp;
+wdb_free_tokens(struct bu_list *hp)
 {
 	struct tokens *tok;
 
@@ -76,8 +75,7 @@ wdb_free_tokens(hp)
 }
 
 HIDDEN void
-wdb_append_union(hp)
-     struct bu_list *hp;
+wdb_append_union(struct bu_list *hp)
 {
 	struct tokens *tok;
 
@@ -90,8 +88,7 @@ wdb_append_union(hp)
 }
 
 HIDDEN void
-wdb_append_inter(hp)
-     struct bu_list *hp;
+wdb_append_inter(struct bu_list *hp)
 {
 	struct tokens *tok;
 
@@ -104,8 +101,7 @@ wdb_append_inter(hp)
 }
 
 HIDDEN void
-wdb_append_subtr(hp)
-     struct bu_list *hp;
+wdb_append_subtr(struct bu_list *hp)
 {
 	struct tokens *tok;
 
@@ -118,8 +114,7 @@ wdb_append_subtr(hp)
 }
 
 HIDDEN void
-wdb_append_lparen(hp)
-     struct bu_list *hp;
+wdb_append_lparen(struct bu_list *hp)
 {
 	struct tokens *tok;
 
@@ -132,8 +127,7 @@ wdb_append_lparen(hp)
 }
 
 HIDDEN void
-wdb_append_rparen(hp)
-     struct bu_list *hp;
+wdb_append_rparen(struct bu_list *hp)
 {
 	struct tokens *tok;
 
@@ -146,11 +140,7 @@ wdb_append_rparen(hp)
 }
 
 HIDDEN int
-wdb_add_operator(interp, hp, ch, last_tok)
-     Tcl_Interp *interp;
-     struct bu_list *hp;
-     char ch;
-     short *last_tok;
+wdb_add_operator(Tcl_Interp *interp, struct bu_list *hp, char ch, short int *last_tok)
 {
 	char illegal[2];
 
@@ -182,10 +172,7 @@ wdb_add_operator(interp, hp, ch, last_tok)
 }
 
 HIDDEN int
-wdb_add_operand(interp, hp, name)
-     Tcl_Interp *interp;
-     struct bu_list *hp;
-     char *name;
+wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
 {
 	char *ptr_lparen;
 	char *ptr_rparen;
@@ -243,8 +230,7 @@ wdb_add_operand(interp, hp, name)
 }
 
 HIDDEN void
-wdb_do_inter(hp)
-     struct bu_list *hp;
+wdb_do_inter(struct bu_list *hp)
 {
 	struct tokens *tok;
 
@@ -278,8 +264,7 @@ wdb_do_inter(hp)
 }
 
 HIDDEN void
-wdb_do_union_subtr(hp)
-     struct bu_list *hp;
+wdb_do_union_subtr(struct bu_list *hp)
 {
 	struct tokens *tok;
 
@@ -316,8 +301,7 @@ wdb_do_union_subtr(hp)
 }
 
 HIDDEN int
-wdb_do_paren(hp)
-     struct bu_list *hp;
+wdb_do_paren(struct bu_list *hp)
 {
 	struct tokens *tok;
 
@@ -350,8 +334,7 @@ wdb_do_paren(hp)
 }
 
 HIDDEN union tree *
-wdb_eval_bool(hp)
-     struct bu_list *hp;
+wdb_eval_bool(struct bu_list *hp)
 {
 	int done=0;
 	union tree *final_tree;
@@ -375,12 +358,7 @@ wdb_eval_bool(hp)
 }
 
 HIDDEN int
-wdb_check_syntax(interp, dbip, hp, comb_name, dp)
-     Tcl_Interp *interp;
-     struct db_i *dbip;
-     struct bu_list *hp;
-     char *comb_name;
-     struct directory *dp;
+wdb_check_syntax(Tcl_Interp *interp, struct db_i *dbip, struct bu_list *hp, char *comb_name, struct directory *dp)
 {
 	struct tokens *tok;
 	int paren_count=0;

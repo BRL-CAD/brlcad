@@ -63,11 +63,7 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
  *			B U _ R G B _ T O _ H S V
  *
  */
-void bu_rgb_to_hsv (rgb, hsv)
-
-unsigned char	*rgb;
-fastf_t		*hsv;
-
+void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 {
     fastf_t	red, grn, blu;
     fastf_t	*hue = &hsv[HUE];
@@ -131,11 +127,7 @@ fastf_t		*hsv;
  *			B U _ H S V _ T O _ R G B
  *
  */
-int bu_hsv_to_rgb (hsv, rgb)
-
-fastf_t		*hsv;
-unsigned char	*rgb;
-
+int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t	float_rgb[3];
     fastf_t	hue, sat, val;
@@ -194,11 +186,7 @@ unsigned char	*rgb;
  *			B U _ S T R _ T O _ R G B
  *
  */
-int bu_str_to_rgb (str, rgb)
-
-char		*str;
-unsigned char	*rgb;
-
+int bu_str_to_rgb (char *str, unsigned char *rgb)
 {
     int	num;
     int	r, g, b;

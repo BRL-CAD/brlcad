@@ -41,15 +41,14 @@ static int	inverse = 0;		/* Draw upside-down */
 int	screen_height;			/* input height */
 int	screen_width;			/* input width */
 
-extern void	cmap_crunch();
+extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *cmap);
 
 char usage[] = "\
 Usage: fb-pix [-h -i -c] [-F framebuffer]\n\
 	[-s squaresize] [-w width] [-n height] [file.pix]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -107,9 +106,7 @@ register char **argv;
 }
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	register FBIO *fbp;
 	register int y;
@@ -150,7 +147,7 @@ char **argv;
 		for( y=0; y < screen_height; y++ )  {
 			fb_read( fbp, 0, y, scanline, screen_width );
 			if( crunch )
-				cmap_crunch( scanline, scanpix, &cmap );
+				cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
 			if( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
 				perror("fwrite");
 				break;
@@ -161,7 +158,7 @@ char **argv;
 		for( y = screen_height-1; y >= 0; y-- )  {
 			fb_read( fbp, 0, y, scanline, screen_width );
 			if( crunch )
-				cmap_crunch( scanline, scanpix, &cmap );
+				cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
 			if( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
 				perror("fwrite");
 				break;

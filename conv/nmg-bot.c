@@ -79,9 +79,7 @@ nmg_conv(struct rt_db_internal *intern, const char *name )
 }
 
 int
-main( argc, argv )
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
 	struct directory *dp;
 

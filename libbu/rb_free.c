@@ -41,11 +41,7 @@ static const char libbu_rb_free_RCSid[] = "@(#) $Header$";
  *	before freeing each package , passing it the package's rbp_data
  *	member.  Otherwise, the application data is left untouched.
  */
-void bu_rb_free (tree, free_data)
-
-bu_rb_tree	*tree;
-void		(*free_data)();
-
+void bu_rb_free (bu_rb_tree *tree, void (*free_data) (/* ??? */))
 {
     struct bu_rb_list		*rblp;
     struct bu_rb_node		*node;
@@ -102,10 +98,7 @@ void		(*free_data)();
  *	frees the memory allocated for the various members of the node
  *	and then frees the memory allocated for the node itself.
  */
-void bu_rb_free_node (node)
-
-struct bu_rb_node	*node;
-
+void bu_rb_free_node (struct bu_rb_node *node)
 {
     bu_rb_tree	*tree;
 
@@ -140,10 +133,7 @@ struct bu_rb_node	*node;
  *	nodes that contained the package and then frees the memory
  *	allocated for the package itself.
  */
-void bu_rb_free_package (package)
-
-struct bu_rb_package	*package;
-
+void bu_rb_free_package (struct bu_rb_package *package)
 {
     BU_CKMAG(package, BU_RB_PKG_MAGIC, "red-black package");
 

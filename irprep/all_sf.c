@@ -47,9 +47,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 struct application ap;  /*  Structure passed between functions.  */
 
-extern int hit();       /*  User supplied hit function.  */
-extern int miss();      /*  User supplied miss function.  */
-extern int overlap();   /*  User supplied overlap function.  */
+extern int hit(register struct application *ap_p, struct partition *PartHeadp);       /*  User supplied hit function.  */
+extern int miss(void);      /*  User supplied miss function.  */
+extern int overlap(void);   /*  User supplied overlap function.  */
 
 struct table
 {
@@ -74,11 +74,7 @@ double drand48() {
 }
 #endif
 
-int main(argc,argv)
-
-int argc;
-char **argv;
-
+int main(int argc, char **argv)
 {							/*  START # 99  */
    struct rt_i *rtip;	/*  Used to build directory.  */
    int index;		/*  Index for rt_dirbuild & rt_gettree.  */
@@ -535,12 +531,12 @@ char **argv;
 /*		Hit, miss, & overlap functions.                            */
 /***************************************************************************/
 int
-hit(ap_p,PartHeadp)
+hit(register struct application *ap_p, struct partition *PartHeadp)
 
 /*  User supplied hit function.  */
 
-register struct application *ap_p;
-struct partition *PartHeadp;
+                                  
+                            
 {							/*  START # 1000  */
    register struct partition *pp;
    register struct hit *hitp;
@@ -672,7 +668,7 @@ struct partition *PartHeadp;
 
 /***************************************************************************/
 int
-miss()
+miss(void)
 
 /*  User supplied hit function.  */
 
@@ -683,7 +679,7 @@ miss()
 
 /***************************************************************************/
 int
-overlap()
+overlap(void)
 
 /*  User supplied overlap function.  */
 

@@ -54,11 +54,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  */
 /* should be HIDDEN */
 int
-db_read( dbip, addr, count, offset )
-const struct db_i	*dbip;
-genptr_t	addr;
-long		count;		/* byte count */
-long		offset;		/* byte offset from start of file */
+db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
+                 	      
+        	     
+    		      		/* byte count */
+    		       		/* byte offset from start of file */
 {
 	register int	got;
 	register long	s;
@@ -117,9 +117,7 @@ long		offset;		/* byte offset from start of file */
  *	(union record *)0	failure
  */
 union record *
-db_getmrec( dbip, dp )
-const struct db_i	*dbip;
-const struct directory	*dp;
+db_getmrec(const struct db_i *dbip, const struct directory *dp)
 {
 	union record	*where;
 
@@ -159,12 +157,7 @@ const struct directory	*dp;
  *	-1	failure
  */
 int
-db_get( dbip, dp, where, offset, len )
-const struct db_i	*dbip;
-const struct directory	*dp;
-union record	*where;
-int		offset;
-int		len;
+db_get(const struct db_i *dbip, const struct directory *dp, union record *where, int offset, int len)
 {
 
 	RT_CK_DBI(dbip);
@@ -211,11 +204,7 @@ int		len;
  */
 /* should be HIDDEN */
 int
-db_write( dbip, addr, count, offset )
-struct db_i	*dbip;
-const genptr_t	addr;
-long		count;
-long		offset;
+db_write(struct db_i *dbip, const genptr_t addr, long int count, long int offset)
 {
 	register int	got;
 
@@ -266,12 +255,7 @@ long		offset;
  *	-1	failure
  */
 int
-db_put( dbip, dp, where, offset, len )
-struct db_i	*dbip;
-const struct directory	*dp;
-union record	*where;
-int		offset;
-int		len;
+db_put(struct db_i *dbip, const struct directory *dp, union record *where, int offset, int len)
 {
 
 	RT_CK_DBI(dbip);
@@ -322,10 +306,7 @@ int		len;
  *	 0	success
  */
 int
-db_get_external( ep, dp, dbip )
-register struct bu_external	*ep;
-const struct directory		*dp;
-const struct db_i		*dbip;
+db_get_external(register struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
 {
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
@@ -379,10 +360,7 @@ const struct db_i		*dbip;
  *	 0	success
  */
 int
-db_put_external( ep, dp, dbip )
-struct bu_external	*ep;
-struct directory	*dp;
-struct db_i		*dbip;
+db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 {
 
 	RT_CK_DBI(dbip);
@@ -457,10 +435,10 @@ struct db_i		*dbip;
  *  NOTE:  Callers of this should be using wdb_export_external() instead.
  */
 int
-db_fwrite_external( fp, name, ep )
-FILE			*fp;
-const char		*name;
-struct bu_external	*ep;			/* can't be const */
+db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
+    			    
+          		      
+                  	    			/* can't be const */
 {
 
 	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=x%x\n",
@@ -479,8 +457,7 @@ struct bu_external	*ep;			/* can't be const */
  *  XXX This is a leftover.  You should call bu_free_external() instead.
  */
 void
-db_free_external( ep )
-register struct bu_external	*ep;
+db_free_external(register struct bu_external *ep)
 {
 	BU_CK_EXTERNAL(ep);
 	bu_free_external(ep);

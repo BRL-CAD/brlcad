@@ -45,8 +45,7 @@ int	verbose = 0;
 static char *Usage = "usage: ap-pix [-v] file.ap > file.pix (3456 x ?)\n";
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int	i, bit;
 	int	line;

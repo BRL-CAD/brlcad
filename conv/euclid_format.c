@@ -27,7 +27,7 @@ static const char RCSid[] = "$Header$";
 #include "../librt/debug.h"
 
 int
-main()
+main(void)
 {
 	char str[1024];
 	point_t *pts=NULL;

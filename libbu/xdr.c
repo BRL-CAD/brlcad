@@ -48,8 +48,7 @@ static const char libbu_xdr_RCSid[] = "@(#)$Header$ (ARL)";
  *			B U _ G S H O R T
  */
 unsigned short
-bu_gshort(msgp)
-const unsigned char *msgp;
+bu_gshort(const unsigned char *msgp)
 {
 	register const unsigned char *p = msgp;
 #ifdef vax
@@ -69,8 +68,7 @@ const unsigned char *msgp;
  *			B U _ G L O N G
  */
 unsigned long
-bu_glong(msgp)
-const unsigned char *msgp;
+bu_glong(const unsigned char *msgp)
 {
 	register const unsigned char *p = msgp;
 	register unsigned long u;
@@ -85,9 +83,7 @@ const unsigned char *msgp;
  *			B U _ P S H O R T
  */
 unsigned char *
-bu_pshort(msgp, s)
-register unsigned char *msgp;
-register int s;
+bu_pshort(register unsigned char *msgp, register int s)
 {
 
 	msgp[1] = s;
@@ -99,9 +95,7 @@ register int s;
  *			B U _ P L O N G
  */
 unsigned char *
-bu_plong(msgp, l)
-register unsigned char *msgp;
-register unsigned long l;
+bu_plong(register unsigned char *msgp, register long unsigned int l)
 {
 
 	msgp[3] = l;

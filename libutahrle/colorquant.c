@@ -28,6 +28,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 11.3  2000/11/01 21:30:20  mike
+ *
+ * lint
+ *
  * Revision 11.2  2000/09/01 19:15:42  mike
  *
  * Lint
@@ -114,22 +118,36 @@
 #define HUGE HUGE_VAL
 #endif
 
-static void QuantHistogram();
-static void BoxStats();
-static void UpdateFrequencies();
-static void ComputeRGBMap();
-static void SetRGBmap();
+/*
+ * Maximum number of colormap entries.  To make larger than 2^8, the rgbmap
+ * type will have to be changed from unsigned chars to something larger.
+ */
+#define MAXCOLORS		256
+
+typedef struct {
+	float		weightedvar,		/* weighted variance */
+			mean[3];		/* centroid */
+	unsigned long 	weight,			/* # of pixels in box */
+			freq[3][MAXCOLORS];	/* Projected frequencies */
+	int 		low[3], high[3];	/* Box extent */
+} Box;
+
+static void QuantHistogram(register unsigned char *r, register unsigned char *g, register unsigned char *b, Box *box);
+static void BoxStats(register Box *box);
+static void UpdateFrequencies(register Box *box1, register Box *box2);
+static void ComputeRGBMap(Box *boxes, int colors, unsigned char *rgbmap, int bits, unsigned char **colormap, int fast);
+static void SetRGBmap(int boxnum, Box *box, unsigned char *rgbmap, int bits);
 #ifdef slow_color_map
 static void find_colors();
 static int  getneighbors();
 static int  makenearest();
 #else
-extern void inv_cmap();
+extern void inv_cmap(int colors, unsigned char **colormap, int bits, long unsigned int *dist_buf, unsigned char *rgbmap);
 #endif
-static int  CutBoxes();
-static int  CutBox();
-static int  GreatestVariance();
-static int  FindCutpoint();
+static int  CutBoxes(Box *boxes, int colors);
+static int  CutBox(Box *box, Box *newbox);
+static int  GreatestVariance(Box *boxes, int n);
+static int  FindCutpoint(Box *box, int color, Box *newbox1, Box *newbox2);
 
 
 
@@ -158,11 +176,6 @@ static int  FindCutpoint();
  */
 
 /*
- * Maximum number of colormap entries.  To make larger than 2^8, the rgbmap
- * type will have to be changed from unsigned chars to something larger.
- */
-#define MAXCOLORS		256
-/*
  * Value corrersponding to full intensity in colormap.  The values placed
  * in the colormap are scaled to be between zero and this number.  Note
  * that anything larger than 255 is going to lead to problems, as the
@@ -179,14 +192,6 @@ static int  FindCutpoint();
 #define BLUEI		2	
 #define TRUE		1
 #define FALSE		0
-
-typedef struct {
-	float		weightedvar,		/* weighted variance */
-			mean[3];		/* centroid */
-	unsigned long 	weight,			/* # of pixels in box */
-			freq[3][MAXCOLORS];	/* Projected frequencies */
-	int 		low[3], high[3];	/* Box extent */
-} Box;
 
 static unsigned long	*Histogram,		/* image histogram */
 			NPixels,		/* # of pixels in an image*/
@@ -246,13 +251,7 @@ static Box		*Boxes;			/* Array of color boxes. */
 #define USE_HIST 2
 #define PROCESS_HIST 3
 int
-colorquant(red,green,blue,pixels,colormap,colors,bits,rgbmap,fast,accum_hist)
-unsigned char *red, *green, *blue;
-unsigned long pixels;
-unsigned char *colormap[3];
-int colors, bits;
-unsigned char *rgbmap;
-int fast, accum_hist;
+colorquant(unsigned char *red, unsigned char *green, unsigned char *blue, long unsigned int pixels, unsigned char **colormap, int colors, int bits, unsigned char *rgbmap, int fast, int accum_hist)
 {
     int	i,			/* Counter */
     OutColors,			/* # of entries computed */
@@ -317,9 +316,7 @@ int fast, accum_hist;
  * arrays for the first world-encompassing box.
  */
 static void
-QuantHistogram(r, g, b, box)
-register unsigned char *r, *g, *b;
-Box *box;
+QuantHistogram(register unsigned char *r, register unsigned char *g, register unsigned char *b, Box *box)
 {
 	unsigned long *rf, *gf, *bf, i;
 
@@ -345,9 +342,7 @@ Box *box;
  * Interatively cut the boxes.
  */
 static int
-CutBoxes(boxes, colors) 
-Box	*boxes;
-int	colors;
+CutBoxes(Box *boxes, int colors)
 {
 	int curbox;
 
@@ -372,9 +367,7 @@ int	colors;
  * Restrict the search to those boxes with indices between 0 and n-1.
  */
 static int
-GreatestVariance(boxes, n)
-Box *boxes;
-int n;
+GreatestVariance(Box *boxes, int n)
 {
 	register int i, whichbox = 0;
 	float max;
@@ -393,8 +386,7 @@ int n;
  * Compute mean and weighted variance of the given box.
  */
 static void
-BoxStats(box)
-register Box *box;
+BoxStats(register Box *box)
 {
 	register int i, color;
 	unsigned long *freq;
@@ -425,8 +417,7 @@ register Box *box;
  * Cut the given box.  Returns TRUE if the box could be cut, FALSE otherwise.
  */
 static int
-CutBox(box, newbox)
-Box *box, *newbox;
+CutBox(Box *box, Box *newbox)
 {
 	int i;
 	double totalvar[3];
@@ -478,9 +469,7 @@ Box *box, *newbox;
  * in newbox1 and newbox2.
  */
 static int
-FindCutpoint(box, color, newbox1, newbox2)
-Box *box, *newbox1, *newbox2;
-int color;
+FindCutpoint(Box *box, int color, Box *newbox1, Box *newbox2)
 {
 	float u, v, max;
 	int i, maxindex, minindex, cutpoint;
@@ -531,8 +520,7 @@ int color;
  * a single box.
  */
 static void
-UpdateFrequencies(box1, box2)
-register Box *box1, *box2;
+UpdateFrequencies(register Box *box1, register Box *box2)
 {
 	register unsigned long myfreq, *h;
 	register int b, g, r;
@@ -565,11 +553,7 @@ register Box *box1, *box2;
  * Compute RGB to colormap index map.
  */
 static void
-ComputeRGBMap(boxes, colors, rgbmap, bits, colormap, fast)
-Box *boxes;
-int colors;
-unsigned char *rgbmap, *colormap[3];
-int bits, fast;
+ComputeRGBMap(Box *boxes, int colors, unsigned char *rgbmap, int bits, unsigned char **colormap, int fast)
 {
 	register int i;
 
@@ -597,11 +581,7 @@ int bits, fast;
  * each color in the box.
  */
 static void
-SetRGBmap(boxnum, box, rgbmap, bits)
-int boxnum;
-Box *box;
-unsigned char *rgbmap;
-int bits;
+SetRGBmap(int boxnum, Box *box, unsigned char *rgbmap, int bits)
 {
 	register int r, g, b;
 	

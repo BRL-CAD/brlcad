@@ -123,13 +123,7 @@ RT_EXTERN( void rt_ebm_plate, ( int x1, int y1, int x2, int y2,
  *	0	ERROR
  */
 int
-rt_seg_planeclip( out_hd, in_hd, out_norm, in, out, rp, ap )
-struct seg	*out_hd;
-struct seg	*in_hd;
-vect_t		out_norm;
-fastf_t		in, out;
-struct xray	*rp;
-struct application *ap;
+rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, fastf_t *out_norm, fastf_t in, fastf_t out, struct xray *rp, struct application *ap)
 {
 	fastf_t		norm_dist_min, norm_dist_max;
 	fastf_t		slant_factor;
@@ -216,11 +210,7 @@ static int rt_ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
  *
  */
 int
-rt_ebm_dda( rp, stp, ap, seghead )
-register struct xray	*rp;
-struct soltab		*stp;
-struct application	*ap;
-struct seg		*seghead;
+rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap, struct seg *seghead)
 {
 	register struct rt_ebm_specific *ebmp =
 		(struct rt_ebm_specific *)stp->st_specific;
@@ -527,11 +517,7 @@ if(RT_G_DEBUG&DEBUG_EBM)bu_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
  *  and set up some of the associated internal variables.
  */
 int
-rt_ebm_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-const mat_t			mat;
-const struct db_i		*dbip;
+rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
 	union record	*rp;
 	register struct rt_ebm_internal *eip;
@@ -638,11 +624,7 @@ fail:
  *  The name will be added by the caller.
  */
 int
-rt_ebm_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_ebm_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_ebm_internal	*eip;
 	struct rt_ebm_internal	ebm;	/* scaled version */
@@ -683,11 +665,7 @@ const struct db_i		*dbip;
  *  and set up some of the associated internal variables.
  */
 int
-rt_ebm_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-const mat_t			mat;
-const struct db_i		*dbip;
+rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
 	register struct rt_ebm_internal *eip;
 	struct bu_vls	str;
@@ -788,11 +766,7 @@ fail:
  *  The name will be added by the caller.
  */
 int
-rt_ebm_export5( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_ebm_internal	*eip;
 	struct rt_ebm_internal	ebm;	/* scaled version */
@@ -829,11 +803,7 @@ const struct db_i		*dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_ebm_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register struct rt_ebm_internal	*eip =
 		(struct rt_ebm_internal *)ip->idb_ptr;
@@ -872,8 +842,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_ebm_ifree( ip )
-struct rt_db_internal	*ip;
+rt_ebm_ifree(struct rt_db_internal *ip)
 {
 	register struct rt_ebm_internal	*eip;
 
@@ -905,10 +874,7 @@ struct rt_db_internal	*ip;
  *	in stp->st_specific for use by rt_ebm_shot().
  */
 int
-rt_ebm_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_ebm_internal	*eip;
 	register struct rt_ebm_specific *ebmp;
@@ -964,8 +930,7 @@ struct rt_i		*rtip;
  *			R T _ E B M _ P R I N T
  */
 void
-rt_ebm_print( stp )
-register const struct soltab	*stp;
+rt_ebm_print(register const struct soltab *stp)
 {
 	register const struct rt_ebm_specific *ebmp =
 		(struct rt_ebm_specific *)stp->st_specific;
@@ -990,11 +955,7 @@ register const struct soltab	*stp;
  *	>0	HIT
  */
 int
-rt_ebm_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_ebm_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	register struct rt_ebm_specific *ebmp =
 		(struct rt_ebm_specific *)stp->st_specific;
@@ -1042,10 +1003,7 @@ ideal_ray.r_dir[X], ideal_ray.r_dir[Y], ideal_ray.r_dir[Z] );
  *  code into the proper normal.
  */
 void
-rt_ebm_norm( hitp, stp, rp )
-register struct hit	*hitp;
-struct soltab		*stp;
-register struct xray	*rp;
+rt_ebm_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	register struct rt_ebm_specific *ebmp =
 		(struct rt_ebm_specific *)stp->st_specific;
@@ -1088,10 +1046,7 @@ register struct xray	*rp;
  *  Everything has sharp edges.  This makes things easy.
  */
 void
-rt_ebm_curve( cvp, hitp, stp )
-register struct curvature	*cvp;
-register struct hit		*hitp;
-struct soltab			*stp;
+rt_ebm_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 /*	register struct rt_ebm_specific *ebmp =
 		(struct rt_ebm_specific *)stp->st_specific; */
@@ -1107,11 +1062,7 @@ struct soltab			*stp;
  *  untransformed X becomes U, and Y becomes V.
  */
 void
-rt_ebm_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+rt_ebm_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 	uvp->uv_u = hitp->hit_vpriv[X];
 	uvp->uv_v = hitp->hit_vpriv[Y];
@@ -1125,8 +1076,7 @@ register struct uvcoord	*uvp;
  * 			R T _ E B M _ F R E E
  */
 void
-rt_ebm_free( stp )
-struct soltab	*stp;
+rt_ebm_free(struct soltab *stp)
 {
 	register struct rt_ebm_specific *ebmp =
 		(struct rt_ebm_specific *)stp->st_specific;
@@ -1138,7 +1088,7 @@ struct soltab	*stp;
 }
 
 int
-rt_ebm_class()
+rt_ebm_class(void)
 {
 	return(0);
 }
@@ -1147,11 +1097,7 @@ rt_ebm_class()
  *			R T _ E B M _ P L O T
  */
 int
-rt_ebm_plot( vhead, ip, ttol, tol )
-struct bu_list	*vhead;
-struct rt_db_internal *ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	register struct rt_ebm_internal *eip;
 	register int	x,y;
@@ -1206,12 +1152,7 @@ const struct bn_tol		*tol;
 
 /* either x1==x2, or y1==y2 */
 void
-rt_ebm_plate( x1, y1, x2, y2, t, mat, vhead )
-int			x1, y1;
-int			x2, y2;
-double			t;
-register mat_t		mat;
-register struct bu_list	*vhead;
+rt_ebm_plate(int x1, int y1, int x2, int y2, double t, register fastf_t *mat, register struct bu_list *vhead)
 {
 	LOCAL point_t	s, p;
 	LOCAL point_t	srot, prot;
@@ -1246,11 +1187,7 @@ struct ebm_edge
 
 /* either x1==x2, or y1==y2 */
 static void
-rt_ebm_edge( x1, y1, x2, y2, left, edges )
-int			x1, y1;
-int			x2, y2;
-int			left;
-struct ebm_edge		*edges;
+rt_ebm_edge(int x1, int y1, int x2, int y2, int left, struct ebm_edge *edges)
 {
 	struct ebm_edge *new_edge;
 
@@ -1278,8 +1215,7 @@ struct ebm_edge		*edges;
 }
 
 static int
-rt_ebm_sort_edges( edges )
-struct ebm_edge *edges;
+rt_ebm_sort_edges(struct ebm_edge *edges)
 {
 	struct ebm_edge loops;
 	int vertical;
@@ -1439,12 +1375,7 @@ struct ebm_edge *edges;
  *			R T _ E B M _ T E S S
  */
 int
-rt_ebm_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	struct rt_ebm_internal	*eip;
 	struct shell	*s;
@@ -1966,10 +1897,7 @@ vect_t	pt, dir;
  *	no paramaters requested returns all
  */
 int
-rt_ebm_tclget( interp, intern, attr )
-Tcl_Interp			*interp;
-const struct rt_db_internal	*intern;
-const char			*attr;
+rt_ebm_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
 	register struct rt_ebm_internal *ebm=(struct rt_ebm_internal *)intern->idb_ptr;
 	Tcl_DString	ds;
@@ -2031,11 +1959,7 @@ const char			*attr;
  */
 
 int
-rt_ebm_tcladjust( interp, intern, argc, argv )
-Tcl_Interp		*interp;
-struct rt_db_internal	*intern;
-int			argc;
-char			**argv;
+rt_ebm_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
 {
 	struct rt_ebm_internal *ebm;
 
@@ -2111,10 +2035,7 @@ rt_ebm_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
  *	to initialize the matrix and height to legal values.
  */
 void
-rt_ebm_make( ftp, intern, diameter )
-const struct rt_functab	*ftp;
-struct rt_db_internal	*intern;
-double			diameter;
+rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
 {
 	struct rt_ebm_internal *ebm;
 

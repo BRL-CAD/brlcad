@@ -164,17 +164,17 @@ static struct tms tms0;
 static struct	timeval time0;	/* Time at which timeing started */
 static struct	rusage ru0;	/* Resource utilization at the start */
 
-static void prusage();
-static void tvadd();
-static void tvsub();
-static void psecs();
+static void prusage(register struct rusage *r0, register struct rusage *r1, struct timeval *e, struct timeval *b, char *outp);
+static void tvadd(struct timeval *tsum, struct timeval *t0, struct timeval *t1);
+static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0);
+static void psecs(long int l, register char *cp);
 #endif
 
 /*
  *			P R E P _ T I M E R
  */
 void
-prep_timer()
+prep_timer(void)
 {
 #ifdef SYSV
 	(void)time(&time0);

@@ -27,8 +27,7 @@
 #include <stdio.h>
 
 void
-setlinebuf( stream )
-FILE *stream;
+setlinebuf(FILE *stream)
 {
     setvbuf( stream, NULL, _IOLBF, 0 );
 }

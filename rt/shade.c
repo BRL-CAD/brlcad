@@ -56,11 +56,7 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
  *  array is not needed, or has been handled elsewhere.
  */
 void
-shade_inputs( ap, pp, swp, want )
-struct application *ap;
-register const struct partition *pp;
-register struct shadework *swp;
-register int	want;
+shade_inputs(struct application *ap, register const struct partition *pp, register struct shadework *swp, register int want)
 {
 	register int	have;
 
@@ -196,10 +192,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
  *	Everyone calls us as (void)viewshade()
  */
 int
-viewshade( ap, pp, swp )
-struct application *ap;
-register const struct partition *pp;
-register struct shadework *swp;
+viewshade(struct application *ap, register const struct partition *pp, register struct shadework *swp)
 {
 	register const struct mfuncs *mfp;
 	register const struct region *rp;
@@ -309,9 +302,7 @@ register struct shadework *swp;
  *  Pretty print a shadework structure.
  */
 void
-pr_shadework( str, swp )
-const char *str;
-register const struct shadework *swp;
+pr_shadework(const char *str, register const struct shadework *swp)
 {
 	int	i;
 

@@ -53,9 +53,7 @@
  * 	Repeatedly read from the input until the file EOF or an
  * 	error is encountered.
  */
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     char       *infname = NULL,
     	       *outfname = NULL;

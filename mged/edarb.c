@@ -50,7 +50,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-void	ext4to6(),old_ext4to6();
+void	ext4to6(int pt1, int pt2, int pt3, register struct rt_arb_internal *arb),old_ext4to6();
 
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
@@ -449,11 +449,7 @@ mv_edge(
 /* Extrude command - project an arb face */
 /* Format: extrude face distance	*/
 int
-f_extrude(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i, j;
 	static int face;
@@ -660,11 +656,7 @@ a4toa6:
 /* define an arb8 using rot fb angles to define a face */
 /* Format: a name rot fb	*/
 int
-f_arbdef(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *dp;
 	struct rt_db_internal	internal;
@@ -687,7 +679,7 @@ char	**argv;
 	}
 
 	if( db_lookup( dbip,  argv[1] , LOOKUP_QUIET ) != DIR_NULL )  {
-	  aexists( interp, argv[1] );
+	  aexists( argv[1] );
 	  return TCL_ERROR;
 	}
 
@@ -765,11 +757,7 @@ char	**argv;
 /* Mirface command - mirror an arb face */
 /* Format: mirror face axis	*/
 int
-f_mirface(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i, j, k;
 	static int face;
@@ -955,11 +943,7 @@ char	**argv;
  */
 
 int
-f_edgedir(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i;
 	vect_t slope;
@@ -1030,9 +1014,7 @@ char	**argv;
  *			to produce ARB6
  */
 void
-ext4to6(pt1, pt2, pt3, arb)
-int pt1, pt2, pt3;
-register struct rt_arb_internal *arb;
+ext4to6(int pt1, int pt2, int pt3, register struct rt_arb_internal *arb)
 {
 	point_t pts[8];
 	register int i;
@@ -1071,12 +1053,7 @@ register struct rt_arb_internal *arb;
  *     ------------------------------------------------
  */
 int
-f_permute(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-
+f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     /*
      *	1) Why were all vars declared static?

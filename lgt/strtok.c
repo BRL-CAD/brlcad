@@ -25,9 +25,7 @@ static const char RCSid[] = "@(#)$Header$";
 static char *scanpoint = NULL;
 
 char *				/* NULL if no token left */
-strtok(s, delim)
-char *s;
-register const char *delim;
+strtok(char *s, register const char *delim)
 {
 	register char *scan;
 	char *tok;

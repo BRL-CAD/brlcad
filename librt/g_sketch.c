@@ -63,14 +63,11 @@ static const char RCSsketch[] = "@(#)$Header$ (BRL)";
 #define M_PI            3.14159265358979323846
 #endif
 
-fastf_t rt_cnurb_par_edge();
+fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
 extern void get_indices( genptr_t seg, int *start, int *end );	/* from g_extrude.c */
 
 int
-rt_check_curve( crv, skt, noisey )
-struct curve *crv;
-struct rt_sketch_internal *skt;
-int noisey;
+rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisey)
 {
 	int i, j;
 	int ret=0;
@@ -147,10 +144,7 @@ int noisey;
  *  	stp->st_specific for use by sketch_shot().
  */
 int
-rt_sketch_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_sketch_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	stp->st_specific = (genptr_t)NULL;
 	return( 0 );
@@ -160,8 +154,7 @@ struct rt_i		*rtip;
  *			R T _ S K E T C H _ P R I N T
  */
 void
-rt_sketch_print( stp )
-register const struct soltab *stp;
+rt_sketch_print(register const struct soltab *stp)
 {
 }
 
@@ -177,11 +170,7 @@ register const struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_sketch_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_sketch_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	return(0);			/* MISS */
 }
@@ -194,12 +183,12 @@ struct seg		*seghead;
  *  Vectorized version.
  */
 void
-rt_sketch_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+rt_sketch_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+             	               /* An array of solid pointers */
+           		       /* An array of ray pointers */
+                               /* array of segs (results returned) */
+   		  	       /* Number of ray/object pairs */
+                  	    
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -210,10 +199,7 @@ struct application	*ap;
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_sketch_norm( hitp, stp, rp )
-register struct hit	*hitp;
-struct soltab		*stp;
-register struct xray	*rp;
+rt_sketch_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
@@ -225,10 +211,7 @@ register struct xray	*rp;
  *  Return the curvature of the sketch.
  */
 void
-rt_sketch_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit	*hitp;
-struct soltab		*stp;
+rt_sketch_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
@@ -245,11 +228,7 @@ struct soltab		*stp;
  *  v = elevation
  */
 void
-rt_sketch_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+rt_sketch_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 }
 
@@ -257,8 +236,7 @@ register struct uvcoord	*uvp;
  *		R T _ S K E T C H _ F R E E
  */
 void
-rt_sketch_free( stp )
-register struct soltab *stp;
+rt_sketch_free(register struct soltab *stp)
 {
 }
 
@@ -266,19 +244,13 @@ register struct soltab *stp;
  *			R T _ S K E T C H _ C L A S S
  */
 int
-rt_sketch_class()
+rt_sketch_class(void)
 {
 	return(0);
 }
 
 int
-seg_to_vlist( vhead, ttol, V, u_vec, v_vec, sketch_ip, seg )
-struct bu_list          *vhead;
-const struct rt_tess_tol *ttol;
-point_t			V;
-vect_t			u_vec, v_vec;
-struct rt_sketch_internal *sketch_ip;
-genptr_t seg;
+seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, genptr_t seg)
 {
 	int		ret=0;
 	int		i;
@@ -701,13 +673,7 @@ genptr_t seg;
  *			C U R V E _ T O _ V L I S T
  */
 int
-curve_to_vlist( vhead, ttol, V, u_vec, v_vec, sketch_ip, crv )
-struct bu_list          *vhead;
-const struct rt_tess_tol *ttol;
-point_t			V;
-vect_t			u_vec, v_vec;
-struct rt_sketch_internal *sketch_ip;
-struct curve                    *crv;
+curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, struct curve *crv)
 {
 	int seg_no;
 	int ret=0;
@@ -736,11 +702,7 @@ struct curve                    *crv;
  *			R T _ S K E T C H _ P L O T
  */
 int
-rt_sketch_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	LOCAL struct rt_sketch_internal	*sketch_ip;
 	int				ret;
@@ -768,12 +730,7 @@ const struct bn_tol		*tol;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_sketch_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	return(-1);
 }
@@ -785,11 +742,7 @@ const struct bn_tol		*tol;
  *  Apply modeling transformations as well.
  */
 int
-rt_sketch_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	LOCAL struct rt_sketch_internal	*sketch_ip;
 	union record			*rp;
@@ -950,11 +903,7 @@ const struct db_i		*dbip;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_sketch_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_sketch_internal	*sketch_ip;
 	union record		*rec;
@@ -1146,11 +1095,7 @@ const struct db_i		*dbip;
  *  Apply modeling transformations as well.
  */
 int
-rt_sketch_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	LOCAL struct rt_sketch_internal	*sketch_ip;
 	vect_t				v;
@@ -1308,11 +1253,7 @@ const struct db_i		*dbip;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_sketch_export5( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_sketch_internal	*sketch_ip;
 	unsigned char			*cp;
@@ -1507,11 +1448,7 @@ const struct db_i		*dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_sketch_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register struct rt_sketch_internal	*sketch_ip =
 		(struct rt_sketch_internal *)ip->idb_ptr;
@@ -1726,8 +1663,7 @@ double			mm2local;
 }
 
 void
-rt_curve_free( crv )
-struct curve *crv;
+rt_curve_free(struct curve *crv)
 {
 	int i;
 
@@ -1814,9 +1750,7 @@ rt_sketch_ifree( struct rt_db_internal	*ip )
 }
 
 void
-rt_copy_curve( crv_out, crv_in )
-struct curve *crv_out;
-const struct curve *crv_in;
+rt_copy_curve(struct curve *crv_out, const struct curve *crv_in)
 {
 	int i, j;
 
@@ -1886,8 +1820,7 @@ const struct curve *crv_in;
 }
 
 struct rt_sketch_internal *
-rt_copy_sketch( sketch_ip )
-const struct rt_sketch_internal *sketch_ip;
+rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 {
 	struct rt_sketch_internal *out;
 	int i;
@@ -1921,9 +1854,7 @@ const struct rt_sketch_internal *sketch_ip;
 }
 
 int
-curve_to_tcl_list( vls, crv )
-struct bu_vls *vls;
-struct curve *crv;
+curve_to_tcl_list(struct bu_vls *vls, struct curve *crv)
 {
 	int i,j;
 
@@ -1993,10 +1924,7 @@ int rt_sketch_tclform( const struct rt_functab *ftp, Tcl_Interp *interp)
 }
 
 int
-rt_sketch_tclget( interp, intern, attr )
-Tcl_Interp			*interp;
-const struct rt_db_internal	*intern;
-const char			*attr;
+rt_sketch_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
 	register struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
 	Tcl_DString     ds;
@@ -2074,10 +2002,7 @@ const char			*attr;
 }
 
 int
-get_tcl_curve( interp, crv, seg_list )
-Tcl_Interp *interp;
-struct curve *crv;
-Tcl_Obj *seg_list;
+get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 {
 	int seg_count;
 	int ret, j;
@@ -2268,11 +2193,7 @@ Tcl_Obj *seg_list;
 }
 
 int
-rt_sketch_tcladjust( interp, intern, argc, argv )
-Tcl_Interp		*interp;
-struct rt_db_internal	*intern;
-int			argc;
-char			**argv;
+rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
 {
 	struct rt_sketch_internal *skt;
 	int ret, array_len;

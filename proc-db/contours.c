@@ -27,7 +27,7 @@ int	x,y,z;
 int	npts;
 char	name[128];
 
-main()
+main(void)
 {
 	register int i;
 

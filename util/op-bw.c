@@ -188,7 +188,7 @@ doit()
 }
 #else
 int
-main()
+main(void)
 {
 	fprintf( stderr, "op-bw: this is a vax specific program\n" );
 	exit( 1 );

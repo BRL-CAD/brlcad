@@ -52,8 +52,7 @@ Usage: pix-png [-a] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [file.pix]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -105,9 +104,7 @@ register char **argv;
 }
 
 int
-main(argc, argv)
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	int i;
 	unsigned char *scanbuf;

@@ -37,8 +37,7 @@ static char usage[] = "\
 Usage: fb-cmap [-h] [colormap]\n";
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	FBIO	*fbp;
 	FILE	*fp;

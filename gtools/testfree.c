@@ -12,18 +12,14 @@ struct whatsit
 };
 #define	WHATSIT_MAGIC	0x12345678
 
-void free_whatsit (wp, s)
-
-struct whatsit	*wp;
-char		*s;
-
+void free_whatsit (struct whatsit *wp, char *s)
 {
     RT_CKMAG(wp, WHATSIT_MAGIC, "whatsit");
 
     rt_free((char *) wp, "a whatsit");
 }
 
-main ()
+main (void)
 {
     struct whatsit	*wp;
 

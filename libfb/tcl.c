@@ -61,7 +61,7 @@
 #define FB_TCL_CK_FBIO(_p) FB_TCL_CKMAG(_p, FB_MAGIC, "FBIO")
 
 /* from libfb/fb_obj.c */
-extern int Fbo_Init();
+extern int Fbo_Init(Tcl_Interp *interp);
 
 /*XXX At some point these routines should be moved to FBIO */
 #ifdef IF_OGL
@@ -80,8 +80,8 @@ extern int X24_close_existing();
 extern FBIO X24_interface;
 #endif
 
-int fb_tcl_open_existing();
-int fb_tcl_close_existing();
+int fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static struct bu_cmdtab cmdtab[] = {
 	{"fb_open_existing",	 fb_tcl_open_existing},
@@ -90,8 +90,7 @@ static struct bu_cmdtab cmdtab[] = {
 };
 
 int
-Fb_Init(interp)
-     Tcl_Interp *interp;
+Fb_Init(Tcl_Interp *interp)
 {
 	char *version_number;
 
@@ -110,11 +109,7 @@ Fb_Init(interp)
 }
 
 int
-fb_tcl_open_existing(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef IF_X
 	register FBIO *ifp;
@@ -199,11 +194,7 @@ fb_tcl_open_existing(clientData, interp, argc, argv)
 }
 
 int
-fb_tcl_close_existing(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef IF_X
 	FBIO *ifp;
@@ -269,9 +260,7 @@ fb_tcl_close_existing(clientData, interp, argc, argv)
 }
 
 void
-fb_configureWindow(ifp, width, height)
-     FBIO *ifp;
-     int width, height;
+fb_configureWindow(FBIO *ifp, int width, int height)
 {
 #ifdef IF_X
 	const char *X_name = "/dev/X";
@@ -289,10 +278,7 @@ fb_configureWindow(ifp, width, height)
 }
 
 int
-fb_refresh(ifp, x, y, w, h)
-     FBIO *ifp;
-     int x, y;
-     int w, h;
+fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 {
 #ifdef IF_X
 	char *X_name = "/dev/X";

@@ -59,9 +59,7 @@ struct rt_many_internal  {
  *  a multiple pixel block may be removed from the work queue at once.
  */
 void
-rt_shoot_many_rays_worker(cpu, arg)
-int		cpu;
-genptr_t	arg;
+rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 {
 	LOCAL struct application app;
 	struct rt_many_internal *rmip = (struct rt_many_internal *)arg;
@@ -146,12 +144,12 @@ genptr_t	arg;
  *  This is not a limitation, as you usually can't construct more CPUs.
  */
 void
-rt_shoot_many_rays( proto_ap, callback, ncpus, nrays, resources )
-const struct application *proto_ap;
-int			callback BU_ARGS((struct application *, int index));
-int			ncpus;
-long			nrays;
-struct resource		*resources;	/* resources[ncpus] */
+rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct application *, int), int ncpus, long int nrays, struct resource *resources)
+                                   
+   			                                                    
+   			      
+    			      
+               		           	/* resources[ncpus] */
 {
 	struct rt_many_internal	rmi;
 	int	i;

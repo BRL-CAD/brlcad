@@ -51,7 +51,7 @@ const struct bu_structparse rt_ell_parse[] = {
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 
-static void  nmg_sphere_face_snurb();
+static void  nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m);
 
 /*
  *  Algorithm:
@@ -173,10 +173,7 @@ struct ell_specific {
  *  	stp->st_specific for use by rt_ell_shot().
  */
 int
-rt_ell_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	register struct ell_specific *ell;
 	struct rt_ell_internal	*eip;
@@ -318,8 +315,7 @@ struct rt_i		*rtip;
  *			R T _ E L L _ P R I N T
  */
 void
-rt_ell_print( stp )
-register const struct soltab *stp;
+rt_ell_print(register const struct soltab *stp)
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -341,11 +337,7 @@ register const struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_ell_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -392,12 +384,12 @@ struct seg		*seghead;
  *  This is the Becker vector version.
  */
 void
-rt_ell_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+             	               /* An array of solid pointers */
+           		       /* An array of ray pointers */
+                               /* array of segs (results returned) */
+   		  	       /* Number of ray/object pairs */
+                  	    
 {
 	register int    i;
 	register struct ell_specific *ell;
@@ -450,10 +442,7 @@ struct application	*ap;
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_ell_norm( hitp, stp, rp )
-register struct hit *hitp;
-struct soltab *stp;
-register struct xray *rp;
+rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -476,10 +465,7 @@ register struct xray *rp;
  *  Return the curvature of the ellipsoid.
  */
 void
-rt_ell_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit *hitp;
-struct soltab *stp;
+rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -519,11 +505,7 @@ struct soltab *stp;
  *  v = elevation
  */
 void
-rt_ell_uv( ap, stp, hitp, uvp )
-struct application *ap;
-struct soltab *stp;
-register struct hit *hitp;
-register struct uvcoord *uvp;
+rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -561,8 +543,7 @@ register struct uvcoord *uvp;
  *			R T _ E L L _ F R E E
  */
 void
-rt_ell_free( stp )
-register struct soltab *stp;
+rt_ell_free(register struct soltab *stp)
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -571,7 +552,7 @@ register struct soltab *stp;
 }
 
 int
-rt_ell_class()
+rt_ell_class(void)
 {
 	return(0);
 }
@@ -624,11 +605,7 @@ rt_ell_16pts(register fastf_t *ov,
  *			R T _ E L L _ P L O T
  */
 int
-rt_ell_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	register int		i;
 	struct rt_ell_internal	*eip;
@@ -747,12 +724,7 @@ struct ell_vert_strip {
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_ell_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	LOCAL mat_t	R;
 	LOCAL mat_t	S;
@@ -1123,11 +1095,7 @@ fail:
  *  Apply modeling transformations as well.
  */
 int
-rt_ell_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_ell_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_ell_internal	*eip;
 	union record		*rp;
@@ -1165,11 +1133,7 @@ const struct db_i		*dbip;
  *			R T _ E L L _ E X P O R T
  */
 int
-rt_ell_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_ell_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_ell_internal	*tip;
 	union record		*rec;
@@ -1204,11 +1168,7 @@ const struct db_i		*dbip;
  *  Apply modeling transformations as well.
  */
 int
-rt_ell_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_ell_internal	*eip;
 	fastf_t			vec[ELEMENTS_PER_VECT*4];
@@ -1248,11 +1208,7 @@ const struct db_i		*dbip;
  *	C vector
  */
 int
-rt_ell_export5( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_ell_internal	*eip;
 	fastf_t			vec[ELEMENTS_PER_VECT*4];
@@ -1286,11 +1242,7 @@ const struct db_i		*dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_ell_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register struct rt_ell_internal	*tip =
 		(struct rt_ell_internal *)ip->idb_ptr;
@@ -1356,8 +1308,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_ell_ifree( ip )
-struct rt_db_internal	*ip;
+rt_ell_ifree(struct rt_db_internal *ip)
 {
 	RT_CK_DB_INTERNAL(ip);
 	bu_free( ip->idb_ptr, "ell ifree" );
@@ -1380,11 +1331,7 @@ static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
  *			R T _ E L L _ T N U R B
  */
 int
-rt_ell_tnurb( r, m, ip, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct bn_tol		*tol;
+rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
 	LOCAL mat_t	R;
 	LOCAL mat_t	S;
@@ -1567,9 +1514,7 @@ VPRINT("surf(u,v)", param);
  *  The V direction runs from the south to the north pole.
  */
 static void
-nmg_sphere_face_snurb( fu, m )
-struct faceuse	*fu;
-const matp_t	m;
+nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 {
 	struct face_g_snurb	*fg;
 	FAST fastf_t root2_2;

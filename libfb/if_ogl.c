@@ -65,20 +65,20 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define YMAX170		484
 
 /* Internal callbacks etc.*/
-_LOCAL_ void		do_event();
-_LOCAL_ void		expose_callback();
+_LOCAL_ void		do_event(FBIO *ifp);
+_LOCAL_ void		expose_callback(FBIO *ifp, XEvent *eventPtr);
 void ogl_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
 
 /* Other Internal routines */
-_LOCAL_ void		ogl_clipper();
-_LOCAL_ int		ogl_getmem();
-_LOCAL_ void		backbuffer_to_screen();
-_LOCAL_ void		ogl_cminit();
+_LOCAL_ void		ogl_clipper(register FBIO *ifp);
+_LOCAL_ int		ogl_getmem(FBIO *ifp);
+_LOCAL_ void		backbuffer_to_screen(register FBIO *ifp, int one_y);
+_LOCAL_ void		ogl_cminit(register FBIO *ifp);
 #if 0
 _LOCAL_ void		reorder_cursor();
 #endif
-_LOCAL_ XVisualInfo *	ogl_choose_visual();
-_LOCAL_ int		is_linear_cmap();
+_LOCAL_ XVisualInfo *	ogl_choose_visual(FBIO *ifp);
+_LOCAL_ int		is_linear_cmap(register FBIO *ifp);
 
 _LOCAL_ int	ogl_nwindows = 0; 	/* number of open windows */
 _LOCAL_ int	multiple_windows = 0;	/* someone wants to be ready
@@ -87,33 +87,33 @@ _LOCAL_ int	multiple_windows = 0;	/* someone wants to be ready
 					 */
 _LOCAL_	XColor	color_cell[256];		/* used to set colormap */
 
-int ogl_refresh();
-int ogl_open_existing();
-int ogl_close_existing();
-int _ogl_open_existing();
+int ogl_refresh(FBIO *ifp, int x, int y, int w, int h);
+int ogl_open_existing(FBIO *ifp, int argc, char **argv);
+int ogl_close_existing(FBIO *ifp);
+int _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap);
 
-_LOCAL_ int	ogl_open(),
-		ogl_close(),
-		ogl_clear(),
-		ogl_read(),
-		ogl_write(),
-		ogl_rmap(),
-		ogl_wmap(),
-		ogl_view(),
-		ogl_getview(),
-		ogl_setcursor(),
-		ogl_cursor(),
+_LOCAL_ int	ogl_open(FBIO *ifp, char *file, int width, int height),
+		ogl_close(FBIO *ifp),
+		ogl_clear(FBIO *ifp, unsigned char *pp),
+		ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
+		ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int count),
+		ogl_rmap(register FBIO *ifp, register ColorMap *cmp),
+		ogl_wmap(register FBIO *ifp, register const ColorMap *cmp),
+		ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
+		ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
+		ogl_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
+		ogl_cursor(FBIO *ifp, int mode, int x, int y),
 #if 0
 		ogl_getcursor(),
 		ogl_readrect(),
 		fb_cnull(),
 #endif
-		ogl_writerect(),
-		ogl_bwwriterect(),
-		ogl_poll(),
-		ogl_flush(),
-		ogl_free(),
-		ogl_help();
+		ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
+		ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
+		ogl_poll(FBIO *ifp),
+		ogl_flush(FBIO *ifp),
+		ogl_free(FBIO *ifp),
+		ogl_help(FBIO *ifp);
 
 /* This is the ONLY thing that we normally "export" */
 FBIO ogl_interface =  
@@ -381,8 +381,7 @@ _LOCAL_ struct modeflags {
  *  might need to be increased.
  */
 _LOCAL_ int
-ogl_getmem( ifp )
-FBIO	*ifp;
+ogl_getmem(FBIO *ifp)
 {
 #define SHMEM_KEY	42
 	int	pixsize;
@@ -504,7 +503,7 @@ fail:
  *			O G L _ Z A P M E M
  */
 void
-ogl_zapmem()
+ogl_zapmem(void)
 {
 	int shmid;
 	int i;
@@ -527,10 +526,10 @@ ogl_zapmem()
  */
 static void
 #if _XOPEN_SOURCE
-sigkid( pid )
-int pid;
+sigkid(int pid)
+        
 #else
-sigkid()
+     sigkid(int pid)        
 #endif
 {
 	exit(0);
@@ -544,12 +543,7 @@ sigkid()
  * rectangle of the frame buffer
  */
 _LOCAL_ void
-ogl_xmit_scanlines( ifp, ybase, nlines, xbase, npix )
-register FBIO	*ifp;
-int		ybase;
-int		nlines;
-int		xbase;
-int		npix;
+ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npix)
 {
 	register int	y;
 	register int	n;
@@ -672,10 +666,7 @@ int		npix;
 
 
 _LOCAL_ int
-ogl_open( ifp, file, width, height ) 
-FBIO	*ifp;
-char	*file;
-int	width, height;
+ogl_open(FBIO *ifp, char *file, int width, int height)
 {
 
 	int		f;
@@ -996,10 +987,7 @@ int	width, height;
 }
 
 int
-ogl_open_existing(ifp, argc, argv)
-FBIO *ifp;
-int argc;
-char **argv;
+ogl_open_existing(FBIO *ifp, int argc, char **argv)
 {
   Display *dpy;
   Window win;
@@ -1046,17 +1034,7 @@ char **argv;
 }
 
 int
-_ogl_open_existing(ifp, dpy, win, cmap, vip, width, height, glxc, double_buffer, soft_cmap)
-FBIO *ifp;
-Display *dpy;
-Window win;
-Colormap cmap;
-XVisualInfo *vip;
-int width;
-int height;
-GLXContext glxc;
-int double_buffer;
-int soft_cmap;
+_ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
 {
 
   /*XXX for now use private memory */
@@ -1122,8 +1100,7 @@ int soft_cmap;
 }
 
 _LOCAL_ int 
-ogl_final_close( ifp )
-FBIO	*ifp;
+ogl_final_close(FBIO *ifp)
 {
 
   if( CJDEBUG ) {
@@ -1165,8 +1142,7 @@ FBIO	*ifp;
 
 
 _LOCAL_ int
-ogl_close( ifp )
-FBIO	*ifp;
+ogl_close(FBIO *ifp)
 {
 
 	ogl_flush( ifp );
@@ -1219,8 +1195,7 @@ FBIO	*ifp;
 }
 
 int
-ogl_close_existing(ifp)
-FBIO *ifp;
+ogl_close_existing(FBIO *ifp)
 {
   if(OGL(ifp)->cursor)
     XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
@@ -1257,8 +1232,7 @@ FBIO *ifp;
  *	Handle any pending input events
  */
 _LOCAL_ int
-ogl_poll(ifp)
-FBIO	*ifp;
+ogl_poll(FBIO *ifp)
 {
 	do_event(ifp);
 	return(0);
@@ -1270,8 +1244,7 @@ FBIO	*ifp;
  *  Free shared memory resources, and close.
  */
 _LOCAL_ int
-ogl_free( ifp )
-FBIO	*ifp;
+ogl_free(FBIO *ifp)
 {
 	int	ret;
 
@@ -1288,9 +1261,9 @@ FBIO	*ifp;
 
 
 _LOCAL_ int
-ogl_clear( ifp, pp )
-FBIO	*ifp;
-unsigned char	*pp;		/* pointer to beginning of memory segment*/
+ogl_clear(FBIO *ifp, unsigned char *pp)
+    	     
+             	    		/* pointer to beginning of memory segment*/
 {
 	struct ogl_pixel		bg;
 	register struct ogl_pixel      *oglp;
@@ -1368,10 +1341,7 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
  *			O G L _ V I E W
  */
 _LOCAL_ int
-ogl_view( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	xcenter, ycenter;
-int	xzoom, yzoom;
+ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	struct ogl_clip *clp;
 
@@ -1448,10 +1418,7 @@ int	xzoom, yzoom;
  *			O G L _ G E T V I E W
  */
 _LOCAL_ int
-ogl_getview( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	*xcenter, *ycenter;
-int	*xzoom, *yzoom;
+ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 	if(CJDEBUG) printf("entering ogl_getview\n");
 
@@ -1465,11 +1432,11 @@ int	*xzoom, *yzoom;
 
 
 _LOCAL_ int
-ogl_read( ifp, x, y, pixelp, count ) /*read count pixels into pixelp starting at x,y*/
-FBIO	*ifp;
-int	x, y;
-unsigned char	*pixelp;
-int	count;
+ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count) /*read count pixels into pixelp starting at x,y*/
+    	     
+   	     
+             	        
+   	      
 {
 	register short		scan_count;	/* # pix on this scanline */
 	register unsigned char	*cp;
@@ -1520,11 +1487,11 @@ int	count;
 
 
 _LOCAL_ int
-ogl_write( ifp, xstart, ystart, pixelp, count ) /*write count pixels from pixelp starting at xstart,ystart*/
-FBIO	*ifp;
-int	xstart, ystart;
-const unsigned char	*pixelp;
-int	count;
+ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int count) /*write count pixels from pixelp starting at xstart,ystart*/
+    	     
+   	               
+                   	        
+   	      
 {
 	register short		scan_count;	/* # pix on this scanline */
 	register unsigned char	*cp;
@@ -1663,11 +1630,7 @@ int	count;
  *  the screen separately.
  */
 _LOCAL_ int
-ogl_writerect( ifp, xmin, ymin, width, height, pp )
-FBIO		*ifp;
-int		xmin, ymin;
-int		width, height;
-const unsigned char	*pp;
+ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	register int		x;
 	register int		y;
@@ -1736,11 +1699,7 @@ const unsigned char	*pp;
  *  the screen separately.
  */
 _LOCAL_ int
-ogl_bwwriterect( ifp, xmin, ymin, width, height, pp )
-FBIO		*ifp;
-int		xmin, ymin;
-int		width, height;
-const unsigned char	*pp;
+ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	register int		x;
 	register int		y;
@@ -1803,9 +1762,7 @@ const unsigned char	*pp;
 
 
 _LOCAL_ int	
-ogl_rmap( ifp, cmp )
-register FBIO	*ifp;
-register ColorMap	*cmp;
+ogl_rmap(register FBIO *ifp, register ColorMap *cmp)
 {
 	register int i;
 
@@ -1828,8 +1785,7 @@ register ColorMap	*cmp;
  *  (ie, non-identity map).
  */
 _LOCAL_ int
-is_linear_cmap(ifp)
-register FBIO	*ifp;
+is_linear_cmap(register FBIO *ifp)
 {
 	register int i;
 
@@ -1845,8 +1801,7 @@ register FBIO	*ifp;
  *			O G L _ C M I N I T
  */
 _LOCAL_ void
-ogl_cminit( ifp )
-register FBIO	*ifp;
+ogl_cminit(register FBIO *ifp)
 {
 	register int	i;
 
@@ -1861,9 +1816,7 @@ register FBIO	*ifp;
  *			 O G L _ W M A P
  */
 _LOCAL_ int
-ogl_wmap( ifp, cmp )
-register FBIO	*ifp;
-register const ColorMap	*cmp;
+ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 {
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
@@ -1928,8 +1881,7 @@ register const ColorMap	*cmp;
  *			O G L _ H E L P
  */
 _LOCAL_ int
-ogl_help( ifp )
-FBIO	*ifp;
+ogl_help(FBIO *ifp)
 {
 	struct	modeflags *mfp;
 	XVisualInfo *visual = OGL(ifp)->vip;
@@ -1995,21 +1947,14 @@ FBIO	*ifp;
 
 
 _LOCAL_ int
-ogl_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
-FBIO	*ifp;
-const unsigned char *bits;
-int	xbits, ybits;
-int	xorig, yorig;
+ogl_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
   return 0;
 }
 
 
 _LOCAL_ int
-ogl_cursor( ifp, mode, x, y )	
-FBIO	*ifp;
-int	mode;
-int	x, y;
+ogl_cursor(FBIO *ifp, int mode, int x, int y)
 {
   if(mode){
     register int xx, xy;
@@ -2073,8 +2018,7 @@ int	x, y;
 
 
 _LOCAL_ int
-ogl_flush( ifp )
-FBIO	*ifp;
+ogl_flush(FBIO *ifp)
 {
 	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
 		if (multiple_windows) {
@@ -2120,8 +2064,7 @@ FBIO *ifp;
  *		(xpixmin,xpixmax,ypixmin,ypixmax)
  */
 void
-ogl_clipper( ifp )
-register FBIO	*ifp;
+ogl_clipper(register FBIO *ifp)
 {
 	register struct ogl_clip *clp;
 	register int	i;
@@ -2187,8 +2130,7 @@ register FBIO	*ifp;
  */
 
 _LOCAL_ void
-do_event(ifp)
-FBIO *ifp;	
+do_event(FBIO *ifp)
 {
   XEvent event;
 
@@ -2226,9 +2168,7 @@ FBIO *ifp;
 }
 
 _LOCAL_ void
-expose_callback(ifp, eventPtr)
-FBIO *ifp;
-XEvent *eventPtr;
+expose_callback(FBIO *ifp, XEvent *eventPtr)
 {    
 	XWindowAttributes xwa;
 	struct ogl_clip *clp;
@@ -2363,9 +2303,7 @@ XEvent *eventPtr;
 }  
 
 void
-ogl_configureWindow(ifp, width, height)
-FBIO *ifp;
-int width, height;
+ogl_configureWindow(FBIO *ifp, int width, int height)
 {
   if(width == OGL(ifp)->win_width &&
      height == OGL(ifp)->win_height)
@@ -2416,9 +2354,7 @@ reorder_cursor(char *dst,char *src, int xbits, int ybits)
  * screen if one_y equals -1.
  */
 _LOCAL_ void
-backbuffer_to_screen(ifp, one_y)
-register FBIO	*ifp;
-int		one_y;
+backbuffer_to_screen(register FBIO *ifp, int one_y)
 {
 	struct ogl_clip *clp;
 
@@ -2513,8 +2449,7 @@ int		one_y;
  * Return NULL on failure.
  */
 _LOCAL_ XVisualInfo *
-ogl_choose_visual(ifp)
-FBIO *ifp;
+ogl_choose_visual(FBIO *ifp)
 {
 
 	XVisualInfo *vip, *vibase, *maxvip, template;
@@ -2615,9 +2550,7 @@ FBIO *ifp;
 }
 
 int
-ogl_refresh(ifp, x, y, w, h)
-FBIO *ifp;
-int x, y, w, h;
+ogl_refresh(FBIO *ifp, int x, int y, int w, int h)
 {
   int mm;
   struct ogl_clip *clp;

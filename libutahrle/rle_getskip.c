@@ -61,8 +61,7 @@
  * 	end of image.
  */
 unsigned int
-rle_getskip( the_hdr )
-rle_hdr *the_hdr;
+rle_getskip(rle_hdr *the_hdr)
 {
     unsigned char inst[2];
     register FILE *infile = the_hdr->rle_file;

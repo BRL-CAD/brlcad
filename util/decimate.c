@@ -51,9 +51,7 @@ int	discard;
 int	wpad;
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
 	register int	i;
 	register int	j;

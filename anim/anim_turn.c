@@ -36,9 +36,9 @@
 #define M_PI	3.14159265358979323846
 #endif
 
-int		get_args();
-extern void	anim_y_p_r2mat();
-extern void	anim_add_trans();
+int		get_args(int argc, char **argv);
+extern void	anim_y_p_r2mat(fastf_t *, double, double, double);
+extern void	anim_add_trans(fastf_t *, const fastf_t *, const fastf_t *);
 
 extern int bu_optind;
 extern char *bu_optarg;
@@ -50,15 +50,13 @@ fastf_t length, angle, radius;
 fastf_t factor = 1.0;
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int count;
 	fastf_t val, time, roll_ang, yaw,sign;
 	vect_t v, point, front, back, zero, temp1, temp2;
 	mat_t m_from_world, m_to_world;
-	double bn_atan2();
+	double bn_atan2(double, double);
 
 	/* initialize variables */
 	VSETALL(zero, 0.0);
@@ -149,9 +147,7 @@ char **argv;
 
 #define OPT_STR "r:l:a:f:p:"
 
-int get_args(argc,argv)
-int argc;
-char **argv;
+int get_args(int argc, char **argv)
 {
 	int c;
 	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {

@@ -62,63 +62,63 @@ char	template[][TEMPLATE_COLS] = {
 
 static int	noframes = 1;
 
-STATIC int	make_Script();
-STATIC int	f_Nop();		/* default */
-STATIC int	f_Exec_Shell();		/* ! */
-STATIC int	f_Comment();		/* # */
-STATIC int	f_Menu();		/* ? */
-STATIC int	f_Buffer();		/* . */
-STATIC int	f_Anti_Aliasing();	/* A */
-STATIC int	f_Batch();		/* B */
-STATIC int	f_Cursor_Module();	/* C */
-STATIC int	f_Display_Origin();	/* D */
-STATIC int	f_Fbclear();		/* E */
-STATIC int	f_Animate();		/* F */
-STATIC int	f_GridConfig();		/* G */
-STATIC int	f_Wrt_Fb();		/* H */
-STATIC int	f_Rd_Raw_IR();		/* I */
-STATIC int	f_Movie();		/* J */
-STATIC int	f_Max_Bounce();		/* K */
-STATIC int	f_Entr_Lgt_Db();	/* L */
-STATIC int	f_Entr_Mat_Db();	/* M */
-STATIC int	f_Set_IR_Paint();	/* N */
-STATIC int	f_Err_File();		/* O */
-STATIC int	f_Prnt_Regions();	/* P */
-STATIC int	f_Set_Region_IR();	/* Q */
-STATIC int	f_Raytrace();		/* R */
-STATIC int	f_Script();		/* S */
-STATIC int	f_SetFbSize();		/* T */
-STATIC int	f_Wrt_IR_Db();		/* U */
-STATIC int	f_Wrt_Lgt_Db();		/* V */
-STATIC int	f_Wrt_Mat_Db();		/* W */
-STATIC int	f_Overlaps();		/* X */
-STATIC int	f_Show_IR();		/* Z */
-STATIC int	f_Grid_Roll();		/* a */
-STATIC int	f_Background();		/* b */
-STATIC int	f_Tracking_Cursor();	/* c */
-STATIC int	f_IR_Offset();		/* d */
-STATIC int	f_Debug();		/* e */
-STATIC int	f_Dist_Grid();		/* f */
-STATIC int	f_Scale_Grid();		/* g */
-STATIC int	f_Rd_Fb();		/* h */
-STATIC int	f_IR_Noise();		/* i */
-STATIC int	f_Key_Frame();		/* j */
-STATIC int	f_Hidden_Ln_Draw();	/* k */
-STATIC int	f_Prnt_Lgt_Db();	/* l */
-STATIC int	f_Prnt_Mat_Db();	/* m */
-STATIC int	f_Parallel();		/* n */
-STATIC int	f_Raster_File();	/* o */
-STATIC int	f_Perspective();	/* p */
-STATIC int	f_Quit();		/* q */
-STATIC int	f_Redraw();		/* r */
-STATIC int	f_IRmodule();		/* s */
-STATIC int	f_Grid_Translate();	/* t */
-STATIC int	f_Rd_IR_Db();		/* u */
-STATIC int	f_Rd_Lgt_Db();		/* v */
-STATIC int	f_Rd_Mat_Db();		/* w */
-int		f_Grid_X_Pos();		/* x */
-int		f_Grid_Y_Pos();		/* y */
-STATIC int	f_Shadows();		/* z */
+STATIC int	make_Script(char *file);
+STATIC int	f_Nop(HMitem *itemp, char **ar);		/* default */
+STATIC int	f_Exec_Shell(HMitem *itemp, char **args);		/* ! */
+STATIC int	f_Comment(HMitem *itemp, char **ar);		/* # */
+STATIC int	f_Menu(HMitem *itemp, char **ar);		/* ? */
+STATIC int	f_Buffer(HMitem *itemp, char **args);		/* . */
+STATIC int	f_Anti_Aliasing(HMitem *itemp, char **args);	/* A */
+STATIC int	f_Batch(HMitem *itemp, char **args);		/* B */
+STATIC int	f_Cursor_Module(HMitem *itemp, char **args);	/* C */
+STATIC int	f_Display_Origin(HMitem *itemp, char **args);	/* D */
+STATIC int	f_Fbclear(HMitem *itemp, char **args);		/* E */
+STATIC int	f_Animate(HMitem *itemp, char **args);		/* F */
+STATIC int	f_GridConfig(HMitem *itemp, char **args);		/* G */
+STATIC int	f_Wrt_Fb(HMitem *itemp, char **args);		/* H */
+STATIC int	f_Rd_Raw_IR(HMitem *itemp, char **args);		/* I */
+STATIC int	f_Movie(HMitem *itemp, char **args);		/* J */
+STATIC int	f_Max_Bounce(HMitem *itemp, char **args);		/* K */
+STATIC int	f_Entr_Lgt_Db(HMitem *itemp, char **args);	/* L */
+STATIC int	f_Entr_Mat_Db(HMitem *itemp, char **args);	/* M */
+STATIC int	f_Set_IR_Paint(HMitem *itemp, char **args);	/* N */
+STATIC int	f_Err_File(HMitem *itemp, char **args);		/* O */
+STATIC int	f_Prnt_Regions(HMitem *itemp, char **args);	/* P */
+STATIC int	f_Set_Region_IR(HMitem *itemp, char **args);	/* Q */
+STATIC int	f_Raytrace(HMitem *itemp, char **ar);		/* R */
+STATIC int	f_Script(HMitem *itemp, char **args);		/* S */
+STATIC int	f_SetFbSize(HMitem *itemp, char **args);		/* T */
+STATIC int	f_Wrt_IR_Db(HMitem *itemp, char **args);		/* U */
+STATIC int	f_Wrt_Lgt_Db(HMitem *itemp, char **args);		/* V */
+STATIC int	f_Wrt_Mat_Db(HMitem *itemp, char **args);		/* W */
+STATIC int	f_Overlaps(HMitem *itemp, char **args);		/* X */
+STATIC int	f_Show_IR(HMitem *itemp, char **args);		/* Z */
+STATIC int	f_Grid_Roll(HMitem *itemp, char **args);		/* a */
+STATIC int	f_Background(HMitem *itemp, char **args);		/* b */
+STATIC int	f_Tracking_Cursor(HMitem *itemp, char **args);	/* c */
+STATIC int	f_IR_Offset(HMitem *itemp, char **args);		/* d */
+STATIC int	f_Debug(HMitem *itemp, char **args);		/* e */
+STATIC int	f_Dist_Grid(HMitem *itemp, char **args);		/* f */
+STATIC int	f_Scale_Grid(HMitem *itemp, char **args);		/* g */
+STATIC int	f_Rd_Fb(HMitem *itemp, char **args);		/* h */
+STATIC int	f_IR_Noise(HMitem *itemp, char **args);		/* i */
+STATIC int	f_Key_Frame(HMitem *itemp, char **args);		/* j */
+STATIC int	f_Hidden_Ln_Draw(HMitem *itemp, char **args);	/* k */
+STATIC int	f_Prnt_Lgt_Db(HMitem *itemp, char **args);	/* l */
+STATIC int	f_Prnt_Mat_Db(HMitem *itemp, char **args);	/* m */
+STATIC int	f_Parallel(HMitem *itemp, char **args);		/* n */
+STATIC int	f_Raster_File(HMitem *itemp, char **args);	/* o */
+STATIC int	f_Perspective(HMitem *itemp, char **args);	/* p */
+STATIC int	f_Quit(HMitem *itemp, int args);		/* q */
+STATIC int	f_Redraw(HMitem *itemp, char **args);		/* r */
+STATIC int	f_IRmodule(HMitem *itemp, char **args);		/* s */
+STATIC int	f_Grid_Translate(HMitem *itemp, char **args);	/* t */
+STATIC int	f_Rd_IR_Db(HMitem *itemp, char **args);		/* u */
+STATIC int	f_Rd_Lgt_Db(HMitem *itemp, char **args);		/* v */
+STATIC int	f_Rd_Mat_Db(HMitem *itemp, char **args);		/* w */
+int		f_Grid_X_Pos(HMitem *itemp, char **args);		/* x */
+int		f_Grid_Y_Pos(HMitem *itemp, char **args);		/* y */
+STATIC int	f_Shadows(HMitem *itemp, char **args);		/* z */
 
 typedef struct
 	{
@@ -356,16 +356,14 @@ HMitem	quit_items[] =
 HMenu	quit_hmenu = { quit_items, 0, 0, 0, 0, 0 };
 
 int
-user_Cmd( ar )
-char **ar;
-	{	register int ret = (*func_tab[(int)*ar[0]].func)( (HMitem *) 0, ar );
+user_Cmd(char **ar)
+{	register int ret = (*func_tab[(int)*ar[0]].func)( (HMitem *) 0, ar );
 	return	ret;
 	}
 
 STATIC int
-user_Opt( opt, arg )
-char opt, *arg;
-	{	char	buf[2], *local_argv[MAX_ARGS];
+user_Opt(char opt, char *arg)
+{	char	buf[2], *local_argv[MAX_ARGS];
 		register int	i;
 	buf[0] = opt;
 	buf[1] = '\0';
@@ -383,9 +381,8 @@ char opt, *arg;
 	}
 
 int
-user_Pop( i )
-int	i;
-	{	char	buf[2], *local_argv[MAX_ARGS];
+user_Pop(int i)
+{	char	buf[2], *local_argv[MAX_ARGS];
 	if( i < 0 )
 		return	1;
 	buf[0] = i;
@@ -397,10 +394,8 @@ int	i;
 	}
 
 STATIC int
-f_Nop( itemp, ar )
-HMitem	*itemp;
-char **ar;
-	{
+f_Nop(HMitem *itemp, char **ar)
+{
 	if( *ar[0] > ' ' && *ar[0] <= '~' )
 		bu_log( "Unbound (%c)\n", *ar[0] );
 	else
@@ -411,39 +406,31 @@ char **ar;
 
 /*ARGSUSED*/
 STATIC int
-f_Comment( itemp, ar )
-HMitem	*itemp;
-char **ar;
-	{
+f_Comment(HMitem *itemp, char **ar)
+{
 	bu_log( "%s\n", ar[0] );
 	return	1;
 	}
 
 /*ARGSUSED*/
 STATIC int
-f_Menu( itemp, ar )
-HMitem	*itemp;
-char **ar;
-	{
+f_Menu(HMitem *itemp, char **ar)
+{
 	prnt_Menu();
 	return 1;
 	}
 
 /*ARGSUSED*/
 STATIC int
-f_Script( itemp, args )
-HMitem	*itemp;
-char **args;
-	{
+f_Script(HMitem *itemp, char **args)
+{
 	return	make_Script( args != (char **) NULL ? args[1] : (char *) NULL );
 	}
 
 /*ARGSUSED*/
 STATIC int
-f_SetFbSize( itemp, args )
-HMitem	*itemp;
-char **args;
-	{
+f_SetFbSize(HMitem *itemp, char **args)
+{
 	if( args != NULL && args[1] != NULL )
 		{
 		if( sscanf( args[1], "%d", &fb_size ) != 1 )
@@ -478,10 +465,8 @@ char **args;
 
 /*ARGSUSED*/
 STATIC int
-f_Raytrace( itemp, ar )
-HMitem	*itemp;
-char **ar;
-	{
+f_Raytrace(HMitem *itemp, char **ar)
+{
 	if( rt_g.rtg_parallel )
 		bu_log( "Will use %d processors.\n", npsw );
 
@@ -519,10 +504,8 @@ HMenu	buffer_hmenu = { buffer_items, 0, 0, 0, 0, prnt_Status };
  */
 /*ARGSUSED*/
 STATIC int
-f_Buffer( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Buffer(HMitem *itemp, char **args)
+{
 #if HAS_SGIGL
 	if( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	buffering_menu;
@@ -584,10 +567,8 @@ HMenu	debug_hmenu = { debug_items, 0, 0, 0, 0, prnt_Status };
  */
 /*ARGSUSED*/
 STATIC int
-f_Debug( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Debug(HMitem *itemp, char **args)
+{
 #if HAS_SGIGL
 	if( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	debugging_menu;
@@ -629,10 +610,8 @@ char	**args;
 	int f_Grid_Roll( HMItem *itemp, char **args )
  */
 STATIC int
-f_Grid_Roll( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Grid_Roll(HMitem *itemp, char **args)
+{
 	if( args == NULL || args[1] == NULL || sscanf( args[1], "%lf", &grid_roll ) != 1 )
 		{
 		if( tty )
@@ -656,10 +635,8 @@ char	**args;
 
 /*	f _ A n t i _ A l i a s i n g ( ) */
 STATIC int
-f_Anti_Aliasing( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Anti_Aliasing(HMitem *itemp, char **args)
+{
 	if(	args == NULL || args[1] == NULL
 	     ||	sscanf( args[1], "%d", &aperture_sz ) != 1
 		)
@@ -691,7 +668,7 @@ char	**args;
  * and yet not rewrite lgt.
  */
 char *
-lgt_tmp_name()
+lgt_tmp_name(void)
 {
 	char *template;
 	int tmp_fd;
@@ -711,9 +688,7 @@ lgt_tmp_name()
 /*	f _ B a t c h ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Batch( itemp, args )
-HMitem	*itemp;
-char	**args;
+f_Batch(HMitem *itemp, char **args)
 {
 		static char	*batch_com[8];
 		char		*script;
@@ -768,9 +743,8 @@ char	**args;
 #define QUIT	'q'
 
 void
-pt_Select( x, y, xp, yp, originp )
-register int	x, y, *xp, *yp, *originp;
-	{	char		*args[3];
+pt_Select(register int x, register int y, register int *xp, register int *yp, register int *originp)
+{	char		*args[3];
 		char		buf1[5], buf2[5];
 	
 	args[1] = buf1;
@@ -815,8 +789,8 @@ register int	x, y, *xp, *yp, *originp;
 
  */
 STATIC int
-setCellSize()
-	{
+setCellSize(void)
+{
 	(void) sprintf( prompt, "Cell size (mm) ? (%g) ", cell_sz );
 	if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
 	   &&	sscanf( input_ln, "%lf", &cell_sz ) != 1
@@ -826,9 +800,8 @@ setCellSize()
 	}
 
 void
-setGridSize( size )
-int	size;
-	{	char	buf[10];
+setGridSize(int size)
+{	char	buf[10];
 		char	*ar[3];
 	ar[1] = "0";
 	ar[2] = buf;
@@ -843,8 +816,8 @@ int	size;
 
  */
 STATIC int
-setViewSize()
-	{
+setViewSize(void)
+{
 	(void) sprintf( prompt, "View size (mm) ? (%g) ", view_size );
 	if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
 	   &&	sscanf( input_ln, "%lf", &view_size ) != 1
@@ -869,10 +842,8 @@ static int	popups = FALSE;	/* Are pop-up menus being used? */
 /*	f_Cursor_Module() */
 /*ARGSUSED*/
 STATIC int
-f_Cursor_Module( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	static int	x = -1, y = -1;
+f_Cursor_Module(HMitem *itemp, char **args)
+{	static int	x = -1, y = -1;
 		register int	c;
 		int		origin = TRUE;
 		int		xx0, yy0;
@@ -1207,10 +1178,8 @@ exit_cm :	;
 /*	f _ D i s p l a y _ O r i g i n ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Display_Origin( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Display_Origin(HMitem *itemp, char **args)
+{
 	if(	args == NULL ||
 		args[1] == NULL || sscanf( args[1], "%d", &x_fb_origin ) != 1
 	    ||	args[2] == NULL || sscanf( args[2], "%d", &y_fb_origin ) != 1
@@ -1236,10 +1205,8 @@ char	**args;
 /*	f _ A n i m a t e ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Animate( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Animate(HMitem *itemp, char **args)
+{
 	(void) sprintf( prompt, "Full-screen animation ? [y|n](%c) ", movie.m_fullscreen ? 'y' : 'n' );
 	if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
 		movie.m_fullscreen = input_ln[0] != 'n';
@@ -1357,10 +1324,8 @@ char	**args;
  */
 /*ARGSUSED*/
 STATIC int
-f_GridConfig( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_GridConfig(HMitem *itemp, char **args)
+{
 	if( args != NULL && args[1] != NULL && args[2] == NULL )
 		{ /* Old style 'G' command for upward compatibility of
 			'lgt' scripts. */
@@ -1472,10 +1437,8 @@ char	**args;
 /*	f _ W r t _ F b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Wrt_Fb( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	register int y;
+f_Wrt_Fb(HMitem *itemp, char **args)
+{	register int y;
 		static char save_fb_file[MAX_LN] = { 0 };
 		FBIO *save_fbiop;
 	if( args != NULL && args[1] != NULL )
@@ -1546,10 +1509,8 @@ char	**args;
 /*	f _ R d _ F b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Rd_Fb( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	register int y;
+f_Rd_Fb(HMitem *itemp, char **args)
+{	register int y;
 		static char save_fb_file[MAX_LN] = { 0 };
 		FBIO *save_fbiop;
 	if( args != NULL && args[1] != NULL )
@@ -1618,8 +1579,8 @@ char	**args;
 	}
 
 STATIC void
-wait_For_User()
-	{
+wait_For_User(void)
+{
 	(void) get_Input( input_ln, MAX_LN, "Continue ? [<return>] " );
 	(void) f_Redraw( (HMitem *) 0, (char **) 0 );
 	return;
@@ -1628,10 +1589,8 @@ wait_For_User()
 /*	f _ P r n t _ L g t _ D b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Prnt_Lgt_Db( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	static int	light_id = -1;
+f_Prnt_Lgt_Db(HMitem *itemp, char **args)
+{	static int	light_id = -1;
 #if HAS_SGIGL
 	if( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	lgts_prnt_menu;
@@ -1671,10 +1630,8 @@ char	**args;
 /*	f _ P r n t _ M a t _ D b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Prnt_Mat_Db( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	static int	material_id = -1;
+f_Prnt_Mat_Db(HMitem *itemp, char **args)
+{	static int	material_id = -1;
 	if( (args == NULL || args[1] == NULL) && tty )
 		{
 		(void) sprintf( input_ln, "%d", material_id );
@@ -1706,10 +1663,8 @@ char	**args;
 /*	f _ R d _ R a w _ I R ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Rd_Raw_IR( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	FILE	*ir_fp;
+f_Rd_Raw_IR(HMitem *itemp, char **args)
+{	FILE	*ir_fp;
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( ir_file, args[1], MAX_LN );
 	else
@@ -1753,9 +1708,8 @@ char	**args;
 	}
 
 STATIC int
-read_Frame( fp )
-FILE	*fp;
-	{	register int	i;
+read_Frame(FILE *fp)
+{	register int	i;
 #if SINGLE_PRECISION
 	if( fscanf( fp, "%e", &view_size ) != 1 )
 #else
@@ -1799,10 +1753,8 @@ FILE	*fp;
 /*	f _ M o v i e ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Movie( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	int		ret = TRUE;
+f_Movie(HMitem *itemp, char **args)
+{	int		ret = TRUE;
 		char		buf[10];
 		char		*locargs[3];
 	/* Will use 'grid_sz' to control resolution. */
@@ -2055,10 +2007,8 @@ error_exit :
 /*	f _ M a x _ B o u n c e ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Max_Bounce( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Max_Bounce(HMitem *itemp, char **args)
+{
 	if( ir_mapping )
 		{
 		bu_log( "Multiple bounces disallowed during IR mapping.\n" );
@@ -2089,10 +2039,8 @@ char	**args;
 /*	f _ P r n t _ R e g i o n s ( )  */
 /*ARGSUSED*/
 STATIC int
-f_Prnt_Regions( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Prnt_Regions(HMitem *itemp, char **args)
+{
 	prnt_Trie( reg_triep, 0 );
 	if( popups )
 		wait_For_User();
@@ -2102,10 +2050,8 @@ char	**args;
 /*	f _ S e t _ R e g i o n _ I R ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Set_Region_IR( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	register OcList	*ocp;
+f_Set_Region_IR(HMitem *itemp, char **args)
+{	register OcList	*ocp;
 		OcList		*oclist;
 		static char	reg_name[MAX_LN];
 		static int	temperature = 0;
@@ -2127,10 +2073,8 @@ char	**args;
 /*	f _ E r r _ F i l e ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Err_File( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	static int	err_fd = -1;
+f_Err_File(HMitem *itemp, char **args)
+{	static int	err_fd = -1;
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( err_file, args[1], MAX_LN );
 	else
@@ -2169,10 +2113,8 @@ char	**args;
  */
 /*ARGSUSED*/
 STATIC int
-f_Shadows( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Shadows(HMitem *itemp, char **args)
+{
 	if( args == NULL )
 		{
 		(void) sprintf( prompt,
@@ -2193,10 +2135,8 @@ char	**args;
 /*	f _ T r a c k i n g _ C u r s o r ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Tracking_Cursor( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Tracking_Cursor(HMitem *itemp, char **args)
+{
 	if( args == NULL )
 		{
 		(void) sprintf( prompt,
@@ -2217,10 +2157,8 @@ char	**args;
 /*	f _ P a r a l l e l ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Parallel( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Parallel(HMitem *itemp, char **args)
+{
 #ifdef PARALLEL
 		int maxpsw = bu_avail_cpus();
 	if( maxpsw > MAX_PSW )
@@ -2254,10 +2192,8 @@ char	**args;
 /*	f _ W r t _ I R _ D b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Wrt_IR_Db( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	FILE		*ir_fp;
+f_Wrt_IR_Db(HMitem *itemp, char **args)
+{	FILE		*ir_fp;
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( ir_db_file, args[1], MAX_LN );
 	else
@@ -2298,10 +2234,8 @@ char	**args;
 /*	f _ W r t _ L g t _ D b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Wrt_Lgt_Db( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Wrt_Lgt_Db(HMitem *itemp, char **args)
+{
  	if( args != NULL && args[1] != NULL )
 		(void) strncpy( lgt_db_file, args[1], MAX_LN );
 	else
@@ -2332,10 +2266,8 @@ char	**args;
 /*	f _ W r t _ M a t _ D b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Wrt_Mat_Db( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Wrt_Mat_Db(HMitem *itemp, char **args)
+{
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( mat_db_file, args[1], MAX_LN );
 	else
@@ -2361,10 +2293,8 @@ char	**args;
 /*	f _ G r i d _ T r a n s l a t e ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Grid_Translate( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Grid_Translate(HMitem *itemp, char **args)
+{
 #if SINGLE_PRECISION
 	if(	args == NULL || args[1] == NULL || args[2] == NULL
 	    ||	sscanf( args[1], "%f", &x_grid_offset ) != 1
@@ -2399,10 +2329,8 @@ char	**args;
 
 /*ARGSUSED*/
 STATIC int
-f_Overlaps( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Overlaps(HMitem *itemp, char **args)
+{
 	if( args == NULL )
 		{
 		(void) sprintf( prompt,
@@ -2427,10 +2355,8 @@ char	**args;
 /*	f _ S h o w _ I R ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Show_IR( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	int	x, y;
+f_Show_IR(HMitem *itemp, char **args)
+{	int	x, y;
 	if( args == NULL || args[1] == NULL )
 		{
 		x = grid_sz / 8;
@@ -2456,10 +2382,8 @@ char	**args;
 /*	f _ B a c k g r o u n d ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Background( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Background(HMitem *itemp, char **args)
+{
 	if(	args == NULL || args[1] == NULL
 	     ||	args[2] == NULL
 	     ||	args[3] == NULL
@@ -2506,9 +2430,8 @@ HMitem	irflags_items[] =
 HMenu	irflags_hmenu = { irflags_items, 0, 0, 0, 0, 0 };
 
 void
-set_IRmapping( bitflag )
-int	bitflag;
-	{
+set_IRmapping(int bitflag)
+{
 	switch( bitflag )
 		{
 	case IR_OFF :
@@ -2530,8 +2453,8 @@ int	bitflag;
 	}
 
 void
-note_IRmapping()
-	{
+note_IRmapping(void)
+{
 	if( ir_mapping == IR_OFF )
 		{
 		prnt_Scroll( "Leaving IR module.\n" );
@@ -2550,10 +2473,8 @@ note_IRmapping()
 /*	f _ I R m o d u l e ( ) */
 /*ARGSUSED*/
 STATIC int
-f_IRmodule( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	int	menuval = -1;
+f_IRmodule(HMitem *itemp, char **args)
+{	int	menuval = -1;
 	if( args == NULL || args[1] == NULL )
 		{	HMitem	*itemptr;
 		if( ! tty )
@@ -2587,10 +2508,8 @@ char	**args;
 /*	f _ R d _ I R _ D b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Rd_IR_Db( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	FILE	*ir_fp;
+f_Rd_IR_Db(HMitem *itemp, char **args)
+{	FILE	*ir_fp;
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( ir_db_file, args[1], MAX_LN );
 	else
@@ -2633,10 +2552,8 @@ char	**args;
 /*	f _ R d _ L g t _ D b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Rd_Lgt_Db( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Rd_Lgt_Db(HMitem *itemp, char **args)
+{
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( lgt_db_file, args[1], MAX_LN );
 	else
@@ -2665,10 +2582,8 @@ char	**args;
 /*	f _ R d _ M a t _ D b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Rd_Mat_Db( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Rd_Mat_Db(HMitem *itemp, char **args)
+{
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( mat_db_file, args[1], MAX_LN );
 	else
@@ -2697,10 +2612,8 @@ char	**args;
 /*	f _ I R _ O f f s e t ( ) */
 /*ARGSUSED*/
 STATIC int
-f_IR_Offset( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_IR_Offset(HMitem *itemp, char **args)
+{
 	if(	args == NULL || args[1] == NULL || sscanf( args[1], "%d", &ir_mapx ) != 1
 	     ||	args[2] == NULL || sscanf( args[2], "%d", &ir_mapy ) != 1
 		)
@@ -2713,10 +2626,8 @@ char	**args;
 /*	f _ D i s t _ G r i d ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Dist_Grid( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Dist_Grid(HMitem *itemp, char **args)
+{
 	if(	args != NULL && args[1] != NULL
 #if SINGLE_PRECISION
 	    &&	sscanf( args[1], "%f", &grid_dist ) != 1
@@ -2760,10 +2671,8 @@ char	**args;
 /*	f _ S c a l e _ G r i d ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Scale_Grid( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Scale_Grid(HMitem *itemp, char **args)
+{
 	bu_log( "The -g option is obsolete, use -G to set view size.\n" );
 	return	1;
 	}
@@ -2771,10 +2680,8 @@ char	**args;
 /*	f _ I R _ N o i s e ( ) */
 /*ARGSUSED*/
 STATIC int
-f_IR_Noise( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_IR_Noise(HMitem *itemp, char **args)
+{
 	if(	args == NULL || args[1] == NULL
 	    ||	sscanf( args[1], "%d", &ir_noise ) != 1
 		)
@@ -2803,10 +2710,8 @@ char	**args;
  */
 /*ARGSUSED*/
 STATIC int
-f_Key_Frame( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	fastf_t		model2view[16], to_eye[16];
+f_Key_Frame(HMitem *itemp, char **args)
+{	fastf_t		model2view[16], to_eye[16];
 		FILE		*svkey_fp=NULL;
 	if( args != NULL && args[1] != NULL )
 		{
@@ -2883,10 +2788,8 @@ char	**args;
 
 /*ARGSUSED*/
 STATIC int
-f_Hidden_Ln_Draw( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Hidden_Ln_Draw(HMitem *itemp, char **args)
+{
 	if( args == NULL )
 		{
 		(void) sprintf( prompt,
@@ -2932,10 +2835,8 @@ char	**args;
 /*	f _ E n t r _ L g t _ D b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Entr_Lgt_Db( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	static int	light_id = 0;
+f_Entr_Lgt_Db(HMitem *itemp, char **args)
+{	static int	light_id = 0;
 #if HAS_SGIGL
 	if( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	lgts_edit_menu;
@@ -2976,10 +2877,8 @@ char	**args;
 /*	f _ E n t r _ M a t _ D b ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Entr_Mat_Db( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	static int	material_id = 0;
+f_Entr_Mat_Db(HMitem *itemp, char **args)
+{	static int	material_id = 0;
 	if( (args == NULL || args[1] == NULL) && tty )
 		{
 		(void) sprintf( input_ln, "%d", material_id );
@@ -3010,10 +2909,8 @@ char	**args;
 /*	f _ S e t _ I R _ P a i n t ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Set_IR_Paint( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Set_IR_Paint(HMitem *itemp, char **args)
+{
 #if HAS_SGIGL
 	if( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	irpaint_menu;
@@ -3048,10 +2945,8 @@ char	**args;
 /*	f _ R a s t e r _ F i l e ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Raster_File( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Raster_File(HMitem *itemp, char **args)
+{
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( fb_file, args[1], MAX_LN );
 	else
@@ -3072,10 +2967,8 @@ char	**args;
 /*	f _ P e r s p e c t i v e ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Perspective( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Perspective(HMitem *itemp, char **args)
+{
 #if SINGLE_PRECISION
 	if( args == NULL || args[1] == NULL || sscanf( args[1], "%f", &rel_perspective ) != 1 )
 #else
@@ -3106,9 +2999,8 @@ char	**args;
 /*	f _ Q u i t ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Quit( itemp, args )
-HMitem	*itemp;
-	{
+f_Quit(HMitem *itemp, int args)
+{
 	exit_Neatly( 0 );
 	/*NOTREACHED*/
 	return( 0 ); /* for the compiler */
@@ -3117,10 +3009,8 @@ HMitem	*itemp;
 /*	f _ R e d r a w ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Redraw( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Redraw(HMitem *itemp, char **args)
+{
 	if( tty )
 		{
 		(void) ClrText();
@@ -3134,10 +3024,8 @@ char	**args;
 /*	f _ G r i d _ X _ P o s  ( ) */
 /*ARGSUSED*/
 int
-f_Grid_X_Pos( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Grid_X_Pos(HMitem *itemp, char **args)
+{
 	if(	args != NULL && args[1] != NULL && args[2] != NULL
 	    &&	(	sscanf( args[1], "%d", &grid_x_org ) != 1
 		    ||	sscanf( args[2], "%d", &grid_x_fin ) != 1
@@ -3179,10 +3067,8 @@ char	**args;
 /*	f _ G r i d _ Y _ P o s  ( ) */
 /*ARGSUSED*/
 int
-f_Grid_Y_Pos( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{
+f_Grid_Y_Pos(HMitem *itemp, char **args)
+{
 	if(	args != NULL && args[1] != NULL && args[2] != NULL
 	    &&	(	sscanf( args[1], "%d", &grid_y_org ) != 1
 		    ||	sscanf( args[2], "%d", &grid_y_fin ) != 1
@@ -3224,10 +3110,8 @@ char	**args;
 /*	f _ F b c l e a r ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Fbclear( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	static RGBpixel	black = { 0, 0, 0 };
+f_Fbclear(HMitem *itemp, char **args)
+{	static RGBpixel	black = { 0, 0, 0 };
 	if( ! ready_Output_Device( 0 ) )
 		return	-1;
 	(void) fb_clear( fbiop, black );
@@ -3238,10 +3122,8 @@ char	**args;
 /*	f _ E x e c _ S h e l l ( ) */
 /*ARGSUSED*/
 STATIC int
-f_Exec_Shell( itemp, args )
-HMitem	*itemp;
-char	**args;
-	{	register int	i;
+f_Exec_Shell(HMitem *itemp, char **args)
+{	register int	i;
 		int	exit_status;
 	if( args == NULL )
 		{
@@ -3365,8 +3247,8 @@ HMitem	main_items[] =
 	};
 HMenu	main_hmenu = { main_items, 0, 0, 0, 1, prnt_Status };
 void
-user_Interaction()
-	{	static char	*local_argv[MAX_ARGS];
+user_Interaction(void)
+{	static char	*local_argv[MAX_ARGS];
 		register int	ret;
 	local_argv[1] = NULL; /* Truncate argument list initially. */
 	/* Set up user options. */
@@ -3408,9 +3290,8 @@ static fastf_t	neg_z_axis[3] = { 0.0, 0.0, -1.0 };
 	Compute locations of light sources, observer, and grid.
  */
 int
-setup_Lgts( frame )
-int	frame;
-	{	register int i;
+setup_Lgts(int frame)
+{	register int i;
 		struct soltab *eye_stp = NULL;  /* Initialize to shut up the */
 		struct soltab *grid_stp = NULL; /* stupid Cray compiler. */
 	prnt_Event( "Setting up light sources..." );
@@ -3627,9 +3508,8 @@ int	frame;
 
 /*	u s e r _ I n p u t ( ) */
 void
-user_Input( args )
-char	*args[];
-	{	static int first_time_through = TRUE;
+user_Input(char **args)
+{	static int first_time_through = TRUE;
 		register int i;
 	if( get_Input( input_ln, BUFSIZ, ": " ) == NULL )
 		{
@@ -3675,9 +3555,8 @@ char	*args[];
 
 /*	m a k e _ S c r i p t ( ) */
 STATIC int
-make_Script( file )
-char	*file;
-	{	FILE	*run_fp;
+make_Script(char *file)
+{	FILE	*run_fp;
 		char	**obj_p = objects;
 	if( file != NULL )
 		(void) strncpy( script_file, file, MAX_LN );
@@ -3795,9 +3674,8 @@ char	*file;
 
 /*	p a r s _ A r g v ( ) */
 int
-pars_Argv( argc, argv )
-register char	**argv;
-	{	register int	c;
+pars_Argv(int argc, register char **argv)
+{	register int	c;
 		extern int	optind;
 		extern char	*optarg;
 	prog_id = argv[0];
@@ -3914,9 +3792,8 @@ void
 #else
 int
 #endif
-stop_sig( sig )
-int	sig;
-	{	int	pid = getpid();
+stop_sig(int sig)
+{	int	pid = getpid();
 	EVENT_MOVE();
 	(void) signal( sig, SIG_DFL );
 #if defined( SIGSTOP )
@@ -3937,8 +3814,8 @@ int	sig;
 	other modules.
  */
 int
-key_Frame()
-	{	static char	*local_argv[2];	
+key_Frame(void)
+{	static char	*local_argv[2];	
 	local_argv[0] = local_argv[1] = NULL;
 	return	f_Key_Frame( (HMitem *) 0, local_argv );
 	}
@@ -3947,11 +3824,8 @@ key_Frame()
 	Get a line of input.
  */
 char	*
-get_Input( inbuf, bufsz, msg )
-char	 *inbuf;
-int	 bufsz;
-char	*msg;
-	{
+get_Input(char *inbuf, int bufsz, char *msg)
+{
 #if HAS_SGIGL
 		extern char	*sgi_GetInput();
 	if( sgi_console && sgi_usemouse )
@@ -3973,8 +3847,8 @@ char	*msg;
 	}
 
 int
-hm_getchar()
-	{
+hm_getchar(void)
+{
 #if HAS_SGIGL		
 	if( SGI_USEKEYBD )
 		return	sgi_Getchar();
@@ -3987,9 +3861,8 @@ hm_getchar()
 	}
 
 int
-hm_ungetchar( c )
-int	c;
-	{
+hm_ungetchar(int c)
+{
 #if HAS_SGIGL
 	if( SGI_USEKEYBD )
 		return	sgi_Ungetchar();

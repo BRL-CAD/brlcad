@@ -28,10 +28,10 @@ static const char RCSid[] = "";
 
 extern int fb_refresh();  /* from libfb/tcl.c */
 
-extern void mged_center(); /* from chgview.c */
-extern int mged_vscale();
+extern void mged_center(fastf_t *center); /* from chgview.c */
+extern int mged_vscale(fastf_t sfactor);
 
-static void adjust_rect_for_zoom();
+static void adjust_rect_for_zoom(void);
 
 struct _rubber_band default_rubber_band = {
 /* rb_rc */		1,
@@ -105,7 +105,7 @@ set_rect(void)
  * Adjust the rubber band to have the same aspect ratio as the window.
  */
 static void
-adjust_rect_for_zoom()
+adjust_rect_for_zoom(void)
 {
   fastf_t width, height;
 

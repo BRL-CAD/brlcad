@@ -120,8 +120,7 @@ Usage: pldebug [-v] [unix_plot]\n";
 
 
 void
-outchar( n )
-int	n;
+outchar(int n)
 {
 	int	i, c;
 
@@ -136,8 +135,7 @@ int	n;
 }
 
 void
-outstring( n )
-int	n;
+outstring(int n)
 {
 	int	c;
 
@@ -148,7 +146,7 @@ int	n;
 }
 
 int
-getshort()
+getshort(void)
 {
 	register long	v, w;
 
@@ -163,8 +161,7 @@ getshort()
 }
 
 void
-outshort( n )
-int	n;
+outshort(int n)
 {
 	int	i;
 	short	s;
@@ -180,8 +177,7 @@ int	n;
 }
 
 void
-outfloat( n )
-int	n;
+outfloat(int n)
 {
 	int	i;
 	unsigned char	in[8*16];
@@ -202,9 +198,7 @@ int	n;
 
 
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	register int	c;
 	struct	uplot *up;

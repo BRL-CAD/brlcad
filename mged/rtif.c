@@ -8,7 +8,6 @@
  *	f_rrt		ray-trace using any program
  *	f_rtcheck	ray-trace to check for overlaps
  *	f_saveview	save the current view parameters
- *	f_loadview	load view parameters from a saveview file
  *	f_rmats		load views from a file
  *	f_savekey	save keyframe in file
  *	f_nirt          trace a single ray from current view
@@ -58,12 +57,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./qray.h"
 #include "./cmd.h"
 
-extern int mged_svbase();
-extern void set_perspective(); /* from set.c */
-/* from ged.c -- used to open databases quietly */
-extern int interactive;
+extern int mged_svbase(void);
+static void setup_rt(register char **vp, int printcmd);
 
-static void setup_rt();
 static int tree_walk_needed;
 
 struct run_rt head_run_rt;
@@ -77,84 +73,6 @@ struct rtcheck {
        double			csize;  
 };
 
-static vect_t	rtif_eye_model;
-static mat_t	rtif_viewrot;
-static struct bn_vlblock	*rtif_vbp;
-static FILE	*rtif_fp;
-static double	rtif_delay;
-static struct _mged_variables    rtif_saved_state;       /* saved state variable\s */
-static int	rtif_mode;
-static int	rtif_desiredframe;
-static int	rtif_finalframe;
-static int	rtif_currentframe;
-
-extern int	cm_start();
-extern int	cm_vsize();
-extern int	cm_eyept();
-extern int	cm_lookat_pt();
-extern int	cm_vrot();
-extern int	cm_end();
-extern int	cm_multiview();
-extern int	cm_anim();
-extern int	cm_tree();
-extern int	cm_clean();
-extern int	cm_set();
-extern int	cm_ae();
-extern int	cm_orientation();
-extern int	cm_null();
-
-/* here we define a minimal table of commands that are supported by the
- * loadview command.  unsupported commands are those that have no bearing on
- * view restoration. 
- */
-struct command_tab view_cmdtab[] = {
-	{"viewsize", "size in mm", "set view size",
-		cm_vsize,	2, 2},
-	{"eye_pt", "xyz of eye", "set eye point",
-		cm_eyept,	4, 4},
-	{"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
-		cm_lookat_pt,	4, 5},
-	{"viewrot", "4x4 matrix", "set view direction from matrix",
-		cm_vrot,	17,17},
-	{"orientation", "quaturnion", "set view direction from quaturnion",
-		cm_orientation,	5, 5},
-	{"set", 	"", "show or set parameters",
-		cm_set,		1, 999},
-
-	/* begin unsupported commands (for view loading) */
-
-	{"start", "frame number", "start a new frame",
-		cm_null,	2, 2},
-	{"clean", "", "clean articulation from previous frame",
-		cm_null,	1, 1},
-	{"end", 	"", "end of frame setup, begin raytrace",
-		cm_null,		1, 1},
-
-	/* not output, by default in saveview */
-
-	{"multiview", "", "produce stock set of views",
-		cm_null,	1, 1},
-	{"anim", 	"path type args", "specify articulation animation",
-		cm_null,	4, 999},
-	{"tree", 	"treetop(s)", "specify alternate list of tree tops",
-		cm_null,	1, 999},
-	{"ae", "azim elev", "specify view as azim and elev, in degrees",
-		cm_null,		3, 3},
-	{"opt", "-flags", "set flags, like on command line",
-		cm_null,		2, 999},
-
-	/* this is a quick hack used for quietly parsing the EOF delimiter in the
-	 * script files. 
-	 */
-	{"EOF", "", "End of file delimiter",
-		cm_null,		1, 1},
-
-	/* XXX support for the ae command is not included, though it probably should */
-	{(char *)0, (char *)0, (char *)0,
-	        0,		0, 0	/* END */}
-};
-
-
 /*
  *			P R _ W A I T _ S T A T U S
  *
@@ -164,8 +82,7 @@ struct command_tab view_cmdtab[] = {
  *  on non-UNIX machines.
  */
 void
-pr_wait_status( status )
-int	status;
+pr_wait_status(int status)
 {
   int	sig = status & 0x7f;
   int	core = status & 0x80;
@@ -202,9 +119,7 @@ int	status;
  *  due to some oddball hackery in RT to determine old -vs- new format.
  */
 HIDDEN void
-rt_oldwrite(fp, eye_model)
-FILE *fp;
-vect_t eye_model;
+rt_oldwrite(FILE *fp, fastf_t *eye_model)
 {
 	register int i;
 
@@ -227,9 +142,7 @@ vect_t eye_model;
  *  as it can be computed in different ways.
  */
 HIDDEN void
-rt_write(fp, eye_model)
-FILE *fp;
-vect_t eye_model;
+rt_write(FILE *fp, fastf_t *eye_model)
 {
 	register int	i;
 	quat_t		quat;
@@ -277,11 +190,7 @@ vect_t eye_model;
  *  Read in one view in the old RT format.
  */
 HIDDEN int
-rt_read(fp, scale, eye, mat)
-FILE	*fp;
-fastf_t	*scale;
-vect_t	eye;
-mat_t	mat;
+rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
 {
 	register int i;
 	double d;
@@ -353,9 +262,7 @@ static int	rt_cmd_vec_len;
 static char	rt_cmd_storage[MAXARGS*9];
 
 static void
-setup_rt( vp, printcmd )
-register char	**vp;
-int printcmd;
+setup_rt(register char **vp, int printcmd)
 {
   rt_cmd_vec_len = vp - rt_cmd_vec;
   rt_cmd_vec_len += build_tops(vp, &rt_cmd_vec[MAXARGS]);
@@ -428,8 +335,7 @@ rt_output_handler(ClientData clientData, int mask)
 #endif
 
 static void
-rt_set_eye_model(eye_model)
-vect_t eye_model;
+rt_set_eye_model(fastf_t *eye_model)
 {
   if(dmp->dm_zclip || mged_variables->mv_perspective_mode){
     vect_t temp;
@@ -492,7 +398,7 @@ vect_t eye_model;
  *			R U N _ R T
  */
 int
-run_rt()
+run_rt(void)
 {
 	register struct solid *sp;
 	register int i;
@@ -583,11 +489,7 @@ cmd_rt(ClientData	clientData,
  *  Typically used to invoke a remote RT (hence the name).
  */
 int
-f_rrt(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register char **vp;
 	register int i;
@@ -704,9 +606,8 @@ cmd_rtcheck(ClientData	clientData,
  *  
  *  Return basename of path, removing leading slashes and trailing suffix.
  */
-HIDDEN char *
-basename( p1, suff )
-register char *p1, *suff;
+static char *
+basename(register char *p1, register char *suff)
 {
 	register char *p2, *p3;
 	static char buf[128];
@@ -733,11 +634,7 @@ register char *p1, *suff;
  *  in the generated shell script
  */
 int
-f_saveview(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char **argv;
+f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct solid *sp;
 	register int i;
@@ -810,231 +707,6 @@ char **argv;
 	return TCL_OK;
 }
 
-
-/*
- *			F _ L O A D V I E W
- *
- *  Load a ray-trace view shell script.  If a database is not open, the 
- *  database listed in the script will attempted to be opened.  If a 
- *  database is open, it must match (inode) the one in the saveview
- *  raytrace script for it to get used.
- *
- *  The actual raytrace functionality is ignored in scripts -- only the view
- *  is intended to be restored, if possible.
- */
-int
-f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
-{
-	register FILE *fp;
-	char buffer[512];
-
-	/* data pulled from script file */
-  int perspective=-1;
-	char dbName[512];
-	char objects[1024];
-	char *editArgv[2];
-
-	/* save previous interactive state */
-	int prevInteractive = interactive;
-	int prevPerspective =  mged_variables->mv_perspective;
-
-	/* inodes used for database comparisons */
-	struct stat dbInode;
-	struct stat scriptInode;
-
-	/* for view orientation */
-	vect_t xlate;
-	mat_t new_cent;
-	
-
-#if 0
-	double viewsize;
-	double orientation[4]={0.0, 0.0, 0.0, 0.0};
-	vect_t eye_pt={0.0, 0.0, 0.0};
-#endif
-
-	/* We do not need to check *here* if a database is open, since we will be
-	 * loading one anyways.  we manually check when/if we find the database name.
-	 */
-	/*	CHECK_DBI_NULL; */
-
-	if(argc < 2){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help loadview");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	/* open the file for reading */
-	if ( (fp = fopen( argv[1], "r" )) == NULL ) {
-		perror(argv[1]);
-		return TCL_ERROR;
-	}
-
-	/* turn perspective mode off, by default.  A "-p" option in the view script
-	 * will turn it back on.
-	 */
-	mged_variables->mv_perspective=-1;
-	set_perspective();
-
-	/* iterate over the contents of the raytrace script */
-  while (!feof(fp)) {
-		memset(buffer, 0, 512);
-		fscanf(fp, "%s", buffer);
-
-    if (strncmp(buffer, "-p", 2)==0) {
-      /* we found perspective */
-
-      buffer[0]=' ';
-      buffer[1]=' ';
-      sscanf(buffer, "%d", &perspective);
-			/*      bu_log("perspective=%d\n", perspective);*/
-			mged_variables->mv_perspective=perspective;
-			set_perspective(); /* !!! this does not update the menu variable.. */
-
-    } else if (strncmp(buffer, "$*", 2)==0) {
-      /* the next read is the file name, the objects come after that */
-
-      memset(dbName, 0, 1024);
-      fscanf(fp, "%s", dbName);
-      /* if the last character is a line termination, remove it
-       * (it should always be unless the user modifies the file)
-       */
-      if ( *(dbName + strlen(dbName) - 1)=='\\' ) {
-        memset(dbName+strlen(dbName)-1, 0, 1);
-      }
-			/*      bu_log("dbName=%s\n", dbName); */
-
-			/* if no database is open, we attempt to open the database listed in the
-			 * script.  if a database is open, we compare the open database's inode
-			 * number with the inode of the database listed in the script.  If they
-			 * match, we may proceed. otherwise we need to abort since the wrong
-			 * database would be open.
-			 */
-			if ( dbip == DBI_NULL ) {
-				/* load the database */
-
-				/* XXX could use better path handling instead of assuming rooted or . */
-
-				/* turn off interactive mode so the f_opendb() call doesn't blather or
-				 * attempt to create a new database
-				 */
-				interactive=0;
-				editArgv[0]="";
-				editArgv[1]=dbName;
-				editArgv[2]=(char *)NULL;
-				if (f_opendb( (ClientData)NULL, interp, 2, editArgv ) == TCL_ERROR) {
-					Tcl_AppendResult(interp, "Unable to load database: ", dbName, "\n", (char *)NULL);
-
-					/* restore state before leaving */
-					mged_variables->mv_perspective=prevPerspective;
-					set_perspective();
-
-					return TCL_ERROR;
-				} else {
-					Tcl_AppendResult(interp, "Loading database: ", dbName, "\n", (char *)NULL);
-				}
-				interactive=prevInteractive;
-
-			} else {
-				/* compare inode numbers */
-
-				stat(dbip->dbi_filename, &dbInode);
-				stat(dbName, &scriptInode);
-
-				/* stop here if they are not the same file, otherwise, we may proceed
-				 * as expected, and load the objects.
-				 */
-				if (dbInode.st_ino != scriptInode.st_ino) {
-					Tcl_AppendResult(interp, "View script references a different database\nCannot load the view without closing the current database\n(i.e. run \"opendb ", dbName, "\")\n", (char *)NULL);
-
-					/* restore state before leaving */
-					mged_variables->mv_perspective=prevPerspective;
-					set_perspective();
-
-					return TCL_ERROR;
-				}
-					
-			}
-			/* end check for loaded database */
-
-			/* get rid of anything that may be displayed, since we will load objects
-			 * that are listed in the script next.
-			 */
-			(void)cmd_zap( (ClientData)NULL, interp, 1, NULL );
-
-      /* now get the objects listed */
-      fscanf(fp, "%s", objects);
-			/*			bu_log("objects=%s\n", objects);*/
-      while ((!feof(fp)) && (strncmp(objects, "\\", 1)!=0)) {
-
-				/* clean off the single quotes... */
-				if (strncmp(objects, "'", 1)==0) {
-					objects[0]=' ';
-					memset(objects+strlen(objects)-1, ' ', 1);
-					sscanf(objects, "%s", objects);
-				}
-
-				editArgv[0] = "e";
-				editArgv[1] = objects;
-				editArgv[2] = (char *)NULL;
-				if (edit_com( 2, editArgv, 1, 1 ) != 0) {
-					Tcl_AppendResult(interp, "Unable to load object: ", objects, "\n", (char *)NULL);
-				}
-
-				fscanf(fp, "%s", objects);
-				/*				bu_log("objects=%s\n", objects);*/
-      }			/* end iteration over reading in listed objects */
-    } else if (strncmp(buffer, "<<EOF", 5)==0) {
-			char *cmdBuffer = NULL;
-      /* we are almost done .. read in the view commands */
-			
-			while ( (cmdBuffer = rt_read_cmd( fp )) != NULL ) {
-				/* even unsupported commands should return successfully as they should
-				 * be calling cm_null()
-				 */
-				if ( rt_do_cmd( (struct rt_i *)0, cmdBuffer, view_cmdtab ) < 0 ) { 
-					Tcl_AppendResult(interp, "command failed: ", cmdBuffer, "\n", (char *)NULL);
-				}
-				bu_free( (genptr_t)cmdBuffer, "loadview cmdBuffer" );
-			}
-			/* end iteration over rt commands */
-
-    }
-		/* end check for non-view values (dbname, etc) */
-
-  }
-	/* end iteration over file until eof */
-	fclose(fp);
-
-	/* now we have to finish the eye point calculations that usually get
-	 * postponed until the end command runs.  Since we are at the "end"
-	 * of a commands section, we may finish the computations.
-	 */
-	/* First step:  put eye at view center (view 0,0,0) */
-	MAT_COPY(view_state->vs_vop->vo_rotation, rtif_viewrot);
-	MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, rtif_eye_model);
-	new_mats(); /* actually updates display here (maybe?) */
-	
-	/* XXX not sure why the correction factor is needed, but it works -- csm */
-	/*  Second step:  put eye at view 0,0,1.
-	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
-	 */
-	VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
-	MAT4X3PNT(new_cent, view_state->vs_vop->vo_view2model, xlate);
-	MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, new_cent);
-	new_mats();
-
-	/* update the view next time through the event loop */
-	update_views = 1;
-
-	return TCL_OK;
-}
-
-
 /*
  *			F _ R M A T S
  *
@@ -1046,15 +718,11 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
  *	1	leave view alone, animate solid named "EYE"
  */
 int
-f_rmats(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register FILE *fp;
 	register struct directory *dp;
-	register struct solid *sp;
+	register struct solid *sp = SOLID_NULL;
 	vect_t	eye_model;
 	vect_t	xlate;
 	vect_t	sav_center;
@@ -1083,9 +751,6 @@ char	**argv;
 	  perror(argv[1]);
 	  return TCL_ERROR;
 	}
-
-	sp = SOLID_NULL;
-
 	mode = -1;
 	if( argc > 2 )
 		mode = atoi(argv[2]);
@@ -1224,11 +889,7 @@ work:
 
 /* Save a keyframe to a file */
 int
-f_savekey(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_savekey(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register FILE *fp;
 	fastf_t	time;
@@ -1264,8 +925,19 @@ char	**argv;
 	return TCL_OK;
 }
 
-/* table of commands supported by the preview command
- */
+extern int	cm_start(int argc, char **argv);
+extern int	cm_vsize(int argc, char **argv);
+extern int	cm_eyept(int argc, char **argv);
+extern int	cm_lookat_pt(int argc, char **argv);
+extern int	cm_vrot(int argc, char **argv);
+extern int	cm_end(int argc, char **argv);
+extern int	cm_multiview(int argc, char **argv);
+extern int	cm_anim(int argc, char **argv);
+extern int	cm_tree(int argc, char **argv);
+extern int	cm_clean(int argc, char **argv);
+extern int	cm_set(int argc, char **argv);
+extern int	cm_orientation(int argc, char **argv);
+
 static struct command_tab cmdtab[] = {
 	{"start", "frame number", "start a new frame",
 		cm_start,	2, 2},
@@ -1291,14 +963,33 @@ static struct command_tab cmdtab[] = {
 		cm_clean,	1, 1},
 	{"set", 	"", "show or set parameters",
 		cm_set,		1, 999},
-	{"ae", "azim elev", "specify view as azim and elev, in degrees",
-		cm_null,		3, 3},
-	{"opt", "-flags", "set flags, like on command line",
-		cm_null,		2, 999},
 	{(char *)0, (char *)0, (char *)0,
 		0,		0, 0}	/* END */
 };
 
+/*
+ *			F _ P R E V I E W
+ *
+ *  Preview a new style RT animation scrtip.
+ *  Note that the RT command parser code is used, rather than the
+ *  MGED command parser, because of the differences in format.
+ *  The RT parser expects command handlers of the form "cm_xxx()",
+ *  and all communications are done via global variables.
+ *
+ *  For the moment, the only preview mode is the normal one,
+ *  moving the eyepoint as directed.
+ *  However, as a bonus, the eye path is left behind as a vector plot.
+ */
+static vect_t	rtif_eye_model;
+static mat_t	rtif_viewrot;
+static struct bn_vlblock	*rtif_vbp;
+static FILE	*rtif_fp;
+static double	rtif_delay;
+static struct _mged_variables    rtif_saved_state;       /* saved state variable\s */
+static int	rtif_mode;
+static int	rtif_desiredframe;
+static int	rtif_finalframe;
+static int	rtif_currentframe;
 
 /*
  *			R T I F _ S I G I N T
@@ -1311,8 +1002,7 @@ static struct command_tab cmdtab[] = {
  *  It isn't clear how to handle this.
  */
 static void
-rtif_sigint( num )
-int	num;
+rtif_sigint(int num)
 {
 	if(dbip == DBI_NULL)
 	  return;
@@ -1331,26 +1021,11 @@ int	num;
 	/* NOTREACHED */
 }
 
-
 /*
  *			F _ P R E V I E W
- *
- *  Preview a new style RT animation scrtip.
- *  Note that the RT command parser code is used, rather than the
- *  MGED command parser, because of the differences in format.
- *  The RT parser expects command handlers of the form "cm_xxx()",
- *  and all communications are done via global variables.
- *
- *  For the moment, the only preview mode is the normal one,
- *  moving the eyepoint as directed.
- *  However, as a bonus, the eye path is left behind as a vector plot.
  */
 int
-f_preview(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	char	*cmd;
 	int	c;
@@ -1484,11 +1159,7 @@ char	**argv;
  *  Invoke nirt with the current view & stuff
  */
 int
-f_nirt(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register char **vp;
 	FILE *fp_in;
@@ -1821,11 +1492,7 @@ done:
 }
 
 int
-f_vnirt(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   register int i;
   int status;
@@ -1904,9 +1571,7 @@ char    **argv;
 }
 
 int
-cm_start(argc, argv)
-char	**argv;
-int	argc;
+cm_start(int argc, char **argv)
 {
 	if( argc < 2 )
 		return(-1);
@@ -1916,9 +1581,7 @@ int	argc;
 }
 
 int
-cm_vsize(argc, argv)
-char	**argv;
-int	argc;
+cm_vsize(int argc, char **argv)
 {
 	if( argc < 2 )
 		return(-1);
@@ -1927,9 +1590,7 @@ int	argc;
 }
 
 int
-cm_eyept(argc, argv)
-char	**argv;
-int	argc;
+cm_eyept(int argc, char **argv)
 {
 	if( argc < 4 )
 		return(-1);
@@ -1941,9 +1602,7 @@ int	argc;
 }
 
 int
-cm_lookat_pt(argc, argv)
-int	argc;
-char	**argv;
+cm_lookat_pt(int argc, char **argv)
 {
 	point_t	pt;
 	vect_t	dir;
@@ -1979,9 +1638,7 @@ char	**argv;
 }
 
 int
-cm_vrot(argc, argv)
-char	**argv;
-int	argc;
+cm_vrot(int argc, char **argv)
 {
 	register int	i;
 
@@ -1994,9 +1651,7 @@ int	argc;
 }
 
 int
-cm_orientation( argc, argv )
-int	argc;
-char	**argv;
+cm_orientation(int argc, char **argv)
 {
 	register int	i;
 	quat_t		quat;
@@ -2011,9 +1666,7 @@ char	**argv;
  *			C M _ E N D
  */
 int
-cm_end(argc, argv)
-char	**argv;
-int	argc;
+cm_end(int argc, char **argv)
 {
 	vect_t	xlate;
 	vect_t	new_cent;
@@ -2033,7 +1686,7 @@ int	argc;
 	}
 
 	/* First step:  put eye at view center (view 0,0,0) */
-	MAT_COPY(view_state->vs_vop->vo_rotation, rtif_viewrot);
+       	MAT_COPY(view_state->vs_vop->vo_rotation, rtif_viewrot);
 	MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, rtif_eye_model);
 	new_mats();
 
@@ -2086,9 +1739,7 @@ int	argc;
 }
 
 int
-cm_multiview(argc, argv)
-char	**argv;
-int	argc;
+cm_multiview(int argc, char **argv)
 {
 	return(-1);
 }
@@ -2099,9 +1750,7 @@ int	argc;
  *  Parse any "anim" commands, and lodge their info in the directory structs.
  */
 int
-cm_anim(argc, argv)
-int	argc;
-char	**argv;
+cm_anim(int argc, char **argv)
 {
 
   if(dbip == DBI_NULL)
@@ -2123,9 +1772,7 @@ char	**argv;
  *  Replace list of top-level objects in rt_cmd_vec[].
  */
 int
-cm_tree(argc, argv)
-char	**argv;
-int	argc;
+cm_tree(int argc, char **argv)
 {
 	register int	i = 1;
 	char *cp = rt_cmd_storage;
@@ -2149,9 +1796,7 @@ int	argc;
  *  Clear current view.
  */
 int
-cm_clean(argc, argv)
-char	**argv;
-int	argc;
+cm_clean(int argc, char **argv)
 {
 	if(dbip == DBI_NULL)
 	  return 0;
@@ -2166,21 +1811,15 @@ int	argc;
 }
 
 int
-cm_set(argc, argv)
-char	**argv;
-int	argc;
+cm_set(int argc, char **argv)
 {
 	return(-1);
 }
 
-extern char **skewer_solids ();
+extern char **skewer_solids (int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int full_path);
 
 int
-cmd_solids_on_ray (clientData, interp, argc, argv)
-ClientData	clientData;
-Tcl_Interp	*interp;
-int		argc;
-char		**argv;
+cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char			**snames;
     int				h = 0;
@@ -2311,24 +1950,9 @@ char		**argv;
  * List the objects currently being drawn.
  */
 int 
-cmd_who (clientData, interp, argc, argv)
-ClientData	clientData;
-Tcl_Interp	*interp;
-int		argc;
-char 		**argv;
+cmd_who (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	CHECK_DBI_NULL;
 
 	return dgo_who_cmd(dgop, interp, argc, argv);
-}
-
-/* any commands that are not supported or implemented may call this null
- * routine to avoid rt_do_cmd() "command not found" error reporting
- */
-int
-cm_null(argc, argv)
-char	**argv;
-int	argc;
-{
-	return(0);
 }

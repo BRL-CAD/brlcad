@@ -43,11 +43,9 @@
  *	coordinates of real image data.  Use raw interface for speed.
  */
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
-    extern void rle_box();
+    extern void rle_box(rle_hdr *the_hdr, int *xminp, int *xmaxp, int *yminp, int *ymaxp);
     char * rlefname = NULL;
     int vflag = 0, cflag = 0, margin = 0;
     int xmin, xmax, ymin, ymax;

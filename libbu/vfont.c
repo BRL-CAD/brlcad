@@ -56,8 +56,7 @@ int vax_gshort(unsigned char *);
  *  is silent.  On extraordinary errors, a remark is placed on stderr.
  */
 struct vfont *
-vfont_get( font )
-char *font;
+vfont_get(char *font)
 {
 	register struct vfont	*vfp = VFONT_NULL;
 	register FILE		*fp = NULL;
@@ -150,8 +149,7 @@ char *font;
  *  stored in VAX order, regardless of word alignment.
  */
 int
-vax_gshort(msgp)
-unsigned char *msgp;
+vax_gshort(unsigned char *msgp)
 {
 	register unsigned char *p = (unsigned char *) msgp;
 	register int	i;
@@ -167,8 +165,7 @@ unsigned char *msgp;
  *  Return the storage associated with a struct vfont
  */
 void
-vfont_free(vfp)
-register struct vfont	*vfp;
+vfont_free(register struct vfont *vfp)
 {
 	free( vfp->vf_bits );
 	free( (char *)vfp );

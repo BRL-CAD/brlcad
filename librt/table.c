@@ -1156,8 +1156,7 @@ static char idmap[] = {
  *  Returns ID_xxx if successful, or ID_NULL upon failure.
  */
 int
-rt_id_solid( ep )
-struct bu_external	*ep;
+rt_id_solid(struct bu_external *ep)
 {
 	register union record *rec;
 	register int id;
@@ -1243,8 +1242,7 @@ struct bu_external	*ep;
  *  find the appropriate entry in rt_functab[].
  */
 const struct rt_functab *
-rt_get_functab_by_label( label )
-const char *label;
+rt_get_functab_by_label(const char *label)
 {
 	register const struct rt_functab	*ftp;
 

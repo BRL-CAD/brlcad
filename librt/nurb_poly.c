@@ -34,8 +34,7 @@
  */
 
 struct rt_nurb_poly *
-rt_nurb_to_poly( srf )
-struct face_g_snurb *srf;
+rt_nurb_to_poly(struct face_g_snurb *srf)
 {
 	int	coords = srf->pt_type;
 	fastf_t 	 * p1, *p2, *p3, *p4;
@@ -94,9 +93,7 @@ struct face_g_snurb *srf;
 
 
 struct rt_nurb_poly *
-rt_nurb_mk_poly( v1, v2, v3, uv1, uv2, uv3 )
-fastf_t * v1, *v2, *v3;
-fastf_t uv1[2], uv2[2], uv3[2];
+rt_nurb_mk_poly(fastf_t *v1, fastf_t *v2, fastf_t *v3, fastf_t *uv1, fastf_t *uv2, fastf_t *uv3)
 {
 	struct rt_nurb_poly *p;
 

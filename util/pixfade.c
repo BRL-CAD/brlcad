@@ -50,8 +50,7 @@ static char usage[] = "\
 Usage: pixfade [-m max] [-p percent] [-f fraction] [pix-file]\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -111,9 +110,7 @@ register char **argv;
 }
 
 int
-main( argc, argv )
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
 	register float	*randp;
 	struct color_rec {

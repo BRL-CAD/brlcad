@@ -516,9 +516,7 @@ plot_cell_top(struct isect_stuff *isect,
  *
  */
 static void
-dsp_print_v4(vls, dsp_ip)
-     struct bu_vls *vls;
-     const struct rt_dsp_internal *dsp_ip;
+dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 {
     point_t pt, v;
     RT_DSP_CK_MAGIC(dsp_ip);
@@ -628,8 +626,7 @@ dsp_print_v5(struct bu_vls *vls,
  *			R T _ D S P _ P R I N T
  */
 void
-rt_dsp_print( stp )
-     register const struct soltab *stp;
+rt_dsp_print(register const struct soltab *stp)
 {
 	register const struct dsp_specific *dsp =
 		(struct dsp_specific *)stp->st_specific;
@@ -921,10 +918,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
  *  	stp->st_specific for use by dsp_shot().
  */
 int
-rt_dsp_prep( stp, ip, rtip )
-     struct soltab		*stp;
-     struct rt_db_internal	*ip;
-     struct rt_i		*rtip;
+rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_dsp_internal		*dsp_ip;
 	register struct dsp_specific	*dsp;
@@ -2518,11 +2512,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
  *	>0	HIT
  */
 int
-rt_dsp_shot( stp, rp, ap, seghead )
-     struct soltab		*stp;
-     register struct xray	*rp;
-     struct application	*ap;
-     struct seg		*seghead;
+rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
     register struct dsp_specific *dsp =
 	(struct dsp_specific *)stp->st_specific;
@@ -2671,12 +2661,12 @@ rt_dsp_shot( stp, rp, ap, seghead )
  *  Vectorized version.
  */
 void
-rt_dsp_vshot( stp, rp, segp, n, ap )
-     struct soltab	       *stp[]; /* An array of solid pointers */
-     struct xray		*rp[]; /* An array of ray pointers */
-     struct  seg            segp[]; /* array of segs (results returned) */
-     int		  	    n; /* Number of ray/object pairs */
-     struct application	*ap;
+rt_dsp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+                  	               /* An array of solid pointers */
+                		       /* An array of ray pointers */
+                                    /* array of segs (results returned) */
+        		  	       /* Number of ray/object pairs */
+                       	    
 {
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_vshot()\n");
@@ -2791,10 +2781,7 @@ compute_normal_at_gridpoint(vect_t N,
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_dsp_norm( hitp, stp, rp )
-     register struct hit	*hitp;
-     struct soltab		*stp;
-     register struct xray	*rp;
+rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     vect_t N, t, tmp, A;
     struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
@@ -2974,10 +2961,7 @@ rt_dsp_norm( hitp, stp, rp )
  *  Return the curvature of the dsp.
  */
 void
-rt_dsp_curve( cvp, hitp, stp )
-     register struct curvature *cvp;
-     register struct hit	*hitp;
-     struct soltab		*stp;
+rt_dsp_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 
     if (RT_G_DEBUG & DEBUG_HF)
@@ -2998,11 +2982,7 @@ rt_dsp_curve( cvp, hitp, stp )
  *  v = elevation
  */
 void
-rt_dsp_uv( ap, stp, hitp, uvp )
-     struct application	*ap;
-     struct soltab		*stp;
-     register struct hit	*hitp;
-     register struct uvcoord	*uvp;
+rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
     register struct dsp_specific *dsp =
 	(struct dsp_specific *)stp->st_specific;
@@ -3094,8 +3074,7 @@ rt_dsp_uv( ap, stp, hitp, uvp )
  *		R T _ D S P _ F R E E
  */
 void
-rt_dsp_free( stp )
-     register struct soltab *stp;
+rt_dsp_free(register struct soltab *stp)
 {
     register struct dsp_specific *dsp =
 	(struct dsp_specific *)stp->st_specific;
@@ -3124,7 +3103,7 @@ rt_dsp_free( stp )
  *			R T _ D S P _ C L A S S
  */
 int
-rt_dsp_class()
+rt_dsp_class(void)
 {
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_class()\n");
@@ -3136,11 +3115,7 @@ rt_dsp_class()
  *			R T _ D S P _ P L O T
  */
 int
-rt_dsp_plot( vhead, ip, ttol, tol )
-     struct bu_list		*vhead;
-     struct rt_db_internal	*ip;
-     const struct rt_tess_tol *ttol;
-     const struct bn_tol	*tol;
+rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_dsp_internal	*dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
@@ -3376,12 +3351,7 @@ rt_dsp_plot( vhead, ip, ttol, tol )
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_dsp_tess( r, m, ip, ttol, tol )
-     struct nmgregion	**r;
-     struct model		*m;
-     struct rt_db_internal	*ip;
-     const struct rt_tess_tol *ttol;
-     const struct bn_tol	*tol;
+rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     LOCAL struct rt_dsp_internal	*dsp_ip;
 
@@ -3592,11 +3562,7 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
  *  Apply modeling transformations as well.
  */
 int
-rt_dsp_import( ip, ep, mat, dbip )
-     struct rt_db_internal		*ip;
-     const struct bu_external	*ep;
-     register const mat_t		mat;
-     const struct db_i		*dbip;
+rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	LOCAL struct rt_dsp_internal	*dsp_ip;
 	union record			*rp;
@@ -3690,11 +3656,7 @@ rt_dsp_import( ip, ep, mat, dbip )
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_dsp_export( ep, ip, local2mm, dbip )
-     struct bu_external		*ep;
-     const struct rt_db_internal	*ip;
-     double				local2mm;
-     const struct db_i		*dbip;
+rt_dsp_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_dsp_internal	*dsp_ip;
     struct rt_dsp_internal	dsp;
@@ -3747,13 +3709,7 @@ rt_dsp_export( ep, ip, local2mm, dbip )
  *  Apply modeling transformations as well.
  */
 int
-rt_dsp_import5( ip, ep, mat, dbip, resp, minor_type )
-     struct rt_db_internal		*ip;
-     const struct bu_external	*ep;
-     register const mat_t		mat;
-     const struct db_i		*dbip;
-     struct resource		*resp;
-     const int			minor_type;
+rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp, const int minor_type)
 {
 	struct rt_dsp_internal	*dsp_ip;
 	unsigned char		*cp;
@@ -3854,13 +3810,7 @@ rt_dsp_import5( ip, ep, mat, dbip, resp, minor_type )
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_dsp_export5( ep, ip, local2mm, dbip, resp, minor_type )
-     struct bu_external		*ep;
-     const struct rt_db_internal	*ip;
-     double				local2mm;
-     const struct db_i		*dbip;
-     struct resource		*resp;
-     const int			minor_type;
+rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp, const int minor_type)
 {
 	struct rt_dsp_internal	*dsp_ip;
 	unsigned long		name_len;
@@ -3993,8 +3943,7 @@ rt_dsp_describe(struct bu_vls		*str,
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_dsp_ifree( ip )
-     struct rt_db_internal	*ip;
+rt_dsp_ifree(struct rt_db_internal *ip)
 {
     register struct rt_dsp_internal	*dsp_ip;
 
@@ -4097,10 +4046,7 @@ const struct bu_structparse fake_dsp_printab[] = {
  *  Example:  "db get ell.s B" to get only the B vector.
  */
 int
-rt_dsp_tclget( interp, intern, attr )
-Tcl_Interp			*interp;
-const struct rt_db_internal	*intern;
-const char			*attr;
+rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
 	register const struct bu_structparse	*sp = NULL;
 	const struct rt_dsp_internal *dsp_ip;
@@ -4182,11 +4128,7 @@ const char			*attr;
  *  Invoked via rt_functab[].ft_tcladjust()
  */
 int
-rt_dsp_tcladjust( interp, intern, argc, argv )
-Tcl_Interp		*interp;
-struct rt_db_internal	*intern;
-int			argc;
-char			**argv;
+rt_dsp_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
 {
 	register const struct bu_structparse	*sp = NULL;
 	const struct rt_dsp_internal *dsp_ip;

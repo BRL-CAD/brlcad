@@ -28,8 +28,7 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
  *  stored in VAX order, regardless of word alignment.
  */
 int
-vax_gshort(msgp)
-char *msgp;
+vax_gshort(char *msgp)
 {
 	register unsigned char *p = (unsigned char *) msgp;
 	register int	i;
@@ -43,9 +42,7 @@ char *msgp;
  *			V A X _ P S H O R T
  */
 char *
-vax_pshort(msgp, s)
-register char *msgp;
-register unsigned short s;
+vax_pshort(register char *msgp, register short unsigned int s)
 {
 
 	msgp[0] = s & 0xFF;

@@ -47,8 +47,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *  our debug flags too.
  */
 void
-rt_bomb(s)
-const char *s;
+rt_bomb(const char *s)
 {
 	if(RT_G_DEBUG || rt_g.NMG_debug )
 		bu_debug |= BU_DEBUG_COREDUMP;

@@ -67,9 +67,9 @@ char usage[] = "\
 Usage:  regis plot.log pix.log\n";
 
 
-int	mat_build();
-int	read_rt_file();
-void	print_info();
+int	mat_build(fastf_t *mat1, fastf_t *mat2, fastf_t *regismat);
+int	read_rt_file(FILE *infp, char *name, fastf_t *model2view);
+void	print_info(fastf_t *mat);
 
 static FILE	*fp;
 int		verbose;		/* to be used for debugging */
@@ -82,10 +82,7 @@ int		verbose;		/* to be used for debugging */
  *  It also processes its own arguments (argc and argv).
  */
 int
-main(argc, argv)
-int	argc;
-char	**argv;
-
+main(int argc, char **argv)
 {
 
 	mat_t		mod2view1;		/* first log matrix its view */
@@ -169,10 +166,7 @@ char	**argv;
  */
 
 int
-mat_build(mat1, mat2, regismat)
-mat_t	mat1;
-mat_t	mat2;
-mat_t	regismat;
+mat_build(fastf_t *mat1, fastf_t *mat2, fastf_t *regismat)
 {
 
 	vect_t	adelta, bdelta;		/* deltas for mod1 and mod2 */
@@ -226,8 +220,7 @@ mat_t	regismat;
  */
 
 void
-print_info(mat)
-mat_t	mat;
+print_info(fastf_t *mat)
 {
 
 	int	i;

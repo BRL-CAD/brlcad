@@ -56,11 +56,7 @@ static const char rcs_ident[] = "$Header$";
  */
 
 fastf_t
-rt_nurb_basis_eval( knts, interval, order, mu)
-register struct knot_vector * knts;
-int	interval;
-int	order;
-fastf_t mu;
+rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, fastf_t mu)
 {
 
 	register fastf_t den;

@@ -111,17 +111,17 @@ Acknowledgements:
 	(p)=BU_LIST_PLAST(structure,p)
 
 /* defined in librt/dg_obj.c */
-extern int dgo_invent_solid();
-extern void dgo_notify();
+extern int dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_list *vhead, long int rgb, int copy);
+extern void dgo_notify(struct dg_obj *dgop, Tcl_Interp *interp);
 
-static int vdraw_write_tcl();
-static int vdraw_insert_tcl();
-static int vdraw_delete_tcl();
-static int vdraw_read_tcl();
-static int vdraw_send_tcl();
-static int vdraw_params_tcl();
-static int vdraw_open_tcl();
-static int vdraw_vlist_tcl();
+static int vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vdraw_send_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vdraw_params_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vdraw_vlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 struct bu_cmdtab vdraw_cmds[] = {
 	{"write",		vdraw_write_tcl},
@@ -140,11 +140,7 @@ struct bu_cmdtab vdraw_cmds[] = {
  *        write i|next c x y z
  */
 static int
-vdraw_write_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	int index, uind;
@@ -243,11 +239,7 @@ vdraw_write_tcl(clientData, interp, argc, argv)
  *        insert i c x y z
  */
 int
-vdraw_insert_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct rt_vlist *vp, *cp, *wp;
@@ -331,11 +323,7 @@ vdraw_insert_tcl(clientData, interp, argc, argv)
  *        delete i|last|all
  */
 int
-vdraw_delete_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct rt_vlist *vp, *wp;
@@ -426,11 +414,7 @@ vdraw_delete_tcl(clientData, interp, argc, argv)
  *        read i|color|length|name
  */
 static int
-vdraw_read_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct rt_vlist *vp;
@@ -513,11 +497,7 @@ vdraw_read_tcl(clientData, interp, argc, argv)
  *        send
  */
 static int
-vdraw_send_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+vdraw_send_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct directory *dp;
@@ -580,11 +560,7 @@ vdraw_send_tcl(clientData, interp, argc, argv)
  *        params color|name
  */
 static int
-vdraw_params_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+vdraw_params_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct vd_curve *rcp;
@@ -630,11 +606,7 @@ vdraw_params_tcl(clientData, interp, argc, argv)
  *        open [name]
  */
 static int
-vdraw_open_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct vd_curve *rcp;
@@ -703,11 +675,7 @@ vdraw_open_tcl(clientData, interp, argc, argv)
  *        vlist delete name
  */
 static int
-vdraw_vlist_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+vdraw_vlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct vd_curve *rcp, *rcp2;

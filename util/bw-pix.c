@@ -37,8 +37,7 @@ unsigned char	ibuf[1024], obuf[3*1024];
 static char usage[] = "Usage: bw-pix [in.bw] [out.pix]\n";
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int	in, out, num;
 	FILE	*finp, *foutp;

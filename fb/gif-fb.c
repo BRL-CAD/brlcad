@@ -118,9 +118,8 @@ static RGBpixel	*cmap;			/* malloc()ed local color map */
 
 
 static char *
-Simple( path )
-	char		*path;
-	{
+Simple(char *path)
+{
 	register char	*s;		/* -> past last '/' in path */
 
 	return (s = strrchr( path, '/' )) == NULL || *++s == '\0' ? path : s;
@@ -128,10 +127,8 @@ Simple( path )
 
 
 static void
-VMessage( format, ap )
-	char	*format;
-	va_list	ap;
-	{
+VMessage(char *format, va_list ap)
+{
 	(void)fprintf( stderr, "%s: ", arg0 );
 #if !defined(HAVE_VPRINTF)
 	(void)fprintf( stderr, format,	/* kludge city */
@@ -203,9 +200,8 @@ Fatal( va_alist )
 
 
 static void
-Sig_Catcher( sig )
-	int	sig;
-	{
+Sig_Catcher(int sig)
+{
 	(void)signal( sig, SIG_DFL );
 
 	/* The following is not guaranteed to work, but it's worth a try. */
@@ -214,7 +210,7 @@ Sig_Catcher( sig )
 
 
 static void
-Skip()					/* skip over raster data */
+Skip(void)					/* skip over raster data */
 	{
 	register int	c;
 
@@ -246,9 +242,8 @@ static unsigned char	*pixbuf;		/* malloc()ed scan line buffer */
 
 
 static void
-PutPixel( value )
-	register int	value;
-	{
+PutPixel(register int value)
+{
 	if ( pass == stop )
 		Fatal( "Too much raster data for image size" );
 
@@ -317,8 +312,8 @@ static int	bits_on_hand;		/* # of bits left over from last call */
 
 
 static int
-GetCode()
-	{
+GetCode(void)
+{
 	register int	next_val;
 
 	while ( bits_on_hand < chunk_size )
@@ -383,8 +378,8 @@ static short	exp_buffer[(1 << 11) - 2];	/* reverse-order atomic codes */
 
 /* Non-recursive version, for wimpy systems: */
 static void
-Expand( c )
-	register int	c;		/* LZW code */
+Expand(register int c)
+	            	  		/* LZW code */
 	{
 	register short	*bp = exp_buffer;
 
@@ -407,8 +402,8 @@ Expand( c )
 
 
 static void
-LZW()
-	{
+LZW(void)
+{
 	register int	c;		/* input LZW code, also input byte */
 	register int	w;		/* prefix code */
 	register int	next_code;	/* next available table index */
@@ -509,7 +504,7 @@ LZW()
 
 
 static void
-Rasters()				/* process (convert) raster data */
+Rasters(void)				/* process (convert) raster data */
 	{
 	/* Initialize inverted-loop parameters. */
 
@@ -526,10 +521,8 @@ Rasters()				/* process (convert) raster data */
 
 
 int
-main( argc, argv )
-	int	argc;
-	char	*argv[];
-	{
+main(int argc, char **argv)
+{
 	/* Plant signal catcher. */
 	{
 	static int	getsigs[] =	/* signals to catch */

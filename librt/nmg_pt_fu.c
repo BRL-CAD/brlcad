@@ -119,10 +119,7 @@ int		nmg_class_pt_fu_except(const point_t pt, const struct faceuse *fu, const st
  *
  */
 int
-bn_distsq_pt3_lseg3( dist, a, b, p, tol )
-fastf_t		*dist;
-const point_t	a, b, p;
-const struct bn_tol *tol;
+bn_distsq_pt3_lseg3(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
 {
 	vect_t	PtoA;		/* P-A */
 	vect_t	PtoB;		/* P-B */
@@ -202,9 +199,7 @@ const struct bn_tol *tol;
  *	Classify a point vs a vertex (touching/missed)
  */
 static int
-nmg_class_pt_vu(fpi, vu)
-struct fpi *fpi;
-struct vertexuse *vu;
+nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu)
 {
 	vect_t delta;
 	struct ve_dist	*ved;
@@ -304,8 +299,7 @@ struct edge_info *ei;
 }
 #endif
 static int
-Quadrant( x, y )
-fastf_t x,y;
+Quadrant(fastf_t x, fastf_t y)
 {
 	if( x >= 0.0 )
 	{
@@ -324,8 +318,7 @@ fastf_t x,y;
 }
 
 int
-nmg_eu_is_part_of_crack( eu )
-const struct edgeuse *eu;
+nmg_eu_is_part_of_crack(const struct edgeuse *eu)
 {
 	struct loopuse *lu;
 	struct edgeuse *eu_test;
@@ -369,10 +362,7 @@ const struct edgeuse *eu;
  */
 
 int
-nmg_class_pt_euvu( pt, eu_in, tol )
-const point_t pt;
-struct edgeuse *eu_in;
-const struct bn_tol *tol;
+nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol *tol)
 {
 	struct loopuse *lu;
 	struct edgeuse *prev_eu;
@@ -608,11 +598,7 @@ const struct bn_tol *tol;
  * Sort an edge_info structure into the loops list of edgeuse status
  */
 static struct edge_info *
-nmg_class_pt_eu(fpi, eu, edge_list, in_or_out_only)
-struct fpi		*fpi;
-struct edgeuse		*eu;
-struct edge_info	*edge_list;
-const int		in_or_out_only;
+nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list, const int in_or_out_only)
 {
 	struct bn_tol	tmp_tol;
 	struct edgeuse	*next_eu;
@@ -822,9 +808,7 @@ const int		in_or_out_only;
  *
  */
 static void
-make_near_list(edge_list, near)
-struct edge_info *edge_list;
-struct bu_list *near;
+make_near_list(struct edge_info *edge_list, struct bu_list *near)
 {
 	struct edge_info *ei;
 	struct edge_info *ei_p;
@@ -916,10 +900,7 @@ struct bu_list *near;
 
 
 static void
-pl_pt_lu(fpi, lu, ei)
-struct fpi *fpi;
-struct loopuse *lu;
-struct edge_info *ei;
+pl_pt_lu(struct fpi *fpi, struct loopuse *lu, struct edge_info *ei)
 {
 	FILE *fd;
 	char name[25];
@@ -1138,10 +1119,7 @@ departure:
  *
  */
 static int
-nmg_class_pt_lu(lu, fpi, in_or_out_only)
-struct loopuse	*lu;
-struct fpi	*fpi;
-const int	in_or_out_only;
+nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only)
 {
 	int 	lu_class = NMG_CLASS_Unknown;
 
@@ -1263,9 +1241,7 @@ out:
 
 
 static void
-plot_parity_error(fu, pt)
-struct faceuse *fu;
-point_t pt;
+plot_parity_error(struct faceuse *fu, fastf_t *pt)
 {
 	long *b;
 	FILE *fp; 
@@ -1341,17 +1317,16 @@ point_t pt;
  *	NMG_CLASS_AonB, etc...
  */
 int
-nmg_class_pt_fu_except(pt, fu, ignore_lu,
-	eu_func, vu_func, priv, call_on_hits, in_or_out_only, tol)
-const point_t pt;
-const struct faceuse *fu;
-const struct loopuse    *ignore_lu;
-void                    (*eu_func)();   /* func to call when pt on edgeuse */
-void                    (*vu_func)();   /* func to call when pt on vertexuse*/
-const char		*priv;          /* private data for [ev]u_func */
-const int		call_on_hits;
-const int		in_or_out_only;
-const struct bn_tol     *tol;
+nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func) (/* ??? */), void (*vu_func) (/* ??? */), const char *priv, const int call_on_hits, const int in_or_out_only, const struct bn_tol *tol)
+                 
+                         
+                                   
+                                        /* func to call when pt on edgeuse */
+                                        /* func to call when pt on vertexuse*/
+          		                /* private data for [ev]u_func */
+         		             
+         		               
+                             
 {
 	struct fpi	fpi;
 	struct loopuse	*lu;
@@ -1508,11 +1483,7 @@ const struct bn_tol     *tol;
  *	It will not work properly on crack loops.
  */
 int
-nmg_class_pt_lu_except(pt, lu, e_p, tol)
-point_t		pt;
-const struct loopuse	*lu;
-const struct edge	*e_p;
-const struct bn_tol	*tol;
+nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge *e_p, const struct bn_tol *tol)
 {
 	register struct edgeuse	*eu;
 	struct edge_info edge_list;

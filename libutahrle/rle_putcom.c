@@ -52,9 +52,7 @@
  *	[None]
  */
 static char *
-match( n, v )
-const char *n;
-const char *v;
+match(const char *n, const char *v)
 {
     for ( ; *n != '\0' && *n != '=' && *n == *v; n++, v++ )
 	;
@@ -84,9 +82,7 @@ const char *v;
  * 	Find match if any, else add at end (realloc to make bigger).
  */
 const char *
-rle_putcom( value, the_hdr )
-const char * value;
-rle_hdr * the_hdr;
+rle_putcom(const char *value, rle_hdr *the_hdr)
 {
     register const char ** cp, ** old_comments;
     const char * v;
@@ -142,9 +138,7 @@ rle_hdr * the_hdr;
  *	[None]
  */
 const char *
-rle_delcom( name, the_hdr )
-const char * name;
-rle_hdr *the_hdr ;
+rle_delcom(const char *name, rle_hdr *the_hdr)
 {
     register const char ** cp;
     const char * v = NULL;

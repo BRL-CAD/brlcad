@@ -1,5 +1,8 @@
 /*      NIRT.H          */
 
+/* Needed for some struct definitions */
+#include "./usrfmt.h"
+
 /*	CONSTANTS	*/
 #define	VAR_NULL	((struct VarTable *) 0) 
 #define	CT_NULL		((com_table *) 0)
@@ -93,32 +96,32 @@ extern void 		attrib_flush(void);
 extern void		az_el();
 extern void		dir_vect();
 extern void	        grid_coor();
-extern void		interact();
+extern void		interact(int input_source, void *sPtr);
 extern void	        target_coor();
 extern void	        backout();
 extern void		shoot();
 extern void		sh_esc();
 extern void	        quit();
 extern void		show_menu();
-extern void		format_output();
-extern void		direct_output();
+extern void		format_output(char *buffer, com_table *ctp);
+extern void		direct_output(char *buffer, com_table *ctp);
 extern void		nirt_units();
 extern void		do_overlap_claims();
 extern void		use_air();
-extern void		state_file();
-extern void		dump_state();
-extern void		load_state();
-extern void		default_ospec();
-extern void		print_item();
-extern com_table	*get_comtab_ent();
-extern void		read_mat();
-extern void		ae2dir();
-extern void		grid2targ();
-extern void		targ2grid();
-extern void		dir2ae();
-extern void		set_diameter();
-extern void		report();
-extern int		check_conv_spec();
-extern void             do_rt_gettrees();
+extern void		state_file(char *buffer, com_table *ctp);
+extern void		dump_state(char *buffer, com_table *ctp);
+extern void		load_state(char *buffer, com_table *ctp);
+extern void		default_ospec(void);
+extern void		print_item(char *buffer, com_table *ctp);
+extern com_table	*get_comtab_ent(char *pattern, int pat_len);
+extern void		read_mat(void);
+extern void		ae2dir(void);
+extern void		grid2targ(void);
+extern void		targ2grid(void);
+extern void		dir2ae(void);
+extern void		set_diameter(struct rt_i *rtip);
+extern void		report(int outcom_type);
+extern int		check_conv_spec(outitem *oip);
+extern void             do_rt_gettrees(struct rt_i *rtip, char **object_name, int nm_objects);
 extern void		bot_minpieces();
 extern int		need_prep;

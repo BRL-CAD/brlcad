@@ -3235,7 +3235,9 @@ printf("blit: xi_flags & FLG_VMASK = 0x%x\n", xi->xi_flags & FLG_VMASK );
 				/*
 				 * and copy that line to where we are now.
 				 */
-				memcpy(p, src, xi->xi_image->bytes_per_line);
+				for (x=xi->xi_image->bytes_per_line;x>=0;x--) {
+					*p++ = *src++;
+				}
 			}
 			/*
 			 * And again, move to the beginning of the next

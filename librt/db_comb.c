@@ -64,8 +64,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 XXX Should have different name prefix.
  */
 static int
-mat_categorize( matp )
-const mat_t	matp;
+mat_categorize(const fastf_t *matp)
 {
 	int	status = 0;
 

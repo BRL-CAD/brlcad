@@ -105,8 +105,7 @@ int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
  *			S I G I N F O _ H A N D L E R
  */
 void
-siginfo_handler( arg )
-int	arg;
+siginfo_handler(int arg)
 {
 	report_progress = 1;
 #ifdef SIGUSR1
@@ -121,7 +120,7 @@ int	arg;
  *			M E M O R Y _ S U M M A R Y
  */
 void
-memory_summary()
+memory_summary(void)
 {
 #ifdef HAVE_SBRK_DECL
 	if (rt_verbosity & VERBOSE_STATS)  {

@@ -33,7 +33,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <unistd.h>
 #include <stdlib.h>
 
-extern int	getopt();
+extern int	getopt(int, char *const *, const char *);
 extern char	*optarg;
 extern int	optind;
 
@@ -58,14 +58,14 @@ static	char usage[] = "\
 Usage: pixrot [-f -b -r -i -#bytes] [-s squaresize]\n\
 	[-w width] [-n height] [file.pix] > file.pix\n";
 
-void	fill_buffer(), reverse_buffer();
+void	fill_buffer(void);
+void    reverse_buffer(void);
 
 static char	*file_name;
 FILE	*ifp, *ofp;
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -136,8 +136,7 @@ register char **argv;
 }
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int	x, y, j;
 	long	outbyte, outplace;
@@ -247,7 +246,7 @@ int argc; char **argv;
 }
 
 void
-fill_buffer()
+fill_buffer(void)
 {
 	buflines = fread( buffer, scanbytes, buflines, ifp );
 
@@ -256,7 +255,7 @@ fill_buffer()
 }
 
 void
-reverse_buffer()
+reverse_buffer(void)
 {
 	int	i, j;
 	unsigned char *p1, *p2, temp;

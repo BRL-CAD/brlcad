@@ -31,11 +31,7 @@
 #include "dm.h"
 
 int
-dm_processOptions(dmp, init_proc_vls, argc, argv)
-struct dm *dmp;
-struct bu_vls *init_proc_vls;
-int argc;
-char *argv[];
+dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv)
 {
   register int c;
 

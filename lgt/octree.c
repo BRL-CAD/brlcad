@@ -44,14 +44,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 		(((p) = (PtList *) malloc(sizeof(PtList))) != PTLIST_NULL)
 #define NewOctree( p ) \
 		(((p) = (Octree *) malloc(sizeof(Octree))) != OCTREE_NULL)
-STATIC int	subdivide_Octree();
+STATIC int	subdivide_Octree(register Octree *parentp, int level);
 
 Octree	*
-new_Octant( parentp, childpp, bitv, level )
-Octree	*parentp;
-Octree	**childpp;
-int	bitv, level;
-	{	register Octree	*childp;
+new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
+{	register Octree	*childp;
 		fastf_t	delta = modl_radius / pow_Of_2( level );
 		register float	*origin = parentp->o_points->c_point;
 	/* Create child node, filling in parent's pointer.		*/
@@ -99,11 +96,8 @@ int	bitv, level;
 	Return node's address.
  */
 Octree	*
-find_Octant( parentp, pt, levelp )
-register Octree		*parentp;
-register fastf_t	*pt;
-register int		*levelp;
-	{
+find_Octant(register Octree *parentp, register fastf_t *pt, register int *levelp)
+{
 	if( parentp == OCTREE_NULL )
 		{
 		bu_log( "find_Octant() parent node is NULL\n" );
@@ -136,13 +130,8 @@ register int		*levelp;
 	}
 
 Octree	*
-add_Region_Octree( parentp, pt, triep, temp, level )
-Octree		*parentp;
-fastf_t		*pt;
-Trie		*triep;
-int		temp;
-int		level;
-	{	Octree	*newp;
+add_Region_Octree(Octree *parentp, fastf_t *pt, Trie *triep, int temp, int level)
+{	Octree	*newp;
 	/* Traverse to octant leaf node containing "pt".		*/
 	if( (newp = find_Octant( parentp, pt, &level )) == OCTREE_NULL )
 		{
@@ -210,10 +199,8 @@ int		level;
 	return	newp;
 	}
 int
-append_PtList( pt, ptlist )
-fastf_t	*pt;
-PtList	*ptlist;
-	{
+append_PtList(fastf_t *pt, PtList *ptlist)
+{
 	for( ; ptlist->c_next != PTLIST_NULL; ptlist = ptlist->c_next )
 		{
 		if( SamePoint( ptlist->c_next->c_point, pt, F2D_EPSILON ) )
@@ -234,9 +221,8 @@ PtList	*ptlist;
 	}
 
 void
-delete_PtList( ptlistp )
-PtList	**ptlistp;
-	{	register PtList	*pp = *ptlistp, *np;
+delete_PtList(PtList **ptlistp)
+{	register PtList	*pp = *ptlistp, *np;
 	*ptlistp = PTLIST_NULL;
 	for( ; pp != PTLIST_NULL; pp = np )
 		{
@@ -248,10 +234,8 @@ PtList	**ptlistp;
 #define L_MAX_POWER_TWO		31
 
 STATIC int
-subdivide_Octree( parentp, level )
-register Octree	*parentp;
-int		level;
-	{	PtList		*points = parentp->o_points->c_next;
+subdivide_Octree(register Octree *parentp, int level)
+{	PtList		*points = parentp->o_points->c_next;
 		Trie		*triep = parentp->o_triep;
 		int		temp = parentp->o_temp;
 	/* Ward against integer overflow in 2^level.			*/
@@ -287,19 +271,16 @@ int		level;
 	}
 
 fastf_t
-pow_Of_2( power )
-register int	power;
-	{	register long	value = 1;
+pow_Of_2(register int power)
+{	register long	value = 1;
 	for( ; power > 0; power-- )
 		value *= 2;
 	return	(fastf_t) value;
 	}
 
 void
-prnt_Node_Octree( parentp, level )
-Octree	*parentp;
-int	level;
-	{	register PtList	*ptp;
+prnt_Node_Octree(Octree *parentp, int level)
+{	register PtList	*ptp;
 		register int ptcount = 0;
 	bu_log( "%s[%2d](%8.3f,%8.3f,%8.3f)bits=0%o temp=%04d trie=%05x sibling=%05x child=%05x\n",
 		parentp->o_child != OCTREE_NULL ? "NODE" : "LEAF",
@@ -328,10 +309,8 @@ int	level;
 	}
 
 void
-prnt_Octree( parentp, level )
-Octree	*parentp;
-int	level;
-	{	register Octree	*siblingp;
+prnt_Octree(Octree *parentp, int level)
+{	register Octree	*siblingp;
 	/* Print each octant at this level.				*/
 	for(	siblingp = parentp;
 		siblingp != OCTREE_NULL;
@@ -348,10 +327,8 @@ int	level;
 	}
 
 int
-write_Octree( parentp, fp )
-Octree	*parentp;
-FILE	*fp;
-	{	register PtList	*ptp;
+write_Octree(Octree *parentp, FILE *fp)
+{	register PtList	*ptp;
 		F_Hdr_Ptlist	hdr_ptlist;	
 		long		addr = ftell( fp );
 	/* Write temperature and bogus number of points for this leaf.	*/
@@ -400,12 +377,8 @@ FILE	*fp;
 	}
 
 STATIC void
-hit_octant( ap, op, lpp, inv_dir, level )
-struct application	*ap;
-register Octree		*op, **lpp;
-fastf_t			*inv_dir;
-int			level;
-	{
+hit_octant(struct application *ap, register Octree *op, register Octree **lpp, fastf_t *inv_dir, int level)
+{
 	for( ; op != OCTREE_NULL; op = op->o_sibling )
 		{	fastf_t	octnt_min[3], octnt_max[3];
 			fastf_t	delta = modl_radius / pow_Of_2( level );
@@ -435,9 +408,8 @@ int			level;
 	return;
 	}
 int
-ir_shootray_octree( ap )
-struct application	*ap;
-	{	vect_t	inv_dir;	/* Inverses of ap->a_ray.r_dir	*/
+ir_shootray_octree(struct application *ap)
+{	vect_t	inv_dir;	/* Inverses of ap->a_ray.r_dir	*/
 		Octree	*leafp = NULL;	/* Intersected octree leaf.	*/
 	inv_dir[X] = inv_dir[Y] = inv_dir[Z] = INFINITY;
 	if( ap->a_ray.r_dir[X] != 0.0 )

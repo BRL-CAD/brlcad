@@ -200,10 +200,7 @@ const struct bu_structparse rt_rpc_parse[] = {
  *  	stp->st_specific for use by rpc_shot().
  */
 int
-rt_rpc_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_rpc_internal		*xip;
 	register struct rpc_specific	*rpc;
@@ -304,8 +301,7 @@ struct rt_i		*rtip;
  *			R T _ R P C _ P R I N T
  */
 void
-rt_rpc_print( stp )
-register const struct soltab *stp;
+rt_rpc_print(register const struct soltab *stp)
 {
 	register const struct rpc_specific *rpc =
 		(struct rpc_specific *)stp->st_specific;
@@ -336,11 +332,7 @@ register const struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_rpc_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_rpc_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	register struct rpc_specific *rpc =
 		(struct rpc_specific *)stp->st_specific;
@@ -489,12 +481,12 @@ check_plates:
  *  Vectorized version.
  */
 void
-rt_rpc_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+rt_rpc_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+             	               /* An array of solid pointers */
+           		       /* An array of ray pointers */
+                               /* array of segs (results returned) */
+   		  	       /* Number of ray/object pairs */
+                  	    
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -505,10 +497,7 @@ struct application	*ap;
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_rpc_norm( hitp, stp, rp )
-register struct hit	*hitp;
-struct soltab		*stp;
-register struct xray	*rp;
+rt_rpc_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	vect_t can_normal;	/* normal to canonical rpc */
 	register struct rpc_specific *rpc =
@@ -542,10 +531,7 @@ register struct xray	*rp;
  *  Return the curvature of the rpc.
  */
 void
-rt_rpc_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit	*hitp;
-struct soltab		*stp;
+rt_rpc_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 	fastf_t	zp1, zp2;	/* 1st & 2nd derivatives */
 	register struct rpc_specific *rpc =
@@ -580,11 +566,7 @@ struct soltab		*stp;
  *  v = elevation
  */
 void
-rt_rpc_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+rt_rpc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 	register struct rpc_specific *rpc =
 		(struct rpc_specific *)stp->st_specific;
@@ -627,8 +609,7 @@ register struct uvcoord	*uvp;
  *		R T _ R P C _ F R E E
  */
 void
-rt_rpc_free( stp )
-register struct soltab *stp;
+rt_rpc_free(register struct soltab *stp)
 {
 	register struct rpc_specific *rpc =
 		(struct rpc_specific *)stp->st_specific;
@@ -640,7 +621,7 @@ register struct soltab *stp;
  *			R T _ R P C _ C L A S S
  */
 int
-rt_rpc_class()
+rt_rpc_class(void)
 {
 	return(0);
 }
@@ -649,11 +630,7 @@ rt_rpc_class()
  *			R T _ R P C _ P L O T
  */
 int
-rt_rpc_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	LOCAL struct rt_rpc_internal	*xip;
         fastf_t *front;
@@ -843,15 +820,13 @@ const struct bn_tol		*tol;
  *	to this routine until each segment is within tolerance.
  */
 int
-rt_mk_parabola( pts, r, b, dtol, ntol )
-struct rt_pt_node *pts;
-fastf_t	r, b, dtol, ntol;
+rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf_t ntol)
 {
 	fastf_t	dist, intr, m, theta0, theta1;
 	int	n;
 	point_t	mpt, p0, p1;
 	vect_t	norm_line, norm_parab;
-	struct rt_pt_node *new, *rt_ptalloc();
+	struct rt_pt_node *new, *rt_ptalloc(void);
 	
 #define RPC_TOL .0001
 	/* endpoints of segment approximating parabola */
@@ -901,7 +876,7 @@ fastf_t	r, b, dtol, ntol;
  *			R T _ P T A L L O C
  */
 struct rt_pt_node *
-rt_ptalloc()
+rt_ptalloc(void)
 {
 	struct rt_pt_node *mem;
 	
@@ -921,12 +896,7 @@ rt_ptalloc()
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_rpc_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	int		i, j, n;
 	fastf_t		b, *back, f, *front, h, rh;
@@ -1203,11 +1173,7 @@ const struct bn_tol	*tol;
  *  Apply modeling transformations as well.
  */
 int
-rt_rpc_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_rpc_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	LOCAL struct rt_rpc_internal	*xip;
 	union record			*rp;
@@ -1250,11 +1216,7 @@ const struct db_i		*dbip;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_rpc_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_rpc_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_rpc_internal	*xip;
 	union record		*rpc;
@@ -1303,11 +1265,7 @@ const struct db_i		*dbip;
  *  Apply modeling transformations as well.
  */
 int
-rt_rpc_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_rpc_internal	*xip;
 	fastf_t			vec[10];
@@ -1350,11 +1308,7 @@ const struct db_i		*dbip;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_rpc_export5( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_rpc_internal	*xip;
 	fastf_t			vec[10];
@@ -1403,11 +1357,7 @@ const struct db_i		*dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_rpc_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register struct rt_rpc_internal	*xip =
 		(struct rt_rpc_internal *)ip->idb_ptr;
@@ -1448,8 +1398,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_rpc_ifree( ip )
-struct rt_db_internal	*ip;
+rt_rpc_ifree(struct rt_db_internal *ip)
 {
 	register struct rt_rpc_internal	*xip;
 

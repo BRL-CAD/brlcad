@@ -55,9 +55,9 @@ int	debug = 0;
 
 char	*prototype;		/* Contains full text of prototype document */
 
-void	get_proto();
-void	do_lines();
-void	out_mat();
+void	get_proto(char *file);
+void	do_lines(FILE *fp);
+void	out_mat(matp_t m, FILE *fp);
 int	str2chan_index( char *s );
 int	multi_words( char *words[], int	nwords );
 
@@ -67,9 +67,7 @@ int	multi_words( char *words[], int	nwords );
  *
  */
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	FILE	*table;
 
@@ -94,8 +92,7 @@ char	**argv;
 }
 
 void
-get_proto( file )
-char	*file;
+get_proto(char *file)
 {
 	struct stat	sb;
 	int	fd;
@@ -127,8 +124,7 @@ int	nwords;				/* # words in chanwords[] */
 char	*tokenwords[NTOKENWORDS+1];
 
 void
-do_lines( fp )
-FILE	*fp;
+do_lines(FILE *fp)
 {
 #define TOKLEN	128
 	char	token[TOKLEN];
@@ -495,9 +491,7 @@ str2chan_index( char *s )
 }
 
 void
-out_mat( m, fp )
-matp_t	m;
-FILE	*fp;
+out_mat(matp_t m, FILE *fp)
 {
 	fprintf( fp, "\t%.9e %.9e %.9e %.9e\n", m[0], m[1], m[2], m[3] );
 	fprintf( fp, "\t%.9e %.9e %.9e %.9e\n", m[4], m[5], m[6], m[7] );

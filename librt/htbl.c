@@ -31,10 +31,10 @@ static const char librt_htbl_RCSid[] = "@(#)$Header$ (ARL)";
  *			R T _ H T B L _ I N I T
  */
 void
-rt_htbl_init(b, len, str)
-struct rt_htbl	*b;
-int		len;		/* initial len. */
-const char	*str;
+rt_htbl_init(struct rt_htbl *b, int len, const char *str)
+              	   
+   		    		/* initial len. */
+          	     
 {
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("rt_htbl_init(%8x, len=%d, %s)\n", b, len, str);
@@ -52,8 +52,7 @@ const char	*str;
  *  Reset the table to have no elements, but retain any existing storage.
  */
 void
-rt_htbl_reset(b)
-struct rt_htbl	*b;
+rt_htbl_reset(struct rt_htbl *b)
 {
 	RT_CK_HTBL(b);
 	b->end = 0;
@@ -68,8 +67,7 @@ struct rt_htbl	*b;
  *  and render unusable without a subsequent rt_htbl_init().
  */
 void
-rt_htbl_free(b)
-struct rt_htbl	*b;
+rt_htbl_free(struct rt_htbl *b)
 {
 	RT_CK_HTBL(b);
 
@@ -86,8 +84,7 @@ struct rt_htbl	*b;
  *  Allocate another hit structure, extending the array if necessary.
  */
 struct hit *
-rt_htbl_get(b)
-struct rt_htbl *b;
+rt_htbl_get(struct rt_htbl *b)
 {
 	RT_CK_HTBL(b);
 

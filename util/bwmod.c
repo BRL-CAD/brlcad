@@ -63,8 +63,7 @@ int mapbuf[MAPBUFLEN];		/* translation buffer/lookup table */
 int char_arith = 0;
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 	double	d;
@@ -157,7 +156,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
-void mk_trans_tbl()
+void mk_trans_tbl(void)
 {
 	register int j, i, tmp;
 	register double d;
@@ -189,7 +188,7 @@ void mk_trans_tbl()
 			mapbuf[j] = d + 0.5;
 	}
 }
-void mk_char_trans_tbl()
+void mk_char_trans_tbl(void)
 {
 	register int j, i;
 	register signed char d;
@@ -216,9 +215,7 @@ void mk_char_trans_tbl()
 		mapbuf[j] = d & 0x0ff;
 	}
 }
-int main( argc, argv )
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 	register unsigned char	*p, *q;
 	register int		tmp;

@@ -66,10 +66,7 @@ const struct bu_structparse rt_hlf_parse[] = {
  *  			R T _ H L F _ P R E P
  */
 int
-rt_hlf_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_half_internal	*hip;
 	register struct half_specific *halfp;
@@ -109,8 +106,7 @@ struct rt_i		*rtip;
  *  			R T _ H L F _ P R I N T
  */
 void
-rt_hlf_print( stp )
-register const struct soltab *stp;
+rt_hlf_print(register const struct soltab *stp)
 {
 	register const struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
@@ -139,11 +135,7 @@ register const struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_hlf_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
@@ -197,12 +189,12 @@ struct seg		*seghead;
  *  This is the Becker vector version
  */
 void
-rt_hlf_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+             	               /* An array of solid pointers */
+           		       /* An array of ray pointers */
+                               /* array of segs (results returned) */
+   		  	       /* Number of ray/object pairs */
+                  	    
 {
 	register int    i;
 	register struct half_specific *halfp;
@@ -252,10 +244,7 @@ struct application	*ap;
  *  The normal is already filled in.
  */
 void
-rt_hlf_norm( hitp, stp, rp )
-register struct hit *hitp;
-struct soltab *stp;
-register struct xray *rp;
+rt_hlf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
@@ -291,10 +280,7 @@ register struct xray *rp;
  *  indicate no curvature.
  */
 void
-rt_hlf_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit *hitp;
-struct soltab *stp;
+rt_hlf_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
@@ -314,11 +300,7 @@ struct soltab *stp;
  *  0 up to 1 and then back down to 0 again.
  */
 void
-rt_hlf_uv( ap, stp, hitp, uvp )
-struct application *ap;
-struct soltab *stp;
-register struct hit *hitp;
-register struct uvcoord *uvp;
+rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
@@ -386,8 +368,7 @@ register struct uvcoord *uvp;
  *			R T _ H L F _ F R E E
  */
 void
-rt_hlf_free( stp )
-struct soltab *stp;
+rt_hlf_free(struct soltab *stp)
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
@@ -408,10 +389,7 @@ struct soltab *stp;
  *	BN_CLASSIFY_OUTSIDE
  */
 int
-rt_hlf_class( stp, min, max, tol )
-register const struct soltab	*stp;
-const vect_t			 min, max;
-const struct bn_tol		*tol;
+rt_hlf_class(register const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
 	register const struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
@@ -436,11 +414,7 @@ const struct bn_tol		*tol;
  *  drawn shorter.
  */
 int
-rt_hlf_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal 	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	struct rt_half_internal	*hip;
 	vect_t cent;		/* some point on the plane */
@@ -555,11 +529,7 @@ rt_hlf_xform(
  *	 0	success
  */
 int
-rt_hlf_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-const mat_t			mat;
-const struct db_i		*dbip;
+rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_half_internal	*hip;
 	union record	*rp;
@@ -618,11 +588,7 @@ const struct db_i		*dbip;
  *			R T _ H L F _ E X P O R T
  */
 int
-rt_hlf_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_hlf_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_half_internal	*hip;
 	union record		*rec;
@@ -649,11 +615,7 @@ const struct db_i		*dbip;
  *			R T _ H L F _ I M P O R T 5
  */
 int
-rt_hlf_import5( ip, ep, mat, dbip )
-struct rt_db_internal           *ip;
-const struct bu_external        *ep;
-register const mat_t            mat;
-const struct db_i               *dbip;
+rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_half_internal	*hip;
 	point_t			tmp_pt, new_pt;
@@ -708,11 +670,7 @@ const struct db_i               *dbip;
  *		R T _ H A L F _ E X P O R T 5
  */
 int
-rt_hlf_export5( ep, ip, local2mm, dbip )
-struct bu_external              *ep;
-const struct rt_db_internal     *ip;
-double                          local2mm;
-const struct db_i               *dbip;
+rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_half_internal		*hip;
 	fastf_t				scaled_dist;
@@ -747,11 +705,7 @@ const struct db_i               *dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_hlf_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_hlf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register struct rt_half_internal	*hip =
 		(struct rt_half_internal *)ip->idb_ptr;
@@ -774,8 +728,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_hlf_ifree( ip )
-struct rt_db_internal	*ip;
+rt_hlf_ifree(struct rt_db_internal *ip)
 {
 	RT_CK_DB_INTERNAL(ip);
 	bu_free( ip->idb_ptr, "hlf ifree" );
@@ -786,12 +739,7 @@ struct rt_db_internal	*ip;
  *			R T _ H L F _ T E S S
  */
 int
-rt_hlf_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	struct rt_half_internal	*vip;
 #if 0

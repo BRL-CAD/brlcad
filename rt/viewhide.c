@@ -68,11 +68,11 @@ extern int	npsw;			/* number of worker PSWs to run */
 fastf_t		pit_depth;		/* min. distance for drawing pits/mountains */
 fastf_t		maxangle;		/* value of the cosine of the angle bet. surface normals that triggers shading */
 
-void		swapbuff();
-void		cleanline();
-void		horiz_cmp();
-void		vert_cmp();
-struct cell	*find_cell();
+void		swapbuff(struct cell **onepp, struct cell **twopp);
+void		cleanline(struct cell *inbuffp, int file_width);
+void		horiz_cmp(struct cell *botp, int mem_width, int y);
+void		vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y);
+struct cell	*find_cell(struct cell *cur_cellp, struct cell *next_cellp);
 struct cell	*botp;			/* pointer to bottom line   */
 struct cell	*topp;			/* pointer to top line	    */
 
@@ -101,7 +101,7 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit(), raymiss();
+int	rayhit(register struct application *ap, struct partition *PartHeadp), raymiss(register struct application *ap);
 
 /*
  *  			V I E W _ I N I T
@@ -114,9 +114,7 @@ int	rayhit(), raymiss();
  */
 
 int
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
+view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 
 	ap->a_hit = rayhit;
@@ -142,8 +140,7 @@ char *file, *obj;
  */
 
 void
-view_2init( ap )
-struct application	*ap;
+view_2init(struct application *ap)
 {
 
 	if( outfp == NULL )
@@ -231,8 +228,7 @@ struct application	*ap;
  */
 
 int
-raymiss( ap )
-register struct application	*ap;
+raymiss(register struct application *ap)
 {
 
 	struct	cell	*posp;		/* store the current cell position */
@@ -270,13 +266,13 @@ register struct application	*ap;
  */
 
 void
-view_pixel()
+view_pixel(void)
 {
 	return;
 }
 
-void view_setup() {}
-void view_cleanup() {}
+void view_setup(void) {}
+void view_cleanup(void) {}
 
 
 /*
@@ -289,9 +285,7 @@ void view_cleanup() {}
  */
 
 int
-rayhit( ap, PartHeadp )
-struct application *ap;
-register struct partition *PartHeadp;
+rayhit(struct application *ap, register struct partition *PartHeadp)
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	struct	cell	*posp;			/* stores current cell position */
@@ -365,9 +359,7 @@ register struct partition *PartHeadp;
  *  and a new one is read into memory until end-of-file is reached.
  */
 
-void	view_eol(ap)
-struct application *ap;
-
+void	view_eol(struct application *ap)
 {
 
 
@@ -399,8 +391,7 @@ struct application *ap;
  */
 
 void
-view_end(ap)
-struct application *ap;
+view_end(struct application *ap)
 {
 
 	cleanline(topp, width);
@@ -426,11 +417,7 @@ struct application *ap;
  */
 
 void
-horiz_cmp(botp, mem_width, y)
-struct cell	*botp;
-int		mem_width;
-int		y;
-
+horiz_cmp(struct cell *botp, int mem_width, int y)
 {
 	int		x;
 	struct	cell	*cellp;
@@ -519,12 +506,7 @@ int		y;
  */
 
 void
-vert_cmp(botp, topp, mem_width, y)
-struct cell	*botp;
-struct cell	*topp;
-int		mem_width;
-int		y;
-
+vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 {
 
 	register int	x;
@@ -660,9 +642,7 @@ int		y;
  */
 
 struct	cell	*
-find_cell ( cur_cellp, next_cellp)
-struct	cell	*cur_cellp;
-struct	cell	*next_cellp;
+find_cell (struct cell *cur_cellp, struct cell *next_cellp)
 {
 	struct cell	*cellp;
 
@@ -693,9 +673,9 @@ struct	cell	*next_cellp;
  */
 
 void
-swapbuff(onepp, twopp)
-struct cell	**onepp;		/* caveat: variables must start w/ letters */
-struct cell 	**twopp;
+swapbuff(struct cell **onepp, struct cell **twopp)
+           	        		/* caveat: variables must start w/ letters */
+            	        
 
 {
 
@@ -719,10 +699,7 @@ struct cell 	**twopp;
  */
 
 void
-cleanline(inbuffp, file_width)
-struct cell	*inbuffp;
-int		file_width;
-
+cleanline(struct cell *inbuffp, int file_width)
 {
 
 	int	i;
@@ -736,4 +713,4 @@ int		file_width;
 	}
 }
 
-void application_init () {}
+void application_init (void) {}

@@ -44,9 +44,7 @@
  */
 
 fastf_t
-rt_nurb_par_edge(srf, epsilon)
-const struct face_g_snurb * srf;
-fastf_t epsilon;
+rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 {
 	struct face_g_snurb * us, *vs, * uus, * vvs, *uvs;
 	fastf_t d1,d2,d3;
@@ -146,9 +144,7 @@ fastf_t epsilon;
  *		maximum parameter increment otherwise
  */
 fastf_t
-rt_cnurb_par_edge( crv, epsilon )
-const struct edge_g_cnurb *crv;
-fastf_t epsilon;
+rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 {
 	struct edge_g_cnurb *d1, *d2;
 	fastf_t der2[5], t, *pt;

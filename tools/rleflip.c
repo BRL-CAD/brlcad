@@ -49,9 +49,7 @@
 #define RIGHT_FLAG 0x08
 
 int
-main(argc, argv)
-int  argc;
-char *argv[];
+main(int argc, char **argv)
 {
     int rle_cnt = 0;
     int flags = 0, oflag = 0;

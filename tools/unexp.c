@@ -38,9 +38,7 @@ rle_hdr in_hdr, out_hdr;
 rle_pixel r_in, g_in, b_in;
 
 int
-main(argc,argv)
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
     register int x, chan;
     int y;

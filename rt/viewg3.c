@@ -57,7 +57,7 @@ static const char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
 #define TOL 0.01/MM2IN			/* GIFT has a 0.01 inch tolerance */
 
-void	part_compact();
+void	part_compact(register struct application *ap, register struct partition *PartHeadp, fastf_t tolerance);
 
 extern fastf_t	gift_grid_rounding;
 extern point_t	viewbase_model;
@@ -102,7 +102,8 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit(), raymiss();
+int	rayhit(register struct application *ap, struct partition *PartHeadp);
+int     raymiss(register struct application *ap);
 
 /*
  *  			V I E W _ I N I T
@@ -116,9 +117,7 @@ static char * save_file;
 static char * save_obj;
 
 int
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
+view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
 	line_num = 1;
 
@@ -175,8 +174,7 @@ char *file, *obj;
  * 
  */
 void
-view_2init( ap )
-struct application	*ap;
+view_2init(struct application *ap)
 {
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
@@ -231,7 +229,7 @@ struct application	*ap;
  *  do_frame().
  */
 int
-raymiss()
+raymiss(register struct application *ap)
 {
 	return(0);
 }
@@ -242,7 +240,7 @@ raymiss()
  *  This routine is called from do_run(), and in this case does nothing.
  */
 void
-view_pixel()
+view_pixel(void)
 {
 	return;
 }
@@ -269,9 +267,7 @@ view_pixel()
  *  color vector display of ray-model intersections.
  */
 int
-rayhit( ap, PartHeadp )
-struct application *ap;
-register struct partition *PartHeadp;
+rayhit(struct application *ap, register struct partition *PartHeadp)
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	int 			comp_count;	/* component count */
@@ -715,7 +711,7 @@ out:
  *  View_eol() is called by rt_shootray() in do_run().  In this case,
  *  it does nothing.
  */
-void	view_eol()
+void	view_eol(void)
 {
 }
 
@@ -729,7 +725,7 @@ void	view_eol()
  *  be zero on this shotline, or else the client codes get confused.
  */
 void
-view_end()
+view_end(void)
 {
 	fprintf(outfp, SHOT_FMT,
 		999.9, 999.9,
@@ -746,8 +742,8 @@ view_end()
 	fflush(outfp);
 }
 
-void view_setup() {}
-void view_cleanup() {}
+void view_setup(void) {}
+void view_cleanup(void) {}
 
 
 /*
@@ -765,10 +761,7 @@ void view_cleanup() {}
  */
 
 void
-part_compact(ap, PartHeadp, tolerance)
-register struct application		*ap;
-register struct partition		*PartHeadp;
-fastf_t					tolerance;
+part_compact(register struct application *ap, register struct partition *PartHeadp, fastf_t tolerance)
 {
 
 	fastf_t				gap;
@@ -843,4 +836,4 @@ top:		nextpp = pp->pt_forw;
 
 }
 
-void application_init () {}
+void application_init (void) {}

@@ -671,17 +671,17 @@ view_eol( struct application *ap )
 
 }
 
-void view_setup() { }
+void view_setup(void) { }
 
 /*
  * end of a frame, called after rt_clean()
  */
-void view_cleanup() { }
+void view_cleanup(void) { }
 
 /*
  * end of each frame
  */
-void view_end() { }
+void view_end(void) { }
 
 /*
  *			R A Y H I T
@@ -984,7 +984,7 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
   return edge;
 }
 
-void application_init () { 
+void application_init (void) { 
   bu_vls_init(&occlusion_objects);
 }
 

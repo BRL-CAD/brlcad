@@ -45,8 +45,7 @@ static const char RCSstorage[] = "@(#)$Header$ (ARL)";
  *  malloc() locking is done in bu_malloc.
  */
 void
-rt_get_seg(res)
-register struct resource	*res;
+rt_get_seg(register struct resource *res)
 {
 	register struct seg	*sp;
 	register int		bytes;

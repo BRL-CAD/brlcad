@@ -93,8 +93,7 @@ static void	class_fu_vs_s RT_ARGS( (struct faceuse *fu, struct shell *s,
  *  Convert classification status to string.
  */
 const char *
-nmg_class_status(status)
-int	status;
+nmg_class_status(int status)
 {
 	switch(status)  {
 	case INSIDE:
@@ -111,9 +110,7 @@ int	status;
  *			N M G _ P R _ C L A S S _ S T A T U S
  */
 void
-nmg_pr_class_status( prefix, status )
-char	*prefix;
-int	status;
+nmg_pr_class_status(char *prefix, int status)
 {
 	bu_log("%s has classification status %s\n",
 		prefix, nmg_class_status(status) );
@@ -131,11 +128,7 @@ int	status;
  *	nmg_class_pt_e
  */
 static void 
-joint_hitmiss2(closest, eu, pt, code)
-struct neighbor		*closest;
-const struct edgeuse	*eu;
-const point_t		pt;
-int			code;
+joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, const fastf_t *pt, int code)
 {
 	const struct edgeuse *eu_rinf;
 
@@ -212,11 +205,7 @@ int			code;
  *	nmg_class_pt_l
  */
 static void
-nmg_class_pt_e(closest, pt, eu, tol)
-struct neighbor		*closest;
-const point_t		pt;
-const struct edgeuse	*eu;
-const struct bn_tol	*tol;
+nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse *eu, const struct bn_tol *tol)
 {
 	vect_t	ptvec;	/* vector from lseg to pt */
 	vect_t	left;	/* vector left of edge -- into inside of loop */
@@ -418,11 +407,7 @@ out:
  *		from: nmg_misc.c / nmg_split_loops_handler()
  */
 static void
-nmg_class_pt_l(closest, pt, lu, tol)
-struct neighbor		*closest;
-const point_t		pt;
-const struct loopuse	*lu;
-const struct bn_tol	*tol;
+nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse *lu, const struct bn_tol *tol)
 {
 	vect_t		delta;
 	pointp_t	lu_pt;
@@ -513,9 +498,7 @@ const struct bn_tol	*tol;
  *	nmg_mod.c, nmg_lu_reorient()
  */
 int
-nmg_class_lu_fu(lu, tol)
-const struct loopuse	*lu;
-const struct bn_tol	*tol;
+nmg_class_lu_fu(const struct loopuse *lu, const struct bn_tol *tol)
 {
 	const struct faceuse	*fu;
 	struct vertexuse	*vu;
@@ -630,11 +613,7 @@ static const point_t nmg_good_dirs[10] = {
  *	NMG_CLASS_AoutB		pt is OUTSIDE the volume of the shell.
  */
 int
-nmg_class_pt_s(pt, s, in_or_out_only, tol)
-const point_t		pt;
-const struct shell	*s;
-const int		in_or_out_only;
-const struct bn_tol	*tol;
+nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_only, const struct bn_tol *tol)
 {
 	const struct faceuse	*fu;
 	struct model	*m;
@@ -754,11 +733,7 @@ out:
  *	Classify a loopuse/vertexuse from shell A WRT shell B.
  */
 static int 
-class_vu_vs_s(vu, sB, classlist, tol)
-struct vertexuse	*vu;
-struct shell		*sB;
-long			*classlist[4];
-const struct bn_tol	*tol;
+class_vu_vs_s(struct vertexuse *vu, struct shell *sB, long int **classlist, const struct bn_tol *tol)
 {
 	struct vertexuse *vup;
 	pointp_t pt;
@@ -877,11 +852,7 @@ out:
  *			C L A S S _ E U _ V S _ S
  */
 static int 
-class_eu_vs_s(eu, s, classlist, tol)
-struct edgeuse	*eu;
-struct shell	*s;
-long		*classlist[4];
-const struct bn_tol	*tol;
+class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const struct bn_tol *tol)
 {
 	int euv_cl, matev_cl;
 	int	status = 0;
@@ -1300,9 +1271,7 @@ out:
  *	3	Loops identical, at least one is a wire loop.
  */
 int
-nmg_2lu_identical( eu1, eu2 )
-const struct edgeuse	*eu1;
-const struct edgeuse	*eu2;
+nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
 {
 	const struct loopuse	*lu1;
 	const struct loopuse	*lu2;
@@ -1415,10 +1384,7 @@ out:
  *  "newclass" should only be AonBshared or AonBanti.
  */
 void
-nmg_reclassify_lu_eu( lu, classlist, newclass )
-struct loopuse	*lu;
-long		*classlist[4];
-int		newclass;
+nmg_reclassify_lu_eu(struct loopuse *lu, long int **classlist, int newclass)
 {
 	struct vertexuse	*vu;
 	struct edgeuse		*eu;
@@ -1515,10 +1481,7 @@ int		newclass;
  *		NMG_CLASS_AoutB
  */
 static int
-class_shared_lu( lu, lu_ref, tol )
-const struct loopuse *lu;
-const struct loopuse *lu_ref;
-const struct bn_tol *tol;
+class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const struct bn_tol *tol)
 {
 	struct shell *s_ref;
 	struct edgeuse *eu;
@@ -1679,11 +1642,7 @@ const struct bn_tol *tol;
  *	class_fu_vs_s
  */
 static int 
-class_lu_vs_s(lu, s, classlist, tol)
-struct loopuse		*lu;
-struct shell		*s;
-long			*classlist[4];
-const struct bn_tol	*tol;
+class_lu_vs_s(struct loopuse *lu, struct shell *s, long int **classlist, const struct bn_tol *tol)
 {
 	int class;
 	unsigned int	in, outside, on;
@@ -2146,11 +2105,7 @@ out:
  *	nmg_class_shells()
  */
 static void 
-class_fu_vs_s(fu, s, classlist, tol)
-struct faceuse		*fu;
-struct shell		*s;
-long			*classlist[4];
-const struct bn_tol	*tol;
+class_fu_vs_s(struct faceuse *fu, struct shell *s, long int **classlist, const struct bn_tol *tol)
 {
 	struct loopuse *lu;
 	plane_t		n;
@@ -2183,11 +2138,7 @@ const struct bn_tol	*tol;
  *	nmg_bool.c
  */
 void
-nmg_class_shells(sA, sB, classlist, tol)
-struct shell	*sA;
-struct shell	*sB;
-long		*classlist[4];
-const struct bn_tol	*tol;
+nmg_class_shells(struct shell *sA, struct shell *sB, long int **classlist, const struct bn_tol *tol)
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -2314,10 +2265,7 @@ bu_log("DANGER: nmg_classify_pt_loop() is calling nmg_class_pt_l(), which does n
  *		4 - Just plain can't find an interior point
  */
 int
-nmg_get_interior_pt( pt, lu, tol )
-point_t pt;
-const struct loopuse *lu;
-const struct bn_tol *tol;
+nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, const struct bn_tol *tol)
 {
 	struct edgeuse *eu;
 	fastf_t point_count=0.0;
@@ -2427,9 +2375,7 @@ const struct bn_tol *tol;
  *
  */
 int
-nmg_classify_lu_lu( lu1 , lu2 , tol )
-const struct loopuse *lu1,*lu2;
-const struct bn_tol *tol;
+nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const struct bn_tol *tol)
 {
 	struct faceuse *fu1,*fu2;
 	struct edgeuse *eu;
@@ -2766,10 +2712,7 @@ const struct bn_tol *tol;
  *	one or the other.
  */
 int
-nmg_classify_s_vs_s( s2, s, tol )
-struct shell *s;
-struct shell *s2;
-const struct bn_tol *tol;
+nmg_classify_s_vs_s(struct shell *s2, struct shell *s, const struct bn_tol *tol)
 {
 	int i;
 	int class;

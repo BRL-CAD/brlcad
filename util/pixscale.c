@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-extern int	getopt();
+extern int	getopt(int, char *const *, const char *);
 extern char	*optarg;
 extern int	optind;
 
@@ -52,15 +52,14 @@ int	iny = 512;
 int	outx = 512;
 int	outy = 512;
 
-void	init_buffer(), fill_buffer(), binterp(), ninterp();
+void	init_buffer(int scanlen), fill_buffer(int y), binterp(FILE *ofp, int ix, int iy, int ox, int oy), ninterp(FILE *ofp, int ix, int iy, int ox, int oy);
 
 static	char usage[] = "\
 Usage: pixscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -151,9 +150,7 @@ register char **argv;
  * To scale up we use bilinear interpolation.
  */
 int
-scale( ofp, ix, iy, ox, oy )
-FILE	*ofp;
-int	ix, iy, ox, oy;
+scale(FILE *ofp, int ix, int iy, int ox, int oy)
 {
 	int	i, j, k, l;
 	double	pxlen, pylen;			/* # old pixels per new pixel */
@@ -237,8 +234,7 @@ int	ix, iy, ox, oy;
 }
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int i;
 
@@ -274,8 +270,7 @@ int argc; char **argv;
  *  XXX - CHECK FILE SIZE
  */
 void
-init_buffer( scanlen )
-int scanlen;
+init_buffer(int scanlen)
 {
 	int	max;
 
@@ -299,8 +294,7 @@ int scanlen;
  * the given y coordinate.
  */
 void
-fill_buffer( y )
-int y;
+fill_buffer(int y)
 {
 	static int	file_pos = 0;
 
@@ -325,9 +319,7 @@ int y;
  * This version preserves the outside pixels and interps inside only.
  */
 void
-binterp( ofp, ix, iy, ox, oy )
-FILE	*ofp;
-int	ix, iy, ox, oy;
+binterp(FILE *ofp, int ix, int iy, int ox, int oy)
 {
 	int	i, j;
 	double	x, y, dx, dy, mid1, mid2;
@@ -390,9 +382,7 @@ int	ix, iy, ox, oy;
  * This version preserves the outside pixels and interps inside only.
  */
 void
-ninterp( ofp, ix, iy, ox, oy )
-FILE	*ofp;
-int	ix, iy, ox, oy;
+ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
 {
 	int	i, j;
 	double	x, y;

@@ -40,9 +40,7 @@ static const char rcs_ident[] = "$Header$";
 char buffer[4096];
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
     int xlen, ylen, xpos, ypos, posflag=0;
     int oflag = 0, incflag=0, xinc, yinc;

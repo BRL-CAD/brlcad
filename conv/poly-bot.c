@@ -53,9 +53,7 @@ Usage: poly-bot < file_poly.g > file_bot.g\n\
  Convert polysolids to BOT solids in v4 database format only\n";
 
 int
-main( argc, argv )
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
 	FILE *ifp;
 	FILE *ofp;

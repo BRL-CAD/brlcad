@@ -131,11 +131,11 @@ va_dcl
  */
 
 static int
-_do_scanargs( argc, argv, format, argl )
-int     argc;			/* Actual arguments */
-char  **argv;
-const char   *format;
-va_list argl;
+_do_scanargs(int argc, char **argv, const char *format, va_list argl)
+             			/* Actual arguments */
+             
+                     
+             
 {
 
     register int    check;			/* check counter to be sure all argvs
@@ -642,9 +642,7 @@ error:
 }
 
 void
-scan_usage( argv, format )
-char ** argv;
-const char * format;
+scan_usage(char **argv, const char *format)
 {
     register const char * cp;
 
@@ -677,9 +675,7 @@ const char * format;
 }
 
 static const char *
-prformat (format, recurse)
-const char   *format;
-int 	recurse;
+prformat (const char *format, int recurse)
 {
     register const char  *cp;
     bool    required, comma_list;
@@ -808,10 +804,7 @@ reswitch:
  * space and comma are also legal characters.
  */
 static int
-isnum( str, typchr, comma_list )
-register const char * str;
-int typchr;
-int comma_list;
+isnum(register const char *str, int typchr, int comma_list)
 {
     register const char *allowed, *digits, *cp;
     int hasdigit = NO;

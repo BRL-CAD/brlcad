@@ -68,15 +68,14 @@ int	oflag = 0;	/* Different offset specified */
 char *file_name;
 FILE *infp;
 
-void	select_filter(), dousage();
+void	select_filter(char *str), dousage(void);
 
 char	usage[] = "\
 Usage: bwfilter [-f type] [-v] [-d div] [-o offset]\n\
         [-s squaresize] [-w width] [-n height] [file.bw] > file.bw\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -135,8 +134,7 @@ register char **argv;
 }
 
 int
-main( argc, argv )
-int argc; char **argv;
+main(int argc, char **argv)
 {
 	int	x, y;
 	int	value, r1, r2, r3;
@@ -222,8 +220,7 @@ int argc; char **argv;
  *  based on it.
  */
 void
-select_filter( str )
-char *str;
+select_filter(char *str)
 {
 	int	i;
 
@@ -250,7 +247,7 @@ char *str;
 }
 
 void
-dousage()
+dousage(void)
 {
 	int	i;
 

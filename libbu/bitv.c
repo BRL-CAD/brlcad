@@ -43,8 +43,7 @@ static const char libbu_bitv_RCSid[] = "@(#)$Header$ (ARL)";
  *  For efficiency, the bit vector itself is not initialized.
  */
 struct bu_bitv *
-bu_bitv_new(nbits)
-int	nbits;
+bu_bitv_new(int nbits)
 {
 	struct bu_bitv	*bv;
 	int		bv_bytes;
@@ -68,8 +67,7 @@ int	nbits;
  *  It is the caller's responsibility to dequeue from any linked list first.
  */
 void
-bu_bitv_free(bv)
-struct bu_bitv *bv;
+bu_bitv_free(struct bu_bitv *bv)
 {
 	BU_CK_BITV(bv);
 
@@ -85,8 +83,7 @@ struct bu_bitv *bv;
  *  Also available as a macro if you don't desire the pointer checking.
  */
 void
-bu_bitv_clear(bv)
-struct bu_bitv	*bv;
+bu_bitv_clear(struct bu_bitv *bv)
 {
 	BU_CK_BITV(bv);
 
@@ -97,9 +94,7 @@ struct bu_bitv	*bv;
  *			B U _ B I T V _ O R
  */
 void
-bu_bitv_or( ov, iv )
-struct bu_bitv		*ov;
-const struct bu_bitv	*iv;
+bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
 	register bitv_t		*out;
 	register const bitv_t	*in;
@@ -123,9 +118,7 @@ const struct bu_bitv	*iv;
  *			B U _ B I T V _ A N D
  */
 void
-bu_bitv_and( ov, iv )
-struct bu_bitv		*ov;
-const struct bu_bitv	*iv;
+bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
 	register bitv_t		*out;
 	register const bitv_t	*in;
@@ -151,9 +144,7 @@ const struct bu_bitv	*iv;
  *  Print the bits set in a bit vector.
  */
 void
-bu_bitv_vls( v, bv )
-struct bu_vls			*v;
-register const struct bu_bitv	*bv;
+bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
 {
 	int		seen = 0;
 	register int	i;
@@ -183,9 +174,7 @@ register const struct bu_bitv	*bv;
  *  Use bu_vls stuff, to make only a single call to bu_log().
  */
 void
-bu_pr_bitv( str, bv )
-const char			*str;
-register const struct bu_bitv	*bv;
+bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
 {
 	struct bu_vls	v;
 
@@ -205,9 +194,7 @@ register const struct bu_bitv	*bv;
  *	The string is from MSB to LSB (bytes and bits).
  */
 void
-bu_bitv_to_hex( v, bv )
-struct bu_vls *v;
-register const struct bu_bitv	*bv;
+bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
 {
 	int word_count, byte_no;
 
@@ -235,8 +222,7 @@ register const struct bu_bitv	*bv;
  *	Convert a string of HEX digits (as produces by bu_bitv_to_hex) into a bit vector.
  */
 struct bu_bitv *
-bu_hex_to_bitv( str )
-const char *str;
+bu_hex_to_bitv(const char *str)
 {
 	char abyte[3];
 	const char *str_start;
@@ -303,8 +289,7 @@ const char *str;
  *	Make a copy of a bit vector
  */
 struct bu_bitv *
-bu_bitv_dup( bv )
-register const struct bu_bitv	*bv;
+bu_bitv_dup(register const struct bu_bitv *bv)
 {
 	struct bu_bitv *bv2;
 

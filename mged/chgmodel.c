@@ -66,7 +66,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct bn_tol mged_tol;
 
 void set_tran();
-void	aexists();
+void	aexists(char *name);
 
 static char	tmpfil[17];
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
@@ -76,11 +76,7 @@ int		newedge;		/* new edge for arb editing */
 /* Add/modify item and air codes of a region */
 /* Format: item region item <air>	*/
 int
-f_itemair(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *dp;
 	int			ident, air, GIFTmater=0, los=0;
@@ -155,11 +151,7 @@ char	**argv;
 /* Modify material information */
 /* Usage:  mater region_name shader r g b inherit */
 int
-f_mater(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *dp;
 	int r=0, g=0, b=0;
@@ -331,11 +323,7 @@ fail:
 }
 
 int
-f_edmater(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    *argv[];
+f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   int i;
   int status;
@@ -595,11 +583,7 @@ extract_mater_from_line(
  *  Usage: ocolor combination R G B
  */
 int
-f_comb_color(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_comb_color(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int				i;
     int				val;
@@ -659,11 +643,7 @@ char	**argv;
  *  Usage: shader combination shader_material [shader_argument(s)]
  */
 int
-f_shader(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *dp;
 	struct rt_db_internal	intern;
@@ -719,11 +699,7 @@ char	**argv;
 /* Mirror image */
 /* Format: m oldobject newobject axis	*/
 int
-f_mirror(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *proto;
 	register struct directory *dp;
@@ -1245,11 +1221,7 @@ char	**argv;
 /* Modify Combination record information */
 /* Format: edcomb combname Regionflag regionid air los GIFTmater */
 int
-f_edcomb(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct directory *dp;
 	int regionid, air, mat, los;
@@ -1303,8 +1275,7 @@ char	**argv;
 
 /* tell him it already exists */
 void
-aexists( name )
-char	*name;
+aexists(char *name)
 {
   Tcl_AppendResult(interp, name, ":  already exists\n", (char *)NULL);
 }
@@ -2029,10 +2000,7 @@ f_make(ClientData	clientData,
 }
 
 int
-mged_rot_obj(interp, iflag, argvect)
-Tcl_Interp *interp;
-int iflag;
-vect_t argvect;
+mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
 {
 	point_t model_pt;
 	point_t point;
@@ -2099,11 +2067,7 @@ vect_t argvect;
 
 /* allow precise changes to object rotation */
 int
-f_rot_obj(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   int iflag = 0;
   vect_t argvect;
@@ -2143,11 +2107,7 @@ char	**argv;
 
 /* allow precise changes to object scaling, both local & global */
 int
-f_sc_obj(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	mat_t incr;
 	vect_t point, temp;
@@ -2236,11 +2196,7 @@ char	**argv;
  *  Allow precise changes to object translation
  */
 int
-f_tr_obj(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i;
 	mat_t incr, old;
@@ -2308,11 +2264,7 @@ char	**argv;
 /* Change the default region ident codes: item air los mat
  */
 int
-f_regdef(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_regdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   if (argc == 1) {
     struct bu_vls vls;
@@ -2368,9 +2320,7 @@ char	**argv;
 
 static int frac_stat;
 void
-mged_add_nmg_part(newname, m)
-char *newname;
-struct model *m;
+mged_add_nmg_part(char *newname, struct model *m)
 {
 	struct rt_db_internal	new_intern;
 	struct directory *new_dp;
@@ -2424,11 +2374,7 @@ struct model *m;
  *	containing a single shell with a single sub-element.
  */
 int
-f_fracture(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i;
 	struct directory *old_dp;
@@ -2594,11 +2540,7 @@ char	**argv;
  *	about a specified ray.
  */
 int
-f_qorot(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	mat_t temp;
 	vect_t s_point, point, v_work, model_pt;
@@ -2667,7 +2609,7 @@ char	**argv;
 }
 
 void
-set_localunit_TclVar()
+set_localunit_TclVar(void)
 {
   struct bu_vls vls;
   struct bu_vls units_vls;

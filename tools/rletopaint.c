@@ -79,13 +79,11 @@ int dmgray[8][8] = {   {0 ,128 , 32 ,160 ,  8 ,136 , 40 ,168 },
                   {60 ,188 , 28 ,156 , 52 ,220 , 20 ,148 },
                  {252 ,124 ,220 , 92 ,244 ,116 ,212 ,84  } } ;
 
-int compress_line();
-void write_paint_line(), bytes_to_bits();
+int compress_line(void);
+void write_paint_line(int num, FILE *fp), bytes_to_bits(int y);
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
     int i;
     int databytes;
@@ -159,9 +157,7 @@ char *argv[];
     
 /* Write a scanline to the macpaint file. */
 void
-write_paint_line(num, fp)
-int num;
-FILE *fp;
+write_paint_line(int num, FILE *fp)
 {
     int j;
     for (j = 0; j < num; j++)
@@ -173,8 +169,7 @@ FILE *fp;
  * a row of bits in rawbits.
  */
 void
-bytes_to_bits( y )
-int y;
+bytes_to_bits(int y)
 {
     register unsigned char *r, *g, *b;
     register int i, col, row;
@@ -218,7 +213,7 @@ int y;
  */
 
 int
-compress_line()
+compress_line(void)
 {
     int i,j,k=0,cntpsn,count=0;
     int flag;

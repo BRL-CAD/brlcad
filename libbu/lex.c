@@ -28,9 +28,7 @@ static int bu_lex_reading_comment = 0;
  *			B U _ L E X _ G E T O N E
  */
 static char *
-bu_lex_getone(used, rtstr)
-int *used;
-struct bu_vls *rtstr;
+bu_lex_getone(int *used, struct bu_vls *rtstr)
 {
 	register char *cp;
 	register char *sp;

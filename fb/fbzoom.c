@@ -31,8 +31,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "libtermio.h"
 
-int pars_Argv();
-int doKeyPad();
+int pars_Argv(int argc, register char **argv);
+int doKeyPad(void);
 
 /* Zoom rate and limits */
 #define MinZoom		(1)
@@ -59,9 +59,7 @@ Usage: fbzoom [-hT] [-F framebuffer]\n\
 	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n";
 
 int
-main(argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	if( ! pars_Argv( argc, argv ) ) {
 		(void)fputs(usage, stderr);
@@ -169,7 +167,7 @@ RETURN	Exit\r\n";
 #define ctl(x)	(x&037)
 
 int
-doKeyPad()
+doKeyPad(void)
 { 
 	register int ch;
 
@@ -296,8 +294,7 @@ doKeyPad()
 /*	p a r s _ A r g v ( )
  */
 int
-pars_Argv( argc, argv )
-register char	**argv;
+pars_Argv(int argc, register char **argv)
 {
 	register int	c;
 

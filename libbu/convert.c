@@ -278,13 +278,7 @@ bu_cv_pr_cookie( char *title, int cookie )
  *
  */
 int
-cv(out, outfmt, size, in, infmt, count)
-genptr_t out;
-char	*outfmt;
-int	size;
-genptr_t in;
-char	*infmt;
-int	count;
+cv(genptr_t out, char *outfmt, int size, genptr_t in, char *infmt, int count)
 {
 	int	incookie, outcookie;
 	incookie = bu_cv_cookie(infmt);
@@ -300,8 +294,7 @@ int	count;
  *  network format, modify the cookie to request host format.
  */
 int
-bu_cv_optimize( cookie )
-register int	cookie;
+bu_cv_optimize(register int cookie)
 {
 	static int Indian = IND_NOTSET;
 	int	fmt;
@@ -399,11 +392,7 @@ bu_cv_itemlen(register int cookie)
  *	Straight-forward.
  */
 int
-bu_cv_ntohss(out, size, in, count)
-register signed short	*out;
-int			size;
-register genptr_t	in;
-int			count;
+bu_cv_ntohss(register short int *out, int size, register genptr_t in, int count)
 {
 	int limit;
 	register int i;
@@ -423,11 +412,7 @@ int			count;
 	return(count);
 }
 int
-bu_cv_ntohus(out, size, in, count)
-register unsigned short	*out;
-int			size;
-register genptr_t	in;
-int			count;
+bu_cv_ntohus(register short unsigned int *out, int size, register genptr_t in, int count)
 {
 	int limit;
 	register int i;
@@ -443,11 +428,7 @@ int			count;
 	return(count);
 }
 int
-bu_cv_ntohsl(out, size, in, count)
-register signed long int	*out;
-int				size;
-register genptr_t		in;
-int				count;
+bu_cv_ntohsl(register long int *out, int size, register genptr_t in, int count)
 {
 	int limit;
 	register int i;
@@ -467,11 +448,7 @@ int				count;
 	return(count);
 }
 int
-bu_cv_ntohul(out, size, in, count)
-register unsigned long int	*out;
-int				size;
-register genptr_t		in;
-int				count;
+bu_cv_ntohul(register long unsigned int *out, int size, register genptr_t in, int count)
 {
 	int limit;
 	register int i;
@@ -491,11 +468,7 @@ int				count;
 
 /*****/
 int
-bu_cv_htonss(out, size, in, count)
-genptr_t		out;
-int			size;
-register short		*in;
-int			count;
+bu_cv_htonss(genptr_t out, int size, register short int *in, int count)
 {
 	int		limit;
 	register int	i;
@@ -512,11 +485,7 @@ int			count;
 	return(count);
 }
 int
-bu_cv_htonus(out, size, in, count)
-genptr_t		out;
-int			size;
-register unsigned short	*in;
-int			count;
+bu_cv_htonus(genptr_t out, int size, register short unsigned int *in, int count)
 {
 	int		limit;
 	register int	i;
@@ -533,11 +502,7 @@ int			count;
 	return(count);
 }
 int
-bu_cv_htonsl(out, size, in, count)
-genptr_t		out;
-int			size;
-register long		*in;
-int			count;
+bu_cv_htonsl(genptr_t out, int size, register long int *in, int count)
 {
 	int		limit;
 	register int	i;
@@ -556,11 +521,7 @@ int			count;
 	return(count);
 }
 int
-bu_cv_htonul(out, size, in, count)
-genptr_t		out;
-int			size;
-register unsigned long	*in;
-int			count;
+bu_cv_htonul(genptr_t out, int size, register long unsigned int *in, int count)
 {
 	int		limit;
 	register int	i;

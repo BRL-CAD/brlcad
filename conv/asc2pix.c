@@ -33,7 +33,7 @@ int rmap[256];		/* Map HEX ASCII to binary in right nybble */
 unsigned char line[256];
 
 int
-main()
+main(void)
 {
 	register int	a, b;
 	register int	i;

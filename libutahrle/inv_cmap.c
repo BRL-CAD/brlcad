@@ -51,7 +51,7 @@ static int cindex;
 static long outercount = 0, innercount = 0;
 #endif
 
-void	maxfill();
+void	maxfill(long unsigned int *buffer, long int side);
 
 int	redloop(void);
 int	greenloop(int restart);
@@ -206,10 +206,7 @@ int	blueloop(int restart);
  */
 
 void
-inv_cmap( colors, colormap, bits, dist_buf, rgbmap )
-int colors, bits;
-unsigned char *colormap[3], *rgbmap;
-unsigned long *dist_buf;
+inv_cmap(int colors, unsigned char **colormap, int bits, long unsigned int *dist_buf, unsigned char *rgbmap)
 {
     int nbits = 8 - bits;
 
@@ -758,9 +755,7 @@ blueloop( int restart )
 }
 
 void
-maxfill( buffer, side )
-unsigned long *buffer;
-long side;
+maxfill(long unsigned int *buffer, long int side)
 {
     register unsigned long maxv = (unsigned long)~0L;
     register long i;

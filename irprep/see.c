@@ -51,7 +51,7 @@ struct colstr
 				/*  pixels are in.  */
 };
 
-main()
+main(void)
 {
    /*  Variables used for XWindow.  */
    Display *my_display;		/*  Display unit.  */

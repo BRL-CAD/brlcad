@@ -35,9 +35,9 @@
 #include "vmath.h"
 #include "dm.h"
 
-extern struct dm *Nu_open();
-extern struct dm *plot_open();
-extern struct dm *ps_open();
+extern struct dm *Nu_open(Tcl_Interp *interp, int argc, char **argv);
+extern struct dm *plot_open(Tcl_Interp *interp, int argc, char **argv);
+extern struct dm *ps_open(Tcl_Interp *interp, int argc, char **argv);
 
 #ifdef DM_X
 extern struct dm *X_open();
@@ -50,11 +50,7 @@ extern int ogl_share_dlist();
 #endif /* DM_X */
 
 struct dm *
-dm_open(interp, type, argc, argv)
-     Tcl_Interp *interp;
-     int type;
-     int argc;
-     char *argv[];
+dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
 {
 	switch (type) {
 	case DM_TYPE_NULL:
@@ -83,9 +79,7 @@ dm_open(interp, type, argc, argv)
  * NULL, then dmp1 will no longer share its display lists.
  */
 int
-dm_share_dlist(dmp1, dmp2)
-struct dm *dmp1;
-struct dm *dmp2;
+dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
   if(dmp1 == DM_NULL)
     return TCL_ERROR;
@@ -112,26 +106,19 @@ struct dm *dmp2;
 }
 
 fastf_t
-dm_Xx2Normal(dmp, x)
-struct dm *dmp;
-register int x;
+dm_Xx2Normal(struct dm *dmp, register int x)
 {
   return ((x / (fastf_t)dmp->dm_width - 0.5) * 2.0);
 }
 
 int
-dm_Normal2Xx(dmp, f)
-struct dm *dmp;
-register fastf_t f;
+dm_Normal2Xx(struct dm *dmp, register fastf_t f)
 {
   return (f * 0.5 + 0.5) * dmp->dm_width;
 }
 
 fastf_t
-dm_Xy2Normal(dmp, y, use_aspect)
-struct dm *dmp;
-register int y;
-int use_aspect;
+dm_Xy2Normal(struct dm *dmp, register int y, int use_aspect)
 {
   if(use_aspect)
     return ((0.5 - y / (fastf_t)dmp->dm_height) / dmp->dm_aspect * 2.0);
@@ -140,10 +127,7 @@ int use_aspect;
 }
 
 int
-dm_Normal2Xy(dmp, f, use_aspect)
-struct dm *dmp;
-register fastf_t f;
-int use_aspect;
+dm_Normal2Xy(struct dm *dmp, register fastf_t f, int use_aspect)
 {
   if(use_aspect)
     return (0.5 - f * 0.5 * dmp->dm_aspect) * dmp->dm_height;
@@ -152,9 +136,7 @@ int use_aspect;
 }
 
 void
-dm_fogHint(dmp, fastfog)
-struct dm *dmp;
-int fastfog;
+dm_fogHint(struct dm *dmp, int fastfog)
 {
   switch(dmp->dm_type){
 #ifdef DM_OGL

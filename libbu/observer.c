@@ -31,9 +31,9 @@
 #include "externs.h"
 #include "cmd.h"                  /* includes bu.h */
 
-static int bu_observer_attach_tcl();
-static int bu_observer_detach_tcl();
-static int bu_observer_show_tcl();
+static int bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 struct bu_cmdtab bu_observer_cmds[] = {
 	{"attach",	bu_observer_attach_tcl},
@@ -50,11 +50,7 @@ struct bu_cmdtab bu_observer_cmds[] = {
  *
  */
 static int
-bu_observer_attach_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
+bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct bu_observer *headp = (struct bu_observer *)clientData;
 	struct bu_observer *op;
@@ -107,11 +103,7 @@ bu_observer_attach_tcl(clientData, interp, argc, argv)
  *
  */
 static int
-bu_observer_detach_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
+bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct bu_observer *headp = (struct bu_observer *)clientData;
 	struct bu_observer *op;
@@ -149,11 +141,7 @@ bu_observer_detach_tcl(clientData, interp, argc, argv)
  *
  */
 static int
-bu_observer_show_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
+bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct bu_observer *headp = (struct bu_observer *)clientData;
 	struct bu_observer *op;
@@ -170,10 +158,7 @@ bu_observer_show_tcl(clientData, interp, argc, argv)
  * Notify observers.
  */
 void
-bu_observer_notify(interp, headp, this)
-     Tcl_Interp *interp;
-     struct bu_observer *headp;
-     char *this;
+bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *this)
 {
 	struct bu_observer *op;
 	struct bu_vls vls;
@@ -198,8 +183,7 @@ bu_observer_notify(interp, headp, this)
  * Free observers.
  */
 void
-bu_observer_free(headp)
-     struct bu_observer *headp;
+bu_observer_free(struct bu_observer *headp)
 {
 	struct bu_observer *op;
 	struct bu_observer *nop;

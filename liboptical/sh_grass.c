@@ -195,10 +195,10 @@ struct bu_structparse grass_parse_tab[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	grass_setup();
-HIDDEN int	grass_render();
-HIDDEN void	grass_print();
-HIDDEN void	grass_free();
+HIDDEN int	grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int	grass_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void	grass_print(register struct region *rp, char *dp);
+HIDDEN void	grass_free(char *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -215,9 +215,9 @@ struct mfuncs grass_mfuncs[] = {
 
 /* fraction of total allowed returned */
 static double
-plants_this_cell(cell, grass_sp)
-long cell[3];	/* integer cell number */
-struct grass_specific *grass_sp;
+plants_this_cell(long int *cell, struct grass_specific *grass_sp)
+             	/* integer cell number */
+                                
 {
 	point_t c;
 	double val;
@@ -234,9 +234,7 @@ struct grass_specific *grass_sp;
 }
 
 static void
-print_plant(str, plant)
-char *str;
-const struct plant *plant;
+print_plant(char *str, const struct plant *plant)
 {
   int blade, seg;
 
@@ -261,11 +259,7 @@ const struct plant *plant;
  *
  */
 static void
-blade_rot(o, i, m, root)
-struct blade *o;
-struct blade *i;
-mat_t m;
-const point_t root;
+blade_rot(struct blade *o, struct blade *i, fastf_t *m, const fastf_t *root)
 {
 	struct blade tmp;
 	int seg;
@@ -293,9 +287,7 @@ const point_t root;
 	}
 }
 static void
-plant_rot(pl, a)
-struct plant *pl;
-double a;
+plant_rot(struct plant *pl, double a)
 {
 	int blade;
 	mat_t m;
@@ -312,9 +304,9 @@ double a;
  *
  */
 static void
-plant_scale(pl, w)
-struct plant *pl;
-double w;	/* 0..1, */
+plant_scale(struct plant *pl, double w)
+                 
+         	/* 0..1, */
 {
 	int blade, seg;
 	double d;
@@ -351,8 +343,7 @@ double w;	/* 0..1, */
  *	Doesn't set bounding box.
  */
 static void
-make_proto(grass_sp)
-struct grass_specific *grass_sp;
+make_proto(struct grass_specific *grass_sp)
 {
   static const point_t z_axis = { 0.0, 0.0, 1.0 };
   vect_t left;
@@ -477,12 +468,12 @@ struct grass_specific *grass_sp;
  *	Any shader-specific initialization should be done here.
  */
 HIDDEN int
-grass_setup( rp, matparm, dpp, mfp, rtip)
-register struct region	*rp;
-struct bu_vls		*matparm;
-char			**dpp;	/* pointer to reg_udata in *rp */
-struct mfuncs		*mfp;
-struct rt_i		*rtip;	/* New since 4.4 release */
+grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+                      	    
+             		         
+    			      	/* pointer to reg_udata in *rp */
+             		     
+           		      	/* New since 4.4 release */
 {
 	register struct grass_specific	*grass_sp;
 
@@ -540,9 +531,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
  *	G R A S S _ P R I N T
  */
 HIDDEN void
-grass_print( rp, dp )
-register struct region *rp;
-char	*dp;
+grass_print(register struct region *rp, char *dp)
 {
 	bu_struct_print( rp->reg_name, grass_print_tab, (char *)dp );
 }
@@ -551,16 +540,13 @@ char	*dp;
  *	G R A S S _ F R E E
  */
 HIDDEN void
-grass_free( cp )
-char *cp;
+grass_free(char *cp)
 {
 	bu_free( cp, "grass_specific" );
 }
 
 static void
-plot_bush(pl, r)
-struct plant 		*pl;
-struct grass_ray	*r;
+plot_bush(struct plant *pl, struct grass_ray *r)
 {
 	int blade, seg;
 	point_t pt;
@@ -603,13 +589,13 @@ struct grass_ray	*r;
 	bu_semaphore_release(BU_SEM_SYSCALL);
 }
 static void
-make_bush(pl, seed, cell_pos, grass_sp, w, r)
-struct plant 			*pl;
-double 				seed;	/* derived from cell_num */
-const point_t			cell_pos;
-const struct grass_specific 	*grass_sp;
-double				w; /* cell specific weght for count, height */
-struct grass_ray		*r;
+make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct grass_specific *grass_sp, double w, struct grass_ray *r)
+             			    
+       				     	/* derived from cell_num */
+             			         
+                            	          
+      				   /* cell specific weght for count, height */
+                		   
 {
 	point_t pt;
 	int blade, seg;
@@ -662,15 +648,15 @@ struct grass_ray		*r;
  *
  */
 static void
-hit_blade(bl, r, swp, grass_sp, seg, ldist, blade_num, fract)
-const struct blade *bl;
-struct grass_ray *r;
-struct shadework	*swp;	/* defined in material.h */
-const struct grass_specific *grass_sp;
-int seg;
-double ldist[2];
-int blade_num;
-double fract;
+hit_blade(const struct blade *bl, struct grass_ray *r, struct shadework *swp, const struct grass_specific *grass_sp, int seg, double *ldist, int blade_num, double fract)
+                       
+                    
+                	     	/* defined in material.h */
+                                      
+        
+                
+              
+             
 {
 	CK_grass_SP(grass_sp);
 	BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
@@ -735,13 +721,13 @@ double fract;
  *
  */
 static void
-isect_blade(bl, root, r, swp, grass_sp, blade_num)
-const struct blade *bl;
-const point_t root;
-struct grass_ray *r;
-struct shadework	*swp;	/* defined in material.h */
-const struct grass_specific *grass_sp;
-int blade_num;
+isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, struct shadework *swp, const struct grass_specific *grass_sp, int blade_num)
+                       
+                   
+                    
+                	     	/* defined in material.h */
+                                      
+              
 {
 	double ldist[2];
 	point_t pt;
@@ -835,11 +821,11 @@ iter:
 
 
 static void
-isect_plant(pl, r, swp, grass_sp)
-const struct plant *pl;
-struct grass_ray *r;
-struct shadework	*swp;	/* defined in material.h */
-const struct grass_specific *grass_sp;
+isect_plant(const struct plant *pl, struct grass_ray *r, struct shadework *swp, const struct grass_specific *grass_sp)
+                       
+                    
+                	     	/* defined in material.h */
+                                      
 {
 	int i;
 
@@ -896,13 +882,13 @@ const struct grass_specific *grass_sp;
 
 
 static int
-stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell, radius)
-point_t cell_pos;	/* origin of cell in region coordinates */
-struct grass_ray	*r;
-struct grass_specific	*grass_sp;
-struct shadework	*swp;
-double dist_to_cell;
-double radius;	/* radius of ray */
+stat_cell(fastf_t *cell_pos, struct grass_ray *r, struct grass_specific *grass_sp, struct shadework *swp, double dist_to_cell, double radius)
+                 	/* origin of cell in region coordinates */
+                	   
+                     	          
+                	     
+                    
+              	/* radius of ray */
 {
 	point_t tmp;
 	vect_t color;
@@ -954,10 +940,10 @@ double radius;	/* radius of ray */
 }
 
 static void
-plot_cell(cell, r, grass_sp)
-long			cell[3];	/* cell number (such as 5,3) */
-struct grass_ray	*r;
-struct grass_specific	*grass_sp;
+plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
+    			        	/* cell number (such as 5,3) */
+                	   
+                     	          
 {
 	point_t cell_pos;
 
@@ -986,13 +972,13 @@ struct grass_specific	*grass_sp;
  *
  */
 static void
-isect_cell(cell, r, swp, out_dist, grass_sp, curr_dist)
-long			cell[3];	/* cell number (such as 5,3) */
-struct grass_ray	*r;
-double 			out_dist;
-struct shadework	*swp;
-struct grass_specific	*grass_sp;
-double curr_dist;
+isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double out_dist, struct grass_specific *grass_sp, double curr_dist)
+    			        	/* cell number (such as 5,3) */
+                	   
+       			         
+                	     
+                     	          
+                 
 {
 	point_t c;		/* float version of cell # */
 	point_t cell_pos;	/* origin of cell in region coordinates */
@@ -1119,14 +1105,14 @@ double curr_dist;
  *	!0	abort grid marching
  */
 static void
-do_cells(cell_num, r, flags, swp, out_dist, grass_sp, curr_dist)
-long			cell_num[3];
-struct grass_ray	*r;
-short 			flags;		/* which adj cells need processing */
-double 			out_dist;
-struct shadework	*swp;	/* defined in material.h */
-struct grass_specific	*grass_sp;
-double			curr_dist;
+do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadework *swp, double out_dist, struct grass_specific *grass_sp, double curr_dist)
+    			            
+                	   
+      			      		/* which adj cells need processing */
+       			         
+                	     	/* defined in material.h */
+                     	          
+      			          
 {
 	int x, y;
 	long cell[3];
@@ -1166,11 +1152,11 @@ double			curr_dist;
  *	structure.
  */
 int
-grass_render( ap, pp, swp, dp )
-struct application	*ap;
-struct partition	*pp;
-struct shadework	*swp;	/* defined in material.h */
-char			*dp;	/* ptr to the shader-specific struct */
+grass_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+                  	    
+                	    
+                	     	/* defined in material.h */
+    			    	/* ptr to the shader-specific struct */
 {
 	register struct grass_specific *grass_sp =
 		(struct grass_specific *)dp;

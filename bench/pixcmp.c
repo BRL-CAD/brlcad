@@ -42,8 +42,7 @@ long	offmany;
 char usage[] = "Usage: pixcmp f1.pix f2.pix\n";
 
 int
-main(argc, argv)
-char **argv;
+main(int argc, char **argv)
 {
 	register FILE *f1, *f2;
 

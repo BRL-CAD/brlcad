@@ -49,16 +49,14 @@
 #define shiftu(val) u4=u3;u3=u2;u2=u1;u1=u0;u0=(val)
 #define shiftv(val) v4=v3;v3=v2;v2=v1;v1=v0;v0=(val)
 
-void read_image(), send_image();
+void read_image(int yrun, rle_pixel **scanbuf, int minx, int maxy, int xrun), send_image(FILE *outfile);
 
 rle_pixel scanred[FRAME_LENGTH][LINE_LENGTH];
 rle_pixel scanblu[FRAME_LENGTH][LINE_LENGTH];
 rle_pixel scangrn[FRAME_LENGTH][LINE_LENGTH];
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     char       *infname = NULL,
     	       *out_fname = NULL;
@@ -147,10 +145,7 @@ char **argv;
 }
 
 void
-read_image ( yrun, scanbuf, minx, maxy, xrun )
-int yrun;
-rle_pixel *scanbuf[3];
-int minx, maxy, xrun;
+read_image (int yrun, rle_pixel **scanbuf, int minx, int maxy, int xrun)
 {
     register int line, upsidedowny;
 
@@ -169,8 +164,7 @@ int minx, maxy, xrun;
 }
 
 void
-send_image ( outfile )
-FILE *outfile;
+send_image (FILE *outfile)
 {
     unsigned char buf[LINE_LENGTH*5];
     register unsigned char *bp;

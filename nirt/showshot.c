@@ -36,11 +36,7 @@ static const char RCSid[] = "$Header$";
 #define		print_usage()	(void) fputs("Usage: 'show-shot [-n name] [-r radius]'\n",\
 					stderr)
 
-main (argc, argv)
-
-int	argc;
-char	**argv;
-
+main (int argc, char **argv)
 {
     char	buf[BUF_LEN];	/* Contents of current input line */
     char	*bp;		/* Pointer into buf */
@@ -59,7 +55,7 @@ char	**argv;
     extern char *optarg;
     extern int  optind, opterr;
 
-    int         getopt();
+    int         getopt(int, char *const *, const char *);
 
     *rayname = '\0';
     /* Handle command-line options */

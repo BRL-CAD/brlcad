@@ -76,10 +76,7 @@ struct tmp_v {
  *  	stp->st_specific for use by nmg_shot().
  */
 int
-rt_nmg_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct model		*m;
 	register struct nmg_specific	*nmg_s;
@@ -131,8 +128,7 @@ struct rt_i		*rtip;
  *			R T _ N M G _ P R I N T
  */
 void
-rt_nmg_print( stp )
-register const struct soltab *stp;
+rt_nmg_print(register const struct soltab *stp)
 {
 	register struct model *m =
 		(struct model *)stp->st_specific;
@@ -155,11 +151,11 @@ register const struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_nmg_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;	/* info about the ray */
-struct application	*ap;	
-struct seg		*seghead;	/* intersection w/ ray */
+rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+             		     
+                    	    	/* info about the ray */
+                  	    	
+          		         	/* intersection w/ ray */
 {
 	struct ray_data rd;
 	int status;
@@ -244,12 +240,12 @@ struct seg		*seghead;	/* intersection w/ ray */
  *  Vectorized version.
  */
 void
-rt_nmg_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+rt_nmg_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+             	               /* An array of solid pointers */
+           		       /* An array of ray pointers */
+                               /* array of segs (results returned) */
+   		  	       /* Number of ray/object pairs */
+                  	    
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -260,10 +256,7 @@ struct application	*ap;
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_nmg_norm( hitp, stp, rp )
-register struct hit	*hitp;
-struct soltab		*stp;
-register struct xray	*rp;
+rt_nmg_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 }
@@ -274,10 +267,7 @@ register struct xray	*rp;
  *  Return the curvature of the nmg.
  */
 void
-rt_nmg_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit	*hitp;
-struct soltab		*stp;
+rt_nmg_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 /*	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific; */
@@ -297,11 +287,7 @@ struct soltab		*stp;
  *  v = elevation
  */
 void
-rt_nmg_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+rt_nmg_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 /*	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific; */
@@ -311,8 +297,7 @@ register struct uvcoord	*uvp;
  *		R T _ N M G _ F R E E
  */
 void
-rt_nmg_free( stp )
-register struct soltab *stp;
+rt_nmg_free(register struct soltab *stp)
 {
 	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
@@ -325,7 +310,7 @@ register struct soltab *stp;
  *			R T _ N M G _ C L A S S
  */
 int
-rt_nmg_class()
+rt_nmg_class(void)
 {
 	return(0);
 }
@@ -335,11 +320,7 @@ rt_nmg_class()
  *			R T _ N M G _ P L O T
  */
 int
-rt_nmg_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	LOCAL struct model	*m;
 
@@ -365,12 +346,7 @@ const struct bn_tol	*tol;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_nmg_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	LOCAL struct model	*lm;
 
@@ -736,8 +712,7 @@ const char	rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
  *  manifest constant which identifies that structure kind.
  */
 int
-rt_nmg_magic_to_kind( magic )
-register long	magic;
+rt_nmg_magic_to_kind(register long int magic)
 {
 	switch(magic)  {
 	case NMG_MODEL_MAGIC:
@@ -833,11 +808,11 @@ static unsigned int	rt_nmg_cur_fastf_subscript;
  *	subscript number of this array, in the external form.
  */
 int
-rt_nmg_export_fastf( fp, count, pt_type, scale )
-const fastf_t	*fp;
-int		count;
-int		pt_type;	/* If zero, means literal array of values */
-double		scale;
+rt_nmg_export_fastf(const fastf_t *fp, int count, int pt_type, double scale)
+             	    
+   		      
+   		        	/* If zero, means literal array of values */
+      		      
 {
 	register unsigned char	*cp;
 
@@ -880,13 +855,13 @@ double		scale;
  *			R T _ N M G _ I M P O R T _ F A S T F
  */
 fastf_t *
-rt_nmg_import_fastf( base, ecnt, subscript, mat, len, pt_type )
-const unsigned char	*base;
-struct nmg_exp_counts	*ecnt;
-long			subscript;
-const matp_t		mat;
-int			len;		/* expected size */
-int			pt_type;
+rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long int subscript, const matp_t mat, int len, int pt_type)
+                   	      
+                     	      
+    			          
+            		    
+   			    		/* expected size */
+   			        
 {
 	const unsigned char	*cp;
 	register int		count;
@@ -963,9 +938,7 @@ int			pt_type;
  *	-1	substitute pointer to within-struct list head when imported.
  */
 int
-rt_nmg_reindex(p, ecnt)
-genptr_t		p;
-struct nmg_exp_counts	*ecnt;
+rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 {
 	int	index;
 	int	ret=0;	/* zero is NOT the default value, this is just to satisfy CRAY compilers */
@@ -1018,12 +991,12 @@ struct nmg_exp_counts	*ecnt;
  *  Scale geometry by 'local2mm'
  */
 void
-rt_nmg_edisk( op, ip, ecnt, index, local2mm )
-genptr_t	op;		/* base of disk array */
-genptr_t	ip;		/* ptr to in-memory structure */
-struct nmg_exp_counts	*ecnt;
-int		index;
-double		local2mm;
+rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, double local2mm)
+        	   		/* base of disk array */
+        	   		/* ptr to in-memory structure */
+                     	      
+   		      
+      		         
 {
 	int	oindex;		/* index in op */
 
@@ -1405,14 +1378,14 @@ double		local2mm;
  *  Transform geometry by given matrix.
  */
 int
-rt_nmg_idisk( op, ip, ecnt, index, ptrs, mat, basep )
-genptr_t	op;		/* ptr to in-memory structure */
-genptr_t	ip;		/* base of disk array */
-struct nmg_exp_counts	*ecnt;
-int		index;
-long		**ptrs;
-const mat_t	mat;
-const unsigned char	*basep;	/* base of whole import record */
+rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, long int **ptrs, const fastf_t *mat, const unsigned char *basep)
+        	   		/* ptr to in-memory structure */
+        	   		/* base of disk array */
+                     	      
+   		      
+    		       
+           	    
+                   	       	/* base of whole import record */
 {
 	int	iindex;		/* index in ip */
 
@@ -1800,10 +1773,7 @@ const unsigned char	*basep;	/* base of whole import record */
  *  are all appropriately handled.
  */
 struct model *
-rt_nmg_ialloc( ptrs, ecnt, kind_counts )
-long				**ptrs;
-struct nmg_exp_counts		*ecnt;
-int				kind_counts[NMG_N_KINDS];
+rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 {
 	struct model		*m = (struct model *)0;
 	int			subscript;
@@ -2030,11 +2000,7 @@ ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
  *  can kill each array as appropriate.
  */
 void
-rt_nmg_i2alloc( ecnt, cp, kind_counts, maxindex )
-struct nmg_exp_counts	*ecnt;
-unsigned char		*cp;
-int			kind_counts[NMG_N_KINDS];
-int			maxindex;
+rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts, int maxindex)
 {
 	register int	kind;
 	int		nkind;
@@ -2083,12 +2049,7 @@ bu_log("rt_nmg_i2alloc() first one at cp=x%x, offset=%d, subscript=%d\n", cp, of
  *	 0	indicates that a null pointer should be used.
  */
 int
-rt_nmg_import_internal( ip, ep, mat, rebound, tol )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-int				rebound;
-const struct bn_tol		*tol;
+rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, int rebound, const struct bn_tol *tol)
 {
 	struct model			*m;
 	union record			*rp;
@@ -2229,11 +2190,7 @@ const struct bn_tol		*tol;
  *  All floating point values are stored in network (Big-Endian IEEE) format.
  */
 int
-rt_nmg_export_internal( ep, ip, local2mm, compact )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-int				compact;
+rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, int compact)
 {
 	struct model			*m;
 	union record			*rp;
@@ -2431,11 +2388,7 @@ bu_log("Mapping of old index to new index, and kind\n");
  *  Apply modeling transformations as well.
  */
 int
-rt_nmg_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_nmg_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	struct model			*m;
 	union record			*rp;
@@ -2573,11 +2526,7 @@ rt_nmg_import5( struct rt_db_internal	*ip,
  *
  */
 int
-rt_nmg_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_nmg_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct model			*m;
 
@@ -2772,11 +2721,7 @@ rt_nmg_export5(
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_nmg_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register struct model	*m =
 		(struct model *)ip->idb_ptr;
@@ -2810,8 +2755,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_nmg_ifree( ip )
-struct rt_db_internal	*ip;
+rt_nmg_ifree(struct rt_db_internal *ip)
 {
 	register struct model	*m;
 
@@ -2826,10 +2770,7 @@ struct rt_db_internal	*ip;
 }
 
 int
-rt_nmg_tclget( interp, intern, attr )
-Tcl_Interp			*interp;
-const struct rt_db_internal	*intern;
-const char			*attr;
+rt_nmg_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
 	register struct model *m=(struct model *)intern->idb_ptr;
 	Tcl_DString		ds;

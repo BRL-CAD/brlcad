@@ -40,14 +40,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 			fatal_error = TRUE; \
 			return; \
 			}
-STATIC OcList	*copy_OcList();
-STATIC OcList	*match_Trie();
+STATIC OcList	*copy_OcList(register OcList *orp);
+STATIC OcList	*match_Trie(register Trie *triep);
 
 void
-append_Octp( triep, octp )
-Trie	*triep;
-Octree	*octp;
-	{	register OcList	**opp = &triep->l.t_octp;
+append_Octp(Trie *triep, Octree *octp)
+{	register OcList	**opp = &triep->l.t_octp;
 	if( octp == OCTREE_NULL )
 		return;
 	for( ; *opp != OCLIST_NULL; opp = &(*opp)->p_next )
@@ -65,10 +63,8 @@ Octree	*octp;
 	}
 
 int
-delete_Node_OcList( oclistp, octreep )
-register OcList	**oclistp;
-register Octree	*octreep;
-	{
+delete_Node_OcList(register OcList **oclistp, register Octree *octreep)
+{
 	for( ; *oclistp != OCLIST_NULL; oclistp = &(*oclistp)->p_next )
 		if( (*oclistp)->p_octp == octreep )
 			{	register OcList	*tmp = *oclistp;
@@ -80,9 +76,8 @@ register Octree	*octreep;
 	return	0;
 	}
 void
-delete_OcList( oclistp )
-OcList	**oclistp;
-	{	register OcList	*op = *oclistp, *np;
+delete_OcList(OcList **oclistp)
+{	register OcList	*op = *oclistp, *np;
 	*oclistp = OCLIST_NULL;
 	for( ; op != OCLIST_NULL; op = np )
 		{
@@ -93,10 +88,8 @@ OcList	**oclistp;
 	}
 
 Trie	*
-add_Trie( name, triepp )
-register char	*name;
-register Trie	**triepp;
-	{	register Trie	*curp;
+add_Trie(register char *name, register Trie **triepp)
+{	register Trie	*curp;
 	if( *name == NUL )
 		{ /* See if name already exists.			*/
 		if( *triepp == TRIE_NULL )
@@ -134,10 +127,8 @@ register Trie	**triepp;
 	}
 
 OcList	*
-get_Trie( name, triep )
-register char	*name;
-register Trie	*triep;
-	{	register Trie *curp = triep; /* initialize to shutup compiler */
+get_Trie(register char *name, register Trie *triep)
+{	register Trie *curp = triep; /* initialize to shutup compiler */
 	assert( triep != NULL );
 	/* Traverse next links to end of region name.			*/
 	for( ; triep != TRIE_NULL; triep = triep->n.t_next )
@@ -186,9 +177,8 @@ register Trie	*triep;
 	}
 
 STATIC OcList	*
-match_Trie( triep )
-register Trie	*triep;
-	{	OcList	*oclist = OCLIST_NULL;
+match_Trie(register Trie *triep)
+{	OcList	*oclist = OCLIST_NULL;
 		register OcList	**oclistp = &oclist;
 	if( triep == TRIE_NULL )
 		return	OCLIST_NULL;
@@ -212,8 +202,8 @@ register Trie	*triep;
 
 
 STATIC OcList	*
-copy_OcList( orp )
-register OcList	*orp;			/* Input list read pointer.	*/
+copy_OcList(register OcList *orp)
+               	     			/* Input list read pointer.	*/
 	{	OcList *oclistp = OCLIST_NULL;	/* Output list pointer.	*/
 		register OcList	**owpp = &oclistp; /* Write pointer.	*/
 	/* Make copy of Octree pointer list.				*/
@@ -238,10 +228,8 @@ register OcList	*orp;			/* Input list read pointer.	*/
 #define MAX_TRIE_LEVEL	(32*16)
 
 void
-prnt_Trie( triep, level )
-Trie	*triep;
-int	level;
-	{	register Trie	*tp = triep;
+prnt_Trie(Trie *triep, int level)
+{	register Trie	*tp = triep;
 		static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
 	/*bu_log( "prnt_Trie(triep=0x%x,level=%d)\n", triep, level );*/
 	if( tp == TRIE_NULL )
@@ -278,11 +266,8 @@ int	level;
 	}
 
 int
-write_Trie( triep, level, fp )
-Trie	*triep;
-int	level;
-FILE	*fp;
-	{	register Trie	*tp = triep;
+write_Trie(Trie *triep, int level, FILE *fp)
+{	register Trie	*tp = triep;
 		static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
 	if( tp == TRIE_NULL )
 		return	1;
@@ -321,9 +306,8 @@ FILE	*fp;
 	}
 
 int
-read_Trie( fp )
-FILE	*fp;
-	{	static char	name_buf[MAX_TRIE_LEVEL+1];
+read_Trie(FILE *fp)
+{	static char	name_buf[MAX_TRIE_LEVEL+1];
 		register Trie	*triep;
 		F_Hdr_Ptlist	hdr_ptlist;	
 		int		min, max;
@@ -397,16 +381,15 @@ FILE	*fp;
 	}
 
 void
-ring_Bell()
-	{
+ring_Bell(void)
+{
 	(void) putchar( BEL );
 	return;
 	}
 
 char	*
-char_To_String( i )
-int	i;
-	{	static char	buf[4];
+char_To_String(int i)
+{	static char	buf[4];
 	if( i >= SP && i < DEL )
 		{
 		buf[0] = i;
@@ -432,11 +415,8 @@ int	i;
 	Returns a linked-list of pointers to octree leaf nodes.
  */
 OcList	*
-get_Region_Name( inbuf, bufsz, msg )
-char	 *inbuf;
-int	 bufsz;
-char	*msg;
-	{	static char	buffer[BUFSIZ];
+get_Region_Name(char *inbuf, int bufsz, char *msg)
+{	static char	buffer[BUFSIZ];
 		register char	*p = buffer;
 		register int	c;
 		OcList		*oclistp = OCLIST_NULL;

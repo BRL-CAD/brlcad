@@ -212,14 +212,14 @@ nmg_face_state_transition(struct nmg_ray_state	*rs,
  *  For now, a bubble-sort is used, because the list should not have more
  *  than a few hundred entries on it.
  */
-static void ptbl_vsort(b, fu1, fu2, pt, dir, mag, dist_tol)
-struct bu_ptbl *b;		/* table of vertexuses on intercept line */
-struct faceuse	*fu1;		/* unused? */
-struct faceuse	*fu2;		/* unused? */
-point_t		pt;
-vect_t		dir;
-fastf_t		*mag;
-fastf_t		dist_tol;
+static void ptbl_vsort(struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t dist_tol)
+                  		/* table of vertexuses on intercept line */
+              	     		/* unused? */
+              	     		/* unused? */
+       		   
+      		    
+       		     
+       		         
 {
 	register struct vertexuse	**vu;
 	register int i, j;
@@ -338,9 +338,7 @@ fastf_t		dist_tol;
  *  This does not catch _all_ possible mistakes, but does catch some.
  */
 int
-nmg_ck_vu_ptbl( p, fu )
-struct bu_ptbl	*p;
-struct faceuse	*fu;
+nmg_ck_vu_ptbl(struct bu_ptbl *p, struct faceuse *fu)
 {
 	struct vertex		*v;
 	struct vertexuse	*vu;
@@ -414,12 +412,12 @@ top:
  *	0.0 if unable to compute 'vec'
  */
 double
-nmg_vu_angle_measure( vu, x_dir, y_dir, assessment, in )
-struct vertexuse	*vu;
-vect_t			x_dir;
-vect_t			y_dir;
-int			assessment;
-int			in;	/* 1 = inbound edge, 0 = outbound edge */
+nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int assessment, int in)
+                	    
+      			      
+      			      
+   			           
+   			   	/* 1 = inbound edge, 0 = outbound edge */
 {	
 	struct loopuse	*lu;
 	struct edgeuse	*this_eu;
@@ -528,9 +526,7 @@ int			in;	/* 1 = inbound edge, 0 = outbound edge */
  *			N M G _ I S _ V _ O N _ R S _ L I S T
  */
 int
-nmg_is_v_on_rs_list( rs, v )
-const struct nmg_ray_state	*rs;
-const struct vertex		*v;
+nmg_is_v_on_rs_list(const struct nmg_ray_state *rs, const struct vertex *v)
 {
 	register int	i;
 
@@ -554,11 +550,7 @@ const struct vertex		*v;
  *  (with a different vertexuse), that (0-length) edge is ON the ray.
  */
 int
-nmg_assess_eu( eu, forw, rs, pos )
-struct edgeuse		*eu;
-int			forw;
-struct nmg_ray_state	*rs;
-int			pos;
+nmg_assess_eu(struct edgeuse *eu, int forw, struct nmg_ray_state *rs, int pos)
 {
 	struct vertex		*v;
 	struct vertex		*otherv = (struct vertex *)0;
@@ -741,9 +733,7 @@ out:
  *			N M G _ A S S E S S _ V U
  */
 int
-nmg_assess_vu( rs, pos )
-struct nmg_ray_state	*rs;
-int			pos;
+nmg_assess_vu(struct nmg_ray_state *rs, int pos)
 {
 	struct vertexuse	*vu;
 	struct loopuse	*lu;
@@ -848,8 +838,7 @@ static const char *nmg_wedgeclass_string[] = {
  *			N M G _ P R _ V U _ S T U F F
  */
 void
-nmg_pr_vu_stuff( vs )
-const struct nmg_vu_stuff	*vs;
+nmg_pr_vu_stuff(const struct nmg_vu_stuff *vs)
 {
 	bu_log("nmg_pr_vu_stuff(x%x) vu=x%x, loop_index=%d, lsp=x%x\n",
 		vs, vs->vu, vs->loop_index, vs->lsp);
@@ -880,10 +869,10 @@ const struct nmg_vu_stuff	*vs;
  *	WEDGE_ON
  */
 int
-nmg_wedge_class(ass, a,b)
-int	ass;			/* assessment of two edges forming wedge */
-double	a;
-double	b;
+nmg_wedge_class(int ass, double a, double b)
+   	    			/* assessment of two edges forming wedge */
+      	  
+      	  
 {
 	double	ha, hb;
 	register int	ret;
@@ -983,8 +972,7 @@ static const char *nmg_wedge2_string[] = {
  *	WEDGE2_TOUCH_AT_DA	CD touches AB at DA, but does not overlap
  */
 static int
-nmg_compare_2_wedges( a, b, c, d )
-double	a,b,c,d;
+nmg_compare_2_wedges(double a, double b, double c, double d)
 {
 	double	t;
 	int	a_in_cd = 0;
@@ -1138,14 +1126,14 @@ out:
  *	and "this", the current one being considered.
  */
 static int
-nmg_find_vu_in_wedge( vs, start, end, lo_ang, hi_ang, wclass, skip_array )
-struct nmg_vu_stuff	*vs;
-int	start;		/* vu index of coincident range */
-int	end;
-double	lo_ang;
-double	hi_ang;
-int	wclass;
-int	skip_array[];
+nmg_find_vu_in_wedge(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *skip_array)
+                   	    
+   	      		/* vu index of coincident range */
+   	    
+      	       
+      	       
+   	       
+   	             
 {
 	register int	i;
 	double	cand_lo;
@@ -1266,9 +1254,7 @@ out:
  *	0	if cross should be processed before wedge
  */
 static int
-nmg_is_wedge_before_cross( wedge, cross )
-const struct nmg_vu_stuff	*wedge;
-const struct nmg_vu_stuff	*cross;
+nmg_is_wedge_before_cross(const struct nmg_vu_stuff *wedge, const struct nmg_vu_stuff *cross)
 {
 	int	class2;
 	int	ret = -1;
@@ -1333,13 +1319,13 @@ const struct nmg_vu_stuff	*cross;
 #define AB_EQUAL	{ret = 0; goto out;}
 #define A_GT_B		{ret = 1; goto out;}
 static int
-nmg_face_vu_compare( aa, bb )
+nmg_face_vu_compare(const void *aa, const void *bb)
 #if __STDC__
- const void	*aa;
- const void	*bb;
+           	    
+           	    
 #else
- const genptr_t	aa;
- const genptr_t	bb;
+               	   
+               	   
 #endif
 {
 	register const struct nmg_vu_stuff *a = (const struct nmg_vu_stuff *)aa;
@@ -1476,11 +1462,7 @@ out:
  *  starting with the vertexuse that the ray first encounters.
  */
 static void
-nmg_face_vu_dot( vsp, lu, rs, ass )
-struct nmg_vu_stuff		*vsp;
-struct loopuse			*lu;
-const struct nmg_ray_state	*rs;
-int				ass;
+nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_ray_state *rs, int ass)
 {
 	struct edgeuse	*this_eu;
 	struct edgeuse	*othereu;
@@ -1552,15 +1534,15 @@ int				ass;
  *		at this vertexuse.
  */
 static int
-nmg_special_wedge_processing( vs, start, end, lo_ang, hi_ang, wclass, exclude, tol )
-struct nmg_vu_stuff	*vs;
-int	start;		/* vu index of coincident range */
-int	end;
-double	lo_ang;
-double	hi_ang;
-int	wclass;
-int	*exclude;
-const struct bn_tol	*tol;
+nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *exclude, const struct bn_tol *tol)
+                   	    
+   	      		/* vu index of coincident range */
+   	    
+      	       
+      	       
+   	       
+   	         
+                   	     
 {
 	register int	i;
 	int		outer_wedge;
@@ -1720,10 +1702,10 @@ rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT;
  *  sort them into the "proper" order for driving the state machine.
  */
 int
-nmg_face_coincident_vu_sort( rs, start, end )
-struct nmg_ray_state	*rs;
-int			start;		/* first index */
-int			end;		/* last index + 1 */
+nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
+                    	    
+   			      		/* first index */
+   			    		/* last index + 1 */
 {
 	int		num;
 	struct nmg_vu_stuff	*vs;
@@ -1942,8 +1924,7 @@ got_loop:
  *  Eliminate any OT_BOOLPLACE self-loops that remain behind in this face.
  */
 void
-nmg_sanitize_fu(fu)
-struct faceuse	*fu;
+nmg_sanitize_fu(struct faceuse *fu)
 {
 	struct loopuse	*lu;
 	struct loopuse	*lunext;
@@ -1976,15 +1957,15 @@ struct faceuse	*fu;
  *  Mike's notes "The 'Left' Vector Choice" dated 27-Aug-93, page 1.
  */
 void
-nmg_face_rs_init( rs, b, fu1, fu2, pt, dir, eg, tol )
-struct nmg_ray_state	*rs;
-struct bu_ptbl	*b;		/* table of vertexuses in fu1 on intercept line */
-struct faceuse	*fu1;		/* face being worked */
-struct faceuse	*fu2;		/* for plane equation */
-point_t		pt;
-vect_t		dir;
-struct edge_g_lseg		*eg;	/* may be null.  Geom of isect line. */
-const struct bn_tol	*tol;
+nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, struct edge_g_lseg *eg, const struct bn_tol *tol)
+                    	    
+              	   		/* table of vertexuses in fu1 on intercept line */
+              	     		/* face being worked */
+              	     		/* for plane equation */
+       		   
+      		    
+                  		    	/* may be null.  Geom of isect line. */
+                   	     
 {
 	plane_t	n1;
 
@@ -2087,11 +2068,7 @@ const struct bn_tol	*tol;
  *  Return value is where next interval starts.
  */
 HIDDEN int
-nmg_face_next_vu_interval( rs, cur, mag, other_rs_state )
-struct nmg_ray_state	*rs;
-int		cur;
-fastf_t		*mag;
-int		other_rs_state;
+nmg_face_next_vu_interval(struct nmg_ray_state *rs, int cur, fastf_t *mag, int other_rs_state)
 {
 	int	j;
 	int	k;
@@ -2186,10 +2163,7 @@ int		other_rs_state;
  *  See the comments in nmg_radial_join_eu() for the rationale.
  */
 void
-nmg_edge_geom_isect_line( eu, rs, reason )
-struct edgeuse		*eu;
-struct nmg_ray_state	*rs;
-const char		*reason;
+nmg_edge_geom_isect_line(struct edgeuse *eu, struct nmg_ray_state *rs, const char *reason)
 {
 	register struct edge_g_lseg	*eg;
 
@@ -2247,12 +2221,7 @@ out:
 }
 
 static struct bu_ptbl *
-find_loop_to_cut( index1, index2, prior_start, prior_end, next_start, next_end, mid_pt, rs )
-int *index1,*index2;
-int prior_start, prior_end;
-int next_start, next_end;
-point_t mid_pt;
-struct nmg_ray_state *rs;
+find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int next_start, int next_end, fastf_t *mid_pt, struct nmg_ray_state *rs)
 {
 	struct loopuse *lu1,*lu2;
 	struct vertexuse *vu1 = (struct vertexuse *)NULL;
@@ -2638,9 +2607,7 @@ struct nmg_ray_state *rs;
 }
 
 static fastf_t
-nmg_eu_angle( eu, vp )
-struct edgeuse *eu;
-struct vertex *vp;
+nmg_eu_angle(struct edgeuse *eu, struct vertex *vp)
 {
 	struct faceuse *fu;
 	struct vertex_g *vg1,*vg2;
@@ -2672,11 +2639,7 @@ struct vertex *vp;
 }
 
 static int
-find_best_vu( start, end, other_vp, rs )
-int start;
-int end;
-struct vertex *other_vp;
-struct nmg_ray_state *rs;
+find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *rs)
 {
 	struct edgeuse *eu;
 	struct vertexuse *best_vu;
@@ -2834,8 +2797,7 @@ struct nmg_ray_state *rs;
 }
 
 HIDDEN void
-nmg_fcut_face( rs )
-struct nmg_ray_state *rs;
+nmg_fcut_face(struct nmg_ray_state *rs)
 {
 	register int	cur;
 	struct vertexuse *vu1,*vu2;
@@ -3234,11 +3196,7 @@ struct nmg_ray_state *rs;
 }
 
 HIDDEN void
-nmg_face_combine_jra(rs1, mag1, rs2, mag2)
-struct nmg_ray_state	*rs1;
-fastf_t			*mag1;
-struct nmg_ray_state	*rs2;
-fastf_t			*mag2;
+nmg_face_combine_jra(struct nmg_ray_state *rs1, fastf_t *mag1, struct nmg_ray_state *rs2, fastf_t *mag2)
 {
 	nmg_fcut_face( rs1 );
 	nmg_fcut_face( rs2 );
@@ -3252,11 +3210,7 @@ fastf_t			*mag2;
  *
  */
 HIDDEN void
-nmg_face_combineX(rs1, mag1, rs2, mag2)
-struct nmg_ray_state	*rs1;
-fastf_t			*mag1;
-struct nmg_ray_state	*rs2;
-fastf_t			*mag2;
+nmg_face_combineX(struct nmg_ray_state *rs1, fastf_t *mag1, struct nmg_ray_state *rs2, fastf_t *mag2)
 {
 	register int	cur1, cur2;
 	register int	nxt1, nxt2;
@@ -3380,10 +3334,7 @@ fastf_t			*mag2;
  *			N M G _ U N L I S T _ V
  */
 void
-nmg_unlist_v(b, mag, v)
-struct bu_ptbl	*b;
-fastf_t *mag;
-struct vertex	*v;
+nmg_unlist_v(struct bu_ptbl *b, fastf_t *mag, struct vertex *v)
 {
 	register int		i;
 	struct vertexuse	*vu;
@@ -3412,12 +3363,12 @@ struct vertex	*v;
  *  Must be called after vu list has been sorted.
  */
 int
-nmg_onon_fix( rs, b, ob, mag, omag )
-struct nmg_ray_state	*rs;
-struct bu_ptbl		*b;
-struct bu_ptbl		*ob;	/* other rs's vu list */
-fastf_t			*mag;	/* list of distances from intersect ray start point */
-fastf_t			*omag;	/* list of distances from intersect ray start point */
+nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fastf_t *mag, fastf_t *omag)
+                    	    
+              		   
+              		    	/* other rs's vu list */
+       			     	/* list of distances from intersect ray start point */
+       			      	/* list of distances from intersect ray start point */
 {
 	int		i;
 	int		zapped;
@@ -3599,17 +3550,17 @@ const struct bn_tol *tol;
  *  a single use of that same vertex.
  */
 struct edge_g_lseg *
-nmg_face_cutjoin(b1, b2, mag1, mag2, fu1, fu2, pt, dir, eg, tol)
-struct bu_ptbl	*b1;		/* table of vertexuses in fu1 on intercept line */
-struct bu_ptbl	*b2;		/* table of vertexuses in fu2 on intercept line */
-fastf_t		*mag1;		/* table of distances to vertexuses from is->pt */
-fastf_t		*mag2;		/* table of distances to vertexuses from is->pt */
-struct faceuse	*fu1;		/* face being worked */
-struct faceuse	*fu2;		/* for plane equation */
-point_t		pt;
-vect_t		dir;
-struct edge_g_lseg		*eg;	/* may be null.  geometry of isect line */
-const struct bn_tol	*tol;
+nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t *mag2, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, struct edge_g_lseg *eg, const struct bn_tol *tol)
+              	    		/* table of vertexuses in fu1 on intercept line */
+              	    		/* table of vertexuses in fu2 on intercept line */
+       		      		/* table of distances to vertexuses from is->pt */
+       		      		/* table of distances to vertexuses from is->pt */
+              	     		/* face being worked */
+              	     		/* for plane equation */
+       		   
+      		    
+                  		    	/* may be null.  geometry of isect line */
+                   	     
 {
 	struct vertexuse **vu1, **vu2;
 	int		i;
@@ -3754,12 +3705,7 @@ top:
 }
 
 void
-nmg_fcut_face_2d( vu_list, mag, fu1, fu2, tol )
-struct bu_ptbl *vu_list;
-fastf_t *mag;
-struct faceuse *fu1;
-struct faceuse *fu2;
-struct bn_tol *tol;
+nmg_fcut_face_2d(struct bu_ptbl *vu_list, fastf_t *mag, struct faceuse *fu1, struct faceuse *fu2, struct bn_tol *tol)
 {
 	struct nmg_ray_state rs;
 	point_t pt;
@@ -3924,11 +3870,11 @@ static const struct state_transitions nmg_state_is_in[17] = {
  *			1 - inserted vu1 and created a new edge
  */
 int
-nmg_insert_vu_if_on_edge( vu1 , vu2 , new_eu , tol )
-struct vertexuse *vu1;	/* vertexuse from a loop of a single vertex */
-struct vertexuse *vu2;	/* vertexuse from another loop */
-struct edgeuse *new_eu;	/* use of new edge that may be created (implicit return ) */
-struct bn_tol *tol;	/* tolerance for collinearity check */
+nmg_insert_vu_if_on_edge(struct vertexuse *vu1, struct vertexuse *vu2, struct edgeuse *new_eu, struct bn_tol *tol)
+                      	/* vertexuse from a loop of a single vertex */
+                      	/* vertexuse from another loop */
+                       	/* use of new edge that may be created (implicit return ) */
+                   	/* tolerance for collinearity check */
 {
 	struct edgeuse *eu_from;	/* edgeuse that starts at end of vu2's eu */
 	struct edgeuse *eu_to;		/* edgeuse that terminates at vu2 */
@@ -4017,11 +3963,7 @@ struct bn_tol *tol;	/* tolerance for collinearity check */
  *	Updated state etc. in nmg_ray_state structure.
  */
 int
-nmg_face_state_transition( rs, pos, multi, other_rs_state )
-struct nmg_ray_state	*rs;
-int			pos;
-int			multi;
-int			other_rs_state;
+nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int other_rs_state)
 {
 	int			assessment;
 	int			old_state;

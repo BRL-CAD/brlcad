@@ -56,6 +56,10 @@ static const char RCSid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 11.5  2000/09/01 02:48:08  mike
+ *
+ * lint
+ *
  * Revision 11.4  2000/08/24 23:09:00  mike
  *
  * lint
@@ -172,9 +176,7 @@ Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
  *	straight-forward.
  */
 void
-setup(argc,argv)
-int argc;
-char **argv;
+setup(int argc, char **argv)
 {
 	int c;
 	int i,j;
@@ -294,9 +296,7 @@ char **argv;
 }
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int pixel,x,y,i;
 	unsigned char *Line, *Out;

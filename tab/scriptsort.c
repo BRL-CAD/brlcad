@@ -54,11 +54,11 @@ struct  frame {
 struct bu_list head = {MAGIC, &head, &head};
 struct frame globals;
 
-extern int yylex();
+extern int yylex(void);
 
 extern int optind;
 extern char *optarg;
-int get_args();
+int get_args(int argc, char **argv);
 int verbose;		/* print status on stderr */
 int specify_base;	/* user specified a base */
 int user_base;		/* value of user-specified base */
@@ -66,12 +66,10 @@ int force_shell;	/* force shell script for each frame */
 int suppress_shell;	/* suppress shell script for each frame */
 int frame_offset;	/* offset added to frame numbers */
 
-void squirtframes();
-static void sf();
+void squirtframes(int base);
+static void sf(int start, int skip);
 
-void addtext(fp, tp)
-struct frame *fp;
-char *tp;
+void addtext(struct frame *fp, char *tp)
 {
 	char *p;
 	int length;
@@ -105,8 +103,7 @@ char *tp;
 }
 int token = SHELL;
 
-struct frame *getframe(in)
-FILE *in;
+struct frame *getframe(FILE *in)
 {
 	extern FILE *yyin;
 	extern char yytext[];
@@ -212,7 +209,7 @@ bubblesort()
 }
 #else /* never */
 void
-bubblesort()
+bubblesort(void)
 {
 	struct frame *a, *b;
 
@@ -232,8 +229,7 @@ bubblesort()
 }
 #endif /* never */
 void
-printframe(fp)
-struct frame *fp;
+printframe(struct frame *fp)
 {
 	fprintf(stdout, "start %d;%s\n", fp->number,
 	    (fp->flags & FLAG_CLEAN) ? "clean ;" : "");
@@ -245,7 +241,7 @@ struct frame *fp;
 		fprintf(stdout,"!end_of_frame.sh %d\n", fp->number);
 	}
 }
-void merge()
+void merge(void)
 {
 	register struct frame *cur, *next;
 
@@ -269,9 +265,7 @@ void merge()
  *			M A I N
  */
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	struct frame *new, *lp;
 	
@@ -347,13 +341,12 @@ char **argv;
 }
 
 int
-yywrap(){
+yywrap(void) {
 	return 1;
 }
 
 void
-squirtframes(base)
-int base;
+squirtframes(int base)
 {
 
 	sf(0, base);	/* start by outputing every base entries at one */
@@ -365,9 +358,7 @@ int base;
 }
 
 static void
-sf(start, skip)
-int start;
-int skip;
+sf(int start, int skip)
 {
 	int i;
 	struct frame *runner;
@@ -395,9 +386,7 @@ int skip;
 }
 
 #define OPT_STR "qb:fso:"
-int get_args (argc,argv)
-int argc;
-char **argv;
+int get_args (int argc, char **argv)
 {
 	int c;
 	verbose = 1;

@@ -35,9 +35,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 	return	-1;
 
 void
-loc_Perror( msg )
-char	*msg;
-	{
+loc_Perror(char *msg)
+{
 	if( errno >= 0 && errno < sys_nerr )
 		bu_log( "%s: %s\n", msg, sys_errlist[errno] );
 	else
@@ -54,9 +53,8 @@ char	*msg;
 	return an error.
  */
 int
-exec_Shell( args )
-char	*args[];
-	{	register int child_pid;
+exec_Shell(char **args)
+{	register int child_pid;
 		static char error_buf[32];
 #if STD_SIGNAL_DECLS
 		void (*intr_sig)(), (*quit_sig)();

@@ -85,13 +85,11 @@ struct GIF_Image Im;
 
 char *framebuffer=NULL;
 
-void usage();
-int getByte();
+void usage(char **argv);
+int getByte(FILE *inp);
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int	 i,idx,n;
 	int	maxcolors;
@@ -314,8 +312,7 @@ char **argv;
  *		from the left.
  */
 int
-getcode(inp)
-FILE *inp;
+getcode(FILE *inp)
 {
 	static unsigned int lastbits = 0;
 	static int bitsleft = 0;
@@ -381,8 +378,7 @@ FILE *inp;
  *		    a "byte" for each node of the tree.
  *	endif
  */
-int getByte(inp)
-FILE	*inp;
+int getByte(FILE *inp)
 {
 	int code,incode;
 	static int	firstcode,oldcode;
@@ -467,8 +463,7 @@ FILE	*inp;
 	return(code);
 }
 void
-usage(argv)
-char **argv;
+usage(char **argv)
 {
 	fprintf(stderr,"%s [-h] [-v] [-F frame_buffer] [gif_file]\n",argv[0]);
 }

@@ -32,27 +32,27 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "tcl.h"
 
-extern void predictor_hook();		/* in ged.c */
+extern void predictor_hook(void);		/* in ged.c */
 
-extern void set_port();
+extern void set_port(void);
 
-static void set_dirty_flag();
-static void nmg_eu_dist_set();
-static void set_dlist();
-void set_perspective();
-static void establish_perspective();
-static void toggle_perspective();
-static void set_coords();
-static void set_rotate_about();
+static void set_dirty_flag(void);
+static void nmg_eu_dist_set(void);
+static void set_dlist(void);
+static void set_perspective(void);
+static void establish_perspective(void);
+static void toggle_perspective(void);
+static void set_coords(void);
+static void set_rotate_about(void);
 
-static char *read_var();
-static char *write_var();
-static char *unset_var();
+static char *read_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags);
+static char *write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags);
+static char *unset_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags);
 
-void set_scroll_private();
-void set_absolute_tran();
-void set_absolute_view_tran();
-void set_absolute_model_tran();
+void set_scroll_private(void);
+void set_absolute_tran(void);
+void set_absolute_view_tran(void);
+void set_absolute_model_tran(void);
 
 static int perspective_table[] = { 90, 30, 45, 60 };
 
@@ -129,7 +129,7 @@ struct bu_structparse mged_vparse[] = {
 };
 
 static void
-set_dirty_flag()
+set_dirty_flag(void)
 {
   struct dm_list *dmlp;
 
@@ -139,7 +139,7 @@ set_dirty_flag()
 }
 
 static void
-nmg_eu_dist_set()
+nmg_eu_dist_set(void)
 {
   extern double nmg_eue_dist;
   struct bu_vls tmp_vls;
@@ -161,11 +161,11 @@ nmg_eu_dist_set()
  **/
 
 static char *
-read_var(clientData, interp, name1, name2, flags)
-ClientData clientData;       /* Contains pointer to bu_struct_parse entry */
-Tcl_Interp *interp;
-char *name1, *name2;
-int flags;
+read_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags)
+                             /* Contains pointer to bu_struct_parse entry */
+                   
+                    
+          
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str;
@@ -192,11 +192,7 @@ int flags;
  **/
 
 static char *
-write_var(clientData, interp, name1, name2, flags)
-ClientData clientData;
-Tcl_Interp *interp;
-char *name1, *name2;
-int flags;
+write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags)
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str;
@@ -224,11 +220,7 @@ int flags;
  **/
 
 static char *
-unset_var(clientData, interp, name1, name2, flags)
-ClientData clientData;
-Tcl_Interp *interp;
-char *name1, *name2;
-int flags;
+unset_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags)
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
 
@@ -273,11 +265,7 @@ mged_variable_setup(Tcl_Interp *interp)
 }
 
 int
-f_set(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char *argv[];
+f_set(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   struct bu_vls vls;
 
@@ -324,7 +312,7 @@ set_scroll_private(void)
 }
 
 void
-set_absolute_tran()
+set_absolute_tran(void)
 {
   /* calculate absolute_tran */
   set_absolute_view_tran();
@@ -334,7 +322,7 @@ set_absolute_tran()
 }
 
 void
-set_absolute_view_tran()
+set_absolute_view_tran(void)
 {
   /* calculate absolute_tran */
   MAT4X3PNT(view_state->vs_absolute_tran, view_state->vs_vop->vo_model2view, view_state->vs_orig_pos);
@@ -343,7 +331,7 @@ set_absolute_view_tran()
 }
 
 void
-set_absolute_model_tran()
+set_absolute_model_tran(void)
 {
   point_t new_pos;
   point_t diff;
@@ -357,7 +345,7 @@ set_absolute_model_tran()
 }
 
 static void
-set_dlist()
+set_dlist(void)
 {
   struct dm_list *dlp1;
   struct dm_list *dlp2;
@@ -421,8 +409,8 @@ set_dlist()
   curr_dm_list = save_dlp;
 }
 
-void
-set_perspective()
+static void
+set_perspective(void)
 {
 	/* if perspective is set to something greater than 0, turn perspective mode on */
 	if (mged_variables->mv_perspective > 0)
@@ -440,7 +428,7 @@ set_perspective()
 }
 
 static void
-establish_perspective()
+establish_perspective(void)
 {
 	mged_variables->mv_perspective = mged_variables->mv_perspective_mode ?
 		perspective_table[perspective_angle] : -1;
@@ -460,7 +448,7 @@ establish_perspective()
    perspective_angle is set to the value of (toggle_perspective - 1).
 */
 static void
-toggle_perspective()
+toggle_perspective(void)
 {
   /* set perspective matrix */
   if(mged_variables->mv_toggle_perspective > 0)
@@ -490,13 +478,13 @@ toggle_perspective()
 }
 
 static void
-set_coords()
+set_coords(void)
 {
 	view_state->vs_vop->vo_coord = mged_variables->mv_coords;
 }
 
 static void
-set_rotate_about()
+set_rotate_about(void)
 {
 	view_state->vs_vop->vo_rotate_about = mged_variables->mv_rotate_about;
 }

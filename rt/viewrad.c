@@ -41,6 +41,17 @@ static const char RCSppview[] = "@(#)$Header$ (BRL)";
 int		use_air = 0;		/* Handling of air in librt */
 int		using_mlib = 0;		/* Material routines NOT used */
 
+static struct rayinfo {
+	int	sight;
+	vect_t	ip;		/* intersection point */
+	vect_t	norm;		/* normal vector */
+	vect_t	spec;		/* specular direction */
+	struct	curvature curvature;
+	fastf_t	dist;
+	int	reg, sol, surf;
+} rayinfo[MAXREFLECT], *rayp;
+
+
 extern	FILE	*outfp;
 extern	point_t	viewbase_model;		/* lower_left of viewing plane */
 extern	mat_t	view2model;
@@ -60,9 +71,9 @@ struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-void		dumpray();
-void		dumpall();
-static int	isvisible();
+void		dumpray(struct rayinfo *rp);
+void		dumpall(struct application *ap, int depth);
+static int	isvisible(struct application *ap, struct hit *hitp, const fastf_t *norm);
 
 char usage[] = "\
 Usage:  rtrad [options] model.g objects... >file.rad\n\
@@ -75,15 +86,6 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-static struct rayinfo {
-	int	sight;
-	vect_t	ip;		/* intersection point */
-	vect_t	norm;		/* normal vector */
-	vect_t	spec;		/* specular direction */
-	struct	curvature curvature;
-	fastf_t	dist;
-	int	reg, sol, surf;
-} rayinfo[MAXREFLECT], *rayp;
 static struct xray firstray;
 
 /*
@@ -94,8 +96,8 @@ static int	precindex = 0;
 static int	precnum = 0;	/* number of physical records written */
 static int	recnum = 0;	/* number of (useful) records written */
 
-static int radhit();
-static int radmiss();
+static int radhit(register struct application *ap, struct partition *PartHeadp, struct seg *segHeadp);
+static int radmiss(struct application *ap);
 
 /*
  *  			V I E W _ I N I T
@@ -120,8 +122,7 @@ int view_init( register struct application *ap,
  *  Turns on -1 flags in unused logical records
  */
 int
-writephysrec( fp )
-FILE *fp;
+writephysrec(FILE *fp)
 {
 	union radrec	skiprec;
 	long	length;
@@ -161,9 +162,7 @@ totbuf += buf;
  *  Outputs the current physical record if full.
  */
 int
-writerec( rp, fp )
-union radrec *rp;
-FILE *fp;
+writerec(union radrec *rp, FILE *fp)
 {
 	if( precindex >= 256 ) {
 		if( writephysrec( fp ) == 0 )
@@ -183,8 +182,7 @@ FILE *fp;
 
 /* beginning of a frame */
 void
-view_2init( ap )
-struct application *ap;
+view_2init(struct application *ap)
 {
 	extern double azimuth, elevation;
 	vect_t temp, aimpt;
@@ -231,17 +229,17 @@ struct application *ap;
 }
 
 /* end of each pixel */
-void	view_pixel() {}
+void	view_pixel(void) {}
 
 /* end of each line */
-void	view_eol() {}
+void	view_eol(void) {}
 
-void	view_setup() {}
-void	view_cleanup() {}
+void	view_setup(void) {}
+void	view_cleanup(void) {}
 
 /* end of a frame */
 void
-view_end()
+view_end(void)
 {
 	/* flush any partial output record */
 	if( precindex > 0 ) {
@@ -253,10 +251,7 @@ view_end()
 }
 
 static int
-radhit( ap, PartHeadp, segHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
-struct seg	*segHeadp;
+radhit(register struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -349,8 +344,7 @@ struct seg	*segHeadp;
 }
 
 static int
-radmiss(ap)
-struct application *ap;
+radmiss(struct application *ap)
 {
 	return(0);
 }
@@ -362,10 +356,7 @@ struct application *ap;
  *  Called via isvisible on a hit.
  */
 static int
-hiteye( ap, PartHeadp, segHeadp )
-struct application *ap;
-struct partition *PartHeadp;
-struct seg	*segHeadp;
+hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -412,8 +403,7 @@ struct seg	*segHeadp;
  *  Called via isvisible on a miss.
  */
 static int
-hittrue( ap )
-struct application *ap;
+hittrue(struct application *ap)
 {
 	return(1);
 }
@@ -429,10 +419,7 @@ struct application *ap;
  *   than the distance back to the eye.
  */
 static int
-isvisible( ap, hitp, norm )
-struct application *ap;
-struct hit *hitp;
-const vect_t	norm;
+isvisible(struct application *ap, struct hit *hitp, const fastf_t *norm)
 {
 	struct application sub_ap;
 	vect_t	rdir;
@@ -460,9 +447,7 @@ const vect_t	norm;
 
 /************** Output Routines ***************/
 void
-dumpall( ap, depth )
-struct application *ap;
-int depth;
+dumpall(struct application *ap, int depth)
 {
 	int	i;
 	union radrec r;
@@ -522,8 +507,7 @@ int depth;
 }
 
 void
-dumpray( rp )
-struct rayinfo *rp;
+dumpray(struct rayinfo *rp)
 {
 	union radrec r;
 
@@ -564,4 +548,4 @@ struct rayinfo *rp;
 
 
 
-void application_init () {}
+void application_init (void) {}

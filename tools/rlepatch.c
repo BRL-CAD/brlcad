@@ -48,9 +48,7 @@
 #define IN_WINDOW(y,wind) ((y >= wind.ymin) && (y <= wind.ymax))
 
 int
-main( argc, argv )
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     rle_hdr im_hdr, *patch_hdr, out_hdr;
     const char *imfilename = NULL, *outfilename = NULL;

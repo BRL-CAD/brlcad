@@ -10,10 +10,10 @@
 #include "dm.h"
 #include "dm-Null.h"
 
-void	Nu_void();
-int	Nu_int0();
-struct dm *Nu_open();
-unsigned Nu_unsign();
+void	Nu_void(void);
+int	Nu_int0(void);
+struct dm *Nu_open(void);
+unsigned Nu_unsign(void);
 
 struct dm dm_Null = {
   Nu_int0,
@@ -68,7 +68,7 @@ struct dm dm_Null = {
   0				/* Tcl interpreter */
 };
 
-int Nu_int0() { return TCL_OK; }
-void Nu_void() { ; }
-struct dm *Nu_open(){ return DM_NULL; }
-unsigned Nu_unsign() { return TCL_OK; }
+int Nu_int0(void) { return TCL_OK; }
+void Nu_void(void) { ; }
+struct dm *Nu_open(void) { return DM_NULL; }
+unsigned Nu_unsign(void) { return TCL_OK; }

@@ -45,7 +45,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-extern void aexists();
+extern void aexists(char *name);
 
 static int	Trackpos = 0;
 static fastf_t	plano[4], plant[4];
@@ -57,8 +57,8 @@ static struct track_solid
 	fastf_t s_values[24];
 } sol;
 
-void		crname(), slope(), crdummy(), trcurve();
-void		bottom(), top(), crregion(), itoa();
+void		crname(char *name, int pos), slope(fastf_t *wh1, fastf_t *wh2, fastf_t *t), crdummy(fastf_t *w, fastf_t *t, int flag), trcurve(fastf_t *wh, fastf_t *t);
+void		bottom(fastf_t *vec1, fastf_t *vec2, fastf_t *t), top(fastf_t *vec1, fastf_t *vec2, fastf_t *t), crregion(char *region, char *op, int *members, int number, char *solidname), itoa(int n, char *s, int w);
 
 /*
  *
@@ -66,11 +66,7 @@ void		bottom(), top(), crregion(), itoa();
  *
  */
 int
-f_amtrack(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 
 	fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
@@ -552,9 +548,7 @@ end:
 }
 
 void
-crname(name, pos)
-char name[];
-int pos;
+crname(char *name, int pos)
 {
 	int i, j;
 	char temp[4];
@@ -656,8 +650,7 @@ wrobj( char name[], int flags )
 }
 
 void
-tancir( cir1, cir2 )
-register fastf_t cir1[], cir2[];
+tancir(register fastf_t *cir1, register fastf_t *cir2)
 {
 	static fastf_t mag;
 	vect_t	work;
@@ -693,8 +686,7 @@ register fastf_t cir1[], cir2[];
 }
 
 void
-slope( wh1, wh2 , t )
-fastf_t wh1[], wh2[], t[];
+slope(fastf_t *wh1, fastf_t *wh2, fastf_t *t)
 {
 	int i, j, switchs;
 	fastf_t	temp;
@@ -762,9 +754,7 @@ fastf_t wh1[], wh2[], t[];
 }
 
 void
-crdummy( w, t, flag )
-fastf_t	w[3], t[3];
-int	flag;
+crdummy(fastf_t *w, fastf_t *t, int flag)
 {
 	fastf_t	temp;
 	vect_t	vec;
@@ -806,8 +796,7 @@ int	flag;
 }
 
 void
-trcurve( wh, t )
-fastf_t wh[], t[];
+trcurve(fastf_t *wh, fastf_t *t)
 {
 	sol.s_values[0] = wh[0];
 	sol.s_values[1] = t[0];
@@ -820,9 +809,7 @@ fastf_t wh[], t[];
 }
 
 void
-bottom( vec1, vec2, t )
-vect_t	vec1, vec2;
-fastf_t	t[];
+bottom(fastf_t *vec1, fastf_t *vec2, fastf_t *t)
 {
 	vect_t	tvec;
 	int i, j;
@@ -846,9 +833,7 @@ fastf_t	t[];
 }
 
 void
-top( vec1, vec2, t )
-vect_t	vec1, vec2;
-fastf_t	t[];
+top(fastf_t *vec1, fastf_t *vec2, fastf_t *t)
 {
 	fastf_t	tooch, mag;
 	vect_t	del, tvec;
@@ -880,9 +865,7 @@ fastf_t	t[];
 }
 
 void
-crregion( region, op, members, number, solidname )
-char region[], op[], solidname[];
-int members[], number;
+crregion(char *region, char *op, int *members, int number, char *solidname)
 {
   int i;
   struct bu_list head;
@@ -915,9 +898,7 @@ int members[], number;
  *	convert integer to ascii  wd format
  */
 void
-itoa( n, s, w )
-char	 s[];
-int   n,    w;
+itoa(int n, char *s, int w)
 {
 	int	 c, i, j, sign;
 

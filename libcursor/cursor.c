@@ -40,8 +40,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define TBUFSIZ		1024
 #define MAX_TERM_LEN	80
 
-extern char	*getenv(), *tgetstr();
-extern int	tgetent();
+extern char	*getenv(), *tgetstr(const char *, char **);
+extern int	tgetent(void *, const char *);
 #if ! defined( BSD )
 extern void	clr_Tabs(), save_Tty();
 #endif
@@ -54,7 +54,7 @@ static char	*tstr_addr = tstrings;	/* Used by tgetstr().	*/
 static int	fd_stdout = 1;
 #endif
 
-static void	LoadTP(), LoadTCS();
+static void	LoadTP(void), LoadTCS(void);
 
 
 /* This is a global buffer for the name of the terminal.	*/
@@ -82,12 +82,12 @@ int		LI, /* Number of lines on screen.		*/
 /* This function must be called first to read the termcap database and
 	to specify the output stream.
  */
-int		InitTermCap();
+int		InitTermCap(FILE *fp);
 
 /* This function must be accessible to the termcap library, but will
 	not necessarily be needed by the application.
  */
-int		PutChr();
+int		PutChr(char c);
 
 /* These functions output terminal control strings to the file stream
 	specified by the InitTermCap() call which must precede them.
@@ -95,13 +95,13 @@ int		PutChr();
 	database and 1 otherwise.  Of course if the database entry is
 	wrong, the command will not do its job.
  */
-int		ClrStandout(), ClrEOL(), ClrText(),
-		DeleteLn(),
-		HmCursor(),
-		MvCursor(),
-		ResetScrlReg(),
-		ScrollDn(), ScrollUp(),
-		SetScrlReg(), SetStandout();
+int		ClrStandout(void), ClrEOL(void), ClrText(void),
+		DeleteLn(void),
+		HmCursor(void),
+		MvCursor(int x, int y),
+		ResetScrlReg(void),
+		ScrollDn(void), ScrollUp(void),
+		SetScrlReg(int top, int btm), SetStandout(void);
 
 
 /*	I n i t T e r m C a p ( )
@@ -115,9 +115,8 @@ int		ClrStandout(), ClrEOL(), ClrText(),
 	Use 'fp' as output stream.
  */
 int
-InitTermCap( fp )
-FILE	*fp;
-	{	char	*term; /* Name of terminal from environment ($TERM).*/
+InitTermCap(FILE *fp)
+{	char	*term; /* Name of terminal from environment ($TERM).*/
 	out_fp = fp;
 #ifdef TIOCGWINSZ
 	fd_stdout = fileno( out_fp );
@@ -157,8 +156,8 @@ FILE	*fp;
 	Get the terminal parameters.
  */
 static void
-LoadTP()
-	{
+LoadTP(void)
+{
 #ifdef TIOCGWINSZ
 	/* Get window size for DMD layers support.			*/
 	struct _winsize		window;
@@ -183,8 +182,8 @@ LoadTP()
 	Get the terminal control strings.
  */
 static void
-LoadTCS()
-	{
+LoadTCS(void)
+{
 	CS = tgetstr( "cs", &tstr_addr );
 	SE = tgetstr( "se", &tstr_addr );
 	SO = tgetstr( "so", &tstr_addr );
@@ -205,8 +204,8 @@ LoadTCS()
 	Home the cursor.
  */
 int
-HmCursor()
-	{
+HmCursor(void)
+{
 	if( HO != NULL )
 		{
 		tputs( HO, 1, (void *)PutChr );
@@ -220,8 +219,8 @@ HmCursor()
 	Forward scroll 1 line.
  */
 int
-ScrollUp()
-	{
+ScrollUp(void)
+{
 	if( SF != NULL )
 		{
 		tputs( SF, 1, (void *)PutChr );
@@ -235,8 +234,8 @@ ScrollUp()
 	Reverse scroll 1 line.
  */
 int
-ScrollDn()
-	{
+ScrollDn(void)
+{
 	if( SR != NULL )
 		{
 		tputs( SR, 1, (void *)PutChr );
@@ -250,8 +249,8 @@ ScrollDn()
 	Delete the current line.
  */
 int
-DeleteLn()
-	{
+DeleteLn(void)
+{
 	if( DL != NULL )
 		{
 		tputs( DL, 1, (void *)PutChr );
@@ -265,9 +264,8 @@ DeleteLn()
 	Move the cursor to screen coordinates x, y.
  */
 int
-MvCursor( x, y )
-int	x, y;
-	{
+MvCursor(int x, int y)
+{
 	--x; --y; /* Tgoto() adds 1 to each coordinate!?		*/
 	if( CM != NULL )
 		{
@@ -282,8 +280,8 @@ int	x, y;
 	Clear from the cursor to end of line.
  */
 int
-ClrEOL()
-	{
+ClrEOL(void)
+{
 	if( CE != NULL )
 		{
 		tputs( CE, 1, (void *)PutChr );
@@ -297,8 +295,8 @@ ClrEOL()
 	Clear screen and home cursor.
  */
 int
-ClrText()
-	{
+ClrText(void)
+{
 	if( CL != NULL )
 		{
 		tputs( CL, LI, (void *)PutChr );
@@ -312,9 +310,8 @@ ClrText()
 	Set the scrolling region to be from "top" to "btm".
  */
 int
-SetScrlReg( top, btm )
-int	top, btm;
-	{
+SetScrlReg(int top, int btm)
+{
 	if( CS != NULL )
 		{
 		tputs( tgoto( CS, btm-1, top-1 ), 1, (void *)PutChr );
@@ -328,8 +325,8 @@ int	top, btm;
 	Reset the scrolling region to the entire screen.
  */
 int
-ResetScrlReg()
-	{
+ResetScrlReg(void)
+{
 	if( CS != NULL )
 		{
 		tputs( tgoto( CS, LI-1, 0 ), 1, (void *)PutChr );
@@ -343,8 +340,8 @@ ResetScrlReg()
 	End standout mode.
  */
 int
-ClrStandout()
-	{
+ClrStandout(void)
+{
 	if( SE != NULL )
 		{
 		tputs( SE, 1, (void *)PutChr );
@@ -358,8 +355,8 @@ ClrStandout()
 	Begin standout mode.
  */
 int
-SetStandout()
-	{
+SetStandout(void)
+{
 	if( SO != NULL )
 		{
 		tputs( SO, 1, (void *)PutChr );
@@ -371,8 +368,7 @@ SetStandout()
 
 /*	P u t C h r ( )							*/
 int
-PutChr( c )
-char	c;
-	{
+PutChr(char c)
+{
 	return	putc( c, out_fp );
 	}

@@ -84,9 +84,7 @@ static int	inches = 0;
  *			M A I N
  */
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
 	register int	c;
 	double		percent;
@@ -274,13 +272,7 @@ char	*argv[];
 }
 
 static void
-nmg_to_wave( r, pathp, region_id, aircode, los, material_id )
-struct nmgregion *r;
-struct db_full_path *pathp;
-int region_id;
-int aircode;
-int los;
-int material_id;
+nmg_to_wave(struct nmgregion *r, struct db_full_path *pathp, int region_id, int aircode, int los, int material_id)
 {
 	struct model *m;
 	struct shell *s;
@@ -541,11 +533,7 @@ int material_id;
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(tsp, pathp, curtree, client_data)
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-genptr_t		client_data;
+union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
 	union tree		*ret_tree;
 	struct bu_list		vhead;

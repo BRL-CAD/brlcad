@@ -12,8 +12,7 @@
 #include "machine.h"
 
 void
-port_setlinebuf( fp )
-FILE *fp;
+port_setlinebuf(FILE *fp)
 {
 #ifdef BSD
 	setlinebuf( fp );

@@ -191,10 +191,7 @@ const struct bu_structparse rt_epa_parse[] = {
  *  	stp->st_specific for use by epa_shot().
  */
 int
-rt_epa_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_epa_internal		*xip;
 	register struct epa_specific	*epa;
@@ -294,8 +291,7 @@ struct rt_i		*rtip;
  *			R T _ E P A _ P R I N T
  */
 void
-rt_epa_print( stp )
-register const struct soltab *stp;
+rt_epa_print(register const struct soltab *stp)
 {
 	register const struct epa_specific *epa =
 		(struct epa_specific *)stp->st_specific;
@@ -324,11 +320,7 @@ register const struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_epa_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	register struct epa_specific *epa =
 		(struct epa_specific *)stp->st_specific;
@@ -449,12 +441,12 @@ check_plates:
  *  Vectorized version.
  */
 void
-rt_epa_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+rt_epa_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+             	               /* An array of solid pointers */
+           		       /* An array of ray pointers */
+                               /* array of segs (results returned) */
+   		  	       /* Number of ray/object pairs */
+                  	    
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -465,10 +457,7 @@ struct application	*ap;
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_epa_norm( hitp, stp, rp )
-register struct hit	*hitp;
-struct soltab		*stp;
-register struct xray	*rp;
+rt_epa_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	fastf_t	scale;
 	vect_t	can_normal;	/* normal to canonical epa */
@@ -504,10 +493,7 @@ register struct xray	*rp;
  *  Return the curvature of the epa.
  */
 void
-rt_epa_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit	*hitp;
-struct soltab		*stp;
+rt_epa_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 	fastf_t	a, b, c, scale;
 	mat_t	M1, M2;
@@ -563,11 +549,7 @@ struct soltab		*stp;
  *  v = elevation
  */
 void
-rt_epa_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 	register struct epa_specific *epa =
 		(struct epa_specific *)stp->st_specific;
@@ -612,8 +594,7 @@ register struct uvcoord	*uvp;
  *		R T _ E P A _ F R E E
  */
 void
-rt_epa_free( stp )
-register struct soltab *stp;
+rt_epa_free(register struct soltab *stp)
 {
 	register struct epa_specific *epa =
 		(struct epa_specific *)stp->st_specific;
@@ -626,7 +607,7 @@ register struct soltab *stp;
  *			R T _ E P A _ C L A S S
  */
 int
-rt_epa_class()
+rt_epa_class(void)
 {
 	return(0);
 }
@@ -635,21 +616,17 @@ rt_epa_class()
  *			R T _ E P A _ P L O T
  */
 int
-rt_epa_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2;
-	fastf_t		**ellipses, theta_new, theta_prev, rt_ell_ang();
+	fastf_t		**ellipses, theta_new, theta_prev, rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
 	int		*pts_dbl, i, j, nseg;
 	int		jj, na, nb, nell, recalc_b;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_epa_internal	*xip;
 	point_t		p1;
-	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
+	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
 	vect_t		A, Au, B, Bu, Hu, V, Work;
 	
 #ifndef NO_MAGIC_CHECKING
@@ -905,10 +882,7 @@ const struct bn_tol	*tol;
 #define ELLOUT(n)	ov+(n-1)*3
 
 void
-rt_ell_norms( ov, A, B, h_vec, t, sides )
-register fastf_t	*ov;
-fastf_t			*A, *B, *h_vec, t;
-int			sides;
+rt_ell_norms(register fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf_t t, int sides)
 {
 	fastf_t	ang, theta, x, y, sqrt_1mt;
 	int	n;
@@ -938,11 +912,7 @@ int			sides;
  *  Generate an ellipsoid with the specified number of sides approximating it.
  */
 void
-rt_ell( ov, V, A, B, sides )
-register fastf_t	*ov;
-register const fastf_t	*V;
-const fastf_t		*A, *B;
-int			sides;
+rt_ell(register fastf_t *ov, register const fastf_t *V, const fastf_t *A, const fastf_t *B, int sides)
 {
 	fastf_t	ang, theta, x, y;
 	int	n;
@@ -966,9 +936,7 @@ int			sides;
  *	an endpoint at (a, 0, 0) where a is the semi-major axis.
  */
 fastf_t
-rt_ell_ang( p1, a, b, dtol, ntol )
-fastf_t	a, b, dtol, ntol;
-point_t	p1;
+rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 {
 	fastf_t	dist, intr, m, theta0, theta1;
 	point_t	mpt, p0;
@@ -1010,12 +978,7 @@ point_t	p1;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_epa_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2;
 	fastf_t		**ellipses, **normals, theta_new, theta_prev;
@@ -1026,7 +989,7 @@ const struct bn_tol	*tol;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_epa_internal	*xip;
 	point_t		p1;
-	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
+	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
 	struct shell	*s;
 	struct faceuse	**outfaceuses = NULL;
 	struct vertex	*vertp[3];
@@ -1474,11 +1437,7 @@ fail:
  *  Apply modeling transformations as well.
  */
 int
-rt_epa_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_epa_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	LOCAL struct rt_epa_internal	*xip;
 	union record			*rp;
@@ -1523,11 +1482,7 @@ const struct db_i		*dbip;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_epa_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_epa_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_epa_internal	*xip;
 	union record		*epa;
@@ -1587,11 +1542,7 @@ const struct db_i		*dbip;
  *  Apply modeling transformations as well.
  */
 int
-rt_epa_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	LOCAL struct rt_epa_internal	*xip;
 	fastf_t				vec[11];
@@ -1636,11 +1587,7 @@ const struct db_i		*dbip;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_epa_export5( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_epa_internal	*xip;
 	fastf_t			vec[11];
@@ -1700,11 +1647,7 @@ const struct db_i		*dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_epa_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register struct rt_epa_internal	*xip =
 		(struct rt_epa_internal *)ip->idb_ptr;
@@ -1741,8 +1684,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_epa_ifree( ip )
-struct rt_db_internal	*ip;
+rt_epa_ifree(struct rt_db_internal *ip)
 {
 	register struct rt_epa_internal	*xip;
 

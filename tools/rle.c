@@ -30,10 +30,7 @@ static struct {
 } Globals;
 
 void
-rasterInit(fd, width, height)
-int fd;
-int width;
-int height;
+rasterInit(int fd, int width, int height)
 {
     FILE           *rleFile;
     int             i;
@@ -70,8 +67,7 @@ int height;
 }
 
 void
-rasterRowGet(red, green, blue)
-unsigned char *red, *green, *blue;
+rasterRowGet(unsigned char *red, unsigned char *green, unsigned char *blue)
 {
     int             i, max;
 
@@ -98,7 +94,7 @@ unsigned char *red, *green, *blue;
 }
 
 void
-rasterDone()
+rasterDone(void)
 {
     rle_puteof(&rle_dflt_hdr);
 }

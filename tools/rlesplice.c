@@ -49,12 +49,11 @@
 #define Max(x, y) (((x) > (y)) ? (x) : (y) )
 #define Min(x, y) (((x) < (y)) ? (x) : (y) )
 
-static void	bfill();
+static void	bfill(char *s, int n, int c);
 char  *progname = NULL;
 
 
-int compatible_hdr(hdr_1, hdr_2)
-rle_hdr *hdr_1, *hdr_2;
+int compatible_hdr(rle_hdr *hdr_1, rle_hdr *hdr_2)
 {
 #define Check(thing,printthing) \
     if (hdr_1->thing != hdr_2->thing) \
@@ -71,9 +70,7 @@ rle_hdr *hdr_1, *hdr_2;
 }
 
 void
-rle_row_clear( the_hdr, scanline )
-rle_hdr * the_hdr;
-rle_pixel *scanline[];
+rle_row_clear(rle_hdr *the_hdr, rle_pixel **scanline)
 {
     int nc;
     rle_pixel bg_color[255];
@@ -90,9 +87,7 @@ rle_pixel *scanline[];
 }
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char **argv)
 {
     char	*infname1 = NULL, *outfname = NULL;
     char	*infname2 = NULL;
@@ -247,9 +242,7 @@ char	*argv[];
 
 /* Fill buffer at s with n copies of character c.  N must be <= 65535*/
 /* ARGSUSED */
-static void bfill( s, n, c )
-char *s;
-int n, c;
+static void bfill(char *s, int n, int c)
 {
 #ifdef vax
     asm("   movc5   $0,*4(ap),12(ap),8(ap),*4(ap)");

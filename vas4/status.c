@@ -10,7 +10,7 @@
 
 #define M(s,c)	fprintf(stderr,s,c)
 
-status()
+status(void)
 {
 	char c;
 

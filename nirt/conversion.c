@@ -16,7 +16,7 @@ static const char RCSid[] = "$Header$";
 
 extern outval	ValTab[];
 
-void dir2ae()
+void dir2ae(void)
 {
 	azimuth() = ((direct(Y) == 0) && (direct(X) == 0)) ? 0.0 :
 			atan2 ( -(direct(Y)), -(direct(X)) ) / deg2rad;
@@ -24,7 +24,7 @@ void dir2ae()
 		sqrt(direct(X) * direct(X) + direct(Y) * direct(Y))) / deg2rad;
 }
 
-void grid2targ()
+void grid2targ(void)
 {
     double	ar = azimuth() * deg2rad;
     double	er = elevation() * deg2rad;
@@ -39,7 +39,7 @@ void grid2targ()
 		      + grid(DIST) * sin(er);
 }
 
-void targ2grid()
+void targ2grid(void)
 {
     double	ar = azimuth() * deg2rad;
     double	er = elevation() * deg2rad;
@@ -54,7 +54,7 @@ void targ2grid()
 		       + target(Z) * sin(er);
 }
 
-void ae2dir()
+void ae2dir(void)
 {
     double	ar = azimuth() * deg2rad;
     double	er = elevation() * deg2rad;

@@ -52,27 +52,27 @@ int	_fbsize = 512;
 int		rat_debug = 0;
 static int	zoom_factor = 1;
 
-static int	cload(),
-		debug(), entergraphics(), flood(), lutrmp(), lut8(),
-		memsel(), movabs(), pixels(), quit(),
-		rdmask(), rdmode(), rdpixr(), readf(), readw(), readvr(),
-		rgbtru(), scrorg(), value(), vidform(),
-		warm(), wrmask(), xhair(), zoom();
+static int	cload(int creg, int x, int y),
+		debug(int flag), entergraphics(void), flood(void), lutrmp(int code, int sind, int eind, int sval, int eval), lut8(int index, u_char r, u_char g, u_char b),
+		memsel(int unit), movabs(register int x, register int y), pixels(int rows, int cols, register u_char *pix_buf, int bytes, FBIO *ifp), quit(void),
+		rdmask(int bitm), rdmode(int flag), rdpixr(int vreg), readf(int func), readw(int rows, int cols, int bf), readvr(int vreg),
+		rgbtru(int flag), scrorg(int x, int y), value(u_char red, u_char green, u_char blue), vidform(int mode, int flag),
+		warm(void), wrmask(int bitm, int bankm), xhair(int num, int flag), zoom(int factor);
 
-_LOCAL_ int	rat_open(),
-		rat_close(),
-		rat_clear(),
-		rat_read(),
-		rat_write(),
-		rat_rmap(),
-		rat_wmap(),
-		rat_view(),
-		rat_window_set(),	/* OLD */
-		rat_zoom_set(),		/* OLD */
-		rat_setcursor(),
-		rat_cursor(),
+_LOCAL_ int	rat_open(FBIO *ifp, char *file, int width, int height),
+		rat_close(FBIO *ifp),
+		rat_clear(FBIO *ifp, RGBpixel (*pp)),
+		rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count),
+		rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count),
+		rat_rmap(FBIO *ifp, ColorMap *cmp),
+		rat_wmap(FBIO *ifp, ColorMap *cmp),
+		rat_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
+		rat_window_set(FBIO *ifp, int x, int y),	/* OLD */
+		rat_zoom_set(FBIO *ifp, int x, int y),		/* OLD */
+		rat_setcursor(FBIO *ifp, unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
+		rat_cursor(FBIO *ifp, int mode, int x, int y),
 		rat_getcursor(),
-		rat_help();
+		rat_help(FBIO *ifp);
 
 /* This is the ONLY thing that we normally "export" */
 FBIO rat_interface =  {
@@ -119,10 +119,7 @@ FBIO rat_interface =  {
 };
 
 _LOCAL_ int
-rat_open( ifp, file, width, height )
-FBIO	*ifp;
-char	*file;
-int	width, height;
+rat_open(FBIO *ifp, char *file, int width, int height)
 {
 	FB_CK_FBIO(ifp);
 	if( (ifp->if_fd = open( file, O_RDWR, 0 )) == -1)
@@ -139,8 +136,8 @@ int	width, height;
 }
 
 _LOCAL_ int
-rat_close( ifp )
-FBIO	*ifp;
+rat_close(FBIO *ifp)
+    	     
 /*	_ r a t _ c l o s e ( )
 	Issue quit command, and close connection.
  */
@@ -157,9 +154,9 @@ FBIO	*ifp;
 
 
 _LOCAL_ int
-rat_clear( ifp, pp )
-FBIO	*ifp;
-RGBpixel	*pp;
+rat_clear(FBIO *ifp, RGBpixel (*pp))
+    	     
+        	    
 /*	_ r a t _ c l e a r ( )
 	Clear the Raster Tech. to the background color.
  */
@@ -175,11 +172,11 @@ RGBpixel	*pp;
 }
 
 _LOCAL_ int
-rat_read( ifp, x, y, pixelp, count )
-FBIO	*ifp;
-int	x, y;
-RGBpixel	*pixelp;
-int	count;
+rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
+    	     
+   	     
+        	        
+   	      
 /*	_ r a t _ r e a d ( )
  */
 {
@@ -305,11 +302,11 @@ int	count;
 }
 
 _LOCAL_ int
-rat_write( ifp, x, y, pixelp, count )
-FBIO	*ifp;
-int	x, y;
-RGBpixel	*pixelp;
-int	count;
+rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
+    	     
+   	     
+        	        
+   	      
 /*	_ r a t _ w r i t e ( )
  */
 {
@@ -380,17 +377,15 @@ int	count;
 }
 
 _LOCAL_ int
-rat_rmap( ifp, cmp )
-FBIO	*ifp;
-ColorMap	*cmp;
+rat_rmap(FBIO *ifp, ColorMap *cmp)
 {
 	return(0);
 }
 
 _LOCAL_ int
-rat_wmap( ifp, cmp )
-FBIO	*ifp;
-ColorMap	*cmp;
+rat_wmap(FBIO *ifp, ColorMap *cmp)
+    	     
+        	     
 /*	_ r a t _ w m a p ( )
 	Load the color map into the frame buffer.
  */
@@ -421,10 +416,7 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-rat_view( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	xcenter, ycenter;
-int	xzoom, yzoom;
+rat_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	rat_window_set(ifp, xcenter, ycenter);
 	rat_zoom_set(ifp, xzoom, yzoom);
@@ -433,9 +425,9 @@ int	xzoom, yzoom;
 }
 
 _LOCAL_ int
-rat_window_set( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
+rat_window_set(FBIO *ifp, int x, int y)
+    	     
+   	     
 /*	_ r a t _ w i n d o w ( )
 	This routine takes advantage of the fact that there is only 1
 	scaling parameter available (equal scaling in x and y).
@@ -447,9 +439,9 @@ int	x, y;
 }
 
 _LOCAL_ int
-rat_zoom_set( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
+rat_zoom_set(FBIO *ifp, int x, int y)
+    	     
+   	     
 /*	_ r a t _ z o o m ( )
 	 The Raster Tech does not scale independently in x and y.
 		Also addressing is the same in low and high res. so
@@ -466,22 +458,18 @@ int	x, y;
 }
 
 _LOCAL_ int
-rat_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
-FBIO	*ifp;
-unsigned char *bits;
-int	xbits, ybits;
-int	xorig, yorig;
+rat_setcursor(FBIO *ifp, unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	return	0;
 }
 
 _LOCAL_ int
-rat_cursor( ifp, mode, x, y )
+rat_cursor(FBIO *ifp, int mode, int x, int y)
 /*	Place cursor at image (pixel) coordinates x & y
  */
-FBIO	*ifp;
-int	mode;
-int	x, y;
+    	     
+   	     
+   	     
 {
 	fb_sim_cursor(ifp, mode, x, y);
 /*	if(   !	cload( 5, x, y )  ||  ! xhair( 0, mode ) )
@@ -495,9 +483,8 @@ int	x, y;
 	Reset, enter graphics mode, set interlace on, turn on 24 bit color.
 	Set origin and zoom factor.
  */
-_rat_init(ifp)
-FBIO	*ifp;
-	{
+_rat_init(FBIO *ifp)
+{
 	static unsigned char firstcmds[] = {0x10,0x01,0xFD,0x00};
 
 	static unsigned char buff[] =
@@ -528,9 +515,8 @@ FBIO	*ifp;
 
 
 static int
-cload( creg, x, y )
-int	creg, x, y;
-	{
+cload(int creg, int x, int y)
+{
 	u_char	buff[8];
 
 	Rat_Cvt( x, y );
@@ -547,9 +533,8 @@ int	creg, x, y;
 	}
 
 static int
-debug( flag )
-int	flag;
-	{
+debug(int flag)
+{
 	u_char	buff[2];
 
 	buff[0] = 0xA8;
@@ -559,8 +544,8 @@ int	flag;
 	}
 
 static int
-entergraphics()
-	{
+entergraphics(void)
+{
 	u_char	buff[2];
 
 	buff[0] = 0x01;
@@ -571,8 +556,8 @@ entergraphics()
 	}
 
 static int
-flood()
-	{
+flood(void)
+{
 	u_char	buff[2];
 
 	buff[0] = 0x07;
@@ -582,9 +567,8 @@ flood()
 	}
 
 static int
-lutrmp( code, sind, eind, sval, eval )
-int	code, sind, eind, sval, eval;
-	{
+lutrmp(int code, int sind, int eind, int sval, int eval)
+{
 	u_char	buff[6];
 
 	buff[0] = 0x01d;
@@ -598,10 +582,8 @@ int	code, sind, eind, sval, eval;
 	}
 
 static int
-lut8( index, r, g, b )
-int	index;
-u_char	r, g, b;
-	{
+lut8(int index, u_char r, u_char g, u_char b)
+{
 	u_char	buff[6];
 
 	buff[0] = 0x01c;
@@ -620,9 +602,8 @@ u_char	r, g, b;
 	and selecting the unit for each color is the easiest way to go.
  */
 static int
-memsel( unit )
-int	unit;
-	{
+memsel(int unit)
+{
 	u_char	buff[2];
 
 	buff[0] = 0x48;
@@ -662,9 +643,8 @@ int	unit;
 	(-_fbsize/2, -_fbsize/2).....(_fbsize/2, -_fbsize/2)
  */
 static int
-movabs( x, y )
-register int	x, y;
-	{
+movabs(register int x, register int y)
+{
 	u_char	buff[8];
 	
 	Rat_Cvt( x, y );
@@ -681,12 +661,8 @@ register int	x, y;
 	}
 
 static int
-pixels( rows, cols, pix_buf, bytes, ifp )
-int		rows, cols;
-register u_char	*pix_buf;
-int		bytes;
-FBIO	*ifp;
-	{
+pixels(int rows, int cols, register u_char *pix_buf, int bytes, FBIO *ifp)
+{
 	static u_char	buff[MAX_RAT_BUFF+6];
 	register int	i, ct;
 
@@ -713,8 +689,8 @@ FBIO	*ifp;
 	}
 
 static int
-quit()
-	{
+quit(void)
+{
 	u_char	buff[2];
 
 	buff[0] = 0xFF;
@@ -727,9 +703,8 @@ quit()
 	Set read mask.
  */
 static int
-rdmask( bitm )
-int	bitm;
-	{
+rdmask(int bitm)
+{
 	u_char	buff[2];
 
 	buff[0] = 0x9E;
@@ -741,9 +716,8 @@ int	bitm;
 /*	r d m o d e ( )
  */
 static int
-rdmode( flag )
-int	flag;
-	{
+rdmode(int flag)
+{
 	u_char	buff[2];
 
 	buff[0] = 0xD3;
@@ -753,9 +727,8 @@ int	flag;
 	}
 
 static int
-rdpixr( vreg )
-int	vreg;
-	{
+rdpixr(int vreg)
+{
 	u_char	buff[2];
 
 	buff[0] = 0xAF;
@@ -765,9 +738,8 @@ int	vreg;
 	}
 
 static int
-readf( func )
-int	func;
-	{
+readf(int func)
+{
 	u_char	buff[2];
 
 	buff[0] = 0x27;
@@ -777,9 +749,8 @@ int	func;
 	}
 	
 static int
-readvr( vreg )
-int	vreg;
-	{
+readvr(int vreg)
+{
 	u_char	buff[2];
 
 	buff[0] = 0x99;
@@ -789,9 +760,8 @@ int	vreg;
 	}
 
 static int
-readw( rows, cols, bf )
-int	rows, cols, bf;
-	{
+readw(int rows, int cols, int bf)
+{
 	u_char	buff[6];
 
 	buff[0] = 0x96;
@@ -805,9 +775,8 @@ int	rows, cols, bf;
 	}
 
 static int
-rgbtru( flag )
-int	flag;
-	{
+rgbtru(int flag)
+{
 	u_char	buff[2];
 
 	buff[0] = 0x4e;
@@ -821,9 +790,8 @@ int	flag;
 	Set the screen-center coordinate (CREG 4) to (x, y).
  */
 static int
-scrorg( x, y )
-int	x, y;
-	{
+scrorg(int x, int y)
+{
 	u_char	buff[6];
 
 	buff[0] = 0x36;
@@ -837,9 +805,8 @@ int	x, y;
 	}
 
 static int
-value( red, green, blue )
-u_char	red, green, blue;
-	{
+value(u_char red, u_char green, u_char blue)
+{
 	char	buff[4];
 
 	buff[0] = 0x06;
@@ -851,9 +818,8 @@ u_char	red, green, blue;
 	}
 
 static int
-vidform( mode, flag )
-int	mode, flag;
-	{
+vidform(int mode, int flag)
+{
 	u_char	buff[4];
 
 	buff[0] = 0x08;
@@ -865,8 +831,8 @@ int	mode, flag;
 	}
 
 static int
-warm()
-	{
+warm(void)
+{
 	u_char	buff[2];
 
 	buff[0] = 0x10;
@@ -879,9 +845,8 @@ warm()
 	Set write mask.
  */
 static int
-wrmask( bitm, bankm )
-int	bitm, bankm;
-	{
+wrmask(int bitm, int bankm)
+{
 	u_char	buff[4];
 
 	buff[0] = 0x9D;
@@ -893,9 +858,8 @@ int	bitm, bankm;
 	}
 
 static int
-cursor( num, flag )
-int	num, flag;
-	{
+cursor(int num, int flag)
+{
 	u_char	buff[4];
 
 	buff[0] = 0x4A;
@@ -908,9 +872,8 @@ int	num, flag;
 
 
 static int
-xhair( num, flag )
-int	num, flag;
-	{
+xhair(int num, int flag)
+{
 	u_char	buff[4];
 
 	buff[0] = 0x9C;
@@ -922,9 +885,8 @@ int	num, flag;
 	}
 
 static int
-zoom( factor )
-int	factor;
-	{
+zoom(int factor)
+{
 	u_char	buff[2];
 
 	buff[0] = 0x34;
@@ -934,8 +896,7 @@ int	factor;
 	}
 
 _LOCAL_ int
-rat_help( ifp )
-FBIO	*ifp;
+rat_help(FBIO *ifp)
 {
 	fb_log( "Description: %s\n", rat_interface.if_type );
 	fb_log( "Device: %s\n", ifp->if_name );

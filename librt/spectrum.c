@@ -100,11 +100,7 @@ const double	rt_CIE_XYZ[81][4] = {
  *  and must be freed by the caller.
  */
 void
-rt_spect_make_CIE_XYZ( x, y, z, tabp )
-struct bn_tabdata		**x;
-struct bn_tabdata		**y;
-struct bn_tabdata		**z;
-const struct bn_table	*tabp;
+rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_tabdata **z, const struct bn_table *tabp)
 {
 	struct bn_tabdata	*a, *b, *c;
 	fastf_t	xyz_scale;
@@ -184,9 +180,7 @@ again:
  *  doing constant malloc/free cycle.
  */
 void
-rt_spect_reflectance_rgb( curve, rgb )
-struct bn_tabdata	*curve;
-const float		rgb[3];
+rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
 {
 	register int	i;
 	register const struct bn_table	*tabp;
@@ -234,10 +228,10 @@ const float		rgb[3];
  *  Compute at 'n-1' wavelengths evenly spaced between ax and bx.
  */
 void
-rt_spect_black_body( data, temp, n )
-struct bn_tabdata	*data;
-double			temp;		/* Degrees Kelvin */
-unsigned int		n;		/* # wavelengths to eval at */
+rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
+                 	      
+      			     		/* Degrees Kelvin */
+            		  		/* # wavelengths to eval at */
 {
 	const struct bn_table	*tabp;
 	int				j;
@@ -293,9 +287,9 @@ unsigned int		n;		/* # wavelengths to eval at */
  *  With coarse spacing, or when unsure, use rt_spect_black_body().
  */
 void
-rt_spect_black_body_fast( data, temp )
-struct bn_tabdata	*data;
-double			temp;		/* Degrees Kelvin */
+rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
+                 	      
+      			     		/* Degrees Kelvin */
 {
 	const struct bn_table	*tabp;
 	int				j;
@@ -323,9 +317,9 @@ double			temp;		/* Degrees Kelvin */
  *  straight from Planck's black-body radiation formula.
  */
 void
-rt_spect_black_body_points( data, temp )
-struct bn_tabdata	*data;
-double			temp;		/* Degrees Kelvin */
+rt_spect_black_body_points(struct bn_tabdata *data, double temp)
+                 	      
+      			     		/* Degrees Kelvin */
 {
 	const struct bn_table	*tabp;
 	int				j;

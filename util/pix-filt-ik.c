@@ -31,9 +31,7 @@ static int pix_line;		/* Number of pixels/line */
 char usage[] = "Usage: pix-ik [-h] file.pix [width]\n";
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	static int infd;
 
@@ -104,8 +102,7 @@ char **argv;
 	}
 }
 
-doline( out )
-register unsigned char *out;
+doline(register unsigned char *out)
 {
 	register unsigned char *in;
 	register int i;
@@ -135,10 +132,7 @@ register unsigned char *out;
 	*out++ = 0;
 }
 
-avgline( out, i1, i2 )
-register unsigned char *out;
-register unsigned char *i1;
-register unsigned char *i2;
+avgline(register unsigned char *out, register unsigned char *i1, register unsigned char *i2)
 {
 	register int i;
 
@@ -150,8 +144,7 @@ register unsigned char *i2;
 	}
 }
 
-ck_diag( a1, l1, a2 )
-register unsigned char *a1, *l1, *a2;
+ck_diag(register unsigned char *a1, register unsigned char *l1, register unsigned char *a2)
 {
 	static int i;
 	static int need_avg;

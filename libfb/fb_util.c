@@ -35,10 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  storing this information into the FBIO structure.
  */
 int
-fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	xcenter, ycenter;
-int	xzoom, yzoom;
+fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	ifp->if_xcenter = xcenter;
 	ifp->if_ycenter = ycenter;
@@ -55,10 +52,7 @@ int	xzoom, yzoom;
  *  reading this information from the FBIO structure.
  */
 int
-fb_sim_getview( ifp, xcenter, ycenter, xzoom, yzoom )
-FBIO	*ifp;
-int	*xcenter, *ycenter;
-int	*xzoom, *yzoom;
+fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 	*xcenter = ifp->if_xcenter;
 	*ycenter = ifp->if_ycenter;
@@ -75,10 +69,7 @@ int	*xzoom, *yzoom;
  *  storing this information into the FBIO structure.
  */
 int
-fb_sim_cursor( ifp, mode, x, y )
-FBIO	*ifp;
-int	mode;
-int	x, y;
+fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	ifp->if_cursmode = mode;
 	ifp->if_xcurs = x;
@@ -94,10 +85,7 @@ int	x, y;
  *  reading this information from the FBIO structure.
  */
 int
-fb_sim_getcursor( ifp, mode, x, y )
-FBIO	*ifp;
-int	*mode;
-int	*x, *y;
+fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
 	*mode = ifp->if_cursmode;
 	*x = ifp->if_xcurs;
@@ -109,24 +97,19 @@ int	*x, *y;
 /* Backward Compatibility Routines */
 
 int
-fb_reset(ifp)
-FBIO	*ifp;
+fb_reset(FBIO *ifp)
 {
 	return	0;
 }
 
 int
-fb_viewport(ifp, left, top, right, bottom)
-FBIO	*ifp;
-int	left, top, right, bottom;
+fb_viewport(FBIO *ifp, int left, int top, int right, int bottom)
 {
 	return	0;
 }
 
 int
-fb_window(ifp, x, y)
-FBIO	*ifp;
-int	x, y;
+fb_window(FBIO *ifp, int x, int y)
 {
 	int	xcenter, ycenter;
 	int	xzoom, yzoom;
@@ -138,9 +121,7 @@ int	x, y;
 }
 
 int
-fb_zoom(ifp, x, y)
-FBIO	*ifp;
-int	x, y;
+fb_zoom(FBIO *ifp, int x, int y)
 {
 	int	xcenter, ycenter;
 	int	xzoom, yzoom;
@@ -152,10 +133,7 @@ int	x, y;
 }
 
 int
-fb_scursor(ifp, mode, x, y)
-FBIO	*ifp;
-int	mode;
-int	x, y;
+fb_scursor(FBIO *ifp, int mode, int x, int y)
 {
 	/* We could actually implement this but it
 	 * is probably of no value.

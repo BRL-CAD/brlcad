@@ -55,15 +55,11 @@ extern struct rt_db_internal	es_int_orig;
 static char	tmpfil[17];
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
 
-int writesolid(), readsolid();
-int editit();
+int writesolid(void), readsolid(void);
+int editit(const char *file);
 
 int
-f_tedit(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i;
 
@@ -124,7 +120,7 @@ char **argv;
 
 /* Write numerical parameters of a solid into a file */
 int
-writesolid()
+writesolid(void)
 {
 	register int i;
 	FILE *fp;
@@ -247,8 +243,7 @@ writesolid()
 }
 
 static char *
-Get_next_line( fp )
-FILE *fp;
+Get_next_line(FILE *fp)
 {
 	static char line[LINELEN];
 	int i;
@@ -270,7 +265,7 @@ FILE *fp;
 
 /* Read numerical parameters of solid from file */
 int
-readsolid()
+readsolid(void)
 {
 	register int i;
 	FILE *fp;

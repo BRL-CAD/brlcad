@@ -47,8 +47,7 @@ Usage: pixuntile [-h] [-s squareinsize] [-w in_width] [-n in_height]\n\
 	[-o startframe] basename [file2 ... fileN] <file.pix\n";
 
 int
-get_args( argc, argv )
-register char **argv;
+get_args(int argc, register char **argv)
 {
 	register int c;
 
@@ -102,9 +101,7 @@ int	numy;
 int	pixsize = 3;
 
 int
-main( argc, argv )
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	int	i, y;
 	char	ibuf[1024*3], name[80];
