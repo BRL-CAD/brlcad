@@ -3029,7 +3029,7 @@ struct edge_g_lseg	*src_eg;
 		VPRINT( "dir_src ", dir_src );
 		VPRINT( "dir_dest", dir_dest );
 		rt_log("Angle between lines is %g degrees\n", deg );
-		rt_bomb("nmg_jeg() angle between lines is excessive\n");
+		/* This can happen while fixing mistakes, don't bomb. */
 	}
 
 	while( RT_LIST_NON_EMPTY( &src_eg->eu_hd2 ) )  {
