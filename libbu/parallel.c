@@ -104,6 +104,7 @@ struct taskcontrol {
  *
  *  Without knowing what the current UNIX "nice" value is,
  *  change to a new absolute "nice" value.
+ *  (The system routine makes a relative change).
  */
 void
 bu_nice_set(newnice)
@@ -329,7 +330,7 @@ FILE	*fp;
 }
 #endif
 
-static int	bu_pid_of_initiating_thread;
+extern int	bu_pid_of_initiating_thread;
 
 /*
  *			B U _ P A R A L L E L
@@ -680,20 +681,6 @@ int	ncpu;
 		func, ncpu );
 #endif	/* PARALLEL */
 }
-
-/*
- *			B U _ I S _ P A R A L L E L
- *
- *  A clean way for bu_bomb() to tell if this is a parallel application.
- *  If bu_parallel() is active, this routine will return non-zero.
- */
-int
-bu_is_parallel()
-{
-	if( bu_pid_of_initiating_thread != 0 )  return 1;
-	return 0;
-}
-
 
 #if defined(sgi) && !defined(mips)
 /* Horrible bug in 3.3.1 and 3.4 and 3.5 -- hypot ruins stack! */

@@ -10,7 +10,7 @@
 
 #define FILES	\
 	badmagic bitv bomb \
-	getopt linebuf \
+	getopt ispar linebuf \
 	log magic malloc memset \
 	parallel printb ptbl semaphore \
 	vls

@@ -67,7 +67,8 @@ CONST char *str;
 		abort();	/* should dump */
 	}
 
-	/* In parallel mode, should we try to signal the others to die too? */
+	/* If in parallel mode, try to signal the leader to die. */
+	bu_kill_parallel();
 
 	exit(12);
 }
