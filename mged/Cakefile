@@ -13,8 +13,8 @@
 			cmd chgview chgmodel chgtree \
 			rtif anal typein \
 			buttons clip menu adc edsol edarb \
-			ars proc_reg hideline \
-			spline mater plot overlay inside \
+			proc_reg hideline polyif \
+			mater plot overlay inside \
 			concat utility1 utility2 track arbs \
 			facedef arb ell half tgc torus \
 			attach dm-tek dm-plot dm-ps \
@@ -24,7 +24,7 @@
 #include "../Cakefile.prog"
 
 #define COMPLETE_LIBES	\
-	LIB_PRE''LIBRT LIBRT_LIBES LIBMALLOC MGED_LIBES LIBES
+	LIBWDB LIBRT LIBRT_LIBES MGED_LIBES LIBMALLOC LIBES
 
 mged:	OBJ LIBRT
 	sh ../newvers.sh version "Graphics Editor (MGED)"
