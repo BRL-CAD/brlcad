@@ -45,6 +45,10 @@ Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root} [file.bw]\n";
 #define MULT	2
 #define	ABS	3
 #define	POW	4
+#define SHIFT	5
+#define AND	6
+#define OR	7
+#define	XOR	8
 #define	BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
 
 int	numop = 0;		/* number of operations */
@@ -62,7 +66,7 @@ register char **argv;
 	register int c;
 	double	d;
 
-	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:c" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:" )) != EOF )  {
 		switch( c )  {
 		case 'a':
 			op[ numop ] = ADD;
@@ -104,6 +108,22 @@ register char **argv;
 			break;
 		case 'c':
 			char_arith = !char_arith; break;
+		case 'S':
+			op[ numop ] = SHIFT;
+			val[ numop++] = atof(optarg);
+			break;
+		case 'M':
+			op[ numop ] = AND;
+			val[ numop++] = atof(optarg);
+			break;
+		case 'O':
+			op[ numop ] = OR;
+			val[ numop++ ] = atof(optarg);
+			break;
+		case 'X':
+			op[ numop ] = XOR;
+			val[ numop++ ] = atof(optarg);
+			break;
 		default:		/* '?' */
 			return(0);
 		}
@@ -131,7 +151,7 @@ register char **argv;
 
 void mk_trans_tbl()
 {
-	register int j, i;
+	register int j, i, tmp;
 	register double d;
 
 	/* create translation map */
@@ -143,6 +163,10 @@ void mk_trans_tbl()
 			case MULT: d *= val[i]; break;
 			case POW : d = pow( d, val[i]); break;
 			case ABS : if (d < 0.0) d = - d; break;
+			case SHIFT: tmp=d; tmp=tmp<<(int)val[i];d=tmp;break;
+			case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
+			case AND : tmp=d; tmp &= (int)val[i]; d=tmp;break;
+			case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
 			default  : (void)fprintf(stderr, "%s: error in op\n", progname);
 				   exit(-1);
 				   break;
@@ -170,6 +194,10 @@ void mk_char_trans_tbl()
 			case MULT: d *= val[i]; break;
 			case POW : d = pow( d, val[i]); break;
 			case ABS : if (d < 0.0) d = - d; break;
+			case SHIFT: d=d<<(int)val[i]; break;
+			case AND : d &= (int)val[i]; break;
+			case OR  : d |= (int)val[i]; break;
+			case XOR : d ^= (int)val[i]; break;
 			default  : (void)fprintf(stderr, "%s: error in op\n", progname);
 				   exit(-1);
 				   break;
