@@ -60,10 +60,10 @@ int			nbins;
 {
 
 	if( max <= min )  max = min+1;
-	if( nbins < 2 )  {
-		nbins = 2;
+	if( nbins < 1 )  {
+		nbins = 1;	/* nbins=1 makes for a nice 2-bin binary histogram */
 	} else if( nbins > 10000 )  {
-		nbins = 10000;
+		nbins = 10000;	/* This is a lot of lines to print out */
 	}
 
 	histp->hg_min = floor(min);
