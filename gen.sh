@@ -438,7 +438,7 @@ arch)
 	chmod 444 ${ARCHIVE}
 	echo "${ARCHIVE} created"
 
-	FTP_ARCHIVE=/usr/spool/ftp/brl-cad/cad${RELEASE}.tar
+	# The FTP images:
 	FTP_ARCHIVE=/usr/spool/ftp/brl-cad/Rel4.3/src/cad${RELEASE}.tar
 	echo "Enter encryption key:"
 	read KEY
