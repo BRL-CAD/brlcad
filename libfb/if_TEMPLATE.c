@@ -10,6 +10,9 @@
  *   look it up as).
  *  Set the unimplemented functions to "fb_null"
  *   (and remove the skeletons if you're tidy)
+ *  Set DEVNAME_readrect to fb_sim_readrect, and DEVNAME_writerect
+ *   to fb_sim_writerect, if not implemented.
+ *  Make DEVNAME_free call DEVNAME_close if not implemented.
  *  Go add an "ifdef IF_DEVNAME" to fb_generic.c (two places).
  *  Add defines to ../Cakefile.defs.
  *  Replace this header.
@@ -18,62 +21,66 @@
 #include "fb.h"
 #include "./fblocal.h"
 
-extern int	fb_sim_readrect(), fb_sim_writerect();
-
-_LOCAL_ int	DEVNAME_dopen(),
-		DEVNAME_dclose(),
-		DEVNAME_dreset(),
-		DEVNAME_dclear(),
-		DEVNAME_bread(),
-		DEVNAME_bwrite(),
-		DEVNAME_cmread(),
-		DEVNAME_cmwrite(),
-		DEVNAME_viewport_set(),
-		DEVNAME_window_set(),
-		DEVNAME_zoom_set(),
-		DEVNAME_curs_set(),
-		DEVNAME_cmemory_addr(),
-		DEVNAME_cscreen_addr(),
+_LOCAL_ int	DEVNAME_open(),
+		DEVNAME_close(),
+		DEVNAME_reset(),
+		DEVNAME_clear(),
+		DEVNAME_read(),
+		DEVNAME_write(),
+		DEVNAME_rmap(),
+		DEVNAME_wmap(),
+		DEVNAME_viewport(),
+		DEVNAME_window(),
+		DEVNAME_zoom(),
+		DEVNAME_setcursor(),
+		DEVNAME_cursor(),
+		DEVNAME_scursor(),
+		DEVNAME_readrect(),
+		DEVNAME_writerect(),
+		DEVNAME_flush(),
+		DEVNAME_free(),
 		DEVNAME_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO DEVNAME_interface =  {
-	DEVNAME_dopen,		/* device_open		*/
-	DEVNAME_dclose,		/* device_close		*/
-	DEVNAME_dreset,		/* device_reset		*/
-	DEVNAME_dclear,		/* device_clear		*/
-	DEVNAME_bread,		/* buffer_read		*/
-	DEVNAME_bwrite,		/* buffer_write		*/
-	DEVNAME_cmread,		/* colormap_read	*/
-	DEVNAME_cmwrite,		/* colormap_write	*/
-	DEVNAME_viewport_set,		/* viewport_set		*/
-	DEVNAME_window_set,		/* window_set		*/
-	DEVNAME_zoom_set,		/* zoom_set		*/
-	DEVNAME_curs_set,		/* curs_set		*/
-	DEVNAME_cmemory_addr,		/* cursor_move_memory_addr */
-	DEVNAME_cscreen_addr,		/* cursor_move_screen_addr */
-	fb_sim_readrect,		/* rectangle read */
-	fb_sim_writerect,		/* rectangle write */
-	DEVNAME_help,			/* help message		*/
-	"Device description",		/* device description	*/
-	0,				/* max width		*/
-	0,				/* max height		*/
-	"/dev/shortname",		/* short device name	*/
-	0,				/* default/current width  */
-	0,				/* default/current height */
-	-1,				/* file descriptor	*/
-	PIXEL_NULL,			/* page_base		*/
-	PIXEL_NULL,			/* page_curp		*/
-	PIXEL_NULL,			/* page_endp		*/
-	-1,				/* page_no		*/
-	0,				/* page_dirty		*/
-	0L,				/* page_curpos		*/
-	0L,				/* page_pixels		*/
-	0				/* debug		*/
+	DEVNAME_open,		/* open device	*/
+	DEVNAME_close,		/* close device	*/
+	DEVNAME_reset,		/* reset device	*/
+	DEVNAME_clear,		/* clear device	*/
+	DEVNAME_read,		/* read	pixels	*/
+	DEVNAME_write,		/* write pixels */
+	DEVNAME_rmap,		/* rmap - read colormap	*/
+	DEVNAME_wmap,		/* wmap - write colormap */
+	DEVNAME_viewport,	/* viewport set	*/
+	DEVNAME_window,		/* window set	*/
+	DEVNAME_zoom,		/* zoom set	*/
+	DEVNAME_setcursor,	/* setcursor - define cursor	*/
+	DEVNAME_cursor,		/* cursor - memory address	*/
+	DEVNAME_scursor,	/* scursor - screen address	*/
+	DEVNAME_readrect,	/* readrect - read rectangle	*/
+	DEVNAME_writerect,	/* writerect - write rectangle	*/
+	DEVNAME_flush,		/* flush output	*/
+	DEVNAME_free,		/* free resources */
+	DEVNAME_help,		/* help message	*/
+	"Device description",	/* device description	*/
+	0,			/* max width		*/
+	0,			/* max height		*/
+	"/dev/shortname",	/* short device name	*/
+	0,			/* default/current width  */
+	0,			/* default/current height */
+	-1,			/* file descriptor	*/
+	PIXEL_NULL,		/* page_base		*/
+	PIXEL_NULL,		/* page_curp		*/
+	PIXEL_NULL,		/* page_endp		*/
+	-1,			/* page_no		*/
+	0,			/* page_dirty		*/
+	0L,			/* page_curpos		*/
+	0L,			/* page_pixels		*/
+	0			/* debug		*/
 };
 
 _LOCAL_ int
-DEVNAME_dopen( ifp, file, width, height )
+DEVNAME_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -82,21 +89,21 @@ int	width, height;
 }
 
 _LOCAL_ int
-DEVNAME_dclose( ifp )
+DEVNAME_close( ifp )
 FBIO	*ifp;
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_dreset( ifp )
+DEVNAME_reset( ifp )
 FBIO	*ifp;
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_dclear( ifp, pp )
+DEVNAME_clear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
 {
@@ -104,7 +111,7 @@ RGBpixel	*pp;
 }
 
 _LOCAL_ int
-DEVNAME_bread( ifp, x, y, pixelp, count )
+DEVNAME_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -114,7 +121,7 @@ int	count;
 }
 
 _LOCAL_ int
-DEVNAME_bwrite( ifp, x, y, pixelp, count )
+DEVNAME_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -124,7 +131,7 @@ int	count;
 }
 
 _LOCAL_ int
-DEVNAME_cmread( ifp, cmp )
+DEVNAME_rmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
@@ -132,7 +139,7 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-DEVNAME_cmwrite( ifp, cmp )
+DEVNAME_wmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
@@ -140,7 +147,7 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-DEVNAME_viewport_set( ifp, left, top, right, bottom )
+DEVNAME_viewport( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
 {
@@ -148,7 +155,7 @@ int	left, top, right, bottom;
 }
 
 _LOCAL_ int
-DEVNAME_window_set( ifp, x, y )
+DEVNAME_window( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -156,7 +163,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-DEVNAME_zoom_set( ifp, x, y )
+DEVNAME_zoom( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -164,7 +171,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-DEVNAME_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+DEVNAME_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char *bits;
 int	xbits, ybits;
@@ -174,7 +181,7 @@ int	xorig, yorig;
 }
 
 _LOCAL_ int
-DEVNAME_cmemory_addr( ifp, mode, x, y )
+DEVNAME_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -183,10 +190,44 @@ int	x, y;
 }
 
 _LOCAL_ int
-DEVNAME_cscreen_addr( ifp, mode, x, y )
+DEVNAME_scursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
+{
+	return(0);
+}
+
+_LOCAL_ int
+DEVNAME_readrect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+RGBpixel	*pp;
+{
+	return( width*height );
+}
+
+_LOCAL_ int
+DEVNAME_writerect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+RGBpixel	*pp;
+{
+	return( width*height );
+}
+
+_LOCAL_ int
+DEVNAME_flush( ifp )
+FBIO	*ifp;
+{
+	return(0);
+}
+
+_LOCAL_ int
+DEVNAME_free( ifp )
+FBIO	*ifp;
 {
 	return(0);
 }
