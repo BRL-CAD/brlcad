@@ -105,6 +105,13 @@ is filled with up to
 .I len
 characters
 of information from the first title record in the database.
+If it is desired for ``air'' objects to be reported as ``hits''
+during ray-tracing, then the
+.I useair
+member of the
+.I "struct rt_i"
+must be set before the first call to
+.IR rt_gettree .
 .P
 All objects (groups and regions) which are to be included in the description
 to be raytraced must be preprocessed with
