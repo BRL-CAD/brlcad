@@ -45,7 +45,7 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
  *  for K ranging from 0 to +infinity.  There is no looking backwards.
  *
  *  It is also important to note that the direction vector r_dir
- *  must have unit length;  this is mandatory, and is not checked
+ *  must have unit length;  this is mandatory, and is not ordinarily checked,
  *  in the name of efficiency.
  *
  *  Input:  Pointer to an application structure, with these mandatory fields:
@@ -54,10 +54,18 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
  *	a_hit		Routine to call when something is hit
  *	a_miss		Routine to call when ray misses everything
  *
+ *  Calls user's a_miss() or a_hit() routine as appropriate.
+ *  Passes a_hit() routine list of partitions, with only hit_dist
+ *  fields valid.  Normal computation deferred to user code,
+ *  to avoid needless computation here.
+ *
  *  Returns: whatever the application function returns (an int).
  *
  *  NOTE:  The appliction functions may call rt_shootray() recursively.
  *	Thus, none of the local variables may be static.
+ *
+ *  An open issue for execution in a PARALLEL environment is locking
+ *  of the statistics variables.
  */
 int
 rt_shootray( ap )
@@ -88,7 +96,6 @@ register struct application *ap;
 			ap->a_x, ap->a_y, ap->a_level );
 		VPRINT("Pnt", ap->a_ray.r_pt);
 		VPRINT("Dir", ap->a_ray.r_dir);
-		fflush(stderr);		/* In case of instant death */
 	}
 
 	ap->a_rt_i->rti_nrays++;
@@ -449,27 +456,18 @@ weave:
 	}
 
 	/*
-	 *  A DIRECT HIT.
-	 *  Last chance to compute exact hit points and surface normals.
-	 *  Then hand final partitioned intersection list to the application.
-	 * ---- computing normals should probably be moved into the
-	 * application, to prevent wasteful computation.
+	 *  Ray/model intersections exist.  Pass the list to the
+	 *  user's a_hit() routine.  Note that only the hit_dist
+	 *  elements of pt_inhit and pt_outhit have been computed yet.
+	 *  To compute both hit_point and hit_normal, use the
+	 *
+	 *  	RT_HIT_NORM( hitp, stp, rayp )
+	 *
+	 *  macro.  To compute just hit_point, use
+	 *
+	 *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	 */
 hitit:
-	{
-		register struct partition *pp;
-		for( pp=FinalPart.pt_forw; pp != &FinalPart; pp=pp->pt_forw ){
-			register struct soltab *stp;
-
-			stp = pp->pt_inseg->seg_stp;
-			RT_HIT_NORM( pp->pt_inhit, stp, &(ap->a_ray) );
-
-			if( ap->a_onehit && pp->pt_inhit->hit_dist >= 0.0 )
-				break;
-			stp = pp->pt_outseg->seg_stp;
-			RT_HIT_NORM( pp->pt_outhit, stp, &(ap->a_ray) );
-		}
-	}
 	if(rt_g.debug&DEBUG_SHOOT)  rt_pr_partitions(&FinalPart,"a_hit()");
 
 	ret = ap->a_hit( ap, &FinalPart );
@@ -498,7 +496,7 @@ freeup:
 		}
 	}
 	{
-		register struct seg *segp;	/* XXX */
+		register struct seg *segp;
 
 		while( HeadSeg != SEG_NULL )  {
 			segp = HeadSeg->seg_next;
@@ -512,7 +510,6 @@ out:
 	}
 	if(rt_g.debug&(DEBUG_SHOOT|DEBUG_ALLRAYS))
 		rt_log( "%s, ret%d\n", status, ret);
-	if( rt_g.debug )  fflush(stderr);
 	return( ret );
 }
 
