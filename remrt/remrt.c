@@ -40,13 +40,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./rtsrv.h"
 #include "./remrt.h"
+#include "./inout.h"
+#include "./protocol.h"
 
 #ifdef SYSV
 #define vfork	fork
 #endif SYSV
 
 FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
-int cur_fbsize;			/* current fb size */
+int cur_fbwidth;		/* current fb width */
 
 int running = 0;		/* actually working on it */
 int detached = 0;		/* continue after EOF */
@@ -93,14 +95,15 @@ struct frame {
 	struct frame	*fr_forw;
 	struct frame	*fr_back;
 	int		fr_number;	/* frame number */
-	int		fr_size;	/* frame size (pixels) */
+	int		fr_width;	/* frame width (pixels) */
+	int		fr_height;	/* frame height (pixels) */
 	char		*fr_picture;	/* ptr to picture buffer */
 	struct list	fr_todo;	/* work still to be done */
 	long		fr_start;	/* start time */
 	long		fr_end;		/* end time */
 	int		fr_hyper;	/* hypersampling */
 	int		fr_benchmark;	/* Benchmark flag */
-	double		fr_zoomout;	/* perspective */
+	double		fr_perspective;	/* perspective angle */
 	/* Current view */
 	double		fr_viewsize;
 	double		fr_eye_model[3];
@@ -129,7 +132,7 @@ struct servers {
 /* Options */
 int	npts = 64;
 int	hypersample = 0;
-double	zoomout = 0;
+double	perspective = 0;
 int	benchmark = 0;
 extern double	atof();
 
@@ -163,7 +166,8 @@ char *str;
  *			M A I N
  */
 main(argc, argv)
-int argc; char **argv;
+int	argc;
+char	**argv;
 {
 	register int i;
 	register struct servers *sp;
@@ -514,8 +518,8 @@ FILE *fp;
 		return;
 	}
 	if( strcmp( cmd_args[0], "p" ) == 0 )  {
-		zoomout = atof( cmd_args[1] );
-		printf("zoomount=%f, takes effect after next MAT\n", zoomout);
+		perspective = atof( cmd_args[1] );
+		printf("perspective angle=%f, takes effect after next MAT\n", perspective);
 		return;
 	}
 	if( strcmp( cmd_args[0], "read" ) == 0 )  {
@@ -615,7 +619,7 @@ FILE *fp;
 		for( i=1; i<numargs; i++ )  {
 			/* XXX should use rexecd! */
 			sprintf(cmd,
-				"rsh %s 'hostname; cd cad/remrt; rtsrv %s %d;uptime'",
+				"rsh %s -n 'cd cad/remrt; rtsrv %s %d'",
 				cmd_args[i], ourname, pkg_permport );
 			if( vfork() == 0 )  {
 				/* 1st level child */
@@ -697,15 +701,15 @@ FILE *fp;
 
 		/* Draw the accumulated image */
 		if( fr->fr_picture == (char *)0 )  return;
-		size_display(fr->fr_size);
+		size_display(fr);
 		if( fbp == FBIO_NULL ) return;
 		/* Trim to what can be drawn */
-		maxx = fr->fr_size;
+		maxx = fr->fr_width;
 		if( maxx > fb_getwidth(fbp) )
 			maxx = fb_getwidth(fbp);
-		for( i=0; i<fr->fr_size; i++ )  {
-			fb_write( fbp, 0, i%fb_getwidth(fbp),
-				fr->fr_picture + i*fr->fr_size*3,
+		for( i=0; i<fr->fr_height; i++ )  {
+			fb_write( fbp, 0, i%fb_getheight(fbp),
+				fr->fr_picture + i*fr->fr_width*3,
 				maxx );
 		}
 		return;
@@ -722,8 +726,8 @@ FILE *fp;
 		printf("Frames waiting:\n");
 		for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
 			printf(" %4d  ", fr->fr_number);
-			printf("size=%d, zoomout=%f, ",
-				fr->fr_size, fr->fr_zoomout );
+			printf("width=%d, height=%d, perspective angle=%f, ",
+				fr->fr_width, fr->fr_height, fr->fr_perspective );
 			printf("viewsize = %f\n", fr->fr_viewsize);
 			printf("\thypersample = %d, ", fr->fr_hyper);
 			printf("benchmark = %d, ", fr->fr_benchmark);
@@ -782,7 +786,7 @@ FILE *fp;
 	if( strcmp( cmd_args[0], "clear" ) == 0 )  {
 		if( fbp == FBIO_NULL )  return;
 		fb_clear( fbp, PIXEL_NULL );
-		cur_fbsize = 0;
+		cur_fbwidth = 0;
 		return;
 	}
 	if( strcmp( cmd_args[0], "print" ) == 0 )  {
@@ -806,7 +810,7 @@ FILE *fp;
 	if( strcmp( cmd_args[0], "?" ) == 0 )  {
 		printf("load db.g trees\n");
 		printf("f #		set npts\n");
-		printf("p #		set zoomout\n");
+		printf("p #		set perspective angle (0=ortho)\n");
 		printf("-H #		set hypersampling\n");
 		printf("-B		set benchmark flag\n");
 		printf("read script\n");
@@ -841,8 +845,8 @@ register struct frame *fr;
 	register struct list *lp;
 
 	/* Get local buffer for image */
-	fr->fr_size = npts;
-	fr->fr_zoomout = zoomout;
+	fr->fr_width = fr->fr_height = npts;
+	fr->fr_perspective = perspective;
 	fr->fr_hyper = hypersample;
 	fr->fr_benchmark = benchmark;
 	if( fr->fr_picture )  free(fr->fr_picture);
@@ -854,7 +858,7 @@ register struct frame *fr;
 	GET_LIST(lp);
 	lp->li_frame = fr;
 	lp->li_start = 0;
-	lp->li_stop = fr->fr_size-1;	/* last scanline # */
+	lp->li_stop = fr->fr_height-1;	/* last scanline # */
 	APPEND_LIST( lp, fr->fr_todo.li_back );
 }
 
@@ -918,7 +922,7 @@ schedule()
 			fr->fr_end - fr->fr_start);
 		if( out_file[0] != '\0' )  {
 			sprintf(name, "%s.%d", out_file, fr->fr_number);
-			cnt = fr->fr_size*fr->fr_size*3;
+			cnt = fr->fr_width*fr->fr_height*3;
 			if( (fd = creat(name, 0444)) > 0 )  {
 				printf("Writing..."); fflush(stdout);
 				if( write( fd, fr->fr_picture, cnt ) != cnt ) {
@@ -1165,15 +1169,20 @@ char *buf;
 	register int i;
 	register struct servers *sp;
 	register struct frame *fr;
+	struct line_info	info;
 
 	sp = &servers[pc->pkc_fd];
 	fr = sp->sr_curframe;
 
-	line = ((buf[1]&0xFF)<<8) | (buf[0]&0xFF);
+	i = struct_import( (stroff_t)&info, desc_line_info, buf );
+	if( i < 0 || i != info.li_len )  {
+		fprintf(stderr,"struct_inport error, %d, %d\n", i, info.li_len);
+		return;
+	}
 
 	/* Stash pixels in memory in bottom-to-top .pix order */
 	if( fr->fr_picture == (char *)0 )  {
-		i = fr->fr_size*fr->fr_size*3+3;
+		i = fr->fr_width*fr->fr_height*3+3;
 		printf("allocating %d bytes for image\n", i);
 		fr->fr_picture = malloc( i );
 		if( fr->fr_picture == (char *)0 )  {
@@ -1184,9 +1193,9 @@ char *buf;
 		}
 		bzero( fr->fr_picture, i );
 	}
-	i = fr->fr_size*3;
-	if( pc->pkc_len-2 < i )  i = pc->pkc_len-2;
-	bcopy( buf+2, fr->fr_picture + line*fr->fr_size*3, i );
+	i = fr->fr_width*3;
+	if( pc->pkc_len-info.li_len < i )  i = pc->pkc_len-info.li_len;
+	bcopy( buf+info.li_len, fr->fr_picture + info.li_y*fr->fr_width*3, i );
 
 	/* If display attached, also draw it */
 	if( fbp != FBIO_NULL )  {
@@ -1194,13 +1203,17 @@ char *buf;
 		maxx = i/3;
 		if( maxx > fb_getwidth(fbp) )
 			maxx = fb_getwidth(fbp);
-		size_display(fr->fr_size);
-		fb_write( fbp, 0, line%fb_getheight(fbp), buf+2, maxx );
+		size_display(fr);
+		fb_write( fbp, 0, info.li_y%fb_getheight(fbp),
+			buf+info.li_len, maxx );
 	}
 	if(buf) (void)free(buf);
 
+	/* Stash the statistics that came back */
+	/* li_nrays, li_cpusec */
+
 	/* Remove from work list */
-	list_remove( &(sp->sr_work), line );
+	list_remove( &(sp->sr_work), info.li_y );
 	if( running && sp->sr_work.li_forw == &(sp->sr_work) )
 		schedule();
 }
@@ -1260,29 +1273,31 @@ char *name;
 		return(-1);
 	}
 	fb_wmap( fbp, COLORMAP_NULL );	/* Standard map: linear */
-	cur_fbsize = 0;
+	cur_fbwidth = 0;
 	return(0);
 }
 
 /*
  *			S I Z E _ D I S P L A Y
  */
-size_display(n)
-register int n;
+size_display(fp)
+register struct frame	*fp;
 {
-	if( cur_fbsize == n )
+	if( cur_fbwidth == fp->fr_width )
 		return;
 	if( fbp == FBIO_NULL )
 		return;
-	if( n > fb_getwidth(fbp) )  {
-		printf("Warning:  fb not big enough for %d pixels, display truncated\n", n );
-		cur_fbsize = n;
+	if( fp->fr_width > fb_getwidth(fbp) )  {
+		printf("Warning:  fb not big enough for %d pixels, display truncated\n", fp->fr_width );
+		cur_fbwidth = fp->fr_width;
 		return;
 	}
-	cur_fbsize = n;
+	cur_fbwidth = fp->fr_width;
 
-	fb_zoom( fbp, fb_getwidth(fbp)/n, fb_getheight(fbp)/n );
-	fb_window( fbp, n/2, n/2 );		/* center of view */
+	fb_zoom( fbp, fb_getwidth(fbp)/fp->fr_width,
+		fb_getheight(fbp)/fp->fr_height );
+	/* center the view */
+	fb_window( fbp, fp->fr_width/2, fp->fr_height/2 );
 }
 
 /*
@@ -1329,15 +1344,11 @@ register struct frame *fr;
 {
 	char buf[BUFSIZ];
 
-	if( fr->fr_zoomout > 0 )  {
-		sprintf(buf, "%s -f%d -H%d -p%f",
-			fr->fr_benchmark ? "-B" : "",
-			fr->fr_size, fr->fr_hyper, fr->fr_zoomout );
-	}  else  {
-		sprintf(buf, "%s -f%d -H%d",
-			fr->fr_benchmark ? "-B" : "",
-			fr->fr_size, fr->fr_hyper );
-	}
+	sprintf(buf, "%s -w%d -n%d -H%d -p%f",
+		fr->fr_benchmark ? "-B" : "",
+		fr->fr_width, fr->fr_height,
+		fr->fr_hyper, fr->fr_perspective );
+
 	if( pkg_send( MSG_OPTIONS, buf, strlen(buf)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
 
