@@ -27,25 +27,33 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 struct wdb_pipeseg  pipe1[] = {
-	WDB_PIPESEG_MAGIC, 0, 0,
-	0, 1, 0,
-	0, 0, 0,
-	0.05, 0.1, WDB_PIPESEG_TYPE_LINEAR,
+	{
+		(long)WDB_PIPESEG_MAGIC, 0, 0,
+		0, 1, 0,
+		0, 0, 0,
+		0.05, 0.1, WDB_PIPESEG_TYPE_LINEAR
+	},
 
-	WDB_PIPESEG_MAGIC, 0, 0,
-	0, 5, 0,
-	0, 0, 0,
-	0.05, 0.1, WDB_PIPESEG_TYPE_LINEAR,
+	{
+		(long)WDB_PIPESEG_MAGIC, 0, 0,
+		0, 5, 0,
+		0, 0, 0,
+		0.05, 0.1, WDB_PIPESEG_TYPE_LINEAR
+	},
 
-	WDB_PIPESEG_MAGIC, 0, 0,
-	4, 5, 0,
-	0, 5, 0,
-	0.05, 0.1, WDB_PIPESEG_TYPE_BEND,
+	{
+		(long)WDB_PIPESEG_MAGIC, 0, 0,
+		4, 5, 0,
+		0, 5, 0,
+		0.05, 0.1, WDB_PIPESEG_TYPE_BEND
+	},
 
-	WDB_PIPESEG_MAGIC, 0, 0,
-	0, 1, 0,
-	0, 0, 0,
-	0.05, 0.1, WDB_PIPESEG_TYPE_END
+	{
+		(long)WDB_PIPESEG_MAGIC, 0, 0,
+		0, 1, 0,
+		0, 0, 0,
+		0.05, 0.1, WDB_PIPESEG_TYPE_END
+	}
 };
 
 #define Q	0.05	/* inset from borders of enclsing cube */
