@@ -1285,6 +1285,7 @@ struct vertexuse	*vu2;
 	struct edgeuse	*second_new_eu;
 	struct edgeuse	*final_eu2;
 	struct loopuse	*lu1, *lu2;
+	int		new_orient;
 
 	NMG_CK_VERTEXUSE(vu1);
 	NMG_CK_VERTEXUSE(vu2);
@@ -1302,6 +1303,13 @@ struct vertexuse	*vu2;
 
 	if( lu1->up.fu_p != lu2->up.fu_p )
 		rt_bomb("nmg_join_2loops: can't join loops in different faces\n");
+
+	/* Joining same & opp gives same.  */
+	if( lu1->orientation != lu2->orientation )  {
+		new_orient = OT_SAME;
+	} else {
+		new_orient = lu1->orientation;
+	}
 
 	if( vu1->v_p != vu2->v_p )  {
 		/*
@@ -1338,6 +1346,8 @@ struct vertexuse	*vu2;
 		RT_LIST_APPEND(&second_new_eu->eumate_p->l, &eu2->eumate_p->l);
 		eu2->eumate_p->up.lu_p = lu1->lumate_p;
 	}
+
+	lu1->orientation = lu1->lumate_p->orientation = new_orient;
 
 	/* Kill entire (null) loop associated with lu2 */
 	nmg_klu(lu2);
