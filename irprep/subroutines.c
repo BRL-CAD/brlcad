@@ -22,8 +22,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "/n/walrus/usr/brlcad/include/machine.h"
-#include "/n/walrus/usr/brlcad/include/externs.h"
+#include "machine.h"
+#include "externs.h"
 
 #define PI 3.14159265358979323846264		/*  Pi.  */
 
