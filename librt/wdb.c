@@ -112,8 +112,10 @@ wdb_dbopen( struct db_i *dbip, int mode )
 	wdbp->wdb_ttol.abs = 0.0;
 	wdbp->wdb_ttol.rel = 0.01;
 	wdbp->wdb_ttol.norm = 0;
+	bu_vls_init( &wdbp->wdb_prestr );
 
 	return wdbp;
+
 }
 
 /* 
@@ -374,5 +376,6 @@ wdb_close( struct rt_wdb *wdbp )
 
 	db_close( wdbp->dbip );
 
+	bu_vls_free( &wdbp->wdb_prestr );
 	bu_free( (genptr_t)wdbp, "struct rt_wdb");
 }
