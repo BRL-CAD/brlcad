@@ -337,8 +337,6 @@ int		neg;
 	}
 }
 
-extern CONST struct db_tree_state	rt_initial_tree_state;
-
 /*
  *			R E G I O N _ E N D
  *
@@ -390,7 +388,7 @@ union tree		*curtree;
 	if( curtree->tr_op == OP_NOP )  {
 		rt_vls_strcat( &flat, "" );
 	} else {
-		/* XXX More may be needed */
+		/* Rewrite tree so that all unions are at tree top */
 		db_non_union_push( curtree );
 		flatten_tree( &flat, curtree, "  ", 0 );
 	}
@@ -456,8 +454,6 @@ union tree		*curtree;
 	}
 	rt_vls_strcat( &ident, "\n" );
 	ewrite( ridfd, rt_vls_addr(&ident), rt_vls_strlen(&ident) );
-
-	/* ---------------- */
 
 	rt_vls_free( &ident );
 	rt_vls_free( &reg );
@@ -560,9 +556,6 @@ next_one: ;
 	/* For now, just link them all onto the same list */
 	RT_LIST_INSERT( &(sol_hd.l), &(stp->l) );
 
-	/* ---------------- */
-	/* XXX output the solid */
-
 	stp->st_bit = ++nns;
 
 	/* Solid number is stp->st_bit + delsol */
@@ -590,8 +583,12 @@ next_one: ;
 			dp->d_namep, stp->st_bit+delsol );
 		break;
 	case ID_HALF:
-		/* XXX */
+		addhalf( &sol, (struct rt_half_internal *)intern.idb_ptr,
+			dp->d_namep, stp->st_bit+delsol );
+		break;
 	case ID_PIPE:
+		/* XXX */
+	case ID_ARBN:
 		/* XXX */
 	default:
 		(void) fprintf( stderr,
@@ -688,6 +685,28 @@ int			num;
 	vls_blanks( v, 4*10 );
 	rt_vls_strcat( v, name );
 	rt_vls_strcat( v, "\n");
+}
+
+/*
+ *			A D D H A L F
+ */
+addhalf( v, gp, name, num )
+struct rt_vls		*v;
+struct rt_half_internal	*gp;
+char			*name;
+int			num;
+{
+	RT_VLS_CHECK(v);
+	RT_HALF_CK_MAGIC(gp);
+
+	/* N, d */
+	vls_itoa( v, num, 5 );
+	rt_vls_strcat( v, "haf  " );		/* 5 */
+	vls_ftoa_vec( v, gp->eqn, 10, 4 );
+	vls_ftoa_cvt( v, gp->eqn[3], 10, 4 );
+	vls_blanks( v, 2*10 );
+	rt_vls_strcat( v, name );
+	rt_vls_strcat( v, "\n" );
 }
 
 static void
