@@ -1,0 +1,21 @@
+/*
+ *			sample_applications/Cakefile
+ *
+ *  $Header$
+ */
+
+#define SRCDIR	sample_applications
+#define PRODUCTS	g-xxx rtexample
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+g-xxx: g-xxx.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
+	CC LDFLAGS g-xxx.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-xxx
+
+rtexample:	rtexample.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	CC LDFLAGS rtexample.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rtexample
+
+#include "../Cakefile.rules"
