@@ -29,7 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 HIDDEN int stk_setup(), stk_render(), stk_print(), stk_free();
 
 struct mfuncs stk_mfuncs[] = {
-	"stack",	0,		0,		MFI_UV|MFI_NORMAL,
+	"stack",	0,		0,		0,
 	stk_setup,	stk_render,	stk_print,	stk_free,
 
 	(char *)0,	0,		0,		0,
@@ -66,6 +66,8 @@ char	**dpp;		/* pointer to user data pointer */
 	register struct stk_specific *sp;
 	char	*cp, *start;
 	int	i;
+	int	inputs = 0;
+	struct mfuncs *mfp;
 
 	GETSTRUCT( sp, stk_specific );
 	*dpp = (char *)sp;
@@ -85,8 +87,12 @@ char	**dpp;		/* pointer to user data pointer */
 				return( 0 );
 			}
 			/* add one */
-			if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i]) == 0 )
-				i++;	/* XXX else clear entry? */
+			if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i]) == 0 )  {
+				inputs |= sp->mfuncs[i]->mf_inputs;
+				i++;
+			} else {
+				/* XXX else clear entry? */
+			}
 			start = ++cp;
 		} else {
 			cp++;
@@ -98,10 +104,19 @@ char	**dpp;		/* pointer to user data pointer */
 			return( 0 );
 		}
 		/* add one */
-		if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i]) == 0 )
-			i++;	/* XXX else clear entry? */
+		if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i]) == 0 )  {
+			inputs |= sp->mfuncs[i]->mf_inputs;
+			i++;
+		} else {
+			/* XXX else clear entry? */
+		}
 	}
 
+	/* Request only those input bits needed by subordinate shaders */
+	GETSTRUCT( mfp, mfuncs );
+	bcopy( rp->reg_mfuncs, (char *)mfp, sizeof(*mfp) );
+	mfp->mf_inputs = inputs;
+	rp->reg_mfuncs = (char *)mfp;
 	return( 1 );
 }
 
