@@ -37,6 +37,7 @@ static char RCStabdata[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "raytrace.h"
 #include "tabdata.h"
+#include "./debug.h"
 
 /*
  *			R T _ C K _ T A B L E
@@ -415,31 +416,40 @@ register double			wl;
 {
 	CONST struct rt_table	*tabp;
 	register int			i;
+	register fastf_t	ret;
 
 	RT_CK_TABDATA(samp);
 	tabp = samp->table;
 	RT_CK_TABLE(tabp);
 
-	if( wl < tabp->x[0] || wl > tabp->x[tabp->nx] )
+	if( wl < tabp->x[0] || wl > tabp->x[tabp->nx] )  {
+		if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g) out of range %g to %g\n", wl, tabp->x[0], tabp->x[tabp->nx] );
 		return 0;
+	}
 
 	/* Search for proper interval in input spectrum */
 	for( i = 0; i < tabp->nx-1; i++ )  {
 		FAST fastf_t	fract;		/* fraction from [i] to [i+1] */
 
-		if( wl < tabp->x[i] )  rt_bomb("rt_table_lin_interp() assertion1 failed\n");
+		if( wl < tabp->x[i] )  {
+			rt_log("rt_table_lin_interp(%g) assertion1 failed at %g\n", wl, tabp->x[i] );
+			rt_bomb("rt_table_lin_interp() assertion1 failed\n");
+		}
 		if( wl >= tabp->x[i+1] )  continue;
 
 		/* The interval has been found */
 		fract = (wl - tabp->x[i]) /
 			(tabp->x[i+1] - tabp->x[i]);
 		if( fract < 0 || fract > 1 )  rt_bomb("rt_table_lin_interp() assertion2 failed\n");
-		return (1-fract) * samp->y[i] + fract * samp->y[i+1];
+		ret = (1-fract) * samp->y[i] + fract * samp->y[i+1];
+		if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g)=%g in range %g to %g\n", wl, ret, tabp->x[i], tabp->x[i+1] );
+		return ret;
 	}
 
 	/* Assume value is constant in final interval. */
 	if( !( wl >= tabp->x[tabp->nx-1] ) )
 		rt_bomb("rt_table_lin_interp() assertion3 failed\n");
+	if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g)=%g off end of range %g to %g\n", wl, samp->y[tabp->nx-1], tabp->x[0], tabp->x[tabp->nx] );
 	return samp->y[tabp->nx-1];
 }
 
@@ -603,6 +613,7 @@ CONST struct rt_tabdata	*data;
 	for( j=0; j < tabp->nx; j++ )  {
 		fprintf( fp, "%g %g\n", tabp->x[j], data->y[j] );
 	}
+	fprintf( fp, "%g (novalue)\n", tabp->x[tabp->nx] );
 	fclose(fp);
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	return 0;
