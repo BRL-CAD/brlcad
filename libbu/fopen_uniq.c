@@ -69,7 +69,7 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 
     bu_semaphore_acquire( BU_SEM_SYSCALL);
     sprintf(filename, namefmt, n);
-    if ((fd = open(filename, O_WRONLY|O_CREAT|O_EXCL)) < 0) {
+    if ((fd = open(filename, O_RDWR|O_CREAT|O_EXCL, 0600)) < 0) {
 	fprintf(stderr, strerror(errno));
 	exit(-1);
     }
