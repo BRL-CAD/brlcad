@@ -750,6 +750,9 @@ char      	**argv;
 	movedir = 0;		/* No edit modes set */
 	mat_idn( modelchanges );	/* No changes yet */
 	(void)chg_state( ST_VIEW, ST_O_PICK, "internal change of state");
+	/* reset accumulation local scale factors */
+	acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
+	new_mats();
 
 	/* Find the one solid, set s_iflag UP, point illump at it */
 	illump = find_solid_with_path( &both );
