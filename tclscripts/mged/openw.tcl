@@ -69,6 +69,7 @@ if ![info exists mged_default(display)] {
 	set mged_default(display) $env(DISPLAY)
     } else {
 	set mged_default(display) :0
+	set env(DISPLAY) :0
     }
 }
 
@@ -133,10 +134,6 @@ proc gui { args } {
     global view_ring
     global vi_state
     global mged_color_scheme
-
-    if {$mged_default(dt) == ""} {
-	set mged_default(dt) [dm_bestXType $mged_default(gdisplay)]
-    }
 
 # set defaults
     set save_id [cmd_win get]
@@ -1630,48 +1627,56 @@ quickly get started using MGED." } }
 hoc_register_menu_data "Help" "Getting Started Document" "Getting Started"\
 	{ { synopsis "mged \[-c\] \[-d display\] \[-h\] \[-r\] \[-x#\] \[-X#\]\
 \[database \[command\]\]" }
-{ description "The -c (Classic MGED) option causes MGED to start in the usual way, that is by
-prompting the user to select a display manager to attach and to remain attached to the tty.
-Without this option MGED will detach itself from the tty and bring up the new GUI. The -d option
-provides a way to specify a display string. This string is expected to be in the same format
-as the X DISPLAY environment variable. The -h option causes the help message to print out.
-The -r option causes the database to be read-only (i.e. no editing allowed). The -x and -X
-options provide a way for the user to specify the debug level of librt and libbu, respectively.
-Note that if MGED is started by redirecting stdin or stdout, MGED will not enter interactive
-mode. Similarly, if MGED is started with a command, that command will be executed and MGED
-will exit.
-        If the user starts MGED in \"Classic\" mode, the new GUI is still available. See the \"gui\"
-command. There can be many instances of the GUI running at the same time. Each instance of the GUI
-owns four display manager windows (panes) and by default each of these panes has its view initialized
-as follows:
+{ description "The -c (Classic MGED) option causes MGED to start in the style of
+previous versions of MGED, that is by prompting the user to select
+a display manager to attach and by remaining attached to the tty.
+Without this option MGED will detach itself from the tty and bring
+up the new GUI. The -d option provides a way to specify a display
+string. This string is expected to be in the same format as the X
+DISPLAY environment variable. The -h option causes the help message
+to print out. The -r option causes the database to be read-only (i.e.
+no editing allowed). The -x and -X options provide a way for the user
+to specify the debug level of librt and libbu, respectively. Note that
+if MGED is started by redirecting stdin or stdout, MGED will not enter
+interactive mode. Similarly, if MGED is started with a command, that
+command will be executed and MGED will exit. If the user starts MGED in
+\"Classic\" mode, the new GUI is still available. See the \"gui\" command.
+There can be many instances of the GUI running at the same time. Each
+instance of the GUI owns four display manager windows (panes) and by
+default each of these panes has its view initialized as follows:
 
-\t\t\tPane\t\tAzimuth and Elevation
-\t\t\tupper left\t\t0 90
-\t\t\tupper right\t\t35 25
-\t\t\tlower left\t\t0 0
-\t\t\tlower right\t\t90 0.
+\t\tPane\t\tAzimuth and Elevation
+\t\tupper left\t\t0 90
+\t\tupper right\t\t35 25
+\t\tlower left\t\t0 0
+\t\tlower right\t\t90 0.
 
-All four panes can be displayed simultaneously, or a single large pane containing the active pane
-can be displayed (look in the \"Modes\" menu). The active pane is the pane that is controlled by the
-GUI. The active pane can be changed from the \"Settings\" menu, or by certain key or mouse button
-actions. Essentially, any key sequence or mouse button action that will pop up an MGED menu in the
-pane will cause the active pane to move to the pane wherein this action occurred. For example, alt-f
-will pop up the file menu and make this pane the active pane. Similarly, alt-Button1 will pop up the
+All four panes can be displayed simultaneously, or a single large pane
+containing the active pane can be displayed (look in the \"Modes\" menu).
+The active pane is the pane that is controlled by the GUI. The active pane
+can be changed from the \"Settings\" menu, or by certain key or mouse button
+actions. Essentially, any key sequence or mouse button action that will pop
+up an MGED menu in the pane will cause the active pane to move to the pane
+wherein this action occurred. For example, alt-f will pop up the file menu
+and make this pane the active pane. Similarly, alt-Button1 will pop up the
 \"Settings\" menu and alt-Button2 will pop up the \"Modes\" menu.
-        The new GUI also provides \"Help on Context\". This is always available via the right mouse
-button (i.e. button 3). The user can right mouse click on some feature of the GUI and a message window
-pops up with information about the feature. This behavior works everywhere except in the drawing
-panes (i.e. display manager windows) where a right mouse button is bound to \"zoom 2.0\".
-        There are many new features and improvements in MGED providing greater access to its
-underlying power. The single greatest improvement to MGED was adopting the use of Tcl/Tk. Tcl (tool
-command language) is an interpreted command language that can be imbedded into an application
-providing the application with an interpreter as well as a built-in command language. Tk is an
-extension to Tcl for building GUI's. Incorporating Tcl/Tk into MGED gives the user the ability to
-develop their own commands and GUI's. Other new features are: command line editing similar to tcsh,
-multiple display managers opened simultaneously, shareable resources among display managers, view
-axes, model axes, edit axes, rubber banding for zoom or raytracing, support for color schemes, frame
-buffer support for display managers, snap to grid for accuracy with the mouse, query rays for
-interrogating the geometry, and improved solid/object/combination selection from among displayed
+        The new GUI also provides \"Help on Context\". This is always available
+via the right mouse button (i.e. button 3). The user can right mouse click on
+some feature of the GUI and a message window pops up with information about the
+feature. This behavior works everywhere except in the drawing panes (i.e. display
+manager windows) where a right mouse button is bound to \"zoom 2.0\".
+        There are many new features and improvements in MGED providing greater
+access to its underlying power. The single greatest improvement to MGED was
+adopting the use of Tcl/Tk. Tcl (tool command language) is an interpreted command
+language that can be imbedded into an application providing the application with
+an interpreter as well as a built-in command language. Tk is an extension to Tcl
+for building GUI's. Incorporating Tcl/Tk into MGED gives the user the ability to
+develop their own commands and GUI's. Other new features are: command line editing
+similar to tcsh, multiple display managers opened simultaneously, shareable
+resources among display managers, view axes, model axes, edit axes, rubber banding
+for zoom or raytracing, support for color schemes, frame buffer support for display
+managers, snap to grid for accuracy with the mouse, query rays for interrogating the
+geometry, and improved solid/object/combination selection from among displayed
 geometry." } }
 .$id.menubar.help add command -label "Commands..." -underline 0\
 	-command "command_help $id"
