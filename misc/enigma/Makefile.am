@@ -1,3 +1,9 @@
+EXTRA_DIST = \
+	COPYING \
+	README \
+	build.sh \
+	configure.in
+
 SUFFIXES = .1
 
 man_MANS = enigma.1
