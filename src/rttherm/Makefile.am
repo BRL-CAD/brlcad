@@ -19,8 +19,9 @@ man_MANS = \
 	ssamp-bw.1
 
 EXTRA_DIST = \
-	std_day_1km.dat
-	test.sh
+	std_day_1km.dat \
+	test.sh \
+	$(man_MANS)
 
 #rttherm_SOURCES = \
 #	$(common_files) \
