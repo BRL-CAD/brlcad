@@ -483,7 +483,7 @@ struct nmg_loop_stuff {
 /*
  *			N M G _ F A C E _ V U _ C O M P A R E
  *
- *  Support routine for nmg_fact_coincident_vu_sort(), via qsort().
+ *  Support routine for nmg_face_coincident_vu_sort(), via qsort().
  *
  */
 static int
@@ -549,16 +549,18 @@ CONST genptr_t	b;
  *  starting with the vertexuse that the ray first encounters.
  */
 static void
-nmg_face_vu_dot( vsp, lu, rs )
+nmg_face_vu_dot( vsp, lu, rs, ass )
 struct nmg_vu_stuff		*vsp;
 struct loopuse			*lu;
 CONST struct nmg_ray_state	*rs;
+int				ass;
 {
 	struct edgeuse	*this_eu;
 	struct edgeuse	*othereu;
 	vect_t		vec;
 	fastf_t		dot;
 	struct vertexuse	*vu;
+	int		this;
 
 	vu = vsp->vu;
 	NMG_CK_VERTEXUSE(vu);
@@ -566,27 +568,43 @@ CONST struct nmg_ray_state	*rs;
 	this_eu = nmg_eu_with_vu_in_lu( lu, vu );
 
 	/* First, consider the edge inbound into this vertex */
-	othereu = RT_LIST_PLAST_CIRC( edgeuse, this_eu );
-	if( vu->v_p != othereu->vu_p->v_p )  {
-		/* Vector from othereu to this_eu */
-		VSUB2( vec, vu->v_p->vg_p->coord,
-			othereu->vu_p->v_p->vg_p->coord );
-		VUNITIZE(vec);
-		vsp->min_vu_dot = VDOT( vec, rs->dir );
+	this = NMG_V_ASSESSMENT_PREV(ass);
+	if( this == NMG_E_ASSESSMENT_ON_REV )  {
+		vsp->min_vu_dot = -1;		/* straight back */
+	} else if( this == NMG_E_ASSESSMENT_ON_FORW )  {
+		vsp->min_vu_dot = 1;		/* straight forw */
 	} else {
-		vsp->min_vu_dot = 99;		/* larger than +1 */
+		othereu = RT_LIST_PLAST_CIRC( edgeuse, this_eu );
+		if( vu->v_p != othereu->vu_p->v_p )  {
+			/* Vector from othereu to this_eu */
+			VSUB2( vec, vu->v_p->vg_p->coord,
+				othereu->vu_p->v_p->vg_p->coord );
+			VUNITIZE(vec);
+			vsp->min_vu_dot = VDOT( vec, rs->dir );
+		} else {
+			vsp->min_vu_dot = 99;		/* larger than +1 */
+		}
 	}
 
 	/* Second, consider the edge outbound from this vertex (forw) */
-	othereu = RT_LIST_PNEXT_CIRC( edgeuse, this_eu );
-	if( vu->v_p != othereu->vu_p->v_p )  {
-		/* Vector from othereu to this_eu */
-		VSUB2( vec, vu->v_p->vg_p->coord,
-			othereu->vu_p->v_p->vg_p->coord );
-		VUNITIZE(vec);
-		dot = VDOT( vec, rs->dir );
-		if( dot < vsp->min_vu_dot )  {
-			vsp->min_vu_dot = dot;
+	this = NMG_V_ASSESSMENT_NEXT(ass);
+	if( this == NMG_E_ASSESSMENT_ON_REV )  {
+		dot = -1;		/* straight back */
+		if( dot < vsp->min_vu_dot )  vsp->min_vu_dot = dot;
+	} else if( this == NMG_E_ASSESSMENT_ON_FORW )  {
+		dot = 1;		/* straight forw */
+		if( dot < vsp->min_vu_dot )  vsp->min_vu_dot = dot;
+	} else {
+		othereu = RT_LIST_PNEXT_CIRC( edgeuse, this_eu );
+		if( vu->v_p != othereu->vu_p->v_p )  {
+			/* Vector from othereu to this_eu */
+			VSUB2( vec, vu->v_p->vg_p->coord,
+				othereu->vu_p->v_p->vg_p->coord );
+			VUNITIZE(vec);
+			dot = VDOT( vec, rs->dir );
+			if( dot < vsp->min_vu_dot )  {
+				vsp->min_vu_dot = dot;
+			}
 		}
 	}
 }
@@ -598,7 +616,7 @@ CONST struct nmg_ray_state	*rs;
  *  sort them into the "proper" order for driving the state machine.
  */
 int
-nmg_fact_coincident_vu_sort( rs, start, end )
+nmg_face_coincident_vu_sort( rs, start, end )
 struct nmg_ray_state	*rs;
 int			start;		/* first index */
 int			end;		/* last index + 1 */
@@ -614,7 +632,7 @@ int			end;		/* last index + 1 */
 	int		l;
 
 	if(rt_g.NMG_debug&DEBUG_COMBINE)
-		rt_log("nmg_fact_coincident_vu_sort(, %d, %d)\n", start, end);
+		rt_log("nmg_face_coincident_vu_sort(, %d, %d)\n", start, end);
 	num = end - start;
 	vs = (struct nmg_vu_stuff *)rt_malloc( sizeof(struct nmg_vu_stuff)*num,
 		"nmg_vu_stuff" );
@@ -654,7 +672,7 @@ int			end;		/* last index + 1 */
 		/* Check entering and departing edgeuse angle w.r.t. ray */
 		/* This is already done once in nmg_assess_vu();  reuse? */
 		/* Computes vs[nvu].min_vu_dot */
-		nmg_face_vu_dot( &vs[nvu], lu, rs );
+		nmg_face_vu_dot( &vs[nvu], lu, rs, ass );
 
 		/* Search for loopuse table entry */
 		for( l = 0; l < nloop; l++ )  {
@@ -869,7 +887,7 @@ vect_t		dir;
 				if( vu[k]->v_p != v )  rt_bomb("nmg_face_combine: vu block with differing vertices\n");
 			}
 			/* All vu's point to the same vertex, sort them */
-			m = nmg_fact_coincident_vu_sort( &rs, i, j );
+			m = nmg_face_coincident_vu_sort( &rs, i, j );
 			/* Process vu list, up to cutoff index 'm' */
 			for( k = i; k < m; k++ )  {
 				nmg_face_state_transition( vu[k], &rs, k, 1 );
@@ -884,6 +902,7 @@ vect_t		dir;
 	if( rs.state != NMG_STATE_OUT )  {
 		rt_log("ERROR nmg_face_combine() ended in state '%s'?\n",
 			nmg_state_names[rs.state] );
+		rt_bomb("nmg_face_combine() bad ending state\n");
 	}
 
 	rt_free((char *)mag, "vector magnitudes");
