@@ -1,6 +1,14 @@
 #	Makefile for Cake
 #
-#	$Header$
+#$Header$
+
+# -DATT for SystemV, -DBSD for Berkeley, done by machinetype.sh
+#
+COPTS = -DCAKEDEBUG -DYYDEBUG -DCAREFUL -D`machinetype.sh -a`
+
+DEST  = /usr/brlcad/bin
+
+#LDFLAGS=-k 64k
 
 HDR   =	cake.h conf.h port.h
 SRC   =	act.c chase.c entry.c error.c expand.c file.c \
@@ -13,35 +21,32 @@ GEN   =	cake_g.y cake_s.l
 GHDR  =	cake_g.h
 GSRC  =	cake_g.c cake_s.c
 GOBJ  =	cake_g.o cake_s.o
-DEST  = /mip/usr/bin
-COPTS = -DCAKEDEBUG -DYYDEBUG -DCAREFUL
+
 CFLAGS= $(COPTS)
-LDFLAGS=-k 64k
 
 cake:		$(OBJ) $(GOBJ)
 		$(CC) $(LDFLAGS) $(CFLAGS) -o cake $(OBJ) $(GOBJ)
-		-/bin/rm fake
-		ln cake fake
+#		-/bin/rm fake
+#		ln cake fake
 
-all:		cake lint tags defs
+all:		cake lint tags
 
 install:	cake
-		mv $(DEST)/cake /tmp/Oldcake
-		cp cake $(DEST)/cake
-		strip $(DEST)/cake
+		-mv -f $(DEST)/cake $(DEST)/cake.bak
+		mv cake $(DEST)/cake
 
 $(OBJ):		$(HDR)
 $(GOBJ):	$(HDR)
 
 cake_g.c:	cake_g.y
 		yacc -dv cake_g.y
-		@mv y.tab.h cake_g.h
-		@mv y.tab.c cake_g.c
-		@mv y.output cake_g.t
+		mv y.tab.h cake_g.h
+		mv y.tab.c cake_g.c
+		mv y.output cake_g.t
 
 cake_s.c:	cake_s.l
 		lex cake_s.l
-		@mv lex.yy.c cake_s.c
+		mv lex.yy.c cake_s.c
 
 var:		$(SRC) $(GSRC)
 		var -DATT $(COPTS) $(SRC) $(GSRC) > Var
@@ -71,9 +76,6 @@ cchk:		$(SRC)
 tags:		$(SRC) $(GSRC)
 		ctags $(SRC) $(GSRC)
 
-defs:		$(SRC) $(GSRC)
-		defn $(SRC) $(GSRC) > defs
-
 cxref:		$(SRC)
 		cxref -C $(SRC) > Cxref
 
@@ -84,9 +86,12 @@ asize:
 		ssize $(SRC) $(GEN) $(GSRC)
 
 clean:		
-		/bin/rm	cake_g.h cake_g.t \
+		/bin/rm -f cake_g.h cake_g.t \
 			Make_errs Lint_errs Cchk_errs core \
 			$(OBJ) $(GOBJ) $(GSRC)
 
 gclean:		
-		/bin/rm $(GSRC) $(GHDR)
+		/bin/rm -f $(GSRC) $(GHDR)
+
+clobber: clean
+		/bin/rm -f cake fake
