@@ -30,12 +30,16 @@ static char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 struct pipe_internal {
+	int		pipe_magic;
 	int		pipe_count;
 	struct wdb_pipeseg pipe_segs;
 };
+#define RT_PIPE_INTERNAL_MAGIC	0x77ddbbe3
+#define RT_PIPE_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PIPE_INTERNAL_MAGIC,"pipe_internal")
 
 struct pipe_specific {
 	vect_t	pipe_V;
+	/* XXX more here */
 };
 
 RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
@@ -92,6 +96,7 @@ struct rt_i		*rtip;
 #endif
 	RT_CK_DB_INTERNAL( ip );
 	pip = (struct pipe_internal *)ip->idb_ptr;
+	RT_PIPE_CK_MAGIC(pip);
 
 	rt_pipe_ifree( ip );
 	return(-1);	/* unfinished */
@@ -279,6 +284,7 @@ double		norm_tol;
 #endif
 	RT_CK_DB_INTERNAL(ip);
 	pip = (struct pipe_internal *)ip->idb_ptr;
+	RT_PIPE_CK_MAGIC(pip);
 
 	np = RT_LIST_FIRST(wdb_pipeseg, &pip->pipe_segs.l);
 	ADD_VL( vhead, np->ps_start, 0 );
@@ -415,11 +421,79 @@ done:	;
  *			R T _ P I P E _ E X P O R T
  */
 int
-rt_pipe_export( ep, ip )
+rt_pipe_export( ep, ip, local2mm )
 struct rt_external	*ep;
 struct rt_db_internal	*ip;
+double			local2mm;
 {
-	return(-1);
+	struct pipe_internal	*pip;
+	struct wdb_pipeseg	*headp;
+	register struct exported_pipeseg *eps;
+	register struct wdb_pipeseg	*psp;
+	struct wdb_pipeseg		tmp;
+	int		count;
+	int		ngran;
+	int		nbytes;
+	union record	*rec;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_PIPE )  return(-1);
+	pip = (struct pipe_internal *)ip->idb_ptr;
+	RT_PIPE_CK_MAGIC(pip);
+
+	headp = &pip->pipe_segs;
+
+	/* Count number of segments, verify that last seg is an END seg */
+	count = 0;
+	for( RT_LIST( psp, wdb_pipeseg, &headp->l ) )  {
+		count++;
+		switch( psp->ps_type )  {
+		case WDB_PIPESEG_TYPE_END:
+			if( RT_LIST_NEXT_NOT_HEAD( psp, &headp->l ) )
+				return(-1);	/* Inconsistency in list */
+			break;
+		case WDB_PIPESEG_TYPE_LINEAR:
+		case WDB_PIPESEG_TYPE_BEND:
+			if( RT_LIST_NEXT_IS_HEAD( psp, &headp->l ) )
+				return(-2);	/* List ends w/o TYPE_END */
+			break;
+		default:
+			return(-3);		/* unknown segment type */
+		}
+	}
+	if( count <= 1 )
+		return(-4);			/* Not enough for 1 pipe! */
+
+	/* Determine how many whole granules will be required */
+	nbytes = sizeof(struct pipe_wire_rec) +
+		(count-1) * sizeof(struct exported_pipeseg);
+	ngran = (nbytes + sizeof(union record) - 1) / sizeof(union record);
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = ngran * sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "pipe external");
+	rec = (union record *)ep->ext_buf;
+
+	rec->pw.pw_id = DBID_PIPE;
+	rec->pw.pw_count = ngran;
+
+	/* Convert the pipe segments to external form */
+	eps = &rec->pw.pw_data[0];
+	for( RT_LIST( psp, wdb_pipeseg, &headp->l ), eps++ )  {
+		/* Avoid need for htonl() here */
+		eps->eps_type[0] = (char)psp->ps_type;
+		/* Convert from user units to mm */
+		VSCALE( tmp.ps_start, psp->ps_start, local2mm );
+		VSCALE( tmp.ps_bendcenter, psp->ps_bendcenter, local2mm );
+		tmp.ps_id = psp->ps_id * local2mm;
+		tmp.ps_od = psp->ps_od * local2mm;
+		htond( eps->eps_start, tmp.ps_start, 3 );
+		htond( eps->eps_bendcenter, tmp.ps_bendcenter, 3 );
+		htond( eps->eps_id, &tmp.ps_id, 1 );
+		htond( eps->eps_od, &tmp.ps_od, 1 );
+	}
+
+	return(0);
 }
 
 /*
@@ -430,21 +504,25 @@ struct rt_db_internal	*ip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_pipe_describe( str, ip, verbose )
+rt_pipe_describe( str, ip, verbose, mm2local )
 struct rt_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
+double			mm2local;
 {
-	register struct pipe_internal	*pip =
-		(struct pipe_internal *)ip->idb_ptr;
+	register struct pipe_internal	*pip;
 	register struct wdb_pipeseg	*psp;
 	char	buf[256];
 	int	segno = 0;
 
 	RT_CK_DB_INTERNAL(ip);
+	pip = (struct pipe_internal *)ip->idb_ptr;
+	RT_PIPE_CK_MAGIC(pip);
 
 	sprintf(buf, "pipe with %d segments\n", pip->pipe_count );
 	rt_vls_strcat( str, buf );
+
+	if( !verbose )  return(0);
 
 	for( RT_LIST_FOR( psp, wdb_pipeseg, &pip->pipe_segs.l ) )  {
 		/* XXX check magic number here */
@@ -463,20 +541,25 @@ int			verbose;
 		default:
 			return(-1);
 		}
-		sprintf(buf, "  od=%g", psp->ps_od );
+		sprintf(buf, "  od=%g", psp->ps_od * mm2local );
 		rt_vls_strcat( str, buf );
 		if( psp->ps_id > 0 )  {
-			sprintf(buf, ", id  = %g", psp->ps_id );
+			sprintf(buf, ", id  = %g", psp->ps_id * mm2local );
 			rt_vls_strcat( str, buf );
 		}
 		rt_vls_strcat( str, "\n" );
 
-		sprintf(buf, "\t  start=(%g, %g, %g)\n", V3ARGS(psp->ps_start) );
+		sprintf(buf, "\t  start=(%g, %g, %g)\n",
+			psp->ps_start[X] * mm2local,
+			psp->ps_start[Y] * mm2local,
+			psp->ps_start[Z] * mm2local );
 		rt_vls_strcat( str, buf );
 
 		if( psp->ps_type == WDB_PIPESEG_TYPE_BEND )  {
 			sprintf(buf, "\t  bendcenter=(%g, %g, %g)\n",
-				V3ARGS(psp->ps_bendcenter) );
+				psp->ps_bendcenter[X] * mm2local,
+				psp->ps_bendcenter[Y] * mm2local,
+				psp->ps_bendcenter[Z] * mm2local );
 			rt_vls_strcat( str, buf );
 		}
 	}
@@ -484,18 +567,20 @@ int			verbose;
 }
 
 /*
+ *			R T _ P I P E _ I F R E E
+ *
  *  Free the storage associated with the rt_db_internal version of this solid.
- *  XXX The suffix of this name is temporary.
  */
 void
 rt_pipe_ifree( ip )
 struct rt_db_internal	*ip;
 {
-	register struct pipe_internal	*pipe =
-		(struct pipe_internal*)ip->idb_ptr;
+	register struct pipe_internal	*pipe;
 	register struct wdb_pipeseg	*psp;
 
 	RT_CK_DB_INTERNAL(ip);
+	pipe = (struct pipe_internal*)ip->idb_ptr;
+	RT_PIPE_CK_MAGIC(pipe);
 
 	while( RT_LIST_WHILE( psp, wdb_pipeseg, &pipe->pipe_segs.l ) )  {
 		RT_LIST_DEQUEUE( &(psp->l) );
