@@ -187,8 +187,11 @@ struct vertexuse	*dualvu;		/* vu's dual in other shell.  May be NULL */
 		rt_bomb("nmg_enlist_vu: vu is not in s1 or s2\n");
 	}
 
-	if( dualvu && nmg_find_s_of_vu(dualvu) != duals )  rt_bomb("dual vu shell mis-match\n");
-	if( dualvu && vu->v_p != dualvu->v_p )  rt_bomb("dual vu has different vertex\n");
+	if( dualvu )  {
+		if( vu->v_p != dualvu->v_p )  rt_bomb("dual vu has different vertex\n");
+		if( nmg_find_s_of_vu(dualvu) != duals )  rt_bomb("dual vu shell mis-match\n");
+		if( dualfu && nmg_find_fu_of_vu(dualvu) != dualfu) rt_bomb("dual vu has wrong fu\n");
+	}
 
 	/* Second, search for vu's dual */
 	if( dualfu )  {
