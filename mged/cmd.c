@@ -305,8 +305,8 @@ static struct funtab funtab[] = {
 "g", "groupname <objects>", "group objects",
 	f_group,3,MAXARGS,
 #ifdef MGED_TCL
-"gui",	"", "Bring up a Tcl/Tk Graphical User Interface",
-	f_gui, 1, 1,
+"gui",	"text_widget_name", "Bring up a Tcl/Tk Graphical User Interface",
+	f_gui, 2, 2,
 #endif
 #ifdef HIDELINE
 "H", "plotfile [step_size %epsilon]", "produce hidden-line unix-plot",
@@ -1260,7 +1260,7 @@ char **argv;
 		return CMD_BAD;
 	}
 
-	strncpy(text_widget_name, argv[1]);
+	strncpy(text_widget_name, argv[1], sizeof(text_widget_name));
 
 	rt_log("Please direct your attention to the mged interaction window.\n");
 	rt_add_hook( gui_output );
