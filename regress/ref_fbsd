@@ -1,0 +1,3675 @@
+/vld/regress/brlcad_scripts/client.sh: starting on wide.arl.army.mil
+
+PATH = /usr/bin:/bin:/usr/brlcad/bin
+HOME = /vld/regress
+
+./setup.sh -s
+Is it OK to delete the following directories:
+   /usr/brlcad/bin
+   /usr/brlcad/etc
+   /usr/brlcad/html
+   /usr/brlcad/include
+   /usr/brlcad/itcl3.0
+   /usr/brlcad/itk3.0
+   /usr/brlcad/lib
+   /usr/brlcad/man
+   /usr/brlcad/pro-engineer
+   /usr/brlcad/sample_applications
+   /usr/brlcad/tcl8.2
+   /usr/brlcad/tclscripts
+   /usr/brlcad/tk8.2
+   /usr/brlcad/vfont
+(yes|no)[no]
+BINPERM=555, MANPERM=444
+main.o(.text+0x1710): warning: tempnam() possibly used unsafely; consider using mkstemp()
+file.o(.text+0x10): warning: mktemp() possibly used unsafely; consider using mkstemp()
+./gen.sh -s all
+-------------------------------- .bench.fbsd
+-------------------------------- .libsysv.fbsd
+-------------------------------- .libbu.fbsd
+-------------------------------- .libbn.fbsd
+-------------------------------- .libwdb.fbsd
+-------------------------------- .libpkg.fbsd
+-------------------------------- .libfb.fbsd
+-------------------------------- .libtcl.fbsd
+creating cache cache.fbsd
+CFLAGS =  -O2 
+MAKE_LIB=${SHLIB_LD} ${TCL_LIB_FILE} ${OBJS} 
+TCL_LIB_FILE=libtcl8.2${DBGX}.so
+updating cache cache.fbsd
+creating ./config.status
+creating Makefile
+creating tclConfig.sh
+/c/regress/brlcad/.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .libtk.fbsd
+creating cache cache.fbsd
+updating cache cache.fbsd
+creating ./config.status
+creating Makefile
+creating tkConfig.sh
+/c/regress/brlcad/.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .libitcl.fbsd
+../libitcl/configure --srcdir=/c/regress/brlcad/.libitcl.fbsd/../libitcl/ --enable-shared --quiet --cache-file cache.fbsd --exec-prefix=/usr/brlcad --prefix=/usr/brlcad --with-tcl=/c/regress/brlcad/.libitcl.fbsd/../.libtcl.fbsd --with-tk=/c/regress/brlcad/.libitcl.fbsd/../.libtk.fbsd
+creating cache cache.fbsd
+updating cache cache.fbsd
+creating ./config.status
+creating Makefile
+configuring in itcl/unix
+mkdir ./itcl
+mkdir ./itcl/unix
+running /bin/sh /c/regress/brlcad/.libitcl.fbsd/../libitcl/itcl/unix/configure  --enable-shared --quiet --exec-prefix=/usr/brlcad --prefix=/usr/brlcad --with-tcl=/c/regress/brlcad/.libitcl.fbsd/../.libtcl.fbsd --with-tk=/c/regress/brlcad/.libitcl.fbsd/../.libtk.fbsd --cache-file=../../cache.fbsd --srcdir=/c/regress/brlcad/.libitcl.fbsd/../libitcl/itcl/unix
+loading cache ../../cache.fbsd
+cflags= -O2 
+updating cache ../../cache.fbsd
+creating ./config.status
+creating Makefile
+creating pkgIndex.tcl
+creating itclConfig.sh
+configuring in itk/unix
+mkdir ./itk
+mkdir ./itk/unix
+running /bin/sh /c/regress/brlcad/.libitcl.fbsd/../libitcl/itk/unix/configure  --enable-shared --quiet --exec-prefix=/usr/brlcad --prefix=/usr/brlcad --with-tcl=/c/regress/brlcad/.libitcl.fbsd/../.libtcl.fbsd --with-tk=/c/regress/brlcad/.libitcl.fbsd/../.libtk.fbsd --cache-file=../../cache.fbsd --srcdir=/c/regress/brlcad/.libitcl.fbsd/../libitcl/itk/unix
+loading cache ../../cache.fbsd
+creating ./config.status
+creating Makefile
+creating pkgIndex.tcl
+creating itkConfig.sh
+configuring in iwidgets2.2.0/unix
+mkdir ./iwidgets2.2.0
+mkdir ./iwidgets2.2.0/unix
+running /bin/sh /c/regress/brlcad/.libitcl.fbsd/../libitcl/iwidgets2.2.0/unix/configure  --enable-shared --quiet --exec-prefix=/usr/brlcad --prefix=/usr/brlcad --with-tcl=/c/regress/brlcad/.libitcl.fbsd/../.libtcl.fbsd --with-tk=/c/regress/brlcad/.libitcl.fbsd/../.libtk.fbsd --cache-file=../../cache.fbsd --srcdir=/c/regress/brlcad/.libitcl.fbsd/../libitcl/iwidgets2.2.0/unix
+loading cache ../../cache.fbsd
+creating ./config.status
+creating Makefile
+configuring in iwidgets3.0.0/unix
+mkdir ./iwidgets3.0.0
+mkdir ./iwidgets3.0.0/unix
+running /bin/sh /c/regress/brlcad/.libitcl.fbsd/../libitcl/iwidgets3.0.0/unix/configure  --enable-shared --quiet --exec-prefix=/usr/brlcad --prefix=/usr/brlcad --with-tcl=/c/regress/brlcad/.libitcl.fbsd/../.libtcl.fbsd --with-tk=/c/regress/brlcad/.libitcl.fbsd/../.libtk.fbsd --cache-file=../../cache.fbsd --srcdir=/c/regress/brlcad/.libitcl.fbsd/../libitcl/iwidgets3.0.0/unix
+loading cache ../../cache.fbsd
+creating ./config.status
+creating Makefile
+../libitcl/fix_makefile.sh > Makefile.fbsd
+cakeflags=-k -s
+make -k -s -f Makefile.fbsd -k -s all
+/c/regress/brlcad/.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+/c/regress/brlcad/.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+Building iwidgets.tcl
+Building pkgIndex.tcl
+Building iwidgets.tcl
+Building pkgIndex.tcl
+ rm -f libitcl.so libitk.so ; ln -s libitk3.0.so libitk.so ; ln -s libitcl3.0.so libitcl.so
+cake: itclsh is up to date
+cake: libitk3.0.so is up to date
+cake: itkwish is up to date
+-------------------------------- .libdm.fbsd
+-------------------------------- .fbserv.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .librt.fbsd
+-------------------------------- .liboptical.fbsd
+-------------------------------- .libmultispectral.fbsd
+-------------------------------- .libtermio.fbsd
+-------------------------------- .libtclcad.fbsd
+-------------------------------- .libtclhooks.fbsd
+-------------------------------- .conv.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .db.fbsd
+NOTICE:  boolean-ops.g is BRL-CAD v5 format.
+NOTICE:  bldg391.g is BRL-CAD v5 format.
+NOTICE:  crod.g is BRL-CAD v5 format.
+NOTICE:  demo.g is BRL-CAD v5 format.
+NOTICE:  ktank.g is BRL-CAD v5 format.
+NOTICE:  moss.g is BRL-CAD v5 format.
+NOTICE:  prim.g is BRL-CAD v5 format.
+NOTICE:  star.g is BRL-CAD v5 format.
+NOTICE:  truck.g is BRL-CAD v5 format.
+NOTICE:  world.g is BRL-CAD v5 format.
+NOTICE:  cube.g is BRL-CAD v5 format.
+NOTICE:  axis.g is BRL-CAD v5 format.
+NOTICE:  woodsman.g is BRL-CAD v5 format.
+NOTICE:  m35.g is BRL-CAD v5 format.
+NOTICE:  lgt-test.g is BRL-CAD v5 format.
+NOTICE:  havoc.g is BRL-CAD v5 format.
+NOTICE:  tank_car.g is BRL-CAD v5 format.
+NOTICE:  sphflake.g is BRL-CAD v5 format.
+NOTICE:  xmp.g is BRL-CAD v5 format.
+NOTICE:  wave.g is BRL-CAD v5 format.
+NOTICE:  pic.g is BRL-CAD v5 format.
+NOTICE:  galileo.g is BRL-CAD v5 format.
+NOTICE:  castle.g is BRL-CAD v5 format.
+NOTICE:  cray.g is BRL-CAD v5 format.
+NOTICE:  kman.g is BRL-CAD v5 format.
+NOTICE:  terra.g is BRL-CAD v5 format.
+-------------------------------- .rt.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .mged.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+tedit.o(.text+0xe6): warning: mktemp() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .remrt.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .libcursor.fbsd
+-------------------------------- .liborle.fbsd
+-------------------------------- .libutahrle.fbsd
+-------------------------------- .libfft.fbsd
+adds = 58, mults = 12
+adds = 156, mults = 42
+adds = 394, mults = 124
+adds = 956, mults = 330
+adds = 2250, mults = 828
+adds = 58, mults = 31
+adds = 156, mults = 82
+adds = 394, mults = 207
+adds = 956, mults = 498
+adds = 2250, mults = 1167
+-------------------------------- .proc-db.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .jack.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .mk.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .comgeom-g.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .iges.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .fb.fbsd
+../fb/bw-fb.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/cat-fb.c: At top level:
+../fb/cat-fb.c: At top level:
+../fb/cat-fb.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fbgammamod.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fb-pix.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fbcolor.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fbfade.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fbgamma.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fblabel.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fbstretch.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/fbzoom.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/gif-fb.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/gif2fb.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/pix-fb.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../fb/polar-fb.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .util.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+buffer.o(.text+0x9f): warning: mktemp() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../util/mac-pix.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../util/pixscale.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../util/pl-asc.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../util/pl-pl.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../util/pl-tek.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../util/pl-ps.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../util/pldebug.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../util/plrot.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../util/plstat.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../util/imgdims.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .fbed.fbsd
+In file included from ../fbed/fbed.c:42:
+../fbed/fbed.c: At top level:
+../fbed/getfont.c: At top level:
+../fbed/getinput.c: At top level:
+../fbed/pos_pad.c: At top level:
+../fbed/pos_pad.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .lgt.fbsd
+../lgt/ir.c: At top level:
+../lgt/lgt_db.c: At top level:
+../lgt/mat_db.c: At top level:
+../lgt/mat_db.c: At top level:
+../lgt/octree.c: At top level:
+../lgt/octree.c: At top level:
+../lgt/reflect.c: At top level:
+../lgt/hmenu.c: At top level:
+do_options.o(.text+0x7c0): warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .patch.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .vas4.fbsd
+../vas4/vas4.c: At top level:
+../vas4/vas_io.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .vdeck.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .sig.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../sig/fhor.c: At top level:
+../sig/fhor.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .tab.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../tab/script.l: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .tools.fbsd
+into.o(.text+0x156): warning: mktemp() possibly used unsafely; consider using mkstemp()
+rleaddcom.o(.text+0x200): warning: mktemp() possibly used unsafely; consider using mkstemp()
+rlecat.o(.text+0x14f): warning: mktemp() possibly used unsafely; consider using mkstemp()
+-------------------------------- .anim.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .off.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .halftone.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .nirt.fbsd
+../nirt/if.c: At top level:
+../nirt/if.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .irprep.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .jove.fbsd
+../jove/jove_disp.c: At top level:
+../jove/jove_disp.c: At top level:
+../jove/jove_disp.c: At top level:
+../jove/jove_disp.c: At top level:
+../jove/jove_draw.c: At top level:
+../jove/jove_draw.c: At top level:
+../jove/jove_draw.c: At top level:
+../jove/jove_extend.c: At top level:
+../jove/jove_extend.c: At top level:
+../jove/jove_extend.c: At top level:
+../jove/jove_extend.c: At top level:
+../jove/jove_funcs.c: At top level:
+../jove/jove_funcs.c: At top level:
+../jove/jove_insert.c: At top level:
+../jove/jove_insert.c: At top level:
+../jove/jove_insert.c: At top level:
+../jove/jove_main.c: At top level:
+../jove/jove_main.c: At top level:
+../jove/jove_main.c: At top level:
+../jove/jove_misc.c: At top level:
+../jove/jove_misc.c: At top level:
+../jove/jove_misc.c: At top level:
+../jove/jove_misc.c: At top level:
+../jove/jove_re.c: At top level:
+../jove/jove_re.c: At top level:
+../jove/jove_re.c: At top level:
+../jove/jove_re.c: At top level:
+../jove/jove_screen.c: At top level:
+../jove/jove_wind.c: At top level:
+../jove/jove_wind.c: At top level:
+jove_io.o(.text+0x11f2): warning: tempnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .burst.fbsd
+burst.o(.text+0x363): warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .gtools.fbsd
+../gtools/g_lint.c: At top level:
+../gtools/g_lint.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+../gtools/g_diff.c: At top level:
+../gtools/g_diff.c: At top level:
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+-------------------------------- .bwish.fbsd
+../.libtcl.fbsd/libtcl8.2.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
+wide.arl.army.mil compilation complete
+./gen.sh -s install
+-------------------------------- h
+......checking XtndRunsv.h
+++++++INSTALLED /usr/brlcad/include/brlcad/XtndRunsv.h
+......checking anim.h
+++++++INSTALLED /usr/brlcad/include/brlcad/anim.h
+......checking bn.h
+++++++INSTALLED /usr/brlcad/include/brlcad/bn.h
+......checking bu.h
+++++++INSTALLED /usr/brlcad/include/brlcad/bu.h
+......checking cmd.h
+++++++INSTALLED /usr/brlcad/include/brlcad/cmd.h
+......checking compat4.h
+++++++INSTALLED /usr/brlcad/include/brlcad/compat4.h
+......checking conf.h
+++++++INSTALLED /usr/brlcad/include/brlcad/conf.h
+......checking db.h
+++++++INSTALLED /usr/brlcad/include/brlcad/db.h
+......checking db5.h
+++++++INSTALLED /usr/brlcad/include/brlcad/db5.h
+......checking dm-Null.h
+++++++INSTALLED /usr/brlcad/include/brlcad/dm-Null.h
+......checking dm-X.h
+++++++INSTALLED /usr/brlcad/include/brlcad/dm-X.h
+......checking dm-glx.h
+++++++INSTALLED /usr/brlcad/include/brlcad/dm-glx.h
+......checking dm-ogl.h
+++++++INSTALLED /usr/brlcad/include/brlcad/dm-ogl.h
+......checking dm-pex.h
+++++++INSTALLED /usr/brlcad/include/brlcad/dm-pex.h
+......checking dm-plot.h
+++++++INSTALLED /usr/brlcad/include/brlcad/dm-plot.h
+......checking dm-ps.h
+++++++INSTALLED /usr/brlcad/include/brlcad/dm-ps.h
+......checking dm.h
+++++++INSTALLED /usr/brlcad/include/brlcad/dm.h
+......checking dm_color.h
+++++++INSTALLED /usr/brlcad/include/brlcad/dm_color.h
+......checking dm_xvars.h
+++++++INSTALLED /usr/brlcad/include/brlcad/dm_xvars.h
+......checking externs.h
+++++++INSTALLED /usr/brlcad/include/brlcad/externs.h
+......checking fb.h
+++++++INSTALLED /usr/brlcad/include/brlcad/fb.h
+......checking fbserv_obj.h
+++++++INSTALLED /usr/brlcad/include/brlcad/fbserv_obj.h
+......checking forms.h
+++++++INSTALLED /usr/brlcad/include/brlcad/forms.h
+......checking itcl.h
+++++++INSTALLED /usr/brlcad/include/brlcad/itcl.h
+......checking itclInt.h
+++++++INSTALLED /usr/brlcad/include/brlcad/itclInt.h
+......checking itk.h
+++++++INSTALLED /usr/brlcad/include/brlcad/itk.h
+......checking libtermio.h
+++++++INSTALLED /usr/brlcad/include/brlcad/libtermio.h
+......checking machine.h
+++++++INSTALLED /usr/brlcad/include/brlcad/machine.h
+......checking mater.h
+++++++INSTALLED /usr/brlcad/include/brlcad/mater.h
+......checking msr.h
+++++++INSTALLED /usr/brlcad/include/brlcad/msr.h
+......checking nmg.h
+++++++INSTALLED /usr/brlcad/include/brlcad/nmg.h
+......checking noalias-prag.h
+++++++INSTALLED /usr/brlcad/include/brlcad/noalias-prag.h
+......checking noalias.h
+++++++INSTALLED /usr/brlcad/include/brlcad/noalias.h
+......checking nurb.h
+++++++INSTALLED /usr/brlcad/include/brlcad/nurb.h
+......checking orle.h
+++++++INSTALLED /usr/brlcad/include/brlcad/orle.h
+......checking pkg.h
+++++++INSTALLED /usr/brlcad/include/brlcad/pkg.h
+......checking plot3.h
+++++++INSTALLED /usr/brlcad/include/brlcad/plot3.h
+......checking png.h
+++++++INSTALLED /usr/brlcad/include/brlcad/png.h
+......checking pngconf.h
+++++++INSTALLED /usr/brlcad/include/brlcad/pngconf.h
+......checking pyramid.h
+++++++INSTALLED /usr/brlcad/include/brlcad/pyramid.h
+......checking raytrace.h
+++++++INSTALLED /usr/brlcad/include/brlcad/raytrace.h
+......checking redblack.h
+++++++INSTALLED /usr/brlcad/include/brlcad/redblack.h
+......checking regex.h
+++++++INSTALLED /usr/brlcad/include/brlcad/regex.h
+......checking rle.h
+++++++INSTALLED /usr/brlcad/include/brlcad/rle.h
+......checking rle_code.h
+++++++INSTALLED /usr/brlcad/include/brlcad/rle_code.h
+......checking rle_config.h
+++++++INSTALLED /usr/brlcad/include/brlcad/rle_config.h
+......checking rle_getraw.h
+++++++INSTALLED /usr/brlcad/include/brlcad/rle_getraw.h
+......checking rle_put.h
+++++++INSTALLED /usr/brlcad/include/brlcad/rle_put.h
+......checking rle_raw.h
+++++++INSTALLED /usr/brlcad/include/brlcad/rle_raw.h
+......checking rtgeom.h
+++++++INSTALLED /usr/brlcad/include/brlcad/rtgeom.h
+......checking rtlist.h
+++++++INSTALLED /usr/brlcad/include/brlcad/rtlist.h
+......checking rtprivate.h
+++++++INSTALLED /usr/brlcad/include/brlcad/rtprivate.h
+......checking rtstring.h
+++++++INSTALLED /usr/brlcad/include/brlcad/rtstring.h
+......checking shadefuncs.h
+++++++INSTALLED /usr/brlcad/include/brlcad/shadefuncs.h
+......checking shadework.h
+++++++INSTALLED /usr/brlcad/include/brlcad/shadework.h
+......checking shortvect-pr.h
+++++++INSTALLED /usr/brlcad/include/brlcad/shortvect-pr.h
+......checking shortvect.h
+++++++INSTALLED /usr/brlcad/include/brlcad/shortvect.h
+......checking solid.h
+++++++INSTALLED /usr/brlcad/include/brlcad/solid.h
+......checking spectrum.h
+++++++INSTALLED /usr/brlcad/include/brlcad/spectrum.h
+......checking spm.h
+++++++INSTALLED /usr/brlcad/include/brlcad/spm.h
+......checking svfb.h
+++++++INSTALLED /usr/brlcad/include/brlcad/svfb.h
+......checking svfb_global.h
+++++++INSTALLED /usr/brlcad/include/brlcad/svfb_global.h
+......checking tcl.h
+++++++INSTALLED /usr/brlcad/include/brlcad/tcl.h
+......checking tclDecls.h
+++++++INSTALLED /usr/brlcad/include/brlcad/tclDecls.h
+......checking tclInt.h
+++++++INSTALLED /usr/brlcad/include/brlcad/tclInt.h
+......checking tclIntDecls.h
+++++++INSTALLED /usr/brlcad/include/brlcad/tclIntDecls.h
+......checking tk.h
+++++++INSTALLED /usr/brlcad/include/brlcad/tk.h
+......checking tkDecls.h
+++++++INSTALLED /usr/brlcad/include/brlcad/tkDecls.h
+......checking vectfont.h
+++++++INSTALLED /usr/brlcad/include/brlcad/vectfont.h
+......checking vfont-if.h
+++++++INSTALLED /usr/brlcad/include/brlcad/vfont-if.h
+......checking vmath.h
+++++++INSTALLED /usr/brlcad/include/brlcad/vmath.h
+......checking wdb.h
+++++++INSTALLED /usr/brlcad/include/brlcad/wdb.h
+......checking zconf.h
+++++++INSTALLED /usr/brlcad/include/brlcad/zconf.h
+......checking zlib.h
+++++++INSTALLED /usr/brlcad/include/brlcad/zlib.h
+-------------------------------- doc
+++++++INSTALLED /usr/brlcad/man/man5/bw.5
+++++++INSTALLED /usr/brlcad/man/man5/cmap.5
+++++++INSTALLED /usr/brlcad/man/man5/pix.5
+++++++INSTALLED /usr/brlcad/man/man5/plot3.5
+-------------------------------- pix
+cake: install is up to date
+-------------------------------- vfont
+......checking fix.6r
+++++++INSTALLED /usr/brlcad/vfont/fix.6r
+......checking nonie.r.12
+++++++INSTALLED /usr/brlcad/vfont/nonie.r.12
+-------------------------------- awf
+......checking common
+++++++INSTALLED /usr/brlcad/etc/common
+......checking dev.dumb
+++++++INSTALLED /usr/brlcad/etc/dev.dumb
+......checking mac.man
+++++++INSTALLED /usr/brlcad/etc/mac.man
+......checking mac.ms
+++++++INSTALLED /usr/brlcad/etc/mac.ms
+......checking pass1
+++++++INSTALLED /usr/brlcad/etc/pass1
+......checking pass2.base
+++++++INSTALLED /usr/brlcad/etc/pass2.base
+......checking pass2.man
+++++++INSTALLED /usr/brlcad/etc/pass2.man
+......checking pass2.ms
+++++++INSTALLED /usr/brlcad/etc/pass2.ms
+......checking pass3
+++++++INSTALLED /usr/brlcad/etc/pass3
+......checking AWF_COPYRIGHT
+++++++INSTALLED /usr/brlcad/etc/AWF_COPYRIGHT
+++++++INSTALLED /usr/brlcad/man/man1/awf.1
+-------------------------------- brlman
+......checking awf
+++++++INSTALLED /usr/brlcad/bin/awf
+......checking brlman
+++++++INSTALLED /usr/brlcad/bin/brlman
+++++++INSTALLED /usr/brlcad/man/man1/brlman.1
+-------------------------------- .bench.fbsd
+cake: install is up to date
+-------------------------------- .libsysv.fbsd
+......checking libsysv.so.14
+++++++INSTALLED /usr/brlcad/lib/libsysv.so.14
+-------------------------------- .libbu.fbsd
+......checking libbu.so.14
+++++++INSTALLED /usr/brlcad/lib/libbu.so.14
+++++++INSTALLED /usr/brlcad/man/man3/htond.3
+++++++INSTALLED /usr/brlcad/man/man3/libbu.3
+++++++INSTALLED /usr/brlcad/man/man3/redblack.3
+-------------------------------- .libbn.fbsd
+......checking libbn.so.14
+++++++INSTALLED /usr/brlcad/lib/libbn.so.14
+++++++INSTALLED /usr/brlcad/man/man3/libplot3.3
+-------------------------------- .libwdb.fbsd
+......checking libwdb.so.14
+++++++INSTALLED /usr/brlcad/lib/libwdb.so.14
+++++++INSTALLED /usr/brlcad/man/man3/libwdb.3
+-------------------------------- .libpkg.fbsd
+......checking libpkg.so.14
+++++++INSTALLED /usr/brlcad/lib/libpkg.so.14
+-------------------------------- .libfb.fbsd
+......checking libfb.so.14
+++++++INSTALLED /usr/brlcad/lib/libfb.so.14
+++++++INSTALLED /usr/brlcad/man/man3/libfb.3
+-------------------------------- .libtcl.fbsd
+Installing libtcl8.2.so
+chmod +x /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/install-sh
+Installing tclsh
+Installing tclConfig.sh
+Installing libtclstub8.2.a
+Making directory /usr/brlcad/tcl8.2
+Making directory /usr/brlcad/tcl8.2/http2.1
+Making directory /usr/brlcad/tcl8.2/http1.0
+Making directory /usr/brlcad/tcl8.2/opt0.4
+Making directory /usr/brlcad/tcl8.2/encoding
+Making directory /usr/brlcad/tcl8.2/msgcat1.0
+Making directory /usr/brlcad/tcl8.2/tcltest1.0
+chmod +x /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/install-sh
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../generic/tcl.h
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../generic/tclDecls.h
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/auto.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/history.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/init.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/ldAout.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/package.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/parray.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/safe.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/word.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/tclIndex
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../unix/tclAppInit.c
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../unix/ldAix
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/http2.1/http.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/http2.1/pkgIndex.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/http1.0/http.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/http1.0/pkgIndex.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/opt0.4/optparse.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/opt0.4/pkgIndex.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/msgcat1.0/msgcat.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/msgcat1.0/pkgIndex.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/tcltest1.0/pkgIndex.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/tcltest1.0/tcltest.tcl
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/ascii.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/big5.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp1250.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp1251.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp1252.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp1253.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp1254.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp1255.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp1256.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp1257.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp1258.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp437.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp737.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp775.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp850.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp852.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp855.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp857.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp860.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp861.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp862.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp863.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp864.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp865.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp866.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp869.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp874.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp932.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp936.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp949.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/cp950.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/dingbats.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/euc-cn.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/euc-jp.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/euc-kr.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/gb12345.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/gb1988.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/gb2312.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso2022-jp.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso2022-kr.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso2022.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso8859-1.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso8859-2.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso8859-3.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso8859-4.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso8859-5.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso8859-6.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso8859-7.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso8859-8.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/iso8859-9.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/jis0201.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/jis0208.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/jis0212.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/koi8-r.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/ksc5601.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macCentEuro.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macCroatian.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macCyrillic.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macDingbats.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macGreek.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macIceland.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macJapan.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macRoman.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macRomania.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macThai.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macTurkish.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/macUkraine.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/shiftjis.enc
+Installing /c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../library/encoding/symbol.enc
+Making directory /usr/brlcad/man/mann
+Installing doc/tclsh.1
+/c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../unix/mkLinks /usr/brlcad/man/man1
+Installing doc/Access.3
+Installing doc/AddErrInfo.3
+Installing doc/Alloc.3
+Installing doc/AllowExc.3
+Installing doc/AppInit.3
+Installing doc/AssocData.3
+Installing doc/Async.3
+Installing doc/BackgdErr.3
+Installing doc/Backslash.3
+Installing doc/BoolObj.3
+Installing doc/ByteArrObj.3
+Installing doc/CallDel.3
+Installing doc/ChnlStack.3
+Installing doc/CmdCmplt.3
+Installing doc/Concat.3
+Installing doc/CrtChannel.3
+Installing doc/CrtChnlHdlr.3
+Installing doc/CrtCloseHdlr.3
+Installing doc/CrtCommand.3
+Installing doc/CrtFileHdlr.3
+Installing doc/CrtInterp.3
+Installing doc/CrtMathFnc.3
+Installing doc/CrtObjCmd.3
+Installing doc/CrtSlave.3
+Installing doc/CrtTimerHdlr.3
+Installing doc/CrtTrace.3
+Installing doc/DString.3
+Installing doc/DetachPids.3
+Installing doc/DoOneEvent.3
+Installing doc/DoWhenIdle.3
+Installing doc/DoubleObj.3
+Installing doc/Encoding.3
+Installing doc/Eval.3
+Installing doc/Exit.3
+Installing doc/ExprLong.3
+Installing doc/ExprLongObj.3
+Installing doc/FindExec.3
+Installing doc/GetCwd.3
+Installing doc/GetIndex.3
+Installing doc/GetInt.3
+Installing doc/GetOpnFl.3
+Installing doc/GetStdChan.3
+Installing doc/GetVersion.3
+Installing doc/Hash.3
+Installing doc/InitStubs.3
+Installing doc/IntObj.3
+Installing doc/Interp.3
+Installing doc/LinkVar.3
+Installing doc/ListObj.3
+Installing doc/Notifier.3
+Installing doc/Object.3
+Installing doc/ObjectType.3
+Installing doc/OpenFileChnl.3
+Installing doc/OpenTcp.3
+Installing doc/ParseCmd.3
+Installing doc/PkgRequire.3
+Installing doc/Preserve.3
+Installing doc/PrintDbl.3
+Installing doc/RecEvalObj.3
+Installing doc/RecordEval.3
+Installing doc/RegExp.3
+Installing doc/SaveResult.3
+Installing doc/SetErrno.3
+Installing doc/SetRecLmt.3
+Installing doc/SetResult.3
+Installing doc/SetVar.3
+Installing doc/Sleep.3
+Installing doc/SplitList.3
+Installing doc/SplitPath.3
+Installing doc/StaticPkg.3
+Installing doc/StrMatch.3
+Installing doc/StringObj.3
+Installing doc/TclInitStubs.3
+Installing doc/Tcl_Main.3
+Installing doc/Thread.3
+Installing doc/ToUpper.3
+Installing doc/TraceVar.3
+Installing doc/Translate.3
+Installing doc/UpVar.3
+Installing doc/Utf.3
+Installing doc/WrongNumArgs.3
+/c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../unix/mkLinks /usr/brlcad/man/man3
+Installing doc/Tcl.n
+Installing doc/after.n
+Installing doc/append.n
+Installing doc/array.n
+Installing doc/bgerror.n
+Installing doc/binary.n
+Installing doc/break.n
+Installing doc/case.n
+Installing doc/catch.n
+Installing doc/cd.n
+Installing doc/clock.n
+Installing doc/close.n
+Installing doc/concat.n
+Installing doc/continue.n
+Installing doc/dde.n
+Installing doc/encoding.n
+Installing doc/eof.n
+Installing doc/error.n
+Installing doc/eval.n
+Installing doc/exec.n
+Installing doc/exit.n
+Installing doc/expr.n
+Installing doc/fblocked.n
+Installing doc/fconfigure.n
+Installing doc/fcopy.n
+Installing doc/file.n
+Installing doc/fileevent.n
+Installing doc/filename.n
+Installing doc/flush.n
+Installing doc/for.n
+Installing doc/foreach.n
+Installing doc/format.n
+Installing doc/gets.n
+Installing doc/glob.n
+Installing doc/global.n
+Installing doc/history.n
+Installing doc/http.n
+Installing doc/if.n
+Installing doc/incr.n
+Installing doc/info.n
+Installing doc/interp.n
+Installing doc/join.n
+Installing doc/lappend.n
+Installing doc/library.n
+Installing doc/lindex.n
+Installing doc/linsert.n
+Installing doc/list.n
+Installing doc/llength.n
+Installing doc/load.n
+Installing doc/lrange.n
+Installing doc/lreplace.n
+Installing doc/lsearch.n
+Installing doc/lsort.n
+Installing doc/msgcat.n
+Installing doc/namespace.n
+Installing doc/open.n
+Installing doc/package.n
+Installing doc/pid.n
+Installing doc/pkgMkIndex.n
+Installing doc/proc.n
+Installing doc/puts.n
+Installing doc/pwd.n
+Installing doc/re_syntax.n
+Installing doc/read.n
+Installing doc/regexp.n
+Installing doc/registry.n
+Installing doc/regsub.n
+Installing doc/rename.n
+Installing doc/resource.n
+Installing doc/return.n
+Installing doc/safe.n
+Installing doc/scan.n
+Installing doc/seek.n
+Installing doc/set.n
+Installing doc/socket.n
+Installing doc/source.n
+Installing doc/split.n
+Installing doc/string.n
+Installing doc/subst.n
+Installing doc/switch.n
+Installing doc/tcltest.n
+Installing doc/tclvars.n
+Installing doc/tell.n
+Installing doc/time.n
+Installing doc/trace.n
+Installing doc/unknown.n
+Installing doc/unset.n
+Installing doc/update.n
+Installing doc/uplevel.n
+Installing doc/upvar.n
+Installing doc/variable.n
+Installing doc/vwait.n
+Installing doc/while.n
+/c/regress/brlcad/.libtcl.fbsd/../libtcl/unix/../unix/mkLinks /usr/brlcad/man/mann
+-------------------------------- .libtk.fbsd
+Installing libtk8.2.so
+chmod +x /c/regress/brlcad/.libtk.fbsd/../libtk/unix/install-sh
+chmod +x /c/regress/brlcad/.libtk.fbsd/../libtk/unix/mkLinks
+Installing wish
+Installing tkConfig.sh
+Installing libtkstub8.2.a
+Making directory //usr/brlcad/tk8.2
+Making directory //usr/brlcad/tk8.2/images
+chmod +x /c/regress/brlcad/.libtk.fbsd/../libtk/unix/install-sh
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../generic/tk.h
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../generic/tkDecls.h
+for i in /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/*.tcl /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../generic/prolog.ps  /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/tclIndex /c/regress/brlcad/.libtk.fbsd/../libtk/unix/tkAppInit.c;  do  echo "Installing $i";  /c/regress/brlcad/.libtk.fbsd/../libtk/unix/install-sh -c -m 644 $i //usr/brlcad/tk8.2;  done;
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/bgerror.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/button.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/clrpick.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/comdlg.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/console.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/dialog.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/entry.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/focus.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/listbox.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/menu.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/msgbox.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/obsolete.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/optMenu.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/palette.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/safetk.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/scale.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/scrlbar.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/tearoff.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/text.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/tk.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/tkfbox.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/xmfbox.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../generic/prolog.ps
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/tclIndex
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/tkAppInit.c
+for i in /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/*;  do  if [ -f $i ] ; then  echo "Installing $i";  /c/regress/brlcad/.libtk.fbsd/../libtk/unix/install-sh -c -m 644 $i //usr/brlcad/tk8.2/images;  fi;  done;
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/README
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/logo.eps
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/logo100.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/logo64.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/logoLarge.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/logoMed.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/pwrdLogo.eps
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/pwrdLogo100.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/pwrdLogo150.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/pwrdLogo175.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/pwrdLogo200.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/pwrdLogo75.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/images/tai-ku.gif
+Making directory //usr/brlcad/tk8.2/demos
+Making directory //usr/brlcad/tk8.2/demos/images
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/README
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/arrow.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/bind.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/bitmap.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/browse
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/button.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/check.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/clrpick.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/colors.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/cscroll.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/ctext.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/dialog1.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/dialog2.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/entry1.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/entry2.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/filebox.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/floor.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/form.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/hello
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/hscale.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/icon.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/image1.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/image2.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/items.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/ixset
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/label.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/license.terms
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/menu.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/menubu.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/msgbox.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/plot.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/puzzle.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/radio.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/rmt
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/rolodex
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/ruler.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/sayings.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/search.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/square
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/states.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/style.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/tclIndex
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/tcolor
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/text.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/timer
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/twind.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/vscale.tcl
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/widget
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/images/earth.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/images/earthris.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/images/face.bmp
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/images/flagdown.bmp
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/images/flagup.bmp
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/images/gray25.bmp
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/images/letters.bmp
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/images/noletter.bmp
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/images/pattern.bmp
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/images/tcllogo.gif
+Installing /c/regress/brlcad/.libtk.fbsd/../libtk/unix/../library/demos/images/teapot.ppm
+Installing doc/wish.1
+/c/regress/brlcad/.libtk.fbsd/../libtk/unix/mkLinks /usr/brlcad/man/man1
+Installing doc/3DBorder.3
+Installing doc/BindTable.3
+Installing doc/CanvPsY.3
+Installing doc/CanvTkwin.3
+Installing doc/CanvTxtInfo.3
+Installing doc/Clipboard.3
+Installing doc/ClrSelect.3
+Installing doc/ConfigWidg.3
+Installing doc/ConfigWind.3
+Installing doc/CoordToWin.3
+Installing doc/CrtErrHdlr.3
+Installing doc/CrtGenHdlr.3
+Installing doc/CrtImgType.3
+Installing doc/CrtItemType.3
+Installing doc/CrtPhImgFmt.3
+Installing doc/CrtSelHdlr.3
+Installing doc/CrtWindow.3
+Installing doc/DeleteImg.3
+Installing doc/DrawFocHlt.3
+Installing doc/EventHndlr.3
+Installing doc/FindPhoto.3
+Installing doc/FontId.3
+Installing doc/FreeXId.3
+Installing doc/GeomReq.3
+Installing doc/GetAnchor.3
+Installing doc/GetBitmap.3
+Installing doc/GetCapStyl.3
+Installing doc/GetClrmap.3
+Installing doc/GetColor.3
+Installing doc/GetCursor.3
+Installing doc/GetFont.3
+Installing doc/GetGC.3
+Installing doc/GetImage.3
+Installing doc/GetJoinStl.3
+Installing doc/GetJustify.3
+Installing doc/GetOption.3
+Installing doc/GetPixels.3
+Installing doc/GetPixmap.3
+Installing doc/GetRelief.3
+Installing doc/GetRootCrd.3
+Installing doc/GetScroll.3
+Installing doc/GetSelect.3
+Installing doc/GetUid.3
+Installing doc/GetVRoot.3
+Installing doc/GetVisual.3
+Installing doc/HandleEvent.3
+Installing doc/IdToWindow.3
+Installing doc/ImgChanged.3
+Installing doc/InternAtom.3
+Installing doc/MainLoop.3
+Installing doc/MainWin.3
+Installing doc/MaintGeom.3
+Installing doc/ManageGeom.3
+Installing doc/MapWindow.3
+Installing doc/MeasureChar.3
+Installing doc/MoveToplev.3
+Installing doc/Name.3
+Installing doc/NameOfImg.3
+Installing doc/OwnSelect.3
+Installing doc/ParseArgv.3
+Installing doc/QWinEvent.3
+Installing doc/Restack.3
+Installing doc/RestrictEv.3
+Installing doc/SetAppName.3
+Installing doc/SetClass.3
+Installing doc/SetGrid.3
+Installing doc/SetOptions.3
+Installing doc/SetVisual.3
+Installing doc/StrictMotif.3
+Installing doc/TextLayout.3
+Installing doc/TkInitStubs.3
+Installing doc/Tk_Init.3
+Installing doc/Tk_Main.3
+Installing doc/WindowId.3
+/c/regress/brlcad/.libtk.fbsd/../libtk/unix/mkLinks /usr/brlcad/man/man3
+Installing doc/bell.n
+Installing doc/bind.n
+Installing doc/bindtags.n
+Installing doc/bitmap.n
+Installing doc/button.n
+Installing doc/canvas.n
+Installing doc/checkbutton.n
+Installing doc/chooseColor.n
+Installing doc/clipboard.n
+Installing doc/destroy.n
+Installing doc/dialog.n
+Installing doc/entry.n
+Installing doc/event.n
+Installing doc/focus.n
+Installing doc/focusNext.n
+Installing doc/font.n
+Installing doc/frame.n
+Installing doc/getOpenFile.n
+Installing doc/grab.n
+Installing doc/grid.n
+Installing doc/image.n
+Installing doc/label.n
+Installing doc/listbox.n
+Installing doc/loadTk.n
+Installing doc/lower.n
+Installing doc/menu.n
+Installing doc/menubar.n
+Installing doc/menubutton.n
+Installing doc/message.n
+Installing doc/messageBox.n
+Installing doc/option.n
+Installing doc/optionMenu.n
+Installing doc/options.n
+Installing doc/pack-old.n
+Installing doc/pack.n
+Installing doc/palette.n
+Installing doc/photo.n
+Installing doc/place.n
+Installing doc/popup.n
+Installing doc/radiobutton.n
+Installing doc/raise.n
+Installing doc/scale.n
+Installing doc/scrollbar.n
+Installing doc/selection.n
+Installing doc/send.n
+Installing doc/text.n
+Installing doc/tk.n
+Installing doc/tkerror.n
+Installing doc/tkvars.n
+Installing doc/tkwait.n
+Installing doc/toplevel.n
+Installing doc/winfo.n
+Installing doc/wm.n
+/c/regress/brlcad/.libtk.fbsd/../libtk/unix/mkLinks /usr/brlcad/man/mann
+-------------------------------- .libitcl.fbsd
+for dir in itcl/unix itk/unix iwidgets2.2.0/unix iwidgets3.0.0/unix ; do  (cd $dir; make install)  done;
+Installing libitcl3.0.so
+chmod 555 /usr/brlcad/lib/libitcl3.0.so
+Installing itclsh
+/c/regress/brlcad/libitcl/itcl/../config/install-sh -c itclsh /usr/brlcad/bin/itclsh3.0
+rm -f /usr/brlcad/bin/itclsh
+ln -s /usr/brlcad/bin/itclsh3.0 /usr/brlcad/bin/itclsh
+Installing itclConfig.sh
+mkdir /usr/brlcad/itcl3.0
+Installing /c/regress/brlcad/libitcl/itcl/library/itcl.tcl
+Installing /c/regress/brlcad/libitcl/itcl/unix/tclAppInit.c
+Installing pkgIndex.tcl
+Installing doc/itclsh.1
+Installing doc/body.n
+Installing doc/class.n
+Installing doc/code.n
+Installing doc/configbody.n
+Installing doc/delete.n
+Installing doc/ensemble.n
+Installing doc/find.n
+Installing doc/itcl.n
+Installing doc/itcl_class.n
+Installing doc/itcl_info.n
+Installing doc/itclvars.n
+Installing doc/local.n
+Installing doc/scope.n
+Installing libitk3.0.so
+Installing itkwish
+/c/regress/brlcad/libitcl/itk/../config/install-sh -c itkwish /usr/brlcad/bin/itkwish3.0
+rm -f /usr/brlcad/bin/itkwish
+ln -s /usr/brlcad/bin/itkwish3.0 /usr/brlcad/bin/itkwish
+Installing itkConfig.sh
+mkdir /usr/brlcad/itk3.0
+Installing /c/regress/brlcad/libitcl/itk/library/Archetype.itk
+Installing /c/regress/brlcad/libitcl/itk/library/Toplevel.itk
+Installing /c/regress/brlcad/libitcl/itk/library/Widget.itk
+Installing /c/regress/brlcad/libitcl/itk/library/itk.tcl
+Installing /c/regress/brlcad/libitcl/itk/library/tclIndex
+Installing /c/regress/brlcad/libitcl/itk/unix/tkAppInit.c
+Installing pkgIndex.tcl
+Installing doc/itkwish.1
+Installing doc/Archetype.n
+Installing doc/Toplevel.n
+Installing doc/Widget.n
+Installing doc/itk.n
+Installing doc/itkvars.n
+Installing doc/usual.n
+mkdir /usr/brlcad/lib/iwidgets2.2.0
+ln -s /usr/brlcad/lib/iwidgets2.2.0 /usr/brlcad/lib/iwidgets
+mkdir /usr/brlcad/lib/iwidgets2.2.0/scripts
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/buttonbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/canvasprintbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/canvasprintdialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/colors.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/combobox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/dialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/dialogshell.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/entryfield.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/feedback.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/fileselectionbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/fileselectiondialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/hyperhelp.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/labeledwidget.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/menubar.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/messagedialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/notebook.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/optionmenu.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/pane.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/panedwindow.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/promptdialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/pushbutton.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/radiobox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/scrolledcanvas.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/scrolledframe.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/scrolledhtml.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/scrolledlistbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/scrolledtext.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/selectionbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/selectiondialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/shell.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/spindate.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/spinint.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/spinner.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/spintime.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/tabnotebook.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/tabset.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/toolbar.itk
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/dummy.itcl
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/tclIndex
+Installing /c/regress/brlcad/libitcl/iwidgets2.2.0/generic/unknownimage.gif
+Installing iwidgets.tcl
+Installing pkgIndex.tcl
+mkdir /usr/brlcad/lib/iwidgets2.2.0/demos
+mkdir /usr/brlcad/lib/iwidgets2.2.0/demos/images
+mkdir /usr/brlcad/lib/iwidgets2.2.0/demos/html
+Installing buttonbox
+Installing canvasprintdialog
+Installing catalog
+Installing combobox
+Installing demo.html
+Installing dialog
+Installing dialogshell
+Installing entryfield
+Installing feedback
+Installing fileselectionbox
+Installing fileselectiondialog
+Installing hyperhelp
+Installing iwidgets.gif
+Installing labeledwidget
+Installing menubar
+Installing messagedialog
+Installing notebook
+Installing optionmenu
+Installing panedwindow
+Installing promptdialog
+Installing pushbutton
+Installing radiobox
+Installing scrolledcanvas
+Installing scrolledframe
+Installing scrolledhtml
+Installing scrolledlistbox
+Installing scrolledtext
+Installing selectionbox
+Installing selectiondialog
+Installing spindate
+Installing spinint
+Installing spinner
+Installing spintime
+Installing tabnotebook
+Installing tabset
+Installing toolbar
+Installing mag.gif
+Installing poly.gif
+Installing ruler.gif
+Installing select.gif
+Installing buttonbox.n.html
+Installing canvasprintbox.n.html
+Installing canvasprintdialog.n.html
+Installing combobox.n.html
+Installing dialog.n.html
+Installing dialogshell.n.html
+Installing entryfield.n.html
+Installing feedback.n.html
+Installing fileselectionbox.n.html
+Installing fileselectiondialog.n.html
+Installing hyperhelp.n.html
+Installing iwidgets2.2.0UserCmds.html
+Installing labeledwidget.n.html
+Installing menubar.n.html
+Installing messagedialog.n.html
+Installing notebook.n.html
+Installing optionmenu.n.html
+Installing panedwindow.n.html
+Installing promptdialog.n.html
+Installing pushbutton.n.html
+Installing radiobox.n.html
+Installing scrolledcanvas.n.html
+Installing scrolledframe.n.html
+Installing scrolledhtml.n.html
+Installing scrolledlistbox.n.html
+Installing scrolledtext.n.html
+Installing selectionbox.n.html
+Installing selectiondialog.n.html
+Installing shell.n.html
+Installing spindate.n.html
+Installing spinint.n.html
+Installing spinner.n.html
+Installing spintime.n.html
+Installing tabnotebook.n.html
+Installing tabset.n.html
+Installing toolbar.n.html
+Installing doc/buttonbox.n
+Installing doc/canvasprintbox.n
+Installing doc/canvasprintdialog.n
+Installing doc/combobox.n
+Installing doc/dialog.n
+Installing doc/dialogshell.n
+Installing doc/entryfield.n
+Installing doc/feedback.n
+Installing doc/fileselectionbox.n
+Installing doc/fileselectiondialog.n
+Installing doc/hyperhelp.n
+Installing doc/labeledwidget.n
+Installing doc/menubar.n
+Installing doc/messagedialog.n
+Installing doc/notebook.n
+Installing doc/optionmenu.n
+Installing doc/panedwindow.n
+Installing doc/promptdialog.n
+Installing doc/pushbutton.n
+Installing doc/radiobox.n
+Installing doc/scrolledcanvas.n
+Installing doc/scrolledframe.n
+Installing doc/scrolledhtml.n
+Installing doc/scrolledlistbox.n
+Installing doc/scrolledtext.n
+Installing doc/selectionbox.n
+Installing doc/selectiondialog.n
+Installing doc/shell.n
+Installing doc/spindate.n
+Installing doc/spinint.n
+Installing doc/spinner.n
+Installing doc/spintime.n
+Installing doc/tabnotebook.n
+Installing doc/tabset.n
+Installing doc/toolbar.n
+mkdir /usr/brlcad/lib/iwidgets3.0.0
+ln -s iwidgets3.0.0 /usr/brlcad/lib/iwidgets
+mkdir /usr/brlcad/lib/iwidgets3.0.0/scripts
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/buttonbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/calendar.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/canvasprintbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/canvasprintdialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/checkbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/combobox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/dateentry.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/datefield.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/dialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/dialogshell.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/disjointlistbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/entryfield.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/extfileselectionbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/extfileselectiondialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/feedback.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/fileselectionbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/fileselectiondialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/finddialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/hierarchy.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/hyperhelp.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/labeledframe.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/labeledwidget.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/mainwindow.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/menubar.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/messagebox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/messagedialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/notebook.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/optionmenu.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/pane.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/panedwindow.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/promptdialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/pushbutton.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/radiobox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/regexpfield.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/scrolledcanvas.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/scrolledframe.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/scrolledhtml.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/scrolledlistbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/scrolledtext.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/scrolledwidget.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/selectionbox.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/selectiondialog.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/shell.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/spindate.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/spinint.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/spinner.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/spintime.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/tabnotebook.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/tabset.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/timeentry.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/timefield.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/toolbar.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/watch.itk
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/colors.itcl
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/roman.itcl
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/scopedobject.itcl
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/tclIndex
+Installing /c/regress/brlcad/libitcl/iwidgets3.0.0/generic/unknownimage.gif
+Installing iwidgets.tcl
+Installing pkgIndex.tcl
+mkdir /usr/brlcad/lib/iwidgets3.0.0/demos
+mkdir /usr/brlcad/lib/iwidgets3.0.0/demos/images
+mkdir /usr/brlcad/lib/iwidgets3.0.0/demos/html
+Installing buttonbox
+Installing calendar
+Installing canvasprintbox
+Installing canvasprintdialog
+Installing catalog
+Installing checkbox
+Installing combobox
+Installing dateentry
+Installing datefield
+Installing demo.html
+Installing dialog
+Installing dialogshell
+Installing disjointlistbox
+Installing entryfield
+Installing extfileselectionbox
+Installing extfileselectiondialog
+Installing feedback
+Installing fileselectionbox
+Installing fileselectiondialog
+Installing finddialog
+Installing hierarchy
+Installing hyperhelp
+Installing iwidgets.gif
+Installing labeledframe
+Installing labeledwidget
+Installing mainwindow
+Installing menubar
+Installing messagebox
+Installing messagedialog
+Installing notebook
+Installing optionmenu
+Installing panedwindow
+Installing promptdialog
+Installing pushbutton
+Installing radiobox
+Installing scopedobject
+Installing scrolledcanvas
+Installing scrolledframe
+Installing scrolledhtml
+Installing scrolledlistbox
+Installing scrolledtext
+Installing selectionbox
+Installing selectiondialog
+Installing shell
+Installing spindate
+Installing spinint
+Installing spinner
+Installing spintime
+Installing tabnotebook
+Installing tabset
+Installing timeentry
+Installing timefield
+Installing toolbar
+Installing watch
+Installing images/box.xbm
+Installing images/clear.gif
+Installing images/close.gif
+Installing images/copy.gif
+Installing images/cut.gif
+Installing images/exit.gif
+Installing images/find.gif
+Installing images/help.gif
+Installing images/line.xbm
+Installing images/mag.gif
+Installing images/new.gif
+Installing images/open.gif
+Installing images/oval.xbm
+Installing images/paste.gif
+Installing images/points.xbm
+Installing images/poly.gif
+Installing images/print.gif
+Installing images/ruler.gif
+Installing images/save.gif
+Installing images/select.gif
+Installing images/text.xbm
+Installing html/buttonbox.n.html
+Installing html/calendar.n.html
+Installing html/canvasprintbox.n.html
+Installing html/canvasprintdialog.n.html
+Installing html/checkbox.n.html
+Installing html/combobox.n.html
+Installing html/dateentry.n.html
+Installing html/datefield.n.html
+Installing html/dialog.n.html
+Installing html/dialogshell.n.html
+Installing html/disjointlistbox.n.html
+Installing html/entryfield.n.html
+Installing html/extfileselectionbox.n.html
+Installing html/extfileselectiondialog.n.html
+Installing html/feedback.n.html
+Installing html/fileselectionbox.n.html
+Installing html/fileselectiondialog.n.html
+Installing html/finddialog.n.html
+Installing html/hierarchy.n.html
+Installing html/hyperhelp.n.html
+Installing html/labeledframe.n.html
+Installing html/labeledwidget.n.html
+Installing html/mainwindow.n.html
+Installing html/menubar.n.html
+Installing html/messagebox.n.html
+Installing html/messagedialog.n.html
+Installing html/notebook.n.html
+Installing html/optionmenu.n.html
+Installing html/panedwindow.n.html
+Installing html/promptdialog.n.html
+Installing html/pushbutton.n.html
+Installing html/radiobox.n.html
+Installing html/scopedobject.n.html
+Installing html/scrolledcanvas.n.html
+Installing html/scrolledframe.n.html
+Installing html/scrolledhtml.n.html
+Installing html/scrolledlistbox.n.html
+Installing html/scrolledtext.n.html
+Installing html/selectionbox.n.html
+Installing html/selectiondialog.n.html
+Installing html/shell.n.html
+Installing html/spindate.n.html
+Installing html/spinint.n.html
+Installing html/spinner.n.html
+Installing html/spintime.n.html
+Installing html/tabnotebook.n.html
+Installing html/tabset.n.html
+Installing html/timeentry.n.html
+Installing html/timefield.n.html
+Installing html/toolbar.n.html
+Installing html/watch.n.html
+Installing doc/buttonbox.n
+Installing doc/calendar.n
+Installing doc/canvasprintbox.n
+Installing doc/canvasprintdialog.n
+Installing doc/checkbox.n
+Installing doc/combobox.n
+Installing doc/dateentry.n
+Installing doc/datefield.n
+Installing doc/dialog.n
+Installing doc/dialogshell.n
+Installing doc/disjointlistbox.n
+Installing doc/entryfield.n
+Installing doc/extfileselectionbox.n
+Installing doc/extfileselectiondialog.n
+Installing doc/feedback.n
+Installing doc/fileselectionbox.n
+Installing doc/fileselectiondialog.n
+Installing doc/finddialog.n
+Installing doc/hierarchy.n
+Installing doc/hyperhelp.n
+Installing doc/labeledframe.n
+Installing doc/labeledwidget.n
+Installing doc/mainwindow.n
+Installing doc/menubar.n
+Installing doc/messagebox.n
+Installing doc/messagedialog.n
+Installing doc/notebook.n
+Installing doc/optionmenu.n
+Installing doc/panedwindow.n
+Installing doc/promptdialog.n
+Installing doc/pushbutton.n
+Installing doc/radiobox.n
+Installing doc/scopedobject.n
+Installing doc/scrolledcanvas.n
+Installing doc/scrolledframe.n
+Installing doc/scrolledhtml.n
+Installing doc/scrolledlistbox.n
+Installing doc/scrolledtext.n
+Installing doc/selectionbox.n
+Installing doc/selectiondialog.n
+Installing doc/shell.n
+Installing doc/spindate.n
+Installing doc/spinint.n
+Installing doc/spinner.n
+Installing doc/spintime.n
+Installing doc/tabnotebook.n
+Installing doc/tabset.n
+Installing doc/timeentry.n
+Installing doc/timefield.n
+Installing doc/toolbar.n
+Installing doc/watch.n
+-------------------------------- .libdm.fbsd
+......checking libdm.so.14
+++++++INSTALLED /usr/brlcad/lib/libdm.so.14
+-------------------------------- .fbserv.fbsd
+......checking fbserv
+++++++INSTALLED /usr/brlcad/bin/fbserv
+++++++INSTALLED /usr/brlcad/man/man1/fbserv.1
+-------------------------------- .librt.fbsd
+......checking librt.so.14
+++++++INSTALLED /usr/brlcad/lib/librt.so.14
+++++++INSTALLED /usr/brlcad/man/man3/librt.3
+-------------------------------- .liboptical.fbsd
+......checking liboptical.so.14
+++++++INSTALLED /usr/brlcad/lib/liboptical.so.14
+-------------------------------- .libmultispectral.fbsd
+......checking libmultispectral.so.14
+++++++INSTALLED /usr/brlcad/lib/libmultispectral.so.14
+-------------------------------- .libtermio.fbsd
+......checking libtermio.so.14
+++++++INSTALLED /usr/brlcad/lib/libtermio.so.14
+-------------------------------- .libtclcad.fbsd
+......checking libtclcad.so.14
+++++++INSTALLED /usr/brlcad/lib/libtclcad.so.14
+-------------------------------- .libtclhooks.fbsd
+......checking libtclhooks.so.14
+++++++INSTALLED /usr/brlcad/lib/libtclhooks.so.14
+-------------------------------- .conv.fbsd
+......checking asc2g
+++++++INSTALLED /usr/brlcad/bin/asc2g
+......checking g2asc
+++++++INSTALLED /usr/brlcad/bin/g2asc
+......checking conv-vg2g
+++++++INSTALLED /usr/brlcad/bin/conv-vg2g
+......checking pix2asc
+++++++INSTALLED /usr/brlcad/bin/pix2asc
+......checking asc2pix
+++++++INSTALLED /usr/brlcad/bin/asc2pix
+......checking euclid-g
+++++++INSTALLED /usr/brlcad/bin/euclid-g
+......checking g-euclid
+++++++INSTALLED /usr/brlcad/bin/g-euclid
+......checking euclid_format
+++++++INSTALLED /usr/brlcad/bin/euclid_format
+......checking euclid_unformat
+++++++INSTALLED /usr/brlcad/bin/euclid_unformat
+......checking tankill-g
+++++++INSTALLED /usr/brlcad/bin/tankill-g
+......checking g-tankill
+++++++INSTALLED /usr/brlcad/bin/g-tankill
+......checking viewpoint-g
+++++++INSTALLED /usr/brlcad/bin/viewpoint-g
+......checking dxf-g
+++++++INSTALLED /usr/brlcad/bin/dxf-g
+......checking g-nmg
+++++++INSTALLED /usr/brlcad/bin/g-nmg
+......checking g-euclid1
+++++++INSTALLED /usr/brlcad/bin/g-euclid1
+......checking fast4-g
+++++++INSTALLED /usr/brlcad/bin/fast4-g
+......checking proe-g
+++++++INSTALLED /usr/brlcad/bin/proe-g
+......checking asc-nmg
+++++++INSTALLED /usr/brlcad/bin/asc-nmg
+......checking nmg-rib
+++++++INSTALLED /usr/brlcad/bin/nmg-rib
+......checking g-vrml
+++++++INSTALLED /usr/brlcad/bin/g-vrml
+......checking g-acad
+++++++INSTALLED /usr/brlcad/bin/g-acad
+......checking cy-g
+++++++INSTALLED /usr/brlcad/bin/cy-g
+......checking nastran-g
+++++++INSTALLED /usr/brlcad/bin/nastran-g
+......checking g-wave
+++++++INSTALLED /usr/brlcad/bin/g-wave
+......checking nmg-polysolid
+++++++INSTALLED /usr/brlcad/bin/nmg-polysolid
+......checking g-shell.rect
+++++++INSTALLED /usr/brlcad/bin/g-shell.rect
+......checking stl-g
+++++++INSTALLED /usr/brlcad/bin/stl-g
+......checking g4-g5
+++++++INSTALLED /usr/brlcad/bin/g4-g5
+......checking poly-bot
+++++++INSTALLED /usr/brlcad/bin/poly-bot
+++++++INSTALLED /usr/brlcad/man/man1/asc-nmg.1
+++++++INSTALLED /usr/brlcad/man/man1/conv-vg2g.1
+++++++INSTALLED /usr/brlcad/man/man1/cy-g.1
+++++++INSTALLED /usr/brlcad/man/man1/dbclean.1
+++++++INSTALLED /usr/brlcad/man/man1/dxf-g.1
+++++++INSTALLED /usr/brlcad/man/man1/euclid-g.1
+++++++INSTALLED /usr/brlcad/man/man1/fast4-g.1
+++++++INSTALLED /usr/brlcad/man/man1/g-acad.1
+++++++INSTALLED /usr/brlcad/man/man1/g-euclid.1
+++++++INSTALLED /usr/brlcad/man/man1/g-nmg.1
+++++++INSTALLED /usr/brlcad/man/man1/g-shell.rect.1
+++++++INSTALLED /usr/brlcad/man/man1/g-tankill.1
+++++++INSTALLED /usr/brlcad/man/man1/g-vrml.1
+++++++INSTALLED /usr/brlcad/man/man1/g-wave.1
+++++++INSTALLED /usr/brlcad/man/man1/g2asc.1
+++++++INSTALLED /usr/brlcad/man/man1/nastran-g.1
+++++++INSTALLED /usr/brlcad/man/man1/nmg-polysolid.1
+++++++INSTALLED /usr/brlcad/man/man1/nmg-rib.1
+++++++INSTALLED /usr/brlcad/man/man1/pix2asc.1
+++++++INSTALLED /usr/brlcad/man/man1/poly-bot.1
+++++++INSTALLED /usr/brlcad/man/man1/proe-g.1
+++++++INSTALLED /usr/brlcad/man/man1/stl-g.1
+++++++INSTALLED /usr/brlcad/man/man1/tankill-g.1
+++++++INSTALLED /usr/brlcad/man/man1/viewpoint-g.1
+-------------------------------- .db.fbsd
+cake: install is up to date
+-------------------------------- .rt.fbsd
+......checking rt
+++++++INSTALLED /usr/brlcad/bin/rt
+......checking rtrad
+++++++INSTALLED /usr/brlcad/bin/rtrad
+......checking rtpp
+++++++INSTALLED /usr/brlcad/bin/rtpp
+......checking rtray
+++++++INSTALLED /usr/brlcad/bin/rtray
+......checking rtshot
+++++++INSTALLED /usr/brlcad/bin/rtshot
+......checking rtwalk
+++++++INSTALLED /usr/brlcad/bin/rtwalk
+......checking rtcheck
+++++++INSTALLED /usr/brlcad/bin/rtcheck
+......checking rtg3
+++++++INSTALLED /usr/brlcad/bin/rtg3
+......checking rtcell
+++++++INSTALLED /usr/brlcad/bin/rtcell
+......checking rtxray
+++++++INSTALLED /usr/brlcad/bin/rtxray
+......checking rthide
+++++++INSTALLED /usr/brlcad/bin/rthide
+......checking rtfrac
+++++++INSTALLED /usr/brlcad/bin/rtfrac
+......checking rtrange
+++++++INSTALLED /usr/brlcad/bin/rtrange
+......checking rtregis
+++++++INSTALLED /usr/brlcad/bin/rtregis
+......checking rtscale
+++++++INSTALLED /usr/brlcad/bin/rtscale
+......checking rtsil
+++++++INSTALLED /usr/brlcad/bin/rtsil
+......checking rtweight
+++++++INSTALLED /usr/brlcad/bin/rtweight
+++++++INSTALLED /usr/brlcad/man/man1/rt.1
+++++++INSTALLED /usr/brlcad/man/man1/rtcheck.1
+++++++INSTALLED /usr/brlcad/man/man1/rtg3.1
+++++++INSTALLED /usr/brlcad/man/man1/rthide.1
+++++++INSTALLED /usr/brlcad/man/man1/rtpp.1
+++++++INSTALLED /usr/brlcad/man/man1/rtrange.1
+++++++INSTALLED /usr/brlcad/man/man1/rtray.1
+++++++INSTALLED /usr/brlcad/man/man1/rtregis.1
+++++++INSTALLED /usr/brlcad/man/man1/rtscale.1
+++++++INSTALLED /usr/brlcad/man/man1/rtshot.1
+++++++INSTALLED /usr/brlcad/man/man1/rtwalk.1
+++++++INSTALLED /usr/brlcad/man/man1/rtweight.1
+++++++INSTALLED /usr/brlcad/man/man1/rtxray.1
+-------------------------------- .mged.fbsd
+......checking mged
+++++++INSTALLED /usr/brlcad/bin/mged
+......checking cad_boundp
+++++++INSTALLED /usr/brlcad/bin/cad_boundp
+......checking cad_parea
+++++++INSTALLED /usr/brlcad/bin/cad_parea
+++++++INSTALLED /usr/brlcad/man/man1/cad_boundp.1
+++++++INSTALLED /usr/brlcad/man/man1/cad_parea.1
+++++++INSTALLED /usr/brlcad/man/man1/mged.1
+-------------------------------- .remrt.fbsd
+......checking remrt
+++++++INSTALLED /usr/brlcad/bin/remrt
+......checking rtsrv
+++++++INSTALLED /usr/brlcad/bin/rtsrv
+++++++INSTALLED /usr/brlcad/man/man1/remrt.1
+-------------------------------- .libcursor.fbsd
+......checking libcursor.so.14
+++++++INSTALLED /usr/brlcad/lib/libcursor.so.14
+++++++INSTALLED /usr/brlcad/man/man3/libcursor.3
+-------------------------------- .liborle.fbsd
+......checking liborle.so.14
+++++++INSTALLED /usr/brlcad/lib/liborle.so.14
+++++++INSTALLED /usr/brlcad/man/man3/liborle.3
+-------------------------------- .libutahrle.fbsd
+......checking libutahrle.so.14
+++++++INSTALLED /usr/brlcad/lib/libutahrle.so.14
+++++++INSTALLED /usr/brlcad/man/man3/buildmap.3
+++++++INSTALLED /usr/brlcad/man/man3/bwdithermap.3
+++++++INSTALLED /usr/brlcad/man/man3/colorquant.3
+++++++INSTALLED /usr/brlcad/man/man3/dither.3
+++++++INSTALLED /usr/brlcad/man/man3/ditherbw.3
+++++++INSTALLED /usr/brlcad/man/man3/dithergb.3
+++++++INSTALLED /usr/brlcad/man/man3/dithermap.3
+++++++INSTALLED /usr/brlcad/man/man3/float_to_exp.3
+++++++INSTALLED /usr/brlcad/man/man3/inv_cmap.3
+++++++INSTALLED /usr/brlcad/man/man3/libutahrle.3
+++++++INSTALLED /usr/brlcad/man/man3/make_square.3
+++++++INSTALLED /usr/brlcad/man/man3/rgb_to_bw.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_addhist.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_cp.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_debug.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_delcom.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_freeraw.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_get_error.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_get_set.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_get_setup.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_get_setup_ok.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_getcom.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_getraw.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_getrow.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_getskip.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_hdr.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_op.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_open_f.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_open_f_noexit.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_put_init.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_put_setup.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_putcom.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_puteof.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_putraw.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_putrow.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_raw_alloc.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_raw_free.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_rawtorow.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_row_alloc.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_row_free.3
+++++++INSTALLED /usr/brlcad/man/man3/rle_skiprow.3
+++++++INSTALLED /usr/brlcad/man/man3/scanargs.3
+-------------------------------- .libfft.fbsd
+......checking libfft.so.14
+++++++INSTALLED /usr/brlcad/lib/libfft.so.14
+-------------------------------- .proc-db.fbsd
+cake: install is up to date
+-------------------------------- .jack.fbsd
+......checking g-jack
+++++++INSTALLED /usr/brlcad/bin/g-jack
+......checking jack-g
+++++++INSTALLED /usr/brlcad/bin/jack-g
+-------------------------------- .mk.fbsd
+......checking mk_bolt
+++++++INSTALLED /usr/brlcad/bin/mk_bolt
+......checking mk_handle
+++++++INSTALLED /usr/brlcad/bin/mk_handle
+......checking mk_window
+++++++INSTALLED /usr/brlcad/bin/mk_window
+......checking mk_winfrm
+++++++INSTALLED /usr/brlcad/bin/mk_winfrm
+......checking mk_gastank
+++++++INSTALLED /usr/brlcad/bin/mk_gastank
+......checking mk_wire
+++++++INSTALLED /usr/brlcad/bin/mk_wire
+++++++INSTALLED /usr/brlcad/man/man1/mk_bolt.1
+++++++INSTALLED /usr/brlcad/man/man1/mk_gastank.1
+++++++INSTALLED /usr/brlcad/man/man1/mk_handle.1
+++++++INSTALLED /usr/brlcad/man/man1/mk_window.1
+++++++INSTALLED /usr/brlcad/man/man1/mk_winfrm.1
+++++++INSTALLED /usr/brlcad/man/man1/mk_wire.1
+-------------------------------- .comgeom-g.fbsd
+......checking comgeom-g
+++++++INSTALLED /usr/brlcad/bin/comgeom-g
+++++++INSTALLED /usr/brlcad/man/man1/comgeom-g.1
+-------------------------------- .iges.fbsd
+......checking iges-g
+++++++INSTALLED /usr/brlcad/bin/iges-g
+......checking g-iges
+++++++INSTALLED /usr/brlcad/bin/g-iges
+++++++INSTALLED /usr/brlcad/man/man1/g-iges.1
+++++++INSTALLED /usr/brlcad/man/man1/iges-g.1
+-------------------------------- .fb.fbsd
+......checking bw-fb
+++++++INSTALLED /usr/brlcad/bin/bw-fb
+......checking cat-fb
+++++++INSTALLED /usr/brlcad/bin/cat-fb
+......checking cell-fb
+++++++INSTALLED /usr/brlcad/bin/cell-fb
+......checking cmap-fb
+++++++INSTALLED /usr/brlcad/bin/cmap-fb
+......checking fbgammamod
+++++++INSTALLED /usr/brlcad/bin/fbgammamod
+......checking fb-bw
+++++++INSTALLED /usr/brlcad/bin/fb-bw
+......checking fb-cmap
+++++++INSTALLED /usr/brlcad/bin/fb-cmap
+......checking fb-fb
+++++++INSTALLED /usr/brlcad/bin/fb-fb
+......checking fb-orle
+++++++INSTALLED /usr/brlcad/bin/fb-orle
+......checking fb-pix
+++++++INSTALLED /usr/brlcad/bin/fb-pix
+......checking fb-rle
+++++++INSTALLED /usr/brlcad/bin/fb-rle
+......checking fbanim
+++++++INSTALLED /usr/brlcad/bin/fbanim
+......checking fbcbars
+++++++INSTALLED /usr/brlcad/bin/fbcbars
+......checking fbclear
+++++++INSTALLED /usr/brlcad/bin/fbclear
+......checking fbcmap
+++++++INSTALLED /usr/brlcad/bin/fbcmap
+......checking fbcmrot
+++++++INSTALLED /usr/brlcad/bin/fbcmrot
+......checking fbcolor
+++++++INSTALLED /usr/brlcad/bin/fbcolor
+......checking fbfade
+++++++INSTALLED /usr/brlcad/bin/fbfade
+......checking fbframe
+++++++INSTALLED /usr/brlcad/bin/fbframe
+......checking fbfree
+++++++INSTALLED /usr/brlcad/bin/fbfree
+......checking fbgamma
+++++++INSTALLED /usr/brlcad/bin/fbgamma
+......checking fbgrid
+++++++INSTALLED /usr/brlcad/bin/fbgrid
+......checking fbhelp
+++++++INSTALLED /usr/brlcad/bin/fbhelp
+......checking fblabel
+++++++INSTALLED /usr/brlcad/bin/fblabel
+......checking fbline
+++++++INSTALLED /usr/brlcad/bin/fbline
+......checking fbpoint
+++++++INSTALLED /usr/brlcad/bin/fbpoint
+......checking fbscanplot
+++++++INSTALLED /usr/brlcad/bin/fbscanplot
+......checking fbstretch
+++++++INSTALLED /usr/brlcad/bin/fbstretch
+......checking fbzoom
+++++++INSTALLED /usr/brlcad/bin/fbzoom
+......checking gif-fb
+++++++INSTALLED /usr/brlcad/bin/gif-fb
+......checking gif2fb
+++++++INSTALLED /usr/brlcad/bin/gif2fb
+......checking orle-fb
+++++++INSTALLED /usr/brlcad/bin/orle-fb
+......checking pix-fb
+++++++INSTALLED /usr/brlcad/bin/pix-fb
+......checking pixflip-fb
+++++++INSTALLED /usr/brlcad/bin/pixflip-fb
+......checking pl-fb
+++++++INSTALLED /usr/brlcad/bin/pl-fb
+......checking polar-fb
+++++++INSTALLED /usr/brlcad/bin/polar-fb
+......checking pp-fb
+++++++INSTALLED /usr/brlcad/bin/pp-fb
+......checking rle-fb
+++++++INSTALLED /usr/brlcad/bin/rle-fb
+......checking spm-fb
+++++++INSTALLED /usr/brlcad/bin/spm-fb
+......checking pixautosize
+++++++INSTALLED /usr/brlcad/bin/pixautosize
+......checking png-fb
+++++++INSTALLED /usr/brlcad/bin/png-fb
+......checking fb-png
+++++++INSTALLED /usr/brlcad/bin/fb-png
+++++++INSTALLED /usr/brlcad/man/man1/bw-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/cat-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/cell-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/cmap-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/fb-bw.1
+++++++INSTALLED /usr/brlcad/man/man1/fb-cmap.1
+++++++INSTALLED /usr/brlcad/man/man1/fb-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/fb-orle.1
+++++++INSTALLED /usr/brlcad/man/man1/fb-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/fb-png.1
+++++++INSTALLED /usr/brlcad/man/man1/fb-rle.1
+++++++INSTALLED /usr/brlcad/man/man1/fbanim.1
+++++++INSTALLED /usr/brlcad/man/man1/fbcbars.1
+++++++INSTALLED /usr/brlcad/man/man1/fbclear.1
+++++++INSTALLED /usr/brlcad/man/man1/fbcmap.1
+++++++INSTALLED /usr/brlcad/man/man1/fbcmrot.1
+++++++INSTALLED /usr/brlcad/man/man1/fbcolor.1
+++++++INSTALLED /usr/brlcad/man/man1/fbfade.1
+++++++INSTALLED /usr/brlcad/man/man1/fbframe.1
+++++++INSTALLED /usr/brlcad/man/man1/fbfree.1
+++++++INSTALLED /usr/brlcad/man/man1/fbgamma.1
+++++++INSTALLED /usr/brlcad/man/man1/fbgrid.1
+++++++INSTALLED /usr/brlcad/man/man1/fbhelp.1
+++++++INSTALLED /usr/brlcad/man/man1/fblabel.1
+++++++INSTALLED /usr/brlcad/man/man1/fbline.1
+++++++INSTALLED /usr/brlcad/man/man1/fbpoint.1
+++++++INSTALLED /usr/brlcad/man/man1/fbscanplot.1
+++++++INSTALLED /usr/brlcad/man/man1/fbstretch.1
+++++++INSTALLED /usr/brlcad/man/man1/fbzoom.1
+++++++INSTALLED /usr/brlcad/man/man1/gif-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/gif2fb.1
+++++++INSTALLED /usr/brlcad/man/man1/orle-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/pix-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/pixautosize.1
+++++++INSTALLED /usr/brlcad/man/man1/pl-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/png-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/polar-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/pp-fb.1
+++++++INSTALLED /usr/brlcad/man/man1/rle-fb.1
+-------------------------------- .util.fbsd
+......checking alias-pix
+++++++INSTALLED /usr/brlcad/bin/alias-pix
+......checking ap-pix
+++++++INSTALLED /usr/brlcad/bin/ap-pix
+......checking asc-pl
+++++++INSTALLED /usr/brlcad/bin/asc-pl
+......checking azel
+++++++INSTALLED /usr/brlcad/bin/azel
+......checking bary
+++++++INSTALLED /usr/brlcad/bin/bary
+......checking buffer
+++++++INSTALLED /usr/brlcad/bin/buffer
+......checking dbcp
+++++++INSTALLED /usr/brlcad/bin/dbcp
+......checking bw-a
+++++++INSTALLED /usr/brlcad/bin/bw-a
+......checking bw-imp
+++++++INSTALLED /usr/brlcad/bin/bw-imp
+......checking bw-pix
+++++++INSTALLED /usr/brlcad/bin/bw-pix
+......checking bw-ps
+++++++INSTALLED /usr/brlcad/bin/bw-ps
+......checking bw3-pix
+++++++INSTALLED /usr/brlcad/bin/bw3-pix
+......checking bw-png
+++++++INSTALLED /usr/brlcad/bin/bw-png
+......checking png-bw
+++++++INSTALLED /usr/brlcad/bin/png-bw
+......checking png_info
+++++++INSTALLED /usr/brlcad/bin/png_info
+......checking bwcrop
+++++++INSTALLED /usr/brlcad/bin/bwcrop
+......checking bwdiff
+++++++INSTALLED /usr/brlcad/bin/bwdiff
+......checking bwfilter
+++++++INSTALLED /usr/brlcad/bin/bwfilter
+......checking bwhist
+++++++INSTALLED /usr/brlcad/bin/bwhist
+......checking bwhisteq
+++++++INSTALLED /usr/brlcad/bin/bwhisteq
+......checking bwmod
+++++++INSTALLED /usr/brlcad/bin/bwmod
+......checking bwrect
+++++++INSTALLED /usr/brlcad/bin/bwrect
+......checking bwrot
+++++++INSTALLED /usr/brlcad/bin/bwrot
+......checking bwscale
+++++++INSTALLED /usr/brlcad/bin/bwscale
+......checking bwshrink
+++++++INSTALLED /usr/brlcad/bin/bwshrink
+......checking bwstat
+++++++INSTALLED /usr/brlcad/bin/bwstat
+......checking bwthresh
+++++++INSTALLED /usr/brlcad/bin/bwthresh
+......checking cv
+++++++INSTALLED /usr/brlcad/bin/cv
+......checking double-asc
+++++++INSTALLED /usr/brlcad/bin/double-asc
+......checking dpix-pix
+++++++INSTALLED /usr/brlcad/bin/dpix-pix
+......checking dunncolor
+++++++INSTALLED /usr/brlcad/bin/dunncolor
+......checking dunnsnap
+++++++INSTALLED /usr/brlcad/bin/dunnsnap
+......checking pixelswap
+++++++INSTALLED /usr/brlcad/bin/pixelswap
+......checking decimate
+++++++INSTALLED /usr/brlcad/bin/decimate
+......checking files-tape
+++++++INSTALLED /usr/brlcad/bin/files-tape
+......checking gencolor
+++++++INSTALLED /usr/brlcad/bin/gencolor
+......checking hd
+++++++INSTALLED /usr/brlcad/bin/hd
+......checking loop
+++++++INSTALLED /usr/brlcad/bin/loop
+......checking mac-pix
+++++++INSTALLED /usr/brlcad/bin/mac-pix
+......checking op-bw
+++++++INSTALLED /usr/brlcad/bin/op-bw
+......checking orle-pix
+++++++INSTALLED /usr/brlcad/bin/orle-pix
+......checking pix-alias
+++++++INSTALLED /usr/brlcad/bin/pix-alias
+......checking pix-bw
+++++++INSTALLED /usr/brlcad/bin/pix-bw
+......checking pix-bw3
+++++++INSTALLED /usr/brlcad/bin/pix-bw3
+......checking pix-orle
+++++++INSTALLED /usr/brlcad/bin/pix-orle
+......checking pix-ps
+++++++INSTALLED /usr/brlcad/bin/pix-ps
+......checking pix-rle
+++++++INSTALLED /usr/brlcad/bin/pix-rle
+......checking bw-rle
+++++++INSTALLED /usr/brlcad/bin/bw-rle
+......checking pix-spm
+++++++INSTALLED /usr/brlcad/bin/pix-spm
+......checking pix-sun
+++++++INSTALLED /usr/brlcad/bin/pix-sun
+......checking pix-ppm
+++++++INSTALLED /usr/brlcad/bin/pix-ppm
+......checking pcd-pix
+++++++INSTALLED /usr/brlcad/bin/pcd-pix
+......checking pix-png
+++++++INSTALLED /usr/brlcad/bin/pix-png
+......checking png-pix
+++++++INSTALLED /usr/brlcad/bin/png-pix
+......checking pix-yuv
+++++++INSTALLED /usr/brlcad/bin/pix-yuv
+......checking yuv-pix
+++++++INSTALLED /usr/brlcad/bin/yuv-pix
+......checking pix3filter
+++++++INSTALLED /usr/brlcad/bin/pix3filter
+......checking pixbackgnd
+++++++INSTALLED /usr/brlcad/bin/pixbackgnd
+......checking pixbgstrip
+++++++INSTALLED /usr/brlcad/bin/pixbgstrip
+......checking pixbustup
+++++++INSTALLED /usr/brlcad/bin/pixbustup
+......checking pixcolors
+++++++INSTALLED /usr/brlcad/bin/pixcolors
+......checking pixdiff
+++++++INSTALLED /usr/brlcad/bin/pixdiff
+......checking pixdsplit
+++++++INSTALLED /usr/brlcad/bin/pixdsplit
+......checking pixfade
+++++++INSTALLED /usr/brlcad/bin/pixfade
+......checking pixfields
+++++++INSTALLED /usr/brlcad/bin/pixfields
+......checking pixfieldsep
+++++++INSTALLED /usr/brlcad/bin/pixfieldsep
+......checking pixfilter
+++++++INSTALLED /usr/brlcad/bin/pixfilter
+......checking pixhalve
+++++++INSTALLED /usr/brlcad/bin/pixhalve
+......checking pixhist
+++++++INSTALLED /usr/brlcad/bin/pixhist
+......checking pixhist3d-pl
+++++++INSTALLED /usr/brlcad/bin/pixhist3d-pl
+......checking pixhist3d
+++++++INSTALLED /usr/brlcad/bin/pixhist3d
+......checking pixinterp2x
+++++++INSTALLED /usr/brlcad/bin/pixinterp2x
+......checking pixmatte
+++++++INSTALLED /usr/brlcad/bin/pixmatte
+......checking pixmerge
+++++++INSTALLED /usr/brlcad/bin/pixmerge
+......checking pixrect
+++++++INSTALLED /usr/brlcad/bin/pixrect
+......checking pixrot
+++++++INSTALLED /usr/brlcad/bin/pixrot
+......checking pixsaturate
+++++++INSTALLED /usr/brlcad/bin/pixsaturate
+......checking pixscale
+++++++INSTALLED /usr/brlcad/bin/pixscale
+......checking pixshrink
+++++++INSTALLED /usr/brlcad/bin/pixshrink
+......checking pixstat
+++++++INSTALLED /usr/brlcad/bin/pixstat
+......checking pixtile
+++++++INSTALLED /usr/brlcad/bin/pixtile
+......checking pixuntile
+++++++INSTALLED /usr/brlcad/bin/pixuntile
+......checking pixembed
+++++++INSTALLED /usr/brlcad/bin/pixembed
+......checking pixcut
+++++++INSTALLED /usr/brlcad/bin/pixcut
+......checking pixpaste
+++++++INSTALLED /usr/brlcad/bin/pixpaste
+......checking pl-asc
+++++++INSTALLED /usr/brlcad/bin/pl-asc
+......checking pl-hpgl
+++++++INSTALLED /usr/brlcad/bin/pl-hpgl
+......checking pl-pl
+++++++INSTALLED /usr/brlcad/bin/pl-pl
+......checking pl-tek
+++++++INSTALLED /usr/brlcad/bin/pl-tek
+......checking pl-ps
+++++++INSTALLED /usr/brlcad/bin/pl-ps
+......checking pl-sgi
+++++++INSTALLED /usr/brlcad/bin/pl-sgi
+......checking plcolor
+++++++INSTALLED /usr/brlcad/bin/plcolor
+......checking pldebug
+++++++INSTALLED /usr/brlcad/bin/pldebug
+......checking plgetframe
+++++++INSTALLED /usr/brlcad/bin/plgetframe
+......checking plline2
+++++++INSTALLED /usr/brlcad/bin/plline2
+......checking plrot
+++++++INSTALLED /usr/brlcad/bin/plrot
+......checking plstat
+++++++INSTALLED /usr/brlcad/bin/plstat
+......checking query
+++++++INSTALLED /usr/brlcad/bin/query
+......checking rle-pix
+++++++INSTALLED /usr/brlcad/bin/rle-pix
+......checking sgi-pix
+++++++INSTALLED /usr/brlcad/bin/sgi-pix
+......checking sun-pix
+++++++INSTALLED /usr/brlcad/bin/sun-pix
+......checking xyz-pl
+++++++INSTALLED /usr/brlcad/bin/xyz-pl
+......checking msrandom
+++++++INSTALLED /usr/brlcad/bin/msrandom
+......checking pixblend
+++++++INSTALLED /usr/brlcad/bin/pixblend
+......checking pixmorph
+++++++INSTALLED /usr/brlcad/bin/pixmorph
+......checking pixborder
+++++++INSTALLED /usr/brlcad/bin/pixborder
+......checking mst
+++++++INSTALLED /usr/brlcad/bin/mst
+......checking texturescale
+++++++INSTALLED /usr/brlcad/bin/texturescale
+......checking pixclump
+++++++INSTALLED /usr/brlcad/bin/pixclump
+......checking pixcount
+++++++INSTALLED /usr/brlcad/bin/pixcount
+......checking imgdims
+++++++INSTALLED /usr/brlcad/bin/imgdims
+......checking remapid
+++++++INSTALLED /usr/brlcad/bin/remapid
+......checking wavelet
+++++++INSTALLED /usr/brlcad/bin/wavelet
+......checking pixsubst
+++++++INSTALLED /usr/brlcad/bin/pixsubst
+......checking terrain
+++++++INSTALLED /usr/brlcad/bin/terrain
+......checking ttcp
+++++++INSTALLED /usr/brlcad/bin/ttcp
+......checking dsp_add
+++++++INSTALLED /usr/brlcad/bin/dsp_add
+++++++INSTALLED /usr/brlcad/man/man1/alias-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/ap-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/asc-pl.1
+++++++INSTALLED /usr/brlcad/man/man1/azel.1
+++++++INSTALLED /usr/brlcad/man/man1/bary.1
+++++++INSTALLED /usr/brlcad/man/man1/brlcad.1
+++++++INSTALLED /usr/brlcad/man/man1/buffer.1
+++++++INSTALLED /usr/brlcad/man/man1/bw-imp.1
+++++++INSTALLED /usr/brlcad/man/man1/bw-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/bw-png.1
+++++++INSTALLED /usr/brlcad/man/man1/bw-ps.1
+++++++INSTALLED /usr/brlcad/man/man1/bw-rle.1
+++++++INSTALLED /usr/brlcad/man/man1/bw3-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/bwcrop.1
+++++++INSTALLED /usr/brlcad/man/man1/bwdiff.1
+++++++INSTALLED /usr/brlcad/man/man1/bwfilter.1
+++++++INSTALLED /usr/brlcad/man/man1/bwhist.1
+++++++INSTALLED /usr/brlcad/man/man1/bwhisteq.1
+++++++INSTALLED /usr/brlcad/man/man1/bwmod.1
+++++++INSTALLED /usr/brlcad/man/man1/bwrect.1
+++++++INSTALLED /usr/brlcad/man/man1/bwrot.1
+++++++INSTALLED /usr/brlcad/man/man1/bwscale.1
+++++++INSTALLED /usr/brlcad/man/man1/bwshrink.1
+++++++INSTALLED /usr/brlcad/man/man1/bwstat.1
+++++++INSTALLED /usr/brlcad/man/man1/bwthresh.1
+++++++INSTALLED /usr/brlcad/man/man1/cv.1
+++++++INSTALLED /usr/brlcad/man/man1/dbcp.1
+++++++INSTALLED /usr/brlcad/man/man1/decimate.1
+++++++INSTALLED /usr/brlcad/man/man1/dpix-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/dunncolor.1
+++++++INSTALLED /usr/brlcad/man/man1/dunnsnap.1
+++++++INSTALLED /usr/brlcad/man/man1/gencolor.1
+++++++INSTALLED /usr/brlcad/man/man1/hd.1
+++++++INSTALLED /usr/brlcad/man/man1/imgdims.1
+++++++INSTALLED /usr/brlcad/man/man1/loop.1
+++++++INSTALLED /usr/brlcad/man/man1/mac-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/morphedit.1
+++++++INSTALLED /usr/brlcad/man/man1/op-bw.1
+++++++INSTALLED /usr/brlcad/man/man1/orle-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/pcd-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/pix-alias.1
+++++++INSTALLED /usr/brlcad/man/man1/pix-bw.1
+++++++INSTALLED /usr/brlcad/man/man1/pix-bw3.1
+++++++INSTALLED /usr/brlcad/man/man1/pix-orle.1
+++++++INSTALLED /usr/brlcad/man/man1/pix-png.1
+++++++INSTALLED /usr/brlcad/man/man1/pix-ps.1
+++++++INSTALLED /usr/brlcad/man/man1/pix-rle.1
+++++++INSTALLED /usr/brlcad/man/man1/pix-sun.1
+++++++INSTALLED /usr/brlcad/man/man1/pixbackgnd.1
+++++++INSTALLED /usr/brlcad/man/man1/pixbgstrip.1
+++++++INSTALLED /usr/brlcad/man/man1/pixblend.1
+++++++INSTALLED /usr/brlcad/man/man1/pixborder.1
+++++++INSTALLED /usr/brlcad/man/man1/pixbustup.1
+++++++INSTALLED /usr/brlcad/man/man1/pixclump.1
+++++++INSTALLED /usr/brlcad/man/man1/pixcolors.1
+++++++INSTALLED /usr/brlcad/man/man1/pixcut.1
+++++++INSTALLED /usr/brlcad/man/man1/pixdiff.1
+++++++INSTALLED /usr/brlcad/man/man1/pixdsplit.1
+++++++INSTALLED /usr/brlcad/man/man1/pixfade.1
+++++++INSTALLED /usr/brlcad/man/man1/pixfilter.1
+++++++INSTALLED /usr/brlcad/man/man1/pixhalve.1
+++++++INSTALLED /usr/brlcad/man/man1/pixhist.1
+++++++INSTALLED /usr/brlcad/man/man1/pixhist3d-pl.1
+++++++INSTALLED /usr/brlcad/man/man1/pixhist3d.1
+++++++INSTALLED /usr/brlcad/man/man1/pixinterp2x.1
+++++++INSTALLED /usr/brlcad/man/man1/pixmatte.1
+++++++INSTALLED /usr/brlcad/man/man1/pixmerge.1
+++++++INSTALLED /usr/brlcad/man/man1/pixmorph.1
+++++++INSTALLED /usr/brlcad/man/man1/pixrect.1
+++++++INSTALLED /usr/brlcad/man/man1/pixrot.1
+++++++INSTALLED /usr/brlcad/man/man1/pixsaturate.1
+++++++INSTALLED /usr/brlcad/man/man1/pixscale.1
+++++++INSTALLED /usr/brlcad/man/man1/pixshrink.1
+++++++INSTALLED /usr/brlcad/man/man1/pixstat.1
+++++++INSTALLED /usr/brlcad/man/man1/pixsubst.1
+++++++INSTALLED /usr/brlcad/man/man1/pixtile.1
+++++++INSTALLED /usr/brlcad/man/man1/pixuntile.1
+++++++INSTALLED /usr/brlcad/man/man1/pl-X.1
+++++++INSTALLED /usr/brlcad/man/man1/pl-asc.1
+++++++INSTALLED /usr/brlcad/man/man1/pl-hpgl.1
+++++++INSTALLED /usr/brlcad/man/man1/pl-pl.1
+++++++INSTALLED /usr/brlcad/man/man1/pl-ps.1
+++++++INSTALLED /usr/brlcad/man/man1/pl-sgi.1
+++++++INSTALLED /usr/brlcad/man/man1/pl-starbase.1
+++++++INSTALLED /usr/brlcad/man/man1/pl-tek.1
+++++++INSTALLED /usr/brlcad/man/man1/plcolor.1
+++++++INSTALLED /usr/brlcad/man/man1/pldebug.1
+++++++INSTALLED /usr/brlcad/man/man1/plgetframe.1
+++++++INSTALLED /usr/brlcad/man/man1/plline2.1
+++++++INSTALLED /usr/brlcad/man/man1/plrot.1
+++++++INSTALLED /usr/brlcad/man/man1/png-bw.1
+++++++INSTALLED /usr/brlcad/man/man1/png-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/png_info.1
+++++++INSTALLED /usr/brlcad/man/man1/query.1
+++++++INSTALLED /usr/brlcad/man/man1/rle-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/sun-pix.1
+++++++INSTALLED /usr/brlcad/man/man1/terrain.1
+++++++INSTALLED /usr/brlcad/man/man1/wavelet.1
+++++++INSTALLED /usr/brlcad/man/man1/pl-X10.1
+-------------------------------- .fbed.fbsd
+......checking fbed
+++++++INSTALLED /usr/brlcad/bin/fbed
+++++++INSTALLED /usr/brlcad/man/man1/fbed.1
+-------------------------------- .lgt.fbsd
+......checking lgt
+++++++INSTALLED /usr/brlcad/bin/lgt
+++++++INSTALLED /usr/brlcad/man/man1/lgt.1
+-------------------------------- .patch.fbsd
+......checking patch-g
+++++++INSTALLED /usr/brlcad/bin/patch-g
+......checking rpatch
+++++++INSTALLED /usr/brlcad/bin/rpatch
+++++++INSTALLED /usr/brlcad/man/man1/patch-g.1
+++++++INSTALLED /usr/brlcad/man/man1/rpatch.1
+-------------------------------- .vas4.fbsd
+......checking vas4
+++++++INSTALLED /usr/brlcad/bin/vas4
+++++++INSTALLED /usr/brlcad/man/man1/vas4.1
+-------------------------------- .vdeck.fbsd
+......checking vdeck
+++++++INSTALLED /usr/brlcad/bin/vdeck
+++++++INSTALLED /usr/brlcad/man/man1/vdeck.1
+-------------------------------- .sig.fbsd
+......checking a-d
+++++++INSTALLED /usr/brlcad/bin/a-d
+......checking d-a
+++++++INSTALLED /usr/brlcad/bin/d-a
+......checking i-d
+++++++INSTALLED /usr/brlcad/bin/i-d
+......checking d-i
+++++++INSTALLED /usr/brlcad/bin/d-i
+......checking bw-d
+++++++INSTALLED /usr/brlcad/bin/bw-d
+......checking d-bw
+++++++INSTALLED /usr/brlcad/bin/d-bw
+......checking f-d
+++++++INSTALLED /usr/brlcad/bin/f-d
+......checking d-f
+++++++INSTALLED /usr/brlcad/bin/d-f
+......checking f-i
+++++++INSTALLED /usr/brlcad/bin/f-i
+......checking i-f
+++++++INSTALLED /usr/brlcad/bin/i-f
+......checking c-d
+++++++INSTALLED /usr/brlcad/bin/c-d
+......checking i-a
+++++++INSTALLED /usr/brlcad/bin/i-a
+......checking u-a
+++++++INSTALLED /usr/brlcad/bin/u-a
+......checking u-d
+++++++INSTALLED /usr/brlcad/bin/u-d
+......checking u-f
+++++++INSTALLED /usr/brlcad/bin/u-f
+......checking u-bw
+++++++INSTALLED /usr/brlcad/bin/u-bw
+......checking dwin
+++++++INSTALLED /usr/brlcad/bin/dwin
+......checking dauto
+++++++INSTALLED /usr/brlcad/bin/dauto
+......checking dmod
+++++++INSTALLED /usr/brlcad/bin/dmod
+......checking dfft
+++++++INSTALLED /usr/brlcad/bin/dfft
+......checking dconv
+++++++INSTALLED /usr/brlcad/bin/dconv
+......checking imod
+++++++INSTALLED /usr/brlcad/bin/imod
+......checking umod
+++++++INSTALLED /usr/brlcad/bin/umod
+......checking ddisp
+++++++INSTALLED /usr/brlcad/bin/ddisp
+......checking fhor
+++++++INSTALLED /usr/brlcad/bin/fhor
+......checking dstat
+++++++INSTALLED /usr/brlcad/bin/dstat
+......checking dsel
+++++++INSTALLED /usr/brlcad/bin/dsel
+......checking dpeak
+++++++INSTALLED /usr/brlcad/bin/dpeak
+......checking syn
+++++++INSTALLED /usr/brlcad/bin/syn
+......checking damdf
+++++++INSTALLED /usr/brlcad/bin/damdf
+......checking dauto2
+++++++INSTALLED /usr/brlcad/bin/dauto2
+......checking ihist
+++++++INSTALLED /usr/brlcad/bin/ihist
+......checking istat
+++++++INSTALLED /usr/brlcad/bin/istat
+......checking ustat
+++++++INSTALLED /usr/brlcad/bin/ustat
+-------------------------------- .tab.fbsd
+......checking tabinterp
+++++++INSTALLED /usr/brlcad/bin/tabinterp
+......checking txyz-pl
+++++++INSTALLED /usr/brlcad/bin/txyz-pl
+......checking tabsub
+++++++INSTALLED /usr/brlcad/bin/tabsub
+......checking scriptsort
+++++++INSTALLED /usr/brlcad/bin/scriptsort
+......checking script-tab
+++++++INSTALLED /usr/brlcad/bin/script-tab
+++++++INSTALLED /usr/brlcad/man/man1/scriptsort.1
+++++++INSTALLED /usr/brlcad/man/man1/tabinterp.1
+++++++INSTALLED /usr/brlcad/man/man1/tabsub.1
+-------------------------------- .tools.fbsd
+......checking applymap
+++++++INSTALLED /usr/brlcad/bin/applymap
+......checking avg4
+++++++INSTALLED /usr/brlcad/bin/avg4
+......checking crop
+++++++INSTALLED /usr/brlcad/bin/crop
+......checking fant
+++++++INSTALLED /usr/brlcad/bin/fant
+......checking into
+++++++INSTALLED /usr/brlcad/bin/into
+......checking mcut
+++++++INSTALLED /usr/brlcad/bin/mcut
+......checking mergechan
+++++++INSTALLED /usr/brlcad/bin/mergechan
+......checking pyrmask
+++++++INSTALLED /usr/brlcad/bin/pyrmask
+......checking repos
+++++++INSTALLED /usr/brlcad/bin/repos
+......checking rleaddcom
+++++++INSTALLED /usr/brlcad/bin/rleaddcom
+......checking rlebg
+++++++INSTALLED /usr/brlcad/bin/rlebg
+......checking rlebox
+++++++INSTALLED /usr/brlcad/bin/rlebox
+......checking rlecat
+++++++INSTALLED /usr/brlcad/bin/rlecat
+......checking rlecomp
+++++++INSTALLED /usr/brlcad/bin/rlecomp
+......checking rledither
+++++++INSTALLED /usr/brlcad/bin/rledither
+......checking rleflip
+++++++INSTALLED /usr/brlcad/bin/rleflip
+......checking rlehdr
+++++++INSTALLED /usr/brlcad/bin/rlehdr
+......checking rlehisto
+++++++INSTALLED /usr/brlcad/bin/rlehisto
+......checking rleldmap
+++++++INSTALLED /usr/brlcad/bin/rleldmap
+......checking rlemandl
+++++++INSTALLED /usr/brlcad/bin/rlemandl
+......checking rlenoise
+++++++INSTALLED /usr/brlcad/bin/rlenoise
+......checking rlepatch
+++++++INSTALLED /usr/brlcad/bin/rlepatch
+......checking rleprint
+++++++INSTALLED /usr/brlcad/bin/rleprint
+......checking rlequant
+++++++INSTALLED /usr/brlcad/bin/rlequant
+......checking rlescale
+++++++INSTALLED /usr/brlcad/bin/rlescale
+......checking rleselect
+++++++INSTALLED /usr/brlcad/bin/rleselect
+......checking rlesetbg
+++++++INSTALLED /usr/brlcad/bin/rlesetbg
+......checking rlespiff
+++++++INSTALLED /usr/brlcad/bin/rlespiff
+......checking rlesplice
+++++++INSTALLED /usr/brlcad/bin/rlesplice
+......checking rlesplit
+++++++INSTALLED /usr/brlcad/bin/rlesplit
+......checking rlestereo
+++++++INSTALLED /usr/brlcad/bin/rlestereo
+......checking rleswap
+++++++INSTALLED /usr/brlcad/bin/rleswap
+......checking rlezoom
+++++++INSTALLED /usr/brlcad/bin/rlezoom
+......checking smush
+++++++INSTALLED /usr/brlcad/bin/smush
+......checking to8
+++++++INSTALLED /usr/brlcad/bin/to8
+......checking tobw
+++++++INSTALLED /usr/brlcad/bin/tobw
+......checking unexp
+++++++INSTALLED /usr/brlcad/bin/unexp
+......checking unslice
+++++++INSTALLED /usr/brlcad/bin/unslice
+......checking rleClock
+++++++INSTALLED /usr/brlcad/bin/rleClock
+......checking font.c
+++++++INSTALLED /usr/brlcad/bin/font.c
+......checking cubitorle
+++++++INSTALLED /usr/brlcad/bin/cubitorle
+......checking giftorle
+++++++INSTALLED /usr/brlcad/bin/giftorle
+......checking graytorle
+++++++INSTALLED /usr/brlcad/bin/graytorle
+......checking painttorle
+++++++INSTALLED /usr/brlcad/bin/painttorle
+......checking rawtorle
+++++++INSTALLED /usr/brlcad/bin/rawtorle
+......checking rletoabA60
+++++++INSTALLED /usr/brlcad/bin/rletoabA60
+......checking rletoascii
+++++++INSTALLED /usr/brlcad/bin/rletoascii
+......checking rletogray
+++++++INSTALLED /usr/brlcad/bin/rletogray
+......checking rletopaint
+++++++INSTALLED /usr/brlcad/bin/rletopaint
+......checking rletops
+++++++INSTALLED /usr/brlcad/bin/rletops
+......checking rletoraw
+++++++INSTALLED /usr/brlcad/bin/rletoraw
+......checking targatorle
+++++++INSTALLED /usr/brlcad/bin/targatorle
+......checking wasatchrle
+++++++INSTALLED /usr/brlcad/bin/wasatchrle
+......checking rletogif
+++++++INSTALLED /usr/brlcad/bin/rletogif
+......checking rletoabA62
+++++++INSTALLED /usr/brlcad/bin/rletoabA62
+++++++INSTALLED /usr/brlcad/man/man1/applymap.1
+++++++INSTALLED /usr/brlcad/man/man1/avg4.1
+++++++INSTALLED /usr/brlcad/man/man1/crop.1
+++++++INSTALLED /usr/brlcad/man/man1/cubitorle.1
+++++++INSTALLED /usr/brlcad/man/man1/fant.1
+++++++INSTALLED /usr/brlcad/man/man1/giftorle.1
+++++++INSTALLED /usr/brlcad/man/man1/graytorle.1
+++++++INSTALLED /usr/brlcad/man/man1/into.1
+++++++INSTALLED /usr/brlcad/man/man1/mcut.1
+++++++INSTALLED /usr/brlcad/man/man1/mergechan.1
+++++++INSTALLED /usr/brlcad/man/man1/painttorle.1
+++++++INSTALLED /usr/brlcad/man/man1/pyrmask.1
+++++++INSTALLED /usr/brlcad/man/man1/rawtorle.1
+++++++INSTALLED /usr/brlcad/man/man1/repos.1
+++++++INSTALLED /usr/brlcad/man/man1/rleClock.1
+++++++INSTALLED /usr/brlcad/man/man1/rleaddcom.1
+++++++INSTALLED /usr/brlcad/man/man1/rleaddeof.1
+++++++INSTALLED /usr/brlcad/man/man1/rlebg.1
+++++++INSTALLED /usr/brlcad/man/man1/rlebox.1
+++++++INSTALLED /usr/brlcad/man/man1/rlecat.1
+++++++INSTALLED /usr/brlcad/man/man1/rlecomp.1
+++++++INSTALLED /usr/brlcad/man/man1/rledither.1
+++++++INSTALLED /usr/brlcad/man/man1/rleflip.1
+++++++INSTALLED /usr/brlcad/man/man1/rlehdr.1
+++++++INSTALLED /usr/brlcad/man/man1/rlehisto.1
+++++++INSTALLED /usr/brlcad/man/man1/rleldmap.1
+++++++INSTALLED /usr/brlcad/man/man1/rlemandl.1
+++++++INSTALLED /usr/brlcad/man/man1/rlenoise.1
+++++++INSTALLED /usr/brlcad/man/man1/rlepatch.1
+++++++INSTALLED /usr/brlcad/man/man1/rleprint.1
+++++++INSTALLED /usr/brlcad/man/man1/rlequant.1
+++++++INSTALLED /usr/brlcad/man/man1/rlescale.1
+++++++INSTALLED /usr/brlcad/man/man1/rleselect.1
+++++++INSTALLED /usr/brlcad/man/man1/rlesetbg.1
+++++++INSTALLED /usr/brlcad/man/man1/rleskel.1
+++++++INSTALLED /usr/brlcad/man/man1/rlespiff.1
+++++++INSTALLED /usr/brlcad/man/man1/rlesplice.1
+++++++INSTALLED /usr/brlcad/man/man1/rlesplit.1
+++++++INSTALLED /usr/brlcad/man/man1/rlestereo.1
+++++++INSTALLED /usr/brlcad/man/man1/rleswap.1
+++++++INSTALLED /usr/brlcad/man/man1/rletoabA60.1
+++++++INSTALLED /usr/brlcad/man/man1/rletoabA62.1
+++++++INSTALLED /usr/brlcad/man/man1/rletoascii.1
+++++++INSTALLED /usr/brlcad/man/man1/rletogif.1
+++++++INSTALLED /usr/brlcad/man/man1/rletogray.1
+++++++INSTALLED /usr/brlcad/man/man1/rletopaint.1
+++++++INSTALLED /usr/brlcad/man/man1/rletops.1
+++++++INSTALLED /usr/brlcad/man/man1/rletoraw.1
+++++++INSTALLED /usr/brlcad/man/man1/rlezoom.1
+++++++INSTALLED /usr/brlcad/man/man1/smush.1
+++++++INSTALLED /usr/brlcad/man/man1/targatorle.1
+++++++INSTALLED /usr/brlcad/man/man1/to8.1
+++++++INSTALLED /usr/brlcad/man/man1/tobw.1
+++++++INSTALLED /usr/brlcad/man/man1/unexp.1
+++++++INSTALLED /usr/brlcad/man/man1/unslice.1
+++++++INSTALLED /usr/brlcad/man/man1/urt.1
+++++++INSTALLED /usr/brlcad/man/man1/wasatchrle.1
+-------------------------------- .anim.fbsd
+......checking anim_cascade
+++++++INSTALLED /usr/brlcad/bin/anim_cascade
+......checking anim_fly
+++++++INSTALLED /usr/brlcad/bin/anim_fly
+......checking anim_hardtrack
+++++++INSTALLED /usr/brlcad/bin/anim_hardtrack
+......checking anim_keyread
+++++++INSTALLED /usr/brlcad/bin/anim_keyread
+......checking anim_lookat
+++++++INSTALLED /usr/brlcad/bin/anim_lookat
+......checking anim_offset
+++++++INSTALLED /usr/brlcad/bin/anim_offset
+......checking anim_orient
+++++++INSTALLED /usr/brlcad/bin/anim_orient
+......checking anim_script
+++++++INSTALLED /usr/brlcad/bin/anim_script
+......checking anim_sort
+++++++INSTALLED /usr/brlcad/bin/anim_sort
+......checking anim_time
+++++++INSTALLED /usr/brlcad/bin/anim_time
+......checking anim_track
+++++++INSTALLED /usr/brlcad/bin/anim_track
+......checking anim_turn
+++++++INSTALLED /usr/brlcad/bin/anim_turn
+......checking chan_add
+++++++INSTALLED /usr/brlcad/bin/chan_add
+......checking chan_mult
+++++++INSTALLED /usr/brlcad/bin/chan_mult
+......checking chan_permute
+++++++INSTALLED /usr/brlcad/bin/chan_permute
+++++++INSTALLED /usr/brlcad/man/man1/anim_cascade.1
+++++++INSTALLED /usr/brlcad/man/man1/anim_fly.1
+++++++INSTALLED /usr/brlcad/man/man1/anim_hardtrack.1
+++++++INSTALLED /usr/brlcad/man/man1/anim_keyread.1
+++++++INSTALLED /usr/brlcad/man/man1/anim_lookat.1
+++++++INSTALLED /usr/brlcad/man/man1/anim_offset.1
+++++++INSTALLED /usr/brlcad/man/man1/anim_orient.1
+++++++INSTALLED /usr/brlcad/man/man1/anim_script.1
+++++++INSTALLED /usr/brlcad/man/man1/anim_sort.1
+++++++INSTALLED /usr/brlcad/man/man1/anim_time.1
+++++++INSTALLED /usr/brlcad/man/man1/anim_track.1
+++++++INSTALLED /usr/brlcad/man/man1/anim_turn.1
+++++++INSTALLED /usr/brlcad/man/man1/chan_mult.1
+++++++INSTALLED /usr/brlcad/man/man1/chan_permute.1
+-------------------------------- .off.fbsd
+......checking off-g
+++++++INSTALLED /usr/brlcad/bin/off-g
+......checking g-off
+++++++INSTALLED /usr/brlcad/bin/g-off
+-------------------------------- .halftone.fbsd
+......checking halftone
+++++++INSTALLED /usr/brlcad/bin/halftone
+++++++INSTALLED /usr/brlcad/man/man1/halftone.1
+-------------------------------- .nirt.fbsd
+......checking nirt
+++++++INSTALLED /usr/brlcad/bin/nirt
+++++++INSTALLED /usr/brlcad/man/man1/nirt.1
+++++++INSTALLED /usr/brlcad/man/man1/showshot.1
+-------------------------------- .irprep.fbsd
+......checking firpass
+++++++INSTALLED /usr/brlcad/bin/firpass
+......checking secpass
+++++++INSTALLED /usr/brlcad/bin/secpass
+......checking shapefact
+++++++INSTALLED /usr/brlcad/bin/shapefact
+......checking all_sf
+++++++INSTALLED /usr/brlcad/bin/all_sf
+......checking display
+++++++INSTALLED /usr/brlcad/bin/display
+......checking ir-X
+++++++INSTALLED /usr/brlcad/bin/ir-X
+......checking ir-sgi
+++++++INSTALLED /usr/brlcad/bin/ir-sgi
+......checking irdisp
+++++++INSTALLED /usr/brlcad/bin/irdisp
+++++++INSTALLED /usr/brlcad/man/man1/all_sf.1
+++++++INSTALLED /usr/brlcad/man/man1/display.1
+++++++INSTALLED /usr/brlcad/man/man1/firpass.1
+++++++INSTALLED /usr/brlcad/man/man1/ir-X.1
+++++++INSTALLED /usr/brlcad/man/man1/ir-sgi.1
+++++++INSTALLED /usr/brlcad/man/man1/irdisp.1
+++++++INSTALLED /usr/brlcad/man/man1/pictsgi.1
+++++++INSTALLED /usr/brlcad/man/man1/pictx.1
+++++++INSTALLED /usr/brlcad/man/man1/secpass.1
+++++++INSTALLED /usr/brlcad/man/man1/see.1
+++++++INSTALLED /usr/brlcad/man/man1/see2.1
+++++++INSTALLED /usr/brlcad/man/man1/shapefact.1
+-------------------------------- .jove.fbsd
+......checking jove
+++++++INSTALLED /usr/brlcad/bin/jove
+......checking findcom
+++++++INSTALLED /usr/brlcad/bin/findcom
+......checking teach-jove
+++++++INSTALLED /usr/brlcad/bin/teach-jove
+++++++INSTALLED /usr/brlcad/man/man1/describe.com.1
+++++++INSTALLED /usr/brlcad/man/man1/jove.1
+++++++INSTALLED /usr/brlcad/man/man1/teach-jove.1
+-------------------------------- .burst.fbsd
+......checking burst
+++++++INSTALLED /usr/brlcad/bin/burst
+-------------------------------- .gtools.fbsd
+......checking g_lint
+++++++INSTALLED /usr/brlcad/bin/g_lint
+......checking g_diff
+++++++INSTALLED /usr/brlcad/bin/g_diff
+++++++INSTALLED /usr/brlcad/man/man1/g_diff.1
+++++++INSTALLED /usr/brlcad/man/man1/g_lint.1
+-------------------------------- .bwish.fbsd
+......checking bwish
+++++++INSTALLED /usr/brlcad/bin/bwish
+-------------------------------- tclscripts/.
+......checking ami.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/ami.tcl
+......checking cad_clrpick.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/cad_clrpick.tcl
+......checking cad_dialog.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/cad_dialog.tcl
+......checking chkexterns.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/chkexterns.tcl
+......checking helpcomm.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/helpcomm.tcl
+......checking helplib.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/helplib.tcl
+......checking hoc.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/hoc.tcl
+......checking html_library.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/html_library.tcl
+......checking libdm.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/libdm.tcl
+......checking menu_override.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/menu_override.tcl
+......checking mouse.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mouse.tcl
+......checking vmath.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/vmath.tcl
+......checking fs_dialog.tk
+++++++INSTALLED /usr/brlcad/tclscripts/fs_dialog.tk
+......checking tclIndex
+++++++INSTALLED /usr/brlcad/tclscripts/tclIndex
+-------------------------------- tclscripts/mged
+......checking adc.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/adc.tcl
+......checking anim.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/anim.tcl
+......checking apply.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/apply.tcl
+......checking apply_mat.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/apply_mat.tcl
+......checking bindings.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/bindings.tcl
+......checking bot_face_select.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/bot_face_select.tcl
+......checking build_region.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/build_region.tcl
+......checking calipers.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/calipers.tcl
+......checking callbacks.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/callbacks.tcl
+......checking collaborate.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/collaborate.tcl
+......checking color.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/color.tcl
+......checking color_scheme.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/color_scheme.tcl
+......checking comb.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/comb.tcl
+......checking combmenu.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/combmenu.tcl
+......checking cycle.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/cycle.tcl
+......checking e_id.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/e_id.tcl
+......checking edit_menu.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/edit_menu.tcl
+......checking edit_solid.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/edit_solid.tcl
+......checking edit_solid_int.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/edit_solid_int.tcl
+......checking editmenu.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/editmenu.tcl
+......checking editobj.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/editobj.tcl
+......checking eobjmenu.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/eobjmenu.tcl
+......checking extract.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/extract.tcl
+......checking font.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/font.tcl
+......checking g2asc.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/g2asc.tcl
+......checking garbage_collect.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/garbage_collect.tcl
+......checking grid.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/grid.tcl
+......checking help.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/help.tcl
+......checking helpdevel.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/helpdevel.tcl
+......checking icreate.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/icreate.tcl
+......checking illum.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/illum.tcl
+......checking list.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/list.tcl
+......checking make_solid.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/make_solid.tcl
+......checking menu.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/menu.tcl
+......checking mged.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/mged.tcl
+......checking mgedrc.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/mgedrc.tcl
+......checking mouse.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/mouse.tcl
+......checking muves.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/muves.tcl
+......checking mview.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/mview.tcl
+......checking openw.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/openw.tcl
+......checking overlap.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/overlap.tcl
+......checking plot.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/plot.tcl
+......checking prj_add.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/prj_add.tcl
+......checking ps.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/ps.tcl
+......checking qray.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/qray.tcl
+......checking ray.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/ray.tcl
+......checking raypick.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/raypick.tcl
+......checking rt.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/rt.tcl
+......checking rt_script.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/rt_script.tcl
+......checking sample.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/sample.tcl
+......checking shaders.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/shaders.tcl
+......checking skt_ed.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/skt_ed.tcl
+......checking solclick.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/solclick.tcl
+......checking solcreate.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/solcreate.tcl
+......checking solid.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/solid.tcl
+......checking text.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/text.tcl
+......checking titles.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/titles.tcl
+......checking tree.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/mged/tree.tcl
+......checking tclIndex
+++++++INSTALLED /usr/brlcad/tclscripts/mged/tclIndex
+......checking l_i0_v0_s0.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v0_s0.gif
+......checking l_i0_v0_s1.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v0_s1.gif
+......checking l_i0_v0_s2.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v0_s2.gif
+......checking l_i0_v0_s3.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v0_s3.gif
+......checking l_i0_v0_s4.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v0_s4.gif
+......checking l_i0_v0_s5.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v0_s5.gif
+......checking l_i0_v0_s6.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v0_s6.gif
+......checking l_i0_v0_s7.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v0_s7.gif
+......checking l_i0_v0_s8.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v0_s8.gif
+......checking l_i0_v0_s9.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v0_s9.gif
+......checking l_i0_v1_s0.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v1_s0.gif
+......checking l_i0_v1_s1.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v1_s1.gif
+......checking l_i0_v1_s2.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v1_s2.gif
+......checking l_i0_v1_s3.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v1_s3.gif
+......checking l_i0_v1_s4.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v1_s4.gif
+......checking l_i0_v1_s5.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v1_s5.gif
+......checking l_i0_v1_s6.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v1_s6.gif
+......checking l_i0_v1_s7.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v1_s7.gif
+......checking l_i0_v1_s8.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v1_s8.gif
+......checking l_i0_v1_s9.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i0_v1_s9.gif
+......checking l_i1_v0_s0.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v0_s0.gif
+......checking l_i1_v0_s1.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v0_s1.gif
+......checking l_i1_v0_s2.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v0_s2.gif
+......checking l_i1_v0_s3.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v0_s3.gif
+......checking l_i1_v0_s4.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v0_s4.gif
+......checking l_i1_v0_s5.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v0_s5.gif
+......checking l_i1_v0_s6.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v0_s6.gif
+......checking l_i1_v0_s7.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v0_s7.gif
+......checking l_i1_v0_s8.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v0_s8.gif
+......checking l_i1_v0_s9.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v0_s9.gif
+......checking l_i1_v1_s0.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v1_s0.gif
+......checking l_i1_v1_s1.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v1_s1.gif
+......checking l_i1_v1_s2.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v1_s2.gif
+......checking l_i1_v1_s3.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v1_s3.gif
+......checking l_i1_v1_s4.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v1_s4.gif
+......checking l_i1_v1_s5.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v1_s5.gif
+......checking l_i1_v1_s6.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v1_s6.gif
+......checking l_i1_v1_s7.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v1_s7.gif
+......checking l_i1_v1_s8.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v1_s8.gif
+......checking l_i1_v1_s9.gif
+++++++INSTALLED /usr/brlcad/tclscripts/mged/l_i1_v1_s9.gif
+-------------------------------- tclscripts/nirt
+......checking prototype.sh
+++++++INSTALLED /usr/brlcad/tclscripts/nirt/prototype.sh
+-------------------------------- tclscripts/pl-dm
+......checking bindings.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/pl-dm/bindings.tcl
+......checking help.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/pl-dm/help.tcl
+......checking menu.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/pl-dm/menu.tcl
+......checking tclIndex
+++++++INSTALLED /usr/brlcad/tclscripts/pl-dm/tclIndex
+-------------------------------- tclscripts/lib
+......checking CellPlot.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/CellPlot.tcl
+......checking ColorEntry.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/ColorEntry.tcl
+......checking ComboBox.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/ComboBox.tcl
+......checking Command.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/Command.tcl
+......checking Database.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/Database.tcl
+......checking Db.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/Db.tcl
+......checking Display.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/Display.tcl
+......checking Dm.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/Dm.tcl
+......checking Drawable.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/Drawable.tcl
+......checking Help.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/Help.tcl
+......checking Legend.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/Legend.tcl
+......checking Mged.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/Mged.tcl
+......checking QuadDisplay.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/QuadDisplay.tcl
+......checking Splash.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/Splash.tcl
+......checking View.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/lib/View.tcl
+......checking tclIndex
+++++++INSTALLED /usr/brlcad/tclscripts/lib/tclIndex
+-------------------------------- tclscripts/util
+......checking expand_int_ranges.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/util/expand_int_ranges.tcl
+......checking luniq.tcl
+++++++INSTALLED /usr/brlcad/tclscripts/util/luniq.tcl
+......checking tclIndex
+++++++INSTALLED /usr/brlcad/tclscripts/util/tclIndex
+-------------------------------- sample_applications
+......checking g-xxx.c
+++++++INSTALLED /usr/brlcad/sample_applications/g-xxx.c
+......checking pl-dm.c
+++++++INSTALLED /usr/brlcad/sample_applications/pl-dm.c
+......checking rtexample.c
+++++++INSTALLED /usr/brlcad/sample_applications/rtexample.c
+......checking debug.h
+++++++INSTALLED /usr/brlcad/sample_applications/debug.h
+......checking makefile
+++++++INSTALLED /usr/brlcad/sample_applications/makefile
+-------------------------------- html/manuals
+......checking Install.html
+++++++INSTALLED /usr/brlcad/html/manuals/Install.html
+......checking Obtain.html
+++++++INSTALLED /usr/brlcad/html/manuals/Obtain.html
+......checking Overview.html
+++++++INSTALLED /usr/brlcad/html/manuals/Overview.html
+......checking index.html
+++++++INSTALLED /usr/brlcad/html/manuals/index.html
+......checking eagleCAD.gif
+++++++INSTALLED /usr/brlcad/html/manuals/eagleCAD.gif
+......checking small-eagleCAD.gif
+++++++INSTALLED /usr/brlcad/html/manuals/small-eagleCAD.gif
+-------------------------------- html/manuals/shaders
+......checking camo.html
+++++++INSTALLED /usr/brlcad/html/manuals/shaders/camo.html
+-------------------------------- html/manuals/Anim_Tutorial
+......checking Butler.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/Butler.html
+......checking Murdza.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/Murdza.html
+......checking chans.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/chans.html
+......checking chapt0.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/chapt0.html
+......checking chapt1.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/chapt1.html
+......checking chapt2.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/chapt2.html
+......checking chapt3.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/chapt3.html
+......checking chapt4.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/chapt4.html
+......checking chapt5.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/chapt5.html
+......checking chapt6.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/chapt6.html
+......checking chapt7.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/chapt7.html
+......checking chapt8.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/chapt8.html
+......checking chapt9.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/chapt9.html
+......checking foot_Deitz89.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/foot_Deitz89.html
+......checking foot_Muuss88a.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/foot_Muuss88a.html
+......checking foot_Muuss90a.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/foot_Muuss90a.html
+......checking foot_Shoemake85.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/foot_Shoemake85.html
+......checking foot_frames.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/foot_frames.html
+......checking foot_gamma.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/foot_gamma.html
+......checking foot_graphics.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/foot_graphics.html
+......checking foot_hdtv.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/foot_hdtv.html
+......checking foot_libfb.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/foot_libfb.html
+......checking foot_ntsc.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/foot_ntsc.html
+......checking foot_size.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/foot_size.html
+......checking index.html
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/index.html
+......checking Lee_tux.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/Lee_tux.gif
+......checking animtbl.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/animtbl.gif
+......checking dagtbl.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/dagtbl.gif
+......checking ell_sm.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/ell_sm.gif
+......checking ell_ssm.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/ell_ssm.gif
+......checking equation.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/equation.gif
+......checking film.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/film.gif
+......checking fn.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/fn.gif
+......checking matrix.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/matrix.gif
+......checking moss_sm.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/moss_sm.gif
+......checking moss_ssm.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/moss_ssm.gif
+......checking trans.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/trans.gif
+......checking transboth.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/transboth.gif
+......checking transboth_sm.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/transboth_sm.gif
+......checking v_eqn1.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/v_eqn1.gif
+......checking v_eqn2.gif
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/v_eqn2.gif
+......checking ell.mpg
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/ell.mpg
+......checking moss.mpg
+++++++INSTALLED /usr/brlcad/html/manuals/Anim_Tutorial/moss.mpg
+-------------------------------- html/manuals/libdm
+......checking api.html
+++++++INSTALLED /usr/brlcad/html/manuals/libdm/api.html
+......checking contents.html
+++++++INSTALLED /usr/brlcad/html/manuals/libdm/contents.html
+......checking dm_obj.html
+++++++INSTALLED /usr/brlcad/html/manuals/libdm/dm_obj.html
+......checking index.html
+++++++INSTALLED /usr/brlcad/html/manuals/libdm/index.html
+......checking preface.html
+++++++INSTALLED /usr/brlcad/html/manuals/libdm/preface.html
+......checking tcl.html
+++++++INSTALLED /usr/brlcad/html/manuals/libdm/tcl.html
+-------------------------------- html/manuals/mged
+......checking brlcad_glossary.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/brlcad_glossary.html
+......checking brlcad_solids.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/brlcad_solids.html
+......checking cmd_line_ed.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/cmd_line_ed.html
+......checking concl.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/concl.html
+......checking contents.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/contents.html
+......checking default_key_bindings.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/default_key_bindings.html
+......checking default_mouse_bindings.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/default_mouse_bindings.html
+......checking ged.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/ged.html
+......checking index.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/index.html
+......checking mged.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mged.html
+......checking mged1.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mged1.html
+......checking mged2.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mged2.html
+......checking mged3.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mged3.html
+......checking mged_callbacks.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mged_callbacks.html
+......checking mged_cmd_index.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mged_cmd_index.html
+......checking mged_cmds.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mged_cmds.html
+......checking mged_devel_cmds.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mged_devel_cmds.html
+......checking mged_env_vars.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mged_env_vars.html
+......checking mged_gui.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mged_gui.html
+......checking mged_tcl_vars.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mged_tcl_vars.html
+......checking notes.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/notes.html
+......checking preface.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/preface.html
+......checking shaders.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/shaders.html
+......checking az_el.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/az_el.gif
+......checking az_el_sm.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/az_el_sm.gif
+......checking base.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/base.gif
+......checking bool.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/bool.gif
+......checking coord-axes.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/coord-axes.gif
+......checking cup_and_mug.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/cup_and_mug.gif
+......checking cup_and_mug_small.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/cup_and_mug_small.gif
+......checking cup_out+in.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/cup_out+in.gif
+......checking cup_outside.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/cup_outside.gif
+......checking cup_w_handle.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/cup_w_handle.gif
+......checking faceplate.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/faceplate.gif
+......checking faceplate_menu.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/faceplate_menu.gif
+......checking faceplate_menu_sm.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/faceplate_menu_sm.gif
+......checking faceplate_sm.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/faceplate_sm.gif
+......checking fillet.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/fillet.gif
+......checking handle.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/handle.gif
+......checking mug.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mug.gif
+......checking mug_camo.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mug_camo.gif
+......checking mug_green.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mug_green.gif
+......checking peewee.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/peewee.gif
+......checking prims.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/prims.gif
+......checking rim.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/rim.gif
+......checking az_el.jpg
+++++++INSTALLED /usr/brlcad/html/manuals/mged/az_el.jpg
+......checking azel.jpg
+++++++INSTALLED /usr/brlcad/html/manuals/mged/azel.jpg
+......checking base.jpg
+++++++INSTALLED /usr/brlcad/html/manuals/mged/base.jpg
+......checking fillet.jpg
+++++++INSTALLED /usr/brlcad/html/manuals/mged/fillet.jpg
+......checking handle.jpg
+++++++INSTALLED /usr/brlcad/html/manuals/mged/handle.jpg
+......checking mug.jpg
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mug.jpg
+......checking mug_camo.jpg
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mug_camo.jpg
+......checking mug_green.jpg
+++++++INSTALLED /usr/brlcad/html/manuals/mged/mug_green.jpg
+......checking peewee.jpg
+++++++INSTALLED /usr/brlcad/html/manuals/mged/peewee.jpg
+......checking rim.jpg
+++++++INSTALLED /usr/brlcad/html/manuals/mged/rim.jpg
+-------------------------------- html/manuals/mged/animmate
+......checking anim_cascade.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_cascade.html
+......checking anim_doc.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_doc.html
+......checking anim_fly.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_fly.html
+......checking anim_hardtrack.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_hardtrack.html
+......checking anim_keyread.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_keyread.html
+......checking anim_lookat.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_lookat.html
+......checking anim_man_pages.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_man_pages.html
+......checking anim_offset.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_offset.html
+......checking anim_orient.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_orient.html
+......checking anim_script.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_script.html
+......checking anim_sort.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_sort.html
+......checking anim_time.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_time.html
+......checking anim_track.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_track.html
+......checking anim_turn.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_turn.html
+......checking anim_tut.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/anim_tut.html
+......checking animate.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/animate.html
+......checking chan_mult.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/chan_mult.html
+......checking chan_permute.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/chan_permute.html
+......checking combine_doc.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/combine_doc.html
+......checking curve_doc.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/curve_doc.html
+......checking end_tut.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/end_tut.html
+......checking fbanim.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/fbanim.html
+......checking object_tut.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/object_tut.html
+......checking oscript_doc.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/oscript_doc.html
+......checking pixtile.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/pixtile.html
+......checking prep_tut.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/prep_tut.html
+......checking rt.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/rt.html
+......checking rt_tut.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/rt_tut.html
+......checking scriptsort.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/scriptsort.html
+......checking show_doc.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/show_doc.html
+......checking tabinterp.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tabinterp.html
+......checking table_doc.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/table_doc.html
+......checking tabsub.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tabsub.html
+......checking track_tut.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/track_tut.html
+......checking tscript_doc.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tscript_doc.html
+......checking tut.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tut.html
+......checking vcurve_doc.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/vcurve_doc.html
+......checking vdraw.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/vdraw.html
+......checking view_tut.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/view_tut.html
+......checking viewget.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/viewget.html
+......checking vscript_doc.html
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/vscript_doc.html
+......checking left_wheels.txt
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/left_wheels.txt
+......checking right_wheels.txt
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/right_wheels.txt
+......checking tank_path.txt
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tank_path.txt
+......checking track.txt
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/track.txt
+......checking ceditor.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/ceditor.gif
+......checking cscripts.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/cscripts.gif
+......checking etime.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/etime.gif
+......checking mmenu.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/mmenu.gif
+......checking oscript.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/oscript.gif
+......checking sscripts.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/sscripts.gif
+......checking teditor.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/teditor.gif
+......checking tscript.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tscript.gif
+......checking tut4.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tut4.gif
+......checking tut5.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tut5.gif
+......checking vcdwidget.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/vcdwidget.gif
+......checking vceditor.gif
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/vceditor.gif
+......checking tut1.png
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tut1.png
+......checking tut2.png
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tut2.png
+......checking tut6.png
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tut6.png
+......checking tut7.png
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tut7.png
+......checking tut8.png
+++++++INSTALLED /usr/brlcad/html/manuals/mged/animmate/tut8.png
+-------------------------------- html/manuals/librt
+......checking contents.html
+++++++INSTALLED /usr/brlcad/html/manuals/librt/contents.html
+......checking dg_obj.html
+++++++INSTALLED /usr/brlcad/html/manuals/librt/dg_obj.html
+......checking index.html
+++++++INSTALLED /usr/brlcad/html/manuals/librt/index.html
+......checking view_obj.html
+++++++INSTALLED /usr/brlcad/html/manuals/librt/view_obj.html
+......checking wdb_obj.html
+++++++INSTALLED /usr/brlcad/html/manuals/librt/wdb_obj.html
+-------------------------------- html/manuals/libbu
+......checking cmdhist_obj.html
+++++++INSTALLED /usr/brlcad/html/manuals/libbu/cmdhist_obj.html
+......checking contents.html
+++++++INSTALLED /usr/brlcad/html/manuals/libbu/contents.html
+......checking index.html
+++++++INSTALLED /usr/brlcad/html/manuals/libbu/index.html
+-------------------------------- html/manuals/cadwidgets
+......checking Command.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/Command.html
+......checking Database.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/Database.html
+......checking Db.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/Db.html
+......checking Display.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/Display.html
+......checking Dm.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/Dm.html
+......checking Drawable.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/Drawable.html
+......checking Mged.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/Mged.html
+......checking QuadDisplay.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/QuadDisplay.html
+......checking Splash.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/Splash.html
+......checking View.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/View.html
+......checking contents.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/contents.html
+......checking index.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/index.html
+......checking skeleton.html
+++++++INSTALLED /usr/brlcad/html/manuals/cadwidgets/skeleton.html
+-------------------------------- html/ReleaseNotes
+......checking email2.0.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/email2.0.html
+......checking email3.0.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/email3.0.html
+......checking email3.1.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/email3.1.html
+......checking email4.0.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/email4.0.html
+......checking email4.4.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/email4.4.html
+......checking email5.0.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/email5.0.html
+......checking index.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/index.html
+-------------------------------- html/ReleaseNotes/Rel5.0
+......checking deprecated.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/deprecated.html
+......checking index.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/index.html
+......checking new_cmds.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/new_cmds.html
+......checking new_libs.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/new_libs.html
+-------------------------------- html/ReleaseNotes/Rel5.0/Summary
+......checking index.html
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/index.html
+......checking index.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/index.htm
+......checking sld001.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld001.htm
+......checking sld002.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld002.htm
+......checking sld003.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld003.htm
+......checking sld004.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld004.htm
+......checking sld005.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld005.htm
+......checking sld006.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld006.htm
+......checking sld007.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld007.htm
+......checking sld008.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld008.htm
+......checking sld009.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld009.htm
+......checking sld010.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld010.htm
+......checking sld011.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld011.htm
+......checking sld012.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld012.htm
+......checking sld013.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld013.htm
+......checking sld014.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld014.htm
+......checking sld015.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld015.htm
+......checking sld016.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld016.htm
+......checking sld017.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld017.htm
+......checking sld018.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld018.htm
+......checking sld019.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/sld019.htm
+......checking tsld001.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld001.htm
+......checking tsld002.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld002.htm
+......checking tsld003.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld003.htm
+......checking tsld004.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld004.htm
+......checking tsld005.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld005.htm
+......checking tsld006.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld006.htm
+......checking tsld007.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld007.htm
+......checking tsld008.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld008.htm
+......checking tsld009.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld009.htm
+......checking tsld010.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld010.htm
+......checking tsld011.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld011.htm
+......checking tsld012.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld012.htm
+......checking tsld013.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld013.htm
+......checking tsld014.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld014.htm
+......checking tsld015.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld015.htm
+......checking tsld016.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld016.htm
+......checking tsld017.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld017.htm
+......checking tsld018.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld018.htm
+......checking tsld019.htm
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/tsld019.htm
+......checking img001.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img001.jpg
+......checking img002.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img002.jpg
+......checking img003.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img003.jpg
+......checking img004.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img004.jpg
+......checking img005.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img005.jpg
+......checking img006.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img006.jpg
+......checking img007.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img007.jpg
+......checking img008.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img008.jpg
+......checking img009.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img009.jpg
+......checking img010.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img010.jpg
+......checking img011.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img011.jpg
+......checking img012.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img012.jpg
+......checking img013.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img013.jpg
+......checking img014.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img014.jpg
+......checking img015.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img015.jpg
+......checking img016.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img016.jpg
+......checking img017.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img017.jpg
+......checking img018.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img018.jpg
+......checking img019.jpg
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/img019.jpg
+......checking activem.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/activem.gif
+......checking activep.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/activep.gif
+......checking collapse.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/collapse.gif
+......checking expand.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/expand.gif
+......checking first.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/first.gif
+......checking home.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/home.gif
+......checking ielogo.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/ielogo.gif
+......checking info.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/info.gif
+......checking last.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/last.gif
+......checking next.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/next.gif
+......checking pptani.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/pptani.gif
+......checking prev.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/prev.gif
+......checking space.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/space.gif
+......checking text.gif
+++++++INSTALLED /usr/brlcad/html/ReleaseNotes/Rel5.0/Summary/text.gif
+-------------------------------- pro-engineer/.
+......checking install.doc
+++++++INSTALLED /usr/brlcad/pro-engineer/install.doc
+......checking protk.dat
+++++++INSTALLED /usr/brlcad/pro-engineer/protk.dat
+-------------------------------- pro-engineer/sun4_solaris
+......checking proe-brl
+++++++INSTALLED /usr/brlcad/pro-engineer/sun4_solaris/proe-brl
+-------------------------------- pro-engineer/sgi_elf2
+......checking proe-brl
+++++++INSTALLED /usr/brlcad/pro-engineer/sgi_elf2/proe-brl
+-------------------------------- pro-engineer/text
+......checking usermsg.txt
+++++++INSTALLED /usr/brlcad/pro-engineer/text/usermsg.txt
+-------------------------------- pro-engineer/text/fullhelp
+......checking helpfiles.txt
+++++++INSTALLED /usr/brlcad/pro-engineer/text/fullhelp/helpfiles.txt
+......checking proe-brl.hlp
+++++++INSTALLED /usr/brlcad/pro-engineer/text/fullhelp/proe-brl.hlp
+-------------------------------- pro-engineer/text/menus
+......checking intf_exprt.aux
+++++++INSTALLED /usr/brlcad/pro-engineer/text/menus/intf_exprt.aux
+wide.arl.army.mil installation complete
+solids.sh
+NOTICE:  moss.g is BRL-CAD v5 format.
+rendering solids...
+solids.pix       3 off by many
+rendering moss...
+moss.pix       0 off by many
+shaders.sh
+rendering shaders...
+shaders.pix       0 off by many
+wide.arl.army.mil regression complete at Mon Nov 20 06:14:32 EST 2000

@@ -1,0 +1,19 @@
+This directory contains scripts to perform the regression testing of the
+BRL-CAD package.
+
+Every night the "master.sh" script is run on a single machine.  This deletes
+all files under the regression directory (by default "/c/regress").  It then
+checks out a copy of the target "brlcad" from /c/CVS.  For each architecture
+it creates a semaphore file "start_ARCH" (eg. start_7d).  
+
+When the "client.sh" script runs, it waits for the semaphore file to be
+created.  It also will not run past a cutoff time of 7am.  This cutoff time
+can be set on the command line.  Running "client.sh 24" will allow the script
+to run at any time.  When the semaphore file is detected, it is deleted, and
+the script begins building BRLCAD from the sources.  When the sources are
+built, a series of regression scripts are run to try to assure correct
+functionality.  For a list of the scripts that are run, see "client.sh" in the
+"ASSURANCE TESTING" section.
+
+When client.sh is done, it mails the results of the build and test to the
+"acst" mailing list.
