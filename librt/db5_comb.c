@@ -509,7 +509,16 @@ rt_comb_import5(
 	leafp_end = exprp;
 
 	if( rpn_len == 0 )  {
+		/* This tree is all union operators, import it as a balanced tree */
+
 		int	i;
+		struct bu_ptbl *tbl1, *tbl2;
+
+		tbl1 = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "rt_comb_import5: tbl1" );
+		tbl2 = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "rt_comb_import5: tbl2" );
+
+		/* insert all the leaf nodes into a bu_ptbl */
+		bu_ptbl_init( tbl1, nleaf, "rt_comb_import5: tbl" );
 		for( i = nleaf-1; i >= 0; i-- )  {
 			union tree	*tp;
 			long		mi;
@@ -550,18 +559,67 @@ rt_comb_import5(
 					}
 				}
 			}
+			bu_ptbl_ins( tbl1, (long *)tp );
+		}
 
-			if( comb->tree == TREE_NULL )  {
-				comb->tree = tp;
-			} else {
-				union tree	*unionp;
-				RT_GET_TREE( unionp, resp );
-				unionp->tr_b.magic = RT_TREE_MAGIC;
-				unionp->tr_b.tb_op = OP_UNION;
-				unionp->tr_b.tb_left = comb->tree;
-				unionp->tr_b.tb_right = tp;
-				comb->tree = unionp;
+		/* use a second bu_ptbl to help build a balanced tree
+		 *  1 - pick off pairs of pointers from tbl1
+		 *  2 - make a small tree thats unions the pair
+		 *  3 - insert that tree into tbl2
+		 *  4 - insert any leftover pointer from tbl1 into tbl2
+		 *  5 - swap tbl1 and tbl2
+		 *  6 - truncate tbl2 and go to step 1
+		 * stop when tbl2 has less than 2 members
+		 */
+		bu_ptbl_init( tbl2, (BU_PTBL_LEN( tbl1) + 1)/2, "rt_comb_import5: tbl1" );
+		while( 1 ) {
+			struct bu_ptbl *tmp;
+
+			for( i=0 ; i<BU_PTBL_LEN( tbl1 ) ; i += 2 ) {
+				union tree *tp1, *tp2, *unionp;
+				int j;
+
+				j = i + 1;
+				tp1 = (union tree *)BU_PTBL_GET( tbl1, i );
+				if( j < BU_PTBL_LEN( tbl1 ) ) {
+					tp2 = (union tree *)BU_PTBL_GET( tbl1, j );
+				} else {
+					tp2 = (union tree *)NULL;
+				}
+
+				if( tp2 ) {
+					RT_GET_TREE( unionp, resp );
+					unionp->tr_b.magic = RT_TREE_MAGIC;
+					unionp->tr_b.tb_op = OP_UNION;
+					unionp->tr_b.tb_left = tp1;
+					unionp->tr_b.tb_right = tp2;
+					bu_ptbl_ins( tbl2, (long *)unionp );
+				} else {
+					bu_ptbl_ins( tbl2, (long *)tp1 );
+				}
+
 			}
+
+			if( BU_PTBL_LEN( tbl2 ) == 0 ) {
+				comb->tree = (union tree *)NULL;
+				bu_ptbl_free( tbl1 );
+				bu_ptbl_free( tbl2 );
+				bu_free( (char *)tbl1, "rt_comb_import5: tbl1" );
+				bu_free( (char *)tbl2, "rt_comb_import5: tbl2" );
+				break;
+			} else if( BU_PTBL_LEN( tbl2 ) == 1 ) {
+				comb->tree = (union tree *)BU_PTBL_GET( tbl2, 0 );
+				bu_ptbl_free( tbl1 );
+				bu_ptbl_free( tbl2 );
+				bu_free( (char *)tbl1, "rt_comb_import5: tbl1" );
+				bu_free( (char *)tbl2, "rt_comb_import5: tbl2" );
+				break;
+			}
+
+			tmp = tbl2;
+			tbl2 = tbl1;
+			tbl1 = tmp;
+			bu_ptbl_trunc( tbl2, 0 );
 		}
 		BU_ASSERT_PTR( leafp, ==, leafp_end );
 		goto finish;
