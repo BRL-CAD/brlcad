@@ -1,71 +1,123 @@
 # editobj
-#
-# Command for editing ellipsoids.
+# Generic object editor for MGED
 
 set eoname(V) "Vertex"
 set eoname(A) "A vector"
 set eoname(B) "B vector"
 set eoname(C) "C vector"
+set eoname(D) "D vector"
 set eoname(H) "H vector"
 set eoname(r) "Radius"
 set eoname(r_a) "Radius a"
 set eoname(r_h) "Radius h"
 
 proc editobj { oname } {
-    set form [db form $oname]
-    set vals [db get $oname]
-    set objtype [lindex $vals 0]
-    set len [llength $vals]
     global eofin$oname
     global eoname
+
+    set vals [db get $oname]
+    set form [db form [lindex $vals 0]]
+    set len [llength $form]
 
     catch { destroy .eo$oname }
     toplevel .eo$oname
     wm title .eo$oname "Object editor: $oname"
 
-    frame .eo$oname.l
-    frame .eo$oname.r
-    pack .eo$oname.l -side left
-    pack .eo$oname.r -side left -fill x -expand yes
+    frame .eo$oname.t -borderwidth 2
+    pack .eo$oname.t -side top -fill x -expand yes
+
+    frame .eo$oname.t.l
+    frame .eo$oname.t.r
+    pack .eo$oname.t.l -side left -fill y -expand yes
+    pack .eo$oname.t.r -side left -fill x -expand yes
 
     set eofin$oname "db adjust $oname"
-    set i 1
-    while { $i<$len } {
+
+    for { set i 0 } { $i<$len } { incr i } {
 	set attr [lindex $form $i]
 	incr i
-	frame .eo$oname.r.f$attr
-	pack .eo$oname.r.f$attr -side top -fill x -expand yes
-	set eofin$oname [eval concat \$eofin$oname $attr]
 
-	set num 0
-	while { 1 } {
-	    set field [lindex $form $i]
-	    if { [string compare $field "%f"]==0 } then {
-		entry .eo$oname.r.f$attr.e$num -width 5 -relief sunken
-		pack .eo$oname.r.f$attr.e$num -side left -fill x -expand yes
-		.eo$oname.r.f$attr.e$num insert insert [lindex $vals $i]
-		set eofin$oname [eval concat \$eofin$oname \
-			\\\[.eo$oname.r.f$attr.e$num get\\\]]
-		incr i
-		incr num
-	    } else {
-		break
+	frame .eo$oname.t.r.f$attr
+	pack .eo$oname.t.r.f$attr -side top -fill x -expand yes
+	set eofin$oname [eval concat \[set eofin$oname\] $attr \\\"]
+
+	set field [lindex $form $i]
+	set fieldlen [llength $field]
+	for { set num 0 } { $num<$fieldlen } { incr num } {
+	    if { [string first "%f" $field]>-1 } then {
+		button .eo$oname.t.r.f$attr.dec$num -text \- -command \
+			"eodec $oname .eo$oname.t.r.f$attr.e$num"
+		button .eo$oname.t.r.f$attr.inc$num -text \+ -command \
+			"eoinc $oname .eo$oname.t.r.f$attr.e$num"
+		entry .eo$oname.t.r.f$attr.e$num -width 6 -relief sunken
+		pack .eo$oname.t.r.f$attr.dec$num -side left
+		pack .eo$oname.t.r.f$attr.e$num -side left -fill x -expand yes
+		pack .eo$oname.t.r.f$attr.inc$num -side left
+		.eo$oname.t.r.f$attr.e$num insert insert \
+			[lindex [lindex $vals [expr $i+1]] $num]
+		set eofin$oname [eval concat \[set eofin$oname\] \
+			\\\[.eo$oname.t.r.f$attr.e$num get\\\]]
+		bind .eo$oname.t.r.f$attr.e$num <Key-Return> "eoapply $oname"
 	    }
 	}
 
-	label .eo$oname.l.l$attr -text "$eoname($attr)" -anchor w
-	pack .eo$oname.l.l$attr -side top -fill y -expand yes
+	set eofin$oname [eval concat \[set eofin$oname\] \\\"]
+
+	if { [catch { label .eo$oname.t.l.l$attr -text "$eoname($attr)" \
+		-anchor w }]!=0 } then {
+	    label .eo$oname.t.l.l$attr -text "$attr" -anchor w
+	}
+
+	pack .eo$oname.t.l.l$attr -side top -anchor w -fill y -expand yes
     }
 
-    frame .eo$oname.b
-    pack .eo$oname.b -after .eo$oname.r -side bottom -fill x -expand yes
-    button .eo$oname.b.ok -text "Ok" -command "eval eval \$eofin$oname"
-    button .eo$oname.b.apply -text "Apply" -command "eval eval \$eofin$oname"
-    button .eo$oname.b.cancel -text "Cancel" -command "destroy .eo$oname"
-    pack .eo$oname.b.ok .eo$oname.b.apply .eo$oname.b.cancel -side left \
-	    -fill x -expand yes
-
-    echo [eval format \"Final eofin$oname: %s\" \$eofin$oname]
+    frame .eo$oname.b -borderwidth 2
+    pack .eo$oname.b -side top -fill x -expand yes
+    button .eo$oname.b.apply -text "Apply" -command "eoapply $oname"
+    button .eo$oname.b.cancel -text "Close" -command "destroy .eo$oname"
+    pack .eo$oname.b.apply .eo$oname.b.cancel -side left -fill x -expand yes
 }
-		
-	
+
+proc eoapply { oname } {
+    global eofin$oname
+    global eoname
+
+    eval [set eofin$oname]
+
+    set vals [db get $oname]
+    set form [db form [lindex $vals 0]]
+    set len [llength $form]
+
+    for { set i 0 } { $i<$len } { incr i } {
+	set attr [lindex $form $i]
+	incr i
+
+	set field [lindex $form $i]
+	set fieldlen [llength $field]
+	for { set num 0 } { $num<$fieldlen } { incr num } {
+	    if { [string first "%f" $field]>-1 } then {
+		.eo$oname.t.r.f$attr.e$num delete 0 end
+		.eo$oname.t.r.f$attr.e$num insert insert \
+			[lindex [lindex $vals [expr $i+1]] $num]
+	    }
+	}
+    }
+}
+
+proc eoinc { oname entryfield } {
+    set oldval [$entryfield get]
+    set increase [expr $oldval*0.1]
+    if { $increase<0.1 } then { set increase 0.1 }
+    $entryfield delete 0 end
+    $entryfield insert insert [expr $oldval+$increase]
+    eoapply $oname
+}
+
+proc eodec { oname entryfield } {
+    set oldval [$entryfield get]
+    set decrease [expr $oldval*0.1]
+    if { $decrease<0.1 } then { set decrease 0.1 }
+    $entryfield delete 0 end
+    $entryfield insert insert [expr $oldval-$decrease]
+    eoapply $oname
+}
