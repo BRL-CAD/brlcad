@@ -165,7 +165,7 @@ extern double   modf();
 extern void	port_setlinebuf( FILE *fp );
 # if !defined(HAVE_GETOPT_DECL)
 #  if defined(linux)
-extern int	getopt( int argc, char * CONST *argv, CONST char *optstr );
+#	include <getopt.h>
 #  else
 extern int	getopt( int argc, char **argv, char *optstr );
 #  endif
