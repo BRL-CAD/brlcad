@@ -138,6 +138,8 @@ CONST struct rt_list	*eu_hd;
  *			N M G _ L U _ T O _ V L I S T
  *
  *  Plot a single loopuse into a rt_vlist chain headed by vhead.
+ *
+ *  Needs to be able to handle both linear edges and cnurb edges.
  */
 void
 nmg_lu_to_vlist( vhead, lu, poly_markers, normal )
@@ -171,6 +173,7 @@ CONST vectp_t		normal;
 	npoints = 0;
 	VSETALL( centroid, 0 );
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+
 		/* Consider this edge */
 		NMG_CK_EDGEUSE(eu);
 		vu = eu->vu_p;
@@ -203,6 +206,12 @@ CONST vectp_t		normal;
 				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_DRAW );
 			}
 		}
+		/* If cnurb edgeuse, draw points interior to the curve here */
+		if( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )  continue;
+
+		/* XXX only use poly markers when face is planar, not snurb */
+		nmg_cnurb_to_vlist( vhead, eu, 10,  poly_markers ?
+			RT_VLIST_POLY_DRAW : RT_VLIST_LINE_DRAW );
 	}
 
 	/* Draw back to the first vertex used */
@@ -304,7 +313,13 @@ int			poly_markers;
 		NMG_CK_FACE(fu->f_p);
 
 		if( fu->f_p->g.magic_p && *fu->f_p->g.magic_p == NMG_FACE_G_SNURB_MAGIC )  {
+
 			nmg_snurb_fu_to_vlist( vhead, fu, poly_markers );
+
+			VSET( n, 1, 0, 0 );	/* sanity */
+			for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+			   	nmg_lu_to_vlist( vhead, lu, poly_markers, n );
+			}
 			continue;
 		}
 
@@ -2434,7 +2449,35 @@ CONST struct face_g_snurb	*fg;
 	old->s_size[0] = fg->s_size[0];
 	old->s_size[1] = fg->s_size[1];
 	old->pt_type = fg->pt_type;
-	old->ctl_points = fg->ctl_points;
+	old->ctl_points = fg->ctl_points;	/* pointer */
+}
+
+/*
+ *			N M G _ H A C K _ C N U R B
+ *
+ *  Convert a new NMG format cnurb to the older LIBNURB format,
+ *  by copying data and pointers.
+ *  Under no circumstances should the output of this routine be freed,
+ *  or it will corrupt the NMG original!  Just discard it.
+ *
+ *  XXX Temporary hack until LIBNURB is updated to new data structures.
+ */
+void
+nmg_hack_cnurb( old, eg )
+struct cnurb	*old;
+CONST struct edge_g_cnurb	*eg;
+{
+	NMG_CK_EDGE_G_CNURB(eg);
+	bzero( (char *)old, sizeof(struct cnurb) );
+
+	RT_LIST_INIT( &old->l );
+	old->l.magic = RT_CNURB_MAGIC;
+
+	old->order = eg->order;
+	old->knot = eg->k;			/* struct copy, including pointers! */
+	old->c_size = eg->c_size;
+	old->pt_type = eg->pt_type;
+	old->ctl_points = eg->ctl_points;	/* pointer */
 }
 
 /*
@@ -2477,9 +2520,9 @@ int				n_interior;	/* typ. 10 */
 
 	nmg_hack_snurb( &n, fg );	/* XXX */
 	NMG_CK_SNURB(&n);
-	r = (struct snurb *) rt_nurb_s_refine( &n, RT_NURB_SPLIT_COL, &tau2);
+	r = rt_nurb_s_refine( &n, RT_NURB_SPLIT_COL, &tau2);
 	NMG_CK_SNURB(r);
-	c = (struct snurb *) rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tau1);
+	c = rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tau1);
 	NMG_CK_SNURB(c);
 
 	coords = RT_NURB_EXTRACT_COORDS(c->pt_type);
@@ -2534,4 +2577,131 @@ int				n_interior;	/* typ. 10 */
 	rt_free( (char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
 
 	return(0);
+}
+
+/*
+ *			N M G _ C N U R B _ T O _ V L I S T
+ *
+ *  Draw interior points on a cnurb curve.
+ *  The endpoints are not drawn, as those points are (should) match
+ *  the vertices at the end of the edgeuse, and are handled by the caller.
+ *
+ *  Special processing is performed for the order <= 0 (linear) cnurbs.
+ *
+ *  If the curve is on a snurb face, it is in parameter space.
+ *  If the curve is on a planar face, it is in XYZ space.
+ */
+void
+nmg_cnurb_to_vlist( vhead, eu, n_interior, cmd )
+struct rt_list			*vhead;
+CONST struct edgeuse		*eu;
+int				n_interior;	/* typ. 10 */
+int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
+{
+	CONST struct edge_g_cnurb	*eg;
+	CONST struct faceuse	*fu;
+	register int		i;
+	register fastf_t	*vp;
+	struct knot_vector 	tau;
+	struct cnurb		n;		/* XXX hack, don't free */
+	struct cnurb		*c;
+	int 			coords;
+
+	RT_CK_LIST_HEAD( vhead );
+	NMG_CK_EDGEUSE(eu);
+	eg = eu->g.cnurb_p;
+	NMG_CK_EDGE_G_CNURB(eg);
+
+	fu = nmg_find_fu_of_eu(eu);	/* may return NULL */
+	NMG_CK_FACEUSE(fu);
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_cnurb_to_vlist() eu=x%x, n=%d, order=%d\n",
+			eu, n_interior, eg->order);
+	}
+
+	if( eg->order <= 0 )  {
+		/* linear cnurb on planar face -- no intermediate points to draw */
+		if( *fu->f_p->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
+			return;
+
+		/* linear cnurb on snurb face -- cnurb ctl pts are UV */
+		n.order = 2;
+		n.l.magic = RT_CNURB_MAGIC;
+		rt_nurb_gen_knot_vector( &n.knot, n.order, 0.0, 1.0 );
+		n.c_size = 2;
+		n.pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT );
+		n.ctl_points = (fastf_t *)rt_malloc(
+			sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(n.pt_type) *
+			n.c_size, "nmg_cnurb_to_vlist() order0 ctl_points[]");
+		/* Set ctl points to parametric values */
+		NMG_CK_VERTEXUSE_A_CNURB(eu->vu_p->a.cnurb_p);
+		n.ctl_points[0] = eu->vu_p->a.cnurb_p->param[0];
+		n.ctl_points[1] = eu->vu_p->a.cnurb_p->param[1];
+		n.ctl_points[2] = eu->eumate_p->vu_p->a.cnurb_p->param[0];
+		n.ctl_points[3] = eu->eumate_p->vu_p->a.cnurb_p->param[1];
+
+		rt_nurb_kvknot( &tau, 1, 0.0, 1.0, n_interior );
+	} else {
+		struct knot_vector 	tkv;
+
+		nmg_hack_cnurb( &n, eg );	/* don't free it! */
+		rt_nurb_kvgen( &tkv, eg->k.knots[0],
+			eg->k.knots[eg->k.k_size-1], n_interior );
+		rt_nurb_kvmerge( &tau, &tkv, &eg->k );
+		rt_free( (char *) tkv.knots, "nmg_cnurb_to_vlist() tkv.knots");
+	}
+	NMG_CK_CNURB( &n );
+	c = rt_nurb_c_refine( &n, &tau );
+	NMG_CK_CNURB( c );
+
+	coords = RT_NURB_EXTRACT_COORDS(c->pt_type);
+	
+	if( RT_NURB_IS_PT_RATIONAL(c->pt_type))  {
+		vp = c->ctl_points;
+		for(i= 0; i < c->c_size; i++)  {
+			FAST fastf_t	div;
+			register int	j;
+			div = 1/vp[coords-1];
+			for( j=0; j < coords; j++ )  {
+				*vp++ *= div;
+			}
+		}
+	}
+
+	if( *fu->f_p->g.magic_p == NMG_FACE_G_PLANE_MAGIC )  {
+		/* cnurb on planar face -- ctl points are XYZ */
+
+		vp = c->ctl_points;
+		/* Omit first and last points */
+		for( i = 1; i < c->c_size-1; i++)  {
+			RT_ADD_VLIST( vhead, vp, cmd );
+			vp += coords;
+		}
+	} else {
+		struct snurb	s;	/* XXX hack, don't free! */
+
+		/* cnurb on spline face -- ctl points are UV */
+		if( coords != 2 ) rt_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
+		nmg_hack_snurb( &s, fu->f_p->g.snurb_p );
+
+		vp = c->ctl_points;
+		/* Skip first and last points */
+		vp += coords;		/* skip i=0 */
+		for( i = 1; i < c->c_size-1; i++)  {
+			fastf_t		*final;
+
+			/* convert 'vp' from UV coord to XYZ coord via surf! */
+			final = rt_nurb_s_eval( &s, vp[0], vp[1] );
+			RT_ADD_VLIST( vhead, final, cmd );
+			rt_free( (char *)final, "nmg_cnurb_to_vlist() XYZ coord");
+			vp += coords;
+		}
+	}
+
+	rt_nurb_free_cnurb(c);
+	rt_free( (char *)tau.knots, "nmg_cnurb_to_vlist() tau.knots");
+	if( eg->order <= 0 )  {
+		rt_free( (char *)n.knot.knots, "nmg_cnurb_to_vlist() n.knot.knots");
+		rt_free( (char *)n.ctl_points, "nmg_cnurb_to_vlist() ctl_points");
+	}
 }
