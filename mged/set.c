@@ -50,6 +50,7 @@ struct mged_variables mged_variables = {
 /* e_axis */            	0,
 #ifdef SEND_KEY_DOWN_PIPE
 /* send_key */                  0,
+/* hot_key */                   0,
 #endif
 /* view */                      0,
 /* predictor */			0,
@@ -107,6 +108,7 @@ struct structparse mged_vparse[] = {
 	{"%d",  1, "e_axis",            MV_O(e_axis),           refresh_hook },
 #ifdef SEND_KEY_DOWN_PIPE
 	{"%d",  1, "send_key",          MV_O(send_key),         FUNC_NULL },
+	{"%d",  1, "hot_key",           MV_O(hot_key),         FUNC_NULL },
 #endif
 	{"%d",  1, "view",              MV_O(view),             set_view },
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },

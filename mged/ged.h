@@ -376,6 +376,7 @@ struct mged_variables {
 	int     e_axis;  /* edit axis */
 #ifdef SEND_KEY_DOWN_PIPE
         int     send_key;
+        int     hot_key;
 #endif
 	int     view;
 	int	predictor;
