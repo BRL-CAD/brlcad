@@ -2692,7 +2692,7 @@ CONST struct rt_tol	*tol;		/* for printing */
 		RT_LIST_APPEND( &(rmax->l), hd );
 		nmg_radial_verify_pointers( hd, tol );
 	} else {
-		rt_log("  %g %g %g --- %g %g %g\n",
+		rt_log("  %f %f %f --- %f %f %f\n",
 			V3ARGS(eu->vu_p->v_p->vg_p->coord),
 			V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
 		rt_log("amin=%g min_eu=x%x, amax=%g max_eu=x%x B\n",
@@ -3420,6 +3420,110 @@ CONST struct rt_tol	*tol;		/* for printing */
 	}
 }
 
+
+/*		N M G _ D O _ R A D I A L _ F L I P S
+ *
+ *	This routine looks for nmg_radial structures with the same angle,
+ *	and sorts them to match the order of nmg_radial structures that
+ *	are not at that same angle
+ */
+void
+nmg_do_radial_flips( hd )
+struct rt_list *hd;
+{
+	struct nmg_radial	*start_same;
+	struct rt_tol	tol;
+
+		tol.magic = RT_TOL_MAGIC;
+		tol.dist = 0.005;
+		tol.dist_sq = tol.dist * tol.dist;
+		tol.perp = 1e-6;
+		tol.para = 1 - tol.perp;
+
+	RT_CK_LIST_HEAD( hd );
+
+	start_same = RT_LIST_FIRST( nmg_radial, hd );
+	while( RT_LIST_NOT_HEAD( &start_same->l, hd ) )
+	{
+		struct nmg_radial	*next_after_same;
+		struct nmg_radial	*end_same;
+		struct nmg_radial	*same;
+		struct nmg_radial	*check;
+
+		if( !start_same->fu )
+		{
+			start_same = RT_LIST_PNEXT( nmg_radial, &start_same->l );
+			continue;
+		}
+
+		end_same = RT_LIST_PNEXT_CIRC( nmg_radial, &start_same->l );
+		while( (end_same->ang == start_same->ang && end_same != start_same)
+			|| !end_same->fu )
+			end_same = RT_LIST_PNEXT_CIRC( nmg_radial, &end_same->l );
+		end_same = RT_LIST_PPREV_CIRC( nmg_radial, &end_same->l );
+
+		if( start_same == end_same )
+		{
+			start_same = RT_LIST_PNEXT( nmg_radial, &start_same->l );
+			continue;
+		}
+
+		/* more than one eu at same angle, sort them according to shell */
+		next_after_same = RT_LIST_PNEXT_CIRC( nmg_radial, &end_same->l );
+		while( !next_after_same->fu && next_after_same != start_same )
+			next_after_same = RT_LIST_PNEXT_CIRC( nmg_radial, &next_after_same->l );
+
+		if( next_after_same == start_same )
+		{
+			/* no other radials with faces */
+			return;
+		}
+
+		check = next_after_same;
+		while( start_same != end_same && check != start_same )
+		{
+			same = end_same;
+			while( same->s != check->s && same != start_same )
+				same = RT_LIST_PPREV_CIRC( nmg_radial, &same->l );
+
+			if( same->s != check->s )
+			{
+				/* couldn't find any other radial from shell "same->s"
+				 * so put look at next radial
+				 */
+
+				check = RT_LIST_PNEXT_CIRC( nmg_radial, &check->l );
+				continue;
+			}
+
+			/* same->s matches check->s, so move "same" to right after end_same */
+			if( same == start_same )
+			{
+				/* starting radial matches, need to move it and
+				 * set pointer to new start_same
+				 */
+				start_same = RT_LIST_PNEXT_CIRC( nmg_radial, &start_same->l );
+				RT_LIST_DEQUEUE( &same->l );
+				RT_LIST_APPEND( &end_same->l, &same->l );
+			}
+			else if( same == end_same )
+			{
+				/* already in correct place, just move end_same */
+				end_same == RT_LIST_PPREV_CIRC( nmg_radial, &end_same->l );
+			}
+			else
+			{
+				RT_LIST_DEQUEUE( &same->l );
+				RT_LIST_APPEND( &end_same->l, &same->l );
+			}
+
+			check = RT_LIST_PNEXT_CIRC( nmg_radial, &check->l );
+		}
+
+		start_same = RT_LIST_PNEXT( nmg_radial, &end_same->l );
+	}
+}
+
 /*              N M G _ D O _ R A D I A L _ J O I N
  *
  *      Perform radial join of edges in list "hd" based on direction with respect
@@ -3445,6 +3549,8 @@ CONST struct rt_tol *tol;
 	if (rt_g.NMG_debug & DEBUG_MESH_EU )
 		rt_log( "nmg_do_radial_join() START\n" );
 
+	nmg_do_radial_flips( hd );
+
 	VSUB2( ref_dir, eu1ref->eumate_p->vu_p->v_p->vg_p->coord, eu1ref->vu_p->v_p->vg_p->coord );
 
 	if (rt_g.NMG_debug & DEBUG_MESH_EU )
@@ -3463,8 +3569,6 @@ top:
 	{
 		struct edgeuse *dest;
 		struct edgeuse *src;
-		struct faceuse *fu_src;
-		struct faceuse *fu_dest;
 		vect_t src_dir;
 		vect_t dest_dir;
 
@@ -3481,17 +3585,11 @@ top:
 		VSUB2( dest_dir, prev->eu->eumate_p->vu_p->v_p->vg_p->coord, prev->eu->vu_p->v_p->vg_p->coord );
 		VSUB2( src_dir, rad->eu->eumate_p->vu_p->v_p->vg_p->coord, rad->eu->vu_p->v_p->vg_p->coord );
 
-		fu_dest = nmg_find_fu_of_eu( prev->eu );
-		fu_src = nmg_find_fu_of_eu( rad->eu );
-
-		if( !fu_dest || !fu_src )
+		if( !prev->fu || !rad->fu )
 		{
 			nmg_je( prev->eu, rad->eu );
 			continue;
 		}
-
-		NMG_CK_FACEUSE( fu_dest );
-		NMG_CK_FACEUSE( fu_src );
 
 		if( VDOT( dest_dir, ref_dir ) < 0.0 )
 			dest = prev->eu->eumate_p;
@@ -3514,13 +3612,11 @@ top:
 				rt_log( "dest_dir disagrees with eu1ref\n" );
 			else
 				rt_log( "dest_dir agrees with eu1ref\n" );
-			rt_log( "dest_fu is %s\n", nmg_orientation( fu_dest->orientation ) );
 			
 			if( VDOT( src_dir, ref_dir ) < 0.0 )
 				rt_log( "src_dir disagrees with eu1ref\n" );
 			else
 				rt_log( "src_dir agrees with eu1ref\n" );
-			rt_log( "src_fu is %s\n", nmg_orientation( fu_src->orientation ) );
 
 			rt_log( "Joining dest_eu=x%x to src_eu=x%x\n", dest, src );
 		}
