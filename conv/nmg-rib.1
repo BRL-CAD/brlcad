@@ -1,6 +1,6 @@
 .TH NMG-RIB 1 BRL-CAD
 .SH NAME
-nmg-rib \- Convert polygonal NMG to Renderman Interface Bytestream
+nmg-rib \- Convert polygonal NMG to Renderman Interface Bytestream (RIB)
 .SH SYNOPSIS
 .B nmg-rib
 .RB [-t] database.nmg nmg_solid ...
@@ -10,11 +10,10 @@ The
 program
 reads the geometry database
 .I database.nmg
-and converts the named polygonal NMG solids to Renderman\u\s-4tm\s0\d
-Interface Bytestream (RIB) format polygons.
+and converts the named polygonal NMG solids to RIB format polygons.
 If the 
 .B \-t
-option is given the NMG solid will be triangulated first.
+option is given, the NMG solid will be triangulated first.
 If NMG a vertexuse normal is present for a vertexuse, it is used as the RIB
 vertex normal.  Otherwise, the NMG face normal is used.
 .SH EXAMPLE
@@ -36,7 +35,7 @@ box.s:  ARB8
         8 (-0.5, -0.5, 0.5)
 mged> \fBfacetize box.nmg box.s\fR
 facetize:  tessellating primitives with tolerances a=0, r=0.01, n=0
-facetize:  evaluating boolean expressions
+facetize:  evaluating Boolean expressions
 facetize:  converting NMG to database format
 facetize:  wrote 6.38 Kbytes to database
 mged> \fBq\fR
