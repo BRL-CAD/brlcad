@@ -1,4 +1,3 @@
-#define NUgrid 1
 /*
  *			S H O O T . C
  *
@@ -54,32 +53,19 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 #define AUTO /*let the compiler decide*/
 #endif
 
-/* start NUgrid XXX  --  associated with cut.c */
-#define RT_NUGRID_CELL(_array,_x,_y,_z)		(&(_array)[ \
-	((((_z)*rt_nu_cells_per_axis[Y])+(_y))*rt_nu_cells_per_axis[X])+(_x) ])
-
-struct nu_axis {
-	fastf_t	nu_spos;	/* cell start pos */
-	fastf_t	nu_epos;	/* cell end pos */
-	fastf_t	nu_width;	/* voxel size (end-start) */
-};
-extern struct nu_axis	*rt_nu_axis[3];
-extern int		rt_nu_cells_per_axis[3];
-extern union cutter	*rt_nu_grid;
-
 #define NUGRID_T_SETUP(_ax,_cno)	\
 	if( ap->a_ray.r_dir[_ax] == 0.0 )  { \
 		ssp->tv[_ax] = INFINITY; \
 	} else if( ap->a_ray.r_dir[_ax] > 0 ) { \
-		ssp->tv[_ax] = (rt_nu_axis[_ax][_cno].nu_epos - ssp->newray.r_pt[_ax]) * \
-			ssp->inv_dir[_ax]; \
+		ssp->tv[_ax] = (rti_nu_axis[_ax][_cno].nu_epos - \
+				ssp->newray.r_pt[_ax]) * ssp->inv_dir[_ax]; \
 	} else { \
-		ssp->tv[_ax] = (rt_nu_axis[_ax][_cno].nu_spos - ssp->newray.r_pt[_ax]) * \
-			ssp->inv_dir[_ax]; \
+		ssp->tv[_ax] = (rti_nu_axis[_ax][_cno].nu_spos - \
+				ssp->newray.r_pt[_ax]) * ssp->inv_dir[_ax]; \
 	}
 #define NUGRID_T_ADV(_ax,_cno)  \
 	if( ap->a_ray.r_dir[_ax] != 0 )  { \
-		ssp->tv[_ax] += rt_nu_axis[_ax][_cno].nu_width * \
+		ssp->tv[_ax] += rti_nu_axis[_ax][_cno].nu_width * \
 			ssp->abs_inv_dir[_ax]; \
 	}
 
@@ -112,134 +98,119 @@ struct shootray_status {
 };
 
 
-#if NUgrid
 /*
  *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
  *
- *  This version uses Gigante's non-uniform 3-D space grid/mesh discretization.
  */
 CONST union cutter *
 rt_advance_to_next_cell( ssp )
 register struct shootray_status	*ssp;
 {
-	register CONST union cutter	*cutp;
-	int			push_flag = 0;
-	double			fraction;
-	int			exponent;
-	register CONST struct application *ap = ssp->ap;
+	register CONST union cutter		*cutp;
+	register CONST struct application	*ap = ssp->ap;
 
-	if( ssp->lastcut == &(ap->a_rt_i->rti_inf_box) )  {
-	     	if( rt_g.debug & DEBUG_ADVANCE )  {
-	     		bu_log("rt_advance_to_next_cell(): finished infinite solids\n");
-	     	}
-		return(CUTTER_NULL);
-	}
-	for(;;)  {
-		if( ssp->lastcut == CUTTER_NULL )  {
-			/*
-			 *  First time through -- find starting cell.
-			 *  For now, linear search to find x,y,z cell indices.
-			 *  This should become a binary search
-			 *  All distance values (t0, etc) are expressed
-			 *  relative to ssp->first_box_start.
-			 */
-			register int	x, y, z;
+	if( ap->a_rt_i->rti_space_partition == RT_PART_NUGRID ) {
+/*
+ *  This version uses Gigante's non-uniform 3-D space grid/mesh discretization.
+ */
+
+#define rti_nu_axis		(ap->a_rt_i->rti_nu_axis)
+#define rti_nu_cells_per_axis	(ap->a_rt_i->rti_nu_cells_per_axis)
+#define rti_nu_stepsize 	(ap->a_rt_i->rti_nu_stepsize)
+#define rti_nu_grid		(ap->a_rt_i->rti_nu_grid)			
+		if( ssp->lastcut == &(ap->a_rt_i->rti_inf_box) )  {
+			if( rt_g.debug & DEBUG_ADVANCE )  {
+				bu_log("rt_advance_to_next_cell(): finished infinite solids\n");
+			}
+			return(CUTTER_NULL);
+		}
+		
+		for(;;) {
+		    if( ssp->lastcut == CUTTER_NULL )  {
+			register int	i, x, y, z;
 
 			ssp->dist_corr = ssp->first_box_start;
 			VJOIN1( ssp->newray.r_pt, ap->a_ray.r_pt,
 				ssp->dist_corr, ap->a_ray.r_dir );
-			if( rt_g.debug&DEBUG_ADVANCE) {
-				bu_log("rt_advance_to_next_cell() dist_corr=%g\n",
-					ssp->dist_corr );
-				bu_log("rt_advance_to_next_cell() newray.r_pt=(%g, %g, %g)\n",
-					V3ARGS( ssp->newray.r_pt ) );
-			}
 
-			if( ssp->newray.r_pt[X] < rt_nu_axis[X][0].nu_spos )
-				break;
-			for( x=0; x < rt_nu_cells_per_axis[X]; x++ )  {
-				if( ssp->newray.r_pt[X] < rt_nu_axis[X][x].nu_epos )
-					break;
-			}
-			if( x >= rt_nu_cells_per_axis[X] )  break;
+			/* Must find cell that contains newray.r_pt.
+			   We do this by binary subdivision. */
 
-			if( ssp->newray.r_pt[Y] < rt_nu_axis[Y][0].nu_spos )
-				break;
-			for( y=0; y < rt_nu_cells_per_axis[Y]; y++ )  {
-				if( ssp->newray.r_pt[Y] < rt_nu_axis[Y][y].nu_epos )
-					break;
-			}
-			if( y >= rt_nu_cells_per_axis[Y] )  break;
+			x = rt_find_nugrid(ap->a_rt_i, X, ssp->newray.r_pt[X]);
+			y = rt_find_nugrid(ap->a_rt_i, Y, ssp->newray.r_pt[Y]);
+			z = rt_find_nugrid(ap->a_rt_i, Z, ssp->newray.r_pt[Z]);
 
-			if( ssp->newray.r_pt[Z] < rt_nu_axis[Z][0].nu_spos )
-				break;
-			for( z=0; z < rt_nu_cells_per_axis[Z]; z++ )  {
-				if( ssp->newray.r_pt[Z] < rt_nu_axis[Z][z].nu_epos )
-					break;
-			}
-			if( z >= rt_nu_cells_per_axis[Z] )  break;
-			cutp = RT_NUGRID_CELL( rt_nu_grid, x, y, z );
+			if( x<0 || y<0 || z<0 ) break;
 
-			/*
-			 *  Prepare for efficient advancing from
-			 *  cell to cell.
-			 */
+			cutp = &rti_nu_grid[z*rti_nu_stepsize[Z] +
+					    y*rti_nu_stepsize[Y] +
+					    x*rti_nu_stepsize[X]];
+
 			ssp->igrid[X] = x;
 			ssp->igrid[Y] = y;
 			ssp->igrid[Z] = z;
-if(rt_g.debug&DEBUG_ADVANCE)bu_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z]);
 
-			/* tv[] has intercepts with walls of first cell on ray path */
 			NUGRID_T_SETUP( X, x );
 			NUGRID_T_SETUP( Y, y );
 			NUGRID_T_SETUP( Z, z );
 
-			ssp->t0 = 0.0; /* XXX somebody please doublecheck this */
-		} else {
+			ssp->t0 = 0.0;
+				
+if(rt_g.debug&DEBUG_ADVANCE)bu_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z]);
+		    } else {
 			/* Advance from previous cell to next cell */
 			/* Take next step, finding ray entry distance */
+			cutp = ssp->lastcut;
+
 			ssp->t0 = ssp->t1;
-			if( ap->a_ray.r_dir[ssp->out_axis] > 0 ) {
-				if( ++(ssp->igrid[ssp->out_axis]) >= rt_nu_cells_per_axis[ssp->out_axis] )
+			if( ap->a_ray.r_dir[ssp->out_axis] > 0.0 ) {
+				if( ++(ssp->igrid[ssp->out_axis]) >=
+				    rti_nu_cells_per_axis[ssp->out_axis] )
 					break;
+				cutp += rti_nu_stepsize[ssp->out_axis];
 			} else {
 				if( --(ssp->igrid[ssp->out_axis]) < 0 )
 					break;
+				cutp -= rti_nu_stepsize[ssp->out_axis];
 			}
 			NUGRID_T_ADV( ssp->out_axis, ssp->igrid[ssp->out_axis] );
 if(rt_g.debug&DEBUG_ADVANCE)bu_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z]);
-			/* XXX This too can be optimized */
-			cutp = RT_NUGRID_CELL( rt_nu_grid,
-				ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z] );
-		}
-		/* find minimum exit t value */
-		if( ssp->tv[X] < ssp->tv[Y] )  {
-			if( ssp->tv[Z] < ssp->tv[X] )  {
-				ssp->out_axis = Z;
-				ssp->t1 = ssp->tv[Z];
-			} else {
-				ssp->out_axis = X;
-				ssp->t1 = ssp->tv[X];
-			}
-		} else {
-			if( ssp->tv[Z] < ssp->tv[Y] )  {
-				ssp->out_axis = Z;
-				ssp->t1 = ssp->tv[Z];
-			} else {
-				ssp->out_axis = Y;
-				ssp->t1 = ssp->tv[Y];
-			}
-		}
+		    }
+		    /* find minimum exit t value */
+		    if( ssp->tv[X] < ssp->tv[Y] )  {
+			    if( ssp->tv[Z] < ssp->tv[X] )  {
+				    ssp->out_axis = Z;
+				    ssp->t1 = ssp->tv[Z];
+			    } else {
+				    ssp->out_axis = X;
+				    ssp->t1 = ssp->tv[X];
+			    }
+		    } else {
+			    if( ssp->tv[Z] < ssp->tv[Y] )  {
+				    ssp->out_axis = Z;
+				    ssp->t1 = ssp->tv[Z];
+			    } else {
+				    ssp->out_axis = Y;
+				    ssp->t1 = ssp->tv[Y];
+			    }
+		    }
 if(rt_g.debug&DEBUG_ADVANCE)bu_log("Exit axis is %c, t1=%g\n", "XYZ*"[ssp->out_axis], ssp->t1);
 
-		if(cutp==CUTTER_NULL || cutp->cut_type != CUT_BOXNODE)
+		    if(cutp==CUTTER_NULL || cutp->cut_type != CUT_BOXNODE)
 			rt_bomb("rt_advance_to_next_cell(): leaf not boxnode");
 
-		/* Don't get stuck within the same box */
-		if( cutp==ssp->lastcut )  {
-			rt_bomb("rt_advance_to_next_cel():  stuck in same cell\n");
-		}
-		ssp->lastcut = cutp;
+		    /* Don't get stuck within the same box */
+		    if( cutp==ssp->lastcut )  {
+			    rt_bomb("rt_advance_to_next_cell():  stuck in same cell\n");
+		    }
+		    ssp->lastcut = cutp;
+
+		/*
+		 * Automatically skip past empty containers.
+		 */
+
+		    if( cutp->bn.bn_len <= 0 )
+			    continue;
 
 		/*
 		 *  To make life easier on the ray/solid intersectors,
@@ -248,63 +219,55 @@ if(rt_g.debug&DEBUG_ADVANCE)bu_log("Exit axis is %c, t1=%g\n", "XYZ*"[ssp->out_a
 		 *  NOTE:  floating point error may cause this point to
 		 *  be slightly outside the cell, which does not matter.
 		 */
-		ssp->dist_corr = ssp->model_start + ssp->t0;
-		VJOIN1( ssp->newray.r_pt, ap->a_ray.r_pt,
-			ssp->dist_corr, ap->a_ray.r_dir );
-		if( rt_g.debug&DEBUG_ADVANCE) {
-			bu_log("rt_advance_to_next_cell() dist_corr=%g\n",
-				ssp->dist_corr );
-			bu_log("rt_advance_to_next_cell() newray.r_pt=(%g, %g, %g)\n",
-				V3ARGS( ssp->newray.r_pt ) );
+		    ssp->dist_corr = ssp->model_start + ssp->t0;
+		    VJOIN1( ssp->newray.r_pt, ap->a_ray.r_pt,
+			    ssp->dist_corr, ap->a_ray.r_dir );
+		    if( rt_g.debug&DEBUG_ADVANCE) {
+			    bu_log("rt_advance_to_next_cell() dist_corr=%g\n",
+				   ssp->dist_corr );
+			    bu_log("rt_advance_to_next_cell() newray.r_pt=(%g, %g, %g)\n",
+				   V3ARGS( ssp->newray.r_pt ) );
+		    }
+
+		    ssp->newray.r_min = 0.0;
+		    ssp->newray.r_max = ssp->t1 - ssp->t0;
+
+		    ssp->box_start = ssp->first_box_start + ssp->t0;
+		    ssp->box_end = ssp->first_box_start + ssp->t1;
+		    if( rt_g.debug & DEBUG_ADVANCE )  {
+			    bu_log("rt_advance_to_next_cell() box=(%g, %g)\n",
+				   ssp->box_start, ssp->box_end );
+		    }
+		    return(cutp);
 		}
-
-		ssp->newray.r_min = 0.0;
-		ssp->newray.r_max = ssp->t1 - ssp->t0;
-
-		ssp->box_start = ssp->first_box_start + ssp->t0;
-		ssp->box_end = ssp->first_box_start + ssp->t1;
-	     	if( rt_g.debug & DEBUG_ADVANCE )  {
-			bu_log("rt_advance_to_next_cell() box=(%g, %g)\n",
-				ssp->box_start, ssp->box_end );
-	     	}
-		return(cutp);
-	}
-	/* Off the end of the model RPP */
+		/* Off the end of the model RPP */
 # if 0
-	if( ap->a_rt_i->rti_inf_box.bn.bn_len > 0 )  {
-	     	if( rt_g.debug & DEBUG_ADVANCE )  {
-	     		bu_log("rt_advance_to_next_cell(): escaped model RPP, checking infinite solids\n");
-	     	}
-		ssp->lastcut = &(ap->a_rt_i->rti_inf_box);
-		return &(ap->a_rt_i->rti_inf_box);
-	}
+		if( ap->a_rt_i->rti_inf_box.bn.bn_len > 0 )  {
+			if( rt_g.debug & DEBUG_ADVANCE )  {
+				bu_log("rt_advance_to_next_cell(): escaped model RPP, checking infinite solids\n");
+			}
+			ssp->lastcut = &(ap->a_rt_i->rti_inf_box);
+			return &(ap->a_rt_i->rti_inf_box);
+		}
 # endif
-     	if( rt_g.debug & DEBUG_ADVANCE )  {
-     		bu_log("rt_advance_to_next_cell(): escaped model RPP\n");
-     	}
-	ssp->lastcut = CUTTER_NULL;
-	return(CUTTER_NULL);
-}
-#else
+		if( rt_g.debug & DEBUG_ADVANCE )  {
+			bu_log("rt_advance_to_next_cell(): escaped model RPP\n");
+		}
+		ssp->lastcut = CUTTER_NULL;
+		return(CUTTER_NULL);
+	} else {
 
 #define MUCHO_DIAGS	1
+
 /*
- *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
- *
  *  This version uses Muuss' non-uniform binary space partitioning tree.
  */
-CONST union cutter *
-rt_advance_to_next_cell( ssp )
-register struct shootray_status	*ssp;
-{
-	register CONST union cutter	*cutp;
-	int			push_flag = 0;
-	double			fraction;
-	int			exponent;
-	register CONST struct application *ap = ssp->ap;
-	register fastf_t	px, py, pz;	/* Adjusted ray pt */
+	    int			push_flag = 0;
+	    double		fraction;
+	    int			exponent;
+	    register fastf_t	px, py, pz;	/* Adjusted ray pt */
 
-	for(;;)  {
+	    for(;;)  {
 		/*
 		 *  The point corresponding to the box_start distance
 		 *  may not be in the "right" place,
@@ -490,8 +453,8 @@ push:			;
      		VPRINT("mdl_max", ap->a_rt_i->mdl_max);
      	}
 	return(CUTTER_NULL);
+	}
 }
-#endif
 
 /*
  *			R T _ S H O O T R A Y
