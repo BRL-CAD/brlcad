@@ -487,11 +487,12 @@ set -S2 "/bin/sh"
 #		define	MGED_OBJS	dm-4d dm-X
 #		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
+# 		define  XMGED_ALLOCA    alloca
 #		define	XMGED_OBJS	dm-4d dm-X Xmgl
 #		define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
 #		define	XMGED_LIBES	-L''XLIBDIR -lXirisw -lgl_s -lXm_s \
 					-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
-					-lxmalloc
+					-lxmalloc -ll
 #	else
 /*		Lee Butler experimental version */
 #		define	MGED_OBJS	dm-4d mged_widget dm-X
@@ -558,11 +559,12 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-4d dm-X
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
+#       define  XMGED_ALLOCA    alloca
 #	define	XMGED_OBJS	dm-4d dm-X Xmgl
 #	define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
 #	define	XMGED_LIBES	-L''XLIBDIR -lXirisw -lgl_s -lXm_s \
 				-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
-				-lxmalloc
+				-lxmalloc -ll
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	GETHOST	hostname
@@ -680,9 +682,10 @@ set -S2 "/bin/sh"
 #	endif
 #	if 0
 /*		XMGED requires a Motif license and include/X11/Xm/Xm.h */
+#		define  XMGED_ALLOCA
 #		define	XMGED_OBJS	dm-X
-#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -I''XINCDIR
-#		define	XMGED_LIBES	-lXm -lXt -L''XLIBDIR -lXi -lX11
+#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -D_BSD_SIGNALS -I''XINCDIR
+#		define	XMGED_LIBES	-lXm -lXt -L''XLIBDIR -lXi -lX11 -ll
 #	endif
 #	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
@@ -716,7 +719,7 @@ set -S2 "/bin/sh"
 #   else
 #	define	BSD	43
 #	define	HAS_TCP	1
-#	if 1
+#	if 1	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
@@ -773,13 +776,15 @@ set -S2 "/bin/sh"
 #			define	LIBFB_LIBES	LIBPKG \
 				-L''XLIBDIR -lX11
 #			define	MGED_OBJS	dm-X
-#			define	MGED_CONFIG	-DDM_X -I/usr/openwin/include -I''XINCDIR
-#			define	MGED_LIBES	-L/usr/openwin/lib -L''XLIBDIR -lX11
+#			define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#			define	MGED_LIBES	-L''XLIBDIR -lX11
 #		endif
 /*		XMGED requires a Motif license and include/X11/Xm/Xm.h */
+/***		XXX What about XLIBDIR and XINCDIR here?  */
+#		define  XMGED_ALLOCA
 #		define	XMGED_OBJS	dm-X
-#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -I''XINCDIR
-#		define	XMGED_LIBES	-lXm -lXt -L''XLIBDIR -lXi -lX11
+#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -D_BSD_SIGNALS -I/usr/X11/include
+#		define	XMGED_LIBES	-L/usr/X11/lib -lXm -lXt -lXi -lXext -lX11 -ll
 #	endif
 #	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
