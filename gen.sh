@@ -919,6 +919,7 @@ EOF
 	;;
 
 # For SGI IRIX, use the "swpkg" GUI tool.
+	# cd /tmp
 	# swpkg -nofork
 	# Critical note: Product Name may *not* have a "-" in it!
 	# DON'T SAY "BRL-CAD"!!!
@@ -946,7 +947,7 @@ EOF
 	# In "File Browser", click on "html", control-left-click on "man".
 	# click "> Add" (watch the manual stuff go by)
 	# Select 5th tab, "Build Product"
-	# Change "Distribution Directory" to "/var/tmp"
+	# Change "Distribution Directory" to "/var/tmp" (cannot be cwd)
 	# Check off "Verbose" checkbox
 	# Click on "Build All"
 	# Click OK on "save spec"
