@@ -2097,3 +2097,97 @@ struct ray_data *rd;
 		}
 	}
 }
+
+/*
+ *	N M G _ R A Y _ I S E C T _ S H E L L
+ *
+ *	Intended as a support routine for nmg_class_pt_s() in nmg_class.c
+ *
+ *	Intersect a ray with a shell and return the number of hitpoints with
+ *	positive distance values.
+ */
+int
+nmg_ray_vs_shell(rp, s, tol)
+struct xray *rp;
+struct shell *s;
+struct rt_tol *tol;
+{
+	struct ray_data rd;
+	struct application ap;
+	struct hitmiss *a_hit;
+	int hit_count = 0;
+
+	memset(&ap, 0, sizeof(struct application));
+
+	ap.a_resource = &rt_uniresource;
+	rt_uniresource.re_magic = RESOURCE_MAGIC;
+
+	rd.rd_m = nmg_find_model( &s->l.magic );
+	rd.manifolds = nmg_manifolds(rd.rd_m);
+
+
+	/* Compute the inverse of the direction cosines */
+	if( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
+		rd.rd_invdir[X]=1.0/rp->r_dir[X];
+	} else {
+		rd.rd_invdir[X] = INFINITY;
+		rp->r_dir[X] = 0.0;
+	}
+	if( !NEAR_ZERO( rp->r_dir[Y], SQRT_SMALL_FASTF ) )  {
+		rd.rd_invdir[Y]=1.0/rp->r_dir[Y];
+	} else {
+		rd.rd_invdir[Y] = INFINITY;
+		rp->r_dir[Y] = 0.0;
+	}
+	if( !NEAR_ZERO( rp->r_dir[Z], SQRT_SMALL_FASTF ) )  {
+		rd.rd_invdir[Z]=1.0/rp->r_dir[Z];
+	} else {
+		rd.rd_invdir[Z] = INFINITY;
+		rp->r_dir[Z] = 0.0;
+	}
+
+	rd.rp = rp;
+	rd.tol = tol;
+	rd.ap = &ap;
+	rd.stp = (struct soltab *)NULL;
+	rd.seghead = (struct seg *)NULL;
+
+	rd.hitmiss = (struct hitmiss **)rt_calloc( rd.rd_m->maxindex,
+		sizeof(struct hitmiss *), "nmg geom hit list");
+
+	/* initialize the lists of things that have been hit/missed */
+	RT_LIST_INIT(&rd.rd_hit);
+	RT_LIST_INIT(&rd.rd_miss);
+
+	nmg_isect_ray_shell(rd, s);
+
+	while (RT_LIST_WHILE(a_hit, hitmiss, &rd.rd_miss)) {
+		RT_LIST_DEQUEUE( &a_hit->l );
+		rt_free( (char *)a_hit, "Miss list hitmiss struct" );
+	}
+
+	/* count the number of hits */
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+		rt_log("%s[%d]: shell Hits:\n", __FILE__, __LINE__);
+	}
+
+	while (RT_LIST_WHILE(a_hit, hitmiss, &rd.rd_hit)) {
+		RT_LIST_DEQUEUE( &a_hit->l );
+		if (a_hit->hit.hit_dist >= 0.0) {
+			hit_count++;
+			if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+				rt_log("Positive direction hit\n");
+				nmg_rt_print_hitmiss(a_hit);
+			}
+		} else if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+			rt_log("Negative direction hit\n");
+			nmg_rt_print_hitmiss(a_hit);
+		}
+		rt_free( (char *)a_hit, "Hit list hitmiss struct" );
+	}
+
+	/* free the hitmiss table */
+	rt_free( (char *)rd.hitmiss, "free nmg geom hit list");
+
+	return hit_count;
+}
