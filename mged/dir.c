@@ -624,6 +624,7 @@ f_keep() {
 	(void) close(keepfd);
 }
 
+#ifdef OLD
 /*
  *			F _ T R E E
  *
@@ -637,10 +638,11 @@ f_tree() {
 	(void) signal( SIGINT, sig2);  /* Allow interrupts */
 
 	for ( j = 1; j < numargs; j++) {
+		if( j > 1 )
+			putchar( '\n' );
 		if( (dp = db_lookup( dbip, cmd_args[j], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 		printnode(dp, 0, 0);
-		putchar( '\n' );
 	}
 }
 
@@ -680,6 +682,9 @@ int cont;		/* non-zero when continuing partly printed line */
 	while( i-- > 0 )
 		putchar('_');
 
+	if( dp->d_len <= 1 )
+		putchar('\n');		/* empty combination */
+
 	for( i=1; i < dp->d_len; i++ )  {
 		if( (nextdp = db_lookup( dbip, rp[i].M.m_instname, LOOKUP_NOISY ))
 		    == DIR_NULL )
@@ -690,8 +695,78 @@ int cont;		/* non-zero when continuing partly printed line */
 	}
 	rt_free( (char *)rp, "printnode recs");
 }
+#else
+/*
+ *			F _ T R E E
+ *
+ *	Print out a list of all members and submembers of an object.
+ */
+void
+f_tree() {
+	register struct directory *dp;
+	register int j;
 
+	(void) signal( SIGINT, sig2);  /* Allow interrupts */
 
+	for ( j = 1; j < numargs; j++) {
+		if( j > 1 )
+			putchar( '\n' );
+		if( (dp = db_lookup( dbip, cmd_args[j], LOOKUP_NOISY )) == DIR_NULL )
+			continue;
+		printnode(dp, 0, 0);
+	}
+}
+
+/*
+ *			P R I N T N O D E
+ */
+static void
+printnode( dp, pathpos, prefix )
+register struct directory *dp;
+int pathpos;
+char prefix;
+{	
+	union record	*rp;
+	register int	i;
+	register struct directory *nextdp;
+
+	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+		return;
+
+	for( i=0; i<pathpos; i++) 
+		putchar('\t');
+	if( prefix ) {
+		putchar(prefix);
+		putchar(' ');
+	}
+
+	printf("%s", dp->d_namep);
+	/* Output Comb and Region flags (-F?) */
+	if( dp->d_flags & DIR_COMB )
+		putchar('/');
+	if( dp->d_flags & DIR_REGION )
+		putchar('R');
+	putchar('\n');
+
+	if( !(dp->d_flags & DIR_COMB) )  {
+		return;
+	}
+
+	/*
+	 *  This node is a combination (eg, a directory).
+	 *  Process all the arcs (eg, directory members).
+	 */
+	for( i=1; i < dp->d_len; i++ )  {
+		if( (nextdp = db_lookup( dbip, rp[i].M.m_instname, LOOKUP_NOISY ))
+		    == DIR_NULL )
+			continue;
+
+		prefix = rp[i].M.m_relation;
+		printnode ( nextdp, pathpos+1, prefix );
+	}
+	rt_free( (char *)rp, "printnode recs");
+}
+#endif
 
 /*	F _ M V A L L
  *
