@@ -48,6 +48,13 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 RT_EXTERN( struct edgeuse *nmg_find_e, (struct vertex *v1, struct vertex *v2, struct shell *s, struct edge *e ) );
 
 int
+nmg_loop_is_convex( lu, tol )
+struct loopuse *lu;
+struct rt_tol *tol;
+{
+}
+
+int
 nmg_snurb_calc_lu_uv_orient( lu )
 struct loopuse *lu;
 {
