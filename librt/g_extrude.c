@@ -1105,8 +1105,10 @@ struct soltab		*stp;
 {
         struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
 	struct carc_seg *csg;
-	fastf_t radius;
+	fastf_t radius, a, b, a_sq, b_sq;
+	fastf_t curvature, tmp, dota, dotb;
 	vect_t diff;
+	vect_t ra, rb;
 
 	switch( hitp->hit_surfno )
 	{
@@ -1125,10 +1127,22 @@ struct soltab		*stp;
 				radius = -csg->radius;
 			else
 				radius = csg->radius;
+			VSCALE( ra, extr->rot_axis, radius );
+			VSCALE( rb, extr->perp, radius );
+			
+			a_sq = MAG2SQ( ra );
+			b_sq = MAG2SQ( rb );
+			a = sqrt( a_sq );
+			b = sqrt( b_sq );
+			dota = VDOT( diff, ra );
+			dotb = VDOT( diff, rb );
+			tmp = (a_sq/(b_sq*b_sq))*dotb*dotb + (b_sq/(a_sq*a_sq))*dota*dota;
+			tmp = sqrt( tmp );
+			curvature = a*b/(tmp*tmp*tmp);
 			if( VDOT( hitp->hit_normal, diff ) > 0.0 )
-				cvp->crv_c1 = 1.0 / radius;
+				cvp->crv_c1 = curvature;
 			else
-				cvp->crv_c1 = -1.0 / radius;
+				cvp->crv_c1 = -curvature;
 			cvp->crv_c2 = 0;
 			break;
 	}
@@ -1326,7 +1340,9 @@ CONST struct db_i		*dbip;
 	extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 
 	sketch_name = (char *)rp + sizeof( struct extr_rec );
-	if( (dp=db_lookup( dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL )
+	if( !dbip )
+		extrude_ip->skt = (struct rt_sketch_internal *)NULL;
+	else if( (dp=db_lookup( dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL )
 	{
 		bu_log( "rt_extrude_import: ERROR: Cannot find sketch (%.16s) for extrusion (%.16s)\n",
 			sketch_name, rp->extr.ex_name );
