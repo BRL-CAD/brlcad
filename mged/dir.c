@@ -220,16 +220,32 @@ dir_build()  {
 		(void)fseek( fp, addr, 0 );
 		continue;
 
-	case ID_B_SPL_HEAD:
-		dir_add( record.d.d_name, addr,
-			DIR_SOLID, record.d.d_totlen+1 );
-		addr += (long)(record.d.d_totlen+1) * (long)(sizeof(record));
-		(void)fseek( fp, addr, 0 );
-		continue;
+	case ID_BSOLID:
+		{
+			static union record rec;
+			register long start_addr;
 
-	case ID_B_SPL_CTL:
-		(void)printf("Unattached control mesh record?\n");
-		addr += (long)(sizeof(record));
+			start_addr = addr;
+			addr += (long)(sizeof(record));
+			while( fread((char *)&rec, sizeof(rec), 1, fp) == 1 &&
+			    !feof(fp)  &&
+			    rec.u_id == ID_BSURF )  {
+				addr += (rec.d.d_nknots+rec.d.d_nctls+1) *
+					(long)(sizeof(record));
+				(void)fseek( fp, addr, 0 );
+			}
+			(void)dir_add( record.B.B_name, start_addr,
+				DIR_SOLID, (addr-start_addr)/sizeof(record) );
+			(void)fseek( fp, addr, 0 );	/* to reread */
+			continue;
+		}
+
+	case ID_BSURF:
+		(void)printf("Unattached B-spline surface record?\n");
+		/* Need to skip over knots & mesh which follows! */
+		addr += (record.d.d_nknots + record.d.d_nctls + 1) *
+			(long)(sizeof(record));
+		(void)fseek( fp, addr, 0 );
 		continue;
 
 	case ID_P_HEAD:
@@ -274,6 +290,7 @@ dir_build()  {
 	default:
 		(void)printf( "dir_build:  unknown record %c (0%o) erased\n",
 			record.u_id, record.u_id );
+#ifdef CLEANUP_DB
 		if( !read_only )  {
 			/* zap this record and put in free map */
 			zapper.u_id = ID_FREE;	/* The rest will be zeros */
@@ -281,6 +298,7 @@ dir_build()  {
 			(void)write(objfd, (char *)&zapper, sizeof(zapper));
 		}
 		memfree( &dbfreep, 1, addr/(sizeof(union record)) );
+#endif
 		addr += sizeof(record);
 		continue;
 	}
@@ -490,8 +508,8 @@ union record *where;
 	i = read( objfd, (char *)where, sizeof(union record) );
 	if( i != sizeof(union record) )  {
 		perror("db_getrec");
-		(void)printf("db_getrec(%s):  read error.  Wanted %d, got %d\n",
-			dp->d_namep, sizeof(union record), i );
+		(void)printf("db_getrec(%s,%d):  read error.  Wanted %d, got %d\n",
+			dp->d_namep, offset, sizeof(union record), i );
 		where->u_id = '\0';	/* undefined id */
 	}
 }
@@ -553,6 +571,37 @@ int offset;
 	if( i != sizeof(union record) )  {
 		perror("db_putrec");
 		(void)printf("db_putrec(%s):  write error\n", dp->d_namep );
+	}
+}
+
+/*
+ *  			D B _ P U T M A N Y
+ *
+ *  Store several records to the database,
+ *  "offset" granules into this entry.
+ */
+void
+db_putmany( dp, where, offset, len )
+struct directory *dp;
+union record *where;
+{
+	register int i;
+
+	if( read_only )  {
+		(void)printf("db_putrec on READ-ONLY file\n");
+		return;
+	}
+	if( offset < 0 || offset+len > dp->d_len )  {
+		(void)printf("db_putmany(%s):  xfer %d..%x exceeds 0..%d\n",
+			dp->d_namep, offset, offset+len, dp->d_len );
+		return;
+	}
+	(void)lseek( objfd, (long)(dp->d_addr + offset * sizeof(union record)), 0 );
+	i = write( objfd, (char *)where, len * sizeof(union record) );
+	if( i != len * sizeof(union record) )  {
+		perror("db_putmany");
+		(void)printf("db_putmany(%s):  write error.  Wanted %d, got %d\n",
+			dp->d_namep, len * sizeof(union record), i );
 	}
 }
 
@@ -1166,12 +1215,21 @@ f_prefix()
 				(void) fseek( fp, seekptr+sizeof(record), 0);
 	 			break;
 
-			case ID_B_SPL_HEAD:
-				if( strcmp(cmd_args[i],record.d.d_name) != 0 )
+			case ID_BSOLID:
+				if( strcmp(cmd_args[i],record.B.B_name) != 0 )
 					continue;
-				(void) strcpy(record.d.d_name,tempstring);
+				(void) strcpy(record.B.B_name,tempstring);
 				(void) fseek( fp, seekptr, 0);
 				fwrite((char*)&record, sizeof(record), 1, fp);
+				(void) fseek( fp, seekptr+sizeof(record), 0);
+		 		break;
+
+			case ID_BSURF:
+				/* No names here, just lots of granules to
+				 * skip with no ID fields...
+				 */
+				seekptr += (record.d.d_nknots+record.d.d_nctls) *
+					sizeof(record);
 				(void) fseek( fp, seekptr+sizeof(record), 0);
 		 		break;
 
