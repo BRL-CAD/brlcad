@@ -353,12 +353,12 @@ mat_print("pmat", pmat);
 	dmp->dmr_newrot( mat, which_eye );
 
 	FOR_ALL_SOLIDS( sp )  {
+		sp->s_flag = DOWN;		/* Not drawn yet */
 		/* If part of object rotation, will be drawn below */
 		if( sp->s_iflag == UP )
 			continue;
 
 		ratio = sp->s_size * inv_viewsize;
-		sp->s_flag = DOWN;		/* Not drawn yet */
 
 		/*
 		 * Check for this object being bigger than 
@@ -395,7 +395,6 @@ mat_print("pmat", pmat);
 			continue;
 
 		ratio = sp->s_size * inv_viewsize;
-		sp->s_flag = DOWN;		/* Not drawn yet */
 
 		/*
 		 * Check for this object being bigger than 
