@@ -568,6 +568,52 @@ CONST struct rt_tol	*tol;
 	return count;
 }
 
+/*			N M G _ C K _ F G _ V E R T S
+ *
+ * Similar to nmg_ck_fu_verts, but checks all vertices that use the same
+ * face geometry as fu1
+ *  fu1 and f2 may be the same face, or different.
+ *
+ *  This is intended to be a geometric check only, not a topology check.
+ *  Topology may have become inappropriately shared.
+ *
+ *  Returns -
+ *	0	All is well.
+ *	count	Number of verts *not* on fu2's surface.
+ *
+ */
+int
+nmg_ck_fg_verts( fu1 , f2 , tol )
+struct faceuse *fu1;
+struct face *f2;
+CONST struct rt_tol *tol;
+{
+	struct face_g *fg1;
+	struct faceuse *fu;
+	struct face *f;
+	int count=0;
+
+	NMG_CK_FACEUSE( fu1 );
+	NMG_CK_FACE( f2 );
+	RT_CK_TOL( tol );
+
+	NMG_CK_FACE( fu1->f_p );
+	fg1 = fu1->f_p->fg_p;
+	NMG_CK_FACE_G( fg1 );
+
+	for( RT_LIST_FOR( f , face , &fg1->f_hd ) )
+	{
+		NMG_CK_FACE( f );
+
+		fu = f->fu_p;
+		NMG_CK_FACEUSE( fu );
+
+		count += nmg_ck_fu_verts( fu , f2 , tol );
+	}
+
+	return( count );
+}
+
 /*
  *			N M G _ T W O _ F A C E _ F U S E
  *
@@ -629,6 +675,7 @@ CONST struct rt_tol	*tol;
 	 *  according to topology, then by all rights the faces MUST be
 	 *  shared.
 	 */
+
 	if( fabs(VDOT(fg1->N, fg2->N)) >= 0.99  &&
 	    fabs(fg1->N[3]) - fabs(fg2->N[3]) < 100 * tol->dist  &&
 	    nmg_is_common_bigloop( f1, f2 ) )  {
@@ -712,7 +759,7 @@ CONST struct rt_tol	*tol;
 	 *  all the verts in f2 are within tol->dist
 	 *  of f1's surface.
 	 */
-	if( nmg_ck_fu_verts( f2->fu_p, f1, tol ) != 0 )  {
+	if( nmg_ck_fg_verts( f2->fu_p, f1, tol ) != 0 )  {
 		if (rt_g.NMG_debug & DEBUG_MESH)  {
 			rt_log("nmg_two_face_fuse: f2 verts not within tol of f1's surface, can't fuse\n");
 		}
