@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static char	*usage = "ascii-pl [file.in [file.pl]]\n";
 
 static void	printusage();
+static int	check_syntax();
 
 main (argc, argv)
 
