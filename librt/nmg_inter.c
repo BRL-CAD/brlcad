@@ -431,7 +431,13 @@ struct faceuse *fu;
 			 */
 			NMG_CK_EDGEUSE(eu);
 			NMG_CK_EDGEUSE(eu->eumate_p);
-			euforw = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
+
+			/* since we just split eu, the "next" edgeuse
+			 * from eu CAN'T (in a working [as opposed to broken]
+			 * system) be the list head.  
+			 */
+			euforw = NMG_LIST_PNEXT(edgeuse, eu);
+
 			NMG_CK_EDGEUSE(euforw);
 			NMG_CK_EDGEUSE(euforw->eumate_p);
 
@@ -444,6 +450,8 @@ struct faceuse *fu;
 			NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 			NMG_CK_VERTEX(euforw->vu_p->v_p);
 			NMG_CK_VERTEX(euforw->eumate_p->vu_p->v_p);
+
+			nmg_ck_lueu(eu->up.lu_p);
 
 			/* check to make sure we know the right place to
 			 * stick the geometry
@@ -558,6 +566,9 @@ struct faceuse *fu;
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("isect_loop_faces\n");
 
+	NMG_CK_LOOPUSE(lu);
+	NMG_CK_FACEUSE(fu);
+
 	/* loop overlaps intersection face? */
 	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
@@ -587,6 +598,7 @@ struct faceuse *fu;
 			}
 
 			isect_edge_face(bs, eu, fu);
+			nmg_ck_lueu(lu, "isect_loop_face");
 		 }
 	} else {
 		rt_bomb("isect_loop_face() Unknown type of NMG loopuse\n");
@@ -775,6 +787,7 @@ fastf_t tol;
 		(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
     		return;
     	}
+
 	tbl_vsort(&vert_list1, fu1, fu2, bs.pt);
 	nmg_face_combine(&vert_list1, fu1, fu2);
 
