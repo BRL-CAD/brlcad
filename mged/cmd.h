@@ -8,6 +8,7 @@ MGED_EXTERN(int f_aim, (ClientData clientData, Tcl_Interp *interp, int argc, cha
 MGED_EXTERN(int f_aip, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_amtrack, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_analyze, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_arot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_arbdef, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_arced, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_area, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -127,12 +128,14 @@ MGED_EXTERN(int f_rfarb, (ClientData clientData, Tcl_Interp *interp, int argc, c
 MGED_EXTERN(int f_rm, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_rmater, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_rmats, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_rot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_rot_obj, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_rrt, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_rt, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_rtcheck, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_savekey, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_saveview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_sca, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_sc_obj, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_sed, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_set, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -155,6 +158,7 @@ MGED_EXTERN(int f_title, (ClientData clientData, Tcl_Interp *interp, int argc, c
 MGED_EXTERN(int f_toggle_view, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_tol, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_tops, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_tra, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_tran, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_tr_obj, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_tree, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
