@@ -35,7 +35,7 @@ proc init_Raytrace { id } {
 	set rt_control($id,file) $default_file
 
 	set rt_control($id,size) 512
-	set rt_control($id,color) "0 0 0"
+	set rt_control($id,color) [rset cs bg]
 	set rt_control($id,nproc) 1
 	set rt_control($id,hsample) 0
 	set rt_control($id,jitter) 0
@@ -196,6 +196,8 @@ that is used when clearing the framebuffer." } }
 	    -command "do_Advanced_Settings $id"
     hoc_register_data $top.advancedB "Advanced Settings"\
 	    { { summary "Pops up another GUI for advanced settings." } }
+    button $top.okB -relief raised -text "Ok"\
+	    -command "rt_ok $id $top"
     button $top.raytraceB -relief raised -text "Raytrace" \
 	    -command "do_Raytrace $id"
     hoc_register_data $top.raytraceB "Raytrace"\
@@ -230,9 +232,9 @@ is enabled, it will be cleared." } }
     grid columnconfigure $top.sizeF 0 -weight 1
     grid columnconfigure $top.gridF3 0 -weight 1
 
-    grid $top.raytraceB x $top.clearB x $top.dismissB -sticky "nsew" -in $top.gridF4
-    grid columnconfigure $top.gridF4 1 -weight 1 -minsize 8
-    grid columnconfigure $top.gridF4 3 -weight 1 -minsize 8
+    grid $top.okB $top.raytraceB x $top.clearB x $top.dismissB -sticky "nsew" -in $top.gridF4
+    grid columnconfigure $top.gridF4 2 -weight 1 -minsize 8
+    grid columnconfigure $top.gridF4 4 -weight 1 -minsize 8
 
     pack $top.gridF2 $top.gridF3 $top.gridF4 -side top -expand 1 -fill both\
 	    -padx $rt_control($id,padx) -pady $rt_control($id,pady)
@@ -245,6 +247,11 @@ is enabled, it will be cleared." } }
     set y [lindex $pxy 1]
     wm geometry $top +$x+$y
     wm title $top "Raytrace Control Panel ($id)"
+}
+
+proc rt_ok { id top } {
+    do_Raytrace $id
+    rt_dismiss $id
 }
 
 proc do_Raytrace { id } {
