@@ -270,8 +270,10 @@ char	*argv[];
 	if( (fbp = fb_open(framebuffer, width, height)) == FBIO_NULL )
 		exit(1);
 
-	width = fb_getwidth(fbp);
-	height = fb_getheight(fbp);
+	if( width <= 0 || fb_getwidth(fbp) < width )
+		width = fb_getwidth(fbp);
+	if( height <= 0 || fb_getheight(fbp) < height )
+		height = fb_getheight(fbp);
 
 	/* Listen for VRMGR Master PKG connections from MGED */
 	if( (vrmgr_listen_fd = pkg_permserver("5555", "tcp", 8, bu_log)) < 0 )  {
