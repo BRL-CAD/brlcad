@@ -46,12 +46,16 @@
 #include "./ged.h"
 #include "./mgedtcl.h"
 
+#if 0
 struct mged_hist {
     struct rt_list l;
     struct rt_vls command;
     struct timeval start, finish;
     int status;
 } mged_hist_head, *cur_hist;
+#else
+struct mged_hist mged_hist_head;
+#endif
 
 FILE *journalfp;
 int firstjournal;
@@ -92,7 +96,7 @@ int status;   /* Either CMD_OK or CMD_BAD */
     if (journalfp != NULL && !firstjournal)
 	history_journalize(new_hist);
 
-    cur_hist = &mged_hist_head;
+    curr_cmd_list->cur_hist = &mged_hist_head;
     firstjournal = 0;
 }
 
@@ -263,11 +267,11 @@ history_prev()
 {
     struct mged_hist *hp;
 
-    hp = RT_LIST_PREV(mged_hist, &(cur_hist->l));
+    hp = RT_LIST_PREV(mged_hist, &(curr_cmd_list->cur_hist->l));
     if (RT_LIST_IS_HEAD(hp, &(mged_hist_head.l)))
 	return NULL;
     else {
-	cur_hist = hp;
+	curr_cmd_list->cur_hist = hp;
 	return &(hp->command);
     }
 }
@@ -277,10 +281,10 @@ history_prev()
 struct rt_vls *
 history_cur()
 {
-    if (RT_LIST_IS_HEAD(cur_hist, &(mged_hist_head.l)))
+    if (RT_LIST_IS_HEAD(curr_cmd_list->cur_hist, &(mged_hist_head.l)))
 	return NULL;
     else
-	return &(cur_hist->command);
+	return &(curr_cmd_list->cur_hist->command);
 }
 
 /*      H I S T O R Y _ N E X T
@@ -290,16 +294,16 @@ history_next()
 {
     struct mged_hist *hp;
 
-    if (RT_LIST_IS_HEAD(cur_hist, &(mged_hist_head.l))) {
+    if (RT_LIST_IS_HEAD(curr_cmd_list->cur_hist, &(mged_hist_head.l))) {
 	return 0;
     }
     
-    hp = RT_LIST_NEXT(mged_hist, &(cur_hist->l));
+    hp = RT_LIST_NEXT(mged_hist, &(curr_cmd_list->cur_hist->l));
     if (RT_LIST_IS_HEAD(hp, &(mged_hist_head.l))) {
-	cur_hist = hp;
+	curr_cmd_list->cur_hist = hp;
 	return 0;
     } else {
-	cur_hist = hp;
+	curr_cmd_list->cur_hist = hp;
 	return &(hp->command);
     }
 }
@@ -320,7 +324,7 @@ char **argv;
     struct rt_vls *vp;
     vp = history_prev();
     if (vp == NULL)
-	vp = &(cur_hist->command);
+	vp = &(curr_cmd_list->cur_hist->command);
 
     Tcl_SetResult(interp, rt_vls_addr(vp), TCL_VOLATILE);
     return TCL_OK;
@@ -342,7 +346,7 @@ char **argv;
     struct rt_vls *vp;
     vp = history_next();
     if (vp == NULL)
-	vp = &(cur_hist->command);
+	vp = &(curr_cmd_list->cur_hist->command);
 
     Tcl_SetResult(interp, rt_vls_addr(vp), TCL_VOLATILE);
     return TCL_OK;
@@ -381,7 +385,7 @@ void
 history_setup()
 {
     RT_LIST_INIT(&(mged_hist_head.l));
-    cur_hist = &mged_hist_head;
+    curr_cmd_list->cur_hist = &mged_hist_head;
     rt_vls_init(&(mged_hist_head.command));
     mged_hist_head.start.tv_sec = mged_hist_head.start.tv_usec =
 	mged_hist_head.finish.tv_sec = mged_hist_head.finish.tv_usec = 0L;

@@ -212,6 +212,11 @@ char **argv;
 	FreeSolid = SOLID_NULL;
 	RT_LIST_INIT( &rt_g.rtg_vlfree );
 
+	bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
+	RT_LIST_INIT(&head_cmd_list.l);
+	strcpy((char *)head_cmd_list.name, "mged");
+	curr_cmd_list = &head_cmd_list;
+
 	bzero((void *)&head_dm_list, sizeof(struct dm_list));
 	RT_LIST_INIT( &head_dm_list.l );
 	head_dm_list._dmp = &dm_Null;
@@ -539,6 +544,7 @@ int mask;
 	
 	if (Tcl_CommandComplete(rt_vls_addr(&input_str_prefix))) {
 	    cmdline_sig = SIG_IGN;
+	    curr_cmd_list = &head_cmd_list;
 	    if (cmdline_hook) {  /* Command-line hooks don't do CMD_MORE */
 		reset_Tty(fileno(stdin));
 		if ((*cmdline_hook)(&input_str_prefix))
@@ -694,7 +700,7 @@ int mask;
     case CTRL_N:                  /* Next history command */
     case CTRL_P:                  /* Last history command */
 	/* Work the history routines to get the right string */
-
+        curr_cmd_list = &head_cmd_list;
 	if (freshline) {
 	    if (ch == CTRL_P) {
 		vp = history_prev();
@@ -810,7 +816,7 @@ loopagain:
 	    rt_vls_trunc( &dm_values.dv_string, 0 );
 	}
     } else {
-	Tk_DoOneEvent(TK_ALL_EVENTS);
+      Tk_DoOneEvent(TK_ALL_EVENTS);
     }
     
     non_blocking = 0;
