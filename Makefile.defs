@@ -342,6 +342,9 @@ MANPERM		= 664
 LIBPERM		= 664
 DIRPERM		= 775
 
+# Compiler Paths
+#SGI#FC		= f77
+
 # Compiler Flags
 PROFILE		=
 CFLAGS		= -O ${PROFILE} -I${INCDIR} ${SYSTEM} ${CONFIGDEFS}
