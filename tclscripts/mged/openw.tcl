@@ -323,7 +323,7 @@ if [ winfo exists .$id ] {
     return "A session with the id \"$id\" already exists!"
 }
 	
-toplevel .$id -screen $screen
+toplevel .$id -screen $screen -menu .$id.menubar
 
 lappend mged_players $id
 set player_screen($id) $screen
@@ -373,438 +373,431 @@ set mged_apply_list($id) $mged_active_dm($id)
 # PHASE 2: Construction of menu bar
 #==============================================================================
 
-frame .$id.menubar -relief raised -bd 1
+menu .$id.menubar -tearoff $do_tearoffs
+.$id.menubar add cascade -label "File" -underline 0 -menu .$id.menubar.file
+.$id.menubar add cascade -label "Edit" -underline 0 -menu .$id.menubar.edit
+.$id.menubar add cascade -label "Create" -underline 0 -menu .$id.menubar.create
+.$id.menubar add cascade -label "View" -underline 0 -menu .$id.menubar.view
+.$id.menubar add cascade -label "ViewRing" -underline 0 -menu .$id.menubar.viewring
+.$id.menubar add cascade -label "Modes" -underline 0 -menu .$id.menubar.modes
+.$id.menubar add cascade -label "Settings" -underline 0 -menu .$id.menubar.settings
+.$id.menubar add cascade -label "Tools" -underline 0 -menu .$id.menubar.tools
+.$id.menubar add cascade -label "Other" -underline 0 -menu .$id.menubar.other
+.$id.menubar add cascade -label "Help" -underline 0 -menu .$id.menubar.help
 
-menubutton .$id.file -text "File" -underline 0 -menu .$id.file.m
-menu .$id.file.m -tearoff $do_tearoffs
-.$id.file.m add command -label "New..." -underline 0 -command "do_New $id"
-.$id.file.m add command -label "Open..." -underline 0 -command "do_Open $id"
-.$id.file.m add command -label "Insert..." -underline 0 -command "do_Concat $id"
-.$id.file.m add command -label "Extract..." -underline 1 -command "init_extractTool $id"
-.$id.file.m add separator
-.$id.file.m add command -label "Raytrace..." -underline 0 -command "init_Raytrace $id"
-.$id.file.m add cascade -label "Save View As" -underline 0 -menu .$id.file.m.cm_saveview
-.$id.file.m add separator
-.$id.file.m add cascade -label "Preferences" -underline 0 -menu .$id.file.m.cm_pref
-.$id.file.m add separator
-.$id.file.m add command -label "Close" -underline 1 -command "gui_destroy_default $id"
-.$id.file.m add command -label "Exit" -underline 3 -command quit
+menu .$id.menubar.file -tearoff $do_tearoffs
+.$id.menubar.file add command -label "New..." -underline 0 -command "do_New $id"
+.$id.menubar.file add command -label "Open..." -underline 0 -command "do_Open $id"
+.$id.menubar.file add command -label "Insert..." -underline 0 -command "do_Concat $id"
+.$id.menubar.file add command -label "Extract..." -underline 1 -command "init_extractTool $id"
+.$id.menubar.file add separator
+.$id.menubar.file add command -label "Raytrace..." -underline 0 -command "init_Raytrace $id"
+.$id.menubar.file add cascade -label "Save View As" -underline 0 -menu .$id.menubar.file.saveview
+.$id.menubar.file add separator
+.$id.menubar.file add cascade -label "Preferences" -underline 0 -menu .$id.menubar.file.pref
+.$id.menubar.file add separator
+.$id.menubar.file add command -label "Close" -underline 1 -command "gui_destroy_default $id"
+.$id.menubar.file add command -label "Exit" -underline 3 -command quit
 
-menu .$id.file.m.cm_saveview -tearoff $do_tearoffs
-.$id.file.m.cm_saveview add command -label "RT script" -underline 0\
+menu .$id.menubar.file.saveview -tearoff $do_tearoffs
+.$id.menubar.file.saveview add command -label "RT script" -underline 0\
 	-command "init_rtScriptTool $id"
-.$id.file.m.cm_saveview add command -label "Plot" -underline 1\
+.$id.menubar.file.saveview add command -label "Plot" -underline 1\
 	-command "init_plotTool $id"
-.$id.file.m.cm_saveview add command -label "PostScript" -underline 0\
+.$id.menubar.file.saveview add command -label "PostScript" -underline 0\
 	-command "init_psTool $id"
 
-menu .$id.file.m.cm_pref -tearoff $do_tearoffs
-.$id.file.m.cm_pref add cascade -label "Units" -underline 0\
-	-menu .$id.file.m.cm_pref.cm_units
-.$id.file.m.cm_pref add cascade -label "Command Line Edit" -underline 0\
-	-menu .$id.file.m.cm_pref.cm_cle
-.$id.file.m.cm_pref add cascade -label "View Axes Position" -underline 0\
-	-menu .$id.file.m.cm_pref.cm_vap
+menu .$id.menubar.file.pref -tearoff $do_tearoffs
+.$id.menubar.file.pref add cascade -label "Units" -underline 0\
+	-menu .$id.menubar.file.pref.units
+.$id.menubar.file.pref add cascade -label "Command Line Edit" -underline 0\
+	-menu .$id.menubar.file.pref.cle
+.$id.menubar.file.pref add cascade -label "View Axes Position" -underline 0\
+	-menu .$id.menubar.file.pref.vap
 
-menu .$id.file.m.cm_pref.cm_units -tearoff $do_tearoffs
-.$id.file.m.cm_pref.cm_units add radiobutton -value um -variable mged_display(units)\
+menu .$id.menubar.file.pref.units -tearoff $do_tearoffs
+.$id.menubar.file.pref.units add radiobutton -value um -variable mged_display(units)\
 	-label "micrometers" -underline 4 -command "do_Units $id"
-.$id.file.m.cm_pref.cm_units add radiobutton -value mm -variable mged_display(units)\
+.$id.menubar.file.pref.units add radiobutton -value mm -variable mged_display(units)\
 	-label "millimeters" -underline 2 -command "do_Units $id"
-.$id.file.m.cm_pref.cm_units add radiobutton -value cm -variable mged_display(units)\
+.$id.menubar.file.pref.units add radiobutton -value cm -variable mged_display(units)\
 	-label "centimeters" -underline 0 -command "do_Units $id"
-.$id.file.m.cm_pref.cm_units add radiobutton -value m -variable mged_display(units)\
+.$id.menubar.file.pref.units add radiobutton -value m -variable mged_display(units)\
 	-label "meters" -underline 0 -command "do_Units $id"
-.$id.file.m.cm_pref.cm_units add radiobutton -value km -variable mged_display(units)\
+.$id.menubar.file.pref.units add radiobutton -value km -variable mged_display(units)\
 	-label "kilometers" -underline 0 -command "do_Units $id"
-.$id.file.m.cm_pref.cm_units add separator
-.$id.file.m.cm_pref.cm_units add radiobutton -value in -variable mged_display(units)\
+.$id.menubar.file.pref.units add separator
+.$id.menubar.file.pref.units add radiobutton -value in -variable mged_display(units)\
 	-label "inches" -underline 0 -command "do_Units $id"
-.$id.file.m.cm_pref.cm_units add radiobutton -value ft -variable mged_display(units)\
+.$id.menubar.file.pref.units add radiobutton -value ft -variable mged_display(units)\
 	-label "feet" -underline 0 -command "do_Units $id"
-.$id.file.m.cm_pref.cm_units add radiobutton -value yd -variable mged_display(units)\
+.$id.menubar.file.pref.units add radiobutton -value yd -variable mged_display(units)\
 	-label "yards" -underline 0 -command "do_Units $id"
-.$id.file.m.cm_pref.cm_units add radiobutton -value mi -variable mged_display(units)\
+.$id.menubar.file.pref.units add radiobutton -value mi -variable mged_display(units)\
 	-label "miles" -underline 3 -command "do_Units $id"
 
-menu .$id.file.m.cm_pref.cm_cle -tearoff $do_tearoffs
-.$id.file.m.cm_pref.cm_cle add radiobutton -value emacs -variable mged_edit_style($id)\
+menu .$id.menubar.file.pref.cle -tearoff $do_tearoffs
+.$id.menubar.file.pref.cle add radiobutton -value emacs -variable mged_edit_style($id)\
 	-label "emacs" -underline 0 -command "set_text_key_bindings $id"
-.$id.file.m.cm_pref.cm_cle add radiobutton -value vi -variable mged_edit_style($id)\
+.$id.menubar.file.pref.cle add radiobutton -value vi -variable mged_edit_style($id)\
 	-label "vi" -underline 0 -command "set_text_key_bindings $id"
 
-menu .$id.file.m.cm_pref.cm_vap -tearoff $do_tearoffs
-.$id.file.m.cm_pref.cm_vap add radiobutton -value 0 -variable mged_v_axes_pos($id)\
+menu .$id.menubar.file.pref.vap -tearoff $do_tearoffs
+.$id.menubar.file.pref.vap add radiobutton -value 0 -variable mged_v_axes_pos($id)\
 	-label "Center" -underline 0\
 	-command "mged_apply $id \"set v_axes_pos {0 0}\""
-.$id.file.m.cm_pref.cm_vap add radiobutton -value 1 -variable mged_v_axes_pos($id)\
+.$id.menubar.file.pref.vap add radiobutton -value 1 -variable mged_v_axes_pos($id)\
 	-label "Lower Left" -underline 2\
 	-command "mged_apply $id \"set v_axes_pos {-1750 -1750}\""
-.$id.file.m.cm_pref.cm_vap add radiobutton -value 2 -variable mged_v_axes_pos($id)\
+.$id.menubar.file.pref.vap add radiobutton -value 2 -variable mged_v_axes_pos($id)\
 	-label "Upper Left" -underline 6\
 	-command "mged_apply $id \"set v_axes_pos {-1750 1750}\""
-.$id.file.m.cm_pref.cm_vap add radiobutton -value 3 -variable mged_v_axes_pos($id)\
+.$id.menubar.file.pref.vap add radiobutton -value 3 -variable mged_v_axes_pos($id)\
 	-label "Upper Right" -underline 6\
 	-command "mged_apply $id \"set v_axes_pos {1750 1750}\""
-.$id.file.m.cm_pref.cm_vap add radiobutton -value 4 -variable mged_v_axes_pos($id)\
+.$id.menubar.file.pref.vap add radiobutton -value 4 -variable mged_v_axes_pos($id)\
 	-label "Lower Right" -underline 3\
 	-command "mged_apply $id \"set v_axes_pos {1750 -1750}\""
 
-menubutton .$id.edit -text "Edit" -underline 0 -menu .$id.edit.m
-menu .$id.edit.m -tearoff $do_tearoffs
-.$id.edit.m add command -label "Solid" -underline 0 \
+menu .$id.menubar.edit -tearoff $do_tearoffs
+.$id.menubar.edit add command -label "Solid" -underline 0 \
 	-command "winset \$mged_active_dm($id); build_edit_menu_all s"
-.$id.edit.m add command -label "Matrix" -underline 0 \
+.$id.menubar.edit add command -label "Matrix" -underline 0 \
 	-command "winset \$mged_active_dm($id); build_edit_menu_all o"
-.$id.edit.m add command -label "Combination" -underline 0 \
+.$id.menubar.edit add command -label "Combination" -underline 0 \
 	-command "init_comb $id"
-#.$id.edit.m add separator
-#.$id.edit.m add command -label "Reject" -underline 0 \
-	-command "press reject" 
-#.$id.edit.m add command -label "Accept" -underline 0 \
-	-command "press accept"
 
-menubutton .$id.create -text "Create" -underline 0 -menu .$id.create.m
-menu .$id.create.m -tearoff $do_tearoffs
-.$id.create.m add command -label "Solid..." -underline 0 -command "solcreate $id"
-.$id.create.m add command -label "Instance..." -underline 0 -command "icreate $id"
+menu .$id.menubar.create -tearoff $do_tearoffs
+.$id.menubar.create add command -label "Solid..." -underline 0 -command "solcreate $id"
+.$id.menubar.create add command -label "Instance..." -underline 0 -command "icreate $id"
 
-menubutton .$id.view -text "View" -underline 0 -menu .$id.view.m
-menu .$id.view.m -tearoff $do_tearoffs
-.$id.view.m add command -label "Top" -underline 0\
+menu .$id.menubar.view -tearoff $do_tearoffs
+.$id.menubar.view add command -label "Top" -underline 0\
 	-command "mged_apply $id \"press top\""
-.$id.view.m add command -label "Bottom" -underline 0\
+.$id.menubar.view add command -label "Bottom" -underline 0\
 	-command "mged_apply $id \"press bottom\""
-.$id.view.m add command -label "Right" -underline 0\
+.$id.menubar.view add command -label "Right" -underline 0\
 	-command "mged_apply $id \"press right\""
-.$id.view.m add command -label "Left" -underline 0\
+.$id.menubar.view add command -label "Left" -underline 0\
 	-command "mged_apply $id \"press left\""
-.$id.view.m add command -label "Front" -underline 0\
+.$id.menubar.view add command -label "Front" -underline 0\
 	-command "mged_apply $id \"press front\""
-.$id.view.m add command -label "Back" -underline 3\
+.$id.menubar.view add command -label "Back" -underline 3\
 	-command "mged_apply $id \"press rear\""
-.$id.view.m add command -label "az35,el25" -underline 2\
+.$id.menubar.view add command -label "az35,el25" -underline 2\
 	-command "mged_apply $id \"press 35,25\""
-.$id.view.m add command -label "az45,el45" -underline 2\
+.$id.menubar.view add command -label "az45,el45" -underline 2\
 	-command "mged_apply $id \"press 45,45\""
-.$id.view.m add separator
-.$id.view.m add command -label "Zoom In" -underline 5\
+.$id.menubar.view add separator
+.$id.menubar.view add command -label "Zoom In" -underline 5\
 	-command "mged_apply $id \"zoom 2\""
-.$id.view.m add command -label "Zoom Out" -underline 5\
+.$id.menubar.view add command -label "Zoom Out" -underline 5\
 	-command "mged_apply $id \"zoom 0.5\""
-.$id.view.m add separator
-.$id.view.m add command -label "Save" -underline 0\
+.$id.menubar.view add separator
+.$id.menubar.view add command -label "Save" -underline 0\
 	-command "mged_apply $id \"press save\""
-.$id.view.m add command -label "Restore" -underline 1\
+.$id.menubar.view add command -label "Restore" -underline 1\
 	-command "mged_apply $id \"press restore\""
-.$id.view.m add separator
-.$id.view.m add command -label "Reset Viewsize"\
+.$id.menubar.view add separator
+.$id.menubar.view add command -label "Reset Viewsize"\
 	-underline 6 -command "mged_apply $id \"press reset\""
-.$id.view.m add command -label "Zero" -underline 0\
+.$id.menubar.view add command -label "Zero" -underline 0\
 	-command "mged_apply $id \"knob zero\""
 
-menubutton .$id.viewring -text "ViewRing" -underline 4 -menu .$id.viewring.m
-menu .$id.viewring.m -tearoff $do_tearoffs
-.$id.viewring.m add command -label "Add View" -underline 0 -command "do_add_view $id"
-.$id.viewring.m add cascade -label "Select View" -underline 0 -menu .$id.viewring.m.cm_select
-.$id.viewring.m add cascade -label "Delete View" -underline 0 -menu .$id.viewring.m.cm_delete
-.$id.viewring.m add command -label "Next View" -underline 0 -command "do_next_view $id"
-.$id.viewring.m add command -label "Prev View" -underline 0 -command "do_prev_view $id"
-.$id.viewring.m add command -label "Last View" -underline 0 -command "do_toggle_view $id"
+menu .$id.menubar.viewring -tearoff $do_tearoffs
+.$id.menubar.viewring add command -label "Add View" -underline 0 -command "do_add_view $id"
+.$id.menubar.viewring add cascade -label "Select View" -underline 0 -menu .$id.menubar.viewring.select
+.$id.menubar.viewring add cascade -label "Delete View" -underline 0 -menu .$id.menubar.viewring.delete
+.$id.menubar.viewring add command -label "Next View" -underline 0 -command "do_next_view $id"
+.$id.menubar.viewring add command -label "Prev View" -underline 0 -command "do_prev_view $id"
+.$id.menubar.viewring add command -label "Last View" -underline 0 -command "do_toggle_view $id"
 
-menu .$id.viewring.m.cm_select -tearoff $do_tearoffs
+menu .$id.menubar.viewring.select -tearoff $do_tearoffs
 do_view_ring_entries $id s
 set view_ring($id) 1
-menu .$id.viewring.m.cm_delete -tearoff $do_tearoffs
+menu .$id.menubar.viewring.delete -tearoff $do_tearoffs
 do_view_ring_entries $id d
 
-menubutton .$id.modes -text "Modes" -underline 0 -menu .$id.modes.m
-menu .$id.modes.m -tearoff $do_tearoffs
-.$id.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_snap($id)\
-	-label "Snap To Grid" -underline 0\
-	-command "mged_apply $id \"set grid_snap \$mged_grid_snap($id)\""
-.$id.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_rubber_band($id)\
+menu .$id.menubar.modes -tearoff $do_tearoffs
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rubber_band($id)\
 	-label "Rubber Band Persistance" -underline 12\
 	-command "mged_apply $id \"set rubber_band \$mged_rubber_band($id)\""
-.$id.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_rateknobs($id)\
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rateknobs($id)\
 	-label "Rateknobs" -underline 0\
 	-command "mged_apply $id \"set rateknobs \$mged_rateknobs($id)\""
 
-menubutton .$id.settings -text "Settings" -underline 0 -menu .$id.settings.m
-menu .$id.settings.m -tearoff $do_tearoffs
-.$id.settings.m add cascade -label "Transform" -underline 0\
-	-menu .$id.settings.m.cm_transform
-.$id.settings.m add cascade -label "Constraint Coords" -underline 0\
-	-menu .$id.settings.m.cm_coord
-.$id.settings.m add cascade -label "Rotate About" -underline 0\
-	-menu .$id.settings.m.cm_origin
-.$id.settings.m add cascade -label "Mouse Behavior" -underline 0\
-	-menu .$id.settings.m.cm_mb
-.$id.settings.m add cascade -label "Active Pane" -underline 0\
-	-menu .$id.settings.m.cm_mpane
-.$id.settings.m add cascade -label "Apply To" -underline 1\
-	-menu .$id.settings.m.cm_applyTo
-.$id.settings.m add cascade -label "Query Ray Effects" -underline 0\
-	-menu .$id.settings.m.cm_qray
-.$id.settings.m add cascade -label "Grid" -underline 0\
-	-menu .$id.settings.m.cm_grid
-.$id.settings.m add cascade -label "Framebuffer" -underline 0\
-	-menu .$id.settings.m.cm_fb
+menu .$id.menubar.settings -tearoff $do_tearoffs
+.$id.menubar.settings add cascade -label "Transform" -underline 0\
+	-menu .$id.menubar.settings.transform
+.$id.menubar.settings add cascade -label "Constraint Coords" -underline 0\
+	-menu .$id.menubar.settings.coord
+.$id.menubar.settings add cascade -label "Rotate About" -underline 0\
+	-menu .$id.menubar.settings.origin
+.$id.menubar.settings add cascade -label "Mouse Behavior" -underline 0\
+	-menu .$id.menubar.settings.mouse_behavior
+.$id.menubar.settings add cascade -label "Active Pane" -underline 0\
+	-menu .$id.menubar.settings.mpane
+.$id.menubar.settings add cascade -label "Apply To" -underline 1\
+	-menu .$id.menubar.settings.applyTo
+.$id.menubar.settings add cascade -label "Query Ray Effects" -underline 0\
+	-menu .$id.menubar.settings.qray
+.$id.menubar.settings add cascade -label "Grid" -underline 0\
+	-menu .$id.menubar.settings.grid
+.$id.menubar.settings add cascade -label "Framebuffer" -underline 0\
+	-menu .$id.menubar.settings.fb
 
-menu .$id.settings.m.cm_applyTo -tearoff $do_tearoffs
-.$id.settings.m.cm_applyTo add radiobutton -value 0 -variable mged_apply_to($id)\
+menu .$id.menubar.settings.applyTo -tearoff $do_tearoffs
+.$id.menubar.settings.applyTo add radiobutton -value 0 -variable mged_apply_to($id)\
 	-label "Active Pane" -underline 0
-.$id.settings.m.cm_applyTo add radiobutton -value 1 -variable mged_apply_to($id)\
+.$id.menubar.settings.applyTo add radiobutton -value 1 -variable mged_apply_to($id)\
 	-label "Local Panes" -underline 0
-.$id.settings.m.cm_applyTo add radiobutton -value 2 -variable mged_apply_to($id)\
+.$id.menubar.settings.applyTo add radiobutton -value 2 -variable mged_apply_to($id)\
 	-label "Listed Panes" -underline 1
-.$id.settings.m.cm_applyTo add radiobutton -value 3 -variable mged_apply_to($id)\
+.$id.menubar.settings.applyTo add radiobutton -value 3 -variable mged_apply_to($id)\
 	-label "All Panes" -underline 4
 
-menu .$id.settings.m.cm_mb -tearoff $do_tearoffs
-.$id.settings.m.cm_mb add radiobutton -value p -variable mged_mouse_behavior($id)\
-	-label "Paint Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
-.$id.settings.m.cm_mb add radiobutton -value r -variable mged_mouse_behavior($id)\
-	-label "Raytrace Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
-.$id.settings.m.cm_mb add radiobutton -value z -variable mged_mouse_behavior($id)\
-	-label "Zoom Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
-.$id.settings.m.cm_mb add radiobutton -value q -variable mged_mouse_behavior($id)\
-	-label "Query Ray" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
-.$id.settings.m.cm_mb add radiobutton -value s -variable mged_mouse_behavior($id)\
-	-label "Solid Edit Ray" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
-.$id.settings.m.cm_mb add radiobutton -value o -variable mged_mouse_behavior($id)\
-	-label "Object Edit Ray" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
-.$id.settings.m.cm_mb add radiobutton -value c -variable mged_mouse_behavior($id)\
-	-label "Combination Edit Ray" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
-.$id.settings.m.cm_mb add radiobutton -value d -variable mged_mouse_behavior($id)\
+menu .$id.menubar.settings.mouse_behavior -tearoff $do_tearoffs
+.$id.menubar.settings.mouse_behavior add radiobutton -value d -variable mged_mouse_behavior($id)\
 	-label "Default" -underline 0\
 	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.menubar.settings.mouse_behavior add radiobutton -value p -variable mged_mouse_behavior($id)\
+	-label "Paint Rectangle Area" -underline 0\
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.menubar.settings.mouse_behavior add radiobutton -value r -variable mged_mouse_behavior($id)\
+	-label "Raytrace Rectangle Area" -underline 0\
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.menubar.settings.mouse_behavior add radiobutton -value z -variable mged_mouse_behavior($id)\
+	-label "Zoom Rectangle Area" -underline 0\
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.menubar.settings.mouse_behavior add radiobutton -value q -variable mged_mouse_behavior($id)\
+	-label "Query Ray" -underline 0\
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.menubar.settings.mouse_behavior add radiobutton -value s -variable mged_mouse_behavior($id)\
+	-label "Solid Edit Ray" -underline 0\
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.menubar.settings.mouse_behavior add radiobutton -value o -variable mged_mouse_behavior($id)\
+	-label "Object Edit Ray" -underline 0\
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.menubar.settings.mouse_behavior add radiobutton -value c -variable mged_mouse_behavior($id)\
+	-label "Combination Edit Ray" -underline 0\
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 
-menu .$id.settings.m.cm_qray -tearoff $do_tearoffs
-.$id.settings.m.cm_qray add radiobutton -value t -variable mged_qray_effects($id)\
+menu .$id.menubar.settings.qray -tearoff $do_tearoffs
+.$id.menubar.settings.qray add radiobutton -value t -variable mged_qray_effects($id)\
 	-label "Text" -underline 0\
 	-command "mged_apply $id \"qray effects \$mged_qray_effects($id)\""
-.$id.settings.m.cm_qray add radiobutton -value g -variable mged_qray_effects($id)\
+.$id.menubar.settings.qray add radiobutton -value g -variable mged_qray_effects($id)\
 	-label "Graphics" -underline 0\
 	-command "mged_apply $id \"qray effects \$mged_qray_effects($id)\""
-.$id.settings.m.cm_qray add radiobutton -value b -variable mged_qray_effects($id)\
+.$id.menubar.settings.qray add radiobutton -value b -variable mged_qray_effects($id)\
 	-label "both" -underline 0\
 	-command "mged_apply $id \"qray effects \$mged_qray_effects($id)\""
 
-menu .$id.settings.m.cm_mpane -tearoff $do_tearoffs
-.$id.settings.m.cm_mpane add radiobutton -value ul -variable mged_dm_loc($id)\
+menu .$id.menubar.settings.mpane -tearoff $do_tearoffs
+.$id.menubar.settings.mpane add radiobutton -value ul -variable mged_dm_loc($id)\
 	-label "Upper Left" -underline 6\
 	-command "set_active_dm $id"
-.$id.settings.m.cm_mpane add radiobutton -value ur -variable mged_dm_loc($id)\
+.$id.menubar.settings.mpane add radiobutton -value ur -variable mged_dm_loc($id)\
 	-label "Upper Right" -underline 6\
 	-command "set_active_dm $id"
-.$id.settings.m.cm_mpane add radiobutton -value ll -variable mged_dm_loc($id)\
+.$id.menubar.settings.mpane add radiobutton -value ll -variable mged_dm_loc($id)\
 	-label "Lower Left" -underline 2\
 	-command "set_active_dm $id"
-.$id.settings.m.cm_mpane add radiobutton -value lr -variable mged_dm_loc($id)\
+.$id.menubar.settings.mpane add radiobutton -value lr -variable mged_dm_loc($id)\
 	-label "Lower right" -underline 3\
 	-command "set_active_dm $id"
-#.$id.settings.m.cm_mpane add radiobutton -value lv -variable mged_dm_loc($id)\
-#	-label "Last Visited" -command "do_last_visited $id"
 
-menu .$id.settings.m.cm_fb -tearoff $do_tearoffs
-.$id.settings.m.cm_fb add radiobutton -value 1 -variable mged_fb_all($id)\
+menu .$id.menubar.settings.fb -tearoff $do_tearoffs
+.$id.menubar.settings.fb add radiobutton -value 1 -variable mged_fb_all($id)\
 	-label "All" -underline 0\
 	-command "mged_apply $id \"set fb_all \$mged_fb_all($id)\""
-.$id.settings.m.cm_fb add radiobutton -value 0 -variable mged_fb_all($id)\
+.$id.menubar.settings.fb add radiobutton -value 0 -variable mged_fb_all($id)\
 	-label "Rectangle Area" -underline 0\
 	-command "mged_apply $id \"set fb_all \$mged_fb_all($id)\""
-.$id.settings.m.cm_fb add separator
-.$id.settings.m.cm_fb add radiobutton -value 1 -variable mged_fb_overlay($id)\
+.$id.menubar.settings.fb add separator
+.$id.menubar.settings.fb add radiobutton -value 1 -variable mged_fb_overlay($id)\
 	-label "Overlay" -underline 0\
 	-command "mged_apply $id \"set fb_overlay \$mged_fb_overlay($id)\""
-.$id.settings.m.cm_fb add radiobutton -value 0 -variable mged_fb_overlay($id)\
+.$id.menubar.settings.fb add radiobutton -value 0 -variable mged_fb_overlay($id)\
 	-label "Underlay" -underline 0\
 	-command "mged_apply $id \"set fb_overlay \$mged_fb_overlay($id)\""
-.$id.settings.m.cm_fb add separator
-.$id.settings.m.cm_fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
+.$id.menubar.settings.fb add separator
+.$id.menubar.settings.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
 	-label "Framebuffer Active" -underline 0\
 	-command "set_fb $id"
-.$id.settings.m.cm_fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
+.$id.menubar.settings.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
 	-label "Listen For Clients" -underline 0\
 	-command "set_listen $id" -state disabled
 
-menu .$id.settings.m.cm_grid -tearoff $do_tearoffs
-.$id.settings.m.cm_grid add cascade -label "Spacing" -underline 0\
-	-menu .$id.settings.m.cm_grid.cm_spacing
-.$id.settings.m.cm_grid add cascade -label "Advanced" -underline 0\
-	-menu .$id.settings.m.cm_grid.cm_adv
-.$id.settings.m.cm_grid add separator
-.$id.settings.m.cm_grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
+menu .$id.menubar.settings.grid -tearoff $do_tearoffs
+.$id.menubar.settings.grid add command -label "Anchor" -underline 0\
+	-command "do_grid_anchor $id"
+.$id.menubar.settings.grid add command -label "Color" -underline 0\
+	-command "do_grid_color $id"
+.$id.menubar.settings.grid add cascade -label "Spacing" -underline 0\
+	-menu .$id.menubar.settings.grid.spacing
+.$id.menubar.settings.grid add separator
+.$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
 	-label "Draw Grid" -underline 5\
 	-command "mged_apply $id \"set grid_draw \$mged_grid_draw($id)\""
+.$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_snap($id)\
+	-label "Snap To Grid" -underline 3\
+	-command "mged_apply $id \"set grid_snap \$mged_grid_snap($id)\""
 
-menu .$id.settings.m.cm_grid.cm_spacing -tearoff $do_tearoffs
-.$id.settings.m.cm_grid.cm_spacing add cascade -label "Metric" -underline 0\
-	-menu .$id.settings.m.cm_grid.cm_spacing.cm_metric
-.$id.settings.m.cm_grid.cm_spacing add cascade -label "English" -underline 0\
-	-menu .$id.settings.m.cm_grid.cm_spacing.cm_english
-.$id.settings.m.cm_grid.cm_spacing add command -label "Arbitrary" -underline 0\
-	-command "do_grid_spacing $id b"
-.$id.settings.m.cm_grid.cm_spacing add command -label "Autosize" -underline 1\
-	-command "grid_control_autosize $id; grid_spacing_apply $id b"
-#.$id.settings.m.cm_grid.cm_spacing add command -label "Both" -underline 0\
+#menu .$id.menubar.settings.grid.spacing -tearoff $do_tearoffs
+#.$id.menubar.settings.grid.spacing add cascade -label "Metric" -underline 0\
+#	-menu .$id.menubar.settings.grid.spacing.metric
+#.$id.menubar.settings.grid.spacing add cascade -label "English" -underline 0\
+#	-menu .$id.menubar.settings.grid.spacing.english
+#.$id.menubar.settings.grid.spacing add command -label "Arbitrary" -underline 0\
 #	-command "do_grid_spacing $id b"
-#.$id.settings.m.cm_grid.cm_spacing add command -label "Horizontal" -underline 0\
+#.$id.menubar.settings.grid.spacing add command -label "Autosize" -underline 1\
+#	-command "grid_control_autosize $id; grid_spacing_apply $id b"
+#.$id.menubar.settings.grid.spacing add command -label "Both" -underline 0\
+#	-command "do_grid_spacing $id b"
+#.$id.menubar.settings.grid.spacing add command -label "Horizontal" -underline 0\
 #	-command "do_grid_spacing $id h"
-#.$id.settings.m.cm_grid.cm_spacing add command -label "Vertical" -underline 0\
+#.$id.menubar.settings.grid.spacing add command -label "Vertical" -underline 0\
 #	-command "do_grid_spacing $id v"
-#.$id.settings.m.cm_grid.cm_spacing add command -label "Autosize" -underline 0\
+#.$id.menubar.settings.grid.spacing add command -label "Autosize" -underline 0\
 #	-command "grid_control_autosize $id; grid_spacing_apply $id b"
 
-menu .$id.settings.m.cm_grid.cm_spacing.cm_metric -tearoff $do_tearoffs
-.$id.settings.m.cm_grid.cm_spacing.cm_metric add command -label "micrometer" -underline 0\
+menu .$id.menubar.settings.grid.spacing -tearoff $do_tearoffs
+.$id.menubar.settings.grid.spacing add command -label "Autosize" -underline 0\
+	-command "grid_control_autosize $id; grid_spacing_apply $id b"
+.$id.menubar.settings.grid.spacing add command -label "Arbitrary" -underline 1\
+	-command "do_grid_spacing $id b"
+.$id.menubar.settings.grid.spacing add separator
+.$id.menubar.settings.grid.spacing add command -label "micrometer" -underline 4\
 	-command "set_grid_spacing $id micrometer"
-.$id.settings.m.cm_grid.cm_spacing.cm_metric add command -label "millimeter" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "millimeter" -underline 2\
 	-command "set_grid_spacing $id millimeter"
-.$id.settings.m.cm_grid.cm_spacing.cm_metric add command -label "centimeter" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "centimeter" -underline 0\
 	-command "set_grid_spacing $id centimeter"
-.$id.settings.m.cm_grid.cm_spacing.cm_metric add command -label "decimeter" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "decimeter" -underline 0\
 	-command "set_grid_spacing $id decimeter"
-.$id.settings.m.cm_grid.cm_spacing.cm_metric add command -label "meter" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "meter" -underline 0\
 	-command "set_grid_spacing $id meter"
-.$id.settings.m.cm_grid.cm_spacing.cm_metric add command -label "kilometer" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "kilometer" -underline 0\
 	-command "set_grid_spacing $id kilometer"
-
-menu .$id.settings.m.cm_grid.cm_spacing.cm_english -tearoff $do_tearoffs
-.$id.settings.m.cm_grid.cm_spacing.cm_english add command -label "1/10 inch" -underline 0\
+.$id.menubar.settings.grid.spacing add separator
+.$id.menubar.settings.grid.spacing add command -label "1/10 inch" -underline 0\
 	-command "set_grid_spacing $id \"1/10 inch\""
-.$id.settings.m.cm_grid.cm_spacing.cm_english add command -label "1/4 inch" -underline 2\
+.$id.menubar.settings.grid.spacing add command -label "1/4 inch" -underline 2\
 	-command "set_grid_spacing $id \"1/4 inch\""
-.$id.settings.m.cm_grid.cm_spacing.cm_english add command -label "1/2 inch" -underline 2\
+.$id.menubar.settings.grid.spacing add command -label "1/2 inch" -underline 2\
 	-command "set_grid_spacing $id \"1/2 inch\""
-.$id.settings.m.cm_grid.cm_spacing.cm_english add command -label "inch" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "inch" -underline 0\
 	-command "set_grid_spacing $id inch"
-.$id.settings.m.cm_grid.cm_spacing.cm_english add command -label "foot" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "foot" -underline 0\
 	-command "set_grid_spacing $id foot"
-.$id.settings.m.cm_grid.cm_spacing.cm_english add command -label "yard" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "yard" -underline 0\
 	-command "set_grid_spacing $id yard"
-.$id.settings.m.cm_grid.cm_spacing.cm_english add command -label "mile" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "mile" -underline 0\
 	-command "set_grid_spacing $id mile"
 
-menu .$id.settings.m.cm_grid.cm_adv -tearoff $do_tearoffs
-.$id.settings.m.cm_grid.cm_adv add command -label "Anchor" -underline 0\
-	-command "do_grid_anchor $id"
-.$id.settings.m.cm_grid.cm_adv add command -label "Color" -underline 0\
-	-command "do_grid_color $id"
-
-menu .$id.settings.m.cm_coord -tearoff $do_tearoffs
-.$id.settings.m.cm_coord add radiobutton -value m -variable mged_coords($id)\
+menu .$id.menubar.settings.coord -tearoff $do_tearoffs
+.$id.menubar.settings.coord add radiobutton -value m -variable mged_coords($id)\
 	-label "Model" -underline 0\
 	-command "mged_apply $id \"set coords \$mged_coords($id)\""
-.$id.settings.m.cm_coord add radiobutton -value v -variable mged_coords($id)\
+.$id.menubar.settings.coord add radiobutton -value v -variable mged_coords($id)\
 	-label "View" -underline 0\
 	-command "mged_apply $id \"set coords \$mged_coords($id)\""
-.$id.settings.m.cm_coord add radiobutton -value o -variable mged_coords($id)\
+.$id.menubar.settings.coord add radiobutton -value o -variable mged_coords($id)\
 	-label "Object" -underline 0\
 	-command "mged_apply $id \"set coords \$mged_coords($id)\"" -state disabled
 
-menu .$id.settings.m.cm_origin -tearoff $do_tearoffs
-.$id.settings.m.cm_origin add radiobutton -value v -variable mged_rotate_about($id)\
+menu .$id.menubar.settings.origin -tearoff $do_tearoffs
+.$id.menubar.settings.origin add radiobutton -value v -variable mged_rotate_about($id)\
 	-label "View Center" -underline 0\
 	-command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\""
-.$id.settings.m.cm_origin add radiobutton -value e -variable mged_rotate_about($id)\
+.$id.menubar.settings.origin add radiobutton -value e -variable mged_rotate_about($id)\
 	-label "Eye" -underline 0\
 	-command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\""
-.$id.settings.m.cm_origin add radiobutton -value m -variable mged_rotate_about($id)\
+.$id.menubar.settings.origin add radiobutton -value m -variable mged_rotate_about($id)\
 	-label "Model Origin" -underline 0\
 	-command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\""
-.$id.settings.m.cm_origin add radiobutton -value k -variable mged_rotate_about($id)\
+.$id.menubar.settings.origin add radiobutton -value k -variable mged_rotate_about($id)\
 	-label "Key Point" -underline 0\
 	-command "mged_apply $id \"set rotate_about \$mged_rotate_about($id)\"" -state disabled
 
-menu .$id.settings.m.cm_transform -tearoff $do_tearoffs
-.$id.settings.m.cm_transform add radiobutton -value v -variable mged_transform($id)\
+menu .$id.menubar.settings.transform -tearoff $do_tearoffs
+.$id.menubar.settings.transform add radiobutton -value v -variable mged_transform($id)\
 	-label "View" -underline 0\
 	-command "set_transform $id"
-.$id.settings.m.cm_transform add radiobutton -value a -variable mged_transform($id)\
+.$id.menubar.settings.transform add radiobutton -value a -variable mged_transform($id)\
 	-label "ADC" -underline 0\
 	-command "set_transform $id"
-.$id.settings.m.cm_transform add radiobutton -value e -variable mged_transform($id)\
+.$id.menubar.settings.transform add radiobutton -value e -variable mged_transform($id)\
 	-label "Model Params" -underline 0\
 	-command "set_transform $id" -state disabled
 
-menubutton .$id.tools -text "Tools" -underline 0 -menu .$id.tools.m
-menu .$id.tools.m -tearoff $do_tearoffs
-.$id.tools.m add command -label "ADC Control Panel" -underline 0\
+menu .$id.menubar.tools -tearoff $do_tearoffs
+.$id.menubar.tools add command -label "ADC Control Panel" -underline 0\
 	-command "init_adc_control $id"
-.$id.tools.m add command -label "Grid Control Panel" -underline 0\
+.$id.menubar.tools add command -label "Grid Control Panel" -underline 0\
 	-command "init_grid_control $id"
-.$id.tools.m add command -label "Query Ray Control Panel" -underline 0\
+.$id.menubar.tools add command -label "Query Ray Control Panel" -underline 0\
 	-command "init_qray_control $id"
-.$id.tools.m add command -label "Combination Edit Panel" -underline 0\
+.$id.menubar.tools add command -label "Combination Edit Panel" -underline 0\
 	-command "init_comb $id"
-.$id.tools.m add separator
-.$id.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable multi_view($id)\
+.$id.menubar.tools add separator
+.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable multi_view($id)\
 	-label "Multipane" -underline 0 -command "setmv $id"
-.$id.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable show_edit_info($id)\
+.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable show_edit_info($id)\
 	-label "Edit Info" -underline 0\
 	-command "toggle_edit_info $id"
 if {$comb} {
-.$id.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable cmd_win($id)\
+.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable cmd_win($id)\
 	-label "Command Window" -underline 1\
 	-command "set_cmd_win $id"
-.$id.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable dm_win($id)\
+.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable dm_win($id)\
 	-label "Graphics Window" -underline 1\
 	-command "set_dm_win $id"
 } 
-.$id.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable status_bar($id)\
+.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable status_bar($id)\
 	-label "Status Bar" -underline 0\
 	-command "toggle_status_bar $id"
-.$id.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
+.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
 	-label "Button Menu" -underline 0\
 	-command "toggle_button_menu $id"
 
-menubutton .$id.other -text "Other" -underline 0 -menu .$id.other.m
-menu .$id.other.m -tearoff $do_tearoffs
-.$id.other.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
+menu .$id.menubar.other -tearoff $do_tearoffs
+.$id.menubar.other add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
 	-label "Draw Grid" -underline 5\
 	-command "mged_apply $id \"set grid_draw \$mged_grid_draw($id)\""
-.$id.other.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
+.$id.menubar.other add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
 	-label "Framebuffer Active" -underline 0 \
 	-command "set_fb $id"
-.$id.other.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_adc_draw($id)\
+.$id.menubar.other add checkbutton -offvalue 0 -onvalue 1 -variable mged_adc_draw($id)\
 	-label "Angle/Dist Cursor" -underline 0 \
 	-command "mged_apply $id \"adc draw \$mged_adc_draw($id)\""
-.$id.other.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_faceplate($id)\
+.$id.menubar.other add checkbutton -offvalue 0 -onvalue 1 -variable mged_faceplate($id)\
 	-label "Faceplate" -underline 2\
 	-command "mged_apply $id \"set faceplate \$mged_faceplate($id)\""
-.$id.other.m add separator
-.$id.other.m add cascade -label "Axes" -underline 1\
-	-menu .$id.other.m.cm_axes
+.$id.menubar.other add separator
+.$id.menubar.other add cascade -label "Axes" -underline 1\
+	-menu .$id.menubar.other.axes
 
-menu .$id.other.m.cm_axes -tearoff $do_tearoffs
-.$id.other.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
+menu .$id.menubar.other.axes -tearoff $do_tearoffs
+.$id.menubar.other.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_v_axes($id) -label "View" -underline 0\
 	-command "mged_apply $id \"set v_axes \$mged_v_axes($id)\""
-.$id.other.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
+.$id.menubar.other.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_m_axes($id) -label "Model" -underline 0\
 	-command "mged_apply $id \"set m_axes \$mged_m_axes($id)\""
-.$id.other.m.cm_axes add checkbutton -offvalue 0 -onvalue 1\
+.$id.menubar.other.axes add checkbutton -offvalue 0 -onvalue 1\
 	-variable mged_e_axes($id) -label "Edit" -underline 0\
 	-command "mged_apply $id \"set e_axes \$mged_e_axes($id)\""
 
-menubutton .$id.help -text "Help" -underline 0 -menu .$id.help.m
-menu .$id.help.m -tearoff $do_tearoffs
-.$id.help.m add command -label "About" -underline 0\
+menu .$id.menubar.help -tearoff $do_tearoffs
+.$id.menubar.help add command -label "About" -underline 0\
 	-command "do_About_MGED $id"
-.$id.help.m add command -label "On Context" -underline 0\
+.$id.menubar.help add command -label "On Context" -underline 0\
 	-command "on_context_help $id"
-.$id.help.m add command -label "Commands..." -underline 0\
+.$id.menubar.help add command -label "Commands..." -underline 0\
 	-command "command_help $id"
-.$id.help.m add command -label "Apropos..." -underline 1\
+.$id.menubar.help add command -label "Apropos..." -underline 1\
 	-command "ia_apropos .$id $screen"
 
 if [info exists env(WEB_BROWSER)] {
@@ -823,7 +816,7 @@ if ![info exists web_cmd] {
 	set web_cmd "ia_man .$id $screen"
     }
 }
-.$id.help.m add command -label "Manual..." -underline 0 -command $web_cmd
+.$id.menubar.help add command -label "Manual..." -underline 0 -command $web_cmd
 
 #==============================================================================
 # PHASE 3: Bottom-row display
@@ -878,10 +871,6 @@ set vi_search_flag(.$id.t) 0
 # Pack windows
 #==============================================================================
 
-pack .$id.file .$id.edit .$id.create .$id.view .$id.viewring .$id.modes .$id.settings .$id.tools .$id.other -side left -in .$id.menubar
-pack .$id.help -side right -in .$id.menubar
-pack .$id.menubar -side top -fill x
-
 if { $bob_testing } {
     grid $mged_active_dm($id) -in $mged_dmc($id) -sticky "nsew"
 } else {
@@ -913,6 +902,11 @@ pack .$id.tf -side top -fill both -expand yes
 #==============================================================================
 # PHASE 6: Further setup
 #==============================================================================
+
+if {[info procs mged_MenuFirstEntry] == ""} {
+    # trigger the Tcl source file to be loaded
+    mged_MenuFirstEntry ""
+}
 
 cmd_init $id
 setupmv $id
@@ -1076,10 +1070,10 @@ proc update_mged_vars { id } {
     set mged_faceplate($id) $faceplate
 
     if {$mged_fb($id)} {
-	.$id.settings.m.cm_fb entryconfigure 7 -state normal
+	.$id.menubar.settings.fb entryconfigure 7 -state normal
 	set mged_listen($id) $listen
     } else {
-	.$id.settings.m.cm_fb entryconfigure 7 -state disabled
+	.$id.menubar.settings.fb entryconfigure 7 -state disabled
 	set mged_listen($id) $listen
     }
 
@@ -1568,14 +1562,14 @@ proc do_view_ring_entries { id m } {
     set llen [llength $views]
 
     if {$m == "s"} {
-	set w .$id.viewring.m.cm_select
+	set w .$id.menubar.viewring.select
 	$w delete 0 end
 	for {set i 0} {$i < $llen} {incr i} {
 	    $w add radiobutton -value [lindex $views $i] -variable view_ring($id)\
 		    -label [lindex $views $i] -command "do_goto_view $id [lindex $views $i]"
 	}
     } elseif {$m == "d"} {
-	set w .$id.viewring.m.cm_delete
+	set w .$id.menubar.viewring.delete
 	$w delete 0 end
 	for {set i 0} {$i < $llen} {incr i} {
 	    $w add command -label [lindex $views $i]\
@@ -1746,11 +1740,11 @@ proc set_fb { id } {
     mged_apply $id "set fb \$mged_fb($id)"
 
     if {$mged_fb($id)} {
-	.$id.settings.m.cm_fb entryconfigure 7 -state normal
+	.$id.menubar.settings.fb entryconfigure 7 -state normal
 	set mged_listen($id) 1
 	mged_apply $id "set listen \$mged_listen($id)"
     } else {
-	.$id.settings.m.cm_fb entryconfigure 7 -state disabled
+	.$id.menubar.settings.fb entryconfigure 7 -state disabled
 	set mged_listen($id) 0
     }
 }
