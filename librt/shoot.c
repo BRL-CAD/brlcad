@@ -1070,7 +1070,7 @@ hitit:
 	 *  finished_segs is only used by special hit routines
 	 *  which don't follow the traditional solid modeling paradigm.
 	 */
-	if(rt_g.debug&DEBUG_ALLHITS) rt_pr_partitions(rtip,&FinalPart,"Parition list passed to a_hit() routine");
+	if(rt_g.debug&DEBUG_ALLHITS) rt_pr_partitions(rtip,&FinalPart,"Partition list passed to a_hit() routine");
 	ap->a_return = ap->a_hit( ap, &FinalPart, &finished_segs );
 	status = "HIT";
 
