@@ -390,7 +390,7 @@ run_rt()
 
 	(void)close( pipe_err[1] );
 
-	if(*zclip_ptr){
+	if(*zclip_ptr || mged_variables->perspective_mode){
 	  vect_t temp;
 
 	  VSET( temp, 0, 0, 1 );
@@ -1400,7 +1400,7 @@ done:
 		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
 
-	setup_rt( vp, mged_variables->echo_query_ray_cmd );
+	setup_rt( vp, mged_variables->query_ray_cmd_echo );
 
 	if(use_input_orig){
 	  bu_vls_init(&vls);
