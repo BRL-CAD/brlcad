@@ -33,7 +33,7 @@
  *  all comments must start in the first column, or CPP will
  *  leave the leading tabs in place, and confuse Cake.
  *
- *  UNIXTYPE:  By default, a machine is considered to be SYSV,
+ *  By default, a machine is considered to be SYSV,
  *  unless the symbol "BSD" is defined.
  *  	BSD=42	For 4.2 BSD
  *	BSD=43	For 4.3 BSD
@@ -138,373 +138,28 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 
-#ifdef vax
-/*	DEC VAX-11 systems */
-/*	4.3 BSD "Tahoe", or ULTRIX */
+
+
+/****************************************************************
+ *								*
+ *	These platforms have been tested by ARL,		*
+ *	and are considered "supported" system types.		*
+ *								*
+ ****************************************************************/
+
+#if defined(__CAKE__vax)
+/*	DEC VAX-11 hardware running 4.3 BSD "Tahoe", or DEC ULTRIX */
 #	undef	vax
 #	define	MTYPE	vax
 #	define	BSD	43
 #	define	HAS_TCP	1
-/*	On Ultrix & 4.1 systems, #define	CC_DEFS	-Dvoid=int */
-#	define	LIBFB_OBJS	if_remote if_adage
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_ADAGE
-/*	At USNA, add -DGM256 to LIBFB_CONFIG */
-#	define	LIBFB_LIBES	LIBPKG
-#	define	LIBRT_TIMER	timer42
-#endif
-
-#if defined(unix) && defined(m68k)
-/*	Apple MAC II running A/UX 1.0 */
-#	undef	aux
-#	define	MTYPE	aux
-#	if 1
-#		define  CC      /bin/cc
-#		define	OPTIMIZER	-O
-#	else
-#	       define  CC      /usr/local/bin/gcc
-#	       define  OPTIMIZER       -O -fstrength-reduce -fomit-frame-pointer -finline-functions
+#	if	0	/* Set to 1 on Ultrix & 4.1 BSD systems */
+#		define	CC_DEFS	-Dvoid=int
 #	endif
-#	define	HAS_TCP	1
-#	define	LIBRT_TIMER	timerunix
-#	define	CC_OPTS	-Daux
-#	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
-#	if	0
-/*      These defines are for rfbd version of libfb. */
-#		define  LIBFB_OBJS      if_remote if_X
-#		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	else
-/*      And the next two are for all the rest. */
-#		define  LIBFB_OBJS      if_remote
-#		define  LIBFB_CONFIG    -DIF_REMOTE
-#		define	LIBFB_LIBES	LIBPKG
-#	endif
-#	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11
-#endif
-
-#if defined(_AIX)
-/*	IBM RS/6000 running AIX */
-#	undef	ibm
-#	define	MTYPE	ibm
-#	define  CC      /bin/cc
-#	define	CC_OPTS	-qlanglvl=ansi -D__unix
-#	define	OPTIMIZER	-O
-#	define	HAS_TCP	1
-#	define	LIBTERMLIB	-lcurses
-#	define	LIBRT_TIMER	timerunix
-#	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
-#	if	0
-/*      X and remote fb */
-#		define  LIBFB_OBJS      if_remote if_X
-#		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	else
-/*      And the next two are for all the rest. */
-#		define  LIBFB_OBJS      if_remote
-#		define  LIBFB_CONFIG    -DIF_REMOTE
-#		define	LIBFB_LIBES	LIBPKG
-#	endif
-#	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11
-#endif
-
-#if defined(__CAKE__linux)
-/*	IBM PC or clone running Linux */
-#	undef	li
-#	define	MTYPE	li
-#	define	UNIXTYPE BSD
-#	define	BSD	44
-#	define	HAS_TCP 1
-#	define	HAS_SYMLINKS 1
-#	define	RANLIB	ar -s
-#	define	CC	gcc
-#	if 0	/* PRODUCTION=1 */
-#		define	OPTIMIZER	-O2
-#	else
-#		define	OPTIMIZER	-g
-#	endif
-/*	Don't use -ansi, that gives __STRICT_ANSI__.  Default is _GNU_SOURCE. */
-#	define	CC_OPTS /**/
-#	define	XINCDIR	/usr/X11/include
-#	define	XLIBDIR	/usr/X11/lib
-
-#	define	LIBRT_TIMER	timer42
-#	define	LIBTERMLIB	-lcurses
-#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11
-#endif
-
-#if defined(__CAKE__bsdi)
-/*	IBM PC or clone running BSDI Unix */
-#undef	bsdi
-#	define	MTYPE	bsdi
-#	define	UNIXTYPE BSD
-#	define	HAS_TCP 1
-#	define	HAS_SYMLINKS 1
-#	define	BSD	44
-#	define	CC	/usr/bin/cc
-#	define	OPTIMIZER	/**/
-#	define	CC_OPTS -g
-#	define	XINCDIR	/usr/X11/include
-#	define	XLIBDIR	/usr/X11/lib
-
-#	define	LIBRT_TIMER	timer42
-#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11
-#endif
-
-#if defined(__CAKE__at)
-/*	IBM PC or clone, running SysV R3 */
-#	define	MTYPE	at
-#	define	HAS_TCP	1
-#	define	LIBRT_TIMER	timerunix
-#	define	CC	/usr/bin/cc
-#	define	CC_OPTS
-#	define	LIBPKG_CONFIG	-DBSD=42
-#	define	LIBFB_CONFIG	-DIF_REMOTE
 #	define	LIBFB_OBJS	if_remote
-#	define	LIBFB_LIBES	LIBPKG -lsocket
-#	define	MGED_OBJS
-#	define	MGED_CONFIG
-#	define	MGED_LIBES	-lsocket
-#	define	STANDARD_LIBES	-lm
-#endif
-
-#if defined(__CAKE__386)
-/* IBM PC with 386BSD from William Jolitz */
-#	define	MTYPE	386
-#	define	UNIXTYPE BSD
-#	define	HAS_TCP 1
-#	define	HAS_SYMLINKS 1
-#	define	BSD	44
-#	define	LIBRT_TIMER	timer42
-#endif
-
-#if defined(__CAKE__nb) || defined(__CAKE__nb86)
-/* system running NetBSD 1.0 from Chris Demetriou <cgd@sun-lamp.cs.berkeley.edu> */
-#	if defined(i386)
-#		define	MTYPE 		nb86
-#	else
-#		define	MTYPE		nb
-#	endif
-#	define	UNIXTYPE 	BSD
-#	define	HAS_TCP		1
-#	define	HAS_SYMLINKS 	1
-#	define	BSD	44
-#	define	LIBRT_TIMER	timer42
-#	define	CC	/usr/bin/gcc
-#	define	CC_OPTS	-pipe -fpic -DHAVE_UNISTD_H
-#	define	OPTIMIZER	-O2
-#	define	STANDARD_LIBES	-lm
-
-#	define	BUILD_LIBRARY	ld -x -Bshareable -Bforcearchive -o
-#	define	LIBVERS	../sharedlibvers.sh
-#	define	ARCH_SUF	so
-#	define	RANLIB	true
-
-	/* i386 users have XFree86, usually */
-#	if defined(i386)
-#		define	XINCDIR	/usr/X386/include
-#		define	XLIBDIR	/usr/X386/lib
-#	endif
-
-#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X
-#endif
-
-#ifdef ipsc860
-/*	iPSC/860 Hypercube running NX/2 */
-/*	This one is cross-compiled from another machine.  There are no */
-/*	useful cpp symbols other than i860, so we have to hard wire in */
-/*	the above define to get this version (and perhaps undef symbols */
-/*	for the host machine) */
-#	undef	ipsc860
-#	define	MTYPE	ipsc
-#	define	HAS_TCP	0
-#	define	LIBRT_TIMER	timerunix
-#	define	CC	icc -node -Uunix -Dipsc860
-#	define	CC_OPTS
-#	define	OPTIMIZER	/**/
-#	define	AR ar860
-#	define	LIBPKG_CONFIG
-#	define	LIBFB_OBJS
-#	define	LIBFB_CONFIG
-#	define	MGED_OBJS
-#	define	MGED_CONFIG
-#endif
-
-#if defined(alliant) && !defined(i860)
-/*	Alliant FX/8.  Compile all programs for the CEs */
-#	undef	fx
-#	undef	alliant
-#	define	MTYPE	fx
-#	define	BSD	42
-#	define	HAS_TCP	1
-#	if 1
-/*		Standard Alliant C Compiler */
-#		define	CC_OPTS	-ce
-#	else
-#		if 1
-/*			FX/C, -l option puts listing on stdout. */
-#			define	CC	/bin/fxc
-#			define	CC_OPTS	-ce
-#			define	OPTIMIZER -Ogiv
-#		else
-/*			GNU C */
-#			define	CC	gcc
-#			define	CC_OPTS	-traditional
-#		endif
-#	endif
-#	define	LD_OPTS	CC_OPTS
-#	define	FC	/usr/alliant/fortran
-#	define	LIBRT_LIBES	-lcvec -lcommon
-#	define	LIBRT_TIMER	timer42
-#endif
-
-#if defined(alliant) && defined(i860)
-/*	Alliant FX/2800 */
-/*	Notes:  librt/machine.c has to be compiled -Ogc (for parallelism) */
-/*	Notes:  librt/tree.c has to be compiled -Ogu (compiler bug) */
-#	undef	fy
-#	undef	alliant
-#	define	MTYPE	fy
-#	define	BSD	43
-#	define	HAS_TCP	1
-#	if 0
-/*		Standard Alliant C Compiler */
-#	else
-/*		FX/C */
-#		define	CC	/bin/fxc
-/*		-O c(concurrent) g(global) i(inline) v(vectors) */
-#		if	1
-/*			Conservative */
-#		else
-/*			Risky, with Concentrix 2800 1.1.02 */
-#			define	OPTIMIZER -Ogiv
-#		endif
-#	endif
-#	define	FC	/usr/alliant/fortran
-#	define	LIBRT_TIMER	timer42
-#	define	LIBRT_LIBES	-lcommon
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
-#	define	LIBFB_OBJS	if_remote if_ab
+#	define	LIBFB_CONFIG	-DIF_REMOTE
 #	define	LIBFB_LIBES	LIBPKG
-#endif
-
-#if defined(__CAKE__stad)
-/*	Stardent VISTRA i860 machine.  No vendor symbols found in cpp */
-#	undef	stad
-#	define	MTYPE	stad
-#	define	LIBRT_TIMER	timerunix
-#	define	HAS_TCP	1
-#	define	CC	/bin/cc
-/*	-Xc for ANSI, otherwise non-ANSI */
-#	define	CC_OPTS	-D__stardent=1 -Xc
-#	define	LIBPKG_CONFIG	-DBSD=43
-#	define  LIBFB_OBJS      if_remote if_X if_X24
-#	define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
-#	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
-#endif
-
-#if defined(gould) && !defined(NP1)
-/*	Gould SEL, PowerNode.  Obtain more stack space with -m */
-/*	Tested with UTX/32 2.0 */
-#	undef	sel
-#	define	MTYPE	sel
-#	define	BSD	43
-#	define	HAS_TCP	1
-#	if 1
-/*		Normal configuration, with optimization */
-#		define	LD_OPTS	-m 8
-#	else
-/*		DBX configuration, -g, no optimization */
-#		define  OPTIMIZER /**/
-#		define	CC_OPTS	-g
-#		define	LD_OPTS	-m 8 -g
-#	endif
-#	if 1
-/*		Normal Configuration */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_AB
-#		define	LIBFB_OBJS	if_remote if_ab
-#		define	LIBFB_LIBES	LIBPKG
-#	else
-/*		X-Windows Configuration */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I/m/X11/core
-#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
-#		define	MGED_OBJS	dm-X
-#		define	MGED_CONFIG	-DDM_X -I/m/X11/core
-#		define	MGED_LIBES	/usr/local/lib/libX11.a
-#	endif
 #	define	LIBRT_TIMER	timer42
-#endif
-
-/* XXX The existance of the CPP symbol NP1 is unknown.  */
-#if defined(gould) && defined(NP1)
-/*	Gould NP1 */
-#	undef	np1
-#	define	MTYPE	np1
-#	define	BSD	43
-#	define	HAS_TCP	1
-#	if 1
-/*		Normal configuration, with optimization */
-#	else
-/*		DBX configuration, -g, no optimization */
-#		define  OPTIMIZER /**/
-#		define	CC_OPTS	-g
-#		define	LD_OPTS	-g
-#	endif
-#	if 1
-/*		Normal Configuration */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
-#		define	LIBFB_OBJS	if_remote if_ab
-#		define	LIBFB_LIBES	LIBPKG
-#	else
-/*		X-Windows Configuration */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X
-#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
-#		define	MGED_OBJS	dm-X
-#		define	MGED_CONFIG	-DDM_X
-#		define	MGED_LIBES	/usr/local/lib/libX11.a
-#	endif
-#	define	LIBRT_TIMER	timer42
-#endif
-
-#if defined (mips) && defined (ultrix)
-/*      mips-equipped DECStations running ULTRIX v4.2a          */
-#	undef	mips
-#	define MTYPE	mips
-#	define BSD	42
-#	define HAS_TCP	1
-#	define CC_DEFS	-Dvoid=int
-#	define CC_OPTS	-Olimit 4096
-#	define LIBFB_OBJS	if_X if_X24 if_remote if_ab
-#	define LIBFB_CONFIG	-DIF_X -DIF_REMOTE -DIF_AB
-#	define LIBFB_LIBES	LIBPKB -lX11
-#	define LIBRT_TIMER	timer42
-#	define MGED_CONFIG	-DDM_X
-#	define MGED_OBJS	dm-X
-#	define MGED_LIBES	LIBPKG -lX11
 #endif
 
 #if defined(__CAKE__irix4) || (defined(__sgi) && defined(__mips))
@@ -890,7 +545,6 @@ set -S2 "/bin/sh"
 #	undef	sun
 #	undef	sun5
 #	define	MTYPE	sun5
-#	define	UNIXTYPE	SYSV
 /*	For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #	define	CC		/opt/SUNWspro/bin/cc
 
@@ -948,54 +602,6 @@ set -S2 "/bin/sh"
 
 #endif
 
-#ifdef NeXT
-/*	NeXT 2.0 */
-#	undef	next
-#	define	MTYPE	next
-#	define	BSD	43
-#	define	HAS_TCP	1
-#	define	RANLIB	ranlib -c -s
-/*	Using the Gnu C Compiler */
-#	define	CC	cc
-#	define	CC_OPTS -g
-#	define	FC_OPTS	CC_OPTS
-#	ifndef	LD_OPTS
-#		define	LD_OPTS	CC_OPTS
-#	endif
-#	define	LIBRT_TIMER	timer42
-/*	NeXT with X11 configuration */
-#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XLIBDIR -lX11
-#endif
-
-#if defined(apollo)
-/*
- *	Under SR10.1, __STDC__=1, but <stdarg.h> <stddef.h> <stdlib.h>
- *	do not exist, storage class "const" is not known, and
- *	new "..." style variable args don't work, hence the -U.
- *	The -W0,-natural causes struct arrays to be padded for alignment.
- *	Loader flag -z unmaps location zero
- */
-#	undef	apollo
-#	define	MTYPE	apollo
-#	define	BSD	43
-#	define	HAS_TCP	1
-#	define  CC_OPTS	-Tbsd4.3 -U__STDC__ -g
-#	define	FC_OPTS	CC_OPTS
-#	define	LD_OPTS	CC_OPTS -g
-#	define	LIBRT_TIMER	timer42
-#	define	LIBFB_OBJS	if_remote if_X if_X24
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I''XINCDIR
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	/usr/lib/X11/libX11.a
-#endif
-
 #if defined(CRAY1)
 /*	Cray 1, X-MP or Y-MP running UNICOS 8 */
 #	undef	xmp
@@ -1040,21 +646,6 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-lX11 -lnet
-#endif
-
-#if defined(hpux)
-/*	HP 9000 Model 730 et.al., running HPUX */
-#	undef hp
-#	define	MTYPE hp
-#	define	UNIXTYPE SYSV
-#	define	HAS_TCP=0
-#	define	LIBRT_TIMER 	timerunix
-#	define	LIBFB_OBJS 	if_X if_X24
-#	define	LIBFB_CONFIG 	-DIF_X -I''XINCDIR
-#	define	LIBFB_LIBES   	-L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XINCDIR -lX11
 #endif
 
 #if defined(CRAY2)
@@ -1127,7 +718,427 @@ set -S2 "/bin/sh"
 #	endif
 #endif
 
-#if defined(__CAKE_ard)
+#if defined(__CAKE__linux)
+/*	IBM PC or clone running Linux */
+#	undef	li
+#	define	MTYPE	li
+#	define	BSD	44
+#	define	HAS_TCP 1
+#	define	HAS_SYMLINKS 1
+#	define	RANLIB	ar -s
+#	define	CC	gcc
+#	if 0	/* PRODUCTION=1 */
+#		define	OPTIMIZER	-O2
+#	else
+#		define	OPTIMIZER	-g
+#	endif
+/*	Don't use -ansi, that gives __STRICT_ANSI__.  Default is _GNU_SOURCE. */
+#	define	CC_OPTS /**/
+#	define	XINCDIR	/usr/X11/include
+#	define	XLIBDIR	/usr/X11/lib
+
+#	define	LIBRT_TIMER	timer42
+#	define	LIBTERMLIB	-lcurses
+#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
+#endif
+
+#if defined(__CAKE__bsdi)
+/*	IBM PC or clone running BSDI Unix */
+#undef	bsdi
+#	define	MTYPE	bsdi
+#	define	HAS_TCP 1
+#	define	HAS_SYMLINKS 1
+#	define	BSD	44
+#	define	CC	/usr/bin/cc
+#	define	OPTIMIZER	/**/
+#	define	CC_OPTS -g
+#	define	XINCDIR	/usr/X11/include
+#	define	XLIBDIR	/usr/X11/lib
+
+#	define	LIBRT_TIMER	timer42
+#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
+#endif
+
+/****************************************************************
+ *								*
+ *	These platforms have not been tested by ARL,		*
+ *	and are considered "unsupported" system types.		*
+ *	Many of these should work with little or no work.	*
+ *								*
+ ****************************************************************/
+
+#if defined(__CAKE__aux)
+/*	Apple MAC II running A/UX 1.0 */
+#	undef	aux
+#	define	MTYPE	aux
+#	if 1	/* PRODUCTION=1 */
+#		define  CC      /bin/cc
+#		define	OPTIMIZER	-O
+#	else
+#	       define  CC      /usr/local/bin/gcc
+#	       define  OPTIMIZER       -O -fstrength-reduce -fomit-frame-pointer -finline-functions
+#	endif
+#	define	HAS_TCP	1
+#	define	LIBRT_TIMER	timerunix
+#	define	CC_OPTS	-Daux
+#	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
+#	if	0
+/*      These defines are for rfbd version of libfb. */
+#		define  LIBFB_OBJS      if_remote if_X
+#		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	else
+/*      And the next two are for all the rest. */
+#		define  LIBFB_OBJS      if_remote
+#		define  LIBFB_CONFIG    -DIF_REMOTE
+#		define	LIBFB_LIBES	LIBPKG
+#	endif
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
+#endif
+
+#if defined(__CAKE__ibm)
+/*	IBM RS/6000 running AIX */
+#	undef	ibm
+#	define	MTYPE	ibm
+#	define  CC      /bin/cc
+#	define	CC_OPTS	-qlanglvl=ansi -D__unix
+#	define	OPTIMIZER	-O
+#	define	HAS_TCP	1
+#	define	LIBTERMLIB	-lcurses
+#	define	LIBRT_TIMER	timerunix
+#	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
+#	if	0
+/*      X and remote fb */
+#		define  LIBFB_OBJS      if_remote if_X
+#		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	else
+/*      And the next two are for all the rest. */
+#		define  LIBFB_OBJS      if_remote
+#		define  LIBFB_CONFIG    -DIF_REMOTE
+#		define	LIBFB_LIBES	LIBPKG
+#	endif
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
+#endif
+
+#if defined(__CAKE__at)
+/*	IBM PC or clone, running SysV R3 */
+#	define	MTYPE	at
+#	define	HAS_TCP	1
+#	define	LIBRT_TIMER	timerunix
+#	define	CC	/usr/bin/cc
+#	define	CC_OPTS
+#	define	LIBPKG_CONFIG	-DBSD=42
+#	define	LIBFB_CONFIG	-DIF_REMOTE
+#	define	LIBFB_OBJS	if_remote
+#	define	LIBFB_LIBES	LIBPKG -lsocket
+#	define	MGED_OBJS
+#	define	MGED_CONFIG
+#	define	MGED_LIBES	-lsocket
+#	define	STANDARD_LIBES	-lm
+#endif
+
+#if defined(__CAKE__386)
+/* IBM PC with 386BSD from William Jolitz */
+#	define	MTYPE	386
+#	define	HAS_TCP 1
+#	define	HAS_SYMLINKS 1
+#	define	BSD	44
+#	define	LIBRT_TIMER	timer42
+#endif
+
+#if defined(__CAKE__nb) || defined(__CAKE__nb86)
+/* system running NetBSD 1.0 from Chris Demetriou <cgd@sun-lamp.cs.berkeley.edu> */
+#	if defined(i386)
+#		define	MTYPE 		nb86
+#	else
+#		define	MTYPE		nb
+#	endif
+#	define	HAS_TCP		1
+#	define	HAS_SYMLINKS 	1
+#	define	BSD	44
+#	define	LIBRT_TIMER	timer42
+#	define	CC	/usr/bin/gcc
+#	define	CC_OPTS	-pipe -fpic -DHAVE_UNISTD_H
+#	define	OPTIMIZER	-O2
+#	define	STANDARD_LIBES	-lm
+
+#	define	BUILD_LIBRARY	ld -x -Bshareable -Bforcearchive -o
+#	define	LIBVERS	../sharedlibvers.sh
+#	define	ARCH_SUF	so
+#	define	RANLIB	true
+
+	/* i386 users have XFree86, usually */
+#	if defined(i386)
+#		define	XINCDIR	/usr/X386/include
+#		define	XLIBDIR	/usr/X386/lib
+#	endif
+
+#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
+#	define	MGED_OBJS	dm-X
+#endif
+
+#ifdef ipsc860
+/*	iPSC/860 Hypercube running NX/2 */
+/*	This one is cross-compiled from another machine.  There are no */
+/*	useful cpp symbols other than i860, so we have to hard wire in */
+/*	the above define to get this version (and perhaps undef symbols */
+/*	for the host machine) */
+#	undef	ipsc860
+#	define	MTYPE	ipsc
+#	define	HAS_TCP	0
+#	define	LIBRT_TIMER	timerunix
+#	define	CC	icc -node -Uunix -Dipsc860
+#	define	CC_OPTS
+#	define	OPTIMIZER	/**/
+#	define	AR ar860
+#	define	LIBPKG_CONFIG
+#	define	LIBFB_OBJS
+#	define	LIBFB_CONFIG
+#	define	MGED_OBJS
+#	define	MGED_CONFIG
+#endif
+
+#if defined(alliant) && !defined(i860)
+/*	Alliant FX/8.  Compile all programs for the CEs */
+#	undef	fx
+#	undef	alliant
+#	define	MTYPE	fx
+#	define	BSD	42
+#	define	HAS_TCP	1
+#	if 1
+/*		Standard Alliant C Compiler */
+#		define	CC_OPTS	-ce
+#	else
+#		if 1
+/*			FX/C, -l option puts listing on stdout. */
+#			define	CC	/bin/fxc
+#			define	CC_OPTS	-ce
+#			define	OPTIMIZER -Ogiv
+#		else
+/*			GNU C */
+#			define	CC	gcc
+#			define	CC_OPTS	-traditional
+#		endif
+#	endif
+#	define	LD_OPTS	CC_OPTS
+#	define	FC	/usr/alliant/fortran
+#	define	LIBRT_LIBES	-lcvec -lcommon
+#	define	LIBRT_TIMER	timer42
+#endif
+
+#if defined(alliant) && defined(i860)
+/*	Alliant FX/2800 */
+/*	Notes:  librt/machine.c has to be compiled -Ogc (for parallelism) */
+/*	Notes:  librt/tree.c has to be compiled -Ogu (compiler bug) */
+#	undef	fy
+#	undef	alliant
+#	define	MTYPE	fy
+#	define	BSD	43
+#	define	HAS_TCP	1
+#	if 0
+/*		Standard Alliant C Compiler */
+#	else
+/*		FX/C */
+#		define	CC	/bin/fxc
+/*		-O c(concurrent) g(global) i(inline) v(vectors) */
+#		if	1
+/*			Conservative */
+#		else
+/*			Risky, with Concentrix 2800 1.1.02 */
+#			define	OPTIMIZER -Ogiv
+#		endif
+#	endif
+#	define	FC	/usr/alliant/fortran
+#	define	LIBRT_TIMER	timer42
+#	define	LIBRT_LIBES	-lcommon
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
+#	define	LIBFB_OBJS	if_remote if_ab
+#	define	LIBFB_LIBES	LIBPKG
+#endif
+
+#if defined(__CAKE__stad)
+/*	Stardent VISTRA i860 machine.  No vendor symbols found in cpp */
+#	undef	stad
+#	define	MTYPE	stad
+#	define	LIBRT_TIMER	timerunix
+#	define	HAS_TCP	1
+#	define	CC	/bin/cc
+/*	-Xc for ANSI, otherwise non-ANSI */
+#	define	CC_OPTS	-D__stardent=1 -Xc
+#	define	LIBPKG_CONFIG	-DBSD=43
+#	define  LIBFB_OBJS      if_remote if_X if_X24
+#	define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
+#endif
+
+#if defined(gould) && !defined(NP1)
+/*	Gould SEL, PowerNode.  Obtain more stack space with -m */
+/*	Tested with UTX/32 2.0 */
+#	undef	sel
+#	define	MTYPE	sel
+#	define	BSD	43
+#	define	HAS_TCP	1
+#	if 1
+/*		Normal configuration, with optimization */
+#		define	LD_OPTS	-m 8
+#	else
+/*		DBX configuration, -g, no optimization */
+#		define  OPTIMIZER /**/
+#		define	CC_OPTS	-g
+#		define	LD_OPTS	-m 8 -g
+#	endif
+#	if 1
+/*		Normal Configuration */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_AB
+#		define	LIBFB_OBJS	if_remote if_ab
+#		define	LIBFB_LIBES	LIBPKG
+#	else
+/*		X-Windows Configuration */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I/m/X11/core
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X -I/m/X11/core
+#		define	MGED_LIBES	/usr/local/lib/libX11.a
+#	endif
+#	define	LIBRT_TIMER	timer42
+#endif
+
+/* XXX The existance of the CPP symbol NP1 is unknown.  */
+#if defined(gould) && defined(NP1)
+/*	Gould NP1 */
+#	undef	np1
+#	define	MTYPE	np1
+#	define	BSD	43
+#	define	HAS_TCP	1
+#	if 1
+/*		Normal configuration, with optimization */
+#	else
+/*		DBX configuration, -g, no optimization */
+#		define  OPTIMIZER /**/
+#		define	CC_OPTS	-g
+#		define	LD_OPTS	-g
+#	endif
+#	if 1
+/*		Normal Configuration */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
+#		define	LIBFB_OBJS	if_remote if_ab
+#		define	LIBFB_LIBES	LIBPKG
+#	else
+/*		X-Windows Configuration */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X
+#		define	MGED_LIBES	/usr/local/lib/libX11.a
+#	endif
+#	define	LIBRT_TIMER	timer42
+#endif
+
+#if defined (mips) && defined (ultrix)
+/*      mips-equipped DECStations running ULTRIX v4.2a          */
+#	undef	mips
+#	define MTYPE	mips
+#	define BSD	42
+#	define HAS_TCP	1
+#	define CC_DEFS	-Dvoid=int
+#	define CC_OPTS	-Olimit 4096
+#	define LIBFB_OBJS	if_X if_X24 if_remote if_ab
+#	define LIBFB_CONFIG	-DIF_X -DIF_REMOTE -DIF_AB
+#	define LIBFB_LIBES	LIBPKB -lX11
+#	define LIBRT_TIMER	timer42
+#	define MGED_CONFIG	-DDM_X
+#	define MGED_OBJS	dm-X
+#	define MGED_LIBES	LIBPKG -lX11
+#endif
+
+#ifdef NeXT
+/*	NeXT 2.0 */
+#	undef	next
+#	define	MTYPE	next
+#	define	BSD	43
+#	define	HAS_TCP	1
+#	define	RANLIB	ranlib -c -s
+/*	Using the Gnu C Compiler */
+#	define	CC	cc
+#	define	CC_OPTS -g
+#	define	FC_OPTS	CC_OPTS
+#	ifndef	LD_OPTS
+#		define	LD_OPTS	CC_OPTS
+#	endif
+#	define	LIBRT_TIMER	timer42
+/*	NeXT with X11 configuration */
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
+#endif
+
+#if defined(apollo)
+/*
+ *	Under SR10.1, __STDC__=1, but <stdarg.h> <stddef.h> <stdlib.h>
+ *	do not exist, storage class "const" is not known, and
+ *	new "..." style variable args don't work, hence the -U.
+ *	The -W0,-natural causes struct arrays to be padded for alignment.
+ *	Loader flag -z unmaps location zero
+ */
+#	undef	apollo
+#	define	MTYPE	apollo
+#	define	BSD	43
+#	define	HAS_TCP	1
+#	define  CC_OPTS	-Tbsd4.3 -U__STDC__ -g
+#	define	FC_OPTS	CC_OPTS
+#	define	LD_OPTS	CC_OPTS -g
+#	define	LIBRT_TIMER	timer42
+#	define	LIBFB_OBJS	if_remote if_X if_X24
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I''XINCDIR
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	/usr/lib/X11/libX11.a
+#endif
+
+#if defined(hpux)
+/*	HP 9000 Model 730 et.al., running HPUX */
+#	undef hp
+#	define	MTYPE hp
+#	define	HAS_TCP=0
+#	define	LIBRT_TIMER 	timerunix
+#	define	LIBFB_OBJS 	if_X if_X24
+#	define	LIBFB_CONFIG 	-DIF_X -I''XINCDIR
+#	define	LIBFB_LIBES   	-L''XLIBDIR -lX11
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XINCDIR -lX11
+#endif
+
+#if defined(__CAKE__ard)
 /* Ardent/Stardent.  "Titan 1" from Kubota Pacific */
 /* This configuration information is based on a preliminary test */
 #	undef	ard
