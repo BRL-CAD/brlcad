@@ -40,8 +40,9 @@ Please, if anything seems wrong, pause to finish reading the directions.
 	cd cad
 	tar x                      # tar xo   on System V
 	sh machinetype.sh -v
+	sh newbindir.sh
 	sh setup.sh
-	sh gen.sh
+	sh gen.sh all
 .ft R
 .fi
 .sp .5
@@ -113,7 +114,7 @@ xmp	Cray X-MP	UNICOS 3.0.10	net	-
 cr2	Cray-2	UNICOS 4.0	net,X11	X11
 vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	adage, net	mg, vg
 sel	Gould PN6080, PN9080	UTX/32 Rel 2.0	net	-
-pyr	Pyramid 9820	OSx Version 4.1	-	-
+pyr	Pyramid 9820	OSx Version 4.1	net	-
 3d	SGI 3030	Version 3.5, 3.6	sgi, net	sgi
 4d2	SGI 4D	Version 2+MEX	sgi, net	sgi
 4d	SGI 4D	Version 3.1+4Sight	sgi, net	sgi
@@ -676,7 +677,7 @@ and then to conduct the actual benchmark test, run:
 .br
 	cd bench
 .br
-	sh run
+	sh run.sh
 .sp .5
 .ft R
 The \fBcake benchmark\fR will process just the directories
