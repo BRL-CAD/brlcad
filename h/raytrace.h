@@ -1845,7 +1845,9 @@ RT_EXTERN(struct vertex		*nmg_e2break, (struct edgeuse *eu1, struct edgeuse *eu2
 RT_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
 RT_EXTERN(struct vertexuse	*nmg_find_vu_in_face, (CONST point_t pt, struct faceuse *fu, CONST struct rt_tol *tol) );
 RT_EXTERN(void			nmg_gluefaces, (struct faceuse *fulist[], int n) );
-RT_EXTERN(struct edgeuse	*nmg_findeu, (struct vertex *v1, struct vertex *v2, struct shell *s, struct edgeuse *eup) );
+RT_EXTERN(struct edgeuse	*nmg_findeu, (struct vertex *v1, struct vertex *v2,
+				struct shell *s, struct edgeuse *eup,
+				int dangling_only) );
 RT_EXTERN(void			nmg_jl, (struct loopuse *lu, struct edgeuse *eu) );
 RT_EXTERN(struct vertexuse	*nmg_join_2loops, (struct vertexuse *vu1, struct vertexuse *vu2) );
 RT_EXTERN(void			nmg_simplify_loop, (struct loopuse *lu) );
