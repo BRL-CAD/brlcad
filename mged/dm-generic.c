@@ -172,10 +172,10 @@ end:
       MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
       VSCALE(model_pt, model_pt, base2local);
       if(*zclip_ptr)
-	bu_vls_printf(&vls, "nirt %lf %lf %lf",
+	bu_vls_printf(&vls, "qray_nirt %lf %lf %lf",
 		      model_pt[X], model_pt[Y], model_pt[Z]);
       else
-	bu_vls_printf(&vls, "nirt -b %lf %lf %lf",
+	bu_vls_printf(&vls, "qray_nirt -b %lf %lf %lf",
 		      model_pt[X], model_pt[Y], model_pt[Z]);
     }else if((mged_variables->mv_mouse_behavior == 'p' ||
 	      mged_variables->mv_mouse_behavior == 'r' ||
