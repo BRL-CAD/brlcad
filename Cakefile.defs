@@ -207,7 +207,7 @@ set -S2 "/bin/sh"
 #		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #else
 #		define MGED_OBJS	dm-4d dm-X
-#		define MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
+#		define MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
 #		define MGED_LIBES	-L''XLIBDIR -lX11 -lgl_s
 #endif
 #	endif
@@ -287,7 +287,7 @@ set -S2 "/bin/sh"
 # else
 /* 	Carl's test version */
 #	define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx dm-pex
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DDM_PEX
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX -DDM_PEX -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
 # endif
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
@@ -520,18 +520,9 @@ set -S2 "/bin/sh"
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #		define	MGED_OBJS	dm-X
-#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR -DMGED_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
 #		define	MGED_LIBES	-L''XLIBDIR -lX11 -ly
 
-/*		XMGED requires a Motif license and include/X11/Xm/Xm.h */
-#		if 0
-#			define  XMGED_ALLOCA
-#			define	XMGED_OBJS	dm-X
-#			define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -D_BSD_SIGNALS \
-						-DXMGED -I''XINCDIR
-#			define	XMGED_LIBES	-L''XLIBDIR -lXm -lXt -lXi \
-						-lXext -lX11 -ll
-#		endif
 #	endif
 
 #	if 0
