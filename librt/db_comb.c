@@ -51,6 +51,84 @@ RT_EXTERN( union tree *db_mkbool_tree , (struct tree_list *tree_list , int howfa
 RT_EXTERN( union tree *db_mkgift_tree , (struct tree_list *tree_list , int howfar , struct db_tree_state *tsp ) );
 
 /*
+ *			D B _ T R E E _ N L E A V E S
+ *
+ *  Return count of number of leaf nodes in this tree.
+ */
+int
+db_tree_nleaves( tp )
+CONST union tree	*tp;
+{
+
+	RT_CK_TREE(tp);
+
+	switch( tp->tr_op )  {
+	case OP_NOP:
+		return 0;
+	case OP_DB_LEAF:
+		return 1;
+	case OP_SOLID:
+		return 1;
+	case OP_REGION:
+		return 1;
+
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		/* Unary ops */
+		return db_tree_nleaves( tp->tr_b.tb_left );
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		/* This node is known to be a binary op */
+		return	db_tree_nleaves( tp->tr_b.tb_left ) +
+			db_tree_nleaves( tp->tr_b.tb_right );
+
+	default:
+		bu_log("db_tree_nleaves: bad op %d\n", tp->tr_op);
+		rt_bomb("db_tree_nleaves\n");
+	}
+}
+
+/*
+ *			D B _ F L A T T E N _ T R E E
+ *
+ *  Take a binary tree in "V4-ready" layout (non-unions pushed below unions,
+ *  left-heavy), and flatten it into an array layout, ready for conversion
+ *  back to the GIFT-inspired V4 database format.
+ */
+struct tree_list *
+db_flatten_tree( tree_list, tp, op )
+struct tree_list	*tree_list;
+union tree		*tp;
+int			op;
+{
+
+	RT_CK_TREE(tp);
+
+	switch( tp->tr_op )  {
+	case OP_DB_LEAF:
+		tree_list->tl_op = op;
+		tree_list->tl_tree = tp;
+		return tree_list+1;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+		/* This node is known to be a binary op */
+		tree_list = db_flatten_tree( tree_list, tp->tr_b.tb_left, op );
+		tree_list = db_flatten_tree( tree_list, tp->tr_b.tb_right, tp->tr_op );
+		return tree_list;
+
+	default:
+		bu_log("db_flatten_tree: bad op %d\n", tp->tr_op);
+		rt_bomb("db_flatten_tree\n");
+	}
+}
+
+/*
  *			R T _ C O M B _ V 4 _ I M P O R T
  *
  *  Import a combination record from a V4 database into internal form.
@@ -160,15 +238,18 @@ CONST matp_t			matrix;		/* NULL if identity */
 	comb->tree = tree;
 	comb->region_flag = (rp[0].c.c_flags == 'R');
 
-	comb->region_id = rp[0].c.c_regionid;
-	comb->aircode = rp[0].c.c_aircode;
-	comb->GIFTmater = rp[0].c.c_material;
-	comb->los = rp[0].c.c_los;
+	if( comb->region_flag )  {
+		comb->region_id = rp[0].c.c_regionid;
+		comb->aircode = rp[0].c.c_aircode;
+		comb->GIFTmater = rp[0].c.c_material;
+		comb->los = rp[0].c.c_los;
+	}
 
-	comb->rgb_valid = rp[0].c.c_override;
-	comb->rgb[0] = rp[0].c.c_rgb[0];
-	comb->rgb[1] = rp[0].c.c_rgb[1];
-	comb->rgb[2] = rp[0].c.c_rgb[2];
+	if( comb->rgb_valid = rp[0].c.c_override )  {
+		comb->rgb[0] = rp[0].c.c_rgb[0];
+		comb->rgb[1] = rp[0].c.c_rgb[1];
+		comb->rgb[2] = rp[0].c.c_rgb[2];
+	}
 	bu_vls_strncpy( &comb->shader_name , rp[0].c.c_matname, 32 );
 	bu_vls_strncpy( &comb->shader_param , rp[0].c.c_matparm, 60 );
 	/* XXX Separate flags for color inherit, shader inherit, (new) material inherit? */
@@ -180,6 +261,110 @@ CONST matp_t			matrix;		/* NULL if identity */
 	if( tree_list )  bu_free( (genptr_t)tree_list, "tree_list" );
 
 	return( 0 );
+}
+
+/*
+ *			R T _ C O M B _ V 4 _ E X P O R T
+ *
+ *  XXX Note:  all export routines need to know name of object,
+ *  XXX compression flags, other header-common fields.  Via directory pointer??
+ */
+int
+rt_comb_v4_export( ep, ip, local2mm )
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+{
+	struct rt_comb_internal	*comb;
+	int			node_count;
+	int			actual_count;
+	struct tree_list	*tree_list;
+	union tree		*tp;
+	union record		*rp;
+	int			j;
+
+	RT_CK_DB_INTERNAL( ip );
+	if( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_v4_export() type not ID_COMBINATION");
+	comb = (struct rt_comb_internal *)ip->idb_ptr;
+	RT_CK_COMB(comb);
+
+	if( db_ck_v4gift_tree( comb->tree ) < 0 )  {
+		db_non_union_push( comb->tree );
+		if( db_ck_v4gift_tree( comb->tree ) < 0 )  {
+			/* Need to further modify tree */
+			bu_log("rt_comb_v4_export() Unfinished: need to V4-ify tree\n");
+			rt_pr_tree( comb->tree, 0 );
+			return -1;
+		}
+	}
+
+	/* Count # leaves in tree -- that's how many Member records needed. */
+	node_count = db_tree_nleaves( comb->tree );
+	if( node_count )
+		tree_list = (struct tree_list *)bu_calloc( node_count , sizeof( struct tree_list ) , "tree_list" );
+	else
+		tree_list = (struct tree_list *)NULL;
+
+	/* Convert tree into array form */
+	actual_count = db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
+	if( actual_count > node_count )  bu_bomb("rt_comb_v4_export() array overflow!");
+	if( actual_count < node_count )  bu_log("WARNING rt_comb_v4_export() array underflow! %d < %d", actual_count, node_count);
+
+	/* Reformat the data into the necessary V4 granules */
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = sizeof(union record) * ( 1 + node_count );
+	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "v4 comb external" );
+	rp = (union record *)ep->ext_buf;
+
+	/* Convert the member records */
+	for( j = 0; j < node_count; j++ )  {
+		tp = tree_list[j].tl_tree;
+		RT_CK_TREE(tp);
+		if( tp->tr_op != OP_DB_LEAF )  bu_bomb("rt_comb_v4_export() tree not OP_DB_LEAF");
+
+		rp[j+1].u_id = ID_MEMB;
+		switch( tree_list[j].tl_op )  {
+		case OP_INTERSECT:
+			rp[j+1].M.m_relation = '+';
+			break;
+		case OP_SUBTRACT:
+			rp[j+1].M.m_relation = '-';
+			break;
+		case OP_UNION:
+			rp[j+1].M.m_relation = 'u';
+			break;
+		default:
+			bu_bomb("rt_comb_v4_export() corrupt tree_list");
+		}
+		strncpy( rp[j+1].M.m_instname, tp->tr_l.tl_name, NAMESIZE );
+		if( tp->tr_l.tl_mat )  {
+			rt_dbmat_mat( rp[j+1].M.m_mat, tp->tr_l.tl_mat );
+		} else {
+			rt_dbmat_mat( rp[j+1].M.m_mat, mat_identity );
+		}
+	}
+
+	/* Build the Combination record, on the front */
+	rp[0].u_id = ID_COMB;
+	/* XXX c_name[] filled in by caller? */
+	if( comb->region_flag )  {
+		rp[0].c.c_flags = 'R';
+		rp[0].c.c_regionid = comb->region_id;
+		rp[0].c.c_aircode = comb->aircode;
+		rp[0].c.c_material = comb->GIFTmater;
+		rp[0].c.c_los = comb->los;
+	}
+	if( comb->rgb_valid )  {
+		rp[0].c.c_override = 1;
+		rp[0].c.c_rgb[0] = comb->rgb[0];
+		rp[0].c.c_rgb[1] = comb->rgb[1];
+		rp[0].c.c_rgb[2] = comb->rgb[2];
+	}
+	strncpy( rp[0].c.c_matname, bu_vls_addr(&comb->shader_name), 32 );
+	strncpy( rp[0].c.c_matparm, bu_vls_addr(&comb->shader_param), 60 );
+	rp[0].c.c_inherit = comb->inherit;
+
+	return 0;		/* OK */
 }
 
 /*
