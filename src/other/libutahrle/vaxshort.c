@@ -21,8 +21,6 @@
 static const char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
-#define HAVE_VAX_GSHORT	/* from libbu/vfont.c */
-
 #ifndef HAVE_VAX_GSHORT
 /*
  *			V A X _ G S H O R T
