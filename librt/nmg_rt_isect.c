@@ -226,7 +226,7 @@ struct hitmiss *newhit;
 
 	RT_LIST_INSERT(&a_hit->l, &newhit->l);
 
-	print_hitlist(&rd->rd_hit);
+	print_hitlist((struct hitmiss *)&rd->rd_hit);
 
 }
 
@@ -1494,8 +1494,8 @@ struct edgeuse *eu_p;
 		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 			rt_log("\t - Zero length edge\n");
 
-		vhit1 = isect_ray_vertexuse(rd->rp, eu_p->vu_p);
-		vhit2 = isect_ray_vertexuse(rd->rp, eu_p->eumate_p->vu_p);
+		vhit1 = isect_ray_vertexuse(rd, eu_p->vu_p);
+		vhit2 = isect_ray_vertexuse(rd, eu_p->eumate_p->vu_p);
 
 		GET_HITMISS(myhit);
 		NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
@@ -2093,7 +2093,7 @@ struct ray_data *rd;
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				rt_log("ray missed NMG\n");
 		} else {
-			print_hitlist(&rd->rd_hit);
+			print_hitlist((struct hitmiss*)&rd->rd_hit);
 		}
 	}
 }
