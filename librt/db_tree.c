@@ -49,19 +49,6 @@ struct tree_list {
 #define TREE_LIST_NULL	((struct tree_list *)0)
 
 /*
- *			D B _ F U L L _ P A T H _ I N I T
- */
-void
-db_full_path_init( pathp )
-struct db_full_path	*pathp;
-{
-	pathp->fp_len = 0;
-	pathp->fp_maxlen = 0;
-	pathp->fp_names = (struct directory **)NULL;
-	pathp->magic = DB_FULL_PATH_MAGIC;
-}
-
-/*
  *			D B _ N E W _ C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state *
@@ -1849,12 +1836,13 @@ struct mater_info *materp;
 	}
 	return;
 }
+
 /*
+ *			D B _ R E G I O N _ M A T
  *
  *  Given the name of a region, return the matrix which maps model coordinates
  *     into "region" coordinates.
  */
-
 void
 db_region_mat(m, dbip, name)
 mat_t m;
