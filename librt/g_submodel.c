@@ -115,7 +115,7 @@ struct rt_i		*rtip;
 		/* db_open will cache dbip's via bu_open_mapped_file() */
 		if( (sub_dbip = db_open( sip->file, "r" )) == DBI_NULL )
 		    	return -1;
-		if( sub_dbip->dbi_uses <= 1 )  {
+		if( !db_is_directory_non_empty(sub_dbip) )  {
 			/* This is first open of db, build directory */
 			if( db_scan( sub_dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
 				db_close( sub_dbip );
@@ -728,7 +728,7 @@ CONST struct bn_tol	*tol;
 			bu_log("rt_submodel_plot() db_open(%s) failure\n", sip->file);
 			return -1;
 		}
-		if( good.dbip->dbi_uses <= 1 )  {
+		if( !db_is_directory_non_empty(good.dbip) )  {
 			/* This is first open of this database, build directory */
 			if( db_scan( good.dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
 				bu_log("rt_submodel_plot() db_scan() failure\n");

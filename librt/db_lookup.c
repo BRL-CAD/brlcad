@@ -44,13 +44,36 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 /*
+ *			D B _ I S _ D I R E C T O R Y _ N O N _ E M P T Y
+ *
+ *  Returns -
+ *	0	if the in-memory directory is empty
+ *	1	if the in-memory directory has entries,
+ *		which implies that a db_scan() has already been performed.
+ */
+int
+db_is_directory_non_empty( dbip )
+CONST struct db_i	*dbip;
+{
+	register int	i;
+
+	RT_CK_DBI(dbip);
+
+	for (i = 0; i < RT_DBNHASH; i++)  {
+		if( dbip->dbi_Head[i] != DIR_NULL )
+			return 1;
+	}
+	return 0;
+}
+
+/*
  *			D B _ G E T _ D I R E C T O R Y _ S I Z E
  *
  *  Return the number of "struct directory" nodes in the given database.
  */
 int
 db_get_directory_size( dbip )
-struct db_i	*dbip;
+CONST struct db_i	*dbip;
 {
 	register struct directory *dp;
 	register int	count = 0;
