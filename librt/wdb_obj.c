@@ -5894,6 +5894,9 @@ wdb_keep_cmd(struct rt_wdb	*wdbp,
 	    (keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK)) != NULL) {
 		Tcl_AppendResult(interp, "keep:  appending to '", argv[1],
 				 "'\n", (char *)NULL);
+
+		/* --- Scan geometry database and build in-memory directory --- */
+		db_dirbuild(new_dbip);
 	} else {
 		/* Create a new database */
 		if ((keepfp = wdb_fopen(argv[1])) == NULL) {
