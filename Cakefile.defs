@@ -773,6 +773,18 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 
+#if defined(__CAKE__alpha)
+/*	DEC Alpha AXP running OSF/1 Version 3 */
+#	undef	alpha
+#	define	MTYPE	alpha
+#	define	BSD	43
+#	define	HAS_TCP	1
+#	define	LIBFB_OBJS	if_remote
+#	define	LIBFB_CONFIG	-DIF_REMOTE
+#	define	LIBFB_LIBES	LIBPKG
+#	define	LIBRT_TIMER	timer42
+#endif
+
 #if defined(__CAKE__aux)
 /*	Apple MAC II running A/UX 1.0 */
 #	undef	aux
