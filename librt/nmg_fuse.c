@@ -1380,6 +1380,8 @@ struct bn_tol *tol;
 		struct edgeuse *eu1;
 
 		e1 = (struct edge *)BU_PTBL_GET( &edges, i );
+		if( !e1->index )
+			continue;
 		eu1 = e1->eu_p;
 		if( !eu1 )
 			continue;
@@ -1392,6 +1394,8 @@ struct bn_tol *tol;
 			struct edgeuse *eu2;
 
 			e2 = (struct edge *)BU_PTBL_GET( &edges, j );
+			if( !e2->index )
+				continue;
 			eu2 = e2->eu_p;
 			if( !eu2 )
 				continue;
@@ -1402,6 +1406,8 @@ struct bn_tol *tol;
 			{
 				count++;
 				nmg_radial_join_eu(eu1, eu2, tol);
+				if( !e2->magic )
+					bu_ptbl_zero( &edges, (long *)e2 );
 			}
 		}
 	}
