@@ -982,10 +982,10 @@ int		copy;
 	   * zap any associated solids
 	   */
 	  eraseobj(dp);
-	} else {
-	  /* Need to enter phony name in directory structure */
-	  dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID );
 	}
+	/* Need to enter phony name in directory structure */
+	dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID );
+
 
 #if 0
 	/* XXX need to get this going. */
