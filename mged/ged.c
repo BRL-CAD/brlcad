@@ -89,6 +89,10 @@ int dm_pipe[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 
 int    update_views;
+#if 0
+extern void mged_do_rate_rotate();
+extern void mged_do_rate_slew();
+#endif
 extern struct dm dm_Null;
 extern struct _mged_variables default_mged_variables;
 
@@ -1070,6 +1074,7 @@ int	non_blocking;
 
       if( rateflag_rotate )  {
 #if 1
+#if 1
 	struct bu_vls vls;
 
 	non_blocking++;
@@ -1083,6 +1088,10 @@ int	non_blocking;
 	bu_vls_free(&vls);
 #else
 	non_blocking++;
+	mged_do_rate_rotate();
+#endif
+#else
+	non_blocking++;
 
 	/* Compute delta x,y,z parameters */
 	usejoy( rate_rotate[X] * 6 * degtorad,
@@ -1092,6 +1101,7 @@ int	non_blocking;
       }
       if( rateflag_slew )  {
 #if 1
+#if 0
 	struct bu_vls vls;
 
 	non_blocking++;
@@ -1102,6 +1112,10 @@ int	non_blocking;
 		      rate_slew[Z] * 0.1);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+#else
+	non_blocking++;
+	mged_do_rate_slew();
+#endif
 #else
 	non_blocking++;
 

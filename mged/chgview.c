@@ -1879,7 +1879,9 @@ char	**argv;
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
 	}else{
 	  absolute_slew[X] += f;
+#if 0
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
+#endif
 	}
       }else{
 	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
@@ -1887,7 +1889,9 @@ char	**argv;
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
 	}else{
 	  absolute_slew[X] = f;
+#if 0
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
+#endif
 	}
       }
 
@@ -1900,7 +1904,9 @@ char	**argv;
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
 	}else{
 	  absolute_slew[Y] += f;
+#if 0
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
+#endif
 	}
       }else{
 	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
@@ -1908,7 +1914,9 @@ char	**argv;
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
 	}else{
 	  absolute_slew[Y] = f;
+#if 0
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
+#endif
 	}
       }
       
@@ -1921,7 +1929,9 @@ char	**argv;
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
 	}else{
 	  absolute_slew[Z] += f;
+#if 0
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
+#endif
 	}
       }else{
 	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
@@ -1929,7 +1939,9 @@ char	**argv;
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
 	}else{
 	  absolute_slew[Z] = f;
+#if 0
 	  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
+#endif
 	}
       }
 
@@ -2099,6 +2111,49 @@ int edit_flag;
 
   return TCL_OK;
 }
+
+void
+mged_do_rate_rotate()
+{
+  (void)mged_vrot(rate_rotate[X], rate_rotate[Y], rate_rotate[Z]);
+  absolute_rotate[X] += rate_rotate[X];
+  absolute_rotate[Y] += rate_rotate[Y];
+  absolute_rotate[Z] += rate_rotate[Z];
+
+  if(absolute_rotate[X] < -180.0)
+    absolute_rotate[X] = absolute_rotate[X] + 360.0;
+  else if(absolute_rotate[X] > 180.0)
+    absolute_rotate[X] = absolute_rotate[X] - 360.0;
+
+  last_absolute_rotate[X] = absolute_rotate[X];
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_rotate_vls[X]));
+
+  if(absolute_rotate[Y] < -180.0)
+    absolute_rotate[Y] = absolute_rotate[Y] + 360.0;
+  else if(absolute_rotate[Y] > 180.0)
+    absolute_rotate[Y] = absolute_rotate[Y] - 360.0;
+
+  last_absolute_rotate[Y] = absolute_rotate[Y];
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_rotate_vls[Y]));
+
+  if(absolute_rotate[Z] < -180.0)
+    absolute_rotate[Z] = absolute_rotate[Z] + 360.0;
+  else if(absolute_rotate[Z] > 180.0)
+    absolute_rotate[Z] = absolute_rotate[Z] - 360.0;
+
+  last_absolute_rotate[Z] = absolute_rotate[Z];
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_rotate_vls[Z]));
+}
+
+void
+mged_do_rate_slew()
+{
+  absolute_slew[X] += rate_slew[X] * 0.1;
+  absolute_slew[Y] += rate_slew[Y] * 0.1;
+  absolute_slew[Z] += rate_slew[Z] * 0.1;
+  mged_tran(interp, absolute_slew);
+}
+
 
 
 /*
