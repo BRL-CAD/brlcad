@@ -110,7 +110,7 @@ char **argv;
 	}
 
 	/* Identify ourselves */
-	(void)printf("%s\n", version);
+	(void)printf("%s\n", version+5);	/* skip @(#) */
 
 	/* Get input file */
 	if( db_open( argv[1] ) < 0 )  {
