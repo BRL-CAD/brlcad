@@ -10523,6 +10523,7 @@ struct bu_ptbl *tab;
 				vect_t norm_radial;
 				vect_t eu_dir;
 				vect_t cross;
+				fastf_t dot;
 
 				NMG_CK_EDGEUSE( eu );
 
@@ -10551,26 +10552,32 @@ struct bu_ptbl *tab;
 				 */
 				NMG_GET_FU_NORMAL( norm_radial, fu_radial );
 
-				VCROSS( cross, fu_norm, norm_radial );
+				dot = VDOT( norm_radial, fu_norm );
 
-				if( eu->orientation == OT_NONE )
+				if( !NEAR_ZERO( dot - 1.0, 0.00001 ) )
 				{
-					VSUB2( eu_dir, eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord )
-					if( eu->orientation != OT_SAME )
-						VREVERSE( eu_dir, eu_dir )
-				}
-				else
-					VMOVE( eu_dir, eu->g.lseg_p->e_dir )
 
-				if( eu->orientation == OT_SAME || eu->orientation == OT_NONE )
-				{
-					if( VDOT( cross, eu_dir ) < 0.0 )
-						goto not_arb;
-				}
-				else
-				{
-					if( VDOT( cross, eu_dir ) > 0.0 )
-						goto not_arb;
+					VCROSS( cross, fu_norm, norm_radial );
+
+					if( eu->orientation == OT_NONE )
+					{
+						VSUB2( eu_dir, eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord )
+						if( eu->orientation != OT_SAME )
+							VREVERSE( eu_dir, eu_dir )
+					}
+					else
+						VMOVE( eu_dir, eu->g.lseg_p->e_dir )
+
+					if( eu->orientation == OT_SAME || eu->orientation == OT_NONE )
+					{
+						if( VDOT( cross, eu_dir ) < 0.0 )
+							goto not_arb;
+					}
+					else
+					{
+						if( VDOT( cross, eu_dir ) > 0.0 )
+							goto not_arb;
+					}
 				}
 			}
 		}
