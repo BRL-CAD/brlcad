@@ -556,11 +556,14 @@ struct dm_list *initial_dm_list;
   mged_variables->mv_fb = 0;
 
   BU_GETSTRUCT(color_scheme, _color_scheme);
-  *color_scheme = *initial_dm_list->dml_color_scheme;		/* struct copy */
-  color_scheme->cs_rc = 1;
 #if 0
-  color_scheme->cs_mode = default_color_scheme.cs_mode;
+  /* initialize using the last curr_dm_list */
+  *color_scheme = *initial_dm_list->dml_color_scheme;		/* struct copy */
+#else
+  /* initialize using the nu display manager */
+  *color_scheme = *BU_LIST_LAST(dm_list, &head_dm_list.l)->dml_color_scheme;
 #endif
+  color_scheme->cs_rc = 1;
 
   BU_GETSTRUCT(grid_state, _grid_state);
   *grid_state = *initial_dm_list->dml_grid_state;		/* struct copy */
