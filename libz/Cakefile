@@ -24,8 +24,6 @@ PRODUCTS: Makefile.MTYPE
 
 Makefile.in:	if not exist Makefile.in
 	cp ../SRCDIR/Makefile.in .
-	cp ../SRCDIR/zlib.h .
-	cp ../SRCDIR/zconf.h .
 
 Makefile.MTYPE:	Makefile.in	if not exist Makefile.MTYPE
 	( \C\C=\"CC\"; \
@@ -48,9 +46,13 @@ clobber&: Makefile.MTYPE
 	rm -f *.MTYPE Makefile
 
 install&: Makefile.MTYPE
+	cp ../SRCDIR/zlib.h .
+	cp ../SRCDIR/zconf.h .
 	make -f Makefile.MTYPE install
 
 install-nobak&: Makefile.MTYPE
+	cp ../SRCDIR/zlib.h .
+	cp ../SRCDIR/zconf.h .
 	make -f Makefile.MTYPE install
 
 test&: Makefile.MTYPE
