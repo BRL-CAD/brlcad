@@ -1,10 +1,8 @@
 /*
  *			I F _ A B . C
  *
- *  Communicate with an Abekas A60 digital videodisk as if
- *  it was a framebuffer, to ease the task of loading and storing
- *  images.
- *
+ *  Communicate with an Abekas A60 digital videodisk as if it was
+ *  a framebuffer, to ease the task of loading and storing images.
  *
  *  Authors -
  *	Michael John Muuss
@@ -18,8 +16,6 @@
  *  Copyright Notice -
  *	This software is Copyright (C) 1989 by the United States Army.
  *	All rights reserved.
- *
- *	$Header$ (BRL)
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -48,39 +44,38 @@ static void	ab_log();
 static int	ab_get_reply();
 static int	ab_mread();
 
-extern int	fb_sim_readrect(),
-		fb_sim_writerect();
 
-
-_LOCAL_ int	ab_dopen(),
-		ab_dclose(),
-		ab_dclear(),
-		ab_bread(),
-		ab_bwrite(),
-		ab_cmread(),
-		ab_cmwrite(),
-		ab_window_set(),
-		ab_zoom_set(),
-		ab_cmemory_addr(),
+_LOCAL_ int	ab_open(),
+		ab_close(),
+		ab_clear(),
+		ab_read(),
+		ab_write(),
+		ab_rmap(),
+		ab_wmap(),
+		ab_window(),
+		ab_zoom(),
+		ab_cursor(),
 		ab_help();
 
 FBIO abekas_interface = {
-	ab_dopen,
-	ab_dclose,
-	fb_null,			/* reset		*/
-	ab_dclear,
-	ab_bread,
-	ab_bwrite,
-	ab_cmread,
-	ab_cmwrite,
-	fb_null,			/* viewport_set		*/
-	ab_window_set,
-	ab_zoom_set,
-	fb_null,			/* curs_set		*/
-	ab_cmemory_addr,
-	fb_null,			/* cursor_move_screen_addr */
+	ab_open,
+	ab_close,
+	fb_null,			/* reset */
+	ab_clear,
+	ab_read,
+	ab_write,
+	ab_rmap,
+	ab_wmap,
+	fb_null,			/* viewport */
+	ab_window,
+	ab_zoom,
+	fb_null,			/* setcursor */
+	ab_cursor,
+	fb_null,			/* scursor */
 	fb_sim_readrect,
 	fb_sim_writerect,
+	fb_null,			/* flush */
+	ab_close,			/* free */
 	ab_help,
 	"Abekas A60 Videodisk, via Ethernet",
 	720,				/* max width */
@@ -129,7 +124,7 @@ FBIO abekas_interface = {
 #define STATE_USER_HAS_READ	(1<<9)
 #define STATE_USER_HAS_WRITTEN	(1<<10)
 
-struct modeflags {
+static struct modeflags {
 	char	c;
 	long	mask;
 	long	value;
@@ -146,7 +141,7 @@ struct modeflags {
 
 
 /*
- *			A B _ D O P E N
+ *			A B _ O P E N
  *
  *  The device name is expected to have a fairly rigid format:
  *
@@ -161,7 +156,7 @@ struct modeflags {
  *
  */
 _LOCAL_ int
-ab_dopen( ifp, file, width, height )
+ab_open( ifp, file, width, height )
 register FBIO	*ifp;
 register char	*file;
 int		width, height;
@@ -173,12 +168,12 @@ int		width, height;
 	mode = 0;
 
 	if( file == NULL )  {
-		fb_log( "ab_dopen: NULL device string\n" );
+		fb_log( "ab_open: NULL device string\n" );
 		return(-1);
 	}
 
 	if( strncmp( file, "/dev/ab", 7 ) != 0 )  {
-		fb_log("ab_dopen: bad device '%s'\n", file );
+		fb_log("ab_open: bad device '%s'\n", file );
 		return(-1);
 	}
 
@@ -193,7 +188,7 @@ int		width, height;
 			break;
 		}
 		if( mfp->c == '\0' )  {
-			fb_log("ab_dopen: unknown option '%c' ignored\n", *cp);
+			fb_log("ab_open: unknown option '%c' ignored\n", *cp);
 		}
 	}
 	ifp->if_mode = mode;
@@ -213,12 +208,12 @@ int		width, height;
 			*ep++ = *cp++;
 		*ep++ = '\0';
 	} else if( *cp != '#' && *cp != '\0' )  {
-		fb_log("ab_dopen: error in file spec '%s'\n", cp);
+		fb_log("ab_open: error in file spec '%s'\n", cp);
 		return(-1);
 	} else {
 		/* Get hostname from environment variable */
 		if( (ifp->if_host = getenv("ABEKAS")) == NULL )  {
-			fb_log("ab_dopen: hostname not given and ABEKAS environment variable not set\n");
+			fb_log("ab_open: hostname not given and ABEKAS environment variable not set\n");
 			return(-1);
 		}
 	}
@@ -230,19 +225,19 @@ int		width, height;
 
 		i = atoi(cp+1);
 		if( i < 0 || i >= 50*30 )  {
-			fb_log("ab_dopen: frame %d out of range\n", i);
+			fb_log("ab_open: frame %d out of range\n", i);
 			return(-1);
 		}
 		ifp->if_frame = i;
 	} else if( *cp != '\0' )  {
-		fb_log("ab_dopen: error in file spec '%s'\n", cp);
+		fb_log("ab_open: error in file spec '%s'\n", cp);
 		return(-1);
 	}
 
 	/* Allocate memory for YUV and RGB buffers */
 	if( (ifp->if_yuv = malloc(720*486*2)) == NULL ||
 	    (ifp->if_rgb = malloc(720*486*3)) == NULL )  {
-		fb_log("ab_dopen: unable to malloc buffer\n");
+		fb_log("ab_open: unable to malloc buffer\n");
 		return(-1);
 	}
 
@@ -322,10 +317,10 @@ FBIO	*ifp;
 }
 
 /*
- *			A B _ D C L O S E
+ *			A B _ C L O S E
  */
 _LOCAL_ int
-ab_dclose( ifp )
+ab_close( ifp )
 FBIO	*ifp;
 {
 	int	ret = 0;
@@ -345,7 +340,7 @@ FBIO	*ifp;
 
 		if( ab_yuvio( 1, ifp->if_host, ifp->if_yuv,
 		    720*486*2, ifp->if_frame ) != 720*486*2 )  {
-			fb_log("ab_dclose: unable to send frame to A60!\n");
+			fb_log("ab_close: unable to send frame to A60!\n");
 		    	ret = -1;
 		}
 		ab_log(ifp, "Transmission done");
@@ -357,15 +352,15 @@ FBIO	*ifp;
 	free( ifp->if_rgb );
 	ifp->if_rgb = NULL;
 
-	ab_log(ifp, "ab_dclose");
+	ab_log(ifp, "ab_close");
 	return(ret);
 }
 
 /*
- *			A B _ D C L E A R
+ *			A B _ C L E A R
  */
 _LOCAL_ int
-ab_dclear( ifp, bgpp )
+ab_clear( ifp, bgpp )
 FBIO		*ifp;
 RGBpixel	*bgpp;
 {
@@ -394,10 +389,10 @@ RGBpixel	*bgpp;
 }
 
 /*
- *			A B _ B R E A D
+ *			A B _ R E A D
  */
 _LOCAL_ int
-ab_bread( ifp, x, y, pixelp, count )
+ab_read( ifp, x, y, pixelp, count )
 register FBIO	*ifp;
 int		x;
 register int	y;
@@ -418,7 +413,7 @@ int		count;
 
 	if( (ifp->if_mode & STATE_FRAME_WAS_READ) == 0 )  {
 		if( (ifp->if_mode & STATE_USER_HAS_WRITTEN) != 0 )  {
-			fb_log("ab_bread:  WARNING out-only mode set & pixels were written.  Subsequent read operation is unsafe\n");
+			fb_log("ab_read:  WARNING out-only mode set & pixels were written.  Subsequent read operation is unsafe\n");
 			/* Give him whatever is in the buffer */
 		} else {
 			/* Read in the frame */
@@ -458,10 +453,10 @@ int		count;
 }
 
 /*
- *			A B _ B W R I T E
+ *			A B _ W R I T E
  */
 _LOCAL_ int
-ab_bwrite( ifp, x, y, pixelp, count )
+ab_write( ifp, x, y, pixelp, count )
 register FBIO	*ifp;
 int		x, y;
 RGBpixel	*pixelp;
@@ -491,7 +486,7 @@ int		count;
 			(void)ab_readframe(ifp);
 		} else {
 			/* Just clear to black and proceed */
-			(void)ab_dclear( ifp, PIXEL_NULL );
+			(void)ab_clear( ifp, PIXEL_NULL );
 		}
 	}
 
@@ -529,7 +524,7 @@ int		count;
 /*
  */
 _LOCAL_ int
-ab_cmemory_addr( ifp, mode, x, y )
+ab_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -540,7 +535,7 @@ int	x, y;
 /*
  */
 _LOCAL_ int
-ab_window_set( ifp, x, y )
+ab_window( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -550,7 +545,7 @@ int	x, y;
 /*
  */
 _LOCAL_ int
-ab_zoom_set( ifp, x, y )
+ab_zoom( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -558,7 +553,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-ab_cmread( ifp, cmap )
+ab_rmap( ifp, cmap )
 register FBIO		*ifp;
 register ColorMap	*cmap;
 {
@@ -573,7 +568,7 @@ register ColorMap	*cmap;
 }
 
 _LOCAL_ int
-ab_cmwrite( ifp, cmap )
+ab_wmap( ifp, cmap )
 register FBIO		*ifp;
 register ColorMap	*cmap;
 {
