@@ -31,6 +31,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* THis duplicates the extern from nmg_mesh.c */
+RT_EXTERN(double nmg_measure_2fu_angle, (CONST struct edgeuse *eu1, CONST struct edgeuse *eu2));
+
 /************************************************************************
  *									*
  *			Validator Routines				*
@@ -1070,10 +1073,6 @@ char *s;
  *  Note that the proper ordering of the edgeuses' faceuses is:
  *  SAME, OPPOSITE, OPPOSITE, SAME, ....
  *  This can be verified by calling nmg_check_radial(eu);
- *
- *  The first faceuse will have an angle of 0 degrees if it is an OT_SAME
- *  faceuse, otherwise, it will have an angle of 180 degrees (off the
- *  true face normal).
  */
 void
 nmg_pr_fu_around_eu( eu )
@@ -1082,36 +1081,9 @@ CONST struct edgeuse *eu;
 	CONST struct edgeuse	*eu1;
 	CONST struct loopuse	*lu;
 	CONST struct faceuse	*fu;
-	vect_t			evect;
-	vect_t			xdir;
-	vect_t			ydir;
-	vect_t			norm;
-	vect_t			left;
 
 	NMG_CK_EDGEUSE(eu);
 	rt_log("nmg_pr_fu_around_eu(x%x)\n", eu);
-
-	VSUB2( evect, eu->eumate_p->vu_p->v_p->vg_p->coord,
-		eu->vu_p->v_p->vg_p->coord );
-	VUNITIZE( evect );
-
-	/* get normal vector for the face */
-	fu = eu->up.lu_p->up.fu_p;
-	if (fu->orientation == OT_SAME) {
-		VMOVE(norm, fu->f_p->fg_p->N);
-	} else if (fu->orientation == OT_OPPOSITE){
-		VREVERSE(norm, fu->f_p->fg_p->N);
-	} else rt_bomb("nmg_pr_around_eu() bad fu orientation\n");
-
-	/*
-	 * Because edgeuses are oriented, and run CCW for an exterior
-	 * face loop, crossing the face normal with the edge vector will
-	 * give a vector which lies in the plane of the face and
-	 * points "left", towards the interior of the faceloop.
-	 */
-	VCROSS(left, norm, evect);
-	VMOVE( xdir, norm );
-	VMOVE( ydir, left );
 
 	eu1 = eu;
 	do {
@@ -1127,7 +1099,7 @@ CONST struct edgeuse *eu;
 			fu, fu->f_p,
 			fu->orientation == OT_SAME ? "SAME" : "OPP.",
 			fu->s_p,
-			rt_angle_measure( fu->f_p->fg_p->N, xdir, ydir) * rt_radtodeg );
+			nmg_measure_2fu_angle(eu, eu1) * rt_radtodeg );
 
 		/* Second, the edgeuse mate */
 		eu1 = eu1->eumate_p;
@@ -1142,7 +1114,7 @@ CONST struct edgeuse *eu;
 			fu, fu->f_p,
 			fu->orientation == OT_SAME ? "SAME" : "OPP.",
 			fu->s_p,
-			rt_angle_measure( fu->f_p->fg_p->N, xdir, ydir) * rt_radtodeg );
+			nmg_measure_2fu_angle(eu, eu1) * rt_radtodeg );
 
 		/* Now back around to the radial edgeuse */
 		eu1 = eu1->radial_p;
