@@ -112,8 +112,8 @@ void main(int argc, char **argv) {
   int optc;
   params_t params;
   int inter = 0;
-  def = 0;
-  depth = 0;
+  int def = 0;
+  int depth = 0;
   char fileName[20];
   int opts = 0;
 
