@@ -390,6 +390,7 @@ register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
+	union tree		*result;
 	struct nmgregion	*r;
 	struct rt_list		vhead;
 	struct directory	*dp;
@@ -439,7 +440,13 @@ union tree		*curtree;
 	if( verbose )
 		rt_log( "\ndoing boolean tree evaluate...\n" );
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	result = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+
+	if( result )
+		r = result->tr_d.td_r;
+	else
+		r = (struct nmgregion *)NULL;
+
 	if( verbose )
 		rt_log( "\nfinished boolean tree evaluate...\n" );
 	RT_UNSETJUMP;		/* Relinquish the protection */
