@@ -574,10 +574,10 @@ genptr_t client_data;
  *	-1	On major error
  */
 int
-drawtrees( argc, argv, kind )
-int	argc;
-char	**argv;
-int	kind;
+drawtrees(
+	int	argc,
+	char	**argv,
+	int	kind)
 {
 	int		ret = 0;
 	register int	c;
@@ -866,12 +866,12 @@ register struct solid *sp;
  *  This routine must be prepared to run in parallel.
  */
 void
-drawH_part2( dashflag, vhead, pathp, tsp, existing_sp )
-int			dashflag;
-struct bu_list		*vhead;
-struct db_full_path	*pathp;
-struct db_tree_state	*tsp;
-struct solid		*existing_sp;
+drawH_part2(
+	int			dashflag,
+	struct bu_list		*vhead,
+	struct db_full_path	*pathp,
+	struct db_tree_state	*tsp,
+	struct solid		*existing_sp)
 {
 	register struct solid *sp;
 	register int	i;
@@ -1021,9 +1021,10 @@ register struct solid	*sp;
  *	sp may have fields updated.
  */
 void
-pathHmat( sp, matp, depth )
-register struct solid *sp;
-matp_t matp;
+pathHmat(
+	register struct solid *sp,
+	matp_t matp,
+	int depth)
 {
 	struct db_tree_state	ts;
 	struct db_full_path	null_path;
@@ -1126,8 +1127,7 @@ matp_t matp;
  *	 0	OK
  */
 int
-replot_original_solid( sp )
-struct solid	*sp;
+replot_original_solid( struct solid *sp )
 {
 	struct rt_db_internal	intern;
 	struct directory	*dp;
@@ -1171,10 +1171,10 @@ struct solid	*sp;
  *	 0	OK
  */
 int
-replot_modified_solid( sp, ip, mat )
-struct solid			*sp;
-struct rt_db_internal		*ip;
-CONST mat_t			mat;
+replot_modified_solid(
+	struct solid			*sp,
+	struct rt_db_internal		*ip,
+	const mat_t			mat)
 {
 	struct rt_db_internal	intern;
 	struct bu_list		vhead;
@@ -1225,10 +1225,10 @@ CONST mat_t			mat;
  *			C V T _ V L B L O C K _ T O _ S O L I D S
  */
 void
-cvt_vlblock_to_solids( vbp, name, copy )
-struct bn_vlblock	*vbp;
-char			*name;
-int			copy;
+cvt_vlblock_to_solids(
+	struct bn_vlblock	*vbp,
+	const char		*name,
+	int			copy)
 {
 	int		i;
 	char		shortname[32];
@@ -1273,11 +1273,11 @@ int			copy;
  *  This parallels much of the code in dodraw.c
  */
 int
-invent_solid( name, vhead, rgb, copy )
-char		*name;
-struct bu_list	*vhead;
-long		rgb;
-int		copy;
+invent_solid(
+	const char	*name,
+	struct bu_list	*vhead,
+	long		rgb,
+	int		copy)
 {
 	struct directory	*dp;
 	struct directory	*dpp[2] = {DIR_NULL, DIR_NULL};

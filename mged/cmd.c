@@ -1244,9 +1244,7 @@ mged_compat( dest, src, use_first )
  */
 
 int
-cmdline(vp, record)
-	struct bu_vls *vp;
-	int record;
+cmdline( struct bu_vls *vp, int record )
 {
 	int	status;
 	struct bu_vls globbed;
@@ -1373,8 +1371,7 @@ cmdline(vp, record)
 
 
 void
-mged_print_result(status)
-	int status;
+mged_print_result(int status)
 {
 	int len;
 	extern void pr_prompt();
@@ -1428,10 +1425,10 @@ mged_print_result(status)
  */
 
 int
-mged_cmd(argc, argv, in_functions)
-	int argc;
-	char **argv;
-	struct funtab in_functions[];
+mged_cmd(
+	int argc,
+	char **argv,
+	struct funtab in_functions[])
 {
 	register struct funtab *ftp;
 	struct funtab *functions;
@@ -1528,11 +1525,11 @@ f_comm(clientData, interp, argc, argv)
 /* Format: q	*/
 
 int
-f_quit(clientData, interp, argc, argv )
-	ClientData clientData;
-	Tcl_Interp *interp;
-	int	argc;
-	char	**argv;
+f_quit(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
 {
 	if(argc < 1 || 1 < argc){
 		struct bu_vls vls;

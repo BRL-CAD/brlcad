@@ -459,7 +459,7 @@ int f_adc (
 	char	**argv);
 
 /* attach.c */
-#if 0
+#if defined(SEEN_MGED_DM_H)
 int mged_attach(
 	struct w_dm *wp,
 	int argc,
@@ -595,3 +595,106 @@ int mged_vrot_xyz(
 void size_reset(void);
 void solid_list_callback(void);
 void view_ring_destroy(struct dm_list *dlp);
+
+/* cmd.c */
+int cmdline( struct bu_vls *vp, int record);
+int f_quit(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+int mged_cmd(
+	int argc,
+	char **argv,
+	struct funtab in_functions[]);
+void mged_print_result(int status);
+
+/* color_scheme.c */
+void cs_set_bg(void);
+void cs_update(void);
+void cs_set_dirty_flag(void);
+
+/* columns.c */
+void
+vls_col_item(
+	struct bu_vls	*str,
+	const char	*cp);
+void vls_col_eol( struct bu_vls *str );
+void vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_list);
+void vls_line_dpp(
+	struct bu_vls *vls,
+	struct directory **list_of_names,
+	int num_in_list,
+	int aflag,	/* print all objects */
+	int cflag,	/* print combinations */
+	int rflag,	/* print regions */
+	int sflag);	/* print solids */
+
+/* dir.c */
+void dir_summary(int flag);
+int f_killall(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+int f_killtree(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+
+/* dodraw.c */
+void cvt_vlblock_to_solids(
+	struct bn_vlblock	*vbp,
+	const char		*name,
+	int			copy);
+void drawH_part2(
+	int			dashflag,
+	struct bu_list		*vhead,
+	struct db_full_path	*pathp,
+	struct db_tree_state	*tsp,
+	struct solid		*existing_sp);
+int drawtrees(
+	int	argc,
+	char	**argv,
+	int	kind);
+int invent_solid(
+	const char	*name,
+	struct bu_list	*vhead,
+	long		rgb,
+	int		copy);
+void pathHmat(
+	register struct solid *sp,
+	matp_t matp,
+	int depth);
+int replot_modified_solid(
+	struct solid			*sp,
+	struct rt_db_internal		*ip,
+	const mat_t			mat);
+int replot_original_solid( struct solid *sp );
+
+/* dozoom.c */
+void createDList(struct solid *sp);
+void createDLists(struct solid *hsp);
+void createDListALL(struct solid *sp);
+void createDListsAll(struct solid *hsp);
+void freeDListsAll(unsigned int dlist, int range);
+
+/* edarb.c */
+int editarb( vect_t pos_model );
+int mv_edge(
+	vect_t thru,
+	int bp1, int bp2, int end1, int end2,
+	const vect_t	dir);
+
+/* edars.c */
+#if defined(SEEN_RTGEOM_H)
+void find_nearest_ars_pt(
+	int *crv,
+	int *col,
+	struct rt_ars_internal *ars,
+	point_t pick_pt,
+	vect_t dir);
+#else
+void find_nearest_ars_pt();
+#endif

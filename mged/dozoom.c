@@ -505,8 +505,7 @@ bn_mat_print("perspective_mat", perspective_mat);
  * Create Display List
  */
 void
-createDList(sp)
-struct solid *sp;
+createDList(struct solid *sp)
 {
   DM_BEGINDLIST(dmp, sp->s_dlist);
   DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist);
@@ -517,8 +516,7 @@ struct solid *sp;
  * Create Display Lists
  */
 void
-createDLists(hsp)
-struct solid *hsp;
+createDLists(struct solid *hsp)
 {
   register struct solid *sp;
 
@@ -536,8 +534,7 @@ struct solid *hsp;
  *			display manager that has already created the display list)
  */
 void
-createDListALL(sp)
-struct solid *sp;
+createDListALL(struct solid *sp)
 {
   struct dm_list *dlp;
   struct dm_list *save_dlp;
@@ -568,8 +565,7 @@ struct solid *sp;
  * for a description.
  */
 void
-createDListsAll(hsp)
-struct solid *hsp;
+createDListsAll(struct solid *hsp)
 {
   struct solid *sp;
 
@@ -583,9 +579,7 @@ struct solid *hsp;
  * that support display lists and have them activated.
  */
 void
-freeDListsAll(dlist, range)
-unsigned int dlist;
-int range;
+freeDListsAll(unsigned int dlist, int range)
 {
   struct dm_list *dlp;
 

@@ -47,9 +47,9 @@ static int	col_len;		/* length of previous name */
  *			V L S _ C O L _ I T E M
  */
 void
-vls_col_item( str, cp )
-struct bu_vls	*str;
-register char	*cp;
+vls_col_item(
+	struct bu_vls		*str,
+	register const char	*cp)
 {
 	/* Output newline if last column printed. */
 	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
@@ -76,8 +76,7 @@ register char	*cp;
 /*
  */
 void
-vls_col_eol( str )
-struct bu_vls	*str;
+vls_col_eol( struct bu_vls *str )
 {
 	if ( col_count != 0 )		/* partial line */
 		bu_vls_putc( str, '\n' );
@@ -111,10 +110,7 @@ CONST genptr_t b;
  *  in that list, sort and print that list in column order over four columns.
  */
 void
-vls_col_pr4v(vls, list_of_names, num_in_list)
-struct bu_vls *vls;
-struct directory **list_of_names;
-int num_in_list;
+vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_list)
 {
   int lines, i, j, namelen, this_one;
 
@@ -177,14 +173,14 @@ int num_in_list;
  *  in that list, sort and print that list on the same line.
  */
 void
-vls_line_dpp(vls, list_of_names, num_in_list, aflag, cflag, rflag, sflag)
-struct bu_vls *vls;
-struct directory **list_of_names;
-int num_in_list;
-int aflag;	/* print all objects */
-int cflag;	/* print combinations */
-int rflag;	/* print regions */
-int sflag;	/* print solids */
+vls_line_dpp(
+	struct bu_vls *vls,
+	struct directory **list_of_names,
+	int num_in_list,
+	int aflag,	/* print all objects */
+	int cflag,	/* print combinations */
+	int rflag,	/* print regions */
+	int sflag)	/* print solids */
 {
   int i;
   int isComb, isRegion;

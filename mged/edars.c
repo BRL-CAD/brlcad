@@ -51,13 +51,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 
 extern struct bn_tol		mged_tol;	/* from ged.c */
+
 void
-find_nearest_ars_pt( crv, col, ars, pick_pt, dir )
-int *crv;
-int *col;
-struct rt_ars_internal *ars;
-point_t pick_pt;
-vect_t dir;
+find_nearest_ars_pt(
+	int *crv,
+	int *col,
+	struct rt_ars_internal *ars,
+	point_t pick_pt,
+	vect_t dir)
 {
 	int i,j;
 	int pt_no;

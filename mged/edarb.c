@@ -202,8 +202,7 @@ static short earb4[5][18] = {
 
 
 int
-editarb( pos_model )
-vect_t pos_model;
+editarb( vect_t pos_model )
 {
 	static int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
 	short *edptr;		/* pointer to arb edit array */
@@ -423,10 +422,10 @@ err:
  *	the other faces to make sure that they are always "inside".
  */
 int
-mv_edge(thru, bp1, bp2, end1, end2, dir)
-vect_t thru;
-int bp1, bp2, end1, end2;
-vect_t	dir;
+mv_edge(
+	vect_t thru,
+	int bp1, int bp2, int end1, int end2,
+	const vect_t	dir)
 {
 	struct rt_arb_internal *arb;
 	fastf_t	t1, t2;

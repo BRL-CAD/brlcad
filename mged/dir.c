@@ -254,7 +254,7 @@ char	**argv;
  * as a request to print all the names in that category (eg, DIR_SOLID).
  */
 void
-dir_summary(flag)
+dir_summary(int flag)
 {
 	register struct directory *dp;
 	register int i;
@@ -1250,11 +1250,11 @@ char	**argv;
  *
  */
 int
-f_killall(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_killall(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
 {
 	register int	i,k;
 	register struct directory *dp;
@@ -1344,11 +1344,11 @@ char	**argv;
  *
  */
 int
-f_killtree(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_killtree(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
 {
 	register struct directory *dp;
 	register int i;
