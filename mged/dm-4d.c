@@ -247,17 +247,6 @@ Ir_configure_window_shape()
 	
 	switch( getmonitor() )  {
 	default:
-		if( !ir_is_gt )  {
-			/*
-			 *  Set an 8 minute screensaver blanking, which will light up
-			 *  the screen again if it was dark, and will protect it otherwise.
-			 *  4D/60 has a hardware botch limiting the time to 2**15 frames.
-			 */
-			blanktime( (long) 32767L );
-		} else {
-			/* Set blanktime to 30 minutes (at 67 Hz) */
-			blanktime( 30 * 60 * 67 );
-		}
 		break;
 	case NTSC:
 		/* Only use the central square part */
