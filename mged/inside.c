@@ -501,6 +501,9 @@ fastf_t	thick[6];
 		(void)printf("BAD cylinder\n");
 		return(1);
 	}
+	else if( dt < 0.0 )
+		dt = (-dt);
+
 	h1 = thick[0] / dt;
 	h2 = thick[1] / dt;
 	if( (ht = dt * mag[0]) == 0.0 ) {
