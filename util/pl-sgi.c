@@ -40,9 +40,12 @@ Matrix	centermat;	/* center screen matrix */
 Coord	viewsize;
 
 int	axis = 0;	/* display coord axis */
+int	info = 0;	/* output orientation info */
+int	fullscreen = 0;	/* use a full screen window (if mex) */
 int	minobj = 1;	/* lowest active object number */
 int	maxobj = 1;	/* next available object number */
 long	menu;
+char	*menustring;
 
 /*
  *  Color Map:
@@ -71,6 +74,8 @@ char	**argv;
 	while( argc > 1 ) {
 		if( strcmp(argv[1],"-a") == 0 ) {
 			axis++;
+		} else if( strcmp(argv[1],"-f") == 0 ) {
+			fullscreen++;
 		} else
 			break;
 		argc--;
@@ -105,16 +110,27 @@ char	**argv;
 
 	/* set up and save the viewing projection matrix */
 	if( ismex() ) {
-		ortho( -viewsize, viewsize, -viewsize, viewsize,
-			-HUGE, HUGE );
+		if( fullscreen ) {
+			/* Compensate for the rectangular display surface */
+#ifdef mips
+			ortho( -1.25*viewsize, 1.25*viewsize,
+				-viewsize, viewsize, -HUGE, HUGE );
+#else
+			ortho( -1.33*viewsize, 1.33*viewsize,
+				-viewsize, viewsize, -HUGE, HUGE );
+#endif
+		} else {
+			ortho( -viewsize, viewsize, -viewsize, viewsize,
+				-HUGE, HUGE );
+		}
 		getmatrix( viewortho );
 		perspective( 900, 1.0, 0.01, 1.0e10 );
 		/*polarview( 1.414, 0, 0, 0 );*/
 		getmatrix( viewpersp );
 	} else {
-		/* Try to make up for the rectangular display surface */
-		ortho( -1.33*viewsize, 1.33*viewsize, -viewsize, viewsize,
-			-HUGE, HUGE );
+		/* Compensate for the rectangular display surface */
+		ortho( -1.33*viewsize, 1.33*viewsize,
+			-viewsize, viewsize, -HUGE, HUGE );
 		getmatrix( viewortho );
 		perspective( 900, 1.0, 0.01, 1.0e10 );
 		/*polarview( 1.414, 0, 0, 0 );*/
@@ -135,7 +151,7 @@ char	**argv;
 	getmatrix( centermat );
 
 	/* set up the command menu */
-	menu = defpup( "Center|Axis|Exit" );
+	menu = defpup( menustring );
 
 	view_loop();
 	exit( 0 );
@@ -170,6 +186,13 @@ char	**argv;
 #define	FRONT	SW29
 #define	LEFT	SW30
 #define	V3525	SW31
+
+#define	MENU_CENTER	1
+#define	MENU_AXIS	2
+#define	MENU_INFO	3
+#define	MENU_SNAP	4
+#define	MENU_EXIT	5
+char *menustring = "Center|Axis|Info|DunnSnap|Exit";
 
 /*XXX*/
 float	tran[3];	/* xyz screen space translate */
@@ -269,7 +292,7 @@ view_loop()
 			if( val == 0 )
 				break;
 			menuval = dopup( menu );
-			if( menuval == 3 )
+			if( menuval == MENU_EXIT )
 				end_it = 1;
 			else
 				domenu( menuval );
@@ -335,26 +358,29 @@ view_loop()
 			setview( m, 270+25, 0, 270-35 );
 			break;
 		}
-		event = 0;
-		qreset();
 		if (end_it == 1)
 			break;
 
-		getmatrix( rot );
-		newview( m, rot, tran, scal, viewmat );
+		if( event ) {
+			event = 0;
+			qreset();
 
-		/* draw the object */
-		cursoff();
-		color(BLACK);
-		clear();
-		if( axis )
-			draw_axis();
-		for( o = minobj; o < maxobj; o++ )
-			callobj( o );
-		curson();
-		swapbuffers();
+			getmatrix( rot );
+			newview( m, rot, tran, scal, viewmat );
 
-		/* What was this select() ?? */
+			/* draw the object(s) */
+			cursoff();
+			color(BLACK);
+			clear();
+			if( axis )
+				draw_axis();
+			for( o = minobj; o < maxobj; o++ )
+				callobj( o );
+			curson();
+			swapbuffers();
+		}
+
+		/* Check for more objects to be read */
 		if( !feof(stdin) /* && select()*/ ) {
 			double	max[3], min[3];
 			makeobj( maxobj );
@@ -390,7 +416,10 @@ init_display()
 	int map_size;		/* # of color map slots available */
 
 	if( ismex() ) {
-		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
+		if( fullscreen )
+			prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
+		else
+			prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
 		foreground();
 		if( winopen( "UNIX plot display" ) == -1 ) {
 			printf( "No more graphics ports available.\n" );
@@ -467,6 +496,10 @@ init_display()
 		qdevice(i);
 	}
 
+	/*
+	 * SGI Dials: 1024 steps per rev
+	 *   -32768 .. 32767
+	 */
 	setvaluator(ROTX, 0, -360, 360);
 	setvaluator(ROTY, 0, -360, 360);
 	setvaluator(ROTZ, 0, -360, 360);
@@ -745,6 +778,7 @@ setview( m, rx, ry, rz )
 Matrix	m;
 int	rx, ry, rz;
 {
+	/* Hmm... save translation and scale? */
 	loadmatrix( centermat );
 	getmatrix( m );
 	loadmatrix( identmat );
@@ -792,6 +826,12 @@ float	tran[3], scal[3];
 	/* set up total viewing transformation */
 	loadmatrix( viewmat );
 	multmatrix( orient );
+
+	if( info ) {
+		printf( "(%f %f %f) scale %f\n",
+			orient[3][0], orient[3][1], orient[3][2],
+			orient[3][3] );
+	}
 }
 
 domenu( n )
@@ -800,10 +840,10 @@ int	n;
 	long	left, bottom, winx_size, winy_size;
 	long	x, y;
 	double	fx, fy;
+	int	ret;
 
 	switch( n ) {
-	case 1:
-		/* position */
+	case MENU_CENTER:
 		x = getvaluator(CURSORX);
 		y = getvaluator(CURSORY);
 		getsize( &winx_size, &winy_size);
@@ -813,15 +853,30 @@ int	n;
 		tran[0] += fx * 2.0 * viewsize;
 		tran[1] += fy * 2.0 * viewsize;
 		break;
-	case 2:
-		/* axis */
+	case MENU_AXIS:
 		if( axis == 0 )
 			axis = 1;
 		else
 			axis = 0;
 		break;
-	case 3:
-		/* quit */
+	case MENU_INFO:
+		if( info == 0 )
+			info = 1;
+		else
+			info = 0;
+		break;
+	case MENU_SNAP:
+		cursoff();
+		system("/usr/brl/bin/Set30");
+		ret = system("/usr/brlcad/bin/dunnsnap");
+		system("/usr/brl/bin/Set60");
+		curson();
+		if( ret ) {
+			fprintf( stderr, "pl-sgi: Snap failed. Out of film?\n" );
+			ringbell();
+		}
+		break;
+	case MENU_EXIT:
 		break;
 	}
 }
