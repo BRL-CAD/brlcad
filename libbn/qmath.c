@@ -79,8 +79,8 @@ register mat_t	mat;
 	quat[W] = 0.0;
 	x2 = -0.5 * (mat[5] + mat[10]);
 	if( x2 > VDIVIDE_TOL ) {
-		s = 0.5 / quat[X];
 		quat[X] = sqrt( x2 );
+		s = 0.5 / quat[X];
 		quat[Y] = mat[1] * s;
 		quat[Z] = mat[2] * s;
 		return;
