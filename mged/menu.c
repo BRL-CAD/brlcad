@@ -141,16 +141,8 @@ struct menu_item *value;
     bu_vls_init(&menu_string);
     Tcl_DStringInit(&ds_menu);
 
-    bu_vls_printf(&menu_string, "mmenu_set .mmenu%S %S %d ",
-		  &curr_cmd_list->cl_name, &curr_cmd_list->cl_name, index);
+    bu_vls_printf(&menu_string, "mmenu_set %S %d ", &curr_cmd_list->cl_name, index);
 
-    Tcl_DStringStartSublist(&ds_menu);
-    if (value != MENU_NULL)
-	for (; value->menu_string[0] != '\0'; value++)
-	    (void)Tcl_DStringAppendElement(&ds_menu, value->menu_string);
-    Tcl_DStringEndSublist(&ds_menu);
-
-    bu_vls_strcat(&menu_string, Tcl_DStringValue(&ds_menu));
     (void)Tcl_Eval(interp, bu_vls_addr(&menu_string));
 
     Tcl_DStringFree(&ds_menu);
