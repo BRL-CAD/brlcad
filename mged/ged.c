@@ -1191,8 +1191,12 @@ double a1, a2, a3;		/* DOUBLE angles, in degrees */
   buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
   new_mats();
 
-  VSET(temp, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-  MAT4X3PNT(absolute_slew, model2view, temp);
+  if(absolute_slew[X] != 0.0 ||
+     absolute_slew[Y] != 0.0 ||
+     absolute_slew[Z] != 0.0){
+    VSET(temp, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, temp);
+  }
 
   if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
     Tcl_Eval(interp, "set_sliders");
