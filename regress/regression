@@ -4,7 +4,7 @@
 #
 ###
 #
-#  This is the regression testing script suite for the BRL-CAD package.  This 
+#  This is the regression testing script suite from the BRL-CAD package.  This
 #  script is run from a machine that has access to a BRL-CAD source tree (or 
 #  any other for that matter) and a set of default regression test scripts 
 #  (i.e. a test bucket).  The regression suite may either be run locally 
@@ -13,18 +13,19 @@
 #  The source tree is obtained either via a source directory (default), cvs, 
 #  a tar file, or a compressed tar file (tar.gz, tar.bz, tar.Z).  That source
 #  may then be optionally merged with another source tree, tar, or tar.* of 
-#  "update" patches to apply (maybe).
+#  "update" patches to apply [unimplemented].
 #
-#  Then the resulting "source package" may be optionally regression tested on
-#  the local host machine (default) or on the host systems listed in the 
+#  The resulting "source package" may then be optionally regression tested on
+#  a host machine (localhost is default) or on the host systems listed in the 
 #  systems.d directory.  Each system defines all of the options and 
 #  specifications on how to get the source package to the regressing host as 
 #  well as which tests should be run.
 #
-#  The source package is transferred to remote hosts and the tests are 
-#  remotely invoked either via SSH (default), remote automation, or via RSH.
+#  The source package is transferred to remote hosts and tests are remotely 
+#  invoked via SSH.  SSH must be properly set up with rsa or dsa key
+#  management to avoid password prompting.
 #
-#  Filesystem changes should all only occur within the REGRESS_DIR directory.
+#  Filesystem changes should all only occur within the REGRESS_DIR directory,
 #  e.g. the REGRESS_DIR directory is the working directory.
 #
 ###
@@ -32,7 +33,9 @@
 #  GETTING STARTED
 #
 #  Run:
-#  ./regression help
+#  ./regression
+#  ./regression --help-options
+#  ./regression --help-commands
 #  to get help with command line options for modifying run-time behaviour.
 #
 #  Run:
@@ -48,39 +51,29 @@
 #  the tests found in the tests.d directory (the test bucket).  See the 
 #  systems.d/localhost script and/or the systems.d/README for an example on 
 #  how to set up your own systems to automatically regression test the brlcad
-#  package.
+#  package.  Run './regression settings' or use a file in the systems.d 
+#  directory as a starting point for defining new systems.
 #
 ###############################################################################
 
 #
 # include standard utility functions
 # dirname is needed so that we will still be able to find the library file
-. `dirname $0`/library
+# regardless of where or how this script was invoked
+. `dirname $0`/tests.d/library
 
 ###
 # DEFAULT PUBLIC VARIABLE INITIALIZATION
 ########################################
 
-# default name of the regression source
+# default name of the regression source (for various usages)
 initializeVariable PACKAGE_NAME brlcad
 
-# default working directory for source package
+# default directory for source package to regress
 initializeVariable SOURCE ..
 
 # default working directory for checkouts and (un)packing
 initializeVariable REGRESS_DIR /tmp/`whoami`
-
-# number of minutes (greater than zero) to wait on the regression lock
-initializeVariable WAIT_FOR_LOCK_TIMEOUT 3
-
-# fail on warnings (0==do not fail, 1==fail)
-initializeVariable NO_WARNINGS 0
-
-# clean out the regressio directory before starting
-initializeVariable CLOBBER_FIRST 0
-
-# name of log file for output
-initializeVariable LOGFILE .regression-${HOSTNAME}.log
 
 # default system to regression test
 # all is a special keyword to regression test all of the systems, otherwise
@@ -92,6 +85,21 @@ initializeVariable REGRESS_SYSTEM localhost
 # all is a special keyword to perform all tests
 # otherwise the tests must manually be run one at a time through the shell (!)
 initializeVariable REGRESS_TEST all
+
+# fail on warnings (0==do not fail, 1==fail)
+initializeVariable NO_WARNINGS 0
+
+# clean out the regression directory before starting
+initializeVariable CLOBBER_FIRST 0
+
+# name of log file for output
+initializeVariable LOGFILE .regression-${HOSTNAME}-$$.log
+
+# number of minutes (greater than zero) to wait on the regression lock
+initializeVariable WAIT_FOR_LOCK_TIMEOUT 3
+
+# whether to link to or copy source archives into the regression directory
+initializeVariable LINK_OR_COPY copy
 
 # CVS
 ###
@@ -105,25 +113,68 @@ initializeVariable CVS_ROOT /c/CVS
 # name of package to pull from cvs repository
 initializeVariable CVS_TAG brlcad
 
+# cvs log file (unset to not log)
+initializeVariable CVS_LOGFILE .cvs-${HOSTNAME}.log
+
+# SSH
+###
+
+# ssh binary to run
+initializeVariable SSH ssh
+
+# TAR
+###
+
+# tar binary to run
+initializeVariable TAR tar
+
+# GZIP
+###
+
+# gzip compressor binary to run
+initializeVariable GZIP gzip
+
+# gzip decompressor binary to run
+initializeVariable GUNZIP gunzip
+
 # COMMAND
 ###
 
-# name of default command to run (no command set prompts a help message)
-# initializeVariable COMMAND status
+# name of default command to run 
+# (no COMMAND set or invalid command prompts a help message)
+#initializeVariable COMMAND settings
 
+# TRANSPORT
+###
+
+# transport is the mechanism that gets a file from the localhost to remote machines
+# available options are ssh, rsh, and nfs
+initializeVariable TRANSPORT ssh
 
 ###
 # PRIVATE VARIABLE INITIALIZATION
 #################################
 
+# version of this brlcad regression suite (library version is separate)
+initializeVariable VERSION 1.0
+
+# if we have a gen.sh around, grab the brlcad release version
+if [ -r "${LPWD}/../gen.sh" ] ; then
+    initializeVariable BRLCAD_VERSION "`grep '^RELEASE=' \"${LPWD}/../gen.sh\" | sed 's/^RELEASE=[\ \t]*\([^\ \;]*\).*$/\1/'`"
+elif [ -r "${LPWD}/gen.sh" ] ; then
+    initializeVariable BRLCAD_VERSION "`grep '^RELEASE=' \"${LPWD}/gen.sh\" | sed 's/^RELEASE=[\ \t]*\([^\ \;]*\).*$/\1/'`"
+fi
+
 # name of systems directory
-initializeVariable SYSTEMS_D ${LPWD}/systems.d
+initializeVariable SYSTEMS_D systems.d
+initializeVariable SYSTEMS_D_WITH_PATH "${LPWD}/${SYSTEMS_D}"
 
-# name of tests directory
-initializeVariable TESTS_D ${LPWD}/tests.d
+# name of tests directory (must update library inclusion to match if this changes)
+initializeVariable TESTS_D tests.d
+initializeVariable TESTS_D_WITH_PATH "${LPWD}/${TESTS_D}"
 
-# cvs log file (do not change unless modify status.sh as well)
-initializeVariable CVS_LOGFILE .cvs-${HOSTNAME}.log
+# name of the remote architecture regress directories
+initializeVariable REMOTE_REGRESS_DIR "${REGRESS_DIR}/.regress.${HOSTNAME}"
 
 # resource file loading
 ###
@@ -133,7 +184,8 @@ initializeVariable CVS_LOGFILE .cvs-${HOSTNAME}.log
 # and then in the same directory as the regression script
 initializeVariable RESOURCE_FILE ${LPWD}/.regressionrc
 # go ahead and load the resource file so command-line options will override
-if [ -r "$RESOURCE_FILE" ] ; then loadResourceFile "$RESOURCE_FILE" ; fi
+# we only perform the readability check to avoid warning output
+[ -r "$RESOURCE_FILE" ] && loadResourceFile "$RESOURCE_FILE"
 
 # help
 ###
@@ -144,7 +196,7 @@ INFO="${INFO}  visit the BRL-CAD website at http://web.arl.army.mil/software/brl
 
 # build up the usage and help incrementally (it is easier to modify later)
 USAGE="Usage: $0 [regression-options] command [command-options]\n"
-USAGE="${USAGE}  where regression-options are -w, -C, etc.\n"
+USAGE="${USAGE}  where regression-options are -w, -S, etc.\n"
 USAGE="${USAGE}    (specify --help-options for a list of options)\n"
 USAGE="${USAGE}  where command is start, stop, status, etc.\n"
 USAGE="${USAGE}    (specify --help-commands for a list of commands)\n"
@@ -154,25 +206,27 @@ USAGE="${USAGE}    (specify -H [command] for help on a particular command)\n"
 HELP_OPTIONS="Options help\n"
 HELP_OPTIONS="${HELP_OPTIONS}  -H\t\tHelp on a particular command\n"
 HELP_OPTIONS="${HELP_OPTIONS}  -w\t\tFail on warnings\n"
-HELP_OPTIONS="${HELP_OPTIONS}  -C\t\tClean out the regression directory\n"
 HELP_OPTIONS="${HELP_OPTIONS}  -S hosts\tSystem(s) to regression test (default is [$REGRESS_SYSTEM])\n"
 HELP_OPTIONS="${HELP_OPTIONS}  -T tests\tTest(s) to run (default is [$REGRESS_TEST])\n"
-HELP_OPTIONS="${HELP_OPTIONS}  -s src\tWhere/How to find the source archive (default is [$SOURCE])\n"
 HELP_OPTIONS="${HELP_OPTIONS}  -d regdir\tWhere to perform testing (default is [$REGRESS_DIR])\n"
 HELP_OPTIONS="${HELP_OPTIONS}  -l logfile\tName of log file for script output (default is [$LOGFILE])\n"
 HELP_OPTIONS="${HELP_OPTIONS}  -t timeout\tMinutes to wait for nfs lock (default is [$WAIT_FOR_LOCK_TIMEOUT])\n"
 HELP_OPTIONS="${HELP_OPTIONS}\n"
-HELP_OPTIONS="${HELP_OPTIONS}Cvs options (invoke with -s cvs)\n"
+HELP_OPTIONS="${HELP_OPTIONS}Start command options\n"
+HELP_OPTIONS="${HELP_OPTIONS}  -C\t\tClean out the regression directory before starting\n"
+HELP_OPTIONS="${HELP_OPTIONS}  -s src\tWhere/How to find the source archive (default is [$SOURCE])\n"
 HELP_OPTIONS="${HELP_OPTIONS}  -c cvsbin\tcvs command to run, including args (default is [$CVS])\n"
 HELP_OPTIONS="${HELP_OPTIONS}  -r cvsroot\tLocation of cvs root (default is [$CVS_ROOT])\n"
 HELP_OPTIONS="${HELP_OPTIONS}  -m module\tName of cvs module to export (default is [$CVS_TAG])\n"
+HELP_OPTIONS="${HELP_OPTIONS}  -l\t\tInstead of copying the source archive, create a soft link\n"
+HELP_OPTIONS="${HELP_OPTIONS}\n"
 
 HELP_COMMANDS="Commands help\n"
 HELP_COMMANDS="${HELP_COMMANDS}  start\t\tStart the regression testing\n"
 HELP_COMMANDS="${HELP_COMMANDS}  stop\t\tStop the regression testing\n"
 HELP_COMMANDS="${HELP_COMMANDS}  restart\t\tRestart the regression testing\n"
-HELP_COMMANDS="${HELP_COMMANDS}  status\t\tGet status of the testing\n"
-HELP_COMMANDS="${HELP_COMMANDS}  settings\t\tDisplay all settings\n"
+HELP_COMMANDS="${HELP_COMMANDS}  status\t\tGet status of the regression testing\n"
+HELP_COMMANDS="${HELP_COMMANDS}  settings\t\tDisplay current setting values\n"
 HELP_COMMANDS="${HELP_COMMANDS}\n"
 HELP_COMMANDS="${HELP_COMMANDS}Specify -H [command] for more detailed help on a particular command\n"
 HELP_COMMANDS="${HELP_COMMANDS}  (e.g. $0 -H start)\n"
@@ -180,6 +234,7 @@ HELP_COMMANDS="${HELP_COMMANDS}  (e.g. $0 -H start)\n"
 
 HELP_start_label="Start command help"
 HELP_start="The start command is what will invoke the regression suite testing.  After validating any regression and command options, the existance of the source archive is ensured on each of the regressing systems.  Then each of the regressing systems will commence testing the source by running the requested regression scripts from the ${TESTS_D} directory on each host."
+#HELP_start="${HELP_start}\n\nAvailable Options:\n  -s src\tWhere/How to find the source archive (default is [$SOURCE])\n"
 
 HELP_stop_label="Stop command help"
 HELP_stop="This command will halt any specified systems that are presently in the process of running the regression suite.  Depending on the nature of what the regressing machine is doing at the time (and whether the machine is remote, or not), all test processes will be halted as soon as possible."
@@ -200,12 +255,14 @@ COMMANDS="start stop restart status settings"
 # HANDLE OPTIONS
 ################
 
+#
 # handle regression options
+#
 for i in $* ; do
     case "$i" in
         # handle help options.  a command name may be given as an argument
         # to any of the help options to get command-specific help
-        -\? | -h | -H | -help | --help | --h | --H )
+        -\? | -h | -H | -help | --help | --h | --H | help )
             helped="no"
             for i in $COMMANDS ; do
                 hlp_msg_lbl="echo \"\$HELP_${i}_label\""
@@ -217,42 +274,43 @@ for i in $* ; do
                     break
                 fi
             done
-            if [ "x$helped" = "xno" ] ; then
-                log "$USAGE"
-            fi
+            [ "x$helped" = "xno" ] && log "$USAGE"
             log "$INFO"
             exit;;
-        --help-options | --help_options )
+        --help-options | --help_options | -help-options )
             log "$HELP_OPTIONS" ; log "$INFO" ; exit;;
-        --help-commands | --help_commands )
+        --help-commands | --help_commands | -help-commands )
             log "$HELP_COMMANDS" ; log "$INFO" ; exit;;
-	-S | --system | --regress-system | --regress_system )
+        -v | --version | -version )
+            log "BRL-CAD Regression Suite version $VERSION"
+            if [ ! "x$BRLCAD_VERSION" = "x" ] ; then
+                log "  (BRL-CAD v$BRLCAD_VERSION, script library version $LIBRARY_VERSION)\n"
+            else
+                log "  (script library version $LIBRARY_VERSION)\n"
+            fi
+            log "$INFO" ; exit;;
+	-S | --system | --regress-system | --regress_system | -system | -regress-system )
 	    REGRESS_SYSTEM=$2; shift 2;;
-	-T | --test | --regress-test | --regress_test )
+	-T | --test | --regress-test | --regress_test | -test | -regress-test )
 	    REGRESS_TEST=$2; shift 2;;
-	-s | --source )
-	    SOURCE=$2; shift 2;;
-	-d  | --destination | --regress-dir | --regress_dir )
+	-d  | --destination | --regress-dir | --regress_dir | -destination | -regress-dir )
 	    REGRESS_DIR=$2; shift 2;;
-	-c | --cvs )
-	    CVS=$2; shift 2;;
-	-r | --repository ) 
-	    CVS_ROOT=$2; shift 2;;
-	-m | --cvs-tag )
-	    CVS_TAG=$2; shift 2;;
-	-t | --timeout | --wait-for-lock-timeout | --wait_for_lock_timeout )
+	-t | --timeout | --wait-for-lock-timeout | --wait_for_lock_timeout | -timeout | -wait-for-lock-timeout )
 	    WAIT_FOR_LOCK_TIMEOUT=$2; shift 2;;
-	-w | --no-warnings | --no_warnings )
+	-w | --no-warnings | --no_warnings | -no-warnings )
 	    NO_WARNINGS=1; shift 1;;
-	-C | --clobber )
-	    CLOBBER_FIRST=1; shift 1;;
-	-l | --log | --logfile )
+	-l | --log | --logfile | -log | -logfile )
 	    LOGFILE=$2; shift 2;;
         # once we reach a command, we are performing command options
         start | stop | restart | status | settings )
             COMMAND=$1; shift 1; break;;
+        -C | -s | -c | -r | -m )
+            log "Must specify command name before command option: $1"
+            log "$USAGE"
+            log "$INFO"
+            exit ;;
         -* )
-            log "Illegal option -- $1"
+            log "Illegal option: $1"
             log "$HELP_OPTIONS"
             log "$INFO"
             exit ;;
@@ -271,15 +329,26 @@ if [ ! "x$VALID_CMD" = "xyes" ] ; then
     exit
 fi
 
+#
 # handle command options
+#
 for i in $* ; do
-    if [ "x$COMMAND" = "xstart" ] ; then
+    if [ "x$COMMAND" = "xstart" ] || [ "x$COMMAND" = "restart" ] ; then
         case "$i" in 
+            -s | --source | -source )
+                SOURCE=$2; shift 2;;
+            -c | --cvs | -cvs )
+                CVS=$2; shift 2;;
+            -r | --repository | -repository ) 
+                CVS_ROOT=$2; shift 2;;
+            -m | --cvs-tag | -cvs-tag )
+                CVS_TAG=$2; shift 2;;
+            -C | --clobber | -clobber )
+                CLOBBER_FIRST=1; shift 1;;
+            -l | --link | -link )
+                LINK_OR_COPY="link"; shift 1;;
         esac
     elif [ "x$COMMAND" = "xstop" ] ; then
-        case "$i" in 
-        esac
-    elif [ "x$COMMAND" = "xrestart" ] ; then
         case "$i" in 
         esac
     elif [ "x$COMMAND" = "xstatus" ] ; then
@@ -301,111 +370,149 @@ done
 # HANDLE SETTINGS COMMAND (simplest case)
 #########################################
 regressionSettings ( ) {
-    log "#" $1
-    log "# R E G R E S S I O N   S U I T E   R E S O U R C E   S E T T I N G S" $1
-    log "#####################################################################" $1
-    log "#" $1
-    log "# The following are settings to be used in conjunction with the" $1
-    log "# BRL-CAD regression suite.  This file may be used as either the" $1
-    log "# start for a default .regressionrc file or as a template for a" $1
-    log "# system file that would go in the $SYSTEMS_D directory." $1
-    log "#" $1
-    log "# As few or many of the options below may be modified to enforce" $1
-    log "# behaviour different from the default settings." $1
-    log "#" $1
-    log "#####################################################################" $1
-    log " " $1
-    log "#" $1
-    log "# NAME should be a valid domain name or ip address for the host that" $1
-    log "# corresponds with these settings." $1
-    log "###" $1
-    log "NAME=\"${HOSTNAME}\" ; export NAME" $1
-    log " " $1
-    log "#" $1
-    log "# PACKAGE_NAME is a name \"label\" of the source repository being" $1
-    log "# tested." $1
-    log "###" $1
-    log "PACKAGE_NAME=\"${PACKAGE_NAME}\" ; export PACKAGE_NAME" $1
-    log " " $1
-    log "#" $1
-    log "# SOURCE is what or where the source for this build is.  By default" $1
-    log "# the source is usually the entire contents of the directory named" $1
-    log "# ../../PACKAGE_NAME given as either a tar.gz file or a tar.bz2 file." $1
-    log "###" $1
-    log "SOURCE=\"${SOURCE}\" ; export SOURCE" $1
-    log " " $1
-    log "#" $1
-    log "# REGRESS_DIR is the location of where the testing/writing will occur." $1
-    log "# Write permission is only assumed in that directory." $1
-    log "###" $1
-    log "REGRESS_DIR=\"${REGRESS_DIR}\" ; export REGRESS_DIR" $1
-    log " " $1
-    log "#" $1
-    log "# WAIT_FOR_LOCK_TIMEOUT is the number of minutes for a client to wait " $1
-    log "# until the regressing client either acquires a lock on the" $1
-    log "# REGRESS_DIR directory or times out waiting.." $1
-    log "###" $1
-    log "WAIT_FOR_LOCK_TIMEOUT=\"${WAIT_FOR_LOCK_TIMEOUT}\" ; export WAIT_FOR_LOCK_TIMEOUT" $1
-    log " " $1
-    log "#" $1
-    log "# NO_WARNINGS puts the regressing client into a strict behaviour mode." $1
-    log "# This has the effect of the scripts to terminate if they hit a warning" $1
-    log "# condition, instead of just warning and continuing." $1
-    log "###" $1
-    log "NO_WARNINGS=\"${NO_WARNINGS}\" ; export NO_WARNINGS" $1
-    log " " $1
-    log "#" $1
-    log "# CLOBBER_FIRST is a yes/no value as to whether or not the" $1
-    log "# the regressing client should empty out REGRESS_DIR" $1
-    log "# first.
-    log "###" $1
-    log "CLOBBER_FIRST=\"${CLOBBER_FIRST}\" ; export CLOBBER_FIRST" $1
-    log " " $1
-    log "#" $1
-    log "# LOGFILE is simply the name of the log file to use for status output." $1
-    log "# The output does not include the particular status of an individual" $1
-    log "# test, athough completion status and other similar notices may output." $1
-    log "###" $1
-    log "LOGFILE=\"$ LOGFILE}\" ; export LOGFILE" $1
-    log " " $1
-    log "#" $1
-    log "# REGRESS_SYSTEM is a list of other hosts that will perform regression" $1
-    log "# testing.  If the systems listed have a file of the same name in the" $1
-    log "# SYSTEMS_D directory, and they are not localhost, the settings there" $1
-    log "# will override the default settings. "all" is a keyword value that" $1
-    log "# indicates that all systems listed in the SYSTEMS_D dir should be run." $1
-    log "###" $1
-    log "REGRESS_SYSTEM=\"${REGRESS_SYSTEM}\" ; export REGRESS_SYSTEM" $1
-    log " " $1
-    log "#" $1
-    log "# REGRESS_TEST is a list of the tests that should get run by default" $1
-    log "# when the regression suite runs.  By default, all tests will be run." $1
-    log "# Modifying this value changes the default to be something other than" $1
-    log "# all tests.  "all" is a keyword value that indicates that all tests" $1
-    log "# listed in the TESTS_D directory should be run." $1
-    log "###" $1
-    log "REGRESS_TEST=\"${REGRESS_TEST}\" ; export REGRESS_TEST" $1
-    log " " $1
-    log "###" $1
-    log "# cvs-specific settings" $1
-    log "###" $1
-    log " " $1
-    log "# " $1
-    log "# CVS is the name/location of the cvs application.  Options to cvs" $1
-    log "# may optionally be included, so long as they do not conflict with" $1
-    log "# running cvs [whatever-options] -v" $1
-    log "###" $1
-    log "CVS=\"${CVS}\" ; export CVS" $1
+    if [ "x$1" = "x0" ] ; then comment=0 ; else comment=1 ; fi
 
-    log "# " $1
-    log "# CVS_ROOT is the location of the cvs repository (i.e. CVS_ROOT)" $1
-    log "###" $1
-    log "CVS_ROOT=\"${CVS_ROOT}\" ; export CVS_ROOT" $1
+    logfile=$2
 
-    log "# " $1
-    log "# CVS_TAG is the name of the cvs package to checkout." $1
-    log "###" $1
-    log "CVS_TAG=\"${CVS_TAG}\" ; export CVS_TAG" $1
+    if [ "x$comment" = "x1" ] ; then
+    log "#" $logfile
+    log "# R E G R E S S I O N   S U I T E   R E S O U R C E   S E T T I N G S" $logfile
+    log "#####################################################################" $logfile
+    log "#" $logfile
+    log "# The following are settings to be used in conjunction with the" $logfile
+    log "# BRL-CAD regression suite.  This file may be used as either the" $logfile
+    log "# start for a default .regressionrc file or as a template for a" $logfile
+    log "# system file that would go in the $SYSTEMS_D directory." $logfile
+    log "#" $logfile
+    log "# As few or many of the options below may be modified to enforce" $logfile
+    log "# behaviour different from the default settings." $logfile
+    log "#" $logfile
+    log "#####################################################################" $logfile
+    log " " $logfile
+    log "#" $logfile
+    log "# NAME should be a valid domain name or ip address for the host that"  $logfile
+    log "# corresponds with these settings." $logfile
+    log "###" $logfile
+    fi
+    log "NAME=\"${HOSTNAME}\" ; export NAME" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "#" $logfile
+    log "# PACKAGE_NAME is a name \"label\" of the source repository being" $logfile
+    log "# tested." $logfile
+    log "###" $logfile
+    fi
+    log "PACKAGE_NAME=\"${PACKAGE_NAME}\" ; export PACKAGE_NAME" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "#" $logfile
+    log "# SOURCE is what or where the source for this build is.  By default" $logfile
+    log "# the source is usually the entire contents of the directory named" $logfile
+    log "# ../../PACKAGE_NAME given as either a tar.gz file or a tar.bz2 file." $logfile
+    log "###" $logfile
+    fi
+    log "SOURCE=\"${SOURCE}\" ; export SOURCE" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "#" $logfile
+    log "# REGRESS_DIR is the location of where the testing/writing will occur." $logfile
+    log "# Write permission is only assumed in that directory." $logfile
+    log "###" $logfile
+    fi
+    log "REGRESS_DIR=\"${REGRESS_DIR}\" ; export REGRESS_DIR" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "#" $logfile
+    log "# WAIT_FOR_LOCK_TIMEOUT is the number of minutes for a client to wait " $logfile
+    log "# until the regressing client either acquires a lock on the" $logfile
+    log "# REGRESS_DIR directory or times out waiting.." $logfile
+    log "###" $logfile
+    fi
+    log "WAIT_FOR_LOCK_TIMEOUT=\"${WAIT_FOR_LOCK_TIMEOUT}\" ; export WAIT_FOR_LOCK_TIMEOUT" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "#" $logfile
+    log "# NO_WARNINGS puts the regressing client into a strict behaviour mode." $logfile
+    log "# This has the effect of the scripts to terminate if they hit a warning" $logfile
+    log "# condition, instead of just warning and continuing." $logfile
+    log "###" $logfile
+    fi
+    log "NO_WARNINGS=\"${NO_WARNINGS}\" ; export NO_WARNINGS" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "#" $logfile
+    log "# CLOBBER_FIRST is a yes/no value as to whether or not the" $logfile
+    log "# the regressing client should empty out REGRESS_DIR" $logfile
+    log "# first." $logfile
+    log "###" $logfile
+    fi
+    log "CLOBBER_FIRST=\"${CLOBBER_FIRST}\" ; export CLOBBER_FIRST" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "#" $logfile
+    log "# LOGFILE is simply the name of the log file to use for status output." $logfile
+    log "# The output does not include the particular status of an individual" $logfile
+    log "# test, athough completion status and other similar notices may output." $logfile
+    log "###" $logfile
+    fi
+    log "LOGFILE=\"${LOGFILE}\" ; export LOGFILE" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "#" $logfile
+    log "# REGRESS_SYSTEM is a list of other hosts that will perform regression" $logfile
+    log "# testing.  If the systems listed have a file of the same name in the" $logfile
+    log "# SYSTEMS_D directory, and they are not localhost, the settings there" $logfile
+    log "# will override the default settings. "all" is a keyword value that" $logfile
+    log "# indicates that all systems listed in the SYSTEMS_D dir should be run." $logfile
+    log "###" $logfile
+    fi
+    log "REGRESS_SYSTEM=\"${REGRESS_SYSTEM}\" ; export REGRESS_SYSTEM" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "#" $logfile
+    log "# REGRESS_TEST is a list of the tests that should get run by default" $logfile
+    log "# when the regression suite runs.  By default, all tests will be run." $logfile
+    log "# Modifying this value changes the default to be something other than" $logfile
+    log "# all tests.  "all" is a keyword value that indicates that all tests" $logfile
+    log "# listed in the TESTS_D directory should be run." $logfile
+    log "###" $logfile
+    fi
+    log "REGRESS_TEST=\"${REGRESS_TEST}\" ; export REGRESS_TEST" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "###" $logfile
+    log "# cvs-specific settings" $logfile
+    log "###" $logfile
+    log " " $logfile
+    log "# " $logfile
+    log "# CVS is the name/location of the cvs application.  Options to cvs" $logfile
+    log "# may optionally be included, so long as they do not conflict with" $logfile
+    log "# running cvs [whatever-options] -v" $logfile
+    log "###" $logfile
+    fi
+    log "CVS=\"${CVS}\" ; export CVS" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "# " $logfile
+    log "# CVS_ROOT is the location of the cvs repository (i.e. CVS_ROOT)" $logfile
+    log "###" $logfile
+    fi
+    log "CVS_ROOT=\"${CVS_ROOT}\" ; export CVS_ROOT" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "# " $logfile
+    log "# CVS_TAG is the name of the cvs package to checkout." $logfile
+    log "###" $logfile
+    fi
+    log "CVS_TAG=\"${CVS_TAG}\" ; export CVS_TAG" $logfile
+    if [ "x$comment" = "x1" ] ; then
+    log " " $logfile
+    log "# " $logfile
+    log "# CVS_LOGFILE is the name of the cvs log file to write.  Set" $logfile
+    log "# this value to empty to not log cvs exports." $logfile
+    log "###" $logfile
+    fi
+    log "CVS_LOG=\"${CVS_LOG}\" ; export CVS_LOG" $logfile
 }
 
 if [ "x$COMMAND" = "xsettings" ] ; then
@@ -413,37 +520,143 @@ if [ "x$COMMAND" = "xsettings" ] ; then
     exit
 fi
 
-
 # for any other command, we need to validate our settings
+
+###
+# VALIDATE COMMON SETTINGS
+##########################
+
+# check our regression directory settings for useability
+# sanity check -- make sure someone didn't request ""
+# not a good idea to use "." either, but we do not check
+[ "x$REGRESS_DIR" = "x" ] && bomb "Must specify regression directory (use --regress-dir option)"
+
+#
+# make sure the SYSTEMS_D and TESTS_D directories exist
+#
+if [ ! -d "$SYSTEMS_D_WITH_PATH" ] ; then
+    warn "Systems directory [$SYSTEMS_D_WITH_PATH] does not exist"
+elif [ ! -r "$SYSTEMS_D_WITH_PATH" ] ; then
+    warn "Systems directory [$SYSTEMS_D_WITH_PATH] is not readable"
+fi
+if [ ! -d "$TESTS_D_WITH_PATH" ] ; then
+    warn "Tests directory [$TESTS_D_WITH_PATH] does not exist"
+elif [ ! -r "$TESTS_D_WITH_PATH" ] ; then
+    warn "Tests directory [$TESTS_D_WITH_PATH] is not readable"
+fi
+
+# 
+# warn if a localhost systems file exists (it never gets used)
+#
+if [ -f "${SYSTEMS_D_WITH_PATH}/localhost" ] && [ ! "x$REGRESS_SYSTEM" = "xlocalhost" ] ; then
+    warn "Found localhost file in $SYSTEMS_D directory (ignoring)"
+fi
+
+#
+# if a specified system's name is the same as the localhost, 
+# convert it to localhost to avoid packaging up the archive
+# and ssh'ing to same host.  This option is off by default.
+#
+# if [ "x$REGRESS_SYSTEM" = "x$HOSTNAME" ] ; then
+#     REGRESS_SYSTEM="localhost"
+# fi
+
+#
+# expand "all" keyworded system and test lists
+#
+if [ "x$REGRESS_SYSTEM" = "xall" ] ; then
+    systems="`ls -A $SYSTEMS_D_WITH_PATH`"
+    REGRESS_SYSTEM=""
+    for SYS in $systems ; do
+        case $SYS in
+            *~ | *.bak )
+                # ignore backup files
+                ;;
+            * )
+                # do not have to be executable
+                [ -f "${SYSTEMS_D_WITH_PATH}/${SYS}" ] && REGRESS_SYSTEM="$REGRESS_SYSTEM $SYS"
+        esac
+    done
+fi
+if [ "x$REGRESS_TEST" = "xall" ] ; then
+    tests="`ls -A $TESTS_D_WITH_PATH`"
+    REGRESS_TEST=""
+    for TST in $tests ; do
+        case $SYS in
+            *~ | *.bak )
+                # ignore backup files
+                ;;
+            * )
+                # have to be executable
+                if [ -f "${TESTS_D_WITH_PATH}/${TST}" ] && [ -x "${TESTS_D_WITH_PATH}/${SYS}" ] ; then
+                    REGRESS_TEST="$REGRESS_TEST $TST"
+                fi
+        esac
+    done
+fi
+
+# 
+# make sure there is something left to do
+#
+[ "x$REGRESS_SYSTEM" = "x" ] && bomb "No systems are specified\n  (use --system or set REGRESS_SYSTEM var)"
+[ "x$REGRESS_TEST" = "x" ] && bomb "No tests are specified\n  (use --test or set REGRESS_TEST var)"
 
 
 ###
-# VALIDATE SETTINGS
-###################
-
-# check our regression directory settings for useability
-
-# sanity check -- make sure someone didn't request ""
-# not a good idea to use "." either, but we do not check
-if [ "x$REGRESS_DIR" = "x" ] ; then
-	bomb "Must specify regression directory (use --regress-dir option)"
-fi
+# VALIDATE COMMAND-SPECIFIC SETTINGS
+####################################
+#
+# validate start command settings
+#
 if [ "x$COMMAND" = "xstart" ] ; then
+    #
+    #  Make sure the regression directory exists and is writeable
+    #
+    if [ ! -d "$REGRESS_DIR" ] ; then
+        warn "Regression directory [$REGRESS_DIR] does not exist"
+        log "Creating [$REGRESS_DIR]"
+        mkdir -m 700 -p $REGRESS_DIR
+        if [ ! -d "$REGRESS_DIR" ] ; then
+            bomb "Unable to create [$REGRESS_DIR]"
+        fi
+    fi
+    [ ! -w "${REGRESS_DIR}/." ] && bomb "Unable to write to [$REGRESS_DIR]"
+
+    #
+    # acquire the precious regression directory lock.  we will release at
+    # the end of remote running or after localhost, whichever is later.
+    #
+    if ! eval "acquireLock regression $WAIT_FOR_LOCK_TIMEOUT 60 $REGRESS_DIR" ; then
+        bomb "Unable to obtain regression.lock" $TLOG
+    fi
+
+    #
+    # clean out the contents of the directory
+    # delete everything except the current log file
+    #
+    if [ x$CLOBBER_FIRST = x1 ] ; then
+        log "Cleaning out $REGRESS_DIR"
+        for ENTRY in `ls -A $REGRESS_DIR` ; do
+            if [ ! "x$ENTRY" = "x$LOGFILE" ] && [ ! "x$ENTRY" = "xregression.lock" ] ; then
+                [ ! "x$DEBUG" = "x" ] && log "Deleting [${REGRESS_DIR}/${ENTRY}]"
+                rm -rf "${REGRESS_DIR}/${ENTRY}"
+                [ $? != 0 ] && bomb "Failure cleaning out regression directroy $REGRESS_DIR"
+            fi
+        done
+    fi
+
+    #
+    # Verify that the source exists and is readable
+    #
     if [ "x$SOURCE" = "x" ] ; then
-        bomb "Must give a source archive (use --source option)"
+        bomb "Must give a source archive (use --source option or set SOURCE var)"
     else
         #
         # figure out what kind of source we are dealing with
         #
         case $SOURCE in
-            *.tar )
-                initializeVariable SRC_TYPE "tar" ;;
-            *.zip)
-                initializeVariable SRC_TYPE "zip" ;;
-            *.tar.gz )
-                initializeVariable SRC_TYPE "tar.gz" ;;
-            *.tar.bz2 )
-                initializeVariable SRC_TYPE "tar.bz2" ;;
+            *.tar | *.zip | *.tar.Z | *.tar.gz | *.tgz | *.tar.bz2 )
+                initializeVariable SRC_TYPE "archive" ;;
             cvs )
                 initializeVariable SRC_TYPE "cvs" ;;
             # default is to assume we are using a source directory
@@ -451,244 +664,265 @@ if [ "x$COMMAND" = "xstart" ] ; then
                 initializeVariable SRC_TYPE "dir" ;;
         esac
     fi
+    if [ "x$SRC_TYPE" = "xcvs" ] ; then
+        
+        # save any other cvs export log files
+        if [ -f "${REGRESS_DIR}/$CVS_LOGFILE" ] ; then
+            warn "Moving previous cvs log file [${REGRESS_DIR}/$CVS_LOGFILE] to [${REGRESS_DIR}/${CVS_LOGFILE}.$$]"
+            mv "${REGRESS_DIR}/$CVS_LOGFILE" "${REGRESS_DIR}/${CVS_LOGFILE}.$$"
+            touch "${REGRESS_DIR}/$CVS_LOGFILE"
+        fi
+        
+        # Perform the cvs export
+        if ! eval "cvsExport \"$CVS_TAG\" \"$CVS_ROOT\" \"$REGRESS_DIR\" \"$CVS\" \"${REGRESS_DIR}/${CVS_LOGFILE}\"" ; then
+            bomb "cvs export failed"
+        fi
 
-    #
-    # Verify that the source exists and is readable
-    #
-    if [ ! "x$SRC_TYPE" = "xcvs" ] ; then
-        if [ ! -r "$SOURCE" ] ; then
-            bomb "Unable to read source directory [$SOURCE]"
-        else 
-            # make sure cvs exists and/or is set
-            if [ "x$CVS" = "x" ] ; then
-                bomb "Mode is cvs but no cvs binary was set (use --cvs option)"
-            elif ! $CVS -v > /dev/null 2>&1 ; then
-                bomb "Unable to use cvs [--cvs $CVS]"
+        # now we behave just like if we were given a directory
+        SRC_TYPE="dir"
+        SOURCE="$CVS_TAG"
+    elif [ ! "x$SRC_TYPE" = "xdir" ] ; then
+        unpackArchive "$SOURCE" "${REGRESS_DIR}/${PACKAGE_NAME}"
+        SRC_TYPE="dir"
+        SOURCE="$CVS_TAG"
+    fi
+
+    # everything should be 
+    if [ "x$SRC_TYPE" = "xdir" ] ; then
+        if [ ! -d "$SOURCE" ] ; then
+            if [ ! -d "${LPWD}/${SOURCE}" ] ; then
+                bomb "Source directory [$SOURCE] does not exist"
+            else
+                SOURCE="${LPWD}/${SOURCE}"
             fi
         fi
+        [ ! -r "$SOURCE" ] && bomb "Unable to read source directory [$SOURCE]"
+
+        # link or copy the source into the regression directory if we didn't unarchive there.
+        # this is only significant for sources that are not archived initially since we unpack
+        # into the regression directory
+        if [ ! "x$SOURCE" = "x${REGRESS_DIR}/${PACKAGE_NAME}" ] ; then
+            if [ "x$LINK_OR_COPY" = "xlink" ] ; then
+                ln -s "${SOURCE}" "${REGRESS_DIR}/${PACKAGE_NAME}"
+            else
+                cp -R "${SOURCE}" "${REGRESS_DIR}/${PACKAGE_NAME}"
+            fi
+            [ $? != 0 ] && bomb "Source preparation failed (for ${REGRESS_DIR}/${PACKAGE_NAME})"
+        fi
+    else
+        bomb "Should never reach this line (verifying that the source exists and is readable)"
     fi
+
+#
+# validate stop command settings
+#
+elif [ "x$COMMAND" = "xstop" ] ; then
+    log "stop command unimplemented"
+#
+# validate restart command settings
+#
+elif [ "x$COMMAND" = "xrestart" ] ; then
+    log "restart command unimplemented"
+#
+# validate status command settings
+#
+elif [ "x$COMMAND" = "xstatus" ] ; then
+    log "status command unimplemented"
+else
+    bomb "Should never reach this line (we lost a valid command when validating command settings)"
+fi
+
+
+###
+# HANDLE REMOTE ACTIONS
+#######################
+#
+# for non-localhost run, we log to the master logfile.  instead we log
+# to a file in the .regress dir per convention (we can override with param)
+if [ ! "x$REGRESS_SYSTEM" = "xlocalhost" ] ; then
+    # save variable values that may get overridden with a systems file
+    if [ ! "x$NAME" = "x" ] ; then __NAME="$NAME" ; fi
+    if [ ! "x$USER" = "x" ] ; then __USER="$USER" ; fi
+    if [ ! "x$TRANSPORT" = "x" ] ; then __TRANSPORT="$TRANSPORT" ; fi
+    if [ ! "x$REGRESS_DIR" = "x" ] ; then __REGRESS_DIR="$REGRESS_DIR" ; fi
 
     #
-    #  Make sure the regression directory exists and is writeable
+    # iterate over the systems list
     #
-    if [ ! -d "$REGRESS_DIR" ] ; then
-        warn "regression directory [$REGRESS_DIR] does not exist"
-        log "Creating [$REGRESS_DIR]"
-        mkdir -m 700 -p $REGRESS_DIR
-        if [ ! -d "$REGRESS_DIR" ] ; then
-            bomb "Unable to create [$REGRESS_DIR]"
-        fi
-    fi
-    if [ ! -w "${REGRESS_DIR}/." ] ; then
-        bomb "unable to write to [$REGRESS_DIR]"
-    fi
-
-fi
-
-
-#
-# make sure the SYSTEMS_D and TESTS_D directories exist
-#
-if [ ! -d "$SYSTEMS_D" ] ; then
-    warn "systems directory [$SYSTEMS_D] does not exist"
-elif [ ! -r "$SYSTEMS_D" ] ; then
-    warn "systems directory [$SYSTEMS_D] is not readable"
-fi
-if [ ! -d "$TESTS_D" ] ; then
-    warn "tests directory [$TESTS_D] does not exist"
-elif [ ! -r "$TESTS_D" ] ; then
-    warn "tests directory [$TESTS_D] is not readable"
-fi
-
-#
-# expand "all" keyworded system and test lists
-#
-if [ "x$REGRESS_SYSTEM" = "xall" ] ; then
-    systems="`ls -A $SYSTEMS_D`"
-    REGRESS_SYSTEM=""
-    for SYS in $systems ; do
-        # do not have to be executable
-        if [ -f "${SYSTEMS_D}/${SYS}" ] ; then
-            REGRESS_SYSTEM="$REGRESS_SYSTEM $SYS"
-        fi
-    done
-fi
-if [ "x$REGRESS_TEST" = "xall" ] ; then
-    tests="`ls -A $TESTS_D`"
-    REGRESS_TST=""
-    for TST in $tests ; do
-        # have to be executable
-        if [ -f "${TESTS_D}/${TST}" ] && [ -x "${TESTS_D}/${SYS}" ] ; then
-            REGRESS_TEST="$REGRESS_TEST $TST"
-        fi
-    done
-fi
-
-#
-# validate our systems list
-#
-if [ ! "x$NAME" = "x" ] ; then __NAME="$NAME" ; fi
-NEW_REG_SYS=""
-for sys in $REGRESS_SYSTEM ; do
-    if [ ! "x$sys" = "xlocalhost" ] ; then
+    alreadyBuilt="no"
+    for sys in $REGRESS_SYSTEM ; do
+        
         #
-        # try to pull a NAME value from a systems file if one exists
+        # pull any override values from a systems file if one exists
         #
         unset NAME
-        if [ -r "${SYSTEMS_D}/${sys}" ] ; then
-            loadResourceFile "${SYSTEMS_D}/$sys"
-        fi
+        unset USER
+        unset TRANSPORT
+        unset REGRESS_DIR
+        [ -r "${SYSTEMS_D_WITH_PATH}/${sys}" ] && loadResourceFile "${SYSTEMS_D_WITH_PATH}/$sys"
         initializeVariable NAME "$sys"
+        initializeVariable USER "$__USER"
+        initializeVariable TRANSPORT "$__TRANSPORT"
+        initializeVariable REGRESS_DIR "$__REGRESS_DIR"
 
-        if hostIsAlive $NAME ; then
-            NEW_REG_SYS="$NEW_REG_SYS $NAME"
+        if [ "x$NAME" = "xlocalhost" ] ; then
+            FOUND_LOCALHOST=1
+            continue
+        fi
+
+        #
+        # validate our systems list (that hosts are alive)
+        #
+        if ! hostIsAlive $NAME ; then
+            warn "Hostname $NAME did not respond, trying $sys"
+        elif hostIsAlive $sys ; then
+            warn "Hostname $sys is responding, using $sys instead of $NAME"
+            NAME=$sys
         else
-            # try the name given
-            if hostIsAlive $sys ; then
-                warn "Using $sys instead of $NAME (host [$NAME] did not respond)"
-                NEW_REG_SYS="$NEW_REG_SYS $sys"
+            warn "host $sys is also not responding, skipping"
+            continue
+        fi
+
+
+        # 
+        # handle the start command special
+        ###
+        if [ "x$COMMAND" = "xstart" ] ; then
+            #
+            # get the regression scripts we are running to the remote host
+            #
+            if [ "x$TRANSPORT" = "xnfs" ] ; then
+                bomb "unimplemented"
             else
-                warn "host $sys is not responding, skipping"
+                ssh ${USER}@${HOST} "mkdir \"${REGRESS_DIR}/.regress-${NAME}\""
+                ssh ${USER}@${HOST} "ln -s \"${REGRESS_DIR}/${PACKAGE_NAME}\" \"${REGRESS_DIR}/.regress-${NAME}/${PACKAGE_NAME}\""
+                ssh ${USER}@${HOST} "mkdir \"${REGRESS_DIR}/.regress-${NAME}/${PACKAGE_NAME}/.regress.`uname -s`\""
+                scp -R ./* "${USER}@${HOST}:${REGRESS_DIR}/.regress-${NAME}/${PACKAGE_NAME}/.regress.`uname -s`"
             fi
+
+            #
+            # if the transport is nfs, we can invoke as a directory building in place
+            # otherwise we need to package up the archive and send it as a tar.gz via ssh
+            #
+            if [ "x$TRANSPORT" = "xnfs" ] ; then
+                bomb "unimplemented"
+            else
+                if [ "x$alreadyBuilt" = "xno" ] ; then
+                    # archiveDirectory ${REGRESS_DIR}/${PACKAGE_NAME} ${REGRESS_DIR}/${PACKAGE_NAME}.tar.gz
+#                    tar cvf "${REGRESS_DIR}/${PACKAGE_NAME}.tar.gz" "${REGRESS_DIR}/${PACKAGE_NAME}"
+                    scp -R "${REGRESS_DIR}/${PACKAGE_NAME}" "${USER}@${HOST}:${REGRESS_DIR}/.regress-${NAME}/${PACKAGE_NAME}"
+                    alreadyBuilt="yes"
+                fi
+            fi
+
+        #
+        # handle stop|restart|settings command
+        ###
+        else
+            bomb "spawn regression test on remote host"
         fi
-    # make sure someone did not throw a localhost definition into the systems dir
-    else
-        if [ -f "${SYSTEMS_D}/localhost" ] ; then
-            warn "Ignoring localhost file in system directory [$SYSTEMS_D]"
-        fi
 
-        # purposely do not try to validate localhost (may not have ping or network)
-        NEW_REG_SYS="$NEW_REG_SYS $sys"
-    fi
-done
-# restore the previous value of NAME
-if [ ! "x${__NAME}" = "x" ] ; then NAME="${__NAME}" ; unset __NAME ; fi
-
-REGRESS_SYSTEM="$NEW_REG_SYS"
-if [ "x$REGRESS_SYSTEM" = "x" ] ; then
-    bomb "No systems are alive to perform regression testing\n\t(bad name lookup or no ping?)"
-fi
-
-
-#
-# begin to build a log
-###
-#
-# until we actually hold a lock, we do not write to a log file that may be in use
-# by another regression script that we won't be able to capture.
-# in the meantime, we write to a tempfile based on our pid and hostname
-#
-# we do not use the LOG variable just so the user still manually override
-#
-TLOG="${REGRESS_DIR}/.temp-regression-$$-${HOSTNAME}.log"
-
-if [ -f TLOG ] ; then
-    bomb "unexpected name collision with existing temp regression log [$TLOG]"
-fi
-touch "$TLOG"
-export LOG=$TLOG
-
-log "R E G R E S S I O N   S U I T E" $TLOG
-log "===============================" $TLOG
-log "Running [$0] with PID [$$] from [$LPWD] on [$HOSTNAME]" $TLOG
-log "Date is [`date`]" $TLOG
-log "Settings:" $TLOG
-regressionSettings $TLOG
-if [ ! "x$DEBUG" = "x" ] ; then
-    log "Private Settings:" $TLOG
-    log "\tLPWD=$LPWD" $TLOG
-    log "\tHOSTNAME=$HOSTNAME" $TLOG
-    log "\tLOG=$LOG" $TLOG
-fi
-
-bomb "done validing for now"
-
-# from here on we need a lock to avoid nfs and multiple run clobbering
-
-#
-# acquire the precious lock
-###
-if ! eval "acquireLock regression $WAIT_FOR_LOCK_TIMEOUT 60 $REGRESS_DIR" ; then
-    bomb "Unable to obtain regression.lock" $TLOG
-fi
-
-
-###
-# PERFORM ACTIONS
-#################
-
-# WE ARE NOW LOCKED AND LOADED
-# now that we have the lock, from here on out we need to release the lock and exit
-# politely.  cleanup/unlock should be called prior to any exit
-
-#
-# safely dump our temp log file to the single regression log file, keeping a backup
-# of any previously existing log file
-#
-if [ -f ${REGRESS_DIR}/$LOGFILE ] ; then
-    if [ ! "x$CLOBBER_FIRST" = x1 ] ; then
-	mv ${REGRESS_DIR}/$LOGFILE ${REGRESS_DIR}/${LOGFILE}.$$
-	warn "Moving previous regression log file [${REGRESS_DIR}/$LOGFILE] to [${REGRESS_DIR}/${LOGFILE}.$$]" $TLOG
-    else
-	rm ${REGRESS_DIR}/$LOGFILE
-	log "Clobbered previous regression log file" $TLOG
-    fi
-fi
-touch ${REGRESS_DIR}/${LOGFILE}
-if [ -w ${REGRESS_DIR}/${LOGFILE} ] ; then
-    cat $TLOG >> ${REGRESS_DIR}/${LOGFILE}
-else
-    bomb "unable to write log file [${REGRESS_DIR}/${LOGFILE}]"
-fi
-rm $TLOG
-LOG=${REGRESS_DIR}/$LOGFILE ; export LOG
-
-#
-# clean out the contents of the directory
-# delete everything except the current log file
-#
-if [ x$CLOBBER_FIRST = x1 ] ; then
-    log "Cleaning out $REGRESS_DIR"
-    for ENTRY in `ls -A $REGRESS_DIR` ; do
-	if [ ! "x$ENTRY" = "x$LOGFILE" ] && [ ! "x$ENTRY" = "xregression.lock" ] ; then
-	    if [ ! "x$DEBUG" = "x" ] ; then log "Deleting [${REGRESS_DIR}/${ENTRY}]" ; fi
-	    rm -rf "${REGRESS_DIR}/${ENTRY}"
-	    if [ $? != 0 ] ; then
-		bomb "Failure cleaning out regression directroy $REGRESS_DIR"
-	    fi
-	fi
+        bomb !!!
     done
+
+    # restore the previous variable values
+    if [ ! "x${__NAME}" = "x" ] ; then NAME="${__NAME}" ; unset __NAME ; fi
+    if [ ! "x${__USER}" = "x" ] ; then USER="${__USER}" ; unset __USER ; fi
+    if [ ! "x${__TRANSPORT}" = "x" ] ; then TRANSPORT="${__TRANSPORT}" ; unset __TRANSPORT ; fi
+    if [ ! "x${__REGRESS_DIR}" = "x" ] ; then REGRESS_DIR="${__REGRESS_DIR}" ; unset __REGRESS_DIR ; fi
 fi
 
-# safely dump our temp log file to the single regression log file
-if [ -f ${REGRESS_DIR}/$CVS_LOGFILE ] ; then
-    warn "Moving previous cvs log file [${REGRESS_DIR}/$CVS_LOGFILE] to [${REGRESS_DIR}/${CVS_LOGFILE}.$$]"
-    mv ${REGRESS_DIR}/$CVS_LOGFILE ${REGRESS_DIR}/${CVS_LOGFILE}.$$
-    touch ${REGRESS_DIR}/$CVS_LOGFILE
+
+
+###
+# HANDLE LOCALHOST ACTIONS
+##########################
+#
+# localhost behaviour is, in a sense, a special case as it does not involve
+# any of the management intrinsic to a remote run.  It basically means 
+# perform the requested action now.
+if [ "x$REGRESS_SYSTEM" = "xlocalhost" ] || [ "x$FOUND_LOCALHOST" = "x1" ] ; then
+
+    # move the tests.d contents to the regression dir
+    [ ! "x${TESTS_D_WITH_PATH}" = "x${REGRESS_DIR}/$TESTS_D" ] && cp -R "${TESTS_D_WITH_PATH}" "${REGRESS_DIR}/$TESTS_D"
+    # validate that the tests are in place
+    [ ! -r "${REGRESS_DIR}/${TESTS_D}/library" ] && bomb "Unable to validate that tests are in place (no library file)"
+
+    # save our previous working directory for the sake of the scripts that may misbehave or leave junk
+    __PPWD="`pwd`"
+    cd "${REGRESS_DIR}"
+    for tst in $REGRESS_TEST ; do
+        log "Running $tst $COMMAND"
+        log `${REGRESS_DIR}/${TESTS_D}/${tst} $COMMAND` "${REGRESS_DIR}/${tst}.log"
+    done
+    # restore the previous working directory 
+    cd "$__PPWD"
+
+# end localhost run
 fi
 
+
+###
+# COMMAND CLEAN-UP
+##################
 #
-# Get a copy of the cad package
+# handle start
 #
-log "Starting cvs export..."
-log "Running [$CVS -q -d $CVS_ROOT export -D today -d $REGRESS_DIR -N $CVS_TAG >> ${REGRESS_DIR}/${CVS_LOGFILE} 2>&1]"
-$CVS -q -d $CVS_ROOT export -D today -d $REGRESS_DIR -N $CVS_TAG >> ${REGRESS_DIR}/$CVS_LOGFILE 2>&1
-# make sure cvs export exited nicely
-if [ $? != 0 ] ; then 
-    bomb "cvs export failed" "${REGRESS_DIR}/${CVS_LOGFILE}"
+if [ "x$COMMAND" = "xstart" ] ; then
+    #
+    # release that precious lock that we acquired earlier
+    #
+    releaseLock regression $REGRESS_DIR
 else
-    log "OK: cvs export completed" "${REGRESS_DIR}/${CVS_LOGFILE}"
+    bomb "other commands unimplemented"
 fi
 
-#
-# Touch a file for each architecture that we support.  The clients wait for
-# this file to be created before starting their build.
-#
-for ARCH in m4i64 m4i65 7d fbsd li sun5; do
-    releaseSemaphore start_${ARCH} $REGRESS_DIR
-done
 
-# done with the critical part, return the lock
-releaseLock regression $REGRESS_DIR
 
-log "Done $0"
+log "OK Done $0"
+exit 0
+
+
+bomb "previous remote implementation of localhost running
+    #
+    # creation of the .regress dir kind of insinuates that the tests.d was copied, make sure
+    #
+    if [ ! -d "${REGRESS_DIR}/.regress-${HOSTNAME}/${TESTS_D}" ] ; then
+
+        #
+        # copy the regression scripts into a runnable location in the regression directory
+        #
+        if [ ! -d "${REGRESS_DIR}/.regress-$HOSTNAME" ] ; then
+            mkdir "${REGRESS_DIR}/.regress-$HOSTNAME"
+            if [ $? != 0 ] ; then bomb "Unable to create directory [$REGRESS_DIR/.regress-$HOSTNAME]" ; fi
+        fi
+        if [ ! -w "${REGRESS_DIR}/.regress-$HOSTNAME" ] ; then
+            bomb "Unable to write to directory [$REGRESS_DIR/.regress-$HOSTNAME]"
+        fi
+        if [ ! -d "${REGRESS_DIR}/.regress-${HOSTNAME}/$TESTS_D" ] ; then
+            mkdir "${REGRESS_DIR}/.regress-${HOSTNAME}/$TEST_D"
+            if [ $? != 0 ] ; then bomb "Unable to create directory [$REGRESS_DIR/.regress-$HOSTNAME/$TESTS_D]" ; fi
+        fi
+        if [ ! -w "${REGRESS_DIR}/.regress-${HOSTNAME}/$TESTS_D" ] ; then
+            bomb "Unable to write to directory [$REGRESS_DIR/.regress-$HOSTNAME/$TESTS_D]"
+        fi
+        
+        ln -s "${REGRESS_DIR}/${PACKAGE_NAME}" "${REGRESS_DIR}/.regress-${HOSTNAME}/$PACKAGE_NAME"
+        # move the tests.d contents to here 
+        if [ ! "x${TESTS_D_WITH_PATH}" = "x${REGRESS_DIR}/.regress-${HOSTNAME}/$TESTS_D" ] ; then
+            cp -R "${TESTS_D_WITH_PATH}" "${REGRESS_DIR}/.regress-${HOSTNAME}/$TESTS_D"
+        fi
+
+    # we already did the prepwork earlier
+    else
+
+        # save our previous working directory for the sake of the scripts that may misbehave or leave junk
+        __PPWD="`pwd`"
+        cd "${REGRESS_DIR}/.regress-$HOSTNAME"
+        for tst in $REGRESS_TEST ; do
+            "./${TESTS_D}/$tst" $COMMAND > "${tst}.log" 2>&1 &
+            log "Running $tst $COMMAND"
+        done
+        # restore the previous working directory 
+        cd "$__PPWD"
+    fi
