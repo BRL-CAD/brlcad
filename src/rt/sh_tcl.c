@@ -27,17 +27,14 @@
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-
 #include "common.h"
-
-
 
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "tcl.h"
@@ -49,7 +46,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 
+
 extern struct mfuncs	*mfHead;	/* rt/view.c */
+
 
 /*
  *			S H _ D I R E C T C H A N G E _ R G B
@@ -76,7 +75,7 @@ sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, char **
 	g = atoi(argv[3+1]) / 255.;
 	b = atoi(argv[3+2]) / 255.;
 
-	rtip = (struct rt_i *)atoi(argv[1]);
+	rtip = (struct rt_i *)atol(argv[1]);
 	RT_CK_RTI_TCL(interp, rtip);
 
 	if( rtip->needprep )  {
@@ -136,7 +135,7 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, char
 		return TCL_ERROR;
 	}
 
-	rtip = (struct rt_i *)atoi(argv[1]);
+	rtip = (struct rt_i *)atol(argv[1]);
 	RT_CK_RTI_TCL(interp, rtip);
 
 	if( rtip->needprep )  {
