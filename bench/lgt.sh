@@ -47,6 +47,9 @@ if ! test -f "$expected" ; then
   exit 1
 fi
 
+# force locale setting to C so things like date output as expected
+LC_ALL=C
+
 LGT="$expected"
 DB="$path_to_lgt_sh/../db"
 

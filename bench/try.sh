@@ -42,6 +42,9 @@
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 path_to_run_sh=`dirname $0`
 
+# force locale setting to C so things like date output as expected
+LC_ALL=C
+
 # sets MACHINE, UNIXTYPE, HAS_TCP
 eval `machinetype.sh -b 2> /dev/null`	
 

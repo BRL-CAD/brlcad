@@ -50,6 +50,9 @@ if test "x$1" = x ; then
   exit 1
 fi
 
+# force locale setting to C so things like date output as expected
+LC_ALL=C
+
 #  Save three args, because arg list will be reused below.
 #  They may have embedded spaces in them.
 HOST="$1"

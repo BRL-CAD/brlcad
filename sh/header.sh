@@ -60,6 +60,9 @@
 LICE="$1"
 FILE="$2"
 
+# force locale setting to C so things like date output as expected
+LC_ALL=C
+
 
 ##################
 # validate input #

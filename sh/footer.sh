@@ -60,6 +60,8 @@ tab_width=8
 # what level indentation?
 indentation=4
 
+# force locale setting to C so things like date output as expected
+LC_ALL=C
 
 ##################
 # validate input #

@@ -49,6 +49,9 @@ ARG_2="$2"
 ARG_4="$4"
 CONFIG_TIME="$ARGS"
 
+# force locale setting to C so things like date output as expected
+LC_ALL=C
+
 # make sure an argument is given
 if test "x$CONFIG_TIME" = "x" ; then
 	usage="Usage: $0 time"

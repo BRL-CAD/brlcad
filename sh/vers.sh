@@ -49,6 +49,9 @@
 
 path_to_vers_sh="`dirname $0`"
 
+# force locale setting to C so things like date output as expected
+LC_ALL=C
+
 if test $# -gt 0 ; then
 	VARIABLE="$1"
 	shift

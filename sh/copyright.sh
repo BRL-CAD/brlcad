@@ -73,6 +73,9 @@ if [ ! -d "$findgen" ] ; then
 
 fi  
 
+# force locale setting to C so things like date output as expected
+LC_ALL=C
+
 # generate a list of files to check, excluding directories that are
 # not BRL-CAD sources, CVS, or start with a dot.
 files="`find $findgen -type f | \
