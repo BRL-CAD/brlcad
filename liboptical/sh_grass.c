@@ -64,7 +64,7 @@ struct grass_specific grass_defaults = {
 	1.0,		/* size */
 	{ 1.0, 1.0, 1.0 },	/* vscale */
 	{ 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
-	0.45,				/* grass_thresh */
+	0.75,				/* grass_thresh */
 	{ 1.0, 1.0, 1.0 },		/* grass_delta */
 	{ 0.0, 0.0, 0.0 },		/* grass_min */
 	{ 0.0, 0.0, 0.0 },		/* grass_max */
@@ -246,13 +246,18 @@ char			*dp;	/* ptr to the shader-specific struct */
 {
 	register struct grass_specific *grass_sp =
 		(struct grass_specific *)dp;
-	point_t in_pt, out_pt, dist_v, pt;
+	point_t in_pt, out_pt;	/* model space in/out points */
+	double in_radius, out_radius;	/* beam radius, model space */
+	int step_cnt;
+	double step_dist, seg_dist;
+	vect_t dist_v;
+	point_t pt;
 	double val, dist, delta;
 	double	step_delta;/* distance between sample points, texture space */
 	fastf_t	model_step; /* distance between sample points, model space */
 	int	steps;	   /* # of samples along ray/solid intersection */
-	int	i;
-	double	alt;
+	int	i, octaves;
+	double	alt, r, radius;
 
 	/* check the validity of the arguments we got */
 	RT_AP_CHECK(ap);
@@ -261,86 +266,114 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_struct_print( "grass_render Parameters:", grass_print_tab, (char *)grass_sp );
-		
 	}
-	/* We are performing the shading in "region" space, we must 
-	 * transform the hit point from "model" space to "region" space.
-	 * See the call to db_region_mat in grass_setup().
-	 */
-	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	MAT4X3PNT(in_pt, grass_sp->m_to_r, pt);
 
-	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
-	MAT4X3PNT(out_pt, grass_sp->m_to_r, pt);
+	/* figure out the in/out points, and the radius of the beam
+	 * We can work in model space since grass isn't likely to be moving
+	 * around the scene.
+	 */
+	VJOIN1(in_pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+	in_radius = ap->a_rbeam + pp->pt_inhit->hit_dist * ap->a_diverge;
+
+	VJOIN1(out_pt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+	out_radius = ap->a_rbeam + pp->pt_outhit->hit_dist * ap->a_diverge;
 
 	if( rdebug&RDEBUG_SHADE) {
-		VPRINT("in_pt", in_pt);
-		VPRINT("out_pt", out_pt);
+		bu_log(" in_pt: %g %g %g  radius: %g\n", V3ARGS(in_pt), in_radius);
+		bu_log("out_pt: %g %g %g  radius: %g\n", V3ARGS(out_pt), out_radius);
 	}
 
-	/* get the ray/region intersection vector (in region space)
-	 * and compute thickness of solid along ray path
-	 */
-	VSUB2(dist_v, out_pt, in_pt);
-
-	/* The noise field used by the noise_turb and noise_fbm routines
-	 * has a maximum frequency of about 1 cycle per integer step in
-	 * noise space.  Each octave increases this frequency by the
-	 * "lacunarity" factor.  To sample this space adequately we need 
-	 *
-	 *	4 samples per integer step for the first octave,
-	 *	lacunarity * 4 samples/step for the second octave,
-	 * 	lacunarity^2 * 4 samples/step for the third octave,
-	 * 	lacunarity^3 * 4 samples/step for the forth octave,
-	 *
-	 * so for a computation with 4 octaves we need something on the
-	 * order of lacunarity^3 * 4 samples per integer step in noise space.
+	/* XXX the radius of the beam should give us an idea 
+	 * of how many octaves of noise we need to evaluate.
 	 */
 
-	steps = pow(grass_sp->lacunarity, grass_sp->octaves-1) * 4;
-	step_delta = MAGNITUDE(dist_v) / (double)steps;
-	model_step = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist) /
-		(double)steps;
 
-	VUNITIZE(dist_v);
-	VMOVE(pt, in_pt);
+
+	seg_dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	step_cnt = seg_dist / 10; /* scale dist to cm units,  1_sample/cm */
+
+	/* get actual length of step */
+	step_dist = seg_dist / (double)step_cnt; 
 
 	swp->sw_transmit = 1.0;
-	
-	for (i=0 ; i < steps ; i++ ) {
-		/* compute the next point in the cloud space */
-		VJOIN1(pt, in_pt, i*step_delta, dist_v);
+
+	if( rdebug&RDEBUG_SHADE) {
+		bu_log("seg_dist: %g\n", seg_dist);
+		bu_log("step_cnt %d  step_dist %g\n", step_cnt, step_dist);
+	}
+
+	for (i=0 ; i < step_cnt ; i++ ) {
+		dist = pp->pt_inhit->hit_dist + i * step_dist;
+		VJOIN1(pt, ap->a_ray.r_pt, dist, ap->a_ray.r_dir);
+		radius = ap->a_rbeam + dist * ap->a_diverge;
+
+		if ( rdebug&RDEBUG_SHADE) {
+			bu_log("pt %g %g %g radius %g\n", 
+				V3ARGS(pt), radius);
+		}
+
+		octaves = 1;
+		for (r = radius ; r < grass_sp->size ; r *= grass_sp->lacunarity)
+			octaves ++;
+
+		if ( rdebug&RDEBUG_SHADE) {
+			bu_log("octaves %d\n", octaves);
+		}
 
 		alt = pt[Z];
-
 		pt[Z] = 0.0;
-		val = bn_noise_fbm(pt, grass_sp->h_val, 
-			grass_sp->lacunarity, grass_sp->octaves );
+		VSCALE(pt, pt, 1.0/grass_sp->size);
+		val = bn_noise_fbm(pt, grass_sp->h_val,
+			grass_sp->lacunarity, octaves);
 
+		if ( rdebug&RDEBUG_SHADE) {
+			bu_log("value %g\n", val);
+		}
 
 		if (val > grass_sp->grass_thresh) {
 			swp->sw_transmit = 0.0;
 			break;
 		}
-		if (alt < 1008.0 && val < -grass_sp->grass_thresh) {
+		if (alt < 100.0 && val < -grass_sp->grass_thresh) {
 			swp->sw_transmit = 0.0;
 			break;
 		}
 	}
-
 
 	/* grass is basically a green object with transparency */
 	if( swp->sw_xmitonly )  return 1;
 
 	if (swp->sw_transmit == 0.0) {
 		/* hit a blade of grass */
+		/* compute new random normal */
+		vect_t N;
+
+		pt[Z] = (alt/grass_sp->size) * 0.125;
+		bn_noise_vec(pt, N);
+		if ( rdebug&RDEBUG_SHADE) {
+			bu_log("Old Normal %g %g %g\n",
+				V3ARGS(swp->sw_hit.hit_normal));
+		}
+		if (VDOT(N, ap->a_ray.r_dir) > 0.0) {
+			VREVERSE(swp->sw_hit.hit_normal, N);
+		} else {
+			VMOVE(swp->sw_hit.hit_normal, N);
+		}
+		VUNITIZE(swp->sw_hit.hit_normal);
+		if ( rdebug&RDEBUG_SHADE) {
+			bu_log("New Normal %g %g %g\n",
+				V3ARGS(swp->sw_hit.hit_normal));
+		}
 	} else {
-		/* missed everything */
+		/* missed everything XXX shoot a ray on through */
 		swp->sw_transmit = 1.0;
+#if 1
 		VSETALL(swp->sw_color, 0.0);
-		VSETALL(swp->sw_basecolor, 1.0);
+		VSETALL(swp->sw_basecolor, 0.0);
+#endif		
 		swp->sw_refrac_index = 1.0;
 		swp->sw_reflect = 0.0;
+
 	}
 	/* shader must perform transmission/reflection calculations
 	 *
