@@ -43,7 +43,7 @@
 	nurb_interp.o nurb_reverse.o nurb_tess.o nurb_trim_util.o
 
 
-#define PLOT_OBJ	plot3.o htond.o
+#define PLOT_OBJ	plot3.o
 
 /* Oddly, this line needs to be present to keep IBM AIX cpp happy. */
 #ifdef FAST_SQRT
