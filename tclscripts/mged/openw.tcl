@@ -200,13 +200,12 @@ if {![info exists mged_browser]} {
 				if {[file exists $path/netscape]} {
 					set mged_browser $path/netscape
 					break;
-				} elseif { [file exists $path/open] } {
-					# open is the Darwin command equivalent to double-clicking a file icon (an open the file with the system default browser)
-					set mged_browser $path/open
-					break;
 				} elseif { [file exists $path/mozilla] } {
 					set mged_browser $path/mozilla
 					break;
+				} elseif { ($tcl_platform(os) == "Darwin") && [file exists $path/open] } {
+				        set mged_browser $path/open
+				        break
 				}
 			}
 		}
@@ -238,11 +237,11 @@ bind Listbox <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Scale <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 
 # This causes cad_dialog to use mged_wait instead of tkwait
-set tkPriv(wait_cmd) mged_wait
+set ::tk::Priv(wait_cmd) mged_wait
 
 # Used throughout the GUI as the dialog window name.
 # This helps prevent window clutter.
-set tkPriv(cad_dialog) .mged_dialog
+set ::tk::Priv(cad_dialog) .mged_dialog
 
 proc gui { args } {
 	global tmp_hoc

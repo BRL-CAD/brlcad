@@ -6,7 +6,7 @@
 
 package require Itcl
 package require Itk
-package require Iwidgets 3.0
+package require Iwidgets
 
 namespace eval RtWizard {
 
@@ -105,7 +105,7 @@ namespace eval RtWizard {
 	    method getIntensity {} {return $intensity}
 	    method getEyeModel {}
 	    method getRegionColorFlag {} {return $useRegionColors}
-	    method getOcclusionMode {} {return $occMode}
+	    method getOcclusionMode {}
 	}
     
 	protected {
@@ -467,6 +467,7 @@ namespace eval RtWizard {
 		-in $itk_component(mgedFrame) \
 		 -anchor e \
 		 -expand 1 -fill both 
+
 	#
 	# Create menus - use the singleton
 	#
@@ -1341,14 +1342,11 @@ namespace eval RtWizard {
 	}
 
 	$itk_component(occModeRB) add "mode1" \
-		-text "Draw foreground lines only" \
-		-value "1"
+		-text "Draw foreground lines only"
 	$itk_component(occModeRB) add "mode2" \
-		-text "Also draw non-line surfaces in the background color" \
-		-value "2"
+		-text "Also draw non-line surfaces in the background color"
 	$itk_component(occModeRB) add "mode3" \
-		-text "Dither the non-line surfaces (semi-transparent)" \
-		-value "3"
+		-text "Dither the non-line surfaces (semi-transparent)"
 	$itk_component(occModeRB) select mode1
 
 	$itk_component(occModeDialog) hide Help
@@ -1397,6 +1395,18 @@ namespace eval RtWizard {
 	$itk_component(occModeRB) select $oldOccMode
 	$itk_component(occModeDialog) deactivate
 	updateStatus
+    }
+
+    #
+    # getOcclusionMode
+    #
+    ::itcl::body MGEDpage::getOcclusionMode {} {
+	switch $occMode {
+	    "mode1" { return 1 }
+	    "mode2" { return 2 }
+	    "mode3" { return 3 }
+	}
+	return 0
     }
 
     #--------------------#

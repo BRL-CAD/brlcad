@@ -29,13 +29,13 @@ proc build_edit_menu_all { type } {
     global mged_players
     global mged_gui
     global mouse_behavior
-    global tkPriv
+    global ::tk::Priv
 
     set win [winset]
     set id [get_player_id_dm $win]
 
     if {[opendb] == ""} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -47,7 +47,7 @@ proc build_edit_menu_all { type } {
 
     set paths [_mged_x -1]
     if {![llength $paths]} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"No primitives are being displayed!"\
 		"No primitives are being displayed!"\
 		"" 0 OK
@@ -67,7 +67,7 @@ proc ray_build_edit_menu { type x y } {
     global mged_players
     global mged_gui
     global mouse_behavior
-    global tkPriv
+    global ::tk::Priv
 
     set win [winset]
     set id [get_player_id_dm $win]
@@ -81,7 +81,7 @@ proc ray_build_edit_menu { type x y } {
     set paths [ray_get_info $ray in path]
 
     if {![llength $paths]} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"Nothing was hit!"\
 		"Nothing was hit!"\
 		"" 0 OK

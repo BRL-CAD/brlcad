@@ -724,7 +724,7 @@ proc text_scroll { w x y } {
 }
 
 proc selection_begin { w x y } {
-    $w mark set anchor [tkTextClosestGap $w $x $y]
+    $w mark set anchor [::tk::TextClosestGap $w $x $y]
     $w tag remove sel 0.0 end
 
     if {[$w cget -state] == "normal"} {
@@ -733,7 +733,7 @@ proc selection_begin { w x y } {
 }
 
 proc selection_add { w x y } {
-    set cur [tkTextClosestGap $w $x $y]
+    set cur [::tk::TextClosestGap $w $x $y]
 
     if [catch {$w index anchor}] {
 	$w mark set anchor $cur
@@ -753,18 +753,18 @@ proc selection_add { w x y } {
 }
 
 proc select_word { w x y } {
-    set cur [tkTextClosestGap $w $x $y]
+    set cur [::tk::TextClosestGap $w $x $y]
 
     if [catch {$w index anchor}] {
 	$w mark set anchor $cur
     }
 
     if [$w compare $cur < anchor] {
-	set first [tkTextPrevPos $w "$cur + 1c" tcl_wordBreakBefore]
-	set last [tkTextNextPos $w "anchor" tcl_wordBreakAfter]
+	set first [::tk::TextPrevPos $w "$cur + 1c" tcl_wordBreakBefore]
+	set last [::tk::TextNextPos $w "anchor" tcl_wordBreakAfter]
     } else {
-	set first [tkTextPrevPos $w anchor tcl_wordBreakBefore]
-	set last [tkTextNextPos $w "$cur - 1c" tcl_wordBreakAfter]
+	set first [::tk::TextPrevPos $w anchor tcl_wordBreakBefore]
+	set last [::tk::TextNextPos $w "$cur - 1c" tcl_wordBreakAfter]
     }
 
     $w tag remove sel 0.0 $first
@@ -773,7 +773,7 @@ proc select_word { w x y } {
 }
 
 proc select_line { w x y } {
-    set cur [tkTextClosestGap $w $x $y]
+    set cur [::tk::TextClosestGap $w $x $y]
 
     if [catch {$w index anchor}] {
 	$w mark set anchor $cur
@@ -793,7 +793,7 @@ proc select_line { w x y } {
 }
 
 proc selection_modify { w x y } {
-    tkTextResetAnchor $w @$x,$y
+    ::tk::TextResetAnchor $w @$x,$y
     selection_add $w $x $y
 }
 
@@ -1020,7 +1020,7 @@ proc set_text_key_bindings { id } {
     }
 
     bind $w <Alt-Key> {
-	tkTraverseToMenu %W %A
+	::tk::TraverseToMenu %W %A
 	break
     }
 }

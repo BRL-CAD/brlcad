@@ -29,7 +29,7 @@ namespace eval RtWizard {
     #
     package require Itcl
     package require Itk
-    package require Iwidgets 3.0
+    package require Iwidgets
 
     package require Wizard 1.0
     package require DbPage

@@ -400,15 +400,15 @@ proc over_quit { id } {
 		eval view aet $over_cont($id,aet)
 		eval view eye $over_cont($id,eye)
 	}
-	catch [vdraw delete all]
+    catch {vdraw delete all}
 	vdraw send
 
 	if { $over_cont($id,ray) == "ray" && $over_cont($id,fd) > 0 } {
-		catch [exec kill -9 [lindex $over_cont($id,pid) 0]]
-		catch [close $over_cont($id,fd)]
+	    catch {exec kill -9 [lindex $over_cont($id,pid) 0]}
+	    catch {close $over_cont($id,fd)}
 	}
-	catch [destroy $over_cont($id,dialog_window)]
-	catch [unset over_cont($id,glint_ret)]
+    catch {destroy $over_cont($id,dialog_window)}
+    catch {unset over_cont($id,glint_ret)}
 	destroy $over_cont($id,top)
 }
 
@@ -439,7 +439,7 @@ proc glint_setup { id } {
 # This is the top level entry point
 proc overlap_tool { id } {
     global over_cont comb_control localunit local2base
-    global tkPriv tk_version
+    global ::tk::Priv tk_version
 
     if { [info exists tk_version] == 0 } {
 	puts "Cannot run the overlap tool without Tk loaded"
@@ -688,5 +688,5 @@ proc overlap_tool { id } {
 	set over_cont($id,pid) ""
 	set over_cont($id,length) 0
 	set over_cont($id,overlap_count) 0
-	set over_cont($id,dialog_window) $tkPriv(cad_dialog)
+	set over_cont($id,dialog_window) $::tk::Priv(cad_dialog)
 }

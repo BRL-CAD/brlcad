@@ -12,10 +12,10 @@ proc init_comb { id } {
     global mged_gui
     global comb_control
     global shader_params
-    global tkPriv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -450,13 +450,13 @@ proc comb_ok {id top} {
 proc comb_apply { id } {
     global mged_gui
     global comb_control
-    global tkPriv
+    global ::tk::Priv
 
     set top .$id.comb
     set comb_control($id,comb) [$top.combT get 0.0 end]
 
     if {$comb_control($id,dirty_name) && [db_exist $comb_control($id,name)]} {
-	set ret [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	set ret [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"Warning!"\
 		"Warning: about to overwrite $comb_control($id,name)"\
 		"" 0 OK Cancel]
@@ -468,7 +468,7 @@ proc comb_apply { id } {
 
     if {$comb_control($id,isRegion)} {
 	if {$comb_control($id,id) < 0} {
-	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		    "Bad region id!"\
 		    "Region id must be >= 0"\
 		    "" 0 OK
@@ -476,7 +476,7 @@ proc comb_apply { id } {
 	}
 
 	if {$comb_control($id,air) < 0} {
-	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		    "Bad air code!"\
 		    "Air code must be >= 0"\
 		    "" 0 OK
@@ -485,7 +485,7 @@ proc comb_apply { id } {
 
 	if {$comb_control($id,id) == 0 && $comb_control($id,air) == 0 ||
             $comb_control($id,id) != 0 && $comb_control($id,air) != 0} {
-	    set ret [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	    set ret [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		    "Warning: both region id and air code are set/unset"\
 		    "Warning: both region id and air code are set/unset"\
 		    "" 0 OK Cancel]
@@ -507,7 +507,7 @@ proc comb_apply { id } {
 		$comb_control($id,inherit) $comb_control($id,comb)} comb_error]
 
 	if {$ret} {
-	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) \
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
 		    "comb_apply: Error"\
 		    $comb_error\
 		    "" 0 OK 
@@ -516,7 +516,7 @@ proc comb_apply { id } {
 	set ret [catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) } comb_error ]
 
 	if {$ret} {
-	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) \
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
 		    "comb_apply: Error"\
 		    $comb_error\
 		    "" 0 OK 
@@ -536,7 +536,7 @@ proc comb_apply { id } {
 	    $comb_control($id,comb)} comb_error]
 
     if {$ret} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
 		"comb_apply: Error"\
 		$comb_error\
 		"" 0 OK 
@@ -545,7 +545,7 @@ proc comb_apply { id } {
     set ret [catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) } comb_error ]
 
     if {$ret} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
 	    "comb_apply: Error"\
 	    $comb_error\
 	    "" 0 OK 
@@ -557,12 +557,12 @@ proc comb_apply { id } {
 proc comb_reset { id } {
     global mged_gui
     global comb_control
-    global tkPriv
+    global ::tk::Priv
 
     set top .$id.comb
 
     if {$comb_control($id,name) == ""} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"You must specify a region/combination name!"\
 		"You must specify a region/combination name!"\
 		"" 0 OK
@@ -572,7 +572,7 @@ proc comb_reset { id } {
     set save_isRegion $comb_control($id,isRegion)
     set result [catch {get_comb $comb_control($id,name)} comb_defs]
     if {$result == 1} {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"comb_reset: Error"\
 		$comb_defs\
 		"" 0 OK
@@ -581,7 +581,7 @@ proc comb_reset { id } {
 
     set result [catch {attr get $comb_control($id,name)} comb_attrs]
     if { $result == 1 } {
-	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"comb_reset: Error"\
 		$comb_attrs\
 		"" 0 OK

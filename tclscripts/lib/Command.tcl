@@ -914,7 +914,7 @@ body Command::text_scroll {x y} {
 
 body Command::selection_begin {x y} {
     set w $itk_component(text)
-    $w mark set anchor [tkTextClosestGap $w $x $y]
+    $w mark set anchor [::tk::TextClosestGap $w $x $y]
     $w tag remove sel 0.0 end
 
     if {[$w cget -state] == "normal"} {
@@ -924,7 +924,7 @@ body Command::selection_begin {x y} {
 
 body Command::selection_add {x y} {
     set w $itk_component(text)
-    set cur [tkTextClosestGap $w $x $y]
+    set cur [::tk::TextClosestGap $w $x $y]
 
     if [catch {$w index anchor}] {
 	$w mark set anchor $cur
@@ -945,18 +945,18 @@ body Command::selection_add {x y} {
 
 body Command::select_word {x y} {
     set w $itk_component(text)
-    set cur [tkTextClosestGap $w $x $y]
+    set cur [::tk::TextClosestGap $w $x $y]
 
     if [catch {$w index anchor}] {
 	$w mark set anchor $cur
     }
 
     if [$w compare $cur < anchor] {
-	set first [tkTextPrevPos $w "$cur + 1c" tcl_wordBreakBefore]
-	set last [tkTextNextPos $w "anchor" tcl_wordBreakAfter]
+	set first [::tk::TextPrevPos $w "$cur + 1c" tcl_wordBreakBefore]
+	set last [::tk::TextNextPos $w "anchor" tcl_wordBreakAfter]
     } else {
-	set first [tkTextPrevPos $w anchor tcl_wordBreakBefore]
-	set last [tkTextNextPos $w "$cur - 1c" tcl_wordBreakAfter]
+	set first [::tk::TextPrevPos $w anchor tcl_wordBreakBefore]
+	set last [::tk::TextNextPos $w "$cur - 1c" tcl_wordBreakAfter]
     }
 
     $w tag remove sel 0.0 $first
@@ -966,7 +966,7 @@ body Command::select_word {x y} {
 
 body Command::select_line {x y} {
     set w $itk_component(text)
-    set cur [tkTextClosestGap $w $x $y]
+    set cur [::tk::TextClosestGap $w $x $y]
 
     if [catch {$w index anchor}] {
 	$w mark set anchor $cur
@@ -987,7 +987,7 @@ body Command::select_line {x y} {
 
 body Command::selection_modify {x y} {
     set w $itk_component(text)
-    tkTextResetAnchor $w @$x,$y
+    ::tk::TextResetAnchor $w @$x,$y
     selection_add $x $y
 }
 
@@ -1078,7 +1078,7 @@ body Command::doKeyBindings {} {
     bind $w <Meta-BackSpace> "[code $this doMeta_BackSpace]; break"
 
     bind $w <Alt-Key> {
-	tkTraverseToMenu %W %A
+	::tk::TraverseToMenu %W %A
 	break
     }
 }

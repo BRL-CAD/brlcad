@@ -214,7 +214,7 @@ proc solc_list { w id } {
 
     bind $w.slist.l <ButtonRelease> $new_descr
     bind $w.slist.descr <1> $doit
-    bind $w.slist.l <2> "tkListboxBeginSelect \%W \[\%W index \@\%x,\%y\] ; \
+    bind $w.slist.l <2> "::tk::ListboxBeginSelect \%W \[\%W index \@\%x,\%y\] ; \
 	    $new_descr"
     bind $w.slist <Return> $doit
 }
