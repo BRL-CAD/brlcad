@@ -26,8 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 char *options = "ihoF:";
-extern char *optarg;
-extern int optind, opterr, getopt();
+/* externs.h includes externs for getopt and associated variables */
 
 void	checkgamma();
 
