@@ -305,36 +305,27 @@ char **argv;
 		fb_window( fbp, npts/2, npts/2 );
 	}
 
-	/* Load the trees */
-	def_tree( rtip );
-
 	/* Get some dynamic memory to keep from making malloc sbrk() early */
 	for( x=0; x<npsw; x++ )  {
 		rt_get_pt(&resource[x]);
 		rt_get_seg(&resource[x]);
 		rt_get_bitv(&resource[x]);
 	}
+	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-beginptr );
+	beginptr = sbrk(0);
 
 #ifdef PARALLEL
-#ifdef HEP
-	/* This isn't useful with the Caltech malloc() in most systems,
-	 * but is very helpful with the ordinary malloc(). */
-	rt_free( rt_malloc( (20+npsw)*8192, "worker prefetch"), "worker");
-#endif HEP
-
 	fprintf(stderr,"PARALLEL: npsw=%d\n", npsw );
+#endif PARALLEL
 #ifdef HEP
 	for( x=0; x<npsw; x++ )  {
 		/* This is expensive when GEMINUS>1 */
 		Dcreate( worker, x );
 	}
 #endif HEP
-#endif PARALLEL
-
-	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-beginptr );
-	beginptr = sbrk(0);
 
 	if( !matflag )  {
+		def_tree( rtip );		/* Load the default trees */
 		do_ae( azimuth, elevation );
 		(void)do_frame( curframe );
 	} else if( old_way( stdin ) )  {
@@ -347,6 +338,8 @@ char **argv;
 		 * called by do_cmd().
 		 */
 		while( read_cmd( stdin, cbuf, sizeof(cbuf) ) >= 0 )  {
+			if( rdebug&RDEBUG_PARSE )
+				fprintf(stderr,"cmd: %s\n", cbuf );
 			if( do_cmd( cbuf ) < 0 )  break;
 		}
 		if( curframe < desiredframe )  {
@@ -386,6 +379,9 @@ FILE *fp;
 		return(0);		/* Not old way */
 	}
 	rt_log("Interpreting command stream in old format\n");
+
+	def_tree( ap.a_rt_i );		/* Load the default trees */
+
 	curframe = 0;
 	do {
 		do_frame( curframe++ );
@@ -428,13 +424,14 @@ FILE *fp;
  *
  *  Process "start" command in new format input stream
  */
-cm_start( cmd, arg )
-char *cmd, *arg;
+cm_start( argc, argv )
+int	argc;
+char	**argv;
 {
 	char ibuf[512];
 	int frame;
 
-	frame = atoi(arg);
+	frame = atoi(argv[1]);
 	if( frame >= desiredframe )  {
 		curframe = frame;
 		return(0);
@@ -458,49 +455,69 @@ char *cmd, *arg;
 	return(-1);		/* EOF */
 }
 
-static
-fget( fp, cp, cnt )
-register fastf_t *fp;
-register char *cp;
-register int cnt;
+cm_vsize( argc, argv )
+int	argc;
+char	**argv;
 {
-	while( cnt-- > 0 )  {
-		while( *cp && isspace(*cp) )  cp++;
-		*fp++ = atof(cp);
-		while( *cp && !isspace(*cp) ) cp++;
+	viewsize = atof( argv[1] );
+	return(0);
+}
+
+cm_eyept( argc, argv )
+int	argc;
+char	**argv;
+{
+	register int i;
+
+	for( i=0; i<3; i++ )
+		eye_model[i] = atof( argv[i+1] );
+	return(0);
+}
+
+cm_vrot( argc, argv )
+int	argc;
+char	**argv;
+{
+	register int i;
+
+	for( i=0; i<16; i++ )
+		Viewrotscale[i] = atof( argv[i+1] );
+	return(0);
+}
+
+cm_end( argc, argv )
+int	argc;
+char	**argv;
+{
+	struct rt_i *rtip = ap.a_rt_i;
+
+	if( rtip->HeadRegion == REGION_NULL )  {
+		def_tree( rtip );		/* Load the default trees */
 	}
-}
-
-cm_vsize( cmd, arg )
-char *cmd, *arg;
-{
-	fget( &viewsize, arg, 1 );
-	return(0);
-}
-
-cm_eyept( cmd, arg )
-char *cmd, *arg;
-{
-	fget( eye_model, arg, 3 );
-	return(0);
-}
-
-cm_vrot( cmd, arg )
-char *cmd, *arg;
-{
-	fget( Viewrotscale, arg, 16 );
-	return(0);
-}
-
-cm_end( cmd, arg )
-char *cmd, *arg;
-{
 	if( do_frame( curframe ) < 0 )  return(-1);
 	return(0);
 }
 
-cm_multiview( cmd, arg )
-char *cmd, *arg;
+cm_tree( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct rt_i *rtip = ap.a_rt_i;
+	char outbuf[132];
+	register int i;
+
+	rt_prep_timer();
+	for( i=1; i < argc; i++ )  {
+		if( rt_gettree(rtip, argv[i]) < 0 )
+			fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[i]);
+	}
+	(void)rt_read_timer( outbuf, sizeof(outbuf) );
+	fprintf(stderr,"GETTREE: %s\n", outbuf);
+}
+
+cm_multiview( argc, argv )
+int	argc;
+char	**argv;
 {
 	static int a[] = {
 		-35,
@@ -521,8 +538,9 @@ char *cmd, *arg;
 }
 
 /** experimental animation code ***/
-cm_anim( cmd, arg )
-char *cmd, *arg;
+cm_anim( argc, argv )
+int	argc;
+char	**argv;
 {
 	static struct directory *dir[4];
 	static struct animate a;

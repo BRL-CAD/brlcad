@@ -29,6 +29,7 @@ extern int	rdebug;
 #define RDEBUG_SHOWERR	0x00000004	/* Colorful markers on errors */
 #define RDEBUG_RTMEM	0x00000008	/* Debug librt mem after startup */
 #define RDEBUG_PARALLEL	0x00000010	/* Debug parallelism */
+#define RDEBUG_PARSE	0x00000020	/* Command parsing */
 
 /* These will cause binary debugging output */
 #define RDEBUG_RAYWRITE	0x80000000	/* Ray(5V) view rays to stdout */

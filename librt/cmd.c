@@ -49,6 +49,14 @@ int	len;
 			while( (c = fgetc(fp)) != EOF && c != '\n' )  ;
 			continue;
 		}
+		if( c == '\n' )  {
+			*pos++ = ' ';
+			if( pos >= epos )  {
+				fprintf(stderr, "read_cmd:  buffer overrun\n");
+				return(-1);	/* EOF */
+			}
+			continue;
+		}
 		if( c == ';' )  {
 			*pos++ = '\0';
 			return(0);	/* OK */
@@ -76,50 +84,102 @@ extern int	cm_eyept();
 extern int	cm_vrot();
 extern int	cm_end();
 extern int	cm_multiview();
+extern int	cm_anim();
+extern int	cm_tree();
+
+#define MAXWORDS		32	/* Maximum number of args per command */
 
 struct cmd_tab {
 	char	*ct_cmd;
+	char	*ct_parms;
 	int	(*ct_func)();
+	int	ct_min;		/* min number of words in cmd */
+	int	ct_max;		/* max number of words in cmd */
 };
 static struct cmd_tab cmdtab[] = {
-	"start",	cm_start,
-	"viewsize",	cm_vsize,
-	"eye_pt",	cm_eyept,
-	"viewrot",	cm_vrot,
-	"end",		cm_end,
-	"multiview",	cm_multiview,
-	(char *)0,	0		/* END */
+	"start",	"frame number",	cm_start,	2, 2,
+	"viewsize",	"size in mm",	cm_vsize,	2, 2,
+	"eye_pt",	"xyz of eye",	cm_eyept,	4, 4,
+	"viewrot",	"4x4 matrix",	cm_vrot,	17,17,
+	"end",		"",		cm_end,		1, 1,
+	"multiview",	"",		cm_multiview,	1, 1,
+	"anim",		"path type args", cm_anim,	4, MAXWORDS,
+	"tree",		"treetop(s)",	cm_tree,	2, MAXWORDS,
+	(char *)0,	(char *)0,	0,		0, 0	/* END */
 };
 
 /*
  *			D O _ C M D
+ *
+ *  Slice up input buffer into whitespace separated "words",
+ *  look up the first word as a command, and if it has the
+ *  correct number of args, call that function.
+ *  The input buffer is altered in the process.
+ *
+ *  Expected to return -1 to halt command processing loop.
+ *
+ *  Based heavily on mged/cmd.c by Chuck Kennedy.
  */
 int
-do_cmd( buf )
-register char *buf;
+do_cmd( lp )
+register char *lp;
 {
+	register int	nwords;			/* number of words seen */
 	register struct cmd_tab *tp;
-	register char *cmd;
+	char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */
 
-	/* Strip leading spaces */
-	while( *buf && isspace(*buf) )  buf++;
-	cmd = buf;
+	nwords = 0;
+	cmd_args[0] = lp;
 
-	/* Find end of first keyword */
-	while( *buf && !isspace(*buf) ) buf++;
-	if( *buf != '\0' )  {
-		*buf++ = '\0';
-		/* Skip any leading spaces on arg string */
-		while( *buf && isspace(*buf) )  buf++;
+	if( *lp == '\n' )
+		return(0);		/* No command */
+
+	/* Handle "!" shell escape char so the shell can parse the line */
+	if( *lp == '!' )  {
+		(void)system( lp+1 );
+		return(0);		/* No command */
 	}
-	if( *cmd == '\0' )
-		return(0);		/* null command, OK */
+
+	if( *lp != '\0' && !isspace( *lp ) )
+		nwords++;		/* some arg will be seen, [0] set */
+
+	for( ; *lp != '\0'; lp++ )  {
+		register char	*lp1;
+
+		if( !isspace( *lp ) )
+			continue;	/* skip over current word */
+
+		*lp = '\0';		/* terminate current word */
+		lp1 = lp + 1;
+		if( *lp1 != '\0' && !isspace( *lp1 ) )  {
+			/* Begin next word */
+			if( nwords >= MAXWORDS )  {
+				(void)fprintf(stderr,
+					"rt: More than %d arguments, excess flushed\n",
+					MAXWORDS);
+				cmd_args[MAXWORDS] = (char *)0;
+				return(-1);	/* ERROR */
+			}
+			cmd_args[nwords++] = lp1;
+		}
+	}
+	cmd_args[nwords] = (char *)0;	/* safety */
+
+	if( nwords <= 0 )
+		return(0);	/* No command to process */
 
 	for( tp = cmdtab; tp->ct_cmd != (char *)0; tp++ )  {
-		if( cmd[0] != tp->ct_cmd[0] ||
-		    strcmp( cmd, tp->ct_cmd ) != 0 )
+		if( cmd_args[0][0] != tp->ct_cmd[0] ||
+		    strcmp( cmd_args[0], tp->ct_cmd ) != 0 )
 			continue;
-		return( tp->ct_func( cmd, buf ) );
+		if( (nwords >= tp->ct_min) &&
+		    (nwords <= tp->ct_max) )  {
+			return( tp->ct_func( nwords, cmd_args ) );
+		}
+		(void)fprintf(stderr, "rt cmd Usage: %s %s\n",
+			tp->ct_cmd, tp->ct_parms);
+		return(-1);		/* ERROR */
 	}
-	fprintf(stderr,"do_cmd(%s):  unknown command\n", cmd);
+	fprintf(stderr,"do_cmd(%s):  unknown command\n", cmd_args[0]);
+	return(-1);			/* ERROR */
 }
