@@ -1412,19 +1412,39 @@ retry:
 	    		break;
 	    	case 1:
 	    		/* ON-shared */
-		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
-		    		lu->l_p );
-			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-				rt_log("Loop is on-shared\n");
+	    		if( lu->orientation == OT_OPPOSITE )
+	    		{
+			    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
+			    		lu->l_p );
+				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+					rt_log("Loop is on-antishared (lu orient is OT_OPPOSITE)\n");
+	    		}
+	    		else
+	    		{
+			    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
+			    		lu->l_p );
+				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+					rt_log("Loop is on-shared\n");
+	    		}
 			reason = "edges identical with radial face, normals colinear";
 	    		status = ON_SURF;
 	    		goto out;
 	    	case 2:
 	    		/* ON-antishared */
-			NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
-				lu->l_p );
-			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-				rt_log("Loop is on-antishared\n");
+	    		if( lu->orientation == OT_OPPOSITE )
+	    		{
+				NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
+					lu->l_p );
+				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+					rt_log("Loop is on-shared (lu orient is OT_OPPOSITE)\n");
+	    		}
+	    		else
+	    		{
+				NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
+					lu->l_p );
+				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+					rt_log("Loop is on-antishared\n");
+	    		}
 			reason = "edges identical with radial face, normals opposite";
 			status = ON_SURF;
 			goto out;
