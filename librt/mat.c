@@ -1040,6 +1040,7 @@ CONST struct rt_tol	*tol;
 	return 1;
 }
 
+#if 0
 /*
  *			R T _ V E C T _ M A X M A G
  *
@@ -1064,3 +1065,5 @@ CONST vect_t	v;
 
 	return Z;
 }
+
+#endif
