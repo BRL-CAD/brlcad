@@ -167,7 +167,16 @@ if [ X${SILENT} = X ] ; then
 fi
 
 inst_dirs=" bin etc html include itcl3.2 itk3.2 lib man pro-engineer \
-	sample_applications tcl8.3 tclscripts tk8.3 vfont"
+	sample_applications tcl8.4 tclscripts tk8.4 vfont"
+
+for dir in "tcl8.3" "tk8.3"
+do
+  if test -d ${BRLCAD_ROOT}/$dir
+      then
+      inst_dirs="${inst_dirs} ${dir}"
+      fi
+done
+      
 
 if [ X${SILENT} = X ] ; then
     echo "Is it OK to delete the following directories:"
