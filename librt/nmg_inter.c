@@ -28,6 +28,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to raytrace.h */
+RT_EXTERN(struct faceuse	*nmg_find_fu_of_eu, (struct edgeuse *eu));
+
 /* Was nmg_boolstruct, but that name has appeared in nmg.h */
 struct nmg_inter_struct {
 	long		magic;
@@ -56,6 +59,11 @@ struct ee_2d_state {
 
 RT_EXTERN(void		nmg_isect2d_prep, (struct nmg_inter_struct *is, struct face *f1));
 RT_EXTERN(CONST struct vertexuse *nmg_touchingloops, (CONST struct loopuse *lu));
+
+static void	nmg_isect_edge2p_face2p RT_ARGS((struct nmg_inter_struct *is,
+			struct edgeuse *eu, struct faceuse *fu,
+			struct faceuse *eu_fu));
+
 
 
 /*
@@ -113,6 +121,7 @@ CONST struct faceuse	*fu;	/* for plane equation */
 	if( !NEAR_ZERO( pt[2], is->tol.dist ) )  {
 		rt_log("nmg_get_2d_vertex ERROR %d (%g,%g,%g) becomes (%g,%g) %g != zero!\n",
 			v->index, V3ARGS(vg->coord), V3ARGS(pt) );
+		mat_print("is->proj", is->proj);
 	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
@@ -152,6 +161,7 @@ struct face		*f1;
 	NMG_CK_FACE(f1);
 	fg = f1->fg_p;
 	NMG_CK_FACE_G(fg);
+rt_log("nmg_isect2d_prep()\n");
 
 	m = nmg_find_model( &f1->magic );
 
@@ -1046,6 +1056,9 @@ topo:
  *
  * This code currently assumes that an edge can only intersect a face at one
  * point.  This is probably a bad assumption for the future
+ *
+ *  The line of intersection between the two faces is found in
+ *  nmg_isect_two_face2p().
  */
 static void
 nmg_isect_3edge_3face(bs, eu, fu)
@@ -1088,7 +1101,7 @@ struct faceuse *fu;
 	/*
 	 * First check the topology.  If the topology says that starting
 	 * vertex of this edgeuse is on the other face, enter the
-	 * two vertexuses of it in the list and return.
+	 * two vertexuses of that starting vertex in the list and return.
 	 */
 	if (vu_other=nmg_find_v_in_face(v1, fu)) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
@@ -1134,7 +1147,50 @@ struct faceuse *fu;
 		rt_log("\tMiss. Boring status of rt_isect_line3_plane: %d\n",
 				status);
 	}
-	if( status == 0 )  rt_bomb("nmg_isect_3edge_3face: edge lies on face, 'shouldn't happen'\n");
+	if( status == 0 )  {
+#if 0
+		struct nmg_inter_struct	is;
+		struct nmg_ptbl		t1, t2;
+		point_t	foo;
+
+		/*
+		 *  Edge (ray) lies in the plane of the other face,
+		 *  by geometry.  Drop into 2D code to handle all
+		 *  possible intersections (there may be many),
+		 *  and any cut/joins, then resume with the previous work.
+		 */
+		is = *bs;	/* make private copy */
+		is.vert2d = 0;
+
+		rt_log("nmg_isect_3edge_3face: edge lies on face, 'shouldn't happen', using 2D code\n");
+		EUPRINT("eu", eu);
+		VPRINT("start_pt", start_pt);
+		VPRINT("edge_vect", edge_vect);
+		PLPRINT("N", fu->f_p->fg_p->N);
+		rt_g.NMG_debug |= DEBUG_POLYSECT;
+		nmg_get_2d_vertex( foo, eu->vu_p->v_p, &is, nmg_find_fu_of_eu(eu) );
+		VPRINT("eu_v1", eu->vu_p->v_p->vg_p->coord );
+		VPRINT("eu_v1 2d", foo);
+		nmg_get_2d_vertex( foo, eu->eumate_p->vu_p->v_p, &is, nmg_find_fu_of_eu(eu) );
+		VPRINT("eu_v2", eu->eumate_p->vu_p->v_p->vg_p->coord );
+		VPRINT("eu_v2 2d", foo);
+		mat_print("is->proj", is.proj);
+
+		nmg_isect_edge2p_face2p( &is, eu, fu, nmg_find_fu_of_eu(eu) );
+		rt_log("nmg_isect_3edge_3face: END END END\n");
+
+		if( is.vert2d )  rt_free( (char *)is.vert2d, "vert2d");
+
+		/* See if starting vertex is now shared */
+		if (vu_other=nmg_find_v_in_face(eu->vu_p->v_p, fu)) {
+			(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
+		}
+		goto out;
+#else
+		rt_bomb("nmg_isect_3edge_3face: edge lies on face, 'shouldn't happen'\n");
+#endif
+	}
 	if (status < 0)  {
 		/*  Ray does not strike plane.
 		 *  See if start point lies on plane.
