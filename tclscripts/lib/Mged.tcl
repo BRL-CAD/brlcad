@@ -35,7 +35,6 @@ class Mged {
     ######################### Commands related to the Database #########################
     public method adjust {args}
     public method attr {args}
-    public method attr_rm {args}
     public method binary {args}
     public method blast {args}
     public method c {args}
@@ -150,10 +149,6 @@ body Mged::adjust {args} {
 
 body Mged::attr {args} {
     eval $db attr $args
-}
-
-body Mged::attr_rm {args} {
-    eval $db attr_rm $args
 }
 
 body Mged::form {args} {

@@ -28,7 +28,6 @@ class Db {
 
     public method adjust {args}
     public method attr {args}
-    public method attr_rm {args}
     public method binary {args}
     public method c {args}
     public method cat {args}
@@ -346,10 +345,6 @@ body Db::attr {args} {
     eval $db attr $args
 }
 
-body Db::attr_rm {args} {
-    eval $db attr_rm $args
-}
-
 body Db::version {args} {
     eval $db version $args
 }
@@ -378,16 +373,13 @@ body Db::help_init {} {
     set help [cadwidgets::Help #auto]
 
     $help add adjust	{{} {adjust database object parameters}}
-    $help add attr	{{object [attr_name [attr_value]] [attr_name attr_value ...]}
-	      {get, assign or adjust attribute values for the specified object.
-              with only an object specified,
-                    displays all the attributes of that object.
-              with an object and an attribute name specified,
-                    displays the value of that attribute.
-              with an object and attribute value pairs specified,
-                    it sets the value of the specified attributes for that object}   }
-    $help add attr_rm  {{object attr_name [attr_name attr_name ...]}
-	      {delete attributes for the specified object}}
+    $help add attr      {{ {set|get|rm|append} object [args]}
+	      {set, get, remove or append to attribute values for the specified object.
+         for the "set" subcommand, the arguments are attribute name/value pairs
+         for the "get" subcommand, the arguments are attribute names
+         for the "rm" subcommand, the arguments are attribute names
+         for the "append" subcommand, the arguments are attribute name/value pairs } }
+
     $help add c		{{[-gr] comb_name [boolean_expr]} {create or extend a combination using standard notation}}
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add color	{{low high r g b str} {make color entry}}
