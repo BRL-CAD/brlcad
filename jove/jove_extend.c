@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.5  91/08/30  18:59:47  mike
+ * Modifications for clean compilation on the XMP
+ * 
  * Revision 2.4  91/08/30  17:54:32  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -257,6 +260,7 @@ SetVar()
 	setfuncs(globflags);
 }
 			
+int
 findcom(possible, prompt)
 struct function possible[];
 char	*prompt;
@@ -283,7 +287,7 @@ char	*prompt;
 	while (c = (*Getchar)()) {
 		switch (c) {
 		case EOF:
-			return EOF;
+			break;
 
 		case CTL('U'):
 			cp = begin;
@@ -380,7 +384,7 @@ abort:
 		Asking = cp - response;		/* Wonderful! */
 		message(response);
 	}
-	/* NOTREACHED */
+	return EOF;
 }
 
 numcomp(s1, s2)
