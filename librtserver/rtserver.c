@@ -2206,6 +2206,77 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_shutdownNative(JNIEnv *env, jobjec
 	rts_shutdown();
 }
 
+JNIEXPORT jobject JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_getBoundingBox(JNIEnv *env, jobject obj, jint sessionId )
+{
+	jclass boundingBox_class, point_class;
+	jmethodID boundingBox_constructor_id, point_constructor_id;
+	jobject point1, point2, bb;
+	pointp_t min_pt, max_pt;
+
+	if( sessionId < 0 || sessionId >= num_geometries ) {
+		fprintf( stderr, "Called getItemTree with invalid sessionId\n" );
+		return( (jobject)NULL );
+	}
+
+	min_pt = rts_geometry[sessionId]->rts_mdl_min;
+	max_pt = rts_geometry[sessionId]->rts_mdl_max;
+
+	/* get the BoundingBox class */
+	if( (boundingBox_class=(*env)->FindClass( env, "mil/army/arl/muves/math/BoundingBox" ) ) == NULL ) {
+		fprintf( stderr, "Failed to find BoundingBox class\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* get the BoundingBox constructor id */
+	if( (boundingBox_constructor_id=(*env)->GetMethodID( env, boundingBox_class, "<init>",
+	     "(Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Point;)V" ) ) == NULL ) {
+		fprintf( stderr, "Failed to find BoundingBox constructor method id\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* get the Point class */
+	if( (point_class=(*env)->FindClass( env, "mil/army/arl/muves/math/Point" ) ) == NULL ) {
+		fprintf( stderr, "Failed to find Point class\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* get the Point constructor id */
+	if( (point_constructor_id=(*env)->GetMethodID( env, point_class, "<init>",
+	     "(DDD)V" ) ) == NULL ) {
+		fprintf( stderr, "Failed to find BoundingBox constructor method id\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* create the points of Bounding Box */
+	point1 = (*env)->NewObject( env, point_class, point_constructor_id, min_pt[X], min_pt[Y], min_pt[Z] );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while creating minimum point for BoundingBox\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+	point2 = (*env)->NewObject( env, point_class, point_constructor_id, max_pt[X], max_pt[Y], max_pt[Z] );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while creating maximum point for BoundingBox\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* create the BoundingBox */
+	bb = (*env)->NewObject( env, boundingBox_class, boundingBox_constructor_id, point1, point2 );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while creating BoundingBox\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	return( bb );
+}
+
 #ifdef TESTING
 /* usage statement */
 static char *usage="Usage:\n\t%s [-n num_cpus] [-t num_threads] [-q num_queues] [-a] [-s grid_size] [-v] [-o object] model.g\n";

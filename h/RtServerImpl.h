@@ -80,6 +80,14 @@ JNIEXPORT jobject JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay
 JNIEXPORT jobject JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_getItemTree
   (JNIEnv *, jobject, jint);
 
+/*
+ * Class:     mil_army_arl_muves_rtserver_RtServerImpl
+ * Method:    getBoundingBox
+ * Signature: (I)Lmil/army/arl/muves/math/BoundingBox;
+ */
+JNIEXPORT jobject JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_getBoundingBox
+  (JNIEnv *, jobject, jint);
+
 #ifdef __cplusplus
 }
 #endif
