@@ -488,3 +488,109 @@ char	**argv;
 
 	return CMD_OK;
 }
+
+/* XXX Move to raytrace.h */
+RT_EXTERN(struct animate	*db_parse_1anim, (struct db_i *dbip,
+				int argc, CONST char **argv));
+
+/*
+ *			F _ A R C E D
+ *
+ *  Allow editing of the matrix, etc., along an arc in the database
+ *  from the command line, when NOT in an edit state.
+ *  Used mostly to facilitate shell script writing.
+ *
+ *  Syntax:  arced a/b ("anim" command)
+ *	arced a/b matrix rmul translate dx dy dz
+ *
+ *  Extensions should be formulated along the lines of the "anim"
+ *  commands from the script language.
+ */
+int
+f_arced( argc, argv )
+int		argc;
+CONST char	**argv;
+{
+	struct animate		*anp;
+	struct directory	*dp;
+	mat_t			stack;
+	mat_t			arc;
+	union record		*rec;
+	int			i;
+
+	if( not_state( ST_VIEW, "Viewing state" ) )  return CMD_BAD;
+
+	if( !strchr( argv[1], '/' ) )  {
+		rt_log("arced: bad path specification '%s'\n", argv[1]);
+		return CMD_BAD;
+	}
+	if( !(anp = db_parse_1anim( dbip, argc, argv ) ) )  {
+		rt_log("arced: unable to parse command\n");
+		return CMD_BAD;
+	}
+	if( anp->an_path.fp_len != 2 )  {
+		char	*thepath = db_path_to_string( &(anp->an_path) );
+		rt_log("arced: '%s' is not a 2-element path spec\n");
+		rt_free( thepath, "path" );
+		db_free_1anim( anp );
+		return CMD_BAD;
+	}
+
+#if 0
+	db_write_anim(stdout, anp);	/* XXX temp */
+#endif
+
+	/* Only the matrix rarc, lmul, and rmul directives are useful here */
+	mat_idn( stack );
+
+	/* Load the combination into memory */
+	dp = anp->an_path.fp_names[0];
+	if( (rec = db_getmrec( dbip, dp )) == (union record *)NULL )  {
+		READ_ERR;
+		db_free_1anim( anp );
+		return CMD_BAD;
+	}
+	if( rec[0].u_id != ID_COMB )  {
+		rt_log("%s: not a combination\n", dp->d_namep );
+		goto fail;
+	}
+
+	/* Search for first mention of arc */
+	for( i=1; i < dp->d_len; i++ )  {
+		if( rec[i].u_id != ID_MEMB )  {
+			rt_log("%s: element %d not a member! Database corrupted.\n", dp->d_namep, i );
+			goto fail;
+		}
+		if( strncmp( rec[i].M.m_instname,
+		    anp->an_path.fp_names[1]->d_namep,
+		    NAMESIZE ) != 0 )  continue;
+
+		/* Found match */
+		/* XXX For future, also import/export materials here */
+		rt_mat_dbmat( arc, rec[i].M.m_mat );
+
+		if( db_do_anim( anp, stack, arc, NULL ) < 0 )  {
+			goto fail;
+		}
+		rt_dbmat_mat( rec[i].M.m_mat, arc );
+
+		/* Write back */
+		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 )  {
+			rt_log("arced: write error, aborting\n");
+			ERROR_RECOVERY_SUGGESTION;
+			goto fail;
+		}
+		rt_free( (char *)rec, "union record []");
+		db_free_1anim( anp );
+		return CMD_OK;
+	}
+
+	rt_log("Unable to find instance of '%s' in combination '%s', error\n",
+		anp->an_path.fp_names[1]->d_namep,
+		anp->an_path.fp_names[0]->d_namep );
+		
+fail:
+	rt_free( (char *)rec, "union record []");
+	db_free_1anim( anp );
+	return CMD_BAD;
+}
