@@ -37,7 +37,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 #include <netdb.h>
 #ifdef __BSDbackup
-#  undef BSD
 #  define BSD __BSDbackup
 #  undef __BSDbackup
 #endif
