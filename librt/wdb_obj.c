@@ -4074,19 +4074,18 @@ wdb_push_tcl(clientData, interp, argc, argv)
      int     argc;
      char    **argv;
 {
-	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-	struct wdb_push_data *wpdp;
-	struct wdb_push_id *pip;
-	struct bu_external	es_ext;
+	struct rt_wdb 		*wdbp = (struct rt_wdb *)clientData;
+	struct wdb_push_data	*wpdp;
+	struct wdb_push_id	*pip;
 	struct rt_db_internal	es_int;
-	int	i;
-	int	id;
-	int	ncpu;
-	int	c;
-	int	old_debug;
-	int	push_error;
-	extern 	int bu_optind;
-	extern	char *bu_optarg;
+	int			i;
+	int			id;
+	int			ncpu;
+	int			c;
+	int			old_debug;
+	int			push_error;
+	extern 	int		bu_optind;
+	extern	char		*bu_optarg;
 
 	if (wdbp->dbip->dbi_read_only) {
 		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
@@ -4174,31 +4173,19 @@ wdb_push_tcl(clientData, interp, argc, argv)
  * the matrix we've stored for each solid.
  */
 	FOR_ALL_WDB_PUSH_SOLIDS(pip,wpdp->pi_head) {
-		BU_INIT_EXTERNAL(&es_ext);
-		RT_INIT_DB_INTERNAL(&es_int);
-		if (db_get_external(&es_ext, pip->pi_dir, wdbp->dbip) < 0) {
+		if (rt_db_get_internal(&es_int, pip->pi_dir, wdbp->dbip, pip->pi_mat, &rt_uniresource) < 0) {
 			Tcl_AppendResult(interp, "f_push: Read error fetching '",
 				   pip->pi_dir->d_namep, "'\n", (char *)NULL);
 			wpdp->push_error = -1;
 			continue;
 		}
-		id = rt_id_solid(&es_ext);
-		if (rt_functab[id].ft_import(&es_int, &es_ext, pip->pi_mat, wdbp->dbip, &rt_uniresource) < 0 ) {
-			Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
-					 "): solid import failure\n", (char *)NULL);
-			rt_db_free_internal( &es_int, &rt_uniresource);
-			bu_free_external( &es_ext);
-			continue;
-		}
 		RT_CK_DB_INTERNAL(&es_int);
-		if (rt_functab[id].ft_export( &es_ext, &es_int, 1.0, wdbp->dbip, &rt_uniresource) < 0 ) {
-		  Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
-				   "): solid export failure\n", (char *)NULL);
-		} else {
-			db_put_external(&es_ext, pip->pi_dir, wdbp->dbip);
+
+		if (rt_db_put_internal(pip->pi_dir, wdbp->dbip, &es_int, &rt_uniresource) < 0) {
+			Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
+					 "): solid export failure\n", (char *)NULL);
 		}
 		rt_db_free_internal(&es_int, &rt_uniresource);
-		bu_free_external(&es_ext);
 	}
 
 	/*
