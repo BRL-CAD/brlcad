@@ -653,12 +653,16 @@ ipow( d, cnt )
 double d;
 register int cnt;
 {
-	FAST fastf_t result;
+	FAST fastf_t input, result;
 
-	if( d < 1e-8 )  return(0.0);
+	if( (input=d) < 1e-8 )  return(0.0);
+	if( cnt < 0 || cnt > 200 )  {
+		rt_log("ipow(%g,%d) bad\n", d, cnt);
+		return(d);
+	}
 	result = 1;
 	while( cnt-- > 0 )
-		result *= d;
+		result *= input;
 	return( result );
 }
 
