@@ -4557,13 +4557,6 @@ wdb_color_cmd(struct rt_wdb	*wdbp,
 
 	WDB_TCL_CHECK_READ_ONLY;
 
-	if (wdbp->dbip->dbi_version != 4) {
-		Tcl_AppendResult(interp,
-				 "Database is not version 4!",
-				 (char *)NULL);
-		return TCL_ERROR;
-	}
-
 	if (argc != 6) {
 		struct bu_vls vls;
 
@@ -4574,32 +4567,64 @@ wdb_color_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	/* Delete all color records from the database */
-	newp = rt_material_head;
-	while (newp != MATER_NULL) {
-		next_mater = newp->mt_forw;
-		wdb_color_zaprec(newp, interp, wdbp->dbip);
-		newp = next_mater;
-	}
+	if (wdbp->dbip->dbi_version < 5) {
+		/* Delete all color records from the database */
+		newp = rt_material_head;
+		while (newp != MATER_NULL) {
+			next_mater = newp->mt_forw;
+			wdb_color_zaprec(newp, interp, wdbp->dbip);
+			newp = next_mater;
+		}
 
-	/* construct the new color record */
-	BU_GETSTRUCT(newp, mater);
-	newp->mt_low = atoi(argv[1]);
-	newp->mt_high = atoi(argv[2]);
-	newp->mt_r = atoi(argv[3]);
-	newp->mt_g = atoi(argv[4]);
-	newp->mt_b = atoi(argv[5]);
-	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
+		/* construct the new color record */
+		BU_GETSTRUCT(newp, mater);
+		newp->mt_low = atoi(argv[1]);
+		newp->mt_high = atoi(argv[2]);
+		newp->mt_r = atoi(argv[3]);
+		newp->mt_g = atoi(argv[4]);
+		newp->mt_b = atoi(argv[5]);
+		newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
 
-	/* Insert new color record in the in-memory list */
-	rt_insert_color(newp);
+		/* Insert new color record in the in-memory list */
+		rt_insert_color(newp);
 
-	/* Write new color records for all colors in the list */
-	newp = rt_material_head;
-	while (newp != MATER_NULL) {
-		next_mater = newp->mt_forw;
-		wdb_color_putrec(newp, interp, wdbp->dbip);
-		newp = next_mater;
+		/* Write new color records for all colors in the list */
+		newp = rt_material_head;
+		while (newp != MATER_NULL) {
+			next_mater = newp->mt_forw;
+			wdb_color_putrec(newp, interp, wdbp->dbip);
+			newp = next_mater;
+		}
+	} else {
+		struct bu_vls colors;
+
+		/* construct the new color record */
+		BU_GETSTRUCT(newp, mater);
+		newp->mt_low = atoi(argv[1]);
+		newp->mt_high = atoi(argv[2]);
+		newp->mt_r = atoi(argv[3]);
+		newp->mt_g = atoi(argv[4]);
+		newp->mt_b = atoi(argv[5]);
+		newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
+
+		/* Insert new color record in the in-memory list */
+		rt_insert_color(newp);
+
+		/*
+		 * Gather color records from the in-memory list to build
+		 * the _GLOBAL objects regionid_colortable attribute.
+		 */
+		newp = rt_material_head;
+		bu_vls_init(&colors);
+		while (newp != MATER_NULL) {
+			next_mater = newp->mt_forw;
+			bu_vls_printf(&colors, "{%d %d %d %d %d} ", newp->mt_low, newp->mt_high,
+				      newp->mt_r, newp->mt_g, newp->mt_b);
+			newp = next_mater;
+		}
+
+		db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), wdbp->dbip);
+		bu_vls_free(&colors);
 	}
 
 	return TCL_OK;
