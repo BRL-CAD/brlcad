@@ -37,7 +37,7 @@ class Db {
     public method concat {args}
     public method copyeval {args}
     public method cp {args}
-    public method dbip {}
+    public method dbip {args}
     public method dump {args}
     public method dup {args}
     public method expand {args}
@@ -166,8 +166,8 @@ body Db::dump {args} {
     eval $db dump $args
 }
 
-body Db::dbip {} {
-    $db dbip
+body Db::dbip {args} {
+    eval $db dbip $args
 }
 
 body Db::l {args} {
