@@ -775,6 +775,11 @@ char *h;
 		Return;
 	}
 	/* vu_hd ? */
+	rt_log("%s   vu_hd %8x\n", h, &v->vu_hd);
+	rt_log("%s%8x vu_hd.forw\n", h, v->vu_hd.forw);
+	rt_log("%s%8x vu_hd.back\n", h, v->vu_hd.back);
+
+
 	rt_log("%s%8x vg_p\n", h, v->vg_p);
 	if (v->vg_p)
 		nmg_pr_vg(v->vg_p, h);
