@@ -300,7 +300,6 @@ char *line;
   char *ptr;
   char name[NAMESIZE+1];
   char relation;
-  int done=0;
   int node_count=0;
   int j;
 
@@ -310,11 +309,7 @@ char *line;
 
   ptr = strtok(line , delims);
 
-  /* more sanity */
-  if (ptr == NULL)
-    return 0;
-
-  while (!done) {
+  while (ptr) {
     /* First non-white is the relation operator */
     relation = (*ptr);
     if (relation == '\0')
@@ -346,14 +341,15 @@ char *line;
     }
 
     ptr = strtok( (char *)NULL, delims );
-    if (!ptr)
-      done = 1;
-    else if (*ptr != 'u' &&
-	     (*ptr != '-' || *(ptr+1) != '\0') &&
-	     (*ptr != '+' || *(ptr+1) != '\0')) {
+    /*
+     * If this token is not a boolean operator, then it must be the start
+     * of a matrix which we will skip.
+     */
+    if (ptr && !((*ptr == 'u' || *ptr == '-' || *ptr=='+') &&
+		 *(ptr+1) == '\0')) {
       int k;
 
-      /* skip past matrix */
+      /* skip past matrix, k=1 because we already have the first value */
       for (k=1 ; k<16 ; k++) {
 	ptr = strtok( (char *)NULL, delims );
 	if (!ptr) {
