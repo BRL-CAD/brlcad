@@ -2040,6 +2040,8 @@ CONST struct faceuse	*fu1, *fu2;
 
 /*
  *			N M G _ F A C E _ L U _ P L O T
+ *
+ *  Plot the loop, and a ray from vu1 to vu2.
  */
 void
 nmg_face_lu_plot( lu, vu1, vu2 )
@@ -2051,6 +2053,8 @@ CONST struct vertexuse		*vu1, *vu2;
 	long		*b;
 	char		buf[128];
 	static int	num = 0;
+	vect_t		dir;
+	point_t		p1, p2;
 
 	if(!(rt_g.NMG_debug&DEBUG_PLOTEM)) return;
 
@@ -2064,9 +2068,14 @@ CONST struct vertexuse		*vu1, *vu2;
 	fp = fopen(buf, "w");
 	b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_face_lu_plot flag[]" );
 	nmg_pl_lu(fp, lu, b, 255, 0, 0);
-	/* A yellow line for the ray */
+
+	/* A yellow line for the ray.  Overshoot edge by +/-10%, for visibility. */
 	pl_color(fp, 255, 255, 0);
-	pdv_3line(fp, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord );
+	VSUB2( dir, vu2->v_p->vg_p->coord, vu1->v_p->vg_p->coord );
+	VJOIN1( p1, vu1->v_p->vg_p->coord, -0.1, dir );
+	VJOIN1( p2, vu1->v_p->vg_p->coord,  1.1, dir );
+	pdv_3line(fp, p1, p2 );
+
 	fclose(fp);
 	rt_log("wrote %s\n", buf);
 	rt_free( (char *)b, "nmg_face_lu_plot flag[]" );
