@@ -56,10 +56,10 @@ char *args[];
 #if STD_SIGNAL_DECLS
 				register void (*istat)(), (*qstat)(), (*cstat)();
 #else
-#ifndef SIGCLD
-#define SIGCLD	SIGCHLD
-#endif
 				register int (*istat)(), (*qstat)(), (*cstat)();
+#endif
+#if !defined(SIGCLD) && defined(SIGCHLD)
+#	define SIGCLD	SIGCHLD		/* BSD and POSIX name */
 #endif
 			istat = signal(SIGINT, SIG_IGN);
 			qstat = signal(SIGQUIT, SIG_IGN);
