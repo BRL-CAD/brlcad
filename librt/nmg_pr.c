@@ -747,7 +747,7 @@ CONST struct nmg_ptbl	*tbl;
 
     	rt_log("nmg_pr_ptbl_vert_list(%s):\n", str);
 
-	vup = (struct vertexuse **)tbl->buffer;
+	vup = (CONST struct vertexuse **)tbl->buffer;
 	for (i=0 ; i < tbl->end ; ++i) {
 		vu = vup[i];
 		NMG_CK_VERTEXUSE(vu);
