@@ -11,6 +11,8 @@ libredblack \- red-black tree subroutines
 .SH SYNOPSIS
 \fB#include "machine.h"
 .br
+\fB#include "rtlist.h"
+.br
 \fB#include "redblack.h"
 .\"
 .PP
@@ -23,18 +25,18 @@ libredblack \- red-black tree subroutines
 .B int (**order_funcs)();
 .\"
 .PP
-.B void *rb_curr (tree, order)
-.br
-.B rb_tree *tree;
-.br
-.B int order;
-.\"
-.PP
 .B rb_tree *rb_create1 (description, order_func)
 .br
 .B char *description;
 .br
 .B int (*order_func)();
+.\"
+.PP
+.B void *rb_curr (tree, order)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
 .\"
 .PP
 .B void rb_delete (tree, order)
@@ -60,6 +62,13 @@ libredblack \- red-black tree subroutines
 .B int order;
 .br
 .B int sense;
+.\"
+.PP
+.B void rb_free (tree, free_data)
+.br
+.B rb_tree *tree;
+.br
+.B void (*free_data)();
 .\"
 .PP
 .B int rb_insert (tree, data)
@@ -201,6 +210,38 @@ Such uniqueness enforcement is switch selectable
 and may be controlled independently for each order
 and modified dynamically.
 The default behavior is not to enforce any uniqueness.
+.PP
+.I rb_free
+relinquishes the storage used by
+.I tree,
+calling
+.I free_data
+to dispose of the application data in the nodes.
+If
+.I free_data
+equals
+.I RB_RETAIN_DATA
+(defined in \fI"redblack.h"\fR),
+then the application data blocks are left unaffected.
+Otherwise,
+.IR rb_free " calls " free_data
+once for each block of application data,
+passing a pointer to the data.
+Since
+.I rb_create1
+allocates its own table of comparison functions,
+a memory leak will result if
+a tree returned by
+.I rb_create1
+is freed before this table is freed.
+For this reason,
+.I "redblack.h"
+provides the macro
+.I rb_free1(tree, free_data),
+which should be used instead of
+.I rb_free
+when relinquishing a tree created by
+.I rb_create1.
 .PP
 .I rb_insert
 creates a new node containing

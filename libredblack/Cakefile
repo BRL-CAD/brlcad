@@ -10,8 +10,8 @@
 
 #define FILES	\
 		rb_create rb_delete rb_diag		\
-		rb_extreme rb_insert rb_rotate		\
-		rb_search rb_walk
+		rb_extreme rb_free rb_insert		\
+		rb_rotate rb_search rb_walk
 	
 
 #define VERSION_VARIABLE	rt_version
