@@ -863,40 +863,41 @@ int	count;
  *			S G I _ B W R I T E
  */
 _LOCAL_ int
-sgi_bwrite( ifp, x, y, pixelp, count )
+sgi_bwrite( ifp, xmem, ymem, pixelp, count )
 FBIO	*ifp;
-int	x, y;
+int	xmem, ymem;
 RGBpixel *pixelp;
 int	count;
 {
 	register union gepipe *hole = GEPIPE;
 	register short scan_count;	/* # pixels on this scanline */
-	int xpos, ypos;
+	int xscr, yscr;
 	register int i;
 	register unsigned char *cp;
 	register unsigned char *op;
 	int ret;
-
+	int hfwidth = (ifp->if_width/SGI(ifp)->si_xzoom)/2;
+	int hfheight = (ifp->if_height/SGI(ifp)->si_yzoom)/2;
 	if( SGI(ifp)->si_curs_on )
 		cursoff();		/* Cursor interferes with writing */
 	ret = 0;
-	xpos = x;
-	ypos = y;
+	xscr = (xmem - (SGI(ifp)->si_xcenter-hfwidth)) * SGI(ifp)->si_xzoom;
+	yscr = (ymem - (SGI(ifp)->si_ycenter-hfheight)) * SGI(ifp)->si_yzoom;
 	cp = (unsigned char *)(*pixelp);
 	while( count > 0 )  {
-		if( ypos >= ifp->if_height )
+		if( yscr >= ifp->if_height )
 			break;
 		scan_count = ifp->if_width / SGI(ifp)->si_xzoom;
 		if( count < scan_count )
 			scan_count = count;
 
-		op = (unsigned char *)&ifp->if_mem[(ypos*1024+xpos)*sizeof(RGBpixel)];
+		op = (unsigned char *)&ifp->if_mem[(ymem*1024+xmem)*sizeof(RGBpixel)];
 
 		if( ifp->if_zoomflag )  {
 			register Scoord l, b, r, t;
 
-			l = xpos * SGI(ifp)->si_xzoom;
-			b = ypos * SGI(ifp)->si_yzoom;
+			l = xscr;
+			b = yscr;
 			t = b + SGI(ifp)->si_yzoom;
 			for( i=scan_count; i > 0; i-- )  {
 
@@ -939,13 +940,16 @@ int	count;
 				*op++ = *cp++;
 			}
 			count -= scan_count;
-			xpos = 0;
-			ypos++;
+			ret += scan_count;
+			xmem = 0;
+			ymem++;
+			xscr = SGI(ifp)->si_xcenter - hfwidth;
+			yscr += SGI(ifp)->si_yzoom;
 			continue;
 		}
 
 		/* Non-zoomed case */
-		CMOV2S( hole, xpos, ypos );
+		CMOV2S( hole, xscr, yscr );
 
 		switch( ifp->if_mode )  {
 		case MODE_RGB:
@@ -1065,8 +1069,11 @@ int	count;
 		}
 
 		count -= scan_count;
-		xpos = 0;
-		ypos++;
+		ret += scan_count;
+		xmem = 0;
+		ymem++;
+		xscr = SGI(ifp)->si_xcenter - hfwidth;
+		yscr++;
 	}
 	GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
 	if( SGI(ifp)->si_curs_on )
