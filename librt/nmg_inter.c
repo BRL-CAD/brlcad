@@ -330,7 +330,7 @@ struct faceuse *fu;
 	dist_to_plane = edge_len * dist;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("\edge_len=%g, dist=%g, dist_to_plane=%g\n",
+		rt_log("\tedge_len=%g, dist=%g, dist_to_plane=%g\n",
 			edge_len, dist, dist_to_plane);
 
 	if ( dist_to_plane < -(bs->tol) )  {
