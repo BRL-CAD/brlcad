@@ -81,6 +81,13 @@ struct shell *s;
 
 	NMG_CK_SHELL( s );
 
+	/* XXX Yet another tol structure is "faked" */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
+
 	mk_polysolid( out_fp , name );
 
 	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
@@ -105,16 +112,16 @@ struct shell *s;
 
 			if( count_npts > max_count )
 				max_count = count_npts;
+
+			if( max_count < 5 && !nmg_lu_is_convex( lu, &tol ) )
+			{
+				max_count = 6;
+				break;
+			}
 		}
 
 		/* if any loop has more than 5 vertices, triangulate the face */
 		if( max_count > 5 ) {
-			/* XXX Yet another tol structure is "faked" */
-			tol.magic = RT_TOL_MAGIC;
-			tol.dist = 0.005;
-			tol.dist_sq = tol.dist * tol.dist;
-			tol.perp = 1e-6;
-			tol.para = 1 - tol.perp;
 			if( rt_g.NMG_debug & DEBUG_BASIC )
 				rt_log( "write_shell_as_polysolid: triangulating fu x%x\n", fu );
 			nmg_triangulate_fu( fu, (CONST struct rt_tol *)&tol );
