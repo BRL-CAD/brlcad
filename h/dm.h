@@ -1,6 +1,10 @@
 #ifndef SEEN_DM_H
 #define SEEN_DM_H
 
+#if IR_KNOBS
+#define NOISE 32		/* Size of dead spot on knob */
+#endif
+
 /* the font used depends on the size of the window opened */
 #define FONTBACK	"-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
 #define FONT5	"5x7"
@@ -17,6 +21,14 @@
 #define DM_TYPE_PEX	4
 #define DM_TYPE_OGL	5
 #define DM_TYPE_GLX	6
+
+#define IS_DM_TYPE_NULL(_t) ((_t) == DM_TYPE_NULL)
+#define IS_DM_TYPE_PLOT(_t) ((_t) == DM_TYPE_PLOT)
+#define IS_DM_TYPE_PS(_t) ((_t) == DM_TYPE_PS)
+#define IS_DM_TYPE_X(_t) ((_t) == DM_TYPE_X)
+#define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
+#define IS_DM_TYPE_OGL(_t) ((_t) == DM_TYPE_OGL)
+#define IS_DM_TYPE_GLX(_t) ((_t) == DM_TYPE_GLX)
 
 #define GET_DM(p,structure,w,hp) { \
 	register struct structure *tp; \
@@ -88,6 +100,9 @@ struct dm {
   fastf_t *dmr_vp;              /* XXX--ogl still depends on this--XXX Viewscale pointer */
 };
 
+extern int dm_limit();
+extern int dm_unlimit();
+extern fastf_t dm_wrap();
 extern void Nu_void();
 extern int Nu_int0();
 extern unsigned Nu_unsign();
