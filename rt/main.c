@@ -100,6 +100,10 @@ char **argv;
 	 !defined(n16)
 		(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
 #	endif
+#	if defined(sgi) && defined(mips)
+		if( setlinebuf( stderr ) != 0 )
+			perror("setlinebuf(stderr)");
+#	endif
 #endif
 
 	(void)fprintf(stderr, "%s\n", version+5);	/* skip @(#) */
@@ -143,7 +147,7 @@ char **argv;
 #endif
 	if( npsw > 1 )  {
 		rt_g.rtg_parallel = 1;
-		fprintf(stderr,"rt:  running with %d processors\n", npsw );
+		fprintf(stderr,"Planning to run with %d processors\n", npsw );
 	} else
 		rt_g.rtg_parallel = 0;
 	RES_INIT( &rt_g.res_syscall );
