@@ -21,12 +21,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <time.h>
 #include <string.h>
 
+#include "conf.h"
+#include "./vecmath.h"
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 
 #include "./Sc.h"
-#include "./vecmath.h"
 #include "./ascii.h"
 #include "./extern.h"
 

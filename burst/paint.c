@@ -19,12 +19,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
+#include "conf.h"
+#include "./vecmath.h"
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
 
-#include "./vecmath.h"
 #include "./extern.h"
 
 #define DEBUG_CELLFB	0
