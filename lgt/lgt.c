@@ -61,6 +61,7 @@ STATIC int	intr_sig();
 #endif
 STATIC void	init_Lgts();
 void		exit_Neatly();
+int		key_Frame();
 
 STATIC int
 substr( str, pattern )
@@ -74,6 +75,7 @@ char	*str, *pattern;
 	}
 
 /*	m a i n ( )							*/
+int
 main( argc, argv )
 char	*argv[];
 {	register int	i;

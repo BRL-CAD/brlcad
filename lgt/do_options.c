@@ -69,6 +69,21 @@ static int	noframes = 1;
 char		*get_Input();
 int		setup_Lgts();
 void		user_Input();
+int		interpolate_Frame();
+int		ready_Output_Device();
+int		exec_Shell();
+void		set_Cbreak();
+void		clr_Echo();
+int		pixel_To_Temp();
+void		reset_Tty();
+int		read_IR();
+int		write_Trie();
+int		lgt_Save_Db();
+int		read_Trie();
+int		lgt_Rd_Db();
+int		ClrText();
+int		MvCursor();
+int		InitTermCap();
 
 STATIC int	make_Script();
 STATIC int	f_Nop();		/* default */
@@ -135,134 +150,134 @@ typedef struct
 
 static Key_Bindings func_tab[] =
 	{
-/* NUL */ f_Nop,
-/* ^A  */ f_Nop,
-/* ^B  */ f_Nop,
-/* ^C  */ f_Nop,
-/* ^D  */ f_Nop,
-/* ^E  */ f_Nop,
-/* ^F  */ f_Nop,
-/* ^G  */ f_Nop,
-/* ^H  */ f_Nop,
-/* ^I  */ f_Nop,
-/* ^J  */ f_Nop,
-/* ^K  */ f_Nop,
-/* ^L  */ f_Redraw,
-/* ^M  */ f_Nop,
-/* ^N  */ f_Nop,
-/* ^O  */ f_Nop,
-/* ^P  */ f_Nop,
-/* ^Q  */ f_Nop,
-/* ^R  */ f_Nop,
-/* ^S  */ f_Nop,
-/* ^T  */ f_Nop,
-/* ^U  */ f_Nop,
-/* ^V  */ f_Nop,
-/* ^W  */ f_Nop,
-/* ^X  */ f_Nop,
-/* ^Y  */ f_Nop,
-/* ^Z  */ f_Nop,
-/* ESC */ f_Nop,
-/* FS  */ f_Nop,
-/* GS  */ f_Nop,
-/* RS  */ f_Nop,
-/* US  */ f_Nop,
-/* SP  */ f_Nop,
-/* !   */ f_Exec_Shell,
-/* "   */ f_Nop,
-/* #   */ f_Comment,
-/* $   */ f_Nop,
-/* %   */ f_Nop,
-/* &   */ f_Nop,
-/* `   */ f_Nop,
-/* (   */ f_Nop,
-/* )   */ f_Nop,
-/* *   */ f_Nop,
-/* +   */ f_Nop,
-/* ,   */ f_Nop,
-/* -   */ f_Nop,
-/* .   */ f_Buffer,
-/* /   */ f_Nop,
-/* 0   */ f_Nop,
-/* 1   */ f_Nop,
-/* 2   */ f_Nop,
-/* 3   */ f_Nop,
-/* 4   */ f_Nop,
-/* 5   */ f_Nop,
-/* 6   */ f_Nop,
-/* 7   */ f_Nop,
-/* 8   */ f_Nop,
-/* 9   */ f_Nop,
-/* :   */ f_Nop,
-/* ;   */ f_Nop,
-/* <   */ f_Nop,
-/* =   */ f_Nop,
-/* >   */ f_Nop,
-/* ?   */ f_Menu,
-/* @   */ f_Nop,
-/* A   */ f_Anti_Aliasing,
-/* B   */ f_Batch,
-/* C   */ f_Cursor_Module,
-/* D   */ f_Display_Origin,
-/* E   */ f_Fbclear,
-/* F   */ f_Animate,
-/* G   */ f_GridConfig,
-/* H   */ f_Wrt_Fb,
-/* I   */ f_Rd_Raw_IR,
-/* J   */ f_Movie,
-/* K   */ f_Max_Bounce,
-/* L   */ f_Entr_Lgt_Db,
-/* M   */ f_Entr_Mat_Db,
-/* N   */ f_Set_IR_Paint,
-/* O   */ f_Err_File,
-/* P   */ f_Prnt_Regions,
-/* Q   */ f_Set_Region_IR,
-/* R   */ f_Raytrace,
-/* S   */ f_Script,
-/* T   */ f_SetFbSize,
-/* U   */ f_Wrt_IR_Db,
-/* V   */ f_Wrt_Lgt_Db,
-/* W   */ f_Wrt_Mat_Db,
-/* X   */ f_Overlaps,
-/* Y   */ f_Nop,
-/* Z   */ f_Show_IR,
-/* [   */ f_Nop,
-/* \   */ f_Nop,
-/* ]   */ f_Nop,
-/* ^   */ f_Nop,
-/* _   */ f_Nop,
-/* `   */ f_Nop,
-/* a   */ f_Grid_Roll,
-/* b   */ f_Background,
-/* c   */ f_Tracking_Cursor,
-/* d   */ f_IR_Offset,
-/* e   */ f_Debug,
-/* f   */ f_Dist_Grid,
-/* g   */ f_Scale_Grid,
-/* h   */ f_Rd_Fb,
-/* i   */ f_IR_Noise,
-/* j   */ f_Key_Frame,
-/* k   */ f_Hidden_Ln_Draw,
-/* l   */ f_Prnt_Lgt_Db,
-/* m   */ f_Prnt_Mat_Db,
-/* n   */ f_Parallel,
-/* o   */ f_Raster_File,
-/* p   */ f_Perspective,
-/* q   */ f_Quit,
-/* r   */ f_Redraw,
-/* s   */ f_IRmodule,
-/* t   */ f_Grid_Translate,
-/* u   */ f_Rd_IR_Db,
-/* v   */ f_Rd_Lgt_Db,
-/* w   */ f_Rd_Mat_Db,
-/* x   */ f_Grid_X_Pos,
-/* y   */ f_Grid_Y_Pos,
-/* z   */ f_Shadows,
-/* {   */ f_Nop,
-/* |   */ f_Nop,
-/* }   */ f_Nop,
-/* ~   */ f_Nop,
-/* DEL */ f_Nop
+{/* NUL */ f_Nop},
+{/* ^A  */ f_Nop},
+{/* ^B  */ f_Nop},
+{/* ^C  */ f_Nop},
+{/* ^D  */ f_Nop},
+{/* ^E  */ f_Nop},
+{/* ^F  */ f_Nop},
+{/* ^G  */ f_Nop},
+{/* ^H  */ f_Nop},
+{/* ^I  */ f_Nop},
+{/* ^J  */ f_Nop},
+{/* ^K  */ f_Nop},
+{/* ^L  */ f_Redraw},
+{/* ^M  */ f_Nop},
+{/* ^N  */ f_Nop},
+{/* ^O  */ f_Nop},
+{/* ^P  */ f_Nop},
+{/* ^Q  */ f_Nop},
+{/* ^R  */ f_Nop},
+{/* ^S  */ f_Nop},
+{/* ^T  */ f_Nop},
+{/* ^U  */ f_Nop},
+{/* ^V  */ f_Nop},
+{/* ^W  */ f_Nop},
+{/* ^X  */ f_Nop},
+{/* ^Y  */ f_Nop},
+{/* ^Z  */ f_Nop},
+{/* ESC */ f_Nop},
+{/* FS  */ f_Nop},
+{/* GS  */ f_Nop},
+{/* RS  */ f_Nop},
+{/* US  */ f_Nop},
+{/* SP  */ f_Nop},
+{/* !   */ f_Exec_Shell},
+{/* "   */ f_Nop},
+{/* #   */ f_Comment},
+{/* $   */ f_Nop},
+{/* %   */ f_Nop},
+{/* &   */ f_Nop},
+{/* `   */ f_Nop},
+{/* (   */ f_Nop},
+{/* )   */ f_Nop},
+{/* *   */ f_Nop},
+{/* +   */ f_Nop},
+{/* ,   */ f_Nop},
+{/* -   */ f_Nop},
+{/* .   */ f_Buffer},
+{/* /   */ f_Nop},
+{/* 0   */ f_Nop},
+{/* 1   */ f_Nop},
+{/* 2   */ f_Nop},
+{/* 3   */ f_Nop},
+{/* 4   */ f_Nop},
+{/* 5   */ f_Nop},
+{/* 6   */ f_Nop},
+{/* 7   */ f_Nop},
+{/* 8   */ f_Nop},
+{/* 9   */ f_Nop},
+{/* :   */ f_Nop},
+{/* ;   */ f_Nop},
+{/* <   */ f_Nop},
+{/* =   */ f_Nop},
+{/* >   */ f_Nop},
+{/* ?   */ f_Menu},
+{/* @   */ f_Nop},
+{/* A   */ f_Anti_Aliasing},
+{/* B   */ f_Batch},
+{/* C   */ f_Cursor_Module},
+{/* D   */ f_Display_Origin},
+{/* E   */ f_Fbclear},
+{/* F   */ f_Animate},
+{/* G   */ f_GridConfig},
+{/* H   */ f_Wrt_Fb},
+{/* I   */ f_Rd_Raw_IR},
+{/* J   */ f_Movie},
+{/* K   */ f_Max_Bounce},
+{/* L   */ f_Entr_Lgt_Db},
+{/* M   */ f_Entr_Mat_Db},
+{/* N   */ f_Set_IR_Paint},
+{/* O   */ f_Err_File},
+{/* P   */ f_Prnt_Regions},
+{/* Q   */ f_Set_Region_IR},
+{/* R   */ f_Raytrace},
+{/* S   */ f_Script},
+{/* T   */ f_SetFbSize},
+{/* U   */ f_Wrt_IR_Db},
+{/* V   */ f_Wrt_Lgt_Db},
+{/* W   */ f_Wrt_Mat_Db},
+{/* X   */ f_Overlaps},
+{/* Y   */ f_Nop},
+{/* Z   */ f_Show_IR},
+{/* [   */ f_Nop},
+{/* \   */ f_Nop},
+{/* ]   */ f_Nop},
+{/* ^   */ f_Nop},
+{/* _   */ f_Nop},
+{/* `   */ f_Nop},
+{/* a   */ f_Grid_Roll},
+{/* b   */ f_Background},
+{/* c   */ f_Tracking_Cursor},
+{/* d   */ f_IR_Offset},
+{/* e   */ f_Debug},
+{/* f   */ f_Dist_Grid},
+{/* g   */ f_Scale_Grid},
+{/* h   */ f_Rd_Fb},
+{/* i   */ f_IR_Noise},
+{/* j   */ f_Key_Frame},
+{/* k   */ f_Hidden_Ln_Draw},
+{/* l   */ f_Prnt_Lgt_Db},
+{/* m   */ f_Prnt_Mat_Db},
+{/* n   */ f_Parallel},
+{/* o   */ f_Raster_File},
+{/* p   */ f_Perspective},
+{/* q   */ f_Quit},
+{/* r   */ f_Redraw},
+{/* s   */ f_IRmodule},
+{/* t   */ f_Grid_Translate},
+{/* u   */ f_Rd_IR_Db},
+{/* v   */ f_Rd_Lgt_Db},
+{/* w   */ f_Rd_Mat_Db},
+{/* x   */ f_Grid_X_Pos},
+{/* y   */ f_Grid_Y_Pos},
+{/* z   */ f_Shadows},
+{/* {   */ f_Nop},
+{/* |   */ f_Nop},
+{/* }   */ f_Nop},
+{/* ~   */ f_Nop},
+{/* DEL */ f_Nop}
 };
 
 
@@ -366,7 +381,7 @@ HMenu	quit_hmenu = { quit_items, 0, 0, 0, 0, 0 };
 int
 user_Cmd( ar )
 char **ar;
-	{	register int ret = (*func_tab[*ar[0]].func)( (HMitem *) 0, ar );
+	{	register int ret = (*func_tab[(int)*ar[0]].func)( (HMitem *) 0, ar );
 	return	ret;
 	}
 
@@ -387,7 +402,7 @@ char opt, *arg;
 		i++
 		)
 		;
-	return (*func_tab[*local_argv[0]].func)( (HMitem *) 0, local_argv );
+	return (*func_tab[(int)*local_argv[0]].func)( (HMitem *) 0, local_argv );
 	}
 
 int
@@ -609,7 +624,7 @@ char	**args;
 	else
 #endif
 	if(	args == NULL || args[0] == NULL
-	    ||	args[1] == NULL || sscanf( args[1], "%x", &rt_g.debug ) != 1
+	    ||	args[1] == NULL || sscanf( args[1], "%x", (unsigned int *)&rt_g.debug ) != 1
 		)
 		{	HMitem	*itemptr;
 		if( ! tty )
@@ -883,7 +898,7 @@ char	**args;
 	(void) fb_cursor( fbiop, 1, x, y );
 
 	for( ; ; )
-		{	int		fx, fy, tx, ty;
+		{	int		fx=0, fy=0, tx=0, ty=0;
 			int		cx = x, cy = y;
 			int		mx, my;
 			int		mapfromflag = FALSE;
@@ -2796,7 +2811,7 @@ f_Key_Frame( itemp, args )
 HMitem	*itemp;
 char	**args;
 	{	fastf_t		model2view[16], to_eye[16];
-		FILE		*svkey_fp;
+		FILE		*svkey_fp=NULL;
 	if( args != NULL && args[1] != NULL )
 		{
 		(void) strncpy( svkey_file, args[1], MAX_LN );
@@ -2942,8 +2957,8 @@ char	**args;
 				MAX_LGTS-1,
 				input_ln
 				);
-		if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
-		    &&	sscanf( input_ln, "%d", &light_id ) != 1
+		if(	(get_Input( input_ln, MAX_LN, prompt ) != NULL
+		&&	sscanf( input_ln, "%d", &light_id ) != 1)
 		     ||	light_id < 0 || light_id >= MAX_LGTS
 			)
 			{
@@ -3100,6 +3115,7 @@ HMitem	*itemp;
 	{
 	exit_Neatly( 0 );
 	/*NOTREACHED*/
+	return( 0 ); /* for the compiler */
 	}
 
 /*	f _ R e d r a w ( ) */
@@ -3642,7 +3658,7 @@ char	*args[];
 		}
 	first_time_through = FALSE;
 	/* special code to process comments */
-	if( func_tab[input_ln[0]].func == f_Comment )
+	if( func_tab[(int)input_ln[0]].func == f_Comment )
 		{
 		args[0] = input_ln;
 		args[1] = NULL;

@@ -152,7 +152,7 @@ FILE	*fp;
 	else
 		return	1;
 	}
-
+int
 read_IR( fp )
 FILE	*fp;
 	{	register int	fy;

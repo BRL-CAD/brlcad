@@ -100,6 +100,7 @@ int		id;
 	Open light source database and read entries into table,
 	return number of entries successfully read.
  */
+int
 lgt_Rd_Db( file )
 char	*file;
 	{	register Lgt_Source	*entry;
@@ -121,6 +122,7 @@ char	*file;
 	Write ASCII light source database from table.
 	Return 1 for success, 0 for failure.
  */
+int
 lgt_Save_Db( file )
 char	*file;
 	{
