@@ -102,14 +102,13 @@ double	cur_time;
 main(argc, argv)
 char	**argv;
 {
-	register int i;
 	int	frame;
 	char	name[128];
 	char	gname[128];
 	vect_t	normal;
 	struct wmember head, ghead;
 	matp_t	matp;
-	mat_t	xlate, prod;
+	mat_t	xlate;
 	mat_t	rot1, rot2, rot3;
 	vect_t	from, to;
 	vect_t	offset;
@@ -233,7 +232,6 @@ double	radius;
 	int	cur_kv;
 	fastf_t	*meshp;
 	register int col;
-	int	row;
 	vect_t	point;
 
 	/*

@@ -328,7 +328,6 @@ char	*bname;
 double	xc, yc;		/* center coordinates, z=0+ */
 double	size;
 {
-	vect_t	min, max;
 	point_t	center;
 	double	esz;
 	unsigned char	rgb[4];		/* needs all 4 */

@@ -49,15 +49,11 @@ void	do_cell(), draw_rect(), pnorms(), do_light();
 main(argc, argv)
 char	**argv;
 {
-	char	rgb[3];
 	int	ix, iy;
 	double	x, y;
 	double	size;
 	double	base;
 	int	quant;
-	char	name[64];
-	vect_t	pos, aim;
-	char	white[3];
 
 	mk_id( stdout, "Kurt's multi-valued function");
 
@@ -120,8 +116,7 @@ double	xc, yc;		/* center coordinates, z=0+ */
 {
 	LOCAL poly	polynom;
 	LOCAL complex	roots[4];	/* roots of final equation */
-	fastf_t		k[4];
-	int		i, l;
+	int		l;
 	int		nroots;
 	int		lim;
 
@@ -161,10 +156,8 @@ struct val *a, *b, *c, *d;
 	int min, max;
 	register int i;
 	point_t	centroid, work;
-	point_t pt[4];
 	fastf_t	verts[5][3];
 	fastf_t	norms[5][3];
-	static struct val v[3];
 	int	ndiff;
 	int	lvl;
 	int	j;
@@ -314,8 +307,6 @@ char	*rgb;
 	mat_t	rot;
 	mat_t	xlate;
 	mat_t	both;
-	vect_t	begin;
-	vect_t	trial;
 	vect_t	from;
 	vect_t	dir;
 

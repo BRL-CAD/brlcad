@@ -84,8 +84,6 @@ struct wmember	*headp;
 	mat_t	rot;
 	mat_t	xlate;
 	mat_t	both;
-	vect_t	begin;
-	vect_t	trial;
 	vect_t	from;
 	vect_t	dir;
 

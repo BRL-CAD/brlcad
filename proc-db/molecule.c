@@ -15,6 +15,7 @@ static char rcs_ident[] = "$Header$";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "db.h"
 #include "vmath.h"
 #include "wdb.h"
@@ -89,8 +90,6 @@ read_data( )
 	float           x, y, z;
 	float           sphere_radius;
 	int             atom_type;
-	int             atom_id;
-	char            atom_name[20];
 	int             b_1, b_2;
 	int red, green, blue;
 	int i = 0;
