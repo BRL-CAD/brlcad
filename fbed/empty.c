@@ -14,7 +14,7 @@
 static
 char	sccsTag[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, archive /vld/moss/src/fbed/s.empty.c";
 #endif
-#if defined( BSD ) || defined( cray ) || defined( sun )
+#if defined( BSD ) || defined( CRAY ) || defined( sun )
 #include <sys/types.h>
 #include <sys/time.h>
 #endif
@@ -38,7 +38,7 @@ struct timeval
 
 #ifndef FD_ZERO
 /* 4.2 does not define these */
-#ifdef cray
+#ifdef CRAY
 #define	FD_SET(n, p)	(*p |= (n) == 0 ? 1 : (1 << (n)))
 #define FD_ZERO(p)	*p = 0
 typedef	long	fd_set;
