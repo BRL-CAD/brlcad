@@ -86,17 +86,28 @@ Tcl_Interp	*interp;
 int		argc;
 char		*argv[];
 {
-	static char	cmd[] = "zoom 0.5\n";
+  if(argc < 4 || 4 < argc){
+    struct bu_vls vls;
 
-	if(argc < 4 || 4 < argc){
-	  Tcl_Eval(interp, "help L");
-	  return TCL_ERROR;
-	}
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help L");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
-	if( atoi(argv[1]) != 0 )
-	  return Tcl_Eval( interp, cmd );
+  if( atoi(argv[1]) != 0 ){
+    int status;
+    struct bu_vls vls;
 
-	return TCL_OK;
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "zoom 0.5\n");
+    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return status;
+  }
+
+  return TCL_OK;
 }
 
 /*
@@ -111,16 +122,28 @@ Tcl_Interp	*interp;
 int		argc;
 char		*argv[];
 {
-	static char	cmd[] = "zoom 2\n";
+  if(argc < 4 || 4 < argc){
+    struct bu_vls vls;
 
-	if(argc < 4 || 4 < argc){
-	  Tcl_Eval(interp, "help R");
-	  return TCL_ERROR;
-	}
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help R");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
-	if( atoi(argv[1]) != 0 )
-		return Tcl_Eval( interp, cmd );
-	return TCL_OK;
+  if( atoi(argv[1]) != 0 ){
+    int status;
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "zoom 2.0\n");
+    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return status;
+  }
+
+  return TCL_OK;
 }
 
 struct cmdtab {
@@ -525,7 +548,12 @@ char **argv;
   int status;
 
   if(argc < 1 || 2 < argc){
-    Tcl_Eval(interp, "help loadtk");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help loadtk");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -555,15 +583,13 @@ char **argv;
     int status;
 
     if(argc < 1 || 2 < argc){
-      Tcl_Eval(interp, "help output_hook");
-      return TCL_ERROR;
-    }
+      struct bu_vls vls;
 
-    if (argc > 2) {
-	Tcl_AppendResult(interp,
-			 "too many args: should be \"output_hook [hookName]\"",
-			 (char *)NULL);
-	return TCL_ERROR;
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help output_hook");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
+      return TCL_ERROR;
     }
 
     bu_delete_hook(gui_output, (genptr_t)interp);/* Delete the existing hook */
@@ -789,7 +815,9 @@ cmd_setup()
 
     Tcl_LinkVar(interp, "dbip", (char *)&dbip, TCL_LINK_INT|TCL_LINK_READ_ONLY);
     /* XXX Change from .db to "db" & eliminate mged-specific "db" command */
-    (void)Tcl_Eval(interp, "set wdbp [wdb_open .db disk $dbip]" );
+    bu_vls_trunc(&temp, 0);
+    bu_vls_printf(&temp, "set wdbp [wdb_open .db disk $dbip]");
+    (void)Tcl_Eval(interp, bu_vls_addr(&temp)); 
 
     bu_vls_free(&temp);
     tkwin = NULL;
@@ -1397,7 +1425,12 @@ char	**argv;
 	int retcode;
 
 	if(argc < 0 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help ?");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help ?");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1456,7 +1489,12 @@ char **argv;
     register int i;
 
     if(argc < 1 || 1 < argc){
-      Tcl_Eval(interp, "help sync");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help sync");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 
@@ -1564,7 +1602,12 @@ char	**argv;
   register int i;
 
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help press");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help press");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -1586,7 +1629,12 @@ char	**argv;
 	int bad;
 
 	if(argc < 1 || 2 < argc){
-	  Tcl_Eval(interp, "help summary");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help summary");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1633,7 +1681,12 @@ char	*argv[];
     register int i;
 
     if(argc < 1 || MAXARGS < argc){
-      Tcl_Eval(interp, "help echo");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help echo");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 
@@ -1699,7 +1752,12 @@ char *argv[];
   struct bu_vls vls2;
 
   if(argc < 1 || 3 < argc){
-    Tcl_Eval(interp, "help aim");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help aim");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -1808,7 +1866,12 @@ char *argv[];
   struct shared_info *sip;
 
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help ps");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help ps");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -1863,7 +1926,12 @@ char *argv[];
   struct shared_info *sip;
 
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help pl");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help pl");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -1908,7 +1976,12 @@ int     argc;
 char    **argv;
 {
   if(argc < 1 || 1 < argc){
-    Tcl_Eval(interp, "help mged_update");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help mged_update");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -1932,7 +2005,12 @@ char    **argv;
   register struct dm_list *p;
 
   if(argc < 1 || 2 < argc){
-    Tcl_Eval(interp, "help winset");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help winset");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 

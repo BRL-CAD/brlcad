@@ -82,7 +82,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 3 < argc){
-	  Tcl_Eval(interp, "help mv");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help mv");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -130,7 +135,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 3 < argc){
-	  Tcl_Eval(interp, "help cp");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help cp");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -188,7 +198,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 4 < argc){
-	  Tcl_Eval(interp, "help i");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help i");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -231,7 +246,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 4 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help r");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help r");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -326,7 +346,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 4 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help comb");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help comb");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -394,7 +419,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help kill");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help kill");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -436,7 +466,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help g");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help g");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -472,8 +507,13 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
-	      Tcl_Eval(interp, "help rm");
-	          return TCL_ERROR;
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help rm");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
 	}
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
@@ -536,7 +576,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 3 < argc){
-	  Tcl_Eval(interp, "help cpi");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help cpi");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -631,7 +676,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help arced");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help arced");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -759,21 +809,26 @@ int		argc;
 char	        **argv;
 {
   if(argc < 1 || MAXARGS < argc){
-    Tcl_Eval(interp, "help pathlist");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help pathlist");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
-	mged_initial_tree_state.ts_ttol = &mged_ttol;
-	mged_initial_tree_state.ts_tol = &mged_tol;
+  mged_initial_tree_state.ts_ttol = &mged_ttol;
+  mged_initial_tree_state.ts_tol = &mged_tol;
 
-	if( db_walk_tree( dbip, argc-1, (CONST char **)argv+1, 1,
-			 &mged_initial_tree_state,
-			 0, 0, pathlist_leaf_func ) < 0 )  {
-	    	Tcl_AppendResult(interp, "db_walk_tree() error", (char *)NULL);
-		return TCL_ERROR;
-	}
+  if( db_walk_tree( dbip, argc-1, (CONST char **)argv+1, 1,
+		    &mged_initial_tree_state,
+		    0, 0, pathlist_leaf_func ) < 0 )  {
+    Tcl_AppendResult(interp, "db_walk_tree() error", (char *)NULL);
+    return TCL_ERROR;
+  }
 
-	return TCL_OK;
+  return TCL_OK;
 }
 
 /*
@@ -849,7 +904,12 @@ char      	**argv;
 	char			number[32];
 
 	if(argc < 3 || 3 < argc){
-	  Tcl_Eval(interp, "help oed");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help oed");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -979,7 +1039,12 @@ char	**argv;
     CHECK_READ_ONLY;
 
     if(argc < 3 || MAXARGS < argc){
-      Tcl_Eval(interp, "help putmat");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help putmat");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 
@@ -1073,7 +1138,12 @@ char **argv;
     CHECK_READ_ONLY;
 
     if(argc < 3 || 3 < argc){
-      Tcl_Eval(interp, "help copymat");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help copymat");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 

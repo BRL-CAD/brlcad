@@ -1639,7 +1639,12 @@ char	**argv;
 	  av[1] = NULL;
 
 	  if(argc < 2 || 3 < argc){
-	    Tcl_Eval(interp, "help opendb");
+	    struct bu_vls vls;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "help opendb");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	  }
 

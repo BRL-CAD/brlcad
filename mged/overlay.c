@@ -50,7 +50,12 @@ char	**argv;
 	struct rt_vlblock	*vbp;
 
 	if(argc < 2 || 3 < argc){
-	  Tcl_Eval(interp, "help overlay");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help overlay");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -94,7 +99,12 @@ char	**argv;
 	fastf_t			scale;
 
 	if(argc < 2 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help labelvert");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help labelvert");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

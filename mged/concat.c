@@ -106,7 +106,12 @@ char	**argv;
   struct bu_vls vls;
 
   if(argc < 2 || 3 < argc){
-    Tcl_Eval(interp, "help dup");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help dup");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -349,7 +354,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 3 < argc){
-	  Tcl_Eval(interp, "help dbconcat");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help dbconcat");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

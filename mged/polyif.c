@@ -98,7 +98,12 @@ char	**argv;
 	struct	bu_external	obuf;
 
 	if(argc < 2 || 2 < argc){
-	  Tcl_Eval(interp, "help polybinout");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help polybinout");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

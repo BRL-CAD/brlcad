@@ -1147,7 +1147,12 @@ char	**argv;
 	int			mged_nmg_use_tnurbs = 0;
 
 	if(argc < 3 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help facetize");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help facetize");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1338,7 +1343,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help bev");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help bev");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

@@ -232,7 +232,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 1 || 2 < argc){
-    Tcl_Eval(interp, "help release");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help release");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -310,7 +315,12 @@ char    **argv;
   register struct w_dm *wp;
 
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help attach");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help attach");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     print_valid_dm();
     return TCL_ERROR;
   }
@@ -468,6 +478,7 @@ gui_setup()
 {
   char *filename;
   int status;
+  struct bu_vls vls;
 
   /* initialize only once */
   if(tkwin != NULL)
@@ -485,7 +496,10 @@ gui_setup()
     return TCL_ERROR;
   }
 
-  (void)Tcl_Eval( interp, "wm withdraw .");
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "wm withdraw .");
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
 
   /* Check to see if user specified MGED_GUIRC */
   if((filename = getenv("MGED_GUIRC")) != (char *)NULL )  {
@@ -519,7 +533,12 @@ char	**argv;
   }
 
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help dm");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help dm");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -554,7 +573,13 @@ char    **argv;
   struct bu_vls vls1;
 
   if(argc < 2 || 2 < argc){
-    Tcl_Eval(interp, "help untie");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help untie");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
     return TCL_ERROR;
   }
 
@@ -631,7 +656,12 @@ char    **argv;
   struct bu_vls vls1, vls2;
 
   if(argc < 3 || 3 < argc){
-    Tcl_Eval(interp, "help tie");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help tie");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -964,7 +994,12 @@ char    **argv;
   int i;
 
   if(argc < 1 || 1 < argc){
-    Tcl_Eval(interp, "help load_dv");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help load_dv");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 

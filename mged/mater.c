@@ -82,7 +82,12 @@ char	**argv;
   register struct mater *mp;
 
   if(argc < 1 || 1 < argc){
-    Tcl_Eval(interp, "help prcolor");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help prcolor");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -114,7 +119,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 7 || 7 < argc){
-	  Tcl_Eval(interp, "help color");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help color");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -181,7 +191,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || 1 < argc){
-	  Tcl_Eval(interp, "help edcolor");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help edcolor");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

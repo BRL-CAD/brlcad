@@ -109,7 +109,12 @@ char	*argv[];
   CHECK_READ_ONLY;
 
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help edcodes");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help edcodes");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -171,7 +176,12 @@ char	*argv[];
   register struct directory *dp;
 
   if(argc < 3 || MAXARGS < argc){
-    Tcl_Eval(interp, "help wcodes");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help wcodes");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -216,7 +226,12 @@ char		*argv[];
   CHECK_READ_ONLY;
 
   if(argc < 2 || 2 < argc){
-    Tcl_Eval(interp, "help rcodes");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help rcodes");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -396,8 +411,13 @@ char	**argv;
 	int		item;
 
 	if(argc < 2 || MAXARGS < argc){
-	      Tcl_Eval(interp, "help whichid");
-	          return TCL_ERROR;
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help whichid");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
 	}
 
 	if( setjmp( jmp_env ) == 0 )
@@ -454,7 +474,12 @@ char	**argv;
 	int item;
 
 	if(argc < 2 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help which_shader");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help which_shader");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -511,7 +536,12 @@ char	**argv;
 	struct rt_comb_internal *comb;
 
 	if(argc < 2 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help whichair");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help whichair");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -584,7 +614,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 3 < argc){
-	  Tcl_Eval(interp, "help decompose");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help decompose");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

@@ -87,7 +87,12 @@ char **argv;
 	int status = TCL_OK;
 
 	if(argc < 2 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help facedef");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help facedef");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

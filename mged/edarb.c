@@ -473,7 +473,12 @@ char	**argv;
 	struct rt_arb_internal larb;	/* local copy of arb for new way */
 
 	if(argc < 3 || 3 < argc){
-	  Tcl_Eval(interp, "help extrude");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help extrude");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -679,7 +684,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 4 || 4 < argc){
-	  Tcl_Eval(interp, "help arb");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help arb");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -773,7 +783,12 @@ char	**argv;
 	struct rt_arb_internal larb;	/* local copy of solid */
 
 	if(argc < 3 || 3 < argc){
-	  Tcl_Eval(interp, "help mirface");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help mirface");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -954,7 +969,12 @@ char	**argv;
 	FAST fastf_t rot, fb;
 
 	if(argc < 3 || 4 < argc){
-	  Tcl_Eval(interp, "help edgedir");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help edgedir");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1158,7 +1178,12 @@ char	**argv;
     CHECK_READ_ONLY;
 
     if(argc < 2 || 2 < argc){
-      Tcl_Eval(interp, "help permute");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help permute");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 

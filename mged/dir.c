@@ -185,7 +185,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 1 || 1 < argc){
-    Tcl_Eval(interp, "help memprint");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help memprint");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -443,7 +448,12 @@ char	**argv;
 	struct bu_vls vls;
 
 	if(argc < 1 || 1 < argc){
-	  Tcl_Eval(interp, "help tops");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help tops");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -626,7 +636,12 @@ char **argv;
     int regexp, nummatch, thismatch, backslashed;
 
     if(argc < 1 || MAXARGS < argc){
-      Tcl_Eval(interp, "help expand");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help expand");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 
@@ -730,7 +745,12 @@ char	**argv;
   register struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
 
   if(argc < 1 || MAXARGS < argc){
-    Tcl_Eval(interp, "help find");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help find");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -812,7 +832,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help prefix");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help prefix");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -911,7 +936,12 @@ char	**argv;
 	register int		i;
 
 	if(argc < 3 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help keep");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help keep");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -997,7 +1027,12 @@ char	**argv;
   register int j;
 
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help tree");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help tree");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -1178,7 +1213,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 3 < argc){
-	  Tcl_Eval(interp, "help mvall");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help mvall");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1300,7 +1340,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help killall");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help killall");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1385,7 +1430,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help killtree");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help killtree");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1430,7 +1480,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 1 || 1 < argc){
-    Tcl_Eval(interp, "help debugdir");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help debugdir");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 

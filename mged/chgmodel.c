@@ -87,7 +87,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 6 < argc){
-	  Tcl_Eval(interp, "help item");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help item");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -161,7 +166,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 8 < argc){
-	  Tcl_Eval(interp, "help mater");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help mater");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 	
@@ -311,7 +321,12 @@ char    *argv[];
   CHECK_READ_ONLY;
 
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help edmater");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help edmater");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -366,7 +381,12 @@ char    *argv[];
   struct rt_comb_internal	*comb;
 
   if(argc < 3 || MAXARGS < argc){
-    Tcl_Eval(interp, "help wmater");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help wmater");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -432,7 +452,12 @@ char    *argv[];
   CHECK_READ_ONLY;
 
   if(argc < 2 || 2 < argc){
-    Tcl_Eval(interp, "help rmater");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help rmater");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -553,7 +578,12 @@ char	**argv;
     CHECK_READ_ONLY;
 
     if(argc < 5 || 5 < argc){
-      Tcl_Eval(interp, "help comb_color");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help comb_color");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 
@@ -610,7 +640,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help shader");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help shader");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -658,7 +693,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 4 || 4 < argc){
-	  Tcl_Eval(interp, "help mirror");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help mirror");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1171,7 +1211,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 6 || 7 < argc){
-	  Tcl_Eval(interp, "help edcomb");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help edcomb");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1228,7 +1273,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || 2 < argc){
-	  Tcl_Eval(interp, "help units");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help units");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1269,7 +1319,7 @@ char	**argv;
 				   "Warning: unable to stash working units into database\n",
 				   (char *)NULL);
 
-	} else if( (loc2mm = rt_units_conversion(argv[1]) ) <= 0 )  {
+	} else if( (loc2mm = bu_units_conversion(argv[1]) ) <= 0 )  {
 	  Tcl_AppendResult(interp, argv[1], ": unrecognized unit\n",
 			   "valid units: <mm|cm|m|in|ft|meters|inches|feet>\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -1308,7 +1358,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help title");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help title");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1372,7 +1427,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 3 < argc){
-	  Tcl_Eval(interp, "help make");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help make");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1867,7 +1927,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 2 < argc){
-	  Tcl_Eval(interp, "help oscale");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help oscale");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1954,7 +2019,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 4 || 4 < argc){
-	  Tcl_Eval(interp, "help translate");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help translate");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -2004,7 +2074,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 2 || 5 < argc){
-    Tcl_Eval(interp, "help regdef");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help regdef");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -2106,7 +2181,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 3 < argc){
-	  Tcl_Eval(interp, "help fracture");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help fracture");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -2254,7 +2334,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 8 || 8 < argc){
-	  Tcl_Eval(interp, "help qorot");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help qorot");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

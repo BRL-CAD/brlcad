@@ -99,7 +99,12 @@ char	**argv;
 	int	ypos = atoi(argv[3]);
 
 	if(argc < 4 || 4 < argc){
-	  Tcl_Eval(interp, "help M");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help M");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -320,7 +325,12 @@ char *argv[];
   int i;
 
   if(argc < 1 || 2 < argc){
-    Tcl_Eval(interp, "help aip");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help aip");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -546,7 +556,12 @@ char	**argv;
 	register int		j;
 
 	if(argc < 2 || 2 < argc){
-	  Tcl_Eval(interp, "help matpick");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help matpick");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

@@ -208,7 +208,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 4 || 4 < argc){
-    Tcl_Eval(interp, "help center");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help center");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -298,7 +303,12 @@ char	**argv;
   struct bu_vls vls;
 
   if(argc < 4 || 4 < argc){
-    Tcl_Eval(interp, "help vrot");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help vrot");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -316,19 +326,24 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	fastf_t f;
+  fastf_t f;
 
-	if(argc < 2 || 2 < argc){
-	  Tcl_Eval(interp, "help size");
-	  return TCL_ERROR;
-	}
+  if(argc < 2 || 2 < argc){
+    struct bu_vls vls;
 
-	f = atof( argv[1] );
-	if( f < 0.0001 ) f = 0.0001;
-	Viewscale = f * 0.5 * local2base;
-	new_mats();
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help size");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
-	return TCL_OK;
+  f = atof( argv[1] );
+  if( f < 0.0001 ) f = 0.0001;
+  Viewscale = f * 0.5 * local2base;
+  new_mats();
+
+  return TCL_OK;
 }
 
 /* ZAP the display -- then edit anew */
@@ -346,7 +361,12 @@ char	**argv;
   av[1] = (char *)NULL;
 
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help B");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help B");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -399,7 +419,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help ev");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help ev");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -428,7 +453,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help E");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help E");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -594,7 +624,12 @@ char	**argv;
   struct bu_vls vls;
 
   if(argc < 1 || 2 < argc){
-    Tcl_Eval(interp, "help x");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help x");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -626,7 +661,12 @@ char	**argv;
 	static int regdebug = 0;
 
 	if(argc < 1 || 2 < argc){
-	  Tcl_Eval(interp, "help regdebug");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help regdebug");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -657,7 +697,12 @@ char	**argv;
   struct bu_vls vls;
 
   if(argc < 1 || 2 < argc){
-    Tcl_Eval(interp, "help debugbu");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help debugbu");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -695,7 +740,12 @@ char	**argv;
   struct bu_vls vls;
 
   if(argc < 1 || 2 < argc){
-    Tcl_Eval(interp, "help debuglib");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help debuglib");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -733,7 +783,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 1 || 1 < argc){
-    Tcl_Eval(interp, "help debugmem");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help debugmem");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -763,7 +818,12 @@ char	**argv;
   struct bu_vls vls;
 
   if(argc < 1 || 2 < argc){
-    Tcl_Eval(interp, "help debugnmg");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help debugnmg");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -830,7 +890,12 @@ char	**argv;
   struct bu_vls str;
 
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help l");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help l");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -871,7 +936,12 @@ char	**argv;
   struct bu_vls str;
 
   if(argc < 2 || MAXARGS < argc){
-    Tcl_Eval(interp, "help cat");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help cat");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -938,7 +1008,12 @@ char	**argv;
 	struct directory	*dp;
 
 	if(argc < 1 || 1 < argc){
-	  Tcl_Eval(interp, "help Z");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help Z");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -984,7 +1059,12 @@ char	**argv;
   struct bu_vls vls;
 
   if(argc < 1 || 1 < argc){
-    Tcl_Eval(interp, "help status");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help status");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -1018,7 +1098,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 1 || 1 < argc){
-    Tcl_Eval(interp, "help fix");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help fix");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -1033,7 +1118,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 1 || 1 < argc){
-    Tcl_Eval(interp, "help refresh");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help refresh");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -1057,7 +1147,12 @@ char	**argv;
   struct bu_vls vls;
 
   if(argc < 3 || 5 < argc){
-    Tcl_Eval(interp, "help ae");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help ae");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -1293,7 +1388,12 @@ char	**argv;
 	char	*sname;
 
 	if(argc < 2 || 2 < argc){
-	  Tcl_Eval(interp, "help ill");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help ill");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -1416,7 +1516,12 @@ char	**argv;
   CHECK_READ_ONLY;
 
   if(argc < 2 || 2 < argc){
-    Tcl_Eval(interp, "help sed");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help sed");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -1614,7 +1719,12 @@ char	**argv;
   struct bu_vls vls;
 
   if(argc < 1 || MAXARGS < argc){
-    Tcl_Eval(interp, "help knob");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help knob");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -2313,7 +2423,12 @@ char	**argv;
 	int argind=1;
 
 	if(argc < 1 || 11 < argc){
-	  Tcl_Eval(interp, "help tol");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help tol");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -2523,7 +2638,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 2 || 2 < argc){
-    Tcl_Eval(interp, "help zoom");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help zoom");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -2547,7 +2667,12 @@ char	**argv;
   quat_t		quat;
 
   if(argc < 5 || 5 < argc){
-    Tcl_Eval(interp, "help orientation");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help orientation");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -2577,7 +2702,12 @@ char	**argv;
     double	theta;
 
     if(argc < 5 || 5 < argc){
-      Tcl_Eval(interp, "help qvrot");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help qvrot");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 
@@ -2672,7 +2802,12 @@ char    *argv[];
   double x, y, z;
 
   if(argc < 4 || 4 < argc){
-    Tcl_Eval(interp, "help setview");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help setview");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -2741,7 +2876,12 @@ char	*argv[];
   vect_t tranvec;
 
   if(argc < 3 || 5 < argc){
-    Tcl_Eval(interp, "help tran");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help tran");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -2801,7 +2941,12 @@ char	*argv[];
   vect_t slewvec;
 
   if(argc < 3 || 4 < argc){
-    Tcl_Eval(interp, "help sv");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help sv");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -2861,7 +3006,12 @@ int     argc;
 char    **argv;
 {
   if(argc < 1 || 1 < argc){
-    Tcl_Eval(interp, "help svb");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help svb");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -2888,7 +3038,12 @@ char **argv;
   char *cp;
 
   if(argc < 2 || 2 < argc){
-    Tcl_Eval(interp, "help getknob");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help getknob");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -3031,7 +3186,12 @@ int	argc;
 char	**argv;
 {
   if(argc < 5 || 5 < argc){
-    Tcl_Eval(interp, "help vrot_center");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help vrot_center");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -3182,7 +3342,12 @@ char	**argv;
 	vect_t	new_cent;
 
 	if(argc < 4 || 4 < argc){
-	  Tcl_Eval(interp, "help eye_pt");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help eye_pt");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -3221,7 +3386,12 @@ char	**argv;
 	struct bu_vls	str;
 
 	if(argc < 4 || 4 < argc){
-	  Tcl_Eval(interp, "help model2view");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help model2view");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -3257,7 +3427,12 @@ char	**argv;
 	struct bu_vls	str;
 
 	if(argc < 4 || 4 < argc){
-	  Tcl_Eval(interp, "help view2model");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help view2model");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -3292,7 +3467,12 @@ char	**argv;
 	struct bu_vls vls;
 
 	if(argc < 4 || 4 < argc){
-	  Tcl_Eval(interp, "help lookat");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help lookat");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

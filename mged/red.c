@@ -66,7 +66,12 @@ char **argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 2 < argc){
-	  Tcl_Eval(interp, "help red");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help red");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

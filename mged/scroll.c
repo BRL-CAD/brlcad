@@ -101,7 +101,12 @@ struct scroll_item sl_adc_menu[] = {
 void
 sl_halt_scroll()
 {
-  Tcl_Eval( interp, "knob zero");
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "knob zero");
+  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
 }
 
 /*
@@ -133,7 +138,12 @@ char **argv;
   struct dm_list *p;
 
   if(argc < 1 || 2 < argc){
-    Tcl_Eval(interp, "help sliders");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help sliders");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 

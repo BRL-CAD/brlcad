@@ -154,7 +154,12 @@ int argc;
 char **argv;
 {
   if(argc < 1 || 3 < argc){
-    Tcl_Eval(interp, "help journal");
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help journal");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -205,7 +210,12 @@ char **argv;
     struct timeval tv;
 
     if(argc < 3 || 3 < argc){
-      Tcl_Eval(interp, "help delay");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help delay");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 
@@ -236,7 +246,12 @@ char **argv;
     struct timeval tvdiff;
 
     if(argc < 1 || 4 < argc){
-      Tcl_Eval(interp, "help history");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help history");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 
@@ -358,7 +373,12 @@ char **argv;
     struct bu_vls *vp;
 
     if(argc < 1 || 1 < argc){
-      Tcl_Eval(interp, "help hist_prev");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help hist_prev");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 
@@ -386,7 +406,12 @@ char **argv;
     struct bu_vls *vp;
 
     if(argc < 1 || 1 < argc){
-      Tcl_Eval(interp, "help hist_next");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help hist_next");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 
@@ -410,7 +435,12 @@ char **argv;
     struct bu_vls vls;
 
     if(argc < 1 || 2 < argc){
-      Tcl_Eval(interp, "help cmd_hist_add");
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help cmd_hist_add");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
       return TCL_ERROR;
     }
 

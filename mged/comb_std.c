@@ -506,7 +506,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help c");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help c");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

@@ -211,7 +211,13 @@ char	**argv;
 	int     iadc = 0;
 
 	if(argc < 1 || 5 < argc){
-	  Tcl_Eval(interp, "help adc");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help adc");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+
 	  return TCL_ERROR;
 	}
 

@@ -89,7 +89,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
         if(argc < 1 || 27 < argc){
-	  Tcl_Eval(interp, "help 3ptarb");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help 3ptarb");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -347,7 +352,12 @@ char	**argv;
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || 27 < argc){
-	  Tcl_Eval(interp, "help rfarb");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help rfarb");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

@@ -179,7 +179,12 @@ char	*argv[];
 	quat_t		orient;
 
 	if(argc < 8 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help pov");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help pov");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -229,7 +234,12 @@ char	*argv[];
 	char		*role;
 
 	if(argc < 3 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help vrmgr");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help vrmgr");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

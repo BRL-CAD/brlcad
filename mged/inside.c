@@ -162,7 +162,12 @@ char **argv;
 	int status = TCL_OK;
 
 	if(argc < 1 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help inside");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help inside");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

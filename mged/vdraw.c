@@ -149,7 +149,12 @@ char **argv;
 	static int real_flag;
 
 	if(argc < 2 || 7 < argc){
-	  Tcl_Eval(interp, "help vdraw");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help vdraw");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -620,7 +625,12 @@ char **argv;
 	point_t pos;
 
 	if(argc < 1 || 1 < argc){
-	  Tcl_Eval(interp, "help read_center");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help read_center");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -642,7 +652,12 @@ char **argv;
 	point_t pos;
 
 	if(argc < 1 || 1 < argc){
-	  Tcl_Eval(interp, "help read_scale");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help read_scale");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -666,7 +681,12 @@ char **argv;
 	char c;
 
 	if(argc < 2 || 2 < argc){
-	  Tcl_Eval(interp, "help viewget");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help viewget");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -749,7 +769,12 @@ char **argv;
 	mat_t mymat;
 
 	if(argc < 3 || MAXARGS < argc){
-	  Tcl_Eval(interp, "help viewset");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help viewset");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 

@@ -365,7 +365,12 @@ char *argv[];
 	int bad = 0;
 
 	if(argc < 1 || 2 < argc){
-	  Tcl_Eval(interp, "help vars");
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help vars");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
@@ -425,6 +430,8 @@ set_view()
 void
 set_scroll()
 {
+  struct bu_vls vls;
+
   if(es_edclass && mged_variables.edit)
     scroll_edit = es_edclass;
   else
@@ -433,10 +440,15 @@ set_scroll()
   if(!strcmp("nu", bu_vls_addr(&pathName)))
     return;
 
+  bu_vls_init(&vls);
+
   if( mged_variables.scroll_enabled )
-    Tcl_Eval(interp, "sliders on");
+    bu_vls_printf(&vls, "sliders on");
   else
-    Tcl_Eval(interp, "sliders off");
+    bu_vls_printf(&vls, "sliders off");
+
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
 }
 
 
