@@ -57,6 +57,7 @@ int get_more_default();
 void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 
+extern int cmd_get_comb(), cmd_put_comb();  /* defined in red.c */
 extern void set_scroll();  /* defined in set.c */
 extern void sync();
 extern int gui_setup();
@@ -913,6 +914,10 @@ cmd_setup()
 	(void)Tcl_CreateCommand(interp, "stuff_str", cmd_stuff_str, (ClientData)NULL,
 				(Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "get_dbip", cmd_get_ptr, (ClientData)&dbip, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "get_comb", cmd_get_comb,
+				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "put_comb", cmd_put_comb,
+				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	/* A synonym, to allow cut-n-paste of rt animation scripts into mged */
 	(void)Tcl_CreateCommand(interp, "viewsize", f_view, (ClientData)NULL,

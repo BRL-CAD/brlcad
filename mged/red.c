@@ -68,7 +68,7 @@ char **argv;
 
 	CHECK_READ_ONLY;
 
-	if(argc < 2 || 2 < argc){
+	if(argc != 2){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -131,8 +131,8 @@ char **argv;
 	    return TCL_ERROR;
 	  }
 
-	if( comb )
-	{
+	  if( comb )
+	  {
 	  if( save_comb( dp ) ){ /* Save combination to a temp name */
 	    Tcl_AppendResult(interp, "No changes made\n", (char *)NULL);
 	    rt_comb_ifree( &intern );
@@ -226,6 +226,520 @@ matp_t matrix;
 		else
 			fprintf( fp, " %.12e", matrix[k] );
 	}
+}
+
+HIDDEN void
+vls_print_matrix(vls, matrix)
+struct bu_vls *vls;
+matp_t matrix;
+{
+  int k;
+  char buf[64];
+  fastf_t tmp;
+
+  if(!matrix)
+    return;
+
+  if(bn_mat_is_identity(matrix))
+    return;
+
+  for(k=0; k<16; k++){
+    sprintf(buf, "%g", matrix[k]);
+    tmp = atof(buf);
+    if(tmp == matrix[k])
+      bu_vls_printf(vls, " %g", matrix[k]);
+    else
+      bu_vls_printf(vls, " %.12e", matrix[k]);
+  }
+}
+
+HIDDEN int
+put_rgb_into_comb(comb, str)
+struct rt_comb_internal *comb;
+char *str;
+{
+  int r, g, b;
+
+  if(sscanf(str, "%d%d%d", &r, &g, &b) != 3)
+    return TCL_ERROR;
+
+  /* clamp the RGB values to [0,255] */
+  if(r < 0)
+    r = 0;
+  else if(r > 255)
+    r = 255;
+
+  if(g < 0)
+    g = 0;
+  else if(g > 255)
+    g = 255;
+
+  if(b < 0)
+    b = 0;
+  else if(b > 255)
+    b = 255;
+
+  comb->rgb[0] = (unsigned char)r;
+  comb->rgb[1] = (unsigned char)g;
+  comb->rgb[2] = (unsigned char)b;
+  comb->rgb_valid = 1;
+
+  return TCL_OK;
+}
+
+struct line_list{
+  struct bu_list l;
+  char *line;
+};
+
+struct line_list HeadLines;
+
+HIDDEN int
+put_tree_into_comb(comb, dp, old_name, new_name, str)
+struct rt_comb_internal *comb;
+struct directory *dp;
+char *old_name;
+char *new_name;
+char *str;
+{
+  int i;
+  char *line;
+  char *ptr;
+  char relation;
+  char name[NAMESIZE+1];
+  char newline[] = "\n";
+  struct directory *dp1;
+  struct rt_tree_array *rt_tree_array;
+  struct line_list *llp;
+  int node_count = 0;
+  int tree_index = 0;
+  union tree *tp;
+  union tree *final_tree;
+  struct rt_db_internal intern;
+  matp_t matrix;
+
+  if(str == (char *)NULL)
+    return TCL_ERROR;
+
+  BU_LIST_INIT(&HeadLines.l);
+
+  /* break str into lines */
+  line = strtok(str, newline);
+  while(line != (char *)NULL){
+    BU_GETSTRUCT(llp, line_list);
+    BU_LIST_INSERT(&HeadLines.l, &llp->l);
+    llp->line = line;
+    line = strtok((char *)NULL, newline);
+    ++node_count;
+  }
+
+  /* build tree list */
+  if( node_count )
+    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list" );
+  else
+    rt_tree_array = (struct rt_tree_array *)NULL;
+
+  for(BU_LIST_FOR(llp, line_list, &HeadLines.l)){
+    ptr = strtok(llp->line, delims);
+
+    /* First non-white is the relation operator */
+    relation = (*ptr);
+    if( relation == '\0' ){
+      Tcl_AppendResult(interp, "no relational operator\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    /* Next must be the member name */
+    ptr = strtok( (char *)NULL, delims );
+    if(ptr == (char *)NULL){
+      Tcl_AppendResult(interp, "no name specified\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+    strncpy( name , ptr, NAMESIZE );
+    name[NAMESIZE] = '\0';
+
+    /* Eliminate trailing white space from name */
+    i = NAMESIZE;
+    while( isspace( name[--i] ) )
+      name[i] = '\0';
+
+    /* Check for existence of member */
+    if( (dp1=db_lookup( dbip , name , LOOKUP_QUIET )) == DIR_NULL )
+      Tcl_AppendResult(interp, "\tWARNING: '", name,
+		       "' does not exist\n", (char *)NULL);
+
+    /* get matrix */
+    ptr = strtok( (char *)NULL, delims );
+    if(ptr == (char *)NULL)
+      matrix = (matp_t)NULL;
+    else{
+      int k;
+
+      matrix = (matp_t)bu_calloc( 16, sizeof( fastf_t ), "red: matrix" );
+      matrix[0] = atof( ptr );
+      for( k=1 ; k<16 ; k++ ){
+	ptr = strtok( (char *)NULL, delims );
+	if( !ptr ){
+	  Tcl_AppendResult(interp, "incomplete matrix for member ",
+			   name, " No changes made\n", (char *)NULL );
+	  bu_free( (char *)matrix, "red: matrix" );
+	  if( rt_tree_array )
+	    bu_free( (char *)rt_tree_array, "red: tree list" );
+	  return TCL_ERROR;
+	}
+	matrix[k] = atof( ptr );
+      }
+      if( bn_mat_is_identity( matrix ) ){
+	bu_free( (char *)matrix, "red: matrix" );
+	matrix = (matp_t)NULL;
+      }
+    }
+
+    /* Add it to the combination */
+    switch( relation ){
+    case '+':
+      rt_tree_array[tree_index].tl_op = OP_INTERSECT;
+      break;
+    case '-':
+      rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
+      break;
+    default:
+      Tcl_AppendResult(interp, "unrecognized relation (assume UNION)\n",
+		       (char *)NULL );
+    case 'u':
+      rt_tree_array[tree_index].tl_op = OP_UNION;
+      break;
+    }
+
+    BU_GETUNION( tp, tree );
+    rt_tree_array[tree_index].tl_tree = tp;
+    tp->tr_l.magic = RT_TREE_MAGIC;
+    tp->tr_l.tl_op = OP_DB_LEAF;
+    tp->tr_l.tl_name = bu_strdup( name );
+    tp->tr_l.tl_mat = matrix;
+    tree_index++;
+  }
+
+  if( tree_index )
+    final_tree = (union tree *)db_mkgift_tree( rt_tree_array, node_count, (struct db_tree_state *)NULL );
+  else
+    final_tree = (union tree *)NULL;
+
+  RT_INIT_DB_INTERNAL( &intern );
+  intern.idb_type = ID_COMBINATION;
+  intern.idb_ptr = (genptr_t)comb;
+  comb->tree = final_tree;
+
+  if( strncmp( new_name, old_name, NAMESIZE ) ){
+    int flags;
+
+    if( comb->region_flag )
+      flags = DIR_COMB | DIR_REGION;
+    else
+      flags = DIR_COMB;
+
+    if( dp != DIR_NULL ){
+      if(  db_delete( dbip, dp ) || db_dirdelete( dbip, dp ) ){
+	Tcl_AppendResult(interp, "ERROR: Unable to delete directory entry for ",
+			 old_name, "\n", (char *)NULL );
+	rt_comb_ifree( &intern );
+	return( 1 );
+      }
+    }
+
+    if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags)) == DIR_NULL ){
+      Tcl_AppendResult(interp, "Cannot add ", new_name,
+		       " to directory, no changes made\n", (char *)NULL);
+      rt_comb_ifree( &intern );
+      return( 1 );
+    }
+
+    if( db_alloc( dbip, dp, node_count+1) ){
+      Tcl_AppendResult(interp, "Cannot allocate file space for ", new_name,
+		       "\n", (char *)NULL );
+      rt_comb_ifree( &intern );
+      return( 1 );
+    }
+  }else if( dp == DIR_NULL ){
+    int flags;
+
+    if( comb->region_flag )
+      flags = DIR_COMB | DIR_REGION;
+    else
+      flags = DIR_COMB;
+
+    if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags)) == DIR_NULL ){
+      Tcl_AppendResult(interp, "Cannot add ", new_name,
+		       " to directory, no changes made\n", (char *)NULL);
+      rt_comb_ifree( &intern );
+      return TCL_ERROR;
+    }
+
+    if( db_alloc( dbip, dp, node_count+1) ){
+      Tcl_AppendResult(interp, "Cannot allocate file space for ", new_name,
+		       "\n", (char *)NULL );
+      rt_comb_ifree( &intern );
+      return TCL_ERROR;
+    }
+  }
+
+  if( rt_db_put_internal( dp, dbip, &intern ) < 0 ){
+    Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+int
+cmd_get_comb(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  struct directory *dp;
+  struct rt_db_internal	intern;
+  struct rt_comb_internal *comb;
+  struct rt_tree_array	*rt_tree_array;
+  int offset,i;
+  int node_count;
+  int actual_count;
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
+  CHECK_READ_ONLY;
+
+  if(argc != 2){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help get_comb");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+  dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
+
+  if(dp != DIR_NULL){
+    struct bu_vls vls;
+
+    if( !(dp->d_flags & DIR_COMB) ){
+      Tcl_AppendResult(interp, argv[1],
+		       " is not a combination, so cannot be edited this way\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+      TCL_READ_ERR_return;
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+    if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 ){
+      db_non_union_push( comb->tree );
+      if( db_ck_v4gift_tree( comb->tree ) < 0 ){
+	Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL );
+	return TCL_ERROR;
+      }
+    }
+
+    node_count = db_tree_nleaves( comb->tree );
+    if( node_count > 0 ){
+      rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
+							 sizeof( struct rt_tree_array ), "tree list" );
+      actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
+      if( actual_count > node_count )  bu_bomb("write_comb() array overflow!");
+      if( actual_count < node_count )  bu_log("WARNING write_comb() array underflow! %d < %d", actual_count, node_count);
+    } else {
+      rt_tree_array = (struct rt_tree_array *)NULL;
+      actual_count = 0;
+    }
+
+    bu_vls_init(&vls);
+    Tcl_AppendElement(interp, dp->d_namep);                 /* NAME=name */
+    if( comb->region_flag ){
+      Tcl_AppendElement(interp, "Yes");              /* REGION=Yes */
+      bu_vls_printf(&vls, "%d", comb->region_id );
+      Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* REGION_ID=comb->region_id */
+      bu_vls_trunc(&vls, 0);
+      bu_vls_printf(&vls, "%d", comb->aircode);
+      Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* AIRCODE=comb->aircode */
+      bu_vls_trunc(&vls, 0);
+      bu_vls_printf(&vls, "%d", comb->GIFTmater);
+      Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* GIFT_MATERIAL=comb->GIFTmater */
+      bu_vls_trunc(&vls, 0);
+      bu_vls_printf(&vls, "%d", comb->los );
+      Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* LOS=comb->los */
+    }else{
+      Tcl_AppendElement(interp, "No");   /* REGION=No        */
+      Tcl_AppendElement(interp, "");     /* REGION_ID=""     */
+      Tcl_AppendElement(interp, "");     /* AIRCODE=""       */
+      Tcl_AppendElement(interp, "");     /* GIFT_MATERIAL="" */
+      Tcl_AppendElement(interp, "");     /* LOS=""           */
+    }
+
+    if(comb->rgb_valid){
+      bu_vls_trunc(&vls, 0);
+      bu_vls_printf(&vls, "%d %d %d", V3ARGS(comb->rgb));
+      Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* COLOR=comb->rgb */
+    }else
+      Tcl_AppendElement(interp, "");                 /* COLOR=""        */
+
+    Tcl_AppendElement(interp, bu_vls_addr(&comb->shader)); /* SHADER=comb->shader */
+
+    if( comb->inherit )
+      Tcl_AppendElement(interp, "Yes");  /* INHERIT=Yes */
+    else
+      Tcl_AppendElement(interp, "No");   /* INHERIT=No  */
+
+
+    bu_vls_trunc(&vls, 0);
+    for( i=0 ; i<actual_count ; i++ ){
+      char op;
+
+      switch( rt_tree_array[i].tl_op ){
+      case OP_UNION:
+	op = 'u';
+	break;
+      case OP_INTERSECT:
+	op = '+';
+	break;
+      case OP_SUBTRACT:
+	op = '-';
+	break;
+      default:
+	Tcl_AppendResult(interp, "Illegal op code in tree\n",
+			 (char *)NULL );
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+      }
+
+      bu_vls_printf(&vls, " %c %s" , op , rt_tree_array[i].tl_tree->tr_l.tl_name);
+      vls_print_matrix(&vls, rt_tree_array[i].tl_tree->tr_l.tl_mat);
+      bu_vls_printf(&vls, "\n");
+    }
+
+    Tcl_AppendElement(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+  }else {
+    Tcl_AppendElement(interp, argv[1]); /* NAME=argv[1]     */
+    Tcl_AppendElement(interp, "No");    /* REGION=No        */
+    Tcl_AppendElement(interp, "");      /* REGION_ID=""     */
+    Tcl_AppendElement(interp, "");      /* AIRCODE=""       */
+    Tcl_AppendElement(interp, "");      /* GIFT_MATERIAL="" */
+    Tcl_AppendElement(interp, "");      /* LOS=""           */
+    Tcl_AppendElement(interp, "");      /* COLOR=""         */
+    Tcl_AppendElement(interp, "");      /* SHADER=""        */
+    Tcl_AppendElement(interp, "No");    /* INHERIT=No       */
+    Tcl_AppendElement(interp, "");      /* COMBINATION:""   */
+
+    return TCL_OK;
+  }
+}
+
+int
+cmd_put_comb(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  struct directory *dp;
+  struct rt_db_internal	intern;
+  struct rt_comb_internal *comb;
+  char new_name[NAMESIZE+1];
+
+  if(dbip == DBI_NULL)
+    return TCL_OK;
+
+  CHECK_READ_ONLY;
+
+  if(argc != 11){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help put_comb");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+  dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
+  if(dp != DIR_NULL){
+    if( !(dp->d_flags & DIR_COMB) ){
+      Tcl_AppendResult(interp, argv[1],
+		       " is not a combination, so cannot be edited this way\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+    
+    if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+      TCL_READ_ERR_return;
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    save_comb(dp); /* Save combination to a temp name */
+  }else{
+    comb = (struct rt_comb_internal *)NULL;
+  }
+
+  /* empty the existing combination */
+  if( comb && comb->tree ){
+    db_free_tree( comb->tree );
+    comb->tree = NULL;
+  }else{
+    /* make an empty combination structure */
+    BU_GETSTRUCT( comb, rt_comb_internal );
+    comb->magic = RT_COMB_MAGIC;
+    comb->tree = TREE_NULL;
+    bu_vls_init( &comb->shader );
+    bu_vls_init( &comb->material );
+  }
+
+  if(dp == DIR_NULL)
+    NAMEMOVE(argv[1], new_name);
+  else
+    NAMEMOVE(dp->d_namep, new_name);
+
+  if(*argv[2] == 'y' || *argv[2] == 'Y')
+    comb->region_flag = 'Y';
+  else
+    comb->region_flag = '\0';
+
+  comb->region_id = atoi(argv[3]);
+  comb->aircode = atoi(argv[4]);
+  comb->GIFTmater = atoi(argv[5]);
+  comb->los = atoi(argv[6]);
+  put_rgb_into_comb(comb, argv[7]);
+  bu_vls_strcpy(&comb->shader, argv[8]);
+
+  if(*argv[9] == 'y' || *argv[9] == 'Y')
+    comb->inherit = 1;
+  else
+    comb->inherit = 0;
+
+  if(put_tree_into_comb(comb, dp, argv[1], new_name, argv[10]) == TCL_ERROR){
+    if(comb){
+      restore_comb(dp);
+      Tcl_AppendResult(interp, "\toriginal restored\n", (char *)NULL);
+    }
+    (void)unlink(red_tmpfil);
+    return TCL_ERROR;
+  }else if(comb){
+    /* eliminate the temporary combination */
+    char *av[3];
+
+    av[0] = "kill";
+    av[1] = red_tmpcomb;
+    av[2] = NULL;
+    (void)f_kill(clientData, interp, 2, av);
+  }
+
+  (void)unlink(red_tmpfil);
+  return TCL_OK;
 }
 
 int
