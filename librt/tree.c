@@ -556,9 +556,9 @@ struct mater_info *materp;
 		} else {
 			if( curmater.ma_cinherit == DB_INH_LOWER )  {
 				curmater.ma_override = 1;
-				curmater.ma_color[0] = (rec.c.c_rgb[0]+0.5)*rt_inv255;
-				curmater.ma_color[1] = (rec.c.c_rgb[1]+0.5)*rt_inv255;
-				curmater.ma_color[2] = (rec.c.c_rgb[2]+0.5)*rt_inv255;
+				curmater.ma_color[0] = (rec.c.c_rgb[0])*rt_inv255;
+				curmater.ma_color[1] = (rec.c.c_rgb[1])*rt_inv255;
+				curmater.ma_color[2] = (rec.c.c_rgb[2])*rt_inv255;
 				curmater.ma_cinherit = rec.c.c_inherit;
 			}
 		}
@@ -578,11 +578,9 @@ struct mater_info *materp;
 	/* Handle combinations which are the top of a "region" */
 	if( rec.c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
-			if( rt_g.debug & DEBUG_REGIONS )
-				rt_log("Warning:  region %s within region %s\n",
-					rt_path_str(pathpos),
-					argregion->reg_name );
-/***			argregion = REGION_NULL;	/* override! */
+			rt_log("Warning:  region %s below region %s, ignored\n",
+				rt_path_str(pathpos),
+				argregion->reg_name );
 		} else {
 			register struct region *nrp;
 
@@ -600,6 +598,7 @@ struct mater_info *materp;
 			nrp->reg_mater = curmater;	/* struct copy */
 			/* Material property processing in rt_add_regtree() */
 			regionp = nrp;
+			dp->d_uses++;		/* after rt_path_str() */
 		}
 	}
 
@@ -854,16 +853,21 @@ HIDDEN char *
 rt_path_str( pos )
 int pos;
 {
-	static char line[MAXLEVELS*(16+2)];
+	static char line[MAXLEVELS*(NAMESIZE+2)+10];
 	register char *cp = &line[0];
 	register int i;
+	register struct directory	*dp;
 
 	if( pos >= MAXLEVELS )  pos = MAXLEVELS-1;
 	line[0] = '/';
 	line[1] = '\0';
 	for( i=0; i<=pos; i++ )  {
-		(void)sprintf( cp, "/%s", path[i]->d_namep );
+		(void)sprintf( cp, "/%s", (dp=path[i])->d_namep );
 		cp += strlen(cp);
+		if( (dp->d_flags & DIR_REGION) || dp->d_uses > 0 )  {
+			(void)sprintf( cp, "{{%d}}", dp->d_uses );
+			cp += strlen(cp);
+		}
 	}
 	return( &line[0] );
 }
