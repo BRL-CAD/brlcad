@@ -171,7 +171,7 @@ char **argv;
 
 	/* Build directory of GED database */
 	if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
-		fprintf(stderr,"rt:  rt_dirbuild failure\n");
+		fprintf(stderr,"rt:  rt_dirbuild(%s) failure\n", title_file);
 		exit(2);
 	}
 	ap.a_rt_i = rtip;
