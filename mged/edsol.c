@@ -3257,13 +3257,25 @@ sedit()
 			int ret_tcl;
 			struct directory *dp;
 			struct rt_db_internal tmp_ip;
+			struct bu_vls tcl_cmd;
 
 			RT_EXTRUDE_CK_MAGIC( extr );
 
-			ret_tcl = Tcl_VarEval( interp, "get_sketch", " $mged_gui(mged,screen) ",
-				extr->sketch_name, " ", (char *)NULL );
+			bu_vls_init( &tcl_cmd );
+			bu_vls_printf( &tcl_cmd, "cad_input_dialog .get_sketch_name $mged_gui(mged,screen) {Select Sketch} {Enter the name of the sketch to be extruded} final_sketch_name %s 0 {{summary \"Enter sketch name\"}} APPLY DISMISS",
+				extr->sketch_name );
+			ret_tcl = Tcl_Eval( interp, bu_vls_addr( &tcl_cmd ) );
 			if( ret_tcl != TCL_OK )
+			{
+				bu_log( "ERROR: %s\n", Tcl_GetStringResult( interp ) );
+				bu_vls_free( &tcl_cmd );
 				break;
+			}
+
+			if( atoi( Tcl_GetStringResult( interp ) ) == 1 )
+				break;
+			
+			bu_vls_free( &tcl_cmd );
 
 			sketch_name = Tcl_GetVar( interp, "final_sketch_name", TCL_GLOBAL_ONLY );
 			NAMEMOVE( sketch_name, extr->sketch_name );
@@ -3280,8 +3292,8 @@ sedit()
 
 			if( (dp=db_lookup( dbip, sketch_name, 0 )) == DIR_NULL )
 			{
-				Tcl_AppendResult(interp, "Warning: ", sketch_name, " does not exist!!!\n",
-					(char *)NULL );
+				bu_log( "Warning: %s does not exist!!!\n",
+					sketch_name );
 				extr->skt = (struct rt_sketch_internal *)NULL;
 			}
 			else
