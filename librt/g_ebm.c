@@ -31,6 +31,8 @@ static const char RCSebm[] = "@(#)$Header$ (BRL)";
 #else
 #include <strings.h>
 #endif
+#include <ctype.h>
+#include "tcl.h"
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -1946,3 +1948,155 @@ vect_t	pt, dir;
 	pdv_3line( plotfp, a, b );
 }
 #endif /* test driver */
+
+/*
+ *		R T _ E B M _ T C L G E T
+ *
+ *	Routine to format the parameters of an EBM for "db get"
+ *
+ *	Legal requested parameters are:
+ *		"F" - bitmap file to extrude
+ *		"W" - number of cells in X direction
+ *		"N" - number of cells in Y direction
+ *		"H" - height of each cell (mm)
+ *		"M" - matrix to transform EBM solid into model coordinates
+ *
+ *	no paramaters requested returns all
+ */
+int
+rt_ebm_tclget( interp, intern, attr )
+Tcl_Interp			*interp;
+const struct rt_db_internal	*intern;
+const char			*attr;
+{
+	register struct rt_ebm_internal *ebm=(struct rt_ebm_internal *)intern->idb_ptr;
+	Tcl_DString	ds;
+	struct bu_vls	vls;
+	int		i;
+
+	RT_EBM_CK_MAGIC( ebm );
+
+	Tcl_DStringInit( &ds );
+	bu_vls_init( &vls );
+
+	if( attr == (char *)NULL ) {
+		bu_vls_strcpy( &vls, "ebm" );
+		bu_vls_printf( &vls, " F %s W %d N %d H %.25g",
+			       ebm->file, ebm->xdim, ebm->ydim, ebm->tallness );
+		bu_vls_printf( &vls, " M {" );
+		for( i=0 ; i<16 ; i++ )
+			bu_vls_printf( &vls, " %.25g", ebm->mat[i] );
+		bu_vls_printf( &vls, " }" );
+	}
+	else if( !strcmp( attr, "F" ) )
+		bu_vls_printf( &vls, "%s", ebm->file );
+	else if( !strcmp( attr, "W" ) )
+		bu_vls_printf( &vls, "%d", ebm->xdim );
+	else if( !strcmp( attr, "N" ) )
+		bu_vls_printf( &vls, "%d", ebm->ydim );
+	else if( !strcmp( attr, "H" ) )
+		bu_vls_printf( &vls, "%.25g", ebm->tallness );
+	else if( !strcmp( attr, "M" ) ) {
+		for( i=0 ; i<16 ; i++ )
+			bu_vls_printf( &vls, "%.25g ", ebm->mat[i] );
+	}
+	else {
+		Tcl_SetResult( interp,"ERROR: Unknown attribute, choices are F, W, N, or H\n",
+		TCL_STATIC );
+		bu_vls_free( &vls );
+		return( TCL_ERROR );       
+	}
+
+	Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &vls );
+	return( TCL_OK );
+}
+
+
+/*
+ *		R T _ E B M _ T C L A D J U S T
+ *
+ *	Routine to adjust the parameters of an EBM
+ *
+ *	Legal parameters are:
+ *		"F" - bitmap file to extrude
+ *		"W" - number of cells in X direction
+ *		"N" - number of cells in Y direction
+ *		"H" - height of each cell (mm)
+ *		"M" - matrix to transform EBM solid into model coordinates
+ */
+
+int
+rt_ebm_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
+{
+	struct rt_ebm_internal *ebm;
+
+	RT_CK_DB_INTERNAL( intern );
+
+	ebm = (struct rt_ebm_internal *)intern->idb_ptr;
+	RT_EBM_CK_MAGIC( ebm );
+
+	while( argc >= 2 ) {
+		if( !strcmp( argv[0], "F" ) ) {
+			if( strlen( argv[1] ) >= RT_EBM_NAME_LEN ) {
+				Tcl_SetResult( interp,
+					       "ERROR: File name too long",
+					       TCL_STATIC );
+				return( TCL_ERROR );
+			}
+			strcpy( ebm->file, argv[1] );
+		}
+		else if( !strcmp( argv[0], "W" ) ) {
+			ebm->xdim = atoi( argv[1] );
+		}
+		else if( !strcmp( argv[0], "N" ) ) {
+			ebm->ydim = atoi( argv[1] );
+		}
+		else if( !strcmp( argv[0], "H" ) ) {
+			ebm->tallness = atof( argv[1] );
+		}
+		else if( !strcmp( argv[0], "M" ) ) {
+			int len=16;
+			fastf_t array[16];
+			fastf_t *ar_ptr;
+
+			ar_ptr = array;
+
+			if( tcl_list_to_fastf_array( interp, argv[1], &ar_ptr, &len) !=
+			    len ) {
+				Tcl_SetResult( interp,
+				      "ERROR: incorrect number of coefficents for matrix\n",
+				      TCL_STATIC );
+				return( TCL_ERROR );
+			}
+			MAT_COPY( ebm->mat, array )
+		}
+		else {
+			Tcl_SetResult( interp,
+			      "ERROR: illegal argument, choices are F, W, N, or H\n",
+			      TCL_STATIC );
+			return( TCL_ERROR );
+		}
+		argc -= 2;
+		argv += 2;
+	}
+	return( TCL_OK );
+}
+
+int
+rt_ebm_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
+{
+        RT_CK_FUNCTAB(ftp);
+
+        Tcl_AppendResult( interp,
+			  "F %s W %d N %d H %f M { %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", (char *)NULL );
+
+        return TCL_OK;
+
+}
