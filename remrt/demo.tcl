@@ -38,7 +38,8 @@ image create photo .eagle -file "/m/cad/remrt/eagleCAD.gif"
 label .logo -image .eagle
 label .title1 -text "A Demonstration of:"
 label .title2 -text "The Real-Time Ray-Tracer"
-pack .title1 .title2 -side top -in .words_fr
+label .title3 -text "(A SIMTECH Project)"
+pack .title1 .title2 .title3 -side top -in .words_fr
 pack .logo .words_fr -side left -in .title_fr
 
 # Set up FBSERV parameters
