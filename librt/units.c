@@ -138,7 +138,7 @@ rt_mm_value(s)
 const char *s;
 {
 	double v;
-	register char *ptr;	
+	char *ptr;	
 	register const struct cvt_tab	*tp;
 
 	v = strtod(s, &ptr);
