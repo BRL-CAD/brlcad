@@ -4,22 +4,27 @@
 
 #define SRCDIR	bench
 #define	PRODUCTS	pixcmp
-#define STATIC_PRODUCTS	pretty recheck run try
+#define STATIC_PRODUCTS	pretty.sh recheck.sh run.sh try.sh
 #define	SRCSUFF	.c
 #define MANSECTION	9
 
 #define FILES	pixcmp
 
 #include "../Cakefile.defs"
-#include "../Cakefile.prog"
 
 /* These programs are not really for system-wide installation */
 #define DONT_INSTALL	1
 
-/*  Note that there really isn't anything to install.
- *  All that matters is getting the shell scripts to the distribution
- *  directory on the master machine.
- */
+#ifdef NFS
+/* Say this before #include Cakefile.prog */
+all&:	PRODUCTS STATIC_PRODUCTS
+
+/* Pick up any shell scripts needed */
+%.sh:					if exist ../SRCDIR/%.sh
+	ln ../SRCDIR/%.sh %.sh
+#endif
+
+#include "../Cakefile.prog"
 
 clobber&: xxclober
 	@echo "About to wipe out all pictures and binary files in this directory"
