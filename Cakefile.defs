@@ -297,7 +297,7 @@ set -S2 "/bin/sh"
 /*		Warning 1110 is "statement is unreachable" */
 /*		Warning 1048 is "cast between pointer-to-object and pointer-to-function" */
 #		define	OPTIMIZER	-O2 \
-					-Olimit 2000 \
+					-OPT:Olimit 2000 \
 					-use_readonly_const
 #	else
 /*		This version for debugging with DBX */
