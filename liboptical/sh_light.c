@@ -406,7 +406,8 @@ light_gen_sample_pts(struct rt_i            *rtip,
 	/* get extent in X, Y, Z */
 	VSUB2(span, tree_max, tree_min);
 
-	while ( lsp->lt_pt_count < 5 ) {
+	/* For benchmarking, leave lt_pt_count = 0 */
+	if( !benchmark )  while ( lsp->lt_pt_count < 5 ) {
 		VSCALE(step, span, mul);
 
 		/* if there is no space occupied by the light source, then
