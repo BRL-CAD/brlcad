@@ -1675,8 +1675,8 @@ double			mm2local;
 				break;
 			case CURVE_BEZIER_MAGIC:
 				bsg = (struct bezier_seg *)sketch_ip->skt_curve.segments[seg_no];
-				bu_vls_strcat( str, "\t\tBezier Curve:\n" );
-				sprintf( buf, "\t\tdegree = %d\n", bsg->degree );
+				bu_vls_strcat( str, "\t\tBezier segment:\n" );
+				sprintf( buf, "\t\t\tdegree = %d\n", bsg->degree );
 				bu_vls_strcat( str, buf );
 				if( bsg->ctl_points[0] >= sketch_ip->vert_count ||
 				    bsg->ctl_points[bsg->degree] >= sketch_ip->vert_count ) {
@@ -1707,59 +1707,6 @@ double			mm2local;
 	}
 
 	return(0);
-}
-
-/*
- *			R T _ S K E T C H _ I F R E E
- *
- *  Free the storage associated with the rt_db_internal version of this solid.
- */
-void
-rt_sketch_ifree( struct rt_db_internal	*ip )
-{
-	register struct rt_sketch_internal	*sketch_ip;
-	struct curve				*crv;
-	long					*lng;
-	int					seg_no;
-
-	RT_CK_DB_INTERNAL(ip);
-	sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
-	RT_SKETCH_CK_MAGIC(sketch_ip);
-	sketch_ip->magic = 0;			/* sanity */
-
-	if( bu_debug&BU_DEBUG_MEM_CHECK )
-	{
-		bu_log( "Barrier check at start of sketch_ifree():\n" );
-		bu_mem_barriercheck();
-	}
-
-	if( sketch_ip->verts )
-		bu_free( (char *)sketch_ip->verts, "sketch_ip->verts" );
-
-	crv = &sketch_ip->skt_curve;
-
-	for( seg_no=0 ; seg_no < crv->seg_count ; seg_no++ )
-	{
-		lng = (long *)crv->segments[seg_no];
-		if( *lng > 0 )
-		{
-			*lng = 0;
-			bu_free( (char *)lng, "lng" );
-		}
-	}
-
-	bu_free( (char *)crv->reverse, "crv->reverse" );
-	bu_free( (char *)crv->segments, "crv->segments" );
-
-	bu_free( (char *)sketch_ip, "sketch ifree" );
-	ip->idb_ptr = GENPTR_NULL;	/* sanity */
-
-	if( bu_debug&BU_DEBUG_MEM_CHECK )
-	{
-		bu_log( "Barrier check at end of sketch_ifree():\n" );
-		bu_mem_barriercheck();
-	}
-
 }
 
 void
@@ -1801,9 +1748,53 @@ struct curve *crv;
 				break;
 		}
 	}
+
+	if( crv->seg_count > 0 )
+		bu_free( (char *)crv->segments, "crv->segments" );
+
 	crv->seg_count = 0;
 	crv->reverse = (int *)NULL;
 	crv->segments = (genptr_t)NULL;
+}
+
+/*
+ *			R T _ S K E T C H _ I F R E E
+ *
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ */
+void
+rt_sketch_ifree( struct rt_db_internal	*ip )
+{
+	register struct rt_sketch_internal	*sketch_ip;
+	struct curve				*crv;
+
+	RT_CK_DB_INTERNAL(ip);
+	sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
+	RT_SKETCH_CK_MAGIC(sketch_ip);
+	sketch_ip->magic = 0;			/* sanity */
+
+	if( bu_debug&BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "Barrier check at start of sketch_ifree():\n" );
+		bu_mem_barriercheck();
+	}
+
+	if( sketch_ip->verts )
+		bu_free( (char *)sketch_ip->verts, "sketch_ip->verts" );
+
+	crv = &sketch_ip->skt_curve;
+
+	rt_curve_free( crv );
+
+	bu_free( (char *)sketch_ip, "sketch ifree" );
+	ip->idb_ptr = GENPTR_NULL;	/* sanity */
+
+	if( bu_debug&BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "Barrier check at end of sketch_ifree():\n" );
+		bu_mem_barriercheck();
+	}
+
 }
 
 void
@@ -1918,7 +1909,7 @@ curve_to_tcl_list( vls, crv )
 struct bu_vls *vls;
 struct curve *crv;
 {
-	int j;
+	int i,j;
 
 	bu_vls_printf( vls, " SL {" );
 	for( j=0 ; j<crv->seg_count ; j++ )
@@ -1937,6 +1928,15 @@ struct curve *crv;
 				bu_vls_printf( vls, " { carc S %d E %d R %.25g L %d O %d }",
 					csg->start, csg->end, csg->radius,
 					csg->center_is_left, csg->orientation );
+			}
+			break;
+		    case CURVE_BEZIER_MAGIC:
+			{
+				struct bezier_seg *bsg = (struct bezier_seg *)crv->segments[j];
+				bu_vls_printf( vls, " { bezier D %d P {", bsg->degree );
+				for( i=0 ; i<=bsg->degree ; i++ )
+					bu_vls_printf( vls, " %d", bsg->ctl_points[i] );
+				bu_vls_printf( vls, " } }" );
 			}
 			break;
 		    case CURVE_NURB_MAGIC:
@@ -2087,6 +2087,7 @@ Tcl_Obj *seg_list;
 		char *type, *elem;
 		int k, seg_len;
 
+
 		/* get the next segment */
 		if( (ret=Tcl_ListObjIndex( interp, seg_list, j, &seg ) ))
 		{
@@ -2094,17 +2095,11 @@ Tcl_Obj *seg_list;
 		}
 
 		if( (ret=Tcl_ListObjLength( interp, seg, &seg_len )) )
-		{
-			Tcl_DecrRefCount( seg );
 			return( ret );
-		}
 
 		/* get the segment type */
 		if( (ret=Tcl_ListObjIndex( interp, seg, 0, &seg_type ) ))
-		{
-			Tcl_DecrRefCount( seg );
 			return( ret );
-		}
 		type = Tcl_GetString( seg_type );
 
 		if( !strcmp( type, "line" ) )
@@ -2115,18 +2110,11 @@ Tcl_Obj *seg_list;
 			for( k=1 ; k<seg_len ; k += 2 )
 			{
 				if( (ret=Tcl_ListObjIndex( interp, seg, k, &seg_elem ) ))
-				{
-					Tcl_DecrRefCount( seg_type );
-					Tcl_DecrRefCount( seg );
 					return( ret );
-				}
+
 				if( (ret=Tcl_ListObjIndex( interp, seg, k+1, &seg_val ) ))
-				{
-					Tcl_DecrRefCount( seg_elem );
-					Tcl_DecrRefCount( seg_type );
-					Tcl_DecrRefCount( seg );
 					return( ret );
-				}
+
 				elem = Tcl_GetString( seg_elem );
 				switch( *elem )
 				{
@@ -2140,9 +2128,40 @@ Tcl_Obj *seg_list;
 			}
 			lsg->magic = CURVE_LSEG_MAGIC;
 			crv->segments[j] = (genptr_t)lsg;
-			Tcl_DecrRefCount( seg_val );
-			Tcl_DecrRefCount( seg_elem );
-			Tcl_DecrRefCount( seg_type );
+		}
+		else if( !strcmp( type, "bezier" ) )
+		{
+			struct bezier_seg *bsg;
+			int num_points;
+
+			bsg = (struct bezier_seg *)bu_calloc( 1, sizeof( struct bezier_seg ), "bsg" );
+			for( k=1 ; k<seg_len ; k+= 2 ) {
+
+				if( (ret=Tcl_ListObjIndex( interp, seg, k, &seg_elem ) ))
+					return( ret );
+
+				if( (ret=Tcl_ListObjIndex( interp, seg, k+1, &seg_val ) ))
+					return( ret );
+
+				elem = Tcl_GetString( seg_elem );
+				switch( *elem )
+				{
+					case 'D': /* degree */
+						Tcl_GetIntFromObj( interp, seg_val, &bsg->degree );
+						break;
+					case 'P': /* list of control points */
+						num_points = 0;
+						if( (ret=tcl_obj_to_int_array( interp, seg_val, &bsg->ctl_points, &num_points ) ) != TCL_OK )
+							return( ret );
+
+						if( num_points != bsg->degree + 1 ) {
+							Tcl_SetResult( interp, "ERROR: degree and number of control points disagree for a Bezier segment\n", TCL_STATIC );
+							return( TCL_ERROR );
+						}
+				}
+			}
+			bsg->magic = CURVE_BEZIER_MAGIC;
+			crv->segments[j] = (genptr_t)bsg;
 		}
 		else if( !strcmp( type, "carc" ) )
 		{
@@ -2153,18 +2172,11 @@ Tcl_Obj *seg_list;
 			for( k=1 ; k<seg_len ; k += 2 )
 			{
 				if( (ret=Tcl_ListObjIndex( interp, seg, k, &seg_elem ) ))
-				{
-					Tcl_DecrRefCount( seg_type );
-					Tcl_DecrRefCount( seg );
 					return( ret );
-				}
+
 				if( (ret=Tcl_ListObjIndex( interp, seg, k+1, &seg_val ) ))
-				{
-					Tcl_DecrRefCount( seg_elem );
-					Tcl_DecrRefCount( seg_type );
-					Tcl_DecrRefCount( seg );
 					return( ret );
-				}
+
 				elem = Tcl_GetString( seg_elem );
 				switch( *elem )
 				{
@@ -2188,9 +2200,6 @@ Tcl_Obj *seg_list;
 			}
 			csg->magic = CURVE_CARC_MAGIC;
 			crv->segments[j] = (genptr_t)csg;
-			Tcl_DecrRefCount( seg_val );
-			Tcl_DecrRefCount( seg_elem );
-			Tcl_DecrRefCount( seg_type );
 		}
 		else if( !strcmp( type, "nurb" ) )
 		{
@@ -2200,18 +2209,11 @@ Tcl_Obj *seg_list;
 			for( k=1 ; k<seg_len ; k += 2 )
 			{
 				if( (ret=Tcl_ListObjIndex( interp, seg, k, &seg_elem ) ))
-				{
-					Tcl_DecrRefCount( seg_type );
-					Tcl_DecrRefCount( seg );
 					return( ret );
-				}
+
 				if( (ret=Tcl_ListObjIndex( interp, seg, k+1, &seg_val ) ))
-				{
-					Tcl_DecrRefCount( seg_elem );
-					Tcl_DecrRefCount( seg_type );
-					Tcl_DecrRefCount( seg );
 					return( ret );
-				}
+
 				elem = Tcl_GetString( seg_elem );
 				switch( *elem )
 				{
@@ -2234,14 +2236,9 @@ Tcl_Obj *seg_list;
 			}
 			nsg->magic = CURVE_NURB_MAGIC;
 			crv->segments[j] = (genptr_t)nsg;
-			Tcl_DecrRefCount( seg_val );
-			Tcl_DecrRefCount( seg_elem );
-			Tcl_DecrRefCount( seg_type );
 		}
 		else
 		{
-			Tcl_DecrRefCount( seg_type );
-			Tcl_DecrRefCount( seg );
 			Tcl_ResetResult( interp );
 			Tcl_AppendResult( interp, "ERROR: Unrecognized segment type: ",
 				Tcl_GetString( seg ), (char *)NULL);
@@ -2334,6 +2331,7 @@ char			**argv;
 				Tcl_DecrRefCount( tmp );
 				return( ret );
 			}
+			Tcl_DecrRefCount( tmp );
 		}
 		else if( *argv[0] == 'V' && isdigit( *(argv[0]+1) )  )	/* changing a specific vertex */
 		{
