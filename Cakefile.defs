@@ -103,7 +103,6 @@ set -S2 "/bin/sh"
  *	MGED_CONFIG		(default=undefined)		*
  *	MGED_OBJS		(default=undefined)		*
  *	MGED_LIBES		(default=undefined)		*
- *	RT_CONFIG						*
  *	LIBRT_LIBES						*
  *	LGT_CONFIG						*
  *	RFBD_CONFIG						*
@@ -919,7 +918,6 @@ set -S2 "/bin/sh"
 #			define	CC	/bin/ncc
 #		endif
 #	endif
-#	define	LIB_PRE	-L
 #	define	FC	/bin/cf77
 #	define	RANLIB	echo
 #	define	LIBMALLOC	/* use vendor library */
@@ -1119,9 +1117,8 @@ set -S2 "/bin/sh"
 
 /* Various configuration flags that default to nothing */
 
-#ifndef RT_CONFIG
-#	define	RT_CONFIG	/**/
-#endif
+/* RT_CONFIG is no longer used, and should not be set to anything. */
+#define	RT_CONFIG	/*compat*/
 
 #ifndef LGT_CONFIG
 #	define	LGT_CONFIG	/**/
@@ -1204,20 +1201,12 @@ set -S2 "/bin/sh"
 #	define	ARCH_SUF	a
 #endif
 
-#if	!defined(LIB_PRE)
-/*	Prefix for archives;  usually null, "-L" on Cray-2 */
-#	define	LIB_PRE	/**/
-#endif
-
 /*
  *  Places to find the working copies of the libraries
  *  If the binaries are to be separated from the sources,
  *  as is needed in a multi-machine NFS environment,
  *  then a second directory is made for every source directory,
  *  with the machine name appended to the source directory name.
- *
- *  For the purposes of Cray-2 LIB_PRE, there can only be ONE tab
- *  character between the symbol name and the definition.
  */
 /**GAK, no string compares in #if */
 
@@ -1384,7 +1373,7 @@ set -S2 "/bin/sh"
 #if !defined(STANDARD_LIBES)
 #	define	STANDARD_LIBES	-lm
 #endif
-#define LIBES	LIB_PRE''LIBSYSV STANDARD_LIBES
+#define LIBES	LIBSYSV STANDARD_LIBES
 #define LLIBES	STANDARD_LIBES
 
 /* Program to install executables */
@@ -1416,7 +1405,7 @@ set -S2 "/bin/sh"
  *  Even if you have lots of disk space, you don't want that	
  *  to happen.							
  */
-#define	MASTERHOST	wolf.brl.mil
+#define	MASTERHOST	wolf.arl.mil
 #define	DISTRIBUTION	/m/dist
 
 /* Symbols that should be defined in individual Cakefiles */
