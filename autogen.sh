@@ -579,14 +579,37 @@ fi
 #########################################
 # restore COPYING & INSTALL from backup #
 #########################################
-for file in COPYING INSTALL ; do
-  if test -f $file ; then
-    if test -f "${_aux_dir}/${file}.backup" ; then
-      $VERBOSE_ECHO "cp -pf \"${_aux_dir}/${file}.backup\" ${file}"
-      cp -pf "${_aux_dir}/${file}.backup" ${file}
-    fi
-  fi
-done
+if test "x$HAVE_SED" = "xyes" ; then
+    for file in COPYING INSTALL ; do
+	curr="$$file"
+	if ! test -f "$curr" ; then
+	    continue
+	fi
+	back="${aux_dir}/${file}.backup"
+	if ! test -f "$back" ; then
+	    continue
+	fi
+
+	current="`cat $curr`"
+	backup="`cat $back`"
+	if ! test "x$current" = "x$backup" ; then
+	    current_rev=`grep '$Revision' "$curr" | sed 's/.*[^0-9]\([0-9][0-9]*\.[0-9][0-9]*\)[^0-9].*/\1/' | sed 's/\.//g'`
+	    if test "x$current_rev" = "x" ; then
+		current_rev=0
+	    fi
+	    backup_rev=`grep '$Revision' "$back" | sed 's/.*[^0-9]\([0-9][0-9]*\.[0-9][0-9]*\)[^0-9].*/\1/' | sed 's/\.//g'`
+	    if test "x$backup_rev" = "x" ; then
+		backup_rev=0
+	    fi
+	    if test "$current_rev" -lt "$backup_rev" ; then
+		echo "need to restore backup of $file"
+		# restore the backup
+		$VERBOSE_ECHO "cp -pf \"$back\" \"${curr}\""
+		cp -pf "$back" "$curr"
+	    fi
+	fi
+    done
+fi
 
 
 ################
