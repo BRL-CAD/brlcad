@@ -4,6 +4,13 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:41:51  gwyn
+ * Eliminated trailing blanks.
+ * TempFile is now an array.
+ * Improved use of tempnam().
+ * Changed memcpy calls back to bcopy.  (Fixed confusing use of SYSV vs. SYS5.)
+ * Use LBSIZE instead of hard-wired 100.
+ *
  * Revision 11.1  95/01/04  10:35:15  mike
  * Release_4.4
  *
@@ -577,12 +584,42 @@ void
 setcmode()
 {
 	register int	len;
+	register char	*name = curbuf->b_fname;
 
-	len = curbuf->b_fname ? strlen(curbuf->b_fname) : 0;
+	if( !name )  return;
+	len = strlen(name);
 
 	if (len < 2 || IsDisabled(globflags, CMODE))
 		return;
-	if (curbuf->b_fname[--len] == 'c' && curbuf->b_fname[--len] == '.')
+
+	/* Find trailing dot, if any */
+	while( --len >= 0 )  {
+		if(name[len] == '.') break;
+	}
+	if( len < 0 )  return;
+	name += len+1;		/* Now points at char after the dot */
+
+	/* Compare against known names for C and C++ code */
+	if( name[1] == '\0' )  {
+		switch(name[0]) {
+		case 'C':
+		case 'c':
+		case 'h':
+		case 'H':
+			OnFlag(globflags, CMODE);
+			return;
+		}
+	}
+	else if(
+		strcmp( name, "cxx" ) == 0 ||
+		strcmp( name, "cpp" ) == 0 ||
+		strcmp( name, "CC" ) == 0 ||
+		strcmp( name, "c++" ) == 0 ||
+		strcmp( name, "hh" ) == 0 ||
+		strcmp( name, "hpp" ) == 0 ||
+		strcmp( name, "hxx" ) == 0 ||
+		strcmp( name, "h++" ) == 0
+	)
 		OnFlag(globflags, CMODE);
 }
 
