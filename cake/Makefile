@@ -9,7 +9,7 @@ SHELL=/bin/sh
 # For SunOS 5 (Solaris 2), need to add -Xc
 COPTS = -DCAKEDEBUG `machinetype.sh -d`
 
-# For Netbsd, need to add -l to get yylineno
+# For NetBSD 0.9a (but not 1.0), need to add -l to get yylineno.
 LEXOPTS=
 # LEXOPTS= -l
 
