@@ -41,7 +41,7 @@ static char RCStabdata[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "raytrace.h"
 #include "tabdata.h"
-#include "./debug.h"
+#include "../librt/debug.h"
 
 /*
  *			R T _ T A B L E _ F R E E
