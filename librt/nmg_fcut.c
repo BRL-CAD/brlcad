@@ -222,9 +222,11 @@ fastf_t		dist_tol;
 				rt_log("WARNING ptbl_vsort() vu=x%x point off line by %e %g*tol, tol=%e\n",
 					vu[i], dist,
 					dist/dist_tol, dist_tol);
-				VPRINT("  vu", vu[i]->v_p->vg_p->coord);
-				VPRINT("  pt", pt);
-				VPRINT(" dir", dir);
+				if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
+					VPRINT("  vu", vu[i]->v_p->vg_p->coord);
+					VPRINT("  pt", pt);
+					VPRINT(" dir", dir);
+				}
 			}
 			if( dist > 100*dist_tol )  {
 				rt_log("ERROR ptbl_vsort() vu=x%x point off line by %g > 100*dist_tol\n",
@@ -595,7 +597,7 @@ again:
 		if( fareu == eu )  goto really_on;	/* All eu's are ON! */
 		if( fareu->e_p->eg_p != eu->e_p->eg_p )  goto really_on;
 		farv = fareu->vu_p->v_p;
-rt_log("farv = x%x, on_index=%d\n", farv, nmg_is_v_on_rs_list(rs, farv) );
+rt_log("nmg_assess_eu() farv = x%x, on_index=%d\n", farv, nmg_is_v_on_rs_list(rs, farv) );
 		if( nmg_is_v_on_rs_list(rs, farv) > -1 )  {
 			/* farv is ON list, try going further back */
 			goto again;
@@ -603,7 +605,7 @@ rt_log("farv = x%x, on_index=%d\n", farv, nmg_is_v_on_rs_list(rs, farv) );
 		/* farv is not ON list, assess _it_ */
 		/* XXX Need to remove othervu from the list! */
 		otherv = farv;
-rt_log("assessing farv\n");
+rt_log("nmg_assess_eu() assessing farv\n");
 		goto left_right;
 
 		/* Compute edge vector, for purposes of orienting answer */
