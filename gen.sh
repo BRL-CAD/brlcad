@@ -176,7 +176,6 @@ BDIRS="bench \
 	mged \
 	remrt \
 	libcursor \
-	libfont \
 	liborle \
 	librle \
 	libfft \
