@@ -236,7 +236,7 @@ CONST struct rt_tol	*tol;
 	    eu1->eumate_p->vu_p->v_p->vg_p->coord, tol ) )
 		rt_bomb("nmg_radial_join_eu(): 0 length edge (geometry)\n");
 
-#if 0
+#if 1
 nmg_radial_join_eu_NEW(eu1, eu2, tol);
 return;
 #endif
