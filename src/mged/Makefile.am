@@ -101,7 +101,8 @@ mged_SOURCES = \
 	vparse.c \
 	vrlink.c
 
-mged_LDADD = @ITCL_LIBS@ @ITK_LIBS@ @TK_LIBS@ @TERMIO@ @WDB@ @DM@ @FB@ @SYSV@ @GL_LIBS@ @PNG_LIBS@
+mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
+mged_LDADD = @TK_LIBS@ @ITCL_LIBS@ @ITK_LIBS@ @TERMIO@ @WDB@ @DM@ @FB@ @SYSV@ @GL_LIBS@ @PNG_LIBS@
 
 cad_boundp_SOURCES = cad_boundp.c
 cad_boundp_LDADD = @BU@
