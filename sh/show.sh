@@ -24,15 +24,43 @@ eval `pixinfo.sh $FILE`	# sets BASE, SUFFIX, WIDTH, HEIGHT
 set -x
 case $SUFFIX in
 pix)
-	pix-fb -w$WIDTH -n$HEIGHT $FLAGS $FILE;;
+	if test $WIDTH -gt 1280 -o $HEIGHT -gt 1024
+	then
+		decimate 3 $WIDTH $HEIGHT 1280 1024 <$FILE | pix-fb -w1280 -n1024
+	else
+		pix-fb -w$WIDTH -n$HEIGHT $FLAGS $FILE
+	fi;;
 bw)
-	bw-fb -w$WIDTH -n$HEIGHT $FLAGS $FILE;;
+	if test $WIDTH -gt 1280 -o $HEIGHT -gt 1024
+	then
+		decimate 1 $WIDTH $HEIGHT 1280 1024 <$FILE | bw-fb -w1280 -n1024
+	else
+		bw-fb -w$WIDTH -n$HEIGHT $FLAGS $FILE
+	fi;;
 rle)
-	rle-fb $FLAGS $FILE;;
+	if test $WIDTH -gt 1280 -o $HEIGHT -gt 1024
+	then
+		rle-pix $FILE | \
+		decimate 3 $WIDTH $HEIGHT 1280 1024 | pix-fb -w1280 -n1024
+	else
+		rle-fb $FLAGS $FILE
+	fi;;
 jpg|jpeg)
-	jpeg-fb $FLAGS $FILE;;
+	if test $WIDTH -gt 1280 -o $HEIGHT -gt 1024
+	then
+		jpeg-fb -F"/dev/mem -" $FLAGS $FILE | \
+		decimate 3 $WIDTH $HEIGHT 1280 1024 | pix-fb -w1280 -n1024
+	else
+		jpeg-fb $FLAGS $FILE
+	fi;;
 gif)
-	gif-fb -co $FLAGS $FILE;;
+	if test $WIDTH -gt 1280 -o $HEIGHT -gt 1024
+	then
+		gif-fb -c -F"/dev/mem -" $FILE | \
+		decimate 3 $WIDTH $HEIGHT 1280 1024 | pix-fb -w1280 -n1024
+	else
+		gif-fb -co $FLAGS $FILE
+	fi;;
 pr|ras)
 	sun-pix $FILE | pix-fb -i -w$WIDTH -n$HEIGHT;;
 *)
