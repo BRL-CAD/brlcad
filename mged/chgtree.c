@@ -209,7 +209,6 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	union record record;
 	int i;
 	int ident, air;
 	char oper;
@@ -263,15 +262,10 @@ char	**argv;
 		  continue;
 		}
 
-		if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
-		  TCL_READ_ERR_return;
-		}
-		
-		if( record.u_id == ID_COMB ) {
-		  if( record.c.c_flags == 'R' ) {
+		/* Adding region to region */
+		if( dp->d_flags & DIR_REGION )  {
 		    Tcl_AppendResult(interp, "Note: ", dp->d_namep,
 				     " is a region\n", (char *)NULL);
-		  }
 		}
 
 		if( combadd( dp, argv[1], 1, oper, ident, air ) == DIR_NULL )  {
