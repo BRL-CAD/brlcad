@@ -63,38 +63,47 @@ quat_mat2quat( quat, mat )
 register quat_t	quat;
 register mat_t	mat;
 {
-	fastf_t	w2, x2, y2;
+	fastf_t		tr;
 	FAST fastf_t	s;
+	int		i,j,k;
 
-	w2 = 0.25 * (1.0 + mat[0] + mat[5] + mat[10]);
-	if( w2 > VDIVIDE_TOL ) {
-		quat[W] = sqrt( w2 );
-		s = 0.25 / quat[W];
+#define XX	0
+#define YY	5
+#define ZZ	10
+	tr = mat[XX] + mat[YY] + mat[ZZ];
+	if( tr > 0.0 )  {
+		s = sqrt( tr + 1.0 );
+		quat[W] = s * 0.5;
+		s = 0.5 / s;
 		quat[X] = ( mat[6] - mat[9] ) * s;
 		quat[Y] = ( mat[8] - mat[2] ) * s;
 		quat[Z] = ( mat[1] - mat[4] ) * s;
 		return;
 	}
 
-	quat[W] = 0.0;
-	x2 = -0.5 * (mat[5] + mat[10]);
-	if( x2 > VDIVIDE_TOL ) {
-		quat[X] = sqrt( x2 );
-		s = 0.5 / quat[X];
-		quat[Y] = mat[1] * s;
-		quat[Z] = mat[2] * s;
-		return;
+	/* Find dominant element of primary diagonal */
+	if( mat[YY] > mat[XX] )  {
+		if( mat[ZZ] > mat[YY] )  {
+			i = Z; j = X; k = Y;
+		} else {
+			i = Y; j = Z; k = X;
+		}
+	} else {
+		if( mat[ZZ] > mat[XX] )  {
+			i = Z; j = X; k = Y;
+		} else {
+			i = X; j = Y; k = Z;
+		}
 	}
-	quat[X] = 0.0;
-	y2 = 0.5 * (1.0 - mat[10]);
-	if( y2 > VDIVIDE_TOL ) {
-		quat[Y] = sqrt( y2 );
-		quat[Z] = mat[6] / (2.0 * quat[Y]);
-		return;
-	}
-	quat[Y] = 0.0;
-	quat[Z] = 1.0;
-	return;
+
+#define M(a,b)		mat[4*(a)+(b)]
+	s = sqrt( M(i,i) - (M(j,j)+M(k,k)) + 1.0 );
+	quat[i] = s * 0.5;
+	s = 0.5 / s;
+	quat[W] = (M(j,k) - M(k,j)) * s;
+	quat[j] = (M(i,j) + M(j,i)) * s;
+	quat[k] = (M(i,k) + M(k,i)) * s;
+#undef M
 }
 
 /*
@@ -106,10 +115,13 @@ register mat_t	mat;
  *   otherwise.  We should normalize first (still yields same rotation).
  */
 void
-quat_quat2mat( mat, q )
+quat_quat2mat( mat, quat )
 register mat_t	mat;
-register quat_t	q;
+register quat_t	quat;
 {
+	quat_t	q;
+
+	QMOVE( q, quat );	/* private copy */
 	QUNITIZE( q );
 
 	mat[0] = 1.0 - 2.0*q[Y]*q[Y] - 2.0*q[Z]*q[Z];
