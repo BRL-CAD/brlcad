@@ -876,17 +876,18 @@ char	**argv;
 		/* input r1 and r2 are destroyed, output is new r1 */
 		r1 = nmg_do_bool( r1, r2, op );
 		NMG_CK_REGION( r1 );
+		nmg_ck_closed_surf( r1->s_p );	/* debug */
 	}
 
 out:
 	/* Convert NMG to vlist */
-	/* 0 = vectors, 1 = w/polygon markers */
-	nmg_s_to_vlist( &vhead, m->r_p->s_p, 1 );
+	/* 0 = vectors, 1 = w/polygon markers, 2 = polys with normals */
+	nmg_s_to_vlist( &vhead, r1->s_p, 2 );
 
 	/* Destroy NMG */
 	nmg_km( m );
 
-	VSET( sp->s_basecolor, 255, 0, 0 );
+	VSET( sp->s_basecolor, 200, 200, 200 );	/* white, not red */
 
 	/*
 	 * Compute the min, max, and center points.
@@ -899,6 +900,7 @@ out:
 		VMINMAX( minvalue, maxvalue, vp->vl_pnt );
 		sp->s_vlen++;
 	}
+	nvectors += sp->s_vlen;
 
 	VADD2SCALE( sp->s_center, minvalue, maxvalue, 0.5 );
 
