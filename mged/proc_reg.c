@@ -40,6 +40,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct bn_tol		mged_tol;
 extern struct rt_tess_tol	mged_ttol;
+extern int			mged_wireframe_color_override;
+extern int			mged_wireframe_color[3];
 static struct application	ap;
 static time_t			start_time, etime;
 static struct bu_ptbl		leaf_list;
@@ -1097,8 +1099,8 @@ char	**argv;
 	int i;
 	struct directory *dp;
 	int	initial_blank_screen;
-	int start_argc=1;
 	char perf_message[128];
+	register int    c;
 	register struct dm_list *dmlp;
 	register struct dm_list *save_dmlp;
 	register struct cmd_list *save_cmd_list;
@@ -1118,15 +1120,58 @@ char	**argv;
 		bu_log( "Error at start of 'E'\n" );
 
 	do_polysolids = 0;
-	if( *argv[1] == '-' )
-	{
-		do_polysolids = 1;
-		start_argc++;
+	mged_wireframe_color_override = 0;
+
+	/* Parse options. */
+	bu_optind = 1;          /* re-init bu_getopt() */
+	while( (c=bu_getopt(argc,argv,"sC:")) != EOF ) {
+		switch(c) {
+		case 'C':
+			{
+				char		buf[128];
+				int		r,g,b;
+				register char	*cp = bu_optarg;
+
+				r = atoi(cp);
+				while( (*cp >= '0' && *cp <= '9') )  cp++;
+				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				g = atoi(cp);
+				while( (*cp >= '0' && *cp <= '9') )  cp++;
+				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				b = atoi(cp);
+
+				if( r < 0 || r > 255 )  r = 255;
+				if( g < 0 || g > 255 )  g = 255;
+				if( b < 0 || b > 255 )  b = 255;
+
+				mged_wireframe_color_override = 1;
+				mged_wireframe_color[0] = r;
+				mged_wireframe_color[1] = g;
+				mged_wireframe_color[2] = b;
+			}
+			break;
+		case 's':
+			do_polysolids = 1;
+			break;
+		default:
+			{
+				struct bu_vls vls;
+
+				bu_vls_init(&vls);
+				bu_vls_printf(&vls, "help %s", argv[0]);
+				Tcl_Eval(interp, bu_vls_addr(&vls));
+				bu_vls_free(&vls);
+
+				return TCL_ERROR;
+			}
+		}
 	}
+	argc -= bu_optind;
+	argv += bu_optind;
 
 	initial_blank_screen = BU_LIST_IS_EMPTY(&HeadSolid.l);
 
-	for( i=start_argc ; i<argc ; i++ )
+	for( i=0; i<argc; i++ )
 	{
 		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_QUIET )) != DIR_NULL )
 		{
@@ -1159,7 +1204,7 @@ char	**argv;
 	nvectors = 0;
 	(void)time( &start_time );
 
-	(void)db_walk_tree( dbip, argc-start_argc, (CONST char **)(argv+start_argc), 1, &E_initial_tree_state, 0,
+	(void)db_walk_tree( dbip, argc, (CONST char **)argv, 1, &E_initial_tree_state, 0,
 		E_region_end, E_solid_end );
 
 	(void)time( &etime );
