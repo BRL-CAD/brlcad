@@ -1,6 +1,6 @@
 /*
- *	@(#) vproc.c			retrieved: 8/13/86 at 08:24:35,
- *	@(#) version 1.9		last edit: 11/29/83 at 08:13:02.
+ *	@(#) vproc.c			retrieved: 8/13/86 at 08:24:51,
+ *	@(#) version 1.10		last edit: 6/1/84 at 14:00:58.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -56,6 +56,9 @@ char *prefix;
 		exit( 10 );
 	}
 
+	/* space for target units (a2,3x)				*/
+	blank_fill( solfd, 5 );
+
 	/* title
 	 */
 	write( solfd, objfile, strlen( objfile ) );
@@ -64,7 +67,7 @@ char *prefix;
 	/* save space for number of solids and regions
 	 */
 	savsol = lseek( solfd, 0L, 1 );
-	blank_fill( solfd, 30 );
+	blank_fill( solfd, 10 );
 	write( solfd, LF, 1 );
 
 	/* create file for region table
@@ -128,10 +131,10 @@ char *prefix;
 	/* add number of solids and regions on second card
 	 */
 	lseek( solfd, savsol, 0 );
-	itoa( nns, buff, 20 );
-	write( solfd, buff, 20 );
-	itoa( nnr, buff, 10 );
-	write( solfd, buff, 10 );
+	itoa( nns, buff, 5 );
+	write( solfd, buff, 5 );
+	itoa( nnr, buff, 5 );
+	write( solfd, buff, 5 );
 
 	/* finish region id table
 	 */
