@@ -47,8 +47,8 @@ class QuadDisplay {
     public method tra {args}
     public method zoom {sf}
 
-    public method autoview {}
-    public method autoviewall {}
+    public method autoview {{gindex 0}}
+    public method autoviewall {{gindex 0}}
 
     public method add {glist}
     public method addall {glist}
@@ -340,15 +340,15 @@ body QuadDisplay::zoom {args} {
     eval $itk_component($itk_option(-pane)) zoom $args
 }
 
-body QuadDisplay::autoview {} {
-    $itk_component($itk_option(-pane)) autoview
+body QuadDisplay::autoview {{gindex 0}} {
+    $itk_component($itk_option(-pane)) autoview $gindex
 }
 
-body QuadDisplay::autoviewall {} {
-    $itk_component(ul) autoview
-    $itk_component(ur) autoview
-    $itk_component(ll) autoview
-    $itk_component(lr) autoview
+body QuadDisplay::autoviewall {{gindex 0}} {
+    $itk_component(ul) autoview $gindex
+    $itk_component(ur) autoview $gindex
+    $itk_component(ll) autoview $gindex
+    $itk_component(lr) autoview $gindex
 }
 
 body QuadDisplay::add {glist} {
