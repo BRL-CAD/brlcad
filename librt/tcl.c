@@ -1679,8 +1679,10 @@ int *array_len;
 		*array_len = len;
 	}
 
-	for( i=0 ; i<len && i<*array_len ; i++ )
+	for( i=0 ; i<len && i<*array_len ; i++ ) {
 		(*array)[i] = atof( Tcl_GetStringFromObj( obj_array[i], NULL ) );
+		Tcl_DecrRefCount( obj_array[i] );
+	}
 
 	return( TCL_OK );
 }
@@ -1698,8 +1700,6 @@ int *array_len;
 	obj = Tcl_NewStringObj( char_list, -1 );
 
 	ret = tcl_obj_to_fastf_array( interp, obj, array, array_len );
-
-	Tcl_DecrRefCount( obj );
 
 	return( ret );
 }
