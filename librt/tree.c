@@ -76,8 +76,6 @@ CONST struct db_tree_state	rt_initial_tree_state = {
 	0.0, 0.0, 0.0, 1.0,
 };
 
-static struct rt_i	*rt_tree_rtip;
-
 #define ACQUIRE_SEMAPHORE_TREE(_hash)	switch((_hash)&03)  { \
 	case 0: \
 		bu_semaphore_acquire( RT_SEM_TREE0 ); \
@@ -118,10 +116,11 @@ HIDDEN int rt_gettree_region_start( tsp, pathp )
 CONST struct db_tree_state	*tsp;
 CONST struct db_full_path	*pathp;
 {
+	RT_CK_RTI(tsp->ts_rtip);
 
 	/* Ignore "air" regions unless wanted */
-	if( rt_tree_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
-		rt_tree_rtip->rti_air_discards++;
+	if( tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
+		tsp->ts_rtip->rti_air_discards++;
 		return(-1);	/* drop this region */
 	}
 	return(0);
@@ -149,10 +148,13 @@ union tree			*curtree;
 	struct region		*rp;
 	struct directory	*dp;
 	int			shader_len=0;
+	struct rt_i		*rtip;
 
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_TREE(curtree);
+	rtip =  tsp->ts_rtip;
+	RT_CK_RTI(rtip);
 
 	if( curtree->tr_op == OP_NOP )  {
 		/* Ignore empty regions */
@@ -202,10 +204,10 @@ union tree			*curtree;
 	 *  Add the region to the linked list of regions.
 	 *  Positions in the region bit vector are established at this time.
 	 */
-	rp->reg_forw = rt_tree_rtip->HeadRegion;
-	rt_tree_rtip->HeadRegion = rp;
+	rp->reg_forw = rtip->HeadRegion;
+	rtip->HeadRegion = rp;
 
-	rp->reg_bit = rt_tree_rtip->nregions++;	/* Assign bit vector pos. */
+	rp->reg_bit = rtip->nregions++;	/* Assign bit vector pos. */
 	bu_semaphore_release( RT_SEM_RESULTS );	/* leave critical section */
 
 	if( rt_g.debug & DEBUG_REGIONS )  {
@@ -393,16 +395,18 @@ int				id;
 	struct rt_db_internal	intern;
 	register matp_t		mat;
 	int			i;
+	struct rt_i		*rtip;
 
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
 	BU_CK_EXTERNAL(ep);
-	RT_CK_RTI(rt_tree_rtip);
+	rtip = tsp->ts_rtip;
+	RT_CK_RTI(rtip);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 	/* Determine if this matrix is an identity matrix */
 
-	if( !rt_mat_is_equal(tsp->ts_mat, bn_mat_identity, &rt_tree_rtip->rti_tol)) {
+	if( !rt_mat_is_equal(tsp->ts_mat, bn_mat_identity, &rtip->rti_tol)) {
 		/* Not identity matrix */
 		mat = (matp_t)tsp->ts_mat;
 	} else {
@@ -420,7 +424,7 @@ int				id;
 	 *  soltab structure has become a dead solid, so by testing against
 	 *  -1 (instead of <= 0, like before, oops), it isn't a problem.
 	 */
-	stp = rt_find_identical_solid( mat, dp, rt_tree_rtip );
+	stp = rt_find_identical_solid( mat, dp, rtip );
 	if( stp->st_id != 0 )  {
 		/* stp is an instance of a pre-existing solid */
 		if( stp->st_aradius <= -1 )  {
@@ -464,7 +468,7 @@ int				id;
     	 *  that is OK, as long as idb_ptr is set to null.
 	 *  Note that the prep routine may have changed st_id.
     	 */
-	if( rt_functab[id].ft_prep( stp, &intern, rt_tree_rtip ) )  {
+	if( rt_functab[id].ft_prep( stp, &intern, rtip ) )  {
 		int	hash;
 		/* Error, solid no good */
 		bu_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
@@ -478,7 +482,7 @@ int				id;
 		return( TREE_NULL );		/* BAD */
 	}
 
-	if( rt_tree_rtip->rti_dont_instance )  {
+	if( rtip->rti_dont_instance )  {
 		/*
 		 *  If instanced solid refs are not being compressed,
 		 *  then memory isn't an issue, and the application
@@ -670,18 +674,16 @@ int		ncpus;
 	if( argc <= 0 )  return(-1);	/* FAIL */
 
 	prev_sol_count = rtip->nsolids;
-	rt_tree_rtip = rtip;
 
 	tree_state = rt_initial_tree_state;	/* struct copy */
 	tree_state.ts_dbip = rtip->rti_dbip;
+	tree_state.ts_rtip = rtip;
 
 	i = db_walk_tree( rtip->rti_dbip, argc, argv, ncpus,
-		&rt_initial_tree_state,
+		&tree_state,
 		rt_gettree_region_start,
 		rt_gettree_region_end,
 		rt_gettree_leaf );
-
-	rt_tree_rtip = (struct rt_i *)0;	/* sanity */
 
 	/* DEBUG:  Ensure that all region trees are valid */
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
