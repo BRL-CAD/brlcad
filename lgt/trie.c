@@ -240,6 +240,7 @@ Trie	*triep;
 int	level;
 	{	register Trie	*tp = triep;
 		static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
+	/*rt_log( "prnt_Trie(triep=0x%x,level=%d)\n", triep, level );*/
 	if( tp == TRIE_NULL )
 		return;
 	if( tp->n.t_altr != TRIE_NULL )
