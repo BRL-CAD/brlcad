@@ -888,7 +888,7 @@ union tree {
 	struct tree_nmgregion {
 		long		magic;
 		int		td_op;		/* leaf, OP_NMG_TESS */
-		struct region	*td_pad;	/* unused */
+		CONST char	*td_name;	/* If non-null, former name of this object.  Not to be freed. */
 #if defined(NMG_H)
 		struct nmgregion *td_r;		/* ptr to NMG region */
 #else
