@@ -836,10 +836,11 @@ char	**argv;
 		rt_log("%s tessellation failure\n", dp->d_namep);
 	    	return;
 	}
+	nmg_ck_closed_surf( r1->s_p );	/* debug */
 	NMG_CK_REGION( r1 );
 	rt_free( (char *)recp, "record");
 
-	for( i = 2; i < argc; i += 2 )  {
+	for( i = 2; i+1 < argc; i += 2 )  {
 		int	op;
 
 		if( (dp = db_lookup( dbip, argv[i+1], LOOKUP_NOISY )) == DIR_NULL )
@@ -855,6 +856,7 @@ char	**argv;
 			continue;
 		}
 		NMG_CK_REGION( r2 );
+		nmg_ck_closed_surf( r2->s_p );	/* debug */
 		rt_free( (char *)recp, "record");
 
 		/* Bool */
