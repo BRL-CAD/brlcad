@@ -32,6 +32,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #endif
 
+#include "machine.h"	/* before looking at __unix */
+
 #if defined(unix) || defined(__unix)
 # include <sys/types.h>
 # include <sys/stat.h>
@@ -41,7 +43,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include <sys/mman.h>
 #endif
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"
