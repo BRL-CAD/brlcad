@@ -18,6 +18,7 @@
 # Create main window
 #-----------------------------------------------------------------
 proc sketch_main_window {} {
+	sketch_init_globals
 	catch {destroy .sketch}
 
 	toplevel .sketch
@@ -36,7 +37,7 @@ proc sketch_main_window {} {
 
 	pack .sketch.b0 .sketch.b1 .sketch.b2 .sketch.b3 .sketch.b4 \
 		.sketch.b5 .sketch.b6 \
-		-side top -fill x -expand yes
+		-side left -fill x -expand yes
 }
 
 proc sketch_init_globals {} {
@@ -51,9 +52,9 @@ proc sketch_init_globals {} {
 	uplevel #0 set mged_sketch_count 0		
 	uplevel #0 set mged_sketch_time 0.0	
 	uplevel #0 set mged_sketch_tinc 1.0	
-	uplevel #0 set mged_sketch_name ""
-	uplevel #0 set mged_sketch_splname ""
-	uplevel #0 set mged_sketch_color "255 255 0"
+	uplevel #0 {set mged_sketch_name ""}
+	uplevel #0 {set mged_sketch_splname ""}
+	uplevel #0 {set mged_sketch_color "255 255 0"}
 	uplevel #0 set mged_sketch_fps "10"
 	uplevel #0 set mged_sketch_defname "vdraw"
 	#view curve
@@ -61,8 +62,8 @@ proc sketch_init_globals {} {
 	uplevel #0 set mged_sketch_vcount 0		
 	uplevel #0 set mged_sketch_vtime 0.0	
 	uplevel #0 set mged_sketch_vtinc 1.0	
-	uplevel #0 set mged_sketch_vname ""
-	uplevel #0 set mged_sketch_vparams {size eye quat}
+	uplevel #0 {set mged_sketch_vname ""}
+	uplevel #0 {set mged_sketch_vparams {size eye quat}}
 	uplevel #0 set mged_sketch_cmdlen(quat) 4
 	uplevel #0 set mged_sketch_cmdlen(eye) 3
 	uplevel #0 set mged_sketch_cmdlen(center) 3
@@ -73,16 +74,16 @@ proc sketch_init_globals {} {
 	uplevel #0 set mged_sketch_objorv "object"
 	uplevel #0 set mged_sketch_objname "/foo.r"
 	uplevel #0 set mged_sketch_objvsize "500"
-	uplevel #0 set mged_sketch_objcen "0 0 0"
-	uplevel #0 set mged_sketch_objori "0 0 0"
-	uplevel #0 set mged_sketch_eyecen "0 0 0"
-	uplevel #0 set mged_sketch_eyeori "0 0 0"
-	uplevel #0 set mged_sketch_objsteer ""
+	uplevel #0 {set mged_sketch_objcen "0 0 0"}
+	uplevel #0 {set mged_sketch_objori "0 0 0"}
+	uplevel #0 {set mged_sketch_eyecen "0 0 0"}
+	uplevel #0 {set mged_sketch_eyeori "0 0 0"}
+	uplevel #0 {set mged_sketch_objsteer ""}
 	uplevel #0 set mged_sketch_objopt "none"
 	uplevel #0 set mged_sketch_objmang "60"
-	uplevel #0 set mged_sketch_objlaf ""
-	uplevel #0 set mged_sketch_objdisp ""
-	uplevel #0 set mged_sketch_objrot ""
+	uplevel #0 {set mged_sketch_objlaf ""}
+	uplevel #0 {set mged_sketch_objdisp ""}
+	uplevel #0 {set mged_sketch_objrot ""}
 	uplevel #0 set mged_sketch_objframe "0"
 	uplevel #0 set mged_sketch_objscript "foo.script"
 	uplevel #0 set mged_sketch_objsrctype "curve:"
@@ -92,17 +93,17 @@ proc sketch_init_globals {} {
 	uplevel #0 set mged_sketch_objrv 0
 	uplevel #0 set mged_sketch_objrotonly 0
 	uplevel #0 set mged_sketch_objncols 4
-	uplevel #0 set mged_sketch_objcols "t x y z"
+	uplevel #0 {set mged_sketch_objcols "t x y z"}
 	# preview script
-	uplevel #0 set mged_sketch_prevs ""
-	uplevel #0 set mged_sketch_preve ""
-	uplevel #0 set mged_sketch_prevp ""
+	uplevel #0 {set mged_sketch_prevs ""}
+	uplevel #0 {set mged_sketch_preve ""}
+	uplevel #0 {set mged_sketch_prevp ""}
 	#table editor
 	uplevel #0 set mged_sketch_text_lmode "replace"
 	uplevel #0 set mged_sketch_text_index 0
 	#track animation
-	uplevel #0 set mged_sketch_whlsource ""
-	uplevel #0 set mged_sketch_lnkname ""
+	uplevel #0 {set mged_sketch_whlsource ""}
+	uplevel #0 {set mged_sketch_lnkname ""}
 	uplevel #0 set mged_sketch_numlinks 1
 	uplevel #0 set mged_sketch_radii "1"
 }
