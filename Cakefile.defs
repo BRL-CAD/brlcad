@@ -77,7 +77,6 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
-#define NFS	1	/* BRL */
 
 /****************************************************************
  *								*
@@ -325,10 +324,16 @@ set -S2 "/bin/sh"
 #	define	MTYPE	sun3
 #	define	UNIXTYPE	BSD
 #	define	HAS_TCP	1
+/*	If using GNU GCC, also add -traditional flag */
 /*	Select correct floating point flag, -fswitch if unsure */
-/*#	define	CC_OPTS	-fswitch*/
-/*#	define	CC_OPTS	-ffpa */
-#	define	CC_OPTS	-f68881
+#	if 1
+/*		Normal Sun configuration */
+#		define	CC_OPTS	-fswitch
+#	else
+/*		Model-specific floating point options */
+/*#		define	CC_OPTS	-ffpa */
+#		define	CC_OPTS	-f68881
+#	endif
 #	define	FC_OPTS	CC_OPTS
 #	define	LD_OPTS	CC_OPTS
 #	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
@@ -545,7 +550,6 @@ set -S2 "/bin/sh"
 #	define	CC	/usr/5bin/cc
 #	define	RANLIB	ranlib
 #	define	BINDIR	/vld/bin
-#	define	INCLUDE_DIR	/vld/include
 #	define	LIBDIR	/vld/lib
 #	define	ETCDIR	/vld/etc
 #	define	MANDIR	/usr/5lib/man/local/min

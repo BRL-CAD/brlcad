@@ -24,13 +24,13 @@ SHELL=/bin/sh
 export SHELL
 
 # Set to 0 for non-NFS environment (default)
-NFS=1
+NFS=0
 
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-RELEASE=3.1;	RCS_REVISION=8;		REL_DATE=dd-mmm-yy
-#RELEASE=3.0;	RCS_REVISION=8;		REL_DATE=05-Oct-88
+#RELEASE=3.1;	RCS_REVISION=8;		REL_DATE=dd-mmm-yy
+RELEASE=3.0;	RCS_REVISION=8;		REL_DATE=06-Oct-88
 #RELEASE=2.10;	RCS_REVISION=7;		REL_DATE=04-Oct-88	# internal
 #RELEASE=2.9;	RCS_REVISION=7;		REL_DATE=31-Sep-88	# internal
 #RELEASE=2.8;	RCS_REVISION=7;		REL_DATE=21-Sep-88	# internal
@@ -87,7 +87,7 @@ DISTDIR=/m/dist/.
 ARCHDIR=/m/.
 ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 
-TOP_FILES="Copyright* README Cakefile* \
+TOP_FILES="Copyright* README Cakefile* Makefile \
 		cray.sh cray-ar.sh \
 		machinetype.sh gen.sh setup.sh \
 		cakeinclude.sh newbindir.sh"
@@ -163,6 +163,23 @@ echo
 # Now, actually work on making the target
 
 case ${TARGET} in
+
+help)
+	echo '	all		Makes all software'
+	echo '	benchmark	Special:  Make only benchmark'
+	echo '	clean		rm *.o, leave products'
+	echo '	noprod		rm products, leave *.o'
+	echo '	clobber		rm products and *.o'
+	echo '	lint		run lint'
+	echo '	install		install all products'
+	echo '	uninstall	remove all products'
+	echo '	print		print all sources to stdout'
+	echo '	typeset		troff all manual pages'
+	echo '	nroff		nroff all manual pages'
+	echo '	mkdir		NFS: create binary dirs'
+	echo '	relink		NFS: relink Cakefile'
+	echo '	rmdir		NFS: remove binary dirs'
+	;;
 
 benchmark)
 	if test x$NFS = x1
@@ -331,7 +348,7 @@ arch)
 	rm -f ${EXCLUDE}
 	;;
 
-	echo "$0: No code to make ${TARGET}"
+*)
 	echo "$0: No code to make ${TARGET}, use 'help' for help"
 	exit 1;;
 
