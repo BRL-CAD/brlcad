@@ -1547,6 +1547,9 @@ continue;
 		case WMREPLY:
 			/* This guy speaks, but has nothing to say */
 			break;
+		case 0:
+			/* These show up as a consequence of using qgetfd().  Most regrettable.  Ignore. */
+			break;
 		default:
 			rt_log("IRIS device %d gave %d?\n", ret, valp[1]);
 			break;
