@@ -844,18 +844,12 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	BSD	44
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-#	if 0	/* PRODUCTION=0 */
-/*		Static linked executables */
-#		define	CC	gcc
-#		define	RANLIB	ar -s
-/*		Don't use -ansi, that gives __STRICT_ANSI__.  Default is _GNU_SOURCE. */
-#		define	CC_OPTS /**/
-#	else
+#	if 1	/* PRODUCTION=1 */
 /*		Shared library version support.  Requires ELF for Linux. */
 #		define	CC	gcc
 #		define	CC_OPTS -fPIC
@@ -864,6 +858,12 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	BUILD_LIBRARY	gcc -shared -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
+#	else
+/*		Static linked executables */
+#		define	CC	gcc
+#		define	RANLIB	ar -s
+/*		Don't use -ansi, that gives __STRICT_ANSI__.  Default is _GNU_SOURCE. */
+#		define	CC_OPTS /**/
 #	endif
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
@@ -2063,12 +2063,16 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBSYSV_DIR	../.libsysv.MTYPE
 #	define	LIBSYSV		-L''LIBSYSV_DIR -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../.libsysv.MTYPE/libsysv.ARCH_SUF]]
+#    if !defined(LIBTCL)
 #	define	LIBTCL_DIR	../.libtcl.MTYPE
 #	define	LIBTCL		-L''LIBTCL_DIR -ltcl
 #	define	LIBTCL_DEP	[[LIBVERS ../.libtcl.MTYPE/libtcl.ARCH_SUF]]
+#    endif
+#    if !defined(LIBTK)
 #	define	LIBTK_DIR	../.libtk.MTYPE
 #	define	LIBTK		-L''LIBTK_DIR -ltk
 #	define	LIBTK_DEP	[[LIBVERS ../.libtk.MTYPE/libtk.ARCH_SUF]]
+#    endif
 #	define	LIBTCLCAD_DIR	../.libtclcad.MTYPE
 #	define	LIBTCLCAD	-L''LIBTCLCAD_DIR -ltclcad
 #	define	LIBTCLCAD_DEP	[[LIBVERS ../.libtclcad.MTYPE/libtclcad.ARCH_SUF]]
