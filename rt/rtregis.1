@@ -2,18 +2,17 @@
 .TH RTREGIS 1 BRL/CAD
 .UC 4
 .SH NAME
-rtregis \(em facilitates the rapid overlaying of a UNIX-Plot file produced
-by \fBrthide\fR over its corresponding rendered shaded image.
+rtregis \(em register overlay of a UNIX-Plot onto a rendered image.
 .SH SYNOPSIS
 .B rtregis
 plot.log pix.log
 > regtistration.matrix
 .SH DESCRIPTION
-.I Rtregis
+.I rtregis
 makes it easy and fast to overlay a UNIX-Plot file produced with \fBrthide\fR
-or \fBrtrange\fR onto its equivalent color shaded image produced with \fBrt\fR.
+or \fBrtrange\fR onto its equivalent color shaded image produced with \fBrt\fR or \fBcell-fb\fR.
 .LP
-.I Rtregis
+.I rtregis
 produces a script containing a call to \fBplrot\fR with the \fB-m\fR and \fB-S\fR parameters to
 supply it with a registration matrix and a space command.  The registration
 matrix is produced by \fBrtregis\fR from the
@@ -30,6 +29,8 @@ They may not be used together with
 options to 
 .B plrot.
 Output is written to standard out unless it is redirected.
+The output can often be included directly in a shell script using
+grave accents.
 .SH EXAMPLE
 This section shows the ordinary usage of \fIrtregis\fR.  For example,
 
@@ -70,8 +71,6 @@ pl-fb(1), plrot(1), pl-sgi(1), rt(1), rthide(1),
 pix-bw(1), pix-fb(1), 
 librt(3), libplot3(3), plot3(5), ray(5V).
 .SH DIAGNOSTICS
-Numerous error conditions are possible, usually due to errors in
-the geometry database.
 Descriptive messages are printed on standard error (file descriptor 2).
 .SH AUTHORS
 Susanne Muuss, J.D.
@@ -84,13 +83,6 @@ Aberdeen Proving Ground, Maryland  21005-5066
 .SH COPYRIGHT
 This software is Copyright (C) 1991 by the United States Army.
 All rights reserved.
-.SH BUGS
-.LP
-Most deficiencies observed while using the
-.B regis
-program are usually with the
-.IR librt (3)
-package instead.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
 mail to <CAD@BRL.MIL>.
