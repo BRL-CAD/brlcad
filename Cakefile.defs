@@ -532,23 +532,24 @@ set -S2 "/bin/sh"
 #		define	SHARED	_s
 #	endif
 #	define	GFLAG		-KPIC
-# if 1
-/*	Shared library version support */
-#	define	ARCH_SUF	so
-/*	should be ../sharedlibvers.sh, but LD doesn't grok the version numbers! */
-#	define	LIBVERS echo
-#	define	BUILD_LIBRARY	ld -shared -o
-#	define	RANLIB		/**/
-/*	Note that /usr/lib MUST go first on -rpath, so that -lmalloc is the system one */
-#	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath /usr/lib:LIBDIR
-/*	When debugging libraries, -m and -v are helpful LD_OPTS */
-/*	-Wl,-S supresses non-fatal LD errors.  LD has gotten chatty. */
-#	define	LD_OPTS		GFLAG
-# else
-#	define	RANLIB	ranlib5.sh
-#	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
-#	define	LD_OPTS		GFLAG
-# endif
+#	if 1	/* PRODUCTION=1 */
+/*		Shared library version support */
+#		define	ARCH_SUF	so
+/*		should be ../sharedlibvers.sh, but LD doesn't grok the version numbers! */
+#		define	LIBVERS echo
+#		define	BUILD_LIBRARY	ld -shared -o
+#		define	RANLIB		/**/
+/*		Note that /usr/lib MUST go first on -rpath, so that -lmalloc is the system one */
+#		define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath /usr/lib:LIBDIR
+/*		When debugging libraries, -m and -v are helpful LD_OPTS */
+/*		-Wl,-S supresses non-fatal LD errors.  LD has gotten chatty. */
+#		define	LD_OPTS		GFLAG
+#	else
+/*		Static linked executables */
+#		define	RANLIB	ranlib5.sh
+#		define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
+#		define	LD_OPTS		GFLAG
+#	endif
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
 #	define	LGT_CONFIG	GFLAG
@@ -779,14 +780,14 @@ set -S2 "/bin/sh"
 #if defined(sparc) && defined(__CAKE__SunOS5)
 /*	Sun "SparcStation" hardware, running Solaris (SunOS 5) */
 /*	SunOS 5, aka Solaris 2 support.  Looks like a SysV.  */
-/*	For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #	undef	sun
 #	undef	sun5
 #	define	MTYPE	sun5
 #	define	UNIXTYPE	SYSV
+/*	For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
+#	define	CC		/opt/SUNWspro/bin/cc
 
 #	define	HAS_TCP		1
-#	define	CC		cc
 
 #	if 1	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-fast
