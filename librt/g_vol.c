@@ -61,7 +61,7 @@ struct structparse rt_vol_parse[] = {
 	"%d",	1, "lo",	VOL_O(lo),		FUNC_NULL,
 	"%d",	1, "hi",	VOL_O(hi),		FUNC_NULL,
 	"%f",	ELEMENTS_PER_VECT, "size",offsetofarray(struct rt_vol_internal, cellsize), FUNC_NULL,
-	/* XXX might have option for vol_origin */
+	"%f",	16, "mat", offsetofarray(struct rt_vol_internal,mat), FUNC_NULL,
 	"",	0, (char *)0,	0,			FUNC_NULL
 };
 
@@ -393,8 +393,6 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
  *  Read in the information from the string solid record.
  *  Then, as a service to the application, read in the bitmap
  *  and set up some of the associated internal variables.
- *
- *  XXX no way to deal with mat !!!
  */
 int
 rt_vol_import( ip, ep, mat )
@@ -409,7 +407,7 @@ mat_t			mat;
 	int		nbytes;
 	register int	y;
 	register int	z;
-	char		*cp;
+	mat_t		tmat;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -424,12 +422,8 @@ mat_t			mat;
 	vip = (struct rt_vol_internal *)ip->idb_ptr;
 	vip->magic = RT_VOL_INTERNAL_MAGIC;
 
-	cp = rp->ss.ss_str;
-	while( *cp && !isspace(*cp) )  cp++;
-	/* Skip all white space */
-	while( *cp && isspace(*cp) )  cp++;
-
 	/* Establish defaults */
+	mat_idn( vip->mat );
 	vip->lo = 0;
 	vip->hi = 255;
 
@@ -437,7 +431,7 @@ mat_t			mat;
 	VSETALL( vip->cellsize, 1 );
 
 	rt_vls_init( &str );
-	rt_vls_strcpy( &str, cp);
+	rt_vls_strcpy( &str, rp->ss.ss_args );
 	if( rt_structparse( &str, rt_vol_parse, (char *)vip ) < 0 )  {
 		rt_vls_free( &str );
 		return -2;
@@ -446,12 +440,16 @@ mat_t			mat;
 
 	/* Check for reasonable values */
 	if( vip->file[0] == '\0' || vip->xdim < 1 ||
-	    vip->ydim < 1 || vip->zdim < 1 ||
+	    vip->ydim < 1 || vip->zdim < 1 || vip->mat[15] <= 0.0 ||
 	    vip->lo < 0 || vip->hi > 255 )  {
-	    	rt_log("Unreasonable VOL parameters\n");
-	    	rt_structprint("unreasonable", rt_vol_parse, (char *)vip );
+	    	rt_structprint("Unreasonable VOL parameters", rt_vol_parse,
+			(char *)vip );
 	    	return(-1);
 	}
+
+	/* Apply any modeling transforms to get final matrix */
+	mat_mul( tmat, mat, vip->mat );
+	mat_copy( vip->mat, tmat );
 
 	/* Get bit map from .bw(5) file */
 	nbytes = (vip->xdim+VOL_XWIDEN*2)*
@@ -484,8 +482,6 @@ err:
  *			R T _ V O L _ E X P O R T
  *
  *  The name will be added by the caller.
- *  Generally, only libwdb will set conv2mm != 1.0
- *  XXX no way to deal with local2mm !!
  */
 int
 rt_vol_export( ep, ip, local2mm )
@@ -494,6 +490,7 @@ struct rt_db_internal	*ip;
 double			local2mm;
 {
 	struct rt_vol_internal	*vip;
+	struct rt_vol_internal	vol;	/* scaled version */
 	union record		*rec;
 	register int		i;
 	struct rt_vls		str;
@@ -502,19 +499,24 @@ double			local2mm;
 	if( ip->idb_type != ID_VOL )  return(-1);
 	vip = (struct rt_vol_internal *)ip->idb_ptr;
 	RT_VOL_CK_MAGIC(vip);
+	vol = *vip;			/* struct copy */
+
+	/* Apply scale factor */
+	vol.mat[15] /= local2mm;
 
 	RT_INIT_EXTERNAL(ep);
-	ep->ext_nbytes = sizeof(union record);
+	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
 	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "vol external");
 	rec = (union record *)ep->ext_buf;
 
 	RT_VLS_INIT( &str );
-	rt_vls_structprint( &str, rt_vol_parse, (char *)vip );
+	rt_vls_structprint( &str, rt_vol_parse, (char *)&vol );
 
 	rec->ss.ss_id = DBID_STRSOL;
-	(void)sprintf( rec->ss.ss_str, "vol %s", rt_vls_addr( & str ) );
-
+	strncpy( rec->ss.ss_keyword, "vol", NAMESIZE-1 );
+	strncpy( rec->ss.ss_args, rt_vls_addr(&str), DB_SS_LEN-1 );
 	rt_vls_free( &str );
+
 	return(0);
 }
 
@@ -604,15 +606,15 @@ CONST struct rt_tol	*tol;
 	vip->map = (unsigned char *)0;	/* "steal" the bitmap storage */
 
 	/* build Xform matrix from model(world) to ideal(local) space */
-	mat_inv( volp->vol_mat, stp->st_pathmat );
+	mat_inv( volp->vol_mat, vip->mat );
 
-	/* Pre-compute the necessary normals */
+	/* Pre-compute the necessary normals.  Rotate only. */
 	VSET( norm, 1, 0 , 0 );
-	MAT4X3VEC( volp->vol_xnorm, stp->st_pathmat, norm );
+	MAT3X3VEC( volp->vol_xnorm, vip->mat, norm );
 	VSET( norm, 0, 1, 0 );
-	MAT4X3VEC( volp->vol_ynorm, stp->st_pathmat, norm );
+	MAT3X3VEC( volp->vol_ynorm, vip->mat, norm );
 	VSET( norm, 0, 0, 1 );
-	MAT4X3VEC( volp->vol_znorm, stp->st_pathmat, norm );
+	MAT3X3VEC( volp->vol_znorm, vip->mat, norm );
 
 	stp->st_specific = (genptr_t)volp;
 
@@ -620,7 +622,7 @@ CONST struct rt_tol	*tol;
 	VSETALL( small, 0 );
 	VSET( volp->vol_large,
 		volp->vol_i.xdim, volp->vol_i.ydim, volp->vol_i.zdim );/* type conversion */
-	rt_rot_bound_rpp( stp->st_min, stp->st_max, stp->st_pathmat,
+	rt_rotate_bbox( stp->st_min, stp->st_max, vip->mat,
 		small, volp->vol_large );
 
 	/* for now, VOL origin in ideal coordinates is at origin */
