@@ -721,9 +721,6 @@ struct dm *dmp;
 
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
-#if 0
-  dmaflag = 1;
-#endif
 }
 
 /*
@@ -759,10 +756,6 @@ struct dm *dmp;
      allows us to toggle through more than two values.
    */
   ((struct x_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
-
-#if 0
-  dmaflag = 1;
-#endif
 }
 
 
@@ -841,3 +834,7 @@ int *depth;
     return(NULL); /* failure */
   }
 }
+
+
+
+
