@@ -36,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 			 *ifp->if_width)
 #define PAGE_SCANS	(ifp->if_ppixels/ifp->if_width)
 
-_LOCAL_ int	_pagein(), _pageout();
+/*_LOCAL_ int	_fb_pagein(), _fb_pageout();*/
  
 /*
  *		F B _ I O I N I T
@@ -52,7 +52,7 @@ register FBIO	*ifp;
 		fb_log( "fb_ioinit( 0x%lx )\n", (unsigned long)ifp );
 	}
 
-	ifp->if_pno = -1;		/* Force _pagein() initially.	*/
+	ifp->if_pno = -1;		/* Force _fb_pagein() initially.	*/
 	ifp->if_pixcur = 0L;		/* Initialize pixel number.	*/
 	if( ifp->if_pbase == PIXEL_NULL ) {
 		/* Only allocate buffer once. */
@@ -91,9 +91,9 @@ int	x, y;
 	pagepixel = (long) ifp->if_pno * ifp->if_ppixels;
 	if( pixelnum < pagepixel || pixelnum >= (pagepixel + ifp->if_ppixels) ) {
 		if( ifp->if_pdirty )
-			if( _pageout( ifp ) == - 1 )
+			if( _fb_pageout( ifp ) == - 1 )
 				return	-1;
-		if( _pagein( ifp, (int) (pixelnum / (long) ifp->if_ppixels)) == -1 )
+		if( _fb_pagein( ifp, (int) (pixelnum / (long) ifp->if_ppixels)) == -1 )
 			return	-1;
 	}
 	ifp->if_pixcur = pixelnum;
@@ -133,7 +133,7 @@ RGBpixel 	*pixelp;
 #endif NEVER
 
 	if( ifp->if_pno == -1 )
-		if( _pagein( ifp, ifp->if_pixcur / ifp->if_ppixels ) == -1 )
+		if( _fb_pagein( ifp, ifp->if_pixcur / ifp->if_ppixels ) == -1 )
 			return	-1;
 
 	COPYRGB( *(ifp->if_pcurp), *pixelp );
@@ -141,7 +141,7 @@ RGBpixel 	*pixelp;
 	ifp->if_pixcur++;	/* position in framebuffer */
 	ifp->if_pdirty = 1;	/* page referenced (dirty) */
 	if( ifp->if_pcurp >= ifp->if_pendp ) {
-		if( _pageout( ifp ) == -1 )
+		if( _fb_pageout( ifp ) == -1 )
 			return	-1;
 		ifp->if_pno = -1;
 	}
@@ -154,14 +154,14 @@ register FBIO	*ifp;
 RGBpixel	*pixelp;
 {
 	if( ifp->if_pno == -1 )
-		if( _pagein( ifp, ifp->if_pixcur / ifp->if_ppixels ) == -1 )
+		if( _fb_pagein( ifp, ifp->if_pixcur / ifp->if_ppixels ) == -1 )
 			return	-1;
 
 	COPYRGB( *pixelp, *(ifp->if_pcurp) );
 	ifp->if_pcurp++;	/* position in page */
 	ifp->if_pixcur++;	/* position in framebuffer */
 	if( ifp->if_pcurp >= ifp->if_pendp ) {
-		if( _pageout( ifp ) == -1 )
+		if( _fb_pageout( ifp ) == -1 )
 			return	-1;
 		ifp->if_pno = -1;
 	}
@@ -186,20 +186,20 @@ register FBIO	*ifp;
 	}
 
 	if( ifp->if_pdirty )
-		if( _pageout( ifp ) == -1 )
+		if( _fb_pageout( ifp ) == -1 )
 			return	-1;
 
 	ifp->if_pdirty = 0;
 	return	0;
 }
 
-_LOCAL_ int
-_pageout( ifp )
+int
+_fb_pageout( ifp )
 register FBIO	*ifp;
 {
 	int	scans, first_scan;
 
-	/*fb_log( "_pageout(%d)\n", ifp->if_pno );*/
+	/*fb_log( "_fb_pageout(%d)\n", ifp->if_pno );*/
 
 	if( ifp->if_pno < 0 )	/* Already paged out, return 1.	*/
 		return	1;
@@ -218,14 +218,14 @@ register FBIO	*ifp;
 				);
 }
 
-_LOCAL_ int
-_pagein( ifp, pageno )
+int
+_fb_pagein( ifp, pageno )
 register FBIO	*ifp;
 int	pageno;
 {
 	int	scans, first_scan;
 
-	/*fb_log( "_pagein(%d)\n", pageno );*/
+	/*fb_log( "_fb_pagein(%d)\n", pageno );*/
 
 	/* Set pixel pointer to beginning of page. */
 	ifp->if_pcurp = ifp->if_pbase;
