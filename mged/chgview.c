@@ -2014,7 +2014,7 @@ Tcl_Interp *interp;
   Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
   bu_vls_free(&vls);
 
-  return TCL_RETURN;
+  return TCL_OK;
 }
 
 /* Main processing of knob twists.  "knob id val id val ..." */
