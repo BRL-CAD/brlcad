@@ -273,18 +273,24 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-4d dm-X
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
-#else
-/* 	Carl's test version */
-#	define	MGED_OBJS	dm-4d dm-X dm-ogl
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL
-#	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL
-#endif
 #       define  XMGED_ALLOCA    alloca
 #	define	XMGED_OBJS	dm-4d dm-X Xmgl
 #	define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -DXMGED -I/usr/include/X11
 #	define	XMGED_LIBES	-L''XLIBDIR -lXirisw -lgl_s -lXm_s \
 				-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
 				-lxmalloc -ll
+#else
+/* 	Carl's test version */
+#	define	MGED_OBJS	dm-4d dm-X dm-ogl
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL
+#	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL
+#       define  XMGED_ALLOCA    alloca
+#	define	XMGED_OBJS	dm-4d dm-X Xmgl dm-ogl
+#	define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -DXMGED -I/usr/include/X11 -DDM_OGL
+#	define	XMGED_LIBES	-L''XLIBDIR -lXirisw -lgl_s -lGL -lXm \
+				-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
+				-lxmalloc -ll
+#endif
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	GETHOST	hostname
