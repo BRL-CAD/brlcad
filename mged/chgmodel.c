@@ -1337,43 +1337,15 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#if 0
-#else
-	struct bu_vls	title;
-	int bad = 0;
+	int	ret;
 
 	CHECK_DBI_NULL;
-
-	if(argc < 1){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help title");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if (argc == 1) {
-	  Tcl_AppendResult(interp, dbip->dbi_title, "\n", (char *)NULL);
-	  return TCL_OK;
-	}
-
 	CHECK_READ_ONLY;
 
-	bu_vls_init( &title );
-	bu_vls_from_argv( &title, argc-1, argv+1 );
-
-	if( db_update_ident( dbip, bu_vls_addr(&title), dbip->dbi_base2local ) < 0 )  {
-	  Tcl_AppendResult(interp, "Error: unable to change database title\n");
-	  bad = 1;
-	}
-
-	bu_vls_free( &title );
+	ret = invoke_db_wrapper(interp, argc, argv);
 	view_state->vs_flag = 1;
 
-	return bad ? TCL_ERROR : TCL_OK;
-#endif
+	return ret;
 }
 
 /* tell him it already exists */
