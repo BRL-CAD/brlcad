@@ -629,6 +629,9 @@ db5_make_free_object( struct bu_external *ep, long length )
 	odp->db5h_hflags = (h_width << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT) |
 			DB5HDR_HFLAGS_DLI_FREE_STORAGE;
 
+	cp = ((unsigned char *)ep->ext_buf) + sizeof(struct db5_ondisk_header);
+	cp = db5_encode_length( cp, length, h_width );
+
 	cp = ((unsigned char *)ep->ext_buf) + length-1;
 	*cp = DB5HDR_MAGIC2;
 }
