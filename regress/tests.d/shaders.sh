@@ -1,24 +1,29 @@
 #!/bin/sh
 
-if [ X$BRLCAD_ROOT = X ] ; then
-	BIN=/usr/brlcad/bin
+if [ "$#" = "1" ]
+then
+        REGRESS_DIR=$1
 else
-	BIN=$BRLCAD_ROOT/bin
+        REGRESS_DIR=/c/regress
 fi
+export REGRESS_DIR
 
-export BIN
-
-ARCH=`$BIN/machinetype.sh`
+ARCH=`$REGRESS_DIR/brlcad/sh/machinetype.sh`
 export ARCH
 
-EDITOR=ed
-export EDITOR
+if [ X$BRLCAD_ROOT = X ] ; then
+	BRLCAD_ROOT="$REGRESS_DIR/brlcad.$ARCH"
+	export BRLCAD_ROOT
+fi
+
+BIN=${BRLCAD_ROOT}/bin
+export BIN
 
 if [ ! -f ebm.bw ] ; then
 	$BIN/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
 fi
 
-rm -f shaders.rt shaders.g shaders.pix shaders shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix
+rm -f shaders.rt shaders.g shaders.pix shaders shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix ebm.bw mged_shaders.log shaders.pix.diff
 
 $BIN/asc2pix > eagleCAD-w512-n438.pix << EOF
 FFFFFD
@@ -224308,12 +224313,12 @@ r half3.r u half3.s - half.s - half2.s
 mater half3.r "plastic" 80 80 250 0
 g all.g half3.r
 
-in env.s ellg 0 0 1000 0 1 0 0 0 1 1 0 0
+in env.s ell 0 0 1000 0 1 0 0 0 1 1 0 0
 r env.r u env.s
 mater env.r "envmap fakestar" 255 255 255 0
 g all.g env.r
 
-in light1.s ellg -464 339 2213 0 100 0 0 0 100 100 0 0
+in light1.s ell -464 339 2213 0 100 0 0 0 100 100 0 0
 r light1.r u light1.s
 mater light1.r "light invisible=1 angle=180 infinite=0" 255 255 255 0
 g all.g light1.r
@@ -224332,7 +224337,7 @@ foreach p {1 2 3 4 5} {
 
     set n [expr ( \$p - 1 ) * 5 + \$v]
 
-    in ell_\${n}.s ellg \$x \$y 96 0 0 -48 \$radius 0 0 0 \$radius 0
+    in ell_\${n}.s ell \$x \$y 96 0 0 -48 \$radius 0 0 0 \$radius 0
     r  ell_\${n}.r u ell_\${n}.s
 
     g all.g ell_\${n}.r
@@ -224429,10 +224434,10 @@ echo 'rendering shaders...'
 if [ ! -f shaders.pix ] ; then
 	echo shaders raytrace failed
 else
-	if [ ! -f $REGRESS_DIR/regress/tests.d/ref/shaders.pix ] ; then
+	if [ ! -f $REGRESS_DIR/brlcad/regress/tests.d/ref/shaders.pix ] ; then
 		echo No reference file for shaders.pix
 	else
-		$BIN/pixdiff shaders.pix $REGRESS_DIR/regress/tests.d/ref/shaders.pix \
+		$BIN/pixdiff shaders.pix $REGRESS_DIR/brlcad/regress/tests.d/ref/shaders.pix \
 		> shaders.pix.diff \
 		2>> shaders.log
 

@@ -1,11 +1,22 @@
 #!/bin/sh
 
-if [ X$BRLCAD_ROOT != X ] ; then
-	BIN=${BRLCAD_ROOT}/bin
+if [ "$#" = "1" ]
+then
+        REGRESS_DIR=$1
 else
-	BIN=/usr/brlcad/bin
+        REGRESS_DIR=/c/regress
+fi
+export REGRESS_DIR
+
+ARCH=`$REGRESS_DIR/brlcad/sh/machinetype.sh`
+export ARCH
+
+if [ X$BRLCAD_ROOT = X ] ; then
+	BRLCAD_ROOT="$REGRESS_DIR/brlcad.$ARCH"
+	export BRLCAD_ROOT
 fi
 
+BIN=${BRLCAD_ROOT}/bin
 export BIN
 
 rm -f dsp.dat ebm.bw solids solids.g solids.log solids.pix
@@ -817,8 +828,8 @@ in sph.s sph -32 0 32 32
 r sph.r u sph.s
 mater sph.r "plastic re=0.2" 255 255 255 0
 
-in ellg.s ellg -32 0 96 8 0 0 0 16 0 0 0 32
-r ellg.r u ellg.s
+in ellg.s ell -32 0 96 8 0 0 0 16 0 0 0 32
+r ell.r u ell.s
 mater ellg.r "plastic {sp .4 di .6}" 255 120 120 0
 
 #

@@ -11,7 +11,7 @@ export REGRESS_ROOT
 ARCH=`$REGRESS_ROOT/brlcad/sh/machinetype.sh`
 export ARCH
 
-BRLCAD_ROOT="$REGRESS_ROOT/$ARCH"
+BRLCAD_ROOT="$REGRESS_ROOT/brlcad.$ARCH"
 export BRLCAD_ROOT
 
 PATH=$PATH:$REGRESS_ROOT/$ARCH/bin
@@ -23,7 +23,6 @@ export BIN
 rm -f spdi.g spdi.log spdi spdi.pix
 
 $BIN/mged -c spdi.g << EOF
-y
 
 
 set glob_compat_mode 0
@@ -54,7 +53,7 @@ foreach p {1 2 3 4 5} {
 
 set glob_compat_mode 1
 
-in light1.s ellg -464 339 2213 0 100 0 0 0 100 100 0 0
+in light1.s ell -464 339 2213 0 100 0 0 0 100 100 0 0
 r light1.r u light1.s
 mater light1.r "light {invisible 1 angle 180 infinite 1}" 255 255 255 0
 g all.g light1.r
