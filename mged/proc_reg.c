@@ -1171,7 +1171,7 @@ char	**argv;
 
 	save_dmlp = curr_dm_list;
 	save_cmd_list = curr_cmd_list;
-	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
 	  curr_dm_list = dmlp;
 	  if(curr_dm_list->aim)
 	    curr_cmd_list = curr_dm_list->aim;
@@ -1179,7 +1179,7 @@ char	**argv;
 	    curr_cmd_list = &head_cmd_list;
 
 	  /* If we went from blank screen to non-blank, resize */
-	  if (mged_variables.autosize  && initial_blank_screen &&
+	  if (mged_variables->autosize  && initial_blank_screen &&
 	      BU_LIST_NON_EMPTY(&HeadSolid.l)) {
 	    struct view_list *vlp;
 
