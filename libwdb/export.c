@@ -25,10 +25,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "bu.h"
-#include "db.h"
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -48,8 +46,6 @@ genptr_t	gp;
 int		id;
 {
 	struct rt_db_internal	intern;
-	struct bu_external	ext;
-	union record		*rec;
 
 	if( (id <= 0 || id > ID_MAXIMUM) && id != ID_COMBINATION )  {
 		bu_log("mk_export_fwrite(%s): id=%d bad\n",
@@ -62,25 +58,10 @@ int		id;
 	intern.idb_meth = &rt_functab[id];
 	intern.idb_ptr = gp;
 
-	/* Scale change on export is from global "mk_conv2mm" */
-	if( rt_functab[id].ft_export( &ext, &intern, mk_conv2mm, NULL ) < 0 )  {
-		bu_log("mk_export_fwrite(%s): solid export failure\n",
+	if( rt_fwrite_internal( fp, name, &intern, mk_conv2mm ) < 0 )  {
+		bu_log("mk_export_fwrite(%s): rt_fwrite_internal failure\n",
 			name );
-		db_free_external( &ext );
 		return(-2);				/* FAIL */
 	}
-	BU_CK_EXTERNAL( &ext );
-
-	/* Depends on solid names always being in the same place */
-	rec = (union record *)ext.ext_buf;
-	NAMEMOVE( name, rec->s.s_name );
-
-	if( fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp ) != 1 )  {
-		bu_log("mk_export_fwrite(%s): fwrite error\n",
-			name );
-		db_free_external( &ext );
-		return(-3);
-	}
-	db_free_external( &ext );
-	return(0);
+	return 0;					/* OK */
 }
