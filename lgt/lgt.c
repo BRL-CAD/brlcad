@@ -244,6 +244,7 @@ int	frame;
 	if( force_cellsz )
 		{
 		grid_sz = (int)(view_size / cell_sz);
+		grid_sz = Max( grid_sz, 1 ); /* must be non-zero */
 		setGridSize( grid_sz );
 		prnt_Status();
 		}
