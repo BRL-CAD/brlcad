@@ -948,6 +948,7 @@ wdb_rt_gettrees_tcl( clientData, interp, argc, argv )
 	bu_ptbl_ins_unique(&rtip->rti_resources, (long *)resp);
 
 	BU_GETSTRUCT(ap, application);
+	ap->a_magic = RT_AP_MAGIC;
 	ap->a_resource = resp;
 	ap->a_rt_i = rtip;
 	ap->a_purpose = "Conquest!";
