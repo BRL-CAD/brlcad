@@ -135,11 +135,13 @@ extern char	*realloc();
  *  the first entry in the structure is a magic number.
  */
 #define BU_CKMAG(_ptr, _magic, _str)	\
-	if( !(_ptr) || *((long *)(_ptr)) != (_magic) )  { \
+	if( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
+	    *((long *)(_ptr)) != (_magic) )  { \
 		bu_badmagic( (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 	}
 #define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)	\
-	if( !(_ptr) || *((long *)(_ptr)) != (_magic) )  { \
+	if( !(_ptr) || ( ((long)(_ptr)) & (sizeof(long)-1) ) || \
+	     *((long *)(_ptr)) != (_magic) )  { \
 		bu_badmagic_tcl( (_interp), (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 		return TCL_ERROR; \
 	}
