@@ -108,7 +108,7 @@ int
 Fbo_Init(Tcl_Interp *interp)
 {
 	BU_LIST_INIT(&HeadFBObj.l);
-	(void)Tcl_CreateCommand(interp, "fb_open", fbo_open_tcl,
+	(void)Tcl_CreateCommand(interp, "fb_open", (Tcl_CmdProc *)fbo_open_tcl,
 				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	return TCL_OK;
