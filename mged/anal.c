@@ -530,3 +530,13 @@ ars_anal()
 }
 
 
+/*
+ *  		M A T H E R R
+ *  
+ *  Sys-V math-library error catcher.
+ *  Some callers of acos trip over DOMAIN errors all the time, so...
+ */
+matherr()
+{
+	return(1);	/* be quiet */
+}
