@@ -1,5 +1,5 @@
  /*
- *			D M - Ogl . C
+ *			D M - O G L . C
  *
  *  
  *  Source -
@@ -11,9 +11,6 @@
  *	This software is Copyright (C) 1988 by the United States Army.
  *	All rights reserved.
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #define CJDEBUG 0
 
@@ -73,10 +70,10 @@ static void	Ogl_configure_window_shape();
 static int	Ogldoevent();
 static void	Ogl_gen_color();
 
-/* Flags indicating whether the ogl and sgi display managers have been
+/* Flags indicating whether the gl and sgi display managers have been
  * attached. 
  * These are necessary to decide whether or not to use direct rendering
- * with ogl.
+ * with gl.
  */
 char	ogl_ogl_used = 0;
 char	ogl_sgi_used = 0;
@@ -116,7 +113,7 @@ struct dm dm_ogl = {
 	0,				/* no displaylist */
 	0,				/* multi-window */
 	IRBOUND,
-	"ogl", "X Windows, drawn using OpenGL",
+	"gl", "X Windows with OpenGL graphics",
 	0,				/* mem map */
 	Ogl_dm
 };
@@ -306,7 +303,7 @@ static XFontStruct *fontstruct;		/* X Font */
 
 
 /*
- *			Ogl _ O P E N
+ *			O G L _ O P E N
  *
  * Fire up the display manager, and the display processor.
  *
@@ -347,7 +344,7 @@ Ogl_open()
 }
 
 /*
- *  			Ogl _ C L O S E
+ *  			O G L _ C L O S E
  *  
  *  Gracefully release the display.
  */
@@ -369,7 +366,7 @@ Ogl_close()
 }
 
 /*
- *			Ogl _ P R O L O G
+ *			O G L _ P R O L O G
  *
  * There are global variables which are parameters to this routine.
  */
@@ -418,7 +415,7 @@ Ogl_prolog()
 }
 
 /*
- *			Ogl _ E P I L O G
+ *			O G L _ E P I L O G
  */
 void
 Ogl_epilog()
@@ -463,7 +460,7 @@ Ogl_epilog()
 }
 
 /*
- *  			Ogl _ N E W R O T
+ *  			O G L _ N E W R O T
  *  load new rotation matrix onto top of stack
  */
 void
@@ -657,7 +654,7 @@ int which_eye;
 
 
 /*
- *  			Ogl _ O B J E C T
+ *  			O G L _ O B J E C T
  *  
  *  Set up for an object, transformed as indicated, and with an
  *  object center as specified.  The ratio of object to screen size
@@ -830,7 +827,7 @@ int white_flag;
 }
 
 /*
- *			Ogl _ N O R M A L
+ *			O G L _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
  * (ie, not scaled, rotated, displaced, etc).
@@ -869,7 +866,7 @@ Ogl_normal()
 }
 
 /*
- *			Ogl _ U P D A T E
+ *			O G L _ U P D A T E
  *
  * Transmit accumulated displaylist to the display processor.
  */
@@ -913,7 +910,7 @@ int x,y,size, colour;
 
 
 /*
- *			Ogl _ 2 D _ L I N E
+ *			O G L _ 2 D _ L I N E
  *
  */
 void
@@ -1262,7 +1259,7 @@ R		Rear view\n\
 	case XK_Shift_R:
 		break;
 	default:
-		rt_log("dm-ogl: The key '%c' is not defined in the drawing window.\n", key);
+		rt_log("dm-ogl: The key '%c' is not defined. Press '?' for help.\n", key);
 		break;
 	    }
 
@@ -1275,7 +1272,7 @@ R		Rear view\n\
 }
 	    
 /*
- *			Ogl _ I N P U T
+ *			O G L _ I N P U T
  *
  * Execution must suspend in this routine until a significant event
  * has occured on either the command stream,
@@ -1299,7 +1296,7 @@ int		noblock;
 }
 
 /* 
- *			Ogl _ L I G H T
+ *			O G L _ L I G H T
  */
 /* ARGSUSED */
 void
@@ -1556,7 +1553,7 @@ char	*name;
 		return -1;
 	}
 	/* If we used an indirect context, then as far as sgi is concerned,
-	 * ogl hasn't been used.
+	 * gl hasn't been used.
 	 */
 	ogl_is_direct = (char) glXIsDirect(dpy, glxc);
 	rt_log("Using %s OpenGL rendering context.\n", ogl_is_direct ? "a direct" : "an indirect");
@@ -1846,7 +1843,7 @@ Tk_Window tkwin;
 }
 
 /* 
- *			Ogl _ C O N F I G U R E _ W I N D O W _ S H A P E
+ *			O G L _ C O N F I G U R E _ W I N D O W _ S H A P E
  *
  *  Either initially, or on resize/reshape of the window,
  *  sense the actual size of the window, and perform any
@@ -1980,7 +1977,7 @@ Ogl_configure_window_shape()
 }
 
 /*
- *			Ogl _ D M
+ *			O G L _ D M
  * 
  *  Implement display-manager specific commands, from MGED "dm" command.
  */
