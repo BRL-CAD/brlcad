@@ -712,7 +712,8 @@ bad:
 			} else {
 				VMOVE( c, &input_points[((s)-1)*3] );
 			}
-			if( rt_mk_plane_3pts( eqn[cur_eq], a,b,c ) < 0 )  {
+			/* XXX The tol_sq here is sheer guesswork */
+			if( rt_mk_plane_3pts( eqn[cur_eq], a,b,c, 0.00001 ) < 0 )  {
 				printf("arbn degenerate plane\n");
 				VPRINT("a", a);
 				VPRINT("b", b);
