@@ -24,7 +24,6 @@ static char RCSpolyif[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <stdio.h>
 #include "machine.h"
-#include "bu.h"
 #include "vmath.h"
 #include "db.h"
 #include "mater.h"
