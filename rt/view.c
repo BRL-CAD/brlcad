@@ -24,14 +24,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ray.h"
 #include "debug.h"
 
-#define XOFFSET	0
-#define YOFFSET 0
-
 extern int ikfd;		/* defined in iklib.o */
+extern int ikhires;		/* defined in iklib.o */
 
+extern int outfd;		/* defined in rt.c */
+
+#define MAX_LINE	1024	/* Max pixels/line */
+static long scanline[MAX_LINE];	/* 1 scanline pixel buffer */
+static long *pixelp;		/* pointer to first empty pixel */
+static int scanbytes;		/* # of bytes of scanline to be written */
+
+#define BACKGROUND	0x00404040		/* Grey */
 vect_t l0color = {  28,  28, 255 };		/* R, G, B */
 vect_t l1color = { 255,  28,  28 };
-vect_t l2color = { 255, 255, 255 };		/* Grey */
+vect_t l2color = { 255, 255, 255 };		/* White */
 extern vect_t l0vec;
 extern vect_t l1vec;
 extern vect_t l2vec;
@@ -111,9 +117,23 @@ int xscreen, yscreen;
 	}
 
 	if( ikfd > 0 )
-		ikwpixel( xscreen+XOFFSET, yscreen+YOFFSET, inten);
+		ikwpixel( xscreen, yscreen, inten);
+	if( outfd > 0 )
+		*pixelp++ = inten;
 }
 
+wbackground( x, y )
+int x, y;
+{
+	if( ikfd > 0 )
+		ikwpixel( x, y, BACKGROUND );
+	if( outfd > 0 )
+		*pixelp++ = BACKGROUND;
+}
+
+/*
+ *  			H I T _ P R I N T
+ */
 hit_print( str, hitp )
 char *str;
 register struct hit *hitp;
@@ -121,13 +141,6 @@ register struct hit *hitp;
 	printf("** %s HIT, dist=%f\n", str, hitp->hit_dist );
 	VPRINT("** Point ", hitp->hit_point );
 	VPRINT("** Normal", hitp->hit_normal );
-}
-
-wbackground( x, y )
-int x, y;
-{
-	if( ikfd > 0 )
-		ikwpixel( x+XOFFSET, y+YOFFSET, 0x00404040 );	/* Grey */
 }
 
 /*
@@ -139,17 +152,50 @@ int x, y;
 dev_setup(npts)
 int npts;
 {
-	ikopen();
-	load_map(1);
-	ikclear();
-	if( npts <= 64 )  {
-		ikzoom( 7, 7 );		/* 1 pixel gives 8 */
-		ikwindow( (0)*4, 4063+29 );
-	} else if( npts <= 128 )  {
-		ikzoom( 3, 3 );		/* 1 pixel gives 4 */
-		ikwindow( (0)*4, 4063+25 );
-	} else if ( npts <= 256 )  {
-		ikzoom( 1, 1 );		/* 1 pixel gives 2 */
-		ikwindow( (0)*4, 4063+17 );
+	if( npts > MAX_LINE )  {
+		printf("view:  %d pixels/line is too many\n", npts);
+		exit(12);
+	}
+	if( outfd > 0 )  {
+		/* Output is destined for a pixel file */
+		pixelp = &scanline[0];
+		if( npts > 512 )
+			scanbytes = MAX_LINE * sizeof(long);
+		else
+			scanbytes = 512 * sizeof(long);
+	}  else  {
+		/* Output directly to Ikonas */
+		if( npts > 512 )
+			ikhires = 1;
+
+		ikopen();
+		load_map(1);		/* Standard map: linear */
+		ikclear();
+		if( npts <= 64 )  {
+			ikzoom( 7, 7 );		/* 1 pixel gives 8 */
+			ikwindow( (0)*4, 4063+29 );
+		} else if( npts <= 128 )  {
+			ikzoom( 3, 3 );		/* 1 pixel gives 4 */
+			ikwindow( (0)*4, 4063+25 );
+		} else if ( npts <= 256 )  {
+			ikzoom( 1, 1 );		/* 1 pixel gives 2 */
+			ikwindow( (0)*4, 4063+17 );
+		}
+	}
+}
+
+/*
+ *  			D E V _ E O L
+ *  
+ *  This routine is called by main when the end of a scanline is
+ *  reached.
+ */
+dev_eol( y )
+int y;
+{
+	if( outfd > 0 )  {
+		write( outfd, (char *)scanline, scanbytes );
+		bzero( (char *)scanline, scanbytes );
+		pixelp = &scanline[0];
 	}
 }
