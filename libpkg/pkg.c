@@ -53,8 +53,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
 #undef LITTLE_ENDIAN		/* defined in netinet/{ip.h,tcp.h} */
 
-#include "machine.h"		/* Can safely be removed for non-BRLCAD use */
-#include "externs.h"		/* Can safely be removed for non-BRLCAD use */
+#include "machine.h"
+#include "externs.h"
 
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
 #ifdef HAVE_UNIX_DOMAIN_SOCKETS
@@ -1514,8 +1514,6 @@ register struct pkg_conn *pc;
 	return( pkg_dispatch(pc) );
 }
 
-extern int sys_nerr;
-extern char *sys_errlist[];
 
 /*
  *			P K G _ P E R R O R
