@@ -3819,6 +3819,8 @@ int rt_bot_find_e_nearest_pt2(
 int rt_bot_vertex_fuse( struct rt_bot_internal *bot );
 int rt_bot_face_fuse( struct rt_bot_internal *bot );
 int rt_bot_condense( struct rt_bot_internal *bot );
+int rt_smooth_bot( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fastf_t normal_tolerance_angle );
+
 #endif
 int rt_bot_same_orientation( const int *a, const int *b );
 
@@ -4815,6 +4817,7 @@ BU_EXTERN(int	wdb_showmats_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int ar
 BU_EXTERN(int	wdb_copyeval_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_version_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_binary_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_smooth_bot_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 
 /* defined in dg_obj.c */
 BU_EXTERN(void	dgo_autoview,		(struct dg_obj *dgop, struct view_obj *vop, Tcl_Interp *interp));
