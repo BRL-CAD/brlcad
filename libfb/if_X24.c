@@ -78,8 +78,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <X11/X.h>
+#ifndef CRAY2	/* Not available on CRAY2 */
 #include <X11/Xfuncproto.h>
 #include <X11/Xosdefs.h>
+#endif  /* CRAY2 */
 #if defined(linux)
 #	undef	X_NOT_STDC_ENV
 #	undef	X_NOT_POSIX
