@@ -20,23 +20,17 @@
 static char RCSrt[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "machine.h"	/* comes before looking at __unix */
-
-#if defined(unix) || defined(__unix)
-# include <sys/types.h>
-# include <sys/stat.h>
-#endif
-
-#ifdef HEP
-# include <synch.h>
-# undef stderr
-# define stderr stdout
-# define PARALLEL 1
-#endif
+#include "conf.h"
 
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#ifdef HAVE_UNIX_IO
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
+
+#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -45,7 +39,9 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 #include "../librt/debug.h"
 
+#ifdef HAVE_UNIX_IO
 extern char	*sbrk();
+#endif
 
 extern int	rdebug;			/* RT program debugging (not library) */
 
@@ -507,9 +503,11 @@ register struct rt_i	*rtip;
 		rt_pr_lock_stats();
 	}
 
+#ifdef HAVE_UNIX_IO
 	rt_log("Additional dynamic memory used=%d. bytes\n",
 		sbrk(0)-beginptr );
 	beginptr = sbrk(0);
+#endif
 }
 
 /*
@@ -535,9 +533,11 @@ struct rt_i	*rtip;
 		(void)rt_read_timer( outbuf, sizeof(outbuf) );
 		rt_log( "PREP: %s\n", outbuf );
 	}
+#ifdef HAVE_UNIX_IO
 	rt_log("Additional dynamic memory used=%d. bytes\n",
 		sbrk(0)-beginptr );
 	beginptr = sbrk(0);
+#endif
 }
 
 /*
@@ -706,7 +706,7 @@ int framenumber;
 		}  else  {
 			sprintf( framename, "%s.%d", outputfile, framenumber );
 		}
-#if defined(unix) || defined(__unix)
+#ifdef HAVE_UNIX_IO
 		/*
 		 *  This code allows the computation of a particular frame
 		 *  to a disk file to be resumed automaticly.
@@ -816,9 +816,11 @@ int framenumber;
 	 *  All done.  Display run statistics.
 	 */
 	rt_log("SHOT: %s\n", outbuf );
+#ifdef HAVE_UNIX_IO
 	rt_log("Additional dynamic memory used=%d. bytes\n",
 		sbrk(0)-beginptr );
 		beginptr = sbrk(0);
+#endif
 	rt_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
 		rtip->nshots, rtip->nhits, rtip->nmiss );
 	rt_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
