@@ -251,48 +251,48 @@ predictor_frame()
 	 */
 
 	/* Centering dot */
-	VSETALL( delta_v, 0 );
+	VSETALL( delta_v, 0.0 );
 	TF_VL( m, delta_v );
 	RT_ADD_VLIST( &curr_dm_list->p_vlist, m, RT_VLIST_LINE_MOVE );
 	RT_ADD_VLIST( &curr_dm_list->p_vlist, m, RT_VLIST_LINE_DRAW );
 
 	/* The exterior rectangle */
-	VSET( delta_v, -TF_X, -TF_Y, 0 );
+	VSET( delta_v, -TF_X, -TF_Y, 0.0 );
 	TF_VL( mA, delta_v );
 
-	VSET( delta_v,  TF_X, -TF_Y, 0 );
+	VSET( delta_v,  TF_X, -TF_Y, 0.0 );
 	TF_VL( mB, delta_v );
 
-	VSET( delta_v,  TF_X,  TF_Y, 0 );
+	VSET( delta_v,  TF_X,  TF_Y, 0.0 );
 	TF_VL( mC, delta_v );
 
-	VSET( delta_v, -TF_X,  TF_Y, 0 );
+	VSET( delta_v, -TF_X,  TF_Y, 0.0 );
 	TF_VL( mD, delta_v );
 
 	/* The EFGH rectangle */
-	VSET( delta_v, -TF_X, -TF_Y+TF_BORD, 0 );
+	VSET( delta_v, -TF_X, -TF_Y+TF_BORD, 0.0 );
 	TF_VL( mE, delta_v );
 
-	VSET( delta_v,  TF_X, -TF_Y+TF_BORD, 0 );
+	VSET( delta_v,  TF_X, -TF_Y+TF_BORD, 0.0 );
 	TF_VL( mF, delta_v );
 
-	VSET( delta_v,  TF_X,  TF_Y-TF_BORD, 0 );
+	VSET( delta_v,  TF_X,  TF_Y-TF_BORD, 0.0 );
 	TF_VL( mG, delta_v );
 
-	VSET( delta_v, -TF_X,  TF_Y-TF_BORD, 0 );
+	VSET( delta_v, -TF_X,  TF_Y-TF_BORD, 0.0 );
 	TF_VL( mH, delta_v );
 
 	/* The IJKL rectangle */
-	VSET( delta_v, -TF_X+TF_BORD, -TF_Y+TF_BORD, 0 );
+	VSET( delta_v, -TF_X+TF_BORD, -TF_Y+TF_BORD, 0.0 );
 	TF_VL( mI, delta_v );
 
-	VSET( delta_v,  TF_X-TF_BORD, -TF_Y+TF_BORD, 0 );
+	VSET( delta_v,  TF_X-TF_BORD, -TF_Y+TF_BORD, 0.0 );
 	TF_VL( mJ, delta_v );
 
-	VSET( delta_v,  TF_X-TF_BORD,  TF_Y-TF_BORD, 0 );
+	VSET( delta_v,  TF_X-TF_BORD,  TF_Y-TF_BORD, 0.0 );
 	TF_VL( mK, delta_v );
 
-	VSET( delta_v, -TF_X+TF_BORD,  TF_Y-TF_BORD, 0 );
+	VSET( delta_v, -TF_X+TF_BORD,  TF_Y-TF_BORD, 0.0 );
 	TF_VL( mL, delta_v );
 
 	VSUB2( right, mB, mA );

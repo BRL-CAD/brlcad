@@ -1683,9 +1683,9 @@ char	**argv;
 		ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
 		ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
 		VSET( ell_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ] );
-		VSET( ell_ip->a, (0.5*Viewscale), 0, 0 );	/* A */
-		VSET( ell_ip->b, 0, (0.5*Viewscale), 0 );	/* B */
-		VSET( ell_ip->c, 0, 0, (0.5*Viewscale) );	/* C */
+		VSET( ell_ip->a, (0.5*Viewscale), 0.0, 0.0 );	/* A */
+		VSET( ell_ip->b, 0.0, (0.5*Viewscale), 0.0 );	/* B */
+		VSET( ell_ip->c, 0.0, 0.0, (0.5*Viewscale) );	/* C */
 	} else if(( strcmp( argv[2], "grp" ) == 0 ) ||
 		  ( strcmp( argv[2], "grip") == 0 )) {
 		internal.idb_type = ID_GRIP;
@@ -1702,18 +1702,18 @@ char	**argv;
 		ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
 		ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
 		VSET( ell_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ] );
-		VSET( ell_ip->a, (0.5*Viewscale), 0, 0 );	/* A */
-		VSET( ell_ip->b, 0, (0.25*Viewscale), 0 );	/* B */
-		VSET( ell_ip->c, 0, 0, (0.25*Viewscale) );	/* C */
+		VSET( ell_ip->a, (0.5*Viewscale), 0.0, 0.0 );	/* A */
+		VSET( ell_ip->b, 0.0, (0.25*Viewscale), 0.0 );	/* B */
+		VSET( ell_ip->c, 0.0, 0.0, (0.25*Viewscale) );	/* C */
 	} else if( strcmp( argv[2], "ellg" ) == 0 )  {
 		internal.idb_type = ID_ELL;
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ell_internal) , "rt_ell_internal" );
 		ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
 		ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
 		VSET( ell_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ] );
-		VSET( ell_ip->a, Viewscale, 0, 0 );		/* A */
-		VSET( ell_ip->b, 0, (0.5*Viewscale), 0 );	/* B */
-		VSET( ell_ip->c, 0, 0, (0.25*Viewscale) );	/* C */
+		VSET( ell_ip->a, Viewscale, 0.0, 0.0 );		/* A */
+		VSET( ell_ip->b, 0.0, (0.5*Viewscale), 0.0 );	/* B */
+		VSET( ell_ip->c, 0.0, 0.0, (0.25*Viewscale) );	/* C */
 	} else if( strcmp( argv[2], "tor" ) == 0 )  {
 		internal.idb_type = ID_TOR;
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tor_internal) , "rt_tor_internal" );
@@ -1732,61 +1732,61 @@ char	**argv;
 		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
 		VSET( tgc_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
-		VSET( tgc_ip->h,  0, 0, (Viewscale*2) );
-		VSET( tgc_ip->a,  (0.5*Viewscale), 0, 0 );
-		VSET( tgc_ip->b,  0, (0.25*Viewscale), 0 );
-		VSET( tgc_ip->c,  (0.25*Viewscale), 0, 0 );
-		VSET( tgc_ip->d,  0, (0.5*Viewscale), 0 );
+		VSET( tgc_ip->h,  0.0, 0.0, (Viewscale*2) );
+		VSET( tgc_ip->a,  (0.5*Viewscale), 0.0, 0.0 );
+		VSET( tgc_ip->b,  0.0, (0.25*Viewscale), 0.0 );
+		VSET( tgc_ip->c,  (0.25*Viewscale), 0.0, 0.0 );
+		VSET( tgc_ip->d,  0.0, (0.5*Viewscale), 0.0 );
 	} else if( strcmp( argv[2], "tec" ) == 0 )  {
 		internal.idb_type = ID_TGC;
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
 		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
 		VSET( tgc_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
-		VSET( tgc_ip->h,  0, 0, (Viewscale*2) );
-		VSET( tgc_ip->a,  (0.5*Viewscale), 0, 0 );
-		VSET( tgc_ip->b,  0, (0.25*Viewscale), 0 );
-		VSET( tgc_ip->c,  (0.25*Viewscale), 0, 0 );
-		VSET( tgc_ip->d,  0, (0.125*Viewscale), 0 );
+		VSET( tgc_ip->h,  0.0, 0.0, (Viewscale*2) );
+		VSET( tgc_ip->a,  (0.5*Viewscale), 0.0, 0.0 );
+		VSET( tgc_ip->b,  0.0, (0.25*Viewscale), 0.0 );
+		VSET( tgc_ip->c,  (0.25*Viewscale), 0.0, 0.0 );
+		VSET( tgc_ip->d,  0.0, (0.125*Viewscale), 0.0 );
 	} else if( strcmp( argv[2], "rec" ) == 0 )  {
 		internal.idb_type = ID_TGC;
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
 		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
 		VSET( tgc_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
-		VSET( tgc_ip->h,  0, 0, (Viewscale*2) );
-		VSET( tgc_ip->a,  (0.5*Viewscale), 0, 0 );
-		VSET( tgc_ip->b,  0, (0.25*Viewscale), 0 );
-		VSET( tgc_ip->c,  (0.5*Viewscale), 0, 0 );
-		VSET( tgc_ip->d,  0, (0.25*Viewscale), 0 );
+		VSET( tgc_ip->h,  0.0, 0.0, (Viewscale*2) );
+		VSET( tgc_ip->a,  (0.5*Viewscale), 0.0, 0.0 );
+		VSET( tgc_ip->b,  0.0, (0.25*Viewscale), 0.0 );
+		VSET( tgc_ip->c,  (0.5*Viewscale), 0.0, 0.0 );
+		VSET( tgc_ip->d,  0.0, (0.25*Viewscale), 0.0 );
 	} else if( strcmp( argv[2], "trc" ) == 0 )  {
 		internal.idb_type = ID_TGC;
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
 		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
 		VSET( tgc_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
-		VSET( tgc_ip->h,  0, 0, (Viewscale*2) );
-		VSET( tgc_ip->a,  (0.5*Viewscale), 0, 0 );
-		VSET( tgc_ip->b,  0, (0.5*Viewscale), 0 );
-		VSET( tgc_ip->c,  (0.25*Viewscale), 0, 0 );
-		VSET( tgc_ip->d,  0, (0.25*Viewscale), 0 );
+		VSET( tgc_ip->h,  0.0, 0.0, (Viewscale*2) );
+		VSET( tgc_ip->a,  (0.5*Viewscale), 0.0, 0.0 );
+		VSET( tgc_ip->b,  0.0, (0.5*Viewscale), 0.0 );
+		VSET( tgc_ip->c,  (0.25*Viewscale), 0.0, 0.0 );
+		VSET( tgc_ip->d,  0.0, (0.25*Viewscale), 0.0 );
 	} else if( strcmp( argv[2], "rcc" ) == 0 )  {
 		internal.idb_type = ID_TGC;
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
 		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
 		VSET( tgc_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
-		VSET( tgc_ip->h,  0, 0, (Viewscale*2) );
-		VSET( tgc_ip->a,  (0.5*Viewscale), 0, 0 );
-		VSET( tgc_ip->b,  0, (0.5*Viewscale), 0 );
-		VSET( tgc_ip->c,  (0.5*Viewscale), 0, 0 );
-		VSET( tgc_ip->d,  0, (0.5*Viewscale), 0 );
+		VSET( tgc_ip->h,  0.0, 0.0, (Viewscale*2) );
+		VSET( tgc_ip->a,  (0.5*Viewscale), 0.0, 0.0 );
+		VSET( tgc_ip->b,  0.0, (0.5*Viewscale), 0.0 );
+		VSET( tgc_ip->c,  (0.5*Viewscale), 0.0, 0.0 );
+		VSET( tgc_ip->d,  0.0, (0.5*Viewscale), 0.0 );
 	} else if( strcmp( argv[2], "half" ) == 0 ) {
 		internal.idb_type = ID_HALF;
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_half_internal) , "rt_half_internal" );
 		half_ip = (struct rt_half_internal *)internal.idb_ptr;
 		half_ip->magic = RT_HALF_INTERNAL_MAGIC;
-		VSET( half_ip->eqn , 0 , 0 , 1 );
+		VSET( half_ip->eqn , 0.0 , 0.0 , 1.0 );
 		half_ip->eqn[3] = (-toViewcenter[MDZ]);
 	} else if( strcmp( argv[2], "rpc" ) == 0 ) {
 		internal.idb_type = ID_RPC;
@@ -1794,8 +1794,8 @@ char	**argv;
 		rpc_ip = (struct rt_rpc_internal *)internal.idb_ptr;
 		rpc_ip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 		VSET( rpc_ip->rpc_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
-		VSET( rpc_ip->rpc_H, 0, 0, Viewscale );
-		VSET( rpc_ip->rpc_B, 0, (Viewscale*0.5), 0 );
+		VSET( rpc_ip->rpc_H, 0.0, 0.0, Viewscale );
+		VSET( rpc_ip->rpc_B, 0.0, (Viewscale*0.5), 0.0 );
 		rpc_ip->rpc_r = Viewscale*0.25;
 	} else if( strcmp( argv[2], "rhc" ) == 0 ) {
 		internal.idb_type = ID_RHC;
@@ -1803,8 +1803,8 @@ char	**argv;
 		rhc_ip = (struct rt_rhc_internal *)internal.idb_ptr;
 		rhc_ip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 		VSET( rhc_ip->rhc_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
-		VSET( rhc_ip->rhc_H, 0, 0, Viewscale );
-		VSET( rhc_ip->rhc_B, 0, (Viewscale*0.5), 0 );
+		VSET( rhc_ip->rhc_H, 0.0, 0.0, Viewscale );
+		VSET( rhc_ip->rhc_B, 0.0, (Viewscale*0.5), 0.0 );
 		rhc_ip->rhc_r = Viewscale*0.25;
 		rhc_ip->rhc_c = Viewscale*0.10;
 	} else if( strcmp( argv[2], "epa" ) == 0 ) {
@@ -1813,8 +1813,8 @@ char	**argv;
 		epa_ip = (struct rt_epa_internal *)internal.idb_ptr;
 		epa_ip->epa_magic = RT_EPA_INTERNAL_MAGIC;
 		VSET( epa_ip->epa_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
-		VSET( epa_ip->epa_H, 0, 0, Viewscale );
-		VSET( epa_ip->epa_Au, 0, 1, 0 );
+		VSET( epa_ip->epa_H, 0.0, 0.0, Viewscale );
+		VSET( epa_ip->epa_Au, 0.0, 1.0, 0.0 );
 		epa_ip->epa_r1 = Viewscale*0.5;
 		epa_ip->epa_r2 = Viewscale*0.25;
 	} else if( strcmp( argv[2], "ehy" ) == 0 ) {
@@ -1823,8 +1823,8 @@ char	**argv;
 		ehy_ip = (struct rt_ehy_internal *)internal.idb_ptr;
 		ehy_ip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 		VSET( ehy_ip->ehy_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
-		VSET( ehy_ip->ehy_H, 0, 0, Viewscale );
-		VSET( ehy_ip->ehy_Au, 0, 1, 0 );
+		VSET( ehy_ip->ehy_H, 0.0, 0.0, Viewscale );
+		VSET( ehy_ip->ehy_Au, 0.0, 1.0, 0.0 );
 		ehy_ip->ehy_r1 = Viewscale*0.5;
 		ehy_ip->ehy_r2 = Viewscale*0.25;
 		ehy_ip->ehy_c = ehy_ip->ehy_r2;
@@ -1834,8 +1834,8 @@ char	**argv;
 		eto_ip = (struct rt_eto_internal *)internal.idb_ptr;
 		eto_ip->eto_magic = RT_ETO_INTERNAL_MAGIC;
 		VSET( eto_ip->eto_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ] );
-		VSET( eto_ip->eto_N, 0, 0, 1 );
-		VSET( eto_ip->eto_C, Viewscale*0.1, 0, Viewscale*0.1 );
+		VSET( eto_ip->eto_N, 0.0, 0.0, 1.0 );
+		VSET( eto_ip->eto_C, Viewscale*0.1, 0.0, Viewscale*0.1 );
 		eto_ip->eto_r = Viewscale*0.5;
 		eto_ip->eto_rd = Viewscale*0.05;
 	} else if( strcmp( argv[2], "part" ) == 0 ) {
@@ -1844,7 +1844,7 @@ char	**argv;
 		part_ip = (struct rt_part_internal *)internal.idb_ptr;
 		part_ip->part_magic = RT_PART_INTERNAL_MAGIC;
 		VSET( part_ip->part_V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
-		VSET( part_ip->part_H, 0, 0, Viewscale );
+		VSET( part_ip->part_H, 0.0, 0.0, Viewscale );
 		part_ip->part_vrad = Viewscale*0.5;
 		part_ip->part_hrad = Viewscale*0.25;
 		part_ip->part_type = RT_PARTICLE_TYPE_CONE;
@@ -1891,9 +1891,9 @@ char	**argv;
 		extrude_ip = (struct rt_extrude_internal *)internal.idb_ptr;
 		extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 		VSET( extrude_ip->V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
-		VSET( extrude_ip->u_vec, 1, 0, 0 );
-		VSET( extrude_ip->v_vec, 0, 1, 0 );
-		VSET( extrude_ip->h, 0, 0, Viewscale );
+		VSET( extrude_ip->u_vec, 1.0, 0.0, 0.0 );
+		VSET( extrude_ip->v_vec, 0.0, 1.0, 0.0 );
+		VSET( extrude_ip->h, 0.0, 0.0, Viewscale );
 		extrude_ip->keypoint = 0;
 		strcpy( extrude_ip->sketch_name, "sketch_test" );
 		strcpy( extrude_ip->curve_name, "curve0" );
@@ -1910,8 +1910,8 @@ char	**argv;
 		sketch_ip = (struct rt_sketch_internal *)internal.idb_ptr;
 		sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
 		VSET( sketch_ip->V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
-		VSET( sketch_ip->u_vec, 1, 0, 0 );
-		VSET( sketch_ip->v_vec, 0, 1, 0 );
+		VSET( sketch_ip->u_vec, 1.0, 0.0, 0.0 );
+		VSET( sketch_ip->v_vec, 0.0, 1.0, 0.0 );
 		sketch_ip->vert_count = 4;
 		sketch_ip->verts = (point2d_t *)bu_calloc( sketch_ip->vert_count, sizeof( point2d_t ), "sketch_ip->verts" );
 		sketch_ip->verts[0][0] = -Viewscale;

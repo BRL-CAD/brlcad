@@ -728,7 +728,7 @@ char **argv;
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'e':	/*eye*/
-		VSET(temp, 0, 0, 1);
+		VSET(temp, 0.0, 0.0, 1.0);
 		MAT4X3PNT(pos, view2model, temp);
 		sprintf(result_string,"%.12g %.12g %.12g",pos[0],pos[1],pos[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);

@@ -510,7 +510,7 @@ register vect_t point, direc;
 	MAT_DELTAS(origin_to_pt, point[X], point[Y], point[Z]);
 
 	/* build "direc to zaxis" matrix */
-	VSET(zaxis, 0, 0, 1);
+	VSET(zaxis, 0.0, 0.0, 1.0);
 	bn_mat_fromto(d_to_zaxis, direc, zaxis);
 
 	/* build "zaxis to direc" matrix */

@@ -1564,7 +1564,7 @@ refresh()
 
       /* Draw center dot */
       DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-      DM_DRAW_POINT_2D(dmp, 0, 0);
+      DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
 
       DM_DRAW_END(dmp);
 
@@ -1730,9 +1730,9 @@ new_mats()
 	  vect_t temp, temp1;
 
 	  /* Find current azimuth, elevation, and twist angles */
-	  VSET( work , 0 , 0 , 1 );       /* view z-direction */
+	  VSET( work , 0.0, 0.0, 1.0 );       /* view z-direction */
 	  MAT4X3VEC( temp , view2model , work );
-	  VSET( work1 , 1 , 0 , 0 );      /* view x-direction */
+	  VSET( work1 , 1.0, 0.0, 0.0 );      /* view x-direction */
 	  MAT4X3VEC( temp1 , view2model , work1 );
 
 	  /* calculate angles using accuracy of 0.005, since display

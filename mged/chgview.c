@@ -485,8 +485,8 @@ size_reset()
 
 	if(BU_LIST_IS_EMPTY(&HeadSolid.l)) {
 		/* Nothing is in view */
-		VSETALL( center, 0 );
-		VSETALL( radial, 1000 );	/* 1 meter */
+		VSETALL( center, 0.0 );
+		VSETALL( radial, 1000.0 );	/* 1 meter */
 	} else {
 		VADD2SCALE( center, max, min, 0.5 );
 		VSUB2( radial, max, center );
@@ -2315,16 +2315,16 @@ char	**argv;
     if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
       char *av[3];
 
-      VSETALL( rate_model_rotate, 0 );
-      VSETALL( rate_model_tran, 0 );
-      VSETALL( rate_rotate, 0 );
-      VSETALL( rate_tran, 0 );
-      rate_scale = 0;
-      VSETALL( edit_rate_model_rotate, 0 );
-      VSETALL( edit_rate_object_rotate, 0 );
-      VSETALL( edit_rate_view_rotate, 0 );
-      VSETALL( edit_rate_model_tran, 0 );
-      VSETALL( edit_rate_view_tran, 0 );
+      VSETALL( rate_model_rotate, 0.0 );
+      VSETALL( rate_model_tran, 0.0 );
+      VSETALL( rate_rotate, 0.0 );
+      VSETALL( rate_tran, 0.0 );
+      rate_scale = 0.0;
+      VSETALL( edit_rate_model_rotate, 0.0 );
+      VSETALL( edit_rate_object_rotate, 0.0 );
+      VSETALL( edit_rate_view_rotate, 0.0 );
+      VSETALL( edit_rate_model_tran, 0.0 );
+      VSETALL( edit_rate_view_tran, 0.0 );
       edit_rate_scale = 0.0;
       knob_update_rate_vars();
 
@@ -4295,7 +4295,7 @@ char	**argv;
 	/*  Second step:  put eye at view 0,0,1.
 	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
 	 */
-	VSET( xlate, 0, 0, -1 );	/* correction factor */
+	VSET( xlate, 0.0, 0.0, -1.0 );	/* correction factor */
 	MAT4X3PNT( new_cent, view2model, xlate );
 	MAT_DELTAS_VEC_NEG( toViewcenter, new_cent );
 	new_mats();
@@ -4727,7 +4727,7 @@ char	**argv;
 
   VSCALE( look, look, local2base );
 
-  VSET( tmp, 0, 0, 1 );
+  VSET( tmp, 0.0, 0.0, 1.0 );
   MAT4X3PNT(eye, view2model, tmp);
 
   VSUB2( dir, eye, look );
@@ -5251,15 +5251,15 @@ mat_t newrot;
 
   if(origin == 'e' || origin == 'm'){
     /* find view direction vector */
-    VSET( model_direc, 0, 0, 1 );
+    VSET( model_direc, 0.0, 0.0, 1.0 );
     MAT4X3VEC( view_direc, model2view, model_direc );
 
-    VSET( new_origin, 0, 0, 0 );    /* point in model space */
+    VSET( new_origin, 0.0, 0.0, 0.0 );    /* point in model space */
 
     /* find view rotation point */
     if(origin == 'e'){
       /*XXXXX rotating in model space about the view eye does not work, yet!!! */
-      VSET( vrot_pt, 0, 0, 1 );          /* point to rotate around */
+      VSET( vrot_pt, 0.0, 0.0, 1.0 );          /* point to rotate around */
     }else{
       MAT4X3PNT( vrot_pt, model2view, new_origin ); /* point in view space */
     }
@@ -5386,10 +5386,10 @@ mat_t newrot;
 
     if(origin == 'e'){
       /* "VR driver" method: rotate around "eye" point (0,0,1) viewspace */
-      VSET( rot_pt, 0, 0, 1 );		/* point to rotate around */
+      VSET( rot_pt, 0.0, 0.0, 1.0 );		/* point to rotate around */
     }else{
       /* rotate around model center (0,0,0) */
-      VSET( new_origin, 0, 0, 0 );
+      VSET( new_origin, 0.0, 0.0, 0.0 );
       MAT4X3PNT( rot_pt, model2view, new_origin);  /* point to rotate around */
     }
 
@@ -5397,7 +5397,7 @@ mat_t newrot;
     bn_mat_inv( viewchginv, viewchg );
 
     /* Convert origin in new (viewchg) coords back to old view coords */
-    VSET( new_origin, 0, 0, 0 );
+    VSET( new_origin, 0.0, 0.0, 0.0 );
     MAT4X3PNT( new_cent_view, viewchginv, new_origin );
     MAT4X3PNT( new_cent_model, view2model, new_cent_view );
     MAT_DELTAS_VEC_NEG( toViewcenter, new_cent_model );

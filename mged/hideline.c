@@ -227,7 +227,7 @@ char	**argv;
 			     objname[i], "\"\n", (char *)NULL);
 
 	/* Crawl along the vectors raytracing as we go */
-	VSET(temp,0,0,-1);				/* looking at model */
+	VSET(temp, 0.0, 0.0, -1.0);				/* looking at model */
 	MAT4X3VEC(a.a_ray.r_dir,view2model,temp);
 	VUNITIZE(a.a_ray.r_dir);
 

@@ -355,7 +355,7 @@ run_rt()
 	if(*zclip_ptr || mged_variables->perspective_mode){
 	  vect_t temp;
 
-	  VSET( temp, 0, 0, 1 );
+	  VSET( temp, 0.0, 0.0, 1.0 );
 	  MAT4X3PNT( eye_model, view2model, temp );
 	}else{ /* not doing zclipping, so back out of geometry */
 	  double  t;
@@ -587,7 +587,7 @@ char	**argv;
 		vect_t temp;
 		vect_t eye_model;
 
-		VSET( temp, 0, 0, 1 );
+		VSET( temp, 0.0, 0.0, 1.0 );
 		MAT4X3PNT( eye_model, view2model, temp );
 #if 0
 		/* This old way is no longer needed for RT */
@@ -725,7 +725,7 @@ char	**argv;
 		vect_t temp;
 		vect_t eye_model;
 
-		VSET( temp, 0, 0, 1 );
+		VSET( temp, 0.0, 0.0, 1.0 );
 		MAT4X3PNT( eye_model, view2model, temp );
 		rt_write(fp, eye_model);
 	}
@@ -838,7 +838,7 @@ work:
 				-eye_model[Z] );
 	    		new_mats();
 	    		/* Second step:  put eye in front */
-	    		VSET( xlate, 0, 0, -1 );	/* correction factor */
+	    		VSET( xlate, 0.0, 0.0, -1.0 );	/* correction factor */
 	    		MAT4X3PNT( eye_model, view2model, xlate );
 			MAT_DELTAS( toViewcenter,
 				-eye_model[X],
@@ -961,7 +961,7 @@ char	**argv;
 	/*
 	 *  Eye is in conventional place.
 	 */
-	VSET( temp, 0, 0, 1 );
+	VSET( temp, 0.0, 0.0, 1.0 );
 	MAT4X3PNT( eye_model, view2model, temp );
 	rt_oldwrite(fp, eye_model);
 	(void)fclose( fp );
@@ -1161,7 +1161,7 @@ char	**argv;
 	 *  in case a view specification is never given.
 	 */
 	bn_mat_copy(rtif_viewrot, Viewrot);
-	VSET(temp, 0, 0, 1);
+	VSET(temp, 0.0, 0.0, 1.0);
 	MAT4X3PNT(rtif_eye_model, view2model, temp);
 
 	if( setjmp( jmp_env ) == 0 )
@@ -1747,8 +1747,8 @@ int	argc;
 	 * Compute camera orientation notch to right (+X) and up (+Y)
 	 * Done here, with eye in center of view.
 	 */
-	VSET( xv, 0.05, 0, 0 );
-	VSET( yv, 0, 0.05, 0 );
+	VSET( xv, 0.05, 0.0, 0.0 );
+	VSET( yv, 0.0, 0.05, 0.0 );
 	MAT4X3PNT( xm, view2model, xv );
 	MAT4X3PNT( ym, view2model, yv );
 	RT_ADD_VLIST( vhead, xm, RT_VLIST_LINE_DRAW );
@@ -1759,7 +1759,7 @@ int	argc;
 	/*  Second step:  put eye at view 0,0,1.
 	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
 	 */
-	VSET( xlate, 0, 0, -1 );	/* correction factor */
+	VSET( xlate, 0.0, 0.0, -1.0 );	/* correction factor */
 	MAT4X3PNT( new_cent, view2model, xlate );
 	MAT_DELTAS_VEC_NEG( toViewcenter, new_cent );
 	new_mats();

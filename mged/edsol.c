@@ -1835,7 +1835,7 @@ mat_t		mat;
 			/* XXX Fall through, for now (How about first vertex?? - JRA) */
 
 			/* set default first */
-			VSETALL( mpt, 0 );
+			VSETALL( mpt, 0.0 );
 			*strp = "(origin)";
 
 			if( BU_LIST_IS_EMPTY( &m->r_hd ) )
@@ -1941,7 +1941,7 @@ mat_t		mat;
 		}
 	default:
 	  Tcl_AppendResult(interp, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
-	  VSETALL( mpt, 0 );
+	  VSETALL( mpt, 0.0 );
 	  *strp = "(origin)";
 	  break;
 	}
@@ -2082,8 +2082,8 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
       es_edclass = EDIT_CLASS_SCALE;
 
       if(SEDIT_SCALE){
-	edit_absolute_scale = 0;
-	acc_sc_sol = 1;
+	edit_absolute_scale = 0.0;
+	acc_sc_sol = 1.0;
       }
     }else
       es_edclass = EDIT_CLASS_NULL;
@@ -2216,14 +2216,14 @@ init_sedit()
 	VSETALL( edit_absolute_view_tran, 0.0 );
 	VSETALL( last_edit_absolute_model_tran, 0.0 );
 	VSETALL( last_edit_absolute_view_tran, 0.0 );
-	edit_absolute_scale = 0;
-	acc_sc_sol = 1;
+	edit_absolute_scale = 0.0;
+	acc_sc_sol = 1.0;
 
-	VSETALL( edit_rate_model_rotate, 0 );
-	VSETALL( edit_rate_object_rotate, 0 );
-	VSETALL( edit_rate_view_rotate, 0 );
-	VSETALL( edit_rate_model_tran, 0 );
-	VSETALL( edit_rate_view_tran, 0 );
+	VSETALL( edit_rate_model_rotate, 0.0 );
+	VSETALL( edit_rate_object_rotate, 0.0 );
+	VSETALL( edit_rate_view_rotate, 0.0 );
+	VSETALL( edit_rate_model_tran, 0.0 );
+	VSETALL( edit_rate_view_tran, 0.0 );
 
 	set_e_axes_pos(1);
 #endif
@@ -3172,7 +3172,7 @@ sedit()
 			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
 					   (char *)NULL);
 				mged_print_result( TCL_ERROR );
-			  VSET(tgc->h, 0, 0, 1 );
+			  VSET(tgc->h, 0.0, 0.0, 1.0 );
 			  break;
 			}
 
@@ -3226,7 +3226,7 @@ sedit()
 			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
 					   (char *)NULL);
 				mged_print_result( TCL_ERROR );
-			  VSET(tgc->h, 0, 0, 1 );
+			  VSET(tgc->h, 0.0, 0.0, 1.0);
 			  break;
 			}
 		}
@@ -3573,7 +3573,7 @@ sedit()
 					fastf_t dist;
 
 					/* Get view direction vector */
-					VSET( view_z_dir , 0 , 0 , 1 );
+					VSET( view_z_dir, 0.0, 0.0, 1.0 );
 					MAT4X3VEC( view_dir , view2model , view_z_dir );
 
 					/* intersect line through new_pt with plane of loop */
@@ -3743,7 +3743,7 @@ sedit()
 					fastf_t dist;
 
 					/* Get view direction vector */
-					VSET( view_z_dir , 0 , 0 , 1 );
+					VSET( view_z_dir, 0.0, 0.0, 1.0 );
 					MAT4X3VEC( view_dir , view2model , view_z_dir );
 
 					/* intersect line through new_pt with plane of loop */
@@ -4110,7 +4110,7 @@ sedit()
 				break;
 
 			/* Get view direction vector */
-			VSET( z_dir , 0 , 0 , 1 );
+			VSET( z_dir, 0.0, 0.0, 1.0 );
 			MAT4X3VEC( view_dir , view2model , z_dir );
 			find_nearest_ars_pt( &es_ars_crv, &es_ars_col, ars, pick_pt, view_dir );
 			VMOVE( es_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
@@ -6199,15 +6199,15 @@ init_objedit()
 	VSETALL( edit_absolute_view_tran, 0.0 );
 	VSETALL( last_edit_absolute_model_tran, 0.0 );
 	VSETALL( last_edit_absolute_view_tran, 0.0 );
-	edit_absolute_scale = 0;
+	edit_absolute_scale = 0.0;
 	acc_sc_sol = 1.0;
 	VSETALL( acc_sc, 1.0 );
 
-	VSETALL( edit_rate_model_rotate, 0 );
-	VSETALL( edit_rate_object_rotate, 0 );
-	VSETALL( edit_rate_view_rotate, 0 );
-	VSETALL( edit_rate_model_tran, 0 );
-	VSETALL( edit_rate_view_tran, 0 );
+	VSETALL( edit_rate_model_rotate, 0.0 );
+	VSETALL( edit_rate_object_rotate, 0.0 );
+	VSETALL( edit_rate_view_rotate, 0.0 );
+	VSETALL( edit_rate_model_tran, 0.0 );
+	VSETALL( edit_rate_view_tran, 0.0 );
 
 	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "do_edit_menu {}");

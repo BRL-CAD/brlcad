@@ -160,27 +160,27 @@ VPRINT("sheared_eye", sheared_eye);
 bn_mat_print("pmat",pmat);
 
 	/* Some quick checking */
-	VSET( a, 0, 0, -1 );
+	VSET( a, 0.0, 0.0, -1.0 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("0,0,-1 ->", b);
 
-	VSET( a, 1, 1, -1 );
+	VSET( a, 1.0, 1.0, -1.0 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("1,1,-1 ->", b);
 
-	VSET( a, 0, 0, 0 );
+	VSET( a, 0.0, 0.0, 0.0 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("0,0,0 ->", b);
 
-	VSET( a, 1, 1, 0 );
+	VSET( a, 1.0, 1.0, 0.0 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("1,1,0 ->", b);
 
-	VSET( a, 1, 1, 1 );
+	VSET( a, 1.0, 1.0, 1.0 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("1,1,1 ->", b);
 
-	VSET( a, 0, 0, 1 );
+	VSET( a, 0.0, 0.0, 1.0 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("0,0,1 ->", b);
 #endif
@@ -295,17 +295,17 @@ int	which_eye;
 
 		eye_delta_scr = mged_variables->eye_sep_dist * 0.5 / SCR_WIDTH_PHYS;
 
-		VSET( l, -1, -1, -1 );
-		VSET( h, 1, 1, 200.0 );
+		VSET( l, -1.0, -1.0, -1.0 );
+		VSET( h, 1.0, 1.0, 200.0 );
 if(which_eye) {
 printf("d=%gscr, d=%gmm, delta=%gscr\n", to_eye_scr, to_eye_scr * SCR_WIDTH_PHYS, eye_delta_scr);
 VPRINT("l", l);
 VPRINT("h", h);
 }
-		VSET( eye, 0, 0, to_eye_scr );
+		VSET( eye, 0.0, 0.0, to_eye_scr );
 #if 0
 		bn_mat_idn(tmat);
-		tmat[11] = -1;
+		tmat[11] = -1.0;
 		bn_mat_mul( tvmat, tmat, model2view );
 #endif
 		switch(which_eye)  {
