@@ -44,17 +44,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 
+#include "tcl.h"
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "rtstring.h"
 #include "raytrace.h"
-#include "./ged.h"
 #include "externs.h"
+#include "./ged.h"
 #include "./solid.h"
 #include "./dm.h"
-
-#include "tcl.h"
+#include "./mgedtcl.h"
 
 #define BAD_EOF	(-1L)			/* eof_addr not set yet */
 

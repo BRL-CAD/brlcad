@@ -36,17 +36,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* For struct timeval */
 
 #include "tcl.h"
-#include "tk.h"
+
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
+#include "externs.h"
 #include "db.h"
 #include "mater.h"
 #include "./sedit.h"
-#include "raytrace.h"
-#include "externs.h"
 #include "./ged.h"
 #include "./solid.h"
 #include "./dm.h"
+#include "./mgedtcl.h"
 
 #ifdef XMGED
 extern  int     mged_wait();
