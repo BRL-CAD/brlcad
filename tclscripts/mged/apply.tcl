@@ -44,19 +44,27 @@ proc mged_apply_local { id cmd } {
 proc mged_apply_using_list { id cmd } {
     global mged_gui
 
+    set msg ""
     foreach dm $mged_gui($id,apply_list) {
 	winset $dm
 	catch { uplevel #0 $cmd } msg
     }
 
+    winset $mged_gui($id,active_dm)
+
     return $msg
 }
 
 proc mged_apply_all { cmd } {
+    global mged_gui
+
+    set msg ""
     foreach dm [get_dm_list] {
 	winset $dm
 	catch { uplevel #0 $cmd } msg
     }
+
+    winset $mged_gui($id,active_dm)
 
     return $msg
 }
