@@ -272,7 +272,7 @@ do_more:
 	if( perspective )  {
 		VSET( temp, -1, -1, 0 );	/* viewing plane */
 	}  else  {
-		VSET( temp, -1, -1, 1 );	/* eye plane */
+		VSET( temp, -1, -1, 1.1 );	/* eye plane */
 	}
 	MAT4X3PNT( viewbase_model, view2model, temp );
 
