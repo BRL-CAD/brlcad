@@ -117,7 +117,8 @@ static void pkg_perror(void (*errlog) (/* ??? */), char *s);
 static int pkg_dispatch(register struct pkg_conn *pc);
 static int pkg_gethdr(register struct pkg_conn *pc, char *buf);
 
-static char errbuf[80];
+#define MAX_ERRBUF_SIZE 80
+static char errbuf[MAX_ERRBUF_SIZE];
 static FILE	*pkg_debug;
 static void	pkg_ck_debug(void);
 static void	pkg_timestamp(void);
@@ -495,7 +496,8 @@ pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), in
 #else
 			if(errno == EWOULDBLOCK)
 				return(PKC_NULL);
-#endif			pkg_perror( errlog, "pkg_getclient: accept" );
+#endif
+			pkg_perror( errlog, "pkg_getclient: accept" );
 			return(PKC_ERROR);
 		}
 	}  while( s2 < 0);
@@ -1522,8 +1524,19 @@ pkg_block(register struct pkg_conn *pc)
 static void
 pkg_perror(void (*errlog) (/* ??? */), char *s)
 {
-	if( errno >= 0 && errno < sys_nerr ) {
+
+#if HAVE_STRERROR_R
+	int ret = 0;
+	sprintf( errbuf, "%s: ", s);
+	if ((errno >= 0) && (strlen(errbuf) < MAX_ERRBUF_SIZE)) {
+	       	ret = strerror_r(errno, errbuf+strlen(errbuf), MAX_ERRBUF_SIZE-strlen(errbuf));
+		if (ret != 0) {
+			sprintf(errbuf, "%s: errno=%d\n", s, errno);
+		}
+#else
+	if ( errno >= 0 && errno < sys_nerr ) {
 		sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
+#endif
 		errlog( errbuf );
 	} else {
 		sprintf( errbuf, "%s: errno=%d\n", s, errno );
