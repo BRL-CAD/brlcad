@@ -96,16 +96,25 @@ rt_botface_w_normals(struct soltab	*stp,
 		     int			face_no,
 		     const struct bn_tol	*tol);
 
+
 #define TRI_TYPE	float
-#define NORM_TYPE	float
+#define NORM_TYPE	signed char
+#define NORMAL_SCALE	127.0
+#define ONE_OVER_SCALE	(1.0/127.0)
 #include "./g_bot_include.c"
 #undef TRI_TYPE
 #undef NORM_TYPE
+#undef NORMAL_SCALE
+#undef ONE_OVER_SCALE
 #define TRI_TYPE	double
 #define NORM_TYPE	fastf_t
+#define NORMAL_SCALE	1.0
+#define ONE_OVER_SCALE	1.0
 #include "./g_bot_include.c"
 #undef TRI_TYPE
 #undef NORM_TYPE
+#undef NORMAL_SCALE
+#undef ONE_OVER_SCALE
 					
 
 /*
@@ -3698,6 +3707,12 @@ rt_bot_decimate( struct rt_bot_internal *bot,	/* BOT to be decimated */
 }
 
 static int
+smooth_bot_miss( struct application *ap )
+{
+	return 0;
+}
+
+static int
 smooth_bot_hit( struct application *ap, struct partition *PartHeadp, struct seg *seg )
 {
 	struct partition *pp;
@@ -3771,6 +3786,7 @@ rt_smooth_bot( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, f
 		rtip = rt_new_rti( dbip );
 		ap.a_rt_i = rtip;
 		ap.a_hit = smooth_bot_hit;
+		ap.a_miss = smooth_bot_miss;
 		ap.a_uptr = (genptr_t)normals;
 		if( rt_gettree( rtip, bot_name ) ) {
 			bu_log( "rt_gettree failed for %s\n", bot_name );
