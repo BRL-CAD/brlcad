@@ -175,6 +175,14 @@ void			vls_ftoa_vec_cvt();
 void			vls_ftoa_vec();
 void			vls_ftoa_cvt();
 void			vls_ftoa();
+extern int		parsArg();
+extern int		insert();
+extern int		col_prt();
+extern int		match();
+extern int		delete();
+extern int		shell();
+extern int		cgarbs();
+extern int		redoarb();
 
 RT_EXTERN(void ewrite, (FILE *fp, const char *buf, unsigned bytes) );
 RT_EXTERN(void blank_fill, (FILE *fp, int count) );

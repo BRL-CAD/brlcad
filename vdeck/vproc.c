@@ -162,6 +162,7 @@ register char *prefix;
 /*	s h e l l ( )
 	Execute shell command.
  */
+int
 shell( args )
 char  *args[];
 {
@@ -311,6 +312,7 @@ register int	ct;
 	Insert each member of the table of contents 'toc_list' which
 	matches one of the arguments into the current list 'curr_list'.
  */
+int
 insert(  args,	ct )
 char		*args[];
 register int	ct;
@@ -341,6 +343,7 @@ register int	ct;
 	delete all members of current list 'curr_list' which match
 	one of the arguments
  */
+int
 delete(  args )
 char	*args[];
 {
