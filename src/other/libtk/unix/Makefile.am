@@ -30,7 +30,8 @@ tklib_DATA = tkConfig.sh
 
 AM_CPPFLAGS = \
 	-I${top_srcdir}/src/other/libtk/generic \
-	-DTK_LIBRARY="\"${TK_LIBRARY}\""
+	-DTK_LIBRARY="\"${TK_LIBRARY}\"" \
+	@X_CFLAGS@
 
 noinst_HEADERS = \
 	tkUnixDefault.h \
