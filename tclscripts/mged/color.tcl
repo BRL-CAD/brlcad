@@ -48,7 +48,7 @@ of the menubutton." } }
     menubutton $top.$key\MB -relief raised -bd 2\
 	    -menu $top.$key\MB.m -indicatoron 1
     hoc_register_data $top.$key\MB "Color Menu"\
-	    { { summary "Pops up a menu of colors. Also included
+	    { { summary "Pop up a menu of colors. Also included
 in the menu is an entry for a color tool." } }
     menu $top.$key\MB.m -title "Color" -tearoff 0
     $top.$key\MB.m add command -label black\
