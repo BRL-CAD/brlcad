@@ -55,9 +55,6 @@ struct shared_info {
   mat_t	  _viewrot_table[VIEW_TABLE_SIZE];
   fastf_t _viewscale_table[VIEW_TABLE_SIZE];
   int	  _current_view;
-#if 0
-  struct  _mged_variables _mged_variables;
-#endif
 
 /* Angle/distance cursor stuff */
   int	  _dv_xadc;
@@ -92,15 +89,6 @@ struct shared_info {
 /* Virtual trackball stuff */
   point_t _orig_pos;
 
-#if 0
-/* Slider stuff */
-  int _scroll_top;
-  int _scroll_active;
-  int _scroll_y;
-  int _scroll_edit;
-  struct scroll_item *_scroll_array[6];
-#endif
-
   int _dmaflag;
   int _rc;         /* reference count */
 
@@ -128,7 +116,7 @@ struct shared_info {
   struct bu_vls _ang2_vls;
   struct bu_vls _distadc_vls;
 
-  /* Convenient pointer to the owner's (of the shared_info) pathName */
+  /* Convenient pointer to the owner's (of the shared_info) tkName */
   struct bu_vls *opp;
 };
 
@@ -160,6 +148,7 @@ struct dm_list {
   struct scroll_item *_scroll_array[6];
   struct bu_vls _scroll_edit_vls;
 
+  int _last_v_axes;
   void (*_knob_hook)();
   void (*_axes_color_hook)();
   int (*_cmd_hook)();
@@ -279,6 +268,8 @@ extern struct dm_list *curr_dm_list;
 #define scroll_array curr_dm_list->_scroll_array
 #define scroll_edit_vls curr_dm_list->_scroll_edit_vls
 #endif
+
+#define last_v_axes curr_dm_list->_last_v_axes
 
 #define MINVIEW		0.001				
 #define VIEWSIZE	(2.0*Viewscale)	/* Width of viewing cube */
