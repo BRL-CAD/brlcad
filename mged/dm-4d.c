@@ -334,6 +334,11 @@ Ir_open()
 	while( (inv = getinvent()) != (inventory_t *)0 )  {
 		if( inv->class != INV_GRAPHICS )  continue;
 		switch( inv->type )  {
+		case INV_GRODEV:			 /* 4D/60 machines */
+			ir_has_doublebuffer = 1;
+			if( inv->state & INV_GR1ZBUF24 )
+				ir_has_zbuf = 1;
+			break;
 		case INV_GMDEV:
 			ir_is_gt = 1;
 			ir_has_zbuf = 1;
