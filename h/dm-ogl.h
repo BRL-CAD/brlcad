@@ -24,23 +24,10 @@ struct modifiable_ogl_vars {
 };
 
 struct ogl_vars {
-  struct bu_list l;
-  Display *dpy;
-  Window win;
-  Tk_Window top;
-  Tk_Window xtkwin;
-  int omx, omy;
-  unsigned int mb_mask;
-  XFontStruct *fontstruct;
-  Colormap cmap;
+  GLXContext glxc;
   GLdouble faceplate_mat[16];
   int face_flag;
   int *perspective_mode;
-  int devmotionnotify;
-  int devbuttonpress;
-  int devbuttonrelease;
-  int knobs[8];
-  GLXContext glxc;
   int fontOffset;
   int ovec;		/* Old color map entry number */
   char is_direct;
