@@ -913,7 +913,6 @@ AC_CHECK_HEADERS( \
 	sys/ioctl_compat.h \
 	sys/machd.h \
 	sys/mman.h \
-	sys/mount.h \
 	sys/param.h \
 	sys/select.h \
 	sys/socket.h \
@@ -938,6 +937,20 @@ AC_CHECK_HEADERS( \
 )
 AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
 AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
+
+AC_CHECK_HEADER(sys/mount.h,
+		AC_DEFINE(HAVE_SYS_MOUNT_H,1, Define to 1 if you have the <sys/mount.h> header file.),,
+		[
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+#endif
+#define export export_hack
+#include <sys/mount.h>
+#undef export
+])
 
 found_regex_h=no
 AC_CHECK_HEADER(regex.h, 
