@@ -134,7 +134,6 @@ long *flags;
 {
 	struct model *m;
 	struct shell *s;
-rt_log( "In nmg_find_void_shells\n" );
 
 	NMG_CK_REGION( r );
 
@@ -158,12 +157,10 @@ rt_log( "In nmg_find_void_shells\n" );
 		if( normal[Z] > 0.0 )
 		{
 			NMG_INDEX_ASSIGN( flags , s , 1 )	/* external shell */
-rt_log( "Shell x%x is an external shell\n" , s );
 		}
 		else
 		{
 			NMG_INDEX_ASSIGN( flags , s , -1 )	/* void shell */
-rt_log( "Shell x%x is a void shell\n" , s );
 		}
 	}
 }
