@@ -643,6 +643,7 @@ struct db_i  {
 	long			dbi_eof;	/* End+1 pos after db_scan() */
 	long			dbi_nrec;	/* # records after db_scan() */
 	int			dbi_localunit;	/* unit currently in effect */
+	int			dbi_uses;	/* # of uses of this struct */
 	double			dbi_local2base;
 	double			dbi_base2local;	/* unit conversion factors */
 	char			*dbi_title;	/* title from IDENT rec */
@@ -1151,6 +1152,8 @@ struct rt_i {
 	char		*rti_region_fix_file; /* rt_regionfix() file or NULL */
 	int		rti_space_partition;  /* space partitioning method */
 	int		rti_nugrid_dimlimit;  /* limit on nugrid dimensions */
+	struct bn_tol	rti_tol;	/* Math tolerances for this model */
+	struct rt_tess_tol rti_ttol;	/* Tessellation tolerance defaults */
 	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
 	vect_t		mdl_min;	/* min corner of model bounding RPP */
 	vect_t		mdl_max;	/* max corner of model bounding RPP */
@@ -1190,10 +1193,9 @@ struct rt_i {
 	struct bu_hist rti_hist_cellsize; /* occupancy of cut cells */
 	struct bu_hist rti_hist_cutdepth; /* depth of cut tree */
 	struct soltab	**rti_Solids;	/* ptrs to soltab [st_bit] */
-	struct bn_tol	rti_tol;	/* Tolerances for this model */
 	struct bu_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
 	struct bu_ptbl	rti_resources;	/* list of 'struct resource'es encountered */
-	double		 rti_nu_gfactor; /* constant in numcells computation */
+	double		rti_nu_gfactor;	/* constant in numcells computation */
 };
 
 #define RT_NU_GFACTOR_DEFAULT	1.5	 /* see rt_cut_it() for a description
@@ -2424,6 +2426,8 @@ RT_EXTERN(int			nmg_ray_isect_segs, (struct soltab *stp,
 #endif
 /* From nmg_ck.c */
 /* XXX many others here */
+RT_EXTERN(void			nmg_ck_list_magic, (CONST struct bu_list *hd,
+				CONST char *str, CONST long magic) );
 RT_EXTERN(void			nmg_ck_list, (struct bu_list *hd, CONST char *str) );
 RT_EXTERN(void			nmg_ck_lueu, (struct loopuse *lu, char *s) );
 RT_EXTERN(int			nmg_check_radial, (CONST struct edgeuse *eu, CONST struct bn_tol *tol));
