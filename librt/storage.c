@@ -447,6 +447,7 @@ register struct resource *res;
 
 	/* First, march through the free queue, discarding wrong sizes */
 	for( pp = res->re_parthead.pt_forw; pp != &(res->re_parthead); )  {
+		RT_CHECK_PT(pp);
 		if( pp->pt_len != bytes )  {
 			register struct partition	*nextpp;
 
