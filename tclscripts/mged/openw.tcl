@@ -507,11 +507,10 @@ proc gui { args } {
 	hoc_register_menu_data "File" "Create/Update .mgedrc" "Create/Update .mgedrc"\
 			{ { summary "Create the .mgedrc startup file with default variable settings, or update to current settings." }
 	{ see_also } }
-	.$id.menubar.file add command -label "Close" -underline 0 \
-			-command "closedb"
-	hoc_register_menu_data "File" "Close" "Close Database"\
-			{ { summary "Close any presently open database." }
-	{ see_also opendb } }
+        .$id.menubar.file add command -label "Clear Command Window" -underline 1 \
+	    -command ".$id.t delete 1.0 end; mged_print_prompt .$id.t {mged> }"
+        hoc_register_menu_data "File" "Clear Command Window" "Delete all text from command window"\
+	    { { summary "Delete all text from command window" } see_also }
 	.$id.menubar.file add command -label "Exit" -underline 1 -command _mged_quit
 	hoc_register_menu_data "File" "Exit" "Exit MGED"\
 			{ { summary "Exit MGED." }
@@ -2282,17 +2281,6 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 		set geometry [wm geometry .$id]
 		wm geometry .$id $geometry
 	}
-
-	set num_players [llength $mged_players]
-	switch $num_players {
-		1 {
-			.$id.menubar.file entryconfigure 14 -state disabled
-		}
-		2 {
-			set id [lindex $mged_players 0]
-			.$id.menubar.file entryconfigure 14 -state normal
-		}
-	}
 }
 
 proc gui_destroy args {
@@ -2325,16 +2313,6 @@ proc gui_destroy args {
 	catch { destroy .sliders$id }
 	catch { destroy $mged_gui($id,top) }
 	catch { destroy .$id }
-
-# this will disable the File->Close option
-# XXX this should be disabled initially, and then enabled during an opendb or
-# a file->open action.
-#
-	if { [llength $mged_players] == 1 } {
-		set id [lindex $mged_players 0]
-		.$id.menubar.file entryconfigure 14 -state disabled
-	}
-
 }
 
 proc reconfig_gui_default { id } {
