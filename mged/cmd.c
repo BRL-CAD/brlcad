@@ -828,7 +828,13 @@ cmd_setup()
     bn_tcl_setup(interp);
     rt_tcl_setup(interp);
 
-    Tcl_LinkVar(interp, "dbip", (char *)&dbip, TCL_LINK_INT|TCL_LINK_READ_ONLY);
+    /* Can't use Tcl_LinkVar, it doesn't have a (void*) or (long) type */
+    {
+    	char	str[64];
+    	sprintf(str, "%ld", (long)dbip );
+    	Tcl_SetVar(interp, "dbip", str, TCL_GLOBAL_ONLY);
+    }
+
     /* XXX Change from .db to "db" & eliminate mged-specific "db" command */
     bu_vls_trunc(&temp, 0);
     bu_vls_printf(&temp, "set wdbp [wdb_open .db disk $dbip]");
