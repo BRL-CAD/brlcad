@@ -1,7 +1,13 @@
 #ifndef lint
 static char rcsid[] = "$Header$";
 #endif
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"			/* For malloc */
+
 extern int Debug;
 extern double Beta;
 /*	sharpen	- return a sharpened tone mapped buffer.
@@ -39,6 +45,9 @@ extern double Beta;
  *	Christopher T. Johnson
  *
  * $Log$
+ * Revision 10.1  1991/10/12  06:53:19  mike
+ * Release_4.0
+ *
  * Revision 2.4  91/08/30  00:26:43  mike
  * Stardent ANSI C
  * 
