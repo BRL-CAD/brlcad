@@ -30,14 +30,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	
 FBIO	*txtr_ifp = FBIO_NULL;
 
-#ifndef cray
+#if ! defined( cray )
 short	texture[BITS_WIDE][BITS_WIDE/(sizeof(short)*BITS_PER_BYTE)] =
 		{
 #include "./texture.h"
 		};
 #endif
 
-#ifndef cray
+#if ! defined( cray )
 txtr_Val( uvp )
 register struct uvcoord	*uvp;
 	{	register int	ui = uvp->uv_u * BITS_WIDE;
