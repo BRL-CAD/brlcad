@@ -30,7 +30,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
+#ifndef WIN32
 #include <sys/time.h>		/* for struct timeval */
+#endif
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"

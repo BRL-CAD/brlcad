@@ -3,7 +3,9 @@
 
 #define PLOTBOUND       1000.0  /* Max magnification in Rot matrix */
 #include <stdio.h>
+#ifndef WIN32
 #include <sys/time.h>
+#endif
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"

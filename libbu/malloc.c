@@ -65,6 +65,12 @@ static size_t		bu_memdebug_len = 0;
 const char bu_strdup_message[] = "bu_strdup string";
 extern const char bu_vls_message[];	/* from vls.c */
 
+#ifdef WIN32
+char *sbrk(i)
+{
+	return( (char *)0 );
+}
+#endif
 /*
  *			B U _ M E M D E B U G _ A D D
  *
@@ -255,7 +261,10 @@ const char	*str;
 #if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 #endif
+/* Windows does not like */
+#ifndef WIN32
 	*((int *)ptr) = -1;	/* zappo! */
+#endif
 	free(ptr);
 #if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_release(BU_SEM_SYSCALL);
