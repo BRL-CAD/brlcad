@@ -479,6 +479,128 @@ struct directory *dp1, *dp2;
 }
 
 void
+verify_region_attrs( struct directory *dp, struct db_i *dbip, Tcl_Obj *obj )
+{
+	Tcl_Obj **objs;
+	int len=0;
+	int i;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+
+	if( rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) < 0 ) {
+		fprintf( stderr, "Cannot import %s\n", dp->d_namep );
+		exit( 1 );
+	}
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CHECK_COMB( comb );
+
+	if( Tcl_ListObjGetElements( interp, obj, &len, &objs ) != TCL_OK ) {
+		fprintf( stderr, "Cannot get length of attributes for %s\n", dp->d_namep );
+		exit( 1 );
+	}
+
+	for( i=1 ; i<len ; i += 2 ) {
+		char *key, *value;
+
+		key = Tcl_GetStringFromObj( objs[i-1], NULL );
+		value = Tcl_GetStringFromObj( objs[i], NULL );
+		if( !strcmp( key, "region_id" ) ) {
+			short id;
+
+			id = atoi( value );
+			if( id != comb->region_id ) {
+				fprintf( stderr, "WARNING: %s in %s: \"region_id\" attribute says %d, while region says %d\n",
+					 dp->d_namep, dbip->dbi_filename, id, comb->region_id );
+			}
+		} else if( !strcmp( key, "giftmater" ) ) {
+			short GIFTmater;
+
+			GIFTmater = atoi( value );
+			if( GIFTmater != comb->GIFTmater ) {
+				fprintf( stderr, "WARNING: %s in %s: \"giftmater\" attribute says %d, while region says %d\n",
+					 dp->d_namep, dbip->dbi_filename, GIFTmater, comb->GIFTmater );
+			}
+		} else if( !strcmp( key, "los" ) ) {
+			short los;
+
+			los = atoi( value );
+			if( los != comb->los ) {
+				fprintf( stderr, "WARNING: %s in %s: \"los\" attribute says %d, while region says %d\n",
+					 dp->d_namep, dbip->dbi_filename, los, comb->los );
+			}
+		} else if( !strcmp( key, "material" ) ) {
+			if( !strncmp( value, "gift", 4 ) ) {
+				short GIFTmater;
+
+				GIFTmater = atoi( &value[4] );
+				if( GIFTmater != comb->GIFTmater ) {
+					fprintf( stderr, "WARNING: %s in %s: \"material\" attribute says %s, while region says %d\n",
+						 dp->d_namep, dbip->dbi_filename, value, comb->GIFTmater );
+				}
+			}
+		} else if( !strcmp( key, "aircode" ) ) {
+			short aircode;
+
+			aircode = atoi( value );
+			if( aircode != comb->aircode ) {
+				fprintf( stderr, "WARNING: %s in %s: \"aircode\" attribute says %d, while region says %d\n",
+					 dp->d_namep, dbip->dbi_filename, aircode, comb->aircode );
+			}
+		}
+	}
+	rt_db_free_internal( &intern, &rt_uniresource );
+}
+
+static char *region_attrs[] = { "region",
+			      "region_id",
+			      "giftmater",
+			      "los",
+			      "aircode",
+			      NULL };
+void
+remove_region_attrs( Tcl_Obj *obj )
+{
+	int len=0;
+	Tcl_Obj **objs;
+	Tcl_Obj *new_obj;
+	char *key;
+	int i,j;
+	int found_material=0;
+
+	if( Tcl_ListObjGetElements( interp, obj, &len, &objs ) != TCL_OK ) {
+		fprintf( stderr, "Cannot get length of attributes for %s\n",
+			 Tcl_GetStringFromObj( obj, NULL ) );
+		exit( 1 );
+	}
+
+	if( len == 0 )
+		return;
+
+	new_obj = Tcl_NewObj();
+
+	for( i=len-1 ; i>0 ; i -= 2 ) {
+
+		key = Tcl_GetStringFromObj( objs[i-1], NULL );
+		j = 0;
+		while( region_attrs[j] ) {
+			if( !strcmp( key, region_attrs[j] ) ) {
+				Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);
+				break;
+			}
+			j++;
+		}
+		if( !found_material && !strcmp( key, "material" ) ) {
+			found_material = 1;
+			if( !strncmp( Tcl_GetStringFromObj( objs[i], NULL ), "gift", 4 ) ) {
+				Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);
+			}
+		}
+	}
+}
+
+
+void
 compare_attrs( struct directory *dp1, struct directory *dp2 )
 {
 	struct bu_vls vls;
@@ -496,6 +618,9 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 
 		obj1 = Tcl_DuplicateObj( Tcl_GetObjResult( interp ) );
 		Tcl_ResetResult( interp );
+		if( dp1->d_flags & DIR_REGION ) {
+			verify_region_attrs( dp1, dbip1, obj1 );
+		}
 	} else {
 		obj1 = Tcl_NewObj();
 	}
@@ -511,8 +636,17 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 
 		obj2 = Tcl_DuplicateObj( Tcl_GetObjResult( interp ) );
 		Tcl_ResetResult( interp );
+		if( dp1->d_flags & DIR_REGION ) {
+			verify_region_attrs( dp2, dbip2, obj2 );
+		}
 	} else {
 		obj2 = Tcl_NewObj();
+	}
+
+	if( (dp1->d_flags & DIR_REGION) && (dp2->d_flags & DIR_REGION) ) {
+		/* don't complain about "region" attributes */
+		remove_region_attrs( obj1 );
+		remove_region_attrs( obj2 );
 	}
 
 	bu_vls_trunc( &vls, 0 );
