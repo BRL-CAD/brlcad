@@ -79,6 +79,7 @@ point_t		pt;
 	if( tp->cur_index >= MAX_TRAIL )  tp->cur_index = 0;
 }
 
+#if 0
 /*
  *			D R A W _ T R A I L
  *
@@ -104,6 +105,7 @@ struct trail	*tp;
 		if( (--i) < 0 )  i = tp->nused-1;
 	}
 }
+#endif
 
 /*
  *			P O L Y _ T R A I L
@@ -229,13 +231,14 @@ predictor_frame()
 	int	nframes;
 	mat_t	predictor;
 	mat_t	predictorXv2m;
-	point_t	v;		/* view coords */
 	point_t	m;		/* model coords */
 	point_t	mA,mB,mC,mD,mE,mF,mG,mH,mI,mJ,mK,mL;
 	struct rt_list	vhead;
 	struct rt_list	trail;
 	point_t	framecenter_m;
+#if 0
 	point_t	framecenter_v;
+#endif
 	point_t	center_m;
 	vect_t	delta_v;
 	vect_t	right, up;
@@ -263,7 +266,9 @@ predictor_frame()
 
 	MAT_DELTAS_GET_NEG( center_m, toViewcenter );
 	MAT4X3PNT( framecenter_m, predictor, center_m );
+#if 0
 	MAT4X3PNT( framecenter_v, model2view, framecenter_m );
+#endif
 
 	/*
 	 * Draw the frame around the point framecenter_v.

@@ -53,7 +53,7 @@ int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
 
 /* Viewing module specific "set" variables */
 struct structparse view_parse[] = {
-	{"%d",	1, "maxreflect",	(int)&numreflect,	FUNC_NULL },
+	{"%d",	1, "maxreflect",	(long)&numreflect,	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 

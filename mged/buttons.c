@@ -198,7 +198,6 @@ char *str;{
 		(void)printf("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
 
 	if(strcmp(str, "help") == 0) {
-		register int i=0;
 		for( bp = button_table; bp->bu_code >= 0; bp++ )
 			col_item(bp->bu_name);
 		col_eol();

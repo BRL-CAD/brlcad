@@ -165,7 +165,6 @@ char	*dp;
 	int	xmin, xmax, ymin, ymax;
 	register int	x, y;
 	register struct points	*pp;
-	register unsigned char	*cp;
 	fastf_t	mag;
 
 swp->sw_uv.uv_du = ap->a_diverge;
