@@ -206,8 +206,6 @@ configbody Dm::type {
 		error "bad type - $itk_option(-type)"
 	    }
 	}
-    } else {
-	error "type is read-only"
     }
 }
 
