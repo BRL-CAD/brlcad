@@ -1140,8 +1140,14 @@ CONST struct rt_tol	*tol;
 	}
 	nmg_face_g( fu, plane);
 
+	/* Check and make sure all verts are within tol->dist of face */
+	if( nmg_ck_fu_verts( fu, fu->f_p, tol ) != 0 )  {
+		rt_log("nmg_fu_planeeqn(fu=x%x) ERROR, verts are not within tol of face\n");
+		return -1;
+	}
+
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_fu_paneeqn(fu=x%x, tol=x%x)\n", fu, tol);
+		rt_log("nmg_fu_planeeqn(fu=x%x, tol=x%x)\n", fu, tol);
 	}
 	return(0);
 }
