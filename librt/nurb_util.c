@@ -218,10 +218,8 @@ void
 rt_nurb_print_pt_type(c)
 int c;
 {
-	fastf_t flt;
-	int coords, rat;
+	int rat;
 
-	coords = RT_NURB_EXTRACT_COORDS(c);
 	rat = RT_NURB_IS_PT_RATIONAL(c);
 	
 	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XY)

@@ -42,7 +42,7 @@ rt_nurb_closefile()
 void rt_nurb_s_plot( srf )
 struct snurb * srf;
 {
-	int i,j,k;
+	int i,j;
 	fastf_t * m_ptr = srf->ctl_points;
 	int evp = RT_NURB_EXTRACT_COORDS( srf->pt_type);
 
