@@ -2164,43 +2164,73 @@ register struct uvcoord	*uvp;
 	int x, y;
 	vect_t v_m, v_s, tmp;
 	double u, v, r;
+	fastf_t min_r_U, min_r_V;
+	vect_t norm;
+	vect_t rev_dir;
+	fastf_t dot_N;
+	vect_t UV_dir;
+	vect_t U_dir, V_dir;
+	fastf_t U_len, V_len;
+	double one_over_len;
 
 	MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
 
-	x = pt[X];	/* float/int conv */
-	y = pt[Y];	/* float/int conv */
+	uvp->uv_u = pt[X] / (double)XSIZ(dsp);
+	if( uvp->uv_u > 1.0 )
+		uvp->uv_u = 1.0;
+	if( uvp->uv_u < 0.0 )
+		uvp->uv_u = 0.0;
+	uvp->uv_v = pt[Y] / (double)YSIZ(dsp);
+	if( uvp->uv_v > 1.0 )
+		uvp->uv_v = 1.0;
+	if(  uvp->uv_v < 0.0 )
+		uvp->uv_v = 0.0;
+	VSET( tmp, XSIZ(dsp), 0.0, 0.0 )
+	MAT4X3VEC( U_dir,  dsp->dsp_i.dsp_stom, tmp )
+	U_len = MAGNITUDE( U_dir );
+	one_over_len = 1.0/U_len;
+	VSCALE( U_dir, U_dir, one_over_len )
 
-	if (x >= XSIZ(dsp)) x = XSIZ(dsp)-1;
-	if (y >= YSIZ(dsp)) y = YSIZ(dsp)-1;
+	VSET( tmp, 0.0, YSIZ(dsp), 0.0 )
+	MAT4X3VEC( V_dir,  dsp->dsp_i.dsp_stom, tmp )
+	V_len = MAGNITUDE( V_dir );
+	one_over_len = 1.0/V_len;
+	VSCALE( V_dir, V_dir, one_over_len )
 
-	u = x / (XSIZ(dsp)-1.0);
-	v = y / (YSIZ(dsp)-1.0);
-
-	uvp->uv_u = u;
-	uvp->uv_v = v;
-
-#define DUDV
-#ifdef DUDV
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+	min_r_U = r / U_len;
+	min_r_V = r / V_len;
 
-	VSETALL(v_m, r);
+	VREVERSE( rev_dir, ap->a_ray.r_dir )
+	VMOVE( norm, hitp->hit_normal )
+	dot_N = VDOT( rev_dir, norm );
+	VJOIN1( UV_dir, rev_dir, -dot_N, norm )
+	VUNITIZE( UV_dir )
+	if( NEAR_ZERO( dot_N, SMALL_FASTF ) )
+	{
+		uvp->uv_du = 0.5;
+		uvp->uv_dv = 0.5;
+	}
+	else
+	{
+		uvp->uv_du = (r / U_len) * VDOT( UV_dir, U_dir ) / dot_N;
+		uvp->uv_dv = (r / V_len) * VDOT( UV_dir, V_dir ) / dot_N;
+	}
 
-	MAT4X3VEC(v_s, dsp->dsp_i.dsp_mtos, v_m);
+	if( uvp->uv_du < 0.0 )
+		uvp->uv_du = -uvp->uv_du;
+	if( uvp->uv_du < min_r_U )
+		uvp->uv_du = min_r_U;
 
-	/* XXX this is a gross approximation */
-	VSET(tmp, v_s[X], 0.0, 0.0);
-	uvp->uv_du = MAGNITUDE(tmp);
+	if( uvp->uv_dv < 0.0 )
+		uvp->uv_dv = -uvp->uv_dv;
+	if( uvp->uv_dv < min_r_V )
+		uvp->uv_dv = min_r_V;
 
-	VSET(tmp, 0.0, v_s[Y], 0.0);
-	uvp->uv_dv = MAGNITUDE(tmp);
-#else
-	/* XXX The texture anti-aliasing stuff doesn't actually work */
-	uvp->uv_du = 0.0;
-	uvp->uv_dv = 0.0;
-#endif
 	if (rt_g.debug & DEBUG_HF)
-		bu_log("rt_dsp_uv(pt:%g,%g siz:%d,%d)\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
+		bu_log("rt_dsp_uv(pt:%g,%g siz:%d,%d)\n U_len=%g V_len=%g\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
 			pt[X], pt[Y], XSIZ(dsp), YSIZ(dsp), 
+			U_len, V_len,
 			r, ap->a_rbeam, ap->a_diverge, hitp->hit_dist,
 			uvp->uv_u, uvp->uv_v,
 			uvp->uv_du, uvp->uv_dv);
