@@ -1207,6 +1207,221 @@ out:
 }
 
 /*
+ *			R T _ C E L L _ N _ O N _ R A Y
+ *
+ *  Return pointer to cell 'n' along a given ray.
+ *  Used for debugging of how space partitioning interacts with shootray.
+ *  Intended to mirror the operation of rt_shootray().
+ *  The first cell is 0.
+ */
+CONST union cutter *
+rt_cell_n_on_ray( ap, n )
+register struct application *ap;
+int	n;		/* First cell is #0 */
+{
+	struct rt_shootray_status	ss;
+	register CONST union cutter *cutp;
+	struct resource		*resp;
+	struct rt_i		*rtip;
+	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
+
+	RT_AP_CHECK(ap);
+	if( ap->a_magic )  {
+		RT_CK_AP(ap);
+	} else {
+		ap->a_magic = RT_AP_MAGIC;
+	}
+	if( ap->a_ray.magic )  {
+		RT_CK_RAY(&(ap->a_ray));
+	} else {
+		ap->a_ray.magic = RT_RAY_MAGIC;
+	}
+	if( ap->a_resource == RESOURCE_NULL )  {
+		ap->a_resource = &rt_uniresource;
+		rt_uniresource.re_magic = RESOURCE_MAGIC;
+		if(rt_g.debug)bu_log("rt_cell_n_on_ray:  defaulting a_resource to &rt_uniresource\n");
+	}
+	ss.ap = ap;
+	rtip = ap->a_rt_i;
+	RT_CK_RTI( rtip );
+	resp = ap->a_resource;
+	RT_RESOURCE_CHECK(resp);
+	ss.resp = resp;
+
+	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
+		bu_log_indent_delta(2);
+		bu_log("\n**********cell_n_on_ray cpu=%d  %d,%d lvl=%d (%s), n=%d\n",
+			resp->re_cpu,
+			ap->a_x, ap->a_y,
+			ap->a_level,
+			ap->a_purpose != (char *)0 ? ap->a_purpose : "?", n );
+		bu_log("Pnt (%g, %g, %g) a_onehit=%d\n",
+			V3ARGS(ap->a_ray.r_pt),
+			ap->a_onehit );
+		VPRINT("Dir", ap->a_ray.r_dir);
+	}
+	if(RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir))  {
+		bu_log("\n**********cell_n_on_ray cpu=%d  %d,%d lvl=%d (%s)\n",
+			resp->re_cpu,
+			ap->a_x, ap->a_y,
+			ap->a_level,
+			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
+		VPRINT(" r_pt", ap->a_ray.r_pt);
+		VPRINT("r_dir", ap->a_ray.r_dir);
+		rt_bomb("rt_cell_n_on_ray() bad ray\n");
+	}
+
+	if( rtip->needprep )
+		rt_prep_parallel(rtip, 1);	/* Stay on our CPU */
+
+	if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
+		/*
+		 *  We've been handed a mostly un-initialized resource struct,
+		 *  with only a magic number and a cpu number filled in.
+		 *  Init it and add it to the table.
+		 *  This is how application-provided resource structures
+		 *  are remembered for later cleanup by the library.
+		 */
+		rt_init_resource( resp, resp->re_cpu );
+	}
+	/* Ensure that this CPU's resource structure is registered */
+	if( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) == NULL )  {
+		BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) = (long *)resp;
+	}
+
+	/* Verify that direction vector has unit length */
+	if(rt_g.debug) {
+		FAST fastf_t f, diff;
+		/* Fancy version of BN_VEC_NON_UNIT_LEN() */
+		f = MAGSQ(ap->a_ray.r_dir);
+		if( NEAR_ZERO(f, 0.0001) )  {
+			rt_bomb("rt_cell_n_on_ray:  zero length dir vector\n");
+			return CUTTER_NULL;
+		}
+		diff = f - 1;
+		if( !NEAR_ZERO( diff, 0.0001 ) )  {
+			bu_log("rt_cell_n_on_ray: non-unit dir vect (x%d y%d lvl%d)\n",
+				ap->a_x, ap->a_y, ap->a_level );
+			f = 1/f;
+			VSCALE( ap->a_ray.r_dir, ap->a_ray.r_dir, f );
+		}
+	}
+
+	/* Compute the inverse of the direction cosines */
+	if( ap->a_ray.r_dir[X] < -SQRT_SMALL_FASTF )  {
+		ss.abs_inv_dir[X] = -(ss.inv_dir[X]=1.0/ap->a_ray.r_dir[X]);
+		ss.rstep[X] = -1;
+	} else if( ap->a_ray.r_dir[X] > SQRT_SMALL_FASTF )  {
+		ss.abs_inv_dir[X] =  (ss.inv_dir[X]=1.0/ap->a_ray.r_dir[X]);
+		ss.rstep[X] = 1;
+	} else {
+		ap->a_ray.r_dir[X] = 0.0;
+		ss.abs_inv_dir[X] = ss.inv_dir[X] = INFINITY;
+		ss.rstep[X] = 0;
+	}
+	if( ap->a_ray.r_dir[Y] < -SQRT_SMALL_FASTF )  {
+		ss.abs_inv_dir[Y] = -(ss.inv_dir[Y]=1.0/ap->a_ray.r_dir[Y]);
+		ss.rstep[Y] = -1;
+	} else if( ap->a_ray.r_dir[Y] > SQRT_SMALL_FASTF )  {
+		ss.abs_inv_dir[Y] =  (ss.inv_dir[Y]=1.0/ap->a_ray.r_dir[Y]);
+		ss.rstep[Y] = 1;
+	} else {
+		ap->a_ray.r_dir[Y] = 0.0;
+		ss.abs_inv_dir[Y] = ss.inv_dir[Y] = INFINITY;
+		ss.rstep[Y] = 0;
+	}
+	if( ap->a_ray.r_dir[Z] < -SQRT_SMALL_FASTF )  {
+		ss.abs_inv_dir[Z] = -(ss.inv_dir[Z]=1.0/ap->a_ray.r_dir[Z]);
+		ss.rstep[Z] = -1;
+	} else if( ap->a_ray.r_dir[Z] > SQRT_SMALL_FASTF )  {
+		ss.abs_inv_dir[Z] =  (ss.inv_dir[Z]=1.0/ap->a_ray.r_dir[Z]);
+		ss.rstep[Z] = 1;
+	} else {
+		ap->a_ray.r_dir[Z] = 0.0;
+		ss.abs_inv_dir[Z] = ss.inv_dir[Z] = INFINITY;
+		ss.rstep[Z] = 0;
+	}
+
+	/*
+	 *  If ray does not enter the model RPP, skip on.
+	 *  If ray ends exactly at the model RPP, trace it.
+	 */
+	if( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
+	    ap->a_ray.r_max < 0.0 )  {
+		cutp = &ap->a_rt_i->rti_inf_box;
+	    	if( cutp->bn.bn_len > 0 )  {
+	    		if( n == 0 )  return cutp;
+	    	}
+    		return CUTTER_NULL;
+	}
+
+	/*
+	 *  The interesting part of the ray starts at distance 0.
+	 *  If the ray enters the model at a negative distance,
+	 *  (ie, the ray starts within the model RPP),
+	 *  we only look at little bit behind (BACKING_DIST) to see if we are
+	 *  just coming out of something, but never further back than
+	 *  the intersection with the model RPP.
+	 *  If the ray enters the model at a positive distance,
+	 *  we always start there.
+	 *  It is vital that we never pick a start point outside the
+	 *  model RPP, or the space partitioning tree will pick the
+	 *  wrong box and the ray will miss it.
+	 *
+	 *  BACKING_DIST should probably be determined by floating point
+	 *  noise factor due to model RPP size -vs- number of bits of
+	 *  floating point mantissa significance, rather than a constant,
+	 *  but that is too hideous to think about here.
+	 *  Also note that applications that really depend on knowing
+	 *  what region they are leaving from should probably back their
+	 *  own start-point up, rather than depending on it here, but
+	 *  it isn't much trouble here.
+	 */
+	ss.box_start = ss.model_start = ap->a_ray.r_min;
+	ss.box_end = ss.model_end = ap->a_ray.r_max;
+
+	if( ss.box_start < BACKING_DIST )
+		ss.box_start = BACKING_DIST; /* Only look a little bit behind */
+
+	ss.lastcut = CUTTER_NULL;
+	ss.old_status = (struct rt_shootray_status *)NULL;
+	ss.curcut = &ap->a_rt_i->rti_CutHead;
+	if( ss.curcut->cut_type == CUT_NUGRIDNODE ) {
+		ss.lastcell = CUTTER_NULL;
+		VSET( ss.curmin, ss.curcut->nugn.nu_axis[X][0].nu_spos,
+				 ss.curcut->nugn.nu_axis[Y][0].nu_spos,
+				 ss.curcut->nugn.nu_axis[Z][0].nu_spos );
+		VSET( ss.curmax, ss.curcut->nugn.nu_axis[X][ss.curcut->nugn.nu_cells_per_axis[X]-1].nu_epos,
+				 ss.curcut->nugn.nu_axis[Y][ss.curcut->nugn.nu_cells_per_axis[Y]-1].nu_epos,
+				 ss.curcut->nugn.nu_axis[Z][ss.curcut->nugn.nu_cells_per_axis[Z]-1].nu_epos );
+	} else if( ss.curcut->cut_type == CUT_CUTNODE ||
+		   ss.curcut->cut_type == CUT_BOXNODE ) {
+		ss.lastcell = ss.curcut;
+		VMOVE( ss.curmin, rtip->mdl_min );
+		VMOVE( ss.curmax, rtip->mdl_max );
+	}
+
+	ss.newray = ap->a_ray;		/* struct copy */
+	ss.odist_corr = ss.obox_start = ss.obox_end = -99;
+	ss.dist_corr = 0.0;
+
+	/*
+	 *  While the ray remains inside model space,
+	 *  push from box to box until ray emerges from
+	 *  model space again (or first hit is found, if user is impatient).
+	 *  It is vitally important to always stay within the model RPP, or
+	 *  the space partitoning tree will pick wrong boxes & miss them.
+	 */
+	while( (cutp = rt_advance_to_next_cell( &ss )) != CUTTER_NULL )  {
+		if(debug_shoot) {
+			rt_pr_cut( cutp, 0 );
+		}
+		if( --n <= 0 )  return cutp;
+	}
+	return CUTTER_NULL;
+}
+
+/*
  *			R T _ I N _ R P P
  *
  *  Compute the intersections of a ray with a rectangular parallelpiped (RPP)
