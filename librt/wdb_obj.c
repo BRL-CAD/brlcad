@@ -1806,11 +1806,11 @@ wdb_copy_tcl(clientData, interp, argc, argv)
 	}
 
 	if (db_put_external(&external, dp, wdbp->dbip) < 0) {
-		db_free_external(&external);
+		bu_free_external(&external);
 		Tcl_AppendResult(interp, "Database write error, aborting", (char *)NULL);
 		return TCL_ERROR;
 	}
-	db_free_external(&external);
+	bu_free_external(&external);
 
 	return TCL_OK;
 }
@@ -3767,7 +3767,7 @@ wdb_push_tcl(clientData, interp, argc, argv)
 			Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
 					 "): solid import failure\n", (char *)NULL);
 			rt_db_free_internal( &es_int);
-			db_free_external( &es_ext);
+			bu_free_external( &es_ext);
 			continue;
 		}
 		RT_CK_DB_INTERNAL(&es_int);
@@ -3778,7 +3778,7 @@ wdb_push_tcl(clientData, interp, argc, argv)
 			db_put_external(&es_ext, pip->pi_dir, wdbp->dbip);
 		}
 		rt_db_free_internal(&es_int);
-		db_free_external(&es_ext);
+		bu_free_external(&es_ext);
 	}
 
 	/*
@@ -3897,7 +3897,7 @@ wdb_node_write(dbip, dp, client_data)
 		Tcl_AppendResult(wndp->interp, "Output database write error on ",
 			dp->d_namep, ", aborting", (char *)NULL);
 	}
-	db_free_external(&ext);
+	bu_free_external(&ext);
 }
 
 /*

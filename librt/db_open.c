@@ -330,16 +330,17 @@ struct db_i	*dbip;		/* input */
 	for( i=0; i < RT_DBNHASH; i++ )  {
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
 			RT_CK_DIR(dp);
+/* XXX Need to go to internal form, if database versions don't match */
 			if( db_get_external( &ext, dp, dbip ) < 0 )  {
 				bu_log("db_dump() read failed on %s, skipping\n", dp->d_namep );
 				continue;
 			}
 			if( wdb_export_external( wdbp, &ext, dp->d_namep, dp->d_flags ) < 0 )  {
 				bu_log("db_dump() write failed on %s, aborting\n", dp->d_namep);
-				db_free_external( &ext );
+				bu_free_external( &ext );
 				return -1;
 			}
-			db_free_external( &ext );
+			bu_free_external( &ext );
 		}
 	}
 	return 0;

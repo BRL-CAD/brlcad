@@ -801,7 +801,7 @@ CONST struct bu_attribute_value_pair	*attr;
 		bu_log("rt_db_put_internal5(%s):  solid export failure\n",
 			dp->d_namep);
 		rt_db_free_internal( ip );
-		db_free_external( &body );
+		bu_free_external( &body );
 		return -2;		/* FAIL */
 	}
 	rt_db_free_internal( ip );
@@ -813,14 +813,14 @@ CONST struct bu_attribute_value_pair	*attr;
 		dp->d_namep, attr, &body,
 		major, minor,
 		DB5HDR_ZZZ_UNCOMPRESSED);
-	db_free_external( &body );
+	bu_free_external( &body );
 
 	if( db_put_external( &ext, dp, dbip ) < 0 )  {
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return -1;		/* FAIL */
 	}
 
-	db_free_external( &ext );
+	bu_free_external( &ext );
 	return 0;			/* OK */
 }
 
@@ -855,7 +855,7 @@ CONST struct bu_attribute_value_pair	*attr;
 	if( ip->idb_meth->ft_export5( &body, ip, conv2mm, NULL /*dbip*/ ) < 0 )  {
 		bu_log("rt_fwrite_internal5(%s): solid export failure\n",
 			name );
-		db_free_external( &body );
+		bu_free_external( &body );
 		return -2;				/* FAIL */
 	}
 	BU_CK_EXTERNAL( &body );
@@ -868,15 +868,15 @@ CONST struct bu_attribute_value_pair	*attr;
 		name, attr, &body,
 		major, minor,
 		DB5HDR_ZZZ_UNCOMPRESSED);
-	db_free_external( &body );
+	bu_free_external( &body );
 
 	if( bu_fwrite_external( fp, &ext ) < 0 )  {
 		bu_log("rt_fwrite_internal5(%s): bu_fwrite_external() error\n",
 			name );
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return -3;
 	}
-	db_free_external( &ext );
+	bu_free_external( &ext );
 	return 0;
 
 }
@@ -913,7 +913,7 @@ CONST mat_t		mat;
 	if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 )  {
 		bu_log("rt_db_get_internal5(%s):  import failure\n",
 			dp->d_namep );
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return -3;
 	}
 
@@ -924,14 +924,14 @@ CONST mat_t		mat;
 	} else {
 		bu_log("rt_db_get_internal5(%s):  unable to import non-BRL-CAD object, major=%d\n",
 			dp->d_namep, raw.major_type );
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return -1;		/* FAIL */
 	}
 
 	if( !raw.body.ext_buf )  {
 		bu_log("rt_db_get_internal5(%s):  object has no body\n",
 			dp->d_namep );
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return -4;
 	}
 
@@ -939,10 +939,10 @@ CONST mat_t		mat;
 		bu_log("rt_db_get_internal5(%s):  import failure\n",
 			dp->d_namep );
 		rt_db_free_internal( ip );
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return -1;		/* FAIL */
 	}
-	db_free_external( &ext );
+	bu_free_external( &ext );
 	/* Don't free &raw.body */
 
 	RT_CK_DB_INTERNAL( ip );

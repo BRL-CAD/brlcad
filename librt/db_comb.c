@@ -873,7 +873,7 @@ double		mm2local;
  *			D B _ W R A P _ V 4 _ E X T E R N A L
  *
  *  Wraps the v4 object body in "ip" into a v4 wrapper in "op".
- *  db_free_external(ip) will be performed.
+ *  bu_free_external(ip) will be performed.
  *  op and ip must not point at the same bu_external structure.
  *
  *  As the v4 database does not really have the notion of "wrapping",

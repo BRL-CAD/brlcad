@@ -1102,7 +1102,7 @@ struct db_i		*dbip;
 		return -1;			/* FAIL */
 	}
 
-	db_free_external( &ext );
+	bu_free_external( &ext );
 
 	RT_CK_DB_INTERNAL( op );
 	return 0;				/* OK */

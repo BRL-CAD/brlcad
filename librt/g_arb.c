@@ -1030,10 +1030,10 @@ register struct uvcoord *uvp;
 		    ap->a_rt_i->rti_dbip ) < 0 )  {
 			bu_log("rt_arb_uv(%s) database import error\n",
 				stp->st_name);
-			db_free_external( &ext );
+			bu_free_external( &ext );
 			return;
 		}
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		RT_CK_DB_INTERNAL( &intern );
 		aip = (struct rt_arb_internal *)intern.idb_ptr;
 		RT_ARB_CK_MAGIC(aip);

@@ -152,7 +152,7 @@ char *argv[];
 			fwrite( ep.ext_buf, ep.ext_nbytes, 1, fp );
 			fclose(fp);
 		}
-		db_free_external( &ep );
+		bu_free_external( &ep );
 		bu_vls_free( &file );
 
 		/* Convert internal back to external, and write both to files */
@@ -166,7 +166,7 @@ char *argv[];
 			fwrite( ep.ext_buf, ep.ext_nbytes, 1, fp );
 			fclose(fp);
 		}
-		db_free_external( &ep );
+		bu_free_external( &ep );
 		bu_vls_free( &file );
 
 		/* Test the lumberjacks */

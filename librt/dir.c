@@ -107,10 +107,10 @@ CONST mat_t		mat;
 		bu_log("rt_db_get_internal(%s):  import failure\n",
 			dp->d_namep );
 	    	rt_db_free_internal( ip );
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return -1;		/* FAIL */
 	}
-	db_free_external( &ext );
+	bu_free_external( &ext );
 	RT_CK_DB_INTERNAL( ip );
 	ip->idb_meth = &rt_functab[id];
 	return id;			/* OK */
@@ -148,17 +148,17 @@ struct rt_db_internal	*ip;
 		bu_log("rt_db_put_internal(%s):  solid export failure\n",
 			dp->d_namep);
 		rt_db_free_internal( ip );
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return -2;		/* FAIL */
 	}
 	rt_db_free_internal( ip );
 
 	if( db_put_external( &ext, dp, dbip ) < 0 )  {
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return -1;		/* FAIL */
 	}
 
-	db_free_external( &ext );
+	bu_free_external( &ext );
 	return 0;			/* OK */
 }
 
@@ -189,7 +189,7 @@ rt_fwrite_internal(
 	if( ip->idb_meth->ft_export( &ext, ip, conv2mm, NULL /*dbip*/ ) < 0 )  {
 		bu_log("rt_file_put_internal(%s): solid export failure\n",
 			name );
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return(-2);				/* FAIL */
 	}
 	BU_CK_EXTERNAL( &ext );
@@ -197,10 +197,10 @@ rt_fwrite_internal(
 	if( db_fwrite_external( fp, name, &ext ) < 0 )  {
 		bu_log("rt_fwrite_internal(%s): db_fwrite_external() error\n",
 			name );
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return(-3);
 	}
-	db_free_external( &ext );
+	bu_free_external( &ext );
 	return(0);
 
 }

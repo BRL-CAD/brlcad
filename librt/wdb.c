@@ -239,7 +239,7 @@ int			flags;
 			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, NULL )) == DIR_NULL )  {
 				bu_log("wdb_export_external(%s): db_diradd error\n",
 					name );
-				db_free_external( ep );
+				bu_free_external( ep );
 				return -3;
 			}
 		} else {
@@ -250,7 +250,7 @@ int			flags;
 		if( db_wrap_v4_external( ep, ep, dp ) < 0 )  {
 			bu_log("wdb_export_external(%s): db_wrap_v4_external error\n",
 				name );
-			db_free_external( ep );
+			bu_free_external( ep );
 			return -4;
 		}
 
@@ -295,13 +295,13 @@ double		local2mm;
 	if( rt_functab[id].ft_export( &ext, &intern, local2mm, wdbp->dbip ) < 0 )  {
 		bu_log("wdb_export(%s): solid export failure\n",
 			name );
-		db_free_external( &ext );
+		bu_free_external( &ext );
 		return(-2);				/* FAIL */
 	}
 	BU_CK_EXTERNAL( &ext );
 
 	ret = wdb_export_external( wdbp, &ext, name, db_flags_internal( &intern ) );
-	db_free_external( &ext );
+	bu_free_external( &ext );
 	return ret;
 }
 

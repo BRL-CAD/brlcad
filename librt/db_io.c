@@ -311,7 +311,7 @@ long		offset;
  *  The bu_external structure represented by 'ep' is initialized here,
  *  the caller need not pre-initialize it.  On error, 'ep' is left
  *  un-initialized and need not be freed, to simplify error recovery.
- *  On success, the caller is responsible for calling db_free_external(ep);
+ *  On success, the caller is responsible for calling bu_free_external(ep);
  *
  *  Returns -
  *	-1	error
@@ -363,7 +363,7 @@ CONST struct db_i		*dbip;
  *  the size has changed since last write.
  *
  *  Caller is responsible for freeing memory of external representation,
- *  using db_free_external().
+ *  using bu_free_external().
  */
 int
 db_put_external( ep, dp, dbip )
@@ -423,7 +423,7 @@ struct db_i		*dbip;
  *  and write it into a file.
  *
  *  Caller is responsible for freeing memory of external representation,
- *  using db_free_external().
+ *  using bu_free_external().
  *
  *  The 'name' field of the external representation is modified to
  *  contain the desired name.
@@ -456,14 +456,13 @@ struct bu_external	*ep;			/* can't be const */
 
 /*
  *			D B _ F R E E _ E X T E R N A L
+ *
+ *  XXX This is a leftover.  You should call bu_free_external() instead.
  */
 void
 db_free_external( ep )
 register struct bu_external	*ep;
 {
 	BU_CK_EXTERNAL(ep);
-	if( ep->ext_buf )  {
-		bu_free( ep->ext_buf, "db_get_ext ext_buf" );
-		ep->ext_buf = GENPTR_NULL;
-	}
+	bu_free_external(ep);
 }
