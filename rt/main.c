@@ -163,8 +163,8 @@ char **argv;
 	}
 	if( npsw > MAX_PSW )  npsw = MAX_PSW;
 	if( npsw > 1 )  {
-		rt_g.rtg_parallel = 1;
-		fprintf(stderr,"Planning to run with %d processors\n", npsw );
+	    rt_g.rtg_parallel = 1;
+	    fprintf(stderr,"Planning to run with %d processors\n", npsw );
 	} else
 		rt_g.rtg_parallel = 0;
 	RES_INIT( &rt_g.res_syscall );
