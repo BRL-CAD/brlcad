@@ -7,7 +7,7 @@
  *	Michael John Muuss
  *
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
+v *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  *  
@@ -42,28 +42,6 @@ struct matparse txt_parse[] = {
 	(char *)0,	0,				(char *)0
 };
 
-extern txt_render();
-
-int
-txt_setup( rp )
-register struct region *rp;
-{
-	register struct txt_specific *tp;
-
-	GETSTRUCT( tp, txt_specific );
-	rp->reg_ufunc = txt_render;
-	rp->reg_udata = (char *)tp;
-
-	tp->tx_file[0] = '\0';
-	tp->tx_w = tp->tx_fw = tp->tx_l = -1;
-	mlib_parse( rp->reg_mater.ma_matparm, txt_parse, (char *)tp );
-	if( tp->tx_w < 0 )  tp->tx_w = 512;
-	if( tp->tx_l < 0 )  tp->tx_l = tp->tx_w;
-	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
-	tp->tx_pixels = (char *)0;
-	return(1);
-}
-
 
 /*
  *  			T X T _ R E N D E R
@@ -74,6 +52,7 @@ register struct region *rp;
  *  Note that .pix files are stored left-to-right, bottom-to-top,
  *  which works out very naturally for the indexing scheme.
  */
+HIDDEN
 txt_render( ap, pp )
 register struct application *ap;
 register struct partition *pp;
@@ -129,11 +108,91 @@ top:
 }
 
 /*
+ *			T X T _ S E T U P
+ */
+int
+txt_setup( rp )
+register struct region *rp;
+{
+	register struct txt_specific *tp;
+
+	GETSTRUCT( tp, txt_specific );
+	rp->reg_ufunc = txt_render;
+	rp->reg_udata = (char *)tp;
+
+	tp->tx_file[0] = '\0';
+	tp->tx_w = tp->tx_fw = tp->tx_l = -1;
+	mlib_parse( rp->reg_mater.ma_matparm, txt_parse, (char *)tp );
+	if( tp->tx_w < 0 )  tp->tx_w = 512;
+	if( tp->tx_l < 0 )  tp->tx_l = tp->tx_w;
+	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
+	tp->tx_pixels = (char *)0;
+	return(1);
+}
+
+struct ckr_specific  {
+	int	ckr_r[2];
+	int	ckr_g[2];
+	int	ckr_b[2];
+};
+#define CKR_NULL ((struct ckr_specific *)0)
+
+struct matparse ckr_parse[] = {
+	"r",		(int)&(CKR_NULL->ckr_r[0]),	"%d",
+	"g",		(int)&(CKR_NULL->ckr_g[0]),	"%d",
+	"b",		(int)&(CKR_NULL->ckr_b[0]),	"%d",
+	"R",		(int)&(CKR_NULL->ckr_r[1]),	"%d",
+	"G",		(int)&(CKR_NULL->ckr_g[1]),	"%d",
+	"B",		(int)&(CKR_NULL->ckr_b[1]),	"%d"
+};
+
+/*
+ *			C K R _ R E N D E R
+ */
+HIDDEN
+ckr_render( ap, pp )
+register struct application *ap;
+register struct partition *pp;
+{
+	register struct ckr_specific *ckp =
+		(struct ckr_specific *)pp->pt_regionp->reg_udata;
+	auto fastf_t uv[2];
+
+	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
+		pp->pt_inseg->seg_stp, pp->pt_inhit, uv );
+
+	if( (uv[0] < 0.5 && uv[1] < 0.5) ||
+	    (uv[0] >=0.5 && uv[1] >=0.5) )  {
+		VSET( ap->a_color, ckp->ckr_r[0], ckp->ckr_g[0], ckp->ckr_b[0] );
+	} else {
+		VSET( ap->a_color, ckp->ckr_r[1], ckp->ckr_g[1], ckp->ckr_b[1] );
+	}
+}
+
+/*
+ *			C K R _ S E T U P
+ */
+int
+ckr_setup( rp )
+register struct region *rp;
+{
+	register struct ckr_specific *ckp;
+
+	GETSTRUCT( ckp, ckr_specific );
+	bzero( (char *)ckp, sizeof(struct ckr_specific) );
+	rp->reg_ufunc = ckr_render;
+	rp->reg_udata = (char *)ckp;
+	mlib_parse( rp->reg_mater.ma_matparm, ckr_parse, (char *)ckp );
+	return(1);
+}
+
+/*
  *			T E S T M A P _ R E N D E R
  *
  *  Render a map which varries red with U and blue with V values.
  *  Mostly useful for debugging ft_fv() routines.
  */
+HIDDEN
 testmap_render( ap, pp )
 register struct application *ap;
 register struct partition *pp;
