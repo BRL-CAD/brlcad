@@ -109,9 +109,9 @@ int skip;
 {
 	int			sol_num;
 	int			i,j,k;
-	int			no_of_assoc;
-	int			no_of_props;
-	int			name_de;
+	int			no_of_assoc=0;
+	int			no_of_props=0;
+	int			name_de=0;
 	char			*name;
 
 	if( dir[entityno]->param <= pstart )
@@ -135,6 +135,7 @@ int skip;
 	Readint( &no_of_props , "" );
 	for( k=0 ; k<no_of_props ; k++ )
 	{
+		j = 0;
 		Readint( &j , "" );
 		if( dir[(j-1)/2]->type == 406 &&
 		    dir[(j-1)/2]->form == 15 )
@@ -144,6 +145,9 @@ int skip;
 			break;
 		}
 	}
+
+	if( !name_de )
+		return;
 
 	Readrec( dir[(name_de-1)/2]->param );
 	Readint( &sol_num , "" );
@@ -178,9 +182,9 @@ int entityno;
 	int			i,j,k;
 	int			num;
 	int			skip;
-	int			no_of_assoc;
-	int			no_of_props;
-	int			name_de;
+	int			no_of_assoc=0;
+	int			no_of_props=0;
+	int			name_de=0;
 	char			*name;
 
 	if( dir[entityno]->param <= pstart )
@@ -215,6 +219,7 @@ int entityno;
 	Readint( &no_of_props , "" );
 	for( k=0 ; k<no_of_props ; k++ )
 	{
+		j = 0;
 		Readint( &j , "" );
 		if( dir[(j-1)/2]->type == 406 &&
 		    dir[(j-1)/2]->form == 15 )
@@ -224,6 +229,9 @@ int entityno;
 			break;
 		}
 	}
+
+	if( !name_de )
+		return;
 
 	Readrec( dir[(name_de-1)/2]->param );
 	Readint( &sol_num , "" );
@@ -259,9 +267,9 @@ int entityno;
 	int			i,j,k;
 	int			num;
 	int			skip;
-	int			no_of_assoc;
-	int			no_of_props;
-	int			name_de;
+	int			no_of_assoc=0;
+	int			no_of_props=0;
+	int			name_de=0;
 	char			*name;
 
 	if( dir[entityno]->param <= pstart )
@@ -295,6 +303,7 @@ int entityno;
 	Readint( &no_of_props , "" );
 	for( k=0 ; k<no_of_props ; k++ )
 	{
+		j = 0;
 		Readint( &j , "" );
 		if( dir[(j-1)/2]->type == 406 &&
 		    dir[(j-1)/2]->form == 15 )
@@ -304,6 +313,9 @@ int entityno;
 			break;
 		}
 	}
+
+	if( !name_de )
+		return;
 
 	Readrec( dir[(name_de-1)/2]->param );
 	Readint( &sol_num , "" );
