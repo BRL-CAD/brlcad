@@ -677,6 +677,7 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AM_PROG_LEX
 AC_PROG_YACC
+AM_PROG_MKDIR_P
 
 # XXX libtool shouldn't be generated until after LD is set
 # dnl went poof in libtool 1.9 -- AC_PROG_LIBTOOL
