@@ -206,7 +206,7 @@ int op;
 		}
 
 
-		ell_p = dbint->ip.idb_ptr;
+		ell_p = (struct rt_ell_internal *)dbint->ip.idb_ptr;
 
 		if( rdebug&RDEBUG_SHADE)
 			rt_log(" got a solid type %d \"%s\"\n",
@@ -440,7 +440,7 @@ struct seg *seg_p;
 {
 	double span;
 	point_t pt;
-	struct rt_ell_internal *ell_p = dbint->ip.idb_ptr;
+	struct rt_ell_internal *ell_p = (struct rt_ell_internal *)dbint->ip.idb_ptr;
 	double optical_density = 0.0;
 	double step_dist;
 	double dist;
