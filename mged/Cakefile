@@ -36,7 +36,7 @@
 #    define	TCP_FILES	/**/
 #endif
 
-mged:	OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP LIBTCL_DEP LIBTK_DEP LIBREDBLACK_DEP comb_bool_parse.o
+mged:	OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP LIBTCL_DEP LIBTK_DEP LIBDM_DEP LIBREDBLACK_DEP comb_bool_parse.o
 	sh ../newvers.sh version "Graphics Editor (MGED)"
 	CC CFLAGS -c vers.c
 	CC -o mged LDFLAGS OBJ COMPLETE_LIBES vers.o
