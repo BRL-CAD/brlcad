@@ -21,8 +21,10 @@
  *      This software is Copyright (C) 1998 & 1999 by the United States
  *      Army in all countries except the USA.  All rights reserved.
  */
-#ifndef FENCE_H
-#define FENCE_H
+
+#ifndef __FENCE_H__
+#define __FENCE_H__
+
 
 #include "conf.h"
 
@@ -263,4 +265,5 @@ BU_EXTERN(int createWire, (struct rt_wdb *fp, char *segmentname, vect_t heightve
 }
 #endif
 
-#endif
+#endif /* __FENCE_H__ */
+

@@ -7,7 +7,6 @@
   
   */
 
-
 #include "conf.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,9 +115,7 @@ BU_EXTERN(void makeFlake, (int depth, mat_t *trans, point_t center, fastf_t radi
 BU_EXTERN(void usage, (char *n));
 
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc, char **argv)
 {
   int i;
   int optc;
@@ -216,8 +213,7 @@ int main(argc, argv)
   return 0;
 }
 
-void usage(n)
-     char *n;
+void usage(char *n)
 {
   printf(
 	 "\nUSAGE: %s -D -d# -i -f fileName\n\
