@@ -354,6 +354,7 @@ get_cursor()
 	char ibuf[64];
 	register int i;
 	int hix, hiy, lox, loy;
+	int xpen, ypen;
 
 	if ( blit_emulator ) {
 		i = read( second_fd, ibuf, sizeof(ibuf) );
@@ -378,17 +379,15 @@ get_cursor()
 /*		(void)printf("mouse: %d,%d\n",
 			TEK_TO_GED(hix|lox), TEK_TO_GED(hiy|loy)); */
 
-		dm_values.dv_xpen = TEK_TO_GED(hix|lox);
-		dm_values.dv_ypen = TEK_TO_GED(hiy|loy);
-		if( dm_values.dv_xpen < -2048 || dm_values.dv_xpen > 2048 )
-			dm_values.dv_xpen = 0;
-		if( dm_values.dv_ypen < -2048 || dm_values.dv_ypen > 2048 )
-			dm_values.dv_ypen = 0;
+		xpen = TEK_TO_GED(hix|lox);
+		ypen = TEK_TO_GED(hiy|loy);
+		if( xpen < -2048 || xpen > 2048 )
+			xpen = 0;
+		if( ypen < -2048 || ypen > 2048 )
+			ypen = 0;
 
-		if (dm_values.dv_xpen < MENUXLIM )
-			dm_values.dv_penpress = DV_PICK;
-		else
-			dm_values.dv_penpress = DV_SLEW;
+		rt_vls_printf( &dm_values.dv_string , "M 1 %d %d\n", xpen, ypen );
+
 		return;
 	} else {
 		/* ASSUMPTION:  Input is line buffered (tty cooked) */
@@ -416,31 +415,31 @@ get_cursor()
 		/* Tek positioning is 0..4096,
 		 * The desired range is -2048 <= x,y <= +2048.
 		 */
-		dm_values.dv_xpen = TEK_TO_GED(hix|lox);
-		dm_values.dv_ypen = TEK_TO_GED(hiy|loy);
-		if( dm_values.dv_xpen < -2048 || dm_values.dv_xpen > 2048 )
-			dm_values.dv_xpen = 0;
-		if( dm_values.dv_ypen < -2048 || dm_values.dv_ypen > 2048 )
-			dm_values.dv_ypen = 0;
+		xpen = TEK_TO_GED(hix|lox);
+		ypen = TEK_TO_GED(hiy|loy);
+		if( xpen < -2048 || xpen > 2048 )
+			xpen = 0;
+		if( ypen < -2048 || ypen > 2048 )
+			ypen = 0;
 		
 		switch(cp[0])  {
 		case 'Z':
-			(void)printf("x=%d,y=%d\n", dm_values.dv_xpen, dm_values.dv_ypen);
+			(void)printf("x=%d,y=%d\n", xpen, ypen);
 			break;		/* NOP */
 		case 'b':
-			dm_values.dv_penpress = DV_INZOOM;
+			rt_vls_strcat( &dm_values.dv_string, "zoom 2\n");
 			break;
 		case 's':
-			dm_values.dv_penpress = DV_OUTZOOM;
+			rt_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
 			break;
 		case '.':
-			dm_values.dv_penpress = DV_SLEW;
+			rt_vls_strcat( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
 			break;
 		default:
 			(void)printf("s=smaller, b=bigger, .=slew, space=pick/slew\n");
 			return;
 		case ' ':
-			dm_values.dv_penpress = DV_PICK;
+			rt_vls_strcat( &dm_values.dv_string, "M 1 %d %d\n", xpen, ypen );
 			break;
 		}
 	}
