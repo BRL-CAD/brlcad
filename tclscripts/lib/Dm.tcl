@@ -22,9 +22,6 @@
 class Dm {
     inherit itk::Widget
 
-    constructor {{type X} args} {}
-    destructor {}
-
     itk_option define -dmsize dmsize Dmsize {512 512}
     itk_option define -listen listen Listen -1
     itk_option define -fb_active fb_active Fb_active 0
@@ -36,6 +33,11 @@ class Dm {
     itk_option define -perspective perspective Perspective 0
     itk_option define -debug debug Debug 0
     itk_option define -linewidth linewidth Linewidth 0
+    itk_option define -linestyle linestyle Linestyle 0
+    itk_option define -type type Type X
+
+    constructor {args} {}
+    destructor {}
 
     # methods that wrap LIBDM-display-manager-object commands
     public method observer {args}
@@ -68,7 +70,6 @@ class Dm {
 
     # new methods
     public method get_name {}
-    public method get_type {}
     public method fb_active {args}
     public method fb_update {args}
 
@@ -79,44 +80,37 @@ class Dm {
     protected method toggle_perspective {}
     protected method doBindings {}
 
-    protected variable dm ""
     protected variable width 512
     protected variable height 512
     protected variable invWidth ""
     protected variable aspect 1.0
-
-    private variable type X
+    private variable initializing 1
 }
 
-body Dm::constructor {{_type X} args} {
-    switch $_type {
-	X -
-	ogl {
-	    set type $_type
-	}
-	default {
-	    set type X
-	}
-    }
+body Dm::constructor {args} {
+    # process options now (i.e. -type may have been specified)
+    eval itk_initialize $args
+    set initializing 0
 
     itk_component add dm {
-	dm_open $itk_interior.dm $type -t 0 -W $width -N $height
+	dm_open $itk_interior.dm $itk_option(-type) -t 0 -W $width -N $height
     } {}
 
     pack $itk_component(dm) -fill both -expand yes
 
-    # process options
-    eval itk_initialize $args
-
     # initialize display manager object
+    eval Dm::dmsize $itk_option(-dmsize)
+    Dm::listen $itk_option(-listen)
+    Dm::fb_active $itk_option(-fb_active)
+    Dm::fb_update $itk_option(-fb_update)
     eval Dm::bg $itk_option(-bg)
     Dm::light $itk_option(-light)
-    Dm::zbuffer $itk_option(-zbuffer)
     Dm::zclip $itk_option(-zclip)
+    Dm::zbuffer $itk_option(-zbuffer)
+    Dm::perspective $itk_option(-perspective)
     Dm::debug $itk_option(-debug)
-    Dm::listen $itk_option(-listen)
     Dm::linewidth $itk_option(-linewidth)
-    Dm::fb_update $itk_option(-fb_update)
+    Dm::linestyle $itk_option(-linestyle)
 
     # event bindings
     doBindings
@@ -128,56 +122,93 @@ body Dm::destructor {} {
 }
 
 configbody Dm::dmsize {
-    # save size
-    set s $itk_option(-dmsize)
+    if {!$initializing} {
+	# save size
+	set s $itk_option(-dmsize)
 
-    # For now, put back the old value.
-    # If the size really does change, size will
-    # be set in the handle_configure method.
-    set itk_option(-dmsize) "$width $height"
+	# For now, put back the old value.
+	# If the size really does change, size will
+	# be set in the handle_configure method.
+	set itk_option(-dmsize) "$width $height"
 
-    # request a size change
-    eval Dm::dmsize $s
+	# request a size change
+	eval Dm::dmsize $s
+    }
 }
 
 configbody Dm::listen {
-    Dm::listen $itk_option(-listen)
+    if {!$initializing} {
+	Dm::listen $itk_option(-listen)
+    }
 }
 
 configbody Dm::fb_active {
-    Dm::fb_active $itk_option(-fb_active)
+    if {!$initializing} {
+	Dm::fb_active $itk_option(-fb_active)
+    }
 }
 
 configbody Dm::fb_update {
-    Dm::fb_update $itk_option(-fb_update)
+    if {!$initializing} {
+	Dm::fb_update $itk_option(-fb_update)
+    }
 }
 
 configbody Dm::bg {
-    eval Dm::bg $itk_option(-bg)
+    if {!$initializing} {
+	eval Dm::bg $itk_option(-bg)
+    }
 }
 
 configbody Dm::light {
-    Dm::light $itk_option(-light)
+    if {!$initializing} {
+	Dm::light $itk_option(-light)
+    }
 }
 
 configbody Dm::zclip {
-    Dm::zclip $itk_option(-zclip)
+    if {!$initializing} {
+	Dm::zclip $itk_option(-zclip)
+    }
 }
 
 configbody Dm::zbuffer {
-    Dm::zbuffer $itk_option(-zbuffer)
+    if {!$initializing} {
+	Dm::zbuffer $itk_option(-zbuffer)
+    }
 }
 
 configbody Dm::perspective {
-    Dm::perspective $itk_option(-perspective)
+    if {!$initializing} {
+	Dm::perspective $itk_option(-perspective)
+    }
 }
 
 configbody Dm::debug {
-    Dm::debug $itk_option(-debug)
+    if {!$initializing} {
+	Dm::debug $itk_option(-debug)
+    }
 }
 
 configbody Dm::linewidth {
-    Dm::linewidth $itk_option(-linewidth)
+    if {!$initializing} {
+	Dm::linewidth $itk_option(-linewidth)
+    }
+}
+
+configbody Dm::type {
+    if {$initializing} {
+	switch $itk_option(-type) {
+	    X -
+	    ogl {
+	    }
+	    default {
+		error "bad type - $itk_option(-type)"
+	    }
+	}
+    } else {
+	error "type is read-only"
+    }
 }
 
 body Dm::observer {args} {
@@ -224,11 +255,11 @@ body Dm::drawGeom {args} {
 # Get/set the background color
 body Dm::bg {args} {
     if {$args == ""} {
-	return $bg
+	return $itk_option(-bg)
     }
 
     $itk_component(dm) bg $args
-    set bg $args
+    set itk_option(-bg) $args
 }
 
 # Get/set the foreground color
@@ -243,20 +274,21 @@ body Dm::fg {args} {
 # Get/set the line width
 body Dm::linewidth {args} {
     if {$args == ""} {
-	return $linewidth
+	return $itk_option(-linewidth)
     }
 
     $itk_component(dm) linewidth $args
-    set linewidth $args
+    set itk_option(-linewidth) $args
 }
 
 # Get/set the line style
 body Dm::linestyle {args} {
     if {$args == ""} {
-	$itk_component(dm) linestyle
-    } else {
-	$itk_component(dm) linestyle $args
+	return $itk_option(-linestyle)
     }
+
+    $itk_component(dm) linestyle $args
+    set itk_option(-linestyle) $args
 }
 
 body Dm::handle_configure {} {
@@ -279,7 +311,7 @@ body Dm::zclip {args} {
 
 body Dm::zbuffer {args} {
     if {$args == ""} {
-	return $itk_optoin(-zbuffer)
+	return $itk_option(-zbuffer)
     }
 
     $itk_component(dm) zbuffer $args
@@ -345,7 +377,7 @@ body Dm::dmsize {args} {
 
     # get display manager window size
     if {$nargs == 0} {
-	return $itk_option(-size)
+	return $itk_option(-dmsize)
     }
 
     if {$nargs == 1} {
@@ -368,10 +400,6 @@ body Dm::get_aspect {} {
 
 body Dm::get_name {} {
     return $itk_component(dm)
-}
-
-body Dm::get_type {} {
-    return $type
 }
 
 body Dm::fb_active {args} {
