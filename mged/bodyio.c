@@ -29,7 +29,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifndef WIN32
 #include <pwd.h>
+#endif
 #include <signal.h>
 #include <math.h>
 #include <time.h>
@@ -41,7 +43,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <errno.h>
 
 #include "machine.h"
@@ -314,7 +318,11 @@ char	*argv[];
     /*
      *	Do the writing
      */
+#ifndef WIN32
     if( (fd = creat( argv[1], S_IRWXU | S_IRGRP | S_IROTH  )) == -1 ) {
+#else
+		if( (fd = creat( argv[1], _S_IREAD | _S_IWRITE  )) == -1 ) { 
+#endif
 	bu_free_external( &ext );
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls,

@@ -283,6 +283,9 @@ char	**argv;
 	char tol_str[32];
 	char *tol_ptr;
 
+#ifndef WIN32
+	/* XXX needs fixing */
+
 	CHECK_DBI_NULL;
 
 	if(argc < 1 || 2 < argc){
@@ -435,6 +438,7 @@ char	**argv;
 	fclose(fp_r);
 	close(fd1[1]);
 	close(fd3[0]);
+#endif
 
 	return TCL_OK;
 }

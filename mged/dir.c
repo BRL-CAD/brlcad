@@ -56,7 +56,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define BAD_EOF	(-1L)			/* eof_addr not set yet */
 
+#ifndef WIN32
 void	killtree();
+#else
+void	killtree(struct db_i *dbip,struct directory *dp,genptr_t ptr);
+#endif
 
 /*
  *			F _ M E M P R I N T

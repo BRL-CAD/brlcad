@@ -53,7 +53,11 @@ extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
 
 static char	tmpfil[17];
+#ifndef WIN32
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
+#else
+static char	*tmpfil_init = "c:\\GED.aXXXXXX";
+#endif
 
 int writesolid(), readsolid();
 int editit();
@@ -85,7 +89,7 @@ char **argv;
 	  return TCL_ERROR;
 
 	strcpy(tmpfil, tmpfil_init);
-#if 0
+#ifdef WIN32
 	(void)mktemp(tmpfil);
 	i=creat(tmpfil, 0600);
 #else
@@ -753,6 +757,45 @@ readsolid()
 	return( ret_val );
 }
 
+
+#ifdef WIN32
+
+/* Run $EDITOR on temp file */
+editit( file )
+const char *file;
+{
+   STARTUPINFO si = {0};
+   PROCESS_INFORMATION pi = {0};
+   char line[1024];
+
+   sprintf(line,"notepad %s",file);
+
+   
+      si.cb = sizeof(STARTUPINFO);
+      si.lpReserved = NULL;
+      si.lpReserved2 = NULL;
+      si.cbReserved2 = 0;
+      si.lpDesktop = NULL;
+      si.dwFlags = 0;
+
+      CreateProcess( NULL,
+                     line,
+                     NULL,
+                     NULL,
+                     TRUE,
+                     NORMAL_PRIORITY_CLASS,
+                     NULL,
+                     NULL,
+                     &si,
+                     &pi );
+      WaitForSingleObject( pi.hProcess, INFINITE );
+   
+	return 1;
+}
+
+#else
+/* else win32 is not defined */
+
 /* Run $EDITOR on temp file 
  * 
  * BUGS -- right now we only check at compile time whether or not to pop up an
@@ -786,15 +829,15 @@ editit(const char *file)
 		/* XXX do not want to close all io if we are in console mode
 		 * and the editor needs to use stdout...
 		 */
-#if defined(DM_X) || defined(DM_OGL)
+#	if defined(DM_X) || defined(DM_OGL)
 		/* close all stdout/stderr (XXX except do not close 0==stdin) */
 		for( i=1; i < 20; i++ )
 			(void)close(i);
-#else
+#	else
 		/* leave stdin/out/err alone */
 		for( i=3; i < 20; i++ )
 			(void)close(i);
-#endif
+#	endif
 
 		(void)signal( SIGINT, SIG_DFL );
 		(void)signal( SIGQUIT, SIG_DFL );
@@ -802,11 +845,11 @@ editit(const char *file)
 		/* if we have x support, we pop open the editor in an xterm.
 		 * otherwise, we use whatever the user gave as EDITOR
 		 */
-#if defined(DM_X) || defined(DM_OGL)
+#	if defined(DM_X) || defined(DM_OGL)
 		(void)execlp("xterm", "xterm", "-e", ed, file, (char *)0);
-#else
+#	else
 		(void)execlp(ed, ed, file, 0);
-#endif
+#	endif
 		perror(ed);
 		exit(1);
 	}
@@ -821,3 +864,5 @@ editit(const char *file)
 
 	return (!stat);
 }
+#endif
+/* end check if win32 defined */

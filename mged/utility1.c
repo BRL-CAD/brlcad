@@ -27,7 +27,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifndef WIN32
 #include <pwd.h>
+#endif
 #include <signal.h>
 #include <math.h>
 #include <time.h>
@@ -95,7 +97,11 @@ FILE	*tabptr;
 char ctemp[7];
 
 static char	tmpfil[17];
+#ifndef WIN32
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
+#else
+static char	*tmpfil_init = "C:\\GED.aXXXXXX";
+#endif
 
 static int
 id_compare( const void *p1, const void *p2 )
@@ -175,7 +181,7 @@ char	*argv[];
   argv += (bu_optind - 1);
 
   strcpy(tmpfil, tmpfil_init);
-#if 0
+#ifdef WIN32
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
 #else
@@ -1146,7 +1152,18 @@ char	**argv;
 	(void)fprintf(tabptr,"2 -7         file name    : %s\n",dbip->dbi_filename);    
 	(void)fprintf(tabptr,"3 -6         \n");
 	(void)fprintf(tabptr,"4 -5         \n");
+#ifndef WIN32
 	(void)fprintf(tabptr,"5 -4         user         : %s\n",getpwuid(getuid())->pw_gecos);
+#else
+	{
+	char uname[256]; 
+	DWORD dwNumBytes = 256; 
+	if(GetUserName(uname, &dwNumBytes))
+		(void)fprintf(tabptr,"5 -4         user         : %s\n",uname);
+	else
+		(void)fprintf(tabptr,"5 -4         user         : UNKNOWN\n");
+	}
+#endif
 	(void)fprintf(tabptr,"6 -3         target title : %s\n",cur_title);
 	(void)fprintf(tabptr,"7 -2         target units : %s\n",
 		bu_units_string(dbip->dbi_local2base) );

@@ -21,12 +21,15 @@
 #ifdef DM_X
 #  include "tk.h"
 #  include <X11/Xutil.h>
+#ifndef WIN32
 #  include <X11/extensions/XI.h>
 #  include <X11/extensions/XInput.h>
+#endif
 #  include <X11/keysym.h>
 #else
 #  include "tcl.h"
 #endif
+
 
 #if IR_KNOBS
 #include <gl/device.h>
@@ -114,6 +117,12 @@ XEvent *eventPtr;
     curr_dm_list = save_dm_list;
     return TCL_OK;
   }
+
+    /* windows fix - for now */
+#ifdef WIN32
+  if(eventHandler == NULL)
+	  return TCL_CONTINUE;
+#endif
 
   /* calling the display manager specific event handler */
   status = eventHandler(clientData, eventPtr);
