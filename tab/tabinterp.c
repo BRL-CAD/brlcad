@@ -5,9 +5,11 @@
  *  software.
  *
  *  First, one or more files, on different time scales, are read into
- *  internal "channels".
+ *  internal "channels", with FILE and RATE commands.
  *
- *  Secondly, a section of those times is interpolated, and
+ *  Next, the TIMES command is given.
+ *
+ *  Next, a section of those times is interpolated, and
  *  multi-channel output is produced, on uniform time samples.
  *
  *  This multi-channel output is fed to the next stage to generate
@@ -67,16 +69,19 @@ extern int	cm_file();
 extern int	cm_times();
 extern int	cm_interp();
 extern int	cm_idump();
+extern int	cm_rate();
 
 struct command_tab cmdtab[] = {
 	"file", "filename chan_num(s)", "load channels from file",
 		cm_file,	3, 999,
 	"times", "start stop fps", "specify time range and fps rate",
 		cm_times,	4, 4,
-	"interp", "{step|linear|spline|cspline|rate} chan_num(s)", "set interpolation type",
+	"interp", "{step|linear|spline|cspline} chan_num(s)", "set interpolation type",
 		cm_interp,	3, 999,
 	"idump", "[chan_num(s)]", "dump input channel values",
 		cm_idump,	1, 999,
+	"rate", "chan_num initial_value [comment]", "create rate based channel",
+		cm_rate,	3, 4,
 	(char *)0, (char *)0, (char *)0,
 		0,		0, 0	/* END */
 };
@@ -426,9 +431,6 @@ char	**argv;
 	} else if( strcmp( argv[1], "cspline" ) == 0 )  {
 		interp = INTERP_SPLINE;
 		periodic = 1;
-	} else if( strcmp( argv[1], "rate" ) == 0 )  {
-		interp = INTERP_RATE;
-		periodic = 0;
 	} else {
 		fprintf( stderr, "interpolation type '%s' unknown\n", argv[1] );
 		interp = INTERP_LINEAR;
@@ -787,5 +789,24 @@ fastf_t			*times;
 bad:
 	if(diag) rt_free( (char *)diag, "diag");
 	if(rrr) rt_free( (char *)rrr, "rrr" );
+	return(0);
+}
+
+cm_rate( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct chan	*chp;
+	int	ch;
+	double	val;
+
+	val = atof(argv[2]);
+	ch = create_chan( argv[1], 1, argc>3?argv[3]:"rate chan" );
+	chp = &chan[ch];
+	chp->c_interp = INTERP_RATE;
+	chp->c_periodic = 0;
+	chp->c_itime = (fastf_t *)rt_malloc( 1 * sizeof(fastf_t), "rate times");
+	chp->c_itime[0] = 0;
+	chp->c_ival[0] = val;
 	return(0);
 }
