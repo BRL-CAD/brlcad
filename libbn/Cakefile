@@ -1,0 +1,20 @@
+/*
+ *			libbn/Cakefile
+ */
+#define SRCDIR	libbn
+#define PRODUCTS	libbn.ARCH_SUF
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#define FILES	\
+	complex \
+	poly
+
+#define VERSION_VARIABLE	bn_version
+#define LIBRARY_TITLE		"The BRL-CAD Numerical Computation Library"
+
+#include "../Cakefile.lib"
+
+#include "../Cakefile.rules"
