@@ -70,8 +70,7 @@ images created using BRL-CAD.
 attached below.
 
 By signing here, RECIPIENT signifies agreement to these terms and
-conditions of the distribution of BRL-CAD distribution as detailed
-above.
+conditions of the BRL-CAD distribution as detailed above.
 
 
 ____________________________________________________________
@@ -113,10 +112,14 @@ SURVIAC personnel unless indicated otherwise, below.  If RECIPIENT
 grants permission to release this information, BRL and SURVIAC will make
 it available to BRL-CAD related hardware vendors and service providers.
 
- [ ] RECIPIENT grants BRL and SURVIAC permission to release information
-     on this "Recipient Survey Form" to outside parties.
+1. RECIPIENT [ ] grants ([ ] does not grant) BRL and SURVIAC permission to
+   release information on this "Recipient Survey Form" to outside parties.
 
-Please designate a technical point-of-contact:
+2. BRL-CAD is being obtained [ ] free without support privleges
+   [ ] with full service support.
+
+3. Please designate a technical point-of-contact:
+   Mark here [ ] if same as on page 2.
 
 
 ____________________________________________________________
@@ -144,20 +147,22 @@ ____________________________________________________________
 					Internet E-mail Address
 
 
-Please indicate the type of your organization:
+4. Please indicate the type of your organization:
  [ ] Academic
  [ ] Government
  [ ] Industry
  [ ] Private Individual
 
-Number of people in work group _________
+5. Number of people in work group _________
 
-Have you used BRL-CAD before?  _________  If yes, for how many years? _______
+6. Have you used BRL-CAD before?  _________
+   If yes, for how many years? ________
 
-Are you interested in participating in the BRL-CAD user group?  ________
+7. Are you interested in participating in the BRL-CAD user group?  ________
 
+			( $Revision$ )
                                                                  Page 4 of 4
-Please indicate the anticipated uses of BRL-CAD at this site (check all
+8. Please indicate the anticipated uses of BRL-CAD at this site (check all
 that are appropriate):
 
  [ ]	Computer Aided Design (CAD)
@@ -174,45 +179,41 @@ that are appropriate):
 
 
 
-
-Please list the computer platforms that you are likely to install
+9. Please list the computer platforms that you are likely to install
 BRL-CAD on (check all that are appropriate):
 
 	Vendor		Model		OS Revision
 	======		=====		===========
- [ ]	Sun		Sun-3
- [ ]	Sun		Sun-4 (SPARC)
- [ ]	Sun		Sun-386i
- [ ]	SGI		3030
- [ ]	SGI		4D
- [ ]	IBM
- [ ]	DEC
- [ ]	Cray
- [ ]	Convex
- [ ]	Gould/Encore
- [ ]	Alliant
- [ ]	Pyramid
+ [ ]	Apple		Macintosh II	___________
+ [ ]	Sun		Sun-3		___________
+ [ ]	Sun		Sun-4 (SPARC)	___________
+ [ ]	Sun		Sun-386i	___________
+ [ ]	SGI		3030		___________
+ [ ]	SGI		4D		___________
+ [ ]	IBM		_____		___________
+ [ ]	DEC		_____		___________
+ [ ]	Cray		_____		___________
+ [ ]	Convex		_____		___________
+ [ ]	Gould/Encore	_____		___________
+ [ ]	Alliant		FX/4,8,80	___________
+ [ ]	Alliant		FX/2800		___________
+ [ ]	Pyramid		_____		___________
  [ ]	Other (please elaborate)
 
 
-Types of BRL-CAD users at this site (check all that are appropriate):
+10. Types of BRL-CAD users at this site (check all that are appropriate):
 
- [ ]  Management
- [ ]  Graphic artist
- [ ]  Engineer
- [ ]  Image Processor
- [ ]  Designer
- [ ]  Draftperson
- [ ]  Other        __________________________
+ [ ]  Management			[ ]  Graphic artist
+ [ ]  Engineer				[ ]  Image Processor
+ [ ]  Designer				[ ]  Draftperson
+ [ ]  Other   __________________________
 
-Anticipated use of BRL-CAD by at least one person at this site:
+11. Anticipated use of BRL-CAD by at least one person at this site:
 
- [ ]  >10 days/month
- [ ]  5-10 days/month
- [ ]  1-4 days/month
- [ ]  several times/year
+ [ ]  >10 days/month		[ ]  5-10 days/month
+ [ ]  1-4 days/month		[ ]  several times/year
 
-If you are requesting a magnetic tape, please specify the format:
+12. If you are requesting a magnetic tape, please specify the format:
 
  [ ]	6250 bpi 9-track half-inch tape, TAR format, 10k byte records
  [ ]	1600 bpi 9-track half-inch tape, TAR format, 10k byte records
@@ -220,11 +221,12 @@ If you are requesting a magnetic tape, please specify the format:
  [ ]	SGI tape 1/4" tape cartridge, high density, QIC-150
  [ ]	Sun tape 1/4" tape cartridge, QIC-24
  [ ]	8-mm Exabyte tape cartridge
+ [ ]	N/A, using network FTP access
 
 
 		Instructions for completing this form
 
-For record keeping purposes, the four pages of completed and signed form
+For record keeping purposes, the four (4) pages of completed and signed form
 must be returned either (a) printed on paper, or (b) transmitted via
 facsimile machine (FAX).
 
@@ -238,13 +240,14 @@ postal mail to:
 	APG, MD  21005-5066  USA
 
 If you are requesting a "Full service distribution", please transmit the
-completed form via FAX to USA telephone (410)-272-7417, or send via
+completed form via FAX to USA telephone (410)-272-6763, or send via
 postal mail to:
 
 	BRL-CAD Distribution
 	SURVIAC Aberdeen Satellite Office
-	1003 Old Philadelphia Road, Suite 103
+	1003 Old Philadelphia Road
+	Suite 103
 	Aberdeen MD  21001  USA
 
-Note that USA area code 410 will not go into effect until 1-Nov-91.
-Prior to that date, please use area code 301.
+For further details, call Ms. Carla Moyer at USA telephone
+(410)-273-7794 or send E-mail to <cad-dist@brl.mil>.
