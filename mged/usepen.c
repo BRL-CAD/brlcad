@@ -212,7 +212,7 @@ char	**argv;
 	  return TCL_OK;
 
 	case ST_S_EDIT:
-	  if((SEDIT_TRAN || SEDIT_SCALE) && mged_variables.edit)
+	  if((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables.edit)
 	    sedit_mouse( mousevec );
 	  else
 	    slewview( mousevec );
