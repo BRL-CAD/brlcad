@@ -19,7 +19,7 @@
  *  
  */
 #ifndef lint
-static char RCSspline[] = "@(#)$Header $ (BRL)";
+static char RCSspline[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
