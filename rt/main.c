@@ -78,7 +78,7 @@ char		*scanbuf;		/* For optional output buffering */
 int		incr_mode;		/* !0 for incremental resolution */
 int		incr_level;		/* current incremental level */
 int		incr_nlevel;		/* number of levels */
-int		npsw = MAX_PSW;		/* number of worker PSWs to run */
+int		npsw = DEFAULT_PSW;	/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() *****/
 
@@ -295,9 +295,6 @@ char **argv;
 	width = height = 512;
 	azimuth = 35.0;			/* GIFT defaults */
 	elevation = 25.0;
-#ifdef CRAY1
-	npsw = 1;			/* >1 on GOS crashes system */
-#endif
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
