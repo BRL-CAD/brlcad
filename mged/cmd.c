@@ -256,7 +256,7 @@ static struct funtab {
 	f_param,2,4,
 "paths", "pattern", "lists all paths matching input path",
 	f_pathsum, 1, MAXARGS,
-"permute", "###", "permute vertices of an ARB8",
+"permute", "tuple", "permute vertices of an ARB",
 	f_permute,2,2,
 "plot", "[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]", "make UNIX-plot of view",
 	f_plot, 2, MAXARGS,
