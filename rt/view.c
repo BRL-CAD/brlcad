@@ -69,6 +69,7 @@ Options:\n\
  -a #		Azimuth in degrees\n\
  -e #		Elevation in degrees\n\
  -M		Read matrix, cmds on stdin\n\
+ -N #		Set NMG debug flags\n\
  -o model.pix	Specify output file, .pix format (default=fb)\n\
  -x #		Set librt debug flags\n\
  -X #		Set rt debug flags\n\
