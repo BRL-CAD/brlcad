@@ -66,6 +66,14 @@ struct table *info;	/*  Structure that contains all info.  */
 
 FILE *fpw1;		/*  Allows file to be written to from all func.  */
 
+#ifndef HAVE_DRAND48
+/* simulate drand48() --  using 31-bit random() -- assumed to exist */
+double drand48() {
+  extern long random();
+  return (double)random() / 2147483648.0; /* range [0,1) */
+}
+#endif
+
 int main(argc,argv)
 
 int argc;
@@ -302,11 +310,15 @@ char **argv;
 	   (void)fflush(stdout);
 	   (void)scanf("%ld",&seed);
 	}
-#	ifdef MSRMAXTBL
+#ifdef MSRMAXTBL
 	   msr = msr_unif_init(seed,0);
-#	else
+#else
+#  ifndef HAVE_DRAND48
+	   (void)srandom(seed);
+#  else
 	   (void)srand48(seed);
-#	endif
+#  endif
+#endif
 	(void)printf("Seed initialized\n");
 	(void)fflush(stdout);
 

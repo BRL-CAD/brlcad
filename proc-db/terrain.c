@@ -45,6 +45,14 @@ int nsurf = 0;
 
 struct rt_wdb *outfp;
 
+#ifndef HAVE_DRAND48
+/* simulate drand48() --  using 31-bit random() -- assumed to exist */
+double drand48() {
+  extern long random();
+  return (double)random() / 2147483648.0; /* range [0,1) */
+}
+#endif
+
 int
 main(argc, argv)
 int argc; char * argv[];

@@ -70,6 +70,10 @@ then
 	OS_MINOR="$2"
 
 	case "$HARDWARE_TYPE" in
+        "Power Macintosh")
+                case "$OS_TYPE" in
+                Darwin) MACHINE=pmac; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;
+                esac ;;
 	"CRAY C90") MACHINE=xmp; UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;;
 	vax)	MACHINE=vax; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;
 	sun3*)  MACHINE=sun3; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;

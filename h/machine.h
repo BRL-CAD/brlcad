@@ -504,6 +504,25 @@ typedef long	bitv_t;		/* largest integer type */
 
 #endif
 
+#ifdef __ppc__
+/********************************
+ *                              *
+ *      Macintosh PowerPC       *
+ *                              *
+ ********************************/
+#define IEEE_FLOAT      1       /* Uses IEEE style floating point */
+typedef double  fastf_t;        /* double|float, "Fastest" float type */
+#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
+#define FAST    register        /* LOCAL|register, for fastest floats */
+typedef long    bitv_t;         /* could use long long */
+#define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
+
+#define MAX_PSW         4       /* Unused, I actually pull from posix */
+#define DEFAULT_PSW     1
+#define PARALLEL        1
+/* #define MALLOC_NOT_MP_SAFE 1 -- not confirmed */
+#endif#ifdef __ppc__
+
 #ifndef LOCAL
 /********************************
  *				*
@@ -587,8 +606,8 @@ typedef long	bitv_t;		/* largest integer type */
 #define CONST deprecated
 
 /* Even in C++ not all compilers know the "bool" keyword yet */
-#if !defined(BOOL_T)
-# define BOOL_T	int
+#if !defined(BOOL)
+# define BOOL	int
 #endif
 
 /* A portable way of handling pre-ANSI C: remove signed keyword */

@@ -49,6 +49,17 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #include <signal.h>
 #endif
 
+#ifdef __ppc__
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <signal.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#endif
+
 #ifdef CRAY
 # include <sys/category.h>
 # include <sys/resource.h>
@@ -238,6 +249,11 @@ bu_avail_cpus()
 {
 	int	ret = 1;
 
+#ifdef __ppc__
+	int mib[2], maxproc;
+	size_t len;
+#endif
+
 #ifdef SGI_4D
 	ret = (int)prctl(PR_MAXPPROCS);
 #	define	RT_AVAIL_CPUS
@@ -266,13 +282,31 @@ bu_avail_cpus()
 #endif	/* defined(SUNOS) */
 
 #if defined(HAS_POSIX_THREADS)
-	/* XXX Posix doesn't specify how to learn how many CPUs there are. */
+	/* XXX Old posix doesn't specify how to learn how many CPUs there are. 
+	 *  never posix can make a sysctl call -- see __ppc__ below */
 	ret = 2;
 #	define	RT_AVAIL_CPUS
 #endif /* HAS_POSIX_THREADS */
+
+/* These machines may or may not have posix threads, but (more importantly)
+ * they do have other mechanisms for determining cpu count
+ */
+
 #if defined(n16)
 	if( (ret = sysadmin( SADMIN_NUMCPUS, 0 )) < 0 )
 		perror("sysadmin");
+#	define	RT_AVAIL_CPUS
+#endif
+
+#if defined(__ppc__)
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	len = sizeof(maxproc);
+	if (sysctl(mib, 2, &maxproc, &len, NULL, NULL == -1)) {
+	  ret = 1;
+	  perror("sysctl");
+	}
+	ret = maxproc; /* should be able to get sysctl to return maxproc */
 #	define	RT_AVAIL_CPUS
 #endif
 

@@ -2561,12 +2561,12 @@ rt_dsp_vshot( stp, rp, segp, n, ap )
  *
  */
 static void
-compute_normal_at_gridpoint(N, dsp, x, y, fd, bool)
+compute_normal_at_gridpoint(N, dsp, x, y, fd, boolean)
      vect_t N;
      struct dsp_specific *dsp;
      int x, y;
      FILE *fd;
-     int bool;
+     int boolean;
 {
     /*  Gridpoint specified is "B" we compute normal by taking the
      *  cross product of the vectors  A->C, D->E
@@ -2602,7 +2602,7 @@ compute_normal_at_gridpoint(N, dsp, x, y, fd, bool)
     else {			VSET(tmp, x, y+1, DSP(&dsp->dsp_i, x, y+1) );	}
     MAT4X3PNT(E, dsp->dsp_i.dsp_stom, tmp);
 
-    if (fd && bool) {
+    if (fd && boolean) {
 	pl_color(fd, 220, 220, 90);
 	pdv_3line(fd, A, C);
 	pdv_3line(fd, D, E);

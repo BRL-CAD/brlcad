@@ -320,6 +320,39 @@
 #	define HAVE_BZERO	1
 #endif
 
+#if defined(__ppc__)
+#       define USE_PROTOTYPES   1
+#       define USE_REGCOMP      1
+#       define USE_STRING_H     1
+#       define HAS_POSIX_THREADS        1
+#       define HAVE_BZERO       1
+#	define HAVE_FLOAT	1
+#	define HAVE_GETHOSTNAME	1
+#       define HAVE_GETOPT      1
+#       define HAVE_GETOPT_DECL 1
+#       define HAVE_IOCTL_COMPAT_H      1
+#	define HAVE_LIMITS_H	1
+#       define HAVE_POSIX_REGEXEC       1
+#       define HAVE_REGEX	1
+#       define HAVE_REGEX_DECL  1
+#       define HAVE_SBRK	1
+#       define HAVE_SBRK_DECL   1
+#       define HAVE_SHELL_ESCAPE	1
+#	define HAVE_STRCHR	1
+#       define HAVE_STDLIB_H    1
+#       define HAVE_STDARG_H    1
+#       define HAVE_SYS_ERRLIST_DECL    1
+#       define HAVE_SYS_MMAN_H  1
+#       define HAVE_SYS_SOCKET_H	1
+#	define HAVE_TERMIOS_H	1
+#       define HAVE_UNISTD_H    1
+#       define HAVE_UNIX_DOMAIN_SOCKETS 1
+#       define HAVE_UNIX_IO             1
+#       define HAVE_VFORK                       1
+#       define HAVE_VPRINTF             1
+#       define HAVE_WRITEV              1
+#endif
+
 #if defined(__STDC__)
 #	define HAVE_STDLIB_H	1
 #	define HAVE_STDARG_H	1
@@ -350,7 +383,7 @@
 #	define USE_STRING_H	1
 #endif
 
-#if !defined(__convex__) && !defined(__bsdi__)
+#if !defined(__convex__) && !defined(__bsdi__) && !defined(__ppc__)
 #	define HAVE_DRAND48	1
 #endif
 
@@ -459,7 +492,8 @@
         (defined(__sgi) && defined(__mips)) || \
         defined(pyr) || defined(apollo) || defined(aux) || \
         defined(_AIX) || defined(NeXT) || defined(convex) || \
-	defined(hpux) || defined(__hppa) || defined(__convex__)
+	defined(hpux) || defined(__hppa) || defined(__convex__) || \
+	defined(__ppc__)
 
         /*  These systems already operate in
          *  IEEE format internally, using big-endian order.
