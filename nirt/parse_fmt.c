@@ -730,7 +730,7 @@ com_table	*ctp;
     fprintf(sfPtr, "%c file created by the dump command of nirt\n", CMT_CHAR);
     fprintf(sfPtr, "xyz %g %g %g\n", target(X), target(Y), target(Z));
     fprintf(sfPtr, "dir %g %g %g\n", direct(X), direct(Y), direct(Z));
-    fprintf(sfPtr, "useair=%d\n", ap.a_rt_i -> useair);
+    fprintf(sfPtr, "useair %d\n", ap.a_rt_i -> useair);
     fprintf(sfPtr, "units %s\n", local_u_name);
     if (strcmp(dest_string, "stdout") == 0)
 	fputs("dest default\n", sfPtr);
