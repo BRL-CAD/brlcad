@@ -51,13 +51,19 @@ matp_t old_xlate;
 	union record	*rp;
 	auto mat_t	new_xlate;	/* Accumulated translation matrix */
 	auto int	i;
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
 
 	if( pathpos >= MAX_PATH )  {
-		(void)printf("nesting exceeds %d levels\n", MAX_PATH );
-		for(i=0; i<MAX_PATH; i++)
-			(void)printf("/%s", cur_path[i]->d_namep );
-		(void)putchar('\n');
-		return;			/* ERROR */
+	  bu_vls_printf("nesting exceeds %d levels\n", MAX_PATH );
+	  for(i=0; i<MAX_PATH; i++)
+	    bu_vls_printf("/%s", cur_path[i]->d_namep );
+	  bu_vls_strcat(&vls, "\n");
+
+	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	  bu_vls_free(&vls);
+	  return;			/* ERROR */
 	}
 
 	/*
@@ -90,15 +96,17 @@ matp_t old_xlate;
 		goto out;		/* ERROR */
 	}
 	if( dp->d_len <= 1 )  {
-		(void)printf("Warning: combination with zero members \"%s\".\n",
-			dp->d_namep );
-		goto out;			/* non-fatal ERROR */
+	  Tcl_AppendResult(interp, "Warning: combination with zero members \"",
+			   dp->d_namep, "\".\n", (char *)NULL);
+	  goto out;			/* non-fatal ERROR */
 	}
 	if( rp[0].c.c_flags == 'R' )  {
-		if( regionid != 0 )
-			(void)printf("regionid %d overriden by %d\n",
-				regionid, rp[0].c.c_regionid );
-		regionid = rp[0].c.c_regionid;
+	  if( regionid != 0 ){
+	    bu_vls_printf(&vls, "regionid %d overriden by %d\n",
+			  regionid, rp[0].c.c_regionid );
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	  }
+	  regionid = rp[0].c.c_regionid;
 	}
 
 	/*
@@ -106,19 +114,18 @@ matp_t old_xlate;
 	 *  Process all the arcs (eg, directory members).
 	 */
 	if( drawreg && rp[0].c.c_flags == 'R' && dp->d_len > 1 ) {
-		if( regmemb >= 0  ) {
-			(void)printf(
-			"ERROR: region (%s) is member of region (%s)\n",
-				dp->d_namep,
-				cur_path[reg_pathpos]->d_namep);
-			goto out;	/* ERROR */
-		}
-		/* Well, we are processing regions and this is a region */
-		/* if region has only 1 member, don't process as a region */
-		if( dp->d_len > 2) {
-			regmemb = dp->d_len-1;
-			reg_pathpos = pathpos;
-		}
+	  if( regmemb >= 0  ) {
+	    Tcl_AppendResult(interp, "ERROR: region (", dp->d_namep,
+			     ") is member of region (", cur_path[reg_pathpos]->d_namep,
+			     ")\n", (char *)NULL);
+	    goto out;	/* ERROR */
+	  }
+	  /* Well, we are processing regions and this is a region */
+	  /* if region has only 1 member, don't process as a region */
+	  if( dp->d_len > 2) {
+	    regmemb = dp->d_len-1;
+	    reg_pathpos = pathpos;
+	  }
 	}
 
 	/* Process all the member records */
@@ -129,9 +136,9 @@ matp_t old_xlate;
 
 		mp = &(rp[i].M);
 		if( mp->m_id != ID_MEMB )  {
-			fprintf(stderr,"drawHobj:  %s bad member rec\n",
-				dp->d_namep);
-			goto out;			/* ERROR */
+		  Tcl_AppendResult(interp, "drawHobj:  ", dp->d_namep,
+				   " bad member rec\n", (char *)NULL);
+		  goto out;			/* ERROR */
 		}
 		cur_path[pathpos] = dp;
 		if( regmemb > 0  ) { 
@@ -158,7 +165,8 @@ matp_t old_xlate;
 		);
 	}
 out:
-	bu_free( (char *)rp, "drawHobj recs");
+	bu_vls_free(&vls);
+	bu_free( (genptr_t)rp, "drawHobj recs");
 }
 
 /*
@@ -208,6 +216,6 @@ matp_t matp;
 			parentp->d_namep, kidp->d_namep );
 		return;			/* ERROR */
 next_level:
-		bu_free( (char *)rp, "pathHmat recs");
+		bu_free( (genptr_t)rp, "pathHmat recs");
 	}
 }
