@@ -1308,6 +1308,8 @@ rt_generic_xform(
 	    }
 	    break;
 	case 5:
+	    avs.magic = -1;
+
 	    if( rt_functab[id].ft_export5( &ext, ip, 1.0, dbip, resp, 0 ) < 0 )  {
 		bu_log("rt_generic_xform():  %s export failure\n",
 			rt_functab[id].ft_name);
@@ -1329,9 +1331,11 @@ rt_generic_xform(
 
 	    if( !free && op != ip ) {
 		    /* just copy the attributes from ip to op */
-		    bu_avs_init( &op->idb_avs, ip->idb_avs.count, "avs" );
-		    bu_avs_merge( &op->idb_avs, &ip->idb_avs );
-	    } else {
+		    if( ip->idb_avs.magic == BU_AVS_MAGIC ) {
+			    bu_avs_init( &op->idb_avs, ip->idb_avs.count, "avs" );
+			    bu_avs_merge( &op->idb_avs, &ip->idb_avs );
+		    }
+	    } else if( avs.magic == BU_AVS_MAGIC ) {
 		    /* put the saved attributes in the output */
 		    bu_avs_init( &op->idb_avs, avs.count, "avs" );
 		    bu_avs_merge( &op->idb_avs, &avs );
