@@ -328,12 +328,13 @@ rt_tcl_a_miss( struct application *ap )
  *			R T _ T C L _ S H O O T R A Y
  *
  *  Usage -
- *	procname shootray {P} dir|at {V}
+ *	procname shootray [-R] {P} dir|at {V}
+ *		-R option specifries no overlap reporting
  *
  *  Example -
  *	set glob_compat_mode 0
  *	.inmem rt_gettrees .rt all.g
- *	.rt shootray {0 0 0} dir {0 0 -1}
+ *	.rt shootray -R {0 0 0} dir {0 0 -1}
  *
  *	set tgt [bu_get_value_by_keyword V [concat type [.inmem get LIGHT]]]
  *	.rt shootray {20 -13.5 20} at $tgt
@@ -356,20 +357,28 @@ const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
+	int			index;
 
-	if( argc != 5 )  {
+	if( (argc != 5 && argc != 6) || (argc == 6 && strcmp( argv[2], "-R"))  )  {
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
-				argv[0], " ", argv[1], " {P} dir|at {V}\"",
+				argv[0], " ", argv[1], " [-R] {P} dir|at {V}\"",
 				(char *)NULL );
 		return TCL_ERROR;
+	}
+
+	if( argc == 6 ) {
+		ap->a_logoverlap = rt_silent_logoverlap;
+		index = 3;
+	} else {
+		index = 2;
 	}
 
 	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
 	RT_CK_RTI_TCL(interp,rtip);
 
-	if( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[2] ) == TCL_ERROR )
+	if( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[index] ) == TCL_ERROR )
 		return TCL_ERROR;
 	ap->a_hit = rt_tcl_a_hit;
 	ap->a_miss = rt_tcl_a_miss;
