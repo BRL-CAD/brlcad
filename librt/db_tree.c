@@ -1988,10 +1988,15 @@ genptr_t	arg;
 	struct resource	*resp;
 
 	DB_CK_WPS(wps);
-	RT_CK_RTI(wps->rtip);
 
-	resp = (struct resource *)BU_PTBL_GET( &wps->rtip->rti_resources, cpu );
-	if( resp == NULL && cpu == 0 )  resp = &rt_uniresource;
+	if( wps->rtip == NULL && cpu == 0 )  {
+		resp = &rt_uniresource;
+	} else {
+		RT_CK_RTI(wps->rtip);
+
+		resp = (struct resource *)BU_PTBL_GET( &wps->rtip->rti_resources, cpu );
+		if( resp == NULL && cpu == 0 )  resp = &rt_uniresource;
+	}
 	RT_CK_RESOURCE(resp);
 
 	while(1)  {
@@ -2135,11 +2140,14 @@ genptr_t	client_data;
 
 	RT_CHECK_DBI(dbip);
 
-	RT_CK_RTI(init_state->ts_rtip);
-	resp = (struct resource *)BU_PTBL_GET(&init_state->ts_rtip->rti_resources, 0);
-	if( resp == NULL && ncpu == 1 )  {
-		bu_log("db_walk_tree() defaulting resp to rt_uniresource\n");
+	if( init_state->ts_rtip == NULL && ncpu == 1 )  {
 		resp = &rt_uniresource;
+	} else {
+		RT_CK_RTI(init_state->ts_rtip);
+		resp = (struct resource *)BU_PTBL_GET(&init_state->ts_rtip->rti_resources, 0);
+		if( resp == NULL && ncpu == 1 )  {
+			resp = &rt_uniresource;
+		}
 	}
 	RT_CK_RESOURCE(resp);
 
