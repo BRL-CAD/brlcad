@@ -11,8 +11,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -23,9 +26,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
+
 
 #define DFL_SHELL	"/bin/sh"
 #define CSH		"/bin/csh"
@@ -38,8 +43,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 void
 loc_Perror(char *msg)
 {
+#ifdef HAVE_STRERROR
+	if( errno >= 0 )
+		bu_log( "%s: %s\n", msg, strerror(errno) );
+#else
 	if( errno >= 0 && errno < sys_nerr )
 		bu_log( "%s: %s\n", msg, sys_errlist[errno] );
+#endif
 	else
 		bu_log( "\"%s\" (%d), errno not set, shouldn't call perror.\n",
 			__FILE__, __LINE__
