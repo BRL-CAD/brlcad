@@ -53,6 +53,13 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,DBI_MAGIC,"struct db_i")
 #define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p, RTI_MAGIC, "struct rt_i")
+#define RT_CK_WDB_TCL(_p)	BU_CKMAG_TCL(interp,_p,WDB_MAGIC, "struct rt_wdb")
+
+#if defined(USE_PROTOTYPES)
+Tcl_CmdProc rt_db;
+#else
+int rt_db();
+#endif
 
 /*
  *			B U _ B A D M A G I C _ T C L
@@ -100,44 +107,115 @@ struct rt_wdb  {
 #define WDB_TYPE_DB_INMEM		3
 #define WDB_TYPE_DB_INMEM_APPEND_ONLY	4
 
-
-static struct rt_wdb *mike_wdb;
-
 extern struct rt_wdb *wdb_dbopen();
+extern struct rt_wdb *wdb_fopen();
+
+/*
+ *			W D B _ O P E N
+ *
+ *  A TCL interface to wdb_fopen() and wdb_dbopen().
+ *
+ *  Implicit return -
+ *	Creates a new TCL proc which responds to get/put/etc. arguments
+ *	when invoked.  clientData of that proc will be wdb pointer
+ *	for this instance of the database.
+ *	Easily allows keeping track of multiple databases.
+ *
+ *  Explicit return -
+ *	wdb pointer, for more traditional C-style interfacing.
+ *
+ *  Example -
+ *	set wdbp [wdb_open .inmem inmem $dbip]
+ *	.inmem get box.s
+ */
+int
+wdb_open( clientData, interp, argc, argv )
+ClientData	clientData;
+Tcl_Interp	*interp;
+int		argc;
+char		**argv;
+{
+	struct rt_wdb	*wdb;
+	char		buf[32];
+
+	if( argc != 4 )  {
+		Tcl_AppendResult(interp, "\
+Usage: wdb_open widget_command file filename\n\
+       wdb_open widget_command disk $dbip\n\
+       wdb_open widget_command inmem $dbip\n\
+       wdb_open widget_command inmem_append $dbip\n",
+		NULL);
+		return TCL_ERROR;
+	}
+
+	if( strcmp( argv[2], "file" ) == 0 )  {
+		wdb = wdb_fopen( argv[3] );
+	} else {
+		struct db_i	*dbip;
+
+		dbip = (struct db_i *)atoi(argv[3]);
+		/* This can still dump core if it's an unmapped address */
+		RT_CK_DBI_TCL(dbip)
+
+		if( strcmp( argv[2], "disk" ) == 0 )  {
+			wdb = wdb_dbopen( dbip, WDB_TYPE_DB_DISK );
+		} else if( strcmp( argv[2], "inmem" ) == 0 )  {
+			wdb = wdb_dbopen( dbip, WDB_TYPE_DB_INMEM );
+			/* TEMPORARY: Prevent accidents in MGED */
+			if( wdb && !dbip->dbi_read_only )  {
+				Tcl_AppendResult(interp, "(database changed to read-only)\n", NULL);
+				dbip->dbi_read_only = 1;
+			}
+		} else if( strcmp( argv[2], "inmem_append" ) == 0 )  {
+			wdb = wdb_dbopen( dbip, WDB_TYPE_DB_INMEM_APPEND_ONLY );
+		} else {
+			Tcl_AppendResult(interp, "wdb_open ", argv[2],
+				" target type not recognized\n", NULL);
+			return TCL_ERROR;
+		}
+	}
+	if( wdb == WDB_NULL )  {
+		Tcl_AppendResult(interp, "wdb_open ", argv[1], " failed\n", NULL);
+		return TCL_ERROR;
+	}
+
+	/* Instantiate the widget_command, with clientData of wdb */
+	/* XXX should we see if it exists first? default=overwrite */
+	/* XXX Should provide delete proc to free up wdb */
+	/* Beware, returns a "token", not TCL_OK. */
+	(void)Tcl_CreateCommand(interp, argv[1], rt_db,
+	    (ClientData)wdb, (Tcl_CmdDeleteProc *)NULL);
+
+	sprintf(buf, "%d", wdb);
+	Tcl_AppendResult(interp, buf, NULL);
+	return TCL_OK;
+}
 
 /*
  *			R T _ T C L _ G E T _ C O M B
  */
 struct rt_comb_internal *
-rt_tcl_get_comb(ip, interp, dbi_str, name)
+rt_tcl_get_comb(ip, interp, wdbp_str, name, wdbpp)
 struct rt_db_internal	*ip;
 Tcl_Interp		*interp;
-CONST char		*dbi_str;
+CONST char		*wdbp_str;
 CONST char		*name;
+struct rt_wdb		**wdbpp;
 {
 	struct directory	*dp;
 	struct db_i		*dbip;
 	struct rt_comb_internal	*comb;
 
-	dbip = (struct db_i *)atoi(dbi_str);
-	/* This can still dump core if it's an unmapped address */
-	/* RT_CK_DBI_TCL(dbip) */
-	if( !dbip || *((long *)dbip) != DBI_MAGIC )  {
-		bu_badmagic_tcl(interp, (long *)dbip, DBI_MAGIC, "struct db_i", __FILE__, __LINE__);
+	*wdbpp = (struct rt_wdb *)atoi(wdbp_str);
+	/* RT_CK_WDB_TCL */
+	if( !(*wdbpp) || *((long *)(*wdbpp)) != WDB_MAGIC )  {
+		bu_badmagic_tcl(interp, (long *)(*wdbpp), WDB_MAGIC, "struct rt_wdb", __FILE__, __LINE__);
 		return NULL;
 	}
 
-	if( !mike_wdb )  {
-		if( !(mike_wdb = wdb_dbopen( dbip, WDB_TYPE_DB_INMEM )) )  {
-			Tcl_AppendResult(interp, "wdb_dbopen failed\n", NULL);
-			return NULL;
-		}
-		/* Prevent accidents */
-		if( !dbip->dbi_read_only )  {
-			Tcl_AppendResult(interp, "(database changed to read-only)\n", NULL);
-			dbip->dbi_read_only = 1;
-		}
-	}
+	dbip = (*wdbpp)->dbip;
+	RT_CK_DBI(dbip);
+
 	if( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == DIR_NULL )
 		return NULL;
 	if( (dp->d_flags & DIR_COMB) == 0 )  {
@@ -157,6 +235,7 @@ CONST char		*name;
 /*
  *			R T _ W D B _ I N M E M _ R G B
  */
+int
 rt_wdb_inmem_rgb( clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
@@ -165,13 +244,14 @@ char **argv;
 {
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
+	struct rt_wdb		*wdbp;
 
 	if( argc != 6 )  {
-		Tcl_AppendResult(interp, "Usage: rt_wdb_inmem_rgb $dbip comb r g b\n", NULL);
+		Tcl_AppendResult(interp, "Usage: rt_wdb_inmem_rgb $wdbp comb r g b\n", NULL);
 		return TCL_ERROR;
 	}
 
-	if( !(comb = rt_tcl_get_comb( &intern, interp, argv[1], argv[2] )) )
+	if( !(comb = rt_tcl_get_comb( &intern, interp, argv[1], argv[2], &wdbp )) )
 		return TCL_ERROR;
 
 	/* Make mods to comb here */
@@ -179,7 +259,7 @@ char **argv;
 	comb->rgb[1] = atoi(argv[3+1]);
 	comb->rgb[2] = atoi(argv[3+2]);
 
-	if( wdb_export( mike_wdb, argv[2], intern.idb_ptr, intern.idb_type, 1.0 ) < 0 )  {
+	if( wdb_export( wdbp, argv[2], intern.idb_ptr, intern.idb_type, 1.0 ) < 0 )  {
 		Tcl_AppendResult(interp, "wdb_export ", argv[2], " failure\n", NULL);
 		rt_db_free_internal( &intern );
 		return TCL_ERROR;
@@ -199,20 +279,21 @@ char **argv;
 {
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
+	struct rt_wdb		*wdbp;
 
 	if( argc < 4 )  {
-		Tcl_AppendResult(interp, "Usage: rt_wdb_inmem_shader $dbip comb shader [params]\n", NULL);
+		Tcl_AppendResult(interp, "Usage: rt_wdb_inmem_shader $wdbp comb shader [params]\n", NULL);
 		return TCL_ERROR;
 	}
 
-	if( !(comb = rt_tcl_get_comb( &intern, interp, argv[1], argv[2] )) )
+	if( !(comb = rt_tcl_get_comb( &intern, interp, argv[1], argv[2], &wdbp )) )
 		return TCL_ERROR;
 
 	/* Make mods to comb here */
 	bu_vls_trunc( &comb->shader, 0 );
 	bu_vls_from_argv( &comb->shader, argc-3, &argv[3] );
 
-	if( wdb_export( mike_wdb, argv[2], intern.idb_ptr, intern.idb_type, 1.0 ) < 0 )  {
+	if( wdb_export( wdbp, argv[2], intern.idb_ptr, intern.idb_type, 1.0 ) < 0 )  {
 		Tcl_AppendResult(interp, "wdb_export ", argv[2], " failure\n", NULL);
 		rt_db_free_internal( &intern );
 		return TCL_ERROR;
@@ -226,9 +307,9 @@ char **argv;
  *
  * Source file for primitive database manipulation routines.
  *
- * XXX rather than being a "db" command, will be instantiations
- * XXX from a "wdb_open db_var_name" command, like Tk "window win_name".
- * XXX So that clientData will have wdb pointer.
+ * Rather than being run directly (like the mged "db" command),
+ * will be run as a widget_command instantiation of the "database class".
+ * clientData will have wdb pointer.
  *
  * Author -
  *      Glenn Durfee
@@ -269,6 +350,7 @@ int argc;
 char **argv;
 {
     struct dbcmdstruct *dbcmd;
+    struct rt_wdb	*wdb = (struct rt_wdb *)clientData;
 
     if( argc < 2 ) {
 	Tcl_AppendResult( interp,
@@ -277,12 +359,7 @@ char **argv;
 	return TCL_ERROR;
     }
 
-	/* XXX MAJOR HACK ***/
-	if( !mike_wdb )  {
-		Tcl_AppendResult(interp, "wdb_dbopen not yet called\n", NULL);
-		return TCL_ERROR;
-	}
-	clientData = (ClientData)mike_wdb;
+	RT_CK_WDB_TCL(wdb);
 
     Tcl_AppendResult( interp, "unknown database command; must be one of:",
 		   (char *)NULL );
@@ -1047,6 +1124,9 @@ char **argv;
 	return TCL_OK;
 }
 
+/*
+ *			R T _ D B _ F O R M
+ */
 int
 rt_db_form( clientData, interp, argc, argv )
 ClientData clientData;
@@ -1118,8 +1198,7 @@ Tcl_Interp *interp;
 	 * XXX them just yet.  -Mike.
 	 */
 
-	/* This one is more temporary than the rest! */
-	(void)Tcl_CreateCommand(interp, "rt_db", rt_db,
+	(void)Tcl_CreateCommand(interp, "wdb_open", wdb_open,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	(void)Tcl_CreateCommand(interp, "rt_wdb_inmem_rgb", rt_wdb_inmem_rgb,
