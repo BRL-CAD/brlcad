@@ -480,20 +480,18 @@ color[2]= swp -> sw_color[2];
 					ap->a_x, ap->a_y, ap->a_level);
 				cosine = 1;
 			}
-
-			/* Get Obj Hit Point For Attenuation */
 PM_Intensity= 1.0;
+			/* Get Obj Hit Point For Attenuation */
                         if (pp || PM_Activated) {
 				VJOIN1(pt, ap -> a_ray.r_pt, pp -> pt_inhit -> hit_dist, ap -> a_ray.r_dir)
 				dist= sqrt((pt[0]-lp -> lt_pos[0])*(pt[0]-lp -> lt_pos[0]) + (pt[1]-lp -> lt_pos[1])*(pt[1]-lp -> lt_pos[1]) + (pt[2]-lp -> lt_pos[2])*(pt[2]-lp -> lt_pos[2]))/1000.0;
 				dist= PM_Intensity * (1.0/(0.1 + 1.3*dist + 0.7*dist*dist));
-/*			bu_log("pt: [%.3f][%.3f,%.3f,%.3f]\n",dist,pt[0],pt[1],pt[2]);*/
+				refl= dist * ps->wgt_diffuse * swp->sw_lightfract[i] * cosine * lp -> lt_intensity;
+/*				bu_log("pt: [%.3f][%.3f,%.3f,%.3f]\n",dist,pt[0],pt[1],pt[2]);*/
                         } else {
-				dist= 1.0;
+				refl= ps->wgt_diffuse * swp->sw_lightfract[i] * cosine * lp-> lt_fraction;
 			}
 
-			refl = dist * ps->wgt_diffuse * swp->sw_lightfract[i] *
-					cosine * lp->lt_fraction;
 #if RT_MULTISPECTRAL
 			bn_tabdata_incr_mul3_scale( swp->msw_color,
 				lp->lt_spectrum,

@@ -647,7 +647,8 @@ void EmitPhotonsRandom(struct application *ap, struct light_specific *lp, double
 /*bu_log("Shooting Ray: [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n",lp -> lt_pos[0], lp -> lt_pos[1], lp -> lt_pos[2], x,y,z);*/
     CurPh.Power[0]=
     CurPh.Power[1]=
-    CurPh.Power[2]= 1000.0 * 1000.0 * 4.0 * LightIntensity * lp -> lt_fraction;
+    CurPh.Power[2]= 1000.0 * LightIntensity * lp -> lt_intensity;
+/*    CurPh.Power[2]= 1000.0 * 100.0 * 4.0 * LightIntensity * lp -> lt_intensity;*/
 
     Depth= 0;
     PType= PM_GLOBAL;
@@ -764,7 +765,6 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
   P -> Irrad[0]*= Coef;
   P -> Irrad[1]*= Coef;
   P -> Irrad[2]*= Coef;
-/*  bu_log("val: [%.3f,%.3f,%.3f]\n",P -> Irrad[0],P -> Irrad[1],P -> Irrad[2]);*/
 
   free(lap);
 }
@@ -881,7 +881,7 @@ void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int
   /* Scale Photon Power */
   for (i= 0; i < 3; i++)
     if (PMap[i] -> StoredPhotons)
-      ScalePhotonPower(1.0/(double)EPL,i);
+      ScalePhotonPower(ScaleFactor/(double)EPL,i);
 bu_log("EPL: %d\n",EPL);
 
 /*
@@ -906,16 +906,19 @@ bu_log("EPL: %d\n",EPL);
   ap -> a_miss= ICMiss;
   ICSize= 0;
 
-  GPM_RTAB= (struct resource*)malloc(sizeof(struct resource)*cpus);
-  bzero(GPM_RTAB,cpus*sizeof(struct resource));
-  for (i= 0; i < cpus; i++) {
-    GPM_RTAB[i].re_cpu= i;
-    GPM_RTAB[i].re_magic= RESOURCE_MAGIC;
-    BU_PTBL_SET(&ap -> a_rt_i -> rti_resources, i, &GPM_RTAB[i]);
-    rt_init_resource(&GPM_RTAB[i], GPM_RTAB[i].re_cpu, ap -> a_rt_i);
+  if (cpus > 1) {
+    GPM_RTAB= (struct resource*)malloc(sizeof(struct resource)*cpus);
+    bzero(GPM_RTAB,cpus*sizeof(struct resource));
+    for (i= 0; i < cpus; i++) {
+      GPM_RTAB[i].re_cpu= i;
+      GPM_RTAB[i].re_magic= RESOURCE_MAGIC;
+      BU_PTBL_SET(&ap -> a_rt_i -> rti_resources, i, &GPM_RTAB[i]);
+      rt_init_resource(&GPM_RTAB[i], GPM_RTAB[i].re_cpu, ap -> a_rt_i);
+    }
+    bu_parallel(IrradianceThread, cpus, ap);
+  } else {
+    IrradianceThread(0,ap);
   }
-  bu_parallel(IrradianceThread, cpus, ap);
-
 
   /* Allocate Memory for Irradiance Cache and Initialize Pixel Map */
 /*  bu_log("Image Size: %d,%d\n",width,height);*/
@@ -1179,8 +1182,6 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
     Search.Found= 0;
     Search.RadSq*= 4.0;
     LocatePhotons(&Search,PMap[PM_GLOBAL] -> Root);
-    if (!Search.Found && Search.RadSq > ScaleFactor*ScaleFactor/100.0)
-      break;
   } while(Search.Found < Search.Max && Search.RadSq < ScaleFactor * ScaleFactor / 16.0);
 
 
@@ -1200,9 +1201,19 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
     t[2]= Search.List[i].P.Pos[2] - pos[2];
 
     t[0]= (t[0]*t[0] + t[1]*t[1] + t[2]*t[2])/TotDist;
+/*
     irrad[0]+= Search.List[i].P.Irrad[0] * t[0];
     irrad[1]+= Search.List[i].P.Irrad[1] * t[0];
     irrad[2]+= Search.List[i].P.Irrad[2] * t[0];
+*/
+    irrad[0]+= Search.List[i].P.Irrad[0];
+    irrad[1]+= Search.List[i].P.Irrad[1];
+    irrad[2]+= Search.List[i].P.Irrad[2];
+  }
+  if (Search.Found) {
+    irrad[0]/= (double)Search.Found;
+    irrad[1]/= (double)Search.Found;
+    irrad[2]/= (double)Search.Found;
   }
   free(Search.List);
 
@@ -1233,10 +1244,10 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
   irrad[1]= cirrad[1];
   irrad[2]= cirrad[2];
 */
-/*
-  if (irrad[0] < 0.05 && irrad[1] < 0.05 && irrad[2] < 0.05)
-    bu_log("Wi: %.3f,%.3f, [%.3f,%.3f,%.3f]\n",Wi,wgttotal,irrad[0],irrad[1],irrad[2]);
-*/
+/*  bu_log("irrad[%d,%d,%d]: [%.3f,%.3f,%.3f]\n",ap -> a_x,ap -> a_y,Search.Found,irrad[0],irrad[1],irrad[2]);*/
+
+  if (irrad[0] < 0.00 || irrad[1] < 0.00 || irrad[2] < 0.00)
+    bu_log("Wi: [%.3f,%.3f,%.3f]\n",irrad[0],irrad[1],irrad[2]);
 }
 
 
@@ -1318,7 +1329,8 @@ void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, 
       irrad[2]+= Search.List[i].P.Power[2]*Filter;
   }
 
-  if (!centog) {
+  /* This needs a little debugging, splotches in moss cause tmp gets too small, will look at later, ||1 to turn it off */
+  if (!centog||1) {
     Centroid[0]= pos[0];
     Centroid[1]= pos[1];
     Centroid[2]= pos[2];
@@ -1333,7 +1345,11 @@ void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, 
   irrad[1]/= tmp;
   irrad[2]/= tmp;
 
-
+/*
+  if (irrad[0] > 10 || irrad[1] > 10 || irrad[2] > 10) {
+    bu_log("found: %d, tmp: %.1f\n",Search.Found,tmp);
+  }
+*/
   if (map == PM_CAUSTIC) {
     tmp= (double)Search.Found/(double)Search.Max;
     irrad[0]*= tmp;
