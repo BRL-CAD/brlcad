@@ -5,7 +5,7 @@ Installing the BRL-CAD Package
 .br
 Release 3.0
 .sp
-04-Oct-1988
+06-Oct-1988
 .AU
 Michael John Muuss
 .AI
@@ -193,7 +193,7 @@ dm-X10	X Window System (X10R4)
 .NH 1
 LOADING THE SOFTWARE
 .IP 1)
-Find a disk with about 40 Mbytes of free space that you can use.
+Find a disk with about 60 Mbytes of free space that you can use.
 The BRL-CAD Package is distributed in source code form only,
 so you will need enough space to simultaneously store
 the source material, documentation, binary files, and test images.
@@ -537,10 +537,12 @@ where you replace "YOURNAME" with your user name, and then
 you need to add "/usr/brlcad/bin" to your search path.
 See the previous section for instructions on how to do this.
 .PP
-If you wish to install the software somewhere else, create the "bin",
-"lib", and "etc" directories, and update the definitions for BINDIR,
-LIBDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh", and
-"cray.sh". Then, add your choice for BINDIR to your search path. 
+If you wish to install the software somewhere else, create your "bin",
+"lib", and "etc" directories, and
+update the definitions for BINDIR,
+LIBDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh",
+"cray.sh", "cake/Makefile", and "cakeaux/Makefile".
+Then, add your choice for BINDIR to your search path. 
 .NH 2
 Updating Your Search Path \(em Bourne Shell (/bin/sh)
 .PP
@@ -837,16 +839,49 @@ This will allow
 .B rfbd
 to start the 4Sight window system when a remote connection is made.
 .NH 2
-Special Considerations on an SGI 3-D
+Special Kernel/Shared Memory Considerations on all SGI systems
 .PP
-When using the framebuffer library on an SGI 3-D system,
+When using the framebuffer library on an SGI system,
 it is necessary to modify
 certain kernel limits in the binary image of your kernel to be able to
-use a large block of shared memory.  Follow the directions in
+use a large block of shared memory.
+.PP
+For an SGI 3D,
+follow the directions in
 libfb/if_sgi.c, and then reboot your workstation to allow the changes to
 take effect.  There are claims that on some SGI 3-D machines with only
 4 Mbytes of memory, this may
 cause unreliable operation, so be certain to keep a backup kernel.
+.PP
+For an SGI 4D, software release 3.0 and up, add these entries
+to your kernel configuration:
+.sp .5
+.nf
+.ft B
+	#define SHMMAX (MAXUMEM*NBPP)
+	#define SHMMIN 1
+	#define SHMMNI 100
+	#define SHMSEG 6
+	#define SHMALL 4000
+.ft R
+.fi
+.sp .5
+then install the new kernel, and reboot.
+.PP
+For an SGI 4D, software release 2.x, add these entries
+to your kernel configuration:
+.sp .5
+.nf
+.ft B
+	#define SHMMAX 5131072
+	#define SHMMIN 1
+	#define SHMMNI 100
+	#define SHMSEG 6
+	#define SHMALL 4000
+.ft R
+.fi
+.sp .5
+then install the new kernel, and reboot.
 .NH 1
 SUPPORTING A NEW MACHINE
 .PP
@@ -1229,20 +1264,15 @@ or IBM style floating point, not enough accuracy is carried to correctly
 process large models. See the "Silicon Graphics Warnings" section for
 more information.
 .NH 2
-h/rle.h and h/svfb_global.h
+h/rle.h
 .PP
-The files h/rle.h and h/svfb_global.h
-have #\fBif\fR statements that will need modification if
+The file h/rle.h
+has #\fBif\fR statements that will need modification if
 your machine is a "Little-Endian" machine and your machine is not
 a VAX.  "Big-Endian" machines will work without modification.
 A Big-Endian machine has byte [0] on the left of the word, like IBM,
 while a Little-Endian machine has byte [0] on the right side of the word,
-like DEC.  Some of the RLE code needs to know.
-.PP
-Worse still, some of the code in the Utah Raster Toolkit
-software (especially in \fBlibrle\fR)
-also needs to know about this, including:
-Runsv.c, rle_getrow.c, and sv_putrow.c.
+like DEC.  Some of the \fBliborle\fR code needs to know.
 .NH 2
 libplot3/htond.c
 .PP
@@ -1252,7 +1282,8 @@ This is especially important for generating binary portable plot
 metafiles.
 If the machine that you are porting to implements one of the
 already supported native types, all you need to do is adjust
-two of the \fB#if\fR directives to include your machine type.
+the \fB#if\fR directives for the symbol NATURAL_IEEE
+to include your machine type.
 (Please notify BRL when you do this, so that we can update the
 master copy).
 .PP
@@ -1399,7 +1430,7 @@ and then recompiling.
 .NH 1
 KNOWN PROBLEMS
 .NH 2
-CAKE Warning Messages
+CAKE Warning Message
 .PP
 Occasionally, CAKE will print the message
 .sp .5
@@ -1410,6 +1441,20 @@ NOTE:  Null action skipped
 .ft R
 .sp .5
 This warning message is not harmful, and may safely be ignored.
+.NH 2
+System V Documenters Workbench Unbundled
+.PP
+In recent releases of System V, DWB has been unbundled.
+This means that for these systems, the
+\fBman\fR command no longer runs \fBnroff\fR to typeset
+the manual pages as they are needed.
+This spoils our whole strategy for installing
+\fBnroff\fR source documents for all the manual pages.
+As a consequence, the operation of a \fBcake install\fR
+on such a system will report numerous errors about
+being unable to install the manual pages.
+This is known to be a problem with the SGI and Cray machines.
+It is unclear what can be done about it.
 .NH 2
 C to FORTRAN Linkage
 .PP
@@ -1431,7 +1476,7 @@ numbers.
 While the current release of \fBlibrt\fR is believed to generally
 operate correctly in spite of this, beware of the \fBrt\fR program failing to
 find roots, or being unable to perform a "box push". Unfortunately, the
-"star.pix" \fBrt\fR benchmark will will fail due to lack of floating point
+"star.pix" \fBrt\fR benchmark will fail due to lack of floating point
 precision, and generate lots of diagnostics, filling your disk.
 .PP
 SGI 3-D software release version 3.3.1, 3.4, and 3.5 have a defective
