@@ -143,53 +143,6 @@ int	op;
 }
 
 /*
- *			M K _ L C O M B
- *
- *  Make a combination, much like mk_comb(), but where the
- *  members are described by a linked list of wmember structs.
- *  This routine produces the combination and member records
- *  all at once, making it easier and less risky to use than
- *  direct use of the pair of mk_comb() and mk_memb().
- *  The linked list is freed when it has been output.
- *
- *  A shorthand version is given in wdb.h as a macro.
- */
-int
-mk_lcomb( fp, name, headp, region, matname, matparm, rgb, inherit )
-struct rt_wdb		*fp;
-CONST char	*name;
-register struct wmember *headp;
-int		region;
-CONST char	*matname;
-CONST char	*matparm;
-CONST unsigned char	*rgb;
-int		inherit;
-{
-	struct rt_comb_internal *comb;
-
-	comb = mk_comb_internal( headp );
-	if( region )  comb->region_flag = 1;
-	if( matname )  bu_vls_strcat( &comb->shader, matname );
-	if( matparm )  {
-		bu_vls_strcat( &comb->shader, " " );
-		bu_vls_strcat( &comb->shader, matparm );
-	}
-	/* XXX Convert to TCL form? */
-	if( rgb )  {
-		comb->rgb_valid = 1;
-		comb->rgb[0] = rgb[0];
-		comb->rgb[1] = rgb[1];
-		comb->rgb[2] = rgb[2];
-	}
-	comb->inherit = inherit;
-
-	/* Release the member structure dynamic storage */
-	mk_freemembers( headp );
-
-	return mk_export_fwrite( fp, name, comb, ID_COMBINATION );
-}
-
-/*
  *			M K _ F R E E M E M B E R S
  *
  *  Returns -
@@ -248,8 +201,19 @@ int	inherit;
 	if( matparm )  {
 		bu_vls_strcat( &comb->shader, " " );
 		bu_vls_strcat( &comb->shader, matparm );
+		/* Convert to Tcl form if necessary.  Use heuristics */
+		if( strchr( matparm, '=' ) != NULL &&
+		    strchr( matparm, '{' ) == NULL )
+		{
+			struct bu_vls old;
+			bu_vls_init(&old);
+			bu_vls_vlscatzap(&old, &comb->shader);
+			if( bu_shader_to_tcl_list( bu_vls_addr(&old), &comb->shader) )
+				bu_log("Unable to convert shader string '%s %s'\n", matname, matparm);
+			bu_vls_free(&old);
+		}
 	}
-	/* XXX Convert to TCL form? */
+
 	if( rgb )  {
 		comb->rgb_valid = 1;
 		comb->rgb[0] = rgb[0];
@@ -352,8 +316,18 @@ mk_fastgen_region(
 	if( matparm )  {
 		bu_vls_strcat( &comb->shader, " " );
 		bu_vls_strcat( &comb->shader, matparm );
+		/* Convert to Tcl form if necessary.  Use heuristics */
+		if( strchr( matparm, '=' ) != NULL &&
+		    strchr( matparm, '{' ) == NULL )
+		{
+			struct bu_vls old;
+			bu_vls_init(&old);
+			bu_vls_vlscatzap(&old, &comb->shader);
+			if( bu_shader_to_tcl_list( bu_vls_addr(&old), &comb->shader) )
+				bu_log("Unable to convert shader string '%s %s'\n", matname, matparm);
+			bu_vls_free(&old);
+		}
 	}
-	/* XXX Convert to TCL form? */
 	if( rgb )  {
 		comb->rgb_valid = 1;
 		comb->rgb[0] = rgb[0];

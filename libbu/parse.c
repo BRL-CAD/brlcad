@@ -1515,6 +1515,26 @@ struct bu_vls *vls;
 	return( 0 );
 }
 
+/*
+ *			B U _ S H A D E R _ T O _ T C L _ L I S T
+ *
+ *  Take an old v4 shader specification of the form
+ *
+ *	shadername arg1=value1 arg2=value2 color=1/2/3
+ *
+ *  and convert it into the v5 Tcl-list form
+ *
+ *	shadername {arg1 value1 arg2 value2 color 1/2/3}
+ *
+ *  Note -- the input string is smashed with nulls.
+ *
+ *  Note -- the v5 version is used everywhere internally, and in v5
+ *  databases.
+ *
+ *  Returns -
+ *	1	error
+ *	0	OK
+ */
 int
 bu_shader_to_tcl_list( in, vls )
 char *in;

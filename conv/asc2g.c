@@ -69,7 +69,7 @@ struct rt_wdb	*ofp;
 
 static char usage[] = "\
 Usage: asc2g file.asc file.g\n\
- Convert an ASCII BRL-CAD database to binary form\n\
+ Convert an ASCII v4 BRL-CAD database to binary form\n\
 ";
 
 int
@@ -205,7 +205,6 @@ after_read:
 	/* Now, at the end of the database, dump out the entire
 	 * region-id-based color table.
 	 */
-if(rt_material_head) rt_pr_mater(rt_material_head);
 	mk_write_color_table( ofp );
 	wdb_close(ofp);
 

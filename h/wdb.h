@@ -299,11 +299,10 @@ int mk_write_color_table( struct rt_wdb *ofp );
  */
 WDB_EXTERN(struct wmember *mk_addmember, (const char *name,
 			struct wmember *headp, int op) );
-WDB_EXTERN(int mk_lcomb, (struct rt_wdb *fp, const char *name, struct wmember *headp,
-			int region_flag,
-			const char *matname, const char *matparm,
-			const unsigned char *rgb,
-			int inherit_flag) );
+
+#define mk_lcomb(_fp,_name,_headp,_rf,_matname,_matparm,_rgb,_inh)	\
+	mk_lrcomb(_fp,_name,_headp,_rf,_matname,_matparm,_rgb,0,0,0,0,_inh)
+
 WDB_EXTERN(int mk_lrcomb, (struct rt_wdb *fp, const char *name, struct wmember *headp,
 			int region_flag,
 			const char *matname, const char *matparm,
