@@ -54,10 +54,9 @@ f_vrot()
 {
 	/* Actually, it would be nice if this worked all the time */
 	/* usejoy isn't quite the right thing */
-	if( state != ST_VIEW )  {
-		state_err("View Rotate");
+	if( not_state( ST_VIEW, "View Rotate") )
 		return;
-	}
+
 	usejoy(	atof(cmd_args[1]) * degtorad,
 		atof(cmd_args[2]) * degtorad,
 		atof(cmd_args[3]) * degtorad );
@@ -82,17 +81,17 @@ f_blast()
 
 	f_zap();
 
-	/*
-	 * Force out the control list with NO solids being drawn,
-	 * then the display processor will not mind when we start
-	 * writing new subroutines out there...
-	 */
-	refresh();
+	if( dmp->dmr_displaylist )  {
+		/*
+		 * Force out the control list with NO solids being drawn,
+		 * then the display processor will not mind when we start
+		 * writing new subroutines out there...
+		 */
+		refresh();
+	}
 
-	/* fall through */
 	drawreg = 0;
 	regmemb = -1;
-
 	eedit();
 }
 
@@ -102,7 +101,6 @@ f_edit()
 {
 	drawreg = 0;
 	regmemb = -1;
-
 	eedit();
 }
 
@@ -132,13 +130,16 @@ eedit()
 		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		/*
-		 * Delete any portion of object remaining from previous draw
-		 */
-		eraseobj( dp );
-		dmaflag++;
-		refresh();
-		dmaflag++;
+		if( dmp->dmr_displaylist )  {
+			/*
+			 * Delete any portion of object
+			 * remaining from previous draw.
+			 */
+			eraseobj( dp );
+			dmaflag++;
+			refresh();
+			dmaflag++;
+		}
 
 		/*
 		 * Draw this object as a ROOT object, level 0
@@ -159,13 +160,14 @@ eedit()
 		regmemb = -1;
 	}
 	(void)time( &etime );
-	if( Viewscale == 1.0 )  {
+	if( Viewscale == .125 )  {	/* also in ged.c */
 		Viewscale = maxview;
 		new_mats();
 	}
 
-	(void)printf("view (%ld sec)\n", etime - stime );
+	(void)printf("vectorized in %ld sec\n", etime - stime );
 	dmaflag = 1;
+	dmp->dmr_viewchange();		/* alert DM */
 }
 
 /* Delete an object or several objects from the display */
@@ -180,6 +182,7 @@ f_delobj()
 			eraseobj( dp );
 	}
 	dmaflag = 1;
+	dmp->dmr_viewchange();		/* alert DM */
 }
 
 f_debug()
@@ -298,6 +301,7 @@ f_zap()
 		FREE_SOLID( sp );
 		sp = nsp;
 	}
+	(void)chg_state( state, state, "zap" );
 	dmaflag = 1;
 }
 
@@ -342,10 +346,9 @@ f_rt()
 	char *vec[LEN];
 	FILE *fp;
 
-	if( state != ST_VIEW )  {
-		state_err( "Ray-trace of current view" );
+	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
 		return;
-	}
+
 	vp = &vec[0];
 	*vp++ = "rt";
 	*vp++ = "-f";
@@ -420,10 +423,6 @@ f_saveview()
 	register int i;
 	register FILE *fp;
 
-	if( state != ST_VIEW )  {
-		state_err( "Ray-trace of current view" );
-		return;
-	}
 	if( (fp = fopen( cmd_args[1], "a")) == NULL )  {
 		perror(cmd_args[1]);
 		return;
@@ -582,7 +581,7 @@ f_ill()
 	illump->s_iflag = UP;
 	if( state == ST_O_PICK )  {
 		ipathpos = 0;
-		state = ST_O_PATH;
+		(void)chg_state( ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
 	} else {
 		/* Check details, Init menu, set state=ST_S_EDIT */
 		init_sedit();
@@ -594,10 +593,9 @@ f_ill()
 void
 f_sed()
 {
-	if( state != ST_VIEW )  {
-		state_err("keyboard solid edit start");
+	if( not_state( ST_VIEW, "keyboard solid edit start") )
 		return;
-	}
+
 	button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
 	f_ill();		/* Illuminate named solid --> ST_S_EDIT */
 }

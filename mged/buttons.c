@@ -145,12 +145,24 @@ char *str;{
 	(void)printf("press(%s):  Unknown operation, type 'press ?' for help\n",
 		str);
 }
-
-state_err( str )
-char *str;
+/*
+ *  			L A B E L _ B U T T O N
+ *  
+ *  For a given GED button number, return the "press" ID string.
+ *  Useful for displays with programable button lables, etc.
+ */
+char *
+label_button(bnum)
 {
-	(void)printf("Unable to do <%s> from %s state.\n",
-		str, state_str[state] );
+	register struct buttons *bp;
+
+	/* Process the button function requested. */
+	for( bp = button_table; bp->bu_code >= 0; bp++ )  {
+		if( bnum != bp->bu_code )
+			continue;
+		return( bp->bu_name );
+	}
+	(void)printf("label_button(%d):  Not a defined operation\n", bnum);
 }
 
 static void bv_top()  {
@@ -233,13 +245,13 @@ static void bv_35_25()  {
 	setview( 295, 0, 235 );
 }
 
-static void ill_common()  {
+/* returns 0 if error, !0 if success */
+static int ill_common()  {
 	/* Common part of illumination */
 	dmp->dmr_light( LIGHT_ON, BE_REJECT );
 	if( HeadSolid.s_forw == &HeadSolid )  {
 		(void)printf("no solids in view\n");
-		state = ST_VIEW;
-		return;
+		return(0);	/* BAD */
 	}
 	illump = HeadSolid.s_forw;/* any valid solid would do */
 	edobj = 0;		/* sanity */
@@ -248,33 +260,31 @@ static void ill_common()  {
 	mat_idn( modelchanges );	/* No changes yet */
 	new_mats();
 	dmaflag++;
+	return(1);		/* OK */
 }
 
 static void be_o_illuminate()  {
-	if( state != ST_VIEW )  {
-		state_err( "Object Illuminate" );
+	if( not_state( ST_VIEW, "Object Illuminate" ) )
 		return;
-	}
-	state = ST_O_PICK;
+
 	dmp->dmr_light( LIGHT_ON, BE_O_ILLUMINATE );
-	ill_common();
+	if( ill_common() )
+		(void)chg_state( ST_VIEW, ST_O_PICK, "Object Illuminate" );
 }
 
 static void be_s_illuminate()  {
-	if( state != ST_VIEW )  {
-		state_err( "Solid Illuminate" );
+	if( not_state( ST_VIEW, "Solid Illuminate" ) )
 		return;
-	}
-	state = ST_S_PICK;
+
 	dmp->dmr_light( LIGHT_ON, BE_S_ILLUMINATE );
-	ill_common();
+	if( ill_common() )
+		(void)chg_state( ST_VIEW, ST_S_PICK, "Solid Illuminate" );
 }
 
 static void be_o_scale()  {
-	if( state != ST_O_EDIT )  {
-		state_err( "Object Scale" );
+	if( not_state( ST_O_EDIT, "Object Scale" ) )
 		return;
-	}
+
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_SCALE );
 	movedir = SARROW;
@@ -282,10 +292,9 @@ static void be_o_scale()  {
 }
 
 static void be_o_x()  {
-	if( state != ST_O_EDIT )  {
-		state_err( "Object X Motion" );
+	if( not_state( ST_O_EDIT, "Object X Motion" ) )
 		return;
-	}
+
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_X );
 	movedir = RARROW;
@@ -293,10 +302,9 @@ static void be_o_x()  {
 }
 
 static void be_o_y()  {
-	if( state != ST_O_EDIT )  {
-		state_err( "Object Y Motion" );
+	if( not_state( ST_O_EDIT, "Object Y Motion" ) )
 		return;
-	}
+
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_Y );
 	movedir = UARROW;
@@ -305,10 +313,9 @@ static void be_o_y()  {
 
 
 static void be_o_xy()  {
-	if( state != ST_O_EDIT )  {
-		state_err( "Object XY Motion" );
+	if( not_state( ST_O_EDIT, "Object XY Motion" ) )
 		return;
-	}
+
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_XY );
 	movedir = UARROW | RARROW;
@@ -316,10 +323,9 @@ static void be_o_xy()  {
 }
 
 static void be_o_rotate()  {
-	if( state != ST_O_EDIT )  {
-		state_err( "Object Rotation" );
+	if( not_state( ST_O_EDIT, "Object Rotation" ) )
 		return;
-	}
+
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_ROTATE );
 	movedir = ROTARROW;
@@ -328,16 +334,11 @@ static void be_o_rotate()  {
 
 static void be_accept()  {
 	register struct solid *sp;
-	/* Accept edit */
-	if( state != ST_O_EDIT && state != ST_S_EDIT )  {
-		state_err( "Edit Accept" );
-		return;
-	}
-	dmp->dmr_light( LIGHT_OFF, BE_ACCEPT );
-	dmp->dmr_light( LIGHT_OFF, BE_REJECT );
 
 	if( state == ST_S_EDIT )  {
 		/* Accept a solid edit */
+		dmp->dmr_light( LIGHT_OFF, BE_ACCEPT );
+		dmp->dmr_light( LIGHT_OFF, BE_REJECT );
 		/* write editing changes out to disc */
 		db_putrec( illump->s_path[illump->s_last], &es_rec, 0 );
 
@@ -351,8 +352,14 @@ static void be_accept()  {
 
 		FOR_ALL_SOLIDS( sp )
 			sp->s_iflag = DOWN;
-	}  else  {
+
+		illump = SOLID_NULL;
+		(void)chg_state( ST_S_EDIT, ST_VIEW, "Edit Accept" );
+		dmaflag = 1;		/* show completion */
+	}  else if( state == ST_O_EDIT )  {
 		/* Accept an object edit */
+		dmp->dmr_light( LIGHT_OFF, BE_ACCEPT );
+		dmp->dmr_light( LIGHT_OFF, BE_REJECT );
 		dmp->dmr_light( LIGHT_OFF, edobj );
 		edobj = 0;
 		movedir = 0;	/* No edit modes set */
@@ -388,25 +395,29 @@ static void be_accept()  {
 			sp->s_iflag = DOWN;
 		}
 		mat_idn( modelchanges );
-	}
 
-	illump = SOLID_NULL;
-	state = ST_VIEW;
-	dmaflag = 1;		/* show completion */
+		illump = SOLID_NULL;
+		(void)chg_state( ST_O_EDIT, ST_VIEW, "Edit Accept" );
+		dmaflag = 1;		/* show completion */
+	} else {
+		(void)not_state( ST_S_EDIT, "Edit Accept" );
+		return;
+	}
 }
 
 static void be_reject()  {
 	register struct solid *sp;
+
 	/* Reject edit */
-	/* Reject is special -- it is OK in any edit state */
-	if( state == ST_VIEW ) {
-		state_err( "Edit Reject" );
-		return;
-	}
 	dmp->dmr_light( LIGHT_OFF, BE_ACCEPT );
 	dmp->dmr_light( LIGHT_OFF, BE_REJECT );
 
-	if( state == ST_S_EDIT )  {
+	switch( state )  {
+	default:
+		state_err( "Edit Reject" );
+		return;
+
+	case ST_S_EDIT:
 		/* Reject a solid edit */
 		if( edsol )
 			dmp->dmr_light( LIGHT_OFF, edsol );
@@ -415,12 +426,22 @@ static void be_reject()  {
 
 		/* Restore the saved original solid */
 		illump = redraw( illump, &es_orig );
-	}
-	if( state == ST_O_EDIT && edobj )
-		dmp->dmr_light( LIGHT_OFF, edobj );
+		break;
 
-	dmp->dmr_light( LIGHT_OFF, BE_O_ILLUMINATE );
-	dmp->dmr_light( LIGHT_OFF, BE_S_ILLUMINATE );
+	case ST_O_EDIT:
+		if( edobj )
+			dmp->dmr_light( LIGHT_OFF, edobj );
+		break;
+	case ST_O_PICK:
+		dmp->dmr_light( LIGHT_OFF, BE_O_ILLUMINATE );
+		break;
+	case ST_S_PICK:
+		dmp->dmr_light( LIGHT_OFF, BE_S_ILLUMINATE );
+		break;
+	case ST_O_PATH:
+		break;
+	}
+
 	menuflag = 0;
 	movedir = 0;
 	edsol = 0;
@@ -432,7 +453,7 @@ static void be_reject()  {
 	/* Clear illumination flags */
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
-	state = ST_VIEW;
+	(void)chg_state( state, ST_VIEW, "Edit Reject" );
 }
 
 static void bv_slicemode() {
@@ -451,10 +472,9 @@ static void bv_slicemode() {
 
 static void be_s_edit()  {
 	/* solid editing */
-	if( state != ST_S_EDIT )  {
-		state_err( "Solid Edit (Menu)" );
+	if( not_state( ST_S_EDIT, "Solid Edit (Menu)" ) )
 		return;
-	}
+
 	if( edsol )
 		dmp->dmr_light( LIGHT_OFF, edsol );
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_EDIT );
@@ -466,10 +486,9 @@ static void be_s_edit()  {
 
 static void be_s_rotate()  {
 	/* rotate solid */
-	if( state != ST_S_EDIT )  {
-		state_err( "Solid Rotate" );
+	if( not_state( ST_S_EDIT, "Solid Rotate" ) )
 		return;
-	}
+
 	dmp->dmr_light( LIGHT_OFF, edsol );
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_ROTATE );
 	menuflag = 0;
@@ -481,10 +500,9 @@ static void be_s_rotate()  {
 
 static void be_s_trans()  {
 	/* translate solid */
-	if( state != ST_S_EDIT )  {
-		state_err( "Solid Translate" );
+	if( not_state( ST_S_EDIT, "Solid Translate" ) )
 		return;
-	}
+
 	dmp->dmr_light( LIGHT_OFF, edsol );
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_TRANS );
 	menuflag = 0;
@@ -496,10 +514,9 @@ static void be_s_trans()  {
 
 static void be_s_scale()  {
 	/* scale solid */
-	if( state != ST_S_EDIT )  {
-		state_err( "Solid Scale" );
+	if( not_state( ST_S_EDIT, "Solid Scale" ) )
 		return;
-	}
+
 	dmp->dmr_light( LIGHT_OFF, edsol );
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_SCALE );
 	menuflag = 0;
@@ -507,4 +524,52 @@ static void be_s_scale()  {
 	MENU_ON( FALSE );
 	acc_sc_sol = 1.0;
 	dmaflag++;
+}
+
+/*
+ *			N O T _ S T A T E
+ *  
+ *  Returns 0 if current state is as desired,
+ *  Returns !0 and prints error message if state mismatch.
+ */
+int
+not_state( desired, str )
+int desired;
+char *str;
+{
+	if( state != desired ) {
+		(void)printf("Unable to do <%s> from %s state.\n",
+			str, state_str[state] );
+		return(1);	/* BAD */
+	}
+	return(0);		/* GOOD */
+}
+
+/*
+ *  			C H G _ S T A T E
+ *
+ *  Returns 0 if state change is OK,
+ *  Returns !0 and prints error message if error.
+ */
+int
+chg_state( from, to, str )
+int from, to;
+char *str;
+{
+	if( state != from ) {
+		(void)printf("Unable to do <%s> going from %s to %s state.\n",
+			str, state_str[from], state_str[to] );
+		return(1);	/* BAD */
+	}
+	state = to;
+	/* Advise display manager of state change */
+	dmp->dmr_statechange( from, to );
+	return(0);		/* GOOD */
+}
+
+state_err( str )
+char *str;
+{
+	(void)printf("Unable to do <%s> from %s state.\n",
+		str, state_str[state] );
 }

@@ -227,7 +227,7 @@ init_sedit()
 	dmp->dmr_light( LIGHT_ON, BE_REJECT );
 	dmp->dmr_light( LIGHT_OFF, BE_S_ILLUMINATE );
 
-	state = ST_S_EDIT;
+	(void)chg_state( ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
 	es_edflag = IDLE;
 	sedraw = 1;
 

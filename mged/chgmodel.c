@@ -209,10 +209,9 @@ f_extrude()
 	static float dist;
 	static struct solidrec lsolid;	/* local copy of solid */
 
-	if( state != ST_S_EDIT )  {
-		state_err( "Extrude" );
+	if( not_state( ST_S_EDIT, "Extrude" ) )
 		return;
-	}
+
 	if( es_gentype != GENARB8 )  {
 		(void)printf("Extrude: solid type must be ARB\n");
 		return;
@@ -497,10 +496,9 @@ f_mirface()
 	static vect_t work;
 	static struct solidrec lsolid;	/* local copy of solid */
 
-	if( state != ST_S_EDIT )  {
-		state_err( "Mirface" );
+	if( not_state( ST_S_EDIT, "Mirface" ) )
 		return;
-	}
+
 	if( es_gentype != GENARB8 )  {
 		(void)printf("Mirface: solid type must be ARB\n");
 		return;
@@ -909,10 +907,8 @@ f_rot_obj()
 	mat_t temp;
 	vect_t s_point, point, v_work, model_pt;
 
-	if(state != ST_O_EDIT) {
-		state_err("Object Rotation");
+	if( not_state( ST_O_EDIT, "Object Rotation" ) )
 		return;
-	}
 
 	if(movedir != ROTARROW) {
 		(void)printf("Not in object rotate mode\n");
@@ -961,10 +957,8 @@ f_sc_obj()
 	mat_t incr;
 	vect_t point, temp;
 
-	if(state != ST_O_EDIT) {
-		state_err("Object Scale");
+	if( not_state( ST_O_EDIT, "Object Scale" ) )
 		return;
-	}
 
 	if(movedir != SARROW) {
 		(void)printf("Not in object scale mode\n");
@@ -990,10 +984,8 @@ f_tr_obj()
 	mat_t incr, old;
 	vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
 
-	if(state != ST_O_EDIT) {
-		state_err("Object Translation");
+	if( not_state( ST_O_EDIT, "Object Translation") )
 		return;
-	}
 
 	mat_idn(incr);
 	mat_idn(old);

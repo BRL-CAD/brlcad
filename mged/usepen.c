@@ -134,7 +134,7 @@ register int x, y;
 			/* Currently illuminated object is selected */
 			if( state == ST_O_PICK )  {
 				ipathpos = 0;
-				state = ST_O_PATH;
+				(void)chg_state( ST_O_PICK, ST_O_PATH, "Pen press");
 			} else {
 				/* Check details, Init menu, set state */
 				init_sedit();
@@ -184,7 +184,7 @@ register int x, y;
 				if( j == ipathpos+1 )
 					sp->s_iflag = UP;
 			}
-			state = ST_O_EDIT;
+			(void)chg_state( ST_O_PATH, ST_O_EDIT, "Pen press" );
 
 			/* begin object editing - initialize */
 			init_objedit();
@@ -271,10 +271,8 @@ register int x, y;
 		return;
 	}
 
-	if( state != ST_O_EDIT )  {
-		state_err( "Pen Press" );
+	if( not_state( ST_O_EDIT, "Pen Press" ) )
 		return;
-	}
 
 	/*
 	 *  Object Edit
@@ -343,10 +341,12 @@ illuminate( y )  {
 
 	FOR_ALL_SOLIDS( sp )  {
 		if( sp->s_flag == UP )
-			if( count-- == 0 )  {
+			if( count-- == 0 && illump != sp )  {
 				illump = sp;
 				illump->s_iflag = UP;
 				dmaflag++;
+				/* Inform display manager */
+				dmp->dmr_viewchange();
 			}  else
 				sp->s_iflag = DOWN;
 	}

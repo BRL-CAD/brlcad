@@ -52,7 +52,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern void	exit(), perror(), sync();
 extern char	*malloc(), *tempnam();
 extern int	close(), dup(), execl(), fork(), getuid(), open(), pipe(),
-		printf(), sprintf(), unlink(), write();
+		printf(),  unlink(), write();
 extern long	time();
 
 extern struct dm dm_Mg;
@@ -108,13 +108,14 @@ char **argv;
 	HeadSolid.s_forw = &HeadSolid;
 	HeadSolid.s_back = &HeadSolid;
 	FreeSolid = SOLID_NULL;
-
-	/* Fire up the display manager, and the display processor */
-	get_attached();
+	
+	state = ST_VIEW;
+	es_edflag = -1;
+	inpara = newedge = 0;
 
 	/* init rotation matrix */
 	mat_idn( identity );		/* Handy to have around */
-	Viewscale = 1.0;
+	Viewscale = .125;		/* also in chgview.c */
 	mat_idn( Viewrot );
 	mat_idn( toViewcenter );
 	mat_idn( modelchanges );
@@ -140,6 +141,9 @@ char **argv;
 
 	dmaflag = 1;
 
+	/* Fire up the display manager, and the display processor */
+	get_attached();
+
 	/* Here we should print out a "message of the day" file */
 
 	/*	 Scan input file and build the directory	 */
@@ -147,10 +151,6 @@ char **argv;
 
 	/* Initialize the menu mechanism to be off, but ready. */
 	menu_init();
-	
-	state = ST_VIEW;
-	es_edflag = -1;
-	inpara = newedge = 0;
 
 	refresh();			/* Put up faceplate */
 

@@ -24,10 +24,8 @@ f_tedit()
 	struct solidrec lsolid;		/* local copy of solid */
 
 	/* Only do this if in solid edit state */
-	if( state != ST_S_EDIT )  {
-		state_err( "Solid Text Edit" );
+	if( not_state( ST_S_EDIT, "Solid Text Edit" ) )
 		return;
-	}
 
 	if( es_rec.u_id != ID_SOLID ) {
 		(void)printf("tedit: not a solid\n");
