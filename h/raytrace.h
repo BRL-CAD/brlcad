@@ -1387,6 +1387,7 @@ struct application  {
 	vect_t		a_vvec;		/* application-specific vector */
 	fastf_t		a_refrac_index;	/* current index of refraction */
 	fastf_t		a_cumlen;	/* cumulative length of ray */
+	int		a_flag;		/* application-specific flag */
 	int		a_zero2;	/* must be zero (sanity check) */
 };
 #define RT_AFN_NULL	((int (*)())0)
