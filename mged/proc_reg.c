@@ -1,3 +1,4 @@
+#define	OLD	1	/* db/demo.g region BRL and BRL.p exhibit bug in new */
 /*
  *				P R O C _ R E G . C
  *
@@ -1128,9 +1129,35 @@ orregion:	/* sent here if region has or's */
 						}
 					}
 noskip:
+#if OLD
+					if(fabs(VDOT(&peq[i*4],&peq[j*4]))>=.9999)
+						continue; /* planes parallel */
+
+					/* planes not parallel */
+					/* compute direction vector for ray */
+					VCROSS(wb,&peq[i*4],&peq[j*4]);
+					VUNITIZE( wb );
+
+					k=0;
+					if(fabs(wb[1]) > fabs(wb[0])) k=1;
+					if(fabs(wb[2]) > fabs(wb[k])) k=2;
+					if(wb[k] < 0.0)  {
+						VREVERSE( wb, wb );
+					}
+					{
+						plane_t	c1;
+
+						VSETALL(c1, 0);
+						c1[k] = 1;
+						c1[3] = reg_min[k];
+						cpoint(xb,c1,&peq[i*4],&peq[j*4]);
+					}
+#else
 					if( rt_isect_2planes( xb, wb,
 					    &peq[i*4], &peq[j*4], reg_min ) < 0 )
 						continue;
+
+#endif
 
 					/* check if ray intersects region */
 					if( (k=region(lmemb,umemb))<=0)
@@ -1716,3 +1743,32 @@ solpl(lmemb,umemb)
 		mlc[id]=lc-1;
 	}
 }
+
+/* XXX begin old versions */
+#if OLD
+/*
+ *			C P O I N T
+ *
+ * computes point of intersection of three planes, answer in "point".
+ */
+cpoint(point,c1,c2,c3)
+vect_t	point;
+register fastf_t *c1, *c2, *c3;
+{
+	static vect_t	v1, v2, v3;
+	register int i;
+	static fastf_t d;
+
+	VCROSS(v1,c2,c3);
+	if((d=VDOT(c1,v1))==0)  {
+		printf("cpoint failure\n");
+		return;
+	}
+	d = 1.0 / d;
+	VCROSS(v2,c1,c3);
+	VCROSS(v3,c1,c2);
+	for(i=0; i<3; i++)
+		point[i]=d*(c1[3]*v1[i]-c2[3]*v2[i]+c3[3]*v3[i]);
+}
+
+#endif
