@@ -619,6 +619,7 @@ vect_t dir;
  *  and with unit length.  This algorithm taken from Gift's arvec.f;
  *  a faster algorithm may be possible.
  */
+void
 vec_ortho( out, in )
 register fastf_t *out, *in;
 {
