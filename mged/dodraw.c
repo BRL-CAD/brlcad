@@ -411,6 +411,7 @@ int	kind;
 	int		i;
 	register int	c;
 	int		ncpu;
+	int		mged_nmg_use_tnurbs = 0;
 
 	RT_CHECK_DBI(dbip);
 
@@ -428,13 +429,16 @@ int	kind;
 
 	/* Parse options. */
 	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"dnqsuvwTP:")) != EOF )  {
+	while( (c=getopt(argc,argv,"dnqstuvwTP:")) != EOF )  {
 		switch(c)  {
 		case 'u':
 			mged_draw_edge_uses = 1;
 			break;
 		case 's':
 			mged_draw_solid_lines_only = 1;
+			break;
+		case 't':
+			mged_nmg_use_tnurbs = 1;
 			break;
 		case 'v':
 			mged_shade_per_vertex_normals = 1;
@@ -459,11 +463,12 @@ int	kind;
 			break;
 		default:
 			rt_log("option '%c' unknown\n", c);
-			rt_log("Usage: ev [-dnqsuvwT] [-P ncpu] object(s)\n\
+			rt_log("Usage: ev [-dnqstuvwT] [-P ncpu] object(s)\n\
 	-d draw nmg without performing boolean operations\n\
 	-w draw wireframes (rather than polygons)\n\
 	-n draw surface normals as little 'hairs'\n\
 	-s draw solid lines only (no dot-dash for subtract and intersect)\n\
+	-t Perform CSG-to-tNURBS conversion\n\
 	-v shade using per-vertex normals, when present.\n\
 	-u debug: draw edgeuses\n\
 	-T debug: disable triangulator\n");
@@ -532,7 +537,10 @@ A production implementation will exist in the maintenance release.\n");
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_nmg_region_end,
-			nmg_booltree_leaf_tess );
+	  		mged_nmg_use_tnurbs ?
+	  			nmg_booltree_leaf_tnurb :
+				nmg_booltree_leaf_tess
+			);
 
 	  	if (mged_draw_edge_uses) {
 	  		cvt_vlblock_to_solids(mged_draw_edge_uses_vbp, "_EDGEUSES_", 0);
