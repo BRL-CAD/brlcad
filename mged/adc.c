@@ -75,7 +75,7 @@ adcursor()
 
 	dmp->dm_setColor(dmp, DM_YELLOW, 1);
 #if 1
-	dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+	dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 0);
 #else
 	dmp->dm_setLineAttr(dmp, 1, 0);    /* linewidth - 1, not dashed */
 #endif
@@ -127,14 +127,14 @@ adcursor()
 	(void)clip ( &x3, &y3, &x4, &y4 );
 
 #if 1
-	dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 1);
+	dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 1);
 #else
 	dmp->dm_setLineAttr(dmp, 1, 1);  /* linewidth - 1, dashed */
 #endif
 	dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
 	dmp->dm_drawLine2D( dmp, (int)x3, (int)y3, (int)x4, (int)y4 );
 #if 1
-	dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+	dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 0);
 #else
 	dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
 #endif
@@ -241,16 +241,16 @@ char	**argv;
 
 	if (argc == 1)
 	{
-	  if (mged_variables.adcflag)  {
+	  if (mged_variables->adcflag)  {
 #if 0
 	    dmp->dm_light( dmp, LIGHT_OFF, BV_ADCURSOR );
 #endif
-	    mged_variables.adcflag = 0;
+	    mged_variables->adcflag = 0;
 	  } else {
 #if 0
 	    dmp->dm_light( dmp, LIGHT_ON, BV_ADCURSOR );
 #endif
-	    mged_variables.adcflag = 1;
+	    mged_variables->adcflag = 1;
 	  }
 
 	  set_scroll();
