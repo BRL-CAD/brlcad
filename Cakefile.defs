@@ -314,7 +314,7 @@ set -S2 "/bin/sh"
 /*	set CC_OPTS= -Zf only if Weitek FP chip installed */
 #	define	CC_OPTS	-Zf
 #	define	FC_OPTS	CC_OPTS
-#	define	LD_OPTS	CC_OPTS
+#	define	LD_OPTS	-s CC_OPTS
 #	define	FC	/bin/f77
 #	define	RANLIB	ranlib
 #	define	MGED_OBJS	dm-ir
