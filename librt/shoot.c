@@ -962,55 +962,57 @@ bu_log("rt_shootray(): bn_piecelen=%d\n", cutp->bn.bn_piecelen );
 		}
 
 		/* Consider all solids within the box */
-		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
-		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
-			register struct soltab *stp = *stpp;
+		if( cutp->bn.bn_len > 0 )  {
+			stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
+			for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
+				register struct soltab *stp = *stpp;
 
-			if( BU_BITTEST( solidbits, stp->st_bit ) )  {
-				resp->re_ndup++;
-				continue;	/* already shot */
-			}
+				if( BU_BITTEST( solidbits, stp->st_bit ) )  {
+					resp->re_ndup++;
+					continue;	/* already shot */
+				}
 
-			/* Shoot a ray */
-			BU_BITSET( solidbits, stp->st_bit );
+				/* Shoot a ray */
+				BU_BITSET( solidbits, stp->st_bit );
 
-			/* Check against bounding RPP, if desired by solid */
-			if( rt_functab[stp->st_id].ft_use_rpp )  {
-				if( !rt_in_rpp( &ss.newray, ss.inv_dir,
-				    stp->st_min, stp->st_max ) )  {
-					if(debug_shoot)bu_log("rpp miss %s\n", stp->st_name);
-					resp->re_prune_solrpp++;
+				/* Check against bounding RPP, if desired by solid */
+				if( rt_functab[stp->st_id].ft_use_rpp )  {
+					if( !rt_in_rpp( &ss.newray, ss.inv_dir,
+					    stp->st_min, stp->st_max ) )  {
+						if(debug_shoot)bu_log("rpp miss %s\n", stp->st_name);
+						resp->re_prune_solrpp++;
+						continue;	/* MISS */
+					}
+					if( ss.dist_corr + ss.newray.r_max < BACKING_DIST )  {
+						if(debug_shoot)bu_log("rpp skip %s, dist_corr=%g, r_max=%g\n", stp->st_name, ss.dist_corr, ss.newray.r_max);
+						resp->re_prune_solrpp++;
+						continue;	/* MISS */
+					}
+				}
+				
+				if(debug_shoot)bu_log("shooting %s\n", stp->st_name);
+				resp->re_shots++;
+				BU_LIST_INIT( &(new_segs.l) );
+				if( rt_functab[stp->st_id].ft_shot( 
+				    stp, &ss.newray, ap, &new_segs ) <= 0 )  {
+					resp->re_shot_miss++;
 					continue;	/* MISS */
 				}
-				if( ss.dist_corr + ss.newray.r_max < BACKING_DIST )  {
-					if(debug_shoot)bu_log("rpp skip %s, dist_corr=%g, r_max=%g\n", stp->st_name, ss.dist_corr, ss.newray.r_max);
-					resp->re_prune_solrpp++;
-					continue;	/* MISS */
-				}
-			}
 
-			if(debug_shoot)bu_log("shooting %s\n", stp->st_name);
-			resp->re_shots++;
-			BU_LIST_INIT( &(new_segs.l) );
-			if( rt_functab[stp->st_id].ft_shot( 
-			    stp, &ss.newray, ap, &new_segs ) <= 0 )  {
-				resp->re_shot_miss++;
-				continue;	/* MISS */
-			}
-
-			/* Add seg chain to list awaiting rt_boolweave() */
-			{
-				register struct seg *s2;
-				while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
-					BU_LIST_DEQUEUE( &(s2->l) );
-					/* Restore to original distance */
-					s2->seg_in.hit_dist += ss.dist_corr;
-					s2->seg_out.hit_dist += ss.dist_corr;
-					s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = &ap->a_ray;
-					BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
+				/* Add seg chain to list awaiting rt_boolweave() */
+				{
+					register struct seg *s2;
+					while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
+						BU_LIST_DEQUEUE( &(s2->l) );
+						/* Restore to original distance */
+						s2->seg_in.hit_dist += ss.dist_corr;
+						s2->seg_out.hit_dist += ss.dist_corr;
+						s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = &ap->a_ray;
+						BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
+					}
 				}
+				resp->re_shot_hit++;
 			}
-			resp->re_shot_hit++;
 		}
 		if( rt_g.debug & DEBUG_ADVANCE )
 			rt_plot_cell( cutp, &ss, &(waiting_segs.l), rtip);
