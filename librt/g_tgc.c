@@ -10,6 +10,7 @@
  * Authors -
  *	Edwin O. Davisson	(Analysis)
  *	Jeff Hanes		(Programming)
+ *	Gary Moss		(Improvement)
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -25,9 +26,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "../h/db.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "../h/db.h"
 #include "debug.h"
 
 #include "./polyno.h"
@@ -37,6 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 HIDDEN int	stdCone();
 HIDDEN void	tgcnormal();
 static void	rotate(), shear(), TgcPtSort();
+static void	scale();
 
 struct  tgc_specific {
 	vect_t	tgc_V;		/*  Vector to center of base of TGC	*/
@@ -49,8 +51,9 @@ struct  tgc_specific {
 	fastf_t	tgc_CA_H;	/*  (C-A)/H  X_of_Z */
 	fastf_t tgc_DB_H;	/*  (D-B)/H  Y_of_Z */
 	vect_t	tgc_norm;	/*  normal at 'top' of cone		*/
-	mat_t	tgc_ShoR;	/*  Shear( Rot( vect ))			*/
-	mat_t	tgc_invRoSh;	/*  invRot( trnShear( vect ))		*/
+	mat_t	tgc_ScShR;	/*  Scale( Shear( Rot( vect )))		*/
+	mat_t	tgc_inv_ScShR;	/*  invRot( invShear( invScale( vect )))*/
+	mat_t	tgc_invRtShSc;	/*  invRot( trnShear( Scale( vect )))	*/
 	char	tgc_AD_CB;	/*  boolean:  A*D == C*B  */
 };
 
@@ -79,8 +82,9 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	register struct tgc_specific *tgc;
 	LOCAL fastf_t	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
 	LOCAL fastf_t	mag_h, mag_a, mag_b, mag_c, mag_d;
-	LOCAL mat_t	Rot, Shr;
-	LOCAL mat_t	iRot, tShr;
+	LOCAL mat_t	Rot, Shr, Scl;
+	LOCAL mat_t	iRot, tShr, iShr, iScl;
+	LOCAL mat_t	tmp;
 	LOCAL vect_t	Hv, A, B, C, D;
 	LOCAL vect_t	nH;
 	LOCAL vect_t	work;
@@ -189,13 +193,30 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	MAT4X3VEC( nH, Rot, Hv );
 	tgc->tgc_sH = nH[Z];
 
-	tgc->tgc_CA_H = (tgc->tgc_C - tgc->tgc_A) / tgc->tgc_sH;
-	tgc->tgc_DB_H = (tgc->tgc_D - tgc->tgc_B) / tgc->tgc_sH;
+	tgc->tgc_CA_H = tgc->tgc_C/tgc->tgc_A - 1.0;
+	tgc->tgc_DB_H = tgc->tgc_D/tgc->tgc_B - 1.0;
 
-	shear( nH, Z, Shr, tShr );
-	mat_mul( tgc->tgc_ShoR, Shr, Rot );
+	/*
+		Added iShr parameter to shear().
+		Added a matrix to tgc_specific for inverse transformation
+			of std. solid intersection points (tgc_inv_ScShR)
+			which includes a the inverse of a scaling transform.
+		Changed inverse transformation of normal vectors of std.
+			solid intersection to include shear inverse
+			(tgc_invRtShSc).
+		Fold in scaling transformation into the transformation to std.
+			space from target space (tgc_ScShR).
+	 */
+	shear( nH, Z, Shr, tShr, iShr );
+	scale( tgc->tgc_A, tgc->tgc_B, tgc->tgc_sH, Scl, iScl );
+	mat_mul( tmp, Shr, Rot );
+	mat_mul( tgc->tgc_ScShR, Scl, tmp );
 
-	mat_mul( tgc->tgc_invRoSh, iRot, tShr );
+	mat_mul( tmp, tShr, Scl );
+	mat_mul( tgc->tgc_invRtShSc, iRot, tmp );
+
+	mat_mul( tmp, iShr, iScl );
+	mat_mul( tgc->tgc_inv_ScShR, iRot, tmp );
 
 	/* Compute bounding sphere and RPP */
 	{
@@ -317,26 +338,47 @@ struct tgc_specific	*tgc;
  *
  *  NOTE:  This computes the TRANSPOSE of the shear matrix rather than
  *  the inverse.
+ *
+ * Begin changes GSM, EOD -- Added INVERSE (Inv) calculation.
  */
 static void
-shear( vect, axis, Shr, Trn )
+shear( vect, axis, Shr, Trn, Inv )
 vect_t	vect;
 int	axis;
-mat_t	Shr, Trn;
+mat_t	Shr, Trn, Inv;
 {
 	mat_idn( Shr );
 	mat_idn( Trn );
+	mat_idn( Inv );
 
 	if ( axis == X ){
-		Shr[4] = Trn[1] = -vect[Y]/ vect[X];
-		Shr[8] = Trn[2] = -vect[Z]/ vect[X];
+		Inv[4] = -1.0 * (Shr[4] = Trn[1] = -vect[Y]/vect[X]);
+		Inv[8] = -1.0 * (Shr[8] = Trn[2] = -vect[Z]/vect[X]);
 	} else if ( axis == Y ){
-		Shr[1] = Trn[4] = -vect[X]/ vect[Y];
-		Shr[9] = Trn[6] = -vect[Z]/ vect[Y];
+		Inv[1] = -1.0 * (Shr[1] = Trn[4] = Inv[1] = -vect[X]/vect[Y]);
+		Inv[9] = -1.0 * (Shr[9] = Trn[6] = Inv[9] = -vect[Z]/vect[Y]);
 	} else if ( axis == Z ){
-		Shr[2] = Trn[8] = -vect[X]/ vect[Z];
-		Shr[6] = Trn[9] = -vect[Y]/ vect[Z];
+		Inv[2] = -1.0 * (Shr[2] = Trn[8] = -vect[X]/vect[Z]);
+		Inv[6] = -1.0 * (Shr[6] = Trn[9] = -vect[Y]/vect[Z]);
 	}
+}
+
+/*	s c a l e ( )
+ */
+static void
+scale( a, b, h, Scl, Inv )
+fastf_t	a, b, h;
+mat_t	Scl, Inv;
+{
+	mat_idn( Scl );
+	mat_idn( Inv );
+	Scl[0]  /= a;
+	Scl[5]  /= b;
+	Scl[10] /= h;
+	Inv[0]  = a;
+	Inv[5]  = b;
+	Inv[10] = h;
+	return;
 }
 
 tgc_print( stp )
@@ -352,8 +394,10 @@ register struct soltab	*stp;
 	fprintf(stderr, "mag C = %f\n", tgc->tgc_C );
 	fprintf(stderr, "mag D = %f\n", tgc->tgc_D );
 	VPRINT( "Top normal", tgc->tgc_norm );
-	mat_print( "Sh o R", tgc->tgc_ShoR );
-	mat_print( "invR o trnSh", tgc->tgc_invRoSh );
+
+	mat_print( "Sc o Sh o R", tgc->tgc_ScShR );
+	mat_print( "invR o trnSh o Sc", tgc->tgc_invRtShSc );
+
 	if( tgc->tgc_AD_CB )  {
 		fprintf(stderr, "A*D == C*B.  Equal eccentricities gives quadratic equation.\n");
 		fprintf(stderr, "(A/B)**2 = %f\n", tgc->tgc_ABsq );
@@ -400,19 +444,39 @@ register struct xray	*rp;
 				dprime,
 				norm,
 				work;
+	LOCAL vect_t		more_work;
+
 	LOCAL fastf_t		k[4], pt[2],
 				t, b, zval, dir,
 				alf1, alf2;
 	LOCAL int		npts, n, intersect;
 
 	/* find rotated point and direction				*/
-	MAT4X3VEC( dprime, tgc->tgc_ShoR, rp->r_dir );
+	MAT4X3VEC( dprime, tgc->tgc_ScShR, rp->r_dir );
 	VUNITIZE( dprime );
 
 	VSUB2( work, rp->r_pt, tgc->tgc_V );
-	MAT4X3VEC( pprime, tgc->tgc_ShoR, work );
+	MAT4X3VEC( pprime, tgc->tgc_ScShR, work );
 
-	npts = stdCone( pprime, dprime, tgc, k );
+	/*  start code to normalize distance from tgc. */
+	{
+		static fastf_t	cor_pprime[3], cor_proj;
+		register int		i;
+		/* Translating ray origin along direction of ray to closest
+		 * pt. to origin of solids coordinate system, new ray origin
+		 * is 'cor_pprime'.
+		 */
+		cor_proj = VDOT( pprime, dprime );
+		VSCALE( cor_pprime, dprime, cor_proj );
+		VSUB2( cor_pprime, pprime, cor_pprime );
+
+		npts = stdCone( cor_pprime, dprime, tgc, k );
+		/* We must reverse the above translation by adding
+		 * the distance to all 'k' values.
+		 */
+		for( i = 0; i < npts; ++i )
+			k[i] -= cor_proj;
+	}
 
 	if ( npts != 0 && npts != 2 && npts != 4 ){
 		fprintf(stderr,"tgc(%s):  %d intersects != {0,2,4}\n",
@@ -441,7 +505,9 @@ register struct xray	*rp;
 	intersect = 0;
 	for ( n=0; n < npts; ++n ){
 		zval = k[n]*dprime[Z] + pprime[Z];
-		if ( zval < tgc->tgc_sH && zval > 0.0 ){
+		/* Height vector is unitized (tgc->tgc_sH == 1.0) */
+		if ( zval < 1.0 && zval > 0.0 ){
+			/* Why keep going after intersect == 2 ??? */
 			if ( ++intersect == 2 )
 				pt[IN] = k[n];
 			else
@@ -455,17 +521,29 @@ register struct xray	*rp;
 		 */
 		GET_SEG( segp );
 		segp->seg_stp = stp;
-		VJOIN1(	segp->seg_in.hit_point,
-			rp->r_pt, pt[IN], rp->r_dir );
-		VJOIN1( work, pprime, pt[IN], dprime );
-		tgcnormal( segp->seg_in.hit_normal, work, tgc );
-		segp->seg_in.hit_dist = pt[IN];
 
-		VJOIN1(	segp->seg_out.hit_point,
-			rp->r_pt, pt[OUT], rp->r_dir );
+		/* IN hit point back to target coord. system.		*/
+		VJOIN1( work, pprime, pt[IN], dprime );
+		MAT4X3VEC( more_work, tgc->tgc_inv_ScShR, work );
+		VADD2( segp->seg_in.hit_point, more_work, tgc->tgc_V );
+
+		tgcnormal( segp->seg_in.hit_normal, work, tgc );
+
+		/* Compute IN hit distance.				*/
+		VSUB2( work, segp->seg_in.hit_point, rp->r_pt );
+		segp->seg_in.hit_dist = VDOT( work, rp->r_dir );
+
+		/* OUT hit point back to target coord. system.		*/
 		VJOIN1( work, pprime, pt[OUT], dprime );
+		MAT4X3VEC( more_work, tgc->tgc_inv_ScShR, work );
+		VADD2( segp->seg_out.hit_point, more_work, tgc->tgc_V );
+
 		tgcnormal( segp->seg_out.hit_normal, work, tgc );
-		segp->seg_out.hit_dist = pt[OUT];
+
+		/* Compute OUT hit distance.				*/
+		VSUB2( work, segp->seg_out.hit_point, rp->r_pt );
+		segp->seg_out.hit_dist = VDOT( work, rp->r_dir );
+
 		return( segp );
 	}
 	if ( intersect == 1 )  {
@@ -478,13 +556,21 @@ register struct xray	*rp;
 		 *  whether this lies within the governing ellipse.
 		 */
 		b = ( -pprime[Z] )/dprime[Z];
-		t = ( tgc->tgc_sH - pprime[Z] )/dprime[Z];
+		/*  Height vector is unitized (tgc->tgc_sH == 1.0) */
+		t = ( 1.0 - pprime[Z] )/dprime[Z];
 
 		VJOIN1( work, pprime, b, dprime );
-		Alpha( alf1, work[0], work[1], tgc->tgc_A, tgc->tgc_B );
+		/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
+		Alpha( alf1, work[0], work[1], 1.0, 1.0 );
 
 		VJOIN1( work, pprime, t, dprime );
-		Alpha( alf2, work[0], work[1], tgc->tgc_C, tgc->tgc_D );
+		/* Must scale C and D vectors */
+		Alpha(	alf2,
+			work[0],
+			work[1],
+			tgc->tgc_C/tgc->tgc_A,
+			tgc->tgc_D/tgc->tgc_B
+			);
 
 		if ( alf1 <= 1.0 ){
 			pt[IN] = b;
@@ -501,27 +587,49 @@ register struct xray	*rp;
 		GET_SEG( segp );
 		segp->seg_stp = stp;
 		if ( pt[OUT] == Max( pt[OUT], pt[IN] ) ){
-			VJOIN1(	segp->seg_in.hit_point,
-				rp->r_pt, pt[IN], rp->r_dir );
-			VMOVE(	segp->seg_in.hit_normal, norm );
-			segp->seg_in.hit_dist = pt[IN];
+			/* IN hit point back to target coord. system.	*/
+			VJOIN1( work, pprime, pt[IN], dprime );
+			MAT4X3VEC( more_work, tgc->tgc_inv_ScShR, work );
+			VADD2( segp->seg_in.hit_point, more_work, tgc->tgc_V );
 
-			VJOIN1(	segp->seg_out.hit_point,
-				rp->r_pt, pt[OUT], rp->r_dir );
+			VMOVE( segp->seg_in.hit_normal, norm );
+
+			/* Compute IN hit distance.			*/
+			VSUB2( work, segp->seg_in.hit_point, rp->r_pt );
+			segp->seg_in.hit_dist = VDOT( work, rp->r_dir );
+
+			/* OUT hit point back to target coord. system.		*/
 			VJOIN1( work, pprime, pt[OUT], dprime );
+			MAT4X3VEC( more_work, tgc->tgc_inv_ScShR, work );
+			VADD2( segp->seg_out.hit_point, more_work, tgc->tgc_V );
+
 			tgcnormal( segp->seg_out.hit_normal, work, tgc );
-			segp->seg_out.hit_dist = pt[OUT];
-		} else {
-			VJOIN1(	segp->seg_in.hit_point,
-				rp->r_pt, pt[OUT], rp->r_dir );
-			VJOIN1( work, pprime, pt[OUT], dprime );
-			tgcnormal( segp->seg_in.hit_normal, work, tgc );
-			segp->seg_in.hit_dist = pt[OUT];
 
-			VJOIN1(	segp->seg_out.hit_point,
-				rp->r_pt, pt[IN], rp->r_dir );
-			VMOVE(	segp->seg_out.hit_normal, norm );
-			segp->seg_out.hit_dist = pt[IN];
+			/* Compute OUT hit distance.				*/
+			VSUB2( work, segp->seg_out.hit_point, rp->r_pt );
+			segp->seg_out.hit_dist = VDOT( work, rp->r_dir );
+		} else {
+			/* IN hit point back to target coord. system.	*/
+			VJOIN1( work, pprime, pt[OUT], dprime );
+			MAT4X3VEC( more_work, tgc->tgc_inv_ScShR, work );
+			VADD2( segp->seg_in.hit_point, more_work, tgc->tgc_V );
+
+			tgcnormal( segp->seg_in.hit_normal, work, tgc );
+
+			/* Compute IN hit distance.			*/
+			VSUB2( work, segp->seg_in.hit_point, rp->r_pt );
+			segp->seg_in.hit_dist = VDOT( work, rp->r_dir );
+
+			/* OUT hit point back to target coord. system.	*/
+			VJOIN1( work, pprime, pt[IN], dprime );
+			MAT4X3VEC( more_work, tgc->tgc_inv_ScShR, work );
+			VADD2( segp->seg_out.hit_point, more_work, tgc->tgc_V );
+
+			VMOVE( segp->seg_out.hit_normal, norm );
+
+			/* Compute OUT hit distance.			*/
+			VSUB2( work, segp->seg_out.hit_point, rp->r_pt );
+			segp->seg_out.hit_dist = VDOT( work, rp->r_dir );
 		}
 		return( segp );
 	}
@@ -539,13 +647,21 @@ register struct xray	*rp;
 		return( SEG_NULL );
 
 	b = ( -pprime[Z] )/dprime[Z];
-	t = ( tgc->tgc_sH - pprime[Z] )/dprime[Z];
+	/* Height vector is unitized (tgc->tgc_sH == 1.0) */
+	t = ( 1.0 - pprime[Z] )/dprime[Z];
 
 	VJOIN1( work, pprime, b, dprime );
-	Alpha( alf1, work[0], work[1], tgc->tgc_A, tgc->tgc_B );
+	/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
+	Alpha( alf1, work[0], work[1], 1.0, 1.0 );
 
 	VJOIN1( work, pprime, t, dprime );
-	Alpha( alf2, work[0], work[1], tgc->tgc_C, tgc->tgc_D );
+	/* Must scale C and D vectors. */
+	Alpha(	alf2,
+		work[0],
+		work[1],
+		tgc->tgc_C/tgc->tgc_A,
+		tgc->tgc_D/tgc->tgc_B
+		);
 
 	/*  It should not be possible for one planar intersection
 	 *  to be outside its ellipse while the other is inside ...
@@ -562,21 +678,49 @@ register struct xray	*rp;
 	 *  orientation of the intersections.
 	 */
 	if ( dir > 0.0 ){
-		VJOIN1(	segp->seg_in.hit_point, rp->r_pt, b, rp->r_dir );
+		/* IN hit point back to target coord. system.		*/
+		VJOIN1( work, pprime, b, dprime );
+		MAT4X3VEC( more_work, tgc->tgc_inv_ScShR, work );
+		VADD2( segp->seg_in.hit_point, more_work, tgc->tgc_V );
+
 		VREVERSE( segp->seg_in.hit_normal, tgc->tgc_norm );
-		segp->seg_in.hit_dist = b;
 
-		VJOIN1(	segp->seg_out.hit_point, rp->r_pt, t, rp->r_dir );
+		/* Compute IN hit distance.				*/
+		VSUB2( work, segp->seg_in.hit_point, rp->r_pt );
+		segp->seg_in.hit_dist = VDOT( work, rp->r_dir );
+
+		/* OUT hit point back to target coord. system.		*/
+		VJOIN1( work, pprime, t, dprime );
+		MAT4X3VEC( more_work, tgc->tgc_inv_ScShR, work );
+		VADD2( segp->seg_out.hit_point, more_work, tgc->tgc_V );
+
 		VMOVE( segp->seg_out.hit_normal, tgc->tgc_norm );
-		segp->seg_out.hit_dist = t;
-	} else {
-		VJOIN1(	segp->seg_in.hit_point, rp->r_pt, t, rp->r_dir );
-		VMOVE( segp->seg_in.hit_normal, tgc->tgc_norm );
-		segp->seg_in.hit_dist = t;
 
-		VJOIN1(	segp->seg_out.hit_point, rp->r_pt, b, rp->r_dir );
+		/* Compute OUT hit distance.				*/
+		VSUB2( work, segp->seg_out.hit_point, rp->r_pt );
+		segp->seg_out.hit_dist = VDOT( work, rp->r_dir );
+	} else {
+		/* IN hit point back to target coord. system.		*/
+		VJOIN1( work, pprime, t, dprime );
+		MAT4X3VEC( more_work, tgc->tgc_inv_ScShR, work );
+		VADD2( segp->seg_in.hit_point, more_work, tgc->tgc_V );
+
+		VMOVE( segp->seg_in.hit_normal, tgc->tgc_norm );
+
+		/* Compute IN hit distance.				*/
+		VSUB2( work, segp->seg_in.hit_point, rp->r_pt );
+		segp->seg_in.hit_dist = VDOT( work, rp->r_dir );
+
+		/* OUT hit point back to target coord. system.		*/
+		VJOIN1( work, pprime, b, dprime );
+		MAT4X3VEC( more_work, tgc->tgc_inv_ScShR, work );
+		VADD2( segp->seg_out.hit_point, more_work, tgc->tgc_V );
+
 		VREVERSE( segp->seg_out.hit_normal, tgc->tgc_norm );
-		segp->seg_out.hit_dist = b;
+
+		/* Compute OUT hit distance.				*/
+		VSUB2( work, segp->seg_out.hit_point, rp->r_pt );
+		segp->seg_out.hit_dist = VDOT( work, rp->r_dir );
 	}
 	return( segp );
 }
@@ -632,7 +776,8 @@ double		t[];
 
 	R.dgr = 1;
 	R.cf[0] = dprime[Z] * tgc->tgc_CA_H;
-	R.cf[1] = (pprime[Z] * tgc->tgc_CA_H) + tgc->tgc_A;
+	/* A vector is unitized (tgc->tgc_A == 1.0) */
+	R.cf[1] = (pprime[Z] * tgc->tgc_CA_H) + 1.0;
 	(void) polyMul( &R, &R, &Rsqr );
 
 	/*  If the eccentricities of the two ellipses are the same,
@@ -646,7 +791,8 @@ double		t[];
 	} else {
 		Q.dgr = 1;
 		Q.cf[0] = dprime[Z] * tgc->tgc_DB_H;
-		Q.cf[1] = (pprime[Z] * tgc->tgc_DB_H) + tgc->tgc_B;
+		/* B vector is unitized (tgc->tgc_B == 1.0) */
+		Q.cf[1] = (pprime[Z] * tgc->tgc_DB_H) + 1.0;
 		(void) polyMul( &Q, &Q, &Qsqr );
 
 		(void) polyMul( &Qsqr, &Xsqr, &T1 );
@@ -766,10 +912,10 @@ register struct tgc_specific	*tgc;
 	LOCAL fastf_t	Q, parQ, R, parR;
 	LOCAL vect_t	stdnorm;
 
-	R      = tgc->tgc_A + tgc->tgc_CA_H * hit[Z];
+	R      = 1.0 + tgc->tgc_CA_H * hit[Z];
 	parR   = 2.0 * R * tgc->tgc_CA_H;
 
-	Q      = tgc->tgc_B + tgc->tgc_DB_H * hit[Z];
+	Q      = 1.0 + tgc->tgc_DB_H * hit[Z];
 	parQ   = 2.0 * Q * tgc->tgc_DB_H;
 
 	stdnorm[X] = 2.0 * hit[X] * Q * Q;
@@ -777,6 +923,6 @@ register struct tgc_specific	*tgc;
 	stdnorm[Z] =  parQ * hit[X] * hit[X] + parR * hit[Y] * hit[Y]
 			- R * R * parQ - parR * Q * Q;
 
-	MAT4X3VEC( norm, tgc->tgc_invRoSh, stdnorm );
+	MAT4X3VEC( norm, tgc->tgc_invRtShSc, stdnorm );
 	VUNITIZE( norm );
 }
