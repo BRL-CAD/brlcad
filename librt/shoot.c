@@ -120,8 +120,10 @@ struct rt_i	*rtip;
 	RT_CK_RESOURCE(resp);
 	RT_CK_RTI(rtip);
 
-	if( !resp->re_pieces )  return;
-
+	if( !resp->re_pieces ) {
+		rtip->rti_nsolids_with_pieces = 0;
+		return;
+	}
 	for( i = rtip->rti_nsolids_with_pieces-1; i >= 0; i-- )  {
 		psp = &resp->re_pieces[i];
 		RT_CK_PIECESTATE(psp);
@@ -134,6 +136,8 @@ struct rt_i	*rtip;
 	resp->re_pieces = NULL;
 
 	bu_ptbl_free( &resp->re_pieces_pending );
+
+	rtip->rti_nsolids_with_pieces = 0;
 }
 
 /*
