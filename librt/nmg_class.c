@@ -244,8 +244,13 @@ CONST struct rt_tol	*tol;
 	/*
 	 * Note that "pca" can be one of the edge endpoints,
 	 * even if "pt" is far, far away.  This can be confusing.
+	 *
+	 * Some compilers don't get that fastf_t * and point_t are related
+	 * So we have to pass the whole bloody mess for the point arguments.
 	 */
-	code = rt_dist_pt3_lseg3( &dist, pca, eupt, matept, pt, tol);
+	code = rt_dist_pt3_lseg3( &dist, pca, eu->vu_p->v_p->vg_p->coord,
+		eu->eumate_p->vu_p->v_p->vg_p->coord,
+		pt, tol);
 	if( code <= 0 )  dist = 0;
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 		rt_log("          \tcode=%d, dist: %g\n", code, dist);
