@@ -227,8 +227,10 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	static const double	inv_nodes = 1.0/8.0;
 	int			node;
 	int			i;
-	int			long_size = sizeof(long);
+	int			long_size;
 	int			computed_size;
+	int			file_size_long;
+	int			file_size_int;
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
@@ -247,7 +249,9 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	tthrm_sp->tt_name[0] = '\0';
 	tthrm_sp->tt_min_temp = tthrm_sp->tt_max_temp = 0.0;
 
-	bu_log("Parsing: (%s)\n", bu_vls_addr(matparm));
+	if (rdebug&RDEBUG_SHADE)
+		bu_log("Parsing: (%s)\n", bu_vls_addr(matparm));
+
 	if (bu_struct_parse( matparm, tthrm_parse, (char *)tthrm_sp ) < 0 ) {
 		bu_bomb(__FILE__);
 	}
@@ -264,47 +268,40 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	}
 	tt_data = tt_file->buf;
 
-	tthrm_sp->tt_max_seg = cyl_tot = *((long *)tt_data);
 
 	if (rdebug&RDEBUG_SHADE)
-		bu_log("tthrm_setup() data: %08lx total cyl: %ld\n",
-			(unsigned long)tt_data, cyl_tot);
+		bu_log("tthrm_setup() data: %08lx total\n",
+			(unsigned long)tt_data);
 
-	if (sizeof(cyl_tot) == 4 && cyl_tot == 0) {
+	/* Compute how big the file should be, so that we can guess
+	 * at the size of the integer at the front of the file
+	 */
+	file_size_int = sizeof(int) + *((int *)tt_data) * 
+		(sizeof(short) + sizeof(float) * 4 * NUM_NODES);
 
-		bu_log(
-"-------- Probable architecture mismatch from treetherm run ---\n");
-		bu_log("attempting to correct .... ");
+	file_size_long = sizeof(long) + *((long *)tt_data) * 
+		(sizeof(short) + sizeof(float) * 4 * NUM_NODES);
 
-		/* very high probability that treetherm was run on 64 bit
-		 * machine, and we're running on a 32 bit machine.
-		 */
-		tthrm_sp->tt_max_seg = cyl_tot = ((long *)tt_data)[1];
-		long_size = 8;
+	
+	if (tt_file->buflen == file_size_long) {
+		long_size = sizeof(long);
+		tthrm_sp->tt_max_seg = cyl_tot = *((long *)tt_data);
+	} else if (tt_file->buflen == file_size_int) {
+		long_size = sizeof(int);
+		tthrm_sp->tt_max_seg = cyl_tot = *((int *)tt_data);
+	} else {
+		bu_log("file size %d sb %ld or %ld\n",
+			tt_file->buflen, file_size_int, file_size_long);
 
+		bu_log("cyl_tot is either %ld or %ld\n",
+			*((int *)tt_data),
+			*((long *)tt_data));
 
-		computed_size = long_size + 
-			cyl_tot * 
-			(sizeof(short) + sizeof(float) * 4 * NUM_NODES);
-
-		if (computed_size == tt_file->buflen) {
-			bu_log("corrected\n");
-
-			bu_log("buflen %ld\n", tt_file->buflen);
-			bu_log("cyl_tot %ld\n", cyl_tot);
-			bu_log("computed: %d\n", computed_size);
-		} else {
-			bu_log("failed: possible node count != %d?\n",
-			NUM_NODES);
-
-			bu_log("buflen %ld\n", tt_file->buflen);
-			bu_log("cyl_tot %ld\n", cyl_tot);
-			bu_log("computed: %d\n", computed_size);
-
-			bu_bomb("please use correct data file\n");
-		}
+		bu_bomb("");
 	}
 
+	if (rdebug&RDEBUG_SHADE)
+		bu_log("cyl_tot = %ld\n", cyl_tot);
 
 	tthrm_sp->tt_segs = (struct thrm_seg *)
 		bu_calloc(cyl_tot, sizeof(struct thrm_seg), "thermal segs");
@@ -358,7 +355,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 		VSCALE(tthrm_sp->tt_segs[tseg].pt, center, inv_nodes);
 
 		if (rdebug&RDEBUG_SHADE) {
-			bu_log("Center: (%g %g %g)\n", 
+			bu_log("Center: (%g %g %g) (now in mm, not m)\n", 
 					V3ARGS(tthrm_sp->tt_segs[tseg].pt));
 		}
 
