@@ -11,8 +11,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -28,6 +29,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
