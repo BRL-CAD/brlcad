@@ -44,6 +44,39 @@ struct tree_list {
 };
 #define TREE_LIST_NULL	((struct tree_list *)0)
 
+/*
+ *			D B _ N E W _ C O M B I N E D _ T R E E _ S T A T E
+ */
+struct combined_tree_state *
+db_new_combined_tree_state( tsp, pathp )
+register CONST struct db_tree_state	*tsp;
+register CONST struct db_full_path	*pathp;
+{
+	struct combined_tree_state	*new;
+
+	GETSTRUCT( new, combined_tree_state );
+	new->magic = RT_CTS_MAGIC;
+	new->cts_s = *tsp;		/* struct copy */
+	db_dup_full_path( &(new->cts_p), pathp );
+	return new;
+}
+
+/*
+ *			D B _ D U P _ C O M B I N E D _ T R E E _ S T A T E
+ */
+struct combined_tree_state *
+db_dup_combined_tree_state( old )
+CONST struct combined_tree_state	*old;
+{
+	struct combined_tree_state	*new;
+
+ 	RT_CK_CTS(old);
+	GETSTRUCT( new, combined_tree_state );
+	new->magic = RT_CTS_MAGIC;
+	new->cts_s = old->cts_s;	/* struct copy */
+	db_dup_full_path( &(new->cts_p), &(new->cts_p) );
+	return new;
+}
 
 /*
  *			D B _ F R E E _ C O M B I N E D _ T R E E _ S T A T E
@@ -52,6 +85,7 @@ void
 db_free_combined_tree_state( ctsp )
 register struct combined_tree_state	*ctsp;
 {
+ 	RT_CK_CTS(ctsp);
 	db_free_full_path( &(ctsp->cts_p) );
 	bzero( (char *)ctsp, sizeof(*ctsp) );		/* sanity */
 	rt_free( (char *)ctsp, "combined_tree_state");
@@ -89,6 +123,7 @@ register struct combined_tree_state	*ctsp;
 {
 	char	*str;
 
+ 	RT_CK_CTS(ctsp);
 	rt_log("db_pr_combined_tree_state(x%x):\n", ctsp);
 	db_pr_tree_state( &(ctsp->cts_s) );
 	str = db_path_to_string( &(ctsp->cts_p) );
@@ -645,9 +680,7 @@ struct combined_tree_state	**region_start_statepp;
 					*region_start_statepp );
 				goto fail;
 			}
-			GETSTRUCT( ctsp, combined_tree_state );
-			ctsp->cts_s = nts;	/* struct copy */
-			db_dup_full_path( &(ctsp->cts_p), pathp );
+			ctsp =  db_new_combined_tree_state( &nts, pathp );
 			*region_start_statepp = ctsp;
 			if(rt_g.debug&DEBUG_TREEWALK)  {
 				rt_log("setting *region_start_statepp to x%x\n", ctsp );
@@ -773,10 +806,8 @@ region_end:
 			    		sofar );
 			}
 
-			GETSTRUCT( ctsp, combined_tree_state );
-			ctsp->cts_s = *tsp;	/* struct copy */
+		    	ctsp = db_new_combined_tree_state( tsp, pathp );
 		    	ctsp->cts_s.ts_sofar |= TS_SOFAR_REGION;
-			db_dup_full_path( &(ctsp->cts_p), pathp );
 			*region_start_statepp = ctsp;
 			if(rt_g.debug&DEBUG_TREEWALK)  {
 				rt_log("db_recurse(%s): setting *region_start_statepp to x%x (bare solid)\n",
@@ -829,15 +860,8 @@ union tree	*tp;
 		return(new);
 	case OP_REGION:
 		/* If this is a REGION leaf, dup combined_tree_state & path */
-		{
-			struct combined_tree_state	*cts;
-			struct combined_tree_state	*ots;
-			ots = (struct combined_tree_state *)tp->tr_a.tu_stp;
-			GETSTRUCT( cts, combined_tree_state );
-			cts->cts_s = ots->cts_s;	/* struct copy */
-			db_dup_full_path( &(cts->cts_p), &(ots->cts_p) );
-			new->tr_a.tu_stp = (struct soltab *)cts;
-		}
+		new->tr_c.tc_ctsp = db_dup_combined_tree_state(
+			tp->tr_c.tc_ctsp );
 		return(new);
 
 	case OP_NOT:
@@ -884,10 +908,8 @@ union tree	*tp;
 		break;
 	case OP_REGION:
 		/* REGION leaf, free combined_tree_state & path */
-		if( tp->tr_a.tu_stp )  {
-			db_free_combined_tree_state(
-				(struct combined_tree_state *)tp->tr_a.tu_stp );
-		}
+		db_free_combined_tree_state( tp->tr_c.tc_ctsp );
+		tp->tr_c.tc_ctsp = (struct combined_tree_state *)0;
 		break;
 
 	case OP_NOT:
@@ -1104,17 +1126,10 @@ register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
-	register struct combined_tree_state	*cts;
-
-	GETSTRUCT( cts, combined_tree_state );
-	cts->cts_s = *tsp;	/* struct copy */
-	db_dup_full_path( &(cts->cts_p), pathp );
 
 	GETUNION( curtree, tree );
 	curtree->tr_op = OP_REGION;
-	curtree->tr_a.tu_stp = (struct soltab *)cts;
-	curtree->tr_a.tu_name = (char *)0;
-	curtree->tr_regionp = (struct region *)0;
+	curtree->tr_c.tc_ctsp = db_new_combined_tree_state( tsp, pathp );
 
 	return(curtree);
 }
@@ -1125,18 +1140,11 @@ struct db_full_path	*pathp;
 struct rt_external	*ext;
 int			id;
 {
-	register struct combined_tree_state	*cts;
 	register union tree	*curtree;
-
-	GETSTRUCT( cts, combined_tree_state );
-	cts->cts_s = *tsp;	/* struct copy */
-	db_dup_full_path( &(cts->cts_p), pathp );
 
 	GETUNION( curtree, tree );
 	curtree->tr_op = OP_REGION;
-	curtree->tr_a.tu_stp = (struct soltab *)cts;
-	curtree->tr_a.tu_name = (char *)0;
-	curtree->tr_regionp = (struct region *)0;
+	curtree->tr_c.tc_ctsp = db_new_combined_tree_state( tsp, pathp );
 
 	return(curtree);
 }
@@ -1164,7 +1172,8 @@ union tree		 *(*leaf_func)();
 	/*  case OP_SOLID:*/
 	case OP_REGION:
 		/* Flesh out remainder of subtree */
-		ctsp = (struct combined_tree_state *)tp->tr_a.tu_stp;
+		ctsp = tp->tr_c.tc_ctsp;
+	 	RT_CK_CTS(ctsp);
 		ctsp->cts_s.ts_dbip = db_dbip;
 		ctsp->cts_s.ts_stop_at_regions = 0;
 		/* All regions will be accepted, in this 2nd pass */
@@ -1255,6 +1264,7 @@ db_walk_dispatcher()
 
 		if( !region_start_statep )
 			rt_bomb("ERROR db_walk_dispatcher() region started with no state?\n");
+		RT_CK_CTS( region_start_statep );
 
 		/* This is a new region */
 		if( rt_g.debug&DEBUG_TREEWALK )
@@ -1402,7 +1412,8 @@ union tree *	(*leaf_func)();
 				rt_log("%d: op=%\n", i, treep->tr_op);
 				continue;
 			}
-			ctsp = (struct combined_tree_state *)treep->tr_a.tu_stp;
+			ctsp = treep->tr_c.tc_ctsp;
+		 	RT_CK_CTS(ctsp);
 			str = db_path_to_string( &(ctsp->cts_p) );
 			rt_log("%d: path='%s'\n", i, str);
 			rt_free( str, "path string" );
