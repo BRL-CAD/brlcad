@@ -911,7 +911,7 @@ process_entities_polyline_vertex_code( int code )
 {
 	static fastf_t x, y, z;
 	static int face[4];
-	static int vertex_flag=0;
+	static int vertex_flag;
 	int coord;
 
 	switch( code ) {
@@ -920,6 +920,7 @@ process_entities_polyline_vertex_code( int code )
 		face[1] = 0;
 		face[2] = 0;
 		face[3] = 0;
+		vertex_flag = 0;
 		return( 0 );
 	case 8:		/* layer name */
 		if( curr_layer_name ) {
