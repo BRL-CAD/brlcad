@@ -59,7 +59,20 @@ extern long	lseek();
 extern char	*malloc();
 extern void	exit(), free(), perror();
 
-static struct directory *DirHead = DIR_NULL;
+/*
+ *  The directory is organized as forward linked lists hanging off of
+ *  one of NHASH headers.  The function dir_hash() returns a pointer
+ *  to the correct header.
+ */
+#define	NHASH		128	/* size of hash table */
+
+#if	((NHASH)&((NHASH)-1)) != 0
+#define	HASH(sum)	((unsigned)(sum) % (NHASH))
+#else
+#define	HASH(sum)	((unsigned)(sum) & ((NHASH)-1))
+#endif
+
+static struct directory *DirHead[NHASH];
 
 static struct mem_map *dbfreep = MAP_NULL; /* map of free granules */
 
@@ -103,6 +116,29 @@ char *name;
 		read_only = 1;
 	}
 	filename = name;
+}
+
+/*
+ *			D I R _ H A S H
+ *  
+ *  Internal function to return pointer to head of hash chain
+ *  corresponding to the given string.
+ */
+static
+struct directory **
+dir_hash(str)
+char *str;
+{
+	register unsigned char *s = (unsigned char *)str;
+	register long sum;
+	register int i;
+
+	sum = 0;
+	/* namei hashing starts i=0, discarding first char.  ??? */
+	for( i=1; *s; )
+		sum += *s++ * i++;
+
+	return( &DirHead[HASH(sum)] );
 }
 
 /*
@@ -175,6 +211,11 @@ dir_build()  {
 		(void)fseek( fp, addr, 0 );
 		continue;
 
+	case ID_B_SPL_CTL:
+		(void)printf("Unattached control mesh record?\n");
+		addr += (long)(sizeof(record));
+		continue;
+
 	case ID_P_HEAD:
 		{
 			union record rec;
@@ -239,14 +280,17 @@ dir_build()  {
 void
 dir_print()  {
 	register struct directory	*dp;
+	register int i;
 
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
-	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
-		col_item( dp->d_namep );
-		if( dp->d_flags & DIR_COMB )
-			col_putchar( '/' );
-		if( dp->d_flags & DIR_REGION )
-			col_putchar( 'R' );
+	for( i = 0; i < NHASH; i++ )  {
+		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+			col_item( dp->d_namep );
+			if( dp->d_flags & DIR_COMB )
+				col_putchar( '/' );
+			if( dp->d_flags & DIR_REGION )
+				col_putchar( 'R' );
+		}
 	}
 	col_eol();
 }
@@ -268,9 +312,10 @@ register char *str;
 {
 	register struct directory *dp;
 
-	for( dp = DirHead; dp != DIR_NULL; dp=dp->d_forw )  {
+	for( dp = *dir_hash(str); dp != DIR_NULL; dp=dp->d_forw )  {
 		if(
 			str[0] == dp->d_namep[0]  &&	/* speed */
+			str[1] == dp->d_namep[1]  &&	/* speed */
 			strcmp( str, dp->d_namep ) == 0
 		)
 			return(dp);
@@ -291,6 +336,7 @@ dir_add( name, laddr, flags, len )
 register char *name;
 long laddr;
 {
+	register struct directory **headp;
 	register struct directory *dp;
 
 	GETSTRUCT( dp, directory );
@@ -300,8 +346,9 @@ long laddr;
 	dp->d_addr = laddr;
 	dp->d_flags = flags;
 	dp->d_len = len;
-	dp->d_forw = DirHead;
-	DirHead = dp;
+	headp = dir_hash( name );
+	dp->d_forw = *headp;
+	*headp = dp;
 	return( dp );
 }
 
@@ -342,14 +389,16 @@ dir_delete( dp )
 register struct directory *dp;
 {
 	register struct directory *findp;
+	register struct directory **headp;
 
-	if( DirHead == dp )  {
+	headp = dir_hash( dp->d_namep );
+	if( *headp == dp )  {
 		free( dp->d_namep );
-		DirHead = dp->d_forw;
+		*headp = dp->d_forw;
 		free( dp );
 		return;
 	}
-	for( findp = DirHead; findp != DIR_NULL; findp = findp->d_forw )  {
+	for( findp = *headp; findp != DIR_NULL; findp = findp->d_forw )  {
 		if( findp->d_forw != dp )
 			continue;
 		free( dp->d_namep );
@@ -717,25 +766,28 @@ dir_nref( )
 {
 	register struct directory *dp;
 	register FILE *fp;
-	union record rec;
+	register int i;
 
 	/* First, clear any existing counts */
-	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )
-		dp->d_nref = 0;
+	for( i = 0; i < NHASH; i++ )  {
+		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )
+			dp->d_nref = 0;
+	}
 
 	/* Read through the whole database, looking only at MEMBER records */
 	if( (fp = fopen( filename, "r" )) == NULL )  {
 		(void)printf("dir_nref: fopen failed\n");
 		return;
 	}
-	while(fread( (char *)&rec, sizeof(rec), 1, fp ) == 1 && !feof(fp))  {
-		if( rec.u_id != ID_MEMB )
+	while(fread( (char *)&record, sizeof(record), 1, fp ) == 1 &&
+	     !feof(fp))  {
+		if( record.u_id != ID_MEMB )
 			continue;
-		if( rec.M.m_brname[0] != '\0' &&
-		    (dp = lookup(rec.M.m_brname, LOOKUP_QUIET)) != DIR_NULL )
+		if( record.M.m_brname[0] != '\0' &&
+		    (dp = lookup(record.M.m_brname, LOOKUP_QUIET)) != DIR_NULL )
 			dp->d_nref++;
-		if( rec.M.m_instname[0] != '\0' &&
-		    (dp = lookup(rec.M.m_instname, LOOKUP_QUIET)) != DIR_NULL )
+		if( record.M.m_instname[0] != '\0' &&
+		    (dp = lookup(record.M.m_instname, LOOKUP_QUIET)) != DIR_NULL )
 			dp->d_nref++;
 	}
 	(void)fclose(fp);
@@ -820,20 +872,23 @@ void
 dir_summary(flag)
 {
 	register struct directory *dp;
+	register int i;
 	static int sol, comb, reg, br;
 
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	sol = comb = reg = br = 0;
-	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
-		if( dp->d_flags & DIR_SOLID )
-			sol++;
-		if( dp->d_flags & DIR_COMB )
-			if( dp->d_flags & DIR_REGION )
-				reg++;
-			else
-				comb++;
-		if( dp->d_flags & DIR_BRANCH )
-			br++;
+	for( i = 0; i < NHASH; i++ )  {
+		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+			if( dp->d_flags & DIR_SOLID )
+				sol++;
+			if( dp->d_flags & DIR_COMB )
+				if( dp->d_flags & DIR_REGION )
+					reg++;
+				else
+					comb++;
+			if( dp->d_flags & DIR_BRANCH )
+				br++;
+		}
 	}
 	(void)printf("Summary:\n");
 	(void)printf("  %5d solids\n", sol);
@@ -845,9 +900,11 @@ dir_summary(flag)
 		return;
 	/* Print all names matching the flags parameter */
 	/* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
-	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
-		if( dp->d_flags & flag )
-			col_item(dp->d_namep);
+	for( i = 0; i < NHASH; i++ )  {
+		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+			if( dp->d_flags & flag )
+				col_item(dp->d_namep);
+		}
 	}
 	col_eol();
 }
@@ -862,14 +919,17 @@ void
 f_tops()
 {
 	register struct directory *dp;
+	register int i;
 
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	dir_nref();
-	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
-		if( dp->d_nref > 0 )
-			continue;
-		/* Object is not a member of any combination */
-		col_item(dp->d_namep);
+	for( i = 0; i < NHASH; i++ )  {
+		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+			if( dp->d_nref > 0 )
+				continue;
+			/* Object is not a member of any combination */
+			col_item(dp->d_namep);
+		}
 	}
 	col_eol();
 }
