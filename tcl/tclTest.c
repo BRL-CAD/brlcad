@@ -7,26 +7,26 @@
  *	they're only used for testing.
  *
  * Copyright (c) 1993-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1996 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * SCCS: @(#) tclTest.c 1.83 96/10/03 14:56:36
  */
 
-#ifndef lint
-static char sccsid[] = "@(#) tclTest.c 1.25 95/06/08 10:55:56";
-#endif /* not lint */
+#define TCL_TEST
 
 #include "../libtcl/tclInt.h"
 #include "../libtcl/tclPort.h"
 
 /*
- * The following variable is a special hack that is needed in order for
- * Sun shared libraries to be used for Tcl.
+ * Declare external functions used in Windows tests.
  */
 
-extern int matherr();
-int *tclDummyMathPtr = (int *) matherr;
+#if defined(__WIN32__)
+extern TclPlatformType *	TclWinGetPlatform _ANSI_ARGS_((void));
+#endif
 
 /*
  * Dynamic string shared by TestdcallCmd and DelCallbackProc;  used
@@ -52,13 +52,6 @@ typedef struct TestAsyncHandler {
 static TestAsyncHandler *firstHandler = NULL;
 
 /*
- * The variable below is a token for an asynchronous handler for
- * interrupt signals, or NULL if none exists.
- */
-
-static Tcl_AsyncHandler intHandler;
-
-/*
  * The dynamic string below is used by the "testdstring" command
  * to test the dynamic string facilities.
  */
@@ -66,11 +59,38 @@ static Tcl_AsyncHandler intHandler;
 static Tcl_DString dstring;
 
 /*
+ * One of the following structures exists for each command created
+ * by TestdelCmd:
+ */
+
+typedef struct DelCmd {
+    Tcl_Interp *interp;		/* Interpreter in which command exists. */
+    char *deleteCmd;		/* Script to execute when command is
+				 * deleted.  Malloc'ed. */
+} DelCmd;
+
+/*
+ * The following structure is used to keep track of modal timeout
+ * handlers created by the "testmodal" command.
+ */
+
+typedef struct Modal {
+    Tcl_Interp *interp;		/* Interpreter in which to set variable
+				 * "x" when timer fires. */
+    char *key;			/* Null-terminated string to store in
+				 * global variable "x" in interp when
+				 * timer fires.  Malloc-ed. */
+} Modal;
+
+/*
  * Forward declarations for procedures defined later in this file:
  */
 
+int			Tcltest_Init _ANSI_ARGS_((Tcl_Interp *interp));
 static int		AsyncHandlerProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int code));
+static void		CleanupTestSetassocdataTests _ANSI_ARGS_((
+			    ClientData clientData, Tcl_Interp *interp));
 static void		CmdDelProc1 _ANSI_ARGS_((ClientData clientData));
 static void		CmdDelProc2 _ANSI_ARGS_((ClientData clientData));
 static int		CmdProc1 _ANSI_ARGS_((ClientData clientData,
@@ -79,58 +99,79 @@ static int		CmdProc2 _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 static void		DelCallbackProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp));
-static int		IntHandlerProc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, int code));
-static void		IntProc();
+static int		DelCmdProc _ANSI_ARGS_((ClientData clientData,
+			    Tcl_Interp *interp, int argc, char **argv));
+static void		DelDeleteProc _ANSI_ARGS_((ClientData clientData));
+static void		ExitProcEven _ANSI_ARGS_((ClientData clientData));
+static void		ExitProcOdd _ANSI_ARGS_((ClientData clientData));
+static void		ModalTimeoutProc _ANSI_ARGS_((ClientData clientData));
 static void		SpecialFree _ANSI_ARGS_((char *blockPtr));
+static int		StaticInitProc _ANSI_ARGS_((Tcl_Interp *interp));
 static int		TestasyncCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int argc, char **argv));
 static int		TestcmdinfoCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int argc, char **argv));
 static int		TestcmdtokenCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestchmodCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
 static int		TestdcallCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestdelCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestdelassocdataCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int argc, char **argv));
 static int		TestdstringCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestexithandlerCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestfileCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestfilewaitCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestfeventCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestfhandleCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestgetassocdataCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestgetplatformCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestinterpdeleteCmd _ANSI_ARGS_((ClientData dummy,
+		            Tcl_Interp *interp, int argc, char **argv));
 static int		TestlinkCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int argc, char **argv));
 static int		TestMathFunc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, Tcl_Value *args,
 			    Tcl_Value *resultPtr));
+static int		TestmodalCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestPanicCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestsetassocdataCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TestsetplatformCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TeststaticpkgCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+static int		TesttranslatefilenameCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
 static int		TestupvarCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int argc, char **argv));
-
+static int		TestwordendCmd _ANSI_ARGS_((ClientData dummy,
+			    Tcl_Interp *interp, int argc, char **argv));
+
 /*
- *----------------------------------------------------------------------
- *
- * main --
- *
- *	This is the main program for the application.
- *
- * Results:
- *	None: Tcl_Main never returns here, so this procedure never
- *	returns either.
- *
- * Side effects:
- *	Whatever the application does.
- *
- *----------------------------------------------------------------------
+ * External (platform specific) initialization routine:
  */
 
-int
-main(argc, argv)
-    int argc;			/* Number of command-line arguments. */
-    char **argv;		/* Values of command-line arguments. */
-{
-    Tcl_Main(argc, argv, Tcl_AppInit);
-    return 0;			/* Needed only to prevent compiler warning. */
-}
+EXTERN int		TclplatformtestInit _ANSI_ARGS_((
+			    Tcl_Interp *interp));
 
 /*
  *----------------------------------------------------------------------
  *
- * Tcl_AppInit --
+ * Tcltest_Init --
  *
  *	This procedure performs application-specific initialization.
  *	Most applications, especially those that incorporate additional
@@ -147,22 +188,11 @@ main(argc, argv)
  */
 
 int
-Tcl_AppInit(interp)
+Tcltest_Init(interp)
     Tcl_Interp *interp;		/* Interpreter for application. */
 {
-    /*
-     * Call the init procedures for included packages.  Each call should
-     * look like this:
-     *
-     * if (Mod_Init(interp) == TCL_ERROR) {
-     *     return TCL_ERROR;
-     * }
-     *
-     * where "Mod" is the name of the module.
-     */
-
-    if (Tcl_Init(interp) == TCL_ERROR) {
-	return TCL_ERROR;
+    if (Tcl_PkgProvide(interp, "Tcltest", TCL_VERSION) == TCL_ERROR) {
+        return TCL_ERROR;
     }
 
     /*
@@ -171,32 +201,70 @@ Tcl_AppInit(interp)
 
     Tcl_CreateCommand(interp, "testasync", TestasyncCmd, (ClientData) 0,
 	    (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testchannel", TclTestChannelCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testchannelevent", TclTestChannelEventCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testchmod", TestchmodCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
     Tcl_CreateCommand(interp, "testcmdtoken", TestcmdtokenCmd, (ClientData) 0,
 	    (Tcl_CmdDeleteProc *) NULL);
     Tcl_CreateCommand(interp, "testcmdinfo", TestcmdinfoCmd, (ClientData) 0,
 	    (Tcl_CmdDeleteProc *) NULL);
     Tcl_CreateCommand(interp, "testdcall", TestdcallCmd, (ClientData) 0,
 	    (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testdel", TestdelCmd, (ClientData) 0,
+	    (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testdelassocdata", TestdelassocdataCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
     Tcl_DStringInit(&dstring);
     Tcl_CreateCommand(interp, "testdstring", TestdstringCmd, (ClientData) 0,
 	    (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testexithandler", TestexithandlerCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testfhandle", TestfhandleCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testfile", TestfileCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testfilewait", TestfilewaitCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testgetassocdata", TestgetassocdataCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testgetplatform", TestgetplatformCmd,
+	    (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testinterpdelete", TestinterpdeleteCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
     Tcl_CreateCommand(interp, "testlink", TestlinkCmd, (ClientData) 0,
 	    (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testmodal", TestmodalCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testsetassocdata", TestsetassocdataCmd,
+            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testsetplatform", TestsetplatformCmd,
+	    (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "teststaticpkg", TeststaticpkgCmd,
+	    (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testtranslatefilename",
+            TesttranslatefilenameCmd, (ClientData) 0,
+            (Tcl_CmdDeleteProc *) NULL);
     Tcl_CreateCommand(interp, "testupvar", TestupvarCmd, (ClientData) 0,
 	    (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testwordend", TestwordendCmd, (ClientData) 0,
+	    (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testfevent", TestfeventCmd, (ClientData) 0,
+            (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateCommand(interp, "testpanic", TestPanicCmd, (ClientData) 0,
+            (Tcl_CmdDeleteProc *) NULL);
     Tcl_CreateMathFunc(interp, "T1", 0, (Tcl_ValueType *) NULL, TestMathFunc,
 	    (ClientData) 123);
     Tcl_CreateMathFunc(interp, "T2", 0, (Tcl_ValueType *) NULL, TestMathFunc,
 	    (ClientData) 345);
 
     /*
-     * Specify a user-specific startup file to invoke if the application
-     * is run interactively.  If this line is deleted then no user-specific
-     * startup file will be run under any conditions.
+     * And finally add any platform specific test commands.
      */
-
-    tcl_RcFileName = "~/.tclshrc";
-    return TCL_OK;
+    
+    return TclplatformtestInit(interp);
 }
 
 /*
@@ -242,7 +310,7 @@ TestasyncCmd(dummy, interp, argc, argv)
 	nextId++;
 	asyncPtr->handler = Tcl_AsyncCreate(AsyncHandlerProc,
 		(ClientData) asyncPtr);
-	asyncPtr->command = ckalloc((unsigned) (strlen(argv[2]) + 1));
+	asyncPtr->command = (char *) ckalloc((unsigned) (strlen(argv[2]) + 1));
 	strcpy(asyncPtr->command, argv[2]);
 	asyncPtr->nextPtr = firstHandler;
 	firstHandler = asyncPtr;
@@ -279,12 +347,6 @@ TestasyncCmd(dummy, interp, argc, argv)
 	    ckfree((char *) asyncPtr);
 	    break;
 	}
-    } else if (strcmp(argv[1], "int") == 0) {
-	if (argc != 2) {
-	    goto wrongNumArgs;
-	}
-	intHandler = Tcl_AsyncCreate(IntHandlerProc, (ClientData) interp);
-	signal(SIGINT, IntProc);
     } else if (strcmp(argv[1], "mark") == 0) {
 	if (argc != 5) {
 	    goto wrongNumArgs;
@@ -331,103 +393,6 @@ AsyncHandlerProc(clientData, interp, code)
     code = Tcl_Eval(interp, cmd);
     ckfree(cmd);
     return code;
-}
-
-static void
-IntProc()
-{
-    Tcl_AsyncMark(intHandler);
-}
-
-static int
-IntHandlerProc(clientData, interp, code)
-    ClientData clientData;	/* Interpreter in which to invoke command. */
-    Tcl_Interp *interp;		/* Interpreter in which command was
-				 * executed, or NULL. */
-    int code;			/* Current return code from command. */
-{
-    char *listArgv[4];
-    char string[20], *cmd;
-
-    interp = (Tcl_Interp *) clientData;
-    listArgv[0] = Tcl_GetVar(interp, "sigIntCmd", TCL_GLOBAL_ONLY);
-    if (listArgv[0] == NULL) {
-	return code;
-    }
-    listArgv[1] = interp->result;
-    sprintf(string, "%d", code);
-    listArgv[2] = string;
-    listArgv[3] = NULL;
-    cmd = Tcl_Merge(3, listArgv);
-    code = Tcl_Eval(interp, cmd);
-    ckfree(cmd);
-    return code;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TestdcallCmd --
- *
- *	This procedure implements the "testdcall" command.  It is used
- *	to test Tcl_CallWhenDeleted.
- *
- * Results:
- *	A standard Tcl result.
- *
- * Side effects:
- *	Creates and deletes interpreters.
- *
- *----------------------------------------------------------------------
- */
-
-	/* ARGSUSED */
-static int
-TestdcallCmd(dummy, interp, argc, argv)
-    ClientData dummy;			/* Not used. */
-    Tcl_Interp *interp;			/* Current interpreter. */
-    int argc;				/* Number of arguments. */
-    char **argv;			/* Argument strings. */
-{
-    int i, id;
-
-    delInterp = Tcl_CreateInterp();
-    Tcl_DStringInit(&delString);
-    for (i = 1; i < argc; i++) {
-	if (Tcl_GetInt(interp, argv[i], &id) != TCL_OK) {
-	    return TCL_ERROR;
-	}
-	if (id < 0) {
-	    Tcl_DontCallWhenDeleted(delInterp, DelCallbackProc,
-		    (ClientData) (-id));
-	} else {
-	    Tcl_CallWhenDeleted(delInterp, DelCallbackProc,
-		    (ClientData) id);
-	}
-    }
-    Tcl_DeleteInterp(delInterp);
-    Tcl_DStringResult(interp, &delString);
-    return TCL_OK;
-}
-
-/*
- * The deletion callback used by TestdcallCmd:
- */
-
-static void
-DelCallbackProc(clientData, interp)
-    ClientData clientData;		/* Numerical value to append to
-					 * delString. */
-    Tcl_Interp *interp;			/* Interpreter being deleted. */
-{
-    int id = (int) clientData;
-    char buffer[10];
-
-    sprintf(buffer, "%d", id);
-    Tcl_DStringAppendElement(&delString, buffer);
-    if (interp != delInterp) {
-	Tcl_DStringAppendElement(&delString, "bogus interpreter argument!");
-    }
 }
 
 /*
@@ -611,6 +576,181 @@ TestcmdtokenCmd(dummy, interp, argc, argv)
 /*
  *----------------------------------------------------------------------
  *
+ * TestdcallCmd --
+ *
+ *	This procedure implements the "testdcall" command.  It is used
+ *	to test Tcl_CallWhenDeleted.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Creates and deletes interpreters.
+ *
+ *----------------------------------------------------------------------
+ */
+
+	/* ARGSUSED */
+static int
+TestdcallCmd(dummy, interp, argc, argv)
+    ClientData dummy;			/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    int i, id;
+
+    delInterp = Tcl_CreateInterp();
+    Tcl_DStringInit(&delString);
+    for (i = 1; i < argc; i++) {
+	if (Tcl_GetInt(interp, argv[i], &id) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	if (id < 0) {
+	    Tcl_DontCallWhenDeleted(delInterp, DelCallbackProc,
+		    (ClientData) (-id));
+	} else {
+	    Tcl_CallWhenDeleted(delInterp, DelCallbackProc,
+		    (ClientData) id);
+	}
+    }
+    Tcl_DeleteInterp(delInterp);
+    Tcl_DStringResult(interp, &delString);
+    return TCL_OK;
+}
+
+/*
+ * The deletion callback used by TestdcallCmd:
+ */
+
+static void
+DelCallbackProc(clientData, interp)
+    ClientData clientData;		/* Numerical value to append to
+					 * delString. */
+    Tcl_Interp *interp;			/* Interpreter being deleted. */
+{
+    int id = (int) clientData;
+    char buffer[10];
+
+    sprintf(buffer, "%d", id);
+    Tcl_DStringAppendElement(&delString, buffer);
+    if (interp != delInterp) {
+	Tcl_DStringAppendElement(&delString, "bogus interpreter argument!");
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestdelCmd --
+ *
+ *	This procedure implements the "testdcall" command.  It is used
+ *	to test Tcl_CallWhenDeleted.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Creates and deletes interpreters.
+ *
+ *----------------------------------------------------------------------
+ */
+
+	/* ARGSUSED */
+static int
+TestdelCmd(dummy, interp, argc, argv)
+    ClientData dummy;			/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    DelCmd *dPtr;
+    Tcl_Interp *slave;
+
+    if (argc != 4) {
+	interp->result = "wrong # args";
+	return TCL_ERROR;
+    }
+
+    slave = Tcl_GetSlave(interp, argv[1]);
+    if (slave == NULL) {
+	return TCL_ERROR;
+    }
+
+    dPtr = (DelCmd *) ckalloc(sizeof(DelCmd));
+    dPtr->interp = interp;
+    dPtr->deleteCmd = (char *) ckalloc((unsigned) (strlen(argv[3]) + 1));
+    strcpy(dPtr->deleteCmd, argv[3]);
+
+    Tcl_CreateCommand(slave, argv[2], DelCmdProc, (ClientData) dPtr,
+	    DelDeleteProc);
+    return TCL_OK;
+}
+
+static int
+DelCmdProc(clientData, interp, argc, argv)
+    ClientData clientData;		/* String result to return. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    DelCmd *dPtr = (DelCmd *) clientData;
+
+    Tcl_AppendResult(interp, dPtr->deleteCmd, (char *) NULL);
+    ckfree(dPtr->deleteCmd);
+    ckfree((char *) dPtr);
+    return TCL_OK;
+}
+
+static void
+DelDeleteProc(clientData)
+    ClientData clientData;		/* String command to evaluate. */
+{
+    DelCmd *dPtr = (DelCmd *) clientData;
+
+    Tcl_Eval(dPtr->interp, dPtr->deleteCmd);
+    Tcl_ResetResult(dPtr->interp);
+    ckfree(dPtr->deleteCmd);
+    ckfree((char *) dPtr);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestdelassocdataCmd --
+ *
+ *	This procedure implements the "testdelassocdata" command. It is used
+ *	to test Tcl_DeleteAssocData.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Deletes an association between a key and associated data from an
+ *	interpreter.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestdelassocdataCmd(clientData, interp, argc, argv)
+    ClientData clientData;		/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    if (argc != 2) {
+        Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
+                " data_key\"", (char *) NULL);
+        return TCL_ERROR;
+    }
+    Tcl_DeleteAssocData(interp, argv[1]);
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TestdstringCmd --
  *
  *	This procedure implements the "testdstring" command.  It is used
@@ -677,11 +817,11 @@ TestdstringCmd(dummy, interp, argc, argv)
 	} else if (strcmp(argv[2], "staticlarge") == 0) {
 	    interp->result = "first0 first1 first2 first3 first4 first5 first6 first7 first8 first9\nsecond0 second1 second2 second3 second4 second5 second6 second7 second8 second9\nthird0 third1 third2 third3 third4 third5 third6 third7 third8 third9\nfourth0 fourth1 fourth2 fourth3 fourth4 fourth5 fourth6 fourth7 fourth8 fourth9\nfifth0 fifth1 fifth2 fifth3 fifth4 fifth5 fifth6 fifth7 fifth8 fifth9\nsixth0 sixth1 sixth2 sixth3 sixth4 sixth5 sixth6 sixth7 sixth8 sixth9\nseventh0 seventh1 seventh2 seventh3 seventh4 seventh5 seventh6 seventh7 seventh8 seventh9\n";
 	} else if (strcmp(argv[2], "free") == 0) {
-	    interp->result = ckalloc(100);
-	    interp->freeProc = (Tcl_FreeProc *) free;
+	    interp->result = (char *) ckalloc(100);
+	    interp->freeProc = TCL_DYNAMIC;
 	    strcpy(interp->result, "This is a malloc-ed string");
 	} else if (strcmp(argv[2], "special") == 0) {
-	    interp->result = ckalloc(100);
+	    interp->result = (char *) ckalloc(100);
 	    interp->result += 4;
 	    interp->freeProc = SpecialFree;
 	    strcpy(interp->result, "This is a specially-allocated string");
@@ -738,6 +878,383 @@ static void SpecialFree(blockPtr)
 /*
  *----------------------------------------------------------------------
  *
+ * TestexithandlerCmd --
+ *
+ *	This procedure implements the "testexithandler" command. It is
+ *	used to test Tcl_CreateExitHandler and Tcl_DeleteExitHandler.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestexithandlerCmd(clientData, interp, argc, argv)
+    ClientData clientData;		/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    int value;
+
+    if (argc != 3) {
+	Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
+                " create|delete value\"", (char *) NULL);
+        return TCL_ERROR;
+    }
+    if (Tcl_GetInt(interp, argv[2], &value) != TCL_OK) {
+	return TCL_ERROR;
+    }
+    if (strcmp(argv[1], "create") == 0) {
+	Tcl_CreateExitHandler((value & 1) ? ExitProcOdd : ExitProcEven,
+		(ClientData) value);
+    } else if (strcmp(argv[1], "delete") == 0) {
+	Tcl_DeleteExitHandler((value & 1) ? ExitProcOdd : ExitProcEven,
+		(ClientData) value);
+    } else {
+	Tcl_AppendResult(interp, "bad option \"", argv[1],
+		"\": must be create or delete", (char *) NULL);
+	return TCL_ERROR;
+    }
+    return TCL_OK;
+}
+
+static void
+ExitProcOdd(clientData)
+    ClientData clientData;		/* Integer value to print. */
+{
+    char buf[100];
+
+    sprintf(buf, "odd %d\n", (int) clientData);
+    write(1, buf, strlen(buf));
+}
+
+static void
+ExitProcEven(clientData)
+    ClientData clientData;		/* Integer value to print. */
+{
+    char buf[100];
+
+    sprintf(buf, "even %d\n", (int) clientData);
+    write(1, buf, strlen(buf));
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestfhandleCmd --
+ *
+ *	This procedure implements the "testfhandle" command.  It is
+ *	used to test Tcl_GetFile, Tcl_FreeFile, and
+ *	Tcl_GetFileInfo.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestfhandleCmd(clientData, interp, argc, argv)
+    ClientData clientData;		/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+#define MAX_FHANDLES 10
+    static Tcl_File testHandles[MAX_FHANDLES];
+    static initialized = 0;
+
+    int i, index, type;
+    ClientData data;
+
+    if (!initialized) {
+	for (i = 0; i < MAX_FHANDLES; i++) {
+	    testHandles[i] = NULL;
+	}
+	initialized = 1;
+    }
+    if (argc < 2) {
+	Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
+                " option ... \"", (char *) NULL);
+        return TCL_ERROR;
+    }
+    index = -1;
+    if (argc >= 3) {
+	if (Tcl_GetInt(interp, argv[2], &index) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	if (index >= MAX_FHANDLES) {
+	    Tcl_AppendResult(interp, "bad index ", argv[2], (char *) NULL);
+	    return TCL_ERROR;
+	}
+    }
+    if (strcmp(argv[1], "compare") == 0) {
+	int index2;
+	if (argc != 4) {
+	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
+		    argv[0], " index index\"", (char *) NULL);
+	    return TCL_ERROR;
+	}
+	if (Tcl_GetInt(interp, argv[3], (int *) &index2) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	if (testHandles[index] == testHandles[index2]) {
+	    sprintf(interp->result, "equal");
+	} else {
+	    sprintf(interp->result, "notequal");
+	}
+    } else if (strcmp(argv[1], "get") == 0) {
+	if (argc != 5) {
+	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
+		    argv[0], " index data type\"", (char *) NULL);
+	    return TCL_ERROR;
+	}
+	if (Tcl_GetInt(interp, argv[3], (int *) &data) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	if (Tcl_GetInt(interp, argv[4], &type) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	testHandles[index] = Tcl_GetFile(data, type);
+    } else if (strcmp(argv[1], "free") == 0) {
+	if (argc != 3) {
+	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
+		    argv[0], " index\"", (char *) NULL);
+	    return TCL_ERROR;
+	}
+	Tcl_FreeFile(testHandles[index]);
+    } else if (strcmp(argv[1], "info1") == 0) {
+	if (argc != 3) {
+	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
+		    argv[0], " index\"", (char *) NULL);
+	    return TCL_ERROR;
+	}
+	data = Tcl_GetFileInfo(testHandles[index], NULL);
+	sprintf(interp->result, "%d", (int)data);
+    } else if (strcmp(argv[1], "info2") == 0) {
+	if (argc != 3) {
+	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
+		    argv[0], " index\"", (char *) NULL);
+	    return TCL_ERROR;
+	}
+	data = Tcl_GetFileInfo(testHandles[index], &type);
+	sprintf(interp->result, "%d %d", (int)data, type);
+    } else {
+	Tcl_AppendResult(interp, "bad option \"", argv[1],
+		"\": must be compare, get, free, info1, or info2",
+		(char *) NULL);
+	return TCL_ERROR;
+    }
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestfilewaitCmd --
+ *
+ *	This procedure implements the "testfilewait" command. It is
+ *	used to test TclWaitForFile.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestfilewaitCmd(clientData, interp, argc, argv)
+    ClientData clientData;		/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    int mask, result, timeout;
+    Tcl_Channel channel;
+    Tcl_File file;
+
+    if (argc != 4) {
+	Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
+		" file readable|writable|both timeout\"", (char *) NULL);
+	return TCL_ERROR;
+    }
+    channel = Tcl_GetChannel(interp, argv[1], NULL);
+    if (channel == NULL) {
+	return TCL_ERROR;
+    }
+    if (strcmp(argv[2], "readable") == 0) {
+	mask = TCL_READABLE;
+    } else if (strcmp(argv[2], "writable") == 0){
+	mask = TCL_WRITABLE;
+    } else if (strcmp(argv[2], "both") == 0){
+	mask = TCL_WRITABLE|TCL_READABLE;
+    } else {
+	Tcl_AppendResult(interp, "bad argument \"", argv[2],
+		"\": must be readable, writable, or both", (char *) NULL);
+	return TCL_ERROR;
+    }
+    file = Tcl_GetChannelFile(channel, 
+	    (mask & TCL_READABLE) ? TCL_READABLE : TCL_WRITABLE);
+    if (file == NULL) {
+	interp->result = "couldn't get channel file";
+	return TCL_ERROR;
+    }
+    if (Tcl_GetInt(interp, argv[3], &timeout) != TCL_OK) {
+	return TCL_ERROR;
+    }
+    result = TclWaitForFile(file, mask, timeout);
+    if (result & TCL_READABLE) {
+	Tcl_AppendElement(interp, "readable");
+    }
+    if (result & TCL_WRITABLE) {
+	Tcl_AppendElement(interp, "writable");
+    }
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestgetassocdataCmd --
+ *
+ *	This procedure implements the "testgetassocdata" command. It is
+ *	used to test Tcl_GetAssocData.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestgetassocdataCmd(clientData, interp, argc, argv)
+    ClientData clientData;		/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    char *res;
+    
+    if (argc != 2) {
+        Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
+                " data_key\"", (char *) NULL);
+        return TCL_ERROR;
+    }
+    res = (char *) Tcl_GetAssocData(interp, argv[1], NULL);
+    if (res != NULL) {
+        Tcl_AppendResult(interp, res, NULL);
+    }
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestgetplatformCmd --
+ *
+ *	This procedure implements the "testgetplatform" command. It is
+ *	used to retrievel the value of the tclPlatform global variable.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestgetplatformCmd(clientData, interp, argc, argv)
+    ClientData clientData;		/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    static char *platformStrings[] = { "unix", "mac", "windows" };
+    TclPlatformType *platform;
+
+#ifdef __WIN32__
+    platform = TclWinGetPlatform();
+#else
+    platform = &tclPlatform;
+#endif
+    
+    if (argc != 1) {
+        Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
+		(char *) NULL);
+        return TCL_ERROR;
+    }
+
+    Tcl_AppendResult(interp, platformStrings[*platform], NULL);
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestinterpdeleteCmd --
+ *
+ *	This procedure tests the code in tclInterp.c that deals with
+ *	interpreter deletion. It deletes a user-specified interpreter
+ *	from the hierarchy, and subsequent code checks integrity.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Deletes one or more interpreters.
+ *
+ *----------------------------------------------------------------------
+ */
+
+	/* ARGSUSED */
+static int
+TestinterpdeleteCmd(dummy, interp, argc, argv)
+    ClientData dummy;			/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    Tcl_Interp *slaveToDelete;
+
+    if (argc != 2) {
+        Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
+                " path\"", (char *) NULL);
+        return TCL_ERROR;
+    }
+    if (argv[1][0] == '\0') {
+        Tcl_AppendResult(interp, "cannot delete current interpreter",
+                (char *) NULL);
+        return TCL_ERROR;
+    }
+    slaveToDelete = Tcl_GetSlave(interp, argv[1]);
+    if (slaveToDelete == (Tcl_Interp *) NULL) {
+        Tcl_AppendResult(interp, "could not find interpreter \"",
+                argv[1], "\"", (char *) NULL);
+        return TCL_ERROR;
+    }
+    Tcl_DeleteInterp(slaveToDelete);
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TestlinkCmd --
  *
  *	This procedure implements the "testlink" command.  It is used
@@ -765,6 +1282,7 @@ TestlinkCmd(dummy, interp, argc, argv)
     static int boolVar = 4;
     static double realVar = 1.23;
     static char *stringVar = NULL;
+    static int created = 0;
     char buffer[TCL_DOUBLE_SPACE];
     int writable, flag;
 
@@ -774,6 +1292,13 @@ TestlinkCmd(dummy, interp, argc, argv)
 	return TCL_ERROR;
     }
     if (strcmp(argv[1], "create") == 0) {
+	if (created) {
+	    Tcl_UnlinkVar(interp, "int");
+	    Tcl_UnlinkVar(interp, "real");
+	    Tcl_UnlinkVar(interp, "bool");
+	    Tcl_UnlinkVar(interp, "string");
+	}
+	created = 1;
 	if (Tcl_GetBoolean(interp, argv[2], &writable) != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -811,6 +1336,7 @@ TestlinkCmd(dummy, interp, argc, argv)
 	Tcl_UnlinkVar(interp, "real");
 	Tcl_UnlinkVar(interp, "bool");
 	Tcl_UnlinkVar(interp, "string");
+	created = 0;
     } else if (strcmp(argv[1], "get") == 0) {
 	sprintf(buffer, "%d", intVar);
 	Tcl_AppendElement(interp, buffer);
@@ -848,13 +1374,50 @@ TestlinkCmd(dummy, interp, argc, argv)
 	    if (strcmp(argv[5], "-") == 0) {
 		stringVar = NULL;
 	    } else {
-		stringVar = ckalloc((unsigned) (strlen(argv[5]) + 1));
+		stringVar = (char *) ckalloc((unsigned) (strlen(argv[5]) + 1));
 		strcpy(stringVar, argv[5]);
 	    }
 	}
+    } else if (strcmp(argv[1], "update") == 0) {
+	if (argc != 6) {
+	    Tcl_AppendResult(interp, "wrong # args: should be \"",
+		argv[0], " ", argv[1],
+		"intValue realValue boolValue stringValue\"", (char *) NULL);
+	    return TCL_ERROR;
+	}
+	if (argv[2][0] != 0) {
+	    if (Tcl_GetInt(interp, argv[2], &intVar) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    Tcl_UpdateLinkedVar(interp, "int");
+	}
+	if (argv[3][0] != 0) {
+	    if (Tcl_GetDouble(interp, argv[3], &realVar) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    Tcl_UpdateLinkedVar(interp, "real");
+	}
+	if (argv[4][0] != 0) {
+	    if (Tcl_GetInt(interp, argv[4], &boolVar) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    Tcl_UpdateLinkedVar(interp, "bool");
+	}
+	if (argv[5][0] != 0) {
+	    if (stringVar != NULL) {
+		ckfree(stringVar);
+	    }
+	    if (strcmp(argv[5], "-") == 0) {
+		stringVar = NULL;
+	    } else {
+		stringVar = (char *) ckalloc((unsigned) (strlen(argv[5]) + 1));
+		strcpy(stringVar, argv[5]);
+	    }
+	    Tcl_UpdateLinkedVar(interp, "string");
+	}
     } else {
 	Tcl_AppendResult(interp, "bad option \"", argv[1],
-		"\": should be create, delete, get, or set",
+		"\": should be create, delete, get, set, or update",
 		(char *) NULL);
 	return TCL_ERROR;
     }
@@ -888,6 +1451,307 @@ TestMathFunc(clientData, interp, args, resultPtr)
 {
     resultPtr->type = TCL_INT;
     resultPtr->intValue = (int) clientData;
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * CleanupTestSetassocdataTests --
+ *
+ *	This function is called when an interpreter is deleted to clean
+ *	up any data left over from running the testsetassocdata command.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Releases storage.
+ *
+ *----------------------------------------------------------------------
+ */
+	/* ARGSUSED */
+static void
+CleanupTestSetassocdataTests(clientData, interp)
+    ClientData clientData;		/* Data to be released. */
+    Tcl_Interp *interp;			/* Interpreter being deleted. */
+{
+    ckfree((char *) clientData);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestmodalCmd --
+ *
+ *	This procedure implements the "testmodal" command. It is used
+ *	to test modal timeouts created by Tcl_CreateModalTimeout.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Modifies or creates an association between a key and associated
+ *	data for this interpreter.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestmodalCmd(clientData, interp, argc, argv)
+    ClientData clientData;		/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+#define NUM_MODALS 10
+    static Modal modals[NUM_MODALS];
+    static int numModals = 0;
+    int ms;
+
+    if (argc < 2) {
+        Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
+                " option ?arg arg ...?\"", (char *) NULL);
+        return TCL_ERROR;
+    }
+
+    if (strcmp(argv[1], "create") == 0) {
+	if (argc != 4) {
+	    Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
+		    " create ms key\"", (char *) NULL);
+	    return TCL_ERROR;
+	}
+	if (numModals >= NUM_MODALS) {
+	    interp->result = "too many modal timeouts";
+	    return TCL_ERROR;
+	}
+	if (Tcl_GetInt(interp, argv[2], &ms) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	modals[numModals].interp = interp;
+	modals[numModals].key = (char *) ckalloc((unsigned)
+		(strlen(argv[3]) + 1));
+	strcpy(modals[numModals].key, argv[3]);
+	Tcl_CreateModalTimeout(ms, ModalTimeoutProc,
+		(ClientData) &modals[numModals]);
+	numModals += 1;
+    } else if (strcmp(argv[1], "delete") == 0) {
+	if (numModals == 0) {
+	    interp->result = "no more modal timeouts";
+	    return TCL_ERROR;
+	}
+	numModals -= 1;
+	ckfree(modals[numModals].key);
+	Tcl_DeleteModalTimeout(ModalTimeoutProc,
+		(ClientData) &modals[numModals]);
+    } else if (strcmp(argv[1], "event") == 0) {
+	Tcl_DoOneEvent(TCL_TIMER_EVENTS|TCL_DONT_WAIT);
+    } else if (strcmp(argv[1], "eventnotimers") == 0) {
+	Tcl_DoOneEvent(0x100000|TCL_DONT_WAIT);
+    } else {
+	Tcl_AppendResult(interp, "bad option \"", argv[1],
+		"\": must be create, delete, event, or eventnotimers",
+		(char *) NULL);
+	return TCL_ERROR;
+    }
+    return TCL_OK;
+}
+
+static void
+ModalTimeoutProc(clientData)
+    ClientData clientData;	/* Pointer to Modal structure. */
+{
+    Modal *modalPtr = (Modal *) clientData;
+    Tcl_SetVar(modalPtr->interp, "x", modalPtr->key,
+	    TCL_GLOBAL_ONLY|TCL_APPEND_VALUE|TCL_LIST_ELEMENT);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestsetassocdataCmd --
+ *
+ *	This procedure implements the "testsetassocdata" command. It is used
+ *	to test Tcl_SetAssocData.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Modifies or creates an association between a key and associated
+ *	data for this interpreter.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestsetassocdataCmd(clientData, interp, argc, argv)
+    ClientData clientData;		/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    char *buf;
+    
+    if (argc != 3) {
+        Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
+                " data_key data_item\"", (char *) NULL);
+        return TCL_ERROR;
+    }
+
+    buf = ckalloc((unsigned) strlen(argv[2]) + 1);
+    strcpy(buf, argv[2]);
+    
+    Tcl_SetAssocData(interp, argv[1], CleanupTestSetassocdataTests, 
+	(ClientData) buf);
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestsetplatformCmd --
+ *
+ *	This procedure implements the "testsetplatform" command. It is
+ *	used to change the tclPlatform global variable so all file
+ *	name conversions can be tested on a single platform.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Sets the tclPlatform global variable.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestsetplatformCmd(clientData, interp, argc, argv)
+    ClientData clientData;		/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    size_t length;
+    TclPlatformType *platform;
+
+#ifdef __WIN32__
+    platform = TclWinGetPlatform();
+#else
+    platform = &tclPlatform;
+#endif
+    
+    if (argc != 2) {
+        Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
+                " platform\"", (char *) NULL);
+        return TCL_ERROR;
+    }
+
+    length = strlen(argv[1]);
+    if (strncmp(argv[1], "unix", length) == 0) {
+	*platform = TCL_PLATFORM_UNIX;
+    } else if (strncmp(argv[1], "mac", length) == 0) {
+	*platform = TCL_PLATFORM_MAC;
+    } else if (strncmp(argv[1], "windows", length) == 0) {
+	*platform = TCL_PLATFORM_WINDOWS;
+    } else {
+        Tcl_AppendResult(interp, "unsupported platform: should be one of ",
+		"unix, mac, or windows", (char *) NULL);
+	return TCL_ERROR;
+    }
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TeststaticpkgCmd --
+ *
+ *	This procedure implements the "teststaticpkg" command.
+ *	It is used to test the procedure Tcl_StaticPackage.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	When the packge given by argv[1] is loaded into an interpeter,
+ *	variable "x" in that interpreter is set to "loaded".
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TeststaticpkgCmd(dummy, interp, argc, argv)
+    ClientData dummy;			/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    int safe, loaded;
+
+    if (argc != 4) {
+	Tcl_AppendResult(interp, "wrong # arguments: should be \"",
+		argv[0], " pkgName safe loaded\"", (char *) NULL);
+	return TCL_ERROR;
+    }
+    if (Tcl_GetInt(interp, argv[2], &safe) != TCL_OK) {
+	return TCL_ERROR;
+    }
+    if (Tcl_GetInt(interp, argv[3], &loaded) != TCL_OK) {
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage((loaded) ? interp : NULL, argv[1], StaticInitProc,
+	    (safe) ? StaticInitProc : NULL);
+    return TCL_OK;
+}
+
+static int
+StaticInitProc(interp)
+    Tcl_Interp *interp;			/* Interpreter in which package
+					 * is supposedly being loaded. */
+{
+    Tcl_SetVar(interp, "x", "loaded", TCL_GLOBAL_ONLY);
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TesttranslatefilenameCmd --
+ *
+ *	This procedure implements the "testtranslatefilename" command.
+ *	It is used to test the Tcl_TranslateFileName command.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TesttranslatefilenameCmd(dummy, interp, argc, argv)
+    ClientData dummy;			/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    Tcl_DString buffer;
+    char *result;
+
+    if (argc != 2) {
+	Tcl_AppendResult(interp, "wrong # arguments: should be \"",
+		argv[0], " path\"", (char *) NULL);
+	return TCL_ERROR;
+    }
+    result = Tcl_TranslateFileName(interp, argv[1], &buffer);
+    if (result == NULL) {
+	return TCL_ERROR;
+    }
+    Tcl_AppendResult(interp, result, NULL);
+    Tcl_DStringFree(&buffer);
     return TCL_OK;
 }
 
@@ -930,4 +1794,275 @@ TestupvarCmd(dummy, interp, argc, argv)
 		(argv[3][0] == 0) ? (char *) NULL : argv[3], argv[4],
 		(strcmp(argv[5], "global") == 0) ? TCL_GLOBAL_ONLY : 0);
     }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestwordendCmd --
+ *
+ *	This procedure implements the "testwordend" command.  It is used
+ *	to test TclWordEnd.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+	/* ARGSUSED */
+static int
+TestwordendCmd(dummy, interp, argc, argv)
+    ClientData dummy;			/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    if (argc != 2) {
+	Tcl_AppendResult(interp, "wrong # arguments: should be \"",
+		argv[0], " string\"", (char *) NULL);
+	return TCL_ERROR;
+    }
+    Tcl_SetResult(interp, TclWordEnd(argv[1], 0, (int *) NULL), TCL_VOLATILE);
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestfeventCmd --
+ *
+ *	This procedure implements the "testfevent" command.  It is
+ *	used for testing the "fileevent" command.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Creates and deletes interpreters.
+ *
+ *----------------------------------------------------------------------
+ */
+
+	/* ARGSUSED */
+static int
+TestfeventCmd(clientData, interp, argc, argv)
+    ClientData clientData;		/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    static Tcl_Interp *interp2 = NULL;
+    int code;
+    Tcl_Channel chan;
+
+    if (argc < 2) {
+	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
+		" option ?arg arg ...?", (char *) NULL);
+	return TCL_ERROR;
+    }
+    if (strcmp(argv[1], "cmd") == 0) {
+	if (argc != 3) {
+	    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
+		    " cmd script", (char *) NULL);
+	    return TCL_ERROR;
+	}
+        if (interp2 != (Tcl_Interp *) NULL) {
+            code = Tcl_GlobalEval(interp2, argv[2]);
+            interp->result = interp2->result;
+            return code;
+        } else {
+            Tcl_AppendResult(interp,
+                    "called \"testfevent code\" before \"testfevent create\"",
+                    (char *) NULL);
+            return TCL_ERROR;
+        }
+    } else if (strcmp(argv[1], "create") == 0) {
+	if (interp2 != NULL) {
+            Tcl_DeleteInterp(interp2);
+	}
+        interp2 = Tcl_CreateInterp();
+	return TCL_OK;
+    } else if (strcmp(argv[1], "delete") == 0) {
+	if (interp2 != NULL) {
+            Tcl_DeleteInterp(interp2);
+	}
+	interp2 = NULL;
+    } else if (strcmp(argv[1], "share") == 0) {
+        if (interp2 != NULL) {
+            chan = Tcl_GetChannel(interp, argv[2], NULL);
+            if (chan == (Tcl_Channel) NULL) {
+                return TCL_ERROR;
+            }
+            Tcl_RegisterChannel(interp2, chan);
+        }
+    }
+    
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TestPanicCmd --
+ *
+ *	Calls the panic routine.
+ *
+ * Results:
+ *      Always returns TCL_OK. 
+ *
+ * Side effects:
+ *	May exit application.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+TestPanicCmd(dummy, interp, argc, argv)
+    ClientData dummy;			/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    char *argString;
+    
+    /*
+     *  Put the arguments into a var args structure
+     *  Append all of the arguments together separated by spaces
+     */
+
+    argString = Tcl_Merge(argc-1, argv+1);
+    panic(argString);
+    ckfree(argString);
+ 
+    return TCL_OK;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TestchmodCmd --
+ *
+ *	Implements the "testchmod" cmd.  Used when testing "file"
+ *	command.  The only attribute used by the Mac and Windows platforms
+ *	is the user write flag; if this is not set, the file is
+ *	made read-only.  Otehrwise, the file is made read-write.
+ *
+ * Results:
+ *	A standard Tcl result.
+ *
+ * Side effects:
+ *	Changes permissions of specified files.
+ *
+ *---------------------------------------------------------------------------
+ */
+ 
+static int
+TestchmodCmd(dummy, interp, argc, argv)
+    ClientData dummy;			/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    int i, mode;
+    char *rest;
+
+    if (argc < 2) {
+	usage:
+	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
+		" mode file ?file ...?", (char *) NULL);
+	return TCL_ERROR;
+    }
+
+    mode = (int) strtol(argv[1], &rest, 8);
+    if (*rest != '\0') {
+	goto usage;
+    }
+
+    for (i = 2; i < argc; i++) {
+        Tcl_DString buffer;
+        
+        argv[i] = Tcl_TranslateFileName(interp, argv[i], &buffer);
+        if (argv[i] == NULL) {
+            return TCL_ERROR;
+        }
+	if (chmod(argv[i], (unsigned) mode) != 0) {
+	    Tcl_AppendResult(interp, argv[i], ": ", Tcl_PosixError(interp),
+		    (char *) NULL);
+	    return TCL_ERROR;
+	}
+        Tcl_DStringFree(&buffer);
+    }
+    return TCL_OK;
+}
+
+static int
+TestfileCmd(dummy, interp, argc, argv)
+    ClientData dummy;			/* Not used. */
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int argc;				/* Number of arguments. */
+    char **argv;			/* Argument strings. */
+{
+    int force, i, j, result;
+    Tcl_DString error, name[2];
+    
+    if (argc < 3) {
+	return TCL_ERROR;
+    }
+
+    force = 0;
+    i = 2;
+    if (strcmp(argv[2], "-force") == 0) {
+        force = 1;
+	i = 3;
+    }
+
+    Tcl_DStringInit(&name[0]);
+    Tcl_DStringInit(&name[1]);
+    Tcl_DStringInit(&error);
+
+    if (argc - i > 2) {
+	return TCL_ERROR;
+    }
+
+    for (j = i; j < argc; j++) {
+        argv[j] = Tcl_TranslateFileName(interp, argv[j], &name[j - i]);
+	if (argv[j] == NULL) {
+	    return TCL_ERROR;
+	}
+    }
+
+    if (strcmp(argv[1], "mv") == 0) {
+	result = TclpRenameFile(argv[i], argv[i + 1]);
+    } else if (strcmp(argv[1], "cp") == 0) {
+        result = TclpCopyFile(argv[i], argv[i + 1]);
+    } else if (strcmp(argv[1], "rm") == 0) {
+        result = TclpDeleteFile(argv[i]);
+    } else if (strcmp(argv[1], "mkdir") == 0) {
+        result = TclpCreateDirectory(argv[i]);
+    } else if (strcmp(argv[1], "cpdir") == 0) {
+        result = TclpCopyDirectory(argv[i], argv[i + 1], &error);
+    } else if (strcmp(argv[1], "rmdir") == 0) {
+        result = TclpRemoveDirectory(argv[i], force, &error);
+    } else {
+        result = TCL_ERROR;
+	goto end;
+    }
+	
+    if (result != TCL_OK) {
+	if (Tcl_DStringValue(&error)[0] != '\0') {
+	    Tcl_AppendResult(interp, Tcl_DStringValue(&error), " ", NULL);
+	}
+	Tcl_AppendResult(interp, Tcl_ErrnoId(), (char *) NULL);
+    }
+
+    end:
+    Tcl_DStringFree(&error);
+    Tcl_DStringFree(&name[0]);
+    Tcl_DStringFree(&name[1]);
+
+    return result;
 }
