@@ -38,6 +38,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "db.h"
 
+#include "./debug.h"
+
 
 
 /*
@@ -101,12 +103,15 @@ int			noisy;
 			name[0] == dp->d_namep[0]  &&	/* speed */
 			name[1] == dp->d_namep[1]  &&	/* speed */
 			strcmp( name, dp->d_namep ) == 0
-		)
+		)  {
+			if(rt_g.debug&DEBUG_DB) rt_log("db_lookup(%s) x%x\n", name, dp);
 			return(dp);
+		}
 	}
 
 	if( noisy )
 		rt_log("db_lookup:  could not find '%s'\n", name );
+	if(rt_g.debug&DEBUG_DB) rt_log("db_lookup(%s) failed\n", name);
 	return( DIR_NULL );
 }
 
