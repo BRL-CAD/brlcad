@@ -3701,6 +3701,59 @@ struct edgeuse	*eu;
 }
 
 /*
+ *			N M G _ E B R E A K E R
+ *
+ *  Like nmg_ebreak(), but with edge radial sorting when sharing occurs.
+ *
+ *  Use nmg_ebreak() to break an existing edge on a vertex, preserving edge
+ *  geometry on both new edges.
+ *  If the edge was broken on an existing vertex,
+ *  search both old and new edgeuses to see if they need to be joined
+ *  with an existing edgeuse that shared the same vertices.
+ */
+struct edgeuse *
+nmg_ebreaker(v, eu, tol)
+struct vertex		*v;			/* May be NULL */
+struct edgeuse		*eu;
+CONST struct rt_tol	*tol;
+{
+	struct edgeuse	*new_eu;
+	struct edgeuse	*oeu;
+
+	NMG_CK_EDGEUSE(eu);
+	RT_CK_TOL(tol);
+
+	new_eu = nmg_ebreak(v, eu);
+	if( v )  {
+
+		/* This edge was broken on an existing vertex.  Search */
+		oeu = nmg_findeu( eu->vu_p->v_p, eu->eumate_p->vu_p->v_p,
+			(struct shell *)NULL, eu, 0 );
+		if( oeu )  {
+			if (rt_g.NMG_debug & DEBUG_BASIC)  {
+				rt_log("nmg_ebreaker() joining eu=x%x to oeu=x%x\n",
+					eu, oeu );
+			}
+			nmg_radial_join_eu( eu, oeu, tol );
+		}
+
+		oeu = nmg_findeu( new_eu->vu_p->v_p, new_eu->eumate_p->vu_p->v_p,
+			(struct shell *)NULL, new_eu, 0 );
+		if( oeu )  {
+			if (rt_g.NMG_debug & DEBUG_BASIC)  {
+				rt_log("nmg_ebreaker() joining new_eu=x%x to oeu=x%x\n",
+					new_eu, oeu );
+			}
+			nmg_radial_join_eu( new_eu, oeu, tol );
+		}
+	}
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_ebreaker( v=x%x, eu=x%x ) new_eu=x%x\n", v, eu, new_eu);
+	}
+	return new_eu;
+}
+
+/*
  *			N M G _ E 2 B R E A K
  *
  *  Given two edges that are known to intersect someplace other than
