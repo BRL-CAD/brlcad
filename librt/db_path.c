@@ -54,9 +54,7 @@ db_full_path_init( struct db_full_path *pathp )
  *			D B _ A D D _ N O D E _ T O _ F U L L _ P A T H
  */
 void
-db_add_node_to_full_path( pp, dp )
-register struct db_full_path	*pp;
-register struct directory	*dp;
+db_add_node_to_full_path( struct db_full_path *pp, struct directory *dp )
 {
 	RT_CK_FULL_PATH( pp );
 
@@ -103,11 +101,11 @@ register CONST struct db_full_path	*oldp;
  *			D B _ E X T E N D _ F U L L _ P A T H
  *
  *  Extend "pathp" so that it can grow from current fp_len by incr more names.
+ *
+ *  This is intended primarily as an internal method.
  */
 void
-db_extend_full_path( pathp, incr )
-register struct db_full_path	*pathp;
-int				incr;
+db_extend_full_path( struct db_full_path *pathp, int incr )
 {
 	int		newlen;
 
@@ -183,8 +181,7 @@ int					start;
  *  Caller is responsible for freeing the returned buffer.
  */
 char *
-db_path_to_string( pp )
-register CONST struct db_full_path	*pp;
+db_path_to_string( const struct db_full_path *pp )
 {
 	register char	*cp;
 	char	*buf;
@@ -217,12 +214,34 @@ register CONST struct db_full_path	*pp;
 }
 
 /*
+ *			D B _ P A T H _ T O _ V L S
+ *
+ *  Append a string representation of the path onto the vls.
+ *  Must have exactly the same formattting conventions as
+ *  db_path_to_string().
+ */
+void
+db_path_to_vls( struct bu_vls *str, const struct db_full_path *pp )
+{
+	register int i;
+
+	BU_CK_VLS(str);
+	RT_CK_FULL_PATH( pp );
+	
+	for( i=0; i < pp->fp_len; i++ )  {
+		bu_vls_putc( str, '/' );
+		if( pp->fp_names[i] )
+			bu_vls_strcat( str, pp->fp_names[i]->d_namep );
+		else
+			bu_vls_strcat( str, "**NULL**" );
+	}
+}
+
+/*
  *			D B _ P R _ F U L L _ P A T H
  */
 void
-db_pr_full_path( msg, pathp )
-CONST char			*msg;
-CONST struct db_full_path	*pathp;
+db_pr_full_path( const char *msg, const struct db_full_path *pathp )
 {
 	char	*sofar = db_path_to_string(pathp);
 
@@ -355,6 +374,9 @@ CONST char			*CONST*argv;
 
 /*
  *			D B _ F R E E _ F U L L _ P A T H
+ *
+ *  Free the contents of the db_full_path structure, but not the structure
+ *  itself, which might be automatic.
  */
 void
 db_free_full_path( pp )
@@ -367,4 +389,66 @@ register struct db_full_path	*pp;
 		pp->fp_maxlen = pp->fp_len = 0;
 		pp->fp_names = (struct directory **)0;
 	}
+}
+
+/*
+ *			D B _ I D E N T I C A L _ F U L L _ P A T H S
+ *
+ *  Returns -
+ *	1	match
+ *	0	different
+ */
+int
+db_identical_full_paths(
+	const struct db_full_path *a,
+	const struct db_full_path *b )
+{
+	register int i;
+
+	RT_CK_FULL_PATH(a);
+	RT_CK_FULL_PATH(b);
+
+	if( a->fp_len != b->fp_len )  return 0;
+
+	for( i = a->fp_len-1; i >= 0; i-- )  {
+		if( a->fp_names[i] != b->fp_names[i] )  return 0;
+	}
+	return 1;
+}
+
+/*
+ *			D B _ F U L L _ P A T H _ S U B S E T
+ *
+ *  Returns -
+ *	1	if 'b' is a proper subset of 'a'
+ *	0	if not.
+ */
+int
+db_full_path_subset( const struct db_full_path *a, const struct db_full_path *b )
+{
+	register int i;
+
+	RT_CK_FULL_PATH(a);
+	RT_CK_FULL_PATH(b);
+
+	if( b->fp_len > a->fp_len )  return 0;
+
+	for( i=0; i < a->fp_len; i++ )  {
+		register int j;
+
+		if( a->fp_names[i] != b->fp_names[0] )  continue;
+
+		/* First element matches, check remaining length */
+		if( b->fp_len > a->fp_len - i )  return 0;
+
+		/* Check remainder of 'b' */
+		for( j=1; j < b->fp_len; j++ )  {
+			if( a->fp_names[i+j] != b->fp_names[j] )  goto step;
+		}
+		/* 'b' is a proper subset */
+		return 1;
+
+step:		;
+	}
+	return 0;
 }
