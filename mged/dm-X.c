@@ -783,8 +783,10 @@ static void
 checkevents()
 {
 	XEvent	event;
-	XKeyEvent	keyevent;
-	int	key;
+	KeySym	key;
+	char keybuf[4];
+	int cnt;
+	XComposeStatus compose_stat;
 
 	while( XPending( dpy ) > 0 ) {
 		XNextEvent( dpy, &event );
@@ -841,13 +843,18 @@ checkevents()
 				break;
 			}
 		} else if( event.type == KeyPress ) {
+		    register int i;
 			/* Turn these into MGED "buttonpress" or knob functions */
-			key = XLookupKeysym( (XKeyEvent *) &event, 0 );
-			switch( key ) {
-			case '/':
+
+		    cnt = XLookupString(&event.xkey, keybuf, sizeof(keybuf),
+						&key, &compose_stat);
+
+		    for(i=0 ; i < cnt ; i++){
+
+			switch( *keybuf ) {
 			case '?':
-				fprintf( stderr, "\nKey Help Menu:\
-0	Zap 'knobs'\n\
+				fprintf( stderr, "\nKey Help Menu:\n\
+0	Zero 'knobs'\n\
 x	Increase xrot\n\
 y	Increase yrot\n\
 z	Increase zrot\n\
@@ -937,6 +944,7 @@ F	Toggle faceplate\n\
 				printf("dm-X: The key '%c' is not defined\n", key);
 				break;
 			}
+		    }
 		} else
 			fprintf( stderr, "Unknown event type\n" );
 	}
