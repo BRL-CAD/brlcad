@@ -766,12 +766,14 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 		}
 
 		/* malloc some memory for pointers to the object names */
-		rts_geometry[sessionid]->rts_rtis[0]->rtrti_trees = (char **)bu_calloc( num_trees,
+		if( num_trees > 0 ) {
+		    rts_geometry[sessionid]->rts_rtis[0]->rtrti_trees = (char **)bu_calloc( num_trees,
 						     sizeof( char *),
 						     "rtrti_trees" );
 
-		for( i=0 ; i<num_trees ; i++ ) {
+		    for( i=0 ; i<num_trees ; i++ ) {
 			rts_geometry[sessionid]->rts_rtis[0]->rtrti_trees[i] = bu_strdup( objects[i] );
+		    }
 		}
 	} else if( use_articulation ) {
 		/* XXX get articulation data */
@@ -879,13 +881,14 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 					fprintf( stderr, "num_trees = %d\n", num_trees );
 				}
 
-				/* malloc some memory for pointers to the object names */
-				rts_geometry[sessionid]->rts_rtis[0]->rtrti_trees = (char **)bu_calloc( num_trees,
+				if( num_trees > 0 ) {
+				    /* malloc some memory for pointers to the object names */
+				    rts_geometry[sessionid]->rts_rtis[0]->rtrti_trees = (char **)bu_calloc( num_trees,
 						     sizeof( char *),
 						     "rtrti_trees" );
 
-				/* get the names of the top-level BRL-CAD objects */
-				for( j=0 ; j < num_trees ; j++ ) {
+				    /* get the names of the top-level BRL-CAD objects */
+				    for( j=0 ; j < num_trees ; j++ ) {
 					Tcl_Obj *tree;
 
 					Tcl_ListObjIndex( interp, value, j, &tree );
@@ -896,6 +899,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 					if( verbose ) {
 						fprintf( stderr, "\t%s\n", rts_geometry[sessionid]->rts_rtis[0]->rtrti_trees[j] );
 					}
+				    }
 				}
 				found = 1;
 				break;
