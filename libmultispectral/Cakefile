@@ -1,0 +1,18 @@
+/*
+ *			libmultispectral/Cakefile
+ */
+#define SRCDIR	libmultispectral
+#define PRODUCTS	libmultispectral.ARCH_SUF
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#define FILES	\
+	init
+
+#define VERSION_VARIABLE	libmultispectral_version
+#define LIBRARY_TITLE		"The BRL-CAD Multi-Spectral Shader Library"
+
+#include "../Cakefile.lib"
+#include "../Cakefile.rules"
