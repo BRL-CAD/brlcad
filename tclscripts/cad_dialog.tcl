@@ -45,7 +45,7 @@ proc cad_dialog { w screen title text bitmap default args } {
     wm title $w $title
     wm iconname $w Dialog
     frame $w.top -relief raised -bd 1
-    pack $w.top -side top -fill both
+    pack $w.top -side top -expand yes -fill both
     frame $w.bot -relief raised -bd 1
     pack $w.bot -side bottom -fill both
 
