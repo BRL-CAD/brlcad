@@ -503,7 +503,10 @@ struct nmg_vu_stuff {
 	fastf_t			in_vu_angle;
 	fastf_t			out_vu_angle;
 	fastf_t			min_vu_dot;
+	fastf_t			lo_ang;		/* small if RIGHT, large if LEFT */
+	fastf_t			hi_ang;
 	int			seq;		/* seq # after lsp->min_vu */
+	int			wedge_class;	/* -1=LEFT, 0=Cross, +1=RIGHT */
 };
 struct nmg_loop_stuff {
 	struct loopuse		*lu;
@@ -512,11 +515,227 @@ struct nmg_loop_stuff {
 	int			n_vu_in_loop;	/* # ray vu's in this loop */
 };
 
+#define WEDGE_LEFT	-1
+#define WEDGE_CROSS	0
+#define WEDGE_RIGHT	1
+static CONST char *nmg_wedgeclass_string[] = {
+	"LEFT",
+	"CROSS",
+	"RIGHT",
+	"???"
+};
+/*
+ *			N M G _ W E D G E _ C L A S S
+ *
+ *  0 degrees is to the rear (ON_REV), 90 degrees is to the RIGHT,
+ *  180 is ON_FORW, 270 is to the LEFT.
+ *  Determine if the given wedge is entirely to the left or right of
+ *  the ray, or if it crosses.
+ *
+ *  Returns -
+ *	-1	LEFT
+ *	 0	Crossing or both ON
+ *	 1	RIGHT
+ */
+int
+nmg_wedge_class(a,b)
+double	a;
+double	b;
+{
+	double	ha, hb;
+
+	ha = a - 180;
+	hb = b - 180;
+
+	if( NEAR_ZERO( ha, .01 ) )  {
+		/* A is on the ray */
+		if( NEAR_ZERO( hb, .01 ) )  return WEDGE_CROSS;
+		if( hb < 0 )  return WEDGE_RIGHT;
+		return WEDGE_LEFT;
+	}
+	if( ha < 0 )  {
+		/* A is to the right */
+		if( hb <= 0 )  return WEDGE_RIGHT;
+		return WEDGE_CROSS;
+	}
+	/* hb > 0, A is to the left */
+	if( hb >= 0 )  return WEDGE_LEFT;
+	return WEDGE_CROSS;
+}
+
+static CONST char *nmg_wedge2_string[] = {
+	"WEDGE2_OVERLAP",
+	"WEDGE2_NO_OVERLAP",
+	"WEDGE2_AB_IN_CD",
+	"WEDGE2_CD_IN_AB",
+	"WEDGE2_IDENTICAL",
+	"???"
+};
+#define WEDGE2_OVERLAP		-2
+#define WEDGE2_NO_OVERLAP	-1
+#define WEDGE2_AB_IN_CD		0
+#define WEDGE2_CD_IN_AB		1
+#define WEDGE2_IDENTICAL	2
+/*
+ *			N M G _ C O M P A R E _ 2 _W E D G E S
+ *
+ *  Returns -
+ *	WEDGE2_OVERLAP		AB partially overlaps CD (error)
+ *	WEDGE2_NO_OVERLAP	AB does not overlap CD
+ *	WEDGE2_AB_IN_CD		AB is inside CD
+ *	WEDGE2_CD_IN_AB		CD is inside AB
+ *	WEDGE2_IDENTICAL		AB == CD
+ */
+static int
+nmg_compare_2_wedges( a, b, c, d )
+double	a,b,c,d;
+{
+	double	t;
+	int	a_in_cd = 0;
+	int	b_in_cd = 0;
+	int	c_in_ab = 0;
+	int	d_in_ab = 0;
+	int	ret;
+
+	/* Ensure A < B */
+	if( a > b )  {
+		t = a;
+		a = b;
+		b = t;
+	}
+	/* Ensure that C < D */
+	if( c > d )  {
+		t = c;
+		c = d;
+		d = t;
+	}
+
+	if( a == c && b == d )  {
+		ret = WEDGE2_IDENTICAL;
+	}
+
+	/* See if c < a,b < d */
+	if( c <= a && a <= d )  a_in_cd = 1;
+	if( c <= b && b <= d )  b_in_cd = 1;
+	/* See if a < c,d < b */
+	if( a < c && c < b )  c_in_ab = 1;
+	if( a < d && d < b )  d_in_ab = 1;
+
+	if( a_in_cd && b_in_cd )  {
+		if( c_in_ab || d_in_ab )  {
+			ret = WEDGE2_OVERLAP;	/* ERROR */
+			goto out;
+		}
+		ret = WEDGE2_AB_IN_CD;
+		goto out;
+	}
+	if( c_in_ab && d_in_ab )  {
+		if( a_in_cd || b_in_cd )  {
+			ret = WEDGE2_OVERLAP;	/* ERROR */
+			goto out;
+		}
+		ret = WEDGE2_CD_IN_AB;
+		goto out;
+	}
+	if( a_in_cd + b_in_cd + c_in_ab + d_in_ab <= 0 )  {
+		ret = WEDGE2_NO_OVERLAP;
+		goto out;
+	}
+	ret = WEDGE2_OVERLAP;			/* ERROR */
+out:
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)
+		rt_log("nmg_compare_2_wedges(%g,%g, %g,%g) = %d %s\n",
+			a, b, c, d, ret, nmg_wedge2_string[ret+2] );
+	if(ret <= -2 )  rt_log("nmg_compare_2_wedges(%g,%g, %g,%g) ERROR!\n", a, b, c, d);
+	return ret;
+}
+
+/*
+ *			N M G _ F I N D _ V U _ I N _ W E D G E
+ *
+ *  Find the VU which is inside (or on) the given wedge,
+ *  fitting as tightly to the given wedge as possible,
+ *  and with the lowest value of lo_ang possible.
+ *  XXX how to do tie-breaking for the two coincident ones where
+ *  XXX two loops come together.
+ *
+ *  lo_ang < hi_ang on RIGHT side of intersection line
+ *  lo_ang > hi_ang on LEFT side of intersection line
+ *
+ *  There are three wedges involved here:
+ *	the original one, from lo to hi,
+ *	the current best "candidate" so far,
+ *	and "this", the current one being considered.
+ */
+static int
+nmg_find_vu_in_wedge( vs, start, end, lo_ang, hi_ang, wclass )
+struct nmg_vu_stuff	*vs;
+int	start;		/* vu index of coincident range */
+int	end;
+double	lo_ang;
+double	hi_ang;
+int	wclass;
+{
+	register int	i;
+	double	cand_lo;
+	double	cand_hi;
+	int	candidate;
+
+	candidate = -1;
+	cand_lo = lo_ang;
+	cand_hi = hi_ang;
+
+	/* Consider all the candidates */
+	for( i=start; i < end; i++ )  {
+		int	this_wrt_orig;
+		int	this_wrt_cand;
+
+		/* Ignore wedges crossing, or on other side of line */
+		if( vs[i].wedge_class != wclass )  continue;
+
+		this_wrt_orig = nmg_compare_2_wedges(
+			vs[i].lo_ang, vs[i].hi_ang,
+			lo_ang, hi_ang );
+		if( this_wrt_orig != WEDGE2_AB_IN_CD )  continue;	/* not inside */
+
+		this_wrt_cand = nmg_compare_2_wedges(
+			vs[i].lo_ang, vs[i].hi_ang,
+			cand_lo, cand_hi );
+		switch( this_wrt_cand )  {
+		case WEDGE2_CD_IN_AB:
+			/* This wedge contains candidate wedge, therefore
+			 * this wedge is closer to original wedge */
+			candidate = i;
+			cand_lo = vs[i].lo_ang;
+			cand_hi = vs[i].hi_ang;
+			break;
+		case WEDGE2_NO_OVERLAP:
+			/* No overlap, but both are inside.  Take lower angle */
+			if( vs[i].lo_ang < cand_lo )  {
+				candidate = i;
+				cand_lo = vs[i].lo_ang;
+				cand_hi = vs[i].hi_ang;
+			}
+			break;
+		default:
+			continue;
+		}
+	}
+rt_log("nmg_find_vu_in_wedge(start=%d,end=%d, lo=%g, hi=%g) candidate=%d\n",
+start, end, lo_ang, hi_ang,
+candidate);
+	return candidate;	/* is -1 if none found */
+}
+
 /*
  *			N M G _ F A C E _ V U _ C O M P A R E
  *
  *  Support routine for nmg_face_coincident_vu_sort(), via qsort().
  *
+ *  Returns -
+ *	-1	when A < B
+ *	 0	when A == B
+ *	+1	when A > B
  */
 static int
 nmg_face_vu_compare( a, b )
@@ -535,7 +754,7 @@ CONST genptr_t	b;
 	}
 #if 0
 	/* Between two loops each with a single vertex, use min angle */
-	/* This works, but is the "old way".  Should use dot products. */
+	/* This works, but is the "very old way".  Should use dot products. */
 	if( va->lsp->n_vu_in_loop <= 1 && vb->lsp->n_vu_in_loop <= 1 )  {
 		diff = va->in_vu_angle - vb->in_vu_angle;
 		if( diff < 0 )  return -1;
@@ -549,8 +768,10 @@ CONST genptr_t	b;
 	}
 #endif
 
+#if 1
 	/* Between loops, sort by minimum dot product of the loops */
 /* XXX This is wrong.  Test13.r shows how */
+	/* The intermediate old way */
 	diff = va->lsp->min_dot - vb->lsp->min_dot;
 	if( NEAR_ZERO( diff, RT_DOT_TOL) )  {
 		/*
@@ -569,6 +790,78 @@ CONST genptr_t	b;
 	}
 	if( diff < 0 )  return -1;		/* A dot < B dot */
 	return 1;				/* A dot > B dot */
+#else
+	/* If both have the same assessment & angles match, => tie */
+	if( va->wedge_class == vb->wedge_class &&
+	    NEAR_ZERO( va->lo_ang - vb->lo_ang, 0.001 ) &&
+	    NEAR_ZERO( va->hi_ang - vb->hi_ang, 0.001 ) ) {
+	    	/* XXX tie break */
+tie_break:
+	    	/* XXX what about loop orientation? */
+	    	rt_log("XXX nmg_face_vu_compare(): tie break\n");
+		diff = va->in_vu_angle - vb->in_vu_angle;
+		if( diff < 0 )  return -1;
+		if( diff == 0 )  {
+			/* Gak, this really means trouble! */
+			rt_log("nmg_face_vu_compare(): two loops (single vertex) have same in_vu_angle%g?\n",
+				va->in_vu_angle);
+			return 0;
+		}
+		return 1;
+	}
+/* XXX draw all 6 cases, and re-check this */
+/* XXX should NOT have two NEAR_ZERO checks for any case. */
+	switch( va->wedge_class )  {
+	case WEDGE_LEFT:
+		switch( vb->wedge_class )  {
+		case WEDGE_LEFT:
+			if( NEAR_ZERO( va->lo_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
+			if( va->lo_ang > vb->lo_ang )  return -1; /* A */
+			return 1;	/* B */
+		case WEDGE_CROSS:
+			if( NEAR_ZERO( va->lo_ang - vb->hi_ang, 0.001 ) )  goto tie_break;
+			if( NEAR_ZERO( va->hi_ang - vb->hi_ang, 0.001 ) )  goto tie_break;
+			if( va->hi_ang > vb->hi_ang )  return -1; /* A */
+			return 1;	/* B */
+		case WEDGE_RIGHT:
+			diff = 360 - va->lo_ang;/* CW version of left angle */
+			if( diff < vb->hi_ang )  return -1; /* A */
+			return 1;	/* B */
+		}
+	case WEDGE_CROSS:
+		switch( vb->wedge_class )  {
+		case WEDGE_LEFT:
+			if( NEAR_ZERO( va->hi_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
+			if( NEAR_ZERO( va->hi_ang - vb->hi_ang, 0.001 ) )  goto tie_break;
+			if( va->hi_ang > vb->hi_ang )  return -1; /* A */
+			return 1;	/* B */
+		case WEDGE_CROSS:
+			if( va->lo_ang < vb->lo_ang )  return -1; /* A */
+			return 1;	/* B */
+		case WEDGE_RIGHT:
+			if( NEAR_ZERO( va->lo_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
+			if( NEAR_ZERO( va->lo_ang - vb->hi_ang, 0.001 ) )  goto tie_break;
+			if( va->lo_ang < vb->lo_ang )  return -1; /* A */
+			return 1;	/* B */
+		}
+	case WEDGE_RIGHT:
+		switch( vb->wedge_class )  {
+		case WEDGE_LEFT:
+			diff = 360 - vb->lo_ang;/* CW version of left angle */
+			if( va->lo_ang < diff )  return -1; /* A */
+			return 1;	/* B */
+		case WEDGE_CROSS:
+			if( NEAR_ZERO( va->lo_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
+			if( NEAR_ZERO( va->hi_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
+			if( va->lo_ang < vb->lo_ang )  return -1; /* A */
+			return 1;	/* B */
+		case WEDGE_RIGHT:
+			if( NEAR_ZERO( va->lo_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
+			if( va->lo_ang < vb->lo_ang )  return -1; /* A */
+			return 1;	/* B */
+		}
+	}
+#endif
 }
 
 /*
@@ -643,6 +936,32 @@ int				ass;
 }
 
 /*
+ *			N M G _ S P E C I A L _ W E D G E _ P R O C E S S I N G
+ *
+ */
+static void
+nmg_special_wedge_processing( vs, start, end, lo_ang, hi_ang, wclass )
+struct nmg_vu_stuff	*vs;
+int	start;		/* vu index of coincident range */
+int	end;
+double	lo_ang;
+double	hi_ang;
+int	wclass;
+{
+	register int	i;
+	int	this_wedge;
+
+	this_wedge = nmg_find_vu_in_wedge( vs, start, end, lo_ang, hi_ang, wclass );
+	if( this_wedge <= -1 )  return;	/* No wedges to process */
+
+	/* There is at least one wedge on this side of the line */
+
+
+	/* XXX more here */
+	rt_log("XXX special wedge processing needed\n");
+}
+
+/*
  *			N M G _ F A C E _ C O I N C I D E N T _ V U _ S O R T
  *
  *  Given co-incident vertexuses (same distance along the ray),
@@ -703,6 +1022,17 @@ int			end;		/* last index + 1 */
 			rs->ang_x_dir, rs->ang_y_dir, ass, 1 ) * rt_radtodeg;
 		vs[nvu].out_vu_angle = nmg_vu_angle_measure( rs->vu[i],
 			rs->ang_x_dir, rs->ang_y_dir, ass, 0 ) * rt_radtodeg;
+		vs[nvu].wedge_class = nmg_wedge_class( vs[nvu].in_vu_angle, vs[nvu].out_vu_angle );
+		if(rt_g.NMG_debug&DEBUG_VU_SORT) rt_log("nmg_wedge_class = %d %s\n", vs[nvu].wedge_class, nmg_wedgeclass_string[vs[nvu].wedge_class+1]);
+		/* Sort the angles */
+		if( (vs[nvu].wedge_class == WEDGE_LEFT  && vs[nvu].in_vu_angle > vs[nvu].out_vu_angle) ||
+		    (vs[nvu].wedge_class == WEDGE_RIGHT && vs[nvu].in_vu_angle < vs[nvu].out_vu_angle) )  {
+			vs[nvu].lo_ang = vs[nvu].in_vu_angle;
+			vs[nvu].hi_ang = vs[nvu].out_vu_angle;
+		} else {
+			vs[nvu].lo_ang = vs[nvu].out_vu_angle;
+			vs[nvu].hi_ang = vs[nvu].in_vu_angle;
+		}
 
 		/* Check entering and departing edgeuse angle w.r.t. ray */
 		/* This is already done once in nmg_assess_vu();  reuse? */
@@ -743,24 +1073,28 @@ got_loop:
 		if( ls[l].n_vu_in_loop <= 1 )  continue;
 
 		first_eu = nmg_eu_with_vu_in_lu( ls[l].lu, ls[l].min_vu );
-		for( eu = RT_LIST_PNEXT_CIRC(edgeuse,first_eu);
-		     eu != first_eu;
-		     eu = RT_LIST_PNEXT_CIRC(edgeuse,eu)
-		)  {
+		eu = first_eu;
+		do {
 			register struct vertexuse *vu = eu->vu_p;
 			NMG_CK_VERTEXUSE(vu);
 			for( i=0; i < nvu; i++ )  {
-				if( vs[i].vu != vu )  continue;
-				vs[i].seq = seq++;
-				break;
+				if( vs[i].vu == vu )  {
+					vs[i].seq = seq++;
+					break;
+				}
 			}
-		}
+			eu = RT_LIST_PNEXT_CIRC(edgeuse,eu);
+		} while( eu != first_eu );
 	}
 
-#if 0
-/**
+	/* For loops with >1 crossings here, determine proper VU ordering on that loop */
+	/* XXX */
+
+	/* Here is where the special wedge-breaking code goes */
+	nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT );
+	nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT );
+
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
-**/
 	{
 		rt_log("Loop table (before sort):\n");
 		for( l=0; l < nloop; l++ )  {
@@ -768,15 +1102,7 @@ got_loop:
 				l, ls[l].lu, ls[l].min_dot,
 				ls[l].n_vu_in_loop );
 		}
-		rt_log("Vertexuse table:\n");
-		for( i=0; i < nvu; i++ )  {
-			rt_log("  vu=x%x, loop_ind=%d, in ang=%g, out ang=%g, min_vu_dot=%g, seq=%d\n",
-				vs[i].vu, vs[i].loop_index,
-				vs[i].in_vu_angle, vs[i].out_vu_angle,
-				vs[i].min_vu_dot, vs[i].seq );
-		}
 	}
-#endif
 
 	/* Sort the vertexuse table into appropriate order */
 #if defined(__convexc__)
@@ -789,10 +1115,12 @@ got_loop:
 	{
 		rt_log("Vertexuse table (after sort):\n");
 		for( i=0; i < nvu; i++ )  {
-			rt_log("  vu=x%x, loop_ind=%d, in ang=%g, out ang=%g, min_vu_dot=%g, seq=%d\n",
+			rt_log("  x%x, l=%d, in/o=(%g, %g), lo/hi=(%g,%g), %s, sq=%d\n",
 				vs[i].vu, vs[i].loop_index,
 				vs[i].in_vu_angle, vs[i].out_vu_angle,
-				vs[i].min_vu_dot, vs[i].seq );
+				vs[i].lo_ang, vs[i].hi_ang,
+				nmg_wedgeclass_string[vs[i].wedge_class+1],
+				vs[i].seq );
 		}
 	}
 
