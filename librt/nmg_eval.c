@@ -447,7 +447,8 @@ struct nmg_bool_state *bs;
 			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 			case BACTION_KILL:
 				/* Kill by demoting loop to edges */
-				(void)nmg_demote_lu( lu );
+				if( nmg_demote_lu( lu ) )
+					rt_log("nmg_eval_shell() nmg_demote_lu(x%x) fail\n", lu);
 				lu = nextlu;
 				continue;
 			case BACTION_RETAIN:
@@ -524,7 +525,9 @@ struct nmg_bool_state *bs;
 		switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the loopuse into wire edges */
-			(void)nmg_demote_lu( lu );/* kill loop & mate */
+			/* kill loop & mate */
+			if( nmg_demote_lu( lu ) )
+				rt_log("nmg_eval_shell() nmg_demote_lu(x%x) fail\n", lu);
 			lu = nextlu;
 			continue;
 		case BACTION_RETAIN:
@@ -548,13 +551,20 @@ struct nmg_bool_state *bs;
 		NMG_CK_EDGE( eu->e_p );
 		switch( nmg_eval_action( (genptr_t)eu->e_p, bs ) )  {
 		case BACTION_KILL:
-			/* Demote the edegeuse into vertices */
-			(void)nmg_demote_eu( eu );	/* and mate */
+			/* Demote the edegeuse (and mate) into vertices */
+			if( NMG_LIST_MORE(eu, edgeuse, &s->eu_hd) &&
+			    nexteu == eu->eumate_p )
+				nexteu = NMG_LIST_PNEXT(edgeuse, nexteu);
+			if( nmg_demote_eu( eu ) )
+				rt_log("nmg_eval_shell() nmg_demote_eu(x%x) fail\n", eu);
 			eu = nexteu;
 			continue;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
 			if( eu->up.s_p == bs->bs_dest )  break;
+			if( NMG_LIST_MORE(eu, edgeuse, &s->eu_hd) &&
+			    nexteu == eu->eumate_p )
+				nexteu = NMG_LIST_PNEXT(edgeuse, nexteu);
 			nmg_mv_eu_between_shells( bs->bs_dest, s, eu );
 			eu = nexteu;
 			continue;
