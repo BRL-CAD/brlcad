@@ -1340,6 +1340,7 @@ f_make(ClientData	clientData,
 	struct rt_sketch_internal *sketch_ip;
 	struct rt_extrude_internal *extrude_ip;
 	struct rt_bot_internal *bot_ip;
+	struct rt_arbn_internal *arbn_ip;
 
 	if(argc == 2){
 	  struct bu_vls vls;
@@ -1350,6 +1351,7 @@ f_make(ClientData	clientData,
 	    Tcl_AppendElement(interp, "arb6");
 	    Tcl_AppendElement(interp, "arb5");
 	    Tcl_AppendElement(interp, "arb4");
+	    Tcl_AppendElement(interp, "arbn");
 	    Tcl_AppendElement(interp, "bot");
 	    Tcl_AppendElement(interp, "ehy");
 	    Tcl_AppendElement(interp, "ell");
@@ -1519,6 +1521,42 @@ f_make(ClientData	clientData,
 		{
 			arb_ip->pt[i][X] -= view_state->vs_vop->vo_scale*2.0;
 			arb_ip->pt[i][Y] += view_state->vs_vop->vo_scale*2.0;
+		}
+	} else if( strcmp( argv[2], "arbn") == 0 ) {
+		point_t view_center;
+
+		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		internal.idb_type = ID_ARBN;
+		internal.idb_meth = &rt_functab[ID_ARBN];
+		internal.idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_arbn_internal), "rt_arbn_internal" );
+		arbn_ip = (struct rt_arbn_internal *)internal.idb_ptr;
+		arbn_ip->magic = RT_ARBN_INTERNAL_MAGIC;
+		arbn_ip->neqn = 8;
+		arbn_ip->eqn = (plane_t *)bu_calloc( arbn_ip->neqn,
+			     sizeof( plane_t ), "arbn plane eqns" );
+		VSET( arbn_ip->eqn[0], 1, 0, 0 );
+		arbn_ip->eqn[0][3] = view_state->vs_vop->vo_scale;
+		VSET( arbn_ip->eqn[1], -1, 0, 0 );
+		arbn_ip->eqn[1][3] = view_state->vs_vop->vo_scale;
+		VSET( arbn_ip->eqn[2], 0, 1, 0 );
+		arbn_ip->eqn[2][3] = view_state->vs_vop->vo_scale;
+		VSET( arbn_ip->eqn[3], 0, -1, 0 );
+		arbn_ip->eqn[3][3] = view_state->vs_vop->vo_scale;
+		VSET( arbn_ip->eqn[4], 0, 0, 1 );
+		arbn_ip->eqn[4][3] = view_state->vs_vop->vo_scale;
+		VSET( arbn_ip->eqn[5], 0, 0, -1 );
+		arbn_ip->eqn[5][3] = view_state->vs_vop->vo_scale;
+		VSET( arbn_ip->eqn[6], 0.57735, 0.57735, 0.57735 );
+		arbn_ip->eqn[6][3] = view_state->vs_vop->vo_scale;
+		VSET( arbn_ip->eqn[7], -0.57735, -0.57735, -0.57735 );
+		arbn_ip->eqn[7][3] = view_state->vs_vop->vo_scale;
+		VSET( view_center, 
+			-view_state->vs_vop->vo_center[MDX],
+			-view_state->vs_vop->vo_center[MDY],
+		        -view_state->vs_vop->vo_center[MDZ] );
+		for( i=0 ; i<arbn_ip->neqn ; i++ ) {
+			arbn_ip->eqn[i][3] +=
+				VDOT( view_center, arbn_ip->eqn[i] );
 		}
 	} else if( strcmp( argv[2], "sph" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
