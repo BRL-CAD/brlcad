@@ -547,7 +547,6 @@ light_gen_sample_pts(struct application    *upap,
 	if (rdebug & RDEBUG_LIGHT ) {
 		bu_log("light bb (%g %g %g), (%g %g %g)\n", 
 		       V3ARGS(tree_min), V3ARGS(tree_max) );
-		bu_log("span %g %g %g\n", V3ARGS(span));
 	}
 
 
@@ -555,6 +554,9 @@ light_gen_sample_pts(struct application    *upap,
 	 * just give up
 	 */
 	VSUB2(span, tree_max, tree_min);
+	if (rdebug & RDEBUG_LIGHT ) {
+		bu_log("span %g %g %g\n", V3ARGS(span));
+	}
 	if (span[X] <= 0.0 && span[Y] <= 0.0 && span[Z] <= 0.0) {
 		bu_log("Small light. (treating as point source)\n");
 		return;
