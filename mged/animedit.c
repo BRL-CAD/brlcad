@@ -1500,7 +1500,7 @@ struct rt_vls *str;
 			return 0;
 		}
 	}
-	return 0;
+	/* NOTREACHED */
 }
 static int
 parse_jset(hp,fip, str)
@@ -1868,7 +1868,7 @@ struct rt_vls *str;
 			break;
 		}
 	}
-	return 0;
+	/* NOTREACHED */
 }
 static struct rt_list path_head;
 void

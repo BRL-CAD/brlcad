@@ -3971,7 +3971,6 @@ char	**argv;
 {
 	exit(0);
 	/*NOTREACHED*/
-	return 0;
 }
 
 /* 		C D _ F R A M E
