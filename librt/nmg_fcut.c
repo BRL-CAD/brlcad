@@ -884,10 +884,11 @@ double	b;
 		if( NEAR_ZERO( hb, .01 ) )  {
 			/* B is on the ray, within tol */
 			/* This is a 0-angle wedge entering & leaving.
-			 * This is not WEDGE_ON, and it's not WEDGE_CROSS.
-			 * Call it WEDGE_LEFT.
+			 * This is not WEDGE_ON
+			 * Call it WEDGE_CROSS.
 			 */
-rt_log("nmg_wedge_class() 0-angle wedge\n");
+			if(rt_g.NMG_debug&DEBUG_VU_SORT)
+				rt_log("nmg_wedge_class() 0-angle wedge\n");
 			ret = WEDGE_CROSS;
 			goto out;
 		}
