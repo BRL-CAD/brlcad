@@ -64,11 +64,11 @@ void	aexists();
 /* Rename an object */
 /* Format: mv oldname newname	*/
 int
-f_name(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_name(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
 {
 	register struct directory *dp;
 	struct rt_db_internal	intern;
@@ -438,11 +438,11 @@ char	**argv;
 /* Remove an object or several from the description */
 /* Format: kill [-f] object1 object2 .... objectn	*/
 int
-f_kill(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_kill(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
 {
 	register int		i;
 	struct directory	*dp;

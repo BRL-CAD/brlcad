@@ -451,3 +451,147 @@ extern struct cmd_list *curr_cmd_list;
 #define CMD_MORE	921
 #define MORE_ARGS_STR    "more arguments needed::"
 
+/* adc.c */
+int f_adc (
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+
+/* attach.c */
+#if 0
+int mged_attach(
+	struct w_dm *wp,
+	int argc,
+	char *argv[]);
+#else
+int mged_attach();
+#endif
+
+/* buttons.c */
+int bv_zoomin(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_zoomout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_rate_toggle(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_top(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_bottom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_right(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_left(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_front(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_rear(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_vrestore(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_vsave(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_adcursor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_45_45(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_s_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_o_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_o_x(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_o_y(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+void btn_head_menu(int i, int menu, int item);
+void chg_l2menu(int i);
+
+/* chgmodel.c */
+int extract_mater_from_line(
+	char *line,
+	char *name,
+	char *shader,
+	int *r, int *g, int *b,
+	int *override,
+	int *inherit);
+int f_rmater(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int     argc,
+	char    *argv[]);
+int
+f_wmater(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int     argc,
+	char    *argv[]);
+
+
+/* chgtree.c */
+int f_kill(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+int f_name(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+
+/* chgview.c */
+int edit_com(
+     int	argc,
+     char	**argv,
+     int	kind,
+     int	catch_sigint);
+void eraseobjpath(
+     Tcl_Interp	*interp,
+     int	argc,
+     char	**argv,
+     int	noisy,
+     int	all);
+int f_edit(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+int f_erase(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int     argc,
+	char    **argv);
+int f_erase_all(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int     argc,
+	char    **argv);
+int f_sed(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+int f_zap(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+int knob_rot(
+	vect_t rvec,
+	char origin,
+	int model_flag,
+	int view_flag,
+	int edit_flag);
+int mged_erot_xyz(
+	char origin,
+	vect_t rvec);
+int mged_etran(const point_t pt);
+int mged_mtran(const vect_t tvec);
+int mged_otran(const vect_t tvec);
+int mged_vtran(const vect_t tvec);
+int mged_tran(const vect_t tvec);
+int mged_svbase(void);
+int mged_vrot_xyz(
+	char origin,
+	char coords,
+	vect_t rvec);
+void size_reset(void);
+void solid_list_callback(void);
+void view_ring_destroy(struct dm_list *dlp);

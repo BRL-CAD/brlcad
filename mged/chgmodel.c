@@ -393,11 +393,11 @@ char    *argv[];
 
 
 int
-f_wmater(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    *argv[];
+f_wmater(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int     argc,
+	char    *argv[])
 {
   int i;
   int status = TCL_OK;
@@ -456,11 +456,11 @@ char    *argv[];
 
 
 int
-f_rmater(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    *argv[];
+f_rmater(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int     argc,
+	char    *argv[])
 {
 #ifndef LINELEN
 #define LINELEN 256
@@ -537,14 +537,13 @@ char    *argv[];
 }
 
 int
-extract_mater_from_line(line, name, shader, r, g, b, override, inherit)
-char *line;
-char *name;
-char *shader;
-int *r, *g, *b;
-int *override;
-
-int *inherit;
+extract_mater_from_line(
+	char *line,
+	char *name,
+	char *shader,
+	int *r, int *g, int *b,
+	int *override,
+	int *inherit)
 {
   int i,j,k;
   char *str[3];

@@ -168,15 +168,13 @@ double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
 
-BU_EXTERN(int	edit_com, (int argc, char **argv, int kind, int catch_sigint));
-
 void
-eraseobjpath(interp, argc, argv, noisy, all)
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
-     int	noisy;	
-     int	all;
+eraseobjpath(
+     Tcl_Interp	*interp,
+     int	argc,
+     char	**argv,
+     int	noisy,
+     int	all)
 {
 	register struct directory *dp;
 	register int i;
@@ -239,11 +237,11 @@ eraseobjpath(interp, argc, argv, noisy, all)
 /* Delete an object or several objects from the display */
 /* Format: d object1 object2 .... objectn */
 int
-f_erase(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+f_erase(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int     argc,
+	char    **argv)
 {
 	CHECK_DBI_NULL;
 
@@ -264,11 +262,11 @@ char    **argv;
 }
 
 int
-f_erase_all(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+f_erase_all(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int     argc,
+	char    **argv)
 {
   CHECK_DBI_NULL;
 
@@ -416,11 +414,11 @@ char	**argv;
 /* Edit something (add to visible display) */
 /* Format: e object	*/
 int
-f_edit(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_edit(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
 {
   if(argc < 2){
     struct bu_vls vls;
@@ -546,11 +544,11 @@ size_reset()
  * B, e, and E commands use this area as common
  */
 int
-edit_com(argc, argv, kind, catch_sigint)
-     int	argc;
-     char	**argv;
-     int	kind;
-     int	catch_sigint;
+edit_com(
+     int	argc,
+     char	**argv,
+     int	kind,
+     int	catch_sigint)
 {
 	register struct dm_list *dmlp;
 	register struct dm_list *save_dmlp;
@@ -1146,11 +1144,11 @@ mged_freemem()
 /* ZAP the display -- everything dropped */
 /* Format: Z	*/
 int
-f_zap(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_zap(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
 {
 	register struct solid *sp;
 	register struct solid *nsp;
@@ -2164,11 +2162,11 @@ bail_out:
 
 /* Simulate pressing "Solid Edit" and doing an ILLuminate command */
 int
-f_sed(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_sed(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
 {
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
@@ -3523,12 +3521,12 @@ int edit_flag;
 }
 
 int
-knob_rot(rvec, origin, model_flag, view_flag, edit_flag)
-vect_t rvec;
-char origin;
-int model_flag;
-int view_flag;
-int edit_flag;
+knob_rot(
+	vect_t rvec,
+	char origin,
+	int model_flag,
+	int view_flag,
+	int edit_flag)
 {
   if(EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
 		      !view_flag && !model_flag) || edit_flag))
@@ -4737,8 +4735,7 @@ struct _view_state *vsp2;
 }
 
 void
-view_ring_destroy(dlp)
-struct dm_list *dlp;
+view_ring_destroy(struct dm_list *dlp)
 {
   struct view_ring *vrp;
 
@@ -5137,9 +5134,9 @@ mat_t newrot;
 }
 
 int
-mged_erot_xyz(origin, rvec)
-char origin;
-vect_t rvec;
+mged_erot_xyz(
+	char origin,
+	vect_t rvec)
 {
   mat_t newrot;
 
@@ -5248,10 +5245,10 @@ mat_t newrot;
 }
 
 int
-mged_vrot_xyz(origin, coords, rvec)
-char origin;
-char coords;
-vect_t rvec;
+mged_vrot_xyz(
+	char origin,
+	char coords,
+	vect_t rvec)
 {
   mat_t newrot;
   mat_t temp1, temp2;
@@ -5447,27 +5444,28 @@ char    **argv;
 }
 
 int
-mged_etran(pt)
-point_t pt;
+mged_etran(const point_t pt)
 {
+  point_t p2;
   int save_edflag;
   point_t delta;
   point_t vcenter;
   point_t work;
   mat_t xlatemat;
 
+  /* compute delta */
   switch(mged_variables->mv_coords){
   case 'm':
     VSCALE(delta, pt, local2base);
     break;
   case 'o':
-    VSCALE(pt, pt, local2base);
-    MAT4X3PNT(delta, acc_rot_sol, pt);
+    VSCALE(p2, pt, local2base);
+    MAT4X3PNT(delta, acc_rot_sol, p2);
     break;
   case 'v':
   default:
-    VSCALE(pt, pt, local2base/view_state->vs_Viewscale);
-    MAT4X3PNT(work, view_state->vs_view2model, pt);
+    VSCALE(p2, pt, local2base/view_state->vs_Viewscale);
+    MAT4X3PNT(work, view_state->vs_view2model, p2);
     MAT_DELTAS_GET_NEG(vcenter, view_state->vs_toViewcenter);
     VSUB2(delta, work, vcenter);
 
@@ -5496,8 +5494,7 @@ point_t pt;
 }
 
 int
-mged_otran(tvec)
-vect_t tvec;
+mged_otran(const vect_t tvec)
 {
   vect_t work;
 
@@ -5510,8 +5507,7 @@ vect_t tvec;
 }
 
 int
-mged_mtran(tvec)
-vect_t tvec;
+mged_mtran(const vect_t tvec)
 {
   point_t delta;
   point_t vc, nvc;
@@ -5529,15 +5525,15 @@ vect_t tvec;
 }
 
 int
-mged_vtran(tvec)
-vect_t tvec;
+mged_vtran(const vect_t tvec)
 {
+  vect_t  tt;
   point_t delta;
   point_t work;
   point_t vc, nvc;
 
-  VSCALE(tvec, tvec, local2base/view_state->vs_Viewscale);
-  MAT4X3PNT(work, view_state->vs_view2model, tvec);
+  VSCALE(tt, tvec, local2base/view_state->vs_Viewscale);
+  MAT4X3PNT(work, view_state->vs_view2model, tt);
   MAT_DELTAS_GET_NEG(vc, view_state->vs_toViewcenter);
   VSUB2(delta, work, vc);
   VSUB2(nvc, vc, delta);
@@ -5552,8 +5548,7 @@ vect_t tvec;
 }
 
 int
-mged_tran(tvec)
-vect_t tvec;
+mged_tran(const vect_t tvec)
 {
   if((state == ST_S_EDIT || state == ST_O_EDIT) &&
       mged_variables->mv_transform == 'e')

@@ -300,10 +300,10 @@ print_valid_dm()
 }
 
 int
-mged_attach(wp, argc, argv)
-register struct w_dm *wp;
-int argc;
-char *argv[];
+mged_attach(
+	struct w_dm *wp,
+	int argc,
+	char *argv[])
 {
   register struct dm_list *o_dm_list;
 
