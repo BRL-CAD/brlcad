@@ -58,7 +58,6 @@ struct cell {
 	vect_t	c_rdir;			/* ray direction, permits perspective */
 };
 
-static FILE	*plotfp;
 extern	int	width;			/* # of pixels in X; picture width */
 extern	double	AmbientIntensity;	/* angle bet. surface normals; default of 5deg */
 extern	double	mat_degtorad;		/* converts degrees to radians used by rt */
@@ -116,28 +115,18 @@ register struct application *ap;
 char *file, *obj;
 {
 
-	if( outfp == NULL )
-		outfp = stdout;
-
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
 	ap->a_onehit = 1;
 
-	output_is_binary = 0;		/* output is printable ascii */
+	output_is_binary = 1;		/* output is binary */
 
-
-	/* Open a plotfile for writing and check that a valid file pointer
-	 * has been acquired.
-	 */
-
-	plotfp = fopen("hide.pl", "w");
-	if( plotfp == NULL)  {
-		perror("hide.pl");
-		exit(1);
+	if( minus_o )  {
+		return(0);		/* No framebuffer needed */
+	} else {
+		/* write to stdout */
+		return(1);
 	}
-
-
-	return(0);		/* No framebuffer needed */
 }
 
 /*
@@ -212,7 +201,7 @@ struct application	*ap;
 	 * starting with the same size as the model.
 	 */
 
-	pdv_3space(plotfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
+	pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
 
 	/* Now calculated and store the minimun depth change that will
 	 * trigger the drawing of "pits" and "pendula" (mountains).  In
@@ -410,9 +399,6 @@ struct application *ap;
 	horiz_cmp(botp, width + 2, ap->a_y);
 	vert_cmp(botp, topp, width + 2, ap->a_y);
 
-	/* Close plotfile. */
-	fclose(plotfp);
-
 	fflush(outfp);
 }
 
@@ -504,7 +490,7 @@ int		y;
 		   		VJOIN2(stop, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
 		   	}
 
-			pdv_3line(plotfp, start, stop);
+			pdv_3line(outfp, start, stop);
 				
 		}
 	}
@@ -609,7 +595,7 @@ int		y;
 					VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
 				}
 
-				pdv_3line(plotfp, start, stop);
+				pdv_3line(outfp, start, stop);
 				state = SEEKING_START_PT;
 			} else {
 				continue;
@@ -643,7 +629,7 @@ int		y;
 			VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
 		}
 
-		pdv_3line(plotfp, start, stop);
+		pdv_3line(outfp, start, stop);
 		state = SEEKING_START_PT;
 	}
 }
