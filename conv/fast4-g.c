@@ -89,7 +89,7 @@ static char	*mode_str[3]=		/* mode strings */
 #define		MK_REGION( fp , headp , g_id , c_id , e_id , type ) \
 			{\
 				int r_id; \
-				char name[NAMESIZE]; \
+				char name[NAMESIZE+1]; \
 				r_id = g_id * 1000 + c_id; \
 				make_region_name( name , g_id , c_id , e_id , type ); \
 				mk_lrcomb( fp , name , headp , 1 ,\
@@ -401,8 +401,209 @@ int *found;
 }
 
 void
-Insert_name( root , name )
+Delete_name( root , name )
 struct name_tree *root;
+char *name;
+{
+	struct name_tree *ptr,*parent,*ptr2;
+	int r_id, e_id;
+	int found;
+	int diff;
+
+	/* first delete from name portion of tree */
+	ptr = root;
+	parent = (struct name_tree *)NULL;
+	found = 0;
+
+	while( 1 )
+	{
+		diff = strcmp( name , ptr->name );
+		if( diff == 0 )
+		{
+			found = 1;
+			break;
+		}
+		else if( diff > 0 )
+		{
+			if( ptr->nright )
+			{
+				parent = ptr;
+				ptr = ptr->nright;
+			}
+			else
+				break;
+		}
+		else if( diff < 0 )
+		{
+			if( ptr->nleft )
+			{
+				parent = ptr;
+				ptr = ptr->nleft;
+			}
+			else
+				break;
+		}
+	}
+
+	if( !found )
+		return;
+
+	r_id = ptr->region_id;
+	e_id = ptr->element_id;
+
+	if( parent == (struct name_tree *)NULL )
+	{
+		if( ptr->nright )
+		{
+			root = ptr->nright;
+			ptr2 = root;
+			while( ptr2->nleft )
+				ptr2 = ptr2->nleft;
+			ptr2->nleft = ptr->nleft;
+
+			ptr2 = root;
+			while( ptr2->rleft )
+				ptr2 = ptr2->rleft;
+			ptr2->rleft = ptr->rleft;
+		}
+		else
+		{
+			root = ptr->nleft;
+			ptr2 = root;
+			while( ptr2->nright )
+				ptr2 = ptr2->nright;
+			ptr2->nright = ptr->nright;
+			ptr2 = root;
+			while( ptr2->rright )
+				ptr2 = ptr2->rright;
+			ptr2->rright = ptr->rright;
+		}
+
+		rt_free( (char *)ptr , "Delete_name: ptr" );
+		return;
+
+	}
+	else
+	{
+		if( parent->nright == ptr )
+		{
+			if( ptr->nleft )
+			{
+				parent->nright = ptr->nleft;
+				ptr2 = ptr->nleft;
+				while( ptr2->nright )
+					ptr2 = ptr2->nright;
+				ptr2->nright = ptr->nright;
+			}
+			else
+				parent->nright = ptr->nright;
+		}
+		else if( parent->nleft == ptr )
+		{
+			if( ptr->nright )
+			{
+				parent->nleft = ptr->nright;
+				ptr2 = ptr->nright;
+				while( ptr2->nleft )
+					ptr2 = ptr2->nleft;
+				ptr2->nleft = ptr->nleft;
+			}
+			else
+				parent->nleft = ptr->nleft;
+		}
+	}
+
+
+	/* now delete from ident prtion of tree */
+	ptr = root;
+	parent = (struct name_tree *)NULL;
+	found = 0;
+
+	while( 1 )
+	{
+		diff = r_id - ptr->region_id;
+		if( diff == 0 )
+			diff = e_id - ptr->element_id;
+
+		if( diff == 0 )
+		{
+			found = 1;
+			break;
+		}
+		else if( diff > 0 )
+		{
+			if( ptr->rright )
+			{
+				parent = ptr;
+				ptr = ptr->rright;
+			}
+			else
+				break;
+		}
+		else if( diff < 0 )
+		{
+			if( ptr->rleft )
+			{
+				parent = ptr;
+				ptr = ptr->rleft;
+			}
+			else
+				break;
+		}
+	}
+
+	if( !found )
+	{
+		rt_log( "name (%s) deleted from name tree, but not found in ident tree!!\n" , name );
+		rt_bomb( "Delete_name\n" );
+	}
+
+	if( !parent )
+	{
+		rt_log( "name (%s) is root of ident tree, but not name tree!!\n" , name );
+		rt_bomb( "Delete_name\n" );
+	}
+
+
+	if( parent->rright == ptr )
+	{
+		if( ptr->rleft )
+		{
+			parent->rright = ptr->rleft;
+			ptr2 = ptr->rleft;
+			while( ptr2->rright )
+				ptr2 = ptr2->rright;
+			ptr2->rright = ptr->rright;
+		}
+		else
+			parent->rright = ptr->rright;
+	}
+	else if( parent->rleft == ptr )
+	{
+		if( ptr->rright )
+		{
+			parent->rleft = ptr->rright;
+			ptr2 = ptr->rright;
+			while( ptr2->rleft )
+				ptr2 = ptr2->rleft;
+			ptr2->rleft = ptr->rleft;
+		}
+		else
+			parent->rleft = ptr->rleft;
+	}
+}
+
+void
+Delete_name_everywhere( name )
+char *name;
+{
+	Delete_name( sect_name_root , name );
+	Delete_name( model_name_root , name );
+}
+
+void
+Insert_name( root , name )
+struct name_tree **root;
 char *name;
 {
 	struct name_tree *ptr;
@@ -410,7 +611,7 @@ char *name;
 	int found;
 	int diff;
 
-	ptr = Search_names( root , name , &found );
+	ptr = Search_names( *root , name , &found );
 
 	if( found )
 	{
@@ -420,8 +621,7 @@ char *name;
 
 	new_ptr = (struct name_tree *)rt_malloc( sizeof( struct name_tree ) , "Insert_name: new_ptr" );
 
-	strncpy( new_ptr->name , name , NAMESIZE );
-	new_ptr->name[NAMESIZE] = '\0';
+	strncpy( new_ptr->name , name , NAMESIZE+1 );
 	new_ptr->nleft = (struct name_tree *)NULL;
 	new_ptr->nright = (struct name_tree *)NULL;
 	new_ptr->rleft = (struct name_tree *)NULL;
@@ -429,9 +629,9 @@ char *name;
 	new_ptr->region_id = (-region_id);
 	new_ptr->element_id = 0;
 
-	if( !root )
+	if( !*root )
 	{
-		root = new_ptr;
+		*root = new_ptr;
 		return;
 	}
 
@@ -490,8 +690,7 @@ int el_id;
 	new_ptr->nright = (struct name_tree *)NULL;
 	new_ptr->region_id = reg_id;
 	new_ptr->element_id = el_id;
-	strncpy( new_ptr->name , name , NAMESIZE );
-	new_ptr->name[NAMESIZE] = '\0';
+	strncpy( new_ptr->name , name , NAMESIZE+1 );
 
 	if( !sect_name_root )
 		sect_name_root = new_ptr;
@@ -515,7 +714,8 @@ int el_id;
 		{
 			if( nptr_sect->nleft )
 			{
-				rt_log( "Insert_region_name: nptr_sect->nleft not null\n" );
+				rt_log( "Insert_region_name( %s, reg_id=%d, el_id=%d: nptr_sect->nleft not null\n" , name , reg_id , el_id );
+				List_names();
 				rt_bomb( "\tCannot insert new node\n" );
 			}
 			nptr_sect->nleft = new_ptr;
@@ -555,8 +755,7 @@ int el_id;
 	new_ptr->nright = (struct name_tree *)NULL;
 	new_ptr->region_id = reg_id;
 	new_ptr->element_id = el_id;
-	strncpy( new_ptr->name , name , NAMESIZE );
-	new_ptr->name[NAMESIZE] = '\0';
+	strncpy( new_ptr->name , name , NAMESIZE+1 );
 
 	if( !model_name_root )
 		model_name_root = new_ptr;
@@ -610,6 +809,26 @@ int el_id;
 	}
 }
 
+char *
+find_region_name( g_id , c_id , el_id )
+int g_id;
+int c_id;
+int el_id;
+{
+	struct name_tree *ptr;
+	int reg_id;
+	int found;
+
+	reg_id = g_id * 1000 + c_id;
+
+	ptr = Search_ident( model_name_root , reg_id , el_id , &found );
+
+	if( found )
+		return( ptr->name );
+	else
+		return( (char *)NULL );
+}
+
 void
 make_comp_group()
 {
@@ -633,23 +852,28 @@ make_comp_group()
 		if( !ptr )
 			break;
 
-		if( mk_addmember( ptr->name , &g_head , WMOP_UNION ) == (struct wmember *)NULL )
+		if( ptr->element_id )
 		{
-			rt_log( "make_comp_group: Could not add %s to group for ident %d\n" , ptr->name , ptr->region_id );
-			break;
+			if( mk_addmember( ptr->name , &g_head , WMOP_UNION ) == (struct wmember *)NULL )
+			{
+				rt_log( "make_comp_group: Could not add %s to group for ident %d\n" , ptr->name , ptr->region_id );
+				break;
+			}
 		}
 		ptr = ptr->nright;
 	}
 
 	if( RT_LIST_NON_EMPTY( &g_head.l ) )
 	{
-		if( name_name[0] )
-			strcpy( name , name_name );
+		char *tmp_name;
+
+		if( (tmp_name=find_region_name( group_id , comp_id , 0 )) )
+			strcpy( name , tmp_name );
 		else
 		{
 			sprintf( name , "comp_%d" , region_id );
 			make_unique_name( name );
-			Insert_name( model_name_root , name );
+			Insert_name( &model_name_root , name );
 		}
 
 		mk_lfcomb( fdout , name , &g_head , 0 );
@@ -667,7 +891,7 @@ do_groups()
 
 	for( group_no=0 ; group_no < 11 ; group_no++ )
 	{
-		char name[NAMESIZE];
+		char name[NAMESIZE+1];
 
 		if( RT_LIST_IS_EMPTY( &group_head[group_no].l ) )
 			continue;
@@ -762,36 +986,15 @@ do_name()
 
 	len = strlen( tmp_name );
 	if( len <= NAMESIZE )
-		strncpy( name_name , tmp_name , NAMESIZE );
+		strncpy( name_name , tmp_name , NAMESIZE+1 );
 	else
-		strncpy( name_name , &tmp_name[len-NAMESIZE] , NAMESIZE );
+		strncpy( name_name , &tmp_name[len-NAMESIZE] , NAMESIZE+1 );
 
 	/* reserve this name for group name */
 	make_unique_name( name_name );
-	Insert_name( model_name_root , name_name );
+	Insert_region_name( name_name , region_id , 0 );
 
 	name_count = 0;
-}
-
-char *
-find_region_name( g_id , c_id , el_id , type )
-int g_id;
-int c_id;
-int el_id;
-char type;
-{
-	struct name_tree *ptr;
-	int reg_id;
-	int found;
-
-	reg_id = g_id * 1000 + c_id;
-
-	ptr = Search_ident( model_name_root , reg_id , el_id , &found );
-
-	if( found )
-		return( ptr->name );
-	else
-		return( (char *)NULL );
 }
 
 void
@@ -839,19 +1042,19 @@ char type;
 
 	r_id = g_id * 1000 + c_id;
 
-	tmp_name = find_region_name( g_id , c_id , element_id , type );
+	tmp_name = find_region_name( g_id , c_id , element_id );
 	if( tmp_name )
 	{
 		if( !pass )
 			rt_log( "make_region_name: Name for region with g_id=%d, c_id=%d, el_id=%d, and type %c already exists (%s)\n",
 				g_id, c_id, element_id, type , tmp_name );
-		strncpy( name , tmp_name , NAMESIZE );
+		strncpy( name , tmp_name , NAMESIZE+1 );
 		return;
 	}
 
 	/* create a new name */
 	if( name_name[0] )
-		strncpy( name , name_name , NAMESIZE );
+		strncpy( name , name_name , NAMESIZE+1 );
 	else if( element_id < 0 && type == CLINE )
 		sprintf( name , "%d.j.%d.r" , r_id , joint_no++ );
 	else
@@ -873,7 +1076,7 @@ int inner;
 {
 	get_solid_name( name , type , element_id , c_id , g_id , inner );
 
-	Insert_name( model_name_root , name );
+	Insert_name( &model_name_root , name );
 }
 
 void
@@ -936,7 +1139,7 @@ make_cline_regions()
 	struct cline *cline_ptr;
 	struct nmg_ptbl points;
 	struct wmember head;
-	char name[NAMESIZE];
+	char name[NAMESIZE+1];
 	int sph_no;
 
 	RT_LIST_INIT( &head.l );
@@ -994,7 +1197,7 @@ make_cline_regions()
 
 			/* make sphere solid at cline joint */
 			sprintf( name , "%d.%d.j0" , region_id , pt_no );
-			Insert_name( model_name_root , name );
+			Insert_name( &model_name_root , name );
 			mk_sph( fdout , name , grid_pts[pt_no] , sph_radius );
 
 			/* Union sphere */
@@ -1009,7 +1212,7 @@ make_cline_regions()
 			if( sph_inner_radius > 0.0 && sph_inner_radius < sph_radius )
 			{
 				sprintf( name , "%d.%d.j1" , region_id , pt_no );
-				Insert_name( model_name_root , name );
+				Insert_name( &model_name_root , name );
 				mk_sph( fdout , name , grid_pts[pt_no] , sph_inner_radius );
 
 				if( mk_addmember( name , &head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
@@ -1040,6 +1243,17 @@ make_cline_regions()
 			/* now make the region */
 			if( RT_LIST_NON_EMPTY( &head.l ) )
 				MK_REGION( fdout , &head , group_id , comp_id , -pt_no , CLINE )
+		}
+		else
+		{
+			char *bad_name;
+
+			/* no need for a region here
+			 * but we need to remove this region from the name tree
+			 */
+			bad_name = find_region_name( group_id , comp_id , -pt_no );
+			if( bad_name )
+				Delete_name_everywhere( bad_name );
 		}
 
 		/* make regions for all CLINE elements that start at this pt_no */
@@ -1127,7 +1341,7 @@ do_sphere()
 	fastf_t thick;
 	fastf_t radius;
 	fastf_t inner_radius;
-	char name[NAMESIZE];
+	char name[NAMESIZE+1];
 	struct wmember sphere_region;
 
 	strncpy( field , &line[8] , 8 );
@@ -1204,9 +1418,12 @@ int final;
 	if( pass )
 	{
 		make_cline_regions();
-		make_comp_group();
-		List_names();
-		Free_tree();
+		if( final )
+		{
+			make_comp_group();
+			List_names();
+			Free_tree();
+		}
 	}
 
 	if( !final )
@@ -1234,7 +1451,8 @@ int final;
 			mode = 2;
 		}
 
-		name_name[0] = '\0';
+		if( pass )
+			name_name[0] = '\0';
 	}
 }
 
@@ -1284,20 +1502,14 @@ do_cline()
 	fastf_t thick;
 	fastf_t radius;
 	vect_t height;
-	char name[NAMESIZE];
+	char name[NAMESIZE+1];
 
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
 
-	if( !pass )
-	{
-		make_region_name( name , group_id , comp_id , element_id , CLINE );
-		return;
-	}
-
 	strncpy( field , &line[24] , 8 );
 	pt1 = atoi( field );
-	if( pt1 < 1 || pt1 > max_grid_no )
+	if( pass && (pt1 < 1 || pt1 > max_grid_no) )
 	{
 		rt_log( "Illegal grid point (%d) in CLINE, skipping\n", pt1 );
 		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
@@ -1306,7 +1518,7 @@ do_cline()
 
 	strncpy( field , &line[32] , 8 );
 	pt2 = atoi( field );
-	if( pt2 < 1 || pt2 > max_grid_no )
+	if( pass && (pt2 < 1 || pt2 > max_grid_no) )
 	{
 		rt_log( "Illegal grid point in CLINE (%d), skipping\n", pt2 );
 		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
@@ -1317,6 +1529,13 @@ do_cline()
 	{
 		rt_log( "Ilegal grid points in CLINE ( %d and %d ), skipping\n", pt1 , pt2 );
 		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		return;
+	}
+
+	if( !pass )
+	{
+		make_region_name( name , group_id , comp_id , element_id , CLINE );
+		make_region_name( name , group_id , comp_id , -pt1 , CLINE );
 		return;
 	}
 
@@ -1724,7 +1943,7 @@ struct hole_list *ptr;
 }
 
 void
-do_hole()
+do_hole_wall()
 {
 	struct hole_list *list_ptr;
 	struct hole_list *list_start;
@@ -1763,12 +1982,12 @@ do_hole()
 
 		if( list_ptr )
 		{
-			list_ptr->next = (struct hole_list *)rt_malloc( sizeof( struct hole_list ) , "do_hole: list_ptr" );
+			list_ptr->next = (struct hole_list *)rt_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
 			list_ptr = list_ptr->next;
 		}
 		else
 		{
-			list_ptr = (struct hole_list *)rt_malloc( sizeof( struct hole_list ) , "do_hole: list_ptr" );
+			list_ptr = (struct hole_list *)rt_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
 			list_start = list_ptr;
 		}
 
@@ -1815,9 +2034,9 @@ int pass_number;
 		if( !strncmp( line , "VEHICLE" , 7 ) )
 			do_vehicle();
 		else if( !strncmp( line , "HOLE" , 4 ) )
-			do_hole();
+			do_hole_wall();
 		else if( !strncmp( line , "WALL" , 4 ) )
-			rt_log( "\twall\n" );
+			do_hole_wall();
 		else if( !strncmp( line , "SECTION" , 7 ) )
 			do_section( 0 );
 		else if( !strncmp( line , "$NAME" , 5 ) )
@@ -1850,6 +2069,9 @@ int pass_number;
 		else
 			rt_log( "ERROR: skipping unrecognized data type\n%s\n" , line );
 	}
+
+	rt_log( "At pass %d:\n" , pass );
+	List_names();
 }
 
 main( argc , argv )
