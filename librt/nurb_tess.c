@@ -132,3 +132,99 @@ fastf_t epsilon;
 	return ( 3.0 * sqrt( epsilon / (2.0*(d1 + (2.0 * d2)+ d3))));
 }
 
+/*
+ *		R T _ C N U R B _ P A R _ E D G E
+ *
+ *	Calculate the maximum edge length (in parameter space)
+ *	that will keep the curve approximation within epsilon
+ *	of the true curve
+ *
+ *	This is a temporary guess until legitimate code can be found
+ *
+ *	returns:
+ *		-1.0 if the curve is a straight line
+ *		maximum parameter increment otherwise
+ */
+fastf_t
+rt_cnurb_par_edge( crv, epsilon )
+CONST struct edge_g_cnurb *crv;
+fastf_t epsilon;
+{
+	struct edge_g_cnurb *d1, *d2;
+	fastf_t der1[5], der2[5], t, *pt;
+	fastf_t num_coord_factor, final_t;
+	int num_coords;
+	int i,j;
+
+	if( crv->order < 3)
+		return( -1.0 );
+
+	num_coords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
+	if( num_coords > 5 )
+	{
+		bu_log( "ERROR: rt_cnurb_par_edge() cannot handle curves with more than 5 coordinates (curve has %d)\n",
+			num_coords );
+		bu_bomb( "ERROR: rt_cnurb_par_edge() cannot handle curves with more than 5 coordinates\n" );
+	}
+
+	for( i=0 ; i<num_coords ; i++ )
+	{
+		der1[i] = 0.0;
+		der2[i] = 0.0;
+	}
+
+	final_t = MAX_FASTF;
+	num_coord_factor = sqrt( (double)num_coords );
+
+	d1 = rt_nurb_c_diff( crv );
+	d2 = rt_nurb_c_diff( d1 );
+
+#if 0
+	pt = d1->ctl_points;
+	for( i=0 ; i<d1->c_size ; i++ )
+	{
+		for( j=0 ; j<num_coords ; j++ )
+		{
+			fastf_t abs_val;
+
+			abs_val = *pt > 0.0 ? *pt : -(*pt);
+			if( abs_val > der1[j] )
+				der1[j] = abs_val;
+			pt++;
+		}
+	}
+#endif
+	pt = d2->ctl_points;
+	for( i=0 ; i<d2->c_size ; i++ )
+	{
+		for( j=0 ; j<num_coords ; j++ )
+		{
+			fastf_t abs_val;
+
+			abs_val = *pt > 0.0 ? *pt : -(*pt);
+			if( abs_val > der2[j] )
+				der2[j] = abs_val;
+			pt++;
+		}
+	}
+
+	rt_nurb_free_cnurb( d1 );
+	rt_nurb_free_cnurb( d2 );
+
+	for( j=0 ; j<num_coords ; j++ )
+	{
+		fastf_t tmp, sqrt_tmp;
+
+		if( NEAR_ZERO( der2[j], SMALL_FASTF ) )
+			continue;
+
+		t = sqrt( 2.0 * epsilon / (num_coord_factor * der2[j] ) );
+		if( t < final_t )
+			final_t = t;
+	}
+
+	if( final_t == MAX_FASTF )
+		return( -1.0 );
+	else
+		return( final_t/2.0 );
+}
