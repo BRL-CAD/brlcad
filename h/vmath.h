@@ -525,6 +525,28 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(a)[Y] = (b)[Y] * (c)[Y];\
 	(a)[Z] = (b)[Z] * (c)[Z]; }
 #endif /* SHORT_VECTORS */
+/* Given a direction vector, compute the inverses of each element. */
+/* When division by zero would have occured, mark inverse as INFINITY. */
+#define VINVDIR( _inv, _dir )	{ \
+	if( (_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF )  { \
+		(_inv)[X]=1.0/(_dir)[X]; \
+	} else { \
+		(_dir)[X] = 0.0; \
+		(_inv)[X] = INFINITY; \
+	} \
+	if( (_dir)[Y] < -SQRT_SMALL_FASTF || (_dir)[Y] > SQRT_SMALL_FASTF )  { \
+		(_inv)[Y]=1.0/(_dir)[Y]; \
+	} else { \
+		(_dir)[Y] = 0.0; \
+		(_inv)[Y] = INFINITY; \
+	} \
+	if( (_dir)[Z] < -SQRT_SMALL_FASTF || (_dir)[Z] > SQRT_SMALL_FASTF )  { \
+		(_inv)[Z]=1.0/(_dir)[Z]; \
+	} else { \
+		(_dir)[Z] = 0.0; \
+		(_inv)[Z] = INFINITY; \
+	} \
+    }
 
 /* Apply the 3x3 part of a mat_t to a 3-tuple. */
 #ifdef SHORT_VECTORS
