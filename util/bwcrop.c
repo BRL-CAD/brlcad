@@ -47,6 +47,11 @@ float	ulx,uly,urx,ury,lrx,lry,llx,lly;	/* Corners of original file */
 
 FILE	*ifp, *ofp;
 
+static char usage[] = "\
+Usage: bwcrop in.bw out.bw (I prompt!)\n\
+   or  bwcrop in.bw out.bw inwidth outwidth outheight\n\
+        ulx uly urx ury lrx lry llx lly\n";
+
 main(argc, argv)
 int argc; char **argv;
 {
@@ -56,35 +61,49 @@ int argc; char **argv;
 	long	offset;
 
 	if (argc < 3) {
-		printf("usage: bwcrop infile outfile (I prompt!)\n");
+		fprintf( stderr, usage );
 		exit( 1 );
 	}
 	if ((ifp = fopen(argv[1], "r")) == NULL) {
-		printf("bwcrop: can't open %s\n", argv[1]);
+		fprintf( stderr, "bwcrop: can't open %s\n", argv[1] );
 		exit( 2 );
 	}
 	if ((ofp = fopen(argv[2], "w")) == NULL) {
-		printf("bwcrop: can't open %s\n", argv[1]);
+		fprintf( stderr, "bwcrop: can't open %s\n", argv[1] );
 		exit( 3 );
 	}
 
-	/* Get info */
-	printf("Scanline length in input file: ");
-	scanf( "%d", &scanlen );
-	if( scanlen <= 0 ) {
-		fprintf("bwcrop: scanlen = %d, don't be ridiculous\n", scanlen );
-		exit( 4 );
+	if( argc == 14 ) {
+		scanlen = atoi( argv[3] );
+		xnum = atoi( argv[4] );
+		ynum = atoi( argv[5] );
+		ulx = atoi( argv[6] );
+		uly = atoi( argv[7] );
+		urx = atoi( argv[8] );
+		ury = atoi( argv[9] );
+		lrx = atoi( argv[10] );
+		lry = atoi( argv[11] );
+		llx = atoi( argv[12] );
+		lly = atoi( argv[13] );
+	} else {
+		/* Get info */
+		printf("Scanline length in input file: ");
+		scanf( "%d", &scanlen );
+		if( scanlen <= 0 ) {
+			fprintf("bwcrop: scanlen = %d, don't be ridiculous\n", scanlen );
+			exit( 4 );
+		}
+		printf("Line Length and Number of scan lines (in new file)?: ");
+		scanf( "%f%f", &xnum, &ynum );
+		printf("Upper left corner in input file (x,y)?: ");
+		scanf( "%f%f", &ulx, &uly );
+		printf("Upper right corner (x,y)?: ");
+		scanf( "%f%f", &urx, &ury );
+		printf("Lower right (x,y)?: ");
+		scanf( "%f%f", &lrx, &lry );
+		printf("Lower left (x,y)?: ");
+		scanf( "%f%f", &llx, &lly );
 	}
-	printf("Line Length and Number of scan lines (in new file)?: ");
-	scanf( "%f%f", &xnum, &ynum );
-	printf("Upper left corner in input file (x,y)?: ");
-	scanf( "%f%f", &ulx, &uly );
-	printf("Upper right corner (x,y)?: ");
-	scanf( "%f%f", &urx, &ury );
-	printf("Lower right (x,y)?: ");
-	scanf( "%f%f", &lrx, &lry );
-	printf("Lower left (x,y)?: ");
-	scanf( "%f%f", &llx, &lly );
 
 	/* See how many lines we can buffer */
 	init_buffer( scanlen );
@@ -100,11 +119,11 @@ int argc; char **argv;
 	/* Move all points */
 	for (row = 0; row < ynum; row++) {
 		/* calculate left point of row */
-		x1 = ((llx-ulx)/(ynum-1)) * row + ulx;
-		y1 = ((lly-uly)/(ynum-1)) * row + uly;
+		x1 = ((ulx-llx)/(ynum-1)) * row + llx;
+		y1 = ((uly-lly)/(ynum-1)) * row + lly;
 		/* calculate right point of row */
-		x2 = ((lrx-urx)/(ynum-1)) * row + urx;
-		y2 = ((lry-ury)/(ynum-1)) * row + ury;
+		x2 = ((urx-lrx)/(ynum-1)) * row + lrx;
+		y2 = ((ury-lry)/(ynum-1)) * row + lry;
 
 		for (col = 0; col < xnum; col++) {
 			/* calculate point along row */
