@@ -970,17 +970,39 @@ int	count;
 				switch( ifp->if_mode )  {
 				case MODE_RGB:
 					PASSCMD(hole,3,FBCrgbcolor);
-					hole->s = (cp[RED]);
-					hole->s = (cp[GRN]);
-					hole->s = (cp[BLU]);
+					if ( SGI(ifp)->si_cmap_flag == FALSE ) {
+						hole->s = (cp[RED]);
+						hole->s = (cp[GRN]);
+						hole->s = (cp[BLU]);
+					} else {
+						hole->s = CMR(ifp)[cp[RED]];
+						hole->s = CMG(ifp)[cp[GRN]];
+						hole->s = CMB(ifp)[cp[BLU]];
+					}
 					break;
 				case MODE_FIT:
 					PASSCMD(hole,1,FBCcolor);
-					hole->s = get_Color_Index( ifp, cp );
+					if ( SGI(ifp)->si_cmap_flag == FALSE ) {
+						hole->s = get_Color_Index( ifp, cp );
+					} else {
+						static RGBpixel new;
+						new[RED] = CMR(ifp)[cp[RED]];
+						new[GRN] = CMG(ifp)[cp[GRN]];
+						new[BLU] = CMB(ifp)[cp[BLU]];
+						hole->s = get_Color_Index( ifp, new );
+					}
 					break;
 				case MODE_APPROX:
 					PASSCMD(hole,1,FBCcolor);
-					hole->s = COLOR_APPROX(cp);
+					if ( SGI(ifp)->si_cmap_flag == FALSE ) {
+						hole->s = COLOR_APPROX(cp);
+					} else {
+						static RGBpixel new;
+						new[RED] = CMR(ifp)[cp[RED]];
+						new[GRN] = CMG(ifp)[cp[GRN]];
+						new[BLU] = CMB(ifp)[cp[BLU]];
+						hole->s = COLOR_APPROX(new);
+					}
 					break;
 				}
 				r = l + SGI(ifp)->si_xzoom - 1;
