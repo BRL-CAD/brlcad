@@ -14,12 +14,13 @@
  *	All rights reserved.
  */
 #include <stdio.h>
+#include <strings.h>
 #include "machine.h"
 #include "vmath.h"
-#include <strings.h>
+#include "wdb.h"
+#include "raytrace.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "wdb.h"
 
 extrude( entityno )
 int entityno;

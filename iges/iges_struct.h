@@ -5,7 +5,6 @@ extern fastf_t brlabs();
 
 #define	ARCSEGS	10	/* number of segments to use in representing a circle */
 
-#define	INFINITY	1.0e20
 #define	TOL		0.0005
 #define EQUAL( a , b )		((brlabs( (a)-(b) ) < TOL) ? 1 : 0 )
 #define	SAMEPT( pt1 , pt2 )	(EQUAL( pt1[X] , pt2[X] ) && \
@@ -18,7 +17,7 @@ extern fastf_t brlabs();
 
 /* Structure for storing info from the IGES file directory section along with
 	transformation matrices */
-struct directory
+struct iges_directory
 {
 	int type; /* IGES entity type */
 	int form; /* IGES form number */

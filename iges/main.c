@@ -30,7 +30,7 @@ fastf_t scale,inv_scale,conv_factor;
 int units,counter,pstart,dstart,totentities,dirarraylen;
 FILE *fd,*fdout;
 int reclen,currec,ntypes;
-struct directory **dir;
+struct iges_directory **dir;
 struct reglist *regroot;
 
 char operator[]={
