@@ -428,45 +428,6 @@ double	size;
 	return(vpos);
 }
 
-struct colors {
-	char		*name;
-	unsigned char	c_pixel[3];
-}colortab[] = {
-	"black",	20,20,20,
-	"blue",		0,0,255,
-	"brown",	200,130,0,
-	"cyan",		0,255,200,
-	"flesh",	255,200,160,
-	"gray",		120,120,120,
-	"green",	0,255,0,
-	"lime", 	200,255,0,
-	"magenta",	255,0,255,
-	"olive",	220,190,0,
-	"orange",	255,100,0,
-	"pink",		255,200,200,
-	"red",		255,0,0,
-	"rose",		255,0,175,
-	"rust",		200,100,0,
-	"silver",	237,237,237,
-	"sky",		0,255,255,
-	"violet",	200,0,255,
-	"white",	255,255,255,
-	"yellow",	255,200,0
-};
-int	ncolors = sizeof(colortab)/sizeof(struct colors);
-int	curcolor = 0;
-
-get_rgb( rgb )
-register char	*rgb;
-{
-	register struct colors *cp;
-	if( ++curcolor >= ncolors )  curcolor = 0;
-	cp = &colortab[curcolor];
-	rgb[0] = cp->c_pixel[0];
-	rgb[1] = cp->c_pixel[1];
-	rgb[2] = cp->c_pixel[2];
-}
-
 do_rings( ringname, center, r1, r2, incr, n )
 char	*ringname;
 double	r1;
@@ -501,50 +462,3 @@ int	n;
 	/* Build the group that holds all the regions */
 	mk_lfcomb( stdout, ringname, 0, &head );
 }
-
-do_light( name, pos, dir_at, da_flag, r, rgb, headp )
-char	*name;
-point_t	pos;
-vect_t	dir_at;		/* direction or aim point */
-int	da_flag;	/* 0 = direction, !0 = aim point */
-double	r;		/* radius of light */
-char	*rgb;
-struct wmember	*headp;
-{
-	char	nbuf[64];
-	vect_t	center;
-	mat_t	rot;
-	mat_t	xlate;
-	mat_t	both;
-	vect_t	begin;
-	vect_t	trial;
-	vect_t	from;
-	vect_t	dir;
-
-	if( da_flag )  {
-		VSUB2( dir, dir_at, pos );
-		VUNITIZE( dir );
-	} else {
-		VMOVE( dir, dir_at );
-	}
-
-	sprintf( nbuf, "%s.s", name );
-	VSETALL( center, 0 );
-	mk_sph( stdout, nbuf, center, r );
-
-	/*
-	 * Need to rotate from 0,0,-1 to vect "dir",
-	 * then xlate to final position.
-	 */
-	VSET( from, 0, 0, -1 );
-	mat_fromto( rot, from, dir );
-	mat_idn( xlate );
-	MAT_DELTAS( xlate, pos[X], pos[Y], pos[Z] );
-	mat_mul( both, xlate, rot );
-
-	mk_mcomb( stdout, name, 1, 1, "light", "shadows=1", 1, rgb );
-	mk_memb( stdout, nbuf, both, UNION );
-	(void)mk_addmember( name, headp );
-}
-
-rt_log(str) {fprintf(stderr,"rt_log: %s\n", str);}
