@@ -794,11 +794,6 @@ sysconfdir=`eval "echo $sysconfdir"`
 sysconfdir=`eval "echo $sysconfdir"`
 mandir=`eval "echo $mandir"`
 mandir=`eval "echo $mandir"`
-CC=`eval "echo $CC"`
-CFLAGS=`eval "echo $CFLAGS"`
-CPPFLAGS=`eval "echo $CPPFLAGS"`
-LDFLAGS=`eval "echo $LDFLAGS"`
-LIBS=`eval "echo $LIBS"`
 
 
 dnl **********************
