@@ -92,10 +92,8 @@ int argc;
 char **argv;
 {
 	static struct rt_i *rtip;
-	static vect_t temp;
 	char *title_file, *title_obj;	/* name of file and first object */
-	register int x,y;
-	char outbuf[132];
+	register int	x;
 	char idbuf[132];		/* First ID record info */
 
 #ifdef BSD
