@@ -37,7 +37,7 @@ register int *buf;
 	if( ffdes == NULL )
 		return;
 	/* Read the row, rounding width up to nearest byte value. */
-	if( fread( bitrow, (wid / 8) + ((wid % 8 == 0) ? 0 : 1), 1, ffdes)
+	if( (int)fread( bitrow, (wid / 8) + ((wid % 8 == 0) ? 0 : 1), 1, ffdes)
 		< 1
 		)
 		{
