@@ -35,27 +35,31 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdlib.h>
 #include <stdio.h>
+
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #endif
 
 #include <sys/types.h>
+
 #ifndef WIN32
-#include <unistd.h>
+#  include <unistd.h>
 #endif
        
 #ifdef HAVE_SYS_FILE_H
-#include <sys/file.h>
-#else
-#include <fcntl.h>
+#  include <sys/file.h>
+#endif
+
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
 #endif
 
 #include "machine.h"
 #include "fb.h"
 #include "./fblocal.h"
+
 
 #define FILE_CMAP_ADDR	((long) ifp->if_width*ifp->if_height\
 			*sizeof(RGBpixel))
