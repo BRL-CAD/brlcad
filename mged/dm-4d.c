@@ -227,7 +227,7 @@ Ir_open()
 	
 	ir_buffer = 0;
 
-	swapinterval( 5 );
+/* 	swapinterval( 5 );*/
 
 	qdevice(LEFTMOUSE);
 	qdevice(MIDDLEMOUSE);
@@ -1198,12 +1198,14 @@ kblights()
 {
 	char	lights;
 
+#ifdef never
 	lights = (cueing_on)
 		| (zclipping_on << 1)
 		| (perspective_on << 2);
 
 	lampon(lights);
 	lampoff(lights^0xf);
+#endif
 }
 
 /*
