@@ -51,9 +51,6 @@ void restore_comb();
 int editit();
 int clear_comb(),build_comb(),save_comb();
 
-static int ident;
-static int air;
-
 int
 f_red(clientData, interp, argc , argv)
 ClientData clientData;
@@ -382,7 +379,6 @@ char *str;
   char *ptr;
   char relation;
   char name[NAMESIZE+1];
-  struct directory *dp1;
   struct rt_tree_array *rt_tree_array;
   struct line_list *llp;
   int node_count = 0;
@@ -470,7 +466,7 @@ char *str;
       name[i] = '\0';
 
       /* Check for existence of member */
-      if ((dp1=db_lookup(dbip , name , LOOKUP_QUIET)) == DIR_NULL)
+      if ((db_lookup(dbip , name , LOOKUP_QUIET)) == DIR_NULL)
       bu_log("\tWARNING: ' %s ' does not exist\n", name);
 
       /* get matrix */
@@ -615,7 +611,7 @@ char **argv;
   struct rt_db_internal	intern;
   struct rt_comb_internal *comb;
   struct rt_tree_array	*rt_tree_array;
-  int offset,i;
+  int i;
   int node_count;
   int actual_count;
   struct bu_vls vls;
@@ -905,7 +901,7 @@ char *name;
 /*	Writes the file for later editing */
 	struct rt_tree_array	*rt_tree_array;
 	FILE			*fp;
-	int			offset,i;
+	int			i;
 	int			node_count;
 	int			actual_count;
 
@@ -1044,8 +1040,7 @@ checkcomb()
 	char line[MAXLINE];
 	char *ptr;
 	int region=(-1);
-	int id,air,gift,los;
-	unsigned char rgb[3];
+	int id,air;
 	int rgb_valid;
 
 	if( (fp=fopen( red_tmpfil , "r" )) == NULL )
@@ -1111,39 +1106,37 @@ checkcomb()
 		}
 		else if( (ptr=find_keyword( i, line, "GIFT_MATERIAL" ) ) )
 		{
-			gift = atoi( ptr );
 			continue;
 		}
 		else if( (ptr=find_keyword( i, line, "LOS" ) ) )
 		{
-			los = atoi( ptr );
 			continue;
 		}
 		else if( (ptr=find_keyword( i, line, "COLOR" ) ) )
 		{
 			char *ptr2;
 
+			rgb_valid = 1;
 			ptr2 = strtok( ptr, delims );
 			if( !ptr2 )
 			{
 				rgb_valid = 0;
 				continue;
 			}
-			rgb[0] = atoi( ptr2 ) & 0377;
 			ptr2 = strtok( (char *)NULL, delims );
 			if( !ptr2 )
 			{
 				rgb_valid = 0;
 				continue;
 			}
-			rgb[1] = atoi( ptr2 ) & 0377;
 			ptr2 = strtok( (char *)NULL, delims );
 			if( !ptr2 )
 			{
 				rgb_valid = 0;
 				continue;
 			}
-			rgb[2] = atoi( ptr2 ) & 0377;
+			if( !rgb_valid )
+				Tcl_AppendResult(interp, "Invalid color specification!!! Must be three integers, each 0-255\n", (char *)NULL );
 			continue;
 		}
 		else if( (ptr=find_keyword( i, line, "SHADER" ) ) )
@@ -1301,9 +1294,7 @@ char *old_name;
 	int ch;
 	int i;
 	int done=0;
-	int region;
-	int done2, first;
-	struct directory *dp1;
+	int done2;
 	struct rt_tree_array *rt_tree_array;
 	int tree_index=0;
 	union tree *tp;
@@ -1500,7 +1491,6 @@ char *old_name;
 			continue;
 
 		done2=0;
-		first=1;
 		ptr = strtok( line, delims );
 		while (!done2) {
 			if ( !ptr )
@@ -1510,7 +1500,6 @@ char *old_name;
 			relation = (*ptr);
 			if( relation == '\0' )
 				break;
-			first = 0;
 
 			/* Next must be the member name */
 			ptr = strtok( (char *)NULL, delims );
@@ -1523,7 +1512,7 @@ char *old_name;
 				name[i] = '\0';
 
 			/* Check for existence of member */
-			if( (dp1=db_lookup( dbip , name , LOOKUP_QUIET )) == DIR_NULL )
+			if( (db_lookup( dbip , name , LOOKUP_QUIET )) == DIR_NULL )
 			  Tcl_AppendResult(interp, "\tWARNING: '", name, "' does not exist\n", (char *)NULL);
 			/* get matrix */
 			ptr = strtok( (char *)NULL, delims );
