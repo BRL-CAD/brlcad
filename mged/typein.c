@@ -1202,14 +1202,14 @@ struct rt_db_internal	*intern;
 		VADD4( aip->pt[6], Vrtx, Dpth, Wdth, Hgt );
 		VADD3( aip->pt[7], Vrtx, Dpth, Hgt );
 	} else { /* "raw" */
-		VMOVE( aip->pt[0], Vrtx );
-		VADD2( aip->pt[1], Vrtx, Wdth );
-		VADD2( aip->pt[3], Vrtx, Hgt );	/* next lines fliped for 4d uopt bug */
-		VMOVE( aip->pt[2], aip->pt[1] );
-		VADD2( aip->pt[4], Vrtx, Dpth );
-		VADD3( aip->pt[5], Vrtx, Dpth, Wdth );
-		VMOVE( aip->pt[6], aip->pt[5] );
-		VADD3( aip->pt[7], Vrtx, Dpth, Hgt );
+		VADD2( aip->pt[0], Vrtx, Wdth );
+		VADD2( aip->pt[1], Vrtx, Hgt );
+		VADD2( aip->pt[2], aip->pt[1], Dpth );
+		VADD2( aip->pt[3], aip->pt[0], Dpth );
+		VMOVE( aip->pt[4], Vrtx );
+		VMOVE( aip->pt[5], Vrtx );
+		VADD2( aip->pt[6], Vrtx, Dpth );
+		VMOVE( aip->pt[7], aip->pt[6] );
 	}
 
 	return(0);	/* success */
