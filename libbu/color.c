@@ -212,16 +212,22 @@ unsigned char	*rgb;
 	if (strlen(++str) != 6)
 	    return 0;
 	num = sscanf(str, "%02x%02x%02x", &r, &g, &b);
-	printf("# notation: I read %d of %d, %d, %d\n", num, r, g, b);
+#if 0
+	bu_log("# notation: I read %d of %d, %d, %d\n", num, r, g, b);
+#endif
     }
     else if (isdigit(*str))
     {
 	num = sscanf(str, "%d/%d/%d", &r, &g, &b);
-	printf("slash separation: I read %d of %d, %d, %d\n", num, r, g, b);
+#if 0
+	bu_log("slash separation: I read %d of %d, %d, %d\n", num, r, g, b);
+#endif
 	if (num == 1)
 	{
 	    num = sscanf(str, "%d %d %d", &r, &g, &b);
-	    printf("blank separation: I read %d of %d, %d, %d\n", num, r, g, b);
+#if 0
+	    bu_log("blank separation: I read %d of %d, %d, %d\n", num, r, g, b);
+#endif
 	}
 	VSET(rgb, r, g, b);
 	if ((r < 0) || (r > 255)
