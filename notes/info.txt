@@ -146,7 +146,7 @@ anim_time
 anim_track
 anim_turn
 any-png.sh
-ap-pix
+ap-pix sean
 applymap
 asc-nmg
 asc-pl
@@ -164,11 +164,11 @@ bw-a
 bw-d
 bw-fb
 bw-imp
-bw-pix
+bw-pix sean
 bw-png
 bw-ps
 bw-rle
-bw3-pix
+bw3-pix sean
 bwcrop
 bwdiff
 bwfilter
@@ -203,7 +203,9 @@ crop
 cubitorle
 cv
 cy-g
-d-a
+d-a 
+  status: ok
+  desc: binary double file to ascii file converter
 d-bw
 d-f
 d-i
@@ -219,7 +221,7 @@ display
 dmod
 double-asc
 dpeak
-dpix-pix
+dpix-pix sean
 dsel
 dsp_add
 dstat
@@ -239,12 +241,13 @@ fb-bw
 fb-cmap
 fb-fb
 fb-orle
-fb-pix
+fb-pix sean
 fb-png
 fb-rle
 fbanim
 fbcbars
 fbclear
+  status: ok
 fbcmap
 fbcmrot
 fbcolor
@@ -306,7 +309,7 @@ jack-g
 jove
 lgt
 loop
-mac-pix
+mac-pix sean
 machinetype.sh
 mcut
 mergechan
@@ -328,22 +331,22 @@ nmg-rib
 off-g
 op-bw
 orle-fb
-orle-pix
+orle-pix sean
 painttorle
 patch-g
-pcd-pix
-pix-alias
-pix-bw
-pix-bw3
-pix-fb
-pix-orle
-pix-png
-pix-ppm
-pix-ps
-pix-rle
-pix-spm
-pix-sun
-pix-yuv
+pcd-pix sean
+pix-alias sean
+pix-bw sean
+pix-bw3 sean
+pix-fb sean
+pix-orle sean
+pix-png sean
+pix-ppm sean
+pix-ps sean
+pix-rle sean
+pix-spm sean
+pix-sun sean
+pix-yuv sean
 pix2asc
 pix3filter
 pixautosize
@@ -399,9 +402,10 @@ plgetframe
 plline2
 plrot
 plstat
-png-bw
+png-bw sean
 png-fb
-png-pix
+  status: ok
+png-pix sean
 png_info
 polar-fb
 poly-bot
@@ -415,7 +419,7 @@ remapid
 remrt
 repos
 rle-fb
-rle-pix
+rle-pix sean
 rleClock
 rleaddcom
 rlebg
@@ -469,7 +473,7 @@ rtxray
 script-tab
 scriptsort
 secpass
-sgi-pix
+sgi-pix sean
 sgisnap.sh
 shapefact
 sharedliblink.sh
@@ -478,7 +482,7 @@ show.sh
 smush
 spm-fb
 stl-g
-sun-pix
+sun-pix sean
 syn
 tabinterp
 tabsub
@@ -507,4 +511,4 @@ wasatchrle
 wavelet
 wish
 xyz-pl
-yuv-pix
+yuv-pix sean

@@ -1,0 +1,2 @@
+pix-png
+  gives "short read" error when trying to covert a pixfile to png
