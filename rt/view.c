@@ -114,6 +114,7 @@ static int	buf_mode=0;
 #define BUFMODE_INCR	3		/* incr_mode set, dynamic buffering */
 #define BUFMODE_RTSRV	4		/* output buffering into scanbuf */
 #define BUFMODE_FULLFLOAT 5		/* buffer entire frame as floats */
+#define BUFMODE_SCANLINE 6		/* Like _DYNAMIC, one scanline/cpu */
 
 static struct scanline {
 	int	sl_left;		/* # pixels left on this scanline */
@@ -317,6 +318,34 @@ register struct application *ap;
 		bu_semaphore_release( RT_SEM_RESULTS );
 		break;
 
+	/*
+	 *  Only one CPU is working on this scanline,
+	 *  no parallel interlock required!  Much faster.
+	 */
+	case BUFMODE_SCANLINE:
+		slp = &scanline[ap->a_y];
+		if( slp->sl_buf == (char *)0 )  {
+			slp->sl_buf = bu_calloc( width, pwidth, "sl_buf scanline buffer" );
+		}
+		pixelp = slp->sl_buf+(ap->a_x*pwidth);
+		*pixelp++ = r ;
+		*pixelp++ = g ;
+		*pixelp++ = b ;
+		if (rpt_dist)
+		{
+		    *pixelp++ = dist[0];
+		    *pixelp++ = dist[1];
+		    *pixelp++ = dist[2];
+		    *pixelp++ = dist[3];
+		    *pixelp++ = dist[4];
+		    *pixelp++ = dist[5];
+		    *pixelp++ = dist[6];
+		    *pixelp++ = dist[7];
+		}
+		if( --(slp->sl_left) <= 0 )
+			do_eol = 1;
+		break;
+
 	case BUFMODE_INCR:
 		{
 			register int dx,dy;
@@ -397,6 +426,7 @@ register struct application *ap;
 		}
 		break;
 
+	case BUFMODE_SCANLINE:
 	case BUFMODE_DYNAMIC:
 		if( fbp != FBIO_NULL )  {
 			int		npix;
@@ -1112,7 +1142,15 @@ char	*framename;
 	} else if( incr_mode )  {
 		buf_mode = BUFMODE_INCR;
 	} else if( rt_g.rtg_parallel )  {
-		buf_mode = BUFMODE_DYNAMIC;
+		if( npsw >= 4 && npsw <= height )  {
+		    	/* Have each CPU do a whole scanline.
+		    	 * Saves lots of semaphore overhead.
+		    	 */
+			per_processor_chunk = width;
+		    	buf_mode = BUFMODE_SCANLINE;
+		} else {
+			buf_mode = BUFMODE_DYNAMIC;
+		}
 	} else if( width <= 96 )  {
 		buf_mode = BUFMODE_UNBUF;
 	}  else  {
@@ -1191,8 +1229,12 @@ bu_log("mallocing curr_float_frame\n");
 				return;		 /* more res to come */
 		break;
 
+	case BUFMODE_SCANLINE:
+		bu_log("Low overhead scanline-per-CPU buffering\n");
+		/* Fall through... */
 	case BUFMODE_DYNAMIC:
-		bu_log("Dynamic scanline buffering\n");
+		if( buf_mode == BUFMODE_DYNAMIC )
+			bu_log("Dynamic scanline buffering\n");
 		if( sub_grid_mode )  {
 			for( i=sub_ymin; i<=sub_ymax; i++ )
 				scanline[i].sl_left = sub_xmax-sub_xmin+1;
@@ -1226,6 +1268,8 @@ bu_log("mallocing curr_float_frame\n");
 
 		    	/* Protect against file being too large */
 			if( pix_start > pix_end )  pix_start = pix_end;
+
+		    	/* XXX Need to check for black interior regions! */
 
 			xx = pix_start % width;
 			yy = pix_start / width;
