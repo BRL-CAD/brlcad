@@ -1,4 +1,4 @@
-#define NUgrid 0
+#define NUgrid 1
 /*
  *			S H O O T . C
  *
@@ -144,8 +144,6 @@ register struct shootray_status	*ssp;
 			 *  relative to ssp->first_box_start.
 			 */
 			register int	x, y, z;
-			int	in_axis;
-			int	j;
 
 			ssp->dist_corr = ssp->first_box_start;
 			VJOIN1( ssp->newray.r_pt, ap->a_ray.r_pt,
@@ -196,8 +194,7 @@ if(rt_g.debug&DEBUG_ADVANCE)bu_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->i
 			NUGRID_T_SETUP( Y, y );
 			NUGRID_T_SETUP( Z, z );
 
-			ssp->t0 = 0; /* XXX somebody please doublecheck this */
-			}
+			ssp->t0 = 0.0; /* XXX somebody please doublecheck this */
 		} else {
 			/* Advance from previous cell to next cell */
 			/* Take next step, finding ray entry distance */
@@ -233,7 +230,7 @@ if(rt_g.debug&DEBUG_ADVANCE)bu_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->i
 				ssp->t1 = ssp->tv[Y];
 			}
 		}
-if(rt_g.debug&DEBUG_ADVANCE)bu_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X ? "X" : (ssp->out_axis==Y?"Y":"Z"), ssp->t1);
+if(rt_g.debug&DEBUG_ADVANCE)bu_log("Exit axis is %c, t1=%g\n", "XYZ*"[ssp->out_axis], ssp->t1);
 
 		if(cutp==CUTTER_NULL || cutp->cut_type != CUT_BOXNODE)
 			rt_bomb("rt_advance_to_next_cell(): leaf not boxnode");
@@ -261,7 +258,7 @@ if(rt_g.debug&DEBUG_ADVANCE)bu_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X 
 				V3ARGS( ssp->newray.r_pt ) );
 		}
 
-		ssp->newray.r_min = 0;
+		ssp->newray.r_min = 0.0;
 		ssp->newray.r_max = ssp->t1 - ssp->t0;
 
 		ssp->box_start = ssp->first_box_start + ssp->t0;
@@ -285,6 +282,7 @@ if(rt_g.debug&DEBUG_ADVANCE)bu_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X 
      	if( rt_g.debug & DEBUG_ADVANCE )  {
      		bu_log("rt_advance_to_next_cell(): escaped model RPP\n");
      	}
+	ssp->lastcut = CUTTER_NULL;
 	return(CUTTER_NULL);
 }
 #else
