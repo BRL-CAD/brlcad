@@ -160,12 +160,13 @@ CONST mat_t		mat;
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
-	if( mat == NULL )  mat = bn_mat_identity;
-
-	if( dp->d_flags & DIR_COMB )
+	if( dp->d_flags & DIR_COMB )  {
 		id = ID_COMBINATION;
-	else
+	} else {
+		/* As a convenience to older ft_import routines */
+		if( mat == NULL )  mat = bn_mat_identity;
 		id = rt_id_solid( &ext );
+	}
 
 	if( rt_functab[id].ft_import( ip, &ext, mat ) < 0 )  {
 		bu_log("rt_db_get_internal(%s):  import failure\n",
