@@ -139,12 +139,7 @@ struct rt_i		*rtip;
 	CONST struct rt_tol		*tol = &rtip->rti_tol;
 	double	dot;
 	vect_t	height, work;
-	static first_time=1;
 
-	if (first_time) {
-		rt_log("%s\n",RCSid);
-		first_time=0;
-	}
 	RT_CK_DB_INTERNAL(ip);
 	hip = (struct rt_hf_internal *)ip->idb_ptr;
 	RT_HF_CK_MAGIC(hip);
@@ -305,7 +300,11 @@ int			xCell, yCell;
 	int fnd1, fnd2;
 	register double hf2mm = hfp->hf_file2mm;
 
+#if 1
 	if (rt_g.debug & DEBUG_HF) {
+#else
+	{
+#endif
 		rt_log("rt_hf_cell_shot(%s): %d, %d\n", stp->st_name,
 		    xCell, yCell);
 	}
@@ -408,11 +407,6 @@ other_half:
 	fnd2 = 1;
 leave:
 	if (!fnd1 && !fnd2) return 0;
-
-	if (rt_g.debug & DEBUG_HF) {
-		rt_log("rt_hf_cell_shot: hit.\n");
-	}
-
 	/*
 	 * We have now done the ray-triangle intersection.  dn1st
 	 * and dn tell us the direction of the normal, <0 is in
@@ -475,7 +469,7 @@ struct seg		*seghead;
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
 	register struct seg *segp;
-#define	MAXHITS	128		/* # of surfaces hit, must be even */
+#define	MAXHITS	64		/* # of surfaces hit, must be even */
 	LOCAL	struct hit	hits[MAXHITS];
 	register struct hit *hp;
 	LOCAL	int		nhits;
@@ -602,9 +596,7 @@ struct seg		*seghead;
 	xWidth = hf->hf_Xlen/((double)(hf->hf_w-1));
 	yWidth = hf->hf_Ylen/((double)(hf->hf_n-1));
 
-	if (rt_g.debug & DEBUG_HF) {
-		rt_log("hf: xWidth=%g, yWidth=%g\n", xWidth, yWidth);
-	}
+
 	/*
 	 * add the sides, and bottom to the hit list.
 	 */
@@ -612,7 +604,7 @@ struct seg		*seghead;
 		hp->hit_dist = in;
 		hp->hit_surfno = iplane;
 		hp++;
-		if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+		nhits++;
 	} else if (iplane != -6) {
 		double left, right, xx, xright,answer;
 		vect_t loc;
@@ -647,10 +639,6 @@ struct seg		*seghead;
 			xx = loc[X] - CellX*xWidth;
 			break;
 		}
-		if (xx < 0) {
-			rt_log("hf: xx < 0, iplane = %d\n", iplane);
-		}
-
 		if (hf->hf_shorts) {
 			register unsigned short *sp;
 			sp = (unsigned short *)hf->hf_mp->apbuf +
@@ -685,14 +673,14 @@ rt_log("in: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 			hp->hit_dist = in;
 			hp->hit_surfno = iplane;
 			hp++;
-			if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+			nhits++;
 		}
 	}
 	if (oplane == -3) { 
 		hp->hit_dist = out;
 		hp->hit_surfno = oplane;
 		hp++;
-		if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+		nhits++;
 	} else if (oplane != -6) {
 		double left, right, xx, xright, answer;
 		vect_t loc;
@@ -727,10 +715,6 @@ rt_log("in: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 			xx = loc[X] - CellX*xWidth;
 			break;
 		}
-		if (xx < 0) {
-			rt_log("hf: xx < 0, iplane = %d\n", iplane);
-		}
-
 		if (hf->hf_shorts) {
 			register unsigned short *sp;
 			sp = (unsigned short *)hf->hf_mp->apbuf +
@@ -761,11 +745,11 @@ rt_log("in: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 rt_log("out: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
     loc[Z], answer, left, right, xright, xx);
 #endif
-		if (loc[Z]-SQRT_SMALL_FASTF < (right-left)/xright*xx+left) {
+		if (loc[Z]-SQRT_SMALL_FASTF < answer) {
 			hp->hit_dist = out;
 			hp->hit_surfno = oplane;
 			hp++;
-			if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+			nhits++;
 		}
 	}
 	/*
@@ -810,14 +794,7 @@ rt_log("out: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 		 * deltaX = (Xdist*cell_width)/Xdist
 		 * deltaY = (Ydist*cell_width)/Xdist;
 		 */
-		tmp = xWidth/fabs(aray[X]);
-
-#if 0
-rt_log("hf: tmp=%g\n", tmp);
-rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
-		aray[X], aray[Y], aray[Z]);
-#endif
-
+		tmp = xWidth/abs(aray[X]);
 		VSCALE(aray, aray, tmp);
 		farZ = curloc[Z]+aray[Z];
 		/*
@@ -854,13 +831,7 @@ rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 		error = curloc[Y]-yCell*yWidth;
 		error /= yWidth;
 
-/*		delta = aray[Y]/yWidth; */
-		delta = aray[Y]/fabs(aray[X]);
-
-#if 0
-rt_log("aray[Y]/aray[X]=%g\n", delta);
-#endif
-
+		delta = aray[Y]/yWidth;
 		if (delta < 0.0) {
 			delta = -delta;
 			error = -error;
@@ -887,13 +858,9 @@ rt_log("aray[Y]/aray[X]=%g\n", delta);
 			maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
 			minZ = (curloc[Z] < farZ) ? curloc[Z] : farZ;
 			if (rt_g.debug & DEBUG_HF) {
-				rt_log("hf: cell %d,%d [%g -- %g] ",
+				rt_log("hf: cell %d,%d [%g -- %g]\n",
 				xCell, yCell, minZ, maxZ);
 			}
-			/*
-			 * Are we on the grid yet?  If not, then
-			 * we will check for a side step and inc.
-			 */
 			if (yCell < 0 || yCell > hf->hf_n-2) {
 				if (error > -SQRT_SMALL_FASTF) {
 					if (yCell >= -1) goto skip_first;
@@ -906,14 +873,6 @@ rt_log("aray[Y]/aray[X]=%g\n", delta);
 				continue;
 			}
 					
-			/*
-			 * Get the min/max of the four corners of
-			 * a given cell.  Since the data in memory
-			 * can be in one of two forms, unsigned short
-			 * and float, we have this simple if statement
-			 * around the find min/max to reference the data
-			 * correctly.
-			 */
 			if (hf->hf_shorts) {
 				register unsigned short *sp;
 				sp = (unsigned short *)hf->hf_mp->apbuf +
@@ -954,24 +913,15 @@ rt_log("aray[Y]/aray[X]=%g\n", delta);
 				highest *= hf->hf_file2mm;
 			}
 
-			if (rt_g.debug & DEBUG_HF) {
-				rt_log("lowest=%g, highest=%g\n", 
-				    lowest, highest);
-			}
-
 /*
  * This is the primary test.  It is designed to get all cells that the
  * ray passes through.
  */
-#if 1
 			if (maxZ+SQRT_SMALL_FASTF > lowest &&
 			    minZ-SQRT_SMALL_FASTF < highest ) {
-#else
-			{
-#endif
 				int r;
 				if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
-					if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+					++nhits;
 					++hp;
 				}
 			}
@@ -983,7 +933,7 @@ skip_first:
 			if (error > SQRT_SMALL_FASTF) {
 				yCell += signY;
 				if (rt_g.debug & DEBUG_HF) {
-					rt_log("hf: cell %d,%d \n", xCell, yCell);
+					rt_log("hf: cell %d,%d\n", xCell, yCell);
 				}
 				if ((yCell < 0) || yCell > hf->hf_n-2) {
 					error -= 1.0;
@@ -1031,16 +981,12 @@ skip_first:
 					lowest *= hf->hf_file2mm;
 					highest *= hf->hf_file2mm;
 				}
-#if 1
 				if (maxZ+SQRT_SMALL_FASTF > lowest &&
 				    minZ-SQRT_SMALL_FASTF < highest) {
-#else
-				{
-#endif /* 0 */
 					int r;
 					/* DO HIT */
 					if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
-						if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+						++nhits;
 						++hp;
 					}
 				}
@@ -1057,7 +1003,6 @@ skip_first:
 			rt_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
 			   xCell, yCell, curloc[Z], hf->hf_w-1, hf->hf_n-1, hf->hf_max);
 		}
-/* OTHER HALF */
 	} else {
 		double tmp;
 		register double farZ, minZ, maxZ;
@@ -1079,14 +1024,7 @@ skip_first:
 		 * deltaX = (Xdist*cell_width)/Xdist
 		 * deltaY = (Ydist*cell_width)/Xdist;
 		 */
-		tmp = yWidth/fabs(aray[Y]);
-
-#if 0
-rt_log("hf: tmp=%g\n", tmp);
-rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
-		aray[X], aray[Y], aray[Z]);
-#endif
-
+		tmp = yWidth/abs(aray[Y]);
 		VSCALE(aray, aray, tmp);
 		farZ = curloc[Z]+aray[Z];
 		/*
@@ -1123,13 +1061,7 @@ rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 		error = curloc[X]-xCell*xWidth;
 		error /= xWidth;
 
-/*		delta = aray[X]/xWidth; */
-		delta = aray[X]/fabs(aray[Y]);
-
-#if 0
-rt_log("aray[X]/aray[Y]=%g\n", delta);
-#endif
-
+		delta = aray[X]/xWidth;
 		if (delta < 0.0) {
 			delta = -delta;
 			error = -error;
@@ -1156,7 +1088,7 @@ rt_log("aray[X]/aray[Y]=%g\n", delta);
 			maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
 			minZ = (curloc[Z] < farZ) ? curloc[Z] : farZ;
 			if (rt_g.debug & DEBUG_HF) {
-				rt_log("hf: cell %d,%d [%g -- %g] ",
+				rt_log("hf: cell %d,%d [%g -- %g]\n",
 				xCell, yCell, minZ, maxZ);
 			}
 			if (xCell < 0 || xCell > hf->hf_w-2) {
@@ -1211,25 +1143,15 @@ rt_log("aray[X]/aray[Y]=%g\n", delta);
 				highest *= hf->hf_file2mm;
 			}
 
-
-			if (rt_g.debug & DEBUG_HF) {
-				rt_log("lowest=%g, highest=%g\n", 
-				    lowest, highest);
-			}
-
 /*
  * This is the primary test.  It is designed to get all cells that the
  * ray passes through.
  */
-#if 1
 			if (maxZ+SQRT_SMALL_FASTF > lowest &&
 			    minZ-SQRT_SMALL_FASTF < highest ) {
-#else
-			{
-#endif
 				int r;
 				if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
-					if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+					nhits++;
 					hp++;
 				}
 			}
@@ -1289,16 +1211,12 @@ skip_2nd:
 					lowest *= hf->hf_file2mm;
 					highest *= hf->hf_file2mm;
 				}
-#if 1
 				if (maxZ+SQRT_SMALL_FASTF > lowest &&
 				    minZ-SQRT_SMALL_FASTF < highest) {
-#else
-				{
-#endif
 					int r;
 					/* DO HIT */
 					if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
-						if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+						nhits++;
 						hp++;
 					}
 				}
@@ -1459,10 +1377,8 @@ register struct uvcoord	*uvp;
 	if (uvp->uv_u > 1.0) uvp->uv_u=1.0;
 	if (uvp->uv_v < 0.0) uvp->uv_v=0.0;
 	if (uvp->uv_v > 1.0) uvp->uv_v=1.0;
-#if 0
 	uvp->uv_du = r;
 	uvp->uv_dv = r;
-#endif /* 0 */
 }
 
 /*
