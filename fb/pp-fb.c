@@ -26,7 +26,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include <fb.h>
+#include "fb.h"
+
 extern void	perror(), exit();
 
 #define ABS(i)	((i<0)?-(i):(i))
@@ -149,14 +150,14 @@ line1:
 	(void) fscanf( input, "%d", &maxh );
 	(void) fscanf( input, "%d", &maxv );
 	if( maxh > 512 || maxv > 512 ) /* Automatic high res. mode.	*/
-		setfbsize( 1024 );
+		fbsetsize( 1024 );
 	if(	fbopen( NULL, APPEND ) == -1
 	    ||	fb_wmap( (ColorMap *) NULL ) == -1
 		)
 		{
 		return	1;
 		}
-	scans_per_buffer = FBBUFSIZE/getfbsize();
+	scans_per_buffer = FBBUFSIZE/fbgetsize();
 
 	(void) printf( "Number of Horz cells %4d, ",maxh);
 	(void) printf( "Number of Vert cells %4d\n",maxv);

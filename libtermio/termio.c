@@ -243,9 +243,10 @@ struct termio	*to, *from;
 #endif
 	{
 #ifdef TANDEM
+	/* This could be dangerous if there are null bytes */
 	(void) strncpy( (char *) to, (char *) from, sizeof(struct sgttyb) );
 #else
-#include <memory.h>
+#include	<memory.h>
 	(void) memcpy( (char *) to, (char *) from, sizeof(struct termio) );
 #endif
 	return;

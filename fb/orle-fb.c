@@ -14,9 +14,11 @@
 static
 char	sccsTag[] = "@(#) rle-fb.c	1.9	last edit 2/4/86 at 16:38:20";
 #endif
+
 #include <stdio.h>
-#include <fb.h>
-#include <rle.h>
+#include "fb.h"
+#include "rle.h"
+
 #ifndef pdp11
 #define MAX_DMA	1024*64
 #else
@@ -80,7 +82,7 @@ char	*argv[];
 
 	/* Automatic selection of high res. device.			*/
 	if( xpos + xlen > 512 || ypos + ylen > 512 )
-		setfbsize( 1024 );
+		fbsetsize( 1024 );
 	if( xpos + xlen > _fbsize )
 		xlen = _fbsize - xpos;
 	if( ypos + ylen > _fbsize )

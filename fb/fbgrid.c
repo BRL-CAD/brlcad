@@ -19,8 +19,10 @@ char	sccsTag[] = "@(#) fbgrid.c	1.7	last edit 4/3/85 at 09:24:36";
 	In the process, the name has been changed to fbgrid from ikgrid.
 	Gary S. Moss, BRL. 03/12/85
  */
+
 #include <stdio.h>
-#include <fb.h>
+#include "fb.h"
+
 main( argc, argv )
 int	argc;
 char	**argv;
@@ -97,7 +99,7 @@ register char	**argv;
 		switch( c )
 			{
 			case 'h' : /* High resolution frame buffer.	*/
-				setfbsize( 1024 );
+				fbsetsize( 1024 );
 				break;
 			case '?' :
 				return	0;

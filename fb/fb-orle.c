@@ -14,9 +14,11 @@
 static
 char	sccsTag[] = "@(#) fb-rle.c	1.11	last edit 2/12/86 at 13:22:00";
 #endif
+
 #include <stdio.h>
-#include <fb.h>
-#include <rle.h>
+#include "fb.h"
+#include "rle.h"
+
 #ifndef pdp11
 #define MAX_DMA	1024*64
 #else
@@ -175,7 +177,7 @@ register char	**argv;
 			rle_debug = 1;
 			break;
 		case 'h' : /* High resolution.				*/
-			setfbsize( 1024 );
+			fbsetsize( 1024 );
 			break;
 		case 'l' : /* Length in x and y.			*/
 			if( argc - optind < 1 )

@@ -9,8 +9,10 @@
 static
 char	sccsTag[] = "@(#) fbclear.c	1.6	last edit 6/16/86 at 16:53:04";
 #endif
+
 #include <stdio.h>
-#include <fb.h>
+#include "fb.h"
+
 #define u_char	unsigned char
 /*
 			F B C L E A R . C
@@ -31,7 +33,7 @@ int	argc;
 {
 	if( argc > 1 && strcmp (argv[1], "-h") == 0 )
 		{
-		setfbsize( 1024 );
+		fbsetsize( 1024 );
 		argv++;
 		argc--;
 		}
@@ -51,7 +53,7 @@ int	argc;
 		pixel.red = (u_char) atoi( argv[1] );
 		pixel.green = (u_char) atoi( argv[2] );
 		pixel.blue = (u_char) atoi( argv[3] );
-		setbackground( &pixel );
+		fbsetbackground( &pixel );
 		}
 	return	fbclear() == -1;
 	}

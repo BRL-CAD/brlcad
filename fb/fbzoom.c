@@ -11,16 +11,6 @@
  * Enhancements -
  *	Ported to VAX, simplified internals somewhat.
  *	Mike Muuss, BRL.  03/22/84.
- *
- * $Revision$
- *
- * $Log$
- * Revision 1.2  84/05/02  02:04:13  mike
- * Converted to use library zoom and window functions.
- * 
- * Revision 1.1  84/03/22  23:59:43  mike
- * Initial revision
- * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -39,8 +29,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static
 char	sccsTag[] = "@(#) fbzoom.c	1.8	last edit 9/10/85 at 09:58:34";
 #endif
+
 #include <stdio.h>	
-#include <fb.h>
+#include "fb.h"
 
 /* Zoom rate and limits.	*/
 #define MaxZoom		(16)
@@ -207,7 +198,7 @@ register char	**argv;
 		switch( c )
 			{
 			case 'h' : /* High resolution frame buffer.	*/
-				setfbsize( 1024 );
+				fbsetsize( 1024 );
 				break;
 			case '?' :
 				return	0;

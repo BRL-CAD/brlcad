@@ -27,8 +27,10 @@ char	sccsTag[] = "@(#) fbcmap.c	1.9	last edit 7/26/86 at 21:33:10";
 	the standard ramp color-map is written.
 	Other flavors provide interesting alternatives.
  */
+
 #include <stdio.h>
-#include <fb.h>
+#include "fb.h"
+
 typedef unsigned char	u_char;
 static ColorMap cmap;
 static int	flavor = 0;
@@ -201,7 +203,7 @@ register char	**argv;
 		switch( c )
 			{
 			case 'h' : /* High resolution frame buffer.	*/
-				setfbsize( 1024 );
+				fbsetsize( 1024 );
 				break;
 			case '?' :
 				return	0;
