@@ -72,7 +72,9 @@ extern int fb_refresh();
 #endif /* DM_X */
 
 static int dmo_open_tcl();
+#if 0
 static int dmo_close_tcl();
+#endif
 static int dmo_drawBegin_tcl();
 static int dmo_drawEnd_tcl();
 static int dmo_clear_tcl();
@@ -114,7 +116,9 @@ static struct bu_cmdtab dmo_cmds[] = {
 	{"bg",			dmo_bg_tcl},
 	{"bounds",		dmo_bounds_tcl},
 	{"clear",		dmo_clear_tcl},
+#if 0
 	{"close",		dmo_close_tcl},
+#endif
 	{"configure",		dmo_configure_tcl},
 	{"debug",		dmo_debug_tcl},
 	{"drawBegin",		dmo_drawBegin_tcl},
@@ -202,6 +206,7 @@ dmo_deleteProc(clientData)
 
 }
 
+#if 0
 /*
  * Close a display manager object.
  *
@@ -231,6 +236,7 @@ dmo_close_tcl(clientData, interp, argc, argv)
 
 	return TCL_OK;
 }
+#endif
 
 /*
  * Open/create a display manager object.
