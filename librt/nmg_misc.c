@@ -2931,10 +2931,21 @@ CONST struct rt_tol *tol;
 		}
 		NMG_GET_FU_NORMAL( normal , fu );
 
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+		{
+			rt_log( "\tnmg_fix_normals: top face is x%x, OT_SAME use is x%x\n", f_top, fu );
+			rt_log( "\toutward normal = ( %g %g %g )\n" , V3ARGS( normal ) );
+		}
+
 		/* f_top is the topmost face (in the +z direction), so its OT_SAME use should have a
 		 * normal with a positive z component */
 		if( normal[Z] < 0.0 )
+		{
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "nmg_fix_normals: reversing fu x%x\n" , fu );
+
 			nmg_reverse_face_and_radials( fu , tol );
+		}
 
 		/* get OT_SAME use of top face */
 		fu = f_top->fu_p;
@@ -2948,6 +2959,15 @@ CONST struct rt_tol *tol;
 		 * traversing the shell using the radial edge structure */
 
 		nmg_propagate_normals( fu , flags , tol );
+
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+		{
+			vect_t new_norm;
+
+			NMG_GET_FU_NORMAL( new_norm , fu );
+			rt_log( "nmg_fix_normals: After propagation top faceuse normal is ( %g %g %g )\n",
+				V3ARGS( new_norm ) );
+		}
 
 		/* check if all the faces have been processed */
 		missed_faces = 0;
