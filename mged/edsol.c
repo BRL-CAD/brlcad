@@ -600,9 +600,10 @@ eto_ed( arg )
 int arg;
 {
 	es_menu = arg;
-	es_edflag = PSCALE;
 	if(arg == MENU_ETO_ROT_C )
 		es_edflag = ECMD_ETO_ROT_C;
+	else
+		es_edflag = PSCALE;
 }
 
 static void
@@ -1520,6 +1521,7 @@ sedit()
 		{
 			struct rt_eto_internal	*eto = 
 				(struct rt_eto_internal *)es_int.idb_ptr;
+
 			RT_ETO_CK_MAGIC(eto);
 			MAT4X3VEC(work, incr_change, eto->eto_C);
 			VMOVE(eto->eto_C, work);
@@ -2867,7 +2869,9 @@ char	**argv;
 		(void)printf("A solid editor option not selected\n");
 		return;
 	}
-	if( es_edflag == ECMD_TGC_ROT_H || es_edflag == ECMD_TGC_ROT_AB ) {
+	if( es_edflag == ECMD_TGC_ROT_H
+		|| es_edflag == ECMD_TGC_ROT_AB
+		|| es_edflag == ECMD_ETO_ROT_C ) {
 		(void)printf("\"p\" command not defined for this option\n");
 		return;
 	}
@@ -2919,6 +2923,7 @@ double	xangle, yangle, zangle;
 	if( es_edflag != ECMD_TGC_ROT_H &&
 	    es_edflag != ECMD_TGC_ROT_AB &&
 	    es_edflag != SROT &&
+	    es_edflag != ECMD_ETO_ROT_C &&
 	    es_edflag != ECMD_ARB_ROTATE_FACE)
 		return 0;
 
