@@ -66,8 +66,12 @@ db_dup_full_path( newp, oldp )
 register struct db_full_path		*newp;
 register CONST struct db_full_path	*oldp;
 {
+	RT_CK_FULL_PATH(newp);
+	RT_CK_FULL_PATH(oldp);
+
 	newp->fp_maxlen = oldp->fp_maxlen;
-	if( (newp->fp_len = oldp->fp_len) <= 0 )  {
+	newp->fp_len = oldp->fp_len;
+	if( oldp->fp_len <= 0 )  {
 		newp->fp_names = (struct directory **)0;
 		return;
 	}
