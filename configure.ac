@@ -332,11 +332,11 @@ TCLVER=8.4
 TCL=libtcl${TCLVER}
 case "$target" in
 	powerpc-apple-darwin*)
-		TCL_LIBS='-L${top_builddir}/libtcl${TCLVER}/build -ltcl${TCLVER} ${DL} ${SOCKET} -lm'
+		TCL_LIBS='-L${top_builddir}/src/other/libtcl/build -ltcl${TCLVER} ${DL} ${SOCKET} -lm'
 dnl -compatibility_version 20 -current_version 20.1
 		;;
 	*)
-		TCL_LIBS='-L${top_builddir}/libtcl${TCLVER}/build -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
+		TCL_LIBS='-L${top_builddir}/src/other/libtcl/build -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
 		;;
 esac
 TCL_LIBRARY="$prefix/tcl${TCLVER}"
@@ -354,7 +354,7 @@ AC_SUBST(TCL_LIBS)
 
 dnl tk
 TKVER="8.4"
-TK_LIBS='-L${top_builddir}/libtk${TKVER}/build -ltk${TKVER} ${TCL_LIBS} ${X_LIBS}'
+TK_LIBS='-L${top_builddir}/src/other/libtk/build -ltk${TKVER} ${TCL_LIBS} ${X_LIBS}'
 TK_LIBRARY="$prefix/tk${TKVER}"
 AC_SUBST(TKVER)
 AC_SUBST(TK_LIBRARY)
@@ -362,13 +362,13 @@ AC_SUBST(TK_LIBS)
 
 dnl itcl
 ITCL_VERSION="3.3"
-ITCL_LIBS='${top_builddir}/libitcl/itcl/libitcl.la'
-ITK_LIBS='${top_builddir}/libitcl/itk/libitk.la'
+ITCL_LIBS='${top_builddir}/src/other/libitcl/itcl/libitcl.la'
+ITK_LIBS='${top_builddir}/src/other/libitcl/itk/libitk.la'
 AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
 
-PNG_LIBS='${top_builddir}/libpng/libpng.la ${top_builddir}/libz/libz.la'
+PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la ${top_builddir}/src/other/libz/libz.la'
 AC_SUBST(PNG_LIBS)
 
 
@@ -665,167 +665,171 @@ dnl WRITEV
 dnl REGEX
 dnl BSDGETTIMEOFDAY
 
-BN='${top_builddir}/libbn/libbn.la ${BU}'
+BN='${top_builddir}/src/libbn/libbn.la ${BU}'
 AC_SUBST(BN)
 
-BU='${top_builddir}/libbu/libbu.la ${TCL_LIBS} ${PTHREAD_LIBS}'
+BU='${top_builddir}/src/libbu/libbu.la ${TCL_LIBS} ${PTHREAD_LIBS}'
 AC_SUBST(BU)
 
-CURSOR='${top_builddir}/libcursor/libcursor.la ${CURSES}'
+CURSOR='${top_builddir}/src/libcursor/libcursor.la ${CURSES}'
 AC_SUBST(CURSES)
 AC_SUBST(CURSOR)
 
-DM='${top_builddir}/libdm/libdm.la ${TK_LIBS} ${RT}'
+DM='${top_builddir}/src/libdm/libdm.la ${TK_LIBS} ${RT}'
 AC_SUBST(DM)
 
-FB='${top_builddir}/libfb/libfb.la ${X_LIBS} ${PKG} ${BU} ${GL_LIBS}'
+FB='${top_builddir}/src/libfb/libfb.la ${X_LIBS} ${PKG} ${BU} ${GL_LIBS}'
 AC_SUBST(FB)
 
-FFT='${top_builddir}/libfft/libfft.la -lm'
+FFT='${top_builddir}/src/libfft/libfft.la -lm'
 AC_SUBST(FFT)
 
-OPTICAL='${top_builddir}/liboptical/liboptical.la'
+OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 AC_SUBST(OPTICAL)
 
-ORLE='${top_builddir}/liborle/liborle.la'
+ORLE='${top_builddir}/src/other/liborle/liborle.la'
 AC_SUBST(ORLE)
 
-PKG='${top_builddir}/libpkg/libpkg.la'
+PKG='${top_builddir}/src/libpkg/libpkg.la'
 AC_SUBST(PKG)
 
-RLE='${top_builddir}/libutahrle/libutahrle.la -lm'
+RLE='${top_builddir}/src/other/libutahrle/libutahrle.la -lm'
 AC_SUBST(RLE)
 
-RT='${top_builddir}/librt/librt.la ${BN} ${REGEX_LIB}'
+RT='${top_builddir}/src/librt/librt.la ${BN} ${REGEX_LIB}'
 AC_SUBST(RT)
 
-SYSV='${top_builddir}/libsysv/libsysv.la'
+SYSV='${top_builddir}/src/libsysv/libsysv.la'
 AC_SUBST(SYSV)
 
-TCLCAD='${top_builddir}/libtclcad/libtclcad.la'
+TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'
 AC_SUBST(TCLCAD)
 
-TERMIO='${top_builddir}/libtermio/libtermio.la'
+TERMIO='${top_builddir}/src/libtermio/libtermio.la'
 AC_SUBST(TERMIO)
 
-WDB='${top_builddir}/libwdb/libwdb.la'
+WDB='${top_builddir}/src/libwdb/libwdb.la'
 AC_SUBST(WDB)
 
 AC_CONFIG_FILES([
 	Makefile
-	anim/Makefile
-	awf/Makefile
-	bench/Makefile
-	brlman/Makefile
-	burst/Makefile
-	bwish/Makefile
-	comgeom-g/Makefile
-	conv/Makefile
-	db/Makefile
-	doc/Makefile
-	fb/Makefile
-	fbed/Makefile
-	fbserv/Makefile
-	gtools/Makefile
-	h/Makefile
-	halftone/Makefile
-	html/Makefile
-	html/ReleaseNotes/Makefile
-	html/ReleaseNotes/Rel5.0/Makefile
-	html/ReleaseNotes/Rel5.0/Summary/Makefile
-	html/ReleaseNotes/Rel6.0/Makefile
-	html/manuals/Anim_Tutorial/Makefile
-	html/manuals/Makefile
-	html/manuals/ReleaseNotes/Makefile
-	html/manuals/cadwidgets/Makefile
-	html/manuals/libbu/Makefile
-	html/manuals/libdm/Makefile
-	html/manuals/librt/Makefile
-	html/manuals/mged/Makefile
-	html/manuals/mged/animmate/Makefile
-	html/manuals/shaders/Makefile
-	iges/Makefile
-	irprep/Makefile
-	iwidgets4.0.1/Makefile
-	iwidgets4.0.1/doc/Makefile
-	iwidgets4.0.1/generic/Makefile
-	iwidgets4.0.1/iwidgets.tcl
-	iwidgets4.0.1/pkgIndex.tcl
-	jack/Makefile
-	lgt/Makefile
-	libbn/Makefile
-	libbu/Makefile
-	libcursor/Makefile
-	libdm/Makefile
-	libfb/Makefile
-	libfft/Makefile
-	libitcl/Makefile
-	libitcl/itcl/Makefile
-	libitcl/itcl/doc/Makefile
-	libitcl/itcl/generic/Makefile
-	libitcl/itcl/library/Makefile
-	libitcl/itk/Makefile
-	libitcl/itk/doc/Makefile
-	libitcl/itk/generic/Makefile
-	libitcl/itk/library/Makefile
-	liboptical/Makefile
-	liborle/Makefile
-	libpkg/Makefile
-	libpng/Makefile
-	librt/Makefile
-	librtserver/Makefile
-	libsysv/Makefile
-	libtcl8.4/Makefile
-	libtclcad/Makefile
-	libtermio/Makefile
-	libtk8.4/Makefile
-	libutahrle/Makefile
-	libwdb/Makefile
-	libz/Makefile
-	mged/Makefile
-	mk/Makefile
-	nirt/Makefile
-	off/Makefile
-	patch/Makefile
-	pro-engineer/Makefile
-	pro-engineer/resource/Makefile
-	pro-engineer/sgi_mips4/Makefile
-	pro-engineer/sgi_mips4/mk
-	pro-engineer/text/Makefile
-	remrt/Makefile
-	rt/Makefile
-	sample_applications/Makefile
-	sample_applications/mk
+	doc/html/Makefile
+	doc/html/ReleaseNotes/Makefile
+	doc/html/ReleaseNotes/Rel5.0/Makefile
+	doc/html/ReleaseNotes/Rel5.0/Summary/Makefile
+	doc/html/ReleaseNotes/Rel6.0/Makefile
+	doc/html/manuals/Anim_Tutorial/Makefile
+	doc/html/manuals/Makefile
+	doc/html/manuals/ReleaseNotes/Makefile
+	doc/html/manuals/cadwidgets/Makefile
+	doc/html/manuals/libbu/Makefile
+	doc/html/manuals/libdm/Makefile
+	doc/html/manuals/librt/Makefile
+	doc/html/manuals/mged/Makefile
+	doc/html/manuals/mged/animmate/Makefile
+	doc/html/manuals/shaders/Makefile
+	include/Makefile
+	misc/Makefile
+	misc/enigma/Makefile
+	misc/macosx/Makefile
+	misc/pro-engineer/Makefile
+	misc/pro-engineer/resource/Makefile
+	misc/pro-engineer/sgi_mips4/Makefile
+	misc/pro-engineer/sgi_mips4/mk
+	misc/pro-engineer/text/Makefile
+	misc/vfont/Makefile
 	sh/Makefile
-	sig/Makefile
-	tab/Makefile
-	tclscripts/Makefile
-	tclscripts/geometree/Makefile
-	tclscripts/lib/Makefile
-	tclscripts/mged/Makefile
-	tclscripts/nirt/Makefile
-	tclscripts/pl-dm/Makefile
-	tclscripts/rtwizard/Makefile
-	tclscripts/rtwizard/examples/Makefile
-	tclscripts/rtwizard/examples/PictureTypeA/Makefile
-	tclscripts/rtwizard/examples/PictureTypeB/Makefile
-	tclscripts/rtwizard/examples/PictureTypeC/Makefile
-	tclscripts/rtwizard/examples/PictureTypeD/Makefile
-	tclscripts/rtwizard/examples/PictureTypeE/Makefile
-	tclscripts/rtwizard/examples/PictureTypeF/Makefile
-	tclscripts/rtwizard/lib/Makefile
-	tclscripts/util/Makefile
-	tools/Makefile
-	unigraphics/Makefile
-	util/Makefile
-	vas4/Makefile
-	vdeck/Makefile
-	vfont/Makefile
+	src/Makefile
+	src/anim/Makefile
+	src/bench/Makefile
+	src/brlman/Makefile
+	src/burst/Makefile
+	src/bwish/Makefile
+	src/comgeom-g/Makefile
+	src/conv/Makefile
+	src/db/Makefile
+	src/doc/Makefile
+	src/fb/Makefile
+	src/fbed/Makefile
+	src/fbserv/Makefile
+	src/gtools/Makefile
+	src/halftone/Makefile
+	src/iges/Makefile
+	src/irprep/Makefile
+	src/iwidgets/Makefile
+	src/iwidgets/doc/Makefile
+	src/iwidgets/generic/Makefile
+	src/iwidgets/iwidgets.tcl
+	src/iwidgets/pkgIndex.tcl
+	src/jack/Makefile
+	src/lgt/Makefile
+	src/libbn/Makefile
+	src/libbu/Makefile
+	src/libcursor/Makefile
+	src/libdm/Makefile
+	src/libfb/Makefile
+	src/libfft/Makefile
+	src/libitcl/Makefile
+	src/libitcl/itcl/Makefile
+	src/libitcl/itcl/doc/Makefile
+	src/libitcl/itcl/generic/Makefile
+	src/libitcl/itcl/library/Makefile
+	src/libitcl/itk/Makefile
+	src/libitcl/itk/doc/Makefile
+	src/libitcl/itk/generic/Makefile
+	src/libitcl/itk/library/Makefile
+	src/liboptical/Makefile
+	src/liborle/Makefile
+	src/libpkg/Makefile
+	src/libpng/Makefile
+	src/librt/Makefile
+	src/librtserver/Makefile
+	src/libsysv/Makefile
+	src/libtclcad/Makefile
+	src/libtermio/Makefile
+	src/libutahrle/Makefile
+	src/libwdb/Makefile
+	src/mged/Makefile
+	src/mk/Makefile
+	src/nirt/Makefile
+	src/off/Makefile
+	src/other/awf/Makefile
+	src/other/libtcl/Makefile
+	src/other/libtk/Makefile
+	src/other/libz/Makefile
+	src/patch/Makefile
+	src/remrt/Makefile
+	src/rt/Makefile
+	src/sample_applications/Makefile
+	src/sample_applications/mk
+	src/sig/Makefile
+	src/tab/Makefile
+	src/tclscripts/Makefile
+	src/tclscripts/geometree/Makefile
+	src/tclscripts/lib/Makefile
+	src/tclscripts/mged/Makefile
+	src/tclscripts/nirt/Makefile
+	src/tclscripts/pl-dm/Makefile
+	src/tclscripts/rtwizard/Makefile
+	src/tclscripts/rtwizard/examples/Makefile
+	src/tclscripts/rtwizard/examples/PictureTypeA/Makefile
+	src/tclscripts/rtwizard/examples/PictureTypeB/Makefile
+	src/tclscripts/rtwizard/examples/PictureTypeC/Makefile
+	src/tclscripts/rtwizard/examples/PictureTypeD/Makefile
+	src/tclscripts/rtwizard/examples/PictureTypeE/Makefile
+	src/tclscripts/rtwizard/examples/PictureTypeF/Makefile
+	src/tclscripts/rtwizard/lib/Makefile
+	src/tclscripts/util/Makefile
+	src/tools/Makefile
+	src/unigraphics/Makefile
+	src/util/Makefile
+	src/vas4/Makefile
+	src/vdeck/Makefile
  	brlcad.spec
 ])
 #AC_CONFIG_SUBDIRS([
-#	libtcl8.4/unix
-#	libtk8.4/unix
+#	src/other/libtcl8.4/unix
+#	src/other/libtk8.4/unix
 #])
 AC_OUTPUT
 
