@@ -207,9 +207,8 @@ for LAST in \
 		html/manuals/librt html/manuals/libbu html/manuals/cadwidgets \
 		html/ReleaseNotes html/ReleaseNotes/Rel5.0 \
 		html/ReleaseNotes/Rel5.0/Summary \
-	pro-engineer pro-engineer/text pro-engineer/sgi_elf2 \
-		pro-engineer/sun4_solaris pro-engineer/text/fullhelp \
-		pro-engineer/text/menus sample_applications
+	pro-engineer pro-engineer/text pro-engineer/sgi_mips4 \
+		pro-engineer/text/usascii sample_applications
 do
 	if test ! -d $BRLCAD_ROOT/$LAST
 	then
