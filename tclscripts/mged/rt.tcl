@@ -826,7 +826,7 @@ proc rt_cook_dest { id raw_dest } {
     color_entry_update $rt_control($id,top) color $rt_control($id,color)
 
     if {$mouse_behavior == "o"} {
-	if {![info exists rt_mode($id,omode)] ||\
+	if {![info exists rt_control($id,omode)] ||\
 		$rt_control($id,omode) == "all"} {
 	    set rt_control($id,omode) one
 	}
