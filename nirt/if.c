@@ -167,7 +167,7 @@ struct seg		*finished_segs;
 	    need_to_free = 0;
 	}
 
-	if ((ovp = find_ovlp(part)) != OVERLAP_NULL)
+	while ((ovp = find_ovlp(part)) != OVERLAP_NULL)
 	{
 	    ValTab[VTI_OV_REG1_NAME].value.sval =
 		basename(ovp -> reg1 -> reg_name);
@@ -193,7 +193,15 @@ struct seg		*finished_segs;
     }
     report(FMT_FOOT);
     if (ovlp_list.forw != &ovlp_list)
+    {
 	fprintf(stderr, "Previously unreported overlaps.  Shouldn't happen\n");
+    	ovp = ovlp_list.forw;
+    	while( ovp != &ovlp_list )
+    	{
+		bu_log( " OVERLAP:\n\t%s %s (%g %g %g) %g\n",ovp -> reg1 -> reg_name, ovp -> reg2 -> reg_name, V3ARGS( ovp->in_point ), ovp->out_dist - ovp->in_dist );
+    	    ovp = ovp->forw;
+    	}
+    }
     return( HIT );
 }
 
