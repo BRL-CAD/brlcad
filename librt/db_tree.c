@@ -140,7 +140,7 @@ struct full_path	*pp;
 	char	*cp;
 	int	i;
 
-	len = 2;	/* leading slash, trailing null */
+	len = 3;	/* leading slash, trailing null, spare */
 	for( i=pp->fp_len-1; i >= 0; i-- )  {
 		if( pp->fp_names[i] )
 			len += strlen( pp->fp_names[i]->d_namep ) + 1;
@@ -159,6 +159,7 @@ struct full_path	*pp;
 			strcpy( cp, "**NULL**" );
 		cp += strlen( cp );
 	}
+	*cp++ = '\0';
 	return( buf );
 }
 
@@ -202,8 +203,8 @@ register struct tree_state	*tsp;
 		tsp->ts_mater.ma_color[0],
 		tsp->ts_mater.ma_color[1],
 		tsp->ts_mater.ma_color[2] );
-	rt_log(" ts_mater.ma_matname=%32.32s\n", tsp->ts_mater.ma_matname );
-	rt_log(" ts_mater.ma_matparam=%60.60s\n", tsp->ts_mater.ma_matparm );
+	rt_log(" ts_mater.ma_matname=%s\n", tsp->ts_mater.ma_matname );
+	rt_log(" ts_mater.ma_matparam=%s\n", tsp->ts_mater.ma_matparm );
 }
 
 void
@@ -687,7 +688,7 @@ struct combined_tree_state	**region_start_statepp;
 	register int		i;
 	struct tree_list	*tlp;		/* cur elem of trees[] */
 	struct tree_list	*trees = TREE_LIST_NULL;	/* array */
-	union tree		*curtree;
+	union tree		*curtree = TREE_NULL;
 
 	if( tsp->ts_dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_recurse:  bad dbip\n");
 	if( pathp->fp_len <= 0 )  {
@@ -737,7 +738,6 @@ struct combined_tree_state	**region_start_statepp;
 				goto fail;
 
 			if( tsp->ts_stop_at_regions )  {
-				curtree = (union tree *)0;
 				goto region_end;
 			}
 
@@ -1115,18 +1115,21 @@ static struct tree_state	rt_initial_tree_state = {
 	0.0, 0.0, 0.0, 1.0,
 };
 
+static struct rt_i	*db_rtip;
+static union tree	**db_reg_trees;
+static int		db_reg_count;
+static int		db_reg_current;		/* semaphored when parallel */
+
 HIDDEN int rt_gettree_p1_region_start( tsp, pathp )
 struct tree_state	*tsp;
 struct full_path	*pathp;
 {
 
-#if 0
 	/* Ignore "air" regions unless wanted */
-	if( rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
-		rtip->rti_air_discards++;
+	if( db_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
+		db_rtip->rti_air_discards++;
 		return(-1);	/* drop this region */
 	}
-#endif
 	return(0);
 }
 
@@ -1143,8 +1146,6 @@ union tree		*curtree;
 	db_dup_full_path( &(cts->cts_p), pathp );
 
 	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
-	bzero( (char *)curtree, sizeof(union tree) );
-	/* XXX */
 	curtree->tr_op = OP_REGION;
 	curtree->tr_a.tu_stp = (struct soltab *)cts;
 	curtree->tr_a.tu_name = (char *)0;
@@ -1168,31 +1169,12 @@ int			id;
 	db_dup_full_path( &(cts->cts_p), pathp );
 
 	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
-	bzero( (char *)curtree, sizeof(union tree) );
 	curtree->tr_op = OP_REGION;
 	curtree->tr_a.tu_stp = (struct soltab *)cts;
 	curtree->tr_a.tu_name = (char *)0;
 	curtree->tr_regionp = (struct region *)0;
 
 	return(curtree);
-}
-
-static struct rt_i	*db_rtip;
-static union tree	**db_reg_trees;
-static int		db_reg_count;
-static int		db_reg_current;		/* semaphored when parallel */
-
-HIDDEN int rt_gettree_p2_region_start( tsp, pathp )
-struct tree_state	*tsp;
-struct full_path	*pathp;
-{
-
-	/* Ignore "air" regions unless wanted */
-	if( db_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
-		db_rtip->rti_air_discards++;
-		return(-1);	/* drop this region */
-	}
-	return(0);
 }
 
 HIDDEN union tree *rt_gettree_p2_region_end( tsp, pathp, curtree )
@@ -1243,11 +1225,10 @@ int			id;
 		return(TREE_NULL);
 
 	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
-	bzero( (char *)curtree, sizeof(union tree) );
 	curtree->tr_op = OP_SOLID;
 	curtree->tr_a.tu_stp = stp;
 	curtree->tr_a.tu_name = db_path_to_string( pathp );
-/**** need regionp! XXXX */
+	/* regionp will be filled in later by rt_tree_region_assign() */
 	curtree->tr_a.tu_regionp = (struct region *)0;
 
 rt_log("rt_gettree_p2_leaf() %s\n", curtree->tr_a.tu_name );
@@ -1270,7 +1251,8 @@ struct combined_tree_state	**region_start_statepp;
 		ctsp = (struct combined_tree_state *)tp->tr_a.tu_stp;
 		ctsp->cts_s.ts_dbip = db_rtip->rti_dbip;
 		ctsp->cts_s.ts_stop_at_regions = 0;
-		ctsp->cts_s.ts_region_start_func = rt_gettree_p2_region_start;
+		/* All regions will be accepted, in this 2nd pass */
+		ctsp->cts_s.ts_region_start_func = 0;
 		/* ts_region_end_func() will be called in db_walk_dispatcher() */
 		ctsp->cts_s.ts_region_end_func = 0;
 		ctsp->cts_s.ts_leaf_func = rt_gettree_p2_leaf;
@@ -1385,6 +1367,7 @@ char		*node;
 	if(!rtip->needprep)
 		rt_bomb("rt_gettree called again after rt_prep!\n");
 
+	db_rtip = rtip;			/* make global to this module */
 	ts = rt_initial_tree_state;	/* struct copy */
 	ts.ts_dbip = rtip->rti_dbip;
 
@@ -1421,7 +1404,8 @@ char		*node;
 	rt_pr_tree( curtree, 0 );
 
 	/*
-	 *  Build array of tree pointers, one per leaf, for processing below.
+	 *  Build array of sub-tree pointers, one per region,
+	 *  for parallel processing below.
 	 */
 	new_reg_count = db_count_subtree_regions( curtree );
 rt_log("new region count=%d\n", new_reg_count);
@@ -1441,7 +1425,6 @@ rt_log("new region count=%d\n", new_reg_count);
 	db_reg_trees = reg_trees;
 	db_reg_count = new_reg_count;
 	db_reg_current = 0;
-	db_rtip = rtip;
 	if( 1 /* !rt_g.rtg_parallel */ )  {
 		db_walk_dispatcher();
 	} else {
