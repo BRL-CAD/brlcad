@@ -7,7 +7,7 @@
  *
  *  Output is written to a file.
  *
- *  a_uptr is pointer to returned spectral curve.
+ *  a_spectrum is pointer to returned spectral curve.
  *  When NULL, scanline buffer needs to be assigned/checked first.
  *  a_cumlen is distance to first non-atmospheric hit ("depth map").
  *
@@ -125,11 +125,11 @@ struct bu_structparse view_parse[] = {
 
 /********* spectral parameters *************/
 CONST struct rt_table		*spectrum;	/* definition of spectrum */
-struct rt_tabdata		*ss_bg;		/* radiant emittance of bg */
+struct rt_tabdata		*background;		/* radiant emittance of bg */
 /********* spectral parameters *************/
 
 /*
- *  Ensure that a_uptr points to a valid spectral curve.
+ *  Ensure that a_spectrum points to a valid spectral curve.
  */
 void
 curve_attach(ap)
@@ -140,8 +140,8 @@ register struct application *ap;
 	RT_AP_CHECK(ap);
 	RT_CK_RTI(ap->a_rt_i);
 
-	if( ap->a_uptr )  {
-		RT_CK_TABDATA( ap->a_uptr );
+	if( ap->a_spectrum )  {
+		RT_CK_TABDATA( ap->a_spectrum );
 		return;
 	}
 
@@ -153,8 +153,8 @@ register struct application *ap;
 	}
 	bu_semaphore_release( RT_SEM_RESULTS );
 
-	ap->a_uptr = slp->sl_buf+(ap->a_x*RT_SIZEOF_TABDATA(spectrum));
-	RT_CK_TABDATA( ap->a_uptr );
+	ap->a_spectrum = (struct rt_tabdata *)(slp->sl_buf+(ap->a_x*RT_SIZEOF_TABDATA(spectrum)));
+	RT_CK_TABDATA( ap->a_spectrum );
 }
 
 /*
@@ -190,10 +190,11 @@ register struct application *ap;
 
 		/* XXX This should be attenuated by some atmosphere now */
 		/* At least it's in proper power units */
-		rt_tabdata_scale( (struct rt_tabdata *)ap->a_uptr, ss_bg, cm2 );
+		rt_tabdata_scale( ap->a_spectrum, background, cm2 );
 	} else {
-		if( !ap->a_uptr )
+		if( !ap->a_spectrum )
 			rt_bomb("view_pixel called with no spectral curve associated\n");
+		RT_CK_TABDATA(ap->a_spectrum);
 	}
 
 	slp = &scanline[ap->a_y];
@@ -381,15 +382,15 @@ register struct application *ap;
 			rt_invpi + 0.5;
 		u.sw.sw_uv.uv_du = u.sw.sw_uv.uv_dv = 0;
 
-		VSETALL( u.sw.sw_color, 1 );
-		VSETALL( u.sw.sw_basecolor, 1 );
+		u.sw.msw_color = rt_tabdata_get_constval( 1.0, spectrum );
+		u.sw.msw_basecolor = rt_tabdata_get_constval( 1.0, spectrum );
 
 		if (rdebug&RDEBUG_SHADE)
 			rt_log("hit_nothing calling viewshade\n");
 
 		(void)viewshade( ap, &u.part, &u.sw );
 
-		VMOVE( ap->a_color, u.sw.sw_color );
+		rt_tabdata_copy( ap->a_spectrum, u.sw.msw_color );
 		ap->a_user = 1;		/* Signal view_pixel:  HIT */
 		return(1);
 	}
@@ -520,8 +521,8 @@ struct seg *finished_segs;
 	sw.sw_inputs = 0;		/* no fields filled yet */
 	sw.sw_frame = curframe;
 	sw.sw_pixeltime = sw.sw_frametime = curframe * frame_delta_t;
-	VSETALL( sw.sw_color, 1 );
-	VSETALL( sw.sw_basecolor, 1 );
+	sw.msw_color = rt_tabdata_get_constval( 1.0, spectrum );
+	sw.msw_basecolor = rt_tabdata_get_constval( 1.0, spectrum );
 
 	if (rdebug&RDEBUG_SHADE)
 		rt_log("colorview calling viewshade\n");
@@ -532,7 +533,9 @@ struct seg *finished_segs;
 	if( sw.sw_reflect > 0 || sw.sw_transmit > 0 )
 		(void)rr_render( ap, pp, &sw );
 
-	VMOVE( ap->a_color, sw.sw_color );
+	rt_tabdata_copy( ap->a_spectrum, sw.msw_color );
+	bu_free( sw.msw_color, "sw.msw_color");
+	bu_free( sw.msw_basecolor, "sw.msw_basecolor");
 #endif
 
 	/* +++++ Something was hit, get the power from it. ++++++ */
@@ -542,8 +545,8 @@ struct seg *finished_segs;
 	 *  The solid angle of the pixel from the hit point / 4pi
 	 *  says how much of the emitted power is going our way.
 	 */
-	if( !ap->a_uptr )  curve_attach(ap);
-	pixelp = (struct rt_tabdata *)ap->a_uptr;
+	if( !ap->a_spectrum )  curve_attach(ap);
+	pixelp = ap->a_spectrum;
 	RT_CK_TABDATA(pixelp);
 
 	degK = 10000;	/* XXX extract from region! */
@@ -707,8 +710,8 @@ char	*framename;
 
 	/* Compute radiant emittance of background */
 	/* XXX This is wrong, need actual power (radiant flux) emitted */
-	RT_GET_TABDATA( ss_bg, spectrum );
-	rt_spect_black_body( ss_bg, bg_temp, 9 );
+	RT_GET_TABDATA( background, spectrum );
+	rt_spect_black_body( background, bg_temp, 9 );
 }
 
 /*
