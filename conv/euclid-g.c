@@ -135,7 +135,7 @@ char	*argv[];
 	fpin = stdin;
 	efile = NULL;
 	bfile = "euclid.g";
-	polysolids = 0;
+	polysolids = 1;
 	debug = 0;
 
         tol.magic = BN_TOL_MAGIC;
@@ -146,7 +146,7 @@ char	*argv[];
 
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "d:vi:o:px:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "d:vi:o:nx:X:")) != EOF) {
 		switch (c) {
 		case 'd':
 			tol.dist = atof( optarg );
@@ -168,8 +168,8 @@ char	*argv[];
 		case 'o':
 			bfile = optarg;
 			break;
-		case 'p':
-			polysolids = 1;
+		case 'n':
+			polysolids = 0;
 			break;
 		case 'x':
 			sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
