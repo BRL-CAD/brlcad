@@ -383,7 +383,7 @@ genptr_t	ptr;
 				rt_db_free_internal( &intern , &rt_uniresource);
 				return;
 		}
-		wm = mk_addmember( tree_list[i].tl_tree->tr_l.tl_name , &headp.l , op );
+		wm = mk_addmember( tree_list[i].tl_tree->tr_l.tl_name , &headp.l, NULL , op );
 		if( tree_list[i].tl_tree->tr_l.tl_mat )
 			MAT_COPY( wm->wm_mat, tree_list[i].tl_tree->tr_l.tl_mat );
 	}
