@@ -74,6 +74,31 @@ void	show_color(BU_ARGS(int off));
 char			*first_command = "no_command?";
 
 /*
+ *		A S S I G N _ T A B D A T A _ T O _ T C L _ V A R
+ *
+ *  Assign the given "C" rt_tabdata structure to the named Tcl variable,
+ *  and add the name of that variable to the Tcl result string.
+ */
+void
+assign_tabdata_to_tcl_var( interp, name, tabp )
+Tcl_Interp	*interp;
+CONST char	*name;
+CONST struct rt_tabdata *tabp;
+{
+	struct bu_vls	str;
+
+	RT_CK_TABDATA(tabp);
+
+	bu_vls_init(&str);
+
+	rt_tabdata_to_tcl(&str, tabp);
+	Tcl_SetVar( interp, name, bu_vls_addr(&str), 0 );
+	Tcl_AppendResult( interp, (char *)name, " ", (char *)NULL );
+
+	bu_vls_free(&str);
+}
+
+/*
  *  Temporary testing function
  *  Takes no args, sets three Tcl variables, ntsc_r, ntsc_g, ntsc_b
  */
@@ -84,47 +109,20 @@ Tcl_Interp	*interp;
 int		argc;
 char		*argv[];
 {
-	struct bu_vls	str;
-
-	bu_vls_init(&str);
-
-	/* These are the curves as fitted to our spectrum sampling */
-	bu_vls_trunc(&str, 0);
-	rt_tabdata_to_tcl(&str, ntsc_r);
-	Tcl_SetVar( interp, "ntsc_r", bu_vls_addr(&str), 0 );
-
-	bu_vls_trunc(&str, 0);
-	rt_tabdata_to_tcl(&str, ntsc_g);
-	Tcl_SetVar( interp, "ntsc_g", bu_vls_addr(&str), 0 );
-
-	bu_vls_trunc(&str, 0);
-	rt_tabdata_to_tcl(&str, ntsc_b);
-	Tcl_SetVar( interp, "ntsc_b", bu_vls_addr(&str), 0 );
-
-	Tcl_AppendResult( interp, "ntsc_r ntsc_g ntsc_b", (char *)NULL );
-
-	{
-	/* These are the curves from the data tables in the library */
 	extern struct rt_tabdata *rt_NTSC_r_tabdata;
 	extern struct rt_tabdata *rt_NTSC_g_tabdata;
 	extern struct rt_tabdata *rt_NTSC_b_tabdata;
 
-	bu_vls_trunc(&str, 0);
-	rt_tabdata_to_tcl(&str, rt_NTSC_r_tabdata);
-	Tcl_SetVar( interp, "ntsc_r_orig", bu_vls_addr(&str), 0 );
+	/* These are the curves as sampled to our spectrum intervals */
+	assign_tabdata_to_tcl_var( interp, "ntsc_r_samp", ntsc_r );
+	assign_tabdata_to_tcl_var( interp, "ntsc_g_samp", ntsc_g );
+	assign_tabdata_to_tcl_var( interp, "ntsc_b_samp", ntsc_b );
 
-	bu_vls_trunc(&str, 0);
-	rt_tabdata_to_tcl(&str, rt_NTSC_g_tabdata);
-	Tcl_SetVar( interp, "ntsc_g_orig", bu_vls_addr(&str), 0 );
+	/* These are the curves from the data tables in the library */
+	assign_tabdata_to_tcl_var( interp, "ntsc_r_orig", rt_NTSC_r_tabdata );
+	assign_tabdata_to_tcl_var( interp, "ntsc_g_orig", rt_NTSC_g_tabdata );
+	assign_tabdata_to_tcl_var( interp, "ntsc_b_orig", rt_NTSC_b_tabdata );
 
-	bu_vls_trunc(&str, 0);
-	rt_tabdata_to_tcl(&str, rt_NTSC_b_tabdata);
-	Tcl_SetVar( interp, "ntsc_b_orig", bu_vls_addr(&str), 0 );
-	}
-
-	bu_vls_free(&str);
-
-	Tcl_AppendResult( interp, "ntsc_r_orig ntsc_g_orig ntsc_b_orig", (char *)NULL );
 	return TCL_OK;
 }
 
