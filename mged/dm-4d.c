@@ -1087,7 +1087,6 @@ checkevents()  {
 	register int n;
 	static	button0  = 0;	/*  State of button 0 */
 	static	knobs[8];	/*  Save values of dials  */
-	static	pending_middlemouse = 0;	/* state variable */
 	static	pending_middleval = 0;
 	static	pending_x = 0;
 	static	pending_y = 0;
@@ -1464,7 +1463,6 @@ checkevents()  {
 			break;
 		case MIDDLEMOUSE:
 			/* Will also get MOUSEX and MOUSEY hits */
-			pending_middlemouse = 1;
 			pending_middleval = (int)valp[1] ? 1 : 0;
 			/* Don't signal DV_PICK until MOUSEY event */
 			break;
@@ -1480,19 +1478,20 @@ checkevents()  {
 			 *  The MOUSEY event may not be in the same
 			 *  blkqread() buffer, owing to time delays in
 			 *  the outputting of the tie()'ed events.
-			 *  So, don't signal DV_PICK on MIDDLEMOUSE;
-			 *  instead, set the flag, and patiently wait until
-			 *  the subsequent MOUSEY event has arrived, which
+			 *  So, don't report the mouse event on MIDDLEMOUSE;
+			 *  instead, the flag pending_middleval flag is set,
+			 *  and the mouse event is signaled here, which
 			 *  may need multiple trips through this subroutine.
+			 *
+			 *  MOUSEY may be queued all by itself to support
+			 *  illuminate mode;  in those cases, pending_middleval
+			 *  will be zero already, and we just parrot the last
+			 *  X value.
 			 */
-			if( pending_middlemouse )  {
-				char	input_line[64];
-				sprintf(input_line, "M %d %d %d\n",
-					pending_middleval,
-					pending_x, pending_y);
-				rt_vls_strcat( &dm_values.dv_string, input_line);
-				pending_middlemouse = 0;
-			}
+			rt_vls_printf( &dm_values.dv_string, "M %d %d %d\n",
+				pending_middleval,
+				pending_x, pending_y);
+			pending_middleval = 0;
 			break;
 		case REDRAW:
 			/* Window may have moved */
