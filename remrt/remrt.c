@@ -29,7 +29,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <errno.h>
 #include <netdb.h>
-#include <time.h>
 #include <math.h>
 #ifdef BSD
 # include <strings.h>
@@ -43,8 +42,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#ifndef CRAY1
+#if !defined(CRAY1)
 #include <sys/time.h>		/* for struct timeval */
+#endif
+#if !defined(sun)
+#include <time.h>
 #endif
 
 #include "machine.h"
