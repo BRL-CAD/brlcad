@@ -512,7 +512,7 @@ be_o_scale()  {
 	edobj = BE_O_SCALE;
 	movedir = SARROW;
 	update_views = 1;
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 
 	edit_absolute_scale = acc_sc_obj - 1.0;
 	if(edit_absolute_scale > 0.0)
@@ -531,7 +531,7 @@ be_o_xscale()  {
 	edobj = BE_O_XSCALE;
 	movedir = SARROW;
 	update_views = 1;
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 
 	edit_absolute_scale = acc_sc[0] - 1.0;
 	if(edit_absolute_scale > 0.0)
@@ -550,7 +550,7 @@ be_o_yscale()  {
 	edobj = BE_O_YSCALE;
 	movedir = SARROW;
 	update_views = 1;
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 
 	edit_absolute_scale = acc_sc[1] - 1.0;
 	if(edit_absolute_scale > 0.0)
@@ -569,7 +569,7 @@ be_o_zscale()  {
 	edobj = BE_O_ZSCALE;
 	movedir = SARROW;
 	update_views = 1;
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 
 	edit_absolute_scale = acc_sc[2] - 1.0;
 	if(edit_absolute_scale > 0.0)
@@ -589,7 +589,7 @@ be_o_x()  {
 	movedir = RARROW;
 	update_views = 1;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -605,7 +605,7 @@ be_o_y()  {
 	movedir = UARROW;
 	update_views = 1;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 
@@ -622,7 +622,7 @@ be_o_xy()  {
 	movedir = UARROW | RARROW;
 	update_views = 1;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -638,7 +638,7 @@ be_o_rotate()  {
 	movedir = ROTARROW;
 	update_views = 1;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -789,7 +789,7 @@ be_s_edit()  {
 	edsol = BE_S_EDIT;
 	sedit_menu();		/* Install appropriate menu */
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -807,7 +807,7 @@ be_s_rotate()  {
 	es_edflag = SROT;
 	mat_idn(acc_rot_sol);
 
-        set_e_axes_pos();
+        set_e_axes_pos(1);
 }
 
 static void
@@ -824,7 +824,7 @@ be_s_trans()  {
 	es_edflag = STRANS;
 	movedir = UARROW | RARROW;
 	mmenu_set( MENU_L1, MENU_NULL );
-        set_e_axes_pos();
+        set_e_axes_pos(1);
 }
 
 static void
@@ -841,7 +841,7 @@ be_s_scale()  {
 	es_edflag = SSCALE;
 	mmenu_set( MENU_L1, MENU_NULL );
 	acc_sc_sol = 1.0;
-        set_e_axes_pos();
+        set_e_axes_pos(1);
 }
 
 /*
