@@ -1,37 +1,39 @@
 /*
- *	@(#) vproc.c			retrieved: 8/13/86 at 08:25:20,
- *	@(#) version 2.2		last edit: 6/20/84 at 12:22:51.
- *
- *	Written by Gary S. Moss.
- *	All rights reserved, Ballistic Research Laboratory.
- *
- *	Procedures for vproc.c
- *
- *	Section 1:  Commands
- *		2:  Object Directory Routines
- *		3:  List Processing Routines
- *		4:  String Processing Routines
- *		5:  Input/Output Routines
- *		6:  Interrupt Handlers
- *	  
+	@(#) vproc.c			retrieved: 8/13/86 at 08:25:34,
+	@(#) version 2.3		last edit: 1/31/85 at 14:59:56.
+
+	Written by Gary S. Moss.
+	All rights reserved, Ballistic Research Laboratory.
+
+	Procedures for vproc.c
+
+	Section 1:  Commands
+		2:  Object Directory Routines
+		3:  List Processing Routines
+		4:  String Processing Routines
+		5:  Input/Output Routines
+		6:  Interrupt Handlers
+	  
  */
 #include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
+#include <std.h>
 #include "./vextern.h"
+static char	*db_title = NULL, *db_units = "  ";
 char		*addname(), getarg();
 Directory	*lookup(), *diradd();
 
 /*
- *	Section 1:	C O M M A N D S
- *
- *			deck()
- *			shell()
+	Section 1:	C O M M A N D S
+
+			deck()
+			shell()
  */
 
-/*	==== d e c k ( )
- *	make a COMGEOM deck for current list of objects
- *
+/*	d e c k ( )
+	make a COMGEOM deck for current list of objects
+
  */
 deck( prefix )
 register
@@ -56,12 +58,19 @@ char *prefix;
 		exit( 10 );
 	}
 
-	/* space for target units (a2,3x)				*/
-	blank_fill( solfd, 5 );
+	/* Target units (a2,3x)						*/
+	write( solfd, db_units, 2 );
+	blank_fill( solfd, 3 );
 
-	/* title
-	 */
-	write( solfd, objfile, strlen( objfile ) );
+	/* Title							*/
+	if( db_title == NULL )
+		{
+		write( solfd, objfile, strlen( objfile ) );
+		}
+	else
+		{
+		write( solfd, db_title, strlen( db_title ) );
+		}
 	write( solfd, LF, 1 );
 
 	/* save space for number of solids and regions
@@ -187,8 +196,8 @@ char *prefix;
 	delsol = delreg = 0;
 }
 
-/*	==== s h e l l ( )
- *	Execute shell command.
+/*	s h e l l ( )
+	Execute shell command.
  */
 shell( args )
 char  *args[];
@@ -242,78 +251,168 @@ char  *args[];
 }
 
 /*
- *	Section 2:	O B J E C T   D I R E C T O R Y   R O U T I N E S
- *
- *			builddir()
- *			toc()
- *			diradd()
- *			addname()
+	Section 2:	O B J E C T   D I R E C T O R Y   R O U T I N E S
+
+			builddir()
+			toc()
+			diradd()
+			addname()
  */
 
 /*
- *			B U I L D D I R
- *
- * This routine reads through the 3d object file and
- * builds a directory of the object names, to allow rapid
- * named access to objects.
+			B U I L D D I R
+
+ This routine reads through the 3d object file and
+ builds a directory of the object names, to allow rapid
+ named access to objects.
  */
 builddir()
-{ register Directory *dp;
+	{ register Directory *dp;
 	(void) printf( "Building the directory.\n" );
 	(void) fflush( stdout );
 
-	dp = &directory[0];
+	dp = directory;
 	while( 1 ) {
 		dp->d_addr = lseek( objfd, 0L, 1 );
 		if(	readF( objfd, &record, sizeof record )
 			!= sizeof record
-		)	break;
-		if( ++ndir >= NDIR )  {
+			)	
+			break;
+		if( ++ndir >= NDIR )
+			{
 			fprintf( stderr, "Too many objects in input\n" );
 			break;
+			}
+		switch( record.u_id )
+		{
+		case ID_IDENT : /* Identification record.		*/
+		{ static int	units_set_flag = false;
+
+			ndir--; dp--; /* Don't include in directory.	*/
+			if( db_title == NULL )
+				{
+				/* This must be the first ident record.	*/
+				if(	(db_title =
+					malloc( strlen( record.i.i_title )+1 )
+					) == NULL
+					)
+					{
+					(void) fprintf( stderr,
+					"Builddir() :Malloc failed!\n"
+							);
+					}
+				else
+					{
+					strcpy( db_title, record.i.i_title );
+					}
+				}
+			(void) fprintf( stdout, "%s\n", record.i.i_title );
+			(void) fprintf( stdout,
+					"GED database version (%s)\n",
+					record.i.i_version
+					);
+			if( units_set_flag )
+				{
+				;/* Ignore second ident records' units, unless
+					previous were bogus or unspecified.
+				  */
+				}
+			else
+			switch( record.i.i_units )
+				{
+				/* NOTE : Default unit conversion factor (1.0)
+					is set in 'vglobal.c'.
+				 */
+				case ID_NO_UNIT : /* unspecified	*/
+					(void) fprintf( stdout,
+						"No units specified.\n"
+							);
+					break;
+				case ID_MM_UNIT	: /* milimeters		*/
+					(void) fprintf( stdout,
+						"Units = milimeters.\n"
+							);
+					unit_conversion = 25.4;
+					units_set_flag = true;
+					strcpy( db_units, "mm" );
+					break;
+				case ID_CM_UNIT	: /* centimeters	*/
+					(void) fprintf( stdout,
+						"Units = centimeters.\n"
+							);
+					unit_conversion = 2.54;
+					units_set_flag = true;
+					strcpy( db_units, "cm" );
+					break;
+				case ID_M_UNIT  : /* meters		*/
+					(void) fprintf( stdout,
+							"Units = meters.\n"
+							);
+					unit_conversion = 0.0254;
+					units_set_flag = true;
+					strcpy( db_units, "m " );
+					break;
+				case ID_IN_UNIT	: /* inches		*/
+					(void) fprintf( stdout,
+							"Units = inches.\n"
+							);
+					units_set_flag = true;
+					strcpy( db_units, "in" );
+					break;
+				case ID_FT_UNIT	: /* feet		*/
+					(void) fprintf( stdout,
+							"Units = feet.\n"
+							);
+					unit_conversion = 0.0833333333;
+					units_set_flag = true;
+					strcpy( db_units, "ft" );
+					break;
+				default :
+					(void) fprintf( stderr,
+							"Unknown units (%d)!\n",
+							record.i.i_units
+							);
+					break;
+				}
+			break;
 		}
-		switch( record.u_id ) {
-		case SOLID:
-			/* Check for a deleted record
-			 */
+		case ID_FREE :  /* Free record -- ignore.		*/
+			ndir--;
+			dp--;
+			break;
+		case ID_SOLID : /* Check for a deleted record.	 	*/
 			if( record.s.s_name[0] == 0 )  {
 				ndir--;
 				continue;
 			}
 			dp->d_namep = addname( record.s.s_name );
 			break;
-		case ARS_A:
-			/* Check for a deleted record
-			 */
+		case ID_ARS_A :  /* Check for a deleted record.		 */
 			if( record.s.s_name[0] == 0 )  {
 				ndir--;
 				continue;
 			}
 			dp->d_namep = addname( record.s.s_name );
 
-			/*  skip remaining B type recods
-			 */
+			/*  Skip remaining B type records.		 */
 			lseek(	objfd,
 				((long)record.a.a_totlen)
 				* sizeof record,
 				1 );
 			break;
-		case COMB:
-			/* Check for a deleted record
-			 */
+		case ID_COMB :  /* Check for a deleted record.		 */
 			if( record.c.c_name[0] == 0 )  {
 				ndir--;
 				dp--;
 			}  else	dp->d_namep = addname( record.c.c_name );
 
-			/* Skip over remaining records
-			 */
+			/* Skip over remaining records.			 */
 			lseek(	objfd,
 				((long)record.c.c_length)
 				* sizeof record,
 				1 );
 			break;
-		default:
+		default :
 			fprintf( stderr,
 				"Builddir:  unknown record %c (0%o).\n",
 				record.u_id,
@@ -326,31 +425,33 @@ builddir()
 	prompt( "\n%d objects tallied\n", ndir );
 }
 
-/*	==== t o c ( )
- *	Build a sorted list of names of all the objects accessable
- *	in the object file.
+/*	t o c ( )
+	Build a sorted list of names of all the objects accessable
+	in the object file.
  */
-toc() {
-	static Directory	*dp, *ep;
+void
+toc()
+	{
 	register int		i;
 
 	(void) printf( "Making the Table of Contents.\n" );
 	(void) fflush( stdout );
-	dp = &directory[0];
-	ep = &directory[ndir];
 
-	for( i = 0; dp < ep; )	toc_list[i++] = (dp++)->d_namep;
-	toc_ct = i;
-}
+	for( i = 0; i < ndir; i++ )
+		{
+		toc_list[i] = directory[i].d_namep;
+		}
+	return;
+	}
 
-/*	==== l o o k u p ( )
- *	This routine takes a name, and looks it up in the
- *	directory table.  If the name is present, a pointer to
- *	the directory struct element is returned, otherwise
- *	a -1 is returned.
- *
- * If the flag is NOISY, a print occurs, else only
- * the return code indicates failure.
+/*	l o o k u p ( )
+	This routine takes a name, and looks it up in the
+	directory table.  If the name is present, a pointer to
+	the directory struct element is returned, otherwise
+	a -1 is returned.
+
+ If the flag is NOISY, a print occurs, else only
+ the return code indicates failure.
  */
 Directory *
 lookup( str, flag )
@@ -374,8 +475,8 @@ register char *str;
 	return	DIR_NULL;
 }
 
-/*	==== d i r a d d ( )
- *	Add an entry to the directory.
+/*	d i r a d d ( )
+	Add an entry to the directory.
  */
 Directory *
 diradd( name, laddr )
@@ -395,9 +496,9 @@ long laddr;
 	return( dp );
 }
 
-/*	==== a d d n a m e ( )
- *	Given a name, it puts the name in the name buffer, and
- *	returns a pointer to that string.
+/*	a d d n a m e ( )
+	Given a name, it puts the name in the name buffer, and
+	returns a pointer to that string.
  */
 char *
 addname( cp )
@@ -419,65 +520,87 @@ char	*cp;
 }
 
 /*
- *	Section 3:	L I S T   P R O C E S S I N G   R O U T I N E S
- *
- *			list_toc()
- *			col_prt()
- *			insert()
- *			delete()
- */
+	Section 3:	L I S T   P R O C E S S I N G   R O U T I N E S
 
-/*	==== l i s t _ t o c ( )
- *	List the table of contents.
+			list_toc()
+			col_prt()
+			insert()
+			delete()
+*/
+
+/*	l i s t _ t o c ( )
+	List the table of contents.
  */
+void
 list_toc( args )
 char	 *args[];
 {
 	register int	i, j;
 
-	for( tmp_ct = 0, i = 1; args[i] != 0; i++ )
-		for( j = 0; j < toc_ct; j++ )
+	(void) fflush( stdout );
+	for( tmp_ct = 0, i = 1; args[i] != NULL; i++ )
+		{
+		for( j = 0; j < ndir; j++ )
+			{
 			if( match( args[i], toc_list[j] ) )
+				{
 				tmp_list[tmp_ct++] = toc_list[j];
-	if( i > 1 )	col_prt( tmp_list, tmp_ct );
-	else		col_prt( toc_list, toc_ct );
+				}
+			}
+		}
+	if( i > 1 )
+		{
+		col_prt( tmp_list, tmp_ct );
+		}
+	else
+		{
+		col_prt( toc_list, ndir );
+		}
+	return;
 }
 
-/*	==== c o l _ p r t ( )
- *	Print list of names in tabular columns.
+/*	c o l _ p r t ( )
+	Print list of names in tabular columns.
  */
 col_prt( list, ct )
+register
 char	*list[];
 register
 int	ct;
-{
+	{
 	char		buf[72];
-	register char	*lbuf = buf;
-	register int	i, column = 0;
+	register int	i, column, spaces;
 
-	for( i = 0; i < ct; i++ ) {
-		strcpy( lbuf, list[i] );
+	for( i = 0, column = 0; i < ct; i++ )
+		{
+		strcpy( &buf[column], list[i] );
 		column += strlen( list[i] );
-		lbuf += strlen( list[i] );
-		if( column > 56 ) {
-			*lbuf++ = '\n';
-			write( 1, buf, lbuf-buf );
-			lbuf = buf;
+		if( column > 56 )
+			{
+			buf[column++] = '\n';
+			write( 1, buf, column );
 			column = 0;
-		} else	{
-			*lbuf++ = '\t';
-			column += 8 - (column % 8 );
+			}
+		else
+			{
+			for(	spaces = 16 - (column % 16 );
+				spaces > 0;
+				spaces--
+				)
+				{
+				buf[column++] = ' ';
+				}
+			}
 		}
+	buf[column++] = '\n';
+	write( 1, buf, column );
+	column = 0;
+	return	ct;
 	}
-	*lbuf++ = '\n';
-	write( 1, buf, lbuf-buf );
-	lbuf = buf;
-	return( ct );
-}
 
-/*	==== i n s e r t ( )
- *	Insert each member of the table of contents 'toc_list' which
- *	matches one of the arguments into the current list 'curr_list'.
+/*	i n s e r t ( )
+	Insert each member of the table of contents 'toc_list' which
+	matches one of the arguments into the current list 'curr_list'.
  */
 insert(  args,	ct )
 char	*args[];
@@ -494,7 +617,7 @@ register int	ct;
 		 * insert in current list
 		 */
 		nomatch = YES;
-		for( j = 0; j < toc_ct; j++ ) {
+		for( j = 0; j < ndir; j++ ) {
 			if( match( args[i], toc_list[j] ) ) {
 				nomatch = NO;
 
@@ -521,9 +644,9 @@ register int	ct;
 	return( curr_ct );
 }
 
-/*	==== d e l e t e ( )
- *	delete all members of current list 'curr_list' which match
- *	one of the arguments
+/*	d e l e t e ( )
+	delete all members of current list 'curr_list' which match
+	one of the arguments
  */
 delete(  args )
 char	*args[];
@@ -546,7 +669,7 @@ char	*args[];
 				free( curr_list[j] );	--curr_ct;
 				/* starting from bottom of list,
 				 * pull all entries up to fill up space
-				 * made by deletion
+				 made by deletion
 				 */
 				for( k = j; k < curr_ct; k++ )
 					curr_list[k] = curr_list[k+1];
@@ -559,79 +682,15 @@ char	*args[];
 }
 
 /*
- *	Section 4:	S T R I N G   P R O C E S S I N G   R O U T I N E S
- *
- *			match()
- *			itoa()
- *			ftoascii()
- *			check()
+	Section 4:	S T R I N G   P R O C E S S I N G   R O U T I N E S
+
+			itoa()
+			ftoascii()
+			check()
  */
 
-/*	==== m a t c h ( )
- *	if string matches pattern, return 1, else return 0
- *	special characters:
- *		*	Matches any string including the null string.
- *		?	Matches any single character.
- *		[...]	Matches any one of the characters enclosed.
- *		-	May be used inside brackets to specify range
- *			(i.e. str[1-58] matches str1, str2, ... str5, str8)
- *		\	Escapes special characters.
- */
-match(	 pattern,  string )
-register
-char	*pattern, *string;
-{
-	do {	switch( *pattern ) {
-		case '*': /*
-			   * match any string including null string
-			   */
-			++pattern;
-			do	if( match( pattern, string ) ) return( 1 );
-			while( *string++ != '\0' );
-			return( 0 );
-			break;
-		case '?': /*
-			   * match any character
-			   */
-			if( *string == '\0' )	return( 0 );
-			break;
-		case '[': /*
-			   * try to match one of the characters in brackets
-			   */
-			++pattern;
-			while( *pattern != *string ) {
-				if(	pattern[ 0] == '-'
-				    &&	pattern[-1] != '\\'
-				)	if(	pattern[-1] <= *string
-					    &&	pattern[-1] != '['
-					    &&	pattern[ 1] >= *string
-					    &&	pattern[ 1] != ']'
-					)	break;
-				if( *++pattern == ']' )	return( 0 );
-			}
-
-			/* skip to next character after closing bracket
-			 */
-			while( *++pattern != ']' );
-			break;
-		case '\\': /*
-			    * escape special character
-			    */
-			++pattern;
-			/* WARNING: falls through to default case */
-		default:  /*
-			   * compare characters
-			   */
-			if( *pattern != *string )	return( 0 );
-			break;
-		}
-		++string;
-	} while( *pattern++ != '\0' );
-	return( 1 );
-}
-
-/*	==== i t o a ( )
- *	Convert integer to ascii  wd format.
+/*	i t o a ( )
+	Convert integer to ascii  wd format.
  */
 itoa( n, s, w )
 register
@@ -661,8 +720,8 @@ int   n,    w;
 	}
 }
 
-/*	==== f t o a s c i i ( )
- *	Convert float to ascii  w.df format.
+/*	f t o a s c i i ( )
+	Convert float to ascii  w.df format.
  */
 ftoascii( f, s, w, d )
 register
@@ -716,35 +775,35 @@ float	  f;
 	}
 }
 
-/*	==== c h e c k ( )
- *	Compares solids to see if have a new solid.
+/*	c h e c k ( )
+	Compares solids to see if have a new solid.
  */
 check( a, b )
 register
 char	*a, *b;
 {
-	register int	c = sizeof( struct ident );
+	register int	c = sizeof( struct deck_ident );
 
 	while( c-- )	if( *a++ != *b++ ) return( 0 );   /* new solid */
 	return( 1 );   /* match - old solid */
 }
 
 /*
- *	Section 5:	I / O   R O U T I N E S
+	Section 5:	I / O   R O U T I N E S
  *
- *			getcmd()
- *			getarg()
- *			pars_arg()
- *			menu()
- *			blank_fill()
- *			bug()
- *			fbug()
+			getcmd()
+			getarg()
+			pars_arg()
+			menu()
+			blank_fill()
+			bug()
+			fbug()
  */
 
-/*	==== g e t c m d ( )
- *	Return first character read from keyboard,
- *	copy command into args[0] and arguments into args[1]...args[n].
- *		
+/*	g e t c m d ( )
+	Return first character read from keyboard,
+	copy command into args[0] and arguments into args[1]...args[n].
+		
  */
 char
 getcmd(  args, ct )
@@ -770,10 +829,10 @@ int		ct;
 	return( (args[0])[0] );
 }
 
-/*	==== g e t a r g ( )
- *	Get a word of input into 'str',
- *	Return 0 if newline is encountered.
-  *	Return 1 otherwise.
+/*	g e t a r g ( )
+	Get a word of input into 'str',
+	Return 0 if newline is encountered.
+ 	Return 1 otherwise.
  */
 char
 getarg(		 str )
@@ -791,8 +850,8 @@ register char	*str;
 	return( 0 );
 }
 
-/*	==== p a r s _ a r g ( )
- *	Seperate words into seperate arguments.
+/*	p a r s _ a r g ( )
+	Seperate words into seperate arguments.
  */
 pars_arg( argvec,	ct )
 char	 *argvec[];
@@ -832,8 +891,8 @@ register int		ct;
 	}
 }
 
-/*	==== m e n u ( )
- *	Display menu stored at address 'addr'.
+/*	m e n u ( )
+	Display menu stored at address 'addr'.
  */
 menu( addr )
 char **addr;
@@ -844,8 +903,8 @@ char **addr;
 	fflush( stdout );
 }
 
-/*	==== b l a n k _ f i l l ( )
- *	Write count blanks to fildes.
+/*	b l a n k _ f i l l ( )
+	Write count blanks to fildes.
  */
 blank_fill(	fildes,	count )
 register int	fildes,	count;
@@ -856,15 +915,15 @@ register int	fildes,	count;
 }
 
 /*
- *	Section 6:	I N T E R R U P T   H A N D L E R S
+	Section 6:	I N T E R R U P T   H A N D L E R S
  *
- *			abort()
- *			quit()
+			abort()
+			quit()
  */
 
-/*	==== a b o r t ( )
- *	Abort command without terminating run (restore command prompt) and
- *	cleanup temporary files.
+/*	a b o r t ( )
+	Abort command without terminating run (restore command prompt) and
+	cleanup temporary files.
  */
 abort( sig ) {
 	signal( SIGINT, quit );	/* reset trap */
@@ -884,8 +943,8 @@ abort( sig ) {
 	longjmp( env, sig );
 }
 
-/*	==== q u i t ( )
- *	Terminate run.
+/*	q u i t ( )
+	Terminate run.
  */
 quit( sig ) {
 	fprintf( stderr, "quitting...\n" );
