@@ -5,13 +5,17 @@
  *  	Intersect a ray with an Arbitrary Regular Polyhedron with
  *  	as many as 8 vertices.
  *  
- *  Contributors -
- *	Michael John Muuss	(Programming, Generalization)
- *
- * U. S. Army Ballistic Research Laboratory
- * April 18, 1984.
- *
- * $Revision$
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -41,6 +45,9 @@ struct arb_specific  {
 #define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
+
+#undef EPSILON
+#define EPSILON	0.005		/* More appropriate for NEAR_ZERO here */
 
 /*
  *  			A R B _ P R E P
@@ -248,8 +255,8 @@ int noise;			/* non-0: check 4,> pts for being planar */
 		if( ! NEAR_ZERO(f) )  {
 			/* Non-planar face */
 			if( noise )  {
-				fprintf(stderr,"ERROR: arb(%s) face %s non-planar\n",
-				stp->st_name, plp->pl_code );
+				fprintf(stderr,"ERROR: arb(%s) face %s non-planar, dot=%f\n",
+				stp->st_name, plp->pl_code, f );
 			}
 #ifdef CONSERVATIVE
 			plp->pl_npts--;
