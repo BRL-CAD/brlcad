@@ -138,7 +138,7 @@ proc gui { args } {
     }
 
 # set defaults
-    set save_id [lindex [cmd_get] 2]
+    set save_id [cmd_win get]
     set comb $mged_default(comb)
     set join_c 0
     set dtype $mged_default(dt)
@@ -1717,8 +1717,9 @@ if {[info procs cad_MenuFirstEntry] == ""} {
     cad_MenuFirstEntry ""
 }
 
-cmd_init $id
-tie $id $mged_gui($id,active_dm)
+cmd_win open $id
+_mged_tie $id $mged_gui($id,active_dm)
+reconfig_gui_default $id
 
 # Force display manager windows to update their respective color schemes
 mged_apply_local $id "rset cs mode 0"
@@ -1733,7 +1734,7 @@ update_mged_vars $id
 set mged_gui($id,qray_effects) [qray effects]
 
 # reset current_cmd_list so that its cur_hist gets updated
-cmd_set $save_id
+cmd_win set $save_id
 
 # cause all 4 windows to share menu state
 share m $mged_gui($id,top).ul $mged_gui($id,top).ur
@@ -1802,22 +1803,15 @@ proc gui_destroy args {
     }
     set mged_players [lreplace $mged_players $i $i]
 
-    set i [lsearch -exact $mged_collaborators $id]
-    if { $i != -1 } {
-	cmd_set $id
-	set cmd_list [cmd_get]
-	set shared_id [lindex $cmd_list 1]
+    if { [lsearch -exact $mged_collaborators $id] != -1 } {
 	qcs $id
-	if {"$mged_gui($id,top).ur" == "$shared_id"} {
-	    reconfig_all_gui_default
-	}
     }
 
     set mged_gui($id,multi_view) 0
     set mged_gui($id,show_edit_info) 0
 
     releasemv $id
-    catch { cmd_close $id }
+    catch { cmd_win close $id }
     catch { destroy .mmenu$id }
     catch { destroy .sliders$id }
     catch { destroy $mged_gui($id,top) }
@@ -1832,16 +1826,18 @@ proc gui_destroy args {
 proc reconfig_gui_default { id } {
     global mged_display
 
-    cmd_set $id
-    set cmd_list [cmd_get]
-    set shared_id [lindex $cmd_list 1]
+    cmd_win set $id
+    set dm_id [_mged_tie $id]
+    if { [llength $dm_id] != 1 } {
+	return
+    }
 
-    .$id.status.cent configure -textvar mged_display($shared_id,center)
-    .$id.status.size configure -textvar mged_display($shared_id,size)
+    .$id.status.cent configure -textvar mged_display($dm_id,center)
+    .$id.status.size configure -textvar mged_display($dm_id,size)
     .$id.status.units configure -textvar mged_display(units)
 
-    .$id.status.aet configure -textvar mged_display($shared_id,aet)
-    .$id.status.ang configure -textvar mged_display($shared_id,ang)
+    .$id.status.aet configure -textvar mged_display($dm_id,aet)
+    .$id.status.ang configure -textvar mged_display($dm_id,ang)
 
     update_view_ring_entries $id s
     update_view_ring_entries $id d
@@ -2053,29 +2049,6 @@ proc pmp {} {
     return $mged_players
 }
 
-proc tie args {
-    if { [llength $args] == 2 } {
-	if {[lindex $args 0] == "-u"} {
-	    set i 1
-	} else {
-	    set i 0
-	}
-
-	if ![winfo exists .[lindex $args $i]] {
-	    return
-	}
-    }
-
-    set result [eval _mged_tie $args]
-    
-    if { [llength $args] == 2 } {
-	reconfig_gui_default [lindex $args $i]
-    }
-
-    return $result
-}
-
-
 proc set_active_dm { id } {
     global mged_gui
     global mged_display
@@ -2105,7 +2078,8 @@ proc set_active_dm { id } {
     update_mged_vars $id
     set view_ring($id) [view_ring get]
 
-    tie $id $mged_gui($id,active_dm)
+    _mged_tie $id $mged_gui($id,active_dm)
+    reconfig_gui_default $id
 
     if {!$mged_gui($id,multi_view)} {
 	setmv $id
@@ -2487,16 +2461,26 @@ proc adc { args } {
     global transform
 
     set result [eval _mged_adc $args]
-    set id [lindex [cmd_get] 2]
 
+    # toggling ADC on/off
     if { ![llength $args] } {
-	if {[info exists mged_gui($id,active_dm)]} {
+	set dm_id [winset]
+	set tie_list [_mged_tie]
+	set id mged
+
+	# see if dm_id is tied to a command window
+	foreach pair $tie_list {
+	    if { [lindex $pair 1] == $dm_id } {
+		set id [lindex $pair 0]
+		break
+	    }
+	}
+
+	if {[info exists mged_gui($id,adc_draw)]} {
 	    set mged_gui($id,adc_draw) [_mged_adc draw]
 	}
 
-	if {$transform == "a"} {
-	    default_mouse_bindings [winset]
-	}
+	default_mouse_bindings [winset]
     }
 
     return $result
