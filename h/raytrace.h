@@ -2828,6 +2828,8 @@ BU_EXTERN(int db_dircheck,( struct db_i *dbip, struct bu_vls *ret_name,
 			    int noisy, struct directory ***headp ) );
 					/* convert name to directory ptr */
 BU_EXTERN(struct directory *db_lookup,( const struct db_i *, const char *name, int noisy ) );
+					/* lookup directory entries based on attributes */
+BU_EXTERN( struct bu_ptbl *db_lookup_by_attr, (struct db_i *dbip, int dir_flags, struct bu_attribute_value_set *avs, int op ) );
 					/* add entry to directory */
 BU_EXTERN(struct directory *db_diradd, ( struct db_i *, const char *name, long laddr,
 	int len, int flags, genptr_t ptr ) );

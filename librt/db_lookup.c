@@ -530,3 +530,69 @@ db_get_directory(register struct resource *resp)
 		bytes -= sizeof(struct directory);
 	}
 }
+
+/*
+ *			D B _ L O O K U P _ B Y _ A T T R
+ *
+ *	lookup directory entries based on directory flags (dp->d_flags) and attributes
+ *	the "dir_flags" arg is a mask for the directory flags
+ *	the "avs" is an attribute value set used to select from the objects that pass
+ *	the flags mask. if "op" is 1, then the object must have all the attributes and
+ *	values that appear in "avs" in order to be selected. If "op" is 2, then the object
+ *	must have at least one of the attribute/value pairs from "avs".
+ *
+ *	returns a ptbl list of selected directory pointers
+ *		an empty list means nothing met the requirements
+ *		a NULL return means something went wrong
+ */
+struct bu_ptbl *
+db_lookup_by_attr( dbip, dir_flags, avs, op )
+struct db_i *dbip;
+int dir_flags;			/* flags of the form used in struct directory (d_flags) */
+struct bu_attribute_value_set *avs;
+int op;	/* 1 -> all attribute name/value pairs must be present and match */
+        /* 2 -> at least one of the name/value pairs must be present and match */
+{
+	struct bu_attribute_value_set obj_avs;
+	struct directory *dp;
+	struct bu_ptbl *tbl;
+	int match_count;
+	int attr_count;
+	int i,j;
+	int draw;
+
+	tbl = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "wdb_get_by_attr ptbl" );
+	bu_ptbl_init( tbl, 128, "wdb_get_by_attr ptbl_init" );
+	attr_count = avs->count;
+	FOR_ALL_DIRECTORY_START(dp,dbip)
+		if( (dp->d_flags & dir_flags) == 0 ) continue;
+		if( db5_get_attributes( dbip, &obj_avs, dp ) < 0 ) {
+			bu_log( "ERROR: failed to get attributes for %s\n", dp->d_namep );
+			return( (struct bu_ptbl *)NULL );
+		}
+
+		draw = 0;
+		match_count = 0;
+		for( i=0 ; i<avs->count ; i++ ) {
+			for( j=0 ; j<obj_avs.count ; j++ ) {
+				if( !strcmp( avs->avp[i].name, obj_avs.avp[j].name ) ) {
+					if( !strcmp( avs->avp[i].value, obj_avs.avp[j].value ) ) {
+						if( op == 2 ) {
+							draw = 1;
+							break;
+						} else {
+							match_count++;
+						}
+					}
+				}
+			}
+			if( draw ) break;
+		}
+		bu_avs_free( &obj_avs );
+		if( draw || match_count == attr_count ) {
+			bu_ptbl_ins( tbl , (long *)dp );
+		}
+	FOR_ALL_DIRECTORY_END
+
+	return( tbl );
+}
