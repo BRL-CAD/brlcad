@@ -32,7 +32,7 @@ struct edgeuse	*eu;
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
-	if (rt_g.NMG_debug)
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 		rt_log("nmg_class_pt_eu()\n");
 
 	/* if this edgeuse's vertexuse is on a previously processed & touched
@@ -111,7 +111,7 @@ struct edgeuse	*eu;
 		fpi->closest = &eu->l.magic;
 		fpi->PCA_loc = NMG_PCA_EDGE;
 		fpi->pt_class = NMG_CLASS_AonBshared;
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 			rt_log(	"\tplane_pt on eu, (new dist: %g)\n",
 				fpi->dist_in_plane);
 		if (fpi->eu_func)
@@ -127,11 +127,11 @@ struct edgeuse	*eu;
 			fpi->closest = &eu->vu_p->l.magic;
 			fpi->PCA_loc = NMG_PCA_EDGE_VERTEX;
 			fpi->pt_class = NMG_CLASS_AonBshared;
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 				rt_log("\tplane_pt on vu (new dist %g)\n",
 					fpi->dist_in_plane);
 		} else {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 				rt_log("\tplane_pt on vu(dist %g) keeping old dist %g)\n",
 					dist, fpi->dist_in_plane);
 		}
@@ -149,11 +149,11 @@ struct edgeuse	*eu;
 			fpi->closest = &eunext->vu_p->l.magic;
 			fpi->PCA_loc = NMG_PCA_EDGE_VERTEX;
 			fpi->pt_class = NMG_CLASS_AonBshared;
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 				rt_log("\tplane_pt on next(eu)->vu (new dist %g)\n",
 					fpi->dist_in_plane);
 		} else {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 				rt_log("\tplane_pt on next(eu)->vu(dist %g) keeping old dist %g)\n",
 					dist, fpi->dist_in_plane);
 		}
@@ -170,11 +170,12 @@ struct edgeuse	*eu;
 			fpi->dist_in_plane = dist;
 			fpi->closest = &eu->vu_p->l.magic;
 			fpi->PCA_loc = NMG_PCA_EDGE_VERTEX;
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 				rt_log("\tvu of eu is new \"closest to plane_pt\" (new dist %g)\n",
 					fpi->dist_in_plane);
 		} else {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 				rt_log("\tvu of eu is PCA (dist %g).  keeping old dist %g\n",
 					dist, fpi->dist_in_plane);
 		}
@@ -186,11 +187,11 @@ struct edgeuse	*eu;
 			fpi->dist_in_plane = dist;
 			fpi->closest = &eu->vu_p->l.magic;
 			fpi->PCA_loc = NMG_PCA_EDGE_VERTEX;
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 				rt_log("\tvu of next(eu) is new \"closest to plane_pt\" (new dist %g)\n",
 					fpi->dist_in_plane);
 		} else {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 				rt_log("\tvu of next(eu) is PCA (dist %g).  keeping old dist %g\n",
 					dist, fpi->dist_in_plane);
 		}
@@ -206,11 +207,11 @@ struct edgeuse	*eu;
 			fpi->dist_in_plane = dist;
 			fpi->closest = &eu->l.magic;
 			fpi->PCA_loc = NMG_PCA_EDGE;
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 				rt_log("\teu is new \"closest to plane_pt\" (new dist %g)\n",
 					fpi->dist_in_plane);
 		} else {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 				rt_log("\teu dist is %g, keeping old dist %g)\n",
 					dist, fpi->dist_in_plane);
 		}
@@ -251,7 +252,7 @@ CONST struct loopuse	*lu;
 	NMG_CK_LOOP_G(lg);
 	NMG_CK_FPI(fpi);
 
-	if (rt_g.NMG_debug) {
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) ) {
 		VPRINT("nmg_class_pt_lu\tPt:", fpi->pt);
 		rt_log("\tinitial class is %s\n",
 			nmg_class_name(fpi->pt_class));
@@ -260,7 +261,7 @@ CONST struct loopuse	*lu;
 		return;
  
 	if( !V3PT_IN_RPP_TOL( fpi->pt, lg->min_pt, lg->max_pt, fpi->tol ) )  {
-		if (rt_g.NMG_debug )
+		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 			rt_log("\tPoint is outside loop RPP\n");
 		NMG_INDEX_SET(fpi->tbl, lu);
 		NMG_INDEX_SET(fpi->tbl, lu->lumate_p);
@@ -319,7 +320,7 @@ CONST struct loopuse	*lu;
 				nmg_pr_orient(lu->orientation, "\t");
 				rt_bomb("nmg_class_pt_lu: bad orientation for face loopuse(vertex)\n");
 			}
-			if (rt_g.NMG_debug )
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 				rt_log("\t\t closer to loop pt (%g, %g, %g)\n",
 					V3ARGS(lu_pt) );
 
@@ -334,7 +335,7 @@ CONST struct loopuse	*lu;
 	NMG_INDEX_SET(fpi->tbl, lu);
 	NMG_INDEX_SET(fpi->tbl, lu->lumate_p);
 
-	if (rt_g.NMG_debug )
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 		rt_log("nmg_class_pt_lu\treturning, closest=%g %s\n",
 			fpi->dist_in_plane, nmg_class_name(fpi->pt_class) );
 }
@@ -380,7 +381,7 @@ struct vertexuse *vu_p;
     	struct vertexuse *vu;
 	struct edgeuse *eu;
 
-	if (rt_g.NMG_debug)
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 		rt_log("Tanenbaum_patch()\n");
 
 
@@ -459,7 +460,7 @@ struct fu_pt_info *fpi;
 
 	NMG_CK_FPI(fpi);
 
-	if (rt_g.NMG_debug)
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 		rt_log("deduce_pt_class()\n");
 
 
@@ -578,7 +579,7 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 
 
-	if (rt_g.NMG_debug)
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 		rt_log("nmg_class_pt_fu_except()\n");
 
 	fpi = (struct fu_pt_info *)rt_malloc(sizeof(*fpi), "struct fu_pt_info");
@@ -637,7 +638,7 @@ CONST struct rt_tol	*tol;
 	} else
 		deduce_pt_class(fpi);
 
-	if (rt_g.NMG_debug)
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 		rt_log("nmg_class_pt_fu_except(): point is classed %s\n",
 			nmg_class_name(fpi->pt_class));
 
