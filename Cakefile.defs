@@ -215,7 +215,8 @@ set -S2 "/bin/sh"
 /*	IBM PC or clone running Linux */
 #	undef	li
 #	define	MTYPE	li
-#	define	UNIXTYPE SYSV
+#	define	UNIXTYPE BSD
+#	define	BSD	44
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
 #	define	RANLIB	ar -s
@@ -231,6 +232,7 @@ set -S2 "/bin/sh"
 #	define	XLIBDIR	/usr/X11/lib
 
 #	define	LIBRT_TIMER	timer42
+#	define	LIBTERMLIB	-lcurses
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
