@@ -25,7 +25,7 @@ int	digits;		/* # digits wide */
 
 	if( digits < 1 )
 		digits = 1;
-	sprintf( fmt, "%%%d.%dg", digits, digits );
+	sprintf( fmt, "%%%dg", digits, digits );
 	sprintf( buf, fmt, input );
 	tp_symbol( fp, buf, x, y, cscale, theta );
 }

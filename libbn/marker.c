@@ -23,7 +23,7 @@
 tp_marker( fp, c, x, y, scale )
 FILE	*fp;
 register int c;
-int	x, y;
+double	x, y;
 double	scale;
 {
 	static char *mark_str = "x";
@@ -32,7 +32,7 @@ double	scale;
 
 	/* Draw the marker */
 	tp_symbol( fp, mark_str,
-		(int)(x - scale*0.5), (int)(y - scale*0.5),
+		(x - scale*0.5), (y - scale*0.5),
 		scale, 0.0 );
 }
 
@@ -42,10 +42,10 @@ double	scale;
  */
 
 fmarker( fp, c, x, y, scale )
-FILE	*fp;
+FILE	**fp;
 char	*c;
-int	*x, *y;
-float	*scale;
+double	*x, *y;
+double	*scale;
 {
-	tp_marker( fp, *c, *x, *y, *scale );
+	tp_marker( *fp, *c, *x, *y, *scale );
 }

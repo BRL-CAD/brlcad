@@ -30,43 +30,59 @@
 #define bneg(x,y)	NEGY, brt(x,y)
 #define dneg(x,y)	NEGY, drk(x,y)
 
-static char		*ppindex[256];	/* index to stroke tokens */
+#if defined(cray) || defined(CRAY2)
+#define TINY	int
+#else
+#define TINY	char		/* must be signed */
+#endif
 
+static TINY	*ppindex[256];	/* index to stroke tokens */
+extern TINY	pptable[];	/* table of strokes */
+
+/*
+ *  Once-only setup routine
+ */
+static tp_setup()
+{
+	register TINY	*p;	/* pointer to stroke table */
+	register int i;
+
+	p = pptable;		/* pointer to stroke list */
+
+	/* Store start addrs of each stroke list */
+	for( i=040-5; i<128; i++)  {
+		ppindex[i+128] = ppindex[i] = p;
+		while( (*p++ & 0377) != LAST );
+	}
+	for( i=6; i<040; i++ )  {
+		ppindex[i+128] = ppindex[i] = ppindex['?'];
+	}
+	for( i=1; i<6; i++ )  {
+		ppindex[i+128] = ppindex[i] = ppindex[040-1+i];
+	}
+}
+
+/*
+ *			T P _ S Y M B O L
+ */
 tp_symbol( fp, string, x, y, scale, theta )
 char	*string;		/* string of chars to be plotted */
-int	x, y;			/* x,y of lower left corner of 1st char */
-double	scale;			/* scale factor to change 10x10 char sz */
+double	x, y;			/* x,y of lower left corner of 1st char */
+double	scale;			/* scale factor to change 1x1 char sz */
 double	theta;			/* degrees ccw from X-axis */
 {
 	register unsigned char *cp;
 	double	xrot, yrot;		/* x and y rotation factors */
 	double	offset;			/* offset of char from given x,y */
 	double	x2, y2;			/* char pos in local coord system */
-	int	x3, y3;			/* more work areas */
+	double	x3, y3;			/* char pos after rotation */
 	int	ysign;			/* sign of y motion, either +1 or -1 */
-	extern char	pptable[];	/* table of strokes */
 
 	if( string == NULL || *string == '\0' )
 		return;			/* done before begun! */
 
 	/* Check to see if initialization is needed */
-	if( ppindex[040] == 0 )  {
-		register char	*p;	/* pointer to stroke table */
-		register int i;
-
-		p = pptable;		/* pointer to stroke list */
-		/* Store start addrs of each stroke list */
-		for( i=040-5; i<128; i++)  {
-			ppindex[i+128] = ppindex[i] = p;
-			while( (*p++ & 0377) != LAST );
-		}
-		for( i=6; i<040; i++ )  {
-			ppindex[i+128] = ppindex[i] = ppindex['?'];
-		}
-		for( i=1; i<6; i++ )  {
-			ppindex[i+128] = ppindex[i] = ppindex[040-1+i];
-		}
-	}
+	if( ppindex[040] == 0 )  tp_setup();
 
 	/* Apply rotation */
 	xrot = cos( 0.0174533 * theta );
@@ -75,10 +91,10 @@ double	theta;			/* degrees ccw from X-axis */
 	/* Draw each character in the input string */
 	offset = 0;
 	for( cp = (unsigned char *)string ; *cp; cp++, offset += scale )  {
-		register char	*p;	/* pointer to stroke table */
+		register TINY	*p;	/* pointer to stroke table */
 		register int	stroke;
 
-		pl_move( fp, (int)(x+offset*xrot), (int)(y+offset*yrot) );
+		pd_move( fp, x+offset*xrot, y+offset*yrot );
 
 		for( p = ppindex[*cp]; ((stroke= *p)&0xFF) != LAST; p++ )  {
 			int	draw;
@@ -104,16 +120,16 @@ double	theta;			/* degrees ccw from X-axis */
 			x3 = x + x2*xrot - y2*yrot;
 			y3 = y + x2*yrot + y2*xrot;
 			if( draw )
-				pl_cont( fp, x3, y3 );
+				pd_cont( fp, x3, y3 );
 			else
-				pl_move( fp, x3, y3 );
+				pd_move( fp, x3, y3 );
 		}
 	}
 }
 
 /*	tables for markers	*/
 
-static char	pptable[] = {
+static TINY	pptable[] = {
 
 /*	+	*/
 	drk(0, 5),
@@ -1095,16 +1111,37 @@ static char	pptable[] = {
 	LAST
 };
 
-
 /*
- *	CULC FORTRAN-IV PLUS Interface Entry
+ *  This FORTRAN interface expects REAL args (single precision).
  */
-
-fsymbol( fp, string, x, y, scale, theta )
-FILE	*fp;
+FSYMBOL( fp, string, x, y, scale, theta )
+FILE	**fp;
 char	*string;
-int	*x, *y, *scale;
+float	*x, *y;
+float	*scale;
 float	*theta;
 {
-	tp_symbol( fp, string, *x, *y, *scale, *theta );
+	char buf[128];
+
+	tp_strncpy( buf, string, sizeof(buf) );
+	tp_symbol( *fp, buf, *x, *y, *scale, *theta );
+}
+
+/*
+ *			T P _ S T R N C P Y
+ *
+ *  Make null-terminated copy of a string in output buffer,
+ *  being careful not to exceed indicated buffer size
+ *  Accept "$" as alternate string-terminator for FORTRAN Holerith constants.
+ */
+tp_strncpy( out, in, sz )
+register char *out;
+register char *in;
+register int sz;
+{
+	register int c;
+
+	while( --sz > 0 && (c = *in++) != '\0' && c != '$' )
+		*out++ = c;
+	*out++ = '\0';
 }

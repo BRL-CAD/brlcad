@@ -34,27 +34,25 @@
 tp_axis( fp, string, x, y, length, theta, ndigits, minval, incr, unit, cscale )
 FILE		*fp;
 char		*string;	/* label for axis */
-register int	x,y;		/* start coordinates for axis */
-int		length;		/* length of axis */
+double		x,y;		/* start coordinates for axis */
+double		length;		/* length of axis */
 double		theta;		/* rotation off X-axis, in degrees */
 int		ndigits;	/* # digits wide */
 double		minval;		/* minimum value on axis */
 double		incr;		/* increment for each tick */
-int		unit;		/* distance between ticks */
+double		unit;		/* distance between ticks */
 double		cscale;		/* character scale (size) */
 {
 	register int i;				/* index  variable */
 	double	xrot, yrot;			/* direction & rotation */
-	int	temp;				/* Work area for ROT macro */
-	int	xincr, yincr;			/* increments for rotation */
-	int	xbott, ybott;			/* address of bottom of tick */
-	int	xnum, ynum;			/* addr of ticks number */
-	int	xtitle, ytitle;			/* addr of axis title */
+	double	temp;				/* Work area for ROT macro */
+	double	xincr, yincr;			/* increments for rotation */
+	double	xbott, ybott;			/* address of bottom of tick */
+	double	xnum, ynum;			/* addr of ticks number */
+	double	xtitle, ytitle;			/* addr of axis title */
+	double	xlab_end, ylab_end;			/* last number pos */
 	int	direction;			/* 1=clockwise, -1=counter */
-	int	n;
-	int	label_width;
-	int	space;
-	int	xlast, ylast;			/* last number pos */
+	int	nticks;
 
 	/* Determine direction for ticks */
 	direction = 1;				/* normal is clockwise ticks */
@@ -88,50 +86,69 @@ double		cscale;		/* character scale (size) */
 	/* Draw the title */
 	tp_symbol(fp, string, xtitle, ytitle, cscale, theta);
 
-	length = (length+unit-1)/unit;		/* number of ticks to do */
+	nticks = length/unit+0.5;		/* number of ticks to do */
 
 	/*
 	 *  Draw the axis & label as we go.
 	 *  Do left-most tick, then repeat:
 	 *  across, down, label.
 	 */
-	pl_move( fp, xbott, ybott );
-	pl_cont( fp, x, y );
+	pd_move( fp, xbott, ybott );
+	pd_cont( fp, x, y );
 
 	/* initial label */
 	if( ndigits > 0 )
 		tp_number( fp, minval, xnum, ynum, cscale, theta, ndigits );
-	xlast = ndigits * cscale;
-	ylast = ndigits * cscale;
-	ROT( xlast, ylast );
-	xlast += xnum;
-	ylast += ynum;
 
-	for( i=0; i<length; i++) {
-		pl_move( fp, x, y );
+	xlab_end = xnum + X( ndigits * cscale, 0 );
+	ylab_end = ynum + Y( ndigits * cscale, 0 );
+
+	for( i=0; i<nticks; i++) {
+		pd_move( fp, x, y );
 
 		/* advance x & y for next segment */
 		x += xincr;
 		xbott += xincr;
 		xnum += xincr;
+
 		y += yincr;
 		ybott += yincr;
 		ynum += yincr;
 
 		minval += incr;
 
-		pl_cont( fp, x, y );		/* draw segment */
+		pd_cont( fp, x, y );		/* draw segment */
+		pd_cont( fp, xbott, ybott );	/* draw tick */
 
 		/*
-		 *  Draw and label this tick if it is beyond
+		 *  Only label this tick if it is beyond
 		 *  the last label.
 		 */
-		if( ( (xincr >= 0) ? (x <= xlast) : (x >= xlast) ) ||
-		    ( (yincr >= 0) ? (y <= ylast) : (y >= ylast) ) )
+		if( ndigits <= 0 )  continue;
+		if( ( (xincr >= 0) ? (x < xlab_end) : (x > xlab_end) ) ||
+		    ( (yincr >= 0) ? (y < ylab_end) : (y > ylab_end) ) )
 			continue;
 
-		pl_cont( fp, xbott, ybott );	/* draw tick */
-		if( ndigits > 0 )
-			tp_number( fp, minval, xnum, ynum, cscale, theta, ndigits );
+		tp_number( fp, minval, xnum, ynum, cscale, theta, ndigits );
+		xlab_end = xnum + X( ndigits * cscale, 0 );
+		ylab_end = ynum + Y( ndigits * cscale, 0 );
 	}
+}
+
+FAXIS(fp, string, x, y, length, theta, ndigits, minval, incr, unit, cscale )
+FILE		**fp;
+char		*string;	/* label for axis */
+float		*x,*y;		/* start coordinates for axis */
+float		*length;	/* length of axis */
+float		*theta;		/* rotation off X-axis, in degrees */
+int		*ndigits;	/* # digits wide */
+float		*minval;	/* minimum value on axis */
+float		*incr;		/* increment for each tick */
+float		*unit;		/* distance between ticks */
+float		*cscale;	/* character scale (size) */
+{
+	char buf[128];
+	tp_strncpy( buf, string, sizeof(buf) );
+	tp_axis( *fp, buf, *x, *y, *length,
+		*theta, *ndigits, *minval, *incr, *unit, *cscale );
 }

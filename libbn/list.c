@@ -15,34 +15,53 @@
 /*
  *			T P _ L I N E
  * 
- *  Take a set of integer x,y coordinates, and plot them as a
- *  polyline, ie, connect them with line segments.  For markers,
- *  use tp_mline(), below.
+ *  Take a set of x,y coordinates, and plot them as a
+ *  polyline, ie, connect them with line segments.
+ *  For markers, use tp_mline(), below.
+ *  This "C" interface expects arrays of DOUBLES.
  */
 tp_line( fp, x, y, npoints )
 FILE		*fp;
-register int	*x, *y;			/* arrays of integer points */
-int		npoints;		/* numbers of points */
+register double	*x, *y;			/* arrays of points */
+register int	npoints;
 {
-	register int i;
+	if( npoints <= 0 )
+		return;
+
+	pd_move( fp, *x++, *y++ );
+	while( --npoints > 0 )
+		pd_cont( fp, *x++, *y++ );
+}
+
+/*
+ *  This FORTRAN interface expects arrays of REALs (single precision).
+ */
+FLINE( fpp, x, y, n )
+FILE	**fpp;
+float	*x, *y;
+int	*n;
+{
+	FILE	*fp = *fpp;
+	register int npoints = *n;
 
 	if( npoints <= 0 )
 		return;
 
-	pl_move( fp, *x++, *y++ );
-	for( i=1; i<npoints; i++ )
-		pl_cont( fp, *x++, *y++ );
+	pd_move( fp, *x++, *y++ );
+	while( --npoints > 0 )
+		pd_cont( fp, *x++, *y++ );
 }
 
 /*
  *			T P _ M L I N E
  *
- *  Take a set of integer x,y co-ordinates and plots them,
+ *  Take a set of x,y co-ordinates and plots them,
  *  with a combination of connecting lines and/or place markers.
  *  It is important to note that the arrays
- *  are arrays of integers, and express UNIX-plot coordinates in the
- *  current pl_space(). For most uses, SCALE(TIG) should be called first to
- *  appropriately scale the data.
+ *  are arrays of doubles, and express UNIX-plot coordinates in the
+ *  current pl_space().
+ *
+ *  tp_scale(TIG) may be called first to optionally re-scale the data.
  *
  *  The 'mark' character to be used for marking points off can be any
  *  printing character, or 001 to 005 for the special marker characters.
@@ -54,9 +73,9 @@ int		npoints;		/* numbers of points */
  */
 tp_mline( fp, x, y, npoints, mark, interval, scale )
 FILE		*fp;
-register int	*x, *y;			/* arrays of integer points */
-int		npoints;		/* numbers of points */
-int		mark;			/* marker characters */
+register double	*x, *y;			/* arrays of points */
+int		npoints;
+int		mark;			/* marker character to use */
 int		interval;		/* marker drawn every N points */
 double		scale;			/* marker scale */
 {
@@ -79,7 +98,7 @@ double		scale;			/* marker scale */
 	}
 
 	if( flag & DO_MARK )  {
-		pl_move( fp, *x, *y );
+		pd_move( fp, *x, *y );
 		tp_marker( fp, mark, *x, *y, scale );
 	}
 
@@ -87,7 +106,7 @@ double		scale;			/* marker scale */
 	counter = 1;			/* We already plotted one */
 	for( i=1; i<npoints; i++ )  {
 		if( flag & DO_LINE )
-			pl_line( fp, x[-1], y[-1], *x, *y );
+			pd_line( fp, x[-1], y[-1], *x, *y );
 
 		if( flag & DO_MARK )  {
 			if( counter >= interval )  {
@@ -99,23 +118,50 @@ double		scale;			/* marker scale */
 	}
 }
 
-
 /*
- *	FORTRAN-IV Interface Entries
+ *  This FORTRAN interface expects arrays of REALs (single precision).
  */
-
-fline( fp, x, y, npoints )
+FMLINE( fp, x, y, npoints, mark, interval, scale )
 FILE	*fp;
-int	*x, *y, *npoints;
-{
-	/* Need to offset array by 1 for fortran 1-based arrays? */
-	tp_line( fp, x, y, *npoints );
-}
-
-fmline( fp, x, y, npoints, mark, interval, scale )
-FILE	*fp;
-int	*x, *y, *npoints, *mark, *interval;
+double	*x, *y;
+int	*npoints, *mark, *interval;
 float	*scale;
 {
-	tp_mline( fp, x, y, *npoints, *mark, *interval, *scale );
+	register int flag;		/* indicates user's mode request */
+	register int i;			/* index variable */
+	register int counter;		/* interval counter */
+	int mk;
+
+	if( npoints <= 0 )
+		return;
+
+	/* Determine line drawing mode */
+	if( (mk = *mark) < 0 )  {
+		flag = DO_MARK;
+		mk = (-mk);
+	} else if( mark > 0 ) {
+		flag = DO_MARK | DO_LINE;
+	} else {
+		flag = DO_LINE;
+	}
+
+	if( flag & DO_MARK )  {
+		pd_move( fp, *x, *y );
+		tp_marker( fp, mk, *x, *y, scale );
+	}
+
+	x++, y++;
+	counter = 1;			/* We already plotted one */
+	for( i=1; i<*npoints; i++ )  {
+		if( flag & DO_LINE )
+			pd_line( fp, x[-1], y[-1], *x, *y );
+
+		if( flag & DO_MARK )  {
+			if( counter >= *interval )  {
+				tp_marker( fp, mk, *x, *y, scale );
+				counter = 0;	/* Made a mark */
+			}
+			counter++;		/* One more point done */
+		}
+	}
 }
