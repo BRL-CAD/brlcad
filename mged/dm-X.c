@@ -119,9 +119,9 @@ X_open()
 	}
 
 	(void)printf("X Display [%s]? ", envp );
-	(void)gets( line );		/* Null terminated */
+	(void)fgets( line, sizeof(line), stdin );
+	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( feof(stdin) )  quit();
-
 	if( line[0] != '\0' ) {
 		if( xsetup(line) ) {
 			return(1);		/* BAD */

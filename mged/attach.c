@@ -249,7 +249,8 @@ get_attached()
 		for( ; *dp != (struct dm *)0; dp++ )
 			(void)printf("|%s", (*dp)->dmr_name);
 		(void)printf(")[%s]? ", which_dm[0]->dmr_name);
-		(void)gets( line );		/* Null terminated */
+		(void)fgets(line, sizeof(line), stdin);	/* \n, Null terminated */
+		line[strlen(line)-1] = '\0';		/* remove newline */
 		if( feof(stdin) )  quit();
 		if( line[0] == '\0' )  {
 			dp = &which_dm[0];	/* default */
