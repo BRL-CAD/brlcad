@@ -305,7 +305,6 @@ struct seg		*seghead;
 	
 	{
 		register int i, j;
-		LOCAL struct hit temp;
 
 		for( i=0 ; i<nhits-1 ; i++ )
 		{

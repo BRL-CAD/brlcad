@@ -175,7 +175,7 @@ void
 db_update_nref( dbip )
 struct db_i    *dbip;
 {
-	register int			i, j;
+	register int			i;
 	register struct directory      *dp;
 	struct rt_db_internal		intern;
 	struct rt_comb_internal	       *comb;

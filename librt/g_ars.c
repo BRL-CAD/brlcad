@@ -851,7 +851,6 @@ CONST struct bn_tol	*tol;
 	struct vertex	**verts;
 	struct faceuse	*fu;
 	struct bu_ptbl	kill_fus;
-	struct bu_ptbl tbl;
 	int		bad_ars=0;
 
 	RT_CK_DB_INTERNAL(ip);

@@ -916,7 +916,6 @@ CONST struct rt_functab *
 rt_get_functab_by_label( label )
 CONST char *label;
 {
-	register int				i;
 	register CONST struct rt_functab	*ftp;
 
 	for( ftp = rt_functab; ftp->magic != 0; ftp++ )  {

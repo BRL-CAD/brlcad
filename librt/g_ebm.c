@@ -948,9 +948,6 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct rt_ebm_specific *ebmp =
-		(struct rt_ebm_specific *)stp->st_specific;
-
 	uvp->uv_u = hitp->hit_vpriv[X];
 	uvp->uv_v = hitp->hit_vpriv[Y];
 

@@ -280,7 +280,6 @@ CONST char	**argv;
 	struct db_tree_state	ts;
 	struct animate		*anp;
 	int	i;
-	int	at_root = 0;
 
 	BU_GETSTRUCT( anp, animate );
 	anp->magic = ANIMATE_MAGIC;
@@ -385,9 +384,7 @@ struct db_i	*dbip;
 int		argc;
 CONST char		**argv;
 {
-	struct db_tree_state	ts;
 	struct animate		*anp;
-	int	i;
 	int	at_root = 0;
 
 	if( !(anp = db_parse_1anim( dbip, argc, argv )) )

@@ -1314,17 +1314,6 @@ CONST struct bn_tol		*tol;
 	LOCAL fastf_t	f;
 	register int		i;
 	fastf_t		radius;
-	int		nsegs;
-	int		nstrips;
-	struct ell_vert_strip	*strips;
-	int		j;
-	int	faceno;
-	int	stripno;
-	int	boff;		/* base offset */
-	int	toff;		/* top offset */
-	int	blim;		/* base subscript limit */
-	int	tlim;		/* top subscrpit limit */
-	fastf_t	rel;		/* Absolutized relative tolerance */
 	struct rt_ell_internal	*eip;
 	struct vertex		*verts[8];
 	struct vertex		**vertp[4];

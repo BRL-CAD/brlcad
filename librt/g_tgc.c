@@ -1878,15 +1878,11 @@ CONST struct bn_tol	*tol;
 	struct rt_tgc_internal	*tip;
 	fastf_t			radius;		/* bounding sphere radius */
 	fastf_t			max_radius,min_radius; /* max/min of a,b,c,d */
-	fastf_t			min_tri;	/* minimum width of triangle */
 	fastf_t			h,a,b,c,d;	/* lengths of TGC vectors */
 	fastf_t			inv_length;	/* 1.0/length of a vector */
 	vect_t			unit_a,unit_b,unit_c,unit_d; /* units vectors in a,b,c,d directions */
 	fastf_t			rel,abs,norm;	/* interpreted tolerances */
 	fastf_t			alpha_tol;	/* final tolerance for ellipse parameter */
-	fastf_t			ratio;		/* L/D for narrowest triangle */
-	fastf_t			narrow;		/* width of narrowest triangle */
-	int			nsplits;	/* number of intermediate ellipse to avoid large L/D faces */
 	int			nells;		/* total number of ellipses */
 	int			nsegs;		/* number of vertices/ellipse */
 	vect_t			*A;		/* array of A vectors for ellipses */
@@ -2415,10 +2411,8 @@ CONST struct bn_tol	*tol;
 	/* Assign geometry */
 	for( i=0 ; i<nells ; i++ )
 	{
-		fastf_t h_factor;
 		int j;
 
-		h_factor = factors[i];
 		for( j=0 ; j<nsegs ; j++ )
 		{
 			point_t pt_geom;
@@ -2474,7 +2468,7 @@ CONST struct bn_tol	*tol;
 	/* Calculate vertexuse normals */
 	for( i=0 ; i<nells ; i++ )
 	{
-		int j,k,l,m;
+		int j,k;
 
 		k = i + 1;
 		if( k == nells )
@@ -2629,25 +2623,14 @@ CONST struct bn_tol		*tol;
 	vect_t				uvw;
 	struct loopuse			*lu;
 	struct edgeuse			*eu;
-	struct snurb 			*top_srf;
-	struct cnurb			*top_cnurb;
 	struct edgeuse			*top_eu;
 	struct edgeuse			*bot_eu;
 
-	struct snurb 			*bot_srf;
-	struct cnurb			*bot_cnurb;
-	
-	struct snurb			* cyl_srf;
-
-	int				i;
 	mat_t 				mat;
 	mat_t 				imat, omat, top_mat, bot_mat;
-	int 				coords;
 	vect_t 				anorm;
 	vect_t 				bnorm;
 	vect_t 				cnorm;
-	fastf_t 			* mptr;
-	fastf_t 			Height;
 
 
 	/* Get the internal representation of the tgc */
@@ -2824,7 +2807,6 @@ int	flip;
 	struct edgeuse		* eu;
 	struct edge_g_cnurb	* eg;
 	fastf_t	*mptr;
-	int coords;
 	int i;
 	vect_t	vect;
 	point_t	point;
@@ -2889,7 +2871,6 @@ int	flip;
 
 	/* multiple the matrix to get orientation and scaling that we want */
 	mptr = fg->ctl_points;
-	coords = RT_NURB_EXTRACT_COORDS(fg->pt_type);
 
 	i = fg->s_size[0] * fg->s_size[1];
 
