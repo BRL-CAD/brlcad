@@ -101,6 +101,9 @@ set helplib_data(dgo_open)		{{name wdb_obj} {open/create a new drawable geometry
 set helplib_data(dgo_headSolid)		{{} {return pointer to solid list}}
 set helplib_data(dgo_illum)		{{[-n] obj} {illuminate/highlight obj}}
 set helplib_data(dgo_draw)		{{args} {prepare object(s) for display}}
+set helplib_data(dgo_E)			{{[-s] <objects>} {evaluated edit of objects. Option 's' provides a slower,
+        but better fidelity evaluation}}
+set helplib_data(dgo_ev)		{{[-dfnqstuvwT] [-P #] <objects>}	{evaluate objects via NMG tessellation}}
 set helplib_data(dgo_erase)		{{object(s)} {erase object(s) from display}}
 set helplib_data(dgo_zap)		{{} {erase all objects from the display}}
 set helplib_data(dgo_clear)		{{} {erase all objects from the display}}
@@ -109,6 +112,7 @@ set helplib_data(dgo_rtcheck)		{{view_obj [args]} {}}
 set helplib_data(dgo_assoc)		{{[wdb_obj]} {set/get the associated database object}}
 set helplib_data(dgo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
 set helplib_data(dgo_report)		{{[lvl]} {print solid table & vector list}}
+set helplib_data(dgo_who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
 set helplib_data(cho_close)		{{} {close/destroy this command history object}}
 set helplib_data(cho_open)		{{name} {open/create a new command history object}}
 
