@@ -260,13 +260,13 @@ set -S2 "/bin/sh"
 #	define	IRIX	5
 #	define	LGT_CONFIG	GFLAG
 
-# if 1
+# if 0
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED -lgl''SHARED
 # else
 /*	Carl's test version */
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24 if_ogl
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lXm_s -lXt_s -lX11_s /usr/lib/libGLw.a /usr/lib/libGL.so -lgl''SHARED
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lXt_s -lXm_s  -lX11_s /usr/lib/libGLw.a  /usr/lib/libGL.so -lgl''SHARED
 # endif
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DIF_5D -DBSD=43 -DIF_X -I''XINCDIR
 #	define	MGED_OBJS	dm-4d dm-X
