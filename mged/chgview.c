@@ -3128,3 +3128,48 @@ char	**argv;
 
 	return TCL_OK;
 }
+
+int
+f_lookat(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	point_t look;
+	point_t eye;
+	point_t tmp;
+	point_t new_center;
+	vect_t dir;
+	fastf_t new_az, new_el;
+	int status;
+	struct bu_vls vls;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+		return TCL_ERROR;
+
+	VSET( look, atof(argv[1]),
+		atof(argv[2]),
+		atof(argv[3]) );
+
+	VSCALE( look, look, local2base );
+
+	VSET( tmp, 0, 0, 1 );
+	MAT4X3PNT(eye, view2model, tmp);
+
+	VSUB2( dir, eye, look );
+	VUNITIZE( dir );
+	mat_ae_vec( &new_az, &new_el, dir );
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "ae %-15.10f %-15.10f %-15.10f", new_az, new_el, curr_dm_list->s_info->twist);
+	status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	VJOIN1( new_center, eye, -Viewscale, dir );
+	MAT_DELTAS_VEC_NEG( toViewcenter, new_center );
+
+	new_mats();
+
+	return( status );
+}
