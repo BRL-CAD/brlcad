@@ -30,8 +30,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "wdb.h"
-#include "raytrace.h"
 #include "rtlist.h"
+#include "raytrace.h"
+#include "externs.h"
 
 #define RT_PARTICLE_TYPE_SPHERE		1
 #define RT_PARTICLE_TYPE_CYLINDER	2
@@ -56,7 +57,6 @@ mat_t	id_mat = {
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0};	/* identity matrix for pipes */
 
-extern void	exit();
 
 char *name();
 char *strchop();
