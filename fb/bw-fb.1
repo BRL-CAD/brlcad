@@ -15,13 +15,13 @@ bw\(hyfb \- display a black and white bw image on a framebuffer
 .RB [ \-y\  file_yoff]
 .RB [ \-X\  scr_xoff]
 .RB [ \-Y\  src_yoff]
-\<\ file.bw
+[infile.fb]
 .SH DESCRIPTION
 .I Bw-fb
 reads a
 .IR bw (5)
 format file
-from standard input, and displays the
+from standard input if an input file is not given, and displays the
 image on the currently selected framebuffer.
 The environment variable 
 .I FB_FILE
