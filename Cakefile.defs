@@ -493,12 +493,12 @@ set -S2 "/bin/sh"
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-lm -lmalloc -lc
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #	endif
 #	define	TCL_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 #	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
@@ -1841,6 +1841,12 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #if !NFS
 /*	Local style, binaries in source directories */
+#	define	LIBZ_DIR	../libz
+#	define	LIBZ		-L''LIBZ_DIR -lz
+#	define	LIBZ_DEP	[[LIBVERS ../libz/libz.ARCH_SUF]]
+#	define	LIBPNG_DIR	../libpng
+#	define	LIBPNG		-L''LIBPNG_DIR -lpng
+#	define	LIBPNG_DEP	[[LIBVERS ../libpng/libpng.ARCH_SUF]]
 #	define	LIBFB_DIR	../libfb
 #	define	LIBFB		-L''LIBFB_DIR -lfb
 #	define	LIBFB_DEP	[[LIBVERS ../libfb/libfb.ARCH_SUF]]
@@ -1917,6 +1923,12 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #else
 /*	NFS style, append machine name */
+#	define	LIBZ_DIR	../.libz.MTYPE
+#	define	LIBZ		-L''LIBZ_DIR -lz
+#	define	LIBZ_DEP	[[LIBVERS ../.libz.MTYPE/libz.ARCH_SUF]]
+#	define	LIBPNG_DIR	../.libpng.MTYPE
+#	define	LIBPNG		-L''LIBPNG_DIR -lpng
+#	define	LIBPNG_DEP	[[LIBVERS ../.libpng.MTYPE/libpng.ARCH_SUF]]
 #	define	LIBFB_DIR	../.libfb.MTYPE
 #	define	LIBFB		-L''LIBFB_DIR -lfb
 #	define	LIBFB_DEP	[[LIBVERS ../.libfb.MTYPE/libfb.ARCH_SUF]]
