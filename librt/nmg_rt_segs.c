@@ -1133,7 +1133,7 @@ struct ray_data	*rd;
 
 	last_miss = 0;
 
-	check_hitstate(&rd->rd_hit);
+	check_hitstate((struct hitmiss *)&rd->rd_hit);
 
 	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 		rt_log("----------morphed nmg/ray hit list---------\n");
