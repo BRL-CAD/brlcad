@@ -56,23 +56,25 @@ int y_top;
 	register int y = y_top;
 
 	menu_top = y - MENU_DY / 2;
+	dmp->dmr_2d_line(MENUXLIM, menu_top, XMIN, menu_top, 0);
 
 	for( m = menu_array; m < &menu_array[NMENU]; m++ )  {
 		if( *m == MENU_NULL )  continue;
 		for( mptr = *m;
 		     mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
 		     mptr++, y += MENU_DY )  {
-			dmp->dmr_puts( mptr->menu_string, MENUX, y, 0, DM_YELLOW );
-			dmp->dmr_2d_line(XLIM, y+(MENU_DY/2), 2047, y+(MENU_DY/2), 0);
+			dmp->dmr_puts( mptr->menu_string, MENUX, y, 0,
+				mptr == *m ? DM_RED : DM_YELLOW );
+			dmp->dmr_2d_line(MENUXLIM, y+(MENU_DY/2), XMIN, y+(MENU_DY/2), 0);
 		}
 	}
 	if( y == y_top )  return;	/* no active menus */
 
-	dmp->dmr_2d_line( XLIM, menu_top-1, XLIM, y-(MENU_DY/2), 0 );
+	dmp->dmr_2d_line( MENUXLIM, menu_top-1, MENUXLIM, y-(MENU_DY/2), 0 );
 
 	/* prefix item selected with "==>" to let user know it is selected */
 	if( menuflag ) {
-		dmp->dmr_puts("==>", MENUX-114, menu_current, 0, DM_WHITE);
+		dmp->dmr_puts("==>", XMIN, menu_current, 0, DM_WHITE);
 	}
 }
 

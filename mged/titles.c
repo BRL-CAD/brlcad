@@ -77,29 +77,21 @@ dotitles()
 	auto char linebuf[512];
 
 	/* Enclose window in decorative box.  Mostly for alignment. */
-	dmp->dmr_2d_line( -2048, -2048,  2047, -2048, 0 );
-	dmp->dmr_2d_line(  2047, -2048,  2047,  2047, 0 );
-	dmp->dmr_2d_line(  2047,  2047, -2048,  2047, 0 );
-	dmp->dmr_2d_line( -2048,  2047, -2048, -2048, 0 );
+	dmp->dmr_2d_line( XMIN, YMIN, XMAX, YMIN, 0 );
+	dmp->dmr_2d_line( XMAX, YMIN, XMAX, YMAX, 0 );
+	dmp->dmr_2d_line( XMAX, YMAX, XMIN, YMAX, 0 );
+	dmp->dmr_2d_line( XMIN, YMAX, XMIN, YMIN, 0 );
 
 	/* Line across the bottom, above two bottom status lines */
-	dmp->dmr_2d_line( -2047, TITLE_YBASE-TEXT1_DY, 2047, TITLE_YBASE-TEXT1_DY, 0 );
+	dmp->dmr_2d_line( XMIN, TITLE_YBASE-TEXT1_DY, XMAX, TITLE_YBASE-TEXT1_DY, 0 );
 
 	/* Display state and local unit in upper right corner, boxed */
 	dmp->dmr_puts(state_str[state], MENUX, MENUY - MENU_DY, 1, DM_WHITE );
-	dmp->dmr_puts( local_unit[localunit], MENUX, MENUY - (2*MENU_DY), 1, DM_YELLOW);
 #define YPOS	(MENUY - MENU_DY - 75 )
-	dmp->dmr_2d_line(XLIM, YPOS, 2047, YPOS, 0);
-	dmp->dmr_2d_line(XLIM, YPOS, XLIM, 2047, 0);
+	dmp->dmr_2d_line(MENUXLIM, YPOS, XMIN, YPOS, 0); /* side-side */
+	dmp->dmr_2d_line(MENUXLIM, YPOS, MENUXLIM, YMAX, 0);
 #undef YPOS
 
-#ifndef never
-	/* QUESTIONABLE use of machine */
-	/* print region default code numbers */
-	(void)sprintf( &linebuf[0], " Next Region:   item=%d  air=%d  mat=%d  los=%d",
-			item_default,air_default,mat_default,los_default);
-	dmp->dmr_puts(&linebuf[0], TITLE_XBASE, TITLE_YBASE - 3*TEXT1_DY/2, 1, DM_YELLOW);
-#endif
 	/*
 	 * Print information about object illuminated
 	 */
@@ -216,13 +208,13 @@ dotitles()
 	if( es_edflag >= 0 ) {
 		(void)sprintf(&linebuf[0], "** SOLID -- %s:", es_name);
 		dmp->dmr_puts(	&linebuf[0],
-				TITLE_XBASE+15,
+				SOLID_XBASE,
 				SOLID_YBASE,
 				1,
 				DM_YELLOW);
 		for( i=0; i<es_nlines; i++ )  {
 			dmp->dmr_puts( &es_display[i*ES_LINELEN],
-				TITLE_XBASE,
+				SOLID_XBASE,
 				SOLID_YBASE+TEXT1_DY+(TEXT0_DY*i),
 				0,
 				DM_YELLOW );
@@ -240,7 +232,7 @@ dotitles()
 			(void)sprintf(cp,":");
 
 			dmp->dmr_puts(	&linebuf[0],
-					TITLE_XBASE+15,
+					SOLID_XBASE,
 					SOLID_YBASE+TEXT1_DY+(TEXT0_DY*(es_nlines+2)),
 					1,
 					DM_RED);
@@ -258,7 +250,7 @@ dotitles()
 
 			for(i=0; i<es_nlines; i++) {
 				dmp->dmr_puts(	&es_display[i*ES_LINELEN],
-						TITLE_XBASE,
+						SOLID_XBASE,
 						yloc+(TEXT0_DY*i),
 						0,
 						DM_RED );
@@ -281,7 +273,7 @@ dotitles()
 		(void)sprintf(cp,":");
 
 		dmp->dmr_puts(	&linebuf[0],
-				TITLE_XBASE+15,
+				SOLID_XBASE,
 				SOLID_YBASE,
 				1,
 				DM_RED);
@@ -301,7 +293,7 @@ dotitles()
 
 			for(i=0; i<es_nlines; i++) {
 				dmp->dmr_puts(	&es_display[i*ES_LINELEN],
-						TITLE_XBASE,
+						SOLID_XBASE,
 						SOLID_YBASE+TEXT1_DY+(TEXT0_DY*i),
 						0,
 						DM_RED );
@@ -316,7 +308,7 @@ dotitles()
 					"CENTER : %.4f %.4f %.4f",
 					work[0]*base2local, work[1]*base2local, work[2]*base2local );
 			dmp->dmr_puts( &linebuf[0],
-					TITLE_XBASE+15,
+					SOLID_XBASE,
 					SOLID_YBASE+TEXT1_DY+TEXT0_DY,
 					1,
 					DM_RED );
@@ -328,11 +320,12 @@ dotitles()
 	 * General status information on the next to last line
 	 */
 	(void)sprintf( &linebuf[0],
-		" cent=(%.3f, %.3f, %.3f), sz=%.3f, ",
+		" cent=(%.3f, %.3f, %.3f), sz=%.3f %s, ",
 		-toViewcenter[MDX]*base2local,
 		-toViewcenter[MDY]*base2local,
 		-toViewcenter[MDZ]*base2local,
-		VIEWSIZE*base2local );
+		VIEWSIZE*base2local,
+		local_unit[localunit] );
 
 	cp = &linebuf[0];
 	FINDNULL(cp);

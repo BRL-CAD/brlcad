@@ -139,10 +139,10 @@ char **argv;
 	no_memory = 0;		/* memory left */
 	es_edflag = -1;		/* no solid editing just now */
 
-	windowbounds[0] = 2047;		/* XHR */
-	windowbounds[1] = -2048;	/* XLR */
-	windowbounds[2] = 2047;		/* YHR */
-	windowbounds[3] = -2048;	/* YLR */
+	windowbounds[0] = XMAX;		/* XHR */
+	windowbounds[1] = XMIN;		/* XLR */
+	windowbounds[2] = YMAX;		/* YHR */
+	windowbounds[3] = YMIN;		/* YLR */
 	windowbounds[4] = 2047;		/* ZHR */
 	windowbounds[5] = -2048;	/* ZLR */
 	dmp->dmr_window(windowbounds);
@@ -257,9 +257,9 @@ char **argv;
 		 * Set up window so that drawing does not run over into the
 		 * status line area, and menu area (if present).
 		 */
-		windowbounds[0] = 2047;		/* XHR */
+		windowbounds[1] = XMIN;		/* XLR */
 		if( illump != SOLID_NULL )
-			windowbounds[0] = XLIM;
+			windowbounds[1] = MENUXLIM;
 		windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
 		dmp->dmr_window(windowbounds);	/* hack */
 

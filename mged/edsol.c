@@ -46,7 +46,7 @@ static void	arb_ed(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
 void pscale();
 
 struct menu_item  arb_menu[] = {
-	{ "GENERAL ARB MENU", (void (*)())NULL, 0 },
+	{ "ARB MENU", (void (*)())NULL, 0 },
 	{ "move edge 12", arb_ed, 12 },
 	{ "move edge 23", arb_ed, 23 },
 	{ "move edge 34", arb_ed, 43 },
@@ -83,7 +83,7 @@ struct menu_item  tor_menu[] = {
 };
 
 struct menu_item  ell_menu[] = {
-	{ "GENERAL ELLIPSOID MENU", (void (*)())NULL, 0 },
+	{ "ELLIPSOID MENU", (void (*)())NULL, 0 },
 	{ "scale A", ell_ed, MENUA },
 	{ "scale B", ell_ed, MENUB },
 	{ "scale C", ell_ed, MENUC },
@@ -243,6 +243,7 @@ init_sedit()
 	dmp->dmr_light( LIGHT_OFF, BE_S_ILLUMINATE );
 
 	(void)chg_state( ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
+	chg_l2menu(ST_S_EDIT);
 	es_edflag = IDLE;
 	sedraw = 1;
 
@@ -256,7 +257,7 @@ sedit_menu()  {
 	menuflag = 0;		/* No menu item selected yet */
 
 	menu_array[MENU_L1] = MENU_NULL;
-	menu_array[MENU_L2] = MENU_NULL;
+	chg_l2menu(ST_S_EDIT);
 
 	switch( es_gentype ) {
 

@@ -87,7 +87,7 @@ usepen()
 	 * If menu is active, and pen press is in menu area,
 	 * divert this pen press for menu purposes.
 	 */
-	if( dm_values.dv_xpen > XLIM &&
+	if( dm_values.dv_xpen < MENUXLIM &&
 		dm_values.dv_penpress
 	)  {
 		if( menu_select( dm_values.dv_ypen ) < 0 )
@@ -249,6 +249,7 @@ usepen()
 				sp->s_iflag = UP;
 		}
 		(void)chg_state( ST_O_PATH, ST_O_EDIT, "Pen press" );
+		chg_l2menu(ST_O_EDIT);
 
 		/* begin object editing - initialize */
 		init_objedit();
