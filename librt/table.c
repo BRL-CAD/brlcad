@@ -198,7 +198,7 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
 		rt_nul_describe,
 
-	"ID_STRINGSOL",	0,
+	"ID_NMG",	0,
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,
@@ -361,7 +361,7 @@ register union record *rec;
 	case ID_BSOLID:
 		id = ID_BSPLINE;
 		break;
-	case ID_STRSOL:
+	case DBID_STRSOL:
 		/* XXX This really needs to be some kind of table */
 		if( strncmp( rec->ss.ss_str, "ebm", 3 ) == 0 )  {
 			id = ID_EBM;
