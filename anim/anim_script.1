@@ -9,6 +9,7 @@ anim_script - make an animation script for one object
 .B [-a|b # # #] 
 .B [-c|d # # #] 
 .B [-f #]
+.B [-m cmd]
 .B [objectname] 
 .B < in.table 
 .B > out.script
@@ -206,6 +207,26 @@ to the right of the virtual camera. As translation and rotation
 information are read in from in.table, they are applied to the virtual
 tripod, with the virtual camera rigidly attached. See below for examples
 of how this might be used.
+.TP
+.B -m cmd
+Specify a matrix command to use in, object animation. The default value
+is "lmul", which means that matrices in the output script are 
+multiplied onto the 
+left of the matrix between the object being animated and its parent.
+The matrix residing between the object and its parent is referred to as
+the current arc. The possible matrix commands are the following:
+.nf
+
+     lmul   - left-multiply the matrix onto the current arc
+     rmul   - right-multiply the matrix onto the current arc
+     rarc   - replace the current arc with the matrix
+     rstack - replace the stack of ancestor matrices with the matrix
+     rboth  - replace the current arc with the matrix and replace the 
+                 stack of ancestor matrices with the identity matrix.
+
+.fi
+This option is intended primarily to give expert users additional
+flexibility, and shouldn't be needed by most animators. 
 .SH EXAMPLES
 To animate a truck which is modeled with the front facing the positive
 x-direction, the position of the center of the truck and its orientation at 
