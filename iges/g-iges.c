@@ -22,10 +22,8 @@
  *		     zero otherwise.
  */
 
-#ifndef lint
 static const char RCSid[] = "$Header$";
 static const char RCSrev[] = "$Revision$";
-#endif
 
 #include "conf.h"
 
