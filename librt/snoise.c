@@ -1259,7 +1259,7 @@ static unsigned short xtab[256] =
 static int
 Crc16(buf, count)
 register char *buf;
-register int  count;
+register size_t  count;
 {
 	register unsigned int crc = 0;
 
@@ -1490,8 +1490,16 @@ point_t result;
  *
  *	Spectral Noise functions
  *
+ *************************************************************
+ *
+ *	The Spectral Noise functions cache the values of the
+ *	term:
+ *		    (-h_val)
+ *		freq
+ *
+ *	Which on some systems is rather expensive to compute.
+ *
  *************************************************************/
-
 struct fbm_spec {
 	long	magic;
 	double	octaves;
@@ -1505,7 +1513,6 @@ struct fbm_spec {
 static struct fbm_spec *etbl = (struct fbm_spec *)NULL;
 static int etbl_next = 0;
 static int etbl_size = 0;
-
 
 #define PSCALE(_p, _s) _p[0] *= _s; _p[1] *= _s; _p[2] *= _s
 #define PCOPY(_d, _s) _d[0] = _s[0]; _d[1] = _s[1]; _d[2] = _s[2]
@@ -1542,7 +1549,7 @@ double h_val, lacunarity, octaves;
 	}
 
 	/* set up the next available table */
-	ep = &etbl[etbl_next++];
+	ep = &etbl[etbl_next];
 	ep->magic = MAGIC_fbm_spec_wgt;	ep->octaves = octaves;
 	ep->h_val = h_val;		ep->lacunarity = lacunarity;
 	spec_wgts = ep->spec_wgts = 
@@ -1556,6 +1563,7 @@ double h_val, lacunarity, octaves;
 		frequency *= lacunarity;
 	}
 
+	etbl_next++; /* saved for last in case we're running multi-threaded */
 	return ep;
 }
 
@@ -1565,7 +1573,6 @@ double h_val, lacunarity, octaves;
  * possible future use
  */
 
-#define FIND_SPEC_WGT(_ep, _h, _l, _o) _ep = find_spec_wgt(_h, _l, _o)
 struct fbm_spec		*
 find_spec_wgt(h, l, o)
 double			h;
@@ -1575,8 +1582,23 @@ double			o;
 	struct fbm_spec	*ep;
 	int i;
 
+
+	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
+		if (ep->magic != MAGIC_fbm_spec_wgt) rt_bomb("find_spec_wgt");
+		else if (ep->lacunarity == l && ep->h_val == h && 
+			ep->octaves >= o )
+				return ep;
+	}
+
+	/* we didn't find the table we wanted so we've got to semaphore on
+	 * the list to wait our turn to add what we want to the table.
+	 */
+
 	RES_ACQUIRE(&rt_g.res_model);
 
+	/* We search the list one more time in case the last process to
+	 * hold the semaphore just created the table we were about to add
+	 */
 	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
 		if (ep->magic != MAGIC_fbm_spec_wgt) rt_bomb("find_spec_wgt");
 		else if (ep->lacunarity == l && ep->h_val == h && 
@@ -1621,7 +1643,7 @@ double octaves;
 	 * possible future use
 	 */
 
-	FIND_SPEC_WGT(ep, h_val, lacunarity, octaves);
+	ep = find_spec_wgt(h_val, lacunarity, octaves);
 
 	/* now we're ready to compute the fBm value */
 
@@ -1688,7 +1710,8 @@ double octaves;
 
 #define CACHE_SPECTRAL_WGTS 1
 #ifdef CACHE_SPECTRAL_WGTS
-	FIND_SPEC_WGT(ep, h_val, lacunarity, octaves);
+
+	ep = find_spec_wgt(h_val, lacunarity, octaves);
 
 	/* now we're ready to compute the fBm value */
 
