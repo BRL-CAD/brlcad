@@ -1,7 +1,8 @@
-#!/bin/sh
+1#!/bin/sh
 # A Shell script to extract the 4 benchmark statistics, and build an
 # entry for the tables in doc/benchmark.doc.
 #  Mike Muuss & Susan Muuss, 11-Sept-88.
+#  @(#)$Header$ (BRL)
 
 if test x$3 = x
 then
@@ -36,7 +37,10 @@ do
 	RATIO_LIST="${RATIO_LIST}$RATIO	"
 done
 
+MEAN_ABS=`echo 2k $CURVALS +++ 4/ p | dc`
+MEAN_REL=`echo 2k $RATIO_LIST +++ 4/ p | dc`
+
 # Note:  Both RATIO_LIST and CURVALS have an extra trailing tab.
-# The question mark is for the harmoic mean field
-echo "Abs	${HOST}	${CURVALS}?	$NOTE1"
-echo "*vgr	${HOST}	${RATIO_LIST}?	$NOTE2"
+# The question mark is for the mean field
+echo "Abs	${HOST}	${CURVALS}${MEAN_ABS}	$NOTE1"
+echo "*vgr	${HOST}	${RATIO_LIST}${MEAN_REL}	$NOTE2"
