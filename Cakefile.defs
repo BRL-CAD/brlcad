@@ -503,12 +503,20 @@ set -S2 "/bin/sh"
 #		define	OPTIMIZER	-g
 #	endif
 #	define	CC_DEFS	-PIC
-/*	Shared library support */
-#	define	ARCH_SUF	so
-#	define	LIBVERS		../sharedlibvers.sh
-#	define	BUILD_LIBRARY	ld -Bdynamic -o
-#	define	RANLIB	true
-#	define	STANDARD_LIBES	-L''LIBDIR -lm
+#	if 0
+/*		Shared library support */
+#		define	ARCH_SUF	so
+#		define	LIBVERS		../sharedlibvers.sh
+#		define	BUILD_LIBRARY	ld -Bdynamic -o
+#		define	RANLIB	true
+#		define	STANDARD_LIBES	-L''LIBDIR -lm
+#	else
+/*		Static libraries */
+#		define	ARCH_SUF	a
+#		define	LIBVERS		../newvers.sh
+#		define	STANDARD_LIBES	-lm
+#		define	RANLIB	ranlib
+#	endif
 #	define	LIBRT_TIMER	timer42
 
 #	if 0	/* PRODUCTION=1 */
