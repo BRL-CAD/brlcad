@@ -379,6 +379,11 @@ matp_t old_xlate;
 	/*
 	 *  Process a Combination (directory) node
 	 */
+	if( rec.c.c_length <= 0 )  {
+		rtlog(  "Warning: combination with zero members \"%.16s\".\n",
+			rec.c.c_name );
+		return(TREE_NULL);
+	}
 	regionp = argregion;
 
 	/* Handle combinations which are the top of a "region" */
