@@ -298,6 +298,7 @@ register struct partition *PartHeadp;
 	struct	cell	*posp;			/* stores current cell position */
 	fastf_t			dist;   	/* ray distance */
 	int			region_id;	/* solid region's id */
+	register struct hit	*hitp;		/* which hit */
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
@@ -310,6 +311,16 @@ register struct partition *PartHeadp;
 
 	posp = &(topp[ap->a_x + 1]);
 
+	/* Ensure that inhit is in front of emanation plane */
+	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if( pp->pt_inhit->hit_dist >= 0.0 )  break;
+	if( pp == PartHeadp )  {
+		rt_log("rthide/rayhit:  no hit out front? x%d y%d lvl%d\n",
+			ap->a_x, ap->a_y, ap->a_level);
+		return(0);
+	}
+	hitp = pp->pt_inhit;
+
 	/* Calculate the hit normal and the hit distance.  This is done
 	 * by giving RT_HIT_NORM() the address of the hit partition so it
 	 * can fill this in.  From there the hit point and the hit normal
@@ -317,10 +328,10 @@ register struct partition *PartHeadp;
 	 *
 	 *  Note:  In addition to giving the surface normal, it also
 	 *  computes:
-	 *  VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
-	 *	pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
+	 *  VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
+	 *	hitp->hit_dist, ap->a_ray.r_dir );
 	 */
-	RT_HIT_NORM(pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray));
+	RT_HIT_NORM(hitp, pp->pt_inseg->seg_stp, &(ap->a_ray));
 
 
 	/* Now store the distance and the region_id in the appropriate
@@ -348,9 +359,9 @@ register struct partition *PartHeadp;
 	 */
 	if(posp->c_id == ID_BACKGROUND)
 		posp->c_id = 1;
-	posp->c_dist = pp->pt_inhit->hit_dist;
-	VMOVE(posp->c_hit, pp->pt_inhit->hit_point);
-	VMOVE(posp->c_normal, pp->pt_inhit->hit_normal);
+	posp->c_dist = hitp->hit_dist;
+	VMOVE(posp->c_hit, hitp->hit_point);
+	VMOVE(posp->c_normal, hitp->hit_normal);
 	VMOVE(posp->c_rdir, ap->a_ray.r_dir);
 	return(0);
 }
