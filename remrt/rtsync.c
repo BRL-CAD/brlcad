@@ -875,7 +875,7 @@ char	*argv[];
 	if( Tcl_EvalFile( interp, "/m/cad/remrt/rtsync.tcl" ) != TCL_OK )  {
 		bu_log("%s\n",
 			Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
-		bu_log("\n*** Startup Script Aborted ***\n\n");
+		bu_log("\n*** rtsync.tcl Startup Script Aborted ***\n\n");
 	}
 
 	/* Accept commands on stdin */
