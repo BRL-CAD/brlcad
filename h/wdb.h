@@ -80,11 +80,12 @@ extern "C" {
 struct wmember  {
 	struct bu_list	l;
 	int		wm_op;		/* Boolean operation */
-	mat_t		wm_mat;
-	char		wm_name[16+3];	/* NAMESIZE */
+	mat_t		wm_mat;		/* XXX Should be matp_t !!! */
+	char		wm_name[32+3];	/* XXX Should be char* bu_strdup()ed */
 };
 #define WMEMBER_NULL	((struct wmember *)0)
 #define WMEMBER_MAGIC	0x43128912
+#define WDB_CK_WMEMBER(_p)	BU_CKMAG(_p, WMEMBER_MAGIC, "wmember" );
 
 /*
  *  Definitions for pipe (wire) segments
