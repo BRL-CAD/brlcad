@@ -21,51 +21,11 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "fb.h"
-
-#if defined(vax) || defined(pdp11)
-#	define	LITTLEENDIAN	1
-#else
-#	define BIGENDIAN	1
-#endif
-
-#if defined(BIGENDIAN)
-#define SWAB(shrt)	(shrt=(((shrt)>>8) & 0xff) | (((shrt)<<8) & 0xff00))
-#define SWABV(shrt)	((((shrt)>>8) & 0xff) | (((shrt)<<8) & 0xff00))
-#else
-#define	SWAB(shrt)
-#define SWABV(shrt)	(shrt)
-#endif
-
-/* The char fields in struct dispatch are signed.  Extend sign */
-#define	SXT(c)		((c)|((c&0x80)?(~0xFF):0))
-
-struct header {
-	short		magic;
-	unsigned short	size;
-	short		maxx;
-	short		maxy;
-	short		xtend;
-}; 
-struct dispatch
-	{
-	unsigned short	addr;
-	short		nbytes;
-	char		up, down, left, right;
-	short		width;
-	};
+#include "vfont-if.h"
 
 #define FONTBUFSZ 200
-#define FONTDIR		"/usr/lib/vfont"	/* Font directory.	*/
-#define FONTNAME	"nonie.r.12"		/* Default font name.	*/
-#define FONTNAMESZ	128
 
-/* Variables controlling the font itself.				*/
-extern FILE *ffdes;		/* Fontfile file descriptor.		*/
-extern int offset;		/* Offset to data in the file.		*/
-extern struct header hdr;	/* Header for font file.		*/
-extern struct dispatch dir[256];/* Directory for character font.	*/
-extern int width, height;	/* Width and height of current char.	*/
-
+extern char	*malloc();
 extern int	getopt();
 extern char	*optarg;
 extern int	optind;
@@ -77,33 +37,30 @@ static int scanbytes;			/* # of bytes of scanline */
 static char	*framebuffer = NULL;
 static char	*font1 = NULL;
 
-FBIO *fbp;
+FBIO		*fbp;
 
 static char usage[] = "\
 Usage: fblabel [-h -c ] [-F framebuffer]\n\
 	[-f fontstring] [-r red] [-g green] [-b blue] xpos ypos textstring\n";
 
 /* Variables controlling the font itself */
-FILE		*ffdes;		/* File pointer for current font.	*/
-int		offset;		/* Current offset to character data.	*/
-struct header	hdr;		/* Header for font file.		*/
-struct dispatch	dir[256];	/* Directory for character font.	*/
-int		width = 0,	/* Size of current character.		*/
-height = 0;
 
-static int		filterbuf[FONTBUFSZ][FONTBUFSZ];
+int		width = 0;	/* Size of current character.		*/
+int		height = 0;
+
+static int	filterbuf[FONTBUFSZ][FONTBUFSZ];
 
 static int	file_width = 512;	/* default input width */
 static int	file_height = 512;	/* default input height */
-static int clear = 0;
+static int	clear = 0;
 
-static RGBpixel pixcolor;
-static int xpos;
-static int ypos;
-char * textstring;
+static RGBpixel	pixcolor;
+static int	xpos;
+static int	ypos;
+static char	*textstring;
 static int	debug;
 
-void	do_char(), do_line(), squash(), fill_buf(), clear_buf();
+void	do_char(), do_line(), squash(), fill_buf();
 
 get_args( argc, argv )
 register char **argv;
@@ -166,6 +123,7 @@ main(argc, argv)
 int argc;
 char **argv;
 {
+	struct	vfont	*vfp;
 
 	if ( !get_args( argc, argv ) ) {
 		fputs( usage, stderr);
@@ -180,38 +138,39 @@ char **argv;
 		fb_wmap( fbp, COLORMAP_NULL );
 	}
 
-	if( get_font(font1) == 0 )  {
-		fprintf(stderr, "fblabel:  Can't get font\n");
+	if( (vfp = vfont_get(font1)) == VFONT_NULL )  {
+		fprintf(stderr, "fblabel:  Can't get font %s\n", font1);
 		exit(1);
 	}
 
-	do_line( textstring);
+	do_line( vfp, textstring );
 
 	fb_close( fbp );
 	exit(0);
 }
 
 void
-do_line( line )
-register char	*line;
+do_line( vfp, line )
+register struct vfont	*vfp;
+register char		*line;
 {
 	register int    currx;
 	register int    char_count, char_id;
 	register int	len = strlen( line );
-	if( ffdes == NULL )
-	{
-		fprintf(stderr,
-		     "ERROR: do_line() called before get_Font().\n" );
-		return;
-	}
+
+	if( vfp == VFONT_NULL )  return;
+
 	currx = xpos;
 
 	for( char_count = 0; char_count < len; char_count++ )  {
+		register struct vfont_dispatch	*vdp;
+
 		char_id = (int) line[char_count] & 0377;
 
 		/* Obtain the dimensions for the character */
-		width = SXT(dir[char_id].right) + SXT(dir[char_id].left);
-		height = SXT(dir[char_id].up) + SXT(dir[char_id].down);
+		vdp = &vfp->vf_dispatch[char_id];
+		width = vdp->vd_left + vdp->vd_right;
+		height = vdp->vd_up + vdp->vd_down;
 		if(debug) fprintf(stderr,"%c w=%2d h=%2d, currx=%d\n", char_id, width, height, currx);
 
 		/*
@@ -220,11 +179,12 @@ register char	*line;
 		 */
 	 	if( width <= 1 )  {
 	 		char_id = 'n';	/* 1-en space */
-			width = SXT(dir[char_id].right) + SXT(dir[char_id].left);
+			vdp = &vfp->vf_dispatch[char_id];
+			width = vdp->vd_left + vdp->vd_right;
 	 		if( width <= 1 )  {
 		 		char_id = 'N';	/* 1-en space */
-				width = SXT(dir[char_id].right) +
-					SXT(dir[char_id].left);
+				vdp = &vfp->vf_dispatch[char_id];
+				width = vdp->vd_left + vdp->vd_right;
 	 			if( width <= 1 )
 	 				width = 16;	/* punt */
 	 		}
@@ -232,69 +192,61 @@ register char	*line;
 	 		continue;
 	 	}
 
-		/* locate the bitmap for the character in the file */
-		if( fseek( ffdes, (long)(SWABV(dir[char_id].addr)+offset), 0 )
-		     == EOF
-		     )
-		{
-			 fprintf(stderr,  "fseek() to %ld failed.\n",
-			 (long)(SWABV(dir[char_id].addr) + offset)
-			     );
-			 return;
-		}
-
 		if( currx + width > fb_getwidth(fbp) - 1 )  {
 			fprintf(stderr,"fblabel:  Ran off screen\n");
 			break;
 		}
 
-		do_char( char_id, currx, ypos, SXT(dir[char_id].down)%2 );
-		currx += SWABV(dir[char_id].width) + 2;
+		do_char( vfp, vdp, currx, ypos );
+		currx += vdp->vd_width + 2;
 	 }
-	 return;
 }
 
 void
-do_char( c, x, y, odd )
-int c;
-int x, y, odd;
+do_char( vfp, vdp, x, y )
+struct vfont	*vfp;
+struct vfont_dispatch	*vdp;
+int x, y;
 {	
-	 register int    i, j;
-	 int		base;
-	 int     	totwid = width;
-	 int     	up, down;
-	 static float	resbuf[FONTBUFSZ];
-	 static RGBpixel	fbline[FONTBUFSZ];
+	register int    i, j;
+	int		base;
+	int     	totwid = width;
+	int		ln;
+	static float	resbuf[FONTBUFSZ];
+	static RGBpixel	fbline[FONTBUFSZ];
+	int		bytes_wide;	/* # bytes/row in bitmap */
+
+	bytes_wide = (width+7)>>3;
 
 	 /* Read in the character bit map, with two blank lines on each end. */
 	 for (i = 0; i < 2; i++)
-		 clear_buf (totwid, filterbuf[i]);
-	 for (i = height + 1; i >= 2; i--)
-		 fill_buf (width, filterbuf[i]);
-	 for (i = height + 2; i < height + 4; i++)
-		 clear_buf (totwid, filterbuf[i]);
+		bzero( (char *)&filterbuf[i][0], (totwid+4)*sizeof(int) );
 
-	 up = SXT(dir[c].up);
-	 down = SXT(dir[c].down);
+	 for ( ln=0, i = height + 1; i >= 2; i--, ln++)
+		 fill_buf (width, &filterbuf[i][0],
+			&vfp->vf_bits[vdp->vd_addr + bytes_wide*ln] );
+
+	 for (i = height + 2; i < height + 4; i++)
+		bzero( (char *)&filterbuf[i][0], (totwid+4)*sizeof(int) );
 
 	 /* Initial base line for filtering depends on odd flag. */
-	 base = (odd ? 1 : 2);
+	if( vdp->vd_down % 2 )
+		base = 1;
+	else
+		base = 2;
 
 	 /* Produce a RGBpixel buffer from a description of the character and
 	  * the read back data from the frame buffer for anti-aliasing.
 	  */
-
-	 for (i = height + base; i >= base; i--)
-	 {
+	 for (i = height + base; i >= base; i--)  {
 		 squash(	filterbuf[i - 1],	/* filter info */
 			 filterbuf[i],
 			 filterbuf[i + 1],
 			 resbuf,
 			 totwid + 4
 		     );
-		 fb_read( fbp, x, y - down + i, fbline, totwid+3);
-		 for (j = 0; j < (totwid + 3) - 1; j++)
-		 {	
+		 fb_read( fbp, x, y - vdp->vd_down + i, fbline, totwid+3);
+		 for (j = 0; j < (totwid + 3) - 1; j++)  {
 			 register int	tmp;
 			 /* EDITOR'S NOTE : do not rearrange this code,
 			  * the SUN compiler can't handle more
@@ -314,9 +266,8 @@ int x, y, odd;
 			     (int)(pixcolor[BLU]*resbuf[j]+(1-resbuf[j])*tmp);
 			 fbline[j][BLU] &= 0377;
 		 }
-		 fb_write( fbp, x, y - down + i, fbline,  totwid+3 );
+		 fb_write( fbp, x, y - vdp->vd_down + i, fbline,  totwid+3 );
 	 }
-	 return;
 }
 
 
@@ -335,66 +286,6 @@ register int posn;
 	else
 #endif
 		return (int) (*bitstring) & (1 << posn);
-}
-
-get_font( fontname )
-char *fontname;
-{	
-	FILE		*newff;
-	struct header	lochdr;
-	static char	fname[FONTNAMESZ];
-	if( fontname == NULL )
-		fontname = FONTNAME;
-	if( fontname[0] != '/' )		/* absolute path */
-		(void) sprintf( fname, "%s/%s", FONTDIR, fontname );
-	else
-		(void) strncpy( fname, fontname, FONTNAMESZ );
-
-	/* Open the file and read in the header information. */
-	if( (newff = fopen( fname, "r" )) == NULL )
-	{
-		fb_log( "Error opening font file '%s'\n", fname );
-		ffdes = NULL;
-		return	0;
-	}
-	if( ffdes != NULL )
-		(void) fclose(ffdes);
-	ffdes = newff;
-	if( fread( (char *) &lochdr, (int) sizeof(struct header), 1, ffdes ) != 1 )
-	{
-		fb_log( "get_Font() read failed!\n" );
-		ffdes = NULL;
-		return	0;
-	}
-	SWAB( lochdr.magic );
-	SWAB( lochdr.size );
-	SWAB( lochdr.maxx );
-	SWAB( lochdr.maxy );
-	SWAB( lochdr.xtend );
-
-	if( lochdr.magic != 0436 )
-	{
-		fb_log( "Not a font file \"%s\": magic=0%o\n",
-		fname, (int) lochdr.magic
-		    );
-		ffdes = NULL;
-		return	0;
-	}
-	hdr = lochdr;
-
-	/* Read in the directory for the font. */
-	if( fread( (char *) dir, (int) sizeof(struct dispatch), 256, ffdes ) != 256 )
-	{
-		fb_log( "get_Font() read failed!\n" );
-		ffdes = NULL;
-		return	0;
-	}
-	/* Addresses of characters in the file are relative to
-			point in the file after the directory, so grab the
-			current position.
-		 */
-	offset = ftell( ffdes );
-	return	1;
 }
 
 /* 
@@ -439,7 +330,6 @@ register int	n;
 			 buf0[j + 1] * CRNR_WT
 			);
 	}
-	return;
 }
 
 /*	f i l l _ b u f ( )
@@ -448,22 +338,13 @@ register int	n;
 	correct position.
  */
 void
-fill_buf( wid, buf )
+fill_buf( wid, buf, bitrow )
 register int	wid;
 register int	*buf;
+register char	*bitrow;
 {
-	char            bitrow[FONTBUFSZ];
 	register int    j;
 
-	if (ffdes == NULL)
-		return;
-	/* Read the row, rounding width up to nearest byte value. */
-	if (fread(bitrow, (wid / 8) + ((wid % 8 == 0) ? 0 : 1), 1, ffdes)
-	    < 1
-		) {
-		(void) fprintf(stderr, "fill_buf() read failed!\n");
-		return;
-	}
 	/*
 	 * For each bit in the row, set the array value to 1 if it's on. The
 	 * bitx routine extracts the bit value.  Can't just use the j-th bit
@@ -480,23 +361,4 @@ register int	*buf;
 	 * filtering come out right without special casing the filtering. 
 	 */
 	buf[0] = buf[1] = buf[wid + 2] = buf[wid + 3] = 0;
-	return;
-}
-
-/*	c l e a r _ b u f ( )
-	Just sets all the buffer values to zero (this is used to
-	"read" background areas of the character needed for filtering near
-	the edges of the character definition.
- */
-void
-clear_buf( wid, buf )
-int		wid;
-register int	*buf;
-{
-	register int    i, w = wid + 4;
-
-	/* Clear each value in the row.					 */
-	for (i = 0; i < w; i++)
-		buf[i] = 0;
-	return;
 }
