@@ -35,6 +35,9 @@ static char RCSreadfile[] = "@(#)$Header$";
 #define TRUE 1
 
 
+extern int	verbose;
+
+
 /*		R E A D _ R T _ F I L E
  *
  * This routine reads an rt_log file line by line until it either finds
@@ -86,7 +89,13 @@ mat_t 	model2view;
 	seen_eye_pos = FALSE;
 	seen_size = FALSE;
 
+	if(verbose)  {
+		fprintf(stderr, "set flags: view:%d, orient:%d, eye_pos:%d, size:%d\n",
+		seen_view, seen_orientation, seen_eye_pos, seen_size);
+	}
+
 	/* feof returns 1 on failure */
+
 	while( feof(infp) == 0 )  {
 
 		/* clear the buffer */	
@@ -138,6 +147,11 @@ mat_t 	model2view;
 				 * address of the colon, and break: no need to
 				 * look for more colons on this line.
 				 */
+
+				if(verbose)  {
+					fprintf(stderr, "found colon\n");
+				}
+
 				string[i] = '\0';
 				arg_ptr = &string[++i];		/* increment before using */
 				break;
@@ -159,7 +173,10 @@ mat_t 	model2view;
 		 * magic thing has been seen.
 		 *
 		 * Note two points of interest: scanf() does not like %g;
-		 * use %lf.  Also, if loading a whole array of characters
+		 * use %lf.  Likewise, don't use %g for printing out info:
+		 * it might get rounded to the nearest integer.  Use %.6f
+		 * instead.
+		 * Also, if loading a whole array of characters
 		 * with %s, then the name of the array can be used for the
 		 * destination.  However, if the characters are loaded 
 		 * individually into the subsripted spots with %c (or equiv),
@@ -169,7 +186,7 @@ mat_t 	model2view;
 		if(strcmp(string, "View") == 0)  {
 			num = sscanf(arg_ptr, "%lf %s %lf", &azimuth, forget_it, &elevation);
 			if( num != 3)  {
-				fprintf(stderr, "View= %g %s %g elevation\n", azimuth, forget_it, elevation);
+				fprintf(stderr, "View= %.6f %s %.6f elevation\n", azimuth, forget_it, elevation);
 				return(-1);
 			}
 			seen_view = TRUE;
@@ -179,7 +196,7 @@ mat_t 	model2view;
 				&orientation[3]);
 
  			if(num != 4)  {
-				fprintf(stderr, "Orientation= %g, %g, %g, %g\n",
+				fprintf(stderr, "Orientation= %.6f, %.6f, %.6f, %.6f\n",
 				 	V4ARGS(orientation) );
 				return(-1);
 			}
@@ -188,7 +205,7 @@ mat_t 	model2view;
 			num = sscanf(arg_ptr, "%lf, %lf, %lf", &eye_pos[0],
 				&eye_pos[1], &eye_pos[2]);
 			if( num != 3)  {
-				fprintf(stderr, "Eye_pos= %g, %g, %g\n",
+				fprintf(stderr, "Eye_pos= %.6f, %.6f, %.6f\n",
 					V3ARGS(eye_pos) );
 				return(-1);
 			}
@@ -196,7 +213,7 @@ mat_t 	model2view;
 		} else if(strcmp(string, "Size") == 0)  {
 			num = sscanf(arg_ptr, "%lf", &m_size);
 			if(num != 1)  {
-				fprintf(stderr, "Size=%g\n", m_size);
+				fprintf(stderr, "Size=%.6f\n", m_size);
 				return(-1);
 			}
 			seen_size = TRUE;
@@ -225,14 +242,13 @@ mat_t 	model2view;
 		return(-1);
 	}
 
-#if 0
 	/* For now, just print the stuff */
+
 	fprintf(stderr, "logfile: %s\n", name);
-	fprintf(stderr, "view= %g azimuth, %g elevation\n", azimuth, elevation);
-	fprintf(stderr, "orientation= %g, %g, %g, %g\n", V4ARGS(orientation) );
-	fprintf(stderr, "eye_pos= %g, %g, %g\n", V3ARGS(eye_pos) );
-	fprintf(stderr, "size= %gmm\n", m_size);
-#endif
+	fprintf(stderr, "view: %.6f; azimuth: %.6f; elevation: %.6f\n", azimuth, elevation);
+	fprintf(stderr, "orientation: %.6f, %.6f, %.6f, %.6f\n", V4ARGS(orientation) );
+	fprintf(stderr, "eye_pos: %.6f, %.6f, %.6f\n", V3ARGS(eye_pos) );
+	fprintf(stderr, "size: %.6fmm\n", m_size);
 
 	/* Build the view2model matrix. */
 
@@ -241,6 +257,10 @@ mat_t 	model2view;
 	mat_idn( xlate );
 	MAT_DELTAS( xlate, -eye_pos[0], -eye_pos[1], -eye_pos[2] );
 	mat_mul( model2view, rotate, xlate );
+
+	if(verbose)  {
+		 mat_print("model2view", model2view);
+	}
 
 	fclose(fp);		/* clean up */
 	return(0);
