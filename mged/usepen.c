@@ -34,13 +34,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./menu.h"
 #include "./dm.h"
-#include "./sedit.h"
 
 /*	Degree <-> Radian conversion factors	*/
 double	degtorad =  0.01745329251994329573;
 double	radtodeg = 57.29577951308232098299;
 
-int	sedraw;			/* apply solid editing changes */
 struct solid	*illump;	/* == 0 if none, else points to ill. solid */
 int		ipathpos;	/* path index of illuminated element */
 				/* set by e9.c, cleared here */
@@ -83,13 +81,8 @@ f_mouse( argc, argv )
 int	argc;
 char	**argv;
 {
-	fastf_t			scale;
 	register struct solid	*sp;
-	vect_t	pos_view;	 	/* Unrotated view space pos */
-	vect_t	pos_model;	/* Rotated screen space pos */
-	vect_t	tr_temp;		/* temp translation vector */
 	vect_t	mousevec;		/* float pt -1..+1 mouse pos vect */
-	vect_t	temp;
 	int	isave;
 	int	up = atoi(argv[1]);
 	int	xpos = atoi(argv[2]);
@@ -191,100 +184,7 @@ char	**argv;
 		return;
 
 	case ST_S_EDIT:
-		/*
-		 *  Solid Edit
-		 */
-		if( es_edflag <= 0 )  return;
-		switch( es_edflag )  {
-
-		case SSCALE:
-		case PSCALE:
-			/* use mouse to get a scale factor */
-			es_scale = 1.0 + 0.25 * ((fastf_t)
-				(ypos > 0 ?
-					ypos :
-					-ypos) / 2047);
-			if ( ypos <= 0 )
-				es_scale = 1.0 / es_scale;
-
-			/* accumulate scale factor */
-			acc_sc_sol *= es_scale;
-
-			sedraw = 1;
-			return;
-		case STRANS:
-			/* 
-			 * Use mouse to change solid's location.
-			 * Project solid's V point into view space,
-			 * replace X,Y (but NOT Z) components, and
-			 * project result back to model space.
-			 */
-			/* XXX this makes bad assumptions about format of es_rec !! */
-			MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
-			MAT4X3PNT( pos_view, model2view, temp );
-			pos_view[X] = xpos / 2047.0;
-			pos_view[Y] = ypos / 2047.0;
-			MAT4X3PNT( temp, view2model, pos_view );
-			MAT4X3PNT( es_rec.s.s_values, es_invmat, temp );
-			sedraw = 1;
-			return;
-		case MOVEH:
-		case MOVEHH:
-			/* Use mouse to change location of point V+H */
-			VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
-			MAT4X3PNT(pos_model, es_mat, temp);
-			MAT4X3PNT( pos_view, model2view, pos_model );
-			pos_view[X] = xpos / 2047.0;
-			pos_view[Y] = ypos / 2047.0;
-			/* Do NOT change pos_view[Z] ! */
-			MAT4X3PNT( temp, view2model, pos_view );
-			MAT4X3PNT( tr_temp, es_invmat, temp );
-			VSUB2( &es_rec.s.s_tgc_H, tr_temp, &es_rec.s.s_tgc_V );
-			sedraw = 1;
-			return;
-		case PTARB:
-			/* move an arb point to indicated point */
-			/* point is located at es_values[es_menu*3] */
-			VADD2(temp, es_rec.s.s_values, &es_rec.s.s_values[es_menu*3]);
-			MAT4X3PNT(pos_model, es_mat, temp);
-			MAT4X3PNT(pos_view, model2view, pos_model);
-			pos_view[X] = xpos / 2047.0;
-			pos_view[Y] = ypos / 2047.0;
-			MAT4X3PNT(temp, view2model, pos_view);
-			MAT4X3PNT(pos_model, es_invmat, temp);
-			editarb( pos_model );
-			sedraw = 1;
-			return;
-		case EARB:
-			/* move arb edge, through indicated point */
-			mousevec[X] = xpos / 2047.0;
-			mousevec[Y] = ypos / 2047.0;
-			mousevec[Z] = 0;
-			MAT4X3PNT( temp, view2model, mousevec );
-			/* apply inverse of es_mat */
-			MAT4X3PNT( pos_model, es_invmat, temp );
-			editarb( pos_model );
-			sedraw = 1;
-			return;
-		case MVFACE:
-			/* move arb face, through  indicated  point */
-			mousevec[X] = xpos / 2047.0;
-			mousevec[Y] = ypos / 2047.0;
-			mousevec[Z] = 0;
-			MAT4X3PNT( temp, view2model, mousevec );
-			/* apply inverse of es_mat */
-			MAT4X3PNT( pos_model, es_invmat, temp );
-			/* change D of planar equation */
-			es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], pos_model);
-			/* calculate new vertices, put in record as vectors */
-			calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
-			sedraw = 1;
-			return;
-			
-		default:
-			(void)printf("mouse press undefined in this solid edit mode\n");
-			break;
-		}
+		sedit_mouse( mousevec );
 		return;
 
 	case ST_O_PATH:
@@ -323,80 +223,7 @@ char	**argv;
 		return;
 
 	case ST_O_EDIT:
-		/*
-		 *  Object Edit
-		 */
-		mat_idn( incr_change );
-		scale = 1;
-		if( movedir & SARROW )  {
-			/* scaling option is in effect */
-			scale = 1.0 + (fastf_t)(ypos > 0 ?
-				ypos : -ypos) / (2047);
-			if ( ypos <= 0 )
-				scale = 1.0 / scale;
-
-			/* switch depending on scaling option selected */
-			switch( edobj ) {
-
-				case BE_O_SCALE:
-					/* global scaling */
-					incr_change[15] = 1.0 / scale;
-				break;
-
-				case BE_O_XSCALE:
-					/* local scaling ... X-axis */
-					incr_change[0] = scale;
-					/* accumulate the scale factor */
-					acc_sc[0] *= scale;
-				break;
-
-				case BE_O_YSCALE:
-					/* local scaling ... Y-axis */
-					incr_change[5] = scale;
-					/* accumulate the scale factor */
-					acc_sc[1] *= scale;
-				break;
-
-				case BE_O_ZSCALE:
-					/* local scaling ... Z-axis */
-					incr_change[10] = scale;
-					/* accumulate the scale factor */
-					acc_sc[2] *= scale;
-				break;
-			}
-
-			/* Have scaling take place with respect to a point,
-			 * NOT the view center.
-			 */
-			/* XXX should have an es_keypoint for this */
-			MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
-			MAT4X3PNT(pos_model, modelchanges, temp);
-			wrt_point(modelchanges, incr_change, modelchanges, pos_model);
-		}  else if( movedir & (RARROW|UARROW) )  {
-			mat_t oldchanges;	/* temporary matrix */
-
-			/* Vector from object center to cursor */
-			/* XXX should have an es_keypoint for this */
-			MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
-			MAT4X3PNT( pos_view, model2objview, temp );
-			if( movedir & RARROW )
-				pos_view[X] = xpos / 2047.0;
-			if( movedir & UARROW )
-				pos_view[Y] = ypos / 2047.0;
-
-			MAT4X3PNT( pos_model, view2model, pos_view );/* NOT objview */
-			MAT4X3PNT( tr_temp, modelchanges, temp );
-			VSUB2( tr_temp, pos_model, tr_temp );
-			MAT_DELTAS(incr_change,
-				tr_temp[X], tr_temp[Y], tr_temp[Z]);
-			mat_copy( oldchanges, modelchanges );
-			mat_mul( modelchanges, incr_change, oldchanges );
-		}  else  {
-			(void)printf("No object edit mode selected;  mouse press ignored\n");
-			return;
-		}
-		mat_idn( incr_change );
-		new_mats();
+		objedit_mouse( mousevec );
 		return;
 
 	default:
