@@ -1079,6 +1079,8 @@ struct bu_mro {
 
 #define BU_MRO_GETSTRING( _p ) bu_vls_addr( &_p->string_rep )
 
+#define BU_MRO_STRLEN( _p ) bu_vls_strlen( &_p->string_rep )
+
 /*----------------------------------------------------------------------*/
 /*
  * Section for BU_DEBUG values
