@@ -198,6 +198,8 @@ static struct funtab funtab[] = {
 	f_color, 7, 7, TRUE,
 "comb", "comb_name <operation solid>", "create or extend combination w/booleans",
 	f_comb,4,MAXARGS,TRUE,
+"comb_color", "comb R G B", "assign a color to a combination (like 'mater')",
+	f_comb_color, 5,5,TRUE,
 "dbconcat", "file [prefix]", "concatenate 'file' onto end of present database.  Run 'dup file' first.",
 	f_concat, 2, 3, TRUE,
 "copyeval", "new_solid path_to_old_solid (seperate path components with spaces, not /)",
@@ -354,8 +356,6 @@ static struct funtab funtab[] = {
 	f_nirt,1,MAXARGS,TRUE,
 "nmg_simplify", "[arb|tgc|ell|poly] new_solid nmg_solid", "simplify nmg_solid, if possible",
 	f_nmg_simplify, 3,4,TRUE,
-"comb_color", "comb R G B", "assign a color to a combination (like 'mater')",
-	f_comb_color, 5,5,TRUE,
 "oed", "path_lhs path_rhs", "Go from view to object_edit of path_lhs/path_rhs",
 	cmd_oed, 3, 3, TRUE,
 "opendb", "database.g", "Close current .g file, and open new .g file",
@@ -2045,46 +2045,6 @@ char	*argv[];
 
 #if 0
 int
-f_button(argc, argv)
-int	argc;
-char	*argv[];
-{
-  int	save_journal;
-  int result;
-
-  if(button_hook){
-    save_journal = journal;
-    journal = 0;
-    result = (*button_hook)(atoi(argv[1]));
-    journal = save_journal;
-    return result;
-  }
-
-  rt_log( "button: currently not available for this display manager\n");
-  return CMD_BAD;
-}
-
-int
-f_slider(argc, argv)
-int	argc;
-char	*argv[];
-{
-  int	save_journal;
-  int result;
-
-  if(slider_hook){
-    save_journal = journal;
-    journal = 0;
-    result = (*slider_hook)(atoi(argv[1]), atoi(argv[2]));
-    journal = save_journal;
-    return result;
-  }
-
-  rt_log( "slider: currently not available for this display manager\n");
-  return CMD_BAD;
-}
-
-int
 f_savedit(argc, argv)
 int	argc;
 char	*argv[];
@@ -2118,34 +2078,6 @@ char	*argv[];
 
   rt_log( "Savedit will only work in an edit state\n");
   rt_vls_free(&str);
-  return CMD_BAD;
-}
-
-int
-f_openw(argc, argv)
-int     argc;
-char    *argv[];
-{
-  if(openw_hook){
-  	if(argc == 1)
-		return (*openw_hook)(NULL);
-  	else
-		return (*openw_hook)(argv[1]);
-  }
-
-  rt_log( "openw: currently not available\n");
-  return CMD_BAD;
-}
-
-int
-f_closew(argc, argv)
-int     argc;
-char    *argv[];
-{
-  if(closew_hook)
-    return (*closew_hook)(argv[1]);
-
-  rt_log( "closew: currently not available\n");
   return CMD_BAD;
 }
 #endif
@@ -2341,9 +2273,6 @@ set_e_axis_pos()
   MAT4X3PNT( absolute_slew, model2view, es_keypoint );
 #else
   update_views = 1;
-#if 0
-  VSETALL( absolute_slew, 0 );
-#endif
   switch(es_int.idb_type){
   case	ID_ARB8:
   case	ID_ARBN:
@@ -2436,10 +2365,16 @@ set_e_axis_pos()
     break;
   }
 
-  if(EDIT_TRAN){
+  if(EDIT_TRAN) {
     MAT4X3PNT( absolute_slew, model2view, e_axis_pos );
   }else{
-    /*XXX Nothing yet */
+    point_t new_pos;
+
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+
+    if(EDIT_ROTATE)
+      VSETALL( absolute_rotate, 0.0 );
   }
 #endif
 }
@@ -2528,7 +2463,6 @@ vect_t view_pos;
     MAT4X3PNT( new_pos, view2model, view_pos );
     MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
     VSUB2( diff, new_pos, old_pos );
-
     VADD2(new_pos, orig_pos, diff);
     MAT_DELTAS_VEC( toViewcenter, new_pos);
     MAT_DELTAS_VEC( ModelDelta, new_pos);
@@ -2543,8 +2477,8 @@ irot(x, y, z)
 fastf_t x, y, z;
 {
   vect_t view_pos;
+  vect_t model_pos;
   point_t new_pos;
-  point_t old_pos;
   point_t diff;
   int status;
   char *av[] = {NULL, NULL, NULL, NULL, NULL};
@@ -2564,16 +2498,18 @@ fastf_t x, y, z;
   if(state == ST_VIEW || !EDIT_ROTATE){
     char vrot_str[] = "vrot";
 
-    MAT_DELTAS_GET(old_pos, toViewcenter);
+    if(EDIT_TRAN)
+      MAT4X3PNT(model_pos, view2model, absolute_slew);
+
     av[0] = vrot_str;
     status = f_vrot((ClientData)NULL, interp, 4, av);
 
-    MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
-    VSUB2(diff, new_pos, orig_pos);
-    VADD2(new_pos, old_pos, diff);
-    VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
-    MAT4X3PNT( new_pos, model2view, view_pos);
-    VMOVE( absolute_slew, new_pos );
+    if(EDIT_TRAN){
+      MAT4X3PNT(absolute_slew, model2view, model_pos);
+    }else{
+      VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+      MAT4X3PNT(absolute_slew, model2view, new_pos);
+    }
   }else if(state == ST_S_EDIT){
     char p_str[] = "p";
 
