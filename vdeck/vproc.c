@@ -1,5 +1,10 @@
 /*
- *	d e c k _ p r o c . c
+ *	@(#) vproc.c		retrieved 8/13/86 at 08:22:38,
+ *	@(#) version 1.2		  created 2/23/83 at 14:48:39.
+ *
+ *	Written by Gary S. Moss.
+ *	All rights reserved, Ballistic Research Laboratory.
+ *
  *	Proceedures for deck.c
  *
  *	Section 1:  Commands
@@ -16,22 +21,23 @@
 #include "3d.h"
 #include "deck.h"
 #include "deck_proc.h"
-#include "tty.h"
 
 /*
  *	Section 1:	C O M M A N D S
  *
+ *			deck()
  *			shell()
  */
 
-/*	==== D E C K ( )
+/*	==== d e c k ( )
  *	make a COMGEOM deck for current list of objects
  *
  */
 deck( prefix )
+register
 char *prefix;
 {
-	int	i, j;
+	register int	i, j;
 
 	nns = nnr = regflag = numrr = 0;
 	
@@ -179,15 +185,16 @@ char *prefix;
 	delsol = delreg = 0;
 }
 
-/*	==== S H E L L ( )
- *	execute shell command
+/*	==== s h e l l ( )
+ *	Execute shell command.
  */
 shell( args )
 char  *args[];
 {
-	char	*argv[4], cmdbuf[MAXLN], *from, *to;
-	int	pid, ret, status;
-	int	i;
+	register char	*from, *to;
+	char		*argv[4], cmdbuf[MAXLN];
+	int		pid, ret, status;
+	register int	i;
 
 	signal( SIGINT, SIG_IGN );
 
@@ -314,14 +321,11 @@ builddir() {
 	printf( "\n%d objects tallied\n", ndir );
 }
 
-/*	==== T O C ( )
+/*	==== t o c ( )
  *	Build a sorted list of names of all the objects accessable
  *	in the object file.
  */
 toc() {
-	extern char	*toc_list[];
-	extern int	toc_ct;
-	
 	static Directory	*dp, *ep;
 	register int		i;
 
@@ -333,7 +337,7 @@ toc() {
 	sort( toc_list, toc_ct );
 }
 
-/*	==== L O O K U P ( )
+/*	==== l o o k u p ( )
  *	This routine takes a name, and looks it up in the
  *	directory table.  If the name is present, a pointer to
  *	the directory struct element is returned, otherwise
@@ -363,8 +367,8 @@ register char *str;
 	return( -1 );
 }
 
-/*	==== D I R A D D ( )
- *	Add an entry to the directory
+/*	==== d i r a d d ( )
+ *	Add an entry to the directory.
  */
 Directory *
 diradd( name, laddr )
@@ -384,15 +388,16 @@ long laddr;
 	return( dp );
 }
 
-/*	==== A D D N A M E ( )
+/*	==== a d d n a m e ( )
  *	Given a name, it puts the name in the name buffer, and
  *	returns a pointer to that string.
  */
 addname( cp )
-register char *cp;
+register
+char	*cp;
 {
-	static char *holder;
-	register int i;
+	static char	*holder;
+	register int	i;
 
 	if( dir_last >= &dir_names[NDIR*10-16] )  {
 		fprintf( stderr, "addname:  out of name space\n" );
@@ -415,8 +420,8 @@ register char *cp;
  *			sort()
  */
 
-/*	==== L I S T _ T O C ( )
- *	list the table of contents
+/*	==== l i s t _ t o c ( )
+ *	List the table of contents.
  */
 list_toc( args )
 char	 *args[];
@@ -431,15 +436,16 @@ char	 *args[];
 	else		col_prt( toc_list, toc_ct );
 }
 
-/*	==== C O L _ P R T
- *	print list of names in tabular columns
+/*	==== c o l _ p r t ( )
+ *	Print list of names in tabular columns.
  */
 col_prt( list, ct )
 char	*list[];
+register
 int	ct;
 {
 	char		buf[72];
-	char		*lbuf = buf;
+	register char	*lbuf = buf;
 	register int	i, column = 0;
 
 	for( i = 0; i < ct; i++ ) {
@@ -462,17 +468,17 @@ int	ct;
 	return( ct );
 }
 
-/*	==== I N S E R T ( )
- *	insert each member of the table of contents 'toc_list' which
- *	matches one of the arguments into the current list 'curr_list'
+/*	==== i n s e r t ( )
+ *	Insert each member of the table of contents 'toc_list' which
+ *	matches one of the arguments into the current list 'curr_list'.
  */
 insert(  args,	ct )
 char	*args[];
-int		ct;
+register int	ct;
 {
-	char	*malloc();
-	int	i, j, nomatch;
-	unsigned bytect;
+	char		*malloc();
+	register int	i, j, nomatch;
+	unsigned	bytect;
 	
 	/* for each argument (does not include args[0])
 	 */
@@ -507,28 +513,29 @@ int		ct;
 	return( curr_ct );
 }
 
-/*	==== D E L E T E ( )
+/*	==== d e l e t e ( )
  *	delete all members of current list 'curr_list' which match
  *	one of the arguments
  */
 delete(  args )
 char	*args[];
 {
-	int	i, j, k;
-	int	nomatch;
+	register int	i;
+	register int	nomatch;
 	
 	/* for each object in arg list
 	 */
-	for( i = 1; i < arg_ct; i++ ) {
+	for( i = 1; i < arg_ct; i++ ) { register int	j;
 		nomatch = YES;
 
 		/* traverse list to find string
 		 */
 		for( j = 0; j < curr_ct; )
-			if( match( args[i], curr_list[j] ) ) {
+			if( match( args[i], curr_list[j] ) )
+			{	register int	k;			
+
 				nomatch = NO;
-				free( curr_list[j] );
-				--curr_ct;
+				free( curr_list[j] );	--curr_ct;
 				/* starting from bottom of list,
 				 * pull all entries up to fill up space
 				 * made by deletion
@@ -542,18 +549,20 @@ char	*args[];
 	return( curr_ct );
 }
 
-/*	==== S O R T ( )
- *	sort a list of strings alphabetically stored at 'linebuf'
+/*	==== s o r t ( )
+ *	Sort a list of strings alphabetically stored at 'linebuf'.
  */
 sort( linebuf,	items )
 char *linebuf[];
+register
 int		items;
 {
-	char	*p;
-	int	i, j;
-	int	change = YES;
+	register int	i;
+	register int	change = YES;
 
-	for( i = 0; i < items-1 && change == YES; i++ ) {
+	for( i = 0; i < items-1 && change == YES; i++ )
+	{ register int	j;
+	  register char	*p;
 		change = NO;
 		for( j = items-1; j > i; --j ) {
 			if( strcmp( linebuf[j], linebuf[j-1] ) < 0 ) {
@@ -575,7 +584,7 @@ int		items;
  *			check()
  */
 
-/*	==== M A T C H ( )
+/*	==== m a t c h ( )
  *	if string matches pattern, return 1, else return 0
  *	special characters:
  *		*	Matches any string including the null string.
@@ -586,6 +595,7 @@ int		items;
  *		\	Escapes special characters.
  */
 match(	 pattern,  string )
+register
 char	*pattern, *string;
 {
 	do {	switch( *pattern ) {
@@ -637,11 +647,13 @@ char	*pattern, *string;
 	return( 1 );
 }
 
-/*	==== I T O A ( )
- *	convert integer to ascii  wd format
+/*	==== i t o a ( )
+ *	Convert integer to ascii  wd format.
  */
 itoa( n, s, w )
-char	 s[];
+register
+char	*s;
+register
 int   n,    w;
 {
 	int	 c, i, j, sign;
@@ -665,12 +677,13 @@ int   n,    w;
 	}
 }
 
-/*	==== F T O A S C I I ( )
- *	convert float to ascii  w.df format
+/*	==== f t o a s c i i ( )
+ *	Convert float to ascii  w.df format.
  */
 ftoascii( f, s, w, d )
-char	     s[];
-int		w, d;
+register
+char	    *s;
+register int	w, d;
 float	  f;
 {
 	int	c, i, j;
@@ -716,11 +729,12 @@ float	  f;
 	}
 }
 
-/*	==== C H E C K ( )
- *	compares solids to see if have a new solid
+/*	==== c h e c k ( )
+ *	Compares solids to see if have a new solid.
  */
 check( a, b )
-register char	*a, *b;
+register
+char	*a, *b;
 {
 	register int	c = sizeof( struct ident );
 
@@ -740,15 +754,16 @@ register char	*a, *b;
  *			fbug()
  */
 
-/*	==== G E T C M D ( )
- *	return first character read from keyboard
- *	copy command into args[0] and arguments into args[1]...args[n]
+/*	==== g e t c m d ( )
+ *	Return first character read from keyboard,
+ *	copy command into args[0] and arguments into args[1]...args[n].
  *		
  */
 char
 getcmd(  args, ct )
 char	*args[];
-int	ct;
+register
+int		ct;
 {
 	/* get arguments
 	 */
@@ -769,8 +784,8 @@ int	ct;
 	return( (args[0])[0] );
 }
 
-/*	==== G E T A R G ( )
- *	get a word of input into 'str', return first character
+/*	==== g e t a r g ( )
+ *	Get a word of input into 'str', return first character.
  */
 char
 getarg(		 str )
@@ -786,16 +801,16 @@ register char	*str;
 	return( 1 );
 }
 
-/*	==== P A R S _ A R G ( )
- *	seperate words into seperate arguments
+/*	==== p a r s _ a r g ( )
+ *	Seperate words into seperate arguments.
  */
 pars_arg( argvec,	ct )
 char	 *argvec[];
-int			ct;
+register int		ct;
 {
-	char	buf[MAXLN];
-	char	*from, *to = buf;
-	int	i;
+	char		buf[MAXLN];
+	register char	*from, *to = buf;
+	register int	i;
 
 	for( i = 1; i < ct; i++ ) {
 		from = argvec[i];
@@ -827,51 +842,29 @@ int			ct;
 	}
 }
 
-/*	==== M E N U ( )
- *	display menu stored at address 'addr';
+/*	==== m e n u ( )
+ *	Display menu stored at address 'addr'.
  */
 menu( addr )
+register
 char *addr;
 {
-	char	**sbuf = addr;
+	register char	**sbuf = addr;
 	
 	while( *sbuf )	printf( "%s\n", *sbuf++ );
+	fflush( stdout );
 }
 
-/*	==== B L A N K _ F I L L ( )
- *	write count blanks to fildes
+/*	==== b l a n k _ f i l l ( )
+ *	Write count blanks to fildes.
  */
 blank_fill(	fildes,	count )
-int		fildes,	count;
+register int	fildes,	count;
 {
-	char	*blank_buf = BLANKS;
+	register char	*blank_buf = BLANKS;
 
 	return( write( fildes, blank_buf, count ) );
 }
-
-/*	==== B U G ( )
- *	debug statements
- */
-bug(	p0, p1, p2, p3, p4, p5, p6, p7, p8, p9 )
-int	p0, p1, p2, p3, p4, p5, p6, p7, p8, p9;
-{
-	fprintf( stderr, p0, p1, p2, p3, p4, p5, p6, p7, p8, p9 );
-}
-
-/*	==== F B U G ( )
- *	debug statements
- */
-fbug(	control, f0, f1, f2, f3, f4, f5, f6, f7, f8, f9 )
-int	control;
-float	    f0, f1, f2, f3, f4, f5, f6, f7, f8, f9;
-{
-	fprintf( stderr, control, f0, f1, f2, f3, f4, f5, f6, f7, f8, f9 );
-}
-
-deadbug( control, f0, f1, f2, f3, f4, f5, f6, f7, f8, f9 )
-int	 control;
-float	    f0, f1, f2, f3, f4, f5, f6, f7, f8, f9;
-{}
 
 /*
  *	Section 6:	I N T E R R U P T   H A N D L E R S
@@ -880,9 +873,9 @@ float	    f0, f1, f2, f3, f4, f5, f6, f7, f8, f9;
  *			quit()
  */
 
-/*	==== A B O R T ( )
- *	abort command without terminating run (restore command prompt)
- *	cleanup /tmp files
+/*	==== a b o r t ( )
+ *	Abort command without terminating run (restore command prompt) and
+ *	cleanup temporary files.
  */
 abort( sig ) {
 	signal( SIGINT, quit );	/* reset trap */
@@ -902,8 +895,8 @@ abort( sig ) {
 	longjmp( env, sig );
 }
 
-/*	==== Q U I T ( )
- *	terminate run
+/*	==== q u i t ( )
+ *	Terminate run.
  */
 quit( sig ) {
 	fprintf( stderr, "quitting...\n" );
