@@ -46,10 +46,12 @@ int mged_attach();
 void get_attached();
 void print_valid_dm();
 void dm_var_init();
+
 void mged_slider_init_vls();
 void mged_slider_free_vls();
 void mged_slider_link_vars();
 void mged_slider_unlink_vars();
+
 static int do_2nd_attach_prompt();
 static void find_new_owner();
 void mged_fb_open();
@@ -58,7 +60,7 @@ void mged_fb_close();
 extern void set_port(); /* defined in fbserv.c */
 extern void predictor_init(); /* defined in predictor.c */
 extern void set_scroll();  /* defined in set.c */
-extern void color_soltab();
+
 extern int mged_view_init(); /* defined in chgview.c */
 
 /* All systems can compile these! */
@@ -185,7 +187,7 @@ int need_close;
   }
 
   if(!--p->s_info->_rc){
-    if(rate_tran_vls[X].vls_magic == BU_VLS_MAGIC){
+    if(center_name.vls_magic == BU_VLS_MAGIC){
       mged_slider_unlink_vars(p);
       mged_slider_free_vls(p);
     }
@@ -444,7 +446,6 @@ char *argv[];
 #endif
 #endif
 
-  color_soltab();
   ++dirty;
   adc_auto = 1;
   grid_auto_size = 1;
@@ -976,6 +977,8 @@ struct dm_list *p;
   bu_vls_init(&p->s_info->_center_name);
   bu_vls_init(&p->s_info->_size_name);
   bu_vls_init(&p->s_info->_adc_name);
+
+#ifdef UPDATE_TCL_SLIDERS
   bu_vls_init(&p->s_info->_rate_tran_vls[X]);
   bu_vls_init(&p->s_info->_rate_tran_vls[Y]);
   bu_vls_init(&p->s_info->_rate_tran_vls[Z]);
@@ -1008,6 +1011,7 @@ struct dm_list *p;
   bu_vls_init(&p->s_info->_ang2_vls);
   bu_vls_init(&p->s_info->_distadc_vls);
   bu_vls_init(&p->s_info->_Viewscale_vls);
+#endif
 }
 
 void
@@ -1019,6 +1023,8 @@ struct dm_list *p;
   bu_vls_free(&p->s_info->_center_name);
   bu_vls_free(&p->s_info->_size_name);
   bu_vls_free(&p->s_info->_adc_name);
+
+#ifdef UPDATE_TCL_SLIDERS
   bu_vls_free(&p->s_info->_rate_tran_vls[X]);
   bu_vls_free(&p->s_info->_rate_tran_vls[Y]);
   bu_vls_free(&p->s_info->_rate_tran_vls[Z]);
@@ -1051,6 +1057,7 @@ struct dm_list *p;
   bu_vls_free(&p->s_info->_ang2_vls);
   bu_vls_free(&p->s_info->_distadc_vls);
   bu_vls_free(&p->s_info->_Viewscale_vls);
+#endif
 }
 
 void
@@ -1069,6 +1076,8 @@ struct dm_list *p;
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_adc_name, "mged_display(%S,adc)",
 		&p->_dmp->dm_pathName);
+
+#ifdef UPDATE_TCL_SLIDERS
   bu_vls_printf(&p->s_info->_rate_tran_vls[X], "rate_tran(%S,X)",
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_tran_vls[Y], "rate_tran(%S,Y)",
@@ -1195,12 +1204,14 @@ struct dm_list *p;
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_Viewscale_vls),
 	      (char *)&p->s_info->_Viewscale,
 	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
+#endif
 }
 
 void
 mged_slider_unlink_vars(p)
 struct dm_list *p;
 {
+#ifdef UPDATE_TCL_SLIDERS
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[X]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[Y]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[Z]));
@@ -1233,6 +1244,7 @@ struct dm_list *p;
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_ang2_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_distadc_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_Viewscale_vls));
+#endif
 }
 
 int
