@@ -131,6 +131,8 @@ extern char	*realloc();
 
 
 /*
+ *			B U _ C K M A G
+ *
  *  Macros to check and validate a structure pointer, given that
  *  the first entry in the structure is a magic number.
  */
@@ -145,6 +147,25 @@ extern char	*realloc();
 		bu_badmagic_tcl( (_interp), (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 		return TCL_ERROR; \
 	}
+
+/*
+ *			B U _ A S S E R T
+ */
+#ifdef __STDC__
+#define BU_ASSERT(_equation)	\
+	if( !(_equation) )  { \
+		bu_log("BU_ASSERT( " #_equation " ) failed, file %s, line %d\n", \
+			__FILE__, __LINE__ ); \
+		bu_bomb("assertion failure\n"); \
+	}
+#else
+#define BU_ASSERT(_equation)	\
+	if( !(_equation) )  { \
+		bu_log("BU_ASSERT( _equation ) failed, file %s, line %d\n", \
+			__FILE__, __LINE__ ); \
+		bu_bomb("assertion failure\n"); \
+	}
+#endif
 
 /*----------------------------------------------------------------------*/
 /* list.c */
