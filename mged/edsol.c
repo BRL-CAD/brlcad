@@ -105,7 +105,7 @@ char	*es_keytag;		/* string identifying the keypoint */
 int	es_keyfixed;		/* keypoint specified by user? */
 
 vect_t		es_para;	/* keyboard input param. Only when inpara set.  */
-extern int	inpara;		/* es_para valid.  es_mvalid mus = 0 */
+extern int	inpara;		/* es_para valid.  es_mvalid must = 0 */
 static vect_t	es_mparam;	/* mouse input param.  Only when es_mvalid set */
 static int	es_mvalid;	/* es_mparam valid.  inpara must = 0 */
 
@@ -3197,7 +3197,6 @@ CONST vect_t	mousevec;
 		}
 		sedraw = 1;
 		return;
-
 	case ECMD_NMG_EPICK:
 		/* XXX Should just leave desired location in es_mparam for sedit() */
 		{
@@ -3236,7 +3235,7 @@ CONST vect_t	mousevec;
 
 			sedraw = 1;
 		}
-		break;
+	        break;
 
 	case ECMD_NMG_LEXTRU:
 	case ECMD_NMG_EMOVE:
@@ -3252,7 +3251,6 @@ CONST vect_t	mousevec;
 		es_mvalid = 1;
 		sedraw = 1;
 		return;
-
 	default:
 	  Tcl_AppendResult(interp, "mouse press undefined in this solid edit mode\n", (char *)NULL);
 	  break;
@@ -4451,6 +4449,13 @@ char	**argv;
 		case ECMD_PIPE_PT_MOVE:
 		case ECMD_PIPE_PT_ADD:
 		case ECMD_PIPE_PT_INS:
+#if 1
+		  if(SEDIT_TRAN){
+		    vect_t temp;
+		    
+		    MAT4X3PNT( absolute_slew, model2view, es_para );
+		  }
+#endif
 			/* must convert to base units */
 			es_para[0] *= local2base;
 			es_para[1] *= local2base;
@@ -4460,11 +4465,16 @@ char	**argv;
 			break;
 	}
 
-        if(es_edflag >= STRANS && es_edflag <= PTARB){
+#if 0
+	if(es_edflag >= SROT && es_edflag <= ECMD_ETO_ROT_C){
+	  VMOVE(absolute_rotate, es_para);
+	}else
+
+	if(es_edflag >= STRANS && es_edflag <= PTARB){
 	  if(!tran_set)
 	    set_tran(es_para[0], es_para[1], es_para[2]);
 	}
-
+#endif
 	return TCL_OK;
 
 	/* XXX I would prefer to see an explicit call to the guts of sedit()
@@ -4484,12 +4494,8 @@ double	xangle, yangle, zangle;
 {
 	mat_t	tempp;
 
-	if( es_edflag != ECMD_TGC_ROT_H &&
-	    es_edflag != ECMD_TGC_ROT_AB &&
-	    es_edflag != SROT &&
-	    es_edflag != ECMD_ETO_ROT_C &&
-	    es_edflag != ECMD_ARB_ROTATE_FACE)
-		return 0;
+	if(!SEDIT_ROTATE)
+	  return 0;
 
 	mat_idn( incr_change );
 	buildHrot( incr_change, xangle, yangle, zangle );
