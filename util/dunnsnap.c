@@ -4,6 +4,8 @@
  *	Checks status of the Dunn camera and exposes the number of frames
  *	of film specified in the argument (default is 1 frame).
  *
+ *	dunnsnap [num_frames]
+ *
  *  Author -
  *	Don Merritt
  *	August 1985
@@ -62,6 +64,10 @@ char **argv;
 
 	/* check argument */
 
+	if ( argc < 1 || argc > 2) {
+		printf("Usage: dunnsnap [num_frames]\n");
+		exit(25);
+	}
 	if ( argc > 1) 
 		nframes = atoi(*++argv);
 	else
