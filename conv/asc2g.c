@@ -39,7 +39,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define NAMELEN			20
 
 void		identbld(), polyhbld(), polydbld(), pipebld(), particlebld();
-void		solbld(), combbld(), membbld(), arsabld(), arsbbld();
+void		solbld();
+int		combbld();
+void		membbld(), arsabld(), arsbbld();
 void		materbld(), bsplbld(), bsurfbld(), zap_nl();
 char		*nxt_spc();
 
@@ -57,6 +59,7 @@ char **argv;
 	/* Read ASCII input file, each record on a line */
 	while( ( fgets( buf, BUFSIZE, stdin ) ) != (char *)0 )  {
 
+after_read:
 		/* Clear the output record -- vital! */
 		(void)bzero( (char *)&record, sizeof(record) );
 
@@ -69,11 +72,11 @@ char **argv;
 			continue;
 
 		case ID_COMB:
-			combbld();
+			if( combbld() > 0 )  goto after_read;
 			continue;
 
 		case ID_MEMB:
-			membbld();
+			(void)fprintf(stderr,"Warning: unattached Member record, ignored\n");
 			continue;
 
 		case ID_ARS_A:
@@ -244,11 +247,20 @@ solbld()
 /*			C O M B B L D
  *
  *  This routine builds combinations.
+ *  It does so by processing the "C" combination input line,
+ *  (which may be followed by optional material properties lines),
+ *  and it then slurps up any following "M" member lines,
+ *  building up a linked list of all members.
+ *  Reading continues until a non-"M" record is encountered.
+ *
+ *  Returns -
+ *	0	OK
+ *	1	OK, another record exists in global input line buffer.
  */
-
-void
+int
 combbld()
 {
+	struct wmember	head;
 	register char 	*cp;
 	register char 	*np;
 	int 		temp_nflag, temp_pflag;
@@ -259,8 +271,8 @@ combbld()
 	int		is_reg;
 	short		regionid;
 	short		aircode;
-	short		length;		/* number of members expected */
-	short		num;		/* Comgeom reference number: DEPRECATED */
+	short		length;		/* DEPRECTED: number of members expected */
+	short		num;		/* DEPRECATED: Comgeom reference number */
 	short		material;	/* GIFT material code */
 	short		los;		/* LOS estimate */
 	unsigned char	rgb[3];		/* Red, green, blue values */
@@ -268,8 +280,8 @@ combbld()
 	char		matparm[60];	/* String of material parameters */
 	char		inherit;	/* Inheritance property */
 
-
 	/* Set all flags initially. */
+	RT_LIST_INIT( &head.l );
 
 	override = 0;
 	temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
@@ -293,9 +305,9 @@ combbld()
 	cp = nxt_spc( cp );
 	aircode = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	length = (short)atoi( cp );
+	length = (short)atoi( cp );		/* unused */
 	cp = nxt_spc( cp );
-	num = (short)atoi( cp );
+	num = (short)atoi( cp );		/* unused */
 	cp = nxt_spc( cp );
 	material = (short)atoi( cp );
 	cp = nxt_spc( cp );
@@ -334,7 +346,19 @@ combbld()
 		strncpy( matparm, buf, sizeof(matparm)-1 );
 	}
 
-	if( mk_rcomb(stdout, name, length, is_reg,
+	for(;;)  {
+		buf[0] = '\0';
+		if( fgets( buf, BUFSIZE, stdin ) == (char *)0 )
+			break;
+
+		if( buf[0] != ID_MEMB )  break;
+
+		/* Process (and accumulate) the members */
+		membbld( &head );
+	}
+
+	/* Spit them out, all at once */
+	if( mk_lrcomb(stdout, name, &head, is_reg,
 		temp_nflag ? matname : (char *)0,
 		temp_pflag ? matparm : (char *)0,
 		override ? rgb : (char *)0,
@@ -343,24 +367,27 @@ combbld()
 			exit(1);
 	}
 
+	if( buf[0] == '\0' )  return(0);
+	return(1);
 }
 
 
 /*		M E M B B L D
  *
  *  This routine invokes libwdb to build a member of a combination.
+ *  Called only from combbld()
  */
-
 void
-membbld()
+membbld( headp )
+struct wmember	*headp;
 {
 	register char 	*cp;
 	register char 	*np;
 	register int 	i;
 	char		id;
 	char		relation;	/* boolean operation */
-	char		inst_name[NAMESIZE];
-	fastf_t		mat[16];	/* transformation matrix */
+	char		inst_name[NAMESIZE+2];
+	struct wmember	*memb;
 
 	cp = buf;
 	id = *cp++;
@@ -377,12 +404,12 @@ membbld()
 
 	cp = nxt_spc( cp );
 
+	memb = mk_addmember( inst_name, headp, relation );
+
 	for( i = 0; i < 16; i++ )  {
-		mat[i] = atof( cp );
+		memb->wm_mat[i] = atof( cp );
 		cp = nxt_spc( cp );
 	}
-
-	mk_memb(stdout, inst_name, mat, relation );
 }
 
 
