@@ -4,12 +4,6 @@
  *  Communicate with an Abekas A60 digital videodisk as if it was
  *  a framebuffer, to ease the task of loading and storing images.
  *
- *  Normal (non output-only) behavior depends on
- *  what the first operation of the caller is.
- *  If first op is a read, then Abekas is read.
- *  If first op is a full width write at scanline 0, the Abekas is NOT read.
- *  If first op is some other write, the Abekas is read first.
- *
  *  Authors -
  *	Michael John Muuss
  *	Phillip Dykstra
@@ -269,6 +263,7 @@ int		width, height;
 		}
 		if( height < ifp->if_max_height )  {
 			i = (ifp->if_max_height - height)/2;
+			i &= ~1;	/* preserve field alignment */
 			ifp->if_xyoff |= i;
 		}
 	}
@@ -283,7 +278,7 @@ int		width, height;
 	}
 
 	if( ifp->if_xyoff )  {
-		sprintf(message,"ab_open %x*%d xoff=%d yoff=%d",
+		sprintf(message,"ab_open %d*%d xoff=%d yoff=%d",
 			ifp->if_width, ifp->if_height,
 			ifp->if_xyoff>>16, ifp->if_xyoff&0xFFFF );
 	} else {
@@ -456,8 +451,6 @@ int		count;
 	yoff = ifp->if_xyoff & 0xFFFF;
 
 	/* Copy from if_rgb[] */
-	x += xoff;
-	y += yoff;
 	ret = 0;
 	cp = (char *)(pixelp);
 
@@ -470,14 +463,14 @@ int		count;
 		else
 			scan_count = count;
 
-		bcopy( &ifp->if_rgb[(y*720+x)*3], cp, scan_count*3 );
+		bcopy( &ifp->if_rgb[((y+yoff)*720+(x+xoff))*3], cp,
+			scan_count*3 );
 		cp += scan_count * 3;
 		ret += scan_count;
 		count -= scan_count;
-		x = xoff;
 		/* Advance upwards */
-		if( ++y >= ifp->if_height )
-			break;
+		x = 0;
+		y++;
 	}
 	ifp->if_mode |= STATE_USER_HAS_READ;
 	return(ret);
@@ -506,28 +499,19 @@ int		count;
 		return(-1);
 
 	/*
-	 *  If nothing has been written yet, and nothing has been
-	 *  read yet, and this does not seem to
-	 *  be a "well behaved" sequential write, read the frame first.
-	 *  Otherwise, just clear the frame to black.
+	 *  If this is the first write, and the frame has not
+	 *  yet been read, then read it.
 	 */
 	if( (ifp->if_mode & STATE_FRAME_WAS_READ) == 0 &&
 	    (ifp->if_mode & STATE_USER_HAS_WRITTEN) == 0 )  {
-		if( x != 0 || y != 0 || count < ifp->if_width )  {
-	    		/* Read in the frame first */
-			(void)ab_readframe(ifp);
-		} else {
-			/* Assume "well behaved": clear to black and proceed */
-			(void)ab_clear( ifp, PIXEL_NULL );
-		}
+		/* Read in the frame first */
+		(void)ab_readframe(ifp);
 	}
 
 	xoff = ifp->if_xyoff>>16;
 	yoff = ifp->if_xyoff & 0xFFFF;
 
 	/* Copy from if_rgb[] */
-	x += xoff;
-	y += yoff;
 	ret = 0;
 	cp = (char *)(pixelp);
 
@@ -540,14 +524,14 @@ int		count;
 		else
 			scan_count = count;
 
-		bcopy( cp, &ifp->if_rgb[(y*720+x)*3], scan_count*3 );
+		bcopy( cp, &ifp->if_rgb[((y+yoff)*720+(x+xoff))*3],
+			scan_count*3 );
 		cp += scan_count * 3;
 		ret += scan_count;
 		count -= scan_count;
-		x = xoff;
 		/* Advance upwards */
-		if( ++y >= ifp->if_height )
-			break;
+		x = 0;
+		y++;
 	}
 	ifp->if_mode |= STATE_USER_HAS_WRITTEN;
 	return(ret);
@@ -897,14 +881,14 @@ int	n;
  *************************************************************************
  *************************************************************************
  */
-/*  A 4:2:2 framestore uses 2 bytes per pixel.  The even bytes (from 0)
- *  hold Cb and Y, the odd bytes Cr and Y.  Thus a scan line has:
+/*  A 4:2:2 framestore uses 2 bytes per pixel.  The even pixels (from 0)
+ *  hold Cb and Y, the odd pixels Cr and Y.  Thus a scan line has:
  *      Cb Y Cr Y Cb Y Cr Y ...
  *  If we are at an even pixel, we use the Cr value following it.  If
  *  we are at an odd pixel, we use the Cb value following it.
  *
- *  Y:      16 .. 235 range, offset by 16
- *  U, V: -112 .. +112 range, centered on 128
+ *  Y:       0 .. 219 range, offset by 16   [16 .. 235]
+ *  U, V: -112 .. +112 range, offset by 128 [16 .. 240]
  */
 
 #define	VDOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
