@@ -81,6 +81,11 @@ static int	sgi_nwindows = 0;
 
 /* Internal routines */
 _LOCAL_ void	sgi_cminit();
+#if __STDC__
+_LOCAL_ int	gt_zbuf_to_screen(FBIO	*ifp, int one_y);
+#else
+_LOCAL_ int	gt_zbuf_to_screen();
+#endif
 
 /* Exported routines */
 _LOCAL_ int	sgi_open(),
