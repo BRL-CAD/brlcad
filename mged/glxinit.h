@@ -60,10 +60,10 @@ bind $parent R \"winset $child; press rear\";\
 bind $parent s \"winset $child; press sill\";\
 bind $parent o \"winset $child; press oill\";\
 bind $parent q \"winset $child; press reject\";\
-bind $parent <Left> \"winset $child; sv 10 0\";\
-bind $parent <Right> \"winset $child; sv -10 0\";\
-bind $parent <Down> \"winset $child; sv 0 10\";\
-bind $parent <Up> \"winset $child; sv 0 -10\";\
+bind $parent <Left> \"winset $child; sv -10 0\";\
+bind $parent <Right> \"winset $child; sv 10 0\";\
+bind $parent <Down> \"winset $child; sv 0 -10\";\
+bind $parent <Up> \"winset $child; sv 0 10\";\
 bind $parent <F1> \"winset $child; dm set depthcue !\";\
 bind $parent <F2> \"winset $child; dm set zclip !\";\
 bind $parent <F3> \"winset $child; dm set perspective !\";\

@@ -56,10 +56,10 @@ bind $name R \"winset $name; press rear\";\
 bind $name s \"winset $name; press sill\";\
 bind $name o \"winset $name; press oill\";\
 bind $name q \"winset $name; press reject\";\
-bind $name <Left> \"winset $name; sv 10 0\";\
-bind $name <Right> \"winset $name; sv -10 0\";\
-bind $name <Down> \"winset $name; sv 0 10\";\
-bind $name <Up> \"winset $name; sv 0 -10\";\
+bind $name <Left> \"winset $name; sv -10 0\";\
+bind $name <Right> \"winset $name; sv 10 0\";\
+bind $name <Down> \"winset $name; sv 0 -10\";\
+bind $name <Up> \"winset $name; sv 0 10\";\
 bind $name <F3> \"winset $name; dm set perspective !\";\
 bind $name <F6> \"winset $name; dm set set_perspective !\";\
 bind $name <F7> \"winset $name; set faceplate !\";\
