@@ -723,26 +723,41 @@ It returns the number of vertices eliminated.
 </DD>
 <HR>
 
-<DT><a NAME="bot_decimate"><B>bot_decimate</B> <I>new_bot_primitive old_bot_primitive maximum_distance_error [maximum_normal_error]</I></DT>
+<DT><a NAME="bot_decimate"><B>bot_decimate</B> <I>-c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_primitive old_bot_primitive</I></DT>
 
 <DD> The ``bot_decimate'' command reduces the number of triangles in the <I>old_bot_primitive</I> and saves the results
 to the <I>new_bot_primitive</I>. The reduction is accomplished through an edge decimation algorithm. Only changes
-that do not exceed the specified constraints are performed. The <I>maximum_distance_error</I> parameter specifies
+that do not violate the specified constraints are performed. The <I>maximum_chord_error</I> parameter specifies
 the maximum distance allowed between the original surface and the surface of the new BOT primitive in the current editing units. The <I>maximum_normal_error</I> specifies the maximum change in surface normal (degrees) between the old and new
-surfaces. If a normal constraint is not specified, a 90 degree constraint is assumed. This command should not be
-re-run on its output BOT. The constraints are with respect to the input BOT, so repeated application of this
-command may produce unacceptbale results.
+surfaces. The <I>minimum_edge_length</I> specifies the length of the longest edge that will be decimated.  At least one constraint must be supplied.
+If more than one constraint is specified, then only operations which satisfy all the constraints are performed.
 
 <DL>
 <DT><big>Examples:</big></DT>
 <DD>
-<kbd>mged></kbd> <b>bot_decimate bot.new abot 0.5 10.0</b><br>
+<kbd>mged></kbd> <b>bot_decimate -c 0.5 -n 10.0 bot.new abot</b><br>
 -- create a new BOT primitive named <I>bot.new</I> by reducing the number of triangles in <I>abot</I> while
 keeping the resulting surface within 0.5 units of the surface of <I>abot</I> and keeping the surface normals
 within 10 degrees.
 </DD>
-</DL>
+<DD>
+<P>
+Note that the constraints specified only relate the output BOT primitive to the input BOT primitive for a single invokation of the command.  
+Repeated application of this command on its own BOT output will result in a final BOT primitive
+that has unknown relationships to the original BOT primitive.
+For example:
+<P>
+<DD>
+<kbd>mged></kbd> <B>bot_decimate -c 10.0 bot_b bot_a</B><br>
+<kbd>mged></kbd> <B>bot_decimate -c 10.0 bot_c bot_b</B><br>
+-- this sequence of commands will produce primitive ``bot_c'' with up to 20.0 units of chord error
+between ``bot_a'' and ``bot_c''.<br>
+<P>
+<kbd>mged></kbd> <B>bot_decimate -c 10.0 bot_b bot_a</B><br>
+<kbd>mged></kbd> <B>bot_decimate -n 5.0 bot_c bot_b</B><br>
+-- this sequence of commands will produce primitive ``bot_c'' with no guaranteed relationships to ``bot_a''.
 </DD>
+</DL>
 <HR>
 
 <DT><a NAME="bot_face_fuse"><B>bot_face_fuse</B> <I>new_bot_solid old_bot_solid</I></DT>
@@ -1671,6 +1686,21 @@ If <I>EDITOR</I> is not set, then <I>/bin/ed</I> is used.
 	<DD>
 	<kbd>mged></kbd> <b>edmater comb1 comb2</b><br>
 	-- edit the <I>shader</I> parameters for combinations named <I>comb1</I> and <I>comb2</I>.<br>
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="em"><B>em</B> <I>value [value value ...]</I></DT>
+
+<DD> The ``em'' command displays all regions that have a <I>MUVES_Component</I>
+attribute that is set to any of the specified <I>value</I> arguments.
+
+        <DL>
+	<DT><big>Examples:</big></DT>
+	<DD>
+	<kdb>mged></kbd> <b>em engine pilot</b><br>
+	-- display all regions that have <I>MUVES_Component</I> attributes equal to <I>engine</I> or <I>pilot</I>.<br>
 	</DD>
 	</DL>
 </DD>
@@ -2688,15 +2718,21 @@ a similar function, but moves the eye_pt without changing the viewing direction.
 </DD>
 <HR>
 
-<DT><a NAME="ls"><B>ls</B> [<I>-a -c -r -s -p -l</I>]  [<I>objects</I>]</DT>
+<DT><a NAME="ls"><B>ls</B> [<I>-A -o -a -c -r -s -p -l</I>]  [<I>objects</I>]</DT>
 
 <DD>The ``ls'' command with no <I>object</I> argument lists the name of
      every object in the
      database (in alphabetical order), except for those marked as hidden with the
      <a href="#hide">hide</a> command . If the <I>object</I> argument is supplied,
      only those <I>objects</I> are listed. The <I>object</I> argument may include
-     regular expressions
-     for matching. The following options are also allowed:
+     regular expressions. If the <I>-A</I> option is used, then the arguments
+     are expected to be a list of attribute name/value pairs, and objects having attributes
+     that match the provided list are listed. By default, an object must match all
+     the specified attributes in order to be listed, however, the <I>-o</I> flag
+     indicates that an object matching at least one attribute name/value pair
+     should be listed. See the <a href="#attr">attr</a> command for information on how to
+     set or get attributes. Regular expressions are not supported for attributes.
+     The following options are also allowed:
      <ul>
        <li> a - list all objects in the database
        <li> c - list all non-hidden combinations in the database
@@ -2724,7 +2760,10 @@ a similar function, but moves the eye_pt without changing the viewing direction.
 	<kbd>mged></kbd> <b>ls -r wheel*</b><br>
 	     -- list all regions with names beginning with ``wheel''<br>
 	<kbd>mged></kbd> <b>ls -c suspension*</b><br>
-	     -- list all combinations with names beginning with ``suspension''
+	     -- list all combinations with names beginning with ``suspension''<br>
+	<kbd>mged></kbd> <b>ls -A -o -r Comment {First comment} Comment {Second comment}</b><br>
+	     -- list all regions that have a ``Comment'' attribute that is set to either
+	     ``First comment'' or ``Second comment''.
 	</DD>
 	</DL>
 </DD>
