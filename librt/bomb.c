@@ -1,8 +1,7 @@
 /*
  *			B O M B . C
  *
- *  Ray Tracing User Interface (RTUIF) error handler.
- *  Handles RT- and LIBRT-specific error flags, then
+ *  Checks LIBRT-specific error flags, then
  *  hands the error off to LIBBU.
  *
  *  Author -
@@ -53,7 +52,7 @@ void
 rt_bomb(s)
 CONST char *s;
 {
-	if(rt_g.debug || rt_g.NMG_debug || rdebug)
+	if(rt_g.debug || rt_g.NMG_debug )
 		bu_debug |= BU_DEBUG_COREDUMP;
 	bu_bomb(s);
 }
