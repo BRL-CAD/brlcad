@@ -785,6 +785,7 @@ register struct pkg_conn *pc;
 			bcopy( buf, tbuf+sizeof(hdr), len );
 		if( (i = write( pc->pkc_fd, tbuf, len+sizeof(hdr) )) != len+sizeof(hdr) )  {
 			if( i < 0 )  {
+				if( errno == EBADF )  return(-1);
 				pkg_perror(pc->pkc_errlog, "pkg_send: tbuf write");
 				return(-1);
 			}
@@ -798,6 +799,7 @@ register struct pkg_conn *pc;
 	/* Send them separately */
 	if( (i = write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) )) != sizeof(hdr) )  {
 		if( i < 0 )  {
+			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_send: header write");
 			return(-1);
 		}
@@ -808,6 +810,7 @@ register struct pkg_conn *pc;
 	if( len <= 0 )  return(0);
 	if( (i = write( pc->pkc_fd, buf, len )) != len )  {
 		if( i < 0 )  {
+			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_send: write");
 			return(-1);
 		}
@@ -907,6 +910,7 @@ register struct pkg_conn *pc;
 			bcopy( buf2, tbuf+sizeof(hdr)+len1, len2 );
 		if( (i = write( pc->pkc_fd, tbuf, len1+len2+sizeof(hdr) )) != len1+len2+sizeof(hdr) )  {
 			if( i < 0 )  {
+				if( errno == EBADF )  return(-1);
 				pkg_perror(pc->pkc_errlog, "pkg_2send: tbuf write");
 				return(-1);
 			}
@@ -920,6 +924,7 @@ register struct pkg_conn *pc;
 	/* Send it in three pieces */
 	if( (i = write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) )) != sizeof(hdr) )  {
 		if( i < 0 )  {
+			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_2send: header write");
 			sprintf(errbuf, "pkg_2send write(%d, x%x, %d) ret=%d\n",
 				pc->pkc_fd, &hdr, sizeof(hdr), i );
@@ -933,6 +938,7 @@ register struct pkg_conn *pc;
 	}
 	if( (i = write( pc->pkc_fd, buf1, len1 )) != len1 )  {
 		if( i < 0 )  {
+			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_2send: write buf1");
 			sprintf(errbuf, "pkg_2send write(%d, x%x, %d) ret=%d\n",
 				pc->pkc_fd, buf1, len1, i );
@@ -947,6 +953,7 @@ register struct pkg_conn *pc;
 	if( len2 <= 0 )  return(i);
 	if( (i = write( pc->pkc_fd, buf2, len2 )) != len2 )  {
 		if( i < 0 )  {
+			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_2send: write buf2");
 			sprintf(errbuf, "pkg_2send write(%d, x%x, %d) ret=%d\n",
 				pc->pkc_fd, buf2, len2, i );
@@ -1039,6 +1046,7 @@ register struct pkg_conn *pc;
 
 	if( (i = write(pc->pkc_fd,pc->pkc_stream,pc->pkc_strpos)) != pc->pkc_strpos )  {
 		if( i < 0 ) {
+			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_flush: write");
 			return(-1);
 		}
@@ -1825,7 +1833,7 @@ int		nodelay;
 		}
 	} else if( i < 0 )  {
 		/* Error condition */
-		if( errno != EINTR )
+		if( errno != EINTR && errno != EBADF )
 			pkg_perror(pc->pkc_errlog, "pkg_checkin: select");
 	}
 }
