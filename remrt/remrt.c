@@ -487,7 +487,7 @@ char	**argv;
 			clients = 0;
 			eat_script( stdin );
 		}
-		if(debug) cd_frames( 0, (char **)0 );
+		if(debug>1) cd_frames( 0, (char **)0 );
 
 		/* Compute until no work remains */
 		running = 1;
@@ -1760,7 +1760,7 @@ register struct pkg_conn *pc;
 char *buf;
 {
 	if(print_on)  {
-		rt_log("%s %s:%s",
+		rt_log("%s %s: %s",
 			stamp(),
 			servers[pc->pkc_fd].sr_host->ht_name,
 			buf );
@@ -1860,7 +1860,7 @@ char *buf;
 		goto out;
 	}
 	if( debug )  {
-		rt_log("%s %s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
+		rt_log("%s %s %d/%d..%d, ray=%d, cpu=%.2g, el=%g\n",
 			stamp(),
 			sp->sr_host->ht_name,
 			info.li_frame, info.li_startpix, info.li_endpix,
@@ -1921,17 +1921,31 @@ char *buf;
 	/* Later, can implement FD cache here */
 	if( (fd = open( fr->fr_filename, 2 )) < 0 )  {
 		perror( fr->fr_filename );
-		/* XXX Now what? Drop frame? */
-	}
-	if( lseek( fd, info.li_startpix*3L, 0 ) < 0 )  {
+		/* The bad fd will trigger a write error, below */
+	} else if( lseek( fd, info.li_startpix*3L, 0 ) < 0 )  {
 		perror( fr->fr_filename );
-		/* Again, now what? */
 		(void)close(fd);	/* prevent write */
+		fd = -1;
+		/* The bad fd will trigger a write error, below */
 	}
 	if( (cnt = write( fd, buf+info.li_len, i )) != i )  {
-		perror("write");
+		perror( fr->fr_filename );
 		rt_log("write s/b %d, got %d\n", i, cnt );
-		/* Again, now what? */
+		/*
+		 *  Generally, a write error is caused by lack of disk space.
+		 *  In any case, it is indicative of bad problems.
+		 *  Stop assigning new work.
+		 */
+		/* XXX should re-queue this assignment */
+		rt_log("%s disk write error, preparing graceful STOP\n", stamp() );
+		cd_stop( 0, (char **)0 );
+
+		/* Dropping the (innocent) server will requeue the work */
+		drop_server( sp, "disk write error" );
+
+		/* Return, as if nothing had happened. */
+		(void)close(fd);
+		goto out;
 	}
 	(void)close(fd);
 
