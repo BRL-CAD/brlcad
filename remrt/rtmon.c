@@ -86,6 +86,9 @@ int		debug = 0;
 
 char		*our_hostname;
 
+FILE		*ifp;
+FILE		*ofp;
+
 static char	usage[] = "\
 Usage:  rtmon [-d#]\n\
 ";
@@ -139,19 +142,79 @@ int	fd;
 	bu_vls_free( &str );
 }
 
+CONST char *rtnode_paths[] = {
+	".",
+	"/m/cad/.remrt.8d",
+	"/n/vapor/m/cad/.remrt.8d",
+	"/m/cad/.remrt.6d",
+	"/n/vapor/m/cad/.remrt.6d",
+	"/usr/brlcad/bin",
+	NULL
+};
+
+/*
+ */
+void
+run_rtnode(fd, cmd)
+int	fd;
+struct bu_vls	*cmd;
+{
+	CONST char **pp;
+	struct bu_vls	path;
+#define MAX_ARGS	50
+	char	*argv[MAX_ARGS+2];
+
+	bu_vls_init(&path);
+
+	(void)bu_argv_from_string( argv, MAX_ARGS, bu_vls_addr(cmd) );
+	argv[0] = "rtnode";
+
+	/* Set up environment variables appropriately */
+	if( access( "/m/cad/libtcl/library/.", X_OK ) == 0 )  {
+		putenv( "TCL_LIBRARY=/m/cad/libtcl/library" );
+		putenv( "TK_LIBRARY=/m/cad/libtk/library" );
+	} else if( access( "/n/vapor/m/cad/libtcl/library/.", X_OK ) == 0 )  {
+		putenv( "TCL_LIBRARY=/n/vapor/m/cad/libtcl/library" );
+		putenv( "TK_LIBRARY=/n/vapor/m/cad/libtk/library" );
+	} else {
+		putenv( "TCL_LIBRARY=/usr/brlcad/libtcl/library" );
+		putenv( "TK_LIBRARY=/usr/brlcad/libtk/library" );
+	}
+
+	for( pp = rtnode_paths; *pp != NULL; pp++ )  {
+		bu_vls_strcpy( &path, *pp );
+		bu_vls_strcat( &path, "/rtnode" );
+		if( access( bu_vls_addr(&path), X_OK ) )  continue;
+
+		if( fork() == 0 )  {
+			/* Child process */
+			close(fd);
+			(void)execv( bu_vls_addr(&path), argv );
+			perror("execv");
+			/* If execv() succeeds, there is no return */
+			/* Process will be reaped in wait3() in main() */
+			exit(42);
+		}
+		fprintf(ofp, "OK %s\n", bu_vls_addr(&path) );
+		fflush(ofp);
+		return;
+	}
+	fprintf(ofp, "FAIL Unable to locate rtnode executable\n");
+	fflush(ofp);
+}
+
 /*
  *			S E R V E R _ P R O C E S S
  *
  *  Manage all conversation on one connection.
  *  There will be a separate process for each open connection.
+ *  Each command will be acknowledged by a single line response.
  */
 void
 server_process(fd)
 int	fd;
 {
 	struct bu_vls	str;
-	FILE		*ifp;
-	FILE		*ofp;
 
 	ifp = fdopen( fd, "r" );
 	ofp = fdopen( fd, "w" );
@@ -165,6 +228,10 @@ int	fd;
 
 		if( strncmp( bu_vls_addr(&str), "status", 6 ) == 0 )  {
 			send_status(fd);
+			continue;
+		}
+		if( strncmp( bu_vls_addr(&str), "rtnode", 6 ) == 0 )  {
+			run_rtnode(fd, &str);
 			continue;
 		}
 		if( strncmp( bu_vls_addr(&str), "quit", 4 ) == 0 )
