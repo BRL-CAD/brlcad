@@ -122,7 +122,7 @@ CONST struct bu_list	*hd;
 static int plot_file_number=0;
 
 static void
-plfu( fu, pt, plane_pt )
+nmg_rt_isect_plfu( fu, pt, plane_pt )
 struct faceuse *fu;
 point_t pt;
 point_t plane_pt;
@@ -1519,7 +1519,7 @@ point_t pt;
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 		register struct faceuse *fu;
 		if ((fu=nmg_find_fu_of_eu( eu_p )))
-			plfu(fu, rd->rp->r_pt, myhit->hit.hit_point);
+			nmg_rt_isect_plfu(fu, rd->rp->r_pt, myhit->hit.hit_point);
 		else
 			pleu(eu_p, rd->rp->r_pt, myhit->hit.hit_point);
 	}
@@ -1948,7 +1948,7 @@ plane_t norm;
 
 	hit_ins(rd, myhit);
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		plfu(fu_p, rd->rp->r_pt, myhit->hit.hit_point);
+		nmg_rt_isect_plfu(fu_p, rd->rp->r_pt, myhit->hit.hit_point);
 
 #ifndef FAST_NMG
 	NMG_CK_HITMISS(myhit);

@@ -197,7 +197,7 @@ struct vertexuse *vu;
 }
 
 static void
-plfu( fu, tbl2d )
+nmg_tri_plfu( fu, tbl2d )
 struct faceuse *fu;
 struct bu_list *tbl2d;
 {
@@ -2328,7 +2328,7 @@ CONST struct bn_tol	*tol;
 		}
 
 		if (rt_g.NMG_debug & DEBUG_TRI) {
-			plfu( nmg_find_fu_of_vu(tp->top->vu_p),  tbl2d );
+			nmg_tri_plfu( nmg_find_fu_of_vu(tp->top->vu_p),  tbl2d );
 			print_tlist(tbl2d, tlist);
 		}
 	}
@@ -2449,7 +2449,7 @@ CONST struct bn_tol *tol;
 			NMG_CK_LOOPUSE(lu);
 
 			if (rt_g.NMG_debug & DEBUG_TRI)
-				plfu( lu->up.fu_p, tbl2d );
+				nmg_tri_plfu( lu->up.fu_p, tbl2d );
 
 			if (current->vu_p->v_p == first->vu_p->v_p) { 
 				t = PT2D_NEXT(tbl2d, first);
@@ -2651,7 +2651,7 @@ triangulate:
 			bu_log("\tpt2d %26.20e %26.20e\n", pt->coord[0], pt->coord[1]);
 		}
 
-		plfu( fu, tbl2d );
+		nmg_tri_plfu( fu, tbl2d );
 		nmg_plot_flat_face(fu, tbl2d);
 		bu_log( "Face plotted\n\tmaking trapezoids...\n");
 	}
@@ -2733,7 +2733,7 @@ triangulate:
 		nmg_lu_reorient(lu);
 
 	if (rt_g.NMG_debug & DEBUG_TRI)
-		plfu( fu, tbl2d );
+		nmg_tri_plfu( fu, tbl2d );
 
 	while (BU_LIST_WHILE(tp, trap, &tlist)) {
 		BU_LIST_DEQUEUE(&tp->l);
