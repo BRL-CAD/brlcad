@@ -180,7 +180,7 @@ yyinit()
 	BEGIN edge;
 }
 
-#if !defined(__bsdi__) && !defined(__GNUC__)
+#if (!defined(__bsdi__) && !defined(__GNUC__)) || defined(YY_FLEX_LEX_COMPAT)
 extern int yylineno;
 yywrap()
 {
