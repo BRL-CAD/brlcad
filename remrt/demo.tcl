@@ -245,6 +245,7 @@ proc sense_servers {} {
 	array donesearch nodes $j
 }
 
+# Only attempt reconnection to nodes which are presently not connected.
 proc reconnect {} {
 	global nodes
 	global	fds
