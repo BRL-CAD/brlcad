@@ -127,8 +127,8 @@ static  RGBpixel eia_top[7] = {
 };
 
 static RGBpixel botpart[5] = {
-#ifdef SYSV
-	/* SysV can't handle floating-point formulas as initializers */
+#ifndef Floating_Initializers
+	/* Most systems can't handle floating-point formulas as initializers */
 	{ 0,		68,		114 },		/* 40 IRE -I */
 	{ 255,		255,		255 },		/* 100% white */
 	{ 69,		0,		129 },		/* 40 IRE Q */
