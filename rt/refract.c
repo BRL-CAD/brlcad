@@ -28,8 +28,8 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 #include "./material.h"
 
-int	max_ireflect = 15;	/* Maximum internal reflection level */
-int	max_bounces = 15;	/* Maximum recursion level */
+int	max_ireflect = 5;	/* Maximum internal reflection level */
+int	max_bounces = 5;	/* Maximum recursion level */
 
 #define MSG_PROLOGUE	20		/* # initial messages to see */
 #define MSG_INTERVAL	4000		/* message interval thereafter */
