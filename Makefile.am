@@ -20,6 +20,7 @@ SUBDIRS=\
 	librt\
 	librtserver\
 	libsysv\
+	libtclcad\
 	libtermio\
 	libutahrle\
 	libwdb\

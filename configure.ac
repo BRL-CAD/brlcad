@@ -23,6 +23,7 @@ case "$target" in
 		PTHREAD_LIBS="-pthread"
 		;;
 esac
+AC_DEFINE(HAS_POSIX_THREADS,1,[Posix Threading API])
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
@@ -52,7 +53,15 @@ X_LIBS="-L/usr/X11R6/lib -lX11 -lXi"
 dnl tcl
 TCLVER=8.4
 TCL=libtcl${TCLVER}
-TCL_LIBS='-L${top_builddir}/libtcl${TCLVER}/build -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
+case "$target" in
+	powerpc-apple-darwin*)
+		TCL_LIBS='-L${top_builddir}/libtcl${TCLVER}/build -ltcl${TCLVER} ${DL} ${SOCKET} -lm -dynamiclib -flat_namespace -undefined suppress -lc -install_name ${libdir}/libtcl${TCLVER}.dylib'
+dnl -compatibility_version 20 -current_version 20.1
+		;;
+	*)
+		TCL_LIBS='-L${top_builddir}/libtcl${TCLVER}/build -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
+		;;
+esac
 TCL_LIBRARY="$prefix/tcl${TCLVER}"
 if test "$FRAMEWORK_BUILD" = "1" ; then
 	dnl this may be wrong
@@ -179,6 +188,7 @@ PKG='${top_builddir}/libpkg/libpkg.la'
 RLE='${top_builddir}/libutahrle/libutahrle.la -lm'
 RT='${top_builddir}/librt/librt.la ${BN} ${REGEX_LIB}'
 SYSV='${top_builddir}/libsysv/libsysv.la'
+TCLCAD='${top_builddir}/libtclcad/libtclcad.la'
 TERMIO='${top_builddir}/libtermio/libtermio.la'
 WDB='${top_builddir}/libwdb/libwdb.la'
 
@@ -194,8 +204,8 @@ AC_SUBST(GL_CFLAGS)
 AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
-AC_SUBST(JAVA_CFLAGS)
 AC_SUBST(JAVARTSERVER)
+AC_SUBST(JAVA_CFLAGS)
 AC_SUBST(LEX_CFLAGS)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
@@ -209,6 +219,7 @@ AC_SUBST(SGIGL)
 AC_SUBST(SOCKET)
 AC_SUBST(SYSV)
 AC_SUBST(TCL)
+AC_SUBST(TCLCAD)
 AC_SUBST(TCLVER)
 AC_SUBST(TCL_BUILD_CFLAGS)
 AC_SUBST(TCL_LIBRARY)
@@ -287,6 +298,7 @@ AC_CONFIG_FILES([
 	librtserver/Makefile
 	libsysv/Makefile
 	libtcl8.4/Makefile
+	libtclcad/Makefile
 	libtermio/Makefile
 	libtk8.4/Makefile
 	libutahrle/Makefile
