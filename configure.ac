@@ -1016,7 +1016,6 @@ dnl ***************************
 
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(\
-	__INTADDR__ \
 	access \
 	alarm \
 	atexit \
