@@ -201,7 +201,7 @@ register RGBpixel	*bgpixel;
 	static char	*verbage[] =
 		{
 		"Frame buffer image saved in Old Run Length Encoded form\n",
-		"Frame buffer image saved in B&W RLE form\n",
+		"Frame buffer image saved in Old B&W RLE form\n",
 		"File not in RLE format, can't display (magic=0x%x)\n",
 		"Saved with background color %d %d %d\n",
 		"Saved in overlay mode\n",
@@ -500,22 +500,13 @@ RGBpixel	*scan_buf;
 				Data will ignore strides below.
 		 	*/
 			PRNT_A1_DEBUG( "Set-Color", datum );
-			switch( (n = _bw_flag ? 0 : datum) )
+			if( (n = _bw_flag ? 0 : datum) > 2 )
 				{
-			case 0:
-				pp = &(scan_buf[r_setup.h_xpos][RED]);
-				break;
-			case 1:
-				pp = &(scan_buf[r_setup.h_xpos][GRN]);
-				break;
-			case 2:
-				pp = &(scan_buf[r_setup.h_xpos][BLU]);
-				break;
-			default:
 				(void) fprintf( stderr,	"Bad color %d\n", n );
 				if( ! rle_debug )
 					return	-1;
 				}
+			pp = &(scan_buf[r_setup.h_xpos][n]);
 			break;
 		case RSkipPixelsOp: /* advance pixel ptr */
 			n = datum;
@@ -560,8 +551,8 @@ RGBpixel	*scan_buf;
 				register u_char c;
 				while( n-- > 0 )
 					{
+					/* Implicit knowledge of sizeof(RGBpixel) */
 					*pp++ = c = getc( fp );
-					*pp++ = c;
 					*pp++ = c;
 					*pp++ = c;
 					}
@@ -593,7 +584,7 @@ RGBpixel	*scan_buf;
 				{ /* Ugh, black & white.		*/
 				while( n-- > 0 )
 					{
-					*pp++ = (u_char) word;
+					/* Implicit knowledge of sizeof(RGBpixel) */
 					*pp++ = (u_char) word;
 					*pp++ = (u_char) word;
 					*pp++ = (u_char) word;
