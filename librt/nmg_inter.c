@@ -4702,7 +4702,7 @@ CONST struct rt_tol	*tol;
 	struct loopuse	*lu2;
 	struct edgeuse	*eu1;
 	struct edgeuse	*eu2;
-	long		*flags;
+	char		*flags;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_crackshells(s1=x%x, s2=x%x)\n", s1, s2);
@@ -4739,19 +4739,13 @@ CONST struct rt_tol	*tol;
 		nmg_vshell( &s2->r_p->s_hd, s2->r_p );
 	}
 
-	/* XXX this isn't true for non-3-manifold geometry! */
-	if( RT_LIST_IS_EMPTY( &s1->fu_hd ) ||
-	    RT_LIST_IS_EMPTY( &s2->fu_hd ) )  {
-		rt_log("ERROR:shells must contain faces for boolean operations.");
-		return;
-	}
-
 	/* See if shells overlap */
 	if ( ! V3RPP_OVERLAP_TOL(sa1->min_pt, sa1->max_pt,
 	    sa2->min_pt, sa2->max_pt, tol) )
 		return;
 
-	flags = (long *)rt_calloc( s1->r_p->m_p->maxindex, sizeof(long),
+	/* XXX This is dangerous:  maxindex will grow rapidly! */
+	flags = (char *)rt_calloc( s1->r_p->m_p->maxindex * 4, sizeof(char),
 		"nmg_crackshells flags[]" );
 
 	/*
@@ -4794,6 +4788,9 @@ CONST struct rt_tol	*tol;
 		 *  is sufficient.
 		 *  XXX Is this true?  What about a wire edge cutting
 		 *  XXX clean across fu1?  fu1 ought to be cut!
+		 *
+		 *  If coplanar, need to cut face.
+		 *  If non-coplanar, can only hit at one point.
 		 */
 		is.fu2 = (struct faceuse *)NULL;
 
