@@ -33,7 +33,7 @@
  * to evaluate a parametric value on a curve. This is expanded to the surface.
  */
 
-fastf_t *
+void
 rt_nurb_s_eval( srf, u, v, final_value )
 CONST struct snurb *srf;
 fastf_t	u;
@@ -51,10 +51,6 @@ fastf_t * final_value;
 	int	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
 	NMG_CK_SNURB(srf);
-
-	final_value = (fastf_t * ) rt_malloc( 
-	    sizeof (fastf_t) * coords,
-	    "rt_nurb_s_eval: final value" );
 
 	/* Because the algorithm is destructive in nature, the
 	 * rows of the control mesh are copied. The evaluation
@@ -105,14 +101,13 @@ fastf_t * final_value;
 }
 
 
-fastf_t *
+void
 rt_nurb_c_eval( crv, param, final_value)
 CONST struct cnurb *crv;
 fastf_t param;
 fastf_t * final_value;
 {
 	fastf_t * pnts;
-	fastf_t * final_value;
 	fastf_t * ev_pt;
 	int	coords;
 	int	i, k_index;
@@ -120,9 +115,6 @@ fastf_t * final_value;
 	NMG_CK_CNURB(crv);
 
 	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type);
-
-	final_value = (fastf_t * ) rt_malloc( coords * sizeof(fastf_t),
-	    "diff: rt_nurb_c_eval");
 
 	k_index = rt_nurb_knot_index( &crv->knot, param, crv->order);
 
