@@ -164,7 +164,7 @@ static struct funtab funtab[] = {
 	f_tables, 3, MAXARGS,
 "ill", "name", "illuminate object",
 	f_ill,2,2,
-"in", "", "keyboard entry of solids",
+"in", "[-f] [-s] parameters...", "keyboard entry of solids.  -f for no drawing, -s to enter solid edit",
 	f_in, 1, MAXARGS,
 "inside", "", "finds inside solid per specified thicknesses",
 	f_inside, 1, MAXARGS,
