@@ -1583,9 +1583,11 @@ RT_EXTERN(void mat_print, (CONST char *title, CONST mat_t m) );
 RT_EXTERN(void mat_trn, (mat_t dest, CONST mat_t src) );
 RT_EXTERN(void mat_ae, (mat_t dest, double azimuth, double elev) );
 RT_EXTERN(void mat_ae_vec, (fastf_t *azp, fastf_t *elp, CONST vect_t src) );
+RT_EXTERN(void mat_aet_vec, (fastf_t *azp, fastf_t *elp, fastf_t *twistp,
+			     vect_t vec_ae, vect_t vec_twist, fastf_t accuracy) );
 #define ae_vec(_az,_el,_vec)	mat_ae_vec(_az,_el,_vec)	/* compat */
 RT_EXTERN(void mat_angles, (mat_t dest, double alpha, double beta, double ggamma) );
-RT_EXTERN(void eigen2x2, (fastf_t *val1, fastf_t *val2,
+RT_EXTERN(void mat_eigen2x2, (fastf_t *val1, fastf_t *val2,
 	vect_t vec1, vect_t vec2, double a, double b, double c) );
 #define eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	\
 	mat_eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	/* compat */
@@ -1596,6 +1598,8 @@ RT_EXTERN(void mat_zrot, (mat_t dest, double sinz, double cosz) );
 RT_EXTERN(void mat_lookat, (mat_t dest, CONST vect_t dir, int yflip) );
 RT_EXTERN(void mat_vec_ortho, (vect_t dest, CONST vect_t src) );
 RT_EXTERN(void mat_vec_perp, (vect_t dest, CONST vect_t src) );
+RT_EXTERN(void mat_xform_about_pt, (mat_t mat, CONST mat_t xform, CONST point_t pt));
+RT_EXTERN(int rt_mat_is_equal, (CONST mat_t a, CONST mat_t b, CONST struct rt_tol *tol));
 #define vec_ortho(_d,_s)	mat_vec_ortho(_d,_s)	/* compat */
 #define vec_perp(_d,_s)		mat_vec_perp(_d,_s)	/* compat */
 
