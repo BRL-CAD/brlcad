@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fb-rle.c	1.6
-	Last edit: 	6/6/85 at 13:21:05
-	Retrieved: 	8/13/86 at 03:11:00
+	SCCS id:	@(#) fb-rle.c	1.7
+	Last edit: 	8/15/85 at 10:06:25
+	Retrieved: 	8/13/86 at 03:11:08
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fb-rle.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fb-rle.c	1.6	last edit 6/6/85 at 13:21:05";
+char	sccsTag[] = "@(#) fb-rle.c	1.7	last edit 8/15/85 at 10:06:25";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -27,7 +27,7 @@ char	sccsTag[] = "@(#) fb-rle.c	1.6	last edit 6/6/85 at 13:21:05";
 #define PIXEL_OFFSET	((scan_ln%dma_scans)*_fbsize)
 static char	*usage[] = {
 "",
-"fb-rle (1.6)",
+"fb-rle (1.7)",
 "",
 "Usage: fb-rle [-CScdhvw][-l X Y][-p X Y][file.rle]",
 "",
@@ -68,16 +68,23 @@ char	*argv[];
 	dma_pixels = DMA_PIXELS;
 	dma_scans = DMA_SCANS;
 	scan_bytes = _fbsize * sizeof(Pixel);
-	if( rle_verbose )
-		(void) fprintf( stderr,
-				"Background is %d %d %d\n",
-				bgpixel.red, bgpixel.green, bgpixel.blue
-				);
 	rle_wlen( xlen, ylen, 1 );
 	rle_wpos( xpos, ypos, 1 );
-	if( rle_whdr( fp, ncolors, bgflag, cmflag, &bgpixel ) == -1 )
-		return	1;
 	if( fbopen( NULL, APPEND ) == -1 )
+		return	1;
+	if(	bgflag
+	    &&	fbread( 1, 1, &bgpixel, 1 ) == -1
+		)
+		{
+		(void) fprintf( stderr, "Couldn't read background!\n" );
+		return	1;
+		}	
+	if( bgflag && rle_verbose )
+		(void) fprintf( stderr,
+				"Background saved as %d %d %d\n",
+				bgpixel.red, bgpixel.green, bgpixel.blue
+				);
+	if( rle_whdr( fp, ncolors, bgflag, cmflag, &bgpixel ) == -1 )
 		return	1;
 	if( cmflag )
 		{
