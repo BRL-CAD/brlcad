@@ -87,8 +87,7 @@ extern Tk_Window tkwin;
 #endif
 
 int dm_pipe[2];
-
-struct db_i	*dbip;			/* database instance pointer */
+struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 
 int    update_views;
 extern struct dm dm_Null;
@@ -135,7 +134,7 @@ struct bu_vls mged_prompt;
 void pr_prompt(), pr_beep();
 
 #ifdef USE_PROTOTYPES
-Tk_FileProc stdin_input;
+Tcl_FileProc stdin_input;
 #else
 void stdin_input();
 #endif
@@ -330,9 +329,11 @@ char **argv;
 #endif
 
 	(void)pipe(dm_pipe);
-	Tk_CreateFileHandler(STDIN_FILENO, TK_READABLE, stdin_input,
+	Tcl_CreateFileHandler(Tcl_GetFile((ClientData)STDIN_FILENO, TCL_UNIX_FD),
+			      TCL_READABLE, stdin_input,
 			     (ClientData)STDIN_FILENO);
-	Tk_CreateFileHandler(dm_pipe[0], TK_READABLE, stdin_input,
+	Tcl_CreateFileHandler(Tcl_GetFile((ClientData)dm_pipe[0], TCL_UNIX_FD),
+			      TCL_READABLE, stdin_input,
 			     (ClientData)dm_pipe[0]);
 
 	(void)signal( SIGINT, SIG_IGN );
@@ -386,7 +387,7 @@ pr_beep()
  * standard input handling
  *
  * When the Tk event handler sees input on standard input, it calls the
- * routine "stdin_input" (registered with the Tk_CreateFileHandler call).
+ * routine "stdin_input" (registered with the Tcl_CreateFileHandler call).
  * This routine simply appends the new input to a growing string until the
  * command is complete (it is assumed that the routine gets a fill line.)
  *
@@ -833,9 +834,9 @@ int	non_blocking;
 	   as possible before the next redraw (multiple keypresses, redraw
 	   events, etc... */
 	
-	while (Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
+	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
     } else {
-      Tk_DoOneEvent(TK_ALL_EVENTS);
+      Tcl_DoOneEvent(TCL_ALL_EVENTS);
     }
     
     non_blocking = 0;
