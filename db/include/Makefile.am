@@ -1,7 +1,7 @@
 # $Id$
 
 EXTRA_DIST = \
-	ctype.inc
+	ctype.inc \
 	debug.inc
 
 MAINTAINERCLEANFILES = Makefile.in
