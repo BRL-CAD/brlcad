@@ -326,7 +326,7 @@ CONST char	*name;
 	rt_vls_setlen( vls, nbytes );
 	buf = (unsigned char *)rt_vls_addr(vls);
 	bp = rt_plong( buf, nelem );
-	strncpy( bp, name, namelen );
+	strncpy( (char *)bp, name, namelen );
 	bp += namelen;
 
 	/* Output cmds, as bytes */
@@ -375,7 +375,7 @@ CONST unsigned char	*buf;
 	nelem = rt_glong( buf );
 	bp = buf+4;
 
-	namelen = strlen(bp)+1;
+	namelen = strlen((char *)bp)+1;
 	rt_vls_strncpy( namevls, (char *)bp, namelen );
 	bp += namelen;
 
