@@ -87,223 +87,6 @@ Usage: patch-g [options] > model.g\n\
 	-X #		librt NMG debug flags\n\
 Note: fastgen.rp is the pre-processed (through rpatch) fastgen file\n";
 
-void
-nmg_tmp_vu( vu )
-CONST struct vertexuse *vu;
-{
-	struct vertex *v;
-	struct vertex_g *vg;
-
-	NMG_CK_VERTEXUSE( vu );
-	rt_log( "vertexuse magic_p = x%x , magic = x%x , index = %d\n" , &vu->l.magic , vu->l.magic , vu->index );
-
-	v = vu->v_p;
-
-	NMG_CK_VERTEX( v );
-	rt_log( "vertex magic_p = x%x , magic = x%x , index = %d\n" , &v->magic , v->magic , v->index );
-
-	vg = v->vg_p;
-
-	NMG_CK_VERTEX_G( vg );
-	rt_log( "vertex_g magic_p = x%x , magic = x%x , index = %d\n" , &vg->magic , vg->magic , vg->index );
-}
-
-void
-nmg_tmp_eu( eu )
-CONST struct edgeuse *eu;
-{
-	struct edge *e;
-	struct edge_g *eg;
-	struct edgeuse_a *eua;
-	struct vertexuse *vu;
-	struct edgeuse *eu1;
-
-	NMG_CK_EDGEUSE( eu );
-	rt_log( "edgeuse magic_p = x%x , magic = x%x , index = %d\n" , &eu->l.magic , eu->l.magic , eu->index );
-
-	e = eu->e_p;
-	NMG_CK_EDGE( e );
-	rt_log( "edge magic_p = x%x , magic = x%x , index = %d\n" , &e->magic , e->magic , e->index );
-	eu1 = e->eu_p;
-	if( eu1->l.magic != NMG_EDGEUSE_MAGIC )
-	{
-		rt_log( "Found bad edgeuse:\n" );
-		rt_log( "e->eu_p should be x%x, but is x%x\n" , eu , eu1 );
-		rt_log( "( %f %f %f ) to ( %f %f %f )\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) , V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
-	}
-
-	eg = e->eg_p;
-	if( eg )
-	{
-		NMG_CK_EDGE_G( eg );
-		rt_log( "edge_g magic_p = x%x , magic = x%x , index = %d\n" , &eg->magic , eg->magic , eg->index );
-	}
-	else
-		rt_log( "\tNo edge_g\n" );
-
-	eua = eu->eua_p;
-	if( eua )
-	{
-		NMG_CK_EDGEUSE_A( eua );
-		rt_log( "edgeuse_a magic_p = x%x , magic = x%x , index = %d\n" , &eua->magic , eua->magic , eua->index );
-	}
-	else
-		rt_log( "\tNo edgeuse_a\n" );
-
-	vu = eu->vu_p;
-	nmg_tmp_vu( vu );
-}
-
-void
-nmg_tmp_lu( lu )
-CONST struct loopuse *lu;
-{
-	struct loop *l;
-	struct loopuse_a *lua;
-	struct loop_g *lg;
-
-	NMG_CK_LOOPUSE( lu );
-        rt_log( "loopuse magic_p = x%x , magic = x%x , index = %d\n" , &lu->l.magic , lu->l.magic , lu->index );
-
-	l = lu->l_p;
-	NMG_CK_LOOP( l );
-        rt_log( "loop magic_p = x%x , magic = x%x , index = %d\n" , &l->magic , l->magic , l->index );
-
-	lua = lu->lua_p;
-	if( lua )
-	{
-		NMG_CK_LOOPUSE_A( lua );
-	        rt_log( "loopuse_a magic_p = x%x , magic = x%x , index = %d\n" , &lua->magic , lua->magic , lua->index );
-	}
-	else
-		rt_log( "\tNo loopuse_a\n" );
-
-	lg = l->lg_p;
-	if( lg )
-	{
-		NMG_CK_LOOP_G( lg );
-	        rt_log( "loop_g magic_p = x%x , magic = x%x , index = %d\n" , &lg->magic , lg->magic , lg->index );
-	}
-	else
-		rt_log( "\tNo loop_g\n" );
-
-	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
-	{
-		struct edgeuse *eu;
-
-		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-			nmg_tmp_eu( eu );
-	}
-	else if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
-	{
-		struct vertexuse *vu;
-
-		vu = RT_LIST_FIRST( vertexuse , &lu->down_hd );
-		nmg_tmp_vu( vu );
-	}
-}
-void
-nmg_tmp_fu( fu )
-CONST struct faceuse *fu;
-{
-	struct face *f;
-	struct faceuse_a *fua;
-	struct face_g *fg;
-	struct loopuse *lu;
-
-	NMG_CK_FACEUSE( fu );
-        rt_log( "faceuse magic_p = x%x , magic = x%x , index = %d\n" , &fu->l.magic , fu->l.magic , fu->index );
-
-	fua = fu->fua_p;
-	if( fua )
-	{
-		NMG_CK_FACEUSE_A( fua );
-		rt_log( "faceuse_a magic_p = x%x , magic = x%x , index = %d\n" , &fua->magic , fua->magic , fua->index );
-	}
-	else
-		rt_log( "\tNo faceuse_a\n" );
-
-	f = fu->f_p;
-	NMG_CK_FACE( f );
-	rt_log( "face magic_p = x%x , magic = x%x , index = %d\n" , &f->l.magic , f->l.magic , f->index );
-
-	fg = f->fg_p;
-	if( fg )
-	{
-		NMG_CK_FACE_G( fg );
-		rt_log( "face_g magic_p = x%x , magic = x%x , index = %d\n" , &fg->magic , fg->magic , fg->index );
-	}
-	else
-		rt_log( "\tNo face_g\n" );
-
-	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-		nmg_tmp_lu( lu );
-}
-
-void
-nmg_tmp( m )
-CONST struct model *m;
-{
-	struct nmgregion *r;
-	struct model_a *ma;
-
-	NMG_CK_MODEL( m );
-	rt_log( "model magic_p = x%x , magic = x%x , index = %d\n" , &m->magic , m->magic , m->index );
-	ma = m->ma_p;
-	if( ma )
-	{
-		NMG_CK_MODEL_A( ma );
-	        rt_log( "model_a magic_p = x%x , magic = x%x , index = %d\n" , &ma->magic , ma->magic , ma->index );
-	}
-	else
-		rt_log( "\tNo model_a\n" );
-
-	for( RT_LIST_FOR( r , nmgregion , &m->r_hd ) )
-	{
-		struct shell *s;
-		struct nmgregion_a *ra;
-
-		NMG_CK_REGION( r );
-
-		rt_log( "region magic_p = x%x , magic = x%x , index = %d\n" , &r->l.magic , r->l.magic , r->index );
-		ra = r->ra_p;
-		if( ra )
-		{
-			NMG_CK_REGION_A( ra );
-	                rt_log( "region_a magic_p = x%x , magic = x%x , index = %d\n" , &ra->magic , ra->magic , ra->index );
-		}
-		else
-			rt_log( "\tNo region_a\n" );
-
-		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
-		{
-			struct shell_a *sa;
-			struct faceuse *fu;
-			struct loopuse *lu;
-			struct edgeuse *eu;
-			struct vertexuse *vu;
-
-			NMG_CK_SHELL( s );
-	                rt_log( "shell magic_p = x%x , magic = x%x , index = %d\n" , &s->l.magic , s->l.magic , s->index );
-			sa = s->sa_p;
-			if( sa )
-			{
-				NMG_CK_SHELL_A( sa );
-		                rt_log( "shell_a magic_p = x%x , magic = x%x , index = %d\n" , &sa->magic , sa->magic , sa->index );
-			}
-			else
-				rt_log( "\tNo shell_a\n" );
-
-			vu = s->vu_p;
-			if( vu != NULL )
-				nmg_tmp_vu( vu );
-
-			for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
-				nmg_tmp_fu( fu );
-		}
-	}
-}
-
 main(argc,argv)
 int	argc;
 char	*argv[];
@@ -314,6 +97,7 @@ char	*argv[];
 	int fd,fl,nread;
 	FILE	*gfp,*mfp;
 	char	buf[99],s[132+2];
+	int	c;
 	int j = 1;
 	int i;
 	int done;
@@ -334,8 +118,6 @@ char	*argv[];
 
 	bzero(list,sizeof(list));
 
-	argc--,argv++;
-
 	if ( isatty(fileno(stdout)) ){
 		(void)fputs("attempting to send binary output to tty, aborting!\n",stderr);
 		(void)fputs(usage, stderr);
@@ -344,107 +126,99 @@ char	*argv[];
 
 	/*     This section checks usage options given at run command time.   */
 
-	while (argc > 0 && argv[0][0] == '-') {
-		switch (argv[0][1]) {
+	/* Get command line arguments. */
+	while ((c = getopt(argc, argv, "x:X:pf:i:m:anu:t:o:rc:d:")) != EOF)
+	{
+		switch (c)
+		{
+			case 'x':  /* librt debug flags */
 
-		case 'x':  /* librt debug flags */
+				sscanf( optarg , "%x" , &rt_g.debug );
+				break;
 
-			argc--,argv++;
-			sscanf( *argv , "%x" , &rt_g.debug );
-			break;
+			case 'X':  /* librt NMG debug flags */
 
-		case 'X':  /* librt NMG debug flags */
+				sscanf( optarg , "%x" , &rt_g.NMG_debug );
+				break;
 
-			argc--,argv++;
-			sscanf( *argv , "%x" , &rt_g.NMG_debug );
-			break;
+			case 'p':  /* polysolid output */
 
-		case 'p':  /* polysolid output */
+				polysolid = 1;
+				break;
 
-			polysolid = 1;
-			break;
+			case 'f':  /* fastgen source file data */
 
-		case 'f':  /* fastgen source file data */
+				patchfile = optarg;
+				break;
 
-			argc--,argv++;
-			patchfile = *argv;
-			break;
+			case 'i':  /* group labels source file */
 
-		case 'i':  /* group labels source file */
+				labelfile = optarg;
+				break;
 
-			argc--,argv++;
-			labelfile = *argv;
-			break;
+			case 'm':  /* materials information file */
 
-		case 'm':  /* materials information file */
+				matfile = optarg;
+				break;
 
-			argc--,argv++;
-			matfile = *argv;
-			break;
+			case 'a':  /* process phantom armor ? */
 
-		case 'a':  /* process phantom armor ? */
+				aflg++;
+				break;
 
-			aflg++;
-			break;
+			case 'n':  /* process volume mode as plate mode ? */
 
-		case 'n':  /* process volume mode as plate mode ? */
+				nflg = 0;
+				break;
 
-			nflg = 0;
-			break;
+			case 'u':  /* specify number of union operations
+				    * to put in a region 
+							    */
 
-		case 'u':  /* specify number of union operations
-			    * to put in a region 
-						    */
+				if( (num_unions = atoi( optarg )) <= 0 ) {
+					rt_log( "%d: bad number of unions to put in a region\n", num_unions );
+					exit( 1 );
+				}
+				break;
 
-			argc--,argv++;
-			if( (num_unions = atoi( *argv )) <= 0 ) {
-				fprintf(stderr,"%d: bad number of unions to put in a region\n", num_unions );
-				exit( 1 );
-			}
-			break;
+			case 't':  /* optional title for the database */
 
-		case 't':  /* optional title for the database */
+				title = optarg;
+				break;
 
-			argc--,argv++;
-			title = *argv;
-			break;
+			case 'o':  /* optional top-level object name */
 
-		case 'o':  /* optional top-level object name */
+				top_level = optarg;
+				break;
 
-			argc--,argv++;
-			top_level = *argv;
-			break;
+			case 'r':  /* reverse normals for plate mode triangles */
 
-		case 'r':  /* reverse normals for plate mode triangles */
+				rev_norms++;
+				break;
 
-			rev_norms++;
-			break;
-		case 'c':  /* center of object (used for some plate mode
-			    * triangle surface normal calculations
-						    */
-			argc--,argv++;
+			case 'c':  /* center of object (used for some plate mode
+				    * triangle surface normal calculations
+							    */
 #if defined( sgi ) && ! defined( mips )			
-			sscanf( *argv,"%f %f %f", 
-			    &Centroid[0],&Centroid[1],&Centroid[2]);
+				sscanf( optarg,"%f %f %f", 
+				    &Centroid[0],&Centroid[1],&Centroid[2]);
 #else
-			sscanf( *argv,"%lf %lf %lf", 
-			    &Centroid[0],&Centroid[1],&Centroid[2]);
+				sscanf( optarg,"%lf %lf %lf", 
+				    &Centroid[0],&Centroid[1],&Centroid[2]);
 #endif
-			VSCALE( Centroid, Centroid, mmtin );
-			break;
+				rt_log( "Centroid = ( %f %f %f )\n" , V3ARGS( Centroid ) );
+				VSCALE( Centroid, Centroid, mmtin );
+				break;
 
-		case 'd':  /* debug flag checking */
+			case 'd':  /* debug flag checking */
 
-			argc--,argv++;
-			debug = atoi(*argv); /* Debug level */
-			break;
+				debug = atoi(optarg); /* Debug level */
+				break;
 
-		default:
-			(void)fputs(usage, stderr);
-			exit(1);
-		}
-		argc--, argv++;
-
+			default:
+				(void)fputs(usage, stderr);
+				exit(1);
+			}
 	}
 
 	if( debug )
@@ -543,7 +317,7 @@ char	*argv[];
 			if( sscanf(s,"%6d%*66c%3d%5d",
 			    &i,&eqlos,&matcode) != 3 ) {
 
-				fprintf(stderr,"Incomplete line in materials file for component '%.4d'\n",i);
+				rt_log( "Incomplete line in materials file for component '%.4d'\n",i);
 				exit(1);
 			}
 			nm[i].matcode = matcode;
@@ -593,7 +367,7 @@ char	*argv[];
 
 			/*  Regurgitate data just loaded for debugging   */
 			if (debug > 0){
-				fprintf(stderr,"%lf %lf %lf %c %lf %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+				rt_log( "%lf %lf %lf %c %lf %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 				    in[i].x,in[i].y,in[i].z,in[i].surf_mode,in[i].surf_type,
 				    in[i].surf_thick,in[i].spacecode, in[i].cc,
 				    in[i].ept[0],in[i].ept[1],in[i].ept[2],
@@ -623,7 +397,7 @@ char	*argv[];
 
 			if( debug > 2 ) {
 				for( j=0; j<i; j++ )
-					fprintf(stderr,"IN: %f %f %f\n",in[j].x,in[j].y,in[j].z);
+					rt_log("IN: %f %f %f\n",in[j].x,in[j].y,in[j].z);
 			}
 
                     	if( rt_g.debug&DEBUG_MEM_FULL )
@@ -651,7 +425,7 @@ char	*argv[];
 				break;
 
 			case 4: 	/* new "donut/torus" (not processed) */
-				fprintf(stderr,"component %.4d: donut / torus not implemented\n",in[i-1].cc);
+				rt_log( "component %.4d: donut / torus not implemented\n",in[i-1].cc);
 				break;
 
 			case 5:		/* wedge */
@@ -680,7 +454,7 @@ char	*argv[];
 				break;
 
 			default:
-				fprintf(stderr,"component %.4d: unknown solid type %d\n",
+				rt_log( "component %.4d: unknown solid type %d\n",
 				    in[i-1].cc,in[i-1].surf_type);
 				break;
 
@@ -1109,13 +883,13 @@ struct rt_tol *tol;
 		{
 
 			;	/* do nothing */
-			/* fprintf(stderr,"Repeated Vertice, no face made\n"); */
+			/* rt_log( "Repeated Vertice, no face made\n"); */
 		}
 		else if( rt_3pts_collinear( verts[k].coord , verts[k+1].coord , verts[k+2].coord , tol ) )
 		{
 
 			;	/* do nothing */
-			/* fprintf(stderr,"%s: collinear points, face not made.\n", name); */
+			/* rt_log( "%s: collinear points, face not made.\n", name); */
 
 		}
 		else
@@ -1622,11 +1396,7 @@ nmg_face_g( fu , pl1 );
 	{
 		nmg_shell_coplanar_face_merge( s , tol , 0 );
 		if( !nmg_simplify_shell( s ) )
-		{
-			if( debug > 3 )
-				nmg_tmp( m );
 			mk_nmg( stdout , name , m );
-		}
 	}
 
 	/* if this solid is mirrored, don't go through the entire process again */
@@ -1695,7 +1465,7 @@ int cnt;
 				list[index].flag = 1;
 
 				if (debug > 3)
-					fprintf(stderr,"%d %f %f %f\n",list[index].flag,in[k].x,in[k].y,in[k].z);
+					rt_log( "%d %f %f %f\n",list[index].flag,in[k].x,in[k].y,in[k].z);
 			}
 
 		}
@@ -1715,12 +1485,12 @@ int cnt;
 		}
 
 		if (debug > 3)
-			fprintf(stderr,"k=%d l=%d %f %f %f flag=%d\n",k,l,list[k].x,list[k].y,list[k].z,list[k].flag);
+			rt_log( "k=%d l=%d %f %f %f flag=%d\n",k,l,list[k].x,list[k].y,list[k].z,list[k].flag);
 	}
 
 	if (debug > 2){
 		for (k=1;(k<=l);k++)
-			fprintf(stderr,"%d %f %f %f\n",k,x[k],y[k],z[k]);
+			rt_log( "%d %f %f %f\n",k,x[k],y[k],z[k]);
 	}
 
 	VSET( centroid , 0.0 , 0.0 , 0.0 );
@@ -1736,7 +1506,7 @@ int cnt;
 	}
 	VSCALE( centroid, centroid, 1.0/cpts );
 	if( debug > 2 ) {
-		fprintf(stderr,"%d: cpts=%d centroid %f %f %f\n",
+		rt_log( "%d: cpts=%d centroid %f %f %f\n",
 		    in[0].cc, cpts, 
 		    centroid[0], centroid[1], centroid[2] );
 	}
@@ -1824,7 +1594,7 @@ int cnt;
 				if(in[k].ept[l] > 0){
 					index = in[k].ept[l];
 
-					/*				fprintf(stderr,"index = %d\n",index); */
+					/*				rt_log( "index = %d\n",index); */
 					list[index].x = in[k].x;
 					list[index].y = in[k].y;
 					list[index].z = in[k].z;
@@ -1846,7 +1616,7 @@ int cnt;
 				thk[l] = list[k].thick;
 				if( thk[l] < tol.dist )
 				{
-					fprintf( stderr , "Thickness of component #%d at vertex #%d is %g\n" , in[0].cc , l , thk[l] );
+					rt_log( "Thickness of component #%d at vertex #%d is %g\n" , in[0].cc , l , thk[l] );
 					thk[l] = 0.01;
 				}
 				l= l+1;
@@ -1856,7 +1626,7 @@ int cnt;
 
 		if( debug > 2 ) {
 			for ( k=1;k<l; k++ )
-				fprintf(stderr,"Compressed: %f %f %f\n",x[k],y[k],z[k]);
+				rt_log( "Compressed: %f %f %f\n",x[k],y[k],z[k]);
 		}
 
 		VSET( centroid , 0.0 , 0.0 , 0.0 );
@@ -1872,7 +1642,7 @@ int cnt;
 		}
 		VSCALE( centroid, centroid, 1.0/cpts );
 		if( debug > 2 ) {
-			fprintf(stderr,"%d: cpts=%d centroid %f %f %f\n",
+			rt_log( "%d: cpts=%d centroid %f %f %f\n",
 			    in[0].cc, cpts, 
 			    centroid[0], centroid[1], centroid[2] );
 		}
@@ -2085,7 +1855,7 @@ int cnt;
 				proc_region(name);
 		}
 		else {
-			fprintf(stderr,"Bad component %s\n",name);
+			rt_log( "Bad component %s\n",name);
 		}
 
 	}
@@ -2133,7 +1903,7 @@ int cnt;
 				proc_region(name);
 		}
 		else {
-			fprintf(stderr,"Bad component %s\n",name);
+			rt_log( "Bad component %s\n",name);
 		}
 
 	}
@@ -2395,7 +2165,7 @@ int cnt;
 		struct subtract_list *sp;
 
 		for( sp=slist; sp; sp=sp->next )
-			fprintf(stderr,"%d %d %d\n", 
+			rt_log( "%d %d %d\n", 
 			    sp->outsolid,sp->insolid,sp->inmirror );
 	}
 
@@ -2552,14 +2322,14 @@ int cnt;
 					break;
 
 				default:
-					fprintf(stderr,"Unknown cylinder mode\n");
+					rt_log( "Unknown cylinder mode\n");
 					break;
 
 				}         /* end switch */
 			}     		  /* end - plate mode modifications */
 		}         			  /* Degenerate length check */
 		else {
-			fprintf(stderr,"Bad Cylinder Length for %s\n",name);
+			rt_log( "Bad Cylinder Length for %s\n",name);
 		}
 		/* make regions */
 
@@ -2724,13 +2494,13 @@ int cnt;
 					break;
 
 				default:
-					fprintf(stderr,"Unknown cylinder mode\n");
+					rt_log( "Unknown cylinder mode\n");
 					break;
 				}/* switch */
 			}/* plate mode */
 		}
 		else {
-			fprintf(stderr,"Bad Cylinder Length for %s\n",name);
+			rt_log( "Bad Cylinder Length for %s\n",name);
 		}
 		/* due to solid subtractions, this might be a null region */
 		if ((mir_count % num_unions) == 0 && (RT_LIST_NEXT_NOT_HEAD(&head, &head.l)))
@@ -2783,7 +2553,7 @@ int cnt;
 				list[index].flag = 1;
 
 				if (debug > 3)
-					fprintf(stderr,"%d %f %f %f %f %d\n",list[index].flag,in[k].x,in[k].y,in[k].z,in[k].rsurf_thick,
+					rt_log( "%d %f %f %f %f %d\n",list[index].flag,in[k].x,in[k].y,in[k].z,in[k].rsurf_thick,
 					    in[k].mirror);
 			}
 
@@ -2805,7 +2575,7 @@ int cnt;
 
 			l= l+1;
 			if (debug > 3)
-				fprintf(stderr,"k=%d l=%d %f %f %f %f %d flag=%d\n",
+				rt_log( "k=%d l=%d %f %f %f %f %d flag=%d\n",
 				    k,l,list[k].x,list[k].y,list[k].z,
 				    list[k].flag,list[k].radius,list[k].mirror);
 		}
@@ -2813,7 +2583,7 @@ int cnt;
 
 	if (debug > 2){
 		for (k=1;(k<=l);k++)
-			fprintf(stderr,"compressed: %d %f %f %f %f %d\n",
+			rt_log( "compressed: %d %f %f %f %f %d\n",
 			    k,x[k],y[k],z[k],radius[k],mirror[k]);
 	}
 
@@ -2843,7 +2613,7 @@ int cnt;
 			mk_trc_top(stdout,name,base,top,tmp,tmp1);
 		}
 		else {
-			fprintf(stderr,"Bad Rod Radius for %s\n",name);
+			rt_log( "Bad Rod Radius for %s\n",name);
 		}
 
 		if( count > 1 && (count % num_unions) == 0 ){
@@ -2889,7 +2659,7 @@ int cnt;
 			mk_trc_top(stdout,name,base,top,tmp,tmp1);
 		}
 		else {
-			fprintf(stderr,"Bad Rod Radius for %s\n",name);
+			rt_log( "Bad Rod Radius for %s\n",name);
 		}
 
 		if( mir_count > 1 && (mir_count % num_unions) == 0 ) {
@@ -3246,15 +3016,15 @@ fastf_t rad1,rad2;
 
 	pt_radsq = MAGSQ(ba) - (dist*dist);
 	if( debug>2 && pt_radsq < (radius*radius)  ){
-		fprintf(stderr,"pt_inside: point (%.4f,%.4f,%.4f) inside cylinder endpoints (%.4f,%.4f,%.4f) and (%.4f,%.4f,%.4f)\n",
+		rt_log( "pt_inside: point (%.4f,%.4f,%.4f) inside cylinder endpoints (%.4f,%.4f,%.4f) and (%.4f,%.4f,%.4f)\n",
 		    a[0]/mmtin,a[1]/mmtin,a[2]/mmtin,
 		    base[0]/mmtin,base[1]/mmtin,base[2]/mmtin,
 		    top[0]/mmtin,top[1]/mmtin,top[2]/mmtin);
-		fprintf(stderr,"pt_inside: radius at that point is %f\n",radius/mmtin);
-		fprintf(stderr,"pt_inside: radial distance to point is %f\n",sqrt(pt_radsq)/mmtin );
-		fprintf(stderr,"pt_inside: square of radial distance is %f\n",pt_radsq/(mmtin*mmtin));
-		fprintf(stderr,"pt_inside: dist to base to point is %f\n",MAGSQ(ba)/mmtin );
-		fprintf(stderr,"pt_inside: dist to normal between axis and point is %f\n",dist/mmtin);
+		rt_log( "pt_inside: radius at that point is %f\n",radius/mmtin);
+		rt_log( "pt_inside: radial distance to point is %f\n",sqrt(pt_radsq)/mmtin );
+		rt_log( "pt_inside: square of radial distance is %f\n",pt_radsq/(mmtin*mmtin));
+		rt_log( "pt_inside: dist to base to point is %f\n",MAGSQ(ba)/mmtin );
+		rt_log( "pt_inside: dist to normal between axis and point is %f\n",dist/mmtin);
 	}
 	if( pt_radsq < (radius*radius) )
 		return( 1 );
