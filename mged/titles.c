@@ -322,7 +322,9 @@ dotitles()
 			" Keypoint: %s %s: (%g, %g, %g)\n",
 			rt_functab[es_int.idb_type].ft_name+3,	/* Skip ID_ */
 			es_keytag,
-			V3ARGS(es_keypoint) );
+			es_keypoint[X] * base2local,
+			es_keypoint[Y] * base2local,
+			es_keypoint[Z] * base2local);
 		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	} else if( illump != SOLID_NULL )  {
 		/* Illuminated path */
