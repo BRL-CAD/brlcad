@@ -32,11 +32,15 @@ static char RCSlight[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 
 #define LIGHT_O(m)	offsetof(struct light_specific, m)
+#define LIGHT_OA(m)	offsetofarray(struct light_specific, m)
+
+HIDDEN int	aim_set (struct structparse *, char *, char *, char *);
 
 struct structparse light_parse[] = {
 	{"%f",	1, "inten",	LIGHT_O(lt_intensity),	FUNC_NULL },
 	{"%f",	1, "angle",	LIGHT_O(lt_angle),	FUNC_NULL },
 	{"%f",	1, "fract",	LIGHT_O(lt_fraction),	FUNC_NULL },
+	{"%f",	3, "aim",	LIGHT_OA(lt_dir),	aim_set },
 	{"%d",	1, "shadows",	LIGHT_O(lt_shadows),	FUNC_NULL },
 	{"%d",	1, "infinite",	LIGHT_O(lt_infinite),	FUNC_NULL },
 	{"%d",	1, "invisible",	LIGHT_O(lt_invisible),	FUNC_NULL },
@@ -58,6 +62,25 @@ struct mfuncs light_mfuncs[] = {
 	{(char *)0,	0,		0,
 	0,		0,		0,		0 }
 };
+
+/*
+ *			A I M _ S E T
+ *
+ *  This routine is called by rt_structparse() if the "aim"
+ *  qualifier is encountered, and causes lt_exaim to be set.
+ */
+
+HIDDEN void aim_set (sdp, name, base, value)
+CONST struct structparse *sdp;
+CONST char *name;
+CONST char *base;
+char *value;
+{
+	register struct light_specific *lp =
+		(struct light_specific *)base;
+
+	lp->lt_exaim = 1;
+}
 
 /*
  *			L I G H T _ R E N D E R
@@ -124,6 +147,7 @@ genptr_t	*dpp;
 	lp->lt_invisible = 0;		/* explicitly modeled */
 	lp->lt_shadows = 1;		/* by default, casts shadows */
 	lp->lt_angle = 180;		/* spherical emission by default */
+	lp->lt_exaim = 0;		/* use default aiming mechanism */
 	lp->lt_infinite = 0;
 	lp->lt_rp = rp;
 	lp->lt_name = rt_strdup( rp->reg_name );
@@ -177,7 +201,11 @@ genptr_t	*dpp;
 		register matp_t	matp;
 		if( (matp = stp->st_matp) == (matp_t)0 )
 			matp = (matp_t)rt_identity;
-		VSET( work, 0, 0, -1 );
+		if (lp->lt_exaim) {
+			VSUB2 (work, lp->lt_dir, lp->lt_pos);
+			VUNITIZE (work);
+			}
+		   else VSET( work, 0, 0, -1 );
 		MAT4X3VEC( lp->lt_aim, matp, work );
 		VUNITIZE( lp->lt_aim );
 	}
