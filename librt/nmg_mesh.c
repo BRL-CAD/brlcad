@@ -236,6 +236,11 @@ CONST struct rt_tol	*tol;
 	    eu1->eumate_p->vu_p->v_p->vg_p->coord, tol ) )
 		rt_bomb("nmg_radial_join_eu(): 0 length edge (geometry)\n");
 
+#if 0
+nmg_radial_join_eu_NEW(eu1, eu2, tol);
+return;
+#endif
+
 	/* Ensure faces are of same orientation, if both eu's have faces */
 	fu1 = nmg_find_fu_of_eu(eu1);
 	fu2 = nmg_find_fu_of_eu(eu2);
