@@ -50,7 +50,7 @@ struct bot_specific
 };
 
 /* XXX Set this to 32 to enable pieces by default */
-int rt_bot_minpieces = 0;
+int rt_bot_minpieces = 32;
 
 
 /*
