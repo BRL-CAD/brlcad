@@ -106,14 +106,10 @@ void		sig2();
 #endif
 void		new_mats();
 void		usejoy();
-void		f_opendb();
 int		interactive = 0;	/* !0 means interactive */
 static int	do_rc();
 static void	log_event();
 extern char	version[];		/* from vers.c */
-
-extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
 
 struct rt_tol	mged_tol;		/* calculation tolerance */
 
@@ -252,7 +248,7 @@ char **argv;
 	/* If this is an argv[] invocation, do it now */
 	if( argc > 2 )  {
 		mged_cmd( argc-2, argv+2 );
-		f_quit();
+		f_quit(0, NULL);
 		/* NOTREACHED */
 	}
 
@@ -358,7 +354,7 @@ if( cmdline_hook )  {if( (*cmdline_hook)(&str)) pr_prompt();} else
 			/* Check for Control-D (EOF) */
 			if( feof( stdin ) )  {
 				/* EOF, let's hit the road */
-				f_quit();
+				f_quit(0, NULL);
 				/* NOTREACHED */
 			}
 		}
