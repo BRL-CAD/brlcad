@@ -442,22 +442,14 @@ struct _mged_variables {
         int	orig_gui;
 	int	rt_output;
 	int	m_axes;  /* model axes */
-	int	m_axes_color[3];
-	int	m_axes_label_color[3];
 	int	m_axes_size;
 	int	m_axes_linewidth;
 	fastf_t	m_axes_pos[3];
 	int	v_axes;  /* view axes */
-	int	v_axes_color[3];
-	int	v_axes_label_color[3];
 	int	v_axes_size;
 	int	v_axes_linewidth;
 	int	v_axes_pos[2]; /* view axes position */
 	int	e_axes;  /* edit axes */
-	int	e_axes_color1[3];
-	int	e_axes_color2[3];
-	int	e_axes_label_color1[3];
-	int	e_axes_label_color2[3];
 	int	e_axes_size1;
 	int	e_axes_size2;
 	int	e_axes_linewidth1;
@@ -475,12 +467,10 @@ struct _mged_variables {
 	int	fb_all;		/* 0 - use part of image as defined by the rectangle     1 - use the entire image */
 	int	fb_overlay;	/* 0 - underlay     1 - overlay */
 	int	rubber_band;	/* draw rubber band rectangle */
-	int	rubber_band_color[3];
 	int	rubber_band_linewidth;
 	char	rubber_band_linestyle;
 	int	grid_draw;		/* draw grid */
 	int	grid_snap;		/* snap to grid */
-	int	grid_color[3];
 	fastf_t grid_anchor[3];
 	fastf_t	grid_res_h;		/* grid resolution in h */
 	fastf_t grid_res_v;		/* grid resolution in v */
