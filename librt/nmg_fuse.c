@@ -2765,7 +2765,7 @@ CONST struct bn_tol	*tol;
  */
 struct nmg_radial *
 nmg_radial_find_an_original( hd, s, tol )
-struct bu_list		*hd;
+CONST struct bu_list	*hd;
 CONST struct shell	*s;
 CONST struct bn_tol	*tol;
 {
@@ -3342,7 +3342,7 @@ top:
 }
 
 /*
- *			N M G _ R A D I A L _ J O I N _ E U
+ *			N M G _ R A D I A L _ J O I N _ E U _ N E W
  *
  *  A new routine, that uses "global information" about the edge
  *  to plan the operations to be performed.
