@@ -163,7 +163,6 @@ extern void		dir_build(), buildHrot(), dozoom(),
 extern void		eraseobj(), mged_finish(), slewview(),
 			mmenu_init(), moveHinstance(), moveHobj(),
 			quit(), refresh(), rej_sedit(), sedit(),
-			dir_print(),
 			setview(),
 			adcursor(), mmenu_display(),
 			col_item(), col_putchar(), col_eol(), col_pr4v();
@@ -176,8 +175,8 @@ extern int		sig2();
 extern void		(*cur_sigint)();	/* Current SIGINT status */
 extern void		sig2();
 #endif
-extern void		aexists(), f_quit();
-extern int		clip(), getname(), use_pen();
+extern void		aexists();
+extern int		clip(), getname(), use_pen(), dir_print();
 extern struct directory	*combadd(), **dir_getspace();
 extern void		ellipse();
 
@@ -278,32 +277,43 @@ extern char *state_str[];		/* identifying strings */
  *  to enable editor searches for the word "return" to succeed.
  */
 /* For errors from db_get() or db_getmrec() */
+#define READ_ERR { \
+	(void)printf("Database read error, aborting\n"); }
+
 #define READ_ERR_return		{ \
-	(void)printf("Database read error, aborting\n"); \
+	READ_ERR; \
 	return;  }
 
 /* For errors from db_put() */
-#define WRITE_ERR_return	{ \
+#define WRITE_ERR { \
 	(void)printf("Database write error, aborting.\n"); \
-	ERROR_RECOVERY_SUGGESTION; \
+	ERROR_RECOVERY_SUGGESTION; }	
+
+#define WRITE_ERR_return	{ \
+	WRITE_ERR; \
 	return;  }
 
 /* For errors from db_diradd() or db_alloc() */
-#define ALLOC_ERR_return	{ \
+#define ALLOC_ERR { \
 	(void)printf("\
 An error has occured while adding a new object to the database.\n"); \
-	ERROR_RECOVERY_SUGGESTION; \
+	ERROR_RECOVERY_SUGGESTION; }
+
+#define ALLOC_ERR_return	{ \
+	ALLOC_ERR; \
 	return;  }
 
 /* For errors from db_delete() or db_dirdelete() */
-#define DELETE_ERR_return(_name)	{  \
+#define DELETE_ERR(_name)	{ \
 	(void)printf("\
-An error has occured while deleting '%s' from the database.\n", _name); \
-	ERROR_RECOVERY_SUGGESTION; \
+An error has occurred while deleting '%s' from the database.\n", _name); \
+	ERROR_RECOVERY_SUGGESTION; }
+
+#define DELETE_ERR_return(_name)	{  \
+	DELETE_ERR(_name); \
 	return;  }
 
-/* A verbose message to attempt to soothe and advise the user */
-#define	ERROR_RECOVERY_SUGGESTION	\
+/* A verbose message to attempt to soothe and advise the user */#define	ERROR_RECOVERY_SUGGESTION	\
 	(void)printf("\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety,\n\
@@ -327,3 +337,134 @@ struct mged_variables {
 };
 
 extern struct mged_variables mged_variables;
+
+/* Command return codes */
+
+#define CMD_OK		919
+#define CMD_BAD		920
+#define CMD_MORE	921
+
+/* Commands */
+
+MGED_EXTERN(int f_3ptarb, (int argc, char **argv));	/* arbs.c */
+
+
+
+MGED_EXTERN(int f_adc, (int argc, char **argv));
+MGED_EXTERN(int f_aeview, (int argc, char **argv));
+MGED_EXTERN(int f_amtrack, (int argc, char **argv));
+MGED_EXTERN(int f_analyze, (int argc, char **argv));
+MGED_EXTERN(int f_arbdef, (int argc, char **argv));
+MGED_EXTERN(int f_area, (int argc, char **argv));
+MGED_EXTERN(int f_attach, (int argc, char **argv));
+MGED_EXTERN(int f_blast, (int argc, char **argv));
+MGED_EXTERN(int f_cat, (int argc, char **argv));
+MGED_EXTERN(int f_center, (int argc, char **argv));
+MGED_EXTERN(int f_color, (int argc, char **argv));
+MGED_EXTERN(int f_comb, (int argc, char **argv));
+MGED_EXTERN(int f_comm, (int argc, char **argv));
+MGED_EXTERN(int f_concat, (int argc, char **argv));
+MGED_EXTERN(int f_copy, (int argc, char **argv));
+MGED_EXTERN(int f_copy_inv, (int argc, char **argv));
+MGED_EXTERN(int f_copyeval, (int argc, char **argv));
+MGED_EXTERN(int f_debug, (int argc, char **argv));
+MGED_EXTERN(int f_debugdir, (int argc, char **argv));
+MGED_EXTERN(int f_debuglib, (int argc, char **argv));
+MGED_EXTERN(int f_debugmem, (int argc, char **argv));
+MGED_EXTERN(int f_debugnmg, (int argc, char **argv));
+MGED_EXTERN(int f_delobj, (int argc, char **argv));
+MGED_EXTERN(int f_dm, (int argc, char **argv));
+MGED_EXTERN(int f_dup, (int argc, char **argv));
+MGED_EXTERN(int f_echo, (int argc, char **argv));
+MGED_EXTERN(int f_edcodes, (int argc, char **argv));
+MGED_EXTERN(int f_edcolor, (int argc, char **argv));
+MGED_EXTERN(int f_edcomb, (int argc, char **argv));
+MGED_EXTERN(int f_edgedir, (int argc, char **argv));
+MGED_EXTERN(int f_edit, (int argc, char **argv));
+MGED_EXTERN(int f_eqn, (int argc, char **argv));
+MGED_EXTERN(int f_ev, (int argc, char **argv));
+MGED_EXTERN(int f_evedit, (int argc, char **argv));
+MGED_EXTERN(int f_extrude, (int argc, char **argv));
+MGED_EXTERN(int f_facedef, (int argc, char **argv));
+MGED_EXTERN(int f_facetize, (int argc, char **argv));
+MGED_EXTERN(int f_fhelp, (int argc, char **argv));
+MGED_EXTERN(int f_find, (int argc, char **argv));
+MGED_EXTERN(int f_fix, (int argc, char **argv));
+MGED_EXTERN(int f_fracture, (int argc, char **argv));
+MGED_EXTERN(int f_group, (int argc, char **argv));
+MGED_EXTERN(int f_help, (int argc, char **argv));
+MGED_EXTERN(int f_hideline, (int argc, char **argv));
+MGED_EXTERN(int f_ill, (int argc, char **argv));
+MGED_EXTERN(int f_in, (int argc, char **argv));
+MGED_EXTERN(int f_inside, (int argc, char **argv));
+MGED_EXTERN(int f_instance, (int argc, char **argv));
+MGED_EXTERN(int f_itemair, (int argc, char **argv));
+MGED_EXTERN(int f_joint, (int argc, char **argv));
+MGED_EXTERN(int f_keep, (int argc, char **argv));
+MGED_EXTERN(int f_keypoint, (int argc, char **argv));
+MGED_EXTERN(int f_kill, (int argc, char **argv));
+MGED_EXTERN(int f_killall, (int argc, char **argv));
+MGED_EXTERN(int f_killtree, (int argc, char **argv));
+MGED_EXTERN(int f_knob, (int argc, char **argv));
+MGED_EXTERN(int f_labelvert, (int argc, char **argv));
+MGED_EXTERN(int f_list, (int argc, char **argv));
+MGED_EXTERN(int f_make, (int argc, char **argv));
+MGED_EXTERN(int f_mater, (int argc, char **argv));
+MGED_EXTERN(int f_memprint, (int argc, char **argv));
+MGED_EXTERN(int f_mirface, (int argc, char **argv));
+MGED_EXTERN(int f_mirror, (int argc, char **argv));
+MGED_EXTERN(int f_mouse, (int argc, char **argv));
+MGED_EXTERN(int f_mvall, (int argc, char **argv));
+MGED_EXTERN(int f_name, (int argc, char **argv));
+MGED_EXTERN(int f_nirt, (int argc, char **argv));
+MGED_EXTERN(int f_opendb, (int argc, char **argv));
+MGED_EXTERN(int f_orientation, (int argc, char **argv));
+MGED_EXTERN(int f_overlay, (int argc, char **argv));
+MGED_EXTERN(int f_param, (int argc, char **argv));
+MGED_EXTERN(int f_pathsum, (int argc, char **argv));
+MGED_EXTERN(int f_permute, (int argc, char **argv));
+MGED_EXTERN(int f_plot, (int argc, char **argv));
+MGED_EXTERN(int f_polybinout, (int argc, char **argv));
+MGED_EXTERN(int f_pov, (int argc, char **argv));
+MGED_EXTERN(int f_prcolor, (int argc, char **argv));
+MGED_EXTERN(int f_prefix, (int argc, char **argv));
+MGED_EXTERN(int f_press, (int argc, char **argv));
+MGED_EXTERN(int f_preview, (int argc, char **argv));
+MGED_EXTERN(int f_push, (int argc, char **argv));
+MGED_EXTERN(int f_quit, (int argc, char **argv));
+MGED_EXTERN(int f_red, (int argc, char **argv));
+MGED_EXTERN(int f_refresh, (int argc, char **argv));
+MGED_EXTERN(int f_regdebug, (int argc, char **argv));
+MGED_EXTERN(int f_regdef, (int argc, char **argv));
+MGED_EXTERN(int f_region, (int argc, char **argv));
+MGED_EXTERN(int f_release, (int argc, char **argv));
+MGED_EXTERN(int f_rfarb, (int argc, char **argv));
+MGED_EXTERN(int f_rm, (int argc, char **argv));
+MGED_EXTERN(int f_rmats, (int argc, char **argv));
+MGED_EXTERN(int f_rot_obj, (int argc, char **argv));
+MGED_EXTERN(int f_rrt, (int argc, char **argv));
+MGED_EXTERN(int f_rt, (int argc, char **argv));
+MGED_EXTERN(int f_rtcheck, (int argc, char **argv));
+MGED_EXTERN(int f_savekey, (int argc, char **argv));
+MGED_EXTERN(int f_saveview, (int argc, char **argv));
+MGED_EXTERN(int f_sc_obj, (int argc, char **argv));
+MGED_EXTERN(int f_sed, (int argc, char **argv));
+MGED_EXTERN(int f_set, (int argc, char **argv));
+MGED_EXTERN(int f_status, (int argc, char **argv));
+MGED_EXTERN(int f_summary, (int argc, char **argv));
+MGED_EXTERN(int f_tables, (int argc, char **argv));
+MGED_EXTERN(int f_tabobj, (int argc, char **argv));
+MGED_EXTERN(int f_tedit, (int argc, char **argv));
+MGED_EXTERN(int f_title, (int argc, char **argv));
+MGED_EXTERN(int f_tol, (int argc, char **argv));
+MGED_EXTERN(int f_tops, (int argc, char **argv));
+MGED_EXTERN(int f_tr_obj, (int argc, char **argv));
+MGED_EXTERN(int f_tree, (int argc, char **argv));
+MGED_EXTERN(int f_units, (int argc, char **argv));
+MGED_EXTERN(int f_view, (int argc, char **argv));
+MGED_EXTERN(int f_vrmgr, (int argc, char **argv));
+MGED_EXTERN(int f_vrot, (int argc, char **argv));
+MGED_EXTERN(int f_vrot_center, (int argc, char **argv));
+MGED_EXTERN(int f_which_id, (int argc, char **argv));
+MGED_EXTERN(int f_zap, (int argc, char **argv));
+MGED_EXTERN(int f_zoom, (int argc, char **argv));
