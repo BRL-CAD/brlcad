@@ -32,7 +32,7 @@
 	nmg_visit nmg_info nmg_pr \
 	units msr vert nmg_extrude nmg_tri nmg_fuse nmg_pt_fu \
 	rtassoc \
-	pr LIBRT_TIMER storage global snoise \
+	pr LIBRT_TIMER storage global \
 	rt_dspline
 
 #define NURB_OBJ	\
