@@ -1125,16 +1125,6 @@
 	4EA9699603B73CD0003F204C = {
 		activeExec = 0;
 	};
-	4EA969A603B74A03003F204C = {
-		fRef = 4EE8D13703B6A5AF003F204C;
-		isa = PBXTextBookmark;
-		name = "asc2g.c: name";
-		rLen = 27;
-		rLoc = 1647;
-		rType = 0;
-		vrLen = 279;
-		vrLoc = 767;
-	};
 	4EA969A703B74A03003F204C = {
 		fRef = 4EE8D14803B6A5B0003F204C;
 		isa = PBXBookmark;
@@ -1359,6 +1349,16 @@
 		vrLen = 0;
 		vrLoc = 0;
 	};
+	4EBB1F5003C51675003F204C = {
+		fRef = 4EE8D13703B6A5AF003F204C;
+		isa = PBXTextBookmark;
+		name = "asc2g.c: 70";
+		rLen = 27;
+		rLoc = 1647;
+		rType = 0;
+		vrLen = 279;
+		vrLoc = 767;
+	};
 	4EE8D07A03B6A4D6003F204C = {
 		activeBuildStyle = 4EE8D07803B6A4D6003F204C;
 		activeExecutable = 4EA9696203B71DA8003F204C;
@@ -1403,135 +1403,7 @@
 			4EA9696203B71DA8003F204C,
 		);
 		perUserDictionary = {
-			PBXPerProjectTemplateStateSaveDate = 63230434;
-			"PBXTemplateGeometry-D1A6B68F034E715A00C919A9" = {
-				ContentSize = "{597, 562}";
-				LeftSlideOut = {
-					Collapsed = NO;
-					Frame = "{{0, 23}, {597, 539}}";
-					Split0 = {
-						ActiveTab = 4;
-						ActiveTabName = PBXCVSModule;
-						Collapsed = NO;
-						Frame = "{{0, 0}, {597, 539}}";
-						Split0 = {
-							Frame = "{{0, 214}, {597, 325}}";
-						};
-						SplitCount = 1;
-						Tab0 = {
-							Frame = "{{0, 0}, {597, 208}}";
-						};
-						Tab1 = {
-							Debugger = {
-								Collapsed = NO;
-								Frame = "{{0, 0}, {664, 208}}";
-								Split0 = {
-									Frame = "{{0, 24}, {664, 184}}";
-									Split0 = {
-										Frame = "{{0, 0}, {325, 184}}";
-									};
-									Split1 = {
-										DebugVariablesTableConfiguration = (
-											Name,
-											123,
-											Value,
-											85,
-											Summary,
-											96.123,
-										);
-										Frame = "{{334, 0}, {330, 184}}";
-									};
-									SplitCount = 2;
-								};
-								SplitCount = 1;
-								Tab0 = {
-									Frame = "{{0, 0}, {100, 50}}";
-								};
-								Tab1 = {
-									Frame = "{{0, 0}, {100, 50}}";
-								};
-								TabCount = 2;
-								TabsVisible = YES;
-							};
-							Frame = "{{0, 0}, {664, 208}}";
-							LauncherConfigVersion = 7;
-						};
-						Tab2 = {
-							Frame = "{{0, 0}, {664, 50}}";
-							LauncherConfigVersion = 3;
-							Runner = {
-								Frame = "{{0, 0}, {664, 50}}";
-							};
-						};
-						Tab3 = {
-							BuildMessageFrame = "{{0, 0}, {614, 203}}";
-							BuildTranscriptFrame = "{{0, 212}, {614, 85}}";
-							BuildTranscriptFrameExpanded = YES;
-							Frame = "{{0, 0}, {612, 295}}";
-						};
-						Tab4 = {
-							Frame = "{{0, 0}, {597, 226}}";
-						};
-						TabCount = 5;
-						TabsVisible = NO;
-					};
-					SplitCount = 1;
-					Tab0 = {
-						Frame = "{{0, 0}, {313, 531}}";
-						GroupTreeTableConfiguration = (
-							TargetStatusColumn,
-							18,
-							MainColumn,
-							280,
-						);
-					};
-					Tab1 = {
-						ClassesFrame = "{{0, 0}, {280, 398}}";
-						ClassesTreeTableConfiguration = (
-							PBXBookColumnIdentifier,
-							20,
-							PBXClassColumnIdentifier,
-							237,
-						);
-						Frame = "{{0, 0}, {278, 659}}";
-						MembersFrame = "{{0, 407}, {280, 252}}";
-						MembersTreeTableConfiguration = (
-							PBXBookColumnIdentifier,
-							20,
-							PBXMethodColumnIdentifier,
-							236,
-						);
-					};
-					Tab2 = {
-						Frame = "{{0, 0}, {200, 100}}";
-					};
-					Tab3 = {
-						Frame = "{{0, 0}, {200, 557}}";
-						TargetTableConfiguration = (
-							ActiveObject,
-							16,
-							ObjectNames,
-							202.296,
-						);
-					};
-					Tab4 = {
-						BreakpointsTreeTableConfiguration = (
-							breakpointColumn,
-							197,
-							enabledColumn,
-							31,
-						);
-						Frame = "{{0, 0}, {250, 100}}";
-					};
-					TabCount = 5;
-					TabsVisible = NO;
-				};
-				NavBarShownByDefault = YES;
-				StatusViewVisible = YES;
-				Template = D1A6B68F034E715A00C919A9;
-				ToolbarVisible = NO;
-				WindowLocation = "{369, 238}";
-			};
+			PBXPerProjectTemplateStateSaveDate = 63248131;
 			"PBXTemplateGeometry-F5CA7EC8015C06940DCA290F" = {
 				ContentSize = "{705, 569}";
 				LeftSlideOut = {
@@ -1656,7 +1528,7 @@
 				StatusViewVisible = NO;
 				Template = F5CA7EC8015C06940DCA290F;
 				ToolbarVisible = YES;
-				WindowLocation = "{916, 157}";
+				WindowLocation = "{726, 263}";
 			};
 			"PBXTemplateGeometry-F5CA7ECB015C094F0DCA290F" = {
 				ContentSize = "{668, 621}";
@@ -1782,7 +1654,7 @@
 				StatusViewVisible = NO;
 				Template = F5CA7ECB015C094F0DCA290F;
 				ToolbarVisible = NO;
-				WindowLocation = "{334, 179}";
+				WindowLocation = "{704, 160}";
 			};
 			PBXWorkspaceContents = (
 				{
@@ -1790,7 +1662,7 @@
 						Split0 = {
 							Split0 = {
 								NavContent0 = {
-									bookmark = 4E375C8F03C50BBF003F204C;
+									bookmark = 4EBB1F5003C51675003F204C;
 									history = (
 										4EE8E84203B6AF0D003F204C,
 										4EE8E84303B6AF0D003F204C,
@@ -1804,7 +1676,7 @@
 										4E8E401003B70C86003F204C,
 										4E8E401103B70C86003F204C,
 										4E8E401203B70C86003F204C,
-										4EA969A603B74A03003F204C,
+										4E375C8F03C50BBF003F204C,
 									);
 									prevStack = (
 										4EE8E84603B6AF0D003F204C,
@@ -2126,10 +1998,12 @@
 						Tab0 = {
 							Frame = "{{0, 0}, {265, 825}}";
 							GroupTreeTableConfiguration = (
+								SCMStatusColumn,
+								22,
 								TargetStatusColumn,
 								18,
 								MainColumn,
-								232,
+								210,
 							);
 						};
 						Tab1 = {
@@ -2180,7 +2054,7 @@
 					WindowLocation = "{28, 83}";
 				},
 			);
-			PBXWorkspaceStateSaveDate = 63230434;
+			PBXWorkspaceStateSaveDate = 63248131;
 		};
 		perUserProjectItems = {
 			4E375C8F03C50BBF003F204C = 4E375C8F03C50BBF003F204C;
@@ -2201,7 +2075,6 @@
 			4E8E401A03B70C86003F204C = 4E8E401A03B70C86003F204C;
 			4E8E401B03B70C86003F204C = 4E8E401B03B70C86003F204C;
 			4E8E401C03B70C86003F204C = 4E8E401C03B70C86003F204C;
-			4EA969A603B74A03003F204C = 4EA969A603B74A03003F204C;
 			4EA969A703B74A03003F204C = 4EA969A703B74A03003F204C;
 			4EA969A803B74A03003F204C = 4EA969A803B74A03003F204C;
 			4EA969A903B74A03003F204C = 4EA969A903B74A03003F204C;
@@ -2225,6 +2098,7 @@
 			4EA969BB03B74A03003F204C = 4EA969BB03B74A03003F204C;
 			4EA969BC03B74A03003F204C = 4EA969BC03B74A03003F204C;
 			4EA969BD03B74A03003F204C = 4EA969BD03B74A03003F204C;
+			4EBB1F5003C51675003F204C = 4EBB1F5003C51675003F204C;
 			4EE8E84203B6AF0D003F204C = 4EE8E84203B6AF0D003F204C;
 			4EE8E84303B6AF0D003F204C = 4EE8E84303B6AF0D003F204C;
 			4EE8E84403B6AF0D003F204C = 4EE8E84403B6AF0D003F204C;

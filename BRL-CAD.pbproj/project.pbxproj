@@ -13615,13 +13615,6 @@
 			path = cvspolicy.txt;
 			refType = 4;
 		};
-		4EE8D18103B6A5B0003F204C = {
-			children = (
-			);
-			isa = PBXGroup;
-			path = cwish;
-			refType = 4;
-		};
 		4EE8D18203B6A5B0003F204C = {
 			children = (
 				4EE8D18303B6A5B0003F204C,
@@ -14886,13 +14879,6 @@
 			path = fbserv.c;
 			refType = 4;
 		};
-		4EE8D23703B6A5B2003F204C = {
-			children = (
-			);
-			isa = PBXGroup;
-			path = g_lint;
-			refType = 4;
-		};
 		4EE8D23803B6A5B2003F204C = {
 			fileEncoding = 30;
 			isa = PBXExecutableFileReference;
@@ -15686,7 +15672,6 @@
 				4EE8D2FC03B6A5B4003F204C,
 				4EE8D38103B6A5B6003F204C,
 				4EE8D38203B6A5B6003F204C,
-				4EE8D38303B6A5B6003F204C,
 				4EE8D38503B6A5B6003F204C,
 				4EE8D38803B6A5B6003F204C,
 			);
@@ -17150,21 +17135,6 @@
 			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = Overview.html;
-			refType = 4;
-		};
-		4EE8D38303B6A5B6003F204C = {
-			children = (
-				4EE8D38403B6A5B6003F204C,
-			);
-			isa = PBXGroup;
-			path = ReleaseNotes;
-			refType = 4;
-		};
-		4EE8D38403B6A5B6003F204C = {
-			children = (
-			);
-			isa = PBXGroup;
-			path = Rel5.0;
 			refType = 4;
 		};
 		4EE8D38503B6A5B6003F204C = {
@@ -27108,13 +27078,6 @@
 			path = TODO;
 			refType = 4;
 		};
-		4EE8D91D03B6A5C5003F204C = {
-			children = (
-			);
-			isa = PBXGroup;
-			path = libredblack;
-			refType = 4;
-		};
 		4EE8D91E03B6A5C5003F204C = {
 			children = (
 				4EE8D91F03B6A5C5003F204C,
@@ -34083,13 +34046,6 @@
 			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = tkImgFmtPIX.c;
-			refType = 4;
-		};
-		4EE8DCFF03B6A5D0003F204C = {
-			children = (
-			);
-			isa = PBXGroup;
-			path = libtclhooks;
 			refType = 4;
 		};
 		4EE8DD0003B6A5D0003F204C = {
@@ -41448,11 +41404,6 @@
 			path = "off-g.c";
 			refType = 4;
 		};
-		4EE8E12803B6A5DC003F204C = {
-			isa = PBXFileReference;
-			path = output.log;
-			refType = 4;
-		};
 		4EE8E12903B6A5DC003F204C = {
 			children = (
 				4EE8E12A03B6A5DC003F204C,
@@ -43492,13 +43443,6 @@
 			path = "txyz-pl.c";
 			refType = 4;
 		};
-		4EE8E24D03B6A5DF003F204C = {
-			children = (
-			);
-			isa = PBXGroup;
-			path = tcl;
-			refType = 4;
-		};
 		4EE8E24E03B6A5DF003F204C = {
 			children = (
 				4EE8E24F03B6A5DF003F204C,
@@ -45125,13 +45069,6 @@
 			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = vmath.tcl;
-			refType = 4;
-		};
-		4EE8E33B03B6A5E2003F204C = {
-			children = (
-			);
-			isa = PBXGroup;
-			path = tk;
 			refType = 4;
 		};
 		4EE8E33C03B6A5E2003F204C = {
@@ -48057,13 +47994,11 @@
 				4EE8D17A03B6A5B0003F204C,
 				4EE8D17B03B6A5B0003F204C,
 				4EE8D18003B6A5B0003F204C,
-				4EE8D18103B6A5B0003F204C,
 				4EE8D18203B6A5B0003F204C,
 				4EE8D1A203B6A5B1003F204C,
 				4EE8D1C303B6A5B1003F204C,
 				4EE8D21703B6A5B2003F204C,
 				4EE8D23303B6A5B2003F204C,
-				4EE8D23703B6A5B2003F204C,
 				4EE8D23803B6A5B2003F204C,
 				4EE8D23903B6A5B2003F204C,
 				4EE8D24103B6A5B2003F204C,
@@ -48088,12 +48023,10 @@
 				4EE8D8D403B6A5C4003F204C,
 				4EE8D8D803B6A5C4003F204C,
 				4EE8D8DC03B6A5C4003F204C,
-				4EE8D91D03B6A5C5003F204C,
 				4EE8D91E03B6A5C5003F204C,
 				4EE8D9B803B6A5C7003F204C,
 				4EE8D9CA03B6A5C7003F204C,
 				4EE8DCFB03B6A5D0003F204C,
-				4EE8DCFF03B6A5D0003F204C,
 				4EE8DD0003B6A5D0003F204C,
 				4EE8DD0303B6A5D0003F204C,
 				4EE8DFC103B6A5D8003F204C,
@@ -48111,7 +48044,6 @@
 				4EE8E11203B6A5DB003F204C,
 				4EE8E11303B6A5DB003F204C,
 				4EE8E12403B6A5DC003F204C,
-				4EE8E12803B6A5DC003F204C,
 				4EE8E12903B6A5DC003F204C,
 				4EE8E13303B6A5DC003F204C,
 				4EE8E14903B6A5DC003F204C,
@@ -48126,9 +48058,7 @@
 				4EE8E20303B6A5DE003F204C,
 				4EE8E21303B6A5DF003F204C,
 				4EE8E24103B6A5DF003F204C,
-				4EE8E24D03B6A5DF003F204C,
 				4EE8E24E03B6A5DF003F204C,
-				4EE8E33B03B6A5E2003F204C,
 				4EE8E33C03B6A5E2003F204C,
 				4EE8E35603B6A5E2003F204C,
 				4EE8E3D203B6A5E4003F204C,
@@ -48716,11 +48646,9 @@
 				LIBRARY_STYLE = STATIC;
 				OPTIMIZATION_CFLAGS = "-O0";
 				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
 				OTHER_LIBTOOL_FLAGS = "";
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = libsysv.a;
-				REZ_EXECUTABLE = YES;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = "-Wmost -Wno-four-char-constants -Wno-unknown-pragmas";
 			};
