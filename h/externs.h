@@ -74,5 +74,7 @@ extern int	strcmp();
 
 extern long	time();
 
+extern double	atof();
+
 #endif /* __STDC__ */
 #endif /* EXTERNS_H_SEENYET */
