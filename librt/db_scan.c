@@ -309,9 +309,18 @@ genptr_t		client_data;	/* argument for handler */
 				nrec++;
 			}
 			next = ftell(dbip->dbi_fp);
-			handler( dbip, record.c.c_name, addr, nrec,
-				record.c.c_flags == 'R' ?
-					DIR_COMB|DIR_REGION : DIR_COMB,
+			switch(record.c.c_flags)  {
+			default:
+			case DBV4_NON_REGION:
+				j = DIR_COMB;
+				break;
+			case DBV4_REGION:
+			case DBV4_REGION_FASTGEN_PLATE:
+			case DBV4_REGION_FASTGEN_VOLUME:
+				j = DIR_COMB|DIR_REGION;
+				break;
+			}
+			handler( dbip, record.c.c_name, addr, nrec, j,
 				client_data );
 			break;
 		default:

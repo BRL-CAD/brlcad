@@ -75,6 +75,15 @@ CONST struct db_tree_state	rt_initial_tree_state = {
 	0.0, 1.0, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0,
+	REGION_NON_FASTGEN,		/* ts_is_fastgen */
+	0,				/* ts_stop_at_regions */
+	NULL,				/* ts_region_start_func */
+	NULL,				/* ts_region_end_func */
+	NULL,				/* ts_leaf_func */
+	NULL,				/* ts_ttol */
+	NULL,				/* ts_tol */
+	NULL,				/* ts_m */
+	NULL				/* ts_rtip */
 };
 
 #define ACQUIRE_SEMAPHORE_TREE(_hash)	switch((_hash)&03)  { \
@@ -168,6 +177,7 @@ genptr_t			client_data;
 	BU_GETSTRUCT( rp, region );
 	rp->l.magic = RT_REGION_MAGIC;
 	rp->reg_regionid = tsp->ts_regionid;
+	rp->reg_is_fastgen = tsp->ts_is_fastgen;
 	rp->reg_aircode = tsp->ts_aircode;
 	rp->reg_gmater = tsp->ts_gmater;
 	rp->reg_los = tsp->ts_los;

@@ -311,6 +311,7 @@ register CONST struct rt_comb_internal	*comb;
 			/* This starts a new region */
 			tsp->ts_sofar |= TS_SOFAR_REGION;
 			tsp->ts_regionid = comb->region_id;
+			tsp->ts_is_fastgen = comb->is_fastgen;
 			tsp->ts_aircode = comb->aircode;
 			tsp->ts_gmater = comb->GIFTmater;
 			tsp->ts_los = comb->los;

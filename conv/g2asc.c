@@ -632,10 +632,20 @@ combdump()	/* Print out Combination record information */
 	 *  Output the combination
 	 */
 	(void)fprintf(ofp, "%c ", record.c.c_id );		/* C */
-	if( record.c.c_flags == 'R' )			/* set region flag */
+	switch( record.c.c_flags )  {
+	case DBV4_REGION:
 		(void)fprintf(ofp, "Y ");			/* Y if `R' */
-	else
+		break;
+	case DBV4_NON_REGION:
 		(void)fprintf(ofp, "N ");			/* N if ` ' */
+		break;
+	case DBV4_REGION_FASTGEN_PLATE:
+		(void)fprintf(ofp, "P ");
+		break;
+	case DBV4_REGION_FASTGEN_VOLUME:
+		(void)fprintf(ofp, "V ");
+		break;
+	}
 	(void)fprintf(ofp, "%.16s ", name(record.c.c_name) );	/* unique name */
 	(void)fprintf(ofp, "%d ", record.c.c_regionid );	/* region ID code */
 	(void)fprintf(ofp, "%d ", record.c.c_aircode );	/* air space code */

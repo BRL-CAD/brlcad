@@ -762,7 +762,7 @@ combbld()
 	cp++;				/* ID_COMB */
 	cp = nxt_spc( cp );		/* skip the space */
 
-	reg_flags = *cp++;
+	reg_flags = *cp++;		/* Y, N, or new P, F */
 	cp = nxt_spc( cp );
 
 	np = name;
@@ -802,6 +802,7 @@ combbld()
 	cp = nxt_spc( cp );
 	inherit = atoi( cp );
 
+	/* XXX Need support for P and V, for FASTGEN */
 	if( reg_flags == 'Y' )
 		is_reg = 1;
 	else

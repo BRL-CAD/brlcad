@@ -299,7 +299,27 @@ CONST struct db_i		*dbip;
 	bu_vls_init( &comb->material );
 	comb->tree = tree;
 	comb->temperature = -1;
-	comb->region_flag = (rp[0].c.c_flags == 'R');
+	switch( rp[0].c.c_flags )  {
+	case DBV4_NON_REGION:
+		comb->region_flag = 0;
+		break;
+	case DBV4_REGION:
+		comb->region_flag = 1;
+		comb->is_fastgen = REGION_NON_FASTGEN;
+		break;
+	case DBV4_REGION_FASTGEN_PLATE:
+		comb->region_flag = 1;
+		comb->is_fastgen = REGION_FASTGEN_PLATE;
+		break;
+	case DBV4_REGION_FASTGEN_VOLUME:
+		comb->region_flag = 1;
+		comb->is_fastgen = REGION_FASTGEN_VOLUME;
+		break;
+	default:
+		bu_log("WARNING: combination %s has illegal c_flag=x%x\n",
+			rp[0].c.c_name, rp[0].c.c_flags );
+		break;
+	}
 
 	if( comb->region_flag )  {
 		comb->region_id = rp[0].c.c_regionid;
@@ -446,13 +466,24 @@ CONST struct db_i		*dbip;
 	rp[0].u_id = ID_COMB;
 	/* c_name[] filled in by db_wrap_v4_external() */
 	if( comb->region_flag )  {
-		rp[0].c.c_flags = 'R';
 		rp[0].c.c_regionid = comb->region_id;
 		rp[0].c.c_aircode = comb->aircode;
 		rp[0].c.c_material = comb->GIFTmater;
 		rp[0].c.c_los = comb->los;
+		switch( comb->is_fastgen )  {
+		case REGION_FASTGEN_PLATE:
+			rp[0].c.c_flags = DBV4_REGION_FASTGEN_PLATE;
+			break;
+		case REGION_FASTGEN_VOLUME:
+			rp[0].c.c_flags = DBV4_REGION_FASTGEN_VOLUME;
+			break;
+		default:
+		case REGION_NON_FASTGEN:
+			rp[0].c.c_flags = DBV4_REGION;
+			break;
+		}
 	} else {
-		rp[0].c.c_flags = ' ';
+		rp[0].c.c_flags = DBV4_NON_REGION;
 	}
 	if( comb->rgb_valid )  {
 		rp[0].c.c_override = 1;
