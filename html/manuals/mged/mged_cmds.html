@@ -3216,16 +3216,74 @@ vector (<I>dx dy dz</I>).
 </DD>
 <HR>
 
-<DT><a NAME="qray"><B>qray</B> <I>command</I></DT>
+<DT><a NAME="qray"><B>qray</B> [<I>subcommand</I>]</DT>
 
 <DD>Get/set <I>query ray</I> characteristics.
+Without a subcommand, the usage message is printed.
+<I>Qray</I> accepts the following subcommands:
 </DD>
+
+	<ul>
+	<li><DT><b>vars</b></DT>
+	<DD>Print a list of all query ray variables.
+	</DD>
+
+	<li><DT><b>basename</b> [<I>str</I>]</DT>
+	<DD>If <I>str</I> is specified, then set basename to <I>str</I>.
+	Otherwise, return the basename.<br>
+	Note - basename is the name used to create the fake solid names corresponding
+	to the query ray. There will be one fake solid for every color used along the ray.
+	</DD>
+
+	<li><DT><b>effects</b> [<I>t|g|b</I>]</DT>
+	<DD>Set or get the type of <I>effects</I> that will occur when
+	firing a query ray. The effects of firing a ray can be either
+	<I>t</I> for textual output, <I>g</I> for graphical output or
+	<I>b</I> for both textual and graphical.
+	</DD>
+
+	<li><DT><b>echo</b> [<I>0|1</I>]</DT>
+	<DD>Set or get the value of <I>echo</I>.
+	If set to 1, the actual nirt command used will be echoed to the screen.
+	</DD>
+
+	<li><DT><b>oddcolor</b> [<I>r g b</I>]</DT>
+	<DD>Set or get the color of odd partitions.
+	</DD>
+
+	<li><DT><b>evencolor</b> [<I>r g b</I>]</DT>
+	<DD>Set or get the color of even partitions.
+	</DD>
+
+	<li><DT><b>voidcolor</b> [<I>r g b</I>]</DT>
+	<DD>Set or get the color of areas where the ray passes through nothing.
+	</DD>
+
+	<li><DT><b>overlapcolor</b> [<I>r g b</I>]</DT>
+	<DD>Set or get the color of areas that overlap.
+	</DD>
+
+	<li><DT><b>fmt</b> [<I>r|h|p|f|m|o</I> [<I>str</I>]]</DT>
+	<DD>Set or get the format string(s). See the <I>man</I> page
+	of <I>nirt</I> for more details.
+	</DD>
+
+	<li><DT><b>help</b></DT>
+	<DD>Print the usage message.
+	</DD>
+	</ul>
 
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
 	<kbd>mged></kbd> <b>qray</b><br>
 	-- print usage message<br>
+	<kbd>mged></kbd> <b>qray fmt 0</b><br>
+	-- returns the overlap format string<br>
+	<kbd>mged></kbd> <b>qray oddcolor</b><br>
+	-- returns the rgb color used to color odd partitions<br>
+	<kbd>mged></kbd> <b>qray oddcolor 255 0 0</b><br>
+	-- sets the odd partition color to red<br>
 	</DD>
 	</DL>
 <HR>
@@ -3918,19 +3976,74 @@ the actual transformation matrices.
 </DD>
 <HR>
 
-<DT><a NAME="status"><B>status</B></DT>
+<DT><a NAME="status"><B>status</B> [<I>subcommands</I>]</DT>
 
-<DD>The ``status'' command lists the status of the current view in <I>mged</I>.
-The current state ("VIEWING", "SOL PICK", "SOL EDIT", "OBJ PICK", "OBJ PATH", "OBJ EDIT", or "VERTPICK")
-is listed along with the view size, the conversion factor from local model units to
-the base units (mm) stored in the database, and the view matrices.
- 
+<DD>Without a subcommand, the <I>status</I> command returns
+the following information: 
+current state, view size of the current display manager, the conversion
+factor from local model units to the base units (mm) stored in the database, and the
+view matrices of the current display manager.
+<I>Status</I> accepts the following subcommands:
+
+	<ul>
+	<li><DT><b>state</b></DT>
+	<DD>Get the current state of MGED (i.e. "VIEWING", "SOL PICK",
+	"SOL EDIT", "OBJ PICK", "OBJ PATH","OBJ EDIT", or "VERTPICK").
+	</DD>
+
+	<li><DT><b>Viewscale</b></DT>
+	<DD>Get the view scale.
+	</DD>
+
+	<li><DT><b>base2local</b></DT>
+	<DD>Get the conversion factor from base units (mm) to local units.
+	</DD>
+
+	<li><DT><b>local2base</b></DT>
+	<DD>Get the conversion factor from local units to base units (mm).
+	</DD>
+
+	<li><DT><b>toViewcenter</b></DT>
+	<DD>Get the matrix that describes the location of the view center.
+	</DD>
+
+	<li><DT><b>Viewrot</b></DT>
+	<DD>Get the matrix describes the view orientation.
+	</DD>
+
+	<li><DT><b>model2view</b></DT>
+	<DD>Get the model to view conversion matrix.
+	</DD>
+
+	<li><DT><b>view2model</b></DT>
+	<DD>Get the view to model conversion matrix.
+	</DD>
+
+	<li><DT><b>model2objview</b></DT>
+	<DD>Get the model to view conversion matrix. This matrix
+	also includes changes made during editing.
+	</DD>
+
+	<li><DT><b>objview2model</b></DT>
+	<DD>Get the view to model conversion matrix. This matrix
+	also includes changes made during editing.
+	</DD>
+
+	<li><DT><b>help</b></DT>
+	<DD>Print the usage message.
+	</DD>
+	</ul>
 
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
 	<kbd>mged></kbd> <b>status</b><br>
-	-- list the status of the current view<br>
+	-- get default information (i.e. state, view size, local2base, toViewcenter,
+	Viewrot, model2view and view2model)<br>
+	<kbd>mged></kbd> <b>status Viewrot</b><br>
+	-- get the view rotation matrix<br>
+	<kbd>mged></kbd> <b>status state</b><br>
+	-- get the edit state<br>
 	</DD>
 	</DL>
 </DD>
@@ -4300,33 +4413,17 @@ specified <I>variable</I>. Note that no spaces are allowed around the ``=''.
 The available <I>variables</I> are:
 <ul>
 	<li>autosize -- if non-zero, then <I>mged</I> will set the viewsize whenever
-	it draws to an empty display.</li>
+	it draws to an empty display.
 	<li>rateknobs -- if non-zero, then the knobs and sliders act as rate adjustments,
-	otherwise they act as absolute adjustments.</li>
-	<li>slidersflag -- if non-zero, the sliders are displayed.</li>
-	<li>faceplate -- if non-zero, the <I>mged</I> faceplate is displayed.</li>
-	<li>show_menu -- if non-zero, the ``viewing'' menu is displayed.</li>
-	<li>w_axes -- if non-zero, display a set of world axes at the origin of the model
-		coordinate system.
-	<li>v_axes -- if non-zero, display a set of view axes that indicate the viewing direction.
-	The view axes are not located at a specific position in model space, but are merely
-	overlaid on the current display. If v_axes is set to 2, the view axes are placed in
-	the center of the display.
-	If v_axes is set to 3, the view axes are placed in the lower left corner of the display.
-	If v_axes is set to 4, the view axes are placed in the upper left corner of the display.
-	If v_axes is set to 5, the view axes are placed in the upper right corner of the display.
-	If v_axes is set to 6, the view axes are placed in the lower right corner of the display.
-	If v_axes is set to 1, the view axes are placed in their most recent location.</li>
-	<li>send_key -- if non-zero, then the user may type commands in the <I>mged</I> graphics
-	display. This will not work if the user is using a Tcl/Tk command interface.</li>
+	otherwise they act as absolute adjustments.
+	<li>sliders -- if non-zero, the sliders are displayed.
+	<li>faceplate -- if non-zero, the <I>mged</I> faceplate is displayed.
+	<li>orig_gui -- if non-zero, the ``viewing'' menu is displayed.
+	<li>linewidth -- indicates how wide to draw lines.
+	<li>linestyle -- set line style of wireframe solids. Currently not being used.
 	<li>hot_key -- the X11 keysym definition for the key to toggle the <I>send_key</I>
 	value. The default is ``0xFFC6'' (65478 decimal), which is the ``F9'' key. The keysym
 	values are defined in the X11 file named <I>keysymdef.h</I>.
-	<li>view -- if set to non-zero, switch to the next view in the list of views.
-	If set to 0, switch to the previous view in the list of views.
-	There are 5 views in a circular list.</li>
-	<li>edit -- if non-zero and <I>mged</I> is in an edit mode, the knobs and sliders will
-	perform editing functions. Otherwise, they perform viewing operations.</li>
 	<li>context -- if non-zero (the default), then solid editing parameters entered via
 		the <a href="#p">p</a> command will be applied to the edited solid in the context of the
 		<a href="brlcad_glossary.html#COMBINATION">combination</a> tree above it in the
@@ -4339,30 +4436,69 @@ The available <I>variables</I> are:
 		in the edited solid being drawn at a point different from that specified
 		(due to transformations in the <I>combination</I> tree above it). Note that
 		this only affects solid edit operations that use the <I>p</I> command.</li>
-	<li>mged_rotate_view_around_eye -- if non-zero, then the knobs and sliders perform
-	view rotations about the eye point (as in rotating the camera). Otherwise, the knobs
-	and sliders perform rotations about the view center (moving the camera around the
-	view center).</li>
-	<li>predictor -- if non-zero, the predictor frame will be displayed.</li>
-	<li>predictor_advance -- the number of seconds into the future to advance the predictor frame.</li>
-	<li>predictor_length -- not currently used.</li>
-	<li>prespective -- if greater than zero, this is the perspective angle in degrees.
-	Otherwise, perspective is turned off.</li>
+	<li>dlist -- if non-zero use display lists
+	<li>use_air -- if non-zero use air while raytracing
+	<li>listen -- if non-zero listen for connections to MGED's built-in fbserv
+	<li>port -- port for the built-in fbserv to use
+	<li>fb -- if non-zero then framebuffer is active
+	<li>fb_all -- if non-zero use entire geometry window for the framebuffer, otherwise use
+	only the rectangular area.
+	<li>fb_overlay -- if non-zero overlay framebuffer image over geometry, otherwise
+	draw geometry over the framebuffer image.
+	<li>mouse_behavior -- see the following list of mouse behaviors
+		<ul>
+		<li>c -- fire ray for combination edit selection
+		<li>d -- default behavior (i.e. as found in classic MGED)
+		<li>m -- fire ray for matrix edit selection
+		<li>p -- paint rectangular area
+		<li>q -- fire query rays
+		<li>r -- raytrace rectangular area
+		<li>s -- fire ray for solid edit selection
+		<li>z -- zoom rectangular area
+		</ul>
+	<li>coords -- see the following list of coordinate systems
+	to use for transformations.
+		<ul>
+		<li>m -- model coordinates
+		<li>v -- view coordinates
+		<li>o -- object coordinates
+		</ul>
+	<li>rotate_about -- see the following list of centers of rotation
+		<ul>
+		<li>v -- view center
+		<li>e -- eye
+		<li>m -- model origin
+		<li>k -- keypoint
+		</ul>
+	<li>transform -- see the following list of things to transform
+		<ul>
+		<li>a -- transform the angle distance cursor if active, otherwise same as v
+		<li>e -- apply transformations to the edit
+		<li>v -- apply transformations to the view
+		</ul>
+	<li>predictor -- if non-zero, the predictor frame will be displayed.
+	<li>predictor_advance -- the number of seconds into the future to advance the predictor frame.
+	<li>predictor_length -- not currently used.
+	<li>perspective -- if greater than zero, this is the perspective angle in degrees.
+	Otherwise, perspective is turned off.
+	<li>perspective_mode -- if non-zero turn perspective on, otherwise turn it off
+	<li>toggle_perspective -- used to toggle among the four canned perspective angles 
+	(i.e. 30, 45, 60 and 90)
 	<li>nmg_eu_dist -- when the <I>-u</I> option to the <a href="#ev">ev</a> command is used, the
 	<a href="brlcad_solids.html#NMG">NMG</a> edgeuses are drawn this distance (mm) away from the
-	actual edge.</li>
+	actual edge.
 	<li>eye_sep_dist -- if greater than zero, this is the eye separation distance (mm) for
-	stereo viewing. Otherwise, stereo is off.</li>
-	<li>union_op -- not currently used.</li>
-	<li>intersection_op -- not currently used.</li>
-	<li>subtraction_op -- not currently used.</li>
+	stereo viewing. Otherwise, stereo is off.
+	<li>union_op -- not currently used.
+	<li>intersection_op -- not currently used.
+	<li>difference_op -- not currently used.
 </ul>
 
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
 	<kbd>mged></kbd> <b>vars sliders=1</b><br>
-	-- turn on the <I>sliders</I> display<br>
+	-- turn on the <I>sliders</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -4482,19 +4618,60 @@ All textual arguments may be abbreviated by their first letter.
 </DD>
 <HR>
 
-<DT><a NAME="view"><B>view</B> <I>center|size|eye|ypr|quat|aet</I></DT>
+<DT><a NAME="view"><B>view</B> <I>subcommand</I></DT>
 
-<DD>Get/set view parameters (local units) - experimental.
+<DD>Get/set view parameters (local units). <I>View</I> accepts
+the following subcommands:
+
+	<DL>
+	<DT><b>center [<I>x y z</I>]</b></DT>
+	<DD>Get/set the view center of the current view.
+	</DD>
+
+	<DT><b>size [<I>val</I>]</b></DT>
+	<DD>Get/set the view size of the current view.
+	</DD>
+
+	<DT><b>eye [<I>x y z</I>]</b></DT>
+	<DD>Get/set the eye point of the current view.
+	</DD>
+
+	<DT><b>ypr [<I>y p r</I>]</b></DT>
+	<DD>Get/set the yaw, pitch and roll of the current view.
+	</DD>
+
+	<DT><b>quat [<I>v1 v2 v3 v4</I>]</b></DT>
+	<DD>Get/set the view in the form of a quaternion.
+	</DD>
+
+	<DT><b>aet [<I>a e t</I>]</b></DT>
+	<DD>Get/set the azimuth, elevation and twist of the current view.
+	</DD>
+	</DL>
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>
+	<kbd>mged></kbd> <b>view center</b><br>
+	-- get the view center<br>
+	<kbd>mged></kbd> <b>view center 0 0 0</b><br>
+	-- set the view center at the origin of model space<br>
+	</DD>
+	</DL>
 </DD>
 <HR>
 
-<DT><a NAME="vnirt"><B>vnirt</B> <I>x y</I></DT>
-<DD>Trace a single ray from x y.
+<DT><a NAME="vnirt"><B>vnirt</B> [<I>nirt args</I>] <I>x y</I></DT>
+<DD>This command interprets <I>x</I> and <I>y</I> as view coordinates (i.e. +-2047)
+and converts them to model coordinates (local units) using a value of 2047 for view z
+before passing them to <a href="mged_cmds.html#nirt">nirt</a>.
+All other arguments are passed to nirt without
+modification.
 </DD>
 <HR>
 
 <DT><a NAME="vquery_ray"><B>vquery_ray</B> <I>x y</I></DT>
-<DD>Trace a single ray from x y.
+<DD>Same as <a href="mged_cmds.html#vnirt">vnirt</a>.
 </DD>
 <HR>
 
