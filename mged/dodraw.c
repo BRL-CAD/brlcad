@@ -760,9 +760,9 @@ struct solid		*existing_sp;
 	/* Solid is successfully drawn */
 	if( !existing_sp )  {
 		/* Add to linked list of solid structs */
-		bu_semaphore_acquire( (unsigned int)(RT_SEM_MODEL - BU_SEM_SYSCALL) );
+		bu_semaphore_acquire( RT_SEM_MODEL );
 		BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
-		bu_semaphore_release( (unsigned int)(RT_SEM_MODEL - BU_SEM_SYSCALL) );
+		bu_semaphore_release( RT_SEM_MODEL );
 	} else {
 		/* replacing existing solid -- struct already linked in */
 		sp->s_iflag = UP;
@@ -799,19 +799,71 @@ genptr_t                user_ptr1, user_ptr2, user_ptr3;
 }
 
 /*
+ *			F U L L _ P A T H _ F R O M _ S O L I D
+ *
+ *  Initializes a 'db_full_path' to correspond to sp->s_path.
+ */
+void
+full_path_from_solid( pathp, sp )
+struct db_full_path	*pathp;
+register struct solid	*sp;
+{
+	register int	j;
+
+	pathp->fp_len = pathp->fp_maxlen = sp->s_last+1;
+	pathp->fp_names = (struct directory **)bu_malloc(
+		pathp->fp_maxlen * sizeof(struct directory *),
+		"db_full_path array");
+	pathp->magic = DB_FULL_PATH_MAGIC;
+
+	bcopy( (char *)sp->s_path, (char *)pathp->fp_names,
+		pathp->fp_len * sizeof(struct directory *) );
+}
+
+/*
  *  			P A T H h M A T
  *  
  *  Find the transformation matrix obtained when traversing
  *  the arc indicated in sp->s_path[] to the indicated depth.
- *  Be sure to omit s_path[sp->s_last] -- it's a solid.
  *
- *  XXX Change to using db_path_to_mat().
+ *  Returns -
+ *	matp is filled with values (never read first).
+ *	sp may have fields updated.
  */
 void
 pathHmat( sp, matp, depth )
 register struct solid *sp;
 matp_t matp;
 {
+	struct db_tree_state	ts;
+	struct db_full_path	null_path;
+	struct db_full_path	path;
+	int			ret;
+
+	RT_CHECK_DBI(dbip);
+
+	full_path_from_solid( &path, sp );
+
+	db_full_path_init( &null_path );
+	ts = mged_initial_tree_state;		/* struct copy */
+	ts.ts_dbip = dbip;
+
+	ret = db_follow_path( &ts, &null_path, &path, LOOKUP_NOISY, depth+1 );
+	db_free_full_path( &null_path );
+	db_free_full_path( &path );
+
+	/*
+	 *  Copy color out to solid structure, in case it changed.
+	 *  This is an odd place to do this, but...
+	 */
+	sp->s_basecolor[0] = ts.ts_mater.ma_color[0] * 255.;
+	sp->s_basecolor[1] = ts.ts_mater.ma_color[1] * 255.;
+	sp->s_basecolor[2] = ts.ts_mater.ma_color[2] * 255.;
+	mat_copy( matp, ts.ts_mat );	/* implicit return */
+
+	db_free_db_tree_state( &ts );
+
+#if 0
 	register struct directory *parentp;
 	register struct directory *kidp;
 	register int		j;
@@ -858,6 +910,7 @@ matp_t matp;
 			}
 		}
 	}
+#endif
 }
 
 /*
@@ -890,7 +943,6 @@ struct solid	*sp;
 			   "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
 	  return(-1);
 	}
-	/* XXX This should really be db_follow_path_for_state() */
 	pathHmat( sp, mat, sp->s_last-1 );
 
 	BU_INIT_EXTERNAL( &ext );
@@ -1156,7 +1208,7 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	bu_semaphore_acquire( (unsigned int)(RT_SEM_MODEL - BU_SEM_SYSCALL) );
+	bu_semaphore_acquire( RT_SEM_MODEL );
 	if( mged_facetize_tree )  {
 		union tree	*tr;
 		tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
@@ -1169,7 +1221,7 @@ union tree		*curtree;
 	} else {
 		mged_facetize_tree = curtree;
 	}
-	bu_semaphore_release( (unsigned int)(RT_SEM_MODEL - BU_SEM_SYSCALL) );
+	bu_semaphore_release( RT_SEM_MODEL );
 
 	/* Tree has been saved, and will be freed later */
 	return( TREE_NULL );
