@@ -1,40 +1,19 @@
 /*
- *  S H _ P R J . C
+ *	S H _ P R J . C
  *
- *  Projection shader
+ *	Projection shader
  *
- *  Usage:
- *	shader prj file="foo.pix" w=256 n=512 N=x/y/z/w \
- *		   file="foo.pix" w=256 n=512 N=x/y/z/w \
- *		   file="foo.pix" w=256 n=512 N=x/y/z/w
+ *	The one parameter to this shader is a filename.  The named file
+ *	contains the REAL parameters to the shader.  The v4 database format
+ *	is far too anemic to support this sort of shader.
  *
- *	For each image the "file" directive must come first.  This signals
- *	the shader to produce a new image structure.  All other options
- *	following "file" apply to that image until the next "file" directive.
- *
- *  Author -
- *	Lee A. Butler
- *  
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
- *  Distribution Notice -
- *	Re-distribution of this software is restricted, as described in
- *	your "Statement of Terms and Conditions for the Release of
- *	The BRL-CAD Package" license agreement.
- *
- *  Copyright Notice -
- *	This software is Copyright (C) 1998 by the United States Army
- *	in all countries except the USA.  All rights reserved.
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "conf.h"
 
 #include <stdio.h>
+#include <fcntl.h>
+#include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
@@ -46,170 +25,108 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 
-#define prj_MAGIC 0x1998    /* make this a unique number for each shader */
+#define prj_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_prj_SP(_p) RT_CKMAG(_p, prj_MAGIC, "prj_specific")
 
-#define NAME_LEN	128
-#define IMAGE_MAGIC 0x1a
-struct prj_image {
-	struct bu_list	l;
-	struct bu_mapped_file	*i_mp;		/* image data */
-	unsigned 	i_width;		/* image description */
-	unsigned 	i_height;
-	unsigned 	i_depth;
-
-	double		i_persp;		/* projection description */
-	double		i_viewsize;
-	point_t		i_eyept;
+struct image {
+	bu_list	l;
+	struct bu_vls	i_filename;
+	unsigned char	*i_image;
+	unsigned	i_width;
+	unsigned	i_height;
+	fastf_t		i_viewsize;
+	point_t		i_eye;
 	quat_t		i_orient;
-
-#if 0
-	plane_t		i_plane;		/* computed */
-#endif
-	mat_t		i_mat;			/* view rot/scale matrix */
-	char		i_fname[NAME_LEN];	/* file with the pixels */
-	char		i_cfile[NAME_LEN];	/* where we got all this */
-};
+	mat_t		i_m;
+}
 
 /*
  * the shader specific structure contains all variables which are unique
  * to any particular use of the shader.
  */
 struct prj_specific {
-	long		magic;	/* for memory validity check, must come 1st */
-	char		prj_name[NAME_LEN];/* temp variable for filenames */
-	mat_t		prj_m_to_sh;	/* model to shader space matrix */
-	unsigned	prj_count;	/* Number of images in list prj_img */
-	struct bu_list	prj_img;	/* list of images to map on object */
+	long	magic;	/* magic # for memory validity check, must come 1st */
+	struct bu_vls	*prj_img_filename;
+	unsigned char	*prj_image;
+	int		prj_img_width;
+	int		prj_img_height;
+	fastf_t		prj_viewsize;
+	point_t		prj_eye;
+	mat_t		prj_sh_to_v;
+	mat_t		prj_m;
+	mat_t		prj_m_inv;
+	vect_t		prj_dir;	/* direction of projection */
+	point_t		prj_min;	/* bounding box min */
+	point_t		prj_max;	/* bounding box max */
+	mat_t		prj_m_to_sh;	/* region space xform */
+	FILE 		*prj_plfd;
 };
 
+/* The default values for the variables in the shader specific structure */
+CONST static
+struct prj_specific prj_defaults = {
+	prj_MAGIC,
+	(struct bu_vls *)0,
+	(unsigned char *)0,
+	512,
+	512,
+	1.0,
+	{ 1.0, 1.0, 1.0 },		/* prj_eye */
+	{	0.0, 0.0, 0.0, 0.0,	/* prj_sh_to_v */
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0 },
+	{	0.0, 0.0, 0.0, 0.0,	/* prj_m */
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0 },
+	{	0.0, 0.0, 0.0, 0.0,	/* prj_m_inv */
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0 },
+	{ 0.0, 0.0, 0.0 },		/* prj_dir */
+	{ 0.0, 0.0, 0.0 },		/* prj_min */
+	{ 0.0, 0.0, 0.0 },		/* prj_max */
+	{	0.0, 0.0, 0.0, 0.0,	/* prj_m_to_sh */
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0 },
+	(FILE *)0			/* prj_plfd */
+	};
 
-
-/* description of how to parse/print the arguments to the shader.  Not much
- * here as it is all done in the image-specific parsing 
- */
 #define SHDR_NULL	((struct prj_specific *)0)
 #define SHDR_O(m)	offsetof(struct prj_specific, m)
 #define SHDR_AO(m)	offsetofarray(struct prj_specific, m)
-static void image_hook();
+
+
+/* description of how to parse/print the arguments to the shader
+ * There is at least one line here for each variable in the shader specific
+ * structure above
+ */
+struct bu_structparse prj_print_tab[] = {
+	{"%d",  1, "img_width",		SHDR_O(prj_img_width),	FUNC_NULL },
+	{"%d",  1, "img_height",	SHDR_O(prj_img_height),	FUNC_NULL },
+	{"%f",  1, "view_size",		SHDR_O(prj_viewsize),	FUNC_NULL },
+	{"%f",  3, "view_eye",		SHDR_AO(prj_eye),	FUNC_NULL },
+	{"%f",  3, "view_dir",		SHDR_AO(prj_dir),	FUNC_NULL },
+	{"%f",  16,"view_sh_to_v",	SHDR_AO(prj_sh_to_v),	FUNC_NULL },
+	{"%f",  16,"view_m",		SHDR_AO(prj_m),	FUNC_NULL },
+	{"%f",  3, "shader_max",	SHDR_AO(prj_min),	FUNC_NULL },
+	{"%f",  3, "shader_min",	SHDR_AO(prj_max),	FUNC_NULL },
+	{"%f",  16,"shader_mat",	SHDR_AO(prj_m_to_sh),	FUNC_NULL },
+	{"",	0, (char *)0,		0,			FUNC_NULL }
+
+};
 struct bu_structparse prj_parse_tab[] = {
-	{"%s",	NAME_LEN, "pfile", SHDR_AO(prj_name), image_hook },
-	{"%s",	NAME_LEN, "p",	   SHDR_AO(prj_name), image_hook },
-	{"",	0, (char *)0,	0,		      FUNC_NULL  }
+	{"i",	bu_byteoffset(prj_print_tab[0]), "prj_print_tab", 0, FUNC_NULL },
+	{"%d",  1, "w",			SHDR_O(prj_img_width),	FUNC_NULL },
+	{"%d",  1, "n",			SHDR_O(prj_img_height),	FUNC_NULL },
+	{"%f",  1, "vs",		SHDR_O(prj_viewsize),	FUNC_NULL },
+	{"%f",  3, "ve",		SHDR_AO(prj_eye),	FUNC_NULL },
+	{"%f",  16, "vm",		SHDR_AO(prj_sh_to_v),	FUNC_NULL },
+	{"%f",  16, "sm",		SHDR_AO(prj_m_to_sh),	FUNC_NULL },
+	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
-
-
-#define IMG_NULL	((struct prj_image *)0)
-#define IMG_O(m)	offsetof(struct prj_image, m)
-#define IMG_AO(m)	offsetofarray(struct prj_image, m)
-struct bu_structparse image_print_tab[] = {
-	{"%s",	NAME_LEN,"file",IMG_AO(i_fname),	FUNC_NULL },
-	{"%d",  1, "depth",	IMG_O(i_depth),		FUNC_NULL },
-	{"%d",  1, "width",	IMG_O(i_width),		FUNC_NULL },
-	{"%d",  1, "numscan",	IMG_O(i_height),	FUNC_NULL },
-	{"%d",	1, "perpective",IMG_O(i_persp),		FUNC_NULL },
-	{"%d",	1, "viewsize",	IMG_O(i_viewsize),	FUNC_NULL },
-	{"%d",	3, "orientation",IMG_AO(i_orient),	FUNC_NULL },
-	{"%d",	3, "eye_pt",	IMG_AO(i_eyept),	FUNC_NULL },
-	{"",	0, (char *)0,	0,			FUNC_NULL }
-};
-
-struct bu_structparse image_parse_tab[] = {
-	{"i",bu_byteoffset(image_print_tab[0]), "image_print_tab", 0, FUNC_NULL },
-	{"%s",	NAME_LEN,"f",	IMG_AO(i_fname),	FUNC_NULL },
-	{"%d",  1,	 "d",	IMG_O(i_depth),		FUNC_NULL },
-	{"%d",  1,	 "w",	IMG_O(i_width),		FUNC_NULL },
-	{"%d",  1,	 "n",	IMG_O(i_height),	FUNC_NULL },
-	{"%d",	1,	 "p",	IMG_O(i_persp),		FUNC_NULL },
-	{"%d",	1,	 "v",	IMG_O(i_viewsize),	FUNC_NULL },
-	{"%d",	3,	 "o",	IMG_AO(i_orient),	FUNC_NULL },
-	{"%d",	3, 	 "e",	IMG_AO(i_eyept),	FUNC_NULL },
-	{"",	0, (char *)0,	0,			FUNC_NULL }
-};
-
-/*
- * Process a parameter file describing an image and how it is projected onto
- * the object.
- *
- */
-static void
-image_hook(sdp, name, base, value)
-struct bu_structparse			*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
-char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
-{
-	struct prj_specific *prj_sp = (struct prj_specific *)sdp;
-	struct prj_image *img;
-	FILE *fd;
-	int i;
-	struct stat s;
-	struct bu_vls img_params;
-
-	i = stat(prj_sp->prj_name, &s);
-	if ((fd=fopen(prj_sp->prj_name, "r")) == (FILE *)NULL) {
-		return;
-	}
-
-	/* read in the parameters */
-	bu_vls_init(&img_params);
-	bu_vls_extend(&img_params, i);
-	fread(bu_vls_addr(&img_params), 1, i, fd);
-	(void)fclose(fd);
-
-	/* set default values */
-	BU_GETSTRUCT(img, prj_image);
-	strncpy(img->i_cfile, prj_sp->prj_name, sizeof(img->i_cfile));
-	img->i_width = img->i_height = 512;
-	img->i_depth = 3;
-	img->i_persp = 0.0;
-	VSET(img->i_eyept, 0.0, 0.0, 1.0);
-	QSET(img->i_orient, 0.0, 0.0, 0.0, 1.0 );
-	img->i_viewsize = 1.0;
-
-	/* parse specific values */
-	i = bu_struct_parse( &img_params, image_parse_tab, (char *)img);
-	bu_vls_free(&img_params);
-
-	if (i < 0) {
-		bu_log("Error parsing image parameter file %s\n",
-			prj_sp->prj_name);
-		bu_free(img, "prj_image");
-		return;
-	}
-
-	/* map the pixel data */
-	img->i_mp = bu_open_mapped_file(img->i_fname, NULL);
-	if ( ! img->i_mp) {
-		/* File couldn't be mapped */
-		bu_log("Error mapping image file %s\n", img->i_fname);
-		bu_free(img, "prj_image");
-		return;
-	}
-
-	/* add to list */
-	BU_LIST_APPEND(&prj_sp->prj_img, &(img->l));
-	prj_sp->prj_count++;
-}
-
-
-
-/*	P R J _ P R I N T _ S P
- *
- *  Print prj_specific by printing each prj_image struct
- */
-static void
-prj_print_sp(prj_sp)
-CONST struct prj_specific *prj_sp;
-{
-	struct prj_image *img;
-	
-	for(BU_LIST_FOR(img, prj_image, &(prj_sp->prj_img))) {
-		bu_struct_print(img->i_cfile, image_print_tab, (char *)img);
-		mat_print("mat", img->i_mat);
-	}
-}
-
 
 HIDDEN int	prj_setup(), prj_render();
 HIDDEN void	prj_print(), prj_free();
@@ -230,6 +147,124 @@ struct mfuncs prj_mfuncs[] = {
 	0,		0,		0,		0 }
 };
 
+static void
+mp(s, m)
+char *s;
+mat_t m;
+{
+	int i;
+	fprintf(stderr, "Matrix %s:\n", s);
+	fprintf(stderr, "%lg %lg %lg %lg\n", m[0], m[1], m[2], m[3]);
+	fprintf(stderr, "%lg %lg %lg %lg\n", m[4], m[5], m[6], m[7]);
+	fprintf(stderr, "%lg %lg %lg %lg\n", m[8], m[9], m[10], m[11]);
+	fprintf(stderr, "%lg %lg %lg %lg\n", m[12], m[13], m[14], m[15]);
+}
+static int
+get_actual_parameters(prj_sp, matparm)
+struct prj_specific *prj_sp;
+struct rt_vls		*matparm;
+{
+	FILE *fd;
+	char *fname = "prj.txt";
+	char *img_file = "../pix/m35.pix";
+	int i, n;
+
+	
+	if( rdebug&RDEBUG_SHADE) {
+		bu_log("debug matparm:%s\n", bu_vls_addr(matparm));
+	}
+
+
+	bu_log("setting image file %s\n", img_file);
+
+
+	prj_sp->prj_img_filename = bu_vls_vlsinit();
+
+	bu_vls_strcpy(prj_sp->prj_img_filename, img_file);
+	bu_log("set image file %s\n", bu_vls_addr(prj_sp->prj_img_filename));
+
+
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	if ((fd=fopen(fname, "r")) == NULL) {
+		fprintf(stderr, "Error opening parameter file \"%s\": %s\n",
+			fname, strerror(errno));
+		bu_semaphore_release( BU_SEM_SYSCALL );
+		return(-1);
+	}
+
+	if (fscanf(fd, "%lg", &prj_sp->prj_viewsize) != 1) {
+		fprintf(stderr, "error scanning viewsize\n");
+		bu_semaphore_release( BU_SEM_SYSCALL );
+		bu_bomb("prj shader error");
+	}
+	if (fscanf(fd, "%lg %lg %lg", &prj_sp->prj_eye[0], 
+		&prj_sp->prj_eye[1], &prj_sp->prj_eye[2]) != 3) {
+		fprintf(stderr, "error scanning eye point\n");
+		bu_semaphore_release( BU_SEM_SYSCALL );
+		bu_bomb("prj shader error");
+	}
+
+	for (i=0 ; i < ELEMENTS_PER_MAT ; i++) {
+		if (fscanf(fd, "%lg", &prj_sp->prj_m[i]) != 1) {
+			fprintf(stderr, "error scanning matrix element %d\n", i);
+			bu_semaphore_release( BU_SEM_SYSCALL );
+			bu_bomb("prj shader error");
+		}
+	}
+
+	fclose(fd);
+
+	fprintf(stderr, "opening %dx%dimage file %s\n",
+		prj_sp->prj_img_width,
+		prj_sp->prj_img_height,
+		bu_vls_addr(prj_sp->prj_img_filename));
+
+	if ( (fd=fopen(bu_vls_addr(prj_sp->prj_img_filename), "r")) == NULL) {
+		fprintf(stderr, "Error opening image file \"%s\": %s\n",
+			fname, strerror(errno));
+		bu_semaphore_release( BU_SEM_SYSCALL );
+		return(-1);
+	}
+	
+	n = prj_sp->prj_img_width * prj_sp->prj_img_height;
+
+	bu_semaphore_release( BU_SEM_SYSCALL );
+	prj_sp->prj_image = (unsigned char *)bu_malloc(n * 3, "prj image");
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
+
+	fprintf(stderr, "reading %dx%dimage file %s\n",
+		prj_sp->prj_img_width,
+		prj_sp->prj_img_height,
+		bu_vls_addr(prj_sp->prj_img_filename));
+
+	i = fread(prj_sp->prj_image, 3, n, fd);
+
+	if (i != n) {
+		fprintf(stderr, "Error reading %dx%d image file\n\t(got %d pixels, not %d)\n",
+			 prj_sp->prj_img_width, prj_sp->prj_img_height, i, n);
+		bu_semaphore_release( BU_SEM_SYSCALL );
+		return(-1);
+	}
+
+	fclose(fd);
+
+
+	if( rdebug&RDEBUG_SHADE) {
+		prj_sp->prj_plfd = fopen("prj.pl", "w");
+		if ( ! prj_sp->prj_plfd ) {
+			fprintf(stderr, "Error opening plot file \"%s\": %s\n",
+				"prj.pl", strerror(errno));
+			bu_semaphore_release( BU_SEM_SYSCALL );
+			return(-1);
+		}
+	}
+
+
+	bu_semaphore_release( BU_SEM_SYSCALL );
+
+
+	return 0;
+}
 
 /*	P R J _ S E T U P
  *
@@ -246,14 +281,16 @@ struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct prj_specific	*prj_sp;
-	mat_t	tmp;
+	mat_t	trans, rot, scale, tmp;
 	vect_t	bb_min, bb_max, v_tmp;
+	struct stat sb;
+	int i;
+	struct bu_vls	param_buf;
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
 	RT_VLS_CHECK( matparm );
 	RT_CK_REGION(rp);
-
 
 	if( rdebug&RDEBUG_SHADE)
 		rt_log("prj_setup(%s)\n", rp->reg_name);
@@ -263,28 +300,47 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	*dpp = (char *)prj_sp;
 
 	/* initialize the default values for the shader */
-	prj_sp->magic = prj_MAGIC;
-	*prj_sp->prj_name = '\0';
-	bn_mat_idn(prj_sp->prj_m_to_sh);
-	prj_sp->prj_count = 0;
-	BU_LIST_INIT(&prj_sp->prj_img);
+	memcpy(prj_sp, &prj_defaults, sizeof(struct prj_specific) );
+
+	if (get_actual_parameters(prj_sp, matparm)) return -1;
+
 
 	/* The shader needs to operate in a coordinate system which stays
 	 * fixed on the region when the region is moved (as in animation)
 	 * we need to get a matrix to perform the appropriate transform(s).
+	 *
+	 * db_region_mat returns a matrix which maps points on/in the region
+	 * as it exists where the region is defined (as opposed to the 
+	 * (possibly transformed) one we are rendering.
 	 */
 	db_region_mat(prj_sp->prj_m_to_sh, rtip->rti_dbip, rp->reg_name);
 
-	/* get the name of the parameter file(s) and parse them (via hook) */
-	if( bu_struct_parse( matparm, prj_parse_tab, (char *)prj_sp ) < 0 )
-		return(-1);
 
-	if (! prj_sp->prj_count) {
-		bu_bomb("No images specified for prj shader\n");
+	/* compute a direction vector indicating the direction toward
+	 * the plane of projection.
+	 */
+	VSET(v_tmp, 0.0, 0.0, 1.0);
+	mat_inv(prj_sp->prj_m_inv, prj_sp->prj_m);	
+	MAT4X3VEC(prj_sp->prj_dir, prj_sp->prj_m_inv, v_tmp);
+
+
+	/* compute matrix to transform shader coordinates into projection 
+	 * coordinates
+	 */
+	bn_mat_idn(trans);
+	MAT_DELTAS_VEC_NEG(trans, prj_sp->prj_eye);
+
+	bn_mat_idn(scale);
+	MAT_SCALE_ALL(scale, prj_sp->prj_viewsize);
+
+	mat_mul(tmp, prj_sp->prj_m, trans);
+	mat_mul(prj_sp->prj_sh_to_v, scale, tmp);
+
+
+	if( rdebug&RDEBUG_SHADE) {
+		bu_struct_print( " Parameters:", prj_print_tab, (char *)prj_sp );
+		mat_print( "m_to_sh", prj_sp->prj_m_to_sh );
 	}
-
-	if( rdebug&RDEBUG_SHADE)
-		prj_print_sp(prj_sp);
 
 	return(1);
 }
@@ -297,7 +353,7 @@ prj_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	prj_print_sp((struct prj_specific *)dp);
+	bu_struct_print( rp->reg_name, prj_print_tab, (char *)dp );
 }
 
 /*
@@ -308,12 +364,11 @@ prj_free( cp )
 char *cp;
 {
 	struct prj_specific *prj_sp = (struct prj_specific *)cp;
-	struct prj_image *img;
 
-	while (BU_LIST_WHILE( img, prj_image, &(prj_sp->prj_img) )) {
-		BU_LIST_DEQUEUE( &(img->l) );
-		bu_close_mapped_file( img->i_mp );
-		bu_free( (char *)img, "prj_image" );
+	if ( prj_sp->prj_plfd ) {
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
+		fclose( prj_sp->prj_plfd );
+		bu_semaphore_release( BU_SEM_SYSCALL );
 	}
 
 	rt_free( cp, "prj_specific" );
@@ -335,13 +390,21 @@ char			*dp;	/* ptr to the shader-specific struct */
 {
 	register struct prj_specific *prj_sp =
 		(struct prj_specific *)dp;
-	point_t pt;
-	struct prj_image *i;
-	struct prj_image *best;	/* image that best suits this hit point */
-	double best_angle = 8.0;
-	struct application my_ap;
-	static plane_t pl = { 0.0, 0.0, 1.0, -1.0 };
-	vect_t N;
+	point_t r_pt;
+	vect_t	r_N;
+	point_t	dir_pt;	/* for plotting prj_dir */
+	point_t sh_pt;
+	vect_t	sh_N;
+	vect_t	sh_color;
+	static const double	cs = (1.0/255.0);
+	char buf[32];
+	static int fileno = 0;
+	FILE *fd;
+	mat_t	trans_o, trans_p, rot, scale, tmp, xform;
+	point_t	img_v;
+	const static point_t delta = {0.5, 0.5, 0.0};
+	int x, y;
+	unsigned char *pixel;
 
 	/* check the validity of the arguments we got */
 	RT_AP_CHECK(ap);
@@ -349,78 +412,107 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_prj_SP(prj_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		prj_print_sp(prj_sp);
-
+		bu_struct_print( "prj_render Parameters:", prj_print_tab, (char *)prj_sp );
 
 	/* If we are performing the shading in "region" space, we must 
 	 * transform the hit point from "model" space to "region" space.
 	 * See the call to db_region_mat in prj_setup().
 	 */
-	MAT4X3PNT(pt, prj_sp->prj_m_to_sh, swp->sw_hit.hit_point);
-	MAT4X3VEC(N, prj_sp->prj_m_to_sh, swp->sw_hit.hit_normal);
+	MAT4X3PNT(r_pt, prj_sp->prj_m_to_sh, swp->sw_hit.hit_point);
+	MAT4X3VEC(r_N, prj_sp->prj_m_to_sh, swp->sw_hit.hit_normal);
+
+	
+
 
 	if( rdebug&RDEBUG_SHADE) {
 		rt_log("prj_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
 		V3ARGS(swp->sw_hit.hit_point),
-		V3ARGS(pt) );
+		V3ARGS(r_pt) );
 	}
 
-	/* Find the image with the closest projection angle to the normal */
-	best = (struct prj_image *)NULL;
-	for (BU_LIST_FOR(i, prj_image, &prj_sp->prj_img)) {
-		double dist;
-		vect_t dir;
-		point_t pl_pt;
 
-/* XXX removed to make compilation work, fix and reinstate */
-/*		if (VDOT(i->i_plane, N) >= 0.0) continue; */
-
-		/* convert hit point into view coordinates of image */
-		MAT4X3PNT(pl_pt, i->i_mat, pt);
-
-
-		/* compute plane point */
-		if (i->i_persp) {
-			VSUB2(dir, pt, i->i_eyept);
-		} else {
-			VREVERSE(dir, pl);
-		}
-
-#if 0
-/* XXX removed to make compilation work, fix and reinstate */
-		switch (bn_isect_line3_plane(&dist, pt, dir, i->i_plane, &ap->a_rt_i->rti_tol)) {
-		case 0: /* line lies on plane */
-			break;
-		case 1: /* hit entering */
-			break;
-		default:
-			continue;
-			break;
-		}
-#else
-		dist = 42;
-#endif
-		/* get point on image plane */
-		VJOIN1(pl_pt, pt, dist, dir);
-
-		/* XXX fire ray to check self-occlusion */
-
-
-		/* transform model space to image space */
-
-
-
-	}
-
-	VMOVE(swp->sw_color, pt);
-
-	/* shader must perform transmission/reflection calculations
-	 *
-	 * 0 < swp->sw_transmit <= 1 causes transmission computations
-	 * 0 < swp->sw_reflect <= 1 causes reflection computations
+	/* If the normal is not even vaguely in the direction of the 
+	 * projection plane, do nothing.
 	 */
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-		(void)rr_render( ap, pp, swp );
+	if (VDOT(r_N, prj_sp->prj_dir) < 0.0) {
+		if( rdebug&RDEBUG_SHADE)
+			bu_log("vectors oppose, shader abort\n");
+		VSET(swp->sw_color, 1.0, 1.0, 0.0);
 
-	return(1);
+
+		if (prj_sp->prj_plfd) {
+			/* plot hit normal */
+			pl_color(prj_sp->prj_plfd, 255, 255, 255);
+			pdv_3move(prj_sp->prj_plfd, r_pt);
+			VADD2(dir_pt, r_pt, r_N);
+			pdv_3cont(prj_sp->prj_plfd, dir_pt);
+
+			/* plot projection direction */
+			pl_color(prj_sp->prj_plfd, 255, 255, 0);
+			pdv_3move(prj_sp->prj_plfd, r_pt);
+			VADD2(dir_pt, r_pt, prj_sp->prj_dir);
+			pdv_3cont(prj_sp->prj_plfd, dir_pt);
+		}
+		return 1;
+	}
+
+	MAT4X3PNT(sh_pt, prj_sp->prj_sh_to_v, r_pt);
+
+	if( rdebug&RDEBUG_SHADE) {
+		VPRINT("sh_pt", sh_pt);
+	}
+
+	VADD2(img_v, sh_pt, delta);
+
+	x = img_v[X] * (prj_sp->prj_img_width-1);
+	y = img_v[Y] * (prj_sp->prj_img_height-1);
+
+	pixel = &prj_sp->prj_image[x*3 + y*prj_sp->prj_img_width*3];
+
+	if (x >= prj_sp->prj_img_width || x < 0) {
+		VSET(swp->sw_color, 1.0, .0, .0);
+
+		if( rdebug&RDEBUG_SHADE)
+			bu_log("x coord test failed 0 > %d <= %u, shader abort\n",
+				x, prj_sp->prj_img_width);
+		
+		if (prj_sp->prj_plfd) {
+			/* plot projection direction */
+			pl_color(prj_sp->prj_plfd, 255, 0, 0);
+			pdv_3move(prj_sp->prj_plfd, r_pt);
+			VADD2(dir_pt, r_pt, prj_sp->prj_dir);
+			pdv_3cont(prj_sp->prj_plfd, dir_pt);
+		}
+		return 1;
+	}
+	if (y >= prj_sp->prj_img_height || y < 0) {
+		VSET(swp->sw_color, 1.0, 0.0, 1.0);
+		if( rdebug&RDEBUG_SHADE)
+			bu_log("y coord test failed 0 > %d <= %u, shader abort\n",
+				y, prj_sp->prj_img_height);
+
+		if (prj_sp->prj_plfd) {
+			/* plot projection direction */
+			pl_color(prj_sp->prj_plfd, 255, 0, 255);
+			pdv_3move(prj_sp->prj_plfd, r_pt);
+			VADD2(dir_pt, r_pt, prj_sp->prj_dir);
+			pdv_3cont(prj_sp->prj_plfd, dir_pt);
+		}
+		return 1;
+	}
+
+
+	if( rdebug&RDEBUG_SHADE) {
+		bu_log("pixel (%g,%g) %d,%d  (%u %u %u)\n",
+			 img_v[X], img_v[Y], x, y, 
+			 (unsigned)pixel[0],
+			 (unsigned)pixel[1],
+			 (unsigned)pixel[2]);
+
+	}
+
+	VMOVE(sh_color, pixel);	/* int/float conversion */
+	VSCALE(swp->sw_color, sh_color, cs);
+
+	return 1;
 }
