@@ -22,6 +22,12 @@ proc do_grid_spacing { id spacing_type } {
     global grid_control_spacing
     global localunit
 
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
     set top .$id.grid_spacing
 
     if [winfo exists $top] {
@@ -122,6 +128,12 @@ proc do_grid_anchor { id } {
     global mged_gui
     global grid_control_anchor
 
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
     set top .$id.grid_anchor
 
     if [winfo exists $top] {
@@ -202,6 +214,12 @@ proc init_grid_control { id } {
     global mged_default
     global grid_control
     global localunit
+
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
 
     set top .$id.grid_control
 
@@ -619,6 +637,12 @@ proc grid_control_update { sf } {
 }
 
 proc grid_autosize {} {
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
 # Gives between 20 and 200 ticks in user units
     set lower [expr log10(20)]
     set upper [expr $lower+1]
@@ -638,6 +662,12 @@ proc grid_autosize {} {
 proc grid_spacing_autosize { id } {
     global mged_gui
     global grid_control_spacing
+
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
 
     winset $mged_gui($id,active_dm)
     set val [grid_autosize]
@@ -665,7 +695,12 @@ proc grid_spacing_ok { id spacing_type top } {
 }
 
 proc grid_spacing_apply { id spacing_type } {
+    global mged_gui
     global grid_control_spacing
+
+    if {[opendb] == ""} {
+	return
+    }
 
     if {$spacing_type == "h"} {
 	mged_apply $id "rset grid rh $grid_control_spacing($id,tick);\
@@ -697,7 +732,14 @@ proc grid_spacing_reset { id spacing_type } {
 }
 
 proc set_grid_spacing { id grid_unit apply } {
+    global mged_gui
     global grid_control
+
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
 
     set_grid_res res res_major $grid_unit
 
@@ -713,7 +755,14 @@ proc set_grid_spacing { id grid_unit apply } {
 }
 
 proc set_grid_spacing_htick { id grid_unit } {
+    global mged_gui
     global grid_control
+
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
 
     # set res according to grid_unit
     set_grid_res res res_major $grid_unit
@@ -727,7 +776,14 @@ proc set_grid_spacing_htick { id grid_unit } {
 }
 
 proc set_grid_spacing_vtick { id grid_unit } {
+    global mged_gui
     global grid_control
+
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
 
     # set res according to grid_unit
     set_grid_res res res_major $grid_unit

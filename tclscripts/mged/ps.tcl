@@ -12,6 +12,12 @@ proc init_psTool { id } {
     global mged_gui
     global ps_control
 
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
     set top .$id.do_ps
 
     if [winfo exists $top] {

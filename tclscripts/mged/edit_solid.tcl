@@ -32,6 +32,12 @@ proc init_edit_solid { id args } {
     global solid_data
     global esol_control
 
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
     set w .$id.edit_solid
 
     if { [winfo exists $w] } {

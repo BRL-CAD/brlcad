@@ -209,6 +209,10 @@ proc mouse_solid_edit_select { x y } {
     global mged_players
     global mged_gui
 
+    if {[opendb] == ""} {
+	return
+    }
+
     set spath [mouse_get_spath $x $y]
     if {$spath == "" || $spath == " "} {
 	return
@@ -226,6 +230,10 @@ proc mouse_solid_edit_select { x y } {
 proc mouse_matrix_edit_select { x y } {
     global mged_players
     global mged_gui
+
+    if {[opendb] == ""} {
+	return
+    }
 
     set spath_and_pos [mouse_get_spath_and_pos $x $y]
     if {[llength $spath_and_pos] != 2} {
@@ -247,6 +255,10 @@ proc mouse_rt_obj_select { x y } {
     global mged_gui
     global rt_control
     global port
+
+    if {[opendb] == ""} {
+	return
+    }
 
     set win [winset]
     set id [get_player_id_dm $win]
@@ -298,6 +310,10 @@ proc mouse_comb_edit_select { x y } {
     global mged_players
     global mged_gui
     global comb_control
+
+    if {[opendb] == ""} {
+	return
+    }
 
     set win [winset]
     set id [get_player_id_dm $win]

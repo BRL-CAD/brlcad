@@ -9,6 +9,12 @@
 proc init_g2asc { id } {
     global mged_gui
 
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
     set top .$id.ascii
     catch { destroy $top }
 
