@@ -3803,6 +3803,7 @@ long	**trans_tbl;
 			new_v = NMG_INDEX_GETP(vertex, trans_tbl, old_v);
 		else
 			new_v = (struct vertex *)NULL;
+
 		if (new_lu == (struct loopuse *)NULL) {
 			/* this is the first edge in the new loop */
 			new_lu = nmg_mlv(parent, new_v, lu->orientation);
@@ -3862,7 +3863,6 @@ long	**trans_tbl;
 		if( trans_tbl )
 			NMG_INDEX_ASSIGN( trans_tbl, eu, (long *)new_eu );
 	}
-
 #if 0
 /* XXX untested */
 	if( trans_tbl )
@@ -3895,8 +3895,7 @@ long	**trans_tbl;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log(
-"nmg_dup_loop(lu=x%x(%s), parent=x%x, trans_tbl=x%x) new_lu=x%x(%s)\n",
+		bu_log("nmg_dup_loop(lu=x%x(%s), parent=x%x, trans_tbl=x%x) new_lu=x%x(%s)\n",
 			lu, nmg_orientation(lu->orientation),
 			parent , trans_tbl , new_lu,
 			nmg_orientation(new_lu->orientation) );
