@@ -348,6 +348,11 @@ RGBpixel		bgpixel;
 	/* Magic numbers for output file.				*/
 	register int	bbw;
 	static short	x_magic = XtndRMAGIC; /* Extended magic number.	*/
+	static RGBpixel	black = { 0, 0, 0 };
+
+	/* safty check */
+	if( bgpixel == NULL )
+		bgpixel = black;
 
 	/* If black and white mode, compute NTSC value of background.	*/
 	if( ncolors == 1 )
@@ -365,9 +370,9 @@ RGBpixel		bgpixel;
 	w_setup.h_pixelbits = _pixelbits;
 	w_setup.h_ncmap = cmflag ? _ncmap : 0;
 	w_setup.h_cmaplen = _cmaplen;
-	w_setup.h_background[0] = ncolors == 0 ? bbw : bgpixel[RED];
-	w_setup.h_background[1] = ncolors == 0 ? bbw : bgpixel[GRN];
-	w_setup.h_background[2] = ncolors == 0 ? bbw : bgpixel[BLU];
+	w_setup.h_background[0] = ncolors == 1 ? bbw : bgpixel[RED];
+	w_setup.h_background[1] = ncolors == 1 ? bbw : bgpixel[GRN];
+	w_setup.h_background[2] = ncolors == 1 ? bbw : bgpixel[BLU];
 
 	if( fp != stdout && fseek( fp, 0L, 0 ) == -1 )
 		{
@@ -681,9 +686,9 @@ register RGBpixel *endpix;
 		register int	nseg = 0;
 	while( pixelp <= endpix && nseg < NSEG )
 		{
-		if(	*pixelp[RED] != _bg_pixel[RED]
-		    ||	*pixelp[GRN] != _bg_pixel[GRN]
-		    ||	*pixelp[BLU] != _bg_pixel[BLU]
+		if(	(*pixelp)[RED] != _bg_pixel[RED]
+		    ||	(*pixelp)[GRN] != _bg_pixel[GRN]
+		    ||	(*pixelp)[BLU] != _bg_pixel[BLU]
 			)
 			{
 			/* We have found the start of a segment */
