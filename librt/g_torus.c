@@ -1518,8 +1518,7 @@ const struct db_i		*dbip;
 	RT_CK_DB_INTERNAL( ip );
 
 	if (bn_mat_is_non_unif(mat)) {
-	    bu_log("------------------ WARNING ----------------\n\
-     Non-uniform matrix transform on torus.  Ignored\n");
+		bu_log("------------------ WARNING ----------------\nNon-uniform matrix transform on torus.  Ignored\n");
 	}
 
 
