@@ -90,6 +90,8 @@ FBIO adage_interface =
 		adage_cscreen_addr,
 		fb_sim_readrect,
 		fb_sim_writerect,
+		fb_null,		/* flush */
+		adage_device_close,	/* free */
 		adage_help,
 		"Adage RDS3000",
 		1024,
