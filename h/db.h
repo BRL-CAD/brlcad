@@ -58,6 +58,8 @@
 #define DB_H seen
 
 #define NAMESIZE		16
+typedef float dbfloat_t;
+
 #define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
 extern char *strncpy();
 
@@ -77,8 +79,6 @@ union record  {
 #define ID_BSOLID	'b'	/* B-spline solid.  multiple surfs */
 #define ID_BSURF	'D'     /* d_spline surface header */
 #define ID_MATERIAL	'm'	/* Material description record */
-
-	char	u_size[128];	/* Total record size */
 
 	struct ident  {
 		char	i_id;		/* I */
@@ -125,7 +125,7 @@ union record  {
 #define TOR	16	/* toroid */
 #define TGC	17	/* truncated general cone */
 #define ELLG	23	/* comgeom version of GENELL ellipsoid */
-		float	s_values[24];		/* parameters */
+		dbfloat_t	s_values[24];		/* parameters */
 #define s_tgc_V	s_values[0]
 #define s_tgc_H	s_values[3]
 #define s_tgc_A s_values[6]
@@ -175,9 +175,8 @@ union record  {
 		char	m_brname[NAMESIZE];	/* name of this branch */
 		char	m_instname[NAMESIZE];	/* name of referred-to obj. */
 		short	m_pad1;
-		float	m_mat[16];		/* homogeneous trans matrix */
+		dbfloat_t m_mat[16];		/* homogeneous trans matrix */
 		short	m_num;			/* COMGEOM solid # ref */
-		short	m_pad2;
 	}  M;
 
 	struct material_rec {
@@ -196,7 +195,7 @@ union record  {
 		char	B_pad;
 		char	B_name[NAMESIZE];
 		short	B_nsurf;	/* # of surfaces in this solid */
-		float   B_resolution;	/* resolution of flatness */
+		dbfloat_t B_resolution;	/* resolution of flatness */
 	} B;
 	struct b_surf {
 		char    d_id;		/* = ID_BSURF */
@@ -222,8 +221,8 @@ union record  {
 	struct polydata  {
 		char	q_id;		/* = POLY_DATA */
 		char	q_count;	/* # of vertices <= 5 */
-		float	q_verts[5][3];	/* Actual vertices for this polygon */
-		float	q_norms[5][3];	/* Normals at each vertex */
+		dbfloat_t q_verts[5][3]; /* Actual vertices for this polygon */
+		dbfloat_t q_norms[5][3]; /* Normals at each vertex */
 	} q;
 
 	struct ars_rec  {
@@ -235,12 +234,12 @@ union record  {
 		short	a_curlen;		/* # of granules per curve */
 		short	a_totlen;		/* # of granules for ARS */
 		short	a_pad;
-		float	a_xmax;			/* max x coordinate */
-		float	a_xmin;			/* min x coordinate */
-		float	a_ymax;			/* max y coordinate */
-		float	a_ymin;			/* min y coordinate */
-		float	a_zmax;			/* max z coordinate */
-		float	a_zmin;			/* min z coordinate */
+		dbfloat_t a_xmax;		/* max x coordinate */
+		dbfloat_t a_xmin;		/* min x coordinate */
+		dbfloat_t a_ymax;		/* max y coordinate */
+		dbfloat_t a_ymin;		/* min y coordinate */
+		dbfloat_t a_zmax;		/* max z coordinate */
+		dbfloat_t a_zmin;		/* min z coordinate */
 	}  a;
 	struct ars_ext  {			/* one "granule" */
 		char	b_id;		/* B */
@@ -248,7 +247,7 @@ union record  {
 		short	b_n;			/* current curve # */
 		short	b_ngranule;		/* curr. granule for curve */
 		short	b_pad;
-		float	b_values[8*3];		/* vectors */
+		dbfloat_t	b_values[8*3];		/* vectors */
 	}  b;
 };
 
