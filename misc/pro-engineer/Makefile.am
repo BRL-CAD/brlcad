@@ -8,6 +8,7 @@ PROTOOL_SRC = /opt/ptc/proe2001/protoolkit
 PROTOOL_SYS = $(PROTOOL_SRC)/$(PRO_MACHINE_TYPE)
 PRODEV_SRC  = /opt/ptc/proe2001/prodevelop
 PRODEV_SYS  = $(PRODEV_SRC)/$(PRO_MACHINE_TYPE)
+PROTK_UNLOCK = /usr/proe/bin/protk_unlock
 
 PDLIB       = $(PRODEV_SYS)/obj/prodevelop.a
 PDLIB_DLL   = $(PRODEV_SYS)/obj/prodev_dll.a
@@ -26,10 +27,10 @@ AM_CPPFLAGS = \
 	-I$(PROTOOL_SRC)/includes \
 	-I$(PRODEV_SRC)/includes
 
+proe_brldir = @PRO_ENGINEER_DIR@/$(PRO_MACHINE_TYPE)
 proe_brl_CFLAGS = $(AM_CFLAGS)
 proe_brl_LDADD = $(PTLIB) $(PDLIB) $(SYSLIBS)
 proe_brl_SOURCES = proe-brl.c
-proebindir = @PRO_ENGINEER_DIR@/$(PRO_MACHINE_TYPE)
 
 #cc -n32 -mips4 -woff 1521 -multigot -Wl,-wall  -rpath /usr/brlcad/lib -Wl,-hiddens_file,/dev/null -shared -T10000000 -B symbolic -o proe-brl.dll proe-brl.o /opt/ptc/proe2001/protoolkit/sgi_mips4/obj/protk_dll.a /opt/ptc/proe2001/prodevelop/sgi_mips4/obj/prodev_dll.a -L/usr/brlcad/lib -lbu -lbn -ltcl -lc -lm -lw
 
@@ -53,24 +54,24 @@ all-am: Makefile
 	  @ECHO@ ; \
 	fi
 
-install-data-local:
-	@if test -f .libs/proe-brl ; then \
-		@ECHO@ "Installing proe-brl" ; \
-		$(INSTALL) .libs/proe-brl $(DESTDIR)$(proebindir)/proe-brl ; \
-	fi
-	@if test -f libproe2brl.so ; then \
-		@ECHO@ "Installing libproe2brl.so" ; \
-		$(INSTALL) libproe2brl.so $(DESTDIR)$(proelibdir)/libproe2brl.so ; \
-	fi
+#install-data-local:
+#	@if test -f .libs/proe-brl ; then \
+#		@ECHO@ "Installing proe-brl" ; \
+#		$(INSTALL) .libs/proe-brl $(DESTDIR)$(proebindir)/proe-brl ; \
+#	fi
+#	@if test -f libproe2brl.so ; then \
+#		@ECHO@ "Installing libproe2brl.so" ; \
+#		$(INSTALL) libproe2brl.so $(DESTDIR)$(proelibdir)/libproe2brl.so ; \
+#	fi
 
 unlock: proe-brl libproe2brl.la
 	@if test -f proe-brl ; then \
-		/usr/proe/bin/protk_unlock proe-brl ; \
+		$(PROTK_UNLOCK) proe-brl ; \
 	else \
 		@ECHO@ "Run 'make install' before running 'make unlock'" ; \
 	fi
 	@if test -f libproe2brl.so ; then \
-		/usr/proe/bin/protk_unlock libproe2brl.so ; \
+		$(PROTK_UNLOCK) libproe2brl.so ; \
 	else \
 		@ECHO@ "Run 'make install' before running 'make unlock'" ; \
 	fi
