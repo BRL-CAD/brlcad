@@ -25,6 +25,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
+#include <X11/X.h>
+#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
@@ -33,6 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
+static	void	slowrect();
 static	int	linger();
 static	int	xsetup();
 static	void	print_display_info();	/* debug */
@@ -380,6 +383,7 @@ int	width, height;
 	}
 
 	/* Make the Display connection available for selecting on */
+
 	ifp->if_selfd = XI(ifp)->dpy->fd;
 
 	return(0);
@@ -1709,6 +1713,7 @@ FBIO	*ifp;
 /*
  * Repaint a (pre clipped) rectangle from the image onto the screen.
  */
+static void
 slowrect( ifp, xmin, xmax, ymin, ymax )
 FBIO *ifp;
 int xmin, xmax;	/* image bounds */
