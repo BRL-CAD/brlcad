@@ -72,7 +72,24 @@ then
 		CMP=./pixcmp
 	else
 		echo ...need to build pixcmp
-		cake pixcmp
+		cake >& /dev/null
+		if test "x$?" = "x0"
+		then
+			echo ...building pixcmp with cake	
+			cake pixcmp
+		else
+			if test "x${CC}" = "x"
+			then
+				CC=gcc
+				$CC >& /dev/null
+				if ! test "x$?" = "x1"
+				then
+					CC=cc
+				fi
+			fi
+		fi
+		echo ...building pixcmp with $CC
+		$CC -o pixcmp -I../h pixcmp.c
 		CMP=./pixcmp
 	fi
 fi
