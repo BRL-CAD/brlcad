@@ -249,6 +249,7 @@ unsigned char   red8Amap[256];	/* red 8bit dither color map */
 unsigned char   grn8Amap[256];	/* green 8bit dither color map */
 unsigned char   blu8Amap[256];	/* blue 8bit dither color map */
 
+/* Our copy of the *hardware* colormap */
 static unsigned char redmap[256], grnmap[256], blumap[256];
 
 #define RR	6
@@ -835,6 +836,18 @@ int	width, height;
 	SUN(ifp)->su_mode = mode;
 	myfont = pf_open( "/usr/lib/fonts/fixedwidthfonts/screen.b.14" );
 
+	/*
+	 * Initialize what we want an 8bit *hardware* colormap to
+	 * look like.  Note that our software colormap is totally
+	 * separate from this.
+	 * r | g | b, values = RR, GR, BR
+	 */
+	for (x = 0; x < (RR * GR * BR); x++) {
+		blumap[x + 1] = ((x % BR)) * 255 / (BR - 1);
+		grnmap[x + 1] = (((x / BR) % GR)) * 255 / (GR - 1);
+		redmap[x + 1] = ((x / (BR * GR))) * 255 / (RR - 1);
+	}
+
 	/* Create window. */
         if( sun_pixwin = (we_getgfxwindow(sun_parentwinname) == 0) ) {
         	/************** SunView Open **************/
@@ -884,18 +897,8 @@ int	width, height;
 				}
 			else
 				{
-				/* r | g | b, values = RR, GR, BR */
 				/* set a new cms name; initialize it */
 				x = pw_setcmsname(imagepw, "libfb");
-				for (x = 0; x < (RR * GR * BR); x++)
-					{	RGBpixel        q;
-					blumap[x + 1] = ((x % BR)) * (255 / (BR - 1));
-					grnmap[x + 1] = (((x / BR) % GR)) * (255 / (GR - 1));
-					redmap[x + 1] = ((x / (BR * GR))) * (255 / (RR - 1));
-					q[RED] = redmap[x + 1];
-					q[GRN] = grnmap[x + 1];
-					q[BLU] = blumap[x + 1];
-					}
 				/*
 				 * set first (background) and last (foreground)
 				 * entries the same so suntools will fill them
@@ -930,9 +933,7 @@ int	width, height;
 				PW_RETAIN | PW_REPAINT_ALL
 				);
 #endif SUN_USE_AGENT
-		}
-	else
-		{
+	} else {
         	/************ Raw Screen Open ************/
 		static Pixrect	*screenpr = NULL;
 		static Pixrect	*windowpr;
@@ -974,7 +975,11 @@ int	width, height;
 				PIX_CLR,
 				myfont, "BRL libfb Frame Buffer" );
 		SUN(ifp)->su_depth = SUNPR(ifp)->pr_depth;
+		if( SUN(ifp)->su_depth == 8 ) {
+			pr_putcolormap(windowpr, 1, 253,
+				&redmap[1], &grnmap[1], &blumap[1] );
 		}
+	}
 
 	pf_close( myfont );
 	ifp->if_width = width;
