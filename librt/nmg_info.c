@@ -785,6 +785,126 @@ out:
 }
 
 /*
+ *			N M G _ F I N D _ E U _ I N _ F A C E
+ *
+ *  A parallel to nmg_findeu(), only restricted to a faceuse,
+ *  rather than to a whole shell.
+ */
+struct edgeuse *
+nmg_find_eu_in_face( v1, v2, fu, eup, dangling_only )
+CONST struct vertex	*v1;
+CONST struct vertex	*v2;
+CONST struct faceuse	*fu;
+CONST struct edgeuse	*eup;
+int		dangling_only;
+{
+	register CONST struct vertexuse	*vu;
+	register CONST struct edgeuse	*eu;
+	CONST struct edgeuse		*eup_mate;
+	int				eup_orientation;
+
+	NMG_CK_VERTEX(v1);
+	NMG_CK_VERTEX(v2);
+	if(fu) NMG_CK_FACEUSE(fu);
+
+	if(eup)  {
+		NMG_CK_EDGEUSE(eup);
+		eup_mate = eup->eumate_p;
+		NMG_CK_EDGEUSE(eup_mate);
+		if (*eup->up.magic_p != NMG_LOOPUSE_MAGIC ||
+		    *eup->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )
+			rt_bomb("nmg_findeu(): eup not part of a face\n");
+		eup_orientation = eup->up.lu_p->up.fu_p->orientation;
+	} else {
+		eup_mate = eup;			/* NULL */
+		eup_orientation = OT_SAME;
+	}
+
+	if (rt_g.NMG_debug & DEBUG_FINDEU)
+		rt_log("nmg_find_eu_in_face() seeking eu!=%8x/%8x between (%8x, %8x) %s\n",
+			eup, eup_mate, v1, v2,
+			dangling_only ? "[dangling]" : "[any]" );
+
+	for( RT_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )  {
+		NMG_CK_VERTEXUSE(vu);
+		if (!vu->up.magic_p)
+			rt_bomb("nmg_find_eu_in_face() vertexuse in vu_hd list has null parent\n");
+
+		/* Ignore self-loops and lone shell verts */
+		if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+		eu = vu->up.eu_p;
+
+		/* Ignore edgeuses which don't run between the right verts */
+		if( eu->eumate_p->vu_p->v_p != v2 )  continue;
+
+		if (rt_g.NMG_debug & DEBUG_FINDEU )  {
+			rt_log("nmg_find_eu_in_face: check eu=%8x vertex=(%8x, %8x)\n",
+				eu, eu->vu_p->v_p,
+				eu->eumate_p->vu_p->v_p);
+		}
+
+		/* Ignore the edgeuse to be excluded */
+		if( eu == eup || eu->eumate_p == eup )  {
+			if (rt_g.NMG_debug & DEBUG_FINDEU )
+				rt_log("\tIgnoring -- excluded edgeuse\n");
+			continue;
+		}
+
+		/* See if this edgeuse is in the proper faceuse */
+		if( fu )  {
+			struct loopuse	*lu;
+			if( *eu->up.magic_p == NMG_SHELL_MAGIC )  {
+			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+			    		rt_log("\tIgnoring -- wire eu not in faceuse\n");
+				continue;
+			}
+			if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
+				rt_bomb("nmg_find_eu_in_face() eu has bad up\n");
+			lu = eu->up.lu_p;
+			NMG_CK_LOOPUSE(lu);
+			if( *lu->up.magic_p == NMG_SHELL_MAGIC )  {
+			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+			    		rt_log("\tIgnoring -- eu of wire loop not in fu\n");
+				continue;
+			}
+			if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+				rt_bomb("nmg_find_eu_in_face() lu->up is bad\n");
+			/* Edgeuse in loop in face, normal case */
+			if( lu->up.fu_p != fu )  {
+			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+		    		rt_log("\tIgnoring -- eu of lu+fu in wrong faceuse (%x)\n", lu->up.fu_p);
+				continue;
+			}
+		}
+
+		/* If it's not a dangling edge, skip on */
+		if( dangling_only && eu->eumate_p != eu->radial_p) {
+		    	if (rt_g.NMG_debug & DEBUG_FINDEU)  {
+			    	rt_log("\tIgnoring %8x/%8x (radial=x%x)\n",
+			    		eu, eu->eumate_p,
+					eu->radial_p );
+		    	}
+			continue;
+		}
+
+	    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+		    	rt_log("\tFound %8x/%8x\n", eu, eu->eumate_p);
+
+		if ( *eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+		     *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
+		     eup_orientation != eu->up.lu_p->up.fu_p->orientation)
+			eu = eu->eumate_p;	/* Take other orient */
+		goto out;
+	}
+	eu = (struct edgeuse *)NULL;
+out:
+	if (rt_g.NMG_debug & DEBUG_FINDEU)
+	    	rt_log("nmg_find_eu_in_face() returns x%x\n", eu);
+
+	return (struct edgeuse *)eu;
+}
+
+/*
  *			N M G _ F I N D _ E U _ W I T H _ V U _ I N _ L U
  *
  *  Find an edgeuse starting at a given vertexuse within a loop(use).
