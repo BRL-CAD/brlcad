@@ -339,21 +339,16 @@ err:
 			}
 			MAT4X3VEC( ap.a_ray.r_dir, mat, first_dir );
 
-			/* Limit new direction to lie "above" or on
-			 * the tangent plane at the current hit point,
-			 * to prevent constantly banging into the
-			 * object we just hit.
+			/*
+			 *  If new ray is nearly perpendicular to
+			 *  the tangent plane, it is doomed to failure;
+			 *  pick any tangent and use that instead.
 			 */
-			if( (dot=VDOT( ap.a_ray.r_dir, norm_cur_try )) < 0 )  {
+			if( (dot=VDOT( ap.a_ray.r_dir, norm_cur_try )) < -0.9995 )  {
 				vect_t	olddir;
 
-				if( dot <= -0.9995 )  {
-					/* Pick any tangent */
-					VMOVE( olddir, ap.a_ray.r_dir );
-					VCROSS( ap.a_ray.r_dir, olddir, norm_cur_try );
-				} else {
-					proj_goal();
-				}
+				VMOVE( olddir, ap.a_ray.r_dir );
+				VCROSS( ap.a_ray.r_dir, olddir, norm_cur_try );
 			}
 		}
 		if( failed_try > 0 )  {
