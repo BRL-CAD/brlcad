@@ -19,25 +19,16 @@
 #define	SRCSUFF	.c
 #define MANSECTION	1
 #define FILES	burst error fb glob grid gridrotate idents\
-		paint plot prnt trie ui
-#define MYLIBES	Hm/libHm.a Sc/libSc.a Tc/libTc.a
+		paint plot prnt trie ui\
+		Hm HmGetc HmGlob Sc Tc
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
 PRODUCTS:	OBJ
-	CC LDFLAGS -o burst OBJ LIB_PRE''LIBRT RT_LIBES LIB_PRE''LIBFB LIBTERMLIB LIBES MYLIBES -ltermlib -lm
+	CC LDFLAGS -o burst OBJ LIB_PRE''LIBRT RT_LIBES LIB_PRE''LIBFB LIBTERMLIB LIBES -ltermlib -lm
 
-all&: MYLIBES PRODUCTS
-
-Hm/libHm.a:
-	cd Hm; make
-
-Sc/libSc.a:
-	cd Sc; make
-
-Tc/libTc.a:
-	cd Tc; make
+all&: PRODUCTS
 
 test&:	all tfiles/ktank.g
 	./burst -b < tfiles/ktank.in
