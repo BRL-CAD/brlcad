@@ -51,13 +51,21 @@ everything&::	PRODUCTS
  *  So we tell it.  Ugh.  Stupid SGI software.  Sun got it right.
  */
 #if defined(NFS)
-#	define	CONV	\
+#	if defined(__CAKE__sun3) || defined(__CAKE__sun4)
+#		define	CONV	../.conv.MTYPE/asc2g
+#	else
+#		define	CONV	\
 		LD_LIBRARY_PATH=LIBWDB_DIR:LIBRT_DIR:LIBSYSV_DIR:$LD_LIBRARY_PATH \
 		../.conv.MTYPE/asc2g
+#	endif
 #else
-#	define	CONV	\
+#	if defined(__CAKE__sun3) || defined(__CAKE__sun4)
+#		define	CONV	../conv/asc2g
+#	else
+#		define	CONV	\
 		LD_LIBRARY_PATH=LIBWDB_DIR:LIBRT_DIR:LIBSYSV_DIR:$LD_LIBRARY_PATH \
 		../conv/asc2g
+#	endif
 #endif
 
 %.g:	../SRCDIR/%.asc				if exist ../SRCDIR/%.asc
