@@ -8,6 +8,8 @@
 /*  Program to make a bolt using libwdb.  The objects will be  */
 /*  in millimeters.  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
