@@ -356,8 +356,9 @@ extern struct dm_list *curr_dm_list;
 
 
 struct w_dm {
-    struct dm *dp;
-    int (*init)();
+  int type;
+  char *name;
+  int (*init)();
 };
 extern struct w_dm which_dm[];  /* defined in attach.c */
 
