@@ -80,8 +80,8 @@ char *font;
 	    	fclose(fp);
 	    	return(VFONT_NULL);
 	}
-	magic = vax_gshort( &header[0*2] );
-	size = vax_gshort( &header[1*2] );
+	magic = vax_gshort( &header[0*2] ) & 0xFFFF;
+	size = vax_gshort( &header[1*2] ) & 0xFFFF;	/* unsigned short */
 
 	if( magic != 0436 )  {
 		fprintf(stderr, "vfont_get(%s):  bad magic number 0%o\n",
