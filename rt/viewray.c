@@ -34,14 +34,17 @@ static char RCSrayview[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 int		use_air = 1;		/* Handling of air in librt */
+extern FILE	*outfp;			/* optional output file */
 
 char usage[] = "\
 Usage:  rtray [options] model.g objects... >file.ray\n\
 Options:\n\
- -f #		Grid size in pixels, default 512\n\
+ -s #		Grid size in pixels, default 512\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
+ -o model.ray	Specify output file, ray(5V) format (default=stdout)\n\
+ -U #		Set use_air boolean to #\n\
  -x #		Set librt debug flags\n\
 ";
 
@@ -82,7 +85,7 @@ register struct partition *PartHeadp;
 		pp->pt_inflip = 0;
 	}
 	wraypaint( pp->pt_inhit->hit_point, pp->pt_inhit->hit_normal,
-		PAINT_FIRST_ENTRY, ap, stdout );
+		PAINT_FIRST_ENTRY, ap, outfp );
 
 	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
 		/* Write the ray for this partition */
@@ -98,7 +101,7 @@ register struct partition *PartHeadp;
 				  pp->pt_outhit->hit_normal );
 			pp->pt_outflip = 0;
 		}
-		wray( pp, ap, stdout );
+		wray( pp, ap, outfp );
 
 		/*
 		 * If there is a subsequent partition that does not
@@ -130,7 +133,7 @@ register struct partition *PartHeadp;
 				/* output "internal exit" paint */
 				wraypaint( pp->pt_outhit->hit_point,
 					pp->pt_outhit->hit_normal,
-					PAINT_INTERN_EXIT, ap, stdout );
+					PAINT_INTERN_EXIT, ap, outfp );
 			} else {
 				/* Exiting air */
 				if( np->pt_regionp->reg_regionid < 0 )
@@ -138,7 +141,7 @@ register struct partition *PartHeadp;
 				/* output "internal entry" paint */
 				wraypaint( np->pt_inhit->hit_point,
 					np->pt_inhit->hit_normal,
-					PAINT_INTERN_ENTRY, ap, stdout );
+					PAINT_INTERN_ENTRY, ap, outfp );
 			}
 			continue;
 		}
@@ -151,23 +154,23 @@ register struct partition *PartHeadp;
 		 */
 		wraypaint( pp->pt_outhit->hit_point,
 			pp->pt_outhit->hit_normal,
-			PAINT_INTERN_EXIT, ap, stdout );
+			PAINT_INTERN_EXIT, ap, outfp );
 
 		wraypts( pp->pt_outhit->hit_point,
 			pp->pt_outhit->hit_normal,
 			np->pt_inhit->hit_point,
-			PAINT_AIR, ap, stdout );
+			PAINT_AIR, ap, outfp );
 
 		wraypaint( np->pt_inhit->hit_point,
 			np->pt_inhit->hit_normal,
-			PAINT_INTERN_ENTRY, ap, stdout );
+			PAINT_INTERN_ENTRY, ap, outfp );
 	}
 
 	/* "final exit" paint -- ray va(r)nishes off into the sunset */
 	pp = PartHeadp->pt_back;
 	wraypaint( pp->pt_outhit->hit_point,
 		pp->pt_outhit->hit_normal,
-		PAINT_FINAL_EXIT, ap, stdout );
+		PAINT_FINAL_EXIT, ap, outfp );
 	return(0);
 }
 
@@ -183,8 +186,6 @@ char *file, *obj;
 	ap->a_miss = raymiss;
 	ap->a_onehit = 0;
 
-	if( minus_o )
-		fprintf(stderr,"Warning:  -o ignored, rays go to stdout\n");
 	return(0);		/* No framebuffer needed */
 }
 
@@ -193,10 +194,15 @@ void	view_eol() {;}
 void
 view_end()
 {
-	fflush(stdout);
+	fflush(outfp);
 }
 
-void	view_2init()  {;}
+void
+view_2init()
+{
+	if( outfp == NULL )
+		rt_bomb("outfp is NULL\n");
+}
 
 int	mlib_setup() { return(1); }
 
