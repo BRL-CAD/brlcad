@@ -1,25 +1,9 @@
-
-Received: from vgr.brl.mil by WOLF.BRL.MIL id aa26015; 19 Jan 91 3:38 EST
-Received: from iuvax.cs.indiana.edu by VGR.BRL.MIL id aa28346;
-          19 Jan 91 3:19 EST
-Received: by iuvax.cs.indiana.edu 
-Date: Sat, 19 Jan 91 03:20:32 -0500
-From: Steve Hayman <sahayman@iuvax.cs.indiana.edu>
-To: mike@BRL.MIL
-Subject: Re:  War Images
-Message-ID:  <9101190319.aa28346@VGR.BRL.MIL>
-
-Here it is, it's pretty basic and only handles the images at
-the specific resolution you posted.  Just a 10-minute hack,
-but I suppose it would be easy to add options to select
-different widths/heights.
-
-#include <stdio.h>
-
 /*
  * convert BRL .pix files to ppm
  * zcat file.Z | pixtoppm
  * sahayman 1991 01 18
+ *
+ * From: Steve Hayman <sahayman@iuvax.cs.indiana.edu>
  *
  * brl says this:
  *
@@ -30,67 +14,139 @@ different widths/heights.
  *
  *	Mike @ BRL.MIL
  */
+#include <stdio.h>
+#include "machine.h"
+#include "externs.h"
 
-#define WIDTH 720
-#define HEIGHT 486
+static int	file_width = 512;	/* default input width */
+static int	file_height = 512;	/* default input height */
+
+static int	autosize = 0;		/* !0 to autosize input */
+
+static int	fileinput = 0;		/* file of pipe on input? */
+static char	*file_name;
+static FILE	*infp;
+
 #define BYTESPERPIXEL 3
-#define ROWSIZE (WIDTH * BYTESPERPIXEL)
+#define ROWSIZE (file_width * BYTESPERPIXEL)
 
-#define SIZE (WIDTH * HEIGHT * BYTESPERPIXEL)
+#define SIZE (file_width * file_height * BYTESPERPIXEL)
 
+char *scanbuf;
 
-char *map;
-char *malloc();
+static char usage[] = "\
+Usage: pix-ppm [-a] [-w file_width] [-n file_height]\n\
+	[-s square_file_size] [file.pix]\n";
 
-main()
+get_args( argc, argv )
+register char **argv;
 {
+	register int c;
 
-    int i;
-    char *row;
-    /*
-     * magic number
-     */
+	while ( (c = getopt( argc, argv, "as:w:n:" )) != EOF )  {
+		switch( c )  {
+		case 'a':
+			autosize = 1;
+			break;
+		case 's':
+			/* square file size */
+			file_height = file_width = atoi(optarg);
+			autosize = 0;
+			break;
+		case 'w':
+			file_width = atoi(optarg);
+			autosize = 0;
+			break;
+		case 'n':
+			file_height = atoi(optarg);
+			autosize = 0;
+			break;
 
-    printf("P6\n");
+		default:		/* '?' */
+			return(0);
+		}
+	}
 
-    /*
-     * width height
-     */
-    printf("%d %d\n", WIDTH, HEIGHT);
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+			return(0);
+		file_name = "-";
+		infp = stdin;
+	} else {
+		file_name = argv[optind];
+		if( (infp = fopen(file_name, "r")) == NULL )  {
+			perror(file_name);
+			(void)fprintf( stderr,
+				"pix-ppm: cannot open \"%s\" for reading\n",
+				file_name );
+			exit(1);
+		}
+		fileinput++;
+	}
 
-    /*
-     * maximum color component value
-     */
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "pix-ppm: excess argument(s) ignored\n" );
 
-    printf("255\n");
-    fflush(stdout);
-
-    /*
-     * now gobble up the bytes
-     */
-
-    map = malloc( SIZE );
-    if ( map == NULL ) {
-	perror("malloc");
-	exit(1);
-    }
-
-
-    if ( fread(map, 1, SIZE, stdin) == 0 ) {
-	fprintf(stderr, "Short read\n");
-	exit(1);
-    }
-
-    /*
-     * now write them out in the right order, 'cause the
-     * input is upside down.
-     */
-    
-    for ( i = 0; i < HEIGHT; i++ ) {
-	row = map + (HEIGHT - i) * ROWSIZE;
-	fwrite(row, 1, ROWSIZE, stdout);
-    }
-
-    exit(0);
+	return(1);		/* OK */
 }
-
+
+main(argc, argv)
+int	argc;
+char	**argv;
+{
+	int i;
+	char *row;
+
+
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
+	}
+
+	/* autosize input? */
+	if( fileinput && autosize ) {
+		int	w, h;
+		if( fb_common_file_size(&w, &h, file_name, 3) ) {
+			file_width = w;
+			file_height = h;
+		} else {
+			fprintf(stderr,"pix-ppm: unable to autosize\n");
+		}
+	}
+
+
+	/*
+	 * gobble up the bytes
+	 */
+	scanbuf = malloc( SIZE );
+	if ( scanbuf == NULL ) {
+		perror("pix-ppm: malloc");
+		exit(1);
+	}
+	if ( fread(scanbuf, 1, SIZE, infp) == 0 ) {
+		fprintf(stderr, "pix-ppm: Short read\n");
+		exit(1);
+	}
+
+	/* PPM magic number */
+	printf("P6\n");
+
+	/* width height */
+	printf("%d %d\n", file_width, file_height);
+
+	/* maximum color component value */
+	printf("255\n");
+	fflush(stdout);
+
+	/*
+	 * now write them out in the right order, 'cause the
+	 * input is upside down.
+	 */
+	
+	for ( i = 0; i < file_height; i++ ) {
+		row = scanbuf + (file_height - i) * ROWSIZE;
+		fwrite(row, 1, ROWSIZE, stdout);
+	}
+
+	exit(0);
+}
