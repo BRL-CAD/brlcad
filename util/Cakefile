@@ -347,7 +347,7 @@ mst:	mst.o LIBBU_DEP
 	CC LDFLAGS -o mst mst.o LIBBU LIBBU_LIBES LIBES
 
 remapid:	remapid.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
-	CC LDFLAGS -o remapid remapid.o LIBRT LIBBU LIBBU_LIBES LIBES
+	CC LDFLAGS -o remapid remapid.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 texturescale:	texturescale.o LIBBN_DEP LIBBU_DEP LIBFB_DEP
 	CC LDFLAGS -o texturescale texturescale.o LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES

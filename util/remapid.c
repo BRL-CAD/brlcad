@@ -41,7 +41,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "redblack.h"
 
-rb_tree		*assignment;	/* Remapping assignment */
+bu_rb_tree		*assignment;	/* Remapping assignment */
 struct db_i	*dbip;		/* Instance of BRL-CAD database */
 
 /************************************************************************
@@ -89,7 +89,7 @@ struct db_i	*dbip;		/* Instance of BRL-CAD database */
  *									*
  *									*
  *				        +-+				*
- *	       rb_tree		        | |				*
+ *	       bu_rb_tree		        | |				*
  *				        +-+				*
  *				       /   \				*
  *				   +-+/     \+-+			*
@@ -240,7 +240,7 @@ struct curr_id *lookup_curr_id(region_id)
 int	region_id;
 
 {
-    int			rc;	/* Return code from rb_insert() */
+    int			rc;	/* Return code from bu_rb_insert() */
     struct curr_id	*qcip;	/* The query */
     struct curr_id	*cip;	/* Value to return */
 
@@ -255,17 +255,17 @@ int	region_id;
      *	then we have our curr_id.
      *	Otherwise, we must create a new curr_id.
      */
-    switch (rc = rb_insert(assignment, (void *) qcip))
+    switch (rc = bu_rb_insert(assignment, (void *) qcip))
     {
 	case -1:
-	    cip = (struct curr_id *) rb_curr1(assignment);
+	    cip = (struct curr_id *) bu_rb_curr1(assignment);
 	    free_curr_id(qcip);
 	    break;
 	case 0:
 	    cip = qcip;
 	    break;
 	default:
-	    bu_log("rb_insert() returns %d:  This should not happen\n", rc);
+	    bu_log("bu_rb_insert() returns %d:  This should not happen\n", rc);
 	    exit (1);
     }
 
@@ -627,7 +627,7 @@ char *db_name;
 		bu_bomb( "Cannot open TANKILL database\n" );
 	}
 
-	/* make a 'curr_id' structure to feed to rb_search */
+	/* make a 'curr_id' structure to feed to bu_rb_search */
 	cip = mk_curr_id( 0 );
 
 	/* filter TANKILL model, changing ids as we go */
@@ -638,7 +638,7 @@ char *db_name;
 		int ch;
 
 		cip->ci_id = id;
-		id_map = (struct curr_id *)rb_search( assignment, 0, (void *)cip );
+		id_map = (struct curr_id *)bu_rb_search( assignment, 0, (void *)cip );
 		if( !id_map )
 			printf( "%d %d %d", vertex_count, id, surr_code );
 		else
@@ -743,8 +743,8 @@ char	*argv[];
     /*
      *	Initialize the assignment
      */
-    assignment = rb_create1("Remapping assignment", compare_curr_ids);
-    rb_uniq_on1(assignment);
+    assignment = bu_rb_create1("Remapping assignment", compare_curr_ids);
+    bu_rb_uniq_on1(assignment);
 
     /*
      *	Read in the specification for the reassignment
@@ -761,8 +761,8 @@ char	*argv[];
 	db_init(db_name);
 
 	if (debug)
-	    rb_walk1(assignment, print_nonempty_curr_id, INORDER);
+	    bu_rb_walk1(assignment, print_nonempty_curr_id, INORDER);
 	else
-	    rb_walk1(assignment, write_assignment, INORDER);
+	    bu_rb_walk1(assignment, write_assignment, INORDER);
     }
 }
