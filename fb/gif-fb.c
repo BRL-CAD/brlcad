@@ -3,8 +3,8 @@
 
 	created:	89/04/29	D A Gwyn
 
-	Typical compilation:	cc -O -I/usr/include/brlcad -o gif2fb \
-					gif2fb.c /usr/brlcad/lib/libfb.a
+	Typical compilation:	cc -O -I/usr/brlcad/include -o gif-fb \
+					gif-fb.c /usr/brlcad/lib/libfb.a
 	Add -DNO_VFPRINTF, -DNO_MEMCPY, or -DNO_STRRCHR if vfprintf(),
 	memcpy(), or strrchr() are not present in your C library
 	(e.g. on 4BSD-based systems).
@@ -25,6 +25,9 @@
 			of the one specified by the FB_FILE environment
 			variable (the default frame buffer, if no FB_FILE)
 
+	-c		overrides the GIF file's specified color resolution,
+			using all 8 bits for each R, G, and B channel.
+
 	-i image#	outputs just the specified image number (starting
 			at 1) to the frame buffer, instead of all images
 
@@ -42,8 +45,8 @@ static char	RCSid[] =		/* for "what" utility */
 	"@(#)$Header$ (BRL)";
 #endif
 
-#define	USAGE	"gif-fb [ -F fb_file ] [ -i image# ] [ -o ] [ -v ] [ gif_file ]"
-#define	OPTSTR	"F:i:ov"
+#define	USAGE	"gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [gif_file]"
+#define	OPTSTR	"F:ci:ov"
 
 #ifdef BSD	/* BRL-CAD */
 #define	NO_VFPRINTF	1
@@ -105,6 +108,7 @@ typedef int	bool;
 
 static char	*arg0;			/* argv[0] for error message */
 static bool	clear = true;		/* set iff clear to background wanted */
+static bool	ign_cr = false;		/* set iff 8-bit color resoln. forced */
 static bool	verbose = false;	/* set for GIF-file info printout */
 static int	image = 0;		/* # of image to display (0 => all) */
 static char	*gif_file = NULL;	/* GIF file name */
@@ -580,6 +584,10 @@ main( argc, argv )
 				fb_file = optarg;
 				break;
 
+			case 'c':	/* -c */
+				ign_cr = true;
+				break;
+
 			case 'i':	/* -i image# */
 				image = atoi( optarg );
 				break;
@@ -614,22 +622,59 @@ main( argc, argv )
 	/* Process GIF signature. */
 
 	{
-		char	sig[6];		/* GIF signature (assume 8-bit bytes) */
+		/* Scan until "GIF" seen, to skip over additional headers
+		   (e.g., from Macintosh BBSes). */
 
-		if ( fread( sig, 1, 6, gfp ) != 6 )
-			Fatal( "Error reading GIF signature" );
+		register int	state;	/* FSA state */
+#define			ST_INITIAL	0	/* initial state of FSA */
+#define			ST_G_SEEN	1	/* just after 'G' */
+#define			ST_I_SEEN	2	/* just after 'I' */
+#define			ST_F_SEEN	3	/* just after 'F' */
 
-		/* In theory, the signature should be mapped to ASCII here. */
+		for ( state = ST_INITIAL; state != ST_F_SEEN; )
+			/* In theory, the signature should be mapped to ASCII
+			   as it is read.  However, non-ASCII systems are
+			   expected to have other problems anyway, so we don't
+			   worry about that in this implementation. */
 
-		if ( strncmp( sig, "GIF", 3 ) != 0 )
-			/* We could scan until "GIF" is seen, but why bother. */
-			Fatal( "File does not start with \"GIF\"" );
+			switch ( getc( gfp ) )
+				{
+			case EOF:
+				Fatal( "File does not contain \"GIF\" header" );
 
-		if ( strncmp( &sig[3], "87a", 3 ) != 0 )
-			Message(
+			case 'G':
+				state = ST_G_SEEN;
+				break;
+
+			case 'I':
+				if ( state != ST_G_SEEN )
+					state = ST_INITIAL;
+				else
+					state = ST_I_SEEN;
+				break;
+
+			case 'F':
+				if ( state != ST_I_SEEN )
+					state = ST_INITIAL;
+				else	{
+					char	ver[3];
+					/* GIF version (assume 8-bit bytes) */
+
+					state = ST_F_SEEN;	/* ends loop */
+
+					if ( fread( ver, 1, 3, gfp ) != 3 )
+						Fatal(
+						   "Error reading GIF signature"
+						     );
+
+					if ( strncmp( ver, "87a", 3 ) != 0 )
+						Message(
 			     "GIF version \"%3.3s\" not known, \"87a\" assumed",
-				 &sig[3]
-			       );
+							 ver
+						       );
+					}
+				break;
+				}
 	}
 
 	/* Process screen descriptor. */
@@ -666,6 +711,9 @@ main( argc, argv )
 			Message( "Screen descriptor byte 7 = %2.2x unknown",
 				 desc[6]
 			       );
+
+		if ( ign_cr )
+			cr = 8;		/* override value from GIF file */
 	}
 
 	/* Process global color map. */
@@ -680,7 +728,7 @@ main( argc, argv )
 	if ( M_bit )
 		{
 		register int	i;
-		register double	expand;	/* dynamic range expansion factor */
+		register double	expand;	/* dynamic range expansion factor ~ 1 */
 
 		/* Read in global color map. */
 
@@ -693,7 +741,11 @@ main( argc, argv )
 		/* Mask off low-order "noise" bits found in some GIF files,
 		   and expand dynamic range to support pure white and black. */
 
-		cr_mask = ~0 << 8 - cr;
+		if ( cr == 8 )
+			cr_mask = ~0;	/* shift by 0 can tickle compiler bug */
+		else
+			cr_mask = ~0 << 8 - cr;
+
 		expand = 255.0 / (double)(0xFF & cr_mask);
 
 		for ( i = 0; i < entries; ++i )
