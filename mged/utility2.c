@@ -174,7 +174,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#if 0
 	int	ret;
 
 	CHECK_DBI_NULL;
@@ -195,102 +194,6 @@ char	**argv;
 
 	(void)signal( SIGINT, SIG_IGN );
 	return ret;
-#else
-	int i, flag, pos_in;
-
-	CHECK_DBI_NULL;
-
-	if(argc < 1){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help %s", argv[0]);
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	/* pos_in = first member of path entered
-	 *
-	 *	paths are matched up to last input member
-	 *      ANY path the same up to this point is considered as matching
-	 */
-	prflag = 0;
-
-	/* find out which command was entered */
-	if( strcmp( argv[0], "paths" ) == 0 ) {
-		/* want to list all matching paths */
-		flag = LISTPATH;
-	} else if( strcmp( argv[0], "listeval" ) == 0 ) {
-		/* want to list evaluated solid[s] */
-		flag = LISTEVAL;
-	} else {
-		bu_log("f_pathsum() name=%s?\n", argv[0]);
-		flag = 0;
-	}
-
-	if( argc < 2 )  {
-		/* get the path */
-	  Tcl_AppendResult(interp, MORE_ARGS_STR,
-			   "Enter the path: ", (char *)NULL);
-	  return TCL_ERROR;
-	}
-
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
-	  return TCL_OK;
-
-	pos_in = 1;
-
-	if( argc == 2 && strchr( argv[1], '/' ) )
-	{
-		char *tok;
-		objpos = 0;
-
-		tok = strtok( argv[1], "/" );
-		while( tok )
-		{
-			if( (obj[objpos++] = db_lookup( dbip, tok, LOOKUP_NOISY )) == DIR_NULL)
-			{
-				(void)signal( SIGINT, SIG_IGN );
-				return TCL_ERROR;
-			}
-			tok = strtok( (char *)NULL, "/" );
-		}
-	}
-	else
-	{
-		objpos = argc-1;
-
-		/* build directory pointer array for desired path */
-		for(i=0; i<objpos; i++) {
-		  if( (obj[i] = db_lookup( dbip, argv[pos_in+i], LOOKUP_NOISY )) == DIR_NULL){
-		    (void)signal( SIGINT, SIG_IGN );
-		    return TCL_ERROR;
-		  }
-		}
-	}
-
-#if 0
-	bn_mat_idn(identity);
-#endif
-	bn_mat_idn( xform );
-
-	trace(obj[0], 0, identity, flag);
-
-	if(prflag == 0) {
-	  /* path not found */
-	  Tcl_AppendResult(interp, "PATH:  ", (char *)NULL);
-	  for(i=0; i<objpos; i++)
-	    Tcl_AppendResult(interp, "/", obj[i]->d_namep, (char *)NULL);
-
-	  Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
-	}
-
-	(void)signal( SIGINT, SIG_IGN );
-	return TCL_OK;
-#endif
 }
 
 
