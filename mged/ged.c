@@ -1428,6 +1428,8 @@ sig2()
   bu_vls_trunc(&curr_cmd_list->more_default, 0);
   input_str_index = 0;
 
+  curr_cmd_list->quote_string = 0;
+
   bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
   bu_log("\n");
   pr_prompt();
