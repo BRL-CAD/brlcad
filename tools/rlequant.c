@@ -117,7 +117,7 @@ char **argv;
     int		fflag = 0;
     int		dflag = 0;
     int		rle_cnt, rle_err, width, height, shift;
-    int		colors;
+    int		colors = -1;
     long	entries;
     FILE       *outfile = stdout;
     rle_hdr in_hdr, out_hdr;	/* Headers for input and output files. */

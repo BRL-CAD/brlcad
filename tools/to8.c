@@ -26,7 +26,7 @@
  * 
  */
 #ifndef lint
-static char rcs_ident[] = "$Header$";
+static const char rcs_ident[] = "$Header$";
 #endif
 
 #include "conf.h"
@@ -78,7 +78,7 @@ double img_gam = 1.0;
  *	[None]
  */
 
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

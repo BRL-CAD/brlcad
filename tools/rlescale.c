@@ -27,7 +27,7 @@
 #include "rle_code.h"
 #include "rle_raw.h"
 
-void
+int
 main( argc, argv )
 int argc;
 char ** argv;

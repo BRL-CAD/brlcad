@@ -36,7 +36,7 @@
 #include "rle_code.h"
 #include "rle_raw.h"
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];
@@ -73,7 +73,7 @@ char	*argv[];
 	exit(-1);
     }
 
-    if (no_alpha_given = (alpha == -1))
+    if ( (no_alpha_given = (alpha == -1)) )
 	alpha = 255;
     
     for (i=0; i < 4; i++)

@@ -16,7 +16,7 @@
 #include "machine.h"
 #include "rle.h"
 
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

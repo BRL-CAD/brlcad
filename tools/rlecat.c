@@ -74,7 +74,7 @@ char **argv;
     	    	nfiles = 0;
     int		rle_cnt, rle_err, y, nskip;
     int	    	file_cnt;
-    FILE       *outfile, *tmpfile;
+    FILE       *outfile, *tmpfile=NULL;
     rle_hdr in_hdr, out_hdr;	/* Headers for input and output files. */
     rle_hdr tmp_hdr;		/* Header for temp file for repeats. */
     char    	buf[BUFSIZ];	/* For building title comment. */

@@ -76,7 +76,7 @@ static char buf[MAXPATHLEN+1];
  * Algorithm:
  *	[None]
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

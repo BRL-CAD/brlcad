@@ -49,7 +49,7 @@ rle_pixel scanred[FRAME_LENGTH][LINE_LENGTH];
 rle_pixel scanblu[FRAME_LENGTH][LINE_LENGTH];
 rle_pixel scangrn[FRAME_LENGTH][LINE_LENGTH];
 
-void
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -73,7 +73,7 @@ char **argv;
 	      &pflag, &px, &py, &oflag, &out_fname, &infname ) == 0 )
 	exit(3);
 
-    if ( cflag && Pflag || cflag && pflag || Pflag && pflag )  {
+    if ( (cflag && Pflag) || (cflag && pflag) || (Pflag && pflag) )  {
 	fprintf( stderr, "rletoab: specify exactly one of -c -i -p\n" );
 	exit(3);
     }

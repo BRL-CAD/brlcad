@@ -149,7 +149,7 @@ rle_pixel * ptr;
 }
 #endif /* DEBUG */
 
-void
+int
 main(argc,argv)
 int argc;
 char *argv[];

@@ -92,7 +92,7 @@ extern void scan_usage();
  * Algorithm:
  *	[None]
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;
@@ -158,7 +158,7 @@ char **argv;
 	    for ( i = 0; i < noutput; i++ )
 		if ( outchan[i] >= rle_dflt_hdr.ncolors ||
 		     outchan[i] < -1 ||
-		     outchan[i] < 0 && !rle_dflt_hdr.alpha )
+		     (outchan[i] < 0 && !rle_dflt_hdr.alpha) )
 		{
 		    fprintf( stderr, "%s: No input channel %d\n",
 			     cmd_name( argv ), outchan[i] );
@@ -263,7 +263,7 @@ char **argv;
 		     specs[i] >= rle_dflt_hdr.ncolors )
 		    fprintf( stderr, "%s: Warning: No channel %d in input\n",
 			     cmd_name( argv ), specs[i] );
-		else if ( specs[i] == -1 && outalpha == -2 ||
+		else if ( (specs[i] == -1 && outalpha == -2) ||
 			  outchan[specs[i]] == -2 )
 		    fprintf( stderr, "%s: Warning: Deleted channel %d twice\n",
 			     cmd_name( argv ), specs[i] );
@@ -351,10 +351,12 @@ char **argv;
 	{
 	    fprintf( stderr, "Channel mapping from input to output:\n" );
 	    if ( outalpha != -2 )
+	    {
 		if ( outalpha < 0 )
 		    fprintf( stderr, "alpha\t-> alpha\n" );
 		else
 		    fprintf( stderr, "%d\t-> alpha\n", outalpha );
+	    }
 	    else
 		fprintf( stderr, "No output alpha channel\n" );
 	    for ( i = 0; i < noutput; i++ )

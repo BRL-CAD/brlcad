@@ -33,7 +33,7 @@
  *   infile             Input RLE file (stdin default)
  */
 #ifndef lint
-static char rcs_ident[] = "$Id$";
+static const char rcs_ident[] = "$Id$";
 #endif
 
 #include "conf.h"
@@ -53,7 +53,7 @@ void fsdither(), find_closest();
 
 char *progname;
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

@@ -34,7 +34,7 @@
 #define MALLOC_ERR {fprintf(stderr, "%s: ran out of heap space\n",\
 			    cmd_name(argv));exit(-2);}
 
-void
+int
 main( argc, argv )
 int argc;
 char ** argv;

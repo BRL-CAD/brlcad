@@ -87,7 +87,7 @@ void	dump2();
 /*
  * Main entry...
  */
-
+int
 main(argc,argv)
 int argc;
 char **argv;

@@ -74,7 +74,7 @@ int dmgray[8][8] = {   0 ,128 , 32 ,160 ,  8 ,136 , 40 ,168 ,
 int compress_line();
 void write_paint_line(), bytes_to_bits();
 
-void
+int
 main(argc, argv)
 int argc;
 char *argv[];

@@ -251,8 +251,8 @@ char		  *cmd_nm;	/* Command name for error messages */
  * has a slot for a color map index, so the back pointer it followed
  * only once.
  */
-void
-main ( argc, argv )
+int
+main( argc, argv )
 int argc;
 char ** argv;
 {
@@ -1004,13 +1004,16 @@ color_box_t *list, *elt;
     if ( list == NULL )
 	list = elt;
     else if ( P(list) == NULL && N(list) == NULL )
-	if ( list->size <= elt->size )
+    {
+	if ( list->size <= elt->size ) {
 	    ADD( elt, list );
+	}
 	else
 	{
 	    ADD( list, elt );
 	    list = elt;
 	}
+    }
     else
     {
 	/* Search a multi-element list for proper spot to insert. */

@@ -73,7 +73,7 @@ void convert_line();
  *	-r scale	Scale factor for right-eye image (default 1.0).
  */
 
-void
+int
 main(argc, argv)
 int argc;
 char **argv;
@@ -232,6 +232,7 @@ char **argv;
 	exit(0);
 }
 
+int
 get_rle_setup(the_hdr, xres, yres, prog, file)
 int *xres, *yres;
 rle_hdr *the_hdr;

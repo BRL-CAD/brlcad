@@ -42,7 +42,7 @@
  * 	Read the image file and find the smallest and largest X and Y
  *	coordinates of real image data.  Use raw interface for speed.
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

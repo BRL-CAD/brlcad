@@ -9,7 +9,7 @@
  * 
  */
 #ifndef lint
-static char rcs_ident[] = "$Header$";
+static const char rcs_ident[] = "$Header$";
 #endif
 
 #include "conf.h"
@@ -25,7 +25,7 @@ int rle_to_pyramids();
 void alloc_pyramid(), copy_mask_bands(), rebuild_image(), dump_pyramid();
 void copy_half_bands();
 
-void
+int
 main(argc, argv)
 int  argc;
 char *argv[];

@@ -35,7 +35,7 @@
 #include "rle.h"
 
 #ifndef lint
-static char rcsid[] = "$Id$";
+static const char rcsid[] = "$Id$";
 #endif
 
 #define	MAXCOLORMAPSIZE		256
@@ -80,7 +80,7 @@ struct {
 
 static int output_colormap = FALSE;
 
-void
+int
 main(argc,argv)
 int	argc;
 char	**argv;

@@ -69,7 +69,7 @@ void print_hdr(), print_map(), print_codes(), print_brief_hdr();
  *	[None]
  */
 
-void
+int
 main( argc, argv )
 int argc;
 char **argv;
@@ -281,7 +281,7 @@ char **comment_names;
 	if ( ncomment > 0 )
 	{
 	    for ( ; ncomment > 0; ncomment--, comment_names++ )
-		if (the_comment = rle_getcom( *comment_names, the_hdr ))
+		if ( (the_comment = rle_getcom( *comment_names, the_hdr )) )
 		{
 		    if ( (cp = strchr( the_comment, '\n' )) )
 			printf( ", %s=%.*s", *comment_names,

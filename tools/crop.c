@@ -26,7 +26,7 @@
  * 
  */
 #ifndef lint
-static char rcs_ident[] = "$Header$";
+static const char rcs_ident[] = "$Header$";
 #endif
 
 #include "conf.h"
@@ -40,7 +40,7 @@ static char rcs_ident[] = "$Header$";
 extern void rle_box();
 int pos_box_vals();
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

@@ -57,7 +57,7 @@
  * Algorithm:
  *	[None]
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;
@@ -199,6 +199,7 @@ char **argv;
 	    if ( nskip > 1 )
 		rle_skiprow( &out_hdr, nskip - 1 );
 	    if ( in_hdr.ncmap > 0 )
+	    {
 		if ( one_to_many )
 		{
 		    for ( c = 1; c < out_hdr.ncolors; c++ )
@@ -255,6 +256,7 @@ char **argv;
 				    break;
 				}
 		}
+	    }
 	    rle_putraw( outscan, nraw, &out_hdr );
 	    if ( one_to_many )
 		rle_freeraw( &out_hdr, outscan, nraw );

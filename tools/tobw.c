@@ -26,7 +26,7 @@
  * 
  */
 #ifndef lint
-static char rcs_ident[] = "$Header$";
+static const char rcs_ident[] = "$Header$";
 #endif
 
 #include "conf.h"
@@ -56,7 +56,7 @@ static char rcs_ident[] = "$Header$";
  * Algorithm:
  *	[None]
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

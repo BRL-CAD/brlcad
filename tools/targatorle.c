@@ -76,7 +76,7 @@ short *svaxswap();
 long *lvaxswap();
 void fvaxget(), fsunput(), fsunget(), fvaxput();
 
-void
+int
 main(argc,argv) 
 int argc;
 char *argv[];

@@ -46,7 +46,7 @@
  * can be specified with -o (otherwise it writes to stdout).
  */
 #ifndef lint
-static char rcs_ident[] = "$Id$";
+static const char rcs_ident[] = "$Id$";
 #endif
 
 #include "conf.h"
@@ -62,7 +62,7 @@ void prologue(), puthexpix(), epilogue();
 
 static int gencps = 0;		/* generate color PostScript? */
 
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

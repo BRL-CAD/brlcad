@@ -95,6 +95,7 @@ BumpPixel()
 /*
  * Return the next pixel from the image
  */
+int
 GIFNextPixel( getpixel )
 ifunptr getpixel;
 {

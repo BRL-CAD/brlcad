@@ -89,6 +89,7 @@ char *argv[];
     rle_row_free(&in_hdr, scan);
     for (i = 0; i <= in_hdr.ymax; i++ ) free(scanbuf[i]);
     free(scanbuf);
+    return 0;
 }
 
 /*

@@ -29,7 +29,7 @@
 
 #define RLE_END 32768		/* This should be in rle.h */
 
-void
+int
 main( argc, argv )
 int argc;
 char ** argv;
@@ -76,6 +76,7 @@ char ** argv;
     {
         in_hdr[i].rle_file = rle_open_f("mergechan", filenames[i], "r");
 	if ( in_hdr[i].rle_file == stdin )
+        {
 	    if ( stdin_used < 0 )
 	    {
 		filenames[i] = "Standard Input";
@@ -88,6 +89,7 @@ char ** argv;
 			 argv[0], stdin_used, i );
 		exit( -1 );
 	    }
+        }
     }
 
     /* Note: the only way out of this loop is via one of the two exit
@@ -102,6 +104,7 @@ char ** argv;
 	     * or EMPTY after first image means end of input.
 	     */
 	    if ( (rle_err = rle_get_setup( &in_hdr[i])) != RLE_SUCCESS )
+	    {
 		if ( rle_cnt == 0 || (rle_err != RLE_EOF &&
 				      rle_err != RLE_EMPTY) )
 		{
@@ -110,7 +113,7 @@ char ** argv;
 		}
 		else if ( rle_err == RLE_EOF || rle_err == RLE_EMPTY )
 		    goto out;
-
+	    }
 
 	    /* Check that the channel's really there */
 	    if (((in_hdr[i].ncolors-1) < (i-alpha_flag)) ||
