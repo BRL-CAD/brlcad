@@ -862,20 +862,7 @@ struct seg		*seghead;
 	if( hit_count )
 	{
 		/* Sort hits, Near to Far */
-		{
-			register int j;
-			LOCAL struct hit temp;
-
-			for( i=0; i < hit_count-1; i++ )  {
-				for( j=i+1; j < hit_count; j++ )  {
-					if( hits[i].hit_dist <= hits[j].hit_dist )
-						continue;
-					temp = hits[j];		/* struct copy */
-					hits[j] = hits[i];	/* struct copy */
-					hits[i] = temp;		/* struct copy */
-				}
-			}
-		}
+		rt_hitsort( hits, hit_count );
 	}
 
 	if( hits_before_bottom & 1 )
