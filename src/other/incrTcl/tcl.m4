@@ -58,6 +58,8 @@ AC_DEFUN(TEA_PATH_TCLCONFIG, [
 	    # then check for a private Tcl installation
 	    if test x"${ac_cv_c_tclconfig}" = x ; then
 		for i in \
+			../libtcl \
+			../../libtcl \
 			../tcl \
 			`ls -dr ../tcl[[8-9]].[[0-9]]* 2>/dev/null` \
 			../../tcl \
@@ -155,6 +157,8 @@ AC_DEFUN(TEA_PATH_TKCONFIG, [
 	    # then check for a private Tk library
 	    if test x"${ac_cv_c_tkconfig}" = x ; then
 		for i in \
+			../libtk \
+			../../libtk \
 			../tk \
 			`ls -dr ../tk[[8-9]].[[0-9]]* 2>/dev/null` \
 			../../tk \
