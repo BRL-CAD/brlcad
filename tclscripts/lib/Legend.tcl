@@ -33,7 +33,7 @@ class cadwidgets::Legend {
     itk_option define -slots slots Slots 10
     itk_option define -colorFunc colorFunc ColorFunc ""
 
-    public method drawToCanvas {c x y w h tags}
+    public method drawToCanvas {c w h tags}
     public method update {}
     public method getColor {val}
     public method rampRGB {val}
@@ -65,6 +65,10 @@ class cadwidgets::Legend {
     private variable highR 255
     private variable highG 255
     private variable highB 255
+
+    # x and y offsets for drawing legend
+    private variable xoff 20
+    private variable yoff 15
 }
 
 configbody cadwidgets::Legend::range {
@@ -158,6 +162,14 @@ configbody cadwidgets::Legend::rgbRange {
     cadwidgets::Legend::update
 }
 
+configbody cadwidgets::Legend::slots {
+    if {$itk_option(-slots) < 2} {
+	error "Must be 2 or greater"
+    }
+
+    cadwidgets::Legend::update
+}
+
 body cadwidgets::Legend::constructor {args} {
     itk_component add canvas {
 	::canvas $itk_interior.canvas
@@ -174,8 +186,11 @@ body cadwidgets::Legend::constructor {args} {
 body cadwidgets::Legend::destructor {} {
 }
 
-body cadwidgets::Legend::drawToCanvas {c xoff yoff w h tags} {
+body cadwidgets::Legend::drawToCanvas {c w h tags} {
+    # calculate slot increment
     set si [expr {$w / double($itk_option(-slots))}]
+
+    # calculate value increment
     set vi [expr {$dv / double($itk_option(-slots) - 1)}]
 
     set y1 $yoff
@@ -183,7 +198,7 @@ body cadwidgets::Legend::drawToCanvas {c xoff yoff w h tags} {
     for {set i 0} {$i < $itk_option(-slots)} {incr i} {
 	set x1 [expr {int($i * $si) + $xoff}]
 	set x2 [expr {int(($i + 1) * $si) + $xoff}]
-	set val [expr {$vi * $i}]
+	set val [expr {$vi * $i + $low}]
 	if {$itk_option(-colorFunc) == ""} {
 	    set rgb [eval format "#%.2x%.2x%.2x" [rampRGB $val]]
 	} else {
@@ -199,13 +214,10 @@ body cadwidgets::Legend::drawToCanvas {c xoff yoff w h tags} {
 }
 
 body cadwidgets::Legend::update {} {
-    set xoff 20
-    set yoff 15
-
     $itk_component(canvas) delete all
     set w [expr {[winfo width $itk_component(canvas)] - (2 * $xoff)}]
     set h [expr {[winfo height $itk_component(canvas)] - $yoff}]
-    drawToCanvas $itk_component(canvas) $xoff $yoff $w $h legend
+    drawToCanvas $itk_component(canvas) $w $h legend
 }
 
 body cadwidgets::Legend::getColor {val} {
