@@ -94,7 +94,7 @@ char	*menustring;
  */
 /* Map RGB onto 10x10x10 color cube, giving index in range 0..999 */
 #ifdef mips
-#define MAP_RESERVED	32		/* # slots reserved by MAX */
+#define MAP_RESERVED	(256+8)		/* # slots reserved by MAX */
 #else
 #define MAP_RESERVED	16		/* # slots reserved by MEX */
 #endif
