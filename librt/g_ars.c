@@ -560,6 +560,8 @@ struct rt_i		*rtip;
 	return(-1);             /* BAD */
     }
 
+    bot->bot_ntri = ntri;
+
 
     /*
      *  Support for solid 'pieces'
