@@ -89,7 +89,7 @@ struct rt_i		*rtip;
 	struct submodel_specific	*submodel;
 	struct rt_i			*sub_rtip;
 	struct db_i			*sub_dbip;
-	struct resource			*resp;
+	struct resource			**respp;
 	vect_t	radvec;
 	vect_t	diam;
 	char	*argv[2];
@@ -168,11 +168,13 @@ struct rt_i		*rtip;
 	/*
 	 *  Initialize per-processor resources for the submodel.
 	 *  We treewalk here with only one processor (CPU 0).
+	 *  db_walk_tree() as called from
 	 *  rt_gettrees() will pluck the 0th resource out of the rtip table.
 	 *  rt_submodel_shot() will get additional resources as needed.
 	 */
-	resp = (struct resource *)BU_PTBL_GET(&sub_rtip->rti_resources, 0);
-	rt_init_resource( resp, 0, sub_rtip );
+	respp = (struct resource **)&BU_PTBL_GET(&sub_rtip->rti_resources, 0);
+	BU_GETSTRUCT( *respp, resource );
+	rt_init_resource( *respp, 0, sub_rtip );
 
 	/* Propagate some important settings downward */
 	sub_rtip->useair = rtip->useair;
