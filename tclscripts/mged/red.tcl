@@ -265,6 +265,8 @@ proc red_apply { id } {
 	if {$result} {
 	    return $comb_error
 	}
+
+	return
     }
 
     set result [catch {put_comb $red_name($id) $red_isRegion($id)\
