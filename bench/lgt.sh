@@ -136,15 +136,23 @@ fi
  ./script2 < /dev/null &&
  ./script3 < /dev/null || { echo "Script test failed."; exit 1; }
 
+FAIL=0
 for i in 1 2 3
 do
 	if ${CMP} ../pix/lgt${i}.pix lgt${i}a.pix
 	then :;
-	else echo "Test $i A failed."; exit 1
+	else echo "Test $i A failed."; FAIL=1
 	fi
 	if ${CMP} ../pix/lgt${i}.pix lgt${i}b.pix
 	then :;
-	else echo "Test $i B failed."; exit 1
+	else echo "Test $i B failed."; FAIL=1
 	fi
 done
-echo "Tested OK."
+if test "$FAIL" -eq 0
+then
+	echo "LGT Tested OK."
+	exit 0
+fi
+echo "*** LGT does NOT work on this platform ***"
+exit 2
+
