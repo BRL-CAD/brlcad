@@ -699,7 +699,6 @@ choose:
  *  Returns -
  *	0	If more partitions need to be done
  *	1	Requested number of hits are available in FinalHdp
- *		or ray has been traced the reqested distance
  *
  *  The caller must free whatever is in both partition chains.
  */
@@ -738,9 +737,6 @@ struct application *ap;
 		if( HITS_TODO <= 0 )
 			return(1);		/* done */
 	}
-
-	if( ap->a_ray_length > 0.0 && startdist >= ap->a_ray_length )
-		return( 1 );
 
 	pp = InputHdp->pt_forw;
 	while( pp != InputHdp )  {
