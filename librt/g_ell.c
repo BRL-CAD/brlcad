@@ -133,7 +133,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	static mat_t	mtemp;
 	static vect_t	A, B, C;
 	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
-	register float	f;
+	static vect_t	work;
+	static double	f;
 
 #define SP_A	&sp->s_values[3]
 #define SP_B	&sp->s_values[6]
@@ -155,11 +156,19 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	}
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 */
-	if( VDOT( A, B ) != 0.0  ||
-	    VDOT( B, C ) != 0.0  ||
-	    VDOT( A, C ) != 0.0 )  {
-		printf("ell(%s):  A, B, or C not perpendicular\n",
-			stp->st_name);
+	f = VDOT( A, B );
+	if( ! NEAR_ZERO(f) )  {
+		printf("ell(%s):  A not perpendicular to B\n",stp->st_name);
+		return(1);		/* BAD */
+	}
+	f = VDOT( B, C );
+	if( ! NEAR_ZERO(f) )  {
+		printf("ell(%s):  B not perpendicular to C\n",stp->st_name);
+		return(1);		/* BAD */
+	}
+	f = VDOT( A, C );
+	if( ! NEAR_ZERO(f) )  {
+		printf("ell(%s):  A not perpendicular to C\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
@@ -168,7 +177,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	stp->st_specific = (int *)ell;
 
 	/* Apply full 4x4mat to V.  No need for htov_vec, as [15]==0. */
-	matXvec( ell->ell_V, mat, &sp->s_values[0] );
+	VMOVE( work, &sp->s_values[0] );	/* float to fastf_t */
+	matXvec( ell->ell_V, mat, work );
 
 	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
 
@@ -242,9 +252,9 @@ register struct ray *rp;
 	register struct seg *segp;
 	static vect_t	dprime;		/* D' */
 	static vect_t	pprime;		/* P' */
-	static float	dp, dd, pp;	/* D' dot P', D' dot D', P' dot P' */
-	static float	root;		/* root of radical */
-	static float	k1, k2;		/* distance constants of solution */
+	static fastf_t	dp, dd, pp;	/* D' dot P', D' dot D', P' dot P' */
+	static fastf_t	root;		/* root of radical */
+	static fastf_t	k1, k2;		/* distance constants of solution */
 	static vect_t	xlated;		/* translated vector */
 	extern struct seg *HeadSeg;	/* Pointer to segment list */
 
@@ -257,7 +267,7 @@ register struct ray *rp;
 	dd = VDOT( dprime, dprime );
 	pp = VDOT( pprime, pprime );
 
-	root = dp*dp - dd * (pp-1);
+	root = dp*dp - dd * (pp-1.0);
 	if( root < 0 )
 		return(SEG_NULL);		/* No hit */
 	root = sqrt(root);
@@ -266,7 +276,7 @@ register struct ray *rp;
 	k2 = (-dp - root) / dd;
 
 	if( k1 > k2 )  {
-		register float f;	/*  XXX  */
+		FAST fastf_t f;	/*  XXX  */
 		f = k1;
 		k1 = k2;
 		k2 = f;
@@ -274,7 +284,7 @@ register struct ray *rp;
 	/*
 	 * Now, k1 is entry point, and k2 is exit point
 	 */
-	GETSTRUCT(segp, seg);
+	GET_SEG(segp);
 	segp->seg_stp = stp;
 
 	/* ASSERT that MAGNITUDE(rp->r_dir) == 1 */
@@ -287,7 +297,7 @@ register struct ray *rp;
 	 */
 	segp->seg_flag = 0;
 	if( k1 >= 0 )  {
-		register float f;		/* XXX */
+		FAST fastf_t f;		/* XXX */
 		segp->seg_flag |= SEG_IN;
 
 		/* Intersection point */
@@ -300,7 +310,7 @@ register struct ray *rp;
 		VSCALE( segp->seg_in.hit_normal, segp->seg_in.hit_normal, f);
 	}
 	if( k2 >= 0 )  {
-		register float f;		/* XXX */
+		FAST fastf_t f;		/* XXX */
 		segp->seg_flag |= SEG_OUT;
 
 		VCOMPOSE1( segp->seg_out.hit_point, rp->r_pt, k2, rp->r_dir );
