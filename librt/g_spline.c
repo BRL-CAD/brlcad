@@ -1,5 +1,5 @@
 /* 
- *       S P L I N E . C
+ *			G _ S P L I N E . C
  *
  * Function -
  *     Ray trace Spline code to work with librt and libspl.
@@ -63,7 +63,7 @@ struct local_hit {
 #define NULLHIT	    (struct local_hit *) 0
 #define NULLTREE    (struct b_tree *) 0
 
-struct local_hit * spl_hit_head = NULLHIT;
+struct local_hit * rt_spl_hit_head = NULLHIT;
 
 /* Algorithm - Fire a ray at the bounding box of a b_spline surface.  If an
  * intersection is found then subdivide the surface creating two new
@@ -79,15 +79,17 @@ struct local_hit * spl_hit_head = NULLHIT;
  *       --    |---|
  *         --
  */
-void	n_shoot();		/* XXX needs an rt_ or spl_ name */
-void	add_hit();		/* XXX */
-void	n_free();		/* XXX */
-void	shot_poly();		/* XXX */
+void			rt_spl_n_shoot();
+void			rt_spl_add_hit();
+void			rt_spl_n_free();
+void			rt_spl_shot_poly();
+struct local_hit	*rt_spl_get_next_hit();
+struct local_hit	*rt_spl_ray_poly();
 
 #define SPL_NULL	((struct b_spline *)0)
 
 /*
- *			S P L _ R E A D I N
+ *			R T _ S P L _ R E A D I N
  *
  *  Take an in-memory array of database records, and produce a
  *  (struct b_spline) object.
@@ -97,7 +99,7 @@ void	shot_poly();		/* XXX */
  *  fastf_t.
  */
 HIDDEN struct b_spline *
-spl_readin( drec, mat )
+rt_spl_readin( drec, mat )
 union record	*drec;
 matp_t		mat;
 {
@@ -108,7 +110,7 @@ matp_t		mat;
 	register dbfloat_t	*vp;
 
 	if ( drec[0].u_id != ID_BSURF )  {
-		rt_log("spl_readin:  bad record 0%o\n", drec[0].u_id);
+		rt_log("rt_spl_readin:  bad record 0%o\n", drec[0].u_id);
 		return( SPL_NULL );
 	}
 
@@ -157,7 +159,7 @@ matp_t		mat;
 			vp += P4;
 		}
 	} else {
-		rt_log("spl_readin:  %d invalid elements-per-vect\n", epv );
+		rt_log("rt_spl_readin:  %d invalid elements-per-vect\n", epv );
 		return( SPL_NULL );	/* BAD */
 	}
 	return( new_srf );
@@ -165,14 +167,14 @@ matp_t		mat;
 
 
 /* 
- *			S P L _ P R E P
+ *			R T _ S P L _ P R E P
  *
  * Given a pointer of a GED database record, and a transformation matrix,
  * determine if this is avalid B_spline solid, and if so prepare the
  * surface so that the subdivision works.
  */
 int
-spl_prep( stp, rp, rtip )
+rt_spl_prep( stp, rp, rtip )
 struct soltab	*stp;
 union record	*rp;
 struct rt_i	*rtip;
@@ -189,8 +191,8 @@ struct rt_i	*rtip;
 		struct b_spline * new_srf;
 		struct b_spline * s_split;
 
-		if( (new_srf = spl_readin( &rp[currec], stp->st_pathmat )) == SPL_NULL )  {
-			rt_log("spl_prep(%s):  database read error\n",
+		if( (new_srf = rt_spl_readin( &rp[currec], stp->st_pathmat )) == SPL_NULL )  {
+			rt_log("rt_spl_prep(%s):  database read error\n",
 				stp->st_name);
 			return( -1 );
 		}
@@ -250,10 +252,10 @@ struct rt_i	*rtip;
 }
 
 /*
- * S P L _ P R I N T
+ *			R T _ S P L _ P R I N T
  */
 void
-spl_print( stp )
+rt_spl_print( stp )
 register struct soltab * stp;
 {
 	register struct b_head * ncnt = (struct b_head *) stp->st_specific;
@@ -268,10 +270,10 @@ register struct soltab * stp;
 }
 
 /* 
- *	S P L _ U V
+ *			R T _ S P L _ U V
  */
 void
-spl_uv(ap, stp, hitp, uvp)
+rt_spl_uv(ap, stp, hitp, uvp)
 struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
@@ -285,16 +287,16 @@ register struct uvcoord *uvp;
 }
 
 int
-spl_class()
+rt_spl_class()
 {
 	return(0);
 }
 
 /*
- *			S P L _ P L O T
+ *			R T _ S P L _ P L O T
  */
-void
-spl_plot( rp, mat, vhead, dp )
+int
+rt_spl_plot( rp, mat, vhead, dp )
 union record	*rp;
 mat_t		mat;
 struct vlhead	*vhead;
@@ -312,10 +314,10 @@ struct directory *dp;
 	while( n_srfs-- > 0 )  {
 		register struct b_spline	*new;
 
-		if( (new = spl_readin( &rp[cur_gran], mat )) == SPL_NULL )  {
-			rt_log("spl_plot(%s):  database read error\n",
+		if( (new = rt_spl_readin( &rp[cur_gran], mat )) == SPL_NULL )  {
+			rt_log("rt_spl_plot(%s):  database read error\n",
 				dp->d_namep);
-			return;
+			return(-1);
 		}
 		if ( rt_g.debug & DEBUG_SPLINE )  {
 			rt_log("%s surf %d: %d x %d\n",
@@ -367,13 +369,14 @@ struct directory *dp;
 		}
 		spl_sfree( new );
 	}
+	return(0);
 }
 
 /*
- *			S P L _ C U R V E
+ *			R T _ S P L _ C U R V E
  */
 void
-spl_curve( cvp, hitp, stp )
+rt_spl_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
@@ -507,7 +510,7 @@ struct soltab *stp;
 		M = VDOT(norm, uve);
 		N = VDOT(norm, v2e);
 	} else {
-		rt_log("spl_curve: bad mesh point type %d\n",
+		rt_log("rt_spl_curve: bad mesh point type %d\n",
 			s_ptr->root->ctl_mesh->pt_type);
 		goto	cleanup;
 	}
@@ -568,10 +571,10 @@ cleanup:
 }
 
 /*
- *			S P L _ F R E E
+ *			R T _ S P L _ F R E E
  */
 void
-spl_free( stp )
+rt_spl_free( stp )
 register struct soltab * stp;
 {
 	struct b_head * nlist = ( struct b_head *) stp->st_specific;
@@ -580,19 +583,22 @@ register struct soltab * stp;
 	for( c_tree = nlist; c_tree != (struct b_head *)0; )
 	{
 		c_tree = nlist->next;
-		n_free( nlist->left );
-		n_free( nlist->right );
+		rt_spl_n_free( nlist->left );
+		rt_spl_n_free( nlist->right );
 		spl_sfree( nlist->root);
 		spl_sfree( nlist->u_diff);
 		spl_sfree( nlist->v_diff);
-		rt_free( (char *)nlist, "spl_free: b_head structure");
+		rt_free( (char *)nlist, "rt_spl_free: b_head structure");
 	}
 
 	return;
 }
 
+/*
+ *			R T _ S P L _ N _ F R E E
+ */
 void
-n_free( tree)
+rt_spl_n_free( tree)
 struct b_tree * tree;
 {
 	struct b_tree * leftp, * rightp, * rootp;
@@ -602,27 +608,27 @@ struct b_tree * tree;
 	if ( tree->left != (struct b_tree *) 0 )
 	{
 		leftp = tree->left;
-		n_free( leftp );
+		rt_spl_n_free( leftp );
 	}
 
 	if ( tree->right != (struct b_tree *) 0 )
 	{
 		rightp = tree->right;
-		n_free( rightp );
+		rt_spl_n_free( rightp );
 	}
 
 	if ( rootp->root != (struct b_spline *) 0 )
 		spl_sfree( rootp->root );
 
-	rt_free( (char *)rootp, "n_free: tree structure ");
+	rt_free( (char *)rootp, "rt_spl_n_free: tree structure ");
 
 }
 
 /* 
- *	S P L _ N O R M
+ *			R T _ S P L _ N O R M
  */
 void
-spl_norm(hitp, stp, rp)
+rt_spl_norm(hitp, stp, rp)
 register struct hit * hitp;
 struct soltab * stp;
 register struct xray *rp;
@@ -693,11 +699,11 @@ register struct xray *rp;
 		VCROSS( norm, u_norm, v_norm );
 		VUNITIZE( norm);
 		VMOVE(hitp->hit_normal, norm);
-		rt_free( (char *)spl_eval, "ray_poly: spl_eval" );
+		rt_free( (char *)spl_eval, "rt_spl_curve: spl_eval" );
 	}
 	else
 	{
-		rt_log("spl_curve: bad mesh point type %d\n",
+		rt_log("rt_spl_curve: bad mesh point type %d\n",
 			h_ptr->root->ctl_mesh->pt_type);
 		return;
 	}
@@ -707,15 +713,16 @@ register struct xray *rp;
 		VREVERSE( hitp->hit_normal, norm );
 	}
 
-	rt_free( (char *)u_eval, "ray_poly: u_eval" );
-	rt_free( (char *)v_eval, "ray_poly: v_eval" );
+	rt_free( (char *)u_eval, "rt_spl_curve: u_eval" );
+	rt_free( (char *)v_eval, "rt_spl_curve: v_eval" );
 
 	return;
 }
 
 
 /* 
- * S P L _ S H O T 
+ *			R T _ S P L _ S H O T 
+ *
  * Intersect a ray with a set of b_spline surfaces. If an intersection
  * occurs a struct seg will be acquired and filled in.
  *  Returns -
@@ -726,7 +733,7 @@ register struct xray *rp;
 struct b_head * curr_tree;
 
 struct seg *
-spl_shot( stp,  rp, ap)
+rt_spl_shot( stp,  rp, ap)
 struct soltab *stp;
 register struct xray *rp;
 struct application * ap;
@@ -748,15 +755,15 @@ struct application * ap;
 	for(; nlist != (struct b_head *) 0; nlist = nlist->next )
 	{
 		curr_tree = nlist;
-		n_shoot( rp, invdir, nlist->left,  ap, 0 );
-		n_shoot( rp, invdir, nlist->right, ap, 0 );
+		rt_spl_n_shoot( rp, invdir, nlist->left,  ap, 0 );
+		rt_spl_n_shoot( rp, invdir, nlist->right, ap, 0 );
 	}
 
 	/* Sort the hit points and create the segments if only one hit
 	 * than add a distance and fake one.
 	 */
 
-	if (spl_hit_head == NULLHIT )
+	if (rt_spl_hit_head == NULLHIT )
 	{
 		RES_RELEASE( &rt_g.res_model );	
 		return (SEG_NULL);
@@ -764,14 +771,13 @@ struct application * ap;
 
 	GET_SEG( segp, ap->a_resource );
 
-	while ( spl_hit_head != NULLHIT)
+	while ( rt_spl_hit_head != NULLHIT)
 	{
 		register struct local_hit * hit1, * hit2;
 		register struct seg * seg2p;
-		struct local_hit * get_next_hit();
 
-		hit1 = get_next_hit( );
-		hit2 = get_next_hit( );
+		hit1 = rt_spl_get_next_hit( );
+		hit2 = rt_spl_get_next_hit( );
 
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = hit1->hit_dist;
@@ -786,7 +792,7 @@ struct application * ap;
 			VMOVE(segp->seg_out.hit_point, hit2->hit_point );
 			VMOVE(segp->seg_out.hit_vpriv,hit2->hit_vpriv);
 			segp->seg_out.hit_private = hit2->hit_private;
-			rt_free( (char *)hit2, "spl_shot: hit point");
+			rt_free( (char *)hit2, "rt_spl_shot: hit point");
 		} else	/* Fake it */
 		{
 			segp->seg_out.hit_dist = hit1->hit_dist + .01;
@@ -797,9 +803,9 @@ struct application * ap;
 			segp->seg_out.hit_private = hit1->hit_private;
 		}
 
-		rt_free( (char *)hit1, "spl_shot: hit point");
+		rt_free( (char *)hit1, "rt_spl_shot: hit point");
 
-		if ( spl_hit_head != NULLHIT)
+		if ( rt_spl_hit_head != NULLHIT)
 		{
 			GET_SEG( seg2p, ap->a_resource);
 			seg2p->seg_next = segp;
@@ -810,8 +816,11 @@ struct application * ap;
 	return segp;
 }
 
+/*
+ *			R T _ S P L _ N _ S H O O T
+ */
 void
-n_shoot( rp,  invdir,  tree, ap, level)
+rt_spl_n_shoot( rp,  invdir,  tree, ap, level)
 register struct xray *rp;
 fastf_t * invdir;
 struct b_tree * tree;
@@ -833,14 +842,14 @@ int level;
 	if ( tree->root != (struct b_spline *) 0 )  {
 
 		if( spl_check( tree->root ) < 0)  {
-			rt_pr_spl("n_shoot: bad tree root", tree->root);
+			rt_pr_spl("rt_spl_n_shoot: bad tree root", tree->root);
 			return;
 		}
 
 		flat =	spl_flat( tree->root, pix_size );
 		if (flat == FLAT)
 		{
-			shot_poly( rp,  tree, level);
+			rt_spl_shot_poly( rp,  tree, level);
 			return;
 		}
 
@@ -875,22 +884,25 @@ int level;
 	if ( rt_g.debug & DEBUG_SPLINE ) 
 	    rt_log("spline: Left tree level %d\n", level);
 
-	n_shoot( rp,  invdir,  tree->left, ap, level+1 );
+	rt_spl_n_shoot( rp,  invdir,  tree->left, ap, level+1 );
 
 	if ( rt_g.debug & DEBUG_SPLINE ) 
 	    rt_log("spline: Right tree level %d\n", level);
 
-	n_shoot( rp,  invdir,  tree->right, ap, level+1);
+	rt_spl_n_shoot( rp,  invdir,  tree->right, ap, level+1);
 }
 
+/*
+ *			R T _ S P L _ S H O T _ P O L Y
+ */
 void
-shot_poly( rp, tree, level )
+rt_spl_shot_poly( rp, tree, level )
 struct xray *rp;
 struct b_tree * tree;
 int level;
 {
 	struct  spl_poly * poly, *p, *tmp;
-	struct  local_hit * h0, * ray_poly();
+	struct  local_hit * h0;
 	int hit_count;
 
 	hit_count = 0;
@@ -899,7 +911,7 @@ int level;
 
 	for( p = poly; p!= ( struct spl_poly *)0; p = p->next)
 	{
-		h0 = ray_poly( rp, p);
+		h0 = rt_spl_ray_poly( rp, p);
 		if ( h0 != NULLHIT )
 		{
 
@@ -907,7 +919,7 @@ int level;
 			    rt_log("spline: Hit found at level %d\n",
 				level);
 			hit_count++;
-			add_hit( h0 );
+			rt_spl_add_hit( h0 );
 			break;
 		}
 	}
@@ -916,7 +928,7 @@ int level;
 	{
 		tmp = p;
 		p = p->next;
-		rt_free( (char *)tmp, "shot_poly: polygon" );
+		rt_free( (char *)tmp, "rt_spl_shot_poly: polygon" );
 	}
 
 	if ( !hit_count && rt_g.debug & DEBUG_SPLINE )
@@ -936,39 +948,45 @@ int level;
  * subdivision and you need to thow out the extra hit.
  */
 
+/*
+ *			R T _ S P L _ A D D _ H I T
+ */
 void
-add_hit( hit1 )
+rt_spl_add_hit( hit1 )
 struct local_hit * hit1;
 {
 
 	register struct local_hit * h_ptr;
 
-	if ( spl_hit_head == NULLHIT) {
+	if ( rt_spl_hit_head == NULLHIT) {
 	        hit1 ->next = hit1-> prev = NULLHIT;
-		spl_hit_head = hit1;
+		rt_spl_hit_head = hit1;
 		return;
 	}
 
 	/* check for duplicates */
-	for( h_ptr = spl_hit_head; h_ptr != NULLHIT; h_ptr = h_ptr->next)
+	for( h_ptr = rt_spl_hit_head; h_ptr != NULLHIT; h_ptr = h_ptr->next)
 	{
 		if( EQ_HIT(hit1->hit_dist, h_ptr->hit_dist ) &&
 		    EQ_HIT(hit1->hit_vpriv[0], h_ptr->hit_vpriv[0]) &&
 		    EQ_HIT(hit1->hit_vpriv[1], h_ptr->hit_vpriv[1]) )
 		{
-			rt_free( (char *) hit1, "add_hit: duplicate");
+			rt_free( (char *) hit1, "rt_spl_add_hit: duplicate");
 			return;
 		}
 	}
 	
 	hit1->prev = NULLHIT;
-	hit1->next = spl_hit_head;
-	spl_hit_head->prev = hit1;
-	spl_hit_head = hit1;
+	hit1->next = rt_spl_hit_head;
+	rt_spl_hit_head->prev = hit1;
+	rt_spl_hit_head = hit1;
 }
 
+/*
+ *			R T _ S P L _ G E T _ N E X T _ H I T
+ */
 struct local_hit *
-get_next_hit(  )
+rt_spl_get_next_hit(  )
 {
 	register struct local_hit * list_ptr;
 	struct local_hit *rt_hit = NULLHIT;
@@ -976,10 +994,10 @@ get_next_hit(  )
 
 	dist = INFINITY;
 
-	if (spl_hit_head == NULLHIT)
+	if (rt_spl_hit_head == NULLHIT)
 		return NULLHIT;
 
-	for( list_ptr = spl_hit_head;
+	for( list_ptr = rt_spl_hit_head;
 		list_ptr != NULLHIT; list_ptr = list_ptr->next )
 	{
 		if (list_ptr->hit_dist < dist )
@@ -992,8 +1010,8 @@ get_next_hit(  )
 					/* remove rtn_hit from list */
 	if ( rt_hit != NULLHIT )
 	{
-	    if ( spl_hit_head == rt_hit)
-		spl_hit_head = rt_hit->next;
+	    if ( rt_spl_hit_head == rt_hit)
+		rt_spl_hit_head = rt_hit->next;
 	    if ( rt_hit->prev != NULLHIT)
 		rt_hit->prev->next = rt_hit->next;
 	    if ( rt_hit->next != NULLHIT)
@@ -1005,9 +1023,11 @@ get_next_hit(  )
 		return NULLHIT;
 }
 
-
+/*
+ *			R T _ S P L _ R A Y _ P O L Y
+ */
 struct local_hit *
-ray_poly( rp, p1 )
+rt_spl_ray_poly( rp, p1 )
 struct xray * rp;
 struct spl_poly * p1;
 {
@@ -1096,7 +1116,7 @@ struct spl_poly * p1;
 		
 	/* if we reach this point we have a hit */
 	h0 = (struct local_hit *) rt_malloc ( sizeof ( struct local_hit ), 
-		"ray_poly: hit point");
+		"rt_spl_ray_poly: hit point");
 
 	h0->next = (struct local_hit *)0;
 	h0->prev = (struct local_hit *)0;
@@ -1126,4 +1146,13 @@ struct spl_poly * p1;
 	} 
 	
 	return h0;
+}
+
+/*
+ *			R T _ S P L _ T E S S
+ */
+int
+rt_spl_tess()
+{
+	return(-1);
 }
