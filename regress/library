@@ -43,7 +43,7 @@
 #   releaseLock
 #       releases and/or removes a cooperative lock file (rm's the lock)
 #   releaseAllLocks
-#       releases all acquired locks (via internal _ACQUIRED_LOCKS)
+#       releases all locally acquired locks (via internal _ACQUIRED_LOCKS)
 #
 #   acquireSemaphore
 #       gets a cooperative file semaphore ("blocks" when one does not exist)
@@ -51,7 +51,15 @@
 #       releases and/or creates a cooperative file semaphore (touch's the 
 #       semaphore)
 #   releaseAllSemaphores
-#       releases all acquired semaphores (via internal _ACQUIRED_SEMAPHORES)
+#       releases all locally acquired semaphores (via internal 
+#       _ACQUIRED_SEMAPHORES)
+#
+#   mail
+#       mail a file with optional attachments to a user
+#   cvsExport
+#       perform a cvs export for given source tag
+#   unpackArchive
+#       unpack an archive in a variety of formats (tar files, tgz, zip, etc)
 #
 ###
 #
@@ -65,6 +73,8 @@
 #   HOSTNAME
 #       the host name derifed from 1) hostname command, 2) HOST env var,
 #       3) HOSTNAME env var, 4) default "unknown" value
+#   ARCH
+#       the complete architecture definition of this client as given by uname
 #   LPWD
 #       current working directory path where library is included
 #
@@ -79,6 +89,9 @@
 #       set output color for a warning statement
 #   SETCOLOR_NORMAL
 #       set output color for a normal statement
+#
+#   LIBRARY_VERSION
+#       version of this library file being used (majorRelease.minorRelease)
 #   
 #
 # INTERNAL  (do not use)
@@ -88,6 +101,9 @@
 #   _TEMP_DEBUG_OFF
 #
 ###############################################################################
+
+# version of this library script file
+LIBRARY_VERSION=1.0 ; export LIBRARY_VERSION
 
 # have to init LOG here so functions will output properly
 # common log defaults include /dev/tty, stdout, or stderr
@@ -464,6 +480,18 @@ acquireLock ( ) {
 	__RETRY=`expr $__RETRY - 1`
 	if [ $__RETRY -lt 1 ] ; then
 	    warn "Unable to obtain $__LOCK in $__PREFIX"
+            
+            if [ ! "x$USER" = "x" ] ; then __USER="$USER" ; unset USER ; fi
+            if [ ! "x$PID" = "x" ] ; then __PID="$USER" ; unset PID ; fi
+            if [ ! "x$DATE" = "x" ] ; then __DATE="$USER" ; unset DATE ; fi
+            loadResourceFile "${__PREFIX}$__LOCK"
+            if [ ! "x$USER" = "x" ] ; then
+                log "Timed out waiting for ${USER}'s lock held since ${DATE} (pid: $PID)"
+            fi
+            if [ ! "x$__USER" = "x" ] ; then USER="$__USER" ; unset __USER ; fi
+            if [ ! "x$__PID" = "x" ] ; then PID="$__USER" ; unset __PID ; fi
+            if [ ! "x$__DATE" = "x" ] ; then DATE="$__USER" ; unset __DATE ; fi
+            
 	    return 1
 	fi
 	log "Waiting for $__LOCK ($__WAIT seconds)... $__RETRY attempts remain"
@@ -473,8 +501,10 @@ acquireLock ( ) {
     if [ ! -w ${__PREFIX}$__LOCK ] ; then
         warn "Unable to write to lock file $__LOCK in ${__PREFIX}?"
     fi
-    # save the PID of the acquiring process to the lock file
-    log "PID: $$" "${__PREFIX}$__LOCK"
+    # save details about the acquiring process to the lock file
+    if [ ! "x$USER" = "x" ] ; then log "USER=\"$USER\"" "${__PREFIX}$__LOCK" ; else log "USER=\"unknown\"" "${__PREFIX}$__LOCK" ; fi
+    log "PID=\"$$\"" "${__PREFIX}$__LOCK"
+    log "DATE=\"`date`\"" "${__PREFIX}$__LOCK"
     # keep a list of the acquired locks up to date
     _ACQUIRED_LOCKS="$_ACQUIRED_LOCKS ${__PREFIX}$__NAME" ; export _ACQUIRED_LOCKS
     log "Acquired $__LOCK"
@@ -599,7 +629,11 @@ acquireSemaphore ( ) {
 	warn "Unable to properly remove/acquire semaphore file ${__SEMAPHORE} in ${__PREFIX}"
 	return 1
     fi
-    log "HOLDING PID: $$" "${__PREFIX}${__SEMAPHORE}.acquired"
+
+    if [ ! "x$USER" = "x" ] ; then log "USER=$USER" "${__PREFIX}${__SEMAPHORE}.acquired" ; else log "USER=unknown" "${__PREFIX}${__SEMAPHORE}.acquired" ; fi
+    log "PID=$$" "${__PREFIX}${__SEMAPHORE}.acquired"
+    log "DATE=`date`" "${__PREFIX}${__SEMAPHORE}.acquired"
+
     _ACQUIRED_SEMAPHORES="$_ACQUIRED_SEMAPHORES ${__PREFIX}$__NAME" ; export _ACQUIRED_SEMAPHORES
     log "Acquired $__SEMAPHORE"
 
@@ -635,20 +669,21 @@ releaseSemaphore ( ) {
     # recreate the semaphore
     touch ${__PREFIX}$__SEMAPHORE
 
-    # get rid of the stale semaphore acquired file
-    if [ ! -f ${__PREFIX}${__SEMAPHORE}.acquired ] ; then
+    # get rid of the stale semaphore acquired file.
+    # if the file was properly registered, it should have a backup copy
+    if [ -f ${__PREFIX}${__SEMAPHORE}.acquired ] ; then
 	rm -f ${__PREFIX}${__SEMAPHORE}.acquired
+    else
+	warn "Acquired semaphore ${__SEMAPHORE}'s backup copy disappeared in $__PREFIX"
     fi
-	    # if the file was properly registered, it should have a backup copy
-	    if [ ! -f ${__PREFIX}${__SEMAPHORE}.acquired ] ; then
-		warn "Acquired semaphore ${__SEMAPHORE}'s backup copy disappeared in $__PREFIX"
-	    fi
 
     if [ ! -w ${__PREFIX}$__SEMAPHORE ] ; then
         warn "Unable to write to semaphore file $__SEMAPHORE in ${__PREFIX}?"
     fi
     # save the PID of the process that last released this semaphore
-    log "RELEASEOR PID: $$" "${__PREFIX}${__SEMAPHORE}"
+    if [ ! "x$USER" = "x" ] ; then log "USER=$USER" "${__PREFIX}${__SEMAPHORE}" ; else log "USER=unknown" "${__PREFIX}${__SEMAPHORE}" ; fi
+    log "PID=$$" "${__PREFIX}${__SEMAPHORE}"
+    log "DATE=`date`" "${__PREFIX}${__SEMAPHORE}"
 
     # unregister the semaphore with the _ACQUIRED_SEMAPHORES var
     if [ ! "x$_ACQUIRED_SEMAPHORES" = "x" ] ; then
@@ -872,6 +907,115 @@ EOF
     return 0
 }
 
+
+#
+# cvsExport cvsTag cvsRoot [exportDir] [cvsBinary] [cvsLogfile]
+#
+cvsExport ( ) {
+    if [ ! "x$DEBUG" = "x" ] ; then log "cvsExport( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4])" ; fi
+
+    if [ "x$1" = x ] ; then 
+	if [ ! "x$CVS_TAG" = "x" ] ; then
+	    __TAG="$CVS_TAG"
+	else
+	    bomb "cvsExport() arg1 mismatch -- no cvs tag given, no CVS_TAG set"
+	fi
+    else
+	__TAG="$1"
+    fi
+    if [ "x$2" = x ] ; then 
+	if [ ! "x$CVS_ROOT" = "x" ] ; then
+	    __ROOT="$CVS_ROOT"
+	else
+	    bomb "cvsExport() arg2 mismatch -- no cvs root given, no CVS_ROOT set"
+	fi
+    else
+	__ROOT="$2"
+    fi
+    if [ "x$3" = "x" ] ; then __DIR="." ; else __DIR="$3" ; fi
+    if [ "x$4" = "x" ] ; then __BIN="cvs" ; else __BIN="$4" ; fi
+    if [ "x$5" = "x" ] ; then __LOG="/dev/null" ; else __LOG="$5" ; fi
+
+    if [ ! -d "$__DIR" ] ; then 
+        warn "cvs export directory [$__DIR] does not exist" "$__LOG"
+        log "Creating directory [$__DIR]" "$__LOG"
+        mkdir -p "$__DIR"
+    fi
+    if [ ! -w "${__DIR}/." ] ; then
+        log "ERROR: Unable to write to cvs export directory [$__DIR]" "$__LOG"
+        return 1
+    fi
+
+    $__BIN -v > /dev/null 2>&1
+    if [ $? != 0 ] ; then
+	log "ERROR: cvs export failed (unable to run cvs [$__CVS])" "$__LOG"
+	return 1
+    fi
+
+    log "Starting cvs export..." "$__LOG"
+    log "Running [$__BIN -q -d $__ROOT export -D today -d $__DIR -N $__TAG >> ${__LOG} 2>&1]" "$__LOG"
+    $CVS -q -d $__ROOT export -D today -d $__DIR -N $__TAG >> "$__LOG" 2>&1
+    # make sure cvs export exited nicely
+    if [ $? != 0 ] ; then 
+        log "ERROR: cvs export failed" "${__LOG}"
+        return 1
+    fi
+
+    log "OK: cvs export completed" "${__LOG}"
+    return 0
+}
+
+
+#
+# unpackArchive archive [extractDir]
+#
+# as it is, this function merely bombs on error, but it should return a
+# truthvalue as to whether the unpacking succeeded or not and let the
+# application handle the result.
+unpackArchive ( ) {
+    if [ ! "x$DEBUG" = "x" ] ; then log "cvsExport( \$1=[$1] \$2=[$2] )" ; fi
+
+    if [ "x$1" = x ] ; then 
+        bomb "unpackArchive() arg1 mismatch -- no archive given"
+    else
+        __ARCHIVE="$1"
+    fi
+    if [ "x$2" = "x" ] ; then 
+        __SWS=`echo $__ARCHIVE | sed 's/^\/.*/___ROOTED_NAME___/'`
+        if [ "x$__SWS" = "x___ROOTED_NAME___" ] ; then __DIR=`dirname $__ARCHIVE` ; else __DIR="./"; fi
+    else 
+        __DIR="$2"
+    fi
+
+    if [ ! -f "$__ARCHIVE" ] ; then
+        bomb "Unable to find archive [$__ARCHIVE] for unpacking"
+    elif [ ! -r "$__ARCHIVE" ] ; then
+        bomb "Unable to read archive [$__ARCHIVE] for unpacking"
+    fi
+
+    # !!! this is minimal checking and support for right now
+    #  we assume that the uncompressor is available and options are supported
+    case "$__ARCHIVE" in
+        *.tar )
+            tar -C "$__DIR" -xf "$__ARCHIVE" ;;
+        *.zip )
+            unzip "$__ARCHIVE" ;;
+        *.tar.Z )
+            uncompress -c "$__ARCHIVE" | tar -C "$__DIR" -x ;;
+        *.tar.gz | *.tgz )
+            gzip -c -d "$__ARCHIVE" | tar -x -C "$__DIR" ;;
+        *.tar.bz2 )
+            bunzip2 -c "$__ARCHIVE" | tar -C "$__DIR" -x ;;
+        * )
+            bomb "Unsupported archive format" ;;
+    esac
+
+    if [ $? != 0 ] ; then 
+        bomb "Archive unpacking failed"
+    fi
+}
+
+
 # INTERNAL STUFF
 ###
 # vars used to manage locks and semaphores
@@ -881,6 +1025,8 @@ initializeVariable _ACQUIRED_SEMAPHORES
 # GLOBAL STUFF
 # set a hostname and pwd to play with -- exports HOSTNAME and LPWD accordingly
 setHostName
+
+initializeVariable ARCH "`uname -s`"
 
 case $0 in
     # hard path to sourcing script
