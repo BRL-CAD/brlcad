@@ -51,7 +51,7 @@ do
 	if [ -f $i ] ; then
 
 		mv -f $i ${i}.oldbindir
-		cp ${i}.oldbindir {$i}
+		cp ${i}.oldbindir ${i}
 		chmod 775 $i
 		ed - $i << EOF
 f
