@@ -62,7 +62,7 @@ static int mat_code=1;		/* default material code */
 static int debug=0;		/* Debug flag */
 static int binary=0;		/* flag indicating input is binary format */
 
-static char *usage="%s [-dab] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n\
+static char *usage="%s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n\
 	where input.stl is a STereoLithography file\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
         The -b option specifies that the input file is in the binary STL format (default is ASCII). \n\
@@ -72,7 +72,6 @@ static char *usage="%s [-dab] [-t tolerance] [-N forced_name] [-i initial_ident]
 	The -i option sets the initial region ident number (default is 1000).\n\
 	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n\
 	The -m option sets the integer material code for all the parts (default is 1).\n\
-	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
 	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
 	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n";
 static FILE *fd_in;		/* input file */
@@ -108,19 +107,14 @@ int face[3];
 	bot_fcurr++;
 }
 
-char *
-mk_unique_brlcad_name( char *name )
+void
+mk_unique_brlcad_name( struct bu_vls *name )
 {
 	char *c;
-	struct bu_vls vls;
 	int count=0;
 	int len;
 
-	bu_vls_init( &vls );
-
-	bu_vls_strcpy( &vls, name );
-
-	c = bu_vls_addr( &vls );
+	c = bu_vls_addr( name );
 
 	while( *c != '\0' ) {
 		if( *c == '/' || !isprint( *c ) ) {
@@ -129,18 +123,15 @@ mk_unique_brlcad_name( char *name )
 		c++;
 	}
 
-	len = bu_vls_strlen( &vls );
-	while( db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET ) != DIR_NULL ) {
+	len = bu_vls_strlen( name );
+	while( db_lookup( fd_out->dbip, bu_vls_addr( name ), LOOKUP_QUIET ) != DIR_NULL ) {
 		char suff[10];
 
-		bu_vls_trunc( &vls, len );
+		bu_vls_trunc( name, len );
 		count++;
 		sprintf( suff, "_%d", count );
-		bu_vls_strcat( &vls, suff );
+		bu_vls_strcat( name, suff );
 	}
-
-	return( bu_vls_strgrab( &vls ) );
-	
 }
 
 static void
@@ -148,9 +139,9 @@ Convert_part_ascii( line )
 char line[MAX_LINE_LEN];
 {
 	char line1[MAX_LINE_LEN];
-	char name[MAX_LINE_LEN + 1];
-	unsigned int obj=0;
-	char *solid_name;
+	struct bu_vls solid_name;
+	struct bu_vls region_name;
+
 	int start;
 	int i;
 	int face_count=0;
@@ -158,7 +149,6 @@ char line[MAX_LINE_LEN];
 	int small_count=0;
 	float colr[3]={0.5, 0.5, 0.5};
 	unsigned char color[3]={ 128, 128, 128 };
-	char *brlcad_name;
 	struct wmember head;
 	vect_t normal={0,0,0};
 	int solid_in_region=0;
@@ -190,69 +180,58 @@ char line[MAX_LINE_LEN];
 	start += 4;
 	while( isspace( line[++start] ) && line[start] != '\0' );
 
-	if( line[start] != '\0' )
+	bu_vls_init( &region_name );
+	if( forced_name )
+		bu_vls_strcpy( &region_name, forced_name );
+	else if( line[start] != '\0' )
 	{
-		/* get name */
-		i = (-1);
-		start--;
-		while( !isspace( line[++start] ) && line[start] != '\0' && line[start] != '\n' )
-			name[++i] = line[start];
-		name[++i] = '\0';
+		char *ptr;
 
-		/* get object id */
-		sscanf( &line[start] , "%x" , &obj );
+		/* get name */
+		bu_vls_strcpy( &region_name, &line[start] );
+		bu_vls_trimspace( &region_name );
+		ptr = bu_vls_addr( &region_name );
+		while( *ptr != '\0' ) {
+			if( isspace( *ptr ) ) {
+				bu_vls_trunc( &region_name, ptr - bu_vls_addr( &region_name ) );
+				break;
+			}
+			ptr++;
+		}
 	}
-	else if( forced_name )
-		strcpy( name, forced_name );
 	else /* build a name from the file name */
 	{
-		char tmp_str[512];
 		char *ptr;
-		int len, suff_len;
+		int base_len;
 
 		obj_count++;
-		obj = obj_count;
 
-		/* copy the file name into our work space */
-		strncpy( tmp_str, input_file, 512 );
-		tmp_str[511] = '\0';
-
-		/* eliminate a trailing ".stl" */
-		len = strlen( tmp_str );
-		if( len > 4 )
-		{
-			if( !strncmp( &tmp_str[len-4], ".stl", 4 ) )
-				tmp_str[len-4] = '\0';
+		/* copy the file name into our work space (skip over path) */
+		ptr = strrchr( input_file, '/' );
+		if( ptr ) {
+			ptr++;
+			bu_vls_strcpy( &region_name, ptr );
+		} else {
+			bu_vls_strcpy( &region_name, input_file );
 		}
 
-		/* skip over all characters prior to the last '/' */
-		ptr = strrchr( tmp_str, '/' );
-		if( !ptr )
-			ptr = tmp_str;
-		else
-			ptr++;
-
-		/* now copy what is left to the name */
-		strncpy( name, ptr, MAX_LINE_LEN );
-		name[MAX_LINE_LEN] = '\0';
-		sprintf( tmp_str, "_%d", obj_count );
-		len = strlen( name );
-		suff_len = strlen( tmp_str );
-		if( len + suff_len < MAX_LINE_LEN )
-			strcat( name, tmp_str );
-		else
-			sprintf( &name[MAX_LINE_LEN-suff_len-1], tmp_str );
+		/* eliminate a trailing ".stl" */
+		ptr = strstr( bu_vls_addr( &region_name ), ".stl" );
+		if( (base_len=(ptr - bu_vls_addr( &region_name ))) > 0 ) {
+			bu_vls_trunc( &region_name, base_len );
+		}
 	}
 
-	bu_log( "Converting Part: %s\n" , name );
-
-	if( debug )
-		bu_log( "Conv_part %s x%x\n" , name , obj );
+	mk_unique_brlcad_name( &region_name );
+	bu_log( "Converting Part: %s\n" , bu_vls_addr( &region_name ) );
 
 	solid_count++;
-	solid_name = mk_unique_brlcad_name( name );
+	bu_vls_init( &solid_name );
+	bu_vls_strcpy( &solid_name, "s." );
+	bu_vls_vlscat( &solid_name, &region_name );
+	mk_unique_brlcad_name( &solid_name );
 
-	bu_log( "\tUsing solid name: %s\n" , solid_name );
+	bu_log( "\tUsing solid name: %s\n" , bu_vls_addr( &solid_name ) );
 
 	if( RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Convert_part_ascii()" );
@@ -328,6 +307,9 @@ char line[MAX_LINE_LEN];
 
 						bu_log( "\t( %g %g %g )\n", x, y, z );
 					}
+					x *= conv_factor;
+					y *= conv_factor;
+					z *= conv_factor;
 					tmp_face[vert_no++] = Add_vert( x, y, z, tree_root, tol.dist_sq );
 				}
 				else
@@ -371,11 +353,14 @@ char line[MAX_LINE_LEN];
 	/* Check if this part has any solid parts */
 	if( face_count == 0 )
 	{
-		bu_log( "\t%s has no solid parts, ignoring\n" , name );
+		bu_log( "\t%s has no solid parts, ignoring\n" , bu_vls_addr( &region_name ) );
 		if( degenerate_count )
 			bu_log( "\t%d faces were degenerate\n", degenerate_count );
 		if( small_count )
 			bu_log( "\t%d faces were too small\n", small_count );
+		bu_vls_free( &region_name );
+		bu_vls_free( &solid_name );
+
 		return;
 	}
 	else
@@ -386,30 +371,30 @@ char line[MAX_LINE_LEN];
 			bu_log( "\t%d faces were too small\n", small_count );
 	}
 
-	mk_bot( fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree_root->curr_vert, bot_fcurr,
+	mk_bot( fd_out, bu_vls_addr( &solid_name ), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree_root->curr_vert, bot_fcurr,
 		tree_root->the_array, bot_faces, NULL, NULL );
 	clean_vert_tree( tree_root );
 
 	if( face_count && !solid_in_region )
 	{
-		(void)mk_addmember( solid_name , &head.l , NULL, WMOP_UNION );
+		(void)mk_addmember( bu_vls_addr( &solid_name ) , &head.l , NULL, WMOP_UNION );
 	}
 
-	brlcad_name = bu_malloc( strlen( solid_name ) + 3, "region name" );
-	sprintf( brlcad_name, "%s.r", solid_name );
-	bu_log( "\tMaking region (%s)\n" , brlcad_name );
+	bu_log( "\tMaking region (%s)\n" , bu_vls_addr( &region_name ) );
 
 	if( const_id >= 0 ) {
-		mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
-			   color, const_id, 0, mat_code, 100, 0 );
+		mk_lrcomb( fd_out, bu_vls_addr( &region_name ), &head, 1, (char *)NULL,
+			   (char *)NULL, color, const_id, 0, mat_code, 100, 0 );
 		if( face_count ) {
-				(void)mk_addmember( brlcad_name, &all_head.l, NULL, WMOP_UNION );
+				(void)mk_addmember( bu_vls_addr( &region_name ), &all_head.l,
+						    NULL, WMOP_UNION );
 		}
 	} else {
-		mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
-			   color, id_no, 0, mat_code, 100, 0 );
+		mk_lrcomb( fd_out, bu_vls_addr( &region_name ), &head, 1, (char *)NULL,
+			   (char *)NULL, color, id_no, 0, mat_code, 100, 0 );
 		if( face_count )
-			(void)mk_addmember( brlcad_name, &all_head.l, NULL, WMOP_UNION );
+			(void)mk_addmember( bu_vls_addr( &region_name ), &all_head.l,
+					    NULL, WMOP_UNION );
 		id_no++;
 	}
 
@@ -419,6 +404,9 @@ char line[MAX_LINE_LEN];
 		if( bu_mem_barriercheck() )
 			rt_bomb( "Barrier check failed!!!\n" );
 	}
+
+	bu_vls_free( &region_name );
+	bu_vls_free( &solid_name );
 
 	return;
 }
@@ -442,13 +430,26 @@ Convert_part_binary()
 	vect_t normal;
 	int tmp_face[3];
 	struct wmember head;
-	char *solid_name="s.stl";
+	struct bu_vls solid_name;
+	struct bu_vls region_name;
 	int face_count=0;
 	int degenerate_count=0;
 	int small_count=0;
 
 	solid_count++;
-	bu_log( "\tUsing solid name: %s\n" , solid_name );
+	bu_vls_init( &solid_name );
+	bu_vls_init( &region_name );
+	if( forced_name ) {
+		bu_vls_strcpy( &solid_name, "s." );
+		bu_vls_strcat( &solid_name, forced_name );
+		bu_vls_strcpy( &region_name, forced_name );
+	} else {
+		bu_vls_strcat( &solid_name, "s.stl" );
+		bu_vls_strcat( &region_name, "r.stl" );
+	}
+	bu_log( "\tUsing solid name: %s\n" , bu_vls_addr( &solid_name ) );
+
+
 
 	fread( buf, 4, 1, fd_in );
 
@@ -475,11 +476,11 @@ Convert_part_binary()
 		fread( buf, 2, 1, fd_in );
 
 		VMOVE( normal, flts );
-		VMOVE( pt, &flts[3] );
+		VSCALE( pt, &flts[3], conv_factor );
 		tmp_face[0] = Add_vert( V3ARGS( pt ), tree_root, tol.dist_sq );
-		VMOVE( pt, &flts[6] );
+		VSCALE( pt, &flts[6], conv_factor );
 		tmp_face[1] = Add_vert( V3ARGS( pt ), tree_root, tol.dist_sq );
-		VMOVE( pt, &flts[9] );
+		VSCALE( pt, &flts[9], conv_factor );
 		tmp_face[2] = Add_vert( V3ARGS( pt ), tree_root, tol.dist_sq );
 
 		/* check for degenerate faces */
@@ -529,28 +530,30 @@ Convert_part_binary()
 			bu_log( "\t%d faces were too small\n", small_count );
 	}
 
-	mk_bot( fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, tree_root->curr_vert, bot_fcurr,
-		tree_root->the_array, bot_faces, NULL, NULL );
+	mk_bot( fd_out, bu_vls_addr( &solid_name ), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
+		tree_root->curr_vert, bot_fcurr, tree_root->the_array, bot_faces, NULL, NULL );
 	clean_vert_tree( tree_root );
 
 	BU_LIST_INIT( &head.l );
 	if( face_count )
 	{
-		(void)mk_addmember( solid_name , &head.l , NULL, WMOP_UNION );
+		(void)mk_addmember( bu_vls_addr( &solid_name ) , &head.l , NULL, WMOP_UNION );
 	}
-	bu_log( "\tMaking region (r.stl)\n" );
+	bu_log( "\tMaking region (%s)\n", bu_vls_addr( &region_name ) );
 
 	if( const_id >= 0 ) {
-		mk_lrcomb( fd_out, "r.stl", &head, 1, (char *)NULL, (char *)NULL,
-			   NULL, const_id, 0, mat_code, 100, 0 );
+		mk_lrcomb( fd_out, bu_vls_addr( &region_name ), &head, 1, (char *)NULL,
+			   (char *)NULL, NULL, const_id, 0, mat_code, 100, 0 );
 		if( face_count ) {
-				(void)mk_addmember( "r.stl", &all_head.l, NULL, WMOP_UNION );
+				(void)mk_addmember( bu_vls_addr( &region_name ), &all_head.l,
+						    NULL, WMOP_UNION );
 		}
 	} else {
-		mk_lrcomb( fd_out, "r.stl", &head, 1, (char *)NULL, (char *)NULL,
-			   NULL, id_no, 0, mat_code, 100, 0 );
+		mk_lrcomb( fd_out, bu_vls_addr( &region_name ), &head, 1, (char *)NULL,
+			   (char *)NULL, NULL, id_no, 0, mat_code, 100, 0 );
 		if( face_count )
-			(void)mk_addmember( "r.stl", &all_head.l, NULL, WMOP_UNION );
+			(void)mk_addmember( bu_vls_addr( &region_name ), &all_head.l,
+					    NULL, WMOP_UNION );
 		id_no++;
 	}
 
