@@ -49,23 +49,18 @@ char **argv;
 		exit(20);
 	}
 
+	if( argc > 2 && strcmp( argv[1], "-p" ) == 0 )  {
+		/* Polaroid rather than external camera */
+		polaroid = 1;
+		argc--; argv++;
+	}
+	getexposure("old");
+
 	/* check argument */
 	if ( argc != 5 && argc != 6 ) {
 		printf("usage: dunncolor [-p] baseval redval greenval blueval\n"); 
 		exit(25);
 	}
-	if( strcmp( argv[1], "-p" ) == 0 )  {
-		/* Polaroid rather than external camera */
-		polaroid = 1;
-		argc--; argv++;
-	}
-
-	if (!ready(1)) {
-		printf("dunncolor: 30 camera not ready\n");
-		exit(30);
-	}
-		
-	getexposure("old");
 
 	if(!ready(20)) {
 		printf("dunncolor:  camera not ready\n");
@@ -76,11 +71,6 @@ char **argv;
 	send('R',atoi(*++argv));
 	send('G',atoi(*++argv));
 	send('B',atoi(*++argv));
-
-	if(!ready(20)) {
-		printf("dunncolor: 60 camera not ready\n");
-		exit(60);
-	}
 
 	getexposure("new");
 }
@@ -167,6 +157,11 @@ char *title;
 
 	waittime.tv_sec = 20;
 	waittime.tv_usec = 0;
+
+	if(!ready(20)) {
+		printf("dunncolor: (getexposure) camera not ready\n");
+		exit(60);
+	}
 
 	if(polaroid)
 		cmd = '<';	/* req 8x10 exposure values */
