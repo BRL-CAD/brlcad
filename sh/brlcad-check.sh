@@ -111,24 +111,16 @@ rm -f ${OUT_FILE}
 cat > ${IN_FILE} << EOF
 #line 1 "$0"
 #include "Cakefile.defs"
-echo machinetype.sh\ root: ${BRLCAD_ROOT}
-echo Cakefile.defs\ \ root: ${C_BRLCAD_ROOT}
 
 #ifdef BSD
 #undef BSD	/* So that C_UNIXTYPE can have a value of BSD, not "43", etc. */
-#ifdef linux
-#undef linux	/* So that C_BRLCAD_ROOT can have a value of BRLCAD_ROOT, not "/usr/1/brlcad", etc */
-#endif
-#ifdef SYSV
-#undef SYSV
-#endif
-
 ${OUT_FILE}:
 	echo C_MACHINE=MTYPE ';' > ${OUT_FILE}
 	echo C_UNIXTYPE=\'BSD\' ';' >> ${OUT_FILE}
 	echo C_HAS_TCP=HAS_TCP >> ${OUT_FILE}
 	echo C_BRLCAD_ROOT=BRLCAD_ROOT >> ${OUT_FILE}
 #else
+#undef SYSV
 ${OUT_FILE}:
 	echo C_MACHINE=MTYPE ';' > ${OUT_FILE}
 	echo C_UNIXTYPE=\'SYSV\' ';' >> ${OUT_FILE}
@@ -138,8 +130,8 @@ ${OUT_FILE}:
 EOF
 
 # Run the file through CAKE.
-echo cake -f ${IN_FILE} ${OUT_FILE}
-cake -f ${IN_FILE} ${OUT_FILE}
+## echo cake -f ${IN_FILE} ${OUT_FILE}
+cake -f ${IN_FILE} ${OUT_FILE} > /dev/null
 if test $? -ne 0
 then
 	/bin/rm -f ${IN_FILE} ${OUT_FILE}
@@ -157,8 +149,6 @@ fi
 # Source the output file as a shell script, to set C_* variables here.
 ## cat ${OUT_FILE}
 . ${OUT_FILE}
-echo machinetype.sh\ root: ${BRLCAD_ROOT}
-echo Cakefile.defs\ \ root: ${C_BRLCAD_ROOT}
 
 # See if things match up
 if test "x${MACHINE}" != "x${C_MACHINE}" -o \
