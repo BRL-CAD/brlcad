@@ -36,6 +36,17 @@ rcs_id[] = "$Header$";
 #undef	YYLMAX
 #define	YYLMAX		MAXLEXBUF
 
+void
+check_actlen()
+{
+	/* yytext may be an array or a pointer */
+	if (strlen(yytext) >= (unsigned)YYLMAX-4)
+	{
+		printf("cake: action '%s' too long\n", yytext);
+		exit_cake(FALSE);
+	}
+}
+
 #define	LATE_CATCH
 #define	LATE_RECOVERY	printf("cake: token '%s' is too long\n", yytext); \
 			exit(1);
@@ -417,17 +428,4 @@ yycurly()
 
 	exit_cake(FALSE);
 	return("--error--");			/* BRL */
-}
-
-check_actlen()
-{
-	/* Sometimes yytext is a pointer, not a buffer */
-	if( sizeof(yytext) <= 8 )  return;
-
-	/* We know yytext is a char array, check against actual size */
-	if (strlen(yytext) >= (unsigned)sizeof(yytext)-4)
-	{
-		printf("cake: action '%s' too long\n", yytext);
-		exit_cake(FALSE);
-	}
 }
