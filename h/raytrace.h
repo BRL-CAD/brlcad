@@ -1719,6 +1719,11 @@ RT_EXTERN(int db_walk_tree, (struct db_i *dbip, int argc, CONST char **argv,
 	int ncpu, CONST struct db_tree_state *init_state,
 	int (*reg_start_func)(), union tree * (*reg_end_func)(),
 	union tree * (*leaf_func)() ));
+RT_EXTERN(int db_path_to_mat, (struct db_i *dbip, struct db_full_path *pathp,
+	mat_t mat, int depth));
+RT_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
+	struct directory *dp, mat_t stck, mat_t arc,
+	struct mater_info *materp));
 
 
 /* machine.c */
