@@ -1,26 +1,24 @@
 # $Id$
 
-required_files = \
+required_dirs = \
 	other \
 	libbn \
 	libbu \
 	librt
 
-rts_files = librtserver
+rts_dirs = librtserver
 
-bench_files = \
+bench_dirs = \
 	libpkg \
 	libfb \
 	libwdb \
 	liboptical \
 	libsysv \
-	bench \
 	conv \
-	db \
 	fbserv \
 	rt	
 
-kitchensink_files = \
+kitchensink_dirs = \
 	libcursor \
 	libdm \
 	libpkg \
@@ -31,20 +29,16 @@ kitchensink_files = \
 	libtermio \
 	libwdb \
 	anim \
-	bench \
 	brlman \
 	burst \
 	bwish \
 	comgeom-g \
 	conv \
-	db \
-	doc \
 	fb \
 	fbed \
 	fbserv \
 	gtools \
 	halftone \
-	html \
 	iges \
 	irprep \
 	jack \
@@ -54,11 +48,9 @@ kitchensink_files = \
 	nirt \
 	off \
 	patch \
-	pro-engineer \
 	remrt \
 	rt \
 	sample_applications \
-	sh \
 	sig \
 	tab \
 	tclscripts \
@@ -66,8 +58,7 @@ kitchensink_files = \
 	unigraphics \
 	util \
 	vas4 \
-	vdeck \
-	vfont
+	vdeck
 
 
 #######################
@@ -78,14 +69,14 @@ if ONLY_BENCHMARK
 
 if ONLY_RTS
 SUBDIRS = \
-	$(required_files) \
-	$(bench_files) \
-	$(rts_files)
+	$(required_dirs) \
+	$(bench_dirs) \
+	$(rts_dirs)
 
 else !ONLY_RTS
 SUBDIRS = \
-	$(required_files) \
-	$(bench_files)
+	$(required_dirs) \
+	$(bench_dirs)
 
 endif
 # end ONLY_RTS
@@ -94,15 +85,15 @@ else !ONLY_BENCHMARK
 
 if ONLY_RTS
 SUBDIRS = \
-	$(required_files) \
-	$(rts_files)
+	$(required_dirs) \
+	$(rts_dirs)
 
 else !ONLY_RTS
 SUBDIRS = \
-	$(required_files) \
-	$(bench_files) \
-	$(rts_files) \
-	$(kitchensink_files)
+	$(required_dirs) \
+	$(bench_dirs) \
+	$(rts_dirs) \
+	$(kitchensink_dirs)
 
 endif
 # end ONLY_RTS
