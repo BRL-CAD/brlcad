@@ -79,9 +79,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 
 int Glx_dm_init();
-#if 0
-int Glx_close();
-#endif
+
 static int      Glx_doevent();
 static int      Glx_dm();
 static void     Glx_colorchange();
@@ -163,29 +161,16 @@ Glx_dm_init(argc, argv)
 int argc;
 char *argv[];
 {
-  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
-    return TCL_ERROR;
-
   /* register application provided routines */
   dmp->dmr_eventhandler = Glx_doevent;
   dmp->dmr_cmd = Glx_dm;
   dmp->dmr_statechange = Glx_statechange;
-#if 0
-  dmp->dmr_app_close = Glx_close;
-#endif
+
+  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
+    return TCL_ERROR;
 
   return dmp->dmr_open(dmp);
 }
-
-#if 0
-static int
-Glx_close(p)
-genptr_t *p;
-{
-  bu_free(p, "mged_glx_vars");
-  return TCL_OK;
-}
-#endif
 
 /*
    This routine does not handle mouse button or key events. The key

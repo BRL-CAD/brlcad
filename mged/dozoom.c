@@ -374,7 +374,12 @@ mat_print("pmat", pmat);
 		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
 		 	continue;
 
- 		if( dmp->dmr_object( dmp, sp, mat, ratio, sp==illump ) )  {
+ 		if( dmp->dmr_object( dmp, (struct rt_vlist *)&sp->s_vlist,
+				     mat, sp==illump, sp->s_soldash,
+				     (short)sp->s_color[0],
+				     (short)sp->s_color[1],
+				     (short)sp->s_color[2],
+				     sp->s_dmindex) )  {
 			sp->s_flag = UP;
 			ndrawn++;
 		}
@@ -416,7 +421,12 @@ mat_print("pmat", pmat);
 		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
 		 	continue;
 
-		if( dmp->dmr_object( dmp, sp, mat, ratio, 1 ) )  {
+		if( dmp->dmr_object( dmp, (struct rt_vlist *)&sp->s_vlist,
+				     mat, 1, sp->s_soldash,
+				     (short)sp->s_color[0],
+				     (short)sp->s_color[1],
+				     (short)sp->s_color[2],
+				     sp->s_dmindex) )  {
 			sp->s_flag = UP;
 			ndrawn++;
 		}
@@ -433,7 +443,9 @@ static void
 draw_axes(axes)
 int axes;
 {
-  struct solid sp;
+  short r, g, b;
+  short index;
+  struct rt_vlist h_vlist;
   struct rt_vlist vlist;
   int i, j;
   double ox, oy;
@@ -443,33 +455,34 @@ int axes;
   mat_t mr_mat;   /* model rotations */
   static char *labels[] = {"X", "Y", "Z"};
 
+  BU_LIST_INIT(&h_vlist.l);
+  BU_LIST_APPEND(&h_vlist.l, &vlist.l);
+
   mat_idn(mr_mat);
   dmp->dmr_newrot(dmp, mr_mat, 0);
 
-  sp.s_vlist.forw = &sp.s_vlist;
-  sp.s_vlist.back = &sp.s_vlist;
-  BU_LIST_APPEND(&sp.s_vlist, (struct bu_list *)&vlist);
-  sp.s_soldash = 0;
-
   if(axes_color_hook)
-    (*axes_color_hook)(axes, sp.s_color);
+    (*axes_color_hook)(axes, &r, &g, &b, &index);
   else{/* use default color */
     switch(axes){
     case E_AXES:
-      sp.s_color[0] = 230;
-      sp.s_color[1] = 50;
-      sp.s_color[2] = 50;
+      r = 230;
+      g = 50;
+      b = 50;
+      index = 1;
       break;
     case W_AXES:
-      sp.s_color[0] = 150;
-      sp.s_color[1] = 230;
-      sp.s_color[2] = 150;
+      r = 150;
+      g = 230;
+      b = 150;
+      index = 1;
       break;
     case V_AXES:
     default:
-      sp.s_color[0] = 150;
-      sp.s_color[1] = 150;
-      sp.s_color[2] = 230;
+      r = 150;
+      g = 150;
+      b = 230;
+      index = 1;
       break;
     }
   }
@@ -586,5 +599,5 @@ int axes;
   dmp->dmr_newrot(dmp, model2view, 0);
 
   /* draw axes */
-  dmp->dmr_object( dmp, &sp, model2view, (double)1.0, 0 );
+  dmp->dmr_object( dmp, &h_vlist, model2view, 0, 0, r, g, b, index);
 }

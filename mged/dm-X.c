@@ -85,29 +85,16 @@ X_dm_init(argc, argv)
 int argc;
 char *argv[];
 {
-  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
-    return TCL_ERROR;
-
   /* register application provided routines */
   dmp->dmr_eventhandler = X_doevent;
   dmp->dmr_cmd = X_dm;
   dmp->dmr_statechange = X_statechange;
-#if 0
-  dmp->dmr_app_close = X_close;
-#endif
+
+  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
+    return TCL_ERROR;
 
   return dmp->dmr_open(dmp);
 }
-
-#if 0
-int
-X_close(p)
-genptr_t *p;
-{
-  bu_free(p, "mged_x_vars");
-  return TCL_OK;
-}
-#endif
 
 static int
 X_doevent(clientData, eventPtr)

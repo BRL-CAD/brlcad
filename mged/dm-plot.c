@@ -52,13 +52,3 @@ char *argv[];
 
   return dmp->dmr_open(dmp);
 }
-
-#if 0
-static int
-Plot_close(p)
-genptr_t *p;
-{
-  bu_free(p, "mged_plot_vars");
-  return TCL_OK;
-}
-#endif

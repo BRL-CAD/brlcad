@@ -57,13 +57,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm-pex.h"
 #include "solid.h"
 
-#define FONTBACK        "-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
-#define FONT5   "5x7"
-#define FONT6   "6x10"
-#define FONT7   "7x13"
-#define FONT8   "8x13"
-#define FONT9   "9x15"
-
 #define IMMED_MODE_SPT(info) (((info)->subset_info & 0xffff) ==\
 			      PEXCompleteImplementation ||\
 			      (info)->subset_info & PEXImmediateMode)
@@ -80,7 +73,6 @@ static void     Pex_var_init();
 static void     Pex_setup_renderer();
 static void     Pex_mat_copy();
 static void     Pex_load_startup();
-static int	Pex_setup();
 
 static void	label();
 static void	draw();
@@ -144,11 +136,24 @@ struct dm *dmp;
 int argc;
 char *argv[];
 {
+  static int count = 0;
+
+  /* Only need to do this once for this display manager */
+  if(!count)
+    Pex_load_startup(dmp);
+
+  bu_vls_printf(&dmp->dmr_pathName, ".dm_pex%d", count++);
+
   dmp->dmr_vars = bu_calloc(1, sizeof(struct pex_vars), "Pex_init: pex_vars");
   ((struct pex_vars *)dmp->dmr_vars)->perspective_angle = 3;
 
   /* initialize the modifiable variables */
   ((struct pex_vars *)dmp->dmr_vars)->mvars.dummy_perspective = 1;
+
+  if(BU_LIST_IS_EMPTY(&head_pex_vars.l))
+    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+
+  BU_LIST_APPEND(&head_pex_vars.l, &((struct pex_vars *)dmp->dmr_vars)->l);
 
   if(dmp->dmr_vars)
         return TCL_OK;
@@ -167,7 +172,212 @@ static int
 Pex_open(dmp)
 struct dm *dmp;
 {
-  return Pex_setup(dmp);
+  int first_event, first_error;
+  char *cp;
+  XGCValues gcv;
+  XColor a_color;
+  Visual *a_visual;
+  int a_screen;
+  Colormap  a_cmap;
+  struct bu_vls str;
+  Display *tmp_dpy;
+  char pex_err[80];
+  PEXExtensionInfo *pex_info;
+
+  bu_vls_init(&str);
+
+  ((struct pex_vars *)dmp->dmr_vars)->fontstruct = NULL;
+
+  /* Make xtkwin a toplevel window */
+  ((struct pex_vars *)dmp->dmr_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
+		       bu_vls_addr(&dmp->dmr_pathName), dmp->dmr_dname);
+
+  /*
+   * Create the X drawing window by calling create_x which
+   * is defined in xinit.tk
+   */
+  bu_vls_strcpy(&str, "init_x ");
+  bu_vls_printf(&str, "%s\n", bu_vls_addr(&dmp->dmr_pathName));
+
+  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+    bu_vls_free(&str);
+    return TCL_ERROR;
+  }
+
+  bu_vls_free(&str);
+  ((struct pex_vars *)dmp->dmr_vars)->dpy = Tk_Display(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
+  ((struct pex_vars *)dmp->dmr_vars)->width =
+    DisplayWidth(((struct pex_vars *)dmp->dmr_vars)->dpy,
+		 DefaultScreen(((struct pex_vars *)dmp->dmr_vars)->dpy)) - 20;
+  ((struct pex_vars *)dmp->dmr_vars)->height =
+    DisplayHeight(((struct pex_vars *)dmp->dmr_vars)->dpy,
+		  DefaultScreen(((struct pex_vars *)dmp->dmr_vars)->dpy)) - 20;
+
+  /* Make window square */
+  if(((struct pex_vars *)dmp->dmr_vars)->height < ((struct pex_vars *)dmp->dmr_vars)->width)
+    ((struct pex_vars *)dmp->dmr_vars)->width = ((struct pex_vars *)dmp->dmr_vars)->height;
+  else
+    ((struct pex_vars *)dmp->dmr_vars)->height = ((struct pex_vars *)dmp->dmr_vars)->width;
+
+  Tk_GeometryRequest(((struct pex_vars *)dmp->dmr_vars)->xtkwin,
+		     ((struct pex_vars *)dmp->dmr_vars)->width, 
+		     ((struct pex_vars *)dmp->dmr_vars)->height);
+#if 0
+  /*XXX*/
+  XSynchronize(((struct pex_vars *)dmp->dmr_vars)->dpy, TRUE);
+#endif
+
+  Tk_MakeWindowExist(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
+  ((struct pex_vars *)dmp->dmr_vars)->win =
+      Tk_WindowId(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
+
+#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
+  ((struct pex_vars *)dmp->dmr_vars)->pix_width = ((struct pex_vars *)dmp->dmr_vars)->width;
+  ((struct pex_vars *)dmp->dmr_vars)->pix_height = ((struct pex_vars *)dmp->dmr_vars)->height;
+  ((struct pex_vars *)dmp->dmr_vars)->pix =
+    Tk_GetPixmap(((struct pex_vars *)dmp->dmr_vars)->dpy,
+		 DefaultRootWindow(((struct pex_vars *)dmp->dmr_vars)->dpy),
+		 ((struct pex_vars *)dmp->dmr_vars)->width,
+		 ((struct pex_vars *)dmp->dmr_vars)->height,
+		 Tk_Depth(((struct pex_vars *)dmp->dmr_vars)->xtkwin));
+#endif
+
+  a_screen = Tk_ScreenNumber(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
+  a_visual = Tk_Visual(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
+
+  /* Get color map indices for the colors we use. */
+  ((struct pex_vars *)dmp->dmr_vars)->black = BlackPixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
+  ((struct pex_vars *)dmp->dmr_vars)->white = WhitePixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
+
+  a_cmap = Tk_Colormap(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
+  a_color.red = 255<<8;
+  a_color.green=0;
+  a_color.blue=0;
+  a_color.flags = DoRed | DoGreen| DoBlue;
+  if ( ! XAllocColor(((struct pex_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
+    bu_log( "dm-X: Can't Allocate red\n");
+    return TCL_ERROR;
+  }
+  ((struct pex_vars *)dmp->dmr_vars)->red = a_color.pixel;
+    if ( ((struct pex_vars *)dmp->dmr_vars)->red == ((struct pex_vars *)dmp->dmr_vars)->white )
+      ((struct pex_vars *)dmp->dmr_vars)->red = ((struct pex_vars *)dmp->dmr_vars)->black;
+
+    a_color.red = 200<<8;
+    a_color.green=200<<8;
+    a_color.blue=0<<8;
+    a_color.flags = DoRed | DoGreen| DoBlue;
+    if ( ! XAllocColor(((struct pex_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
+	bu_log( "dm-X: Can't Allocate yellow\n");
+	return TCL_ERROR;
+    }
+    ((struct pex_vars *)dmp->dmr_vars)->yellow = a_color.pixel;
+    if ( ((struct pex_vars *)dmp->dmr_vars)->yellow == ((struct pex_vars *)dmp->dmr_vars)->white )
+      ((struct pex_vars *)dmp->dmr_vars)->yellow = ((struct pex_vars *)dmp->dmr_vars)->black;
+    
+    a_color.red = 0;
+    a_color.green=0;
+    a_color.blue=255<<8;
+    a_color.flags = DoRed | DoGreen| DoBlue;
+    if ( ! XAllocColor(((struct pex_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
+	bu_log( "dm-X: Can't Allocate blue\n");
+	return TCL_ERROR;
+    }
+    ((struct pex_vars *)dmp->dmr_vars)->blue = a_color.pixel;
+    if ( ((struct pex_vars *)dmp->dmr_vars)->blue == ((struct pex_vars *)dmp->dmr_vars)->white )
+      ((struct pex_vars *)dmp->dmr_vars)->blue = ((struct pex_vars *)dmp->dmr_vars)->black;
+
+    a_color.red = 128<<8;
+    a_color.green=128<<8;
+    a_color.blue= 128<<8;
+    a_color.flags = DoRed | DoGreen| DoBlue;
+    if ( ! XAllocColor(((struct pex_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
+	bu_log( "dm-X: Can't Allocate gray\n");
+	return TCL_ERROR;
+    }
+    ((struct pex_vars *)dmp->dmr_vars)->gray = a_color.pixel;
+    if ( ((struct pex_vars *)dmp->dmr_vars)->gray == ((struct pex_vars *)dmp->dmr_vars)->white )
+      ((struct pex_vars *)dmp->dmr_vars)->gray = ((struct pex_vars *)dmp->dmr_vars)->black;
+
+    /* Select border, background, foreground colors,
+     * and border width.
+     */
+    if( a_visual->class == GrayScale || a_visual->class == StaticGray ) {
+	((struct pex_vars *)dmp->dmr_vars)->is_monochrome = 1;
+	((struct pex_vars *)dmp->dmr_vars)->bd = BlackPixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
+	((struct pex_vars *)dmp->dmr_vars)->bg = WhitePixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
+	((struct pex_vars *)dmp->dmr_vars)->fg = BlackPixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
+    } else {
+	/* Hey, it's a color server.  Ought to use 'em! */
+	((struct pex_vars *)dmp->dmr_vars)->is_monochrome = 0;
+	((struct pex_vars *)dmp->dmr_vars)->bd = WhitePixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
+	((struct pex_vars *)dmp->dmr_vars)->bg = BlackPixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
+	((struct pex_vars *)dmp->dmr_vars)->fg = WhitePixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
+    }
+
+    if( !((struct pex_vars *)dmp->dmr_vars)->is_monochrome &&
+	((struct pex_vars *)dmp->dmr_vars)->fg != ((struct pex_vars *)dmp->dmr_vars)->red &&
+	((struct pex_vars *)dmp->dmr_vars)->red != ((struct pex_vars *)dmp->dmr_vars)->black )
+      ((struct pex_vars *)dmp->dmr_vars)->fg = ((struct pex_vars *)dmp->dmr_vars)->red;
+
+    gcv.foreground = ((struct pex_vars *)dmp->dmr_vars)->fg;
+    gcv.background = ((struct pex_vars *)dmp->dmr_vars)->bg;
+
+#ifndef CRAY2
+#if 1
+    cp = FONT;
+    if ( (((struct pex_vars *)dmp->dmr_vars)->fontstruct =
+	 XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, cp)) == NULL ) {
+      /* Try hardcoded backup font */
+      if ( (((struct pex_vars *)dmp->dmr_vars)->fontstruct =
+	    XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, FONT2)) == NULL) {
+	bu_log( "dm-X: Can't open font '%s' or '%s'\n", cp, FONT2 );
+	return TCL_ERROR;
+      }
+    }
+    gcv.font = ((struct pex_vars *)dmp->dmr_vars)->fontstruct->fid;
+#endif
+    ((struct pex_vars *)dmp->dmr_vars)->gc = XCreateGC(((struct pex_vars *)dmp->dmr_vars)->dpy,
+					       ((struct pex_vars *)dmp->dmr_vars)->win,
+					       (GCFont|GCForeground|GCBackground),
+						&gcv);
+#else
+    ((struct pex_vars *)dmp->dmr_vars)->gc = XCreateGC(((struct pex_vars *)dmp->dmr_vars)->dpy,
+					       ((struct pex_vars *)dmp->dmr_vars)->win,
+					       (GCForeground|GCBackground),
+					       &gcv);
+#endif
+
+/* Begin PEX stuff. */
+    if(PEXInitialize(((struct pex_vars *)dmp->dmr_vars)->dpy,
+		     &pex_info, 80, pex_err) != 0){
+      bu_vls_free(&str);
+      bu_log("Pex_setup: %s\n", pex_err);
+      return TCL_ERROR;
+    }
+
+    if(!IMMED_MODE_SPT(pex_info)){
+      bu_vls_free(&str);
+      bu_log("Pex_setup: Immediate mode is not supported.\n");
+      return TCL_ERROR;
+    }
+
+    Pex_setup_renderer(dmp);
+
+#if DO_XSELECTINPUT
+    /* start with constant tracking OFF */
+    XSelectInput(((struct pex_vars *)dmp->dmr_vars)->dpy,
+		 ((struct pex_vars *)dmp->dmr_vars)->win,
+		 ExposureMask|ButtonPressMask|KeyPressMask|StructureNotifyMask);
+#endif
+
+#if 1
+    Pex_configure_window_shape(dmp);
+#endif
+
+    Tk_SetWindowBackground(((struct pex_vars *)dmp->dmr_vars)->xtkwin, ((struct pex_vars *)dmp->dmr_vars)->bg);
+    Tk_MapWindow(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
+
+    return TCL_OK;
 }
 
 /*
@@ -189,12 +399,6 @@ struct dm *dmp;
 
   if(((struct pex_vars *)dmp->dmr_vars)->xtkwin != 0)
     Tk_DestroyWindow(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
-
-#if 0
-  /* Give the application a chance to clean up */
-  if(dmp->dmr_app_close)
-    dmp->dmr_app_close(((struct pex_vars *)dmp->dmr_vars)->app_vars);
-#endif
 
   if(((struct pex_vars *)dmp->dmr_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct pex_vars *)dmp->dmr_vars)->l);
@@ -331,14 +535,16 @@ mat_t mat;
 
 /* ARGSUSED */
 static int
-Pex_object( dmp, sp, mat, ratio, white_flag )
+Pex_object( dmp, vp, m, illum, linestyle, r, g, b, index )
 struct dm *dmp;
-register struct solid *sp;
-mat_t mat;
-double ratio;
-int white_flag;
+register struct rt_vlist *vp;
+fastf_t *m;
+int illum;
+int linestyle;
+register short r, g, b;
+short index;
 {
-  register struct rt_vlist    *vp;
+  register struct rt_vlist    *tvp;
   PEXCoord coord_buf[1024];
   PEXCoord *cp;                /* current coordinate */
   int first;
@@ -353,11 +559,11 @@ int white_flag;
 #endif
 		    ((struct pex_vars *)dmp->dmr_vars)->renderer);
   {
-    if( white_flag ){
+    if( illum ){
       SET_COLOR( 0.9, 0.9, 0.9, color );
     }else{
-      SET_COLOR( (short)sp->s_color[0] / 255.0, (short)sp->s_color[1] / 255.0,
-		 (short)sp->s_color[2] / 255.0, color );
+      SET_COLOR( r / 255.0, g / 255.0,
+		 b / 255.0, color );
     }
 
     PEXSetLineColor(((struct pex_vars *)dmp->dmr_vars)->dpy,
@@ -368,7 +574,7 @@ int white_flag;
 		    ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		    PEXOCRender, 1.0);
 
-    if( sp->s_soldash )
+    if( linestyle )
       PEXSetLineType(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		     ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		     PEXOCRender, PEXLineTypeDashed);
@@ -380,11 +586,11 @@ int white_flag;
     ncoord = 0;
     cp = coord_buf;
     first = 1;
-    for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+    for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
       register int	i;
-      register int	nused = vp->nused;
-      register int	*cmd = vp->cmd;
-      register point_t *pt = vp->pt;
+      register int	nused = tvp->nused;
+      register int	*cmd = tvp->cmd;
+      register point_t *pt = tvp->pt;
 
       /* Viewing region is from -1.0 to +1.0 */
       /* 2^31 ~= 2e9 -- dynamic range of a long int */
@@ -438,7 +644,7 @@ int white_flag;
 		  ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		  PEXOCRender, ncoord, coord_buf);
 
-    if (sp->s_soldash) /* restore solid lines */
+    if (linestyle) /* restore solid lines */
       PEXSetLineType(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		     ((struct pex_vars *)dmp->dmr_vars)->renderer,
 		     PEXOCRender, PEXLineTypeSolid);
@@ -749,9 +955,6 @@ char	*str;
 	       ((struct pex_vars *)dmp->dmr_vars)->gc, sx, sy, str, strlen(str) );
 }
 
-#define	FONT	"6x10"
-#define FONT2	"-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
-
 static XWMHints xwmh = {
         StateHint,		        /* flags */
 	0,				/* input */
@@ -762,230 +965,6 @@ static XWMHints xwmh = {
 	0,				/* icon mask */
 	0				/* Window group */
 };
-
-static int
-Pex_setup(dmp)
-struct dm *dmp;
-{
-  static int count = 0;
-  int first_event, first_error;
-  char *cp;
-  XGCValues gcv;
-  XColor a_color;
-  Visual *a_visual;
-  int a_screen;
-  Colormap  a_cmap;
-  struct bu_vls str;
-  Display *tmp_dpy;
-  char pex_err[80];
-  PEXExtensionInfo *pex_info;
-
-  bu_vls_init(&str);
-
-  /* Only need to do this once for this display manager */
-  if(!count)
-    Pex_load_startup(dmp);
-
-  if(BU_LIST_IS_EMPTY(&head_pex_vars.l))
-    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
-
-  BU_LIST_APPEND(&head_pex_vars.l, &((struct pex_vars *)dmp->dmr_vars)->l);
-
-  bu_vls_printf(&dmp->dmr_pathName, ".dm_pex%d", count);
-
-  /* Make xtkwin a toplevel window */
-  ((struct pex_vars *)dmp->dmr_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
-		       bu_vls_addr(&dmp->dmr_pathName), dmp->dmr_dname);
-
-  /*
-   * Create the X drawing window by calling create_x which
-   * is defined in xinit.tk
-   */
-  bu_vls_strcpy(&str, "init_x ");
-  bu_vls_printf(&str, "%s\n", bu_vls_addr(&dmp->dmr_pathName));
-
-  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
-    bu_vls_free(&str);
-    return TCL_ERROR;
-  }
-
-  bu_vls_free(&str);
-  ((struct pex_vars *)dmp->dmr_vars)->dpy = Tk_Display(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
-  ((struct pex_vars *)dmp->dmr_vars)->width =
-    DisplayWidth(((struct pex_vars *)dmp->dmr_vars)->dpy,
-		 DefaultScreen(((struct pex_vars *)dmp->dmr_vars)->dpy)) - 20;
-  ((struct pex_vars *)dmp->dmr_vars)->height =
-    DisplayHeight(((struct pex_vars *)dmp->dmr_vars)->dpy,
-		  DefaultScreen(((struct pex_vars *)dmp->dmr_vars)->dpy)) - 20;
-
-  /* Make window square */
-  if(((struct pex_vars *)dmp->dmr_vars)->height < ((struct pex_vars *)dmp->dmr_vars)->width)
-    ((struct pex_vars *)dmp->dmr_vars)->width = ((struct pex_vars *)dmp->dmr_vars)->height;
-  else
-    ((struct pex_vars *)dmp->dmr_vars)->height = ((struct pex_vars *)dmp->dmr_vars)->width;
-
-  Tk_GeometryRequest(((struct pex_vars *)dmp->dmr_vars)->xtkwin,
-		     ((struct pex_vars *)dmp->dmr_vars)->width, 
-		     ((struct pex_vars *)dmp->dmr_vars)->height);
-#if 0
-  /*XXX*/
-  XSynchronize(((struct pex_vars *)dmp->dmr_vars)->dpy, TRUE);
-#endif
-
-  Tk_MakeWindowExist(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
-  ((struct pex_vars *)dmp->dmr_vars)->win =
-      Tk_WindowId(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
-
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
-  ((struct pex_vars *)dmp->dmr_vars)->pix_width = ((struct pex_vars *)dmp->dmr_vars)->width;
-  ((struct pex_vars *)dmp->dmr_vars)->pix_height = ((struct pex_vars *)dmp->dmr_vars)->height;
-  ((struct pex_vars *)dmp->dmr_vars)->pix =
-    Tk_GetPixmap(((struct pex_vars *)dmp->dmr_vars)->dpy,
-		 DefaultRootWindow(((struct pex_vars *)dmp->dmr_vars)->dpy),
-		 ((struct pex_vars *)dmp->dmr_vars)->width,
-		 ((struct pex_vars *)dmp->dmr_vars)->height,
-		 Tk_Depth(((struct pex_vars *)dmp->dmr_vars)->xtkwin));
-#endif
-
-  a_screen = Tk_ScreenNumber(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
-  a_visual = Tk_Visual(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
-
-  /* Get color map indices for the colors we use. */
-  ((struct pex_vars *)dmp->dmr_vars)->black = BlackPixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
-  ((struct pex_vars *)dmp->dmr_vars)->white = WhitePixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
-
-  a_cmap = Tk_Colormap(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
-  a_color.red = 255<<8;
-  a_color.green=0;
-  a_color.blue=0;
-  a_color.flags = DoRed | DoGreen| DoBlue;
-  if ( ! XAllocColor(((struct pex_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
-    bu_log( "dm-X: Can't Allocate red\n");
-    return TCL_ERROR;
-  }
-  ((struct pex_vars *)dmp->dmr_vars)->red = a_color.pixel;
-    if ( ((struct pex_vars *)dmp->dmr_vars)->red == ((struct pex_vars *)dmp->dmr_vars)->white )
-      ((struct pex_vars *)dmp->dmr_vars)->red = ((struct pex_vars *)dmp->dmr_vars)->black;
-
-    a_color.red = 200<<8;
-    a_color.green=200<<8;
-    a_color.blue=0<<8;
-    a_color.flags = DoRed | DoGreen| DoBlue;
-    if ( ! XAllocColor(((struct pex_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
-	bu_log( "dm-X: Can't Allocate yellow\n");
-	return TCL_ERROR;
-    }
-    ((struct pex_vars *)dmp->dmr_vars)->yellow = a_color.pixel;
-    if ( ((struct pex_vars *)dmp->dmr_vars)->yellow == ((struct pex_vars *)dmp->dmr_vars)->white )
-      ((struct pex_vars *)dmp->dmr_vars)->yellow = ((struct pex_vars *)dmp->dmr_vars)->black;
-    
-    a_color.red = 0;
-    a_color.green=0;
-    a_color.blue=255<<8;
-    a_color.flags = DoRed | DoGreen| DoBlue;
-    if ( ! XAllocColor(((struct pex_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
-	bu_log( "dm-X: Can't Allocate blue\n");
-	return TCL_ERROR;
-    }
-    ((struct pex_vars *)dmp->dmr_vars)->blue = a_color.pixel;
-    if ( ((struct pex_vars *)dmp->dmr_vars)->blue == ((struct pex_vars *)dmp->dmr_vars)->white )
-      ((struct pex_vars *)dmp->dmr_vars)->blue = ((struct pex_vars *)dmp->dmr_vars)->black;
-
-    a_color.red = 128<<8;
-    a_color.green=128<<8;
-    a_color.blue= 128<<8;
-    a_color.flags = DoRed | DoGreen| DoBlue;
-    if ( ! XAllocColor(((struct pex_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
-	bu_log( "dm-X: Can't Allocate gray\n");
-	return TCL_ERROR;
-    }
-    ((struct pex_vars *)dmp->dmr_vars)->gray = a_color.pixel;
-    if ( ((struct pex_vars *)dmp->dmr_vars)->gray == ((struct pex_vars *)dmp->dmr_vars)->white )
-      ((struct pex_vars *)dmp->dmr_vars)->gray = ((struct pex_vars *)dmp->dmr_vars)->black;
-
-    /* Select border, background, foreground colors,
-     * and border width.
-     */
-    if( a_visual->class == GrayScale || a_visual->class == StaticGray ) {
-	((struct pex_vars *)dmp->dmr_vars)->is_monochrome = 1;
-	((struct pex_vars *)dmp->dmr_vars)->bd = BlackPixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
-	((struct pex_vars *)dmp->dmr_vars)->bg = WhitePixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
-	((struct pex_vars *)dmp->dmr_vars)->fg = BlackPixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
-    } else {
-	/* Hey, it's a color server.  Ought to use 'em! */
-	((struct pex_vars *)dmp->dmr_vars)->is_monochrome = 0;
-	((struct pex_vars *)dmp->dmr_vars)->bd = WhitePixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
-	((struct pex_vars *)dmp->dmr_vars)->bg = BlackPixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
-	((struct pex_vars *)dmp->dmr_vars)->fg = WhitePixel( ((struct pex_vars *)dmp->dmr_vars)->dpy, a_screen );
-    }
-
-    if( !((struct pex_vars *)dmp->dmr_vars)->is_monochrome &&
-	((struct pex_vars *)dmp->dmr_vars)->fg != ((struct pex_vars *)dmp->dmr_vars)->red &&
-	((struct pex_vars *)dmp->dmr_vars)->red != ((struct pex_vars *)dmp->dmr_vars)->black )
-      ((struct pex_vars *)dmp->dmr_vars)->fg = ((struct pex_vars *)dmp->dmr_vars)->red;
-
-    gcv.foreground = ((struct pex_vars *)dmp->dmr_vars)->fg;
-    gcv.background = ((struct pex_vars *)dmp->dmr_vars)->bg;
-
-#ifndef CRAY2
-    cp = FONT;
-    if ( (((struct pex_vars *)dmp->dmr_vars)->fontstruct =
-	 XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, cp)) == NULL ) {
-      /* Try hardcoded backup font */
-      if ( (((struct pex_vars *)dmp->dmr_vars)->fontstruct =
-	    XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, FONT2)) == NULL) {
-	bu_log( "dm-X: Can't open font '%s' or '%s'\n", cp, FONT2 );
-	return TCL_ERROR;
-      }
-    }
-    gcv.font = ((struct pex_vars *)dmp->dmr_vars)->fontstruct->fid;
-    ((struct pex_vars *)dmp->dmr_vars)->gc = XCreateGC(((struct pex_vars *)dmp->dmr_vars)->dpy,
-					       ((struct pex_vars *)dmp->dmr_vars)->win,
-					       (GCFont|GCForeground|GCBackground),
-						&gcv);
-#else
-    ((struct pex_vars *)dmp->dmr_vars)->gc = XCreateGC(((struct pex_vars *)dmp->dmr_vars)->dpy,
-					       ((struct pex_vars *)dmp->dmr_vars)->win,
-					       (GCForeground|GCBackground),
-					       &gcv);
-#endif
-
-/* Begin PEX stuff. */
-    if(!count){
-      if(PEXInitialize(((struct pex_vars *)dmp->dmr_vars)->dpy,
-		       &pex_info, 80, pex_err) != 0){
-	bu_vls_free(&str);
-	bu_log("Pex_setup: %s\n", pex_err);
-	return TCL_ERROR;
-      }
-
-      if(!IMMED_MODE_SPT(pex_info)){
-	bu_vls_free(&str);
-	bu_log("Pex_setup: Immediate mode is not supported.\n");
-	return TCL_ERROR;
-      }
-    }
-
-
-    Pex_setup_renderer(dmp);
-
-#if DO_XSELECTINPUT
-    /* start with constant tracking OFF */
-    XSelectInput(((struct pex_vars *)dmp->dmr_vars)->dpy,
-		 ((struct pex_vars *)dmp->dmr_vars)->win,
-		 ExposureMask|ButtonPressMask|KeyPressMask|StructureNotifyMask);
-#endif
-
-#if 1
-    Pex_configure_window_shape(dmp);
-#endif
-
-    Tk_SetWindowBackground(((struct pex_vars *)dmp->dmr_vars)->xtkwin, ((struct pex_vars *)dmp->dmr_vars)->bg);
-    Tk_MapWindow(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
-
-    ++count;
-    return TCL_OK;
-}
 
 void
 Pex_configure_window_shape(dmp)

@@ -289,12 +289,6 @@ struct dm *dmp;
   fputs("%end(plot)\n", ((struct ps_vars *)dmp->dmr_vars)->ps_fp);
   (void)fclose(((struct ps_vars *)dmp->dmr_vars)->ps_fp);
 
-#if 0
-  /* Give the application a chance to clean up */
-  if(dmp->dmr_app_close)
-    dmp->dmr_app_close(((struct ps_vars *)dmp->dmr_vars)->app_vars);
-#endif
-
   if(((struct ps_vars *)dmp->dmr_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct ps_vars *)dmp->dmr_vars)->l);
 
@@ -356,29 +350,31 @@ mat_t mat;
  */
 /* ARGSUSED */
 static int
-PS_object( dmp, sp, mat, ratio, white )
+PS_object( dmp, vp, mat, illum, linestyle, r, g, b, index )
 struct dm *dmp;
-register struct solid *sp;
+register struct rt_vlist *vp;
 mat_t mat;
-double ratio;
-int white;
+int illum;
+int linestyle;
+register short r, g, b;
+short index;
 {
 	static vect_t			last;
-	register struct rt_vlist	*vp;
+	register struct rt_vlist	*tvp;
 	int useful = 0;
 
 	if( !((struct ps_vars *)dmp->dmr_vars)->ps_fp )  return(0);
 
-	if( sp->s_soldash )
+	if( linestyle )
 		fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp, "DDV ");		/* Dot-dashed vectors */
 	else
 		fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp, "NV ");		/* Normal vectors */
 
-	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
 		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
+		register int	nused = tvp->nused;
+		register int	*cmd = tvp->cmd;
+		register point_t *pt = tvp->pt;
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
 			static vect_t	start, fin;
 			switch( *cmd )  {

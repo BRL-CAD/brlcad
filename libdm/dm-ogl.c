@@ -78,7 +78,6 @@ int     Ogl_irlimit();			/* provides knob dead spot */
 int     Ogl_add_tol();
 #endif
 
-static int	Ogl_setup();
 static void	Ogl_gen_color();
 static void     Ogl_colorit();
 static void     Ogl_load_startup();
@@ -165,10 +164,7 @@ void
 Ogl_do_linewidth(dmp)
 struct dm *dmp;
 {
-	glLineWidth((GLfloat) ((struct ogl_vars *)dmp->dmr_vars)->mvars.linewidth);
-#if 0
-	dmaflag = 1;
-#endif
+  glLineWidth((GLfloat) ((struct ogl_vars *)dmp->dmr_vars)->mvars.linewidth);
 }
 
 
@@ -176,10 +172,8 @@ void
 Ogl_do_fog(dmp)
 struct dm *dmp;
 {
-	glHint(GL_FOG_HINT, ((struct ogl_vars *)dmp->dmr_vars)->mvars.fastfog ? GL_FASTEST : GL_NICEST);
-#if 0
-	dmaflag = 1;
-#endif
+  glHint(GL_FOG_HINT,
+	 ((struct ogl_vars *)dmp->dmr_vars)->mvars.fastfog ? GL_FASTEST : GL_NICEST);
 }
 
 /* get rid of when no longer needed */
@@ -219,6 +213,14 @@ struct dm *dmp;
 int argc;
 char *argv[];
 {
+  static count = 0;
+
+  /* Only need to do this once for this display manager */
+  if(!count)
+    Ogl_load_startup(dmp);
+
+  bu_vls_printf(&dmp->dmr_pathName, ".dm_ogl%d", count++);
+
   dmp->dmr_vars = bu_calloc(1, sizeof(struct ogl_vars), "Ogl_init: ogl_vars");
   ((struct ogl_vars *)dmp->dmr_vars)->devmotionnotify = LASTEvent;
   ((struct ogl_vars *)dmp->dmr_vars)->devbuttonpress = LASTEvent;
@@ -236,6 +238,11 @@ char *argv[];
   ((struct ogl_vars *)dmp->dmr_vars)->mvars.fastfog = 1;
   ((struct ogl_vars *)dmp->dmr_vars)->mvars.fogdensity = 1.0;
 
+  if(BU_LIST_IS_EMPTY(&head_ogl_vars.l))
+    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+
+  BU_LIST_APPEND(&head_ogl_vars.l, &((struct ogl_vars *)dmp->dmr_vars)->l);
+
   if(dmp->dmr_vars)
     return TCL_OK;
 
@@ -252,7 +259,220 @@ static int
 Ogl_open(dmp)
 struct dm *dmp;
 {
-  return Ogl_setup(dmp);
+  XGCValues gcv;
+  XColor a_color;
+  Visual *a_visual;
+  int a_screen, num, i, success;
+  int major, minor;
+  Colormap  a_cmap;
+  XVisualInfo *vip;
+  int dsize, use, dbfr, rgba, red, blue, green, alpha, index;
+  GLfloat backgnd[4];
+  long supplied;
+  int j, k;
+  int ndevices;
+  int nclass = 0;
+  XDeviceInfoPtr olist, list;
+  XDevice *dev;
+  XEventClass e_class[15];
+  XInputClassInfo *cip;
+  struct bu_vls str;
+  Display *tmp_dpy;
+
+  bu_vls_init(&str);
+
+  /* this is important so that Ogl_configure_notify knows to set
+   * the font */
+  ((struct ogl_vars *)dmp->dmr_vars)->fontstruct = NULL;
+
+  if((tmp_dpy = XOpenDisplay(dmp->dmr_dname)) == NULL){
+    bu_vls_free(&str);
+    return TCL_ERROR;
+  }
+
+  ((struct ogl_vars *)dmp->dmr_vars)->width = DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+  ((struct ogl_vars *)dmp->dmr_vars)->height = DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+
+  /* Make window square */
+  if(((struct ogl_vars *)dmp->dmr_vars)->height < ((struct ogl_vars *)dmp->dmr_vars)->width)
+    ((struct ogl_vars *)dmp->dmr_vars)->width = ((struct ogl_vars *)dmp->dmr_vars)->height;
+  else
+    ((struct ogl_vars *)dmp->dmr_vars)->height = ((struct ogl_vars *)dmp->dmr_vars)->width;
+
+  XCloseDisplay(tmp_dpy);
+
+  /* Make xtkwin a toplevel window */
+  ((struct ogl_vars *)dmp->dmr_vars)->xtkwin =
+    Tk_CreateWindowFromPath(interp, tkwin, bu_vls_addr(&dmp->dmr_pathName), dmp->dmr_dname);
+
+  /* Open the display - XXX see what NULL does now */
+  if( ((struct ogl_vars *)dmp->dmr_vars)->xtkwin == NULL ) {
+    Tcl_AppendResult(interp, "dm-Ogl: Failed to open ", bu_vls_addr(&dmp->dmr_pathName),
+		     "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  bu_vls_strcpy(&str, "init_ogl ");
+  bu_vls_printf(&str, "%s\n", bu_vls_addr(&dmp->dmr_pathName));
+
+  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+    bu_vls_free(&str);
+    return TCL_ERROR;
+  }
+
+  ((struct ogl_vars *)dmp->dmr_vars)->dpy = Tk_Display(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
+
+  /* must do this before MakeExist */
+  if ((vip=Ogl_set_visual(dmp, ((struct ogl_vars *)dmp->dmr_vars)->xtkwin))==NULL){
+    Tcl_AppendResult(interp, "Ogl_open: Can't get an appropriate visual.\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+#if 1
+  Tk_GeometryRequest(((struct ogl_vars *)dmp->dmr_vars)->xtkwin,
+		     ((struct ogl_vars *)dmp->dmr_vars)->width,
+		     ((struct ogl_vars *)dmp->dmr_vars)->height);
+
+  Tk_ResizeWindow(((struct ogl_vars *)dmp->dmr_vars)->xtkwin,
+		  ((struct ogl_vars *)dmp->dmr_vars)->width,
+		  ((struct ogl_vars *)dmp->dmr_vars)->height);
+#endif
+  Tk_MoveToplevelWindow(((struct ogl_vars *)dmp->dmr_vars)->xtkwin, 1276 - 976, 0);
+  Tk_MakeWindowExist(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
+
+  ((struct ogl_vars *)dmp->dmr_vars)->win = Tk_WindowId(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
+
+  a_screen = Tk_ScreenNumber(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
+
+  /* open GLX context */
+  /* If the sgi display manager has been used, then we must use
+   * an indirect context. Otherwise use direct, since it is usually
+   * faster.
+   */
+  if ((((struct ogl_vars *)dmp->dmr_vars)->glxc =
+       glXCreateContext(((struct ogl_vars *)dmp->dmr_vars)->dpy, vip, 0,
+			ogl_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
+    Tcl_AppendResult(interp, "Ogl_open: couldn't create glXContext.\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+  /* If we used an indirect context, then as far as sgi is concerned,
+   * gl hasn't been used.
+   */
+  ((struct ogl_vars *)dmp->dmr_vars)->is_direct =
+    (char) glXIsDirect(((struct ogl_vars *)dmp->dmr_vars)->dpy,
+		       ((struct ogl_vars *)dmp->dmr_vars)->glxc);
+  Tcl_AppendResult(interp, "Using ", ((struct ogl_vars *)dmp->dmr_vars)->is_direct ?
+		   "a direct" : "an indirect", " OpenGL rendering context.\n", (char *)NULL);
+  /* set ogl_ogl_used if the context was ever direct */
+  ogl_ogl_used = (((struct ogl_vars *)dmp->dmr_vars)->is_direct || ogl_ogl_used);
+
+  /*
+   * Take a look at the available input devices. We're looking
+   * for "dial+buttons".
+   */
+  olist = list =
+    (XDeviceInfoPtr) XListInputDevices (((struct ogl_vars *)dmp->dmr_vars)->dpy, &ndevices);
+
+  /* IRIX 4.0.5 bug workaround */
+  if( list == (XDeviceInfoPtr)NULL ||
+      list == (XDeviceInfoPtr)1 )  goto Done;
+
+  for(j = 0; j < ndevices; ++j, list++){
+    if(list->use == IsXExtensionDevice){
+      if(!strcmp(list->name, "dial+buttons")){
+	if((dev = XOpenDevice(((struct ogl_vars *)dmp->dmr_vars)->dpy,
+			      list->id)) == (XDevice *)NULL){
+	  Tcl_AppendResult(interp, "Glx_open: Couldn't open the dials+buttons\n", (char *)NULL);
+	  goto Done;
+	}
+
+	for(cip = dev->classes, k = 0; k < dev->num_classes;
+	    ++k, ++cip){
+	  switch(cip->input_class){
+#if IR_BUTTONS
+	  case ButtonClass:
+	    DeviceButtonPress(dev, ((struct ogl_vars *)dmp->dmr_vars)->devbuttonpress,
+			      e_class[nclass]);
+	    ++nclass;
+	    DeviceButtonRelease(dev, ((struct ogl_vars *)dmp->dmr_vars)->devbuttonrelease,
+				e_class[nclass]);
+	    ++nclass;
+	    break;
+#endif
+#if IR_KNOBS
+	  case ValuatorClass:
+	    DeviceMotionNotify(dev, ((struct ogl_vars *)dmp->dmr_vars)->devmotionnotify,
+			       e_class[nclass]);
+	    ++nclass;
+	    break;
+#endif
+	  default:
+	    break;
+	  }
+	}
+
+	XSelectExtensionEvent(((struct ogl_vars *)dmp->dmr_vars)->dpy,
+			      ((struct ogl_vars *)dmp->dmr_vars)->win, e_class, nclass);
+	goto Done;
+      }
+    }
+  }
+Done:
+  XFreeDeviceList(olist);
+
+  if (!glXMakeCurrent(((struct ogl_vars *)dmp->dmr_vars)->dpy,
+		      ((struct ogl_vars *)dmp->dmr_vars)->win,
+		      ((struct ogl_vars *)dmp->dmr_vars)->glxc)){
+    Tcl_AppendResult(interp, "Ogl_open: Couldn't make context current\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  /* display list (fontOffset + char) will displays a given ASCII char */
+  if ((((struct ogl_vars *)dmp->dmr_vars)->fontOffset = glGenLists(128))==0){
+    Tcl_AppendResult(interp, "dm-ogl: Can't make display lists for font.\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  /* do viewport, ortho commands and initialize font*/
+  Ogl_configure_window_shape(dmp);
+
+  /* Lines will be solid when stippling disabled, dashed when enabled*/
+  glLineStipple( 1, 0xCF33);
+  glDisable(GL_LINE_STIPPLE);
+
+  backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
+  glFogi(GL_FOG_MODE, GL_LINEAR);
+  glFogf(GL_FOG_START, 0.0);
+  glFogf(GL_FOG_END, 2.0);
+  if (((struct ogl_vars *)dmp->dmr_vars)->mvars.rgb)
+    glFogfv(GL_FOG_COLOR, backgnd);
+  else
+    glFogi(GL_FOG_INDEX, CMAP_RAMP_WIDTH - 1);
+#if 1
+  /*XXX Need to do something about VIEWFACTOR */
+  glFogf(GL_FOG_DENSITY, VIEWFACTOR);
+#else
+  glFogf(GL_FOG_DENSITY, 1.0);
+#endif
+
+	
+
+  /* Initialize matrices */
+  /* Leave it in model_view mode normally */
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
+  glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp->dmr_vars)->faceplate_mat);
+  glPushMatrix();
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity(); 
+  glTranslatef( 0.0, 0.0, -1.0); 
+  glPushMatrix();
+  glLoadIdentity();
+  ((struct ogl_vars *)dmp->dmr_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
+		
+  Tk_MapWindow(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
+  return TCL_OK;
 }
 
 /*XXX Just experimenting */
@@ -292,11 +512,6 @@ struct dm *dmp;
 
   if(((struct ogl_vars *)dmp->dmr_vars)->xtkwin != NULL)
     Tk_DestroyWindow(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
-
-#if 0
-  if(dmp->dmr_app_close)
-    dmp->dmr_app_close(((struct ogl_vars *)dmp->dmr_vars)->app_vars);
-#endif
 
   if(((struct ogl_vars *)dmp->dmr_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct ogl_vars *)dmp->dmr_vars)->l);
@@ -525,14 +740,16 @@ int which_eye;
 
 /* ARGSUSED */
 static int
-Ogl_object( dmp, sp, mat, ratio, white_flag )
+Ogl_object( dmp, vp, m, illum, linestyle, r, g, b, index )
 struct dm *dmp;
-register struct solid *sp;
-mat_t mat;
-double ratio;
-int white_flag;
+register struct rt_vlist *vp;
+fastf_t *m;
+int illum;
+int linestyle;
+register short r, g, b;
+short index;
 {
-	register struct rt_vlist	*vp;
+	register struct rt_vlist	*tvp;
 	register int nvec;
 	register float	*gtvec;
 	register float material[4];
@@ -552,20 +769,15 @@ int white_flag;
 	 */
 	gtvec = (float *)((((int)gtbuf)+15) & (~0xF));
 
-	if (sp->s_soldash)
+	if (linestyle)
 		glEnable(GL_LINE_STIPPLE);		/* set dot-dash */
 
-	if (white_flag && ((struct ogl_vars *)dmp->dmr_vars)->mvars.cueing_on)
+	if (illum && ((struct ogl_vars *)dmp->dmr_vars)->mvars.cueing_on)
 		glDisable(GL_FOG);	
 
 	if( ((struct ogl_vars *)dmp->dmr_vars)->mvars.rgb )  {
-		register short	r, g, b;
-		if( white_flag )  {
+		if( illum )  {
 			r = g = b = 230;
-		} else {
-			r = (short)sp->s_color[0];
-			g = (short)sp->s_color[1];
-			b = (short)sp->s_color[2];
 		}
 
 		if(((struct ogl_vars *)dmp->dmr_vars)->mvars.lighting_on)
@@ -589,10 +801,10 @@ int white_flag;
 			glColor3ub( r,  g,  b );
 		}
 	} else {
-		if (white_flag){
+		if (illum){
 		  ((struct ogl_vars *)dmp->dmr_vars)->ovec = MAP_ENTRY(DM_WHITE);
 		  glIndexi(((struct ogl_vars *)dmp->dmr_vars)->ovec);
-		} else if( (nvec = MAP_ENTRY( sp->s_dmindex )) !=
+		} else if( (nvec = MAP_ENTRY( index )) !=
 			   ((struct ogl_vars *)dmp->dmr_vars)->ovec) {
 		  glIndexi(nvec);
 		  ((struct ogl_vars *)dmp->dmr_vars)->ovec = nvec;
@@ -610,11 +822,11 @@ int white_flag;
 
 	/* Viewing region is from -1.0 to +1.0 */
 	first = 1;
-	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
 		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
+		register int	nused = tvp->nused;
+		register int	*cmd = tvp->cmd;
+		register point_t *pt = tvp->pt;
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
 			switch( *cmd )  {
 			case RT_VLIST_LINE_MOVE:
@@ -662,10 +874,10 @@ int white_flag;
 	}
 	if( first == 0 ) glEnd();
 
-	if (sp->s_soldash)
+	if (linestyle)
 		glDisable(GL_LINE_STIPPLE);	/* restore solid lines */
 
-	if (white_flag && ((struct ogl_vars *)dmp->dmr_vars)->mvars.cueing_on){
+	if (illum && ((struct ogl_vars *)dmp->dmr_vars)->mvars.cueing_on){
 		glEnable(GL_FOG);
 	}
 
@@ -1013,247 +1225,6 @@ register int w[];
 {
 }
 
-/* the font used depends on the size of the window opened */
-#define FONTBACK	"-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
-#define FONT5	"5x7"
-#define FONT6	"6x10"
-#define FONT7	"7x13"
-#define FONT8	"8x13"
-#define FONT9	"9x15"
-
-static int
-Ogl_setup( dmp )
-struct dm *dmp;
-{
-  static count = 0;
-  char *cp, symbol;
-  XGCValues gcv;
-  XColor a_color;
-  Visual *a_visual;
-  int a_screen, num, i, success;
-  int major, minor;
-  Colormap  a_cmap;
-  XVisualInfo *vip;
-  int dsize, use, dbfr, rgba, red, blue, green, alpha, index;
-  GLfloat backgnd[4];
-  long supplied;
-  int j, k;
-  int ndevices;
-  int nclass = 0;
-  XDeviceInfoPtr olist, list;
-  XDevice *dev;
-  XEventClass e_class[15];
-  XInputClassInfo *cip;
-  struct bu_vls str;
-  Display *tmp_dpy;
-
-  bu_vls_init(&str);
-
-  /* Only need to do this once for this display manager */
-  if(!count)
-    Ogl_load_startup(dmp);
-
-  if(BU_LIST_IS_EMPTY(&head_ogl_vars.l))
-    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
-
-  BU_LIST_APPEND(&head_ogl_vars.l, &((struct ogl_vars *)dmp->dmr_vars)->l);
-
-  bu_vls_printf(&dmp->dmr_pathName, ".dm_ogl%d", count++);
-
-  /* this is important so that Ogl_configure_notify knows to set
-   * the font */
-  ((struct ogl_vars *)dmp->dmr_vars)->fontstruct = NULL;
-
-  if((tmp_dpy = XOpenDisplay(dmp->dmr_dname)) == NULL){
-    bu_vls_free(&str);
-    return TCL_ERROR;
-  }
-
-  ((struct ogl_vars *)dmp->dmr_vars)->width = DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
-  ((struct ogl_vars *)dmp->dmr_vars)->height = DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
-
-  /* Make window square */
-  if(((struct ogl_vars *)dmp->dmr_vars)->height < ((struct ogl_vars *)dmp->dmr_vars)->width)
-    ((struct ogl_vars *)dmp->dmr_vars)->width = ((struct ogl_vars *)dmp->dmr_vars)->height;
-  else
-    ((struct ogl_vars *)dmp->dmr_vars)->height = ((struct ogl_vars *)dmp->dmr_vars)->width;
-
-  XCloseDisplay(tmp_dpy);
-
-  /* Make xtkwin a toplevel window */
-  ((struct ogl_vars *)dmp->dmr_vars)->xtkwin =
-    Tk_CreateWindowFromPath(interp, tkwin, bu_vls_addr(&dmp->dmr_pathName), dmp->dmr_dname);
-
-  /* Open the display - XXX see what NULL does now */
-  if( ((struct ogl_vars *)dmp->dmr_vars)->xtkwin == NULL ) {
-    Tcl_AppendResult(interp, "dm-Ogl: Failed to open ", bu_vls_addr(&dmp->dmr_pathName),
-		     "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  bu_vls_strcpy(&str, "init_ogl ");
-  bu_vls_printf(&str, "%s\n", bu_vls_addr(&dmp->dmr_pathName));
-
-  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
-    bu_vls_free(&str);
-    return TCL_ERROR;
-  }
-
-  ((struct ogl_vars *)dmp->dmr_vars)->dpy = Tk_Display(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
-
-  /* must do this before MakeExist */
-  if ((vip=Ogl_set_visual(dmp, ((struct ogl_vars *)dmp->dmr_vars)->xtkwin))==NULL){
-    Tcl_AppendResult(interp, "Ogl_open: Can't get an appropriate visual.\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-#if 1
-  Tk_GeometryRequest(((struct ogl_vars *)dmp->dmr_vars)->xtkwin,
-		     ((struct ogl_vars *)dmp->dmr_vars)->width,
-		     ((struct ogl_vars *)dmp->dmr_vars)->height);
-
-  Tk_ResizeWindow(((struct ogl_vars *)dmp->dmr_vars)->xtkwin,
-		  ((struct ogl_vars *)dmp->dmr_vars)->width,
-		  ((struct ogl_vars *)dmp->dmr_vars)->height);
-#endif
-  Tk_MoveToplevelWindow(((struct ogl_vars *)dmp->dmr_vars)->xtkwin, 1276 - 976, 0);
-  Tk_MakeWindowExist(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
-
-  ((struct ogl_vars *)dmp->dmr_vars)->win = Tk_WindowId(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
-
-  a_screen = Tk_ScreenNumber(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
-
-  /* open GLX context */
-  /* If the sgi display manager has been used, then we must use
-   * an indirect context. Otherwise use direct, since it is usually
-   * faster.
-   */
-  if ((((struct ogl_vars *)dmp->dmr_vars)->glxc =
-       glXCreateContext(((struct ogl_vars *)dmp->dmr_vars)->dpy, vip, 0,
-			ogl_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
-    Tcl_AppendResult(interp, "Ogl_open: couldn't create glXContext.\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-  /* If we used an indirect context, then as far as sgi is concerned,
-   * gl hasn't been used.
-   */
-  ((struct ogl_vars *)dmp->dmr_vars)->is_direct =
-    (char) glXIsDirect(((struct ogl_vars *)dmp->dmr_vars)->dpy,
-		       ((struct ogl_vars *)dmp->dmr_vars)->glxc);
-  Tcl_AppendResult(interp, "Using ", ((struct ogl_vars *)dmp->dmr_vars)->is_direct ?
-		   "a direct" : "an indirect", " OpenGL rendering context.\n", (char *)NULL);
-  /* set ogl_ogl_used if the context was ever direct */
-  ogl_ogl_used = (((struct ogl_vars *)dmp->dmr_vars)->is_direct || ogl_ogl_used);
-
-  /*
-   * Take a look at the available input devices. We're looking
-   * for "dial+buttons".
-   */
-  olist = list =
-    (XDeviceInfoPtr) XListInputDevices (((struct ogl_vars *)dmp->dmr_vars)->dpy, &ndevices);
-
-  /* IRIX 4.0.5 bug workaround */
-  if( list == (XDeviceInfoPtr)NULL ||
-      list == (XDeviceInfoPtr)1 )  goto Done;
-
-  for(j = 0; j < ndevices; ++j, list++){
-    if(list->use == IsXExtensionDevice){
-      if(!strcmp(list->name, "dial+buttons")){
-	if((dev = XOpenDevice(((struct ogl_vars *)dmp->dmr_vars)->dpy,
-			      list->id)) == (XDevice *)NULL){
-	  Tcl_AppendResult(interp, "Glx_open: Couldn't open the dials+buttons\n", (char *)NULL);
-	  goto Done;
-	}
-
-	for(cip = dev->classes, k = 0; k < dev->num_classes;
-	    ++k, ++cip){
-	  switch(cip->input_class){
-#if IR_BUTTONS
-	  case ButtonClass:
-	    DeviceButtonPress(dev, ((struct ogl_vars *)dmp->dmr_vars)->devbuttonpress,
-			      e_class[nclass]);
-	    ++nclass;
-	    DeviceButtonRelease(dev, ((struct ogl_vars *)dmp->dmr_vars)->devbuttonrelease,
-				e_class[nclass]);
-	    ++nclass;
-	    break;
-#endif
-#if IR_KNOBS
-	  case ValuatorClass:
-	    DeviceMotionNotify(dev, ((struct ogl_vars *)dmp->dmr_vars)->devmotionnotify,
-			       e_class[nclass]);
-	    ++nclass;
-	    break;
-#endif
-	  default:
-	    break;
-	  }
-	}
-
-	XSelectExtensionEvent(((struct ogl_vars *)dmp->dmr_vars)->dpy,
-			      ((struct ogl_vars *)dmp->dmr_vars)->win, e_class, nclass);
-	goto Done;
-      }
-    }
-  }
-Done:
-  XFreeDeviceList(olist);
-
-  if (!glXMakeCurrent(((struct ogl_vars *)dmp->dmr_vars)->dpy,
-		      ((struct ogl_vars *)dmp->dmr_vars)->win,
-		      ((struct ogl_vars *)dmp->dmr_vars)->glxc)){
-    Tcl_AppendResult(interp, "Ogl_open: Couldn't make context current\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /* display list (fontOffset + char) will displays a given ASCII char */
-  if ((((struct ogl_vars *)dmp->dmr_vars)->fontOffset = glGenLists(128))==0){
-    Tcl_AppendResult(interp, "dm-ogl: Can't make display lists for font.\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /* do viewport, ortho commands and initialize font*/
-  Ogl_configure_window_shape(dmp);
-
-  /* Lines will be solid when stippling disabled, dashed when enabled*/
-  glLineStipple( 1, 0xCF33);
-  glDisable(GL_LINE_STIPPLE);
-
-  backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
-  glFogi(GL_FOG_MODE, GL_LINEAR);
-  glFogf(GL_FOG_START, 0.0);
-  glFogf(GL_FOG_END, 2.0);
-  if (((struct ogl_vars *)dmp->dmr_vars)->mvars.rgb)
-    glFogfv(GL_FOG_COLOR, backgnd);
-  else
-    glFogi(GL_FOG_INDEX, CMAP_RAMP_WIDTH - 1);
-#if 1
-  /*XXX Need to do something about VIEWFACTOR */
-  glFogf(GL_FOG_DENSITY, VIEWFACTOR);
-#else
-  glFogf(GL_FOG_DENSITY, 1.0);
-#endif
-
-	
-
-  /* Initialize matrices */
-  /* Leave it in model_view mode normally */
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
-  glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp->dmr_vars)->faceplate_mat);
-  glPushMatrix();
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity(); 
-  glTranslatef( 0.0, 0.0, -1.0); 
-  glPushMatrix();
-  glLoadIdentity();
-  ((struct ogl_vars *)dmp->dmr_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
-		
-  Tk_MapWindow(((struct ogl_vars *)dmp->dmr_vars)->xtkwin);
-  return TCL_OK;
-}
-
 /* currently, get a double buffered rgba visual that works with Tk and
  * OpenGL
  */
@@ -1575,10 +1546,6 @@ struct dm *dmp;
     glEnable(GL_LIGHT3);
     glEnable(GL_LIGHT2);
   }
-
-#if 0
-  dmaflag = 1;
-#endif
 }	
 
 void	
@@ -1596,10 +1563,6 @@ struct dm *dmp;
   } else {
     glDisable(GL_DEPTH_TEST);
   }
-
-#if 0
-  dmaflag = 1;
-#endif	
 }
 
 void
@@ -1615,9 +1578,6 @@ struct dm *dmp;
 		 -1 );
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
-#if 0
-  dmaflag = 1;
-#endif
 }
 
 /*
@@ -1652,10 +1612,6 @@ struct dm *dmp;
      allows us to toggle through more than two values.
    */
   ((struct ogl_vars *)dmp->dmr_vars)->mvars.dummy_perspective = 1;
-
-#if 0
-  dmaflag = 1;
-#endif
 }
 
 static void

@@ -139,6 +139,11 @@ char *argv[];
   /* initialize the modifiable variables */
   ((struct x_vars *)dmp->dmr_vars)->mvars.dummy_perspective = 1;
 
+  if(BU_LIST_IS_EMPTY(&head_x_vars.l))
+    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+
+  BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dmr_vars)->l);
+
   if(dmp->dmr_vars)
     return TCL_OK;
 
@@ -165,10 +170,7 @@ struct dm *dmp;
 
   bu_vls_init(&str);
 
-  if(BU_LIST_IS_EMPTY(&head_x_vars.l))
-    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
-
-  BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dmr_vars)->l);
+  ((struct x_vars *)dmp->dmr_vars)->fontstruct = NULL;
 
   /* Make xtkwin a toplevel window */
   ((struct x_vars *)dmp->dmr_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
@@ -339,12 +341,6 @@ struct dm *dmp;
   if(((struct x_vars *)dmp->dmr_vars)->xtkwin != 0)
     Tk_DestroyWindow(((struct x_vars *)dmp->dmr_vars)->xtkwin);
 
-#if 0
-  /* Give the application a chance to clean up */
-  if(dmp->dmr_app_close)
-    dmp->dmr_app_close(((struct x_vars *)dmp->dmr_vars)->app_vars);
-#endif
-
   if(((struct x_vars *)dmp->dmr_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct x_vars *)dmp->dmr_vars)->l);
 
@@ -417,15 +413,17 @@ mat_t mat;
 
 /* ARGSUSED */
 static int
-X_object( dmp, sp, mat, ratio, white_flag )
+X_object( dmp, vp, mat, illum, linestyle, r, g, b, index )
 struct dm *dmp;
-register struct solid *sp;
+register struct rt_vlist *vp;
 mat_t mat;
-double ratio;
-int white_flag;
+int illum;
+int linestyle;
+register short r, g, b;
+short index;
 {
     static vect_t   pnt;
-    register struct rt_vlist	*vp;
+    register struct rt_vlist	*tvp;
     int useful = TCL_ERROR;
     XSegment segbuf[1024];		/* XDrawSegments list */
     XSegment *segp;			/* current segment */
@@ -438,8 +436,8 @@ int white_flag;
     int   line_style = LineSolid;
 
 #if TRY_COLOR_CUBE
-    if(white_flag){    /* if highlighted */
-      gcv.foreground = get_pixel(dmp, sp->s_color);
+    if(illum){    /* if highlighted */
+      gcv.foreground = get_pixel(dmp, r, g, b);
 
       /* if solid color is already the same as the highlight color use double line width */
       if(gcv.foreground == ((struct x_vars *)dmp->dmr_vars)->white)
@@ -447,25 +445,27 @@ int white_flag;
       else
 	gcv.foreground = ((struct x_vars *)dmp->dmr_vars)->white;
     }else
-      gcv.foreground = get_pixel(dmp, sp->s_color);
+      gcv.foreground = get_pixel(dmp, r, g, b);
 #else
     gcv.foreground = ((struct x_vars *)dmp->dmr_vars)->fg;
 #endif
-    XChangeGC(((struct x_vars *)dmp->dmr_vars)->dpy, ((struct x_vars *)dmp->dmr_vars)->gc, GCForeground, &gcv);
+    XChangeGC(((struct x_vars *)dmp->dmr_vars)->dpy,
+	      ((struct x_vars *)dmp->dmr_vars)->gc, GCForeground, &gcv);
 
-    if( sp->s_soldash )
+    if( linestyle )
       line_style = LineOnOffDash;
 
-    XSetLineAttributes( ((struct x_vars *)dmp->dmr_vars)->dpy, ((struct x_vars *)dmp->dmr_vars)->gc,
+    XSetLineAttributes( ((struct x_vars *)dmp->dmr_vars)->dpy,
+			((struct x_vars *)dmp->dmr_vars)->gc,
 			line_width, line_style, CapButt, JoinMiter );
 
     nseg = 0;
     segp = segbuf;
-    for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+    for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
 	register int	i;
-	register int	nused = vp->nused;
-	register int	*cmd = vp->cmd;
-	register point_t *pt = vp->pt;
+	register int	nused = tvp->nused;
+	register int	*cmd = tvp->cmd;
+	register point_t *pt = tvp->pt;
 
 	/* Viewing region is from -1.0 to +1.0 */
 	/* 2^31 ~= 2e9 -- dynamic range of a long int */
@@ -502,7 +502,7 @@ int white_flag;
 		/*XXX Color */
 #if !TRY_COLOR_CUBE
 		gcv.foreground = ((struct x_vars *)dmp->dmr_vars)->fg;
-		if( white_flag && !((struct x_vars *)dmp->dmr_vars)->is_monochrome ){
+		if( illum && !((struct x_vars *)dmp->dmr_vars)->is_monochrome ){
 		    gcv.foreground = ((struct x_vars *)dmp->dmr_vars)->white;
 		}
 		XChangeGC( ((struct x_vars *)dmp->dmr_vars)->dpy, ((struct x_vars *)dmp->dmr_vars)->gc, GCForeground, &gcv );
@@ -524,7 +524,7 @@ int white_flag;
 		if( nseg == 1024 ) {
 		    XDrawSegments( ((struct x_vars *)dmp->dmr_vars)->dpy, ((struct x_vars *)dmp->dmr_vars)->pix, ((struct x_vars *)dmp->dmr_vars)->gc, segbuf, nseg );
 		    /* Thicken the drawing, if monochrome */
-		    if( white_flag && ((struct x_vars *)dmp->dmr_vars)->is_monochrome ){
+		    if( illum && ((struct x_vars *)dmp->dmr_vars)->is_monochrome ){
 			int	i;
 			/* XXX - width and height don't work on Sun! */
 			/* Thus the following gross hack */
@@ -547,7 +547,7 @@ int white_flag;
     }
     if( nseg ) {
 	XDrawSegments( ((struct x_vars *)dmp->dmr_vars)->dpy, ((struct x_vars *)dmp->dmr_vars)->pix, ((struct x_vars *)dmp->dmr_vars)->gc, segbuf, nseg );
-	if( white_flag && ((struct x_vars *)dmp->dmr_vars)->is_monochrome ){
+	if( illum && ((struct x_vars *)dmp->dmr_vars)->is_monochrome ){
 	    int	i;
 	    /* XXX - width and height don't work on Sun! */
 	    /* Thus the following gross hack */
@@ -957,24 +957,24 @@ struct dm *dmp;
 /* Return the allocated pixel value that most closely represents
 the color requested. */
 static unsigned long
-get_pixel(dmp, s_color)
+get_pixel(dmp, r, g, b)
 struct dm *dmp;
-unsigned char	*s_color;
+short r, g, b;
 {
-  unsigned char	r, g, b;
+  short rr, rg, rb;
 
-  get_color_slot(s_color[0], &r);
-  get_color_slot(s_color[1], &g);
-  get_color_slot(s_color[2], &b);
+  get_color_slot(r, &rr);
+  get_color_slot(g, &rg);
+  get_color_slot(b, &rb);
 
-  return(((struct x_vars *)dmp->dmr_vars)->pixel[r * 36 + g * 6 + b]);
+  return(((struct x_vars *)dmp->dmr_vars)->pixel[rr * 36 + rg * 6 + rb]);
 }
 
 /* get color component value */
 static void
 get_color_slot(sc, c)
-unsigned char sc;
-unsigned char *c;
+short sc;
+short *c;
 {
   if(sc < 42)
 	*c = 0;

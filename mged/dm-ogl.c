@@ -63,7 +63,6 @@ static void     set_knob_offset();
 static void     Ogl_statechange();
 static int	Ogl_dm();
 static int	Ogl_doevent();
-static int      Ogl_close();  /* do application specific cleanup */
 static void     Ogl_colorchange();
 static void     establish_zbuffer();
 static void     establish_lighting();
@@ -72,9 +71,6 @@ static void     set_perspective();
 static void     refresh_hook();
 static void     do_linewidth();
 static void     do_fog();
-#if 0
-static struct dm_list *get_dm_list();
-#endif
 
 #ifdef IR_BUTTONS
 /*
@@ -138,29 +134,16 @@ Ogl_dm_init(argc, argv)
 int argc;
 char *argv[];
 {
-  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
-    return TCL_ERROR;
-
   /* register application provided routines */
   dmp->dmr_eventhandler = Ogl_doevent;
   dmp->dmr_cmd = Ogl_dm;
   dmp->dmr_statechange = Ogl_statechange;
-#if 0
-  dmp->dmr_app_close = Ogl_close;
-#endif
+
+  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
+    return TCL_ERROR;
 
   return dmp->dmr_open(dmp);
 }
-
-#if 0
-int
-Ogl_close(p)
-genptr_t *p;
-{
-  bu_free(p, "mged_ogl_vars");
-  return TCL_OK;
-}
-#endif
 
 static int
 Ogl_doevent(clientData, eventPtr)

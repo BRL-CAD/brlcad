@@ -110,7 +110,6 @@ static void set_window();
 static XVisualInfo *extract_visual();
 static unsigned long extract_value();
 
-static int Glx_setup();
 static void Glx_load_startup();
 static void Glx_var_init();
 static void Glx_colorit();
@@ -217,6 +216,28 @@ struct dm *dmp;
 int argc;
 char *argv[];
 {
+  static int count = 0;
+
+#ifdef DM_OGL
+  /* This is a hack to handle the fact that the sgi attach crashes
+   * if a direct OpenGL context has been previously opened in the 
+   * current mged session. This stops the attach before it crashes.
+   */
+  if (ogl_ogl_used){
+    Tcl_AppendResult(interp, "Can't attach sgi, because a direct OpenGL context has\n",
+		     "previously been opened in this session. To use sgi,\n",
+		     "quit this session and reopen it.\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+  ogl_sgi_used = 1;
+#endif /* DM_OGL */
+
+  /* Only need to do this once for this display manager */
+  if(!count)
+    Glx_load_startup(dmp);
+
+  bu_vls_printf(&dmp->dmr_pathName, ".dm_glx%d", count++);
+
   dmp->dmr_vars = bu_calloc(1, sizeof(struct glx_vars), "Glx_init: struct glx_vars");
   ((struct glx_vars *)dmp->dmr_vars)->devmotionnotify = LASTEvent;
   ((struct glx_vars *)dmp->dmr_vars)->devbuttonpress = LASTEvent;
@@ -229,6 +250,11 @@ char *argv[];
   ((struct glx_vars *)dmp->dmr_vars)->mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
   ((struct glx_vars *)dmp->dmr_vars)->mvars.linewidth = 1;      /* Line drawing width */
   ((struct glx_vars *)dmp->dmr_vars)->mvars.dummy_perspective = 1;
+
+  if(BU_LIST_IS_EMPTY(&head_glx_vars.l))
+    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+
+  BU_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)dmp->dmr_vars)->l);
 
   if(dmp->dmr_vars)
     return TCL_OK;
@@ -250,29 +276,7 @@ static int
 Glx_open(dmp)
 struct dm *dmp;
 {
-#ifdef DM_OGL
-  /* This is a hack to handle the fact that the sgi attach crashes
-   * if a direct OpenGL context has been previously opened in the 
-   * current mged session. This stops the attach before it crashes.
-   */
-  if (ogl_ogl_used){
-    Tcl_AppendResult(interp, "Can't attach sgi, because a direct OpenGL context has\n",
-		     "previously been opened in this session. To use sgi,\n",
-		     "quit this session and reopen it.\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-  ogl_sgi_used = 1;
-#endif /* DM_OGL */
-
-  return Glx_setup(dmp);
-}
-
-static int
-Glx_setup(dmp)
-struct dm *dmp;
-{
   register int	i;
-  static int count = 0;
   Matrix		m;
   inventory_t	*inv;
   struct bu_vls str;
@@ -288,16 +292,6 @@ struct dm *dmp;
 
   bu_vls_init(&str);
 
-  /* Only need to do this once for this display manager */
-  if(!count)
-    Glx_load_startup(dmp);
-
-  if(BU_LIST_IS_EMPTY(&head_glx_vars.l))
-    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
-
-  BU_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)dmp->dmr_vars)->l);
-
-  bu_vls_printf(&dmp->dmr_pathName, ".dm_glx%d", count++);
   ((struct glx_vars *)dmp->dmr_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin, bu_vls_addr(&dmp->dmr_pathName), dmp->dmr_dname);
   /*
    * Create the X drawing window by calling init_glx which
@@ -555,14 +549,10 @@ struct dm *dmp;
     Glx_clear_to_black(dmp);
     frontbuffer(0);
 
-    GLXunlink(((struct glx_vars *)dmp->dmr_vars)->dpy, ((struct glx_vars *)dmp->dmr_vars)->win);
+    GLXunlink(((struct glx_vars *)dmp->dmr_vars)->dpy,
+	      ((struct glx_vars *)dmp->dmr_vars)->win);
     Tk_DestroyWindow(((struct glx_vars *)dmp->dmr_vars)->xtkwin);
   }
-
-#if 0
-  if(dmp->dmr_app_close)
-    dmp->dmr_app_close(((struct glx_vars *)dmp->dmr_vars)->app_vars);
-#endif
 
   if(((struct glx_vars *)dmp->dmr_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct glx_vars *)dmp->dmr_vars)->l);
@@ -767,14 +757,16 @@ static float material_objdef[] = {
  *	!0 if object was omitted.
  */
 static int
-Glx_object( dmp, sp, m, ratio, white )
+Glx_object( dmp, vp, m, illum, linestyle, r, g, b, index )
 struct dm *dmp;
-register struct solid *sp;
-fastf_t		*m;
-double		ratio;
-int		white;
+register struct rt_vlist *vp;
+fastf_t *m;
+int illum;
+int linestyle;
+register short r, g, b;
+short index;
 {
-	register struct rt_vlist	*vp;
+	register struct rt_vlist	*tvp;
 	register int nvec;
 	register float	*gtvec;
 	char	gtbuf[16+3*sizeof(double)];
@@ -802,82 +794,76 @@ int		white;
 	 * highlight mode uses the *next* to the brightest entry --
 	 * otherwise it can (and does) fall off the shading ramp.
 	 */
-	if (sp->s_soldash)
+	if (linestyle)
 		setlinestyle( 1 );		/* set dot-dash */
 
 	if( ((struct glx_vars *)dmp->dmr_vars)->mvars.rgb )  {
-		register short	r, g, b;
-		if( white )  {
-			r = g = b = 230;
-		} else {
-			r = (short)sp->s_color[0];
-			g = (short)sp->s_color[1];
-			b = (short)sp->s_color[2];
-		}
-		if(((struct glx_vars *)dmp->dmr_vars)->mvars.cueing_on)  {
-			lRGBrange(
-			    r/10, g/10, b/10,
-			    r, g, b,
-			    ((struct glx_vars *)dmp->dmr_vars)->mvars.min_scr_z, ((struct glx_vars *)dmp->dmr_vars)->mvars.max_scr_z );
-		} else
-		if(((struct glx_vars *)dmp->dmr_vars)->mvars.lighting_on && ((struct glx_vars *)dmp->dmr_vars)->is_gt)
-		{
-			/* Ambient = .2, Diffuse = .6, Specular = .2 */
+	  if( illum )  {
+	    r = g = b = 230;
+	  }
 
-			/* Ambient */
-			material_objdef[3] = 	.2 * ( r / 255.0);
-			material_objdef[4] = 	.2 * ( g / 255.0);
-			material_objdef[5] = 	.2 * ( b / 255.0);
+	  if(((struct glx_vars *)dmp->dmr_vars)->mvars.cueing_on)  {
+	    lRGBrange(r/10, g/10, b/10, r, g, b,
+		      ((struct glx_vars *)dmp->dmr_vars)->mvars.min_scr_z,
+		      ((struct glx_vars *)dmp->dmr_vars)->mvars.max_scr_z );
+	  } else if(((struct glx_vars *)dmp->dmr_vars)->mvars.lighting_on &&
+		    ((struct glx_vars *)dmp->dmr_vars)->is_gt) {
+	    /* Ambient = .2, Diffuse = .6, Specular = .2 */
 
-			/* diffuse */
-			material_objdef[7] = 	.6 * ( r / 255.0);
-			material_objdef[8] = 	.6 * ( g / 255.0);
-			material_objdef[9] = 	.6 * ( b / 255.0);
+	    /* Ambient */
+	    material_objdef[3] = 	.2 * ( r / 255.0);
+	    material_objdef[4] = 	.2 * ( g / 255.0);
+	    material_objdef[5] = 	.2 * ( b / 255.0);
 
-			/* Specular */
-			material_objdef[11] = 	.2 * ( r / 255.0);
-			material_objdef[12] = 	.2 * ( g / 255.0);
-			material_objdef[13] = 	.2 * ( b / 255.0);
+	    /* diffuse */
+	    material_objdef[7] = 	.6 * ( r / 255.0);
+	    material_objdef[8] = 	.6 * ( g / 255.0);
+	    material_objdef[9] = 	.6 * ( b / 255.0);
 
-			lmdef(DEFMATERIAL, 21, 0, material_objdef);
-			lmbind(MATERIAL, 21);
+	    /* Specular */
+	    material_objdef[11] = 	.2 * ( r / 255.0);
+	    material_objdef[12] = 	.2 * ( g / 255.0);
+	    material_objdef[13] = 	.2 * ( b / 255.0);
 
-		} else
-
-			RGBcolor( r, g, b );
+	    lmdef(DEFMATERIAL, 21, 0, material_objdef);
+	    lmbind(MATERIAL, 21);
+	  } else
+	    RGBcolor( r, g, b );
 	} else {
-		if( white ) {
-			ovec = nvec = MAP_ENTRY(DM_WHITE);
-			/* Use the *next* to the brightest white entry */
-			if(((struct glx_vars *)dmp->dmr_vars)->mvars.cueing_on)  {
-				lshaderange(nvec+1, nvec+1,
-				    ((struct glx_vars *)dmp->dmr_vars)->mvars.min_scr_z, ((struct glx_vars *)dmp->dmr_vars)->mvars.max_scr_z );
-			}
-			color( nvec );
-		} else {
-			if( (nvec = MAP_ENTRY( sp->s_dmindex )) != ovec) {
-				/* Use only the middle 14 to allow for roundoff...
-				 * Pity the poor fool who has defined a black object.
-				 * The code will use the "reserved" color map entries
-				 * to display it when in depthcued mode.
-				 */
-				if(((struct glx_vars *)dmp->dmr_vars)->mvars.cueing_on)  {
-					lshaderange(nvec+1, nvec+14,
-					    ((struct glx_vars *)dmp->dmr_vars)->mvars.min_scr_z, ((struct glx_vars *)dmp->dmr_vars)->mvars.max_scr_z );
-				}
-				color( nvec );
-				ovec = nvec;
-			}
-		}
+	  if( illum ) {
+	    ovec = nvec = MAP_ENTRY(DM_WHITE);
+	    /* Use the *next* to the brightest white entry */
+	    if(((struct glx_vars *)dmp->dmr_vars)->mvars.cueing_on)  {
+	      lshaderange(nvec+1, nvec+1, 
+			  ((struct glx_vars *)dmp->dmr_vars)->mvars.min_scr_z,
+			  ((struct glx_vars *)dmp->dmr_vars)->mvars.max_scr_z );
+	    }
+	    color( nvec );
+	  } else {
+	    if( (nvec = MAP_ENTRY( index )) != ovec) {
+	      /* Use only the middle 14 to allow for roundoff...
+	       * Pity the poor fool who has defined a black object.
+	       * The code will use the "reserved" color map entries
+	       * to display it when in depthcued mode.
+	       */
+	      if(((struct glx_vars *)dmp->dmr_vars)->mvars.cueing_on)  {
+		lshaderange(nvec+1, nvec+14,
+			    ((struct glx_vars *)dmp->dmr_vars)->mvars.min_scr_z,
+			    ((struct glx_vars *)dmp->dmr_vars)->mvars.max_scr_z );
+	      }
+	      color( nvec );
+	      ovec = nvec;
+	    }
+	  }
 	}
 
 	/* Viewing region is from -1.0 to +1.0 */
 	first = 1;
-	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
 		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
+		register int	nused = tvp->nused;
+		register int	*cmd = tvp->cmd;
+		register point_t *pt = tvp->pt;
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
 			switch( *cmd )  {
 			case RT_VLIST_LINE_MOVE:
@@ -926,7 +912,7 @@ int		white;
 	}
 	if( first == 0 ) endline();
 
-	if (sp->s_soldash)
+	if (linestyle)
 		setlinestyle(0);		/* restore solid lines */
 
 	return(1);	/* OK */

@@ -96,29 +96,16 @@ Pex_dm_init(argc, argv)
 int argc;
 char *argv[];
 {
-  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
-    return TCL_ERROR;
-
   /* register application provided routines */
   dmp->dmr_eventhandler = Pex_doevent;
   dmp->dmr_cmd = Pex_dm;
   dmp->dmr_statechange = Pex_statechange;
-#if 0
-  dmp->dmr_app_close = Pex_close;
-#endif
+
+  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
+    return TCL_ERROR;
 
   return dmp->dmr_open(dmp);
 }
-
-#if 0
-int
-Pex_close(p)
-genptr_t *p;
-{
-  bu_free(p, "mged_pex_vars");
-  return TCL_OK;
-}
-#endif
 
 static int
 Pex_doevent(clientData, eventPtr)

@@ -218,12 +218,6 @@ struct dm *dmp;
   else
     fclose(((struct plot_vars *)dmp->dmr_vars)->up_fp);
 
-#if 0
-  /* Give the application a chance to clean up */
-  if(dmp->dmr_app_close)
-    dmp->dmr_app_close(((struct plot_vars *)dmp->dmr_vars)->app_vars);
-#endif
-
   if(((struct plot_vars *)dmp->dmr_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct plot_vars *)dmp->dmr_vars)->l);
 
@@ -282,30 +276,33 @@ mat_t mat;
  */
 /* ARGSUSED */
 static int
-Plot_object( dmp, sp, mat, ratio, white )
+Plot_object( dmp, vp, mat, illum, linestyle, r, g, b, index )
 struct dm *dmp;
-register struct solid *sp;
+register struct rt_vlist *vp;
 mat_t mat;
-double ratio;
+int illum;
+int linestyle;
+register short r, g, b;
+short index;
 {
   static vect_t			last;
-  register struct rt_vlist	*vp;
+  register struct rt_vlist	*tvp;
   int useful = 0;
 
-  if( white )  {
+  if( illum )  {
     pl_linmod( ((struct plot_vars *)dmp->dmr_vars)->up_fp, "longdashed" );
   } else {
-    if( sp->s_soldash )
+    if( linestyle )
       pl_linmod( ((struct plot_vars *)dmp->dmr_vars)->up_fp, "dotdashed");
     else
       pl_linmod( ((struct plot_vars *)dmp->dmr_vars)->up_fp, "solid");
   }
 
-  for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+  for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
     register int	i;
-    register int	nused = vp->nused;
-    register int	*cmd = vp->cmd;
-    register point_t *pt = vp->pt;
+    register int	nused = tvp->nused;
+    register int	*cmd = tvp->cmd;
+    register point_t *pt = tvp->pt;
     for( i = 0; i < nused; i++,cmd++,pt++ )  {
       static vect_t	start, fin;
       switch( *cmd )  {
@@ -330,10 +327,7 @@ double ratio;
 		((struct plot_vars *)dmp->dmr_vars)->clipmax) == 0)
 	continue;
       
-      pl_color( ((struct plot_vars *)dmp->dmr_vars)->up_fp,
-		sp->s_color[0],
-		sp->s_color[1],
-		sp->s_color[2] );
+      pl_color( ((struct plot_vars *)dmp->dmr_vars)->up_fp, r, g, b );
 
       if(((struct plot_vars *)dmp->dmr_vars)->is_3D)
 	pl_3line( ((struct plot_vars *)dmp->dmr_vars)->up_fp, 
