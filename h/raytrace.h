@@ -1166,6 +1166,21 @@ struct rt_pm_res {
 };
 
 /*
+ *			R T _ H T B L
+ *
+ *  Support for variable length arrays of "struct hit".
+ *  Patterned after the libbu/ptbl.c idea.
+ */
+struct rt_htbl {
+	struct bu_list	l;	/* linked list for caller's use */
+	int		end;	/* index of first available location */
+	int		blen;	/* # of struct's of storage at *hits */
+	struct hit 	*hits;	/* hits[blen] data storage area */
+};
+#define RT_HTBL_MAGIC		0x6874626c		/* "htbl" */
+#define RT_CK_HTBL(_p)		BU_CKMAG(_p, RT_HTBL_MAGIC, "rt_htbl")
+
+/*
  *			R T _ P I E C E S T A T E
  *
  *  Holds onto memory re-used by rt_shootray() from shot to shot.
