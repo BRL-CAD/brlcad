@@ -184,7 +184,8 @@ must not exist by this name."}}\
     if {$ia_filename != "" && $ret == 0} {
 	# save the directory
 	if [file isdirectory $ia_filename] {
-	    set mged_gui(databaseDir) $ia_filename
+	    # the split followed by the join removes extra /'s
+	    set mged_gui(databaseDir) [eval file join [file split $ia_filename]]
 	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Not a database." \
 		    "$ia_filename is a directory!" info 0 OK
 	    return
