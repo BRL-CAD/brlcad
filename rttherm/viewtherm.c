@@ -576,15 +576,20 @@ struct seg *finished_segs;
 		sw.sw_temperature = bg_temp;
 
 	if (rdebug&RDEBUG_SHADE)
-		rt_log("colorview calling viewshade\n");
+		rt_log("colorview calling viewshade, temp=%g\n", sw.sw_temperature);
 if (rdebug&RDEBUG_SHADE) pr_shadework( "shadework before viewshade", &sw);
 
 	(void)viewshade( ap, pp, &sw );
 if (rdebug&RDEBUG_SHADE) pr_shadework( "shadework after viewshade", &sw);
+	if (rdebug&RDEBUG_SHADE)
+		rt_log("after viewshade, temp=%g\n", sw.sw_temperature);
 
 	/* individual shaders must handle reflection & refraction */
 
-	bn_tabdata_copy( ap->a_spectrum, sw.msw_color );
+	/* bn_tabdata_copy( ap->a_spectrum, sw.msw_color ); */
+	rt_spect_black_body( sw.msw_basecolor, sw.sw_temperature, 3 );
+	bn_tabdata_add( ap->a_spectrum, sw.msw_color, sw.msw_basecolor );
+
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
 	/* XXX This is always negative when eye is inside air solid */
 	ap->a_dist = hitp->hit_dist;
