@@ -41,10 +41,13 @@ extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
 
-#define MAXARGS		 20	/* Maximum number of args per line */
+#define MAXARGS		 200	/* Maximum number of args per line */
+int	maxargs = MAXARGS;	/* For dir.c */
 int	inpara;			/* parameter input from keyboard */
 int	numargs;		/* number of args */
 char *cmd_args[MAXARGS + 1];	/* array of pointers to args */
+
+extern int	cmd_glob();
 
 static void	do_cmd();
 void	f_help(), f_center(), f_press(), f_view(), f_blast();
@@ -83,7 +86,7 @@ static struct funtab {
 "d", "<objects>", "delete list of objects",
 	f_delobj,2,MAXARGS,
 "t", "", "table of contents",
-	dir_print,1,1,
+	dir_print,1,MAXARGS,
 "mv", "old new", "rename object",
 	f_name,3,3,
 "cp", "from to", "copy [duplicate] object",
@@ -99,7 +102,7 @@ static struct funtab {
 "kill", "<objects>", "delete objects from file",
 	f_kill,2,MAXARGS,
 "l", "object", "list object attributes",
-	f_list,2,2,
+	f_list,2,MAXARGS,
 "Z", "", "zap all objects off screen",
 	f_zap,1,1,
 "g", "groupname <objects>", "group objects",
@@ -129,7 +132,7 @@ static struct funtab {
 "scale", "factor", "scale object by factor",
 	f_sc_obj,2,2,
 "analyze", "[arbname]", "analyze faces of ARB",
-	f_analyze,1,2,
+	f_analyze,1,MAXARGS,
 "ill", "name", "illuminate object",
 	f_ill,2,2,
 "sed", "solid", "solid-edit named solid",
@@ -259,7 +262,9 @@ parse_line()
 					return(0);
 				}
 				cmd_args[numargs] = lp1;
-				numargs++;
+				/* If not cmd [0], check for regular exp */
+				if( numargs++ > 0 )
+					(void)cmd_glob();
 			}
 		}
 		/* Finally, a non-space char */

@@ -44,7 +44,7 @@ void	Tek_update();
 void	Tek_puts(), Tek_2d_line(), Tek_light();
 int	Tek_object();
 unsigned Tek_cvtvecs(), Tek_load();
-void	Tek_statechange(), Tek_viewchange();
+void	Tek_statechange(), Tek_viewchange(), Tek_colorchange();
 
 struct dm dm_Tek = {
 	Tek_open, Tek_close, Tek_restart,
@@ -58,6 +58,7 @@ struct dm dm_Tek = {
 	Tek_cvtvecs, Tek_load,
 	Tek_statechange,
 	Tek_viewchange,
+	Tek_colorchange,
 	0,				/* no displaylist */
 	TEKBOUND,
 	"tek", "Tektronix 4014"
@@ -493,6 +494,11 @@ Tek_statechange()
 
 void
 Tek_viewchange()
+{
+}
+
+void
+Tek_colorchange()
 {
 }
 

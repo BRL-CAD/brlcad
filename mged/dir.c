@@ -24,6 +24,7 @@
  *	regexp_match	Does regular exp match given string?
  *	dir_summary	Summarize contents of directory by categories
  *	f_tops		Prints top level items in database
+ *	cmd_glob	Does regular expression expansion on cmd_args[]
  *
  *  Authors -
  *	Michael John Muuss
@@ -98,10 +99,12 @@ static char *units_str[] = {
 char	cur_title[128];			/* current target title */
 
 char	*filename;			/* Name of database file */
-static int read_only = 0;		/* non-zero when read-only */
+int	read_only = 0;			/* non-zero when read-only */
 void	conversions();
 
 extern void color_addrec();
+extern int numargs, maxargs;		/* defined in cmd.c */
+extern char *cmd_args[];		/* defined in cmd.c */
 
 /*
  *  			D B _ O P E N
@@ -289,6 +292,21 @@ dir_print()  {
 	register int i;
 
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
+	if( numargs > 1 ) {
+		/* Just list specified names */
+		for( i = 1; i < numargs; i++ )  {
+			if( (dp = lookup( cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
+				continue;
+			col_item( dp->d_namep );
+			if( dp->d_flags & DIR_COMB )
+				col_putchar( '/' );
+			if( dp->d_flags & DIR_REGION )
+				col_putchar( 'R' );
+		}
+		col_eol();
+		return;
+	}
+	/* Full table of contents */
 	for( i = 0; i < NHASH; i++ )  {
 		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )  {
 			col_item( dp->d_namep );
@@ -942,4 +960,74 @@ f_tops()
 		}
 	}
 	col_eol();
+}
+
+/*
+ *			C M D _ G L O B
+ *  
+ *  Assist routine for command processor.  If the current word
+ *  in the cmd_args[] array contains "*", "?" or "[", then this
+ *  word is potentially a regular expression, and we will tromp
+ *  through the entire in-core directory searching for a match.
+ *  If no match is found, the original word remains untouched
+ *  and this routine was an expensive no-op.  If any match is
+ *  found, it replaces the original word.  All matches are sought
+ *  for, up to the limit of the cmd_args[] array.
+ *
+ *  Returns 0 if no expansion happened, !0 if we matched something.
+ */
+int
+cmd_glob()
+{
+	static char word[64];
+	register char *pattern;
+	register struct directory	*dp;
+	register int i;
+	int orig_numargs = numargs;
+
+	strncpy( word, cmd_args[numargs-1], sizeof(word) );
+	/* If * ? or [ are present, this is a regular expression */
+	pattern = word;
+	while( *pattern )
+		if( *pattern == '*' ||
+		    *pattern == '?' ||
+		    *pattern++ == '[' )
+			goto hard;
+	return(0);				/* nothing to do */
+hard:
+	/* First, null terminate (sigh) */
+	pattern = &word[-1];
+	while( *++pattern )  {
+		if( *pattern == '\n' ||
+		    *pattern == ' '  ||
+		    *pattern == '\t' )  {
+			*pattern = '\0';
+			break;
+		    }
+	}
+			
+	/* Search for pattern matches.
+	 * First, save the pattern, and remove it from cmd_args,
+	 * as it will be overwritten by the expansions.
+	 */
+	numargs--;
+	for( i = 0; i < NHASH; i++ )  {
+		for( dp = DirHead[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+			if( !regexp_match( word, dp->d_namep ) )
+				continue;
+			/* Successful match */
+			cmd_args[numargs++] = dp->d_namep;
+			if( numargs >= maxargs )  {
+				(void)printf("%s: expansion stopped after %d matches\n", word, maxargs);
+				return(1);	/* limited success */
+			}
+		}
+	}
+	/* If we failed to do any expansion, leave the word untouched */
+	if( numargs == orig_numargs-1 )  {
+		(void)printf("%s: no match\n", word);
+		numargs++;
+		return(0);		/* found nothing */
+	}
+	return(1);			/* success */
 }

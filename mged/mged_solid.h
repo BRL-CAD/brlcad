@@ -38,6 +38,7 @@ struct solid  {
 	char	s_iflag;	/* UP = illuminated, DOWN = regular */
 	char	s_soldash;	/* solid/dashed line flag */
 	char	s_Eflag;	/* flag - not a solid but an "E'd" region */
+	short	s_regionid;	/* region ID */
 	char	*s_materp;	/* (struct mater *), for display manager */
 	struct solid *s_forw;	/* forward link */
 	struct solid *s_back;	/* backward link */

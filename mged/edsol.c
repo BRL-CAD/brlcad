@@ -184,8 +184,9 @@ union record *recp;
 		illump->s_soldash,
 		illump->s_last,
 		es_mat,
-		recp ) != 1
-	)  {
+		recp,
+		0
+	) != 1 )  {
 		(void)printf("redraw():  error in drawHsolid()\n");
 		return(sp);
 	}

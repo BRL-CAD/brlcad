@@ -57,12 +57,13 @@ int	no_memory;	/* flag indicating memory for drawing is used up */
  *	 1	if solid was drawn
  */
 int
-drawHsolid( sp, flag, pathpos, xform, recordp )
+drawHsolid( sp, flag, pathpos, xform, recordp, regionid )
 register struct solid *sp;		/* solid structure */
 int flag;
 int pathpos;
 matp_t xform;
 union record *recordp;
+int regionid;
 {
 	register struct veclist *vp;
 	register int i;
@@ -212,11 +213,12 @@ union record *recordp;
 		for( i=0; i<=sp->s_last; i++ )
 			sp->s_path[i] = path[i];
 	}
+	sp->s_regionid = regionid;
+	sp->s_addr = 0;
+	sp->s_bytes = 0;
 
 	/* Cvt to displaylist, determine displaylist memory requirement. */
-	sp->s_addr = 0;
-	if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
-
+	if( !no_memory && (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
 		/* Allocate displaylist storage for object */
 		sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
 		if( sp->s_addr == 0 )  {

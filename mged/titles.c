@@ -90,7 +90,7 @@ dotitles()
 	dmp->dmr_puts( state_str[state], MENUX, MENUY - MENU_DY, 1, DM_YELLOW );
 
 	/* Display current local unit in effect */
-	dmp->dmr_puts( local_unit[localunit], MENUX, MENUY - (2*MENU_DY), 1, DM_CYAN);
+	dmp->dmr_puts( local_unit[localunit], MENUX, MENUY - (2*MENU_DY), 1, DM_BLUE);
 	dmp->dmr_2d_line(XLIM, 1825, 2047, 1825, 0);
 	dmp->dmr_2d_line(XLIM, 1815, 2047, 1815, 0);
 	dmp->dmr_2d_line(XLIM, 1815, XLIM, 2047, 0);
@@ -323,7 +323,7 @@ dotitles()
 			/* region has been evaluated */
 			MAT4X3PNT(work, modelchanges, es_rec.s.s_values);
 			(void)sprintf( &linebuf[0],
-					"CENTER  : %.4f %.4f %.4f",
+					"CENTER : %.4f %.4f %.4f",
 					work[0]*base2local, work[1]*base2local, work[2]*base2local );
 			dmp->dmr_puts( &linebuf[0],
 					TITLE_XBASE+15,
@@ -363,7 +363,7 @@ dotitles()
 				(curs_x / 2047.0) / VIEWFACTOR*base2local,
 				(curs_y / 2047.0) / VIEWFACTOR*base2local
 			     );
-		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_CYAN );
+		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_BLUE );
 	} else {
 		(void)sprintf(&linebuf[0], " %s", cur_title);
 		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );

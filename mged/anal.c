@@ -36,6 +36,7 @@ extern int	atoi();
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 
+static void	do_anal();
 static void	arb_anal();
 static void	anal_face();
 static void	anal_edge();
@@ -56,9 +57,9 @@ float	tot_vol, tot_area;
 void
 f_analyze()
 {
-	struct directory *ndp;
+	register struct directory *ndp;
 	mat_t new_mat;
-	int i;
+	register int i;
 
 	if( numargs == 1 ) {
 		/* use the solid being edited */
@@ -68,7 +69,7 @@ f_analyze()
 			temp_rec = es_rec;
 			/* just to make sure */
 			mat_idn( modelchanges );
-		break;
+			break;
 
 		case ST_O_EDIT:
 			if(illump->s_Eflag) {
@@ -77,11 +78,11 @@ f_analyze()
 			}
 			/* use solid at bottom of path */
 			temp_rec = es_rec;
-		break;
+			break;
 
 		default:
 			state_err( "Default SOLID Analyze" );
-		return;
+			return;
 		}
 		mat_mul(new_mat, modelchanges, es_mat);
 		MAT4X3PNT(temp_rec.s.s_values, new_mat, es_rec.s.s_values);
@@ -89,10 +90,14 @@ f_analyze()
 			MAT4X3VEC( &temp_rec.s.s_values[i*3], new_mat,
 					&es_rec.s.s_values[i*3] );
 		}
-	} else {
-		/* use the name that was input */
-		if( (ndp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
-			return;
+		do_anal();
+		return;
+	}
+
+	/* use the names that were input */
+	for( i = 1; i < numargs; i++ )  {
+		if( (ndp = lookup( cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
+			continue;
 
 		db_getrec(ndp, &temp_rec, 0);
 
@@ -102,47 +107,52 @@ f_analyze()
 		}
 		if(temp_rec.u_id != ID_SOLID && 
 		   temp_rec.u_id != ID_ARS_A) {
-			(void)printf("%s: not a solid \n",cmd_args[1]);
+			(void)printf("%s: not a solid \n",cmd_args[i]);
 			return;
 		}
-		f_list();
+		do_list(ndp);
+		do_anal();
 	}
+}
 
-	/* Now have a solid in temp_rec */
+
+/* Analyze solid in temp_rec */
+static void
+do_anal()
+{
 	switch( temp_rec.s.s_type ) {
 
-		case ARS:
-			ars_anal();
+	case ARS:
+		ars_anal();
 		break;
 
-		case GENARB8:
-			arb_anal();
+	case GENARB8:
+		arb_anal();
 		break;
 
-		case GENTGC:
-			tgc_anal();
+	case GENTGC:
+		tgc_anal();
 		break;
 
-		case GENELL:
-			ell_anal();
+	case GENELL:
+		ell_anal();
 		break;
 
-		case TOR:
-			tor_anal();
+	case TOR:
+		tor_anal();
 		break;
 
-		default:
-			(void)printf("Analyze: unknown solid type\n");
-		return;
+	default:
+		(void)printf("Analyze: unknown solid type\n");
+		break;
 	}
-
 }
 
 
 static void
 arb_anal()
 {
-	int i;
+	register int i;
 
 	/* got the arb - convert to point notation */
 	for(i=3; i<24; i+=3) {

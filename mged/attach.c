@@ -45,6 +45,7 @@ struct dm dm_Null = {
 	Nu_unsign, Nu_unsign,
 	Nu_void,
 	Nu_void,
+	Nu_void,
 	0,
 	0.0,
 	"nu", "Null Display"
@@ -116,6 +117,7 @@ char *name;
 				sp->s_bytes = 0;
 			}
 		}
+		dmp->dmr_colorchange();
 		dmp->dmr_viewchange( 0, SOLID_NULL );	/* complete change */
 		dmaflag++;
 		return;

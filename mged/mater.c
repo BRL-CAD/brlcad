@@ -10,6 +10,7 @@
  *	f_color		Add a color & material table entry
  *	f_edcolor	Invoke text editor on color table
  *	color_addrec	Called by dir_build on startup
+ *	color_soltab	Apply colors to the solid table
  *
  *  Author -
  *	Michael John Muuss
@@ -34,18 +35,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/vmath.h"
 #include "../h/mater.h"
 #include "objdir.h"
+#include "solid.h"
+#include "dm.h"
 
 extern char	*mktemp();
 
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
+extern int	read_only;	/* database is read-only */
 
 /*
  *  It is expected that entries on this mater list will be sorted
  *  in strictly ascending order, with no overlaps (ie, monotonicly
  * increasing).
  */
-static struct mater *MaterHead = MATER_NULL;
+struct mater *MaterHead = MATER_NULL;
 
 void color_addrec(), color_putrec(), color_zaprec();
 
@@ -60,6 +64,8 @@ register struct mater *mp;
 	(void)sprintf( buf, "%d,%d,%d", mp->mt_r, mp->mt_g, mp->mt_b);
 	col_item( buf );
 	col_item( mp->mt_handle );
+	(void)sprintf( buf, "dm%d", mp->mt_dm_int );
+	col_item( buf );
 	col_eol();
 }
 
@@ -212,6 +218,7 @@ f_color()
 	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
 	insert_color( newp );
 	color_putrec( newp );			/* write to database */
+	dmp->dmr_colorchange();
 }
 
 /*
@@ -285,6 +292,7 @@ f_edcolor()
 	}
 	(void)fclose(fp);
 	(void)unlink( tmpfile );
+	dmp->dmr_colorchange();
 }
 
 /*
@@ -323,6 +331,8 @@ register struct mater *mp;
 	struct directory dir;
 	union record rec;
 
+	if( read_only )
+		return;
 	rec.md.md_id = ID_MATERIAL;
 	rec.md.md_flags = 0;		/* not used yet */
 	rec.md.md_low = mp->mt_low;
@@ -356,11 +366,46 @@ register struct mater *mp;
 {
 	struct directory dir;
 
-	if( mp->mt_daddr == MATER_NO_ADDR )
+	if( read_only || mp->mt_daddr == MATER_NO_ADDR )
 		return;
 	dir.d_namep = "color_zaprec";
 	dir.d_len = 1;
 	dir.d_addr = mp->mt_daddr;
 	db_delete( &dir );
 	mp->mt_daddr = MATER_NO_ADDR;
+}
+
+static struct mater default_mater = {
+	0, 32767,
+	DM_RED,
+	255, 0, 0,
+	"{default mater}",
+	MATER_NO_ADDR, 0
+};
+
+/*
+ *  			C O L O R _ S O L T A B
+ *
+ *  Pass through the solid table and set pointer to appropriate
+ *  mater structure.
+ *  Called by the display manager anytime the color mappings change.
+ */
+void
+color_soltab()
+{
+	register struct solid *sp;
+	register struct mater *mp;
+
+	FOR_ALL_SOLIDS( sp )  {
+		for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
+			if( sp->s_regionid <= mp->mt_high &&
+			    sp->s_regionid >= mp->mt_low ) {
+				sp->s_materp = (char *)mp;
+				goto done;
+			}
+		}
+		sp->s_materp = (char *)&default_mater;
+done: ;
+	}
+	dmaflag = 1;		/* re-write control list with new colors */
 }

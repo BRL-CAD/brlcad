@@ -226,7 +226,7 @@ f_mirror()
 			cmd_args[2] );
 		return;
 	}
-	drawHobj( dp, ROOT, 0, identity );
+	drawHobj( dp, ROOT, 0, identity, 0 );
 	dmaflag = 1;
 }
 
@@ -478,7 +478,7 @@ f_arbdef()
 			cmd_args[1] );
 		return;
 	}
-	drawHobj( dp, ROOT, 0, identity );
+	drawHobj( dp, ROOT, 0, identity, 0 );
 	dmaflag = 1;
 }
 
@@ -929,7 +929,7 @@ f_make()  {
 	NAMEMOVE( cmd_args[1], record.s.s_name );
 	db_putrec( dp, &record, 0 );
 	/* draw the "made" solid */
-	drawHobj(dp, ROOT, 0, identity);
+	drawHobj( dp, ROOT, 0, identity, 0 );
 	dmaflag = 1;
 }
 

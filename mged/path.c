@@ -39,11 +39,10 @@ struct directory	*path[MAX_PATH];	/* Record of current path */
  *
  * This routine is used to get an object drawn.
  * The actual drawing of solids is performed by drawsolid(),
- * but all transformations down the path are done here in
- * drawHobj().
+ * but all transformations down the path are done here.
  */
 void
-drawHobj( dp, flag, pathpos, old_xlate )
+drawHobj( dp, flag, pathpos, old_xlate, regionid )
 register struct directory *dp;
 matp_t old_xlate;
 {
@@ -58,10 +57,6 @@ matp_t old_xlate;
 		(void)putchar('\n');
 		return;			/* ERROR */
 	}
-
-	/* if no memory left DO NOT go further */
-	if(no_memory > 0)
-		return;
 
 	/*
 	 * Load the record into local record buffer
@@ -81,7 +76,7 @@ matp_t old_xlate;
 		GET_SOLID( sp );
 		if( sp == SOLID_NULL )
 			return;		/* ERROR */
-		if( drawHsolid( sp, flag, pathpos, old_xlate, &rec ) != 1 ) {
+		if( drawHsolid( sp, flag, pathpos, old_xlate, &rec, regionid ) != 1 ) {
 			FREE_SOLID( sp );
 		}
 		return;
@@ -90,6 +85,12 @@ matp_t old_xlate;
 	if( rec.u_id != ID_COMB )  {
 		(void)printf("drawobj:  defective input '%c'\n", rec.u_id );
 		return;			/* ERROR */
+	}
+	if( rec.c.c_flags == 'R' )  {
+		if( regionid != 0 )
+			(void)printf("regionid %d overriden by %d\n",
+				regionid, rec.c.c_regionid );
+		regionid = rec.c.c_regionid;
 	}
 
 	/*
@@ -152,7 +153,8 @@ matp_t old_xlate;
 			nextdp,
 			(mp->m_relation != SUBTRACT) ? ROOT : INNER,
 			pathpos + 1,
-			new_xlate
+			new_xlate,
+			regionid
 		);
 	}
 }

@@ -45,14 +45,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<math.h>
 #include	<signal.h>
 #include	<stdio.h>
-#include "ged_types.h"
 #include "../h/db.h"
+#include "../h/vmath.h"
+#include "../h/mater.h"
+#include "ged_types.h"
 #include "sedit.h"
 #include "ged.h"
 #include "objdir.h"
 #include "solid.h"
 #include "dm.h"
-#include "../h/vmath.h"
 
 extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
@@ -188,7 +189,7 @@ eedit()
 			continue;
 		}
 
-		drawHobj( dp, ROOT, 0, identity );
+		drawHobj( dp, ROOT, 0, identity, 0 );
 
 		drawreg = 0;
 		regmemb = -1;
@@ -200,6 +201,7 @@ eedit()
 	}
 
 	(void)printf("vectorized in %ld sec\n", etime - stime );
+	dmp->dmr_colorchange();
 	dmaflag = 1;
 }
 
@@ -222,6 +224,7 @@ f_delobj()
 void
 f_debug()
 {
+	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	pr_solids( &HeadSolid );
 }
 
@@ -235,17 +238,12 @@ f_regdebug()
 	(void)printf("regdebug=%d\n", regdebug);
 }
 
-/* List object information */
-/* Format: l object	*/
 void
-f_list()
+do_list( dp )
 {
 	register struct directory *dp;
 	register int i;
 	union record record;
-	
-	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
 
 	db_getrec( dp, &record, 0 );
 
@@ -273,7 +271,7 @@ f_list()
 		(void)printf(" num curves  %d\n", record.a.a_m );
 		(void)printf(" pts/curve   %d\n", record.a.a_n );
 		db_getrec( dp, &record, 1 );
-		/* convert vertex from the base unit to the local unit */
+		/* convert vertex from base unit to the local unit */
 		(void)printf(" vertex      %.4f %.4f %.4f\n",
 			record.b.b_values[0]*base2local,
 			record.b.b_values[1]*base2local,
@@ -283,10 +281,12 @@ f_list()
 	if( record.u_id == ID_B_SPL_HEAD ) {
 		(void)printf("%s:  SPLINE\n", dp->d_namep );
 		db_getrec( dp, &record, 0 );
-		(void)printf(" order %d %d\n", record.d.d_order[0],
+		(void)printf(" order %d %d\n",
+			record.d.d_order[0],
 			record.d.d_order[1]);
 		(void)printf(" num Control points %d %d\n",
-			record.d.d_ctl_size[0], record.d.d_ctl_size[1]);
+			record.d.d_ctl_size[0],
+			record.d.d_ctl_size[1]);
 		return;
 	}
 	if( record.u_id == ID_P_HEAD )  {
@@ -295,17 +295,20 @@ f_list()
 		return;
 	}
 	if( record.u_id != ID_COMB )  {
-		(void)printf("%s: unknown record type!\n", dp->d_namep );
+		(void)printf("%s: unknown record type!\n",
+			dp->d_namep );
 		return;
 	}
 
 	/* Combination */
 	(void)printf("%s (len %d) ", dp->d_namep, dp->d_len-1 );
 	if( record.c.c_flags == 'R' )
-		(void)printf("REGION item=%d, air=%d, mat=%d, los=%d ",
-			record.c.c_regionid, record.c.c_aircode,
-			record.c.c_material, record.c.c_los );
-	(void)printf("--\n", dp->d_len-1 );
+		(void)printf("REGION id=%d (air=%d, mat=%d, los=%d) ",
+			record.c.c_regionid,
+			record.c.c_aircode,
+			record.c.c_material,
+			record.c.c_los );
+	(void)printf("--\n");
 
 	for( i=1; i < dp->d_len; i++ )  {
 		db_getrec( dp, &record, i );
@@ -315,19 +318,39 @@ f_list()
 		if( record.M.m_brname[0] != '\0' )
 			(void)printf(" br name=%s", record.M.m_brname );
 #define Mat record.M.m_mat
-		if( Mat[0] != 1.0  || Mat[5] != 1.0 || Mat[10] != 1.0 )
+		if( Mat[0] != 1.0 || Mat[5] != 1.0 || Mat[10] != 1.0 )
 			(void)printf(" (Rotated)");
-		if( Mat[MDX] != 0.0 || Mat[MDY] != 0.0 || Mat[MDZ] != 0.0 )
+		if( Mat[MDX] != 0.0 ||
+		    Mat[MDY] != 0.0 ||
+		    Mat[MDZ] != 0.0 )
 			(void)printf(" [%f,%f,%f]",
 				Mat[MDX]*base2local,
 				Mat[MDY]*base2local,
 				Mat[MDZ]*base2local);
-		if( Mat[12] != 0.0 || Mat[13] != 0.0 || Mat[14] != 0.0 )
+		if( Mat[12] != 0.0 ||
+		    Mat[13] != 0.0 ||
+		    Mat[14] != 0.0 )
 			(void)printf(" ??Perspective=[%f,%f,%f]??",
 				Mat[12], Mat[13], Mat[14] );
 		(void)putchar('\n');
 	}
 #undef Mat
+}
+
+/* List object information */
+/* Format: l object	*/
+void
+f_list()
+{
+	register struct directory *dp;
+	register int arg;
+	
+	for( arg = 1; arg < numargs; arg++ )  {
+		if( (dp = lookup( cmd_args[arg], LOOKUP_NOISY )) == DIR_NULL )
+			continue;
+
+		do_list( dp );
+	}
 }
 
 /* ZAP the display -- everything dropped */
@@ -498,7 +521,7 @@ f_saveview()
 
 		if( sp->s_iflag == UP )
 			continue;
-		(void)fprintf(fp, "%s ", sp->s_path[0]->d_namep);
+		(void)fprintf(fp, "'%s' ", sp->s_path[0]->d_namep);
 		sp->s_iflag = UP;
 		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
 			if( forw->s_path[0] == sp->s_path[0] )
@@ -551,6 +574,8 @@ register struct directory *dp;
 		nsp = sp->s_forw;
 		for( i=0; i<=sp->s_last; i++ )  {
 			if( sp->s_path[i] == dp )  {
+				if( state != ST_VIEW && illump == sp )
+					button( BE_REJECT );
 				dmp->dmr_viewchange( 2, sp );	/* DEL sol */
 				memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 				DEQUEUE_SOLID( sp );
@@ -578,16 +603,22 @@ struct solid *startp;
 
 	sp = startp->s_forw;
 	while( sp != startp )  {
+		(void)printf( sp->s_flag == UP ? "VIEW ":"-no- " );
 		for( i=0; i <= sp->s_last; i++ )
 			(void)printf("/%s", sp->s_path[i]->d_namep);
-		(void)printf("  %s", sp->s_flag == UP ? "VIEW":"-NO-" );
 		if( sp->s_iflag == UP )
-			(void)printf(" ILL");
+			(void)printf(" ILLUM");
+		(void)printf("\n");
 		/* convert to the local unit for printing */
-		(void)printf(" [%f,%f,%f] size %f",
-			sp->s_center[X]*base2local, sp->s_center[Y]*base2local, 
-			sp->s_center[Z]*base2local,sp->s_size*base2local);
-		(void)putchar('\n');
+		(void)printf("    (%.3f, %.3f, %.3f) sz=%.4f ",
+			sp->s_center[X]*base2local,
+			sp->s_center[Y]*base2local, 
+			sp->s_center[Z]*base2local,
+			sp->s_size*base2local );
+		(void)printf("reg=%d matrl=%s (dm%d)\n",
+			sp->s_regionid,
+			((struct mater *)sp->s_materp)->mt_handle,
+			((struct mater *)sp->s_materp)->mt_dm_int );
 		sp = sp->s_forw;
 	}
 }
