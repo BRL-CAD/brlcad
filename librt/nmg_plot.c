@@ -1603,6 +1603,7 @@ int			show_mates;
 int		nmg_class_nothing_broken=1;
 static long	**global_classlist;
 static long	*broken_tab;
+static int	broken_tab_len;
 static int 	broken_color;
 static unsigned char broken_colors[][3] = {
 	{ 100, 100, 255 },	/* NMG_CLASS_AinB (bright blue) */
@@ -1977,8 +1978,19 @@ CONST char	*a_string;
 	if (!broken_tab) {
 		broken_tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
 			"nmg_vlblock_s tab[]");
-	} else if (all_new) {
-		bzero( (char *)broken_tab,  (m->maxindex+1) * sizeof(long));
+		broken_tab_len = m->maxindex+1;
+	} else {
+		if( broken_tab_len < m->maxindex+1 ) {
+			rt_log("nmg_show_broken_classifier_stuff() maxindex increased! was %d, now %d\n",
+				broken_tab_len, m->maxindex+1 );
+			broken_tab = (long *)rt_realloc( (char *)broken_tab,
+				(m->maxindex+1) * sizeof(long),
+				"nmg_vlblock_s tab[] enlargement");
+			broken_tab_len = m->maxindex+1;
+		}
+		if (all_new) {
+			bzero( (char *)broken_tab,  (m->maxindex+1) * sizeof(long));
+		}
 	}
 
 
@@ -2062,6 +2074,7 @@ CONST char	*a_string;
 		vbp = (struct rt_vlblock *)NULL;
 		rt_free((char *)broken_tab, "broken_tab");
 		broken_tab = (long *)NULL;
+		broken_tab_len = 0;
 	}
 }
 
