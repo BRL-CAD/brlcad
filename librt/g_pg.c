@@ -968,7 +968,7 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resour
 		LOCAL vect_t work[3], tmp;
 		LOCAL struct tri_specific trip;
 		LOCAL fastf_t m1, m2, m3, m4;
-		LOCAL int first, v0, v2;
+		LOCAL int first, v0=0, v2=0;
 
 		first = 1;
 		VMOVE( work[0], &ip_pg->poly[p].verts[0*3] );
