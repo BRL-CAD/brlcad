@@ -392,7 +392,7 @@ struct partition *PartHeadp;
 		/* Build up the fakery */
 		part.pt_inhit = part.pt_outhit = &hit;
 		part.pt_regionp = &env_region;
-		hit.hit_dist = 0.0;
+		hit.hit_dist = 0.0;	/* XXX should be = 1 model diameter */
 
 		sw.sw_transmit = sw.sw_reflect = 0.0;
 		sw.sw_refrac_index = 1.0;
@@ -407,7 +407,7 @@ struct partition *PartHeadp;
 		sw.sw_uv.uv_v = mat_atan2( ap->a_ray.r_dir[Z],
 			sqrt( ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
 			ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y]) ) *
-			rt_invpi + 0.5;
+			rt_inv2pi + 0.5;
 		sw.sw_uv.uv_du = sw.sw_uv.uv_dv = 0;
 
 		VSETALL( sw.sw_color, 1 );
