@@ -235,7 +235,7 @@ struct edgeuse *eu1, *eu2;
 			if( eu1 == eu1->radial_p->eumate_p )  break;
 			eu1 = eu1->radial_p->eumate_p;
 			if( eu1 == first_eu1 )  {
-				rt_log("XXX nmg_join_eu():  went full circle, no luck.  Guessing at face insertion point.\n");
+				rt_bomb("nmg_join_eu():  went full circle, no face insertion point.\n");
 				break;
 			}
 			angle1 = get_angle(eu1, eu2);
