@@ -1444,6 +1444,7 @@ Ir_statechange( a, b )
 		break;
 	case ST_O_EDIT:
 	case ST_S_EDIT:
+	case ST_S_VPICK:
 		unqdevice( MOUSEY );	/* constant tracking OFF */
 		break;
 	default:
