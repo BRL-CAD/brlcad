@@ -11455,19 +11455,25 @@ struct bn_tol *tol;
 	return( count );
 }
 
+#define EDGE_COLLAPSE_DEBUG 0
+
 /*	 	N M G _ E D G E _ C O L L A P S E
  *
  * Routine to decimate an NMG model through edge collapse
  * to obtain a model with less faces at a greater tolerance
+ *
+ *  tol_coll is the tolerance distance to be used for choosing
+ *  edges to collapse
  *
  * Model must already be triangulated (this is not checked for)
  *
  * returns number of edges collapsed
  */
 int
-nmg_edge_collapse( m, tol )
+nmg_edge_collapse( m, tol, tol_coll )
 struct model *m;
 CONST struct bn_tol *tol;
+CONST fastf_t tol_coll;
 {
 	struct bu_ptbl edge_table;
 	long edge_no=0;
@@ -11501,6 +11507,7 @@ CONST struct bn_tol *tol;
 			fastf_t max_dist1, max_dist2;
 			fastf_t dot;
 			int flip1, flip2;
+			int no_collapse;
 
 			min_dist1 = MAX_FASTF;
 			min_dist2 = MAX_FASTF;
@@ -11523,6 +11530,9 @@ CONST struct bn_tol *tol;
 			NMG_CK_VERTEX( v2 );
 
 			/* consider collapsing this edge */
+#if EDGE_COLLAPSE_DEBUG
+			bu_log( "Consider collapsing e x%x (%g %g %g)<->(%g %g %g)\n", e, V3ARGS( v1->vg_p->coord ), V3ARGS( v2->vg_p->coord ) );
+#endif
 
 			/* don't collapse where more than 2 real edges meet */
 			real_count1 = 0;
@@ -11531,12 +11541,26 @@ CONST struct bn_tol *tol;
 			{
 				struct edgeuse *eu1;
 
-				if( eu->e_p->is_real )
+				if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+					continue;
+
+				eu1 = vu->up.eu_p;
+
+				fu = nmg_find_fu_of_eu( eu1 );
+				if( fu->orientation != OT_SAME )
+					continue;
+
+				if( eu1->e_p->is_real )
 					real_count1++;
 			}
 
 			if( real_count1 > 2 )
+			{
+#if EDGE_COLLAPSE_DEBUG
+				bu_log( "\t%d real edges at v1\n", real_count1 );
+#endif
 				continue;
+			}
 
 			real_count2 = 0;
 
@@ -11544,21 +11568,42 @@ CONST struct bn_tol *tol;
 			{
 				struct edgeuse *eu1;
 
-				if( eu->e_p->is_real )
+				if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+					continue;
+
+				eu1 = vu->up.eu_p;
+
+				fu = nmg_find_fu_of_eu( eu1 );
+				if( fu->orientation != OT_SAME )
+					continue;
+
+				if( eu1->e_p->is_real )
 					real_count2++;
 			}
 
 			if( real_count2 > 2 )
+			{
+#if EDGE_COLLAPSE_DEBUG
+				bu_log( "\t%d real edges at v1\n", real_count1 );
+#endif
 				continue;
+			}
 
 			/* if real edges are involved, only collapse along the real edges */
 			if( (real_count1 || real_count2) && !e->is_real )
+			{
+#if EDGE_COLLAPSE_DEBUG
+				bu_log( "\tthis edge is not real\n" );
+#endif
 				continue;
+			}
+#if EDGE_COLLAPSE_DEBUG
+			bu_log( "\tpassed real edges test\n" );
+#endif
 
 			VSUB2( edge_dir, v2->vg_p->coord, v1->vg_p->coord )
 			VUNITIZE( edge_dir )
 
-			/* create plane containing edge and normal to surface */
 			fu = nmg_find_fu_of_eu( eu );
 			NMG_CK_FACEUSE( fu );
 			if( fu->orientation != OT_SAME )
@@ -11581,7 +11626,9 @@ CONST struct bn_tol *tol;
 				continue;
 			}
 
-
+#if EDGE_COLLAPSE_DEBUG
+			bu_log( "\tCheck moving v1 to v2\n" );
+#endif
 			/* check if moving v1 to v2 would flip any loops */
 			flip1 = 0;
 			for( BU_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )
@@ -11611,10 +11658,20 @@ CONST struct bn_tol *tol;
 				VSUB2( vec1, v1->vg_p->coord, vg1->coord )
 				VSUB2( vec2, vg2->coord, vg1->coord )
 				VCROSS( norma, vec1, vec2 )
-
+#if EDGE_COLLAPSE_DEBUG
+				bu_log( "\t\toriginal tri (%g %g %g) (%g %g %g) (%g %g %g)\n",
+					V3ARGS( v1->vg_p->coord ),
+					V3ARGS( vg1->coord ),
+					V3ARGS( vg2->coord ) );
+#endif
 				VSUB2( vec1, v2->vg_p->coord, vg1->coord )
 				VCROSS( normb, vec1, vec2 )
-
+#if EDGE_COLLAPSE_DEBUG
+				bu_log( "\t\tnew tri (%g %g %g) (%g %g %g) (%g %g %g)\n",
+					V3ARGS( v2->vg_p->coord ),
+					V3ARGS( vg1->coord ),
+					V3ARGS( vg2->coord ) );
+#endif
 				fu = nmg_find_fu_of_eu( eu1 );
 				if( fu->orientation == OT_SAME )
 				{
@@ -11622,20 +11679,33 @@ CONST struct bn_tol *tol;
 					normb[3] = VDOT( normb, v2->vg_p->coord );
 
 					dist = fabs( DIST_PT_PLANE( v1->vg_p->coord, normb ) );
+#if EDGE_COLLAPSE_DEBUG
+					bu_log( "\t\t\tdist = %g\n", dist );
+#endif
 					if( dist > max_dist1 )
 						max_dist1 = dist;
 				}
+#if EDGE_COLLAPSE_DEBUG
+				else
+					bu_log( "\t\t\tfu->orientation = %s\n", nmg_orientation( fu->orientation ) );
+#endif
 
 				if( VDOT( norma, normb ) <= 0.0 )
 				{
 					/* this would flip a loop */
 					flip1 = 1;
+#if EDGE_COLLAPSE_DEBUG
+					bu_log( "\t\t\tflip1 = 1\n" );
+#endif
 					break;
 				}
 				
 			}
 
 			/* check if moving v2 to v1 would flip any loops */
+#if EDGE_COLLAPSE_DEBUG
+			bu_log( "\tCheck moving v2 to v1\n" );
+#endif
 			flip2 = 0;
 			for( BU_LIST_FOR( vu, vertexuse, &v2->vu_hd ) )
 			{
@@ -11664,9 +11734,21 @@ CONST struct bn_tol *tol;
 				VSUB2( vec1, v2->vg_p->coord, vg1->coord )
 				VSUB2( vec2, vg2->coord, vg1->coord )
 				VCROSS( norma, vec1, vec2 )
+#if EDGE_COLLAPSE_DEBUG
+				bu_log( "\t\toriginal tri (%g %g %g) (%g %g %g) (%g %g %g)\n",
+					V3ARGS( v2->vg_p->coord ),
+					V3ARGS( vg1->coord ),
+					V3ARGS( vg2->coord ) );
+#endif
 
 				VSUB2( vec1, v1->vg_p->coord, vg1->coord )
 				VCROSS( normb, vec1, vec2 )
+#if EDGE_COLLAPSE_DEBUG
+				bu_log( "\t\tnew tri (%g %g %g) (%g %g %g) (%g %g %g)\n",
+					V3ARGS( v1->vg_p->coord ),
+					V3ARGS( vg1->coord ),
+					V3ARGS( vg2->coord ) );
+#endif
 
 				fu = nmg_find_fu_of_eu( eu1 );
 				if( fu->orientation == OT_SAME )
@@ -11675,26 +11757,94 @@ CONST struct bn_tol *tol;
 					normb[3] = VDOT( normb, v1->vg_p->coord );
 
 					dist = fabs( DIST_PT_PLANE( v2->vg_p->coord, normb ));
+#if EDGE_COLLAPSE_DEBUG
+					bu_log( "\t\t\tdist = %g\n", dist );
+#endif
 					if( dist > max_dist2 )
 						max_dist2 = dist;
 				}
+#if EDGE_COLLAPSE_DEBUG
+				else
+					bu_log( "\t\t\tfu->orientation = %s\n", nmg_orientation( fu->orientation ) );
+#endif
 
 				if( VDOT( norma, normb ) <= 0.0 )
 				{
 					/* this would flip a loop */
+#if EDGE_COLLAPSE_DEBUG
+					bu_log( "\t\t\tflip2 = 1\n" );
+#endif
 					flip2 = 1;
 					break;
 				}
 			}
+#if EDGE_COLLAPSE_DEBUG
+			bu_log( "\tmax_dist1=%g, flip1=%d, max_dist2=%g, flip2=%d\n", max_dist1, flip1, max_dist2, flip2 );
+#endif
 
 			if( max_dist1 < 0.0 )
 				max_dist1 = MAX_FASTF;
 			if( max_dist2 < 0.0 )
 				max_dist2 = MAX_FASTF;
-			if( ((max_dist1 > tol->dist) || (flip1 > 0) ) &&
-			    ((max_dist2 > tol->dist) || (flip2 > 0) ) )
+			if( ((max_dist1 > tol_coll) || (flip1 > 0) ) &&
+			    ((max_dist2 > tol_coll) || (flip2 > 0) ) )
 				continue;
 
+
+			/* one last check to insure we don't collapse two faces into
+			 * a flat plane, i.e., don't collapse an ARB4 into a single
+			 * triangle.
+			 */
+			no_collapse = 0;
+			for( BU_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )
+			{
+				struct edgeuse *eu1, *eu1a;
+				struct edgeuse *eu2, *eu2a;
+				struct vertexuse *vu2;
+
+				if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+					continue;
+
+				eu1 = vu->up.eu_p;
+				if( eu1->e_p == e )
+					continue;
+
+				eu1a = BU_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
+
+				for( BU_LIST_FOR( vu2, vertexuse, &v2->vu_hd ) )
+				{
+					if( *vu2->up.magic_p != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					eu2 = vu2->up.eu_p;
+					if( eu2->e_p == e )
+						continue;
+					if( eu2->e_p == eu1->e_p )
+						continue;
+
+					eu2a = BU_LIST_PNEXT_CIRC( edgeuse, &eu2->l );
+
+					if( NMG_ARE_EUS_ADJACENT( eu1a, eu2a ) )
+					{
+						no_collapse = 1;
+						break;
+					}
+				}
+
+				if( no_collapse )
+					break;
+			}
+
+			if( no_collapse )
+			{
+#if EDGE_COLLAPSE_DEBUG
+				bu_log( "\tNot collapsing edge (would create 2D object)\n" );
+#endif
+				continue;
+			}
+#if EDGE_COLLAPSE_DEBUG
+			bu_log( "\tCollapsing edge\n" );
+#endif
 			/* edge will be collapsed */
 			bu_ptbl_zero( &edge_table, (long *)e );
 
@@ -11730,11 +11880,13 @@ CONST struct bn_tol *tol;
 				eu2 = next;
 			}
 
-			if( (max_dist1 <= max_dist2) && !flip1 )
+			if( ((max_dist1 <= max_dist2) && !flip1) || flip2 )
 			{
 				struct edgeuse *eu1,*eu2;
 				struct vertexuse *vu2;
-
+#if EDGE_COLLAPSE_DEBUG
+				bu_log( "\tMoving v1 to v2 (%g %g %g) -> (%g %g %g)\n", V3ARGS( v1->vg_p->coord ), V3ARGS( v2->vg_p->coord ) );
+#endif
 				/* vertex1 will be moved to vertex2 */
 				done = 0;
 				while( !done )
@@ -11782,7 +11934,9 @@ CONST struct bn_tol *tol;
 			{
 				struct edgeuse *eu1,*eu2;
 				struct vertexuse *vu2;
-
+#if EDGE_COLLAPSE_DEBUG
+				bu_log( "\tMoving v2 to v1 (%g %g %g) -> (%g %g %g)\n", V3ARGS( v2->vg_p->coord ), V3ARGS( v1->vg_p->coord ) );
+#endif
 				/* vertex2 will be moved to vertex1 */
 				done = 0;
 				while( !done )
