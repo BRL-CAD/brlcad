@@ -2349,7 +2349,7 @@ struct shell *s1;
 
 void
 Reunite_faces( tbl )
-CONST long **tbl;
+long **tbl;
 {
 	struct adjacent_faces *adj;
 	struct shell *s_eu1;
