@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.3  84/10/03  21:48:13  dpk
+ * Numerous bug fixes/enhancements.
+ * 
  * Revision 1.2  83/12/16  00:09:50  dpk
  * Added distinctive RCS header
  * 
@@ -142,6 +145,10 @@ getTERM()
 	}
 	if (XS)
 		SO = SE = 0;
+
+	if (! (CS && SR && SF))		/* We really need all three! */
+		CS = SR = SF = 0;
+
 	disp_opt_init();
 }
 
