@@ -86,24 +86,24 @@ BOTFACESSRC= \
 	worker.c
 
 rt_bot_faces_vers.c: $(BOTFACESRC)
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT BOT FACES" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh version "RT BoT Faces" > $@
 rt_bot_faces_SOURCES = 	$(BOTFACESSRC) rt_bot_faces_vers.c
 
 rt_simple_vers.c: rt_simple.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT simple?" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh version "RT Simple" > $@
 rt_simple_SOURCES = \
 	rt_simple.c \
 	rt_simple_vers.c
 
 rtarea_vers.c: $(COMMON) viewarea.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT area?" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh version "RT Area" > $@
 rtarea_SOURCES = \
 	$(COMMON) \
 	rtarea_vers.c \
 	viewarea.c
 
 rtcell_vers.c: $(COMMON) viewcell.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT cell?" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh version "RT Cell" > $@
 rtcell_SOURCES = \
 	$(COMMON) \
 	rtcell_vers.c \
@@ -127,7 +127,7 @@ rtexample_SOURCES = \
 	rtexample.c
 
 rtfrac_vers.c: $(COMMON) viewfrac.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT frac?" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh version "RT Volume Fractions" > $@
 rtfrac_SOURCES = \
 	$(COMMON) \
 	rtfrac_vers.c \
@@ -155,7 +155,7 @@ rtpp_SOURCES = \
 	viewpp.c
 
 rtrad_vers.c: $(COMMON) viewrad.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT rad?" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh version "RTRAD" > $@
 rtrad_SOURCES = \
 	$(COMMON) \
 	rtrad_vers.c \
@@ -187,7 +187,7 @@ rtshot_SOURCES = \
 	rtshot.c
 
 rtsil_vers.c: $(COMMON) viewsil.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT sil?" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh version "RT Simple Intersection Lightmap" > $@
 rtsil_SOURCES = \
 	$(COMMON) \
 	rtsil_vers.c \
