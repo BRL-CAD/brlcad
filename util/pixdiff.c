@@ -39,11 +39,15 @@ char **argv;
 		exit(0);
 	}
 
-	if( (f1 = fopen( argv[1], "r" ) ) == NULL )  {
+	if( strcmp( argv[1], "-" ) == 0 )
+		f1 = stdin;
+	else if( (f1 = fopen( argv[1], "r" ) ) == NULL )  {
 		perror( argv[1] );
 		exit(1);
 	}
-	if( (f2 = fopen( argv[2], "r" ) ) == NULL )  {
+	if( strcmp( argv[2], "-" ) == 0 )
+		f2 = stdin;
+	else if( (f2 = fopen( argv[2], "r" ) ) == NULL )  {
 		perror( argv[2] );
 		exit(1);
 	}
