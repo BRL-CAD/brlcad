@@ -29,7 +29,11 @@ static char RCSbomb[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "bu.h"
 
-/* These are global because BU_SETJUMP() *must* be a macro */
+/*
+ * These variables are global because BU_SETJUMP() *must* be a macro.
+ * If you replace this version of bu_bomb() with one of your own,
+ * you must also provide these variables, even if you don't use them.
+ */
 int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
 jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
 
