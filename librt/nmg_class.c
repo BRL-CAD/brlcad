@@ -1,3 +1,5 @@
+/* XXX Move to nmg.h */
+#define NMG_INDEX_CLEAR(_tab,_p)		{(_tab)[(_p)->index] = 0;}
 /*
  *			N M G _ C L A S S . C
  *
@@ -564,6 +566,9 @@ CONST struct rt_tol	*tol;
 		rt_log("\tPt=(%g, %g, %g) dir=(%g, %g, %g), reg_diam=%g\n",
 			V3ARGS(pt), V3ARGS(projection_dir), region_diameter);
 
+	/*
+	 *  First pass:  Try hard to see if point is ON a face.
+	 */
 	for( RT_LIST_FOR(fu, faceuse, &s->fu_hd) )  {
 		/* If this face processed before, skip on */
 		if( NMG_INDEX_TEST( faces_seen, fu->f_p ) )  continue;
@@ -571,7 +576,7 @@ CONST struct rt_tol	*tol;
 		/* Mark this face as having been processed */
 		NMG_INDEX_SET(faces_seen, fu->f_p);
 
-		/* Only consider the outward pointing faces */
+		/* Only consider the outward pointing faceuses */
 		if( fu->orientation != OT_SAME )  continue;
 
 		/* See if this point lies on this face */
@@ -601,9 +606,22 @@ CONST struct rt_tol	*tol;
 		/* Dangling faces don't participate in Jordan Curve calc */
 		if (nmg_dangling_face(fu))  continue;
 
-		/*
-		 * Find point where ray hits the plane.
-		 */
+		/* Un-mark this face, handle it in the second pass */
+		NMG_INDEX_CLEAR(faces_seen, fu->f_p);
+	}
+
+	/*
+	 *  Second pass:  Jordan Curve algorithm.
+	 *  Fire a ray in "projection_dir", and count face crossings.
+	 */
+	for( RT_LIST_FOR(fu, faceuse, &s->fu_hd) )  {
+		/* If this face processed before, skip on */
+		if( NMG_INDEX_TEST( faces_seen, fu->f_p ) )  continue;
+
+		/* Only consider the outward pointing faceuses */
+		if( fu->orientation != OT_SAME )  continue;
+
+		/* Find point where ray hits the plane. */
 		stat = rt_isect_ray_plane(&dist, pt, projection_dir,
 			fu->f_p->fg_p->N);
 
@@ -627,9 +645,13 @@ CONST struct rt_tol	*tol;
 
 		/*
 		 * Construct coordinates of hit point, and classify.
-		 * XXX This really needs to be a ray/face classification
-		 * XXX The ray can start outside, graze across an edge,
-		 * XXX and keep going.
+		 * XXX In the case of an ON result,
+		 * XXX this really needs to be a ray/edge classification,
+		 * XXX not a point/edge classification.
+		 * XXX The ray can go in/in, out/out, in/out, out/in,
+		 * XXX with different meanings.  Can't tell the difference here.
+		 * XXX One strategy:  keep picking different directions until
+		 * XXX no "hard" cases come up.  (Limit 10 per customer).
 		 */
 	    	VJOIN1(plane_pt, pt, dist, projection_dir);
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -637,8 +659,8 @@ CONST struct rt_tol	*tol;
 		class = nmg_class_pt_f( plane_pt, fu, tol );
 		if( class == NMG_CLASS_AinB )  hitcount++;
 		else if( class == NMG_CLASS_AonBshared )  {
-			rt_log("nmg_class_pt_s: WARNING: ray grazed an edge, could be 1 hit (in/out) or 2 hits (in/in, out/out), can't tell which!\n");
 			hitcount++;
+			rt_bomb("nmg_class_pt_s: ray grazed an edge, could be 1 hit (in/out) or 2 hits (in/in, out/out), can't tell which!\n");
 		}
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 			rt_log("nmg_class_pt_s:\t ray hitcount=%d\n", hitcount);
