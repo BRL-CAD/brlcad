@@ -782,6 +782,8 @@ register struct rt_vlist *vp;
     register int	*cmd = tvp->cmd;
     register point_t *pt = tvp->pt;
     for( i = 0; i < nused; i++,cmd++,pt++ )  {
+      if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
+	bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
       switch( *cmd )  {
       case RT_VLIST_LINE_MOVE:
 	/* Move, start line */
