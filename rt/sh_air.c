@@ -49,23 +49,23 @@ struct bu_structparse air_parse[] = {
 HIDDEN int	air_setup(), airtest_render(), air_render(), emist_render(), tmist_render();
 HIDDEN void	air_print(), air_free();
 
-struct mfuncs air_mfuncs[] = {
-	{"airtest",	0,		0,		MFI_HIT, MFF_PROC,
+CONST struct mfuncs air_mfuncs[] = {
+	{MF_MAGIC,	"airtest",	0,		MFI_HIT, MFF_PROC,
 	air_setup,	airtest_render,	air_print,	air_free },
 
-	{"air",		0,		0,		MFI_HIT, MFF_PROC,
+	{MF_MAGIC,	"air",		0,		MFI_HIT, MFF_PROC,
 	air_setup,	air_render,	air_print,	air_free },
 
-	{"fog",		0,		0,		MFI_HIT, MFF_PROC,
+	{MF_MAGIC,	"fog",		0,		MFI_HIT, MFF_PROC,
 	air_setup,	air_render,	air_print,	air_free },
 
-	{"emist",	0,		0,		MFI_HIT, MFF_PROC,
+	{MF_MAGIC,	"emist",	0,		MFI_HIT, MFF_PROC,
 	air_setup,	emist_render,	air_print,	air_free },
 
-	{"tmist",	0,		0,		MFI_HIT, MFF_PROC,
+	{MF_MAGIC,	"tmist",	0,		MFI_HIT, MFF_PROC,
 	air_setup,	tmist_render,	air_print,	air_free },
 
-	{(char *)0,	0,		0,		0,	0,
+	{0,		(char *)0,	0,		0,	0,
 	0,		0,		0,		0 }
 };
 static void 

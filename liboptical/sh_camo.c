@@ -119,11 +119,11 @@ struct bu_structparse camo_parse[] = {
 HIDDEN int	camo_setup(), camo_render();
 HIDDEN void	camo_print(), camo_free();
 
-struct mfuncs camo_mfuncs[] = {
-	{"camo",	0,		0,		MFI_HIT,	0,
+CONST struct mfuncs camo_mfuncs[] = {
+	{MF_MAGIC,	"camo",		0,		MFI_HIT,	0,
 	camo_setup,	camo_render,	camo_print,	camo_free },
 
-	{(char *)0,	0,		0,		0,		0,
+	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
 };
 

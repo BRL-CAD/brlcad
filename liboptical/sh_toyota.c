@@ -105,17 +105,17 @@ fastf_t
 	skylight_spectral_dist(),
 	zenith_luminance();
 
-struct mfuncs toyota_mfuncs[] = {
-	{"toyota",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
+CONST struct mfuncs toyota_mfuncs[] = {
+	{MF_MAGIC,	"toyota",	0,		MFI_NORMAL|MFI_LIGHT,	0,
 	toyota_setup,	toyota_render,	toyota_print,	toyota_free },
 
-	{"tmirror",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
+	{MF_MAGIC,	"tmirror",	0,		MFI_NORMAL|MFI_LIGHT,	0,
 	tmirror_setup,	toyota_render,	toyota_print,	toyota_free },
 
-	{"tglass",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
+	{MF_MAGIC,	"tglass",	0,		MFI_NORMAL|MFI_LIGHT,	0,
 	tglass_setup,	toyota_render,	toyota_print,	toyota_free },
 
-	{(char *)0,	0,		0,		0,	0,
+	{0,		(char *)0,	0,		0,	0,
 	0,		0,		0,		0 }
 };
 

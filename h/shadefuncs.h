@@ -15,8 +15,8 @@
  *  The interface to the various material property & texture routines.
  */
 struct mfuncs {
-	char		*mf_name;	/* Keyword for material */
 	int		mf_magic;	/* To validate structure */
+	char		*mf_name;	/* Keyword for material */
 	struct mfuncs	*mf_forw;	/* Forward link */
 	int		mf_inputs;	/* shadework inputs needed */
 	int		mf_flags;	/* Flags describing shader */
@@ -27,6 +27,7 @@ struct mfuncs {
 };
 #define MF_MAGIC	0x55968058
 #define MF_NULL		((struct mfuncs *)0)
+#define RT_CK_MF(_p)	BU_CKMAG(_p, MF_MAGIC, "mfuncs")
 
 /*
  *  mf_inputs lists what optional shadework fields are needed.

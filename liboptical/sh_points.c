@@ -58,11 +58,11 @@ struct bu_structparse points_parse[] = {
 HIDDEN int	points_setup(), points_render();
 HIDDEN void	points_print(), points_mfree();
 
-struct mfuncs points_mfuncs[] = {
-	{"points",	0,		0,		MFI_UV,		0,
+CONST struct mfuncs points_mfuncs[] = {
+	{MF_MAGIC,	"points",	0,		MFI_UV,		0,
 	points_setup,	points_render,	points_print,	points_mfree },
 
-	{(char *)0,	0,		0,		0,		0,
+	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
 };
 

@@ -145,11 +145,11 @@ HIDDEN void	prj_print(), prj_free();
  * and "plastic" are all names for the same shader with different default
  * values for the parameters.
  */
-struct mfuncs prj_mfuncs[] = {
-	{"prj",	0,	0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+CONST struct mfuncs prj_mfuncs[] = {
+	{MF_MAGIC,	"prj",		0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	prj_setup,	prj_render,	prj_print,	prj_free },
 
-	{(char *)0,	0,		0,		0,		0,
+	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
 };
 

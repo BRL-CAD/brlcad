@@ -49,11 +49,14 @@ static char *mdefault = "default";	/* Name of default material */
  *  list of material routines.
  */
 void
-mlib_add( mfp )
-register struct mfuncs *mfp;
+mlib_add( mfp1 )
+struct mfuncs *mfp1;
 {
-	for( ; mfp->mf_name != (char *)0; mfp++ )  {
-		mfp->mf_magic = MF_MAGIC;
+	register struct mfuncs *mfp;
+
+	RT_CK_MF(mfp1);
+	for( mfp = mfp1; mfp->mf_name != (char *)0; mfp++ )  {
+		RT_CK_MF(mfp);
 		mfp->mf_forw = mfHead;
 		mfHead = mfp;
 	}

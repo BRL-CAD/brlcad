@@ -217,25 +217,25 @@ struct	bu_structparse marble_parse[] = {
  */
 
 #ifdef eRT
-struct	mfuncs marble_mfuncs[] = {
-	{"marble",	0,		0,		MFI_HIT|MFI_NORMAL|MFI_LIGHT,	0,
+CONST struct	mfuncs marble_mfuncs[] = {
+	{MF_MAGIC,	"marble",	0,		MFI_HIT|MFI_NORMAL|MFI_LIGHT,	0,
 	marble_prep,	marble_setup,	marble_render,	mlib_void,	marble_free },
 
-	{"m",		0,		0,		MFI_HIT|MFI_NORMAL|MFI_LIGHT,	0,
+	{MF_MAGIC,	"m",		0,		MFI_HIT|MFI_NORMAL|MFI_LIGHT,	0,
 	marble_prep,    marble_setup,   marble_render,  mlib_void,      marble_free },
 
-	{(char *)0,	0,		0,		0,
+	{0,		(char *)0,	0,		0,
 	0,		0,		0,		0,		0 }
 };
 #else
-struct mfuncs marble_mfuncs[] = {
-	{"marble",	0,		0,		MFI_HIT|MFI_NORMAL|MFI_LIGHT,	0,
+CONST struct mfuncs marble_mfuncs[] = {
+	{MF_MAGIC,	"marble",	0,		MFI_HIT|MFI_NORMAL|MFI_LIGHT,	0,
 	marble_setup,	marble_render,	mlib_void,	marble_free},
 
-	{"m",		0,		0,		MFI_HIT|MFI_NORMAL|MFI_LIGHT,	0,
+	{MF_MAGIC,	"m",		0,		MFI_HIT|MFI_NORMAL|MFI_LIGHT,	0,
 	marble_setup,   marble_render,  mlib_void,      marble_free},
 
-	{(char *)0,	0,		0,		0,	0,
+	{0,		(char *)0,	0,		0,	0,
 	0,		0,		0,		0}
 };
 #endif

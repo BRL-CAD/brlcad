@@ -159,11 +159,11 @@ HIDDEN void	fire_print(), fire_free();
  * and "plastic" are all names for the same shader with different default
  * values for the parameters.
  */
-struct mfuncs fire_mfuncs[] = {
-	{"fire",	0,	0,		MFI_HIT,	0,
+CONST struct mfuncs fire_mfuncs[] = {
+	{MF_MAGIC,	"fire",		0,		MFI_HIT,	0,
 	fire_setup,	fire_render,	fire_print,	fire_free },
 
-	{(char *)0,	0,		0,		0,		0,
+	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
 };
 

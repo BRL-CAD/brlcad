@@ -50,11 +50,11 @@ struct bu_structparse spm_parse[] = {
 HIDDEN int	spm_setup(), spm_render();
 HIDDEN void	spm_print(), spm_mfree();
 
-struct mfuncs spm_mfuncs[] = {
-	{"spm",		0,		0,		MFI_UV,		0,
+CONST struct mfuncs spm_mfuncs[] = {
+	{MF_MAGIC,	"spm",		0,		MFI_UV,		0,
 	spm_setup,	spm_render,	spm_print,	spm_mfree },
 
-	{(char *)0,	0,		0,		0,		0,
+	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
 };
 

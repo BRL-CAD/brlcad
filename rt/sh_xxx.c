@@ -96,11 +96,11 @@ HIDDEN void	xxx_print(), xxx_free();
  * and "plastic" are all names for the same shader with different default
  * values for the parameters.
  */
-struct mfuncs xxx_mfuncs[] = {
-	{"xxx",	0,	0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+CONST struct mfuncs xxx_mfuncs[] = {
+	{MF_MAGIC,	"xxx",		0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	xxx_setup,	xxx_render,	xxx_print,	xxx_free },
 
-	{(char *)0,	0,		0,		0,		0,
+	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
 };
 

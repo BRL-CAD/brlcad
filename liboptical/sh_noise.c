@@ -165,26 +165,26 @@ HIDDEN void	gravel_print(), gravel_free();
  *
  * WARNING:  The order of this table is critical for these shaders.
  */
-struct mfuncs gravel_mfuncs[] = {
-	{"gravel",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+CONST struct mfuncs gravel_mfuncs[] = {
+	{MF_MAGIC,	"gravel",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	gravel_setup,	fractal_render,	gravel_print,	gravel_free },
 
-	{"fbmbump",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+	{MF_MAGIC,	"fbmbump",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	gravel_setup,	fractal_render,	gravel_print,	gravel_free },
 
-	{"turbump",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+	{MF_MAGIC,	"turbump",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	gravel_setup,	fractal_render, gravel_print,	gravel_free },
 
-	{"fbmcolor",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+	{MF_MAGIC,	"fbmcolor",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	gravel_setup,	fractal_render, gravel_print,	gravel_free },
 
-	{"turcolor",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+	{MF_MAGIC,	"turcolor",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	gravel_setup,	fractal_render, gravel_print,	gravel_free },
 
-	{"grunge",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+	{MF_MAGIC,	"grunge",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	gravel_setup,	fractal_render, gravel_print,	gravel_free },
 
-	{(char *)0,	0,	0,		0,		0,
+	{0,		(char *)0,	0,	0,		0,
 	0,		0,		0,		0 }
 };
 

@@ -71,17 +71,17 @@ struct	bu_structparse stxt_parse[] = {
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
-struct	mfuncs stxt_mfuncs[] = {
-	{"brick",	0,		0,		MFI_HIT,	0,
+CONST struct	mfuncs stxt_mfuncs[] = {
+	{MF_MAGIC,	"brick",	0,		MFI_HIT,	0,
 	stxt_setup,	brick_render,	stxt_print,	stxt_free },
 
-	{"mbound",	0,		0,		MFI_HIT,	0,
+	{MF_MAGIC,	"mbound",	0,		MFI_HIT,	0,
 	stxt_setup,	mbound_render,	stxt_print,	stxt_free },
 
-	{"rbound",	0,		0,		MFI_HIT,	0,
+	{MF_MAGIC,	"rbound",	0,		MFI_HIT,	0,
 	stxt_setup,	rbound_render,	stxt_print,	stxt_free },
 
-	{ (char *)0,	0,		0,		0,		0,
+	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
 };
 

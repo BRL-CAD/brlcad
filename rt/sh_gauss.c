@@ -118,11 +118,11 @@ HIDDEN void	gauss_print(), gauss_free();
  * and "plastic" are all names for the same shader with different default
  * values for the parameters.
  */
-struct mfuncs gauss_mfuncs[] = {
-	{"gauss",	0,	0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+CONST struct mfuncs gauss_mfuncs[] = {
+	{MF_MAGIC,	"gauss",	0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	gauss_setup,	gauss_render,	gauss_print,	gauss_free },
 
-	{(char *)0,	0,		0,		0,		0,
+	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
 };
 

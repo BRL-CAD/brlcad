@@ -77,17 +77,17 @@ HIDDEN void	cook_free();
 HIDDEN double	fresnel();
 HIDDEN double	beckmann();
 
-struct mfuncs cook_mfuncs[] = {
-	{"cook",		0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
+CONST struct mfuncs cook_mfuncs[] = {
+	{MF_MAGIC,	"cook",		0,		MFI_NORMAL|MFI_LIGHT,	0,
 	cook_setup,	cook_render,	cook_print,	cook_free },
 
-	{"cmirror",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
+	{MF_MAGIC,	"cmirror",	0,		MFI_NORMAL|MFI_LIGHT,	0,
 	cmirror_setup,	cook_render,	cook_print,	cook_free },
 
-	{"cglass",	0,		0,		MFI_NORMAL|MFI_LIGHT,	0,
+	{MF_MAGIC,	"cglass",	0,		MFI_NORMAL|MFI_LIGHT,	0,
 	cglass_setup,	cook_render,	cook_print,	cook_free },
 
-	{(char *)0,	0,		0,		0,	0,
+	{0,		(char *)0,	0,		0,	0,
 	0,		0,		0,		0 }
 };
 
