@@ -2,7 +2,7 @@
 # A prototype GUI for rtsync.
 # This file is executed by the rtsync program, not directly from the shell.
 # Depends on rtnode defining [get_dbip] and [get_rtip].
-# Depends on rtnode having executed {wdb_open .inmem inmem [get_dbip]}
+# Depends on rtnode & mged having executed {wdb_open .inmem inmem [get_dbip]}
 # Uses various RTSYNC built-in commands, as well as LIBRT's Tcl commands.
 #  -Mike Muuss, ARL, March 97.
 
@@ -88,10 +88,15 @@ proc apply_angle {} {
 	puts "Sun pos = $sunx $suny $sunz"
 	# send new stuff to servers
 	node_send .inmem adjust $sun_solid_name V "{" $sunx $suny $sunz "}"
-	# indicate re-prep required.
+
+	# Have MGED update it's position too.
+	vrmgr_send .inmem adjust $sun_solid_name V "{" $sunx $suny $sunz "}" ";" \
+		redraw_vlist $sun_solid_name
+
+	# indicate LIBRT re-prep required.
 	reprep
-	# Send this to MGED to get pov message sent back.
-	vrmgr_send refresh
+	# Use new POV if one receieved, else repeat last POV.
+	refresh
 }
 
 # The sun color
@@ -130,8 +135,12 @@ proc apply_color {} {
 	  sh_directchange_rgb {[get_rtip]} $sun_region_name $red $grn $blu ";" \
 	  .inmem adjust $sun_region_name rgb $red $grn $blu
 
-	# Send 'refresh' command to MGED to get pov message sent back to us.
-	vrmgr_send refresh
+	# Have MGED update it's color too.  This doesn't work.
+	#vrmgr_send .inmem adjust $sun_region_name rgb $red $grn $blu ";" \
+	#	redraw_vlist $sun_region_name
+
+	# Use new POV if one receieved, else repeat last POV.
+	refresh
 }
 
 proc net_speed_test {val} {
@@ -154,4 +163,4 @@ puts "done rtsync.tcl"
 # node_send sh_opt -P1 -x1 -X1
 # node_send .inmem get LIGHT
 # node_send {.inmem adjust LIGHT V {20 -13 5}}
-# node_send {.inmem adjust LIGHT V {50 -13 5}} ; reprep;vrmgr_send refresh
+# node_send {.inmem adjust LIGHT V {50 -13 5}} ; reprep; refresh
