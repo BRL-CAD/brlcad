@@ -24,6 +24,9 @@ static char rcsid[] = "$Header$";
  *
  *
  * $Log$
+ * Revision 10.1  1991/10/12  06:40:37  mike
+ * Release_4.0
+ *
  * Revision 1.4  91/07/25  01:26:10  butler
  * added magic number and checking to struct msr_unif & msr_gauss
  * 
@@ -238,17 +241,17 @@ int method;
 
 /*	msr_gauss_fill	fill a random number table.
  *
- * Use the msrad algorithm to fill a random number table
- * with values from -1.0 to 10.0.  These numbers can (and are) extracted from
+ * Use the msrad algorithm to fill a random number table.
+ * hese numbers can (and are) extracted from
  * the random number table via high speed macros and msr_guass_fill
  * called when the table is exauseted.
  *
  * Entry:
- *	p	pointer to a msr_guassstructure.
+ *	p	pointer to a msr_guass structure.
  *
  * Exit:
- *	if (!p) returns 0.0 else returns a value between -1.0 and 1.0
- *	with a guassian distribution (bell curve)
+ *	if (!p) returns 0.0 else returns a value with a mean of 0 and
+ *	    a variance of 1.0.
  *
  * Calls:
  *	MSR_UNIF_CIRCLE to get to uniform random number whos radius is
