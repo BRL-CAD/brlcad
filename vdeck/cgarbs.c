@@ -1,6 +1,6 @@
 /*
- *	@(#) cgarbs.c			retrieved 8/13/86 at 07:59:01,
- *	@(#) version 1.2		  created 3/16/83 at 15:37:13.
+ *	@(#) cgarbs.c			retrieved 8/13/86 at 07:59:15,
+ *	@(#) version 1.3		  created 3/23/83 at 12:37:46.
  *
  *	Written by Keith Applin.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -8,6 +8,7 @@
 #include "ged_types.h"
 #include "3d.h"
 #include "./view.h"
+extern double	fabs();
 
 /* C G A R B S :   determines COMGEOM arb types from GED general arbs
  */
@@ -31,9 +32,11 @@ int svec[];	/* array of like points */
 		if(done == NO)
 			svec[si] = i;
 		for(j=i+1; j<8; j++) {
-			if(compar((rec->s.s_values[i*3]), (rec->s.s_values[j*3])) == YES) {
-				if( done == NO )
-					svec[++si] = j;
+			if(	compar(	&(rec->s.s_values[i*3]),
+					&(rec->s.s_values[j*3])
+				) == YES
+			) {
+				if( done == NO ) svec[++si] = j;
 				unique = NO;
 			}
 		}
@@ -260,6 +263,7 @@ int p0, p1, p2, p3, p4, p5, p6, p7;
 	}
 	return;
 }
+
 compar( x, y )
 register
 float *x,*y;
