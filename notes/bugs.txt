@@ -1,5 +1,3 @@
 pix-png
   gives "short read" error when trying to covert a pixfile to png
 
-png-pix
-  gives incorrect pixfile result from a given png
