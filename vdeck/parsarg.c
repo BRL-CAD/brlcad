@@ -35,6 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /*	p a r s A r g ( )
 	Parse the command line arguments.
  */
+int
 parsArg( argc, argv )	char	*argv[];
 	{ 	register int	i, c, arg_cnt;
 		extern int	optind;
