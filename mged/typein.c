@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <signal.h>
 #include <stdio.h>
+#include <math.h>
 #ifdef BSD
 #include <strings.h>
 #else
@@ -53,7 +54,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./objdir.h"
 
 void	aexists();
-extern double atof();
 extern void f_quit();
 
 int		args;		/* total number of args available */

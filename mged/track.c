@@ -23,7 +23,6 @@
 #include "./dm.h"
 
 extern void aexists();
-extern double atof();
 extern int atoi();
 extern char *strcat(), *strcpy();
 

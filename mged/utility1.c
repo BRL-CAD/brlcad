@@ -15,6 +15,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
+#include <math.h>
 #ifdef BSD
 #include <sys/time.h>	/* for struct timeval.  Includes <time.h> */
 #include <strings.h>
@@ -30,7 +31,6 @@
 #include "./sedit.h"
 #include "./objdir.h"
 
-extern double atof();
 extern void f_quit();
 
 extern int	args;		/* total number of args available */
