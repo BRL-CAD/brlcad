@@ -860,9 +860,10 @@ struct model *m2;
 
 	nmg_m_reindex(m2, m1->maxindex);
 
-	for ( RT_LIST_FOR(r, nmgregion, &(m1->r_hd)) )
+	for ( RT_LIST_FOR(r, nmgregion, &(m2->r_hd)) ) {
+		NMG_CK_REGION(r);
 		r->m_p = m1;
-
+	}
 	RT_LIST_APPEND_LIST(&(m1->r_hd), &(m2->r_hd));
 
 	FREE_MODEL(m2);
