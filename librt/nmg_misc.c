@@ -41,14 +41,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
-int colors[7][3]={
-	{255 , 0 , 0},
-	{0 , 255 , 0},
-	{0 , 0 , 255},
-	{255 , 255 , 0},
-	{0 , 255 , 255 },
-	{255 , 0 , 255},
-	{126 , 126 , 126 }};
 
 /*	N M G _ T B L
  *	maintain a table of pointers (to magic numbers/structs)
@@ -2858,6 +2850,7 @@ CONST struct rt_tol *tol;
 	struct nmg_ptbl int_faces;
 	struct rt_tol tol_tmp;
 	point_t ave_pt;
+	vect_t ave_norm;
 	point_t rpp_min;
 	int i,j,done;
 	int unique_verts;
@@ -2871,7 +2864,47 @@ CONST struct rt_tol *tol;
 
 	NMG_CK_VERTEX( new_v );
 	RT_CK_TOL( tol );
+#if 0
+for( i=0 ; i<NMG_TBL_END( faces ) ; i++ )
+{
+	char arb_name[17];
+	struct face *fp;
+	struct face_g *fg;
+	point_t pts[8];
+	point_t start;
+	vect_t v1,v2;
+	fastf_t dist;
+	fastf_t size,thick;
 
+	sprintf( arb_name , "pl.%d" , i );
+
+	fp = (struct face *)NMG_TBL_GET( faces , i );
+	fg = fp->fg_p;
+
+	mat_vec_perp( v1 , fg->N );
+	VCROSS( v2 , v1 , fg->N );
+
+	VUNITIZE( v1 );
+	VUNITIZE( v2 );
+
+	dist = DIST_PT_PLANE( new_v->vg_p->coord , fg->N );
+	VJOIN1( start , new_v->vg_p->coord , dist , fg->N );
+
+	size = 100.0;
+	thick = 0.0005;
+	VJOIN3( pts[0] , start , size , v1 , size , v2 , thick , fg->N );
+	VJOIN1( pts[1] , pts[0] , (-size*2.0) , v1 );
+	VJOIN1( pts[2] , pts[1] , (-size*2.0) , v2 );
+	VJOIN1( pts[3] , pts[0] , (-size*2.0) , v2 );
+	for( j=0 ; j<4 ; j++ )
+	{
+		VJOIN1( pts[j+4] , pts[j] , -thick , fg->N );
+	}
+
+	mk_arb8( stdout , arb_name , pts );
+	rt_log( "%s - fp = x%x, fg = x%x  ( %f %f %f %f )\n" , arb_name , fp , fg  , V4ARGS( fg->N ) );
+}
+#endif
 	VSET( rpp_min , 0.0 , 0.0 , 0.0 );
 
 	/* A local tolerance structure for times when I don't want tolerancing */
@@ -2889,6 +2922,9 @@ CONST struct rt_tol *tol;
 	NMG_CK_VERTEXUSE( vu );
 	eu1 = vu->up.eu_p;
 	NMG_CK_EDGEUSE( eu1 );
+	fu = nmg_find_fu_of_eu( eu1 );
+	if( fu->orientation != OT_SAME )
+		eu1 = eu1->eumate_p;
 	eu = eu1;
 	done = 0;
 	VSET( ave_pt , 0.0 , 0.0 , 0.0 );
@@ -2982,13 +3018,14 @@ CONST struct rt_tol *tol;
 			}
 		}
 		/* Make the start point at closest approach to old vertex */
-		(void)rt_dist_pt3_line3( &dist , start , start , dir , new_v->vg_p->coord , tol );
+		(void)rt_dist_pt3_line3( &dist , start , start , dir , new_v->vg_p->coord , &tol_tmp );
 
 		/* Make sure the calculated direction is away from the vertex */
 		if( VDOT( eu_dir , dir ) < 0.0 )
 			VREVERSE( dir , dir );
 		VMOVE( i_fus->start , start );
 		VMOVE( i_fus->dir , dir );
+		VADD2( ave_pt , ave_pt , i_fus->start );
 
 		nmg_tbl( &int_faces , TBL_INS , (long *)i_fus );
 
@@ -2997,6 +3034,8 @@ CONST struct rt_tol *tol;
 		if( eu == eu1 )
 			done = 1;
 	}
+	VSCALE( ave_pt , ave_pt , (1.0/(double)(NMG_TBL_END(&int_faces)) ) );
+	VMOVE( new_v->vg_p->coord , ave_pt );
 
 #if 0
 	/* i_fus->start and i_fus->dir define the edge between faces i_fus->fu[0] and i_fus->fu[1]
@@ -3010,6 +3049,7 @@ CONST struct rt_tol *tol;
 		vect_t edge_vect;
 
 		i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , edge_no );
+
 		fu1 = i_fus->fu[0];
 		fu2 = i_fus->fu[1];
 
@@ -3038,28 +3078,174 @@ CONST struct rt_tol *tol;
 			}
 		}
 
-		if( max_dist > (-MAX_FASTF) )
-		{
-			VADD2( ave_pt , ave_pt , i_fus->pt );
-		}
-
 	}
 #else
-rt_log( "at (%f %f %f): \n" , V3ARGS( new_v->vg_p->coord ) );
+
+rt_log( "\nat (%f %f %f): \n" , V3ARGS( new_v->vg_p->coord ) );
 	for( edge_no=0 ; edge_no < NMG_TBL_END( &int_faces ) ; edge_no++ )
 	{
 		struct intersect_fus *i_fus;
+		fastf_t dist;
+		char rcc_name[17];
+		vect_t height;
+		vect_t tmp_dir;
+		fastf_t radius,d1,d2;
 
 		i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , edge_no );
-		VJOIN1( i_fus->pt , i_fus->start , 25.0 * tol->dist , i_fus->dir );
-rt_log( "\tfor edge ( %f %f %f 0 -> ( %f %f %f ) intersect at ( %f %f %f )\n" ,
+
+		/* Make the start point at closest approach to new vertex */
+		(void)rt_dist_pt3_line3( &dist , i_fus->start , i_fus->start , i_fus->dir , new_v->vg_p->coord , &tol_tmp );
+
+		VJOIN1( i_fus->pt , i_fus->start , 3.0 , i_fus->dir );
+rt_log( "\tfor edge ( %f %f %f ) -> ( %f %f %f )\n",
 	V3ARGS( i_fus->eu->vu_p->v_p->vg_p->coord ),
-	V3ARGS( i_fus->eu->eumate_p->vu_p->v_p->vg_p->coord ),
-	V3ARGS( i_fus->pt ) );
+	V3ARGS( i_fus->eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+rt_log( "\t\tstart = ( %f %f %f ) , dir = ( %f %f %f )\n",
+	V3ARGS( i_fus->start ) , V3ARGS( i_fus->dir ) );
+rt_log( "\t\tintersect = ( %f %f %f )\n", V3ARGS( i_fus->pt ) );
+rt_log( "\t\tpl1 = ( %f %f %f %f ) , pl2 = ( %f %f %f %f )\n" , V4ARGS( i_fus->fu[0]->f_p->fg_p->N ), V4ARGS( i_fus->fu[1]->f_p->fg_p->N ) );
+VCROSS( tmp_dir , i_fus->fu[0]->f_p->fg_p->N , i_fus->fu[1]->f_p->fg_p->N );
+VUNITIZE( tmp_dir );
+d1 = DIST_PT_PLANE( i_fus->start , i_fus->fu[0]->f_p->fg_p->N );
+d2 = DIST_PT_PLANE( i_fus->start , i_fus->fu[1]->f_p->fg_p->N );
+rt_log( "\t\ttmp_dir = ( %f %f %f ), d1 = %f , d2 = %f\n" , V3ARGS(tmp_dir) , d1 , d2 );
+
+		sprintf( rcc_name , "edge.%d.%d" , pl_count , edge_no );
+		VSCALE( height , i_fus->dir , 500.0 );
+		mk_rcc( stdout , rcc_name , i_fus->start , height , 0.0005 );
+
 	}
+rt_log( "\tcenter at ( %f %f %f )\n" , V3ARGS( ave_pt ) );
 #endif
-	VSCALE( ave_pt , ave_pt , (1.0/(double)(unique_verts)) );
-	VMOVE( new_v->vg_p->coord , ave_pt );
+
+#if 0
+	/* check for crossed planes where
+	 * a small face gets cut off:
+	 *
+	 * 	  \    \         /    /
+	 * 	   \    \       /    /
+	 * 	    \    \     /    /
+	 * 	     \    \   /    /
+	 * 	      \    \ /    /
+	 * 	       \    X    /
+	 * 	        \  / \  /
+	 * 	         \ --- /
+	 * 	          \___/
+	 */
+
+	for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
+	{
+		struct intersect_fus *i_fus,*j_fus;
+		struct faceuse *fu1,*fu2,*fu3;
+		plane_t pl1,pl2,pl3;
+		point_t start;
+		point_t new_pt;
+		vect_t dir;
+		fastf_t dist;
+
+		i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , i );
+
+		j = i + 1;
+		if( j == NMG_TBL_END( &int_faces ) )
+			j = 0;
+
+		j_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , j );
+
+		if( i_fus->fu[1] != j_fus->fu[0] )
+		{
+			rt_log( "nmg_complex_vertex_solve: no match in faceuse structs\n" );
+			continue;
+		}
+
+		fu1 = i_fus->fu[0];
+		if( fu1->orientation != OT_SAME )
+			fu1 = fu1->fumate_p;
+		fu2 = i_fus->fu[1];
+		if( fu2->orientation != OT_SAME )
+			fu2 = fu2->fumate_p;
+		fu3 = j_fus->fu[1];
+		if( fu3->orientation != OT_SAME )
+			fu3 = fu3->fumate_p;
+
+		NMG_GET_FU_PLANE( pl1 , fu1 );
+		NMG_GET_FU_PLANE( pl2 , fu2 );
+		NMG_GET_FU_PLANE( pl3 , fu3 );
+
+		/* get intersect line for planes 1 and 3 */
+		VMOVE( rpp_min , i_fus->pt );
+		if( rt_isect_2planes( start , dir , pl1 , pl3 , rpp_min , &tol_tmp ) )
+			continue;
+
+		/* move start point near intersection point */
+		(void)rt_dist_pt3_line3( &dist , start , start , dir , i_fus->pt , &tol_tmp );
+
+		/* check if start point is behind plane 2 */
+		dist = DIST_PT_PLANE( start , pl2 );
+		if( dist < tol->dist )
+			continue;
+
+		/* the start point is to the normal-ward side of pl2
+		 * fuse i_fus->pt and j_fus->pt
+		 */
+
+		VADD2( new_pt , i_fus->pt , j_fus->pt );
+		VSCALE( new_pt , new_pt , 0.5 );
+
+		/* move start point near average intersection point */
+		(void)rt_dist_pt3_line3( &dist , start , start , dir , new_pt , &tol_tmp );
+
+rt_log( "\t\t\tFusing intersect points at ( %f %f %f ) and ( %f %f %f )\n\t\t\tto ( %f %f %f )\n" ,
+V3ARGS( i_fus->pt ) , V3ARGS( j_fus->pt ) , V3ARGS( start ) );
+		VMOVE( i_fus->pt , start );
+		VMOVE( j_fus->pt , start );
+	}
+#else
+	VSET( ave_norm , 0.0 , 0.0 , 0.0 );
+	for( i=0 ; i<NMG_TBL_END( faces ) ; i++ )
+	{
+		struct face *fp;
+		vect_t norm;
+
+		fp = (struct face *)NMG_TBL_GET( faces , i );
+		fu = fp->fu_p;
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+
+		NMG_GET_FU_NORMAL( norm , fu );
+
+		VADD2( ave_norm , ave_norm , norm );
+	}
+	VSCALE( ave_norm , ave_norm , (1.0)/((fastf_t)(NMG_TBL_END( faces ))) );
+
+	for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
+	{
+		struct intersect_fus *i_fus,*j_fus;
+		vect_t cross;
+
+		i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , i );
+
+		j = i + 1;
+		if( j == NMG_TBL_END( &int_faces ) )
+			j = 0;
+
+		j_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , j );
+
+		if( i_fus->fu[1] != j_fus->fu[0] )
+		{
+			rt_log( "nmg_complex_vertex_solve: no match in faceuse structs\n" );
+			continue;
+		}
+
+		VCROSS( cross , j_fus->dir , i_fus->dir );
+		if( VDOT( cross , ave_norm ) < 0.0 )
+		{
+			VCOMB2( i_fus->pt , 0.5 , i_fus->pt , 0.5 , j_fus->pt );
+			VMOVE( j_fus->pt , i_fus->pt );
+		}
+	}
+
+#endif
+pl_count++;
 
 	/* split edges at intersection points */
 	unique_verts = 0;
