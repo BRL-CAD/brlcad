@@ -298,7 +298,8 @@ register struct application *ap;
 			int	count;
 
 			RES_ACQUIRE( &rt_g.res_syscall );
-			fseek( outfp, ap->a_y*width*3L, 0 );
+			if( fseek( outfp, ap->a_y*width*3L, 0 ) != 0 )
+				rt_log("fseek error\n");
 			count = fwrite( scanline[ap->a_y].sl_buf,
 				sizeof(char), width*3, outfp );
 			RES_RELEASE( &rt_g.res_syscall );
@@ -838,9 +839,11 @@ char	*framename;
 
 			scanline[yy].sl_buf = rt_calloc( width,
 				sizeof(RGBpixel), "sl_buf for continuation scanline");
-			fseek( outfp, yy*width*3L, 0 );
-			fread( scanline[yy].sl_buf, sizeof(RGBpixel),
-				width, outfp );
+			if( fseek( outfp, yy*width*3L, 0 ) != 0 )
+		    		rt_log("fseek error\n");
+			if( fread( scanline[yy].sl_buf, sizeof(RGBpixel),
+			    width, outfp ) != width )
+		    		rt_log("fread error\n");
 
 			/* Account for pixels that don't need to be done */
 			scanline[yy].sl_left -= xx;
