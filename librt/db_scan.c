@@ -4,6 +4,7 @@
  * Functions -
  *	db_scan		Sequentially read database, send objects to handler()
  *	db_ident	Update database IDENT record
+ *      db_conversions  Update unit conversion factors
  *
  *
  *  Author -
@@ -114,9 +115,7 @@ int			(*handler)();
 			if( dbip->dbi_title == (char *)0 )  {
 				dbip->dbi_title = rt_strdup( record.i.i_title );
 				dbip->dbi_localunit = record.i.i_units;
-				/* conversions() XXX */
-				dbip->dbi_local2base = 1.0;
-				dbip->dbi_base2local = 1.0;
+				db_conversions( dbip, dbip->dbi_localunit );
 			}
 			break;
 		case ID_FREE:
@@ -298,4 +297,56 @@ int		units;
 	dbip->dbi_localunit = rec.i.i_units = units;
 
 	return( db_put( dbip, &dir, &rec, 0, 1 ) );
+}
+
+/*
+ *			D B _ C O N V E R S I O N S
+ *
+ *	Builds conversion factors given the local unit
+ */
+void
+db_conversions( dbip, local )
+struct db_i	*dbip;
+int local;
+{
+	/* Base unit is MM */
+	switch( local ) {
+
+	case ID_NO_UNIT:
+		/* no local unit specified ... use the base unit */
+		dbip->dbi_localunit = ID_MM_UNIT;
+		dbip->dbi_local2base = 1.0;
+		break;
+
+	case ID_MM_UNIT:
+		/* local unit is mm */
+		dbip->dbi_local2base = 1.0;
+		break;
+
+	case ID_CM_UNIT:
+		/* local unit is cm */
+		dbip->dbi_local2base = 10.0;		/* CM to MM */
+		break;
+
+	case ID_M_UNIT:
+		/* local unit is meters */
+		dbip->dbi_local2base = 1000.0;		/* M to MM */
+		break;
+
+	case ID_IN_UNIT:
+		/* local unit is inches */
+		dbip->dbi_local2base = 25.4;		/* IN to MM */
+		break;
+
+	case ID_FT_UNIT:
+		/* local unit is feet */
+		dbip->dbi_local2base = 304.8;		/* FT to MM */
+		break;
+
+	default:
+		dbip->dbi_local2base = 1.0;
+		dbip->dbi_localunit = 6;
+		break;
+	}
+	dbip->dbi_base2local = 1.0 / dbip->dbi_local2base;
 }
