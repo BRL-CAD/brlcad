@@ -1168,6 +1168,19 @@ double a1, a2, a3;		/* DOUBLE angles, in degrees */
 #endif
 }
 
+void
+aslewview( view_pos )
+vect_t view_pos;
+{
+  struct rt_vls cmd;
+
+  rt_vls_init(&cmd);
+  rt_vls_printf(&cmd, "knob aX %f aY %f aZ %f\n",
+		view_pos[X], view_pos[Y], view_pos[Z]);
+  (void)cmdline(&cmd, FALSE);
+  rt_vls_free(&cmd);
+}
+
 /*
  *			S L E W V I E W
  *
