@@ -119,7 +119,75 @@ register CONST struct db_full_path	*pp;
 		cp += strlen( cp );
 	}
 	*cp++ = '\0';
-	return( buf );
+	return buf;
+}
+
+/*
+ *			D B _ S T R I N G _ T O _ P A T H
+ *
+ *  Reverse the effects of db_path_to_string().
+ *
+ *  The db_full_path structure is initialized.  If it was already in use,
+ *  call db_free_full_path() first.
+ *
+ *  Returns -
+ *	-1	failure (shouldn't happen)
+ *	 0	OK
+ */
+int
+db_string_to_path( pp, dbip, str )
+register struct db_full_path	*pp;
+struct db_i			*dbip;
+CONST char			*str;
+{
+	register char		*cp;
+	register char		*slashp;
+	struct directory	*dp;
+	char			*copy;
+	int			nslash = 0;
+	int			ret = 0;
+
+	RT_CK_DBI(dbip);
+
+	/* Count slashes */
+	while( *str == '/' )  str++;	/* strip off leading slashes */
+	copy = rt_strdup( str );
+	cp = copy;
+	while( *cp )  {
+		if( (slashp = strchr( cp, '/' )) == NULL )  break;
+		nslash++;
+		cp = slashp+1;
+	}
+
+	/* Make a path structure just big enough */
+	pp->magic = DB_FULL_PATH_MAGIC;
+	pp->fp_maxlen = pp->fp_len = nslash+1;
+	pp->fp_names = (struct directory **)rt_malloc(
+		pp->fp_maxlen * sizeof(struct directory *),
+		"db_string_to_path path array" );
+
+
+	/* Build up path array */
+	cp = copy;
+	nslash = 0;
+	while( *cp )  {
+		if( (slashp = strchr( cp, '/' )) == NULL )  {
+			/* Last element of string, has no trailing slash */
+			slashp = cp + strlen(cp) - 1;
+		} else {
+			*slashp = '\0';
+		}
+		if( (dp = db_lookup( dbip, cp, 1 )) == DIR_NULL )  {
+			rt_log("db_string_to_path() of '%s' failed on '%s'\n",
+				str, cp );
+			ret = -1;	/* FAILED */
+			/* Fall through, storing null dp in this location */
+		}
+		pp->fp_names[nslash++] = dp;
+		cp = slashp+1;
+	}
+	rt_free( copy, "db_string_to_path() rt_strdip");
+	return ret;
 }
 
 /*
