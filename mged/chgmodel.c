@@ -952,7 +952,7 @@ char	**argv;
 
 	mat_default = atoi(argv[4]);
 
-	return CMK_OK;
+	return CMD_OK;
 }
 
 static int frac_stat;
