@@ -49,6 +49,8 @@ rb_tree *rb_create (char *description, int nm_orders, int (**order_funcs)())
     tree -> rbt_description = description;
     tree -> rbt_nm_orders = nm_orders;
     tree -> rbt_order = order_funcs;
+    tree -> rbt_print = 0;
+    tree -> rbt_current = tree -> rbt_empty_node;
 
     /*
      *	Initialize the nil sentinel
@@ -124,9 +126,8 @@ static int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
  *	the new node and the contents of the node.  The bulk of this code
  *	is from T. H. Cormen, C. E. Leiserson, and R. L. Rivest.  _Intro-
  *	duction to Algorithms_.  Cambridge, MA: MIT Press, 1990. p. 268.
- *	On failure, rb_insert() returns the value -1.  Otherwise, it
- *	returns the number of orders for which the new node was equal to
- *	a node already in the tree.
+ *	rb_insert() returns the number of orders for which the new node
+ *	was equal to a node already in the tree.
  */
 int rb_insert (rb_tree *tree, void *data)
 {
@@ -134,43 +135,60 @@ int rb_insert (rb_tree *tree, void *data)
     int			order;
     int			result = 0;
     struct rb_node	*node;
+    struct rb_package	*package;
 
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
 
     nm_orders = tree -> rbt_nm_orders;
 
-    /* Create a new node */
-    if (((node = (struct rb_node *)
-		rt_malloc(sizeof(struct rb_node), "red-black node"))
-	== RB_NODE_NULL)						||
-	((node -> rbn_parent = (struct rb_node **)
+    /*
+     *	Create a new package
+     */
+    package = (struct rb_package *)
+		rt_malloc(sizeof(struct rb_package), "red-black package");
+    package -> rbp_node = (struct rb_node **)
 		rt_malloc(nm_orders * sizeof(struct rb_node *),
-			    "red-black parents")) == 0)			||
-	((node -> rbn_left = (struct rb_node **)
-		rt_malloc(nm_orders * sizeof(struct rb_node *),
-			    "red-black left children")) == 0)		||
-	((node -> rbn_right = (struct rb_node **)
-		rt_malloc(nm_orders * sizeof(struct rb_node *),
-			    "red-black right children")) == 0)		||
-	((node -> rbn_color =
-		rt_malloc((size_t) ceil((double) (nm_orders / 8.0)),
-			    "red-black colors")) == 0)			||
-	((node -> rbn_data = (void **)
-		    rt_malloc(nm_orders * sizeof(void *),
-			    "red-black data")) == 0))
-    {
-	fputs("rb_insert(): Ran out of memory\n", stderr);
-	return (-1);
-    }
+			    "red-black package nodes");
 
     /*
-     *	Fill the node and insert it into the tree
+     *	Create a new node
+     */
+    node = (struct rb_node *)
+		rt_malloc(sizeof(struct rb_node), "red-black node");
+    node -> rbn_parent = (struct rb_node **)
+		rt_malloc(nm_orders * sizeof(struct rb_node *),
+			    "red-black parents");
+    node -> rbn_left = (struct rb_node **)
+		rt_malloc(nm_orders * sizeof(struct rb_node *),
+			    "red-black left children");
+    node -> rbn_right = (struct rb_node **)
+		rt_malloc(nm_orders * sizeof(struct rb_node *),
+			    "red-black right children");
+    node -> rbn_color = (char *)
+		rt_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+			    "red-black colors");
+    node -> rbn_package = (struct rb_package **)
+		rt_malloc(nm_orders * sizeof(struct rb_package *),
+			    "red-black packages");
+    /*
+     *	Fill in the package
+     */
+    package -> rbp_magic = RB_PKG_MAGIC;
+    package -> rbp_data = data;
+    for (order = 0; order < nm_orders; ++order)
+	(package -> rbp_node)[order] = node;
+
+    /*
+     *	Fill in the node
      */
     node -> rbn_magic = RB_NODE_MAGIC;
     node -> rbn_tree = tree;
     for (order = 0; order < nm_orders; ++order)
-	rb_data(node, order) = data;
-    node -> rbn_data_refs = nm_orders;
+    {
+	rb_set_color(node, order, RB_RED);
+	(node -> rbn_package)[order] = package;
+    }
+    node -> rbn_pkg_refs = nm_orders;
 
     /*
      *	If the tree was empty, install this node as the root
@@ -187,13 +205,10 @@ int rb_insert (rb_tree *tree, void *data)
     /*	Otherwise, insert the node into the tree */
     else
 	for (order = 0; order < nm_orders; ++order)
-	{
 	    result += _rb_insert(tree, order, node);
-	    rb_set_color(node, order, RB_RED);
-	}
 
     /* Record the node with which we've been working */
-    current_node = node;
+    rb_current(tree) = node;
     return (result);
 }
 
@@ -220,4 +235,18 @@ rb_tree *rb_create1 (char *description, int (*order_func)())
     }
     *ofp = order_func;
     return (rb_create(description, 1, ofp));
+}
+
+/*		    R B _ I N S T A L L _ P R I N T ( )
+ *
+ *	    Install a pretty-print function in a red-black tree
+ *
+ *	This function has two parameters: a tree and a pretty-print
+ *	function, which LIBREDBLACK uses for diagnostic purposes.
+ */
+void rb_install_print (rb_tree *tree, void (*print_func)())
+{
+    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+
+    tree -> rbt_print = print_func;
 }
