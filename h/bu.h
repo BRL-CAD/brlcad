@@ -125,6 +125,22 @@ extern char	*realloc();
 	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), "_unn (getunion)")
 #endif
 
+/*
+ *                B U _ G E T T Y P E
+ *
+ * Acquire storage for a given TYPE, eg, BU_GETTYPE(ptr, typename);
+ * Equivalent to BU_GETSTRUCT, except without the 'struct' Useful
+ * for typedef'ed objects.
+ */
+#if __STDC__
+#  define BU_GETTYPE(_p,_type) \
+	_p = (_type *)bu_calloc(1,sizeof(_type), #_type " (gettype)" )
+#else
+#  define BU_GETTYPE(_p,_type) \
+	_p = (_type *)bu_calloc(1,sizeof(_type), "_type (getstruct)")
+#endif
+
+
 
 /*
  *			B U _ C K M A G
