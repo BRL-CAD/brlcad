@@ -1,4 +1,4 @@
-/*                          A N I M . H
+/*                          C O N F . H
  * BRL-CAD
  *
  * Copyright (c) 1993-2004 United States Government as represented by
@@ -18,7 +18,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file anim.h
+/** @file conf.h
+ *
+ */
 #ifndef CONF_H
 #define CONF_H seen
 
