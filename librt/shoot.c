@@ -387,13 +387,12 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 				rt_bomb("rt_shootray:  bad st_id 2");
 
 			if( BITTEST( solidbits->be_v, stp->st_bit ) )  {
-				if(rt_g.debug&DEBUG_SHOOT)rt_log("skipping %s\n", stp->st_name);
+				if(rt_g.debug&DEBUG_SHOOT)rt_log("eff skip %s\n", stp->st_name);
 				ap->a_rt_i->nmiss_tree++;
 				continue;	/* already shot */
 			}
 
 			/* Shoot a ray */
-			if(rt_g.debug&DEBUG_SHOOT)rt_log("shooting %s\n", stp->st_name);
 			BITSET( solidbits->be_v, stp->st_bit );
 
 			/* If ray does not strike the bounding RPP, skip on */
@@ -403,10 +402,12 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 			      stp->st_min, stp->st_max ) ||
 			      dist_corr + newray.r_max < -10.0 )
 			)  {
+				if(rt_g.debug&DEBUG_SHOOT)rt_log("rpp skip %s\n", stp->st_name);
 				ap->a_rt_i->nmiss_solid++;
 				continue;	/* MISS */
 			}
 
+			if(rt_g.debug&DEBUG_SHOOT)rt_log("shooting %s\n", stp->st_name);
 			ap->a_rt_i->nshots++;
 			if( (newseg = rt_functab[stp->st_id].ft_shot( 
 				stp, &newray, ap )
