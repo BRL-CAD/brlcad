@@ -113,6 +113,14 @@ if ![info exists mged_gui(mged,screen)] {
     set mged_gui(mged,screen) $mged_default(display)
 }
 
+if ![info exists mged_gui(databaseDir)] {
+    set mged_gui(databaseDir) [pwd]
+}
+
+if ![info exists mged_gui(loadScriptDir)] {
+    set mged_gui(loadScriptDir) [pwd]
+}
+
 if ![info exists tk_version] {
     loadtk
 }
