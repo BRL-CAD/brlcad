@@ -624,8 +624,15 @@ register struct application *ap;
 	RT_LIST_INIT( &waiting_segs.l );
 	RT_LIST_INIT( &finished_segs.l );
 
-	if( RT_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
-		RT_LIST_INIT(  &resp->re_solid_bitv );
+	if( RT_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
+		RT_LIST_INIT( &resp->re_parthead );
+
+		/* If one is, they all probably are.  Runs once per processor. */
+		if( RT_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
+			RT_LIST_INIT(  &resp->re_solid_bitv );
+		if( RT_LIST_UNINITIALIZED( &resp->re_region_bitv ) )
+			RT_LIST_INIT(  &resp->re_region_bitv );
+	}
 	if( RT_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
 		solidbits = bu_bitv_new( rtip->nsolids );
 	} else {
@@ -636,8 +643,6 @@ register struct application *ap;
 	}
 	bu_bitv_clear(solidbits);
 
-	if( RT_LIST_UNINITIALIZED( &resp->re_region_bitv ) )
-		RT_LIST_INIT(  &resp->re_region_bitv );
 	if( RT_LIST_IS_EMPTY( &resp->re_region_bitv ) )  {
 		BU_GETSTRUCT( regionbits, bu_ptbl );
 		bu_ptbl_init( regionbits, 7 );
