@@ -1544,8 +1544,19 @@ char	**argv;
 	return TCL_OK;
 
 bail_out:
-    if (state != ST_VIEW)
-	button(BE_REJECT);
+    if(state != ST_VIEW){
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+
+      bu_vls_printf(&vls, "%s", interp->result);
+      button(BE_REJECT);
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+
+      bu_vls_free(&vls);
+    }
+
     if (path_piece)
     {
 	for (i = 0; path_piece[i] != 0; ++i)
@@ -1766,7 +1777,7 @@ Tcl_Interp *interp;
     }
   }
 
-  if(mged_variables->adcflag){
+  if(adc_draw){
     bu_vls_printf(&vls, "xadc = %d\n", dv_xadc);
     bu_vls_printf(&vls, "yadc = %d\n", dv_yadc);
     bu_vls_printf(&vls, "ang1 = %d\n", dv_1adc);
@@ -3886,7 +3897,7 @@ char	**argv;
 	MAT4X3PNT( view, model2view, model );
 
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "%.15e %.15e %.15e\n", V3ARGS(view) );
+	bu_vls_printf(&str, "%.15e %.15e %.15e", V3ARGS(view) );
 	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
 
@@ -3920,18 +3931,325 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	VSET(view, atof(argv[1]),
-		atof(argv[2]),
-		atof(argv[3]) );
-
-	MAT4X3PNT( model, view2model, view );
+	VSET(view, atof(argv[1]), atof(argv[2]), atof(argv[3]));
+	MAT4X3PNT(model, view2model, view);
 
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "%.15e %.15e %.15e\n", V3ARGS(model) );
+	bu_vls_printf(&str, "%.15e %.15e %.15e", V3ARGS(model) );
 	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
 
 	return TCL_OK;
+}
+
+/*
+ *			F _ M O D E L 2 V I E W _ L U
+ *
+ *  Given a point in model coordinates (local units),
+ *  convert it to view coordinates (local units).
+ */
+int
+f_model2view_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  struct bu_vls vls;
+  fastf_t f;
+  point_t view_pt;
+  point_t model_pt;
+
+  bu_vls_init(&vls);
+
+  if(argc != 4){
+    bu_vls_printf(&vls, "help model2view_lu");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_ERROR;
+  }
+
+  VSET(model_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
+  VSCALE(model_pt, model_pt, local2base);
+  MAT4X3PNT(view_pt, model2view, model_pt);
+  f = Viewscale * base2local;
+  VSCALE(view_pt, view_pt, f);
+
+  bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(view_pt));
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+
+  bu_vls_free(&vls);
+  return TCL_OK;
+}
+
+/*
+ *			F _ V I E W 2 M O D E L _ L U 
+ *
+ *  Given a point in view coordinates (local units),
+ *  convert it to model coordinates (local units).
+ */
+int
+f_view2model_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  struct bu_vls vls;
+  fastf_t sf;
+  point_t view_pt;
+  point_t model_pt;
+
+  bu_vls_init(&vls);
+
+  if(argc != 4){
+    bu_vls_printf(&vls, "help view2model_lu");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_ERROR;
+  }
+
+  sf = 1.0 / (Viewscale * base2local);
+  VSET(view_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
+  VSCALE(view_pt, view_pt, sf);
+  MAT4X3PNT(model_pt, view2model, view_pt);
+  VSCALE(model_pt, model_pt, base2local);
+
+  bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(model_pt));
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+
+  bu_vls_free(&vls);
+  return TCL_OK;
+}
+
+/*
+ *			F _ M O D E L 2 G R I D _ L U
+ *
+ *  Given a point in model coordinates (local units),
+ *  convert it to grid coordinates (local units).
+ */
+int
+f_model2grid_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  struct bu_vls vls;
+  fastf_t f;
+  point_t view_pt;
+  point_t model_pt;
+  point_t mo_view_pt;           /* model origin in view space */
+  point_t diff;
+
+  bu_vls_init(&vls);
+
+  if(argc != 4){
+    bu_vls_printf(&vls, "help model2grid_lu");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_ERROR;
+  }
+
+  VSETALL(model_pt, 0.0);
+  MAT4X3PNT(mo_view_pt, model2view, model_pt);
+
+  VSET(model_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
+  VSCALE(model_pt, model_pt, local2base);
+  MAT4X3PNT(view_pt, model2view, model_pt);
+
+  VSUB2(diff, view_pt, mo_view_pt);
+  f = Viewscale * base2local;
+  VSCALE(diff, diff, f);
+
+  bu_vls_printf(&vls, "%.15e %.15e", diff[X], diff[Y]);
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+
+  bu_vls_free(&vls);
+  return TCL_OK;
+}
+
+/*
+ *			F _ G R I D 2 M O D E L _ L U
+ *
+ *  Given a point in grid coordinates (local units),
+ *  convert it to model coordinates (local units).
+ */
+int
+f_grid2model_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct bu_vls vls;
+  fastf_t f;
+  point_t view_pt;
+  point_t model_pt;
+  point_t mo_view_pt;           /* model origin in view space */
+  point_t diff;
+
+  bu_vls_init(&vls);
+
+  if(argc != 3){
+    bu_vls_printf(&vls, "help f_grid2model_lu");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_ERROR;
+  }
+
+  f = 1.0 / (Viewscale * base2local);
+  diff[X] = atof(argv[1]) * f;
+  diff[Y] = atof(argv[2]) * f;
+  diff[Z] = 0.0;
+
+  VSETALL(model_pt, 0.0);
+  MAT4X3PNT(mo_view_pt, model2view, model_pt);
+
+  VADD2(view_pt, mo_view_pt, diff);
+  MAT4X3PNT(model_pt, view2model, view_pt);
+  VSCALE(model_pt, model_pt, base2local);
+
+  bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(model_pt));
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+
+  bu_vls_free(&vls);
+  return TCL_OK;
+}
+
+/*
+ *			F _ V I E W 2 G R I D _ L U 
+ *
+ *  Given a point in view coordinates (local units),
+ *  convert it to grid coordinates (local units).
+ */
+int
+f_view2grid_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  struct bu_vls vls;
+  fastf_t f;
+  point_t view_pt;
+  point_t model_pt;
+  point_t mo_view_pt;           /* model origin in view space */
+  point_t diff;
+
+  bu_vls_init(&vls);
+
+  if(argc != 4){
+    bu_vls_printf(&vls, "help f_view2grid_lu");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_ERROR;
+  }
+
+  VSET(view_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
+
+  VSETALL(model_pt, 0.0);
+  MAT4X3PNT(mo_view_pt, model2view, model_pt);
+  f = Viewscale * base2local;
+  VSCALE(mo_view_pt, mo_view_pt, f);
+  VSUB2(diff, view_pt, mo_view_pt);
+
+  bu_vls_printf(&vls, "%.15e %.15e", diff[X], diff[Y]);
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+
+  bu_vls_free(&vls);
+  return TCL_OK;
+}
+
+/*
+ *			F _ G R I D 2 V I E W _ L U
+ *
+ *  Given a point in grid coordinates (local units),
+ *  convert it to view coordinates (local units).
+ */
+int
+f_grid2view_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct bu_vls vls;
+  fastf_t f;
+  point_t view_pt;
+  point_t model_pt;
+  point_t mo_view_pt;           /* model origin in view space */
+  point_t diff;
+
+  bu_vls_init(&vls);
+
+  if(argc != 3){
+    bu_vls_printf(&vls, "help f_grid2view_lu");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_ERROR;
+  }
+
+  diff[X] = atof(argv[1]);
+  diff[Y] = atof(argv[2]);
+  diff[Z] = 0.0;
+
+  VSETALL(model_pt, 0.0);
+  MAT4X3PNT(mo_view_pt, model2view, model_pt);
+  f = Viewscale * base2local;
+  VSCALE(mo_view_pt, mo_view_pt, f);
+  VADD2(view_pt, mo_view_pt, diff);
+
+  bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(view_pt));
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+
+  bu_vls_free(&vls);
+  return TCL_OK;
+}
+
+/*
+ *			F _ V I E W 2 M O D E L _ V E C
+ *
+ *  Given a vector in view coordinates,
+ *  convert it to model coordinates.
+ */
+int
+f_view2model_vec(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct bu_vls vls;
+  point_t model_vec;
+  point_t view_vec;
+  mat_t inv_Viewrot;
+
+  bu_vls_init(&vls);
+
+  if(argc != 4){
+    bu_vls_printf(&vls, "help f_view2model_vec");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+
+    return TCL_ERROR;
+  }
+
+  VSET(view_vec, atof(argv[1]), atof(argv[2]), atof(argv[3]));
+  bn_mat_inv(inv_Viewrot, Viewrot);
+  MAT4X3PNT(model_vec, inv_Viewrot, view_vec);
+
+  bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(model_vec));
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+
+  bu_vls_free(&vls);
+  return TCL_OK;
 }
 
 int
@@ -3941,52 +4259,52 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	point_t look;
-	point_t eye;
-	point_t tmp;
-	point_t new_center;
-	vect_t dir;
-	fastf_t new_az, new_el;
-	int status;
-	struct bu_vls vls;
+  point_t look;
+  point_t eye;
+  point_t tmp;
+  point_t new_center;
+  vect_t dir;
+  fastf_t new_az, new_el;
+  int status;
+  struct bu_vls vls;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+  if(dbip == DBI_NULL)
+    return TCL_OK;
 
-	if(argc < 4 || 4 < argc){
-	  struct bu_vls vls;
+  if(argc < 4 || 4 < argc){
+    struct bu_vls vls;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help lookat");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help lookat");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
-	VSET( look, atof(argv[1]),
-		atof(argv[2]),
-		atof(argv[3]) );
+  VSET( look, atof(argv[1]),
+	atof(argv[2]),
+	atof(argv[3]) );
 
-	VSCALE( look, look, local2base );
+  VSCALE( look, look, local2base );
 
-	VSET( tmp, 0, 0, 1 );
-	MAT4X3PNT(eye, view2model, tmp);
+  VSET( tmp, 0, 0, 1 );
+  MAT4X3PNT(eye, view2model, tmp);
 
-	VSUB2( dir, eye, look );
-	VUNITIZE( dir );
-	mat_ae_vec( &new_az, &new_el, dir );
+  VSUB2( dir, eye, look );
+  VUNITIZE( dir );
+  mat_ae_vec( &new_az, &new_el, dir );
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "ae %-15.10f %-15.10f %-15.10f", new_az, new_el, curr_dm_list->s_info->twist);
-	status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "ae %-15.10f %-15.10f %-15.10f", new_az, new_el, curr_dm_list->s_info->twist);
+  status = Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
 
-	VJOIN1( new_center, eye, -Viewscale, dir );
-	MAT_DELTAS_VEC_NEG( toViewcenter, new_center );
+  VJOIN1( new_center, eye, -Viewscale, dir );
+  MAT_DELTAS_VEC_NEG( toViewcenter, new_center );
 
-	new_mats();
+  new_mats();
 
-	return( status );
+  return( status );
 }
 
 int
@@ -4723,6 +5041,8 @@ char	**argv;
     return TCL_ERROR;
   }
 
+  VSCALE(rvec, rvec, -1.0);
+
   return mged_vrot_xyz(mged_variables->rotate_about, rvec);
 }
 
@@ -4786,6 +5106,10 @@ char    **argv;
   if(sscanf(argv[3], "%lf", &rvec[Z]) < 1){
     Tcl_AppendResult(interp, "f_rot: bad z value - %s\n", argv[3]);
     return TCL_ERROR;
+  }
+
+  if(state != ST_S_EDIT && state != ST_O_EDIT){
+    VSCALE(rvec, rvec, -1.0);
   }
 
   return mged_rot_xyz(mged_variables->rotate_about, rvec);
@@ -4981,6 +5305,10 @@ char    **argv;
   if(sscanf(argv[3], "%lf", &tvec[Z]) < 1){
     Tcl_AppendResult(interp, "f_tra: bad z value - %s\n", argv[3]);
     return TCL_ERROR;
+  }
+
+  if(state != ST_S_EDIT && state != ST_O_EDIT){
+    VSCALE(tvec, tvec, -1.0);
   }
 
   return mged_tran(tvec);
