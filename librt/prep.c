@@ -264,7 +264,6 @@ register struct soltab	*stp;
 
 	if( rt_functab[id].ft_plot(
 		&vhead,
-		stp->st_pathmat,
 		&intern,
 		0.0,		/* absolute tolerance */
 		0.01,		/* relative tolerance */
