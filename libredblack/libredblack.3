@@ -132,9 +132,11 @@ and adds it to
 The node is inserted in the appropriate place
 in each order,
 as determined by the comparison functions.
+On failure,
 .I rb_insert
-returns 1 on success
-and 0 on failure.
+returns -1.
+Otherwise it returns the number of orders
+for which the new node compared equal to an existing node in the tree.
 .PP
 .I rb_extreme
 searches through
