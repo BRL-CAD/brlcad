@@ -1014,8 +1014,8 @@ CONST point_t			new_view_pt;
 	if( reproject_mode != 2 )  {
 		register int dx, dy;
 		/* Don't reproject if too pixel moved too far on the screen */
-		dx = ix - op->ff_x;
-		dy = iy - op->ff_y;
+		dx = ix - ip->ff_x;
+		dy = iy - ip->ff_y;
 		if( dx*dx + dy*dy > rt_scr_lim_dist_sq )  return 0;
 
 		/* Don't reproject for too many frame-times */
