@@ -336,7 +336,7 @@ init_Lgts()
 	lgts[1].elev = 60.0/DEGRAD;
 	lgts[1].dist = 10000.0;
 	lgts[1].energy = 1.0;
-	lgts[0].stp = SOLTAB_NULL;
+	lgts[1].stp = SOLTAB_NULL;
 
 	lgt_db_size = 2;
 	return;

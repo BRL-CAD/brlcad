@@ -2826,7 +2826,7 @@ char	**args;
 		}
 	else
 	if( tty && ! movie.m_keys )
-		{	int abortsvkey = TRUE;
+		{	int abortsvkey;
 		(void) sprintf( prompt, "Use key frame file ? [y|n](%c) ",
 				svkey_file[0] == '\0' ? 'n' : 'y' );
 		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
@@ -2834,7 +2834,11 @@ char	**args;
 		else
 			abortsvkey = svkey_file[0] == '\0';
 		if( abortsvkey )
+			{
+			svkey_file[0] = '\0'; /* disable reading of key frame */
+			save_view_flag = FALSE;
 			return	1;
+			}
 		(void) sprintf( prompt,
 				"Name of key frame file ? (%s) ",
 				svkey_file
@@ -3416,6 +3420,7 @@ int	frame;
 		struct soltab *eye_stp = NULL;  /* Initialize to shut up the */
 		struct soltab *grid_stp = NULL; /* stupid Cray compiler. */
 	prnt_Event( "Setting up light sources..." );
+	lgts[0].stp = NULL; /* flags use of eye solid */
 
 	/* Compute observer (ambient light) position in model space. */
 	if( save_view_flag )
@@ -3458,6 +3463,7 @@ int	frame;
 	    &&	(grid_stp = rt_find_solid( rt_ip, "GRID" )) != SOLTAB_NULL
 		) /* Eye and grid are modeled explicitly. */
 		{	fastf_t	mag;
+		lgts[0].stp = eye_stp;
 		VMOVE( lgts[0].loc, eye_stp->st_center );
 		VMOVE( grid_loc, grid_stp->st_center );
 		/* Observer positioned by actual solid in data base. */
@@ -3469,6 +3475,20 @@ int	frame;
 			return	0;
 			}
 		VUNITIZE( lgts[0].dir );
+		rt_log( "Using eye solid (%s) and grid solid \"GRID\".\n",
+			lgts[0].name );
+		rt_log( "\teye center = <%g,%g,%g>\n",
+			eye_stp->st_center[X],
+			eye_stp->st_center[Y],
+			eye_stp->st_center[Z] );
+		rt_log( "\tgrid center = <%g,%g,%g>\n",
+			grid_stp->st_center[X],
+			grid_stp->st_center[Y],
+			grid_stp->st_center[Z] );
+		rt_log( "\tviewing direction = <%g,%g,%g>\n",
+			lgts[0].dir[X],
+			lgts[0].dir[Y],
+			lgts[0].dir[Z] );
 		VCROSS( grid_hor, lgts[0].dir, neg_z_axis );
 		if( (mag = MAGNITUDE( grid_hor )) < EPSILON )
 			{ /* Must be top view. */
@@ -3479,7 +3499,7 @@ int	frame;
 			{
 			/* Unitize first. */
 			VSCALE( grid_hor, grid_hor, 1.0/mag );
-			VCROSS( grid_ver, grid_hor, neg_x_axis );
+			VCROSS( grid_ver, lgts[0].dir, grid_hor );
 			if( (mag = MAGNITUDE( grid_ver )) < EPSILON )
 				{ /* Must be top ([+/-]90,90) view. */
 				VMOVE( grid_ver, y_axis );
@@ -3497,6 +3517,11 @@ int	frame;
 					}
 				}
 			}
+#ifdef VDEBUG
+		rt_log( "\tgrid vectors: hor=<%g,%g,%g> ver=<%g,%g,%g>\n",
+			grid_hor[X], grid_hor[Y], grid_hor[Z],
+			grid_ver[X], grid_ver[Y], grid_ver[Z] );
+#endif
 		}
 	else	/* Automatic positioning of grid based on perspective. */
 	if( rel_perspective >= 0.0 )

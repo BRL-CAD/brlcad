@@ -155,13 +155,18 @@ static unsigned short *hl_dstmap = NULL;
 #define PT_EMPTY	0
 #define PT_OHIT		1
 #define PT_BEHIND	2
+#define PT_EYE		3
+#define PT_GRID		4
 
 #define Get_Partition( ap, pp, pt_headp, func )\
 	{	int failure;\
 	for(	pp = pt_headp->pt_forw;\
 		(failure=PT_EMPTY, pp != pt_headp)\
 	    &&	(failure=PT_OHIT, pp->pt_outhit != (struct hit *) NULL)\
-	    &&	(failure=PT_BEHIND, pp->pt_outhit->hit_dist < BEHIND_ME_TOL);\
+	    && ((failure=PT_BEHIND, pp->pt_outhit->hit_dist < BEHIND_ME_TOL)\
+	     || (failure=PT_EYE, pp->pt_inseg->seg_stp == lgts[0].stp)\
+	     ||	(failure=PT_GRID, lgts[0].stp != NULL &&\
+		 !strcmp( pp->pt_inseg->seg_stp->st_name, "GRID" )));\
 		pp = pp->pt_forw\
 		)\
 		{ struct partition *pt_back = pp->pt_back;\
@@ -180,6 +185,8 @@ static unsigned short *hl_dstmap = NULL;
 			ap->a_level, ap->a_x, ap->a_y );\
 		return	ap->a_miss( ap );\
 	case PT_BEHIND :\
+	case PT_EYE :\
+	case PT_GRID :\
 		break;\
 		}\
 	}
@@ -278,7 +285,7 @@ int frame;
 		ag.a_hit = f_Region;
 		ag.a_miss = f_R_Miss;
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
-		ag.a_onehit = true;
+		ag.a_onehit = false;
 		}
 	else
 	if( hiddenln_draw )
@@ -490,6 +497,12 @@ render_Scan()
 					VUNITIZE( a.a_ray.r_dir );
 					}
 				a.a_level = 0; /* Recursion level (bounces). */
+#ifdef VDEBUG
+				rt_log( "r_dir=<%g,%g,%g>\n",
+					a.a_ray.r_dir[X],
+					a.a_ray.r_dir[Y],
+					a.a_ray.r_dir[Z] );
+#endif
 				if( ir_mapping & IR_OCTREE )
 					{
 					if( ir_shootray_octree( &a ) == -1 )
@@ -743,14 +756,6 @@ struct partition *pt_headp;
 		RT_HIT_NORM( ihitp, stp, rp );
 		Fix_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, stp );
 		}
-#if 0
-	{	register struct hit *ohitp;
-	stp = pp->pt_outseg->seg_stp;
-	ohitp = pp->pt_outhit;
-	RT_HIT_NORM( ohitp, stp, &(ap->a_ray) );
-	Fix_Oflip( pp, ohitp->hit_normal, ap->a_ray.r_dir, stp );
-	}
-#endif
 
 	/* See if we hit a light source. */
 	{	register int i;
