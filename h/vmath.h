@@ -814,6 +814,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * _f; }
 #endif /* SHORT_VECTORS */
 
+#define MAT4XSCALOR(o,m,i) \
+	{(o) = (i) / (m)[15];}
+
 /* Multiply a Relative 3-Vector by most of a 4x4 matrix */
 #define VEC3X4MAT(o,i,m) \
 	{ register double _f; 	_f = 1.0/((m)[15]); \
