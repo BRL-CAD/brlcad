@@ -1670,7 +1670,6 @@ char 		**argv;
 		default:
 			Tcl_AppendResult(interp,"who: argument not understood\n", (char *)NULL);
 			return TCL_ERROR;
-			break;
 		}
 	}
 		
