@@ -197,7 +197,7 @@ register struct application *ap;
 		/* mark elements to be skipped with ary_stp[] = SOLTAB_NULL */
 		rt_functab[id].ft_vshot(
 			ary_stp, ary_rp, ary_seg,
-			rtip->rti_nsol_by_type[id], ap );
+			rtip->rti_nsol_by_type[id], ap->a_resource );
 
 		/* set bits for all solids shot at */
 
@@ -338,12 +338,12 @@ out:
 
 /* Stub function which will "similate" a call to a vector shot routine */
 /*void*/
-rt_vstub( stp, rp, segp, n, ap)
+rt_vstub( stp, rp, segp, n, resp )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
-struct application        *ap; /* pointer to an application */
+struct resource		*resp;
 {
 	register int    i;
 	register struct seg *tmp_seg;
@@ -352,8 +352,8 @@ struct application        *ap; /* pointer to an application */
 	for (i = 0; i < n; i++) {
 		if (stp[i] != 0){ /* skip call if solid table pointer is NULL */
 			/* do scalar call */
-			tmp_seg =
-			    rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap);
+			tmp_seg = rt_functab[stp[i]->st_id].ft_shot(
+				stp[i], rp[i], resp);
 
 			/* place results in segp array */
 			if ( tmp_seg == 0) {
@@ -361,7 +361,7 @@ struct application        *ap; /* pointer to an application */
 			}
 			else {
 				segp[i] = *tmp_seg; /* structure copy */
-				FREE_SEG(tmp_seg, ap->a_resource);
+				FREE_SEG(tmp_seg, resp);
 			}
 		}
 	}
