@@ -596,12 +596,13 @@ set -S2 "/bin/sh"
 #	undef	sun
 #	undef	sun4
 #	define	MTYPE	sun4
-#	define	BSD	42
+#	define	BSD	43
 #	define	HAS_TCP	1
 #	define	OPTIMIZER	-O2
 #	define	LIBMALLOC	/* use vendor library */
+#	define	LIBRT_TIMER	timer42
 #	if 1
-/*		Sun with X11 (aka "openwin") */
+/*		Sun with X11 (aka "openwin").  Default for SunOS 4.1.1 */
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
 			-I/usr/openwin/include -DIF_X
