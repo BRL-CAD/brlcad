@@ -291,7 +291,6 @@ int entity_no;
 	}
 
 	crv = rt_nurb_new_cnurb( degree+1, num_pts+degree+1, num_pts, pt_type );
-
 	/* knot vector */
 	for( i=0 ; i<num_pts+degree+1 ; i++ )
 	{
@@ -307,7 +306,7 @@ int entity_no;
 			crv->ctl_points[i*ncoords+2] = a;
 	}
 
-	/* vertices */
+	/* control points */
 	for( i=0 ; i<num_pts ; i++ )
 	{
 		if( dir[entity_no]->status & 500 )
@@ -339,7 +338,6 @@ int entity_no;
 		crv->ctl_points[i*ncoords] = pt2[X];
 		crv->ctl_points[i*ncoords+1] = pt2[Y];
 	}
-
 	return( crv );
 }
 
@@ -569,7 +567,6 @@ struct face_g_snurb *srf;
 			Assign_cnurb_to_eu( eu, crv );
 
 			rt_nurb_free_cnurb( crv );
-
 			break;
 		default:
 			rt_log( "Curves of type %d are not yet handled for trimmed surfaces\n", entity_type );
@@ -633,8 +630,18 @@ struct faceuse *fu;
 					Add_trim_curve( (curve_list[i]-1)/2, lu, srf );
 
 				rt_free( (char *)curve_list , "Make_trim_loop: curve_list" );
+
+				/* if last EU is zero length, kill it */
 				eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
-				nmg_keu( eu );
+				if( bn_dist_pt3_pt3( eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord ) < tol.dist )
+					nmg_keu( eu );
+				else
+				{
+					bu_log( "ERROR: composite trimming curve is not closed!!!!\n" );
+					bu_log( "\ttrim curve is entity #%d, parameters at line #%d\n",
+						entity_no, dir[entity_no]->param );
+					bu_log( "\tThis is likely to result in failure to convert (core dump)\n" );
+				}
 			}
 			break;
 		case 100:	/* circular arc (must be full cirle here) */
@@ -827,9 +834,9 @@ struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct vertexuse *vu;
-	struct vertex *v[4];
-	fastf_t knots[4];
-	fastf_t ctl_points[4];
+	fastf_t *knots;
+	fastf_t u,v;
+	fastf_t *ctl_points;
 	int edge_no=0;
 	int pt_type;
 	int ncoords;
@@ -851,10 +858,8 @@ struct faceuse *fu;
 	for( i=0 ; i<3 ; i++ )
 		(void)nmg_eusplit( (struct vertex *)NULL, eu, 0 );
 
-	knots[0] = 0.0;
-	knots[1] = 0.0;
-	knots[2] = 1.0;
-	knots[3] = 1.0;
+
+	/* assign vertex geometry */
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 		int u_index,v_index;
@@ -867,41 +872,79 @@ struct faceuse *fu;
 			case 0:
 				u_index = 0;
 				v_index = 0;
-				ctl_points[0] = 0.0;
-				ctl_points[1] = 0.0;
-				ctl_points[2] = 1.0;
-				ctl_points[3] = 0.0;
+				u = srf->u.knots[0];
+				v = srf->v.knots[0];
 				break;
 			case 1:
 				u_index = srf->s_size[0] - 1;
 				v_index = 0;
-				ctl_points[0] = 0.0;
-				ctl_points[1] = 1.0;
-				ctl_points[2] = 1.0;
-				ctl_points[3] = 1.0;
+				u = srf->u.knots[srf->u.k_size - 1];
+				v = srf->v.knots[0];
 				break;
 			case 2:
 				u_index = srf->s_size[0] - 1;
 				v_index = srf->s_size[1] - 1;
-				ctl_points[0] = 1.0;
-				ctl_points[1] = 1.0;
-				ctl_points[2] = 0.0;
-				ctl_points[3] = 1.0;
+				u = srf->u.knots[srf->u.k_size - 1];
+				v = srf->v.knots[srf->v.k_size - 1];
 				break;
 			case 3:
 				u_index = 0;
 				v_index = srf->s_size[0] - 1;
-				ctl_points[0] = 0.0;
-				ctl_points[1] = 1.0;
-				ctl_points[2] = 0.0;
-				ctl_points[3] = 0.0;
+				u = srf->u.knots[0];
+				v = srf->v.knots[srf->v.k_size - 1];
 				break;
 		}
 		nmg_vertex_gv( vu->v_p, &srf->ctl_points[(u_index*srf->s_size[1] + v_index)*ncoords] );
+		Assign_vu_geom( vu, u, v, srf );
+		edge_no++;
+	}
+
+	/* assign edge geometry */
+	edge_no = 0;
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		NMG_CK_EDGEUSE( eu );
+		vu = eu->vu_p;
+		NMG_CK_VERTEXUSE( vu );
 		if( planar )
 			nmg_edge_g( eu );
 		else
+		{
+			ctl_points = (fastf_t *)bu_calloc( sizeof( fastf_t ), 4, "ctl_points" );
+			switch( edge_no )
+			{
+				case 0:
+					ctl_points[0] = 0.0;
+					ctl_points[1] = 0.0;
+					ctl_points[2] = 1.0;
+					ctl_points[3] = 0.0;
+					break;
+				case 1:
+					ctl_points[0] = 1.0;
+					ctl_points[1] = 0.0;
+					ctl_points[2] = 1.0;
+					ctl_points[3] = 1.0;
+					break;
+				case 2:
+					ctl_points[0] = 1.0;
+					ctl_points[1] = 1.0;
+					ctl_points[2] = 0.0;
+					ctl_points[3] = 1.0;
+					break;
+				case 3:
+					ctl_points[0] = 0.0;
+					ctl_points[1] = 1.0;
+					ctl_points[2] = 0.0;
+					ctl_points[3] = 0.0;
+					break;
+			}
+			knots = (fastf_t *)bu_calloc( sizeof( fastf_t ), 4, "knots" );
+			knots[0] = 0.0;
+			knots[1] = 0.0;
+			knots[2] = 1.0;
+			knots[3] = 1.0;
 			nmg_edge_g_cnurb( eu, 2, 4, knots, 2, pt_type, ctl_points );
+		}
 		edge_no++;
 	}
 
@@ -961,6 +1004,12 @@ struct shell *s;
 	m = nmg_find_model( &s->l.magic );
 	NMG_CK_MODEL( m );
 
+	if( bu_debug & BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "barriercheck at start of trim_surf():\n" );
+		bu_mem_barriercheck();
+	}
+
 	/* Acquiring Data */
 	if( dir[entityno]->param <= pstart )
 	{
@@ -1000,20 +1049,62 @@ struct shell *s;
 	 */
 	for( i=0 ; i<3 ; i++ )
 		verts[i] = (struct vertex *)NULL;
+
+	if( bu_debug & BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "barriercheck before making face:\n" );
+		bu_mem_barriercheck();
+	}
+
 	fu = nmg_cface( s, verts, 3 );
 	Assign_surface_to_fu( fu, srf );
 
 	kill_lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
 
 	if( !has_outer_boundary )
+	{
+		if( bu_debug & BU_DEBUG_MEM_CHECK )
+		{
+			bu_log( "barriercheck before making default loop():\n" );
+			bu_mem_barriercheck();
+		}
+
 		lu = Make_default_loop( srf, fu);
+	}
 	else
+	{
+		if( bu_debug & BU_DEBUG_MEM_CHECK )
+		{
+			bu_log( "barriercheck before Make_loop():\n" );
+			bu_mem_barriercheck();
+		}
+
 		lu = Make_loop( (outer_loop-1)/2, OT_SAME, surf_de, srf, fu );
+	}
+
+	if( bu_debug & BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "barriercheck after making loop:\n" );
+		bu_mem_barriercheck();
+	}
+
 
 	(void)nmg_klu( kill_lu );
 
 	/* first loop is an outer loop, orientation must be OT_SAME */
+	if( bu_debug & BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "barriercheck before nmg_snurb_calc_lu_uv_orient(():\n" );
+		bu_mem_barriercheck();
+		bu_log( "check complete!!!\n" );
+	}
+
 	lu_uv_orient = nmg_snurb_calc_lu_uv_orient( lu );
+	if( bu_debug & BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "barriercheck after nmg_snurb_calc_lu_uv_orient(():\n" );
+		bu_mem_barriercheck();
+	}
 	if( lu_uv_orient == OT_SAME )
 		nmg_set_lu_orientation( lu, 0 );
 	else
@@ -1462,6 +1553,7 @@ Convtrimsurfs()
 		if( Find_pt_in_fu( fu, mid_pt, ray_dir ) )
 		{
 			bu_log( "Convtrimsurfs: Cannot find a point in fu (x%x)\n", fu );
+			nmg_pr_fu( fu, " " );
 			bu_bomb( "Convtrimsurfs: Cannot find a point in fu\n" );
 		}
 
