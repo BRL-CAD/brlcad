@@ -15,10 +15,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	char.c - routines for displaying a string on a frame buffer.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <fb.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "fb.h"
+#include "vmath.h"
+#include "raytrace.h"
+
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./font.h"
+
 #define BUFFSIZ 200
 STATIC int	bitx();
 STATIC void	do_char();
@@ -119,7 +130,7 @@ register int	xpos, ypos;
 			weight = (fastf_t) sum / sample_sz;
 			if( fb_seek( fbiop, x, ypos + up ) == -1 )
 				continue;
-			if( fb_rpixel( fbiop, (RGBpixel *) pixel ) == -1 )
+			if( fb_rpixel( fbiop, (unsigned char *) pixel ) == -1 )
 				{
 				rt_log( "\"%s\" (%d) read of pixel from <%d,%d> failed.\n",
 					__FILE__, __LINE__, x, ypos
@@ -131,7 +142,7 @@ register int	xpos, ypos;
 			pixel[BLU] = pixel[BLU]*(1.0-weight) + FONTCOLOR_BLU*weight;
 			if( fb_seek( fbiop, x, ypos + up ) == -1 )
 				continue;
-			if( fb_wpixel( fbiop, (RGBpixel *) pixel ) == -1 )
+			if( fb_wpixel( fbiop, (unsigned char *) pixel ) == -1 )
 				{
 				rt_log( "\"%s\" (%d) write of pixel to <%d,%d> failed.\n",
 					__FILE__, __LINE__, x, ypos
