@@ -1766,10 +1766,11 @@ int		nodelay;
 		for( j = 0; j < FD_SETSIZE; j++ ) 
 			if( FD_ISSET( j, &bits ) ) break;
 			
-		if( j >= FD_SETSIZE )  {   /* No fd's in bits! */
+		if( j < FD_SETSIZE )  {
+			/* Some fd is ready for I/O */
 			(void)pkg_suckin(pc);
 		} else {
-			/* Odd condition */
+			/* Odd condition, bits! */
 			sprintf(errbuf,
 				"pkg_checkin: select returned %d, bits=0\n",
 				i );
