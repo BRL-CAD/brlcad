@@ -753,6 +753,11 @@ genptr_t		user_ptr1,user_ptr2,user_ptr3;
  *  *tsp and *total_path with full state information along the way.
  *  In a better world, there would have been a "combined_tree_state" arg.
  *
+ *  Parameter 'depth' controls how much of 'new_path' is used:
+ *	0	use all of new_path
+ *	>0	use only this many of the first elements of the path
+ *	<0	use all but this many path elements.
+ *
  *  A much more complete version of rt_plookup() and pathHmat().
  *  There is also a TCL interface.
  *
