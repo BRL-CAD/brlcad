@@ -277,12 +277,13 @@ char	*argv[];
 
 		infds = select_list;	/* struct copy */
 
-		tv.tv_sec = 60L;
+		tv.tv_sec = 3L;
 		tv.tv_usec = 0L;
 		if( (select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, 
 			     &tv )) == 0 ) {
 			/* printf("select timeout\n"); */
 			if(fbp) fb_poll(fbp);
+			dispatcher();
 			continue;
 		}
 #if 0
@@ -376,11 +377,12 @@ dispatcher()
 	if( sent_one )  return 0;
 
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
-		if( rtnodes[i].fd != 0 )  continue;
+		if( rtnodes[i].fd <= 0 )  continue;
 		if( rtnodes[i].ncpus <= 0 )  continue;
 		ncpu += rtnodes[i].ncpus;
 		lowest_index = i;
 	}
+	rt_log("%s dispatcher() has %d cpus\n", stamp(), ncpu);
 	if( ncpu <= 0 )  return 0;
 
 	/* Have some CPUS! Parcel up 'height' scanlines. */
@@ -391,7 +393,7 @@ dispatcher()
 		struct rt_vls	msg;
 
 		if( start_line >= height )  break;
-		if( rtnodes[i].fd != 0 )  continue;
+		if( rtnodes[i].fd <= 0 )  continue;
 		if( rtnodes[i].ncpus <= 0 )  continue;
 
 		if( i <= lowest_index )  {
@@ -443,7 +445,8 @@ struct pkg_conn	*pcp;
 		if( pcp->pkc_fd > max_fd )  max_fd = pcp->pkc_fd;
 		setup_socket( pcp->pkc_fd );
 		rtnodes[i].host = host_lookup_of_fd(pcp->pkc_fd);
-rt_log("%s Connection from %s\n", stamp(), rtnodes[i].host->ht_name);
+
+		rt_log("%s Connection from %s\n", stamp(), rtnodes[i].host->ht_name);
 		return;
 	}
 	rt_log("rtsync: too many rtnode clients.  My cup runneth over!\n");
@@ -457,6 +460,7 @@ void
 drop_rtnode( sub )
 int	sub;
 {
+	rt_log("%s Dropping %s\n", stamp(), rtnodes[sub].host->ht_name);
 
 	if( rtnodes[sub].pkg != PKC_NULL )  {
 		pkg_close( rtnodes[sub].pkg );
@@ -605,7 +609,6 @@ rtsync_ph_alive(pc, buf)
 register struct pkg_conn *pc;
 char			*buf;
 {
-	struct rtnode	*np;
 	register int	i;
 	int		ncpu;
 
@@ -618,8 +621,9 @@ char			*buf;
 		rt_log("%s ALIVE %d cpus, %s\n", stamp(),
 			ncpu, rtnodes[i].host->ht_name );
 
-		np->ncpus = ncpu;
+		rtnodes[i].ncpus = ncpu;
 		if( buf )  free(buf);
+		return;
 	}
 	rt_bomb("ALIVE Message received from phantom pkg?\n");
 }

@@ -538,10 +538,11 @@ char			*buf;
 	int	min_res;
 	int	start_line;
 	int	end_line;
-	mat_t	toViewcenter;
-	mat_t	Viewrot;
 	quat_t	orient;
+	mat_t	toViewcenter;
 	fastf_t	viewscale;
+	point_t	viewcenter_model;
+	point_t	eye_screen;
 
 	RT_CK_RTI(rtip);
 
@@ -578,17 +579,31 @@ char			*buf;
 	start_line = atoi(argv[1]);
 	end_line = atoi(argv[2]);
 
-	VSET( eye_model, atof(argv[3]), atof(argv[4]), atof(argv[5]) );
+	width = fb_getwidth(fbp);
+	height = fb_getheight(fbp);
+
+	/* XXX NOT eye_model */
+	VSET( viewcenter_model, atof(argv[3]), atof(argv[4]), atof(argv[5]) );
 	VSET( orient, atof(argv[6]), atof(argv[7]), atof(argv[8]) );
 	orient[3] = atof(argv[9]);
 	viewscale = atof(argv[10]);
+VPRINT("viewcenter_model", viewcenter_model);
+HPRINT("orient", orient);
+
+	viewsize = 2 * viewscale;
+rt_log("viewsize = %g\n", viewsize);
+	mat_idn( Viewrotscale );
+	quat_quat2mat( Viewrotscale, orient );
 
 	mat_idn( toViewcenter );
-	mat_idn( Viewrot );
-	MAT_DELTAS_VEC_NEG( toViewcenter, eye_model );
-	quat_quat2mat( Viewrot, orient );
-	Viewrot[15] = viewscale;
-	mat_mul( model2view, Viewrot, toViewcenter );
+	MAT_DELTAS_VEC_NEG( toViewcenter, viewcenter_model );
+	mat_mul( model2view, Viewrotscale, toViewcenter );
+	Viewrotscale[15] = viewscale;
+	model2view[15] = viewscale;
+	mat_inv( view2model, model2view );
+
+	VSET( eye_screen, 0, 0, 1 );
+	MAT4X3PNT( eye_model, view2model, eye_screen );
 
 	seen_matrix = 1;
 
@@ -609,6 +624,8 @@ char			*buf;
 	rt_prep_timer();
 	do_run( start_line*width, end_line*width+width-1 );
 	(void)rt_read_timer( (char *)0, 0 );
+
+	rt_log("done!\n");
 
 	/* Signal done */
 
