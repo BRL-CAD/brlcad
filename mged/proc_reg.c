@@ -856,7 +856,6 @@ int op;
 			#endif
 
 			return( A );
-			break;
 		case OP_INTERSECT:
 
 			#ifdef debug
@@ -901,7 +900,6 @@ int op;
 			#endif
 
 			return( A );
-			break;
 		case OP_UNION:
 
 			#ifdef debug
@@ -1112,7 +1110,6 @@ int op;
 			#endif
 
 			return( A );
-			break;
 	}
 
 	/* should never get here */
