@@ -947,7 +947,9 @@ int arg;
 		}
 		NMG_CK_EDGEUSE(es_eu);
 		es_eu = RT_LIST_PNEXT_CIRC(edgeuse, es_eu);
-		rt_log("edgeuse selected=x%x\n", es_eu);
+		rt_log("edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n", es_eu,
+			V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+			V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
 		sedraw = 1;
 		return;
 	case ECMD_NMG_BACK:
@@ -957,7 +959,9 @@ int arg;
 		}
 		NMG_CK_EDGEUSE(es_eu);
 		es_eu = RT_LIST_PPREV_CIRC(edgeuse, es_eu);
-		rt_log("edgeuse selected=x%x\n", es_eu);
+		rt_log("edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n", es_eu,
+			V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+			V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
 		sedraw = 1;
 		return;
 	case ECMD_NMG_RADIAL:
@@ -967,7 +971,9 @@ int arg;
 		}
 		NMG_CK_EDGEUSE(es_eu);
 		es_eu = es_eu->eumate_p->radial_p;
-		rt_log("edgeuse selected=x%x\n", es_eu);
+		rt_log("edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n", es_eu,
+			V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+			V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
 		sedraw = 1;
 		return;
 	case ECMD_NMG_LEXTRU:
@@ -2867,7 +2873,9 @@ CONST vect_t	mousevec;
 			}
 			es_eu = e->eu_p;
 			NMG_CK_EDGEUSE(es_eu);
-			rt_log("edgeuse selected=x%x\n", es_eu);
+				rt_log("edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n", es_eu,
+				V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+				V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
 			sedraw = 1;
 		}
 		break;
