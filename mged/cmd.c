@@ -116,7 +116,7 @@ struct cmd_list *curr_cmd_list;
 extern void mged_view_obj_callback();
 
 extern int db_nowarn;	/* defined in ged.c */
-extern int create_db4;	/* defined in ged.c */
+extern int db_version;	/* defined in ged.c */
 
 int glob_compat_mode = 1;
 int output_as_return = 1;
@@ -2059,8 +2059,8 @@ Tcl_Interp *interp;
 	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&mged_default_dlist, TCL_LINK_INT);
 	bu_vls_strcpy(&vls, "mged_default(db_nowarn)");
 	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&db_nowarn, TCL_LINK_INT);
-	bu_vls_strcpy(&vls, "mged_default(create_db4)");
-	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&create_db4, TCL_LINK_INT);
+	bu_vls_strcpy(&vls, "mged_default(db_version)");
+	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&db_version, TCL_LINK_INT);
 
 	bu_vls_strcpy(&vls, "edit_class");
 	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&es_edclass, TCL_LINK_INT);

@@ -174,8 +174,8 @@ int input_str_index = 0;
  */
 int db_nowarn = 0;
 
-/* force creation of db4 databases */
-int create_db4 = 0;
+/* force creation of specific database versions */
+int db_version = 5;
 
 static void     mged_insert_char();
 static void	mged_process_char();
@@ -2105,7 +2105,7 @@ f_opendb(
 		}
 
 	    	/* File does not exist, and should be created */
-		if ((dbip = db_create(argv[1], create_db4 ? 4 : 5)) == DBI_NULL) {
+		if ((dbip = db_create(argv[1], db_version)) == DBI_NULL) {
 			dbip = save_dbip; /* restore previous database */
 			rt_material_head = save_materp;
 			bu_vls_free(&vls);
