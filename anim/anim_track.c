@@ -320,10 +320,10 @@ char **argv;
 			        		mat_mul(wmat,m_axes,mat_x);
 			        	}
 			        	if (print_mode==PRINT_ANIM) {
-						printf("anim %s.%d matrix %s\n", *(argv+link_nindex),count,link_cmd);
+						printf("anim %s%d matrix %s\n", *(argv+link_nindex),count,link_cmd);
 			        		anim_mat_printf(wmat,"%.10g ","\n",";\n");
 			        	} else if (print_mode==PRINT_ARCED) {
-			        		printf("arced %s.%d matrix %s ", *(argv+link_nindex),count,link_cmd);
+			        		printf("arced %s%d matrix %s ", *(argv+link_nindex),count,link_cmd);
 			        		anim_mat_printf(wmat,"%.10g ","","\n");
 			        	}
 				}
@@ -338,10 +338,10 @@ char **argv;
 			        		mat_mul(wmat,m_axes,mat_x);
 			        	}
 			        	if (print_mode==PRINT_ANIM) {
-						printf("anim %s.%d matrix %s\n",*(argv+wheel_nindex),count,wheel_cmd);
+						printf("anim %s%d matrix %s\n",*(argv+wheel_nindex),count,wheel_cmd);
 			        		anim_mat_printf(wmat,"%.10g ","\n",";\n");
 			        	} else if (print_mode==PRINT_ARCED) {
-						printf("arced %s.%d matrix %s ",*(argv+wheel_nindex),count,wheel_cmd);
+						printf("arced %s%d matrix %s ",*(argv+wheel_nindex),count,wheel_cmd);
 			        		anim_mat_printf(wmat,"%.10g ","","\n");
 			        	}
 				}

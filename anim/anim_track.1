@@ -84,10 +84,10 @@ where
 ranges from 0 to one less than the number of wheels.
 .I wheelname 
 is an arbitrary string. 
-.IR wheelname .0 
+.IR wheelname 0 
 must be
 the top front wheel in a given track and 
-.IR wheelname .(n-1) 
+.IR wheelname (n-1) 
 must be the top
 back wheel. The central axes of all the wheels should be parallel to
 each other and perpendicular to a plane containing all of the wheel
@@ -95,7 +95,7 @@ centers.
 .PP
 The pads of the track should be identical instances or copies of a
 prototype pad object, and they all should be named
-.IR padname . i,
+.IR padname i,
 where 
 .I i
 ranges from 0 to one less than the number of pads. 
@@ -120,7 +120,7 @@ example, if there is a combination named "lpads" containing 80 track
 pads with names ranging from "pad.0" to "pad.79", then the correct
 arguments would be:
 .IP
-.B -p 79 lpads/pad
+.B -p 79 lpads/pad.
 .IP
 Each frame of the output animation script will contain an animation
 command for each of the track pads.
@@ -131,10 +131,10 @@ slash-separated path to the wheel basename. The number of wheels is
 obtained from the number of lines in the 
 .BR wheelfile .
 If there is, for example, a combination named "rwheels" containing 4
-wheels named wheel.0, wheel.1, wheel.2, and wheel.3, then the correct
+wheels named wheel_0, wheel_1, wheel_2, and wheel_3, then the correct
 argument is:
 .IP
-.B -w rwheels/wheel
+.B -w rwheels/wheel_
 .IP
 Each frame of the output animation script will contain an animation
 command for each of the wheels.
@@ -349,7 +349,7 @@ have a 60mm radius, and the wheels are named wh.0, wh.1, wh.2, and wh.3.
 The following call checks the circumference of the track:
 .nf
 
-%> anim_track -c -b 90 0 0 -d 0 0 100 rwheelfile
+%> anim_track -c  rwheelfile
 9502.448956
 
 .fi
@@ -361,7 +361,7 @@ The following call creates a file which can be used by
 to wrap the pads around the wheels in the model.
 .nf
 
-%> anim_track -g 0 -b 90 0 0 -d 0 0 100 -lf 9600 -p 96 rtrack/rpad 
+%> anim_track -g 0 -b 90 0 0 -d 0 0 100 -lf 9600 -p 96 rtrack/rpad.
 rwheelfile <<EOF > rtrack.src
 ? 0 0
 ? EOF
@@ -388,7 +388,7 @@ The pads are now permanently modeled in their new positions.
 In order to animate the pads and wheels, the following command would be
 appropriate:
 .PP
-anim_track -p 96 rtrack/rpad -w rwheel/wh -d 0 0 1005 -b 90 0 0 -y -v -lf
+anim_track -p 96 rtrack/rpad. -w rwheel/wh. -d 0 0 1005 -b 90 0 0 -y -v -lf
 9600 rwheelfile < in.table > rtrack.script
 .PP
 The in.table contains 15 columns specifying the time, the 3D position and
