@@ -19,6 +19,7 @@
  *	USE_STRING_H -
  *		When defined, use <string.h>, not <strings.h>
  *
+ *  $Header$
  */
 
 #if __STDC__ || (defined(__sgi) && defined(__mips))
