@@ -63,7 +63,7 @@ CONST struct db_tree_state	rt_initial_tree_state = {
 		/* struct mater_info ts_mater */
 		1.0, 1.0, 1.0,		/* color, RGB */
 		-1.0,			/* Temperature */
-		0,			/* override */
+		0,			/* ma_color_valid=0 --> use default */
 		DB_INH_LOWER,		/* color inherit */
 		DB_INH_LOWER,		/* mater inherit */
 		(char *)0		/* shader */
