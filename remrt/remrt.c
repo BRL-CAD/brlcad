@@ -79,6 +79,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # define vfork	fork
 #endif
 
+/* Needed to satisfy the reference created by including ../rt/opt.o */
+struct command_tab rt_cmdtab[] = {
+	(char *)0, (char *)0, (char *)0,
+		0,		0, 0	/* END */
+};
+
 void		read_rc_file();
 void		check_input();
 void		addclient();
