@@ -3472,10 +3472,10 @@ register CONST mat_t		mat;
 	 */
 	RT_LIST_INIT( &pipe->pipe_segs_head );
 	for( exp = &rp->pwr.pwr_data[pipe->pipe_count-1]; exp >= &rp->pwr.pwr_data[0]; exp-- )  {
-		ntohd( &tmp.pp_id, exp->epp_id, 1 );
-		ntohd( &tmp.pp_od, exp->epp_od, 1 );
-		ntohd( &tmp.pp_bendradius, exp->epp_bendradius, 1 );
-		ntohd( tmp.pp_coord, exp->epp_coord, 3 );
+		ntohd( (unsigned char *)&tmp.pp_id, exp->epp_id, 1 );
+		ntohd( (unsigned char *)&tmp.pp_od, exp->epp_od, 1 );
+		ntohd( (unsigned char *)&tmp.pp_bendradius, exp->epp_bendradius, 1 );
+		ntohd( (unsigned char *)tmp.pp_coord, exp->epp_coord, 3 );
 
 		/* Apply modeling transformations */
 		GETSTRUCT( ptp, wdb_pipept );
@@ -3546,10 +3546,10 @@ double				local2mm;
 		tmp.pp_id = ppt->pp_id * local2mm;
 		tmp.pp_od = ppt->pp_od * local2mm;
 		tmp.pp_bendradius = ppt->pp_bendradius * local2mm;
-		htond( epp->epp_coord, tmp.pp_coord, 3 );
-		htond( epp->epp_id, &tmp.pp_id, 1 );
-		htond( epp->epp_od, &tmp.pp_od, 1 );
-		htond( epp->epp_bendradius, &tmp.pp_bendradius, 1 );
+		htond( epp->epp_coord, (unsigned char *)tmp.pp_coord, 3 );
+		htond( epp->epp_id, (unsigned char *)&tmp.pp_id, 1 );
+		htond( epp->epp_od, (unsigned char *)&tmp.pp_od, 1 );
+		htond( epp->epp_bendradius, (unsigned char *)&tmp.pp_bendradius, 1 );
 	}
 
 	return(0);

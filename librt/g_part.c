@@ -954,10 +954,10 @@ register CONST mat_t		mat;
 	}
 
 	/* Convert from database to internal format */
-	ntohd( v, rp->part.p_v, 3 );
-	ntohd( h, rp->part.p_h, 3 );
-	ntohd( &vrad, rp->part.p_vrad, 1 );
-	ntohd( &hrad, rp->part.p_hrad, 1 );
+	ntohd( (unsigned char *)v, rp->part.p_v, 3 );
+	ntohd( (unsigned char *)h, rp->part.p_h, 3 );
+	ntohd( (unsigned char *)&vrad, rp->part.p_vrad, 1 );
+	ntohd( (unsigned char *)&hrad, rp->part.p_hrad, 1 );
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_PARTICLE;
@@ -1042,10 +1042,10 @@ double				local2mm;
 	/* pip->part_type is not converted -- internal only */
 
 	rec->part.p_id = DBID_PARTICLE;
-	htond( rec->part.p_v, vert, 3 );
-	htond( rec->part.p_h, hi, 3 );
-	htond( rec->part.p_vrad, &vrad, 1 );
-	htond( rec->part.p_hrad, &hrad, 1 );
+	htond( rec->part.p_v, (unsigned char *)vert, 3 );
+	htond( rec->part.p_h, (unsigned char *)hi, 3 );
+	htond( rec->part.p_vrad, (unsigned char *)&vrad, 1 );
+	htond( rec->part.p_hrad, (unsigned char *)&hrad, 1 );
 
 	return(0);
 }

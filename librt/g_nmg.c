@@ -1057,8 +1057,8 @@ double		local2mm;
 			PUTMAGIC( DISK_REGION_A_MAGIC );
 			VSCALE( min, r->min_pt, local2mm );
 			VSCALE( max, r->max_pt, local2mm );
-			htond( d->min_pt, min, 3 );
-			htond( d->max_pt, max, 3 );
+			htond( d->min_pt, (unsigned char *)min, 3 );
+			htond( d->max_pt, (unsigned char *)max, 3 );
 		}
 		return;
 	case NMG_KIND_SHELL:
@@ -1087,8 +1087,8 @@ double		local2mm;
 			PUTMAGIC( DISK_SHELL_A_MAGIC );
 			VSCALE( min, sa->min_pt, local2mm );
 			VSCALE( max, sa->max_pt, local2mm );
-			htond( d->min_pt, min, 3 );
-			htond( d->max_pt, max, 3 );
+			htond( d->min_pt, (unsigned char *)min, 3 );
+			htond( d->max_pt, (unsigned char *)max, 3 );
 		}
 		return;
 	case NMG_KIND_FACEUSE:
@@ -1133,7 +1133,7 @@ double		local2mm;
 			INDEXL( d, fg, f_hd );
 			VMOVE( plane, fg->N );
 			plane[3] = fg->N[3] * local2mm;
-			htond( d->N, plane, 4 );
+			htond( d->N, (unsigned char *)plane, 4 );
 		}
 		return;
 	case NMG_KIND_FACE_G_SNURB:
@@ -1202,8 +1202,8 @@ double		local2mm;
 			PUTMAGIC( DISK_LOOP_G_MAGIC );
 			VSCALE( min, lg->min_pt, local2mm );
 			VSCALE( max, lg->max_pt, local2mm );
-			htond( d->min_pt, min, 3 );
-			htond( d->max_pt, max, 3 );
+			htond( d->min_pt, (unsigned char *)min, 3 );
+			htond( d->max_pt, (unsigned char *)max, 3 );
 		}
 		return;
 	case NMG_KIND_EDGEUSE:
@@ -1249,8 +1249,8 @@ double		local2mm;
 			PUTMAGIC( DISK_EDGE_G_LSEG_MAGIC );
 			INDEXL( d, eg, eu_hd2 );
 			VSCALE( pt, eg->e_pt, local2mm );
-			htond( d->e_pt, pt, 3);
-			htond( d->e_dir, eg->e_dir, 3);
+			htond( d->e_pt, (unsigned char *)pt, 3);
+			htond( d->e_dir, (unsigned char *)eg->e_dir, 3);
 		}
 		return;
 	case NMG_KIND_EDGE_G_CNURB:
@@ -1310,7 +1310,7 @@ double		local2mm;
 			PUTMAGIC( DISK_VERTEXUSE_A_PLANE_MAGIC );
 			/* Normal vectors don't scale */
 			/* This is not a plane equation here */
-			htond( d->N, vua->N, 3 );
+			htond( d->N, (unsigned char *)vua->N, 3 );
 		}
 		return;
 	case NMG_KIND_VERTEXUSE_A_CNURB:
@@ -1322,7 +1322,7 @@ double		local2mm;
 			NMG_CK_VERTEXUSE_A_CNURB(vua);
 			PUTMAGIC( DISK_VERTEXUSE_A_CNURB_MAGIC );
 			/* (u,v) parameters on curves don't scale */
-			htond( d->param, vua->param, 3 );
+			htond( d->param, (unsigned char *)vua->param, 3 );
 		}
 		return;
 	case NMG_KIND_VERTEX:
@@ -1345,7 +1345,7 @@ double		local2mm;
 			NMG_CK_VERTEX_G(vg);
 			PUTMAGIC( DISK_VERTEX_G_MAGIC );
 			VSCALE( pt, vg->coord, local2mm );
-			htond( d->coord, pt, 3 );
+			htond( d->coord, (unsigned char *)pt, 3 );
 		}
 		return;
 	}
@@ -1444,8 +1444,8 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_nmgregion_a *)ip)[iindex];
 			NMG_CK_REGION_A(r);
 			RT_CK_DISKMAGIC( d->magic, DISK_REGION_A_MAGIC );
-			ntohd( min, d->min_pt, 3 );
-			ntohd( max, d->max_pt, 3 );
+			ntohd( (unsigned char *)min, d->min_pt, 3 );
+			ntohd( (unsigned char *)max, d->max_pt, 3 );
 			rt_rotate_bbox( r->min_pt, r->max_pt, mat, min, max );
 		}
 		return 0;
@@ -1474,8 +1474,8 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_shell_a *)ip)[iindex];
 			NMG_CK_SHELL_A(sa);
 			RT_CK_DISKMAGIC( d->magic, DISK_SHELL_A_MAGIC );
-			ntohd( min, d->min_pt, 3 );
-			ntohd( max, d->max_pt, 3 );
+			ntohd( (unsigned char *)min, d->min_pt, 3 );
+			ntohd( (unsigned char *)max, d->max_pt, 3 );
 			rt_rotate_bbox( sa->min_pt, sa->max_pt, mat, min, max );
 		}
 		return 0;
@@ -1524,7 +1524,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			NMG_CK_FACE_G_PLANE(fg);
 			RT_CK_DISKMAGIC( d->magic, DISK_FACE_G_PLANE_MAGIC );
 			INDEXL_HD( d, fg, f_hd, fg->f_hd );
-			ntohd( plane, d->N, 4 );
+			ntohd( (unsigned char *)plane, d->N, 4 );
 			rt_rotate_plane( fg->N, mat, plane );
 		}
 		return 0;
@@ -1603,8 +1603,8 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_loop_g *)ip)[iindex];
 			NMG_CK_LOOP_G(lg);
 			RT_CK_DISKMAGIC( d->magic, DISK_LOOP_G_MAGIC );
-			ntohd( min, d->min_pt, 3 );
-			ntohd( max, d->max_pt, 3 );
+			ntohd( (unsigned char *)min, d->min_pt, 3 );
+			ntohd( (unsigned char *)max, d->max_pt, 3 );
 			rt_rotate_bbox( lg->min_pt, lg->max_pt, mat, min, max );
 		}
 		return 0;
@@ -1675,8 +1675,8 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_G_LSEG_MAGIC );
 			/* Forw subscript points to edgeuse, not edgeuse2 */
 			INDEXL_HD2( d, eg, eu_hd2, eg->eu_hd2 );
-			ntohd(pt, d->e_pt, 3);
-			ntohd(dir, d->e_dir, 3);
+			ntohd((unsigned char *)pt, d->e_pt, 3);
+			ntohd((unsigned char *)dir, d->e_dir, 3);
 			MAT4X3PNT( eg->e_pt, mat, pt );
 			MAT4X3VEC( eg->e_dir, mat, dir );
 		}
@@ -1742,7 +1742,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_vertexuse_a_plane *)ip)[iindex];
 			NMG_CK_VERTEXUSE_A_PLANE(vua);
 			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_A_PLANE_MAGIC );
-			ntohd( norm, d->N, 3 );
+			ntohd( (unsigned char *)norm, d->N, 3 );
 			MAT4X3VEC( vua->N, mat, norm );
 		}
 		return 0;
@@ -1754,7 +1754,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			NMG_CK_VERTEXUSE_A_CNURB(vua);
 			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_A_CNURB_MAGIC );
 			/* These parameters are invarient w.r.t. 'mat' */
-			ntohd( vua->param, d->param, 3 );
+			ntohd( (unsigned char *)vua->param, d->param, 3 );
 		}
 		return 0;
 	case NMG_KIND_VERTEX:
@@ -1776,7 +1776,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_vertex_g *)ip)[iindex];
 			NMG_CK_VERTEX_G(vg);
 			RT_CK_DISKMAGIC( d->magic, DISK_VERTEX_G_MAGIC );
-			ntohd( pt, d->coord, 3 );
+			ntohd( (unsigned char *)pt, d->coord, 3 );
 			MAT4X3PNT( vg->coord, mat, pt );
 		}
 		return 0;
