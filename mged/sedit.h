@@ -43,6 +43,17 @@
 
 #define ECMD_ETO_ROT_C		16
 
+#define ECMD_VTRANS		17	/* vertex translate */
+#define ECMD_NMG_EPICK		19	/* edge pick */
+#define ECMD_NMG_EMOVE		20	/* edge move */
+#define ECMD_NMG_EDEBUG		21	/* edge debug */
+#define ECMD_NMG_FORW		22	/* next eu */
+#define ECMD_NMG_BACK		23	/* prev eu */
+#define ECMD_NMG_RADIAL		24	/* radial+mate eu */
+#define	ECMD_NMG_ESPLIT		25	/* split current edge */
+#define	ECMD_NMG_EKILL		26	/* kill current edge */
+#define	ECMD_NMG_LEXTRU		27	/* Extrude loop */
+
 extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
 extern fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
