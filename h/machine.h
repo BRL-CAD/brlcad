@@ -150,6 +150,11 @@
  *		(and sometimes requires special queues/privs), so ordinary
  *		runs should just stay serial.
  *
+ *	MALLOC_NOT_MP_SAFE -
+ *		Defined when the system malloc() routine can not be
+ *		safely used in a multi-processor (MP) execution.
+ *		If defined, LIBBU will protect with BU_SEM_SYSCALL.
+ *
  *  Author -
  *	Michael John Muuss
  *
@@ -412,6 +417,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 #define MAX_PSW		1	/* only one processor, max */
 #define DEFAULT_PSW	1
+#define MALLOC_NOT_MP_SAFE 1
 
 #endif
 
@@ -432,6 +438,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define MAX_PSW		32	/* This number is uncertain */
 #define DEFAULT_PSW	1
 #define PARALLEL	1
+#define MALLOC_NOT_MP_SAFE 1
 #endif
 
 #ifdef ipsc860
@@ -443,6 +450,7 @@ typedef long	bitv_t;		/* largest integer type */
 /* icc compiler gets confused on const typedefs */
 #define	CONST	/**/
 #define	const	/**/
+#define MALLOC_NOT_MP_SAFE 1
 #endif
 
 #if SUNOS >= 50
@@ -486,6 +494,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 #define MAX_PSW		1	/* only one processor, max */
 #define DEFAULT_PSW	1
+#define MALLOC_NOT_MP_SAFE 1
 
 #endif
 
