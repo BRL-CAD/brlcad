@@ -329,10 +329,25 @@ set_scroll()
 void
 set_absolute_tran()
 {
-  struct dm_list *dmlp;
-  struct dm_list *save_dmlp;
   point_t new_pos;
   point_t diff;
+#if 1
+
+    /* calculate absolute_model_tran */
+    MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
+    VSUB2(diff, orig_pos, new_pos);
+    VSCALE(absolute_model_tran, diff, 1/Viewscale);
+    /* This is used in f_knob()  ---- needed in case absolute_model_tran is set from Tcl */
+    VMOVE(last_absolute_model_tran, absolute_model_tran);
+
+    /* calculate absolute_tran */
+    MAT4X3PNT(absolute_tran, model2view, orig_pos);
+    /* This is used in f_knob()  ---- needed in case absolute_tran is set from Tcl */
+    VMOVE(last_absolute_tran, absolute_tran);
+
+#else
+  struct dm_list *dmlp;
+  struct dm_list *save_dmlp;
 
   save_dmlp = curr_dm_list;
 
@@ -356,6 +371,8 @@ set_absolute_tran()
 
   /* restore */
   curr_dm_list = save_dmlp;
+
+#endif
 }
 
 static void
