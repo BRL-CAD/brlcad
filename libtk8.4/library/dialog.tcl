@@ -155,6 +155,16 @@ proc ::tk_dialog {w title text bitmap default args} {
 	    - [winfo vrootx [winfo parent $w]]}]
     set y [expr {[winfo screenheight $w]/2 - [winfo reqheight $w]/2 \
 	    - [winfo vrooty [winfo parent $w]]}]
+    # Make sure that the window is on the screen and set the maximum
+    # size of the window is the size of the screen.  That'll let things
+    # fail fairly gracefully when very large messages are used. [Bug 827535]
+    if {$x < 0} {
+	set x 0
+    }
+    if {$y < 0} {
+	set y 0
+    }
+    wm maxsize $w [winfo screenwidth $w] [winfo screenheight $w]
     wm geom $w +$x+$y
     wm deiconify $w
 
