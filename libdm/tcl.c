@@ -41,12 +41,8 @@ int
 Dm_Init(interp)
 Tcl_Interp *interp;
 {
-  register struct bu_cmdtab *ctp;
-
-  for (ctp = cmdtab; ctp->ct_name != (char *)NULL; ctp++) {
-    (void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
-			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-  }
+  /* register commands */
+  bu_register_cmds(interp, cmdtab);
 
   /* initialize display manager object code */
   Dmo_Init(interp);
