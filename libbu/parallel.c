@@ -68,7 +68,7 @@ typedef __uint64_t k_sigset_t;  /* signal set type */
 /* <malloc.h> #include's <stddef.h> */
 
 #include <sys/wait.h>
-#if IRIX >= 6
+#if IRIX64 >= 64
 # include <sys/sched.h>
 static struct sched_param bu_param;
 #endif
@@ -331,7 +331,7 @@ bu_get_public_cpus()
 int
 bu_set_realtime()
 {
-#	if IRIX >= 6
+#	if IRIX64 >= 64
 	{
 		int	policy;
 
