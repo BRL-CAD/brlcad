@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  93/10/26  05:30:25  mike
+ * ANSI C
+ * 
  * Revision 10.1  91/10/12  06:54:04  mike
  * Release_4.0
  * 
@@ -343,7 +346,7 @@ v_ins_line(num, top, bottom)
 	}
 
         if (BG) {	/* But it makes such a big difference built in */
-		printf("\033[%d;%dr\033[%dL\033[r", top + 1, bottom + 1, num);
+		jprintf("\033[%d;%dr\033[%dL\033[r", top + 1, bottom + 1, num);
 		CapCol = CapLine = 0;
 	} else if (CS) {
 		putpad(tgoto(CS, bottom, top), 0);

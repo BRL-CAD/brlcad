@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.3  93/10/26  03:43:10  mike
+ * ANSI C
+ * 
  * Revision 10.2  93/08/11  20:25:34  mike
  * Removed 132 column restriction on output displays.
  * 
@@ -306,7 +309,7 @@ register WINDOW	*w;
 	}
 	if (!DotIsHere) {	/* Current line not in window */
 		if (UpdWCalls != 0) {
-			printf("\rCalled UpdateWindow too many times");
+			jprintf("\rCalled UpdateWindow too many times");
 			finish(SIGHUP);
 		}
 		IDstart = savestart;

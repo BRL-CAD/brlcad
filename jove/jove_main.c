@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.5  93/10/26  06:01:51  mike
+ * Changed getchar() to jgetchar() to prevent stdio.h conflict
+ * 
  * Revision 10.4  93/10/26  05:42:22  mike
  * POSIX
  * 
@@ -851,7 +854,7 @@ char	*argv[];
 	Getchar = getch;
 
 	if( setjmp(mainjmp) )  {
-		printf("Pre-error: \"%s\"; tell system support\n", mesgbuf);
+		jprintf("Pre-error: \"%s\"; tell system support\n", mesgbuf);
 		finish(0);
 	}
 

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.3  93/10/26  06:01:39  mike
+ * Changed getchar() to jgetchar() to prevent stdio.h conflict
+ * 
  * Revision 10.2  93/10/26  03:44:16  mike
  * ANSI C
  * 
@@ -100,7 +103,7 @@ sprint(fmt, a, b, c, d, e)
 char	*fmt;
 char	*a, *b, *c, *d, *e;
 {
-	static char line[160];
+	static char line[256];
 
 	sprintf(line, fmt, a, b, c, d, e);
 	return line;
@@ -117,7 +120,7 @@ char	*a, *b, *c, *d;
 	message(mesgbuf);
 }
 
-printf(fmt, a, b, c, d)
+jprintf(fmt, a, b, c, d)
 char	*fmt;
 char	*a, *b, *c, *d;
 {
