@@ -33,38 +33,50 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "fb.h"
 
+#define	ACHROMATIC	-1.0
+#define	HUE		0
+#define	SAT		1
+#define	VAL		2
+
 static char		*file_name;
 static FILE		*infp;
 
 static int		fileinput = 0;	/* Is input a file (not stdin)? */
 static int		autosize = 0;	/* Try to guess input dimensions? */
+static int		tol_using_rgb = 1; /* Compare via RGB, not HSV? */
 
 static int		file_width = 512;
 static int		file_height = 512;
 
-static unsigned char	border_color[3];
-static unsigned char	region_color[3];
-static unsigned char	color_tol[3];
+static unsigned char	border_rgb[3];
+static unsigned char	region_rgb[3];
+static unsigned char	rgb_tol[3];
 
-#define	OPT_STRING	"ab:hi:s:t:w:n:?"
+fastf_t			border_hsv[3];
+fastf_t			region_hsv[3];
+fastf_t			hsv_tol[3];
+
+#define	OPT_STRING	"ab:hi:s:t:w:n:B:I:T:?"
 
 #define	made_it()	fprintf(stderr, "Made it to %s:%d\n",	\
 				__FILE__, __LINE__);		\
 				fflush(stderr)
 static char usage[] = "\
 Usage: pixborder [-b 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
-	[-ah] [-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
+                 [-B 'H S V'] [-I 'H S V'] [-T 'H S V']\n\
+                 [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
+                 [file.pix]\n";
 
 /*
  *		    R E A D _ R G B ( )
  *
- *	Read in an R/G/B triple as ints and then (implicitly)
+ *	Read in an RGB triple as ints and then (implicitly)
  *	cast them as unsigned chars.
  */
 static int read_rgb (rgbp, buf)
 
-unsigned char *rgbp;
-char *buf;
+unsigned char	*rgbp;
+char		*buf;
 
 {
     int		tmp[3];
@@ -76,6 +88,32 @@ char *buf;
 	if ((tmp[i] < 0) || (tmp[i] > 255))
 	    return (0);
     VMOVE(rgbp, tmp);
+    return (1);
+}
+
+/*
+ *		    R E A D _ H S V ( )
+ *
+ *	Read in an HSV triple.
+ */
+static int read_hsv (hsvp, buf)
+
+fastf_t *hsvp;
+char	*buf;
+
+{
+    double	tmp[3];
+    int		i;
+
+    if (sscanf(buf, "%lf %lf %lf", tmp, tmp + 1, tmp + 2) != 3)
+	return (0);
+    if ((tmp[HUE] < 0.0) || (tmp[HUE] > 360.0)
+     || (tmp[SAT] < 0.0) || (tmp[SAT] >   1.0)
+     || (tmp[VAL] < 0.0) || (tmp[VAL] >   1.0))
+	    return (0);
+    if (tmp[SAT] == 0.0)
+	tmp[HUE] = ACHROMATIC;
+    VMOVE(hsvp, tmp);
     return (1);
 }
 
@@ -98,7 +136,7 @@ register char **argv;
 		autosize = 1;
 		break;
 	    case 'b':
-		if (! read_rgb(border_color, optarg))
+		if (! read_rgb(border_rgb, optarg))
 		{
 		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
@@ -109,7 +147,7 @@ register char **argv;
 		autosize = 0;
 		break;
 	    case 'i':
-		if (! read_rgb(region_color, optarg))
+		if (! read_rgb(region_rgb, optarg))
 		{
 		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
@@ -124,19 +162,48 @@ register char **argv;
 		autosize = 0;
 		break;
 	    case 't':
-		if (! read_rgb(color_tol, optarg))
+		if (! read_rgb(rgb_tol, optarg))
 		{
 		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
 		}
+		tol_using_rgb = 1;
 		break;
 	    case 'w':
 		file_width = atoi(optarg);
 		autosize = 0;
 		break;
+	    case 'B':
+		if (! read_hsv(border_hsv, optarg))
+		{
+		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    return (0);
+		}
+		hsv_to_rgb(border_hsv, border_rgb);
+		break;
+	    case 'I':
+		if (! read_hsv(region_hsv, optarg))
+		{
+		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    return (0);
+		}
+		hsv_to_rgb(region_hsv, region_rgb);
+		break;
+	    case 'T':
+		if (! read_hsv(hsv_tol, optarg))
+		{
+		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    return (0);
+		}
+		tol_using_rgb = 0;
+		break;
 	    case '?':
+		(void) fputs(usage, stderr);
+		made_it();
+		exit (0);
 	    default:
-		return (c == '?');
+		made_it();
+		return (0);
 	}
     }
 
@@ -185,60 +252,251 @@ FILE		*infp;
 }
 
 /*
- *		    S A M E _ C O L O R ( )
+ *		Convert between RGB and HSV color models
+ *
+ *	R, G, and B are in {0, 1, ..., 255},
+ *	H is in [0.0, 360.0), and S and V are in [0.0, 1.0],
+ *	unless S = 0.0, in which case H = ACHROMATIC.
+ *
+ *	These two routines are adapted from
+ *	pp. 592-3 of J.D. Foley, A. van Dam, S.K. Feiner, and J.F. Hughes,
+ *	_Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
+ *	Reading, MA, 1990.
  */
-same_color (color1, color2)
+
+/*
+ *		R G B _ T O _ H S V ( )
+ */
+static void rgb_to_hsv (rgb, hsv)
+
+unsigned char	*rgb;
+fastf_t		*hsv;
+
+{
+    fastf_t	red, grn, blu;
+    fastf_t	*hue = &hsv[HUE];
+    fastf_t	*sat = &hsv[SAT];
+    fastf_t	*val = &hsv[VAL];
+    fastf_t	max, min;
+    fastf_t	delta;
+
+    /*
+     *	Compute value
+     */
+    max = min = red = rgb[RED] / 255.0;
+
+    grn = rgb[GRN] / 255.0;
+    if (grn < min)
+	min = grn;
+    else if (grn > max)
+	max = grn;
+
+    blu = rgb[BLU] / 255.0;
+    if (blu < min)
+	min = blu;
+    else if (blu > max)
+	max = blu;
+
+    *val = max;
+
+    /*
+     *	Compute saturation
+     */
+    delta = max - min;
+    if (max > 0.0)
+	*sat = delta / max;
+    else
+	*sat = 0.0;
+    
+    /*
+     *	Compute hue
+     */
+    if (*sat == 0.0)
+	*hue = ACHROMATIC;
+    else
+    {
+	if (red == max)
+	    *hue = (grn - blu) / delta;
+	else if (grn == max)
+	    *hue = 2.0 + (blu - red) / delta;
+	else if (blu == max)
+	    *hue = 4.0 + (red - grn) / delta;
+
+	/*
+	 *	Convert hue to degrees
+	 */
+	*hue *= 60.0;
+	if (*hue < 0.0)
+	    *hue += 360.0;
+    }
+}
+
+/*
+ *		H S V _ T O _ R G B ( )
+ */
+int hsv_to_rgb (hsv, rgb)
+
+fastf_t		*hsv;
+unsigned char	*rgb;
+
+{
+    fastf_t	float_rgb[3];
+    fastf_t	hue, sat, val;
+    fastf_t	hue_frac;
+    fastf_t	p, q, t;
+    int		hue_int;
+
+    hue = hsv[HUE];
+    sat = hsv[SAT];
+    val = hsv[VAL];
+
+    if (sat == 0.0)
+	if (hue == ACHROMATIC)
+	    VSETALL(float_rgb, val)
+	else
+	{
+	    (void) fprintf(stderr, "Illegal HSV (%g, %g, %g)\n",
+		    V3ARGS(hsv));
+	    return (0);
+	}
+    else
+    {
+	if (hue == 360.0)
+	    hue = 0.0;
+	hue /= 60.0;
+	hue_int = floor((double) hue);
+	hue_frac = hue - hue_int;
+	p = val * (1.0 - sat);
+	q = val * (1.0 - (sat * hue_frac));
+	t = val * (1.0 - (sat * (1.0 - hue_frac)));
+	switch (hue_int)
+	{
+	    case 0: VSET(float_rgb, val, t, p); break;
+	    case 1: VSET(float_rgb, q, val, p); break;
+	    case 2: VSET(float_rgb, p, val, t); break;
+	    case 3: VSET(float_rgb, p, q, val); break;
+	    case 4: VSET(float_rgb, t, p, val); break;
+	    case 5: VSET(float_rgb, val, p, q); break;
+	    default:
+		fprintf(stderr, "%s:%d: This shouldn't happen\n",
+		    __FILE__, __LINE__);
+		exit (1);
+	}
+    }
+
+    rgb[RED] = float_rgb[RED] * 255;
+    rgb[GRN] = float_rgb[GRN] * 255;
+    rgb[BLU] = float_rgb[BLU] * 255;
+
+    return (1);
+}
+
+/*
+ *		    S A M E _ R G B ( )
+ */
+static int same_rgb (color1, color2)
 
 unsigned char	*color1;
 unsigned char	*color2;
 
 {
-    return ((abs(*(color1 + RED) - *(color2 + RED)) <= (int) color_tol[RED]) &&
-	    (abs(*(color1 + GRN) - *(color2 + GRN)) <= (int) color_tol[GRN]) &&
-	    (abs(*(color1 + BLU) - *(color2 + BLU)) <= (int) color_tol[BLU]));
+    return ((abs(color1[RED] - color2[RED]) <= (int) rgb_tol[RED]) &&
+	    (abs(color1[GRN] - color2[GRN]) <= (int) rgb_tol[GRN]) &&
+	    (abs(color1[BLU] - color2[BLU]) <= (int) rgb_tol[BLU]));
+}
+
+/*
+ *		    S A M E _ H S V ( )
+ */
+static int same_hsv (color1, color2)
+
+fastf_t	*color1;
+fastf_t	*color2;
+
+{
+    return ((fabs(color1[HUE] - color2[HUE]) <= hsv_tol[HUE]) &&
+	    (fabs(color1[SAT] - color2[SAT]) <= hsv_tol[SAT]) &&
+	    (fabs(color1[VAL] - color2[VAL]) <= hsv_tol[VAL]));
 }
 
 /*
  *		    I S _ B O R D E R ( )
  */
-static int is_border (prp, trp, nrp, col_nm, interior_color)
+static int is_border (prp, trp, nrp, col_nm, use_rgb)
 
-unsigned char	*prp;	/* Previous row */
-unsigned char	*trp;	/* Current (this) row */
-unsigned char	*nrp;	/* Next row */
-int		col_nm;
-unsigned char	*interior_color;
+unsigned char	*prp;		/* Previous row */
+unsigned char	*trp;		/* Current (this) row */
+unsigned char	*nrp;		/* Next row */
+int		col_nm;		/* Current column */
+int		use_rgb;	/* Instead of HSV? */
 
 {
-    unsigned char	pixel[3];
+    unsigned char	pix_rgb[3];
+    fastf_t		pix_hsv[3];
 
-    VMOVE(pixel, trp + (col_nm + 1) * 3);
+    VMOVE(pix_rgb, trp + (col_nm + 1) * 3);
 
-    /*
-     *	Ensure that this pixel is in a region of interest
-     */
-    if (! same_color(pixel, interior_color))
-	return (0);
-    
-    /*
-     *	Check its left and right neighbors
-     */
-     VMOVE(pixel, trp + (col_nm + 0) * 3);
-     if (! same_color(pixel, interior_color))
-	return (1);
-     VMOVE(pixel, trp + (col_nm + 2) * 3);
-     if (! same_color(pixel, interior_color))
-	return (1);
-    
-    /*
-     *	Check its upper and lower neighbors
-     */
-     VMOVE(pixel, prp + (col_nm + 1) * 3);
-     if (! same_color(pixel, interior_color))
-	return (1);
-     VMOVE(pixel, nrp + (col_nm + 1) * 3);
-     if (! same_color(pixel, interior_color))
-	return (1);
+    if (use_rgb)
+    {
+	/*
+	 *	Ensure that this pixel is in a region of interest
+	 */
+	if (! same_rgb(pix_rgb, region_rgb))
+	    return (0);
+	
+	/*
+	 *	Check its left and right neighbors
+	 */
+	 VMOVE(pix_rgb, trp + (col_nm + 0) * 3);
+	 if (! same_rgb(pix_rgb, region_rgb))
+	    return (1);
+	 VMOVE(pix_rgb, trp + (col_nm + 2) * 3);
+	 if (! same_rgb(pix_rgb, region_rgb))
+	    return (1);
+	
+	/*
+	 *	Check its upper and lower neighbors
+	 */
+	 VMOVE(pix_rgb, prp + (col_nm + 1) * 3);
+	 if (! same_rgb(pix_rgb, region_rgb))
+	    return (1);
+	 VMOVE(pix_rgb, nrp + (col_nm + 1) * 3);
+	 if (! same_rgb(pix_rgb, region_rgb))
+	    return (1);
+    }
+    else
+    {
+	/*
+	 *	Ensure that this pixel is in a region of interest
+	 */
+	rgb_to_hsv(pix_rgb, pix_hsv);
+	if (! same_hsv(pix_hsv, region_hsv))
+	    return (0);
+	
+	/*
+	 *	Check its left and right neighbors
+	 */
+	VMOVE(pix_rgb, trp + (col_nm + 0) * 3);
+	rgb_to_hsv(pix_rgb, pix_hsv);
+	if (! same_hsv(pix_hsv, region_hsv))
+	    return (1);
+	VMOVE(pix_rgb, trp + (col_nm + 2) * 3);
+	rgb_to_hsv(pix_rgb, pix_hsv);
+	if (! same_hsv(pix_hsv, region_hsv))
+	    return (1);
+	
+	/*
+	 *	Check its upper and lower neighbors
+	 */
+	VMOVE(pix_rgb, prp + (col_nm + 1) * 3);
+	rgb_to_hsv(pix_rgb, pix_hsv);
+	if (! same_hsv(pix_hsv, region_hsv))
+	    return (1);
+	VMOVE(pix_rgb, nrp + (col_nm + 1) * 3);
+	rgb_to_hsv(pix_rgb, pix_hsv);
+	if (! same_hsv(pix_hsv, region_hsv))
+	    return (1);
+    }
     
     /*
      *	All four of its neighbors are also in the region
@@ -264,22 +522,24 @@ char	*argv[];
     int			row_nm;
     int			this_row;
 
-    border_color[RED] = border_color[GRN] = border_color[BLU] = 1;
-    region_color[RED] = region_color[GRN] = region_color[BLU] = 255;
-    color_tol[RED] = color_tol[GRN] = color_tol[BLU] = 0;
+    VSETALL(border_rgb, 1);
+    VSETALL(region_rgb, 255);
+    VSETALL(rgb_tol, 0);
 
     if (!get_args( argc, argv ))
     {
 	(void) fputs(usage, stderr);
+	made_it();
 	exit (1);
     }
 
-    fprintf(stderr, "OK, file '%s' has size %d by %d\n",
-	file_name, file_width, file_height);
     fprintf(stderr,
 	"We'll put a border of %d/%d/%d around regions of %d/%d/%d\n",
-	border_color[RED], border_color[GRN], border_color[BLU],
-	region_color[RED], region_color[GRN], region_color[BLU]);
+	V3ARGS(border_rgb), V3ARGS(region_rgb));
+    if (tol_using_rgb)
+	fprintf(stderr, "With an RGB tol of %d/%d/%d\n", V3ARGS(rgb_tol));
+    else
+	fprintf(stderr, "With an HSV tol of %g/%g/%g\n", V3ARGS(hsv_tol));
 
     /*
      *	Autosize the input if appropriate
@@ -338,9 +598,9 @@ char	*argv[];
 	    unsigned char	*color_ptr;
 
 	    color_ptr = is_border(inrow[prev_row], inrow[this_row],
-				    inrow[next_row], col_nm, region_color)
-		    ? border_color
-		    : inrow[this_row] + col_nm * 3;
+				    inrow[next_row], col_nm, tol_using_rgb)
+		    ? border_rgb
+		    : inrow[this_row] + (col_nm + 1) * 3;
 
 	    VMOVE(outbuf + col_nm * 3, color_ptr);
 	}
