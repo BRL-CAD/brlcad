@@ -17,6 +17,7 @@ set help_data(apropos)		{{keyword}	{finds commands whose descriptions contain th
 set help_data(arb)		{{name rot fb}	{make arb8, rotation + fallback}}
 set help_data(arced)		{{a/b ...anim_command...}	{edit matrix or materials on combination's arc}}
 set help_data(area)		{{[endpoint_tolerance]}	{calculate presented area of view}}
+set help_data(arot)             {{x y z angle} {rotate about axis ((0,0,0) (x,y,z)) by angle (degrees)}}
 set help_data(attach)		{{[-d display_string] [-i init_script] [-n name]
 	      [-t is_toplevel] [-W width] [-N height]
 	      [-S square_size] dev_type}	{attach to a display manager}}
@@ -158,7 +159,7 @@ set help_data(rfarb)		{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thi
 set help_data(rm)		{{comb <members>}	{remove members from comb}}
 set help_data(rmater)		{{filename}	{read combination materials from filename}}
 set help_data(rmats)		{{file}	{load view(s) from 'savekey' file}}
-set help_data(rot)              {{x y z angle} {rotate about axis ((0,0,0) (x,y,z)) by angle (degrees)}}
+set help_data(rot)              {{x y z} {rotate by x, y, z (degrees)}}
 set help_data(rotobj)		{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
 set help_data(rrt)		{{prog [options]}	{invoke prog with view}}
 set help_data(rt)		{{[options]}	{do raytrace of view}}
