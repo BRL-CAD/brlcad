@@ -45,7 +45,8 @@ main()
 	{
 		int i;
 
-		pts = (point_t *)rt_calloc( npts , sizeof( point_t ) , "pts" );
+		if( npts > 0 )
+			pts = (point_t *)rt_calloc( npts , sizeof( point_t ) , "pts" );
 
 		for( i=0 ; i<npts ; i++ )
 		{
@@ -69,24 +70,34 @@ main()
 
 		if( ident != old_id )
 		{
-			face_count = 1;
-			printf( "%5d%5d%5d    0    %8d      %5.2f               \n" ,
-				face_count , npts , face_type , ident , 0.0 );
+			if( npts > 2 )
+			{
+				face_count = 1;
+				printf( "%5d%5d%5d    0    %8d      %5.2f               \n" ,
+					face_count , npts , face_type , ident , 0.0 );
+			}
 			old_id = ident;
 		}
 		else
 		{
-			face_count++;
-			printf( "%5d%5d%5d    0                                              \n" ,
-				face_count , npts , face_type );
+			if( npts > 2 )
+			{
+				face_count++;
+				printf( "%5d%5d%5d    0                                              \n" ,
+					face_count , npts , face_type );
+			}
 		}
 
-		printf( "%11.6f%11.6f%11.6f%13.6f\n" , V4ARGS( pl ) );
+		if( npts > 2 )
+		{
+			printf( "%11.6f%11.6f%11.6f%13.6f\n" , V4ARGS( pl ) );
 
-		for( i=0 ; i<npts ; i++ )
-			printf( "%8f  %8f  %8f  \n" , V3ARGS( pts[i] ) );
+			for( i=0 ; i<npts ; i++ )
+				printf( "%8f  %8f  %8f  \n" , V3ARGS( pts[i] ) );
+		}
 
-		rt_free( (char *)pts , "pts" );
+		if( npts > 0 )
+			rt_free( (char *)pts , "pts" );
 	}
 	return 0;
 }
