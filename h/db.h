@@ -304,39 +304,39 @@ union record  {
 		char	n_id;			/* DBID_ARBN */
 		char	n_pad;
 		char	n_name[NAMESIZE];
-		char	n_neqn[4];		/* # equations which follow */
-		char	n_grans[4];		/* # eqn granules to follow */
+		unsigned char	n_neqn[4];	/* # equations which follow */
+		unsigned char	n_grans[4];	/* # eqn granules to follow */
 		/* Note that eqn granules are in "network" byte order */
 	}  n;
 	struct pipe_wire_rec  {
 		char	pw_id;			/* DBID_PIPE */
 		char	pw_pad;
 		char	pw_name[NAMESIZE];
-		char	pw_count[4];		/* # additional granules */
+		unsigned char	pw_count[4];	/* # additional granules */
 		struct exported_pipeseg  {
-			char		eps_type[4];
-			char		eps_start[8*3];
-			char		eps_bendcenter[8*3];
-			char		eps_id[8];
-			char		eps_od[8];
+			unsigned char	eps_type[4];
+			unsigned char	eps_start[8*3];
+			unsigned char	eps_bendcenter[8*3];
+			unsigned char	eps_id[8];
+			unsigned char	eps_od[8];
 		} pw_data[1];			/* mach indep segments */
 	}  pw;
 	struct particle_rec  {
 		char	p_id;			/* DBID_PARTICLE */
 		char	p_pad;
 		char	p_name[NAMESIZE];
-		char	p_v[8*3];		/* vertex (mach indep fmt) */
-		char	p_h[8*3];		/* height vector */
-		char	p_vrad[8];		/* radius at vertex */
-		char	p_hrad[8];		/* radius at end of height */
+		unsigned char	p_v[8*3];	/* vertex (mach indep fmt) */
+		unsigned char	p_h[8*3];	/* height vector */
+		unsigned char	p_vrad[8];	/* radius at vertex */
+		unsigned char	p_hrad[8];	/* radius at end of height */
 	}  part;
 	struct nmg_rec  {
 		char	N_id;			/* DBID_NMG */
 		char	N_pad;
 		char	N_name[NAMESIZE];
 		char	N_pad2[2];		/* neatness */
-		char	N_count[4];		/* # additional granules */
-		char	N_structs[26*4];	/* # of structs needed */
+		unsigned char	N_count[4];	/* # additional granules */
+		unsigned char	N_structs[26*4];/* # of structs needed */
 	} nmg;
 };
 #endif /* !RECORD_DEFINED || !__STDC__ */
