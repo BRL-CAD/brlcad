@@ -2261,6 +2261,8 @@ CONST struct rt_tol *tol;
 	struct pt2d *min, *max, *new, *first, *prev, *next, *current;
 	struct edgeuse *eu;
 	int verts=0;
+	int vert_count_sq;	/* XXXXX Hack for catching infinite loop */
+	int loop_count=0;	/* See above */
 	static CONST int cut_color[3] = { 90, 255, 90};
 
 	NMG_CK_TBL2D(tbl2d);
@@ -2293,6 +2295,7 @@ CONST struct rt_tol *tol;
 		if (!max || P_GT_V(new, max))
 			max = new;
 	}
+	vert_count_sq = verts * verts;
 
 	/* pick the pt which does NOT have the other as a "next" pt in loop 
 	 * as the place from which we start marching around the uni-monotone
@@ -2322,6 +2325,13 @@ CONST struct rt_tol *tol;
 	current = PT2D_NEXT(tbl2d, first);
 
 	while (verts > 3) {
+
+		loop_count++;
+		if( loop_count > vert_count_sq )
+		{
+			rt_log( "Cut_unimontone is in an infinite loop!!!\n" );
+			rt_bomb( "Cut_unimontone is in an infinite loop" );
+		}
 
 		prev = PT2D_PREV(tbl2d, current);
 		next = PT2D_NEXT(tbl2d, current);
