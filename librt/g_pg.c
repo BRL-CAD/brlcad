@@ -748,7 +748,7 @@ CONST mat_t			mat;
 CONST struct db_i		*dbip;
 {
 	bu_log( "Import of polysolids from a version 5 database is not allowed\n" );
-	bu_log( "\tPolysolids should be converted to BOT solids using the rt_pg_bot() routine or g4-g5 utility.\n" );
+	bu_log( "\tPolysolids should be converted to BOT solids using the rt_pg_to_bot() routine or g4-g5 utility.\n" );
 	return -1;
 }
 
@@ -868,6 +868,8 @@ struct rt_db_internal	*ip;
  *  Convert in-memory form of a polysolid (pg) to a bag of triangles (BoT)
  *  There is no record in the V5 database for a polysolid.
  *
+ *  Depends on the "max_npts" parameter having been set.
+ *
  *  Returns -
  *	-1	FAIL
  *	0	OK
@@ -899,9 +901,11 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol )
 
 	/* maximum possible vertices */
 	max_pts = ip_pg->npoly * ip_pg->max_npts;
+	BU_ASSERT_LONG( max_pts, >, 0 );
 
 	/* maximum possible triangular faces */
 	max_tri = ip_pg->npoly * 3;
+	BU_ASSERT_LONG( max_tri, >, 0 );
 
 	ip_bot->num_vertices = 0;
 	ip_bot->num_faces = 0;
