@@ -3,25 +3,26 @@
 #
 #	Procs for implementing "Help On Context".
 #
-#	Author -
+#	Authors -
 #		Robert G. Parker
 #		Paul Tanenbaum
 #
 
-# create_hoc_binding --
+# hoc_build_string --
 #
-# Generic procedure for building uniform "Help On Context" dialog widgets.
+# Generic procedure for building uniform "Help On Context" strings.
 #
-proc hoc_create_binding { w subject ksl } {
-    if ![winfo exists $w] {
-	return
-    }
+proc hoc_build_string { sname subject ksl } {
+    upvar $sname hoc_string
 
     # Initialize string variables
     set summary ""
     set range ""
     set see_also ""
     set hoc_string ""
+
+#XXX add the following keywords
+# synopsis, description, examples, accelerator
 
     # Set string variables according to { keyword string } list
     foreach ks $ksl {
@@ -52,12 +53,26 @@ proc hoc_create_binding { w subject ksl } {
     }
 
     if { $hoc_string == "" } {
-	set hoc_string "Sorry, no information is available for \\\"$subject\\\""
+	set hoc_string "No information was found for \\\"$subject\\\""
+    }
+}
+
+# create_hoc_binding --
+#
+# Create bindings to call help on context dialog.
+#
+proc hoc_create_binding { w subject ksl } {
+    global hoc_data
+
+    if ![winfo exists $w] {
+	return
     }
 
+    hoc_build_string hoc_string $subject $ksl
+    lappend hoc_data($w) $subject $hoc_string
+
     # cause right mouse button click to bring up dialog widget
-    set screen [winfo screen $w]
-    bind $w <ButtonPress-3><ButtonRelease-3> "hoc_dialog $w \"$subject\" \"$hoc_string\" %X %Y"
+    bind $w <ButtonPress-3><ButtonRelease-3> "hoc_callback $w %X %Y"
 }
 
 # hoc_create_label_binding --
@@ -73,18 +88,70 @@ proc hoc_create_label_binding { w subject ksl } {
     bind $w <Leave> "$w configure -background #d9d9d9"
 }
 
-# hoc_dialog --
+# hoc_callback --
 #
-# Check to see if the triggering event actually occurred within $w.
+# Call hoc_dialog using $w as an index into hoc_data.
 #
-proc hoc_dialog { w subject hoc_string ptr_x ptr_y } {
-    set cwin [winfo containing $ptr_x $ptr_y]
+proc hoc_callback { w x y } {
+    # Check to see if the triggering event actually occurred within $w.
+    set cwin [winfo containing $x $y]
     if { $cwin != $w } {
 	return
     }
 
+    hoc_dialog $w $w
+}
+
+# hoc_dialog --
+#
+# Call cad_dialog with hoc_data.
+#
+proc hoc_dialog { w index } {
+    global hoc_data
+
     set screen [winfo screen $w]
-    cad_dialog $w.hocDialog $screen\
-	    "On context help for \"$subject\""\
-	    "$hoc_string" info 0 Dismiss
+
+    if [info exists hoc_data($index)] {
+	set subject [lindex $hoc_data($index) 0]
+	set description [lindex $hoc_data($index) 1]
+    } else {
+	set subject "Information not found"
+	set description "No information was found for $index"
+    }
+
+    cad_dialog $w.hocDialog $screen $subject $description info 0 Dismiss
+}
+
+# hoc_register_data --
+#
+# Register help on context data.
+#
+proc hoc_register_data { index subject ksl } {
+    global hoc_data
+
+    if [info exists hoc_data($index)] {
+	set hoc_data($index) ""
+    }
+
+    hoc_build_string hoc_string $subject $ksl
+    lappend hoc_data($index) $subject $hoc_string
+}
+
+# hoc_register_menu_data --
+#
+# Call hoc_register_data with an appropriate index.
+#
+proc hoc_register_menu_data { title label subject ksl } {
+    hoc_register_data $title,$label $subject $ksl
+}
+
+# hoc_menu_callback --
+#
+# Call hoc_dialog with an appropriate index.
+#
+proc hoc_menu_callback { w } {
+    set title [lindex [$w configure -title] 4]
+    set label [$w entrycget active -label]
+
+    hoc_dialog $w $title,$label
 }
