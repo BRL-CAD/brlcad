@@ -79,6 +79,20 @@ static struct camo_specific camo_defaults = {
 #define SHDR_O(m)	offsetof(struct camo_specific, m)
 #define SHDR_AO(m)	offsetofarray(struct camo_specific, m)
 
+struct bu_structparse camo_print_tab[] = {
+	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
+	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
+	{"%f",  1, "size",		SHDR_O(size),		camo_cvt_parse },
+	{"%f",  3, "vscale",		SHDR_AO(vscale),	FUNC_NULL },
+	{"%f",	1, "thresh1",		SHDR_O(t1),		FUNC_NULL },
+	{"%f",	1, "thresh2",		SHDR_O(t2),		FUNC_NULL },
+	{"%f",  3, "color1",		SHDR_AO(c1),		FUNC_NULL },
+	{"%f",  3, "color2",		SHDR_AO(c2),		FUNC_NULL },
+	{"%f",  3, "color3",		SHDR_AO(c3),		FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(delta),		FUNC_NULL },
+};
+
 struct bu_structparse camo_parse[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
@@ -171,7 +185,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_mul2(tmp, camo_sp->xform);
 
 	if( rdebug&RDEBUG_SHADE) {
-		bu_struct_print( rp->reg_name, camo_parse, (char *)camo_sp );
+		bu_struct_print( rp->reg_name, camo_print_tab, (char *)camo_sp );
 		mat_print( "xform", camo_sp->xform );
 	}
 
@@ -186,7 +200,7 @@ camo_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_struct_print( rp->reg_name, camo_parse, (char *)dp );
+	bu_struct_print( rp->reg_name, camo_print_tab, (char *)dp );
 }
 
 /*
