@@ -2516,8 +2516,13 @@ struct edgeuse	*eu;
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGEUSE(new_eu);
 
+	if( eu->e_p == new_eu->e_p )  rt_bomb("nmb_ebreak() same edges?\n");
+
 	/* If there wasn't any edge geometry before, nothing more to do */
 	if( !eg ) return new_eu;
+
+	/* Make sure the two edges share the same geometry. */
+	NMG_CK_EDGE_G(eg);
 
 	/* Both these edges should be fresh, without geometry yet. */
 	if( eu->e_p->eg_p )   {
@@ -2526,14 +2531,21 @@ struct edgeuse	*eu;
 		nmg_pr_eg(eu->e_p->eg_p, "new_");
 		rt_bomb("nmg_ebreak() eu grew geometry?\n");
 	}
-	if( new_eu->e_p->eg_p )  rt_bomb("nmg_ebreak() new_eu grew geometry?\n");
-
-	/* Make sure the two edges share the same geometry. */
-	NMG_CK_EDGE_G(eg);
 	eu->e_p->eg_p = eg;		/* eg->usage++ was done above */
-	new_eu->e_p->eg_p = eg;
-	eg->usage++;
+
+	/* Sometimes new_eu still has the previous edge geometry on it */
+	if( new_eu->e_p->eg_p )  {
+		if( new_eu->e_p->eg_p != eg )
+			rt_bomb("nmg_ebreak() new_eu grew geometry?\n");
+		/* new_eu retained the previous geometry (why?) */
+	} else {
+		nmg_use_edge_g( new_eu->e_p, eg );
+	}
 	return new_eu;
+
+	/* XXX It would be much nicer to have a list of edges sharing
+	 * XXX edge geometry, rather than a count...
+	 */
 }
 
 /*
