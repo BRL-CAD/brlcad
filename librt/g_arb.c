@@ -132,6 +132,7 @@ struct rt_i	*rtip;
 	 */
 	VSETALL( sum, 0 );
 	op = &vec[1*ELEMENTS_PER_VECT];
+#	include "noalias.h"
 	for( i=1; i<8; i++ )  {
 		VADD2( work, &vec[0], op );
 		MAT4X3PNT( op, mat, work );
@@ -217,6 +218,7 @@ next_pt:		;
 	 * to be contained within the solid!
 	 */
 	op = &vec[0];
+#	include "noalias.h"
 	for( i=0; i< 8; i++ ) {
 		VMINMAX( stp->st_min, stp->st_max, op );
 		op += ELEMENTS_PER_VECT;
@@ -583,6 +585,7 @@ struct vlhead		*vhead;
 
 	ip = &rp[0].s.s_values[1*3];
 	op = &points[1*3];
+#	include "noalias.h"
 	for( i=1; i<8; i++ )  {
 		VADD2( work, &rp[0].s.s_values[0], ip );
 		MAT4X3PNT( op, matp, work );
