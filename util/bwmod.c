@@ -54,7 +54,7 @@ unsigned char ibuf[BUFLEN];	/* input buffer */
 
 #define MAPBUFLEN 256
 int mapbuf[MAPBUFLEN];		/* translation buffer/lookup table */
-
+int char_arith = 0;
 
 get_args( argc, argv )
 register char **argv;
@@ -62,7 +62,7 @@ register char **argv;
 	register int c;
 	double	d;
 
-	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:c" )) != EOF )  {
 		switch( c )  {
 		case 'a':
 			op[ numop ] = ADD;
@@ -102,7 +102,8 @@ register char **argv;
 			}
 			val[ numop++ ] = 1.0 / d;
 			break;
-
+		case 'c':
+			char_arith = !char_arith; break;
 		default:		/* '?' */
 			return(0);
 		}
@@ -155,7 +156,29 @@ void mk_trans_tbl()
 			mapbuf[j] = d + 0.5;
 	}
 }
+void mk_char_trans_tbl()
+{
+	register int j, i;
+	register signed char d;
 
+	/* create translation map */
+	for (j = 0; j < MAPBUFLEN ; ++j) {
+		d = j;
+		for (i=0 ; i < numop ; i++) {
+			switch (op[i]) {
+			case ADD : d += val[i]; break;
+			case MULT: d *= val[i]; break;
+			case POW : d = pow( d, val[i]); break;
+			case ABS : if (d < 0.0) d = - d; break;
+			default  : (void)fprintf(stderr, "%s: error in op\n", progname);
+				   exit(-1);
+				   break;
+			}
+			fprintf(stderr, "%d: %d\n", j, d);
+		}
+		mapbuf[j] = d & 0x0ff;
+	}
+}
 int main( argc, argv )
 int argc;
 char **argv;
@@ -173,7 +196,10 @@ char **argv;
 		exit( 1 );
 	}
 
-	mk_trans_tbl();
+	if (char_arith)
+		mk_char_trans_tbl();
+	else
+		mk_trans_tbl();
 
 	clip_high = clip_low = 0L;
 	while ( (n=read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {

@@ -10,6 +10,7 @@ bwmod \- arithmetically modify pixel values in black and white bw file
 .B \-A
 .BR \-e\  exp
 .BR \-r\  root}
+.BR \-c
 \....
 \<\ file.bw
 .SH DESCRIPTION
@@ -19,10 +20,18 @@ of it's input/output stream.  This is a
 .IR bw (5)
 file format.
 The pixel values range from 0 to 255 and are internally operated on
-in floating point form so that dynamic range, truncation, and sign,
+in floating point form (unless the
+.BR \-c
+option has been specified) so that dynamic range, truncation, and sign,
 are not a problem.  On output they are converted back to 8-bit unsigned
 values clipping to 0 and 255 if necessary.  The number of pixels clipped
 high and low, if any, are reported to standard error on completion.
+.PP
+If the 
+.BR -c
+option is specified, then all operations are performed using signed character
+arithmetic.  This is useful when one wishes to take advantage of wrap-around
+characteristics of binary mathematics.
 .PP
 Any number of operations can be given and they are applied in order.
 The choices are:
