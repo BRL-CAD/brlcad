@@ -75,6 +75,7 @@ struct db_i	*dbip;			/* database instance pointer */
 struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
 
 int		dmaflag;		/* Set to 1 to force new screen DMA */
+double		frametime = 1.0;	/* time needed to draw last frame */
 
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
@@ -565,12 +566,15 @@ printf("cmd: %s", rt_vls_addr(&cmd) );
 void
 refresh()
 {
-	dmp->dmr_prolog();	/* update displaylist prolog */
 	/*
 	 * if something has changed, then go update the display.
 	 * Otherwise, we are happy with the view we have
 	 */
 	if( dmaflag )  {
+		rt_prep_timer();
+
+		dmp->dmr_prolog();	/* update displaylist prolog */
+
 		/* Apply zoom & rotate translation vectors */
 		dozoom();
 
@@ -585,8 +589,14 @@ refresh()
 		dotitles();
 
 		dmp->dmr_epilog();
+
+		frametime = rt_read_timer( (char *)0, 0 );
+		if( frametime <= 1.0e-5 )  frametime = 0.01;	/* 100 fps */
+	} else {
+		/* For displaylist machines??? */
+		dmp->dmr_prolog();	/* update displaylist prolog */
+		dmp->dmr_update();
 	}
-	dmp->dmr_update();
 
 	dmaflag = 0;
 }
