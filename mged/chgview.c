@@ -736,6 +736,13 @@ int			lvl;
 	int	status;
 
 	BU_CK_VLS(vls);
+
+	if( !tp )
+	{
+		/* no tree, probably an empty combination */
+		bu_vls_strcat( vls, "-empty-\n" );
+		return;
+	}
 	RT_CK_TREE(tp);
 	switch( tp->tr_op )  {
 
