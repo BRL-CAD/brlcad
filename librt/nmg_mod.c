@@ -987,16 +987,58 @@ struct edgeuse *eu;
 }
 
 /*
+ *			N M G _ F I N D _ V _ I N _ F A C E
+ *
+ *	Perform a topological search to
+ *	determine if the given vertex is contained in the given faceuse.
+ *	If it is, return a pointer to the vertexuse which was found in the
+ *	faceuse.
+ *
+ *  Returns NULL if not found.
+ */
+struct vertexuse *
+nmg_find_v_in_face(v, fu)
+CONST struct vertex	*v;
+CONST struct faceuse	*fu;
+{
+	struct vertexuse *vu;
+	struct edgeuse *eu;
+	struct loopuse *lu;
+
+#define CKLU_FOR_FU(_lu, _fu, _vu) \
+	if (*_lu->up.magic_p == NMG_FACEUSE_MAGIC && _lu->up.fu_p == _fu) \
+		return(_vu)
+
+	NMG_CK_VERTEX(v);
+
+	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
+		NMG_CK_VERTEXUSE(vu);
+		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
+			eu = vu->up.eu_p;
+			if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+				lu = eu->up.lu_p;
+				CKLU_FOR_FU(lu, fu, vu);
+			}
+		} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+			lu = vu->up.lu_p;
+			CKLU_FOR_FU(lu, fu, vu);
+		}
+	}
+	return((struct vertexuse *)NULL);
+}
+
+/*
  *			N M G _ F I N D _ V U _ I N _ F A C E
  *
  *	try to find a vertex(use) in a face wich appoximately matches the
  *	coordinates given.  
  *	
+ *	This is a geometric search, not a topological one.
  */
 struct vertexuse *
 nmg_find_vu_in_face(pt, fu, tol)
 CONST point_t		pt;
-struct faceuse		*fu;
+CONST struct faceuse	*fu;
 CONST struct rt_tol	*tol;
 {
 	register struct loopuse	*lu;
@@ -2447,9 +2489,9 @@ struct shell *s;
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		if (new_fu) {
-			new_lu = nmg_dup_loop(lu, new_fu, trans_tbl);
+			new_lu = nmg_dup_loop(lu, &new_fu->l.magic, trans_tbl);
 		} else {
-			new_lu = nmg_dup_loop(lu, s, trans_tbl);
+			new_lu = nmg_dup_loop(lu, &s->l.magic, trans_tbl);
 			new_fu = nmg_mf(new_lu);
 		}
 	}
@@ -2474,7 +2516,7 @@ struct shell *s;
  */
 int
 nmg_loop_is_a_crack( lu )
-struct loopuse	*lu;
+CONST struct loopuse	*lu;
 {
 	struct edgeuse	*cur_eu;
 	struct edgeuse	*cur_eumate;
@@ -2540,8 +2582,8 @@ match:		;
  */
 int
 nmg_loop_is_ccw( lu, norm, tol )
-struct loopuse	*lu;
-CONST plane_t	norm;
+CONST struct loopuse	*lu;
+CONST plane_t		norm;
 CONST struct rt_tol	*tol;
 {
 	vect_t		edge1, edge2;
@@ -2581,20 +2623,20 @@ CONST struct rt_tol	*tol;
 		x = VDOT( edge2, edge1 );
 		rad = atan2( y, x );
 #if 0
-VPRINT("vu1", this_vu->v_p->vg_p->coord);
-VPRINT("vu2", next_vu->v_p->vg_p->coord);
-VPRINT("edge1", edge1);
-VPRINT("edge2", edge2);
-VPRINT("left", left);
-rt_log("atan2(%g,%g) = %g\n", y, x, rad);
+		VPRINT("vu1", this_vu->v_p->vg_p->coord);
+		VPRINT("vu2", next_vu->v_p->vg_p->coord);
+		VPRINT("edge1", edge1);
+		VPRINT("edge2", edge2);
+		VPRINT("left", left);
+		rt_log("atan2(%g,%g) = %g\n", y, x, rad);
 #endif
 		theta += rad;
 	}
 #if 0
 	rt_log(" theta = %g (%g)\n", theta, theta / rt_twopi );
+	nmg_face_lu_plot( lu, this_vu, this_vu );
+	nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
 #endif
-nmg_face_lu_plot( lu, this_vu, this_vu );
-nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
 
 	rad = theta * rt_inv2pi;
 	x = rad-1;
