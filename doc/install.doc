@@ -271,6 +271,10 @@ On a Sun workstation, you will need to use the command
 in order to have the Sun workstation read the tape using the industry
 standard QIC-24 format, rather than the default Sun behavior of reading
 the tape in QIC-11 format.
+.IP 5)
+Apply all the relevant errata sheets.  They are stored on the
+anonymous FTP server host ftp.brl.mil, in the directory brl-cad,
+and are named "errata4.0-irix4" and the like.
 .NH 1
 SOFTWARE ORGANIZATION
 .PP
