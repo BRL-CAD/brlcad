@@ -1020,8 +1020,6 @@ struct edgeuse *eu;
 		matep[0], matep[1], matep[2]);
 }
 
-#define FIRST_TIME(p)	( flags[(p)->index]++ == 0 )
-
 /*
  *			N M G _ R E B O U N D
  *
@@ -1063,7 +1061,7 @@ struct model	*m;
 					NMG_CK_LOOPUSE(lu);
 					l = lu->l_p;
 					NMG_CK_LOOP(l);
-					if( FIRST_TIME(l) )
+					if( NMG_INDEX_FIRST_TIME(flags,l) )
 						nmg_loop_g(l);
 				}
 			}
@@ -1074,7 +1072,7 @@ struct model	*m;
 				NMG_CK_FACE(f);
 
 				/* Rebound the face */
-				if( FIRST_TIME(f) )
+				if( NMG_INDEX_FIRST_TIME(flags,f) )
 					nmg_face_bb( f );
 			}
 
@@ -1083,7 +1081,7 @@ struct model	*m;
 				NMG_CK_LOOPUSE(lu);
 				l = lu->l_p;
 				NMG_CK_LOOP(l);
-				if( FIRST_TIME(l) )
+				if( NMG_INDEX_FIRST_TIME(flags,l) )
 					nmg_loop_g(l);
 			}
 
@@ -1091,7 +1089,7 @@ struct model	*m;
 			 *  Rebound the shell.
 			 *  This routine handles wire edges and lone vertices.
 			 */
-			if( FIRST_TIME(s) )
+			if( NMG_INDEX_FIRST_TIME(flags,s) )
 				nmg_shell_a( s );
 		}
 
