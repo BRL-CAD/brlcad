@@ -62,7 +62,7 @@ fastf_t c;
 fastf_t init;
 {
 
-	fastf_t old,new,temp,inv;
+	fastf_t old,new,temp;
 	int countdown,success;
 	countdown = MAXITS;
 

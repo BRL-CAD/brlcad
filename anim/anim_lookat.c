@@ -55,7 +55,7 @@ int argc;
 char **argv;
 {
 	fastf_t time, vsize;
-	vect_t eye,look,dir,prev_dir, angles, norm, temp;
+	vect_t eye,look,dir, angles, norm, temp;
 	quat_t quat;
 	mat_t mat;
 	int val = 0;
@@ -68,7 +68,6 @@ char **argv;
 
 	VSET(norm, 0.0, 1.0, 0.0);
 	while (!feof(stdin)){
-		VMOVE(prev_dir,dir);
 		val=scanf("%lf %lf %lf %lf %lf %lf %lf",&time,eye,eye+1,eye+2,look,look+1,look+2);
 		if (val < 7){
 			break;

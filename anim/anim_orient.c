@@ -67,7 +67,7 @@ int argc;
 char **argv;
 {
 	int num_read;
-	fastf_t	temp[3], temp2[3],angle[3],quat[4],matrix[16],tmatrix[16];
+	fastf_t	temp[3], temp2[3],angle[3],quat[4],matrix[16];
 	void anim_zyx2mat(),anim_ypr2mat(),anim_quat2mat(), anim_mat_print();
 	int anim_mat2ypr(),anim_mat2zyx(),anim_mat2quat();
 
