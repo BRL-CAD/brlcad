@@ -485,8 +485,9 @@ struct rt_tol		*tol;
 		}
 
 		/* Associate face geometry */
-		if( nmg_fu_planeeqn( fu, tol ) < 0 )
+		if( nmg_calc_face_g( fu ) )
 		{
+			nmg_pr_fu_briefly( fu, "" );
 			rt_free( (char *)verts, "pg_tess verts[]" );
 			rt_free( (char *)vertp, "pg_tess vertp[]" );
 			return -1;			/* FAIL */
