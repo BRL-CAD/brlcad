@@ -23,12 +23,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-#define	MAX_BYTES	(8*3*1024)
+#define	MAX_BYTES	(128*1024)
 
 char Usage[] = "usage: gencolor [-r#] [val1 .. valN]\n";
 
-unsigned char	buf[MAX_BYTES];
 int	bytes_in_buf, copies_per_buf;
+
+unsigned char	buf[MAX_BYTES];
 
 main( argc, argv )
 int argc; char **argv;
@@ -87,13 +88,20 @@ int argc; char **argv;
 
 	if( count < 0 ) {
 		/* output forever */
-		while( 1 )
-			(void) write( 1, (char *)buf, bytes_in_buf );
+		while( 1 )  {
+			if( write( 1, (char *)buf, bytes_in_buf ) != bytes_in_buf )  {
+				perror("write");
+				exit(1);
+			}
+		}
 	}
 
 	while( count > 0 ) {
 		times = copies_per_buf > count ? count : copies_per_buf;
-		(void) write( 1, (char *)buf, len * times );
+		if( write( 1, (char *)buf, len * times ) != len * times )  {
+			perror("write");
+			exit(1);
+		}
 		count -= times;
 	}
 
