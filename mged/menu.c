@@ -177,14 +177,20 @@ int index;
 struct menu_item *value;
 {
   struct dm_list *p;
+  struct cmd_list *save_cmd_list;
   struct dm_list *save_dm_list;
 
+  save_cmd_list = curr_cmd_list;
   save_dm_list = curr_dm_list;
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    if(p->aim)
+      curr_cmd_list = p->aim;
+
     curr_dm_list = p;
     mmenu_set( index, value );
   }
 
+  curr_cmd_list = save_cmd_list;
   curr_dm_list = save_dm_list;
 }
 
