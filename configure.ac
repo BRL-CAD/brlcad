@@ -659,7 +659,6 @@ dnl detect a useable system png library
 png_link_works=no
 dnl AC_CHECK_LIB(png, png_check_sig, png_link_works=yes)
 AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes)
-AC_MSG_RESULT($png_link_works)
 
  dnl check whether there is a useable math library
 m_link_works=no
