@@ -19,25 +19,40 @@
 
 <ul>
   <li>New Macintosh OS X architecture build capability</li>
-  <li>Improved Raytrace performance</li>
+  <li>Improved raytrace performance</li>
   <li>New database file format and migration tools</li>
   <li>New ascii database file format</li>
   <li>Ascii support for extruded bitmap (ebm) and volume (vol) primitives</li>
-  <li>Improved height field (dsp) primitive performance</li>
+  <li>Improved height field (dsp) primitive performance (Bresenham voxel traversal)</li>
   <li>Tesselation support for sketch extrusion (extrude) primitve</li>
-
   <li>General bug fixes, security enhancements, and speed improvements</li>
   <li>Multi-device Geometry Editor (MGED) improvements
   <ul>
     <li>New accelerators to automatically generate new primitevs from existing ones</li>
-    <li>Improved menu layout</li>
+    <li>Improved menu and interface layout</li>
     <li>New "Introduction to MGED" user manual</li>
-    <li>'in' command support for kinematics control (grip), sketch extrusion (extrude), and arbitrary regular polyhedron (arbn) primitives</li>
+    <li>'in' command support for kinematics control (grip), sketch extrusion (extrude), arbitrary regular polyhedron (arbn), and binary object (binunif) primitives</li>
     <li>'make' command support for rectangular parallelopipeds (rpp), arbitrary faceted (ars), and arbitrary regular polyhedron (arbn) primitives</li>
-    <li>New commands include: attr, attr_rm, copyeval, hide, lt, nmg_collapse, nmg_simplify, pathlist, shells, showmats, summary, unhide, version, xpush, rtedge </li>
-  </ul>  
+    <li>New commands include: adjust, autoview, attr, attr_rm, copyeval, hide, lt, nmg_collapse, nmg_simplify, pathlist, shells, showmats, summary, unhide, version, xpush, rtedge, E</li>
+    <li>Bezier curves are interactive display support</li>
+    <li>New "Build Pattern Tool" for duplicating geometry in a pattern</li>
+  </ul>
   <li>Supported architectures include Linux, FreeBSD, SGI IRIX, and Sun</li>
+  <li>Improve Pro-Engineer conversion support
+  <ul>
+    <li>Oriented and non-oriented triangle support</li>
+    <li>Unlimited name length support<li>
+  </ul>
+  <li>Fastgen 4 conversion now supports character names longer than 16 characters</li>
+  <li>Hidden geometry support</li>
+  <li>Geometry databases now support attributes</li>
+  <li>Improved and updated support documentation (man pages, command help, and documentation)</li>
+  <li>Improved raytracer edge detection performance</li>
+  <li>Initial support for multiply represented objects (MROs)</li>
+  <li>Improved Bezier curve support for sketch extrusion (extrude) primitive</li>
 </ul>
+
+!!! stop at 2001-03-02
 
 <a name="new_util"><h2>New Utilities</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
@@ -47,21 +62,27 @@
   <li>rtedge
     <p>Raytraces models, detects edges, and writes BRL-CAD color image (.pix) files</p>
   </li>
+  <li>g_diff
+    <p>Compares two geometry database files and reports differences between the two</p>
 </ul>
 
 <a name="new_lib"><h2>New Libraries</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
-  <li></li>
+  <li>New general purpose bourne-shell utility library (part of regression suite)
+  <ul>
+    <li>With file lock and semaphores, stdout/stderr/file logging, mail, cvs, packaging, and remote host querying facilities</li>
+  </ul>
 </ul>
 
 <a name="dev"><h2>Developer Notes</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
   <li>New and improved regression test suite</li>
   <li>Compile-time optimizations that significantly increase raytrace performance (at cost of run-time debugging)</li>
-  <li>Detached dependancy on X (and Tk) during compilation</li>
-  <li>Consolidated configuration options prior to building</li>
+  <li>Detached dependancy on X (and Tk) during source compilation</li>
+  <li>Consolidated cake build options</li>
+  <li>Mged 'db' command facilities</li>
+  <li>Improved ANSI source conformance (still in transition)</li>
 </ul>
-
 
 <a name="deprecated"><h2>Deprecated Features</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
@@ -73,11 +94,11 @@
 <a name="removed"><h2>Unsupported Features and Utilities</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
   <li>g4-g5
-    <p>This tool has been superceeded by the more general 'dbupgrade' tool</p>
+    <p>This tool has been replaced by the more general 'dbupgrade' command</p>
   </li>
 
   <!-- include specific commands that did this --->
-  <li>Standard input/output redirection is no longer supported via the command-line tools</li>
+  <li>Standard input/output redirection is no longer supported for g2asc, asc2g</li>
 
 <hr>
 <a href="mailto:cad@arl.army.mil">&lt;<code>cad@arl.army.mil</code>&gt;</a>
