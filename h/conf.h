@@ -154,6 +154,7 @@
 #	define HAVE_SBRK_DECL	1
 #endif
 
+
 #if defined(__FreeBSD__)
 #	define	HAVE_STDLIB_H	1
 #	define	HAVE_STDARG_H	1

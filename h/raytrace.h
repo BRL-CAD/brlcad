@@ -1671,7 +1671,7 @@ struct rt_functab {
 			int /*free*/, struct db_i * /*dbip*/));
 	CONST struct bu_structparse *ft_parsetab;	/* rt_xxx_parse */
 	size_t	ft_internal_size;	/* sizeof(struct rt_xxx_internal) */
-	long	ft_internal_magic;	/* RT_XXX_INTERNAL_MAGIC */
+	unsigned long	ft_internal_magic;	/* RT_XXX_INTERNAL_MAGIC */
 #if defined(TCL_OK)
 	int	(*ft_tclget) BU_ARGS((Tcl_Interp *,
 			CONST struct rt_db_internal *, CONST char *item));
