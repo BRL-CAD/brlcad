@@ -27,6 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 
 extern int	atoi();
+void	aexists();
 
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */

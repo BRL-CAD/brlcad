@@ -32,7 +32,7 @@ extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
 
-static void	aexists();
+void	aexists();
 
 int		newedge;		/* new edge for arb editing */
 
@@ -692,7 +692,7 @@ f_title()
 }
 
 /* tell him it already exists */
-static void
+void
 aexists( name )
 char	*name;
 {
