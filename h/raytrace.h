@@ -581,6 +581,7 @@ struct partition {
 	char		pt_inflip;		/* flip inhit->hit_normal */
 	char		pt_outflip;		/* flip outhit->hit_normal */
 	struct bu_ptbl	pt_seglist;		/* all segs in this partition */
+	struct region	**pt_overlap_reg;	/* NULL-terminated array of overlapping regions.  NULL if no overlap. */
 };
 #define PT_NULL		((struct partition *)0)
 #define PT_MAGIC	0x87687681
