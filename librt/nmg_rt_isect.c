@@ -413,8 +413,10 @@ char *Pole_name;
 		if (distA < distB) {
 			VUNITIZE(VtoPole_prj);
 			VUNITIZE(leftA);
-			VPRINT("LeftA", leftA);
-			VPRINT("VtoPole_prj", VtoPole_prj);
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+				VPRINT("LeftA", leftA);
+				VPRINT("VtoPole_prj", VtoPole_prj);
+			}
 
 			if (VDOT(leftA, VtoPole_prj) >= 0.0) {
 				/* plane point is "inside" edge A */
@@ -432,8 +434,10 @@ char *Pole_name;
 		} else {
 			VUNITIZE(VtoPole_prj);
 			VUNITIZE(leftB);
-			VPRINT("LeftB", leftB);
-			VPRINT("VtoPole_prj", VtoPole_prj);
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+				VPRINT("LeftB", leftB);
+				VPRINT("VtoPole_prj", VtoPole_prj);
+			}
 			if (VDOT(leftB, VtoPole_prj) >= 0.0) {
 				/* plane point is "inside" edge B */
 			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)

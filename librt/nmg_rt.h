@@ -39,7 +39,9 @@ struct hitmiss {
 					 * this hit point.
 					 */
 	long		*inbound_use;
+	vect_t		inbound_norm;
 	long		*outbound_use;
+	vect_t		outbound_norm;
 	int		start_stop;	/* is this a seg_in or seg_out */
 	struct hitmiss	*other;		/* for keeping track of the other
 					 * end of the segment when we know
@@ -67,11 +69,15 @@ struct hitmiss {
 		rt_bomb("going down in flames\n"); \
 	}\
 	if (!hm->hit.hit_private) { \
-		rt_log("%s[%d]: NULL hit_private in hitmiss structj\n", \
+		rt_log("%s[%d]: NULL hit_private in hitmiss struct\n", \
 			__FILE__, __LINE__); \
 		rt_bomb("going down in flames\n"); \
 	} \
 }
+
+#define NMG_CK_HITMISS_LISTS(a_hit, rd) { \
+    for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)){NMG_CK_HITMISS(a_hit);} \
+    for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_miss)){NMG_CK_HITMISS(a_hit);} }
 
 
 /*	Ray Data structure

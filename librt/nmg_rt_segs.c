@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -57,16 +58,35 @@ struct structparse hit_parsetab[] = {
 {"", 0, (char *)NULL,	  0,			  FUNC_NULL}
 };
 
+
+#define CK_SEGP(_p) if ( !(_p) || !(*(_p)) ) {\
+	rt_log("%s[line:%d]: Bad seg_p pointer\n", __FILE__, __LINE__); \
+	rt_bomb("Goodbye"); }
+
+
 static
-print_seg_list(seghead)
+print_seg_list(seghead, seg_count, s)
 struct seg *seghead;
+int seg_count;
+char *s;
 {
 	struct seg *seg_p;
 
-	rt_log("Segment List:\n");
+	rt_log("Segment List (%d segnemts) (%s):\n", seg_count, s);
 	/* print debugging data before returning */
+	rt_log("Seghead:\n0x%08x magic: 0x%0x(%d) forw:0x%08x back:0x%08x\n\n",
+			seghead,
+			seghead->l.magic,
+			seghead->l.forw,
+			seghead->l.back);
+
 	for (RT_LIST_FOR(seg_p, seg, &seghead->l) ) {
-		rt_log("dist %g  pt(%g,%g,%g)  N(%g,%g,%g)  =>  ",
+		rt_log("0x%08x magic: 0x%0x(%d) forw:0x%08x back:0x%08x\n",
+			seg_p,
+			seg_p->l.magic,
+			seg_p->l.forw,
+			seg_p->l.back);
+		rt_log("dist %g  pt(%g,%g,%g)  N(%g,%g,%g)  =>\n",
 		seg_p->seg_in.hit_dist,
 		seg_p->seg_in.hit_point[0],
 		seg_p->seg_in.hit_point[1],
@@ -90,30 +110,31 @@ struct seg *seghead;
  *		N E X T _ S T A T E _ T A B L E
  *
  *			Current_State
- *	Input	| 0   1   2   3   4   5   6
- *	-------------------------------------
- *	O_N  =	| 1   1  C1   5   1   5   5
- *	O_N !=	| 1  1|E C1  C1  C1  C1  C1
- *	N_N  =	| E   1   E   3   E   1   6    
- *	N_N !=	| E   1   E   E   E   1   1   
- *	N_O  =	| E   2   2  ?2   E   2   2
- *	N_O !=	| E   2   2   E   E   2   2
- *	O_O  =	| 3   2   2   3   3   6   6
- *	O_O !=	| 3  2|E C3  C3  C3  C3  C3
- *	A_A  =	| 4   1   2   3   4   8   6
- *	A_A !=	| 4   1  C4  C4  C4  C4  C4
- *
+ *	Input	|  0   1     2    3    4    5    6
+ *	-------------------------------------------
+ *	O_N  =	| i1   1   Ci1    5    1    5    5
+ *	O_N !=	| i1  1|E  Ci1   C1  Ci1  Ci1  Ci1
+ *	N_N  =	|  E   1     E    3    E    1    1
+ *	N_N !=	|  E   1     E    E    E    1    1   
+ *	N_O  =	|  E  o2    o2  ?o2    E   o2   o2
+ *	N_O !=	|  E  o2    o2    E    E   o2   o2
+ *	O_O  =	|io3  o2    o2    3    3    6    6
+ *	O_O !=	|io3 o2|E Cio3 Cio3 Cio3 Cio3 Cio3
+ *	A_A  =	|io4   1     2    3    4    5    6
+ *	A_A !=	|io4   1  Cio4 Cio4 Cio4 Cio4 Cio4
+ *	EOI     |  N   E    CN   CN   CN   CN   CN   
  *
  *	=	-> ray dist to point within tol (along ray) of last hit point
  *	!=	-> ray dist to point outside tol (along ray) of last hit point
  *
- *
  *	State Prefix
- *	C	current segment now completed
- *	C_	Previous segment now completed
- *
+ *	C	segment now completed, add to list & alloc new segment
+ *	i	set inpoint for current segment
+ *	o	set outpoint for current segment
+ *	
  *	State
  *	E	Error termination
+ *	N	Normal termination
  *	1	"Entering" solid
  *	2	"Leaving" solid
  *	3	O_O from outside state
@@ -123,23 +144,652 @@ struct seg *seghead;
  */
 
 
+static void
+set_inpoint(seg_p, a_hit, stp, ap)
+struct seg	**seg_p;	/* The segment we're building */
+struct hitmiss	*a_hit;		/* The input hit point */
+struct soltab	*stp;
+struct application	*ap;
+{
+	if ( !seg_p ) {
+		rt_log("%s[line:%d]: Null pointer to segment pointer\n",
+			__FILE__, __LINE__);
+		rt_bomb("Goodbye");
+	}
+		
+	/* if we don't have a seg struct yet, get one */
+	if ( *seg_p == (struct seg *)NULL ) {
+		RT_GET_SEG(*seg_p, ap->a_resource);
+		(*seg_p)->seg_stp = stp;
+	}
+
+	/* copy the "in" hit */
+	bcopy(&a_hit->hit, &(*seg_p)->seg_in, sizeof(struct hit));
+
+	/* copy the normal */
+	VMOVE((*seg_p)->seg_in.hit_normal, a_hit->inbound_norm);
+
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
+		rt_log("Set seg_in:\n\  dist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
+		(*seg_p)->seg_in.hit_dist,
+		(*seg_p)->seg_in.hit_point[0],
+		(*seg_p)->seg_in.hit_point[1],
+		(*seg_p)->seg_in.hit_point[2],
+		(*seg_p)->seg_in.hit_normal[0],
+		(*seg_p)->seg_in.hit_normal[1],
+		(*seg_p)->seg_in.hit_normal[2]);
+	}
+}
+
+static void
+set_outpoint(seg_p, a_hit)
+struct seg	**seg_p;	/* The segment we're building */
+struct hitmiss	*a_hit;		/* The input hit point */
+{
+	if ( !seg_p ) {
+		rt_log("%s[line:%d]: Null pointer to segment pointer\n",
+			__FILE__, __LINE__);
+		rt_bomb("Goodbye");
+	}
+		
+	/* if we don't have a seg struct yet, get one */
+	if ( *seg_p == (struct seg *)NULL )
+		rt_bomb("bad seg pointer\n");
+
+	/* copy the "out" hit */
+	bcopy(&a_hit->hit, &(*seg_p)->seg_out, sizeof(struct hit));
+
+	/* copy the normal */
+	VMOVE((*seg_p)->seg_out.hit_normal, a_hit->outbound_norm);
+
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
+		rt_log("Set seg_out:\n\  dist %g  pt(%g,%g,%g)  N(%g,%g,%g)  =>\n",
+		(*seg_p)->seg_in.hit_dist,
+		(*seg_p)->seg_in.hit_point[0],
+		(*seg_p)->seg_in.hit_point[1],
+		(*seg_p)->seg_in.hit_point[2],
+		(*seg_p)->seg_in.hit_normal[0],
+		(*seg_p)->seg_in.hit_normal[1],
+		(*seg_p)->seg_in.hit_normal[2]);
+		rt_log("  dist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
+		(*seg_p)->seg_out.hit_dist,
+		(*seg_p)->seg_out.hit_point[0],
+		(*seg_p)->seg_out.hit_point[1],
+		(*seg_p)->seg_out.hit_point[2],
+		(*seg_p)->seg_out.hit_normal[0],
+		(*seg_p)->seg_out.hit_normal[1],
+		(*seg_p)->seg_out.hit_normal[2]);
+	}
+}
 
 
 
+static int
+state0(seghead, seg_p, seg_count, a_hit, stp, ap, tol)
+struct seg	*seghead;	/* intersection w/ ray */
+struct seg	**seg_p;	/* The segment we're building */
+int		*seg_count;	/* The number of valid segments built */
+struct hitmiss	*a_hit;		/* The input hit point */
+struct soltab	*stp;
+struct application *ap;
+struct rt_tol	*tol;
+{
+	int ret_val = -1;
+
+	switch (a_hit->in_out) {
+	case HMG_HIT_OUT_IN:
+	case HMG_HIT_OUT_ON:
+		/* save the in-hit point */
+		set_inpoint(seg_p, a_hit, stp, ap);
+		ret_val = 1;
+		break;
+	case HMG_HIT_ON_ON:
+	case HMG_HIT_IN_IN:
+	case HMG_HIT_ON_IN:
+	case HMG_HIT_IN_ON:
+	case HMG_HIT_IN_OUT:
+	case HMG_HIT_ON_OUT:
+		/* error */
+		rt_log("%s[line:%d]: State transition error.\n",
+			__FILE__, __LINE__);
+		ret_val = -2;
+		break;
+	case HMG_HIT_OUT_OUT:
+		/* Save the in/out points */
+		set_inpoint(seg_p, a_hit, stp, ap);
+		set_outpoint(seg_p, a_hit);
+		ret_val = 3;
+		break;
+	case HMG_HIT_ANY_ANY:
+		/* Save the in/out points */
+		set_inpoint(seg_p, a_hit, stp, ap);
+		set_outpoint(seg_p, a_hit);
+		ret_val = 4;
+		break;
+	default:
+		rt_log("%s[line:%d]: bogus hit in/out status\n",
+			__FILE__, __LINE__);
+		rt_bomb("Goodbye\n");
+		break;
+	}
+
+	return ret_val;
+}
+
+static int
+state1(seghead, seg_p, seg_count, a_hit, stp, ap, tol)
+struct seg	*seghead;	/* intersection w/ ray */
+struct seg	**seg_p;	/* The segment we're building */
+int		*seg_count;	/* The number of valid segments built */
+struct hitmiss	*a_hit;		/* The input hit point */
+struct soltab	*stp;
+struct application *ap;
+struct rt_tol	*tol;
+{
+	int ret_val = -1;
+	double delta;
+
+	switch (a_hit->in_out) {
+	case HMG_HIT_OUT_ON:
+	case HMG_HIT_OUT_IN:
+	case HMG_HIT_IN_IN:
+	case HMG_HIT_ON_IN:
+	case HMG_HIT_IN_ON:
+	case HMG_HIT_ON_ON:
+		ret_val = 1;
+		break;
+	case HMG_HIT_ON_OUT:
+	case HMG_HIT_IN_OUT:
+		set_outpoint(seg_p, a_hit);
+		ret_val = 2;
+		break;
+	case HMG_HIT_OUT_OUT:
+		/* XXX possibly an error condition if not within tol */
+		set_outpoint(seg_p, a_hit);
+		ret_val = 2;
+		break;
+	case HMG_HIT_ANY_ANY:
+		ret_val = 1;
+		break;
+	default:
+		rt_log("%s[line:%d]: bogus hit in/out status\n",
+			__FILE__, __LINE__);
+		rt_bomb("Goodbye\n");
+		break;
+	}
+
+	return ret_val;
+}
+
+static int
+state2(seghead, seg_p, seg_count, a_hit, stp, ap, tol)
+struct seg	*seghead;	/* intersection w/ ray */
+struct seg	**seg_p;	/* The segment we're building */
+int		*seg_count;	/* The number of valid segments built */
+struct hitmiss	*a_hit;		/* The input hit point */
+struct soltab	*stp;
+struct application *ap;
+struct rt_tol	*tol;
+{
+	int ret_val = -1;
+	double delta;
+
+	switch (a_hit->in_out) {
+	case HMG_HIT_OUT_ON:
+	case HMG_HIT_OUT_IN:
+		/* Segment completed.  Insert into segment list */
+		RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+		RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+		(*seg_count)++;
+
+		/* start new segment */
+		(*seg_p) = (struct seg *)NULL;
+		set_inpoint(seg_p, a_hit, stp, ap);
+
+		ret_val = 1;
+		break;
+	case HMG_HIT_IN_IN:
+	case HMG_HIT_ON_ON:
+	case HMG_HIT_ON_IN:
+	case HMG_HIT_IN_ON:
+		/* Error */
+		rt_log("%s[line:%d]: State transition error.\n",
+			__FILE__, __LINE__);
+		ret_val = -2;
+		break;
+	case HMG_HIT_ON_OUT:
+	case HMG_HIT_IN_OUT:
+		/* progress the out-point */
+		set_outpoint(seg_p, a_hit);
+		ret_val = 2;
+		break;
+	case HMG_HIT_OUT_OUT:
+		CK_SEGP(seg_p);
+		RT_CK_TOL(tol);
+		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+		if ( delta < tol->dist) {
+			set_outpoint(seg_p, a_hit);
+			ret_val = 2;
+			break;
+		}
+		/* complete the segment */
+		RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+		RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+		(*seg_count)++;
+
+		/* start new segment */
+		(*seg_p) = (struct seg *)NULL;
+		set_inpoint(seg_p, a_hit, stp, ap);
+		set_outpoint(seg_p, a_hit);
+
+		ret_val = 3;
+		break;
+	case HMG_HIT_ANY_ANY:
+		CK_SEGP(seg_p);
+		RT_CK_TOL(tol);
+		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+		if ( delta < tol->dist) {
+			set_outpoint(seg_p, a_hit);
+			ret_val = 2;
+			break;
+		}
+		/* complete the segment */
+		RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+		RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+		(*seg_count)++;
+
+		/* start new segment */
+		(*seg_p) = (struct seg *)NULL;
+		set_inpoint(seg_p, a_hit, stp, ap);
+		set_outpoint(seg_p, a_hit);
+
+		ret_val = 4;
+		break;
+	default:
+		rt_log("%s[line:%d]: bogus hit in/out status\n",
+			__FILE__, __LINE__);
+		rt_bomb("Goodbye\n");
+		break;
+	}
+
+	return ret_val;
+}
+
+static int
+state3(seghead, seg_p, seg_count, a_hit, stp, ap, tol)
+struct seg	*seghead;	/* intersection w/ ray */
+struct seg	**seg_p;	/* The segment we're building */
+int		*seg_count;	/* The number of valid segments built */
+struct hitmiss	*a_hit;		/* The input hit point */
+struct soltab	*stp;
+struct application *ap;
+struct rt_tol	*tol;
+{
+	int ret_val = -1;
+	double delta;
+
+	CK_SEGP(seg_p);
+	RT_CK_TOL(tol);
+	delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+
+	switch (a_hit->in_out) {
+	case HMG_HIT_OUT_ON:
+	case HMG_HIT_OUT_IN:
+		if ( delta < tol->dist) {
+			ret_val = 5;
+		} else {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+
+			ret_val = 1;
+		}
+		break;
+	case HMG_HIT_IN_IN:
+	case HMG_HIT_ON_IN:
+	case HMG_HIT_IN_ON:
+	case HMG_HIT_ON_ON:
+		if ( delta < tol->dist) {
+			ret_val = 3;
+		} else {
+			/* Error */
+			rt_log("%s[line:%d]: State transition error.\n",
+				__FILE__, __LINE__);
+			ret_val = -2;
+		}
+		break;
+	case HMG_HIT_ON_OUT:
+	case HMG_HIT_IN_OUT:
+		/*
+		 * This can happen when the ray hits an edge/vertex and
+		 * (due to floating point fuzz) also appears to have a 
+		 * hit point in the area of a face:
+		 *
+		 * ------->o
+		 *	  / \------------>
+		 *	 /   \
+		 *
+		 */
+		set_outpoint(seg_p, a_hit);
+		ret_val = 2;
+		break;
+	case HMG_HIT_OUT_OUT:
+		if (delta > tol->dist) {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+			set_outpoint(seg_p, a_hit);
+		}
+		ret_val = 3;
+		break;
+	case HMG_HIT_ANY_ANY:
+		if (delta < tol->dist) {
+			ret_val = 3;
+		} else {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+			ret_val = 4;
+		}
+		break;
+	default:
+		rt_log("%s[line:%d]: bogus hit in/out status\n",
+			__FILE__, __LINE__);
+		rt_bomb("Goodbye\n");
+		break;
+	}
+
+	return ret_val;
+}
+
+static int
+state4(seghead, seg_p, seg_count, a_hit, stp, ap, tol)
+struct seg	*seghead;	/* intersection w/ ray */
+struct seg	**seg_p;	/* The segment we're building */
+int		*seg_count;	/* The number of valid segments built */
+struct hitmiss	*a_hit;		/* The input hit point */
+struct soltab	*stp;
+struct application *ap;
+struct rt_tol	*tol;
+{
+	int ret_val = -1;
+	double delta;
+
+	switch (a_hit->in_out) {
+	case HMG_HIT_OUT_ON:
+	case HMG_HIT_OUT_IN:
+		CK_SEGP(seg_p);
+		RT_CK_TOL(tol);
+		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+		if (delta > tol->dist) {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+		}
+		ret_val = 1;
+		break;
+	case HMG_HIT_IN_IN:
+	case HMG_HIT_ON_IN:
+	case HMG_HIT_IN_ON:
+	case HMG_HIT_ON_ON:
+	case HMG_HIT_ON_OUT:
+	case HMG_HIT_IN_OUT:
+		/* Error */
+		rt_log("%s[line:%d]: State transition error.\n",
+			__FILE__, __LINE__);
+		ret_val = -2;
+		break;
+	case HMG_HIT_OUT_OUT:
+		CK_SEGP(seg_p);
+		RT_CK_TOL(tol);
+		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+		if (delta > tol->dist) {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+			set_outpoint(seg_p, a_hit);
+		}
+		ret_val = 3;
+		break;
+	case HMG_HIT_ANY_ANY:
+		CK_SEGP(seg_p);
+		RT_CK_TOL(tol);
+		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+		if (delta > tol->dist) {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+			set_outpoint(seg_p, a_hit);
+		}
+		ret_val = 4;
+		break;
+	default:
+		rt_log("%s[line:%d]: bogus hit in/out status\n",
+			__FILE__, __LINE__);
+		rt_bomb("Goodbye\n");
+		break;
+	}
+
+	return ret_val;
+}
+
+static int
+state5(seghead, seg_p, seg_count, a_hit, stp, ap, tol)
+struct seg	*seghead;	/* intersection w/ ray */
+struct seg	**seg_p;	/* The segment we're building */
+int		*seg_count;	/* The number of valid segments built */
+struct hitmiss	*a_hit;		/* The input hit point */
+struct soltab	*stp;
+struct application *ap;
+struct rt_tol	*tol;
+{
+	int ret_val = -1;
+	double delta;
+
+	switch (a_hit->in_out) {
+	case HMG_HIT_OUT_ON:
+	case HMG_HIT_OUT_IN:
+		CK_SEGP(seg_p);
+		RT_CK_TOL(tol);
+		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+		if (delta < tol->dist) {
+			ret_val = 5;
+		} else {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+			ret_val = 1;
+		}
+		break;
+	case HMG_HIT_IN_IN:
+	case HMG_HIT_ON_IN:
+	case HMG_HIT_IN_ON:
+	case HMG_HIT_ON_ON:
+		ret_val = 1;
+		break;
+	case HMG_HIT_ON_OUT:
+	case HMG_HIT_IN_OUT:
+		set_outpoint(seg_p, a_hit);
+		ret_val = 2;
+		break;
+	case HMG_HIT_OUT_OUT:
+		CK_SEGP(seg_p);
+		RT_CK_TOL(tol);
+		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+		if (delta < tol->dist) {
+			ret_val = 6;
+		} else {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+			set_outpoint(seg_p, a_hit);
+			ret_val = 3;
+		}
+		break;
+	case HMG_HIT_ANY_ANY:
+		CK_SEGP(seg_p);
+		RT_CK_TOL(tol);
+		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+		if (delta < tol->dist) {
+			ret_val = 5;
+		} else {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+			set_outpoint(seg_p, a_hit);
+			ret_val = 4;
+		}
+		break;
+	default:
+		rt_log("%s[line:%d]: bogus hit in/out status\n",
+			__FILE__, __LINE__);
+		rt_bomb("Goodbye\n");
+		break;
+	}
+
+	return ret_val;
+}
+
+static int
+state6(seghead, seg_p, seg_count, a_hit, stp, ap, tol)
+struct seg	*seghead;	/* intersection w/ ray */
+struct seg	**seg_p;	/* The segment we're building */
+int		*seg_count;	/* The number of valid segments built */
+struct hitmiss	*a_hit;		/* The input hit point */
+struct soltab	*stp;
+struct application *ap;
+struct rt_tol	*tol;
+{
+	int ret_val = -1;
+	double delta;
+
+	switch (a_hit->in_out) {
+	case HMG_HIT_OUT_ON:
+	case HMG_HIT_OUT_IN:
+		CK_SEGP(seg_p);
+		RT_CK_TOL(tol);
+		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+		if (delta < tol->dist) {
+			ret_val = 5;
+		} else {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+			ret_val = 1;
+		}
+		break;
+	case HMG_HIT_IN_IN:
+	case HMG_HIT_ON_IN:
+	case HMG_HIT_IN_ON:
+	case HMG_HIT_ON_ON:
+		ret_val = 1;
+		break;
+	case HMG_HIT_ON_OUT:
+	case HMG_HIT_IN_OUT:
+		set_outpoint(seg_p, a_hit);
+		ret_val = 2;
+		break;
+	case HMG_HIT_OUT_OUT:
+		CK_SEGP(seg_p);
+		RT_CK_TOL(tol);
+		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+		if (delta < tol->dist) {
+			ret_val = 6;
+		} else {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+			set_outpoint(seg_p, a_hit);
+			ret_val = 3;
+		}
+		break;
+	case HMG_HIT_ANY_ANY:
+		CK_SEGP(seg_p);
+		RT_CK_TOL(tol);
+		delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
+		if (delta < tol->dist) {
+			ret_val = 6;
+		} else {
+			/* complete the segment */
+			RT_LIST_MAGIC_SET( &( (*seg_p)->l ), RT_SEG_MAGIC);
+			RT_LIST_INSERT(&(seghead->l), &((*seg_p)->l) );
+			(*seg_count)++;
+
+			/* start new segment */
+			(*seg_p) = (struct seg *)NULL;
+			set_inpoint(seg_p, a_hit, stp, ap);
+			set_outpoint(seg_p, a_hit);
+			ret_val = 4;
+		}
+		break;
+	default:
+		rt_log("%s[line:%d]: bogus hit in/out status\n",
+			__FILE__, __LINE__);
+		rt_bomb("Goodbye\n");
+		break;
+	}
+}
 
 
-
-
-
-#define MAKE_SEG(in_hit, out_hit) \
-	RT_GET_SEG(seg_p, ap->a_resource); \
-	RT_CK_SEG(seg_p); \
-	seg_p->seg_stp = stp; \
-	bcopy(&in_hit->hit, &seg_p->seg_in, sizeof(struct hit)); \
-	bcopy(&out_hit->hit, &seg_p->seg_out, sizeof(struct hit)); \
-	seg_count++; \
-	RT_LIST_INSERT(&(seghead->l), &(seg_p->l) )
-
+static int (*state_table[7])() = {
+	state0, state1, state2, state3,
+	state4, state5, state6
+};
 
 
 static int
@@ -149,102 +799,59 @@ struct application	*ap;
 struct seg		*seghead;	/* intersection w/ ray */
 struct soltab		*stp;
 {
-	int ray_state = NMG_RAY_STATE_OUTSIDE;
-	struct hitmiss *in_hit = (struct hitmiss *)NULL;
-	struct hitmiss *a_hit;
+	int ray_state = 0;
+	int new_state;
+	struct hitmiss *a_hit = (struct hitmiss *)NULL;
+	struct hitmiss *hm = (struct hitmiss *)NULL;
+	struct seg *seg_p = (struct seg *)NULL;
 	int seg_count = 0;
-	struct seg *seg_p;
 
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
-
-	while (RT_LIST_NON_EMPTY(&rd->rd_hit) ) {
-
-		a_hit = RT_LIST_FIRST(hitmiss, &rd->rd_hit);
+	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
 		NMG_CK_HITMISS(a_hit);
-		RT_LIST_DEQUEUE( &a_hit->l );
 
-		if (ray_state == NMG_RAY_STATE_OUTSIDE) {
-			switch (a_hit->in_out) {
-			case HMG_HIT_OUT_IN:
-			case HMG_HIT_OUT_ON:
-				in_hit = a_hit;
-				break;
-			case HMG_HIT_ANY_ANY:
-				/* Hit a Non-3-Manifold */
-			case HMG_HIT_OUT_OUT:
-				if (in_hit)
-					rt_bomb("What should I have done?\n");
-
-				/* build the seg */
-				MAKE_SEG(a_hit, a_hit);
-				VMOVE(seg_p->seg_in.hit_normal,
-					a_hit->inbound_norm);
-				VMOVE(seg_p->seg_out.hit_normal,
-					a_hit->outbound_norm);
-
-				ray_state = NMG_RAY_STATE_INSIDE;
-				break;
-			case HMG_HIT_IN_IN:
-			case HMG_HIT_IN_ON:
-			case HMG_HIT_ON_IN:
-			case HMG_HIT_ON_ON:
-				if (!in_hit)
-					rt_bomb("How did I get in?\n");
-				/* if we're already inside, just eat this */
-				break;
-			case HMG_HIT_IN_OUT:
-			case HMG_HIT_ON_OUT:
-				if (!in_hit)
-					rt_bomb("How can I be leaving when I haven't entered?\n");
-				/* build the seg */
-				MAKE_SEG(in_hit, a_hit);
-				VMOVE(seg_p->seg_in.hit_normal,
-					in_hit->inbound_norm);
-				VMOVE(seg_p->seg_out.hit_normal,
-					a_hit->outbound_norm);
-
-				in_hit = (struct hitmiss *)NULL;
-				ray_state = NMG_RAY_STATE_INSIDE;
-				break;
-			default:
-				rt_bomb("Bogus ray state while leaving\n");
-				break;
+		new_state = state_table[ray_state](seghead, &seg_p,
+							&seg_count, a_hit,
+							stp, ap, rd->tol);
+		if (new_state < 0) {
+			/* state transition error.  Print out the hit list
+			 * and indicate where we were in processing it.
+			 */
+			for (RT_LIST_FOR(hm, hitmiss, &rd->rd_hit)) {
+				if (hm == a_hit) {
+					rt_log("======= State %d ======\n",
+						ray_state);
+					nmg_rt_print_hitmiss(hm);
+					rt_log("================\n");
+				} else 
+					nmg_rt_print_hitmiss(hm);
 			}
-		} else { /* ray_state == NMG_RAY_STATE_INSIDE */
-			switch (a_hit->in_out) {
-			case HMG_HIT_IN_OUT:
-			case HMG_HIT_ON_OUT:
-				/* "eat" the hit point */
-				break;
-			case HMG_HIT_IN_IN:
-			case HMG_HIT_IN_ON:
-			case HMG_HIT_ON_IN:
-			case HMG_HIT_ON_ON:
-				rt_bomb("I've already left the NMG and this guy wants to stay inside\n");
-				break;
-			case HMG_HIT_OUT_IN:
-			case HMG_HIT_OUT_ON:
-				ray_state = NMG_RAY_STATE_OUTSIDE;
-				in_hit = a_hit;
-				break;
 
-			case HMG_HIT_ANY_ANY:
-			case HMG_HIT_OUT_OUT:
-				ray_state = NMG_RAY_STATE_OUTSIDE;
-				/* build the seg */
-				MAKE_SEG(a_hit, a_hit);
-				VMOVE(seg_p->seg_in.hit_normal,
-					in_hit->inbound_norm);
-				VMOVE(seg_p->seg_out.hit_normal,
-					a_hit->outbound_norm);
-				break;
-			default:
-				rt_bomb("Bogus ray state while leaving\n");
-				break;
-			}
+			/* Now bomb off */
+			rt_bomb("Goodbye\n");
 		}
+
+		ray_state = new_state;
 	}
+
+	/* Check to make sure the input ran out in the right place 
+	 * in the state table.
+	 */
+	if (ray_state == 1) {
+		rt_log("%s[line:%d]: Input ended at non-terminal FSM state\n",
+			__FILE__, __LINE__);
+		rt_bomb("Goodbye");
+	}
+
+	/* Insert the last segment if appropriate */
+	if (ray_state > 1) {
+		/* complete the segment */
+		RT_LIST_MAGIC_SET( &( seg_p->l ), RT_SEG_MAGIC);
+		RT_LIST_INSERT(&(seghead->l), &(seg_p->l) );
+		seg_count++;
+	}
+
 
 
 	if (rt_g.NMG_debug & DEBUG_RT_SEGS && RT_LIST_NON_EMPTY(&rd->rd_miss))
@@ -286,6 +893,8 @@ struct ray_data	*rd;
 		return(0);			/* MISS */
 	} else if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 
+		print_seg_list(rd->seghead, seg_count, "before");
+
 		rt_log("\n\nnmg_ray_segs(rd)\nsorted nmg/ray hit list\n");
 
 		for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit))
@@ -300,7 +909,7 @@ struct ray_data	*rd;
 		return(seg_count);
 
 	/* print debugging data before returning */
-	print_seg_list(rd->seghead);
+	print_seg_list(rd->seghead, seg_count, "after");
 
 	return(seg_count);
 }
