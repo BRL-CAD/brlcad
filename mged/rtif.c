@@ -1301,7 +1301,7 @@ int	argc;
 		FD_SET(fileno(stdin), &readfds);
 		tv.tv_sec = (long)rtif_delay;
 		tv.tv_usec = (long)((rtif_delay - sec) * 1000000);
-		select( 1, &readfds, (fd_set *)0, (fd_set *)0, &tv );
+		select( fileno(stdin)+1, &readfds, (fd_set *)0, (fd_set *)0, &tv );
 	}
 	return(0);
 }
