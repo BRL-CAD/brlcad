@@ -297,7 +297,7 @@ char **argv;
 	elevation = 25.0;
 #ifdef CRAY1
 	npsw = 1;			/* >1 on GOS crashes system */
-#endif cray
+#endif
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
