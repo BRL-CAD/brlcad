@@ -43,6 +43,27 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 
+/*
+ *			D B _ G E T _ D I R E C T O R Y _ S I Z E
+ *
+ *  Return the number of "struct directory" nodes in the given database.
+ */
+int
+db_get_directory_size( dbip )
+struct db_i	*dbip;
+{
+	register struct directory *dp;
+	register int	count = 0;
+	int		i;
+
+	RT_CK_DBI(dbip);
+
+	for (i = 0; i < RT_DBNHASH; i++)  {
+		for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+			count++;
+	}
+	return count;
+}
 
 /*
  *			D B _ D I R H A S H

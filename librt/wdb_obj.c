@@ -2850,8 +2850,6 @@ wdb_getspace(dbip, num_entries)
      struct db_i *dbip;
      register int num_entries;
 {
-	register struct directory *dp;
-	register int i;
 	register struct directory **dir_basep;
 
 	if (num_entries < 0) {
@@ -2860,12 +2858,7 @@ wdb_getspace(dbip, num_entries)
 		num_entries = 0;
 	}
 
-	if (num_entries == 0) {
-		/* Set num_entries to the number of entries */
-		for (i = 0; i < RT_DBNHASH; i++)
-			for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
-				num_entries++;
-	}
+	if (num_entries == 0)  num_entries = db_get_directory_size(dbip);
 
 	/* Allocate and cast num_entries worth of pointers */
 	dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
