@@ -185,6 +185,7 @@ int			flags;
 				name );
 			return -3;
 		}
+		dp->d_flags = (dp->d_flags & ~7) | flags;
 		if( db_put_external( ep, dp, wdbp->dbip ) < 0 )  {
 			bu_log("wdb_export_external(%s): db_put_external error\n",
 				name );
@@ -216,7 +217,7 @@ int			flags;
 				name );
 			return -3;
 		}
-		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, 0, NULL )) == DIR_NULL )  {
+		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, NULL )) == DIR_NULL )  {
 			bu_log("wdb_export_external(%s): db_diradd error\n",
 				name );
 			return -3;
@@ -235,12 +236,14 @@ int			flags;
 
 	case RT_WDB_TYPE_DB_INMEM:
 		if( (dp = db_lookup( wdbp->dbip, name, 0 )) == DIR_NULL )  {
-			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, 0, NULL )) == DIR_NULL )  {
+			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, NULL )) == DIR_NULL )  {
 				bu_log("wdb_export_external(%s): db_diradd error\n",
 					name );
 				db_free_external( ep );
 				return -3;
 			}
+		} else {
+			dp->d_flags = (dp->d_flags & ~7) | flags;
 		}
 
 		/* Stash name into external representation */
