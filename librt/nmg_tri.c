@@ -1480,8 +1480,6 @@ CONST struct rt_tol	*tol;
 	int max_dir, min_dir;	/* 1: forward -1 reverse */
 	struct edgeuse *eu_first, *eu_last, *eu_p;
 
-	rt_g.debug = 1;
-
 	NMG_CK_VERTEX(v);
 	NMG_CK_FACEUSE(fu);
 	if (first_vu == (struct vertexuse **)(NULL)) {
