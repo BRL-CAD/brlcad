@@ -398,12 +398,49 @@ struct directory  {
 	char		*d_namep;		/* pointer to name string */
 	long		d_addr;			/* disk address in obj file */
 	struct directory *d_forw;		/* link to next dir entry */
+	struct animate	*d_animate;		/* link to animation */
 };
 #define DIR_NULL	((struct directory *)0)
 
 /* Args to rt_dir_lookup() */
 #define LOOKUP_NOISY	1
 #define LOOKUP_QUIET	0
+
+/*
+ *			A N I M A T E
+ *
+ *  Each one of these structures specifies an arc in the tree that
+ *  is to be operated on for animation purposes.  More than one
+ *  animation operation may be applied at any given arc.  The directory
+ *  structure points to a linked list of animate structures
+ *  (built by rt_anim_add()), and the operations are processed in the
+ *  order given.
+ */
+struct anim_mat {
+	short		anm_op;			/* ANM_RSTACK, ANM_RARC... */
+	mat_t		anm_mat;		/* Matrix */
+};
+#define ANM_RSTACK	1			/* Replace stacked matrix */
+#define ANM_RARC	2			/* Replace arc matrix */
+#define ANM_LMUL	3			/* Left (root side) mul */
+#define ANM_RMUL	4			/* Right (leaf side) mul */
+#define ANM_RBOTH	5			/* Replace stack, arc=Idn */
+
+struct animate {
+	struct animate	*an_forw;		/* forward link */
+	struct directory **an_path;		/* pointer to path array */
+	short		an_pathlen;		/* 0 = root */
+	short		an_type;		/* AN_MATRIX, AN_COLOR... */
+	union animate_specific {
+		struct anim_mat anu_m;
+	}		an_u;
+};
+#define AN_MATRIX	1			/* Matrix animation */
+#define AN_PROPERTY	2			/* Material property anim */
+#define AN_COLOR	3			/* Material color anim */
+#define AN_SOLID	4			/* Solid parameter anim */
+
+#define ANIM_NULL	((struct animate *)0)
 
 /*
  *			R E S O U R C E
@@ -516,6 +553,7 @@ struct rt_i {
 	union cutter	rti_inf_box;	/* List of infinite solids */
 	struct directory *rti_DirHead;	/* directory for this DB */
 	union record	*rti_db;	/* in-core database, when needed */
+	struct animate	*rti_anroot;	/* heads list of anim at root lvl */
 };
 #define RTI_NULL	((struct rt_i *)0)
 
