@@ -117,11 +117,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 
 /* Add vectors at `b' and `c', store result at `a' */
 #ifdef VECTORIZE
-#define VADD2(a,b,c) \
-	{ register int _i; \
-	for(_i = 0; _i < 3; _i++) \
-		(a)[_i] = (b)[_i] + (c)[_i]; \
-	}
+#define VADD2(a,b,c) VADD2N(a,b,c, 3)
 #else
 #define VADD2(a,b,c)	(a)[0] = (b)[0] + (c)[0];\
 			(a)[1] = (b)[1] + (c)[1];\
@@ -137,11 +133,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 
 /* Subtract vector at `c' from vector at `b', store result at `a' */
 #ifdef VECTORIZE
-#define VSUB2(a,b,c) \
-	{ register int _i; \
-	for(_i = 0; _i < 3; _i++) \
-		(a)[_i] = (b)[_i] - (c)[_i]; \
-	}
+#define VSUB2(a,b,c) 	VSUB2N(a,b,c, 3)
 #else
 #define VSUB2(a,b,c)	(a)[0] = (b)[0] - (c)[0];\
 			(a)[1] = (b)[1] - (c)[1];\
@@ -157,11 +149,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 
 /* Vectors:  A = B - C - D */
 #ifdef VECTORIZE
-#define VSUB3(a,b,c,d) \
-	{ register int _i; \
-	for(_i = 0; _i < 3; _i++) \
-		(a)[_i] = (b)[_i] - (c)[_i] - (d)[_i]; \
-	}
+#define VSUB3(a,b,c,d) VSUB3(a,b,c,d, 3)
 #else
 #define VSUB3(a,b,c,d)	(a)[0] = (b)[0] - (c)[0] - (d)[0];\
 			(a)[1] = (b)[1] - (c)[1] - (d)[1];\
@@ -177,11 +165,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 
 /* Add 3 vectors at `b', `c', and `d', store result at `a' */
 #ifdef VECTORIZE
-#define VADD3(a,b,c,d) \
-	{ register int _i; \
-	for(_i = 0; _i < 3; _i++) \
-		(a)[_i] = (b)[_i] + (c)[_i] + (d)[_i]; \
-	}
+#define VADD3(a,b,c,d) VADD3N(a,b,c,d, 3)
 #else
 #define VADD3(a,b,c,d)	(a)[0] = (b)[0] + (c)[0] + (d)[0];\
 			(a)[1] = (b)[1] + (c)[1] + (d)[1];\
@@ -197,11 +181,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 
 /* Add 4 vectors at `b', `c', `d', and `e', store result at `a' */
 #ifdef VECTORIZE
-#define VADD4(a,b,c,d,e) \
-	{ register int _i; \
-	for(_i = 0; _i < 3; _i++) \
-		(a)[_i] = (b)[_i] + (c)[_i] + (d)[_i] + (e)[_i];\
-	}
+#define VADD4(a,b,c,d,e) VADD4N(a,b,c,d,e, 3)
 #else
 #define VADD4(a,b,c,d,e) (a)[0] = (b)[0] + (c)[0] + (d)[0] + (e)[0];\
 			(a)[1] = (b)[1] + (c)[1] + (d)[1] + (e)[1];\
@@ -217,11 +197,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 
 /* Scale vector at `b' by scalar `c', store result at `a' */
 #ifdef VECTORIZE
-#define VSCALE(a,b,c) \
-	{ register int _i; \
-	for(_i = 0; _i < 3; _i++) \
-		(a)[_i] = (b)[_i] * (c); \
-	}
+#define VSCALE(a,b,c) VSCALEN(a,b,c, 3)
 #else
 #define VSCALE(a,b,c)	(a)[0] = (b)[0] * (c);\
 			(a)[1] = (b)[1] * (c);\
@@ -252,11 +228,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 
 /* Combine together several vectors, scaled by a scalar */
 #ifdef VECTORIZE
-#define VCOMB3(o, a,b, c,d, e,f)	{\
-	{ register int _i; \
-	for(_i = 0; _i < 3; _i++) \
-		(o)[_i] = (a) * (b)[_i] + (c) * (d)[_i] + (e) * (f)[_i]; \
-	} }
+#define VCOMB3(o, a,b, c,d, e,f)	VCOMB3N(o, a,b, c,d, e,f, 3)
 #else
 #define VCOMB3(o, a,b, c,d, e,f)	{\
 	(o)[X] = (a) * (b)[X] + (c) * (d)[X] + (e) * (f)[X];\
@@ -271,11 +243,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	} }
 
 #ifdef VECTORIZE
-#define VCOMB2(o, a,b, c,d)	{\
-	{ register int _i; \
-	for(_i = 0; _i < 3; _i++) \
-		(o)[_i] = (a) * (b)[_i] + (c) * (d)[_i]; \
-	} }
+#define VCOMB2(o, a,b, c,d)	VCOMB2N(o, a,b, c,d, 3)
 #else
 #define VCOMB2(o, a,b, c,d)	{\
 	(o)[X] = (a) * (b)[X] + (c) * (d)[X];\
@@ -295,11 +263,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
  *	scalar `e' times vector at `f'
  */
 #ifdef VECTORIZE
-#define VJOIN2(a,b,c,d,e,f)	\
-	{ register int _i; \
-	for(_i = 0; _i < 3; _i++) \
-		(a)[_i] = (b)[_i] + (c) * (d)[_i] + (e) * (f)[_i]; \
-	}
+#define VJOIN2(a,b,c,d,e,f)	VJOIN2N(a,b,c,d,e,f,3)
 #else
 #define VJOIN2(a,b,c,d,e,f)	\
 	(a)[0] = (b)[0] + (c) * (d)[0] + (e) * (f)[0];\
@@ -314,11 +278,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	}
 
 #ifdef VECTORIZE
-#define VJOIN1(a,b,c,d) \
-	{ register int _i; \
-	for(_i = 0; _i < 3; _i++) \
-		(a)[_i] = (b)[_i] + (c) * (d)[_i]; \
-	}
+#define VJOIN1(a,b,c,d)		VJOIN1N(a,b,c,d,3)
 #else
 #define VJOIN1(a,b,c,d) \
 	(a)[0] = (b)[0] + (c) * (d)[0];\
@@ -385,7 +345,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 #define VEC3X3MAT(o,i,m) \
 	{ register int _i; \
 	for(_i = 0; _i < 3; _i++) \
-		(o)[_i] = (i)[X]*(m)[_i] + (i)[Y]*(m)[4+_i] + (i)[Z]*(m)[8+_i]; \
+		(o)[_i] = (i)[X]*(m)[_i] + (i)[Y]*(m)[_i+4] + (i)[Z]*(m)[_i+8]; \
 	}
 #else
 #define VEC3X3MAT(o,i,m) \
@@ -428,14 +388,17 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	{ register double f; \
 	register int _i, _j; \
 	f = 0.0; \
-	for(_j = 0; _j < 3; _j++)  f+= (m)[12+_j] * (i)[_j]; \
+	for(_j = 0; _j < 3; _j++)  \
+		f += (m)[_j+12] * (i)[_j]; \
 	f = 1.0/(f + (m)[15]); \
-	for(_i = 0; _i < 3; _i++)  { \
+	for(_i = 0; _i < 3; _i++) \
 		(o)[_i] = 0.0; \
+	for(_i = 0; _i < 3; _i++)  { \
 		for(_j = 0; _j < 3; _j++) \
-			(o)[_i] += (m)[4*_i+_j] * (i)[_j]; \
-		(o)[_i] += (m)[4*_i+3]; \
-		(o)[_i] *=f; \
+			(o)[_i] += (m)[_j+4*_i] * (i)[_j]; \
+	} \
+	for(_i = 0; _i < 3; _i++)  { \
+		(o)[_i] = ((o)[_i] + (m)[4*_i+3]) * f; \
 	} }
 #else
 #define MAT4X3PNT(o,m,i) \
@@ -461,7 +424,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	for(_i = 0; _i < 4; _i++) (o)[_i] = 0.0; \
 	for(_i = 0; _i < 4; _i++) \
 		for(_j = 0; _j < 4; _j++) \
-			(o)[_i] += (m)[4*_i+_j] * (i)[_j]; \
+			(o)[_i] += (m)[_j+4*_i] * (i)[_j]; \
 	}
 #else
 #define MAT4X4PNT(o,m,i) \
@@ -477,10 +440,13 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	{ register double f; \
 	register int _i, _j; \
 	f = 1.0/((m)[15]); \
-	for(_i = 0; _i < 3; _i++) { \
+	for(_i = 0; _i < 3; _i++) \
 		(o)[_i] = 0.0; \
+	for(_i = 0; _i < 3; _i++) { \
 		for(_j = 0; _j < 3; _j++) \
-			(o)[_i] += (m)[4*_i+_j] * (i)[_j]; \
+			(o)[_i] += (m)[_j+4*_i] * (i)[_j]; \
+	} \
+	for(_i = 0; _i < 3; _i++) { \
 		(o)[_i] *= f; \
 	} }
 #else
