@@ -59,6 +59,56 @@ int n;
 }
 
 /*
+ *			N M G _ R E V E R S E _ F A C E
+ *
+ *  Reverse the orientation of a face.
+ *  Manipulate both the topological and geometric aspects of the face.
+ */
+void
+nmg_reverse_face( fu )
+register struct faceuse	*fu;
+{
+	register struct faceuse	*fumate;
+	register vectp_t	v;
+
+	NMG_CK_FACEUSE(fu);
+	fumate = fu->fumate_p;
+	NMG_CK_FACEUSE(fumate);
+	NMG_CK_FACE(fu->f_p);
+	NMG_CK_FACE_G(fu->f_p->fg_p);
+
+	/* reverse face normal vector */
+	v = fu->f_p->fg_p->N;
+	VREVERSE(v, v);
+	v[H] *= -1.0;
+
+	/* switch which face is "outside" face */
+	if (fu->orientation == OT_SAME)  {
+		if (fumate->orientation != OT_OPPOSITE)  {
+			rt_log("nmg_reverse_face(fu=x%x) fu:SAME, fumate:%d\n",
+				fu, fumate->orientation);
+			rt_bomb("nmg_reverse_face() orientation clash\n");
+		} else {
+			fu->orientation = OT_OPPOSITE;
+			fumate->orientation = OT_SAME;
+		}
+	} else if (fu->orientation == OT_OPPOSITE) {
+		if (fumate->orientation != OT_SAME)  {
+			rt_log("nmg_reverse_face(fu=x%x) fu:OPPOSITE, fumate:%d\n",
+				fu, fumate->orientation);
+			rt_bomb("nmg_reverse_face() orientation clash\n");
+		} else {
+			fu->orientation = OT_SAME;
+			fumate->orientation = OT_OPPOSITE;
+		}
+	} else {
+		/* Unoriented face? */
+		rt_log("ERROR nmg_reverse_face(fu=x%x), orientation=%d.\n",
+			fu, fu->orientation );
+	}
+}
+
+/*
  *			N M G _ M V _ F U _ B E T W E E N _ S H E L L S
  *
  *  Move faceuse from 'src' shell to 'dest' shell.
@@ -131,7 +181,6 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 		long **l;
 	} p;
 	int i;
-	vectp_t v;
 
 	(void)nmg_tbl(&faces, TBL_INIT, (long *)NULL);
 
@@ -152,31 +201,9 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
 		if (nmg_tbl(&faces, TBL_LOC, &fu->magic) < 0) {
-			/* Move fu from shell B to A */
+			/* Move fu from shell B to A, flip normal */
 			nmg_mv_fu_between_shells( sA, sB, fu );
-
-			/* reverse face normal vector */
-			NMG_CK_FACE(fu->f_p);
-			NMG_CK_FACE_G(fu->f_p->fg_p);
-			v = fu->f_p->fg_p->N;
-			VREVERSE(v, v);
-			v[H] *= -1.0;
-
-			/* switch which face is "outside" face */
-			if (fu->orientation == OT_SAME)
-				if (fu->fumate_p->orientation != OT_OPPOSITE)
-					rt_bomb("NMG fumate has bad orientation\n");
-				else {
-					fu->orientation = OT_OPPOSITE;
-					fu->fumate_p->orientation = OT_SAME;
-				}
-			else if (fu->orientation == OT_OPPOSITE)
-				if (fu->fumate_p->orientation != OT_SAME)
-					rt_bomb("NMG fumate has bad orientation\n");
-				else {
-					fu->orientation = OT_SAME;
-					fu->fumate_p->orientation = OT_OPPOSITE;
-				}
+			nmg_reverse_face( fu );
 		}
 	}
 
