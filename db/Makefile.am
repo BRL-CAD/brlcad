@@ -5,7 +5,9 @@ SUBDIRS = include
 A2G=$(top_builddir)/src/conv/asc2g
 G2A=$(top_builddir)/src/conv/g2asc
 
-.asc.g: ; $(A2G) $(builddir)$< $@
+# the shell script fu is to cope with gmake vs irix make weirdness...
+# gmake seems to prefix the src with the appropriate srcdir automagically...
+.asc.g: ; $(A2G) `if test -e $< ; then echo $< ; else echo $(top_srcdir)/db/$< ; fi` $@
 
 MODELS = \
 	axis.asc \
