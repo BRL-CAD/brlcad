@@ -880,7 +880,7 @@ vect_t		dir;
 			}
 			/* vu Interval runs from [i] to [j-1] inclusive */
 			if(rt_g.NMG_debug&DEBUG_COMBINE)
-				rt_log("interval from [%d] to [%d]\n", i, j-1 );
+				rt_log("vu's on list interval [%d] to [%d] equal\n", i, j-1 );
 			/* Ensure that all vu's point to same vertex */
 			v = vu[i]->v_p;
 			for( k = i+1; k < j; k++ )  {
@@ -908,7 +908,7 @@ vect_t		dir;
 		nmg_pl_comb_fu( 0, 1, fu1 );
 		nmg_pl_comb_fu( 0, 2, fu2 );
 
-		rt_bomb("nmg_face_combine() bad ending state\n");
+/*		rt_bomb("nmg_face_combine() bad ending state\n"); */
 	}
 
 	rt_free((char *)mag, "vector magnitudes");
@@ -1099,6 +1099,7 @@ int
 nmg_face_state_transition( vu, rs, pos, multi )
 struct vertexuse	*vu;
 struct nmg_ray_state	*rs;
+int			pos;
 int			multi;
 {
 	int			assessment;
@@ -1368,6 +1369,7 @@ rt_log("force next eu to ray\n");
 			rt_log("nmg_join_2loops(prev_vu=x%x, vu=x%x)\n",
 			prev_vu, vu);
 
+		nmg_vmodel(nmg_find_model(&vu->l.magic));
 		nmg_join_2loops( prev_vu, vu );
 
 		/* update vu[pos], as it will have changed. */
@@ -1408,14 +1410,15 @@ struct faceuse	*fu;
 
 	vbp = rt_vlblock_init();
 
-	fancy = 1;
+	fancy = 3;	/* show both types of edgeuses */
 	nmg_vlblock_fu(vbp, fu, tab, fancy );
 
 	/* Cause animation of boolean operation as it proceeds! */
 	if( nmg_vlblock_anim_upcall )  {
 		/* if requested, delay 3/4 second */
 		(*nmg_vlblock_anim_upcall)( vbp,
-			(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0 );
+			(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
+			0 );
 	} else {
 		rt_log("null nmg_vlblock_anim_upcall, no animation\n");
 	}
