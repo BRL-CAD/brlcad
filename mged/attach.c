@@ -473,6 +473,9 @@ char *dstr;
     return TCL_ERROR;
   }
 
+  /* Add Bezier Curves to the canvas widget */
+  Tk_CreateCanvasBezierType();
+
   /* Initialize [incr Tk] */
   if (Itk_Init(interp) == TCL_ERROR) {
     bu_vls_free(&vls);
