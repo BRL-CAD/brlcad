@@ -1485,6 +1485,10 @@ register struct uvcoord	*uvp;
 	switch( hitp->hit_surfno )  {
 	case TGC_NORM_BODY:
 		/* Skin.  x,y coordinates define rotation.  radius = 1 */
+		if( pprime[Y] > 1.0 )
+			pprime[Y] = 1.0;
+		if( pprime[Y] < -1.0 )
+			pprime[Y] = -1.0;
 		uvp->uv_u = acos(pprime[Y]) * bn_inv2pi;
 		uvp->uv_v = pprime[Z];		/* height */
 		break;
@@ -1504,6 +1508,15 @@ register struct uvcoord	*uvp;
 	/* Handle other half of acos() domain */
 	if( pprime[X] < 0 )
 		uvp->uv_u = 1.0 - uvp->uv_u;
+
+	if( uvp->uv_u < 0.0 )
+		uvp->uv_u = 0.0;
+	else if( uvp->uv_u > 1.0 )
+		uvp->uv_u = 1.0;
+	if( uvp->uv_v < 0.0 )
+		uvp->uv_v = 0.0;
+	else if( uvp->uv_v > 1.0 )
+		uvp->uv_v = 1.0;
 
 	/* uv_du should be relative to rotation, uv_dv relative to height */
 	uvp->uv_du = uvp->uv_dv = 0;
