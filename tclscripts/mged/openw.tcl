@@ -2513,11 +2513,12 @@ proc view_ring_add { id } {
     global view_ring
     global mged_collaborators
 
-#    if {$mged_gui($id,dm_loc) != "lv"} {
-#	winset $mged_gui($id,active_dm)
-#    }
     winset $mged_gui($id,active_dm)
 
+    # already more than 9 views in the view ring, ignore add
+    if {9 < [llength [_mged_view_ring get -a]]} {
+	return
+    }
     _mged_view_ring add
 
     set i [lsearch -exact $mged_collaborators $id]
