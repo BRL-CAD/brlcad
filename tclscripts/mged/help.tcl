@@ -188,6 +188,10 @@ set mged_help_data(quit)	{{}	{quit}}
 set mged_help_data(qorot)	{{x y z dx dy dz theta}	{rotate object being edited about specified vector}}
 set mged_help_data(qvrot)	{{dx dy dz theta}	{set view from direction vector and twist angle}}
 set mged_help_data(r)		{{region <operation solid>}	{create or extend a Region combination}}
+set mged_help_data(rcc-blend)	{{rccname newname thickness [v|h]}	{create a flange at an end of an rcc}}
+set mged_help_data(rcc-cap)     {{rccname newname [height] [v|h]}      {create a cap at an end of an rcc}}
+set mged_help_data(rcc-tgc)     {{rccname newname x y z [v|h]}     {create a tgc with the specified apex at an end of an rcc}}
+set mged_help_data(rcc-tor)     {{rccname newname}     {create a tor from an rcc}}
 set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
 set mged_help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{read the MUVES region_map file and optionally the sysdef file}}
 set mged_help_data(red)		{{object}	{edit a group or region using a text editor}}
@@ -206,6 +210,8 @@ set mged_help_data(rmater)	{{filename}	{read combination materials from filename
 set mged_help_data(rmats)	{{file}	{load view(s) from 'savekey' file}}
 set mged_help_data(rot)		{{x y z} {rotate by x, y, z (degrees)}}
 set mged_help_data(rotobj)	{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
+set mged_help_data(rpp-arch)    {{rppname newname face}     {create an arch at a face of an rpp}}
+set mged_help_data(rpp-cap)     {{rppname newname face height [0|1]}	{create a cap (arb6) at a face of an rpp}}
 set mged_help_data(rrt)		{{prog [options]}	{invoke prog with view}}
 set mged_help_data(rt)		{{[options] [-- objects]}	{do raytrace of view or specified objects}}
 set mged_help_data(rtcheck)	{{[options]}	{check for overlaps in current view}}
@@ -220,6 +226,7 @@ set mged_help_data(shells)	{{nmg_model}	{breaks model into seperate shells}}
 set mged_help_data(showmats)	{{path}	{show xform matrices along path}}
 set mged_help_data(size)	{{size}	{set view size}}
 set mged_help_data(solids)	{{file object(s)}	{make ascii summary of solid parameters}}
+set mged_help_data(sph-part)	{{sph1 sph2 newname}	{create a part from two sph's}}
 set mged_help_data(status)	{{[state|Viewscale|base2local|local2base|
         toViewcenter|Viewrot|model2view|view2model|
         model2objview|objview2model|help]}	{get view status}}
@@ -231,6 +238,7 @@ set mged_help_data(ted)		{{}	{text edit a solid's parameters}}
 set mged_help_data(title)	{{[string]}	{print or change the title}}
 set mged_help_data(tol)		{{[abs #] [rel #] [norm #] [dist #] [perp #]}	{show/set tessellation and calculation tolerances}}
 set mged_help_data(tops)	{{}	{find all top level objects}}
+set mged_help_data(tor-rcc)     {{torname newname}     {create an rcc from a tor}}
 set mged_help_data(tra)		{{dx dy dz} {translate by (dx,dy,dz)}}
 set mged_help_data(track)	{{<parameters>}	{adds tracks to database}}
 set mged_help_data(translate)	{{x y z}	{trans object to x,y, z}}
