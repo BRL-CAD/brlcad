@@ -62,7 +62,7 @@ union record  {
 #define ID_IN_UNIT	4		/* inches (deprecated) */
 #define ID_FT_UNIT	5		/* feet (deprecated) */
 		char	i_version[6];	/* Version code of Database format */
-#define ID_VERSION	"v3"		/* Current Version */
+#define ID_VERSION	"v4"		/* Current Version */
 		char	i_title[72];	/* Title or description */
 	} i;
 	struct solidrec  {
