@@ -67,6 +67,8 @@ int	nsamples;
 double	length;
 double	spacing;
 
+int	nframes = 300;
+
 main(argc, argv)
 char	**argv;
 {
@@ -102,6 +104,7 @@ char	**argv;
 	oradius = iradius + (5-4.134) * inches2mm / 2;		/* 5" outer diameter */
 #endif
 	fprintf(stderr,"inner radius=%gmm, outer radius=%gmm\n", iradius, oradius);
+	fprintf(stderr,"nframes=%d\n", nframes);
 
 	length = 187 * inches2mm;
 #ifdef never
@@ -146,7 +149,7 @@ char	**argv;
 		 */
 		mk_addmember( name, &ghead );
 		matp = mk_addmember( "ke", &ghead )->wm_mat;
-		pos = ((double)frame)/64 *	/* XXX hack: nframes */
+		pos = ((double)frame)/nframes *
 			(sample[nsamples-1][X] - sample[0][X]); /* length */
 
 		VSET( from, 0, -1, 0 );
