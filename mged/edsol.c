@@ -3218,8 +3218,8 @@ sedit()
 			ret_tcl = Tcl_VarEval( interp, "cad_radio", " .bot_fmode_radio ", bu_vls_addr( &pathName ),
 					       " _bot_fmode_result ", "\"BOT Face Mode\"",
 					       " \"Select the desired face mode\"", fmode,
-					       " { {Thickness appended to hit point} {Thickness centered about hit point} }",
-					       " { {This selection will place the plate thickness rayward of the hit point} {This selection will place the plate thickness centered about the hit point} } ",
+					       " { {Thickness centered about hit point} {Thickness appended to hit point} }",
+					       " { {This selection will place the plate thickness centered about the hit point} {This selection will place the plate thickness rayward of the hit point} } ",
 					       (char *)NULL );
 			if( ret_tcl != TCL_OK )
 			{
