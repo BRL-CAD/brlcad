@@ -34,6 +34,7 @@
 #include "rle_put.h"
 #include "rle.h"
 
+
 extern int	RunSetup( ARB_ARGS ),
 		RunSkipBlankLines( ARB_ARGS ),
 		RunSetColor( ARB_ARGS ),
@@ -76,7 +77,7 @@ rle_hdr rle_dflt_hdr = {
     8,				/* cmaplen (log2 of length of color map) */
     NULL,			/* pointer to color map */
     NULL,			/* pointer to comment strings */
-    stdout,			/* output file */
+    0,				/* output file */
     { 7 },			/* RGB channels only */
     0L,				/* Can't free name and file fields. */
     "Urt",			/* Default "program name". */
