@@ -62,10 +62,10 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			struct model *m, struct rt_db_internal *ip, \
 			CONST struct rt_tol *tol)); \
 	RT_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, \
-			CONST struct rt_external *ep, CONST mat_t mat)); \
+			CONST struct rt_external *ep, CONST mat_t mat, CONST struct db_i *dbip)); \
 	RT_EXTERN(int rt_##name##_export, (struct rt_external *ep, \
 			CONST struct rt_db_internal *ip, \
-			double local2mm)); \
+			double local2mm, CONST struct db_i *dbip )); \
 	RT_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip)); \
 	RT_EXTERN(int rt_##name##_describe, (struct rt_vls *str, \
 			struct rt_db_internal *ip, int verbose, \
@@ -104,10 +104,10 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			struct model *m, struct rt_db_internal *ip, \
 			CONST struct rt_tol *tol)); \
 	RT_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
-			CONST struct rt_external *ep, CONST mat_t mat)); \
+			CONST struct rt_external *ep, CONST mat_t mat, CONST struct db_i *dbip )); \
 	RT_EXTERN(int rt_/**/name/**/_export, (struct rt_external *ep, \
 			CONST struct rt_db_internal *ip, \
-			double local2mm)); \
+			double local2mm, CONST struct db_i *dbip )); \
 	RT_EXTERN(void rt_/**/name/**/_ifree, (struct rt_db_internal *ip)); \
 	RT_EXTERN(int rt_/**/name/**/_describe, (struct rt_vls *str, \
 			struct rt_db_internal *ip, int verbose, \
@@ -166,13 +166,16 @@ RT_DECLARE_INTERFACE(grp)
 RT_DECLARE_INTERFACE(hf)
 #define rt_dsp_xform rt_generic_xform
 RT_DECLARE_INTERFACE(dsp)
+#define rt_sketch_xform rt_generic_xform
+RT_DECLARE_INTERFACE(sketch)
+RT_DECLARE_INTERFACE(extrude)
 
 /* from db_comb.c */
 RT_EXTERN(int rt_comb_import, (struct rt_db_internal *ip,
-		CONST struct rt_external *ep, CONST mat_t mat));
+		CONST struct rt_external *ep, CONST mat_t mat, CONST struct db_i *dbip ));
 RT_EXTERN(int rt_comb_export, (struct rt_external *ep,
 		CONST struct rt_db_internal *ip,
-		double local2mm));
+		double local2mm, CONST struct db_i *dbip ));
 RT_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip));
 RT_EXTERN(int rt_comb_describe, (struct rt_vls *str,
 		struct rt_db_internal *ip, int verbose,
@@ -361,12 +364,26 @@ struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_hf_import,	rt_hf_export,	rt_hf_ifree,
 		rt_hf_describe,rt_hf_xform,
 
-	"ID_DSP",	0,		/* 25 In development */
+	"ID_DSP",	0,		/* 25 Displacement Map (alt. height field) */
 		rt_dsp_prep,	rt_dsp_shot,	rt_dsp_print,	rt_dsp_norm,
 		rt_dsp_uv,	rt_dsp_curve,	rt_dsp_class,	rt_dsp_free,
 		rt_dsp_plot,	rt_vstub,	rt_nul_tess,	rt_nul_tnurb,
 		rt_dsp_import,	rt_dsp_export,	rt_dsp_ifree,
 		rt_dsp_describe,rt_dsp_xform,
+
+	"ID_SKETCH",	0,		/* 26 2D sketch */
+		rt_sketch_prep,	rt_sketch_shot,	rt_sketch_print,	rt_sketch_norm,
+		rt_sketch_uv,	rt_sketch_curve,	rt_sketch_class,	rt_sketch_free,
+		rt_sketch_plot,	rt_vstub,	rt_nul_tess,	rt_nul_tnurb,
+		rt_sketch_import,	rt_sketch_export,	rt_sketch_ifree,
+		rt_sketch_describe,rt_sketch_xform,
+
+	"ID_EXTRUDE",	0,		/* 27 Solid of extrusion */
+		rt_extrude_prep,	rt_extrude_shot,	rt_extrude_print,	rt_extrude_norm,
+		rt_extrude_uv,	rt_extrude_curve,	rt_extrude_class,	rt_extrude_free,
+		rt_extrude_plot,	rt_extrude_vshot,	rt_extrude_tess,	rt_nul_tnurb,
+		rt_extrude_import,	rt_extrude_export,	rt_extrude_ifree,
+		rt_extrude_describe,rt_extrude_xform,
 
 	/* ID_MAXIMUM.  Add new solids _above_ this point */
 
@@ -445,10 +462,10 @@ int NDEF(rt_nul_tnurb,(struct nmgregion **r,
 			CONST struct rt_tol *tol))
 int NDEF(rt_nul_import,(struct rt_db_internal *ip,
 			CONST struct rt_external *ep,
-			CONST mat_t mat))
+			CONST mat_t mat, CONST struct db_i *dbip ))
 int NDEF(rt_nul_export,(struct rt_external *ep,
 			CONST struct rt_db_internal *ip,
-			double local2mm))
+			double local2mm, CONST struct db_i *dbip ))
 void DEF(rt_nul_ifree,(struct rt_db_internal *ip))
 int NDEF(rt_nul_describe,(struct rt_vls *str,
 			struct rt_db_internal *ip,
@@ -556,6 +573,12 @@ struct rt_external	*ep;
 	case DBID_NMG:
 		id = ID_NMG;
 		break;
+	case DBID_SKETCH:
+		id = ID_SKETCH;
+		break;
+	case DBID_EXTR:
+		id = ID_EXTRUDE;
+		break;
 	default:
 		rt_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);
 		id = ID_NULL;		/* BAD */
@@ -596,7 +619,7 @@ int			free;
 	id = ip->idb_type;
 	RT_INIT_EXTERNAL(&ext);
 	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[id].ft_export( &ext, ip, 1.0 ) < 0 )  {
+	if( rt_functab[id].ft_export( &ext, ip, 1.0, DBI_NULL ) < 0 )  {
 		rt_log("rt_generic_xform():  %s export failure\n",
 			rt_functab[id].ft_name);
 		return -1;			/* FAIL */
@@ -606,7 +629,7 @@ int			free;
     		ip->idb_ptr = (genptr_t)0;
     	}
 
-	if( rt_functab[id].ft_import( op, &ext, mat ) < 0 )  {
+	if( rt_functab[id].ft_import( op, &ext, mat, DBI_NULL ) < 0 )  {
 		rt_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	}
