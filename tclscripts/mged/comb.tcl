@@ -241,6 +241,10 @@ the form of the selected shader type." } }
 	-command "comb_shader_gui $id envmap"
     hoc_register_menu_data "Shader" "envmap" "Shader - envmap" \
 	{ { summary "Apply an environment map using this region." } }
+    $top.shaderMB.m add command -label "Unknown" \
+	-command "comb_shader_gui $id unknown"
+    hoc_register_menu_data "Shader" "Unknown" "Shader - unknown" \
+	{ { summary "Apply a shader that this gui doesn't recognize." } }
 
     label $top.combL -text "Boolean Expression:" -anchor w
     set hoc_data { { summary "A boolean expression is used to combine
@@ -598,7 +602,8 @@ proc comb_shader_gui { id shader_type } {
 proc comb_callback { id master } {
     global comb_control
 
-    set material [lindex $comb_control($id,shader) 0]
+    set err [catch "set material [lindex $comb_control($id,shader) 0]"]
+    if { $err != 0 } return
 
     if [is_good_shader $material] {
 	# If not managing shader frame, then manage it.
