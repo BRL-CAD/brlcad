@@ -7,21 +7,28 @@
 
 #include "../Cakefile.defs"
 
+/* Since we're building a library, we can't also list a regular
+ * program (like tclsh) in the PRODUCTS rule, it will confuse
+ * the BUILD_LIBRARY rule in Cakefile.defs.
+ * Hence the EXTRA_PRODUCTS dodge
+ */
+
 #if !defined(BUILD_LIBRARY)
 #define	BUILD_LIBRARY	ar r
 #define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --quiet --cache-file cache.MTYPE \
 			 --exec-prefix=BASEDIR --prefix=BASEDIR
-#define PRODUCTS	[[echo libtcl''TCLTK_VERS.a]] tclsh
+#define PRODUCTS	[[echo libtcl''TCLTK_VERS.a]]
 #define	AFTER_MAKE	/**/
 #else
 #define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --quiet --enable-shared \
 			 --cache-file cache.MTYPE --exec-prefix=BASEDIR --prefix=BASEDIR
-#define PRODUCTS	[[ echo libtcl''TCLTK_VERS.so]] tclsh
+#define PRODUCTS	[[ echo libtcl''TCLTK_VERS.so]]
 #define SHARED_PRODUCT	libtcl''TCLTK_VERS.so''[[LIBVERS]]
 #define	AFTER_MAKE	mv -f libtcl''TCLTK_VERS.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
 #endif
+#define EXTRA_PRODUCTS	tclsh
 
-PRODUCTS: Makefile.MTYPE cache.MTYPE
+PRODUCTS: Makefile.MTYPE cache.MTYPE EXTRA_PRODUCTS
 	make `echo CAKEFLAGS | tr '\040' '\012' | grep -- -s` -f Makefile.MTYPE CAKEFLAGS
 	AFTER_MAKE
 
