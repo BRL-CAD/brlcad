@@ -172,9 +172,9 @@ set mged_help_data(quit)	{{}	{quit}}
 set mged_help_data(qorot)	{{x y z dx dy dz theta}	{rotate object being edited about specified vector}}
 set mged_help_data(qvrot)	{{dx dy dz theta}	{set view from direction vector and twist angle}}
 set mged_help_data(r)		$helplib_data(wdb_region)
-set mged_help_data(rcc-blend)	{{rccname newname thickness [v|h]}	{create a flange at an end of an rcc}}
-set mged_help_data(rcc-cap)     {{rccname newname [height] [v|h]}      {create a cap at an end of an rcc}}
-set mged_help_data(rcc-tgc)     {{rccname newname x y z [v|h]}     {create a tgc with the specified apex at an end of an rcc}}
+set mged_help_data(rcc-blend)	{{rccname newname thickness [b|t]}	{create a blend at an end of an rcc}}
+set mged_help_data(rcc-cap)     {{rccname newname [height] [b|t]}      {create a cap at an end of an rcc}}
+set mged_help_data(rcc-tgc)     {{rccname newname x y z [b|t]}     {create a tgc with the specified apex at an end of an rcc}}
 set mged_help_data(rcc-tor)     {{rccname newname}     {create a tor from an rcc}}
 set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
 set mged_help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{read the MUVES region_map file and optionally the sysdef file}}
@@ -212,7 +212,7 @@ set mged_help_data(shells)	$helplib_data(wdb_shells)
 set mged_help_data(showmats)	$helplib_data(wdb_showmats)
 set mged_help_data(size)	$helplib_data(vo_size)
 set mged_help_data(solids)	{{file object(s)}	{make ascii summary of solid parameters}}
-set mged_help_data(sph-part)	{{sph1 sph2 newname}	{create a part from two sph's}}
+set mged_help_data(sph-part)	{{sph1name sph2name newname}	{create a part from two sph's}}
 set mged_help_data(status)	{{[state|Viewscale|base2local|local2base|
         toViewcenter|Viewrot|model2view|view2model|
         model2objview|objview2model|help]}	{get view status}}
