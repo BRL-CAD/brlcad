@@ -21,6 +21,8 @@
  *	All rights reserved.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <time.h>
 

@@ -28,6 +28,8 @@
 static char RCSrayview[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
 #include "machine.h"

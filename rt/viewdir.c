@@ -1,12 +1,12 @@
 /*
- *			V I E W R A N G E
+ *			V I E W_ R A Y_D I R E C T I O N
  *
- *  RT-View-Module for visualizing range data.  The output is a
- *  UNIX-Plot file.  Direction vectors are preserved so that
- *  perspective is theoretically possible.
- *  The algorithm is based on plotting all the hit distances for all
- *  the pixels ray-traced.
- *
+ *  RT-View-Module for printing out the hit point of a ray and the ray's
+ *  direction on a user-specified grid.
+ *  
+ *  
+ *  
+ *  
  *  Author -
  *	Susanne L. Muuss, J.D.
  *  
@@ -16,13 +16,13 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1991 by the United States Army.
+ *	This software is Copyright (C) 1993 by the United States Army.
  *	All rights reserved.
  */
 
 
 #ifndef lint
-static char RCSrayrange[] = "@(#)$Header$";
+static char RCSraydir[] = "@(#)$Header$";
 #endif
 
 #include "conf.h"
@@ -37,17 +37,11 @@ static char RCSrayrange[] = "@(#)$Header$";
 #include "./ext.h"
 #include "rdebug.h"
 
-#define CELLNULL ( (struct cell *) 0)
-
-struct cell {
-	float	c_dist;			/* distance from emanation plane to in_hit */
-	point_t	c_hit;			/* 3-space hit point of ray */
-};
 
 extern	int	width;			/* # of pixels in X; picture width */
 extern int	npsw;			/* number of worker PSWs to run */
-float		max_dist;
-struct cell	*cellp;
+
+
 
 int		use_air = 0;		/* Internal air recognition is off */
 
@@ -81,6 +75,7 @@ int	rayhit(), raymiss();
  *  any other computations take place.  It is called only once per run.
  *  Pointers to rayhit() and raymiss() are set up and are later called from
  *  do_run().
+ *  
  */
 
 int
@@ -91,9 +86,9 @@ char *file, *obj;
 
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
-	ap->a_onehit = 1;
+	ap->a_onehit = 1;		/* only the first hit is considered */
 
-	output_is_binary = 1;		/* output is binary */
+	output_is_binary = 0;		/* output is not binary */
 
 	return(0);			/* No framebuffer needed */
 }
@@ -119,8 +114,8 @@ struct application	*ap;
 		rt_bomb("outfp is NULL\n");
 
 	/*
-	 *  For now, RTRANGE does not operate in parallel, while ray-tracing.
-	 *  However, not dropping out of parallel mode until here permits
+	 *  For now, RTVIEWDIR does not operate in parallel, while ray-tracing.
+	 *  However, not dropping out of parallel mode here permits
 	 *  tree walking and database prepping to still be done in parallel.
 	 */
 	if( npsw >= 1 )  {
@@ -129,34 +124,6 @@ struct application	*ap;
 	}
 
 
-	/* malloc() a buffer that has room for as many struct cell 's
-	 * as the incoming file is wide (width).
-	 * Rather than using malloc(), though, rt_malloc() is used.  This
-	 * has the advantage of inbuild error-checking and automatic aborting
-	 * if there is no memory.  Also, rt_malloc() takes a string as its
-	 * final parameter: this tells the user exactly where memory ran out.
-	 */
-
-
-	cellp = (struct cell *)rt_malloc(sizeof(struct cell) * width,
-		"cell buffer" );
-
-
-	/* Obtain the maximun distance within the model to use as the
-	 * background distance.  Also get the coordinates of the model's
-	 * bounding box and feed them to 
-	 * pdv_3space.  This will allow the image to appear in the plot
-	 * starting with the same size as the model.
-	 */
-
-	pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
-
-	/* Find the max dist fron emantion plane to end of model
-	 * space.  This can be twice the radius of the bounding
-	 * sphere.
-	 */
-
-	max_dist = 2 * (ap->a_rt_i->rti_radius);
 }
 
 
@@ -179,12 +146,7 @@ register struct application	*ap;
 		rt_bomb("raymiss: pixels exceed width\n");
 	}
 
-	posp = &(cellp[ap->a_x]);
 
-	/* Find the hit point for the miss. */
-
-	VJOIN1(posp->c_hit, ap->a_ray.r_pt, max_dist, ap->a_ray.r_dir);
-	posp->c_dist = max_dist;
 
 	return(0);
 }
@@ -214,15 +176,12 @@ void view_cleanup() {}
  *  
  */
 
-int
+ int
 rayhit( ap, PartHeadp )
 struct application *ap;
 register struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
-	struct	cell	*posp;		/* stores current cell position */
-	fastf_t		dist;   	/* ray distance */
-
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
@@ -233,7 +192,6 @@ register struct partition *PartHeadp;
 		rt_bomb("rayhit: pixels exceed width\n");
 	}
 
-	posp = &(cellp[ap->a_x]);
 
 	/* Calculate the hit distance and the direction vector.  This is done
 	 * by VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir).
@@ -242,16 +200,17 @@ register struct partition *PartHeadp;
 	VJOIN1(pp->pt_inhit->hit_point, ap->a_ray.r_pt,
 		pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 
-	/* Now store the distance and the direction vector as appropriate.
-	 * Output the ray data: screen plane (pixel) coordinates
-	 * for x and y positions of a ray, region_id, and hit_distance.
-	 * The x and y positions are represented by ap->a_x and ap->a_y.
-	 *
-	 *  Assume all rays are parallel.
+	/* Print the information onto stdout.  The first three numbers are
+	 * ray impact coordinates, and the next three numbers are the ray
+	 * direction.  The line must be semi-colon terminated so that
+	 * the output can be read by "miss" for use with PCAVAM.
 	 */
 
-	posp->c_dist = pp->pt_inhit->hit_dist;
-	VMOVE(posp->c_hit, pp->pt_inhit->hit_point);
+	fprintf(stdout, "%g %g %g %g %g %g;\n", 
+	    pp->pt_inhit->hit_point[0], pp->pt_inhit->hit_point[1], pp->pt_inhit->hit_point[2], 
+            ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
+
+
 
 	return(0);
 }
@@ -269,41 +228,8 @@ void	view_eol(ap)
 struct application *ap;
 
 {
-	struct cell	*posp;
-	int		i;
-	int		cont;		/* continue flag */
+ 
 
-	posp = &(cellp[0]);
-	cont = 0;
-
-	/* Plot the starting point and set cont to 0.  Then
-	 * march along the entire array and continue to plot the
-	 * hit points based on their distance from the emanation
-	 * plane. When consecutive hit-points with identical distances
-	 * are found, cont is set to one so that the entire sequence
-	 * of like-distanced hit-points can be plotted together.
-	 */
-
-	pdv_3move( outfp, posp->c_hit );
-
-	for( i = 0; i < width-1; i++, posp++ )  {
-		if( posp->c_dist == (posp+1)->c_dist )  {
-			cont = 1;
-			continue;
-		} else  {
-			if(cont)  {
-				pdv_3cont(outfp, posp->c_hit);
-				cont = 0;
-			}
-			pdv_3cont(outfp, (posp+1)->c_hit);
-		}
-	}
-
-	/* Catch the boundary condition if the last couple of cells
-	 * heve the same distance.
-	 */
-
-	pdv_3cont(outfp, posp->c_hit);
 }
 
 
