@@ -59,6 +59,7 @@ struct dm dm_Null = {
   0,				/* clipmin */
   0,				/* clipmax */
   0,				/* no debugging */
+  0,				/* no perspective */
   0				/* no zclipping */
 };
 
