@@ -132,8 +132,6 @@ struct bu_vls edit_absolute_tran_vls[3];
 struct bu_vls edit_absolute_rotate_vls[3];
 struct bu_vls edit_absolute_scale_vls;
 
-int		mged_rotate_view_around_eye = 0; /* shared with cmd.c */
-
 double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
@@ -202,9 +200,20 @@ double x, y, z;
   buildHrot( newrot, x * degtorad, y * degtorad, z * degtorad);
   bn_mat_inv( newinv, newrot );
 
-  if( mged_rotate_view_around_eye == 0 )  {
-	/* Traditional method:  rotate around view center (0,0,0) viewspace */
-	wrt_view( ModelDelta, newinv, ModelDelta );
+  if( mged_variables.eyerot == 0 )  {
+    /* Traditional method:  rotate around view center (0,0,0) viewspace */
+    wrt_view( ModelDelta, newinv, ModelDelta );
+
+    /* Update the rotation component of the model2view matrix */
+    bn_mat_mul2( newrot, Viewrot );			/* pure rotation */
+    new_mats();
+
+    if(absolute_slew[X] != 0.0 ||
+       absolute_slew[Y] != 0.0 ||
+       absolute_slew[Z] != 0.0){
+      VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+      MAT4X3PNT(absolute_slew, model2view, new_pos);
+    }
   } else {
   	/* "VR driver" method: rotate around "eye" point (0,0,1) viewspace */
   	point_t		eye_view;
@@ -226,23 +235,18 @@ double x, y, z;
   	/* XXX This should probably capture the translation too */
   	/* XXX I think the only consumer of ModelDelta is the predictor frame */
 	wrt_view( ModelDelta, newinv, ModelDelta );		/* pure rotation */
+
+	/* Update the rotation component of the model2view matrix */
+	bn_mat_mul2( newrot, Viewrot );			/* pure rotation */
+	new_mats();
+
+	VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+	MAT4X3PNT(absolute_slew, model2view, new_pos);
   }
 
-  /* Update the rotation component of the model2view matrix */
-  bn_mat_mul2( newrot, Viewrot );			/* pure rotation */
-  new_mats();
-
-  if(absolute_slew[X] != 0.0 ||
-     absolute_slew[Y] != 0.0 ||
-     absolute_slew[Z] != 0.0){
-    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-    MAT4X3PNT(absolute_slew, model2view, new_pos);
-#if 1
-    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
-    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
-    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
-#endif
-  }
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
 
   return TCL_OK;
 }
