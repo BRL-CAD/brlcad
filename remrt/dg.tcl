@@ -190,9 +190,9 @@ proc apply_air {} {
 # The dynamic hole-maker
 button .hole_init -text "Hole Init" -command hole_init
 entry .hole_treetop -width 16 -relief sunken -bd 2 -textvariable treetop_name
-button .hole_size1 -text "Size1" -command "hole_size 40"
-button .hole_size2 -text "Size2" -command "hole_size 80"
-button .hole_size3 -text "Size3" -command "hole_size 120"
+button .hole_size1 -text "Size1" -command "hole_size 20"
+button .hole_size2 -text "Size2" -command "hole_size 40"
+button .hole_size3 -text "Size3" -command "hole_size 60"
 pack .hole_init .hole_treetop .hole_size1 .hole_size2 .hole_size3 -side left -in .hole_fr
 
 proc hole_init {} {
@@ -207,11 +207,11 @@ proc hole_init {} {
 	send rtsync \
 		vrmgr_send "{" \
 			.inmem put _hole.s tgc \
-				V "{" 0 0  50 "}" \
+				V "{" 0 0   0 "}" \
 				H "{" 0 0 -50 "}" \
 				A "{" 1 0 0 "}" \
-				B "{" 1 0 0 "}" \
-				C "{" 0 1 0 "}" \
+				B "{" 0 1 0 "}" \
+				C "{" 1 0 0 "}" \
 				D "{" 0 1 0 "}" \
 			";" \
 			_mged_e _hole.s ";" \
@@ -229,9 +229,14 @@ proc hole_init {} {
 
 proc hole_size { radius } {
 	send rtsync \
-		vrmgr_send .inmem adjust _hole.s \
-			V "{" 0 0 0 "}" \
-			
+		vrmgr_send "{" \
+			.inmem adjust _hole.s \
+			A "{" $radius 0 0 "}" \
+			B "{" 0 $radius 0 "}" \
+			C "{" $radius 0 0 "}" \
+			D "{" 0 $radius 0 "}" ";" \
+			redraw_vlist _hole.s \
+		"}"
 }
 
 puts "done dg.tcl"
