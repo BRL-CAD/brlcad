@@ -3,9 +3,9 @@
 .TL
 Installing the BRL-CAD Package
 .br
-Release 3.1
+Release 3.3
 .sp
-24-April-1989
+7-May-1989
 .AU
 Michael John Muuss
 .AI
@@ -38,11 +38,12 @@ Please, if anything seems wrong, pause to finish reading the directions.
 	mkdir /usr/brlcad/bin
 	mkdir cad
 	cd cad
-	tar x                      # 'tar xo'   on System V
+	tar x                           # 'tar xo'   on System V
 	sh machinetype.sh -v
-	sh newbindir.sh
+	sh newbindir.sh            # non-production config only
 	sh setup.sh
 	sh gen.sh all
+	sh gen.sh install          # production config only
 .ft R
 .fi
 .sp .5
@@ -777,6 +778,13 @@ sit in the top ("cad") directory, and run:
 	cake install
 .ft R
 .sp .5
+Note that if the products from a previous installation remain
+in INSTDIR (eg, "/usr/brlcad/bin", etc), then the install operation
+very carefully renames each existing product as product.bak before
+installing the new product.
+For example, an existing version of mged would be renamed
+/usr/brlcad/bin/mged.bak before the new version is installed
+as /usr/brlcad/bin/mged.
 .NH 2
 Installing Network Framebuffer Service
 .PP
@@ -1506,7 +1514,33 @@ gclear::4:5::/tmp:/usr/bin/gclear
 Currently there are no good solutions to these problems.  Voice your
 opinions to the vendor.
 .NH 2
+ALLIANT WARNINGS
+.PP
+Under Concentrix 5.0, the module librt/machine.c causes the
+optimizer to dump core.  If you cd to librt and compile it without
+optimization before compiling everything else, this will avoid the trouble:
+.sp .5
+.ft B
+cd librt
+.br
+cc -ce -I../h -DBSD=42 -c ../librt/machine.c
+.ft R
+.NH 2
 CRAY WARNINGS
+.PP
+When performing multi-tasking on both the XMP and Cray-2,
+the librt/timerunix.c routine has great difficulty in collecting
+correct timing.  On the average, one run in four will have correct
+timing data.  This is due to a wierd interaction between the
+Cray multi-tasking library and the UNIX times() system call.
+In particular, the multi-tasking library provides an arbitrary
+mapping between ``virtual cpu'' and tfork()-ed UNIX process, so
+that the ``main'' thread of control can land in any process in
+the multi-tasking group \(em but only one of those processes is
+the parent process, where timing data is being collected.
+Presently, there is no known fix, except to re-run the benchmarks
+many times, and only use timing data from runs where the
+``rt_parallel: PID changed ...'' warning does not occur.
 .PP
 Under C 3.0, which is /bin/cc on XMP UNICOS 4.0 and on Cray-2
 UNICOS 4.0, the \fBlgt\fR program will not compile due to
@@ -1517,16 +1551,8 @@ a compiler bug:
  * F * :../lgt/hmenu.c: 207: CC058 - Invalid Initialization
 .fi
 .ft R
-Also, \fBpl-fb\fR will not compile:
-.sp .5
-.ft B
-.nf
- * F * :../util/pl-fb.c: 724: CC001 - Internal Compiler Error  67 .
-	Debug: icons: Constant Expected
-.fi
-.ft R
 Get your site analyst to request the necessary compiler fixes,
-or get C 4.0.
+or get C 4.0 or ANSI C.
 .PP
 Ignore these error messags:
 .sp .5
@@ -1659,6 +1685,8 @@ UPGRADING FROM RELEASE 3.0 to 3.1
 .PP
 Release 3.1 is a maintenance release.
 Some new features have been added, such as sliders for MGED.
+This release also includes a network distributed version of
+the ray tracer - remrt.
 The most significant efforts went into getting the SGI 4-D
 framebuffer support working efficiently.
 Support for each kind of primitive geometry is largely
