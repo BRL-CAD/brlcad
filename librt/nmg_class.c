@@ -71,6 +71,30 @@ static vect_t projection_dir = { 1.0, 0.0, 0.0 };
 #define FACE_HIT 256
 #define FACE_MISS 512
 
+void
+nmg_pr_class_status( prefix, status )
+char	*prefix;
+int	status;
+{
+	char	*str;
+
+	switch(status)  {
+	case INSIDE:
+		str = "INSIDE";
+		break;
+	case OUTSIDE:
+		str = "OUTSIDE";
+		break;
+	case ON_SURF:
+		str = "ON_SURF";
+		break;
+	default:
+		str = "??unknown_code??";
+		break;
+	}
+	rt_log("%s has classification status %s\n", prefix, str);
+}
+
 /*
  *			J O I N T _ H I T M I S S 2
  *
@@ -625,7 +649,15 @@ CONST struct rt_tol	*tol;
 	/* sanity check */
 	if ((euv_cl == INSIDE && matev_cl == OUTSIDE) ||
 	    (euv_cl == OUTSIDE && matev_cl == INSIDE)) {
+	    	nmg_pr_class_status("eu vu", euv_cl);
+	    	nmg_pr_class_status("eumate vu", matev_cl);
+	    	/* Do them over, so we can watch */
+		rt_g.NMG_debug |= DEBUG_CLASSIFY;
+		(void)class_vu_vs_s(eu->vu_p, s, classlist, tol);
+		(void)class_vu_vs_s(eu->eumate_p->vu_p, s, classlist, tol);
+
 	    	EUPRINT("didn't this edge get cut?", eu);
+	    	nmg_pr_eu(eu, "  ");
 		rt_bomb("class_eu_vs_s\n");
 	    }
 
