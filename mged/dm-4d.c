@@ -1328,7 +1328,7 @@ continue;
 				}
 				perspective_mode = 1-perspective_mode;
 				rt_vls_printf( &dm_values.dv_string,
-				    "set perspective=%d\n",
+				    "set perspective %d\n",
 				    perspective_mode ?
 				    perspective_table[perspective_angle] :
 				    -1 );
@@ -1366,7 +1366,7 @@ continue;
 				/* toggle perspective matrix */
 				if (--perspective_angle < 0) perspective_angle = 3;
 				if(perspective_mode) rt_vls_printf( &dm_values.dv_string,
-				    "set perspective=%d\n",
+				    "set perspective %d\n",
 				    perspective_table[perspective_angle] );
 				dmaflag = 1;
 				continue;
