@@ -30,6 +30,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
+#include "wdb.h"
 #include "./ged.h"
 #include "./sedit.h"
 #include "../librt/debug.h"	/* XXX */
@@ -719,7 +720,7 @@ static struct db_tree_state push_initial_tree_state = {
 	{
 #endif
 		/* struct mater_info ts_mater */
-		1.0, 0.0, 0.0,	/* color, RGB */
+		{1.0, 0.0, 0.0},	/* color, RGB */
 		-1.0,		/* Temperature */
 		0,		/* override */
 		0,		/* color inherit */
@@ -733,10 +734,10 @@ static struct db_tree_state push_initial_tree_state = {
 	}
 #endif
 	,
-	1.0, 0.0, 0.0, 0.0,
+	{1.0, 0.0, 0.0, 0.0,
 	0.0, 1.0, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0,
+	0.0, 0.0, 0.0, 1.0},
 };
 
 /*			F _ P U S H
@@ -767,7 +768,6 @@ char **argv;
 	extern	struct bn_tol	mged_tol;	/* from ged.c */
 	extern	struct rt_tess_tol mged_ttol;
 	int	i;
-	int	id;
 	struct push_id *pip;
 	struct rt_db_internal	intern;
 
@@ -1547,7 +1547,7 @@ char **argv;
 	MAT_IDN( acc_matrix );
 
 	parent = strtok( argv[1], "/" );
-	while( child = strtok( (char *)NULL, "/" ) )
+	while( (child = strtok( (char *)NULL, "/" )) != NULL )
 	{
 		int count;
 		struct rt_db_internal	intern;
@@ -1868,9 +1868,6 @@ char **argv;
 	int			i;
 	point_t			rpp_min,rpp_max;
 	struct db_full_path	path;
-	struct directory	*dp;
-	struct rt_arb_internal	*arb;
-	struct rt_db_internal	new_intern;
 	struct region		*regp;
 	char			*new_name;
 
@@ -1976,15 +1973,10 @@ char **argv;
 			if( *argv[i] != '/' && *reg_name == '/' )
 				reg_name++;
 
-			if( !strcmp( reg_name, argv[i] ) )
-				goto found;
-				
-		}
-		goto not_found;
+			if( strcmp( reg_name, argv[i] ) )
+				continue;
 
-		if( regp != REGION_NULL )
-		{
-found:
+			/* Found match */
 			/* input name was a region  */
 			if( rt_bound_tree( regp->reg_treetop, reg_min, reg_max ) )
 			{
@@ -1996,11 +1988,12 @@ found:
 			}
 			VMINMAX( rpp_min, rpp_max, reg_min );
 			VMINMAX( rpp_min, rpp_max, reg_max );
+			goto found;
 		}
-		else
+
+		/* Not found */
 		{
 			int name_len;
-not_found:
 
 			/* input name may be a group, need to check all regions under
 			 * that group
@@ -2027,40 +2020,16 @@ not_found:
 				VMINMAX( rpp_min, rpp_max, reg_max );
 			}
 		}
+found:
 	}
 
-	/* build bounding RPP */
-	arb = (struct rt_arb_internal *)bu_malloc( sizeof( struct rt_arb_internal ), "arb" );
-	VMOVE( arb->pt[0], rpp_min );
-	VSET( arb->pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z] );
-	VSET( arb->pt[2], rpp_min[X], rpp_max[Y], rpp_max[Z] );
-	VSET( arb->pt[3], rpp_min[X], rpp_max[Y], rpp_min[Z] );
-	VSET( arb->pt[4], rpp_max[X], rpp_min[Y], rpp_min[Z] );
-	VSET( arb->pt[5], rpp_max[X], rpp_min[Y], rpp_max[Z] );
-	VMOVE( arb->pt[6], rpp_max );
-	VSET( arb->pt[7], rpp_max[X], rpp_max[Y], rpp_min[Z] );
-	arb->magic = RT_ARB_INTERNAL_MAGIC;
+	rt_free_rti( rtip );
 
-	/* set up internal structure */
-	RT_INIT_DB_INTERNAL( &new_intern );
-	new_intern.idb_type = ID_ARB8;
-	new_intern.idb_meth = &rt_functab[ID_ARB8];
-	new_intern.idb_ptr = (genptr_t)arb;
-
-	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
-	{
-		Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL );
+	/* build bounding RPP solid */
+	if( mk_rpp( wdbp, new_name, rpp_min, rpp_max ) < 0 )  {
+		Tcl_AppendResult(interp, "Cannot add ", new_name, " to database\n", (char *)NULL );
 		return TCL_ERROR;
 	}
-
-	if( rt_db_put_internal( dp, dbip, &new_intern ) < 0 )
-	{
-		rt_db_free_internal( &new_intern );
-		TCL_WRITE_ERR_return;
-	}
-
-	rt_clean( rtip );
-	bu_free( (genptr_t)rtip, "f_make_bb: rtip" );
 
 	/* use "e" command to get new solid displayed */
 	{
@@ -2392,11 +2361,13 @@ char **argv;
     bu_vls_init(&obj_name);
     for (cp = argv[1], len = 0; (*cp != '\0'); ++cp, ++len)
     {
-	if (*cp == '@')
-	    if (*(cp + 1) == '@')
+	if (*cp == '@')  {
+	    if (*(cp + 1) == '@')  {
 		++cp;
-	    else
+	    } else {
 		break;
+	    }
+	}
 	bu_vls_putc(&obj_name, *cp);
     }
     bu_vls_putc(&obj_name, '\0');
