@@ -29,8 +29,10 @@
 proc sketch_init_main {} {
 	# global variable initialisations
 	uplevel #0 set mged_sketch_init_main 1
+	#hack
 	uplevel #0 set mged_sketch_anim_path "/m/cad/anim/"
-	uplevel #0 set mged_sketch_tab_path "/m/cad/tab/"
+	#hack
+	uplevel #0 set mged_sketch_tab_path "/m/cad/.tab.6d/"
 	uplevel #0 set mged_sketch_temp1 "./_mged_sketch_temp1_"
 	uplevel #0 set mged_sketch_temp2 "./_mged_sketch_temp2_"
 }
@@ -3138,6 +3140,7 @@ proc sketch_popup_sort { p } {
 		return
 	}
 	toplevel $root
+	wm title $root "MGED AnimMate Combine Scripts"
 	label $root.l0 -text "COMBINE SCRIPTS"
 	frame $root.f0
 	label $root.f0.l0 -text "Combine Scripts:"
@@ -3207,7 +3210,7 @@ proc sketch_sort_entry1 { entry list nentry } {
 }
 
 proc sketch_sort { sortp outfile list } {
-	global mged_sketch_anim_path mged_sketch_sort_temp
+	global mged_sketch_sort_temp mged_sketch_tab_path
 
 	if { [info commands $sortp.fa] != "" } {
 		tk_dialog ._sketch_msg {Script already sorting} \
@@ -3224,14 +3227,12 @@ proc sketch_sort { sortp outfile list } {
 		}
 	}
 
-	append cmd "cat "
+	set files ""
 	foreach file [$list get 0 end] {
-		append cmd " $file"
+		append files "$file "
 	}
-	append cmd " > $mged_sketch_sort_temp"
-	eval exec $cmd
-	set pid [exec ${mged_sketch_anim_path}anim_sort \
-		< $mged_sketch_sort_temp > $outfile &]
+	set pid [eval exec cat $files | ${mged_sketch_tab_path}scriptsort \
+		-q -b 1 > $outfile &]
 
 	frame $sortp.fa
 	label $sortp.fa.l0 -text "Sorting $outfile ..."
@@ -3239,7 +3240,7 @@ proc sketch_sort { sortp outfile list } {
 	pack $sortp.fa -side bottom -before $sortp.f3
 	pack $sortp.fa.l0 $sortp.fa.b0 -side left -fill x
 
-	set done "destroy $sortp.fa; exec rm $mged_sketch_sort_temp"
+	set done "destroy $sortp.fa"
 	sketch_sort_monitor $outfile -1 $done
 }
 
@@ -3277,6 +3278,9 @@ proc sketch_init_preview {} {
 	uplevel #0 {set mged_sketch_prevs ""}
 	uplevel #0 {set mged_sketch_preve ""}
 	uplevel #0 {set mged_sketch_prevp ""}
+	uplevel #0 {set mged_sketch_prev_size [viewget size]}
+	uplevel #0 {set mged_sketch_prev_center [viewget center]}
+	uplevel #0 {set mged_sketch_prev_quat [viewget quat]}
 	#dependencies
 	foreach dep {main} {
 		if { [info globals mged_sketch_init_$dep] == "" } {
@@ -3294,12 +3298,15 @@ proc sketch_popup_preview { p {filename ""} } {
 	}
 	if { [info commands $root] != ""} {
 		raise $root
-		$root.f0.e0 delete 0 end
-		$root.f0.e0 insert end $filename
+		if { $filename != "" } {
+			$root.f0.e0 delete 0 end
+			$root.f0.e0 insert end $filename
+		}
 		$root.f0.e0 selection range 0 end
 		return
 	}
 	toplevel $root
+	wm title $root "MGED AnimMate Show Script"
 	label $root.l0 -text "SHOW SCRIPT"
 	frame $root.f0
 	label $root.f0.l0 -text "Script file: "
@@ -3321,6 +3328,7 @@ proc sketch_popup_preview { p {filename ""} } {
 		-command "sketch_preview \[$root.f0.e0 get\]"
 	button $root.f4.b1 -text "Up" -command "raise $p"
 	button $root.f4.b2 -text "Cancel" -command "destroy $root"
+	button $root.f4.b3 -text "Restore" -command "sketch_prev_restore"
 
 	$root.f0.e0 delete 0 end
 	$root.f0.e0 insert 0 $filename
@@ -3335,7 +3343,7 @@ proc sketch_popup_preview { p {filename ""} } {
 		-side left
 	pack $root.f0.e0 $root.f1.e0 $root.f2.e0 $root.f3.e0 \
 		-side right
-	pack $root.f4.b0 $root.f4.b1 $root.f4.b2 \
+	pack $root.f4.b0 $root.f4.b1 $root.f4.b2 $root.f4.b3 \
 		-side left -expand yes -fill x
 
 	focus $root.f0.e0
@@ -3349,7 +3357,8 @@ proc sketch_popup_preview { p {filename ""} } {
 proc sketch_preview { filename } {
 	upvar #0 mged_sketch_fps fps
 	upvar #0 mged_sketch_prevp arg0
-	global mged_sketch_prevs mged_sketch_preve
+	global mged_sketch_prevs mged_sketch_preve mged_sketch_prev_size \
+		mged_sketch_prev_center mged_sketch_prev_quat
 
 	#save list of curves currently displayed
 	set clist ""
@@ -3357,6 +3366,10 @@ proc sketch_preview { filename } {
 	foreach name [lrange $vlist 1 end] {
 		lappend clist [string range $name 5 end]
 	}
+
+	set mged_sketch_prev_size [viewget size]
+	set mged_sketch_prev_center [viewget center]
+	set mged_sketch_prev_quat [viewget quat]
 
 	if {($mged_sketch_prevs == "first")||($mged_sketch_prevs == "")} {
 		set arg1 ""
@@ -3391,7 +3404,14 @@ proc sketch_preview { filename } {
 	}
 }
 
+proc sketch_prev_restore {} {
+	global mged_sketch_prev_size mged_sketch_prev_center \
+		mged_sketch_prev_quat
 
+	eval viewset size $mged_sketch_prev_size \
+		center $mged_sketch_prev_center quat $mged_sketch_prev_quat
+	eval e [who]
+}	
 	
 #-----------------------------------------------------------------
 # Quit
