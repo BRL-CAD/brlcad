@@ -1084,10 +1084,6 @@ genptr_t	client_data;
 	 * Load the entire object into contiguous memory.
 	 */
 	if( dp->d_addr == RT_DIR_PHONY_ADDR )  return TREE_NULL;
-	if( db_get_external( &ext, dp, tsp->ts_dbip ) < 0 )  {
-		bu_log("db_recurse() db_get_external() FAIL\n");
-		return(TREE_NULL);		/* FAIL */
-	}
 
 	if( dp->d_flags & DIR_COMB )  {
 		struct rt_comb_internal	*comb;
@@ -1097,8 +1093,8 @@ genptr_t	client_data;
 		/*  Handle inheritance of material property. */
 		db_dup_db_tree_state( &nts, tsp );
 
-		if( rt_comb_v4_import( &intern , &ext , NULL ) < 0 )  {
-			bu_log("db_recurse() import of %s failed\n", dp->d_namep);
+		if( rt_db_get_internal( &intern, dp, tsp->ts_dbip, NULL ) < 0 )  {
+			bu_log("db_recurse() rt_db_get_internal(%s) FAIL on combination\n", dp->d_namep);
 			db_free_db_tree_state( &nts );
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
@@ -1182,6 +1178,10 @@ region_end:
 	} else if( dp->d_flags & DIR_SOLID )  {
 		int	id;
 
+		if( db_get_external( &ext, dp, tsp->ts_dbip ) < 0 )  {
+			bu_log("db_recurse() db_get_external(%s) FAIL on solid\n", dp->d_namep);
+			return(TREE_NULL);		/* FAIL */
+		}
 		/* Get solid ID */
 		if( (id = rt_id_solid( &ext )) == ID_NULL )  {
 			bu_log("db_recurse(%s): defective database record, addr=x%x\n",
