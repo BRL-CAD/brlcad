@@ -149,11 +149,11 @@ extern void		db_getrec(), db_putrec(), db_delete(), db_alloc(),
 			drawHobj(), eraseobj(), finish(), slewview(),
 			htov_move(), mat_copy(), mat_idn(),
 			mat_inv(), mat_mul(), mat_zero(), matXvec(),
-			menu_init(), moveHinstance(), moveHobj(), pr_solid(),
+			mmenu_init(), moveHinstance(), moveHobj(), pr_solid(),
 			quit(), refresh(), rej_sedit(), sedit(),
 			sig2(), dir_print(),
 			usepen(), vtoh_move(), setview(),
-			adcursor(), menu_display(),
+			adcursor(), mmenu_display(),
 			col_item(), col_putchar(), col_eol(), col_pr4v();
 extern void		sedit_menu();
 extern void		attach(), release(), get_attached();
