@@ -1,0 +1,951 @@
+.in .5i
+.sp 3
+.NH
+INTRODUCTION
+.PP
+MGED is the latest BRL graphics editor and is similar in operation
+to its predecessors, GED and VGED.
+This booklet is intended to serve as a guide to MGED users and assumes
+some general knowledge of the GED envirnoment.
+For further GED background, read BRL report ARBRL-TR-02480.
+This booklet will cover the major differences between MGED and VGED/GED.
+All the commands will be discussed and a command summary table presented.
+Also, a section will be devoted to the hardware interfaces for each
+major class of workstations which MGED supports.
+.NH
+GENERAL OVERVIEW
+.PP
+MGED is presently installed on the VAX and GOULD class of computers at BRL.
+Workstations supported by MGED are the Vector General 3300 3DI, the Megatek
+7250, the Raster Tech One/80, and the Tektronix 4014 class.
+MGED can also be executed on any terminal by attaching the NULL (nu) processor
+as an option.
+One uses MGED by simply entering "mged file", where 'file' is a mged data file.
+You will be asked which processor you wish to use:
+.nf
+                      attach <vg|mg|rat|tek|nu>  (mg) ?
+.fi
+To use the Megatek (default) enter a "CR".
+To use the Vector General enter "vg", "rat" for Raster Tech, "tek" for
+Tektronix 4014, or "nu" for any alphanumeric terminal.
+During the editing process the processor being used can be dropped by
+entering "release".
+At this point the present processor is dropped and the null one is put into use.
+To use another processer, enter "attach type" where type is vg, mg, rat, or tek.
+.NH
+DATA STRUCTURE DIFFERENCES AND CONVERSIONS
+.PP
+The data file structure for MGED has changed some.
+An "ident" record has been added which contains a title for the description, the
+units of the description, and a version identification.
+All numerical information in the new data file is stored in a fixed base
+unit and all work (input and output) is done in a user-selected local unit.
+The user can change his local unit at ANY time by using the "units" command.
+This command is discussed later.
+This way of handling units was selected to "free" the user from worrying
+about producing targets with the units he needs for different applications.
+.PP
+At the present time, there are quite a few "different" GED data files
+floating around BRL.
+To end any questions about which GED file you may have, simply run the
+"cv" conversion code:      "cv oldfile newfile"   .
+The cv code will look at the input file (oldfile), determine its type,
+then convert it to the new type GED file (newfile), asking you for
+any needed information.
+You will then be ready to run MGED on "newfile".
+.NH
+SOLID EDITING DIFFERENCES
+.PP
+The actual editing process for solids has not changed.
+The "selection" of which solid to edit has changed slightly, however.
+To select a solid for editing, first press the "solid pick" button.
+Then as before, the tablet is used to select the solid, except now
+it is a one-step process with the solid at the bottom of the
+illuminated path being selected.
+As before, the parameters of the solid record is listed on the
+screen during solid editing.
+However, in addition, the parameters of that solid as it exists
+at the bottom of the path is also listed and these are the
+values you will be changing.
+As before, the only way out of solid editing is to accept or
+reject what you have done (see Figure 1).
+.bp
+.sp 6i
+This page saved for fiqure 1.
+.bp
+.sp 5
+.NH
+OBJECT EDITING DIFFERENCES
+.PP
+As with solid editing, the actual process of object editing has not changed.
+In fact, the selection process is still a two step process (first select
+the path, then select an object in the path).
+The difference is that a KEY point is now selected, and all object editing
+is done about this point.
+This KEY point is the vertex of the solid at the bottom of the path
+selected for editing.
+This solid at the bottom of the path is the KEY solid, and its parameters
+are listed and continually updated on the screen, and it parameters are
+labeled on the display (see Figure 2).
+Three commands for precise editing in this mode have been added (like the
+"p" command in solid editing).
+These commands are: rotobj, scale, translate and do what one would expect.
+These commands will be discussed in detail later.
+If no KEY solid exists at the bottom of the selected path (ie the object has
+been "E'd"), then the center of the region at the bottom of the path becomes
+the KEY point.
+.bp
+.sp 4i
+This page reserved for Figure 2.
+.bp
+.sp 5i
+In the following section, the commands of MGED will be discussed.
+First, a summary table will be presented, then each command will be
+discussed in detail.
+.bp
+.in .5i
+.sp 5
+.TS
+box;
+c s s
+c s s
+c s s
+c|c|c
+l|l|l.
+
+MGED COMMAND SUMMARY
+
+=
+Key	Argument[s]	Description
+_
+  e	obj1 obj2 ... objn	display objects on the screen
+  E	obj1 obj2 ... objn	display objects evaluating regions
+  B	obj1 obj2 ... objn	Zap screen, display objects
+  d	obj1 obj2 ... objn	delete objects from screen
+  cp	oldobj newobj	copy 'oldobj' to 'newobj'
+  Z	-none-	Zap (clear) the screen
+  g	groupname obj1 obj2....objn	group objects
+  r	region op1 sol1....opn soln	create/modify a region
+  i	object instname brname	create instance of an object
+  mv	oldname newname	rename object
+  l	object	list object information
+  kill	obj1 obj2 ,,, objn	remove objects from the file
+  t	-none-	table of contents
+  mirror	oldobj newobj axis	mirror image of an object
+  mirface	#### axis	mirror face #### about an axis
+  extrude	#### distance	extrude an arb face
+  item	region item air	change region item/air codes
+  mater	region material los	change region mat/los codes
+  rm	comb mem1 mem2....memn	delete members from combination
+  units	<mm|cm|m|in|ft>	change the units of the objectfile
+  title	new title	change the title of the description
+  p	dx [dy dz]	precise commands for solid editing
+  rotobj	xdeg ydeg zdeg	rotate(absolute) an edited object
+  scale	factor	scale(absolute) an edited object
+  translate	x y z	translate an edited object
+  arb	name rot fb	make arb8 with rot and fb
+  analyze	<solid>	print much info about a solid
+  summary	<s|r|g>	solid/region/group summary
+  tops	-none-	list all top level objects
+  make	name type	create a primitive
+  fix	-none-	restart the display after hangup
+  rt	[options]	raytrace view onto framebuffer
+  release	-none-	release current display processor
+  attach	<mg|vg>	attach new display processor
+  ted	-none-	text edit a solids parameters
+  vrot	xdeg ydeg zdeg	rotate view
+  ill	name	illuminate object
+  sed	solidname	solid edit the named solid
+  center	x y z	set view center
+  press	button-label	emulate button press
+  knob	id value	emulate knob twist
+  size	value	set view size
+  x	-none-	debug list of objects displayed
+  status	-none-	print view status
+  refresh	-none-	send new control list
+  edcomb	comb flag item air mat los	edit comb record info
+  q	-none-	quit
+  %	-none-	escape to shell
+  ?	-none-	help message
+.TE
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+cp oldobj newobj
+.sp 2
+This command is used to produce a copy of an object (solid or comb).  In this case, the
+object "oldobj" will be copied into an object called "newobj".  
+NOTE: in VGED one could only copy solids.
+.sp 2
+Examples:
+              cp arb8 hullbot.s
+              cp tgc wheelrim.s
+              cp torso.r driver_torso
+              cp proto.man driver
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+Z
+.sp 2
+This is the Zap command and clears all objects from the screen.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+d obj1 obj2 ... objn
+.sp 2
+This command allows one to remove objects from the display screen.  In
+this case "obj1" thru "objn" will be removed from the display.
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+mv old new
+.sp 2
+This command is used to rename objects in the data file.  In this
+case, the object "old" will be renamed "new".
+A note of caution:  the name is changed only in the object record itself, not
+in any member records.  Thus if the object "old" appears as a member
+of any other object, the name will not be changed there.
+.sp 2
+Examples:
+              mv test hull
+              mv g00 air
+              mv g1 turret
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+units ab
+.sp 2
+This command allows one to change the local or working units at ANY time.
+The only allowable values for "ab" are "mm", "cm", "m", "in", or "ft".
+
+
+Examples:
+           units mm
+           units in
+.bp
+.sp 10
+.ce
+-----------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+g group obj1 obj2 ..... objn
+.sp 2
+This command creates or appends to a combination record and
+is used to group objects together either for editing or displaying
+purposes.  In this case, "obj1" through "objn" are added as members
+to the combination "group".  If "group" does not exist, it is
+created and "obj1" through "objn" are added as members.
+NOTE: no checking if "obji" is already a member of "group".
+.sp 2
+Examples:
+            g shell hull turret
+            g tank wheels engine crew shell
+            g tank track
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+r region op1 sol1 op2 sol2 .... opn soln
+.sp 2
+This command is used to create regions or append to regions.
+If "region" exists, then solids "sol1" through "soln" are
+added as members with "op1" through "opn" as the defining operations.
+If "region" does not exist, then it is created and solids "sol1" through
+"soln" are added as members with "op1" through "opn" as the
+defining operations.  A region is merely a combination
+record with a flag set and is distinguished from other combinations (groups)
+since it has meaning to the COMGEOM solid modeling system.
+     When a region is created, the item and air codes are set equal to zero.  To change
+the item and air codes use the "item" command.
+Note:  In the past all members of a region had to be solids, but
+recently regions have been allowed as members of regions.  Hence,
+the names "soli" can also be regions now.
+Also...as in grouping, no checking for members already in a region.
+.sp 2
+Examples:
+             r hulltop.r + hulltop.s - hullleft.s - hullright.s
+             r gun + gun.s - gunin.s
+             r gunair + gunin.s
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+i object combname brname
+.sp 2
+This command is used to make an instance of an object.
+An instance of an object is produced by creating a combination 
+and making the object a member.   
+In this case, an instance of "object" is made by
+creating the combination record "combname" (if "combname" does not
+already exist) and adding "object" as a member.  This member also
+has a second name "brname" added to the member record, which can be
+thought of as the name of this branch in the hierarchical data structure.
+If "combname" already exists, then "object" is added as the next member
+and "brname" is added as the branch name.
+
+An instance is used to refer to an object, without making actual copies
+of the object.  Instances are useful when one is adding a certain
+component to a target description many times.
+Furthermore, any modifications to an object which has been instanced need only be
+done in the original (prototype) object.
+These modifications will then be automatically reflected in all the
+instances of the object.
+.sp 2
+Examples:
+                i heround he1 .he1.
+                i heround he2 .he2.
+                i heat heat1 .heat1.
+                i heat heat2 .heat2.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+title newtitle
+.sp 2
+This command allows one to change the title of the target at any time.
+The string "newtitle" will become the new title and is limited to 72
+characters including blanks.
+
+
+Examples:
+          title XM89A - New version of tank
+          title M345 (groups are m345 and m345a)
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+extrude #### distance
+.sp 2
+This command allows the user to project
+a face(####) of an arb being edited a normal distance to create a new arb.
+The value of "face" is 4 digits such as 1256. If the face is projected
+in the wrong direction use a negative "distance".  One use for this command is 
+for producing armor plates of a desired thickness.
+.sp 2
+.nf
+Examples:
+              extrude 1234 20
+              extrude 2367 34.75
+              extrude 2367 -34.75
+.fi
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+rm comb mem1 mem2 .... memn
+.sp 2
+This command allows one to delete members from a combination (group or region) record. 
+In this case, members "mem1" through "memn" will be deleted from
+the combination "comb".
+.sp
+Examples:
+              rm tank hull wheels
+              rm region1 solid8 solid112
+              rm turtop.r tursidel.s tursider.s 
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+l object
+.sp 2
+This command is used to list information about objects in the data file.
+The information listed depends on what type of record "object" is.
+If "object" is a combination record, then the members are listed.
+If "object" is a solid record, then the GED general solid type and
+the parameters as presently in the data file are listed.
+Note:  only the solid parameters as they exist in the solid record are
+listed, no transformation matrix is applied.
+Hence, if the solid was edited as a member of a combination, the "l"
+command will not reflect the editing in the listed parameters.
+.sp 2
+Examples:
+               l hull
+               l turret
+               l turtop.s
+               l arb8
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+analyze <solid>
+.sp 2
+This command produces information about a solid(all except ars).
+The information includes surface area(s) and volume.
+Also, in the case of arbs, edge lengths and rot and fallback angles
+and plane equations are given for each face.
+If "solid" is present that solid name will be used and analyzed.
+If "solid" is absent, the solid at the bottom of the present path
+being edited will be analyzed.
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+mirror oldobj newobj axis
+.sp 2
+This command is used to create a new object which is
+the mirror image of an existing object about an axis.  
+In this case, a mirror image of the object "oldobj" will created
+about the axis indicated by "axis" and the new object record will
+be called "newobj".
+The only acceptable values for the parameter "axis" are "x", "y", and "z".
+Note:  in VGED one could only mirror solids.
+.sp
+Examples:
+              mirror tur.left.s tur.right.s y
+              mirror tur.top.s tur.bot.s z
+              mirror tur.front.s tur.back.s x
+              mirror lt_gun rt_gun y
+.sp 3
+CONSIDERATIONS:
+
+              When to mirror regions?  groups?
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+arb name rot fb
+.sp 2
+This command allows one to create an arb8 with desired rot and fallback angles.
+In this case, an arb8 with name = "name" will be created with the desired
+rotation angle of "rot" degrees and the fallback angle of "fb" degrees.
+.sp
+Examples:
+           arb top1.s 0 90
+           arb sidelt.s 90 0
+           arb upglacis.s 0 60
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+item region ident air
+.sp 2
+This command allows one to change the item or
+air code numbers of a region.  If the air code ("air") is not included,
+a zero is assumed.
+To change the air code, a zero item code must be used (see second
+example below).
+.sp 2
+Examples:
+            item region1 105
+            item region7 0 2
+            item region11 129 0
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+mater region material los
+.sp 2
+This command is used to change the material and/or the los percent for
+a region.
+.sp 1
+Examples:
+                 mater hull.r1 1 100
+                 mater turret.r34 2 88
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+e obj1 obj2 ... objn
+.sp 2
+This command allows one to display objects on the screen.
+In this case, "obj1" thru "objn" will be displayed on the screen.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+E obj1 obj2 ... objn
+.sp 2
+This command is the same as the "e" command, except the regions will
+be evaluated before being displayed.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+B obj1 obj2 ... objn
+.sp 2
+This command is the same as the "e" command, except that the screen
+is cleared (Zap) before the objects are displayed.
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+kill obj1 obj2 ... objn
+.sp 2
+This command allows one to remove objects from the file itself.
+Only the object records themselves are removed, any references made
+to these objects still will exist.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+t 
+.sp 2
+This is the table of contents command, and will produce a list of all
+objects presently included in the file.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+tops
+.sp 2
+This command will search the target file hierarchy, and list all "top level"
+objects (objects which are not members of any other object).
+This command is useful to make sure objects have been grouped properly.
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+make name type
+.sp 2
+This command will create a solid of a specified type.
+This solid will be named "name" and the solid type will be "type".
+The acceptable types are: arb8, arb7, arb6, arb5, arb4, tor, tgc, tec,
+rec, trc, rcc, ellg, ell, sph.
+This new solid will be drawn at the center of the screen.
+This command should be used instead of the old "cp" command to create
+solids for editing.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+mirface #### axis
+.sp 2
+This command allows one to mirror a face of an edited arb about an axis.
+This command is quite useful for adding air to a "symmetric" target.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+summary <s|r|g>
+.sp 2
+This command will produce a summary of objects in the target file.
+If the options s, r, or g are entered a listing of the solids, regions,
+or groups will also be presented.
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+p dx [dy dz]
+.sp 2
+This is the parameter modification command and is used during solid
+editing to make precise changes.
+The actual meaning of the values typed after the "p", depend on what
+editing option is being performed.
+If one were translating a solid, then the values would be the x,y,z
+coordinates of the vertex of the solid.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+release
+.sp 2
+This command releases the current display device (attaches the null device).
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+attach device
+.sp 2
+This command allows one to attach a display device (the present display device
+is released first).
+The present acceptable values for "device" are vg, mg, tek, rat, and nu.
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+rotobj xdeg ydeg zdeg
+.sp 2
+This command allows one to make precise rotations of an object during
+object editing.
+The "object rotation" option must be in effect for this command to mean
+anything.
+The object will be rotated "xdeg" about the x-axis, "ydeg" about the
+y-axis, and "zdeg" about the z-axis.
+The rotation is "absolute"....the total rotation since the beginning
+of object editing will be equal to the input values.
+The rotation is done about the "KEY" point for the object being edited.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+scale xxx.xx
+.sp 2
+This command allows one to make precise scaling changes to an object
+during object editing.
+The "object scale" option must be in effect for this command to have meaning.
+The object will be scaled by a TOTAL amount equal to the input value.
+The scaling is done about the "KEY" point of the object being edited.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+translate xxx.xx yyy.yy zzz.zz
+.sp 2
+This command allows one to make precise translation changes to an object
+during object editing.
+The "object translation" option must be in effect for this command to have
+meaning.
+The "KEY" point of the object being edited will move to the input coordinates.
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+fix
+.sp 2
+This command will "fix" (restart) the display device after a hardware error.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+rt <-fxxx>
+.sp 2
+This command will produce a color shaded iamge of objects on the display.
+This color shaded image will appear on a framebuffer (IKONAS).
+The resolution of the iamge (number of rays) is equal to xxx from the "-f"
+option.
+If the -f option is absent, 64x64 ray resolution will be used.
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+knob id value
+.sp 2
+This command is used to emulate a "knob twist".
+Generally this command is used for display devices which have no actual
+knob peripherals (eg. tek).
+Any non-zero number entered for "value" is converted to 1 (if "value" is
+greater than zero) or is converted to -1 (if "value is less than zero).
+The user must enter the same command with "value" equal to zero to
+stop the action envoked by the knob twist.
+
+The "id" defines which knob is to be "twisted" :
+.nf
+	x	rotates about x-axis
+	y	rotates about y-axis
+	z	rotates about z-axis
+	X	slew view in x direction
+	Y	slew view in y direction
+	Z	zoom the view
+
+
+Examples:
+       knob x 1
+       knob x 0
+       knob Z -1
+       knob Z 0
+.fi
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+sed name
+.sp 2
+This command allows one to immediately enter the solid edit mode
+with the solid "name" as the edited solid.
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+ill name
+.sp 2
+This command is used to illuminate an object ... a path containing this
+object ("name") will be illuminated.
+This command is primarily used with display devices which do not have
+a tablet to pick objects for editing.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+vrot xdeg ydeg zdeg
+.sp 2
+This command rotates the VIEW "xdeg" degrees about the screen x-axis,
+"ydeg" degrees about the screen y-axis, and "zdeg" degrees about the
+screen z-axis.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+center xx.xx yy.yy zz.zz
+.sp 2
+This command moves the screen center to (xx.xx, yy.yy, zz.zz).
+Using this command is one way of slewing the view.
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+size xx.xx
+.sp 2
+This command sets the view size to xx.xx and is one way of zooming
+the display.
+Making the view size smaller has the effect of zooming in on the view.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+x
+.sp 2
+This command produces a list of all objects displayed, listing the center
+of the object, its size, and if it is in the present view.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+refresh
+.sp 2
+This command will send a new display list to the display device.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+status
+.sp 2
+This is a debug command which prints the status of the current view, including all
+editing matrices.
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+press button-label
+.sp 2
+This command allows one to emulate a button press and is generally used
+on display devices which do not have actual button peripherals.
+The following are the strings allowed for "button-label" and all produce
+the indicated view on the device screen:
+.nf
+        top, bottom, right, left, front, rear, 90,90, 35,25
+.fi
+
+The following is a listing of the remaining acceptable strings for
+"button-label" and the resulting action:
+.nf
+
+       reset          reset the view
+       save           save the present view
+       restore        restor the saved view
+       adc            display the angle-distance cursor
+       oill           begin object illumination (pick)
+       sill           begin solid illumination (pick)
+       oscale         object scale
+       ox             object translation in x direction only
+       oy             object translation in y direction only
+       oxy            object translation
+       orot           object rotation
+       sedit          put up solid parameter menu
+       srot           solid rotation
+       sxy            solid translation
+       sscale         solid scale
+       accept         accept editing done
+       reject         reject editing done
+
+
+Examples:
+         press 90,90
+         press front
+         press oill
+         press orot
+         press reject
+
+.fi
+.bp
+.sp 10
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+%
+.sp 2
+This command allows one to escape to the shell.
+To return to mged, enter a control-d.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+?
+.sp 2
+This is the help command and produces a listing of all the available commands.
+.sp 5
+.ce
+------------------------------------------------------------------------------------------------------
+.sp 3
+.ce
+q
+.sp 2
+This is the normal quit (halt) command.
+
+.bp
+  
+.sp 10
+.PP
+Using the Vector General terminals has changed very little.
+The buttons have changed slightly while the knobs have remained
+the same.
+The pen, in the viewing state, slews the view in a somewhat different
+manner.
+When pressed, the point which it is pointing at will be drawn at
+the center of the screen.
+.bp
+.sp 10
+.PP
+The Megatek terminals may be new to most VGED/GED users.
+The "buttons" and "knobs" of the Megateks are located in the same box.
+There are not enough buttons or knobs to have ONE assigned meaning, hence
+most buttons and three knobs have dual functions.
+.PP
+To toggle the functions of the buttons, use the upper right button (toggle button).
+When the light on this button is ON, the functions listed on the RIGHT above
+each button is the current funtion.
+When the light on the "toggle" button is OFF, the functions labeled on the
+LEFT are then in effect.
+The left/right meaning of these buttons is grouped generally according to
+viewing funtions on the left and editing functions on the right.
+.PP
+A similar situation is in effect in the case of the Megatek knobs.
+The second function of the first three knobs is only in effect when
+the angle-distance cursor (ADC) is on the screen.
+.PP
+The Megatek tablet has a mouse instead of a pen.
+This mouse has four buttons on it.
+The yellow (top) button is used during illumination and editing just as the
+pen on the Vector General terminals.
+However, in the viewing mode, when pushed, the point which it was pointing
+at will be drawn at the center of the screen.
+The blue (bottom) button has this same function at ALL times and is used
+to "slew" the display during editing.
+The white (left) and the green (right) buttons on the mouse are used for
+zooming the display at a fixed rate.
+The white button will zoom out and the green button will zoom in.
+.bp
+.sp 10
+.PP
+To run MGED on the tek4014 class of terminals one needs to have TWO
+terminals - the graphics terminal (4014 or one which emulates a 4014) and
+another terminal to enter commands on.
+.nf
+The procedure is as follows:
+
+     1.  login on the graphics terminal
+     2.  enter "tty" to find out which terminal number has been assigned
+     3.  enter "sleep 32000" to put the graphics terminal in sleep mode
+     4.  login on the other terminal
+     5.  enter "mged file" to execute MGED
+     6.  enter "tek" to select the tek4014 device processor
+     7.  enter the tty value found in step 2.
+     8.  perform editing
+     9.  enter "q" to quit MGED
+    10.  enter control-c on the graphics terminal to end the sleep mode
+    11.  logout on both terminals
+.fi
+
+Since there are no knobs or buttons on the tek4014 class of terminals, one
+is forced to use the "press" and "knob" commands to emulate these peripherals.
+Other commands whcih can/should be used are:
+
+.nf
+           ill     put up a desired path
+           center  slew the display
+           size    zoom the display
+           sed     solid edit immediately
+.fi
+
+
+
+.PP
+The main force behind the writing of a driver for the tek4014 terminals, was
+to allow the use of the Teletype 5620 terminals.
+These graphic terminals have an internal processor and different windows
+can be set up which represent different terminals.
+Hence two terminals are NOT necessary.
+The use of the Teletype 5620 terminals is then the same as the procedure
+outlined above, except each window represents a terminal.
+
+.PP
+The button box layout for the SGI Iris is as below.
+Note that the "right" button shows you the right side of the
+model, as if you were looking in from the left.
+To achieve the customary draftsman views, this function
+goes on the left.
+.nf
+.cs
+               |----------|----------|----------|----------|
+               |          |          |          |   Zero   |          
+               |   Help   |    ADC   |  Reset   |   Knobs  |          
+    |----------|----------|----------|----------|----------|----------|
+    |    Obj   |    Obj   |    Obj   |    Obj   |          |   Save   |
+    |   Scale  |  ScaleX  |  ScaleY  |  ScaleZ  |  empty   |   View   |
+    |----------|----------|----------|----------|----------|----------|
+    |    Obj   |    Obj   |    Obj   |    Obj   |          |  Restore |
+    |  TransX  |  TransY  |  TransXY |  Rotate  |  empty   |   View   |
+    |----------|----------|----------|----------|----------|----------|
+    |   Solid  |   Solid  |   Solid  |   Solid  |    Obj   |  Solid   |
+    |   Trans  |    Rot   |   Scale  |   Menu   |   Pick   |  Pick    |
+    |----------|----------|----------|----------|----------|----------|
+    |  REJECT  |  Bottom  |   Top    |   Rear   |   90,90  |  ACCEPT  |
+    |----------|----------|----------|----------|----------|----------|
+               |   Right  |   Front  |   Left   |   35,25  |          
+               |----------|----------|----------|----------|

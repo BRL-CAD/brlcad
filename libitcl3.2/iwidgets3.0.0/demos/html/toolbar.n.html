@@ -1,0 +1,351 @@
+<TITLE><B>toolbar</B> - Create and manipulate a tool bar</TITLE>
+<H1><B>toolbar</B> - Create and manipulate a tool bar</H1>
+
+</pre><H2>SYNOPSIS</H2>
+<B>toolbar</B> <I>pathName</I> ?<I>options</I>?
+</pre><H2>STANDARD OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>activeBackground</B><br>
+<B>activeForeground</B><br>
+<B>background</B><br>
+<B>borderWidth</B><br>
+<B>cursor</B><br>
+</td>
+<td valign=top>
+<B>disabledForeground</B><br>
+<B>font</B><br>
+<B>foreground</B><br>
+<B>highlightBackground</B><br>
+<B>highlightColor</B><br>
+</td>
+<td valign=top>
+<B>highlightThickness</B><br>
+<B>insertBackground</B><br>
+<B>insertForeground</B><br>
+<B>orient</B><br>
+<B>selectBackground</B><br>
+</td>
+<td valign=top>
+<B>selectBorderWidth</B><br>
+<B>selectColor</B><br>
+<B>selectForeground</B><br>
+<B>state</B><br>
+<B>troughColor</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "options" </A> manual entry for details on the standard options. For widgets
+added to the toolbar, these options will be propogated if the widget supports
+the option. For example, all widgets that support a font option will be changed
+if the the toolbar's font option is configured. 
+</pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
+<P>
+<pre>
+Name:                   <B>balloonBackground</B>
+Class:                  <B>BalloonBackground</B>
+Command-Line Switch:	<B>-ballooonbackground</B>
+</pre>
+<UL>
+Specifies the background color of the balloon help displayed at the bottom 
+center of a widget on the toolbar that has a non empty string for its 
+balloonStr option. The default color is yellow.
+</UL>
+<P>
+<pre>
+Name:                   <B>balloonDelay1</B>
+Class:                  <B>BalloonDelay1</B>
+Command-Line Switch:	<B>-balloondelay1</B>
+</pre>
+<UL>
+Specifies the length of time (in milliseconds) to wait before initially 
+posting a balloon help hint window. This delay is in effect whenever 1) 
+the mouse leaves the toolbar, or 2) a toolbar item is selected with the 
+mouse button.
+</UL>
+<P>
+<pre>
+Name:                   <B>balloonDelay2</B>
+Class:                  <B>BalloonDelay2</B>
+Command-Line Switch:	<B>-balloondelay2</B>
+</pre>
+<UL>
+Specifies the length of time (in milliseconds) to wait before continuing to 
+post balloon help hint windows. This delay is in effect after the first 
+time a balloon hint window is activated. It remains in effect until 1) the 
+mouse leaves the toolbar, or 2) a toolbar item is selected with the mouse 
+button.
+</UL>
+<P>
+<pre>
+Name:                   <B>balloonFont</B>
+Class:                  <B>BalloonFont</B>
+Command-Line Switch:	<B>-balloonfont</B>
+</pre>
+<UL>
+Specifies the font of the balloon help text displayed at the bottom center 
+of a widget on the toolbar that has a non empty string for its 
+balloonStr option. The default font is 6x10.
+</UL>
+<P>
+<pre>
+Name:                   <B>balloonForeground</B>
+Class:                  <B>BalloonForeground</B>
+Command-Line Switch:	<B>-ballooonforeground</B>
+</pre>
+<UL>
+Specifies the foreground color of the balloon help displayed at the 
+bottom center of a widget on the toolbar that has a non empty string for 
+its balloonStr option. The default color is black.
+</UL>
+<P>
+<pre>
+Name:                   <B>helpVariable</B>
+Class:                  <B>HelpVariable</B>
+Command-Line Switch:	<B>-helpvariable</B>
+</pre>
+<UL>
+Specifies the global variable to update whenever the mouse is in motion 
+over a toolbar widget. This global variable is updated with the current 
+value of the active widget's helpStr. Other widgets can "watch" this 
+variable with the trace command, or as is the case with entry or label 
+widgets, they can set their textVariable to the same global variable. This 
+allows for a simple implementation of a help status bar. Whenever the 
+mouse leaves a menu entry, the helpVariable is set to the empty string {}.
+</UL>
+<P>
+<pre>
+Name:                   <B>orient</B>
+Class:                  <B>Orient</B>
+Command-Line Switch:	<B>-orient</B>
+</pre>
+<UL>
+Specifies the orientation of the toolbar. Must be either horizontal or
+vertical. 
+</UL>
+</pre><HR>
+</pre><H2>DESCRIPTION</H2>
+The <B>toolbar</B> command creates a new window (given by the pathName 
+argument) and makes it into a <B>toolbar</B> widget. Additional options, 
+described above may be specified on the command line or in the option 
+database to configure aspects of the toolbar such as its colors, font, 
+and orientation. The <B>toolbar</B> command returns its pathName argument. At 
+the time this command is invoked, there must not exist a window named 
+pathName, but pathName's parent must exist. 
+<P>
+A <B>toolbar</B> is a widget that displays a collection of widgets arranged 
+either in a row or a column (depending on the value of the -orient option). 
+This collection of widgets is usually for user convenience to give access 
+to a set of commands or settings. Any widget may be placed on a toolbar. 
+However, command or value-oriented widgets (such as button, radiobutton, 
+etc.) are usually the most useful kind of widgets to appear on a toolbar.  
+<P>
+In addition, the toolbar adds two new options to all widgets that are added to
+it. These are the <B>helpStr</B> and <B>balloonStr</B> options. See the 
+discussion for the widget command add below.
+
+</pre><H2>WIDGET-SPECIFIC METHODS</H2>
+<P>
+The toolbar command creates a new Tcl command whose name is pathName. This
+command may be used to invoke various operations on the widget. It has the
+following general form:
+<pre>
+<I>pathName</I> <I>option</I> <I>?arg arg ...?</I>
+</pre>
+Option and args determine the exact behavior of the command. 
+<P>
+Many of the widget commands for a toolbar take as one argument an indicator of
+which widget item of the toolbar to operate on. The indicator is called 
+an <B>index</B> and may be specified in any of the following forms:
+<DL>
+<DT> <I>number</I>
+</I></B>
+<DD> Specifies the widget numerically, where 0 corresponds to the first
+widget in the notebook, 1 to the second, and so on. (For horizontal, 0 is the
+leftmost; for vertical, 0 is the topmost). 
+</DL>
+<DL>
+<DT> <B>end</B>
+</I></B>
+<DD> Specifes the last widget in the toolbar's index. If the toolbar is
+empty this will return -1. 
+</DL>
+<DL>
+<DT> <B>last</B>
+</I></B>
+<DD> Same as end.
+</DL>
+<DL>
+<DT> <I>pattern</I>
+</I></B>
+<DD> If the index doesn't satisfy any of the above forms, then this form is
+used. Pattern is pattern-matched against the widgetName of each widget in the
+toolbar, in order from the first to the last widget, until a matching entry is
+found. An exact match must occur. 
+</DL>
+<P>
+The following commands are possible for toolbar widgets:
+<DL>
+<DT> <I>pathName</I> <B>add</B> <I>widgetCommand</I> <I>widgetName</I> <I>?option value?</I>
+</I></B>
+<DD> Adds a widget with the command widgetCommand whose name is widgetName to the
+toolbar. If widgetCommand is radiobutton or checkbutton, its packing is
+slightly padded to match the geometry of button widgets. In addition, the
+indicatorOn option is false by default and the selectColor is that of the
+toolbar background by default. This allows Radiobutton and Checkbutton widgets
+to be added as icons by simply setting their bitmap or image options. If 
+additional arguments are present, they are the set of available options
+that the widget type of <I>widgetCommand</I> supports. In addition they may
+also be one of the following options:
+</DL>
+<UL>
+<DL>
+<DT> <B>-helpstr</B> <I>value</I>
+</I></B>
+<DD> Specifes the help string to associate with the widget. When the mouse moves
+over the widget, the variable denoted by <B>helpVariable</B> is set 
+to <B>helpStr</B>. Another widget can bind to the helpVariable and thus 
+track status help. 
+</DL>
+<DL>
+<DT> <B>-balloonstr</B> <I>value</I>
+</I></B>
+<DD> Specifes the string to display in a balloon window for this widget. A 
+balloon window is a small popup window centered at the bottom of the 
+widget. Usually the <B>balloonStr</B> value is the name of the item on the 
+toolbar. It is sometimes known as a hint window.
+<UL>
+When the mouse moves into an item on the toolbar, a timer is set based on 
+the value of <B>balloonDelay1</B>. If the mouse stays inside the item 
+for <B>balloonDelay1</B>, the balloon window will pop up displaying 
+the <B>balloonStr</B> value. Once the balloon window is posted, a new 
+timer based on <B>balloonDelay2</B> is set. This is typically a shorter 
+timer. If the mouse is moved to another item, the window is unposted and 
+a new window will be posted over the item if the shorter delay time is 
+satisfied. 
+</UL>
+<UL>
+While the balloon window is posted, it can also be unposted if the item 
+is selected. In this case the timer is reset to <B>balloonDelay1</B>. 
+Whenever the mouse leaves the toolbar, the timer is also reset 
+to <B>balloonDelay1</B>.
+</UL>
+<UL>
+This window posting/unposting model is the same model used in the 
+Windows95 environment.
+</UL>
+</DL>
+</UL>
+<DL>
+<DT> <I>pathName</I> <B>cget</B> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given by <I>option</I>.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>configure</B> ?<I>option</I> <I>value</I>?
+</I></B>
+<DD> Query or modify the configuration options of the widget. If no <I>option</I> is
+specified, returns a list describing all of the available options for pathName
+(see Tk_ConfigureInfo for information on the format of this list). If 
+<I>option</I> is specified with no value, then the command returns a 
+list describing the one
+named option (this list will be identical to the corresponding sublist of the
+value returned if no option is specified). If one or more option-value pairs
+are specified, then the command modifies the given widget option(s) to have the
+given value(s); in this case the command returns an empty string. 
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>delete</B> <I>index</I> ?<I>index2</I>?
+</I></B>
+<DD> This command deletes all items between <I>index</I> and <I>index2</I> 
+inclusive. If <I>index2</I> is omitted then it defaults to <I>index</I>. 
+Returns an empty string. 
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>index</B> <I>index</I>
+</I></B>
+<DD> Returns the widget's numerical index for the entry corresponding 
+to <I>index</I>. If <I>index</I> is not found, -1 is returned. 
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>insert</B> <I>beforeIndex</I> <I>widgetCommand</I> <I>widgetName</I> <I>?option value?</I>
+</DL>
+<DL>
+<DT> Insert a new item named <I>widgetName</I> with the 
+</I></B>
+<DD> command <I>widgetCommand</I> before the item specified by <I>beforeIndex</I>. 
+If <I>widgetCommand</I> is <B>radiobutton</B> or <B>checkbutton</B>, its 
+packing is slightly padded to match the geometry of button widgets. In 
+addition, the <B>indicatorOn</B> option is <B>false</B> by default and the
+<B>selectColor</B> is that of the toolbar background by default. This allows
+<B>Radiobutton</B> and <B>Checkbutton</B> widgets to be added as icons by 
+simply setting their <B>bitmap</B> or <B>image</B> options. The set of 
+available options is the same as specified in the <B>ad</B> command.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>itemcget</B> <I>index</I> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given by <I>option</I> for
+index. The item type of <I>index</I> determines the valid available options. 
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>itemconfigure</B> <I>index</I> <I>?option value?</I>
+</I></B>
+<DD> Query or modify the configuration options of the widget of the toolbar
+specified by <I>index</I>. If no option is specified, 
+returns a list describing all of
+the available options for <I>index</I> 
+(see <B>Tk_ConfigureInfo</B> for information on the
+format of this list). If <I>option</I> is specified with no value, 
+then the command
+returns a list describing the one named option (this list will be identical to
+the corresponding sublist of the value returned if no option is specified). If
+one or more option-value pairs are specified, then the command modifies the
+given widget option(s) to have the given value(s); in this case the command
+returns an empty string. The item type of <I>index</I> determines the valid
+available options. The set of available options is the same as specified 
+in the <B>ad</B> command.
+</DL>
+</pre><H2>EXAMPLE</H2>
+<pre>
+ toolbar .tb -helpvariable statusVar
+
+ .tb add button item1 \\
+    -helpstr "Save It" -bitmap @./icons/Tool_32_box.xbm \\
+    -balloonstr "Save" -command {puts 1}
+ .tb add button item2 \\
+    -helpstr "Save It" -bitmap @./icons/Tool_32_brush.xbm \\
+    -balloonstr "Save" -command {puts 1}
+ .tb add button item3 \\
+    -helpstr "Save It" -bitmap @./icons/Tool_32_cut.xbm \\
+    -balloonstr "Save" -command {puts 1}
+ .tb add button item4 \\
+    -helpstr "Save It" -bitmap @./icons/Tool_32_draw.xbm \\
+    -balloonstr "Save" -command {puts 1}
+ .tb add button item5 \\
+    -bitmap @./icons/Tool_32_erase.xbm -helpstr "Play It" \\
+    -command {puts 2}
+ .tb add frame filler \\
+    -borderwidth 1 -width 10 -height 10
+ .tb add radiobutton item6 \\
+    -bitmap @./icons/Tool_32_oval.xbm -command {puts 4} \\
+    -variable result -value OPEN -helpstr "Radio Button # 1" \\
+    -balloonstr "Radio"
+ .tb add radiobutton item7 \\
+    -bitmap @./icons/Tool_32_line.xbm -command {puts 5} \\
+    -variable result -value CLOSED
+ .tb add checkbutton item8 \\
+    -bitmap @./icons/Tool_32_text.xbm -command {puts 6} \\
+    -variable checkit -onvalue yes -offvalue no    
+ .tb add checkbutton check2 \\
+    -bitmap @./icons/Tool_32_points.xbm -command {puts 7} \\
+     -variable checkit2 -onvalue yes -offvalue no    
+
+ pack .tb -side top -anchor nw
+</pre>
+</pre><H2>AUTHOR</H2>
+Bill Scott
+</pre><H2>KEYWORDS</H2>
+toolbar, button, radiobutton, checkbutton, iwidgets, widget
+

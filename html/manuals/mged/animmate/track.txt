@@ -1,0 +1,49 @@
+#TRACK.TXT - command to prepare for ktank track animation
+units mm
+
+#create new names for the left wheels
+g lw.0 r37
+g lw.1 r32
+g lw.2 r33
+g lw.3 r34
+g lw.4 r35
+g lw.5 r36
+g lw.6 r38
+
+#create new names for the the right wheels
+g rw.0 r44
+g rw.1 r39
+g rw.2 r40
+g rw.3 r41
+g rw.4 r42
+g rw.5 r43
+g rw.6 r45
+
+#create new parent group for the wheels
+for {set i 0} { $i < 7 } { incr i} {
+	g anim_wheels lw.$i rw.$i
+}
+
+#create the prototype track pad solid
+in pad_proto.s arb8 \
+112	-125.2	0	\
+112	125.2	0	\
+112	125.2	25.4	\
+112	-125.2	25.4	\
+-112	-165.1	0	\
+-112	165.1	0	\
+-112	165.1	25.4	\
+-112	-165.1	25.4	\
+
+#make the prototype track pad region
+r pad_proto u pad_proto.s
+
+#make sixty pads for the left track, and sixty for the right
+for {set i 0} { $i < 60} { incr i} {
+	i pad_proto rpad.$i
+	i pad_proto lpad.$i
+	g pads lpad.$i rpad.$i
+}
+
+#create an animation-ready tank
+g anim_tank hull turret anim_wheels pads

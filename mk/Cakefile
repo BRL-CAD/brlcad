@@ -1,0 +1,36 @@
+/*
+ *			mk/Cakefile
+ *
+ *  $Header$
+ */
+
+#define SRCDIR	mk
+#define PRODUCTS	mk_bolt mk_handle mk_window mk_winfrm mk_gastank \
+			mk_wire
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* Explicit composition of each product */
+
+mk_bolt:	mk_bolt.o
+	CC LDFLAGS mk_bolt.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o mk_bolt
+
+mk_handle:	mk_handle.o
+	CC LDFLAGS mk_handle.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o mk_handle
+
+mk_window:	mk_window.o
+	CC LDFLAGS mk_window.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o mk_window
+
+mk_winfrm:	mk_winfrm.o
+	CC LDFLAGS mk_winfrm.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o mk_winfrm
+
+mk_gastank:	mk_gastank.o
+	CC LDFLAGS mk_gastank.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o mk_gastank
+
+mk_wire:	mk_wire.o
+	CC LDFLAGS mk_wire.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o mk_wire
+
+#include "../Cakefile.rules"

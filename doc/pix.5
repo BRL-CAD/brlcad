@@ -1,0 +1,85 @@
+.TH PIX 5 BRL/CAD
+.SH NAME
+pix \- Color RGB image file format and utilities
+.SH FORMAT
+A
+.I pix
+file contains sequences of pixels.
+Each pixel is stored as three \fBunsigned char\fRs,
+first red, then green, then blue.
+The intensity of each color ranges from 0 ("off") to 255 ("on").
+The first pixel in a
+.I pix
+file is the lower left corner of the image.
+The pixels proceed from left-to-right across each scanline,
+with scanlines being written from the bottom to the top of the image.
+.PP
+By convention, 
+.I pix
+images are usually square, and thus their dimensions
+can be determined by the file size.  If this is not the case, often
+only the file width need be known by a program reading the file.  History
+has left us with two "standard" sizes, 512x512 and the "hires" 1024x1024.
+A common practice for other file sizes is to include the file width in
+the filename.
+.PP
+At some time in the future
+.I pix
+files will probably get self-typing headers so that parameters such as
+their size can be automatically determined by programs.
+.SH UTILITIES
+.B pix-fb
+display a .pix format image on a framebuffer.
+.br
+.B fb-pix
+produce a .pix file from a framebuffer image.
+.br
+.B pix-bw
+convert a .pix file to a black and white .bw file.
+.br
+.B bw-pix
+convert a black and white .bw file to a .pix file.
+.br
+.B ap-pix
+convert an Applicon Color Plotter file to a .pix file.
+.br
+.B pixtile
+combine several small .pix files into one large one.
+.br
+.B pixstat
+gives statistics concerning a .pix file.
+.br
+.B pixhist
+displays a color histogram on a framebuffer.
+.br
+.B pixhist3d
+display three views of an RGB color space histogram on a framebuffer.
+.br
+.B pixhist3d-pl
+unix plot of RGB color space utilization.
+.br
+.B pixdiff
+shows which pixels/colors differ between two .pix files.
+.br
+.B pixrect
+extracts an arbitrary rectangle from a .pix file.
+.br
+.B pixrot
+rotate, reverse, or invert a .pix file.
+.br
+.B pixscale
+scale a .pix file up or down.
+.br
+.B pixfilter
+a collection of 3x3 kernel filters for .pix files.
+.br
+.B bw3-pix
+merges three .bw files into one .pix file.
+.br
+.B pix-bw3
+separates .pix file RGB colors into three .bw files.
+.br
+.SH FILES
+file.pix
+.SH SEE ALSO
+brlcad(1), bw(5), and above named programs.

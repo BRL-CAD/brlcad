@@ -1,0 +1,50 @@
+.\" Copyright (c) 1986, University of Utah
+.\" Template man page.  Taken from wtm's page for getcx3d
+.TH RLEFLIP 1 "Month DD, YYYY" 1
+.UC 4 
+.SH NAME
+rleflip \- Invert, reflect or rotate an image.
+.SH SYNOPSIS
+.B rleflip
+.\" sample options...
+.B \-{rlhv}
+[ 
+.B \-o
+.I outfile
+] [
+.I infile
+]
+.SH DESCRIPTION
+.IR Rleflip
+inverts, reflects an image; or rotates left or right by 90 degrees.  The
+picture's origin remains the same.  If no input file is specified, the
+image is read from standard input.  For rotations of other than 90
+degrees, use
+.IR fant (1).
+.SH OPTIONS
+Exactly one of the following flags must be given:
+.TP
+.B \-r
+Rotate the image 90 degrees to the right
+.TP
+.B \-l
+Rotate the image 90 degrees to the left
+.TP
+.B \-h
+Reflect the image horizontally
+.TP
+.B \-v
+Flip the image vertically
+.TP
+.BI \-o " outfile"
+If specified, the output will be written to this file.  If 
+.I outfile
+is "\-", or if it is not specified, the output will be written to the
+standard output stream.
+.SH SEE ALSO
+.IR fant (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+John W. Peterson
+

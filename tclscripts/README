@@ -1,0 +1,14 @@
+This directory contains all common Tcl scripts for the
+BrlCad distribution. Application specific Tcl scripts
+also live here within their own subdirectories.
+
+chkexterns.tcl		utility to check for the existence of commands
+fs_dialog.tk		file selection dialog widget
+helpcomm.tcl		generic help routines
+helplib.tcl		library help routines
+html_library.tcl	HTML display library by Stephen Uhler 
+libdm.tcl		libdm initialization routines
+mged			directory of mged specific tcl scripts
+pl-dm			directory of pl-dm specific tcl scripts
+tclIndex		Tcl autoload index file
+vmath.tcl		tcl routines for doing vmath stuff

@@ -1,0 +1,34 @@
+BRL-CAD Release 3.26   Ray-Tracer
+    Mon Aug 26 22:39:04 EDT 1991, Compilation 1
+    butler@vgr.brl.mil:/usr/src/tmpcad/rt
+
+db title:  Gary Moss's "World on a Platter"
+initial dynamic memory use=15568.
+GETTREE: 0.1user 0.3sys 0:01real 41% 315i+264d 395maxrss 22+48pf 22+4csw
+Additional dynamic memory used=15976. bytes
+
+...................Frame     0...................
+PREP: 0.0user 0.1sys 0:00real 53% 527i+360d 454maxrss 1+14pf 1+7csw
+Additional dynamic memory used=21096. bytes
+Tree: 6 solids in 6 regions
+Model: X(-50,90), Y(-70,70), Z(-24,63)
+View: 35 azimuth, 25 elevation off of front view
+Orientation: 0.248097, 0.476591, 0.748097, 0.389435
+Eye_pos: 63.7999, 32.7177, 33.6666
+Size: 157.203mm
+Grid: (0.307036, 0.307036) mm, (512, 512) pixels
+Beam: radius=0.153518 mm, divergence=0 mm/1mm
+Output file is 'moss.pix'
+Dynamic scanline buffering
+Lighting: Ambient = 40%
+  /all.g/light.r: (20.1576, -13.526, 5.03474), aimed at (0, 0, -1)
+  /all.g/light.r: visible, casts shadows, 1000 lumens (83%), halfang=180
+
+SHOT: 2503.7user 184.1sys 1:20:23real 55% 577i+449d 517maxrss 4+40pf 69+39029csw
+Additional dynamic memory used=32584. bytes
+488710 solid/ray intersections: 316743 hits + 171967 miss
+pruned 64.8%:  51533 model RPP, 0 dups skipped, 205036 solid RPP
+Frame     0:   262144 pixels in    2503.79 sec =     104.70 pixels/sec
+Frame     0:   343042 rays   in    2503.79 sec =     137.01 rays/sec (RTFM)
+
+     4828.3 real      2504.2 user       185.4 sys  

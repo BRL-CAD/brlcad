@@ -1,0 +1,574 @@
+<HTML>
+<HEAD>
+<TITLE>Database Object Documentation</TITLE>
+</HEAD>
+<BODY>
+<A HREF="#toc">Table of Contents</A><P>
+_________________________________________________________________
+<P>
+
+<H2><A NAME="sect1" HREF="#toc1"><B>NAME</B></A></H2>
+wdb_open - create and manipulate a database object.
+<P>
+
+<H2><A NAME="sect2" HREF="#toc2"><B>SYNOPSIS</B></A></H2>
+<B>wdb_open</B> [<I>dbName file dbFile</I>]
+<BR>
+<B>wdb_open</B> [<I>dbName disk dbip</I>]
+<BR>
+<B>wdb_open</B> [<I>dbName disk_append dbip</I>]
+<BR>
+<B>wdb_open</B> [<I>dbName inmem dbip</I>]
+<BR>
+<B>wdb_open</B> [<I>dbName inmem_append dbip</I>]
+<BR>
+<B>wdb_open</B> [<I>dbName db dbFile</I>]
+<P>
+
+<H2><A NAME="sect8" HREF="#toc8"><B>DESCRIPTION</B></A></H2>
+The following describes opening a database object of type <I>db</I>:
+<P>
+Create a new database object
+(given by <I>dbName</I>) that is associated with
+the database file (given by <I>dbFile</I>).
+The <B>wdb_open</B> command returns its <I>dbName</I> argument.
+At the time this command is invoked, there must not exist a
+database object named <I>dbName</I>.
+<P>
+
+<H2><A NAME="sect9" HREF="#toc9"><B>METHODS</B></A></H2>
+The <B>wdb_open</B> command creates a new Tcl command whose name
+is <I>dbName</I>. This command may be used to invoke various
+operations on the database object. It has the following general
+form: 
+<P>
+<I>dbName</I> <I>option</I> ?<I>arg</I> <I>arg</I> ...?
+<P>
+<I>Option</I> and the <I>arg</I>s determine the exact behavior of the command.
+The following commands are possible for database objects:
+<P>
+<DL>
+<DT><I>dbName</I> <A NAME="adjust"><B>adjust</B></A> <I>object attribute1 new_value1</I> [<I>attribute2 new_value2...</I>]</DT>
+<DD>Modify <I>object</I> by adjusting the value of its attribute(s) to the new_value(s).
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="c"><B>c</B></A> [<I>-g|r</I>] <I>combination_name</I> [<I>Boolean_expression</I>]</DT>
+<DD>Create a <I>BRL&#173CAD</I> <a href="../mged/brlcad_glossary.html#COMBINATION">combination</a>
+with the name
+<I>combination_name</I>. The <I>-g</I> option is the default and indicates that the
+combination should be flagged as a
+<I>BRL&#173CAD</I> <a href="../mged/brlcad_glossary.html#GROUP">group</a>
+and the <I>-r</I> option indicates that the
+combination is a <I>BRL&#173CAD</I>
+<a href="../mged/brlcad_glossary.html#REGION">region</a>. The <I>Boolean_expression</I>
+allows parentheses. Where no order is specified, intersections are performed before
+subtractions or unions, then subtractions and unions are performed, left to right.
+With no <I>Boolean_expression</I> and when <I>combination_name</I> does not already exist,
+a new empty combination will be created. If no <I>Boolean_expression</I> is provided, and
+<I>combination_name</I> does already exist and one of <I>-g</I> or <I>-r</I> is specified,
+then <I>combination_name</I> is flagged to agree with the indicated option.
+If a new <I>region</I> is created with this command, its region specific attributes
+will be set according to the current defaults (see <a href="#regdef">regdef</a>).
+The <a href="#comb">comb</a> and <a href="#r">r</a> commands may also be used to create combinations.
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="cat"><B>cat</B></A> <I>&lt;objects&gt</I></DT>
+<DD>Return a brief description of each item in the list of <I>objects</I>.
+If the item is a primitive solid, the type of solid and its vertex are displayed.
+If the item is a combination, the Boolean formula for that combination is displayed
+including operands, operators, and parentheses. If the combination is flagged as a region,
+then that fact is also displayed along with the regions ident code, air code, los,
+and GIFT material code.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="close"><B>close</B></A></DT>
+<DD>Close/destroy the database object.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="color"><B>color</B></A> <I>low high r g b str</I></DT>
+<DD>Create an entry in the database that functions as part of a color lookup
+table for displayed regions. The ident number for the region is used to find the
+appropriate color from the lookup table. The <I>low</I> and <I>high</I> values are
+the limits of region ident numbers to have the indicated <I>r g b</I> color (0-255) applied.
+The <I>str</I> parameter is intended to be an identifying character string, but is
+currently ignored. The current list of color table entries may be displayed with the
+<a href="#prcolor">prcolor</a> command, and the entire color table may be edited
+using the <a href="#edcolor">edcolor</a> command. If a color lookup table exists,
+its entries will override any color assigned using the <a href="#mater">mater</a> command
+when drawing wireframe.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="comb"><B>comb</B></A> <I>combination_name &lt;operation object&gt</I></DT>
+<DD>Create a new <a href="../mged/brlcad_glossary.html#COMBINATION">combination</a>
+or extend an existing one.
+If <I>combination_name</I> does not already exist, then it will be created
+using the indicated list of <I>operations</I> and <I> objects</I>.. If
+it does exist, the list of <I>operations</I> and <I> objects</I> will
+be appended to the end of the existing combination. The <I>&lt;operation object&gt</I>
+list is expected to be in the same form as used in the <a href="#r">r</a> command.
+The <a href="#c">c</a> command may also be used to create a <I>combination</I>.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="concat"><B>concat</B></A> <I>database_file</I> [<I>prefix</I>]</DT>
+<DD> Concatenates an existing <I>BRL&#173CAD</I> database to the
+database currently being edited. If a <I>prefix</I> is supplied, then all objects
+from the <I>database_file</I> will have <I>prefix</I> added to the beginning of their names.
+Note that each <I>BRL&#173CAD</I> object must have a unique name, so care must be taken
+not to <I>concat</I> a database that has objects with names the same as objects
+in the current database. The <a href="#dup">dup</a> command may be used to check
+for duplicate names. If the <I>dup</I> command finds duplicate names, use the <I>prefix</I>
+option to both the <I>dup</I> and <I>dbconcat</I> commands to find
+a <I>prefix</I> that produces no duplicates. If duplicate names are encountered during the concatenation
+process, computer generated prefixes will be added to the object names coming from the
+<I>database_file</I> (but member names appearing in combinations will not be modified,
+so this is a dangerous practice and should be avoided).
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="cp"><B>cp</B></A> <I>from_object to_object</I></DT>
+<DD>Make a duplicate of an object (solid or combination).
+If <I>from_object</I> is a solid, then it is simply copied to a new solid named <I>to_object</I>.
+If <I>from_object</I> is a combination, then a new combination is created that contains
+exactly the same members, transformation matrices, etc, and it is named <I>to_object</I>.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="dbip"><B>dbip</B></A></DT>
+<DD>Return the database instance pointer associated with this
+database object.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="dump"><B>dump</B></A> <I>dbfile</I></DT>
+<DD>Write the current state of the database to <I>dbfile</I>. 
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="dup"><B>dup</B></A> <I>file</I> [<I>prefix</I>]</DT>
+<DD>Check the specified <I>file</I> (which is
+expected to contain a <I>BRL&#173CAD</I> model) for names that are the same as those
+in the current model. If a <I>prefix</I> is included on the command line,
+all names in the specified <I>file</I> will have that <I>prefix</I>
+added to their names before comparison with the current model. This command
+is often used prior to invoking the <a href="#concat">concat</a> command
+to insure that there are no name clashes.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="expand"><B>expand</B></A> <I>regexp</I></DT>
+<DD>Perform matching of the regular expression, <I>regexp</I>,
+with the names of all the objects in the database returning
+all those that successfully match.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="find"><B>find</B></A> &lt;<I>objects</I>&gt</DT>
+<DD>Return all <a href="../mged/brlcad_glossary.html#COMBINATION">combinations</a>
+that have any of the <I>objects</I> specified as a
+<a href="../mged/brlcad_glossary.html#MEMBER">member</a>.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="form"><B>form</B></A></DT>
+<DD>Return the format used to display objects of the specified <I>type</I>.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="g"><B>g</B></A> <I>groupname</I> &lt;<I>objects</I>&gt</DT>
+<DD>Create a special type of <a href="../mged/brlcad_glossary.html#COMBINATION">combination</a>
+often referred to as a <a href="../mged/brlcad_glossary.html#GROUP">group</a>. This builds a <I>combination</I>
+by unioning together all the listed <I>objects</I>. If <I>groupname</I> already exists, then
+the list of <I>objects</I> will be unioned to the end of it (Note that an existing <I>groupname</I>
+is not restricted to being a <I>group</I>, any <I>combination</I> is legal).
+Other commands to build
+<I>combinations</I> are <a href="#c">c</a>, <a href="#r">r</a>, or <a href="#comb">comb</a>.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="get"><B>get</B></A> <I>object</I> [<I>attribute</I>]</DT>
+<DD>Return information about the database <I>object</I>.
+If <I>object</I> is a path, the transformation matrices
+encountered along the path will be accumulated and applied to the leaf
+before returning the information. If no attribute is specified, all the details
+about <I>object</I> are returned. If a specific attribute is listed, then only that
+information is returned.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="i"><B>i</B></A> <I>obj_name comb_name</I> [<I>operation</I>]</DT>
+x<DD>Add <I>obj_name</I> to the end of the combination named <I>comb_name</I>.
+The <I>operation</I> may be ``+'', ``-'', or ``u''. If no <I>operation</I> is specified,
+``u'' is assumed. If <I>comb_name</I> does not exist, it is created.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="keep"><B>keep</B></A> <I>keep_file</I> &lt;<I>objects</I>&gt</DT>
+<DD>Copy the <I>objects</I> specified to the <I>keep_file</I>.
+If <I>keep_file</I> does not exist, it is created. If <I>keep_file</I> does exist,
+the <I>objects</I> are appended to it. The <I>keep_file</I> is a <I>BRL&#173CAD</I>
+database file. The <I>objects</I> in the list must exist in the current database.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="kill"><B>kill</B></A> [<I>-f</I>] &lt;<I>objects</I>&gt</DT>
+<DD>Delete the specified <I>objects</I> from the current database.
+This command affects only the <I>objects</I> actually listed on the command line. If a
+<a href="../mged/brlcad_glossary.html#COMBINATION">combination</a> is killed, its members are not affected.
+If the <I>-f</I> option is specified, then kill will not complain if some, or all, of
+the <I>objects</I> specified do not actaully exist in the database. Note that the <I>objects</I>
+are killed immediately. There is no need for a ``write file'' command in <I>MGED</I>, and
+there is no ``undo'' command. Use this command with caution. Other commands that remove
+objects from the database are <a href="#killall">killall</a> and <a href="#killtree">killtree</a>.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="killall"><B>killall</B></A> &lt;<I>objects</I>&gt</DT>
+<DD>Delete the specified <I>objects</I> from the current database
+and remove all references to them from all <a href="../mged/brlcad_glossary.html#COMBINATION">combinations</a> in the database.
+Note that the <I>objects</I>
+are killed immediately. There is no need for a ``write file'' command in <I>MGED</I>, and
+there is no ``undo'' command. Use this command with caution. Other commands that remove
+objects from the database are <a href="#kill">kill</a> and <a href="#killtree">killtree</a>.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="killtree"><B>killtree</B></A> &lt;<I>objects</I>&gt</DT>
+<DD>Delete the specified <I>objects</I> from the current database
+and recursively delete all objects referenced by any of those objects.
+If one of the <I>objects</I> listed is a
+<a href="../mged/brlcad_glossary.html#COMBINATION">combination</a>, then that <I>combination</I> will
+be deleted as well as any objects that are members of that <I>combination</I>. If a member
+of that <I>combination</I> is itself a <I>combination</I>, then all its members
+will also be destroyed. This continues recursively until the
+<a href="../mged/brlcad_glossary.html#SOLID">primitive solids</a> are reached and destroyed.
+Note that the <I>objects</I>
+are killed immediately. There is no need for a ``write file'' command in <I>MGED</I>, and
+there is no ``undo'' command. Use this command with extreme caution.
+Other commands that remove
+objects from the database are <a href="#kill">kill</a> and <a href="#killall">killall</a>.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="l"><B>l</B></A> [-<I>r</I>] &lt;<I>objects</I>&gt</DT>
+<DD>Return a verbose description about the
+specified list of <a href="../mged/brlcad_glossary.html#OBJECT">objects</a>. If a specified <I>object</I> is a
+<a href="../mged/brlcad_glossary.html#PATH">path</a>, then any transformation
+matrices along that <I>path</I> are applied. If the final <I>path</I> component is a
+<a href="../mged/brlcad_glossary.html#COMBINATION">combination</a>,
+the command will list the <a href="../mged/brlcad_glossary.html#BOOLEAN">Boolean</a>
+formula for the <I>combination</I> and will indicate any accumulated
+transformations (including any in that <I>combination</I>). If a <a href="../mged/brlcad_glossary.html#SHADER"> shader</a>
+and/or color has been assigned to the <I>combination</I>, the details will be listed. For a
+<a href="../mged/brlcad_glossary.html#REGION">region</a>, its <a
+href="../mged/brlcad_glossary.html#IDENT">ident</a>, <a
+href="../mged/brlcad_glossary.html#SPACE">air code</a>, <a
+href="../mged/brlcad_glossary.html#GIFTMAT">material code</a>, and <a
+href="../mged/brlcad_glossary.html#LOS">LOS</a> will also be listed. For <a
+href="../mged/brlcad_glossary.html#SOLID">primitive solids</a>, detailed <I>solid</I>
+parameters will be displayed with the accumulated transformation applied.
+If the <I>-r</I> (recursive) option is used, then each <I>object</I> on the command line
+will be treated as a <I>path</I>. If the <I>path</I> does not end at a primitive <I>solid</I>,
+then all possible <I>paths</I> from that point down to individual <I>solids</I> will be considered.
+The <I>solid</I> at the end of each possible <I>path</I> will be listed with its
+parameters adjusted by the accumulated transformation.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="listeval"><B>listeval</B></A> [<I>path</I>]</DT>
+<DD><a href="../mged/brlcad_glossary.html#COMBINATION">Combinations</a> may include transformation
+matrices to be applied to their members. A <I>path</I> through a series of <I>combinations</I>
+and ending with a <a href="../mged/brlcad_glossary.html#SOLID">primitive solid</a> represents
+that <I>primitive solid</I> with the transformations accumulated through the path
+applied to it. The ``listeval'' command displays primitive solid parameters after
+applying the accumulated transformations from the indicated <I>path</I>. If the
+specified <I>path</I> does not end at a <I>primitive solid</I>, then all possible paths
+from the indicated <I>path</I> to any <I>primitive solid</I> will be evaluated and displayed.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="ls"><B>ls</B></A> [<I>-a -c -r -s</I>]  [<I>objects</I>]</DT>
+<DD>With no <I>object</I> arguments, list the name of
+     every object in the
+     database (in alphabetical order). If the <I>object</I> argument is supplied,
+     only those <I>objects</I> are listed.
+     The following options are also allowed:
+     <ul>
+       <li> a - list all objects in the database
+       <li> c - list all combinations in the database
+       <li> r - list all regions in the database
+       <li> s - list all solids in the database
+     </ul>
+
+     Note - when any of the above options are used, the output is not
+     formatted.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="match"><B>match</B></A> regexp1 [regexp2 regexp3...]</DT>
+<DD>Return a list of all objects in the database that match
+the list of regular expressions.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="mv"><B>mv</B></A> <I>old_name new_name</I></DT>
+<DD>Change the name of <I>old_name</I> to <I>new_name</I>.
+Note that this does not change any references to <I>old_name</I> that may appear
+in other <a href="../mged/brlcad_glossary.html#COMBINATION">combinations</a> in the
+database. The <a href="#mvall">mvall</a> command will change an objects name everywhere.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="mvall"><B>mvall</B></A> <I>old_name new_name</I><</DT>
+<DD>Change the name of <I>old_name</I> to <I>new_name</I>.
+This will also change any references to <I>old_name</I> that may appear
+in other <a href="../mged/brlcad_glossary.html#COMBINATION">combinations</a> in the
+database. The <a href="#mv">mv</a> command will change an objects name without
+changing references to it. The <a href="#prefix">prefix</a> command will also
+change the names and references of objects.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME= "observer"><B>observer</B></A> [<I>subcommand</I>]</DT>
+<DD>This command is used to maintain a list of observers. Observers
+are objects who have registered an interest in this database object and
+are notified when the database changes (i.e. create/destroy geometry objects). 
+<P>
+	<DL>
+	<DT><I>dbName observer</I> <B>attach</B> <I>obs</I> [<I>command</I>]</DT>
+	<DD>Add the specified observer, <I>obs</I>, to the list of observers.
+	If <I>command</I> is specified then it is executed each time the database
+	changes. Otherwise, the observer is expected to have an update method
+	which is called with the name of this database object as an argument.
+	</DD>
+<P>
+	<DT><I>dbName observer</I> <B>detach</B> <I>obs</I></DT>
+	<DD>Remove the specified observer, <I>obs</I>, from the list of observers.
+	</DD>
+<P>
+	<DT><I>dbName observer</I> <B>show</B></DT>
+	<DD>Return the list of observers for this database object.
+	</DD>
+	</DL>
+</DD>
+<DD>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="open"><B>open</B></A> [<I>dbfile</I>]</DT>
+<DD>Close the current database file and open
+<I>dbfile</I>. If <I>dbfile</I> is not
+found or cannot be created, the current database is left open.
+If <I>dbfile</I> is not specified on the command line, the name of the current
+database file is returned.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="paths"><B>paths</B></A> <I>path_start</I></DT>
+<DD>List all existing paths that start from the specified
+<I>path_start</I> and end at
+a <a href="../mged/brlcad_glossary.html#SOLID">primitive solid</a>. The <I>path_start</I>
+may be specified by ``/'' separated components or they may be separated by spaces
+(but not both).
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="prcolor"><B>prcolor</B></A></DT>
+<DD>List the entries in the
+<a href="../mged/brlcad_glossary.html#IDENT">ident</a> based
+color table.
+The ident number for a displayed <a href="../mged/brlcad_glossary.html#REGION">region</a>
+is used to find the
+appropriate color from the lookup table. The <I>low</I> and <I>high</I> values are
+the limits of region ident numbers to have the indicated <I>r g b</I> color (0-255) applied.
+The color table entries may be modified using the
+<a href="#color">color</a> command, and the entire color table may be edited
+using the <a href="#edcolor">edcolor</a> command. If a color lookup table exists,
+its entries will override any color assigned using the <a href="#mater">mater</a> command
+when drawing wireframe.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="push"><B>push</B></A> &lt;<I>objects</I>&gt</DT>
+<DD>Force the effects of all transformation
+matrices that appear in any
+<a href="../mged/brlcad_glossary.html#COMBINATION">combinations</a> in the trees
+from the specified <I>objects</I> down to the
+<a href="../mged/brlcad_glossary.html#SOLID">primitive solids</a>. This will change
+the parameters of the <I>primitive solids</I> if any of the
+transformation matrices are not identity matices. All the transformation
+matrices visited will be set to identity matrices. This command will fail,
+and no changes will be made, if any <I>primitive solid</I> referenced by
+the list of <I>objects</I> is positioned differently in two or more
+<I>combinations</I>. The <a href="#xpush">xpush</a> command will perform a
+similar function, even if some solids are multiply referenced.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="put"><B>put</B></A> <I>object type attributes</I></DT>
+<DD>Create the database <I>object</I> of the specified <I>type</I> with the specified
+<I>attributes</I>. The arguments to the put command are the same as
+those returned by the get command. <I>Type</I> can be any of the solid types
+or comb.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="r"><B>r</B></A> <I>region_name</I> &lt;<I>operation object</I>&gt</DT>
+<DD>Create a <a href="../mged/brlcad_glossary.html#REGION">region</a> with
+the specified <I>region_name</I>. The <I>region</I> is constructed using the
+list of  <a href="../mged/brlcad_glossary.html#BOOLEAN">Boolean operation</a> and <I>object</I>
+pairs. The operators are represented by the single characters ``+'', ``-'', and ``u''
+for intersection, subtraction, and union respectively. The <I>object</I> associated
+with each operator may be a <a href="../mged/brlcad_glossary.html#COMBINATION">combination</a>
+or a <a href="../mged/brlcad_glossary.html#SOLID">primitive solid</a>. No parentheses or any
+grouping indication is allowed in the <I>r</I> command. The operator hierarchy for the
+<I>r</I> command has been established through the ancestry of <I>BRL&#173CAD</I>, and
+does not conform to accepted standards (see the <a href="#c">c</a> command for a more
+standard implementation). Intersection and subtraction operations are performed first
+proceeding left to right, then union operations are performed. <I>BRL&#173CAD</I> regions
+are special cases of <I>BRL&#173CAD</I> <I>combinations</I> and include special attributes.
+Default values for these attributes may be set using the <a href="#regdef">regdef</a>
+command. As new <I>regions</I> are built, the default <a href="../mged/brlcad_glossary.html#IDENT">
+ident</a> number gets incremented. If <I>region_name</I> already exists, then the
+<I>operation</I>/<I>object</I> pairs get appended to it's end.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="rm"><B>rm</B></A> <I>combination</I> &lt;<I>members</I>&gt</DT>
+<DD>Delete all occurences of the listed <a href="../mged/brlcad_glossary.html#MEMBER">members</a> from
+the specified <a href="../mged/brlcad_glossary.html#COMBINATION">combination</a>.
+The <a href="#red">red</a>, <a href="#r">r</a>,
+<a href="#comb">comb</a>, <a href="#c">c</a>, and <a href="#g">g</a> commands provide
+other <I>combination</I> editing capabilities.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="rt_gettrees"><B>rt_gettrees</B></A> <I>rtproc tree1</I> [<I>tree2 tree3</I>...]</DT>
+<DD>Create a ray-tracing object named <I>rtproc</I>.
+See the documentation of the <A HREF="rt_obj.html">raytrace object</A>
+for details on how to use the ray-tracing object.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="title"><B>title</B></A> [<I>string</I>]</DT>
+<DD>Set/get the database title string.
+If any command line arguments are supplied, they will become
+the new title string for the current database. Quote marks must be doubly escaped.
+If no arguments are provided the current database title is returned.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="tol"><B>tol</B></A> [<I>abs #</I>] [<I>rel #</I>] [<I>norm #</I>]
+	[<I>dist #</I>] [<I>perp #</I>]</DT>
+<DD>With no arguments, list the current tolerance settings.
+If the command line includes any of the keywords followed by a number,
+then that tolerance setting will be modified. The keywords are:
+
+<ul>
+<li>Tesselation tolerances:<br>
+	The tesselation tolerances are used to control the facetization of
+	<a href="../mged/brlcad_glossary.html#SOLID">primitive solids</a>. If more than one
+	tolerance value is specified, the tesselation is performed to meet the most stringent.</li>
+	<ul>
+	<li>abs -- This <I>absolute</I> tolerance is specified in model units and represents the maximum
+		allowable error in the distance from the actual solid surface to the
+		tesselated surface. An <I>absolute</I> tolerance of 0 means that the
+		<I>absolute</I> tolerance should be ignored.</li>
+	<li>rel -- This <I>relative</I> tolerance is specified in terms of a fraction
+		of the solid size. The value is multiplied by the size of the solid to 
+		determine another bound on the maximum
+                allowable error in the distance from the actual solid surface to the
+                tesselated surface. An <I>relative</I> tolerance of 0 means that the
+                <I>relative</I> tolerance should be ignored.
+	<li>norm -- This <I>normal</I> tolerance is specified in degrees and represents the maximum angle
+		between the actual solid surface normal and the tesellated surface normal.
+		A <I>normal</I> tolerance of 0 means that the <I>normal</I> toerance
+		should be ignored.</li>
+	</ul>
+<li>Calculational tolerances:<br>
+	The calculational tolerances are used in evaluating the <a href="../mged/brlcad_glossary.html#BOOLEAN">Boolean operations</a>
+	specified in a <a href="../mged/brlcad_glossary.html#COMBINATION">combination</a>.
+	This is used, for example, in the <a href="#ev">ev</a>, <a href="#facetize">facetize</a>,
+	and <a href="#bev">bev</a> commands.</li>
+	<ul>
+	<li>dist -- The <I>distance</I> tolerance is specified in model units and represents
+	the minimum distance required between two vertices to consider them distinct.</li>
+	<li>perp -- The <I>perpendicularity</I> tolerance is specified as the cosine of
+	an angle. Two objects will be considered perpendicular if the cosine of the angle
+	between them is less than the <I>perpendicularity</I> tolerance. Similarly, two
+	objects will be considered parallel if the cosine of the angle between them
+	is greater than 1.0 - the <I>perpendicularity</I> tolerance.</li>
+	</ul>
+</ul>
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="tops"><B>tops</B></A></DT>
+<DD>Return a list of all the top level objects in the current database.
+The <I>top level</I> objects are all those objects that are not referenced by some other
+<a href="../mged/brlcad_glossary.html#COMBINATION">combination</a>. The hierarchical structure
+of <I>BRL&#173CAD</I> databases usually means that there will be a <I>top level</I>
+object that includes all (or at least most) of the objects in the database.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="tree"><B>tree</B></A> &lt;<I>objects</I>&gt</DT>
+<DD>List the contents of the specified <I>objects</I>
+in a tree-like format that displays the hierarchical structure of the <I>objects</I>,
+and all objects referenced by them, down to the
+<a href="../mged/brlcad_glossary.html#SOLID">primitive solid</a> level.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="whatid"><B>whatid</B></A> <I>region</I></DT>
+<DD>List the <a href="../mged/brlcad_glossary.html#IDENT">ident</a>
+number of the specified <I>region</I>.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="whichair"><B>whichair</B></A> &lt;<I>air_codes</I>&gt</DT>
+<DD>List all the <a href="../mged/brlcad_glossary.html#REGION">regions</a>
+that use one of the <a href="../mged/brlcad_glossary.html#SPACE">air_codes</a> specified.
+Regions that have non-zero <a href="../mged/brlcad_glossary.html#IDENT">ident numbers</a>
+will not be listed by this command.
+</DD>
+<P>
+<DT><I>dbName</I> <A NAME="whichid"><B>whichid</B></A> &lt;<I>idents</I>&gt</DT>
+<DD>List all the <a href="../mged/brlcad_glossary.html#REGION">regions</a>
+that use one of the <a href="../mged/brlcad_glossary.html#IDENT">idents</a> specified.
+</DD>
+<P>
+</DL>
+
+<H2><A NAME="sect16" HREF="#toc16"><B>EXAMPLE</B></A></H2>
+The following sequence creates a database object and
+uses it to query the database.
+<P>
+cwish> wdb_open db moss moss.g
+<BR>
+moss
+<BR>
+cwish> moss ls
+<PRE>
+LIGHT               cone.r/R            light.r/R           tor.r/R
+all.g/              cone.s              platform.r/R
+box.r/R             ellipse.r/R         platform.s
+box.s               ellipse.s           tor
+</PRE>
+cwish> moss tops
+<BR>
+all.g
+<BR>
+cwish> moss l all.g
+<PRE>
+all.g:  --
+   u platform.r
+   u box.r [-23.6989,13.41,8.02399]
+   u cone.r [22.0492,12.2349,2.11125e-07]
+   u ellipse.r [14.6793,-41.6077,38.7988]
+   u tor.r
+   u light.r
+</PRE>
+cwish> moss l tor.r
+<PRE>
+tor.r:  REGION id=6000  (air=0, los=0, GIFTmater=0) --
+Color 240 240 0
+   u tor
+</PRE>
+cwish> moss get tor
+<BR>
+tor V {4.91623592376708984375 -32.8022308349609375 31.7117767333984375}
+H {0 1 0} r_a 25.399997711181640625 r_h 5.0799999237060546875
+<BR>
+cwish> moss adjust tor H {1 0 0}
+<P>
+
+<H2><A NAME="sect17" HREF="#toc17"><B>ACKNOWLEDGEMENTS:</B></A></H2>
+
+Mark L. Ulferts &lt;mulferts@austin.dsccc.com&gt;
+<PRE>        Basic layout for documenting classes.</PRE>
+<P>
+
+<H2><A NAME="sect18" HREF="#toc18"><B>AUTHOR</B></A></H2>
+<P>
+Robert G. Parker
+<P>
+
+<HR><P>
+<A NAME="toc"><B>Table of Contents</B></A><P>
+<UL>
+<LI><A NAME="toc1" HREF="#sect1">NAME</A></LI>
+<LI><A NAME="toc2" HREF="#sect2">SYNOPSIS</A></LI>
+<LI><A NAME="toc8" HREF="#sect8">DESCRIPTION</A></LI>
+<LI><A NAME="toc9" HREF="#sect9">METHODS</A></LI>
+<LI><A NAME="toc16" HREF="#sect16">EXAMPLE</A></LI>
+<LI><A NAME="toc17" HREF="#sect17">ACKNOWLEDGEMENTS</A></LI>
+<LI><A NAME="toc18" HREF="#sect18">AUTHOR</A></LI>
+</UL>
+</BODY>
+</HTML>

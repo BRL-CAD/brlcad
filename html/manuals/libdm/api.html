@@ -1,0 +1,617 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+
+<HEAD>
+<title>LIBDM's Application Programming Interface</title>
+</HEAD>
+
+<BODY BGCOLOR="#E0D8c8" Text="#000000">
+<CENTER><h1>LIBDM's Application Programming Interface</h1></CENTER>
+
+<DT><a NAME="open"><I>struct dm *</I> <B>DM_OPEN</B> ( <I>int dtype, int argc, char *argv[]</I> )</a></DT><BR><BR>
+<DD><I>DM_OPEN</I> creates a display manager of type <I>dtype</I> and
+     returns a pointer to it's <I>dm</I> structure.
+     <I>argc</I> and <I>argv</I> are passed to
+     <a href="#processOptions">dm_processOptions</a>
+     for interpretation. <I>DM_NULL</I> is returned if unable to
+     acquire a display manager.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    int dtype;
+    int argc;
+    char *argv[];
+    struct dm *dmp;
+
+    /*
+     * Open a 512x512 X display manager window on the local
+     * display using my_default_bindings to set default key
+     * and mouse button bindings.
+     */
+    dtype = DM_TYPE_X;
+    argv[0] = "X_open";
+    argv[1] = "-i";
+    argv[2] = "my_default_bindings";
+    argv[3] = "-S";
+    argv[4] = "512";
+    argv[5] = "-d";
+    argv[6] = ":0";
+    argv[7] = (char *)NULL;
+    dmp = DM_OPEN(dtype, argc, argv);
+	   </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+<BR>     
+<DT><a NAME="close"><I>int</I> <B>DM_CLOSE</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
+<DD><I>DM_CLOSE</I> closes the display manager indicated by <I>dmp</I>.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* open a display manager */
+    dmp = DM_OPEN(dtype, argc, argv);
+
+              .  .  .
+	    
+    /* close the display manager */
+    DM_CLOSE(dmp);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="drawBegin"><I>int</I> <B>DM_DRAW_BEGIN</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
+<DD><I>DM_DRAW_BEGIN</I> prepares the display manager indicated by
+     <I>dmp</I> for a round of drawing.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* begin another drawing sequence */
+    (void)DM_DRAW_BEGIN(dmp);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="drawEnd"><I>int</I> <B>DM_DRAW_END</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
+<DD><I>DM_DRAW_END</I> ends the drawing sequence for the display manager indicated by <I>dmp</I>.
+     This should be called before the next call to <a href="#DM_DRAW_BEGIN">DM_DRAW_BEGIN</a>
+     in order to see the results of the current drawing sequence.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* end the current drawing sequence */
+    (void)DM_DRAW_END(dmp);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="normal"><I>int</I> <B>DM_NORMAL</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
+<DD><I>DM_NORMAL</I> restores the display manager indicated by <I>dmp</I> to a normal mode
+     of operation (i.e. not scaled, rotated, displaced, etc.).
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* restore to normal mode */
+    (void)DM_NORMAL(dmp);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="loadMatrix"><I>int</I> <B>DM_LOADMATRIX</B> ( <I>struct dm *dmp, mat_t mat, int which_eye</I> )</a></DT><BR><BR>
+<DD><I>DM_LOADMATRIX</I> loads the display manager indicated by <I>dmp</I> with a new
+     transformation matrix.
+     <I>mat</I> indicates the matrix to be loaded. <I>which_eye</I> denotes the
+     eye the matrix applies to and
+     can have a value of <I>0</I> to indicate non-stereo, a value of 1 to indicate the
+     right eye, or a value of 2 to indicate the left eye.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* load the display manager with mat --- not using stereo */
+    (void)DM_LOADMATRIX(dmp, mat, 0);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+<DT><a NAME="drawString2D"><I>int</I> <B>DM_DRAW_STRING_2D</B> ( <I>struct dm *dmp, char *str, int x, int y, int size, int use_aspect</I> )</a></DT><BR><BR>
+<DD><I>DM_DRAW_STRING_2D</I> draws a string in the display manager window indicated by <I>dmp</I>.
+     <I>str</I> is a pointer to the string to be drawn.
+     <I>x</I> and <I>y</I> indicate where to begin drawing the string and are
+     expected to be in the range [-2048,2047].
+     The <I>size</I> argument indicates the font size to use (currently used only by dm-ps).
+     The expected values for <I>size</I> are <I>0</I> for small, <I>1</I> for medium,
+     <I>2</I> for large, and <I>3</I> for huge.
+     <I>use_aspect</I> indicates whether to use the aspect ratio to modify the starting point
+     where the string will be drawn.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /*
+     * - draw the string starting at the lower left corner
+     * - use the small font
+     * - don't use aspect ratio to modify string placement
+     */
+    (void)DM_DRAW_STRING_2D(dmp, "starting string at lower left", -2040, -2040, 0, 0)
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="drawLine2D"><I>int</I> <B>DM_DRAW_LINE_2D</B> ( <I>struct dm *dmp, int x1, int y1, int x2, int y2</I> )</a></DT><BR><BR>
+<DD><I>DM_DRAW_LINE_2D</I> is used to draw two-dimensional lines in the display manager
+     window indicated by <I>dmp</I>.
+     <I>x1</I>, <I>y1</I>, <I>x2</I>, and <I>y2</I> indicate the coordinates for the line to be drawn.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* draw a line from the lower left corner of the window to the upper right corner */
+    (void)DM_DRAW_LINE_2D(dmp, -2048, -2048, 2047, 2047);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="drawPoint2D"><I>int</I> <B>DM_DRAW_POINT_2D</B> ( <I>struct dm *dmp, int x, int y</I> )</a></DT><BR><BR>
+<DD><I>DM_DRAW_POINT_2D</I> draws a point in the display manager window indicated
+     by <I>dmp</I>.
+     <I>x</I> and <I>y</I> indicate the coordinates for the point to be drawn.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* draw a yellow dot in the center of the window */
+    (void)DM_SET_FGCOLOR(dmp, 230, 230, 0, 1);
+    (void)DM_DRAW_POINT_2D(dmp, 0, 0);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="drawVlist"><I>int</I> <B>DM_DRAW_VLIST</B> ( <I>struct dm *dmp, struct rt_vlist *vp</I> )</a></DT><BR><BR>
+<DD><I>DM_DRAW_VLIST</I> takes the vlist pointer <I>vp</I> and interprets it for drawing into
+     the display manager window indicated by <I>dmp</I>.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* draw the vlists pointed to by view_list_ptr */
+    (void)DM_DRAW_VLIST(dmp, view_list_ptr);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="setFBColor"><I>int</I> <B>DM_SET_FGCOLOR</B> ( <I>struct dm *dmp, short r, short g, short b, int strict</I> )</a></DT><BR><BR>
+<DD><I>DM_SET_FGCOLOR</I> sets the color for drawing in the
+     display manager indicated by <I>dmp</I>.
+     <I>r</I>, <I>g</I>, and <I>b</I> denote the color and have
+     values in the range [0,255]. <I>Strict</I> specifies to really
+     use this color (i.e. don't allow ogl to do fancy things with
+     the color when depth cueing).
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* set the drawing color to red */
+    (void)DM_SET_FGCOLOR(dmp, 220, 0, 0, 1);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="setBGColor"><I>int</I> <B>DM_SET_BGCOLOR</B> ( <I>struct dm *dmp, short r, short g, short b</I> )</a></DT><BR><BR>
+<DD><I>DM_SET_BGCOLOR</I> sets the background color for the display manager indicated
+     by <I>dmp</I>.
+     <I>r</I>, <I>g</I>, and <I>b</I> denote the color and have values in the range [0,255].
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* set the background color to red */
+    (void)DM_SET_BGCOLOR(dmp, 220, 0, 0);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="getBGColor"><I>int</I> <B>DM_GET_BGCOLOR</B>
+     ( <I>struct dm *dmp, Tcl_Interp *interp</I> )</a></DT><BR><BR>
+<DD><I>DM_SET_BGCOLOR</I> gets the background color for the
+     display manager indicated by <I>dmp</I> and places the
+     result in interp.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* get the background color */
+    return DM_GET_BGCOLOR(dmp, interp);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="setLineAttr"><I>int</I> <B>DM_SET_LINE_ATTR</B> ( <I>struct dm *dmp, int width, int style</I> )</a></DT><BR><BR>
+<DD><I>DM_SET_LINE_ATTR</I> sets the display managers (i.e. <I>dmp</I>) line width
+     to <I>width</I> and sets its line style to <I>style</I>.
+     Currently, there are only 2 valid values for <I>style</I>: <I>0</I> for solid lines
+     and <I>1</I> for dashed lines.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* set the display manager up to draw fat dashed lines */
+    (void)DM_SET_LINE_ATTR(dmp, 10, 1);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="setWinBounds"><I>int</I> <B>DM_SET_WIN_BOUNDS</B> ( <I>struct dm *dmp, int clip[6]</I> )</a></DT><BR><BR>
+<DD><I>DM_SET_WIN_BOUNDS</I> sets the view clipping planes for the display manager indicated
+     by <I>dmp</I>.
+     <I>clip</I> is interpreted as follows: {XMIN, XMAX, YMIN, YMAX, ZMIN, ZMAX}
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    int clip[6] = { -2048, 2047, -2048, 2047, -2048, 2047 };
+
+    /* set the display managers clipping planes */
+    (void)DM_SET_WIN_BOUNDS(dmp, clip);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="debug"><I>int</I> <B>DM_DEBUG</B> ( <I>struct dm *dmp, int lvl</I> )</a></DT><BR><BR>
+<DD><I>DM_DEBUG</I> sets the debug level to <I>lvl</I>.
+     Currently, only two levels are recognized. <I>lvl = 0</I> for debugging off and <I>lvl > 0</I>
+     for debugging on.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* turn on debugging */
+    (void)DM_DEBUG(dmp, 1);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="beginDList"><I>int</I> <B>DM_BEGINDLIST</B> ( <I>struct dm *dmp, unsigned int list</I> )</a></DT><BR><BR>
+<DD><I>DM_BEGINDLIST</I> starts a display list definition for the display list <I>list</I>
+     in the display manager indicated by <I>dmp</I>.
+     The definition continues to build until a call to <a href="#endDList">DM_ENDDLIST</a>
+     is made.
+     Currently, only the <I>ogl</I> display manager supports display lists.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* begin the definition of display list 1 */
+    (void)DM_BEGINDLIST(dmp, 1);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="endDList"><I>int</I> <B>DM_ENDDLIST</B> ( <I>struct dm *dmp</I> )</a></DT><BR><BR>
+<DD><I>DM_ENDDLIST</I> ends the definition of the display list currently being defined
+     for the display manager indicated by <I>dmp</I>.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* define display list 1 to draw objects */
+    (void)DM_BEGINDLIST(dmp, 1);
+
+    /* Put code to draw objects here */
+
+    (void)DM_ENDDLIST(dmp);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="drawDList"><I>int</I> <B>DM_DRAWDLIST</B> ( <I>struct dm *dmp, unsigned int list</I> )</a></DT><BR><BR>
+<DD><I>DM_DRAWDLIST</I> draws the previously defined display list <I>list</I> in the display
+     manager indicated by <I>dmp</I>.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    unsigned int i;
+
+    /* draw display lists 1 through 9 */
+    for(i = 1; i < 10; ++i)
+       (void)DM_DRAWDLIST(dmp, i);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="freeDLists"><I>int</I> <B>DM_FREEDLISTS</B> ( <I>struct dm *dmp, unsigned int list, int range</I> )</a></DT><BR><BR>
+<DD><I>DM_FREEDLISTS</I> frees the display lists indicated by <I>list</I> and <I>range</I>.
+     <I>list</I> indicates the display list to start with and <I>range</I> indicates the
+     number of display lists to be freed.
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* free display lists 10 through 29 */
+    (void)DM_FREEDLISTS(dmp, 10, 20);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+
+
+<BR><BR>
+<HR SIZE=10>
+<BR><BR>
+
+<a NAME="dm_other"></a>
+<CENTER><h2>LIBDM's Other Support Routines</h2></CENTER>
+<DT><a NAME="dm_share_dlist"><I>int</I> <B>dm_share_list</B>
+     ( <I>struct dm *dmp1, struct dm *dmp2</I> )</a></DT><BR><BR>
+<DD><I>dm_share_dlist</I> provides a way to (un)share display lists.
+     If dmp1 and dmp2 are not NULL, dmp1 will share it's display
+     lists with dmp2.
+     If dmp2 is NULL, dmp1 will no longer share its display lists.
+</DD>
+<HR>
+<BR>
+<DT><a NAME="dm_fogHint"><I>void</I> <B>dm_fogHint</B>
+     ( <I>struct dm *dmp, int fastfog</I> )</a></DT><BR><BR>
+<DD><I>dm_fogHint</I> is used to give a hint to the display
+     manager about whether to use an efficient fog calculation
+     method or the most accurate. Note - this is currently only
+     implemented by the ogl display manager.
+
+     <DL>
+       <DT><big>Example:</big></DT>
+       <DD><PRE>
+    /* use the most efficient method for calculating fog */
+    dm_fogHint(dmp, 1);
+
+    /* use the most accurate method for calculating fog */
+    dm_fogHint(dmp, 0);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+<BR>
+<DT><a NAME="dm_limit"><I>int</I> <B>dm_limit</B> ( <I>val</I> )</a></DT><BR><BR>
+<DD><I>dm_limit</I> takes an integer argument and returns zero if (<I>-NOISE <= val <= NOISE</I> )
+     where <I>NOISE</I> is the size of the dead spot around zero. If ( <I>val < -NOISE</I> ),
+     the return value is ( <I>val + NOISE</I> ). If ( <I>NOISE < val</I> ), the return value
+     is ( <I>val - NOISE</I> ).
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD><PRE>
+    /* The examples below assume that NOISE is 16 */
+
+    /* i = 0 */
+    i = dm_limit(16);
+
+    /* i = 1 */
+    i = dm_limit(17);
+
+    /* i = 0 */
+    i = dm_limit(-16);
+
+    /* i = -1 */
+    i = dm_limit(-17);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+<BR>
+<DT><a NAME="dm_unlimit"><I>int</I> <B>dm_unlimit</B> ( <I>val</I> )</a></DT><BR><BR>
+<DD><I>dm_unlimit</I> takes an integer value and returns zero if ( <I>val == 0</I> ).
+     If ( <I>0 < val</I> ), the return value is ( <I>NOISE + val</I> ). If ( <I>val < 0</I> ),
+     the return value is ( <I>-NOISE + val</I> ). In short, <I>dm_unlimit</I> puts
+     <I>NOISE</I> back into <I>val</I>.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD><PRE>
+    /* i = 0 */
+    i = dm_unlimit(0);
+
+    /* i = 17 */
+    i = dm_unlimit(1);
+
+    /* i = -17 */
+    i = dm_unlimit(-1);
+	    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+<BR>
+<DT><a NAME="dm_wrap"><I>fastf_t</I> <B>dm_wrap</B> ( <I>val</I> )</a></DT><BR><BR>
+<DD><I>dm_wrap</I> wraps <I>val</I> into the range [-1.0, 1.0].
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD><PRE>
+    /* f = 0.9 */
+    f = dm_wrap(0.9);
+
+    /* f = -0.5 */
+    f = dm_wrap(1.5);
+
+    /* f = 0.0 */
+    f = dm_wrap(6.0);
+
+    /* f = 1.0 */
+    f = dm_wrap(7.0);
+
+    /* f = 0.5 */
+    f = dm_wrap(-1.5);
+
+    /* f = -1.0 */
+    f = dm_wrap(-5.0);
+	    
+    </PRE>
+       </DD>
+     </DL>
+</DD>
+<HR>
+<BR>
+<DT><a NAME="processOptions"><I>int</I> <B>dm_processOptions</B>(<I>struct dm *dmp, struct bu_vls *vls, int argc, char *argv[]</I>)</a></DT><BR><BR>
+<DD><I>dm_processOptions</I> is used primarily by LIBDM's display manager open routines
+     to process options. The table below lists the available options.
+     Note - the application would not typically call <I>processOptions</I>.
+     The application would instead build the desired options into the
+     <I>argv</I> list that is supplied to the call to
+     <a href="api.html#open">DM_OPEN</a>.
+     <br><br>
+     <center>
+     <table COLS=2 RULES=all BORDER=1 CELLPADDING=5>
+     <tbody>
+     <tr>
+     <th ALIGN=center>Options</th>
+     <th ALIGN=center>Description</th>
+     </tr>
+     <tr>
+     <td ALIGN=left>-d string</td>
+     <td ALIGN=left>This option specifies where to draw the display manager.
+     <I>string</I> is expected to be in the same form as the X DISPLAY environment variable.</td>
+     </tr>
+     <tr>
+     <td ALIGN=left>-i init_script</td>
+     <td ALIGN=left>This option specifies a Tcl script to use to initialize
+     the display manager.</td>
+     </tr>
+     <tr>
+     <td ALIGN=left>-N height</td>
+     <td ALIGN=left>This option specifies the number of scanlines or height to make the
+     display manager window.</td>
+     </tr>
+     <tr>
+     <td ALIGN=left>-n name</td>
+     <td ALIGN=left>This option specifies a name to use for the display manager.</td>
+     </tr>
+     <tr>
+     <td ALIGN=left>-S size</td>
+     <td ALIGN=left>This option specifies the display manager windows square size.</td>
+     </tr>
+     <tr>
+     <td ALIGN=left>-s</td>
+     <td ALIGN=left>This option turns on stereo mode and is
+     currently only available with the ogl display manager.</td>
+     </tr>
+     <tr>
+     <td ALIGN=left>-t 0|1</td>
+     <td ALIGN=left>This option specifies whether the display manager window will be
+     a top level window or an imbedded window. A non-zero value indicates a
+     top level window, while zero indicates an imbedded window.
+     </tr>
+     <tr>
+     <td ALIGN=left>-W width</td>
+     <td ALIGN=left>This option specifies the width in pixels of the display manager
+     window.</td>
+     </tr>
+     </tbody>
+     </table>
+     </center>
+</DD>
+<BR>     
+<HR>
+<BR>     
+<DT><a NAME="dm_configureWindowShape"><I>void</I> <B>dm_configureWindowShape</B> ( <I>dmp</I> )</a></DT><BR><BR>
+<DD><I>dm_configureWindowShape</I> is used to update the internal state of a
+     display manager after it's window has been newly created or
+     resized. This routine is typically called by an event handler.
+</DD>
+<BR>
+<HR>
+<BR>     
+<DT><a NAME="dm_zbuffer"><I>void</I> <B>dm_zbuffer</B>
+     ( <I>struct dm *dmp, zbuffer_on</I> )</a></DT><BR><BR>
+<DD><I>dm_zbuffer</I> is used to turn Z-buffering on/off. Note - zbuffering
+     is only supported by the <I>ogl</I> display manager.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD><PRE>
+    /* turn zbuffering on */
+    dm_zbuffer(dmp, 1);
+	    </PRE>
+	</DD>
+     </DL>
+</DD>
+<BR>
+<HR>     
+<DT><a NAME="dm_lighting"><I>void</I> <B>dm_lighting</B>
+     ( <I>struct dm *dmp, int lighting_on</I> )</a></DT><BR><BR>
+<DD><I>dm_lighting</I> is used to turn lighting on/off. Note - lighting
+     is only supported by the <I>ogl</I> display manager.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD><PRE>
+    /* turn lighting on */
+    dm_lighting(dmp, 1);
+	    </PRE>
+	</DD>
+     </DL>
+</DD>
+<BR>
+<HR>
+<DT><a NAME="dm_Xx2Normal"><I>fastf_t</I> <B>dm_Xx2Normal</B>
+     ( <I>struct dm *dmp, int x</I> )</a></DT><BR><BR>
+<DD><I>dm_Xx2Normal</I> takes <I>x</I> in X screen coordinates
+     and returns a value in the range [-1.0, 1.0].
+     <I>dmp</I> indicates the display manager of interest.
+</DD>
+<BR>
+<HR>
+<DT><a NAME="dm_Xy2Normal"><I>fastf_t</I> <B>dm_Xy2Normal</B>
+     ( <I>struct dm *dmp, int y, int use_aspect</I> )</a></DT><BR><BR>
+<DD><I>dm_Xy2Normal</I> takes <I>y</I> in X screen coordinates
+     and returns a value in the range [-1.0, 1.0].
+     <I>dmp</I> indicates the display manager of interest.
+     <I>use_aspect</I> specifies whether to use the window's aspect
+     ratio in the calculation.
+</DD>
+<BR>
+<HR>
+<DT><a NAME="dm_Normal2Xx"><I>int</I> <B>dm_Normal2Xx</B>
+     ( <I>struct dm *dmp, fastf_t x</I> )</a></DT><BR><BR>
+<DD><I>dm_Normal2Xx</I> takes <I>x</I> in normalized coordinates
+     and returns a value in X screen coordinates. <I>dmp</I>
+     indicates the display manager of interest.
+</DD>
+<HR>
+<BR>
+<DT><a NAME="dm_Normal2Xy"><I>int</I> <B>dm_Normal2Xy</B>
+     ( <I>struct dm *dmp, fastf_t y</I> )</a></DT><BR><BR>
+<DD><I>dm_Normal2Xy</I> takes <I>y</I> in normalized coordinates
+     and returns a value in X screen coordinates. <I>dmp</I>
+     indicates the display manager of interest.
+</DD>
+<HR>
+<BR>
+<DT><a NAME="Dm_Init"><I>int</I> <B>Dm_Init</B> ( <I>Tcl_Interp *interp</I> ) </a></DT><BR><BR>
+<DD><I>Dm_Init</I> initializes LIBDM's tcl commands.
+     <I>interp</I> indicates the Tcl interpreter.
+</DD>
+</BODY>
+</HTML>

@@ -1,0 +1,587 @@
+# second pass:  interpretation of directives
+# A macro-set-specific portion gets interpolated into this at the "#include"
+# line.  As a minimum, it must deal with .^b and .^e and with any input traps.
+BEGIN {
+	# stuff for output to third pass
+	nobreak = -1
+	dobreak = -2
+	message = -3
+	OFS = "\t"
+
+	# special-character table; this one character needs to be hardcoded
+	chars[" "] = " " ; charwidths[" "] = 1
+
+	debug["e"] = 0		# just to make it an array
+	strings["a"] = ""	# just to make it an array
+	numbers["a"] = 0	# just to make it an array
+	hyphens["a"] = ""	# just to make it an array
+	hyphenwidths["a"] = ""	# just to make it an array
+
+	# stuff for expression decoding
+	signfactor["+"] = 1
+	signfactor["-"] = -1
+	scale["i"] = 240
+	scale["c"] = 240*50/127
+	scale["P"] = 240/6
+	# we get m, n, and v when we see .^r
+	scale["p"] = 240/72
+	scale["u"] = 1
+
+	# stuff for basic parameters that just get passed to third pass
+	parms["in"] = 0		# just to make it an array
+	prevparms["in"] = 0	# just to make it an array
+	setcmd["ll"] = "linelen"
+	setcmd["in"] = "indent"
+	setcmd["ti"] = "tempindent"
+	setcmd["po"] = "pageoffset"
+	setcmd["pl"] = "pagelen"
+
+	# did last word end with \c ?  (in which case, it's still in "word")
+	backc = 0
+
+	# stuff for error reporting
+	il = 0			# input line number
+	lockil = 0		# il is locked, we're inside a macro
+	inname = "?"		# input filename
+	msg = message "\t"	# later picks up filename etc.
+
+	# current input trap
+	afternext = ""
+}
+{
+	if (!lockil)
+		il++
+	msg = message "\t" inname "," il ": "
+	# fallthrough
+}
+/^[ \t]*$/ {			# empty line
+	print dobreak, "space"
+	next
+}
+/^[ \t]/ {			# line starting with white space
+	print dobreak, "flush"
+	print 0, ""		# empty word
+	# fallthrough
+}
+/^[^.]/ {			# text
+	# dispose of the easy case
+	if (font == "R" && $0 !~ /\\|\t|-|  / && !backc && afternext == "") {
+		for (i = 1; i <= NF; i++)
+			print length($i), $i
+		if ($0 ~ /[.!?:]([)'"*]|])*$/)
+			print nobreak, "gap", 2
+		if (centering > 0) {
+			print dobreak, "center"
+			centering--
+		} else if (!fill)
+			print dobreak, "flush"
+		next
+	}
+
+	# the hard case, needs a character-by-character scan
+	s = $0 " "		# the space flushes the last word
+	n = 1			# current position in s
+	inword = 0		# have we been processing a word?
+	period = ""		# "." if this word ended a sentence
+	nsp = 0			# count of spaces seen so far
+	tabpos = 0		# which tab position was used last
+	while (n <= length(s)) {
+		c = substr(s, n, 1)
+
+		# handle state transitions
+		if (c == " " || c == "\t") {
+			if (inword) {		# ends word
+				if (!backc) {
+					print wordlen, word
+					if (usedhyphen)
+						print nobreak, "nohyphen"
+				}
+				inword = 0
+				nsp = 0
+			}
+		} else {
+			if (!inword) {		# begins word
+				if (!backc) {
+					word = ""
+					wordlen = 0
+					usedhyphen = 0
+				}
+				backc = 0
+				inword = 1
+				if (nsp > 1)
+					print nobreak, "gap", nsp
+			}
+		}
+
+		# deal with the character
+		if (c == " ") {
+			nsp++
+			if (n != length(s))	# not the trailing flusher
+				period = ""
+		} else if (c == "\t") {
+			# not really right, should be based on input position
+			# also, one space following tab gets ignored
+			tabpos++
+			if (tabpos <= ntabs)
+				print nobreak, "tabto", tabs[tabpos]
+			nsp = 0
+			period = ""
+		} else if (c == "-" && wordlen > 0) {
+			# hyphen within word
+			print wordlen, word, hyphenwidths[font]
+			print nobreak, "userhyphen", hyphens[font], hyphenwidths[font]
+			word = ""
+			wordlen = 0
+			period = ""
+			usedhyphen = 1
+		} else if (c != "\\") {
+			# ordinary character
+			if (font == "B")
+				word = word c "\b" c "\b" c
+			else if (font == "I" && c ~ /[a-zA-Z0-9]/)
+				word = word "_\b" c
+			else
+				word = word c
+			wordlen++
+			if (c ~ /[.!?:]/)
+				period = "."
+			else if (c !~ /([)'"*]|])/)
+				period = ""
+		} else {			# backslash
+			n++
+			c = substr(s, n, 1)
+			if (c == "f") {
+				# font change
+				n++
+				code = substr(s, n, 1)
+				if (code == "(") {
+					n++
+					code = substr(s, n, 2)
+					n++
+				}
+				if (code == "P")
+					font = prevfont
+				else if (fontok[code] == "")
+					print msg "unknown font `" code "'"
+				else {
+					prevfont = font
+					font = code
+				}
+			} else if (c == "n") {
+				# number-register value
+				n++
+				code = substr(s, n, 1)
+				if (code == "(") {
+					n++
+					code = substr(s, n, 2)
+					n++
+				}
+				s = substr(s, 1, n) numbers[code] substr(s, n+1)
+			} else if (c == "s") {
+				# size change
+				n++
+				if (substr(s, n, 1) ~ /[0-9]/)
+					n++
+				# just ignore it
+			} else if (c == "c")
+				# word continuation
+				backc = 1
+			else if (c == "*") {
+				# string-variable value
+				n++
+				code = substr(s, n, 1)
+				if (code == "(") {
+					n++
+					code = substr(s, n, 2)
+					n++
+				}
+				s = substr(s, 1, n) strings[code] substr(s, n+1)
+			} else if (c == "%") {
+				# discretionary hyphen
+				if (wordlen > 0) {
+					print wordlen, word, hyphenwidths[font]
+					print nobreak, "hyphen", hyphens[font], hyphenwidths[font]
+					word = ""
+					wordlen = 0
+					usedhyphen = 1
+				}
+			} else if (c == "(" && substr(s, n+1, 2) == "em" && \
+							chars["em"] != "") {
+				# em-dash, special case due to hyphenation
+				n += 2
+				emw = charwidths["em"]
+				print wordlen, word, emw
+				print nobreak, "userhyphen", chars["em"], emw
+				word = ""
+				wordlen = 0
+				period = ""
+				usedhyphen = 1
+			} else {
+				# special-character name
+				code = c
+				if (code == "(") {
+					n++
+					code = substr(s, n, 2)
+					n++
+				}
+				word = word chars[code]
+				wordlen += charwidths[code]
+				period = ""
+			}
+		}
+
+		# on to the next character, at last
+		n++
+	}
+
+	# end-of-line processing
+	if (!backc) {
+		if (period == ".")
+			print nobreak, "gap", 2
+		if (centering > 0) {
+			print dobreak, "center"
+			centering--
+		} else if (!fill)
+			print dobreak, "flush"
+	}
+
+	# if no input trap, we're done
+	if (afternext == "")
+		next
+
+	# if there is an input trap, fall into the macro-dependent section
+}
+#
+#
+#
+# at this point we plug in the macro-specific stuff, keyed on the next line
+#include			note that this is an awk comment
+#
+#
+#
+/^\.it/ {			# plant an input trap, sort of
+	if (NF > 1 && $2 != 1)
+		print msg ".it first argument must be 1"
+	if (NF > 2)
+		afternext = afternext "," $3
+	else
+		afternext = ""
+	next
+}
+/^\.\^r cpi / {			# set resolutions, in cpi:  .^r cpi hor vert
+	scale["m"] = 240/$3
+	scale["n"] = 240/$3
+	scale["v"] = 240/$4
+	next
+}
+/^\.(ta|ll|in|ti|po|ne|sp|pl|nr)/ {	# expression processing
+	# sort out default scale factor
+	if ($1 ~ /^\.(ne|sp|pl)/)
+		exprscale = "v"
+	else if ($1 ~ /^\.(nr)/)
+		exprscale = "u"
+	else
+		exprscale = "n"
+
+	# which argument should we start with?
+	offset = length($1) + 1
+	if ($1 == ".nr")
+		offset += length($2) + 1
+
+	# beginning of debugging message
+	if (debug["e"])
+		printf "%s ", msg substr($0, 1, offset)
+
+	# do the expressions
+	s = substr($0, offset+1)
+	n = 1
+	while (s != "") {
+		while (s ~ /^[ \t]/)
+			s = substr(s, 2)
+
+		# an initial sign is magic
+		ssign = ""
+		if (s ~ /^[+-]/) {
+			ssign = substr(s, 1, 1)
+			s = substr(s, 2)
+		}
+		s = "+" s	# this is an un-magic addition operator
+
+		# process terms
+		sval = 0
+		while (s ~ /^([+*%)-]|\/)/) {
+			# figure out what it is and what it contributes
+			if (debug["e"] > 1)
+				print "s=`" s "'"
+			termop = substr(s, 1, 1)
+			s = substr(s, 2)
+			termscale = exprscale
+			if (termop == ")") {
+				if (debug["e"] > 1)
+					print "pop " valstack[vsp] " " opstack[vsp] " with " sval
+				termval = sval
+				sval = valstack[vsp]
+				termop = opstack[vsp]
+				vsp--
+				termscale = "u"
+			} else if (s ~ /^\(/) {
+				if (debug["e"] > 1)
+					print "push " sval " " termop
+				vsp++
+				valstack[vsp] = sval
+				opstack[vsp] = termop
+				sval = 0
+				termop = "+"	# dummy op and value
+				termval = 0
+				s = "+" substr(s, 2)
+			} else if (s ~ /^\\w/) {
+				delim = substr(s, 3, 1)
+				s = substr(s, 4)
+				endp = index(s, delim)
+				if (endp == 0)
+					endp = length(s) + 1
+				termval = (endp - 1) * scale["n"]	# crude
+				s = substr(s, endp+1)
+			} else if (s ~ /^\\n/) {
+				if (s ~ /^\\n\(/) {
+					code = substr(s, 4, 2)
+					s = substr(s, 6)
+				} else {
+					code = substr(s, 3, 1)
+					s = substr(s, 4)
+				}
+				termval = numbers[code]
+			} else if (s ~ /^[0-9.]/) {
+				for (endp = 1; endp <= length(s); endp++)
+					if (substr(s, endp, 1) !~ /[0-9.]/)
+						break
+				termval = substr(s, 1, endp-1) + 0
+				s = substr(s, endp)
+			}
+
+			# add it in, with scaling factor
+			c = substr(s, 1, 1)
+			if (scale[c] != "") {
+				termval *= scale[c]
+				s = substr(s, 2)
+			} else
+				termval *= scale[termscale]
+			if (termop == "+")
+				sval += termval
+			else if (termop == "-")
+				sval -= termval
+			else if (termop == "*")
+				sval *= termval
+			else if (termop == "/")
+				sval = int(sval) / int(termval)
+			else if (termop == "%")
+				sval = int(sval) % int(termval)
+		}
+
+		# remember the value, print if debugging
+		expr[n] = sval
+		exprsign[n] = ssign
+		iexpr[n] = signfactor[ssign] * sval	# convenience
+		if (debug["e"])
+			printf "%s ", ssign "(" sval ")"
+
+		# proceed to next, skipping trash if necessary
+		while (s ~ /^[^ \t]/)
+			s = substr(s, 2)
+		n++
+	}
+
+	# final cleanup
+	nexprs = n - 1
+	if (debug["e"])
+		printf "\n"
+
+	# fallthrough
+}
+/^\.(ll|in|ti|po|pl)/ {		# common code for set-parameter requests
+	# relies on expression processing, including setting of exprscale
+	name = substr($1, 2, 2)
+	n = parms[name]
+	if (nexprs == 0)
+		n = prevparms[name]
+	else if (exprsign[1] == "" || name == "ti")
+		n = expr[1] / scale[exprscale]
+	else
+		n += iexpr[1] / scale[exprscale]
+	prevparms[name] = parms[name]
+	parms[name] = int(n)
+	print dobreak, setcmd[name], parms[name]
+	next
+}
+/^\.nr/ {
+	# relies on expression processing
+	n = numbers[$2]
+	if (exprsign[1] == "")
+		n = expr[1]
+	else
+		n += iexpr[1]
+	numbers[$2] = int(n)
+	next
+}
+/^\.ne/ {
+	# relies on expression processing
+	print dobreak, "need", int(expr[1]/scale["v"] + 0.99)
+	next
+}
+/^\.sp/ {
+	# relies on expression processing
+	if (nexprs == 0)
+		i = 1
+	else
+		i = int(expr[1]/scale["v"] + 0.99)
+	for (; i > 0; i--)
+		print dobreak, "space"
+	next
+}
+/^\.ta/ {
+	# relies on expression processing
+	tabstop = 0
+	for (n = 1; n <= nexprs; n++) {
+		if (exprsign[n] == "")
+			tabstop = expr[n]
+		else
+			tabstop += iexpr[n]
+		tabs[n] = int(tabstop/scale["n"])
+	}
+	ntabs = nexprs
+	next
+}
+/^\.ft/ {
+	if (NF > 1)
+		code = $2
+	else
+		code = "P"
+
+	if (code == "P")
+		font = prevfont
+	else if (fontok[code] == "")
+		print msg "unknown font `" code "'"
+	else {
+		prevfont = font
+		font = code
+	}
+	next
+}
+/^\.br/ {
+	print dobreak, "flush"
+	next
+}
+/^\.ds/ {
+	# note, macro-set-specific code often looks at .ds as well
+	if ($3 !~ /^"/)
+		strings[$2] = $3
+	else
+		strings[$2] = substr($0, index($0, "\"")+1)
+	next
+}
+/^\.ns/ {
+	print nobreak, "nospace"
+	next
+}
+/^\.rs/ {
+	print nobreak, "yesspace"
+	next
+}
+/^\.ad/ {
+	print nobreak, "both"
+	next
+}
+/^\.na/ {
+	print nobreak, "left"
+	next
+}
+/^\.nf/ {
+	fill = 0
+	print dobreak, "flush"
+	next
+}
+/^\.fi/ {
+	fill = 1
+	print dobreak, "flush"
+	next
+}
+/^\.\^x/ {			# direct errors to this file:  .^x filename
+	print nobreak, "errsto", $2
+	next
+}
+/^\.\^c/ {			# define character:  .^c name width text
+	if ($4 ~ /^"/)
+		s = substr($0, index($0, "\"")+1)
+	else
+		s = $4
+	ns = ""
+	while ((n = index(s, "\\")) > 0) {
+		if (n > 1)
+			ns = ns substr(s, 1, n-1)
+		n++
+		c = substr(s, n, 1)
+		if (c == "\\")
+			ns = ns "\\"
+		else if (c == "b")
+			ns = ns "\b"
+		s = substr(s, n+1)
+	}
+	ns = ns s
+	if ($2 == "hy") {
+		hyphens[font] = ns
+		hyphenwidths[font] = $3
+	} else {
+		chars[$2] = ns
+		charwidths[$2] = $3
+	}
+	next
+}
+/^\.\^f/ {			# this font is okay:  .^f fontname
+	# someday, this might take font-change codes as further arguments
+	fontok[$2] = "yes"
+	next
+}
+/^\.tm/ {
+	print msg $0
+	next
+}
+/^\.ps/ {
+	# ignore
+	next
+}
+/^\.ce/ {
+	if (NF > 1)
+		centering = $2
+	else
+		centering = 1
+	next
+}
+/^\.bp/ {
+	print dobreak, "need", 999
+	next
+}
+/^\.\^d/ {			# debug control:  .^d debugvar value
+	debug[$2] = $3
+	next
+}
+/^\.\^#/ {			# set line number of next line: .^# no file
+	il = $2 - 1
+	lockil = 0
+	inname = $3
+	next
+}
+/^\.\^=/ {			# lock line number to value:  .^= no file
+	il = $2
+	lockil = 1
+	inname = $3
+	next
+}
+/^\.\\"/ {			# comment
+	next
+}
+/^\./ {
+	print msg "command `" $1 "' unsupported or unknown"
+}
+END {
+	print dobreak, "need", 999	# flush page
+}

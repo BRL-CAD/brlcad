@@ -1,0 +1,41 @@
+#			vdeck/Makefile.loc
+#  Makefile for GIFT card-deck producer
+
+# Make null for default, or specify -p or -pg for profiling
+PROFILE		=
+
+PRODUCTS	= vdeck
+SRCDIR		= vdeck
+MANSECTION	= 1
+
+HEADERS		= vextern.h std.h
+
+CFILES		= vdeck.c cgarbs.c match.c parsarg.c vproc.c vglobal.c \
+		vsort.c
+
+OBJS		= vdeck.o cgarbs.o match.o parsarg.o vproc.o vglobal.o \
+		vsort.o
+
+all:		${PRODUCT} ${MANUALS}
+
+${PRODUCTS}:	${OBJS}
+	$(CC) -o $@ ${LDFLAGS} ${OBJS} ${LIBSYSV} ${LIBES}
+
+# DO NOT DELETE THIS LINE -- make depend uses it
+vdeck.o: vdeck.c
+vdeck.o: vextern.h
+cgarbs.o: cgarbs.c
+cgarbs.o: vextern.h
+match.o: match.c
+match.o: vextern.h
+parsarg.o: parsarg.c
+parsarg.o: vextern.h
+vproc.o: vproc.c
+vproc.o: vextern.h
+vproc.o: std.h
+vglobal.o: vglobal.c
+vglobal.o: vextern.h
+vsort.o: vsort.c
+# DEPENDENCIES MUST END AT END OF FILE
+# IF YOU PUT STUFF HERE IT WILL GO AWAY
+# see make depend above

@@ -1,0 +1,748 @@
+<html><HEAD></HEAD><BODY BGCOLOR="#E0D8c8" Text="#000000">
+<DL COMPACT>
+<HR>
+
+<DT><a NAME="air"><B>air</B></DT>
+<DD> The ``air'' shader mimics the behaviour of atmosphere.
+Volumes of modeled air can be given a realistic appearance by using this shader.
+The shader performs basic Beer's Law extinction and contrast reduction.  
+It should be applied only on regions where the air code has been set to
+a non-zero value.  
+See <a href="mged_cmds.html#edcodes">edcodes</a> for imformation
+about setting the air flag on the region).
+<p>
+The ``air'' shader assumes that the volume is a homogenous volume of 
+non-turbulent air.  The shader provides crude modeling of absorbtion
+and scattering effects in the atmosphere.  Absorbtion and/or extinction
+effects are modeled by reducing the transmission of the air volume by
+an amount proportional to the distance traveled through the air.
+<pre>
+Transmission = exp( - Tau )
+Tau	= optical path depth 
+	= density_per_unit_distance * distance
+</pre>
+<p>
+Scattering effects are modeled by replacing the non-transmitted color energy
+with an ambient energy.  Specifically, the color of the air region is used
+for the non-transmission portion.  The result is that short paths through the
+air volume are relatively clear, whereas long paths become very muddied with
+the color of the air.
+
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+<tr><td>dpm</td><td align=center> - </td><td>0.1</td></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>dpm</DT>
+	<DD>Density per meter.  This parameter describes the optical
+	density of the atmosphere per unit meter of distance.</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> mater air.r air dpm=5000 180 180 220 0
+</pre>
+</DD>
+<HR>
+<DT><a NAME="emist"><B>emist</B></DT>
+<DD> The ``emist'' shader is much like the <a href="#air">air</a> shader except
+that the density of the atmosphere varies exponentially as a function
+of altitude.  Above a certain delta from the Z=0 plane, emist should 
+be identical to ``air''.  
+Below this level, density increases exponentially.
+
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+<tr><td>dpm</td><td align=center> - </td><td>0.1</td></tr>
+<tr><td>delta</td><td>d</td><td>0.0</td></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>dpm</DT>
+	<DD>Density per meter.  This parameter describes the optical
+	density of the atmosphere per unit meter of distance.</DD>
+	<DT>delta</DT>
+	<DD>This is the height (above the Z=0 plane) at which the fog starts
+	to get exponentially denser.  From this altitude downward density
+	increases.  By default this value is specified in millimeters,
+	(regardless of the currend MGED editing units).  It is possible
+	to specify values in other units by appending the units as a suffix
+	to the value.  For example: ``2ft''.
+	</DL>
+<H3>Examples</h3>
+<pre>
+	mater swamp_gas.r emist "dpm=5000 delta=2ft" 180 180 220 0
+</pre>
+</DD>
+<HR>
+<DT><A name="marble"><b>marble</b></a></dt>
+<DD>The "marble" shader simulates the color patterns present in some types of
+marble. This is a procedural shader based
+upon a fractal noise function known as turbulence.
+<p>
+The fractal noise function produces a pseudo- random number in the range
+[0.0&nbsp;...&nbsp;1.0] from the 3-space coordinates of a point in the bounding volume
+of the region.  This noise value is used to determine the ratio of two colors
+present as the final color of the object.
+The object color and a shader-specific color are combined.
+
+The color produced is a combination of 
+
+
+<p>
+The fractal pattern has infinite resolution.  As a result, the borders of
+the color splashes never become pixelated, no mater how close the eyepoint is
+to the surface.
+
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+<tr><th colspan=3>Noise Parameters</th></tr>
+<tr><td>lacunarity</td><td>l</td><td>2.1753974</td></tr>
+<tr><td>H</td><td>H</td><td>1.0</td></tr>
+<tr><td>octaves</td><td>o</td><td>4.0</td></tr>
+<tr><td>size</td><td>s</td><td>1.0</td></tr>
+<tr><td>vscale</td><td>v</td><td>1.0/1.0/1.0</td></tr>
+<tr><td>delta</td><td>d</td><td>1000/1000/1000</td></tr>
+<tr></tr>
+<tr><th colspan=3>Shader Specific Parameters</tr>
+<tr><td>color2</td><td>c2</td><td>250/100/100</td></tr>
+</table></center>
+<dl>
+<dt><b>Lacunarity</b>
+<dd>The grid on which the noise function is built is scaled by this value
+for each successive octave of noise which will be combined to produce the
+final result.
+<dt><b>H</b>
+<dd>
+<dt><B>Octaves</b>
+<dd>The number of times the noise grid will be scaled and recombined to 
+produce the final noise function
+<dt><b>Size, Vscale</b>
+<dd>If <b>size</b> is set it is used as a scalar which defines the size of the
+noise grid on the object.  So if t2=0.5 and size=5mm then splotches of color3
+would tend to be no larger than 5-10mm.  If non-uniform scaling is required, 
+Vscale can specify the grid size in X, Y and Z.
+<dt><b>Delta</b>
+<dd>This specifies a translation in noise space for the origin of region space.
+Since the origin of noise space is reflected 8 ways, it is undesireable to have
+that portion of noise space overlap with region space.
+</dl>
+<H3>Examples</h3>
+<pre>
+	mater column.r stack marble s=512;plastic 250 240 280 0
+</pre>
+</DD>
+<HR>
+<DT><a name="camo"><b>camo</b></a></DT>
+<DD>The "camo" shader creates a pseudo-random tri-color camoflage pattern on
+the object using a fractal noise pattern.  This is a procedural shader based
+upon a fractal noise function known as fractional brownian motion or fBm.
+<p>
+The fractal noise function produces
+a pseudo- random number in the range [-1.0 ... 1.0] from the 3-space
+coordinates of a point in the bounding volume of the region.  This noise value
+is used to determine the color of the object at the given location.  
+<p>
+<center><table border=1>
+<tr><th>Noise value</th><th>Object Color</th></tr>
+<tr><td>nv < thresh1</td><td align=center>color1</td></tr>
+<tr><td>nv < thresh1<br><center>and</center>nv < thresh2</td><td align=center>color2</td></tr>
+<tr><td>nv > thresh2</td><td align=center>color3</td></tr>
+</table></center>
+<p>
+The fractal pattern has infinite resolution.  As a result, the borders of the
+color splashes never become pixelated, no mater how close the eyepoint is to the
+surface.
+<H3>Parameters</h3>
+<p>
+The parameters associated with the noise function are common to all shaders
+based upon the noise functions.
+
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+<tr><th colspan=3>Noise Parameters</th></tr>
+<tr><td>lacunarity</td><td>l</td><td>2.1753974</td></tr>
+<tr><td>H</td><td>H</td><td>1.0</td></tr>
+<tr><td>octaves</td><td>o</td><td>4.0</td></tr>
+<tr><td>size</td><td>s</td><td>1.0</td></tr>
+<tr><td>vscale</td><td>v</td><td>1.0/1.0/1.0</td></tr>
+<tr><td>delta</td><td>d</td><td>1000/1000/1000</td></tr>
+<tr></tr>
+<tr><th colspan=3>Shader Specific Parameters</tr>
+<tr><td>thresh1</td><td>t1</td><td>-0.25</td></tr>
+<tr><td>thresh2</td><td>t2</td><td>0.25</td></tr>
+<tr><td>color1</td><td>c1</td><td>97/74/41</td></tr>
+<tr><td>color2</td><td>c2</td><td>26/77/10</td></tr>
+<tr><td>color3</td><td>c3</td><td>38/38/38</td></tr>
+</table></center>
+<dl>
+<dt><b>Lacunarity</b>
+<dd>The grid on which the noise function is built is scaled by this value
+for each successive octave of noise which will be combined to produce the
+final result.
+<dt><b>H</b>
+<dd>
+<dt><B>Octaves</b>
+<dd>The number of times the noise grid will be scaled and recombined to 
+produce the final noise function
+<dt><b>Size, Vscale</b>
+<dd>If <b>size</b> is set it is used as a scalar which defines the size of the
+noise grid on the object.  So if t2=0.5 and size=5mm then splotches of color3
+would tend to be no larger than 5-10mm.  If non-uniform scaling is required, 
+Vscale can specify the grid size in X, Y and Z.
+<dt><b>Delta</b>
+<dd>This specifies a translation in noise space for the origin of region space.
+Since the origin of noise space is reflected 8 ways, it is undesireable to have
+that portion of noise space overlap with region space.
+</dl>
+
+<H3>Examples</h3>
+<pre>
+	mged> shader tent.r stack "camo ; plastic"
+</pre>
+
+<h3>Limitations</h3>
+Because of the continuous nature of the fractal noise space, it is impossible
+to get a splash of color1 directly adjacent to a splash of color3.
+<P>
+</DD>
+<hr>
+<DT><a NAME="fire"><B>fire</B></DT>
+<DD> The ``fire'' shader creates a space-filling semi-transparent color
+texture that resembles fire.
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+<tr><th colspan=3>Noise Parameters</th></tr>
+<tr><td>lacunarity</td><td>l</td><td>2.1753974</td></tr>
+<tr><td>H</td><td>H</td><td>1.0</td></tr>
+<tr><td>octaves</td><td>o</td><td>4.0</td></tr>
+<tr><td>size</td><td>s</td><td>1.0</td></tr>
+<tr><td>vscale</td><td>v</td><td>1.0/1.0/1.0</td></tr>
+<tr><td>delta</td><td>d</td><td>1000/1000/1000</td></tr>
+<tr></tr>
+<tr><th colspan=3>Shader Specific Parameters</tr>
+<tr><td>flicker</td><td>f</td><td>0.0</td></tr>
+<tr><td>stretch</td><td>st</td><td>0.0</td></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>flicker</DT>
+	<DD>Specifies rater of translation through noise space for
+	animation.  Animation frametime*flicker produces a delta
+	of Z in noise space for the given frame/pixel.  Useful
+	values are probably in the range 0 .. 10.</DD>
+	<DT>strectch</DT>
+	<DD>Specifies a scaling of the exponential stretch of the
+	flames.  Flame stretch effect = exp(pos[Z] * - stretch)</DD>
+	</DL>
+
+<H3>Examples</h3>
+<pre>
+	mged> mater air.r air dpm=5000 180 180 220 0
+</pre>
+</DD>
+<HR>
+
+<DT><a NAME="light"><B>light</B></DT>
+<DD>When light sources are explicitly modeled in the geometry
+description, they are given a shader type ``light''.
+The color of the region defines the color of the light.
+</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+<tr><td>inten</td><td align=center> - </td><td>1000</td></tr>
+<tr><td>angle</td><td align=center> - </td><td>180</td></tr>
+<tr><td>fract</td><td align=center> - </td><td>(computed)</td></tr>
+<tr><td>aim</td><td align=center> - </td><td>0</td></tr>
+<tr><td>shadows</td><td align=center> - </td><td>1</td></tr>
+<tr><td>infinite</td><td align=center> - </td><td>0</td></tr>
+<tr><td>invisible</td><td align=center> - </td><td>0</td></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>intensity</DT>
+	<DD>Intensity of the light source (nominally in lumens)</DD>
+	<DT>angle&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</DT>
+	<DD>Beam displersion angle (degrees 0..180)</DD>
+	<DT>fraction</DT>
+	<DD>Fraction of total light</DD>
+	<DT>shadows</DT>
+	<DD>Boolean:  Does light cast shadows</DD>
+	<DT>infinite</DT>
+	<DD>Boolean:  Is light source infinitely distant</DD>
+	<DT>aim&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</DT>
+	<DD>Boolean: Take light aim direction from solid</DD>
+	<DT>invisible</DT>
+	<DD>Boolean:  Is light source visible as an object</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader lightbulb.r light
+</pre>
+</DD>
+<HR>
+
+<DT><a NAME="fbmbump"><B>fbmbump</B></DT>
+<DT><a NAME="turbump"><B>turbump</B></DT>
+<DT><a NAME="fbmcolor"><B>fbmcolor</B></DT>
+<DT><a NAME="turcolor"><B>turcolor</B></DT>
+<DD>These shaders apply a noise function to the surface normal
+or the intensity of the surface color.  The ``bump'' shaders
+apply either fBm or turbulence noise to the surface normal of
+the object.  The ``color'' shaders apply either fBm or turbulence
+noise to the intensity of the surface color.
+</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+<tr><th colspan=3>Noise Parameters</th></tr>
+<tr><td>lacunarity</td><td>l</td><td>2.1753974</td></tr>
+<tr><td>H</td><td>H</td><td>1.0</td></tr>
+<tr><td>octaves</td><td>o</td><td>4.0</td></tr>
+<tr><td>size</td><td>s</td><td>1.0</td></tr>
+<tr><td>vscale</td><td>v</td><td>1.0/1.0/1.0</td></tr>
+<tr><td>delta</td><td>d</td><td>1000/1000/1000</td></tr>
+<tr></tr>
+<tr><th colspan=3>Shader Specific Parameters</tr>
+<tr><td>angle</td><td>a/ang</td><td>1.0</td></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>angle</DT>
+	<DD>Maximum angle of the surface normal deviation.</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+
+
+
+<HR>
+
+<DT><a NAME="plastic"><B>plastic</B></DT>
+<DT><a NAME="mirror"><B>mirror</B></DT>
+<DT><a NAME="glass"><B>glass</B></DT>
+<DD>These are really all just the Phong shader ``plastic''.  The
+``mirror'' and ``glass'' shaders simply set different defaults.
+</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th rowspan=2>Parameter</th><th rowspan=2>Abreviation</th><th colspan=3>Default Value</th></tr>
+
+<tr><th>plastic</th><th>mirror</th><th>glass</th></tr>
+<tr></tr>
+<tr><td>shine</td><td>sh</td><td>10</td><td>4</td><td>4</td>
+</tr>
+<tr><td>specular</td><td>sp</td><td>0.7</td><td>0.6</td><td>0.7</td>
+</tr>
+<tr><td>diffuse</td><td>di</td><td>0.3</td><td>0.4</td><td>0.3</td>
+</tr>
+<tr><td>transmit</td><td>tr</td><td>0.0</td><td>0.0</td><td>0.8</td>
+</tr>
+<tr><td>reflect</td><td>re</td><td>0.0</td><td>0.75</td><td>0.1</td>
+</tr>
+<tr><td>ri</td><td align=center>-</td><td>1.0</td><td>1.65</td><td>1.65</td>
+</tr>
+<tr><td>extinction</td><td>ex</td><td>0.0</td><td>0</td><td>0</td>
+</tr>
+
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>shine</DT>
+	<DD>Deescribes the shininess of the object [4..20] where 4 is a very higly polished surface, and 20 defines a very rough
+	surface</DD>
+	<DT>specular</DT>
+	<DD>Defines the amount of energy due to directional reflection
+	of energy (eg. due to light sources in the scene)</DD>
+	<DT>diffuse</DT>
+	<DD>Defines the portion of energy due to diffuse (non directional)
+	surface reflection, eg. due to ambient illumination</DD>
+	<DT>transmit</DT>
+	<DD>Defines the portion of light [0..1] due to energy transmitted
+	through the object</DD>
+	<DT>reflect</DT>
+	<DD>Defines the portion of light [0..1] due to reflected energy</DD>
+	<DT>ri</DT>
+	<DD>Sets the refractive index</DD>
+	<DT>extinction</DT>
+	<DD>Set but not used</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+
+<HR>
+
+<DT><a NAME="points"><B>points</B></DT>
+<DD>Phil Dykstra's points shader</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+
+<HR>
+
+<DT><a NAME="scloud"><B>scloud</B></DT>
+<DD>Lee's ``Solid Clouds''</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+
+
+<HR>
+
+<DT><a NAME="cloud"><B>cloud</B></DT>
+<DD>Geoffrey Gardner style 2D cloud texture</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+
+<HR>
+
+<DT><a NAME="cs"><B>cs</B></DT>
+<DD>Lee's Color space.  Maps RPP of region onto color cube</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+
+<HR>
+
+<DT><a NAME="rtrans"><B>rtrans</B></DT>
+<DD>John's random transmission shader</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+
+<HR>
+
+<DT><a NAME="spm"><B>spm</B></DT>
+<DD>Spherical pixmap texture</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+
+<HR>
+
+<DT><a NAME="stack"><B>stack</B></DT>
+<DD>Shader stacker</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+
+<HR>
+
+
+<DT><a NAME="extern"><B>stack</B></DT>
+<DD>external Shader stacker</DD>
+<p>
+
+The "extern" shader takes a filename as its only argument.  The file is
+opened and shaders and their parameters are read from the file.  The
+"extern" shader is really an extension of the "stack" shader.  The contents
+of the file can have the same structure as the content of the stack shader 
+parameters.
+
+<p>
+WARNING: Since the mged command line format for specifying shaders and their
+parameters was converted to a Tcl/Tk syntax, the format in the shader file
+is NOT what the user is accustomed to typing.  Instead, the old structparse()
+format should be adhered to:
+<pre>
+	shader param=value param=value;shader param=value param=value
+</pre>
+The "extern" shader was developed to overcome limitations in the v4 database
+format.  The specific limitation addressed is that there are only 40
+characters available for the shader parameter string.
+
+
+<H3>Example</h3>
+<pre>
+	mged> shader stuff.r "extern stuff_material.shd" 255 255 255 0
+
+	% cat stuff_material.shd
+	texture file=image.pix w=768 n=512;
+	plastic sp=.8 di=.2 sh=10 tr=.1 re=.1
+</pre>
+</DD>
+
+<HR>
+
+
+
+<DT><a NAME="stxt"><B>stxt</B></DT>
+<DD>Broken and antiquated attempt at solid textures</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+<HR>
+
+<DT><a NAME="checker"><B>checker</B></DT>
+<DD>checkerboard color texture</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>a</DT>
+	<DD>3-tuple color for squares</DD>
+	<DT>b</DT>
+	<DD>3-tuple color for other squares</DD>
+	<DT>s</DT>
+	<DD>number of squares in each direction (u,v)</DD>
+
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader board.r "stack checker a=255/255/255 b=100/100/100 s=8;plastic"
+</pre>
+</DD>
+<HR>
+
+<DT><a NAME="fakestar"><B>fakestar</B></DT>
+<DD>A fake star skymap texture</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+<HR>
+
+<DT><a NAME="texture"><B>texture</B></DT>
+<DD>maps a .pix file onto an object using u,v coordinates.
+This is usually undesireable for objects made up of more than one primitive solid.
+</DD>
+
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<TR><td>file</td>	<td>&nbsp;</td>	<td>&nbsp;</td></td>
+<TR><td>w</td>		<td>&nbsp;</td>	<td>512</td></td>
+<TR><td>n</td>		<td>l</td>	<td>w</td></td>
+<TR><td>transp</td>	<td>&nbsp;</td>	<td>&nbsp</td></td>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>file</DT>
+	<DD>Name of the pix file to map onto the object</DD>
+	<DT>w</DT>
+	<DD>width of the pix file in pixels</DD>
+	<DT>n</DT>
+	<DD>number of scanlines in the pix file</DD>
+	<DT>transp</DT>
+	<DD>a value which indicates the object does not exist (is transparent).</DD>
+	</DL>
+
+<p>
+If the "transp" parameter is not set by the user, then no values are deemed transparent.
+
+<H3>Example</h3>
+<pre>
+	mged> shader cube.r stack texture file=eagle-w512-n438.pix w=512 n=438;plastic 0 0 0 0
+<pre>
+<H3>See Also</h3>
+<p>prj, bwtexture
+</DD>
+<HR>
+
+<DT><a NAME="bwtexture"><B>bwtexture</B></DT>
+<DD>maps a .bw file onto an object using u,v coordinates</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+<HR>
+
+<DT><a NAME="bump"><B>bump</B></DT>
+<DD>Uses the R,B color data from a .pix file as a surface normal
+bump map</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+<HR>
+
+<DT><a NAME="testmap"><B>testmap</B></DT>
+<DD>Ramps the red value from off to on as the "u" coord of a texture map varis fro m0 to 1, and the blue value with the "v" coordinate.
+For debugging.</DD>
+<H3>Parameters</h3>
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+</table></center>
+<p>
+	<DL COMPACT>
+	<DT>parameter</DT>
+	<DD>Description of parameter</DD>
+	</DL>
+
+<H3>Example</h3>
+<pre>
+	mged> shader air.r proto
+</pre>
+</DD>
+
+</DL></BODY>

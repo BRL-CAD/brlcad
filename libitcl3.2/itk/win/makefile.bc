@@ -1,0 +1,227 @@
+# Borland C++ 4.52 makefile
+#
+# Copyright (c) 1993-1996 Lucent Technologies
+# based on original from
+# Copyright (c) 1995-1996 by Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+
+!include "..\..\Makefile.bc"
+
+#
+# Project directories
+#
+# ROOT = top of source tree
+# TMPDIR = location where .obj files should be stored during build
+
+ROOT	   		= ..
+TMPDIR			= .
+TARGET_LIB_ITK		= $(TARGET_LIB)\Itk2.2
+TARGET_DOC_ITK 		= $(TARGET_DOC)\Itk
+
+# uncomment the following line to compile with symbols
+#DEBUG=1
+
+# uncomment the following two lines to compile with TCL_MEM_DEBUG
+#DEBUGDEFINES	=TCL_MEM_DEBUG
+
+
+INCLUDES   =$(BORLAND)\include;$(ROOT)\generic;$(ROOT);$(TCLDIR)\generic;$(ITCLDIR)\generic;$(TKDIR)\generic;$(TKDIR)\xlib;$(TKDIR)\bitmaps
+LIBDIRS    =$(BORLAND)\lib;$(ROOT)\win
+
+!ifndef DEBUG
+
+# these macros cause maximum optimization and no symbols
+DEBUGLDFLAGS =
+DEBUGCCFLAGS = -v- -vi- -O2
+
+!else
+
+# these macros enable debugging
+DEBUGLDFLAGS = -v
+DEBUGCCFLAGS = -k -Od -v
+
+!endif
+
+DEFINES = _RTLDLL;USE_TCLALLOC=0;STRICT;$(DEBUGDEFINES);ITCL_NAMESPACES=1
+PROJECTCCFLAGS= $(DEBUGCCFLAGS) -w-par -w-stu
+
+LNFLAGS_exe = -Tpe -aa -c $(DEBUGLDFLAGS) $(BORLAND)\lib\c0w32
+LNFLAGS_dll = -Tpd -aa -c $(DEBUGLDFLAGS) $(BORLAND)\lib\c0d32
+
+LNLIBS_exe =	$(ITKLIB) $(ITCLLIBDIR)\$(ITCLLIB) $(TKLIBDIR)\$(TKLIB) $(TCLLIBDIR)\$(TCLLIB) import32 cw32i
+LNLIBS_dll =	$(ITCLLIBDIR)\$(ITCLLIB) $(TKLIBDIR)\$(TKLIB) $(TCLLIBDIR)\$(TCLLIB) import32 cw32i
+
+#
+# Global makefile settings
+#
+
+.AUTODEPEND
+.CACHEAUTODEPEND
+
+.suffixes: .c .dll .lib .obj .exe
+
+.path.c=$(ROOT)\win;$(ROOT)\generic;
+.path.obj=$(TMPDIR)
+
+ITKWISHOBJS = \
+	$(TMPDIR)\winMain.obj
+
+ITKOBJS = \
+	$(TMPDIR)\itk_archetype.obj \
+	$(TMPDIR)\itk_cmds.obj \
+	$(TMPDIR)\itk_option.obj \
+	$(TMPDIR)\itk_util.obj \
+	$(TMPDIR)\dllEntryPoint.obj
+
+ITKWISH = itkwish.exe
+
+
+#
+# Targets
+#
+
+all: cfgdll $(ITKDLL) cfgexe $(ITKWISH) cfgcln
+test: $(ITKWISH)
+	$(CP) $(TCLLIBDIR)\*.dll
+	$(CP) $(TKLIBDIR)\*.dll
+	$(CP) $(ITCLLIBDIR)\*.dll
+#set ITK_
+	$(ITKWISH) <<|
+   cd ..\tests
+   source all
+   exit
+|
+
+install: all
+	$(MKDIR) "$(TARGET_ROOT)"
+	$(MKDIR) "$(TARGET_BIN)"
+	$(MKDIR) "$(TARGET_LIB_ROOT)"
+	$(MKDIR) "$(TARGET_LIB)"
+	$(MKDIR) "$(TARGET_LIB_ITK)"
+	$(MKDIR) "$(TARGET_INCLUDE_ROOT)"
+	$(MKDIR) "$(TARGET_INCLUDE)"
+	$(MKDIR) "$(TARGET_DOC)"
+	$(MKDIR) "$(TARGET_DOC_ITK)"
+	$(CP) $(TMPDIR)\$(ITKWISH) "$(TARGET_BIN)"
+	$(CP) $(TMPDIR)\$(ITKDLL) "$(TARGET_BIN)"
+	$(CP) $(ROOT)\generic\itk.h "$(TARGET_INCLUDE)"
+	$(CP) $(ROOT)\library\*.* "$(TARGET_LIB_ITK)"
+	$(CP) $(ROOT)\win\*.tcl "$(TARGET_LIB_ITK)"
+	$(CP) $(ROOT)\..\html\Itk\*.* "$(TARGET_DOC_ITK)"
+
+# Implicit Targets
+
+.c.obj:
+	@$(BCC32) {$< }
+
+.dll.lib:
+	$(IMPLIB) -c $@ $<
+
+.rc.res:
+	$(RC) -i$(ROOT)\generic;$(ITCLDIR)\generic;$(TCLDIR)\generic;$(TKDIR)\generic $<
+
+#
+# Special case object file targets
+#
+
+#
+# Configuration file targets - these files are implicitly used by the compiler
+#
+
+cfgdll:
+	@$(CP) &&|
+		-n$(TMPDIR) -I$(INCLUDES) -c -WD
+		-D$(DEFINES) -3 -d $(PROJECTCCFLAGS)
+| bcc32.cfg >NUL
+
+cfgexe:
+	@$(CP) &&|
+		-n$(TMPDIR) -I$(INCLUDES) -c -W
+		-D$(DEFINES) -3 -d $(PROJECTCCFLAGS)
+| bcc32.cfg >NUL
+
+cfgtest:
+	@$(CP) &&|
+		-n$(TMPDIR) -I$(INCLUDES) -c -W
+		-D$(DEFINES);TCL_TEST -3 -d $(PROJECTCCFLAGS)
+| bcc32.cfg >NUL
+
+cfgcln:
+	@$(RM) bcc32.cfg
+
+#
+# Executable targets
+#
+
+$(ITKDLL): $(ITKOBJS) itk.def rc\itk.res
+	$(TLINK32) @&&|
+$(LNFLAGS_dll) $(ITKOBJS)
+$@
+-x
+$(LNLIBS_dll)
+itk.def
+rc\itk.res
+|
+
+$(ITKWISH): $(ITKWISHOBJS) $(ITKLIB) rc\itkwish.res
+	$(TLINK32) @&&|
+$(LNFLAGS_exe) $(ITKWISHOBJS)
+$@
+-x
+$(LNLIBS_exe)
+|, &&|
+EXETYPE WINDOWS
+CODE PRELOAD MOVEABLE DISCARDABLE
+DATA PRELOAD MOVEABLE MULTIPLE
+|, rc\itkwish.res
+
+#
+# Other dependencies
+#
+
+
+# The following rule automatically generates a tk.def file containing
+# an export entry for every public symbol in the $(TKDLL) library.
+
+itk.def: $(ITKOBJS)
+	$(TCLLIBDIR)\dumpexts.exe -o $@ $(ITKDLL) @&&|
+		$(ITKOBJS)
+|
+
+# Dependencies for .rc files:
+rc\itk.res: rc\*.cur rc\itk.ico
+rc\itkwish.res: rc\*.cur rc\itk.ico
+
+# debugging rules, the .dll and .exe files must be in the same
+# directory as the object files for debugging purposes
+
+$(TMPDIR)\$(ITKDLL): $(ITKDLL)
+	$(CP) $(ITKDLL) $(TMPDIR)
+
+$(TMPDIR)\$(ITCLDLL): $(ITCLLIBDIR)\$(ITCLDLL)
+        $(CP) $(ITCLLIBDIR)\$(ITCLDLL) $(TMPDIR)
+
+$(TMPDIR)\$(TKDLL): $(TKLIBDIR)\$(TKDLL)
+        $(CP) $(TKLIBDIR)\$(TKDLL) $(TMPDIR)
+
+$(TMPDIR)\$(TCLDLL): $(TCLLIBDIR)\$(TCLDLL)
+	$(CP) $(TCLLIBDIR)\$(TCLDLL) $(TMPDIR)
+
+$(TMPDIR)\$(ITKWISH): $(ITKWISH)
+	$(CP) $(ITKWISH) $(TMPDIR)
+
+debug: $(TMPDIR)\$(ITKDLL) $(TMPDIR)\$(ITCLDLL) $(TMPDIR)\$(TKDLL) $(TMPDIR)\$(TCLDLL)
+
+
+# remove all generated files
+
+clean:
+	-@$(RM) $(ITKWISH)
+	-@$(RM) $(ITKLIB)
+	-@$(RM) $(ITKDLL)
+	-@$(RM) itk.def
+	-@$(RM) $(TMPDIR)\Rc\*.res
+	-@$(RM) $(TMPDIR)\*.obj
+	-@$(RM) *.cfg

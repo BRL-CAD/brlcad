@@ -1,0 +1,35 @@
+.TH INTO 1 "Utah 12/17/84"
+.SH NAME
+into \- copy into a file without destroying it
+.SH SYNOPSIS
+.B into
+[
+.B \-f
+] 
+.I outfile
+.SH DESCRIPTION
+.I Into
+copies its standard input into the specified
+.I outfile,
+but doesn't actually modify the file
+until it gets EOF.
+This is useful in a pipeline for putting stuff back in the "same place."
+The
+.I outfile
+is not overwritten if that would make it zero length, unless
+the
+.B \-f
+option is given.  That option also
+forces overwriting of the
+.I outfile
+even if it is not directly writable (as long as the directory is writable).
+.SH "SEE ALSO"
+pipe(2)
+.SH BUGS
+For efficiency reasons, the directory containing the
+.I outfile
+must be writable by the invoker.
+.br
+The original
+.I outfile's
+owner is not preserved.

@@ -1,0 +1,686 @@
+<TITLE>menubar - Create and manipulate menubar menu widgets</TITLE>
+<H1>menubar - Create and manipulate menubar menu widgets</H1>
+
+</pre><H2>SYNOPSIS</H2>
+<B>menubar</B> <I>pathName</I> ?<I>options</I>?
+</pre><H2>INHERITANCE</H2>
+itk::Widget &lt;- menubar
+</pre><H2>STANDARD OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>activeBackground</B><br>
+<B>activeBorderWidth</B><br>
+<B>activeForeground</B><br>
+<B>anchor</B><br>
+<B>foreground</B><br>
+</td>
+<td valign=top>
+<B>borderWidth</B><br>
+<B>cursor</B><br>
+<B>disabledForeground</B><br>
+<B>font</B><br>
+<B>padX</B><br>
+</td>
+<td valign=top>
+<B>highlightBackground</B><br>
+<B>highligthThickness</B><br>
+<B>highlightColor</B><br>
+<B>justify</B><br>
+</td>
+<td valign=top>
+<B>padY</B><br>
+<B>relief</B><br>
+<B>wrapLength</B><br>
+<B>background</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "options" </A> manual entry for details on the standard options.
+</pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
+<P>
+<pre>
+Name:                   <B>helpVariable</B>
+Class:                  <B>HelpVariable</B>
+Command-Line Switch:	<B>-helpvariable</B>
+</pre>
+<UL>
+Specifies the global variable to update whenever the mouse is in motion over a menu entry. This global variable is updated with the current value of the active menu entry's <B>helpStr</B>. Other widgets can "watch" this variable with the trace command, or as is the case with entry or label widgets, they can set their <B>textVariable</B> to the same global variable. This allows for a simple implementation of a help status bar. Whenever the mouse leaves a menu entry, the helpVariable is set to the empty string {}. The mainwindow(1) associates its helpstatus and its menubar in this fashion.
+</UL>
+<P>
+<pre>
+Name:                   <B>menuButtons</B>
+Class:                  <B>MenuButtons</B>
+Command-Line Switch:	<B>-menubuttons</B>
+</pre>
+<UL>
+The menuButton option is a string which specifies the arrangement of menubuttons on the menubar frame. Each menubutton entry is delimited by the newline character.
+</UL>
+<table cellpadding=5>
+<td valign=top>
+<UL><br>
+-menubuttons<br>
+-text<br>
+-text<br>
+-text<br>
+</td>
+<td valign=top>
+</UL><br>
+{<br>
+File<br>
+Edit<br>
+Options<br>
+</td>
+<td valign=top>
+menubar<br>
+menubutton<br>
+menubutton<br>
+menubutton<br>
+}<br>
+</td>
+<td valign=top>
+.mb<br>
+file<br>
+edit<br>
+options<br>
+</td>
+</table>
+<UL>
+specifies that three menubuttons will be added to the menubar (file, edit, options). Each entry is translated into an add command call.
+</UL>
+<UL>
+The <B>menuButtons</B> option can accept embedded variables, commands, and
+backslash quoting. Embedded variables and commands must be enclosed in
+curly braces ({}) to ensure proper parsing of the substituted values.
+</UL>
+</pre><HR>
+</pre><H2>DESCRIPTION</H2>
+<P>
+The <B>menubar</B> command creates a new window (given by the <I>pathName</I> argument) and makes it into a <B>menubar</B> menu widget. Additional options, described above may be specified on the command line or in the option database to configure aspects of the menubar such as its colors and font. The <B>menubar</B> command returns its <I>pathName</I> argument. At the time this command is invoked, there must not exist a window named pathName, but pathName's parent must exist.
+<P>
+A <B>menubar</B> is a widget that simplifies the task of creating menu hierarchies. It encapsulates a <B>frame</B> widget, as well as <B>menubuttons</B>, <B>menus</B>, and menu <B>entries</B>. The menubar allows menus to be specified and referenced in a more consistent manner than using Tk to build menus directly. 
+
+<B>Menubar</B> allows a menu tree to be expressed in a hierachical "language". The <B>menubar</B> accepts a <B>menuButtons</B> option that allows a list of menubuttons to be added to the menubar. In turn, each menubutton accepts a <B>menu</B> option that specifies a list of menu entries to be added to the menubutton's menu. Cascade entries also accept the <B>menu</B> option for specifying a list of menu entries to be added to the cascade's menu. 
+
+Additionally, the menubar allows each component of the menubar system to be referenced by a simple <I>menuPathName</I> syntax. The menubar also extends the set of options for menu entries to include a <B>helpStr</B> option.
+</pre><H2>MENU PATH NAMES</H2>
+<P>
+A <I>menuPathName</I> is a series of component names separated by the `.' character. Each menubar component can be referenced via these <I>menuPathNames</I>. <I>menuPathNames</I> are similar to widget pathNames in Tk. Some correspond directly to a widget pathName (components of type <B>menu</B> or <B>menubutton</B>), others correspond to a menu entry type. Every widget and entry in a menubar can be referenced with the <I>menuPathName</I> naming convention. A menubar can have four types of components:
+<UL>
+<B>frame</B>. A menubar holds exactly one frame which manages menubuttons. The frame is always signified by the `.' character as the path name.
+</UL>
+<UL>
+<B>menubutton</B>. A menubutton corresponds directly to a Tk menubutton. See menubutton(n).
+</UL>
+<UL>
+<B>menu</B>. A menu is attached to a menubutton and corresponds directly to Tk's menu widget. A menu is always signified by the <I>menuPathName</I> ending with the keyword <B>menu</B>. See menu(n).
+</UL>
+<UL>
+<B>entry</B>. An entry corresponds directly to Tk's menu widget entries. Menus consist of a column of one line entries. Entries may be of type: <B>command</B>, <B>checkbutton</B>, <B>radiobutton</B>, <B>separator</B>, or <B>cascade</B>. For a complete description of these types see the discussion on <B>ENTRIES</B> in menu(n).
+</UL>
+<P>
+The suffix of a <I>menuPathName</I> may have the form of:
+<DL>
+<DT> <I>tkWidgetName</I>
+</I></B>
+<DD> Specifies the name of the component, either a <B>frame</B>, <B>menubutton</B>, <B>menu</B>, or an <B>entry</B>. This is the normal naming of widgets. For example, .file references a <B>menubutton</B> named <I>file</I>.
+</DL>
+<P>
+The <I>menuPathName</I> is a series of segment names, each separated by the '.' character. Segment names may be one of the following forms:
+<DL>
+<DT> <I>number</I>
+</I></B>
+<DD> Specifies the index of the the component. For menubuttons, 0 corresponds to the left-most menubutton of the menu bar frame. As an example, <I>.1</I> would correspond to the second menubutton on the menu bar frame. 
+<UL>
+For entries, 0 corresponds to the top-most entry of the menu. For example, .file.0 would correspond to the first entry on the menu attached to the menubutton named <I>file</I>.
+</UL>
+</DL>
+<DL>
+<DT> <B>end</B>
+</I></B>
+<DD> Specifes the last component. For menubuttons, it specifies the right-most entry of the menu bar frame. For menu entries, it specifies the bottom-most entry of the menu. 
+</DL>
+<DL>
+<DT> <B>last</B>
+</I></B>
+<DD> Same as end.
+</DL>
+<P>
+Finally, menu components always end with the <B>menu</B> keyword. These components are automatically created via the -menu option on menubuttons and cascades or via the <B>add</B> or <B>insert</B> commands.
+<DL>
+<DT> <B>menu</B>
+</I></B>
+<DD> Specifes the menu pane that is associated with the given menubutton prefix. For example, <I>.file.menu</I> specifies the menu pane attached to the <I>.file</I> menubutton.
+</DL>
+<P>
+For example, the path <I>.file.new</I> specifies the entry named new on the menu associated with the file menubutton located on the menu bar. The path <I>.file.menu</I> specifies the menu pane associated with the menubutton <I>.file</I>. The path <I>.last</I> specifies the last menu on the menu bar. The path <I>.0.last</I> would specify the first menu (file) and the last entry on that menu (quit), yielding <I>.file.quit</I>.
+
+As a restriction, the last name segment of <I>menuPathName</I> cannot be one of the keywords last, menu, end, nor may it be a numeric value (integer).
+</pre><H2>WIDGET-SPECIFIC METHODS</H2>
+<P>
+The <B>menubar</B> command creates a new Tcl command whose name is <I>pathName</I>.
+This command may be used to invoke various operations on the widget. It has
+the following general form:
+<pre>
+<I>pathName option </I>?<I>arg arg ...</I>?
+</pre>
+<I>option</I> and the <I>arg</I>s
+determine the exact behavior of the command.
+<P>
+In addition, many of the widget commands for menubar take as one argument a path name to a menu component. These path names are called <I>menuPathName</I>s. See the discussion on <B>MENUBAR PATH NAMES</B> above.
+<P>
+The following commands are possible for menubar widgets:
+<DL>
+<DT> <I>pathName</I> <B>add</B> <I>type</I> <I>menuPathName</I> ?<I>option value option value</I>?
+</I></B>
+<DD> Adds either a menu to the menu bar or a menu entry to a menu pane.
+<UL>
+If additional arguments are present, they specify <I>option</I>s available to component type <B>entry</B>. See the man pages for <B>menu</B>(1) in the section on <B>ENTRIES</B>. 
+
+If <I>type</I> is one of <B>cascade</B>, <B>checkbutton</B>, <B>command</B>, <B>radiobutton</B>, or <B>separator</B> it adds a new entry to the bottom of the menu denoted by the prefix of <I>menuPathName</I>. If additonal arguments are present, they specify options available to menu <B>entry</B> widgets. In addition, the <B>helpStr</B> option is added by the menubar widget to all components of type entry.
+</UL>
+</DL>
+<UL>
+<DL>
+<DT> <B>-helpstr</B> <I>value</I>
+</I></B>
+<DD> Specifes the string to associate with the entry. When the mouse moves over the associated entry, the variable denoted by <B>helpVariable</B> is set. Another widget can bind to the helpVariable and thus display status help.
+</DL>
+</UL>
+<UL>
+If the type of the component added is <B>menubutton</B> or <B>cascade</B>, a menubutton or cascade is added to the menubar. If additional arguments are present, they specify options available to menubutton or cascade widgets. In addition, the <B>menu</B> option is added by the menubar widget to all menubutton and cascade widgets.
+</UL>
+<UL>
+<DL>
+<DT> <B>-menu</B> <I>menuSpec</I>
+</I></B>
+<DD> This is only valid for <I>menuPathName</I>s of type <B>menubutton</B> or <B>cascade</B>. Specifes an option set and/or a set of entries to place on a menu and associate with the menubutton or cascade. The <B>option</B> keyword allows the menu widget to be configured. Each item in the <I>menuSpec</I> is treated as add commands (each with the possibility of having other -menu options). In this way a menu can be recursively built.
+<UL>
+The last segment of <I>menuPathName</I> cannot be one of the keywords <B>last</B>, <B>menu</B>, <B>end</B>. Additionally, it may not be a <I>number</I>. However the <I>menuPathName</I> may be referenced in this manner (see discussion of <B>COMPONENT PATH NAMES</B>).
+</UL>
+<UL>
+Note that the same curly brace quoting rules apply to <B>-menu</B> option strings as did to <B>-menubuttons</B> option strings. See the earlier discussion on <B>umenubuttons</B> in the "<B>WIDGET-SPECIFIC OPTIONS</B>" section.
+</UL>
+</DL>
+</UL>
+<DL>
+<DT> <I>pathName</I> <B>cget</B> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given by <I>option</I>.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>configure</B> ?<I>options</I> <I>value</I> <I>option</I> <I>value</I>?
+</I></B>
+<DD> Query or modify the configuration options of the widget. If no <I>option</I> is specified, returns a list describing all of the available options for <B>pathName</B> (see <B>Tk_ConfigureInfo</B> for information on the format of this list). If <I>option</I> is specified with no value, then the command returns a list describing the one named option (this list will be identical to the corresponding sublist of the value returned if no option is specified). If one or more option-value pairs are specified, then the command modifies the given widget option(s) to have the given value(s); in this case the command returns an empty string.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>delete</B> <I>menuPathName</I> ?<I>menuPathName2</I>?
+</I></B>
+<DD> If <I>menuPathName</I> is of component type <B>Menubutton</B> or <B>Menu</B>, delete operates on menus. If <I>menuPathName</I> is of component type <B>Entry</B>, delete operates on menu entries.
+
+This command deletes all components between <I>menuPathName</I> and <I>menuPathName2</I> inclusive. If <I>menuPathName2</I> is omitted then it defaults to <I>menuPathName</I>. Returns an empty string.
+
+If <I>menuPathName</I> is of type menubar, then all menus and the menu bar frame will be destroyed. In this case <I>menuPathName2</I> is ignored.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>index</B> <I>menuPathName</I>
+</I></B>
+<DD> If <I>menuPathName</I> is of type menubutton or menu, it returns the position of the menu/menubutton on the menubar frame. 
+
+If <I>menuPathName</I> is of type <B>command</B>, <B>separator</B>, <B>radiobutton</B>, <B>checkbutton</B>, or <B>cascade</B>, it returns the menu widget's numerical index for the entry corresponding to <I>menuPathName</I>. If path is not found or the path is equal to ".", a value of -1 is returned.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>insert</B> <I>menuPathName</I> <I>type</I> <I>name</I> ?<I>option</I> <I>value</I>?
+</I></B>
+<DD> Insert a new component named name before the component specified by <I>menuPathName</I>.
+<UL>
+If <I>menuPathName</I> is of type <B>Menubutton</B> or <B>Menu</B>, the new component inserted is of type <B>Menu</B> and given the name name. In this case valid <I>option</I> <I>value</I> pairs are those accepted by menubuttons.
+</UL>
+<UL>
+If <I>menuPathName</I> is of type <B>Entry</B>, the new component inserted is of type <B>entry</B> and given the name <I>name</I>. In this case, valid <I>option</I> <I>value</I> pairs are those accepted by menu entries.
+<I>Name</I> cannot be one of the keywords <B>last</B>, <B>menu</B>, <B>end</B>. Additionally, it may not be a number. However the <I>menuPathName</I> may be referenced in this manner (see discussion of <B>COMPONENT PATH NAMES</B>).
+</UL>
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>invoke</B> <I>menuPathName</I>
+</I></B>
+<DD> Invoke the action of the menu entry denoted by <I>menuPathName</I>. See the sections on the individual entries in the menu(1) man pages. If the menu entry is disabled then nothing happens. If the entry has a command associated with it then the result of that command is returned as the result of the <B>invoke</B> widget command. Otherwise the result is an empty string.
+
+If <I>menuPathName</I> is not a menu entry, an error is issued.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>menucget</B> <I>menuPathName</I> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given by <I>option</I>. The component type of <I>menuPathName</I> determines the valid available options.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>menuconfigure</B> <I>menuPathName</I> ?<I>option</I> <I>value</I>?
+</I></B>
+<DD> Query or modify the configuration options of the componet of the menubar specified by <I>menuPathName</I>. If no <I>option</I> is specified, returns a list describing all of the available options for <I>menuPathName</I> (see <B>Tk_ConfigureInfo</B> for information on the format of this list). If <I>option</I> is specified with no value, then the command returns a list describing the one named option (this list will be identical to the corresponding sublist of the value returned if no option is specified). If one or more option-value pairs are specified, then the command modifies the given widget option(s) to have the given value(s); in this case the command returns an empty string. The component type of <I>menuPathName</I> determines the valid available options.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>path</B> ?<I>mode</I>? <I>pattern</I>
+</I></B>
+<DD> Returns a fully formed <I>menuPathName</I> that matches <I>pattern</I>. If no match is found it returns -1. The <I>mode</I> argument indicates how the search is to be matched against <I>pattern</I> and it must have one of the following values:
+</DL>
+<UL>
+<DL>
+<DT> <B>-glob</B>
+</I></B>
+<DD> Pattern is a glob-style pattern which is matched against each component path using the same rules as the string match command.
+</DL>
+<DL>
+<DT> <B>-regexp</B>
+</I></B>
+<DD> Pattern is treated as a regular expression and matched against each component of the <I>menuPathName</I> using the same rules as the regexp command.
+The default mode is -glob.
+</DL>
+</UL>
+<DL>
+<DT> <I>pathName</I> <B>type</B> <I>menuPathName</I>
+</I></B>
+<DD> Returns the type of the component specified by <I>menuPathName</I>. For menu entries, this is the type argument passed to the <B>add</B>/<B>insert</B> widget command when the entry was created, such as <B>command</B> or <B>separator</B>. Othewise it is either a <B>menubutton</B> or a <B>menu</B>.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>yposition</B> <I>menuPathName</I>
+</I></B>
+<DD> Returns a decimal string giving the y-coordinate within the menu window of the topmost pixel in the entry specified by <I>menuPathName</I>. If the <I>menuPathName</I> is not an entry, an error is issued.
+</DL>
+</pre><H2>EXAMPLE ONE: USING GRAMMAR</H2>
+<P>
+The following example creates a menubar with "File", "Edit", "Options" menubuttons. Each of these menubuttons has an associated menu. 
+In turn the File menu has menu entries, as well as the Edit
+menu and the Options menu. The Options menu is a tearoff menu
+with selectColor (for radiobuttons) set to blue.
+In addition, the Options menu has a cascade titled More,
+with several menu entries attached to it as well. An entry widget is 
+provided to display help status.
+<P>
+menubar .mb -helpvariable helpVar -menubuttons {
+    menubutton file -text File -menu {
+        options -tearoff false
+        command new -label New \\
+            -helpstr "Open new document" \\
+            -command {puts NEW}
+        command close -label Close \\
+            -helpstr "Close current document" \\
+            -command {puts CLOSE}
+        separator sep1
+        command exit -label Exit -command {exit} \\
+            -helpstr "Exit application"
+    }
+    menubutton edit -text Edit -menu {
+        options -tearoff false
+        command undo -label Undo -underline 0 \\
+            -helpstr "Undo last command" \\
+            -command {puts UNDO}
+        separator sep2
+        command cut -label Cut -underline 1 \\
+            -helpstr "Cut selection to clipboard" \\
+            -command {puts CUT}
+        command copy -label Copy -underline 1 \\
+            -helpstr "Copy selection to clipboard" \\
+            -command {puts COPY}
+        command paste -label Paste -underline 0 \\
+            -helpstr "Paste clipboard contents" \\
+            -command {puts PASTE}
+    }
+    menubutton options -text Options -menu {
+        options -tearoff false -selectcolor blue
+        radiobutton byName -variable viewMode \\
+            -value NAME -label "by Name" \\
+            -helpstr "View files by name order" \\
+            -command {puts NAME}
+        radiobutton byDate -variable viewMode \\
+            -value DATE -label "by Date" \\
+            -helpstr "View files by date order" \\
+            -command {puts DATE}
+        cascade prefs -label Preferences -menu {
+            command colors -label Colors... \\
+                -helpstr "Change text colors" \\
+                -command {puts COLORS}
+            command fonts -label Fonts... \\
+                -helpstr "Change text font" \\
+                -command {puts FONT}
+        }
+    }
+
+}
+
+<table cellpadding=5>
+<td valign=top>
+frame<br>
+-height<br>
+-textvariable<br>
+-anchor<br>
+-expand<br>
+-fill<br>
+pack<br>
+-fill<br>
+</pre><H2>EXAMPLE<br>
+Alternatively<br>
+could<br>
+using<br>
+configure<br>
+menubar<br>
+-menubuttons<br>
+-text<br>
+command<br>
+command<br>
+separator<br>
+-label<br>
+edit<br>
+<P><br>
+.edit.undo<br>
+0<br>
+.edit.sep2<br>
+.edit.cut<br>
+1<br>
+.edit.copy<br>
+1<br>
+.edit.paste<br>
+0<br>
+.options<br>
+{<br>
+viewMode<br>
+-label<br>
+byDate<br>
+-value<br>
+Date"<br>
+cascade<br>
+-menu<br>
+-label<br>
+-label<br>
+.mb<br>
+nw<br>
+yes<br>
+option<br>
+the<br>
+evaluated<br>
+the<br>
+positive<br>
+is<br>
+string<br>
+commands,<br>
+However,<br>
+into<br>
+single<br>
+can<br>
+enclosing<br>
+curly<br>
+ensures,<br>
+value<br>
+will<br>
+as<br>
+and<br>
+The<br>
+this<br>
+</UL><br>
+Menu"<br>
+menubar<br>
+menubutton<br>
+menubutton<br>
+-menu<br>
+\\<br>
+-variable<br>
+-onvalue<br>
+0<br>
+-text<br>
+</td>
+<td valign=top>
+.fr<br>
+300<br>
+helpVar<br>
+nw<br>
+yes<br>
+both<br>
+.ef<br>
+x<br>
+TWO:<br>
+the<br>
+be<br>
+the<br>
+methods:<br>
+.mb<br>
+{<br>
+File<br>
+new<br>
+close<br>
+sep1<br>
+Quit<br>
+-text<br>
+.mb<br>
+-label<br>
+.mb<br>
+.mb<br>
+-label<br>
+.mb<br>
+-label<br>
+.mb<br>
+-label<br>
+.mb<br>
+-text<br>
+radiobutton<br>
+\\<br>
+"by<br>
+-variable<br>
+DATE<br>
+}<br>
+.options.prefs<br>
+{<br>
+Colors...<br>
+Fonts...<br>
+-side<br>
+-fill<br>
+</pre><H2>CAVEATS</H2><br>
+as<br>
+<B>-menu</B><br>
+by<br>
+<B>subst</B><br>
+side<br>
+that<br>
+may<br>
+and/or<br>
+substitutions<br>
+more<br>
+word.<br>
+be<br>
+candidate<br>
+braces<br>
+for<br>
+for<br>
+still<br>
+a<br>
+not<br>
+following<br>
+case:<br>
+set<br>
+set<br>
+.mb<br>
+file<br>
+edit<br>
+{<br>
+-label<br>
+{[scope<br>
+1<br>
+}<br>
+Options<br>
+</td>
+<td valign=top>
+-width<br>
+entry<br>
+pack<br>
+-fill<br>
+pack<br>
+-expand<br>
+-anchor<br>
+-expand<br>
+USING<br>
+same<br>
+created<br>
+add<br>
+<P><br>
+.mb<br>
+menubutton<br>
+-menu<br>
+-label<br>
+-label<br>
+command<br>
+}<br>
+Edit<br>
+add<br>
+Undo<br>
+add<br>
+add<br>
+Cut<br>
+add<br>
+Copy<br>
+add<br>
+Paste<br>
+add<br>
+Options<br>
+byName<br>
+-value<br>
+Name"<br>
+viewMode<br>
+-label<br>
+.mb<br>
+-label<br>
+command<br>
+command<br>
+}<br>
+left<br>
+x<br>
+The<br>
+well<br>
+option<br>
+menubar<br>
+command.<br>
+of<br>
+the<br>
+contain<br>
+backslash<br>
+might<br>
+than<br>
+These<br>
+protected<br>
+substitutions<br>
+({}).<br>
+example,<br>
+an<br>
+be<br>
+single<br>
+multiple<br>
+example<br>
+<table><br>
+fileMenuName<br>
+var<br>
+-menubuttons<br>
+-text<br>
+-text<br>
+checkbutton<br>
+Check<br>
+var]}<br>
+\\<br>
+menubutton<br>
+}<br>
+</td>
+<td valign=top>
+300<br>
+.ef<br>
+.mb<br>
+x<br>
+.fr<br>
+yes<br>
+sw<br>
+yes<br>
+METHODS</H2><br>
+menu<br>
+by<br>
+and<br>
+<table><br>
+configure<br>
+file<br>
+{<br>
+New<br>
+Close<br>
+quit<br>
+menubutton<br>
+}<br>
+command<br>
+-underline<br>
+separator<br>
+command<br>
+-underline<br>
+command<br>
+-underline<br>
+command<br>
+-underline<br>
+menubutton<br>
+-menu<br>
+-variable<br>
+NAME<br>
+radiobutton<br>
+\\<br>
+"by<br>
+add<br>
+Preferences<br>
+colors<br>
+fonts<br>
+pack<br>
+-anchor<br>
+-expand<br>
+<B>-menubuttons</B><br>
+as<br>
+is<br>
+with<br>
+The<br>
+this<br>
+option<br>
+variables,<br>
+substitutions.<br>
+expand<br>
+a<br>
+expansions<br>
+by<br>
+in<br>
+This<br>
+a<br>
+option<br>
+treated<br>
+value<br>
+values.<br>
+illustrates<br>
+<UL><br>
+"File<br>
+{}<br>
+{<br>
+{$fileMenuName}<br>
+Edit<br>
+check<br>
+\\<br>
+\\<br>
+-offvalue<br>
+options<br>
+</td>
+</table>
+<UL>
+The variable <I>fileMenuName</I> will expand to "File Menu" when the <B>subst</B> command is used on the menubutton specification. In addition, the [<B>scope</B>...] command will expand to @scope :: var. By enclosing these inside {} they stay as a single value. Note that only {} work for this. [list...], "" etc. will not protect these from the subst command.
+</UL>
+</pre><H2>ACKNOWLEDGMENTS</H2>
+<P>
+Bret Schumaker
+<UL>
+1994 - Early work on a menubar widget.
+</UL>
+<P>
+Mark Ulferts, Mark Harrison, John Sigler
+<UL>
+Invaluable feedback on grammar and usability of the menubar widget
+</UL>
+<P>
+</pre><H2>AUTHOR</H2>
+Bill W. Scott
+</pre><H2>KEYWORDS</H2>
+frame, menu, menubutton, entries, help
+
