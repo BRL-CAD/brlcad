@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  85/05/14  01:44:34  dpk
+ * Added changes to support System V (conditional on SYS5)
+ * 
  * Revision 2.0  84/12/26  16:50:32  dpk
  * Version as sent to Berkeley 26 December 84
  * 
@@ -171,6 +174,12 @@ getTERM()
 		*(meas[i]) = (char *)tgetstr(ts,&termp);
 		ts += 2;
 	}
+#ifdef SYS5
+	if (M_AL) TERMINFOfix(M_AL);
+	if (M_DL) TERMINFOfix(M_DL);
+	if (M_IC) TERMINFOfix(M_IC);
+	if (M_DC) TERMINFOfix(M_DC);
+#endif SYS5				
 	if (XS)
 		SO = SE = 0;
 
@@ -183,6 +192,21 @@ getTERM()
 	disp_opt_init();
 }
 
+#ifdef SYS5
+#include <ctype.h>
+/* Find TERMINFO %p# strings in the string and kill them */
+/* This is a SYS5 bug fix.   -DPK- */
+TERMINFOfix(cp)
+char *cp;
+{
+	while (*cp) {
+		if (cp[0]=='%' && cp[1]=='p' && isdigit(cp[2]))
+			strcpy(cp, cp+3);
+		else
+			cp++;
+	}
+}
+#endif SYS5				
 /*
    Deals with output to the terminal, setting up the amount of characters
    to be buffered depending on the output baud rate.  Why it's in a 
