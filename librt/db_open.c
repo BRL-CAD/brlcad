@@ -126,42 +126,30 @@ CONST char	*mode;
 
 	if( mode[0] == 'r' && mode[1] == '\0' )  {
 		/* Read-only mode */
+		dbip->dbi_mf = bu_open_mapped_file( name, "db_i" );
+		if( dbip->dbi_mf == NULL )  goto fail;
+
+		/* Is this a re-use of a previously mapped file? */
+		if( dbip->dbi_mf->apbuf )  {
+			bu_free( (genptr_t)dbip, "db_open: unwanted db_i");
+			dbip = (struct db_i *)dbip->dbi_mf->apbuf;
+			RT_CK_DBI(dbip);
+			dbip->dbi_uses++;
+			if(rt_g.debug&DEBUG_DB)
+				bu_log("db_open(%s) dbip=x%x: reused previously mapped file\n", name, dbip);
+			return dbip;
+		}
+
+		dbip->dbi_eof = dbip->dbi_mf->buflen;
+		dbip->dbi_inmem = dbip->dbi_mf->buf;
+		dbip->dbi_mf->apbuf = (genptr_t)dbip;
+
 #ifdef HAVE_UNIX_IO
-		if( sb.st_size == 0 )  goto fail;
+		/* Do this too, so we can seek around on the file */
 		if( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
 			goto fail;
 		if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
 			goto fail;
-
-#		ifdef HAVE_SYS_MMAN_H
-			/* Attempt to access as memory-mapped file */
-			dbip->dbi_eof = sb.st_size;	/* needed by db_read() */
-			if( (dbip->dbi_inmem = mmap(
-			    (caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
-			    dbip->dbi_fd, (off_t)0 )) == (caddr_t)-1L )  {
-				perror("mmap");
-				dbip->dbi_inmem = (char *)0;
-			} else {
-				if(rt_g.debug&DEBUG_DB)
-					bu_log("db_open: memory mapped file, addr=x%x\n", dbip->dbi_inmem);
-			}
-#		endif
-
-		if( !dbip->dbi_inmem && sb.st_size <= INMEM_LIM )  {
-			dbip->dbi_inmem = bu_malloc( sb.st_size,
-				"in-memory database" );
-			if( read( dbip->dbi_fd, dbip->dbi_inmem,
-			    sb.st_size ) != sb.st_size )
-				goto fail;
-
-			/* Lseek required by Linux to get "fd" and "fp"
-			   in agreement at start of file */
-			if( lseek( dbip->dbi_fd, 0, SEEK_SET ) == (-1) )
-				goto fail;
-			dbip->dbi_eof = sb.st_size;	/* needed by db_read() */
-			if(rt_g.debug&DEBUG_DB)
-				bu_log("db_open: in-memory file\n");
-		}
 #else /* HAVE_UNIX_IO */
 		if( (dbip->dbi_fp = fopen( name, "r")) == NULL )
 			goto fail;

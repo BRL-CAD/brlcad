@@ -221,7 +221,7 @@ long		offset;		/* byte offset from start of file */
 				offset, count, dbip->dbi_eof );
 			return -1;
 		}
-		memcpy( addr, dbip->dbi_inmem + offset, count );
+		memcpy( addr, ((char *)dbip->dbi_inmem) + offset, count );
 		return(0);
 	}
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
