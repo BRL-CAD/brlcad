@@ -309,18 +309,22 @@ register RGBpixel *v;
 	g = ( (*v)[GRN]+26 ) / 51;
 	b = ( (*v)[BLU]+26 ) / 51;
 
-	if ( r == g & r == b ) /* all grey, take average */
-		return greyvec[( ((*v)[RED]+(*v)[GRN]+(*v)[BLU]) / 3 ) /16];
-		
+	if ( r == g )  {
+		if( r == b )  {
+			/* all grey, take average */
+			return greyvec[( ((*v)[RED]+(*v)[GRN]+(*v)[BLU]) / 3 ) /16];
+		}
+		if (r == 0)  {
+			/* r=g=0, all blue */
+			return bluvec[((*v)[BLU])/16];
+		}
+	}
 	else if (g == b && g == 0)	/* all red */
 		return redvec[((*v)[RED])/16];
 		
 	else if (r == b && r == 0)	/* all green */
 		return grnvec[((*v)[GRN])/16];
-		
-	else if (r == g && r == 0)	/* all blue */
-		return bluvec[((*v)[BLU])/16];
-		
+
 	else				/* color cube val */
 		return 215 - (r + g * 6 + b * 36);
 }
