@@ -33,6 +33,7 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #define RI_AIR		1.0    /* Refractive index of air.		*/
 
 HIDDEN int	rr_hit(), rr_miss();
+HIDDEN int	rr_refract();
 
 extern vect_t	background;
 
@@ -49,10 +50,14 @@ char	*dp;
 	auto struct application sub_ap;
 	auto fastf_t	f;
 	auto vect_t	work;
+	auto vect_t	incident_dir;
+	auto vect_t	filter_color;
 
-	if( (swp->sw_reflect <= 0 && swp->sw_transmit <= 0) ||
-	    ap->a_level > MAX_BOUNCE )  {
+	if( swp->sw_reflect <= 0 && swp->sw_transmit <= 0 )
+		goto finish;
+	if( ap->a_level > MAX_BOUNCE )  {
 		/* Nothing more to do for this ray */
+		rt_log("rr_render: lvl=%d, stopping\n", ap->a_level);
 		goto finish;
 	}
 
@@ -88,7 +93,6 @@ char	*dp;
 			swp->sw_reflect, sub_ap.a_color);
 	}
 	if( swp->sw_transmit > 0 )  {
-		LOCAL vect_t incident_dir;
 
 		/* Calculate refraction at entrance. */
 		sub_ap = *ap;		/* struct copy */
@@ -97,20 +101,23 @@ char	*dp;
 		sub_ap.a_user = (int)(pp->pt_regionp);
 		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
 		VMOVE( incident_dir, ap->a_ray.r_dir );
-		if( !phg_refract(incident_dir, /* Incident ray (IN) */
+		if( !rr_refract(incident_dir, /* Incident ray (IN) */
 			swp->sw_hit.hit_normal,
 			RI_AIR, swp->sw_refrac_index,
 			sub_ap.a_ray.r_dir	/* Refracted ray (OUT) */
 		) )  {
 			/* Reflected back outside solid */
+			VSETALL( filter_color, 1 );
 			goto do_exit;
 		}
+		VMOVE( filter_color, pp->pt_regionp->reg_mater.ma_transmit );
+
 		/* Find new exit point from the inside. */
 do_inside:
 		sub_ap.a_hit =  rr_hit;
 		sub_ap.a_miss = rr_miss;
 		if( rt_shootray( &sub_ap ) == 0 )  {
-			if(rdebug&RDEBUG_HITS)rt_log("phong: Refracted ray missed '%s' -- RETRYING, lvl=%d\n",
+			if(rdebug&RDEBUG_HITS)rt_log("rr_render: Refracted ray missed '%s' -- RETRYING, lvl=%d\n",
 				pp->pt_inseg->seg_stp->st_name,
 				sub_ap.a_level );
 			/* Back off just a little bit, and try again */
@@ -118,7 +125,7 @@ do_inside:
 			VJOIN1( sub_ap.a_ray.r_pt, sub_ap.a_ray.r_pt,
 				-0.5, incident_dir );
 			if( rt_shootray( &sub_ap ) == 0 )  {
-				rt_log("phong: Refracted ray missed 2x '%s', lvl=%d\n",
+				rt_log("rr_render: Refracted ray missed 2x '%s', lvl=%d\n",
 					pp->pt_inseg->seg_stp->st_name,
 					sub_ap.a_level );
 				VPRINT("pt", sub_ap.a_ray.r_pt );
@@ -144,14 +151,14 @@ do_inside:
 
 		/* Calculate refraction at exit. */
 		VMOVE( incident_dir, sub_ap.a_ray.r_dir );
-		if( !phg_refract( incident_dir,		/* input direction */
+		if( !rr_refract( incident_dir,		/* input direction */
 			sub_ap.a_vvec,			/* exit normal */
 			swp->sw_refrac_index, RI_AIR,
 			sub_ap.a_ray.r_dir		/* output direction */
 		) )  {
 			/* Reflected internally -- keep going */
 			if( (++sub_ap.a_level)%100 > MAX_IREFLECT )  {
-				rt_log("phong: %s Excessive internal reflection (x%d, y%d, lvl=%d)\n",
+				rt_log("rr_render: %s Excessive internal reflection (x%d, y%d, lvl=%d)\n",
 					pp->pt_inseg->seg_stp->st_name,
 					sub_ap.a_x, sub_ap.a_y, sub_ap.a_level );
 				if(rdebug&RDEBUG_SHOWERR) {
@@ -173,8 +180,9 @@ do_exit:
 		if( sub_ap.a_user == 0 )  {
 			VMOVE( sub_ap.a_color, background );
 		}
+		VELMUL( work, filter_color, sub_ap.a_color );
 		VJOIN1( swp->sw_color, swp->sw_color,
-			swp->sw_transmit, sub_ap.a_color );
+			swp->sw_transmit, work );
 	}
 finish:
 	return(1);
@@ -290,7 +298,7 @@ bad:
  *  Note:  output (v_2) can be same storage as an input.
  */
 HIDDEN int
-phg_refract( v_1, norml, ri_1, ri_2, v_2 )
+rr_refract( v_1, norml, ri_1, ri_2, v_2 )
 register vect_t	v_1;
 register vect_t	norml;
 double	ri_1, ri_2;
@@ -300,12 +308,12 @@ register vect_t	v_2;
 	FAST fastf_t	beta;
 
 	if( NEAR_ZERO(ri_1, 0.0001) || NEAR_ZERO( ri_2, 0.0001 ) )  {
-		rt_log("phg_refract:ri1=%g, ri2=%g\n", ri_1, ri_2 );
+		rt_log("rr_refract:ri1=%g, ri2=%g\n", ri_1, ri_2 );
 		beta = 1;
 	} else {
 		beta = ri_1/ri_2;		/* temp */
 		if( beta > 10000 )  {
-			rt_log("phg_refract:  beta=%g\n", beta);
+			rt_log("rr_refract:  beta=%g\n", beta);
 			beta = 1000;
 		}
 	}
