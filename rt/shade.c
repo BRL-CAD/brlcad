@@ -69,6 +69,7 @@ register struct shadework *swp;
 	RT_CK_RTI(ap->a_rt_i);
 	RT_CK_PT(pp);
 	RT_CK_HIT(pp->pt_inhit);
+	RT_CK_RAY(pp->pt_inhit->hit_rayp);
 	rp = pp->pt_regionp;
 	RT_CK_REGION(rp);
 	mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs;
@@ -183,6 +184,8 @@ register struct shadework *swp;
 register int	want;
 {
 	register int	have;
+
+	RT_CK_RAY( swp->sw_hit.hit_rayp );
 
 	/* These calcuations all have MFI_HIT as a pre-requisite */
 	if( want & (MFI_NORMAL|MFI_LIGHT|MFI_UV) )

@@ -691,6 +691,7 @@ struct seg *finished_segs;
 	RT_CK_PT(pp);
 	hitp = pp->pt_inhit;
 	RT_CK_HIT(hitp);
+	RT_CK_RAY(hitp->hit_rayp);
 	ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
 
 	if(rdebug&RDEBUG_HITS)  {
