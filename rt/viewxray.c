@@ -105,7 +105,8 @@ int minus_o;
 		pixsize = 0;
 	}
 	if( pixsize ) {
-		scanbuf = rt_malloc( width*pixsize, "scanline buffer" );
+		scanbuf = (unsigned char *)
+			rt_malloc( width*pixsize, "scanline buffer" );
 	}
 
 	if( minus_o ) {
