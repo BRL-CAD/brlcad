@@ -127,6 +127,7 @@ ARCHDIR=/m/.
 ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 
 # Every shell script to be distributed must be listed here.
+# Scripts to be installed in $BINDIR need to be listed in setup.sh $SCRIPTS also.
 TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 		cray.sh cray-ar.sh ranlib5.sh sgisnap.sh \
 		machinetype.sh gen.sh setup.sh newvers.sh \
