@@ -68,6 +68,7 @@ int		rateflag_slew;
 vect_t		rate_slew;
 int		rateflag_rotate;
 vect_t		rate_rotate;
+vect_t		absolute_rotate;	/* selected by mged_variables.rateknobs */
 int		rateflag_zoom;
 fastf_t		rate_zoom;
 
@@ -865,19 +866,38 @@ char	**argv;
 		switch( cmd[0] )  {
 		case 'x':
 			dm_values.dv_xjoy = f;
-			rate_rotate[X] = f;
+			if( mged_variables.rateknobs )  {
+				rate_rotate[X] = f;
+			} else {
+				VSETALL(rate_rotate, 0);
+				absolute_rotate[X] = f;
+				absview_v( absolute_rotate );
+			}
 			break;
 		case 'y':
 			dm_values.dv_yjoy = f;
-			rate_rotate[Y] = f;
+			if( mged_variables.rateknobs )  {
+				rate_rotate[Y] = f;
+			} else {
+				VSETALL(rate_rotate, 0);
+				absolute_rotate[Y] = f;
+				absview_v( absolute_rotate );
+			}
 			break;
 		case 'z':
 			dm_values.dv_zjoy = f;
-			rate_rotate[Z] = f;
+			if( mged_variables.rateknobs )  {
+				rate_rotate[Z] = f;
+			} else {
+				VSETALL(rate_rotate, 0);
+				absolute_rotate[Z] = f;
+				absview_v( absolute_rotate );
+			}
 			break;
 		case 'X':
 			dm_values.dv_xslew = f;
-			rate_slew[X] = f;
+			if( mged_variables.rateknobs )
+				rate_slew[X] = f;
 			break;
 		case 'Y':
 			dm_values.dv_yslew = f;
