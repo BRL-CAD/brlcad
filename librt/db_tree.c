@@ -1745,10 +1745,11 @@ int		lim;
 
 /* ============================== */
 
-HIDDEN union tree *db_gettree_region_end( tsp, pathp, curtree )
+HIDDEN union tree *db_gettree_region_end( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 
 	RT_CK_DBI(tsp->ts_dbip);
@@ -1762,11 +1763,12 @@ union tree		*curtree;
 	return(curtree);
 }
 
-HIDDEN union tree *db_gettree_leaf( tsp, pathp, ext, id )
+HIDDEN union tree *db_gettree_leaf( tsp, pathp, ext, id, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct bu_external	*ext;
 int			id;
+genptr_t		client_data;
 {
 	register union tree	*curtree;
 
