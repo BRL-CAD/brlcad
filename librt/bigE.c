@@ -1274,7 +1274,19 @@ shoot_and_plot(point_t			start_pt,
 				{
 					if( !leaf->l.stp->st_matp && !shoot->l.stp->st_matp )
 						dont_shoot = 1;
-					else if( bn_mat_is_equal( leaf->l.stp->st_matp,
+					else if( !leaf->l.stp->st_matp &&
+						 bn_mat_is_equal( shoot->l.stp->st_matp,
+								  bn_mat_identity,
+								  &dgcdp->dgop->dgo_wdbp->wdb_tol ) )
+						dont_shoot = 1;
+					else if( !shoot->l.stp->st_matp &&
+						 bn_mat_is_equal( leaf->l.stp->st_matp,
+								  bn_mat_identity,
+								  &dgcdp->dgop->dgo_wdbp->wdb_tol ) )
+						dont_shoot = 1;
+					else if( leaf->l.stp->st_matp &&
+						 shoot->l.stp->st_matp &&
+						 bn_mat_is_equal( leaf->l.stp->st_matp,
 								  shoot->l.stp->st_matp,
 								  &dgcdp->dgop->dgo_wdbp->wdb_tol ) )
 						dont_shoot = 1;
@@ -1287,7 +1299,19 @@ shoot_and_plot(point_t			start_pt,
 				{
 					if( !leaf->l.stp->st_matp && !shoot->l.stp->st_matp )
 						dont_shoot = 1;
-					else if( bn_mat_is_equal( leaf->l.stp->st_matp,
+					else if( !leaf->l.stp->st_matp &&
+						 bn_mat_is_equal( shoot->l.stp->st_matp,
+								  bn_mat_identity,
+								  &dgcdp->dgop->dgo_wdbp->wdb_tol ) )
+						dont_shoot = 1;
+					else if( !shoot->l.stp->st_matp &&
+						 bn_mat_is_equal( leaf->l.stp->st_matp,
+								  bn_mat_identity,
+								  &dgcdp->dgop->dgo_wdbp->wdb_tol ) )
+						dont_shoot = 1;
+					else if( leaf->l.stp->st_matp &&
+						 shoot->l.stp->st_matp &&
+						 bn_mat_is_equal( leaf->l.stp->st_matp,
 								  shoot->l.stp->st_matp,
 								  &dgcdp->dgop->dgo_wdbp->wdb_tol ) )
 						dont_shoot = 1;
