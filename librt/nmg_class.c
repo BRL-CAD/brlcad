@@ -1489,7 +1489,8 @@ int		newclass;
  *		1. Select any EU from LU.
  *		2. Find EU_REF from LU_REF that is shared with EU.
  *		3. If left vector of EU is opposite left vector of EU_REF,
- *			then classification is NMG_CLASS_AoutB.
+ *			then classification is either NMG_CLASS_AoutB or
+ *			NMG_CLASS_AinB.
  *			(This is the case where one lu exactly fills a hole
  *			 that the other lu creates in a face).
  *		4. If the left vectors agree, then the loops are shared -
@@ -1503,17 +1504,21 @@ int		newclass;
  *		NMG_CLASS_AoutB
  */
 static int
-class_shared_lu( lu, lu_ref )
-struct loopuse *lu;
-struct loopuse *lu_ref;
+class_shared_lu( lu, lu_ref, tol )
+CONST struct loopuse *lu;
+CONST struct loopuse *lu_ref;
+CONST struct rt_tol *tol;
 {
+	struct shell *s_ref;
 	struct edgeuse *eu;
 	struct edgeuse *eu_ref;
+	struct edgeuse *eu_start,*eu_tmp;
 	vect_t left;
 	vect_t left_ref;
 
 	NMG_CK_LOOPUSE( lu );
 	NMG_CK_LOOPUSE( lu_ref );
+	RT_CK_TOL( tol );
 
 	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
 	for( RT_LIST_FOR( eu_ref, edgeuse, &lu_ref->down_hd ) )
@@ -1540,13 +1545,51 @@ struct loopuse *lu_ref;
 		rt_bomb( "class_shared_lu() couldn't get a left vector for EU\n" );
 	}
 
-	if( VDOT( left, left_ref ) < 0.0 )
-		return( NMG_CLASS_AoutB );
+	if( VDOT( left, left_ref ) > 0.0 )
+	{
+		/* loop is either shared or anti */
+		if( eu->vu_p->v_p == eu_ref->vu_p->v_p ) 
+			return( NMG_CLASS_AonBshared );
+		else
+			return( NMG_CLASS_AonBanti );
+	}
 
-	if( eu->vu_p->v_p == eu_ref->vu_p->v_p ) 
-		return( NMG_CLASS_AonBshared );
-	else
-		return( NMG_CLASS_AonBanti );
+	/* loop is either in or out
+	 * look at next radial edge from lu_ref shell if that faceuse
+	 * is OT_OPPOSITE, then we are "in", else "out"
+	 */
+
+	s_ref = nmg_find_s_of_eu( eu_ref );
+	eu_start = eu;
+	eu_tmp = eu_start->eumate_p->radial_p;
+	while( eu_tmp != eu_start )
+	{
+		vect_t left_tmp;
+		struct faceuse *fu;
+
+		fu = nmg_find_fu_of_eu( eu_tmp );
+		if( fu->s_p == s_ref )
+		{
+			if( nmg_find_eu_leftvec( left_tmp, eu_tmp ) )
+			{
+				rt_log( "class_shared_lu() couldn't get a left vector for EU x%x\n", eu_tmp );
+				rt_bomb( "class_shared_lu() couldn't get a left vector for EU\n" );
+			}
+
+			if( VDOT( left, left_tmp ) < tol->para )
+			{
+				if( fu->orientation == OT_SAME )
+					return( NMG_CLASS_AoutB );
+				else
+					return( NMG_CLASS_AinB );
+			}
+			else
+				return( NMG_CLASS_Unknown );
+		}
+		eu_tmp = eu_tmp->eumate_p->radial_p;
+	}
+
+	return( NMG_CLASS_Unknown );
 }
 
 /*
@@ -1901,9 +1944,9 @@ retry:
 				rt_log( "\tFound a matching LU's x%x and x%x\n", lu, q_lu );
 
 			if( fu_qlu->orientation == OT_SAME )
-				test_class = class_shared_lu( lu, q_lu );
+				test_class = class_shared_lu( lu, q_lu, tol );
 			else if( fu_qlu->orientation == OT_OPPOSITE )
-				test_class = class_shared_lu( lu, q_lu->lumate_p );
+				test_class = class_shared_lu( lu, q_lu->lumate_p, tol );
 			else
 			{
 				rt_log( "class_lu_vs_s: FU x%x for lu x%x matching lu x%x has bad orientation (%s)\n",
