@@ -146,7 +146,8 @@ typedef long long	bitv_t;	/* largest integer type */
 #ifdef ardent
 /********************************
  *				*
- *  Ardent Workstation		*
+ *  Stardent (formerly Ardent) 	*
+ *  "Titan" Workstation		*
  *				*
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
@@ -157,7 +158,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 /* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines, for now */
 #define MAX_PSW		4	/* # processors, max */
-#define DEFAULT_PSW	MAX_PSW
+#define DEFAULT_PSW	1
 #define PARALLEL	1
 #endif
 
