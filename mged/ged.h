@@ -140,6 +140,9 @@ extern fastf_t	c_tdist;	/* Cursor tick distance */
 extern fastf_t	angle1;		/* Angle to solid wiper */
 extern fastf_t	angle2;		/* Angle to dashed wiper */
 
+/* defined in ged.c */
+extern FILE *infile;
+extern FILE *outfile;
 /*
  *	GED functions referenced in more than one source file:
  */
