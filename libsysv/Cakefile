@@ -6,13 +6,12 @@
  *	BSD "select" interface (on selected machines)
  *
  *  On a Berkeley machine, this library additionally provides:
- *	getopt
  *	strchr
  *
  */
 #define PRODUCTS	libsysv.ARCH_SUF
 #define SRCDIR	libsysv
-#define FILES	linebuf regex redata regcomp regerror regexec regfree EXTRA_FILES
+#define FILES regex redata
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
@@ -23,16 +22,6 @@
 
 #ifdef	LIBSYSV_SETUP
 #	define	EXTRA_SETUP	LIBSYSV_SETUP
-#endif
-
-#ifdef BSD
-# if	BSD < 43
-#	define EXTRA_FILES	getopt memset
-# else
-#	define EXTRA_FILES	getopt
-# endif
-#else
-#	define EXTRA_FILES	/**/
 #endif
 
 #include "../Cakefile.lib"
