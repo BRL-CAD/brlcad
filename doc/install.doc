@@ -1,12 +1,11 @@
 .\" $Header$
 .\" tbl install.doc | troff -t -ms | catimp -P imt1
 .TL
-PRELIMINARY
 Installing the BRL-CAD Package
 .br
 Release 4.0
 .sp
-23-July-1991
+10-October-1991
 .AU
 Michael John Muuss
 .AI
@@ -20,7 +19,8 @@ This document is printed from the file ``doc/install.doc'' in
 the BRL-CAD source tree.
 The printed copies are usually somewhat older than the version on
 the actual distribution tape.
-When installing the software, please refer to the version from
+When installing the software,
+please refer to the version of this document found on
 the distribution tape.
 .NH 1
 GOING QUICKLY
@@ -59,16 +59,15 @@ Please recall that to obtain this software, you agreed that
 before using the software at additional sites, or for permission to
 use this work as part of a commercial package, you would first obtain
 authorization from BRL.
-The full terms of the distribution agreement are in the file "README".
 .NH 1
 INTRODUCTION
 .PP
 The BRL-CAD Package software is distributed only in source code form.
 There are quite a number of advantages to this.
-The most important advantage is that a single distribution tape
+The most important advantage is that only a single distribution tape
 has to be prepared;  this distribution tape contains the complete
 software for all currently supported machines.
-All the recipient of this software has to do is compile the source
+All a BRL-CAD recipient needs to do is compile the source
 code, and install the resulting binaries.
 The second most important advantage of a source-code-only distribution
 is that it gives you complete control of your destiny.
@@ -112,6 +111,7 @@ l l l l l.
 MTYPE	Hardware	Software	Framebuffer	MGED
 _
 fx	Alliant FX/8, /80	Concentrix 3.0, 4.0	net	-
+fy	Alliant FX/2800	Concentrix 5	net	-
 c1	Convex C1	UNIX 6.2.32.2	net	-
 xmp	Cray X-MP	UNICOS 5.1.11	net,X11	X11
 cr2	Cray-2	UNICOS 4.0.7	net,X11	X11
@@ -119,9 +119,10 @@ vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	adage, net	-
 sel	Gould PN6080, PN9080	UTX/32 Rel 2.0	net,X11	X11
 pyr	Pyramid 9820	OSx Version 4.1	net	-
 3d	SGI 3030	Version 3.5, 3.6	sgi, net	sgi
-4d	SGI 4D	Irix 3.2	sgi, net	sgi
-sun3	Sun-3/*	SunOS 3.4	sun,net,X11	sun,X11
-sun4	Sun-4/*	SunOS 4.0	sun, net	sun
+4d	SGI 4D	Irix 3.3	sgi, net	sgi
+sun3	Sun-3/*	SunOS 3.4,4.1.1	sun,net,X11	sun,X11,XGL
+sun4	Sun-4/*	SunOS 4.0,4.1.1	sun, net	sun,X11,XGL
+ibm	RS/6000	AIX	net,X11	X11
 .TE
 .IP b)
 With slight modifications to the configuration files, these
@@ -134,14 +135,18 @@ center box;
 l l l.
 MTYPE	Hardware	Software
 _
-ard	Ardent	System V
-eta	ETA-10	System V
-vax	DEC VAX-11	Berkeley 4.1 BSD
-3d	SGI 3030	Version 3.4 (TCP or XNS)
-stl	Stellar	System V
-apollo	Apollo	SR10
+5d	SGI 4D	IRIX 4.0
+apollo	Apollo	SR10.1
+ard	Stardent Titan	System V
 aux	Apple Mac II	AUX 1.0
+eta	ETA-10	System V
+ipsc	iPSC/860 Hypercube	NX/2
+n16	Encore Multi-Max	System V
 next	NeXT	NeXT 2.0
+np1	Gould NP1	UTX
+stad	Stardent VISTRA	System V
+stl	Stellar	System V
+vax	DEC VAX-11	Berkeley 4.1 BSD
 .TE
 These systems are not considered ``supported'', but should work with
 little or no effort.
@@ -157,15 +162,17 @@ Optional framebuffer support is:
 .TS
 center box;
 l l.
-if_remote	Network access to remote display
+if_ab	Abekas A60 videodisk (ethernet)
 if_adage	Adage RDS-3000 ("Ikonas")
+if_ptty	AT&T 5620 w/special Moss layer
+if_sun	SunView interface
+if_ts	TekSource VME framebuffer
+if_rat	Raster Technology One/80
+if_remote	Network access to remote display
 if_sgi	SGI Iris 3-D display
 if_4d	SGI 4-D display
-if_sun	SunView interface
-if_ptty	AT&T 5620 w/special Moss layer
 if_ug	Ultra Graphics
-if_rat	Raster Technology One/80
-if_X	X Window System (X11R3)
+if_X	X Window System (X11R3, R4, R5)
 .TE
 .PP
 At present, all versions of \fBmged\fR have support for these types of
@@ -189,12 +196,13 @@ dm-4d	SGI 4-D
 dm-sun	SUN 3.2 Pixwin
 dm-rat	Raster Tech One/180,380
 dm-rat80	Raster Tech One/80
-dm-X	X Window System (X11R4)
+dm-X	X Window System (X11R4, R5)
+dm-xgl	SUN XGL interface
 .TE
 .NH 1
 LOADING THE SOFTWARE
 .IP 1)
-Find a disk with about 100 Mbytes of free space that you can use.
+Find a disk with 100-150 Mbytes of free space that you can use.
 The BRL-CAD Package is distributed in source code form only,
 so you will need enough space to simultaneously store
 the source material, documentation, binary files, and test images.
@@ -541,8 +549,9 @@ to make these directories, or have a superuser make them for you:
 	mkdir /usr/brlcad
 	cd /usr/brlcad
 	mkdir bin lib etc include man vfont
-	chmod 775 bin lib etc include man vfont
-	chown YOURNAME bin lib etc include man vfont
+	mkdir man/man1 man/man3 man/man5
+	chmod 775 * */*
+	chown YOURNAME * */*
 .sp .5
 .fi
 .ft R
@@ -661,7 +670,7 @@ into BINDIR.
 Finally, it compiles \fBcake\fR and \fBcakeaux\fR.
 .PP
 Once this is complete, if you use \fBcsh\fR for your login shell,
-(or a derrivative of \fBcsh\fR, such as \fBtcsh\fR), run:
+(or a derivative of \fBcsh\fR, such as \fBtcsh\fR), run:
 .ft B
 .sp .5
 	rehash
@@ -727,9 +736,13 @@ The reference images are also located in the "pix/" directory.
 .PP
 For example,
 if you are running the benchmark on a Cray X-MP, as I'm sure all of you
-are, the world.pix and bldg391.pix images will have a single byte in the
-blue channel off by 1, out in the cloud background.  This is not to be
-considered an error.
+are,
+moss.pix will have 152554 pixels off by 1,
+world.pix will have two pixels off by 1,
+and m35.pix will have 75 pixels off by 1.
+This is not to be considered an error, as it is a consequence of
+differences arising from Cray's different hardware floating point format,
+division algorithm, and rounding rules.
 .NH 1
 GENERAL STRUCTURE OF THE SOFTWARE
 .PP
@@ -772,7 +785,7 @@ concentrated in the single file \fBCakefile.defs\fR,
 with per-product structural information in the individual
 \fBCakefile\fRs located in each sub-directory.
 \fBCakefile.rules\fR contains all the rules which are used to
-implement the ancilliary operations (such as "typeset", "install", etc),
+implement the ancillary operations (such as "typeset", "install", etc),
 and these rules then apply uniformly in all product directories.
 While this complex structure may seem overwhelming at first,
 once established, it makes the task of configuration very simple.
@@ -845,24 +858,6 @@ GID of -2 is intentional):
 .ft B
 nobody:*:-2:-2:NFS Unprivileged user:/nonexistent:/dev/null
 .ft R
-.NH 3
-Special RFBD Considerations on an SGI running 4Sight
-.PP
-If your SGI is running 4Sight (also known as MAX) rather than MEX,
-and you desire to run the remote frame buffer daemon, so that remote
-machines can display images on your workstation,
-you will need to run these additional commands:
-.sp .5
-.nf
-.ft B
-	mkdir /usr/brlcad/etc/NeWS
-	cp contributed/init.ps /usr/brlcad/etc/NeWS/init.ps
-.ft R
-.fi
-.sp .5
-This will allow
-.B fbserv
-to start the 4Sight window system when a remote connection is made.
 .NH 2
 Special Kernel/Shared Memory Considerations on all SGI systems
 .PP
@@ -906,7 +901,7 @@ The first step is enhancing \fBmachinetype.sh\fR and \fBCakefile.defs\fR
 to recognize the type of machine that you are using.
 Both of these files use the same technique:
 they directly run the C Preprocessor (/lib/cpp) and
-test for the existance of a vendor-specific pre-defined symbol that
+test for the existence of a vendor-specific pre-defined symbol that
 identifies the machine type,
 using C \fB#ifdef\fR constructions.
 For example, on a DEC VAX, the test \fB#ifdef vax\fR is true,
@@ -915,8 +910,12 @@ The documentation for the C Compiler \fBcc\fR(1)
 will often mention the vendor-specific symbol to test for.
 If not, a little playful experimentation with the vendor's name
 and the machine model name/number will usually suffice.
-Sometimes two symbols need to be checked (eg, on the SGI machines)
+Sometimes two symbols need to be checked
 to tell certain incompatible models apart.
+For example, on the SGI machines,
+both "sgi" and "mips" need to be checked.
+If defined(sgi) and !defined(mips), then it is a 3030,
+if defined(sgi) and defined(mips), then it is a 4D.
 Sometimes it is worse than that.
 .PP
 Update \fBmachinetype.sh\fR first;  it is easier to experiment with
@@ -963,7 +962,7 @@ and making any necessary corrections.
 .PP
 If \fBmachinetype.sh\fR reports that HAS_TCP=0, ie, 
 this is a machine without TCP network capability,
-the \fBgen.sh\fR script will automaticly delete
+the \fBgen.sh\fR script will automatically delete
 \fBfbserv\fR and \fBlibpkg\fR from the PRODUCTS list,
 as they serve no purpose in a non-networked environment.
 .NH 2
@@ -1082,7 +1081,7 @@ chosen based on BSD or SYSV with this code:
 Library post-processing (ranlib)
 .PP
 The program to run to properly post-process an archive which is
-intended to be a subroutine library is specified by the symbol GETHOST.
+intended to be a subroutine library is specified by the symbol RANLIB.
 The default values are chosen with the code below.
 Note that on older System V release, no post-processing is possible,
 so the command \fBecho\fR is substituted.
@@ -1134,14 +1133,14 @@ this library is necessary, as the debug and disk-file interfaces are
 always useful.
 Lacking any displays at all, you may be able to utilize
 the bw-impress(1) program to produce pictures on an Imagen
-laser-printer.
+laser-printer, or bw-px(1) to produce a PostScript image.
 .PP
 The philosophy of \fBlibfb\fR is that it is a fully self-contained
 library.
 An applications program that desires to have framebuffer support
 need only link with \fBlibfb\fR, and all subroutines that may be
 needed on that machine will be provided.
-Frequenctly, this means that \fBlibfb\fR will have to include
+Frequently, this means that \fBlibfb\fR will have to include
 object modules drawn from one or more vendor-specific libraries,
 as well as the object modules from the BRL-CAD source files.
 If the symbol LIBFB_SETUP is defined, then libfb/Cakefile will
@@ -1171,44 +1170,35 @@ This is taken directly from Cakefile.defs:
 .sp .5
 .nf
 .ft B
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
-#	define	LIBFB_OBJS	if_remote pkg if_sun
-#	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \\
-		rm -f libfb.a; cd tmp; \\
-		AR x /usr/lib/libsuntool.a; \\
-		AR x /usr/lib/libsunwindow.a; \\
-		AR x /usr/lib/libpixrect.a; \\
-		AR uv ../libfb.a *; \\
-		cd ..; rm -fr tmp)
+#	define	LIBFB_OBJS	if_remote if_ab if_sun
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN
+#	define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
 .ft R
 .fi
 .sp .5
 The first important thing to note is that when adding support for
-the network "remote" framebuffer capability, \fItwo\fR object files
-are added to the LIBFB_OBJS definition:  "if_remote" for the actual
-interface code and "pkg" for the network interface routines (drawn
-from \fBlibpkg\fR).
-The second important thing to note is the definition of LIBFB_SETUP,
-which includes the entire contents of three SUN-specific libraries
-in \fBlibfb\fR, so that \fBlibfb\fR is completely self-contained.
+the network "remote" framebuffer capability,
+"if_remote" is listed as an object file,
+and "LIBPKG" is added to the library list
+for the network interface routines.
+Also note that the definition of LIBFB_LIBES
+mentions three SUN-specific libraries that will also be used when
+building applications that use LIBFB.
 .PP
 As a final example, configuring a machine to use the
-X Window System (X11R3) as a framebuffer uses these definitions:
+X Window System (X11) as a framebuffer might use these definitions:
 .sp .5
 .nf
 .ft B
-#	define	LIBFB_CONFIG	-DIF_X  -I/usr/local/include/X11
-#	define	LIBFB_OBJS	if_X
-#	define	LIBFB_SETUP	(rm -f PRODUCTS; \\
-		cp /usr/local/lib/libX11.a PRODUCTS; \\
-		AR uv PRODUCTS *.o )
+#	define  LIBFB_OBJS      if_remote if_X
+#	define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I/usr/local/include/X11
+#	define	LIBFB_LIBES	LIBPKG -L/usr/local/lib/X11 -lX11
 .ft R
 .fi
 .sp .5
-Note how the X11 include directory is added to LIBFB_CONFIG,
-and how the PRODUCTS (libfb.a) file is first initialized with
-a full copy of the X11 library, and then the \fBlibfb\fR modules
-are added into that.
+Note how the X11 include directory may need to be added to LIBFB_CONFIG,
+and the location of the X11 library may need to be indicated with a "-L"
+flag in LIBFB_LIBES.
 .PP
 If you change the configuration of libfb
 partway through building the system, be certain to run
@@ -1386,13 +1376,23 @@ In recent releases of System V, DWB has been unbundled.
 This means that for these systems, the
 \fBman\fR command no longer runs \fBnroff\fR to typeset
 the manual pages as they are needed.
-This spoils our whole strategy for installing
-\fBnroff\fR source documents for all the manual pages.
-As a consequence, the operation of a \fBcake install\fR
-on such a system will report numerous errors about
-being unable to install the manual pages.
-This is known to be a problem with the SGI and Cray machines.
-It is unclear what can be done about it.
+As a result, a new strategy is employed for installing manual pages.
+They now go in INSTDIR/man/man1, man3, and man5,
+rather than into the system's manual directories.
+At a minimum, this means that your users will have to add /usr/brlcad/man
+to their MANPATH environment variable.
+.PP
+If your \fBman\fR command does not honor the MANPATH variable,
+or your system does not have DWB installed, then you can always fall back
+to using the \fBbrlman\fR command.
+A replacement for \fBnroff\fR known as \fBawf\fR is provided,
+and is used as the basis for the \fBbrlman\fR command (which is just
+a shell script).
+\fBawf\fR is the Amazingly Workable Formatter,
+kindly provided by Henry Spencer at U of Toronto Zoology,
+<henry@zoo.toronto.edu>.
+In this way, all systems can have nicely formatted manual pages online,
+while leaving the sources for the manual pages in \fBnroff\fR format.
 .NH 2
 C to FORTRAN Linkage
 .PP
@@ -1485,29 +1485,13 @@ gclear::4:5::/tmp:/usr/bin/gclear
 Currently there are no good solutions to these problems.  Voice your
 opinions to the vendor.
 .NH 2
-SILICON GRAPHICS 3-D, Version 3.4
-.PP
-Support for the Silicon Graphics Iris 3-D product running SGI software
-release 3.4 has not been tested at BRL with this release of BRL-CAD.
-However, the necessary definitions are still carried in
-\fBCakefile.defs\fR, and if you are still using SGI release 3.4,
-things will probably work.
-In the SGI 3-D section, define the symbol "Version3_4"
-right before where it is checked, eg:
-.sp .5
-.nf
-.ft B
-#	define	Version3_4	yes
-#	ifdef	Version3_4
-.ft R
-.fi
-.sp .5
-With a little luck, this should result in working software.
-.NH 2
 SILICON GRAPHICS 4-D WARNINGS
 .PP
 There is utterly no support for SGI 4-D machines running SGI software
 releases earlier than 3.0 \(em they don't work well.
+Similarly, IRIX 4.0 had not been released at the time BRL-CAD Release 4.0
+was being finalized, so it is unclear how well this combination will work.
+Contact BRL for an errata sheet when IRIX 4.0 is available.
 .NH 2
 ALLIANT WARNINGS
 .PP
@@ -1525,75 +1509,33 @@ cake
 .NH 2
 CRAY WARNINGS
 .PP
-When performing multi-tasking on both the XMP and Cray-2,
-the librt/timerunix.c routine has great difficulty in collecting
-correct timing.  On the average, one run in four will have correct
-timing data.  This is due to a wierd interaction between the
-Cray multi-tasking library and the UNIX times() system call.
-In particular, the multi-tasking library provides an arbitrary
-mapping between ``virtual cpu'' and tfork()-ed UNIX process, so
-that the ``main'' thread of control can land in any process in
-the multi-tasking group \(em but only one of those processes is
-the parent process, where timing data is being collected.
-Presently, there is no known fix, except to re-run the benchmarks
-many times, and only use timing data from runs where the
-``rt_parallel: PID changed ...'' warning does not occur.
+When running \fBrt\fR on multiple processors on either the XMP and Cray-2,
+the message
+``rt_parallel: PID changed ..., open file table may be botched''
+can (finally) be safely ignored.  As of UNICOS 5, the open file table
+is no longer botched when this condition occurs.
 .PP
-Ignore these error messags:
+Ignore warning messags of this form:
 .sp .5
-.ft B
-.nf
- * W * :../librle/scanargs.c: 246: CC121 - Unused Expression Ignored
-.fi
-.ft R
-.PP
-Programs which link with \fBlibfb\fR will get these error messages,
-which should be ignored:
-.sp .5
-.ft B
-.nf
- *CAUTION* DUPLICATE ENTRY- dup2 DISCOVERED IN MODULE-$dup2 FROM FILE-/lib/libc.o;IGNORED
-     ENTRY WAS PREVIOUSLY FOUND IN MODULE-dup2$c FROM FILE-../libfb/libfb.o
- *CAUTION* DUPLICATE ENTRY- mkdir DISCOVERED IN MODULE-$mkdir FROM FILE-/lib/libc.o;IGNORED
-     ENTRY WAS PREVIOUSLY FOUND IN MODULE-mkdir$c FROM FILE-../libfb/libfb.o
- *CAUTION* DUPLICATE ENTRY- rmdir DISCOVERED IN MODULE-$rmdir FROM FILE-/lib/libc.o;IGNORED
-     ENTRY WAS PREVIOUSLY FOUND IN MODULE-rmdir$c FROM FILE-../libfb/libfb.o
-.fi
-.ft R
-.PP
-In \fBrt\fR, ignore these errors from the multi-tasking library:
-.sp .5
-.nf
- *CAUTION* DUPLICATE ENTRY- mkdir DISCOVERED IN MODULE-$mkdir FROM FILE-/lib/multi/libc.o;IGNORED
-     ENTRY WAS PREVIOUSLY FOUND IN MODULE-mkdir$c FROM FILE-../libfb/libfb.o
- *CAUTION* DUPLICATE ENTRY- rmdir DISCOVERED IN MODULE-$rmdir FROM FILE-/lib/multi/libc.o;IGNORED
-     ENTRY WAS PREVIOUSLY FOUND IN MODULE-rmdir$c FROM FILE-../libfb/libfb.o
- *CAUTION* REFERENCE TO EXTERNAL-TSKSTART IN MODULE-TSKSTART
- FROM MODULE-$TSKENTR IS NOT COMPATIBLE WITH ITS DEFINITION
-  --- DEFINITION IS PARCEL -- REFERENCE IS WORD
-.fi
-.ft R
+ *** *** SC1130 [caution ] < File = ../librt/vert.c, line = 337 > :
+.br
+         Code was not generated for the block beginning at or corresponding to this statement (or part of it), because there is no path to it or it is not necessary.
 .PP
 In \fBremrt\fR, ignore the error messages:
 .sp .5
-.ft B
-.nf
-second definition of rt@bomb in error$c
-second definition of rt@log in error$c
+.br
+ *** *** SC065 [caution ] < ../remrt/remrt.c, Line = 29, File = /usr/include/netdb.h line = 34 > :
+.br
+         Invalid characters appear before a new-line in the '#else' directive.
+.br
+ *** *** SC065 [caution ] < ../remrt/remrt.c, Line = 29, File = /usr/include/netdb.h line = 37 > :
+.br
+         Invalid characters appear before a new-line in the '#endif' directive.
 .fi
-.ft R
+and the like;  they are due to non-ANSI-C constructs in system include
+files provided by Cray.
 .PP
-In the \fButil\fR directory, ignore these error messages:
-.sp .5
-.ft B
-.nf
-second definition of bzero in bstring$c
-second definition of bcopy in bstring$c
-.fi
-.ft R
-Similar messages in other directories can also safely be ingored.
-.PP
-It is safe to ignore the self-lauditory messages of the form:
+It is safe to ignore the self-laudatory messages of the form:
 .sp .5
 .ft B
 .nf
@@ -1603,9 +1545,6 @@ It is safe to ignore the self-lauditory messages of the form:
 .PP
 Various remarks from CFT77 regarding the Whetstone tests
 can also be ingored.
-.PP
-Please join with BRL in urging Cray to stomp out SEGLDR,
-and thereby eliminate all these foolish error and warning messages.
 .NH 2
 SUN PROBLEMS
 .PP
@@ -1637,7 +1576,7 @@ Release 2.0
 contains only minor external changes from Release 1.20,
 but for complete safety, you should save the old binary to "conv/g2asc"
 someplace safe, so that if you find the binary format of the database
-incompatable you can convert your old databases from binary to ASCII
+incompatible you can convert your old databases from binary to ASCII
 form. Having to do this is system dependent (only Sun, SGI, and Alliant
 users are likely to be affected), but it is difficult to recover from
 without having saved the old converter (or your old distribution tape).
@@ -1703,9 +1642,15 @@ There have been no file format changes.
 UPGRADING FROM RELEASE 3.7 to 4.0
 .PP
 Release 4.0 is a major features release.
-It contains an implementation of Kevin Weiler's n-Manifold Geometry
+Binary geometry databases (``.g'' files) are upwards compatible from
+Release 3.7 to Release 4.0, but \fInot\fR backwards compatible.
+In order to move a geometry database from a 4.0 system back to a 3.7
+system, it is necessary to convert it to ASCII form with \fBg2asc\fR.
+The ASCII format is unchanged.
+.PP
+Release 4.0 contains an implementation of Kevin Weiler's n-Manifold Geometry
 capability, which can be used to convert CSG models into faceted
-approximations.
+boundary-representation approximations of the original shapes.
 Note that this software is still experimental in this release, and can only
 operate on very simple cases.
 .PP
@@ -1715,11 +1660,14 @@ WORK IN PROGRES
 .PP
 We are hard at work on a variety of new features, the most significant are:
 .IP (*)
-a substantial package for animation specification and preview,
+making the NMG capability robust, for the forthcomming maintenance release,
 .IP (*)
 additional primitive types,
 .IP (*)
-\fBmged\fR improvements.
+a new graphical user interface for \fBmged\fR,
+and internal improvements to the editor,
+.IP (*)
+interfaces between BRL-CAD and various Finite-Element (FEM) codes.
 .NH 1
 COMMUNICATION
 .PP
