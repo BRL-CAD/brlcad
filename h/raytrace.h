@@ -545,8 +545,12 @@ struct region  {
 	genptr_t	reg_mfuncs;	/* User appl. funcs for material */
 	genptr_t	reg_udata;	/* User appl. data for material */
 	int		reg_transmit;	/* flag:  material transmits light */
-	int		reg_instnum;	/* instance number, from d_uses */
-	int		reg_all_unions;	/* 1=boolean tree is all unions */
+	long		reg_instnum;	/* instance number, from d_uses */
+	short		reg_all_unions;	/* 1=boolean tree is all unions */
+	short		reg_is_fastgen;	/* FASTGEN-compatability mode? */
+#define REGION_NON_FASTGEN	0
+#define REGION_FASTGEN_PLATE	1
+#define REGION_FASTGEN_VOLUME	2
 };
 #define REGION_NULL	((struct region *)0)
 #define RT_REGION_MAGIC	0xdffb8001
@@ -793,6 +797,7 @@ struct rt_comb_internal  {
 	long		magic;
 	union tree	*tree;		/* Leading to tree_db_leaf leaves */
 	char		region_flag;	/* !0 ==> this COMB is a REGION */
+	char		is_fastgen;	/* REGION_NON_FASTGEN/_PLATE/_VOLUME */
 	/* Begin GIFT compatability */
 	short		region_id;
 	short		aircode;
@@ -823,6 +828,7 @@ struct db_tree_state {
 	int		ts_sofar;		/* Flag bits */
 
 	int		ts_regionid;	/* GIFT compat region ID code*/
+	int		ts_is_fastgen;	/* REGION_NON_FASTGEN/_PLATE/_VOLUME */
 	int		ts_aircode;	/* GIFT compat air code */
 	int		ts_gmater;	/* GIFT compat material code */
 	int		ts_los;		/* equivalent LOS estimate .. */
