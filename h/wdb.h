@@ -81,7 +81,7 @@ struct wmember  {
 	struct bu_list	l;
 	int		wm_op;		/* Boolean operation */
 	mat_t		wm_mat;		/* XXX Should be matp_t !!! */
-	char		wm_name[32+3];	/* XXX Should be char* bu_strdup()ed */
+	char		*wm_name;
 };
 #define WMEMBER_NULL	((struct wmember *)0)
 #define WMEMBER_MAGIC	0x43128912
