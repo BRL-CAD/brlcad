@@ -235,7 +235,9 @@ struct edgeuse *eu1, *eu2;
 {
 	struct edgeuse	*original_eu1 = eu1;
 	struct edgeuse	*nexteu;
-	fastf_t angle1, angle2;
+	fastf_t		angle12;	/* Angle from eu1 to eu2 */
+	fastf_t		angle1r;	/* Angle from eu1 to eu1's radial */
+	fastf_t		angler2;	/* Angle from eu1's radial to eu2 */
 	int	iteration1, iteration2;
 
 	NMG_CK_EDGEUSE(eu1);
@@ -259,6 +261,8 @@ struct edgeuse *eu1, *eu2;
 		rt_bomb("nmg_radial_join_eu(): edgeuses don't share both vertices\n");
 	}
 
+	if( eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p )  rt_bomb("nmg_radial_join_eu(): 0 length edge\n");
+
 	if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) ) {
 		rt_log("nmg_radial_join_eu(eu1=x%x, eu2=x%x) e1=x%x, e2=x%x\n",
 			eu1, eu2,
@@ -273,6 +277,14 @@ struct edgeuse *eu1, *eu2;
 	for ( iteration1=0; eu2 && iteration1 < 10000; iteration1++ ) {
 		struct edgeuse	*first_eu1 = eu1;
 		/* Resume where we left off from last eu2 insertion */
+#if 0
+		/* For early debugging only, reset position to original.
+		 * Not only inefficient, but can give different results,
+		 * but it makes examining the printouts easier.
+		 */
+		first_eu1 = eu1 = original_eu1;
+		rt_log("Reset eu1 to x%x\n", original_eu1);
+#endif
 
 		/* because faces are always created with counter-clockwise
 		 * exterior loops and clockwise interior loops, radial
@@ -283,19 +295,23 @@ struct edgeuse *eu1, *eu2;
 			eu2 = eu2->eumate_p;
 
 		/* find a place to insert eu2 on eu1's edge */
+		for ( iteration2=0; iteration2 < 10000; iteration2++ ) {
+			angle12 = nmg_measure_2fu_angle(eu1, eu2);
+			angle1r = nmg_measure_2fu_angle(eu1, eu1->radial_p);
+			angler2 = nmg_measure_2fu_angle(eu1->radial_p->eumate_p, eu2);
 
-		angle1 = nmg_measure_2fu_angle(eu1, eu2);
-		angle2 = nmg_measure_2fu_angle(eu1, eu1->radial_p);
+			if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) )  {
+				rt_log("  angle12=%g, angle1r=%g, angler2=%g\n",
+					angle12*rt_radtodeg, angle1r*rt_radtodeg, angler2*rt_radtodeg );
+			}
 
-		if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) )
-			rt_log("  angle1=%g, angle2=%g\n" , angle1 , angle2 );
+			/* XXX I believe the problem here is with this (non-circular)
+			 * relation ('if' test).
+			 * How about (angle12>angle1r) && (angle12<angle1r+2pi)
+			 */
+			/* Search termination condition */
+			if( angle12 > angle1r )  break;
 
-
-		/* XXX I believe the problem here is with this (non-circular)
-		 * relation ('if' test).
-		 * How about (angle1>angle2) && (angle1<angle2+2pi)
-		 */
-		for ( iteration2=0; (angle1 > angle2) && iteration2 < 10000; iteration2++ ) {
 			if( iteration2 > 9997 )  rt_g.NMG_debug |= DEBUG_MESH_EU;
 			/* If eu1 is only one pair of edgeuses, done */
 			if( eu1 == eu1->radial_p->eumate_p )  break;
@@ -304,27 +320,21 @@ struct edgeuse *eu1, *eu2;
 				rt_bomb("nmg_radial_join_eu():  went full circle, no face insertion point.\n");
 				break;
 			}
-			angle1 = nmg_measure_2fu_angle(eu1, eu2);
-			angle2 = nmg_measure_2fu_angle(eu1, eu1->radial_p);
-			if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) ) {
-				rt_log("  angle1=%g, angle2=%g\n",
-					angle1*rt_radtodeg , angle2*rt_radtodeg );
-			}
 		}
 		if(iteration2 >= 10000)  {
-			rt_log("angle1=%e, angle2=%e\n", angle1, angle2);
+			rt_log("angle12=%e, angle1r=%e\n", angle12, angle1r);
 			rt_bomb("nmg_radial_join_eu: infinite loop (2)\n");
 		}
 		/*
-		 *  Here, angle1 <= angle2.
-		 *  XXX If angle1 == angle2 within a very tight tolerance,
+		 *  Here, angle12 > angle1r.
+		 *  XXX If angle12 == angle1r within a very tight tolerance,
 		 *  then it's necessary to be sure that the face gets
 		 *  interted on the proper side of eu1.
 		 *  Really, these two faces should be fused together here
 		 *  (or somewhere).
 		 *  XXX What tolerance to use here?  (radians)
 		 */
-		if( NEAR_ZERO( angle1-angle2, 1.0e-6 ) ) {
+		if( NEAR_ZERO( angle12-angle1r, 1.0e-6 ) ) {
 			rt_log("nmg_radial_join_eu: WARNING 2 faces should have been fused.\n");
 		}
 
@@ -337,8 +347,9 @@ struct edgeuse *eu1, *eu2;
 			nexteu = (struct edgeuse *)NULL;
 
 		if (rt_g.NMG_debug & DEBUG_MESH_EU)
-			rt_log("joining edgeuses with angle1(to eu2):%g angle2(to eu1->radial):%g\n",
-				angle1, angle2);
+			rt_log("joining eu1=x%x eu2=x%x with angle12=%g, angle1r=%g\n",
+				eu1, eu2,
+				angle12*rt_radtodeg, angle1r*rt_radtodeg);
 
 		/* make eu2 radial to eu1 */
 		nmg_moveeu(eu1, eu2);
