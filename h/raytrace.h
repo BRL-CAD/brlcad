@@ -1018,6 +1018,26 @@ extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 #define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
 /*
+ *			P I X E L _ E X T
+ *
+ *  This structure is intended to descrbe the area and/or volume represented
+ *  by a ray.  In the case of the "rt" program it represents the extent in
+ *  model coordinates of the prism behind the pixel being rendered.
+ *
+ *  The r_pt values of the rays indicate the dimensions and location in model
+ *  space of the ray origin (usually the pixel to be rendered). 
+ *  The r_dir vectors indicate the edges (and thus the shape) of the prism 
+ *  which is formed from the projection of the pixel into space.
+ */
+#define CORNER_PTS 4
+struct pixel_ext {
+	unsigned long	magic;
+	struct xray	corner[CORNER_PTS];
+};
+#define PIXEL_EXT_MAGIC 0x50787400	/* "Pxt" */
+#define BU_CK_PIXEL_EXT(_p)	BU_CKMAG(_p, PIXEL_EXT_MAGIC, "struct pixel_ext")
+
+/*
  *			A P P L I C A T I O N
  *
  *  This structure is the only parameter to rt_shootray().
@@ -1073,6 +1093,7 @@ struct application  {
 	int		a_zero1;	/* must be zero (sanity check) */
 	/* THESE ELEMENTS ARE USED BY THE LIBRARY, BUT MAY BE LEFT ZERO */
 	struct resource	*a_resource;	/* dynamic memory resources */
+	struct pixel_ext *a_pixelext;	/* locations of pixel corners */
 	int		(*a_overlap)();	/* called when overlaps occur */
 	int		a_level;	/* recursion level (for printing) */
 	int		a_x;		/* Screen X of ray, if applicable */
@@ -1159,6 +1180,7 @@ struct rt_i {
 	int		rti_dont_instance; /* 1=Don't compress instances of solids into 1 while prepping */
 	int		rti_hasty_prep;	/* 1=hasty prep, slower ray-trace */
 	int		rti_nlights;	/* number of light sources */
+	int		rti_prismtrace; /* add support for pixel prism trace */
 	char		*rti_region_fix_file; /* rt_regionfix() file or NULL */
 	int		rti_space_partition;  /* space partitioning method */
 	int		rti_nugrid_dimlimit;  /* limit on nugrid dimensions */

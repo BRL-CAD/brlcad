@@ -251,6 +251,7 @@ int		cpu;
 genptr_t	arg;
 {
 	LOCAL struct application a;
+	LOCAL struct pixel_ext pe;
 	LOCAL vect_t point;		/* Ref point on eye or view plane */
 	LOCAL vect_t colorsum;
 	int	pixel_start;
@@ -299,6 +300,7 @@ genptr_t	arg;
 				a.a_x = pixelnum%width;
 				a.a_y = pixelnum/width;
 			}
+
 			if( sub_grid_mode )  {
 				if( a.a_x < sub_xmin || a.a_x > sub_xmax )
 					continue;
@@ -326,14 +328,68 @@ genptr_t	arg;
 						a.a_x, dx_model,
 						a.a_y, dy_model );
 				}
+				if (a.a_rt_i->rti_prismtrace) {
+					/* compute the four corners */
+					pe.magic = PIXEL_EXT_MAGIC;
+
+					VJOIN2(pe.corner[0].r_pt,
+						viewbase_model,
+						a.a_x, dx_model,
+						a.a_y, dy_model );
+
+					VJOIN2(pe.corner[1].r_pt,
+						viewbase_model,
+						(a.a_x+1), dx_model,
+						a.a_y, dy_model );
+
+					VJOIN2(pe.corner[2].r_pt,
+						viewbase_model,
+						(a.a_x+1), dx_model,
+						(a.a_y+1), dy_model );
+
+					VJOIN2(pe.corner[3].r_pt,
+						viewbase_model,
+						a.a_x, dx_model,
+						(a.a_y+1), dy_model );
+
+					a.a_pixelext = &pe;
+				} else {
+					a.a_pixelext=(struct pixel_ext *)NULL;
+				}
+
 				if( rt_perspective > 0.0 )  {
 					VSUB2( a.a_ray.r_dir,
 						point, eye_model );
 					VUNITIZE( a.a_ray.r_dir );
 					VMOVE( a.a_ray.r_pt, eye_model );
+					if (a.a_rt_i->rti_prismtrace) {
+						VSUB2(pe.corner[0].r_dir,
+						      pe.corner[0].r_pt,
+						      eye_model);
+						VSUB2(pe.corner[1].r_dir,
+						      pe.corner[1].r_pt,
+						      eye_model);
+						VSUB2(pe.corner[2].r_dir,
+						      pe.corner[2].r_pt,
+						      eye_model);
+						VSUB2(pe.corner[3].r_dir,
+						      pe.corner[3].r_pt,
+						      eye_model);
+					}
 				} else {
 					VMOVE( a.a_ray.r_pt, point );
 				 	VMOVE( a.a_ray.r_dir, ap.a_ray.r_dir );
+
+					if (a.a_rt_i->rti_prismtrace) {
+						VMOVE(pe.corner[0].r_dir,
+							a.a_ray.r_dir);
+						VMOVE(pe.corner[1].r_dir,
+							a.a_ray.r_dir);
+						VMOVE(pe.corner[2].r_dir,
+							a.a_ray.r_dir);
+						VMOVE(pe.corner[3].r_dir,
+							a.a_ray.r_dir);
+					}
 				}
 				a.a_level = 0;		/* recursion level */
 				a.a_purpose = "main ray";

@@ -62,6 +62,9 @@ proc prj_add {args} {
 	puts $fd "image=\"$image\""
 	puts $fd "w=$width"
 	puts $fd "n=$height"
+	puts $fd "through=0"
+	puts $fd "antialias=1"
+	puts $fd "behind=0"
 	puts $fd "viewsize=[viewget size]"
 	regsub -all { } [viewget eye] "," eye_pt
 	puts $fd "eye_pt=$eye_pt"

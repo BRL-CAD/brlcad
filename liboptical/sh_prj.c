@@ -44,6 +44,9 @@ struct img_specific {
 	mat_t		i_mat_inv;	/* computed (for debug) */
 	plane_t		i_plane;	/* dir/plane of projection */
 	mat_t		i_sh_to_img;	/* transform used in prj_render() */
+	char		i_through;	/* ignore surface normal */
+	char		i_antialias;	/* anti-alias texture */
+	char		i_behind;	/* shade points behind img plane */
 };
 #define img_MAGIC	0x696d6700	/* "img" */
 
@@ -188,13 +191,6 @@ CONST char				*value;	/* string containing value */
 
 	}
 
-
-
-
-
-
-
-
 	/* read in the pixel data */
 	img_new->i_data = bu_open_mapped_file(bu_vls_addr(&img_new->i_file),
 				(char *)NULL);
@@ -216,12 +212,14 @@ CONST char				*value;	/* string containing value */
  */
 struct bu_structparse img_parse_tab[] = {
 	{"%S",	1, "image",		IMG_O(i_file),		FUNC_NULL},
-	{"%S",	1, "end",		IMG_O(i_file),		FUNC_NULL},
 	{"%d",	1, "w",			IMG_O(i_width),		FUNC_NULL},
 	{"%d",	1, "n",			IMG_O(i_height),	FUNC_NULL},
 	{"%f",	1, "viewsize",		IMG_O(i_viewsize),	FUNC_NULL},
 	{"%f",	3, "eye_pt",		IMG_AO(i_eye_pt),	FUNC_NULL},
 	{"%f",	4, "orientation",	IMG_AO(i_orient),	orient_hook},
+	{"%c",	1, "through",		IMG_O(i_through),	FUNC_NULL},
+	{"%c",	1, "antialias",		IMG_O(i_antialias),	FUNC_NULL},
+	{"%c",	1, "behind",		IMG_O(i_behind),	FUNC_NULL},
 	{"",	0, (char *)0,		0,			FUNC_NULL}
 };
 struct bu_structparse img_print_tab[] = {
@@ -266,7 +264,8 @@ char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
 {
-	register struct prj_specific	*prj_sp;
+	struct prj_specific		*prj_sp;
+	struct img_specific		*img_sp;
 	char 				*fname;
 	struct bu_vls 			parameter_data;
 	struct bu_mapped_file		*parameter_file;
@@ -320,9 +319,27 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	bu_close_mapped_file( parameter_file );
 
+	/* set defaults on img_specific struct */
+	prj_sp->prj_images.i_width = prj_sp->prj_images.i_height = 512;
+	prj_sp->prj_images.i_antialias = 1;
+
+
 	if(bu_struct_parse( &parameter_data, img_parse_tab, 
 	    (char *)&prj_sp->prj_images) < 0)
 		return -1;
+
+	/* if even one of the images is to be anti-aliased, then we need
+	 * to set the rti_prismtrace flag so that we can compute the exact
+	 * extent of the pixel.
+	 */
+	for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
+		if (img_sp->i_antialias) {
+			rtip->rti_prismtrace = 1;
+			break;
+		}
+	}
+
+
 
 	bu_vls_free( &parameter_data );
 
@@ -409,11 +426,11 @@ char			*dp;	/* ptr to the shader-specific struct */
 		(struct prj_specific *)dp;
 	const static point_t delta = {0.5, 0.5, 0.0};
 	point_t r_pt;
-	vect_t	r_N;
+	plane_t	r_N;
 	point_t sh_pt;
 	static CONST double	cs = (1.0/255.0);
 	point_t	img_v;
-	int x, y;
+	int x, y, i;
 	unsigned char *pixel;
 	struct img_specific *img_sp;
 	point_t	sh_color;
@@ -451,7 +468,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	VSET(final_color, 0.0, 0.0, 0.0);
 	divisor = 0.0;
 	for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
-		if (VDOT(r_N, img_sp->i_plane) < 0.0) {
+		if ( ! img_sp->i_through && VDOT(r_N, img_sp->i_plane) < 0.0) {
 			/* normal and projection dir don't match, skip on */
 
 			if( rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
@@ -470,54 +487,62 @@ char			*dp;	/* ptr to the shader-specific struct */
 			continue;
 		}
 		
-		MAT4X3PNT(sh_pt, img_sp->i_sh_to_img, r_pt);
-		VADD2(img_v, sh_pt, delta);
-		if( rdebug&RDEBUG_SHADE) {
-			VPRINT("sh_pt", sh_pt);
-			VPRINT("img_v", img_v);
-		}
-		x = img_v[X] * (img_sp->i_width-1);
-		y = img_v[Y] * (img_sp->i_height-1);
-		pixel = &img_sp->i_img[x*3 + y*img_sp->i_width*3];
+		if (img_sp->i_antialias) {
+			point_t	img_pt[4];
+
+			if (!ap->a_pixelext)
+				bu_bomb("pixel corners structure not set\n");
+			BU_CK_PIXEL_EXT(ap->a_pixelext);
+
+			/* compute plane of hit point */
+			VUNITIZE(r_N);
+			r_N[H] = VDOT(r_N, r_pt);
+
+			/* project corner points into hit plane */
+			for (i=0 ; i < CORNER_PTS ; i++) {
+				
+			}
+			/* project hit plane corner points into image plane */
+
+		} else { 
+			MAT4X3PNT(sh_pt, img_sp->i_sh_to_img, r_pt);
+			VADD2(img_v, sh_pt, delta);
+			if( rdebug&RDEBUG_SHADE) {
+				VPRINT("sh_pt", sh_pt);
+				VPRINT("img_v", img_v);
+			}
+			x = img_v[X] * (img_sp->i_width-1);
+			y = img_v[Y] * (img_sp->i_height-1);
+			pixel = &img_sp->i_img[x*3 + y*img_sp->i_width*3];
 
 
-		if (x >= img_sp->i_width || x < 0 ||
-		    y >= img_sp->i_height || y < 0 ||
-		    sh_pt[Z] > 0.0) {
-		    	/* for some reason we're out of bounds */
-#if 0
+			if (x >= img_sp->i_width || x < 0 ||
+			    y >= img_sp->i_height || y < 0 ||
+			    ((!img_sp->i_behind && sh_pt[Z] > 0.0)) ) {
+			    	/* we're out of bounds,
+			    	 * leave the color alone
+			    	 */
+				continue;
+			}
+
+
 			if( rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
 				/* plot projection direction */
-				int colour[3];
-				VSCALE(colour, swp->sw_color, 255.0);
-
-				pl_color(prj_sp->prj_plfd, V3ARGS(colour));
-
+				pl_color(prj_sp->prj_plfd, V3ARGS(pixel));
 				pdv_3move(prj_sp->prj_plfd, r_pt);
+				VMOVE(tmp_pt, r_pt);
+
 				VSCALE(tmp_pt, img_sp->i_plane, -sh_pt[Z]);
 				VADD2(tmp_pt, r_pt, tmp_pt);
 				pdv_3cont(prj_sp->prj_plfd, tmp_pt);
 			}
-#endif
-			continue;
+			VMOVE(sh_color, pixel);	/* int/float conversion */
+			VSCALE(sh_color, sh_color, cs);
+			VADD2(final_color, final_color, sh_color);
+			divisor++;
 		}
-
-		if( rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
-			/* plot projection direction */
-			pl_color(prj_sp->prj_plfd, V3ARGS(pixel));
-			pdv_3move(prj_sp->prj_plfd, r_pt);
-			VMOVE(tmp_pt, r_pt);
-
-			VSCALE(tmp_pt, img_sp->i_plane, -sh_pt[Z]);
-			VADD2(tmp_pt, r_pt, tmp_pt);
-			pdv_3cont(prj_sp->prj_plfd, tmp_pt);
-		}
-
-		VMOVE(sh_color, pixel);	/* int/float conversion */
-		VSCALE(sh_color, sh_color, cs);
-		VADD2(final_color, final_color, sh_color);
-		divisor++;
 	}
+
 	if (divisor > 0.0) {
 		divisor = 1.0 / divisor;
 		VSCALE(swp->sw_color, final_color, divisor);
