@@ -107,18 +107,20 @@ else
 fi
 AM_CONFIG_HEADER(include/config.h)
 
-# a secondary automated automake may blow away COPYING, so restore it
-if test -f "$srcdir/misc/COPYING.backup" ; then
-	AC_MSG_CHECKING([whether the COPYING file needs to be restored])
-	copyingcontent="`cat $srcdir/COPYING`"
-	backupcopying="`cat $srcdir/misc/COPYING.backup`"
-	if test "x$copyingcontent" = "x$backupcopying" ; then
-		AC_MSG_RESULT(no)
-	else
-		AC_MSG_RESULT(yes)
-		cp -pr $srcdir/misc/COPYING.backup $srcdir/COPYING
+# a secondary automated automake may blow away COPYING & INSTALL , so restore them
+for file in COPYING INSTALL ; do
+	if test -f "$srcdir/misc/${file}.backup" ; then
+		AC_MSG_CHECKING([whether ${file} needs to be restored])
+		content="`cat $srcdir/${file}`"
+		backup="`cat $srcdir/misc/${file}.backup`"
+		if test "x$content" = "x$backup" ; then
+			AC_MSG_RESULT(no)
+		else
+			AC_MSG_RESULT(yes)
+			cp -pr $srcdir/misc/${file}.backup $srcdir/${file}
+		fi
 	fi
-fi
+done
 
 # automatically enable and load our configure cache file if available
 AC_MSG_CHECKING([whether a configure cache exists])
@@ -1764,6 +1766,14 @@ dnl sample applications
 SAMPLE_APPLICATIONS_DIR='${prefix}/sample_applications'
 AC_SUBST(SAMPLE_APPLICATIONS_DIR)
 
+dnl pro-engineer plug-in (lib/.. is needed to fake out libtool)
+if test "x${prefix}" = "xNONE" ; then
+	PRO_ENGINEER_DIR="${ac_default_prefix}/lib/../pro-engineer"
+else
+	PRO_ENGINEER_DIR="${prefix}/lib/../pro-engineer"
+fi
+AC_SUBST(PRO_ENGINEER_DIR)
+
 
 AC_CONFIG_FILES([
 	Makefile
@@ -1795,10 +1805,7 @@ AC_CONFIG_FILES([
 	misc/macosx/Resources/ReadMe.rtfd/Makefile
 	misc/macosx/Resources/Welcome.rtfd/Makefile
 	misc/pro-engineer/Makefile
-	misc/pro-engineer/resource/Makefile
-	misc/pro-engineer/sgi_mips4/Makefile
-	misc/pro-engineer/sgi_mips4/mk
-	misc/pro-engineer/text/Makefile
+	misc/pro-engineer/protk.dat
 	misc/vfont/Makefile
 	pix/Makefile
 	sh/Makefile
