@@ -50,7 +50,7 @@ struct dm dm_Null = {
 	0.0,
 	"nu", "Null Display"
 };
-extern struct dm dm_Mg, dm_Vg, dm_Tek, dm_Rat;
+extern struct dm dm_Mg, dm_Vg, dm_Tek, dm_Rat, dm_Mer;
 #ifdef PS300
 extern struct dm_Ps;
 #endif
@@ -63,6 +63,7 @@ static struct dm *which_dm[] = {
 	&dm_Vg,
 	&dm_Tek,
 	&dm_Rat,
+	&dm_Mer,
 #ifdef PS300
 	&dm_Ps,
 #endif PS300
@@ -118,7 +119,7 @@ char *name;
 			}
 		}
 		dmp->dmr_colorchange();
-		dmp->dmr_viewchange( 0, SOLID_NULL );	/* complete change */
+		dmp->dmr_viewchange( DM_CHGV_REDO, SOLID_NULL );
 		dmaflag++;
 		return;
 	}

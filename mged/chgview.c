@@ -576,7 +576,7 @@ register struct directory *dp;
 			if( sp->s_path[i] == dp )  {
 				if( state != ST_VIEW && illump == sp )
 					button( BE_REJECT );
-				dmp->dmr_viewchange( 2, sp );	/* DEL sol */
+				dmp->dmr_viewchange( DM_CHGV_DEL, sp );
 				memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 				DEQUEUE_SOLID( sp );
 				FREE_SOLID( sp );
@@ -615,10 +615,12 @@ struct solid *startp;
 			sp->s_center[Y]*base2local, 
 			sp->s_center[Z]*base2local,
 			sp->s_size*base2local );
-		(void)printf("reg=%d matrl=%s (dm%d)\n",
-			sp->s_regionid,
-			((struct mater *)sp->s_materp)->mt_handle,
-			((struct mater *)sp->s_materp)->mt_dm_int );
+		(void)printf("reg=%d",sp->s_regionid );
+		if( sp->s_materp )
+			(void)printf(" matrl=%s (dm%d)",
+			    ((struct mater *)sp->s_materp)->mt_handle,
+			    ((struct mater *)sp->s_materp)->mt_dm_int );
+		(void)printf("\n");
 		sp = sp->s_forw;
 	}
 }
