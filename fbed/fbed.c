@@ -17,6 +17,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./extern.h"
 
+#if !defined(NSIG)
+# define NSIG	64		/* conservative */
+#endif
+
 static struct
 	{
 	int xbits, ybits;
