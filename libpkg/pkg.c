@@ -110,7 +110,7 @@ static void	pkg_timestamp();
 static void	pkg_checkin();
 
 #define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
-			sprintf(errbuf,"%s: bad pointer x%x line %d\n",__FILE__, p, __LINE__);\
+			sprintf(errbuf,"%s: bad pointer x%lx line %d\n",__FILE__, (long)(p), __LINE__);\
 			pkg_errlog(errbuf);abort();}}
 
 #define	MAXQLEN	512	/* largest packet we will queue on stream */
@@ -226,9 +226,9 @@ void (*errlog)();
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_open(%s, %s, %s, %s, (passwd), switchp=x%x, errlog=x%x)\n",
+			"pkg_open(%s, %s, %s, %s, (passwd), switchp=x%lx, errlog=x%lx)\n",
 			host, service, protocol, uname,
-			switchp, errlog );
+			(long)switchp, (long)errlog );
 		fflush(pkg_debug);
 	}
 
@@ -326,8 +326,8 @@ void (*errlog)();
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_transerver(switchp=x%x, errlog=x%x)\n",
-			switchp, errlog );
+			"pkg_transerver(switchp=x%lx, errlog=x%lx)\n",
+			(long)switchp, (long)errlog );
 		fflush(pkg_debug);
 	}
 
@@ -369,8 +369,8 @@ void (*errlog)();
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_permserver(%s, %s, backlog=%d, errlog=x%x\n",
-			service, protocol, backlog, errlog );
+			"pkg_permserver(%s, %s, backlog=%d, errlog=x%lx\n",
+			service, protocol, backlog, (long)errlog );
 		fflush(pkg_debug);
 	}
 
@@ -468,8 +468,8 @@ void (*errlog)();
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_getclient(fd=%d, switchp=x%x, errlog=x%x, nodelay=%d)\n",
-			fd, switchp, errlog, nodelay );
+			"pkg_getclient(fd=%d, switchp=x%lx, errlog=x%lx, nodelay=%d)\n",
+			fd, (long)switchp, (long)errlog, nodelay );
 		fflush(pkg_debug);
 	}
 
@@ -531,8 +531,8 @@ void (*errlog)();
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_makeconn(fd=%d, switchp=x%x, errlog=x%x)\n",
-			fd, switchp, errlog );
+			"pkg_makeconn(fd=%d, switchp=x%lx, errlog=x%lx)\n",
+			fd, (long)switchp, (long)errlog );
 		fflush(pkg_debug);
 	}
 
@@ -570,8 +570,8 @@ register struct pkg_conn *pc;
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_close(pc=x%x) fd=%d\n",
-			pc, pc->pkc_fd );
+			"pkg_close(pc=x%lx) fd=%d\n",
+			(long)pc, pc->pkc_fd );
 		fflush(pkg_debug);
 	}
 
@@ -581,8 +581,8 @@ register struct pkg_conn *pc;
 	}
 
 	if( pc->pkc_buf != (char *)0 )  {
-		sprintf(errbuf,"pkg_close(x%x):  partial input pkg discarded, buf=x%x\n",
-			pc, pc->pkc_buf);
+		sprintf(errbuf,"pkg_close(x%lx):  partial input pkg discarded, buf=x%lx\n",
+			(long)pc, (long)(pc->pkc_buf));
 		pc->pkc_errlog(errbuf);
 		(void)free( pc->pkc_buf );
 	}
@@ -670,8 +670,8 @@ register struct pkg_conn *pc;
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_send(type=%d, buf=x%x, len=%d, pc=x%x)\n",
-			 type, buf, len, pc );
+			"pkg_send(type=%d, buf=x%lx, len=%d, pc=x%lx)\n",
+			 type, (long)buf, len, (long)pc );
 		fflush(pkg_debug);
 	}
 
@@ -742,7 +742,7 @@ register struct pkg_conn *pc;
 				return(-1);
 			}
 			sprintf(errbuf,"pkg_send of %d, wrote %d\n",
-				len, i-sizeof(hdr) );
+				len, i-(int)sizeof(hdr) );
 			(pc->pkc_errlog)(errbuf);
 			return(i-sizeof(hdr));	/* amount of user data sent */
 		}
@@ -755,7 +755,8 @@ register struct pkg_conn *pc;
 			pkg_perror(pc->pkc_errlog, "pkg_send: header write");
 			return(-1);
 		}
-		sprintf(errbuf,"pkg_send header of %d, wrote %d\n", sizeof(hdr), i);
+		sprintf(errbuf,"pkg_send header of %d, wrote %d\n",
+			(int)sizeof(hdr), i);
 		(pc->pkc_errlog)(errbuf);
 		return(-1);		/* amount of user data sent */
 	}
@@ -801,8 +802,8 @@ register struct pkg_conn *pc;
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_send2(type=%d, buf1=x%x, len1=%d, buf2=x%x, len2=%d, pc=x%x)\n",
-			 type, buf1, len1, buf2, len2, pc );
+			"pkg_send2(type=%d, buf1=x%lx, len1=%d, buf2=x%lx, len2=%d, pc=x%lx)\n",
+			 type, (long)buf1, len1, (long)buf2, len2, (long)pc );
 		fflush(pkg_debug);
 	}
 
@@ -869,7 +870,7 @@ register struct pkg_conn *pc;
 				return(-1);
 			}
 			sprintf(errbuf,"pkg_2send of %d+%d, wrote %d\n",
-				len1, len2, i-sizeof(hdr) );
+				len1, len2, i-(int)sizeof(hdr) );
 			(pc->pkc_errlog)(errbuf);
 			return(i-sizeof(hdr));	/* amount of user data sent */
 		}
@@ -880,13 +881,13 @@ register struct pkg_conn *pc;
 		if( i < 0 )  {
 			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_2send: header write");
-			sprintf(errbuf, "pkg_2send write(%d, x%x, %d) ret=%d\n",
-				pc->pkc_fd, &hdr, sizeof(hdr), i );
+			sprintf(errbuf, "pkg_2send write(%d, x%lx, %d) ret=%d\n",
+				pc->pkc_fd, (long)&hdr, (int)sizeof(hdr), i );
 			(pc->pkc_errlog)(errbuf);
 			return(-1);
 		}
 		sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote header=%d\n",
-			sizeof(hdr), len1, len2, i );
+			(int)sizeof(hdr), len1, len2, i );
 		(pc->pkc_errlog)(errbuf);
 		return(-1);		/* amount of user data sent */
 	}
@@ -894,13 +895,13 @@ register struct pkg_conn *pc;
 		if( i < 0 )  {
 			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_2send: write buf1");
-			sprintf(errbuf, "pkg_2send write(%d, x%x, %d) ret=%d\n",
-				pc->pkc_fd, buf1, len1, i );
+			sprintf(errbuf, "pkg_2send write(%d, x%lx, %d) ret=%d\n",
+				pc->pkc_fd, (long)buf1, len1, i );
 			(pc->pkc_errlog)(errbuf);
 			return(-1);
 		}
 		sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote len1=%d\n",
-			sizeof(hdr), len1, len2, i );
+			(int)sizeof(hdr), len1, len2, i );
 		(pc->pkc_errlog)(errbuf);
 		return(i);		/* amount of user data sent */
 	}
@@ -909,13 +910,13 @@ register struct pkg_conn *pc;
 		if( i < 0 )  {
 			if( errno == EBADF )  return(-1);
 			pkg_perror(pc->pkc_errlog, "pkg_2send: write buf2");
-			sprintf(errbuf, "pkg_2send write(%d, x%x, %d) ret=%d\n",
-				pc->pkc_fd, buf2, len2, i );
+			sprintf(errbuf, "pkg_2send write(%d, x%lx, %d) ret=%d\n",
+				pc->pkc_fd, (long)buf2, len2, i );
 			(pc->pkc_errlog)(errbuf);
 			return(-1);
 		}
 		sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote len2=%d\n",
-			sizeof(hdr), len1, len2, i );
+			(int)sizeof(hdr), len1, len2, i );
 		(pc->pkc_errlog)(errbuf);
 		return(len1+i);		/* amount of user data sent */
 	}
@@ -947,8 +948,8 @@ register struct pkg_conn *pc;
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_stream(type=%d, buf=x%x, len=%d, pc=x%x)\n",
-			 type, buf, len, pc );
+			"pkg_stream(type=%d, buf=x%lx, len=%d, pc=x%lx)\n",
+			 type, (long)buf, len, (long)pc );
 		fflush(pkg_debug);
 	}
 
@@ -988,8 +989,8 @@ register struct pkg_conn *pc;
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_flush( pc=x%x )\n",
-			pc );
+			"pkg_flush( pc=x%lx )\n",
+			(long)pc );
 		fflush(pkg_debug);
 	}
 
@@ -1039,8 +1040,8 @@ register struct pkg_conn *pc;
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_waitfor(type=%d, buf=x%x, len=%d, pc=x%x)\n",
-			type, buf, len, pc );
+			"pkg_waitfor(type=%d, buf=x%lx, len=%d, pc=x%lx)\n",
+			type, (long)buf, len, (long)pc );
 		fflush(pkg_debug);
 	}
 again:
@@ -1075,7 +1076,7 @@ again:
 		register char *bp;
 		int excess;
 		sprintf(errbuf,
-			"pkg_waitfor:  message %d exceeds buffer %d\n",
+			"pkg_waitfor:  message %ld exceeds buffer %d\n",
 			pc->pkc_len, len );
 		(pc->pkc_errlog)(errbuf);
 		if( (i = pkg_inget( pc, buf, len )) != len )  {
@@ -1104,7 +1105,8 @@ again:
 	/* Read the whole message into the users buffer */
 	if( (i = pkg_inget( pc, buf, pc->pkc_len )) != pc->pkc_len )  {
 		sprintf(errbuf,
-			"pkg_waitfor:  pkg_inget %d gave %d\n", pc->pkc_len, i );
+			"pkg_waitfor:  pkg_inget %ld gave %d\n",
+			pc->pkc_len, i );
 		(pc->pkc_errlog)(errbuf);
 		return(-1);
 	}
@@ -1145,8 +1147,8 @@ register struct pkg_conn *pc;
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_bwaitfor(type=%d, pc=x%x)\n",
-			type, pc );
+			"pkg_bwaitfor(type=%d, pc=x%lx)\n",
+			type, (long)pc );
 		fflush(pkg_debug);
 	}
 	do  {
@@ -1169,7 +1171,7 @@ register struct pkg_conn *pc;
 	/* Read the whole message into the dynamic buffer */
 	if( (i = pkg_inget( pc, pc->pkc_buf, pc->pkc_len )) != pc->pkc_len )  {
 		sprintf(errbuf,
-			"pkg_bwaitfor:  pkg_inget %d gave %d\n", pc->pkc_len, i );
+			"pkg_bwaitfor:  pkg_inget %ld gave %d\n", pc->pkc_len, i );
 		(pc->pkc_errlog)(errbuf);
 	}
 	tmpbuf = pc->pkc_buf;
@@ -1256,8 +1258,8 @@ register struct pkg_conn *pc;
 			}
 			pkg_timestamp();
 			fprintf( pkg_debug,
-				"pkg_process(pc=x%x) pkc_left=%d %s (avail=%d)\n",
-				pc, pc->pkc_left, errbuf, available );
+				"pkg_process(pc=x%lx) pkc_left=%d %s (avail=%d)\n",
+				(long)pc, pc->pkc_left, errbuf, available );
 			fflush(pkg_debug);
 		}
 		if( pc->pkc_left < 0 )  {
@@ -1370,8 +1372,8 @@ register struct pkg_conn *pc;
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_dispatch(pc=x%x) type=%d, buf=x%x, len=%d\n",
-			pc, pc->pkc_type, pc->pkc_buf, pc->pkc_len );
+			"pkg_dispatch(pc=x%lx) type=%d, buf=x%lx, len=%ld\n",
+			(long)pc, pc->pkc_type, (long)(pc->pkc_buf), pc->pkc_len );
 		fflush(pkg_debug);
 	}
 	if( pc->pkc_left != 0 )  return(-1);
@@ -1395,7 +1397,7 @@ register struct pkg_conn *pc;
 		pc->pkc_switch[i].pks_handler(pc, tempbuf);
 		return(1);
 	}
-	sprintf(errbuf,"pkg_dispatch:  no handler for message type %d, len %d\n",
+	sprintf(errbuf,"pkg_dispatch:  no handler for message type %d, len %ld\n",
 		pc->pkc_type, pc->pkc_len );
 	(pc->pkc_errlog)(errbuf);
 	(void)free(pc->pkc_buf);
@@ -1502,8 +1504,8 @@ register struct pkg_conn *pc;
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_block(pc=x%x)\n",
-			pc );
+			"pkg_block(pc=x%lx)\n",
+			(long)pc );
 		fflush(pkg_debug);
 	}
 
@@ -1716,10 +1718,10 @@ register struct pkg_conn	*pc;
 			goto out;
 		}
 		pkg_perror(pc->pkc_errlog, "pkg_suckin: read");
-		sprintf(errbuf, "pkg_suckin: read(%d, x%x, %d) ret=%d inbuf=x%x, inend=%d\n",
-			pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail,
+		sprintf(errbuf, "pkg_suckin: read(%d, x%lx, %d) ret=%d inbuf=x%lx, inend=%d\n",
+			pc->pkc_fd, (long)(&pc->pkc_inbuf[pc->pkc_inend]), avail,
 			got,
-			pc->pkc_inbuf, pc->pkc_inend );
+			(long)(pc->pkc_inbuf), pc->pkc_inend );
 		(pc->pkc_errlog)(errbuf);
 		ret = -1;
 		goto out;
