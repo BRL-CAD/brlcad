@@ -138,7 +138,8 @@ struct rt_ebm_internal  {
 	char		file[RT_EBM_NAME_LEN];
 	int		xdim;		/* X dimension (w cells) */
 	int		ydim;		/* Y dimension (n cells) */
-	double		tallness;	/* Z dimension (mm) */
+	fastf_t		tallness;	/* Z dimension (mm) */
+	mat_t		mat;		/* convert local coords to model space */
 	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
 	unsigned char	*map;		/* actual bitmap, with padding */
 };
@@ -158,6 +159,7 @@ struct rt_vol_internal  {
 	int		lo;		/* Low threshold */
 	int		hi;		/* High threshold */
 	vect_t		cellsize;	/* ideal coords: size of each cell */
+	mat_t		mat;		/* convert local coords to model space */
 	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
 	unsigned char	*map;
 };
