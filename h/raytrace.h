@@ -211,3 +211,20 @@ extern struct partition *FreePart;		 /* Head of freelist */
 #define DEQUEUE_PART(cur)	{ \
 	(cur)->pt_forw->pt_back = (cur)->pt_back; \
 	(cur)->pt_back->pt_forw = (cur)->pt_forw;  }
+
+/*
+ *		A P P L I C A T I O N
+ */
+struct application  {
+	/* THESE ELEMENTS ARE MANDATORY */
+	struct ray a_ray;	/* Actual ray to be shot */
+	int	(*a_hit)();	/* routine to call when shot hits model */
+	int	(*a_miss)();	/* routine to call when shot misses */
+	int	a_x;		/* Screen X of ray, where applicable */
+	int	a_y;		/* Screen Y of ray, where applicable */
+	/* THE FOLLOWING ROUTINES ARE MAINLINE & APPLICATION SPECIFIC */
+	int	a_user;		/* application-specific value */
+	int	(*a_init)();	/* routine to init application */
+	int	(*a_eol)();	/* routine for end of scan-line */
+	int	(*a_end)();	/* routine to end application */
+};
