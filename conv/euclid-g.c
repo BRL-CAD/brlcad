@@ -554,6 +554,22 @@ int	reg_id;
 	s = RT_LIST_FIRST( shell , &r->s_hd );
 	nmg_fix_normals( s, &tol );
 
+	/* Fuse faces */
+	(void)nmg_model_face_fuse( m, &tol );
+	if( nmg_simplify_shell( s ) )
+	{
+		/* Simplified away to nothing!!! */
+		if( nmg_ks( s ) )
+		{
+			nmg_km( m );
+			m = (struct model *)NULL;
+		}
+		s = (struct shell *)NULL;
+	}
+
+	if( !m )
+		return( cur_id );
+
 	/* verify face plane calculations */
 	for (i = 0; i < face; i++)
 	{
@@ -570,6 +586,8 @@ int	reg_id;
 		for( RT_LIST_FOR( lu, loopuse, &outfaceuses[i]->lu_hd ) )
 		{
 			NMG_CK_LOOPUSE( lu );
+			if( debug )
+				rt_log( "Checking fu x%x ( %g %g %g %g )\n", outfaceuses[i], V4ARGS( pl ) );
 
 			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
 			{
@@ -577,6 +595,11 @@ int	reg_id;
 				dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
 				if( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
 				{
+					if( debug )
+						rt_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
+							vu->v_p,
+							V3ARGS( vu->v_p->vg_p->coord ),
+							dist_to_plane );
 					triangulate = 1;
 					break;
 				}
@@ -590,6 +613,11 @@ int	reg_id;
 					dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
 					if( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
 					{
+						if( debug )
+							rt_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
+								vu->v_p,
+								V3ARGS( vu->v_p->vg_p->coord ),
+								dist_to_plane );
 						triangulate = 1;
 						break;
 					}
@@ -602,6 +630,10 @@ int	reg_id;
 		if( triangulate )
 		{
 			/* Need to triangulate this face */
+			if( debug )
+				rt_log( "\tTriangulating fu x%x (mate is x%x)\n",
+					outfaceuses[i], outfaceuses[i]->fumate_p );
+
 			nmg_triangulate_fu( outfaceuses[i], &tol );
 
 			/* split each triangular loop into its own face */
@@ -614,14 +646,27 @@ int	reg_id;
 				nmg_pr_fu_briefly( fu , "" );
 				rt_bomb( "cvt_euclid_region: face with no OT_SAME use\n" );
 			}
+
+			if( debug )
+				rt_log( "\tSplitting loops into face for fu x%x\n", fu );
+
 			(void)nmg_split_loops_into_faces( &fu->l.magic, &tol );
 			if( nmg_calc_face_g( fu ) )
 			{
 				rt_log( "cvt_euclid_region: nmg_calc_face_g failed!!\n" );
 				rt_bomb( "euclid-g: Could not calculate new face geometry\n" );
 			}
+
+			if( debug )
+			{
+				NMG_GET_FU_PLANE( pl, fu );
+				rt_log( "\tNew face geometry for fu x%x ( %g %g %g %g )\n", fu, V4ARGS( pl ) );
+			}
 		}
 	}
+
+	if( debug )
+		rt_log( "Looking for new faces:\n" );
 
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
@@ -639,7 +684,66 @@ int	reg_id;
 			}
 		}
 		if( !found )
+		{
+			plane_t pl;
 			nmg_calc_face_g( fu );
+
+			if( debug )
+			{
+				NMG_GET_FU_PLANE( pl, fu );
+				rt_log( "\tnew geometry for fu x%x ( %g %g %g %g )\n", fu, V4ARGS( pl ) );
+			}
+		}
+	}
+
+	if( debug )
+	{
+		rt_log( "Checking faceuses:\n" );
+		for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+		{
+			struct loopuse *lu;
+			struct edgeuse *eu;
+			struct vertexuse *vu;
+			fastf_t dist_to_plane;
+			plane_t pl;
+
+			NMG_CK_FACEUSE( fu );
+
+			if( fu->orientation != OT_SAME )
+				continue;
+
+			NMG_GET_FU_PLANE( pl, fu );
+
+			if( debug )
+				rt_log( "faceuse x%x ( %g %g %g %g )\n", fu, V4ARGS( pl ) );
+
+			/* check if all the vertices for this face lie on the plane */
+			for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+			{
+				NMG_CK_LOOPUSE( lu );
+
+				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+				{
+					vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
+					dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
+					if( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
+						rt_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
+							vu->v_p, V3ARGS( vu->v_p->vg_p->coord ), dist_to_plane );
+				}
+				else
+				{
+					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+					{
+						NMG_CK_EDGEUSE( eu );
+						vu = eu->vu_p;
+						dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
+						if( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
+							rt_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
+								vu->v_p, V3ARGS( vu->v_p->vg_p->coord ), dist_to_plane );
+					}
+				}
+			}
+		}
 	}
 #if 0
 	/* if the shell we just built has a void shell inside, nmg_fix_normals will
@@ -881,23 +985,41 @@ struct vlist	*vert;
 	/* Description of record. */
 	fscanf(fp, "%d %*lf %*lf %lf", &facet_type, &num_points);
 	*ni = (int)num_points;
+
+	if( debug )
+		rt_log( "facet type %d has %d points:\n", facet_type,  *ni );
 	
 	/* Read in data points. */
-	for (i = 0; i < *ni; i++) {
+	for (i = 0; i < *ni; i++)
+	{
 		fscanf(fp, "%*d %lf %lf %lf", &x, &y, &z);
 
+		if( debug )
+			rt_log( "\tpoint #%d ( %g %g %g )\n", i+1, x, y, z );
+
 		if ((lst[i] = find_vert(vert, *nv, x, y, z)) == -1)
+		{
 			lst[i] = store_vert(vert, nv, x, y, z);
+			if( debug )
+				rt_log( "\t\tStoring vertex ( %g %g %g ) at index %d\n" , x, y, z, lst[i] );
+		}
+		else if( debug )
+			rt_log( "\t\tFound vertex ( %g %g %g ) at index %d\n" , x, y, z, lst[i] );
 	}
 
 	/* Read in plane equation. */
 	fscanf(fp, "%*d %lf %lf %lf %lf", &a, &b, &c, &d);
+	if( debug )
+		rt_log( "plane equation for face is ( %f %f %f %f )\n", a, b, c, d );
 
 	/* Remove duplicate points (XXX this should be improved). */
 	for (i = 0; i < *ni; i++)
 		for (j = i+1; j < *ni; j++)
 			if (lst[i] == lst[j]) {
 				int increment;
+
+				if( debug )
+					rt_log( "\tComparing vertices at indices lst[%d]=%d and lst[%d]=%d\n", i, lst[i], j, lst[j] );
 				
 				if( j == i+1 || (i == 0 && j == (*ni-1))  )
 					increment = 1;
@@ -908,7 +1030,7 @@ struct vlist	*vert;
 				}
 				else
 				{
-					fprintf( stderr , "warning: removing distant duplicates\n" );
+					rt_log( "warning: removing distant duplicates\n" );
 					increment = 1;
 				}
 
@@ -934,15 +1056,13 @@ int		nv;
 fastf_t		x, y, z;
 {
 	int	found, i;
+	point_t new_pt;
 
-/* XXX What's good here? */
-#define ZERO_TOL 0.0001
-
+	VSET( new_pt, x, y, z );
 	found = 0;
-	for (i = 0; i < nv; i++) {
-		if (NEAR_ZERO(x - vert->pt[3*i+0], ZERO_TOL)
-			&& NEAR_ZERO(y - vert->pt[3*i+1], ZERO_TOL)
-			&& NEAR_ZERO(z - vert->pt[3*i+2], ZERO_TOL))
+	for (i = 0; i < nv; i++)
+	{
+		if( rt_pt3_pt3_equal( &vert->pt[3*i], new_pt, &tol ) )
 		{
 			found = 1;
 			break;
