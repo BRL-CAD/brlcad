@@ -44,14 +44,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* Local state variables within the FBIO structure */
 extern char *malloc();
 
-/* If there are any more of these, they ought to go into a malloc()d struct */
-#define if_xzoom	u1.l
-#define if_yzoom	u2.l
-#define if_special_zoom	u3.l
-#define if_mode		u4.l
-#define if_rgb_ct	u5.l
-#define if_save		u6.p
-
 /*
  *  Defines for dealing with SGI Graphics Engine Pipeline
  */
@@ -185,6 +177,22 @@ static FBIO sgiw_interface =
 		0			/* debug */
 		};
 
+/*
+ *  Per SGI (window or device) state information
+ *  Too much for the if_u[1-6] area now.
+ */
+struct sgiinfo {
+	short	si_xzoom;
+	short	si_yzoom;
+	short	si_special_zoom;
+	short	si_mode;
+	int	si_rgb_ct;
+	char	*si_save;
+	short	si_curs_on;
+};
+#define	SGI(ptr) ((struct sgiinfo *)((ptr)->u1.p))
+#define	SGIL(ptr) ((ptr)->u1.p)		/* left hand side version */
+
 _LOCAL_ int _sgi_cmap_flag;
 
 _LOCAL_ ColorMap _sgi_cmap;
@@ -240,8 +248,13 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
-	ifp->if_xzoom = 1;	/* for zoom fakeout */
-	ifp->if_yzoom = 1;	/* for zoom fakeout */
+	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
+		fb_log("sgi_dopen:  sgiinfo malloc failed\n");
+		return(-1);
+	}
+
+	SGI(ifp)->si_xzoom = 1;	/* for zoom fakeout */
+	SGI(ifp)->si_yzoom = 1;	/* for zoom fakeout */
 	/* Setup default cursor.					*/
 	defcursor( 1, cursor );
 	curorigin( 1, 0, 0 );
@@ -274,6 +287,8 @@ FBIO	*ifp;
 	/* could be ginit(), gconfig() */
 #endif
 	gexit();
+	if( SGIL(ifp) != NULL )
+		(void)free( (char *)SGIL(ifp) );
 	return(0);
 }
 
@@ -322,13 +337,13 @@ int	x, y;
 	if( npts > ifp->if_max_width )  npts = ifp->if_max_width;
 	if( x < 1 )  x = 1;
 	npts = npts / x;
-	ifp->if_xzoom = ifp->if_max_width/npts;
+	SGI(ifp)->si_xzoom = ifp->if_max_width/npts;
 
 	npts = ifp->if_height;
 	if( npts > ifp->if_max_height )  npts = ifp->if_max_height;
 	if( y < 1 )  y = 1;
 	npts = npts / y;
-	ifp->if_yzoom = ifp->if_max_height/npts;
+	SGI(ifp)->si_yzoom = ifp->if_max_height/npts;
 	return(0);
 }
 
@@ -345,6 +360,8 @@ int	count;
 	register int i;
 	int ret;
 
+	if( SGI(ifp)->si_curs_on )
+		cursoff();		/* Cursor interferes with reading! */
 	ret = count;	/* save count */
 	xpos = x;
 	ypos = y;
@@ -375,6 +392,8 @@ int	count;
 		xpos = 0;
 		ypos++;		/* Advance upwards */
 	}
+	if( SGI(ifp)->si_curs_on )
+		curson();		/* Cursor interferes with reading! */
 	return(ret);
 }
 
@@ -412,16 +431,16 @@ int	count;
 		for( i=scan_count; i > 0; )  {
 			register short chunk;
 
-			if( ifp->if_xzoom > 1 )  {
+			if( SGI(ifp)->si_xzoom > 1 )  {
 				Coord l, b;
 				RGBcolor( (short)(cp[RED]),
 					(short)(cp[GRN]),
 					(short)(cp[BLU]) );
-				l = xpos * ifp->if_xzoom;
-				b = ypos * ifp->if_yzoom;
+				l = xpos * SGI(ifp)->si_xzoom;
+				b = ypos * SGI(ifp)->si_yzoom;
 				/* left bottom right top */
 				rectf( l, b,
-					l+ifp->if_xzoom, b+ifp->if_yzoom);
+					l+SGI(ifp)->si_xzoom, b+SGI(ifp)->si_yzoom);
 				i--;
 				xpos++;
 				cp += 3;
@@ -547,13 +566,14 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 	{
+	SGI(ifp)->si_curs_on = mode;
 	if( ! mode )
 		{
 		cursoff();
 		return	0;
 		}
-	x *= ifp->if_xzoom;
-	y *= ifp->if_yzoom;
+	x *= SGI(ifp)->si_xzoom;
+	y *= SGI(ifp)->si_yzoom;
 	curson();
 	RGBcursor( 1, 255, 255, 0, 0xFF, 0xFF, 0xFF );
 	setvaluator( MOUSEX, x, 0, 1023 );
@@ -593,7 +613,7 @@ register RGBpixel	*pixelp;
 
 	/* Find best fit in existing table */
 	best = 0;
-	for( i = 0, sp = rgb_table; i < ifp->if_rgb_ct; sp++, i++ ) {
+	for( i = 0, sp = rgb_table; i < SGI(ifp)->si_rgb_ct; sp++, i++ ) {
 		register int	diff;
 		register int	d;
 
@@ -621,13 +641,13 @@ register RGBpixel	*pixelp;
 
 	/* Allocate new entry in color table if there's room.		*/
 	if( i < map_size )  {
-		COPYRGB( rgb_table[ifp->if_rgb_ct], *pixelp);
-		mapcolor(	(Colorindex)ifp->if_rgb_ct,
+		COPYRGB( rgb_table[SGI(ifp)->si_rgb_ct], *pixelp);
+		mapcolor(	(Colorindex)SGI(ifp)->si_rgb_ct,
 				(short) (*pixelp)[RED],
 				(short) (*pixelp)[GRN],
 				(short) (*pixelp)[BLU]
 				);
-		return	(Colorindex)(ifp->if_rgb_ct++);
+		return	(Colorindex)(SGI(ifp)->si_rgb_ct++);
 	}
 
 	/* No room to add, use best we found */
@@ -651,12 +671,17 @@ char	*file;
 int	width, height;
 {	register Colorindex i;
 
-	ifp->if_mode = 0;
+	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
+		fb_log("sgw_dopen:  sgiinfo malloc failed\n");
+		return(-1);
+	}
+
+	SGI(ifp)->si_mode = 0;
 	if( file != NULL )  {
 		register char *cp;
 		/* "/dev/sgiw###" gives optional mode */
 		for( cp = file; *cp != NULL && !isdigit(*cp); cp++ ) ;
-		(void)sscanf( cp, "%d", &ifp->if_mode );
+		(void)sscanf( cp, "%d", &SGI(ifp)->si_mode );
 	}
 
 	if( width <= 0 )
@@ -671,14 +696,14 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
-	ifp->if_xzoom = 1;	/* for zoom fakeout */
-	ifp->if_yzoom = 1;	/* for zoom fakeout */
-	ifp->if_special_zoom = 0;
-	if( (ifp->if_save = malloc( width*height*sizeof(Colorindex) )) == NULL )  {
+	SGI(ifp)->si_xzoom = 1;	/* for zoom fakeout */
+	SGI(ifp)->si_yzoom = 1;	/* for zoom fakeout */
+	SGI(ifp)->si_special_zoom = 0;
+	if( (SGI(ifp)->si_save = malloc( width*height*sizeof(Colorindex) )) == NULL )  {
 		fb_log("sgw_dopen:  unable to malloc pixel buffer\n");
 		return(-1);
 	}
-	bzero( ifp->if_save, width*height*sizeof(Colorindex) );
+	bzero( SGI(ifp)->si_save, width*height*sizeof(Colorindex) );
 
 	if( ismex() )  {
 		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
@@ -714,8 +739,8 @@ int	width, height;
 	SET( 7, 255, 255, 255 );	/* WHITE */
 
 	/* Mode 0 builds color map on the fly */
-	ifp->if_rgb_ct = MAP_RESERVED;
-	if( ifp->if_mode )
+	SGI(ifp)->si_rgb_ct = MAP_RESERVED;
+	if( SGI(ifp)->si_mode )
 		{
 		/* Mode 1 uses fixed color map */
 		for( i = 0; i < map_size-MAP_RESERVED; i++ )
@@ -739,19 +764,21 @@ _LOCAL_ int
 sgw_dclose( ifp )
 FBIO	*ifp;
 {
-	free( ifp->if_save );
-	ifp->if_save = (char *)0;
+	free( SGI(ifp)->si_save );
+	SGI(ifp)->si_save = (char *)0;
 
 	setcursor( 0, 1, 0x2000 );
 	if( ismex() )  {
 		/* Leave mex's cursor on */
-		; /* winclose( ifp->if_fd ); */
+		; /* winclose( SGI(ifp)->si_fd ); */
 	}  else  {
 		cursoff();
 		greset();
 		gexit();
 	}
-/** 	fb_log( "%d color table entries used.\n", ifp->if_rgb_ct );  **/
+	if( SGIL(ifp) != NULL )
+		(void)free( (char *)SGIL(ifp) );
+/** 	fb_log( "%d color table entries used.\n", SGI(ifp)->si_rgb_ct );  **/
 	return	0;	
 }
 
@@ -767,7 +794,7 @@ FBIO	*ifp;
 		sgw_inqueue(ifp);
 	color(BLACK);
 	clear();
-	bzero( ifp->if_save, ifp->if_width*ifp->if_height*sizeof(Colorindex) );
+	bzero( SGI(ifp)->si_save, ifp->if_width*ifp->if_height*sizeof(Colorindex) );
 	return	0;	
 }
 
@@ -809,14 +836,16 @@ int	count;
 
 	if( qtest() )
 		sgw_inqueue(ifp);
-	x *= ifp->if_xzoom;
+	if( SGI(ifp)->si_curs_on )
+		cursoff();		/* Cursor interferes with reading! */
+	x *= SGI(ifp)->si_xzoom;
 	while( count > 0 )
-		{	register short	ypos = y*ifp->if_yzoom;
+		{	register short	ypos = y*SGI(ifp)->si_yzoom;
 		if ( count >= ifp->if_width )
 			scan_count = ifp->if_width;
 		else
 			scan_count = count;
-		if( (ifp->if_xzoom == 1 && ifp->if_yzoom == 1) || ifp->if_special_zoom )
+		if( (SGI(ifp)->si_xzoom == 1 && SGI(ifp)->si_yzoom == 1) || SGI(ifp)->si_special_zoom )
 			{ /* No pixel replication, so read scan of pixels. */
 			CMOV2S( hole, x, ypos );
 			readpixels( scan_count, colors );
@@ -827,13 +856,13 @@ int	count;
 			for( i = 0; i < scan_count; i++ )
 				{
 				CMOV2S( hole, x, ypos );
-				x += ifp->if_xzoom;
+				x += SGI(ifp)->si_xzoom;
 				readpixels( 1, &colors[i] );
 				}
 			}
 		for( i = 0; i < scan_count; i++, pixelp++) 
 			{
-			if( ifp->if_mode )
+			if( SGI(ifp)->si_mode )
 				{
 				colors[i] -= MAP_RESERVED;
 				(*pixelp)[RED] =   (colors[i] % 10 + 1) * 25;
@@ -845,7 +874,7 @@ int	count;
 			else
 				{
 				register int	ci = colors[i];
-				if( ci < ifp->if_rgb_ct )
+				if( ci < SGI(ifp)->si_rgb_ct )
 					{
 					COPYRGB( *pixelp, rgb_table[ci]);
 					}
@@ -857,6 +886,8 @@ int	count;
 		x = 0;
 		y++;
 	}
+	if( SGI(ifp)->si_curs_on )
+		curson();		/* Cursor interferes with reading! */
 	return	0;	
 }
 
@@ -875,16 +906,16 @@ int	count;
 	writemask( 0x3FF );
 	while( count > 0 )
 		{
-			register short	ypos = y*ifp->if_yzoom;
-			register short	xpos = x*ifp->if_xzoom;
+			register short	ypos = y*SGI(ifp)->si_yzoom;
+			register short	xpos = x*SGI(ifp)->si_xzoom;
 			register Colorindex *sp;
 		sp = (Colorindex *)
-			&ifp->if_save[(y*ifp->if_width+x)*sizeof(Colorindex)];
+			&SGI(ifp)->si_save[(y*ifp->if_width+x)*sizeof(Colorindex)];
 		if ( count >= ifp->if_width )
 			scan_count = ifp->if_width;
 		else
 			scan_count = count;
-		if( (ifp->if_xzoom == 1 && ifp->if_yzoom == 1) || ifp->if_special_zoom )
+		if( (SGI(ifp)->si_xzoom == 1 && SGI(ifp)->si_yzoom == 1) || SGI(ifp)->si_special_zoom )
 			{	register Colorindex	colori;
 			CMOV2S( hole, xpos, ypos );
 			for( i = scan_count; i > 0; )
@@ -898,7 +929,7 @@ int	count;
 				i -= chunk;
 				for( ; chunk > 0; chunk--, pixelp++ )
 					{
-					if( ifp->if_mode )
+					if( SGI(ifp)->si_mode )
 						{
 						colori =  MAP_RESERVED +
 							((*pixelp)[RED]/26);
@@ -916,10 +947,10 @@ int	count;
 		else
 			for( i = 0; i < scan_count; i++, pixelp++ )
 				{	register Colorindex	col;
-					register Coord	r = xpos + ifp->if_xzoom - 1,
-							t = ypos + ifp->if_yzoom - 1;
+					register Coord	r = xpos + SGI(ifp)->si_xzoom - 1,
+							t = ypos + SGI(ifp)->si_yzoom - 1;
 				CMOV2S( hole, xpos, ypos );
-				if( ifp->if_mode )
+				if( SGI(ifp)->si_mode )
 					{
 					col =  MAP_RESERVED +
 						((*pixelp)[RED]/26);
@@ -931,7 +962,7 @@ int	count;
 
 				color( col );
 				im_rectf( (Coord)xpos, (Coord)ypos, r, t );
-				xpos += ifp->if_xzoom;
+				xpos += SGI(ifp)->si_xzoom;
 				*sp++ = col;
 				}
 		count -= scan_count;
@@ -1017,13 +1048,13 @@ int	x, y;
 	if( y == 0 )  y = 1;
 	if( x < 0 || y < 0 )
 		{
-		ifp->if_special_zoom = 1;
+		SGI(ifp)->si_special_zoom = 1;
 		x = y = 1;
 		}
 	else
-		ifp->if_special_zoom = 0;
-	ifp->if_xzoom = x;
-	ifp->if_yzoom = y;
+		SGI(ifp)->si_special_zoom = 0;
+	SGI(ifp)->si_xzoom = x;
+	SGI(ifp)->si_yzoom = y;
 	return	0;
 	}
 
@@ -1070,14 +1101,15 @@ int	x, y;
 			/* Color and bitmask ignored under MEX.	*/
 	if( qtest() )
 		sgw_inqueue(ifp);
+	SGI(ifp)->si_curs_on = mode;
 	if( ! mode )
 		{
 		cursoff();
 		setcursor( 0, 1, 0x2000 );
 		return	0;
 		}
-	x *= ifp->if_xzoom;
-	y *= ifp->if_yzoom;
+	x *= SGI(ifp)->si_xzoom;
+	y *= SGI(ifp)->si_yzoom;
 	curson();
 	setcursor( 1, cursor_color, 0x2000 );
 	setvaluator( MOUSEX, x + WIN_L, 0, 1023 );
@@ -1127,7 +1159,8 @@ register FBIO *ifp;
 		for( i=0; i<ifp->if_height; i++ )  {
 			cmov2s( 0, i );
 			writepixels( ifp->if_width, (Colorindex *)
-				&ifp->if_save[i*ifp->if_width*sizeof(Colorindex)] );
+				&SGI(ifp)->si_save[i*ifp->if_width*sizeof(Colorindex)] );
 		}
+		redraw = 0;
 	}
 }
