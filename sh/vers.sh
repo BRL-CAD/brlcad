@@ -38,7 +38,7 @@ fi
 if test -r $path_to_vers_sh/../configure.ac ; then
 	version_script=`grep VERSION $path_to_vers_sh/../configure.ac | grep -v SUBST | head -4`
 	eval $version_script
-	if ! test "x$BRLCAD_VERSION" = "x" ; then
+	if test ! "x$BRLCAD_VERSION" = "x" ; then
 		RELEASE="$BRLCAD_VERSION"
 	else
 		RELEASE='??.??.??'

@@ -25,7 +25,7 @@ if test "x$2" = "x" ; then
 fi
 
 # if there is a fourth, assume date format string
-if ! test "x$4" = "x" ; then
+if test ! "x$4" = "x" ; then
 	CONFIG_TIME="`echo $* | awk '{print $4}' | tr : ' '`"
 fi
 
@@ -47,27 +47,27 @@ total_post="`expr $hour_seconds_after + $min_seconds_after + $post_sec`"
 
 sec_elapsed="`expr $total_post - $total_pre`"
 min_elapsed="0"
-if ! test "x$sec_elapsed" = "x0" ; then
+if test ! "x$sec_elapsed" = "x0" ; then
 	min_elapsed="`expr $sec_elapsed / 60`"
 	sec_elapsed2="`expr $min_elapsed \* 60`"
 	sec_elapsed="`expr $sec_elapsed - $sec_elapsed2`"
 fi
 hour_elapsed="0"
-if ! test "x$min_elapsed" = "x0" ; then
+if test ! "x$min_elapsed" = "x0" ; then
 	hour_elapsed="`expr $min_elapsed / 60`"
 	min_elapsed2="`expr $hour_elapsed \* 60`"
 	min_elapsed="`expr $min_elapsed - $min_elapsed2`"
 fi
 
-if ! test "x$hour_elapsed" = "x0" ; then
+if test ! "x$hour_elapsed" = "x0" ; then
 	if test "x$hour_elapsed" = "x1" ; then
 		time_elapsed="$hour_elapsed hour"
 	else
 		time_elapsed="$hour_elapsed hours"
 	fi
 fi
-if ! test "x$min_elapsed" = "x0" ; then
-	if ! test "x$time_elapsed" = "x" ; then
+if test ! "x$min_elapsed" = "x0" ; then
+	if test ! "x$time_elapsed" = "x" ; then
 		time_elapsed="${time_elapsed}, "
 	fi
 	time_elapsed="${time_elapsed}${min_elapsed}"
@@ -77,8 +77,8 @@ if ! test "x$min_elapsed" = "x0" ; then
 		time_elapsed="${time_elapsed} minutes"
 	fi
 fi
-if ! test "x$sec_elapsed" = "x0" ; then
-	if ! test "x$time_elapsed" = "x" ; then
+if test ! "x$sec_elapsed" = "x0" ; then
+	if test ! "x$time_elapsed" = "x" ; then
 		time_elapsed="${time_elapsed}, "
 	fi
 	time_elapsed="${time_elapsed}${sec_elapsed}"
