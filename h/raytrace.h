@@ -1329,6 +1329,7 @@ struct rt_g {
 	int		rtg_parallel;	/* !0 = trying to use multi CPUs */
 	struct bu_list	rtg_vlfree;	/* head of bn_vlist freelist */
 	int		NMG_debug;	/* debug bits for NMG's see h/nmg.h */
+	struct rt_wdb	rtg_headwdb;	/* head of database object list */
 };
 extern struct rt_g rt_g;
 
