@@ -59,9 +59,12 @@ anim_cascade
   status: ok
   desc: evaluate movement of an object relative to a moving frame of reference
   notes: waits for standard input without redirector (e.g. no args given)
-  notes: doesn't take -?
-anim_fly sean
-anim_hardtrack
+  notes: doesn't take -? or -h
+anim_fly
+  status: ok
+  desc: make animation table to simulate flying motion
+  notes: doesn't take -? or -h
+anim_hardtrack sean
 anim_keyread
 anim_lookat
 anim_offset
@@ -274,6 +277,9 @@ pix-fb
   desc: raw image datafile to framebuffer
 pix-orle
 pix-png
+  status: ok, bad behaviour
+  desc: converts raw image datafiles to png image datafiles
+  notes: gives "short read" error when trying to covert a raw to png; doesn't dynamically determine height -n (based on data) when given width -w; no output produced
 pix-ppm
 pix-ps
 pix-rle

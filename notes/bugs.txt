@@ -1,3 +1,1 @@
-pix-png
-  gives "short read" error when trying to covert a raw to png; doesn't dynamically determine height -n (based on data) when given width -w; no output produced
 
