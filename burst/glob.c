@@ -17,7 +17,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./extern.h"
 
 Colors	colorids;	/* ident range to color mappings for plots */
-FBIO	*fbiop;		/* frame buffer specific access from libfb */
+FBIO	*fbiop=NULL;	/* frame buffer specific access from libfb */
 FILE	*gridfp=NULL;	/* grid file output stream (2-d shots) */
 FILE	*histfp=NULL;	/* histogram output stream (statistics) */
 FILE	*outfp=NULL;	/* output stream */
@@ -28,6 +28,14 @@ HmMenu	*mainhmenu;
 Ids	airids;		/* burst air idents */
 Ids	armorids;	/* burst armor idents */
 Ids	critids;	/* critical component idents */
+RGBpixel *pixgrid;
+RGBpixel pixaxis  = { 255,   0,   0 };
+RGBpixel pixbhit  = { 200, 255, 200 };
+RGBpixel pixblack = {   0,   0,   0 };
+RGBpixel pixcrit  = { 255, 200, 200 };
+RGBpixel pixbkgr  = { 150, 100, 255 };
+RGBpixel pixmiss  = { 200, 200, 200 };
+RGBpixel pixtarg  = { 255, 255, 255 };
 Trie	*cmdtrie = TRIE_NULL;
 
 bool batchmode = false;		/* are we processing batch input now */
@@ -70,7 +78,14 @@ fastf_t	cellsz = DFL_CELLSIZE;
 fastf_t	conehfangle = DFL_CONEANGLE;
 			/* spall cone half angle */
 fastf_t	fire[3];	/* explicit firing coordinates (2-D or 3-D) */
+fastf_t	gridrt;		/* distance in model coordinates from origin to
+				right border of grid */
+fastf_t gridlf;		/* distance to left border */	
+fastf_t griddn;		/* distance to bottom border */
+fastf_t gridup;		/* distance to top border */
+fastf_t	gridhor[3];	/* Horizontal grid direction cosines. */
 fastf_t	gridsoff[3];	/* origin of grid translated by stand-off */
+fastf_t	gridver[3];	/* Vertical grid direction cosines. */
 fastf_t	modlcntr[3];	/* centroid of target's bounding RPP */
 fastf_t raysolidangle;	/* solid angle per spall sampling ray */
 fastf_t	standoff;	/* distance from model origin to grid */
@@ -88,20 +103,25 @@ fastf_t	yaw = 0.0;	/* deviation right of path of main penetrator */
 fastf_t	setback = 0.0;	/* fusing distance for warhead */
 
 int co;			/* columns of text displayable on video screen */
-int li;			/* lines of text displayable on video screen */
+int devwid = 512;	/* width in pixels of frame buffer window */
+int devhgt = 512;	/* height in pixels of frame buffer window */
 int firemode = FM_DFLT;	/* mode of specifying shots */
 int gridsz = 512;
 int gridxfin;
 int gridyfin;
 int gridxorg;
 int gridyorg;
-int nbarriers = 0;	    /* no. of barriers allowed to critical comp */
-int noverlaps = 0;	    /* no. of overlaps encountered in this view */
-int nprocessors;	    /* no. of processors running concurrently */
-int nriplevels = 0;	    /* no. of levels of ripping (0 = no ripping) */
-int nspallrays = DFL_NRAYS; /* no. of spall rays at each burst point */
-int units = DFL_UNITS;	    /* target units (default is millimeters) */
-int zoom = 1;		    /* magnification factor on frame buffer */
+int gridwidth;		/* Grid width in cells. */
+int gridheight;		/* Grid height in cells. */
+int li;			/* lines of text displayable on video screen */
+int nbarriers = 0;	/* no. of barriers allowed to critical comp */
+int noverlaps = 0;	/* no. of overlaps encountered in this view */
+int nprocessors;	/* no. of processors running concurrently */
+int nriplevels = 0;	/* no. of levels of ripping (0 = no ripping) */
+int nspallrays = DFL_NRAYS;
+			/* no. of spall rays at each burst point */
+int units = DFL_UNITS;	/* target units (default is millimeters) */
+int zoom = 1;		/* magnification factor on frame buffer */
 
 struct rt_i *rtip = RTI_NULL; /* model specific access from librt */
 

@@ -9,7 +9,9 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#define DEBUG_BURST	false
 #define DEBUG_GRID	false
+
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -26,14 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static int	currshot;	/* Current shot index. */
 static int	lastshot;	/* Final shot index. */
 
-static int	gridwidth;	/* Grid width in cells. */
-static int	gridheight;	/* Grid height in cells. */
-
-static fastf_t	gridhor[3];	/* Horizontal grid direction cosines. */
-static fastf_t	gridver[3];	/* Vertical grid direction cosines. */
-static fastf_t	gridsoff[3];	/* Grid origin translated by standoff. */
 static fastf_t	viewdir[3];	/* Direction of grid rays. */
-
 static fastf_t	delta;		/* Angular delta ray of spall cone. */
 static fastf_t	comphi;		/* Angle between ring and cone axis. */
 static fastf_t	phiinc;		/* Angle between concentric rings. */
@@ -42,19 +37,20 @@ static fastf_t	cantdelta[3];	/* Delta ray specified by yaw and pitch.*/
 
 static struct application ag;	/* Global application structure. */
 
-_LOCAL_ bool		gridShot();
-_LOCAL_ int		burstRay();
-_LOCAL_ int		f_Hit();
-_LOCAL_ int		f_HushOverlap();
-_LOCAL_ int		f_Miss();
-_LOCAL_ int		f_Overlap();
-_LOCAL_ int		f_Penetrate();
-_LOCAL_ int		f_Spall();
-_LOCAL_ int		f_Canted_Warhead();
-_LOCAL_ int		f_Warhead_Miss();
-_LOCAL_ void		view_pix(), view_end();
-_LOCAL_ void		spallVec();
-void			consVector();
+_LOCAL_ bool	gridShot();
+_LOCAL_ int	burstRay();
+_LOCAL_ int	f_BurstHit();
+_LOCAL_ int	f_BurstMiss();
+_LOCAL_ int	f_Hit();
+_LOCAL_ int	f_HushOverlap();
+_LOCAL_ int	f_Miss();
+_LOCAL_ int	f_Overlap();
+_LOCAL_ int	f_Penetrate();
+_LOCAL_ int	f_Canted_Warhead();
+_LOCAL_ int	f_Warhead_Miss();
+_LOCAL_ void	view_pix(), view_end();
+_LOCAL_ void	spallVec();
+void		consVector();
 
 fastf_t
 min( a, b )
@@ -72,14 +68,12 @@ fastf_t	a, b;
 
 void
 gridInit()
-	{	fastf_t		gridrt, gridlf, gridup, griddn;
-
-	notify( "Initializing grid..." );
+	{
+	notify( "Initializing grid...", NOTIFY_APPEND );
 	rt_prep_timer();
 
 	/* Compute grid unit vectors. */
-	gridRotate(	viewazim, viewelev, 0.0,
-			gridhor, gridver );
+	gridRotate( viewazim, viewelev, 0.0, gridhor, gridver );
 
 	if( yaw != 0.0 || pitch != 0.0 )
 		{	fastf_t	negsinyaw = -sin( yaw );
@@ -97,13 +91,9 @@ gridInit()
 	/* Compute distances from grid origin (model origin) to each
 		border of grid, and grid indices at borders of grid.
 	 */
-	if( firemode & FM_SHOT )
-		{
-		if( firemode & FM_FILE )
-			rewind( shotfp );
-		gridxorg = gridxfin = gridyorg = gridyfin = 0;
-		}
-	else
+	if( firemode & FM_SHOT && firemode & FM_FILE )
+		rewind( shotfp );
+	if( ! (firemode & FM_PART) )
 		{
 		gridrt = max(	gridhor[X] * rtip->mdl_max[X],
 				gridhor[X] * rtip->mdl_min[X]
@@ -141,16 +131,19 @@ gridInit()
 			  min(	gridver[Z] * rtip->mdl_max[Z],
 				gridver[Z] * rtip->mdl_min[Z]
 				);
-		gridxorg = gridlf / cellsz;
-		gridxfin = gridrt / cellsz;
-		gridyorg = griddn / cellsz;
-		gridyfin = gridup / cellsz;
+		}
+	gridxorg = gridlf / cellsz;
+	gridxfin = gridrt / cellsz;
+	gridyorg = griddn / cellsz;
+	gridyfin = gridup / cellsz;
 
-		/* Allow for randomization of cells. */
+	/* Allow for randomization of cells. */
+	if( dithercells )
+		{
 		gridxorg--;
 		gridxfin++;
 		gridyorg--;
-		gridxorg++;
+		gridyfin++;
 		}
 
 	/* Compute stand-off distance. */
@@ -225,24 +218,24 @@ gridModel()
 	ag.a_overlap = reportoverlaps ? f_Overlap : f_HushOverlap;
 	ag.a_rt_i = rtip;
 
-	plotInit();
+	plotInit();	/* initialize plot file if appropriate */
 
-	/* Output initial line for this aspect. */
+	imageInit();	/* initialize frame buffer if appropriate */
+
+	/* output initial line for this aspect */
 	prntAspectInit();
 
 	fatalerror = false;
-	userinterrupt = false;	/* Set by interrupt handler. */
+	userinterrupt = false;	/* set by interrupt handler */
 
-	/* Get starting and ending shot number. */
+	/* get starting and ending shot number */
 	currshot = 0;
 	lastshot = gridwidth * gridheight - 1;
 
 	rt_prep_timer();
-	notify( "Raytracing..." );
+	notify( "Raytracing...", NOTIFY_ERASE );
 
-	/*
-	 * SERIAL case -- one CPU does all the work.
-	 */
+	/* SERIAL case -- one CPU does all the work */
 	if( ! gridShot() )
 		return;
 	view_end();
@@ -324,7 +317,7 @@ register struct application	*ap;
 			{
 			switch( readShot( vec ) )
 				{
-			case EOF :	return	true;
+			case EOF :	return	false;
 			case true :	break;
 			case false :	return	false;
 				}
@@ -380,10 +373,6 @@ _LOCAL_ void
 prntFiringCoords( vec )
 register fastf_t	*vec;
 	{
-#if false
-	rt_log( "Firing coords <%7.2f,%7.2f>\n",
-		vec[X]*unitconv, vec[Y]*unitconv );
-#endif
 	if( gridfile[0] != '\0' )
 		(void) fprintf( gridfp,
 				"%7.2f %7.2f\n",
@@ -406,7 +395,7 @@ gridShot()
 	noverlaps = 0;
 	for( ; ! userinterrupt; view_pix( &a ) )
 		{
-		if( !(firemode & FM_FILE) && currshot > lastshot )
+		if( !(firemode & FM_SHOT) && currshot > lastshot )
 			break;
 		if( ! (status = getRayOrigin( &a )) )
 			break;
@@ -422,7 +411,10 @@ gridShot()
 			return	false;
 			}
 		if( !(firemode & FM_FILE) && (firemode & FM_SHOT) )
+			{
+			view_pix( &a );
 			break;
+			}
 		}
 	return	status;
 	}
@@ -553,6 +545,9 @@ struct partition	*pt_headp;
 	{
 	/* Output cell identification. */
 	prntCellIdent( ap, pt_headp );
+	/* Color cell if making frame buffer image. */
+	if( fbfile[0] != NUL )
+		paintCellFb( ap, pixtarg, pixbkgr );
 	if( cantwarhead )
 		return	f_Canted_Warhead( ap, pt_headp );
 	else
@@ -606,6 +601,14 @@ struct partition	*pt_headp;
 	{	register struct partition *pp;
 		register int		ct = 0; /* Cumulative count. */
 		struct partition	*bp = PT_NULL;
+#if DEBUG_GRID
+	rt_log( "f_Penetrate\n" );
+	for( pp = pt_headp->pt_forw; pp != pt_headp; pp = pp->pt_forw )
+		rt_log( "\tregion is '%s',\tid=%d\taircode=%d\n",
+			pp->pt_regionp->reg_name,
+			(int) pp->pt_regionp->reg_regionid,
+			(int) pp->pt_regionp->reg_aircode );
+#endif
 	if( setback != 0.0 )
 		prntComin( ap, pt_headp );
 
@@ -646,6 +649,9 @@ struct partition	*pt_headp;
 		/* Check for voids. */
 		if( np != pt_headp )
 			{
+#if DEBUG_GRID
+			rt_log( "\tcheck for voids\n" );
+#endif
 			los = np->pt_inhit->hit_dist -
 					pp->pt_outhit->hit_dist;
 			voidflag = ( los > LOS_TOL );
@@ -653,6 +659,9 @@ struct partition	*pt_headp;
 				air, extend the outside air to fill it. */
 			if( OutsideAir( np->pt_regionp ) )
 				{
+#if DEBUG_GRID
+				rt_log( "\t\toutside air\n" );
+#endif
 				if( voidflag )
 					{
 					np->pt_inhit->hit_dist =
@@ -682,7 +691,9 @@ struct partition	*pt_headp;
 		/* Merge adjacent inside airs of same type. */
 		if( np != pt_headp && InsideAir( np->pt_regionp ) )
 			{
-			prntScr( "Merging inside airs" );
+#if DEBUG_GRID
+			rt_log( "\tmerging inside airs\n" );
+#endif
 			for(	cp = np->pt_forw;
 				cp != pt_headp;
 				cp = cp->pt_forw )
@@ -705,6 +716,10 @@ struct partition	*pt_headp;
 			that is if it is the first thing hit. */
 		if( pp->pt_back == pt_headp && InsideAir( regp ) )
 			{	fastf_t	slos;
+#if DEBUG_GRID
+			rt_log( "\tphantom armor before internal air\n" );
+#endif
+
 			slos = pp->pt_outhit->hit_dist -
 					pp->pt_inhit->hit_dist;
 			prntPhantom( ap, regp->reg_aircode, slos, ++ct );
@@ -713,11 +728,14 @@ struct partition	*pt_headp;
 		/* If we have a component, output it. */
 		if( ! Air( regp ) )
 			{
+#if DEBUG_GRID
+			rt_log( "\twe have a component\n" );
+#endif
 			/* If there is a void, output 01 air as space. */
 			if( voidflag )
 				{
 #if DEBUG_GRID
-				rt_log( "outputting 01 air\n" );
+				rt_log( "\t\tthere is a void, so outputting 01 air\n" );
 #endif
 				prntSeg( ap, pp, false,
 						OUTSIDE_AIR, los, ++ct );
@@ -729,7 +747,7 @@ struct partition	*pt_headp;
 						np->pt_inhit->hit_dist;
 				/* Check for burst point. */
 #if DEBUG_GRID
-				rt_log( "\texplicit air follows\n" );
+				rt_log( "\t\texplicit air follows\n" );
 #endif
 				if(	bp == PT_NULL
 				    &&	findIdents( regp->reg_regionid,
@@ -753,7 +771,7 @@ struct partition	*pt_headp;
 				{
 				/* Last component gets 09 air. */
 #if DEBUG_GRID
-				rt_log( "\toutputting 09 air\n" );
+				rt_log( "\t\tlast component, so outputting 09 air\n" );
 #endif
 				prntSeg( ap, pp, false,
 					 EXIT_AIR, 0.0, ++ct );
@@ -763,7 +781,7 @@ struct partition	*pt_headp;
 			if( SameCmp( regp, nregp ) )
 				{
 #if DEBUG_GRID
-				rt_log( "\tmerging adjacent components\n" );
+				rt_log( "\t\tmerging adjacent components\n" );
 #endif
 				/* Merge adjacent components with same
 					idents. */
@@ -774,7 +792,7 @@ struct partition	*pt_headp;
 			else
 				{
 #if DEBUG_GRID
-				rt_log( "\tdifferent component follows\n" );
+				rt_log( "\t\tdifferent component follows\n" );
 #endif
 				prntSeg( ap, pp, false, 0, 0.0, ++ct );
 				}
@@ -783,6 +801,9 @@ struct partition	*pt_headp;
 			explicit and output phantom armor as needed. */
 		if( InsideAir( regp ) )
 			{
+#if DEBUG_GRID
+			rt_log( "\tcheck for adjacency of differingt airs; inside air\n" );
+#endif
 			/* Inside air followed by implicit outside air. */
 			if( voidflag )
 				prntPhantom( ap, OUTSIDE_AIR, los, ++ct );
@@ -790,11 +811,17 @@ struct partition	*pt_headp;
 		/* Check next partition for adjacency problems. */
 		if( np != pt_headp )
 			{
+#if DEBUG_GRID
+			rt_log( "\tcheck next partition for adjacency\n" );
+#endif
 			/* See if inside air follows impl. outside air. */
 			if( voidflag && InsideAir( nregp ) )
 				{	fastf_t	slos =
 						np->pt_outhit->hit_dist -
 						np->pt_inhit->hit_dist;
+#if DEBUG_GRID
+				rt_log( "\t\tinside air follows impl. outside air\n" );
+#endif
 				prntPhantom( ap, nregp->reg_aircode,
 						slos, ++ct );
 				}
@@ -807,13 +834,21 @@ struct partition	*pt_headp;
 				)
 				{ fastf_t slos = np->pt_outhit->hit_dist -
 						 np->pt_inhit->hit_dist;
+#if DEBUG_GRID
+				rt_log( "\t\tdiffering airs are adjacent\n" );
+#endif
 				prntPhantom( ap, nregp->reg_aircode,
 						slos, ++ct );
 				}
 			}
 		/* Output phantom armor if internal air is last hit. */
 		if( np == pt_headp && InsideAir( regp ) )
+			{
+#if DEBUG_GRID
+			rt_log( "\tinternal air last hit\n" );
+#endif
 			prntPhantom( ap, EXIT_AIR, 0.0, ++ct );
+			}
 		}
 	if( nriplevels == 0 )
 		return	1;
@@ -821,7 +856,7 @@ struct partition	*pt_headp;
 	if( bp != PT_NULL )
 		{
 		/* This is a burst point. */
-		prntBurstHdr(	ap, bp, bp->pt_forw );
+		prntBurstHdr( ap, bp, bp->pt_forw );
 		return	burstPoint( ap, bp );
 		}
 	return	1;
@@ -829,6 +864,16 @@ struct partition	*pt_headp;
 
 _LOCAL_ int
 f_Miss( ap )
+register struct application *ap;
+	{
+	if( fbfile[0] != NUL )
+		paintCellFb( ap, pixmiss, pixbkgr );
+	VSETALL( ap->a_color, 0.0 ); /* All misses black. */
+	return	0;
+	}
+
+_LOCAL_ int
+f_BurstMiss( ap )
 register struct application *ap;
 	{
 	VSETALL( ap->a_color, 0.0 ); /* All misses black. */
@@ -860,11 +905,12 @@ struct xray		*rayp;
 		ap->a_color[GRN] =
 		ap->a_color[BLU] = 1.0;
 	ScaleVec( ap->a_color, intensity );
+	ap->a_cumlen = hitp->hit_dist;
 	return;
 	}
 
 _LOCAL_ int
-f_Spall( ap, pt_headp )
+f_BurstHit( ap, pt_headp )
 struct application	*ap;
 struct partition	*pt_headp;
 	{	Pt_Queue			*qshield = PT_Q_NULL;
@@ -924,12 +970,20 @@ struct partition	*pt_headp;
 		}
 	qFree( qshield );
 	if( ncrit == 0 )
+		{
+		if( fbfile[0] != NUL )
+			paintCellFb( ap, pixbhit, pixtarg );
 		return	ap->a_miss( ap );
+		}
 	else
+		{
+		if( fbfile[0] != NUL )
+			paintCellFb( ap, pixcrit, pixtarg );
 		return	ncrit;
+		}
 	}
 
-_LOCAL_ int
+int
 round( f )
 fastf_t	f;
 	{	register int	a;
@@ -946,14 +1000,9 @@ _LOCAL_ int
 burstPoint( ap, pp )
 register struct application	*ap;
 register struct partition	*pp;
-	{
-#ifdef alliant
-		register int	d7;	/* known to be in d7 */
-#endif
-		fastf_t			s_rdir[3];
+	{	fastf_t			s_rdir[3];
 		register struct hit	*ohitp;
 		register struct soltab	*stp;
-	prntScr( "burstPoint" );
 	/* Fill in hit point and normal. */
 	stp = pp->pt_outseg->seg_stp;
 	ohitp = pp->pt_outhit;
@@ -961,8 +1010,8 @@ register struct partition	*pp;
 	Check_Oflip( pp, ohitp->hit_normal, ap->a_ray.r_dir );
 
 	a_burst = *ap;
-	a_burst.a_miss = f_Miss;
-	a_burst.a_hit = f_Spall;
+	a_burst.a_miss = f_BurstMiss;
+	a_burst.a_hit = f_BurstHit;
 	a_burst.a_overlap = ap->a_overlap; /* Shouldn't need this. */
 	a_burst.a_level++;
 	a_burst.a_user = 0; /* Ray number. */
@@ -990,12 +1039,11 @@ burstRay()
 		fastf_t			phi;
 		fastf_t			nrings = conehfangle / phiinc;
 		int			m;
-	prntScr( "burstray()" );
 	a_spall = a_burst;
 	a_spall.a_resource = RESOURCE_NULL;
 	for( ; ! userinterrupt; )
 		{	fastf_t	sinphi;
-			fastf_t	gamma, gammainc;
+			fastf_t	gamma, gammainc, gammalast;
 			register int	done;
 		RES_ACQUIRE( &rt_g.res_worker );
 		phi = comphi;
@@ -1008,9 +1056,8 @@ burstRay()
 		sinphi = Abs( sinphi );
 		m = (TWO_PI * sinphi)/delta + 1;
 		gammainc = TWO_PI / m;
-		for(	gamma = 0.0;
-			gamma <= TWO_PI-gammainc;
-			gamma += gammainc )
+		gammalast = TWO_PI - gammainc + EPSILON;
+		for( gamma = 0.0; gamma <= gammalast; gamma += gammainc )
 			{	register int	ncrit;
 			spallVec( a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,
 				 phi, gamma );
@@ -1026,24 +1073,7 @@ burstRay()
 				return	0;
 				}
 			if( fbfile[0] != NUL && ncrit > 0 )
-				{	RGBpixel	pixel;
-					int		x, y;
-					int		err;
-				pixel[RED] = a_spall.a_color[RED] * 255;
-				pixel[GRN] = a_spall.a_color[GRN] * 255;
-				pixel[BLU] = a_spall.a_color[BLU] * 255;
-				x = round( 255 +
-					Dot( a_spall.a_ray.r_dir, gridhor )
-					* nrings );
-				y = round( 255 +
-					Dot( a_spall.a_ray.r_dir, gridver )
-					* nrings );
-				RES_ACQUIRE( &rt_g.res_stats );
-				err = fb_write( fbiop, x, y, pixel, 1 );
-				RES_RELEASE( &rt_g.res_stats );
-				if( err == -1 )
-					rt_log( "Write failed to pixel <%d,%d>.\n", x, y );
-				}
+				paintSpallFb( &a_spall );
 			if( histfile[0] != NUL )
 				{
 				RES_ACQUIRE( &rt_g.res_syscall );
@@ -1116,10 +1146,6 @@ abort_RT( sig )
 int	sig;
 	{
 	(void) signal( SIGINT, abort_RT );
-#if false
-	if( fbfile[0] != NUL )
-		(void) fb_flush( fbiop );
-#endif
 	userinterrupt = 1;
 #if defined( SYSV )
 	return;
@@ -1166,10 +1192,6 @@ register struct application	*ap;
 _LOCAL_ void
 view_end()
 	{
-#if false
-	if( fbfile[0] != NUL )
-		fb_flush( fbiop );
-#endif
 	if( gridfile[0] != NUL )
 		(void) fflush( gridfp );
 	if( histfile[0] != NUL )
@@ -1178,6 +1200,13 @@ view_end()
 		(void) fflush( plotfp );
 	if( outfile[0] != NUL )
 		(void) fflush( outfp );
+	if(	fbfile[0] != NUL
+	     &&	(!(firemode & FM_SHOT) || (firemode & FM_FILE))
+		)
+		{
+		if( closFbDevice() )
+			fbiop = FBIO_NULL;
+		}
 	prntTimer( "view" );
 	if( noverlaps > 0 )
 		rt_log( "%d overlaps detected over %g mm thick.\n",

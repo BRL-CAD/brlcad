@@ -12,23 +12,30 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #include "./burst.h"
 #include "./vecmath.h"
+#define DEBUG_IDENTS	false
 
 bool
 findIdents( ident, idp )
 int		ident;
 register Ids	*idp;
 	{
-	prntScr( "findIdents(%d)", ident );
+#if DEBUG_IDENTS
+	rt_log( "findIdents(%d)\n", ident );
+#endif
 	for( idp = idp->i_next ; idp != IDS_NULL; idp = idp->i_next )
 		{
-		prntScr( "lower=%d, upper=%d", (int) idp->i_lower,
+#if DEBUG_IDENTS
+		rt_log( "lower=%d, upper=%d\n", (int) idp->i_lower,
 			(int) idp->i_upper );
+#endif
 		if(	ident >= (int) idp->i_lower
 		    &&	ident <= (int) idp->i_upper
 			)
 			return	true;
 		}
-	prntScr( "returned false" );
+#if DEBUG_IDENTS
+	rt_log( "returned false\n" );
+#endif
 	return	false;
 	}
 

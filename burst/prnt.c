@@ -22,6 +22,85 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define PHANTOM_ARMOR	111
 
+int
+notify( str, mode )
+char    *str;
+int	mode;
+	{       register int    i;
+		static int      lastlen = -1;
+		register int    len;
+		static char	buf[LNBUFSZ] = { 0 };
+		register char	*p;
+	if( ! tty )
+		return	false;
+	switch( mode )
+		{
+	case NOTIFY_APPEND :
+		p = buf + lastlen;
+		break;
+	case NOTIFY_DELETE :
+		for( p = buf+lastlen; p > buf && *p != NOTIFY_DELIM; p-- )
+			;
+		break;
+	case NOTIFY_ERASE :
+		p = buf;
+		break;
+		}
+	if( str != NULL )
+		{
+		if( p > buf )
+			*p++ = NOTIFY_DELIM;
+		(void) strcpy( p, str );
+		}
+	else
+		*p = NUL;
+	(void) ScMvCursor( PROMPT_X, PROMPT_Y );
+	len = strlen( buf );
+	if( len > 0 )
+		{
+		(void) ScSetStandout();
+		(void) fputs( buf, stdout );
+		(void) ScClrStandout();
+		}
+
+	/* Blank out remainder of previous command. */
+	for( i = len; i < lastlen; i++ )
+		(void) putchar( ' ' );
+	(void) ScMvCursor( PROMPT_X, PROMPT_Y );
+	(void) fflush( stdout );
+	lastlen = len;
+	return	true;
+	}
+
+void
+warning( str )
+char	*str;
+	{
+	if( tty )
+		HmError( str );
+	else
+		prntScr( str );
+	return;
+	}
+
+
+void
+prompt( str )
+char    *str;
+	{
+	(void) ScMvCursor( PROMPT_X, PROMPT_Y );
+	if( str == (char *) NULL )
+		(void) ScClrEOL();
+	else
+		{
+		(void) ScSetStandout();
+		(void) fputs( str, stdout );
+		(void) ScClrStandout();
+		}
+	(void) fflush( stdout );
+	return;
+	}
+
 /**/
 void
 prntPagedMenu( menu )

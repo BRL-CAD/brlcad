@@ -335,7 +335,7 @@ Trie	**triepp;
 			break;
 		case Ctrl('G') : /* Abort input. */
 			ring_Bell();
-			notify( "Aborted." );
+			notify( "Aborted.", NOTIFY_APPEND );
 			goto	clean_return;
 		case Ctrl('K') : /* Erase from cursor to end of line. */
 			if( *p == NUL )
@@ -419,7 +419,7 @@ Trie	**triepp;
 			else
 				{
 				(void) strncpy( inbuf, buffer, bufsz );
-				notify( "" );
+				notify( NULL, NOTIFY_DELETE );
 				goto clean_return;
 				}
 		case Ctrl('V') :
@@ -448,7 +448,7 @@ Trie	**triepp;
 		}
 	while( strlen( buffer ) < BUFSIZ);
 	ring_Bell();
-	notify( "Buffer full." );
+	notify( "Buffer full.", NOTIFY_APPEND );
 clean_return :
 	prompt( "" );
 	if( tty )

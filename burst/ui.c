@@ -87,6 +87,8 @@ _LOCAL_ void	MerrorFile();
 _LOCAL_ void	Mexecute();
 _LOCAL_ void	MfbFile();
 _LOCAL_ void	MgedFile();
+_LOCAL_	void	MgridFile();
+_LOCAL_ void	MhistFile();
 _LOCAL_ void	Minput2dShot();
 _LOCAL_ void	Minput3dShot();
 _LOCAL_ void	Minput3dBurst();
@@ -107,9 +109,6 @@ _LOCAL_ int	getInput();
 _LOCAL_ int	unitStrToInt();
 _LOCAL_ void	addItem();
 _LOCAL_ void	banner();
-_LOCAL_ void	prompt();
-_LOCAL_ void	notify();
-_LOCAL_ void	warning();
 
 typedef struct ftable	Ftable;
 struct ftable
@@ -128,6 +127,8 @@ Ftable	shot2dmenu[] =
 	{ "input-2d-shot",
 		"type in shotline coordinates",
 		0, Minput2dShot },
+	{ "execute",
+		"begin ray tracing", 0, Mexecute },
 	{ 0 },
 	};
 
@@ -161,6 +162,8 @@ Ftable	gridmenu[] =
 	{ "enclose-portion",
 		"generate a grid which covers a portion of the target",
 		0, MenclosePortion },
+	{ "execute",
+		"begin ray tracing", 0, Mexecute },
 	{ 0 }
 	};
 
@@ -261,13 +264,19 @@ Ftable	filemenu[] =
 	{ "read-input-file",
 		"read commands from a file", 0, MreadCmdFile },
 	{ "burst-file",
-		"enable or rename burst point output file", 0, MburstFile },
+		"name burst point output file", 0, MburstFile },
 	{ "error-file",
 		"redirect error diagnostics to file", 0, MerrorFile },
+	{ "histogram-file",
+		"name file for graphing hits on critical components",
+		0, MhistFile },
+	{ "grid-file",
+		"name file for storing grid points",
+		0, MgridFile },
 	{ "image-file",
-		"enable or rename frame buffer device", 0, MfbFile },
+		"name frame buffer device", 0, MfbFile },
 	{ "plot-file",
-		"enable or rename UNIX plot output file", 0, MplotFile },
+		"name UNIX plot output file", 0, MplotFile },
 	{ "write-input-file",
 		"save input up to this point in a file", 0, MwriteCmdFile },
 	{ 0 }
@@ -457,55 +466,6 @@ initUi()
 	return	true;
 	}
 
-_LOCAL_ void
-prompt( str )
-char    *str;
-	{
-	(void) ScMvCursor( PROMPT_X, PROMPT_Y );
-	if( str == (char *) NULL )
-		(void) ScClrEOL();
-	else
-		{
-		(void) ScSetStandout();
-		(void) fputs( str, stdout );
-		(void) ScClrStandout();
-		}
-	(void) fflush( stdout );
-	return;
-	}
-
-_LOCAL_ void
-notify( str )
-char    *str;
-	{       register int    i;
-		static int      lastlen = -1;
-		register int    len = strlen( str );
-	if( ! tty )
-		return;
-	(void) ScMvCursor( PROMPT_X, PROMPT_Y );
-	(void) ScSetStandout();
-	(void) fputs( str, stdout );
-	(void) ScClrStandout();
-	/* Blank out remainder of previous command. */
-	for( i = len; i < lastlen; i++ )
-		(void) putchar( ' ' );
-	(void) ScMvCursor( PROMPT_X, PROMPT_Y );
-	(void) fflush( stdout );
-	lastlen = len;
-	return;
-	}
-
-_LOCAL_ void
-warning( str )
-char	*str;
-	{
-	if( tty )
-		HmError( str );
-	else
-		prntScr( str );
-	return;
-	}
-
 _LOCAL_ int
 unitStrToInt( str )
 char	*str;
@@ -548,10 +508,30 @@ HmItem	*itemp;
 _LOCAL_ void
 MautoBurst( itemp )
 HmItem	*itemp;
-	{
-	nriplevels = 1;
-	(void) sprintf( scrbuf, "%s",
-			itemp != (HmItem *) 0 ? itemp->text : cmdname );
+	{	static Input	input[] =
+			{
+			{ "Burst along shotline", "n", "%d", "y or n" },
+			};
+		register Input	*ip = input;
+	if( getInput( ip ) )
+		{
+		if( ip->buffer[0] == 'y' )
+			nriplevels = 1;
+		else
+		if( ip->buffer[0] == 'n' )
+			nriplevels = 0;
+		else
+			{
+			(void) sprintf( scrbuf,
+					"Illegal input \"%s\".",
+					ip->buffer );
+			warning( scrbuf );
+			return;
+			}
+		}
+	(void) sprintf( scrbuf, "%s\t\t%s",
+			itemp != (HmItem *) 0 ? itemp->text : cmdname,
+			nriplevels == 1 ? "yes" : "no" );
 	logCmd( scrbuf );
 	return;
 	}
@@ -582,8 +562,9 @@ HmItem	*itemp;
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			airfile );
 	logCmd( scrbuf );
-	notify( "Reading burst air idents..." );
+	notify( "Reading burst air idents...", NOTIFY_APPEND );
 	readIdents( &airids, airfp );
+	notify( NULL, NOTIFY_DELETE );
 	return;
 	}
 
@@ -613,8 +594,9 @@ HmItem	*itemp;
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			armorfile );
 	logCmd( scrbuf );
-	notify( "Reading burst armor idents..." );
+	notify( "Reading burst armor idents...", NOTIFY_APPEND );
 	readIdents( &armorids, armorfp );
+	notify( NULL, NOTIFY_DELETE );
 	return;
 	}
 
@@ -708,10 +690,10 @@ HmItem	*itemp;
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			colorfile );
 	logCmd( scrbuf );
-	notify( "Reading ident-to-color mappings..." );
+	notify( "Reading ident-to-color mappings...", NOTIFY_APPEND );
 	readColors( &colorids, colorfp );
+	notify( NULL, NOTIFY_DELETE );
 	return;
-	
 	}
 
 /*ARGSUSED*/
@@ -758,8 +740,9 @@ HmItem	*itemp;
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			critfile );
 	logCmd( scrbuf );
-	notify( "Reading critical component idents..." );
+	notify( "Reading critical component idents...", NOTIFY_APPEND );
 	readIdents( &critids, critfp );
+	notify( NULL, NOTIFY_DELETE );
 	return;
 	}
 
@@ -832,11 +815,29 @@ HmItem	*itemp;
 _LOCAL_ void
 MenclosePortion( itemp )
 HmItem	*itemp;
-	{
+	{	static Input	input[] =
+			{
+			{ "Left border of grid", "", "%lf", 0 },
+			{ "Right border of grid", "", "%lf", 0 },
+			{ "Bottom border of grid", "", "%lf", 0 },
+			{ "Top border of grid", "", "%lf", 0 },
+			};
+		register Input	*ip = input;
+	GetVar( gridlf, ip, unitconv );
+	GetVar( gridrt, ip, unitconv );
+	GetVar( griddn, ip, unitconv );
+	GetVar( gridup, ip, unitconv );
+
+	firemode = FM_PART;
 	(void) sprintf( scrbuf,
-			"%s",
-			itemp != (HmItem *) 0 ? itemp->text : cmdname );
+			"%s\t\t%g %g %g %g",
+			itemp != (HmItem *) 0 ? itemp->text : cmdname,
+			gridlf, gridrt, griddn, gridup );
 	logCmd( scrbuf );
+	gridlf /= unitconv;
+	gridrt /= unitconv;
+	griddn /= unitconv;
+	gridup /= unitconv;
 	return;
 	}
 
@@ -906,8 +907,8 @@ HmItem	*itemp;
 		warning( "No target file has been specified." );
 		return;
 		}
+	notify( "Reading target data base...", NOTIFY_APPEND );
 	rt_prep_timer();
-	notify( "Reading target data base..." );
 	if(	rtip == RTI_NULL
 	    && (rtip = rt_dirbuild( gedfile, title, TITLE_LEN ))
 		     == RTI_NULL )
@@ -916,15 +917,21 @@ HmItem	*itemp;
 		return;
 		}
 	prntTimer( "dir" );
-	rt_prep_timer();
+	notify( NULL, NOTIFY_DELETE );
+	/* Add air into boolean trees, must be set after rt_dirbuild() and
+                before rt_gettree().
+	 */
+	rtip->useair = true;
 	if( ! gottree )
 		{	char	*ptr, *obj;
+		rt_prep_timer();
 		for(	ptr = objects;
 			(obj = strtok( ptr, WHITESPACE )) != NULL;
 			ptr = NULL
 			)
 			{
 			(void) sprintf( scrbuf, "Loading \"%s\"...", obj );
+			notify( scrbuf, NOTIFY_APPEND );
 			if( rt_gettree( rtip, obj ) != 0 )
 				{
 				(void) sprintf( scrbuf,
@@ -933,6 +940,7 @@ HmItem	*itemp;
 				warning( scrbuf );
 				loaderror = true;
 				}
+			notify( NULL, NOTIFY_DELETE );
 			}
 		gottree = true;
 		prntTimer( "load" );
@@ -941,10 +949,11 @@ HmItem	*itemp;
 		return;
 	if( rtip->needprep )
 		{
-		notify( "Prepping solids..." );
+		notify( "Prepping solids...", NOTIFY_APPEND );
 		rt_prep_timer();
 		rt_prep( rtip );
 		prntTimer( "prep" );
+		notify( NULL, NOTIFY_DELETE );
 		}
 	gridInit();
 	if( nriplevels > 0 )
@@ -970,7 +979,7 @@ HmItem	*itemp;
 		fbfile[0] = NUL;
 	(void) sprintf( scrbuf, "%s\t\t%s",
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
-			plotfile );
+			fbfile );
 	logCmd( scrbuf );
 	return;
 	}
@@ -997,6 +1006,62 @@ HmItem	*itemp;
 	(void) sprintf( scrbuf, "%s\t\t%s",
 			itemp != (HmItem *) 0 ? itemp->text : cmdname,
 			gedfile );
+	logCmd( scrbuf );
+	return;
+	}
+
+/*ARGSUSED*/
+_LOCAL_ void
+MgridFile( itemp )
+HmItem	*itemp;
+	{	static Input	input[] =
+			{
+			{ "Name of grid file", "", "%s", 0 },
+			};
+		register Input	*ip = input;
+	if( getInput( ip ) )
+		(void) strcpy( gridfile, ip->buffer );
+	else
+		histfile[0] = NUL;
+	if( (gridfp = fopen( gridfile, "w" )) == (FILE *) NULL )
+		{
+		(void) sprintf( scrbuf,
+				"Write access denied for \"%s\"",
+				gridfile );
+		warning( scrbuf );
+		return;
+		}
+	(void) sprintf( scrbuf, "%s\t\t%s",
+			itemp != (HmItem *) 0 ? itemp->text : cmdname,
+			gridfile );
+	logCmd( scrbuf );
+	return;
+	}
+
+/*ARGSUSED*/
+_LOCAL_ void
+MhistFile( itemp )
+HmItem	*itemp;
+	{	static Input	input[] =
+			{
+			{ "Name of histogram file", "", "%s", 0 },
+			};
+		register Input	*ip = input;
+	if( getInput( ip ) )
+		(void) strcpy( histfile, ip->buffer );
+	else
+		histfile[0] = NUL;
+	if( (histfp = fopen( histfile, "w" )) == (FILE *) NULL )
+		{
+		(void) sprintf( scrbuf,
+				"Write access denied for \"%s\"",
+				histfile );
+		warning( scrbuf );
+		return;
+		}
+	(void) sprintf( scrbuf, "%s\t\t%s",
+			itemp != (HmItem *) 0 ? itemp->text : cmdname,
+			histfile );
 	logCmd( scrbuf );
 	return;
 	}
@@ -1179,7 +1244,26 @@ HmItem	*itemp;
 _LOCAL_ void
 Mread2dShotFile( itemp )
 HmItem	*itemp;
-	{
+	{	static Input	input[] =
+			{
+			{ "Name of 2-D shot input file", "", "%s", 0 },
+			};
+		register Input	*ip = input;
+	if( getInput( ip ) )
+		(void) strcpy( shotfile, ip->buffer );
+	if( (shotfp = fopen( shotfile, "r" )) == NULL )
+		{
+		(void) sprintf( scrbuf,
+				"Read access denied for \"%s\"",
+				shotfile );
+		warning( scrbuf );
+		return;
+		}
+	firemode = FM_SHOT | FM_FILE;
+	(void) sprintf( scrbuf, "%s\t%s",
+			itemp != (HmItem *) 0 ? itemp->text : cmdname,
+			shotfile );
+	logCmd( scrbuf );
 	return;
 	}
 
@@ -1187,7 +1271,26 @@ HmItem	*itemp;
 _LOCAL_ void
 Mread3dShotFile( itemp )
 HmItem	*itemp;
-	{
+	{	static Input	input[] =
+			{
+			{ "Name of 3-D shot input file", "", "%s", 0 },
+			};
+		register Input	*ip = input;
+	if( getInput( ip ) )
+		(void) strcpy( shotfile, ip->buffer );
+	if( (shotfp = fopen( shotfile, "r" )) == NULL )
+		{
+		(void) sprintf( scrbuf,
+				"Read access denied for \"%s\"",
+				shotfile );
+		warning( scrbuf );
+		return;
+		}
+	firemode = FM_SHOT | FM_FILE | FM_3DIM;
+	(void) sprintf( scrbuf, "%s\t%s",
+			itemp != (HmItem *) 0 ? itemp->text : cmdname,
+			shotfile );
+	logCmd( scrbuf );
 	return;
 	}
 

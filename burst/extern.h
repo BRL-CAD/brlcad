@@ -13,12 +13,6 @@
 #include "./burst.h"
 #include "./trie.h"
 #include "Hm/Hm.h"
-extern Func	*getTrie();
-extern Trie	*addTrie();
-extern bool	InitUi();
-extern char	*malloc();
-extern void	closeUi();
-extern void	rt_log();
 
 /* External functions from C library. */
 extern char	*tmpnam();
@@ -38,28 +32,27 @@ extern int	CO, LI;
 
 /* External functions from application. */
 extern Colors	*findColors();
-
+extern Func	*getTrie();
+extern Trie	*addTrie();
+extern bool	closFbDevice();
+extern bool	initUi();
+extern bool	openFbDevice();
 extern bool	findIdents();
 extern bool	readColors();
 extern bool	readIdents();
-
-#if defined( SYSV )
-extern void	(*norml_sig)(), (*abort_sig)();
-extern void	abort_RT();
-extern void	intr_sig();
-extern void	stop_sig();
-#else
-extern int	(*norml_sig)(), (*abort_sig)();
-extern int	abort_RT();
-extern int	intr_sig();
-extern int	stop_sig();
-#endif
-
+extern int	round();
+extern void	closeUi();
 extern void	exitCleanly();
 extern void	gridInit();
 extern void	gridModel();
+extern void	gridToFb();
+extern void	imageInit();
 extern void	locPerror();
 extern void	logCmd();
+extern int	notify();
+extern void	paintCellFb();
+extern void	paintGridFb();
+extern void	paintSpallFb();
 extern void	plotGrid();
 extern void	plotInit();
 extern void	plotPartition();
@@ -75,7 +68,23 @@ extern void	prntPhantom();
 extern void	prntRayIntersect();
 extern void	prntScr();
 extern void	prntTimer();
+extern void	prompt();
 extern void	readCmdFile();
+extern void	rt_log();
+extern void	warning();
+
+
+#if defined( SYSV )
+extern void	(*norml_sig)(), (*abort_sig)();
+extern void	abort_RT();
+extern void	intr_sig();
+extern void	stop_sig();
+#else
+extern int	(*norml_sig)(), (*abort_sig)();
+extern int	abort_RT();
+extern int	intr_sig();
+extern int	stop_sig();
+#endif
 
 extern Colors	colorids;
 extern FBIO	*fbiop;
@@ -89,6 +98,14 @@ extern HmMenu	*mainhmenu;
 extern Ids	airids;
 extern Ids	armorids;
 extern Ids	critids;
+extern RGBpixel	*pixgrid;
+extern RGBpixel	pixaxis;
+extern RGBpixel pixbkgr;
+extern RGBpixel pixbhit;
+extern RGBpixel	pixblack;
+extern RGBpixel pixcrit;
+extern RGBpixel	pixmiss;
+extern RGBpixel	pixtarg;
 extern Trie	*cmdtrie;
 
 extern bool	batchmode;
@@ -130,6 +147,13 @@ extern fastf_t	burstpoint[];
 extern fastf_t	cellsz;
 extern fastf_t	conehfangle;
 extern fastf_t	fire[];
+extern fastf_t	gridlf;
+extern fastf_t	gridrt;
+extern fastf_t	griddn;
+extern fastf_t	gridup;
+extern fastf_t	gridhor[];
+extern fastf_t	gridsoff[];
+extern fastf_t	gridver[];
 extern fastf_t	modlcntr[];
 extern fastf_t	pitch;
 extern fastf_t	raysolidangle;
@@ -141,13 +165,18 @@ extern fastf_t	viewelev;
 extern fastf_t	viewsize;
 extern fastf_t	yaw;
 
-extern int	co, li;
+extern int	co;
+extern int	devhgt;
+extern int	devwid;
 extern int	firemode;
 extern int	gridsz;
 extern int	gridxfin;
 extern int	gridyfin;
 extern int	gridxorg;
 extern int	gridyorg;
+extern int	gridheight;
+extern int	gridwidth;
+extern int	li;
 extern int	nbarriers;
 extern int	noverlaps;
 extern int	nprocessors;

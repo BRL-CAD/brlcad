@@ -36,8 +36,10 @@ typedef int	bool;
 #define TIMER_Y		1
 /* buffer sizes */
 #define LNBUFSZ		133	/* buffer for one-line messages */
-/* white space in input tokens */
-#define WHITESPACE	" \t"
+#define MAXDEVWID	1024	/* maximum width of frame buffer */
+
+#define CHAR_COMMENT	'#'
+
 /* default parameters */
 #define DFL_AZIMUTH	0.0
 #define DFL_BDIST	0.0
@@ -50,10 +52,20 @@ typedef int	bool;
 #define DFL_OVERLAPS	true
 #define DFL_UNITS	U_MILLIMETERS
 
-#define TITLE_LEN	72
-#define TIMER_LEN	72
+/* firing mode bit definitions */
+#define FM_GRID 0	/* generate grid of shotlines */
+#define FM_DFLT	FM_GRID
+#define FM_PART (1)	/* bit 0: ON = partial envelope, OFF = full */
+#define FM_SHOT	(1<<1)	/* bit 1: ON = discrete shots, OFF = gridding */
+#define FM_FILE	(1<<2)	/* bit 2: ON = file input, OFF = direct input */
+#define FM_3DIM	(1<<3)	/* bit 3: ON = 3-D coords., OFF = 2-D coords */
 
-#define CHAR_COMMENT	'#'
+/* flags for notify() */
+#define	NOTIFY_APPEND	1
+#define NOTIFY_DELETE	2
+#define NOTIFY_ERASE	4
+
+#define NOTIFY_DELIM	':'
 
 #define P_HEADER_INIT	'1'
 #define P_ASPECT_INIT	'2'
@@ -62,6 +74,9 @@ typedef int	bool;
 #define P_BURST_HEADER	'5'
 #define P_REGION_HEADER	'6'
 #define P_SHIELD_COMP	'7'
+
+#define TITLE_LEN	72
+#define TIMER_LEN	72
 
 #define U_INCHES	0
 #define U_FEET		1
@@ -76,12 +91,8 @@ typedef int	bool;
 #define UNITS_CENTIMETERS	"centimeters"
 #define UNITS_METERS		"meters"
 
-/* firing mode bit definitions */
-#define FM_GRID 0	/* generate grid of shotlines */
-#define FM_DFLT	FM_GRID
-#define FM_SHOT	1	/* bit 0: ON = discrete shots, OFF = gridding */
-#define FM_FILE	(1<<2)	/* bit 1: ON = file input, OFF = direct input */
-#define FM_3DIM	(1<<3)	/* bit 2: ON = 3-D coords., OFF = 2-D coords */
+/* white space in input tokens */
+#define WHITESPACE	" \t"
 
 #define R_OUTAIR	100
 #define G_OUTAIR	100
