@@ -895,7 +895,8 @@ rt_comb_describe(
 	const struct rt_db_internal *ip,
 	int		verbose,
 	double		mm2local,
-	struct resource	*resp)
+	struct resource	*resp,
+	struct db_i *db_i)
 {
 	const struct rt_comb_internal	*comb;
 
