@@ -71,7 +71,6 @@ typedef float dbfloat_t;
 #endif
 
 #define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
-extern char *strncpy();
 
 #define DB_MINREC	128
 
