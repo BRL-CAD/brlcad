@@ -41,6 +41,74 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
+
+/*	R T _ I S E C T _ P L A N E S
+ *
+ * Calculates the point that is the minimum distance from all the
+ * planes in the "planes" array.  If the planes intersect at a single point,
+ * that point is the solution.
+ *
+ * The method used here is based on:
+ *	An expression for the distance from a point to a plane is VDOT(pt,plane)-plane[H].
+ *	Square that distance and sum for all planes to get the "total" distance.
+ *	For minimum total distance, the partial derivatives of this expression (with
+ *	respect to x, y, and z) must all be zero. 
+ *	This produces a set of three equations in three unknowns (x, y, and z).
+ *	This routine sets up the three equations as [matrix][pt] = [hpq]
+ *	and solves by inverting "matrix" into "inverse" and
+ *	[pt] = [inverse][hpq].
+ *
+ * There is likely a more economical solution rather than matrix inversion, but
+ * mat_inv was handy at the time.
+ */
+void
+rt_isect_planes( pt , planes , pl_count )
+point_t pt;
+CONST plane_t planes[];
+CONST int pl_count;
+{
+	mat_t matrix;
+	mat_t inverse;
+	mat_t test;
+	vect_t hpq;
+	int i,j;
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+	{
+		rt_log( "rt_isect_planes:\n" );
+		for( i=0 ; i<pl_count ; i++ )
+		{
+			rt_log( "Plane #%d (%f %f %f %f)\n" , i , V4ARGS( planes[i] ) );
+		}
+	}
+
+	mat_zero( matrix );
+	VSET( hpq , 0.0 , 0.0 , 0.0 );
+
+	for( i=0 ; i<pl_count ; i++ )
+	{
+		matrix[0] += planes[i][X] * planes[i][X];
+		matrix[5] += planes[i][Y] * planes[i][Y];
+		matrix[10] += planes[i][Z] * planes[i][Z];
+		matrix[1] += planes[i][X] * planes[i][Y];
+		matrix[2] += planes[i][X] * planes[i][Z];
+		matrix[6] += planes[i][Y] * planes[i][Z];
+		hpq[X] += planes[i][X] * planes[i][H];
+		hpq[Y] += planes[i][Y] * planes[i][H];
+		hpq[Z] += planes[i][Z] * planes[i][H];
+	}
+
+	matrix[4] = matrix[1];
+	matrix[8] = matrix[2];
+	matrix[9] = matrix[6];
+	matrix[15] = 1.0;
+
+	mat_inv( inverse , matrix );
+
+	MAT4X3PNT( pt , inverse , hpq );
+
+}
+
 /* 	N M G _ I S E C T _ S H E L L _ S E L F
  *
  * Intersects all faces in a shell with all other faces in the same shell
@@ -4019,6 +4087,38 @@ CONST struct rt_tol *tol;
 			}
 		}
 
+		if( max_dist < 0.0 )
+		{
+			/* Now check for intersections with other planes */
+			for( other_index=0 ; other_index<NMG_TBL_END( int_faces ) ; other_index ++ )
+			{
+				struct face *f;
+
+				if( other_index == edge_no )
+					continue;
+
+				other_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , other_index );
+
+				if( !other_fus->fu[0] )
+					continue;
+
+				NMG_CK_FACEUSE( other_fus->fu[0] );
+				f = other_fus->fu[0]->f_p;
+
+				if( edge_fus->fu[0] && f == edge_fus->fu[0]->f_p )
+					continue;
+
+				if( edge_fus->fu[1] && f == edge_fus->fu[1]->f_p )
+					continue;
+
+				if( rt_isect_line3_plane( &dist[0] , edge_fus->start , edge_fus->dir , f->fg_p->N , tol ) > 1 )
+					continue;
+
+				if( dist[0] > max_dist )
+					max_dist = dist[0];
+			}
+		}
+
 		/* if any intersections have been found, save the point in edge_fus->pt */
 		if( max_dist > (-MAX_FASTF) )
 		{
@@ -4414,7 +4514,7 @@ CONST struct rt_tol *tol;
 	NMG_CK_PTBL( int_faces );
 	RT_CK_TOL( tol );
 
-	while( edge_no < NMG_TBL_END( int_faces ) )
+	while( NMG_TBL_END( int_faces ) > 1 && edge_no < NMG_TBL_END( int_faces ) )
 	{
 		struct intersect_fus *i_fus;
 		struct intersect_fus *j_fus;
@@ -4463,10 +4563,6 @@ CONST struct rt_tol *tol;
 			continue;
 		}
 
-		/* the two vertices should never be the same */
-		if( i_fus->vp == j_fus->vp )
-			rt_bomb( "nmg_simplify_inter: Two vertices are the same\n" );
-
 		NMG_CK_VERTEX( i_fus->vp );
 		NMG_CK_VERTEX( j_fus->vp );
 		NMG_CK_EDGEUSE( i_fus->eu );
@@ -4475,7 +4571,12 @@ CONST struct rt_tol *tol;
 		/* if the two vertices are within tolerance,
 		 * fuse them
 		 */
-		if( rt_pt3_pt3_equal( i_fus->vp->vg_p->coord , j_fus->vp->vg_p->coord , tol ) )
+		if( i_fus->vp == j_fus->vp )
+		{
+			nmg_fuse_inters( i_fus , j_fus , int_faces , tol );
+			continue;
+		}
+		else if( rt_pt3_pt3_equal( i_fus->vp->vg_p->coord , j_fus->vp->vg_p->coord , tol ) )
 		{
 			nmg_jv( i_fus->vp , j_fus->vp );
 			nmg_fuse_inters( i_fus , j_fus , int_faces , tol );
@@ -5290,6 +5391,7 @@ struct vertex *new_v;
 CONST struct nmg_ptbl *int_faces;
 CONST struct rt_tol *tol;
 {
+#if 0
 	int edge_no;
 	fastf_t edge_count=0.0;
 	point_t ave_pt,prev_pt;
@@ -5356,6 +5458,77 @@ CONST struct rt_tol *tol;
 		VBLEND2( new_v->vg_p->coord , 0.5 , free_fus[0]->vp->vg_p->coord , 0.5 , free_fus[1]->vp->vg_p->coord )
 	else
 		VMOVE( new_v->vg_p->coord , ave_pt )
+#else
+	plane_t *planes;
+	int pl_count;
+	int i;
+
+	NMG_CK_VERTEX( new_v );
+	NMG_CK_PTBL( int_faces );
+	RT_CK_TOL( tol );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_calc_new_v: (%f %f %f) , %d faces\n" , V3ARGS( new_v->vg_p->coord ) , NMG_TBL_END( int_faces ) );
+
+	planes = (plane_t *)rt_calloc( NMG_TBL_END( int_faces ) , sizeof( plane_t ) , "nmg_calc_new_v: planes" );
+
+	pl_count = 0;
+
+	for( i=0 ; i<NMG_TBL_END( int_faces ) ; i++ )
+	{
+		struct intersect_fus *fus;
+		plane_t pl;
+		int j;
+		int unique=1;
+
+		fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , i );
+
+		if( !fus->fu[0] )
+			continue;
+
+		NMG_CK_FACEUSE( fus->fu[0] );
+		NMG_GET_FU_PLANE( pl , fus->fu[0] );
+
+		for( j=0 ; j<pl_count ; j++ )
+		{
+			if( rt_coplanar( planes[j] , pl , tol ) > 0 )
+			{
+				unique = 0;
+				break;
+			}
+		}
+
+		if( !unique )
+			continue;
+
+		VMOVE( planes[pl_count] , pl );
+		planes[pl_count][H] = pl[H];
+		pl_count++;
+	}
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+	{
+		for( i=0 ; i<pl_count ; i++ )
+			rt_log( "Plane #%d: %f %f %f %f\n" , i , V4ARGS( planes[i] ) );
+	}
+
+	rt_isect_planes( new_v->vg_p->coord , planes , pl_count );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "\tnew_v = ( %f %f %f )\n" , V3ARGS( new_v->vg_p->coord ) );
+
+	rt_free( (char *)planes , "nmg_calc_new_v: planes" );
+
+	for( i=0 ; i<NMG_TBL_END( int_faces ) ; i++ )
+	{
+		struct intersect_fus *fus;
+		fastf_t dist;
+
+		fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , i );
+
+		(void) rt_dist_pt3_line3( &dist , fus->start , fus->start , fus->dir , new_v->vg_p->coord , tol );
+	}
+#endif
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 	{
@@ -5426,6 +5599,9 @@ CONST struct rt_tol *tol;
 		return( 1 );
 	}
 
+	/* calculate geometry for new_v */
+	nmg_calc_new_v( new_v , &int_faces , tol );
+
 	/* fill in "pt" portion of intersect_fus structures with points
 	 * that are the intersections of the edge line with the other
 	 * edges that meet at new_v. The intersection that is furthest
@@ -5442,9 +5618,10 @@ CONST struct rt_tol *tol;
 
 	/* fix intersection points that cause loops that cross themselves */
 	nmg_fix_crossed_loops( new_v , &int_faces , tol );
-
+#if 0
 	/* calculate geometry for new_v */
 	nmg_calc_new_v( new_v , &int_faces , tol );
+#endif
 
 	nmg_remove_short_eus_inter( new_v , &int_faces , tol );
 
