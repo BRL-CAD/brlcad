@@ -28,6 +28,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 /* #include "externs.h" */
 
+#if !defined(SYSV) && defined(BSD) && BSD < 43
+#define	strrchr rindex
+#endif
+
 extern int	getopt();
 extern char	*optarg;
 extern int	optind;
