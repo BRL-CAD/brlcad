@@ -1039,7 +1039,7 @@ wdb_tops_cmd(struct rt_wdb	*wdbp,
 		for (dp = wdbp->dbip->dbi_Head[i];
 		     dp != DIR_NULL;
 		     dp = dp->d_forw)  {
-			if (dp->d_nref == 0 && !(dp->d_flags & DIR_HIDDEN))
+			if (dp->d_nref == 0)
 				Tcl_AppendElement( interp, dp->d_namep);
 		}
 	return TCL_OK;
