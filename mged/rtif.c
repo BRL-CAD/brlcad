@@ -445,7 +445,7 @@ char	**argv;
 	(void)close(i_pipe[1]);
 	fp = fdopen(i_pipe[0], "r");
 	vbp = rt_vlblock_init();
-	(void)uplot_vlist( vbp, fp );
+	(void)rt_uplot_to_vlist( vbp, fp, Viewscale * 0.01 );
 	fclose(fp);
 
 	/* Wait for program to finish */
