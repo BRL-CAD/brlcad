@@ -101,6 +101,9 @@ struct rt_i		*rtip;
 
 		VMINMAX(stp->st_min, stp->st_max, rp->ra_p->min_pt);
 		VMINMAX(stp->st_min, stp->st_max, rp->ra_p->max_pt);
+
+		nmg_ck_vs_in_region( rp , &rtip->rti_tol );
+
 	}
 
 	VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
@@ -111,6 +114,10 @@ struct rt_i		*rtip;
 	 * of each sub-element of NMG solid
 	 */
 	nmg_s->manifolds = nmg_manifolds(m);
+
+
+
+
 
 	return(0);
 }
