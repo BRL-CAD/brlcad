@@ -35,6 +35,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 /* macros for comparing 2D points in scanline order */
+#if 0
 #define P_GT_V(_p, _v) \
 	(((_p)->coord[Y] > (_v)->coord[Y]) || ((_p)->coord[Y] == (_v)->coord[Y] && (_p)->coord[X] < (_v)->coord[X]))
 #define P_LT_V(_p, _v) \
@@ -43,7 +44,17 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 	(((_p)->coord[Y] > (_v)->coord[Y]) || ((_p)->coord[Y] == (_v)->coord[Y] && (_p)->coord[X] <= (_v)->coord[X]))
 #define P_LE_V(_p, _v) \
 	(((_p)->coord[Y] < (_v)->coord[Y]) || ((_p)->coord[Y] == (_v)->coord[Y] && (_p)->coord[X] >= (_v)->coord[X]))
-
+#else
+#define TOL_2D	1.0e-10
+#define P_GT_V(_p, _v) \
+	(((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] < (_v)->coord[X]))
+#define P_LT_V(_p, _v) \
+	(((_p)->coord[Y] - (_v)->coord[Y]) < (-TOL_2D) || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] > (_v)->coord[X]))
+#define P_GE_V(_p, _v) \
+	(((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] <= (_v)->coord[X]))
+#define P_LE_V(_p, _v) \
+	(((_p)->coord[Y] - (_v)->coord[Y]) < (-TOL_2D) || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] >= (_v)->coord[X]))
+#endif
 
 #define NMG_PT2D_MAGIC	0x2d2d2d2d
 #define NMG_TRAP_MAGIC  0x1ab1ab
@@ -2554,7 +2565,7 @@ triangulate:
 		bu_log( "Face Flattened\n");
 		bu_log( "Vertex list:\n");
 		for (BU_LIST_FOR(pt, pt2d, tbl2d)) {
-			bu_log("\tpt2d %g %g\n", pt->coord[0], pt->coord[1]);
+			bu_log("\tpt2d %26.20e %26.20e\n", pt->coord[0], pt->coord[1]);
 		}
 
 		plfu( fu, tbl2d );
@@ -2660,6 +2671,8 @@ CONST struct bn_tol   *tol;
 
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		bu_log("Triangulating NMG\n");
+
+	(void)nmg_model_edge_g_fuse( m, tol );
 
 	(void)nmg_unbreak_region_edges( &m->magic );
 
