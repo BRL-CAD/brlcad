@@ -185,6 +185,7 @@ static struct cmdtab cmdtab[] = {
 	{"db_glob", cmd_mged_glob},
 	{"dbconcat", cmd_concat},
 	{"dbfind", cmd_find},
+	{"dbversion", cmd_dbversion},
 	{"dbip",	cmd_dbip},
 	{"dump",	cmd_dump},
 	{"debugbu", f_debugbu},
@@ -2331,6 +2332,15 @@ cmd_rt_gettrees(ClientData	clientData,
 		char		**argv)
 {
 	return wdb_rt_gettrees_cmd(wdbp, interp, argc, argv);
+}
+
+int
+cmd_dbversion(ClientData	clientData,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char		**argv)
+{
+	return wdb_version_cmd(wdbp, interp, argc, argv);
 }
 
 /*
