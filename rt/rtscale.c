@@ -69,8 +69,8 @@ void	make_border();
 void	make_bounding_rpp();
 
 static FILE	*fp;
-int		border;
-int		verbose;
+int		border;		/* flag for debugging; to be used later */
+int		verbose;	/* flag for debugging; to be used later */
 
 /*
  *
