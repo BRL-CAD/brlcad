@@ -11,34 +11,31 @@ then
 fi
 
 # this is a comment \
-if test -x ${BRLCAD_ROOT}/bin/tclsh
+if test -x ${BRLCAD_ROOT}/bin/btclsh
 # this is a comment \
 then
 # this is a comment \
-	TCLSH=${BRLCAD_ROOT}/bin/tclsh
+	BTCLSH=${BRLCAD_ROOT}/bin/btclsh
 # this is a comment \
-elif test -x /usr/bin/tclsh
-# this is a comment \
-then
-# this is a comment \
-	TCLSH=/usr/bin/tclsh
-# this is a comment \
-elif test -x /usr/local/bin/tclsh
+elif test -x /usr/bin/btclsh
 # this is a comment \
 then
 # this is a comment \
-	TCLSH=/usr/local/bin/tclsh
+	BTCLSH=/usr/bin/btclsh
+# this is a comment \
+elif test -x /usr/local/bin/btclsh
+# this is a comment \
+then
+# this is a comment \
+	BTCLSH=/usr/local/bin/btclsh
 # this is a comment \
 else
 # this is a comment \
 	exit 1
 # this is a comment \
 fi
-# the next line restarts using tclsh \
-exec $TCLSH "$0" "$@"
-
-package require Itcl
-auto_mkindex_parser::slavehook {_%@namespace import -force ::itcl::*}
+# the next line restarts using btclsh \
+exec $BTCLSH "$0" "$@"
 
 foreach arg $argv {
     catch {auto_mkindex $arg *.tcl *.itcl}
