@@ -12,7 +12,13 @@ elif test -x /usr/local/bin/tclsh8.0
 # this is a comment \
 then
 # this is a comment \
-	TCLSH_NAME=tclsh8.0
+	TCLSH_NAME=/usr/local/bin/tclsh8.0
+# this is a comment \
+elif test -x /usr/bin/tclsh8.0 
+# this is a comment \
+then
+# this is a comment \
+	TCLSH_NAME=/usr/bin/tclsh8.0
 # this is a comment \
 else
 # this is a comment \
