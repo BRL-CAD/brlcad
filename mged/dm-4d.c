@@ -265,6 +265,12 @@ Ir_open()
 	mat_idn( nozclip_mat );
 	nozclip_mat[10] = 1.0e-20;
 	persp_mat( perspect_mat, 90.0, 1.0, 0.01, 1.0e10, 1.0 );
+	/*
+	 *  Set an 8 minute screensaver blanking, which will light up
+	 *  the screen again if it was dark, and will protect it otherwise.
+	 *  The 4D has a hardware botch limiting the time to 2**15 frames.
+	 */
+	blanktime( (long) 32767L );
 
 	return(0);
 }
