@@ -95,17 +95,9 @@ proc plot_overlaps { id } {
 		# this loop may be slow for large output, so do some updates
 		mged_update 1
 	}
-	if { [llength [db match $over_cont($id,tmp_obj1)]] == 0 } {
-		.inmem put $over_cont($id,tmp_obj1) comb region yes tree [db get $obj1 tree] rgb { 0 255 0 }
-	} else {
-		.inmem adjust $over_cont($id,tmp_obj1) tree [db get $obj1 tree]
-	}
-	if { [llength [db match $over_cont($id,tmp_obj2)]] == 0 } {
-		.inmem put $over_cont($id,tmp_obj2) comb region yes tree [db get $obj2 tree] rgb { 0 255 255 }
-	} else {
-		.inmem adjust $over_cont($id,tmp_obj2) tree [db get $obj2 tree]
-	}
-	B $over_cont($id,tmp_obj1) $over_cont($id,tmp_obj2)
+	Z
+	draw -C 0/255/0 $obj1
+	draw -C 0/255/255 $obj2
 	vdraw show
 	mged_update 0
 }
@@ -384,11 +376,12 @@ proc edit_object2 { id } {
 proc over_quit { id } {
 	global over_cont
 
-	if { [llength [db match $over_cont($id,tmp_obj1)]] > 0} {
-		catch [kill $over_cont($id,tmp_obj1)]
-	}
-	if { [llength [db match $over_cont($id,tmp_obj2)]] > 0} {
-		catch [kill $over_cont($id,tmp_obj2)]
+	if { [string length $over_cont($id,objs)] > 0 } {
+		eval draw $over_cont($id,objs)
+		eval view center $over_cont($id,center)
+		eval view size $over_cont($id,vsize)
+		eval view aet $over_cont($id,aet)
+		eval view eye $over_cont($id,eye)
 	}
 	catch [vdraw delete all]
 	vdraw show
@@ -440,11 +433,18 @@ proc overlap_tool { id } {
 		return
 	}
 
+	set over_cont($id,objs) ""
 	set objs [who]
 	if { [string length $objs] == 0 } {
 		set objs "all"
+	} else {
+		set over_cont($id,objs) $objs
 	}
 
+	set over_cont($id,center) [view center]
+	set over_cont($id,vsize) [view size]
+	set over_cont($id,aet) [view aet]
+	set over_cont($id,eye) [view eye]
 	set over_cont($id,objs) $objs
 	set over_cont($id,az) 0
 	set over_cont($id,el) 0
