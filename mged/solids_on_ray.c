@@ -138,8 +138,8 @@ int			free_name;
     BU_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
     if (free_name)
-	bu_free((char *) sol -> name, "solid name");
-    bu_free((char *) sol, "solid");
+	bu_free((genptr_t) sol -> name, "solid name");
+    bu_free((genptr_t) sol, "solid");
 }
 
 /*

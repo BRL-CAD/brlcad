@@ -294,7 +294,7 @@ fastf_t scale;
 		{
 			new_ps = BU_LIST_FIRST( wdb_pipept, &head );
 			BU_LIST_DEQUEUE( &new_ps->l );
-			bu_free( (char *)new_ps, "pipe_scale_radius: new_ps" );
+			bu_free( (genptr_t)new_ps, "pipe_scale_radius: new_ps" );
 		}
 		return;
 	}
@@ -304,7 +304,7 @@ fastf_t scale;
 	{
 		new_ps = BU_LIST_FIRST( wdb_pipept, &head );
 		BU_LIST_DEQUEUE( &new_ps->l );
-		bu_free( (char *)new_ps, "pipe_scale_radius: new_ps" );
+		bu_free( (genptr_t)new_ps, "pipe_scale_radius: new_ps" );
 	}
 
 	/* make changes to the original */
@@ -403,7 +403,7 @@ CONST point_t new_pt;
 	{
 		/* won't work here, so refuse to do it */
 		BU_LIST_DEQUEUE( &new->l );
-		bu_free( (char *)new, "add_pipept: new " );
+		bu_free( (genptr_t)new, "add_pipept: new " );
 	}
 }
 
@@ -457,7 +457,7 @@ CONST point_t new_pt;
 	{
 		/* won't work here, so refuse to do it */
 		BU_LIST_DEQUEUE( &new->l );
-		bu_free( (char *)new, "ins_pipept: new " );
+		bu_free( (genptr_t)new, "ins_pipept: new " );
 	}
 }
 
@@ -504,7 +504,7 @@ struct wdb_pipept *ps;
 		return( ps );
 	}
 	else
-		bu_free( (char *)ps, "del_pipept: ps" );
+		bu_free( (genptr_t)ps, "del_pipept: ps" );
 
 	if( prev )
 		return( prev );

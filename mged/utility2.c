@@ -89,7 +89,7 @@ char **argv;
 		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		{
 			s_tmp = nmg_dup_shell( s, &trans_tbl );
-			bu_free( (char *)trans_tbl, "trans_tbl" );
+			bu_free( (genptr_t)trans_tbl, "trans_tbl" );
 
 			m_tmp = nmg_mmr();
 			r_tmp = BU_LIST_FIRST( nmgregion, &m_tmp->r_hd );
@@ -662,7 +662,7 @@ int			id;
 
 	  Tcl_AppendResult(interp, "push_leaf(", rt_functab[id].ft_name,
 			   ") path='", sofar, "'\n", (char *)NULL);
-	  bu_free(sofar, "path string");
+	  bu_free((genptr_t)sofar, "path string");
 	}
 /*
  * XXX - This will work but is not the best method.  dp->d_uses tells us
@@ -683,7 +683,7 @@ int			id;
 
 	      Tcl_AppendResult(interp, "push_leaf: matrix mismatch between '", sofar,
 			       "' and prior reference.\n", (char *)NULL);
-	      bu_free(sofar, "path string");
+	      bu_free((genptr_t)sofar, "path string");
 	      push_error = 1;
 	    }
 
@@ -855,7 +855,7 @@ char **argv;
 			pip = pi_head.forw;
 			pip->forw->back = pip->back;
 			pip->back->forw = pip->forw;
-			bu_free((char *)pip, "Push ident");
+			bu_free((genptr_t)pip, "Push ident");
 		}
 		rt_g.debug = old_debug;
 		Tcl_AppendResult(interp, "push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions\n", (char *)NULL);
@@ -917,7 +917,7 @@ char **argv;
 		pip = pi_head.forw;
 		pip->forw->back = pip->back;
 		pip->back->forw = pip->forw;
-		bu_free((char *)pip, "Push ident");
+		bu_free((genptr_t)pip, "Push ident");
 	}
 
 	rt_g.debug = old_debug;
@@ -1038,7 +1038,7 @@ struct directory *dp;
 		}
 
 		BU_LIST_DEQUEUE( &use->l );
-		bu_free( (char *)use, "Free_uses: use" );
+		bu_free( (genptr_t)use, "Free_uses: use" );
 	}
 }
 
@@ -1377,7 +1377,7 @@ char **argv;
 
 				dp2->d_nref++;
 			}
-			bu_free( (char *)rp, "rp[]" );
+			bu_free( (genptr_t)rp, "rp[]" );
 		}
 	}
 
@@ -1505,7 +1505,7 @@ char **argv;
 		if( count > max_count )
 			max_count = count;
 
-		bu_free( (char *)rp, "f_showmats: rp" );
+		bu_free( (genptr_t)rp, "f_showmats: rp" );
 		parent = child;
 	}
 	Tcl_AppendResult(interp, parent, "\n", (char *)NULL);
@@ -1778,7 +1778,7 @@ char **argv;
 			Tcl_AppendResult(interp, "db_string_to_path failed for ",
 				argv[i], "\n", (char *)NULL );
 			rt_clean( rtip );
-			bu_free( (char *)rtip, "f_make_bb: rtip" );
+			bu_free( (genptr_t)rtip, "f_make_bb: rtip" );
 			return TCL_ERROR;
 		}
 
@@ -1794,7 +1794,7 @@ char **argv;
 				Tcl_AppendResult(interp, "db_string_to_path failed for ",
 					regp->reg_name, "\n", (char *)NULL );
 				rt_clean( rtip );
-				bu_free( (char *)rtip, "f_make_bb: rtip" );
+				bu_free( (genptr_t)rtip, "f_make_bb: rtip" );
 				return TCL_ERROR;
 			}
 			if( path.fp_names[0] == tmp_path.fp_names[0] )
@@ -1810,7 +1810,7 @@ char **argv;
 			Tcl_AppendResult(interp, "rt_gettree failed for ",
 				argv[i], "\n", (char *)NULL );
 			rt_clean( rtip );
-			bu_free( (char *)rtip, "f_make_bb: rtip" );
+			bu_free( (genptr_t)rtip, "f_make_bb: rtip" );
 			return TCL_ERROR;
 		}
 		db_free_full_path( &path );
@@ -1848,7 +1848,7 @@ char **argv;
 				Tcl_AppendResult(interp, "rt_bound_tree failed for ",
 					regp->reg_name, "\n", (char *)NULL );
 				rt_clean( rtip );
-				bu_free( (char *)rtip, "f_make_bb: rtip" );
+				bu_free( (genptr_t)rtip, "f_make_bb: rtip" );
 				return TCL_ERROR;
 			}
 			VMINMAX( rpp_min, rpp_max, reg_min );
@@ -1877,7 +1877,7 @@ char **argv;
 					Tcl_AppendResult(interp, "rt_bound_tree failed for ",
 						regp->reg_name, "\n", (char *)NULL );
 					rt_clean( rtip );
-					bu_free( (char *)rtip, "f_make_bb: rtip" );
+					bu_free( (genptr_t)rtip, "f_make_bb: rtip" );
 					return TCL_ERROR;
 				}
 				VMINMAX( rpp_min, rpp_max, reg_min );
@@ -1931,7 +1931,7 @@ char **argv;
 	db_free_external( &new_extern );
 
 	rt_clean( rtip );
-	bu_free( (char *)rtip, "f_make_bb: rtip" );
+	bu_free( (genptr_t)rtip, "f_make_bb: rtip" );
 
 	/* use "e" command to get new solid displayed */
 	{
@@ -2047,7 +2047,7 @@ char **argv;
 		new_argc = rt_split_cmd( new_argv, lim+1, bu_vls_addr( &v ) );
 		retval = f_edit( clientData, interp, new_argc, new_argv );
 		bu_vls_free( &v );
-		bu_free( (char *)new_argv, "f_eac: new_argv" );
+		bu_free( (genptr_t)new_argv, "f_eac: new_argv" );
 		bu_vls_free( &v );
 		(void)signal( SIGINT, SIG_IGN );
 		return retval;

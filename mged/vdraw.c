@@ -594,7 +594,7 @@ char **argv;
 				}
 			}
 			RT_FREE_VLIST(&(rcp2->vhd));
-			bu_free((char *) rcp2, "rt_curve");
+			bu_free((genptr_t) rcp2, "rt_curve");
 			return TCL_OK;
 		default:
 			Tcl_AppendResult(interp,"vdraw: unknown option to vdraw vlist", (char *)NULL);

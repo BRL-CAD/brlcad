@@ -1016,14 +1016,14 @@ char	**argv;
 		if( cmd[0] == '!' )  {
 			if( rtif_currentframe < rtif_desiredframe ||
 			    rtif_finalframe && rtif_currentframe > rtif_finalframe )  {
-				bu_free( cmd, "preview ! cmd" );
+				bu_free( (genptr_t)cmd, "preview ! cmd" );
 			    	continue;
 			}
 		}
 		if( rt_do_cmd( (struct rt_i *)0, cmd, cmdtab ) < 0 )
 		   Tcl_AppendResult(interp, "command failed: ", cmd,
 				    "\n", (char *)NULL);
-		bu_free( cmd, "preview cmd" );
+		bu_free( (genptr_t)cmd, "preview cmd" );
 	}
 	fclose(rtif_fp);
 	rtif_fp = NULL;
@@ -1577,7 +1577,7 @@ char		**argv;
     for (i = 0; snames[i] != 0; ++i)
 	Tcl_AppendElement(interp, snames[i]);
     
-    bu_free((char *) snames, "solid names");
+    bu_free((genptr_t) snames, "solid names");
 
     return TCL_OK;
 }

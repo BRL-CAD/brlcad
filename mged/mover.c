@@ -152,10 +152,10 @@ matp_t xlate;
 
 		if( db_put( dbip,  cdp, rec, 0, cdp->d_len ) < 0 )
 			WRITE_ERR_return;
-		bu_free( (char *)rec, "union record");
+		bu_free( (genptr_t)rec, "union record");
 		return;
 	}
-	bu_free( (char *)rec, "union record");
+	bu_free( (genptr_t)rec, "union record");
 	Tcl_AppendResult(interp, "moveinst:  couldn't find ", cdp->d_namep,
 			 "/", dp->d_namep, "\n", (char *)NULL);
 	return;				/* ERROR */

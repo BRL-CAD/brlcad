@@ -277,7 +277,7 @@ char	*argv[];
 
   if( f_wcodes(clientData, interp, argc + 1, av) == TCL_ERROR ){
     (void)unlink(tmpfil);
-    bu_free((char *)av, "f_edcodes: av");
+    bu_free((genptr_t)av, "f_edcodes: av");
     return TCL_ERROR;
   }
 
@@ -290,7 +290,7 @@ char	*argv[];
     status = TCL_ERROR;
 
   (void)unlink(tmpfil);
-  bu_free((char *)av, "f_edcodes: av");
+  bu_free((genptr_t)av, "f_edcodes: av");
   return status;
 }
 

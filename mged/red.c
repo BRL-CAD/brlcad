@@ -507,7 +507,7 @@ struct directory *dpold;
 	  return( 1 );
 	}
 
-	bu_free( (char *)rp, "record" );
+	bu_free( (genptr_t)rp, "record" );
 	return( 0 );
 }
 

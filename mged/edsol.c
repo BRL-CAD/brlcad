@@ -1040,7 +1040,7 @@ int arg;
 				cvt_vlblock_to_solids( vbp, "_EU_", 0 );	/* swipe vlist */
 
 				rt_vlblock_free(vbp);
-				bu_free( (char *)tab, "nmg_ed tab[]" );
+				bu_free( (genptr_t)tab, "nmg_ed tab[]" );
 			}
 			dmaflag = 1;
 		}
@@ -3226,8 +3226,8 @@ sedit()
 			}
 
 			for( i=0 ; i<ars->ncurves ; i++ )
-				bu_free( (char *)ars->curves[i], "ars->curves[i]" );
-			bu_free( (char *)ars->curves, "ars->curves" );
+				bu_free( (genptr_t)ars->curves[i], "ars->curves[i]" );
+			bu_free( (genptr_t)ars->curves, "ars->curves" );
 
 			ars->curves = curves;
 			ars->ncurves++;
@@ -3271,8 +3271,8 @@ sedit()
 			}
 
 			for( i=0 ; i<ars->ncurves ; i++ )
-				bu_free( (char *)ars->curves[i], "ars->curves[i]" );
-			bu_free( (char *)ars->curves, "ars->curves" );
+				bu_free( (genptr_t)ars->curves[i], "ars->curves[i]" );
+			bu_free( (genptr_t)ars->curves, "ars->curves" );
 
 			ars->curves = curves;
 			ars->pts_per_curve++;
@@ -3320,8 +3320,8 @@ sedit()
 			}
 
 			for( i=0 ; i<ars->ncurves ; i++ )
-				bu_free( (char *)ars->curves[i], "ars->curves[i]" );
-			bu_free( (char *)ars->curves, "ars->curves" );
+				bu_free( (genptr_t)ars->curves[i], "ars->curves[i]" );
+			bu_free( (genptr_t)ars->curves, "ars->curves" );
 
 			ars->curves = curves;
 			ars->ncurves--;
@@ -3381,8 +3381,8 @@ sedit()
 			}
 
 			for( i=0 ; i<ars->ncurves ; i++ )
-				bu_free( (char *)ars->curves[i], "ars->curves[i]" );
-			bu_free( (char *)ars->curves, "ars->curves" );
+				bu_free( (genptr_t)ars->curves[i], "ars->curves[i]" );
+			bu_free( (genptr_t)ars->curves, "ars->curves" );
 
 			ars->curves = curves;
 			ars->pts_per_curve--;
