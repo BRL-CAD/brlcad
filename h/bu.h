@@ -306,7 +306,7 @@ extern int	bu_debug;
  *
  *  Definitions and data structures needed for routines that assign values
  *  to elements of arbitrary data structures, the layout of which is
- *  described by tables of "structparse" structures.
+ *  described by tables of "bu_structparse" structures.
  *
  *  The general problem of word-addressed hardware
  *  where (int *) and (char *) have different representations
@@ -322,6 +322,27 @@ extern int	bu_debug;
 #	define offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
 #endif
 
+/* The "bu_structparse" struct describes one element of a structure.
+ * Collections of these are combined to describe entire structures (or at
+ * least those portions for which parse/print/import/export support is
+ * desired.  For example:
+ *
+ * struct data_structure {
+ *	char	a_char;
+ *	char	str[32];
+ *	short	a_short;
+ *	int	a_int;
+ *	double	a_double;
+ * };
+ *
+ * struct bu_structparse data_sp[] ={
+ * {"%c", 1,  "char_value", offsetof(data_structure, a_char),	FUNC_NULL}, 
+ * {"%s", 32, "char_value", offsetofarray(data_structure, str), FUNC_NULL}, 
+ * {"%i", 1,  "char_value", offsetof(data_structure, a_short),	FUNC_NULL}, 
+ * {"%d", 1,  "char_value", offsetof(data_structure, a_int), 	FUNC_NULL}, 
+ * {"%f", 1,  "char_value", offsetof(data_structure, a_double), FUNC_NULL}, 
+ * };
+ */
 struct bu_structparse {
 	char		sp_fmt[4];		/* "i" or "%f", etc */
 	long		sp_count;		/* number of elements */
@@ -331,16 +352,18 @@ struct bu_structparse {
 };
 #define FUNC_NULL	((void (*)())0)
 
-
-/*
- *			B U _ I M E X P O R T
+/* A "bu_external" struct holds the "external binary" representation of a
+ * structure.
  */
-struct bu_imexport  {
-	char		im_fmt[4];		/* "l", "i", or "%f", etc */
-	int		im_offset;		/* byte offset in struct */
-	int		im_count;		/* # of repetitions */
+struct bu_external  {
+	long	ext_magic;
+	int	ext_nbytes;
+	genptr_t ext_buf;
 };
-#define BU_IMEXPORT_NULL	((struct bu_imexport *)0)
+#define BU_EXTERNAL_MAGIC	0x768dbbd0
+#define BU_INIT_EXTERNAL(_p)	{(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
+	(_p)->ext_buf = GENPTR_NULL; (_p)->ext_nbytes = 0;}
+#define BU_CK_EXTERNAL(_p)	RT_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
 /*----------------------------------------------------------------------*/
 /*
