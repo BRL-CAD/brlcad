@@ -2221,7 +2221,7 @@ CONST int center;
 							adj = adj->next;
 						adj->next = (struct adjacent_faces *)rt_malloc(
 							sizeof( struct adjacent_faces ),
-							"Get_shell: adj_root" );
+							"Get_shell: adj_next" );
 						adj = adj->next;
 					}
 					adj->next = (struct adjacent_faces *)NULL;
@@ -2357,13 +2357,57 @@ struct shell *s1;
 }
 
 void
+Sort_vertices_along_vect( norm, verts )
+vect_t norm;
+struct vertex *verts[4];
+{
+	int i;
+	fastf_t dist[4];
+	fastf_t dist_tmp;
+	struct vertex *v_tmp;
+	int done=0;
+
+	dist[0] = 0.0;
+	for( i=1 ; i<4 ; i++ )
+	{
+		vect_t to_v;
+
+		VSUB2( to_v, verts[i]->vg_p->coord, verts[0]->vg_p->coord );
+		dist[i] = VDOT( to_v, norm );
+	}
+
+	while( !done )
+	{
+		done = 1;
+		for( i=0 ; i<3 ; i++ )
+		{
+			if( dist[i] > dist[i+1] )
+			{
+				dist_tmp = dist[i];
+				v_tmp = verts[i];
+				dist[i] = dist[i+1];
+				verts[i] = verts[i+1];
+				dist[i+1] = dist_tmp;
+				verts[i+1] = v_tmp;
+				done = 0;
+			}
+		}
+	}
+
+}
+
+void
 Reunite_faces( tbl )
 long **tbl;
 {
 	struct adjacent_faces *adj;
+	struct adjacent_faces *adj2;
 	struct shell *s_eu1;
+	struct vertex *verts[4];
+	vect_t norm;
+	int found;
 
-	/* maybe ther's nothing to do */
+	/* maybe there's nothing to do */
 	if( adj_root == (struct adjacent_faces *)NULL )
 		return;
 
@@ -2375,8 +2419,72 @@ long **tbl;
 	adj = adj_root;
 	while( adj )
 	{
+		struct vertex *v_other_end;
 		struct edgeuse *eu1,*eu2;
 		struct faceuse *fu1,*fu2;
+		point_t pca;
+		fastf_t dist;
+
+		v_other_end = adj->eu1->eumate_p->vu_p->v_p;
+
+		/* make the four vertices that define
+		 * the edge in both shells colinear.
+		 */
+
+		verts[0] = adj->eu1->vu_p->v_p;
+		verts[1] = adj->eu2->eumate_p->vu_p->v_p;
+		verts[2] = NMG_INDEX_GETP( vertex, tbl, verts[0] );
+		verts[3] = NMG_INDEX_GETP( vertex, tbl, verts[1] );
+		NMG_GET_FU_NORMAL( norm, adj->fu1 );
+		Sort_vertices_along_vect( norm, verts );
+
+		(void) rt_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
+					verts[3]->vg_p->coord, verts[1]->vg_p->coord, &tol );
+		VMOVE( verts[1]->vg_p->coord, pca );
+
+		(void) rt_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
+					verts[3]->vg_p->coord, verts[2]->vg_p->coord, &tol );
+		VMOVE( verts[2]->vg_p->coord, pca );
+
+		/* Check if the other ends of these edges is another adjacent faces struct */
+		found = 0;
+		adj2 = adj_root;
+		while( adj2 )
+		{
+			if( adj2 == adj )
+			{
+				adj2 = adj2->next;
+				continue;
+			}
+
+			if( adj2->eu1->vu_p->v_p == v_other_end )
+			{
+				found = 1;
+				break;
+			}
+			adj2 = adj2->next;
+		}
+
+		if( !found )
+		{
+			/* Need to align the other end */
+
+			verts[0] = adj->eu1->eumate_p->vu_p->v_p;
+			verts[1] = adj->eu2->vu_p->v_p;
+			verts[2] = NMG_INDEX_GETP( vertex, tbl, verts[0] );
+			verts[3] = NMG_INDEX_GETP( vertex, tbl, verts[1] );
+			NMG_GET_FU_NORMAL( norm, adj->fu1 );
+			Sort_vertices_along_vect( norm, verts );
+
+			(void) rt_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
+						verts[3]->vg_p->coord, verts[1]->vg_p->coord, &tol );
+			VMOVE( verts[1]->vg_p->coord, pca );
+
+			(void) rt_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
+						verts[3]->vg_p->coord, verts[2]->vg_p->coord, &tol );
+			VMOVE( verts[2]->vg_p->coord, pca );
+
+		}
 
 		/* if the two faceuses are radial, nothing to do */
 		if( !nmg_faces_are_radial( adj->fu1 , adj->fu2 ) )
@@ -2415,9 +2523,275 @@ long **tbl;
 		rt_log( "ERROR: rt_mem_barriercheck failed in Reunite_face\n" );
 }
 
+/* Support routine for "Stitch_adj_shells"
+ * creates the actual faces to connect the two shells
+ * in the problem area
+ */
+void
+Connect_at_adj_edges( s1, s2, eu1, adj, dup_tbl )
+struct shell *s1;
+struct shell *s2;
+struct edgeuse *eu1;
+struct adjacent_faces *adj;
+long **dup_tbl;
+{
+	struct edgeuse *eu2;	/* eu in s2 corresponding to eu1 in s1 */
+	struct vertex *v2a,*v2b,*v2c,*v2d; /* vertices along free edge of shell s2 */
+	struct vertex *v1a,*v1b,*v1c,*v1d; /* vertices along free edge of shell s1 */
+	vect_t norm1;		/* normal for face containing edge from v1a to v1b */
+	vect_t norm2;		/* normal for face containing edge from v2a to v2b */
+	int normalward1;	/* flag indicating if eu1 points in norm1 direction */
+	int normalward2;	/* flag indicating if eu2 points in norm2 direction */
+	struct edgeuse *eu;
+	struct vertexuse *vu;
+	vect_t a_to_b;
+	fastf_t area;
+	plane_t pl;
+
+	NMG_CK_SHELL( s1 );
+	NMG_CK_SHELL( s2 );
+	NMG_CK_EDGEUSE( eu1 );
+
+	if( eu1->radial_p != eu1->eumate_p )
+	{
+		rt_log( "Connect_at_adj_edges: Called with non dangling edge!!\n" );
+		rt_bomb( "Connect_at_adj_edges\n" );
+	}
+
+	/* find the v1 vertices */
+	v1b = eu1->vu_p->v_p;
+	NMG_CK_VERTEX( v1b );
+	v1c = eu1->eumate_p->vu_p->v_p;
+	NMG_CK_VERTEX( v1c );
+
+	v1a = (struct vertex *)NULL;
+	v1d = (struct vertex *)NULL;
+
+	for( RT_LIST_FOR( vu, vertexuse, &v1b->vu_hd ) )
+	{
+		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		eu = vu->up.eu_p;
+		NMG_CK_EDGEUSE( eu );
+		if( eu->radial_p != eu->eumate_p )
+			continue;	/* not a free edge */
+
+		if( eu->eumate_p->vu_p->v_p == v1c )
+			continue;	/* wrong free edge */
+
+		v1a = eu->eumate_p->vu_p->v_p;
+		NMG_CK_VERTEX( v1a );
+		break;
+	}
+	for( RT_LIST_FOR( vu, vertexuse, &v1c->vu_hd ) )
+	{
+		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		eu = vu->up.eu_p;
+		NMG_CK_EDGEUSE( eu );
+		if( eu->radial_p != eu->eumate_p )
+			continue;	/* not a free edge */
+
+		if( eu->eumate_p->vu_p->v_p == v1b )
+			continue;	/* wrong free edge */
+
+		v1d = eu->eumate_p->vu_p->v_p;
+		NMG_CK_VERTEX( v1d );
+		break;
+	}
+
+	if( adj->eu1->vu_p->v_p == v1b )
+		NMG_GET_FU_NORMAL( norm1, adj->fu1 )
+	else if( adj->eu1->eumate_p->vu_p->v_p == v1c )
+		NMG_GET_FU_NORMAL( norm1, adj->fu2 )
+
+	VREVERSE( norm2, norm1 );
+
+	v2b = NMG_INDEX_GETP( vertex, dup_tbl, v1b );
+	NMG_CK_VERTEX( v2b );
+	v2c = NMG_INDEX_GETP( vertex, dup_tbl, v1c );
+
+	v2a = (struct vertex *)NULL;
+	v2d = (struct vertex *)NULL;
+
+	for( RT_LIST_FOR( vu, vertexuse, &v2b->vu_hd ) )
+	{
+		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		eu = vu->up.eu_p;
+		NMG_CK_EDGEUSE( eu );
+		if( eu->radial_p != eu->eumate_p )
+			continue;	/* not a free edge */
+
+		if( eu->eumate_p->vu_p->v_p == v2c )
+			continue;	/* wrong free edge */
+
+		v2a = eu->eumate_p->vu_p->v_p;
+		NMG_CK_VERTEX( v2a );
+		break;
+	}
+	for( RT_LIST_FOR( vu, vertexuse, &v2c->vu_hd ) )
+	{
+		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		eu = vu->up.eu_p;
+		NMG_CK_EDGEUSE( eu );
+		if( eu->radial_p != eu->eumate_p )
+			continue;	/* not a free edge */
+
+		if( eu->eumate_p->vu_p->v_p == v2b )
+			continue;	/* wrong free edge */
+
+		v2d = eu->eumate_p->vu_p->v_p;
+		NMG_CK_VERTEX( v2d );
+		break;
+	}
+
+	if( !v1a || !v1d || !v2a || !v2d )
+	{
+		rt_log( "Connect_at_adj_edges: Could not find vertices for adjacent edges\n" );
+		rt_bomb( "Connect_at_adj_edges\n" );
+	}
+
+	eu2 = nmg_findeu( v2b, v2c, s2, (struct edgeuse *)NULL, 1 );
+	if( !eu2 )
+	{
+		rt_log( "Connect_at_adj_edges: Could not find eu2 corresponding to eu1\n" );
+		rt_bomb( "Connect_at_adj_edges\n" );
+	}
+
+	VSUB2( a_to_b, v1b->vg_p->coord, v1a->vg_p->coord );
+	if( VDOT( a_to_b, norm1 ) > 0.0 )
+		normalward1 = 1;
+	else
+		normalward1 = 0;
+
+	VSUB2( a_to_b, v2b->vg_p->coord, v2a->vg_p->coord );
+	if( VDOT( a_to_b, norm2 ) > 0.0 )
+		normalward2 = 1;
+	else
+		normalward2 = 0;
+
+	if( normalward1 == normalward2 )
+	{
+		struct faceuse *fu;
+		struct loopuse *lu;
+		struct vertex *verts[3];
+
+		if( normalward1 )
+		{
+			verts[0] = v1d;
+			verts[1] = v1c;
+			verts[2] = v1b;
+		}
+		else
+		{
+			verts[0] = v1c;
+			verts[1] = v1b;
+			verts[2] = v1a;
+		}
+
+		fu = nmg_cface( s1, verts, 3 );
+		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		area = nmg_loop_plane_area( lu , pl );
+		if( area < 0.0 )
+		{
+			rt_log( "Cannot calculate plane equation for new face: \n" );
+			rt_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
+				V3ARGS( verts[0]->vg_p->coord ),
+				V3ARGS( verts[1]->vg_p->coord ),
+				V3ARGS( verts[2]->vg_p->coord ) );
+			nmg_kfu( fu );
+		}
+		else
+		{
+			nmg_face_g( fu , pl );
+			nmg_loop_g( lu->l_p , &tol );
+		}
+
+		if( normalward2 )
+		{
+			verts[0] = v2b;
+			verts[1] = v2c;
+			verts[2] = v2d;
+		}
+		else
+		{
+			verts[0] = v2a;
+			verts[1] = v2b;
+			verts[2] = v2c;
+		}
+
+		fu = nmg_cface( s2, verts, 3 );
+		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		area = nmg_loop_plane_area( lu , pl );
+		if( area < 0.0 )
+		{
+			rt_log( "Cannot calculate plane equation for new face: \n" );
+			rt_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
+				V3ARGS( verts[0]->vg_p->coord ),
+				V3ARGS( verts[1]->vg_p->coord ),
+				V3ARGS( verts[2]->vg_p->coord ) );
+			nmg_kfu( fu );
+		}
+		else
+		{
+			nmg_face_g( fu , pl );
+			nmg_loop_g( lu->l_p , &tol );
+		}
+		return;
+	}
+}
+
+/* This routine stitches together the two shells just in the areas where "Reunite_shells"
+ * made its connections. These areas get too complicated for "nmg_open_shells_connect".
+ */
+void
+Stitch_adj_shells( s1, s2, dup_tbl )
+struct shell *s1;
+struct shell *s2;
+long **dup_tbl;
+{
+	struct adjacent_faces *adj;
+
+	NMG_CK_SHELL( s1 );
+	NMG_CK_SHELL( s2 );
+
+	/* loop through list of faces that Reunite_shells connected
+	 * looking for created dangling edges
+	 */
+	adj = adj_root;
+	while( adj )
+	{
+		struct edgeuse *eu1;
+
+		eu1 = nmg_findeu( adj->eu1->vu_p->v_p, adj->eu2->eumate_p->vu_p->v_p, s1,
+				(struct edgeuse *)NULL, 1 );
+
+		/* eu1 is a dangling edge created by Reunite_shells */
+		if( eu1 )
+			Connect_at_adj_edges( s1, s2, eu1, adj, dup_tbl );
+
+		/* Check other end of adjacent edges */
+		eu1 = nmg_findeu( adj->eu2->vu_p->v_p, adj->eu1->eumate_p->vu_p->v_p,
+				s1, (struct edgeuse *)NULL, 1 );
+
+		/* eu1 is a dangling edge created by Reunite_shells */
+		if( eu1 )
+			Connect_at_adj_edges( s1, s2, eu1, adj, dup_tbl );
+
+		adj = adj->next;
+	}
+}
+
 int
 Extrude_faces()
 {
+	struct nmgregion *r;
 	struct shell *s1,*s2;
 	struct shell **shells,**dup_shells;
 	struct fast_fus *fus;
@@ -2435,6 +2809,8 @@ Extrude_faces()
 /*	Check_normals();	*/
 
 	num_thicks = Sort_fus_by_thickness();
+	if( debug )
+		rt_log( "\tComponent has %d unique thicknesses\n", num_thicks );
 
 	thicks = (fastf_t *)rt_calloc( num_thicks , sizeof( fastf_t ) , "Extrude_faces: thicks" );
 	i = 0;
@@ -2464,7 +2840,15 @@ Extrude_faces()
 	for( thick_no=0 ; thick_no<num_thicks ; thick_no++ )
 	{
 		for( center=1 ; center<3 ; center++ )
+		{
 			shells[ thick_no*2 + center - 1 ] = Get_shell( thicks[thick_no] , center );
+			if( debug )
+			{
+				rt_log( "Shell thickness = %g, center position = %d:\n",
+					thicks[thick_no], center );
+				nmg_pr_s_briefly( shells[ thick_no*2 + center - 1 ], " " );
+			}
+		}
 	}
 
 	/* Extrude faces with POS_CENTER first (these faces were defined as the center
@@ -2534,6 +2918,23 @@ Extrude_faces()
 	nmg_ks( s );
 	s = (struct shell *)NULL;
 
+	if( debug )
+	{
+		nmg_rebound( m, &tol );
+		nmg_stash_model_to_file( "error0.g", m, "unconnected shells" );
+	}
+
+	/* Re-calculate face geometries */
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s , shell, &r->s_hd ) )
+		{
+			NMG_CK_SHELL( s );
+			Recalc_face_g( s );
+		}
+	}
+	s = (struct shell *)NULL;
+
 	/* Now reunite adjacent faces that were seperated in "Get_shell" */
 	Reunite_faces( dup_tbl );
 
@@ -2562,6 +2963,12 @@ Extrude_faces()
 	Glue_shell_faces( s1 );
 	Glue_shell_faces( s2 );
 
+	if( debug )
+	{
+		nmg_rebound( m, &tol );
+		nmg_stash_model_to_file( "error1.g", m, "unconnected shells" );
+	}
+
 	/* Now combine the final two */
 	if( debug )
 		rt_log( "Close shell\n" );
@@ -2572,11 +2979,19 @@ Extrude_faces()
 	rt_free( (char *)shells , "Extrude_faces: shells" );
 	rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
 	rt_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
+
+	(void)nmg_kill_zero_length_edgeuses( m );
 	s = s1;
 	Glue_shell_faces( s );
 
 	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 		rt_log( "ERROR: rt_mem_barriercheck failed in Extrude_faces\n" );
+
+	if( debug )
+	{
+		nmg_rebound( m, &tol );
+		nmg_stash_model_to_file( "error2.g", m, "connected shells" );
+	}
 
 	return( 0 );
 }
@@ -2939,6 +3354,8 @@ out:
 		rt_log( "Check_radials: bad radials at edge from ( %g %g %g ) to ( %g %g %g )\n",
 			V3ARGS( eu1->vu_p->v_p->vg_p->coord ), V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) );
 		rt_log( "\tUse count = %d\n" , use_count );
+		if( debug )
+			nmg_stash_model_to_file( "bad_radials.g", m, "bad radials" );
 	}
 
 	return( !radials_ok );
@@ -3104,6 +3521,9 @@ make_nmg_objects()
 		fflush( fdout );
 	}
 
+	/*  Make sure faces are within tolerance */
+	nmg_make_faces_within_tol( s, &tol );
+
 	if( debug )
 		rt_log( "Coplanar face merge\n" );
 
@@ -3133,11 +3553,17 @@ make_nmg_objects()
 	{
 		/* Check radial orientation around all edges */
 		if( Check_radials( s, 0 ) )
+		{
+			rt_log( "Shell has bad radial edge orientation\n" );
 			return( 1 );
+		}
 
 		/* Check if a valid closed shell has been produced */
 		if( nmg_ck_closed_surf( s , &tol ) )
+		{
+			rt_log( "Final shell is not closed\n" );
 			return( 1 );
+		}
 
 		if( debug )
 			rt_log( "model fuse\n" );
@@ -4513,7 +4939,10 @@ int pass_number;
 	region_id = 0;
 	pass = pass_number;
 	curr_offset = ftell( fdin );
-	while( getline() )
+	(void)getline();
+	if( !line[0] )
+		strcpy( line, "ENDDATA" );
+	while( 1 )
 	{
 		if( !strncmp( line , "VEHICLE" , 7 ) )
 			do_vehicle();
@@ -4554,6 +4983,9 @@ int pass_number;
 			rt_log( "ERROR: skipping unrecognized data type\n%s\n" , line );
 
 		curr_offset = ftell( fdin );
+		(void)getline();
+		if( !line[0] )
+			strcpy( line, "ENDDATA" );
 	}
 
 	if( try_count )
