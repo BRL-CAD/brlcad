@@ -251,23 +251,6 @@ struct mater_info {
 };
 
 /*
- *			M F U N C S
- *
- *  The interface to the various material property & texture routines.
- */
-struct mfuncs {
-	char		*mf_name;	/* Keyword for material */
-	int		mf_magic;	/* To validate structure */
-	struct mfuncs	*mf_forw;	/* Forward link */
-	int		(*mf_setup)();	/* Routine for preparing */
-	int		(*mf_render)();	/* Routine for rendering */
-	int		(*mf_print)();	/* Routine for printing */
-	int		(*mf_free)();	/* Routine for releasing storage */
-};
-#define MF_MAGIC	0x55968058
-#define MF_NULL		((struct mfuncs *)0)
-
-/*
  *			R E G I O N
  *
  *  The region structure.
@@ -282,7 +265,7 @@ struct region  {
 	short		reg_los;	/* equivalent LOS estimate ?? */
 	struct region	*reg_forw;	/* linked list of all regions */
 	struct mater_info reg_mater;	/* Real material information */
-	struct mfuncs	*reg_mfuncs;	/* User appl. funcs for material */
+	char		*reg_mfuncs;	/* User appl. funcs for material */
 	char		*reg_udata;	/* User appl. data for material */
 };
 #define REGION_NULL	((struct region *)0)
