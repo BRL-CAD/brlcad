@@ -150,14 +150,13 @@ unsigned char	*rgb;
     if ((((hue < 0.0) || (hue > 360.0)) && (hue != ACHROMATIC))
      || (sat < 0.0) || (sat > 1.0)
      || (val < 0.0) || (val > 1.0)
-     || ((hue == ACHROMATIC) && (sat > 0.0))
-     || ((sat == 0.0) && (hue != ACHROMATIC)))
+     || ((hue == ACHROMATIC) && (sat > 0.0)))
     {
 	bu_log("bu_hsv_to_rgb: Illegal HSV (%g, %g, %g)\n",
 	    V3ARGS(hsv));
 	return (0);
     }
-    if (sat == 0.0)	/*	so hue == ACHROMATIC	*/
+    if (sat == 0.0)	/*	so hue == ACHROMATIC (or is ignored)	*/
 	VSETALL(float_rgb, val)
     else
     {
