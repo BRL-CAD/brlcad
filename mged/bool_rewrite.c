@@ -301,8 +301,13 @@ struct bool_tree_node	*rp;
 
     RT_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
-    for (cnr = 0; nr = _cvt_to_gift_bool(rp); cnr += nr)
+
+    for (cnr = 0; nr = _cvt_to_gift_bool(rp); cnr += nr) {
+	;
+#if 0
 	show_tree (rp, 1);
+#endif
+    }
     
     return (cnr);
 }
