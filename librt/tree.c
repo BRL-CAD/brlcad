@@ -1090,25 +1090,27 @@ register int regbit;
  */
 void
 rt_prep(rtip)
-struct rt_i *rtip;
+register struct rt_i *rtip;
 {
 	register struct region *regp;
 	register struct soltab *stp;
 
-	if(!rt_i.needprep)
+	if( &rt_i != rtip )
+		rt_bomb("rt_prep:  bad arg!");	/* XXX --temp */
+	if(!rtip->needprep)
 		rt_bomb("rt_prep: re-invocation");
-	rt_i.needprep = 0;
-	if( rt_i.nsolids <= 0 )
+	rtip->needprep = 0;
+	if( rtip->nsolids <= 0 )
 		rt_bomb("rt_prep:  no solids to prep");
 
 	/*
-	 *  Allocate space for a per-solid bit of rt_i.nregions length.
+	 *  Allocate space for a per-solid bit of rtip->nregions length.
 	 */
-	for( stp=rt_i.HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
+	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
 		stp->st_regions = (bitv_t *)rt_malloc(
-			BITS2BYTES(rt_i.nregions)+sizeof(bitv_t),
+			BITS2BYTES(rtip->nregions)+sizeof(bitv_t),
 			"st_regions bitv" );
-		BITZERO( stp->st_regions, rt_i.nregions );
+		BITZERO( stp->st_regions, rtip->nregions );
 		stp->st_maxreg = 0;
 	}
 
@@ -1117,11 +1119,11 @@ struct rt_i *rtip;
 	 *  Set this region's bit in the bit vector of every solid
 	 *  contained in the subtree.
 	 */
-	rt_i.Regions = (struct region **)rt_malloc(
-		rt_i.nregions * sizeof(struct region *),
-		"rt_i.Regions[]" );
-	for( regp=rt_i.HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
-		rt_i.Regions[regp->reg_bit] = regp;
+	rtip->Regions = (struct region **)rt_malloc(
+		rtip->nregions * sizeof(struct region *),
+		"rtip->Regions[]" );
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		rtip->Regions[regp->reg_bit] = regp;
 		rt_optim_tree( regp->reg_treetop );
 		rt_solid_bitfinder( regp->reg_treetop, regp->reg_bit );
 		if(rt_g.debug&DEBUG_REGIONS)  {
@@ -1129,7 +1131,7 @@ struct rt_i *rtip;
 		}
 	}
 	if(rt_g.debug&DEBUG_REGIONS)  {
-		for( stp=rt_i.HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
+		for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
 			rt_log("solid %s ", stp->st_name);
 			rt_pr_bitv( "regions ref", stp->st_regions,
 				stp->st_maxreg);
@@ -1137,7 +1139,7 @@ struct rt_i *rtip;
 	}
 
 	/* Partition space */
-	rt_cut_it();
+	rt_cut_it(rtip);
 }
 
 /*
