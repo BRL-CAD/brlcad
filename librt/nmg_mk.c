@@ -1795,6 +1795,12 @@ struct edgeuse *eudst, *eusrc;
  *	associated with a new edge structure.
  *
  *	Primarily a support routine for nmg_eusplit()
+ *
+ *  If the original edge had edge geometry, that is *not* duplicated here,
+ *  because it is not easy (or appropriate) for nmg_eusplit() to know
+ *  whether the new vertex lies on the previous edge geometry or not.
+ *  Hence having the nmg_ebreak() interface, which preserves the ege
+ *  geometry across a split, and nmg_esplit() which does not.
  */
 void
 nmg_unglueedge(eu)
@@ -1817,10 +1823,7 @@ struct edgeuse *eu;
 
 	new_e->magic = NMG_EDGE_MAGIC;
 	new_e->eu_p = eu;
-
-	/* If old_e had edge_g, duplicate reference here */
 	new_e->eg_p = (struct edge_g *)NULL;
-	if( old_e->eg_p )  nmg_use_edge_g( new_e, old_e->eg_p );
 
 	/* make sure the old edge isn't pointing at this edgeuse */
 	if (old_e->eu_p == eu || old_e->eu_p == eu->eumate_p ) {
