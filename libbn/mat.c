@@ -79,29 +79,25 @@ const mat_t	bn_mat_identity = {
 		0.0, 0.0, 0.0, 1.0
 };
 
-/*
- *			B N _ M A T _ P R I N T
- */
 void
-bn_mat_print( title, m )
-const char	*title;
-const mat_t	m;
+bn_mat_print_guts(const char	*title,
+		  const mat_t	m,
+		  char		*obuf)
 {
 	register int	i;
-	char		obuf[1024];	/* sprintf may be non-PARALLEL */
 	register char	*cp;
 
 	sprintf(obuf, "MATRIX %s:\n  ", title);
 	cp = obuf+strlen(obuf);
-	if( !m )  {
-		strcat( obuf, "(Identity)" );
+	if (!m) {
+		strcat(obuf, "(Identity)");
 	} else {
-		for(i=0; i<16; i++)  {
+		for (i=0; i<16; i++)  {
 			sprintf(cp, " %8.3f", m[i]);
 			cp += strlen(cp);
-			if( i == 15 )  {
+			if (i == 15) {
 				break;
-			} else if( (i&3) == 3 )  {
+			} else if((i&3) == 3) {
 				*cp++ = '\n';
 				*cp++ = ' ';
 				*cp++ = ' ';
@@ -109,6 +105,18 @@ const mat_t	m;
 		}
 		*cp++ = '\0';
 	}
+}
+
+/*
+ *			B N _ M A T _ P R I N T
+ */
+void
+bn_mat_print(const char		*title,
+	     const mat_t	m)
+{
+	char		obuf[1024];	/* sprintf may be non-PARALLEL */
+
+	bn_mat_print_guts(title, m, obuf);
 	bu_log("%s\n", obuf);
 }
 
