@@ -1986,7 +1986,6 @@ struct faceuse		*fu2;		/* face to be intersected w/eu1 */
 struct faceuse		*fu1;		/* fu that eu1 is from */
 {
 	struct nmg_ptbl vert_list1, vert_list2;
-	struct loopuse		*lu;
 	struct vertexuse	*vu1;
 	struct vertexuse	*vu2;
 	struct edgeuse		*fu2_eu;	/* use of edge in fu2 */
@@ -2132,7 +2131,7 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 		nmg_isect_line2_face2pNEW( is, fu1, &eu1_list, &eu2_list );
 	}
 	if (rt_g.NMG_debug & DEBUG_POLYSECT )
-		rt_log("nmg_isect_edge2p_face2p(): total_splits=%d\n", lu, total_splits);
+		rt_log("nmg_isect_edge2p_face2p(): total_splits=%d\n", total_splits);
 
 	if( total_splits <= 0 )  goto out;
 
