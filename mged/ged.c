@@ -1519,6 +1519,19 @@ refresh()
 
   rt_prep_timer();
 
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l)
+	  if (update_views || p->dml_view_state->vs_flag)
+		  p->dml_dirty = 1;
+
+  /*
+   * This needs to be done separately
+   * because dml_view_state may be shared.
+   */
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l)
+	  p->dml_view_state->vs_flag = 0;
+
+  update_views = 0;
+
   save_dm_list = curr_dm_list;
   FOR_ALL_DISPLAYS(p, &head_dm_list.l){
     /*
@@ -1526,9 +1539,8 @@ refresh()
      * Otherwise, we are happy with the view we have
      */
     curr_dm_list = p;
-    if(mapped && (update_views || view_state->vs_flag || dirty)) {
+    if (mapped && dirty) {
       dirty = 0;
-      view_state->vs_flag = 0;
       do_time = 1;
       VMOVE(geometry_default_color,color_scheme->cs_geo_def);
 
@@ -1646,8 +1658,7 @@ refresh()
   }
 
   curr_dm_list = save_dm_list;
-  update_views = 0;
-
+  
   if(!do_overlay){
     bu_vls_free(&overlay_vls);
     bu_vls_free(&tmp_vls);
