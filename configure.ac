@@ -143,17 +143,38 @@ else
 fi
 AM_CONFIG_HEADER([include/config.h])
 
-# a secondary automated automake may blow away COPYING & INSTALL , so restore them
+# a secondary automated automake may blow away COPYING & INSTALL due
+# to an automake bug in older version, so restore those files if
+# needed.
 for file in COPYING INSTALL ; do
-	if test -f "$srcdir/misc/${file}.backup" ; then
-		AC_MSG_CHECKING([whether ${file} needs to be restored])
-		content="`cat $srcdir/${file}`"
-		backup="`cat $srcdir/misc/${file}.backup`"
-		if test "x$content" = "x$backup" ; then
+	if ! test -f "$srcdir/$file" ; then
+		continue
+	fi
+	if ! test -f "$srcdir/misc/${file}.backup" ; then
+		continue
+	fi
+
+	AC_MSG_CHECKING([whether ${file} needs to be restored])
+	content="`cat $srcdir/${file}`"
+	backup="`cat $srcdir/misc/${file}.backup`"
+	if test "x$content" = "x$backup" ; then
+		AC_MSG_RESULT(no)
+	else
+		content_rev="`grep \$Revision ${srcdir}/${file} | awk '{print $2}' | sed 's/\.//g'`"
+		if test "x$content_rev" = "x" ; then
+			content_rev=0
+		fi
+		backup_rev="`grep \$Revision ${srcdir}/misc/${file} | awk '{print $2}' | sed 's/\.//g'`"
+		if test "x$backup_rev" = "x" ; then
+			backup_rev=0
+		fi
+		if test "$content_rev" -gt "$backup_rev" ; then
 			AC_MSG_RESULT(no)
+			# new version from cvs.. back it up
+			cp -pr "$srcdir/${file}" "$srcdir/misc/${file}.backup"
 		else
 			AC_MSG_RESULT(yes)
-			cp -pr $srcdir/misc/${file}.backup $srcdir/${file}
+			cp -pr "$srcdir/misc/${file}.backup" "$srcdir/${file}"
 		fi
 	fi
 done
@@ -805,8 +826,6 @@ dnl ***************************
 dnl *** Check for libraries ***
 dnl ***************************
 
-SAVELIBS="${LIBS}"
-
 dnl need curses, would prefer ncurses  (XXX should look for tputs)
 #LIBS=
 AC_CHECK_LIB(ncurses, tputs, CURSES="-lncurses",
@@ -816,31 +835,7 @@ AC_CHECK_LIB(ncurses, tputs, CURSES="-lncurses",
 	)]
     )]
 )
-#AC_SEARCH_LIBS(initscr, ncurses curses termlib termcap,, 
-#	       AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-#	       AC_MSG_ERROR([*** Need curses! ***]) )
-#CURSES="${LIBS}"
 AC_SUBST(CURSES)
-
-LIBS=
-AC_SEARCH_LIBS(getvideo, gl, AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.))
-SGIGL="${LIBS}"
-AC_SUBST(SGIGL)
-
-LIBS="${SAVELIBS}"
-
-dnl XXX every binary doesn't need this so remove later
-AC_SEARCH_LIBS(mallopt, malloc)
-
-dnl XXX every binary doesn't need this so remove later
-AC_SEARCH_LIBS(matherr, mx)
-
-dnl XXX every binary doesn't need this so revert later
-AC_SEARCH_LIBS(sqrt, m)
-
-dnl XXX every binary doesn't need this so remove later
-AC_SEARCH_LIBS(dlopen, [dl ldl], AC_DEFINE(HAVE_DLOPEN, 1, dlopen is available))
-AC_SUBST(DL)
 
 dnl X
 X_PREFIX=/usr/X11R6
@@ -878,7 +873,22 @@ AC_CHECK_LIB(socket, socket, socket_link_works=yes)
 
 dnl check if a network socket library links
 nsl_link_works=no
-AC_CHECK_LIB(gethostbyaddr, nsl, nsl_link_works=yes)
+AC_CHECK_LIB(nsl, gethostbyaddr, nsl_link_works=yes)
+
+dnl check if a malloc library links
+malloc_link_works=no
+AC_CHECK_LIB(malloc, mallopt, malloc_link_works=yes)
+
+dnl check if a mx library links
+mx_link_works=no
+AC_CHECK_LIB(mx, matherr, mx_link_works=yes)
+
+dnl check if a dynamic link library links
+dl_link_works=no
+AC_CHECK_LIB(dl, dlopen, dl_link_works=yes)
+
+dnl check if a graphics library links
+AC_CHECK_LIB(gl, getvideo, gl_link_works=yes)
 
 
 dnl *************************
@@ -1684,6 +1694,59 @@ else
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(LIBNSL)
+
+
+dnl *** libmalloc ***
+
+LIBMALLOC=""
+AC_MSG_CHECKING(for malloc library availability)
+if test "x$malloc_link_works" = "xyes" ; then
+	LIBMALLOC="-lmalloc"
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(LIBMALLOC)
+
+
+dnl *** libmx ***
+
+LIBMX=""
+AC_MSG_CHECKING(for mx library availability)
+if test "x$mx_link_works" = "xyes" ; then
+	LIBMX="-lmx"
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(LIBMX)
+
+
+dnl *** libdl ***
+
+LIBDL=""
+AC_MSG_CHECKING(for dynamic linker library availability)
+if test "x$dl_link_works" = "xyes" ; then
+	LIBDL="-ldl"
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(LIBDL)
+
+
+dnl *** libgl ***
+
+LIBGL=""
+AC_MSG_CHECKING(for graphics library availability)
+if test "x$gl_link_works" = "xyes" ; then
+	LIBGL="-lgl"
+	AC_MSG_RESULT(yes)
+	AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(LIBGL)
 
 
 dnl *** 64-bit compilation ***
