@@ -409,8 +409,10 @@ char **argv;
 	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 
-	  if(status != TCL_OK)
+	  if (status != TCL_OK) {
+	    bu_log("%s", interp->result);
 	    exit(1);
+	  }
 	}
 
 	if(argc >= 2){
@@ -444,6 +446,17 @@ char **argv;
 
 	    if ((pid = fork()) == 0){
 	      struct bu_vls vls;
+	      int status;
+
+	      bu_vls_init(&vls);
+	      bu_vls_strcpy(&vls, "gui");
+	      status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	      bu_vls_free(&vls);
+
+	      if (status != TCL_OK) {
+		bu_log("%s", interp->result);
+		exit(1);
+	      }
 
 	      (void)pipe(pipe_out);
 	      (void)pipe(pipe_err);
@@ -462,11 +475,6 @@ char **argv;
 	      /* close stdin */
 	      (void)close(0);
 #endif
-
-	      bu_vls_init(&vls);
-	      bu_vls_strcpy(&vls, "gui");
-	      (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	      bu_vls_free(&vls);
 	    }else{
 	      exit(0);
 	    }
