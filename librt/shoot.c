@@ -103,10 +103,11 @@ register struct application *ap;
 		ap->a_resource = &rt_uniresource;
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
-		rt_log("**********shootray cpu=%d  %d,%d lvl=%d\n",
+		rt_log("**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
 			ap->a_resource->re_cpu,
 			ap->a_x, ap->a_y,
-			ap->a_level );
+			ap->a_level,
+			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
 		VPRINT("Pnt", ap->a_ray.r_pt);
 		VPRINT("Dir", ap->a_ray.r_dir);
 	}
