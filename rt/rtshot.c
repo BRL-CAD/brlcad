@@ -50,6 +50,7 @@ int		rdebug;			/* RT program debugging (not library) */
 
 int		npsw = 1;		/* Run serially */
 int		parallel = 0;
+int		interactive = 0;	/* human is watching results */
 
 struct resource		resource;
 struct application	ap;
@@ -204,3 +205,18 @@ miss()
 {
 	rt_log("missed\n");
 }
+
+#if defined(SYSV)
+#if !defined(bcopy)
+bcopy(from,to,count)
+{
+	memcpy( to, from, count );
+}
+#endif
+#if !defined(bzero)
+bzero(str,n)
+{
+	memset( str, '\0', n );
+}
+#endif
+#endif
