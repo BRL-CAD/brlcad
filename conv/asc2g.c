@@ -1645,7 +1645,7 @@ botbld()
 		facemode = bu_hex_to_bitv( &buf[1] );
 	}
 
-	mk_bot( ofp, my_name, mode, orientation, error_mode, num_vertices, num_faces,
+	mk_bot( ofp, my_name, mode, orientation, 0, num_vertices, num_faces,
 		vertices, faces, thick, facemode );
 
 	bu_free( (char *)vertices, "botbld: vertices" );

@@ -47,6 +47,23 @@ int rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
 
 #define BOT_MIN_DN	1.0e-9
 
+#define RT_BOT_UNORIENTED_NORM( _hitp, _in_or_out)	{ \
+	if( _in_or_out < 0 ) {	/* this is an exit */ \
+		if( (_hitp)->hit_vpriv[X] < 0.0 ) { \
+			VREVERSE( (_hitp)->hit_normal, trip->tri_N ); \
+		} else { \
+			VMOVE( (_hitp)->hit_normal, trip->tri_N ); \
+		} \
+	} else {	/* this is an entrance */ \
+		if( (_hitp)->hit_vpriv[X] > 0.0 ) { \
+			VREVERSE( (_hitp)->hit_normal, trip->tri_N ); \
+		} else { \
+			VMOVE( (_hitp)->hit_normal, trip->tri_N ); \
+		} \
+	} \
+}
+					
+
 /*
  *			R T _ B O T F A C E
  *
@@ -59,17 +76,19 @@ int rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
  *	#pts	(3) if a valid plane resulted.
  */
 int
-rt_botface(struct soltab	*stp,
+rt_botface_w_normals(struct soltab	*stp,
 	   struct bot_specific	*bot,
 	   fastf_t		*ap,
 	   fastf_t		*bp,
 	   fastf_t		*cp,
+	   fastf_t		*vertex_normals, /* array of nine values (three unit normals vectors) */
 	   int			face_no,
 	   const struct bn_tol	*tol)
 {
 	register struct tri_specific *trip;
 	vect_t work;
 	LOCAL fastf_t m1, m2, m3, m4;
+	int i;
 
 	BU_GETSTRUCT( trip, tri_specific );
 	VMOVE( trip->tri_A, ap );
@@ -97,6 +116,15 @@ rt_botface(struct soltab	*stp,
 		return(0);			/* BAD */
 	}		
 
+	if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+		trip->tri_normals = (fastf_t *)bu_malloc( 9 * sizeof( fastf_t ), "trip->tri_normals" );
+		for( i=0 ; i<3 ; i++ ) {
+			VMOVE( &trip->tri_normals[i*3], &vertex_normals[i*3] );
+		}
+	} else {
+		trip->tri_normals = (fastf_t *)NULL;
+	}
+
 	/*  wn is a normal of not necessarily unit length.
 	 *  N is an outward pointing unit normal.
 	 *  We depend on the points being given in CCW order here.
@@ -104,12 +132,24 @@ rt_botface(struct soltab	*stp,
 	VMOVE( trip->tri_N, trip->tri_wn );
 	VUNITIZE( trip->tri_N );
 	if( bot->bot_mode == RT_BOT_CW )
-		VREVERSE( trip->tri_N, trip->tri_N )
+		VREVERSE( trip->tri_N, trip->tri_N );
 
 	/* Add this face onto the linked list for this solid */
 	trip->tri_forw = bot->bot_facelist;
 	bot->bot_facelist = trip;
 	return(3);				/* OK */
+}
+
+int
+rt_botface(struct soltab	*stp,
+	   struct bot_specific	*bot,
+	   fastf_t		*ap,
+	   fastf_t		*bp,
+	   fastf_t		*cp,
+	   int			face_no,
+	   const struct bn_tol	*tol)
+{
+	return( rt_botface_w_normals( stp, bot, ap, bp, cp, NULL, face_no, tol ) );
 }
 
 /*
@@ -273,7 +313,7 @@ struct rt_i		*rtip;
 	stp->st_specific = (genptr_t)bot;
 	bot->bot_mode = bot_ip->mode;
 	bot->bot_orientation = bot_ip->orientation;
-	bot->bot_errmode = bot_ip->error_mode;
+	bot->bot_flags = bot_ip->bot_flags;
 	if( bot_ip->thickness )
 	{
 		bot->bot_thickness = (fastf_t *)bu_calloc( bot_ip->num_faces, sizeof( fastf_t ), "bot_thickness" );
@@ -289,6 +329,7 @@ struct rt_i		*rtip;
 	for( tri_index=0 ; tri_index < bot_ip->num_faces ; tri_index++ )
 	{
 		point_t p1, p2, p3;
+		int default_normal=-1;
 
 		VMOVE( p1, &bot_ip->vertices[bot_ip->faces[tri_index*3]*3] );
 		VMOVE( p2, &bot_ip->vertices[bot_ip->faces[tri_index*3 + 1]*3] );
@@ -296,8 +337,39 @@ struct rt_i		*rtip;
 		VMINMAX( stp->st_min, stp->st_max, p1 );
 		VMINMAX( stp->st_min, stp->st_max, p2 );
 		VMINMAX( stp->st_min, stp->st_max, p3 );
-		if( rt_botface( stp, bot, p1, p2, p3, ntri, tol ) > 0 )
-			ntri++;
+		if( (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
+		    (bot_ip->num_normals > 0) && (bot_ip->num_face_normals > tri_index) ) {
+			for( i=0 ; i<3 ; i++ ) {
+				int index;
+
+				index = bot_ip->face_normals[tri_index*3 + i];
+				if( index >= 0 && index < bot_ip->num_normals ) {
+					default_normal = index;
+				}
+			}
+			if( default_normal < 0 ) {
+				if( rt_botface( stp, bot, p1, p2, p3, ntri, tol ) > 0 )
+					ntri++;
+			} else {
+				fastf_t normals[9];
+
+				for( i=0 ; i<3 ; i++ ) {
+					int index;
+
+					index = bot_ip->face_normals[tri_index*3 + i];
+					if( index < 0 || index > bot_ip->num_normals ) {
+						VMOVE( &normals[i*3], &bot_ip->normals[default_normal*3] );
+					} else {
+						VMOVE( &normals[i*3], &bot_ip->normals[index*3] );
+					}
+				}
+				if( rt_botface_w_normals( stp, bot, p1, p2, p3, normals, ntri, tol ) > 0 )
+					ntri++;
+			}
+		} else {
+			if( rt_botface( stp, bot, p1, p2, p3, ntri, tol ) > 0 )
+				ntri++;
+		}
 	}
 
 	if( bot->bot_facelist == (struct tri_specific *)0 )  {
@@ -375,6 +447,8 @@ rt_bot_plate_segs(struct hit		*hits,
 
 
     for( i=0; i < nhits; i++ ) {
+	struct tri_specific *trip=(struct tri_specific *)hits[i].hit_private;
+
 	surfno = hits[i].hit_surfno;
 
 	if( bot->bot_mode == RT_BOT_PLATE_NOCOS )
@@ -385,20 +459,20 @@ rt_bot_plate_segs(struct hit		*hits,
 		los = -los;
 	}
 	if( BU_BITTEST( bot->bot_facemode, hits[i].hit_surfno ) ) {
+
 				/* append thickness to hit point */
 	    RT_GET_SEG( segp, ap->a_resource);
 	    segp->seg_stp = stp;
 
 				/* set in hit */
 	    segp->seg_in = hits[i];
-	    segp->seg_in.hit_vpriv[Z] = 1;
+	    RT_BOT_UNORIENTED_NORM( &segp->seg_in, 1 );
 
 				/* set out hit */
 	    segp->seg_out.hit_surfno = surfno;
 	    segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
-	    segp->seg_out.hit_vpriv[X] = segp->seg_in.hit_vpriv[X]; /* ray dir dot normal */
-	    segp->seg_out.hit_vpriv[Y] = bot->bot_orientation;
-	    segp->seg_out.hit_vpriv[Z] = -1; /* a clue for rt_bot_norm that this is an exit */
+	    segp->seg_out.hit_vpriv[X] = hits[i].hit_vpriv[X];
+	    RT_BOT_UNORIENTED_NORM( &segp->seg_out, -1 );
 	    segp->seg_out.hit_private = segp->seg_in.hit_private;
 	    segp->seg_out.hit_rayp = &ap->a_ray;
 
@@ -410,9 +484,8 @@ rt_bot_plate_segs(struct hit		*hits,
 
 				/* set in hit */
 	    segp->seg_in.hit_surfno = surfno;
-	    segp->seg_in.hit_vpriv[X] = hits[i].hit_vpriv[X]; /* ray dir dot normal */
-	    segp->seg_in.hit_vpriv[Y] = bot->bot_orientation;
-	    segp->seg_in.hit_vpriv[Z] = 1;
+	    segp->seg_in.hit_vpriv[X] = hits[i].hit_vpriv[X];
+	    RT_BOT_UNORIENTED_NORM( &segp->seg_in, 1 );
 	    segp->seg_in.hit_private = hits[i].hit_private;
 	    segp->seg_in.hit_dist = hits[i].hit_dist - (los*0.5 );
 	    segp->seg_in.hit_rayp = &ap->a_ray;
@@ -420,9 +493,8 @@ rt_bot_plate_segs(struct hit		*hits,
 				/* set out hit */
 	    segp->seg_out.hit_surfno = surfno;
 	    segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
-	    segp->seg_out.hit_vpriv[X] = segp->seg_in.hit_vpriv[X]; /* ray dir dot normal */
-	    segp->seg_out.hit_vpriv[Y] = bot->bot_orientation;
-	    segp->seg_out.hit_vpriv[Z] = -1;
+	    segp->seg_out.hit_vpriv[X] = hits[i].hit_vpriv[X];
+	    RT_BOT_UNORIENTED_NORM( &segp->seg_out, -1 );
 	    segp->seg_out.hit_private = hits[i].hit_private;
 	    segp->seg_out.hit_rayp = &ap->a_ray;
 
@@ -453,17 +525,19 @@ rt_bot_unoriented_segs(struct hit		*hits,
     int	removed=0;
 
     if( nhits == 1 ) {
+	struct tri_specific *trip=(struct tri_specific *)hits[0].hit_private;
+
 	/* make a zero length partition */
 	RT_GET_SEG( segp, ap->a_resource );
 	segp->seg_stp = stp;
 
 	/* set in hit */
 	segp->seg_in = hits[0];
-	segp->seg_in.hit_vpriv[Z] = 1;
+	RT_BOT_UNORIENTED_NORM( &segp->seg_in, 1 );
 
 	/* set out hit */
 	segp->seg_out = hits[0];
-	segp->seg_out.hit_vpriv[Z] = -1;
+	RT_BOT_UNORIENTED_NORM( &segp->seg_out, -1 );
 
 	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	return( 1 );
@@ -507,16 +581,20 @@ rt_bot_unoriented_segs(struct hit		*hits,
     }
 
     for( i=0 ; i<(nhits&~1) ; i += 2 ) {
+	struct tri_specific *trip;
+
 	RT_GET_SEG( segp, ap->a_resource );
 	segp->seg_stp = stp;
 
 	/* set in hit */
 	segp->seg_in = hits[i];
-	segp->seg_in.hit_vpriv[Z] = 1;
+	trip = (struct tri_specific *)hits[i].hit_private;
+	RT_BOT_UNORIENTED_NORM( &segp->seg_in, 1 );
 
 	/* set out hit */
 	segp->seg_out = hits[i+1];
-	segp->seg_out.hit_vpriv[Z] = -1;
+	trip = (struct tri_specific *)hits[i+1].hit_private;
+	RT_BOT_UNORIENTED_NORM( &segp->seg_out, -1 );
 
 	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
     }
@@ -564,16 +642,18 @@ struct rt_piecestate	*psp;
     if( bot->bot_mode == RT_BOT_SURFACE ) {
 	for( i=0 ; i<nhits ; i++ )
 	    {
+		struct tri_specific *trip=(struct tri_specific *)hits[i].hit_private;
+
 		RT_GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
 
 		/* set in hit */
 		segp->seg_in = hits[i];
-		segp->seg_in.hit_vpriv[Z] = 1;
+		RT_BOT_UNORIENTED_NORM( &segp->seg_in, 1 );
 
 		/* set out hit */
 		segp->seg_out = hits[i];
-		segp->seg_out.hit_vpriv[Z] = -1;
+		RT_BOT_UNORIENTED_NORM( &segp->seg_out, -1 );
 		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	    }
 	/* Every hit turns into two, and makes a seg.  No leftovers */
@@ -829,6 +909,7 @@ struct rt_piecestate	*psp;
 				dot2 = hits[i].hit_vpriv[X];
 				nhits++;
 				bu_log( "\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name );
+				bu_log( "\t\t\tray = (%g %g %g) -> (%g %g %g)\n", V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ) );
 			    }
 			else if( dot1 < 0.0 && dot2 < 0.0 )
 			    {
@@ -855,6 +936,7 @@ struct rt_piecestate	*psp;
 				dot2 = hits[i].hit_vpriv[X];
 				nhits++;
 				bu_log( "\t\tadding fictitious exit at %f (%s)\n", hits[i].hit_dist, stp->st_name );
+				bu_log( "\t\t\tray = (%g %g %g) -> (%g %g %g)\n", V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ) );
 			    }
 			i++;
 		    }
@@ -883,12 +965,16 @@ struct rt_piecestate	*psp;
 
     /* nhits is even, build segments */
     for( i=0; i < nhits; i += 2 )  {
+	struct tri_specific *trip;
+
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
-	segp->seg_in = hits[i];		/* struct copy */
-	segp->seg_in.hit_vpriv[Z] = 1;
+	segp->seg_in = hits[i];	/* struct copy */
+	trip = (struct tri_specific *)hits[i].hit_private;
+	RT_BOT_UNORIENTED_NORM( &segp->seg_in, 1 );
 	segp->seg_out = hits[i+1];	/* struct copy */
-	segp->seg_out.hit_vpriv[Z] = -1;
+	trip = (struct tri_specific *)hits[i+1].hit_private;
+	RT_BOT_UNORIENTED_NORM( &segp->seg_out, -1 );
 	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
     }
 
@@ -905,8 +991,6 @@ struct rt_piecestate	*psp;
  *	Notes for rt_bot_norm():
  *		hit_private contains pointer to the tri_specific structure
  *		hit_vpriv[X] contains dot product of ray direction and unit normal from tri_specific
- *		hit_vpriv[Y] contains the BOT solid orientation
- *		hit_vpriv[Z] contains the +1 if the hit is a entrance, or -1 for an exit
  *  
  *  Returns -
  *  	0	MISS
@@ -929,7 +1013,7 @@ struct seg		*seghead;
 	nhits = 0;
 	hp = &hits[0];
 	if( bot->bot_orientation != RT_BOT_UNORIENTED && bot->bot_mode == RT_BOT_SOLID ) {
-		toldist = ap->a_rt_i->rti_tol.dist;
+		toldist = stp->st_aradius / 10.0e+6;
 	} else {
 		toldist = 0.0;
 	}
@@ -955,6 +1039,7 @@ struct seg		*seghead;
 		 */
 		abs_dn = dn >= 0.0 ? dn : (-dn);
 		if( abs_dn < BOT_MIN_DN ) {
+			    bu_log( "no hit on face %d (dN = %g)\n", trip->tri_surfno, VDOT(trip->tri_N, rp->r_dir )  );
 			continue;
 		}
 		VSUB2( wxb, trip->tri_A, rp->r_pt );
@@ -984,7 +1069,8 @@ struct seg		*seghead;
 		hp->hit_dist = k;
 		hp->hit_private = (genptr_t)trip;
 		hp->hit_vpriv[X] = VDOT( trip->tri_N, rp->r_dir );
-		hp->hit_vpriv[Y] = bot->bot_orientation;
+		hp->hit_vpriv[Y] = alpha / abs_dn;
+		hp->hit_vpriv[Z] = beta / abs_dn;
 		hp->hit_surfno = trip->tri_surfno;
 		hp->hit_rayp = &ap->a_ray;
 		if( ++nhits >= MAXHITS )  {
@@ -1047,7 +1133,7 @@ struct seg		*seghead;
 	if( bot->bot_orientation != RT_BOT_UNORIENTED &&
 	    bot->bot_mode == RT_BOT_SOLID ) {
 
-		toldist = ap->a_rt_i->rti_tol.dist;
+		toldist = psp->stp->st_aradius / 10.0e+6;
 	} else {
 		toldist = 0.0;
 	}
@@ -1092,6 +1178,7 @@ struct seg		*seghead;
 		}
 		for( trinum=0 ; trinum<tris_in_piece ;
 		     trinum++, trip=bot->bot_facearray[face_array_index+trinum] ) {
+			fastf_t dN, abs_dN;
 
 		    if (trip->tri_surfno < (piecenum*bot->bot_tri_per_piece) ||
 			trip->tri_surfno >= 
@@ -1103,15 +1190,19 @@ struct seg		*seghead;
 		    /*
 		     *  Ray Direction dot N.  (N is outward-pointing normal)
 		     *  wn points inwards, and is not unit length.
+		     *  Therefore, wn is not a good choice for this test
 		     */
 		    dn = VDOT( trip->tri_wn, rp->r_dir );
+		    dN = VDOT( trip->tri_N, rp->r_dir );
 
 		    /*
 		     *  If ray lies directly along the face, (ie, dot product
 		     *  is zero), drop this face.
 		     */
+		    abs_dN = dN >= 0.0 ? dN : (-dN);
 		    abs_dn = dn >= 0.0 ? dn : (-dn);
-		    if( abs_dn < BOT_MIN_DN ) {
+		    if( abs_dN < BOT_MIN_DN ) {
+			    bu_log( "no hit on face %d (dN = %g)\n", trip->tri_surfno, dN );
 			continue;
 		    }
 		    VSUB2( wxb, trip->tri_A, rp->r_pt );
@@ -1143,12 +1234,13 @@ struct seg		*seghead;
 		    hp->hit_dist = k + dist_corr;
 		    hp->hit_private = (genptr_t)trip;
 		    hp->hit_vpriv[X] = VDOT( trip->tri_N, rp->r_dir );
-		    hp->hit_vpriv[Y] = bot->bot_orientation;
+		    hp->hit_vpriv[Y] = alpha / abs_dn;
+		    hp->hit_vpriv[Z] = beta / abs_dn;
 		    hp->hit_surfno = trip->tri_surfno;
 		    hp->hit_rayp = &ap->a_ray;
 		    if(debug_shoot)
-			bu_log("%s piece %d ... HIT %g\n",
-			       stp->st_name, piecenum, hp->hit_dist);
+			bu_log("%s piece %d surfno %d ... HIT %g\n",
+			       stp->st_name, piecenum, trip->tri_surfno, hp->hit_dist);
 		} /* for (trinum...) */
 	} /* for (;sol_piece_subscr_p...) */
 
@@ -1217,30 +1309,31 @@ struct soltab		*stp;
 register struct xray	*rp;
 {
 	struct tri_specific *trip=(struct tri_specific *)hitp->hit_private;
-	fastf_t dn=hitp->hit_vpriv[X]; /* ray dir dot normal */
 	struct bot_specific *bot=(struct bot_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
-	if( hitp->hit_vpriv[Y] == RT_BOT_UNORIENTED || bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )
-	{
-		if( hitp->hit_vpriv[Z] < 0 ) /* this is an out hit */
-		{
-			if( dn < 0.0 )
-				VREVERSE( hitp->hit_normal, trip->tri_N )
-			else
-				VMOVE( hitp->hit_normal, trip->tri_N )
+	if( bot->bot_flags && RT_BOT_HAS_SURFACE_NORMALS ) {
+		fastf_t u, v, w; /*barycentric coords of hit point */
+		int i;
+
+		v = hitp->hit_vpriv[Y];
+		if( v < 0.0 ) v = 0.0;
+		if( v > 1.0 ) v = 1.0;
+
+		w = hitp->hit_vpriv[Z];
+		if( w < 0.0 ) w = 0.0;
+		if( w > 1.0 ) w =  1.0;
+
+		u = 1.0 - v - w;
+		if( u < 0.0 ) u = 0.0;
+
+		VSETALL( hitp->hit_normal, 0.0 );
+		for( i=X ; i<=Z ; i++ ) {
+			hitp->hit_normal[i] = u*trip->tri_normals[i] + v*trip->tri_normals[i+3] + w*trip->tri_normals[i+6];
 		}
-		else
-		{
-			if( dn > 0.0 )
-				VREVERSE( hitp->hit_normal, trip->tri_N )
-			else
-				VMOVE( hitp->hit_normal, trip->tri_N )
-		}
+		VUNITIZE( hitp->hit_normal );
 	}
-	else
-		VMOVE( hitp->hit_normal, trip->tri_N )
 }
 
 /*
@@ -1306,8 +1399,12 @@ register struct soltab *stp;
 	while( ptr )
 	{
 		tri = ptr->tri_forw;
-		if( ptr )
+		if( ptr ) {
+			if( ptr->tri_normals ) {
+				bu_free( (char *)ptr->tri_normals, "bot tri_specific normals" );
+			}
 			bu_free( (char *)ptr, "bot tri_specific" );
+		}
 		ptr = tri;
 	}
 	bot->bot_facelist = NULL;
@@ -1538,7 +1635,7 @@ const struct db_i		*dbip;
 	bot_ip->num_faces = bu_glong( rp->bot.bot_num_triangles );
 	bot_ip->orientation = rp->bot.bot_orientation;
 	bot_ip->mode = rp->bot.bot_mode;
-	bot_ip->error_mode = rp->bot.bot_err_mode;
+	bot_ip->bot_flags = 0;
 
 	bot_ip->vertices = (fastf_t *)bu_calloc( bot_ip->num_vertices * 3, sizeof( fastf_t ), "Bot vertices" );
 	bot_ip->faces = (int *)bu_calloc( bot_ip->num_faces * 3, sizeof( int ), "Bot faces" );
@@ -1606,6 +1703,11 @@ const struct db_i		*dbip;
 	bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC(bot_ip);
 
+	if( bot_ip->num_normals > 0 ) {
+		bu_log( "BOT surface normals not supported in older database formats, normals not saved\n" );
+		bu_log( "\tPlease update to current database format using \"dbupgrade\"\n" );
+	}
+
 	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof( struct bot_rec ) - 1 +
 		bot_ip->num_vertices * 3 * 8 + bot_ip->num_faces * 3 * 4;
@@ -1638,7 +1740,7 @@ const struct db_i		*dbip;
 	bu_plong( (unsigned char *)rec->bot.bot_nrec, num_recs );
 	rec->bot.bot_orientation = bot_ip->orientation;
 	rec->bot.bot_mode = bot_ip->mode;
-	rec->bot.bot_err_mode = bot_ip->error_mode;
+	rec->bot.bot_err_mode = 0;
 	bu_plong( (unsigned char *)rec->bot.bot_num_verts, bot_ip->num_vertices );
 	bu_plong( (unsigned char *)rec->bot.bot_num_triangles, bot_ip->num_faces );
 
@@ -1708,7 +1810,7 @@ const struct db_i               *dbip;
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_BOT;
 	ip->idb_meth = &rt_functab[ID_BOT];
-	ip->idb_ptr = bu_malloc( sizeof(struct rt_bot_internal), "rt_bot_internal");
+	ip->idb_ptr = bu_calloc( 1, sizeof(struct rt_bot_internal), "rt_bot_internal");
 
 	bip = (struct rt_bot_internal *)ip->idb_ptr;
 	bip->magic = RT_BOT_INTERNAL_MAGIC;
@@ -1720,7 +1822,7 @@ const struct db_i               *dbip;
 	cp += SIZEOF_NETWORK_LONG;
 	bip->orientation = *cp++;
 	bip->mode = *cp++;
-	bip->error_mode = *cp++;
+	bip->bot_flags = *cp++;
 
 	bip->vertices = (fastf_t *)bu_calloc( bip->num_vertices * 3, sizeof( fastf_t ), "BOT vertices" );
 	bip->faces = (int *)bu_calloc( bip->num_faces * 3, sizeof( int ), "BOT faces" );
@@ -1760,6 +1862,47 @@ const struct db_i               *dbip;
 		bip->face_mode = (struct bu_bitv *)NULL;
 	}
 
+	if( bip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+		vect_t tmp;
+
+		bip->num_normals = bu_glong( cp );
+		cp += SIZEOF_NETWORK_LONG;
+		bip->num_face_normals = bu_glong( cp );
+		cp += SIZEOF_NETWORK_LONG;
+
+		if( bip->num_normals <= 0 ) {
+			bip->normals = (fastf_t *)NULL;
+		}
+		if( bip->num_face_normals <= 0 ) {
+			bip->face_normals = (int *)NULL;
+		}
+		if( bip->num_normals > 0 ) {
+			bip->normals = (fastf_t *)bu_calloc( bip->num_normals * 3, sizeof( fastf_t ), "BOT normals" );
+
+			for( i=0 ; i<bip->num_normals ; i++ ) {
+				ntohd( (unsigned char *)tmp, (const unsigned char *)cp, 3 );
+				cp += SIZEOF_NETWORK_DOUBLE * 3;
+				MAT4X3VEC( &(bip->normals[i*3]), mat, tmp );
+			}
+		}
+		if( bip->num_face_normals > 0 ) {
+			bip->face_normals = (int *)bu_calloc( bip->num_face_normals * 3, sizeof( int ), "BOT face normals" );
+
+			for( i=0 ; i<bip->num_face_normals ; i++ ) {
+				bip->face_normals[i*3] = bu_glong( cp );
+				cp += SIZEOF_NETWORK_LONG;
+				bip->face_normals[i*3 + 1] = bu_glong( cp );
+				cp += SIZEOF_NETWORK_LONG;
+				bip->face_normals[i*3 + 2] = bu_glong( cp );
+				cp += SIZEOF_NETWORK_LONG;
+			}
+		}
+	} else {
+		bip->normals = (fastf_t *)NULL;
+		bip->face_normals = (int *)NULL;
+		bip->num_normals = 0;
+	}
+
 	return(0);			/* OK */
 }
 
@@ -1794,16 +1937,21 @@ const struct db_i               *dbip;
 			bu_bitv_to_hex( &vls, bip->face_mode );
 	}
 
-	ep->ext_nbytes = 3				/* orientation, mode, error_mode */
+	ep->ext_nbytes = 3				/* orientation, mode, bot_flags */
 			+ SIZEOF_NETWORK_LONG * (bip->num_faces * 3 + 2) /* faces, num_faces, num_vertices */
 			+ SIZEOF_NETWORK_DOUBLE * bip->num_vertices * 3; /* vertices */
 
-	if( bip->mode == RT_BOT_PLATE || bip->mode == RT_BOT_PLATE_NOCOS )
+	if( bip->mode == RT_BOT_PLATE || bip->mode == RT_BOT_PLATE_NOCOS ) {
 		ep->ext_nbytes += SIZEOF_NETWORK_DOUBLE * bip->num_faces /* face thicknesses */
 			+ bu_vls_strlen( &vls ) + 1;	/* face modes */
+	}
+
+	if( bip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+		ep->ext_nbytes += SIZEOF_NETWORK_DOUBLE * bip->num_normals * 3 /* vertex normals */
+			+ SIZEOF_NETWORK_LONG * (bip->num_face_normals * 3 + 2); /* indices into normals array, num_normals, num_face_normals */
+	}
 
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "BOT external" );
-
 	
 	cp = ep->ext_buf;
 
@@ -1813,7 +1961,7 @@ const struct db_i               *dbip;
 	cp += SIZEOF_NETWORK_LONG;
 	*cp++ = bip->orientation;
 	*cp++ = bip->mode;
-	*cp++ = bip->error_mode;
+	*cp++ = bip->bot_flags;
 
 	for( i=0 ; i<bip->num_vertices ; i++ )
 	{
@@ -1848,6 +1996,27 @@ const struct db_i               *dbip;
 		cp += bu_vls_strlen( &vls );
 		*cp = '\0';
 		bu_vls_free( &vls );
+	}
+
+	if( bip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+		(void)bu_plong( cp, bip->num_normals );
+		cp += SIZEOF_NETWORK_LONG;
+		(void)bu_plong( cp, bip->num_face_normals );
+		cp += SIZEOF_NETWORK_LONG;
+		if( bip->num_normals > 0 ) {
+			htond( cp, (unsigned char*)bip->normals, bip->num_normals*3 );
+			cp += SIZEOF_NETWORK_DOUBLE * 3 * bip->num_normals;
+		}
+		if( bip->num_face_normals > 0 ) {
+			for( i=0 ; i<bip->num_face_normals ; i++ ) {
+				(void)bu_plong( cp, bip->face_normals[i*3] );
+				cp += SIZEOF_NETWORK_LONG;
+				(void)bu_plong( cp, bip->face_normals[i*3 + 1] );
+				cp += SIZEOF_NETWORK_LONG;
+				(void)bu_plong( cp, bip->face_normals[i*3 + 2] );
+				cp += SIZEOF_NETWORK_LONG;
+			}
+		}
 	}
 
 	return 0;
@@ -1924,21 +2093,44 @@ double			mm2local;
 		orientation );
 	bu_vls_strcat( str, buf );
 	bu_vls_strcat( str, mode );
+	if( (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && bot_ip->num_normals > 0 ) {
+		bu_vls_strcat( str, "\twith surface normals\n" );
+	}
 
 	if( verbose )
 	{
 		for( i=0 ; i<bot_ip->num_faces ; i++ )
 		{
-			int j;
+			int j, k;
 			point_t pt[3];
 
 			for( j=0 ; j<3 ; j++ )
-				VSCALE( pt[j], &bot_ip->vertices[bot_ip->faces[i*3+j]*3], mm2local )
-			sprintf( buf, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g)\n", i,
-				V3ARGS( pt[0] ),
-				V3ARGS( pt[1] ),
-				V3ARGS( pt[2] ) );
-			bu_vls_strcat( str, buf );
+				VSCALE( pt[j], &bot_ip->vertices[bot_ip->faces[i*3+j]*3], mm2local );
+			if( (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && bot_ip->num_normals > 0 ) {
+				sprintf( buf, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g) normals: ", i,
+					 V3ARGS( pt[0] ),
+					 V3ARGS( pt[1] ),
+					 V3ARGS( pt[2] ) );
+				bu_vls_strcat( str, buf );
+				for( k=0 ; k<3 ; k++ ) {
+					int index;
+
+					index = i*3 + k;
+					if( bot_ip->face_normals[index] < 0 ||  bot_ip->face_normals[index] >= bot_ip->num_normals ) {
+						bu_vls_strcat( str, "none " );
+					} else {
+						sprintf( buf, "(%g %g %g) ", V3ARGS( &bot_ip->normals[bot_ip->face_normals[index]*3]));
+						bu_vls_strcat( str, buf );
+					}
+				}
+				bu_vls_strcat( str, "\n" );
+			} else {
+				sprintf( buf, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g)\n", i,
+					 V3ARGS( pt[0] ),
+					 V3ARGS( pt[1] ),
+					 V3ARGS( pt[2] ) );
+				bu_vls_strcat( str, buf );
+			}
 			if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )
 			{
 				char *face_mode;
@@ -2013,34 +2205,38 @@ struct db_i	*dbip;
 	if( op != ip && !free )
 	{
 		RT_INIT_DB_INTERNAL(op);
-		botop = (struct rt_bot_internal *)bu_malloc( sizeof( struct rt_bot_internal ), "botop" );
+		BU_GETSTRUCT( botop, rt_bot_internal );
 		botop->magic = RT_BOT_INTERNAL_MAGIC;
 		botop->mode = botip->mode;
 		botop->orientation = botip->orientation;
-		botop->error_mode = botip->error_mode;
+		botop->bot_flags = botip->bot_flags;
 		botop->num_vertices = botip->num_vertices;
 		botop->num_faces = botip->num_faces;
-		botop->vertices = (fastf_t *)bu_malloc( botip->num_vertices * 3 *
-			sizeof( fastf_t ), "botop->vertices" );
-		botop->faces = (int *)bu_malloc( botip->num_faces * 3 *
-			sizeof( int ), "botop->faces" );
+		if( botop->num_vertices > 0 ) {
+			botop->vertices = (fastf_t *)bu_malloc( botip->num_vertices * 3 *
+								sizeof( fastf_t ), "botop->vertices" );
+		}
+		if( botop->num_faces > 0 ) {
+			botop->faces = (int *)bu_malloc( botip->num_faces * 3 *
+							 sizeof( int ), "botop->faces" );
+			memcpy( botop->faces, botip->faces, botop->num_faces * 3 * sizeof( int ) );
+		}
 		if( botip->thickness )
 			botop->thickness = (fastf_t *)bu_malloc( botip->num_faces *
 				sizeof( fastf_t ), "botop->thickness" );
 		if( botip->face_mode )
 			botop->face_mode = bu_bitv_dup( botip->face_mode );
-		for( i=0 ; i<botip->num_vertices ; i++ )
-			VMOVE( &botop->vertices[i*3], &botip->vertices[i*3] )
-		for( i=0 ; i<botip->num_faces ; i++ )
-		{
-			botop->faces[i*3] = botip->faces[i*3];
-			botop->faces[i*3+1] = botip->faces[i*3+1];
-			botop->faces[i*3+2] = botip->faces[i*3+2];
-		}
 		if( botip->thickness )
 		{
 			for( i=0 ; i<botip->num_faces ; i++ )
 				botop->thickness[i] = botip->thickness[i];
+		}
+
+		if( botop->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+			botop->num_normals = botip->num_normals;
+			botop->normals = (fastf_t *)bu_calloc( botop->num_normals * 3, sizeof( fastf_t ), "BOT normals" );
+			botop->face_normals = (int *)bu_calloc( botop->num_faces * 3, sizeof( int ), "BOT face normals" );
+			memcpy( botop->face_normals, botip->face_normals, botop->num_faces * 3 * sizeof( int ) );
 		}
 		op->idb_ptr = (genptr_t)botop;
 		op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -2054,6 +2250,11 @@ struct db_i	*dbip;
 	{
 		MAT4X3PNT( pt, mat, &botip->vertices[i*3] );
 		VMOVE( &botop->vertices[i*3], pt );
+	}
+
+	for( i=0 ; i<botip->num_normals ; i++ ) {
+		MAT4X3VEC( pt, mat, &botip->normals[i*3] );
+		VMOVE( &botop->normals[i*3], pt );
 	}
 
 	if( free && op != ip )
@@ -2279,8 +2480,14 @@ static char *los[]={
  *	db get name f#		get list of 3 3tuple coords for face #
  *	db get name T		get thickness for all faces
  *	db get name T#		get thickness for face #
+ *	db get name N		get list of normals
+ *	db get name N#		get coords for normal #
+ *	db get name fn		get list indices into normal vectors for all faces
+ *	db get name fn#		get list indices into normal vectors for face #
  *	db get name nv		get num_vertices
  *	db get name nt		get num_faces
+ *	db get name nn		get num_normals
+ *	db get name nfn		get num_face_normals
  *	db get name mode	get mode (surf, volume, plate, plane_nocos)
  *	db get name orient	get orientation (no, rh, lh)
  */
@@ -2322,11 +2529,80 @@ const char			*attr;
 			bu_vls_strcat( &vls, " } fm " );
 			bu_bitv_to_hex( &vls, bot->face_mode );
 		}
+		if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+			bu_vls_printf( &vls, " N {" );
+			for( i=0 ; i<bot->num_normals ; i++ ) {
+				bu_vls_printf( &vls, " { %.25G %.25G %.25G }", V3ARGS( &bot->normals[i*3] ) );
+			}
+			bu_vls_printf( &vls, " } fn {" );
+			for( i=0 ; i<bot->num_faces ; i++ ) {
+				bu_vls_printf( &vls, " { %d %d %d }", V3ARGS( &bot->face_normals[i*3] ) );
+			}
+			bu_vls_printf( &vls, " }" );
+		}
 		status = TCL_OK;
 	}
 	else
 	{
-		if( !strncmp( attr, "fm", 2 ) )
+		if( attr[0] == 'N' )
+		{
+			if( attr[1] == '\0' ) {
+				if( !(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) || bot->num_normals < 1 ) {
+					bu_vls_strcat( &vls, "{}" );
+				} else {
+					for( i=0 ; i<bot->num_normals ; i++ ) {
+						bu_vls_printf( &vls, " { %.25G %.25G %.25G }", V3ARGS( &bot->normals[i*3] ) );
+					}
+				}
+				status = TCL_OK;
+			} else {
+				i = atoi( &attr[1] );
+				if( i < 0 || i >= bot->num_normals ) {
+					bu_vls_strcat( &vls, "Specified normal index is out of range" );
+					status = TCL_ERROR;
+				} else {
+					bu_vls_printf( &vls, "%.25G %.25G %.25G", V3ARGS( &bot->normals[i*3] ) );
+					status = TCL_OK;
+				}
+			}
+		}
+		else if( !strncmp( attr, "fn", 2 ) )
+		{
+			if( attr[2] == '\0' ) {
+				for( i=0 ; i<bot->num_faces ; i++ ) {
+					bu_vls_printf( &vls, " { %d %d %d }", V3ARGS( &bot->face_normals[i*3] ) );
+				}
+				status = TCL_OK;
+			} else {
+				i = atoi( &attr[2] );
+				if( i < 0 || i >= bot->num_faces ) {
+					bu_vls_strcat( &vls, "Specified face index is out of range" );
+					status = TCL_ERROR;
+				} else {
+					bu_vls_printf( &vls, "%d %d %d", V3ARGS( &bot->face_normals[i*3] ) );
+					status = TCL_OK;
+				}
+			}
+		}
+		else if( !strcmp( attr, "nn" ) )
+		{
+			if( !(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) || bot->num_normals < 1 ) {
+				bu_vls_strcat( &vls, "0" );
+			} else {
+				bu_vls_printf( &vls, "%d", bot->num_normals );
+			}
+			status = TCL_OK;
+		}
+		else if( !strcmp( attr, "nfn" ) )
+		{
+			if( !(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) || bot->num_face_normals < 1 ) {
+				bu_vls_strcat( &vls, "0" );
+			} else {
+				bu_vls_printf( &vls, "%d", bot->num_face_normals );
+			}
+			status = TCL_OK;
+		}
+		else if( !strncmp( attr, "fm", 2 ) )
 		{
 			if( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
 			{
@@ -2528,6 +2804,26 @@ const char			*attr;
 	return( status );
 }
 
+/*
+ *			R T _ B O T _ T C L A D J U S T
+ *
+ * Examples - 
+ *	db adjust name fm		set los facemode bit vector
+ *	db adjust name fm#		set los face mode of face # (center, append)
+ *	db adjust name V		set coords for all vertices
+ *	db adjust name V#		set coords for vertex #
+ *	db adjust name F		set vertex indices for all faces
+ *	db adjust name F#		set vertex indices for face #
+ *	db adjust name T		set thickness for all faces
+ *	db adjust name T#		set thickness for face #
+ *	db adjust name N		set list of normals
+ *	db adjust name N#		set coords for normal #
+ *	db adjust name fn		set list indices into normal vectors for all faces
+ *	db adjust name fn#		set list indices into normal vectors for face #
+ *	db adjust name nn		set num_normals
+ *	db adjust name mode		set mode (surf, volume, plate, plane_nocos)
+ *	db adjust name orient		set orientation (no, rh, lh)
+ */
 int
 rt_bot_tcladjust( interp, intern, argc, argv )
 Tcl_Interp		*interp;
@@ -2580,6 +2876,195 @@ char			**argv;
 				else
 				        BU_BITCLR( bot->face_mode, i );
 			}
+		}
+		else if( !strcmp( argv[0], "nn" ) )
+		{
+			int new_num=0;
+			int old_num = bot->num_normals;
+
+			new_num = atoi( Tcl_GetStringFromObj( obj, NULL ) );
+			if( new_num < 0 ) {
+				Tcl_SetResult( interp, "Number of normals may not be less than 0", TCL_STATIC );
+				Tcl_DecrRefCount( list );
+				return( TCL_ERROR );
+			}
+
+			if( new_num == 0 ) {
+				bot->num_normals = 0;
+				if( bot->normals ) {
+					bu_free( (char *)bot->normals, "BOT normals" );
+				}
+				bot->normals = (fastf_t *)NULL;
+			} else {
+				if( new_num != old_num ) {
+					bot->num_normals = new_num;
+					if( bot->normals ) {
+						bot->normals = (fastf_t *)bu_realloc( (char *)bot->normals,
+								     bot->num_normals * 3 * sizeof( fastf_t ), "BOT normals" );
+					} else {
+						bot->normals = (fastf_t *)bu_calloc( bot->num_normals * 3, sizeof( fastf_t ),
+										     "BOT normals" );
+					}
+
+					if( new_num > old_num ) {
+						for( i = old_num ; i<new_num ; i++ ) {
+							VSET( &bot->normals[i*3], 0, 0, 0 );
+						}
+					}
+				}
+				
+			}
+			
+		}
+		else if( !strncmp( argv[0], "fn", 2 ) )
+		{
+		    char *f_str;
+
+		    if( argv[0][2] == '\0' )
+		      {
+			(void)Tcl_ListObjGetElements( interp, list, &len, &obj_array );
+			if( len != bot->num_faces || len <= 0 ) {
+			    Tcl_SetResult( interp, "Must provide normals for all faces!!!", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			}
+			if( bot->face_normals )
+				bu_free( (char *)bot->face_normals, "BOT face_normals" );
+			bot->face_normals = (int *)bu_calloc( len*3, sizeof( int ), "BOT face_normals" );
+			bot->num_face_normals = len;
+			for( i=0 ; i<len ; i++ ) {
+				f_str = Tcl_GetStringFromObj( obj_array[i], NULL );
+				while( isspace( *f_str ) ) f_str++;
+
+				if( *f_str == '\0' ) {
+					Tcl_SetResult( interp, "incomplete list of face_normals", TCL_STATIC );
+					Tcl_DecrRefCount( list );
+					return( TCL_ERROR );
+				}
+				bot->face_normals[i*3] = atoi( f_str );
+				f_str = bu_next_token( f_str );
+				if( *f_str == '\0' ) {
+					Tcl_SetResult( interp, "incomplete list of face_normals", TCL_STATIC );
+					Tcl_DecrRefCount( list );
+					return( TCL_ERROR );
+				}
+				bot->face_normals[i*3+1] = atoi( f_str );
+				f_str = bu_next_token( f_str );
+				if( *f_str == '\0' ) {
+					Tcl_SetResult( interp, "incomplete list of face_normals", TCL_STATIC );
+					Tcl_DecrRefCount( list );
+					return( TCL_ERROR );
+				}
+				bot->face_normals[i*3+2] = atoi( f_str );
+			}
+			bot->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
+		      }
+		    else
+		      {
+			i = atoi( &argv[0][2] );
+			if( i < 0 || i >= bot->num_faces )
+			  {
+			    Tcl_SetResult( interp, "face_normal number out of range!!!", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			f_str = Tcl_GetStringFromObj( list, NULL );
+		      	while( isspace( *f_str ) ) f_str++;
+			bot->face_normals[i*3] = atoi( f_str );
+			f_str = bu_next_token( f_str );
+			if( *f_str == '\0' )
+			  {
+			    Tcl_SetResult( interp, "incomplete vertex", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			bot->face_normals[i*3+1] = atoi( f_str );
+			f_str = bu_next_token( f_str );
+			if( *f_str == '\0' )
+			  {
+			    Tcl_SetResult( interp, "incomplete vertex", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			bot->face_normals[i*3+2] = atoi( f_str );
+		      }
+		}
+		else if( argv[0][0] == 'N' )
+		{
+		  char *v_str;
+
+		  if( argv[0][1] == '\0' )
+		    {
+		      (void)Tcl_ListObjGetElements( interp, list, &len, &obj_array );
+		      if( len <= 0 )
+			{
+			  Tcl_SetResult( interp, "Must provide at least one normal!!!", TCL_STATIC );
+			  Tcl_DecrRefCount( list );
+			  return( TCL_ERROR );
+			}
+		      bot->num_normals = len;
+		      if( bot->normals )
+			      bu_free( (char *)bot->normals, "BOT normals" );
+		      bot->normals = (fastf_t *)bu_calloc( len*3, sizeof( fastf_t ), "BOT normals" );
+		      for( i=0 ; i<len ; i++ )
+			{
+			  v_str = Tcl_GetStringFromObj( obj_array[i], NULL );
+			  while( isspace( *v_str ) ) v_str++;
+			  if( *v_str == '\0' )
+			    {
+			      Tcl_SetResult( interp, "incomplete list of normals", TCL_STATIC );
+			      Tcl_DecrRefCount( list );
+			      return( TCL_ERROR );
+			    }
+			  bot->normals[i*3] = atof( v_str );
+			  v_str = bu_next_token( v_str );
+			  if( *v_str == '\0' )
+			    {
+			      Tcl_SetResult( interp, "incomplete list of normals", TCL_STATIC );
+			      Tcl_DecrRefCount( list );
+			      return( TCL_ERROR );
+			    }
+			  bot->normals[i*3+1] = atof( v_str );
+			  v_str = bu_next_token( v_str );
+			  if( *v_str == '\0' )
+			    {
+			      Tcl_SetResult( interp, "incomplete list of normals", TCL_STATIC );
+			      Tcl_DecrRefCount( list );
+			      return( TCL_ERROR );
+			    }
+			  bot->normals[i*3+2] = atof( v_str );
+			  Tcl_DecrRefCount( obj_array[i] );
+			}
+		      bot->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
+		    } else {
+		      i = atoi( &argv[0][1] );
+		      if( i < 0 || i >= bot->num_normals )
+			{
+			  Tcl_SetResult( interp, "normal number out of range!!!", TCL_STATIC );
+			  Tcl_DecrRefCount( list );
+			  return( TCL_ERROR );
+			}
+		      v_str = Tcl_GetStringFromObj( list, NULL );
+		      while( isspace( *v_str ) ) v_str++;
+
+		      bot->normals[i*3] = atof( v_str );
+		      v_str = bu_next_token( v_str );
+		      if( *v_str == '\0' )
+			{
+			  Tcl_SetResult( interp, "incomplete normal", TCL_STATIC );
+			  Tcl_DecrRefCount( list );
+			  return( TCL_ERROR );
+			}
+		      bot->normals[i*3+1] = atof( v_str );
+		      v_str = bu_next_token( v_str );
+		      if( *v_str == '\0' )
+			{
+			  Tcl_SetResult( interp, "incomplete normal", TCL_STATIC );
+			  Tcl_DecrRefCount( list );
+			  return( TCL_ERROR );
+			}
+		      bot->normals[i*3+2] = atof( v_str );
+		    }
 		}
 		else if( argv[0][0] == 'V' )
 		{
@@ -2676,6 +3161,23 @@ char			**argv;
 			if( bot->faces )
 				bu_free( (char *)bot->faces, "BOT faces" );
 			bot->faces = (int *)bu_calloc( len*3, sizeof( int ), "BOT faces" );
+			if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+				if( !bot->face_normals ) {
+					bot->face_normals = (int *)bu_malloc( bot->num_faces * 3 * sizeof( int ),
+									      "bot->face_normals" );
+					bot->num_face_normals = bot->num_faces;
+					for( i=0 ; i<bot->num_face_normals ; i++ ) {
+						VSETALL( &bot->face_normals[i*3], -1 );
+					}
+				} else if( bot->num_face_normals < bot->num_faces ) {
+					bot->face_normals = (int *)bu_realloc( bot->face_normals,
+							     bot->num_faces * 3 * sizeof( int ), "bot->face_normals" );
+					for( i=bot->num_face_normals ; i<bot->num_faces ; i++ ) {
+						VSETALL( &bot->face_normals[i*3], -1 );
+					}
+					bot->num_face_normals = bot->num_faces;
+				}
+			}
 			for( i=0 ; i<len ; i++ )
 			  {
 			    f_str = Tcl_GetStringFromObj( obj_array[i], NULL );

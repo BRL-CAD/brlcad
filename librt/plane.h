@@ -48,6 +48,7 @@ struct tri_specific  {
 	vect_t	tri_CA;			/* C - A (third point) */
 	vect_t	tri_wn;			/* facet normal (non-unit) */
 	vect_t	tri_N;			/* unit normal vector */
+	fastf_t *tri_normals;		/* unit vertex normals A, B, C  (this is malloced storage) */
 	int	tri_surfno;		/* solid specific surface number */
 	struct tri_specific *tri_forw;	/* Next facet */
 };

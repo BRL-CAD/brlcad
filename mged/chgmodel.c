@@ -1861,12 +1861,12 @@ f_make(ClientData	clientData,
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_BOT;
 		internal.idb_meth = &rt_functab[ID_BOT];
-		internal.idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_bot_internal ), "rt_bot_internal" );
+		BU_GETSTRUCT( bot_ip, rt_bot_internal );
+		internal.idb_ptr = (genptr_t)bot_ip;
 		bot_ip = (struct rt_bot_internal *)internal.idb_ptr;
 		bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
 		bot_ip->mode = RT_BOT_SOLID;
 		bot_ip->orientation = RT_BOT_UNORIENTED;
-		bot_ip->error_mode = 0;
 		bot_ip->num_vertices = 4;
 		bot_ip->num_faces = 4;
 		bot_ip->faces = (int *)bu_calloc( bot_ip->num_faces * 3, sizeof( int ), "BOT faces" );

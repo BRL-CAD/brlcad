@@ -12222,7 +12222,7 @@ const struct bn_tol *tol;
 	bot->magic = RT_BOT_INTERNAL_MAGIC;
 	bot->mode = RT_BOT_SOLID;
 	bot->orientation = RT_BOT_CCW;
-	bot->error_mode = 0;
+	bot->bot_flags = 0;
 
 	bot->num_vertices = BU_PTBL_LEN( &nmg_vertices );
 	bot->num_faces = 0;

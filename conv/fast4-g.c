@@ -2618,7 +2618,7 @@ make_bot_object()
 
 	bot_ip.mode = bot_mode;
 	bot_ip.orientation = RT_BOT_UNORIENTED;
-	bot_ip.error_mode = 0;
+	bot_ip.bot_flags = 0;
 
 	count = rt_bot_vertex_fuse( &bot_ip );
 	if( count )

@@ -565,7 +565,7 @@ bot_dump()
 	(void)fprintf(ofp, "%.16s ", name );	/* unique name */
 	(void)fprintf(ofp, "%d ", bot->mode );
 	(void)fprintf(ofp, "%d ", bot->orientation );
-	(void)fprintf(ofp, "%d ", bot->error_mode );
+	(void)fprintf(ofp, "%d ", 0 );	/* was error_mode */
 	(void)fprintf(ofp, "%d ", bot->num_vertices );
 	(void)fprintf(ofp, "%d ", bot->num_faces );
 	(void)fprintf(ofp, "\n");

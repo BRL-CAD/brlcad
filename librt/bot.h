@@ -12,7 +12,7 @@
 struct bot_specific {
     unsigned char bot_mode;
     unsigned char bot_orientation;
-    unsigned char bot_errmode;
+    unsigned char bot_flags;
     int bot_ntri;
     fastf_t *bot_thickness;
     struct bu_bitv *bot_facemode;
