@@ -108,16 +108,43 @@ for PRIM in $PRIMITIVES ; do
     set ehy_DB_ARGS ""
 
     #
-    # (epa) Arguments
+    # Elliptical Paraboloid (EPA) Arguments
     # 
     # in args =>
     # db args =>
     #
-    set epa_IN_ARGS ""
-    set epa_DB_ARGS ""
+    set epa_IN_ARGS "0 0 0  0 0 10  5 0 0 2"
+    set epa_DB_ARGS "epa V {0 0 0} H {0 0 10} A {1 0 0} r_1 5 r_2 2"
 
     #
     # (eto) Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
+    # 
+    # in args =>
+    # db args =>
+    #
+    set _IN_ARGS ""
+    set _DB_ARGS ""
+
+    #
+    # () Arguments
     # 
     # in args =>
     # db args =>
