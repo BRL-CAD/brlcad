@@ -57,8 +57,8 @@ proc init_adc_control { id } {
     hoc_register_menu_data "Coordinates" "Model" "Model Coordinates"\
 	    { { summary "Set coordinate system type to model.
 The model coordinate system is the
-coordinate system that the MGED database
-lives in." } }
+coordinate system that the MGED
+database lives in." } }
     $top.coordsMB.m add radiobutton -value grid -variable mged_adc_control($id,coords)\
 	    -label "Grid" -command "adc_adjust_coords $id"
     hoc_register_menu_data "Coordinates" "Grid" "Grid Coordinates"\
@@ -94,25 +94,26 @@ as an offset." } }
     frame $top.a2F
     label $top.posL -text "Position" -anchor w
     entry $top.posE -relief sunken -textvar mged_adc_control($id,pos)
-    label $top.tickL -text "Tick Distance" -anchor w
-    hoc_register_data $top.tickL "Tick Distance"\
-	    { { summary "The tick distance indicates the distance (local units)
+
+    set hoc_data { { summary "The tick distance indicates the distance (local units)
 from the ADC position to one of its ticks." } }
+    label $top.tickL -text "Tick Distance" -anchor w
+    hoc_register_data $top.tickL "Tick Distance" $hoc_data
     entry $top.tickE -relief sunken -width 15 -textvar mged_adc_control($id,dst)
-    hoc_register_data $top.tickE "Tick Distance"\
-	    { { summary "Enter the tick distance (local units)." } }
+    hoc_register_data $top.tickE "Tick Distance" $hoc_data
+
+    set hoc_data { { summary "Angle 1 is one of two axes used to measure angles." } }
     label $top.a1L -text "Angle 1" -anchor w
-    hoc_register_data $top.a1L "Angle 1"\
-	    { { summary "Angle 1 is one of two axes used to measure angles." } }
+    hoc_register_data $top.a1L "Angle 1" $hoc_data
     entry $top.a1E -relief sunken -width 15 -textvar mged_adc_control($id,a1)
-    hoc_register_data $top.a1E "Angle 1"\
-	    { { summary "Enter angle 1." } }
+    hoc_register_data $top.a1E "Angle 1" $hoc_data
+
+    set hoc_data { { summary "Angle 2 is one of two axes used to measure angles." } }
     label $top.a2L -text "Angle 2" -anchor w
-    hoc_register_data $top.a2L "Angle 2"\
-	    { { summary "Angle 2 is one of two axes used to measure angles." } }
+    hoc_register_data $top.a2L "Angle 2" $hoc_data
     entry $top.a2E -relief sunken -width 15 -textvar mged_adc_control($id,a2)
-    hoc_register_data $top.a2E "Angle 2"\
-	    { { summary "Enter angle 2." } }
+    hoc_register_data $top.a2E "Angle 2" $hoc_data
+
     grid $top.posL -sticky "ew" -in $top.posF
     grid $top.posE -sticky "ew" -in $top.posF
     grid columnconfigure $top.posF 0 -weight 1
@@ -168,7 +169,7 @@ position and the anchor point." } }
 	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_a1)
     hoc_register_data $top.anchor_a1CB "Angle 1 Anchor Point"\
 	    { { summary "Toggle anchoring of angle 1. If anchoring
-is enabled angle 1 is always drawn through
+is enabled, angle 1 is always drawn through
 its anchor point." } }
     label $top.anchor_a2L -text "Angle 2" -anchor w
     entry $top.anchor_a2E -relief sunken -textvar mged_adc_control($id,anchor_pt_a2)
@@ -176,8 +177,8 @@ its anchor point." } }
 	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_a2)
     hoc_register_data $top.anchor_a2CB "Angle 2 Anchor Point"\
 	    { { summary "Toggle anchoring of angle 2. If anchoring
-is enabled angle 2 is always drawn through its anchor
-point." } }
+is enabled, angle 2 is always drawn through
+its anchor point." } }
     grid $top.anchor_xyzL -sticky "ew" -in $top.anchor_xyzF
     grid $top.anchor_xyzE -sticky "ew" -in $top.anchor_xyzF
     grid $top.anchor_tickL -sticky "ew" -in $top.anchor_tickF
@@ -207,6 +208,10 @@ point." } }
     frame $top.gridF5
     button $top.okB -relief raised -text "Ok"\
 	    -command "mged_apply $id \"adc_ok $id $top\""
+    hoc_register_data $top.okB "Ok"\
+	    { { summary "Apply the values in the ADC control panel
+to the angle distance cursor then close
+the control panel."} }
     button $top.applyB -relief raised -text "Apply"\
 	    -command "mged_apply $id \"adc_apply $id\""
     hoc_register_data $top.applyB "Apply"\
@@ -448,57 +453,52 @@ proc adc_adjust_coords { id } {
 types - model and grid. The current coordinate
 system type is model. This is the coordinate system
 type that the MGED database lives in." } }
-            hoc_register_data $top.posL "ADC Position"\
-		    { { summary "Indicates the angle distance cursor's position
+
+            set hoc_data { { summary "Indicates the angle distance cursor's position
 in model coordinates (local units)." } }
-            hoc_register_data $top.posE "ADC Position"\
-		    { { summary "Enter the ADC position in model
-coordinates (local units)." } }
+            hoc_register_data $top.posL "ADC Position" $hoc_data
+            hoc_register_data $top.posE "ADC Position" $hoc_data
+
             hoc_register_data $top.anchorL "Anchor Points"\
 		    { { summary "Anchor points are currently used to \"anchor\"
 certain ADC attributes to a point in model space.
 For example, if the ADC position is anchored to the
-model origin the angle distance cursor will always be
+model origin, the angle distance cursor will always be
 drawn with its center at the model origin. The following
-four attributes can be anchored:
+four attributes can be anchored: position, tick distance,
+angle1 and angle2." } }
 
-        position, tick distance, angle1 and angle2." } }
-            hoc_register_data $top.anchor_xyzL "Position"\
-		    { { summary "Indicates the angle distance cursor's position
+            set hoc_data { { summary "Indicates the angle distance cursor's position
 in model coordinates (local units). If the
 ADC position is anchored, the ADC will remain
 positioned at the anchor point. So if the view
 changes while the ADC position is anchored, the
 ADC will move with respect to the view." } }
-            hoc_register_data $top.anchor_xyzE "Position"\
-		    { { summary "Enter the ADC position in model
-coordinates (local units)." } }
-            hoc_register_data $top.anchor_tickL "Tick Distance Anchor Point"\
-		    { { summary "If anchoring, the tick is drawn at
+            hoc_register_data $top.anchor_xyzL "Position" $hoc_data
+            hoc_register_data $top.anchor_xyzE "Position" $hoc_data
+
+            set hoc_data { { summary "If anchoring, the tick is drawn at
 a distance from the ADC center position
 that is equal to the distance between the
 ADC center position and the anchor point.
 Note - the anchor point is currently specified
 in model coordinates (local units)." } }
-            hoc_register_data $top.anchor_tickE "Tick Distance Ancor Point"\
-		    { { summary "Enter the tick distance anchor point in
-model coordinates (local units)." } }
-            hoc_register_data $top.anchor_a1L "Angle 1 Anchor Point"\
-		    { { summary "If anchoring is enabled, then angle 1 is always
+            hoc_register_data $top.anchor_tickL "Tick Distance Anchor Point" $hoc_data
+            hoc_register_data $top.anchor_tickE "Tick Distance Ancor Point" $hoc_data
+
+            set hoc_data { { summary "If anchoring is enabled, then angle 1 is always
 drawn through its anchor point. Note - the
 anchor point is currently specified in model
 coordinates (local units)." } }
-            hoc_register_data $top.anchor_a1E "Angle 1 Anchor Point"\
-		    { { summary "Enter angle 1's anchor point in
-model coordinates (local units)." } }
-            hoc_register_data $top.anchor_a2L "Angle 2 Anchor Point"\
-		    { { summary "If anchoring is enabled, then angle 2 is always
+            hoc_register_data $top.anchor_a1L "Angle 1 Anchor Point" $hoc_data
+            hoc_register_data $top.anchor_a1E "Angle 1 Anchor Point" $hoc_data
+
+            set hoc_data { { summary "If anchoring is enabled, then angle 2 is always
 drawn through its anchor point. Note - the
 anchor point is currently specified in model
 coordinates (local units)." } }
-            hoc_register_data $top.anchor_a2E "Angle 2 Anchor Point"\
-		    { { summary "Enter angle 2's anchor point in
-model coordinates (local units)." } }
+            hoc_register_data $top.anchor_a2L "Angle 2 Anchor Point" $hoc_data
+            hoc_register_data $top.anchor_a2E "Angle 2 Anchor Point" $hoc_data
 	}
 	grid {
 	    set mged_adc_control($id,coords_text) "Grid Coords"
@@ -509,53 +509,48 @@ system type is grid. This coordinate system is
 2D and lives in the view plane. The origin of
 this system is located by projecting the model
 origin onto the view plane." } }
-            hoc_register_data $top.posL "ADC Position"\
-		    { { summary "Indicates the angle distance cursor's position
+
+            set hoc_data { { summary "Indicates the angle distance cursor's position
 in grid coordinates (local units)." } }
-            hoc_register_data $top.posE "ADC Position"\
-		    { { summary "Enter the ADC position in grid
-coordinates (local units)." } }
+            hoc_register_data $top.posL "ADC Position" $hoc_data
+            hoc_register_data $top.posE "ADC Position" $hoc_data
+
             hoc_register_data $top.anchorL "Anchor Points"\
 		    { { summary "Anchor points are currently used to \"anchor\"
 certain ADC attributes to a point in grid space.
 For example, if the ADC position is anchored to the
-grid origin the angle distance cursor will always be
+grid origin, the angle distance cursor will always be
 drawn with its center at the grid origin. The following
-four attributes can be anchored:
+four attributes can be anchored: position, tick distance,
+angle1 and angle2." } }
 
-        position, tick distance, angle1 and angle2." } }
-            hoc_register_data $top.anchor_xyzL "Position"\
-		    { { summary "Indicates the angle distance cursor's position
+            set hoc_data { { summary "Indicates the angle distance cursor's position
 in grid coordinates (local units)." } }
-            hoc_register_data $top.anchor_xyzE "Position"\
-		    { { summary "Enter the ADC position in grid
-coordinates (local units)." } }
-            hoc_register_data $top.anchor_tickL "Tick Distance Anchor Point"\
-		    { { summary "If anchoring is enabled, the tick is always
+            hoc_register_data $top.anchor_xyzL "Position" $hoc_data
+            hoc_register_data $top.anchor_xyzE "Position" $hoc_data
+
+            set hoc_data { { summary "If anchoring is enabled, the tick is always
 drawn at a distance from the ADC center
 position that is equal to the distance between the
 the ADC center position and the anchor point.
 Note - the anchor point is currently specified
 in grid coordinates (local units)." } }
-    hoc_register_data $top.anchor_tickE "Tick Distance Ancor Point"\
-	    { { summary "Enter the tick distance anchor point in
-grid coordinates (local units)." } }
-            hoc_register_data $top.anchor_a1L "Angle 1 Anchor Point"\
-		    { { summary "If anchoring is enabled, then angle 1 is always
+            hoc_register_data $top.anchor_tickL "Tick Distance Anchor Point" $hoc_data
+	    hoc_register_data $top.anchor_tickE "Tick Distance Ancor Point" $hoc_data
+
+            set hoc_data { { summary "If anchoring is enabled, then angle 1 is always
 drawn through its anchor point. Note - the
 anchor point is currently specified in grid
 coordinates (local units)." } }
-            hoc_register_data $top.anchor_a1E "Angle 1 Anchor Point"\
-		    { { summary "Enter angle 1's anchor point in
-grid coordinates (local units)." } }
-            hoc_register_data $top.anchor_a2L "Angle 2 Anchor Point"\
-		    { { summary "If anchoring is enabled, then angle 2 is always
+            hoc_register_data $top.anchor_a1L "Angle 1 Anchor Point" $hoc_data
+            hoc_register_data $top.anchor_a1E "Angle 1 Anchor Point" $hoc_data
+
+            set hoc_data { { summary "If anchoring is enabled, then angle 2 is always
 drawn through its anchor point. Note - the
 anchor point is currently specified in grid
 coordinates (local units)." } }
-            hoc_register_data $top.anchor_a2E "Angle 2 Anchor Point"\
-		    { { summary "Enter angle 2's anchor point in
-grid coordinates (local units)." } }
+            hoc_register_data $top.anchor_a2L "Angle 2 Anchor Point" $hoc_data
+            hoc_register_data $top.anchor_a2E "Angle 2 Anchor Point" $hoc_data
 	}
     }
 
