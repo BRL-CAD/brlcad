@@ -96,6 +96,8 @@ static struct cmdtab cmdtab[] = {
 	"attach", f_attach,
 	"B", f_blast,
 	"bev", f_bev,
+	"bodyread", cmd_bodyread,
+	"bodywrite", cmd_bodywrite,
 	"bot_face_fuse", f_bot_face_fuse,
 	"bot_vertex_fuse", f_bot_fuse,
 	"bot_condense", f_bot_condense,
