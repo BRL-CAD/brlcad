@@ -703,6 +703,7 @@ extern int		nmg_manifold_face(struct faceuse *fu);
 extern int		nmg_demote_eu(struct edgeuse *eu);
 extern int		nmg_demote_lu(struct loopuse *lu);
 extern void		nmg_region_a(struct nmgregion *r);
+extern void		nmg_ck_lueu(struct loopuse *cklu, char *s);
 
 #else
 extern struct model	*nmg_mmr();
@@ -775,6 +776,7 @@ extern int		nmg_manifold_face();
 extern int		nmg_demote_eu();
 extern int		nmg_demote_lu();
 extern void		nmg_region_a();
+extern void		nmg_ck_lueu();
 
 #endif
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
