@@ -56,7 +56,7 @@ SRCS = \
 libbu_la_LDFLAGS = -version-info 19:1
 libbu_la_LIBADD = \
 	${LIBMALLOC} \
-	${PTHREAD_LIBS} \
+	${LIBTHREAD} \
 	${TCL}
 
 libbu_la_SOURCES = \
