@@ -158,7 +158,7 @@ long		*classlist[8];
 	struct nmg_bool_state	bool_state;
 
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d)\n",
+		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d) START\n",
 			sA, sB, op );
 	}
 
@@ -188,6 +188,11 @@ long		*classlist[8];
 
 	bool_state.bs_isA = 0;
 	nmg_eval_shell( sB, &bool_state );
+
+	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
+		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d), evaluations done\n",
+			sA, sB, op );
+	}
 
 	/* Plot the result */
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM) {
@@ -220,6 +225,11 @@ long		*classlist[8];
 
 	/* Remove loops/edges/vertices that appear more than once in result */
 	nmg_rm_redundancies( sA );
+
+	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
+		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d) END\n",
+			sA, sB, op );
+	}
 }
 
 static int	nmg_eval_count = 0;	/* debug -- plot file numbering */
@@ -246,6 +256,7 @@ struct nmg_bool_state *bs;
 	struct vertex	*v;
 	int		loops_retained;
 	int		loops_flipped;
+	plane_t		peqn;
 
 	NMG_CK_SHELL(s);
 
@@ -261,9 +272,17 @@ struct nmg_bool_state *bs;
 	while( RT_LIST_NOT_HEAD( fu, &s->fu_hd ) )  {
 		nextfu = RT_LIST_PNEXT( faceuse, fu );
 
+		/* Faceuse mates will be handled at same time as OT_SAME fu */
+		if( fu->orientation != OT_SAME )  {
+			fu = nextfu;
+			continue;
+		}
+
 		/* Consider this face */
 		NMG_CK_FACEUSE(fu);
 		NMG_CK_FACE(fu->f_p);
+		NMG_GET_FU_PLANE( peqn, fu );
+
 		loops_retained = loops_flipped = 0;
 		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
 		while( RT_LIST_NOT_HEAD( lu, &fu->lu_hd ) )  {
@@ -271,6 +290,20 @@ struct nmg_bool_state *bs;
 
 			NMG_CK_LOOPUSE(lu);
 			NMG_CK_LOOP( lu->l_p );
+			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)  {
+				/* XXX Needing a tol here is just for debugging */
+				struct rt_tol	tol;
+				tol.magic = RT_TOL_MAGIC;
+				tol.dist = 0.005;
+				tol.dist_sq = tol.dist * tol.dist;
+				tol.perp = 0;
+				tol.para = 1;
+				rt_log("lu=x%x, ccw=%d, fu_orient=%s, lu_orient=%s\n", lu,
+					nmg_loop_is_ccw(lu, peqn, &tol),
+					nmg_orientation(fu->orientation),
+					nmg_orientation(lu->orientation)
+				);
+			}
 			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 			case BACTION_KILL:
 				/* Kill by demoting loop to edges */
@@ -326,11 +359,11 @@ struct nmg_bool_state *bs;
 			} else {
 				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 			    		rt_log("faceuse x%x flipped\n", fu);
-				nmg_reverse_face( fu );
-#if 0
-				/* XXX why doesn't this work? */
-				nmg_reverse_face_and_radials( fu );
-#endif
+				if( fu->s_p != bs->bs_dest )  {
+					nmg_reverse_face_and_radials( fu );
+				} else {
+					nmg_reverse_face( fu );
+				}
 			}
 		} else {
 			/* loops_flipped <= 0 */
