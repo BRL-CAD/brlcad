@@ -3269,6 +3269,11 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 		if( bot_face_free_edge_count( face_del2, faces, bot->num_faces ) ) {
 			return 0;
 		}
+		for( i=0 ; i<affected_count ; i++ ) {
+			if( bot_face_free_edge_count( faces_affected[i], faces, bot->num_faces ) ) {
+				return 0;
+			}
+		}
 	}
 
 	/* calculate edge vector */
