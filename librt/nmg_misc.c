@@ -3519,7 +3519,7 @@ CONST struct rt_tol *tol;
 			{
 				if( rt_g.NMG_debug & DEBUG_BASIC )
 				{
-					rt_log( "return from rt_isect_line3_plane is %d\n" , ret_val );
+					rt_log( "return from rt_isect_line3_plane is %d for edge %d and plane %d \n" , ret_val , edge_no , other_index );
 					rt_log( "\tfor line ( %f %f %f ) -> ( %f %f %f )\n",
 						V3ARGS( edge_fus->start ) , V3ARGS( edge_fus->dir ) );
 					rt_log( "\tand plane ( %f %f %f %f )\n" , V4ARGS( f->fg_p->N ) );
@@ -5817,8 +5817,10 @@ struct rt_list *vhead;
 }
 
 void
-nmg_follow_free_edges_to_vertex( vpa, vpb, vpbad1, vpbad2, eu, verts, found )
-CONST struct vertex *vpa,*vpb,*vpbad1,*vpbad2;
+nmg_follow_free_edges_to_vertex( vpa, vpb, bad_verts, s, eu, verts, found )
+CONST struct vertex *vpa,*vpb;
+struct nmg_ptbl *bad_verts;
+CONST struct shell *s;
 CONST struct edgeuse *eu;
 struct nmg_ptbl *verts;
 int *found;
@@ -5828,12 +5830,16 @@ int *found;
 	NMG_CK_EDGEUSE( eu );
 	NMG_CK_VERTEX( vpa );
 	NMG_CK_VERTEX( vpb );
-	if( vpbad1 )
-		NMG_CK_VERTEX( vpbad1 );
-	if( vpbad2 )
-		NMG_CK_VERTEX( vpbad2 );
+	if( s )
+		NMG_CK_SHELL( s );
 
 	NMG_CK_VERTEX( eu->eumate_p->vu_p->v_p );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+	{
+		rt_log( "nmg_follow_free_edges_to_vertex( vpa=x%x, vpb=x%x s=x%x, eu=x%x, found=%d )\n",
+			vpa,vpb,s,eu,*found );
+	}
 
 	for( RT_LIST_FOR( vu , vertexuse , &eu->eumate_p->vu_p->v_p->vu_hd ) )
 	{
@@ -5844,21 +5850,39 @@ int *found;
 		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 			continue;
 
+		if( s && (nmg_find_s_of_vu( vu ) != s ) )
+			continue;
+
 		eu1 = vu->up.eu_p;
 
 		NMG_CK_EDGEUSE( eu1 );
 
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+			rt_log( "\tchecking eu x%x: x%x ( %f %f %f )\n\t\tto x%x ( %f %f %f )\n", eu1,
+				eu1->vu_p->v_p, V3ARGS( eu1->vu_p->v_p->vg_p->coord ),
+				eu1->eumate_p->vu_p->v_p, V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) );
+
 		/* stick to free edges */
 		if( eu1->eumate_p != eu1->radial_p )
+		{
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "\t\tnot a dangling edge\n" );
 			continue;
+		}
 
 		/* don`t go back the way we came */
 		if( eu1 == eu->eumate_p )
+		{
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "\t\tback the way we came\n" );
 			continue;
+		}
 
 		if( eu1->eumate_p->vu_p->v_p == vpb )
 		{
 			/* found it!!! */
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "\t\tfound goal\n" );
 			nmg_tbl( verts , TBL_INS , (long *)vu->v_p );
 			nmg_tbl( verts , TBL_INS , (long *)vpb );
 			*found = 1;
@@ -5866,26 +5890,55 @@ int *found;
 		else if( eu1->eumate_p->vu_p->v_p == vpa )
 		{
 			/* back where we started */
-			*found = (-1);
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "\t\tback at start\n" );
+			continue;
 		}
-		else if( eu1->eumate_p->vu_p->v_p == vpbad1 || eu1->eumate_p->vu_p->v_p == vpbad2 )
+		else if( nmg_tbl( bad_verts , TBL_LOC , (long *)eu1->eumate_p->vu_p->v_p ) != (-1))
 		{
 			/* this is the wrong way */
-			*found = (-2);
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "\t\tA bad vertex\n" );
+			continue;
+		}
+		else if( nmg_tbl( verts , TBL_LOC , (long *)eu1->eumate_p->vu_p->v_p ) != (-1))
+		{
+			/* This is a loop !!!! */
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "a loop\n" );
+			continue;
 		}
 		else
 		{
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "\t\tinserting vertex x%x\n" , vu->v_p );
 			nmg_tbl( verts , TBL_INS , (long *)vu->v_p );
-			nmg_follow_free_edges_to_vertex( vpa , vpb , vpbad1, vpbad2 , eu1 , verts , found );
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "\t\tCalling follow edges\n" );
+			nmg_follow_free_edges_to_vertex( vpa , vpb , bad_verts , s , eu1 , verts , found );
+			if( *found < 0 )
+			{
+				if( rt_g.NMG_debug & DEBUG_BASIC )
+				{
+					rt_log( "\t\treturn is %d\n" , *found );
+					rt_log( "\t\t\tremove vertex x%x\n" , vu->v_p );
+				}
+				nmg_tbl( verts , TBL_RM , (long *)vu->v_p );
+				*found = 0;
+			}
 		}
 		if( *found )
 			return;
 	}
+
+	*found = (-1);
 }
 
 static struct nmg_ptbl *
-nmg_find_middle_verts( vpa, vpb, vpbad1, vpbad2 )
-CONST struct vertex *vpa,*vpb,*vpbad1,*vpbad2;
+nmg_find_path( vpa, vpb, bad_verts, s )
+CONST struct vertex *vpa,*vpb;
+struct nmg_ptbl *bad_verts;
+CONST struct shell *s;
 {
 	int done;
 	static struct nmg_ptbl verts;
@@ -5894,21 +5947,21 @@ CONST struct vertex *vpa,*vpb,*vpbad1,*vpbad2;
 
 	NMG_CK_VERTEX( vpa );
 	NMG_CK_VERTEX( vpb );
-	if( vpbad1 )
-		NMG_CK_VERTEX( vpbad1 );
-	if( vpbad2 )
-		NMG_CK_VERTEX( vpbad2 );
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 	{
-		rt_log( "nmg_find_middle_verts( vpa=x%x ( %f %f %f ), vpb=x%x ( %f %f %f )\n",
+		int i;
+
+		rt_log( "nmg_find_path( vpa=x%x ( %f %f %f ), vpb=x%x ( %f %f %f )\n",
 			vpa, V3ARGS( vpa->vg_p->coord ), vpb, V3ARGS( vpb->vg_p->coord ) );
-		if( vpbad1 )
-			rt_log( "\tvpbad1=x%x ( %f %f %f )\n",
-				vpbad1, V3ARGS( vpbad1->vg_p->coord ) );
-		if( vpbad2 )
-			rt_log( "\tvpbad2=x%x ( %f %f %f )\n",
-				vpbad2, V3ARGS( vpbad2->vg_p->coord ) );
+		rt_log( "\t%d vertices to avoid\n" , NMG_TBL_END( bad_verts ) );
+		for( i=0 ; i<NMG_TBL_END( bad_verts ) ; i++ )
+		{
+			struct vertex *vpbad;
+
+			vpbad = (struct vertex *)NMG_TBL_GET( bad_verts , i );
+			rt_log( "\tx%x ( %f %f %f )\n" , vpbad , V3ARGS( vpbad->vg_p->coord ) );
+		}
 	}
 
 	nmg_tbl( &verts , TBL_INIT , NULL );
@@ -5923,72 +5976,56 @@ CONST struct vertex *vpa,*vpb,*vpbad1,*vpbad2;
 		if( *vua->up.magic_p != NMG_EDGEUSE_MAGIC )
 			continue;
 
+		if( s && (nmg_find_s_of_vu( vua ) != s) )
+			continue;
+
 		eua = vua->up.eu_p;
 
 		NMG_CK_EDGEUSE( eua );
 
-		if( eua->eumate_p != eua->radial_p )
-			continue;
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+			rt_log( "\tchecking eu x%x: x%x ( %f %f %f )\n\t\tto x%x ( %f %f %f )\n", eua,
+				eua->vu_p->v_p, V3ARGS( eua->vu_p->v_p->vg_p->coord ),
+				eua->eumate_p->vu_p->v_p, V3ARGS( eua->eumate_p->vu_p->v_p->vg_p->coord ) );
 
-		if( eua->eumate_p->vu_p->v_p == vpbad1 || eua->eumate_p->vu_p->v_p == vpbad2 )
+		if( eua->eumate_p != eua->radial_p )
+		{
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "\t\tback the way we came!\n" );
 			continue;
+		}
+
+		if( nmg_tbl( bad_verts , TBL_LOC , (long *)eua->eumate_p->vu_p->v_p ) != (-1) )
+		{
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "\t\tOne of the bad vertices!!\n" );
+			continue;
+		}
 
 		if( eua->eumate_p->vu_p->v_p == vpb )
 		{
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "\t\tfound goal!!\n" );
 			nmg_tbl( &verts , TBL_INS , (long *)vpb );
 			return( &verts );
 		}
 
 		done = 0;
-		nmg_follow_free_edges_to_vertex( vpa, vpb, vpbad1, vpbad2, eua, &verts, &done );
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+			rt_log( "\tCall follow edges\n" );
+		nmg_follow_free_edges_to_vertex( vpa, vpb, bad_verts, s, eua, &verts, &done );
 
-		if( done > 0 )
+		if( done == 1 )
 			break;
 
 		nmg_tbl( &verts , TBL_RST , NULL );
 		nmg_tbl( &verts , TBL_INS , (long *)vpa );
 	}
 
-	if( done == 1 )
-		return( &verts );
+	if( done != 1 )
+		nmg_tbl( &verts , TBL_INIT , (long *)NULL );
 
-    if( done < 1 )
-    {
-        int free_edge_count;
-    	struct vertexuse *vu1,*vu4;
-
-        rt_log( "ERROR: nmg_find_middle_verts: cannot find intervening vertices\n" );
-        rt_log( "verts are: x%x ( %f %f %f ) and x%x ( %f %f %f )\n",
-		vpa, V3ARGS( vpa->vg_p->coord ), vpb, V3ARGS( vpb->vg_p->coord ) );
-
-        free_edge_count = 0;
-        for( RT_LIST_FOR( vu1 , vertexuse , &vpa->vu_hd ) )
-        {
-            struct edgeuse *eu1;
-
-            if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )
-                continue;
-
-            eu1 = vu1->up.eu_p;
-            if( eu1->radial_p == eu1->eumate_p )
-                free_edge_count++;
-        }
-        rt_log( "%d free edges at vertex x%x\n" , free_edge_count , vpa );
-
-        free_edge_count = 0;
-        for( RT_LIST_FOR( vu4 , vertexuse , &vpb->vu_hd ) )
-        {
-            struct edgeuse *eu4;
-
-            if( *vu4->up.magic_p != NMG_EDGEUSE_MAGIC )
-                continue;
-
-            eu4 = vu4->up.eu_p;
-            if( eu4->radial_p == eu4->eumate_p )
-                free_edge_count++;
-        }
-        rt_log( "%d free edges at vertex x%x\n" , free_edge_count , vpb );
-    }
+	return( &verts );
 }
 
 void
@@ -6198,6 +6235,16 @@ CONST struct rt_tol *tol;
  *		0 - All is well
  *		1 - failure
  */
+
+/* 	structure for use by nmg_open_shells_connect */
+struct dangle
+{
+	struct vertex *va,*vb;		/* vertices of a dangling edge in dst shell */
+	struct vertex *v1,*v2;		/* corresponding vertices in src shell */
+	struct nmg_ptbl bad_verts;	/* list of vertices to avoid when finding path
+					 * from v1 to v2 */
+};
+
 int
 nmg_open_shells_connect( dst , src , copy_tbl , tol )
 struct shell *dst;
@@ -6208,15 +6255,16 @@ CONST struct rt_tol *tol;
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
-	struct vertex *vp[3];
 	struct nmg_ptbl faces;
-	int vertex_count=0;
+	struct nmg_ptbl dangles;
+	int edge_no;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_open_shells_connect( dst=x%x , src=x%x , copy_tbl=x%x)\n" , dst , src , copy_tbl );
 
 	NMG_CK_SHELL( dst );
 	NMG_CK_SHELL( src );
+	RT_CK_TOL( tol );
 
 	if( nmg_ck_closed_surf( dst , tol ) )
 	{
@@ -6229,6 +6277,8 @@ CONST struct rt_tol *tol;
 		rt_log( "nmg_open_shells_connect: source shell is closed!\n" );
 		return( 1 );
 	}
+
+	nmg_tbl( &dangles , TBL_INIT , (long *)NULL );
 
 	/* find free edges in "dst" shell */
 	for( RT_LIST_FOR( fu , faceuse , &dst->fu_hd ) )
@@ -6247,89 +6297,118 @@ CONST struct rt_tol *tol;
 				NMG_CK_EDGEUSE( eu );
 				if( eu->eumate_p == eu->radial_p )
 				{
+					struct dangle *dang;
 					struct vertexuse *test_vu;
-					struct vertex *vp1,*vp2;
-					struct vertex *vpa,*vpb;
-					struct vertex *vpbad1,*vpbad2;
-					struct nmg_ptbl *verts;
+					struct edgeuse *check_eu;
+					struct vertex *vpbad1,*vpbada;
 					int i;
 
-					/* found a free edge, find corresponding edge in "src" shell */
-					vpa = eu->vu_p->v_p;
-					NMG_CK_VERTEX( vpa );
-					vp1 = NMG_INDEX_GETP(vertex, copy_tbl, vpa );
-					NMG_CK_VERTEX( vp1 );
-					vpb = eu->eumate_p->vu_p->v_p;
-					NMG_CK_VERTEX( vpb );
-					vp2 = NMG_INDEX_GETP(vertex, copy_tbl, vpb );
-					NMG_CK_VERTEX( vp2 );
+					/* found a dangling edge, put it in the list */
+					dang = (struct dangle *)rt_malloc( sizeof( struct dangle ) ,
+						"nmg_open_shells_connect: dang" );
 
-					/* look for another dangling edge at this vertex
-					 * to establish direction for nmg_find_middle_verts
+					dang->va = eu->vu_p->v_p;
+					NMG_CK_VERTEX( dang->va );
+					dang->v1 = NMG_INDEX_GETP(vertex, copy_tbl, dang->va );
+					NMG_CK_VERTEX( dang->v1 );
+					dang->vb = eu->eumate_p->vu_p->v_p;
+					NMG_CK_VERTEX( dang->vb );
+					dang->v2 = NMG_INDEX_GETP(vertex, copy_tbl, dang->vb );
+					NMG_CK_VERTEX( dang->v2 );
+
+					nmg_tbl( &dang->bad_verts , TBL_INIT , (long *)NULL );
+
+					/* look for other dangling edges around this one
+					 * to establish direction for nmg_find_path
 					 * to look in
 					 */
 
-					vpbad1 = (struct vertex *)NULL;
-					for( RT_LIST_FOR( test_vu , vertexuse , &eu->vu_p->v_p->vu_hd ) )
+					for( RT_LIST_FOR( test_vu , vertexuse , &dang->va->vu_hd ) )
 					{
 						struct edgeuse *test_eu;
-
-						NMG_CK_VERTEXUSE( test_vu );
 
 						if( *test_vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 							continue;
 
 						test_eu = test_vu->up.eu_p;
-						NMG_CK_EDGEUSE( test_eu );
-
 						if( test_eu == eu )
 							continue;
 
-						if( test_eu->eumate_p != test_eu->radial_p )
+						if( test_eu->eumate_p->vu_p->v_p == dang->vb )
 							continue;
 
-						vpbad1 = test_eu->eumate_p->vu_p->v_p;
-					}
-
-					if( !vpbad1 )
-					{
-						for( RT_LIST_FOR( test_vu , vertexuse , &eu->eumate_p->vu_p->v_p->vu_hd ) )
+						if( test_eu->eumate_p == test_eu->radial_p )
 						{
-							struct edgeuse *test_eu;
-
-							NMG_CK_VERTEXUSE( test_vu );
-
-							if( *test_vu->up.magic_p != NMG_EDGEUSE_MAGIC )
-								continue;
-
-							test_eu = test_vu->up.eu_p;
-							NMG_CK_EDGEUSE( test_eu );
-
-							if( test_eu->eumate_p == eu )
-								continue;
-
-							if( test_eu->eumate_p != test_eu->radial_p )
-								continue;
-
-							vpbad1 = test_eu->eumate_p->vu_p->v_p;
+							/* another dangling edge, don't want
+							 * nmg_find_path to wander off
+							 * in this direction
+							 */
+							vpbada = test_eu->eumate_p->vu_p->v_p;
+							vpbad1 = NMG_INDEX_GETP( vertex , copy_tbl , vpbada );
+							if( vpbad1 )
+								nmg_tbl( &dang->bad_verts , TBL_INS , (long *)vpbad1 );
 						}
 					}
 
-					if( vpbad1 )
-						vpbad2 = NMG_INDEX_GETP(vertex, copy_tbl, vpbad1 );
-					else
-						vpbad2 = (struct vertex *)NULL;
+					for( RT_LIST_FOR( test_vu , vertexuse , &dang->vb->vu_hd ) )
+					{
+						struct edgeuse *test_eu;
 
-					/* find vertices between vp1 and vp2 */
-					verts = nmg_find_middle_verts( vp1 , vp2 , vpbad1 , vpbad2 );
+						if( *test_vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+							continue;
 
-					/* make faces connecting the two shells */
-					nmg_make_connect_faces( src , vpa , vpb , verts , tol );
+						test_eu = test_vu->up.eu_p;
+						if( test_eu == eu->eumate_p )
+							continue;
 
-					nmg_tbl( verts , TBL_FREE , NULL );
+
+						if( test_eu->eumate_p->vu_p->v_p == dang->va )
+							continue;
+
+						if( test_eu->eumate_p == test_eu->radial_p )
+						{
+							/* another dangling edge, don't want
+							 * nmg_find_path to wander off
+							 * in this direction
+							 */
+							vpbada = test_eu->eumate_p->vu_p->v_p;
+							vpbad1 = NMG_INDEX_GETP( vertex , copy_tbl , vpbada );
+							if( vpbad1 )
+								nmg_tbl( &dang->bad_verts , TBL_INS , (long *)vpbad1 );
+						}
+					}
+				nmg_tbl( &dangles , TBL_INS , (long *)dang );
 				}
 			}
 		}
+	}
+
+	/* now build the faces to connect the dangling edges */
+	while( NMG_TBL_END( &dangles ) )
+	{
+		struct dangle *dang;
+		struct nmg_ptbl *verts;
+
+		dang = (struct dangle *)NMG_TBL_GET( &dangles , NMG_TBL_END( &dangles ) - 1 );
+
+		/* find vertices between vp1 and vp2 */
+		verts = nmg_find_path( dang->v1 , dang->v2 , &dang->bad_verts , src );
+
+		/* make faces connecting the two shells */
+		if( NMG_TBL_END( verts ) > 1 )
+			nmg_make_connect_faces( dst , dang->va , dang->vb , verts , tol );
+		else
+		{
+			rt_log( "nmg_open_shells_connect: unable to make connecting face\n" );
+			rt_log( "\tfor edge from x%x ( %f %f %f )\n\t\tto x%x ( %f %f %f )\n",
+				dang->va, V3ARGS( dang->va->vg_p->coord ),
+				dang->vb, V3ARGS( dang->vb->vg_p->coord ) );
+		}
+
+		nmg_tbl( verts , TBL_FREE , (long *)NULL );
+		nmg_tbl( &dang->bad_verts , TBL_FREE , (long *)NULL );
+		nmg_tbl( &dangles , TBL_RM , (long *)dang );
+		rt_free( (char *)dang , "nmg_open_shells_connect: dang" );
 	}
 
 	nmg_js( dst , src , tol );
