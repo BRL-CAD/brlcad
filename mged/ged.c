@@ -197,7 +197,7 @@ char **argv;
 	/* Here we should print out a "message of the day" file */
 
 	/*	 Scan input file and build the directory	 */
-	db_scan( dbip, (int (*)())db_diradd);
+	db_scan( dbip, (int (*)())db_diradd, 1);
 	/* XXX - save local units */
 	localunit = dbip->dbi_localunit;
 	local2base = dbip->dbi_local2base;
