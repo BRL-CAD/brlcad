@@ -1323,7 +1323,7 @@ struct rt_vlblock {
 	struct rt_list	*head;		/* head[max] */
 };
 #define RT_VLBLOCK_MAGIC	0x981bd112
-
+#define RT_CK_VLBLOCK(_p)	RT_CKMAG(_p, RT_VLBLOCK_MAGIC, "rt_vlblock")
 /*
  *  Replacements for definitions from ../h/vmath.h
  */
@@ -1948,7 +1948,6 @@ RT_EXTERN(struct faceuse	*nmg_find_fu_with_fg_in_s, (CONST struct shell *s1,
 
 	/* Loop routines */
 RT_EXTERN(struct loopuse	*nmg_find_lu_of_vu, (CONST struct vertexuse *vu) );
-RT_EXTERN(struct loopuse	*nmg_lu_of_vu, (CONST struct vertexuse *vu) );
 RT_EXTERN(int			nmg_loop_is_a_crack, (CONST struct loopuse *lu) );
 RT_EXTERN(int			nmg_loop_is_ccw, (CONST struct loopuse *lu,
 				CONST plane_t norm, CONST struct rt_tol *tol) );
