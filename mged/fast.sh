@@ -89,7 +89,7 @@ cake ${SILENT} \
  bodyio.o &
 
 wait
-if test "${SILENT}" == ""
+if test "${SILENT}" = ""
 then
 	echo --- Collecting any stragglers.
 fi
