@@ -99,6 +99,7 @@
 #       endif
 #       define HAVE_FLOAT_H     1
 #       define HAVE_LIMITS_H    1
+#	define HAVE_BZERO	1
 #endif
 
 #if IRIX == 5
@@ -189,6 +190,7 @@
 #	define HAVE_SYS_ERRLIST_DECL	1
 #	define HAVE_SBRK_DECL		1
 #	define HAVE_IOCTL_COMPAT_H	1
+#	define HAVE_BZERO	1
 #endif
 
 #if defined(__STDC__)
