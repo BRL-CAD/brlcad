@@ -325,11 +325,52 @@ spl_curve()
 {
 }
 
-spl_free()
+spl_free( stp )
+register struct soltab * stp;
 {
+	struct b_tree * nlist = ( struct b_tree *) stp->st_specific;
+	struct b_tree * c_tree;
+	
+	for( c_tree = nlist; c_tree != (struct b_tree *)0; )
+	{
+		c_tree = nlist->next;
+		n_free( nlist );
+	}
+
+	return;
 }
 
+n_free( tree)
+struct b_tree * tree;
+{
+	struct b_tree * leftp, * rightp, * rootp;
+	
+	root = tree;
 
+	if ( tree->left != (struct b_tree *) 0 )
+	{
+		leftp = tree->left;
+		n_free( leftp );
+	}
+
+	if ( tree->right != (struct b_tree *) 0 )
+	{
+		rightp = tree->right;
+		n_free( rightp );
+	}
+
+	if ( rootp != (struct b_spline *) 0 )
+		free_spl( rootp->root );
+
+	if ( rootp->u_diff != (struct b_spline *) 0 )
+		free_spl( rootp->u_diff );
+
+	if ( rootp->v_diff != (struct b_spline *) 0 )
+		free_spl( rootp->v_diff );
+	
+	rt_free( rootp, "n_free: tree structure ");
+
+}
 /* 
  *	S P L _ N O R M
  */
@@ -489,6 +530,8 @@ struct application *ap;
 			tree->left->dir = (tree-> dir == 0) ? 1:0;
 			tree->left->level = tree->level + 1;
 			tree->left->left = tree->left->right = NULLTREE;
+			tree->left->u_diff = NULLTREE;
+			tree->left->v_diff = NULLTREE;
 
 			tree->right->root = sub->next; 		
 			tree->right->next = NULLTREE;
@@ -497,6 +540,8 @@ struct application *ap;
 			tree->right->level = tree->level + 1; 
 			tree->right->left =
 			tree->right->right = NULLTREE; 		
+			tree->right->u_diff = NULLTREE;
+			tree->right->v_diff = NULLTREE;
 		}
 shoot:
 		if ( rt_g.debug & DEBUG_SPLINE ) 
