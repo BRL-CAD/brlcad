@@ -270,35 +270,38 @@ struct application *ap;
 {
 	struct cell	*posp;
 	int		i;
+	int		cont;		/* continue flag */
 
 	posp = &(cellp[0]);
+	cont = 0;
 
-	/* Use an implicite state machine to facilitate this: make
-	 * the starting point and move to it.  Having plotted it,
+	/* Plot the starting point and set cont to 0.  Then
 	 * march along the entire array and continue to plot the
-	 * distances.  Since all distances will be plotted,
-	 * this is a viable approach.  Just the
-	 * hit-points are plotted.
+	 * hit points based on their distance from the emanation
+	 * plane. When consecutive hit-points with identical distances
+	 * are found, cont is set to one so that the entire sequence
+	 * of like-distanced hit-points can be plotted together.
 	 */
 
 	pdv_3move( outfp, posp->c_hit );
 
 	for( i = 0; i < width-1; i++, posp++ )  {
-#ifdef
-		if( posp->c_dist == (posp+1)->c_dist )
+		if( posp->c_dist == (posp+1)->c_dist )  {
+			cont = 1;
 			continue;
-		else if( posp->c_dist != (posp+1)->c_dist )  {
-			/* Make an ending point, plot it, and make the
-			 * the stopping point the new stating point.
-			 */
-			pdv_3cont( outfp, (posp+1)->c_hit );
+		} else  {
+			if(cont)  {
+				pdv_3cont(outfp, posp->c_hit);
+				cont = 0;
+			}
+			pdv_3cont(outfp, (posp+1)->c_hit);
 		}
-#endif
-		pdv_3cont( outfp, posp->c_hit );
 	}
+
 	/* Catch the boundary condition if the last couple of cells
 	 * heve the same distance.
 	 */
+
 	pdv_3cont(outfp, posp->c_hit);
 }
 
