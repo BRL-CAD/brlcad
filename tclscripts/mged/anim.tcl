@@ -324,7 +324,7 @@ proc sketch_highlight { } {
 
 	if {$mged_sketch_node == ""} return
 
-	set offset [expr [vget size] * 0.01]
+	set offset [expr [viewget size] * 0.01]
 	set oldname [vdraw r n]
 	set vertex [eval [concat vdraw r $mged_sketch_node]]
 
@@ -380,8 +380,8 @@ proc sketch_append {} {
 		lappend tlist $mged_sketch_time
 		#puts $mged_sketch_time
 	}
-	set center [vget center]
-	#set center [vget eye]
+	set center [viewget center]
+	#set center [viewget eye]
 	set mged_sketch_node [vdraw r l]
 	eval [concat vdraw w n $cmd $center]
 	sketch_update
@@ -397,12 +397,12 @@ proc sketch_insert { n } {
 		return
 	}
 	if { $n == 0 } {
-		eval [concat vdraw i $n 0 [vget center]]
+		eval [concat vdraw i $n 0 [viewget center]]
 		set vertex [vdraw r 1]
 		eval [concat vdraw w 1 1 [lrange $vertex 1 3]]
 		set tn [expr [lindex $tlist 0] - $mged_sketch_tinc]
 	} else {
-		eval [concat vdraw i $n 1 [vget center]]
+		eval [concat vdraw i $n 1 [viewget center]]
 		set tn [expr [lindex $tlist $n]+[lindex $tlist [expr $n - 1]]]
 		set tn [expr $tn * 0.5]
 	}
@@ -417,9 +417,9 @@ proc sketch_move { n } {
 		return
 	}
 	if { $n == 0 } {
-		eval [concat vdraw w $n 0 [vget center]]
+		eval [concat vdraw w $n 0 [viewget center]]
 	} else {
-		eval [concat vdraw w $n 1 [vget center]]
+		eval [concat vdraw w $n 1 [viewget center]]
 	}
 	sketch_update
 }
@@ -1032,7 +1032,7 @@ proc sketch_get_view_line { {mode 0}} {
 
 	set line "\t$mged_sketch_vtime"
 	foreach cmd $mged_sketch_vparams {
-		set new [join [vget $cmd] "\t"]
+		set new [join [viewget $cmd] "\t"]
 		append line "\t$new"
 	}
 	if { $mode == "nl" } {
@@ -2263,15 +2263,15 @@ proc sketch_popup_objanim { p {mode object} } {
 		wm title $root "MGED View Animation"
 		label $root.l0 -text "CREATE VIEW ANIMATION"
 		button $root.f2.l0 -text "View size:" -command \
-			{set mged_sketch_objvsize [vget size]}
+			{set mged_sketch_objvsize [viewget size]}
 		entry $root.f2.e0 -width 20 -textvariable mged_sketch_objvsize
 		frame $root.f9
 		button $root.f9.b0 -text "Eye point:" \
-			-command { set mged_sketch_eyecen [vget eye] }
+			-command { set mged_sketch_eyecen [viewget eye] }
 		entry $root.f9.e0 -width 20 -textvariable mged_sketch_eyecen
 		frame $root.f10
 		button $root.f10.b0 -text "Eye yaw,pitch,roll: " \
-			-command { set mged_sketch_eyeori [vget ypr] }
+			-command { set mged_sketch_eyeori [viewget ypr] }
 		entry $root.f10.e0 -width 20 -textvariable mged_sketch_eyeori
 		set if_view "$root.f9 $root.f10"
 		checkbutton $root.cb0 -text "Read viewsize from source" \
@@ -2295,11 +2295,11 @@ proc sketch_popup_objanim { p {mode object} } {
 	}
 	frame $root.f3
 	button $root.f3.b0 -text "Object center:" \
-		-command { set mged_sketch_objcen [vget center] }
+		-command { set mged_sketch_objcen [viewget center] }
 	entry $root.f3.e0 -width 20 -textvariable mged_sketch_objcen
 	frame $root.f4
 	button $root.f4.b0 -text "Object yaw,pitch,roll: " \
-		-command { set mged_sketch_objori [vget ypr] }
+		-command { set mged_sketch_objori [viewget ypr] }
 	entry $root.f4.e0 -width 20 -textvariable mged_sketch_objori
 	checkbutton $root.cb3 -text "No Translation" \
 		-variable mged_sketch_objrotonly -command "sketch_script_update $mode"
@@ -2757,11 +2757,11 @@ proc sketch_popup_track_anim { p } {
 	entry $root.f5.e0 -textvariable mged_sketch_numlinks
 	frame $root.f6
 	button $root.f6.b0 -text "Vehicle center:" \
-			-command { set mged_sketch_objcen [vget center] }
+			-command { set mged_sketch_objcen [viewget center] }
 	entry $root.f6.e0 -width 20 -textvariable mged_sketch_objcen
 	frame $root.f7
 	button $root.f7.b0 -text "Vehicle yaw,pitch,roll: " \
-			-command { set mged_sketch_objori [vget ypr] }
+			-command { set mged_sketch_objori [viewget ypr] }
 	entry $root.f7.e0 -width 20 -textvariable mged_sketch_objori
 	frame $root.f8
 	label $root.f8.l0 -text "First frame:"
