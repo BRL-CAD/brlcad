@@ -58,7 +58,7 @@ extern struct mfuncs	*mfHead;	/* rt/view.c */
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */
-sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
 	struct rt_i	*rtip;
 	struct region	*regp;
@@ -100,7 +100,7 @@ sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, char **
 		if( strstr( regp->reg_name, argv[2] ) == NULL )  continue;
 
 		/* Modify the region's color */
-bu_log("sh_directchange_rgb() changing %s\n", regp->reg_name);
+		bu_log("sh_directchange_rgb() changing %s\n", regp->reg_name);
 		VSET( regp->reg_mater.ma_color, r, g, b );
 
 		/* Update the shader */
@@ -122,7 +122,7 @@ bu_log("sh_directchange_rgb() changing %s\n", regp->reg_name);
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */
-sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
 	struct rt_i	*rtip;
 	struct region	*regp;
@@ -164,7 +164,7 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, char
 		if( strstr( regp->reg_name, argv[2] ) == NULL )  continue;
 
 		/* Modify the region's shader string */
-bu_log("sh_directchange_shader() changing %s\n", regp->reg_name);
+		bu_log("sh_directchange_shader() changing %s\n", regp->reg_name);
 		if( regp->reg_mater.ma_shader )
 			bu_free( (genptr_t)regp->reg_mater.ma_shader, "reg_mater.ma_shader");
 		regp->reg_mater.ma_shader = bu_vls_strdup(&shader);
@@ -185,7 +185,7 @@ bu_log("sh_directchange_shader() changing %s\n", regp->reg_name);
  *
  *  Process RT-style command-line options.
  */
-sh_opt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+sh_opt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
 	struct rt_i	*rtip;
 	struct region	*regp;
