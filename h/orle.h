@@ -23,7 +23,7 @@
  */
 
 /********* Be certain to update this!! **********/
-#if defined( gould ) || defined( sel ) || defined(sun) || defined(sgi)
+#if defined( gould ) || defined( sel ) || defined(sun) || defined(sgi) || defined(alliant)
 #define BIGENDIAN
 #endif
 
