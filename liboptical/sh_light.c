@@ -287,7 +287,7 @@ mat_t	v2m;
 		lp->lt_intensity = 1000.0;
 		lp->lt_radius = 0.1;		/* mm, "point" source */
 		lp->lt_invisible = 1;		/* NOT explicitly modeled */
-		lp->lt_shadows = 1;		/* casts shadows */
+		lp->lt_shadows = 0;		/* no shadows for speed */
 		lp->lt_angle = 180;		/* spherical emission */
 		lp->lt_cosangle = -1;		/* cos(180) */
 		lp->lt_infinite = 0;
