@@ -74,12 +74,13 @@
  */
 
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
-#define GETSTRUCT(p,str) \
-	if( (p = (struct str *)rt_malloc(sizeof(struct str), \
-	    "getstruct str")) == (struct str *)0 ) \
-		exit(17); \
-	bzero( (char *)p, sizeof(struct str));
-
+#ifdef __STDC__
+# define GETSTRUCT(p,str) \
+	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
+#else
+# define GETSTRUCT(p,str) \
+	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
+#endif
 
 /*
  *			X R A Y
@@ -898,6 +899,8 @@ extern char *rt_malloc(unsigned int cnt, char *str);
 extern void rt_free(char *ptr, char *str);
 					/* visible realloc() */
 extern char *rt_realloc(char *ptr, unsigned int cnt, char *str);
+					/* visible calloc() */
+extern char *rt_calloc(unsigned nelem, unsigned elsize, char *str);
 					/* Duplicate str w/malloc */
 extern char *rt_strdup(char *cp);
 
@@ -948,7 +951,7 @@ extern void rt_pr_cut(union cutter *cutp, int lvl);
 					/* regionid-driven color override */
 extern void rt_region_color_map(struct region *regp);
 					/* process ID_MATERIAL record */
-extern void rt_color_addrec(union record *recp, long addr);
+extern void rt_color_addrec();
 					/* extend a cut box */
 extern void rt_cut_extend(union cutter *cutp, struct soltab *stp);
 					/* find RPP of one region */
@@ -997,11 +1000,24 @@ extern int db_delete( struct db_i *, struct directory *dp );
 					/* write FREE records from 'start' */
 extern int db_zapper( struct db_i *, struct directory *dp, int start );
 
+/* machine.c */
+					/* change to new "nice" value */
+extern void rt_pri_set( int nval );
+					/* get CPU time limit */
+extern int rt_cpuget(void);
+					/* set CPU time limit */
+extern void rt_cpuset(int sec);
+					/* find # of CPUs available */
+extern int rt_avail_cpus(void);
+					/* run func in parallel */
+extern void rt_parallel( void (*func)(), int ncpu );
+
 #else
 
 extern char *rt_malloc();		/* visible malloc() */
 extern void rt_free();			/* visible free() */
 extern char *rt_realloc();		/* visible realloc() */
+extern char *rt_calloc();		/* visible calloc() */
 extern char *rt_strdup();		/* Duplicate str w/malloc */
 
 extern void rt_boolweave();		/* Weave segs into partitions */
@@ -1067,6 +1083,14 @@ extern int db_trunc( struct db_i *, struct directory *, int );
 extern int db_delrec( struct db_i *, struct directory *, int );
 extern int db_delete( struct db_i *, struct directory * );
 extern int db_zapper( struct db_i *, struct directory *, int );
+
+/* machine.c */
+extern void rt_pri_set();		/* change to new "nice" value */
+extern int rt_cpuget();			/* get CPU time limit */
+extern void rt_cpuset();		/* set CPU time limit */
+extern int rt_avail_cpus();		/* find # of CPUs available */
+extern void rt_parallel();		/* run func in parallel */
+
 #endif
 
 #endif
@@ -1084,6 +1108,7 @@ extern double	rt_inv255;
  *  System library routines used by the RT library.
  */
 extern char	*malloc();
+extern char	*calloc();
 /**extern void	free(); **/
 
 #endif /* RAYTRACE_H */
