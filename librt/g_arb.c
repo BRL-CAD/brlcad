@@ -54,11 +54,11 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
  */
 
 struct oface {
-	float	arb_UVorig[3];		/* origin of UV coord system */
-	float	arb_U[3];		/* unit U vector (along B-A) */
-	float	arb_V[3];		/* unit V vector (perp to N and U) */
-	float	arb_Ulen;		/* length of U basis (for du) */
-	float	arb_Vlen;		/* length of V basis (for dv) */
+	fastf_t	arb_UVorig[3];		/* origin of UV coord system */
+	fastf_t	arb_U[3];		/* unit U vector (along B-A) */
+	fastf_t	arb_V[3];		/* unit V vector (perp to N and U) */
+	fastf_t	arb_Ulen;		/* length of U basis (for du) */
+	fastf_t	arb_Vlen;		/* length of V basis (for dv) */
 };
 
 /* One of these for each face */
@@ -78,12 +78,13 @@ struct arb_specific  {
 /* These hold temp values for the face being prep'ed */
 #define ARB_MAXPTS	4		/* All we need are 4 points */
 struct prep_arb {
-	fastf_t	pa_vec[3*8];		/* Original points */
-	point_t	pa_points[ARB_MAXPTS];	/* Actual points on plane */
-	int	pa_npts;		/* number of points on plane */
-	int	pa_faces;		/* Number of faces done so far */
+	fastf_t		pa_vec[3*8];	/* Original points */
+	point_t		pa_points[ARB_MAXPTS];	/* Actual points on plane */
+	int		pa_npts;	/* number of points on plane */
+	int		pa_faces;	/* Number of faces done so far */
 	struct aface	pa_face[6];	/* required face info work area */
 	struct oface	pa_opt[6];	/* optional face info work area */
+	int		pa_doopt;	/* compute pa_opt[] stuff */
 };
 
 HIDDEN void	arb_add_pt();
@@ -113,6 +114,22 @@ union record	*rec;
 struct rt_i	*rtip;
 struct directory *dp;
 {
+	return( arb_setup( stp, rec, rtip, 0 ) );
+}
+
+/*
+ *			A R B _ S E T U P
+ *
+ *  Returns -
+ *	 0	OK
+ *	!0	failure
+ */
+arb_setup( stp, rec, rtip, uv_wanted )
+struct soltab	*stp;
+union record	*rec;
+struct rt_i	*rtip;
+int		uv_wanted;
+{
 	register fastf_t *op;		/* Used for scanning vectors */
 	LOCAL vect_t	work;		/* Vector addition work area */
 	LOCAL vect_t	sum;		/* Sum of all endpoints */
@@ -122,8 +139,17 @@ struct directory *dp;
 	LOCAL fastf_t	f;
 	struct prep_arb	pa;
 
-	/* Convert from database to internal format */
-	rt_fastf_float( pa.pa_vec, rec->s.s_values, 8 );
+	if( rec == (union record *)0 )  {
+		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
+		/* Convert from database to internal format */
+		rt_fastf_float( pa.pa_vec, rec->s.s_values, 8 );
+		rt_free( (char *)rec, "arb record" );
+	} else {
+		/* Convert from database to internal format */
+		rt_fastf_float( pa.pa_vec, rec->s.s_values, 8 );
+	}
+
+	pa.pa_doopt = uv_wanted;
 
 	/*
 	 * Process an ARB8, which is represented as a vector
@@ -157,8 +183,6 @@ struct directory *dp;
 	 */
 	VSCALE( stp->st_center, sum, 0.125 );	/* sum/8 */
 
-	stp->st_specific = (int *) 0;
-
 	pa.pa_faces = 0;
 	for( i=0; i<6; i++ )  {
 		pa.pa_npts = 0;
@@ -190,11 +214,18 @@ next_pt:		;
 			continue;
 		}
 
-		/* Scale U and V basis vectors by the inverse of Ulen and Vlen */
-		pa.pa_opt[pa.pa_faces].arb_Ulen = 1.0 / pa.pa_opt[pa.pa_faces].arb_Ulen;
-		pa.pa_opt[pa.pa_faces].arb_Vlen = 1.0 / pa.pa_opt[pa.pa_faces].arb_Vlen;
-		VSCALE( pa.pa_opt[pa.pa_faces].arb_U, pa.pa_opt[pa.pa_faces].arb_U, pa.pa_opt[pa.pa_faces].arb_Ulen );
-		VSCALE( pa.pa_opt[pa.pa_faces].arb_V, pa.pa_opt[pa.pa_faces].arb_V, pa.pa_opt[pa.pa_faces].arb_Vlen );
+		if( uv_wanted )  {
+			register struct oface	*ofp;
+
+			ofp = &pa.pa_opt[pa.pa_faces];
+			/* Scale U and V basis vectors by
+			 * the inverse of Ulen and Vlen
+			 */
+			ofp->arb_Ulen = 1.0 / ofp->arb_Ulen;
+			ofp->arb_Vlen = 1.0 / ofp->arb_Vlen;
+			VSCALE( ofp->arb_U, ofp->arb_U, ofp->arb_Ulen );
+			VSCALE( ofp->arb_V, ofp->arb_V, ofp->arb_Vlen );
+		}
 
 		pa.pa_faces++;
 	}
@@ -212,21 +243,25 @@ next_pt:		;
 	 */
 	{
 		register struct arb_specific *arbp;
-		arbp = (struct arb_specific *)rt_malloc(
-			sizeof(struct arb_specific) +
-			sizeof(struct aface) * (pa.pa_faces - 4),
-			"arb_specific" );
+		if( (arbp = (struct arb_specific *)stp->st_specific) == 0 )  {
+			arbp = (struct arb_specific *)rt_malloc(
+				sizeof(struct arb_specific) +
+				sizeof(struct aface) * (pa.pa_faces - 4),
+				"arb_specific" );
+			stp->st_specific = (int *)arbp;
+		}
 		arbp->arb_nmfaces = pa.pa_faces;
 		for( i=0; i < pa.pa_faces; i++ )
 			arbp->arb_face[i] = pa.pa_face[i];	/* struct copy */
 
-		/* Eventually this will be optional */
-		arbp->arb_opt = (struct oface *)rt_malloc(
-			pa.pa_faces * sizeof(struct oface), "arb_opt");
-		for( i=0; i < pa.pa_faces; i++ )
-			arbp->arb_opt[i] = pa.pa_opt[i];	/* struct copy */
-
-		stp->st_specific = (int *)arbp;
+		if( uv_wanted )  {
+			arbp->arb_opt = (struct oface *)rt_malloc(
+				pa.pa_faces * sizeof(struct oface), "arb_opt");
+			for( i=0; i < pa.pa_faces; i++ )
+				arbp->arb_opt[i] = pa.pa_opt[i];	/* struct copy */
+		} else {
+			arbp->arb_opt = (struct oface *)0;
+		}
 	}
 
 	/*
@@ -284,7 +319,9 @@ struct prep_arb	*pap;
 	switch( i )  {
 	case 0:
 		VMOVE( afp->A, point );
-		VMOVE( ofp->arb_UVorig, point );
+		if( pap->pa_doopt )  {
+			VMOVE( ofp->arb_UVorig, point );
+		}
 		return;					/* OK */
 	case 1:
 		VSUB2( ofp->arb_U, point, afp->A );	/* B-A */
@@ -292,6 +329,7 @@ struct prep_arb	*pap;
 		ofp->arb_Ulen = f;
 		f = 1/f;
 		VSCALE( ofp->arb_U, ofp->arb_U, f );
+		/* Note that arb_U is used to build N, below */
 		return;					/* OK */
 	case 2:
 		VSUB2( P_A, point, afp->A );	/* C-A */
@@ -305,27 +343,30 @@ struct prep_arb	*pap;
 		f = 1/f;
 		VSCALE( afp->N, afp->N, f );
 
-		/*
-		 * Get vector perp. to AB in face of plane ABC.
-		 * Scale by projection of AC, make this V.
-		 */
-		VCROSS( work, afp->N, ofp->arb_U );
-		VUNITIZE( work );
-		f = VDOT( work, P_A );
-		VSCALE( ofp->arb_V, work, f );
-		f = MAGNITUDE( ofp->arb_V );
-		ofp->arb_Vlen = f;
-		f = 1/f;
-		VSCALE( ofp->arb_V, ofp->arb_V, f );
+		if( pap->pa_doopt )  {
+			/*
+			 * Get vector perp. to AB in face of plane ABC.
+			 * Scale by projection of AC, make this V.
+			 */
+			VCROSS( work, afp->N, ofp->arb_U );
+			VUNITIZE( work );
+			f = VDOT( work, P_A );
+			VSCALE( ofp->arb_V, work, f );
+			f = MAGNITUDE( ofp->arb_V );
+			ofp->arb_Vlen = f;
+			f = 1/f;
+			VSCALE( ofp->arb_V, ofp->arb_V, f );
 
-		/* Check for new Ulen */
-		VSUB2( P_A, point, ofp->arb_UVorig );
-		f = VDOT( P_A, ofp->arb_U );
-		if( f > ofp->arb_Ulen ) {
-			ofp->arb_Ulen = f;
-		} else if( f < 0.0 ) {
-			VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f, ofp->arb_U );
-			ofp->arb_Ulen += (-f);
+			/* Check for new Ulen */
+			VSUB2( P_A, point, ofp->arb_UVorig );
+			f = VDOT( P_A, ofp->arb_U );
+			if( f > ofp->arb_Ulen ) {
+				ofp->arb_Ulen = f;
+			} else if( f < 0.0 ) {
+				VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f,
+					ofp->arb_U );
+				ofp->arb_Ulen += (-f);
+			}
 		}
 
 		/*
@@ -341,21 +382,25 @@ struct prep_arb	*pap;
 		return;					/* OK */
 	default:
 		/* Merely validate 4th and subsequent points */
-		VSUB2( P_A, point, ofp->arb_UVorig );
-		/* Check for new Ulen, Vlen */
-		f = VDOT( P_A, ofp->arb_U );
-		if( f > ofp->arb_Ulen ) {
-			ofp->arb_Ulen = f;
-		} else if( f < 0.0 ) {
-			VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f, ofp->arb_U );
-			ofp->arb_Ulen += (-f);
-		}
-		f = VDOT( P_A, ofp->arb_V );
-		if( f > ofp->arb_Vlen ) {
-			ofp->arb_Vlen = f;
-		} else if( f < 0.0 ) {
-			VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f, ofp->arb_V );
-			ofp->arb_Vlen += (-f);
+		if( pap->pa_doopt )  {
+			VSUB2( P_A, point, ofp->arb_UVorig );
+			/* Check for new Ulen, Vlen */
+			f = VDOT( P_A, ofp->arb_U );
+			if( f > ofp->arb_Ulen ) {
+				ofp->arb_Ulen = f;
+			} else if( f < 0.0 ) {
+				VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f,
+					ofp->arb_U );
+				ofp->arb_Ulen += (-f);
+			}
+			f = VDOT( P_A, ofp->arb_V );
+			if( f > ofp->arb_Vlen ) {
+				ofp->arb_Vlen = f;
+			} else if( f < 0.0 ) {
+				VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f,
+					ofp->arb_V );
+				ofp->arb_Vlen += (-f);
+			}
 		}
 
 		VSUB2( P_A, point, afp->A );
@@ -645,6 +690,16 @@ register struct uvcoord *uvp;
 	LOCAL vect_t P_A;
 	LOCAL fastf_t r;
 
+	if( arbp->arb_opt == (struct oface *)0 )  {
+		if( arb_setup( stp, (union record *)0, ap->a_rt_i, 1 ) != 0 ||
+		    arbp->arb_opt == (struct oface *)0 )  {
+			rt_log("arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
+				stp->st_name,
+		    		stp->st_specific, arbp->arb_opt );
+			return;
+		}
+	}
+
 	h = (int)hitp->hit_private;
 
 	VSUB2( P_A, hitp->hit_point, arbp->arb_opt[h].arb_UVorig );
@@ -698,21 +753,25 @@ struct vlhead		*vhead;
 struct directory	*dp;
 {
 	register int		i;
-	register dbfloat_t	*ip;
+	register fastf_t	*ip;
 	register fastf_t	*op;
 	static vect_t		work;
+	static fastf_t		vec[3*8];
 	static fastf_t		points[3*8];
 	
+	/* Convert from database to internal format */
+	rt_fastf_float( vec, rp->s.s_values, 8 );
+
 	/*
 	 * Convert from vector to point notation for drawing.
 	 */
-	MAT4X3PNT( &points[0], matp, &rp[0].s.s_values[0] );
+	MAT4X3PNT( &points[0], matp, &vec[0] );
 
-	ip = &rp[0].s.s_values[1*3];
+	ip = &vec[1*3];
 	op = &points[1*3];
 #	include "noalias.h"
 	for( i=1; i<8; i++ )  {
-		VADD2( work, &rp[0].s.s_values[0], ip );
+		VADD2( work, &vec[0], ip );
 		MAT4X3PNT( op, matp, work );
 		ip += 3;
 		op += ELEMENTS_PER_VECT;
