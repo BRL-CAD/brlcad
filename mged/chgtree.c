@@ -33,9 +33,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
-#include <math.h>
 #include <signal.h>
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 
 #include "tcl.h"
@@ -43,6 +43,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "./sedit.h"
 #include "raytrace.h"
@@ -54,7 +55,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
-extern struct rt_tol		mged_tol;	/* from ged.c */
+extern struct bn_tol		mged_tol;	/* from ged.c */
 extern struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. from dodraw.c */
 
 void	aexists();
@@ -111,7 +112,7 @@ char	**argv;
 {
 	register struct directory *proto;
 	register struct directory *dp;
-	struct rt_external external;
+	struct bu_external external;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -481,7 +482,7 @@ char	**argv;
 {
 	register struct directory *proto;
 	register struct directory *dp;
-	struct rt_external external;
+	struct bu_external external;
 	struct rt_db_internal internal;
 	struct rt_tgc_internal *tgc_ip;
 	int id;
@@ -514,7 +515,7 @@ char	**argv;
 	}
 
 	/* import the TGC */
-	if( rt_functab[id].ft_import( &internal , &external , rt_identity ) < 0 )
+	if( rt_functab[id].ft_import( &internal , &external , bn_mat_identity ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "f_copy_inv: import failure for ",
 			   argv[1], "\n", (char *)NULL);
@@ -643,7 +644,7 @@ char	**argv;
 #endif
 
 	/* Only the matrix rarc, lmul, and rmul directives are useful here */
-	mat_idn( stack );
+	bn_mat_idn( stack );
 
 	/* Load the combination into memory */
 	dp = anp->an_path.fp_names[0];
@@ -710,7 +711,7 @@ static union tree *
 pathlist_leaf_func( tsp, pathp, ext, id )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-struct rt_external	*ext;
+struct bu_external	*ext;
 int			id;
 {
 	char	*str;
@@ -869,7 +870,7 @@ char      	**argv;
 	illump = BU_LIST_NEXT(solid, &HeadSolid.l);/* any valid solid would do */
 	edobj = 0;		/* sanity */
 	movedir = 0;		/* No edit modes set */
-	mat_idn( modelchanges );	/* No changes yet */
+	bn_mat_idn( modelchanges );	/* No changes yet */
 	(void)chg_state( ST_VIEW, ST_O_PICK, "internal change of state");
 	/* reset accumulation local scale factors */
 	acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;

@@ -35,10 +35,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 
+#include <math.h>
 #include "machine.h"
 #include "externs.h"
-#include "vmath.h"
 #include "bu.h"
+#include "vmath.h"
+#include "bn.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./mged_dm.h"
@@ -268,11 +270,11 @@ predictor_frame()
 	if( nframes < 1 )  nframes = 1;
 
 	/* Build view2model matrix for the future time */
-	mat_idn( predictor );
+	bn_mat_idn( predictor );
 	for( i=0; i < nframes; i++ )  {
-		mat_mul2( ModelDelta, predictor );
+		bn_mat_mul2( ModelDelta, predictor );
 	}
-	mat_mul( predictorXv2m, predictor, view2model );
+	bn_mat_mul( predictorXv2m, predictor, view2model );
 
 	MAT_DELTAS_GET_NEG( center_m, toViewcenter );
 	MAT4X3PNT( framecenter_m, predictor, center_m );
@@ -430,7 +432,7 @@ predictor_frame()
 #endif
 
 	/* Done */
-	mat_idn( ModelDelta );
+	bn_mat_idn( ModelDelta );
 }
 
 /*

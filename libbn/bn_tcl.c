@@ -35,12 +35,15 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <sys/time.h>
 #include <time.h>
 
+#if 0
 #include "tcl.h"
 #include "tk.h"
+#endif
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "externs.h"
@@ -120,7 +123,7 @@ mat_t mat;
 CONST point_t pt;
 CONST double scale;
 {
-	*statusp = mat_scale_about_pt(mat, pt, scale);
+	*statusp = bn_mat_scale_about_pt(mat, pt, scale);
 }
 
 
@@ -146,7 +149,7 @@ char **argv;
 	math_func = (void (*)())clientData;
 	bu_vls_init(&result);
 
-	if (math_func == mat_mul) {
+	if (math_func == bn_mat_mul) {
 		mat_t o, a, b;
 		if (argc < 3 || decode_mat(a, argv[1]) < 16 ||
 		    decode_mat(b, argv[2]) < 16) {
@@ -155,7 +158,7 @@ char **argv;
 		}
 		(*math_func)(o, a, b);
 		encode_mat(&result, o);
-	} else if (math_func == mat_inv || math_func == mat_trn) {
+	} else if (math_func == bn_mat_inv || math_func == bn_mat_trn) {
 		mat_t o, a;
 
 		if (argc < 2 || decode_mat(a, argv[1]) < 16) {
@@ -164,7 +167,7 @@ char **argv;
 		}
 		(*math_func)(o, a);
 		encode_mat(&result, o);
-	} else if (math_func == mat_ae) {
+	} else if (math_func == bn_mat_ae) {
 		mat_t o;
 		double az, el;
 
@@ -177,7 +180,7 @@ char **argv;
 
 		(*math_func)(o, (fastf_t)az, (fastf_t)el);
 		encode_mat(&result, o);
-	} else if (math_func == mat_ae_vec) {
+	} else if (math_func == bn_ae_vec) {
 		fastf_t az, el;
 		vect_t v;
 
@@ -188,7 +191,7 @@ char **argv;
 
 		(*math_func)(&az, &el, v);
 		bu_vls_printf(&result, "%g %g", az, el);
-	} else if (math_func == mat_aet_vec) {
+	} else if (math_func == bn_aet_vec) {
 		fastf_t az, el, twist, accuracy;
 		vect_t vec_ae, vec_twist;
 
@@ -202,7 +205,7 @@ char **argv;
 
 		(*math_func)(&az, &el, &twist, vec_ae, vec_twist, accuracy);
 		bu_vls_printf(&result, "%g %g %g", az, el, twist);
-	} else if (math_func == mat_angles) {
+	} else if (math_func == bn_mat_angles) {
 		mat_t o;
 		double alpha, beta, ggamma;
 
@@ -216,7 +219,7 @@ char **argv;
 
 		(*math_func)(o, alpha, beta, ggamma);
 		encode_mat(&result, o);
-	} else if (math_func == mat_eigen2x2) {
+	} else if (math_func == bn_eigen2x2) {
 		fastf_t val1, val2;
 		vect_t vec1, vec2;
 		double a, b, c;
@@ -233,7 +236,7 @@ char **argv;
 		    (fastf_t)c);
 		bu_vls_printf(&result, "%g %g {%g %g %g} {%g %g %g}", val1, val2,
 		    V3ARGS(vec1), V3ARGS(vec2));
-	} else if (math_func == mat_fromto) {
+	} else if (math_func == bn_mat_fromto) {
 		mat_t o;
 		vect_t from, to;
 
@@ -244,8 +247,8 @@ char **argv;
 		}
 		(*math_func)(o, from, to);
 		encode_mat(&result, o);
-	} else if (math_func == mat_xrot || math_func == mat_yrot ||
-	    math_func == mat_zrot) {
+	} else if (math_func == bn_mat_xrot || math_func == bn_mat_yrot ||
+	    math_func == bn_mat_zrot) {
 		mat_t o;
 		double s, c;
 		if (argc < 3) {
@@ -257,7 +260,7 @@ char **argv;
 
 		(*math_func)(o, s, c);
 		encode_mat(&result, o);
-	} else if (math_func == mat_lookat) {
+	} else if (math_func == bn_mat_lookat) {
 		mat_t o;
 		vect_t dir;
 		int yflip;
@@ -269,7 +272,7 @@ char **argv;
 
 		(*math_func)(o, dir, yflip);
 		encode_mat(&result, o);
-	} else if (math_func == mat_vec_ortho || math_func == mat_vec_perp) {
+	} else if (math_func == bn_vec_ortho || math_func == bn_vec_perp) {
 		vect_t ov, vec;
 
 		if (argc < 2 || decode_vect(vec, argv[1]) < 3) {
@@ -297,7 +300,7 @@ char **argv;
 			goto error;
 		}
 		encode_mat(&result, o);
-	} else if (math_func == mat_xform_about_pt) {
+	} else if (math_func == bn_mat_xform_about_pt) {
 		mat_t o, xform;
 		vect_t v;
 
@@ -309,7 +312,7 @@ char **argv;
 
 		(*math_func)(o, xform, v);
 		encode_mat(&result, o);
-	} else if (math_func == mat_arb_rot) {
+	} else if (math_func == bn_mat_arb_rot) {
 		mat_t o;
 		point_t pt;
 		vect_t dir;
@@ -428,24 +431,24 @@ static struct math_func_link {
 	char *name;
 	void (*func)();
 } math_funcs[] = {
-	"mat_mul",            mat_mul,
-	"mat_inv",            mat_inv,
-	"mat_trn",            mat_trn,
-	"mat_ae",             mat_ae,
-	"mat_ae_vec",         mat_ae_vec,
-	"mat_aet_vec",        mat_aet_vec,
-	"mat_angles",         mat_angles,
-	"mat_eigen2x2",       mat_eigen2x2,
-	"mat_fromto",         mat_fromto,
-	"mat_xrot",           mat_xrot,
-	"mat_yrot",           mat_yrot,
-	"mat_zrot",           mat_zrot,
-	"mat_lookat",         mat_lookat,
-	"mat_vec_ortho",      mat_vec_ortho,
-	"mat_vec_perp",       mat_vec_perp,
+	"bn_mat_mul",            bn_mat_mul,
+	"mat_inv",            bn_mat_inv,
+	"mat_trn",            bn_mat_trn,
+	"mat_ae",             bn_mat_ae,
+	"mat_ae_vec",         bn_ae_vec,
+	"mat_aet_vec",        bn_aet_vec,
+	"mat_angles",         bn_mat_angles,
+	"mat_eigen2x2",       bn_eigen2x2,
+	"mat_fromto",         bn_mat_fromto,
+	"mat_xrot",           bn_mat_xrot,
+	"mat_yrot",           bn_mat_yrot,
+	"mat_zrot",           bn_mat_zrot,
+	"mat_lookat",         bn_mat_lookat,
+	"mat_vec_ortho",      bn_vec_ortho,
+	"mat_vec_perp",       bn_vec_perp,
 	"mat_scale_about_pt", mat_scale_about_pt_wrapper,
-	"mat_xform_about_pt", mat_xform_about_pt,
-	"mat_arb_rot",        mat_arb_rot,
+	"mat_xform_about_pt", bn_mat_xform_about_pt,
+	"mat_arb_rot",        bn_mat_arb_rot,
 	"quat_mat2quat",      quat_mat2quat,
 	"quat_quat2mat",      quat_quat2mat,
 	"quat_distance",      quat_distance_wrapper,

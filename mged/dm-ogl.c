@@ -110,12 +110,12 @@ struct bu_structparse Ogl_vparse[] = {
 	{"%d",  1, "linewidth",		Ogl_MV_O(linewidth),	do_linewidth },
 	{"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fog },
 	{"%f",  1, "density",		Ogl_MV_O(fogdensity),	refresh_hook },
-	{"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		FUNC_NULL },
-	{"%d",  1, "has_rgb",		Ogl_MV_O(rgb),		FUNC_NULL },
-	{"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), FUNC_NULL },
-	{"%d",  1, "depth",		Ogl_MV_O(depth),	FUNC_NULL },
-	{"%d",  1, "debug",		Ogl_MV_O(debug),	FUNC_NULL },
-	{"",	0,  (char *)0,		0,			FUNC_NULL }
+	{"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "has_rgb",		Ogl_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "depth",		Ogl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "debug",		Ogl_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 #ifdef IR_KNOBS

@@ -568,7 +568,7 @@ char *name;
 	sizeof(struct _mged_variables));
 
   strcpy(dname, name);
-  mat_copy(Viewrot, identity);
+  bn_mat_copy(Viewrot, identity);
   size_reset();
   new_mats();
   (void)f_load_dv((ClientData)NULL, interp, 0, NULL);
@@ -596,12 +596,12 @@ char    **argv;
 
   for(i = 0; i < VIEW_TABLE_SIZE; ++i){
     press(default_view_strings[i]);
-    mat_copy(viewrot_table[i], Viewrot);
+    bn_mat_copy(viewrot_table[i], Viewrot);
     viewscale_table[i] = Viewscale;
   }
 
   current_view = 0;
-  mat_copy(Viewrot, viewrot_table[current_view]);
+  bn_mat_copy(Viewrot, viewrot_table[current_view]);
   Viewscale = viewscale_table[current_view];
   new_mats();
 

@@ -25,11 +25,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "raytrace.h"
-#include "./ged.h"
 #include "externs.h"
+#include "./ged.h"
 #include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
@@ -71,7 +73,7 @@ fastf_t	fovy, aspect, near, far, backoff;
 
 	fovy *= 3.1415926535/180.0;
 
-	mat_idn( m2 );
+	bn_mat_idn( m2 );
 	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
 	m2[0] = m2[5]/aspect;
 	m2[10] = (far+near) / (far-near);
@@ -81,9 +83,9 @@ fastf_t	fovy, aspect, near, far, backoff;
 	m2[15] = 0;
 
 	/* Move eye to origin, then apply perspective */
-	mat_idn( tran );
+	bn_mat_idn( tran );
 	tran[11] = -backoff;
-	mat_mul( m, m2, tran );
+	bn_mat_mul( m, m2, tran );
 }
 
 /*
@@ -119,7 +121,7 @@ CONST point_t	eye;
 	}
 
 	/* Shear "eye" to +Z axis */
-	mat_idn(shear);
+	bn_mat_idn(shear);
 	shear[2] = -eye[X]/eye[Z];
 	shear[6] = -eye[Y]/eye[Z];
 
@@ -133,12 +135,12 @@ VPRINT("sheared_eye", sheared_eye);
 #endif
 
 	/* Translate along +Z axis to put sheared_eye at (0,0,1). */
-	mat_idn(xlate);
+	bn_mat_idn(xlate);
 	/* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
 	MAT_DELTAS( xlate, 0, 0, 1-sheared_eye[Z] );
 
 	/* Build perspective matrix inline, substituting fov=2*atan(1,Z) */
-	mat_idn( persp );
+	bn_mat_idn( persp );
 	/* From page 492 of Graphics Gems */
 	persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
 	persp[5] = sheared_eye[Z];	/* scaling: determines fov */
@@ -147,8 +149,8 @@ VPRINT("sheared_eye", sheared_eye);
 	/* Z center of projection at Z=+1, r=-1/1 */
 	persp[14] = -1;
 
-	mat_mul( t1, xlate, shear );
-	mat_mul( t2, persp, t1 );
+	bn_mat_mul( t1, xlate, shear );
+	bn_mat_mul( t2, persp, t1 );
 #if 0
 	/* t2 has perspective matrix, with Z ranging from -1 to +1.
 	 * In order to control "near" and "far clipping planes,
@@ -162,9 +164,9 @@ VPRINT("sheared_eye", sheared_eye);
 	/* Now, move eye from Z=1 to Z=0, for clipping purposes */
 	MAT_DELTAS( xlate, 0, 0, -1 );
 #endif
-	mat_mul( pmat, xlate, t2 );
+	bn_mat_mul( pmat, xlate, t2 );
 #if 0
-mat_print("pmat",pmat);
+bn_mat_print("pmat",pmat);
 
 	/* Some quick checking */
 	VSET( a, 0, 0, -1 );
@@ -297,7 +299,7 @@ int	which_eye;
 		point_t	l, h, eye;
 
 		/* Determine where eye should be */
-		to_eye_scr = 1 / tan(mged_variables.perspective * rt_degtorad * 0.5);
+		to_eye_scr = 1 / tan(mged_variables.perspective * bn_degtorad * 0.5);
 
 #define SCR_WIDTH_PHYS	330	/* Assume a 330 mm wide screen */
 
@@ -312,9 +314,9 @@ VPRINT("h", h);
 }
 		VSET( eye, 0, 0, to_eye_scr );
 
-		mat_idn(tmat);
+		bn_mat_idn(tmat);
 		tmat[11] = -1;
-		mat_mul( tvmat, tmat, model2view );
+		bn_mat_mul( tvmat, tmat, model2view );
 
 		switch(which_eye)  {
 		case 0:
@@ -342,7 +344,7 @@ if( mged_variables.faceplate > 0 )  {
 			mike_persp_mat( pmat, eye_pos_scr );
 }
 #if HACK
-mat_print("pmat", pmat);
+bn_mat_print("pmat", pmat);
 #endif
 			break;
 		case 1:
@@ -358,7 +360,7 @@ mat_print("pmat", pmat);
 			deering_persp_mat( pmat, l, h, eye );
 			break;
 		}
-		mat_mul( new, pmat, mat );
+		bn_mat_mul( new, pmat, mat );
 		mat = new;
 	}
 
@@ -390,7 +392,7 @@ mat_print("pmat", pmat);
 	      dmp->dm_setColor(dmp, DM_WHITE, 1);
 	      DM_SET_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B);
 	    }
-	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat )){
+	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK){
 	      sp->s_flag = UP;
 	      ndrawn++;
 	    }
@@ -408,7 +410,7 @@ mat_print("pmat", pmat);
 			      (short)sp->s_color[1],
 			      (short)sp->s_color[2]);
 	    }
-	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat )) {
+	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK) {
 	      sp->s_flag = UP;
 	      ndrawn++;
 	    }
@@ -431,7 +433,7 @@ mat_print("pmat", pmat);
 	if( mged_variables.perspective <= 0 )  {
 		mat = model2objview;
 	} else {
-		mat_mul( new, pmat, model2objview );
+		bn_mat_mul( new, pmat, model2objview );
 		mat = new;
 	}
 	dmp->dm_newrot( dmp, mat, which_eye );
@@ -457,7 +459,7 @@ mat_print("pmat", pmat);
 	    dmp->dm_setLineAttr(dmp, 1, linestyle);
 	  }
 
-	  if( dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat )){
+	  if( dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK){
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
@@ -491,7 +493,7 @@ int axes;
   BU_LIST_INIT(&h_vlist.l);
   BU_LIST_APPEND(&h_vlist.l, &vlist.l);
 
-  mat_idn(mr_mat);
+  bn_mat_idn(mr_mat);
   dmp->dm_newrot(dmp, mr_mat, 0);
 
   if(axes_color_hook)

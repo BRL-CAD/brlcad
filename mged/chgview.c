@@ -41,16 +41,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include "conf.h"
 
-#include <math.h>
 #include <signal.h>
 #include <stdio.h>
+#include <math.h>
 
+#if 0
 #include "tcl.h"
 #include "tk.h"
+#endif
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "mater.h"
 #include "raytrace.h"
 #include "nmg.h"
@@ -79,7 +82,7 @@ static void abs_zoom();
 extern mat_t    ModelDelta;     /* from ged.c */
 extern long	nvectors;	/* from dodraw.c */
 
-extern struct rt_tol mged_tol;	/* from ged.c */
+extern struct bn_tol mged_tol;	/* from ged.c */
 extern vect_t e_axes_pos;
 
 vect_t edit_absolute_rotate;
@@ -155,14 +158,14 @@ double x, y, z;
   mat_t newrot;
   vect_t new_pos;
 
-  mat_idn( newrot );
+  bn_mat_idn( newrot );
   buildHrot( newrot, x * degtorad, y * degtorad, z * degtorad);
-  mat_mul2( newrot, Viewrot );
+  bn_mat_mul2( newrot, Viewrot );
 
   {
     mat_t   newinv;
 
-    mat_inv( newinv, newrot );
+    bn_mat_inv( newinv, newrot );
     wrt_view( ModelDelta, newinv, ModelDelta );
   }
 
@@ -353,7 +356,7 @@ size_reset()
 	if( VNEAR_ZERO( radial , SQRT_SMALL_FASTF ) )
 		VSETALL( radial , 1.0 );
 
-	mat_idn( toViewcenter );
+	bn_mat_idn( toViewcenter );
 	MAT_DELTAS( toViewcenter, -center[X], -center[Y], -center[Z] );
 	Viewscale = radial[X];
 	V_MAX( Viewscale, radial[Y] );
@@ -744,8 +747,8 @@ int			lvl;
 		bu_vls_strcat( vls, tp->tr_l.tl_name );
 		if( status & STAT_ROT ) {
 			fastf_t	az, el;
-			ae_vec( &az, &el, tp->tr_l.tl_mat ?
-				tp->tr_l.tl_mat : rt_identity );
+			bn_ae_vec( &az, &el, tp->tr_l.tl_mat ?
+				tp->tr_l.tl_mat : bn_mat_identity );
 			bu_vls_printf( vls, 
 				" az=%g, el=%g, ",
 				az, el );
@@ -836,7 +839,7 @@ int	verbose;
 
 	bu_vls_init( &str );
 	bu_vls_printf( outstrp, "%s:  ", dp->d_namep );
-	RT_INIT_EXTERNAL(&ext);
+	BU_INIT_EXTERNAL(&ext);
 	if( db_get_external( &ext, dp, dbip ) < 0 )  {
 	  Tcl_AppendResult(interp, "db_get_external(", dp->d_namep,
 			   ") failure\n", (char *)NULL);
@@ -869,7 +872,7 @@ int	verbose;
 	}
 
 	id = rt_id_solid( &ext );
-	mat_idn( ident );
+	bn_mat_idn( ident );
 	if( rt_functab[id].ft_import( &intern, &ext, ident ) < 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ": database import error\n", (char *)NULL);
 	  goto out;
@@ -1061,13 +1064,13 @@ char	**argv;
   bu_log("STATE=%s, ", state_str[state] );
   bu_log("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
   bu_log("base2local=%f\n", base2local);
-  mat_print("toViewcenter", toViewcenter);
-  mat_print("Viewrot", Viewrot);
-  mat_print("model2view", model2view);
-  mat_print("view2model", view2model);
+  bn_mat_print("toViewcenter", toViewcenter);
+  bn_mat_print("Viewrot", Viewrot);
+  bn_mat_print("model2view", model2view);
+  bn_mat_print("view2model", view2model);
   if( state != ST_VIEW )  {
-    mat_print("model2objview", model2objview);
-    mat_print("objview2model", objview2model);
+    bn_mat_print("model2objview", model2objview);
+    bn_mat_print("objview2model", objview2model);
   }
 
   stop_catching_output(&vls);
@@ -2162,14 +2165,14 @@ char	**argv;
 	    struct bu_vls vls;
 
 	    bu_vls_init(&vls);
-	    sec = mged_nrm_tol * rt_radtodeg;
+	    sec = mged_nrm_tol * bn_radtodeg;
 	    deg = (int)(sec);
 	    sec = (sec - (double)deg) * 60;
 	    min = (int)(sec);
 	    sec = (sec - (double)min) * 60;
 
 	    bu_vls_printf(&vls, "\tnorm %g degrees (%d deg %d min %g sec)\n",
-			  mged_nrm_tol * rt_radtodeg, deg, min, sec );
+			  mged_nrm_tol * bn_radtodeg, deg, min, sec );
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 	  } else {
@@ -2184,7 +2187,7 @@ char	**argv;
 	    bu_vls_printf(&vls,
 			  "\tdistance = %g %s\n\tperpendicularity = %g (cosine of %g degrees)\n",
 			   mged_tol.dist*base2local, rt_units_string(local2base), mged_tol.perp,
-			  acos(mged_tol.perp)*rt_radtodeg);
+			  acos(mged_tol.perp)*bn_radtodeg);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 	  }
@@ -2220,7 +2223,7 @@ char	**argv;
 			  return TCL_ERROR;
 			}
 			/* Note that a value of 0.0 or 360.0 will disable this tol */
-			mged_nrm_tol = f * rt_degtorad;
+			mged_nrm_tol = f * bn_degtorad;
 		}
 		else if( argv[argind][0] == 'd' ) {
 			/* Calculational distance tolerance */

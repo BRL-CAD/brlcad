@@ -71,8 +71,8 @@ extern Tk_Window tkwin;
 struct bu_structparse X_vparse[] = {
   {"%d",  1, "perspective",       X_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective",   X_MV_O(dummy_perspective),set_perspective },
-  {"%d",  1, "debug",             X_MV_O(debug),            FUNC_NULL },
-  {"",    0, (char *)0,           0,                        FUNC_NULL }
+  {"%d",  1, "debug",             X_MV_O(debug),            BU_STRUCTPARSE_FUNC_NULL },
+  {"",    0, (char *)0,           0,                        BU_STRUCTPARSE_FUNC_NULL }
 };
 
 static int XdoMotion = 0;

@@ -32,7 +32,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "raytrace.h"
 #include "externs.h"
@@ -441,13 +443,13 @@ register matp_t out, change, in;
 {
 	static mat_t t1, t2;
 
-	mat_mul( t1, toViewcenter, in );
-	mat_mul( t2, change, t1 );
+	bn_mat_mul( t1, toViewcenter, in );
+	bn_mat_mul( t2, change, t1 );
 
 	/* Build "fromViewcenter" matrix */
-	mat_idn( t1 );
+	bn_mat_idn( t1 );
 	MAT_DELTAS( t1, -toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ] );
-	mat_mul( out, t1, t2 );
+	bn_mat_mul( out, t1, t2 );
 }
 
 /*
@@ -465,23 +467,23 @@ register vect_t point;
 	static mat_t t1, t2, pt_to_origin, origin_to_pt;
 
 	/* build "point to origin" matrix */
-	mat_idn( pt_to_origin );
+	bn_mat_idn( pt_to_origin );
 	MAT_DELTAS(pt_to_origin, -point[X], -point[Y], -point[Z]);
 
 	/* build "origin to point" matrix */
-	mat_idn( origin_to_pt );
+	bn_mat_idn( origin_to_pt );
 	MAT_DELTAS(origin_to_pt, point[X], point[Y], point[Z]);
 
 	/* t1 = pt_to_origin * in */
-	mat_mul( t1, pt_to_origin, in );
+	bn_mat_mul( t1, pt_to_origin, in );
 
 	/* apply change matrix: t2 = change * pt_to_origin * in */
-	mat_mul( t2, change, t1 );
+	bn_mat_mul( t2, change, t1 );
 
 	/* apply origin_to_pt matrix:
 	 *	out = origin_to_pt * change * pt_to_origin * in
 	 */
-	mat_mul( out, origin_to_pt, t2 );
+	bn_mat_mul( out, origin_to_pt, t2 );
 }
 
 /*
@@ -502,41 +504,41 @@ register vect_t point, direc;
 	static vect_t	zaxis;
 
 	/* build "point to origin" matrix */
-	mat_idn( pt_to_origin );
+	bn_mat_idn( pt_to_origin );
 	MAT_DELTAS(pt_to_origin, -point[X], -point[Y], -point[Z]);
 
 	/* build "origin to point" matrix */
-	mat_idn( origin_to_pt );
+	bn_mat_idn( origin_to_pt );
 	MAT_DELTAS(origin_to_pt, point[X], point[Y], point[Z]);
 
 	/* build "direc to zaxis" matrix */
 	VSET(zaxis, 0, 0, 1);
-	mat_fromto(d_to_zaxis, direc, zaxis);
+	bn_mat_fromto(d_to_zaxis, direc, zaxis);
 
 	/* build "zaxis to direc" matrix */
-	mat_inv(zaxis_to_d, d_to_zaxis);
+	bn_mat_inv(zaxis_to_d, d_to_zaxis);
 
 	/* t1 = pt_to_origin * in */
-	mat_mul( t1, pt_to_origin, in );
+	bn_mat_mul( t1, pt_to_origin, in );
 
 	/* t2 = d_to_zaxis * pt_to_origin * in */
-	mat_mul( t2, d_to_zaxis, t1 );
+	bn_mat_mul( t2, d_to_zaxis, t1 );
 
 	/* apply change matrix...
 	 *	t1 = change * d_to_zaxis * pt_to_origin * in
 	 */
-	mat_mul( t1, change, t2 );
+	bn_mat_mul( t1, change, t2 );
 
 	/* apply zaxis_to_d matrix:
 	 *	t2 = zaxis_to_d * change * d_to_zaxis * pt_to_origin * in
 	 */
-	mat_mul( t2, zaxis_to_d, t1 );
+	bn_mat_mul( t2, zaxis_to_d, t1 );
 
 	/* apply origin_to_pt matrix:
 	 *	out = origin_to_pt * zaxis_to_d * change *
 	 *		d_to_zaxis * pt_to_origin * in
 	 */
-	mat_mul( out, origin_to_pt, t2 );
+	bn_mat_mul( out, origin_to_pt, t2 );
 }
 
 /*

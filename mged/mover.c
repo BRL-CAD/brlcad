@@ -25,6 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <math.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
@@ -34,6 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "raytrace.h"
 #include "./ged.h"
@@ -58,7 +60,7 @@ moveHobj( dp, xlate )
 register struct directory *dp;
 matp_t xlate;
 {
-	struct rt_external	ext;
+	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	register int		i;
 	union record		*rec;
@@ -77,7 +79,7 @@ matp_t xlate;
 			static mat_t temp, xmat;
 
 			rt_mat_dbmat( xmat, rec[i].M.m_mat );
-			mat_mul( temp, xlate, xmat );
+			bn_mat_mul( temp, xlate, xmat );
 			rt_dbmat_mat( rec[i].M.m_mat, temp );
 		}
 		if( db_put_external( &ext, dp, dbip ) < 0 )  {
@@ -147,7 +149,7 @@ matp_t xlate;
 			continue;
 
 		rt_mat_dbmat( xmat, rec[i].M.m_mat );
-		mat_mul(temp, xlate, xmat);
+		bn_mat_mul(temp, xlate, xmat);
 		rt_dbmat_mat( rec[i].M.m_mat, temp );
 
 		if( db_put( dbip,  cdp, rec, 0, cdp->d_len ) < 0 )
@@ -241,7 +243,7 @@ int air;				/* Air code */
 		record.M.m_id = ID_MEMB;
 		record.M.m_relation = relation;
 #if 0
-		mat_idn( identity );
+		bn_mat_idn( identity );
 #endif
 		rt_dbmat_mat( record.M.m_mat, identity );
 		if( db_put( dbip,  dp, &record, 1, 1 ) < 0 )  {
@@ -288,7 +290,7 @@ int air;				/* Air code */
 	record.M.m_relation = relation;
 	(void)strcpy( record.M.m_instname, objp->d_namep );
 #if 0
-	mat_idn( identity );
+	bn_mat_idn( identity );
 #endif
 	rt_dbmat_mat( record.M.m_mat, identity );
 	if( db_put( dbip,  dp, &record, dp->d_len-1, 1 ) < 0 )  {

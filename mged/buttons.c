@@ -401,8 +401,8 @@ static void bv_vrestore()  {
 	/* restore to saved view */
 	if ( vsaved )  {
 		Viewscale = sav_vscale;
-		mat_copy( Viewrot, sav_viewrot );
-		mat_copy( toViewcenter, sav_toviewcenter );
+		bn_mat_copy( Viewrot, sav_viewrot );
+		bn_mat_copy( toViewcenter, sav_toviewcenter );
 		new_mats();
 	}
 }
@@ -410,8 +410,8 @@ static void bv_vrestore()  {
 static void bv_vsave()  {
 	/* save current view */
 	sav_vscale = Viewscale;
-	mat_copy( sav_viewrot, Viewrot );
-	mat_copy( sav_toviewcenter, toViewcenter );
+	bn_mat_copy( sav_viewrot, Viewrot );
+	bn_mat_copy( sav_toviewcenter, toViewcenter );
 	vsaved = 1;
 #if 0
 	dmp->dm_light( dmp, LIGHT_ON, BV_VRESTORE );
@@ -479,7 +479,7 @@ ill_common()  {
 	edobj = 0;		/* sanity */
 	edsol = 0;		/* sanity */
 	movedir = 0;		/* No edit modes set */
-	mat_idn( modelchanges );	/* No changes yet */
+	bn_mat_idn( modelchanges );	/* No changes yet */
 
 	update_views = 1;
 	return(1);		/* OK */
@@ -825,7 +825,7 @@ be_s_rotate()  {
 	edsol = BE_S_ROTATE;
 	mmenu_set( MENU_L1, MENU_NULL );
 	es_edflag = SROT;
-	mat_idn(acc_rot_sol);
+	bn_mat_idn(acc_rot_sol);
 
         set_e_axes_pos(1);
 }
@@ -924,7 +924,7 @@ char *str;
 	      fastf_t o_Viewscale;
 
 	      /* save toViewcenter and Viewscale */
-	      mat_copy(o_toViewcenter, toViewcenter);
+	      bn_mat_copy(o_toViewcenter, toViewcenter);
 	      o_Viewscale = Viewscale;
 
 	      /* get new orig_pos */
@@ -932,7 +932,7 @@ char *str;
 	      MAT_DELTAS_GET(orig_pos, toViewcenter);
 
 	      /* restore old toViewcenter and Viewscale */
-	      mat_copy(toViewcenter, o_toViewcenter);
+	      bn_mat_copy(toViewcenter, o_toViewcenter);
 	      Viewscale = o_Viewscale;
 
 	    }

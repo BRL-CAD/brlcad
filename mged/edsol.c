@@ -44,6 +44,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -62,7 +63,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 extern void bv_edit_toggle();
-extern struct rt_tol		mged_tol;	/* from ged.c */
+extern struct bn_tol		mged_tol;	/* from ged.c */
 
 extern short earb4[5][18];
 extern short earb5[9][18];
@@ -102,7 +103,7 @@ MGED_EXTERN( struct wdb_pipept *add_pipept, (struct rt_pipe_internal *pipe, stru
 /* data for solid editing */
 int			sedraw;	/* apply solid editing changes */
 
-struct rt_external	es_ext;
+struct bu_external	es_ext;
 struct rt_db_internal	es_int;
 struct rt_db_internal	es_int_orig;
 
@@ -1293,7 +1294,7 @@ int arg;
 					NMG_CK_VERTEX( v2 );
 					VSUB2( edge2, eu2->eumate_p->vu_p->v_p->vg_p->coord, v2->vg_p->coord );
 
-					if( (ret_val=rt_isect_lseg3_lseg3( dist, v1->vg_p->coord, edge1,
+					if( (ret_val=bn_isect_lseg3_lseg3( dist, v1->vg_p->coord, edge1,
 						v2->vg_p->coord, edge2, &mged_tol )) > (-1) )
 					{
 					  struct bu_vls tmp_vls;
@@ -1442,7 +1443,7 @@ mat_t		mat;
 				{
 					for( k=j+1 ; k<arbn->neqn ; k++ )
 					{
-						if( !rt_mkpoint_3planes( mpt , arbn->eqn[i] , arbn->eqn[j] , arbn->eqn[k] ) )
+						if( !bn_mkpoint_3planes( mpt , arbn->eqn[i] , arbn->eqn[j] , arbn->eqn[k] ) )
 						{
 							int l;
 
@@ -1979,7 +1980,7 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
       acc_sc_sol = 1;
     }
 
-    mat_idn(acc_rot_sol);
+    bn_mat_idn(acc_rot_sol);
 
     mged_variables.edit = 0;
     bv_edit_toggle();
@@ -2049,7 +2050,7 @@ init_sedit()
 	}
 
 	/* Read solid description.  Save copy of original data */
-	RT_INIT_EXTERNAL(&es_ext);
+	BU_INIT_EXTERNAL(&es_ext);
 	RT_INIT_DB_INTERNAL(&es_int);
 	if( db_get_external( &es_ext, illump->s_path[illump->s_last], dbip ) < 0 ){
 	  TCL_READ_ERR;
@@ -2057,7 +2058,7 @@ init_sedit()
 	}
 
 	id = rt_id_solid( &es_ext );
-	if( rt_functab[id].ft_import( &es_int, &es_ext, rt_identity ) < 0 )  {
+	if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity ) < 0 )  {
 	  Tcl_AppendResult(interp, "init_sedit(", illump->s_path[illump->s_last]->d_namep,
 			   "):  solid import failure\n", (char *)NULL);
 	  if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
@@ -2103,7 +2104,7 @@ init_sedit()
 	pathHmat( illump, es_mat, illump->s_last-1 );
 
 	/* get the inverse matrix */
-	mat_inv( es_invmat, es_mat );
+	bn_mat_inv( es_invmat, es_mat );
 
 	/* Establish initial keypoint */
 	es_keytag = "";
@@ -2353,7 +2354,7 @@ char *str;
 
 	if( (fptr=strrchr( str, '/')))
 	{
-		dir = (char *)rt_malloc( (strlen(str)+1)*sizeof( char ), "get_file_name: dir" );
+		dir = (char *)bu_malloc( (strlen(str)+1)*sizeof( char ), "get_file_name: dir" );
 		ptr1 = str;
 		ptr2 = dir;
 		while( ptr1 != fptr )
@@ -2799,7 +2800,7 @@ sedit()
 			 * First, cancel any existing rotations,
 			 * then perform new rotation
 			 */
-			mat_inv( invsolr, acc_rot_sol );
+			bn_mat_inv( invsolr, acc_rot_sol );
 			eqp = &es_peqn[es_menu][0];	/* es_menu==plane of interest */
 			VMOVE( work, eqp );
 			MAT4X3VEC( eqp, invsolr, work );
@@ -2807,12 +2808,12 @@ sedit()
 			if( inpara == 3 ){
 				/* 3 params:  absolute X,Y,Z rotations */
 				/* Build completely new rotation change */
-				mat_idn( modelchanges );
+				bn_mat_idn( modelchanges );
 				buildHrot( modelchanges,
 					es_para[0] * degtorad,
 					es_para[1] * degtorad,
 					es_para[2] * degtorad );
-				mat_copy(acc_rot_sol, modelchanges);
+				bn_mat_copy(acc_rot_sol, modelchanges);
 
 				/* Apply new rotation to face */
 				eqp = &es_peqn[es_menu][0];
@@ -2844,7 +2845,7 @@ sedit()
 			es_peqn[es_menu][3]=VDOT(eqp,tempvec);	
 
 			/*  Clear out solid rotation */
-			mat_idn( modelchanges );
+			bn_mat_idn( modelchanges );
 
 		}  else  {
 			/* Apply incremental changes */
@@ -2863,7 +2864,7 @@ sedit()
 		}
 
 		(void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
-		mat_idn( incr_change );
+		bn_mat_idn( incr_change );
 
 		/* no need to calc_planes again */
 		replot_editing_solid();
@@ -2885,9 +2886,9 @@ sedit()
 				acc_sc_sol = es_para[0];
 			}
 
-			mat_scale_about_pt( scalemat, es_keypoint, es_scale );
-			mat_mul(mat2, scalemat, es_mat);
-			mat_mul(mat, es_invmat, mat2);
+			bn_mat_scale_about_pt( scalemat, es_keypoint, es_scale );
+			bn_mat_mul(mat2, scalemat, es_mat);
+			bn_mat_mul(mat, es_invmat, mat2);
 			transform_editing_solid(&es_int, mat, &es_int, 1);
 
 			/* reset solid scale factor */
@@ -2914,18 +2915,18 @@ sedit()
 			    MAT4X3PNT(raw_para, es_invmat, es_para);
 			    MAT4X3PNT(work, es_invmat, es_keypoint);
 			    VSUB2( delta, work, raw_para );
-			    mat_idn( xlatemat );
+			    bn_mat_idn( xlatemat );
 			    MAT_DELTAS_VEC_NEG( xlatemat, delta );
 			  }else{ /* move solid to position es_para */
 			    /* move solid to position es_para */
 			    MAT4X3PNT(work, es_invmat, es_keypoint);
 			    VSUB2( delta, work, es_para );
-			    mat_idn( xlatemat );
+			    bn_mat_idn( xlatemat );
 			    MAT_DELTAS_VEC_NEG( xlatemat, delta );
 			  }
 #else
 				VSUB2( delta, es_para, es_keypoint );
-				mat_idn( xlatemat );
+				bn_mat_idn( xlatemat );
 				MAT_DELTAS_VEC( xlatemat, delta );
 #endif
 				transform_editing_solid(&es_int, xlatemat, &es_int, 1);
@@ -2989,7 +2990,7 @@ sedit()
 			ld = MAGNITUDE( tgc->d );
 
 			/* find 2 perpendicular vectors normal to H for new A,B */
-			mat_vec_perp( tgc->b, tgc->h );
+			bn_vec_perp( tgc->b, tgc->h );
 			VCROSS(tgc->a, tgc->b, tgc->h);
 			VUNITIZE(tgc->a);
 			VUNITIZE(tgc->b);
@@ -3058,21 +3059,21 @@ sedit()
 				 * in degrees.  First, cancel any existing rotations,
 				 * then perform new rotation
 				 */
-				mat_inv( invsolr, acc_rot_sol );
+				bn_mat_inv( invsolr, acc_rot_sol );
 
 				/* Build completely new rotation change */
-				mat_idn( modelchanges );
+				bn_mat_idn( modelchanges );
 				buildHrot( modelchanges,
 					es_para[0] * degtorad,
 					es_para[1] * degtorad,
 					es_para[2] * degtorad );
 				/* Borrow incr_change matrix here */
-				mat_mul( incr_change, modelchanges, invsolr );
-				mat_copy(acc_rot_sol, modelchanges);
+				bn_mat_mul( incr_change, modelchanges, invsolr );
+				bn_mat_copy(acc_rot_sol, modelchanges);
 
 				/* Apply new rotation to solid */
 				/*  Clear out solid rotation */
-				mat_idn( modelchanges );
+				bn_mat_idn( modelchanges );
 			}  else  {
 				/* Apply incremental changes already in incr_change */
 			}
@@ -3081,25 +3082,25 @@ sedit()
 #ifdef TRY_EDIT_NEW_WAY
 			if(mged_variables.context){
 			  /* calculate rotations about keypoint */
-			  mat_xform_about_pt( edit, incr_change, es_keypoint );
+			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
 			  /* We want our final matrix (mat) to xform the original solid
 			   * to the position of this instance of the solid, perform the
 			   * current edit operations, then xform back.
 			   *	mat = es_invmat * edit * es_mat
 			   */
-			  mat_mul( mat1, edit, es_mat );
-			  mat_mul( mat, es_invmat, mat1 );
+			  bn_mat_mul( mat1, edit, es_mat );
+			  bn_mat_mul( mat, es_invmat, mat1 );
 			}else{
 			  MAT4X3PNT(work, es_invmat, es_keypoint);
-			  mat_xform_about_pt( mat, incr_change, work );
+			  bn_mat_xform_about_pt( mat, incr_change, work );
 			}
 #else
-			mat_xform_about_pt( mat, incr_change, es_keypoint);
+			bn_mat_xform_about_pt( mat, incr_change, es_keypoint);
 #endif
 			transform_editing_solid(&es_int, mat, &es_int, 1);
 
-			mat_idn( incr_change );
+			bn_mat_idn( incr_change );
 		}
 		break;
 
@@ -3113,7 +3114,7 @@ sedit()
 			MAT4X3VEC(work, incr_change, tgc->h);
 			VMOVE(tgc->h, work);
 
-			mat_idn( incr_change );
+			bn_mat_idn( incr_change );
 		}
 		break;
 
@@ -3134,7 +3135,7 @@ sedit()
 			MAT4X3VEC(work, incr_change, tgc->d);
 			VMOVE(tgc->d, work);
 
-			mat_idn( incr_change );
+			bn_mat_idn( incr_change );
 		}
 		break;
 
@@ -3148,7 +3149,7 @@ sedit()
 			MAT4X3VEC(work, incr_change, eto->eto_C);
 			VMOVE(eto->eto_C, work);
 		}
-		mat_idn( incr_change );
+		bn_mat_idn( incr_change );
 		break;
 
 	case ECMD_NMG_EPICK:
@@ -3205,7 +3206,7 @@ sedit()
 					MAT4X3VEC( view_dir , view2model , view_z_dir );
 
 					/* intersect line through new_pt with plane of loop */
-					if( rt_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
+					if( bn_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
 					{
 					  /* line does not intersect plane, don't do an esplit */
 					  Tcl_AppendResult(interp, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
@@ -3366,7 +3367,7 @@ sedit()
 					MAT4X3VEC( view_dir , view2model , view_z_dir );
 
 					/* intersect line through new_pt with plane of loop */
-					if( rt_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
+					if( bn_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
 					{
 					  /* line does not intersect plane, don't do an esplit */
 					  Tcl_AppendResult(interp, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
@@ -3413,7 +3414,7 @@ sedit()
 
 			VSUB2( extrude_vec , to_pt , lu_keypoint );
 
-			if( rt_isect_line3_plane( &dist , to_pt , extrude_vec , lu_pl , &mged_tol ) < 1 )
+			if( bn_isect_line3_plane( &dist , to_pt , extrude_vec , lu_pl , &mged_tol ) < 1 )
 			{
 			  Tcl_AppendResult(interp, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
@@ -4231,7 +4232,7 @@ CONST vect_t	mousevec;
       MAT4X3PNT( raw_mp, es_invmat, pt );
       MAT4X3PNT( raw_kp, es_invmat, es_keypoint );
       VSUB2( delta, raw_kp, raw_mp );
-      mat_idn( xlatemat );
+      bn_mat_idn( xlatemat );
       MAT_DELTAS_VEC_NEG( xlatemat, delta );
 #else
 	MAT4X3PNT( temp, es_mat, es_keypoint );
@@ -4246,7 +4247,7 @@ CONST vect_t	mousevec;
 	 */
 
 	VSUB2( delta, es_keypoint, pt );
-	mat_idn( xlatemat );
+	bn_mat_idn( xlatemat );
 	MAT_DELTAS_VEC_NEG( xlatemat, delta );
 #endif
       transform_editing_solid(&es_int, xlatemat, &es_int, 1);
@@ -4386,11 +4387,11 @@ CONST vect_t	mousevec;
       struct model	*m = 
 	(struct model *)es_int.idb_ptr;
       struct edge	*e;
-      struct rt_tol	tmp_tol;
+      struct bn_tol	tmp_tol;
       NMG_CK_MODEL(m);
 
       /* Picking an edge should not depend on tolerances! */
-      tmp_tol.magic = RT_TOL_MAGIC;
+      tmp_tol.magic = BN_TOL_MAGIC;
       tmp_tol.dist = 0.0;
       tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
       tmp_tol.perp = 0.0;
@@ -4508,7 +4509,7 @@ vect_t tvec;
        * to desired new location.
        */
       VSUB2( delta, raw_kp, pt );
-      mat_idn( xlatemat );
+      bn_mat_idn( xlatemat );
       MAT_DELTAS_VEC_NEG( xlatemat, delta );
       transform_editing_solid(&es_int, xlatemat, &es_int, 1);
     }
@@ -4593,11 +4594,11 @@ vect_t tvec;
       struct model	*m = 
 	(struct model *)es_int.idb_ptr;
       struct edge	*e;
-      struct rt_tol	tmp_tol;
+      struct bn_tol	tmp_tol;
       NMG_CK_MODEL(m);
 
       /* Picking an edge should not depend on tolerances! */
-      tmp_tol.magic = RT_TOL_MAGIC;
+      tmp_tol.magic = BN_TOL_MAGIC;
       tmp_tol.dist = 0.0;
       tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
       tmp_tol.perp = 0.0;
@@ -4700,7 +4701,7 @@ CONST vect_t	mousevec;
   vect_t	tr_temp;		/* temp translation vector */
   vect_t	temp;
 
-  mat_idn( incr_change );
+  bn_mat_idn( incr_change );
   scale = 1;
   if( movedir & SARROW )  {
     /* scaling option is in effect */
@@ -4760,7 +4761,7 @@ CONST vect_t	mousevec;
     MAT4X3PNT(pos_model, modelchanges, temp);
     wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
-    mat_idn( incr_change );
+    bn_mat_idn( incr_change );
     new_mats();
   }  else if( movedir & (RARROW|UARROW) )  {
     mat_t oldchanges;	/* temporary matrix */
@@ -4778,10 +4779,10 @@ CONST vect_t	mousevec;
     VSUB2( tr_temp, pos_model, tr_temp );
     MAT_DELTAS(incr_change,
 	       tr_temp[X], tr_temp[Y], tr_temp[Z]);
-    mat_copy( oldchanges, modelchanges );
-    mat_mul( modelchanges, incr_change, oldchanges );
+    bn_mat_copy( oldchanges, modelchanges );
+    bn_mat_mul( modelchanges, incr_change, oldchanges );
 
-    mat_idn( incr_change );
+    bn_mat_idn( incr_change );
     new_mats();
 
     update_edit_absolute_tran(pos_view);
@@ -4802,15 +4803,15 @@ vect_t tvec;
   mat_t incr_mat;
   mat_t oldchanges;	/* temporary matrix */
 
-  mat_idn( incr_mat );
+  bn_mat_idn( incr_mat );
   MAT4X3PNT( temp, es_mat, es_keypoint );
   MAT4X3PNT( pos_model, view2model, tvec);/* NOT objview */
   MAT4X3PNT( tr_temp, modelchanges, temp );
   VSUB2( tr_temp, pos_model, tr_temp );
   MAT_DELTAS(incr_mat,
 	     tr_temp[X], tr_temp[Y], tr_temp[Z]);
-  mat_copy( oldchanges, modelchanges );
-  mat_mul( modelchanges, incr_mat, oldchanges );
+  bn_mat_copy( oldchanges, modelchanges );
+  bn_mat_mul( modelchanges, incr_mat, oldchanges );
 
   new_mats();
 }
@@ -4824,7 +4825,7 @@ oedit_abs_scale()
   vect_t pos_model;
   mat_t incr_mat;
 
-  mat_idn( incr_mat );
+  bn_mat_idn( incr_mat );
 
   if(-SMALL_FASTF < edit_absolute_scale && edit_absolute_scale < SMALL_FASTF)
     scale = 1;
@@ -4947,7 +4948,7 @@ pscale()
 
 	case MENU_VOL_CSIZE:	/* scale voxel size */
 		{
-			rt_log( "es_scale = %g\n", es_scale );
+			bu_log( "es_scale = %g\n", es_scale );
 		}
 		break;
 
@@ -5659,7 +5660,7 @@ init_objedit()
 	/* for safety sake */
 	es_menu = 0;
 	es_edflag = -1;
-	mat_idn(es_mat);
+	bn_mat_idn(es_mat);
 
 	/*
 	 * Check for a processed region 
@@ -5683,7 +5684,7 @@ init_objedit()
 	}
 
 	id = rt_id_solid( &es_ext );
-	if( rt_functab[id].ft_import( &es_int, &es_ext, rt_identity ) < 0 )  {
+	if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity ) < 0 )  {
 	  Tcl_AppendResult(interp, "init_objedit(", illump->s_path[illump->s_last]->d_namep,
 			   "):  solid import failure\n", (char *)NULL);
 	  if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
@@ -5708,7 +5709,7 @@ init_objedit()
 	pathHmat( illump, es_mat, illump->s_last-1 );
 
 	/* get the inverse matrix */
-	mat_inv( es_invmat, es_mat );
+	bn_mat_inv( es_invmat, es_mat );
 
 	set_e_axes_pos(1);
 }
@@ -5737,17 +5738,17 @@ oedit_accept()
 		);
 		break;
 	default:
-		mat_idn( topm );
-		mat_idn( inv_topm );
-		mat_idn( deltam );
-		mat_idn( tempm );
+		bn_mat_idn( topm );
+		bn_mat_idn( inv_topm );
+		bn_mat_idn( deltam );
+		bn_mat_idn( tempm );
 
 		pathHmat( illump, topm, ipathpos-2 );
 
-		mat_inv( inv_topm, topm );
+		bn_mat_inv( inv_topm, topm );
 
-		mat_mul( tempm, modelchanges, topm );
-		mat_mul( deltam, inv_topm, tempm );
+		bn_mat_mul( tempm, modelchanges, topm );
+		bn_mat_mul( deltam, inv_topm, tempm );
 
 		moveHinstance(
 			illump->s_path[ipathpos-1],
@@ -5777,8 +5778,8 @@ oedit_accept()
 		(void)replot_original_solid( sp );
 		sp->s_iflag = DOWN;
 	}
-	mat_idn( modelchanges );
-	mat_idn( acc_rot_sol );
+	bn_mat_idn( modelchanges );
+	bn_mat_idn( acc_rot_sol );
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
@@ -5792,7 +5793,7 @@ oedit_reject()
 	es_int.idb_ptr = (genptr_t)NULL;
 	db_free_external( &es_ext );
 
-	mat_idn( acc_rot_sol );
+	bn_mat_idn( acc_rot_sol );
 }
 
 /* 			F _ E Q N ( )
@@ -6085,12 +6086,12 @@ double	xangle, yangle, zangle;
 	if(!SEDIT_ROTATE)
 	  return 0;
 
-	mat_idn( incr_change );
+	bn_mat_idn( incr_change );
 	buildHrot( incr_change, xangle, yangle, zangle );
 
 	/* accumulate the translations */
-	mat_mul(tempp, incr_change, acc_rot_sol);
-	mat_copy(acc_rot_sol, tempp);
+	bn_mat_mul(tempp, incr_change, acc_rot_sol);
+	bn_mat_copy(acc_rot_sol, tempp);
 
 	/* sedit() will use incr_change or acc_rot_sol ?? */
 	sedit();	/* change es_int only, NOW */
@@ -6112,11 +6113,11 @@ double	xangle, yangle, zangle;
 
 	if( movedir != ROTARROW )  return 0;
 
-	mat_idn( incr_change );
+	bn_mat_idn( incr_change );
 	buildHrot( incr_change, xangle, yangle, zangle );
 
 	/* accumulate change matrix - do it wrt a point NOT view center */
-	mat_mul(tempp, modelchanges, es_mat);
+	bn_mat_mul(tempp, modelchanges, es_mat);
 	MAT4X3PNT(point, tempp, es_keypoint);
 	wrt_point(modelchanges, incr_change, modelchanges, point);
 
@@ -6264,7 +6265,7 @@ struct rt_db_internal	*ip;
 			vect_t	adir;
 			RT_TOR_CK_MAGIC(tor);
 
-			mat_vec_ortho( adir, tor->h );
+			bn_vec_ortho( adir, tor->h );
 
 			MAT4X3PNT( pos_view, xform, tor->v );
 			POINT_LABEL( pos_view, 'V' );
@@ -6426,7 +6427,7 @@ struct rt_db_internal	*ip;
 
 			VMOVE(Nu, eto->eto_N);
 			VUNITIZE(Nu);
-			vec_ortho( Au, Nu );
+			bn_vec_ortho( Au, Nu );
 			VUNITIZE(Au);
 
 			cmag = MAGNITUDE(eto->eto_C);
@@ -6557,12 +6558,12 @@ rt_arb_calc_planes( planes, arb, type, tol )
 plane_t			planes[6];
 struct rt_arb_internal	*arb;
 int			type;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	register int i, p1, p2, p3;
 
 	RT_ARB_CK_MAGIC( arb);
-	RT_CK_TOL( tol );
+	BN_CK_TOL( tol );
 
 	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
 
@@ -6573,7 +6574,7 @@ CONST struct rt_tol	*tol;
 		p2 = arb_faces[type][i*4+1];
 		p3 = arb_faces[type][i*4+2];
 
-		if( rt_mk_plane_3pts( planes[i],
+		if( bn_mk_plane_3pts( planes[i],
 		    arb->pt[p1], arb->pt[p2], arb->pt[p3], tol ) < 0 )  {
 		  struct bu_vls tmp_vls;
 

@@ -37,9 +37,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
-#include <math.h>
 #include <signal.h>
 #include <stdio.h>
+#include <math.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
@@ -49,6 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "externs.h"
 #include "db.h"
 #include "nmg.h"
@@ -61,7 +62,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./sedit.h"
 
-extern struct rt_tol mged_tol;
+extern struct bn_tol mged_tol;
 
 
 void set_tran();
@@ -665,17 +666,17 @@ char	**argv;
 	if( proto->d_flags & DIR_SOLID )
 	{
 		struct rt_db_internal	internal;
-		struct rt_external	ext;
+		struct bu_external	ext;
 		int			id;
 
-		RT_INIT_EXTERNAL( &ext );
+		BU_INIT_EXTERNAL( &ext );
 		RT_INIT_DB_INTERNAL( &internal );
 
 		if( db_get_external( &ext, proto, dbip ) < 0 )
 			return TCL_ERROR;
 
 		id = rt_id_solid( &ext );
-		if( rt_functab[id].ft_import( &internal, &ext, rt_identity ) < 0 )  {
+		if( rt_functab[id].ft_import( &internal, &ext, bn_mat_identity ) < 0 )  {
 		  Tcl_AppendResult(interp, "f_mirror(", argv[1], argv[2],
 			   "):  solid import failure\n", (char *)NULL);
 		  if( internal.idb_ptr )  rt_functab[id].ft_ifree( &internal );
@@ -1059,7 +1060,7 @@ char	**argv;
 				}
 
 				/* now reverse order of vertices in each curve */
-				tmp_curve = (fastf_t *)rt_calloc( 3*ars->pts_per_curve, sizeof( fastf_t ), "f_mirror: tmp_curve" );
+				tmp_curve = (fastf_t *)bu_calloc( 3*ars->pts_per_curve, sizeof( fastf_t ), "f_mirror: tmp_curve" );
 				for( i=0 ; i<ars->ncurves ; i++ )
 				{
 					/* reverse vertex order */
@@ -1070,7 +1071,7 @@ char	**argv;
 					bcopy( tmp_curve, ars->curves[i], ars->pts_per_curve*3*sizeof( fastf_t ) );
 				}
 
-				rt_free( (char *)tmp_curve, "f_mirror: tmp_curve" );
+				bu_free( (char *)tmp_curve, "f_mirror: tmp_curve" );
 
 				break;
 			}
@@ -1083,7 +1084,7 @@ char	**argv;
 
 				MAT_IDN( mirmat )
 				mirmat[k*5] = -1.0;
-				mat_mul( temp, mirmat, ebm->mat );
+				bn_mat_mul( temp, mirmat, ebm->mat );
 				MAT_COPY( ebm->mat, temp )
 
 				break;
@@ -1098,7 +1099,7 @@ char	**argv;
 
 				MAT_IDN( mirmat )
 				mirmat[k*5] = -1.0;
-				mat_mul( temp, mirmat, vol->mat );
+				bn_mat_mul( temp, mirmat, vol->mat );
 				MAT_COPY( vol->mat, temp )
 
 				break;
@@ -1147,7 +1148,7 @@ char	**argv;
 		  TCL_ALLOC_ERR_return;
 		}
 		NAMEMOVE(argv[2], rec[0].c.c_name);
-		mat_idn( mirmat );
+		bn_mat_idn( mirmat );
 		mirmat[k*5] = -1.0;
 		for( i=1; i < proto->d_len; i++) {
 			mat_t	xmat;
@@ -1157,7 +1158,7 @@ char	**argv;
 			  return TCL_ERROR;
 			}
 			rt_mat_dbmat( xmat, rec[i].M.m_mat );
-			mat_mul(temp, mirmat, xmat);
+			bn_mat_mul(temp, mirmat, xmat);
 			rt_dbmat_mat( rec[i].M.m_mat, temp );
 		}
 		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 ) {
@@ -1374,7 +1375,7 @@ char	**argv;
 	int ngran;
 	int i;
 	struct rt_db_internal	internal;
-	struct rt_external	external;
+	struct bu_external	external;
 	struct rt_arb_internal	*arb_ip;
 	struct rt_tgc_internal	*tgc_ip;
 	struct rt_ell_internal	*ell_ip;
@@ -1806,13 +1807,13 @@ vect_t argvect;
    *	2. trans == v_work
    *	3. same scale factor
    */
-  mat_idn(temp);
+  bn_mat_idn(temp);
   MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
   temp[15] = modelchanges[15];
-  mat_copy(modelchanges, temp);
+  bn_mat_copy(modelchanges, temp);
 
   /* build new rotation matrix */
-  mat_idn(temp);
+  bn_mat_idn(temp);
   buildHrot(temp,
 	    argvect[0]*degtorad,
 	    argvect[1]*degtorad,
@@ -1820,10 +1821,10 @@ vect_t argvect;
 
   if(iflag){
     /* apply accumulated rotations */
-    mat_mul2(acc_rot_sol, temp);
+    bn_mat_mul2(acc_rot_sol, temp);
   }
 
-  /*XXX*/ mat_copy(acc_rot_sol, temp); /* used to rotate solid/object axis */
+  /*XXX*/ bn_mat_copy(acc_rot_sol, temp); /* used to rotate solid/object axis */
   
   /* Record the new rotation matrix into the revised
    *	modelchanges matrix wrt "point"
@@ -1910,7 +1911,7 @@ char	**argv;
 		movedir = SARROW;
 	}
 
-	mat_idn(incr);
+	bn_mat_idn(incr);
 
 	/* switch depending on type of scaling to do */
 	switch( edobj ) {
@@ -1970,8 +1971,8 @@ char	**argv;
 
 	update_views = 1;
 
-	mat_idn(incr);
-	mat_idn(old);
+	bn_mat_idn(incr);
+	bn_mat_idn(old);
 
 	if( (movedir & (RARROW|UARROW)) == 0 ) {
 		/* put in object trans mode */
@@ -1990,8 +1991,8 @@ char	**argv;
 	MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
 	VSUB2(model_incr, new_vertex, ed_sol_pt);
 	MAT_DELTAS(incr, model_incr[0], model_incr[1], model_incr[2]);
-	mat_copy(old,modelchanges);
-	mat_mul(modelchanges, incr, old);
+	bn_mat_copy(old,modelchanges);
+	bn_mat_mul(modelchanges, incr, old);
 	new_mats();
 
 	return TCL_OK;
@@ -2115,7 +2116,7 @@ char	**argv;
 	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return TCL_ERROR;
 
-	if( rt_db_get_internal( &old_intern, old_dp, dbip, rt_identity ) < 0 )  {
+	if( rt_db_get_internal( &old_intern, old_dp, dbip, bn_mat_identity ) < 0 )  {
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -2281,13 +2282,13 @@ char	**argv;
 	 *	2. trans == v_work
 	 *	3. same scale factor
 	 */
-	mat_idn(temp);
+	bn_mat_idn(temp);
 	MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
 	temp[15] = modelchanges[15];
-	mat_copy(modelchanges, temp);
+	bn_mat_copy(modelchanges, temp);
 
 	/* build new rotation matrix */
-	mat_idn(temp);
+	bn_mat_idn(temp);
 	buildHrot(temp, 0.0, 0.0, atof(argv[7])*degtorad);
 
 	/* Record the new rotation matrix into the revised

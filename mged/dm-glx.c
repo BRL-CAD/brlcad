@@ -100,14 +100,14 @@ struct bu_structparse Glx_vparse[] = {
 	{"%d",  1, "lighting",		Glx_MV_O(lighting_on),	establish_lighting },
 	{"%d",  1, "perspective",       Glx_MV_O(perspective_mode), establish_perspective },
 	{"%d",  1, "set_perspective",Glx_MV_O(dummy_perspective),  set_perspective },
-	{"%d",  1, "debug",		Glx_MV_O(debug),	FUNC_NULL },
+	{"%d",  1, "debug",		Glx_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "linewidth",		Glx_MV_O(linewidth),	refresh_hook },
-	{"%d",  1, "has_zbuf",		Glx_MV_O(zbuf),		FUNC_NULL },
-	{"%d",  1, "has_rgb",		Glx_MV_O(rgb),		FUNC_NULL },
-	{"%d",  1, "has_doublebuffer",	Glx_MV_O(doublebuffer), FUNC_NULL },
-	{"%d",  1, "min_scr_z",		Glx_MV_O(min_scr_z),	FUNC_NULL },
-	{"%d",  1, "max_scr_z",		Glx_MV_O(max_scr_z),	FUNC_NULL },
-	{"",	0,  (char *)0,		0,			FUNC_NULL }
+	{"%d",  1, "has_zbuf",		Glx_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "has_rgb",		Glx_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "has_doublebuffer",	Glx_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "min_scr_z",		Glx_MV_O(min_scr_z),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "max_scr_z",		Glx_MV_O(max_scr_z),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 #ifdef IR_BUTTONS
