@@ -44,8 +44,7 @@ struct tcl_specific tcl_defaults = {
 	{	0.0, 0.0, 0.0, 0.0,	/* tcl_m_to_r */
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0 },
-	(Tcl_Interp *)NULL
+		0.0, 0.0, 0.0, 0.0 }
 	};
 
 #define SHDR_NULL	((struct tcl_specific *)0)

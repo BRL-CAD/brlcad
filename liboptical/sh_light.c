@@ -491,8 +491,7 @@ light_gen_sample_pts(struct application    *upap,
 	struct application ap;
 	point_t tree_min;
 	point_t tree_max;
-	vect_t step, span;
-	double mul = 0.25;
+	vect_t  span;
 
 	RT_CK_LIGHT(lsp);
 
@@ -510,8 +509,6 @@ light_gen_sample_pts(struct application    *upap,
 	/* get the bounding box of the light source */
 	rt_bound_tree(lsp->lt_rp->reg_treetop, tree_min, tree_max);
 
-	/* get extent in X, Y, Z */
-	VSUB2(span, tree_max, tree_min);
 
 	if (rdebug & RDEBUG_LIGHT ) {
 		bu_log("light bb (%g %g %g), (%g %g %g)\n", 
@@ -520,40 +517,19 @@ light_gen_sample_pts(struct application    *upap,
 	}
 
 
-<<<<<<< sh_light.c
 	/* if there is no space occupied by the light source, then
 	 * just give up
 	 */
+	VSUB2(span, tree_max, tree_min);
 	if (span[X] <= 0.0 && span[Y] <= 0.0 && span[Z] <= 0.0) {
-		bu_log("impossibly small light\n");
+		bu_log("Small light. (treating as point source)\n");
 		return;
 	}
 
-=======
->>>>>>> 11.55
-	/* get extent in X, Y, Z */
-	VSUB2(span, tree_max, tree_min);
-
-<<<<<<< sh_light.c
 	while ( lsp->lt_pt_count < MAX_LIGHT_SAMPLES ) {
-#if 0
-=======
-	/* For benchmarking, leave lt_pt_count = 0 */
-	if( !benchmark )  while ( lsp->lt_pt_count < 5 ) {
->>>>>>> 11.55
-		VSCALE(step, span, mul);
 
-		/* if there is no space occupied by the light source, then
-		 * just give up.  Prevents infinite loops.
-		 */
-		if (step[X] <= 0.0 && step[Y] <= 0.0 && step[Z] <= 0.0) break;
-
-		shoot_grids(&ap, step, tree_min, tree_max);
-		mul *= 0.5;
-#else
 		ray_setup(&ap, tree_min, tree_max, span);
 		(void)rt_shootray( &ap );
-#endif
 	}
 
 	if (rdebug & RDEBUG_LIGHT ) {
@@ -1150,6 +1126,25 @@ struct seg *finished_segs;
 		goto out;
 	}
 
+	/* if the region we hit is a light source be generous */
+#if 1
+	{
+		struct light_specific *lsp;
+		for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
+			if (lsp->lt_rp == regp) {
+#if RT_MULTISPECTRAL
+		bn_tabdata_copy( ap->a_spectrum, ms_filter_color );
+#else
+		VMOVE( ap->a_color, filter_color );
+#endif
+		light_visible = 1;
+		reason = "hit light";
+		goto out;
+
+			}
+		}
+	}
+#endif
 	/* or something futher away than a finite invisible light */
 	if (lsp->lt_invisible && !(lsp->lt_infinite) ) {
 		vect_t	tolight;

@@ -18,7 +18,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCScook[] = "@(#)$Header$ (BRL)";
+static const char RCScook[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

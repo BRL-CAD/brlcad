@@ -472,6 +472,7 @@ char *cp;
 static CONST double	cs = (1.0/255.0);
 static CONST point_t delta = {0.5, 0.5, 0.0};
 
+#if 0
 static int
 project_antialiased(sh_color, img_sp, prj_sp, ap, r_pe, r_N, r_pt)
 point_t sh_color;
@@ -505,7 +506,7 @@ CONST point_t r_pt;
 	}
 	return 0;
 }
-
+#endif
 static int
 project_point(sh_color, img_sp, prj_sp, r_pt)
 point_t sh_color;

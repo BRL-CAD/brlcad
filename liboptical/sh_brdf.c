@@ -28,7 +28,7 @@
  *	earlier work by Beckmann, Torrance, and Cook).
  */
 #ifndef lint
-static char RCSbrdf[] = "@(#)$Header$ (BRL)";
+static const char RCSbrdf[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
