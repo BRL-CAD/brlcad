@@ -434,8 +434,7 @@ struct soltab {
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
 	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
 	int		st_bit;		/* solids bit vector index (const) */
-	int		st_maxreg;	/* highest bit set in st_regions */
-	bitv_t		*st_regions;	/* bit vect of region #'s (const) */
+	struct bu_ptbl	st_regions;	/* ptrs to regions using this solid (const) */
 	matp_t		st_matp;	/* solid coords to model space, NULL=identity */
 	struct db_full_path st_path;	/* path from region to leaf */
 };
@@ -1630,7 +1629,7 @@ RT_EXTERN(void rt_boolweave, (struct seg *out_hd, struct seg *in_hd,
 RT_EXTERN(int rt_boolfinal, (struct partition *InputHdp,
 	struct partition *FinalHdp,
 	fastf_t startdist, fastf_t enddist,
-	struct bu_bitv *regionbits, struct application *ap) );
+	struct bu_ptbl *regionbits, struct application *ap) );
 
 RT_EXTERN(void rt_grow_boolstack, (struct resource *res) );
 					/* Approx Floating compare */
