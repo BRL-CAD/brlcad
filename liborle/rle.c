@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.4
-	Last edit: 	3/22/85 at 14:23:05	G S M
-	Retrieved: 	8/13/86 at 10:27:22
+	SCCS id:	@(#) librle.c	1.5
+	Last edit: 	3/25/85 at 12:34:55	G S M
+	Retrieved: 	8/13/86 at 10:27:36
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -16,14 +16,12 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.4	last edit 3/22/85 at 14:23:05";
+char	sccsTag[] = "@(#) librle.c	1.5	last edit 3/25/85 at 12:34:55";
 #endif
 #include <stdio.h>
 #include <fb.h>
 #include <rle.h>
 typedef unsigned char	u_char;
-int	rle_debug = 0;
-int	rle_verbose = 0;
 
 #define CUR red		/* Must be rightmost part of Pixel.		*/
 /* 
@@ -122,11 +120,19 @@ HIDDEN int	_put_Color_Map_Seg();
 HIDDEN int	_get_Color_Map_Seg();
 
 /* Global data.								*/
-int	_bg_flag = 2;
-int	_bw_flag = 0;
-int	_cm_flag = 0;
-Pixel	_bg_pixel = { 0, 0, 0, 0 };
+int	_bg_flag;
+int	_bw_flag;
+int	_cm_flag;
+Pixel	_bg_pixel;
 
+int	_ncmap = 3;	/* Default : (3) channels in color map.		*/
+int	_cmaplen = 8;	/* Default : (8) log base 2 entries in map.	*/
+int	_pixelbits = 8;	/* Default : (8) bits per pixel.		*/
+int	rle_debug = 0;
+int	rle_verbose = 0;
+
+static Xtnd_Rle_Header	w_setup;	/* Header being written out.	*/
+static Rle_Header	r_setup;	/* Header being read in.	*/
 
 /*	r l e _ w h d r ( )
  	This routine should be called after 'setfbsize()', unless the
@@ -135,48 +141,61 @@ Pixel	_bg_pixel = { 0, 0, 0, 0 };
 	the global data: _bg_flag, _bw_flag, _cm_flag, and _bg_pixel.
 	Returns -1 for failure, 0 otherwise.
  */
-rle_whdr( fp, bwflag, bgflag, cmflag, bbw, bgpixel )
+rle_whdr( fp, ncolors, bgflag, cmflag, bgpixel )
 FILE		*fp;
-int		bwflag, bgflag, cmflag;
-int		bbw;
+int		ncolors, bgflag, cmflag;
 Pixel		*bgpixel;
 	{
 	/* Magic numbers for output file.				*/
-	static char	tab_magic[] = "\0OB";
-	Rle_Header	setup;
-	_bg_flag = bgflag;
-	_bw_flag = bwflag;
-	_cm_flag = cmflag;
-	_bg_pixel = *bgpixel;
-	setup.magic = (_bw_flag ? WMAGIC : RMAGIC) | tab_magic[_bg_flag];
-	setup.xpos = 0;
-	setup.ypos = 0;
-	setup.xsize = _fbsize;
-	setup.ysize = _fbsize;
-	setup.bg_r = _bw_flag ? bbw : _bg_pixel.red;
-	setup.bg_g = _bw_flag ? bbw : _bg_pixel.green;
-	setup.bg_b = _bw_flag ? bbw : _bg_pixel.blue;
-	setup.map = _cm_flag;
-	if( fwrite( &setup, sizeof setup, 1, fp ) != 1 )
+	register int	bbw;
+
+	/* If black and white mode, compute NTSC value of background.	*/
+	if( ncolors == 1 )
+		bbw = 0.35*bgpixel->red+0.55*bgpixel->green+0.1*bgpixel->blue;
+	w_setup.h_xpos = 0;
+	w_setup.h_ypos = 0;
+	w_setup.h_xsize = _fbsize;
+	w_setup.h_ysize = _fbsize;
+	w_setup.h_flags = bgflag ? H_CLEARFIRST : 0;
+	w_setup.h_ncolors = ncolors;
+	w_setup.h_pixelbits = _pixelbits;
+	w_setup.h_ncmap = cmflag ? _ncmap : 0;
+	w_setup.h_cmaplen = _cmaplen;
+	w_setup.h_background[0] = ncolors == 0 ? bbw : bgpixel.red;
+	w_setup.h_background[1] = ncolors == 0 ? bbw : bgpixel.green;
+	w_setup.h_background[2] = ncolors == 0 ? bbw : bgpixel.blue;
+
+	if( fseek( fp, 0L, 0 ) == -1 )
+		{
+		(void) fprintf( stderr, "Seek to RLE header failed!\n" );
+		return	-1;
+		}
+	if( fwrite( &w_setup, sizeof w_setup, 1, fp ) != 1 )
 		{
 		(void) fprintf( stderr, "Write of RLE header failed!\n" );
 		return	-1;
 		}
+	_bg_flag = bgflag;
+	_bw_flag = ncolors == 1;
+	_cm_flag = cmflag;
+	_bg_pixel = *bgpixel;
 	return	0;
 	}
 
 /*	r l e _ r h d r ( )
-	This routine should be called before 'rle_decode_ln()' to set up
-	the global data: _bg_flag, _bw_flag, _cm_flag, and _bg_pixel.
+	This routine should be called before 'rle_decode_ln()' or 'rle_rmap()'
+	to position the file pointer correctily and set up the global flags
+	_bw_flag and _cm_flag, and to fill in _bg_pixel if necessary, and
+	to pass information back to the caller in cmflag, bgpixel, xsize,
+	ysize, xpos and ypos.
 	Returns -1 for failure, 0 otherwise.
  */
-rle_rhdr( fp, bgflag, bwflag, cmflag, olflag, bgpixel )
-FILE	*fp;
-int	bgflag;
-int	*bwflag;
-int	*cmflag;
-int	olflag;
-Pixel	*bgpixel;
+rle_rhdr( fp, cmflag, bgpixel, xsize, ysize, xpos, ypos )
+FILE		*fp;
+int		*cmflag;
+register Pixel	*bgpixel;
+int		*xsize, *ysize;
+int		*xpos, *ypos;
 	{
 	Rle_Header	setup;
 	register int	mode;
@@ -191,6 +210,11 @@ Pixel	*bgpixel;
 		NULL
 		};
 
+	if( fseek( fp, 0L, 0 ) == -1 )
+		{
+		(void) fprintf( stderr, "Seek to RLE header failed!\n" );
+		return	-1;
+		}
 	if( fread( (char *)&setup, sizeof(Rle_Header), 1, fp ) != 1 )
 		{
 		(void) fprintf( stderr, "Read of RLE header failed!\n" );
@@ -232,6 +256,7 @@ Pixel	*bgpixel;
 			setup.ypos = posy % _fbsize;
 			}
 		}
+#endif POSFLAG
 	if( rle_verbose )
 		(void) fprintf( stderr,
 				"Positioned at (%d, %d), size (%d %d)\n",
@@ -240,7 +265,6 @@ Pixel	*bgpixel;
 				setup.xsize,
 				setup.ysize
 				);
-#endif POSFLAG
 	switch( mode ) {
 	case 'B' : /* Background given.					*/
 		if( rle_verbose )
@@ -248,12 +272,13 @@ Pixel	*bgpixel;
 					verbage[3],
 					setup.bg_r, setup.bg_g, setup.bg_b
 					);
-		if( bgflag == 0 )
+		if( bgpixel != (Pixel *) NULL )
 			{
 			/* No command-line backgr., use saved values.	*/
 			_bg_pixel.red = setup.bg_r;
 			_bg_pixel.green = setup.bg_g;
 			_bg_pixel.blue = setup.bg_b;
+			*bgpixel = _bg_pixel;
 			}
 		break;
 	case 'O': /* Overlay mode.					*/
@@ -266,34 +291,11 @@ Pixel	*bgpixel;
 		(void) fprintf( stderr, "unknown display mode x%x\n", mode );
 		break;
 	}
-
-	/*
-	 * Checks
-	 */
-	if( setup.xsize > _fbsize )  {
-		(void) fprintf( stderr,	"truncating xsize from %d to %d\n",
-			setup.xsize,
-			_fbsize
-			);
-		setup.xsize = _fbsize;
-	}
-	if( setup.ysize > _fbsize )  {
-		(void) fprintf( stderr,	"truncating ysize from %d to %d\n",
-			setup.ysize,
-			_fbsize
-			);
-		setup.ysize = _fbsize;
-	}
-	if( olflag && bgflag )
-		{
-		(void) fprintf( stderr,
-		"Error:  both overlay and background modes selected\n"
-				);
-		return	-1;
-		}
-	*bwflag = _bw_flag;
 	*cmflag = setup.map;
-	*bgpixel = _bg_pixel;
+	*xsize = setup.xsize;
+	*ysize = setup.ysize;
+	*xpos = setup.xpos;
+	*ypos = setup.ypos;
 	return	0;
 	}
 
@@ -324,6 +326,16 @@ rle_wmap( fp, cmap )
 FILE		*fp;
 ColorMap	*cmap;
 	{
+	if( w_setup.h_ncmap == 0 )
+		{
+		(void) fprintf( stderr,
+		"Writing color map conflicts with header information!\n"
+				);
+		(void) fprintf( stderr,
+				"rle_whdr(arg 2 == 0) No map written.\n"
+				);
+		return	-1;
+		}
 	if( rle_verbose )
 		(void) fprintf( stderr, "Writing color map\n" );
 	if(	_put_Color_Map_Seg( fp, cmap->cm_red ) == -1
@@ -543,7 +555,7 @@ Pixel	*scan_buf;
 	if( _bw_flag )
 		{
 		register Pixel *pixelp;
-		/* Compute Black & White in blue row */
+		/* Compute NTSC Black & White in blue row.		*/
 		for( pixelp=scan_p; pixelp <= last_p; pixelp++ )
 			pixelp->blue =  .35 * pixelp->red +
 					.55 * pixelp->green +
