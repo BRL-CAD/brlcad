@@ -1,16 +1,24 @@
 # $Id$
 
 brlcadincludedir = $(includedir)/brlcad
- 
+
 brlcadinclude_HEADERS = \
+	bn.h \
+	bu.h \
+	config.h \
+	raytrace.h \
+	rtgeom.h \
+	rtlist.h \
+	rtprivate.h \
+	rtstring.h
+
+if !ONLYRTS
+brlcadinclude_HEADERS += \
 	XtndRunsv.h \
 	anim.h \
-	bn.h \
 	brlregex.h \
-	bu.h \
 	cmd.h \
 	compat4.h \
-	config.h \
 	db.h \
 	db5.h \
 	dm-Null.h \
@@ -50,7 +58,6 @@ brlcadinclude_HEADERS = \
 	png.h \
 	pngconf.h \
 	pyramid.h \
-	raytrace.h \
 	redblack.h \
 	rle.h \
 	rle_code.h \
@@ -58,10 +65,6 @@ brlcadinclude_HEADERS = \
 	rle_getraw.h \
 	rle_put.h \
 	rle_raw.h \
-	rtgeom.h \
-	rtlist.h \
-	rtprivate.h \
-	rtstring.h \
 	shadefuncs.h \
 	shadework.h \
 	shortvect-pr.h \
@@ -84,4 +87,4 @@ brlcadinclude_HEADERS = \
 	wdb.h \
 	zconf.h \
 	zlib.h
-
+endif
