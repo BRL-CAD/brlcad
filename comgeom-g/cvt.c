@@ -195,7 +195,7 @@ char **argv;
 	switch( version )  {
 	case 1:
 		title = ctitle;
-		strcpy( units, "in" );		/* XXX is this right? */
+		strcpy( units, "in" );
 		break;
 	case 4:
 	case 5:
@@ -212,6 +212,16 @@ char **argv;
 	trim_trail_spaces( title );
 	trim_trail_spaces( units );
 
+	/* Convert units to lower case */
+	{
+		register char	*cp = units;
+		while( *cp )  {
+			if( isupper(*cp) )
+				*cp = tolower(*cp);
+			cp++;
+		}
+	}
+
 	printf("Title: %s\n", title);
 	printf("Units: %s\n", units);
 
@@ -220,12 +230,15 @@ char **argv;
 	 */
 	if( mk_conversion( units ) < 0 )  {
 		printf("WARNING:  unknown units '%s', using inches\n", units);
-		(void)mk_conversion( "inches" );
+		strcpy( units, "in" );
+		(void)mk_conversion( units );
 	}
 
 	/* Output the MGED database header */
-	mk_id( outfp, title );
-
+	if( mk_id_units( outfp, title, units ) < 0 )  {
+		printf("Unable to write database ID, units='%s'\n", units);
+		exit(1);
+	}
 
 	/*
 	 *  Read control card, if present
