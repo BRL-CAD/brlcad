@@ -199,7 +199,7 @@ f_region()
 	if( lookup(cmd_args[1], LOOKUP_QUIET) == DIR_NULL ) {
 		/* will attempt to create the region */
 		item_default++;
-		(void)printf("Defaulting item number to %d\n", idem_default);
+		(void)printf("Defaulting item number to %d\n", item_default);
 	}
 
 	/* Get operation and solid name for each solid */
