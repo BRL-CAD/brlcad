@@ -3365,6 +3365,7 @@ char	**argv;
 		s, assignment_time() );
 	rt_log("   Server   Last  Last   Average  Cur   Machine\n");
 	rt_log("    State   Lump Elapsed pix/sec Frame   Name \n");
+	rt_log("  -------- ----- ------- ------- ----- -------------\n");
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
 
