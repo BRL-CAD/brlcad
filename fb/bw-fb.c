@@ -119,14 +119,14 @@ register char **argv;
 		file_name = argv[optind];
 		if( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
-				"pix-fb: cannot open \"%s\" for reading\n",
+				"bw-fb: cannot open \"%s\" for reading\n",
 				file_name );
 			return(0);
 		}
 	}
 
 	if ( argc > ++optind )
-		(void)fprintf( stderr, "pix-fb: excess argument(s) ignored\n" );
+		(void)fprintf( stderr, "bw-fb: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
 }
