@@ -159,8 +159,10 @@ char **argv;
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
-	else
+	else{
+	  bu_vls_free(&tmp_vls);
 	  return TCL_OK;
+	}
 
 	for(i=1; i<argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL )
@@ -290,11 +292,6 @@ char	**argv;
 	 */
 	prflag = 0;
 
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
-	  return TCL_OK;
-
 	/* find out which command was entered */
 	if( strcmp( argv[0], "paths" ) == 0 ) {
 		/* want to list all matching paths */
@@ -312,13 +309,20 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
+
 	pos_in = 1;
 	objpos = argc-1;
 
 	/* build directory pointer array for desired path */
 	for(i=0; i<objpos; i++) {
-	  if( (obj[i] = db_lookup( dbip, argv[pos_in+i], LOOKUP_NOISY )) == DIR_NULL)
+	  if( (obj[i] = db_lookup( dbip, argv[pos_in+i], LOOKUP_NOISY )) == DIR_NULL){
+	    (void)signal( SIGINT, SIG_IGN );
 	    return TCL_ERROR;
+	  }
 	}
 
 #if 0
@@ -337,6 +341,7 @@ char	**argv;
 	  Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
 	}
 
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 
@@ -361,6 +366,7 @@ char **argv;
 	mat_t	start_mat;
 	int	id;
 	int	i;
+	int status = TCL_OK;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -390,8 +396,10 @@ char **argv;
 	/* build directory pointer array for desired path */
 	for(i=2; i<argc; i++)
 	{
-	  if( (obj[i-2] = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	  if( (obj[i-2] = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL){
+	    (void)signal( SIGINT, SIG_IGN );
 	    return TCL_ERROR;
+	  }
 	}
 
 	/* Make sure that final component in path is a solid */
@@ -399,6 +407,7 @@ char **argv;
 	if( db_get_external( &external , obj[argc-3] , dbip ) )
 	{
 	  db_free_external( &external );
+	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_READ_ERR_return;
 	}
 	RT_CK_EXTERNAL( &external );
@@ -408,6 +417,7 @@ char **argv;
 	  Tcl_AppendResult(interp, "Final name in full path must be a solid, ",
 			   argv[argc-1], " is not a solid\n", (char *)NULL);
 	  db_free_external( &external );
+	  (void)signal( SIGINT, SIG_IGN );
 	  return TCL_ERROR;
 	}
 
@@ -417,6 +427,7 @@ char **argv;
 	  Tcl_AppendResult(interp, "solid import failure on ",
 			   argv[argc-1], "\n", (char *)NULL);
 	  db_free_external( &external );
+	  (void)signal( SIGINT, SIG_IGN );
 	  return TCL_ERROR;
 	}
 
@@ -430,13 +441,9 @@ char **argv;
 
 	  Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
 	  db_free_external( &external );
+	  (void)signal( SIGINT, SIG_IGN );
 	  return TCL_ERROR;
 	}
-
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
-	  return TCL_OK;
 
 	/* Have found the desired path - xform is the transformation matrix */
 	/* xform matrix calculated in trace() */
@@ -447,6 +454,7 @@ char **argv;
 	{
 	  db_free_external( &external );
 	  Tcl_AppendResult(interp, "f_copyeval: rt_generic_xform failed\n", (char *)NULL);
+	  (void)signal( SIGINT, SIG_IGN );
 	  return TCL_ERROR;
 	}
 
@@ -454,7 +462,9 @@ char **argv;
 	{
 	  db_free_external( &new_ext );
 	  db_free_external( &external );
-	  Tcl_AppendResult(interp, "f_copyeval: export failure for new solid\n", (char *)NULL);
+	  Tcl_AppendResult(interp, "f_copyeval: export failure for new solid\n",
+			   (char *)NULL);
+	  (void)signal( SIGINT, SIG_IGN );
 	  return TCL_ERROR;
 	}
 
@@ -463,6 +473,7 @@ char **argv;
 	{
 	  db_free_external( &new_ext );
 	  db_free_external( &external );
+	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_ALLOC_ERR_return;
 	}
 
@@ -470,11 +481,13 @@ char **argv;
 	{
 	  db_free_external( &new_ext );
 	  db_free_external( &external );
+	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_WRITE_ERR_return;
 	}
 	db_free_external( &external );
 	db_free_external( &new_ext );
 
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 
@@ -1986,12 +1999,14 @@ char **argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 		return TCL_ERROR;
 
+	bu_vls_init( &v );
+
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
+        else{
+	  bu_vls_free( &v );
 	  return TCL_OK;
-
-	bu_vls_init( &v );
+	}
 
 	bu_vls_strcat( &v, "e" );
 	lim = 1;
@@ -2008,6 +2023,8 @@ char **argv;
 				    (DIR_COMB|DIR_REGION) )
 					continue;
 				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 ) {
+				  bu_vls_free( &v );
+				  (void)signal( SIGINT, SIG_IGN );
 				  TCL_READ_ERR_return;
 				}
 				if( rec.c.c_regionid != 0 ||
@@ -2031,11 +2048,14 @@ char **argv;
 		retval = f_edit( clientData, interp, new_argc, new_argv );
 		bu_vls_free( &v );
 		bu_free( (char *)new_argv, "f_eac: new_argv" );
+		bu_vls_free( &v );
+		(void)signal( SIGINT, SIG_IGN );
 		return retval;
 	}
 	else
 	{
 		bu_vls_free( &v );
+		(void)signal( SIGINT, SIG_IGN );
 		return TCL_OK;
 	}
 }
