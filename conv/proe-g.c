@@ -247,7 +247,7 @@ int type;
 
 
 	/* Add a new name */
-	ptr = (struct name_conv_list *)bu_malloc( sizeof( struct name_conv_list ) , "Add_new_name: prev->next" );
+	ptr = (struct name_conv_list *)bu_calloc( 1, sizeof( struct name_conv_list ) , "Add_new_name: prev->next" );
 	ptr->next = (struct name_conv_list *)NULL;
 	strncpy( ptr->name , name, 80 );
 	ptr->obj = obj;
@@ -497,6 +497,18 @@ char line[MAX_LINE_LEN];
 				inv_scale = 1.0/scale;
 				for( j=0 ; j<3 ; j++ )
 					HSCALE( &wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale )
+
+				/* clamp rotation elements to fabs(1.0) */
+				for( j=0 ; j<3 ; j++ )
+				{
+					for( i=0 ; i<3 ; i++ )
+					{
+						if( wmem->wm_mat[j*4 + i] > 1.0 )
+							wmem->wm_mat[j*4 + i] = 1.0;
+						else if( wmem->wm_mat[j*4 + i] < -1.0 )
+							wmem->wm_mat[j*4 + i] = -1.0;
+					}
+				}
 
 				if( top_level)
 					wmem->wm_mat[15] *= (inv_scale/conv_factor);
