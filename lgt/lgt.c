@@ -21,6 +21,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/category.h>
 #include <sys/resource.h>
 #include <sys/types.h>
+# if defined( CRAY1 )
+#  include <sys/machd.h>	/* For HZ */
+# endif
 #if defined( CRAY2 )
 #undef MAXINT
 #include <sys/param.h>
