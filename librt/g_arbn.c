@@ -27,9 +27,9 @@ static char RCSarbn[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "nmg.h"
 #include "db.h"
 #include "raytrace.h"
-#include "nmg.h"
 #include "rtgeom.h"
 #include "./debug.h"
 
@@ -407,12 +407,97 @@ rt_arbn_class()
 	return(0);
 }
 
+
+/* structures used by arbn tessellator */
+struct arbn_pts
+{
+	point_t		pt;		/* coordinates for vertex */
+	int		plane_no[3];	/* which planes intersect here */
+	struct vertex	**vp;		/* pointer to vertex struct pointer for NMG's */
+};
+struct arbn_edges
+{
+	int		v1_no,v2_no;	/* index into arbn_pts for endpoints of edge */
+};
+
+#define		LOC(i,j)	i*(aip->neqn)+j
+
+static void
+Sort_edges( edges , edge_count , aip )
+struct arbn_edges *edges;
+int *edge_count;
+CONST struct rt_arbn_internal   *aip;
+{
+	int face;
+
+	for( face=0 ; face<aip->neqn ; face++ )
+	{
+		int done=0;
+		int edge1,edge2;
+
+		if( edge_count[face] < 3 )
+			continue;	/* nothing to sort */
+
+		edge1 = 0;
+		edge2 = 0;
+		while( !done )
+		{
+			int edge3;
+			int tmp_v1,tmp_v2;
+
+			/* Look for out of order edge (edge2) */
+			while( ++edge2 < edge_count[face] &&
+				edges[LOC(face,edge1)].v2_no == edges[LOC(face,edge2)].v1_no )
+					edge1++;
+			if( edge2 == edge_count[face] )
+			{
+				/* all edges are in order */
+				done = 1;
+				continue;
+			}
+
+			/* look for edge (edge3) that belongs where edge2 is */
+			edge3 = edge2 - 1;
+			while( ++edge3 < edge_count[face] &&
+				edges[LOC(face,edge1)].v2_no != edges[LOC(face,edge3)].v1_no &&
+				edges[LOC(face,edge1)].v2_no != edges[LOC(face,edge3)].v2_no );
+
+			if( edge3 == edge_count[face] )
+				rt_bomb( "rt_arbn_tess: Sort_edges: Cannot find next edge in loop\n" );
+
+			if( edge2 != edge3 )
+			{
+				/* swap edge2 and edge3 */
+				tmp_v1 = edges[LOC(face,edge2)].v1_no;
+				tmp_v2 = edges[LOC(face,edge2)].v2_no;
+				edges[LOC(face,edge2)].v1_no = edges[LOC(face,edge3)].v1_no;
+				edges[LOC(face,edge2)].v2_no = edges[LOC(face,edge3)].v2_no;
+				edges[LOC(face,edge3)].v1_no = tmp_v1;
+				edges[LOC(face,edge3)].v2_no = tmp_v2;
+			}
+			if( edges[LOC(face,edge1)].v2_no == edges[LOC(face,edge2)].v2_no )
+			{
+				/* reverse order of edge */
+				tmp_v1 = edges[LOC(face,edge2)].v1_no;
+				edges[LOC(face,edge2)].v1_no = edges[LOC(face,edge2)].v2_no;
+				edges[LOC(face,edge2)].v2_no = tmp_v1;
+			}
+
+			edge1 = edge2;
+		}
+	}
+}
+
 /*
  *			R T _ A R B N _ T E S S
  *
  *  "Tessellate" an ARB into an NMG data structure.
  *  Purely a mechanical transformation of one faceted object
  *  into another.
+ *
+ *  Returns -
+ *	-1	failure
+ *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
 rt_arbn_tess( r, m, ip, ttol, tol )
@@ -422,7 +507,268 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
-	return(-1);
+	LOCAL struct rt_arbn_internal	*aip;
+	struct shell		*s;
+	struct faceuse		**fu;		/* array of faceuses */
+	int			nverts;		/* maximum possible number of vertices = neqn!/(3!(neqn-3)! */
+	int			point_count=0;	/* actual number of vertices */
+	int			face_count=0;	/* actual number of faces built */
+	int			i,j,k,l,n;
+	struct arbn_pts		*pts;
+	struct arbn_edges	*edges;		/* A list of edges for each plane eqn (each face) */
+	int			*edge_count;	/* number of edges for each face */
+	int			max_edge_count; /* maximium number of edges for any face */
+	struct vertex		**verts;	/* Array of pointers to vertex structs */
+	struct vertex		***loop_verts;	/* Array of pointers to vertex structs to pass to nmg_cmface */
+
+	RT_CK_DB_INTERNAL(ip);
+	aip = (struct rt_arbn_internal *)ip->idb_ptr;
+	RT_ARBN_CK_MAGIC(aip);
+
+	/* Allocate memory for the vertices */
+	nverts = aip->neqn * (aip->neqn-1) * (aip->neqn-2) / 6;
+	pts = (struct arbn_pts *)rt_calloc( nverts , sizeof( struct arbn_pts ) , "rt_arbn_tess: pts" );
+
+	/* Allocate memory for arbn_edges */
+	edges = (struct arbn_edges *)rt_calloc( aip->neqn*aip->neqn , sizeof( struct arbn_edges ) ,
+			"rt_arbn_tess: edges" );
+	edge_count = (int *)rt_calloc( aip->neqn , sizeof( int ) , "rt_arbn_tess: edge_count" );
+
+	/* Allocate memory for faceuses */
+	fu = (struct faceuse **)rt_calloc( aip->neqn , sizeof( struct faceuse *) , "rt_arbn_tess: fu" );
+
+	/* Calculate all vertices */
+	for( i=0 ; i<aip->neqn ; i++ )
+	{
+		for( j=i+1 ; j<aip->neqn ; j++ )
+		{
+			for( k=j+1 ; k<aip->neqn ; k++ )
+			{
+				int keep_point=1;
+
+				if( rt_mkpoint_3planes( pts[point_count].pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]))
+					continue;
+
+				for( l=0 ; l<aip->neqn ; l++ )
+				{
+					if( l == i || l == j || l == k )
+						continue;
+					if( DIST_PT_PLANE( pts[point_count].pt , aip->eqn[l] ) > tol->dist )
+					{
+						keep_point = 0;
+						break;
+					}
+				}
+				if( keep_point )
+				{
+					pts[point_count].plane_no[0] = i;
+					pts[point_count].plane_no[1] = j;
+					pts[point_count].plane_no[2] = k;
+					point_count++;
+				}
+			}
+		}
+	}
+
+	/* Allocate memory for the NMG vertex pointers */
+	verts = (struct vertex **)rt_calloc( point_count , sizeof( struct vertex *) ,
+			"rt_arbn_tess: verts" );
+
+	/* Associate points with vertices */
+	for( i=0 ; i<point_count ; i++ )
+		pts[i].vp = &verts[i];
+
+	/* Check for duplicate points */
+	for( i=0 ; i<point_count ; i++ )
+	{
+		for( j=i+1 ; j<point_count ; j++ )
+		{
+			vect_t dist;
+
+			VSUB2( dist , pts[i].pt , pts[j].pt )
+			if( MAGSQ( dist ) < tol->dist_sq )
+			{
+				/* These two points should point to the same vertex */
+				pts[j].vp = pts[i].vp;
+			}
+		}
+	}
+
+	/* Make list of edges for each face */
+	for( i=0 ; i<aip->neqn ; i++ )
+	{
+		/* look for a point that lies in this face */
+		for( j=0 ; j<point_count ; j++ )
+		{
+			if( pts[j].plane_no[0] != i && pts[j].plane_no[1] != i && pts[j].plane_no[2] != i )
+				continue;
+
+			/* look for another point that shares plane "i" and another with this one */
+			for( k=j+1 ; k<point_count ; k++ )
+			{
+				int match=(-1);
+				int pt1,pt2;
+				int duplicate=0;
+
+				/* skip points not on plane "i" */
+				if( pts[k].plane_no[0] != i && pts[k].plane_no[1] != i && pts[k].plane_no[2] != i )
+					continue;
+
+				for( l=0 ; l<3 ; l++ )
+				{
+					for( n=0 ; n<3 ; n++ )
+					{
+						if( pts[j].plane_no[l] == pts[k].plane_no[n] &&
+						    pts[j].plane_no[l] != i )
+						{
+							match = pts[j].plane_no[l];
+							break;
+						}
+					}
+					if( match != (-1) )
+						break;
+				}
+
+				if( match == (-1) )
+					continue;
+
+				/* convert equivalent points to lowest point number */
+				pt1 = j;
+				pt2 = k;
+				for( l=0 ; l<pt1 ; l++ )
+				{
+					if( pts[pt1].vp == pts[l].vp )
+					{
+						pt1 = l;
+						break;
+					}
+				}
+				for( l=0 ; l<pt2 ; l++ )
+				{
+					if( pts[pt2].vp == pts[l].vp )
+					{
+						pt2 = l;
+						break;
+					}
+				}
+
+				/* skip null edges */
+				if( pt1 == pt2 )
+					continue;
+
+				/* check for duplicate edge */
+				for( l=0 ; l<edge_count[i] ; l++ )
+				{
+					if( (edges[LOC(i,l)].v1_no == pt1 &&
+					    edges[LOC(i,l)].v2_no == pt2) ||
+					    (edges[LOC(i,l)].v2_no == pt1 &&
+					    edges[LOC(i,l)].v1_no == pt2) )
+					{
+						duplicate = 1;
+						break;
+					}
+				}
+				if( duplicate )
+					continue;
+
+				/* found an edge belonging to faces "i" and "match" */
+				if( edge_count[i] == aip->neqn )
+				{
+					rt_log( "Too many edges found for one face\n" );
+					goto fail;
+				}
+				edges[LOC( i , edge_count[i] )].v1_no = pt1;
+				edges[LOC( i , edge_count[i] )].v2_no = pt2;
+				edge_count[i]++;
+			}
+		}
+	}
+
+	/* for each face, sort the list of edges into a loop */
+	Sort_edges( edges , edge_count , aip );
+
+	/* Get max number of edges for any face */
+	max_edge_count = 0;
+	for( i=0 ; i<aip->neqn ; i++ )
+		if( edge_count[i] > max_edge_count )
+			max_edge_count = edge_count[i];
+
+	/* Allocate memory for array to pass to nmg_cmface */
+	loop_verts = (struct vertex ***) rt_calloc( max_edge_count , sizeof( struct vertex **) ,
+				"rt_arbn_tess: loop_verts" );
+
+	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+
+	/* Make the faces */
+	for( i=0 ; i<aip->neqn ; i++ )
+	{
+		int loop_length=0;
+
+		for( j=0 ; j<edge_count[i] ; j++ )
+		{
+			/* skip zero length edges */
+			if( pts[edges[LOC(i,j)].v1_no].vp == pts[edges[LOC(i,j)].v2_no].vp )
+				continue;
+
+			/* put vertex pointers into loop_verts array */
+			loop_verts[loop_length] = pts[edges[LOC(i,j)].v2_no].vp;
+			loop_length++;
+		}
+
+		/* Make the face if there is are least 3 vertices */
+		if( loop_length > 2 )
+			fu[face_count++] = nmg_cmface( s , loop_verts , loop_length );
+	}
+
+	/* Associate vertex geometry */
+	for( i=0 ; i<point_count ; i++ )
+	{
+		if( !(*pts[i].vp) )
+			continue;
+
+		if( (*pts[i].vp)->vg_p )
+			continue;
+
+		nmg_vertex_gv( *pts[i].vp , pts[i].pt );
+	}
+
+	rt_free( (char *)pts , "rt_arbn_tess: pts" );
+	rt_free( (char *)edges , "rt_arbn_tess: edges" );
+	rt_free( (char *)edge_count , "rt_arbn_tess: edge_count" );
+	rt_free( (char *)verts , "rt_arbn_tess: verts" );
+	rt_free( (char *)loop_verts , "rt_arbn_tess: loop_verts" );
+
+	/* Associate face geometry */
+	for( i=0 ; i<face_count ; i++ )
+	{
+		if( nmg_fu_planeeqn( fu[i] , tol ) )
+		{
+			rt_log( "Failed to calculate face plane equation\n" );
+			rt_free( (char *)fu , "rt_arbn_tess: fu" );
+			nmg_kr( *r );
+			*r = (struct nmgregion *)NULL;
+			return( -1 );
+		}
+	}
+
+	rt_free( (char *)fu , "rt_arbn_tess: fu" );
+
+	nmg_fix_normals( s , tol );
+
+	(void)nmg_mark_edges_real( &s->l );
+
+	/* Compute "geometry" for region and shell */
+	nmg_region_a( *r, tol );
+
+	return( 0 );
+
+fail:
+	rt_free( (char *)pts , "rt_arbn_tess: pts" );
+	rt_free( (char *)edges , "rt_arbn_tess: edges" );
+	rt_free( (char *)edge_count , "rt_arbn_tess: edge_count" );
+	rt_free( (char *)verts , "rt_arbn_tess: verts" );
+	return( -1 );	
 }
 
 /*
