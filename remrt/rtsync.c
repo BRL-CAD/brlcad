@@ -230,6 +230,7 @@ Tk_Window	tkwin;
 CONST char	*database;
 struct bu_vls	treetops;
 double		blend1 = 0.8;		/* weight to give older timing data */
+int		update_status_every_frame = 0;
 
 char		*node_search_path;
 
@@ -1013,6 +1014,7 @@ char	*argv[];
 	Tcl_LinkVar( interp, "framebuffer", (char *)&framebuffer, TCL_LINK_STRING | TCL_LINK_READ_ONLY );
 	Tcl_LinkVar( interp, "database", (char *)&database, TCL_LINK_STRING | TCL_LINK_READ_ONLY );
 	Tcl_LinkVar( interp, "debug", (char *)&debug, TCL_LINK_INT );
+	Tcl_LinkVar( interp, "update_status_every_frame", (char *)&update_status_every_frame, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "blend1", (char *)&blend1, TCL_LINK_DOUBLE );
 
 	/* This string may be supplemented by the Tcl runtime */
@@ -1837,19 +1839,19 @@ check_others:
 	/* Calculate assignment duration variation. 1X is optimum. */
 	variation = ms_total_max / ms_total_min;
 
-	bu_log("%s%6d ms, %5.1f Mbps, %4.1f fps, %2d%%net %d/%d %.1fX %s\n",
+	bu_log("%s%6d ms, %5.1f Mbps, %4.1f fps, %2d%%net %.1fx %s%s\n",
 		stamp(),
 		ms_total,
 		burst_mbps,
 		1.0/interval,
 		network_overhead,
-		(int)ms_total_min, (int)ms_total_max,
 		variation,
+		variation >= 2 ? "***> " : "",
 		last_host_done
 	    );
 
 	/* Trigger TCL code to auto-update cpu status window on major changes */
-	if( sched_update )
+	if( sched_update || update_status_every_frame )
 		Tcl_Eval( interp, "update_cpu_status" );
 }
 
