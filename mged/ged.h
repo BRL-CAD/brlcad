@@ -168,13 +168,9 @@ extern void		eraseobj(), mged_finish(), slewview(),
 			col_item(), col_putchar(), col_eol(), col_pr4v();
 extern void		sedit_menu();
 extern void		attach(), release(), get_attached();
-#if defined(sgi) && !defined(mips)
-extern int		(*cur_sigint)();	/* Current SIGINT status */
-extern int		sig2(); 
-#else
 extern void		(*cur_sigint)();	/* Current SIGINT status */
 extern void		sig2();
-#endif
+
 extern void		aexists();
 extern int		clip(), getname(), use_pen(), dir_print();
 extern struct directory	*combadd(), **dir_getspace();
