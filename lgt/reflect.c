@@ -11,15 +11,26 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <math.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
+#include <assert.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./mat_db.h"
@@ -1893,11 +1904,7 @@ hl_Postprocess()
 			if( anti_aliasing )
 				{ /* NOTE: the 3030 compiler barfs on
 				     HL_TSTBIT if we use registers here. */
-#if defined(sgi) && ! defined(mips)
-					int xa, ya, xn, yn;
-#else
 					register int xa, ya, xn, yn;
-#endif
 				/* Anti-aliasing, map square matrix to pixel.
 					If one bit is ON, turn pixel ON. */
 				for(	ya = 0, yn = yi*aperture_sz;
@@ -2122,7 +2129,7 @@ RGBpixel scanbuf[];
 				}
 			}
 		else
-		if( fb_write( fbiop, x, y, scanbuf+x, ct ) == -1 )
+		if( fb_write( fbiop, x, y, (unsigned char *)(scanbuf+x), ct ) == -1 )
 			rt_log( "Write of scan line (%d) failed.\n", ap->a_y );
 		RES_RELEASE( &rt_g.res_stats );
 		}
