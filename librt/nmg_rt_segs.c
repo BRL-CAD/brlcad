@@ -170,7 +170,7 @@ struct application	*ap;
 	VMOVE((*seg_p)->seg_in.hit_normal, a_hit->inbound_norm);
 
 	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
-		rt_log("Set seg_in:\n\  dist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
+		rt_log("Set seg_in:\n\tdist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
 		(*seg_p)->seg_in.hit_dist,
 		(*seg_p)->seg_in.hit_point[0],
 		(*seg_p)->seg_in.hit_point[1],
@@ -203,7 +203,7 @@ struct hitmiss	*a_hit;		/* The input hit point */
 	VMOVE((*seg_p)->seg_out.hit_normal, a_hit->outbound_norm);
 
 	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
-		rt_log("Set seg_out:\n\  dist %g  pt(%g,%g,%g)  N(%g,%g,%g)  =>\n",
+		rt_log("Set seg_out:\n\tdist %g  pt(%g,%g,%g)  N(%g,%g,%g)  =>\n",
 		(*seg_p)->seg_in.hit_dist,
 		(*seg_p)->seg_in.hit_point[0],
 		(*seg_p)->seg_in.hit_point[1],
@@ -211,7 +211,7 @@ struct hitmiss	*a_hit;		/* The input hit point */
 		(*seg_p)->seg_in.hit_normal[0],
 		(*seg_p)->seg_in.hit_normal[1],
 		(*seg_p)->seg_in.hit_normal[2]);
-		rt_log("  dist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
+		rt_log("\tdist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
 		(*seg_p)->seg_out.hit_dist,
 		(*seg_p)->seg_out.hit_point[0],
 		(*seg_p)->seg_out.hit_point[1],
