@@ -1075,12 +1075,15 @@ CONST union tree	*tp;
  *			D B _ T A L L Y _ S U B T R E E _ R E G I O N S
  */
 int
-db_tally_subtree_regions( tp, reg_trees, cur )
+db_tally_subtree_regions( tp, reg_trees, cur, lim )
 union tree	*tp;
 union tree	**reg_trees;
 int		cur;
+int		lim;
 {
 	union tree	*new;
+
+	if( cur >= lim )  rt_bomb("db_tally_subtree_regions: array overflow\n");
 
 	switch( tp->tr_op )  {
 	case OP_NOP:
@@ -1096,8 +1099,8 @@ int		cur;
 
 	case OP_UNION:
 		/* This node is known to be a binary op */
-		cur = db_tally_subtree_regions( tp->tr_b.tb_left, reg_trees, cur );
-		cur = db_tally_subtree_regions( tp->tr_b.tb_right, reg_trees, cur );
+		cur = db_tally_subtree_regions( tp->tr_b.tb_left, reg_trees, cur, lim );
+		cur = db_tally_subtree_regions( tp->tr_b.tb_right, reg_trees, cur, lim );
 		return(cur);
 
 	case OP_INTERSECT:
@@ -1402,9 +1405,10 @@ union tree *	(*leaf_func)();
 	 *  for parallel processing below.
 	 */
 	new_reg_count = db_count_subtree_regions( whole_tree );
-	reg_trees = (union tree **)rt_malloc( sizeof(union tree *) * new_reg_count,
-		"*reg_trees[]" );
-	(void)db_tally_subtree_regions( whole_tree, reg_trees, 0 );
+	reg_trees = (union tree **)rt_calloc( sizeof(union tree *),
+		(new_reg_count+1), "*reg_trees[]" );
+	new_reg_count = db_tally_subtree_regions( whole_tree, reg_trees, 0,
+		new_reg_count );
 
 	/*  Release storage for tree from whole_tree to leaves.
 	 *  db_tally_subtree_regions() duplicated and OP_NOP'ed the original
