@@ -12,59 +12,39 @@
 #	are provided by the calling application
 check_externs "_mged_press _mged_ill _mged_matpick"
 
-proc solid_illum { w x y illum_only } {
-    $w selection clear 0 end
-    $w selection set @$x,$y
+proc solid_illum { spath } {
+    set state [_mged_status state]
 
-    _mged_press sill
-
-    if {$illum_only} {
-	_mged_ill -n [$w get @$x,$y]
-    } else {
-	_mged_ill [$w get @$x,$y]
+    switch $state {
+	VIEWING {
+	    _mged_press sill
+	}
+	default {
+	    _mged_press reject
+	    _mged_press sill
+	}
     }
+    
+    _mged_ill -n $spath
 }
 
-proc obj_illum { id w x y illum_only } {
-    $w selection clear 0 end
-    $w selection set @$x,$y
+proc matrix_illum { spath path_pos } {
+    set state [_mged_status state]
 
-    _mged_press oill
-
-    if {$illum_only} {
-	_mged_ill -n [$w get @$x,$y]
-    } else {
-	set item [$w get @$x,$y]
-	_mged_ill $item
-	build_matrix_menu $id $item
+    switch $state {
+	VIEWING {
+	    _mged_press oill
+	    _mged_ill $spath
+	}
+	"OBJ PICK" {
+	    _mged_ill $spath
+	}
+	default {
+	    _mged_press reject
+	    _mged_press oill
+	    _mged_ill $spath
+	}
     }
-}
 
-proc matrix_illum { w x y illum_only } {
-    $w selection clear 0 end
-    $w selection set @$x,$y
-
-    if {$illum_only} {
-	_mged_matpick -n [$w index @$x,$y]
-    } else {
-	_mged_matpick [$w index @$x,$y]
-    }
-}
-
-proc comb_illum { w x y } {
-    $w selection clear 0 end
-    $w selection set @$x,$y
-
-    set comb [$w get @$x,$y]
-
-    set paths [_mged_x -1]
-    set path_index [lsearch $paths *$comb*]
-    set path [lindex $paths $path_index]
-    regexp "\[^/\].*" $path match
-    set path_components [split $match /]
-    set path_index [lsearch -exact $path_components $comb]
-
-    _mged_press oill
-    _mged_ill $path
-    _mged_matpick $path_index
+    _mged_matpick -n $path_pos
 }
