@@ -383,6 +383,42 @@ int				singletons;
 }
 
 /*
+ *	N M G _ I S _ V E R T E X _ A _ S E L F L O O P _ I N _ S H E L L
+ *
+ *  Check to see if a given vertex is used within a shell
+ *  by a wire loopuse which is a loop of a single vertex.
+ *  The search could either be by the shell lu_hd, or the vu_hd.
+ *
+ *  Returns -
+ *	0	vertex is not part of that kind of loop in the shell.
+ *	1	vertex is part of a selfloop in the given shell.
+ */
+int
+nmg_is_vertex_a_selfloop_in_shell(v, s)
+CONST struct vertex	*v;
+CONST struct shell	*s;
+{
+	CONST struct vertexuse *vu;
+
+	NMG_CK_VERTEX(v);
+	NMG_CK_SHELL(s);
+
+	/* try to find the vertex in a loopuse of this shell */
+	for (RT_LIST_FOR(vu, vertexuse, &v->vu_hd)) {
+		register CONST struct loopuse	*lu;
+		NMG_CK_VERTEXUSE(vu);
+		if (*vu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+		lu = vu->up.lu_p;
+		NMG_CK_LOOPUSE(lu);
+		if( *lu->up.magic_p != NMG_SHELL_MAGIC )  continue;
+		NMG_CK_SHELL(lu->up.s_p);
+		if( lu->up.s_p == s)
+			return 1;
+	}
+	return 0;
+}
+
+/*
  *			N M G _ I S _ V E R T E X _ I N _ F A C E L I S T
  *
  *  Returns -
