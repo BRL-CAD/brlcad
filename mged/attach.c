@@ -361,10 +361,10 @@ char *argv[];
     bu_free((genptr_t)tmp_dmp, "mged_attach: tmp_dmp");
   }
 
+  BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
+
   if(wp->init(o_dm_list, argc, argv) == TCL_ERROR)
     goto Bad;
-
-  BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
 
   /* initialize the background color */
   cs_set_bg();
