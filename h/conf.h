@@ -80,6 +80,8 @@
  *
  *	HAVE_DLOPEN		Dynamic library loading support.
  *
+ *      HAVE_STRCASECMP		Has stricmp()
+ *
  *  $Header$
  */
 
@@ -106,6 +108,126 @@
 #	define HAVE_TERMIOS_H	1
 #endif
 
+
+/* Windows */
+#if defined(_WIN32)
+/* Microsoft VisualC++ 6.0 on WinNT 4.0
+ *
+ * Ensure that Project Settings / Project Options includes
+ *	/Za		for ANSI C
+ */
+
+/* XXX - compiler hack; need to remove later */
+# define __STDC__ 1
+
+/* Quell the MSVC++ compiler
+ *  4244 conversion from type 1 to type 2 
+ *  4305 truncation
+ *  4018 signed/unsigned mismatch
+ * XXX should remove these eventually (and fix the warnings)
+ */
+# pragma warning( disable : 4244 4305 4018)
+
+# if !__STDC__
+#	 error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
+# endif
+#	define HAVE_STDLIB_H	1
+#	define HAVE_STDARG_H	1
+#	define HAVE_STRING_H	1
+#	define HAS_OPENGL	1
+//#	define HAS_POSIX_THREADS	0
+//#	define HAS_SGIGL	0
+//#	define HAVE_BSDGETTIMEOFDAY	0
+//#	define HAVE_BZERO	0
+//#	define HAVE_CALTECH_MALLOC	0
+//#	define HAVE_DLOPEN	0
+#	define HAVE_DRAND48	1
+#	define HAVE_FLOAT_H	1
+#	define HAVE_GETHOSTNAME	1
+//#	define HAVE_GETOPT	0
+//#	define HAVE_GETOPT_DECL	0
+//#	define HAVE_GETOPT_H	0
+//#	define HAVE_IOCTL_COMPAT_H	0
+#	define HAVE_LIMITS_H	1
+#	define HAVE_MATHERR	1
+#	define HAVE_MEMORY_H	1
+#	define HAVE_OFF_T	1
+#	define HAVE_POPEN_DECL	1
+//#	define HAVE_POSIX_REGEXEC	0
+//#	define HAVE_REGEX	0
+//#	define HAVE_REGEX_DECL	0
+//#	define HAVE_SBRK	0
+//#	define HAVE_SBRK_DECL	0
+//#	define HAVE_SHELL_ESCAPE	0
+#	define HAVE_STRCHR	1
+#	define HAVE_STRDUP	1
+#	define HAVE_STRDUP_DECL	1
+//#	define HAVE_SYS_ERRLIST_DECL	0
+//#	define HAVE_SYS_MACHD_H	0
+//#	define HAVE_SYS_MMAN_H	0
+//#	define HAVE_SYS_SELECT_H	0
+//#	define HAVE_SYS_SOCKET_H	0
+//#	define HAVE_TERMIOS_H	0
+//#	define HAVE_UNISTD_H	0
+//#	define HAVE_UNIX_DOMAIN_SOCKETS	0
+//#	define HAVE_UNIX_IO	0
+#	define HAVE_VARARGS_H	1
+#	define HAVE_VFORK	1
+#	define HAVE_VPRINTF	1
+//#	define HAVE_WRITEV	0
+//#	define HAVE_XOPEN	0
+//#	define HAVE_XOSDEFS_H	0
+#	define USE_PROTOTYPES	1
+#	define USE_REGCOMP	1
+#	define USE_STRING_H	1
+//#	define USE_SYS_TIME_H	0
+#	define HAVE_STRCHR 1
+//#	define USE_SYSV_RE	0
+//#	define SPRINTF_NOT_PARALLEL	0
+#	define bzero(str,n)		memset( str, 0, n )
+#	define bcopy(from,to,count)	memcpy( to, from, count )
+#	define REVERSED_IEEE	yes
+
+# include <windows.h>
+# include <io.h>
+
+/* use compatibility library calls for standard unixyness */
+# define stat _stat
+# define hypot _hypot
+# define fdopen _fdopen
+# define off_t _off_t
+# undef rad1
+# undef rad2
+# define isascii __isascii
+# define chmod _chmod
+# define popen _popen
+# define open _open
+# define read _read
+# define close _close
+# define fstat _fstat
+# define O_RDONLY _O_RDONLY
+# define O_RDWR _O_RDWR
+# define O_CREAT _O_CREAT
+# define O_EXCL _O_EXCL
+# define MAXPATHLEN _MAX_PATH
+# define fileno _fileno
+# define write _write
+# define getpid _getpid
+# define access _access
+# define pclose _pclose
+# define strdup _strdup
+# define	isnan _isnan
+# define isatty _isatty
+# define creat _creat
+# define mktemp _mktemp
+# undef OUT
+# undef IN
+# undef DELETE
+# undef complex
+
+#endif
+
+/*
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_M_IX86)
 #	define USE_PROTOTYPES 1
 #	define HAVE_STRING_H 1
@@ -118,6 +240,7 @@
 #	define HAVE_STRCHR 1
 #	define HAVE_UNIX_IO 1
 #endif
+*/
 
 #if defined(sgi) || defined(__sgi) || defined(IRIX)
 #	if IRIX < 6
@@ -137,25 +260,25 @@
 #       define HAVE_FLOAT_H     1
 #       define HAVE_LIMITS_H    1
 #	define HAVE_BZERO	1
-#endif
 
-#if IRIX == 5
-#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
-#	define _BSD_TYPES		1
-#	define _BSD_TIME		1	/* for good timeval */
-#	define HAVE_SBRK_DECL		1
-#endif
+#	if IRIX == 5
+#		define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#		define _BSD_TYPES		1
+#		define _BSD_TIME		1	/* for good timeval */
+#		define HAVE_SBRK_DECL		1
+#	endif
 
-#if IRIX == 6
-#	define HAVE_BSDGETTIMEOFDAY	1	/* For BSDgettimeofday */
-#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
-#	define _BSD_TYPES		1
-#	define _BSD_TIME		1	/* for good timeval */
-#	define HAVE_SBRK_DECL		1
-#	define HAVE_REGEX_DECL		1
-#	define HAVE_POSIX_REGEXEC	1
-#	define USE_REGCOMP		1
-#	define HAVE_DLOPEN		1
+#	if IRIX == 6
+#		define HAVE_BSDGETTIMEOFDAY	1	/* For BSDgettimeofday */
+#		define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#		define _BSD_TYPES		1
+#		define _BSD_TIME		1	/* for good timeval */
+#		define HAVE_SBRK_DECL		1
+#		define HAVE_REGEX_DECL		1
+#		define HAVE_POSIX_REGEXEC	1
+#		define USE_REGCOMP		1
+#		define HAVE_DLOPEN		1
+#	endif
 #endif
 
 #if defined(_AIX) || defined(__AIX)
@@ -180,35 +303,18 @@
 #	define HAVE_UNISTD_H	1
 #	define HAVE_SYS_MMAN_H	1
 #	define HAVE_LIMITS_H	1
+
+#	if SUNOS > 55
+#		define USE_PROTOTYPES   1	
+#		define HAVE_SBRK_DECL	1
+/* #		define HAVE_GETOPT_DECL	1 -- is not available if __STDC__ */
+#		define HAVE_MEMORY_H	1
+#		define HAVE_LIMITS_H	1
+#		define USE_STRING_H	1
+#		undef _KERNEL  /* make sure the kernel calls are not used */
+#	endif
 #endif
 
-#if SUNOS > 55
-#	define USE_PROTOTYPES   1	
-#	define HAVE_SBRK_DECL	1
-/* #	define HAVE_GETOPT_DECL	1 -- is not available if __STDC__ */
-/*#	define HAVE_GETOPT_H	1*/
-#	define HAVE_MEMORY_H	1
-#	define HAVE_LIMITS_H	1
-#	define USE_STRING_H	1
-#	undef _KERNEL  /* make sure the kernel calls are not used */
-#endif
-
-#if defined(WIN32)
-/* Microsoft VisualC++ 6.0 on WinNT 4.0 */
-/*
- * Ensure that Project Settings / Project Options includes
- *	/Za		for ANSI C
- *	/D "WIN32"	to fire this rule
- */
-# if !__STDC__
-#	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
-# endif
-#	define HAVE_STDLIB_H	1
-#	define HAVE_STDARG_H	1
-#	define HAVE_STRING_H	1
-#	define bzero(str,n)		memset( str, 0, n )
-#	define bcopy(from,to,count)	memcpy( to, from, count )
-#endif
 
 #if defined(__FreeBSD__)
 #	define	HAVE_STDLIB_H	1
@@ -301,7 +407,9 @@
 #	define HAVE_LIMITS_H	1
 /*#	define HAVE_BZERO	1 -- faster to use memcpy */
 #	define TK_READ_DATA_PENDING(f)	((f)->_IO_read_ptr != (f)->_IO_read_end)
-
+#	if defined(__GNUC__)
+#		define HAVE_GET_NPROCS	1
+#	endif
 #endif
 
 #if defined(__NetBSD__)
@@ -321,38 +429,70 @@
 #	define HAVE_BZERO	1
 #endif
 
+/* Apple Mac OS X (Darwin -- not YellowDog Linux or others where __PPC__ is
+ * defined instead of __ppc__ 
+ */
 #if defined(__ppc__)
 #       define USE_PROTOTYPES   1
 #       define USE_REGCOMP      1
 #       define USE_STRING_H     1
+#				define HAVE_STRING_H	1
 #       define HAS_POSIX_THREADS        1
 #       define HAVE_BZERO       1
-#	define HAVE_FLOAT	1
-#	define HAVE_GETHOSTNAME	1
+#				define HAVE_FLOAT	1
+#				define HAVE_GETHOSTNAME	1
 #       define HAVE_GETOPT      1
 #       define HAVE_GETOPT_DECL 1
 #       define HAVE_IOCTL_COMPAT_H      1
-#	define HAVE_LIMITS_H	1
-#	define HAVE_MEMORY_H	1
+#				define HAVE_LIMITS_H	1
+#				define HAVE_MEMORY_H	1
 #       define HAVE_POSIX_REGEXEC       1
 #       define HAVE_REGEX	1
 #       define HAVE_REGEX_DECL  1
 #       define HAVE_SBRK	1
 #       define HAVE_SBRK_DECL   1
 #       define HAVE_SHELL_ESCAPE	1
-#	define HAVE_STRCHR	1
+#				define HAVE_STRCHR	1
 #       define HAVE_STDLIB_H    1
 #       define HAVE_STDARG_H    1
 #       define HAVE_SYS_ERRLIST_DECL    1
 #       define HAVE_SYS_MMAN_H  1
 #       define HAVE_SYS_SOCKET_H	1
-#	define HAVE_TERMIOS_H	1
+#				define HAVE_TERMIOS_H	1
 #       define HAVE_UNISTD_H    1
 #       define HAVE_UNIX_DOMAIN_SOCKETS 1
 #       define HAVE_UNIX_IO             1
 #       define HAVE_VFORK                       1
 #       define HAVE_VPRINTF             1
 #       define HAVE_WRITEV              1
+#	define HAVE_STRCASECMP		1
+#endif
+
+#if defined(__sp3__)
+#	define USE_PROTOTYPES	1
+#       define USE_STRING_H     1
+#	define HAS_POSIX_THREADS	1
+#	define HAVE_FLOAT_H	1
+#	define HAVE_GETHOSTNAME	1
+#	define HAVE_GETOPT	1
+#	define HAVE_GETOPT_DECL	1
+#	define HAVE_LIMITS_H	1
+#	define HAVE_MEMORY_H	1
+#	define HAVE_SBRK	1
+#	define HAVE_SBRK_DECL	1
+#	define HAVE_STRCHR	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_STDARG_H	1
+#	define HAVE_STRING_H	1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_SYS_SOCKET_H	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_UNIX_DOMAIN_SOCKETS	1
+#	define HAVE_UNIX_IO	1
+#	define HAVE_VFORK	1
+#	define HAVE_VPRINTF	1
+#	define HAVE_WRITEV	1
 #endif
 
 #if defined(__STDC__)
@@ -495,7 +635,7 @@
         defined(pyr) || defined(apollo) || defined(aux) || \
         defined(_AIX) || defined(NeXT) || defined(convex) || \
 	defined(hpux) || defined(__hppa) || defined(__convex__) || \
-	defined(__ppc__)
+	(defined(__ppc__) || defined(__PPC__))
 
         /*  These systems already operate in
          *  IEEE format internally, using big-endian order.
@@ -525,7 +665,7 @@
 /* We need sys/types.h for definitions and prototypes that will appear 
    everywhere. */
 
-#if SUNOS >= 52
+#if defined(SUNOS) && SUNOS >= 52
 	/* For the duration of <sys/types.h>, set this, to get u_short
 	 * etc, defined properly.
 	 */
@@ -536,11 +676,11 @@
 #	endif
 #endif
 
-#ifndef CPP_ONLY
+#if !defined(CPP_ONLY)
 # include <sys/types.h>
 #endif
 
-#if SUNOS >= 52
+#if defined(SUNOS) && SUNOS >= 52
 #	if SUNOS <= 55
 #		undef	_KERNEL
 #	endif
@@ -586,4 +726,3 @@
 
 
 #endif /* CONF_H */
-

@@ -171,7 +171,7 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
 }
 
 
-/*	>>>  s y n D i v ( )  <<<
+/*	s y n D i v ( )
  *	Divides any polynomial into any other polynomial using synthetic
  *	division.  Both polynomials must have real coefficients.
  */
@@ -202,7 +202,7 @@ bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly
 }
 
 
-/*	>>>  q u a d r a t i c ( )  <<<
+/*	q u a d r a t i c ( )
  *
  *	Uses the quadratic formula to find the roots (in `complex' form)
  *	of any quadratic equation with real coefficients.
@@ -246,7 +246,7 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
 #define INV_TWENTYSEVEN		0.037037037037037037037037037
 #define	CUBEROOT( a )	(( (a) >= 0.0 ) ? pow( a, THIRD ) : -pow( -(a), THIRD ))
 
-/*	>>>  c u b i c ( )  <<<
+/*	c u b i c ( )
  *
  *	Uses the cubic formula to find the roots ( in `complex' form )
  *	of any cubic equation with real coefficients.

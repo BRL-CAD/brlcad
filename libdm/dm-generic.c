@@ -17,7 +17,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1999 by the United States Army
+ *	This software is Copyright (C) 1999-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #include "conf.h"
@@ -49,6 +49,13 @@ extern int ogl_share_dlist();
 #endif /* DM_OGL */
 #endif /* DM_X */
 
+#ifdef WIN32
+extern struct dm *ogl_open();
+extern void ogl_fogHint();
+extern int ogl_share_dlist();
+#endif
+
+
 struct dm *
 dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
 {
@@ -59,9 +66,11 @@ dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
 		return plot_open(interp, argc, argv);
 	case DM_TYPE_PS:
 		return ps_open(interp, argc, argv);
+#ifndef WIN32
 #ifdef DM_X
 	case DM_TYPE_X:
 		return X_open(interp, argc, argv);
+#endif
 #endif
 #ifdef DM_OGL
 	case DM_TYPE_OGL:

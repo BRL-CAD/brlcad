@@ -982,10 +982,9 @@ bu_vls_printf(vls, fmt, a,b,c,d,e,f,g,h,i,j)       /* Cray XMP */
 struct bu_vls *vls;
 char *fmt;
 {
-	char append_buf[65536];   /* yuck -- fixed length buffer. */
+	char append_buf[65536] = {0};   /* yuck -- fixed length buffer. */
 
 	BU_CK_VLS(vls);
-	append_buf[sizeof(append_buf)-1] = '\0';
 	sprintf(append_buf, fmt, a,b,c,d,e,f,g,h,i,j);
 	if (append_buf[sizeof(append_buf)-1] != '\0') {
 		/* Attempting to bu_log() the WHOLE append_buf would just overflow again */

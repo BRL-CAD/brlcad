@@ -17,7 +17,7 @@
  *	Aberdeen Proving Ground, Maryland  21005 USA
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army.
+ *	This software is Copyright (C) 1993-2004 by the United States Army.
  *	All rights reserved.
  *
  *  Include Sequencing -
@@ -138,6 +138,7 @@ extern "C" {
 #ifdef INFINITY
 #	undef INFINITY
 #endif
+
 #if defined(vax) || (defined(sgi) && !defined(mips))
 #	define INFINITY	(1.0e20)	/* VAX limit is 10**37 */
 #else
@@ -710,7 +711,8 @@ union cutter  {
 		int	bn_len;		/* # of solids in list */
 		int	bn_maxlen;	/* # of ptrs allocated to list */
 		struct rt_piecelist *bn_piecelist; /* [] solids with pieces */
-		int	bn_piecelen;	/* # of solids with pieces */
+		int	bn_piecelen;	/* # of piecelists used */
+		int	bn_maxpiecelen; /* # of piecelists allocated */
 	} bn;
 	struct nugridnode {
 		int	nu_type;
@@ -1176,8 +1178,20 @@ struct vd_curve {
  */
 struct run_rt {
 	struct bu_list		l;
+#ifdef WIN32
+	HANDLE			fd;
+	HANDLE			hProcess;
+	DWORD			pid;
+
+#ifdef TCL_OK
+	Tcl_Channel		chan;
+#else
+	genptr_t chan;
+#endif
+#else
 	int			fd;
 	int			pid;
+#endif	
 	int			aborted;
 };
 
@@ -1479,6 +1493,30 @@ extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 		(_res)->re_tree_free++; \
 	}
 
+
+/*			R T _ R E P R E P _ O B J _ L I S T
+ *
+ *	Structure used by the "reprep" routines
+ */
+struct rt_reprep_obj_list {
+	int ntopobjs;		/* number of objects in the original call to gettrees */
+	char **topobjs;		/* list of the above object names */
+	int nunprepped;		/* number of objects to be unprepped and re-prepped */
+	char **unprepped;	/* list of the above objects */
+	/* Above here must be filled in by application */
+	/* Below here is used by dynamic geometry routines, should be zeroed by application before use */
+	struct bu_ptbl paths;	/* list of all paths from topobjs to unprepped objects */
+	struct db_tree_state **tsp;	/* tree state used by tree walker in "reprep" routines */
+	struct bu_ptbl unprep_regions;	/* list of region structures that will be "unprepped" */
+	long old_nsolids;		/* rtip->nsolids before unprep */
+	long old_nregions;		/* rtip->nregions before unprep */
+	long nsolids_unprepped;		/* number of soltab structures eliminated by unprep */
+	long nregions_unprepped;	/* number of region structures eliminated by unprep */
+};
+
+
+
+
 /*
  *			P I X E L _ E X T
  *
@@ -1562,8 +1600,14 @@ struct application  {
 	/* THESE ELEMENTS ARE USED BY THE LIBRARY, BUT MAY BE LEFT ZERO */
 	struct resource	*a_resource;	/* dynamic memory resources */
 	int		(*a_overlap)();	/* DEPRECATED */
-	void		(*a_multioverlap)BU_ARGS( (struct application *, struct partition *, struct bu_ptbl *, struct partition *) );	/* called to resolve overlaps */
-	void		(*a_logoverlap)BU_ARGS( (struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *) );	/* called to log overlaps */
+	void		(*a_multioverlap)BU_ARGS( (struct application *,	/* called to resolve overlaps */
+						   struct partition *,
+						   struct bu_ptbl *,
+						   struct partition *) );
+	void		(*a_logoverlap)BU_ARGS( (struct application *,	/* called to log overlaps */
+						 const struct partition *,
+						 const struct bu_ptbl *,
+						 const struct partition *) );
 	int		a_level;	/* recursion level (for printing) */
 	int		a_x;		/* Screen X of ray, if applicable */
 	int		a_y;		/* Screen Y of ray, if applicable */
@@ -1582,6 +1626,7 @@ struct application  {
 	/* THESE ELEMENTS ARE WRITTEN BY THE LIBRARY, AND MAY BE READ IN a_hit() */
 	struct seg	*a_finished_segs_hdp;
 	struct partition *a_Final_Part_hdp;
+	vect_t		a_inv_dir;	/* filled in by rt_shootray(), inverse of ray direction cosines */
 	/* THE FOLLOWING ELEMENTS ARE MAINLINE & APPLICATION SPECIFIC. */
 	/* THEY ARE NEVER EXAMINED BY THE LIBRARY. */
 	int		a_user;		/* application-specific value */
@@ -1702,6 +1747,7 @@ struct rt_i {
 	struct region	**Regions;	/* ptrs to regions [reg_bit] */
 	struct bu_list	HeadRegion;	/* ptr of list of regions in model */
 	genptr_t	Orca_hash_tbl;	/* Hash table in matrices for ORCA */
+	struct bu_ptbl	delete_regs;	/* list of region pointers to delete after light_init() */
 	/* Ray-tracing statistics */
 	long		nregions;	/* total # of regions participating */
 	long		nsolids;	/* total # of solids participating */
@@ -1741,6 +1787,9 @@ struct rt_i {
 	int		rti_uses;	/* for rt_submodel */
 	/* Parameters for accelerating "pieces" of solids */
 	int		rti_nsolids_with_pieces; /* #solids using pieces */
+	/* Parameters for dynamic geometry */
+	int		rti_add_to_new_solids_list;
+	struct bu_ptbl	rti_new_solids;
 };
 
 #define RT_NU_GFACTOR_DEFAULT	1.5	 /* see rt_cut_it() for a description
@@ -2108,7 +2157,7 @@ struct rt_shootray_status {
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1994 by the United States Army
+ *	This software is Copyright (C) 1994-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  *
  *  $Header$
@@ -2498,7 +2547,9 @@ BU_EXTERN(void rt_color_free, () );
 /* cut.c */
 extern void rt_pr_cut_info(const struct rt_i	*rtip,
 			   const char		*str);
-
+extern void remove_from_bsp( struct soltab *stp, union cutter *cutp, struct bn_tol *tol );
+extern void insert_in_bsp( struct soltab *stp, union cutter *cutp );
+extern void fill_out_bsp( struct rt_i *rtip, union cutter *cutp, struct resource *resp, fastf_t bb[6] );
 BU_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp,
 	const struct rt_i *rtip) );
 					/* find RPP of one region */
@@ -2824,6 +2875,15 @@ extern int rt_comb_import5( struct rt_db_internal   *ip,
         struct resource         *resp,
 	const int		minor_type);
 
+/* g_extrude.c */
+extern int rt_extrude_import5(
+	struct rt_db_internal		*ip,
+	const struct bu_external	*ep,
+	register const mat_t		mat,
+	const struct db_i		*dbip,
+	struct resource			*resp,
+	const int			minor_type );
+
 
 /* db_lookup.c */
 extern int db_get_directory_size( const struct db_i	*dbip );
@@ -3073,6 +3133,9 @@ int rt_pg_plot_poly(struct bu_list		*vhead,
 /* g_hf.c */
 int rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp);
 
+/* g_dsp.c */
+BU_EXTERN(int dsp_pos, (point_t out, struct soltab *stp, point_t p));
+
 /* pr.c */
 BU_EXTERN(void rt_pr_soltab, (const struct soltab *stp));
 BU_EXTERN(void rt_pr_region, (const struct region *rp));
@@ -3128,12 +3191,23 @@ void rt_init_resource(
 	int		cpu_num,
 	struct rt_i	*rtip);
 BU_EXTERN(void rt_clean_resource, (struct rt_i *rtip, struct resource *resp));
+extern int rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *resp );
+extern int rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *resp );
+extern int re_prep_solids( struct rt_i *rtip, int num_solids, char **solid_names, struct resource *resp );
+extern int rt_find_paths( struct db_i *dbip,
+	       struct directory *start,
+	       struct directory *end,
+	       struct bu_ptbl *paths,
+	       struct resource *resp );
+extern struct bu_bitv *get_solidbitv( long nbits, struct resource *resp );
 
 /* shoot.c */
 BU_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
 					/* Tally stats into struct rt_i */
+extern void rt_zero_res_stats( struct resource *resp );
 extern void rt_res_pieces_clean(struct resource *resp,
 			   struct rt_i *rtip);
+extern void rt_res_pieces_init( struct resource *resp, struct rt_i *rtip );
 extern void rt_vstub(struct soltab	       *stp[],
 		     struct xray		*rp[],
 		     struct  seg            segp[],
@@ -3788,6 +3862,8 @@ int rt_bot_find_e_nearest_pt2(
 int rt_bot_vertex_fuse( struct rt_bot_internal *bot );
 int rt_bot_face_fuse( struct rt_bot_internal *bot );
 int rt_bot_condense( struct rt_bot_internal *bot );
+int rt_smooth_bot( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fastf_t normal_tolerance_angle );
+
 #endif
 int rt_bot_same_orientation( const int *a, const int *b );
 
@@ -3893,10 +3969,9 @@ BU_EXTERN(int			nmg_class_pt_fu_except, (const point_t pt,
 				const struct bn_tol *tol) );
 
 /* From nmg_plot.c */
-void
-extern nmg_pl_shell(FILE		*fp,
-		    const struct shell	*s,
-		    int			fancy);
+BU_EXTERN(void			nmg_pl_shell, (FILE *fp, 
+					     const struct shell *s,
+					     int fancy));
 
 BU_EXTERN(void			nmg_vu_to_vlist, (struct bu_list *vhead,
 				const struct vertexuse	*vu));
@@ -4784,6 +4859,7 @@ BU_EXTERN(int	wdb_showmats_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int ar
 BU_EXTERN(int	wdb_copyeval_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_version_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_binary_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_smooth_bot_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 
 /* defined in dg_obj.c */
 BU_EXTERN(void	dgo_autoview,		(struct dg_obj *dgop, struct view_obj *vop, Tcl_Interp *interp));

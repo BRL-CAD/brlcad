@@ -20,7 +20,7 @@
  *      The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *      This software is Copyright (C) 1993 by the United States Army
+ *      This software is Copyright (C) 1993-2004 by the United States Army
  *      in all countries except the USA.  All rights reserved.
  */
 

@@ -22,7 +22,7 @@
  *      The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *      This software is Copyright (C) 1998 by the United States Army
+ *      This software is Copyright (C) 1998-2004 by the United States Army
  *      in all countries except the USA.  All rights reserved.
  */
 
@@ -657,7 +657,6 @@ remove_region_attrs( Tcl_Obj *obj )
 {
 	int len=0;
 	Tcl_Obj **objs;
-	Tcl_Obj *new_obj;
 	char *key;
 	int i,j;
 	int found_material=0;
@@ -670,8 +669,6 @@ remove_region_attrs( Tcl_Obj *obj )
 
 	if( len == 0 )
 		return;
-
-	new_obj = Tcl_NewObj();
 
 	for( i=len-1 ; i>0 ; i -= 2 ) {
 

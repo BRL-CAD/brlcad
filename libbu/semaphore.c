@@ -79,7 +79,11 @@ struct bu_semaphores {
 
 #include <sys/wait.h>
 
+#ifndef WIN32
 static char		bu_lockfile[] = "/usr/tmp/bu_lockXXXXXX";
+#else
+static char		bu_lockfile[] = "C:\\bu_lockXXXXXX";
+#endif
 static usptr_t		*bu_lockstuff = 0;
 extern int		_utrace;
 
@@ -134,7 +138,11 @@ struct bu_semaphores {
 #endif	/* SUNOS */
 
 #if defined(HAS_POSIX_THREADS)
+#ifdef __sp3__
+#	include	<unistd.h>
+#else
 #	include <sys/unistd.h>
+#endif
 #	include <pthread.h>
 struct bu_semaphores {
 	long	magic;

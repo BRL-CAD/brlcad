@@ -16,7 +16,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army
+ *	This software is Copyright (C) 1997-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -72,7 +72,7 @@ extern void ogl_configureWindow();
 extern int ogl_refresh();
 #endif
 
-#ifdef IF_X
+#if defined(IF_X) && !defined(WIN32)
 extern void X24_configureWindow();
 extern int X24_refresh();
 extern int X24_open_existing();
@@ -92,7 +92,7 @@ static struct bu_cmdtab cmdtab[] = {
 int
 Fb_Init(Tcl_Interp *interp)
 {
-	char *version_number;
+	const char *version_number;
 
 	/* register commands */
 	bu_register_cmds(interp, cmdtab);
@@ -112,85 +112,100 @@ int
 fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef IF_X
-	register FBIO *ifp;
-	char *X_name = "/dev/X";
-#ifdef IF_OGL
-	char *ogl_name = "/dev/ogl";
-#endif
-	struct bu_vls vls;
+  register FBIO *ifp;
+#  ifndef WIN32
+  char *X_name = "/dev/X";
+#  endif
+#  ifdef IF_OGL
+  char *ogl_name = "/dev/ogl";
+#  endif
+  struct bu_vls vls;
 
-	if(argc < 2){
-		Tcl_AppendResult(interp, "XXXfb_open_existing: wrong number of args\n", (char *)NULL);
-		return TCL_ERROR;
-	}
+  if(argc < 2){
+    Tcl_AppendResult(interp, "XXXfb_open_existing: wrong number of args\n", (char *)NULL);
+    return TCL_ERROR;
+  }
 
-	if((ifp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL){
-		Tcl_AppendResult(interp, "fb_open_existing: failed to allocate ifp memory\n",
-				 (char *)NULL);
-		return TCL_ERROR;
-	}
+  if((ifp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL){
+    Tcl_AppendResult(interp, "fb_open_existing: failed to allocate ifp memory\n", (char *)NULL);
+    return TCL_ERROR;
+  }
 
-	if(strcmp(argv[1], X_name) == 0){
-		*ifp = X24_interface; /* struct copy */
+#  ifndef WIN32
+#    if defined(HAVE_STRCASECMP)
+  if(strcasecmp(argv[1], X_name) == 0) {
+#    else
+  if(stricmp(argv[1], X_name) == 0) {
+#    endif
+    *ifp = X24_interface; /* struct copy */
 
-		ifp->if_name = malloc((unsigned)strlen(X_name) + 1);
-		(void)strcpy(ifp->if_name, X_name);
+    ifp->if_name = malloc((unsigned)strlen(X_name) + 1);
+    (void)strcpy(ifp->if_name, X_name);
 
-		/* Mark OK by filling in magic number */
-		ifp->if_magic = FB_MAGIC;
+    /* Mark OK by filling in magic number */
+    ifp->if_magic = FB_MAGIC;
 
-		if((X24_open_existing(ifp, argc - 1, argv + 1)) <= -1){
-			ifp->if_magic = 0; /* sanity */
-			free((void *) ifp->if_name);
-			free((void *) ifp);
-			Tcl_AppendResult(interp, "fb_open_existing: failed to open X framebuffer\n",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-#ifdef IF_OGL
-	}else if(strcmp(argv[1], ogl_name) == 0){
-		*ifp = ogl_interface; /* struct copy */
+    if((X24_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+      ifp->if_magic = 0; /* sanity */
+      free((void *) ifp->if_name);
+      free((void *) ifp);
+      Tcl_AppendResult(interp, "fb_open_existing: failed to open X framebuffer\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+  } else {
+  
+#  endif  /* WIN32 */
 
-		ifp->if_name = malloc((unsigned)strlen(ogl_name) + 1);
-		(void)strcpy(ifp->if_name, ogl_name);
+#  ifdef IF_OGL
+#    if defined(HAVE_STRCASECMP)
+    if(strcasecmp(argv[1], ogl_name) == 0) {
+#    else
+    if(stricmp(argv[1], ogl_name) == 0) {
+#    endif
+      *ifp = ogl_interface; /* struct copy */
 
-		/* Mark OK by filling in magic number */
-		ifp->if_magic = FB_MAGIC;
+      ifp->if_name = malloc((unsigned)strlen(ogl_name) + 1);
+      (void)strcpy(ifp->if_name, ogl_name);
 
-		if((ogl_open_existing(ifp, argc - 1, argv + 1)) <= -1){
-			ifp->if_magic = 0; /* sanity */
-			free((void *) ifp->if_name);
-			free((void *) ifp);
-			Tcl_AppendResult(interp, "fb_open_existing: failed to open ogl framebuffer\n",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-#endif
-	}else{
-		ifp->if_magic = 0; /* sanity */
-		free((void *) ifp->if_name);
-		free((void *) ifp);
+      /* Mark OK by filling in magic number */
+      ifp->if_magic = FB_MAGIC;
 
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "fb_open_existing: supports only the following device types\n");
-		bu_vls_printf(&vls, "%s", X_name);
-#ifdef IF_OGL
-		bu_vls_printf(&vls, ", %s", ogl_name);
-#endif
-		bu_vls_printf(&vls, "\n");
-		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-		bu_vls_free(&vls);
+      if((ogl_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+	ifp->if_magic = 0; /* sanity */
+	free((void *) ifp->if_name);
+	free((void *) ifp);
+	Tcl_AppendResult(interp, "fb_open_existing: failed to open ogl framebuffer\n", (char *)NULL);
+	return TCL_ERROR;
+      }
+    } else {
+#  endif  /* IF_OGL */
 
-		return TCL_ERROR;
-	}
+      ifp->if_magic = 0; /* sanity */
+      free((void *) ifp->if_name);
+      free((void *) ifp);
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%lu", (unsigned long)ifp);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-#endif /* IF_X */
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "fb_open_existing: supports only the following device types\n");
+#  if defined(IF_X) && !defined(WIN32)
+      bu_vls_printf(&vls, "%s", X_name);
+#  endif  /* IF_X && !WIN32 */
+#  ifdef IF_OGL
+      bu_vls_printf(&vls, ", %s", ogl_name);
+#  endif  /* IF_OGL */
+      bu_vls_printf(&vls, "\n");
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
 
-	return TCL_OK;
+      return TCL_ERROR;
+    }
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%lu", (unsigned long)ifp);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+#endif  /* IF_X */
+
+    return TCL_OK;
 }
 
 int
@@ -201,7 +216,9 @@ fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 #ifdef IF_OGL
 	char *ogl_name = "/dev/ogl";
 #endif
+#ifndef WIN32
 	char *X_name = "/dev/X";
+#endif
 	struct bu_vls vls;
 	int status;
 
@@ -217,8 +234,13 @@ fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 
 	FB_TCL_CK_FBIO(ifp);
 	_fb_pgflush(ifp);
-
-	if(strcmp(ifp->if_name, X_name) == 0){
+#ifndef WIN32
+#if defined(HAVE_STRCASECMP)
+	if(strcasecmp(ifp->if_name, X_name) == 0)
+#else
+	if(stricmp(ifp->if_name, X_name) == 0)
+#endif
+	  {
 		if((status = X24_close_existing(ifp)) <= -1){
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
@@ -228,8 +250,20 @@ fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 
 			return TCL_ERROR;
 		}
+#endif
 #ifdef IF_OGL
-	}else if(strcmp(ifp->if_name, ogl_name) == 0){
+#ifndef WIN32
+	}
+#endif
+#ifndef WIN32
+	else
+#endif
+#if defined(HAVE_STRCASECMP)
+		if(strcasecmp(ifp->if_name, ogl_name) == 0)
+#else
+		if(stricmp(ifp->if_name, ogl_name) == 0)
+#endif
+		  {
 		if((status = ogl_close_existing(ifp)) <= -1){
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
@@ -263,15 +297,22 @@ void
 fb_configureWindow(FBIO *ifp, int width, int height)
 {
 #ifdef IF_X
+#ifndef _WIN32
 	const char *X_name = "/dev/X";
+#endif
 #ifdef IF_OGL
 	const char *ogl_name = "/dev/ogl";
 #endif
 
+#ifndef _WIN32
 	if (!strncmp(ifp->if_name, X_name, strlen(X_name)))
 		X24_configureWindow(ifp, width, height);
+#endif
 #ifdef IF_OGL
-	else if (!strncmp(ifp->if_name, ogl_name, strlen(ogl_name)))
+#ifndef _WIN32	
+	else 
+#endif
+		if (!strnicmp(ifp->if_name, ogl_name, strlen(ogl_name)))
 		ogl_configureWindow(ifp, width, height);
 #endif
 #endif /* IF_X */
@@ -281,17 +322,23 @@ int
 fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 {
 #ifdef IF_X
+#ifndef WIN32
 	char *X_name = "/dev/X";
+#endif
 #ifdef IF_OGL
 	char *ogl_name = "/dev/ogl";
 #endif
 	int status;
-
+#ifndef WIN32
 	if(!strcmp(ifp->if_name, X_name)){
 		status = X24_refresh(ifp, x, y, w, h);
 	}
+#endif
 #ifdef IF_OGL
-	else if(!strcmp(ifp->if_name, ogl_name)){
+#ifndef WIN32	
+	else 
+#endif		
+		if(!strcmp(ifp->if_name, ogl_name)){
 		status = ogl_refresh(ifp, x, y, w, h);
 	}
 #endif

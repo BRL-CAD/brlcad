@@ -10,6 +10,10 @@
 #include "shadefuncs.h"
 #include "shadework.h"
 extern void optical_shader_init(struct mfuncs	**headp);
+/* stub functions useful for debugging */
+extern int mlib_zero(), mlib_one();
+extern void	mlib_void();
+
 
 /* refract.c */
 int
@@ -107,14 +111,21 @@ void mlib_free( struct region *rp );
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  *  
  *  $Revision$
  */
-#define RDEBUG_OFF	0	/* No debugging */
-
 extern int	rdebug;
+
+/* When in production mode, no debug checking is performed, hence the 
+ * R_DEBUG define causes sections of debug code to go "poof"
+ */
+#ifdef NO_DEBUG_CHECKING
+#	define	R_DEBUG	0
+#else
+#	define	R_DEBUG	rdebug
+#endif
 
 /* These definitions are each for one bit */
 /* Should be reogranized to put most useful ones first */
@@ -164,3 +175,15 @@ extern int	rt_verbosity;
 #define VERBOSE_FORMAT \
 "\012OUTPUTFILE\011MULTICPU\010INCREMENTAL\7LIGHTINFO\6VIEWDETAIL\
 \5FRAMENUMBER\4STATS\3TOLERANCE\2MODELTITLE\1LIBVERSIONS"
+
+extern double AmbientIntensity;
+
+struct floatpixel {
+	double	ff_dist;		/* range to ff_hitpt[], <-INFINITY for miss */
+	float	ff_hitpt[3];
+	struct region *ff_regp;
+	int	ff_frame;		/* >= 0 means pixel was reprojected */
+	short	ff_x;			/* screen x,y coords of first location */
+	short	ff_y;
+	char	ff_color[3];
+};

@@ -21,7 +21,7 @@
  *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1998 by the United States Army
+ *	This software is Copyright (C) 1998-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  *
  */
@@ -148,6 +148,7 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, char **a
 			if (timediff(&tvdiff, &(hp_prev->h_finish), &(hp->h_start)) >= 0)
 				bu_vls_printf(&str, "delay %d %d\n", tvdiff.tv_sec,
 					      tvdiff.tv_usec);
+
 		}
 
 		if (hp->h_status == TCL_ERROR)

@@ -3,7 +3,7 @@
 dxf-g \- DXF Translator (DXF to BRL-CAD)
 .SH SYNOPSIS
 .B dxf-g
-[-p] [-v] [-t tolerance] [-i file.dxf] [-o database.g]
+[-c] [-d] [-v] [-s scale_factor] [-t tolerance] file.dxf database.g
 .SH DESCRIPTION
 .I dxf-g\^
 converts the specified
@@ -12,29 +12,38 @@ to a BRL-CAD
 .I database.g
 file.
 The
-.I -p
-option results in a BRL-CAD model built from polysolids instead of NMGs.
+.I -c
+option specifies that only the first color seen for a layer should be used. Without this option,
+layers may be broken into seperate BOT primitives according to color assigned.
+The
+.I -d
+option sets a debug flag. The only effect is to cause a core dump on failure.
+This is probably not useful except for developers.
 The
 .I -v
 option produces very verbose output on stderr.
 The
-.I tolerance
-is the maximum distance (in mm) between two vertices at which the two vertices
+.I -s
+option provides a scale factor to be applied to the DXF input. This can be used for DXF files
+that do not provide units information.
+The
+.I -t
+option specifies the maximum distance (in mm) between two vertices at which the two vertices
 will be considered to be the same vertex.
 The
 .I file.dxf
 file is expected to be in the Autodesk DXF format as defined in the
-Autocad version 10 manuals. The only objects converted to the BRL-CAD
-format are 3DFACES and 3DMESH objects (other objects defined for the DXF
-format are 2D drawing entities and are ignored).
+Autocad 2000 manuals. This converter handles entities of type POLYLINE, VERTEX, LINE, CIRCLE, ARC, and 3DFACE.
+The POLYLINE entities in AUTOCAD are actually a container for numerous different entity types. The types
+of POLYLINE entities converted include 3D polylines, 3D polygon meshes, and polyface meshes.
+Each layer is converted to a seperate opbject. Colors are also converted.
 .SH EXAMPLE
 .RS
-$ \|\fIdxf-g < \|sample.dxf > \|sample.g\fP
+$ \|\fIdxf-g \|sample.dxf \|sample.g\fP
 .RE
 .SH "SEE ALSO"
 .I
-The AutoCAD Reference Manual Version 10
-Autodesk, Inc.
+http://www.autodesk.com/techpubs/autocad/acad2000/dxf/index.htm
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
 .SH AUTHOR
@@ -47,4 +56,4 @@ The U. S. Army Research Laboratory
 Aberdeen Proving Ground, MD  21005
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.MIL>.
+mail to <CAD@ARL.ARMY.MIL>.

@@ -251,6 +251,7 @@ tmist_hit(register struct application *ap, struct partition *PartHeadp, struct s
 	 */
 	return 0;
 }
+
 int
 tmist_miss(register struct application *ap)
 {

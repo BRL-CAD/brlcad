@@ -13,7 +13,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1986 by the United States Army.
+ *	This software is Copyright (C) 1986-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -244,7 +244,7 @@ stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 					i++;
 			} else {
 				/* XXX else clear entry? */
-				bu_log("stk_setup problem\n");
+				bu_log("Problem in stack shader setup\n");
 			}
 			start = ++cp;
 		} else {

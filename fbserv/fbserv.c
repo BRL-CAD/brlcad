@@ -46,7 +46,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1995 by the United States Army
+ *	This software is Copyright (C) 1995-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -232,7 +232,7 @@ new_client(struct pkg_conn *pcp)
 		return;
 
 	for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
-		if( clients == NULL )  continue;
+		if( clients[i] != NULL )  continue;
 		/* Found an available slot */
 		clients[i] = pcp;
 		FD_SET(pcp->pkc_fd, &select_list);

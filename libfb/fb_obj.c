@@ -23,7 +23,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army
+ *	This software is Copyright (C) 1997-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -54,7 +54,6 @@ static int fbo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, c
 static int fbo_refresh_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int fbo_rect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int fbo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
 static int fbo_coords_ok(Tcl_Interp *interp, FBIO *fbp, int x, int y);
 static int fbo_tcllist2color(Tcl_Interp *interp, char *string, unsigned char *pixel);
 
@@ -235,7 +234,7 @@ fbo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&fbop->fbo_name),
-				fbo_cmd,
+				(Tcl_CmdProc *)fbo_cmd,
 				(ClientData)fbop,
 				fbo_deleteProc);
 

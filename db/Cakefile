@@ -63,23 +63,33 @@ everything&::	PRODUCTS
 #if defined(NFS)
 #	if defined(__CAKE__sun3) || defined(__CAKE__sun4)
 #		define	CONV	../.conv.MTYPE/asc2g
-#		define	CONV_EX	../.conv.MTYPE/asc2g
 #	else
-#		define	CONV	\
-		LD_LIBRARY_PATH=LIBWDB_DIR:LIBRT_DIR:LIBBN_DIR:LIBBU_DIR:LIBTCL_DIR:LIBITCL_DIR:LIBSYSV_DIR:$LD_LIBRARY_PATH \
-		../.conv.MTYPE/asc2g
-#		define	CONV_EX	../.conv.MTYPE/asc2g
+#		if defined(__CAKE__sp3)
+#			define	CONV	\
+			LIBPATH=LIBWDB_DIR:LIBRT_DIR:LIBBN_DIR:LIBBU_DIR:LIBTCL_DIR:LIBITCL_DIR:LIBSYSV_DIR:$LIBPATH \
+			../.conv.MTYPE/asc2g
+#		else
+#			define	CONV	\
+			LD_LIBRARY_PATH=LIBWDB_DIR:LIBRT_DIR:LIBBN_DIR:LIBBU_DIR:LIBTCL_DIR:LIBITCL_DIR:LIBSYSV_DIR:$LD_LIBRARY_PATH \
+			../.conv.MTYPE/asc2g
+#		endif
 #	endif
+#	define	CONV_EX	../.conv.MTYPE/asc2g
 #else
 #	if defined(__CAKE__sun3) || defined(__CAKE__sun4)
 #		define	CONV	../conv/asc2g
-#		define	CONV_EX	../conv/asc2g
 #	else
-#		define	CONV	\
-		LD_LIBRARY_PATH=LIBWDB_DIR:LIBRT_DIR:LIBBN_DIR:LIBBU_DIR:LIBTCL_DIR:LIBITCL_DIR:LIBSYSV_DIR:$LD_LIBRARY_PATH \
-		../conv/asc2g
-#		define	CONV_EX	../conv/asc2g
+#		if defined(__CAKE__sp3)
+#			define	CONV	\
+			LIBPATH=LIBWDB_DIR:LIBRT_DIR:LIBBN_DIR:LIBBU_DIR:LIBTCL_DIR:LIBITCL_DIR:LIBSYSV_DIR:$LIBPATH \
+			../.conv.MTYPE/asc2g
+#		else
+#			define	CONV	\
+			LD_LIBRARY_PATH=LIBWDB_DIR:LIBRT_DIR:LIBBN_DIR:LIBBU_DIR:LIBTCL_DIR:LIBITCL_DIR:LIBSYSV_DIR:$LD_LIBRARY_PATH \
+			../conv/asc2g
+#		endif
 #	endif
+#	define	CONV_EX	../conv/asc2g
 #endif
 
 /* If converter program changed, be sure to re-convert the .g files */

@@ -38,6 +38,7 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/sysinfo.h>
 #endif
 
 #ifdef __FreeBSD__
@@ -64,6 +65,12 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #  define BSD __BSDbackup
 #endif
 #include <sys/sysctl.h>
+#endif
+
+#ifdef __sp3__
+#include <sys/types.h>
+#include <sys/sysconfig.h>
+#include <sys/var.h>
 #endif
 
 #ifdef CRAY
@@ -137,7 +144,11 @@ static struct sched_param bu_param;
  * multithread support built on POSIX Threads (pthread) library.
  */
 #ifdef HAS_POSIX_THREADS
+#ifdef __sp3__
+#	include	<unistd.h>
+#else
 #	include <sys/unistd.h>
+#endif
 #	include <pthread.h>
 #define rt_thread_t	pthread_t
 #endif	/* HAS_POSIX_THREADS */
@@ -243,6 +254,8 @@ bu_cpulimit_set(int sec)
 #endif
 }
 
+
+
 /*
  *			B U _ A V A I L _ C P U S
  *
@@ -252,18 +265,34 @@ bu_cpulimit_set(int sec)
 int
 bu_avail_cpus(void)
 {
-	int	ret = 1;
+	int ncpu = -1;
 
-#ifdef linux 
-#define CPUINFO_FILE "/proc/cpuinfo"
-	FILE *fp;
-	char buf[128];
+
+#if defined(_SC_NPROCESSORS_ONLN)
+	/* SUNOS and linux */
+	ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+	if (ncpu < 0) {
+		perror("Unable to get the number of available CPUs");
+		ncpu = 1;
+	}
+	goto DONE_NCPU;
+#elif defined(_SC_NPROC_ONLN)
+	ncpu = sysconf(_SC_NPROC_ONLN);
+	if (ncpu < 0) {
+		perror("Unable to get the number of available CPUs");
+		ncpu = 1;
+	}
+	goto DONE_NCPU;
+#elif defined(_SC_CRAY_NCPU)
+	/* cray */
+	ncpu = sysconf(_SC_CRAY_NCPU);
+	if (ncpu < 0) {
+		perror("Unable to get the number of available CPUs");
+		ncpu = 1;
+	}
+	goto DONE_NCPU;
 #endif
 
-#ifdef __ppc__
-	int mib[2], maxproc;
-	size_t len;
-#endif
 
 #ifdef SGI_4D
 	/* XXX LAB 04 June 2002
@@ -276,109 +305,163 @@ bu_avail_cpus(void)
 	 * configured processors.  This will have to suffice until SGI
 	 * comes up with a fix.
 	 */
-#if 0
-	ret = (int)prctl(PR_MAXPPROCS);
-#else
-	ret = sysmp(MP_NPROCS);
-#endif
-#	define	RT_AVAIL_CPUS
-#endif
+#  if 0
+	ncpu = (int)prctl(PR_MAXPPROCS);
+#  else
+	ncpu = sysmp(MP_NPROCS);
+#  endif
+	goto DONE_NCPU;
+#endif /* SGI_4D */
+
 
 #ifdef alliant
-	long	memsize, ipnum, cenum, detnum, attnum;
+	{
+	  long	memsize, ipnum, cenum, detnum, attnum;
 
-#if !defined(i860)
-	/* FX/8 */
-	lib_syscfg( &memsize, &ipnum, &cenum, &detnum, &attnum );
-#else
-	/* FX/2800 */
-	attnum = 28;
-#endif
-	ret = attnum;		/* # of CEs attached to parallel Complex */
-#	define	RT_AVAIL_CPUS
-#endif
-
-#if defined(SUNOS)
-	if ((ret = sysconf(_SC_NPROCESSORS_ONLN)) == -1) {
-		ret = 1;
-		perror("sysconf");
+#  if !defined(i860)
+	  /* FX/8 */
+	  lib_syscfg( &memsize, &ipnum, &cenum, &detnum, &attnum );
+#  else
+	  /* FX/2800 */
+	  attnum = 28;
+#  endif /* i860 */
+	  ncpu = attnum;		/* # of CEs attached to parallel Complex */
+	  goto DONE_NCPU;
 	}
-#       define  RT_AVAIL_CPUS
-#endif	/* defined(SUNOS) */
+#endif /* alliant */
 
-#if defined(HAS_POSIX_THREADS) && !defined(linux)
-	/* XXX Old posix doesn't specify how to learn how many CPUs there are. 
-	 *  never posix can make a sysctl call -- see __ppc__ below */
-	ret = 2;
-#	define	RT_AVAIL_CPUS
-#endif /* HAS_POSIX_THREADS */
 
-/* 
- * These machines may or may not have posix threads, but (more importantly)
- * they do have other mechanisms for determining cpu count
- */
-#if defined(linux)
-	/*
-	 * Ultra-kludgey way to determine the number of cpus in a 
-	 * linux box--count the number of processor entries in 
-	 * /proc/cpuinfo!
-	 */
-	ret = 0;
+#if defined(__sp3__)
+	{
+	  int status;
+	  int cmd;
+	  int parmlen;
+	  struct var p;
 
-	fp = fopen (CPUINFO_FILE,"r");
-
-	if (fp == NULL)
-	  {
-	    ret = 1; 
-	    perror (CPUINFO_FILE);
+	  cmd = SYS_GETPARMS;
+	  parmlen = sizeof(struct var);
+	  if ( sysconfig(cmd, &p, parmlen) != 0 ) {
+	    bu_bomb("bu_parallel(): sysconfig error for sp3");
 	  }
-	else 
-	  {
-	    while (fgets (buf, 80, fp) != NULL)
-	      {
-		if (strncmp (buf, "processor",9) == 0)
-		  {
-		    ++ ret;
-		  }
-	      }
-	    fclose (fp);	
-	    
-	    if (ret <= 0) 
-	      {
-		ret = 1;
-	      } 
-	    else
-	      { 
-                #if 0
-		bu_log ("bu_avail_cpus: counted %d cpus.\n", ret);
-                #endif
-	      }
-	  }
-#         define RT_AVAIL_CPUS
-#endif
+	  ncpu = p.v_ncpus;
+	  goto DONE_NCPU;
+	}
+#endif	/* __sp3__ */
+
 
 #if defined(n16)
-	if( (ret = sysadmin( SADMIN_NUMCPUS, 0 )) < 0 )
+	if( (ncpu = sysadmin( SADMIN_NUMCPUS, 0 )) < 0 )
 	  perror("sysadmin");
-#	define	RT_AVAIL_CPUS
+	goto DONE_NCPU;
+#endif /* n16 */
+
+
+#ifdef __FreeBSD__
+	{
+	  int maxproc;
+	  size_t len;
+	  len = 4;
+	  if (sysctlbyname("hw.ncpu", &maxproc, &len, NULL, 0) == -1) {
+	    ncpu = 1;
+	    perror("sysctlbyname");
+	  } else {
+	    ncpu = maxproc;
+	  }
+	  goto DONE_NCPU;
+	}
 #endif
+
 
 #if defined(__ppc__)
-	mib[0] = CTL_HW;
-	mib[1] = HW_NCPU;
-	len = sizeof(maxproc);
-	if (sysctl(mib, 2, &maxproc, &len, NULL, NULL == -1)) {
-	  ret = 1;
-	  perror("sysctl");
+	{
+	  int mib[2], maxproc;
+	  size_t len;
+
+	  mib[0] = CTL_HW;
+	  mib[1] = HW_NCPU;
+	  len = sizeof(maxproc);
+	  if (sysctl(mib, 2, &maxproc, &len, NULL, NULL == -1)) {
+	    ncpu = 1;
+	    perror("sysctl");
+	  } else {
+	    ncpu = maxproc; /* should be able to get sysctl to return maxproc */
+	  }
+	  goto DONE_NCPU;
 	}
-	ret = maxproc; /* should be able to get sysctl to return maxproc */
-#	define	RT_AVAIL_CPUS
+#endif /* __ppc__ */
+
+
+#if defined(HAVE_GET_NPROCS)
+	ncpu = get_nprocs(); /* GNU extension from sys/sysinfo.h */
+	goto DONE_NCPU;
 #endif
 
-#ifndef RT_AVAIL_CPUS
-	ret = DEFAULT_PSW;
+
+#if defined(linux) && 0
+	{
+	  /* old retired linux method */
+	  /*
+	   * Ultra-kludgey way to determine the number of cpus in a 
+	   * linux box--count the number of processor entries in 
+	   * /proc/cpuinfo!
+	   */
+
+#	define CPUINFO_FILE "/proc/cpuinfo"
+	  FILE *fp;
+	  char buf[128];
+
+	  ncpu = 0;
+	
+	  fp = fopen (CPUINFO_FILE,"r");
+	
+	  if (fp == NULL) {
+	    ncpu = 1; 
+	    perror (CPUINFO_FILE);
+	  } else {
+	    while (fgets (buf, 80, fp) != NULL) {
+	      if (strncmp (buf, "processor",9) == 0) {
+		++ ncpu;
+	      }
+	    }
+	    fclose (fp);	
+	  
+	    if (ncpu <= 0) {
+	      ncpu = 1;
+	    }
+	  }
+	  goto DONE_NCPU;
+	}
 #endif
-	return( ret );
+
+#if defined(_WIN32)
+	/* Windows */
+	{
+	  GetSystemInfo(&sysinfo);
+	  ncpu = (int)sysinfo.dwNumberOfProcessors;
+	  goto DONE_NCPU;
+	}
+#endif
+
+DONE_NCPU:  ; /* allows debug and final validity check */
+
+
+#if defined(HAS_POSIX_THREADS)
+	/* if they have threading and we could not detect properly, use two */
+	if (ncpu < 0) {
+		ncpu = 2;
+	}
+#endif /* HAS_POSIX_THREADS */
+
+	if (bu_debug & BU_DEBUG_PARALLEL) {
+		/* do not use bu_log() here, this can get called before semaphores are initialized */
+		fprintf( stderr, "bu_avail_cpus: counted %d cpus.\n", ncpu);
+	}
+
+	if (ncpu > 0) {
+		return ncpu;
+	}
+
+	return( DEFAULT_PSW );
 }
 
 
@@ -571,12 +654,14 @@ bu_parallel_interface(void)
 {
 	register int	cpu;		/* our CPU (thread) number */
 
+#if 0
 #ifdef HAS_POSIX_THREADS
 	{
 		pthread_t	pt;
 		pt = pthread_self();
 		fprintf(stderr,"bu_parallel_interface, Thread ID = 0x%x\n", (unsigned int)pt);
 	}
+#endif
 #endif
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	cpu = bu_nthreads_started++;
@@ -1034,6 +1119,7 @@ genptr_t	arg;
 		}
 	}
 
+
 	if( bu_debug & BU_DEBUG_PARALLEL ) {
 		for (i = 0; i < nthreadc; i++) {
 			bu_log("bu_parallel(): thread_tbl[%d] = %d\n",
@@ -1073,7 +1159,8 @@ genptr_t	arg;
 	if( bu_debug & BU_DEBUG_PARALLEL )
 		bu_log("bu_parallel(): %d threads created.  %d threads exited.\n",
 		       nthreadc, nthreade);
-#  endif
+
+#  endif /* end if posix threads */
 
 	/*
 	 *  Ensure that all the threads are REALLY finished.
@@ -1109,6 +1196,8 @@ genptr_t	arg;
 	bu_log("bu_parallel( x%lx, %d., x%lx ):  Not compiled for PARALLEL machine\n",
 		(long)func, ncpu, (long)arg );
 #endif	/* PARALLEL */
+
+
 }
 
 #if defined(sgi) && !defined(mips)

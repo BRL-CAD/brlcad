@@ -17,7 +17,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1995 by the United States Army
+ *	This software is Copyright (C) 1995-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -204,7 +204,7 @@ struct g_lint_seg *create_segment (void)
  *	This routine writes one overlap segent to stdout.
  *	It's the workhorse of the reporting process for overlaps.
  */
-void print_segment (char *r1name, char *r2name, double seg_length, fastf_t *origin, fastf_t *entrypt, fastf_t *exitpt)
+void print_segment (const char *r1name, const char *r2name, double seg_length, point_t *origin, point_t *entrypt, point_t *exitpt)
 {
     printf("overlap ");
     if (origin)

@@ -127,7 +127,7 @@ HIDDEN void	xxx_print(register struct region *rp, char *dp), xxx_free(char *cp);
  * values for the parameters.
  */
 struct mfuncs xxx_mfuncs[] = {
-	{MF_MAGIC,	"xxx",		0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+	{MF_MAGIC,	"xxx",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	xxx_setup,	xxx_render,	xxx_print,	xxx_free },
 
 	{0,		(char *)0,	0,		0,		0,

@@ -17,7 +17,7 @@
  *      The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *      This software is Copyright (C) 1998 by the United States Army
+ *      This software is Copyright (C) 1998-2004 by the United States Army
  *      in all countries except the USA.  All rights reserved.
  */
 
@@ -29,11 +29,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <sys/stat.h>
+#include "png.h"
 #include "machine.h"
 #include "externs.h"			/* For getopt() */
 #include "bu.h"
 #include "fb.h"
-#include "png.h"
 
 static unsigned char	*scanline;	/* scanline pixel buffers */
 static int	scanbytes;		/* # of bytes of scanline */

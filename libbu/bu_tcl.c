@@ -22,7 +22,7 @@
  *	The BRL-CAD Package" agreement.
  *
  * Copyright Notice -
- *	This software is Copyright (C) 1998 by the United States Army
+ *	This software is Copyright (C) 1998-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -858,7 +858,7 @@ bu_get_value_by_keyword(ClientData	clientData,
 	iwant = argv[1];
 
 	if( argc == 3 )  {
-		if( Tcl_SplitList( interp, argv[2], &listc, &listv ) != TCL_OK )  {
+		if( Tcl_SplitList( interp, argv[2], &listc, (const char ***)&listv ) != TCL_OK )  {
 			Tcl_AppendResult( interp,
 				"bu_get_value_by_keyword: iwant='", iwant,
 				"', unable to split '",
@@ -981,7 +981,7 @@ bu_get_all_keyword_values(ClientData	clientData,
 	}
 
 	if( argc == 2 )  {
-		if( Tcl_SplitList( interp, argv[1], &listc, &listv ) != TCL_OK )  {
+		if( Tcl_SplitList( interp, argv[1], &listc, (const char ***)&listv ) != TCL_OK )  {
 			Tcl_AppendResult( interp,
 				"bu_get_all_keyword_values: unable to split '",
 				argv[1], "'\n", (char *)NULL );

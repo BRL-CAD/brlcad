@@ -20,7 +20,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1994 by the United States Army
+ *	This software is Copyright (C) 1994-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -113,15 +113,10 @@ static mat_t re_orient;		/* rotation matrix to put model in BRL-CAD orientation
 static int do_air=0;		/* When set, all regions are BRL-CAD "air" regions */
 static int do_reorient=1;	/* When set, reorient entire model to BRL-CAD style */
 static unsigned int obj_count=0; /* Count of parts converted for "stl-g" conversions */
-static fastf_t *bot_verts=NULL;	 /* array of vertices for a bot solid */
-static int *bot_faces=NULL;	 /* array of ints (indices into bot_verts array) three per face */
-static int bot_vsize=0;		/* current size of the bot_verts array */
-static int bot_vcurr=0;		/* current bot vertex */
+static int *bot_faces=NULL;	 /* array of ints (indices into vert_tree_root->the_array array) three per face */
 static int bot_fsize=0;		/* current size of the bot_faces array */
 static int bot_fcurr=0;		/* current bot face */
-
-/* Size of blocks of vertices to malloc */
-#define	BOT_VBLOCK	128
+static struct vert_root *vert_tree_root;	/* binary search tree for vertices */
 
 /* Size of blocks of faces to malloc */
 #define BOT_FBLOCK	128
@@ -739,11 +734,12 @@ Convert_part(char *line)
 	}
 
 
-	bot_vcurr = 0;
 	bot_fcurr = 0;
 	BU_LIST_INIT( &head.l );
 	VSETALL( part_min, MAX_FASTF );
 	VSETALL( part_max, -MAX_FASTF );
+
+	clean_vert_tree( vert_tree_root );
 
 	start = (-1);
 	/* skip leading blanks */
@@ -884,9 +880,9 @@ Convert_part(char *line)
 					endloop = 1;
 				else if ( !strncmp( &line1[start] , "vertex" , 6 ) || !strncmp( &line1[start] , "VERTEX" , 6 ) )
 				{
-					float x,y,z;
+					double x,y,z;
 
-					sscanf( &line1[start+6] , "%f%f%f" , &x , &y , &z );
+					sscanf( &line1[start+6] , "%lf%lf%lf" , &x , &y , &z );
 					if( top_level )
 					{
 						x *= conv_factor;
@@ -900,12 +896,12 @@ Convert_part(char *line)
 
 						bu_log( "Non-triangular loop:\n" );
 						for( n=0 ; n<3 ; n++ )
-							bu_log( "\t( %g %g %g )\n", V3ARGS( &bot_verts[tmp_face[n]] ) );
+							bu_log( "\t( %g %g %g )\n", V3ARGS( &vert_tree_root->the_array[tmp_face[n]] ) );
 
 						bu_log( "\t( %g %g %g )\n", x, y, z );
 					}
-					tmp_face[vert_no++] = Add_vert( x, y, z );
-					VMINMAX( part_min, part_max, &bot_verts[tmp_face[vert_no-1]*3] );
+					tmp_face[vert_no++] = Add_vert( x, y, z, vert_tree_root, tol.dist_sq );
+					VMINMAX( part_min, part_max, &vert_tree_root->the_array[tmp_face[vert_no-1]*3] );
 				}
 				else
 					bu_log( "Unrecognized line: %s\n", line1 );
@@ -936,7 +932,7 @@ Convert_part(char *line)
 
 				bu_log( "Making Face:\n" );
 				for( n=0 ; n<3; n++ )
-					bu_log( "\tvertex #%d: ( %g %g %g )\n", tmp_face[n], V3ARGS( &bot_verts[3*tmp_face[n]] ) );
+					bu_log( "\tvertex #%d: ( %g %g %g )\n", tmp_face[n], V3ARGS( &vert_tree_root->the_array[3*tmp_face[n]] ) );
 				VPRINT(" normal", normal);
 			}
 
@@ -987,7 +983,8 @@ Convert_part(char *line)
 			bu_log( "\t%d faces were too small\n", small_count );
 	}
 
-	mk_bot( fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, bot_vcurr, bot_fcurr, bot_verts, bot_faces, NULL, NULL );
+	mk_bot( fd_out, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree_root->curr_vert, bot_fcurr,
+		vert_tree_root->the_array, bot_faces, NULL, NULL );
 
 	if( face_count && !solid_in_region )
 	{
@@ -1215,6 +1212,8 @@ main(int argc, char **argv)
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;
         tol.para = 1 - tol.perp;
+
+	vert_tree_root = create_vert_tree();
 
 	bu_ptbl_init( &null_parts, 64, " &null_parts");
 	bu_vls_init( &ret_name );

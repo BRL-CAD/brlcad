@@ -18,7 +18,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army
+ *	This software is Copyright (C) 1997-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -39,6 +39,10 @@
 #include "tcl.h"
 #endif
 
+#ifdef WIN32
+#include <tkwinport.h>
+#endif
+
 #include "machine.h"
 #include "externs.h"
 #include "cmd.h"                  /* includes bu.h */
@@ -53,7 +57,9 @@
 #include "dm_xvars.h"
 
 #ifdef DM_OGL
+#ifndef WIN32
 #include <GL/glx.h>
+#endif
 #include <GL/gl.h>
 #include "dm-ogl.h"
 #ifdef USE_FBSERV
@@ -63,9 +69,11 @@ extern int ogl_close_existing();
 #endif /* DM_OGL */
 
 #ifdef USE_FBSERV
+#ifndef WIN32
 /* These functions live in libfb. */
 extern int _X24_open_existing();
 extern int X24_close_existing();
+#endif
 extern int fb_refresh();
 #endif /* USE_FBSERV */
 
@@ -161,6 +169,7 @@ static struct bu_cmdtab dmo_cmds[] = {
  *
  * Returns: result of DM command.
  */
+#ifndef WIN32
 static int
 dmo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -180,6 +189,7 @@ Dmo_Init(Tcl_Interp *interp)
 /*
  * Called by Tcl when the object is destroyed.
  */
+#ifndef WIN32
 static void
 dmo_deleteProc(ClientData clientData)
 {
@@ -238,6 +248,7 @@ dmo_close_tcl(clientData, interp, argc, argv)
  * Usage:
  *	  dm_open [name type [args]]
  */
+#ifndef WIN32
 static int
 dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -381,7 +392,7 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&dmop->dmo_name),
-				dmo_cmd,
+				(Tcl_CmdProc *)dmo_cmd,
 				(ClientData)dmop,
 				dmo_deleteProc);
 
@@ -1310,6 +1321,7 @@ dmo_openFb(dmop, interp)
 	}
 
 	switch (dmop->dmo_dmp->dm_type) {
+#ifndef WIN32
 	case DM_TYPE_X:
 		*dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
 
@@ -1329,6 +1341,7 @@ dmo_openFb(dmop, interp)
 				   dmop->dmo_dmp->dm_height,
 				   ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc);
 		break;
+#endif
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
 		*dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
@@ -1366,9 +1379,11 @@ dmo_closeFb(dmop)
 	_fb_pgflush(dmop->dmo_fbs.fbs_fbp);
 
 	switch (dmop->dmo_dmp->dm_type) {
+#ifndef WIN32
 	case DM_TYPE_X:
 		X24_close_existing(dmop->dmo_fbs.fbs_fbp);
 		break;
+#endif
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
 		ogl_close_existing(dmop->dmo_fbs.fbs_fbp);

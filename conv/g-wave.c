@@ -18,7 +18,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1996 by the United States Army
+ *	This software is Copyright (C) 1996-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -43,6 +43,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "../librt/debug.h"
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
+
+#ifdef WIN32
+#include <fcntl.h>
+#endif
+
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
@@ -88,6 +93,11 @@ main(int argc, char **argv)
 {
 	register int	c;
 	double		percent;
+
+#ifdef WIN32
+	_fmode = _O_BINARY;
+#endif
+
 #ifdef BSD
 	setlinebuf( stderr );
 #else

@@ -16,7 +16,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 2001 by the United States Army
+ *	This software is Copyright (C) 2001-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -63,6 +63,8 @@ static	int name_not_converted=0;
 static	int indent_level=0;
 static	int indent_delta=4;
 
+static struct vert_root *tree_root;
+
 #define DO_INDENT	{ int _i; \
 				for( _i=0 ; _i<indent_level ; _i++ ) {\
 					bu_log( " " ); \
@@ -89,43 +91,11 @@ struct obj_info {
 #define PART_TYPE	1
 #define ASSEMBLY_TYPE	2
 
-static fastf_t *part_verts=NULL;	/* list of vertices for current part */
-static int max_vert=0;			/* number of vertices currently malloced */
-static int curr_vert=0;			/* number of vertices currently being used */
-
-#define VERT_BLOCK 512			/* numer of vertices to malloc per call */
-
 static int *part_tris=NULL;		/* list of triangles for current part */
 static int max_tri=0;			/* number of triangles currently malloced */
 static int curr_tri=0;			/* number of triangles currently being used */
 
 #define TRI_BLOCK 512			/* number of triangles to malloc per call */
-
-/* structure to make vertex searching fast
- * Each leaf represents a vertex, and has an index into the
- * part_verts array.
- * Each node is a cutting plane at the "cut_val" on the "coord" (0, 1, or 2) axis.
- * All vertices with "coord" value less than the "cut_val" are in the "lower"
- * subtree, others are in the "higher".
- */
-union vert_tree {
-	char type;
-	struct vert_leaf {
-		char type;
-		int index;
-	} vleaf;
-	struct vert_node {
-		char type;
-		double cut_val;
-		int coord;
-		union vert_tree *higher, *lower;
-	} vnode;
-} *vert_root=NULL;
-
-/* types for the above "vert_tree" */
-#define VERT_LEAF	'l'
-#define VERT_NODE	'n'
-
 
 void
 lower_case( char *name )
@@ -242,134 +212,6 @@ add_triangle( int v[3] )
 	curr_tri++;
 }
 
-/* routine to free the "vert_tree"
- * called after each part is output
- */
-void
-free_vert_tree( union vert_tree *ptr )
-{
-	if( !ptr )
-		return;
-
-	if( ptr->type == VERT_NODE ) {
-		free_vert_tree( ptr->vnode.higher );
-		free_vert_tree( ptr->vnode.lower );
-	}
-
-	bu_free( (char *)ptr, "vert_tree" );
-}
-
-
-/* routine to add a vertex to the current list of part vertices */
-int
-Add_vert( point_t vertex )
-{
-	union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
-	vect_t diff;
-
-	/* look for this vertex already in the list */
-	ptr = vert_root;
-	while( ptr ) {
-		if( ptr->type == VERT_NODE ) {
-			prev = ptr;
-			if( vertex[ptr->vnode.coord] >= ptr->vnode.cut_val ) {
-				ptr = ptr->vnode.higher;
-			} else {
-				ptr = ptr->vnode.lower;
-			}
-		} else {
-			int ij;
-
-			ij = ptr->vleaf.index*3;
-			diff[0] = fabs( vertex[0] - part_verts[ij] ); 
-			diff[1] = fabs( vertex[1] - part_verts[ij+1] ); 
-			diff[2] = fabs( vertex[2] - part_verts[ij+2] ); 
-			if( (diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]) <= local_tol_sq ) {
-				/* close enough, use this vertex again */
-				return( ptr->vleaf.index );
-			}
-			break;
-		}
-	}
-
-	/* add this vertex to the list */
-	if( curr_vert >= max_vert ) {
-		/* allocate more memory for vertices */
-		max_vert += VERT_BLOCK;
-
-		part_verts = (fastf_t *)bu_realloc( part_verts, sizeof( fastf_t ) * max_vert * 3,
-						    "part_verts" );
-	}
-
-	VMOVE( &part_verts[curr_vert*3], vertex );
-
-	/* add to the tree also */
-	new_leaf = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_leaf" );
-	new_leaf->vleaf.type = VERT_LEAF;
-	new_leaf->vleaf.index = curr_vert++;
-	if( !vert_root ) {
-		/* first vertex, it becomes the root */
-		vert_root = new_leaf;
-	} else if( ptr && ptr->type == VERT_LEAF ) {
-		/* search above ended at a leaf, need to add a node above this leaf and the new leaf */
-		new_node = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_node" );
-		new_node->vnode.type = VERT_NODE;
-
-		/* select the cutting coord based on the biggest difference */
-		if( diff[0] >= diff[1] && diff[0] >= diff[2] ) {
-			new_node->vnode.coord = 0;
-		} else if( diff[1] >= diff[2] && diff[1] >= diff[0] ) {
-			new_node->vnode.coord = 1;
-		} else if( diff[2] >= diff[1] && diff[2] >= diff[0] ) {
-			new_node->vnode.coord = 2;
-		}
-
-		/* set the cut value to the mid value between the two vertices */
-		new_node->vnode.cut_val = (vertex[new_node->vnode.coord] +
-					   part_verts[ptr->vleaf.index * 3 + new_node->vnode.coord]) * 0.5;
-
-		/* set the node "lower" nad "higher" pointers */
-		if( vertex[new_node->vnode.coord] >= 
-		    part_verts[ptr->vleaf.index * 3 + new_node->vnode.coord] ) {
-			new_node->vnode.higher = new_leaf;
-			new_node->vnode.lower = ptr;
-		} else {
-			new_node->vnode.higher = ptr;
-			new_node->vnode.lower = new_leaf;
-		}
-
-		if( ptr == vert_root ) {
-			/* if the above search ended at the root, redefine the root */
-			vert_root =  new_node;
-		} else {
-			/* set the previous node to point to our new one */
-			if( prev->vnode.higher == ptr ) {
-				prev->vnode.higher = new_node;
-			} else {
-				prev->vnode.lower = new_node;
-			}
-		}
-	} else if( ptr && ptr->type == VERT_NODE ) {
-		/* above search ended at a node, just add the new leaf */
-		prev = ptr;
-		if( vertex[prev->vnode.coord] >= prev->vnode.cut_val ) {
-			if( prev->vnode.higher ) {
-				exit(1);
-			}
-			prev->vnode.higher = new_leaf;
-		} else {
-			if( prev->vnode.lower ) {
-				exit(1);
-			}
-			prev->vnode.lower = new_leaf;
-		}
-	} else {
-		fprintf( stderr, "*********ERROR********\n" );
-	}
-
-	/* return the index into the vertex array */
-	return( new_leaf->vleaf.index );
-}
 
 void
 List_assem( struct obj_info *assem )
@@ -396,7 +238,6 @@ void
 Make_brlcad_names( struct obj_info *part )
 {
 	struct bu_vls vls;
-	struct directory *dp;
 	int count=0;
 	char *tmp_name, *ptr;
 	Tcl_HashEntry *hash_entry=NULL;
@@ -463,7 +304,7 @@ Make_brlcad_names( struct obj_info *part )
 		if( max_name_len ) {
 			bu_vls_trunc( &vls, max_name_len );
 		}
-		while( (dp=db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET )) != DIR_NULL) {
+		while( db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET ) != DIR_NULL) {
 			int digits, val=10;
 
 			count++;
@@ -492,7 +333,7 @@ Make_brlcad_names( struct obj_info *part )
 	if( max_name_len ) {
 		bu_vls_trunc( &vls, max_name_len );
 	}
-	while( (dp=db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET) ) != DIR_NULL ) {
+	while( db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET) != DIR_NULL ) {
 		int digits, val=10;
 
 		count++;
@@ -558,6 +399,8 @@ Part_import( int id_start )
 	int tri[3];
 	int corner_index=-1;
 
+	clean_vert_tree( tree_root );
+
 	VSETALL( rgb, 128 );
 
 	part = (struct obj_info *)bu_calloc( 1, sizeof( struct obj_info ), "part" );
@@ -614,7 +457,7 @@ Part_import( int id_start )
 		} else if( !strncmp( line, "Vertex", 6 ) ) {
 			/* get a vertex */
 			char *ptr;
-			point_t v;
+			double v[3];
 
 			i = 7;
 			while( !isspace( line[i] ) && line[i] != '\0' )
@@ -624,9 +467,9 @@ Part_import( int id_start )
 				v[i] = atof( ptr );
 				ptr = strtok( (char *)NULL, " \t" );
 			}
-			tri[++corner_index] = Add_vert( v );
+			tri[++corner_index] = Add_vert( V3ARGS( v ), tree_root, local_tol_sq );
 			if( corner_index == 2 ) {
-				if( !bad_triangle( tri, part_verts ) ) {
+				if( !bad_triangle( tri, tree_root->the_array ) ) {
 					add_triangle( tri );
 				}
 			}
@@ -650,7 +493,7 @@ Part_import( int id_start )
 
 		/* write this part to database, first make a primitive solid */
 		if( mk_bot( fd_out, part->brlcad_solid, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
-			    curr_vert, curr_tri, part_verts, part_tris, NULL, NULL ) ) {
+			    tree_root->curr_vert, curr_tri, tree_root->the_array, part_tris, NULL, NULL ) ) {
 			bu_log( "Failed to write primitive %s (%s) to database\n",
 				part->brlcad_solid, part->obj_name );
 			exit( 1 );
@@ -688,20 +531,12 @@ Part_import( int id_start )
 	}
 
 	/* free some memory */
-	free_vert_tree( vert_root );
-	vert_root = NULL;
 	if( part_tris ) {
 		bu_free( (char *)part_tris, "part_tris" );
 	}
 	max_tri = 0;
 	curr_tri = 0;
 	part_tris = NULL;
-	if( part_verts ) {
-		bu_free( (char *)part_verts, "part_verts" );
-	}
-	max_vert = 0;
-	curr_vert = 0;
-	part_verts = NULL;
 
 	return( part );
 }
@@ -882,6 +717,8 @@ main( int argc, char *argv[] )
 		create_name_hash( fd_parts );
 	}
 
+	tree_root = create_vert_tree();
+
 	/* finally, start processing the input */
 	while( fgets( line, MAX_LINE_LEN, fd_in ) ) {
 		if( !strncmp( line, "FileName", 8 ) ) {
@@ -915,10 +752,8 @@ main( int argc, char *argv[] )
 			top_level_assems[curr_top_level] = Assembly_import( id );
 		} else if( !strncmp( line, "PartId", 6 ) ) {
 			/* found a top-level part */
-			struct obj_info *top_level_part;
-
 			id = atoi( &line[7] );
-			top_level_part = Part_import( id );
+			(void)Part_import( id );
 		}
 	}
 

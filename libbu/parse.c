@@ -25,7 +25,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
+ *	This software is Copyright (C) 1989-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -1992,6 +1992,7 @@ bu_key_val_to_vls(struct bu_vls *vls, char *params)
 
 		bu_free( keyword, "bu_key_val_to_vls() keyword");
 		bu_free( value, "bu_key_val_to_vls() value");
+
 	}
 	return( 0 );
 }

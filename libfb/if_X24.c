@@ -60,6 +60,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "conf.h"
 
+#include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -73,6 +74,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #else
 #include <strings.h>
 #endif
+
+#include <errno.h>
 
 #include "machine.h"
 #include "fb.h"

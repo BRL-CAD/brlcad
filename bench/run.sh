@@ -10,7 +10,20 @@ echo "================================="
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
-eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, HAS_TCP
+eval `machinetype.sh -b 2> /dev/null`	# sets MACHINE, UNIXTYPE, HAS_TCP
+if test "x$MACHINE" = "x"
+then
+    echo Looking for machinetype.sh...
+    eval `../sh/machinetype.sh -b 2> /dev/null`
+    if test "x$MACHINE" = "x"
+    then
+        echo WARNING: could not find machinetype.sh
+        # try _something_, linux is pretty popular
+        MACHINE="li"
+    else
+    	echo ...found local machinetype.sh
+    fi
+fi
 
 echo Looking for RT...
 # find RT (environment variable overrides)
@@ -72,7 +85,24 @@ then
 		CMP=./pixcmp
 	else
 		echo ...need to build pixcmp
-		cake pixcmp
+		cake >& /dev/null
+		if test "x$?" = "x0"
+		then
+			echo ...building pixcmp with cake	
+			cake pixcmp
+		else
+			if test "x${CC}" = "x"
+			then
+				CC=gcc
+				$CC >& /dev/null
+				if ! test "x$?" = "x1"
+				then
+					CC=cc
+				fi
+			fi
+		fi
+		echo ...building pixcmp with $CC
+		$CC -o pixcmp -I../h pixcmp.c
 		CMP=./pixcmp
 	fi
 fi

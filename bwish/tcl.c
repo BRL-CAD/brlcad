@@ -16,7 +16,7 @@
  *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1998 by the United States Army
+ *	This software is Copyright (C) 1998-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  *
  *  Cad_Main --
@@ -90,7 +90,7 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
 	 * Make command-line arguments available in the Tcl variables "argc"
 	 * and "argv".
 	 */
-	args = Tcl_Merge(argc-1, argv+1);
+	args = Tcl_Merge(argc-1, (const char * const *)argv+1);
 	Tcl_ExternalToUtfDString(NULL, args, -1, &argString);
 	Tcl_SetVar(interp, "argv", Tcl_DStringValue(&argString), TCL_GLOBAL_ONLY);
 	Tcl_DStringFree(&argString);

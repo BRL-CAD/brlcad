@@ -3,18 +3,28 @@
 stl-g \- Stereolithography Translator (STL to BRL-CAD)
 .SH SYNOPSIS
 .B stl-g
-[-da] [-i initial_ident] [-I constant_ident] [-m material_code] [-N forced_name] [-u reg_exp] [-x RT_DEBUG_FLAG] file.stl file.g
+[-db] [-i initial_ident] [-I constant_ident] [-m material_code] [-N forced_name] [-c units] [-t tolerance] [-x RT_DEBUG_FLAG] file.stl file.g
 .SH DESCRIPTION
-.I stl-g\^
+.I stl-g
 converts the specified
 .I file.stl
 to a BRL-CAD
 .I file.g
-file.
+file. Use the
+.I -b
+option if you have a binary STL file (the default is ASCII).
 The
 .I -d
 option prints debugging information.
 The
+.I -c
+option specifies the units that are used in the STL file. The
+.I units
+string may be "mm", "in", "ft", ... (default is "mm").
+The
+.I -t
+option specifies a tolerance distance (in mm) such that any two vertices
+within tolerance distance of each other are treated as the same vertex.
 The
 .I -i
 option sets the starting ident number for the regions created. As each
@@ -34,17 +44,8 @@ The
 option sets a name for the resulting BRL-CAD object. STL files typically do not contain any
 object names.
 The
-.I -a
-option implies that all the parts in the Pro/E model should be converted to
-BRL-CAD
-.I air
-regions.
-The
 .I -x
-option sets an RT debug flags (see librt/debug.h).
-The
-.I -X
-option specifies an NMG debug flag (see h/nmg.h).
+option sets an RT debug flag (see librt/debug.h).
 The
 .I file.stl
 file is expected to be a stereolithography file.
@@ -64,4 +65,4 @@ The U. S. Army  Research Laboratory
 Aberdeen Proving Ground, MD  21005
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.MIL>.
+mail to <CAD@ARL.ARMY.MIL>.

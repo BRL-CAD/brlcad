@@ -46,7 +46,7 @@ HIDDEN struct bu_cmdtab cmdtab[] = {
 int
 Dm_Init(Tcl_Interp *interp)
 {
-	char		*version_number;
+	const char		*version_number;
 	struct bu_vls	vls;
 
 	/* register commands */

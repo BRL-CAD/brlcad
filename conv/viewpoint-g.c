@@ -20,7 +20,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army
+ *	This software is Copyright (C) 1993-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -415,7 +415,7 @@ main(int argc, char **argv)
 			nmg_rebound( m , &tol );
 
 			/* write the nmg to the output file */
-			mk_nmg( out_fp , curr_name  , m );
+			mk_bot_from_nmg( out_fp , curr_name  , s );
 		}
 		else
 			bu_log( "Object %s has no faces\n" , curr_name );

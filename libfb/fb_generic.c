@@ -12,7 +12,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1986 by the United States Army.
+ *	This software is Copyright (C) 1986-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -85,8 +85,10 @@ extern FBIO rat_interface;
 extern FBIO ug_interface;
 #endif
 #ifdef IF_X
+#ifndef WIN32 
 extern FBIO X24_interface;
 extern FBIO X_interface;
+#endif
 #endif
 #ifdef IF_PTTY
 extern FBIO ptty_interface;
@@ -125,8 +127,10 @@ FBIO *_if_list[] = {
 	&ug_interface,
 #endif
 #ifdef IF_X
+#ifndef WIN32
 	&X24_interface,
 	&X_interface,
+#endif
 #endif
 
 	&debug_interface,

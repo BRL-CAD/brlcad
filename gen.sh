@@ -37,7 +37,10 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-RELEASE=6.01;	RCS_REVISION=17;	REL_DATE=2-July-02	# 6.0.1
+RELEASE=6.1;	RCS_REVISION=19;	REL_DATE=XX-Oct-03	# 6.1
+#RELEASE=6.1DP;	RCS_REVISION=18;	REL_DATE=25-Oct-02	# 6.1 developer preview
+#RELEASE=6.02;	RCS_REVISION=18;	REL_DATE=13-Sep-02	# 6.0.2
+#RELEASE=6.01;	RCS_REVISION=17;	REL_DATE=2-July-02	# 6.0.1
 #RELEASE=6.0;	RCS_REVISION=16;	REL_DATE=22-March-02	# 6.0
 #RELEASE=5.4;	RCS_REVISION=15;	REL_DATE=18-Jul-01	# internal
 #RELEASE=5.3;	RCS_REVISION=14;	REL_DATE=5-Mar-01	# 5.3
@@ -175,57 +178,60 @@ CDIRS="sh cake cakeaux html"
 # These will be built in the order listed.
 # db depends on conv, conv depends on libwdb, libwdb depends on librt
 BDIRS="bench \
-	libsysv \
-	libbu \
-	libbn \
-	libwdb \
-	libpkg \
-	libfb \
-	libtcl8.3 \
-	libtk8.3 \
-	libitcl3.2 \
-	libdm \
+	libtcl8.4 \
+	libtk8.4 \
+	libitcl \
+        iwidgets4.0.1 \
 	libz \
 	libpng \
-	fbserv \
-	librt \
-	liboptical \
-	libmultispectral \
-	libtermio \
-	libtclcad \
-	conv \
-	db \
-	rt \
-	mged \
-	remrt \
-	libcursor \
+	libsysv \
 	liborle \
 	libutahrle \
 	libfft \
-	proc-db \
-	jack \
-	mk \
-	comgeom-g \
-	iges \
+	libpkg \
+	libcursor \
+	libbu \
+	libbn \
+	librt \
+	librtserver \
+	liboptical \
+	libfb \
+	libwdb \
+	libdm \
+	libmultispectral \
+	libtermio \
+	libtclcad \
+	rt \
+	fbserv \
 	fb \
-	util \
 	fbed \
+	conv \
+	util \
+	db \
+	mged \
+	remrt \
+	proc-db \
+	tools \
+	mk \
+	iges \
 	lgt \
 	patch \
 	vas4 \
 	vdeck \
 	sig \
 	tab \
-	tools \
 	anim \
 	off \
 	halftone \
 	nirt \
+	jack \
 	irprep \
-	jove \
 	canon \
 	burst \
 	gtools \
+	comgeom-g \
+        unigraphics \
+	jove \
 	bwish \
 	btclsh \
 "			# This ends the list.
@@ -256,30 +262,6 @@ case "${MACHINE}" in
 		BDIRS=`echo ${BDIRS} | sed -e  's/canon//' `
 		;;
 esac
-
-# If this system has good vendor-provided libraries, use them.
-# Remove them from the list of targets to be compiled.
-# Two common sets:
-#	libtcl, libtk
-#	libpng, libz
-# Needs to be coordinated with setting of LIBTCL_DIR LIBTK_DIR LIBZ_DIR
-# in architecture-specific entry in Cakefile.defs
-case "${MACHINE}" in
-	li|fbsd)
-		BDIRS=`echo ${BDIRS} | \
-			sed -e 's/libz//' -e 's/libpng//'`
-		;;
-	pmac)
-		BDIRS=`echo ${BDIRS} | \
-			sed -e 's/libz//'`
-		;;
-	7d|m4i65)
-		# Be sure to look in /usr/lib64, not /usr/lib!
-		BDIRS=`echo ${BDIRS} | \
-		    sed -e 's/libz//' `
-		;;
-esac
-
 
 if test X"$1" = X""
 then	TARGET=all
@@ -346,8 +328,8 @@ benchmark)
 	(T=libbn; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=librt; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=liboptical; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
-	(T=libtcl8.3; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
-	(T=libitcl3.2; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=libtcl8.4; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=libitcl; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=rt; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=conv; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=db; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
@@ -543,7 +525,7 @@ etags)
 	for dir in ${BDIRS} pro-engineer; do
 		echo -------------------------------- ${dir};
 #		etags -a -o etags ${dir}/*.c
-		find ${dir} -name \*.c -exec etags -a -o etags {} \;
+		find ${dir} -name \*.c -a \! -name vshoot.c -exec etags -a -o etags {} \;
 	done;;
 shell)
 	for dir in ${BDIRS}; do
@@ -702,9 +684,10 @@ dist)
 	echo 'html/*' >> ${EXCLUDE}
 	echo 'pix/*' >> ${EXCLUDE}
 	echo 'pro-engineer/*' >> ${EXCLUDE}
-	echo 'libtcl8.3/*' >> ${EXCLUDE}
-	echo 'libtk8.3/*' >> ${EXCLUDE}
-	echo 'libitcl3.2/*' >> ${EXCLUDE}
+	echo 'libtcl8.4/*' >> ${EXCLUDE}
+	echo 'libtk8.4/*' >> ${EXCLUDE}
+	echo 'libitcl/*' >> ${EXCLUDE}
+	echo 'iwidgets4.0.1/*' >> ${EXCLUDE}
 
 	tar cfv - Copy* README doc html \
 	    zzzEND |\
@@ -747,10 +730,10 @@ dist)
 	chmod 444 ${FTP_ARCHIVE}-h.gz
 	echo "${FTP_ARCHIVE}-h.gz created (pro-engineer)"
 
-	tar cfv - Copy* README libtcl8.3 libtk8.3 libitcl3.2 zzzEND |\
+	tar cfv - Copy* README libtcl8.4 libtk8.4 libitcl iwidgets4.0.1 zzzEND |\
 		gzip -9 > ${FTP_ARCHIVE}-i.gz
 	chmod 444 ${FTP_ARCHIVE}-i.gz
-	echo "${FTP_ARCHIVE}-i.gz created (libtcl8.3 libtk8.3 libitcl3.2)"
+	echo "${FTP_ARCHIVE}-i.gz created (libtcl8.4 libtk8.4 libitcl iwidgets4.0.1)"
 
 	rm -f ${EXCLUDE}
 

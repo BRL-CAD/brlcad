@@ -1,7 +1,9 @@
 /*
- *			G - X X X , C
+ *			G - X X X . C
  *
- *	Sample code for converting BRL-CAD models to some other format
+ *	Sample code for converting BRL-CAD models to some other format.
+ *	This code assumes that your receiving format can handle CSG primitives
+ *	and Boolean trees with transformation matrices
  *
  *  Author -
  *	John R. Anderson
@@ -16,7 +18,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army
+ *	This software is Copyright (C) 1993-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -43,21 +45,13 @@ static const char RCSid[] = "$Header$";
 #include "wdb.h"
 #include "../librt/debug.h"
 
-BU_EXTERN( void comb_func , ( struct db_i *dbip , struct directory *dp ) );
-BU_EXTERN( void solid_func , ( struct db_i *dbip , struct directory *dp ) );
+BU_EXTERN( void comb_func , ( struct db_i *dbip , struct directory *dp, genptr_t data ) );
+BU_EXTERN( void primitive_func , ( struct db_i *dbip , struct directory *dp, genptr_t data ) );
 
-static char	*tok_sep = " \t";
-static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-static int	ncpu = 1;		/* Number of processors */
-static char	*out_file = NULL;	/* Output filename */
-static FILE	*fp_out;		/* Output file pointer */
 static struct db_i		*dbip;
-static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
-static struct model		*the_model;
 
-static struct db_tree_state	tree_state;	/* includes tol & model */
 
 static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
@@ -71,21 +65,11 @@ char	*argv[];
 {
 	int		i;
 	register int	c;
-	double		percent;
 
 	port_setlinebuf( stderr );
 
-	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
-
-	/* tesselation tolerances
-	 * only needed if you tessellate any solids
-	 */
-	ttol.magic = RT_TESS_TOL_MAGIC;
-	/* Defaults, updated by command line options. */
-	ttol.abs = 0.0;
-	ttol.rel = 0.01;
-	ttol.norm = 0.0;
-
+	rt_init_resource(&rt_uniresource, 0, NULL);
+	
 	/* calculational tolerances
 	 * mostly used by NMG routines
 	 */
@@ -101,19 +85,8 @@ char	*argv[];
 		case 't':		/* calculational tolerance */
 			tol.dist = atof( optarg );
 			tol.dist_sq = tol.dist * tol.dist;
-		case 'a':		/* Absolute tolerance. */
-			ttol.abs = atof(optarg);
-			ttol.rel = 0.0;
-			break;
-		case 'n':		/* Surface normal tolerance. */
-			ttol.norm = atof(optarg)*bn_pi/180.0;
-			ttol.rel = 0.0;
-			break;
 		case 'o':		/* Output file name */
-			out_file = optarg;
-			break;
-		case 'r':		/* Relative tolerance. */
-			ttol.rel = atof(optarg);
+			/* grab output file name */
 			break;
 		case 'v':		/* verbosity */
 			verbose++;
@@ -125,7 +98,6 @@ char	*argv[];
 			break;
 		case 'X':		/* NMG debug flag (see h/nmg.h) */
 			sscanf( optarg, "%x", &rt_g.NMG_debug );
-			NMG_debug = rt_g.NMG_debug;
 			bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 			bu_log("\n");
 			break;
@@ -153,22 +125,11 @@ char	*argv[];
 	db_dirbuild( dbip );
 
 	/* open output file */
-	if( out_file == NULL )
-		fp_out = stdout;
-	else
-	{
-		if ((fp_out = fopen( out_file , "w")) == NULL)
-		{
-			bu_log( "Cannot open %s\n" , out_file );
-			perror( argv[0] );
-			exit( 2 );
-		}
-	}
 
 	optind++;
 
 	/* Walk the trees named on the command line
-	 * outputting combinations and solids
+	 * outputting combinations and primitives
 	 */
 	for( i=optind ; i<argc ; i++ )
 	{
@@ -180,10 +141,9 @@ char	*argv[];
 			bu_log( "WARNING!!! Could not find %s, skipping\n", argv[i] );
 			continue;
 		}
-		db_functree( dbip , dp , comb_func , solid_func , NULL );
+		db_functree( dbip, dp, comb_func, primitive_func, &rt_uniresource, NULL );
 	}
 
-	bn_vlist_cleanup();
 	db_close(dbip);
 
 	return 0;
@@ -295,7 +255,7 @@ genptr_t	ptr;
 		return;
 
 	/* get the internal format of this combination */
-	if( (id=rt_db_get_internal( &itrn, dp, dbip, bn_mat_identity ) ) < 0 )
+	if( (id=rt_db_get_internal( &itrn, dp, dbip, bn_mat_identity, &rt_uniresource ) ) < 0 )
 	{
 		bu_log( "rt_db_get_internal failed for %s\n", dp->d_namep );
 		return;
@@ -316,13 +276,13 @@ genptr_t	ptr;
 	if( comb->region_flag )
 		printf( "Write this region (name=%s) as a part in your format:\n", dp->d_namep );
 	else
-		printf( "Write this group (name=%s) as an assembly in your format:\n", dp->d_namep );
+		printf( "Write this combination (name=%s) as an assembly in your format:\n", dp->d_namep );
 
 	bu_vls_init( &str );
 
 	describe_tree( dbip, comb, comb->tree, &str );
 
-	printf( "%s\n", bu_vls_addr( &str ) );
+	printf( "\t%s\n\n", bu_vls_addr( &str ) );
 
 	bu_vls_free( &str );
 
@@ -331,22 +291,21 @@ genptr_t	ptr;
 }
 
 /* This routine is called by the tree walker (db_functree)
- * for every solid encountered in the trees specified on the command line */
+ * for every primitive encountered in the trees specified on the command line */
 void
-solid_func( dbip, dp, ptr )
+primitive_func( dbip, dp, ptr )
 struct db_i *dbip;
 struct directory *dp;
 genptr_t	ptr;
 {
 	struct rt_db_internal itrn;
-	int id;
 
-	/* check if we already converted this solid */
+	/* check if we already converted this primitive */
 	if( dp->d_uses )
 		return;
 
-	/* get the internal form of the solid */
-	if( (id=rt_db_get_internal( &itrn, dp, dbip, bn_mat_identity ) ) < 0 )
+	/* get the internal form of the primitive */
+	if( rt_db_get_internal( &itrn, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
 	{
 		bu_log( "rt_db_get_internal failed for %s\n", dp->d_namep );
 		return;
@@ -354,189 +313,218 @@ genptr_t	ptr;
 
 	RT_CK_DB_INTERNAL( &itrn );
 
-	/* handle each type of solid (see h/rtgeom.h) */
-	switch( itrn.idb_type )
-	{
-		/* most commonly used solids */
-		case ID_TOR:	/* torus */
-		{
-			struct rt_tor_internal *tor = (struct rt_tor_internal *)itrn.idb_ptr;
+	/* handle each type of primitive (see h/rtgeom.h) */
+	if( itrn.idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
+		switch( itrn.idb_type )
+			{
+				/* most commonly used primitives */
+			case ID_TOR:	/* torus */
+				{
+					struct rt_tor_internal *tor = (struct rt_tor_internal *)itrn.idb_ptr;
 
-			printf( "Write this torus (name=%s) in your format:\n", dp->d_namep );
-			printf( "\tV=(%g %g %g)\n", V3ARGS( tor->v ) );
-			printf( "\tnormal=(%g %g %g)\n", V3ARGS( tor->h ) );
-			printf( "\tradius1 = %g\n", tor->r_a );
-			printf( "\tradius2 = %g\n", tor->r_h );
-			break;
-		}
-		case ID_TGC: /* truncated general cone frustum */
-		case ID_REC: /* right elliptical cylinder */
-		{
-			/* This solid includes circular cross-section
-			 * cones and cylinders
-			 */
-			struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)itrn.idb_ptr;
+					printf( "Write this torus (name=%s) in your format:\n", dp->d_namep );
+					printf( "\tV=(%g %g %g)\n", V3ARGS( tor->v ) );
+					printf( "\tnormal=(%g %g %g)\n", V3ARGS( tor->h ) );
+					printf( "\tradius1 = %g\n", tor->r_a );
+					printf( "\tradius2 = %g\n", tor->r_h );
+					break;
+				}
+			case ID_TGC: /* truncated general cone frustum */
+			case ID_REC: /* right elliptical cylinder */
+				{
+					/* This primitive includes circular cross-section
+					 * cones and cylinders
+					 */
+					struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)itrn.idb_ptr;
 
-			printf( "Write this TGC (name=%s) in your format:\n", dp->d_namep );
-			printf( "\tV=(%g %g %g)\n", V3ARGS( tgc->v ) );
-			printf( "\tH=(%g %g %g)\n", V3ARGS( tgc->h ) );
-			printf( "\tA=(%g %g %g)\n", V3ARGS( tgc->a ) );
-			printf( "\tB=(%g %g %g)\n", V3ARGS( tgc->b ) );
-			printf( "\tC=(%g %g %g)\n", V3ARGS( tgc->c ) );
-			printf( "\tD=(%g %g %g)\n", V3ARGS( tgc->d ) );
-			break;
-		}
-		case ID_ELL:
-		case ID_SPH:
-		{
-			/* spheres and ellipsoids */
-			struct rt_ell_internal *ell = (struct rt_ell_internal *)itrn.idb_ptr;
+					printf( "Write this TGC (name=%s) in your format:\n", dp->d_namep );
+					printf( "\tV=(%g %g %g)\n", V3ARGS( tgc->v ) );
+					printf( "\tH=(%g %g %g)\n", V3ARGS( tgc->h ) );
+					printf( "\tA=(%g %g %g)\n", V3ARGS( tgc->a ) );
+					printf( "\tB=(%g %g %g)\n", V3ARGS( tgc->b ) );
+					printf( "\tC=(%g %g %g)\n", V3ARGS( tgc->c ) );
+					printf( "\tD=(%g %g %g)\n", V3ARGS( tgc->d ) );
+					break;
+				}
+			case ID_ELL:
+			case ID_SPH:
+				{
+					/* spheres and ellipsoids */
+					struct rt_ell_internal *ell = (struct rt_ell_internal *)itrn.idb_ptr;
 
-			printf( "Write this ellipsoid (name=%s) in your format:\n", dp->d_namep );
-			printf( "\tV=(%g %g %g)\n", V3ARGS( ell->v ) );
-			printf( "\tA=(%g %g %g)\n", V3ARGS( ell->a ) );
-			printf( "\tB=(%g %g %g)\n", V3ARGS( ell->b ) );
-			printf( "\tC=(%g %g %g)\n", V3ARGS( ell->c ) );
-			break;
-		}
-		case ID_ARB8:	/* convex solid with from four to six faces */
-		{
-			/* this solid may have degenerate faces
-			 * faces are: 0123, 7654, 0347, 1562, 0451, 3267
-			 * (points listed above in counter-clockwise order)
-			 */
-			struct rt_arb_internal *arb = (struct rt_arb_internal *)itrn.idb_ptr;
-			int i;
+					printf( "Write this ellipsoid (name=%s) in your format:\n", dp->d_namep );
+					printf( "\tV=(%g %g %g)\n", V3ARGS( ell->v ) );
+					printf( "\tA=(%g %g %g)\n", V3ARGS( ell->a ) );
+					printf( "\tB=(%g %g %g)\n", V3ARGS( ell->b ) );
+					printf( "\tC=(%g %g %g)\n", V3ARGS( ell->c ) );
+					break;
+				}
+			case ID_ARB8:	/* convex primitive with from four to six faces */
+				{
+					/* this primitive may have degenerate faces
+					 * faces are: 0123, 7654, 0347, 1562, 0451, 3267
+					 * (points listed above in counter-clockwise order)
+					 */
+					struct rt_arb_internal *arb = (struct rt_arb_internal *)itrn.idb_ptr;
+					int i;
 
-			printf( "Write this ARB (name=%s) in your format:\n", dp->d_namep );
-			for( i=0 ; i<8 ; i++ )
-				printf( "\tpoint #%d: (%g %g %g)\n", i, V3ARGS( arb->pt[i] ) );
-			break;
-		}
+					printf( "Write this ARB (name=%s) in your format:\n", dp->d_namep );
+					for( i=0 ; i<8 ; i++ )
+						printf( "\tpoint #%d: (%g %g %g)\n", i, V3ARGS( arb->pt[i] ) );
+					break;
+				}
+			case ID_BOT:	/* Bag O' Triangles */
+				{
+					struct rt_bot_internal *bot = (struct rt_bot_internal *)itrn.idb_ptr;
+					break;
+				}
 
-		/* less commonly used solids */
-		case ID_ARS:
-		{
-			/* series of curves
-			 * each with the same number of points
-			 */
-			struct rt_ars_internal *ars = (struct rt_ars_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_HALF:
-		{
-			/* half universe defined by a plane */
-			struct rt_half_internal *half = (struct rt_half_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_POLY:
-		{
-			/* polygons (up to 5 vertices per) */
-			struct rt_pg_internal *pg = (struct rt_pg_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_BSPLINE:
-		{
-			/* NURB surfaces */
-			struct rt_nurb_internal *nurb = (struct rt_nurb_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_NMG:
-		{
-			/* N-manifold geometry */
-			struct model *m = (struct model *)itrn.idb_ptr;
-			break;
-		}
-		case ID_ARBN:
-		{
-			struct rt_arbn_internal *arbn = (struct rt_arbn_internal *)itrn.idb_ptr;
-			break;
-		}
+				/* less commonly used primitives */
+			case ID_ARS:
+				{
+					/* series of curves
+					 * each with the same number of points
+					 */
+					struct rt_ars_internal *ars = (struct rt_ars_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_HALF:
+				{
+					/* half universe defined by a plane */
+					struct rt_half_internal *half = (struct rt_half_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_POLY:
+				{
+					/* polygons (up to 5 vertices per) */
+					struct rt_pg_internal *pg = (struct rt_pg_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_BSPLINE:
+				{
+					/* NURB surfaces */
+					struct rt_nurb_internal *nurb = (struct rt_nurb_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_NMG:
+				{
+					/* N-manifold geometry */
+					struct model *m = (struct model *)itrn.idb_ptr;
+					break;
+				}
+			case ID_ARBN:
+				{
+					struct rt_arbn_internal *arbn = (struct rt_arbn_internal *)itrn.idb_ptr;
+					break;
+				}
 
-		/* normally used for terrain only */
-		case ID_DSP:
-		{
-			/* Displacement map (terrain solid) */
-			struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_HF:
-		{
-			/* height field (terrain solid) */
-			struct rt_hf_internal *hf = (struct rt_hf_internal *)itrn.idb_ptr;
-			break;
-		}
+			case ID_DSP:
+				{
+					/* Displacement map (terrain primitive) */
+					/* normally used for terrain only */
+					/* the DSP primitive may reference an external file */
+					struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_HF:
+				{
+					/* height field (terrain primitive) */
+					/* the HF primitive references an external file */
+					struct rt_hf_internal *hf = (struct rt_hf_internal *)itrn.idb_ptr;
+					break;
+				}
 
-		/* rarely used solids */
-		case ID_EBM:
-		{
-			/* extruded bit-map */
-			struct rt_ebm_internal *ebm = (struct rt_ebm_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_VOL:
-		{
-			struct rt_vol_internal *vol = (struct rt_vol_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_PIPE:
-		{
-			struct rt_pipe_internal *pipe = (struct rt_pipe_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_PARTICLE:
-		{
-			struct rt_part_internal *part = (struct rt_part_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_RPC:
-		{
-			struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_RHC:
-		{
-			struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_EPA:
-		{
-			struct rt_epa_internal *epa = (struct rt_epa_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_EHY:
-		{
-			struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_ETO:
-		{
-			struct rt_eto_internal *eto = (struct rt_eto_internal *)itrn.idb_ptr;
-			break;
-		}
-		case ID_GRIP:
-		{
-			struct rt_grip_internal *grip = (struct rt_grip_internal *)itrn.idb_ptr;
-			break;
-		}
+				/* rarely used primitives */
+			case ID_EBM:
+				{
+					/* extruded bit-map */
+					/* the EBM primitive references an external file */
+					struct rt_ebm_internal *ebm = (struct rt_ebm_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_VOL:
+				{
+					/* the VOL primitive references an external file */
+					struct rt_vol_internal *vol = (struct rt_vol_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_PIPE:
+				{
+					struct rt_pipe_internal *pipe = (struct rt_pipe_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_PARTICLE:
+				{
+					struct rt_part_internal *part = (struct rt_part_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_RPC:
+				{
+					struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_RHC:
+				{
+					struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_EPA:
+				{
+					struct rt_epa_internal *epa = (struct rt_epa_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_EHY:
+				{
+					struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_ETO:
+				{
+					struct rt_eto_internal *eto = (struct rt_eto_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_GRIP:
+				{
+					struct rt_grip_internal *grip = (struct rt_grip_internal *)itrn.idb_ptr;
+					break;
+				}
+				
+			case ID_SKETCH:
+				{
+					struct rt_sketch_internal *sketch = (struct rt_sketch_internal *)itrn.idb_ptr;
+					break;
+				}
+			case ID_EXTRUDE:
+				{
+					/* note that an extrusion references a sketch, make sure you convert
+					 * the sketch also
+					 */
+					struct rt_extrude_internal *extrude = (struct rt_extrude_internal *)itrn.idb_ptr;
+					break;
+				}
+				
+			default:
+				bu_log( "Primitive %s is unrecognized type (%d)\n", dp->d_namep, itrn.idb_type );
+				break;
+			}
+	} else {
+		switch( itrn.idb_major_type ) {
+			case DB5_MAJORTYPE_BINARY_UNIF:
+				{
+					/* not actually a primitive, just a block of storage for data
+					 * a uniform array of chars, ints, floats, doubles, ...
+					 */
+					struct rt_binunif_internal *bin = (struct rt_binunif_internal *)itrn.idb_ptr;
 
-		/* Unimplemented solids */
-		case ID_SKETCH:
-		{
-			struct rt_sketch_internal *sketch = (struct rt_sketch_internal *)itrn.idb_ptr;
-			break;
+					printf( "Found a binary object (%s)\n\n", dp->d_namep );
+					break;
+				}
+			default:
+				bu_log( "Major type of %s is unrecognized type (%d)\n", dp->d_namep, itrn.idb_major_type );
+				break;
 		}
-		case ID_EXTRUDE:
-		{
-			struct rt_extrude_internal *extrude = (struct rt_extrude_internal *)itrn.idb_ptr;
-			break;
-		}
-
-		default:
-			bu_log( "Solid %s is unrecognized type (%d)\n", dp->d_namep, itrn.idb_type );
-			break;
 	}
 
-	/* mark this solid as converted */
+	/* mark this primitive as converted */
 	dp->d_uses++;
 }

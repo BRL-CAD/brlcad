@@ -17,7 +17,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army
+ *	This software is Copyright (C) 1993-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -46,11 +46,12 @@ static const char RCSid[] = "$Header$";
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
-static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
+static int	do_bots=0;		/* flag to output BOT's instead of NMG's */
 /* static int	ncpu = 1; */		/* Number of processors */
 static int	nmg_count=0;		/* Count of nmgregions written to output */
 static char	*out_file = "nmg.g";	/* Output filename */
@@ -85,6 +86,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	char *shader;
 	char *matparm;
 	struct wmember headp;
+	struct rt_bot_internal *bot;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	BN_CK_TOL(tsp->ts_tol);
@@ -142,12 +144,15 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	}
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 
-	BU_UNSETJUMP;		/* Relinquish the protection */
 	if( ret_tree )
 		r = ret_tree->tr_d.td_r;
 	else
 		r = (struct nmgregion *)NULL;
+	if( do_bots ) {
+		bot = nmg_bot( BU_LIST_FIRST( shell, &r->s_hd ), tsp->ts_tol );
+	}
 
+	BU_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 
 	shader = strtok( tsp->ts_mater.ma_shader, tok_sep );
@@ -199,7 +204,12 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			/* Write the nmgregion to the output file */
 			nmg_count++;
 			sprintf( nmg_name , "nmg.%d" , nmg_count );
-			mk_nmg( fp_out , nmg_name , r->m_p );
+
+			if( do_bots ) {
+				wdb_export( fp_out, nmg_name, (genptr_t)bot, ID_BOT, 1.0 );
+			} else {
+				mk_nmg( fp_out , nmg_name , r->m_p );
+			}
 		}
 
 		/* Now make a normal brlcad region */
@@ -443,8 +453,11 @@ main(int argc, char **argv)
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "t:a:n:o:r:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "t:a:n:o:r:bvx:P:X:")) != EOF) {
 		switch (c) {
+		case 'b':		/* make BOT's instead of NMG's */
+			do_bots = 1;
+			break;
 		case 't':		/* calculational tolerance */
 			tol.dist = atof( optarg );
 			tol.dist_sq = tol.dist * tol.dist;

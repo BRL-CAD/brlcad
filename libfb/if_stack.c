@@ -12,7 +12,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  * Copyright Notice -
- *	This software is Copyright (C) 1986 by the United States Army.
+ *	This software is Copyright (C) 1986-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -52,6 +52,7 @@ _LOCAL_ int	stk_open(FBIO *ifp, char *file, int width, int height),
 		stk_flush(FBIO *ifp),
 		stk_free(FBIO *ifp),
 		stk_help(FBIO *ifp);
+
 
 /* This is the ONLY thing that we normally "export" */
 FBIO stk_interface =  {

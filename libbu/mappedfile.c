@@ -35,7 +35,9 @@ static const char libbu_mappedfile_RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <math.h>
 #include <fcntl.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #ifdef USE_STRING_H
 #include <string.h>
 #else
