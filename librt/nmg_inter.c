@@ -79,7 +79,7 @@ struct nmg_inter_struct {
 	fastf_t		*vert2d;	/* Array of 2d vertex projections [index] */
 	int		maxindex;	/* size of vert2d[] */
 	mat_t		proj;		/* Matrix to project onto XY plane */
-	struct face	*face;		/* face of 2d projection plane */
+	CONST long	*twod;		/* ptr to face/edge of 2d projection */
 };
 #define NMG_INTER_STRUCT_MAGIC	0x99912120
 #define NMG_CK_INTER_STRUCT(_p)	NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
@@ -94,7 +94,8 @@ struct ee_2d_state {
 	vect_t	dir;
 };
 
-RT_EXTERN(void		nmg_isect2d_prep, (struct nmg_inter_struct *is, struct face *f1));
+RT_EXTERN(void			nmg_isect2d_prep, (struct nmg_inter_struct *is,
+				CONST long *assoc_use));
 RT_EXTERN(CONST struct vertexuse *nmg_loop_touches_self, (CONST struct loopuse *lu));
 
 static int	nmg_isect_edge2p_face2p RT_ARGS((struct nmg_inter_struct *is,
@@ -271,35 +272,50 @@ struct vertexuse	*dualvu;		/* vu's dual in other shell.  May be NULL */
  *  The return is a 3-tuple, with the Z coordinate set to 0.0 for safety.
  *  This is especially useful when the projected value is printed using
  *  one of the 3D print routines.
+ *
+ *  'assoc_use' is either a pointer to a faceuse, or an edgeuse.
  */
 static void
-nmg_get_2d_vertex( v2d, v, is, fu )
-point_t		v2d;		/* a 3-tuple */
-struct vertex	*v;
+nmg_get_2d_vertex( v2d, v, is, assoc_use )
+point_t			v2d;		/* a 3-tuple */
+struct vertex		*v;
 struct nmg_inter_struct	*is;
-CONST struct faceuse	*fu;	/* for plane equation */
+CONST long		*assoc_use;	/* ptr to faceuse/edgeuse associated w/2d projection */
 {
 	register fastf_t	*pt2d;
 	point_t			pt;
 	struct vertex_g		*vg;
+	long			*this;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_VERTEX(v);
 
 	/* If 2D preparations have not been made yet, do it now */
 	if( !is->vert2d )  {
-		nmg_isect2d_prep( is, fu->f_p );
+		nmg_isect2d_prep( is, assoc_use );
 	}
 
-	if( fu->f_p != is->face )  {
-		rt_log("nmg_get_2d_vertex(,fu=%x) f=x%x, is->face=%x\n",
-			fu, fu->f_p, is->face);
-		rt_bomb("nmg_get_2d_vertex:  face mis-match\n");
+	if( *assoc_use == NMG_FACEUSE_MAGIC )  {
+		this = &((struct faceuse *)assoc_use)->f_p->l.magic;
+		if( this != is->twod )
+			goto bad;
+	} else if ( *assoc_use == NMG_EDGEUSE_MAGIC )  {
+		this = &((struct edgeuse *)assoc_use)->e_p->magic;
+		if( this != is->twod )
+			goto bad;
+	} else {
+		this = (long *)NULL;
+bad:
+		rt_log("nmg_get_2d_vertex(,assoc_use=%x %s) this=x%x %s, is->twod=%x %s\n",
+			assoc_use, rt_identify_magic(*assoc_use),
+			this, rt_identify_magic(*this),
+			is->twod, rt_identify_magic(*(is->twod)) );
+		rt_bomb("nmg_get_2d_vertex:  2d association mis-match\n");
 	}
-	NMG_CK_FACEUSE(fu);
 
 	if( !v->vg_p )  {
-		rt_log("nmg_get_2d_vertex: v=x%x, fu=x%x, null vg_p\n", v, fu);
+		rt_log("nmg_get_2d_vertex: v=x%x, assoc_use=x%x, null vg_p\n",
+			v, assoc_use);
 		rt_bomb("nmg_get_2d_vertex:  vertex with no geometry!\n");
 	}
 	vg = v->vg_p;
@@ -348,6 +364,7 @@ CONST struct faceuse	*fu;	/* for plane equation */
 	v2d[2] = pt2d[2] = 0;		/* flag */
 
 	if( !NEAR_ZERO( pt[2], is->tol.dist ) )  {
+		struct faceuse	*fu = (struct faceuse *)assoc_use;
 		plane_t	n;
 		fastf_t	dist;
 		NMG_GET_FU_PLANE( n, fu );
@@ -357,9 +374,8 @@ CONST struct faceuse	*fu;	/* for plane equation */
 			dist, dist/is->tol.dist );
 		if( !NEAR_ZERO( dist, is->tol.dist ) &&
 		    !NEAR_ZERO( pt[2], 10*is->tol.dist ) )  {
-			rt_log("nmg_get_2d_vertex(,fu=%x) f=x%x, is->face=%x\n",
-				fu, fu->f_p, is->face);
-			PLPRINT("is->face N", is->face->fg_p->N);
+			rt_log("nmg_get_2d_vertex(,assoc_use=%x) f=x%x, is->twod=%x\n",
+				assoc_use, fu->f_p, is->twod);
 			PLPRINT("fu->f_p N", n);
 			rt_bomb("3D->2D point projection error\n");
 		}
@@ -390,12 +406,11 @@ CONST struct faceuse	*fu;	/* for plane equation */
  * or a face pointer.  In case of edge, make edge_g->dir unit, and
  * rotate that to +X axis.  Make edge_g->pt be the origin.
  * This will allow the 2D routines to operate on wires.
- * f1 & is->face should become a (long *) to track geom associativity.
  */
 void
-nmg_isect2d_prep( is, f1 )
+nmg_isect2d_prep( is, assoc_use )
 struct nmg_inter_struct	*is;
-struct face		*f1;
+long			*assoc_use;
 {
 	struct model	*m;
 	struct face_g	*fg;
@@ -406,47 +421,83 @@ struct face		*f1;
 	register int	i;
 
 	NMG_CK_INTER_STRUCT(is);
-	NMG_CK_FACE(f1);
 
-	if( is->vert2d && f1 == is->face )  return;	/* Already prepped */
+	if( *assoc_use == NMG_FACEUSE_MAGIC )  {
+		if( &((struct faceuse *)assoc_use)->f_p->l.magic == is->twod )
+			return;		/* Already prepped */
+	} else if( *assoc_use == NMG_EDGEUSE_MAGIC )  {
+		if( &((struct edgeuse *)assoc_use)->e_p->magic == is->twod )
+			return;		/* Already prepped */
+	} else {
+		rt_bomb("nmg_isect2d_prep() bad assoc_use magic\n");
+	}
 
 	nmg_isect2d_cleanup(is);
 	nmg_hack_last_is = is;
 
-	fg = f1->fg_p;
-	NMG_CK_FACE_G(fg);
-	is->face = f1;
-	if( f1->flip )  {
-		VREVERSE( n, fg->N );
-		n[3] = -fg->N[3];
-	} else {
-		HMOVE( n, fg->N );
-	}
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		rt_log("nmg_isect2d_prep(f=x%x) flip=%d\n", f1, f1->flip);
-		PLPRINT("N", n);
-	}
-
-	m = nmg_find_model( &f1->l.magic );
+	m = nmg_find_model( assoc_use );
 
 	is->maxindex = ( 2 * m->maxindex );
 	is->vert2d = (fastf_t *)rt_malloc( is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
 
-	/*
-	 *  Rotate so that f1's N vector points up +Z.
-	 *  This places all 2D calcuations in the XY plane.
-	 *  Translate so that f1's centroid becomes the 2D origin.
-	 *  Reasoning:  no vertex should be favored by putting it at
-	 *  the origin.  The "desirable" floating point space in the
-	 *  vicinity of the origin should be used to best advantage,
-	 *  by centering calculations around it.
-	 */
-	VSET( to, 0, 0, 1 );
-	mat_fromto( is->proj, n, to );
-	VADD2SCALE( centroid, f1->max_pt, f1->min_pt, 0.5 );
-	MAT4X3PNT( centroid_proj, is->proj, centroid );
-	centroid_proj[Z] = n[3];	/* pull dist from origin off newZ */
-	MAT_DELTAS_VEC_NEG( is->proj, centroid_proj );
+	if( *assoc_use == NMG_FACEUSE_MAGIC )  {
+		struct faceuse	*fu1 = (struct faceuse *)assoc_use;
+		struct face	*f1;
+
+		f1 = fu1->f_p;
+		fg = f1->fg_p;
+		NMG_CK_FACE_G(fg);
+		is->twod = &f1->l.magic;
+		if( f1->flip )  {
+			VREVERSE( n, fg->N );
+			n[3] = -fg->N[3];
+		} else {
+			HMOVE( n, fg->N );
+		}
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			rt_log("nmg_isect2d_prep(f=x%x) flip=%d\n", f1, f1->flip);
+			PLPRINT("N", n);
+		}
+
+		/*
+		 *  Rotate so that f1's N vector points up +Z.
+		 *  This places all 2D calcuations in the XY plane.
+		 *  Translate so that f1's centroid becomes the 2D origin.
+		 *  Reasoning:  no vertex should be favored by putting it at
+		 *  the origin.  The "desirable" floating point space in the
+		 *  vicinity of the origin should be used to best advantage,
+		 *  by centering calculations around it.
+		 */
+		VSET( to, 0, 0, 1 );
+		mat_fromto( is->proj, n, to );
+		VADD2SCALE( centroid, f1->max_pt, f1->min_pt, 0.5 );
+		MAT4X3PNT( centroid_proj, is->proj, centroid );
+		centroid_proj[Z] = n[3];	/* pull dist from origin off newZ */
+		MAT_DELTAS_VEC_NEG( is->proj, centroid_proj );
+	} else if( *assoc_use == NMG_EDGEUSE_MAGIC )  {
+		struct edgeuse	*eu1 = (struct edgeuse *)assoc_use;
+		struct edge	*e1;
+		struct edge_g	*eg;
+
+		rt_log("2d prep for edgeuse\n");
+		e1 = eu1->e_p;
+		NMG_CK_EDGE(e1);
+		eg = e1->eg_p;
+		NMG_CK_EDGE_G(eg);
+		is->twod = &e1->magic;
+
+		/*
+		 *  Rotate so that eg's eg_dir vector points up +X.
+		 *  The choice of the other axes is arbitrary.
+		 *  This ensures that all calculations happen on the XY plane.
+		 *  Translate the edge start point to the origin.
+		 */
+		VSET( to, 1, 0, 0 );
+		mat_fromto( is->proj, eg->e_dir, to );
+		MAT_DELTAS_VEC_NEG( is->proj, eg->e_pt );
+	} else {
+		rt_bomb("nmg_isect2d_prep() bad assoc_use magic\n");
+	}
 
 	/* Clear out the 2D vertex array, setting flag in [2] to -1 */
 	for( i = (3*is->maxindex)-1-2; i >= 0; i -= 3 )  {
@@ -470,7 +521,7 @@ struct nmg_inter_struct	*is;
 	if( !is->vert2d )  return;
 	rt_free( (char *)is->vert2d, "vert2d");
 	is->vert2d = (fastf_t *)NULL;
-	is->face = (struct face *)NULL;
+	is->twod = (long *)NULL;
 }
 
 /*
@@ -600,7 +651,7 @@ struct faceuse		*fu2;
 	pt = vu1->v_p->vg_p->coord;
 
 	/* Prep the 2D cache, if the face changed */
-	nmg_isect2d_prep( is, fu2->f_p );
+	nmg_isect2d_prep( is, &fu2->l.magic );
 
 	/* For every edge and vert, check topo AND geometric intersection */
 	for( RT_LIST_FOR( lu2, loopuse, &fu2->lu_hd ) )  {
@@ -3046,7 +3097,7 @@ struct nmg_ptbl		*line_eutab;	/* optional */
     	}
 
 	/* Project the intersect line into 2D.  Build matrix first. */
-	nmg_isect2d_prep( is, fu1->f_p );
+	nmg_isect2d_prep( is, &fu1->l.magic );
 	/* XXX Need subroutine for this!! */
 	MAT4X3PNT( is->pt2d, is->proj, is->pt );
 	MAT4X3VEC( is->dir2d, is->proj, is->dir );
@@ -3515,11 +3566,10 @@ top:
 	if( status == 0 )  {
 		int	nbreak;
 		/* lines are colinear */
-		rt_bomb("nmg_isect_edge3p_edge3p() colinear case.  Write some code here.\n");
+		rt_log("nmg_isect_edge3p_edge3p() colinear case.  Untested waters.\n");
 		/* Initialize 2D vertex cache with EDGE info. */
-		nmg_isect2d_prep( is, (struct face *)eu1->e_p );
+		nmg_isect2d_prep( is, &eu1->l.magic );
 		(void)nmg_isect_2colinear_edge2p( eu1, eu2, eu1->e_p, is, 0, 0 );
-		/* XXX The support for this won't quite work yet */
 		return;
 	}
 
