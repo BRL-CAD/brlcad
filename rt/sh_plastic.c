@@ -597,7 +597,7 @@ struct partition *PartHeadp;
 
 	/* Give serious information when problems are encountered */
 bad:
-	if(rdebug&RDEBUG_HITS) rt_pr_partitions( PartHeadp, "phg_rhit" );
+	if(rdebug&RDEBUG_HITS) rt_pr_partitions( ap->a_rt_i, PartHeadp, "phg_rhit" );
 	return(0);
 }
 
