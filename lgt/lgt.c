@@ -103,7 +103,7 @@ char	*argv[];
 		{
 		sgi_console = substr( getenv( "TERM" ), "iris" );
 		(void) sprintf( prompt,
-				"Do you want to use the mouse ? [y|n](%c) ",
+				"Do you want to use the IRIS mouse and keyboard ? [y|n](%c) ",
 				sgi_usemouse ? 'y' : 'n'
 				);
 		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
