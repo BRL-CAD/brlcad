@@ -2,12 +2,12 @@
  *
  */
 #include <stdio.h>
+#include <values.h>
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rt_tree.h"
 
 /* macros for comparing 2D points in scanline order */
 #define P_GT_V(_p, _v) \
@@ -192,7 +192,8 @@ struct rt_list *tbl2d;
 					p->coord[0], p->coord[1]);
 				pl_label(fd, buf);
 			} else
-				rt_bomb("error finding loop vertex in 2D list\n");
+				pl_label(fd, "X, Y");
+
 		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC){
 			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 				if (p=find_pt2d(tbl2d,eu->vu_p)) {
@@ -201,7 +202,7 @@ struct rt_list *tbl2d;
 						p->coord[0], p->coord[1]);
 					pl_label(fd, buf);
 				} else
-					rt_bomb("error finding edge vertex in 2D list\n");
+					pl_label(fd, "X, Y");
 			}
 		} else {
 			rt_bomb("bogus loopuse child\n");
@@ -981,11 +982,11 @@ struct pt2d *p1, *p2;
 	map_new_vertexuse(tbl2d, eu->vu_p);
 
 	/* now map the vertexuse on the radially-adjacent edgeuse */
-	eu = eu->radial_p;
-	NMG_CK_EDGEUSE(eu);
-	map_new_vertexuse(tbl2d, eu->vu_p);
+	NMG_CK_EDGEUSE(eu->radial_p);
+	map_new_vertexuse(tbl2d, eu->radial_p->vu_p);
 
-
+	eu = RT_LIST_PREV( edgeuse, &(p1->vu_p->up.eu_p->l));
+	return find_pt2d(tbl2d, eu->vu_p);
 }
 
 static void
@@ -995,6 +996,7 @@ struct vertexuse *vu1, *vu2;
 {
 	struct vertexuse *vu;
 	struct edgeuse *eu;
+	struct loopuse *lu;
 
 	NMG_CK_VERTEXUSE(vu1);
 	NMG_CK_VERTEXUSE(vu2);
@@ -1020,14 +1022,18 @@ struct vertexuse *vu1, *vu2;
 		return;
 
 	/* since we've just made some new vertexuses
-	 * we need to map them to the 2D plane.
+	 * we need to map them to the 2D plane.  
+	 *
+	 * XXX This should be made more direct and efficient.  For now we
+	 * just go looking for vertexuses without a mapping.
 	 */
-	map_new_vertexuse(tbl2d, vu);
-	NMG_CK_EDGEUSE(eu);
-	eu = RT_LIST_PNEXT_CIRC(edgeuse, eu);
-	NMG_CK_VERTEXUSE(eu->vu_p);
-
-	map_new_vertexuse(tbl2d, eu->vu_p);
+	NMG_CK_EDGEUSE(vu->up.eu_p);
+	NMG_CK_LOOPUSE(vu->up.eu_p->up.lu_p);
+	lu = vu->up.eu_p->up.lu_p;
+	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		if (! find_pt2d(tbl2d, eu->vu_p))
+			map_new_vertexuse(tbl2d, eu->vu_p);
+	}
 }
 
 
@@ -1229,6 +1235,7 @@ struct loopuse *lu;
 				next->coord[Y]);
 
 		if (is_convex(prev, current, next)) {
+			struct pt2d *t;
 			/* cut a triangular piece off of the loop to
 			 * create a new loop.
 			 */
@@ -1237,14 +1244,14 @@ struct loopuse *lu;
 
 			plfu( lu->up.fu_p, tbl2d );
 
-			if (current->vu_p->v_p == first->vu_p->v_p) {
-				struct pt2d *t;
+			if (current->vu_p->v_p == first->vu_p->v_p) { 
 				t = PT2D_NEXT(tbl2d, first);
 				rt_log("\tfirst(0x%08x -> %g %g\n", first, t->coord[X], t->coord[Y]);
 				t = PT2D_NEXT(tbl2d, current);
 				rt_log("\tcurrent(0x%08x) -> %g %g\n", current, t->coord[X], t->coord[Y]);
 
 				current = PT2D_NEXT(tbl2d, current);
+				rt_log("\tcurrent(0x%08x) -> %g %g\n", current, t->coord[X], t->coord[Y]);
 			}
 		} else {
 			if (tri_debug)
