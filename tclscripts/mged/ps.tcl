@@ -164,7 +164,7 @@ proc do_ps { id } {
     global mged_gui
     global ps_control
 
-    cmd_set $id
+    cmd_win set $id
     set ps_cmd "_mged_ps"
 
     if {$ps_control($id,file) != ""} {

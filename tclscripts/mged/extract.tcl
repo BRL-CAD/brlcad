@@ -69,7 +69,7 @@ proc do_extract { id } {
     global mged_gui
     global ex_control
 
-    cmd_set $id
+    cmd_win set $id
     set ex_cmd "_mged_keep"
 
     if {$ex_control($id,file) != ""} {

@@ -193,7 +193,7 @@ proc next_command { w } {
     global mged_gui
 
     set id [get_player_id_t $w]
-    cmd_set $id
+    cmd_win set $id
     set result [catch hist_next msg]
 
     if {$result==0} {
@@ -220,7 +220,7 @@ proc prev_command { w } {
     global mged_gui
 
     set id [get_player_id_t $w]
-    cmd_set $id
+    cmd_win set $id
     set result [catch hist_prev msg]
 
     if {$result==0} {

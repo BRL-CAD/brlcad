@@ -65,7 +65,7 @@ proc do_rtScript { id } {
     global mged_gui
     global rts_control
 
-    cmd_set $id
+    cmd_win set $id
     set rts_cmd "_mged_saveview"
 
     if {$rts_control($id,file) != ""} {

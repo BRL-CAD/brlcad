@@ -108,7 +108,7 @@ proc do_plot { id } {
     global mged_gui
     global pl_control
 
-    cmd_set $id
+    cmd_win set $id
     set pl_cmd "_mged_pl"
 
     if {$pl_control($id,zclip)} {

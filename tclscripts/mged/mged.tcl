@@ -282,7 +282,7 @@ proc ia_invoke { w } {
 
     if [info complete $cmd] {
 	if {!$mged_gui($w,insert_char_flag)} {
-	    cmd_set $id
+	    cmd_win set $id
 	}
 
 	if {$glob_compat_mode == 0} {

@@ -54,7 +54,7 @@ proc mmenu_init { id } {
     global mged_gui
     global mged_display
 
-    cmd_set $id
+    cmd_win set $id
     set w .mmenu$id
     catch { destroy $w }
     toplevel $w -screen $mged_gui($id,screen)
@@ -88,7 +88,7 @@ proc mmenu_init { id } {
 }
 
 proc mged_press { id w } {
-    cmd_set $id
+    cmd_win set $id
     press [$w get [$w curselection]]
 }
 
