@@ -1035,12 +1035,11 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 	struct stat dbInode;
 	struct stat scriptInode;
 
+#if 0
 	/* for view orientation */
 	vect_t xlate;
 	mat_t new_cent;
 	
-
-#if 0
 	double viewsize;
 	double orientation[4]={0.0, 0.0, 0.0, 0.0};
 	vect_t eye_pt={0.0, 0.0, 0.0};

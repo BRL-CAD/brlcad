@@ -1,0 +1,12 @@
+# ----------------------------------------------------------------------
+#  DEMO: datefield in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+proc returnCmd {} {
+  puts [.df get]
+}
+
+iwidgets::datefield .df -labeltext "Date (International Format):" \
+  -command returnCmd -int 1
+pack .df -fill x -expand yes -padx 10 -pady 10

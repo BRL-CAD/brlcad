@@ -1,0 +1,39 @@
+/*
+ *			librtserver/Cakefile
+ */
+#define SRCDIR	librtserver
+#ifdef __ppc__
+#  define PRODUCTS	librtserver.jnilib
+#else
+#  define PRODUCTS	librtserver.ARCH_SUF
+#endif
+#define FILES	rtserver
+#define	SRCSUFF	.c
+#define VERSION_VARIABLE	rtserver_version
+#define LIBRARY_TITLE		"The BRL-CAD Ray-Tracing Server library"
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#undef CONFIGDEFS
+#ifdef __ppc__
+#  undef RANLIB
+#  undef BUILD_LIBRARY
+#  define RANLIB	true
+#  define CONFIGDEFS	/**/
+#  define BUILD_LIBRARY	cc -bundle -framework JavaVM -o
+#else
+#  define CONFIGDEFS	-I/usr/java/j2sdk1.4.2_02/include "-I/usr/java/j2sdk1.4.2_02/include/linux"
+#endif
+
+/* Oddly, this line needs to be present to keep IBM AIX cpp happy. */
+#ifdef FAST_SQRT
+#	define	EXTRA_OBJ	FAST_SQRT
+#else
+#	define	EXTRA_OBJ	/**/
+#endif
+
+#define EXTRA_OBJ_NO_DEPENDENCY -L../.librt.''MTYPE -lrt -L../.libbn.''MTYPE -lbn -L../.libbu.''MTYPE -lbu -L../.libtcl8.4.''MTYPE -ltcl8.4
+
+#include "../Cakefile.lib"
+#include "../Cakefile.rules"

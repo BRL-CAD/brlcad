@@ -1,0 +1,279 @@
+<TITLE>messagedialog - Create and manipulate a message dialog widget</TITLE>
+<H1>messagedialog - Create and manipulate a message dialog widget</H1>
+
+</pre><H2>SYNOPSIS</H2>
+<B>messagedialog<I> <I>pathName </I>?<I>options</I>?
+</pre><H2>INHERITANCE</H2>
+itk::Toplevel &lt;- Shell &lt;- Dialogshell &lt;- Dialog &lt;- Messagedialog
+</pre><H2>STANDARD OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>background</B><br>
+<B>foreground</B><br>
+</td>
+<td valign=top>
+<B>bitmap</B><br>
+<B>image</B><br>
+</td>
+<td valign=top>
+<B>cursor</B><br>
+<B>text</B><br>
+</td>
+<td valign=top>
+<B>font</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "options" </A> manual entry for details on the standard options.
+</pre><H2>INHERITED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>buttonBoxPadX</B><br>
+<B>padY</B><br>
+</td>
+<td valign=top>
+<B>buttonBoxPadY</B><br>
+<B>separator</B><br>
+</td>
+<td valign=top>
+<B>buttonBoxPos</B><br>
+<B>thickness</B><br>
+</td>
+<td valign=top>
+<B>padX</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="dialogshell.n.html"> "dialogshell" </A> widget manual entry for details on the above
+inherited options.
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>master</B><br>
+</td>
+<td valign=top>
+<B>modality</B><br>
+</td>
+<td valign=top>
+</td>
+<td valign=top>
+</td>
+</table>
+<P>
+See the "shell" widget manual entry for details on the above
+inherited options.
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>title</B><br>
+</td>
+<td valign=top>
+</td>
+<td valign=top>
+</td>
+<td valign=top>
+</td>
+</table>
+<P>
+See the "Toplevel" widget manual entry for details on the above
+inherited options.
+<P>
+</pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
+<P>
+<pre>
+Name:                   <B>imagePos</B>
+Class:                  <B>Position</B>
+Command-Line Switch:	<B>-imagepos</B>
+</pre>
+<UL>
+Specifies the image position relative to the message text: <B>n</B>, <B>s</B>, 
+<B>e</B>, or <B>w</B>.  The default is w.
+</UL>
+<P>
+<pre>
+Name:                   <B>textPadX</B>
+Class:                  <B>Pad</B>
+Command-Line Switch:	<B>-textpadx</B>
+</pre>
+<UL>
+Specifies a non-negative value indicating how much extra space to request for 
+the message text in the X direction.  The value may have any of the forms 
+acceptable to Tk_GetPixels.
+</UL>
+<P>
+<pre>
+Name:                   <B>textPadY</B>
+Class:                  <B>Pad</B>
+Command-Line Switch:	<B>-textpady</B>
+</pre>
+<UL>
+Specifies a non-negative value indicating how much extra space to request for 
+the message text in the X direction.  The value may have any of the forms 
+acceptable to Tk_GetPixels.
+</UL>
+<P>
+</pre><HR>
+
+</pre><H2>DESCRIPTION</H2>
+<P>
+The <B>messagedialog</B> command creates a message dialog composite widget. 
+The messagedialog is derived from the Dialog class and is composed of 
+an image and associated message text with commands to manipulate the 
+dialog buttons.
+
+</pre><H2>METHODS</H2>
+<P>
+The <B>messagedialog</B> command creates a new Tcl command whose
+name is <I>pathName</I>.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+<pre>
+<I>pathName option </I>?<I>arg arg ...</I>?
+</pre>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the command.  The following
+commands are possible for messagedialog widgets:
+
+</pre><H2>INHERITED METHODS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>add</B><br>
+<B>insert</B><br>
+</td>
+<td valign=top>
+<B>buttonconfigure</B><br>
+<B>invoke</B><br>
+</td>
+<td valign=top>
+<B>default</B><br>
+<B>show</B><br>
+</td>
+<td valign=top>
+<B>hide</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="buttonbox.n.html"> "buttonbox" </A> widget manual entry for details on the above
+inherited methods.
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>childsite</B><br>
+</td>
+<td valign=top>
+</td>
+<td valign=top>
+</td>
+<td valign=top>
+</td>
+</table>
+<P>
+See the <A HREF="dialogshell.n.html"> "dialogshell" </A> widget manual entry for details on the above
+inherited methods.
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>activate</B><br>
+</td>
+<td valign=top>
+<B>center</B><br>
+</td>
+<td valign=top>
+<B>deactivate</B><br>
+</td>
+<td valign=top>
+</td>
+</table>
+<P>
+See the <A HREF="dialogshell.n.html"> "dialogshell" </A> widget manual entry for details on the above
+inherited methods.
+</pre><H2>WIDGET-SPECIFIC METHODS</H2>
+<DL>
+<DT> <I>pathName <B>cget</B> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>messagedialog</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?
+</I></B>
+<DD> Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>pathName</I> (see <B>Tk_ConfigureInfo</B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>messagedialog</B>
+command.
+
+</DL>
+</pre><H2>COMPONENTS</H2>
+<P>
+<pre>
+Name:                   <B>image</B>
+Class:                  <B>Label</B>
+</pre>
+<UL>
+The image component is the bitmap or image of the message dialog.  See 
+the "label" widget manual entry for details on the image component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>message</B>
+Class:                  <B>Label</B>
+</pre>
+<UL>
+The message component provides the textual portion of the message dialog.
+See the "label" widget manual entry for details on the message component item.
+</UL>
+</table>
+
+</pre><H2>EXAMPLE</H2>
+<pre>
+ #
+ # Standard question message dialog used for confirmation.
+ #
+ messagedialog .md -title "Message Dialog" -text "Are you sure ?" \\
+	-bitmap questhead -modality global
+
+ .md buttonconfigure OK -text Yes
+ .md buttonconfigure Cancel -text No
+
+ if {[.md activate]} {
+    .md configure -text "Are you really sure ?"
+    if {[.md activate]} {
+	puts stdout "Yes"
+    } else {
+	puts stdout "No"
+    }
+ } else {
+    puts stdout "No"
+ }
+
+ destroy .md
+
+ #
+ # Copyright notice with automatic deactivation.
+ #
+ messagedialog .cr -title "Copyright" -bitmap @dsc.xbm -imagepos n \\
+     -text "Copyright 1995 DSC Communications Corporation\\n \\
+	    All rights reserved"
+ 
+ .cr hide Cancel
+
+ .cr activate
+ after 10000 ".cr deactivate"
+</pre>
+</pre><H2>AUTHOR</H2>
+Mark L. Ulferts
+</pre><H2>KEYWORDS</H2>
+messagedialog, dialog, dialogshell, shell, widget

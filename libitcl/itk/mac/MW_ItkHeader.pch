@@ -1,0 +1,73 @@
+/*
+ * MW_ItkHeader.pch --
+ *
+ *  This file is the source for a pre-compilied header that gets used
+ *  for all files in the Tk projects.  This make compilies go a bit
+ *  faster.  This file is only intended to be used in the MetroWerks
+ *  CodeWarrior environment.  It essentially acts as a place to set 
+ *  compiler flags.  See MetroWerks documention for more details.
+ *
+ * Copyright (c) 1995-1996 Sun Microsystems, Inc.
+ *
+ * See the file "license.terms" for information on usage and redistribution
+ * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * SCCS: @(#) MW_TkHeader.pch 1.16 96/09/04 17:01:00
+ */
+
+/*
+ * Support for automatically naming the precompiled header file ...
+ */
+#if __POWERPC__
+#pragma precompile_target "MW_ItkHeaderPPC"
+#include "MW_TkHeaderPPC"
+#elif __CFM68K__
+#pragma precompile_target "MW_ItkHeaderCFM68K"
+#include "MW_TkHeaderCFM68K"
+#else
+#pragma precompile_target "MW_ItkHeader68K"
+#include "MW_TkHeader68K"
+#endif
+
+/*
+ * Macintosh Tcl must be compiled with certain compiler options to
+ * ensure that it will work correctly.  The following pragmas are 
+ * used to ensure that those options are set correctly.  An error
+ * will occur at compile time if they are not set correctly.
+ */
+
+#if !__option(enumsalwaysint)
+#error Tcl requires the Metrowerks setting "Enums always ints".
+#endif
+
+#if !defined(__POWERPC__)
+#if !__option(far_data)
+#error Tcl requires the Metrowerks setting "Far data".
+#endif
+#endif
+
+#if !defined(__POWERPC__)
+#if !__option(fourbyteints)
+#error Tcl requires the Metrowerks setting "4 byte ints".
+#endif
+#endif
+
+#if !defined(__POWERPC__)
+#if !__option(IEEEdoubles)
+#error Tcl requires the Metrowerks setting "8 byte doubles".
+#endif
+#endif
+
+#include <tcl.h>
+#include <tk.h>
+#include <itcl.h>
+
+/*
+ * Place any includes below that will are needed by the majority of the
+ * and is OK to be in any file in the system.  The pragma's are used
+ * to control what functions are exported in the Tcl shared library.
+ */
+
+#pragma export on
+#include "itk.h"
+#pragma export reset

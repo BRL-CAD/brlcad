@@ -38,12 +38,12 @@ proc cadColorWidget { mode parent child args } {
     global ::tk::Priv
 
     if ![winfo exists $parent] {
-      cad_dialog $::tk::Priv(cad_dialog) [winfo screen .]\
-	  "cadColorWidget: parent does not exist"\
-	  "cadColorWidget: parent does not exist - $parent"\
-	  "" 0 OK
-      
-      return {}
+	cad_dialog $::tk::Priv(cad_dialog) [winfo screen .]\
+		"cadColorWidget: parent does not exist"\
+		"cadColorWidget: parent does not exist - $parent"\
+		"" 0 OK
+
+	return {}
     }
 
     # Allow more than one color tool

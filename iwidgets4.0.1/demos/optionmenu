@@ -1,0 +1,12 @@
+# ----------------------------------------------------------------------
+#  DEMO: optionmenu in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+iwidgets::optionmenu .cb -labeltext "Font:" -labelpos w -command {
+    puts "selected: [.cb get]"
+}
+pack .cb
+
+.cb insert end Ariel Courier Helvetica Knarly Lucida \
+    Rumpus Symbol Times "Zapf Dingbats"

@@ -433,8 +433,9 @@ typedef long	bitv_t;		/* largest integer type */
 #if defined(WIN32)
 #	define hypot _hypot
 #endif
+
 #if defined(SUNOS) && SUNOS >= 52
         extern double hypot(double, double);
 #endif
 
-#endif
+#endif  /* MACHINE_H */
