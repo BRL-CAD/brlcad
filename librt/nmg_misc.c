@@ -231,19 +231,19 @@ struct faceuse *fu;
 		for (RT_LIST_FOR(fu2lu, loopuse, &fu->lu_hd )){
 			NMG_CK_LOOPUSE(fu2lu);
 			NMG_CK_LOOP(fu2lu->l_p);
-			fu2lg = fu2lu->l_p->lg_p;
-			NMG_CK_LOOP_G(fu2lg);
 
-			/* If this loop is just some drek deposited as part of
-			 * the intersection operation, it doesn't really
-			 * count
+			/* If this loop is just some drek deposited into the
+			 * other loop as part of an intersection operation,
+			 * it doesn't really count -- skip it.
 			 */
 			if (fu2lu->orientation == OT_BOOLPLACE)  continue;
 
 			/* Everything should be OT_SAME or OT_BOOLPLACE, but...*/
 			if (fu2lu->orientation != OT_SAME)
-				rt_log("purge encountered %s in vertex list\n", nmg_orientation(fu2lu->orientation));
+				rt_log("nmg_purge_unwanted_intersection_points encountered %s loop in fu2\n", nmg_orientation(fu2lu->orientation));
 
+			fu2lg = fu2lu->l_p->lg_p;
+			NMG_CK_LOOP_G(fu2lg);
 			if (NMG_EXTENT_OVERLAP(fu2lg->min_pt, fu2lg->max_pt,
 			    lg->min_pt, lg->max_pt)) {
 				overlap = 1;
@@ -259,7 +259,7 @@ struct faceuse *fu;
 		if (!overlap) {
 			/* why is this vertexuse in the list? */
 			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-				rt_log("This little bugger slipped in somehow\n");
+				rt_log("nmg_purge_unwanted_intersection_points This little bugger slipped in somehow.  Deleting it.\n");
 				nmg_pr_vu_briefly(vu, (char *)NULL);
 			}
 
