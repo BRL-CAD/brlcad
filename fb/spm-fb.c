@@ -37,6 +37,9 @@ static char	*file_name;
 static int	square = 0;
 static int	vsize;
 
+void spm_fb();
+void spm_square();
+
 static char usage[] = "\
 Usage: spm-fb [-h -s] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
@@ -133,6 +136,7 @@ char	**argv;
  *
  *  Displays a sphere map on a framebuffer.
  */
+void
 spm_fb( mapp )
 spm_map_t *mapp;
 {
@@ -157,6 +161,7 @@ spm_map_t *mapp;
  *
  *  Display a square sphere map on a framebuffer.
  */
+void
 spm_square( mapp )
 register spm_map_t *mapp;
 {

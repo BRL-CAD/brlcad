@@ -85,6 +85,8 @@ struct GIF_Image Im;
 
 char *framebuffer=NULL;
 
+void usage();
+
 main(argc,argv)
 int argc;
 char **argv;
@@ -460,6 +462,7 @@ FILE	*inp;
 	}
 	return(code);
 }
+void
 usage(argv)
 char **argv;
 {

@@ -166,7 +166,7 @@ q	quit\r\n\
 
 doKeyPad()
 { 
-	register ch;	
+	register int ch;	
 
 	if( (ch = getchar()) == EOF )
 		return	0;		/* done */

@@ -784,11 +784,11 @@ DoFile( )	/* returns vpl status code */
 				  )
 				  	return Foo( -11 );
 				/* Only need X and Y, ignore Z */
-				space.left  = sxt16((buf3[1]<<8) | buf3[0]); /* x1 */
-				space.bottom= sxt16((buf3[3]<<8) | buf3[2]); /* y1 */
+				space.left  = sxt16((long)(buf3[1]<<8) | buf3[0]); /* x1 */
+				space.bottom= sxt16((long)(buf3[3]<<8) | buf3[2]); /* y1 */
 				/* z1 */
-				space.right = sxt16((buf3[7]<<8) | buf3[6]); /* x2 */
-				space.top   = sxt16((buf3[9]<<8) | buf3[8]); /* y2 */
+				space.right = sxt16((long)(buf3[7]<<8) | buf3[6]); /* x2 */
+				space.top   = sxt16((long)(buf3[9]<<8) | buf3[8]); /* y2 */
 				/* z2 */
 				goto spacend;
 				}
@@ -802,10 +802,10 @@ DoFile( )	/* returns vpl status code */
 					  ) != 1
 				   )
 					return Foo( -11 );
-				space.left  = sxt16((buf2[1]<<8) | buf2[0]); /* x1 */
-				space.bottom= sxt16((buf2[3]<<8) | buf2[2]); /* y1 */
-				space.right = sxt16((buf2[5]<<8) | buf2[4]); /* x2 */
-				space.top   = sxt16((buf2[7]<<8) | buf2[6]); /* y2 */
+				space.left  = sxt16((long)(buf2[1]<<8) | buf2[0]); /* x1 */
+				space.bottom= sxt16((long)(buf2[3]<<8) | buf2[2]); /* y1 */
+				space.right = sxt16((long)(buf2[5]<<8) | buf2[4]); /* x2 */
+				space.top   = sxt16((long)(buf2[7]<<8) | buf2[6]); /* y2 */
 				}
 
 spacend:
@@ -987,8 +987,8 @@ register coords	*coop;		/* -> input coordinates */
 		return false;
 
 
-	x = sxt16((buf[1]<<8) | buf[0]);
-	y = sxt16((buf[3]<<8) | buf[2]);
+	x = sxt16((long)(buf[1]<<8) | buf[0]);
+	y = sxt16((long)(buf[3]<<8) | buf[2]);
 	if( debug )  fprintf(stderr,"Coord: (%g,%g) ", x, y);
 
 	/* limit left, bottom */

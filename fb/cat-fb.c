@@ -358,6 +358,8 @@ static int	output_pix = 0;		/* output pixfile, rather than to fb */
 
 void		ofile();
 void		readrailmag();
+void		crail();
+void		slop_lines();
 
 static char usage[] = "\
 Usage: cat-fb [-h -c -O -o] [-F framebuffer] [-C r/g/b]\n\
@@ -686,6 +688,7 @@ findsize(code)
 	return (psp->real_code);
 }
 
+void
 crail(nrail)
 	register int nrail;
 {
@@ -874,6 +877,7 @@ outc(code)
 	return (1);
 }
 
+void
 slop_lines(nlines)
 	int nlines;
 {

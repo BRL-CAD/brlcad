@@ -27,6 +27,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "fb.h"
 
+void PrintUsage();
+void ArgCompat();
+
 /* Program constants */
 #define		High_Size	1024
 #define		GRID_RHO_EPS	0.005
@@ -154,12 +157,12 @@ char	*argv[];
     unsigned char *fbb;		/* Buffer for current line of frame buffer */
     unsigned char *fbbPtr;	/* Pointer to within fbb */
 
-    int		(*Fill_Func)();
-    int		Fill_Empty();
-    int		Fill_Constant();
-    int		Fill_Ramp();
-    int		Fill_Wedges();
-    int		Fill_Rings();
+    void		(*Fill_Func)();
+    void		Fill_Empty();
+    void		Fill_Constant();
+    void		Fill_Ramp();
+    void		Fill_Wedges();
+    void		Fill_Rings();
 
 /* Initialize things */
     ProgName = *argv;
@@ -688,6 +691,7 @@ char	*argv[];
     fb_close(fbPtr);
 }
 
+void
 PrintUsage (ShoOpts)
 
 bool	ShoOpts;
@@ -842,6 +846,7 @@ double	rho;
     return (0);
 }
 
+void
 ArgCompat (Interior)
 
 {
@@ -853,6 +858,7 @@ ArgCompat (Interior)
     }
 }
 
+void
 Fill_Empty (fbbPtr, rho, npf_rho, unit_r, merge)
 
 unsigned char	*fbbPtr;	/* Pointer to within fbb */
@@ -866,6 +872,7 @@ bool		merge;		/* Overlay onto current FB contents? */
 	COPYRGB(fbbPtr, Color[C_BKGRND])
 }
 
+void
 Fill_Constant (fbbPtr, rho, npf_rho, unit_r, merge)
 
 unsigned char	*fbbPtr;	/* Pointer to within fbb */
@@ -878,6 +885,7 @@ bool		merge;		/* Overlay onto current FB contents? */
     COPYRGB(fbbPtr, Color[C_INTERIOR])
 }
 
+void
 Fill_Ramp (fbbPtr, rho, npf_rho, unit_r, merge)
 
 unsigned char	*fbbPtr;	/* Pointer to within fbb */
@@ -898,6 +906,7 @@ bool		merge;		/* Overlay onto current FB contents? */
     COPYRGB(fbbPtr, ThisPix)
 }
 
+void
 Fill_Wedges (fbbPtr, rho, npf_rho, unit_r, merge)
 
 unsigned char	*fbbPtr;	/* Pointer to within fbb */
@@ -919,6 +928,7 @@ bool		merge;		/* Overlay onto current FB contents? */
 	COPYRGB(fbbPtr, Color[C_BLUE])
 }
 
+void
 Fill_Rings (fbbPtr, rho, npf_rho, unit_r, merge)
 
 unsigned char	*fbbPtr;	/* Pointer to within fbb */
