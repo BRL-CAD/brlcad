@@ -321,6 +321,7 @@ struct nmg_bool_state *bs;
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
 	while( RT_LIST_NOT_HEAD( fu, &s->fu_hd ) )  {
+		NMG_CK_FACEUSE(fu);
 		nextfu = RT_LIST_PNEXT( faceuse, fu );
 
 		/* Faceuse mates will be handled at same time as OT_SAME fu */
@@ -328,18 +329,21 @@ struct nmg_bool_state *bs;
 			fu = nextfu;
 			continue;
 		}
+		if( fu->fumate_p == nextfu )
+			nextfu = RT_LIST_PNEXT( faceuse, nextfu );
 
 		/* Consider this face */
-		NMG_CK_FACEUSE(fu);
 		NMG_CK_FACE(fu->f_p);
 		NMG_GET_FU_PLANE( peqn, fu );
 
 		loops_retained = loops_flipped = 0;
 		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
 		while( RT_LIST_NOT_HEAD( lu, &fu->lu_hd ) )  {
-			nextlu = RT_LIST_PNEXT( loopuse, lu );
-
 			NMG_CK_LOOPUSE(lu);
+			nextlu = RT_LIST_PNEXT( loopuse, lu );
+			if( lu->lumate_p == nextlu )
+				nextlu = RT_LIST_PNEXT( loopuse, nextlu );
+
 			NMG_CK_LOOP( lu->l_p );
 #if 0
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
@@ -385,8 +389,6 @@ struct nmg_bool_state *bs;
 			/* faceuse is empty, face & mate die */
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x empty, kill\n", fu);
-			if( nextfu == fu->fumate_p )
-				nextfu = RT_LIST_PNEXT(faceuse, nextfu);
 			nmg_kfu( fu );	/* kill face & mate, dequeue from shell */
 			if( rt_g.NMG_debug & DEBUG_VERIFY )
 				nmg_vshell( &s->r_p->s_hd, s->r_p );
@@ -427,9 +429,11 @@ struct nmg_bool_state *bs;
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	lu = RT_LIST_FIRST( loopuse, &s->lu_hd );
 	while( RT_LIST_NOT_HEAD( lu, &s->lu_hd ) )  {
-		nextlu = RT_LIST_PNEXT( loopuse, lu );
-
 		NMG_CK_LOOPUSE(lu);
+		nextlu = RT_LIST_PNEXT( loopuse, lu );
+		if( lu->lumate_p == nextlu )
+			nextlu = RT_LIST_PNEXT( loopuse, nextlu );
+
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			/* ignore vertex-with-self-loop */
 			lu = nextlu;
@@ -461,16 +465,16 @@ struct nmg_bool_state *bs;
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	eu = RT_LIST_FIRST( edgeuse, &s->eu_hd );
 	while( RT_LIST_NOT_HEAD( eu, &s->eu_hd ) )  {
+		NMG_CK_EDGEUSE(eu);
 		nexteu = RT_LIST_PNEXT( edgeuse, eu );	/* may be head */
+		if( eu->eumate_p == nexteu )
+			nexteu = RT_LIST_PNEXT( edgeuse, nexteu );
 
 		/* Consider this edge */
-		NMG_CK_EDGEUSE(eu);
 		NMG_CK_EDGE( eu->e_p );
 		switch( nmg_eval_action( (genptr_t)eu->e_p, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the edegeuse (and mate) into vertices */
-			if( nexteu == eu->eumate_p )
-				nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
 			if( nmg_demote_eu( eu ) == 0 )
 				nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			eu = nexteu;
@@ -499,22 +503,22 @@ struct nmg_bool_state *bs;
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	lu = RT_LIST_FIRST( loopuse, &s->lu_hd );
 	while( RT_LIST_NOT_HEAD( lu, &s->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu);
 		nextlu = RT_LIST_PNEXT( loopuse, lu );
 
-		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_VERTEXUSE_MAGIC )  {
 			/* ignore any remaining wire-loops */
 			lu = nextlu;
 			continue;
 		}
+		if( nextlu == lu->lumate_p )
+			nextlu = RT_LIST_PNEXT(loopuse, nextlu);
 		vu = RT_LIST_PNEXT( vertexuse, &lu->down_hd );
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
 		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
 		case BACTION_KILL:
 			/* Eliminate the loopuse, and mate */
-			if( nextlu == lu->lumate_p )
-				nextlu = RT_LIST_PNEXT(loopuse, nextlu);
 			nmg_klu( lu );
 			lu = nextlu;
 			continue;
