@@ -16,7 +16,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+#define PKG_H_VERSION "@(#)$Header$ (ARL)"
 #endif
 
 #ifndef PKG_H_SEENYET
