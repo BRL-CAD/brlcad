@@ -169,7 +169,7 @@ fi
 ############################################
 if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
   echo -n "Automatically preparing build ..."
-  autoreconf --i
+  autoreconf -i
   [ ! $? = 0 ] && echo "ERROR: autoreconf failed" && exit 2
 else
   echo -n "Preparing build ..."
