@@ -432,16 +432,13 @@ f_which(clientData, interp, argc, argv)
      int	argc;
      char	**argv;
 {
-	register int i;
-	int ret;
-	struct bu_vls vls;
+	int		ret;
+	struct bu_vls	vls;
 
 	CHECK_DBI_NULL;
 
 	bu_vls_init(&vls);
-	bu_vls_strcpy(&vls, "db");
-	for (i = 0; i < argc; ++i)
-		bu_vls_printf(&vls, " %s", argv[i]);
+	bu_build_cmd_vls(&vls, MGED_DB_NAME, argc, argv);
 
 	if (setjmp(jmp_env) == 0)
 		(void)signal(SIGINT, sig3);  /* allow interupts */
