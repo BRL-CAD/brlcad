@@ -40,23 +40,15 @@
         nurb_c2 oslo_calc oslo_map nurb_plot nurb_bezier nurb_trim \
 	nurb_interp nurb_reverse nurb_tess nurb_trim_util
 
-#define PLOT_OBJ	plot3.o
-
 /* Oddly, this line needs to be present to keep IBM AIX cpp happy. */
 #ifdef FAST_SQRT
-#	define	EXTRA_OBJ	FAST_SQRT PLOT_OBJ
+#	define	EXTRA_OBJ	FAST_SQRT
 #else
-#	define	EXTRA_OBJ	PLOT_OBJ
+#	define	EXTRA_OBJ	/**/
 #endif
 
 #define VERSION_VARIABLE	rt_version
 #define LIBRARY_TITLE		"The BRL-CAD Ray-Tracing Library"
 
 #include "../Cakefile.lib"
-
-/*
- *  Special rules for additions from other directories
- */
-%.o&:	libplot3,,%,o			if exist ../libplot3/%.c
-
 #include "../Cakefile.rules"
