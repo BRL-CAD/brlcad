@@ -58,6 +58,14 @@ JNIEXPORT void JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_closeSessio
 
 /*
  * Class:     mil_army_arl_muves_rtserver_RtServerImpl
+ * Method:    shutdownNative
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_shutdownNative
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     mil_army_arl_muves_rtserver_RtServerImpl
  * Method:    shootRay
  * Signature: (Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Vector3;I)Lmil/army/arl/muves/rtserver/RayResult;
  */
