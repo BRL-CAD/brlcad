@@ -1140,15 +1140,9 @@ unsigned char r, g, b;
   dmp->dm_bg[1] = g;
   dmp->dm_bg[2] = b;
 
-#if 0
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->r = r / 255.0;
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
-#else
-  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->r = r >> 8;
-  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g = g >> 8;
-  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b = b >> 8;
-#endif
 
   if(((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer){
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -1387,11 +1381,22 @@ struct dm *dmp;
 
   XGetWindowAttributes( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa );
+
+  /* nothing to do */
+  if (dmp->dm_height == xwa.height &&
+      dmp->dm_width == xwa.width)
+    return TCL_OK;
+    
   dmp->dm_height = xwa.height;
   dmp->dm_width = xwa.width;
-	
-  glViewport(0,  0, (dmp->dm_width),
-	     (dmp->dm_height));
+  dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+
+  if (dmp->dm_debugLevel) {
+    bu_log("ogl_configureWin()\n");
+    bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
+  }
+
+  glViewport(0, 0, dmp->dm_width, dmp->dm_height);
 #if 0
   glScissor(0,  0, (dmp->dm_width)+1,
 	    (dmp->dm_height)+1);
@@ -1414,8 +1419,6 @@ struct dm *dmp;
   glLoadIdentity();
   glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
   glMatrixMode(mm);
-
-  dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
   /* First time through, load a font or quit */
   if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
