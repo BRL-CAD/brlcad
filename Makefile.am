@@ -122,21 +122,17 @@ all-local:
 	  @ECHO@ ;\
 	  line1="  BRL-CAD @BRLCAD_VERSION@ is now installed into $(prefix)" ;\
 	  line2="  Be sure to add $(prefix)/bin to your PATH" ;\
-	  length="`@ECHO@ $(prefix)@BRLCAD_VERSION@ | wc | sed 's/[ 	]*/ /g' | cut -f 4 -d ' '`" ;\
+	  length="`@ECHO@ $(prefix)@BRLCAD_VERSION@ | wc -c`" ;\
 	  length="`expr $$length + 34`" ;\
-	  len=$$length ;\
-	  while test $$len -gt 0  ; do \
-	    @ECHO@ -n "***" ;\
-	    len="`expr $$len - 3`" ;\
-          done ;\
-	  @ECHO@ ;\
-	  @ECHO@ "$$line1" ;\
-	  @ECHO@ "$$line2" ;\
-	  while [ $$length -gt 0 ] ; do \
-	    @ECHO@ @ECHO_N@ "***" ;\
+	  separator="" ;\
+	  while test $$length -gt 0  ; do \
+	    separator="$${separator}***" ;\
 	    length="`expr $$length - 3`" ;\
           done ;\
-	  @ECHO@ ;\
+	  @ECHO@ "$$separator" ;\
+	  @ECHO@ "$$line1" ;\
+	  @ECHO@ "$$line2" ;\
+	  @ECHO@ "$$separator" ;\
 	elif test "x$(MAKECMDGOALS)" = "x" ; then \
 	  @ECHO@ @ECHO_N@ "Elapsed time: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/brlcad_version.h | grep Compilation` ;\
