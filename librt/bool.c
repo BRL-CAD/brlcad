@@ -38,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int view_only;	/* non-zero if computation is for viewing only */
 
-struct partition *FreePart = PART_NULL;		 /* Head of freelist */
+struct partition *FreePart = PT_NULL;		 /* Head of freelist */
 
 /*
  *			B O O L _ R E G I O N S
@@ -89,25 +89,25 @@ struct seg *segp_in;
 		 */
 		if( PartHd.pt_forw == &PartHd )  {
 			/* No partitions yet, simple! */
-			GET_PART_INIT( pp );
+			GET_PT_INIT( pp );
 			pp->pt_solhit[stp->st_bin] = TRUE;
 			pp->pt_instp = stp;
 			pp->pt_inhit = &segp->seg_in;
 			pp->pt_outstp = stp;
 			pp->pt_outhit = &segp->seg_out;
-			APPEND_PART( pp, &PartHd );
+			APPEND_PT( pp, &PartHd );
 			goto done_weave;
 		}
 		dist = segp->seg_in.hit_dist;
 		if( fdiff(dist, PartHd.pt_back->pt_outdist) > 0 )  {
 			/* Segment starts beyond last partitions end */
-			GET_PART_INIT( pp );
+			GET_PT_INIT( pp );
 			pp->pt_solhit[stp->st_bin] = TRUE;
 			pp->pt_instp = stp;
 			pp->pt_inhit = &segp->seg_in;
 			pp->pt_outstp = stp;
 			pp->pt_outhit = &segp->seg_out;
-			APPEND_PART( pp, PartHd.pt_back );
+			APPEND_PT( pp, PartHd.pt_back );
 			goto done_weave;
 		}
 		if( fdiff(segp->seg_out.hit_dist, PartHd.pt_back->pt_outdist) > 0 )  {
@@ -115,13 +115,13 @@ struct seg *segp_in;
 			 * Segment ends beyond the end of the last
 			 * partition.  Create an additional partition.
 			 */
-			GET_PART_INIT( pp );
+			GET_PT_INIT( pp );
 			pp->pt_solhit[stp->st_bin] = TRUE;
 			pp->pt_instp = PartHd.pt_back->pt_outstp;
 			pp->pt_inhit = PartHd.pt_back->pt_outhit;
 			pp->pt_outstp = stp;
 			pp->pt_outhit = &segp->seg_out;
-			APPEND_PART( pp, PartHd.pt_back );
+			APPEND_PT( pp, PartHd.pt_back );
 		}
 		for( pp=PartHd.pt_forw; pp != &PartHd; pp=pp->pt_forw ) {
 			if( fdiff(dist, pp->pt_outdist) >= 0 )  {
@@ -130,13 +130,13 @@ struct seg *segp_in;
 				 */
 				if( pp->pt_forw == &PartHd )  {
 					/* beyond last part. end */
-					GET_PART_INIT( newpp );
+					GET_PT_INIT( newpp );
 					newpp->pt_solhit[stp->st_bin] = TRUE;
 					newpp->pt_instp = stp;
 					newpp->pt_inhit = &segp->seg_in;
 					newpp->pt_outstp = stp;
 					newpp->pt_outhit = &segp->seg_out;
-					APPEND_PART( newpp, pp );
+					APPEND_PT( newpp, pp );
 					goto done_weave;
 				}
 				continue;
@@ -162,13 +162,13 @@ equal_start:			/*
 					dist = pp->pt_outdist;
 					if( pp->pt_forw == &PartHd )  {
 						/* beyond last part. end */
-						GET_PART_INIT( newpp );
+						GET_PT_INIT( newpp );
 						newpp->pt_solhit[stp->st_bin] = TRUE;
 						newpp->pt_instp = pp->pt_outstp;
 						newpp->pt_inhit = pp->pt_outhit;
 						newpp->pt_outstp = stp;
 						newpp->pt_outhit = &segp->seg_out;
-						APPEND_PART( newpp, pp );
+						APPEND_PT( newpp, pp );
 						goto done_weave;
 					}
 					/*
@@ -178,13 +178,13 @@ equal_start:			/*
 					continue;
 				}
 				/* Segment ends before partition ends */
-				GET_PART( newpp );
+				GET_PT( newpp );
 				*newpp = *pp;		/* struct copy */
 				/* new partition contains segment */
 				newpp->pt_solhit[stp->st_bin] = TRUE;
 				newpp->pt_outstp = pp->pt_instp = stp;
 				newpp->pt_outhit = pp->pt_inhit = &segp->seg_out;
-				INSERT_PART( newpp, pp );
+				INSERT_PT( newpp, pp );
 				goto done_weave;
 			}
 			if( i < 0 )  {
@@ -192,13 +192,13 @@ equal_start:			/*
 				 * Seg starts before current partition starts,
 				 * but after the previous partition ends.
 				 */
-				GET_PART_INIT( newpp );
+				GET_PT_INIT( newpp );
 				newpp->pt_solhit[stp->st_bin] = TRUE;
 				newpp->pt_instp = stp;
 				newpp->pt_inhit = &segp->seg_in;
 				newpp->pt_outstp = stp;
 				newpp->pt_outhit = &segp->seg_out;
-				INSERT_PART( newpp, pp );
+				INSERT_PT( newpp, pp );
 				if( fdiff(segp->seg_out.hit_dist, pp->pt_indist) <= 0 )  {
 					/* Seg ends before partition starts */
 					goto done_weave;
@@ -215,12 +215,12 @@ equal_start:			/*
 			 *  but before the end of the partition.
 			 *  Note:  pt_solhit will be marked in equal_start.
 			 */
-			GET_PART( newpp );
+			GET_PT( newpp );
 			*newpp = *pp;			/* struct copy */
 			/* new partition is span before seg joins partition */
 			newpp->pt_outstp = pp->pt_instp = stp;
 			newpp->pt_outhit = pp->pt_inhit = &segp->seg_in;
-			INSERT_PART( newpp, pp );
+			INSERT_PT( newpp, pp );
 			goto equal_start;
 		}
 		printf("bool_regions:  fell out of seg_weave loop\n");
@@ -282,9 +282,9 @@ done_weave:	;
 
 			newpp = pp;
 			pp=pp->pt_forw;
-			DEQUEUE_PART( newpp );
+			DEQUEUE_PT( newpp );
 			newpp->pt_regionp = lastregion;
-			APPEND_PART( newpp, FinalHd.pt_back );
+			APPEND_PT( newpp, FinalHd.pt_back );
 			/* Shameless efficiency hack */
 			if( !debug && view_only )  break;
 		}
@@ -310,7 +310,7 @@ done_weave:	;
 		register struct partition *newpp;
 		newpp = pp;
 		pp = pp->pt_forw;
-		FREE_PART(newpp);
+		FREE_PT(newpp);
 	}
 	/* Free seg chain in caller */
 
@@ -324,7 +324,7 @@ done_weave:	;
  *  	Given a tree node, evaluate it, possibly recursing.
  */
 bool_eval( treep, partp )
-register struct tree *treep;
+register union tree *treep;
 register struct partition *partp;
 {
 	register int ret;

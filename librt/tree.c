@@ -193,7 +193,7 @@ matp_t old_xlate;
 	if( pathpos >= MAXLEVELS )  {
 		(void)printf("%s: nesting exceeds %d levels\n",
 			path_str(MAXLEVELS), MAXLEVELS );
-		return;			/* Error */
+		return(TREE_NULL);
 	}
 	path[pathpos] = dp;
 

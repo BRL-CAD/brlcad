@@ -158,10 +158,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	VMOVE( rec->rec_Hunit, Hv );
 	VUNITIZE( rec->rec_Hunit );
 
-	/* Apply full 4x4mat to V. */
-	VMOVE( work, SP_V );
-	work[3] = 1;
-	matXvec( rec->rec_V, mat, work );
+	MAT4X3VEC( rec->rec_V, mat, SP_V );
 
 	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_h );
 
@@ -458,19 +455,19 @@ register struct ray *rp;
 	 * side, in no particular order.
 	 *  Compute exact intersection points, and surface normal.
 	 */
-	VCOMPOSE1( point, pprime, k1, dprime );		/* hit' */
+	VJOIN1( point, pprime, k1, dprime );		/* hit' */
 	if( point[Z] >= 0.0 && point[Z] <= 1.0 ) {
 		hitp->hit_dist = k1;
-		VCOMPOSE1( hitp->hit_point, rp->r_pt, k1, rp->r_dir );
+		VJOIN1( hitp->hit_point, rp->r_pt, k1, rp->r_dir );
 		MAT3XVEC( hitp->hit_normal, rec->rec_invRoS, point );
 		VUNITIZE( hitp->hit_normal );
 		hitp++;
 	}
 
-	VCOMPOSE1( point, pprime, k2, dprime );		/* hit' */
+	VJOIN1( point, pprime, k2, dprime );		/* hit' */
 	if( point[Z] >= 0.0 && point[Z] <= 1.0 )  {
 		hitp->hit_dist = k2;
-		VCOMPOSE1( hitp->hit_point, rp->r_pt, k2, rp->r_dir );
+		VJOIN1( hitp->hit_point, rp->r_pt, k2, rp->r_dir );
 		MAT3XVEC( hitp->hit_normal, rec->rec_invRoS, point );
 		VUNITIZE( hitp->hit_normal );
 		hitp++;
@@ -485,18 +482,18 @@ check_plates:
 		k1 = -pprime[Z] / dprime[Z];		/* bottom plate */
 		k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
 
-		VCOMPOSE1( point, pprime, k1, dprime );		/* hit' */
+		VJOIN1( point, pprime, k1, dprime );		/* hit' */
 		if( point[X] * point[X] + point[Y] * point[Y] <= 1.0 )  {
 			hitp->hit_dist = k1;
-			VCOMPOSE1( hitp->hit_point, rp->r_pt, k1, rp->r_dir );
+			VJOIN1( hitp->hit_point, rp->r_pt, k1, rp->r_dir );
 			VREVERSE( hitp->hit_normal, rec->rec_Hunit ); /* -H */
 			hitp++;
 		}
 
-		VCOMPOSE1( point, pprime, k2, dprime );		/* hit' */
+		VJOIN1( point, pprime, k2, dprime );		/* hit' */
 		if( point[X] * point[X] + point[Y] * point[Y] <= 1.0 )  {
 			hitp->hit_dist = k2;
-			VCOMPOSE1( hitp->hit_point, rp->r_pt, k2, rp->r_dir );
+			VJOIN1( hitp->hit_point, rp->r_pt, k2, rp->r_dir );
 			VMOVE( hitp->hit_normal, rec->rec_Hunit ); /* H */
 			hitp++;
 		}

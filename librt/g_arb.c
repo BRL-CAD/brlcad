@@ -46,7 +46,6 @@ matp_t mat;
 	static vect_t	work;		/* Vector addition work area */
 	static vect_t	sum;		/* Sum of all endpoints */
 	static int	faces;		/* # of faces produced */
-	static fastf_t	scale;		/* width across widest axis */
 	static int	i;
 
 	/* init maxima and minima */
@@ -61,12 +60,11 @@ matp_t mat;
 	 * Convert from vector to point notation IN PLACE
 	 * by rotating vectors and adding base vector.
 	 */
-	vec[3] = 1;					/* cvt to homog vec */
-	matXvec( work, mat, vec );			/* 4x4: xlate, too */
-	htov_move( vec, work );				/* divide out W */
+	MAT4X3VEC( work, mat, vec );			/* 4x4: xlate, too */
+	VMOVE( vec, work );				/* base vector */
+	VMOVE( sum, vec );				/* sum=0th element */
 
 	op = &vec[1*ELEMENTS_PER_VECT];
-	VMOVE( sum, vec );				/* sum=0th element */
 	for( i=1; i<8; i++ )  {
 		MAT3XVEC( work, mat, op );		/* 3x3: rot only */
 		VADD2( op, &vec[0], work );
@@ -344,7 +342,6 @@ register struct ray *rp;
 	for( ; plp; plp = plp->pl_forw )  {
 		FAST fastf_t dn;		/* Direction dot Normal */
 		FAST fastf_t k;		/* (NdotA - (N dot P))/ (N dot D) */
-		FAST fastf_t f;
 		/*
 		 *  Ray Direction dot N.  (N is outward-pointing normal)
 		 */
@@ -368,7 +365,7 @@ register struct ray *rp;
 				continue;
 			}
 			/* if( pl_shot( plp, rp, &in, k ) != 0 ) continue; */
-			VCOMPOSE1( hit_pt, rp->r_pt, k, rp->r_dir );
+			VJOIN1( hit_pt, rp->r_pt, k, rp->r_dir );
 			VSUB2( work, hit_pt, plp->pl_A );
 			xt = VDOT( work, plp->pl_Xbasis );
 			yt = VDOT( work, plp->pl_Ybasis );
@@ -392,7 +389,7 @@ register struct ray *rp;
 				continue;
 			}
 			/* if( pl_shot( plp, rp, &out, k ) != 0 ) continue; */
-			VCOMPOSE1( hit_pt, rp->r_pt, k, rp->r_dir );
+			VJOIN1( hit_pt, rp->r_pt, k, rp->r_dir );
 			VSUB2( work, hit_pt, plp->pl_A );
 			xt = VDOT( work, plp->pl_Xbasis );
 			yt = VDOT( work, plp->pl_Ybasis );
@@ -458,7 +455,7 @@ double	k;			/* dist along ray */
 	static vect_t	work;
 	static fastf_t	xt, yt;
 
-	VCOMPOSE1( hit_pt, rp->r_pt, k, rp->r_dir );
+	VJOIN1( hit_pt, rp->r_pt, k, rp->r_dir );
 	/* Project the hit point onto the plane, making this a 2-d problem */
 	VSUB2( work, hit_pt, plp->pl_A );
 	xt = VDOT( work, plp->pl_Xbasis );

@@ -4,6 +4,9 @@
  * $Revision$
  */
 
+extern char *malloc();
+extern void free();
+
 /*
  *			R A Y
  *
@@ -179,36 +182,36 @@ struct partition {
 #define pt_indist	pt_inhit->hit_dist
 #define pt_outdist	pt_outhit->hit_dist
 
-#define PART_NULL	((struct partition *)0)
+#define PT_NULL	((struct partition *)0)
 extern struct partition *FreePart;		 /* Head of freelist */
 
 /* Initialize all the bins to FALSE, clear out structure */
-#define GET_PART_INIT(p)	\
-	{ GET_PART(p);bzero( ((char *) (p)), sizeof(struct partition) ); }
+#define GET_PT_INIT(p)	\
+	{ GET_PT(p);bzero( ((char *) (p)), sizeof(struct partition) ); }
 
-#define GET_PART(p)   { if( ((p)=FreePart) == PART_NULL )  { \
+#define GET_PT(p)   { if( ((p)=FreePart) == PT_NULL )  { \
 				GETSTRUCT((p), partition); \
 			} else { \
 				FreePart = (p)->pt_forw; \
 			}  }
-#define FREE_PART(p) {(p)->pt_forw = FreePart; FreePart = (p);}
+#define FREE_PT(p) {(p)->pt_forw = FreePart; FreePart = (p);}
 
 /* Insert "new" partition in front of "old" partition */
-#define INSERT_PART(new,old)	{ \
+#define INSERT_PT(new,old)	{ \
 	(new)->pt_back = (old)->pt_back; \
 	(old)->pt_back = (new); \
 	(new)->pt_forw = (old); \
 	(new)->pt_back->pt_forw = (new);  }
 
 /* Append "new" partition after "old" partition */
-#define APPEND_PART(new,old)	{ \
+#define APPEND_PT(new,old)	{ \
 	(new)->pt_forw = (old)->pt_forw; \
 	(new)->pt_back = (old); \
 	(old)->pt_forw = (new); \
 	(new)->pt_forw->pt_back = (new);  }
 
 /* Dequeue "cur" partition from doubly-linked list */
-#define DEQUEUE_PART(cur)	{ \
+#define DEQUEUE_PT(cur)	{ \
 	(cur)->pt_forw->pt_back = (cur)->pt_back; \
 	(cur)->pt_back->pt_forw = (cur)->pt_forw;  }
 

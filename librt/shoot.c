@@ -135,7 +135,7 @@ done:
 		register struct partition *newpp;
 		newpp = pp;
 		pp = pp->pt_forw;
-		FREE_PART(newpp);
+		FREE_PT(newpp);
 	}
 	if( debug )  fflush(stdout);
 }

@@ -157,7 +157,6 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	static fastf_t	magsq_a, magsq_b, magsq_h;
 	static mat_t	R;
 	static vect_t	A, B, Hv;
-	static vect_t	work;
 	FAST fastf_t	f;
 	static fastf_t	r1, r2;	/* primary and secondary radius */
 
@@ -220,11 +219,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	GETSTRUCT( tor, tor_specific );
 	stp->st_specific = (int *)tor;
 
-	/* Apply full 4x4mat to V */
-	VMOVE( work, SP_V );
-	work[3] = 1;
-	matXvec( tor->tor_V, mat, work );
-	htov_move( tor->tor_V, tor->tor_V );
+	MAT4X3VEC( tor->tor_V, mat, SP_V );
 
 	tor->tor_alpha = r2/r1;
 
@@ -334,13 +329,13 @@ register struct ray *rp;
 	segp->seg_flag = SEG_IN | SEG_OUT;
 
 	/* Intersection point, entering */
-	VCOMPOSE1( segp->seg_in.hit_point, rp->r_pt, k[1], rp->r_dir );
-	VCOMPOSE1( work, pprime, k[1], dprime );
+	VJOIN1( segp->seg_in.hit_point, rp->r_pt, k[1], rp->r_dir );
+	VJOIN1( work, pprime, k[1], dprime );
 	tornormal( segp->seg_in.hit_normal, work, tor );
 
 	/* Intersection point, exiting */
-	VCOMPOSE1( segp->seg_out.hit_point, rp->r_pt, k[0], rp->r_dir );
-	VCOMPOSE1( work, pprime, k[0], dprime );
+	VJOIN1( segp->seg_out.hit_point, rp->r_pt, k[0], rp->r_dir );
+	VJOIN1( work, pprime, k[0], dprime );
 	tornormal( segp->seg_out.hit_normal, work, tor );
 
 	if( npts == 2 )
@@ -361,13 +356,13 @@ register struct ray *rp;
 	segp->seg_flag = SEG_IN | SEG_OUT;
 
 	/* Intersection point, entering */
-	VCOMPOSE1( segp->seg_in.hit_point, rp->r_pt, k[3], rp->r_dir );
-	VCOMPOSE1( work, pprime, k[3], dprime );
+	VJOIN1( segp->seg_in.hit_point, rp->r_pt, k[3], rp->r_dir );
+	VJOIN1( work, pprime, k[3], dprime );
 	tornormal( segp->seg_in.hit_normal, work, tor );
 
 	/* Intersection point, exiting */
-	VCOMPOSE1( segp->seg_out.hit_point, rp->r_pt, k[2], rp->r_dir );
-	VCOMPOSE1( work, pprime, k[2], dprime );
+	VJOIN1( segp->seg_out.hit_point, rp->r_pt, k[2], rp->r_dir );
+	VJOIN1( work, pprime, k[2], dprime );
 	tornormal( segp->seg_out.hit_normal, work, tor );
 
 	return(segp);			/* HIT */

@@ -304,7 +304,7 @@ register struct ray *rp;
 		segp->seg_flag |= SEG_IN;
 
 		/* Intersection point */
-		VCOMPOSE1( segp->seg_in.hit_point, rp->r_pt, k1, rp->r_dir );
+		VJOIN1( segp->seg_in.hit_point, rp->r_pt, k1, rp->r_dir );
 
 		/* Normal at that point, pointing out */
 		VSUB2( xlated, segp->seg_in.hit_point, ell->ell_V );
@@ -316,7 +316,7 @@ register struct ray *rp;
 		FAST fastf_t f;		/* XXX */
 		segp->seg_flag |= SEG_OUT;
 
-		VCOMPOSE1( segp->seg_out.hit_point, rp->r_pt, k2, rp->r_dir );
+		VJOIN1( segp->seg_out.hit_point, rp->r_pt, k2, rp->r_dir );
 
 		VSUB2( xlated, segp->seg_out.hit_point, ell->ell_V );
 		MAT3XVEC( segp->seg_out.hit_normal,ell->ell_invRSSR, xlated );

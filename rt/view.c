@@ -75,6 +75,7 @@ extern double AmbientIntensity;
 
 /* Null function */
 nullf() { ; }
+
 l3init(ap, title1, title2 )
 register struct application *ap;
 {
@@ -92,7 +93,6 @@ register struct application *ap;
 struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
-	register struct hit *hitp= pp->pt_inhit;
 	register int i;	/* XXX */
 
 	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
@@ -117,10 +117,7 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	register struct hit *hitp= pp->pt_inhit;
-	static fastf_t diffuse2, cosI2;
-	static fastf_t diffuse1, cosI1;
-	static fastf_t diffuse0, cosI0;
-	static vect_t work0, work1;
+	static double cosI0;
 	register int i,j;
 
 #define pchar(c) {putc(c,outfp);if(col++==74){putc('\n',outfp);col=0;}}
@@ -369,9 +366,11 @@ l3end()
  *  Number is written 5 bits at a time, right to left (low to high)
  *  until there are no more non-zero bits remaining.
  */
-pknum( i )
-register long i;
+pknum( arg )
+int arg;
 {
+	register long i = arg;
+
 	do {
 		pchar( '@'+(i & 037) );
 		i >>= 5;

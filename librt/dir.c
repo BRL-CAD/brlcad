@@ -37,7 +37,6 @@ void
 dir_build(filename)
 char *filename;
 {
-	register struct directory *dp;
 	static union record	record;
 	static long	addr;
 

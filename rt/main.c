@@ -53,17 +53,14 @@ struct functab functab[] = {
  *  Hooks for unimplemented routines
  */
 
-static char unimp[] = "Unimplemented Routine";
 
 #define UNIMPLEMENTED(type) \
 	DEF(type/**/_prep) \
 	struct seg * DEF(type/**/_shot) \
 	DEF(type/**/_print)
 
-#define DEF(func)	func() { printf("func unimplemented\n"); }
-
-UNIMPLEMENTED(null);
-UNIMPLEMENTED(half);
+half() { printf("half unimplemented\n"); }
+null() { printf("null unimplemented\n"); }
 
 double timer_print();
 
@@ -113,9 +110,7 @@ char **argv;
 	static struct application ap;
 	static mat_t view2model;
 	static mat_t model2view;
-	static mat_t mat1, mat2;	/* temporary matrices */
 	static vect_t tempdir;
-	static fastf_t distsq;
 	static int matflag = 0;		/* read matrix from stdin */
 
 	npts = 512;
