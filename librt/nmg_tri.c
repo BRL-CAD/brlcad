@@ -1204,8 +1204,13 @@ vect_t dir;
 		NMG_CK_VERTEX_G(vu_next->v_p->vg_p);
 		VSUB2(eu_dir, vu_next->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 		VUNITIZE(eu_dir);
+
 		if (rt_g.NMG_debug & DEBUG_TRI)
-			rt_log("\t\tchecking forward edgeuse\n");
+			rt_log("\t\tchecking forward edgeuse to %g %g %g\n",
+				vu_next->v_p->vg_p->coord[0],
+				vu_next->v_p->vg_p->coord[1],
+				vu_next->v_p->vg_p->coord[2]);
+
 		if (MAGSQ(eu_dir) >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
@@ -1236,8 +1241,9 @@ vect_t dir;
 			}
 		}
 
-		if (rt_g.NMG_debug & DEBUG_TRI)
-			rt_log("\t\tchecking reverse edgeuse\n");
+
+
+
 
 		/* compute/compare vu/prev_eu vector w/ ray vector */
 		eu_last = RT_LIST_PLAST_CIRC(edgeuse, vu->up.eu_p);
@@ -1251,11 +1257,18 @@ vect_t dir;
 		 */
 		VSUB2(eu_dir, vu_prev->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 		VUNITIZE(eu_dir);
+
+		if (rt_g.NMG_debug & DEBUG_TRI)
+			rt_log("\t\tchecking reverse edgeuse to %g %g %g\n",
+				vu_prev->v_p->vg_p->coord[0],
+				vu_prev->v_p->vg_p->coord[1],
+				vu_prev->v_p->vg_p->coord[2]);
+
 		if (MAGSQ(eu_dir) >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
 					rt_log("\t\t\t-eu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
-					rt_log("\t\t\tnew_max 0x%08x %g %g %g <- %g %g %g vdot %g\n",
+					rt_log("\t\t\tnew_last/max 0x%08x %g %g %g <- %g %g %g vdot %g\n",
 						vu, 
 						V3ARGS(vu->v_p->vg_p->coord),
 						V3ARGS(vu_prev->v_p->vg_p->coord),
@@ -1268,7 +1281,7 @@ vect_t dir;
 			if (vu_dot < dot_min) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
 					rt_log("\t\t\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
-					rt_log("\t\t\tnew_min 0x%08x %g %g %g <- %g %g %g vdot %g\n",
+					rt_log("\t\t\tnew_first/min 0x%08x %g %g %g <- %g %g %g vdot %g\n",
 						vu,
 						V3ARGS(vu->v_p->vg_p->coord),
 						V3ARGS(vu_prev->v_p->vg_p->coord),
@@ -1325,7 +1338,10 @@ int find_max;
 			VUNITIZE(eu_vect);
 
 			/* compute the "left" vector for this edgeuse */
-			VCROSS(left, fu->f_p->fg_p->N, eu_vect);
+			if (nmg_find_eu_leftvec(left, eu)) {
+				rt_log("%s %d: edgeuse no longer in faceuse?\n", __FILE__, __LINE__);
+				rt_bomb("bombing");
+			}
 
 			euleft_dot = VDOT(left, dir);
 
@@ -1711,11 +1727,13 @@ int void_ok;
 			char buf[80];
 			char name[32];
 			static int iter=0;
+			vect_t cut_vect, cut_start, cut_end;
+			FILE *fd;
 
 			rt_log("parent loops are not the same %s %d\n",
 				__FILE__, __LINE__);
 
-			sprintf(name, "bad_tri_cut%d.g", iter++);
+
 			sprintf(buf, "cut %g %g %g -> %g %g %g\n",
 				p1->vu_p->v_p->vg_p->coord[0],
 				p1->vu_p->v_p->vg_p->coord[1],
@@ -1724,8 +1742,27 @@ int void_ok;
 				p2->vu_p->v_p->vg_p->coord[1],
 				p2->vu_p->v_p->vg_p->coord[2]);
 
-			nmg_stash_model_to_file( name, 
+			nmg_stash_model_to_file( "bad_tri_cut.g",
 				nmg_find_model(&p1->vu_p->l.magic), buf );
+
+			sprintf(name, "bad_tri_cut%d.g", iter++);
+			if ((fd=fopen("bad_tri_cut.pl", "w")) == (FILE *)NULL)
+				rt_bomb("cut_mapped_loop() goodnight 2\n");
+	
+			VSUB2(cut_vect, p2->vu_p->v_p->vg_p->coord, p1->vu_p->v_p->vg_p->coord);
+			/* vector goes past end point by 50% */
+			VJOIN1(cut_end, p2->vu_p->v_p->vg_p->coord, 0.5, cut_vect);
+			/* vector starts before start point by 25% */
+			VJOIN1(cut_start, p1->vu_p->v_p->vg_p->coord, -0.25, cut_vect);
+
+			pl_color(fd, 100, 100, 100);
+			pdv_3line(fd, cut_start, p1->vu_p->v_p->vg_p->coord);
+			pl_color(fd, 255, 255, 255);
+			pdv_3line(fd, p1->vu_p->v_p->vg_p->coord, p2->vu_p->v_p->vg_p->coord);
+			pl_color(fd, 100, 100, 100);
+			pdv_3line(fd, p2->vu_p->v_p->vg_p->coord, cut_end);
+
+			(void)fclose(fd);
 			rt_bomb("cut_mapped_loop() goodnight 2\n");
 		}
 	}
@@ -2316,6 +2353,23 @@ CONST struct rt_tol	*tol;
 
 	RT_CK_TOL(tol);
 	NMG_CK_FACEUSE(fu);
+
+	/* make a quick check to see if we need to bother or not */
+	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		vert_count = 0;
+		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd ))
+			if (++vert_count > 3) goto triangulate;
+	}
+
+	return;
+
+	triangulate:
+	if (rt_g.NMG_debug & DEBUG_TRI) {
+		vect_t N;
+		NMG_GET_FU_NORMAL(N, fu);
+		rt_log("---------------- Triangulate face %g %g %g\n", N[0], N[1], N[2]);
+	}
+
 
 	/* convert 3D face to face in the X-Y plane */
 	tbl2d = nmg_flatten_face(fu, TformMat);
