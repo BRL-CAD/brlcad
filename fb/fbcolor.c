@@ -294,9 +294,11 @@ rgbhsv(rgb, hsv)
 register int *rgb;
 register int *hsv;
 {
-        int s, v, r, g, b, x;
+        int	s, v;
+        int	r, g, b;
+        int	x;
 	static int h;
-        double dif;
+        double dif = 0;
 
         r = rgb[0];
         g = rgb[1];
@@ -305,25 +307,26 @@ register int *hsv;
         v = ((v > b) ? v : b);
         x = ((r < g) ? r : g);
         x = ((x < b) ? x : b);
-	if (v != x)
-        {
+	if (v != x)  {
             dif = (double) (v - x);
-            if (r != v)
-                if (g == v)
+            if (r != v)  {
+                if (g == v)  {
                     if (b != x)
                         h = (int) (42.5 * (3. - (double)(v-b) / dif));
                     else
                         h = (int) (42.5 * (1. + (double)(v-r) / dif));
-                else
+                } else {
                     if (r != x)
                         h = (int) (42.5 * (5. - (double)(v-r) / dif));
                     else
                         h = (int) (42.5 * (3. + (double)(v-g) / dif));
-            else
+                }
+            } else {
                 if (g != x)
                     h = (int) (42.5 * (1. - (double)(v-g) / dif));
                 else
                     h = (int) (42.5 * (5. + (double)(v-b) / dif));
+            }
 	}
 
 	if (v != 0)

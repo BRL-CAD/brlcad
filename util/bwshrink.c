@@ -164,7 +164,8 @@ int ac;
 char *av[];
 {
 	u_char *buffer = (u_char *)NULL;
-	int size, c;
+	int	size;
+	int	c = 0;
 	register int t;
 
 	(void)parse_args(ac, av);

@@ -31,7 +31,8 @@ UCHAR *read_image(scanlen, Width, Height, buffer)
 int scanlen, Width, Height;
 UCHAR *buffer;
 {
-	int total_bytes, in_bytes, count;
+	int total_bytes, in_bytes;
+	int	count = 0;
 	UCHAR *malloc();
 
 	if (!buffer && (buffer=malloc(scanlen * Height)) == (UCHAR *)NULL) {
@@ -62,7 +63,8 @@ void write_image(Width, Height, buffer)
 int Width, Height;
 UCHAR *buffer;
 {
-	int count, out_bytes, total_bytes;
+	int	count = 0;
+	int	out_bytes, total_bytes;
 	
 	total_bytes = Width * Height * 3;
 	out_bytes = 0;

@@ -133,7 +133,7 @@ get_args( argc, argv )
 register char	**argv;
 {
 	register int	c;
-	register int	seen_formula;
+	register int	seen_formula = 0;
 	register int	i;
 
 	while ( (c = getopt( argc, argv, "glenaw:" )) != EOF )  {
