@@ -42,6 +42,7 @@ static char usage[] = "\
 Usage: fb-fb [-v] [-F output_framebuffer]\n\
 	input_framebuffer [output_framebuffer]\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -77,6 +78,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main(argc, argv)
 int argc;
 char **argv;

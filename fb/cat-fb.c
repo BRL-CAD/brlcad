@@ -32,6 +32,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "externs.h"			/* For getopt() */
 #include "bu.h"
@@ -77,22 +82,22 @@ struct point_sizes {
 	int	stupid_code;
 	int	real_code;
 } point_sizes[] = {
-	010, 6,
-	0, 7,
-	01, 8,
-	07, 9,
-	02, 10,
-	03, 11,
-	04, 12,
-	05, 14,
-	0211, 16,
-	06, 18,
-	0212, 20,
-	0213, 22,
-	0214, 24,
-	0215, 28,
-	0216, 36,
-	0, 0
+	{010, 6},
+	{0, 7},
+	{01, 8},
+	{07, 9},
+	{02, 10},
+	{03, 11},
+	{04, 12},
+	{05, 14},
+	{0211, 16},
+	{06, 18},
+	{0212, 20},
+	{0213, 22},
+	{0214, 24},
+	{0215, 28},
+	{0216, 36},
+	 {0, 0}
 };
 
 int	cur_fb_line;		/*  Output absolute scanline number  */
@@ -360,12 +365,17 @@ void		ofile();
 void		readrailmag();
 void		crail();
 void		slop_lines();
+int		loadfont();
+int		findsize();
+int		outc();
+int		relfont();
+int		writelines();
 
 static char usage[] = "\
 Usage: cat-fb [-h -c -O -o] [-F framebuffer] [-C r/g/b]\n\
 	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n\
 	[troff_files]\n";
-
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -431,6 +441,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main(argc, argv) 
 	int argc;
 	char *argv[];
@@ -658,6 +669,7 @@ out:
 	return;
 }
 
+int
 findsize(code)
 	register int code;
 {
@@ -702,6 +714,7 @@ crail(nrail)
 
 
 /* Queue up a request to change to a new font */
+int
 loadfont(fnum, size)
 register int fnum;
 register int size;
@@ -734,6 +747,7 @@ register int size;
  *	-1	FAIL
  *	 0	OK
  */
+int
 readinfont()
 {
 	register struct vfont	*vfp;
@@ -765,6 +779,7 @@ readinfont()
 
 int lastloaded	= -1;
 
+int
 relfont()
 {
 	register int newfont;
@@ -804,6 +819,7 @@ relfont()
  *	0	FAIL
  *	1	OK
  */
+int
 outc(code)
 	int code;
 {
@@ -828,7 +844,7 @@ outc(code)
 	} else {
 		c = asctab[code];
 	}
-	vdp = &fontdes[cfont].vfp->vf_dispatch[c];
+	vdp = &fontdes[cfont].vfp->vf_dispatch[(int)c];
 
 	if (vdp->vd_nbytes <= 0 )
 		return(0);
@@ -907,6 +923,7 @@ slop_lines(nlines)
  *  Overlay framebuffer with indicated lines of bitmap.
  *  Output proceeds from top to bottom.
  */
+int
 writelines(nlines, buf)
 	int	nlines;		/*  Number of scan lines to put out.  */
 	register char	*buf;	/*  Pointer to buffer location.  */

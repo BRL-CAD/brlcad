@@ -22,6 +22,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "externs.h"
@@ -107,7 +112,7 @@ FBIO *fb;
 }
 
 
-
+int
 main( argc, argv )
 int argc; char **argv;
 {
@@ -197,6 +202,7 @@ int argc; char **argv;
 
 	fb_wmap( fbp, &cm );
 	fb_close( fbp );
+	return(0);
 }
 
 void

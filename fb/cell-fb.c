@@ -19,6 +19,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "externs.h"
@@ -236,6 +241,7 @@ STATIC void	log_Run();
 STATIC bool	display_Cells();
 STATIC void	fill_colortbl();
 
+int
 main (argc, argv)
 
 int	argc;
@@ -287,6 +293,8 @@ char	**argv;
 		log_Run();
 	}
     } while ((view_flag == 0) && ! feof(filep) && get_OK());
+
+    return(0);
 }
 
 #define	STATE_VIEW_TOP		0

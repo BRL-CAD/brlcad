@@ -43,6 +43,7 @@ FBIO *fbp;
 static char usage[] = "\
 Usage: fbcmrot [-h] [-i increment] steps_per_second\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -79,6 +80,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main(argc, argv )
 char **argv;
 {

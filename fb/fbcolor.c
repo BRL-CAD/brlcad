@@ -24,9 +24,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>	
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "externs.h"
 #include "fb.h"
+#include "libtermio.h"
 
 int curchan = 0;	/* 0=r, 1=g, 2=b */
 
@@ -42,12 +48,15 @@ static int	scr_height;
 static int	scr_width;
 
 void	new_rgb(), rgbhsv(), hsvrgb();
+int	pars_Argv();
+int	doKeyPad();
 
 static char usage[] = "\
 Usage: fbcolor [-h] [-F framebuffer]\n\
 	[-s squarescrsize] [-w scr_width] [-n scr_height]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n";
 
+int
 main(argc, argv )
 char **argv;
 {
@@ -164,6 +173,7 @@ i v	select intensity value\r\n\
 q	quit\r\n\
 \\n	Exit\r\n";
 
+int
 doKeyPad()
 { 
 	register int ch;	

@@ -56,6 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"
 #include "fb.h"
+#include "libtermio.h"
 
 FBIO *fbp;
 
@@ -74,26 +75,26 @@ struct colors {
 	char *name;
 	RGBpixel c_pixel;
 }colortab[] = {
-	"black",	0,0,0,
-	"blue",		0,0,255,
-	"brown",	200,130,0,
-	"cyan",		0,255,200,
-	"flesh",	255,200,160,
-	"gray",		120,120,120,
-	"green",	0,255,0,
-	"lime", 	200,255,0,
-	"magenta",	255,0,255,
-	"olive",	220,190,0,
-	"orange",	255,100,0,
-	"pink",		255,200,200,
-	"red",		255,0,0,
-	"rose",		255,0,175,
-	"rust",		200,100,0,
-	"silver",	237,237,237,
-	"sky",		0,255,255,
-	"violet",	200,0,255,
-	"white",	255,255,255,
-	"yellow",	255,200,0
+	{"black",	{0,0,0}},
+	{"blue",	{0,0,255}},
+	{"brown",	{200,130,0}},
+	{"cyan",	{0,255,200}},
+	{"flesh",	{255,200,160}},
+	{"gray",	{120,120,120}},
+	{"green",	{0,255,0}},
+	{"lime", 	{200,255,0}},
+	{"magenta",	{255,0,255}},
+	{"olive",	{220,190,0}},
+	{"orange",	{255,100,0}},
+	{"pink",	{255,200,200}},
+	{"red",		{255,0,0}},
+	{"rose",	{255,0,175}},
+	{"rust",	{200,100,0}},
+	{"silver",	{237,237,237}},
+	{"sky",		{0,255,255}},
+	{"violet",	{200,0,255}},
+	{"white",	{255,255,255}},
+	{"yellow",	{255,200,0}}
 };
 int ifd,io,grid_w,grid_h,min_w,min_h,max_w,max_h,ni,opq=0;
 int ib=0,ic=0,nc=0,ibc=0,itc=3;
@@ -101,7 +102,9 @@ int itmc[500];
 long itm[500],loci,locd,loct=0,loce,ctoi();
 
 void	paint(), prtclr(), prtsmu();
+int	lookup();
 
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -127,7 +130,15 @@ char **argv;
 	}
 	for(i=1;i<argc;i++){
 		if(strcmp("-F",argv[i])==0){
+#if 0
 			argv[++i];
+#else
+			/*
+			 * I don't know what the intent was above, so just
+			 * increment i as before. This gets rid of compiler warnings.
+			 */
+			++i;
+#endif
 		} else if(strcmp("-W",argv[i])==0){
 			sscanf(argv[++i],"%d",&scr_w);
 			scr_set=1;
@@ -417,7 +428,9 @@ again:				printf("      %-7s  %s%c%5ld ",
 			break;
 		}
 	}
+	return(0);
 }
+
 void
 paint()
 /* Paint picture */

@@ -74,6 +74,7 @@ Usage: fbline [-h -c ] [-F framebuffer]\n\
 /*
  *			G E T_ A R G S
  */
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -130,6 +131,7 @@ register char **argv;
 /*
  *			M A I N
  */
+int
 main(argc, argv)
 int argc;
 char **argv;

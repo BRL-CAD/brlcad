@@ -21,6 +21,11 @@
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <ctype.h>
 #include "machine.h"
 #include "externs.h"
@@ -59,6 +64,7 @@ static int	alias_off;
 
 void	do_char(), do_line(), squash(), fill_buf();
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -145,7 +151,7 @@ register char **argv;
 }
 
 
-
+int
 main(argc, argv)
 int argc;
 char **argv;
@@ -306,7 +312,7 @@ int x, y;
  /*	b i t x ( )
 	 Extract a bit field from a bit string.
   */
-
+int
 bitx( bitstring, posn )
 register char *bitstring;
 register int posn;

@@ -140,6 +140,7 @@ register char	**argv;
 /*
  *			M A I N
  */
+int
 main( argc, argv)
 int argc;
 char ** argv;

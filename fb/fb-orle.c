@@ -52,6 +52,7 @@ static char	*fb_file = (char *)NULL;
 extern void	cmap_crunch();
 
 /*	m a i n ( )							*/
+int
 main( argc, argv )
 int	argc;
 char	*argv[];

@@ -86,7 +86,9 @@ struct GIF_Image Im;
 char *framebuffer=NULL;
 
 void usage();
+int getByte();
 
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -278,6 +280,7 @@ char **argv;
 		}
 	}
 	fb_close(fbp);
+	return(0);
 }
 /* getcode - Get a LWZ "code"
  *
@@ -310,6 +313,7 @@ char **argv;
  * N.B.!!!	This code depends on the '>>' operator zero filling
  *		from the left.
  */
+int
 getcode(inp)
 FILE *inp;
 {

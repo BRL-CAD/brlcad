@@ -33,6 +33,7 @@ char *Usage="[-h] [-F framebuffer]\n\
 #define USAGE_EXIT(p) { fprintf(stderr, "Usage: %s %s\n", (p), Usage); \
 			exit(-1); }
 
+int
 main(argc, argv)
 char **argv;
 {

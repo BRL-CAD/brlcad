@@ -22,6 +22,11 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "externs.h"			/* For getopt() */
 #include "fb.h"
@@ -56,6 +61,7 @@ static char	*fb_file = (char *)NULL;
 void		fill_Buffer();
 
 /*	m a i n ( )							*/
+int
 main( argc, argv )
 int	argc;
 char	*argv[];

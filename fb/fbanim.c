@@ -56,6 +56,7 @@ Usage: fbanim [-h -i -r -v] [-p passes]\n\
 	[-s square_subimage_size] [-w subimage_width] [-n subimage_height]\n\
 	subimage_width nframes [fps]\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -109,6 +110,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main(argc, argv )
 char **argv;
 {
@@ -166,6 +168,7 @@ char **argv;
 		}
 	}
 	fb_close( fbp );
+	return(0);
 }
 
 void

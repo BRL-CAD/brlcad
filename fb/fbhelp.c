@@ -33,6 +33,7 @@ static char	*framebuffer = NULL;
 static char usage[] = "\
 Usage: fbhelp [-F framebuffer]\n";
 
+int
 main(argc, argv)
 char	**argv;
 int	argc;

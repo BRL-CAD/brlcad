@@ -30,8 +30,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"		/* For getopt() and friends */
-
 #include "fb.h"
+
+/* defined in libbn/asize.c */
+extern int bn_common_file_size();
+
+int mread();
+int skipbytes();
 
 #define	MAX_LINE	(16*1024)	/* Largest output scan line length */
 
@@ -64,7 +69,7 @@ Usage: bw-fb [-a -h -i -c -z -R -G -B] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.bw]\n";
-
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -164,6 +169,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main( argc, argv )
 int argc; char **argv;
 {
@@ -326,6 +332,7 @@ general:
 /*
  * Throw bytes away.  Use reads into ibuf buffer if a pipe, else seek.
  */
+int
 skipbytes( fd, num )
 int	fd;
 long	num;
@@ -354,6 +361,7 @@ long	num;
  *  or the requested number of bytes is read.  This
  *  is important for pipes.
  */
+int
 mread( fd, bp, num )
 int	fd;
 register char	*bp;

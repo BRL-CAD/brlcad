@@ -362,17 +362,19 @@ main( argc, argv )
 
 	/* Figure out what scale factors to use before messing up size info. */
 
-	if ( x_scale < 0.0 )
+	if ( x_scale < 0.0 ) {
 		if ( src_width == 0 || dst_width == 0 )
 			x_scale = 1.0;
 		else
 			x_scale = (double)dst_width / (double)src_width;
+	}
 
-	if ( y_scale < 0.0 )
+	if ( y_scale < 0.0 ) {
 		if ( src_height == 0 || dst_height == 0 )
 			y_scale = 1.0;
 		else
 			y_scale = (double)dst_height / (double)src_height;
+	}
 
 	if ( verbose )
 		Message( "Scale factors %gx%g", x_scale, y_scale );
@@ -417,7 +419,7 @@ main( argc, argv )
 			       );
 
 		if ( src_file == NULL
-		  || dst_file != NULL && strcmp( src_file, dst_file ) == 0
+		     || (dst_file != NULL && strcmp( src_file, dst_file ) == 0)
 		   )
 			dst_fbp = src_fbp;	/* No No No Not a Second Time */
 		else if ( (dst_fbp = fb_open( dst_file, dst_width, dst_height ))

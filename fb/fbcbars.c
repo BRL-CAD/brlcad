@@ -155,6 +155,7 @@ Usage: fbcbars [-fs] [-h] [-F framebuffer]\n\
 #define M_SMPTE	2
 int	mode = M_SMPTE;
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -199,6 +200,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main(argc, argv)
 int argc;
 char **argv;
@@ -275,4 +277,5 @@ char **argv;
 		break;
 	}
 	fb_close(fbp);
+	return(0);
 }

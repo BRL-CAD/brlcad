@@ -29,6 +29,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 void PrintUsage();
 void ArgCompat();
+int LoadNPF();
+int OnGrid();
 
 /* Program constants */
 #define		High_Size	1024
@@ -117,6 +119,7 @@ RGBpixel	Color[] = {
     {   0,   0, 255 }		/* Blue */
 };
 
+int
 main (argc, argv)
 
 int	argc;
@@ -327,8 +330,8 @@ char	*argv[];
 			(void) fputs("Illegal -z option\n", stderr);
 			goto error;
 		    }
-		    if ((argv[1][0] != 'l') && (argv[1][0] != 'r') ||
-			(argv[1][1] != '\0'))
+		    if ((argv[1][0] != 'l' && argv[1][0] != 'r') ||
+			argv[1][1] != '\0')
 		    {
 			(void) fprintf(stderr, "Illegal -z value: %s\n",
 			    argv[1]);
@@ -689,6 +692,7 @@ char	*argv[];
 
     /* Wrap up */
     fb_close(fbPtr);
+    return(0);
 }
 
 void
@@ -710,6 +714,7 @@ bool	ShoOpts;
 	(void) fputs(" -? option for help\n", stderr);
 }
 
+bool
 LoadNPF (FileName, Table, Quantum, convert, arc_min, arc_max)
 
 char	*FileName;	/* Name of input file */
@@ -816,6 +821,7 @@ double	arc_max;	/* Last    "    "     "    */
      return(Warnings);
 }
 
+int
 OnGrid (theta, rho)
 
 double	theta;

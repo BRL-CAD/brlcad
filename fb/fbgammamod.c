@@ -21,6 +21,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "externs.h"
@@ -105,6 +110,7 @@ do_fb()
 /*
  *			M A I N
  */
+int
 main( argc, argv )
 int	argc;
 char	**argv;

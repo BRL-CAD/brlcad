@@ -41,6 +41,7 @@ static char usage[] = "\
 Usage: fbclear [-h -c] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [gray | r g b]\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -79,6 +80,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main(argc, argv)
 int argc;
 char **argv;

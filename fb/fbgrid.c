@@ -46,6 +46,7 @@ static char usage[] = "\
 Usage: fbgrid [-h -c] [-b | -d | -o] [-F framebuffer]\n\
 	[-S squaresize] [-W width] [-N height]\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -97,6 +98,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main( argc, argv )
 int argc; char **argv;
 {
@@ -146,6 +148,7 @@ int argc; char **argv;
 	}
 
 	fb_close( fbp );
+	return(0);
 }
 
 void

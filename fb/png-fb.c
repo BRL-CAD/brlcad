@@ -69,6 +69,7 @@ Usage: png-fb [-H -h -i -c -v -z -1] [-m #lines] [-F framebuffer]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.png]\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -157,6 +158,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
 main(argc, argv)
 int argc;
 char **argv;
