@@ -18,6 +18,10 @@
 
 /*
  *			R B _ T R E E
+ *
+ *	This is the only data structure used in LIBREDBLACK
+ *	to which application software need make any explicit
+ *	reference.
  */
 typedef struct
 {
@@ -34,6 +38,16 @@ typedef struct
 
 /*
  *			R B _ P A C K A G E
+ *
+ *		    Wrapper for application data
+ *
+ *	This structure provides a level of indirection between
+ *	the application software's data and the red-black nodes
+ *	in which the data is stored.  It is necessary because of
+ *	the algorithm for deletion, which generally shuffles data
+ *	among nodes in the tree.  The package structure allows
+ *	the application data to remember which node "contains" it
+ *	for each order.
  */
 struct rb_package
 {
@@ -44,7 +58,14 @@ struct rb_package
 #define	RB_PKG_NULL	((struct rb_package *) 0)
 
 /*
- *			R B _ N O D E
+ *			    R B _ N O D E
+ *
+ *	For the most part, there is a one-to-one correspondence
+ *	between nodes and chunks of application data.  When a
+ *	node is created, all of its package pointers (one per
+ *	order of the tree) point to the same chunk of data.
+ *	However, subsequent deletions usually muddy this tidy
+ *	state of affairs.
  */
 struct rb_node
 {
@@ -116,7 +137,7 @@ void *rb_search		(
 			    int		order,
 			    void	*data
 			);
-#define rb_search1(t,n)	rb_search((t), 0, (n))
+#define rb_search1(t,d)	rb_search((t), 0, (d))
 void rb_summarize_tree	(   rb_tree	*tree	);
 void rb_walk		(
 			    rb_tree	*tree,
