@@ -324,6 +324,11 @@ it can be filled in by using the
 .I VJOIN1\^
 macro (see the following example).
 .P
+If the ray does not intersect the model, the
+.I a_miss
+routine is called
+with a pointer to the application structure.
+.P
 Helpful in generating a grid of ray origins, the bounding RPP of the
 model is computed by
 .I rt_gettree
