@@ -137,16 +137,7 @@ AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strcasec
 AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_MSG_ERROR([No internet socket found]))])
 dnl AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHECK_LIB(compat, re_comp, REGEX_LIB="-lcompat",)])
 
-dnl TODO this needs to be fixed to actually test...
-case "$target" in
-	i386-* | i686-* | alpha-*)
-		AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique)
-		;;
-	*)
-		AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique)
-		;;
-esac
-		
+AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique), AC_ERROR("Don't know the endian of this machine!"))
 
 AC_DEFINE(USE_PROTOTYPES,1,heh)
 
