@@ -15,7 +15,7 @@
  *	mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
  *	mat_ae_vec( &az, &el, v )		Find az/elev from dir vector
  *	mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
- *	eigen2x2()			Eigen values and vectors
+ *	mat_eigen2x2()			Eigen values and vectors
  *	mat_lookat			Make rot mat:  xform from D to -Z
  *	mat_fromto			Make rot mat:  xform from A to B
  *
