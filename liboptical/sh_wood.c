@@ -92,8 +92,8 @@ HIDDEN int	wood_init(), wood_setup(), wood_render();
 HIDDEN void	wood_print();
 HIDDEN void	wood_free RT_ARGS(( char * ));
 
-HIDDEN void	wood_V_set RT_ARGS((CONST struct structparse *, CONST char *, CONST char *, char *));
-HIDDEN void	wood_D_set RT_ARGS((CONST struct structparse *, CONST char *, CONST char *, char *));
+HIDDEN void	wood_V_set RT_ARGS((CONST struct bu_structparse *, CONST char *, CONST char *, char *));
+HIDDEN void	wood_D_set RT_ARGS((CONST struct bu_structparse *, CONST char *, CONST char *, char *));
 
 /*
  *	functions block for the shader
@@ -180,7 +180,7 @@ static struct wood_specific	*Wood_Chain;
  *	MATPARM parsing structure
  */
 
-struct structparse wood_parse[] = {
+struct bu_structparse wood_parse[] = {
 	{"%d",	1, "ident",		WOOD_O(ident),		FUNC_NULL },
 	{"%d",	1, "id",		WOOD_O(ident),		FUNC_NULL },
 	{"%d",	1, "overlay",		WOOD_O(overlay),	FUNC_NULL },
@@ -257,7 +257,7 @@ HIDDEN int wood_init ()
  */
 
 HIDDEN void wood_V_set (sdp, name, base, value)
-CONST struct structparse *sdp;
+CONST struct bu_structparse *sdp;
 CONST char *name;
 CONST char *base;
 char *value;
@@ -269,7 +269,7 @@ char *value;
 }
 
 HIDDEN void wood_D_set (sdp, name, base, value)
-CONST struct structparse *sdp;
+CONST struct bu_structparse *sdp;
 CONST char *name;
 CONST char *base;
 char *value;
@@ -360,7 +360,7 @@ char			**dpp;
 	 *	Parse the MATPARM field
 	 */
 
-	if( rt_structparse( matparm, wood_parse, (char *)wd ) < 0 )  {
+	if( bu_structparse( matparm, wood_parse, (char *)wd ) < 0 )  {
 		rt_free( (char *)wd, "wood_specific" );
 		return(-1);
 		}
@@ -521,7 +521,7 @@ struct wood_specific *wd;
 HIDDEN void wood_print( rp )
 register struct region *rp;
 {
-	rt_structprint(rp->reg_name, wood_parse, (char *)rp->reg_udata);
+	bu_structprint(rp->reg_name, wood_parse, (char *)rp->reg_udata);
 }
 
 /*

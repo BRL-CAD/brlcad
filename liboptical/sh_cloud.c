@@ -38,7 +38,7 @@ struct cloud_specific {
 #define CL_NULL	((struct cloud_specific *)0)
 #define CL_O(m)	offsetof(struct cloud_specific, m)
 
-struct structparse cloud_parse[] = {
+struct bu_structparse cloud_parse[] = {
 	{"%f",	1, "thresh",	CL_O(cl_thresh),	FUNC_NULL },
 	{"%f",	1, "range",	CL_O(cl_range),		FUNC_NULL },
 	{"",	0, (char *)0,	0,			FUNC_NULL }
@@ -125,7 +125,7 @@ char	**dpp;
 
 	cp->cl_thresh = 0.35;
 	cp->cl_range = 0.3;
-	if( rt_structparse( matparm, cloud_parse, (char *)cp ) < 0 )
+	if( bu_structparse( matparm, cloud_parse, (char *)cp ) < 0 )
 		return(-1);
 
 	return(1);
@@ -139,7 +139,7 @@ cloud_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, cloud_parse, (char *)dp );
+	bu_structprint( rp->reg_name, cloud_parse, (char *)dp );
 }
 
 /*

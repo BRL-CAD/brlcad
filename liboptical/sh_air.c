@@ -39,7 +39,7 @@ static struct air_specific air_defaults = {
 #define SHDR_O(m)	offsetof(struct air_specific, m)
 #define SHDR_AO(m)	offsetofarray(struct air_specific, m)
 
-struct structparse air_parse[] = {
+struct bu_structparse air_parse[] = {
 	{"%f",  1, "dpm",		SHDR_O(d_p_m),		FUNC_NULL },
 	{"%f",  1, "scale",		SHDR_O(scale),		FUNC_NULL },
 	{"%f",  1, "s",			SHDR_O(scale),		FUNC_NULL },
@@ -102,7 +102,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 #endif
 
 	if (rdebug&RDEBUG_SHADE) rt_log("\"%s\"\n", RT_VLS_ADDR(matparm) );
-	if( rt_structparse( matparm, air_parse, (char *)air_sp ) < 0 )
+	if( bu_structparse( matparm, air_parse, (char *)air_sp ) < 0 )
 		return(-1);
 
 	return(1);
@@ -116,7 +116,7 @@ air_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, air_parse, (char *)dp );
+	bu_structprint( rp->reg_name, air_parse, (char *)dp );
 }
 
 /*
@@ -155,9 +155,9 @@ char	*dp;
 	CK_air_SP(air_sp);
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_structprint( "air_specific", air_parse, (char *)air_sp );
+		bu_structprint( "air_specific", air_parse, (char *)air_sp );
 
-		rt_log("air in(%g) out%g)\n",
+		bu_log("air in(%g) out%g)\n",
 			pp->pt_inhit->hit_dist,
 			pp->pt_outhit->hit_dist);
 	}
@@ -195,8 +195,8 @@ char	*dp;
 	CK_air_SP(air_sp);
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_structprint( "air_specific", air_parse, (char *)air_sp );
-		rt_log("air in(%g) out(%g) r_pt(%g %g %g)\n",
+		bu_structprint( "air_specific", air_parse, (char *)air_sp );
+		bu_log("air in(%g) out(%g) r_pt(%g %g %g)\n",
 			pp->pt_inhit->hit_dist,
 			pp->pt_outhit->hit_dist,
 			V3ARGS(ap->a_ray.r_pt));

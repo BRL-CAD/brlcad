@@ -35,10 +35,10 @@ static char RCSlight[] = "@(#)$Header$ (BRL)";
 #define LIGHT_O(m)	offsetof(struct light_specific, m)
 #define LIGHT_OA(m)	offsetofarray(struct light_specific, m)
 
-RT_EXTERN(HIDDEN void	aim_set, (CONST struct structparse *sdp, CONST char *name,
+RT_EXTERN(HIDDEN void	aim_set, (CONST struct bu_structparse *sdp, CONST char *name,
 			CONST char *base, char *value));
 
-struct structparse light_parse[] = {
+struct bu_structparse light_parse[] = {
 	{"%f",	1, "inten",	LIGHT_O(lt_intensity),	FUNC_NULL },
 	{"%f",	1, "angle",	LIGHT_O(lt_angle),	FUNC_NULL },
 	{"%f",	1, "fract",	LIGHT_O(lt_fraction),	FUNC_NULL },
@@ -68,12 +68,12 @@ struct mfuncs light_mfuncs[] = {
 /*
  *			A I M _ S E T
  *
- *  This routine is called by rt_structparse() if the "aim"
+ *  This routine is called by bu_structparse() if the "aim"
  *  qualifier is encountered, and causes lt_exaim to be set.
  */
 
 HIDDEN void aim_set (sdp, name, base, value)
-CONST struct structparse *sdp;
+CONST struct bu_structparse *sdp;
 CONST char *name;
 CONST char *base;
 char *value;
@@ -153,7 +153,7 @@ genptr_t	*dpp;
 	lp->lt_infinite = 0;
 	lp->lt_rp = rp;
 	lp->lt_name = rt_strdup( rp->reg_name );
-	if( rt_structparse( matparm, light_parse, (char *)lp ) < 0 )  {
+	if( bu_structparse( matparm, light_parse, (char *)lp ) < 0 )  {
 		rt_free( (char *)lp, "light_specific" );
 		return(-1);
 	}
@@ -251,7 +251,7 @@ light_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint(rp->reg_name, light_parse, (char *)dp);
+	bu_structprint(rp->reg_name, light_parse, (char *)dp);
 }
 
 /*

@@ -66,12 +66,12 @@ struct cs_specific cs_defaults = {
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
-struct structparse cs_print_tab[] = {
+struct bu_structparse cs_print_tab[] = {
 	{"%f",  1, "val",		SHDR_O(cs_val),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
 };
-struct structparse cs_parse_tab[] = {
+struct bu_structparse cs_parse_tab[] = {
 	{"i",	byteoffset(cs_print_tab[0]), (char *)0, 0,		FUNC_NULL },
 	{"%f",  1, "v",			SHDR_O(cs_val),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
@@ -132,7 +132,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	memcpy(cs_sp, &cs_defaults, sizeof(struct cs_specific) );
 
 	/* parse the user's arguments for this use of the shader. */
-	if( rt_structparse( matparm, cs_parse_tab, (char *)cs_sp ) < 0 )
+	if( bu_structparse( matparm, cs_parse_tab, (char *)cs_sp ) < 0 )
 		return(-1);
 
 	/* Optional:
@@ -147,7 +147,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	if( rdebug&RDEBUG_SHADE) {
 		cs_sp->cs_reg_name = rt_strdup(rp->reg_name);
 
-		rt_structprint( " Parameters:", cs_print_tab, (char *)cs_sp );
+		bu_structprint( " Parameters:", cs_print_tab, (char *)cs_sp );
 		mat_print( "m_to_sh", cs_sp->cs_m_to_sh );
 	}
 
@@ -162,7 +162,7 @@ cs_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, cs_print_tab, (char *)dp );
+	bu_structprint( rp->reg_name, cs_print_tab, (char *)dp );
 }
 
 /*
@@ -205,8 +205,8 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_cs_SP(cs_sp);
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_log("cs_render(%s)\n", cs_sp->cs_reg_name);
-		rt_structprint( "Parameters:", cs_print_tab, (char *)cs_sp );
+		bu_log("cs_render(%s)\n", cs_sp->cs_reg_name);
+		bu_structprint( "Parameters:", cs_print_tab, (char *)cs_sp );
 	}
 
 	/* If we are performing the shading in "region" space, we must 

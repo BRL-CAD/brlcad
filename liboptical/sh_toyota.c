@@ -72,7 +72,7 @@ struct toyota_specific {
 #define CK_NULL	((struct toyota_specific *)0)
 #define CL_O(m)	offsetof(struct toyota_specific, m)
 
-struct structparse toyota_parse[] = {
+struct bu_structparse toyota_parse[] = {
 	{"%f", 1, "alpha",	CL_O(alpha),		FUNC_NULL },
 	{"%f", 1, "beta",	CL_O(beta),		FUNC_NULL },
 	{"%d", 1, "weather",	CL_O(weather),		FUNC_NULL },
@@ -184,7 +184,7 @@ char	**dtp;
 	(void)strcpy( tp->material, "junk" );
 	VSET(tp->Zenith, 0., 0., 1.);
 
-	if (rt_structparse(matparm, toyota_parse, (char *)tp) < 0)  {
+	if (bu_structparse(matparm, toyota_parse, (char *)tp) < 0)  {
 		rt_free((char *)tp, "toyota_specific");
 		return(-1);
 	}
@@ -281,7 +281,7 @@ toyota_print(rp, dp)
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint(rp->reg_name, toyota_parse, (char *)dp);
+	bu_structprint(rp->reg_name, toyota_parse, (char *)dp);
 }
 
 /*

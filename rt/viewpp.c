@@ -52,7 +52,7 @@ extern int	height;
 int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
-struct structparse view_parse[] = {
+struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,	FUNC_NULL }
 };
 

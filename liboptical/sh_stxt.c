@@ -54,7 +54,7 @@ struct	stxt_specific  {
 #define SOL_NULL	((struct stxt_specific *)0)
 #define SOL_O(m)	offsetof(struct stxt_specific, m)
 
-struct	structparse stxt_parse[] = {
+struct	bu_structparse stxt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for Cray compiler */
 	{"%d",	1, "transp",		0,		stxt_transp_hook },
@@ -88,11 +88,11 @@ struct	mfuncs stxt_mfuncs[] = {
 /*
  *			S T X T _ T R A N S P _ H O O K
  *
- *  Hooked function, called by rt_structparse.
+ *  Hooked function, called by bu_structparse.
  */
 HIDDEN void
 stxt_transp_hook( ptab, name, cp, value)
-struct structparse *ptab;
+struct bu_structparse *ptab;
 char	*name;
 char	*cp;
 char	*value;
@@ -188,7 +188,7 @@ char			**dpp;
 		return(-1);
 
 	/**	Get input values  **/
-	if( rt_structparse( matparm, stxt_parse, (char *)stp ) < 0 )  {
+	if( bu_structparse( matparm, stxt_parse, (char *)stp ) < 0 )  {
 		rt_free( (char *)stp, "stxt_specific" );
 		return(-1);
 	}
@@ -233,7 +233,7 @@ stxt_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint(rp->reg_name, stxt_parse, (char *)dp);
+	bu_structprint(rp->reg_name, stxt_parse, (char *)dp);
 }
 
 

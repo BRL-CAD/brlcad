@@ -9,7 +9,7 @@
  *		change "xxx"   to "shadername"
  *		Set a new number for the xxx_MAGIC define
  *		define shader specific structure and defaults
- *		edit/build parse table for structparse from xxx_parse
+ *		edit/build parse table for bu_structparse from xxx_parse
  *		edit/build shader_mfuncs tables from xxx_mfuncs for
  *			each shader name being built.
  *		edit the xxx_setup function to do shader-specific setup
@@ -33,7 +33,7 @@
 
 /*
  *  Generic settable parameters.
- *  By setting the "base address" to zero in the rt_structparse call,
+ *  By setting the "base address" to zero in the bu_structparse call,
  *  the actual memory address is given here as the structure offset.
  *
  *  Strictly speaking, the C language only permits initializers of the
@@ -95,13 +95,13 @@ struct xxx_specific xxx_defaults = {
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
-struct structparse xxx_print_tab[] = {
+struct bu_structparse xxx_print_tab[] = {
 	{"%f",  1, "val",		SHDR_O(xxx_val),	FUNC_NULL },
 	{"%f",  3, "delta",		SHDR_AO(xxx_delta),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
 };
-struct structparse xxx_parse_tab[] = {
+struct bu_structparse xxx_parse_tab[] = {
 	{"i",	byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, FUNC_NULL },
 	{"%f",  1, "v",			SHDR_O(xxx_val),	FUNC_NULL },
 	{"%f",  3, "d",			SHDR_AO(xxx_delta),	FUNC_NULL },
@@ -163,7 +163,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	memcpy(xxx_sp, &xxx_defaults, sizeof(struct xxx_specific) );
 
 	/* parse the user's arguments for this use of the shader. */
-	if( rt_structparse( matparm, xxx_parse_tab, (char *)xxx_sp ) < 0 )
+	if( bu_structparse( matparm, xxx_parse_tab, (char *)xxx_sp ) < 0 )
 		return(-1);
 
 	/* Optional:
@@ -177,7 +177,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_structprint( " Parameters:", xxx_print_tab, (char *)xxx_sp );
+		bu_structprint( " Parameters:", xxx_print_tab, (char *)xxx_sp );
 		mat_print( "m_to_sh", xxx_sp->xxx_m_to_sh );
 	}
 
@@ -192,7 +192,7 @@ xxx_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, xxx_print_tab, (char *)dp );
+	bu_structprint( rp->reg_name, xxx_print_tab, (char *)dp );
 }
 
 /*
@@ -229,7 +229,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_xxx_SP(xxx_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( "xxx_render Parameters:", xxx_print_tab, (char *)xxx_sp );
+		bu_structprint( "xxx_render Parameters:", xxx_print_tab, (char *)xxx_sp );
 
 	/* If we are performing the shading in "region" space, we must 
 	 * transform the hit point from "model" space to "region" space.

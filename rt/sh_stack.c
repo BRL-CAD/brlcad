@@ -46,7 +46,7 @@ struct stk_specific {
 #define STK_NULL	((struct stk_specific *)0)
 #define STK_O(m)	offsetof(struct stk_specific, m)
 
-struct structparse stk_parse[] = {
+struct bu_structparse stk_parse[] = {
 	{"",	0,	(char *)0,	0,			FUNC_NULL }
 };
 
@@ -75,7 +75,7 @@ struct rt_i	*rtip;
 	GETSTRUCT( sp, stk_specific );
 	*dpp = (char *)sp;
 
-	/*rt_structparse( matparm, stk_parse, (char *)sp );*/
+	/*bu_structparse( matparm, stk_parse, (char *)sp );*/
 
 	if(rdebug&RDEBUG_MATERIAL)
 		rt_log( "stk_setup called with \"%s\"\n", RT_VLS_ADDR(matparm) );

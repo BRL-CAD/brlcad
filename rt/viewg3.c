@@ -64,7 +64,7 @@ extern int	npsw;			/* number of worker PSWs to run */
 int		use_air = 1;		/* Handling of air in librt */
 
 /* Viewing module specific "set" variables */
-struct structparse view_parse[] = {
+struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,		FUNC_NULL }
 };
 

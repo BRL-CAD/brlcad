@@ -40,7 +40,7 @@ struct spm_specific {
 #define SP_NULL	((struct spm_specific *)0)
 #define SP_O(m)	offsetof(struct spm_specific, m)
 
-struct structparse spm_parse[] = {
+struct bu_structparse spm_parse[] = {
 	{"%s",	SPM_NAME_LEN, "file",		offsetofarray(struct spm_specific, sp_file),	FUNC_NULL },
 	{"%d",	1, "w",		SP_O(sp_w),	FUNC_NULL },
 	{"%d",	1, "n",		SP_O(sp_w),	FUNC_NULL },	/*compat*/
@@ -109,7 +109,7 @@ char	**dpp;
 
 	spp->sp_file[0] = '\0';
 	spp->sp_w = -1;
-	if( rt_structparse( matparm, spm_parse, (char *)spp ) < 0 )  {
+	if( bu_structparse( matparm, spm_parse, (char *)spp ) < 0 )  {
 		rt_free( (char *)spp, "spm_specific" );
 		return(-1);
 	}
@@ -139,7 +139,7 @@ char	*dp;
 	spm = (struct spm_specific *)dp;
 
 	rt_log("spm_print(rp=x%x, dp=x%x)\n", rp, dp);
-	rt_structprint("spm_print", spm_parse, (char *)dp);
+	(void)bu_structprint("spm_print", spm_parse, (char *)dp);
 	if( spm->sp_map )  spm_dump( spm->sp_map, 0 );
 }
 

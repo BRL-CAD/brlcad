@@ -55,7 +55,7 @@ extern	int	height;
 int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
 
 /* Viewing module specific "set" variables */
-struct structparse view_parse[] = {
+struct bu_structparse view_parse[] = {
 	"%d",	1, "maxreflect",	(int)&numreflect,	FUNC_NULL,
 	"%f",	1, "wavelength",	(int)&wavelength,	FUNC_NULL,
 	"%f",	1, "xhpol",	(int)&xhpol,		FUNC_NULL,

@@ -55,7 +55,7 @@ static int xrayhit();
 static int xraymiss();
 
 /* Viewing module specific "set" variables */
-struct structparse view_parse[] = {
+struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,	FUNC_NULL }
 };
 

@@ -67,7 +67,7 @@ int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
 #  endif
 #endif
 /* Viewing module specific "set" variables */
-struct structparse view_parse[] = {
+struct bu_structparse view_parse[] = {
 #if !defined(__alpha)   /* XXX Alpha does not support this initialization! */
 
 	{"%d",	1, "maxreflect",	byteoffset(numreflect),	FUNC_NULL },

@@ -111,7 +111,7 @@ fastf_t	spectrum_param[3] = {
 fastf_t	bg_temp = 293;			/* degK.  20 degC = 293 degK */
 
 /* Viewing module specific "set" variables */
-struct structparse view_parse[] = {
+struct bu_structparse view_parse[] = {
 	{"%f",  3, "spectrum",  (long)spectrum_param,		FUNC_NULL },
 	{"%f",  1, "bg_temp",	(long)&bg_temp,			FUNC_NULL },
 	{"%d",	1, "bounces",	(long)&max_bounces,		FUNC_NULL },

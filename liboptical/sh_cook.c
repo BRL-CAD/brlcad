@@ -54,7 +54,7 @@ struct cook_specific {
 #define CK_NULL	((struct cook_specific *)0)
 #define CL_O(m)	offsetof(struct cook_specific, m)
 
-struct structparse cook_parse[] = {
+struct bu_structparse cook_parse[] = {
 	{"%f", 1, "m",		CL_O(m),		FUNC_NULL },
 	{"%f", 1, "specular",	CL_O(wgt_specular),	FUNC_NULL },
 	{"%f", 1, "sp",		CL_O(wgt_specular),	FUNC_NULL },
@@ -134,7 +134,7 @@ char	**dpp;
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
 
-	if( rt_structparse( matparm, cook_parse, (char *)pp ) < 0 )  {
+	if( bu_structparse( matparm, cook_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "cook_specific" );
 		return(-1);
 	}
@@ -176,7 +176,7 @@ char	**dpp;
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
 
-	if( rt_structparse( matparm, cook_parse, (char *)pp ) < 0 )
+	if( bu_structparse( matparm, cook_parse, (char *)pp ) < 0 )
 		return(-1);
 
 	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
@@ -216,7 +216,7 @@ char	**dpp;
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
 
-	if( rt_structparse( matparm, cook_parse, (char *)pp ) < 0 )
+	if( bu_structparse( matparm, cook_parse, (char *)pp ) < 0 )
 		return(-1);
 
 	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
@@ -233,7 +233,7 @@ cook_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint(rp->reg_name, cook_parse, (char *)dp);
+	bu_structprint(rp->reg_name, cook_parse, (char *)dp);
 }
 
 /*

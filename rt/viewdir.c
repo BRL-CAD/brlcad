@@ -48,7 +48,7 @@ int		use_air = 0;		/* Internal air recognition is off */
 int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
-struct structparse view_parse[] = {
+struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,	FUNC_NULL }
 };
 

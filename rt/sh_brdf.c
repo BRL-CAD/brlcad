@@ -63,7 +63,7 @@ struct brdf_specific {
 #define BRDF_NULL	((struct brdf_specific *)0)
 #define BRDF_O(m)	offsetof(struct brdf_specific, m)
 
-struct structparse brdf_parse[] = {
+struct bu_structparse brdf_parse[] = {
 	{"%f",	1, "specular",		BRDF_O(specular_refl),	FUNC_NULL },
 	{"%f",	1, "sp",		BRDF_O(specular_refl),	FUNC_NULL },
 	{"%f",	1, "diffuse",		BRDF_O(diffuse_refl),	FUNC_NULL },
@@ -120,7 +120,7 @@ char	**dpp;
 	pp->extinction = 0.0;
 	pp->rms_slope = 0.05;
 
-	if( rt_structparse( matparm, brdf_parse, (char *)pp ) < 0 )  {
+	if( bu_structparse( matparm, brdf_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "brdf_specific" );
 		return(-1);
 	}
@@ -138,7 +138,7 @@ brdf_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint(rp->reg_name, brdf_parse, (char *)dp);
+	bu_structprint(rp->reg_name, brdf_parse, (char *)dp);
 }
 
 /*
@@ -219,7 +219,7 @@ char	*dp;
 	if( ps->magic != BRDF_MAGIC )  rt_log("brdf_render: bad magic\n");
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( "brdf_render", brdf_parse, (char *)ps );
+		bu_structprint( "brdf_render", brdf_parse, (char *)ps );
 
 	swp->sw_transmit = ps->transmit;
 	swp->sw_reflect = ps->reflect;

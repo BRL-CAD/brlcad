@@ -52,7 +52,7 @@ struct phong_specific {
 #define PL_NULL	((struct phong_specific *)0)
 #define PL_O(m)	offsetof(struct phong_specific, m)
 
-struct structparse phong_parse[] = {
+struct bu_structparse phong_parse[] = {
 	{"%d",	1, "shine",		PL_O(shine),		FUNC_NULL },
 	{"%d",	1, "sh",		PL_O(shine),		FUNC_NULL },
 	{"%f",	1, "specular",		PL_O(wgt_specular),	FUNC_NULL },
@@ -120,7 +120,7 @@ char	**dpp;
 	pp->refrac_index = RI_AIR;
 	pp->extinction = 0.0;
 
-	if( rt_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
+	if( bu_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}
@@ -154,7 +154,7 @@ char	**dpp;
 	pp->refrac_index = 1.65;
 	pp->extinction = 0.0;
 
-	if( rt_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
+	if( bu_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}
@@ -189,7 +189,7 @@ char	**dpp;
 	pp->refrac_index = 1.65;
 	pp->extinction = 0.0;
 
-	if( rt_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
+	if( bu_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}
@@ -207,7 +207,7 @@ phong_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint(rp->reg_name, phong_parse, (char *)dp);
+	bu_structprint(rp->reg_name, phong_parse, (char *)dp);
 }
 
 /*
@@ -309,7 +309,7 @@ char	*dp;
 	if( ps->magic != PL_MAGIC )  rt_log("phong_render: bad magic\n");
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( "phong_render", phong_parse, (char *)ps );
+		bu_structprint( "phong_render", phong_parse, (char *)ps );
 
 	swp->sw_transmit = ps->transmit;
 	swp->sw_reflect = ps->reflect;

@@ -31,7 +31,7 @@ static struct rtrans_specific rtrans_defaults = {
 #define SHDR_O(m)	offsetof(struct rtrans_specific, m)
 #define SHDR_AO(m)	offsetofarray(struct rtrans_specific, m)
 
-struct structparse rtrans_parse[] = {
+struct bu_structparse rtrans_parse[] = {
 	{"%f",  1, "threshold",		SHDR_O(threshold),		FUNC_NULL },
 	{"%f",  1, "t",			SHDR_O(threshold),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
@@ -74,13 +74,13 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	memcpy(rtrans_sp, &rtrans_defaults, sizeof(struct rtrans_specific) );
 
-	if( rt_structparse( matparm, rtrans_parse, (char *)rtrans_sp ) < 0 )
+	if( bu_structparse( matparm, rtrans_parse, (char *)rtrans_sp ) < 0 )
 		return(-1);
 
 	rtrans_sp->msr = msr_unif_init( 0, 0 );
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( rp->reg_name, rtrans_parse, (char *)rtrans_sp );
+		bu_structprint( rp->reg_name, rtrans_parse, (char *)rtrans_sp );
 
 	return(1);
 }
@@ -93,7 +93,7 @@ rtrans_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, rtrans_parse, (char *)dp );
+	bu_structprint( rp->reg_name, rtrans_parse, (char *)dp );
 }
 
 /*
@@ -128,7 +128,7 @@ char	*dp;
 	CK_RTRANS_SP(rtrans_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( "random transparency", rtrans_parse, (char *)rtrans_sp );
+		bu_structprint( "random transparency", rtrans_parse, (char *)rtrans_sp );
 
 	if( rtrans_sp->threshold >= 1.0 ||
 	    0.5 + MSR_UNIF_DOUBLE( rtrans_sp->msr ) < rtrans_sp->threshold )

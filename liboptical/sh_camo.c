@@ -46,7 +46,7 @@ struct camo_specific {
  */
 void
 camo_cvt_parse( sdp, name, base, value )
-register CONST struct structparse	*sdp;	/* structure description */
+register CONST struct bu_structparse	*sdp;	/* structure description */
 register CONST char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
 CONST char				*value;	/* string containing value */
@@ -79,7 +79,7 @@ static struct camo_specific camo_defaults = {
 #define SHDR_O(m)	offsetof(struct camo_specific, m)
 #define SHDR_AO(m)	offsetofarray(struct camo_specific, m)
 
-struct structparse camo_parse[] = {
+struct bu_structparse camo_parse[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
@@ -137,7 +137,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	memcpy(camo_sp, &camo_defaults, sizeof(struct camo_specific) );
 
-	if( rt_structparse( matparm, camo_parse, (char *)camo_sp ) < 0 )
+	if( bu_structparse( matparm, camo_parse, (char *)camo_sp ) < 0 )
 		return(-1);
 
 	/* Optional:  get the matrix which maps model space into
@@ -168,7 +168,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_mul2(tmp, camo_sp->xform);
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_structprint( rp->reg_name, camo_parse, (char *)camo_sp );
+		bu_structprint( rp->reg_name, camo_parse, (char *)camo_sp );
 		mat_print( "xform", camo_sp->xform );
 	}
 
@@ -183,7 +183,7 @@ camo_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, camo_parse, (char *)dp );
+	bu_structprint( rp->reg_name, camo_parse, (char *)dp );
 }
 
 /*
@@ -219,7 +219,7 @@ char	*dp;
 	CK_camo_SP(camo_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( "foo", camo_parse, (char *)camo_sp );
+		bu_structprint( "foo", camo_parse, (char *)camo_sp );
 
 	/* Optional: transform hit point into "shader-space coordinates" */
 	MAT4X3PNT(pt, camo_sp->xform, swp->sw_hit.hit_point);

@@ -173,7 +173,7 @@ HIDDEN int	marble_setup(), marble_render(), marble_prep();
 extern int	mlib_zero(), mlib_one();
 extern void	mlib_void();
 
-HIDDEN void	marble_check_flags RT_ARGS((CONST struct structparse *sdp,
+HIDDEN void	marble_check_flags RT_ARGS((CONST struct bu_structparse *sdp,
 			CONST char *name, CONST char *base, char *value));
 
 HIDDEN void	marble_free RT_ARGS(( char * ));
@@ -182,7 +182,7 @@ HIDDEN void	marble_free RT_ARGS(( char * ));
  *	Marble-specific user data
  */
 
-struct	structparse marble_parse[] = {
+struct	bu_structparse marble_parse[] = {
 	{"%d",	1,	"id",		MARB_O(ident),		marble_check_flags },
 	{"%d",	1,	"ns",		MARB_O(ns),		FUNC_NULL },
 	{"%d",	1,	"matte",	MARB_O(matte),		marble_check_flags },
@@ -265,13 +265,13 @@ HIDDEN int marble_prep ()
 /*
  *		S e t u p   H o o k   R o u t i n e s
  *
- *	The following are routines which are called by rt_structparse()
+ *	The following are routines which are called by bu_structparse()
  *	while parsing the MATPARM field.  These are currently limited to
  *	setting flag bits, indicating the presence of certain options.
  */
 
 HIDDEN void marble_check_flags (sdp, name, base, value)
-CONST struct structparse *sdp;
+CONST struct bu_structparse *sdp;
 CONST char *name;
 CONST char *base;
 char *value;
@@ -390,7 +390,7 @@ char	**dpp;
 	 *	Parse the parameter block
 	 */
 
-	if (rt_structparse (matparm, marble_parse, (char *)mp) < 0)
+	if (bu_structparse (matparm, marble_parse, (char *)mp) < 0)
 		return(-1);
 
 	/*

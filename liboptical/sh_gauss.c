@@ -9,7 +9,7 @@
  *		change "gauss"   to "shadername"
  *		Set a new number for the gauss_MAGIC define
  *		define shader specific structure and defaults
- *		edit/build parse table for structparse from gauss_parse
+ *		edit/build parse table for bu_structparse from gauss_parse
  *		edit/build shader_mfuncs tables from gauss_mfuncs for
  *			each shader name being built.
  *		edit the gauss_setup function to do shader-specific setup
@@ -34,7 +34,7 @@
 
 /*
  *  Generic settable parameters.
- *  By setting the "base address" to zero in the rt_structparse call,
+ *  By setting the "base address" to zero in the bu_structparse call,
  *  the actual memory address is given here as the structure offset.
  *
  *  Strictly speaking, the C language only permits initializers of the
@@ -119,12 +119,12 @@ struct gauss_specific gauss_defaults = {
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
-struct structparse gauss_print_tab[] = {
+struct bu_structparse gauss_print_tab[] = {
 	{"%f",  1, "sigma",		SHDR_O(gauss_sigma),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
 };
-struct structparse gauss_parse_tab[] = {
+struct bu_structparse gauss_parse_tab[] = {
 	{"i",	byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, FUNC_NULL },
 	{"%f",  1, "s",			SHDR_O(gauss_sigma),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
@@ -324,7 +324,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	memcpy(gauss_sp, &gauss_defaults, sizeof(struct gauss_specific) );
 
 	/* parse the user's arguments for this use of the shader. */
-	if( rt_structparse( matparm, gauss_parse_tab, (char *)gauss_sp ) < 0 )
+	if( bu_structparse( matparm, gauss_parse_tab, (char *)gauss_sp ) < 0 )
 		return(-1);
 
 	/* We have to pick up the parameters for the gaussian puff now.
@@ -352,7 +352,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_structprint( " Parameters:", gauss_print_tab, (char *)gauss_sp );
+		bu_structprint( " Parameters:", gauss_print_tab, (char *)gauss_sp );
 		mat_print( "m_to_sh", gauss_sp->gauss_m_to_sh );
 	}
 
@@ -367,7 +367,7 @@ gauss_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, gauss_print_tab, (char *)dp );
+	bu_structprint( rp->reg_name, gauss_print_tab, (char *)dp );
 }
 
 /*
@@ -511,9 +511,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_gauss_SP(gauss_sp);
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_structprint( "gauss_render Parameters:", gauss_print_tab, (char *)gauss_sp );
+		bu_structprint( "gauss_render Parameters:", gauss_print_tab, (char *)gauss_sp );
 
-		rt_log("r_pt(%g %g %g)  r_dir(%g %g %g)\n",
+		bu_log("r_pt(%g %g %g)  r_dir(%g %g %g)\n",
 			V3ARGS(ap->a_ray.r_pt),
 			V3ARGS(ap->a_ray.r_dir) );
 	}

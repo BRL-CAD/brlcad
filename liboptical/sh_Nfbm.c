@@ -45,7 +45,7 @@ static struct Nfbm_specific Nfbm_defaults = {
 
 void
 cvt_parse( sdp, name, base, value )
-register CONST struct structparse	*sdp;	/* structure description */
+register CONST struct bu_structparse	*sdp;	/* structure description */
 register CONST char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
 CONST char				*value;	/* string containing value */
@@ -57,7 +57,7 @@ CONST char				*value;	/* string containing value */
 	*p = rt_mm_value(value);
 }
 
-struct structparse Nfbm_parse[] = {
+struct bu_structparse Nfbm_parse[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
@@ -113,7 +113,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	memcpy(Nfbm_sp, &Nfbm_defaults, sizeof(struct Nfbm_specific) );
 
-	if( rt_structparse( matparm, Nfbm_parse, (char *)Nfbm_sp ) < 0 )
+	if( bu_structparse( matparm, Nfbm_parse, (char *)Nfbm_sp ) < 0 )
 		return(-1);
 
 	/* Optional:  get the matrix which maps model space into
@@ -141,7 +141,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_mul2(tmp, Nfbm_sp->xform);
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_structprint( rp->reg_name, Nfbm_parse, (char *)Nfbm_sp );
+		bu_structprint( rp->reg_name, Nfbm_parse, (char *)Nfbm_sp );
 		mat_print( "xform", Nfbm_sp->xform );
 	}
 
@@ -156,7 +156,7 @@ Nfbm_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, Nfbm_parse, (char *)dp );
+	bu_structprint( rp->reg_name, Nfbm_parse, (char *)dp );
 }
 
 /*
@@ -202,7 +202,7 @@ char	*dp;
 	CK_Nfbm_SP(Nfbm_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( "foo", Nfbm_parse, (char *)Nfbm_sp );
+		bu_structprint( "foo", Nfbm_parse, (char *)Nfbm_sp );
 
 
 	/* transform hit point into "shader-space coordinates" */

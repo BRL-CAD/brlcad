@@ -47,7 +47,7 @@ extern int	rpt_overlap;		/* report overlapping region names */
 int		use_air = 0;		/* Handling of air in librt */
 
 /* Viewing module specific "set" variables */
-struct structparse view_parse[] = {
+struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,		FUNC_NULL }
 };
 

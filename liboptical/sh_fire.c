@@ -52,7 +52,7 @@
 
 /*
  *  Generic settable parameters.
- *  By setting the "base address" to zero in the rt_structparse call,
+ *  By setting the "base address" to zero in the bu_structparse call,
  *  the actual memory address is given here as the structure offset.
  *
  *  Strictly speaking, the C language only permits initializers of the
@@ -142,7 +142,7 @@ struct fire_specific fire_defaults = {
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
-struct structparse fire_print_tab[] = {
+struct bu_structparse fire_print_tab[] = {
 	{"%d",  1, "debug",	SHDR_O(fire_debug),		FUNC_NULL },
 	{"%f",  1, "flicker",	SHDR_O(fire_flicker),		FUNC_NULL },
 	{"%f",  1, "stretch",	SHDR_O(fire_stretch),		FUNC_NULL },
@@ -154,7 +154,7 @@ struct structparse fire_print_tab[] = {
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
 };
-struct structparse fire_parse_tab[] = {
+struct bu_structparse fire_parse_tab[] = {
 	{"i",	byteoffset(fire_print_tab[0]), "fire_print_tab", 0, FUNC_NULL },
 	{"%f",  1, "f",		SHDR_O(fire_flicker),		FUNC_NULL },
 	{"%f",  1, "st",	SHDR_O(fire_stretch),		FUNC_NULL },
@@ -241,7 +241,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	memcpy(fire_sp, &fire_defaults, sizeof(struct fire_specific) );
 
 	/* parse the user's arguments for this use of the shader. */
-	if( rt_structparse( matparm, fire_parse_tab, (char *)fire_sp ) < 0 )
+	if( bu_structparse( matparm, fire_parse_tab, (char *)fire_sp ) < 0 )
 		return(-1);
 
 	/* Optional:
@@ -268,7 +268,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 
 	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
-		rt_structprint( " FIRE Parameters:", fire_print_tab, (char *)fire_sp );
+		bu_structprint( " FIRE Parameters:", fire_print_tab, (char *)fire_sp );
 		mat_print( "m_to_sh", fire_sp->fire_m_to_sh );
 		mat_print( "sh_to_noise", fire_sp->fire_sh_to_noise );
 		mat_print( "colorspline", fire_sp->fire_colorspline_mat );
@@ -285,7 +285,7 @@ fire_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, fire_print_tab, (char *)dp );
+	bu_structprint( rp->reg_name, fire_print_tab, (char *)dp );
 }
 
 /*
@@ -362,8 +362,8 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_fire_SP(fire_sp);
 
 	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
-/*		rt_structprint( "fire_render Parameters:", fire_print_tab, (char *)fire_sp ); */
-		rt_log("fire_render()\n");
+/*		bu_structprint( "fire_render Parameters:", fire_print_tab, (char *)fire_sp ); */
+		bu_log("fire_render()\n");
 	}
 	/* If we are performing the shading in "region" space, we must 
 	 * transform the hit point from "model" space to "region" space.

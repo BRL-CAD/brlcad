@@ -134,7 +134,7 @@ static struct scanline {
 #  endif
 #endif
 /* Viewing module specific "set" variables */
-struct structparse view_parse[] = {
+struct bu_structparse view_parse[] = {
 #if !defined(__alpha)   /* XXX Alpha does not support this initialization! */
 	{"%d",	1, "bounces",	byteoffset(max_bounces),		FUNC_NULL },
 	{"%d",	1, "ireflect",	byteoffset(max_ireflect),		FUNC_NULL },

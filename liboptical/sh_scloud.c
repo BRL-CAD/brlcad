@@ -42,7 +42,7 @@ static struct scloud_specific scloud_defaults = {
 #define SHDR_O(m)	offsetof(struct scloud_specific, m)
 #define SHDR_AO(m)	offsetofarray(struct scloud_specific, m)
 
-struct structparse scloud_pr[] = {
+struct bu_structparse scloud_pr[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(h_val),	FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
@@ -50,7 +50,7 @@ struct structparse scloud_pr[] = {
 	{"%f",  3, "delta",		SHDR_AO(delta),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
-struct structparse scloud_parse[] = {
+struct bu_structparse scloud_parse[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(h_val),	FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
@@ -102,13 +102,13 @@ struct rt_i		*rtip;
 	if( rdebug&RDEBUG_SHADE)
 		rt_log("scloud_setup\n");
 
-	if( rt_structparse( matparm, scloud_parse, (char *)scloud ) < 0 )
+	if( bu_structparse( matparm, scloud_parse, (char *)scloud ) < 0 )
 		return(-1);
 
-	rt_structprint( rp->reg_name, scloud_pr, (char *)scloud );
+	(void)bu_structprint( rp->reg_name, scloud_pr, (char *)scloud );
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( rp->reg_name, scloud_parse, (char *)scloud );
+		(void)bu_structprint( rp->reg_name, scloud_parse, (char *)scloud );
 
 	/* get transformation between world and "region" coordinates */
 	if (db_string_to_path( &full_path, rtip->rti_dbip, rp->reg_name) ) {
@@ -152,7 +152,7 @@ scloud_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, scloud_pr, (char *)dp );
+	(void)bu_structprint( rp->reg_name, scloud_pr, (char *)dp );
 }
 
 /*

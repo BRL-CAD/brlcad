@@ -85,7 +85,7 @@ struct txt_specific {
 #define TX_NULL	((struct txt_specific *)0)
 #define TX_O(m)	offsetof(struct txt_specific, m)
 
-struct structparse txt_parse[] = {
+struct bu_structparse txt_parse[] = {
 	{"%d",	1, "transp",	offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
 	{"%s",	TXT_NAME_LEN, "file", offsetofarray(struct txt_specific, tx_file),		FUNC_NULL },
 	{"%d",	1, "w",		TX_O(tx_w),		FUNC_NULL },
@@ -98,11 +98,11 @@ struct structparse txt_parse[] = {
 /*
  *			T X T _ T R A N S P _ H O O K
  *
- *  Hooked function, called by rt_structparse
+ *  Hooked function, called by bu_structparse
  */
 HIDDEN void
 txt_transp_hook( ptab, name, cp, value )
-struct structparse *ptab;
+struct bu_structparse *ptab;
 char	*name;
 char	*cp;
 char	*value;
@@ -340,7 +340,7 @@ CONST struct mfuncs	*mfp;
 	tp->tx_file[0] = '\0';
 	tp->tx_w = tp->tx_n = -1;
 	tp->tx_trans_valid = 0;
-	if( rt_structparse( matparm, txt_parse, (char *)tp ) < 0 )  {
+	if( bu_structparse( matparm, txt_parse, (char *)tp ) < 0 )  {
 		rt_free( (char *)tp, "txt_specific" );
 		return(-1);
 	}
@@ -377,7 +377,7 @@ HIDDEN void
 txt_print( rp )
 register struct region *rp;
 {
-	rt_structprint(rp->reg_name, txt_parse, (char *)rp->reg_udata);
+	bu_structprint(rp->reg_name, txt_parse, (char *)rp->reg_udata);
 }
 
 /*
@@ -401,7 +401,7 @@ struct ckr_specific  {
 #define CKR_NULL	((struct ckr_specific *)0)
 #define CKR_O(m)	offsetof(struct ckr_specific, m)
 
-struct structparse ckr_parse[] = {
+struct bu_structparse ckr_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for old Cray compilers */
 	{"%d",	1, "a",		0,			FUNC_NULL },
@@ -459,7 +459,7 @@ char			**dpp;
 	GETSTRUCT( ckp, ckr_specific );
 	*dpp = (char *)ckp;
 	ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
-	if( rt_structparse( matparm, ckr_parse, (char *)ckp ) < 0 )  {
+	if( bu_structparse( matparm, ckr_parse, (char *)ckp ) < 0 )  {
 		rt_free( (char *)ckp, "ckr_specific" );
 		return(-1);
 	}
@@ -479,7 +479,7 @@ HIDDEN void
 ckr_print( rp )
 register struct region *rp;
 {
-	rt_structprint(rp->reg_name, ckr_parse, rp->reg_udata);
+	bu_structprint(rp->reg_name, ckr_parse, rp->reg_udata);
 }
 
 /*
