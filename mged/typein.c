@@ -135,6 +135,21 @@ char *p_vol[] = {
 	"Enter Z dimension of a cell: ",
 };
 
+char *p_bot[] = {
+	"Enter number of vertices: ",
+	"Enter number of triangles: ",
+	"Enter mode (1->surface, 2->solid, 3->plate): ",
+	"Enter triangle orientation (1->unoriented, 2->counter-clockwise, 3->clockwise): ",
+	"Enter X, Y, Z",
+	"Enter Y",
+	"Enter Z",
+	"Enter three vertex numbers",
+	"Enter second vertex number",
+	"Enter third vertex number",
+	"Enter face_mode (0->centered, 1->appended) and thickness",
+	"Enter thickness"
+};
+
 char *p_pipe[] = {
 	"Enter number of points: ",
 	"Enter X, Y, Z, inner diameter, outer diameter, and bend radius for first point: ",
@@ -439,7 +454,7 @@ char **argv;
 				epa_in(), eto_in(), half_in(), rec_in(),
 				rcc_in(), rhc_in(), rpc_in(), rpp_in(),
 				sph_in(), tec_in(), tgc_in(), tor_in(),
-				trc_in(), ebm_in(), vol_in(), hf_in(),
+				trc_in(), ebm_in(), vol_in(), hf_in(), bot_in(),
 				dsp_in(), submodel_in(), part_in(), pipe_in();
 
 	CHECK_DBI_NULL;
@@ -520,6 +535,17 @@ char **argv;
 		nvals = 4;
 		menu = p_ebm;
 		fn_in = ebm_in;
+	} else if( strcmp( argv[2], "bot" ) == 0 ) {
+		switch( bot_in(argc, argv, &internal, &p_bot[0]) ) {
+		case CMD_BAD:
+		  Tcl_AppendResult(interp, "ERROR, BOT not made!\n", (char *)NULL);
+		  if(internal.idb_type) rt_functab[internal.idb_type].
+					  ft_ifree( &internal );
+		  return TCL_ERROR;
+		case CMD_MORE:
+		  return TCL_ERROR;
+		}
+		goto do_new_update;
 	} else if( strcmp( argv[2], "submodel" ) == 0 )  {
 		nvals = 3;
 		menu = p_submodel;
@@ -882,6 +908,156 @@ struct rt_db_internal	*intern;
 	bn_mat_idn( vol->mat );
 
 	return( 0 );
+}
+
+/*
+ *			B O T _ I N
+ */
+int
+bot_in( argc, argv, intern, prompt )
+int			argc;
+char			**argv;
+struct rt_db_internal	*intern;
+char			*prompt[];
+{
+	int i;
+	int num_verts, num_faces;
+	int mode, orientation;
+	int arg_count;
+	struct rt_bot_internal *bot;
+
+	CHECK_DBI_NULL;
+
+	if( argc < 7 ) {
+		Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
+		return CMD_MORE;
+	}
+
+	num_verts = atoi( argv[3] );
+	if( num_verts < 3 )
+	{
+		Tcl_AppendResult(interp, "Invalid number of vertices (must be at least 3)\n", (char *)NULL);
+		return CMD_BAD;
+	}
+
+	num_faces = atoi( argv[4] );
+	if( num_faces < 1 )
+	{
+		Tcl_AppendResult(interp, "Invalid number of triangles (must be at least 1)\n", (char *)NULL);
+		return CMD_BAD;
+	}
+
+	mode = atoi( argv[5] );
+	if( mode < 1 || mode > 3 )
+	{
+		Tcl_AppendResult(interp, "Invalid mode (must be 1, 2, or 3)\n", (char *)NULL );
+		return CMD_BAD;
+	}
+
+	orientation = atoi( argv[6] );
+	if( orientation < 1 || orientation > 3 )
+	{
+		Tcl_AppendResult(interp, "Invalid orientation (must be 1, 2, or 3)\n", (char *)NULL );
+		return CMD_BAD;
+	}
+
+	arg_count = argc - 7;
+	if( arg_count < num_verts*3 )
+	{
+		struct bu_vls tmp_vls;
+
+		bu_vls_init( &tmp_vls );
+		bu_vls_printf( &tmp_vls, "%s for vertex %d : ", prompt[4+arg_count%3], arg_count/3 );
+
+		Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+
+		return CMD_MORE;
+	}
+
+	arg_count = argc - 7 - num_verts*3;
+	if( arg_count < num_faces*3 )
+	{
+		struct bu_vls tmp_vls;
+
+		bu_vls_init( &tmp_vls );
+		bu_vls_printf( &tmp_vls, "%s for triangle %d : ", prompt[7+arg_count%3], arg_count/3 );
+
+		Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+
+		return CMD_MORE;
+	}
+
+	if( mode == RT_BOT_PLATE )
+	{
+		arg_count = argc - 7 - num_verts*3 - num_faces*3;
+		if( arg_count < num_faces*2 )
+		{
+			struct bu_vls tmp_vls;
+
+			bu_vls_init( &tmp_vls );
+			bu_vls_printf( &tmp_vls, "%s for face %d : ", prompt[10+arg_count%2], arg_count/2 );
+
+			Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls), (char *)NULL);
+			bu_vls_free(&tmp_vls);
+
+			return CMD_MORE;
+		}
+	}
+
+	intern->idb_type = ID_BOT;
+	intern->idb_meth = &rt_functab[ID_BOT];
+	bot = (struct rt_bot_internal *)bu_malloc( sizeof( struct rt_bot_internal ), "rt_bot_internal" );
+	intern->idb_ptr = (genptr_t)bot;
+	bot->magic = RT_BOT_INTERNAL_MAGIC;
+	bot->num_vertices = num_verts;
+	bot->num_faces = num_faces;
+	bot->mode = mode;
+	bot->orientation = orientation;
+	bot->faces = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "bot faces" );
+	bot->vertices = (fastf_t *)bu_calloc( bot->num_vertices * 3, sizeof( fastf_t ), "bot vertices" );
+	bot->thickness = (fastf_t *)NULL;
+	bot->face_mode = (struct bu_bitv *)NULL;
+
+	for( i=0 ; i<num_verts ; i++ )
+	{
+		bot->vertices[i*3] = atof( argv[7+i*3] );
+		bot->vertices[i*3+1] = atof( argv[8+i*3] );
+		bot->vertices[i*3+2] = atof( argv[9+i*3] );
+	}
+
+	arg_count = 7 + num_verts*3;
+	for( i=0 ; i<num_faces ; i++ )
+	{
+		bot->faces[i*3] = atoi( argv[arg_count + i*3] );
+		bot->faces[i*3+1] = atoi( argv[arg_count + i*3 + 1] );
+		bot->faces[i*3+2] = atoi( argv[arg_count + i*3 + 2] );
+	}
+
+	if( mode == RT_BOT_PLATE )
+	{
+		arg_count = 7 + num_verts*3 + num_faces*3;
+		bot->thickness = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "bot thickness" );
+		bot->face_mode = bu_bitv_new( num_faces );
+		bu_bitv_clear( bot->face_mode );
+		for( i=0 ; i<num_faces ; i++ )
+		{
+			int j;
+
+			j = atoi( argv[arg_count + i*2] );
+			if( j == 1 )
+				BU_BITSET( bot->face_mode, i );
+			else if( j != 0 )
+			{
+				Tcl_AppendResult(interp, "Invalid face mode (must be 0 or 1)\n", (char *)NULL );
+				return CMD_BAD;
+			}
+			bot->thickness[i] = atof( argv[arg_count + i*2 + 1] );
+		}
+	}
+
+	return CMD_OK;
 }
 
 /*
