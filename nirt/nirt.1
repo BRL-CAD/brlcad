@@ -7,7 +7,7 @@
 .SH NAME
 nirt \- interactively ray trace an MGED model
 .SH SYNOPSIS
-.BR "nirt  [ -u " n " ] " "model.g objects ..."
+.BR "nirt  [ -u " n " ] [ -x " f " ] " "model.g objects ..."
 .SH DESCRIPTION
 .I Nirt
 operates on the specified
@@ -36,6 +36,11 @@ of the \fIrt_i\fR structure to \fIn\fR.
 See the discussion of the
 .I useair
 command below.
+The
+.BI -x " f"
+option sets the
+.IR librt (3)
+debug flags to the hexadecimal bit vector \fIf\fR.
 
 If there is a file called .nirtrc in the current directory,
 otherwise in the user's home directory,
