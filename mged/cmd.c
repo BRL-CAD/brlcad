@@ -79,6 +79,7 @@ void	f_tol();
 void	f_debugdir();
 void	f_polybinout();
 void	f_facetize();
+void	f_adc();
 
 static struct funtab {
 	char *ft_name;
@@ -95,6 +96,8 @@ static struct funtab {
 	f_comm,1,1,
 "3ptarb", "", "makes arb given 3 pts, 2 coord of 4th pt, and thickness",
 	f_3ptarb, 1, 27,
+"adc", "[<reset|<a1|a2|x|y|dst> num>]", "control the angle/distance cursor",
+        f_adc, 1, 3,
 "ae", "azim elev", "set view using az and elev angles",
 	f_aeview, 3, 3,
 "analyze", "[arbname]", "analyze faces of ARB",
