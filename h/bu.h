@@ -332,6 +332,15 @@ struct bu_structparse {
 #define FUNC_NULL	((void (*)())0)
 
 
+/*
+ *			B U _ I M E X P O R T
+ */
+struct bu_imexport  {
+	char		im_fmt[4];		/* "l", "i", or "%f", etc */
+	int		im_offset;		/* byte offset in struct */
+	int		im_count;		/* # of repetitions */
+};
+#define BU_IMEXPORT_NULL	((struct bu_imexport *)0)
 
 /*----------------------------------------------------------------------*/
 /*
