@@ -10,6 +10,7 @@
 #include "conf.h"
 
 #include <stdio.h>		/* Direct the output to stdout */
+#include <unistd.h>
 #include "machine.h"		/* BRLCAD specific machine data types */
 #include "vmath.h"		/* BRLCAD Vector macros */
 #include "nurb.h"		/* BRLCAD Spline data structures */
