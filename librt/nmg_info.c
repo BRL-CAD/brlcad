@@ -944,3 +944,63 @@ struct edgeuse *eu;
 	}
 	return(eur);
 }
+
+static CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
+struct vf_state {
+	char		*visited;
+	struct nmg_ptbl	*tabl;
+};
+
+/*
+ *			N M G _ 2 R V F _ H A N D L E R
+ *
+ *  A private support routine for nmg_region_vertex_list().
+ *  Having just visited a vertex, if this is the first time,
+ *  add it to the nmg_ptbl array.
+ */
+static void
+nmg_2rvf_handler( vp, state, first )
+long		*vp;
+genptr_t	state;
+int		first;
+{
+	register struct vf_state *sp = (struct vf_state *)state;
+	register struct vertex	*v = (struct vertex *)vp;
+
+	NMG_CK_VERTEX(v);
+	/* If this vertex has been processed before, do nothing more */
+	if( !NMG_INDEX_FIRST_TIME(sp->visited, v) )  return;
+
+	nmg_tbl( sp->tabl, TBL_INS, vp );
+}
+
+/*
+ *			N M G _ R E G I O N _ V E R T E X _ L I S T
+ *
+ *  Given an nmgregion, build an nmg_ptbl list which has each vertex
+ *  pointer in the region listed exactly once.
+ */
+void
+nmg_region_vertex_list( tab, r )
+struct nmg_ptbl		*tab;
+struct nmgregion	*r;
+{
+	struct model	*m;
+	struct vf_state	st;
+	struct nmg_visit_handlers	handlers;
+
+	NMG_CK_REGION(r);
+	m = r->m_p;
+	NMG_CK_MODEL(m);
+
+	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.tabl = tab;
+
+	(void)nmg_tbl( tab, TBL_INIT, 0 );
+
+	handlers = nmg_visit_handlers_null;		/* struct copy */
+	handlers.vis_vertex = nmg_2rvf_handler;
+	nmg_visit( &r->l.magic, &handlers, (genptr_t)&st );
+
+	rt_free( (char *)st.visited, "visited[]");
+}
