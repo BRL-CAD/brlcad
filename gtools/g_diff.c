@@ -816,6 +816,7 @@ char *argv[];
 	char *invoked_as;
 	char *file1, *file2;
 	struct rt_wdb *wdb1, *wdb2;
+	struct stat stat1, stat2;
 	int c;
 
 	invoked_as = argv[0];
@@ -844,6 +845,24 @@ char *argv[];
 
 	file1 = *argv++;
 	file2 = *argv;
+
+	if( stat( file1, &stat1 ) ) {
+		fprintf( stderr, "Cannot stat file %s\n", file1 );
+		perror( file1 );
+		exit( 1 );
+	}
+
+	if( stat( file2, &stat2 ) ) {
+		fprintf( stderr, "Cannot stat file %s\n", file2 );
+		perror( file2 );
+		exit( 1 );
+	}
+
+	if( stat1.st_dev == stat2.st_dev && stat1.st_ino == stat2.st_ino ) {
+		fprintf( stderr, "%s and %s are the same file\n", file1, file2 );
+		fprintf( stderr, "Cannot compare a file to itself!!\n" );
+		exit( 1 );
+	}
 
 	interp = Tcl_CreateInterp();
 	if( Tcl_Init(interp) == TCL_ERROR )
