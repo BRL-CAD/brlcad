@@ -562,17 +562,21 @@ char *buf;
 	    rtip->rti_dbip->dbi_title, strlen(rtip->rti_dbip->dbi_title)+1, pcsrv ) < 0 )
 		fprintf(stderr,"RTSYNCMSG_DIRBUILD reply error\n");
 
+/* XXXX BUG:  On IRIX64, int=32, but these pointers are 64-bits wide! (long)  No TCL_LINK_LONG or TCL_LINK_PTR */
 	Tcl_LinkVar(interp, "dbip", (char *)&ap.a_rt_i->rti_dbip, TCL_LINK_INT|TCL_LINK_READ_ONLY);
 	Tcl_LinkVar(interp, "rtip", (char *)&ap.a_rt_i, TCL_LINK_INT|TCL_LINK_READ_ONLY);
 
 	{
-		static char cmd[] = "set wdbp [wdb_open .inmem inmem $dbip]";
+		struct bu_vls	cmd;
+		bu_vls_init(&cmd);
+		bu_vls_strcpy(&cmd, "set wdbp [wdb_open .inmem inmem $dbip]");
 		/* Tcl interpreter will write nulls into cmd string */
-		if( Tcl_Eval(interp, cmd ) != TCL_OK )  {
+		if( Tcl_Eval(interp, bu_vls_addr(&cmd) ) != TCL_OK )  {
 			bu_log("%s\n%s\n",
 		    		interp->result,
 				Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
 		}
+		bu_vls_free(&cmd);
 	}
 
 	Tcl_LinkVar(interp, "test_fb_speed", (char *)&test_fb_speed, TCL_LINK_INT);
@@ -769,7 +773,7 @@ char			*buf;
 	rtip->rti_nrays = 0;
 
 	if( test_fb_speed )  {
-		char	*buf;
+		unsigned char	*buf;
 		int	y;
 
 		/* Write out colored lines. */
