@@ -36,6 +36,9 @@ static const char RCSid[] = "$Header$";
 
 #include "machine.h"
 #include "externs.h"			/* For getopt */
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
 
 static int	file_width = 512;
 static int	autosize = 0;
@@ -47,6 +50,7 @@ static char	usage[] = "\
 Usage: bw-a [a] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[file.bw]\n";
 
+int
 get_args( argc, argv )
 int argc;
 char **argv;
@@ -94,6 +98,8 @@ char **argv;
 	}
 	return(1);	/* OK */
 }
+
+int
 main(argc, argv)
 int argc;
 char **argv;
@@ -129,4 +135,5 @@ char **argv;
 			cur_height++;
 		}
 	}
+	return 0;
 }

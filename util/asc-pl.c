@@ -23,8 +23,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <ctype.h>
 #include "machine.h"
+#include "externs.h"
+
+#include "plot3.h"
 
 #define		BUF_LEN		512
 #define		FP_IN		0
@@ -35,8 +43,8 @@ static char	*usage = "asc-pl [file.in [file.pl]]\n";
 static void	printusage();
 static int	check_syntax();
 
+int
 main (argc, argv)
-
 int	argc;
 char	*argv[];
 
@@ -227,6 +235,7 @@ char	*argv[];
 		exit (1);
 	}
     }
+    return 0;
 }
 
 static void printusage ()
