@@ -39,7 +39,13 @@ fastf_t		gift_grid_rounding = 0;		/* set to 25.4 for inches */
 
 point_t		viewbase_model;	/* model-space location of viewplane corner */
 
-extern int	fullfloat_mode;
+int			fullfloat_mode = 0;
+int			reproject_mode = 0;
+struct floatpixel	*curr_float_frame;	/* buffer of full frame */
+struct floatpixel	*prev_float_frame;
+int		reproj_cur;	/* number of pixels reprojected this frame */
+int		reproj_max;	/* out of total number of pixels */
+/* XXX should record width&height, in case size changes on-the-fly */
 
 /* Local communication with worker() */
 HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
@@ -187,6 +193,8 @@ grid_setup()
 	}
 }
 
+int	rt_savings;
+
 /*
  *			D O _ R U N
  *
@@ -200,6 +208,7 @@ do_run( a, b )
 
 	cur_pixel = a;
 	last_pixel = b;
+rt_savings = 0;
 
 	if( !rt_g.rtg_parallel )  {
 		/*
@@ -222,6 +231,7 @@ do_run( a, b )
 		}
 		rt_add_res_stats( ap.a_rt_i, &resource[cpu] );
 	}
+bu_log("rt_savings = %d\n", rt_savings);
 	return;
 }
 
@@ -299,14 +309,14 @@ genptr_t	arg;
 				if( a.a_y < sub_ymin || a.a_y > sub_ymax )
 					continue;
 			}
-#if 0
 			if( fullfloat_mode )  {
 				register struct floatpixel	*fp;
 				fp = &curr_float_frame[a.a_y*width + a.a_x];
-				if( fp->ff_frame >= 0 )
+				if( fp->ff_frame >= 0 )  {
+rt_savings++;	/* non-parallel */
 					continue;	/* pixel was reprojected */
+				}
 			}
-#endif
 
 			VSETALL( colorsum, 0 );
 			for( samplenum=0; samplenum<=hypersample; samplenum++ )  {

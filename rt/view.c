@@ -121,16 +121,6 @@ static struct scanline {
 
 static int	pwidth;			/* Width of each pixel (in bytes) */
 
-int	fullfloat_mode = 0;
-struct floatpixel {
-	double	ff_dist;		/* range to ff_hitpt[], <-INFINITY for miss */
-	float	ff_hitpt[3];
-	char	ff_color[3];
-	int	ff_frame;		/* >= 0 means pixel was reprojected */
-};
-struct floatpixel	*curr_float_frame;	/* buffer of full frame */
-struct floatpixel	*prev_float_frame;
-/* XXX should record width&height, in case size changes on-the-fly */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -434,9 +424,9 @@ register struct application *ap;
 view_end(ap)
 struct application *ap;
 {
-	if( buf_mode == BUFMODE_FULLFLOAT )  {
+	if( fullfloat_mode )  {
 		struct floatpixel	*tmp;
-		/* Transmit scanlines, if not done by rtsync? */
+		/* Transmitting scanlines, is done by rtsync before calling here. */
 		/* Exchange previous and current buffers.  No freeing. */
 		tmp = prev_float_frame;
 		prev_float_frame = curr_float_frame;
@@ -999,6 +989,7 @@ char	*framename;
 		break;	
 	case BUFMODE_FULLFLOAT:
 		if( !curr_float_frame )  {
+bu_log("mallocing curr_float_frame\n");
 			curr_float_frame = (struct floatpixel *)bu_malloc(
 				width * height * sizeof(struct floatpixel),
 				"floatpixel frame");
@@ -1016,8 +1007,9 @@ char	*framename;
 		}
 
 		/* Reproject previous frame */
-		if( prev_float_frame )  {
+		if( prev_float_frame && reproject_mode )  {
 			register struct floatpixel	*ip, *op;
+			int	count = 0;
 			for( ip = &prev_float_frame[width*height-1];
 			     ip >= prev_float_frame; ip--
 			) {
@@ -1026,10 +1018,10 @@ char	*framename;
 
 				if( ip->ff_dist <= -INFINITY )
 					continue;	/* was a miss */
-/* XXX has new model2view been computed yet? */
+				/* new model2view has been computed before here */
 				MAT4X3PNT( new_view_pt, model2view, ip->ff_hitpt );
-				ix = new_view_pt[X];
-				iy = new_view_pt[Y];
+				ix = new_view_pt[X] * width;
+				iy = new_view_pt[Y] * height;
 				/* See if reprojects off of screen */
 				if( ix < 0 || ix >= width )  continue;
 				if( iy < 0 || iy >= height )  continue;
@@ -1037,7 +1029,12 @@ char	*framename;
 				/* See if old pixel is more then N frames old */
 				/* re-use old pixel as new pixel */
 				*op = *ip;	/* struct copy */
+				count++;
 			}
+			reproj_cur = count;
+			reproj_max = width*height;
+		} else {
+			reproj_cur = reproj_max = 0;
 		}
 		break;
 #ifdef RTSRV
