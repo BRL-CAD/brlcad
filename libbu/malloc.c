@@ -398,7 +398,7 @@ char *
 bu_strdup(register const char *cp)
 {
 	register char	*base;
-	register int	len;
+	register size_t	len;
 
 	len = strlen( cp )+2;
 	base = bu_malloc( len, bu_strdup_message );

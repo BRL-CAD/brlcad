@@ -138,7 +138,7 @@ bu_vls_addr(register const struct bu_vls *vp)
  *			B U _ V L S _ E X T E N D
  */
 void
-bu_vls_extend(register struct bu_vls *vp, int extra)
+bu_vls_extend(register struct bu_vls *vp, unsigned int extra)
 {
 	BU_CK_VLS(vp);
 	if( extra < 40 )  extra = 40;

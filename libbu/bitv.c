@@ -43,7 +43,7 @@ static const char libbu_bitv_RCSid[] = "@(#)$Header$ (ARL)";
  *  For efficiency, the bit vector itself is not initialized.
  */
 struct bu_bitv *
-bu_bitv_new(int nbits)
+bu_bitv_new(unsigned int nbits)
 {
 	struct bu_bitv	*bv;
 	int		bv_bytes;
@@ -52,7 +52,7 @@ bu_bitv_new(int nbits)
 	bv_bytes = BU_BITS2BYTES(nbits);
 	total_bytes = sizeof(struct bu_bitv) - 2*sizeof(bitv_t) + bv_bytes;
 
-	bv = (struct bu_bitv *)bu_malloc( total_bytes, "struct bu_bitv" );
+	bv = (struct bu_bitv *)bu_malloc( (size_t)total_bytes, "struct bu_bitv" );
 	BU_LIST_INIT( &bv->l );
 	bv->l.magic = BU_BITV_MAGIC;
 	bv->nbits = bv_bytes * 8;
@@ -196,7 +196,7 @@ bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
 void
 bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
 {
-	int word_count, byte_no;
+	unsigned int word_count, byte_no;
 
 	BU_CK_VLS( v );
 	BU_CK_BITV( bv );
@@ -226,7 +226,7 @@ bu_hex_to_bitv(const char *str)
 {
 	char abyte[3];
 	const char *str_start;
-	int len=0;
+	unsigned int len=0;
 	int bytes;
 	struct bu_bitv *bv;
 	unsigned long c;

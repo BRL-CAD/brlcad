@@ -96,7 +96,7 @@ static struct bu_cmdtab bu_cmds[] = {
 void
 bu_badmagic_tcl(Tcl_Interp	*interp,
 		const long	*ptr,
-		long		magic,
+		unsigned long	magic,
 		const char	*str,
 		const char	*file,
 		int		line)

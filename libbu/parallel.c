@@ -133,7 +133,7 @@ static struct sched_param bu_param;
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
  */
-#if SUNOS >= 52
+#if defined(SUNOS) && SUNOS >= 52
 #	include <sys/unistd.h>
 #	include <thread.h>
 #	include <synch.h>
@@ -252,6 +252,7 @@ bu_cpulimit_set(int sec)
 		perror("bu_cpulimit_set: MEM limit(set)");
 	}
 #endif
+	if (sec < 0) sec = 0;
 }
 
 
@@ -550,7 +551,7 @@ bu_get_public_cpus(void)
 int
 bu_set_realtime(void)
 {
-#	if IRIX64 >= 64
+#	if defined(IRIX64) && IRIX64 >= 64
 	{
 		int	policy;
 
@@ -756,10 +757,10 @@ genptr_t	arg;
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
  */
-#  if SUNOS >= 52
+#  if defined(SUNOS) && SUNOS >= 52
 	static int	concurrency = 0; /* Max concurrency we have set */
 #  endif
-#  if SUNOS >= 52 || defined(HAS_POSIX_THREADS)
+#  if (defined(SUNOS) && SUNOS >= 52) || defined(HAS_POSIX_THREADS)
 	int		nthreadc;
 	int		nthreade;
 	rt_thread_t	thread;
@@ -1004,7 +1005,7 @@ genptr_t	arg;
 	/*
 	 * multithreading support for SunOS 5.X / Solaris 2.x
 	 */
-#  if SUNOS >= 52
+#  if defined(SUNOS) && SUNOS >= 52
 
 	thread = 0;
 	nthreadc = 0;
@@ -1125,7 +1126,7 @@ genptr_t	arg;
 			bu_log("bu_parallel(): thread_tbl[%d] = %d\n",
 			       i, thread_tbl[i]);
 		}
-#    if __FreeBSD__
+#    if defined(__FreeBSD__)
 		/* Is this FreeBSD-only? */
 		_thread_dump_info();
 #    endif

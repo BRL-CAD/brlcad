@@ -56,7 +56,7 @@ bu_hist_free(struct bu_hist *histp)
  *  It is expected that the structure is junk upon entry.
  */
 void
-bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, int nbins)
+bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, unsigned int nbins)
 {
 
 	if( max <= min )  max = min+1;
@@ -119,7 +119,7 @@ bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int
 #define	NMARKS	50
 	char		buf[256];
 	int		percent;
-	int		mark_count;
+	unsigned int	mark_count;
 	double		val;
 	int		nbins;
 

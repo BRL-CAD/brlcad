@@ -48,7 +48,7 @@ struct bu_vls *bu_association (const char *fname, const char *value, int field_s
 {
     char		*cp;
     FILE		*fp;
-    int			len;
+    size_t		len;
     struct bu_vls	*vp = 0;
     struct bu_vls	buffer;
 

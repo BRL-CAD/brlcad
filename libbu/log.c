@@ -303,7 +303,7 @@ char *fmt;
     
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) )  || bu_log_hooks_called) {
     	int ret;
-	int len;
+	size_t len;
 
 	if (bu_log_first_time) {
 	    bu_setlinebuf(stderr);
@@ -407,7 +407,7 @@ char *fmt;
     
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) || bu_log_hooks_called) {
     	int ret;
-	int len;
+	size_t len;
 
 	len = bu_vls_strlen(&output);
 	if(len){

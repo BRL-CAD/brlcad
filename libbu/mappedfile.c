@@ -187,7 +187,7 @@ dont_reuse:
 	/* Attempt to access as memory-mapped file */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	mp->buf = mmap(
-		(caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
+		(caddr_t)0, (size_t)sb.st_size, PROT_READ, MAP_PRIVATE,
 		fd, (off_t)0 );
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -200,10 +200,10 @@ dont_reuse:
 #  endif /* HAVE_SYS_MMAN_H */
 	{
 		/* Allocate a local buffer, and slurp it in */
-		mp->buf = bu_malloc( sb.st_size, mp->name );
+		mp->buf = bu_malloc( (size_t)sb.st_size, mp->name );
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		ret = read( fd, mp->buf, sb.st_size );
+		ret = read( fd, mp->buf, (size_t)sb.st_size );
 		bu_semaphore_release(BU_SEM_SYSCALL);
 
 		if( ret != sb.st_size )  {
@@ -385,7 +385,7 @@ bu_free_mapped_files(int verbose)
 		if( mp->is_mapped )  {
 			int	ret;
 			bu_semaphore_acquire(BU_SEM_SYSCALL);
-			ret = munmap( mp->buf, mp->buflen );
+			ret = munmap( mp->buf, (size_t)mp->buflen );
 			bu_semaphore_release(BU_SEM_SYSCALL);
 			if( ret < 0 )  perror("munmap");
 			/* XXX How to get this chunk of address space back to malloc()? */
