@@ -1,9 +1,9 @@
 #
-#				E - I D
+#				E _ I D
 #
 #	A TCL macro for MGED(1) to edit all objects with specified ident numbers
 #
-#	Usage -  'e-id ident[-ident] ...'
+#	Usage -  'e_id ident[-ident] ...'
 #	Author - Paul Tanenbaum
 #
 #	Grab the output of MGED's 'whichid' command, and use that to construct
@@ -26,12 +26,12 @@ foreach cmd $extern_commands {
 #
 #    The actual macro
 #
-proc e-id {args} {
+proc e_id {args} {
     #
     #	Ensure that at least one argument was given
     #
     if {$args == ""} {
-	puts "Usage: e-id <idents and/or ident_ranges>\n       \
+	puts "Usage: e_id <idents and/or ident_ranges>\n       \
 		(edit object(s) with the specified idents)"
 	return
     }
