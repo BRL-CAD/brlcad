@@ -107,6 +107,21 @@ register struct application *ap;
 		fflush(stderr);		/* In case of instant death */
 	}
 
+	/* Verify that direction vector has unit length */
+	if(debug) {
+		FAST fastf_t f, diff;
+		f = ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
+			ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y] +
+			ap->a_ray.r_dir[Z] * ap->a_ray.r_dir[Z];
+		diff = f - 1;
+		if( !NEAR_ZERO( diff ) )  {
+			rtlog("shootray: non-unit dir vect (x%d y%d lvl%d)\n",
+				ap->a_x, ap->a_y, ap->a_level );
+			f = 1/f;
+			VSCALE( ap->a_ray.r_dir, ap->a_ray.r_dir, f );
+		}
+	}
+
 	inv_dir[X] = inv_dir[Y] = inv_dir[Z] = INFINITY;
 	if(!NEAR_ZERO(ap->a_ray.r_dir[X])) inv_dir[X]=1.0/ap->a_ray.r_dir[X];
 	if(!NEAR_ZERO(ap->a_ray.r_dir[Y])) inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
