@@ -1,5 +1,14 @@
 # $Id$
 
+if ONLYRTS
+SUBDIRS = \
+	h \
+	libtcl8.4 \
+	libbn \
+	libbu \
+	librt \
+	librtserver
+else
 SUBDIRS = \
 	h \
 	libpng \
@@ -63,6 +72,7 @@ SUBDIRS = \
 	vas4 \
 	vdeck \
 	vfont
+endif
 
 DIST_SUBDIRS = $(SUBDIRS)
 

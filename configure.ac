@@ -61,6 +61,19 @@ AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
 	]	
 )
 
+onlyrts="no"
+AC_ARG_ENABLE(only-rts, AC_HELP_STRING(--enable-only-rts,
+		  [Only build enough stuff to for (and including) librtserver (for muves3)]) ,
+	[
+		if test "x$enableval" != "xno"
+		then
+			onlyrts="yes"
+		fi
+	]
+)
+echo "onlyrts: $onlyrts"
+AM_CONDITIONAL(ONLYRTS, test "x$onlyrts" = xyes)
+
 # XXX these flags are GCC-specific -- perhaps should set after the compiler check
 CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
 
