@@ -168,6 +168,11 @@ char	*argv[];
 	if( (who = getenv("USER")) != (char *)0 ) {
 		sprintf( comment, "converted_by=%s", who);
 		rle_putcom( strdup(comment), &outrle );
+	} else {
+		if( (who = getenv("LOGNAME")) != (char *)0 ) {
+			sprintf( comment, "converted_by=%s", who);
+			rle_putcom( strdup(comment), &outrle );
+		}
 	}
 #	ifdef BSD
 	gethostname( host, sizeof(host) );
