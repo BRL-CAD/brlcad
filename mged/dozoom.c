@@ -644,7 +644,7 @@ int axes;
 
       /* label axes */
       dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
-			   ((int)(2048.0 * v2[Y])) + 15, 1);
+			   ((int)(2048.0 * v2[Y])) + 15, 1, 0);
     }else{
       VMOVE(vlist.pt[i*2], m1);
       vlist.cmd[i*2] = RT_VLIST_LINE_MOVE;
@@ -657,7 +657,7 @@ int axes;
 
     /* label axes */
     dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
-		  ((int)(2048.0 * v2[Y])) + 15, 1);
+		  ((int)(2048.0 * v2[Y])) + 15, 1, 0);
   }
 
   dmp->dm_newrot(dmp, model2view, 0);
