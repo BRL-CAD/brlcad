@@ -81,7 +81,7 @@ char **argv;
 			/* Common case:  equal.  Give B&W NTSC average */
 			/* .35 R +  .55 G + .10 B, done in fixed-point */
 			register long i;
-			i = ((22937 * r1 + 36044 * g1 + 6553 * b1)>>16)-32;
+			i = ((22937 * r1 + 36044 * g1 + 6553 * b1)>>17);
 			if( i < 0 )  i = 0;
 			putc( i, stdout);
 			putc( i, stdout);
