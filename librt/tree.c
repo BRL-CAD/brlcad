@@ -222,6 +222,14 @@ static struct mater_info rt_no_mater = {
 	DB_INH_LOWER		/* mater inherit */
 };
 
+/*
+ * Note that while GED has a more limited MAXLEVELS, GED can
+ * work on sub-trees, while RT must be able to process the full tree.
+ * Thus the difference, and the large value here.
+ */
+#define	MAXLEVELS	64
+static struct directory	*path[MAXLEVELS];	/* Record of current path */
+
 double		rt_inv255 = 1.0/255.0;
 
 /*
@@ -279,10 +287,10 @@ char *node;
 
 		GETSTRUCT( regionp, region );
 		rt_log("Warning:  Top level solid, region %s created\n",
-			rt_path_str(0) );
+			rt_path_str(path,0) );
 		if( curtree->tr_op != OP_SOLID )
 			rt_bomb("root subtree not Solid");
-		regionp->reg_name = rt_strdup(rt_path_str(0));
+		regionp->reg_name = rt_strdup(rt_path_str(path,0));
 		rt_add_regtree( rtip, regionp, curtree );
 	}
 	return(0);	/* OK */
@@ -452,14 +460,6 @@ register union record *rec;
 	return(id);
 }
 
-/*
- * Note that while GED has a more limited MAXLEVELS, GED can
- * work on sub-trees, while RT must be able to process the full tree.
- * Thus the difference, and the large value here.
- */
-#define	MAXLEVELS	64
-static struct directory	*path[MAXLEVELS];	/* Record of current path */
-
 struct tree_list {
 	union tree *tl_tree;
 	int	tl_op;
@@ -496,7 +496,7 @@ struct mater_info *materp;
 
 	if( pathpos >= MAXLEVELS )  {
 		rt_log("%s: nesting exceeds %d levels\n",
-			rt_path_str(MAXLEVELS), MAXLEVELS );
+			rt_path_str(path,MAXLEVELS), MAXLEVELS );
 		return(TREE_NULL);
 	}
 	path[pathpos] = dp;
@@ -523,7 +523,7 @@ struct mater_info *materp;
 		bzero( (char *)curtree, sizeof(union tree) );
 		curtree->tr_op = OP_SOLID;
 		curtree->tr_a.tu_stp = stp;
-		curtree->tr_a.tu_name = rt_strdup(rt_path_str(pathpos));
+		curtree->tr_a.tu_name = rt_strdup(rt_path_str(path,pathpos));
 		curtree->tr_regionp = argregion;
 		goto out;
 	}
@@ -582,7 +582,7 @@ struct mater_info *materp;
 	if( rp->c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
 			rt_log("Warning:  region %s below region %s, ignored\n",
-				rt_path_str(pathpos),
+				rt_path_str(path,pathpos),
 				argregion->reg_name );
 		} else {
 			register struct region *nrp;
@@ -597,7 +597,7 @@ struct mater_info *materp;
 			nrp->reg_regionid = rp->c.c_regionid;
 			nrp->reg_aircode = rp->c.c_aircode;
 			nrp->reg_gmater = rp->c.c_material;
-			nrp->reg_name = rt_strdup(rt_path_str(pathpos));
+			nrp->reg_name = rt_strdup(rt_path_str(path,pathpos));
 			nrp->reg_mater = curmater;	/* struct copy */
 			/* Material property processing in rt_add_regtree() */
 			regionp = nrp;
@@ -640,13 +640,32 @@ struct mater_info *materp;
 		{
 			register struct animate *anp;
 
+			if ((nextdp->d_animate != ANIM_NULL) &&
+			    (rt_g.debug & DEBUG_ANIM)) {
+				rt_log("Animate %s/%s with...\n",
+				    rt_path_str(path,pathpos),mp->m_instname);
+			}
 			for( anp = nextdp->d_animate; anp != ANIM_NULL; anp = anp->an_forw ) {
 				register int i = anp->an_pathlen-2;
-				register int j = pathpos-1;
+				/*
+				 * pathlen - 1 would point to the leaf (a
+				 * solid), but the solid is implicit in "path"
+				 * so we need to backup "2" such that we point
+				 * at the combination just above this solid.
+				 */
+				register int j = pathpos;
 
+				if (rt_g.debug & DEBUG_ANIM) {
+					rt_log("\t%s\t",rt_path_str(
+					    anp->an_path, anp->an_pathlen-1));
+				}
 				for( ; i>=0 && j>=0; i--, j-- )  {
 					if( anp->an_path[i] != path[j] )  {
-rt_log("%s != %s\n", anp->an_path[i]->d_namep, path[j]->d_namep);
+						if (rt_g.debug & DEBUG_ANIM) {
+							rt_log("%s != %s\n",
+							     anp->an_path[i]->d_namep,
+							     path[j]->d_namep);
+						}
 						goto next_one;
 					}
 				}
@@ -674,11 +693,11 @@ next_one:			;
 			 * This matches GIFT's current behavior.
 			 */
 			rt_log("Warning:  Forced to create region %s\n",
-				rt_path_str(pathpos+1) );
+				rt_path_str(path, pathpos+1) );
 			if((tlp->tl_tree)->tr_op != OP_SOLID )
 				rt_bomb("subtree not Solid");
 			GETSTRUCT( xrp, region );
-			xrp->reg_name = rt_strdup(rt_path_str(pathpos+1));
+			xrp->reg_name = rt_strdup(rt_path_str(path, pathpos+1));
 			rt_add_regtree( rtip, xrp, (tlp->tl_tree) );
 			tlp->tl_tree = TREE_NULL;
 			continue;	/* no remaining subtree, go on */
@@ -839,7 +858,8 @@ struct region	*regionp;
  *			R T _ P A T H _ S T R
  */
 HIDDEN char *
-rt_path_str( pos )
+rt_path_str( whichpath, pos )
+struct directory *whichpath[];
 int pos;
 {
 	static char line[MAXLEVELS*(NAMESIZE+2)+10];
@@ -851,7 +871,7 @@ int pos;
 	line[0] = '/';
 	line[1] = '\0';
 	for( i=0; i<=pos; i++ )  {
-		(void)sprintf( cp, "/%s", (dp=path[i])->d_namep );
+		(void)sprintf( cp, "/%s", (dp=whichpath[i])->d_namep );
 		cp += strlen(cp);
 		if( (dp->d_flags & DIR_REGION) || dp->d_uses > 0 )  {
 			(void)sprintf( cp, "{{%d}}", dp->d_uses );
