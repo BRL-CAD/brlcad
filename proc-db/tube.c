@@ -226,7 +226,7 @@ char	*name;
 int	npts;
 double	radius;
 {
-	struct snurb *bp;
+	struct face_g_snurb *bp;
 	register int i;
 	int	nv;
 	int	cur_kv;
@@ -251,18 +251,18 @@ double	radius;
 
 	/*  Build the U knots */
 	for( i=0; i<N_CIRCLE_KNOTS; i++ )
-		bp->u_knots.knots[i] = circle_knots[i];
+		bp->u.knots[i] = circle_knots[i];
 
 	/* Build the V knots */
 	cur_kv = 0;		/* current knot value */
 	nv = 0;			/* current knot subscript */
 	for( i=0; i<4; i++ )
-		bp->v_knots.knots[nv++] = cur_kv;
+		bp->v.knots[nv++] = cur_kv;
 	cur_kv++;
 	for( i=4; i<(npts+4-2); i++ )
-		bp->v_knots.knots[nv++] = cur_kv++;
+		bp->v.knots[nv++] = cur_kv++;
 	for( i=0; i<4; i++ )
-		bp->v_knots.knots[nv++] = cur_kv;
+		bp->v.knots[nv++] = cur_kv;
 
 	/*
 	 *  The control mesh is stored in row-major order,
