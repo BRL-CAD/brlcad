@@ -236,14 +236,14 @@ Mat_Db_Entry	*entry;
 		register RGBpixel		*pixel;
 		register struct icon_texture	*iconp;
 		char				*file = entry->name + TEX_KEYLEN;
-	RES_ACQUIRE( &rt_g.res_results );
+	bu_semaphore_acquire( RT_SEM_RESULTS );
 	for(	iconp = icons;
 		iconp != NULL && strcmp( iconp->filenm, file ) != 0;
 		iconp = iconp->next )
 		;
 	if( iconp == NULL )
 		iconp = init_Icon_Texture( file, entry );
-	RES_RELEASE( &rt_g.res_results );
+	bu_semaphore_release( RT_SEM_RESULTS );
 	if( iconp == NULL )
 		return	0;
 	if(	uvp->uv_u > 1.0 || uvp->uv_u < 0.0
@@ -274,14 +274,14 @@ Mat_Db_Entry	*entry;
 		register RGBpixel		*pixel;
 		register struct fb_texture	*fbp;
 		char				*file = entry->name + TEX_KEYLEN;
-	RES_ACQUIRE( &rt_g.res_results );
+	bu_semaphore_acquire( RT_SEM_RESULTS );
 	for(	fbp = fbs;
 		fbp != NULL && strcmp( fbp->filenm, file ) != 0 ;
 		fbp = fbp->next )
 		;
 	if( fbp == NULL )
 		fbp = init_Fb_Texture( file, entry );
-	RES_RELEASE( &rt_g.res_results );
+	bu_semaphore_release( RT_SEM_RESULTS );
 	if( fbp == NULL )
 		return	0;
 	if(	uvp->uv_u > 1.0 || uvp->uv_u < 0.0

@@ -433,9 +433,9 @@ render_Scan()
 		threads of execution, so make copy. */
 		struct application a;
 
-	RES_ACQUIRE( &rt_g.res_worker );
+	bu_semaphore_acquire( RT_SEM_WORKER );
 	cpu = nworkers++;
-	RES_RELEASE( &rt_g.res_worker );
+	bu_semaphore_release( RT_SEM_WORKER );
 
 	resource[cpu].re_cpu = cpu;
 #ifdef RESOURCE_MAGIC
@@ -444,9 +444,9 @@ render_Scan()
 
 	for( ; ! user_interrupt; )
 		{
-		RES_ACQUIRE( &rt_g.res_worker );
+		bu_semaphore_acquire( RT_SEM_WORKER );
 		com = curr_scan++;
-		RES_RELEASE( &rt_g.res_worker );
+		bu_semaphore_release( RT_SEM_WORKER );
 
 		if( com > last_scan )
 			break;
@@ -538,9 +538,9 @@ render_Scan()
 				}
 			}
 		}
-	RES_ACQUIRE( &rt_g.res_worker );
+	bu_semaphore_acquire( RT_SEM_WORKER );
 	nworkers--;
-	RES_RELEASE( &rt_g.res_worker );
+	bu_semaphore_release( RT_SEM_WORKER );
 	return;
 	}
 
@@ -820,12 +820,12 @@ struct partition *pt_headp;
 		entry = &mat_tmp_entry;
 		if( ir_mapping & IR_READONLY )
 			{	int ir_level = 0;
-			RES_ACQUIRE( &rt_g.res_worker );
+			bu_semaphore_acquire( RT_SEM_WORKER );
 			octreep = find_Octant(	&ir_octree,
 						ihitp->hit_point,
 						&ir_level
 						);
-			RES_RELEASE( &rt_g.res_worker );
+			bu_semaphore_release( RT_SEM_WORKER );
 			}
 		else
 		if( ir_mapping & IR_EDIT )
@@ -836,7 +836,7 @@ struct partition *pt_headp;
 					int y = ap->a_y + y_fb_origin - ir_mapy;
 				/* Map temperature from IR image using
 					offsets. */
-				RES_ACQUIRE( &rt_g.res_stats );
+				bu_semaphore_acquire( RT_SEM_STATS );
 				if(	x < 0 || y < 0
 				    ||	fb_read( fbiop, x, y, pixel, 1 ) == -1
 					)
@@ -844,7 +844,7 @@ struct partition *pt_headp;
 				else
 					fahrenheit =
 					    pixel_To_Temp( (RGBpixel *) pixel );
-				RES_RELEASE( &rt_g.res_stats );
+				bu_semaphore_release( RT_SEM_STATS );
 				}
 			else
 			if( ir_doing_paint )
@@ -854,7 +854,7 @@ struct partition *pt_headp;
 				/* Unknown temperature, use out-of-band
 					value. */
 				fahrenheit = AMBIENT-1;
-			RES_ACQUIRE( &rt_g.res_worker );
+			bu_semaphore_acquire( RT_SEM_WORKER );
 			triep = add_Trie( pp->pt_regionp->reg_name,
 						&reg_triep );
 			octreep = add_Region_Octree(	&ir_octree,
@@ -868,10 +868,10 @@ struct partition *pt_headp;
 			else
 			if( fatal_error )
 				{
-				RES_RELEASE( &rt_g.res_worker );
+				bu_semaphore_release( RT_SEM_WORKER );
 				return	-1;
 				}
-			RES_RELEASE( &rt_g.res_worker );
+			bu_semaphore_release( RT_SEM_WORKER );
 			}
 		if( octreep != OCTREE_NULL )
 			{	register int index;
@@ -1758,11 +1758,11 @@ int
 abort_RT( sig )
 int sig;
 	{
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	(void) signal( SIGINT, abort_RT );
 	(void) fb_flush( fbiop );
 	user_interrupt = true;
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 #if STD_SIGNAL_DECLS
 	return;
 #else
@@ -1967,12 +1967,12 @@ vect_t aliasbuf[];
 		int y;
 	if( rt_g.debug && tty )
 		{
-		RES_ACQUIRE( &rt_g.res_syscall );
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		(void) sprintf( GRID_PIX_PTR, " [%04d-", ap->a_x/aperture_sz );
 		prnt_Timer( (char *) NULL );
 		IDLE_MOVE();
 		(void) fflush( stdout );
-		RES_RELEASE( &rt_g.res_syscall );
+		bu_semaphore_release( BU_SEM_SYSCALL );
 		}
 	if( hiddenln_draw )
 		return;
@@ -2073,17 +2073,17 @@ register struct application	*ap;
 		int y = ap->a_y/aperture_sz + y_fb_origin;
 	if( tracking_cursor )
 		{
-		RES_ACQUIRE( &rt_g.res_stats );
+		bu_semaphore_acquire( RT_SEM_STATS );
 		(void) fb_cursor( fbiop, 1, x, y );
-		RES_RELEASE( &rt_g.res_stats );
+		bu_semaphore_release( RT_SEM_STATS );
 		}
 	if( tty )
 		{
-		RES_ACQUIRE( &rt_g.res_stats );
+		bu_semaphore_acquire( RT_SEM_STATS );
 		(void) sprintf( GRID_SCN_PTR, "%04d-", ap->a_y/aperture_sz );
 		(void) sprintf( GRID_PIX_PTR, " [%04d-", ap->a_x/aperture_sz );
 		update_Screen();
-		RES_RELEASE( &rt_g.res_stats );
+		bu_semaphore_release( RT_SEM_STATS );
 		}
 	return;
 	}
@@ -2113,18 +2113,18 @@ RGBpixel scanbuf[];
 
 	if( tty )
 		{
-		RES_ACQUIRE( &rt_g.res_stats );
+		bu_semaphore_acquire( RT_SEM_STATS );
 		prnt_Timer( (char *) NULL );
 		IDLE_MOVE();
 		(void) fflush( stdout );
-		RES_RELEASE( &rt_g.res_stats );
+		bu_semaphore_release( RT_SEM_STATS );
 		}
 	else
 		{	char	grid_y[5];
-		RES_ACQUIRE( &rt_g.res_stats );
+		bu_semaphore_acquire( RT_SEM_STATS );
 		(void) sprintf( grid_y, "%04d", ap->a_y/aperture_sz );
 		prnt_Timer( grid_y );
-		RES_RELEASE( &rt_g.res_stats );
+		bu_semaphore_release( RT_SEM_STATS );
 		}
 	if( query_region )
 		return;
@@ -2134,7 +2134,7 @@ RGBpixel scanbuf[];
 		return;
 	if( pix_buffered == B_LINE )
 		{
-		RES_ACQUIRE( &rt_g.res_stats );
+		bu_semaphore_acquire( RT_SEM_STATS );
 		if( strcmp( fb_file, "/dev/remote" ) == 0 )
 			{	char ystr[5];
 			(void) sprintf( ystr, "%04d", ap->a_y );
@@ -2153,7 +2153,7 @@ RGBpixel scanbuf[];
 		else
 		if( fb_write( fbiop, x, y, (unsigned char *)(scanbuf+x), ct ) == -1 )
 			rt_log( "Write of scan line (%d) failed.\n", ap->a_y );
-		RES_RELEASE( &rt_g.res_stats );
+		bu_semaphore_release( RT_SEM_STATS );
 		}
 	return;
 	}

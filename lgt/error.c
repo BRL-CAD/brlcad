@@ -68,7 +68,7 @@ fb_log( char *fmt, ... )
 	{
 	va_list ap;
 	/* We use the same lock as malloc.  Sys-call or mem lock, really */
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	va_start( ap, fmt );
 	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
 		{ /* Only move cursor and scroll if newline is output.	*/
@@ -109,7 +109,7 @@ fb_log( char *fmt, ... )
 		(void) fflush( stderr );
 		}
 	va_end( ap );
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	return;
 	}
 #else 
@@ -120,7 +120,7 @@ void
 fb_log(fmt, a,b,c,d,e,f,g,h,i)
 char *fmt;
 	{
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
 		{ /* Only move cursor and scroll if newline is output.	*/
 			static int	newline = 1;
@@ -156,7 +156,7 @@ char *fmt;
 		}
 	else
 		(void) fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	}
 #else 
 
@@ -172,7 +172,7 @@ char	*fmt;
 va_dcl
 	{	va_list		ap;
 	/* We use the same lock as malloc.  Sys-call or mem lock, really */
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	va_start( ap );
 	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
 		{ /* Only move cursor and scroll if newline is output.	*/
@@ -213,7 +213,7 @@ va_dcl
 		(void) fflush( stderr );
 		}
 	va_end( ap );
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	return;
 	}
 #endif

@@ -244,7 +244,7 @@ pcsrv, control_host, tcp_port);
 	/* Note that the LIBPKG error logger can not be
 	 * "bu_log", as that can cause bu_log to be entered recursively.
 	 * Given the special version of bu_log in use here,
-	 * that will result in a deadlock in RES_ACQUIRE(res_syscall)!
+	 * that will result in a deadlock in bu_semaphore_acquire(res_syscall)!
 	 *  libpkg will default to stderr via pkg_errlog(), which is fine.
 	 */
 	pcsrv = pkg_open( control_host, tcp_port, "tcp", "", "",
@@ -358,12 +358,7 @@ pcsrv, control_host, tcp_port);
 		rt_g.rtg_parallel = 1;
 	} else
 		rt_g.rtg_parallel = 0;
-	RES_INIT( &rt_g.res_syscall );
-	RES_INIT( &rt_g.res_worker );
-	RES_INIT( &rt_g.res_stats );
-	RES_INIT( &rt_g.res_results );
-	RES_INIT( &rt_g.res_model );
-	/* DO NOT USE bu_log() before this point! */
+	bu_semaphore_init( BU_SEM_LAST );
 
 	bu_log("load average = %f, using %d of %d cpus\n",
 		load,
@@ -938,7 +933,7 @@ bu_log( char *fmt, ... )
 	static char *cp = buf+1;
 
 	if( print_on == 0 )  return;
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	va_start( ap, fmt );
 	(void)vsprintf( cp, fmt, ap );
 	va_end(ap);
@@ -957,7 +952,7 @@ bu_log( char *fmt, ... )
 	}
 	cp = buf+1;
 out:
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 }
 #else /* __STDC__ */
 
@@ -986,7 +981,7 @@ va_dcl
 	if( print_on == 0 )  return;
 	if( cp == (char *)0 )  cp = buf+1;
 
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #if defined(mips) || (defined(alliant) && defined(i860))
@@ -1018,7 +1013,7 @@ va_dcl
 	}
 	cp = buf+1;
 out:
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 }
 #else
 /* VARARGS */
@@ -1031,7 +1026,7 @@ int	a, b, c, d, e, f, g, h;
 	static char *cp = buf+1;
 
 	if( print_on == 0 )  return;
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	(void)sprintf( cp, str, a, b, c, d, e, f, g, h );
 	while( *cp++ )  ;		/* leaves one beyond null */
 	if( cp[-2] != '\n' )
@@ -1047,7 +1042,7 @@ int	a, b, c, d, e, f, g, h;
 	}
 	cp = buf+1;
 out:
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 }
 #endif /* not BSD */
 #endif /* not __STDC__ */
