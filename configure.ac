@@ -46,7 +46,6 @@ dnl
 
 AC_PREREQ(2.50)
 
-
 AC_INIT(BRL-CAD, 7.0, [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
 AC_CONFIG_AUX_DIR(misc)
@@ -88,7 +87,14 @@ fi
 AC_CONFIG_SRCDIR([src/librt/bool.c])
 AC_PREFIX_DEFAULT(/usr/brlcad)
 
-AM_INIT_AUTOMAKE
+AC_MSG_CHECKING([whether dependency tracking should be enabled])
+if test -d $srcdir/CVS ; then
+	AC_MSG_RESULT(it should)
+	AM_INIT_AUTOMAKE
+else
+	AC_MSG_RESULT(it should not)
+	AM_INIT_AUTOMAKE(no-dependencies)
+fi
 AM_CONFIG_HEADER(include/config.h)
 
 # automatically enable and load our configure cache file if available
@@ -313,16 +319,20 @@ AC_ARG_ENABLE(warnings,
 AC_MSG_RESULT($use_warnings)
 
 # debugging
-AC_MSG_CHECKING(whether to enable debug mode compilation)
-use_debug=no
+AC_MSG_CHECKING(whether to disable debug mode compilation)
+use_debug=yes
 AC_ARG_ENABLE(debug,
-	AC_HELP_STRING(--enable-debug,
-		[enable debug symbols (default=no)]),
-	[if test "x$enable_debug" != "xno" ; then
-		use_debug=yes
+	AC_HELP_STRING(--disable-debug,
+		[disable debug symbols (default=no)]),
+	[if test "x$disable_debug" != "xno" ; then
+		use_debug=no
 	fi]
 )
-AC_MSG_RESULT($use_debug)
+if test "x$use_debug" = "xyes" ; then
+	AC_MSG_RESULT(no)
+else
+	AC_MSG_RESULT(yes)
+fi
 
 # profile
 AC_MSG_CHECKING(whether to enable profile mode compilation)
@@ -368,9 +378,10 @@ esac
 AC_SUBST(PTHREAD_LIBS)
 AM_CONDITIONAL(IRIX, [test "x$is_irix" == yes])
 
-dnl XXX should only add to build paths when something fails that is necessary
-dnl additionally, a compiler might complain if /usr/local or /sw are already
-dnl in the system search path -- so need to try a compile test..
+dnl XXX should only add to build paths when something fails that is
+dnl necessary additionally, a compiler might complain if /usr/local or
+dnl /sw are already in the system search path -- so need to try a
+dnl compile test..
 
 dnl autosearch /usr/local
 AC_MSG_CHECKING([for /usr/local])
@@ -407,6 +418,12 @@ AC_SUBST(GL_LIBS)
 LEX_CFLAGS="-Dyylex=cmd_nop"
 AC_SUBST(LEX_CFLAGS)
 
+# override the default autoconf "-O3 -g" cflags if user has not
+# modified them
+if test "x$CFLAGS" = "x" ; then
+	CFLAGS=" "
+fi
+
 
 dnl **************************
 dnl *** Check for programs ***
@@ -434,7 +451,8 @@ AC_PATH_PROG(CP, cp)
 AC_PATH_PROG(RM, rm)
 
 dnl figure out which compiler is seems like we are using
-dnl supported values include: gcc, mipspro, sunpro
+dnl detected values include: gcc, mipspro, sunpro
+dnl XXX -- none of the tests should be compiler-specific, but it's good to know in the log
 compiler=unknown
 
 dnl Determine whether we are using GCC
@@ -689,8 +707,7 @@ AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 
-dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped?
-dnl ============================================================
+dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped.
 AC_MSG_CHECKING([union wait])
 AC_CACHE_VAL(tcl_cv_union_wait,
     AC_TRY_LINK([#include <sys/types.h>
@@ -703,7 +720,6 @@ AC_MSG_RESULT($tcl_cv_union_wait)
 if test $tcl_cv_union_wait = no; then
     AC_DEFINE(NO_UNION_WAIT,, From Tcl -- Lacking a "union wait")
 fi
-dnl ============================================================
 
 dnl XXX -- need to really check for time zone
 AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
@@ -712,7 +728,6 @@ AC_CHECK_DECL(sys_errlist,
 	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]), 
 	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),
 	      [# include <stdio.h>])
-
 
 dnl XXX -- necessary checks from tcl8.4 tcl.m4
 builtin(include,src/other/libtcl/unix/tcl.m4)
@@ -724,94 +739,133 @@ dnl ******************************************
 dnl *** Check for compiler characteristics ***
 dnl ******************************************
 
-dnl flags that should work across all known compilers
+dnl include the BRL-CAD include directory
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/include"
 
-dnl flags that are required but not tied to a compilation style
-case "x$compiler" in
-	xgcc*)
-		CFLAGS="$CFLAGS -fno-strict-aliasing"
-		;;
-esac
-
 dnl try to use -pipe to speed up the compiles
-
-AC_MSG_CHECKING([if the compiler understands -pipe])
+pipe_flag="-pipe"
+AC_MSG_CHECKING([if the compiler understands $pipe_flag])
+pipe_flag_works=yes
 PRECFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS -pipe"
-AC_TRY_COMPILE( [], [],
-	[ AC_MSG_RESULT(yes) ], 
-	[
-		CFLAGS="$PRECFLAGS"
-		AC_MSG_RESULT(no)
-	]
-)
+PRELDFLAGS="$LDFLAGS"
+CFLAGS="$CFLAGS $pipe_flag"
+LDFLAGS="$LDFLAGS $pipe_flag"
+AC_TRY_COMPILE( [], [], [], [pipe_flag_works=no])
+AC_MSG_RESULT($pipe_flag_works)
+
+if test "$pipe_flag_works" = "xno" ; then
+	CFLAGS="$PRECFLAGS"
+	LDFLAGS="$PRELDFLAGS"
+fi
+
+dnl check for -fno-strict-aliasing
+fno_strict_aliasing_flag="-fno-strict-aliasing"
+AC_MSG_CHECKING([if the compiler understands $fno_strict_aliasing_flag])
+fno_strict_aliasing_flag_works=yes
+PRECFLAGS="$CFLAGS"
+PRELDFLAGS="$LDFLAGS"
+CFLAGS="$CFLAGS $fno_strict_aliasing_flag"
+LDFLAGS="$LDFLAGS $fno_strict_aliasing_flag"
+AC_TRY_COMPILE( [], [], [], [fno_strict_aliasing_flag_works=no])
+AC_MSG_RESULT($fno_strict_aliasing_flag_works)
+
+if test "x$fno_strict_aliasing_flag_works" = "xno" ; then
+	CFLAGS="$PRECFLAGS"
+	LDFLAGS="$PRELDFLAGS"
+fi
 
 dnl optimization flags
 if test "x$use_optimized" != "xno" ; then
-	case "x$compiler" in
-		xgcc*)
-			CFLAGS="$CFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
-			LDFLAGS="$LDFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
-			;;
-		xmipspro*)
-			CFLAGS="$CFLAGS -O3"
-			LDFLAGS="$LDFLAGS -O3"
-			;;
-		*)
-			AC_MSG_WARN([Don't know how to compile optimized with this compiler])
-			CFLAGS="$CFLAGS -O3"
-			LDFLAGS="$LDFLAGS -O3"
-			AC_MSG_NOTICE([Will try to use -O3 (use CFLAGS and LDFLAGS to override)])
-			;;
-	esac
+	O3_flag="-O3"
+	AC_MSG_CHECKING([if the compiler understands $O3_flag])
+	O3_flag_works=yes
+	PRECFLAGS="$CFLAGS"
+	PRELDFLAGS="$LDFLAGS"
+	CFLAGS="$CFLAGS $O3_flag"
+	LDFLAGS="$LDFLAGS $O3_flag"
+	AC_TRY_COMPILE( [], [], [], [O3_flag_works=no])
+	AC_MSG_RESULT($O3_flag_works)
+
+	if test "x$O3_flag_works" = "xno" ; then
+		AC_MSG_WARN([Don't know how to compile optimized with this compiler])
+		CFLAGS="$PRECFLAGS"
+		LDFLAGS="$PRELDFLAGS"
+	fi
+
+	dnl check for a slew of gcc optimizations that may or may not be available with -O3
+	extra_optimization_flag="-fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
+	AC_MSG_CHECKING([if the compiler understands extra optimization flags])
+	extra_optimization_flag_works=yes
+	PRECFLAGS="$CFLAGS"
+	PRELDFLAGS="$LDFLAGS"
+	CFLAGS="$CFLAGS $extra_optimization_flag"
+	LDFLAGS="$LDFLAGS $extra_optimization_flag"
+	AC_TRY_COMPILE( [], [], [], [extra_optimization_flag_works=no])
+	AC_MSG_RESULT($extra_optimization_flag_works)
+
+	if test "x$extra_optimization_flag_works" = "xno" ; then
+		CFLAGS="$PRECFLAGS"
+		LDFLAGS="$PRELDFLAGS"
+	fi
 fi
 
 dnl debug flags
 if test "x$use_debug" != "xno" ; then
-	case "x$compiler" in
-		xgcc*)
-			CFLAGS="$CFLAGS -g"
-			LDFLAGS="$LDFLAGS -g"
-			;;
-		xmipspro*)
-			CFLAGS="$CFLAGS -g"
-			LDFLAGS="$LDFLAGS -g"
-			;;
-		*)
-			AC_MSG_WARN([Do not know how to debug with this compiler])
-			CFLAGS="$CFLAGS -g"
-			LDFLAGS="$LDFLAGS -g"
-			AC_MSG_NOTICE([Will try to use -g (use CFLAGS and LDFLAGS to override)])
-			;;
-	esac
+	g_flag="-g"
+	AC_MSG_CHECKING([if the compiler understands $g_flag])
+	g_flag_works=yes
+	PRECFLAGS="$CFLAGS"
+	PRELDFLAGS="$LDFLAGS"
+	CFLAGS="$CFLAGS $g_flag"
+	LDFLAGS="$LDFLAGS $g_flag"
+	AC_TRY_COMPILE( [], [], [], [g_flag_works=no])
+	AC_MSG_RESULT($g_flag_works)
+
+	if test "x$g_flag_works" = "xno" ; then
+		AC_MSG_WARN([Do not know how to debug with this compiler])
+		CFLAGS="$PRECFLAGS"
+		LDFLAGS="$PRELDFLAGS"
+	fi
 fi
 
 dnl profile flags
 if test "x$use_profiling" != "xno" ; then
-	case "x$compiler" in
-		xgcc*)
-			CFLAGS="$CFLAGS -pg"
-			LDFLAGS="$LDFLAGS -pg"
-			;;
-		*)
-			AC_MSG_WARN([Don't know how to profile with this compiler])
-			;;
-	esac
+	pg_flag="-pg"
+	AC_MSG_CHECKING([if the compiler understands $pg_flag])
+	pg_flag_works=yes
+	PRECFLAGS="$CFLAGS"
+	PRELDFLAGS="$LDFLAGS"
+	CFLAGS="$CFLAGS $pg_flag"
+	LDFLAGS="$LDFLAGS $pg_flag"
+	AC_TRY_COMPILE( [], [], [], [pg_flag_works=no])
+	AC_MSG_RESULT($pg_flag_works)
+
+	if test "x$pg_flag_works" = "xno" ; then
+		AC_MSG_WARN([Don't know how to profile with this compiler])
+		CFLAGS="$PRECFLAGS"
+		LDFLAGS="$PRELDFLAGS"
+	fi
 fi
 
 dnl verbose warning flags
 if test "x$use_warnings" != "xno" ; then
-	case "x$compiler" in
-		xgcc*)
-			CFLAGS="$CFLAGS -W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion"
-			# XXX also of interest
-			# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
-			;;
-		*)
-			AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
-			;;
-	esac
+	warning_flag="-W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion"
+		# XXX also of interest
+		# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
+	AC_MSG_CHECKING([if the compiler understands warning flags])
+	warning_flag_works=yes
+	PRECFLAGS="$CFLAGS"
+	PRELDFLAGS="$LDFLAGS"
+	CFLAGS="$CFLAGS $warning_flag"
+	LDFLAGS="$LDFLAGS $warning_flag"
+	AC_TRY_COMPILE( [], [], [], [warning_flag_works=no])
+	AC_MSG_RESULT($warning_flag_works)
+
+	if test "x$warning_flag_works" = "xno" ; then
+		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
+		CFLAGS="$PRECFLAGS"
+		LDFLAGS="$PRELDFLAGS"
+	fi
 fi
 
 AC_C_CONST
@@ -1443,3 +1497,4 @@ fi
 echo ---
 echo "$0 complete, type 'make' to begin building"
 echo
+
