@@ -832,7 +832,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 	int perspective=-1;
 	char dbName[512];
 	char objects[1024];
-	char *editArgv[2];
+	char *editArgv[3];
 
 	/* save previous interactive state */
 	int prevInteractive = interactive;
@@ -842,12 +842,11 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 	struct stat dbInode;
 	struct stat scriptInode;
 
+#if 0
 	/* for view orientation */
 	vect_t xlate;
 	mat_t new_cent;
 	
-
-#if 0
 	double viewsize;
 	double orientation[4]={0.0, 0.0, 0.0, 0.0};
 	vect_t eye_pt={0.0, 0.0, 0.0};
@@ -974,7 +973,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 
 		  /* now get the objects listed */
 		  fscanf(fp, "%s", objects);
-		  /*			bu_log("objects=%s\n", objects);*/
+		  /*		  bu_log("OBJECTS=%s\n", objects);*/
 		  while ((!feof(fp)) && (strncmp(objects, "\\", 1)!=0)) {
 
 		    /* clean off the single quotes... */
@@ -991,9 +990,10 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		      Tcl_AppendResult(interp, "Unable to load object: ", objects, "\n", (char *)NULL);
 		    }
 		    
+		    /* bu_log("objects=%s\n", objects);*/
 		    fscanf(fp, "%s", objects);
-		    /*				bu_log("objects=%s\n", objects);*/
 		  }
+
 		  /* end iteration over reading in listed objects */
 		} else if (strncmp(buffer, "<<EOF", 5)==0) {
 		  char *cmdBuffer = NULL;
@@ -1929,7 +1929,10 @@ int	argc;
 {
 	if( argc < 2 )
 		return(-1);
-	view_state->vs_vop->vo_scale = atof(argv[1])*0.5;
+	/* for some reason, scale is supposed to be half of size... */
+	view_state->vs_vop->vo_size = atof(argv[1]);
+	view_state->vs_vop->vo_scale = view_state->vs_vop->vo_size * 0.5;
+	view_state->vs_vop->vo_invSize = 1.0 / view_state->vs_vop->vo_size;
 	return(0);
 }
 
@@ -2337,5 +2340,5 @@ cm_null(argc, argv)
 char	**argv;
 int	argc;
 {
-	return(0);
+  return(0);
 }
