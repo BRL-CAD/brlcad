@@ -106,6 +106,7 @@ struct partition *PartHeadp;
 		return(0);
 	}
 	hitp = pp->pt_inhit;
+	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
 
 	/*
 	 * Diffuse reflectance from each light source
@@ -236,6 +237,8 @@ struct partition *PartHeadp;
 		return(0);
 	}
 	hitp = pp->pt_inhit;
+	/* XXX  This should be pushed down into materials routines */
+	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
 
 	if(rt_g.debug&DEBUG_HITS)  {
 		rt_pr_pt(pp);

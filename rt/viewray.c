@@ -56,6 +56,8 @@ register struct partition *PartHeadp;
 	register struct partition *pp = PartHeadp->pt_forw;
 
 	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
+		RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+		RT_HIT_NORM( pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray) );
 		wray( pp, ap, stdout );
 	}
 }

@@ -79,6 +79,9 @@ char *scanbuf;		/*** Output buffering, for parallelism */
 int npsw = 1;		/* number of worker PSWs to run */
 /***** end variables shared with worker() */
 
+extern int end;		/* Conventionally, end of initial memory */
+static char *endptr = (char *)&end;
+
 /*
  *			M A I N
  */
@@ -274,7 +277,7 @@ char **argv;
 		Dcreate( worker );
 	}
 #endif
-	fprintf(stderr,"initial memory use=%d.\n",sbrk(0) );
+	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-endptr );
 #endif
 
 do_more:

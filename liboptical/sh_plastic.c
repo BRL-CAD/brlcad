@@ -346,8 +346,7 @@ register struct partition *pp;
 			register struct soltab *stp;
 			/* Record passing through the solid */
 			stp = pp->pt_outseg->seg_stp;
-			rt_functab[stp->st_id].ft_norm(
-				pp->pt_outhit, stp, &(ap->a_ray) );
+			RT_HIT_NORM( pp->pt_outhit, stp, &(ap->a_ray) );
 			wray( pp, ap, stdout );
 		}
 		/* Nothing more to do for this ray */
@@ -509,9 +508,12 @@ struct partition *PartHeadp;
 
 	hitp = pp->pt_inhit;
 	if( !NEAR_ZERO(hitp->hit_dist, 10) )  {
-		if(rt_g.debug&DEBUG_HITS)  {
+/**		if(rt_g.debug&DEBUG_HITS) **/
+		{
+			stp = pp->pt_inseg->seg_stp;
+			RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
 			rt_log("phg_rhit:  '%s' inhit %g not near zero!\n",
-				pp->pt_inseg->seg_stp->st_name, hitp->hit_dist);
+				stp->st_name, hitp->hit_dist);
 			rt_pr_hit("inhit", hitp);
 			rt_pr_hit("outhit", pp->pt_outhit);
 		}
@@ -519,6 +521,8 @@ struct partition *PartHeadp;
 	}
 
 	hitp = pp->pt_outhit;
+	stp = pp->pt_outseg->seg_stp;
+	RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
 	if( hitp->hit_dist >= INFINITY )  {
 		if(rt_g.debug&DEBUG_HITS)
 			rt_log("phg_rhit:  (%g,%g) bad!\n",
@@ -526,9 +530,6 @@ struct partition *PartHeadp;
 		goto bad;
 	}
 
-	stp = pp->pt_outseg->seg_stp;
-	rt_functab[stp->st_id].ft_norm(
-		hitp, stp, &(ap->a_ray) );
 	VMOVE( ap->a_uvec, hitp->hit_point );
 	/* Safety check */
 	if( rt_g.debug && (!NEAR_ZERO(hitp->hit_normal[X], 1.001) ||
@@ -639,7 +640,17 @@ register int cnt;
 	return( result );
 }
 
-/* These shadow functions return a boolean "light_visible" */
+/* 
+ *			L I G H T _ H I T
+ *
+ *  These shadow functions return a boolean "light_visible".
+ * 
+ *  This is an incredibly simplistic algorithm, in need of improvement.
+ *  If glass is hit, we need to keep going.
+ *  Reflected light can't be dealt with at all.
+ *  Would also be nice to return an energy level, rather than
+ *  a boolean, which could account for lots of interesting effects.
+ */
 light_hit(ap, PartHeadp)
 struct application *ap;
 struct partition *PartHeadp;

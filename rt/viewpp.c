@@ -68,6 +68,7 @@ struct partition *PartHeadp;
 		return(0);
 	}
 	hitp = pp->pt_inhit;
+	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
 
 #define pchar(c) {putc(c,stdout);if(col++==74){putc('\n',stdout);col=0;}}
 
