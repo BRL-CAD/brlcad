@@ -2887,7 +2887,7 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 	old_faces = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "old_faces" );
 	piece = (int *)bu_calloc( tris_per_piece * 3, sizeof( int ), "piece" );
 	vert_count = (unsigned char *)bu_malloc( bot->num_faces * sizeof( unsigned char ), "vert_count" );
-	piece_verts = (int *)bu_malloc( tris_per_piece * 3 * sizeof( int ), "piece_verts" );
+	piece_verts = (int *)bu_malloc( (tris_per_piece * 3 + 1) * sizeof( int ), "piece_verts" );
 	centers = (fastf_t *)NULL;
 
 	if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
@@ -2907,7 +2907,7 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 		int done_with_piece;
 
 		/* initialize piece_verts */
-		for( i=0 ; i<tris_per_piece*3 ; i++ ) {
+		for( i=0 ; i<tris_per_piece*3+1 ; i++ ) {
 			piece_verts[i] = -1;
 		}
 
@@ -2980,17 +2980,52 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 					    v1 == piece_verts[j] ||
 					    v2 == piece_verts[j] ) {
 						vert_count[i]++;
-						if( vert_count[i] > max_verts ) {
-							max_verts = vert_count[i];
-						}
 					}
+				}
+
+				if( vert_count[i] > 1 ) {
+					/* add this face to the piece */
+					VMOVE( &piece[piece_len*3], &old_faces[i*3] );
+					if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+						VMOVE( &piece_norms[piece_len*3], &bot->face_normals[i*3] );
+					}
+
+					/* Add its vertices to the list of piece vertices */
+					Add_unique_verts( piece_verts, &old_faces[i*3] );
+
+					/* mark this face as used */
+					VSETALL( &old_faces[i*3], -1 );
+
+					/* update counts */
+					piece_len++;
+					faces_left--;
+					vert_count[i] = 0;
+
+					/* check if this piece is done */
+					if( piece_len == tris_per_piece || faces_left == 0 ) {
+						/* copy this piece to the "new_faces" list */
+						for( j=0 ; j<piece_len ; j++ ) {
+							VMOVE( &new_faces[new_face_count*3], &piece[j*3] );
+							if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+								VMOVE( &new_norms[new_face_count*3], &piece_norms[j*3] );
+							}
+							new_face_count++;
+						}
+						piece_len = 0;
+						max_verts = 0;
+						done_with_piece = 1;
+						break;
+					}
+				}
+				if( vert_count[i] > max_verts ) {
+					max_verts = vert_count[i];
 				}
 			}
 
 			/* set this variable to 2, means look for faces with at least common edges */
 			max_verts_min = 2;
 
-			if( max_verts == 0 ) {
+			if( max_verts == 0 && !done_with_piece ) {
 				/* none of the remaining faces has any vertices in common with the current piece */
 				int face_to_add;
 
@@ -3029,10 +3064,10 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 					max_verts = 0;
 					done_with_piece = 1;
 				}
-			} else if( max_verts == 1 ) {
+			} else if( max_verts == 1 && !done_with_piece ) {
 				/* the best we can find is common vertices */
 				max_verts_min = 1;
-			} else {
+			} else if( !done_with_piece ) {
 				/* there are some common edges, so ignore simple shared vertices */
 				max_verts_min = 2;
 			}
@@ -3041,7 +3076,7 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 			 * do this in a loop that starts by only accepting the faces with the
 			 * most vertices in common with the current piece
 			 */
-			while( max_verts >= max_verts_min ) {
+			while( max_verts >= max_verts_min && !done_with_piece ) {
 				/* check every face */
 				for( i=0 ; i<bot->num_faces ; i++ ) {
 					/* if this face has enough vertices in common with the piece,
