@@ -619,15 +619,14 @@ gui_output( str )
 char *str;
 {
 	char buf[10240];
-	int ret;
 	char *old;
 
-	ret = sprintf(buf, ".i.f.text insert insert \"%s\"", str);
+	sprintf(buf, ".i.f.text insert insert \"%s\"", str);
 	Tcl_Eval(interp, buf);
 	Tcl_Eval(interp, ".i.f.text yview -pickplace insert");
 	Tcl_Eval(interp, "set printend [.i.f.text index insert]");
 
-	return ret;
+	return strlen(str);
 }
 
 
