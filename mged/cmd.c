@@ -650,6 +650,27 @@ cmd_nop(clientData, interp, argc, argv)
 
 
 /*
+ *			C M D _ G E T _ P T R
+ *
+ *  Returns an appropriately-formatted string that can later be reinterpreted
+ *  (using atol() and a cast) as a a pointer.
+ */
+
+int
+cmd_get_ptr(clientData, interp, argc, argv)
+ClientData	clientData;
+Tcl_Interp     *interp;
+int		argc;
+char	      **argv;
+{
+	char buf[128];
+
+	sprintf( buf, "%ld", (long)(*((void **)clientData)) );
+	Tcl_AppendResult( interp, buf, (char *)NULL );
+	return TCL_OK;
+}
+
+/*
  *
  * Sets up the Tcl interpreter
  */ 
@@ -814,6 +835,7 @@ cmd_setup()
 				(Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "stuff_str", cmd_stuff_str, (ClientData)NULL,
 				(Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "get_dbip", cmd_get_ptr, (ClientData)&dbip, (Tcl_CmdDeleteProc *)NULL);
 
 	/* A synonym, to allow cut-n-paste of rt animation scripts into mged */
 	(void)Tcl_CreateCommand(interp, "viewsize", f_view, (ClientData)NULL,
@@ -827,15 +849,6 @@ cmd_setup()
 	/* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
 	bn_tcl_setup( interp );
 	rt_tcl_setup( interp );
-	/* Call it dbip since it looks like a pointer to Tcl */
-	Tcl_LinkVar( interp, "dbip", (char *)&dbih,
-		     TCL_LINK_INT|TCL_LINK_READ_ONLY );
-
-#if THIS_DOESNT_WORK_BECAUSE_THE_DATABASE_ISNT_OPEN_YET	
-	/* XXX Change from .db to "db" & eliminate mged-specific "db" command*/
-	if( Tcl_Eval(interp, "set wdbp [wdb_open .db disk $dbip]") != TCL_OK )
-		bu_log( "%s", interp->result );
-#endif
 
 	tkwin = NULL;
 }
