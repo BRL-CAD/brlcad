@@ -1060,8 +1060,7 @@ dnl XXX -- need to really check for time zone
 AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
 
 AC_CHECK_DECL(sys_errlist, 
-	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]), 
-	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),
+	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]),, 
 	      [# include <stdio.h>])
 
 dnl XXX -- necessary checks from tcl8.4 tcl.m4
