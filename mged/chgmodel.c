@@ -390,7 +390,7 @@ char    *argv[];
     return TCL_ERROR;
   }
 
-  if((fp = fopen(argv[1], "w")) == NULL){
+  if((fp = fopen(argv[1], "a")) == NULL){
     Tcl_AppendResult(interp, "f_wmater: Failed to open file - ", argv[1], (char *)NULL);
     return TCL_ERROR;
   }
