@@ -37,6 +37,8 @@
 	-v		"verbose": prints information about the images on
 			the standard error output
 
+	-z		zoom up the framebuffer, keeping image aspect square
+
 	gif_file	GIF input file to be translated (standard input if
 			no explicit GIF file name is specified)
 */
@@ -45,8 +47,8 @@ static char	RCSid[] =		/* for "what" utility */
 	"@(#)$Header$ (BRL)";
 #endif
 
-#define	USAGE	"gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [gif_file]"
-#define	OPTSTR	"F:ci:ov"
+#define	USAGE	"gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]"
+#define	OPTSTR	"F:ci:ovz"
 
 #ifdef BSD	/* BRL-CAD */
 #define	NO_VFPRINTF	1
@@ -110,6 +112,7 @@ static char	*arg0;			/* argv[0] for error message */
 static bool	clear = true;		/* set iff clear to background wanted */
 static bool	ign_cr = false;		/* set iff 8-bit color resoln. forced */
 static bool	verbose = false;	/* set for GIF-file info printout */
+static bool	do_zoom = false;	/* set to zoom framebuffer */
 static int	image = 0;		/* # of image to display (0 => all) */
 static char	*gif_file = NULL;	/* GIF file name */
 static FILE	*gfp = NULL;		/* GIF input stream handle */
@@ -599,6 +602,9 @@ main( argc, argv )
 			case 'v':	/* -v */
 				verbose = true;
 				break;
+			case 'z':
+				do_zoom = true;
+				break;
 				}
 
 		if ( errors )
@@ -785,6 +791,7 @@ main( argc, argv )
 
 	{
 		register int	wt = fb_getwidth( fbp );
+		int zoom;
 
 		ht = fb_getheight( fbp );
 
@@ -798,11 +805,21 @@ main( argc, argv )
 				 wt, ht
 			       );
 
+		zoom = fb_getwidth(fbp)/width;
+		if( fb_getheight(fbp)/height < zoom )
+			zoom = fb_getheight(fbp)/height;
+		if( do_zoom && zoom > 1 )  {
+			(void)fb_view( fbp, width/2, height/2,
+				zoom, zoom );
+		} else {
+			/* Unzoomed, full screen */
+			(void)fb_view( fbp,
+				fb_getwidth(fbp)/2, fb_getheight(fbp)/2,
+				1, 1 );
+		}
+
 		ht = height - 1;	/* for later use as (ht - row) */
 	}
-
-	if ( fb_wmap( fbp, (ColorMap *)NULL ) == -1 )
-		Fatal( "Error setting up linear color map" );
 
 	/* Fill frame buffer with background color. */
 

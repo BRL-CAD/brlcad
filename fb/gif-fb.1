@@ -28,6 +28,8 @@ gif-fb \- display GIF file on frame buffer
 ] [
 .CW -v
 ] [
+.CW -z
+] [
 .I "GIF file name"
 ]
 .SH DESCRIPTION
@@ -68,6 +70,14 @@ to the background color specified in the GIF file.
 (``verbose'')\ 
 Also prints information about the GIF images
 on the standard error output.
+.TP
+.CW -z
+(``zoom'')\ 
+Uses the zoom capability of the current framebuffer to
+make the image as large as possible on the screen while
+preserving a square aspect ratio to the pixels.
+This means that the zoom factor in X and Y will be equal to
+the smaller of the two possible zooms.
 .TP
 .I "GIF file name"
 Specifies the GIF input file to be translated,
