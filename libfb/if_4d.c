@@ -2005,15 +2005,15 @@ FBIO	*ifp;
 {
 	struct	modeflags *mfp;
 
-	fb_log( "Description: %s\n", sgi_interface.if_type );
+	fb_log( "Description: %s\n", ifp->if_type );
 	fb_log( "Device: %s\n", ifp->if_name );
 	fb_log( "Max width height: %d %d\n",
-		sgi_interface.if_max_width,
-		sgi_interface.if_max_height );
+		ifp->if_max_width,
+		ifp->if_max_height );
 	fb_log( "Default width height: %d %d\n",
-		sgi_interface.if_width,
-		sgi_interface.if_height );
-	fb_log( "Usage: /dev/sgi[options]\n" );
+		ifp->if_width,
+		ifp->if_height );
+	fb_log( "Usage: /dev/sgi[option letters]\n" );
 	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
 		fb_log( "   %c   %s\n", mfp->c, mfp->help );
 	}
