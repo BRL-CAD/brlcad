@@ -56,10 +56,13 @@ static int solid_count=0;	/* count of solids converted */
 static struct rt_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
 static int debug=0;		/* Debug flag */
-static char *usage="proe-g [-p] < proe_file.brl > output.g\n\
+static char *usage="proe-g [-p] [-d] [-x rt_debug_flag] [-X nmg_debug_flag] < proe_file.brl > output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
-	and output.g is the name of a BRL-CAD database file\n\
-	The -p option is to create polysolids rather than NMG's\n";
+	and output.g is the name of a BRL-CAD database file.\n\
+	The -p option is to create polysolids rather than NMG's.\n\
+	The -d option prints additional debugging information.\n\
+	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n\
+	The -X option specifies an NMG debug flag (see cad/h/nmg.h).\n";
 
 struct render_verts
 {
@@ -69,7 +72,8 @@ struct render_verts
 
 struct name_conv_list
 {
-	char brlcad_name[NAMESIZE+1];
+	char brlcad_name[NAMESIZE];
+	char solid_name[NAMESIZE];
 	char name[80];
 	char *obj;
 	struct name_conv_list *next;
@@ -77,22 +81,33 @@ struct name_conv_list
 
 #define	MAX_LINE_LEN	512
 
+#define	UNKNOWN_TYPE	0
+#define	ASSEMBLY_TYPE	1
+#define	PART_TYPE	2
+
 struct name_conv_list *
-Add_new_name( name , obj )
+Add_new_name( name , obj , type )
 char *name,*obj;
+int type;
 {
 	struct name_conv_list *ptr,*ptr2;
 	char tmp_name[NAMESIZE];
 	int len;
 	char try_char='@';
 
+	if( type != ASSEMBLY_TYPE && type != PART_TYPE )
+	{
+		rt_log( "Bad type for name (%s) in Add_new_name\n", name );
+		rt_bomb( "Add_new_name\n" );
+	}
+
 	/* Add a new name */
 	ptr = (struct name_conv_list *)rt_malloc( sizeof( struct name_conv_list ) , "Add_new_name: prev->next" );
 	ptr->next = (struct name_conv_list *)NULL;
 	strcpy( ptr->name , name );
 	ptr->obj = obj;
-	strncpy( ptr->brlcad_name , name , NAMESIZE );
-	ptr->brlcad_name[NAMESIZE] = '\0';
+	strncpy( ptr->brlcad_name , name , NAMESIZE-1 );
+	ptr->brlcad_name[NAMESIZE-1] = '\0';
 
 	/* make sure brlcad_name is unique */
 	len = strlen( ptr->brlcad_name );
@@ -100,7 +115,7 @@ char *name,*obj;
 	ptr2 = name_root;
 	while( ptr2 )
 	{
-		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) )
+		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
 		{
 			try_char++;
 			if( try_char == '[' )
@@ -117,19 +132,57 @@ char *name,*obj;
 	}
 
 	strcpy( ptr->brlcad_name , tmp_name );
+
+	if( type == ASSEMBLY_TYPE )
+	{
+		ptr->solid_name[0] = '\0';
+		return( ptr );
+	}
+	else
+	{
+		strcpy( ptr->solid_name , "s." );
+		strncpy( &ptr->solid_name[2] , name , NAMESIZE-3 );
+		ptr->solid_name[NAMESIZE-1] = '\0';
+	}
+
+	/* make sure solid name is unique */
+	len = strlen( ptr->solid_name );
+	strcpy( tmp_name , ptr->solid_name );
+	ptr2 = name_root;
+	while( ptr2 )
+	{
+		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
+		{
+			try_char++;
+			if( try_char == '[' )
+				try_char = 'a';
+			if( try_char == '{' )
+				rt_log( "Too many objects with same name (%s)\n" , ptr->brlcad_name );
+
+			strcpy( tmp_name , ptr->solid_name );
+			sprintf( &tmp_name[len-2] , "_%c" , try_char );
+			ptr2 = name_root;
+		}
+		else
+			ptr2 = ptr2->next;
+	}
+
+	strcpy( ptr->solid_name , tmp_name );
+
 	return( ptr );
 }
 
 char *
-Get_unique_name( name , obj )
+Get_unique_name( name , obj , type )
 char *name,*obj;
+int type;
 {
 	struct name_conv_list *ptr,*prev;
 
 	if( name_root == (struct name_conv_list *)NULL )
 	{
 		/* start new list */
-		name_root = Add_new_name( name , obj );
+		name_root = Add_new_name( name , obj , type );
 		ptr = name_root;
 	}
 	else
@@ -151,7 +204,7 @@ char *name,*obj;
 
 		if( !found )
 		{
-			prev->next = Add_new_name( name , obj );
+			prev->next = Add_new_name( name , obj , type );
 			ptr = prev->next;
 		}
 	}
@@ -159,6 +212,22 @@ char *name,*obj;
 	return( ptr->brlcad_name );
 }
 
+char *
+Get_solid_name( name , obj )
+char *name,*obj;
+{
+	struct name_conv_list *ptr;
+
+	ptr = name_root;
+
+	while( ptr && obj != ptr->obj )
+		ptr = ptr->next;
+
+	if( !ptr )
+		ptr = Add_new_name( name , (char *)NULL , PART_TYPE );
+
+	return( ptr->solid_name );
+}
 
 void
 Convert_assy( line )
@@ -215,7 +284,7 @@ char line[MAX_LINE_LEN];
 		if( !strncmp( &line1[start] , "endassembly" , 11 ) )
 		{
 
-			brlcad_name = Get_unique_name( name , obj );
+			brlcad_name = Get_unique_name( name , obj , ASSEMBLY_TYPE );
 			if( debug )
 				rt_log( "\tmake assembly ( %s)\n" , brlcad_name );
 			mk_lcomb( stdout , brlcad_name , &head , 0 ,
@@ -235,7 +304,7 @@ char line[MAX_LINE_LEN];
 
 			sscanf( &line1[start] , "%x" , &memb_obj );
 
-			brlcad_name = Get_unique_name( memb_name , memb_obj );
+			brlcad_name = Get_unique_name( memb_name , memb_obj , PART_TYPE );
 			if( debug )
 				rt_log( "\tmember (%s)\n" , brlcad_name );
 			wmem = mk_addmember( brlcad_name , &head , WMOP_UNION );
@@ -270,7 +339,7 @@ char line[MAX_LINE_LEN];
 	char line1[MAX_LINE_LEN];
 	char name[80];
 	char *obj;
-	char solid_name[NAMESIZE+1];
+	char *solid_name;
 	int start;
 	int i;
 	struct model *m;
@@ -318,7 +387,7 @@ char line[MAX_LINE_LEN];
 	rt_log( "Converting Part: %s\n" , name );
 
 	if( debug )
-		rt_log( "Conv_part %s %s x%x\n" , name , obj );
+		rt_log( "Conv_part %s x%x\n" , name , obj );
 
 	while( gets( line1 ) != NULL )
 	{
@@ -432,8 +501,11 @@ char line[MAX_LINE_LEN];
 	else
 		nmg_rebound( m , &tol );
 
-	sprintf( solid_name , "sol.%d" , solid_count );
 	solid_count++;
+	solid_name = Get_solid_name( name , obj );
+
+	if( debug )
+		rt_log( "Writing solid (%s)\n" , solid_name );
 
 	if( polysolid )
 	{
@@ -451,7 +523,7 @@ char line[MAX_LINE_LEN];
 
 	mk_addmember( solid_name , &head , WMOP_UNION );
 
-	brlcad_name = Get_unique_name( name , obj );
+	brlcad_name = Get_unique_name( name , obj , PART_TYPE );
 	if( debug )
 		rt_log( "\tMake region (%s)\n" , brlcad_name );
 
