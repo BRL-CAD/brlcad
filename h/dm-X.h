@@ -6,10 +6,10 @@
  *  GED is using -2048..+2048,
  *  X is 0..width,0..height
  */
-#define	GED_TO_Xx(_dmp, x) ((int)(((x)/4096.0+0.5)*((struct x_vars *)((_dmp)->dmr_vars))->width))
-#define	GED_TO_Xy(_dmp, x) ((int)((0.5-(x)/4096.0)*((struct x_vars *)((_dmp)->dmr_vars))->height))
-#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)((struct x_vars *)((_dmp)->dmr_vars))->width - 0.5) * 4095))
-#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)((struct x_vars *)((_dmp)->dmr_vars))->height) * 4095))
+#define	GED_TO_Xx(_dmp, x) ((int)(((x)/4096.0+0.5)*((struct x_vars *)((_dmp)->dm_vars))->width))
+#define	GED_TO_Xy(_dmp, x) ((int)((0.5-(x)/4096.0)*((struct x_vars *)((_dmp)->dm_vars))->height))
+#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)((struct x_vars *)((_dmp)->dm_vars))->width - 0.5) * 4095))
+#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)((struct x_vars *)((_dmp)->dm_vars))->height) * 4095))
 
 #define TRY_COLOR_CUBE 1
 #define NUM_PIXELS  216
@@ -28,6 +28,7 @@ struct x_vars {
   Tk_Window xtkwin;
   int width;
   int height;
+  int depth;
   int omx, omy;
   unsigned int mb_mask;
   int perspective_angle;
