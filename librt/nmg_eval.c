@@ -254,6 +254,10 @@ CONST struct rt_tol	*tol;
 		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d), evaluations done\n",
 			sA, sB, op );
 	}
+	/* Write sA and sB into separate files, if wanted? */
+
+	/* Move everything left in sB into sA.  sB is killed. */
+	nmg_js( sA, sB );
 
 	/* Plot the result */
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM) {
@@ -267,22 +271,6 @@ CONST struct rt_tol	*tol;
 		nmg_pl_s( fp, sA );
 		(void)fclose(fp);
 	}
-
-	if( RT_LIST_NON_EMPTY( &sB->fu_hd ) )  {
-		rt_log("WARNING:  nmg_evaluate_boolean():  shell B still has faces!\n");
-	}
-	if( RT_LIST_NON_EMPTY( &sB->lu_hd ) )  {
-		rt_log("WARNING:  nmg_evaluate_boolean():  shell B still has wire loops!\n");
-	}
-	if( RT_LIST_NON_EMPTY( &sB->eu_hd ) )  {
-		rt_log("WARNING:  nmg_evaluate_boolean():  shell B still has wire edges!\n");
-	}
-	if(sB->vu_p) {
-		rt_log("WARNING:  nmg_evaluate_boolean():  shell B still has verts!\n");
-	}
-
-	/* Regardless of what is in it, kill shell B */
-	nmg_ks( sB );
 
 	/* Remove loops/edges/vertices that appear more than once in result */
 	nmg_rm_redundancies( sA );
@@ -301,6 +289,8 @@ static int	nmg_eval_count = 0;	/* debug -- plot file numbering */
  *  Make a life-and-death decision on every element of a shell.
  *  Descend the "great chain of being" from the face to loop to edge
  *  to vertex, saving or demoting along the way.
+ *
+ *  Note that there is no moving of items from one shell to another.
  */
 static void
 nmg_eval_shell( s, bs )
@@ -412,16 +402,7 @@ struct nmg_bool_state *bs;
 			} else {
 				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 			    		rt_log("faceuse x%x flipped\n", fu);
-				if( fu->s_p != bs->bs_dest )  {
-#if 0
-rt_log("nmg_reverse_face_and_radials(fu=x%x)\n", fu);
-					nmg_reverse_face_and_radials( fu );
-#else
-					nmg_reverse_face( fu );
-#endif
-				} else {
-					nmg_reverse_face( fu );
-				}
+				nmg_reverse_face( fu );
 			}
 		} else {
 			/* loops_flipped <= 0 */
@@ -432,33 +413,6 @@ rt_log("nmg_reverse_face_and_radials(fu=x%x)\n", fu);
 				nmg_pr_fu(fu, "  ");
 				rt_bomb("nmg_eval_shell() retaining face with no loops?\n");
 			}
-		}
-
-		if( fu->s_p != bs->bs_dest )  {
-			struct faceuse	*fu2;
-
-			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
-		    		rt_log("faceuse x%x moved to A shell\n", fu);
-			if( nextfu == fu->fumate_p )
-				nextfu = RT_LIST_PNEXT(faceuse, nextfu);
-
-			/* If there is a face in the destination shell that
-			 * shares face geometry with this face, then
-			 * move all the loops into the other face,
-			 * and eliminate this redundant face.
-			 */
-			fu2 = nmg_find_fu_with_fg_in_s( bs->bs_dest, fu );
-			if( fu2 )  {
-rt_log("retaining face, doing nmg_jf()\n");
-				nmg_jf( fu2, fu );
-				/* fu pointer is invalid here */
-				fu = fu2;
-			} else {
-				nmg_mv_fu_between_shells( bs->bs_dest, s, fu );
-			}
-
-			fu = nextfu;
-			continue;
 		}
 		fu = nextfu;
 	}
@@ -492,10 +446,7 @@ rt_log("retaining face, doing nmg_jf()\n");
 			continue;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( lu->up.s_p == bs->bs_dest )  break;
-			nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
-			lu = nextlu;
-			continue;
+			break;
 		default:
 			rt_bomb("nmg_eval_shell() bad BACTION\n");
 		}
@@ -526,12 +477,7 @@ rt_log("retaining face, doing nmg_jf()\n");
 			continue;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( eu->up.s_p == bs->bs_dest )  break;
-			if( nexteu == eu->eumate_p )
-				nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
-			nmg_mv_eu_between_shells( bs->bs_dest, s, eu );
-			eu = nexteu;
-			continue;
+			break;
 		default:
 			rt_bomb("nmg_eval_shell() bad BACTION\n");
 		}
@@ -567,21 +513,14 @@ rt_log("retaining face, doing nmg_jf()\n");
 		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
 		case BACTION_KILL:
 			/* Eliminate the loopuse, and mate */
-			if( RT_LIST_NOT_HEAD(lu, &lu->down_hd) &&
-			    nextlu == lu->lumate_p )
+			if( nextlu == lu->lumate_p )
 				nextlu = RT_LIST_PNEXT(loopuse, nextlu);
 			nmg_klu( lu );
 			lu = nextlu;
 			continue;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( lu->up.s_p == bs->bs_dest )  break;
-			if( RT_LIST_NOT_HEAD(lu, &lu->down_hd) &&
-			    nextlu == lu->lumate_p )
-				nextlu = RT_LIST_PNEXT(loopuse, nextlu);
-			nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
-			lu = nextlu;
-			continue;
+			break;
 		default:
 			rt_bomb("nmg_eval_shell() bad BACTION\n");
 		}
@@ -604,9 +543,6 @@ rt_log("retaining face, doing nmg_jf()\n");
 			break;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( vu->up.s_p == bs->bs_dest )  break;
-			nmg_mv_vu_between_shells( bs->bs_dest, s, vu );
-			s->vu_p = (struct vertexuse *)0;	/* sanity */
 			break;
 		default:
 			rt_bomb("nmg_eval_shell() bad BACTION\n");
