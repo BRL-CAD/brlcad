@@ -25,26 +25,8 @@
 extern int dm_validXType();
 extern char *dm_bestXType();
 
-/* from libdm/dm-generic.c */
-extern struct dm *dm_open();
-
 /* from libdm/dm_obj.c */
-extern int dmo_open_tcl();
 extern int Dmo_Init();
-
-/* from libdm/view_obj.c */
-extern int vo_open_tcl();
-extern int Vo_Init();
-
-#if 0
-/* from libdm/geometry_obj.c */
-extern int geo_open_tcl();
-extern int Geo_Init();
-
-/* from libdm/db_obj.c */
-extern int dbo_open_tcl();
-extern int Dbo_Init();
-#endif
 
 HIDDEN int dm_validXType_tcl();
 HIDDEN int dm_bestXType_tcl();
@@ -52,12 +34,6 @@ HIDDEN int dm_bestXType_tcl();
 HIDDEN struct bu_cmdtab cmdtab[] = {
 	"dm_validXType",	dm_validXType_tcl,
 	"dm_bestXType",		dm_bestXType_tcl,
-	"dm_open",		dmo_open_tcl,
-	"vo_open",		vo_open_tcl,
-#if 0
-	"geo_open",		geo_open_tcl,
-	"db_open",		dbo_open_tcl,
-#endif
 	(char *)0,		(int (*)())0
 };
 
@@ -74,17 +50,6 @@ Tcl_Interp *interp;
 
   /* initialize display manager object code */
   Dmo_Init(interp);
-
-  /* initialize view object code */
-  Vo_Init(interp);
-
-#if 0
-  /* initialize geometry object code */
-  Geo_Init(interp);
-
-  /* initialize database object */
-  Dbo_Init(interp);
-#endif
 
   return TCL_OK;
 }
