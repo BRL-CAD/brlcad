@@ -47,7 +47,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <gl.h>
 #include <get.h>
 #include <device.h>
-#include <psio.h>
 #include <sys/types.h>
 #include <sys/invent.h>
 #include <sys/ipc.h>
