@@ -236,7 +236,6 @@ int cpu;
 	RES_RELEASE( &rt_g.res_worker );
 
 	resource[cpu].re_cpu = cpu;
-	ap.a_onehit = 1;
 
 	while(1)  {
 		RES_ACQUIRE( &rt_g.res_worker );
