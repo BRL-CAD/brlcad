@@ -24,14 +24,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <sys/time.h>		/* for struct timeval */
-#include "machine.h"
-#include "externs.h"
-#include "vmath.h"
-#include "mater.h"
-#include "raytrace.h"
-#include "./ged.h"
-#include "./dm.h"
-#include "./solid.h"
 #include <X11/X.h>
 #ifdef HAVE_XOSDEFS_H
 #include <X11/Xfuncproto.h>
@@ -44,6 +36,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "mater.h"
+#include "raytrace.h"
+#include "./ged.h"
+#include "./dm.h"
+#include "./solid.h"
 
 static void	label();
 static void	draw();
