@@ -530,7 +530,7 @@ struct soltab {
   /* Add a new primitive id above here
    * XXX must update the non-geometric object id's below XXX 
    */
-#define	ID_MAX_SOLID	31	/* Maximum defined ID_xxx for solids */
+#define	ID_MAX_SOLID	37	/* Maximum defined ID_xxx for solids */
 
 /*
  *	Non-geometric objects
