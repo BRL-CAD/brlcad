@@ -118,10 +118,12 @@ Model 0 is a full lighting model with the ability to implement
 Phong shading, transparant and reflective objects, shadow penumbras,
 texture maps, etc.
 In addition to ambient light, a small amount of light is
-supplied from eye position.  If an object called ``LIGHT''
-exists in the active model space, then it provides a second light
-source, and shadow computations will be initiated automaticly.
-(This mechanism is subject to change).
+supplied from eye position.
+All objects in the active model space with a material property
+string of ``light'' represent additional light sources
+(up to 16 are presently permitted),
+and shadow computations will be initiated automaticly.
+(This mechanism is subject to further change).
 Model 1 is a diffuse-lighting model only, and is intended for
 debugging.
 Model 2 displays the surface normals as colors, and is useful
@@ -134,7 +136,7 @@ Model 5 is a curvature debugging display, showing the principal
 direction vector.
 .TP
 .B \-P#
-Specify the number of processors (in a multi-processor system) to be
+Specify the maximum number of processors (in a multi-processor system) to be
 used for this execution.  The default is 1.
 .TP
 .B \-B
@@ -151,7 +153,7 @@ which can be invoked directly, or via the
 command in
 .IR mged (1).
 .SH "SEE ALSO"
-mged(1), rtray(1), pix-fb(1), rtray(1), rtpp(1),
+brlcad(1), mged(1), rtray(1), pix-fb(1), rtray(1), rtpp(1),
 librt(3), ray(5V), pix(5).
 .SH DIAGNOSTICS
 Numerous error conditions are possible.
