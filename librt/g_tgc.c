@@ -591,7 +591,12 @@ struct seg		*seghead;
 	R.cf[0] = dprime[Z] * tgc->tgc_CdAm1;
 	/* A vector is unitized (tgc->tgc_A == 1.0) */
 	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CdAm1) + 1.0;
-	(void) polyMul( &R, &R, &Rsqr );
+
+	/* (void) polyMul( &R, &R, &Rsqr ); */
+	Rsqr.dgr = 2;
+	Rsqr.cf[0] = R.cf[0] * R.cf[0];
+	Rsqr.cf[1] = R.cf[0] * R.cf[1] * 2;
+	Rsqr.cf[2] = R.cf[1] * R.cf[1];
 
 	/*
 	 *  If the eccentricities of the two ellipses are the same,
@@ -601,16 +606,23 @@ struct seg		*seghead;
 	if ( tgc->tgc_AD_CB ){
 		FAST fastf_t roots;
 
-		(void) polyAdd( &Xsqr, &Ysqr, &sum );
-		(void) polySub( &sum, &Rsqr, &C );
+		/*
+		 *  (void) polyAdd( &Xsqr, &Ysqr, &sum );
+		 *  (void) polySub( &sum, &Rsqr, &C );
+		 */
+		C.dgr = 2;
+		C.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
+		C.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
+		C.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] - Rsqr.cf[2];
 
 		/* Find the real roots the easy way.  C.dgr==2 */
 		if( (roots = C.cf[1]*C.cf[1] - 4 * C.cf[0] * C.cf[2]) < 0 ) {
 			npts = 0;	/* no real roots */
 		} else {
+			register fastf_t	f;
 			roots = sqrt(roots);
-			k[0] = (roots - C.cf[1]) * 0.5 / C.cf[0];
-			k[1] = (roots + C.cf[1]) * (-0.5) / C.cf[0];
+			k[0] = (roots - C.cf[1]) * (f = 0.5 / C.cf[0]);
+			k[1] = (roots + C.cf[1]) * -f;
 			npts = 2;
 		}
 	} else {
@@ -624,13 +636,39 @@ struct seg		*seghead;
 		Q.cf[0] = dprime[Z] * tgc->tgc_DdBm1;
 		/* B vector is unitized (tgc->tgc_B == 1.0) */
 		Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DdBm1) + 1.0;
-		(void) polyMul( &Q, &Q, &Qsqr );
 
-		(void) polyMul( &Qsqr, &Xsqr, &T1 );
-		(void) polyMul( &Rsqr, &Ysqr, &T2 );
-		(void) polyMul( &Rsqr, &Qsqr, &T3 );
-		(void) polyAdd( &T1, &T2, &sum );
-		(void) polySub( &sum, &T3, &C );
+		/* (void) polyMul( &Q, &Q, &Qsqr ); */
+		Qsqr.dgr = 2;
+		Qsqr.cf[0] = Q.cf[0] * Q.cf[0];
+		Qsqr.cf[1] = Q.cf[0] * Q.cf[1] * 2;
+		Qsqr.cf[2] = Q.cf[1] * Q.cf[1];
+
+		/*
+		 * (void) polyMul( &Qsqr, &Xsqr, &T1 );
+		 * (void) polyMul( &Rsqr, &Ysqr, &T2 );
+		 * (void) polyMul( &Rsqr, &Qsqr, &T3 );
+		 * (void) polyAdd( &T1, &T2, &sum );
+		 * (void) polySub( &sum, &T3, &C );
+		 */
+		C.dgr = 4;
+		C.cf[0] = Qsqr.cf[0] * Xsqr.cf[0] +
+			  Rsqr.cf[0] * Ysqr.cf[0] -
+			  (Rsqr.cf[0] * Qsqr.cf[0]);
+		C.cf[1] = Qsqr.cf[0] * Xsqr.cf[1] + Qsqr.cf[1] * Xsqr.cf[0] +
+			  Rsqr.cf[0] * Ysqr.cf[1] + Rsqr.cf[1] * Ysqr.cf[0] -
+			  (Rsqr.cf[0] * Qsqr.cf[1] + Rsqr.cf[1] * Qsqr.cf[0]);
+		C.cf[2] = Qsqr.cf[0] * Xsqr.cf[2] + Qsqr.cf[1] * Xsqr.cf[1] +
+				 Qsqr.cf[2] * Xsqr.cf[0] +
+			  Rsqr.cf[0] * Ysqr.cf[2] + Rsqr.cf[1] * Ysqr.cf[1] +
+				 Rsqr.cf[2] * Ysqr.cf[0] -
+			  (Rsqr.cf[0] * Qsqr.cf[2] + Rsqr.cf[1] * Qsqr.cf[1] +
+				 Rsqr.cf[2] * Qsqr.cf[0]);
+		C.cf[3] = Qsqr.cf[1] * Xsqr.cf[2] + Qsqr.cf[2] * Xsqr.cf[1] +
+			  Rsqr.cf[1] * Ysqr.cf[2] + Rsqr.cf[2] * Ysqr.cf[1] -
+			  (Rsqr.cf[1] * Qsqr.cf[2] + Rsqr.cf[2] * Qsqr.cf[1]);
+		C.cf[4] = Qsqr.cf[2] * Xsqr.cf[2] +
+			  Rsqr.cf[2] * Ysqr.cf[2] -
+			  (Rsqr.cf[2] * Qsqr.cf[2]);
 
 		/*  The equation is 4th order, so we expect 0 to 4 roots */
 		nroots = polyRoots( &C , val );
@@ -968,8 +1006,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 	/* (void) polyMul( &R, &R, &Rsqr ); inline expands to: */
                 Rsqr.dgr = 2;
                 Rsqr.cf[0] = R.cf[0] * R.cf[0];
-                Rsqr.cf[1] = R.cf[0] * R.cf[1] +
-                                 R.cf[1] * R.cf[0];
+                Rsqr.cf[1] = R.cf[0] * R.cf[1] * 2;
                 Rsqr.cf[2] = R.cf[1] * R.cf[1];
 
 	/*
@@ -995,8 +1032,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 		/* (void) polyMul( &Q, &Q, &Qsqr ); inline expands to */
 			Qsqr.dgr = 2;
 			Qsqr.cf[0] = Q.cf[0] * Q.cf[0];
-			Qsqr.cf[1] = Q.cf[0] * Q.cf[1] +
-					 Q.cf[1] * Q.cf[0];
+			Qsqr.cf[1] = Q.cf[0] * Q.cf[1] * 2;
 			Qsqr.cf[2] = Q.cf[1] * Q.cf[1];
 
 		/* (void) polyMul( &Qsqr, &Xsqr, &T1 ); inline expands to */
