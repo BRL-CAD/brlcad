@@ -784,6 +784,7 @@ init_sedit()
 	switch( id )  {
 	case ID_ELL:
 	case ID_TGC:
+	case ID_TOR:
 		rt_log("Experimental:  new_way=1\n");
 		new_way = 1;
 
@@ -1775,60 +1776,95 @@ pscale()
 
 	case MENU_TOR_R1:
 		/* scale radius 1 of TOR */
-		mr2 = MAGNITUDE(&es_rec.s.s_tor_H);
-		op = &es_rec.s.s_tor_B;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
-		}
-		VSCALE(op, op, es_scale);
-
-		op = &es_rec.s.s_tor_A;
-		VSCALE(op, op, es_scale);
-		mr1 = MAGNITUDE(op);
-		if( mr1 < mr2 ) {
-			VSCALE(op, op, (mr2+0.01)/mr1);
+		if( new_way )  {
+			struct rt_tor_internal	*tor = 
+				(struct rt_tor_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+			RT_TOR_CK_MAGIC(tor);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				newrad = es_para[0];
+			} else {
+				newrad = tor->r_a * es_scale;
+			}
+			if( newrad < SMALL )  newrad = 4*SMALL;
+			if( tor->r_h <= newrad )
+				tor->r_a = newrad;
+		} else {
+			mr2 = MAGNITUDE(&es_rec.s.s_tor_H);
 			op = &es_rec.s.s_tor_B;
-			VSCALE(op, op, (mr2+0.01)/mr1);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
+
+			op = &es_rec.s.s_tor_A;
+			VSCALE(op, op, es_scale);
 			mr1 = MAGNITUDE(op);
-		}
+			if( mr1 < mr2 ) {
+				VSCALE(op, op, (mr2+0.01)/mr1);
+				op = &es_rec.s.s_tor_B;
+				VSCALE(op, op, (mr2+0.01)/mr1);
+				mr1 = MAGNITUDE(op);
+			}
 torcom:
-		ma = mr1 - mr2;
-		op = &es_rec.s.s_tor_C;
-		mb = MAGNITUDE(op);
-		VSCALE(op, op, ma/mb);
+			ma = mr1 - mr2;
+			op = &es_rec.s.s_tor_C;
+			mb = MAGNITUDE(op);
+			VSCALE(op, op, ma/mb);
 
-		op = &es_rec.s.s_tor_D;
-		mb = MAGNITUDE(op);
-		VSCALE(op, op, ma/mb);
+			op = &es_rec.s.s_tor_D;
+			mb = MAGNITUDE(op);
+			VSCALE(op, op, ma/mb);
 
-		ma = mr1 + mr2;
-		op = &es_rec.s.s_tor_E;
-		mb = MAGNITUDE(op);
-		VSCALE(op, op, ma/mb);
+			ma = mr1 + mr2;
+			op = &es_rec.s.s_tor_E;
+			mb = MAGNITUDE(op);
+			VSCALE(op, op, ma/mb);
 
-		op = &es_rec.s.s_tor_F;
-		mb = MAGNITUDE(op);
-		VSCALE(op, op, ma/mb);
+			op = &es_rec.s.s_tor_F;
+			mb = MAGNITUDE(op);
+			VSCALE(op, op, ma/mb);
+		}
 		break;
 
 	case MENU_TOR_R2:
 		/* scale radius 2 of TOR */
-		op = &es_rec.s.s_values[3];
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
-		}
-		VSCALE(op, op, es_scale);
-		mr2 = MAGNITUDE(op);
-		mr1 = MAGNITUDE(&es_rec.s.s_values[6]);
-		if(mr1 < mr2) {
-			VSCALE(op, op, (mr1-0.01)/mr2);
+		if( new_way )  {
+			struct rt_tor_internal	*tor = 
+				(struct rt_tor_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+			RT_TOR_CK_MAGIC(tor);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				newrad = es_para[0];
+			} else {
+				newrad = tor->r_h * es_scale;
+			}
+			if( newrad < SMALL )  newrad = 4*SMALL;
+			if( newrad <= tor->r_a )
+				tor->r_h = newrad;
+		} else {
+			op = &es_rec.s.s_values[3];
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
 			mr2 = MAGNITUDE(op);
+			mr1 = MAGNITUDE(&es_rec.s.s_values[6]);
+			if(mr1 < mr2) {
+				VSCALE(op, op, (mr1-0.01)/mr2);
+				mr2 = MAGNITUDE(op);
+			}
+			goto torcom;
 		}
-		goto torcom;
+		break;
 
 	case MENU_TGC_SCALE_A:
 		/* scale vector A */
@@ -2158,7 +2194,6 @@ init_objedit()
 		VMOVE(es_keypoint, illump->s_center);
 
 		/* The s_center takes the es_mat into account already */
-		return;
 	}
 
 	/* Not an evaluated region - just a regular path ending in a solid */
@@ -2701,6 +2736,33 @@ struct rt_db_internal	*ip;
 		break;
 
 	case ID_TOR:
+		if( new_way )  {
+			struct rt_tor_internal	*tor = 
+				(struct rt_tor_internal *)es_int.idb_ptr;
+			fastf_t	r3, r4;
+			vect_t	adir;
+			RT_TOR_CK_MAGIC(tor);
+
+			mat_vec_ortho( adir, tor->h );
+
+			MAT4X3PNT( pos_view, xform, tor->v );
+			POINT_LABEL( pos_view, 'V' );
+
+			r3 = tor->r_a - tor->r_h;
+			VJOIN1( work, tor->v, r3, adir );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'I' );
+
+			r4 = tor->r_a + tor->r_h;
+			VJOIN1( work, tor->v, r4, adir );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'O' );
+
+			VJOIN1( work, tor->v, tor->r_a, adir );
+			VADD2( work, work, tor->h );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'H' );
+		} else {
 		MAT4X3PNT( pos_view, xform, &es_rec.s.s_tor_V );
 		POINT_LABEL( pos_view, 'V' );
 
@@ -2715,6 +2777,7 @@ struct rt_db_internal	*ip;
 		VADD3( work, &es_rec.s.s_tor_V, &es_rec.s.s_tor_A, &es_rec.s.s_tor_H);
 		MAT4X3PNT(pos_view, xform, work);
 		POINT_LABEL( pos_view, 'H' );
+		}
 		break;
 
 	case ID_ARS:
@@ -2779,6 +2842,22 @@ mat_t		mat;
 			}
 			/* Default */
 			VMOVE( mpt, ell->v );
+			*strp = "V";
+			break;
+		}
+	case ID_TOR:
+		{
+			struct rt_tor_internal	*tor = 
+				(struct rt_tor_internal *)ip->idb_ptr;
+			RT_TOR_CK_MAGIC(tor);
+
+			if( strcmp( cp, "V" ) == 0 )  {
+				VMOVE( mpt, tor->v );
+				*strp = "V";
+				break;
+			}
+			/* Default */
+			VMOVE( mpt, tor->v );
 			*strp = "V";
 			break;
 		}
