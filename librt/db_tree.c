@@ -280,11 +280,12 @@ CONST struct member	*mp;
 	 *  Comparison is performed right-to-left (from leafward to rootward).
 	 */
 	for( anp = mdp->d_animate; anp != ANIM_NULL; anp = anp->an_forw ) {
-		register int i = anp->an_path.fp_len-1;
+		register int i;
 		register int j = pathp->fp_len-1;
 		register int anim_flag;
 		
 		RT_CK_ANIMATE(anp);
+		i = anp->an_path.fp_len-1;
 		anim_flag = 1;
 
 		if (rt_g.debug & DEBUG_ANIM) {
