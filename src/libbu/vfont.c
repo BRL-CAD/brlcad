@@ -55,7 +55,7 @@ static const char libbu_vfont_RCSid[] = "@(#)$Header$ (BRL)";
 /*
  * Forward Definitions
  */
-int vax_gshort(unsigned char *);
+static int vax_gshort(unsigned char *);
 
 /*
  *			V F O N T _ G E T
@@ -166,7 +166,7 @@ vfont_get(char *font)
  *  Obtain a 16-bit signed integer from two adjacent characters,
  *  stored in VAX order, regardless of word alignment.
  */
-int
+static int
 vax_gshort(unsigned char *msgp)
 {
 	register unsigned char *p = (unsigned char *) msgp;
