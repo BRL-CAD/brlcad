@@ -36,10 +36,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./fblocal.h"
 
 /* Local state variables within the FBIO structure */
+/* If there are any more of these, they ought to go into a malloc()d struct */
 #define if_xzoom	u1.l
 #define if_yzoom	u2.l
 #define if_special_zoom	u3.l
 #define if_mode		u4.l
+#define if_rgb_ct	u5.l
 
 /*
  *  Defines for dealing with SGI Graphics Engine Pipeline
@@ -186,7 +188,11 @@ int	width, height;
 	register int i;
 	
 	if( ismex() )  {
+		char *name;
+
+		name = ifp->if_name;
 		*ifp = sgiw_interface;	/* struct copy */
+		ifp->if_name = name;
 		return( sgw_dopen( ifp, file, width, height ) );
 	}
 	gbegin();		/* not ginit() */
@@ -553,7 +559,6 @@ int	x, y;
 /* TOL of 28 gives good rendering of the dragon picture without running out */
 
 static RGBpixel	rgb_table[MAP_SIZE];
-static int	rgb_ct = MAP_RESERVED;
 
 /*
  *			g e t _ C o l o r _ I n d e x
@@ -570,7 +575,7 @@ register RGBpixel	*pixelp;
 
 	/* Find best fit in existing table */
 	best = 0;
-	for( i = 0, sp = rgb_table; i < rgb_ct; sp++, i++ ) {
+	for( i = 0, sp = rgb_table; i < ifp->if_rgb_ct; sp++, i++ ) {
 		register int	diff;
 		register int	d;
 
@@ -598,13 +603,13 @@ register RGBpixel	*pixelp;
 
 	/* Allocate new entry in color table if there's room.		*/
 	if( i < MAP_SIZE )  {
-		COPYRGB( rgb_table[rgb_ct], *pixelp);
-		mapcolor(	(Colorindex)rgb_ct,
+		COPYRGB( rgb_table[ifp->if_rgb_ct], *pixelp);
+		mapcolor(	(Colorindex)ifp->if_rgb_ct,
 				(short) (*pixelp)[RED],
 				(short) (*pixelp)[GRN],
 				(short) (*pixelp)[BLU]
 				);
-		return	(Colorindex)(rgb_ct++);
+		return	(Colorindex)(ifp->if_rgb_ct++);
 	}
 
 	/* No room to add, use best we found */
@@ -673,6 +678,7 @@ int	width, height;
 	SET( 7, 255, 255, 255 );	/* WHITE */
 
 	/* Mode 0 builds color map on the fly */
+	ifp->if_rgb_ct = MAP_RESERVED;
 	if( ifp->if_mode )
 		{
 		/* Mode 1 uses fixed color map */
@@ -706,7 +712,7 @@ FBIO	*ifp;
 		greset();
 		gexit();
 		}
-/** 	fb_log( "%d color table entries used.\n", rgb_ct );  **/
+/** 	fb_log( "%d color table entries used.\n", ifp->if_rgb_ct );  **/
 	return	0;	
 }
 
@@ -784,7 +790,7 @@ int	count;
 			else
 				{
 				register int	ci = colors[i];
-				if( ci < rgb_ct )
+				if( ci < ifp->if_rgb_ct )
 					{
 					COPYRGB( *pixelp, rgb_table[ci]);
 					}
