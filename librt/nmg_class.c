@@ -417,10 +417,6 @@ CONST struct rt_tol	*tol;
 			rt_log("\tPoint is outside loop RPP\n");
 		return;
 	}
-	if( lu->orientation != OT_SAME )  {
-		/* Now what? */
-		rt_log("nmg_class_pt_l(lu=x%x) WARNING orientation=%s\n", lu, nmg_orientation(lu->orientation) );
-	}
 	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			nmg_class_pt_e(closest, pt, eu, tol);
