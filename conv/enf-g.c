@@ -193,7 +193,7 @@ free_vert_tree( union vert_tree *ptr )
 		free_vert_tree( ptr->vnode.lower );
 	}
 
-	free( (char *)ptr );
+	bu_free( (char *)ptr, "vert_tree" );
 }
 
 
@@ -249,7 +249,7 @@ Add_vert( point_t vertex )
 		vert_root = new_leaf;
 	} else if( ptr && ptr->type == VERT_LEAF ) {
 		/* search above ended at a leaf, need to add a node above this leaf and the new leaf */
-		new_node = (union vert_tree *)malloc( sizeof( union vert_tree ) );
+		new_node = (union vert_tree *)bu_malloc( sizeof( union vert_tree ), "new_node" );
 		new_node->vnode.type = VERT_NODE;
 
 		/* select the cutting coord based on the biggest difference */
