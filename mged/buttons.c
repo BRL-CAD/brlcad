@@ -312,6 +312,8 @@ static void bv_zoomout()
 static void bv_rate_toggle()
 {
 	mged_variables.rateknobs = !mged_variables.rateknobs;
+	rt_vls_printf( &dm_values.dv_string, "set sliders(rate) %d; sliders %s\n",
+		       mged_variables.rateknobs, scroll_enabled ? "on" : "off");
 	dmaflag = 1;
 }
 
@@ -375,6 +377,8 @@ static void bv_adcursor()  {
 		dmp->dmr_light( LIGHT_ON, BV_ADCURSOR );
 	}
 
+	rt_vls_printf( &dm_values.dv_string, "set sliders(adc) %d; sliders %s\n",
+		       adcflag, scroll_enabled ? "on" : "off");
 	dmaflag = 1;
 }
 

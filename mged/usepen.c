@@ -106,7 +106,7 @@ char	**argv;
 	mousevec[Y] =  ypos / 2047.0;
 	mousevec[Z] = 0;
 
-	if (mged_variables.faceplate && mged_variables.show_menu) {
+	if (mged_variables.faceplate && mged_variables.show_menu && !tran_set) {
         /*
 	 * If mouse press is in scroll area, see if scrolling, and if so,
 	 * divert this mouse press.

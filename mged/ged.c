@@ -1131,6 +1131,15 @@ void
 slewview( view_pos )
 vect_t view_pos;
 {
+#if 1
+  struct rt_vls cmd;
+
+  rt_vls_init(&cmd);
+  rt_vls_printf(&cmd, "iknob aX %f; iknob aY %f; iknob aZ %f\n",
+		-view_pos[X], -view_pos[Y], -view_pos[Z]);
+  (void)cmdline(&cmd, FALSE);
+  rt_vls_free(&cmd);
+#else
 	point_t	old_model_center;
 	point_t	new_model_center;
 	vect_t	diff;
@@ -1146,6 +1155,7 @@ vect_t view_pos;
 	MAT_DELTAS_VEC( delta, diff );
 	mat_mul2( delta, ModelDelta );
 	new_mats();
+#endif
 }
 
 /*

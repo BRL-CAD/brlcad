@@ -28,6 +28,8 @@ extern int dm_pipe[];
 /* defined in dm-ps.c */
 extern FILE *ps_fp;
 
+#define SL_TOL 0.031265266  /* size of dead spot - 64/2047 */
+
 #define VIRTUAL_TRACKBALL_OFF 0
 #define VIRTUAL_TRACKBALL_ON 1
 #define VIRTUAL_TRACKBALL_ROTATE 2 
@@ -90,23 +92,19 @@ struct shared_info {
 /* Rate stuff */
   int     _rateflag_slew;
   vect_t  _rate_slew;
-  vect_t  _absolute_slew;
 
   int     _rateflag_rotate;
   vect_t  _rate_rotate;
-  vect_t  _absolute_rotate;
 	
   int     _rateflag_zoom;
   fastf_t  _rate_zoom;
+
+/* Absolute stuff */
+  vect_t  _absolute_slew;
+  vect_t  _absolute_rotate;
   fastf_t  _absolute_zoom;
 
 /* Virtual trackball stuff */
-  double _rot_x;
-  double _rot_y;
-  double _rot_z;
-  double _tran_x;
-  double _tran_y;
-  double _tran_z;
   point_t _orig_pos;
 
 /* Slider stuff */
