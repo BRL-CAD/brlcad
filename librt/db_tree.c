@@ -823,6 +823,7 @@ union tree	*tp;
 	*new = *tp;		/* struct copy */
 
 	switch( tp->tr_op )  {
+	case OP_NOP:
 	case OP_SOLID:
 		/* If this is a leaf, done */
 		return(new);
@@ -919,15 +920,22 @@ union tree	*tp;
  */
 void
 db_non_union_push( tp )
-union tree	*tp;
+register union tree	*tp;
 {
 
 top:
-	/* If this is a leaf, done */
-	if( tp->tr_op == OP_REGION || tp->tr_op == OP_SOLID )  return;
+	switch( tp->tr_op )  {
+	case OP_REGION:
+	case OP_SOLID:
+		/* If this is a leaf, done */
+		return;
 
-	/* This node is known to be a binary op */
-	if( tp->tr_op == OP_UNION )  {
+	case OP_NOP:
+		/* This tree has nothing in it, done */
+		return;
+
+	case OP_UNION:
+		/* This node is known to be a binary op */
 		/* Recurse both left and right */
 		db_non_union_push( tp->tr_b.tb_left );
 		db_non_union_push( tp->tr_b.tb_right );
@@ -1031,6 +1039,7 @@ union tree	*tp;
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
+	case OP_NOP:
 		/* This is as far down as we go -- this is a region top */
 		return(1);
 
@@ -1052,6 +1061,9 @@ int		cur;
 	union tree	*new;
 
 	switch( tp->tr_op )  {
+	case OP_NOP:
+		return(cur);
+
 	case OP_SOLID:
 	case OP_REGION:
 		GETUNION( new, tree );
@@ -1138,13 +1150,16 @@ int			id;
 
 void
 db_walk_subtree( tp, region_start_statepp )
-union tree	*tp;
+register union tree	*tp;
 struct combined_tree_state	**region_start_statepp;
 {
 	struct combined_tree_state	*ctsp;
 	union tree	*curtree;
 
 	switch( tp->tr_op )  {
+	case OP_NOP:
+		return;
+
 	/*  case OP_SOLID:*/
 	case OP_REGION:
 		/* Flesh out remainder of subtree */

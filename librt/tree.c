@@ -126,6 +126,7 @@ union tree		*curtree;
 	 *  to the list of infinite solids, for special handling.
 	 */
 	if( rt_bound_tree( curtree, region_min, region_max ) < 0 )  {
+		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
 		rt_bomb("rt_gettree_region_end(): rt_bound_tree() fail\n");
 	}
 	if( region_max[X] >= INFINITY )  {
@@ -484,6 +485,9 @@ vect_t			tree_max;
 			return(-1);
 		/* Discard right rpp */
 		break;
+	case OP_NOP:
+		/* Implies that this tree has nothing in it */
+		break;
 	}
 	return(0);
 }
@@ -743,6 +747,9 @@ register union tree	*tp;
 register struct region	*regionp;
 {
 	switch( tp->tr_op )  {
+	case OP_NOP:
+		return;
+
 	case OP_SOLID:
 		tp->tr_a.tu_regionp = regionp;
 		return;
