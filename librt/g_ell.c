@@ -1260,11 +1260,20 @@ struct rt_db_internal	*ip;
 }
 
 static CONST fastf_t rt_ell_uvw[5*3] = {
+#if 0
 	0, 0, 0,
 	1, 0, 0,
 	1, 1, 0,
 	0, 1, 0,
 	0, 0, 0
+#else
+	/* Somewhat surprisingly, the U parameter runs south to north */
+	0, 0, 0,
+	0, 1, 0,
+	1, 1, 0,
+	1, 0, 0,
+	0, 0, 0
+#endif
 };
 
 /*
@@ -1389,8 +1398,8 @@ struct rt_tol		*tol;
 		radius = Clen;
 
 	mat_idn( xlate );
-	MAT_DELTAS_VEC_NEG( xlate, eip->v );
-	mat_mul( unit2model, invRinvS, xlate );
+	MAT_DELTAS_VEC( xlate, eip->v );
+	mat_mul( unit2model, xlate, invRinvS );
 
 	/*
 	 *  --- Build Topology ---
@@ -1399,6 +1408,8 @@ struct rt_tol		*tol;
 	 *  There is a single face, an snurb with singularities.
 	 *  vert[0] is the south pole, and is the first row of the ctl_points.
 	 *  vert[1] is the north pole, and is the last row of the ctl_points.
+	 *
+	 *  Somewhat surprisingly, the U parameter runs from south to north.
 	 */
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
@@ -1441,15 +1452,31 @@ struct rt_tol		*tol;
 	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
 	NMG_CK_EDGEUSE(eu);
 	for( i=0; i < 4; i++ )  {
+#if 0
+struct snurb sn;
+fastf_t	param[4];
+rt_log("\neu=x%x, vu=x%x, v=x%x  ", eu, eu->vu_p, eu->vu_p->v_p);
+VPRINT("xyz", eu->vu_p->v_p->vg_p->coord);
+nmg_hack_snurb( &sn, fu->f_p->g.snurb_p );
+VPRINT("uv", eu->vu_p->a.cnurb_p->param);
+rt_nurb_s_eval( &sn, V2ARGS(eu->vu_p->a.cnurb_p->param), param );
+VPRINT("surf(u,v)", param);
+#endif
+
 		nmg_edge_g_cnurb_plinear(eu);
 		eu = RT_LIST_NEXT( edgeuse, &eu->l );
 	}
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
+
 	return 0;
 }
 
+/*
+ *  u,v=(0,0) is supposed to be the south pole, at Z=-1.0
+ *  The V direction runs from the south to the north pole.
+ */
 nmg_sphere_face_snurb( fu, m )
 struct faceuse	*fu;
 CONST matp_t	m;
