@@ -213,7 +213,8 @@ BU_EXTERN(int		mat_is_equal, (CONST mat_t a, CONST mat_t b,
 
 BU_EXTERN(void		bn_noise_init, () );
 BU_EXTERN(double	bn_noise_perlin, (CONST point_t pt) );
-BU_EXTERN(void		bn_noise_vec, (point_t point, point_t result) );
+/* XXX Why isn't the result listed first? */
+BU_EXTERN(void		bn_noise_vec, (CONST point_t point, point_t result) );
 BU_EXTERN(double	bn_noise_fbm, (point_t point, double h_val,
 				double lacunarity, double octaves) );
 BU_EXTERN(double	bn_noise_turb, (point_t point, double h_val,
