@@ -5,7 +5,7 @@ export BIN
 
 rm -f spdi.g spdi.log spdi spdi.pix
 
-$BIN/mged -c spdi.g << EOF
+$BIN/mged -c spdi.g << EOF > spdi_mged.log 2>&1
 
 
 set glob_compat_mode 0
@@ -28,7 +28,7 @@ foreach p {1 2 3 4 5} {
 
     in sph_\${sp}_\${sh}.s sph \$x \$y \$radius \$radius
     r  sph_\${sp}_\${sh}.r u sph_\${sp}_\${sh}.s
-    mater sph_\${sp}_\${sh}.r "plastic {sp \$sp di \$di sh \$sh}" 100 200 200 0
+    mater sph_\${sp}_\${sh}.r "plastic sp \$sp di \$di sh \$sh" 100 200 200 0
 
     g all.g sph_\${sp}_\${sh}.r
   }
@@ -38,20 +38,23 @@ set glob_compat_mode 1
 
 in light1.s ell -464 339 2213 0 100 0 0 0 100 100 0 0
 r light1.r u light1.s
-mater light1.r "light {i 1 s 1 v 0}" 255 255 255 0
+mater light1.r "light i 1 s 1 v 0" 255 255 255 0
 g all.g light1.r
 
-Z
-e all.g
-press top
-size 3200
-saveview spdi
 q
 EOF
 
-mv spdi spdi.orig
-sed "s,^rt,$BIN/rt," < spdi.orig > spdi
-rm spdi.orig
-chmod 775 spdi
 echo "rendering..."
-./spdi
+
+$BIN/rt -M -B -o spdi.pix $2/regress/spdi.g 'all.g' 2>> spdi.log <<EOF
+viewsize 3.200000000000000e+03;
+orientation 0.000000000000000e+00 0.000000000000000e+00 0.000000000000000e+00 1.000000000000000e+00;
+eye_pt 0.000000000000000e+00 0.000000000000000e+00 2.413000000000000e+03;
+start 0; clean;
+end;
+
+EOF
+$BIN/asc2pix < $2/regress/spdipix.asc > spdi_ref.pix 
+$BIN/pixdiff spdi.pix spdi_ref.pix > spdi_diff.pix 2>> spdi.log
+/bin/echo -n spdi.pix
+tr , '\012' < spdi.log | grep many
