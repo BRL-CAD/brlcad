@@ -24,6 +24,7 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "rtstring.h"
 #include "raytrace.h"
 #include "./material.h"
 #include "./rdebug.h"
@@ -63,17 +64,18 @@ register struct region *rp;
 {
 	register struct mfuncs *mfp;
 	int	ret;
-	char	param[256];
+	struct rt_vls	param;
 	char	*material;
 
 	if( rp->reg_mfuncs != (char *)0 )  {
 		rt_log("mlib_setup:  region %s already setup\n", rp->reg_name );
 		return(-1);
 	}
+	rt_vls_init( &param );
 	material = rp->reg_mater.ma_matname;
 	if( material[0] == '\0' )  {
 		material = mdefault;
-		param[0] = '\0';
+		rt_vls_trunc( &param );
 	}
 retry:
 	for( mfp=mfHead; mfp != MF_NULL; mfp = mfp->mf_forw )  {
@@ -86,24 +88,25 @@ retry:
 		material );
 	if( material != mdefault )  {
 		material = mdefault;
-		param[0] = '\0';
+		rt_vls_trunc( &param );
 		goto retry;
 	}
+	rt_vls_free( &param );
 	return(-1);
 found:
 	rp->reg_mfuncs = (char *)mfp;
 	rp->reg_udata = (char *)0;
-	strncpy( param, rp->reg_mater.ma_matparm, sizeof(rp->reg_mater.ma_matparm) );
-	param[sizeof(rp->reg_mater.ma_matparm)+1] = '\0';
+	rt_vls_strncpy( &param, rp->reg_mater.ma_matparm, sizeof(rp->reg_mater.ma_matparm) );
 
-	if( (ret = mfp->mf_setup( rp, param, &rp->reg_udata )) < 0 )  {
+	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata )) < 0 )  {
 		/* What to do if setup fails? */
 		if( material != mdefault )  {
 			material = mdefault;
-			param[0] = '\0';
+			rt_vls_trunc( &param );
 			goto retry;
 		}
 	}
+	rt_vls_free( &param );
 	return(ret);		/* Good or bad, as mf_setup says */
 }
 
