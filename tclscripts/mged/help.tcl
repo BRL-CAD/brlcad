@@ -81,7 +81,7 @@ set help_data(goto_view)        {{vid} {make view vid the current view}}
 set help_data(gui)		{{[-gt gui_type] [options for gui_type]} {create graphical user interface}}
 set help_data(gui_create)	{{[-gt gui_type] [options for gui_type]} {create graphical user interface}}
 set help_data(gui_destroy)	{{[-gt gui_type] [options for gui_type]} {destroy graphical user interface}}
-set help_data(gui_create_default)	{{[-config b|c|g] [-d display string] [-gd graphics display string] [-gt graphics type] [-id name] [-c -h -j -s]}	{create display/command window pair}}
+set help_data(gui_create_default)	{{[-config b|c|g] [-d display string] [-gd graphics display string] [-dt graphics type] [-id name] [-c -h -j -s]}	{create display/command window pair}}
 set help_data(gui_destroy_default)	{{id}	{destroy display/command window pair}}
 set help_data(help)		{{[commands]}	{give usage message for given commands}}
 set help_data(helplib)		{{[library commands]}	{give usage message for given library commands}}
