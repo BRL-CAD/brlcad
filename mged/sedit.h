@@ -82,6 +82,10 @@
 #define	ECMD_VOL_THRESH_HI	51	/* set VOL threshold (hi) */
 #define	ECMD_VOL_FNAME		52	/* set VOL file name */
 
+#define	ECMD_EBM_FNAME		53	/* set EBM file name */
+#define	ECMD_EBM_FSIZE		54	/* set EBM file size */
+#define	ECMD_EBM_HEIGHT		55	/* set EBM extrusion depth */
+
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
 		       es_edflag == ECMD_TGC_ROT_H || \
@@ -97,7 +101,8 @@
 		      es_edflag == PSCALE || \
 		      es_edflag == ECMD_VOL_THRESH_LO || \
 		      es_edflag == ECMD_VOL_THRESH_HI || \
-		      es_edflag == ECMD_VOL_CSIZE ))
+		      es_edflag == ECMD_VOL_CSIZE || \
+		      es_edflag == ECMD_EBM_HEIGHT ))
 #define OEDIT_SCALE (state == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \

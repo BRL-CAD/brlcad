@@ -74,7 +74,7 @@ extern int      savedit;
 #endif
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
-static void	nmg_ed(), pipe_ed(), vol_ed();
+static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed();
 static void	rpc_ed(), rhc_ed(), epa_ed(), ehy_ed(), eto_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
@@ -198,6 +198,9 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_VOL_CSIZE		76
 #define	MENU_VOL_THRESH_LO	77
 #define	MENU_VOL_THRESH_HI	78
+#define	MENU_EBM_FNAME		79
+#define	MENU_EBM_FSIZE		80
+#define	MENU_EBM_HEIGHT		81
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -544,6 +547,14 @@ struct menu_item vol_menu[] = {
 	{ "", (void (*)())NULL, 0 }
 };
 
+struct menu_item ebm_menu[] = {
+	{"EBM MENU", (void (*)())NULL, 0 },
+	{"file name", ebm_ed, MENU_EBM_FNAME },
+	{"file size (W N)", ebm_ed, MENU_EBM_FSIZE },
+	{"extrude depth", ebm_ed, MENU_EBM_HEIGHT },
+	{ "", (void (*)())NULL, 0 }
+};
+
 struct menu_item *which_menu[] = {
 	point4_menu,
 	edge5_menu,
@@ -657,6 +668,28 @@ int arg;
 		sedraw = 1;
 	}
 
+	set_e_axes_pos();
+}
+
+static void
+ebm_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	sedraw = 1;
+
+	switch( arg )
+	{
+		case MENU_EBM_FNAME:
+			es_edflag = ECMD_EBM_FNAME;
+			break;
+		case MENU_EBM_FSIZE:
+			es_edflag = ECMD_EBM_FSIZE;
+			break;
+		case MENU_EBM_HEIGHT:
+			es_edflag = ECMD_EBM_HEIGHT;
+			break;
+	}
 	set_e_axes_pos();
 }
 
@@ -2195,6 +2228,9 @@ sedit_menu()  {
 	case ID_VOL:
 		mmenu_set( MENU_L1, vol_menu );
 		break;
+	case ID_EBM:
+		mmenu_set( MENU_L1, ebm_menu );
+		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
 	es_menu = 0;
@@ -2293,25 +2329,46 @@ get_rotation_vertex()
 }
 
 char *
-get_file_name()
+get_file_name( str )
+char *str;
 {
 	struct bu_vls cmd;
+	char *dir;
+	char *fptr;
+	char *ptr1;
+	char *ptr2;
 
 	bu_vls_init( &cmd );
 
-	bu_vls_printf( &cmd, "fs_dialog .w . * new_file" );
+	if( (fptr=strrchr( str, '/')))
+	{
+		dir = (char *)rt_malloc( (strlen(str)+1)*sizeof( char ), "get_file_name: dir" );
+		ptr1 = str;
+		ptr2 = dir;
+		while( ptr1 != fptr )
+			*ptr2++ = *ptr1++;
+		*ptr2 = '\0';
+		strcat( dir, "/*" );
+
+		bu_vls_printf( &cmd, "fs_dialog .w . %s", dir );
+	}
+	else
+		bu_vls_printf( &cmd, "fs_dialog .w . *" );
+
 	if( Tcl_Eval( interp, bu_vls_addr( &cmd ) ) )
 	{
 		bu_vls_free( &cmd );
 		return( (char *)NULL );
 	}
+	else if( interp->result[0] != '\0' )
+	{
+		bu_vls_free( &cmd );
+		return( interp->result );
+	}
 	else
 	{
 		bu_vls_free( &cmd );
-		if( interp->result[0] == '1' )
-			return( Tcl_GetVar( interp, "new_file", TCL_GLOBAL_ONLY));
-		else
-			return( (char *)NULL );
+		return( (char *)NULL );
 	}
 }
 
@@ -2349,6 +2406,106 @@ sedit()
 	  update_views = 0;
 	  break;
 
+	case ECMD_EBM_FSIZE:	/* set file size */
+		{
+			struct rt_ebm_internal *ebm =
+				(struct rt_ebm_internal *)es_int.idb_ptr;
+			struct stat stat_buf;
+			off_t need_size;
+
+			RT_EBM_CK_MAGIC( ebm );
+
+			if( inpara == 2 )
+			{
+				if( stat( ebm->file, &stat_buf ) )
+				{
+					Tcl_AppendResult(interp, "Cannot get status of file ", ebm->file, (char *)NULL );
+					mged_print_result( TCL_ERROR );
+					return;
+				}
+				need_size = es_para[0] * es_para[1] * sizeof( unsigned char );
+				if( stat_buf.st_size < need_size )
+				{
+					Tcl_AppendResult(interp, "File (", ebm->file,
+						") is too small, set file name first", (char *)NULL );
+					mged_print_result( TCL_ERROR );
+					return;
+				}
+				ebm->xdim = es_para[0];
+				ebm->ydim = es_para[1];
+			}
+			else if( inpara > 0 )
+			{
+				Tcl_AppendResult(interp, "width and length of file are required\n", (char *)NULL );
+				mged_print_result( TCL_ERROR );
+				return;
+			}
+		}
+		break;
+
+	case ECMD_EBM_FNAME:
+		{
+			struct rt_ebm_internal *ebm =
+				(struct rt_ebm_internal *)es_int.idb_ptr;
+			char *fname;
+			struct stat stat_buf;
+			off_t need_size;
+
+			RT_EBM_CK_MAGIC( ebm );
+
+			fname = get_file_name( ebm->file );
+			if( fname )
+			{
+				struct bu_vls message;
+
+				if( stat( fname, &stat_buf ) )
+				{
+					bu_vls_init( &message );
+					bu_vls_printf( &message, "Cannot get status of file %s\n", fname );
+					Tcl_SetResult(interp, bu_vls_addr( &message ), TCL_VOLATILE );
+					bu_vls_free( &message );
+					mged_print_result( TCL_ERROR );
+					return;
+				}
+				need_size = ebm->xdim * ebm->ydim * sizeof( unsigned char );
+				if( stat_buf.st_size < need_size )
+				{
+					bu_vls_init( &message );
+					bu_vls_printf( &message, "File (%s) is too small, adjust the file size parameters first", fname);
+					Tcl_SetResult(interp, bu_vls_addr( &message ), TCL_VOLATILE);
+					bu_vls_free( &message );
+					mged_print_result( TCL_ERROR );
+					return;
+				}
+				strcpy( ebm->file, fname );
+			}
+
+			break;
+		}
+
+	case ECMD_EBM_HEIGHT:	/* set extrusion depth */
+		{
+			struct rt_ebm_internal *ebm =
+				(struct rt_ebm_internal *)es_int.idb_ptr;
+
+			RT_EBM_CK_MAGIC( ebm );
+
+			if( inpara == 1 )
+				ebm->tallness = es_para[0];
+			else if( inpara > 0 )
+			{
+				Tcl_AppendResult(interp, "extrusion depth required\n", (char *)NULL );
+				mged_print_result( TCL_ERROR );
+				return;
+			}
+			else if( es_scale > 0.0 )
+			{	
+				ebm->tallness *= es_scale;
+				es_scale = 0.0;
+			}
+		}
+		break;
+
 	case ECMD_VOL_CSIZE:	/* set voxel size */
 		{
 			struct rt_vol_internal *vol =
@@ -2358,7 +2515,7 @@ sedit()
 
 			if( inpara == 3 )
 				VMOVE( vol->cellsize, es_para )
-			else if( inpara > 0 && inpara < 3 )
+			else if( inpara > 0 && inpara != 3 )
 			{
 				Tcl_AppendResult(interp, "x, y, and z cell sizes are required\n", (char *)NULL );
 				mged_print_result( TCL_ERROR );
@@ -2401,7 +2558,7 @@ sedit()
 				vol->ydim = es_para[1];
 				vol->zdim = es_para[2];
 			}
-			else if( inpara > 0 && inpara < 3 )
+			else if( inpara > 0 )
 			{
 				Tcl_AppendResult(interp, "x, y, and z file sizes are required\n", (char *)NULL );
 				mged_print_result( TCL_ERROR );
@@ -2478,7 +2635,7 @@ sedit()
 
 			RT_VOL_CK_MAGIC( vol );
 
-			fname = get_file_name();
+			fname = get_file_name( vol->file );
 			if( fname )
 			{
 				struct bu_vls message;
@@ -3986,6 +4143,7 @@ CONST vect_t	mousevec;
   case ECMD_VOL_CSIZE:
   case ECMD_VOL_THRESH_LO:
   case ECMD_VOL_THRESH_HI:
+  case ECMD_EBM_HEIGHT:
     /* use mouse to get a scale factor */
     es_scale = 1.0 + 0.25 * ((fastf_t)
 			     (mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
@@ -5764,6 +5922,7 @@ vect_t argvect;
   case ECMD_ARS_MOVE_CRV:
   case ECMD_ARS_MOVE_COL:
   case ECMD_VOL_CSIZE:
+  case ECMD_EBM_HEIGHT:
     /* must convert to base units */
     es_para[0] *= local2base;
     es_para[1] *= local2base;
