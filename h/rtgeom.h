@@ -28,6 +28,8 @@
 #ifndef SEEN_RTGEOM_H
 #define SEEN_RTGEOM_H seen
 
+#undef r_a /* defined on alliant in <machine/reg.h> included in signal.h */
+
 /*
  *	ID_TOR
  */
