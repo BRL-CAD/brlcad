@@ -2971,6 +2971,8 @@ hit_b:
 			continue;	/* outside lseg AB pts */
 		default:
 		case -1:
+#if 0
+			rt_log("rt_isect_pt2_lseg2() returned %d, dist[0]=%e\n", code, dist[0]);
 			VPRINT("  pt", is->pt);
 			VPRINT(" dir", is->dir);
 			VPRINT("  A3", vu1a->v_p->vg_p->coord);
@@ -2981,9 +2983,9 @@ hit_b:
 			V2PRINT("  A2", eu1_pt2d );
 			V2PRINT("Hit2", hit2d);
 			V2PRINT("  B2", eu1_end2d );
-			rt_log("rt_isect_pt2_lseg2() returned %d, ldist=%g, dist[0]=%e\n", code, ldist, dist[0]);
-			rt_bomb("not on line of AB within tolerance??\n");
-			continue;
+			rt_log("not on line of AB within tolerance, continuing\n");
+#endif
+			continue;	/* Point not on lseg */
 		case 1:
 			/* Point is at A (vu1a) by geometry */
 			hit_v = vu1a->v_p;
@@ -3020,6 +3022,7 @@ hit_b:
 				if( hit_v != vu1_final->v_p )  rt_bomb("hit_v changed?\n");
 			}
 			nmg_insert_fu_vu_in_other_list( is, list, hit_v, fu2 );
+			nmg_ck_face_worthless_edges( fu1 );
 			break;
 		}
 	}
