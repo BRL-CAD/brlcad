@@ -255,6 +255,12 @@ bu_avail_cpus()
 {
 	int	ret = 1;
 
+#ifdef linux 
+#define CPUINFO_FILE "/proc/cpuinfo"
+	FILE *fp;
+	char buf[128];
+#endif
+
 #ifdef __ppc__
 	int mib[2], maxproc;
 	size_t len;
@@ -287,20 +293,60 @@ bu_avail_cpus()
 #       define  RT_AVAIL_CPUS
 #endif	/* defined(SUNOS) */
 
-#if defined(HAS_POSIX_THREADS)
+#if defined(HAS_POSIX_THREADS) && !defined(linux)
 	/* XXX Old posix doesn't specify how to learn how many CPUs there are. 
 	 *  never posix can make a sysctl call -- see __ppc__ below */
 	ret = 2;
 #	define	RT_AVAIL_CPUS
 #endif /* HAS_POSIX_THREADS */
 
-/* These machines may or may not have posix threads, but (more importantly)
+/* 
+ * These machines may or may not have posix threads, but (more importantly)
  * they do have other mechanisms for determining cpu count
  */
+#if defined(linux)
+	/*
+	 * Ultra-kludgey way to determine the number of cpus in a 
+	 * linux box--count the number of processor entries in 
+	 * /proc/cpuinfo!
+	 */
+	ret = 0;
+
+	fp = fopen (CPUINFO_FILE,"r");
+
+	if (fp == NULL)
+	  {
+	    ret = 1; 
+	    perror (CPUINFO_FILE);
+	  }
+	else 
+	  {
+	    while (fgets (buf, 80, fp) != NULL)
+	      {
+		if (strncmp (buf, "processor",9) == 0)
+		  {
+		    ++ ret;
+		  }
+	      }
+	    fclose (fp);	
+	    
+	    if (ret <= 0) 
+	      {
+		ret = 1;
+	      } 
+	    else
+	      { 
+                #if 0
+		bu_log ("bu_avail_cpus: counted %d cpus.\n", ret);
+                #endif
+	      }
+	  }
+#         define RT_AVAIL_CPUS
+#endif
 
 #if defined(n16)
 	if( (ret = sysadmin( SADMIN_NUMCPUS, 0 )) < 0 )
-		perror("sysadmin");
+	  perror("sysadmin");
 #	define	RT_AVAIL_CPUS
 #endif
 
