@@ -57,7 +57,7 @@ char *av[];
 	int arg_index;
 	u_char *red, *green, *blue;
 	struct dsreq *dsp;
-	FILE *fd;
+	int	fd;
 	int i;
 	int bufpos;
 	u_char buf[3*10240];
@@ -70,7 +70,7 @@ char *av[];
 	 * left over for processing.
 	 */
 	if ((arg_index = parse_args(ac, av)) < ac) {
-		if ((fd=fopen(av[arg_index], "w")) == (FILE *)NULL) {
+		if ((fd=open(av[arg_index], 0)) < 0) {
 			(void)fprintf(stderr, "%s: ", progname);
 			perror(av[arg_index]);
 			return(-1);
@@ -78,7 +78,7 @@ char *av[];
 	} else if (isatty(fileno(stdout))) {
 		usage("Cannot scan to tty\n");
 	} else
-		fd = stdout;
+		fd = fileno(stdout);
 
 	if ((dsp = dsopen(scsi_device, O_RDWR)) == NULL) {
 		perror(scsi_device);
@@ -136,7 +136,7 @@ char *av[];
 				*cp++ = green[offset+x];
 				*cp++ = blue[offset+x];
 			}
-			if (fwrite(buf, width*3, 1, fd) != 1) {
+			if (write(fd, buf, width*3) != width*3) {
 				fprintf(stderr, "buffer write error, line %d\n", pix_y);
 				return(-1);
 			}
@@ -146,6 +146,7 @@ char *av[];
 	}
 
 	(void)dsclose(dsp);
+	(void)close(fd);
 	(void)chmod(av[arg_index], 0444);
 	return(0);
 }
