@@ -109,15 +109,13 @@ mged_plot_anim_upcall_handler( file, us )
 char	*file;
 long	us;		/* microseconds of extra delay */
 {
-	struct bu_vls	str;
+	char *av[3];
 
 	/* Overlay plot file */
-	bu_vls_init( &str );
-	bu_vls_printf( &str, "overlay %s\n", file );
-
-	(void)cmdline( &str, FALSE );
-
-	bu_vls_free( &str );
+	av[0] = "overlay";
+	av[1] = file;
+	av[2] = NULL;
+	(void)f_overlay((ClientData)NULL, interp, 2, av);
 
 	do {
 		event_check( 1 );	/* Take any device events */
@@ -928,17 +926,16 @@ int			copy;
 	int		i;
 	char		shortname[32];
 	char		namebuf[64];
-	struct bu_vls	str;
+	char		*av[4];
 
 	strncpy( shortname, name, 16-6 );
 	shortname[16-6] = '\0';
 	/* Remove any residue colors from a previous overlay w/same name */
-	bu_vls_init(&str);
-	bu_vls_printf( &str, "kill -f %s*\n", shortname );
-
-	(void)cmdline( &str, FALSE );
-
-	bu_vls_free(&str);
+	av[0] = "kill";
+	av[1] = "-f";
+	av[2] = shortname;
+	av[3] = NULL;
+	(void)f_kill((ClientData)NULL, interp, 3, av);
 
 	for( i=0; i < vbp->nused; i++ )  {
 		if( vbp->rgb[i] == 0 )  continue;

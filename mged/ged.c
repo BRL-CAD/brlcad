@@ -563,6 +563,7 @@ int mask;
 		(void)signal( SIGINT, SIG_IGN );
 	    } else {
 		reset_Tty(fileno(stdin)); /* Backwards compatibility */
+		(void)signal( SIGINT, SIG_IGN );
 		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
 		    /* Remove newline */
 		    bu_vls_trunc(&input_str_prefix,
@@ -1123,13 +1124,30 @@ void
 aslewview( view_pos )
 vect_t view_pos;
 {
-  struct bu_vls cmd;
+  char *av[8];
+  struct bu_vls x_vls, y_vls, z_vls;
 
-  bu_vls_init(&cmd);
-  bu_vls_printf(&cmd, "knob aX %f aY %f aZ %f\n",
-		view_pos[X], view_pos[Y], view_pos[Z]);
-  (void)cmdline(&cmd, FALSE);
-  bu_vls_free(&cmd);
+  bu_vls_init(&x_vls);
+  bu_vls_init(&y_vls);
+  bu_vls_init(&z_vls);
+  bu_vls_printf(&x_vls, "%f", view_pos[X]);
+  bu_vls_printf(&y_vls, "%f", view_pos[Y]);
+  bu_vls_printf(&z_vls, "%f", view_pos[Z]);
+
+  av[0] = "knob";
+  av[1] = "aX";
+  av[2] = bu_vls_addr(&x_vls);
+  av[3] = "aY";
+  av[4] = bu_vls_addr(&y_vls);;
+  av[5] = "aZ";
+  av[6] = bu_vls_addr(&z_vls);;
+  av[7] = NULL;
+
+  (void)f_knob((ClientData)NULL, interp, 7, av);
+
+  bu_vls_free(&x_vls);
+  bu_vls_free(&y_vls);
+  bu_vls_free(&z_vls);
 }
 
 /*
@@ -1143,13 +1161,30 @@ slewview( view_pos )
 vect_t view_pos;
 {
 #if 1
-  struct bu_vls cmd;
+  char *av[8];
+  struct bu_vls x_vls, y_vls, z_vls;
 
-  bu_vls_init(&cmd);
-  bu_vls_printf(&cmd, "iknob aX %f aY %f aZ %f\n",
-		-view_pos[X], -view_pos[Y], -view_pos[Z]);
-  (void)cmdline(&cmd, FALSE);
-  bu_vls_free(&cmd);
+  bu_vls_init(&x_vls);
+  bu_vls_init(&y_vls);
+  bu_vls_init(&z_vls);
+  bu_vls_printf(&x_vls, "%f", -view_pos[X]);
+  bu_vls_printf(&y_vls, "%f", -view_pos[Y]);
+  bu_vls_printf(&z_vls, "%f", -view_pos[Z]);
+
+  av[0] = "iknob";
+  av[1] = "aX";
+  av[2] = bu_vls_addr(&x_vls);
+  av[3] = "aY";
+  av[4] = bu_vls_addr(&y_vls);;
+  av[5] = "aZ";
+  av[6] = bu_vls_addr(&z_vls);;
+  av[7] = NULL;
+
+  (void)f_knob((ClientData)NULL, interp, 7, av);
+
+  bu_vls_free(&x_vls);
+  bu_vls_free(&y_vls);
+  bu_vls_free(&z_vls);
 #else
 	point_t	old_model_center;
 	point_t	new_model_center;

@@ -316,12 +316,12 @@ static void bv_rate_toggle()
   mged_variables.rateknobs = !mged_variables.rateknobs;
 
   if(mged_variables.scroll_enabled){
-    struct bu_vls cmd;
+    char *av[3];
 
-    bu_vls_init(&cmd);
-    bu_vls_strcpy( &cmd, "sliders on\n");
-    (void)cmdline(&cmd, False);
-    bu_vls_free(&cmd);
+    av[0] = "sliders";
+    av[1] = "on";
+    av[2] = NULL;
+    (void)cmd_sliders((ClientData)NULL, interp, 2, av);
   }
 
   dmaflag = 1;
@@ -388,12 +388,12 @@ static void bv_adcursor()  {
 	}
 
 	if(mged_variables.scroll_enabled){
-	  struct bu_vls cmd;
+	  char *av[3];
 
-	  bu_vls_init(&cmd);
-	  bu_vls_strcpy( &cmd, "sliders on\n");
-	  (void)cmdline(&cmd, False);
-	  bu_vls_free(&cmd);
+	  av[0] = "sliders";
+	  av[1] = "on";
+	  av[2] = NULL;
+	  (void)cmd_sliders((ClientData)NULL, interp, 2, av);
 	}
 
 	dmaflag = 1;

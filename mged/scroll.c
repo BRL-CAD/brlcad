@@ -52,33 +52,33 @@ static void	sl_itol();
 static double	sld_xadc, sld_yadc, sld_1adc, sld_2adc, sld_distadc;
 
 struct scroll_item scr_menu[] = {
-	{ "xslew",	sl_tol,		0,	"knob X" },
-	{ "yslew",	sl_tol,		1,	"knob Y" },
-	{ "zslew",	sl_tol,		2,	"knob Z" },
-	{ "zoom",	sl_tol,		3,	"knob S" },
-	{ "xrot",	sl_tol,		4,   "knob x" },
-	{ "yrot",	sl_tol,		5,   "knob y" },
-	{ "zrot",	sl_tol,		6,   "knob z" },
+	{ "xslew",	sl_tol,		0,	"X" },
+	{ "yslew",	sl_tol,		1,	"Y" },
+	{ "zslew",	sl_tol,		2,	"Z" },
+	{ "zoom",	sl_tol,		3,	"S" },
+	{ "xrot",	sl_tol,		4,   "x" },
+	{ "yrot",	sl_tol,		5,   "y" },
+	{ "zrot",	sl_tol,		6,   "z" },
 	{ "",		(void (*)())NULL, 0, "" }
       };
 
 struct scroll_item sl_abs_menu[] = {
-	{ "Xslew",	sl_tol,		0,	"knob aX" },
-	{ "Yslew",	sl_tol,		1,	"knob aY" },
-	{ "Zslew",	sl_tol,		2,	"knob aZ" },
-	{ "Zoom",	sl_tol,		3,	"knob aS" },
-	{ "Xrot",	sl_tol,		4,   "knob ax" },
-	{ "Yrot",	sl_tol,		5,   "knob ay" },
-	{ "Zrot",	sl_tol,		6,   "knob az" },
+	{ "Xslew",	sl_tol,		0,	"aX" },
+	{ "Yslew",	sl_tol,		1,	"aY" },
+	{ "Zslew",	sl_tol,		2,	"aZ" },
+	{ "Zoom",	sl_tol,		3,	"aS" },
+	{ "Xrot",	sl_tol,		4,   "ax" },
+	{ "Yrot",	sl_tol,		5,   "ay" },
+	{ "Zrot",	sl_tol,		6,   "az" },
 	{ "",		(void (*)())NULL, 0, "" }
 };
 
 struct scroll_item sl_adc_menu[] = {
-	{ "xadc",	sl_itol,	0, "knob xadc" },
-	{ "yadc",	sl_itol,	1, "knob yadc" },
-	{ "ang 1",	sl_itol,	2, "knob ang1" },
-	{ "ang 2",	sl_itol,	3, "knob ang2" },
-	{ "tick",	sl_itol,	4, "knob distadc" },
+	{ "xadc",	sl_itol,	0, "xadc" },
+	{ "yadc",	sl_itol,	1, "yadc" },
+	{ "ang 1",	sl_itol,	2, "ang1" },
+	{ "ang 2",	sl_itol,	3, "ang2" },
+	{ "tick",	sl_itol,	4, "distadc" },
 	{ "",		(void (*)())NULL, 0, "" }
 };
 
@@ -96,15 +96,13 @@ struct scroll_item sl_adc_menu[] = {
  */
 void sl_halt_scroll()
 {
-  struct bu_vls cmd;
+  char *av[3];
 
-  bu_vls_init(&cmd);
+  av[0] = "knob";
+  av[1] = "zero";
+  av[2] = NULL;
 
-  /* The 'knob' command will zero the rate_slew[] array, etc. */
-  bu_vls_strcpy(&cmd, "knob zero\n");
-  (void)cmdline(&cmd, False);
-
-  bu_vls_free(&cmd);
+  (void)f_knob((ClientData)NULL, interp, 2, av);
 }
 
 /*
@@ -112,18 +110,17 @@ void sl_halt_scroll()
  */
 void sl_toggle_scroll()
 {
-  struct bu_vls cmd;
+  char *av[3];
 
-  bu_vls_init(&cmd);
+  av[0] = "sliders";
+  av[2] = NULL;
 
   if( mged_variables.scroll_enabled == 0 )
-    bu_vls_strcpy( &cmd, "sliders on\n" );
+    av[1] = "on";
   else
-    bu_vls_strcpy( &cmd, "sliders off\n" );
+    av[1] = "off";
 
-  (void)cmdline(&cmd, False);
-
-  bu_vls_free(&cmd);
+  (void)cmd_sliders((ClientData)NULL, interp, 2, av);
 }
 
 /*
@@ -183,40 +180,52 @@ static void sl_tol( mptr, val )
 register struct scroll_item     *mptr;
 double				val;
 {
-	struct bu_vls cmd;
+  char *av[4];
+  struct bu_vls vls;
 
-	if( val < -SL_TOL )   {
-		val += SL_TOL;
-	} else if( val > SL_TOL )   {
-		val -= SL_TOL;
-	} else {
-		val = 0.0;
-	}
+  av[0] = "knob";
+  av[1] = mptr->scroll_cmd;
+  av[3] = NULL;
 
-	bu_vls_init( &cmd );
-	bu_vls_printf( &cmd, "%s %f\n", mptr->scroll_cmd, val );
-	(void)cmdline( &cmd, FALSE );
-	bu_vls_free(&cmd);
+  if( val < -SL_TOL )   {
+    val += SL_TOL;
+  } else if( val > SL_TOL )   {
+    val -= SL_TOL;
+  } else {
+    val = 0.0;
+  }
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "%f", val);
+  av[2] = bu_vls_addr(&vls);
+  (void)f_knob((ClientData)NULL, interp, 3, av);
+  bu_vls_free(&vls);
 }
 
 static void sl_itol( mptr, val )
 register struct scroll_item     *mptr;
 double				val;
 {
-	struct bu_vls cmd;
+  char *av[4];
+  struct bu_vls vls;
 
-	if( val < -SL_TOL )   {
-		val += SL_TOL;
-	} else if( val > SL_TOL )   {
-		val -= SL_TOL;
-	} else {
-		val = 0.0;
-	}
+  av[0] = "knob";
+  av[1] = mptr->scroll_cmd;
+  av[3] = NULL;
 
-	bu_vls_init( &cmd );
-	bu_vls_printf( &cmd, "%s %d\n", mptr->scroll_cmd, (int)(val * 2047.0) );
-	(void)cmdline( &cmd, FALSE );
-	bu_vls_free(&cmd);
+  if( val < -SL_TOL )   {
+    val += SL_TOL;
+  } else if( val > SL_TOL )   {
+    val -= SL_TOL;
+  } else {
+    val = 0.0;
+  }
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "%d", (int)(val*2047.0));
+  av[2] = bu_vls_addr(&vls);
+  (void)f_knob((ClientData)NULL, interp, 3, av);
+  bu_vls_free(&vls);
 }
 
 

@@ -97,12 +97,12 @@ extern struct _mged_variables default_mged_variables;
 struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list;
 
-static char *view_cmd_str[] = {
-  "press top",
-  "press right",
-  "press front",
-  "press 45,45",
-  "press 35,25"
+static char *default_view_strings[] = {
+  "top",
+  "right",
+  "front",
+  "45,45",
+  "35,25"
 };
 
 struct w_dm {
@@ -199,15 +199,14 @@ char *name;
 int
 reattach()
 {
-  struct bu_vls cmd;
-  int status;
+  char *av[4];
 
-  bu_vls_init(&cmd);
-  bu_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
-  release((char *)NULL);
-  status = cmdline(&cmd, FALSE);
-  bu_vls_free(&cmd);
-  return status;
+  av[0] = "attach";
+  av[1] = dmp->dmr_name;
+  av[2] = dname;
+  av[3] = NULL;
+
+  return f_attach((ClientData)NULL, interp, 3, av);
 }
 
 
@@ -552,19 +551,15 @@ int     argc;
 char    **argv;
 {
   int i;
-  struct bu_vls vls;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  bu_vls_init(&vls);
   for(i = 0; i < VIEW_TABLE_SIZE; ++i){
-    bu_vls_strcpy(&vls, view_cmd_str[i]);
-    (void)cmdline(&vls, False);
+    press(default_view_strings[i]);
     mat_copy(viewrot_table[i], Viewrot);
     viewscale_table[i] = Viewscale;
   }
-  bu_vls_free(&vls);
 
   current_view = 0;
   mat_copy(Viewrot, viewrot_table[current_view]);
