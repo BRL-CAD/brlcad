@@ -498,9 +498,10 @@ struct partition *PartHeadp;
  *  This can be a recursive procedure.
  */
 int
-colorview( ap, PartHeadp )
+colorview( ap, PartHeadp, finished_segs )
 register struct application *ap;
 struct partition *PartHeadp;
+struct seg *finished_segs;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -561,6 +562,9 @@ struct partition *PartHeadp;
 		sub_ap.a_purpose = "pushed eye position";
 		(void)rt_shootray( &sub_ap );
 #if 0
+	/* XXX This is taken out because we tend to have air and 
+	 * vapor "solids" these days which typically fill space
+	 */
 		VSCALE( ap->a_color, sub_ap.a_color, 0.80 );
 #else
 		VMOVE( ap->a_color, sub_ap.a_color);
@@ -619,6 +623,7 @@ struct partition *PartHeadp;
 	sw.sw_inputs = 0;		/* no fields filled yet */
 	sw.sw_frame = curframe;
 	sw.sw_pixeltime = sw.sw_frametime = curframe * frame_delta_t;
+	sw.sw_segs = finished_segs;
 	VSETALL( sw.sw_color, 1 );
 	VSETALL( sw.sw_basecolor, 1 );
 
