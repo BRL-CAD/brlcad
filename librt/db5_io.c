@@ -227,7 +227,13 @@ db5_crack_disk_header( rip, cp )
 struct db5_raw_internal		*rip;
 CONST unsigned char		*cp;
 {
-	if( cp[0] != DB5HDR_MAGIC1 )  return 0;
+	if( cp[0] != DB5HDR_MAGIC1 )  {
+		bu_log("db5_crack_disk_header() bad magic1 -- database has become corrupted\n expected x%x, got x%x\n",
+			DB5HDR_MAGIC1, cp[0]);
+		if( cp[0] == 'I' )
+			bu_log("It looks like a v4 database was concatenated onto a v5 database.\nConvert using g4-g5 before the 'cat', or use the MGED 'concat' command.\n");
+		return 0;
+	}
 
 	/* hflags */
 	rip->h_dli = (cp[1] & DB5HDR_HFLAGS_DLI_MASK);
@@ -290,9 +296,16 @@ db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
 	cp += db5_decode_length( &rip->object_length, cp, rip->h_object_width );
 	rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
+	if( rip->object_length < sizeof(struct db5_ondisk_header) )  {
+		bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database is corrupted\n",
+			rip->object_length);
+		return NULL;
+	}
+
 	/* Verify trailing magic number */
 	if( ip[rip->object_length-1] != DB5HDR_MAGIC2 )  {
-		bu_log("db5_get_raw_internal_ptr() bad magic2\n");
+		bu_log("db5_get_raw_internal_ptr() bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
+			DB5HDR_MAGIC2, ip[rip->object_length-1] );
 		return NULL;
 	}
 
@@ -378,6 +391,12 @@ FILE			*fp;
 	used += db5_decode_length( &rip->object_length, lenbuf, rip->h_object_width );
 	rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
+	if( rip->object_length < sizeof(struct db5_ondisk_header) )  {
+		bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database is corrupted\n",
+			rip->object_length);
+		return -1;
+	}
+
 	/* Now that we finally know how large the object is, get it all */
 	rip->buf = (unsigned char *)bu_malloc( rip->object_length, "raw v5 object" );
 
@@ -395,7 +414,8 @@ FILE			*fp;
 
 	/* Verify trailing magic number */
 	if( rip->buf[rip->object_length-1] != DB5HDR_MAGIC2 )  {
-		bu_log("db5_get_raw_internal_fp() bad magic2\n");
+		bu_log("db5_get_raw_internal_fp() bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
+			DB5HDR_MAGIC2, rip->buf[rip->object_length-1] );
 		return -2;
 	}
 
