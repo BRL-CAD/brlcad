@@ -13,16 +13,20 @@
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" license agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1988 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1998 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -252,7 +256,7 @@ int	nwords;
 	if( strcmp( words[0], "rot" ) == 0 )  {
 		mat_t	mat;
 
-		/* Expects rotations rx, ry, rz */
+		/* Expects rotations rx, ry, rz, in degrees */
 		if( nwords < 4 )  return(-1);
 		mat_idn( mat );
 		mat_angles( mat, 
@@ -355,6 +359,41 @@ int	nwords;
 		mat_idn( mat );
 		/* XXX does not take twist, for now XXX */
 		mat_ae( mat, az, el );
+		out_mat( mat, stdout );
+		return(0);
+	}
+	if( strcmp( words[0], "arb_rot_pt" ) == 0 )  {
+		mat_t	mat;
+		point_t	pt1, pt2;
+		vect_t	dir;
+		fastf_t	ang;
+
+		if( nwords < 1+3+3+1 )  return(-1);
+		/* Expects point1, point2, angle */
+		VSET( pt1, atof(words[1]), atof(words[2]), atof(words[3]) );
+		VSET( pt2, atof(words[4]), atof(words[5]), atof(words[6]) );
+		ang = atof(words[7]) * bn_degtorad;
+		VSUB2( dir, pt2, pt2 );
+		VUNITIZE(dir);
+		mat_idn( mat );
+		bn_mat_arb_rot( mat, pt1, dir, ang );
+		out_mat( mat, stdout );
+		return(0);
+	}
+	if( strcmp( words[0], "arb_rot_dir" ) == 0 )  {
+		mat_t	mat;
+		point_t	pt1;
+		vect_t	dir;
+		fastf_t	ang;
+
+		if( nwords < 1+3+3+1 )  return(-1);
+		/* Expects point1, dir, angle */
+		VSET( pt1, atof(words[1]), atof(words[2]), atof(words[3]) );
+		VSET( dir, atof(words[4]), atof(words[5]), atof(words[6]) );
+		ang = atof(words[7]) * bn_degtorad;
+		VUNITIZE(dir);
+		mat_idn( mat );
+		bn_mat_arb_rot( mat, pt1, dir, ang );
 		out_mat( mat, stdout );
 		return(0);
 	}
