@@ -1493,7 +1493,7 @@ cm_clean(argc, argv)
 char	**argv;
 int	argc;
 {
-	f_zap( (ClientData)NULL, interp, 0, (char **)0 );
+	/*f_zap( (ClientData)NULL, interp, 0, (char **)0 );*/
 
 	/* Free animation structures */
 	db_free_anim(dbip);
