@@ -173,7 +173,7 @@ void argumentExamples(fp, progname)
 	   "-o", outputFilename, \
 	   "-e", "f" \
 	  );
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
 
   fprintf(fp, "Full Interactive-Mode Example: \n%s %s %s %s %s %s\n", 
 	   progname, \
@@ -181,7 +181,7 @@ void argumentExamples(fp, progname)
 	   "-o", outputFilename, \
 	   "-e", "fpmw" \
 	  );
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
 
   fprintf(fp, "Simple Parameter-Specified Example: \n%s %s %s %s %.1f %s %.1f\n", 
 	   progname, \
@@ -189,7 +189,7 @@ void argumentExamples(fp, progname)
 	   "-H", MAGNITUDE(fenceHeight), \
 	   "-L", MAGNITUDE(fenceWidth) \
 	  );
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
 
   fprintf(fp, "Extended Parameter-Specified Example: \n%s %s %s %s %s %s %s %s '%.1f %.1f %.1f' %s '%.1f %.1f %.1f' %s %.1f %s %.1f %s %.1f %s %.1f %s '%d %d %d' %s %s\n", 
 	   progname, \
@@ -205,7 +205,7 @@ void argumentExamples(fp, progname)
 	   "-c", fenceMaterialColor[0], fenceMaterialColor[1], fenceMaterialColor[2], \
 	   "-e", "fpm" \
 	  );
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
 
   return;
 }
@@ -244,7 +244,7 @@ void defaultSettings(fp)
   fprintf(fp, "\t\t\t\tMaterial[%s] \n\t\t\t\tMaterial Parameters[%s] \n\t\t\t\tMaterial Color[%d %d %d]\n\n", wireMaterial, wireMaterialParams, wireMaterialColor[0], wireMaterialColor[1], wireMaterialColor[2]);
   fprintf(fp, "\tCombination Names: \n");
   fprintf(fp, "\t\tFence: [%s] \n\t\tPoles: [%s] \n\t\tMesh: [%s] \n\t\tWires: [%s] \n\t\tSegments: [%s] \n\n", fenceName, poleName, meshName, wireName, segmentName);
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
   fprintf(fp, "No action performed.\n");
 }
 
@@ -269,12 +269,12 @@ int parseArguments(argc, argv)
     exit(1);
   }
 
-	if (argc > 1) {
-		strncpy(progname, argv[0], (strlen(argv[0])>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])));
-	}
-	else {
-		strncpy(progname, "fence\0", 6);
-	}
+  if (argc > 1) {
+    strncpy(progname, argv[0], (strlen(argv[0])>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])));
+  }
+  else {
+    strncpy(progname, "fence\0", 6);
+  }
 
   opterr = 0;
 
