@@ -32,10 +32,11 @@
 # Ensure /bin/sh.  Make no remarks here, just do it.
 export PATH || (sh $0 $*; kill $$)
 
-FILE=/tmp/machtype$$
-trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
+IN_FILE=/tmp/machty$$.c
+OUT_FILE=/tmp/machty$$
+trap '/bin/rm -f ${IN_FILE} ${OUT_FILE}; exit 1' 1 2 3 15	# Clean up temp file
 
-/lib/cpp << EOF > ${FILE}
+cat << EOF > ${IN_FILE}
 #line 1 "$0"
 
 #if defined(unix) && defined(m68k)
@@ -204,10 +205,21 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 
 EOF
 
+# Run the file through the macro preprocessor.
+# Many systems don't provide many built-in symbols with bare CPP,
+# so try to run through the compiler.
+# Using cc is essential for the IBM RS/6000, and helpful on the SGI.
+cc -E ${IN_FILE} > ${OUT_FILE}
+if test $? -ne 0
+then
+	# Must be an old C compiler without -E, fall back to /lib/cpp
+	/lib/cpp < ${IN_FILE} > ${OUT_FILE}
+fi
+
 # Note that we depend on CPP's "#line" messages to be ignored as comments
 # when sourced by the "." command here:
-. ${FILE}
-/bin/rm -f ${FILE}
+. ${OUT_FILE}
+/bin/rm -f ${IN_FILE} ${OUT_FILE}
 
 # See if we learned anything by all this
 if test x${MACHINE} = x
