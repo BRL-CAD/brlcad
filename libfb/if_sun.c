@@ -430,7 +430,7 @@ unsigned char rmap[], gmap[], bmap[];
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15ZAP	(1<<14)
 
-struct modeflags {
+static struct modeflags {
 	char	c;
 	long	mask;
 	long	value;

@@ -117,7 +117,7 @@ static char		*bitbuf = NULL;		/*XXXXXX*/
 #define MODE_1TRANSIENT	(0<<1)
 #define MODE_1LINGERING (1<<1)
 
-struct modeflags {
+static struct modeflags {
 	char	c;
 	long	mask;
 	long	value;
