@@ -140,7 +140,9 @@ for LAST in \
 	html/manuals/mged/animmate html/manuals/libdm \
 	html/manuals/shaders html/manuals/Anim_Tutorial \
 	html/ReleaseNotes html/ReleaseNotes/Rel5.0 \
-	html/ReleaseNotes/Rel5.0/Summary
+	html/ReleaseNotes/Rel5.0/Summary pro-engineer \
+	pro-engineer/text pro-engineer/sgi_elf2 pro-engineer/sun4_solaris \
+	pro-engineer/text/fullhelp pro-engineer/text/menus
 do
 	if test ! -d $BASEDIR/$LAST
 	then
