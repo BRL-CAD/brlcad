@@ -686,17 +686,20 @@ GetCoords( coop )
 	register coords	*coop;		/* -> input coordinates */
 	{
 	unsigned char buf[4];
+	register short s;
 	register long x,y;
 
 	/* read coordinates */
 	if ( fread( (char *)buf, (int)sizeof (buf), 1, pfin ) != 1 )
 		return false;
 
-	x = (buf[1]<<8) | buf[0];
-	y = (buf[3]<<8) | buf[2];
+	s = (buf[1]<<8) | buf[0];
+	x = s;				/* sign extend */
+	s = (buf[3]<<8) | buf[2];
+	y = s;				/* sign extend */
+	if( debug )  fprintf(stderr,"Coord: (%d,%d) ", x, y);
 
 	/* limit left, bottom */
-	if( debug )  fprintf(stderr,"Coord: (%d,%d) ", coop->x, coop->y);
 	if ( (x -= space.left) < 0 )
 		x = 0;
 	if ( (y -= space.bottom) < 0 )
