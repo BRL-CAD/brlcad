@@ -88,7 +88,7 @@ CONST char	*str;
 	register char	*ip;
 	register int	c;
 	register CONST struct cvt_tab	*tp;
-	char		ubuf[64];
+	char		ubuf[256];
 	int		len;
 
 	strncpy( ubuf, str, sizeof(ubuf)-1 );
