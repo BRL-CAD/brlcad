@@ -1332,9 +1332,8 @@ int		copy;
 		BU_LIST_INIT( &(sp->s_vlist) );
 		rt_vlist_copy( &(sp->s_vlist), vhead );
 	} else {
-		/* For efficiency, just swipe the vlist */
-		BU_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
-		BU_LIST_INIT(vhead);
+		BU_LIST_INIT(&(sp->s_vlist));
+		BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
 	}
 	mged_bound_solid( sp );
 	nvectors += sp->s_vlen;
