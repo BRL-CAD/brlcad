@@ -279,7 +279,7 @@ genptr_t		ptr;		/* for db version 5, this is a pointer to an unsigned char (mino
 	}
 
 	bu_vls_init(&local);
-	bu_vls_strcpy(&local, name);
+	bu_vls_strncpy(&local, name, NAMESIZE);
 	if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 		bu_vls_free(&local);
 		return DIR_NULL;
