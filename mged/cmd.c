@@ -150,7 +150,7 @@ int output_as_return = 0;
 extern Tcl_CmdProc cmd_expand, cmd_db, cmd_prev, cmd_next, f_echo, cmd_look;
 
 int	mged_cmd();
-int	cmd_gui(), cmd_tk(), cmd_getknob(), gui_cmdline();
+int	cmd_gui(), cmd_tk(), cmd_getknob();
 
 struct rt_vls tcl_output_hook;
 
@@ -382,10 +382,6 @@ static struct funtab funtab[] = {
 	f_matpick, 2,2,FALSE,
 "memprint", "", "print memory maps",
 	f_memprint, 1, 1,FALSE,
-#ifndef XMGED
-"mged", "cmd ?args...?", "Executes the given command and its arguments",
-        gui_cmdline, 1, MAXARGS, TRUE,
-#endif
 "mirface", "#### axis", "mirror an ARB face",
 	f_mirface,3,3,FALSE,
 "mirror", "old new axis", "Arb mirror ??",
