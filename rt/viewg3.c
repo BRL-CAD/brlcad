@@ -107,19 +107,20 @@ register struct partition *PartHeadp;
 	register struct partition *pp = PartHeadp->pt_forw;
 	struct partition	*np;	/* next partition */
 	struct partition	air;
-	int 			count;
+	int 			comp_count;	/* component count */
 	fastf_t			h, v;		/* h,v actual ray pos */
 	fastf_t			hcen, vcen;	/* h,v cell center */
 	fastf_t			dfirst, dlast;	/* ray distances */
 	fastf_t			dcorrection;	/* RT to GIFT dist corr */
+	int			card_count;	/* # comp. on this card */
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
-	/*  count components in partitions */
-	count = 0;
+	/*  comp components in partitions */
+	comp_count = 0;
 	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )
-		count++;
+		comp_count++;
 
 	/*
 	 *  GIFT format wants grid coordinates, which are the
@@ -177,11 +178,12 @@ register struct partition *PartHeadp;
 	 */
 	fprintf(stdout,"%7.1f%7.1f%9.3f%9.3f%3d%8.2f%8.2f A%6.1f E%6.1f\n",
 		hcen, vcen, h, v,
-		count,
+		comp_count,
 		dfirst, dlast,
 		azimuth, elevation );
 
 	/* loop here to deal with individual components */
+	card_count = 0;
 	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )  {
 		/*
 		 *  The GIFT statements that would have produced
@@ -261,13 +263,32 @@ register struct partition *PartHeadp;
 		out_obliq = acos( VDOT( ap->a_ray.r_dir,
 			pp->pt_outhit->hit_normal ) ) * mat_radtodeg;
 
-		fprintf(stdout,"%4d%6.2f%5.1f%5.1f%1d%5.1f\n",
+		/*
+		 *  Handle 3-components per card output format, with
+		 *  a leading space in front of the first component.
+		 */
+		if( card_count == 0 )  {
+			putc( ' ', stdout );
+		}
+		fprintf(stdout,"%4d%6.2f%5.1f%5.1f%1d%5.1f",
 			region_id,
 			comp_thickness,
 			in_obliq, out_obliq,
 			air_id, air_thickness );
+		card_count++;
+		if( card_count >= 3 )  {
+			putc( '\n', stdout );
+			card_count = 0;
+		}
 	}
 
+	/* If partway through building the line, add a newline */
+	if( card_count > 0 )  {
+		/* May need to zero-fill unused component slots
+		 *  Not needed for COVART III, unknown for COVART II.
+		 */
+		putc( '\n', stdout );
+	}
 	return(0);
 }
 
