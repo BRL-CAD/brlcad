@@ -85,6 +85,8 @@ extern "C" {
 
 #define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
 
+#define CLAMP(_v, _l, _h) if (_v < _l) _v = _l; else if (_v > _h) _v = _h
+
 #ifdef vax
 #	define VDIVIDE_TOL	(1.0e-10)
 #	define VUNITIZE_TOL	(1.0e-7)
