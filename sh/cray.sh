@@ -123,12 +123,12 @@ echo "ARGS	$ARGS"
 echo ""
 
 REM_DB="/tmp/${USER}db"
-REM_MAT="/tmp/${USER}mat"	# Actually on local machine, for now
+REM_MAT="/tmp/${USER}mat"
 
-# Capture stdin from invoker, MGED rrt command
-cat > $REM_MAT
 g2asc < $DBASE | rsh $COMPUTE_SERVER "rm -f $REM_DB; asc2g > $REM_DB"
 
-rsh $COMPUTE_SERVER "rt $ARGS $REM_DB $OBJS; rm -f $REM_DB" < $REM_MAT
-rm -f $REM_MAT
+RCMD="cat > $REM_MAT; rt $ARGS $REM_DB $OBJS < $REM_MAT; rm -f $REM_DB $REM_MAT"
+
+# Uses stdin from invoker, typ. MGED rrt command
+rsh $COMPUTE_SERVER $RCMD
 exit 0
