@@ -24,13 +24,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include <termio.h>
 #undef VMIN		/* is used in vmath.h, too */
 #include <ctype.h>
 
 #include "../h/machine.h"	/* special copy */
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -65,6 +65,7 @@ static char ir_title[] = "BRL MGED";
 static int big_txt = 0;		/* Text window size flag - hack for Ir_puts */
 static int cueing_on = 1;	/* Depth cueing flag - for colormap work */
 static int zclipping_on = 1;	/* Z Clipping flag */
+static int zbuffer_on = 1;	/* Hardware Z buffer is on */
 static int perspective_on = 0;	/* Perspective flag */
 static int ovec = -1;		/* Old color map entry number */
 static mat_t perspect_mat;
@@ -116,6 +117,18 @@ char	*kn2_knobs[] = {
 };
 #endif
 
+/*
+ * SGI Color Map table
+ */
+#define NSLOTS		4080	/* The mostest possible - may be fewer */
+static int ir_nslots=0;		/* how many we have, <= NSLOTS */
+static int slotsused;		/* how many actually used */
+static struct rgbtab {
+	unsigned char	r;
+	unsigned char	g;
+	unsigned char	b;
+} ir_rgbtab[NSLOTS];
+
 struct dm dm_4d = {
 	Ir_open, Ir_close,
 	Ir_input,
@@ -141,6 +154,8 @@ extern struct device_values dm_values;	/* values read from devices */
 static int	ir_debug;		/* 2 for basic, 3 for full */
 static int	ir_buffer;
 static int	ir_is_gt;		/* 0 for non-GT machines */
+static int	ir_has_zbuf;		/* 0 if no Z buffer */
+static int	ir_has_rgb;		/* 0 if mapped mode must be used */
 
 long gr_id;
 long win_l, win_b, win_r, win_t;
@@ -205,6 +220,8 @@ Ir_open()
 		switch( inv->type )  {
 		case INV_GMDEV:
 			ir_is_gt = 1;
+			ir_has_zbuf = 1;
+			ir_has_rgb = 1;
 			break;
 		}
 	}
@@ -224,15 +241,22 @@ Ir_open()
 	win_r = win_l + winx_size;
 	win_t = win_b + winy_size;
 
-	onemap();			/* one color map */
+	if( ir_has_rgb )  {
+		RGBmode();
+	} else {
+		/* one indexed color map of 4096 entries */
+		onemap();
+	}
 	doublebuffer();			/* half of whatever we have */
 	gconfig();
 
 	winattach( );
 
-	color(BLACK);
+	if( ir_has_zbuf && zbuffer_on )  zbuffer(1);
+
+	/* Clear out image from windows underneath */
 	frontbuffer(1);
-	clear();
+	ir_clear_to_black();
 	frontbuffer(0);
 	
 	ir_buffer = 0;
@@ -272,10 +296,10 @@ Ir_open()
 	ir_dbtext(ir_title);
 #endif
 
-	/* Enable the pf1 key for depthcue switching */
-	qdevice(F1KEY);
+	qdevice(F1KEY);	/* pf1 key for depthcue switching */
 	qdevice(F2KEY);	/* pf2 for Z clipping */
 	qdevice(F3KEY);	/* pf3 for perspective */
+	qdevice(F4KEY);	/* pf4 for Z buffering */
 	
 	while( getbutton(LEFTMOUSE)||getbutton(MIDDLEMOUSE)||getbutton(RIGHTMOUSE) )  {
 		printf("IRIS_open:  mouse button stuck\n");
@@ -314,9 +338,9 @@ Ir_close()
 	lampoff( 0xf );
 
 	frontbuffer(1);
-	color(BLACK);
-	clear();
+	ir_clear_to_black();
 	frontbuffer(0);
+
 	winclose(gr_id);
 	return;
 }
@@ -349,7 +373,12 @@ Ir_prolog()
 void
 Ir_normal()
 {
-	color(BLACK);
+	if( ir_has_rgb )  {
+		RGBcolor( (short)0, (short)0, (short)0 );
+	} else {
+		color(BLACK);
+	}
+
 	ortho2( -1.0,1.0, -1.0,1.0);	/* L R Bot Top */
 #ifdef never
 	/* Doing this here affects the redraw speed, due to the
@@ -377,8 +406,7 @@ Ir_epilog()
 	ir_buffer = (ir_buffer==0)?1:0;
 
 	/* give Graphics pipe time to work */
-	color(BLACK);
-	clear();
+	ir_clear_to_black();
 }
 
 /*
@@ -398,7 +426,29 @@ mat_t mat;
  *  object center as specified.  The ratio of object to screen size
  *  is passed in as a convienience.  Mat is model2view.
  *
- *  Returns 0 if object could be drawn, !0 if object was omitted.
+ *  Returns -
+ *	 0 if object could be drawn
+ *	!0 if object was omitted.
+ *
+ *  IMPORTANT COORDINATE SYSTEM NOTE:
+ *
+ *  MGED uses a right handed coordinate system where +Z points OUT of
+ *  the screen.  The Silicon Graphics uses a left handed coordinate
+ *  system where +Z points INTO the screen.
+ *  This difference in convention is handled here.
+ *  The conversion is accomplished by concatenating a matrix multiply
+ *  by
+ *            (  1    0    0   0  )
+ *            (  0    1    0   0  )
+ *            (  0    0   -1   0  )
+ *            (  0    0    0   1  )
+ *
+ *  However, this is actually implemented by straight-line code which
+ *  flips the sign on the entire third row.
+ *
+ *  Note that through BRL-CAD Release 3.7 this was handled by flipping
+ *  the direction of the shade ramps.  Now, with the Z-buffer being used,
+ *  the correct solution is important.
  */
 int
 Ir_object( sp, m, ratio, white )
@@ -409,7 +459,7 @@ double ratio;
 	register struct vlist *vp;
 	register int nvec;
 	register float	*gtvec;
-	char	gtbuf[16+3*sizeof(float)];
+	char	gtbuf[16+3*sizeof(double)];
 	register fastf_t *mptr;
 	Matrix gtmat;
 	int first;
@@ -429,7 +479,6 @@ double ratio;
 	 * matrix is loaded for each object. Even though its the same
 	 * matrix.
 	 */
-
 	if( perspective_on ) {
 		mat_mul( newm, perspect_mat, m );
 		m = newm;
@@ -443,15 +492,22 @@ double ratio;
 	for(j= 0; j < 4; j++)
 		gtmat[j][i] = *(mptr++);
 
+	/*
+	 *  Convert between MGED's right handed coordinate system
+	 *  where +Z comes out of the screen to the Silicon Graphics's
+	 *  left handed coordinate system, where +Z goes INTO the screen.
+	 */
+	gtmat[0][2] = -gtmat[0][2];
+	gtmat[1][2] = -gtmat[1][2];
+	gtmat[2][2] = -gtmat[2][2];
+	gtmat[3][2] = -gtmat[3][2];
+
 	loadmatrix( gtmat );
 
 
 	/*
-	 * IMPORTANT DEPTHCUEING NOTE:  The IRIS screen +Z points in
-	 * (i.e. increasing Z is further away).  In order to reconcile
-	 * this with mged (which expects +Z to point out), the color
-	 * ramps will be flipped to compensate.  This seemed to be the
-	 * lessor of the evils at the time.
+	 * IMPORTANT DEPTHCUEING NOTE
+	 *
 	 * Also note that the depthcueing shaderange() routine wanders
 	 * outside it's allotted range due to roundoff errors.  A buffer
 	 * entry is kept on each end of the shading curves, and the
@@ -461,44 +517,88 @@ double ratio;
 	if (sp->s_soldash)
 		setlinestyle( 1 );		/* set dot-dash */
 
-	if( white ) {
-		ovec = nvec = MAP_ENTRY(DM_WHITE);
-		/* Use the *next* to the brightest white entry */
-		if(cueing_on) shaderange(nvec+1, nvec+1, 0, 768);
-
-		color( nvec );
+	if( ir_has_rgb )  {
+		register short	r, g, b;
+		if( white )  {
+			r = g = b = 250;
+		} else {
+			r = (short)sp->s_color[0];
+			g = (short)sp->s_color[1];
+			b = (short)sp->s_color[2];
+		}
+		if(cueing_on)  {
+			RGBrange(
+				r/10, g/10, b/10,
+				r, g, b,
+				0, 768 );
+		}
+		RGBcolor( r, g, b );
 	} else {
-		if( (nvec = MAP_ENTRY( sp->s_dmindex )) != ovec) {
-			/* Use only the middle 14 to allow for roundoff...
-			 * Pity the poor fool who has defined a black object.
-			 * The code will use the "reserved" color map entries
-			 * to display it when in depthcued mode.
-			 */
-		  	if(cueing_on) shaderange(nvec+1, nvec+14, 0, 768);
+		if( white ) {
+			ovec = nvec = MAP_ENTRY(DM_WHITE);
+			/* Use the *next* to the brightest white entry */
+			if(cueing_on) shaderange(nvec+1, nvec+1, 0, 768);
+
 			color( nvec );
-		  	ovec = nvec;
-		  }
+		} else {
+			if( (nvec = MAP_ENTRY( sp->s_dmindex )) != ovec) {
+				/* Use only the middle 14 to allow for roundoff...
+				 * Pity the poor fool who has defined a black object.
+				 * The code will use the "reserved" color map entries
+				 * to display it when in depthcued mode.
+				 */
+			  	if(cueing_on) shaderange(nvec+1, nvec+14, 0, 768);
+				color( nvec );
+			  	ovec = nvec;
+			  }
+		}
 	}
 
+	/* Viewing region is from -1.0 to +1.0 */
 	if( ir_is_gt )  {
-		first = 1;
-		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-			/* Viewing region is from -1.0 to +1.0 */
-			if( vp->vl_draw == 0 )  {
-				/* Move, not draw */
-				if ( first )
+		if( sp->s_vlist != VL_NULL && sp->s_vlist->vl_draw == 2 )  {
+			/* Draw as polygons, with header markers */
+			first = 1;
+			for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+				switch( vp->vl_draw )  {
+				case 2:
+					/* Normal, perhaps? */
+					if( first )
+						first = 0;
+					else
+						endpolygon();
+					concave(TRUE);
+					bgnpolygon();
+					break;
+				case 0:
+					/* Move, not draw */
 					first = 0;
-				else
-					endline();
-				bgnline();
+					v3d( vp->vl_pnt );
+					break;
+				case 1:
+					/* Draw */
+					first = 0;
+					v3d( vp->vl_pnt );
+					break;
+				}
 			}
-			mptr = &(vp->vl_pnt[0]);
-			gtvec[0] = *mptr;
-			gtvec[1] = *(mptr+1);
-			gtvec[2] = *(mptr+2); 
-			v3f( gtvec ); 
+			if( !first ) endpolygon();
+		} else {
+			/* Draw with vectors */
+			first = 1;
+			for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+				if( vp->vl_draw == 0 )  {
+					/* Move, not draw */
+					if ( first )
+						first = 0;
+					else
+						endline();
+					bgnline();
+				}
+				v3d( vp->vl_pnt );
+			}
+			if( !first )  endline();
 		}
-		endline();
 	} else {
 		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 			/* Viewing region is from -1.0 to +1.0 */
@@ -540,7 +640,13 @@ register char *str;
 int x,y,size, colour;
 {
 	cmov2( GED2IRIS(x), GED2IRIS(y));
-	color( MAP_ENTRY(colour) );
+	if( ir_has_rgb )  {
+		RGBcolor( (short)ir_rgbtab[colour].r,
+			(short)ir_rgbtab[colour].g,
+			(short)ir_rgbtab[colour].b );
+	} else {
+		color( MAP_ENTRY(colour) );
+	}
 	charstr( str );
 }
 
@@ -555,10 +661,21 @@ int x2, y2;
 int dashed;
 {
 	register int nvec;
-	if((nvec = MAP_ENTRY(DM_YELLOW)) != ovec) {
-	  	if(cueing_on) shaderange(nvec, nvec, 0, 768);
-		color( nvec );
-	  	ovec = nvec;
+	if( ir_has_rgb )  {
+		/* Yellow */
+		if(cueing_on)  {
+			RGBrange(
+				255, 255, 0,
+				255, 255, 0,
+				0, 768 );
+		}
+		RGBcolor( (short)255, (short)255, (short) 0 );
+	} else {
+		if((nvec = MAP_ENTRY(DM_YELLOW)) != ovec) {
+		  	if(cueing_on) shaderange(nvec, nvec, 0, 768);
+			color( nvec );
+		  	ovec = nvec;
+		}
 	}
 
 	if( dashed )
@@ -677,7 +794,9 @@ checkevents()  {
 
 #if IR_BUTTONS
 		if((ret >= SWBASE && ret < SWBASE+IR_BUTTONS)
-		  || ret == F1KEY || ret == F2KEY || ret == F3KEY ) {
+		  || ret == F1KEY || ret == F2KEY || ret == F3KEY
+		  || ret == F4KEY
+		) {
 			register int	i;
 
 			/*
@@ -765,6 +884,23 @@ checkevents()  {
 				}
 				/* toggle perspective viewing */
 				perspective_on = perspective_on ? 0 : 1;
+				dmaflag = 1;
+				kblights();
+				continue;
+			} else if(ret == F4KEY)  {
+				if(!valp[1]) continue; /* Ignore release */
+				/*  Help mode */
+				if(button0)  {
+					ir_dbtext("Zbuffing");
+					continue;
+				}
+				if( ir_has_zbuf == 0 )  {
+					printf("dm-4d: This machine has no Zbuffer to enable\n");
+					continue;
+				}
+				/* toggle zbuffer status */
+				zbuffer_on = zbuffer_on ? 0 : 1;
+				zbuffer( zbuffer_on );
 				dmaflag = 1;
 				kblights();
 				continue;
@@ -1031,30 +1167,42 @@ int w[];
 
 
 /*
- * Color Map table
- */
-#define NSLOTS		4080	/* The mostest possible - may be fewer */
-static int ir_nslots=0;		/* how many we have, <= NSLOTS */
-static int slotsused;		/* how many actually used */
-static struct rgbtab {
-	unsigned char	r;
-	unsigned char	g;
-	unsigned char	b;
-} ir_rgbtab[NSLOTS];
-
-/*
  *  			I R _ C O L O R C H A N G E
  *  
- *  Go through the mater table, and allocate color map slots.
+ *  Go through the solid table, and allocate color map slots.
  *	8 bit system gives 4 or 8,
  *	24 bit system gives 12 or 24.
  */
 void
 Ir_colorchange()
 {
-	register struct mater *mp;
 	register int i;
 	register int nramp;
+
+	if( ir_debug )  printf("colorchange\n");
+
+	/* Program the builtin colors */
+	ir_rgbtab[0].r=0; ir_rgbtab[0].g=0; ir_rgbtab[0].b=0;/* Black */
+	ir_rgbtab[1].r=255; ir_rgbtab[1].g=0; ir_rgbtab[1].b=0;/* Red */
+	ir_rgbtab[2].r=0; ir_rgbtab[2].g=0; ir_rgbtab[2].b=255;/* Blue */
+	ir_rgbtab[3].r=255; ir_rgbtab[3].g=255;ir_rgbtab[3].b=0;/*Yellow */
+	ir_rgbtab[4].r = ir_rgbtab[4].g = ir_rgbtab[4].b = 255; /* White */
+	slotsused = 5;
+
+	if( ir_has_rgb )  {
+		if(cueing_on) {
+			depthcue(1);
+		} else {
+			depthcue(0);
+		}
+
+		RGBcolor( (short)255, (short)255, (short)255 );
+
+		/* apply region-id based colors to the solid table */
+		color_soltab();
+
+		return;
+	}
 
 	ir_nslots = getplanes();
 	if(cueing_on && (ir_nslots < 7)) {
@@ -1072,16 +1220,7 @@ Ir_colorchange()
 		depthcue(0);
 	}
 
-	if( ir_debug )  printf("colorchange\n");
 	ovec = -1;	/* Invalidate the old colormap entry */
-	/* Program the builtin colors */
-	ir_rgbtab[0].r=0; ir_rgbtab[0].g=0; ir_rgbtab[0].b=0;/* Black */
-	ir_rgbtab[1].r=255; ir_rgbtab[1].g=0; ir_rgbtab[1].b=0;/* Red */
-	ir_rgbtab[2].r=0; ir_rgbtab[2].g=0; ir_rgbtab[2].b=255;/* Blue */
-	ir_rgbtab[3].r=255; ir_rgbtab[3].g=255;ir_rgbtab[3].b=0;/*Yellow */
-	ir_rgbtab[4].r = ir_rgbtab[4].g = ir_rgbtab[4].b = 255; /* White */
-
-	slotsused = 5;
 
 	/* apply region-id based colors to the solid table */
 	color_soltab();
@@ -1093,8 +1232,6 @@ Ir_colorchange()
 		gen_color( i, ir_rgbtab[i].r, ir_rgbtab[i].g, ir_rgbtab[i].b);
 	}
 
-	/* Re-send the tree, with the new colors attached */
-	Ir_viewchange( DM_CHGV_REDO, SOLID_NULL );
 	color(WHITE);	/* undefinied after gconfig() */
 }
 
@@ -1105,6 +1242,8 @@ ir_colorit()
 	register struct rgbtab *rgb;
 	register int i;
 	register int r,g,b;
+
+	if( ir_has_rgb )  return;
 
 	FOR_ALL_SOLIDS( sp )  {
 		r = sp->s_color[0];
@@ -1185,12 +1324,14 @@ int irlimit(i)
 #endif
 
 /*			G E N _ C O L O R
- *	maps the mater color entries into the appropriate colormap entry
+ *
+ *	maps a given color into the appropriate colormap entry
  *	for both depthcued and non-depthcued mode.  In depthcued mode,
  *	gen_color also generates the colormap ramps.  Note that in depthcued
  *	mode, DM_BLACK uses map entry 0, and does not generate a ramp for it.
  *	Non depthcued mode skips the first CMAP_BASE colormap entries.
- * 	Note that the colormap ramps are generated from bright to dim.
+ *
+ *	This routine is not called at all if ir_has_rgb is set.
  */
 gen_color(c)
 int c;
@@ -1199,7 +1340,7 @@ int c;
 		
 		/*  Not much sense in making a ramp for DM_BLACK.  Besides
 		 *  which, doing so, would overwrite the bottom color
-		 *  map entries, which is a no, no.
+		 *  map entries, which is a no-no.
 		 */
 		if( c != DM_BLACK) {
 			register int i;
@@ -1210,10 +1351,12 @@ int c;
 			g_inc = ir_rgbtab[c].g/16;
 			b_inc = ir_rgbtab[c].b/16;
 
-			for(i = 0, red = ir_rgbtab[c].r,
-			  green = ir_rgbtab[c].g, blue = ir_rgbtab[c].b;
-			  i < 16;
-			  i++, red -= r_inc, green -= g_inc, blue -= b_inc)
+			red = ir_rgbtab[c].r;
+			green = ir_rgbtab[c].g;
+			blue = ir_rgbtab[c].b;
+
+			for(i = 15; i >= 0;
+			  i--, red -= r_inc, green -= g_inc, blue -= b_inc)
 				mapcolor( MAP_ENTRY(c) + i,
 					(short)red,
 					(short)green,
@@ -1235,7 +1378,8 @@ kblights()
 
 	lights = (cueing_on)
 		| (zclipping_on << 1)
-		| (perspective_on << 2);
+		| (perspective_on << 2)
+		| (zbuffer_on << 3);
 
 	lampon(lights);
 	lampoff(lights^0xf);
@@ -1245,7 +1389,6 @@ kblights()
  *  Compute a perspective matrix.
  *  Reference: SGI Graphics Reference Appendix C
  */
-#include <math.h>
 static int
 persp_mat( m, fovy, aspect, near, far, backoff )
 mat_t	m;
@@ -1266,6 +1409,25 @@ fastf_t	fovy, aspect, near, far, backoff;
 	mat_idn( tran );
 	tran[11] = -backoff;
 	mat_mul( m, m2, tran );
+}
+
+ir_clear_to_black()
+{
+	if( zbuffer_on )  {
+		zfunction( ZF_LEQUAL );
+		if( ir_has_rgb )  {
+			czclear( 0, 0x7fffff );
+		} else {
+			czclear( BLACK, 0x7fffff );
+		}
+	} else {
+		if( ir_has_rgb )  {
+			RGBcolor( (short)0, (short)0, (short)0 );
+		} else {
+			color(BLACK);
+		}
+		clear();
+	}
 }
 
 #if 0
