@@ -220,7 +220,6 @@ int	n;
  *  U, V: -112 .. +112 range, offset by 128 [16 .. 240]
  */
 
-#define	VDOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
 #define	V5DOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
 #define	floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
 #define	CLIP(out,in)		{ register int t; \

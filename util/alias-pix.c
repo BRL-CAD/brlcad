@@ -41,7 +41,7 @@ int ac;
 char *av[];
 {
 	int pixcnt, i;
-	char *p, *malloc();
+	char *p;
 
 	progname = *av;
 
