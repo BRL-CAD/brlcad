@@ -1833,7 +1833,7 @@ RT_EXTERN(struct edgeuse	*nmg_me, (struct vertex *v1, struct vertex *v2, struct 
 RT_EXTERN(struct edgeuse	*nmg_meonvu, (struct vertexuse *vu) );
 RT_EXTERN(struct loopuse	*nmg_ml, (struct shell *s) );
 /*	KILL routines */
-RT_EXTERN(void			nmg_kvu, (struct vertexuse *vu) );
+RT_EXTERN(int			nmg_kvu, (struct vertexuse *vu) );
 RT_EXTERN(int			nmg_kfu, (struct faceuse *fu1) );
 RT_EXTERN(int			nmg_klu, (struct loopuse *lu1) );
 RT_EXTERN(int			nmg_keu, (struct edgeuse *eu) );
@@ -1856,8 +1856,6 @@ RT_EXTERN(int			nmg_demote_eu, (struct edgeuse *eu) );
 /*	MODIFY routines */
 RT_EXTERN(void			nmg_movevu, (struct vertexuse *vu, struct vertex *v) );
 RT_EXTERN(void			nmg_moveeu, (struct edgeuse *eudst, struct edgeuse *eusrc) );
-RT_EXTERN(void			nmg_ensure_vertex, (struct vertex *v,
-				struct shell *s) );
 RT_EXTERN(void			nmg_unglueedge, (struct edgeuse *eu) );
 RT_EXTERN(void			nmg_jv, (struct vertex *v1, struct vertex *v2) );
 
@@ -1922,6 +1920,8 @@ RT_EXTERN(int			nmg_is_vertex_in_edgelist, (CONST struct vertex *v,
 				CONST struct rt_list *hd) );
 RT_EXTERN(int			nmg_is_vertex_in_looplist, (CONST struct vertex *v,
 				CONST struct rt_list *hd, int singletons) );
+RT_EXTERN(int			nmg_is_vertex_a_selfloop_in_shell, (CONST struct vertex *v,
+				CONST struct shell *s) );
 RT_EXTERN(int			nmg_is_vertex_in_facelist, (CONST struct vertex *v,
 				CONST struct rt_list *hd) );
 RT_EXTERN(int			nmg_is_edge_in_edgelist, (CONST struct edge *e,
