@@ -53,9 +53,9 @@ int debug = 0;
 float mmtin = 25.4;
 fastf_t third = 0.333333333;
 
-char  name[16];
-char  cname[16];
-char  tname[16];
+char  name[17];
+char  cname[17];
+char  tname[17];
 char  surf[2];
 char thick[3];
 char  space[2];
