@@ -599,8 +599,7 @@ CONST struct rt_tol	*tol;
 				class = NMG_CLASS_AonBshared;
 				goto out;
 			}
-			/* Point is OUTside face, skip on. */
-			continue;
+			/* Point is OUTside face, its undecided. */
 		}
 
 		/* Dangling faces don't participate in Jordan Curve calc */
