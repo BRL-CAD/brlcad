@@ -420,14 +420,14 @@ char **argv;
 #endif
 }
 
-struct bu_structparse db_tor_parse[] = {
+struct bu_structparse rt_tor_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_tor_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",   offsetof(struct rt_tor_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_a", offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_h", offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL },
     {0} };
 
-struct bu_structparse db_tgc_parse[] = {
+struct bu_structparse rt_tgc_parse[] = {
     { "%f", 3, "V", offsetof(struct rt_tgc_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H", offsetof(struct rt_tgc_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "A", offsetof(struct rt_tgc_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -436,14 +436,14 @@ struct bu_structparse db_tgc_parse[] = {
     { "%f", 3, "D", offsetof(struct rt_tgc_internal, d[X]), BU_STRUCTPARSE_FUNC_NULL },
     { 0 } };
 
-struct bu_structparse db_ell_parse[] = {
+struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "V", offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "A", offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "B", offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "C", offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
     {0} };
 
-struct bu_structparse db_arb8_parse[] = {
+struct bu_structparse rt_arb8_parse[] = {
     { "%f", 3, "V1", offsetof(struct rt_arb_internal, pt[0][X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "V2", offsetof(struct rt_arb_internal, pt[1][X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "V3", offsetof(struct rt_arb_internal, pt[2][X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -454,26 +454,26 @@ struct bu_structparse db_arb8_parse[] = {
     { "%f", 3, "V8", offsetof(struct rt_arb_internal, pt[7][X]), BU_STRUCTPARSE_FUNC_NULL },
     {0} };
 
-struct bu_structparse db_half_parse[] = {
+struct bu_structparse rt_half_parse[] = {
     { "%f", 3, "N", offsetof(struct rt_half_internal, eqn[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "d", offsetof(struct rt_half_internal, eqn[3]), BU_STRUCTPARSE_FUNC_NULL },
     {0} };
 
-struct bu_structparse db_part_parse[] = {
+struct bu_structparse rt_part_parse[] = {
     { "%f", 3, "V",  offsetof(struct rt_part_internal, part_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",  offsetof(struct rt_part_internal, part_H[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_v",offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_h",offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL },
     {0} };
 	    
-struct bu_structparse db_rpc_parse[] = {
+struct bu_structparse rt_rpc_parse[] = {
     { "%f", 3, "V", offsetof(struct rt_rpc_internal, rpc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H", offsetof(struct rt_rpc_internal, rpc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "B", offsetof(struct rt_rpc_internal, rpc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r", offsetof(struct rt_rpc_internal, rpc_r),    BU_STRUCTPARSE_FUNC_NULL },
     {0} };
 	    
-struct bu_structparse db_rhc_parse[] = {
+struct bu_structparse rt_rhc_parse[] = {
     { "%f", 3, "V", offsetof(struct rt_rhc_internal, rhc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H", offsetof(struct rt_rhc_internal, rhc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "B", offsetof(struct rt_rhc_internal, rhc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -481,7 +481,7 @@ struct bu_structparse db_rhc_parse[] = {
     { "%f", 1, "c", offsetof(struct rt_rhc_internal, rhc_c),    BU_STRUCTPARSE_FUNC_NULL },
     {0} };
 	    
-struct bu_structparse db_epa_parse[] = {
+struct bu_structparse rt_epa_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_epa_internal, epa_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",   offsetof(struct rt_epa_internal, epa_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "A",   offsetof(struct rt_epa_internal, epa_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -489,7 +489,7 @@ struct bu_structparse db_epa_parse[] = {
     { "%f", 1, "r_2", offsetof(struct rt_epa_internal, epa_r2),    BU_STRUCTPARSE_FUNC_NULL },
     {0} };
 
-struct bu_structparse db_ehy_parse[] = {
+struct bu_structparse rt_ehy_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_ehy_internal, ehy_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",   offsetof(struct rt_ehy_internal, ehy_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "A",   offsetof(struct rt_ehy_internal, ehy_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -498,7 +498,7 @@ struct bu_structparse db_ehy_parse[] = {
     { "%f", 1, "c",   offsetof(struct rt_ehy_internal, ehy_c),     BU_STRUCTPARSE_FUNC_NULL },
     {0} };
 
-struct bu_structparse db_eto_parse[] = {
+struct bu_structparse rt_eto_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_eto_internal, eto_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "N",   offsetof(struct rt_eto_internal, eto_N[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "C",   offsetof(struct rt_eto_internal, eto_C[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -517,19 +517,19 @@ struct solid_type_lookup {
     char *label;
     struct bu_structparse *parsetab;
 } solid_type_lookup[] = {
-    { ID_TOR,     sizeof(struct rt_tor_internal), (long)RT_TOR_INTERNAL_MAGIC, "tor", db_tor_parse },
-    { ID_TGC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "tgc", db_tgc_parse },
-    { ID_REC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "rec", db_tgc_parse },
-    { ID_ELL,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "ell", db_ell_parse },
-    { ID_SPH,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "sph", db_ell_parse },
-    { ID_ARB8,    sizeof(struct rt_arb_internal), (long)RT_ARB_INTERNAL_MAGIC, "arb8",db_arb8_parse },
-    { ID_HALF,    sizeof(struct rt_half_internal),(long)RT_HALF_INTERNAL_MAGIC,"half",db_half_parse },
-    { ID_PARTICLE,sizeof(struct rt_part_internal),(long)RT_PART_INTERNAL_MAGIC,"part",db_part_parse },
-    { ID_RPC,     sizeof(struct rt_rpc_internal), (long)RT_RPC_INTERNAL_MAGIC, "rpc", db_rpc_parse },
-    { ID_RHC,     sizeof(struct rt_rhc_internal), (long)RT_RHC_INTERNAL_MAGIC, "rhc", db_rhc_parse },
-    { ID_EPA,     sizeof(struct rt_epa_internal), (long)RT_EPA_INTERNAL_MAGIC, "epa", db_epa_parse },
-    { ID_EHY,     sizeof(struct rt_ehy_internal), (long)RT_EHY_INTERNAL_MAGIC, "ehy", db_ehy_parse },
-    { ID_ETO,     sizeof(struct rt_eto_internal), (long)RT_ETO_INTERNAL_MAGIC, "eto", db_eto_parse },
+    { ID_TOR,     sizeof(struct rt_tor_internal), (long)RT_TOR_INTERNAL_MAGIC, "tor", rt_tor_parse },
+    { ID_TGC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "tgc", rt_tgc_parse },
+    { ID_REC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "rec", rt_tgc_parse },
+    { ID_ELL,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "ell", rt_ell_parse },
+    { ID_SPH,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "sph", rt_ell_parse },
+    { ID_ARB8,    sizeof(struct rt_arb_internal), (long)RT_ARB_INTERNAL_MAGIC, "arb8", rt_arb8_parse },
+    { ID_HALF,    sizeof(struct rt_half_internal),(long)RT_HALF_INTERNAL_MAGIC,"half", rt_half_parse },
+    { ID_PARTICLE,sizeof(struct rt_part_internal),(long)RT_PART_INTERNAL_MAGIC,"part", rt_part_parse },
+    { ID_RPC,     sizeof(struct rt_rpc_internal), (long)RT_RPC_INTERNAL_MAGIC, "rpc", rt_rpc_parse },
+    { ID_RHC,     sizeof(struct rt_rhc_internal), (long)RT_RHC_INTERNAL_MAGIC, "rhc", rt_rhc_parse },
+    { ID_EPA,     sizeof(struct rt_epa_internal), (long)RT_EPA_INTERNAL_MAGIC, "epa", rt_epa_parse },
+    { ID_EHY,     sizeof(struct rt_ehy_internal), (long)RT_EHY_INTERNAL_MAGIC, "ehy", rt_ehy_parse },
+    { ID_ETO,     sizeof(struct rt_eto_internal), (long)RT_ETO_INTERNAL_MAGIC, "eto", rt_eto_parse },
     { 0, 0, 0, 0 }
 };
 
