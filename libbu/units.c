@@ -118,22 +118,58 @@ CONST char	*str;
 	return(0.0);		/* Unable to find it */
 }
 
+/*
+ *			B U _ U N I T S _ S T R I N G
+ *
+ *  Given a conversion factor to mm, search the table to find
+ *  what unit this represents.
+ *  To accomodate floating point fuzz, a "near miss" is allowed.
+ *  The algorithm depends on the table being sorted small-to-large.
+ *
+ *  Returns -
+ *	char*	units string
+ *	NULL	No known unit matches this conversion factor.
+ */
 CONST char *
 bu_units_string(mm)
 register CONST double	mm;
 {
 	register CONST struct cvt_tab	*tp;
 
+	if( mm <= 0 )  return (char *)NULL;
+
 	/* Search for this string in the table */
 	for( tp=bu_units_tab; tp->name[0]; tp++ )  {
-		if( mm != tp->val )  continue;
-		return( tp->name );
+		fastf_t	diff, bigger;
+		if( mm == tp->val )  return tp->name;
+
+		/* Check for near-miss */
+		if( mm > tp->val )  {
+			bigger = mm;
+			diff = mm - tp->val;
+		}  else  {
+			bigger = tp->val;
+			diff = tp->val - mm;
+		}
+
+		/* Absolute difference less than 0.1 angstrom */
+		if( diff < 1.0e-8 )  return tp->name;
+
+		/* Relative difference less than 1 part per billion */
+		if( diff < 0.000000001 * bigger )  return tp->name;
 	}
-	return (char *)0;
+	return (char *)NULL;
 }
 
-/* Given a string of the form "25cm" or "5.2ft" returns the 
- * corresponding distance in mm
+/*
+ *			B U _ M M _ V A L U E
+ *
+ * Given a string of the form "25cm" or "5.2ft" returns the 
+ * corresponding distance in mm.
+ *
+ *  Returns -
+ *	-1	on error
+ *	>0	on success
  */
 double
 bu_mm_value(s)
@@ -145,19 +181,28 @@ CONST char *s;
 
 	v = strtod(s, &ptr);
 
-	if (ptr == s) return 0.0;
-	if ( ! *ptr) return v;
+	if (ptr == s)  {
+		/* No number could be found, unity is implied */
+		/* e.g. interprept "ft" as "1ft" */
+		v = 1.0;
+	}
+	if ( ! *ptr)  {
+		/* There are no characters following the scaned number */
+		return v;
+	}
 
 	for (tp=bu_units_tab; tp->name[0]; tp++ )  {
 		if( *ptr != tp->name[0] )  continue;
 		if( strcmp( ptr, tp->name ) == 0 ) {
 			v *= tp->val;
-			break;
+			return v;
 		}
 	}
 
-	return v;
+	/* A string was seen, but not found in the table.  Signal error */
+	return -1;
 }
+
 /*	B U _ M M _ C V T
  *
  *  Used primarily as a hooked function for bu_structparse tables
@@ -175,25 +220,3 @@ CONST char				*value;	/* string containing value */
 	/* reconvert with optional units */
 	*p = bu_mm_value(value);
 }
-
-#if 0
-CONST char *
-bu_units_id_string(id)
-	int id;
-{
-	if (id >= BU_UNITS_TABLE_SIZE)
-		return bu_units_tab[0].name; /* none */
-
-	return bu_units_tab[id].name;
-}
-
-int
-bu_units_id_valid(id)
-	int id;
-{
-	if (0 <= id && id < BU_UNITS_TABLE_SIZE)
-		return 1;	/* valid */
-
-	return 0;		/* not valid */
-}
-#endif
