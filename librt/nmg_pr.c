@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "nurb.h"
 
 /*
  *			N M G _ O R I E N T A T I O N
@@ -206,6 +207,10 @@ nmg_pr_fg(magic, h)
 CONST long *magic;
 char *h;
 {
+	CONST struct face_g_snurb *fgs;
+	int ncoords;
+	int i,j,k,l;
+
 	MKPAD(h);
 
 	switch( *magic )  {
@@ -216,8 +221,31 @@ char *h;
 			V4ARGS( ((struct face_g_plane *)magic)->N ) );
 		break;
 	case NMG_FACE_G_SNURB_MAGIC:
+		fgs = (struct face_g_snurb *)magic;
 		rt_log("%sFACE_G_SNURB %8x\n", h, magic);
-		/* XXX What else? */
+		rt_log( "%s  order (%d, %d)\n", h, fgs->order[0], fgs->order[1] );
+		rt_log( "%s  U knots: size=%d", h, fgs->u.k_size );
+		for( i=0 ; i<fgs->u.k_size ; i++ )
+			rt_log( " %f", fgs->u.knots[i] );
+		rt_log( "\n%s  V knots: size=%d", h, fgs->v.k_size );
+		for( i=0 ; i<fgs->v.k_size ; i++ )
+			rt_log( " %f", fgs->v.knots[i] );
+		rt_log( "\n%s  Mesh size = (%d X %d), pt_type = %d\n", h, fgs->s_size[0], fgs->s_size[1], fgs->pt_type );
+		ncoords = RT_NURB_EXTRACT_COORDS( fgs->pt_type );
+		l = 0;
+		for( i=0 ; i<fgs->s_size[0] ; i++ )
+		{
+			rt_log( "%s  ", h );
+			for( j=0 ; j<fgs->s_size[1] ; j++ )
+			{
+				rt_log( " (", h );
+				for( k=0 ; k<ncoords ; k++ )
+					rt_log( "%f ", fgs->ctl_points[l+k] );
+				rt_log( ")" );
+				l += ncoords;
+			}
+			rt_log( "\n" );
+		}
 		break;
 	default:
 		rt_bomb("nmg_pr_fg() bad magic\n");
@@ -535,8 +563,27 @@ char *h;
 		case NMG_EDGE_G_CNURB_MAGIC:
 		{
 			struct edge_g_cnurb *eg_c=(struct edge_g_cnurb *)eg_magic_p;
+			int i,j,l;
+			int ncoords;
+
 			rt_log( "%sEDGE_G_CNURB %8x\n" , h , eg_c );
 			rt_log( "%s  order=%d, %d ctl pts\n", h, eg_c->order, eg_c->c_size );
+			rt_log( "%s  knot vector (len=%d):", h, eg_c->k.k_size );
+			for( i=0 ; i<eg_c->k.k_size ; i++ )
+				rt_log( " %f", eg_c->k.knots[i] );
+			rt_log( "\n" );
+			ncoords = RT_NURB_EXTRACT_COORDS( eg_c->pt_type );
+			l = 0;
+			rt_log( "%s  control points: ", h );
+			for( i=0 ; i<eg_c->c_size ; i++ )
+			{
+				rt_log( "(" );
+				for( j=0 ; j<ncoords ; j++ )
+					rt_log( "%f ", eg_c->ctl_points[l+j] );
+				rt_log( ")" );
+				l += ncoords;
+			}
+			rt_log( "\n" );
 			break;
 		}
 	}
