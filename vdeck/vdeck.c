@@ -1,6 +1,6 @@
 /*
- *	@(#) vdeck.c		retrieved 8/13/86 at 08:05:20,
- *	@(#) version 1.6		  created 3/29/83 at 10:53:50.
+ *	@(#) vdeck.c		retrieved 8/13/86 at 08:05:39,
+ *	@(#) version 1.7		  created 6/14/83 at 08:51:37.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -566,17 +566,26 @@ notnew:	/* sent here if solid already in solid table
 		write(	ridfd,	buf,	  30 );
 		blank_fill( ridfd, 10 );
 		printf( "\nREGION %4d    ", nnr+delreg );
-		j = strlen( rec.s.s_name );
+		bp = buf;
+		length = strlen( rec.s.s_name );
 		for( i = 0; i < pathpos; i++ ) {
-			if( j += strlen( path[i]->d_namep ) < 38 )
-				write(	ridfd,
+			strncpy(	bp,
 					path[i]->d_namep,
-					strlen( path[i]->d_namep ) );
-			write( ridfd, "/", 1 );
-			printf( "/%s", path[i]->d_namep );
-			j++;
+					strlen( path[i]->d_namep )
+			);
+			bp += strlen( path[i]->d_namep );
+			*bp++ = '/';
 		}
-		
+		length += bp - buf;
+		if( length > 34 ) {
+			bp = buf + (length - 34);
+			*bp = '*';
+			write(	ridfd,
+				bp,
+				34 - strlen( rec.s.s_name )
+			);
+		} else	write( ridfd, buf, bp - buf );
+
 		if( rec.u_id == ARS_B ) {	/* ars extension record
 						 */
 			prompt( "/%s", ars_name );
