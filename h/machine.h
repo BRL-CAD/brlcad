@@ -459,7 +459,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define MALLOC_NOT_MP_SAFE 1
 #endif
 
-#if SUNOS >= 50
+#if defined(SUNOS) && SUNOS >= 50
 /********************************
  *				*
  *   Sun Running Solaris 2.X    *
@@ -712,7 +712,7 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 #endif
 
-#if SUNOS >= 52
+#if defined(SUNOS) && SUNOS >= 52
         extern double hypot(double, double);
 #endif
 

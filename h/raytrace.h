@@ -3952,10 +3952,9 @@ BU_EXTERN(int			nmg_class_pt_fu_except, (const point_t pt,
 				const struct bn_tol *tol) );
 
 /* From nmg_plot.c */
-void
-extern nmg_pl_shell(FILE		*fp,
-		    const struct shell	*s,
-		    int			fancy);
+BU_EXTERN(void			nmg_pl_shell, (FILE *fp, 
+					     const struct shell *s,
+					     int fancy));
 
 BU_EXTERN(void			nmg_vu_to_vlist, (struct bu_list *vhead,
 				const struct vertexuse	*vu));
