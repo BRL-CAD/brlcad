@@ -308,7 +308,7 @@ extern char *state_str[];		/* identifying strings */
 #endif
 #endif
 
-#define	MAXLINE		10240	/* Maximum number of chars per line */
+#define	MAXLINE		RT_MAXLINE	/* Maximum number of chars per line */
 
 /* Cloned mged macros for use in Tcl/Tk */
 #define TCL_READ_ERR {\
