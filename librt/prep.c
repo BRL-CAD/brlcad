@@ -187,16 +187,8 @@ register struct rt_i *rtip;
 
 		if( (plotfp=fopen("rtrpp.plot", "w"))!=NULL) {
 			/* Plot solid bounding boxes, in white */
-			pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
 			pl_color( plotfp, 255, 255, 255 );
-			for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
-				/* Ignore "dead" solids in the list.  (They failed prep) */
-				if( stp->st_aradius <= 0 )  continue;
-				/* Don't draw infinite solids */
-				if( stp->st_aradius >= INFINITY )
-					continue;
-				pdv_3box( plotfp, stp->st_min, stp->st_max );
-			}
+			rt_plot_all_bboxes( plotfp, rtip );
 			(void)fclose(plotfp);
 		}
 	}
@@ -204,24 +196,102 @@ register struct rt_i *rtip;
 	/* Plot solid outlines */
 	if( (rt_g.debug&DEBUG_PLOTBOX) )  {
 		FILE		*plotfp;
-		register struct soltab	*stp;
 
-		if( (plotfp=fopen("rtsolids.pl", "w")) == NULL)  return;
-
-		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
-
-		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
-			/* Ignore "dead" solids in the list.  (They failed prep) */
-			if( stp->st_aradius <= 0 )  continue;
-
-			/* Don't draw infinite solids */
-			if( stp->st_aradius >= INFINITY )
-				continue;
-
-			if( rt_plot_solid( plotfp, rtip, stp ) < 0 )
-				rt_log("unable to plot %s\n", stp->st_name);
+		if( (plotfp=fopen("rtsolids.pl", "w")) != NULL)  {
+			rt_plot_all_solids( plotfp, rtip );
+			(void)fclose(plotfp);
 		}
-		(void)fclose(plotfp);
+	}
+}
+
+/*
+ *			R T _ P L O T _ A L L _ B B O X E S
+ *
+ *  Plot the bounding boxes of all the active solids.
+ *  Color may be set in advance by the caller.
+ */
+void
+rt_plot_all_bboxes( fp, rtip )
+FILE		*fp;
+struct rt_i	*rtip;
+{
+	register struct soltab	*stp;
+
+	RT_CK_RTI(rtip);
+	pdv_3space( fp, rtip->rti_pmin, rtip->rti_pmax );
+	for( RT_LIST_FOR( stp, soltab, &(rtip->rti_headsolid) ) )  {
+		/* Ignore "dead" solids in the list.  (They failed prep) */
+		if( stp->st_aradius <= 0 )  continue;
+		/* Don't draw infinite solids */
+		if( stp->st_aradius >= INFINITY )
+			continue;
+		pdv_3box( fp, stp->st_min, stp->st_max );
+	}
+}
+
+/*
+ *			R T _ P L O T _ A L L _ S O L I D S
+ */
+void
+rt_plot_all_solids( fp, rtip )
+FILE		*fp;
+struct rt_i	*rtip;
+{
+	register struct soltab	*stp;
+
+	RT_CK_RTI(rtip);
+
+	pdv_3space( fp, rtip->rti_pmin, rtip->rti_pmax );
+
+	for( RT_LIST_FOR( stp, soltab, &(rtip->rti_headsolid) ) )  {
+		/* Ignore "dead" solids in the list.  (They failed prep) */
+		if( stp->st_aradius <= 0 )  continue;
+
+		/* Don't draw infinite solids */
+		if( stp->st_aradius >= INFINITY )
+			continue;
+
+		(void)rt_plot_solid( fp, rtip, stp );
+	}
+}
+
+/*
+ *			R T _ V L I S T _ T O _ U P L O T
+ *
+ *  Output a vlist as an extended 3-D floating point UNIX-Plot file.
+ *  You provide the file.
+ */
+void
+rt_vlist_to_uplot( fp, vhead )
+FILE		*fp;
+struct rt_list	*vhead;
+{
+	register struct rt_vlist	*vp;
+
+	for( RT_LIST_FOR( vp, rt_vlist, vhead ) )  {
+		register int		i;
+		register int		nused = vp->nused;
+		register CONST int	*cmd = vp->cmd;
+		register point_t	 *pt = vp->pt;
+
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			switch( *cmd )  {
+			case RT_VLIST_POLY_START:
+				break;
+			case RT_VLIST_POLY_MOVE:
+			case RT_VLIST_LINE_MOVE:
+				pdv_3move( fp, *pt );
+				break;
+			case RT_VLIST_POLY_DRAW:
+			case RT_VLIST_POLY_END:
+			case RT_VLIST_LINE_DRAW:
+				pdv_3cont( fp, *pt );
+				break;
+			default:
+				rt_log("rt_vlist_to_uplot: unknown vlist cmd x%x\n",
+					*cmd );
+			}
+		}
 	}
 }
 
@@ -242,7 +312,6 @@ register FILE		*fp;
 struct rt_i		*rtip;
 struct soltab		*stp;
 {
-	register struct rt_vlist	*vp;
 	struct rt_list			vhead;
 	struct region			*regp;
 	struct rt_external		ext;
@@ -309,36 +378,13 @@ struct soltab		*stp;
 			(int)(255*regp->reg_mater.ma_color[2]) );
 	}
 
-	for( RT_LIST_FOR( vp, rt_vlist, &vhead ) )  {
-		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
-		for( i = 0; i < nused; i++,cmd++,pt++ )  {
-			switch( *cmd )  {
-			case RT_VLIST_POLY_START:
-				break;
-			case RT_VLIST_POLY_MOVE:
-			case RT_VLIST_LINE_MOVE:
-				pdv_3move( fp, *pt );
-				break;
-			case RT_VLIST_POLY_DRAW:
-			case RT_VLIST_POLY_END:
-			case RT_VLIST_LINE_DRAW:
-				pdv_3cont( fp, *pt );
-				break;
-			default:
-				rt_log("rt_plot_solid(%s): unknown vlist cmd x%x\n",
-					stp->st_name, *cmd );
-			}
-		}
-	}
-
 	if( RT_LIST_IS_EMPTY( &vhead ) )  {
 		rt_log("rt_plot_solid(%s): no vectors to plot?\n",
 			stp->st_name);
 		return(-3);		/* FAIL */
 	}
+
+	rt_vlist_to_uplot( fp, &vhead );
 	RT_FREE_VLIST( &vhead );
 	return(0);			/* OK */
 }
