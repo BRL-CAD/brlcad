@@ -222,8 +222,7 @@ struct rt_i		*rtip;
 	mag_b = sqrt( magsq_b = MAGSQ( xip->rhc_B ) );
 	mag_h = sqrt( magsq_h = MAGSQ( xip->rhc_H ) );
 	mag_r = xip->rhc_r;
-	magsq_r = rhc->rhc_rsq = mag_r * mag_r;
-	rhc->rhc_c = xip->rhc_c;
+	magsq_r = mag_r * mag_r;
 
 	/* Check for |H| > 0, |B| > 0, |R| > 0 */
 	if( NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_b, RT_LEN_TOL)
@@ -245,6 +244,8 @@ struct rt_i		*rtip;
 	GETSTRUCT( rhc, rhc_specific );
 	stp->st_specific = (genptr_t)rhc;
 	rhc->rhc_b = mag_b;
+	rhc->rhc_rsq = magsq_r;
+	rhc->rhc_c = xip->rhc_c;
 
 	/* make unit vectors in B, H, and BxH directions */
 	VMOVE(    rhc->rhc_Hunit, xip->rhc_H );
@@ -354,15 +355,16 @@ struct seg		*seghead;
 	VSUB2( xlated, rp->r_pt, rhc->rhc_V );
 	MAT4X3VEC( pprime, rhc->rhc_SoR, xlated );
 	
+	x = rhc->rhc_cprime;
+
 	if ( NEAR_ZERO(dprime[Y], SMALL) && NEAR_ZERO(dprime[Z], SMALL) )
 		goto check_plates;
 
-	x = rhc->rhc_cprime;
 	/* Find roots of the equation, using formula for quadratic */
 	{
 		FAST fastf_t	a, b, c;	/* coeffs of polynomial */
 		FAST fastf_t	disc;		/* disc of radical */
-		
+
 		a = dprime[Z] * dprime[Z] - dprime[Y] * dprime[Y] * (1 + 2*x);
 		b = 2*((pprime[Z] + x + 1) * dprime[Z]
 			- (2*x + 1) * dprime[Y] * pprime[Y]);
