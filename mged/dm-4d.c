@@ -46,6 +46,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>
 #include <sys/invent.h>
 
+#define YSTEREO		491	/* subfield height, in scanlines */
+#define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
+
 extern inventory_t	*getinvent();
 
 /* Display Manager package interface */
@@ -79,6 +82,7 @@ static int kblights();
 static double	xlim_view = 1.0;	/* args for ortho() */
 static double	ylim_view = 1.0;
 static mat_t	aspect_corr;
+static int	stereo_is_on = 0;
 
 #ifdef IR_BUTTONS
 /*
@@ -163,6 +167,7 @@ static int	ir_is_gt;		/* 0 for non-GT machines */
 static int	ir_has_zbuf;		/* 0 if no Z buffer */
 static int	ir_has_rgb;		/* 0 if mapped mode must be used */
 static int	ir_has_doublebuffer;	/* 0 if singlebuffer mode must be used */
+static int	ir_oldmonitor;		/* Old monitor type */
 long gr_id;
 long win_l, win_b, win_r, win_t;
 long winx_size, winy_size;
@@ -191,10 +196,10 @@ static int
 irisY2ged(y)
 register int y;
 {
-	
 	if( y <= win_b )  return(-2048);
 	if( y >= win_t )  return(2047);
 	y -= win_b;
+	if( stereo_is_on )  y = (y%512)<<1;
 	y = ( y / (double)winy_size)*4096.0;
 	y -= 2048;
 	return(y);
@@ -395,6 +400,15 @@ Ir_open()
 	keepaspect(1,1);	/* enforce 1:1 aspect ratio */
 	winconstraints();	/* remove constraints on the window size */
 
+	ir_oldmonitor = getmonitor();
+#if 0
+	/* XXX also need to test some flag variable */
+	if( sgi_has_stereo() )  {
+		setmonitor(STR_RECT);
+		stereo_is_on = 1;
+	}
+#endif
+
 	/*
 	 *  If monitor is in special mode, close window and re-open.
 	 *  winconstraints() does not work, and getmonitor() can't
@@ -405,6 +419,22 @@ Ir_open()
 	case HZ30_SG:
 		/* Dunn camera, etc. */
 		/* Use already established prefposition */
+		break;
+	case STR_RECT:
+		/* Hi-res monitor in stereo mode, take over whole screen */
+		winclose(gr_id);
+		noborder();
+		foreground();
+#if defined(__sgi) && defined(__mips)
+		/* Deal with Irix 4.0 bug:  (+2,+0) offset due to border */
+		prefposition( 0-2, XMAXSCREEN-2, 0, YMAXSCREEN );
+#else
+		prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
+#endif
+		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
+			printf( "No more graphics ports available.\n" );
+			return	-1;
+		}
 		break;
 	default:
 	case HZ60:
@@ -543,6 +573,8 @@ Ir_close()
 	ir_clear_to_black();
 	frontbuffer(0);
 
+	setmonitor(ir_oldmonitor);
+
 	winclose(gr_id);
 	return;
 }
@@ -649,7 +681,7 @@ Ir_epilog()
  *  the correct solution is important.
  */
 void
-Ir_newrot(mat)
+Ir_newrot(mat, which_eye)
 mat_t	mat;
 {
 	register fastf_t *mptr;
@@ -659,6 +691,22 @@ mat_t	mat;
 
 	if (ir_debug)
 		fprintf(stderr, "Ir_newrot()\n");
+
+	switch(which_eye)  {
+	case 0:
+		/* Non-stereo */
+		break;
+	case 1:
+		/* R eye */
+		viewport(0, XMAXSCREEN, 0, YSTEREO);
+		Ir_puts( "R", 2020, 0, 0, DM_RED );
+		break;
+	case 2:
+		/* L eye */
+		viewport(0, XMAXSCREEN, 0+YOFFSET_LEFT, YSTEREO+YOFFSET_LEFT);
+		break;
+	}
+
 	if( ! zclipping_on ) {
 		mat_t	nozclip;
 
@@ -1779,6 +1827,9 @@ kblights()
 
 ir_clear_to_black()
 {
+	/* Re-enable the full viewport */
+	viewport(0, winx_size, 0, winy_size);
+
 	if( zbuffer_on )  {
 		zfunction( ZF_LEQUAL );
 		if( ir_has_rgb )  {

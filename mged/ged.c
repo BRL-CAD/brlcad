@@ -585,8 +585,16 @@ refresh()
 
 		dmp->dmr_prolog();	/* update displaylist prolog */
 
-		/* Apply zoom & rotate translation vectors */
-		dozoom();
+		/*  Draw each solid in it's proper place on the screen
+		 *  by applying zoom, rotation, & translation.
+		 *  Calls dmp->dmr_newrot() and dmp->dmr_object().
+		 */
+#if 1
+		dozoom(0);
+#else
+		dozoom(1);
+		dozoom(2);
+#endif
 
 		/* Restore to non-rotated, full brightness */
 		dmp->dmr_normal();

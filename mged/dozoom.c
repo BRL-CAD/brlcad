@@ -87,12 +87,14 @@ fastf_t	fovy, aspect, near, far, backoff;
  * screen position for the object.
  */
 void
-dozoom()
+dozoom(which_eye)
+int	which_eye;
 {
 	register struct solid *sp;
 	FAST fastf_t ratio;
 	fastf_t		inv_viewsize;
 	mat_t		pmat;
+	mat_t		tmat, tvmat;
 	mat_t		new;
 	matp_t		mat;
 
@@ -105,12 +107,32 @@ dozoom()
 	if( mged_variables.perspective <= 0 )  {
 		mat = model2view;
 	} else {
+		switch(which_eye)  {
+		case 0:
+			mat = model2view;
+			break;
+		case 1:
+			/* R */
+#define EYE_DELTA	0.01	/* XXX hack hack hack */
+			mat_idn(tmat);
+			MAT_DELTAS(tmat, EYE_DELTA, 0, 0);	/* view delta */
+			mat_mul(tvmat, tmat, model2view);
+			mat = tvmat;
+			break;
+		case 2:
+			/* L */
+			mat_idn(tmat);
+			MAT_DELTAS(tmat, -EYE_DELTA, 0, 0);	/* view delta */
+			mat_mul(tvmat, tmat, model2view);
+			mat = tvmat;
+			break;
+		}
 		persp_mat( pmat, mged_variables.perspective,
 			1.0, 0.01, 1.0e10, 1.0 );
-		mat_mul( new, pmat, model2view );
+		mat_mul( new, pmat, mat );
 		mat = new;
 	}
-	dmp->dmr_newrot( mat );
+	dmp->dmr_newrot( mat, which_eye );
 
 	FOR_ALL_SOLIDS( sp )  {
 		/* If part of object rotation, will be drawn below */
@@ -146,7 +168,7 @@ dozoom()
 		mat_mul( new, pmat, model2objview );
 		mat = new;
 	}
-	dmp->dmr_newrot( mat );
+	dmp->dmr_newrot( mat, which_eye );
 	inv_viewsize /= modelchanges[15];
 
 	FOR_ALL_SOLIDS( sp )  {
