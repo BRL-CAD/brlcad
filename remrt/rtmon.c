@@ -72,11 +72,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #  endif
 #endif
 
-#if IRIX >= 6
-# include <sched.h>
-struct sched_param param;
-#endif
-
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
@@ -115,12 +110,12 @@ bu_get_1cpu_speed()
 #if defined(IRIX)
 	struct utsname	ut;
 
-#if 0
+# if 0
 	if( uname(&ut) >= 0 )  {
 		/* Key on type of CPU board, e.g. IP6 */
 		return lookup( CPU_SPEED_FILE, ut.machine );
 	}
-#endif
+# endif
 	FILE	*fp;
 	double	d;
 	/* File format:  scale-factor TAB #Mhz SPACE IP99 */
