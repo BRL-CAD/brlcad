@@ -75,6 +75,7 @@ struct rt_i		*rtip;
 	int				tri_index, i;
 	LOCAL fastf_t			dx, dy, dz;
 	LOCAL fastf_t			f;
+	int				ntri = 0;
 
 	RT_CK_DB_INTERNAL(ip);
 	bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -105,7 +106,8 @@ struct rt_i		*rtip;
 		VMINMAX( stp->st_min, stp->st_max, p1 );
 		VMINMAX( stp->st_min, stp->st_max, p2 );
 		VMINMAX( stp->st_min, stp->st_max, p3 );
-		(void)rt_botface( stp, bot, p1, p2, p3, tri_index, tol );
+		if( rt_botface( stp, bot, p1, p2, p3, tri_index, tol ) > 0 )
+			ntri++;
 	}
 
 	if( stp->st_specific == (genptr_t)0 )  {
@@ -134,20 +136,41 @@ struct rt_i		*rtip;
 	stp->st_aradius = f;
 	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
 
-	/* XXX Should use actual face count (len of list) */
-	stp->st_npieces = bot_ip->num_faces;
+	/*
+	 *  Support for solid 'pieces'
+	 *  For now, each triangle is considered a separate piece.
+	 *  These array allocations can't be made until the number of
+	 *  triangles are known.
+	 */
+	stp->st_npieces = ntri;
 
-	/* Support for solid 'pieces' */
 	bot->bot_facearray = (struct tri_specific **)
-		bu_malloc( sizeof(struct tri_specific *) * bot_ip->num_faces,
+		bu_malloc( sizeof(struct tri_specific *) * ntri,
 			"bot_facearray" );
 
+	stp->st_piece_rpps = (struct bound_rpp *)
+		bu_malloc( sizeof(struct bound_rpp) * ntri,
+			"st_piece_rpps" );
+
 	{
-		struct tri_specific **fap = bot->bot_facearray;
-		register struct tri_specific *trip = bot->bot_facelist;
+		struct bound_rpp	*minmax = stp->st_piece_rpps;
+		CONST struct tri_specific **fap =
+			(CONST struct tri_specific **)bot->bot_facearray;
+		register CONST struct tri_specific *trip = bot->bot_facelist;
 		for( ; trip; trip = trip->tri_forw )  {
+			point_t b,c;
+
 			*fap = trip;
 			fap++;
+
+			minmax->min[X] = minmax->max[X] = trip->tri_A[X];
+			minmax->min[Y] = minmax->max[Y] = trip->tri_A[Y];
+			minmax->min[Z] = minmax->max[Z] = trip->tri_A[Z];
+			VADD2( b, trip->tri_BA, trip->tri_A );
+			VMINMAX( minmax->min, minmax->max, b );
+			VADD2( c, trip->tri_CA, trip->tri_A );
+			VMINMAX( minmax->min, minmax->max, c );
+			minmax++;
 		}
 
 	}
