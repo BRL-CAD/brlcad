@@ -26,6 +26,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "vmath.h"
 
+#include "../rt/mathtab.h"
+
 mat_t	identity;
 double degtorad = 0.0174532925199433;
 double sin60;
@@ -34,7 +36,7 @@ struct ntab {
 	char	nm[64];
 } ntab[64];
 
-double	ball_stack(), prim_stack();
+double	ball_stack(), prim_stack(), crystal_stack(), crystal_layer();
 
 main(argc, argv)
 char	**argv;
@@ -50,7 +52,7 @@ char	**argv;
 	vect_t	pos, aim;
 	char	white[3];
 	int	n;
-	double	height, maxheight = 0;
+	double	height, maxheight, minheight;
 
 	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
 
@@ -68,13 +70,16 @@ char	**argv;
 
 	/* Create the detail cells */
 	size = 1000;	/* mm */
-	quant = 5;
+	quant = 1;	/* XXXX 5 */
 	base = -size*(quant/2);
+	maxheight = size/2;		/* keep lights off the floor */
 	for( ix=quant-1; ix>=0; ix-- )  {
 		x = base + ix*size;
 		for( iy=quant-1; iy>=0; iy-- )  {
 			y = base + iy*size;
 			sprintf( name, "x%dy%d", ix, iy );
+maxheight = height = crystal_stack( name, x, y, size );
+continue;
 			n = rand() & 03;
 			switch(n)  {
 			case 0:
@@ -88,21 +93,25 @@ char	**argv;
 		}
 	}
 
+	/* Enclose in some rings */
+	minheight = size/2;
+	VSET( pos, 0, 0, size/4 );
+	do_rings( "rings", pos, 1.414*size, size/4, size, 4 );
+
+	if( maxheight < minheight ) maxheight = minheight;
+
 	/* Create some light */
 	white[0] = white[1] = white[2] = 255;
 	base = size*(quant/2+1);
 	VSET( aim, 0, 0, 0 );
-	VSET( pos, base, base, maxheight*((rand()&7)+1)/8 );
+	VSET( pos, base, base, minheight+maxheight*rand0to1() );
 	do_light( "l1", pos, aim, 1, 100.0, white );
-	VSET( pos, -base, base, maxheight*((rand()&7)+1)/8 );
+	VSET( pos, -base, base, minheight+maxheight*rand0to1() );
 	do_light( "l2", pos, aim, 1, 100.0, white );
-	VSET( pos, -base, -base, maxheight*((rand()&7)+1)/8 );
+	VSET( pos, -base, -base, minheight+maxheight*rand0to1() );
 	do_light( "l3", pos, aim, 1, 100.0, white );
-	VSET( pos, base, -base, maxheight*((rand()&7)+1)/8 );
+	VSET( pos, base, -base, minheight+maxheight*rand0to1() );
 	do_light( "l4", pos, aim, 1, 100.0, white );
-
-	VSET( pos, 0, 0, size/2 );
-	do_rings( "rings", pos, 1.414*base, size/2, 4 );
 
 	/* Build the overall combination */
 	mk_comb( stdout, "clut", quant*quant+1+4+1, 0 );
@@ -118,6 +127,164 @@ char	**argv;
 	mk_memb( stdout, "l3", identity, UNION );
 	mk_memb( stdout, "l4", identity, UNION );
 	mk_memb( stdout, "rings", identity, UNION );
+}
+
+double
+crystal_stack( name, xc, yc, size )
+char	*name;
+double	xc, yc;		/* center coordinates, z=0+ */
+double	size;
+{
+	int	i;
+	point_t	center;
+	vect_t	maj, min;
+	int	nsolids;
+	struct ntab	names[32];
+	int	len = 0;
+	char	rgb[4];		/* needs all 4 */
+	double	high;
+	double	height = 0;
+	double	esz;
+	vect_t	minpt, maxpt;
+	char	basename[64];
+	char	rppname[64];
+	char	crystalname[64];
+
+	/* Make the base */
+	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
+	VSET( minpt, xc-esz, yc-esz, 0 );
+	VSET( maxpt, xc+esz, yc+esz, 10 );
+	sprintf( basename, "%sbase", name );
+	mk_rpp( stdout, basename, minpt, maxpt );
+
+	/* These should change somewhat for each layer, and be done by rots */
+	VSET( maj, 1, 0, .2 );
+	VSET( min, 0, 1, .2 );
+	VUNITIZE( maj );
+	VUNITIZE( min );
+
+	for( i=0; i<3; i++ )  {
+		sprintf( names[len].nm, "%sl%c", name, 'a'+i);
+		VSET( center, xc, yc, size/2*i );
+		nsolids = 3 + (rand() & 7);
+
+		high = crystal_layer( names[len++].nm, center, size/2,
+			maj, min,
+			rand0to1() * 90.0,
+			rand0to1() * 8.0 + 2.0,
+			nsolids );
+		if( high > height )  height = high;
+	}
+
+	/* Make the trimming RPP */
+	esz = size*0.5;	/* dist from ctr to edge of base */
+	VSET( minpt, xc-esz, yc-esz, 10 );
+	VSET( maxpt, xc+esz, yc+esz, height );
+	sprintf( rppname, "%srpp", name );
+	mk_rpp( stdout, rppname, minpt, maxpt );
+
+	/* Build the crystal union */
+	sprintf( crystalname, "%scrystal", name );
+	mk_comb( stdout, crystalname, len, 0 );
+	for( i=0; i<len; i++ )  {
+		mk_memb( stdout, names[i].nm, identity, UNION );
+	}
+
+	/* Build the combination */
+	get_rgb(rgb);
+	/* XXX should be mirror or glass */
+	mk_mcomb( stdout, name, 3, 1, "", "", 1, rgb );
+	mk_memb( stdout, crystalname, identity, UNION );
+	mk_memb( stdout, rppname, identity, INTERSECT );
+	mk_memb( stdout, basename, identity, UNION );
+	return(height);
+}
+
+double
+crystal_layer( name, center, radius, maj, min, var, ratio, nsolids )
+char	*name;
+point_t	center;		/* center coordinates, (min Z) */
+double	radius;		/* cell radius */
+vect_t	maj;		/* main axis of growth */
+vect_t	min;		/* minor axis of growth */
+double	var;		/* max degrees of variation off axis (0..90) */
+double	ratio;		/* len/width ratio */
+int	nsolids;	/* number of solids for this layer */
+{
+	int	todo;
+	struct ntab	*crname;
+	double	height = center[Z];
+	int	len = 0;
+	point_t	loc_cent;
+	point_t	a,b;
+	fastf_t	*maj_axis, *min_axis;
+	vect_t	long_axis, short_axis;
+	vect_t	other_axis;
+	double	cos_var;
+	double	m_cos_var;
+	double	length, width;
+	point_t	pt[8];
+	int	i;
+
+	crname = (struct ntab *)malloc( sizeof(struct ntab)*nsolids );
+
+	for( todo = nsolids-1; todo >= 0; todo-- )  {
+		cos_var = cos( var*rand0to1() );
+		m_cos_var = 1 - cos_var;
+		/* Blend together two original axes for new orthog. set */
+		if( rand() & 1 )  {
+			maj_axis = maj;
+			min_axis = min;
+		}  else  {
+			maj_axis = min;
+			min_axis = maj;
+		}
+		VSETALL( long_axis, 0 );
+		VSETALL( short_axis, 0 );
+		VJOIN2( long_axis, long_axis,
+			cos_var, maj_axis,
+			m_cos_var, min_axis );
+		VJOIN2( short_axis, short_axis,
+			m_cos_var, maj_axis,
+			cos_var, min_axis );
+		VCROSS( other_axis, long_axis, short_axis );
+
+		/* dither center position */
+		VMOVE(loc_cent, center );
+		loc_cent[X] += rand_half() * radius;
+		loc_cent[Y] += rand_half() * radius;
+
+		length = radius * rand0to1();
+		width = length / ratio;
+
+		VJOIN1( a, loc_cent, length, long_axis );
+		VJOIN2( pt[0], a, -width, short_axis, -width, other_axis );
+		VJOIN2( pt[1], a,  width, short_axis, -width, other_axis );
+		VJOIN2( pt[2], a,  width, short_axis,  width, other_axis );
+		VJOIN2( pt[3], a, -width, short_axis,  width, other_axis );
+
+		VJOIN1( b, loc_cent, -length, long_axis );
+		VJOIN2( pt[4], b, -width, short_axis, -width, other_axis );
+		VJOIN2( pt[5], b,  width, short_axis, -width, other_axis );
+		VJOIN2( pt[6], b,  width, short_axis,  width, other_axis );
+		VJOIN2( pt[7], b, -width, short_axis,  width, other_axis );
+
+		/* Consider fusing points here, for visual complexity */
+
+		sprintf( ntab[len].nm, "%s%d", name, len );
+		mk_arb8( stdout, ntab[len++].nm, pt );
+
+		for( i=0; i<8; i++ )  {
+			if( pt[i][Z] > height )
+				height = pt[i][Z];
+		}
+	}
+
+	mk_comb( stdout, name, len, 0 );
+	for( todo = nsolids-1; todo >= 0; todo-- )  {
+		mk_memb( stdout, ntab[todo].nm, identity, UNION );
+	}
+	return(height);
 }
 
 double
@@ -287,10 +454,11 @@ register char	*rgb;
 	rgb[2] = cp->c_pixel[2];
 }
 
-do_rings( name, center, r1, r2, n )
+do_rings( name, center, r1, r2, incr, n )
 char	*name;
 double	r1;
 double	r2;
+double	incr;
 int	n;
 {
 	struct ntab snames[32];
@@ -304,7 +472,7 @@ int	n;
 		sprintf( snames[len].nm, "%s%ds", name, i );
 		sprintf( ntab[len].nm, "%s%dr", name, i );
 		mk_tor( stdout, snames[len++].nm, center, normal, r1, r2 );
-		r1 += 4*r2;
+		r1 += incr;
 	}
 
 	/* Build the region that contains each solid */
