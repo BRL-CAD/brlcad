@@ -959,7 +959,8 @@ if test -r WrongNumArgs.3; then
     ln WrongNumArgs.3 Tcl_WrongNumArgs.3
 fi
 if test -r http.n; then
-    rm -f Http.n
+		# This is bogus on a case preserving filesystem (hfs+)
+		# rm -f Http.n
     ln http.n Http.n
 fi
 if test -r library.n; then
@@ -1005,7 +1006,8 @@ if test -r safe.n; then
     ln safe.n SafeBase.n
 fi
 if test -r tcltest.n; then
-    rm -f Tcltest.n
+		# this is bogus on a case-preserving filesystem (hfs+)
+    # rm -f Tcltest.n
     ln tcltest.n Tcltest.n
 fi
 exit 0

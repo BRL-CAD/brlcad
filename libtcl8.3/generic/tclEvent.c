@@ -650,7 +650,7 @@ TclGetLibraryPath()
 
 void
 TclInitSubsystems(argv0)
-    CONST char *argv0;		/* Name of executable from argv[0] to main()
+    const char *argv0;		/* Name of executable from argv[0] to main()
 				 * in native multi-byte encoding. */
 {
     ThreadSpecificData *tsdPtr;
@@ -939,7 +939,7 @@ Tcl_VwaitObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int done, foundEvent;
     char *nameString;
@@ -1015,7 +1015,7 @@ Tcl_UpdateObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int optionIndex;
     int flags = 0;		/* Initialized to avoid compiler warning. */
@@ -1055,3 +1055,4 @@ Tcl_UpdateObjCmd(clientData, interp, objc, objv)
     Tcl_ResetResult(interp);
     return TCL_OK;
 }
+

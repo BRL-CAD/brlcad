@@ -544,7 +544,7 @@ Tcl_BinaryObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int arg;			/* Index of next argument to consume. */
     int value = 0;		/* Current integer value to be packed.
@@ -1549,3 +1549,4 @@ ScanNumber(buffer, type)
     }
     return NULL;
 }
+

@@ -21,7 +21,7 @@ static int	TesteventloopCmd _ANSI_ARGS_((ClientData dummy,
 	Tcl_Interp *interp, int argc, char **argv));
 static int	TestvolumetypeCmd _ANSI_ARGS_((ClientData dummy,
 	Tcl_Interp *interp, int objc,
-	Tcl_Obj *CONST objv[]));
+	Tcl_Obj *const objv[]));
 
 /*
  *----------------------------------------------------------------------
@@ -155,7 +155,7 @@ TestvolumetypeCmd(clientData, interp, objc, objv)
     ClientData clientData;		/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
 #define VOL_BUF_SIZE 32
     int found;

@@ -68,7 +68,7 @@ static int		ImageCreate _ANSI_ARGS_((Tcl_Interp *interp,
 			    ClientData *clientDataPtr));
 #else
 static int		ImageCreate _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *name, int argc, Tcl_Obj *CONST objv[],
+			    char *name, int argc, Tcl_Obj *const objv[],
 			    Tk_ImageType *typePtr, Tk_ImageMaster master,
 			    ClientData *clientDataPtr));
 #endif
@@ -113,7 +113,7 @@ static NewApp *newAppPtr = NULL;
  */
 
 extern int SquareObjCmd _ANSI_ARGS_((ClientData clientData,
-	Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[]));
+	Tcl_Interp *interp, int objc, Tcl_Obj * const objv[]));
 
 typedef struct CBinding {
     Tcl_Interp *interp;
@@ -162,21 +162,21 @@ static int		TestcbindCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int argc, char **argv));
 static int		TestbitmapObjCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]));
+			    Tcl_Obj * const objv[]));
 static int		TestborderObjCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]));
+			    Tcl_Obj * const objv[]));
 static int		TestcolorObjCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]));
+			    Tcl_Obj * const objv[]));
 static int		TestcursorObjCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]));
+			    Tcl_Obj * const objv[]));
 static int		TestdeleteappsCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int argc, char **argv));
 static int		TestfontObjCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static int		TestmakeexistCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int argc, char **argv));
 static int		TestmenubarCmd _ANSI_ARGS_((ClientData dummy,
@@ -187,7 +187,7 @@ static int		TestmetricsCmd _ANSI_ARGS_((ClientData dummy,
 #endif
 static int		TestobjconfigObjCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]));
+			    Tcl_Obj * const objv[]));
 static int		TestpropCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int argc, char **argv));
 static int		TestsendCmd _ANSI_ARGS_((ClientData dummy,
@@ -202,7 +202,7 @@ static void		TrivialCmdDeletedProc _ANSI_ARGS_((
 			    ClientData clientData));
 static int		TrivialConfigObjCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]));
+			    Tcl_Obj * const objv[]));
 static void		TrivialEventProc _ANSI_ARGS_((ClientData clientData,
 			    XEvent *eventPtr));
 
@@ -440,7 +440,7 @@ TestbitmapObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window for application. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
 
     if (objc < 2) {
@@ -475,7 +475,7 @@ TestborderObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window for application. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
 
     if (objc < 2) {
@@ -510,7 +510,7 @@ TestcolorObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window for application. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
 
     if (objc < 2) {
@@ -545,7 +545,7 @@ TestcursorObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window for application. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
 
     if (objc < 2) {
@@ -618,7 +618,7 @@ TestobjconfigObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window for application. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     static char *options[] = {"alltypes", "chain1", "chain2",
 	    "configerror", "delete", "info", "internal", "new",
@@ -1320,7 +1320,7 @@ TrivialConfigObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window for application. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int result = TCL_OK;
     static char *options[] = {"cget", "configure", "csave", (char *) NULL};
@@ -1505,7 +1505,7 @@ TestfontObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window for application. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     static char *options[] = {"counts", "subfonts", (char *) NULL};
     enum option {COUNTS, SUBFONTS};
@@ -1604,7 +1604,7 @@ ImageCreate(interp, name, objc, objv, typePtr, master, clientDataPtr)
 				 * image. */
     char *name;			/* Name to use for image. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument strings for options (doesn't
+    Tcl_Obj *const objv[];	/* Argument strings for options (doesn't
 				 * include image name or type). */
     Tk_ImageType *typePtr;	/* Pointer to our type record (not used). */
     Tk_ImageMaster master;	/* Token for image, to be used by us in

@@ -38,7 +38,7 @@ int (*tclDummyLinkVarPtr)() = Tcl_LinkVar;
  */
 
 extern int		isatty _ANSI_ARGS_((int fd));
-extern char *		strcpy _ANSI_ARGS_((char *dst, CONST char *src));
+extern char *		strcpy _ANSI_ARGS_((char *dst, const char *src));
 
 static char *tclStartupScriptFileName = NULL;
 
@@ -329,3 +329,4 @@ Tcl_Main(argc, argv, appInitProc)
     sprintf(buffer, "exit %d", exitCode);
     Tcl_Eval(interp, buffer);
 }
+

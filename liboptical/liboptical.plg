@@ -1,0 +1,122 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: liboptical - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1D2.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /GX /ZI /Od /I "../h" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"Debug/liboptical.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\code\brlcad6.0\liboptical\init.c"
+"C:\code\brlcad6.0\liboptical\sh_air.c"
+"C:\code\brlcad6.0\liboptical\sh_brdf.c"
+"C:\code\brlcad6.0\liboptical\sh_camo.c"
+"C:\code\brlcad6.0\liboptical\sh_cloud.c"
+"C:\code\brlcad6.0\liboptical\sh_cook.c"
+"C:\code\brlcad6.0\liboptical\sh_fire.c"
+"C:\code\brlcad6.0\liboptical\sh_flat.c"
+"C:\code\brlcad6.0\liboptical\sh_gauss.c"
+"C:\code\brlcad6.0\liboptical\sh_grass.c"
+"C:\code\brlcad6.0\liboptical\sh_light.c"
+"C:\code\brlcad6.0\liboptical\sh_noise.c"
+"C:\code\brlcad6.0\liboptical\sh_null.c"
+"C:\code\brlcad6.0\liboptical\sh_plastic.c"
+"C:\code\brlcad6.0\liboptical\sh_points.c"
+"C:\code\brlcad6.0\liboptical\sh_prj.c"
+"C:\code\brlcad6.0\liboptical\sh_rtrans.c"
+"C:\code\brlcad6.0\liboptical\sh_scloud.c"
+"C:\code\brlcad6.0\liboptical\sh_spm.c"
+"C:\code\brlcad6.0\liboptical\sh_stack.c"
+"C:\code\brlcad6.0\liboptical\sh_stxt.c"
+"C:\code\brlcad6.0\liboptical\sh_tcl.c"
+"C:\code\brlcad6.0\liboptical\sh_text.c"
+"C:\code\brlcad6.0\liboptical\sh_toyota.c"
+"C:\code\brlcad6.0\liboptical\sh_treetherm.c"
+"C:\code\brlcad6.0\liboptical\sh_wood.c"
+"C:\code\brlcad6.0\liboptical\turb.c"
+"C:\code\brlcad6.0\liboptical\vers.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1D2.tmp" 
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1D3.tmp" with contents
+[
+/nologo /out:"Debug\liboptical_d.lib" 
+.\Debug\init.obj
+.\Debug\sh_air.obj
+.\Debug\sh_brdf.obj
+.\Debug\sh_camo.obj
+.\Debug\sh_cloud.obj
+.\Debug\sh_cook.obj
+.\Debug\sh_fire.obj
+.\Debug\sh_flat.obj
+.\Debug\sh_gauss.obj
+.\Debug\sh_grass.obj
+.\Debug\sh_light.obj
+.\Debug\sh_noise.obj
+.\Debug\sh_null.obj
+.\Debug\sh_plastic.obj
+.\Debug\sh_points.obj
+.\Debug\sh_prj.obj
+.\Debug\sh_rtrans.obj
+.\Debug\sh_scloud.obj
+.\Debug\sh_spm.obj
+.\Debug\sh_stack.obj
+.\Debug\sh_stxt.obj
+.\Debug\sh_tcl.obj
+.\Debug\sh_text.obj
+.\Debug\sh_toyota.obj
+.\Debug\sh_treetherm.obj
+.\Debug\sh_wood.obj
+.\Debug\turb.obj
+.\Debug\vers.obj
+]
+Creating command line "link.exe -lib @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1D3.tmp"
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1D4.bat" with contents
+[
+@echo off
+copy .\Debug\liboptical_d.lib "..\lib"
+]
+Creating command line "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1D4.bat"
+Compiling...
+init.c
+sh_air.c
+sh_brdf.c
+sh_camo.c
+sh_cloud.c
+sh_cook.c
+sh_fire.c
+sh_flat.c
+sh_gauss.c
+sh_grass.c
+sh_light.c
+C:\code\brlcad6.0\liboptical\sh_grass.c(1043) : warning C4700: local variable 'cell_pos' used without having been initialized
+sh_noise.c
+sh_null.c
+sh_plastic.c
+sh_points.c
+sh_prj.c
+sh_rtrans.c
+sh_scloud.c
+sh_spm.c
+sh_stack.c
+sh_stxt.c
+sh_tcl.c
+sh_text.c
+sh_toyota.c
+sh_treetherm.c
+sh_wood.c
+turb.c
+vers.c
+Creating library...
+<h3>Output Window</h3>
+Performing Custom Build Step on .\Debug\liboptical_d.lib
+        1 file(s) copied.
+
+
+
+<h3>Results</h3>
+liboptical_d.lib - 0 error(s), 1 warning(s)
+</pre>
+</body>
+</html>

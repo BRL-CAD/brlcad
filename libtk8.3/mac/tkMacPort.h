@@ -74,12 +74,12 @@ extern int errno;
 extern void 		panic  _ANSI_ARGS_(TCL_VARARGS(char *, string));
 #endif
 #ifndef strcasecmp
-extern int		strcasecmp _ANSI_ARGS_((CONST char *s1,
-			    CONST char *s2));
+extern int		strcasecmp _ANSI_ARGS_((const char *s1,
+			    const char *s2));
 #endif
 #ifndef strncasecmp			    
-extern int		strncasecmp _ANSI_ARGS_((CONST char *s1,
-			    CONST char *s2, size_t n));
+extern int		strncasecmp _ANSI_ARGS_((const char *s1,
+			    const char *s2, size_t n));
 #endif
 /*
  * Defines for X functions that are used by Tk but are treated as

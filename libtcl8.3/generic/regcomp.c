@@ -38,7 +38,7 @@
 /* =====^!^===== begin forwards =====^!^===== */
 /* automatically gathered by fwd; do not hand-edit */
 /* === regcomp.c === */
-int compile _ANSI_ARGS_((regex_t *, CONST chr *, size_t, int));
+int compile _ANSI_ARGS_((regex_t *, const chr *, size_t, int));
 static VOID moresubs _ANSI_ARGS_((struct vars *, int));
 static int freev _ANSI_ARGS_((struct vars *, int));
 static VOID makesearch _ANSI_ARGS_((struct vars *, struct nfa *));
@@ -185,8 +185,8 @@ static int before _ANSI_ARGS_((celt, celt));
 static struct cvec *eclass _ANSI_ARGS_((struct vars *, celt, int));
 static struct cvec *cclass _ANSI_ARGS_((struct vars *, chr *, chr *, int));
 static struct cvec *allcases _ANSI_ARGS_((struct vars *, pchr));
-static int cmp _ANSI_ARGS_((CONST chr *, CONST chr *, size_t));
-static int casecmp _ANSI_ARGS_((CONST chr *, CONST chr *, size_t));
+static int cmp _ANSI_ARGS_((const chr *, const chr *, size_t));
+static int casecmp _ANSI_ARGS_((const chr *, const chr *, size_t));
 /* automatically gathered by fwd; do not hand-edit */
 /* =====^!^===== end forwards =====^!^===== */
 
@@ -278,12 +278,12 @@ static struct fns functions = {
 
 /*
  - compile - compile regular expression
- ^ int compile(regex_t *, CONST chr *, size_t, int);
+ ^ int compile(regex_t *, const chr *, size_t, int);
  */
 int
 compile(re, string, len, flags)
 regex_t *re;
-CONST chr *string;
+const chr *string;
 size_t len;
 int flags;
 {
@@ -1177,8 +1177,8 @@ int n;
 #	define	INF	3
 #	define	PAIR(x, y)	((x)*4 + (y))
 #	define	REDUCE(x)	( ((x) == INFINITY) ? INF : (((x) > 1) ? SOME : (x)) )
-	CONST int rm = REDUCE(m);
-	CONST int rn = REDUCE(n);
+	const int rm = REDUCE(m);
+	const int rn = REDUCE(n);
 	struct state *s;
 	struct state *s2;
 
@@ -2173,3 +2173,4 @@ size_t bufsize;
 #include "regc_nfa.c"
 #include "regc_cvec.c"
 #include "regc_locale.c"
+

@@ -215,7 +215,7 @@ static int		TtyGetOptionProc _ANSI_ARGS_((ClientData instanceData,
 			    Tcl_DString *dsPtr));
 static FileState *	TtyInit _ANSI_ARGS_((int fd));
 static int		TtyParseMode _ANSI_ARGS_((Tcl_Interp *interp,
-			    CONST char *mode, int *speedPtr, int *parityPtr,
+			    const char *mode, int *speedPtr, int *parityPtr,
 			    int *dataPtr, int *stopPtr));
 static void		TtySetAttributes _ANSI_ARGS_((int fd,
 			    TtyAttrs *ttyPtr));
@@ -1113,7 +1113,7 @@ TtySetAttributes(fd, ttyPtr)
 static int
 TtyParseMode(interp, mode, speedPtr, parityPtr, dataPtr, stopPtr)
     Tcl_Interp *interp;		/* If non-NULL, interp for error return. */
-    CONST char *mode;		/* Mode string to be parsed. */
+    const char *mode;		/* Mode string to be parsed. */
     int *speedPtr;		/* Filled with baud rate from mode string. */
     int *parityPtr;		/* Filled with parity from mode string. */
     int *dataPtr;		/* Filled with data bits from mode string. */
@@ -2150,7 +2150,7 @@ CreateSocketAddress(sockaddrPtr, host, port)
 	addr.s_addr = INADDR_ANY;
     } else {
 	Tcl_DString ds;
-	CONST char *native;
+	const char *native;
 
 	if (host == NULL) {
 	    native = NULL;

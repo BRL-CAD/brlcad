@@ -1,0 +1,41 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: libpkg - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1D7.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /GX /ZI /Od /I "../h" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"Debug/libpkg.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\code\brlcad6.0\libpkg\pkg.c"
+"C:\code\brlcad6.0\libpkg\tcl.c"
+"C:\code\brlcad6.0\libpkg\vers.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1D7.tmp" 
+Creating command line "link.exe -lib /nologo /out:"Debug\libpkg_d.lib"  .\Debug\pkg.obj .\Debug\tcl.obj .\Debug\vers.obj "
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1D8.bat" with contents
+[
+@echo off
+copy .\Debug\libpkg_d.lib "..\lib"
+]
+Creating command line "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1D8.bat"
+Compiling...
+pkg.c
+c:\code\brlcad6.0\libpkg\pkg.c(301) : warning C4102: 'ready' : unreferenced label
+c:\code\brlcad6.0\libpkg\pkg.c(427) : warning C4102: 'ready' : unreferenced label
+tcl.c
+vers.c
+Creating library...
+<h3>Output Window</h3>
+Performing Custom Build Step on .\Debug\libpkg_d.lib
+        1 file(s) copied.
+
+
+
+<h3>Results</h3>
+libpkg_d.lib - 0 error(s), 2 warning(s)
+</pre>
+</body>
+</html>

@@ -725,7 +725,7 @@ Tcl_AfterObjCmd(clientData, interp, objc, objv)
 				 * hasn't been created yet.*/
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int ms;
     AfterInfo *afterPtr;
@@ -1126,3 +1126,4 @@ AfterCleanupProc(clientData, interp)
     }
     ckfree((char *) assocPtr);
 }
+

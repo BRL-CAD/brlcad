@@ -755,7 +755,7 @@ Itcl_HandleClass(clientData, interp, objc, objv)
     ClientData clientData;   /* class definition */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclClass *cdefnPtr = (ItclClass*)clientData;
     int result = TCL_OK;

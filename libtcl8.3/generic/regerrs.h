@@ -16,3 +16,4 @@
 { REG_INVARG,	"REG_INVARG",	"invalid argument to regex function" },
 { REG_MIXED,	"REG_MIXED",	"character widths of regex and string differ" },
 { REG_BADOPT,	"REG_BADOPT",	"invalid embedded option" },
+

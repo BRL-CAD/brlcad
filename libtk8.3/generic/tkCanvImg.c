@@ -85,7 +85,7 @@ static void		ImageChangedProc _ANSI_ARGS_((ClientData clientData,
 			    int imgHeight));
 static int		ImageCoords _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
-			    Tcl_Obj *CONST argv[]));
+			    Tcl_Obj *const argv[]));
 static int		ImageToArea _ANSI_ARGS_((Tk_Canvas canvas,
 			    Tk_Item *itemPtr, double *rectPtr));
 static double		ImageToPoint _ANSI_ARGS_((Tk_Canvas canvas,
@@ -96,10 +96,10 @@ static void		ComputeImageBbox _ANSI_ARGS_((Tk_Canvas canvas,
 			    ImageItem *imgPtr));
 static int		ConfigureImage _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
-			    Tcl_Obj *CONST argv[], int flags));
+			    Tcl_Obj *const argv[], int flags));
 static int		CreateImage _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, struct Tk_Item *itemPtr,
-			    int argc, Tcl_Obj *CONST argv[]));
+			    int argc, Tcl_Obj *const argv[]));
 static void		DeleteImage _ANSI_ARGS_((Tk_Canvas canvas,
 			    Tk_Item *itemPtr, Display *display));
 static void		DisplayImage _ANSI_ARGS_((Tk_Canvas canvas,
@@ -166,7 +166,7 @@ CreateImage(interp, canvas, itemPtr, argc, argv)
     Tk_Item *itemPtr;			/* Record to hold new item;  header
 					 * has been initialized by caller. */
     int argc;				/* Number of arguments in argv. */
-    Tcl_Obj *CONST argv[];		/* Arguments describing rectangle. */
+    Tcl_Obj *const argv[];		/* Arguments describing rectangle. */
 {
     ImageItem *imgPtr = (ImageItem *) itemPtr;
     int i;
@@ -246,7 +246,7 @@ ImageCoords(interp, canvas, itemPtr, argc, argv)
 					 * read or modified. */
     int argc;				/* Number of coordinates supplied in
 					 * argv. */
-    Tcl_Obj *CONST argv[];		/* Array of coordinates: x1, y1,
+    Tcl_Obj *const argv[];		/* Array of coordinates: x1, y1,
 					 * x2, y2, ... */
 {
     ImageItem *imgPtr = (ImageItem *) itemPtr;
@@ -311,7 +311,7 @@ ConfigureImage(interp, canvas, itemPtr, argc, argv, flags)
     Tk_Canvas canvas;		/* Canvas containing itemPtr. */
     Tk_Item *itemPtr;		/* Image item to reconfigure. */
     int argc;			/* Number of elements in argv.  */
-    Tcl_Obj *CONST argv[];	/* Arguments describing things to configure. */
+    Tcl_Obj *const argv[];	/* Arguments describing things to configure. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
 {
     ImageItem *imgPtr = (ImageItem *) itemPtr;

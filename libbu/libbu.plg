@@ -1,0 +1,186 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: libbu - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP401.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /GX /ZI /Od /I "../h" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"Debug/libbu.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\code\brlcad6.0\libbu\association.c"
+"C:\code\brlcad6.0\libbu\avs.c"
+"C:\code\brlcad6.0\libbu\badmagic.c"
+"C:\code\brlcad6.0\libbu\bitv.c"
+"C:\code\brlcad6.0\libbu\bomb.c"
+"C:\code\brlcad6.0\libbu\brlcad_path.c"
+"C:\code\brlcad6.0\libbu\bu_tcl.c"
+"C:\code\brlcad6.0\libbu\cmd.c"
+"C:\code\brlcad6.0\libbu\cmdhist.c"
+"C:\code\brlcad6.0\libbu\cmdhist_obj.c"
+"C:\code\brlcad6.0\libbu\color.c"
+"C:\code\brlcad6.0\libbu\convert.c"
+"C:\code\brlcad6.0\libbu\fopen_uniq.c"
+"C:\code\brlcad6.0\libbu\getopt.c"
+"C:\code\brlcad6.0\libbu\hist.c"
+"C:\code\brlcad6.0\libbu\hook.c"
+"C:\code\brlcad6.0\libbu\htond.c"
+"C:\code\brlcad6.0\libbu\htonf.c"
+"C:\code\brlcad6.0\libbu\ispar.c"
+"C:\code\brlcad6.0\libbu\lex.c"
+"C:\code\brlcad6.0\libbu\linebuf.c"
+"C:\code\brlcad6.0\libbu\list.c"
+"C:\code\brlcad6.0\libbu\log.c"
+"C:\code\brlcad6.0\libbu\magic.c"
+"C:\code\brlcad6.0\libbu\malloc.c"
+"C:\code\brlcad6.0\libbu\mappedfile.c"
+"C:\code\brlcad6.0\libbu\mro.c"
+"C:\code\brlcad6.0\libbu\observer.c"
+"C:\code\brlcad6.0\libbu\parallel.c"
+"C:\code\brlcad6.0\libbu\parse.c"
+"C:\code\brlcad6.0\libbu\printb.c"
+"C:\code\brlcad6.0\libbu\ptbl.c"
+"C:\code\brlcad6.0\libbu\rb_create.c"
+"C:\code\brlcad6.0\libbu\rb_delete.c"
+"C:\code\brlcad6.0\libbu\rb_diag.c"
+"C:\code\brlcad6.0\libbu\rb_extreme.c"
+"C:\code\brlcad6.0\libbu\rb_free.c"
+"C:\code\brlcad6.0\libbu\rb_insert.c"
+"C:\code\brlcad6.0\libbu\rb_order_stats.c"
+"C:\code\brlcad6.0\libbu\rb_rotate.c"
+"C:\code\brlcad6.0\libbu\rb_search.c"
+"C:\code\brlcad6.0\libbu\rb_walk.c"
+"C:\code\brlcad6.0\libbu\semaphore.c"
+"C:\code\brlcad6.0\libbu\units.c"
+"C:\code\brlcad6.0\libbu\vfont.c"
+"C:\code\brlcad6.0\libbu\vls.c"
+"C:\code\brlcad6.0\libbu\xdr.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP401.tmp" 
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP402.tmp" with contents
+[
+/nologo /out:"Debug\libbu_d.lib" 
+.\Debug\association.obj
+.\Debug\avs.obj
+.\Debug\badmagic.obj
+.\Debug\bitv.obj
+.\Debug\bomb.obj
+.\Debug\brlcad_path.obj
+.\Debug\bu_tcl.obj
+.\Debug\cmd.obj
+.\Debug\cmdhist.obj
+.\Debug\cmdhist_obj.obj
+.\Debug\color.obj
+.\Debug\convert.obj
+.\Debug\fopen_uniq.obj
+.\Debug\getopt.obj
+.\Debug\hist.obj
+.\Debug\hook.obj
+.\Debug\htond.obj
+.\Debug\htonf.obj
+.\Debug\ispar.obj
+.\Debug\lex.obj
+.\Debug\linebuf.obj
+.\Debug\list.obj
+.\Debug\log.obj
+.\Debug\magic.obj
+.\Debug\malloc.obj
+.\Debug\mappedfile.obj
+.\Debug\memset.obj
+.\Debug\mro.obj
+.\Debug\observer.obj
+.\Debug\parallel.obj
+.\Debug\parse.obj
+.\Debug\printb.obj
+.\Debug\ptbl.obj
+.\Debug\rb_create.obj
+.\Debug\rb_delete.obj
+.\Debug\rb_diag.obj
+.\Debug\rb_extreme.obj
+.\Debug\rb_free.obj
+.\Debug\rb_insert.obj
+.\Debug\rb_order_stats.obj
+.\Debug\rb_rotate.obj
+.\Debug\rb_search.obj
+.\Debug\rb_walk.obj
+.\Debug\semaphore.obj
+.\Debug\units.obj
+.\Debug\vers.obj
+.\Debug\vfont.obj
+.\Debug\vls.obj
+.\Debug\xdr.obj
+]
+Creating command line "link.exe -lib @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP402.tmp"
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP403.bat" with contents
+[
+@echo off
+copy .\Debug\libbu_d.lib "..\lib"
+]
+Creating command line "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP403.bat"
+Compiling...
+association.c
+avs.c
+badmagic.c
+bitv.c
+bomb.c
+brlcad_path.c
+bu_tcl.c
+cmd.c
+C:\code\brlcad6.0\libbu\cmd.c(127) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(void *,struct Tcl_Interp *,int ,char ** )'
+cmdhist.c
+cmdhist_obj.c
+color.c
+convert.c
+fopen_uniq.c
+getopt.c
+hist.c
+hook.c
+htond.c
+htonf.c
+ispar.c
+lex.c
+linebuf.c
+list.c
+log.c
+magic.c
+malloc.c
+mappedfile.c
+C:\code\brlcad6.0\libbu\mappedfile.c(141) : warning C4102: 'dont_reuse' : unreferenced label
+C:\code\brlcad6.0\libbu\mappedfile.c(134) : warning C4102: 'do_reuse' : unreferenced label
+C:\code\brlcad6.0\libbu\mappedfile.c(89) : warning C4101: 'fd' : unreferenced local variable
+mro.c
+observer.c
+parallel.c
+C:\code\brlcad6.0\libbu\parallel.c(407) : warning C4101: 'fp' : unreferenced local variable
+C:\code\brlcad6.0\libbu\parallel.c(442) : warning C4101: 'fp' : unreferenced local variable
+parse.c
+printb.c
+ptbl.c
+rb_create.c
+rb_delete.c
+rb_diag.c
+rb_extreme.c
+rb_free.c
+rb_insert.c
+rb_order_stats.c
+rb_rotate.c
+rb_search.c
+rb_walk.c
+semaphore.c
+units.c
+vfont.c
+vls.c
+xdr.c
+Creating library...
+<h3>Output Window</h3>
+Performing Custom Build Step on .\Debug\libbu_d.lib
+        1 file(s) copied.
+
+
+
+<h3>Results</h3>
+libbu_d.lib - 0 error(s), 6 warning(s)
+</pre>
+</body>
+</html>

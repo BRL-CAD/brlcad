@@ -891,96 +891,96 @@ EXTERN int		Tk_AfterCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_BellObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_BindCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_BindtagsCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_ButtonObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_CanvasObjCmd _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, int argc, Tcl_Obj *CONST objv[]));
+			    Tcl_Interp *interp, int argc, Tcl_Obj *const objv[]));
 EXTERN int		Tk_CheckbuttonObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_ClipboardCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int              Tk_ChooseColorObjCmd _ANSI_ARGS_((
 			    ClientData clientData, Tcl_Interp *interp,
-			    int objc, Tcl_Obj *CONST objv[]));
+			    int objc, Tcl_Obj *const objv[]));
 EXTERN int              Tk_ChooseDirectoryObjCmd _ANSI_ARGS_((
 			    ClientData clientData, Tcl_Interp *interp,
-			    int objc, Tcl_Obj *CONST objv[]));
+			    int objc, Tcl_Obj *const objv[]));
 EXTERN int              Tk_ChooseFontObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_DestroyObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_EntryObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-                            Tcl_Obj *CONST objv[]));
+                            Tcl_Obj *const objv[]));
 EXTERN int		Tk_EventObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_FileeventCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_FrameObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_FocusObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_FontObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int              Tk_GetOpenFileObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int              Tk_GetSaveFileObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_GrabCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_GridCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_ImageObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_LabelObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_ListboxObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_LowerObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_MenubuttonObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int              Tk_MessageBoxObjCmd _ANSI_ARGS_((ClientData clientData,
                             Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_MessageCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_OptionObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-	                    Tcl_Obj *CONST objv[]));
+	                    Tcl_Obj *const objv[]));
 EXTERN int		Tk_PackCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_PlaceCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_RadiobuttonObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_RaiseObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_ScaleObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-                            Tcl_Obj *CONST objv[]));
+                            Tcl_Obj *const objv[]));
 EXTERN int		Tk_ScrollbarCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_SelectionCmd _ANSI_ARGS_((ClientData clientData,
@@ -989,23 +989,23 @@ EXTERN int		Tk_SendCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_SendObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_TextCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_TkObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_TkwaitCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		Tk_ToplevelObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_UpdateObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_WinfoObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 EXTERN int		Tk_WmCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 
@@ -1025,18 +1025,18 @@ EXTERN int		TkCanvasGetCoordObj _ANSI_ARGS_((Tcl_Interp *interp,
 			    double *doublePtr));
 EXTERN int		TkCanvasDashParseProc _ANSI_ARGS_((
 			    ClientData clientData, Tcl_Interp *interp,
-			    Tk_Window tkwin, CONST char *value, char *widgRec,
+			    Tk_Window tkwin, const char *value, char *widgRec,
 			    int offset));
 EXTERN char *		TkCanvasDashPrintProc _ANSI_ARGS_((
 			    ClientData clientData, Tk_Window tkwin,
 			    char *widgRec, int offset,
 			    Tcl_FreeProc **freeProcPtr));
 EXTERN int		TkGetDoublePixels _ANSI_ARGS_((Tcl_Interp *interp,
-			    Tk_Window tkwin, CONST char *string,
+			    Tk_Window tkwin, const char *string,
 			    double *doublePtr));
 EXTERN int		TkOffsetParseProc _ANSI_ARGS_((
 			    ClientData clientData, Tcl_Interp *interp,
-			    Tk_Window tkwin, CONST char *value, char *widgRec,
+			    Tk_Window tkwin, const char *value, char *widgRec,
 			    int offset));
 EXTERN char *		TkOffsetPrintProc _ANSI_ARGS_((
 			    ClientData clientData, Tk_Window tkwin,
@@ -1044,7 +1044,7 @@ EXTERN char *		TkOffsetPrintProc _ANSI_ARGS_((
 			    Tcl_FreeProc **freeProcPtr));
 EXTERN int		TkOrientParseProc _ANSI_ARGS_((
 			    ClientData clientData, Tcl_Interp *interp,
-			    Tk_Window tkwin, CONST char *value,
+			    Tk_Window tkwin, const char *value,
 			    char *widgRec, int offset));
 EXTERN char *		TkOrientPrintProc _ANSI_ARGS_((
 			    ClientData clientData, Tk_Window tkwin,
@@ -1052,7 +1052,7 @@ EXTERN char *		TkOrientPrintProc _ANSI_ARGS_((
 			    Tcl_FreeProc **freeProcPtr));
 EXTERN int		TkPixelParseProc _ANSI_ARGS_((
 			    ClientData clientData, Tcl_Interp *interp,
-			    Tk_Window tkwin, CONST char *value, char *widgRec,
+			    Tk_Window tkwin, const char *value, char *widgRec,
 			    int offset));
 EXTERN char *		TkPixelPrintProc _ANSI_ARGS_((
 			    ClientData clientData, Tk_Window tkwin,
@@ -1064,13 +1064,13 @@ EXTERN int		TkPostscriptImage _ANSI_ARGS_((Tcl_Interp *interp,
 			    int height));
 EXTERN int		TkSmoothParseProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, Tk_Window tkwin,
-			    CONST char *value, char *recordPtr, int offset));
+			    const char *value, char *recordPtr, int offset));
 EXTERN char *		TkSmoothPrintProc _ANSI_ARGS_((ClientData clientData,
 			    Tk_Window tkwin, char *recordPtr, int offset,
 			    Tcl_FreeProc **freeProcPtr));
 EXTERN int		TkStateParseProc _ANSI_ARGS_((
 			    ClientData clientData, Tcl_Interp *interp,
-			    Tk_Window tkwin, CONST char *value,
+			    Tk_Window tkwin, const char *value,
 			    char *widgRec, int offset));
 EXTERN char *		TkStatePrintProc _ANSI_ARGS_((
 			    ClientData clientData, Tk_Window tkwin,
@@ -1078,7 +1078,7 @@ EXTERN char *		TkStatePrintProc _ANSI_ARGS_((
 			    Tcl_FreeProc **freeProcPtr));
 EXTERN int		TkTileParseProc _ANSI_ARGS_((
 			    ClientData clientData, Tcl_Interp *interp,
-			    Tk_Window tkwin, CONST char *value, char *widgRec,
+			    Tk_Window tkwin, const char *value, char *widgRec,
 			    int offset));
 EXTERN char *		TkTilePrintProc _ANSI_ARGS_((
 			    ClientData clientData, Tk_Window tkwin,

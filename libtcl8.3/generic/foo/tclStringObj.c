@@ -140,7 +140,7 @@ typedef struct String {
 
 Tcl_Obj *
 Tcl_NewStringObj(bytes, length)
-    CONST char *bytes;		/* Points to the first of the length bytes
+    const char *bytes;		/* Points to the first of the length bytes
 				 * used to initialize the new object. */
     int length;			/* The number of bytes to copy from "bytes"
 				 * when initializing the new object. If 
@@ -154,7 +154,7 @@ Tcl_NewStringObj(bytes, length)
 
 Tcl_Obj *
 Tcl_NewStringObj(bytes, length)
-    CONST char *bytes;		/* Points to the first of the length bytes
+    const char *bytes;		/* Points to the first of the length bytes
 				 * used to initialize the new object. */
     int length;			/* The number of bytes to copy from "bytes"
 				 * when initializing the new object. If 
@@ -206,7 +206,7 @@ Tcl_NewStringObj(bytes, length)
 
 Tcl_Obj *
 Tcl_DbNewStringObj(bytes, length, file, line)
-    CONST char *bytes;		/* Points to the first of the length bytes
+    const char *bytes;		/* Points to the first of the length bytes
 				 * used to initialize the new object. */
     int length;			/* The number of bytes to copy from "bytes"
 				 * when initializing the new object. If 
@@ -231,7 +231,7 @@ Tcl_DbNewStringObj(bytes, length, file, line)
 
 Tcl_Obj *
 Tcl_DbNewStringObj(bytes, length, file, line)
-    CONST char *bytes;		/* Points to the first of the length bytes
+    const char *bytes;		/* Points to the first of the length bytes
 				 * used to initialize the new object. */
     register int length;	/* The number of bytes to copy from "bytes"
 				 * when initializing the new object. If 
@@ -1618,3 +1618,4 @@ FreeStringInternalRep(objPtr)
 {
     ckfree((char *) GET_STRING(objPtr));
 }
+

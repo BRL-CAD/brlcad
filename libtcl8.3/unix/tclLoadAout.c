@@ -334,7 +334,7 @@ FindLibraries (interp, fileName, buf)
   int c;			/* Byte from the load module */
   char * p;
   Tcl_DString ds;
-  CONST char *native;
+  const char *native;
 
   /* Open the load module */
 

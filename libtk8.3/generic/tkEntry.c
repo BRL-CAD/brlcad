@@ -379,7 +379,7 @@ enum selcommand {
 
 static int		ConfigureEntry _ANSI_ARGS_((Tcl_Interp *interp,
 			    Entry *entryPtr, int objc, 
-                            Tcl_Obj *CONST objv[], int flags));
+                            Tcl_Obj *const objv[], int flags));
 static void		DeleteChars _ANSI_ARGS_((Entry *entryPtr, int index,
 			    int count));
 static void		DestroyEntry _ANSI_ARGS_((char *memPtr));
@@ -418,7 +418,7 @@ static void		EntryVisibleRange _ANSI_ARGS_((Entry *entryPtr,
 			    double *firstPtr, double *lastPtr));
 static int		EntryWidgetObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static void		EntryWorldChanged _ANSI_ARGS_((
 			    ClientData instanceData));
 static int		GetEntryIndex _ANSI_ARGS_((Tcl_Interp *interp,
@@ -461,7 +461,7 @@ Tk_EntryObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Either NULL or pointer to option table. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];      /* Argument objects. */
+    Tcl_Obj *const objv[];      /* Argument objects. */
 {
     register Entry *entryPtr;
     Tk_OptionTable optionTable;
@@ -607,7 +607,7 @@ EntryWidgetObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Information about entry widget. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Entry *entryPtr = (Entry *) clientData;
     int cmdIndex, selIndex, result;
@@ -1106,7 +1106,7 @@ ConfigureEntry(interp, entryPtr, objc, objv, flags)
     Entry *entryPtr;		/* Information about widget; may or may not
 				 * already have values for some fields. */
     int objc;			/* Number of valid entries in argv. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
 {
     Tk_SavedOptions savedOptions;

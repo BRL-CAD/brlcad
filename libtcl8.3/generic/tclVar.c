@@ -962,7 +962,7 @@ Tcl_SetObjCmd(dummy, interp, objc, objv)
     ClientData dummy;			/* Not used. */
     register Tcl_Interp *interp;	/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     Tcl_Obj *varValueObj;
 
@@ -2587,7 +2587,7 @@ Tcl_UnsetObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register int i;
     register char *name;
@@ -2630,7 +2630,7 @@ Tcl_AppendObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register Tcl_Obj *varValuePtr = NULL;
     					/* Initialized to avoid compiler
@@ -2682,7 +2682,7 @@ Tcl_LappendObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Obj *varValuePtr, *newValuePtr;
     register List *listRepPtr;
@@ -2852,7 +2852,7 @@ Tcl_ArrayObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     /*
      * The list of constants below should match the arrayOptions string array
@@ -3737,7 +3737,7 @@ Tcl_GlobalObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Interp *iPtr = (Interp *) interp;
     register Tcl_Obj *objPtr;
@@ -3837,7 +3837,7 @@ Tcl_VariableObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Interp *iPtr = (Interp *) interp;
     char *varName, *tail, *cp;
@@ -3959,7 +3959,7 @@ Tcl_UpvarObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register Interp *iPtr = (Interp *) interp;
     CallFrame *framePtr;
@@ -4806,3 +4806,4 @@ TclVarTraceExists(interp, varName)
     }
     return varPtr;
 }
+

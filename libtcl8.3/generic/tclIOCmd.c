@@ -60,7 +60,7 @@ Tcl_PutsObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Channel chan;			/* The channel to puts on. */
     int i;				/* Counter. */
@@ -153,7 +153,7 @@ Tcl_FlushObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Channel chan;			/* The channel to flush on. */
     char *channelId;
@@ -205,7 +205,7 @@ Tcl_GetsObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Channel chan;			/* The channel to read from. */
     int lineLen;			/* Length of line just read. */
@@ -286,7 +286,7 @@ Tcl_ReadObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Channel chan;		/* The channel to read from. */
     int newline, i;		/* Discard newline at end? */
@@ -403,7 +403,7 @@ Tcl_SeekObjCmd(clientData, interp, objc, objv)
     ClientData clientData;		/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     Tcl_Channel chan;			/* The channel to tell on. */
     int offset, mode;			/* Where to seek? */
@@ -466,7 +466,7 @@ Tcl_TellObjCmd(clientData, interp, objc, objv)
     ClientData clientData;		/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     Tcl_Channel chan;			/* The channel to tell on. */
     char *chanName;
@@ -512,7 +512,7 @@ Tcl_CloseObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Channel chan;			/* The channel to close. */
     char *arg;
@@ -578,7 +578,7 @@ Tcl_FconfigureObjCmd(clientData, interp, objc, objv)
     ClientData clientData;		/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     char *chanName, *optionName, *valueName;
     Tcl_Channel chan;			/* The channel to set a mode on. */
@@ -650,7 +650,7 @@ Tcl_EofObjCmd(unused, interp, objc, objv)
     ClientData unused;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Channel chan;
     int dummy;
@@ -694,7 +694,7 @@ Tcl_ExecObjCmd(dummy, interp, objc, objv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
 #ifdef MAC_TCL
 
@@ -871,7 +871,7 @@ Tcl_FblockedObjCmd(unused, interp, objc, objv)
     ClientData unused;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Channel chan;
     int mode;
@@ -920,7 +920,7 @@ Tcl_OpenObjCmd(notUsed, interp, objc, objv)
     ClientData notUsed;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     int pipeline, prot;
     char *modeString, *what;
@@ -1284,7 +1284,7 @@ Tcl_SocketObjCmd(notUsed, interp, objc, objv)
     ClientData notUsed;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     static char *socketOptions[] = {
 	"-async", "-myaddr", "-myport","-server", (char *) NULL
@@ -1474,7 +1474,7 @@ Tcl_FcopyObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Channel inChan, outChan;
     char *arg;
@@ -1539,3 +1539,4 @@ Tcl_FcopyObjCmd(dummy, interp, objc, objv)
 
     return TclCopyChannel(interp, inChan, outChan, toRead, cmdPtr);
 }
+

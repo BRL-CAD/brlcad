@@ -76,7 +76,7 @@ Itcl_CreateObject(interp, name, cdefn, objc, objv, roPtr)
     char* name;              /* name of new object */
     ItclClass *cdefn;        /* class for new object */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
     ItclObject **roPtr;      /* returns: pointer to object data */
 {
     ItclClass *cdefnPtr = (ItclClass*)cdefn;
@@ -430,7 +430,7 @@ ItclDestructBase(interp, contextObj, contextClass, flags)
     if (!Tcl_FindHashEntry(contextObj->destructed, contextClass->name)) {
 
         result = Itcl_InvokeMethodIfExists(interp, "destructor",
-            contextClass, contextObj, 0, (Tcl_Obj* CONST*)NULL);
+            contextClass, contextObj, 0, (Tcl_Obj* const*)NULL);
 
         if (result != TCL_OK) {
             return TCL_ERROR;
@@ -583,7 +583,7 @@ Itcl_HandleInstance(clientData, interp, objc, objv)
     ClientData clientData;   /* object definition */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclObject *contextObj = (ItclObject*)clientData;
 

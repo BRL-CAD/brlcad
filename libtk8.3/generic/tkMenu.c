@@ -318,12 +318,12 @@ enum options {
 static int		CloneMenu _ANSI_ARGS_((TkMenu *menuPtr,
 			    Tcl_Obj *newMenuName, Tcl_Obj *newMenuTypeString));
 static int		ConfigureMenu _ANSI_ARGS_((Tcl_Interp *interp,
-			    TkMenu *menuPtr, int objc, Tcl_Obj *CONST objv[]));
+			    TkMenu *menuPtr, int objc, Tcl_Obj *const objv[]));
 static int		ConfigureMenuCloneEntries _ANSI_ARGS_((
 			    Tcl_Interp *interp, TkMenu *menuPtr, int index,
-			    int objc, Tcl_Obj *CONST objv[]));
+			    int objc, Tcl_Obj *const objv[]));
 static int		ConfigureMenuEntry _ANSI_ARGS_((TkMenuEntry *mePtr,
-			    int objc, Tcl_Obj *CONST objv[]));
+			    int objc, Tcl_Obj *const objv[]));
 static void		DeleteMenuCloneEntries _ANSI_ARGS_((TkMenu *menuPtr,
 			    int first, int last));
 static void		DestroyMenuHashTable _ANSI_ARGS_((
@@ -337,10 +337,10 @@ static int		MenuDoYPosition _ANSI_ARGS_((Tcl_Interp *interp,
 			    TkMenu *menuPtr, Tcl_Obj *objPtr));
 static int		MenuAddOrInsert _ANSI_ARGS_((Tcl_Interp *interp,
 			    TkMenu *menuPtr, Tcl_Obj *indexPtr, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static int		MenuCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static void		MenuCmdDeletedProc _ANSI_ARGS_((
 			    ClientData clientData));
 static TkMenuEntry *	MenuNewEntry _ANSI_ARGS_((TkMenu *menuPtr, int index,
@@ -350,7 +350,7 @@ static char *		MenuVarProc _ANSI_ARGS_((ClientData clientData,
 			    int flags));
 static int		MenuWidgetObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static void		MenuWorldChanged _ANSI_ARGS_((
 			    ClientData instanceData));
 static int		PostProcessEntry _ANSI_ARGS_((TkMenuEntry *mePtr));
@@ -442,7 +442,7 @@ MenuCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument strings. */
+    Tcl_Obj *const objv[];	/* Argument strings. */
 {
     Tk_Window tkwin = Tk_MainWindow(interp);
     Tk_Window new;
@@ -680,7 +680,7 @@ MenuWidgetObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Information about menu widget. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument strings. */
+    Tcl_Obj *const objv[];	/* Argument strings. */
 {
     register TkMenu *menuPtr = (TkMenu *) clientData;
     register TkMenuEntry *mePtr;
@@ -1495,7 +1495,7 @@ ConfigureMenu(interp, menuPtr, objc, objv)
     register TkMenu *menuPtr;	/* Information about widget;  may or may
 				 * not already have values for some fields. */
     int objc;			/* Number of valid entries in argv. */
-    Tcl_Obj *CONST objv[];	/* Arguments. */
+    Tcl_Obj *const objv[];	/* Arguments. */
 {
     int i;
     TkMenu *menuListPtr, *cleanupPtr;
@@ -1864,7 +1864,7 @@ ConfigureMenuEntry(mePtr, objc, objv)
 					 * or may not already have values for
 					 * some fields. */
     int objc;				/* Number of valid entries in argv. */
-    Tcl_Obj *CONST objv[];		/* Arguments. */
+    Tcl_Obj *const objv[];		/* Arguments. */
 {
     TkMenu *menuPtr = mePtr->menuPtr;
     Tk_SavedOptions errorStruct;
@@ -1929,7 +1929,7 @@ ConfigureMenuCloneEntries(interp, menuPtr, index, objc, objv)
     int index;				/* Index of mePtr within menuPtr's
 					 * entries. */
     int objc;				/* Number of valid entries in argv. */
-    Tcl_Obj *CONST objv[];		/* Arguments. */
+    Tcl_Obj *const objv[];		/* Arguments. */
 {
     TkMenuEntry *mePtr;
     TkMenu *menuListPtr;
@@ -2299,7 +2299,7 @@ MenuAddOrInsert(interp, menuPtr, indexPtr, objc, objv)
 					 * to insert.  NULL means insert at
 					 * end. */
     int objc;				/* Number of elements in objv. */
-    Tcl_Obj *CONST objv[];		/* Arguments to command:  first arg
+    Tcl_Obj *const objv[];		/* Arguments to command:  first arg
 					 * is type of entry, others are
 					 * config options. */
 {

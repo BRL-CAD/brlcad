@@ -19,8 +19,8 @@
  * in tclPort.h.
  */
 
-int		memcmp _ANSI_ARGS_((CONST VOID *s1,
-			    CONST VOID *s2, size_t n));
+int		memcmp _ANSI_ARGS_((const VOID *s1,
+			    const VOID *s2, size_t n));
 
 /*
  *----------------------------------------------------------------------
@@ -44,8 +44,8 @@ int		memcmp _ANSI_ARGS_((CONST VOID *s1,
 
 int
 memcmp(s1, s2, n)
-    CONST VOID *s1;			/* First string. */
-    CONST VOID *s2;			/* Second string. */
+    const VOID *s1;			/* First string. */
+    const VOID *s2;			/* Second string. */
     size_t      n;                      /* Length to compare. */
 {
     unsigned char u1, u2;

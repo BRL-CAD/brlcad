@@ -119,7 +119,7 @@ Tk_FocusObjCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     static char *focusOptions[] = {"-displayof", "-force", "-lastfor",
 				   (char *) NULL};

@@ -121,7 +121,7 @@ static Tk_ConfigSpec configSpecs[] = {
  * some C compiler have limitations on the size of static strings.
  * (str2c is a small tcl script in tcl's tool directory (source release))
  */
-static CONST char * CONST  prolog[]= {
+static const char * const  prolog[]= {
 	/* Start of part 1 (2000 characters) */
 	"%%BeginProlog\n\
 50 dict begin\n\
@@ -484,7 +484,7 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
     Tcl_HashSearch search;
     Tcl_HashEntry *hPtr;
     Tcl_DString buffer;
-    CONST char * CONST *chunk;
+    const char * const *chunk;
 
     /*
      *----------------------------------------------------------------

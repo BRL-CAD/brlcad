@@ -61,7 +61,7 @@ Itk_ClassOptionDefineCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* class parser info */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefn = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
@@ -172,7 +172,7 @@ Itk_ClassOptionIllegalCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* class parser info */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *op = Tcl_GetStringFromObj(objv[0], (int*)NULL);
 

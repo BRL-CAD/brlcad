@@ -37,19 +37,19 @@ EXTERN int		Itk_Init _ANSI_ARGS_((Tcl_Interp * interp));
 /* 2 */
 EXTERN int		Itk_ConfigBodyCmd _ANSI_ARGS_((ClientData cdata, 
 				Tcl_Interp * interp, int objc, 
-				Tcl_Obj *CONST objv[]));
+				Tcl_Obj *const objv[]));
 /* 3 */
 EXTERN int		Itk_UsualCmd _ANSI_ARGS_((ClientData cdata, 
 				Tcl_Interp * interp, int objc, 
-				Tcl_Obj *CONST objv[]));
+				Tcl_Obj *const objv[]));
 /* 4 */
 EXTERN int		Itk_ClassOptionDefineCmd _ANSI_ARGS_((
 				ClientData cdata, Tcl_Interp * interp, 
-				int objc, Tcl_Obj *CONST objv[]));
+				int objc, Tcl_Obj *const objv[]));
 /* 5 */
 EXTERN int		Itk_ClassOptionIllegalCmd _ANSI_ARGS_((
 				ClientData cdata, Tcl_Interp * interp, 
-				int objc, Tcl_Obj *CONST objv[]));
+				int objc, Tcl_Obj *const objv[]));
 /* 6 */
 EXTERN int		Itk_ConfigClassOption _ANSI_ARGS_((
 				Tcl_Interp * interp, ItclObject * contextObj, 
@@ -92,10 +92,10 @@ typedef struct ItkStubs {
 
     int (*itk_Init) _ANSI_ARGS_((Tcl_Interp * interp)); /* 0 */
     void *reserved1;
-    int (*itk_ConfigBodyCmd) _ANSI_ARGS_((ClientData cdata, Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[])); /* 2 */
-    int (*itk_UsualCmd) _ANSI_ARGS_((ClientData cdata, Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[])); /* 3 */
-    int (*itk_ClassOptionDefineCmd) _ANSI_ARGS_((ClientData cdata, Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[])); /* 4 */
-    int (*itk_ClassOptionIllegalCmd) _ANSI_ARGS_((ClientData cdata, Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[])); /* 5 */
+    int (*itk_ConfigBodyCmd) _ANSI_ARGS_((ClientData cdata, Tcl_Interp * interp, int objc, Tcl_Obj *const objv[])); /* 2 */
+    int (*itk_UsualCmd) _ANSI_ARGS_((ClientData cdata, Tcl_Interp * interp, int objc, Tcl_Obj *const objv[])); /* 3 */
+    int (*itk_ClassOptionDefineCmd) _ANSI_ARGS_((ClientData cdata, Tcl_Interp * interp, int objc, Tcl_Obj *const objv[])); /* 4 */
+    int (*itk_ClassOptionIllegalCmd) _ANSI_ARGS_((ClientData cdata, Tcl_Interp * interp, int objc, Tcl_Obj *const objv[])); /* 5 */
     int (*itk_ConfigClassOption) _ANSI_ARGS_((Tcl_Interp * interp, ItclObject * contextObj, ClientData cdata, char* newVal)); /* 6 */
     ItkClassOptTable* (*itk_CreateClassOptTable) _ANSI_ARGS_((Tcl_Interp * interp, ItclClass * cdefn)); /* 7 */
     ItkClassOptTable* (*itk_FindClassOptTable) _ANSI_ARGS_((ItclClass * cdefn)); /* 8 */

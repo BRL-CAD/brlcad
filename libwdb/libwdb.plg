@@ -1,0 +1,88 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: libwdb - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1E3.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /GX /ZI /Od /I "../h" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"Debug/libwdb.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\code\brlcad6.0\libwdb\arbn.c"
+"C:\code\brlcad6.0\libwdb\ars.c"
+"C:\code\brlcad6.0\libwdb\bot.c"
+"C:\code\brlcad6.0\libwdb\cline.c"
+"C:\code\brlcad6.0\libwdb\export.c"
+"C:\code\brlcad6.0\libwdb\extr.c"
+"C:\code\brlcad6.0\libwdb\id.c"
+"C:\code\brlcad6.0\libwdb\mater.c"
+"C:\code\brlcad6.0\libwdb\nmg.c"
+"C:\code\brlcad6.0\libwdb\nurb.c"
+"C:\code\brlcad6.0\libwdb\pipe.c"
+"C:\code\brlcad6.0\libwdb\reg.c"
+"C:\code\brlcad6.0\libwdb\skt.c"
+"C:\code\brlcad6.0\libwdb\strsol.c"
+"C:\code\brlcad6.0\libwdb\units.c"
+"C:\code\brlcad6.0\libwdb\vers.c"
+"C:\code\brlcad6.0\libwdb\wdb.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1E3.tmp" 
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1E4.tmp" with contents
+[
+/nologo /out:"Debug\libwdb_d.lib" 
+.\Debug\arbn.obj
+.\Debug\ars.obj
+.\Debug\bot.obj
+.\Debug\cline.obj
+.\Debug\export.obj
+.\Debug\extr.obj
+.\Debug\id.obj
+.\Debug\mater.obj
+.\Debug\nmg.obj
+.\Debug\nurb.obj
+.\Debug\pipe.obj
+.\Debug\reg.obj
+.\Debug\skt.obj
+.\Debug\strsol.obj
+.\Debug\units.obj
+.\Debug\vers.obj
+.\Debug\wdb.obj
+]
+Creating command line "link.exe -lib @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1E4.tmp"
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1E5.bat" with contents
+[
+@echo off
+copy .\Debug\libwdb_d.lib "..\lib"
+]
+Creating command line "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1E5.bat"
+Compiling...
+arbn.c
+ars.c
+bot.c
+cline.c
+export.c
+extr.c
+id.c
+mater.c
+nmg.c
+nurb.c
+pipe.c
+reg.c
+skt.c
+strsol.c
+units.c
+vers.c
+wdb.c
+Creating library...
+<h3>Output Window</h3>
+Performing Custom Build Step on .\Debug\libwdb_d.lib
+        1 file(s) copied.
+
+
+
+<h3>Results</h3>
+libwdb_d.lib - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

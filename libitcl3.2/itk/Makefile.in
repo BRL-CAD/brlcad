@@ -68,7 +68,7 @@ GENERIC_OBJECTS = itk_cmds.$(OBJEXT) \
 PLATFORM_OBJECTS = @PLATFORM_OBJECTS@
 itk_OBJECTS = $(PLATFORM_OBJECTS) $(GENERIC_OBJECTS)
 itkstub_OBJECTS = itkStubLib.$(OBJEXT)
-OBJECTS = $(itk_OBJECTS) $(itkstub_OBJECTS)
+OBJECTS = $(itk_OBJECTS)
 
 #========================================================================
 # The substitution of "exampleA_LIB_FILE" into the variable name below

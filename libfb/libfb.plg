@@ -1,0 +1,195 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: libfb - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1CD.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /GX /ZI /Od /I "../h" /I "../libtk8.4/xlib" /I "../libtk8.4/generic" /I "../libtk8.4/win" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "IF_OGL" /D "IF_X" /Fp"Debug/libfb.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\code\brlcad6.0\libfb\fb_generic.c"
+"C:\code\brlcad6.0\libfb\fb_log.c"
+"C:\code\brlcad6.0\libfb\fb_obj.c"
+"C:\code\brlcad6.0\libfb\fb_paged_io.c"
+"C:\code\brlcad6.0\libfb\fb_rect.c"
+"C:\code\brlcad6.0\libfb\fb_util.c"
+"C:\code\brlcad6.0\libfb\fbserv_obj_win32.c"
+"C:\code\brlcad6.0\libfb\getput.c"
+"C:\code\brlcad6.0\libfb\if_debug.c"
+"C:\code\brlcad6.0\libfb\if_disk.c"
+"C:\code\brlcad6.0\libfb\if_mem.c"
+"C:\code\brlcad6.0\libfb\if_null.c"
+"C:\code\brlcad6.0\libfb\if_ogl_win32.c"
+"C:\code\brlcad6.0\libfb\if_stack.c"
+"C:\code\brlcad6.0\libfb\server.c"
+"C:\code\brlcad6.0\libfb\tcl.c"
+"C:\code\brlcad6.0\libfb\vers.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1CD.tmp" 
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1CE.tmp" with contents
+[
+/nologo /out:"Debug\libfb_d.lib" 
+.\Debug\fb_generic.obj
+.\Debug\fb_log.obj
+.\Debug\fb_obj.obj
+.\Debug\fb_paged_io.obj
+.\Debug\fb_rect.obj
+.\Debug\fb_util.obj
+.\Debug\fbserv_obj_win32.obj
+.\Debug\getput.obj
+.\Debug\if_debug.obj
+.\Debug\if_disk.obj
+.\Debug\if_mem.obj
+.\Debug\if_null.obj
+.\Debug\if_ogl_win32.obj
+.\Debug\if_stack.obj
+.\Debug\server.obj
+.\Debug\tcl.obj
+.\Debug\vers.obj
+]
+Creating command line "link.exe -lib @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1CE.tmp"
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1CF.bat" with contents
+[
+@echo off
+copy .\Debug\libfb_d.lib "..\lib"
+]
+Creating command line "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1CF.bat"
+Compiling...
+fb_generic.c
+fb_log.c
+fb_obj.c
+fb_paged_io.c
+fb_rect.c
+fb_util.c
+fbserv_obj_win32.c
+getput.c
+c:\code\brlcad6.0\libfb\getput.c(48) : warning C4244: '=' : conversion from 'unsigned short ' to 'char ', possible loss of data
+c:\code\brlcad6.0\libfb\getput.c(59) : warning C4244: '=' : conversion from 'unsigned long ' to 'char ', possible loss of data
+c:\code\brlcad6.0\libfb\getput.c(60) : warning C4244: '=' : conversion from 'unsigned long ' to 'char ', possible loss of data
+c:\code\brlcad6.0\libfb\getput.c(61) : warning C4244: '=' : conversion from 'unsigned long ' to 'char ', possible loss of data
+c:\code\brlcad6.0\libfb\getput.c(62) : warning C4244: '=' : conversion from 'unsigned long ' to 'char ', possible loss of data
+if_debug.c
+C:\code\brlcad6.0\libfb\if_debug.c(43) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,char *,int ,int )'
+C:\code\brlcad6.0\libfb\if_debug.c(44) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_debug.c(45) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_debug.c(46) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_debug.c(47) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,const unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_debug.c(48) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_debug.c(49) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,const struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_debug.c(50) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_debug.c(51) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int *,int *,int *,int *)'
+C:\code\brlcad6.0\libfb\if_debug.c(52) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,const unsigned char *,int ,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_debug.c(53) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_debug.c(54) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int *,int *,int *)'
+C:\code\brlcad6.0\libfb\if_debug.c(55) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_debug.c(56) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,const unsigned char *)'
+C:\code\brlcad6.0\libfb\if_debug.c(57) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_debug.c(58) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,const unsigned char *)'
+C:\code\brlcad6.0\libfb\if_debug.c(59) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_debug.c(60) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_debug.c(61) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_debug.c(62) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+if_disk.c
+C:\code\brlcad6.0\libfb\if_disk.c(62) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,char *,int ,int )'
+C:\code\brlcad6.0\libfb\if_disk.c(63) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_disk.c(64) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_disk.c(65) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_disk.c(66) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,const unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_disk.c(67) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_disk.c(68) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,const struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_disk.c(80) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_disk.c(81) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+if_mem.c
+C:\code\brlcad6.0\libfb\if_mem.c(55) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,char *,int ,int )'
+C:\code\brlcad6.0\libfb\if_mem.c(56) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_mem.c(57) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_mem.c(58) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_mem.c(59) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,const unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_mem.c(60) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_mem.c(61) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,const struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_mem.c(62) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_mem.c(63) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int *,int *,int *,int *)'
+C:\code\brlcad6.0\libfb\if_mem.c(64) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,const unsigned char *,int ,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_mem.c(65) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_mem.c(66) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int *,int *,int *)'
+C:\code\brlcad6.0\libfb\if_mem.c(71) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_mem.c(72) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_mem.c(73) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_mem.c(74) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+if_null.c
+C:\code\brlcad6.0\libfb\if_null.c(53) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,char *,int ,int )'
+C:\code\brlcad6.0\libfb\if_null.c(54) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_null.c(55) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_null.c(56) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_null.c(57) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,const unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_null.c(58) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_null.c(59) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,const struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_null.c(60) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_null.c(61) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int *,int *,int *,int *)'
+C:\code\brlcad6.0\libfb\if_null.c(62) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,const unsigned char *,int ,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_null.c(63) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_null.c(64) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int *,int *,int *)'
+C:\code\brlcad6.0\libfb\if_null.c(65) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_null.c(66) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,const unsigned char *)'
+C:\code\brlcad6.0\libfb\if_null.c(67) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_null.c(68) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,const unsigned char *)'
+C:\code\brlcad6.0\libfb\if_null.c(69) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_null.c(70) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_null.c(71) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_null.c(72) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+if_ogl_win32.c
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(114) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,char *,int ,int )'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(115) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(116) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(117) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(118) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,const unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(119) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(120) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,const struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(121) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(122) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int *,int *,int *,int *)'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(123) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,const unsigned char *,int ,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(124) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(127) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,const unsigned char *)'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(129) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,const unsigned char *)'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(130) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(131) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(132) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_ogl_win32.c(133) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+if_stack.c
+C:\code\brlcad6.0\libfb\if_stack.c(60) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,char *,int ,int )'
+C:\code\brlcad6.0\libfb\if_stack.c(61) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_stack.c(62) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_stack.c(63) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_stack.c(64) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,const unsigned char *,int )'
+C:\code\brlcad6.0\libfb\if_stack.c(65) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_stack.c(66) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,const struct ColorMap *)'
+C:\code\brlcad6.0\libfb\if_stack.c(67) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_stack.c(68) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int *,int *,int *,int *)'
+C:\code\brlcad6.0\libfb\if_stack.c(69) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,const unsigned char *,int ,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_stack.c(70) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int )'
+C:\code\brlcad6.0\libfb\if_stack.c(71) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int *,int *,int *)'
+C:\code\brlcad6.0\libfb\if_stack.c(72) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_stack.c(73) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,const unsigned char *)'
+C:\code\brlcad6.0\libfb\if_stack.c(74) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,unsigned char *)'
+C:\code\brlcad6.0\libfb\if_stack.c(75) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *,int ,int ,int ,int ,const unsigned char *)'
+C:\code\brlcad6.0\libfb\if_stack.c(76) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_stack.c(77) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_stack.c(78) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+C:\code\brlcad6.0\libfb\if_stack.c(79) : warning C4113: 'int (__cdecl *)()' differs in parameter lists from 'int (__cdecl *)(struct FBIO_ *)'
+server.c
+tcl.c
+vers.c
+Creating library...
+<h3>Output Window</h3>
+Performing Custom Build Step on .\Debug\libfb_d.lib
+        1 file(s) copied.
+
+
+
+<h3>Results</h3>
+libfb_d.lib - 0 error(s), 107 warning(s)
+</pre>
+</body>
+</html>

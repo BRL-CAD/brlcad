@@ -57,7 +57,7 @@ typedef NET_API_STATUS NET_API_FUNCTION NETGETDCNAMEPROC
 
 char *
 TclpFindExecutable(argv0)
-    CONST char *argv0;		/* The value of the application's argv[0]
+    const char *argv0;		/* The value of the application's argv[0]
 				 * (native). */
 {
     Tcl_DString ds;
@@ -456,7 +456,7 @@ TclpMatchFiles(
 
 char *
 TclpGetUserHome(name, bufferPtr)
-    CONST char *name;		/* User name for desired home directory. */
+    const char *name;		/* User name for desired home directory. */
     Tcl_DString *bufferPtr;	/* Uninitialized or free DString filled
 				 * with name of user's home directory. */
 {
@@ -579,7 +579,7 @@ TclpGetUserHome(name, bufferPtr)
 
 int
 TclpAccess(
-    CONST char *path,		/* Path of file to access (UTF-8). */
+    const char *path,		/* Path of file to access (UTF-8). */
     int mode)			/* Permission setting. */
 {
     Tcl_DString ds;
@@ -609,7 +609,7 @@ TclpAccess(
     }
 
     if (mode & X_OK) {
-        CONST char *p;
+        const char *p;
 
 	if (attr & FILE_ATTRIBUTE_DIRECTORY) {
 	    /*
@@ -656,7 +656,7 @@ TclpAccess(
 
 int
 TclpChdir(path)
-    CONST char *path;     	/* Path to new working directory (UTF-8). */
+    const char *path;     	/* Path to new working directory (UTF-8). */
 {
     int result;
     Tcl_DString ds;
@@ -774,7 +774,7 @@ TclpGetCwd(interp, bufferPtr)
 
 int
 TclpStat(path, statPtr)
-    CONST char *path;		/* Path of file to stat (UTF-8). */
+    const char *path;		/* Path of file to stat (UTF-8). */
     struct stat *statPtr;	/* Filled with results of stat call. */
 {
     Tcl_DString ds;

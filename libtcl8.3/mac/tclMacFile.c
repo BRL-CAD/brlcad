@@ -62,7 +62,7 @@ TCL_DECLARE_MUTEX(gmtMutex)
 
 char *
 TclpFindExecutable(
-    CONST char *argv0)		/* The value of the application's argv[0]. */
+    const char *argv0)		/* The value of the application's argv[0]. */
 {
     ProcessSerialNumber psn;
     ProcessInfoRec info;
@@ -349,7 +349,7 @@ TclpMatchFiles(
 
 int
 TclpAccess(
-    CONST char *path,		/* Path of file to access (UTF-8). */
+    const char *path,		/* Path of file to access (UTF-8). */
     int mode)			/* Permission setting. */
 {
     HFileInfo fpb;
@@ -449,7 +449,7 @@ TclpAccess(
 
 int
 TclpChdir(
-    CONST char *dirName)     	/* Path to new working directory (UTF-8). */
+    const char *dirName)     	/* Path to new working directory (UTF-8). */
 {
     FSSpec spec;
     OSErr err;
@@ -568,7 +568,7 @@ TclpGetCwd(
 
 char *
 TclpReadlink(
-    CONST char *path,		/* Path of file to readlink (UTF-8). */
+    const char *path,		/* Path of file to readlink (UTF-8). */
     Tcl_DString *linkPtr)	/* Uninitialized or free DString filled
 				 * with contents of link (UTF-8). */
 {
@@ -697,7 +697,7 @@ TclpReadlink(
 
 int
 TclpLstat(
-    CONST char *path,		/* Path of file to stat (in UTF-8). */
+    const char *path,		/* Path of file to stat (in UTF-8). */
     struct stat *bufPtr)	/* Filled with results of stat call. */
 {
     /*
@@ -725,7 +725,7 @@ TclpLstat(
 
 int
 TclpStat(
-    CONST char *path,		/* Path of file to stat (in UTF-8). */
+    const char *path,		/* Path of file to stat (in UTF-8). */
     struct stat *bufPtr)	/* Filled with results of stat call. */
 {
     HFileInfo fpb;
@@ -885,8 +885,8 @@ Tcl_WaitPid(
 #undef fopen
 FILE *
 TclMacFOpenHack(
-    CONST char *path,
-    CONST char *mode)
+    const char *path,
+    const char *mode)
 {
     OSErr err;
     FSSpec fileSpec;
@@ -933,7 +933,7 @@ TclMacFOpenHack(
 
 char *
 TclpGetUserHome(name, bufferPtr)
-    CONST char *name;		/* User name for desired home directory. */
+    const char *name;		/* User name for desired home directory. */
     Tcl_DString *bufferPtr;	/* Uninitialized or free DString filled
 				 * with name of user's home directory. */
 {

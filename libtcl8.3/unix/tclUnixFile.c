@@ -42,10 +42,10 @@
 
 char *
 TclpFindExecutable(argv0)
-    CONST char *argv0;		/* The value of the application's argv[0]
+    const char *argv0;		/* The value of the application's argv[0]
 				 * (native). */
 {
-    CONST char *name, *p;
+    const char *name, *p;
     struct stat statBuf;
     int length;
     Tcl_DString buffer, nameString;
@@ -459,7 +459,7 @@ TclpMatchFiles(interp, separators, dirPtr, pattern, tail)
 
 char *
 TclpGetUserHome(name, bufferPtr)
-    CONST char *name;		/* User name for desired home directory. */
+    const char *name;		/* User name for desired home directory. */
     Tcl_DString *bufferPtr;	/* Uninitialized or free DString filled
 				 * with name of user's home directory. */
 {
@@ -498,7 +498,7 @@ TclpGetUserHome(name, bufferPtr)
 
 int
 TclpAccess(path, mode)
-    CONST char *path;		/* Path of file to access (UTF-8). */
+    const char *path;		/* Path of file to access (UTF-8). */
     int mode;			/* Permission setting. */
 {
     int result;
@@ -530,7 +530,7 @@ TclpAccess(path, mode)
 
 int
 TclpChdir(dirName)
-    CONST char *dirName;     	/* Path to new working directory (UTF-8). */
+    const char *dirName;     	/* Path to new working directory (UTF-8). */
 {
     int result;
     Tcl_DString ds;
@@ -561,7 +561,7 @@ TclpChdir(dirName)
 
 int
 TclpLstat(path, bufPtr)
-    CONST char *path;		/* Path of file to stat (UTF-8). */
+    const char *path;		/* Path of file to stat (UTF-8). */
     struct stat *bufPtr;	/* Filled with results of stat call. */
 {
     int result;
@@ -641,7 +641,7 @@ TclpGetCwd(interp, bufferPtr)
 
 char *
 TclpReadlink(path, linkPtr)
-    CONST char *path;		/* Path of file to readlink (UTF-8). */
+    const char *path;		/* Path of file to readlink (UTF-8). */
     Tcl_DString *linkPtr;	/* Uninitialized or free DString filled
 				 * with contents of link (UTF-8). */
 {
@@ -680,7 +680,7 @@ TclpReadlink(path, linkPtr)
 
 int
 TclpStat(path, bufPtr)
-    CONST char *path;		/* Path of file to stat (in UTF-8). */
+    const char *path;		/* Path of file to stat (in UTF-8). */
     struct stat *bufPtr;	/* Filled with results of stat call. */
 {
     int result;

@@ -128,7 +128,7 @@ Tcl_ResourceObjCmd(
     ClientData clientData,		/* Not used. */
     Tcl_Interp *interp,			/* Current interpreter. */
     int objc,				/* Number of arguments. */
-    Tcl_Obj *CONST objv[])		/* Argument values. */
+    Tcl_Obj *const objv[])		/* Argument values. */
 {
     Tcl_Obj *resultPtr, *objPtr;
     int index, result;
@@ -938,7 +938,7 @@ Tcl_MacSourceObjCmd(
     ClientData dummy,			/* Not used. */
     Tcl_Interp *interp,			/* Current interpreter. */
     int objc,				/* Number of arguments. */
-    Tcl_Obj *CONST objv[])		/* Argument objects. */
+    Tcl_Obj *const objv[])		/* Argument objects. */
 {
     char *errNum = "wrong # args: ";
     char *errBad = "bad argument: ";
@@ -1009,7 +1009,7 @@ Tcl_BeepObjCmd(
     ClientData dummy,			/* Not used. */
     Tcl_Interp *interp,			/* Current interpreter. */
     int objc,				/* Number of arguments. */
-    Tcl_Obj *CONST objv[])		/* Argument values. */
+    Tcl_Obj *const objv[])		/* Argument values. */
 {
     Tcl_Obj *resultPtr, *objPtr;
     Handle sound;

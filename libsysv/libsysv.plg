@@ -1,0 +1,53 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: libsysv - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1DB.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /GX /ZI /Od /I "../h" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"Debug/libsysv.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\code\brlcad6.0\libsysv\getopt.c"
+"C:\code\brlcad6.0\libsysv\linebuf.c"
+"C:\code\brlcad6.0\libsysv\redata.c"
+"C:\code\brlcad6.0\libsysv\regcomp.c"
+"C:\code\brlcad6.0\libsysv\regerror.c"
+"C:\code\brlcad6.0\libsysv\regex.c"
+"C:\code\brlcad6.0\libsysv\regexec.c"
+"C:\code\brlcad6.0\libsysv\regfree.c"
+"C:\code\brlcad6.0\libsysv\vers.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1DB.tmp" 
+Creating command line "link.exe -lib /nologo /out:"Debug\libsysv_d.lib"  .\Debug\getopt.obj .\Debug\linebuf.obj .\Debug\redata.obj .\Debug\regcomp.obj .\Debug\regerror.obj .\Debug\regex.obj .\Debug\regexec.obj .\Debug\regfree.obj .\Debug\vers.obj "
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1DC.bat" with contents
+[
+@echo off
+copy .\Debug\libsysv_d.lib "..\lib"
+]
+Creating command line "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP1DC.bat"
+Compiling...
+getopt.c
+linebuf.c
+redata.c
+regcomp.c
+regerror.c
+regex.c
+regexec.c
+regfree.c
+c:\code\brlcad6.0\libsysv\engine.c(684) : warning C4715: 'sbackref' : not all control paths return a value
+c:\code\brlcad6.0\libsysv\engine.c(684) : warning C4715: 'lbackref' : not all control paths return a value
+vers.c
+Creating library...
+<h3>Output Window</h3>
+Performing Custom Build Step on .\Debug\libsysv_d.lib
+        1 file(s) copied.
+
+
+
+<h3>Results</h3>
+libsysv_d.lib - 0 error(s), 2 warning(s)
+</pre>
+</body>
+</html>

@@ -154,7 +154,7 @@ Tk_ImageObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument strings. */
+    Tcl_Obj *const objv[];	/* Argument strings. */
 {
     static char *imageOptions[] = {
 	"create", "delete", "height", "names", "type", "types", "width",

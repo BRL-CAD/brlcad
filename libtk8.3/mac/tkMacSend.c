@@ -39,7 +39,7 @@
 #include "tkInt.h"
 
 EXTERN int		Tk_SendObjCmd _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+			    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 
      /* 
       * The following structure is used to keep track of the
@@ -359,7 +359,7 @@ Tk_SendObjCmd(
     ClientData clientData,	/* Used only for deletion */
     Tcl_Interp *interp,		/* The interp we are sending from */
     int objc,			/* Number of arguments */
-    Tcl_Obj *CONST objv[])	/* The arguments */
+    Tcl_Obj *const objv[])	/* The arguments */
 {
     static char *sendOptions[] = {"-async", "-displayof", "-", (char *) NULL};
     char *stringRep, *destName;

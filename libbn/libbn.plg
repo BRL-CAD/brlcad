@@ -1,0 +1,120 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: libbn - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP24F.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /GX /ZI /Od /I "../h" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"Debug/libbn.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\code\brlcad6.0\libbn\anim.c"
+"C:\code\brlcad6.0\libbn\asize.c"
+"C:\code\brlcad6.0\libbn\axis.c"
+"C:\code\brlcad6.0\libbn\bn_tcl.c"
+"C:\code\brlcad6.0\libbn\complex.c"
+"C:\code\brlcad6.0\libbn\const.c"
+"C:\code\brlcad6.0\libbn\font.c"
+"C:\code\brlcad6.0\libbn\fortran.c"
+"C:\code\brlcad6.0\libbn\list.c"
+"C:\code\brlcad6.0\libbn\marker.c"
+"C:\code\brlcad6.0\libbn\mat.c"
+"C:\code\brlcad6.0\libbn\msr.c"
+"C:\code\brlcad6.0\libbn\noise.c"
+"C:\code\brlcad6.0\libbn\number.c"
+"C:\code\brlcad6.0\libbn\plane.c"
+"C:\code\brlcad6.0\libbn\plot3.c"
+"C:\code\brlcad6.0\libbn\poly.c"
+"C:\code\brlcad6.0\libbn\qmath.c"
+"C:\code\brlcad6.0\libbn\rand.c"
+"C:\code\brlcad6.0\libbn\scale.c"
+"C:\code\brlcad6.0\libbn\sphmap.c"
+"C:\code\brlcad6.0\libbn\symbol.c"
+"C:\code\brlcad6.0\libbn\tabdata.c"
+"C:\code\brlcad6.0\libbn\tplot.c"
+"C:\code\brlcad6.0\libbn\vectfont.c"
+"C:\code\brlcad6.0\libbn\vector.c"
+"C:\code\brlcad6.0\libbn\wavelet.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP24F.tmp" 
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP250.tmp" with contents
+[
+/nologo /out:"Debug\libbn_d.lib" 
+.\Debug\anim.obj
+.\Debug\asize.obj
+.\Debug\axis.obj
+.\Debug\bn_tcl.obj
+.\Debug\complex.obj
+.\Debug\const.obj
+.\Debug\font.obj
+.\Debug\fortran.obj
+.\Debug\list.obj
+.\Debug\marker.obj
+.\Debug\mat.obj
+.\Debug\msr.obj
+.\Debug\noise.obj
+.\Debug\number.obj
+.\Debug\plane.obj
+.\Debug\plot3.obj
+.\Debug\poly.obj
+.\Debug\qmath.obj
+.\Debug\rand.obj
+.\Debug\scale.obj
+.\Debug\sphmap.obj
+.\Debug\symbol.obj
+.\Debug\tabdata.obj
+.\Debug\tplot.obj
+.\Debug\vectfont.obj
+.\Debug\vector.obj
+.\Debug\vers.obj
+.\Debug\wavelet.obj
+]
+Creating command line "link.exe -lib @C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP250.tmp"
+Creating temporary file "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP251.bat" with contents
+[
+@echo off
+copy .\Debug\libbn_d.lib "..\lib"
+]
+Creating command line "C:\DOCUME~1\chrisp\LOCALS~1\Temp\RSP251.bat"
+Compiling...
+anim.c
+asize.c
+axis.c
+bn_tcl.c
+complex.c
+C:\code\brlcad6.0\libbn\bn_tcl.c(782) : warning C4700: local variable 'scale' used without having been initialized
+const.c
+font.c
+fortran.c
+list.c
+marker.c
+mat.c
+msr.c
+noise.c
+number.c
+plane.c
+plot3.c
+poly.c
+qmath.c
+rand.c
+scale.c
+sphmap.c
+symbol.c
+tabdata.c
+tplot.c
+vectfont.c
+vector.c
+wavelet.c
+Creating library...
+<h3>Output Window</h3>
+Performing Custom Build Step on .\Debug\libbn_d.lib
+        1 file(s) copied.
+
+
+
+<h3>Results</h3>
+libbn_d.lib - 0 error(s), 1 warning(s)
+</pre>
+</body>
+</html>

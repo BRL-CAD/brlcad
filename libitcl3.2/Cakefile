@@ -8,34 +8,39 @@
 #include "../Cakefile.defs"
 
 #if !defined(BUILD_LIBRARY)
-#define	BUILD_LIBRARY	ar r
-#define ITCL_OPTS	--srcdir=[[pwd]]/../SRCDIR --quiet \
-			 --cache-file cache.MTYPE  \
-			 --exec-prefix=BASEDIR --prefix=BASEDIR \
-			 --with-tcl=[[pwd]]/[[echo LIBTCL_DIR]] \
-			 --with-tk=[[pwd]]/[[echo LIBTK_DIR]]
-#define PRODUCTS	libitcl3.2.a& libitk3.2.a&
-#define	AFTER_MAKE	rm -f libitcl.a libitk.a ; ln -s libitcl3.2.a libitcl.a ; ln -s libitk3.2.a libitk.a
+#	define	BUILD_LIBRARY	ar r
+#	define ITCL_OPTS	--srcdir=[[pwd]]/../SRCDIR --disable-shared --quiet \
+			--cache-file cache.MTYPE  \
+			--exec-prefix=BASEDIR --prefix=BASEDIR \
+			--with-tcl=[[pwd]]/LIBTCL_DIR \
+			--with-tk=[[pwd]]/LIBTK_DIR
+#	define PRODUCTS	libitcl3.2.a& libitk3.2.a&
+#	define	AFTER_MAKE	rm -f libitcl.a libitk.a ; cp [[pwd]]/itcl/libitcl3.2.a . ; cp [[pwd]]/itk/libitk3.2.a . ; ln -s libitcl3.2.a libitcl.a ; ln -s libitk3.2.a libitk.a
+
 #else
 /* Shared library case */
-#define ITCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/ --enable-shared --quiet \
-			 --cache-file cache.MTYPE \
-			 --exec-prefix=BASEDIR --prefix=BASEDIR \
-			 --with-tcl=[[pwd]]/[[echo LIBTCL_DIR]] \
-			 --with-tk=[[pwd]]/[[echo LIBTK_DIR]]
-#define PRODUCTS	libitcl3.2.so& libitk3.2.so&
-#define SHARED_PRODUCT	libitcl3.2.so''[[LIBVERS]] libitk3.2.so''[[LIBVERS]]
-#define	AFTER_MAKE	/* mv -f libitcl3.2.so libitcl3.2.so''[[LIBVERS]] ; \
-			mv -f libitk3.2.so libitk3.2.so''[[LIBVERS]] ; \
-			sharedliblink.sh libitcl3.2.so''[[LIBVERS]] ; \
-			sharedliblink.sh libitk3.2.so''[[LIBVERS]] ; */ \
-			rm -f libitcl.so libitk.so ; \
-			ln -s libitk3.2.so libitk.so ; \
-			ln -s libitcl3.2.so libitcl.so
+#	define ITCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/ --enable-shared --quiet \
+			--cache-file cache.MTYPE \
+			--exec-prefix=BASEDIR --prefix=BASEDIR \
+			--with-tcl=[[pwd]]/LIBTCL_DIR \
+			--with-tk=[[pwd]]/LIBTK_DIR
+#	define PRODUCTS	libitcl3.2.so libitk3.2.so
+#	define SHARED_PRODUCT	libitcl3.2.[[echo ARCH_SUF]]''[[LIBVERS]] libitk3.2.[[echo ARCH_SUF]]''[[LIBVERS]]
+#	define	AFTER_MAKE	/* mv -f libitcl3.2.ARCH_SUF libitcl3.2.ARCH_SUF''[[LIBVERS]] ; \
+			mv -f libitk3.2.ARCH_SUF libitk3.2.ARCH_SUF''[[LIBVERS]] ; \
+			sharedliblink.sh libitcl3.2.ARCH_SUF''[[LIBVERS]] ; \
+			sharedliblink.sh libitk3.2.ARCH_SUF''[[LIBVERS]] ; */ \
+			rm -f libitcl.ARCH_SUF libitk.ARCH_SUF ; \
+			cp [[pwd]]/itcl/libitcl3.2.[[echo ARCH_SUF]] [[pwd]] ; \
+			cp [[pwd]]/itk/libitk3.2.[[echo ARCH_SUF]] [[pwd]] ; \
+			ln -s libitcl3.2.[[echo ARCH_SUF]] libitcl.ARCH_SUF ; \
+			ln -s libitk3.2.[[echo ARCH_SUF]] libitk.ARCH_SUF
 #endif
 
 /* Rule to see if cake is running with -s flag */
 #define MINUS_S	[[echo CAKEFLAGS | tr '\040' '\012' | sed -n -e /-s/p ]]
+
+all&: PRODUCTS
 
 PRODUCTS: Makefile.MTYPE cache.MTYPE
 	echo cakeflags=CAKEFLAGS
@@ -51,8 +56,9 @@ Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYP
 		\R\A\N\L\I\B=\"RANLIB\"; \
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
 		\S\H\L\I\B\_\L\D=\"BUILD_LIBRARY\"; \
+		\C\C=\"CC\"; \
 		 export INSTALL \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S; \
-		 export \S\H\L\I\B\_\L\D \A\F\T\E\R\_\M\A\K\E; \
+		 export \S\H\L\I\B\_\L\D \C\C \A\F\T\E\R\_\M\A\K\E; \
 		 echo ../SRCDIR/configure ITCL_OPTS; \
 		 ../SRCDIR/configure ITCL_OPTS; \
 		 echo ../SRCDIR/fix_makefile.sh '>' Makefile.MTYPE; \
@@ -66,11 +72,11 @@ noprod&:
 
 #ifdef NFS
 clobber&:
-	rm -f *.MTYPE *.o config.log config.status Makefile lib* *.a *.so
+	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.so *.ARCH_SUF
 	rm -rf itcl itk iwidgets*
 #else
 clobber&:
-	rm -f *.MTYPE *.o config.log config.status Makefile lib* *.a *.so
+	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.so *.ARCH_SUF
 #endif
 
 install&: Makefile.MTYPE
