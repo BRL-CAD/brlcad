@@ -462,7 +462,7 @@ set -S2 "/bin/sh"
 #	else
 /*		This version for debugging with DBX */
 #		define	OPTIMIZER	-g
-#		define	SHARED		/**/
+#		define	SHARED	_s
 #	endif
 #	define	GFLAG		-G 9
 /*	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
