@@ -52,8 +52,8 @@
 #	define	EXTRA_OBJ	PLOT_OBJ NURB_OBJ
 #endif
 
-#define EXTRA_SETUP	../newvers.sh rt_version "The Ray-Tracing Library"; CC CFLAGS -c vers.c
-#define EXTRA_OBJ_NO_DEPENDENCY	vers.o
+#define VERSION_VARIABLE	rt_version
+#define LIBRARY_TITLE		"The BRL-CAD Ray-Tracing Library"
 
 #include "../Cakefile.lib"
 
