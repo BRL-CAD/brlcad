@@ -46,12 +46,12 @@ SUBDIRS = \
 	${REGEX} \
 	${TKGLX} \
 	awf \
-	iwidgets \
 	${JOVEDIR} \
-	libitcl \
+	libutahrle \
 	libtcl \
 	libtk \
-	libutahrle
+	incrTcl \
+	iwidgets
 
 endif
 # end ONLY_RTS
