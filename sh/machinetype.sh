@@ -194,12 +194,14 @@ cat << EOF > ${IN_FILE}
 
 	if [ -x /usr/bin/uname ] ; then
 		if expr \`/usr/bin/uname -r\` : '4\.*' > /dev/null; then
+			/* Solarix 1.X (BSD based) */
 			UNIXTYPE=BSD;
 		else
+			/* Solaris 2.X (SYSV based) */
 			UNIXTYPE=SYSV;
 		fi
 	else
-		/* No uname.  Must be 1.X */
+		/* No uname.  Must be Solarix 1.X */
 		UNIXTYPE=BSD;
 	fi
 #endif
