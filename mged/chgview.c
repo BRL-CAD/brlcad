@@ -1161,3 +1161,68 @@ char	**argv;
 	new_mats();
 	return CMD_OK;
 }
+
+/*
+ *			F _ Q V R O T
+ *
+ *  Set current view direction from a quaternion.
+ */
+int
+f_qvrot( argc, argv )
+int	argc;
+char	**argv;
+{
+    double	dx, dy, dz;
+    double	az;
+    double	el;
+    double	three_halves_pi = 270.0 * radtodeg;
+    double	theta;
+    int		i, j;
+    mat_t	mat1, mat2, mat3;
+
+    dx = atof(argv[1]);
+    dy = atof(argv[2]);
+    dz = atof(argv[3]);
+
+    if (NEAR_ZERO(dy, 0.00001) && NEAR_ZERO(dx, 0.00001))
+    {
+	if (NEAR_ZERO(dz, 0.00001))
+	{
+	    printf("f_qvrot: (dx, dy, dz) may not be the zero vector\n");
+	    return CMD_BAD;
+	}
+	az = 0.0;
+    }
+    else
+	az = atan2(-dy, -dx);
+    
+    el = atan2(-dz, sqrt(dx * dx + dy * dy));
+
+    setview( 270.0 + el * radtodeg, 0.0, 270.0 - az * radtodeg );
+    theta = atof(argv[4]) * degtorad;
+    usejoy(0.0, 0.0, theta);
+
+    return CMD_OK;
+
+
+
+
+
+
+    buildHrot(mat1, three_halves_pi + el, 0.0, three_halves_pi - az);
+
+    theta = atof(argv[4]) * degtorad;
+    buildHrot(mat2, 0.0, theta, 0.0);
+    mat_mul(mat3, mat2, mat1);
+    for (i = 0; i < 3; ++i)
+	for (j = 0; j < 3; ++j)
+	    Viewrot[4 * i + j] = mat3[4 * i + j];
+    new_mats();
+    return CMD_OK;
+
+    /*
+     * setview( 270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]) );
+     *    buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
+     *    new_mats();
+     */
+}
