@@ -123,6 +123,169 @@ struct faceuse *fu;
 	}
 }
 
+/*	M E G A _ C H E C K _ E B R E A K _ R E S U L T
+ *
+ *	Given all the trouble that nmg_ebreak() and nmg_esplit() were
+ *	to develop, this routine exists to assist isect_edge_face() in
+ *	checking the results of a call to these routines.
+ */
+static struct edgeuse *
+mega_check_ebreak_result(eu)
+struct edgeuse *eu;
+{
+	struct edgeuse *euforw;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_EDGEUSE(eu->eumate_p);
+
+	/* since we just split eu, the "next" edgeuse
+	 * from eu CAN'T (in a working [as opposed to broken]
+	 * system) be the list head.
+	 */
+	euforw = RT_LIST_PNEXT(edgeuse, eu);
+
+	NMG_CK_EDGEUSE(euforw);
+	NMG_CK_EDGEUSE(euforw->eumate_p);
+
+	NMG_CK_VERTEXUSE(eu->vu_p);
+	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
+	NMG_CK_VERTEXUSE(euforw->vu_p);
+	NMG_CK_VERTEXUSE(euforw->eumate_p->vu_p);
+
+	NMG_CK_VERTEX(eu->vu_p->v_p);
+	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
+	NMG_CK_VERTEX(euforw->vu_p->v_p);
+	NMG_CK_VERTEX(euforw->eumate_p->vu_p->v_p);
+
+	nmg_ck_lueu(eu->up.lu_p, "isect_edge_face" );
+
+	if (euforw->vu_p->v_p != eu->eumate_p->vu_p->v_p)
+		rt_bomb("I was supposed to share verticies!\n");
+
+	/* Make sure there is no geometry at the place we're about
+	 * to stick the new geometry
+	 */
+	if (eu->eumate_p->vu_p->v_p->vg_p != (struct vertex_g *)NULL) {
+		VPRINT("where'd this geometry come from?",
+			eu->eumate_p->vu_p->v_p->vg_p->coord);
+		rt_bomb("I didn't order this\n");
+	}
+
+	return(euforw);
+}
+
+/*	B R E A K _ E D G E _ A T _ P L A N E
+ *
+ *	Having decided that an edge(use) crosses a plane of intersection,
+ *	stick a vertex at the point of intersection along the edge.
+ */
+static void
+break_edge_at_plane(hit_pt, fu, bs, eu, v1, v1mate)
+point_t	hit_pt;
+struct faceuse *fu;
+struct nmg_inter_struct *bs;
+struct edgeuse *eu;
+struct vertex	*v1;
+struct vertex	*v1mate;
+{
+	struct vertexuse *vu_other;
+	struct loopuse	*plu;
+	struct edgeuse *euforw;
+
+	/* Intersection is between first and second vertex points.
+	 * Insert new vertex at intersection point.
+	 */
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		rt_log("Splitting %g, %g, %g <-> %g, %g, %g\n",
+			V3ARGS(v1->vg_p->coord), V3ARGS(v1mate->vg_p->coord) );
+		VPRINT("\tPoint of intersection", hit_pt);
+	}
+
+	/* if we can't find the appropriate vertex in the
+	 * other face, we'll build a new vertex.  Otherwise
+	 * we re-use an old one.
+	 */
+	vu_other = nmg_find_vu_in_face(hit_pt, fu, &(bs->tol));
+	if (vu_other) {
+		/* the other face has a convenient vertex for us */
+
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("re-using vertex from other face\n");
+
+		(void)nmg_ebreak(vu_other->v_p, eu->e_p);
+		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
+	} else {
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("Making new vertex\n");
+
+		(void)nmg_ebreak((struct vertex *)NULL, eu->e_p);
+
+		euforw = mega_check_ebreak_result(eu);
+
+		if (euforw->vu_p->v_p != eu->eumate_p->vu_p->v_p)
+			rt_bomb("I thought you said I was sharing verticies!\n");
+
+		nmg_vertex_gv(eu->eumate_p->vu_p->v_p, hit_pt);
+
+		NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
+		NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
+		NMG_CK_VERTEX_G(euforw->vu_p->v_p->vg_p);
+		NMG_CK_VERTEX_G(euforw->eumate_p->vu_p->v_p->vg_p);
+
+		if (euforw->vu_p->v_p != eu->eumate_p->vu_p->v_p)
+			rt_bomb("I thought I was sharing verticies!\n");
+
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			register pointp_t p1 = eu->vu_p->v_p->vg_p->coord;
+			register pointp_t p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
+
+			rt_log("Just split %g, %g, %g -> %g, %g, %g\n",
+				V3ARGS(p1), V3ARGS(p2) );
+			p1 = euforw->vu_p->v_p->vg_p->coord;
+			p2 = euforw->eumate_p->vu_p->v_p->vg_p->coord;
+			rt_log("\t\t\t%g, %g, %g -> %g, %g, %g\n",
+				V3ARGS(p1), V3ARGS(p2) );
+		}
+
+		/* stick this vertex in the other shell
+		 * and make sure it is in the other shell's
+		 * list of vertices on the instersect line
+		 *
+		 * XXX Is this really a good idea?
+		 */
+		plu = nmg_mlv(&fu->l.magic, eu->eumate_p->vu_p->v_p, OT_UNSPEC);
+		vu_other = RT_LIST_FIRST( vertexuse, &plu->down_hd );
+		NMG_CK_VERTEXUSE(vu_other);
+		nmg_loop_g(plu->l_p);
+
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		    	VPRINT("Making vertexloop",
+				vu_other->v_p->vg_p->coord);
+			if (RT_LIST_FIRST_MAGIC(&plu->down_hd) !=
+				NMG_VERTEXUSE_MAGIC)
+				rt_bomb("bad plu\n");
+			if (RT_LIST_FIRST_MAGIC(&plu->lumate_p->down_hd) !=
+				NMG_VERTEXUSE_MAGIC)
+				rt_bomb("bad plumate\n");
+		}
+		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
+	}
+
+	euforw = RT_LIST_PNEXT_CIRC(edgeuse, eu);
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		register pointp_t	p1, p2;
+		p1 = eu->vu_p->v_p->vg_p->coord;
+		p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
+		rt_log("\tNow %g, %g, %g <-> %g, %g, %g\n",
+			V3ARGS(p1), V3ARGS(p2) );
+		p1 = euforw->vu_p->v_p->vg_p->coord;
+		p2 = euforw->eumate_p->vu_p->v_p->vg_p->coord;
+		rt_log("\tand %g, %g, %g <-> %g, %g, %g\n\n",
+			V3ARGS(p1), V3ARGS(p2) );
+	}
+	(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &euforw->vu_p->l.magic);
+}
+
 /*	I S E C T _ E D G E _ F A C E
  *
  *	Intersect an edge with a face
@@ -145,8 +308,9 @@ struct faceuse *fu;
 	fastf_t		dist_to_plane;	/* distance to hit point, in mm */
 	int		status;
 	struct loopuse	*plu;
-	fastf_t		dist1, dist2;
+	fastf_t		dist2;
 	vect_t		start_pt;
+	struct edgeuse	*euforw;
 	struct edgeuse	*eunext;
 	struct edgeuse	*eulast;
 
@@ -194,9 +358,8 @@ struct faceuse *fu;
 	 */
 	if (vu_other=find_vertex_on_face(v1, fu)) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			register pointp_t	p1, p2;
-			p1 = v1->vg_p->coord;
-			p2 = v1mate->vg_p->coord;
+			register pointp_t p1 = v1->vg_p->coord;
+			register pointp_t p2 = v1mate->vg_p->coord;
 			rt_log("Edgeuse %g, %g, %g -> %g, %g, %g\n",
 				V3ARGS(p1), V3ARGS(p2) );
 			rt_log("\tvertex topologically on isect plane.\n\tAdding vu1=x%x (v=x%x), vu_other=x%x (v=x%x)\n",
@@ -217,59 +380,7 @@ struct faceuse *fu;
 	VSUB2(edge_vect, v1mate->vg_p->coord, v1->vg_p->coord);
 	edge_len = MAGNITUDE(edge_vect);
 
-
-
-#define USE_EDGE_GEOMETRY	0
-#if USE_EDGE_GEOMETRY
-	if( eu->e_p->eg_p )
-#else
-	if(0)
-#endif
-	{
-		/* Use ray in edge geometry, for repeatability */
-		register struct edge_g	*eg = eu->e_p->eg_p;
-		fastf_t		dot;
-		NMG_CK_EDGE_G(eg);
-		if( MAGSQ( eg->e_dir ) < SQRT_SMALL_FASTF )  {
-			rt_log("zero length edge_g\n");
-			nmg_pr_eg(eg, "");
-			goto calc;
-		}
-		if( (dot=VDOT( edge_vect, eg->e_dir )) < 0 )  {
-			VREVERSE( edge_vect, eg->e_dir );
-			if( dot > -0.95 )  {
-				rt_log("edge/ray dot=%g!\n", dot);
-				goto calc;
-			}
-		} else {
-			VMOVE( edge_vect, eg->e_dir );
-			if( dot < 0.95 )  {
-				rt_log("edge/ray dot=%g!\n", dot);
-				goto calc;
-			}
-		}
-		VMOVE( start_pt, eg->e_pt );
-
-#define VSUBDOT(_pt2, _pt, _dir)	( \
-	((_pt2)[X] - (_pt)[X]) * (_dir)[X] + \
-	((_pt2)[Y] - (_pt)[Y]) * (_dir)[Y] + \
-	((_pt2)[Z] - (_pt)[Z]) * (_dir)[Z] )
-
-		dist1 = VSUBDOT( v1->vg_p->coord, start_pt, edge_vect ) / edge_len;
-		dist2 = VSUBDOT( v1mate->vg_p->coord, start_pt, edge_vect ) / edge_len;
-
-rt_log("A dist1=%g, dist2=%g\n", dist1, dist2);
-
-	} else {
-calc:
-		VMOVE( start_pt, v1->vg_p->coord );
-		dist1 = 0;
-		dist2 = edge_len;
-
-#if USE_EDGE_GEOMETRY
-rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
-#endif
-	}
+	VMOVE( start_pt, v1->vg_p->coord );
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 		rt_log("Testing (%g, %g, %g) -> (%g, %g, %g) dir=(%g, %g, %g)\n",
@@ -281,11 +392,11 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 	status = rt_isect_ray_plane(&dist, start_pt, edge_vect, fu->f_p->fg_p->N);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		if (status >= 0)
-			rt_log("\tHit. Status of rt_isect_ray_plane: %d dist: %g\n",
+	    if (status >= 0)
+		rt_log("\tHit. Status of rt_isect_ray_plane: %d dist: %g\n",
 				status, dist);
-		else
-			rt_log("\tMiss. Boring status of rt_isect_ray_plane: %d dist: %g\n",
+	    else
+		rt_log("\tMiss. Boring status of rt_isect_ray_plane: %d dist: %g\n",
 				status, dist);
 	}
 	if (status < 0)  {
@@ -295,10 +406,18 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 		dist = VDOT( start_pt, fu->f_p->fg_p->N ) - fu->f_p->fg_p->N[3];
 		if( !NEAR_ZERO( dist, bs->tol.dist ) )
 			return;		/* No geometric intersection */
+
 		/* Start point lies on plane of other face */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tStart point lies on plane of other face\n");
-		dist = VSUBDOT( v1->vg_p->coord, start_pt, edge_vect ) / edge_len;
+
+#define VSUBDOT(_pt2, _pt, _dir)	( \
+	((_pt2)[X] - (_pt)[X]) * (_dir)[X] + \
+	((_pt2)[Y] - (_pt)[Y]) * (_dir)[Y] + \
+	((_pt2)[Z] - (_pt)[Z]) * (_dir)[Z] )
+
+		dist = VSUBDOT( v1->vg_p->coord, start_pt, edge_vect )
+				/ edge_len;
 	}
 
 	/* The ray defined by the edgeuse intersects the plane 
@@ -318,23 +437,10 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 		rt_log("\tedge_len=%g, dist=%g, dist_to_plane=%g\n",
 			edge_len, dist, dist_to_plane);
 
-	if ( dist_to_plane < dist1-(bs->tol.dist) )  {
+	if ( dist_to_plane < -bs->tol.dist )  {
 		/* Hit is behind first point */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tplane behind first point\n");
-		return;
-	}
-
-
-	/* If the hit point is outside the bounding box of the other face,
-	 * this edge can't really be intersecting the face.
-	 */
-	if ( !(NMG_EXTENT_OVERLAP(hit_pt, hit_pt,
-	   fu->f_p->fg_p->min_pt, fu->f_p->fg_p->max_pt)) ) {
-		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			VPRINT("\thit_pt is outside of face bounding box\n",
-				hit_pt);
-		}
 		return;
 	}
 
@@ -345,7 +451,7 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 	 * and give up on this edge, knowing that we'll pick up the
 	 * intersection of the next edgeuse with the face later.
 	 */
-	if ( dist_to_plane < dist1+(bs->tol.dist) )  {
+	if ( dist_to_plane < bs->tol.dist )  {
 		/* First point is on plane of face, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge starts at plane intersect\n");
@@ -375,137 +481,16 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 		}
 		return;
 	}
-	if ( dist_to_plane < dist2 - bs->tol.dist) {
-		struct edgeuse	*euforw;
 
+	if ( dist_to_plane < edge_len - bs->tol.dist) {
 		/* Intersection is between first and second vertex points.
 		 * Insert new vertex at intersection point.
 		 */
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-			rt_log("Splitting %g, %g, %g <-> %g, %g, %g\n",
-				V3ARGS(v1->vg_p->coord), V3ARGS(v1mate->vg_p->coord) );
-			VPRINT("\tPoint of intersection", hit_pt);
-		}
-
-		/* if we can't find the appropriate vertex in the
-		 * other face, we'll build a new vertex.  Otherwise
-		 * we re-use an old one.
-		 */
-		vu_other = nmg_find_vu_in_face(hit_pt, fu, &(bs->tol));
-		if (vu_other) {
-			/* the other face has a convenient vertex for us */
-
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("re-using vertex from other face\n");
-
-			(void)nmg_ebreak(vu_other->v_p, eu->e_p);
-			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
-		} else {
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("Making new vertex\n");
-
-			(void)nmg_ebreak((struct vertex *)NULL, eu->e_p);
-
-			/* given the trouble that nmg_ebreak (nmg_esplit)
-			 * went to create, we're going to check this to the
-			 * limit.
-			 */
-			NMG_CK_EDGEUSE(eu);
-			NMG_CK_EDGEUSE(eu->eumate_p);
-
-			/* since we just split eu, the "next" edgeuse
-			 * from eu CAN'T (in a working [as opposed to broken]
-			 * system) be the list head.
-			 */
-			euforw = RT_LIST_PNEXT(edgeuse, eu);
-
-			NMG_CK_EDGEUSE(euforw);
-			NMG_CK_EDGEUSE(euforw->eumate_p);
-
-			NMG_CK_VERTEXUSE(eu->vu_p);
-			NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
-			NMG_CK_VERTEXUSE(euforw->vu_p);
-			NMG_CK_VERTEXUSE(euforw->eumate_p->vu_p);
-
-			NMG_CK_VERTEX(eu->vu_p->v_p);
-			NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
-			NMG_CK_VERTEX(euforw->vu_p->v_p);
-			NMG_CK_VERTEX(euforw->eumate_p->vu_p->v_p);
-
-			nmg_ck_lueu(eu->up.lu_p, "isect_edge_face" );
-
-			/* check to make sure we know the right place to
-			 * stick the geometry
-			 */
-			if (eu->eumate_p->vu_p->v_p->vg_p != 
-			    (struct vertex_g *)NULL) {
-				VPRINT("where'd this geometry come from?",
-					eu->eumate_p->vu_p->v_p->vg_p->coord);
-			}
-			nmg_vertex_gv(eu->eumate_p->vu_p->v_p, hit_pt);
-
-			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-			NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
-			NMG_CK_VERTEX_G(euforw->vu_p->v_p->vg_p);
-			NMG_CK_VERTEX_G(euforw->eumate_p->vu_p->v_p->vg_p);
-						
-			if (euforw->vu_p->v_p != eu->eumate_p->vu_p->v_p)
-				rt_bomb("I was supposed to share verticies!\n");
-
-			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-				register pointp_t	p1, p2;
-				p1 = eu->vu_p->v_p->vg_p->coord;
-				p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
-				rt_log("Just split %g, %g, %g -> %g, %g, %g\n",
-					V3ARGS(p1), V3ARGS(p2) );
-				p1 = euforw->vu_p->v_p->vg_p->coord;
-				p2 = euforw->eumate_p->vu_p->v_p->vg_p->coord;
-				rt_log("\t\t\t%g, %g, %g -> %g, %g, %g\n",
-					V3ARGS(p1), V3ARGS(p2) );
-			}
-			/* stick this vertex in the other shell
-			 * and make sure it is in the other shell's
-			 * list of vertices on the instersect line
-			 *
-			 * XXX Is this really a good idea?
-			 */
-			plu = nmg_mlv(&fu->l.magic,
-				eu->eumate_p->vu_p->v_p, OT_SAME);
-			vu_other = RT_LIST_FIRST( vertexuse, &plu->down_hd );
-			NMG_CK_VERTEXUSE(vu_other);
-			nmg_loop_g(plu->l_p);
-
-			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			    	VPRINT("Making vertexloop",
-					vu_other->v_p->vg_p->coord);
-				if (RT_LIST_FIRST_MAGIC(&plu->down_hd) !=
-					NMG_VERTEXUSE_MAGIC)
-					rt_bomb("bad plu\n");
-				if (RT_LIST_FIRST_MAGIC(&plu->lumate_p->down_hd) !=
-					NMG_VERTEXUSE_MAGIC)
-					rt_bomb("bad plumate\n");
-
-			}
-			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
-		}
-
-		euforw = RT_LIST_PNEXT_CIRC(edgeuse, eu);
-		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			register pointp_t	p1, p2;
-			p1 = eu->vu_p->v_p->vg_p->coord;
-			p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
-			rt_log("\tNow %g, %g, %g <-> %g, %g, %g\n",
-				V3ARGS(p1), V3ARGS(p2) );
-			p1 = euforw->vu_p->v_p->vg_p->coord;
-			p2 = euforw->eumate_p->vu_p->v_p->vg_p->coord;
-			rt_log("\tand %g, %g, %g <-> %g, %g, %g\n\n",
-				V3ARGS(p1), V3ARGS(p2) );
-		}
-		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &euforw->vu_p->l.magic);
+		break_edge_at_plane(hit_pt, fu, bs, eu, v1, v1mate);
 		return;
 	}
-	if ( dist_to_plane < dist2 + bs->tol.dist) {
-		struct edgeuse	*eunext;
+
+	if ( dist_to_plane < edge_len + bs->tol.dist) {
 		/* Second point is on plane of face, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge ends at plane intersect\n");
@@ -570,7 +555,6 @@ struct faceuse *fu;
 
 	NMG_CK_FACEUSE(fu);
 
-	/* loop overlaps intersection face? */
 	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
 		/* this is most likely a loop inserted when we split
@@ -640,6 +624,14 @@ struct faceuse	*fu2;
 			NMG_CK_LOOPUSE(fu2lu);
 			NMG_CK_LOOP(fu2lu->l_p);
 			NMG_CK_LOOP_G(fu2lu->l_p->lg_p);
+
+			/* If this loop is just some drek deposited as part of
+			 * the intersection operation, it doesn't really
+			 * count
+			 */
+			if (fu2lu->orientation != OT_SAME &&
+			    fu2lu->orientation != OT_OPPOSITE)
+			    	continue;
 
 			if (NMG_EXTENT_OVERLAP(
 			   fu2lu->l_p->lg_p->min_pt, fu2lu->l_p->lg_p->max_pt,
@@ -790,6 +782,10 @@ CONST struct rt_tol	*tol;
     	bs.l1 = &vert_list2;
 	nmg_isect_2face_loops(&bs, fu2, fu1);
 
+	nmg_purge_unwanted_intersection_points(&vert_list1, fu2);
+	nmg_purge_unwanted_intersection_points(&vert_list2, fu1);
+
+
     	if (rt_g.NMG_debug & DEBUG_COMBINE) {
 	    	rt_log("nmg_isect_2faces(fu1=x%x, fu2=x%x) vert_lists B:\n", fu1, fu2);
     		nmg_pr_vert_list( "vert_list1", &vert_list1 );
@@ -803,8 +799,7 @@ CONST struct rt_tol	*tol;
     		return;
     	}
 
-	nmg_face_combine(&vert_list1, fu1, fu2, bs.pt, bs.dir);
-	nmg_face_combine(&vert_list2, fu2, fu1, bs.pt, bs.dir);
+	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, bs.pt, bs.dir, tol);
 
 	/* When two faces are intersected
 	 * with each other, they should
