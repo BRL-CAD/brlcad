@@ -53,6 +53,7 @@ extern int 	numargs;
 static int	new_way = 0;	/* Set 1 for import/export handling */
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
+static void	eto_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
 static void	arb5_mv_face(), arb4_mv_face(), arb8_rot_face(), arb7_rot_face();
@@ -104,6 +105,8 @@ int	es_menu;		/* item selected from menu */
 #define MENU_ELL_SCALE_B	39
 #define MENU_ELL_SCALE_C	40
 #define MENU_ELL_SCALE_ABC	41
+#define MENU_ETO_R1		42
+#define MENU_ETO_R2		43
 
 /*
  *			M A T _ S C A L E _ A B O U T _ P T
@@ -265,6 +268,13 @@ struct menu_item  tor_menu[] = {
 	{ "TORUS MENU", (void (*)())NULL, 0 },
 	{ "scale radius 1", tor_ed, MENU_TOR_R1 },
 	{ "scale radius 2", tor_ed, MENU_TOR_R2 },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item  eto_menu[] = {
+	{ "ELL-TORUS MENU", (void (*)())NULL, 0 },
+	{ "scale r1 (r)", eto_ed, MENU_ETO_R1 },
+	{ "scale r2 (rd)", eto_ed, MENU_ETO_R2 },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -539,6 +549,14 @@ int arg;
 }
 
 static void
+eto_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	es_edflag = PSCALE;
+}
+
+static void
 ell_ed( arg )
 int arg;
 {
@@ -785,6 +803,7 @@ init_sedit()
 	case ID_ELL:
 	case ID_TGC:
 	case ID_TOR:
+	case ID_ETO:
 		rt_log("Experimental:  new_way=1\n");
 		new_way = 1;
 
@@ -934,6 +953,9 @@ sedit_menu()  {
 		break;
 	case ID_BSPLINE:
 		menu_array[MENU_L1] = spline_menu;
+		break;
+	case ID_ETO:
+		menu_array[MENU_L1] = eto_menu;
 		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
@@ -1866,6 +1888,48 @@ torcom:
 		}
 		break;
 
+	case MENU_ETO_R1:
+		/* scale radius 1 (r) of ETO */
+		/* new_way only */
+		{
+			struct rt_eto_internal	*eto = 
+				(struct rt_eto_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+			RT_ETO_CK_MAGIC(eto);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				newrad = es_para[0];
+			} else {
+				newrad = eto->eto_r * es_scale;
+			}
+			if( newrad < SMALL )  newrad = 4*SMALL;
+			if( eto->eto_rd <= newrad )
+				eto->eto_r = newrad;
+		}
+		break;
+
+	case MENU_ETO_R2:
+		/* scale radius 2 (rd) of ETO */
+		/* new_way only */
+		{
+			struct rt_eto_internal	*eto = 
+				(struct rt_eto_internal *)es_int.idb_ptr;
+			fastf_t	newrad;
+			RT_ETO_CK_MAGIC(eto);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				newrad = es_para[0];
+			} else {
+				newrad = eto->eto_rd * es_scale;
+			}
+			if( newrad < SMALL )  newrad = 4*SMALL;
+			if( newrad <= eto->eto_r )
+				eto->eto_rd = newrad;
+		}
+		break;
+
 	case MENU_TGC_SCALE_A:
 		/* scale vector A */
 		if( new_way )  {
@@ -2246,6 +2310,7 @@ init_objedit()
 	case ID_ELL:
 	case ID_ARB8:
 	case ID_HALF:
+	case ID_ETO:
 		/* All folks with u_id == (DB_)ID_SOLID */
 		if( es_rec.s.s_cgtype < 0 )
 			es_rec.s.s_cgtype *= -1;
@@ -2777,6 +2842,39 @@ struct rt_db_internal	*ip;
 		VADD3( work, &es_rec.s.s_tor_V, &es_rec.s.s_tor_A, &es_rec.s.s_tor_H);
 		MAT4X3PNT(pos_view, xform, work);
 		POINT_LABEL( pos_view, 'H' );
+		}
+		break;
+
+	case ID_ETO:
+		/* new_way only */
+		{
+			struct rt_eto_internal	*eto = 
+				(struct rt_eto_internal *)es_int.idb_ptr;
+			fastf_t	r3, r4;
+			vect_t	adir;
+			RT_ETO_CK_MAGIC(eto);
+
+			mat_vec_ortho( adir, eto->eto_N );
+
+			MAT4X3PNT( pos_view, xform, eto->eto_V );
+			POINT_LABEL( pos_view, 'V' );
+
+#if 0
+			r3 = eto->r_a - eto->r_h;
+			VJOIN1( work, eto->v, r3, adir );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'I' );
+
+			r4 = eto->r_a + eto->r_h;
+			VJOIN1( work, eto->v, r4, adir );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'O' );
+
+			VJOIN1( work, eto->v, eto->r_a, adir );
+			VADD2( work, work, eto->h );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'H' );
+#endif
 		}
 		break;
 
