@@ -183,7 +183,7 @@ dunnopen()
 static int
 mread(fd, bufp, n)
 int fd;
-register char	*bufp;
+register unsigned char	*bufp;
 unsigned	n;
 {
 	register unsigned	count = 0;
@@ -228,7 +228,7 @@ goodstatus()
 		return(0);
 	}
 
-	mread(fd, status, 4);
+	(void)mread(fd, status, 4);
 	alarm(0);
 
 	if (status[0]&0x1)  printf("No vertical sync\n");
@@ -343,7 +343,7 @@ char *title;
 		exit(40);
 	}
 
-	mread(fd, values, 20);
+	(void)mread(fd, values, 20);
 
 	values[20] = '\0';
 	printf("dunncolor: %s = %s\n", title, values);
