@@ -36,6 +36,9 @@
 #include <time.h>
 #include "./font.h"
 
+#include "machine.h"
+#include "externs.h"
+
 /*
  * Program parameters defaults
  *
@@ -144,7 +147,7 @@ char	*argv[];
     int             i, j;
     float           theta;
     time_t	    now;
-    struct tm      *tm, *localtime();
+    struct tm      *tm;
     bool haveFaceColor;
     bool haveHandEdgeColor;
     bool haveTextBackColor;
