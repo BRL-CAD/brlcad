@@ -1,8 +1,8 @@
 /*
   TITLE: sphflake1.c 
-
+  
   AUTHOR: Jason Owens
-
+  
   DESCRIPTION: Program to create a sphere-flake utilizing libwdb
   
   */
@@ -58,15 +58,20 @@
 #define ENVIRON_MAT "envmap"
 #define ENVIRON_MATPARAM "cloud"
 
+#define MAX_INPUT_LENGTH 48
+
+extern char *optarg;
+extern int optind, opterr, getopt();
+
 struct depthMat { 
-  char name[20];
-  char params[50];
+  char name[MAX_INPUT_LENGTH];
+  char params[MAX_INPUT_LENGTH];
   unsigned char color[3];
 };
 typedef struct depthMat depthMat_t;
 
 struct params {
-  char fileName[20];
+  char fileName[MAX_INPUT_LENGTH];
   int  maxRadius;
   int  maxDepth;
   double deltaRadius;
@@ -115,44 +120,44 @@ int main(argc, argv)
      char **argv;
 {
   int i;
-  extern char *optarg;
   int optc;
+
   params_t params;
+
   int inter = 0;
-  int def = 0;
-  int depth = 0;
-  char fileName[20];
-  int opts = 0;
-  
-  while ( (optc = getopt( argc, argv, "hiDd:f:" )) != -1 ) {
+  char fileName[MAX_INPUT_LENGTH];
+  int depth;
+
+  memset(fileName, 0, MAX_INPUT_LENGTH);
+  depth = DEFAULT_MAXDEPTH;
+  strncpy(fileName, DEFAULT_FILENAME, MAX_INPUT_LENGTH);
+
+  opterr = 0;
+
+  while ( (optc = getopt( argc, argv, "hHiIDd:f:F:" )) != -1 ) {
     switch (optc) {
+    case 'I' :
     case 'i' : /* interactive mode */
       inter = 1;
-      opts = 1;
       break;
     case 'D':  /* Use ALL default parameters */
-      def = 1;
-      depth = 3;
-      strcpy(fileName, DEFAULT_FILENAME);
-      opts = 1;
+      memset(fileName, 0, MAX_INPUT_LENGTH);
+      strncpy(fileName, DEFAULT_FILENAME, MAX_INPUT_LENGTH);
+      depth = DEFAULT_MAXDEPTH;
       break;
     case 'd':  /* Use a user-defined depth */
       depth = atoi(optarg);
       if (depth > 5) {
 	printf("\nWARNING: Depths greater than 5 produce extremely large numbers of objects.\n");
       }
-      if (def) {
-	depth = 3;
-	break;
-      }
-      strcpy(fileName, DEFAULT_FILENAME);
-      opts = 1;
       break;
+    case 'F':
     case 'f':  /* Use a user-defined filename */
-      strcpy(fileName, optarg);
-      opts = 1;
+      memset(fileName, 0, MAX_INPUT_LENGTH);
+      strncpy(fileName, optarg, MAX_INPUT_LENGTH);
       break;
     case 'h':
+    case 'H':
     case '?':
       usage(argv[0]);
       exit(0);
@@ -160,14 +165,10 @@ int main(argc, argv)
       break;
     }
   }
-  if (!opts) {
-    printf("Using all defaults. Try %s -h\n", argv[0]);
+  if (optind <= 1) {
+    printf("Using all default parameters. Try %s -h for assistance\n", argv[0]);
     inter = 0;
-    def = 1;
-    depth = 3;
-    strcpy(fileName, DEFAULT_FILENAME);
   }
-  
   
   initializeInfo(&params, inter, fileName, depth);
   
@@ -231,19 +232,19 @@ void initializeInfo(p, inter, name, depth)
      char *name;
      int depth;
 {
-  char matName[20];
+  char input[MAX_INPUT_LENGTH];
   int i = 0;
-  int r, g, b;
-  
-  
+  int len = 0;
+  unsigned int c[3];
+
   if (name == NULL) {
-    strcpy(p->fileName, DEFAULT_FILENAME);
+    strncpy(p->fileName, DEFAULT_FILENAME, MAX_INPUT_LENGTH);
   }
   else {
-    strcpy(p->fileName, name);
+    strncpy(p->fileName, name, MAX_INPUT_LENGTH);
   }
   p->maxRadius = DEFAULT_MAXRADIUS;
-  p->maxDepth =  (depth != 0) ? (depth) : (DEFAULT_MAXDEPTH);
+  p->maxDepth =  (depth > 0) ? (depth) : (DEFAULT_MAXDEPTH);
   p->deltaRadius = DEFAULT_DELTARADIUS;
   p->pos[X] = DEFAULT_ORIGIN_X;
   p->pos[Y] = DEFAULT_ORIGIN_Y;
@@ -252,62 +253,133 @@ void initializeInfo(p, inter, name, depth)
   p->matArray = (depthMat_t *)malloc(sizeof(depthMat_t) * (p->maxDepth+1));
 
   for (i = 0; i <= p->maxDepth; i++) {
-    strcpy(p->matArray[i].name, DEFAULT_MAT);
-    strcpy(p->matArray[i].params, DEFAULT_MATPARAM);
-    sscanf(DEFAULT_MATCOLOR, "%d %d %d", &r, &g, &b);
-    p->matArray[i].color[0] = (char)r;
-    p->matArray[i].color[1] = (char)g;
-    p->matArray[i].color[2] = (char)b;
+    strncpy(p->matArray[i].name, DEFAULT_MAT, MAX_INPUT_LENGTH);
+    strncpy(p->matArray[i].params, DEFAULT_MATPARAM, MAX_INPUT_LENGTH);
+    sscanf(DEFAULT_MATCOLOR, "%u %u %u", &(c[0]), &(c[1]), &(c[2]));
+    p->matArray[i].color[0] = c[0];
+    p->matArray[i].color[1] = c[1];
+    p->matArray[i].color[2] = c[2];
   }
 
   if (inter) {
     /* prompt the user for some data */
     /* no error checking here.... */
-    if (name != NULL) {
-      printf("\nPlease enter a filename: ");
-      scanf("%s", p->fileName);
-    } else
-      strcpy(p->fileName, name);
+    printf("\nPlease enter a filename for sphereflake output: [%s] ", p->fileName);
+    if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+      fprintf(stderr, "sphereflake: initializeInfo: fgets filename read error.\n");
+      fprintf(stderr, "Continuing with default value.\n");
+    }
+    else {
+      len = strlen(input);
+      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) { 
+	sscanf(input, "%s", p->fileName);
+      }
+    }
+    fflush(stdin);
     
-    printf("maxRadius: ");
-    scanf("%d", &(p->maxRadius));
-    printf("maxDepth: ");
-    scanf("%d", &(p->maxDepth));
-    printf("deltaRadius: ");
-    scanf("%lg", &(p->deltaRadius));
-    printf("init. position X Y Z: ");
-    scanf("%lg %lg %lg", &(p->pos[X]), &(p->pos[Y]), &(p->pos[Z]));
-    getchar();
+    printf("Initial position X Y Z: [%.2f %.2f %.2f] ", p->pos[X], p->pos[Y], p->pos[Z]);
+    if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+      fprintf(stderr, "sphereflake: initializeInfo: fgets position read error.\n");
+      fprintf(stderr, "Continuing with default values.\n");
+    }
+    else {
+      len = strlen(input);
+      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+      if (strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
+	sscanf(input, "%lg %lg %lg", &(p->pos[X]), &(p->pos[Y]), &(p->pos[Z]));
+      }
+    }
+    fflush(stdin);
     
+    printf("maxRadius: [%d] ", p->maxRadius);
+    if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+      fprintf(stderr, "sphereflake: initializeInfo: fgets maxradius read error.\n");
+      fprintf(stderr, "Continuing with default value.\n");
+    }
+    else {
+      len = strlen(input);
+      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	sscanf(input, "%d", &(p->maxRadius));
+      }
+    }
+    fflush(stdin);
+
+    printf("deltaRadius: [%.2f] ", p->deltaRadius);
+    if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+      fprintf(stderr, "sphereflake: initializeInfo: fgets deltaradius read error.\n");
+      fprintf(stderr, "Continuing with default value.\n");
+    }
+    else {
+      len = strlen(input);
+      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	sscanf(input, "%lg", &(p->deltaRadius));
+      }
+    }
+    fflush(stdin);
+
+    printf("maxDepth: [%d] ", p->maxDepth);
+    if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+      fprintf(stderr, "sphereflake: initializeInfo: fgets maxdepth read error.\n");
+      fprintf(stderr, "Continuing with default value.\n");
+    } 
+    else {
+      len = strlen(input);
+      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	sscanf(input, "%d", &(p->maxDepth));
+      }
+    }
+    fflush(stdin);
+
     
     for (i = 0; i <= p->maxDepth; i++) {
-      printf("Material for depth %d: [%s] ", i, DEFAULT_MAT);
-      fgets(p->matArray[i].name, 20, stdin);
-      if (strlen(p->matArray[i].name) > 0) p->matArray[i].name[strlen(p->matArray[i].name)-1] = 0;
-      if (strcmp(p->matArray[i].name, "") == 0) {
-	strcpy(p->matArray[i].name, DEFAULT_MAT);
-      }
-      printf("Mat. params for depth %d: [%s] ", i, DEFAULT_MATPARAM);
-      fgets(p->matArray[i].params, 50, stdin);
-      if (strlen(p->matArray[i].params) > 0) p->matArray[i].params[strlen(p->matArray[i].params)-1] = 0;
-      if (strcmp(p->matArray[i].params, "") == 0) {
-	strcpy(p->matArray[i].params, DEFAULT_MATPARAM);
-      }
-      printf("Mat. color for depth %d: [%s] ", i, DEFAULT_MATCOLOR);
-      fgets(matName, 20, stdin);
-      if (strlen(matName) > 0) matName[strlen(matName)-1] = 0;
-      if (strcmp(matName, "") == 0) {
-	sscanf(DEFAULT_MATCOLOR, "%d %d %d", &r, &g, &b);
-	p->matArray[i].color[0] = (char)r;
-	p->matArray[i].color[1] = (char)g;
-	p->matArray[i].color[2] = (char)b;
+      printf("Material for depth %d: [%s] ", i, p->matArray[i].name);
+      if ( ! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+	fprintf(stderr, "sphereflake: initializeInfo: fgets material read error.\n");
+	fprintf(stderr, "Continuing with default value.\n");
       }
       else {
-	sscanf(matName, "%d %d %d", &r, &g, &b);
-	p->matArray[i].color[0] = (char)r;
-	p->matArray[i].color[1] = (char)g;
-	p->matArray[i].color[2] = (char)b;
+	len = strlen(input);
+	if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+	if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	  sscanf(input, "%s", p->matArray[i].name);
+	}
       }
+      fflush(stdin);
+
+      printf("Mat. params for depth %d: [%s] ", i, p->matArray[i].params);
+      if ( ! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+	fprintf(stderr, "sphereflake: initializeInfo: fgets params read error.\n");
+	fprintf(stderr, "Continuing with default value.\n");
+      }
+      else {
+	len = strlen(input);
+	if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+	if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	  sscanf(input, "%s", p->matArray[i].params);
+	}
+      }
+      fflush(stdin);
+
+      printf("Mat. color for depth %d: [%d %d %d] ", i, p->matArray[i].color[0], p->matArray[i].color[1], p->matArray[i].color[2]);
+      if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+	fprintf(stderr, "sphereflake: initializeInfo: fgets color read error.\n");
+	fprintf(stderr, "Continuing with default values.\n");
+      }
+      else {
+	len = strlen(input);
+	if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+	if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	  sscanf(input, "%d %d %d", &(c[0]), &(c[1]), &(c[2]));
+	  p->matArray[i].color[0] = c[0];
+	  p->matArray[i].color[1] = c[1];
+	  p->matArray[i].color[2] = c[2];
+	}
+      }
+      fflush(stdin);
     }
   }
   MAT_IDN(IDENT);
@@ -317,7 +389,7 @@ void createSphereflake(p)
      params_t *p;
 {
   mat_t trans;
-  char name[20];
+  char name[MAX_INPUT_LENGTH];
   int i = 0;
   
   /* now begin the creation of the sphereflake... */
@@ -329,7 +401,7 @@ void createSphereflake(p)
      materials to the different depths */
 
   for (i = 0; i <= p->maxDepth; i++) {
-    memset(name, 0, 20);
+    memset(name, 0, MAX_INPUT_LENGTH);
     sprintf(name, "depth%d.r", i);
     mk_lcomb(fp, name, &(wmemberArray[i+ADDITIONAL_OBJECTS]), 1, p->matArray[i].name, p->matArray[i].params, p->matArray[i].color, 0);
   }
@@ -340,15 +412,15 @@ void createSphereflake(p)
 void createLights(p)
      params_t *p;
 {
-  char name[20];
+  char name[MAX_INPUT_LENGTH];
   point_t lPos;
   int r, g, b;
-  char c[3];
+  unsigned char c[3];
   
   
   /* first create the light spheres */
   VSET(lPos, p->pos[X]+(5 * p->maxRadius), p->pos[Y]+(-5 * p->maxRadius), p->pos[Z]+(150 * p->maxRadius));
-  memset(name, 0, 20);
+  memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "light0");
   mk_sph(fp, name, lPos, p->maxRadius*5);
   
@@ -382,11 +454,11 @@ void createLights(p)
 void createPlane(p)
      params_t *p;
 {
-  char name[20];
+  char name[MAX_INPUT_LENGTH];
   point_t lPos;
   
   VSET(lPos, 0, 0, 1); /* set the normal */
-  memset(name, 0, 20);
+  memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "plane");
   mk_half(fp, name, lPos, -p->maxRadius * 2 * DEFAULT_SCALE);
   
@@ -401,12 +473,12 @@ void createPlane(p)
 void createEnvironMap(p)
      params_t *p;
 {
-  char name[20];
+  char name[MAX_INPUT_LENGTH];
   
-  memset(name, 0, 20);
+  memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "light0");
   mk_addmember(name, &(wmemberArray[ENVIRON_ID]), WMOP_UNION);
-  memset(name, 0, 20);
+  memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "environ.r");
   mk_lcomb(fp, name, &(wmemberArray[ENVIRON_ID]), 1, ENVIRON_MAT, ENVIRON_MATPARAM, "0 0 0", 0);
   
@@ -418,10 +490,10 @@ void createScene(p)
      params_t *p;
 {
   int i;
-  char name[20];
+  char name[MAX_INPUT_LENGTH];
   
   for (i = 0; i < p->maxDepth+1; i++) {
-    memset(name, 0, 20);
+    memset(name, 0, MAX_INPUT_LENGTH);
     sprintf(name, "depth%d.r", i);
     mk_addmember(name, &(wmemberArray[SCENE_ID]), WMOP_UNION);
   }
@@ -429,7 +501,7 @@ void createScene(p)
   mk_addmember("light1.r", &(wmemberArray[SCENE_ID]), WMOP_UNION);
   mk_addmember("plane.r", &(wmemberArray[SCENE_ID]), WMOP_UNION);
   mk_addmember("environ.r", &(wmemberArray[SCENE_ID]), WMOP_UNION);
-  memset(name, 0, 20);
+  memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "scene.r");
   mk_lfcomb(fp, name, &(wmemberArray[SCENE_ID]), 0);
   
@@ -525,7 +597,7 @@ void makeFlake(depth, trans, center, radius, delta, maxDepth)
      double delta;
      int maxDepth;
 {
-  char name[20];
+  char name[MAX_INPUT_LENGTH];
   int i = 0;
   point_t pcent;
   fastf_t newRadius;
