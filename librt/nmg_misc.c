@@ -3411,8 +3411,6 @@ CONST struct faceuse *fu1,*fu2;
 	return( 0 );
 }
 
-RT_EXTERN( struct vertexuse *nmg_loop_touches_self , ( struct loopuse *lu ) );
-
 /*
  *	N M G _ E X T R U D E _ C L E A N U P
  *
@@ -3663,30 +3661,24 @@ CONST struct rt_tol *tol;
 				{
 					struct loopuse *new_lu;
 					struct faceuse *new_fu;
-					int orientation;
 
 					/* check this loop */
-					if( (vu=nmg_loop_touches_self( lu ) ) == 0 )
+					if( (vu=(struct vertexuse *)nmg_loop_touches_self( lu ) ) == (struct vertexuse *)NULL )
 						continue;
 
 					/* this loop touches itself */
 					done = 0;
 
-					/* save orientation */
-					orientation = lu->orientation;
-
 					/* split loop */
 					new_lu = nmg_split_lu_at_vu( lu , vu );
-
-					/* restore orientations */
-					lu->orientation = orientation;
-					lu->lumate_p->orientation = orientation;
-					new_lu->orientation = orientation;
-					new_lu->lumate_p->orientation = orientation;
 
 					/* make a new face from the new loop */
 					new_fu = nmg_mk_new_face_from_loop( new_lu );
 					nmg_face_g( new_fu , plane );
+
+					/* Determine new orientations */
+					nmg_lu_reorient( lu, tol );
+					nmg_lu_reorient( new_lu, tol );
 				}
 			}
 		}
