@@ -33,3 +33,10 @@ CONST double rt_inv255 = 1.0/255.0;
 
 CONST double rt_degtorad =  0.0174532925199433;		/* (pi*2)/360 */
 CONST double rt_radtodeg = 57.29577951308230698802;	/* 360/(pi*2) */
+
+CONST mat_t	rt_identity = {
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1, 0,
+	0, 0, 0, 1
+};
