@@ -223,7 +223,7 @@ register const struct bu_bitv	*bv;
 		while( byte_no-- )
 		{
 			bu_vls_printf( v, "%02x",
-				(bv->bits[word_count] & (((bitv_t)0xff)<<(byte_no*8))) >> (byte_no*8) );
+				       ((bv->bits[word_count] & (((bitv_t)0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff );
 		}
 		byte_no = sizeof( bitv_t );
 	}
