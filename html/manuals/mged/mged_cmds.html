@@ -2117,7 +2117,7 @@ commands provide additional information on available commands.
 
 <DD>The ``hide'' command sets the ``hidden'' flag for the specified objects.
 When this flag is set, the objects do not appear in <a href="#t">t</a>
-or <a href="#ls">ls</a> command outputs. The <I>-a</I> option on the <I>ls</I>
+or <a href="#ls">ls</a> command outputs. The <I>-a</I> option on the <I>ls</I> or <I>t</I>
 command will force hidden objects to appear in its output.
 
 <DL>
@@ -4465,15 +4465,16 @@ written out.
 
 <DD>The ``t'' command with no <I>object</I> argument lists the name of
      every object in the
-     database (in alphabetical order). If the <I>object</I> argument is supplied,
+     database (in alphabetical order), except for those marked as hidden with the
+     <a href="#hide">hide</a> command . If the <I>object</I> argument is supplied,
      only those <I>objects</I> are listed. The <I>object</I> argument may include
      regular expressions
      for matching. The following options are also allowed:
      <ul>
        <li> a - list all objects in the database
-       <li> c - list all combinations in the database
-       <li> r - list all regions in the database
-       <li> s - list all solids in the database
+       <li> c - list all non_hidden combinations in the database
+       <li> r - list all non_hidden regions in the database
+       <li> s - list all non_hidden solids in the database
      </ul>
 
      The <I>t</I>
