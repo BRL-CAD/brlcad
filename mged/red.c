@@ -741,6 +741,12 @@ char **argv;
     comb->aircode = atoi(argv[4]);
     comb->GIFTmater = atoi(argv[5]);
     comb->los = atoi(argv[6]);
+
+    /* use the new values for defaults */
+    item_default = comb->region_id + 1;
+    air_default = comb->aircode;
+    mat_default = comb->GIFTmater;
+    los_default = comb->los;
     offset = 6;
   }else{
     if(argc != 7){
