@@ -420,7 +420,7 @@ struct seg		*seghead;
 		/*
 		 *  RT_BOT_SOLID, RT_BOT_UNORIENTED.
 		 */
-		fastf_t rm_dist;
+		fastf_t rm_dist=0.0;
 		int	removed=0;
 
 		if( nhits == 1 )
