@@ -5,6 +5,9 @@
  * and to limit the area/volume that a set of random numbers inhabit.
  *
  *	$Log$
+ * Revision 1.2  91/06/22  02:22:23  cjohnson
+ * Fix some types and otherwise clean up the include file.
+ * 
  * Revision 1.1  90/04/20  02:05:15  cjohnson
  * Initial revision
  * 
@@ -14,8 +17,12 @@
  * NOTE!!! MSRMAXTBL must be an even number!!!
  */
 #define	MSRMAXTBL	4096	/* Size of random number tables. */
+#define MSR_UNIF_MAGIC	12481632
+#define MSR_GAUSS_MAGIC 512256128
+
 
 struct msr_unif {
+	long	magic;
 	long	msr_seed;
 	int	msr_double_ptr;
 	double	*msr_doubles;
@@ -28,6 +35,7 @@ struct msr_unif {
  * msr_gauss_fill.
  */
 struct msr_gauss {
+	long	magic;
 	long	msr_gauss_seed;
 	int	msr_gauss_dbl_ptr;
 	double	*msr_gauss_doubles;
