@@ -18,6 +18,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
+#if __STDC__
+# include <stdarg.h>
+#else
+# include <varargs.h>
+#endif
 
 #ifndef SYSV
 # include <sys/ioctl.h>
@@ -609,6 +614,35 @@ char *buf;
  *  Log an error.
  *  This version buffers a full line, to save network traffic.
  */
+#if __STDC__
+void
+rt_log( char *fmt, ... )
+{
+	va_list ap;
+	static char buf[512];		/* a generous output line */
+	static char *cp = buf+1;
+
+	if( print_on == 0 )  return;
+	RES_ACQUIRE( &rt_g.res_syscall );
+	va_start( ap, fmt );
+	(void)vfprintf( stderr, fmt, ap );
+	va_end(ap);
+
+	while( *cp++ )  ;		/* leaves one beyond null */
+	if( cp[-2] != '\n' )
+		goto out;
+	if( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
+		fprintf(stderr, "%s", buf+1);
+		goto out;
+	}
+	if(debug) fprintf(stderr, "%s", buf+1);
+	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )
+		exit(12);
+	cp = buf+1;
+out:
+	RES_RELEASE( &rt_g.res_syscall );
+}
+#else
 /* VARARGS */
 void
 rt_log( str, a, b, c, d, e, f, g, h )
@@ -635,7 +669,7 @@ int	a, b, c, d, e, f, g, h;
 out:
 	RES_RELEASE( &rt_g.res_syscall );
 }
-
+#endif /* not __STDC__ */
 void
 rt_bomb(str)
 char *str;
