@@ -88,6 +88,18 @@ if [ -x /bin/mail ] ; then
 	exit
 fi
 
+if [ -x /usr/bin/mail ] ; then
+	/usr/bin/mail cad-bugs@arl.mil "$USER" < $BUG_REPORT
+	if [ $? -eq 0 ] ; then
+		rm -f $BUG_REPORT
+	else
+		FAILED=1
+		echo "/usr/bin/mail exited with non-zero status."
+		echo "message file $BUG_REPORT not deleted"
+	fi
+	exit
+fi
+
 if [ $FAILED -eq 1] ; then
 	/bin/echo "Mail delivery failed.  Send file $BUG_REPORT to cad-bugs@arl.mil"
 else
