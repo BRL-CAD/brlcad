@@ -96,8 +96,8 @@ WDB_EXTERN(int mk_wedge, (FILE *fp, char *name, CONST point_t vert,
 			CONST vect_t xdirv, CONST vect_t zdirv,
 			fastf_t xlen, fastf_t ylen, fastf_t zlen,
 			fastf_t x_top_len) );
-WDB_EXTERN(int mk_arb4, (FILE *fp, char *name, CONST point_t pts[4]) );
-WDB_EXTERN(int mk_arb8, (FILE *fp, char *name, CONST point_t pts[8]) );
+WDB_EXTERN(int mk_arb4, (FILE *fp, char *name, CONST fastf_t *pts4) );
+WDB_EXTERN(int mk_arb8, (FILE *fp, char *name, CONST fastf_t *pts8) );
 WDB_EXTERN(int mk_sph, (FILE *fp, char *name, CONST point_t center,
 			fastf_t radius) );
 WDB_EXTERN(int mk_ell, (FILE *fp, char *name, CONST point_t center,
@@ -150,7 +150,7 @@ WDB_EXTERN(int mk_fcomb, (FILE *fp, char *name, int len, int region_flag) );
 WDB_EXTERN(int mk_memb, (FILE *fp, char *name, mat_t mat, int bool_op) );
 
 /*
-   *  Combination conversion routines
+ *  Combination conversion routines
  */
 WDB_EXTERN(struct wmember *mk_addmember, (char *name, struct wmember *headp, int op) );
 WDB_EXTERN(int mk_lcomb, (FILE *fp, char *name, struct wmember *headp,
