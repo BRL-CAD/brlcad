@@ -211,49 +211,55 @@ after_read:
 
 /*
  *			S T R S O L B L D
+ *
+ *  Input format is:
+ *	s type name args...\n
+ *
+ *  Individual processing is needed for each 'type' of solid,
+ *  to hand it off to the appropriate LIBWDB routine.
  */
 void
 strsolbld()
 {
-#if 0
 	register char *cp;
-	register char *np;
-	char keyword[10];
-	char name[NAME_LEN+1];
+	char	*type;
+	char	*name;
+	char	*args;
+	struct bu_vls	str;
 
-	cp = buf;
+	bu_vls_init(&str);
 
-	if( *cp != DBID_STRSOL )
-	{
-		bu_log( "asc2g: expecting STRSOL, found '%c' (0%o) (skipping)\n" , buf[0], buf[0] );
-		bu_log( "%s\n" , buf );
-		return;
+	(void)strtok( buf, " " );
+	/* skip stringsolid_id */
+	type = strtok( NULL, " " );
+	name = strtok( NULL, " " );
+	args = strtok( NULL, "\n" );
+
+	if( strcmp( type, "dsp" ) == 0 )  {
+		struct rt_dsp_internal *dsp;
+		BU_GETSTRUCT( dsp, rt_dsp_internal );
+		bu_vls_init( &dsp->dsp_file );
+		bu_vls_strcpy( &str, args );
+		if( bu_struct_parse( &str, rt_functab[ID_DSP].ft_parsetab, (char *)dsp ) < 0 )  {
+			bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
+				name, type, args);
+			rt_dsp_ifree( dsp );
+			goto out;
+		}
+		dsp->magic = RT_DSP_INTERNAL_MAGIC;
+		if( wdb_export( ofp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm ) < 0 )  {
+			bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
+				name, type, args);
+			goto out;
+		}
+		/* 'dsp' has already been freed by wdb_export() */
+	} else {
+		bu_log("strsolbld(%s): unable to convert '%s' type solid, skipping\n",
+			name, type);
 	}
 
-	cp = nxt_spc( cp );
-	np = keyword;
-	while( *cp != ' ' )
-		*np++ = *cp++;
-	*np = '\0';
-
-	cp = nxt_spc( cp );
-	np = name;
-	while( *cp != ' ' )
-		*np++ = *cp++;
-	*np = '\0';
-
-	cp = nxt_spc( cp );
-
-	/* Zap the trailing newline */
-	cp[strlen(cp)-1] = '\0';
-
-	if( mk_strsol( ofp, name, keyword, cp ) )  {
-		bu_log("asc2g(%s) couldn't convert %s type solid\n",
-			name, keyword );
-	}
-#else
-	bu_bomb("strsolbld() needs to be upgraded to v5\n");
-#endif
+out:
+	bu_vls_free(&str);
 }
 
 #define LSEG 'L'
