@@ -2,6 +2,7 @@
 
 #include <signal.h>
 #include <time.h>
+#include <libexc.h>
 
 #include "conf.h"
 #include <stdio.h>
