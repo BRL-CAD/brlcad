@@ -212,7 +212,15 @@ hangten()
 #ifdef BSD
 	select(0, (int *)0, (int *)0, (int *)0, &delaytime);
 #else
-	sleep(1);
+	register int i;
+	register int a, b;
+	/* On a 10 MIPS machine, do 10,000,000 * 0.010 adds,
+	 * to approximate 10mS
+	 */
+	b = 2;
+	for( i=0; i < 100000; i++ )
+		b = b + i;
+	a = b;
 #endif
 }
 
@@ -309,21 +317,21 @@ char *title;
  *			S E N D
  *
  */
-void
+int
 send(color,val)
 char color;
 int val;
 {
-	int digit;
+	char digit;
 
 	if(val < 0 || val > 255) {
 		printf("dunncolor: bad value %d\n",val);
-		exit(75);
+		return(-1);
 	}
 
-	if(!ready(20)) {
-		printf("dunncolor: 80 camera not ready\n");
-		exit(80);
+	if(!ready(5)) {
+		printf("dunncolor: send(), camera not ready\n");
+		return(-1);
 	}
 
 	if( polaroid )
@@ -343,4 +351,6 @@ int val;
 	hangten();
 	digit = (val%10 + 0x30)&0x7f;
 	write(fd, &digit,1);
+	hangten();
+	return(0);		/* OK */
 }

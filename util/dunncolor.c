@@ -36,22 +36,26 @@ char **argv;
 
 	dunnopen();
 
+	if(!ready(5)) {
+		printf("dunncolor:  camera not ready\n");
+		exit(50);
+	}
+
 	if( argc > 2 && strcmp( argv[1], "-p" ) == 0 )  {
 		/* Polaroid rather than external camera */
 		polaroid = 1;
 		argc--; argv++;
 	}
 	getexposure("old");
+	if(!ready(5)) {
+		printf("dunncolor:  camera not ready\n");
+		exit(50);
+	}
 
 	/* check argument */
 	if ( argc != 5 && argc != 6 ) {
 		printf("usage: dunncolor [-p] baseval redval greenval blueval\n"); 
 		exit(25);
-	}
-
-	if(!ready(20)) {
-		printf("dunncolor:  camera not ready\n");
-		exit(50);
 	}
 
 	send('A',atoi(*++argv));
@@ -60,4 +64,9 @@ char **argv;
 	send('B',atoi(*++argv));
 
 	getexposure("new");
+
+	if(!ready(5)) {
+		printf("dunncolor:  camera not ready\n");
+		exit(50);
+	}
 }
