@@ -431,7 +431,7 @@ mat_t	mat;
 
 	int	i;
 
-	fprintf(stdout, "-m\"");
+	fprintf(stdout, "plrot -m\"");
 	for( i = 0; i < 15; i++ )  {
 		fprintf(stdout, "%g ", mat[i]);
 	}
