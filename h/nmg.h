@@ -79,7 +79,7 @@
 #define DEBUG_MESH_EU	0x00001000	/* 13 nmg_mesh: list edges meshed */
 #define DEBUG_POLYTO	0x00002000	/* 14 nmg_misc: polytonmg */
 #define DEBUG_LABEL_PTS 0x00004000	/* 15 label points in plot files */
-/***#define DEBUG_INS	0x00008000	/* 16 nmg_tbl table insert */
+/***#define DEBUG_INS	0x00008000	/_* 16 nmg_tbl table insert */
 #define DEBUG_NMGRT	0x00010000	/* 17 ray tracing */
 #define DEBUG_FINDEU	0x00020000	/* 18 nmg_mod: nmg_findeu() */
 #define DEBUG_CMFACE	0x00040000	/* 19 nmg_mod: nmg_cmface() */
