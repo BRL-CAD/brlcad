@@ -2477,7 +2477,8 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 	int			maxindex;
 	int			kind;
 	int			kind_counts[NMG_N_KINDS];
-	genptr_t		dp, startdata;	/* data pointer */
+	unsigned char		*dp;		/* data pointer */
+	genptr_t		startdata;	/* data pointer */
 	long			**real_ptrs;
 	long			**ptrs;
 	struct nmg_exp_counts	*ecnt;
