@@ -37,6 +37,10 @@ static char rcsid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.4  90/04/10  03:34:21  cjohnson
+ * Add Intensity Levels
+ * Add tonescale mapping
+ * 
  * Revision 1.3  90/04/10  01:04:08  cjohnson
  * Add Classic halftone method
  * 
@@ -132,7 +136,7 @@ int argc;
 char **argv;
 {
 	int pixel,x,y,i;
-	unsigned char *Line;
+	unsigned char *Line, *Out;
 	int NewFlag = 1;
 	int scale;
 	unsigned char Map[256];
@@ -149,30 +153,45 @@ char **argv;
 		fprintf(stderr,"\n");
 	}
 	Line = (unsigned char *) malloc(width);
+	Out = (unsigned char *) malloc(width);
 
+	if (Method != M_FLOYD) Surpent = 0;
 	for (y=0; y<height; y++) {
 		int NextX;
 		NewFlag =1;
 (void)		fread(Line,1,width,stdin);
+		if (Surpent && y % 2) {
+			for (x=width-1; x>=0; x--) {
+				pixel = Map[Line[x]];
+				Out[x] = scale*tone_floyd(pixel, x, y, x-1,
+				    y+1, NewFlag);
+				NewFlag = 0;
+			}
+		} else {
 		for (x=0; x<width; x++) {
-			NextX = (x == width-1) ? 0 : x+1;
+			NextX = x+1;
 			pixel = Map[Line[x]];
 			switch (Method) {
 			case M_FOLLY:
-				putchar(scale*tone_folly(pixel, x, y, NextX,
-				    y+1, NewFlag));
+				Out[x] = scale*tone_folly(pixel, x, y, NextX,
+				    y+1, NewFlag);
 			break;
 			case M_FLOYD:
+				Out[x] = scale*tone_floyd(pixel, x, y, NextX,
+				    y+1, NewFlag);
+			break;
 			case M_THRESH:
-				putchar(scale*tone_simple(pixel, x, y, NextX,
-				    y+1, NewFlag));
+				Out[x] = scale*tone_simple(pixel, x, y, NextX,
+				    y+1, NewFlag);
 			break;
 			case M_CLASSIC:
-				putchar(scale*tone_classic(pixel, x, y, NextX,
-				    y+1, NewFlag));
+				Out[x] = scale*tone_classic(pixel, x, y, NextX,
+				    y+1, NewFlag);
 			break;
 			}
 			NewFlag=0;
 		}
+		}
+		fwrite(Out,1,width,stdout);
 	}
 }
