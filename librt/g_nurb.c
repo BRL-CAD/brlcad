@@ -39,19 +39,10 @@ struct rt_nurb_internal {
 #define RT_NURB_INTERNAL_MAGIC	0x002b2bdd
 #define RT_NURB_CK_MAGIC( _p) RT_CKMAG(_p,RT_NURB_INTERNAL_MAGIC,"rt_nurb_internal");
 
-struct nurb_b_list {
-	struct nurb_b_list *	next;
-	point_t 		min,	/* bounding box */
-				max;
-	struct snurb * 		srf;	/* bezier form of surface */
-};
-
 struct nurb_specific {
 	struct nurb_specific *  next;	/* next surface in the the solid */
-	point_t		        min,	/* Bounding box of surface */
-			        max;
-	struct snurb *		srf;	/* Surface description */
-	struct nurb_b_list *	b_list; /* Converted into bezier form */
+	struct snurb *		srf;	/* Original surface description */
+	struct rt_list		bez_hd;	/* List of Bezier snurbs */
 };
 
 struct nurb_hit {
@@ -99,36 +90,26 @@ struct rt_i		*rtip;
 	{
 		struct snurb * s;
 		struct nurb_specific * n;
-		struct rt_list	bezier;
 
 		GETSTRUCT( n, nurb_specific);
 
 		/* Store off the original snurb */
-		n->srf = rt_nurb_scopy (sip->srfs[i]);
-		NMG_CK_SNURB(n->srf);
-		rt_nurb_s_bound(n->srf, n->min, n->max);
+		s = rt_nurb_scopy (sip->srfs[i]);
+		NMG_CK_SNURB(s);
+		rt_nurb_s_bound(s, s->min_pt, s->max_pt);
 
-		n->b_list = (struct nurb_b_list *)0;
-		
-		RT_LIST_INIT( &bezier );
-		(void)rt_nurb_bezier( &bezier, sip->srfs[i] );
-		
-		/* Pull off each Bezier snurb, and wrap with nurb_b_list */
-		while( RT_LIST_WHILE( s, snurb, &bezier ) )  {
-			struct nurb_b_list *b;
+		n->srf = s;
+		RT_LIST_INIT( &n->bez_hd );
 
+		/* Grind up the original surf into a list of Bezier snurbs */
+		(void)rt_nurb_bezier( &n->bez_hd, sip->srfs[i] );
+		
+		/* Compute bounds of each Bezier snurb */
+		for( RT_LIST_FOR( s, snurb, &n->bez_hd ) )  {
 			NMG_CK_SNURB(s);
-			RT_LIST_DEQUEUE( &s->l );
-			b = (struct nurb_b_list *) rt_malloc( 
-				sizeof(struct nurb_b_list ),
-				"rt_nurb_prep:nurb_b_list");
-			b->srf = s;
-			rt_nurb_s_bound( s, b->min, b->max);
-			
-			VMINMAX( stp->st_min, stp->st_max, b->min);
-			VMINMAX( stp->st_min, stp->st_max, b->max);
-			b->next = n->b_list;
-			n->b_list = b;
+			rt_nurb_s_bound( s, s->min_pt, s->max_pt );
+			VMINMAX( stp->st_min, stp->st_max, s->min_pt);
+			VMINMAX( stp->st_min, stp->st_max, s->max_pt);
 		}
 
 		n->next = nurbs;
@@ -244,21 +225,16 @@ struct seg		*seghead;
 
 	while( nurb != (struct nurb_specific *) 0 )
 	{
-		struct nurb_b_list * n;
+		struct snurb * s;
 		struct rt_nurb_uv_hit *hp;
 
-		n = nurb->b_list;
-		while( n != (struct nurb_b_list *)0)
-		{
-			if( !rt_in_rpp( rp, invdir, n->min, n->max))
-			{
-				n = n -> next;
+		for( RT_LIST_FOR( s, snurb, &nurb->bez_hd ) )  {
+			if( !rt_in_rpp( rp, invdir, s->min_pt, s->max_pt))
 				continue;
-			}
 
 #define UV_TOL	1.0e-6	/* Paper says 1.0e-4 is reasonable for 1k images, not close up */
 			hp = rt_nurb_intersect(
-				n->srf, plane1, plane2, UV_TOL );
+				s, plane1, plane2, UV_TOL );
 			while( hp != (struct rt_nurb_uv_hit *)0)
 			{
 				struct rt_nurb_uv_hit * o;
@@ -277,7 +253,6 @@ struct seg		*seghead;
 
 				rt_nurb_add_hit( &hit_list, hit, tol );
 			}
-			n = n->next;  
 		}
 		nurb = nurb->next;
 		/* Insert Trimming routines here */
