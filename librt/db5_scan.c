@@ -42,13 +42,13 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *	 0	Success
  *	-1	Fatal Error
  */
-int
-db5_scan( dbip, handler, client_data )
-register struct db_i	*dbip;
-void			(*handler)BU_ARGS((struct db_i *,
-			CONST struct db5_raw_internal *,
-			long addr, genptr_t client_data));
-genptr_t		client_data;	/* argument for handler */
+HIDDEN int
+db5_scan(
+	struct db_i	*dbip,
+	void		(*handler)(struct db_i *,
+				const struct db5_raw_internal *,
+				long addr, genptr_t client_data ),
+	genptr_t	client_data )
 {
 	unsigned char	header[8];
 	struct db5_raw_internal	raw;
@@ -124,12 +124,12 @@ fatal:
  *
  * In support of db5_scan, add a named entry to the directory.
  */
-void
-db5_diradd_handler( dbip, rip, laddr, client_data )
-register struct db_i	*dbip;
-CONST struct db5_raw_internal *rip;
-long			laddr;
-genptr_t		client_data;	/* unused client_data from db_scan() */
+HIDDEN void
+db5_diradd_handler(
+	struct db_i		*dbip,
+	const struct db5_raw_internal *rip,
+	long			laddr,
+	genptr_t		client_data )	/* unused client_data from db5_scan() */
 {
 	register struct directory **headp;
 	register struct directory *dp;
@@ -231,6 +231,7 @@ genptr_t		client_data;	/* unused client_data from db_scan() */
  *			D B _ D I R B U I L D
  *
  *  A generic routine to determine the type of the database,
+ *  (v4 or v5)
  *  and to invoke the appropriate db_scan()-like routine to
  *  build the in-memory directory.
  *
@@ -243,8 +244,7 @@ genptr_t		client_data;	/* unused client_data from db_scan() */
  *	-1	failure
  */
 int
-db_dirbuild( dbip )
-struct db_i	*dbip;
+db_dirbuild( struct db_i *dbip )
 {
 	char	header[8];
 
