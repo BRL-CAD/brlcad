@@ -38,7 +38,7 @@ char *argv[];
 	int rshift=5;
 	int nlg=512,nlt=256;
 	int x,y;
-	fastf_t delta_z;
+	fastf_t delta_z=0;
 	fastf_t delta_angle;
 	fastf_t angle=0.0;
 	fastf_t *sins, *coss;
