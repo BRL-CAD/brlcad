@@ -663,28 +663,35 @@ struct application *ap;
 		 *  XXX No, because input queue shouldn't be interesting on 2nd visit.
 		 */
 		{
-			register struct partition *newpp;
+			register struct partition	*newpp;
+			register struct partition	*lastpp;
 
 			newpp = pp;
 			pp=pp->pt_forw;
 			DEQUEUE_PT( newpp );
+			RT_CHECK_SEG(newpp->pt_inseg);		/* sanity */
+			RT_CHECK_SEG(newpp->pt_outseg);		/* sanity */
 			newpp->pt_regionp = lastregion;
 
 			/*  See if this new partition extends the previous
 			 *  last partition, "exactly" matching.
 			 */
-			if( lastregion == FinalHdp->pt_back->pt_regionp &&
+			if( (lastpp = FinalHdp->pt_back) != FinalHdp &&
+			    lastregion == lastpp->pt_regionp &&
 			    rt_fdiff( newpp->pt_inhit->hit_dist,
-				FinalHdp->pt_back->pt_outhit->hit_dist ) == 0
+				lastpp->pt_outhit->hit_dist ) == 0
 			)  {
 				/* same region, extend last final partition */
-				FinalHdp->pt_back->pt_outhit = newpp->pt_outhit;
-				FinalHdp->pt_back->pt_outflip = newpp->pt_outflip;
-				FinalHdp->pt_back->pt_outseg = newpp->pt_outseg;
+				RT_CHECK_PT(lastpp);
+				RT_CHECK_SEG(lastpp->pt_inseg);	/* sanity */
+				RT_CHECK_SEG(lastpp->pt_outseg);/* sanity */
+				lastpp->pt_outhit = newpp->pt_outhit;
+				lastpp->pt_outflip = newpp->pt_outflip;
+				lastpp->pt_outseg = newpp->pt_outseg;
 				FREE_PT( newpp, ap->a_resource );
-				newpp = FinalHdp->pt_back;
+				newpp = lastpp;
 			}  else  {
-				APPEND_PT( newpp, FinalHdp->pt_back );
+				APPEND_PT( newpp, lastpp );
 				hits_avail += 2;
 			}
 
