@@ -710,7 +710,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		else
 #			define	OPTIMIZER	-g -fwritable-strings
 #		endif
-#		define	CC_DEFS		-D_REENTRANT -DSUNOS=53
+#		define	CC_DEFS		-D_REENTRANT -DSUNOS=55
 #		define	CC_OPTS		-I''XINCDIR
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
@@ -722,7 +722,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		endif
 #		define	CC_OPTS		-Xc -K PIC -I''XINCDIR
 /*		SunPro C 2.0.1 does not define __sparc or sparc.  3.0 on does */
-#		define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=53
+#		define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=55
 #	endif
 
 /*	Shared library support */
