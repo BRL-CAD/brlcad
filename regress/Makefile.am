@@ -1,6 +1,6 @@
-.PHONY : regress moss.pix lights.pix solids.pix shaders.pix spdi.pix
+.PHONY : regress moss.pix lights.pix solids.pix shaders.pix spdi.pix iges
 
-regress: solids.pix shaders.pix spdi.pix moss.pix lights.pix Makefile
+regress: solids.pix shaders.pix spdi.pix moss.pix lights.pix Makefile iges
 
 moss.pix: moss.sh
 	${SH} moss.sh $(prefix) $(top_srcdir)
@@ -17,8 +17,11 @@ shaders.pix: shaders.sh
 spdi.pix: spdi.sh
 	${SH} spdi.sh $(prefix) $(top_srcdir)
 
+iges:
+	${SH} iges.sh $(prefix) $(top_srcdir)
+
 # these are here because they go in the distribution but are not installed
-EXTRA_DIST = solids.sh shaders.sh spdi.sh lights.sh moss.sh \
+EXTRA_DIST = solids.sh shaders.sh spdi.sh lights.sh moss.sh iges.sh \
 	solidspix.asc shaderspix.asc spdipix.asc lights_ref.asc mosspix.asc
 
 CLEANFILES = \
@@ -27,6 +30,7 @@ CLEANFILES = \
 	shaders.pix solids solids.g solids.log solids.pix spdi spdi.g spdi_mged.log spdi_ref.pix \
 	spdi.log spdi.pix moss.pix moss_ref.pix solids_ref.pix spdi_diff.pix \
 	shaders_ref.pix moss-diff.log moss.pix.diff shaders.pix.diff \
+	iges.g iges_file.iges iges_new.g iges_stdout.iges iges_stdout_new.g \
 	solids-diff.log solids.pix.diff lights.g lights_diff.pix lights_ref.pix lights.pix lights.asc
 
 MOSTLYCLEANFILES = \
