@@ -1609,6 +1609,7 @@ RT_EXTERN(int db_add_anim, (struct db_i *dbip, struct animate *anp, int root) );
 RT_EXTERN(int db_do_anim, (struct animate *anp, mat_t stack, mat_t arc,
 	struct mater_info *materp) );
 RT_EXTERN(void db_free_anim, (struct db_i *dbip) );
+RT_EXTERN(void db_write_anim, (FILE *fop, struct animate *anp));
 
 /* db_path.c */
 RT_EXTERN(void db_add_node_to_full_path, (struct db_full_path *pp,
