@@ -2279,6 +2279,8 @@ fi
 
 if test "$TCL_EXEC_PREFIX" != "$exec_prefix"; then
     LIB_RUNTIME_DIR="${LIB_RUNTIME_DIR}:${TCL_EXEC_PREFIX}/lib"
+else
+    LIB_RUNTIME_DIR="${exec_prefix}/lib"
 fi
 
 #--------------------------------------------------------------------
