@@ -56,6 +56,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 void mged_global_variable_setup();
+int f_bot_fuse(), f_bot_condense(), f_bot_face_fuse();
+int get_solid_keypoint_tcl();
 
 extern void sync();
 extern void init_qray();			/* in qray.c */
@@ -63,6 +65,7 @@ extern int gui_setup();				/* in attach.c */
 extern int get_edit_solid_menus();		/* in edsol.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;			/* in ged.c */
+extern int bot_vertex_fuse(), bot_condense();
 
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
@@ -95,6 +98,9 @@ static struct cmdtab cmdtab[] = {
 	"attach", f_attach,
 	"B", f_blast,
 	"bev", f_bev,
+	"bot_face_fuse", f_bot_face_fuse,
+	"bot_vertex_fuse", f_bot_fuse,
+	"bot_condense", f_bot_condense,
 	"c", f_comb_std,
 	"cat", f_cat,
 	"center", f_center,
@@ -147,6 +153,7 @@ static struct cmdtab cmdtab[] = {
 	"get_dm_list", f_get_dm_list,
 	"get_edit_solid", f_get_edit_solid,
 	"get_more_default", cmd_get_more_default,
+	"get_solid_keypoint", get_solid_keypoint_tcl,
 	"grid2model_lu", f_grid2model_lu,
 	"grid2view_lu", f_grid2view_lu,
 #ifdef HIDELINE
@@ -2076,4 +2083,171 @@ Tcl_Interp *interp;
 
 	bu_vls_init(&edit_info_vls);
 	bu_vls_strcpy(&edit_info_vls, "edit_info");
+}
+
+int
+f_bot_face_fuse( clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int     argc;
+	char    **argv;
+{
+	struct directory *old_dp, *new_dp;
+	struct rt_db_internal intern;
+	struct rt_bot_internal *bot;
+	int count1=0;
+
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	if(argc != 3){
+	  Tcl_AppendResult(interp, "Usage:\nbot_face_fuse new_bot_solid old_bot_solid\n", (char *)NULL );
+	  return TCL_ERROR;
+	}
+
+	if( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+		return TCL_ERROR;
+
+	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity ) < 0 )
+	{
+	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	if( intern.idb_type != ID_BOT )
+	{
+		Tcl_AppendResult(interp, argv[2], " is not a BOT solid!!!\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
+	RT_BOT_CK_MAGIC( bot );
+
+	count1 = bot_face_fuse( bot );
+
+	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID)) == DIR_NULL )
+	{
+		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( rt_db_put_internal( new_dp, dbip, &intern ) < 0 )
+	{
+		rt_db_free_internal( &intern );
+		TCL_WRITE_ERR_return;
+	}
+	return TCL_OK;
+}
+
+int
+f_bot_fuse(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int     argc;
+	char    **argv;
+{
+	struct directory *old_dp, *new_dp;
+	struct rt_db_internal intern;
+	struct rt_bot_internal *bot;
+	int count1=0, count2=0;
+
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	if(argc != 3){
+	  Tcl_AppendResult(interp, "Usage:\nbot_fuse new_bot_solid old_bot_solid\n", (char *)NULL );
+	  return TCL_ERROR;
+	}
+
+	if( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+		return TCL_ERROR;
+
+	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity ) < 0 )
+	{
+	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	if( intern.idb_type != ID_BOT )
+	{
+		Tcl_AppendResult(interp, argv[2], " is not a BOT solid!!!\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
+	RT_BOT_CK_MAGIC( bot );
+
+	count1 = bot_vertex_fuse( bot );
+	if( count1 )
+		count2 = bot_condense( bot );
+
+	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID)) == DIR_NULL )
+	{
+		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( rt_db_put_internal( new_dp, dbip, &intern ) < 0 )
+	{
+		rt_db_free_internal( &intern );
+		TCL_WRITE_ERR_return;
+	}
+	return TCL_OK;
+}
+
+int
+f_bot_condense(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int     argc;
+	char    **argv;
+{
+	struct directory *old_dp, *new_dp;
+	struct rt_db_internal intern;
+	struct rt_bot_internal *bot;
+	int count2=0;
+	char count_str[255];
+
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	if(argc != 3){
+	  Tcl_AppendResult(interp, "Usage:\nbot_condense new_bot_solid old_bot_solid\n", (char *)NULL );
+	  return TCL_ERROR;
+	}
+
+	if( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+		return TCL_ERROR;
+
+	if( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity ) < 0 )
+	{
+	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	if( intern.idb_type != ID_BOT )
+	{
+		Tcl_AppendResult(interp, argv[2], " is not a BOT solid!!!\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
+	RT_BOT_CK_MAGIC( bot );
+
+	count2 = bot_condense( bot );
+	sprintf( count_str, "%d", count2 );
+	Tcl_AppendResult(interp, count_str, " dead vertices eliminated\n", (char *)NULL );
+
+	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID)) == DIR_NULL )
+	{
+		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( rt_db_put_internal( new_dp, dbip, &intern ) < 0 )
+	{
+		rt_db_free_internal( &intern );
+		TCL_WRITE_ERR_return;
+	}
+	return TCL_OK;
 }

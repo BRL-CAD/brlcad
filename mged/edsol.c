@@ -1650,6 +1650,7 @@ mat_t		mat;
 				VMOVE( mpt, &bot->vertices[bot_verts[0]*3] )
 			else
 				VMOVE( mpt, bot->vertices )
+
 			break;
 		}
 	case ID_DSP:
@@ -2077,6 +2078,16 @@ mat_t		mat;
 	MAT4X3PNT( pt, mat, mpt );
 }
 
+int
+get_solid_keypoint_tcl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+	get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
+	return TCL_OK;
+}
 
 void
 set_e_axes_pos(both)
@@ -3047,9 +3058,11 @@ sedit()
 			char *radio_result;
 			char mode[10];
 			int ret_tcl;
+			int old_mode;
 
 			RT_BOT_CK_MAGIC( bot );
-			sprintf( mode, " %d", bot->mode - 1);
+			old_mode = bot->mode;
+			sprintf( mode, " %d", old_mode - 1);
 			ret_tcl = Tcl_VarEval( interp, "cad_radio", " .bot_mode_radio ",
 				   bu_vls_addr( &pathName ), " _bot_mode_result",
 				   " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
@@ -3062,6 +3075,27 @@ sedit()
 			}
 			radio_result = Tcl_GetVar( interp, "_bot_mode_result", TCL_GLOBAL_ONLY );
 			bot->mode = atoi( radio_result ) + 1;
+			if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS )
+			{
+				if( old_mode != RT_BOT_PLATE && old_mode != RT_BOT_PLATE_NOCOS )
+				{
+					/* need to create some thicknesses */
+					bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ), "BOT thickness" );
+					bot->face_mode = bu_bitv_new( bot->num_faces );
+					bu_bitv_clear( bot->face_mode );
+				}
+			}
+			else
+			{
+				if( old_mode == RT_BOT_PLATE || old_mode == RT_BOT_PLATE_NOCOS )
+				{
+					/* free the per face memory */
+					bu_free( (char *)bot->thickness, "BOT thickness" );
+					bot->thickness = (fastf_t *)NULL;
+					bu_free( (char *)bot->face_mode, "BOT face_mode" );
+					bot->face_mode = (struct bu_bitv *)NULL;
+				}
+			}
 		}
 		break;
 	case ECMD_BOT_ORIENT:
@@ -3098,9 +3132,12 @@ sedit()
 
 			if( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
 			{
-				(void)Tcl_VarEval( interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
+				if( Tcl_VarEval( interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
 					"{Cannot edit face thickness in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
-					(char *)NULL );
+					(char *)NULL ) != TCL_OK )
+				{
+					bu_log( "cad_dialog failed!!!!: %s\n", interp->result );
+				}
 				break;
 			}
 
@@ -5501,10 +5538,6 @@ CONST vect_t	mousevec;
   		}
 		bu_vls_strcat( &vls, " } " );
 
-		Tcl_LinkVar( interp, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT );
-		Tcl_LinkVar( interp, "bot_v2", (char *)&bot_verts[1], TCL_LINK_INT );
-		Tcl_LinkVar( interp, "bot_v3", (char *)&bot_verts[2], TCL_LINK_INT );
-
 		if( hits == 0 )
   		{
 	  		bot_verts[0] = -1;
@@ -5518,10 +5551,14 @@ CONST vect_t	mousevec;
 	  		bot_verts[2] = v3;
   		}
 		else
-		  {
-		    ret_tcl = Tcl_VarEval( interp, "bot_face_select ", bu_vls_addr( &vls ), (char *)NULL );
-		    bu_vls_free( &vls );
-		      if( ret_tcl != TCL_OK )
+		{
+			Tcl_LinkVar( interp, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT );
+			Tcl_LinkVar( interp, "bot_v2", (char *)&bot_verts[1], TCL_LINK_INT );
+			Tcl_LinkVar( interp, "bot_v3", (char *)&bot_verts[2], TCL_LINK_INT );
+
+			ret_tcl = Tcl_VarEval( interp, "bot_face_select ", bu_vls_addr( &vls ), (char *)NULL );
+			bu_vls_free( &vls );
+			if( ret_tcl != TCL_OK )
 			{
 			  bu_log( "bot_face_select failed: %s\n", interp->result );
 			  bot_verts[0] = -1;
@@ -5529,7 +5566,7 @@ CONST vect_t	mousevec;
 			  bot_verts[2] = -1;
 			  break;
 			}
-		  }
+		}
   	}
   	break;
   case ECMD_NMG_EPICK:
@@ -7984,9 +8021,9 @@ struct rt_db_internal	*ip;
 				MAT4X3PNT( pos_view, xform, mid_pt );
 				POINT_LABEL_STR( pos_view, "edge" );
 			}
-			else if( bot_verts[0] > -1 )
+			if( bot_verts[0] > -1 )
 			{
-				/* editing a vertex */
+				/* editing something, always label the vertex (this is the keypoint) */
 				MAT4X3PNT( pos_view, xform, &bot->vertices[bot_verts[0]*3] );
 				POINT_LABEL_STR( pos_view, "pt" );
 			}
