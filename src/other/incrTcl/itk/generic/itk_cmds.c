@@ -73,10 +73,15 @@ namespace eval ::itk {\n\
             lappend dirs [file join $bindir .. library]\n\
             lappend dirs [file join $bindir .. .. library]\n\
             lappend dirs [file join $bindir .. .. itk library]\n\
+            lappend dirs [file join $bindir .. .. .. itk library]\n\
+            lappend dirs [file join $bindir .. .. .. .. itk library]\n\
+            lappend dirs [file join $bindir .. .. .. .. .. itk library]\n\
             lappend dirs [file join $bindir src other incrTcl itk library]\n\
             lappend dirs [file join $bindir .. src other incrTcl itk library]\n\
             lappend dirs [file join $bindir .. .. src other incrTcl itk library]\n\
             lappend dirs [file join $bindir .. .. .. src other incrTcl itk library]\n\
+            lappend dirs [file join $bindir .. .. .. .. src other incrTcl itk library]\n\
+            lappend dirs [file join $bindir .. .. .. .. .. src other incrTcl itk library]\n\
         }\n\
         foreach i $dirs {\n\
             set library $i\n\
