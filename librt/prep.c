@@ -67,10 +67,11 @@ register struct rt_i *rtip;
 
 	/* Compute size of model-specific variable-length data structures */
 	/* -sizeof(bitv_t) == sizeof(struct partition.pt_solhit) */
-	rtip->rti_pt_bytes = sizeof(struct partition) + 
-		BITS2BYTES(rtip->nsolids) - sizeof(bitv_t) + 1;
-	rtip->rti_bv_bytes = BITS2BYTES(rtip->nsolids) +
-		BITS2BYTES(rtip->nregions) + 4*sizeof(bitv_t);
+	rtip->rti_pt_bytes = sizeof(struct partition) - sizeof(bitv_t) + 1 +
+		RT_BITV_BITS2WORDS(rtip->nsolids) * sizeof(bitv_t);
+	rtip->rti_bv_bytes = sizeof(bitv_t) *
+		( RT_BITV_BITS2WORDS(rtip->nsolids) +
+		RT_BITV_BITS2WORDS(rtip->nregions) + 2 );
 
 	/*
 	 *  Allocate space for a per-solid bit of rtip->nregions length.
@@ -127,12 +128,17 @@ register struct rt_i *rtip;
 		}
 	}
 
+	/* Space for array of soltab pointers indexed by solid bit number */
+	rtip->rti_Solids = (struct soltab **)rt_malloc(
+		rtip->nsolids * sizeof(struct soltab *),
+		"rtip->rti_Solids[]" );
 	/*
 	 *  Build array of solid table pointers indexed by solid ID.
 	 *  Last element for each kind will be found in
 	 *	rti_sol_by_type[id][rti_nsol_by_type[id]-1]
 	 */
 	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
+		rtip->rti_Solids[stp->st_bit] = stp;
 		rtip->rti_nsol_by_type[stp->st_id]++;
 	}
 	/* Find solid type with maximum length (for rt_shootray) */
