@@ -70,13 +70,16 @@ rb_tree *rb_create (char *description, int nm_orders, int (**order_funcs)())
  *	    Insert a node into one linear order of a red-black tree
  *
  *	This function has three parameters: the tree and linear order into
- *	which to insert the new node and the contents of the node.
+ *	which to insert the new node and the contents of the node.  If
+ *	the new node was equal (modulo the linear order) to a node already
+ *	in the tree, _rb_insert() returns 1.  Otherwise, it returns 0.
  */
-static void _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
+static int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
 {
     struct rb_node	*node;
     struct rb_node	*parent;
     int			(*compare)();
+    int			comparison;
 
 
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
@@ -95,7 +98,8 @@ static void _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
     while (node != rb_null(tree))
     {
 	parent = node;
-	if ((*compare)(rb_data(new_node, order), rb_data(node, order)) < 0)
+	comparison = (*compare)(rb_data(new_node, order), rb_data(node, order));
+	if (comparison < 0)
 	    node = rb_left_child(node, order);
 	else
 	    node = rb_right_child(node, order);
@@ -107,6 +111,8 @@ static void _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
 	rb_left_child(parent, order) = new_node;
     else
 	rb_right_child(parent, order) = new_node;
+    
+    return (comparison == 0);
 }
 
 /*		    R B _ I N S E R T ( )
@@ -117,12 +123,15 @@ static void _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
  *	the new node and the contents of the node.  The bulk of this code
  *	is from T. H. Cormen, C. E. Leiserson, and R. L. Rivest.  _Intro-
  *	duction to Algorithms_.  Cambridge, MA: MIT Press, 1990. p. 268.
- *	On success, rb_insert() returns the value 1.  Otherwise, it returns 0.
+ *	On failure, rb_insert() returns the value -1.  Otherwise, it
+ *	returns the number of orders for which the new node was equal to
+ *	a node already in the tree.
  */
 int rb_insert (rb_tree *tree, void *data)
 {
     int			nm_orders;
     int			order;
+    int			result = 0;
     struct rb_node	*node;
 
     /* Check data type of the parameter "tree" */
@@ -150,7 +159,7 @@ int rb_insert (rb_tree *tree, void *data)
 			    "red-black data")) == 0))
     {
 	fputs("rb_insert(): Ran out of memory\n", stderr);
-	return (0);
+	return (-1);
     }
 
     /*
@@ -160,7 +169,7 @@ int rb_insert (rb_tree *tree, void *data)
     node -> rbn_tree = tree;
     for (order = 0; order < nm_orders; ++order)
 	rb_data(node, order) = data;
-    node -> rbn_data_count = nm_orders;
+    node -> rbn_data_refs = nm_orders;
 
     /*
      *	If the tree was empty, install this node as the root
@@ -178,13 +187,13 @@ int rb_insert (rb_tree *tree, void *data)
     else
 	for (order = 0; order < nm_orders; ++order)
 	{
-	    _rb_insert(tree, order, node);
+	    result += _rb_insert(tree, order, node);
 	    rb_set_color(node, order, RB_RED);
 	}
 
     /* Record the node with which we've been working */
     current_node = node;
-    return (1);
+    return (result);
 }
 
 /*		    R B _ C R E A T E 1 ( )
