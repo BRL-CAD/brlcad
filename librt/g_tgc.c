@@ -1691,9 +1691,9 @@ struct directory *dp;
 	tip = (struct tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
-	ell_16pts( bottom, tip->v, tip->a, tip->b );
+	rt_ell_16pts( bottom, tip->v, tip->a, tip->b );
 	VADD2( work, tip->v, tip->h );
-	ell_16pts( top, work, tip->c, tip->d );
+	rt_ell_16pts( top, work, tip->c, tip->d );
 
 	/* Draw the top */
 	ADD_VL( vhead, &top[15*ELEMENTS_PER_VECT], 0 );
@@ -1863,9 +1863,9 @@ struct directory *dp;
 	/* Create two 16 point ellipses
 	 *  Note that in both cases the points go counterclockwise.
 	 */
-	ell_16pts( bottom, tip->v, tip->a, tip->b );
+	rt_ell_16pts( bottom, tip->v, tip->a, tip->b );
 	VADD2( work, tip->v, tip->h );
-	ell_16pts( top, work, tip->c, tip->d );
+	rt_ell_16pts( top, work, tip->c, tip->d );
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
