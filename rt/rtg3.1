@@ -1,0 +1,148 @@
+.\" @(#) $Header$ (BRL)
+.TH RTG3 1 BRL/CAD
+.UC 4
+.SH NAME
+rtg3 \(em raytrace a model, writing a COVART (GIFT) 3-component format
+shotline file
+.SH SYNOPSIS
+.B rtg3
+[ options ... ]
+model.g
+objects ...
+> model.cov
+.SH DESCRIPTION
+.I Rtg3
+operates on the indicated
+.I objects
+in the input
+.I model.g
+and produces a GIFT/COVART
+shotline file with three components per line, and both
+entrance and exit obliquity angles
+on standard output.
+The region ID field of the output
+file is set to the region id of each intersected region (partition).
+If the ray partition is followed by air,
+the aircode for the air region (and the line-of-sight thickness of the air)
+is noted on the shotline header line.
+.LP
+The orientation of the rays to be fired may be specified by
+the
+.B \-a
+and
+.B \-e
+options, in which case the model will be autosized, and the grid
+will be centered on the centroid of the model, with ray spacing
+chosen to span the entire set of
+.I objects.
+Alternatively,
+with the
+.B \-M
+option, a transformation matrix may be provided on standard input
+which maps model-space to view-space.
+In this case, the grid ranges from -1.0 <= X,Y <= +1.0 in view space,
+with the size of the grid (number of rays fired) specified with
+.B \-s
+This option is most useful when
+.B rtg3
+is being invoked from a shell script created by an
+.IR mged (1)
+\fIsaveview\fR command.
+.LP
+The following options are recognized.
+.TP
+.B \-s#
+Number of rays to fire in X and Y directions (square grid).
+Default is 512 (512x512).
+.TP
+.B \-a#
+Select azimuth in degrees.  Used with
+.B \-e
+and conflicts with
+.B \-M
+.TP
+.B \-e#
+Select elevation in degrees.  Used with
+.B \-a
+and conflicts with
+.B \-M
+.TP
+.B \-M
+Read model2view matrix from standard input.
+Conflicts with
+.B \-a
+and
+.B \-e
+.TP
+.B \-U #
+sets the Boolean variable
+.I use_air
+to the given value.
+The default for
+.IR rtg3 (1)
+is on, ie
+.BR \-U1 ,
+but the effect of air regions may be disabled with
+.BR \-U0 .
+.TP
+.B \-o
+.B output.cov
+specifies a named file for COVART-format output.
+By default, the shotlines are written to stdout.
+.TP
+.B \-x#
+Set librt debug flags to (hexadecimal) number.
+.LP
+The
+.B rtg3
+program is a simple front-end to
+.IR librt (3)
+which is most useful when used with
+.IR mged (1)
+and
+.IR covart (1V).
+.SH "FORMAT"
+The generaly layout of the output format is:
+.LP
+Overall header line (one per run)
+.LP
+View header line (one per view)
+.LP
+Ray (shotline) header line (one per ray)
+.LP
+Component line (one for each three components in this ray)
+.SH "SEE ALSO"
+covart(1V), gift(1V), mged(1),
+rt(1), rtray(1),
+librt(3), plot3(5), ray(5V).
+[[refer to JTCG COVART manual]]
+.SH DIAGNOSTICS
+Numerous error conditions are possible, usually due to errors in
+the geometry database.
+Descriptive messages are printed on standard error (file descriptor 2).
+.SH AUTHORS
+Dr. Susanne Muuss
+.br
+Michael John Muuss
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005-5066
+.SH COPYRIGHT
+This software is Copyright (C) 1989 by the United States Army.
+All rights reserved.
+.SH BUGS
+The COVART file format permits multiple views to be stored in one file.
+.I Rtg3
+presently can only compute a single view.
+.LP
+Most deficiencies observed while using the
+.B rtg3
+program are usually with the
+.IR librt (3)
+package instead.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.MIL>.
