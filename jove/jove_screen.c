@@ -1,48 +1,51 @@
 /*
- *			J O V E _ S C R E E N . C 
+ *			J O V E _ S C R E E N . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:21  mike
+ * Release_4.4
+ *
  * Revision 10.3  93/10/26  06:33:01  mike
  * Changed printf() to jprintf() so that all modules could safely
  * use stdio.h
- * 
+ *
  * Revision 10.2  93/10/26  05:30:25  mike
  * ANSI C
- * 
+ *
  * Revision 10.1  91/10/12  06:54:04  mike
  * Release_4.0
- * 
+ *
  * Revision 2.5  91/08/30  18:11:07  mike
  * Made explicit that termcap.h to be used is the local version
- * 
+ *
  * Revision 2.4  91/08/30  17:54:39  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.3  88/03/10  05:25:54  phil
  * ignore ll if li != winsize
- * 
+ *
  * Revision 2.2  85/05/14  01:43:59  dpk
  * Added changes to support System V (conditional on SYS5)
- * 
+ *
  * Revision 2.1  85/01/17  23:58:32  dpk
- * 
- * 
+ *
+ *
  * Revision 2.0  84/12/26  16:47:55  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.4  84/02/06  20:43:17  dpk
  * Fixed handling of clear to end of line (ADM3A bug).  Thanks
  * go to Terry Slatterly for finding this bug and providing the fix.
- * 
+ *
  * Revision 1.3  84/02/06  20:41:23  dpk
  * Made screen handling more conservative (i.e. fixed)
- * 
+ *
  * Revision 1.2  83/12/16  00:09:41  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -664,15 +667,15 @@ DoPlacur(line, col)
 	/* Which of these is simpler */
 	CursMin(VertMin, WarpVert, NUMVERT);
 
-	/* Homing first and lowering first are considered 
+	/* Homing first and lowering first are considered
 	   direct motions.
 	   Homing first's total is the sum of the cost of homing
 	   and the sum of tabbing (if possible) to the right. */
-	
+
 	if (VertMin->c_numchars + HorMin->c_numchars <= 3) {
 		DirectMin = &WarpDirect[DIRECT];	/* A dummy ... */
 		DirectMin->c_numchars = 100;
-	}		
+	}
 	WarpDirect[DIRECT].c_numchars = CM ?
 				strlen(Cmstr = tgoto(CM, col, line)) : 1000;
 	WarpDirect[HOME].c_numchars = HomeLen + line +
@@ -716,4 +719,3 @@ register int	from,
 	}
 	return numchars + abs(from - to);
 }
-

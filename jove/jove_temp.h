@@ -1,35 +1,38 @@
 /*
- *			J O V E _ T E M P . H 
+ *			J O V E _ T E M P . H
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:23  mike
+ * Release_4.4
+ *
  * Revision 10.1  91/10/12  06:54:05  mike
  * Release_4.0
- * 
+ *
  * Revision 2.4  91/08/30  19:33:24  mike
  * Changed VMUNIX to !defined(pdp11)
- * 
+ *
  * Revision 2.3  91/08/30  17:39:55  mike
  * No symbols after #else
- * 
+ *
  * Revision 2.2  87/04/14  20:07:34  dpk
  * Changed to support Crays.
- * 
+ *
  * Revision 2.1  86/09/23  22:28:37  mike
  * Externs now declared properly.
  * I/O fixes for SysV
- * 
+ *
  * Revision 2.1  86/09/23  22:26:34  mike
  * Externs now declared properly.
  * I/O fixes for SysV
- * 
+ *
  * Revision 2.0  84/12/26  16:50:00  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:10:22  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 
 /*
@@ -54,7 +57,7 @@
 #define	OFFMSK	01777
 #define	SHFT	0
 
-#else 
+#else
 
 #define	BLKMSK	01777
 #define	BNDRY	16
@@ -65,7 +68,7 @@
 #define	OFFMSK	077
 #define	SHFT	3
 
-#endif 
+#endif
 
 extern char	ibuff1[BSIZ],	/* Holds block `iblock1' of the tmp file */
 	ibuff2[BSIZ],	/*   "     "   `iblock2' of the tmp file */
@@ -84,4 +87,3 @@ extern int	ichng1,		/* ibuff1 should be written to its
 extern disk_line	tline;		/* Pointer to end of tmp file */
 
 extern char	*tfname;
-
