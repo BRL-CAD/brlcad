@@ -52,6 +52,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "pkg.h"
+#include "externs.h"
 
 #include "./list.h"
 #include "./remrt.h"
@@ -278,8 +279,6 @@ char	object_list[512];	/* contains list of "MGED" objects */
 FILE	*helper_fp;		/* pipe to rexec helper process */
 char	ourname[128];
 
-extern char *malloc();
-
 int	tcp_listen_fd;
 extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 
@@ -431,6 +430,11 @@ int	auto_start;
 
 	/* Compute until no work remains */
 	prev_serv = 0;
+
+	if( FrameHead.fr_forw == &FrameHead )  {
+		check_input( 30 );	/* delay up to 30 secs */
+	}
+
 	while( FrameHead.fr_forw != &FrameHead )  {
 		if( auto_start )  {
 			(void)gettimeofday( &now, (struct timezone *)0 );
@@ -1591,7 +1595,7 @@ char *buf;
 	if( (sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime )) < 0.1 )
 		sp->sr_l_elapsed = 0.1;
 
-	i = struct_import( (stroff_t)&info, desc_line_info, buf );
+	i = struct_import( (char *)&info, desc_line_info, buf );
 	if( i < 0 || i != info.li_len )  {
 		rt_log("struct_import error, %d, %d\n", i, info.li_len);
 		goto out;
@@ -1847,7 +1851,7 @@ char *name;
 		xx <<= 1;
 	while( yy < width )
 		yy <<= 1;
-	if( (fbp = fb_open( framebuffer, xx, yy )) == FBIO_NULL )  {
+	if( (fbp = fb_open( name?name:framebuffer, xx, yy )) == FBIO_NULL )  {
 		rt_log("fb_open %d,%d failed\n", width, height);
 		return(-1);
 	}
