@@ -1880,13 +1880,11 @@ new_edit_mats()
 static int
 do_rc()
 {
-	FILE	*fp;
+	FILE	*fp = NULL;
 	char	*path;
-	int 	found;
 	struct	bu_vls str;
 	int bogus;
 
-	found = 0;
 	bu_vls_init( &str );
 
 #define ENVRC	"MGED_RCFILE"
@@ -1895,31 +1893,28 @@ do_rc()
 	if( (path = getenv(ENVRC)) != (char *)NULL ) {
 		if ((fp = fopen(path, "r")) != NULL ) {
 			bu_vls_strcpy( &str, path );
-			found = 1;
 		}
 	}
 
-	if( !found ) {
+	if( !fp ) {
 		if( (path = getenv("HOME")) != (char *)NULL )  {
 			bu_vls_strcpy( &str, path );
 			bu_vls_strcat( &str, "/" );
 			bu_vls_strcat( &str, RCFILE );
 
-			if( (fp = fopen(bu_vls_addr(&str), "r")) != NULL )
-			  found = 1;
+			fp = fopen(bu_vls_addr(&str), "r");
 		}
 	}
 
-	if( !found ) {
+	if( !fp ) {
 		if( (fp = fopen( RCFILE, "r" )) != NULL )  {
 			bu_vls_strcpy( &str, RCFILE );
-			found = 1;
 		}
 	}
 
     /* At this point, if none of the above attempts panned out, give up. */
 
-	if( !found ){
+	if( !fp ){
 	  bu_vls_free(&str);
 	  return -1;
 	}
