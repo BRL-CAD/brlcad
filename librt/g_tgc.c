@@ -1649,7 +1649,7 @@ struct directory *dp;
 	ell_16pts( top, work, ti.c, ti.d );
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = m->r_p->s_p;
+	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
 
 	for( i=0; i<16; i++ )  {
 		vtop[i] = vtemp[i] = (struct vertex *)0;

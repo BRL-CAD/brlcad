@@ -443,7 +443,9 @@ struct soltab *stp;
 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
-
+#if 0
+/*	Superseeded by nmg_find_vu_in_face
+ */
 /*
  *			R T _ N M G _ F I N D _ P T _ I N _ F A C E
  *
@@ -488,7 +490,7 @@ double		tol_sq;
 	} while (lu != fu->lu_p);
 	return ((struct vertex *)NULL);
 }
-
+#endif
 /*
  *			R T _ N M G _ F I N D _ P T _ I N _ S H E L L
  *
@@ -509,49 +511,87 @@ double		tol_sq;
 	struct faceuse	*fu;
 	struct loopuse	*lu;
 	struct edgeuse	*eu;
+	struct vertexuse *vu;
 	struct vertex	*v;
 	struct vertex_g	*vg;
 	vect_t		delta;
 
 	NMG_CK_SHELL(s);
 
-	if( fu = s->fu_p ) {
+	fu = NMG_LIST_FIRST(faceuse, &s->fu_hd);
+	while (NMG_LIST_MORE(fu, faceuse, &s->fu_hd) ) {
 		/* Shell has faces */
-		do {
-			NMG_CK_FACEUSE(fu);
-			if( (v = rt_nmg_find_pt_in_face( fu, pt, tol_sq )) )
-				return(v);
-			if (fu->next != s->fu_p &&
-			    fu->next->f_p == fu->f_p)
-				fu = fu->next->next;
-			else
-				fu = fu->next;
-		} while (fu != s->fu_p);
-	}
-	if( lu = s->lu_p ) {
-		do {
-			NMG_CK_LOOPUSE(lu);
-			/* XXX what to do here? */
-			rt_log("rt_nmg_find_pt_in_face(): lu?\n");
-			lu = lu->next;
-		} while (lu != s->fu_p->lu_p);
+		NMG_CK_FACEUSE(fu);
+			if( (vu = nmg_find_vu_in_face( pt, fu, tol_sq )) )
+				return(vu->v_p);
 
+			if (NMG_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
+				fu = NMG_LIST_PNEXT_PNEXT(faceuse, fu);
+			else
+				fu = NMG_LIST_PNEXT(faceuse, fu);
 	}
-	if( eu = s->eu_p ) {
-		do {
-			NMG_CK_EDGEUSE(eu);
-			NMG_CK_VERTEXUSE(eu->vu_p);
-			v = eu->vu_p->v_p;
-			NMG_CK_VERTEX(v);
-			if( (vg = v->vg_p) )  {
+
+	for (NMG_LIST(lu, loopuse, &s->lu_hd)) {
+		NMG_CK_LOOPUSE(lu);
+		if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+			vu = NMG_LIST_FIRST(vertexuse, &lu->down_hd);
+			NMG_CK_VERTEX(vu->v_p);
+			if (vg = vu->v_p->vg_p) {
 				NMG_CK_VERTEX_G(vg);
 				VSUB2( delta, vg->coord, pt );
 				if( MAGSQ(delta) < tol_sq )
-					return(v);
+					return(vu->v_p);
 			}
-			eu = eu->next;
-		} while (eu != s->eu_p);
+		} else if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+			rt_log("in %s at %d ", __FILE__, __LINE__);
+			rt_bomb("loopuse has bad child\n");
+		} else {
+			/* loopuse made of edgeuses */
+			for (NMG_LIST(eu, edgeuse, &lu->down_hd)) {
+				
+				NMG_CK_EDGEUSE(eu);
+				NMG_CK_VERTEXUSE(eu->vu_p);
+				v = eu->vu_p->v_p;
+				NMG_CK_VERTEX(v);
+				if( (vg = v->vg_p) )  {
+					NMG_CK_VERTEX_G(vg);
+					VSUB2( delta, vg->coord, pt );
+					if( MAGSQ(delta) < tol_sq )
+						return(v);
+				}
+			}
+		}
 	}
+
+
+
+	lu = NMG_LIST_FIRST(loopuse, &s->lu_hd);
+	while (NMG_LIST_MORE(lu, loopuse, &s->lu_hd) ) {
+
+			NMG_CK_LOOPUSE(lu);
+			/* XXX what to do here? */
+			rt_log("nmg_find_vu_in_face(): lu?\n");
+
+			if (NMG_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
+				lu = NMG_LIST_PNEXT_PNEXT(loopuse, lu);
+			else
+				lu = NMG_LIST_PNEXT(loopuse, lu);
+	}
+
+	for (NMG_LIST(eu, edgeuse, &s->eu_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_VERTEXUSE(eu->vu_p);
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+		if( (vg = v->vg_p) )  {
+			NMG_CK_VERTEX_G(vg);
+			VSUB2( delta, vg->coord, pt );
+			if( MAGSQ(delta) < tol_sq )
+				return(v);
+		}
+	}
+
+
 	if (s->vu_p) {
 		NMG_CK_VERTEXUSE(s->vu_p);
 		v = s->vu_p->v_p;
@@ -593,7 +633,8 @@ double			rel_tol;
 	int		npts;
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = m->r_p->s_p;
+	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
+
 
 	/* rel_tol is hard to deal with, given we don't know the RPP yet */
 	tol = abs_tol;

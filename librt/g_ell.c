@@ -943,7 +943,7 @@ rt_log("norm_tol abs_tol=%g, state.theta_tol=%g\n", abs_tol, state.theta_tol);
 rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	state.s = m->r_p->s_p;
+	state.s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
 
 	/* Find the number of segments to divide 90 degrees worth into */
 	nsegs = rt_halfpi / state.theta_tol + 0.999;

@@ -114,6 +114,8 @@ long	magic;
 		return("vertexuse");
 	case NMG_VERTEXUSE_A_MAGIC:
 		return("vertexuse_a");
+	case NMG_LIST_MAGIC:
+		return("nmg_list");
 	}
 }
 
@@ -130,8 +132,8 @@ struct model *nmg_mm()
 	GET_MODEL(m);
 
 	m->magic = NMG_MODEL_MAGIC;
-	m->r_p = (struct nmgregion *)NULL;
 	m->ma_p = (struct model_a *)NULL;
+	NMG_LIST_INIT( &m->r_hd );
 
 	return(m);
 }
@@ -146,23 +148,23 @@ struct model *nmg_mmr()
 	struct model *m;
 	struct nmgregion *r;
 
-	GET_MODEL(m);
+	m = nmg_mm();
 	GET_REGION(r);
+	r->l.magic = NMG_REGION_MAGIC;
 
-	m->magic = NMG_MODEL_MAGIC;
-	m->r_p = r;
-	m->ma_p = (struct model_a *)NULL;
-
-	r->magic = NMG_REGION_MAGIC;
 	r->m_p = m;
-	r->next = r->last = r;
+
 	r->ra_p = (struct nmgregion_a *)NULL;
-	r->s_p = (struct shell *)NULL;
+	NMG_LIST_INIT( &r->s_hd );
+
+	NMG_LIST_APPEND( &m->r_hd, &r->l );
 
 	return(m);
 }
 
-/*	N M G _ M R
+/*
+ *			N M G _ M R S V
+ *
  *	Make new region, shell, vertex in model
  *	Create a new (2nd, 3rd, ...) region in model consisting of a minimal
  *	shell.
@@ -175,19 +177,21 @@ struct model *m;
 	NMG_CK_MODEL(m);
 
 	GET_REGION(r);
-
-	r->magic = NMG_REGION_MAGIC;
-	r->s_p = (struct shell *)NULL;
-	(void)nmg_msv(r);
-
+	r->l.magic = NMG_REGION_MAGIC;
 	r->m_p = m;
 
-	/* new region goes at "head" of list of regions */
-	DLLINS(m->r_p, r);
+	NMG_LIST_INIT( &r->s_hd );
+	(void)nmg_msv(r);
+
+	/* new region goes at "head" of list of regions in model */
+	NMG_LIST_APPEND( &m->r_hd, &r->l );
 
 	return(r);
 }
-/*	N M G _ M S V
+
+/*
+ *			N M G _ M S V
+ *
  *	Make Shell, Vertex Use, Vertex
  *	Create a new shell in a specified region.  The shell will consist
  *	of a single vertexuse and vertex (which are also created).
@@ -195,23 +199,25 @@ struct model *m;
 struct shell *nmg_msv(r_p)
 struct nmgregion	*r_p;
 {
-	struct shell *s;
+	struct shell 		*s;
+	struct vertexuse	*vu;
 
 	NMG_CK_REGION(r_p);
 
-	GET_SHELL(s);
-
 	/* set up shell */
-	s->magic = NMG_SHELL_MAGIC;
+	GET_SHELL(s);
+	s->l.magic = NMG_SHELL_MAGIC;
+
 	s->r_p = r_p;
-	DLLINS(r_p->s_p, s);
+	NMG_LIST_APPEND( &r_p->s_hd, &s->l );
 
 	s->sa_p = (struct shell_a *)NULL;
-	s->vu_p = nmg_mvvu(&s->magic);
-	s->fu_p = (struct faceuse *)NULL;
-	s->lu_p = (struct loopuse *)NULL;
-	s->eu_p = (struct edgeuse *)NULL;
+	NMG_LIST_INIT( &s->fu_hd );
+	NMG_LIST_INIT( &s->lu_hd );
+	NMG_LIST_INIT( &s->eu_hd );
 
+	vu = nmg_mvvu(&s->l.magic);
+	s->vu_p = vu;
 	return(s);
 }
 
@@ -224,20 +230,22 @@ long *upptr;		/* pointer to parent struct */
 {
 	struct vertexuse *vu;
 
+	NMG_CK_VERTEX(v);
+
 	if (*upptr != NMG_SHELL_MAGIC &&
 	    *upptr != NMG_LOOPUSE_MAGIC &&
 	    *upptr != NMG_EDGEUSE_MAGIC) {
 		rt_log("in %s at %d magic not shell, loop, or edge (%d)\n",
 		    __FILE__, __LINE__, *upptr);
-		rt_bomb("Cannot build vertexuse without parent");
+		rt_bomb("nmg_mvu() Cannot build vertexuse without parent");
 	}
 
 	GET_VERTEXUSE(vu);
+	vu->l.magic = NMG_VERTEXUSE_MAGIC;
 
-	vu->magic = NMG_VERTEXUSE_MAGIC;
 	vu->v_p = v;
 	vu->vua_p = (struct vertexuse_a *)NULL;
-	DLLINS(v->vu_p, vu);
+	NMG_LIST_APPEND( &v->vu_hd, &vu->l );
 	vu->up.magic_p = upptr;
 
 	return(vu);
@@ -252,22 +260,34 @@ long *upptr;
 	struct vertex *v;
 
 	GET_VERTEX(v);
-
 	v->magic = NMG_VERTEX_MAGIC;
+	NMG_LIST_INIT( &v->vu_hd );
 	v->vg_p = (struct vertex_g *)NULL;
 	return(nmg_mvu(v, upptr));
 }
 
 
-/*	N M G _ M E
+/*
+ *			N M G _ M E
+ *
  *	Make edge
  *	Make a new edge between a pair of vertices in a shell.
+ *
  *	A new vertex will be made for any NULL vertex pointer parameters.
  *	If we need to make a new vertex and the shell still has its vertexuse
  *	we re-use that vertex rather than freeing and re-allocating.
  *
+ *	If both vertices were specified, and the shell also had a
+ *	vertexuse pointer, the vertexuse in the shell is killed.
+ *
  *	Explicit Return:
  *		edgeuse whose vertex use is v1, whose eumate has vertex v2
+ *
+ *  Implicit Returns -
+ *	1)  If the shell had a lone vertex in vu_p, it is destroyed,
+ *	even if both vertices were specified.
+ *	2)  The returned edgeuse is the first item on the shell's
+ *	eu_hd list, followed immediately by the mate.
  */
 struct edgeuse *nmg_me(v1, v2, s)
 struct vertex *v1, *v2;
@@ -275,20 +295,21 @@ struct shell *s;
 {
 	struct edge *e;
 	struct edgeuse *eu1, *eu2;
+	struct vertexuse	*vu;
 
 	if (v1) NMG_CK_VERTEX(v1);
 	if (v2) NMG_CK_VERTEX(v2);
 	NMG_CK_SHELL(s);
 
 	GET_EDGE(e);
-	GET_EDGEUSE(eu1);
-	GET_EDGEUSE(eu2);
-
 	e->magic = NMG_EDGE_MAGIC;
-	e->eu_p = eu1;
 	e->eg_p = (struct edge_g *)NULL;
 
-	eu1->magic = eu2->magic = NMG_EDGEUSE_MAGIC;
+	GET_EDGEUSE(eu1);
+	GET_EDGEUSE(eu2);
+	eu1->l.magic = eu2->l.magic = NMG_EDGEUSE_MAGIC;
+
+	e->eu_p = eu1;
 
 	eu1->radial_p = eu1->eumate_p = eu2;
 	eu2->radial_p = eu2->eumate_p = eu1;
@@ -297,46 +318,51 @@ struct shell *s;
 	eu1->eua_p = eu2->eua_p = (struct edgeuse_a *)NULL;
 
 	if (v1)
-		eu1->vu_p = nmg_mvu(v1, &eu1->magic);
-	else if (s->vu_p) {
+		eu1->vu_p = nmg_mvu(v1, &eu1->l.magic);
+	else if (s->vu_p)  {
 		/* steal the vertex from the shell */
-		eu1->vu_p = s->vu_p;
-		s->vu_p->up.eu_p = eu1;
+		vu = s->vu_p;
 		s->vu_p = (struct vertexuse *)NULL;
+		eu1->vu_p = vu;
+		vu->up.eu_p = eu1;
 	}
 	else
-		eu1->vu_p = nmg_mvvu(&eu1->magic);
+		eu1->vu_p = nmg_mvvu(&eu1->l.magic);
 
 
 	if (v2)
-		eu2->vu_p = nmg_mvu(v2, &eu2->magic);
-	else if (s->vu_p) {
+		eu2->vu_p = nmg_mvu(v2, &eu2->l.magic);
+	else if (s->vu_p)  {
 		/* steal the vertex from the shell */
-		eu2->vu_p = s->vu_p;
-		s->vu_p->up.eu_p = eu2;
+		vu = s->vu_p;
 		s->vu_p = (struct vertexuse *)NULL;
+		eu2->vu_p = vu;
+		vu->up.eu_p = eu2;
 	}
 	else
-		eu2->vu_p = nmg_mvvu(&eu2->magic);
+		eu2->vu_p = nmg_mvvu(&eu2->l.magic);
 
-	if (s->vu_p)
-		nmg_kvu(s->vu_p);
+	if( s->vu_p )  {
+		/* Ensure shell no longer has any stored vertexuse */
+		nmg_kvu( s->vu_p );
+		s->vu_p = (struct vertexuse *)NULL;
+	}
 
 	/* link the edgeuses to the parent shell */
 	eu1->up.s_p = eu2->up.s_p = s;
 
-	if (s->vu_p)
-		nmg_kvu(s->vu_p);
-
-	DLLINS(eu2->up.s_p->eu_p, eu2);
-	DLLINS(eu1->up.s_p->eu_p, eu1);
+	/* shell's eu_head, eu1, eu2, ... */
+	NMG_LIST_APPEND( &s->eu_hd, &eu1->l );
+	NMG_LIST_APPEND( &eu1->l, &eu2->l );
 
 	return(eu1);
 }
 
 
 
-/*	N M G _ M E o n V U
+/*
+ *			N M G _ M E o n V U
+ *
  * Make edge on vertexuse.
  * Vertexuse must be sole element of either a shell or a loopuse.
  */
@@ -351,18 +377,18 @@ struct vertexuse *vu;
 	    *vu->up.magic_p != NMG_LOOPUSE_MAGIC) {
 		rt_log("Error in %s at %d vertexuse not for shell/loop\n", 
 		    __FILE__, __LINE__);
-		rt_bomb("cannot make edge vertexuse not sole element of object");
+		rt_bomb("nmg_meonvu() cannot make edge, vertexuse not sole element of object");
 	}
 
 	GET_EDGE(e);
-	GET_EDGEUSE(eu1);
-	GET_EDGEUSE(eu2);
-
 	e->magic = NMG_EDGE_MAGIC;
-	e->eu_p = eu1;
 	e->eg_p = (struct edge_g *)NULL;
 
-	eu1->magic = eu2->magic = NMG_EDGEUSE_MAGIC;
+	GET_EDGEUSE(eu1);
+	GET_EDGEUSE(eu2);
+	eu1->l.magic = eu2->l.magic = NMG_EDGEUSE_MAGIC;
+
+	e->eu_p = eu1;
 
 	eu1->radial_p = eu1->eumate_p = eu2;
 	eu2->radial_p = eu2->eumate_p = eu1;
@@ -370,46 +396,59 @@ struct vertexuse *vu;
 	eu1->e_p = eu2->e_p = e;
 	eu1->eua_p = eu2->eua_p = (struct edgeuse_a *)NULL;
 
-
 	/* link edgeuses to parent */
 	if (*vu->up.magic_p == NMG_SHELL_MAGIC) {
+		struct shell	*s;
+
 		eu1->vu_p = vu;
-		eu2->vu_p = nmg_mvu(vu->v_p, &eu2->magic);
-		eu2->up.s_p = eu1->up.s_p = vu->up.s_p;
-		if (vu->up.s_p->vu_p != vu)
-			rt_bomb("vetexuse parent shell disowns vertexuse!\n");
-		vu->up.s_p->vu_p = (struct vertexuse *)NULL;
+		eu2->vu_p = nmg_mvu(vu->v_p, &eu2->l.magic);
+		s = eu2->up.s_p = eu1->up.s_p = vu->up.s_p;
+		if( s->vu_p != vu )
+			rt_bomb("nmg_meonvu() vetexuse parent shell disowns vertexuse!\n");
+		s->vu_p = (struct vertexuse *)NULL;	/* remove from shell */
 		vu->up.eu_p = eu1;
-		DLLINS(eu2->up.s_p->eu_p, eu2);
-		DLLINS(eu1->up.s_p->eu_p, eu1);
+		NMG_LIST_APPEND( &s->eu_hd, &eu2->l );
+		NMG_LIST_APPEND( &s->eu_hd, &eu1->l );
 	}
 	else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+		struct loopuse		*lu;
+		struct loopuse		*lumate;
+		struct vertexuse	*vumate;
+
+		lu = vu->up.lu_p;
+		NMG_CK_LOOPUSE(lu);
+		lumate = lu->lumate_p;
+		NMG_CK_LOOPUSE(lumate);
+
 		/* do a little consistency checking */
-		if (vu->up.lu_p->lumate_p->magic != NMG_LOOPUSE_MAGIC ||
-		    *vu->up.lu_p->lumate_p->down.magic_p != 
-		    NMG_VERTEXUSE_MAGIC)
-			rt_bomb("mate of vertex-loop is not vertex-loop!\n");
+		if( lu == lumate )  rt_bomb("nmg_meonvu() lu mate is lu\n");
+		if( NMG_LIST_FIRST_MAGIC(&lumate->down_hd) != NMG_VERTEXUSE_MAGIC )
+			rt_bomb("nmg_meonvu() mate of vertex-loop is not vertex-loop!\n");
+		vumate = NMG_LIST_FIRST(vertexuse, &lumate->down_hd);
+		NMG_CK_VERTEXUSE(vumate);
+		if( vu == vumate )  rt_bomb("nmg_meonvu() vu mate is vu\n");
+		NMG_CK_VERTEX(vu->v_p);
+		NMG_CK_VERTEX(vumate->v_p);
 
 		/* edgeuses point at vertexuses */
 		eu1->vu_p = vu;
-		eu2->vu_p = vu->up.lu_p->lumate_p->down.vu_p;
+		eu2->vu_p = vumate;
 
 		/* edgeuses point at parent loopuses */
-		eu1->up.lu_p = eu1->vu_p->up.lu_p;
-		eu2->up.lu_p = eu2->vu_p->up.lu_p;
+		eu1->up.lu_p = lu;
+		eu2->up.lu_p = lumate;
 
-		/* loopuses point at edgeuses */
-		vu->up.lu_p->lumate_p->down.eu_p = (struct edgeuse *)NULL;
-		vu->up.lu_p->down.eu_p = (struct edgeuse *)NULL;
-		DLLINS(vu->up.lu_p->lumate_p->down.eu_p, eu2);
-		DLLINS(vu->up.lu_p->down.eu_p, eu1);
+		/* Fix forw & back pointers after "abuse", above */
+		NMG_LIST_INIT( &lu->down_hd );
+		NMG_LIST_INIT( &lumate->down_hd );
+		/* loopuses now point down at edgeuses */
+		NMG_LIST_APPEND( &lumate->down_hd, &eu2->l );
+		NMG_LIST_APPEND( &lu->down_hd, &eu1->l );
 
-
-		/* vertexuses point at edgeusees */
-		eu1->vu_p->up.eu_p = eu1;
-		eu2->vu_p->up.eu_p = eu2;
+		/* vertexuses point up at edgeuses */
+		vu->up.eu_p = eu1;
+		vumate->up.eu_p = eu2;
 	}
-
 	return(eu1);
 }
 
@@ -437,103 +476,109 @@ struct shell *s;
 {
 	struct loop *l;
 	struct loopuse *lu1, *lu2;
-	struct edgeuse *p1, *p2, *feu;
+	struct edgeuse	*p1;
+	struct edgeuse	*p2;
+	struct edgeuse	*feu;
 
 	NMG_CK_SHELL(s);
 
 	GET_LOOP(l);
-	GET_LOOPUSE(lu1);
-	GET_LOOPUSE(lu2);
-
 	l->magic = NMG_LOOP_MAGIC;
-	l->lu_p = lu1;
 	l->lg_p = (struct loop_g *)NULL;
 
-	lu1->magic = lu2->magic = NMG_LOOPUSE_MAGIC;
+	GET_LOOPUSE(lu1);
+	lu1->l.magic = NMG_LOOPUSE_MAGIC;
+	NMG_LIST_INIT( &lu1->down_hd );
+
+	GET_LOOPUSE(lu2);
+	lu2->l.magic = NMG_LOOPUSE_MAGIC;
+	NMG_LIST_INIT( &lu2->down_hd );
+
+	l->lu_p = lu1;
+
 	lu1->up.s_p = lu2->up.s_p = s;
 	lu1->l_p = lu2->l_p = l;
 	lu1->lua_p = lu2->lua_p = (struct loopuse_a *)NULL;
-	lu1->down.magic_p = lu2->down.magic_p = (long *)NULL;
 	lu1->orientation = lu2->orientation = OT_UNSPEC;
 
 	lu1->lumate_p = lu2;
 	lu2->lumate_p = lu1;
 
 	/* make loop on single vertex */
-	if (!s->eu_p && s->vu_p) {
-		lu1->down.vu_p = s->vu_p;
-		s->vu_p->up.lu_p = lu1;
-		lu2->down.vu_p = nmg_mvu(s->vu_p->v_p, &lu2->magic);
+	if( NMG_LIST_IS_EMPTY( &s->eu_hd ) && s->vu_p )  {
+		struct vertexuse	*vu1;
+		struct vertexuse	*vu2;
+
+		vu1 = s->vu_p;		/* take vertex from shell */
 		s->vu_p = (struct vertexuse *)NULL;
-		DLLINS(s->lu_p, lu2);
-		DLLINS(s->lu_p, lu1);
+
+		NMG_LIST_SET_DOWN_TO_VERT( &lu1->down_hd, vu1 );
+		vu1->up.lu_p = lu1;
+
+		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic);
+		/* vu2->up.lu_p = lu2; done by nmg_mvu() */
+		NMG_LIST_SET_DOWN_TO_VERT( &lu2->down_hd, vu2 );
+
+		/* head, lu1, lu2, ... */
+		NMG_LIST_APPEND( &s->lu_hd, &lu1->l );
+		NMG_LIST_APPEND( &lu1->l, &lu2->l );
 		return(lu1);
 	}
 
-	feu = s->eu_p;
+	feu = NMG_LIST_FIRST( edgeuse, &s->eu_hd );
 
-	do {
+	p2 = (struct edgeuse *)NULL;
+	while( NMG_LIST_NON_EMPTY( &s->eu_hd ) )  {
+		p1 = NMG_LIST_FIRST( edgeuse, &s->eu_hd );
+		p2 = p1->eumate_p;
+		NMG_CK_EDGEUSE(p1);
+		NMG_CK_EDGEUSE(p2);
+
 		/* bogosity check */
-		if (s->eu_p->up.s_p != s || s->eu_p->eumate_p->up.s_p != s)
-			rt_bomb("edgeuse mates don't have proper parent!");
+		if (p1->up.s_p != s || p2->up.s_p != s)
+			rt_bomb("nmg_ml() edgeuse mates don't have proper parent!");
 
-		/* get the first edgeuse */
-		DLLRM(s->eu_p, p1);
-		if (s->eu_p == p1) {
+		/* dequeue the first edgeuse */
+		NMG_LIST_DEQUEUE( &p1->l );
+		if( NMG_LIST_IS_EMPTY( &s->eu_hd ) )  {
 			rt_log("in %s at %d edgeuse mate not in this shell\n",
 			    __FILE__, __LINE__);
-			rt_bomb("");
+			rt_bomb("nmg_ml");
 		}
 
-		/* pick out its mate */
-		if (s->eu_p == p1->eumate_p) {
-			DLLRM(s->eu_p, p2);
-			if (s->eu_p == p2) s->eu_p = (struct edgeuse *)NULL;
-		} else {
-			DLLRM(p1->eumate_p, p2);
-			p1->eumate_p = p2;
-		}
+		/* dequeue the edgeuse's mate */
+		NMG_LIST_DEQUEUE( &p2->l );
 
-		DLLINS(lu1->down.eu_p, p1);
-		DLLINS(lu2->down.eu_p, p2);
-
-		/* we want to insert the next new edgeuse(s) in the tail of
-		 * the list, not the head.
+		/*  Insert the next new edgeuse(s) at tail of the loop's list
+		 *  (ie, insert just before the head).
+		 *  ... p1, head.
 		 */
-		lu1->down.eu_p = lu1->down.eu_p->next;
-		lu2->down.eu_p = lu2->down.eu_p->next;
+		NMG_LIST_INSERT( &lu1->down_hd, &p1->l );
+		NMG_LIST_INSERT( &lu2->down_hd, &p2->l );
 
 		p1->up.lu_p = lu1;
 		p2->up.lu_p = lu2;
 
-	} while (s->eu_p && s->eu_p->vu_p->v_p == p2->vu_p->v_p);
+		/* If p2's vertex does not match next one comming, quit */
+		if( NMG_LIST_IS_EMPTY( &s->eu_hd ) )  break;
+		p1 = NMG_LIST_FIRST( edgeuse, &s->eu_hd );
+		if( p1->vu_p->v_p != p2->vu_p->v_p )  {
+			break;
+		}
+	}
 
 	/*	printf("p2v %x feu %x\n", p2->vu_p->v_p, feu->vu_p->v_p); */
 
-	if (p2->vu_p->v_p != feu->vu_p->v_p) {
+	if( p2 && p2->vu_p->v_p != feu->vu_p->v_p) {
 		rt_log("Edge(use)s do not form proper loop!\n");
 		nmg_pr_s(s, (char *)NULL);
 		rt_log("Edge(use)s do not form proper loop!\n");
-		rt_bomb("Bye\n");
-		/* re-link edgeuses back to shell */
-		do {
-			DLLRM(lu1->down.eu_p, p1);
-			if (lu1->down.eu_p == p1)
-				lu1->down.eu_p = (struct edgeuse *)NULL;
-			DLLINS(s->eu_p, p1);
-		} while (lu1->down.eu_p);
-		do {
-			DLLRM(lu2->down.eu_p, p2);
-			if (lu2->down.eu_p == p2)
-				lu2->down.eu_p = (struct edgeuse *)NULL;
-			DLLINS(s->eu_p, p2);
-		} while (lu2->down.eu_p);
-
-		return((struct loopuse *)NULL);
+		rt_bomb("nmg_ml\n");
 	}
 
-	DLLINS(s->lu_p, lu2);
-	DLLINS(s->lu_p, lu1);
+	/* Head, lu1, lu2, ... */
+	NMG_LIST_APPEND( &s->lu_hd, &lu2->l );
+	NMG_LIST_APPEND( &s->lu_hd, &lu1->l );
 
 	return(lu1);
 }
@@ -545,26 +590,22 @@ void nmg_movevu(vu, v)
 struct vertexuse *vu;
 struct vertex *v;
 {
+	struct vertex	*oldv;
+
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_VERTEX(v);
 
-	if (vu->next == vu->last && vu->next == vu) {
+	oldv = vu->v_p;
+	NMG_CK_VERTEX(oldv);
+
+	NMG_LIST_DEQUEUE( &vu->l );
+	if( NMG_LIST_IS_EMPTY( &oldv->vu_hd ) )  {
 		/* last vertexuse on vertex */
-		if (vu->v_p) {
-			if (vu->v_p->vg_p) FREE_VERTEX_G(vu->v_p->vg_p);
-			FREE_VERTEX(vu->v_p);
-		}
-	} else {
-		vu->next->last = vu->last;
-		vu->last->next = vu->next;
-
-		/* make sure vertex isn't pointing at this vu */
-		if (vu->v_p->vu_p == vu)
-			vu->v_p->vu_p = vu->next;
+		if (oldv->vg_p) FREE_VERTEX_G(oldv->vg_p);
+		FREE_VERTEX(oldv);
 	}
-
+	NMG_LIST_APPEND( &v->vu_hd, &vu->l );
 	vu->v_p = v;
-	DLLINS(v->vu_p, vu);
 }
 
 /*	N M G _ K V U
@@ -573,36 +614,33 @@ struct vertex *v;
 void nmg_kvu(vu)
 register struct vertexuse *vu;
 {
+	struct vertex	*v;
 
 	NMG_CK_VERTEXUSE(vu);
 
 	/* ditch any attributes */
 	if (vu->vua_p) FREE_VERTEXUSE_A(vu->vua_p);
 
-	if (vu->next == vu->last && vu->next == vu) {
-		/* last vertexuse on vertex */
-		if (vu->v_p) {
-			if (vu->v_p->vg_p) FREE_VERTEX_G(vu->v_p->vg_p);
-			FREE_VERTEX(vu->v_p);
-		}
-	} else {
-		vu->next->last = vu->last;
-		vu->last->next = vu->next;
+	v = vu->v_p;
+	NMG_CK_VERTEX(v);
 
-		/* make sure vertex isn't pointing at this vu */
-		if (vu->v_p->vu_p == vu)
-			vu->v_p->vu_p = vu->next;
+	NMG_LIST_DEQUEUE( &vu->l );
+	if( NMG_LIST_IS_EMPTY( &v->vu_hd ) )  {
+		/* last vertexuse on vertex */
+		if (v->vg_p) FREE_VERTEX_G(v->vg_p);
+		FREE_VERTEX(v);
 	}
 
 	/* erase existence of this vertexuse from parent */
-	if (*vu->up.magic_p == NMG_SHELL_MAGIC)
+	if (*vu->up.magic_p == NMG_SHELL_MAGIC)  {
 		vu->up.s_p->vu_p = (struct vertexuse *)NULL;
-	else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC)
-		vu->up.lu_p->down.vu_p = (struct vertexuse *)NULL;
-	else if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC)
+	} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+		/* Reset the hack */
+		NMG_LIST_INIT( &vu->up.lu_p->down_hd );
+	} else if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC)  {
 		vu->up.eu_p->vu_p = (struct vertexuse *)NULL;
-	else
-		rt_bomb("killing vertexuse of unknown parent?\n");
+	} else
+		rt_bomb("nmg_kvu() killing vertexuse of unknown parent?\n");
 
 	FREE_VERTEXUSE(vu);
 }
@@ -610,34 +648,40 @@ register struct vertexuse *vu;
 
 /*	N M G _ K F U
  *	Kill Faceuse
- *	delete a faceuse and its mate from the parent shell.  Any children
- *	found are brutally murdered as well.  If this is the last child of
- *	a shell, we null-out the shell's downward pointer
+ *
+ *	delete a faceuse and its mate from the parent shell.
+ *	Any children found are brutally murdered as well.
+ *	The faceuses are dequeued from the parent shell's list here.
  */
 void nmg_kfu(fu1)
 struct faceuse *fu1;
 {
-	struct faceuse *fu2, *p;
+	struct faceuse *fu2;
+	struct face	*f1;
+	struct face	*f2;
+
 	NMG_CK_FACEUSE(fu1);
 	fu2 = fu1->fumate_p;
 	NMG_CK_FACEUSE(fu2);
-
+	f1 = fu1->f_p;
+	f2 = fu2->f_p;
+	NMG_CK_FACE(f1);
+	NMG_CK_FACE(f2);
+	if( f1 != f2 )
+		rt_bomb("nmg_kfu() faceuse mates do not share face!\n");
 
 	/* kill off the children (infanticide?)*/
-	while (fu1->lu_p)
-		nmg_klu(fu1->lu_p);
+	while( NMG_LIST_NON_EMPTY( &fu1->lu_hd ) )  {
+		nmg_klu( NMG_LIST_FIRST( loopuse, &fu1->lu_hd ) );
+	}
 
 	/* kill the geometry */
-	if (fu1->f_p != fu2->f_p)
-		rt_bomb("faceuse mates do not share face!\n");
-	if (fu1->f_p) {
-		if (fu1->f_p->fg_p) {
-			NMG_CK_FACE_G(fu1->f_p->fg_p);
-			FREE_FACE_G(fu1->f_p->fg_p);
-		}
-		FREE_FACE(fu1->f_p);
-		fu1->f_p = fu2->f_p = (struct face *)NULL;
+	if (f1->fg_p) {
+		NMG_CK_FACE_G(f1->fg_p);
+		FREE_FACE_G(f1->fg_p);
 	}
+	FREE_FACE(f1);
+	fu1->f_p = fu2->f_p = (struct face *)NULL;
 
 	/* kill the attributes */
 	if (fu1->fua_p) {
@@ -650,15 +694,10 @@ struct faceuse *fu1;
 	}
 
 	/* remove ourselves from the parent list */
-	fu1->s_p->fu_p = fu1;
-	DLLRM(fu1->s_p->fu_p, p);
-	if (p == fu1->s_p->fu_p)
-		rt_bomb("faceuse mate not in parent?\n");
-
-	fu2->s_p->fu_p = fu2;
-	DLLRM(fu2->s_p->fu_p, p);
-	if (p == fu2->s_p->fu_p)
-		fu2->s_p->fu_p = (struct faceuse *)NULL;
+	NMG_LIST_DEQUEUE( &fu1->l );
+	if( NMG_LIST_IS_EMPTY( &fu1->s_p->fu_hd ) )
+		rt_bomb("nmg_kfu() faceuse mate not in parent?\n");
+	NMG_LIST_DEQUEUE( &fu2->l );
 
 	FREE_FACEUSE(fu1);
 	FREE_FACEUSE(fu2);
@@ -677,34 +716,36 @@ struct faceuse *fu1;
 void nmg_klu(lu1)
 struct loopuse *lu1;
 {
-	struct loopuse *lu2, *p;
-#if 0
-	struct edgeuse *eu1, *eu2;
-#endif
-	struct faceuse *fu;
-	struct shell *s;
+	struct loopuse *lu2;
 
 	NMG_CK_LOOPUSE(lu1);
 	lu2 = lu1->lumate_p;
 	NMG_CK_LOOPUSE(lu2);
 
+	if (lu1->l_p != lu2->l_p)
+		rt_bomb("nmg_klu() loopmates do not share loop!\n");
 
 	if (*lu1->up.magic_p != *lu2->up.magic_p)
-		rt_bomb("loopuses do not have same type of parent!\n");
+		rt_bomb("nmg_klu() loopuses do not have same type of parent!\n");
 
-	if (lu1->down.magic_p && *lu1->down.magic_p != *lu2->down.magic_p)
-		rt_bomb("loopuses do not have same type of child!\n");
+	if( NMG_LIST_FIRST_MAGIC( &lu1->down_hd ) != 0 )  {
+		long	magic1;
+		/* deal with the children */
+		magic1 = NMG_LIST_FIRST_MAGIC( &lu1->down_hd );
+		if( magic1 != NMG_LIST_FIRST_MAGIC( &lu2->down_hd ) )
+			rt_bomb("nmg_klu() loopuses do not have same type of child!\n");
 
-	/* deal with the children */
-	if (lu1->down.magic_p) {
-		if (*lu1->down.magic_p == NMG_VERTEXUSE_MAGIC) {
-			nmg_kvu(lu1->down.vu_p);
-			nmg_kvu(lu2->down.vu_p);
+		if( magic1 == NMG_VERTEXUSE_MAGIC )  {
+			/* Follow the vertex-loop hack downward,
+			 * nmg_kvu() will clean up */
+			nmg_kvu( NMG_LIST_FIRST(vertexuse, &lu1->down_hd) );
+			nmg_kvu( NMG_LIST_FIRST(vertexuse, &lu2->down_hd) );
 		}
-		else if (*lu1->down.magic_p == NMG_EDGEUSE_MAGIC) {
+		else if ( magic1 == NMG_EDGEUSE_MAGIC) {
 			/* delete all edgeuse in the loopuse (&mate) */
-			while (lu1->down.eu_p)
-				nmg_keu(lu1->down.eu_p);
+			while( NMG_LIST_NON_EMPTY( &lu1->down_hd ) )  {
+				nmg_keu(NMG_LIST_FIRST(edgeuse, &lu1->down_hd) );
+			}
 		}
 		else
 			rt_bomb("nmg_klu: unknown type for loopuse child\n");
@@ -713,30 +754,17 @@ struct loopuse *lu1;
 
 	/* disconnect from parent's list */
 	if (*lu1->up.magic_p == NMG_SHELL_MAGIC) {
-		s = lu1->up.s_p;
-		s->lu_p = lu1;
-		DLLRM(s->lu_p, p);
-		if (s->lu_p == p) s->lu_p = (struct loopuse *)NULL;
-
-		s->lu_p = lu2;
-		DLLRM(s->lu_p, p);
-		if (s->lu_p == p) s->lu_p = (struct loopuse *)NULL;
+		NMG_LIST_DEQUEUE( &lu1->l );
+		NMG_LIST_DEQUEUE( &lu2->l );
 	}
 	else if (*lu1->up.magic_p == NMG_FACEUSE_MAGIC) {
-		fu = lu1->up.fu_p;
-		fu->lu_p = lu1;
- 		DLLRM(fu->lu_p, p);
-		if (fu->lu_p == p) fu->lu_p = (struct loopuse *)NULL;
-
-		fu = lu2->up.fu_p;
-		fu->lu_p = lu2;
-		DLLRM(fu->lu_p, p);
-		if (fu->lu_p == p) fu->lu_p = (struct loopuse *)NULL;
+		NMG_LIST_DEQUEUE( &lu1->l );
+		NMG_LIST_DEQUEUE( &lu2->l );
 	}
 	else {
 		rt_log("in %s at %d Unknown parent for loopuse\n", __FILE__,
 		    __LINE__);
-		rt_bomb("bye");
+		rt_bomb("nmg_klu");
 	}
 
 	if (lu1->lua_p) {
@@ -748,10 +776,8 @@ struct loopuse *lu1;
 		FREE_LOOPUSE_A(lu2->lua_p);
 	}
 
-	if (lu1->l_p != lu2->l_p)
-		rt_bomb("loopmates do not share loop!\n");
-
-	if (lu1->l_p) {
+	/* XXX when would this not be set? */
+/**	if (lu1->l_p) **/ {
 		NMG_CK_LOOP(lu1->l_p);
 		if (lu1->l_p->lg_p) {
 			NMG_CK_LOOP_G(lu1->l_p->lg_p);
@@ -764,8 +790,9 @@ struct loopuse *lu1;
 	FREE_LOOPUSE(lu2);
 }
 
-
-/*	N M G _ M F
+/*
+ *			N M G _ M F
+ *
  *	Make Face from loop
  *	make a face from a pair of loopuses.  The loopuses must be direct
  *	children of a shell.  The new face will be a child of the same shell.
@@ -780,15 +807,16 @@ struct loopuse *lu1;
 
 	NMG_CK_LOOPUSE(lu1);
 	if (*lu1->up.magic_p != NMG_SHELL_MAGIC) {
-		rt_bomb("loop must be child of shell for making face");
+		rt_bomb("nmg_mf() loop must be child of shell for making face");
 	}
 	lu2 = lu1->lumate_p;
 	NMG_CK_LOOPUSE(lu2);
 	if (lu2->up.magic_p != lu1->up.magic_p) {
-		rt_bomb("loopuse mate does not have same parent\n");
+		rt_bomb("nmg_mf() loopuse mate does not have same parent\n");
 	}
 
 	s = lu1->up.s_p;
+	NMG_CK_SHELL(s);
 
 	GET_FACE(f);
 	GET_FACEUSE(fu1);
@@ -798,7 +826,9 @@ struct loopuse *lu1;
 	f->fg_p = (struct face_g *)NULL;
 	f->magic = NMG_FACE_MAGIC;
 
-	fu1->magic = fu2->magic = NMG_FACEUSE_MAGIC;
+	fu1->l.magic = fu2->l.magic = NMG_FACEUSE_MAGIC;
+	NMG_LIST_INIT(&fu1->lu_hd);
+	NMG_LIST_INIT(&fu2->lu_hd);
 	fu1->s_p = fu2->s_p = s;
 	fu1->fumate_p = fu2;
 	fu2->fumate_p = fu1;
@@ -806,57 +836,48 @@ struct loopuse *lu1;
 	fu1->f_p = fu2->f_p = f;
 	fu1->fua_p = fu2->fua_p = (struct faceuse_a *)NULL;
 
-
 	/* move the loopuses from the shell to the faceuses */
-	s->lu_p = lu1;
-	DLLRM(s->lu_p, fu1->lu_p);
-	if (s->lu_p == fu1->lu_p)
-		rt_bomb("loopuses don't have same parent?\n");
+	NMG_LIST_DEQUEUE( &lu1->l );
+	NMG_LIST_DEQUEUE( &lu2->l );
+	NMG_LIST_APPEND( &fu1->lu_hd, &lu1->l );
+	NMG_LIST_APPEND( &fu2->lu_hd, &lu2->l );
+
 	lu1->up.fu_p = fu1;
 	lu1->orientation = OT_SAME;
-
-	s->lu_p = lu2;
-	DLLRM(s->lu_p, fu2->lu_p)
-	    if (s->lu_p == fu2->lu_p)
-		s->lu_p = (struct loopuse *)NULL;
 	lu2->up.fu_p = fu2;
 	lu2->orientation = OT_SAME;
 
-	/* connect the faces to the parent shell */
-	DLLINS(s->fu_p, fu2);
-	DLLINS(s->fu_p, fu1);
-
+	/* connect the faces to the parent shell:  head, fu1, fu2... */
+	NMG_LIST_APPEND( &s->fu_hd, &fu1->l );
+	NMG_LIST_APPEND( &fu1->l, &fu2->l );
 	return(fu1);
 }
 
-
-/*	N M G _ K E U
- *	Delete an edgeuse & it's mate on a shell/loop.
+/*
+ *			N M G _ K E U
  *
- *	This routine DOES null-out the
- *	parent's edgeuse pointer when the last edgeuse is being
- *	deleted.
+ *	Delete an edgeuse & it's mate on a shell/loop.
  */
 void nmg_keu(eu1)
 register struct edgeuse *eu1;
 {
-	register struct edgeuse *eu2, *tmpeu;
+	register struct edgeuse *eu2;
+	struct edge		*e;
 
 	/* prevent mishaps */
 	NMG_CK_EDGEUSE(eu1);
+	e = eu1->e_p;
+	NMG_CK_EDGE(e);
 
 	eu2 = eu1->eumate_p;
 	NMG_CK_EDGEUSE(eu2);
+	NMG_CK_EDGE(eu2->e_p);
 
-	if (eu1->e_p != eu2->e_p) {
-		rt_log("In %s at %d Edgeuse pair does not share edge\n",
-		    __FILE__, __LINE__);
-		rt_bomb("Dying in nmg_keu");
+	if (e != eu2->e_p) {
+		rt_bomb("nmg_keu() edgeuse pair does not share edge\n");
 	}
-	NMG_CK_EDGE(eu1->e_p);
 
-	/* unlink from radial linkages (if any)
-	 */
+	/* unlink from radial linkages (if any) */
 	if (eu1->radial_p != eu2) {
 		NMG_CK_EDGEUSE(eu1->radial_p);
 		NMG_CK_EDGEUSE(eu2->radial_p);
@@ -867,63 +888,52 @@ register struct edgeuse *eu1;
 		/* since there is a use of this edge left, make sure the edge
 		 * structure points to a remaining edgeuse
 		 */
-		if (eu1->e_p->eu_p == eu1 || eu1->e_p->eu_p == eu2)
-			eu1->e_p->eu_p = eu1->radial_p;
+		if (e->eu_p == eu1 || e->eu_p == eu2)
+			e->eu_p = eu1->radial_p;
 	} else {
 		/* since these two edgeuses are the only use of this edge,
 		 * we need to free the edge (since all uses are about 
 		 * to disappear).
 		 */
-		if (eu1->e_p->eg_p) FREE_EDGE_G(eu1->e_p->eg_p);
-		FREE_EDGE(eu1->e_p);
+		if (e->eg_p) FREE_EDGE_G(e->eg_p);
+		FREE_EDGE(e);
 	}
 
 	/* remove the edgeuses from their parents */
 	if (*eu1->up.magic_p == NMG_LOOPUSE_MAGIC) {
-
-		if (eu1->up.lu_p->lumate_p != eu2->up.lu_p ||
-		    eu1->up.lu_p != eu2->up.lu_p->lumate_p ) {
-			rt_log("In %s at %d %s\n", __FILE__, __LINE__,
-			    "edgeuse mates don't belong to loopuse mates");
-			rt_bomb("bye");
+		struct loopuse	*lu1, *lu2;
+		lu1 = eu1->up.lu_p;
+		lu2 = eu2->up.lu_p;
+		NMG_CK_LOOPUSE(lu1);
+		NMG_CK_LOOPUSE(lu2);
+		/* XXX This may be OK for wire edges / wire loops */
+		if( lu1 == lu2 )  rt_bomb("nmg_keu() edgeuses on same loop\n");
+		if (lu1->lumate_p != lu2 || lu1 != lu2->lumate_p ) {
+			rt_log("lu1=x%x, mate=x%x\n", lu1, lu1->lumate_p);
+			rt_log("lu2=x%x, mate=x%x\n", lu2, lu2->lumate_p);
+		    	rt_bomb("nmg_keu() edgeuse mates don't belong to loopuse mates\n");
 		}
 
 		/* remove the edgeuses from their parents */
-		eu1->up.lu_p->down.eu_p = eu1;
-		DLLRM(eu1->up.lu_p->down.eu_p, tmpeu);
-		if (tmpeu == eu1->up.lu_p->down.eu_p)
-			eu1->up.lu_p->down.eu_p = (struct edgeuse *)NULL;
-
-		eu2->up.lu_p->down.eu_p = eu2;
-		DLLRM(eu2->up.lu_p->down.eu_p, tmpeu);
-		if (tmpeu == eu2->up.lu_p->down.eu_p)
-			eu2->up.lu_p->down.eu_p = (struct edgeuse *)NULL;
+		NMG_LIST_DEQUEUE( &eu1->l );
+		NMG_LIST_DEQUEUE( &eu2->l );
 
 		/* if deleting this edge would cause parent loop to become
 		 * non-contiguous or if there are no more edges left in loop,
-		 * we must kill the parent loopuses.
+		 * we must kill the parent loopuses.  (or demote it)
 		 *
 		 *if (eu2->vu_p->v_p != eu1->vu_p->v_p || 
-		 *    !eu1->up.lu_p->down.eu_p)
-		 *	nmg_klu(eu1->up.lu_p);
+		 *    !lu1->down.eu_p)
+		 *	nmg_klu(lu1);
 		 */
-
 	} else if (*eu1->up.magic_p == NMG_SHELL_MAGIC) {
-
 		if (eu1->up.s_p != eu2->up.s_p) {
-			rt_log("in %s at %d edguses don't share parent\n",
-			    __FILE__, __LINE__);
-			rt_bomb("bye");
+			rt_bomb("nmg_keu() edguses don't share parent shell\n");
 		}
 
 		/* unlink edgeuses from the parent shell */
-		eu1->up.s_p->eu_p = eu1;
-		DLLRM(eu1->up.s_p->eu_p, tmpeu);
-		eu2->up.s_p->eu_p = eu2;
-		DLLRM(eu2->up.s_p->eu_p, tmpeu);
-		if (eu2->up.s_p->eu_p == tmpeu) {
-			eu2->up.s_p->eu_p = (struct edgeuse *)NULL;
-		}
+		NMG_LIST_DEQUEUE( &eu1->l );
+		NMG_LIST_DEQUEUE( &eu2->l );
 	}
 
 
@@ -935,10 +945,10 @@ register struct edgeuse *eu1;
 		}
 		else {
 			FREE_EDGEUSE_A(eu1->eua_p);
-			FREE_EDGEUSE_A(eu2->eua_p);
-			eu1->eua_p = eu2->eua_p = (struct edgeuse_a *)NULL;
+			eu1->eua_p = (struct edgeuse_a *)NULL;
 		}
-	} else if (eu2->eua_p) {
+	}
+	if (eu2->eua_p) {
 		FREE_EDGEUSE_A(eu2->eua_p);
 		eu2->eua_p = (struct edgeuse_a *)NULL;
 	}
@@ -957,6 +967,7 @@ register struct edgeuse *eu1;
 	FREE_EDGEUSE(eu1);
 	FREE_EDGEUSE(eu2);
 }
+
 /*	N M G _ K S
  *
  *	Kill a shell and all children
@@ -964,23 +975,19 @@ register struct edgeuse *eu1;
 void nmg_ks(s)
 struct shell *s;
 {
-	struct shell *tmps;
 
 	NMG_CK_SHELL(s);
 
-	while (s->fu_p)
-		nmg_kfu(s->fu_p);
-	while (s->lu_p)
-		nmg_klu(s->lu_p);
-	while (s->eu_p)
-		nmg_keu(s->eu_p);
-	while (s->vu_p)
-		nmg_kvu(s->vu_p);
+	while( NMG_LIST_NON_EMPTY( &s->fu_hd ) )
+		nmg_kfu( NMG_LIST_FIRST(faceuse, &s->fu_hd) );
+	while( NMG_LIST_NON_EMPTY( &s->lu_hd ) )
+		nmg_klu( NMG_LIST_FIRST(loopuse, &s->lu_hd) );
+	while( NMG_LIST_NON_EMPTY( &s->eu_hd ) )
+		nmg_keu( NMG_LIST_FIRST(edgeuse, &s->eu_hd) );
+	if( s->vu_p )
+		nmg_kvu( s->vu_p );
 
-	s->r_p->s_p = s;
-	DLLRM(s->r_p->s_p, tmps);
-	if (s->r_p->s_p == tmps)
-		s->r_p->s_p = (struct shell *)NULL;
+	NMG_LIST_DEQUEUE( &s->l );
 
 	if (s->sa_p) {
 		FREE_SHELL_A(s->sa_p);
@@ -988,23 +995,20 @@ struct shell *s;
 
 	FREE_SHELL(s);
 }
+
 /*	N M G _ K R
  *	Kill a region and all shells in it
  */
 void nmg_kr(r)
 struct nmgregion *r;
 {
-	struct nmgregion *tmpr;
 
 	NMG_CK_REGION(r);
 
-	while (r->s_p)
-		nmg_ks(r->s_p);
+	while( NMG_LIST_NON_EMPTY( &r->s_hd ) )
+		nmg_ks( NMG_LIST_FIRST( shell, &r->s_hd ) );
 
-	r->m_p->r_p = r;
-	DLLRM(r->m_p->r_p, tmpr);
-	if (r->m_p->r_p == tmpr)
-		r->m_p->r_p = (struct nmgregion *)NULL;
+	NMG_LIST_DEQUEUE( &r->l );
 
 	if (r->ra_p) {
 		FREE_REGION_A(r->ra_p);
@@ -1020,8 +1024,8 @@ struct model *m;
 {
 	NMG_CK_MODEL(m);
 
-	while (m->r_p)
-		nmg_kr(m->r_p);
+	while( NMG_LIST_NON_EMPTY( &m->r_hd ) )
+		nmg_kr( NMG_LIST_FIRST( nmgregion, &m->r_hd ) );
 
 	if (m->ma_p) {
 		FREE_MODEL_A(m->ma_p);
@@ -1058,40 +1062,41 @@ pointp_t	pt;
 void nmg_loop_g(l)
 struct loop *l;
 {
-	struct edgeuse *eu;
-	struct vertex_g *vg;
-
-	if (l->lg_p) {
-		NMG_CK_LOOP_G(l->lg_p);
-	} else {
-		GET_LOOP_G(l->lg_p);
-		l->lg_p->magic = NMG_LOOP_G_MAGIC;
-	}
-
-	l->lg_p->max_pt[X] = l->lg_p->max_pt[Y] = 
-	    l->lg_p->max_pt[Z] = -MAX_FASTF;
-	l->lg_p->min_pt[X] = l->lg_p->min_pt[Y] = 
-	    l->lg_p->min_pt[Z] = MAX_FASTF;
+	struct edgeuse	*eu;
+	struct vertex_g	*vg;
+	struct loop_g	*lg;
+	long		magic1;
 
 	NMG_CK_LOOPUSE(l->lu_p);
-	if (*l->lu_p->down.magic_p == NMG_EDGEUSE_MAGIC) {
-		eu = l->lu_p->down.eu_p;
-		do {
+
+	if (lg = l->lg_p) {
+		NMG_CK_LOOP_G(lg);
+	} else {
+		GET_LOOP_G(l->lg_p);
+		lg = l->lg_p;
+		lg->magic = NMG_LOOP_G_MAGIC;
+	}
+	VSETALL( lg->max_pt, -INFINITY );
+	VSETALL( lg->min_pt,  INFINITY );
+
+	magic1 = NMG_LIST_FIRST_MAGIC( &l->lu_p->down_hd );
+	if (magic1 == NMG_EDGEUSE_MAGIC) {
+		for( NMG_LIST( eu, edgeuse, &l->lu_p->down_hd ) )  {
 			vg = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
-
-			VMINMAX(l->lg_p->min_pt, l->lg_p->max_pt, vg->coord);
-
-			eu = eu->next;
-		} while (eu != l->lu_p->down.eu_p);
-	} else if (*l->lu_p->down.magic_p == NMG_VERTEXUSE_MAGIC) {
-		NMG_CK_VERTEX(l->lu_p->down.vu_p->v_p);
-		vg = l->lu_p->down.vu_p->v_p->vg_p;
+			VMINMAX(lg->min_pt, lg->max_pt, vg->coord);
+		}
+	} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
+		struct vertexuse	*vu;
+		vu = NMG_LIST_FIRST(vertexuse, &l->lu_p->down_hd);
+		NMG_CK_VERTEXUSE(vu);
+		NMG_CK_VERTEX(vu->v_p);
+		vg = vu->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		VMOVE(l->lg_p->min_pt, vg->coord);
-		VMOVE(l->lg_p->max_pt, vg->coord);
+		VMOVE(lg->min_pt, vg->coord);
+		VMOVE(lg->max_pt, vg->coord);
 	} else
-		rt_bomb("in nmg_loop_g, loopuse has bad child\n");
+		rt_bomb("nmg_loop_g() loopuse has bad child\n");
 }
 
 /*	N M G _ F A C E _ G
@@ -1124,14 +1129,16 @@ plane_t p;
 
 	nmg_face_bb(fu->f_p);
 }
+
 /*	N M G _ F A C E _ B B
  *	Build the bounding box for a face
  */
 void nmg_face_bb(f)
 struct face *f;
 {
-	struct face_g *fg;
-	struct loopuse *lu;
+	struct face_g	*fg;
+	struct loopuse	*lu;
+	struct faceuse	*fu;
 
 	NMG_CK_FACE(f);
 
@@ -1150,18 +1157,15 @@ struct face *f;
 	/* we compute the extent of the face by looking at the extent of
 	 * each of the loop children.
 	 */
-
-	lu = f->fu_p->lu_p;
-	do {
+	fu = f->fu_p;
+	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_loop_g(lu->l_p);
 
 		if (lu->orientation != OT_BOOLPLACE) {
 			VMIN(fg->min_pt, lu->l_p->lg_p->min_pt);
 			VMAX(fg->max_pt, lu->l_p->lg_p->max_pt);
 		}
-
-		lu = lu->next;
-	} while (lu != f->fu_p->lu_p);
+	}
 }
 
 /*	N M G _ S H E L L _ A
@@ -1187,66 +1191,50 @@ struct shell *s;
 	sa = s->sa_p;
 
 	/* */
-	if (s->fu_p) {
-		fu = s->fu_p;
-		do {
-			if (!fu->f_p->fg_p)
-				nmg_face_bb(fu->f_p);
+	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+		if (!fu->f_p->fg_p)
+			nmg_face_bb(fu->f_p);
 
-			fg = fu->f_p->fg_p;
-			VMIN(sa->min_pt, fg->min_pt);
-			VMAX(sa->max_pt, fg->max_pt);
+		fg = fu->f_p->fg_p;
+		VMIN(sa->min_pt, fg->min_pt);
+		VMAX(sa->max_pt, fg->max_pt);
 
-			if (fu->next != s->fu_p &&
-			    fu->next->f_p == fu->f_p)
-				fu = fu->next->next;
-			else
-				fu = fu->next;
-		} while (fu != s->fu_p);
+		/* If next faceuse shares this face, skip it */
+		if( NMG_LIST_MORE(fu, faceuse, &fu->l) &&
+		    ( NMG_LIST_NEXT(faceuse, &fu->l)->f_p == fu->f_p ) )  {
+			fu = NMG_LIST_PNEXT(faceuse,fu);
+		}
 	}
-	if (s->lu_p) {
-		lu = s->fu_p->lu_p;
-		do {
-			if (!lu->l_p->lg_p)
-				nmg_loop_g(lu->l_p);
+	for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
+		if (!lu->l_p->lg_p)
+			nmg_loop_g(lu->l_p);
 
-			VMIN(sa->min_pt, lu->l_p->lg_p->min_pt);
-			VMAX(sa->max_pt, lu->l_p->lg_p->max_pt);
-
-			lu = lu->next;
-		} while (lu != s->fu_p->lu_p);
-
+		VMIN(sa->min_pt, lu->l_p->lg_p->min_pt);
+		VMAX(sa->max_pt, lu->l_p->lg_p->max_pt);
 	}
-	if (s->eu_p) {
-		eu = s->eu_p;
-		do {
-			NMG_CK_EDGEUSE(eu);
-			NMG_CK_EDGE(eu->e_p);
-
-			vg = eu->vu_p->v_p->vg_p;
-			NMG_CK_VERTEX_G(vg);
-
-			VMINMAX(sa->min_pt, sa->max_pt, vg->coord);
-
-			eu = eu->next;
-		} while (eu != s->eu_p);
+	for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_EDGE(eu->e_p);
+		vg = eu->vu_p->v_p->vg_p;
+		NMG_CK_VERTEX_G(vg);
+		VMINMAX(sa->min_pt, sa->max_pt, vg->coord);
 	}
 	if (s->vu_p) {
 		NMG_CK_VERTEXUSE(s->vu_p);
 		NMG_CK_VERTEX(s->vu_p->v_p);
 		NMG_CK_VERTEX_G(s->vu_p->v_p->vg_p);
 		vg = s->vu_p->v_p->vg_p;
-
 		VMINMAX(sa->min_pt, sa->max_pt, vg->coord);
 	}
 
 
-	if (!s->fu_p && !s->lu_p && !s->eu_p && !s->vu_p) {
+	if( NMG_LIST_IS_EMPTY( &s->fu_hd ) &&
+	    NMG_LIST_IS_EMPTY( &s->lu_hd ) &&
+	    NMG_LIST_IS_EMPTY( &s->eu_hd ) && !s->vu_p )  {
 		rt_log("At %d in %s shell has no children\n",
 		    __LINE__, __FILE__);
-		rt_bomb("exiting\n");
+		rt_bomb("nmg_shell_a\n");
 	}
-
 }
 
 /*	N M G _ R E G I O N _ A
@@ -1256,8 +1244,9 @@ struct shell *s;
 void nmg_region_a(r)
 struct nmgregion *r;
 {
-	struct shell *s;
-	struct nmgregion_a *ra;
+	register struct shell	*s;
+	struct nmgregion_a	*ra;
+
 	NMG_CK_REGION(r);
 	GET_REGION_A(ra);
 
@@ -1266,18 +1255,19 @@ struct nmgregion *r;
 	VSETALL(ra->max_pt, -MAX_FASTF);
 	VSETALL(ra->min_pt, MAX_FASTF);
 
-	s = r->s_p;
-	do {
+	for( NMG_LIST( s, shell, &r->s_hd ) )  {
 		nmg_shell_a(s);
-
-		VMIN(ra->min_pt, r->s_p->sa_p->min_pt);
-		VMAX(ra->max_pt, r->s_p->sa_p->max_pt);
-
-		s = s->next;
-	} while (s != r->s_p);
+		NMG_CK_SHELL_A(s->sa_p);
+		VMIN(ra->min_pt, s->sa_p->min_pt);
+		VMAX(ra->max_pt, s->sa_p->max_pt);
+	}
 }
-/*	N M G _ E U S P L I T
- *	Split an edgeuse
+
+/*
+ *			N M G _ E U S P L I T
+ *
+ *	Split an edgeuse by inserting a vertex into middle of the edgeuse.
+ *
  *	Make a new edge, and a vertex.  If v is non-null it is taken as a
  *	pointer to an existing vertex to use as the start of the new edge.
  *	If v is null, then a new vertex is created for the begining of the
@@ -1286,23 +1276,25 @@ struct nmgregion *r;
  *	In either case, the new edge will exist as the "next" edge after
  *	the edge passed as a parameter.
  *
- *	Before:
- *		oldeu
- *		.------------->
+ *  List on entry -
  *
- *		 =============== (edge)
- *
+ *		       oldeu
+ *		  .------------->
+ *		 /
+ *		A =============== B (edge)
+ *				 /
  *		  <-------------.
- *		   oldeu->eumate
+ *		      oldeumate
  *
- *	After:
- *		oldeu(cw)   eu1
- *		.-------> .----->
+ *  List on return -
  *
- *	   (edge)========= ~~~~~~~(new edge)
- *
- *		  <-------. <-----.
- *		 oldeumate  eu1mate
+ *		     oldeu(cw)    eu1
+ *		    .------->   .----->
+ *		   /           /
+ *	   (edge) A ========= V ~~~~~~~ B (new edge)
+ *			     /         /
+ *		    <-------.   <-----.
+ *		       mate	 mate
  */
 struct edgeuse *nmg_eusplit(v, oldeu)
 struct vertex *v;
@@ -1317,43 +1309,75 @@ struct edgeuse *oldeu;
 	if (v) {
 		NMG_CK_VERTEX(v);
 	}
+	oldeumate = oldeu->eumate_p;
+	NMG_CK_EDGEUSE( oldeumate );
 
 	/* if this edge has uses other than this edge and its mate, we must
 	 * separate these two edgeuses from the existing edge, and create
 	 * a new edge for them.  Then we can insert a new vertex in this
 	 * new edge without fear of damaging some other object.
 	 */
-	if (oldeu->radial_p != oldeu->eumate_p)
+	if (oldeu->radial_p != oldeumate)
 		nmg_unglueedge(oldeu);
 
-
 	if (*oldeu->up.magic_p == NMG_SHELL_MAGIC) {
-		/* set the shell's edge pointer so that a "make edge" 
-		 * operation will insert a new edge in the "appropriate" place
-		 */
-		if (oldeu->next != oldeu->eumate_p)
-			oldeu->up.s_p->eu_p = oldeu->next;
-		else
-			oldeu->up.s_p->eu_p = oldeu->next->next;
+		s = oldeu->up.s_p;
+		NMG_CK_SHELL(s);
 
-		/* we make an edge from the new vertex to the vertex at the
-		 * other end of the edge given
+		/*
+		 *  Make an edge from the new vertex ("V") to vertex at
+		 *  other end of the edge given ("B").
+		 *  The new vertex "V" may be NULL, which will cause the
+		 *  shell's lone vertex to be used, or a new one obtained.
+		 *  New edges will be placed at head of shell's edge list.
 		 */
-		if (v)
-			eu1 = nmg_me(v,
-			    oldeu->eumate_p->vu_p->v_p, oldeu->up.s_p);
-		else
-			eu1 = nmg_me((struct vertex *)NULL,
-			    oldeu->eumate_p->vu_p->v_p, oldeu->up.s_p);
+		eu1 = nmg_me(v, oldeumate->vu_p->v_p, s);
+		eu2 = eu1->eumate_p;
 
-		/* now move the end of the old edge over to the new vertex */
-		nmg_movevu(oldeu->eumate_p->vu_p, eu1->vu_p->v_p);
+		/*
+		 *  The situation is now:
+		 *
+		 *      eu1			       oldeu
+		 *  .----------->		  .------------->
+		 * /				 /
+		 *V ~~~~~~~~~~~~~ B (new edge)	A =============== B (edge)
+		 *		 /				 /
+		 *  <-----------.		  <-------------.
+		 *      eu2			      oldeumate
+		 */
+
+		/* Make oldeumate start at "V", not "B" */
+		nmg_movevu(oldeumate->vu_p, eu1->vu_p->v_p);
+
+		/*
+		 *  Enforce rigid ordering in shell's edge list:
+		 *	oldeu, oldeumate, eu1, eu2
+		 *  This is to keep edges & mates "close to each other".
+		 */
+		if( NMG_LIST_PNEXT(edgeuse, oldeu) != oldeumate )  {
+			NMG_LIST_DEQUEUE( &oldeumate->l );
+			NMG_LIST_APPEND( &oldeu->l, &oldeumate->l );
+		}
+		NMG_LIST_DEQUEUE( &eu1->l );
+		NMG_LIST_DEQUEUE( &eu2->l );
+		NMG_LIST_APPEND( &oldeumate->l, &eu1->l );
+		NMG_LIST_APPEND( &eu1->l, &eu2->l );
+
+		/*
+		 *	     oldeu(cw)    eu1
+		 *	    .------->   .----->
+		 *	   /           /
+		 * (edge) A ========= V ~~~~~~~ B (new edge)
+		 *		     /         /
+		 *	    <-------.   <-----.
+		 *	    oldeumate     eu2
+		 */
 		return(eu1);
 	}
 	else if (*oldeu->up.magic_p != NMG_LOOPUSE_MAGIC) {
 		rt_log("in %s at %d invalid edgeuse parent\n",
 			__FILE__, __LINE__);
-		rt_bomb("routine nmg_eusplit");
+		rt_bomb("nmg_eusplit");
 	}
 
 	/* now we know we are in a loop */
@@ -1361,65 +1385,80 @@ struct edgeuse *oldeu;
 	/* get a parent shell pointer so we can make a new edge */
 	if (*oldeu->up.lu_p->up.magic_p == NMG_SHELL_MAGIC)
 		s = oldeu->up.lu_p->up.s_p;
-	else {
+	else
 		s = oldeu->up.lu_p->up.fu_p->s_p;
-		NMG_CK_SHELL(s);
-	}
+	NMG_CK_SHELL(s);
 
 	/* make a new edge on the vertex */
 	if (v) {
+		/* An edge on the single vertex "V" */
 		eu1 = nmg_me(v, v, s);
 		eu2 = eu1->eumate_p;
 	} else {
+		/* An edge between two new vertices */
 		eu1 = nmg_me((struct vertex *)NULL, (struct vertex *)NULL, s);
 		eu2 = eu1->eumate_p;
+		/* Make both ends of edge use same vertex.
+		 * The second vertex is freed automaticly.
+		 */
 		nmg_movevu(eu2->vu_p, eu1->vu_p->v_p);
 	}
 
-	/* pick out the edge from the shell */
-	DLLRM(s->eu_p, eu1);
-	DLLRM(s->eu_p, eu2);
-	if (s->eu_p == eu2)
-		s->eu_p = (struct edgeuse *)NULL;
-
-	oldeumate = oldeu->eumate_p;
-
-	/* insert the new edge(uses) in the loop
-	 * eu1 will become the mate to oldeumate on the existing edge.
-	 * eu2 will become the mate of oldeu on the new edge.
-	 * orientation and parentage are copied copied.
+	/*
+	 *  The current situation is now:
+	 *
+	 *	      eu1			       oldeu
+	 *	  .------------->		  .------------->
+	 *	 /				 /
+	 *	V ~~~~~~~~~~~~~~~ V (new edge)	A =============== B (edge)
+	 *			 /				 /
+	 *	  <-------------.		  <-------------.
+	 *	      eu2			      oldeumate
+	 *
+	 *  Goals:
+	 *  eu1 will become the mate to oldeumate on the existing edge.
+	 *  eu2 will become the mate of oldeu on the new edge.
 	 */
-	eu1->last = oldeu;
-	eu1->next = oldeu->next;
-	eu1->next->last = eu1;
-	oldeu->next = eu1;
+	NMG_LIST_DEQUEUE( &eu1->l );
+	NMG_LIST_DEQUEUE( &eu2->l );
+	NMG_LIST_APPEND( &oldeu->l, &eu1->l );
+	NMG_LIST_APPEND( &oldeumate->l, &eu2->l );
+
+	/*
+	 *  The situation is now:
+	 *
+	 *		       oldeu      eu1			>>>loop>>>
+	 *		    .------->   .----->
+	 *		   /           /
+	 *	   (edge) A ========= V ~~~~~~~ B (new edge)
+	 *			     /         /
+	 *		    <-------.   <-----.	
+	 *		       eu2      oldeumate		<<<loop<<<
+	 */
+
+	/* Copy parentage (loop affiliation) and orientation */
 	eu1->up.magic_p = oldeu->up.magic_p;
 	eu1->orientation = oldeu->orientation;
 	eu1->eua_p = (struct edgeuse_a *)NULL;
 	eu1->eumate_p = eu1->radial_p = oldeumate;
 	oldeumate->radial_p = oldeumate->eumate_p = eu1;
 
-	eu2->next = oldeumate->next;
-	eu2->last = oldeumate;
-	eu2->next->last = eu2;
-	oldeumate->next = eu2;
 	eu2->up.magic_p = oldeumate->up.magic_p;
 	eu2->orientation = oldeumate->orientation;
 	eu2->eua_p = (struct edgeuse_a *)NULL;
 	eu2->eumate_p = eu2->radial_p = oldeu;
 	oldeu->radial_p = oldeu->eumate_p = eu2;
 
-	/* straighten out ownership of the edge.
-	 * oldeu keeps the edge it had (and shares with eu2).
-	 * oldeumate and eu1 share the new edge.
-	 */
+	/* Associate oldeumate with new edge, and eu2 with old edge. */
 	oldeumate->e_p = eu1->e_p;
 	eu2->e_p = oldeu->e_p;
 
 	return(eu1);
 }
 
-/*	N M G _ M O V E E U
+/*
+ *			N M G _ M O V E E U
+ *
  *	Move a pair of edgeuses onto a new edge (glue edgeuse).
  *	the edgeuse eusrc and its mate are moved to the edge
  *	used by eudst.  eusrc is made to be immediately radial to eudst.
@@ -1450,7 +1489,7 @@ struct edgeuse *eudst, *eusrc;
 	    (eudst->vu_p->v_p == eusrc->vu_p->v_p &&
 	    eudst->eumate_p->vu_p->v_p == eusrc->eumate_p->vu_p->v_p) ) ) {
 		/* edgeuses do NOT share verticies. */
-	    	rt_bomb("edgeuses do not share vertices, cannot share edge\n");
+	    	rt_bomb("nmg_moveeu() edgeuses do not share vertices, cannot share edge\n");
 	}
 
 	e = eusrc->e_p;
@@ -1481,10 +1520,8 @@ struct edgeuse *eudst, *eusrc;
 	eudst->radial_p = eusrc;
 }
 
-
-
-
 /*	N M G _ U N G L U E 
+ *
  *	If edgeuse is part of a shared edge (more than one pair of edgeuses
  *	on the edge), it and its mate are "unglued" from the edge, and 
  *	associated with a new edge structure.
@@ -1559,33 +1596,41 @@ struct edgeuse *eu;
 	eu->eumate_p->e_p = eu->e_p = e;
 
 }
-/*	N M G _ J V
- *	Join two vertexes into one
+
+/*
+ *			N M G _ J V
+ *
+ *	Join two vertexes into one.
+ *	v1 inherits all the vertexuses presently pointing to v2,
+ *	and v2 is then destroyed.
  */
 void nmg_jv(v1, v2)
-struct vertex *v1, *v2;
+register struct vertex	*v1;
+register struct vertex	*v2;
 {
-	struct vertexuse *vu1, *vu2;
+	register struct vertexuse	*vu;
 
 	NMG_CK_VERTEX(v1);
 	NMG_CK_VERTEX(v2);
 
 	if (v1 == v2) return;
 
-	/* tell all the vertexuses about their new vertex */
-	vu1 = vu2 = v2->vu_p;
-	do {
-		vu2->v_p = v1;
-		vu2 = vu2->next;
-	} while (vu2 != vu1);
+	/*
+	 *  Walk the v2 list, unlinking vertexuse structs,
+	 *  and adding them to the *end* of the v1 list
+	 *  (which preserves relative ordering).
+	 */
+	vu = NMG_LIST_FIRST(vertexuse, &v2->vu_hd );
+	while( NMG_LIST_MORE( vu, vertexuse, &v2->vu_hd ) )  {
+		register struct vertexuse	*vunext;
 
-	/* link vertexuse list for v2 to v1's vertexuse list */
-	vu1 = v1->vu_p;
-
-	vu1->last->next = vu2->next;
-	vu2->next->last = vu1->last;
-	vu2->next = vu1;
-	vu1->last = vu2;
+		NMG_CK_VERTEXUSE(vu);
+		vunext = NMG_LIST_PNEXT(vertexuse, vu);
+		NMG_LIST_DEQUEUE( &vu->l );
+		NMG_LIST_INSERT( &v1->vu_hd, &vu->l );
+		vu->v_p = v1;		/* "up" to new vertex */
+		vu = vunext;
+	}
 
 	if (v2->vg_p) FREE_VERTEX_G(v2->vg_p);
 	FREE_VERTEX(v2);
@@ -1688,15 +1733,22 @@ long *p;
 		return (0);
 	} else {
 		rt_log("Unknown table function %d\n", func);
-		rt_bomb("bye");
+		rt_bomb("nmg_tbl");
 	}
 	return(-1);/* this is here to keep lint happy */
 }
 
 
-/*	N M G _ M L V
- *	Make a new loop (with specified orientation) and
- *	vertex in shell or face.
+/*
+ *			N M G _ M L V
+ *
+ *	Make a new loop (with specified orientation) and vertex,
+ *	in a shell or face.
+ *	If the vertex 'v' is NULL, the shell's lone vertex is used,
+ *	or a new vertex is created.
+ * 
+ *  Implicit return -
+ *	The loopuse is inserted at the head of the appropriate list.
  */
 struct loopuse *nmg_mlv(magic, v, orientation)
 long *magic;
@@ -1713,69 +1765,90 @@ char orientation;
 
 	p.magic_p = magic;
 
-	GET_LOOP(l);
-	GET_LOOPUSE(lu1);
-	GET_LOOPUSE(lu2);
 	if (v) {
 		NMG_CK_VERTEX(v);
 	}
 
+	GET_LOOP(l);
 	l->magic = NMG_LOOP_MAGIC;
-	l->lu_p = lu1;
 	l->lg_p = (struct loop_g *)NULL;
 
-	lu1->magic = lu2->magic = NMG_LOOPUSE_MAGIC;
+	GET_LOOPUSE(lu1);
+	lu1->l.magic = NMG_LOOPUSE_MAGIC;
+	NMG_LIST_INIT( &lu1->down_hd );
+
+	GET_LOOPUSE(lu2);
+	lu2->l.magic = NMG_LOOPUSE_MAGIC;
+	NMG_LIST_INIT( &lu2->down_hd );
+
+	l->lu_p = lu1;
 
 	lu1->l_p = lu2->l_p = l;
 	lu1->lua_p = lu2->lua_p = (struct loopuse_a *)NULL;
 	if (*p.magic_p == NMG_SHELL_MAGIC) {
-		if (p.s->vu_p) {
-			lu1->down.vu_p = p.s->vu_p;
-			p.s->vu_p->up.lu_p = lu1;
-			p.s->vu_p = (struct vertexuse *)NULL;
-			if (v) nmg_movevu(lu1->down.vu_p, v);
+		struct shell		*s;
+		struct vertexuse	*vu1, *vu2;
+
+		s = p.s;
+		if ( vu1 = s->vu_p ) {
+			/* Use shell's lone vertex */
+			s->vu_p = (struct vertexuse *)NULL;
+			vu1->up.lu_p = lu1;
+			if (v) nmg_movevu(vu1, v);
 		}
 		else {
-			if (v) lu1->down.vu_p = nmg_mvu(v, &lu1->magic);
-			else lu1->down.vu_p = nmg_mvvu(&lu1->magic);
+			if (v) vu1 = nmg_mvu(v, &lu1->l.magic);
+			else vu1 = nmg_mvvu(&lu1->l.magic);
 		}
-		lu2->down.vu_p = nmg_mvu(lu1->down.vu_p->v_p, &lu2->magic);
-		lu1->up.magic_p = lu2->up.magic_p = magic;
+		NMG_CK_VERTEXUSE(vu1);
+		NMG_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
+
+		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic);
+		NMG_CK_VERTEXUSE(vu2);
+		NMG_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
+		lu1->up.s_p = lu2->up.s_p = s;
 
 		lu1->lumate_p = lu2;
 		lu2->lumate_p = lu1;
 
-		DLLINS(p.s->lu_p, lu2);
-		DLLINS(p.s->lu_p, lu1);
+		NMG_LIST_INSERT( &s->lu_hd, &lu1->l );
+		NMG_LIST_INSERT( &lu1->l, &lu2->l );
 	} else if (*p.magic_p == NMG_FACEUSE_MAGIC) {
-		if (v) lu1->down.vu_p = nmg_mvu(v, &lu1->magic);
-		else lu1->down.vu_p = nmg_mvvu(&lu1->magic);
+		struct vertexuse	*vu1, *vu2;
 
-		lu2->down.vu_p = nmg_mvu(lu1->down.vu_p->v_p, &lu2->magic);
+		if (v) vu1 = nmg_mvu(v, &lu1->l.magic);
+		else vu1 = nmg_mvvu(&lu1->l.magic);
+		NMG_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
+
+		vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic);
+		NMG_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu2);
+
 		lu1->up.fu_p = p.fu;
 		lu2->up.fu_p = p.fu->fumate_p;
 
 		lu1->lumate_p = lu2;
 		lu2->lumate_p = lu1;
 
-		DLLINS(p.fu->fumate_p->lu_p, lu2);
-		DLLINS(p.fu->lu_p, lu1);
+		NMG_LIST_INSERT( &p.fu->fumate_p->lu_hd, &lu2->l );
+		NMG_LIST_INSERT( &p.fu->lu_hd, &lu1->l );
 	} else {
-		rt_bomb("unknown parent for loopuse!\n");
+		rt_bomb("nmg_mlv() unknown parent for loopuse!\n");
 	}
 	lu1->orientation = lu2->orientation = orientation;
 
 	return(lu1);
 }
 
-/*	N M G _ M O V E L T O F
- *	move first shell loopuse to an existing face
+/*
+ *			N M G _ M O V E L T O F
+ *
+ *	move first pair of shell loopuses to an existing face
  */
 void nmg_moveltof(fu, s)
 struct faceuse *fu;
 struct shell *s;
 {
-	struct loopuse *lu;
+	struct loopuse	*lu1, *lu2;
 
 	NMG_CK_SHELL(s);
 	NMG_CK_FACEUSE(fu);
@@ -1783,24 +1856,21 @@ struct shell *s;
 		rt_log("in %s at %d Cannot move loop to face in another shell\n",
 		    __FILE__, __LINE__);
 	}
-	NMG_CK_LOOPUSE(s->lu_p);
+	lu1 = NMG_LIST_FIRST(loopuse, &s->lu_hd);
+	NMG_CK_LOOPUSE(lu1);
+	NMG_LIST_DEQUEUE( &lu1->l );
 
-	DLLRM(s->lu_p, lu);
-	if (s->lu_p == lu) {
-		rt_bomb("Loopuses don't share parent shell!\n");
-	}
+	lu2 = NMG_LIST_FIRST(loopuse, &s->lu_hd);
+	NMG_CK_LOOPUSE(lu2);
+	NMG_LIST_DEQUEUE( &lu2->l );
 
-	DLLINS(fu->lu_p, lu);
-
-	DLLRM(s->lu_p, lu);
-	if (s->lu_p == lu)
-		s->lu_p = (struct loopuse *)NULL;
-
-	fu = fu->fumate_p;
-	DLLINS(fu->lu_p, lu);
+	NMG_LIST_APPEND( &fu->lu_hd, &lu1->l );
+	NMG_LIST_APPEND( &fu->fumate_p->lu_hd, &lu2->l );
 }
 
-/*	N M G _ C F A C E
+/*
+ *			N M G _ C F A C E
+ *
  *	Create a face from a list of vertices
  *
  *	"verts" is an array of "n" pointers to (struct vertex).  "s" is the
@@ -1830,31 +1900,38 @@ int n;
 {
 	struct faceuse *fu;
 	struct edgeuse *eu;
+	struct loopuse	*lu;
+	struct vertexuse *vu;
 	int i;
 
 	NMG_CK_SHELL(s);
 	if (n < 1) {
-		rt_bomb("trying to make bogus face\n");
+		rt_log("nmg_cface(s=x%x, verts=x%x, n=%d.)\n",
+			s, verts, n );
+		rt_bomb("nmg_cface() trying to make bogus face\n");
 	}
 
 	if (verts) {
-		fu = nmg_mf(nmg_mlv(&s->magic, verts[n-1], OT_SAME));
-		eu = nmg_meonvu(fu->lu_p->down.vu_p);
+		lu = nmg_mlv(&s->l.magic, verts[n-1], OT_SAME);
+		fu = nmg_mf(lu);
+		vu = NMG_LIST_FIRST(vertexuse, &lu->down_hd);
+		eu = nmg_meonvu(vu);
 
 		if (!verts[n-1])
 			verts[n-1] = eu->vu_p->v_p;
 
 		for (i = n-2 ; i >= 0 ; i--) {
-			eu = nmg_eusplit(verts[i], fu->lu_p->down.eu_p);
+			eu = NMG_LIST_FIRST(edgeuse, &lu->down_hd);
+			eu = nmg_eusplit(verts[i], eu);
 			if (!verts[i])
 				verts[i] = eu->vu_p->v_p;
 		}
 
 	} else {
-		fu = nmg_mf(nmg_mlv(&s->magic, (struct vertex *)NULL, OT_SAME));
-		(void)nmg_meonvu(fu->lu_p->down.vu_p);
-
-		eu = fu->lu_p->down.eu_p;
+		lu = nmg_mlv(&s->l.magic, (struct vertex *)NULL, OT_SAME);
+		fu = nmg_mf(lu);
+		vu = NMG_LIST_FIRST(vertexuse, &lu->down_hd);
+		eu = nmg_meonvu(vu);
 		while (--n) {
 			(void)nmg_eusplit((struct vertex *)NULL, eu);
 		}
@@ -1862,8 +1939,11 @@ int n;
 	return (fu);
 }
 
-/*	N M G _ E S P L I T
+/*
+ *			N M G _ E S P L I T
+ *
  *	Split an edge.
+ *
  *	Actually, we split each edgeuse pair of the given edge, and combine
  *	the new edgeuses together onto new edges.  
  *
@@ -1881,6 +1961,7 @@ struct edge *e;
 			*neu1, *neu2; /* new (split) edgeuses */
 	int 		notdone=1;
 	struct vertex	*v1, *v2;
+
 	eu = e->eu_p;
 	neu1 = neu2 = (struct edgeuse *)NULL;
 
@@ -1926,10 +2007,9 @@ struct edge *e;
 			neu1 = eu2->eumate_p;
 		} else {
 			rt_log("in %s at %d ", __FILE__, __LINE__);
-			rt_bomb("Something's awry in nmg_esplit\n");
+			rt_bomb("nmg_esplit() Something's awry\n");
 		}
 	} while (notdone);
-
 
 	eu = neu1;
 	do {
@@ -1954,8 +2034,10 @@ struct edge *e;
 	return(eu->e_p);
 }
 
-/*	N M G _ E I N S
- *	insert a new (zero length) edge at the begining of an existing edge
+/*
+ *				N M G _ E I N S
+ *
+ *	Insert a new (zero length) edge at the begining of an existing edge
  *	Perhaps this is what nmg_esplit and nmg_eusplit should have been like?
  *
  *	Before:
@@ -1976,7 +2058,7 @@ struct edge *e;
 struct edgeuse *nmg_eins(eu)
 struct edgeuse *eu;
 {
-	struct edgeuse *eu1, *eu2, *eulist;
+	struct edgeuse *eu1, *eu2;
 	struct shell *s;
 
 	NMG_CK_EDGEUSE(eu);
@@ -2003,72 +2085,76 @@ struct edgeuse *eu;
 	}
 
 	eu1 = nmg_me(eu->vu_p->v_p, eu->vu_p->v_p, s);
+	eu2 = eu1->eumate_p;
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-		DLLRM(s->eu_p, eu1);
-		DLLRM(s->eu_p, eu2);
-		if (s->eu_p == eu2)
-			s->eu_p = (struct edgeuse *)NULL;
+		struct edgeuse	*eumate_pred;	/* predecessor to eumate */
 
-		eulist = eu;
-		DLLINS(eulist, eu1);
-		eulist = eu->eumate_p->next;
-		DLLINS(eulist, eu2);
+		NMG_LIST_DEQUEUE( &eu1->l );
+		NMG_LIST_DEQUEUE( &eu2->l );
+
+		NMG_LIST_APPEND( &eu->l, &eu1->l );
+		eumate_pred = NMG_LIST_NEXT( edgeuse, &eu->eumate_p->l );
+		NMG_LIST_APPEND( &eumate_pred->l, &eu2->l );
+
 		eu1->up.lu_p = eu->up.lu_p;
 		eu2->up.lu_p = eu->eumate_p->up.lu_p;
 	}
 	else {
-		rt_bomb("Cannot yet insert null edge in shell\n");
+		rt_bomb("nmg_eins() Cannot yet insert null edge in shell\n");
 	}
 	return(eu1);
 }
 
-/*	F I N D _ V U _ I N _ F A C E
+/*
+ *			F I N D _ V U _ I N _ F A C E
  *
  *	try to find a vertex(use) in a face wich appoximately matches the
  *	coordinates given.  
  *	
  */
 struct vertexuse *nmg_find_vu_in_face(pt, fu, tol)
-point_t pt;
-struct faceuse *fu;
-fastf_t tol;
+point_t		pt;
+struct faceuse	*fu;
+fastf_t		tol;
 {
-	struct loopuse *lu;
-	struct edgeuse *eu;
-	vect_t		delta;
+	register struct loopuse	*lu;
+	struct edgeuse		*eu;
+	vect_t			delta;
+	register pointp_t	pp;
+	int			magic1;
 
 	NMG_CK_FACEUSE(fu);
-	lu = fu->lu_p;
-	do {
+
+	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
-		if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC) {
-			VSUB2(delta, lu->down.vu_p->v_p->vg_p->coord, pt);
+		magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+		if (magic1 == NMG_VERTEXUSE_MAGIC) {
+			struct vertexuse	*vu;
+			vu = NMG_LIST_FIRST(vertexuse, &lu->down_hd);
+			pp = vu->v_p->vg_p->coord;
+			VSUB2(delta, pp, pt);
 			if ( MAGSQ(delta) < tol)
-				return(lu->down.vu_p);
+				return(vu);
 		}
-		else if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC) {
-			eu = lu->down.eu_p;
-			do {
-				VSUB2(delta, eu->vu_p->v_p->vg_p->coord, pt);
+		else if (magic1 == NMG_EDGEUSE_MAGIC) {
+			for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+				pp = eu->vu_p->v_p->vg_p->coord;
+				VSUB2(delta, pp, pt);
 				if ( MAGSQ(delta) < tol)
 					return(eu->vu_p);
-				eu = eu->next;
-			} while (eu != lu->down.eu_p);
+			}
 		} else
-			rt_bomb("Bogus child of loop\n");
-
-		lu = lu->next;
-	} while (lu != fu->lu_p);
+			rt_bomb("nmg_find_vu_in_face() Bogus child of loop\n");
+	}
 	return ((struct vertexuse *)NULL);
 }
 
-/*	N M G _ G L U E F A C E S
+/*
+ *			N M G _ G L U E F A C E S
  *
  *	given a shell containing "n" faces whose outward oriented faceuses are
  *	enumerated in "fulist", glue the edges of the faces together
- *
- *
  *
  */
 nmg_gluefaces(fulist, n)
@@ -2076,6 +2162,7 @@ struct faceuse *fulist[];
 int n;
 {
 	struct shell	*s;
+	struct loopuse	*lu;
 	struct edgeuse	*eu;
 	int		i;
 	int		f_no;		/* Face number */
@@ -2083,51 +2170,223 @@ int n;
 	NMG_CK_FACEUSE(fulist[0]);
 	s = fulist[0]->s_p;
 	NMG_CK_SHELL(s);
+
+	/* First, perform some checks */
 	for (i = 0 ; i < n ; ++i) {
-		NMG_CK_FACEUSE(fulist[i]);
-		if (fulist[i]->s_p != s) {
+		register struct faceuse	*fu;
+
+		fu = fulist[i];
+		NMG_CK_FACEUSE(fu);
+		if (fu->s_p != s) {
 			rt_log("in %s at %d faceuses don't share parent\n",
 				__FILE__, __LINE__);
 			rt_bomb("nmg_gluefaces\n");
 		}
-		NMG_CK_LOOPUSE(fulist[i]->lu_p);
-		if (*fulist[i]->lu_p->down.magic_p != NMG_EDGEUSE_MAGIC) {
-			rt_bomb("Cannot glue edges of face on vertex\n");
+		lu = NMG_LIST_FIRST( loopuse, &fu->lu_hd );
+		NMG_CK_LOOPUSE(lu);
+		if( NMG_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC) {
+			/* Not an edgeuse, probably a vertexuse */
+			rt_bomb("nmg_cluefaces() Cannot glue edges of face on vertex\n");
 		} else {
-			NMG_CK_EDGEUSE(fulist[i]->lu_p->down.eu_p);
+			eu = NMG_LIST_FIRST( edgeuse, &lu->down_hd );
+			NMG_CK_EDGEUSE(eu);
 		}
 	}
 
 	for (i=0 ; i < n ; ++i) {
-	    eu = fulist[i]->lu_p->down.eu_p;
-	    do {
+		lu = NMG_LIST_FIRST( loopuse, &fulist[i]->lu_hd );
+		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+			for( f_no = i+1; f_no < n; f_no++ )  {
+				register struct edgeuse	*eu2;
 
-		for (f_no=i+1 ; eu->radial_p == eu->eumate_p && f_no < n ;
-		    ++f_no) {
-			register struct edgeuse	*eu2;
+				if( eu->radial_p != eu->eumate_p )  break;
 
-			eu2 = fulist[f_no]->lu_p->down.eu_p;
-			do {
-			    if (EDGESADJ(eu, eu2))
-			    	nmg_moveeu(eu, eu2);
+				lu = NMG_LIST_FIRST(loopuse, &fulist[f_no]->lu_hd);
+				for( NMG_LIST( eu2, edgeuse, &lu->down_hd ) )  {
+					if (EDGESADJ(eu, eu2))
+					    	nmg_moveeu(eu, eu2);
+				}
+			}
+		}
+	}
+}
 
-			    eu2 = eu2->next;
-			} while (eu2 != fulist[f_no]->lu_p->down.eu_p);
+/*
+ *			N M G _ V U _ T O _ V L I S T
+ *
+ *  Plot a single vertexuse
+ */
+nmg_vu_to_vlist( vhead, vu )
+struct vlhead		*vhead;
+struct vertexuse	*vu;
+{
+	struct vertex	*v;
+	register struct vertex_g *vg;
+
+	NMG_CK_VERTEXUSE(vu);
+	v = vu->v_p;
+	NMG_CK_VERTEX(v);
+	vg = v->vg_p;
+	if( vg )  {
+		/* Only thing in this shell is a point */
+		NMG_CK_VERTEX_G(vg);
+		ADD_VL( vhead, vg->coord, 0 );
+		ADD_VL( vhead, vg->coord, 1 );
+	}
+}
+
+/*
+ *			N M G _ E U _ T O _ V L I S T
+ *
+ *  Plot a list of edgeuses.  The last edge is joined back to the first.
+ */
+nmg_eu_to_vlist( vhead, eu_hd )
+struct vlhead	*vhead;
+struct nmg_list	*eu_hd;
+{
+	struct edgeuse	*eu;
+	struct vertexuse *vu;
+	struct vertex	*v;
+	register struct vertex_g *vg;
+	struct vertex_g	*first_vg;
+
+	/* Consider all the edges in the wire edge list */
+	first_vg = (struct vertex_g *)0;
+	for( NMG_LIST( eu, edgeuse, eu_hd ) )  {
+		/* Consider this edge */
+		NMG_CK_EDGEUSE(eu);
+		vu = eu->vu_p;
+		NMG_CK_VERTEXUSE(vu);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+		vg = v->vg_p;
+		if( !vg ) {
+			continue;
+		}
+		NMG_CK_VERTEX_G(vg);
+		if( !first_vg )  {
+			/* move */
+			ADD_VL( vhead, vg->coord, 0 );
+			first_vg = vg;
+		} else {
+			/* Draw */
+			ADD_VL( vhead, vg->coord, 1 );
+		}
+	}
+	if( first_vg )  {
+		/* Draw back to first vertex used */
+		ADD_VL( vhead, first_vg->coord, 1 );	/* draw */
+	}
+}
+
+/*
+ *			N M G _ L U _ T O _ V L I S T
+ *
+ *  Plot a list of loopuses.
+ */
+nmg_lu_to_vlist( vhead, lu_hd, poly_markers, normal )
+struct vlhead	*vhead;
+struct nmg_list	*lu_hd;
+int		poly_markers;
+vectp_t		normal;
+{
+	struct loopuse	*lu;
+	struct edgeuse	*eu;
+	struct vertexuse *vu;
+	struct vertex	*v;
+	register struct vertex_g *vg;
+
+	for( NMG_LIST( lu, loopuse, lu_hd ) )  {
+		int		isfirst;
+		struct vertex_g	*first_vg;
+		point_t		centroid;
+		int		npoints;
+
+		/* Consider this loop */
+		NMG_CK_LOOPUSE(lu);
+		if( NMG_LIST_FIRST_MAGIC(&lu->down_hd)==NMG_VERTEXUSE_MAGIC )  {
+			/* loop of a single vertex */
+			vu = NMG_LIST_FIRST(vertexuse, &lu->down_hd);
+			nmg_vu_to_vlist( vhead, vu );
+			continue;
+		}
+		/* Consider all the edges in the loop */
+		isfirst = 1;
+		first_vg = (struct vertex_g *)0;
+		npoints = 0;
+		VSETALL( centroid, 0 );
+		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+			/* Consider this edge */
+			NMG_CK_EDGEUSE(eu);
+			vu = eu->vu_p;
+			NMG_CK_VERTEXUSE(vu);
+			v = vu->v_p;
+			NMG_CK_VERTEX(v);
+			vg = v->vg_p;
+			if( !vg ) {
+				continue;
+			}
+			NMG_CK_VERTEX_G(vg);
+			VADD2( centroid, centroid, vg->coord );
+			npoints++;
+			if (isfirst) {
+				if( poly_markers) {
+					/* Insert a "start polygon, normal" marker */
+					ADD_VL( vhead, normal, 2 );
+					ADD_VL( vhead, vg->coord, 3 );	/* move */
+				} else {
+					/* move */
+					ADD_VL( vhead, vg->coord, 0 );
+				}
+				isfirst = 0;
+				first_vg = vg;
+			} else {
+				if( poly_markers) {
+					ADD_VL( vhead, vg->coord, 4 );
+				} else {
+					/* Draw */
+					ADD_VL( vhead, vg->coord, 1 );
+				}
+			}
 		}
 
-		eu = eu->next;
-	    } while (eu != fulist[i]->lu_p->down.eu_p);
+		/* Draw back to the first vertex used */
+		if( !isfirst && first_vg )  {
+			if( poly_markers )  {
+				/* Draw, end polygon */
+				ADD_VL( vhead, first_vg->coord, 5 );
+			} else {
+				/* Draw */
+				ADD_VL( vhead, first_vg->coord, 1 );
+			}
+		}
+		if( poly_markers > 1 && npoints > 2 )  {
+			/* Draw surface normal as a little vector */
+			double	f;
+			vect_t	tocent;
+			f = 1.0 / npoints;
+			VSCALE( centroid, centroid, f );
+			ADD_VL( vhead, centroid, 0 );	/* move */
+			VSUB2( tocent, first_vg->coord, centroid );
+			f = MAGNITUDE( tocent ) * 0.5;
+			VSCALE( tocent, normal, f );
+			VADD2( centroid, centroid, tocent );
+			ADD_VL( vhead, centroid, 1 );	/* draw */
+		}
 	}
 }
 
 /*
  *			N M G _ S _ T O _ V L I S T
  *
+ *  Plot the entire contents of a shell.
+ *
  *  poly_markers =
  *	0 for vectors
  *	1 for polygons
  *	2 for polygons and surface normals drawn with vectors
  */
+void
 nmg_s_to_vlist( vhead, s, poly_markers )
 struct vlhead	*vhead;
 struct shell	*s;
@@ -2135,129 +2394,53 @@ int		poly_markers;
 {
 	struct faceuse	*fu;
 	struct face_g	*fg;
-	struct loopuse	*lu;
-	struct edgeuse	*eu;
-	struct vertexuse *vu;
-	struct vertex	*v;
-	register struct vertex_g *vg;
+	vect_t		normal;
 
 	NMG_CK_SHELL(s);
+
+	/* faces */
+	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+		/* Consider this face */
+		NMG_CK_FACEUSE(fu);
+		NMG_CK_FACE(fu->f_p);
+		fg = fu->f_p->fg_p;
+		NMG_CK_FACE_G(fg);
+		if (fu->orientation != OT_SAME)  continue;
+	   	nmg_lu_to_vlist( vhead, &fu->lu_hd, poly_markers, fg->N );
+	}
+
+	/* wire loops.  poly_markers=0 so wires are always drawn as vectors */
+	VSETALL(normal, 0);
+	nmg_lu_to_vlist( vhead, &s->lu_hd, 0, normal );
+
+	/* wire edges */
+	nmg_eu_to_vlist( vhead, &s->eu_hd );
+
+	/* single vertices */
 	if (s->vu_p)  {
-		if (s->fu_p || s->lu_p || s->eu_p) {
-			rt_bomb("nmg_s_to_vlist:  shell with vu also has other pointers\n");
-		}
-		vu = s->vu_p;
-		NMG_CK_VERTEXUSE(vu);
-		v = vu->v_p;
-		NMG_CK_VERTEX(v);
-		vg = v->vg_p;
-		if( vg )  {
-			/* Only thing in this shell is a point */
-			NMG_CK_VERTEX_G(vg);
-			ADD_VL( vhead, vg->coord, 0 );
-			ADD_VL( vhead, vg->coord, 1 );
-		}
-		return;
+		nmg_vu_to_vlist( vhead, s->vu_p );
 	}
-	if( !(s->fu_p) )  {
-		rt_log("nmg_s_to_vlist: shell with no faces?\n");
-		return;
-	}
-	if (s->lu_p || s->eu_p || s->vu_p) {
-		rt_bomb("nmg_s_to_vlist:  shell with fu also has other pointers\n");
-	}
-
-	fu = s->fu_p;
-	do {
-	    /* Consider this face */
-	    NMG_CK_FACEUSE(fu);
-	    NMG_CK_FACE(fu->f_p);
-	    fg = fu->f_p->fg_p;
-	    NMG_CK_FACE_G(fg);
-	    if (fu->orientation == OT_SAME) {
-		lu = fu->lu_p;
-		do {
-			int		isfirst;
-			struct vertex_g	*first_vg;
-			point_t		centroid;
-			int		npoints;
-
-			/* Consider this loop */
-			NMG_CK_LOOPUSE(lu);
-			eu = lu->down.eu_p;
-			NMG_CK_EDGEUSE(eu);
-			isfirst = 1;
-			first_vg = (struct vertex_g *)0;
-			npoints = 0;
-			VSETALL( centroid, 0 );
-			do  {
-				/* Consider this edge */
-				vu = eu->vu_p;
-				NMG_CK_VERTEXUSE(vu);
-				v = vu->v_p;
-				NMG_CK_VERTEX(v);
-				vg = v->vg_p;
-				if( !vg ) {
-					eu = eu->next;
-					continue;
-				}
-				NMG_CK_VERTEX_G(vg);
-				VADD2( centroid, centroid, vg->coord );
-				npoints++;
-				if (isfirst) {
-					if( poly_markers) {
-						/* Insert a "start polygon, normal" marker */
-						ADD_VL( vhead, fg->N, 2 );
-						ADD_VL( vhead, vg->coord, 3 );	/* move */
-					} else {
-						/* move */
-						ADD_VL( vhead, vg->coord, 0 );
-					}
-					isfirst = 0;
-					first_vg = vg;
-				} else {
-					if( poly_markers) {
-						ADD_VL( vhead, vg->coord, 4 );
-					} else {
-						/* Draw */
-						ADD_VL( vhead, vg->coord, 1 );
-					}
-				}
-				eu = eu->next;
-			} while(eu != lu->down.eu_p);
-
-			/* Draw back to the first vertex used */
-			if( !isfirst && first_vg )  {
-				if( poly_markers )  {
-					/* Draw, end polygon */
-					ADD_VL( vhead, first_vg->coord, 5 );
-				} else {
-					/* Draw */
-					ADD_VL( vhead, first_vg->coord, 1 );
-				}
-			}
-			if( poly_markers > 1 && npoints > 2 )  {
-				/* Draw surface normal as a little vector */
-				double	f;
-				vect_t	tocent;
-				f = 1.0 / npoints;
-				VSCALE( centroid, centroid, f );
-				ADD_VL( vhead, centroid, 0 );	/* move */
-				VSUB2( tocent, first_vg->coord, centroid );
-				f = MAGNITUDE( tocent ) * 0.5;
-				VSCALE( tocent, fg->N, f );
-				VADD2( centroid, centroid, tocent );
-				ADD_VL( vhead, centroid, 1 );	/* draw */
-			}
-
-			lu = lu->next;
-		}while (lu != fu->lu_p);
-	    }
-	    fu = fu->next;
-	} while (fu != s->fu_p);
 }
 
-/*	F I N D E U
+/*
+ *			N M G _ R _ T O _ V L I S T
+ */
+void
+nmg_r_to_vlist( vhead, r, poly_markers )
+struct vlhead	*vhead;
+struct nmgregion	*r;
+int		poly_markers;
+{
+	register struct shell	*s;
+
+	NMG_CK_REGION( r );
+	for( NMG_LIST( s, shell, &r->s_hd ) )  {
+		nmg_s_to_vlist( vhead, s, poly_markers );
+	}
+}
+
+/*
+ *			F I N D E U
  *
  *	find an edgeuse in a shell between a pair of verticies
  */
@@ -2266,20 +2449,18 @@ struct vertex *v1, *v2;
 struct shell *s;
 struct edgeuse *eup;
 {
-	struct vertexuse *vu;
-	struct edgeuse *eu;
+	register struct vertexuse	*vu;
+	register struct edgeuse		*eu;
 
 	NMG_CK_VERTEX(v1);
 	NMG_CK_VERTEX(v2);
 	NMG_CK_SHELL(s);
 
-
 	if (rt_g.NMG_debug & DEBUG_FINDEU)
 		rt_log("looking for edge between %8x and %8x other than %8x/%8x\n",
 		v1, v2, eup, eup->eumate_p);
 
-	vu = v1->vu_p;
-	do {
+	for( NMG_LIST( vu, vertexuse, &v1->vu_hd ) )  {
 		NMG_CK_VERTEXUSE(vu);
 		if (!vu->up.magic_p) {
 			rt_log("in %s at %d vertexuse has null parent\n",
@@ -2287,8 +2468,9 @@ struct edgeuse *eup;
 			rt_bomb("findeu");
 		}
 
-		if (rt_g.NMG_debug & DEBUG_FINDEU &&
-		    *vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
+		if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+
+		if (rt_g.NMG_debug & DEBUG_FINDEU )  {
 			rt_log("checking edgeuse %8x vertex pair (%8x, %8x)\n",
 				vu->up.eu_p, vu->up.eu_p->vu_p->v_p,
 				vu->up.eu_p->eumate_p->vu_p->v_p);
@@ -2298,16 +2480,15 @@ struct edgeuse *eup;
 		 * on the vertices we want
 		 * the edgeuse pair should be a dangling edge
 		 */
-		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC && 
-		    vu->up.eu_p != eup && vu->up.eu_p->eumate_p != eup &&
-		    vu->up.eu_p->eumate_p->vu_p->v_p == v2  &&
-		    vu->up.eu_p->eumate_p == vu->up.eu_p->radial_p) {
+		eu = vu->up.eu_p;
+		if( eu != eup && eu->eumate_p != eup &&
+		    eu->eumate_p->vu_p->v_p == v2  &&
+		    eu->eumate_p == eu->radial_p) {
 
 		    	/* if the edgeuse we have found is a part of a face
 		    	 * in the proper shell, we've found what we're looking
 		    	 * for.
 		    	 */
-			eu = vu->up.eu_p;
 			if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 			    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
 			    eu->up.lu_p->up.fu_p->s_p == s) {
@@ -2327,9 +2508,7 @@ struct edgeuse *eup;
 		    		rt_log("ignoring an edge because it has wrong parent\n");
 
 		}
-		vu = vu->next;
-	} while (vu != v1->vu_p);
-
+	}
 
 	if (rt_g.NMG_debug & DEBUG_FINDEU)
 	    	rt_log("findeu search failed\n");
@@ -2337,9 +2516,9 @@ struct edgeuse *eup;
 	return((struct edgeuse *)NULL);
 }
 
-
-
-/*	N M G _ C M F A C E
+/*
+ *			N M G _ C M F A C E
+ *
  *	Create a face for a manifold shell from a list of vertices
  *
  *	"verts" is an array of "n" pointers to pointers to (struct vertex).
@@ -2406,24 +2585,28 @@ struct edgeuse *eup;
  *	to effect the proper vertex order in the final face loop.
  */
 struct faceuse *nmg_cmface(s, verts, n)
-struct shell *s;
-struct vertex **verts[];
-int n;
+struct shell	*s;
+struct vertex	**verts[];
+int		n;
 {
 	struct faceuse *fu;
 	struct edgeuse *eu, *eur, *euold;
+	struct loopuse	*lu;
+	struct vertexuse	*vu;
 	int i;
 
 	NMG_CK_SHELL(s);
 
 	if (n < 1) {
-		rt_bomb("trying to make bogus face\n");
+		rt_log("nmg_cmface(s=x%x, verts=x%x, n=%d.)\n",
+			s, verts, n );
+		rt_bomb("nmg_cmface() trying to make bogus face\n");
 	}
 
 	/* make sure verts points to some real storage */
 	if (!verts) {
-		rt_log("in %s at %d, null pointer to array start\n",
-			__FILE__, __LINE__);
+		rt_log("nmg_cmface(s=x%x, verts=x%x, n=%d.) null pointer to array start\n",
+			s, verts, n );
 		rt_bomb("nmg_cmface\n");
 	}
 
@@ -2435,24 +2618,32 @@ int n;
 				NMG_CK_VERTEX(*verts[i]);
 			}
 		} else {
-			rt_log("in %s at %d, null ptr to ptr to struct vertex\n",
-				__FILE__, __LINE__);
+			rt_log("nmg_cmface(s=x%x, verts=x%x, n=%d.) verts[%d]=NULL\n",
+				s, verts, n, i );
 			rt_bomb("nmg_cmface\n");
 		}
 	}
 
-
-	fu = nmg_mf(nmg_mlv(&s->magic, *verts[n-1], OT_SAME));
+	lu = nmg_mlv(&s->l.magic, *verts[n-1], OT_SAME);
+	fu = nmg_mf(lu);
 	fu->orientation = OT_SAME;
 	fu->fumate_p->orientation = OT_OPPOSITE;
-	eu = nmg_meonvu(fu->lu_p->down.vu_p);
+	vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd);
+	NMG_CK_VERTEXUSE(vu);
+	eu = nmg_meonvu(vu);
+	NMG_CK_EDGEUSE(eu);
 
-	if (!(*verts[n-1]))
+	if (!(*verts[n-1]))  {
+		NMG_CK_VERTEXUSE(eu->vu_p);
+		NMG_CK_VERTEX(eu->vu_p->v_p);
 		*verts[n-1] = eu->vu_p->v_p;
+	}
 
 	for (i = n-2 ; i >= 0 ; i--) {
-
-		euold = fu->lu_p->down.eu_p;
+		lu = NMG_LIST_FIRST( loopuse, &fu->lu_hd );
+		NMG_CK_LOOPUSE(lu);
+		euold = NMG_LIST_FIRST( edgeuse, &lu->down_hd );
+		NMG_CK_EDGEUSE(euold);
 
 		if (rt_g.NMG_debug & DEBUG_CMFACE)
 			rt_log("euold: %8x\n", euold);
@@ -2470,14 +2661,13 @@ int n;
 				if (rt_g.NMG_debug & DEBUG_CMFACE)
 				rt_log("found another edgeuse (%8x) between %8x and %8x\n",
 					eur, *verts[i+1], *verts[i]);
-
 			}
-			else 
+			else {
 				if (rt_g.NMG_debug & DEBUG_CMFACE)
 				    rt_log("didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
 					i+1, *verts[i+1], i, *verts[i]);
+			}
 		} else {
-
 			if (rt_g.NMG_debug & DEBUG_CMFACE)
 				rt_log("*verts[%d] is null\t", i);
 
@@ -2486,7 +2676,6 @@ int n;
 
 			if (rt_g.NMG_debug & DEBUG_CMFACE)
 			rt_log("*verts[%d] is now %8x\n", i, *verts[i]);
-
 		}
 	}
 
@@ -2500,13 +2689,22 @@ int n;
 	return (fu);
 }
 
-
+/*
+ *			N M G _ V V G
+ *
+ *  Verify vertex geometry
+ */
 void nmg_vvg(vg)
 struct vertex_g *vg;
 {
 	NMG_CK_VERTEX_G(vg);
 }
 
+/*
+ *			N M G _ V V E R T E X
+ *
+ *  Verify a vertex
+ */
 void nmg_vvertex(v, vup)
 struct vertex *v;
 struct vertexuse *vup;
@@ -2515,22 +2713,26 @@ struct vertexuse *vup;
 
 	NMG_CK_VERTEX(v);
 
-	vu = vup;
-	do {
+	for( NMG_LIST( vu, vertexuse, &v->vu_hd ) )  {
 		NMG_CK_VERTEXUSE(vu);
 		if (vu->v_p != v)
-			rt_bomb("a vertexuse in my list doesn't share my vertex\n");
-		vu = vu->next;
-	} while (vu != vup);
-
+			rt_bomb("nmg_vvertex() a vertexuse in my list doesn't share my vertex\n");
+	}
 	if (v->vg_p) nmg_vvg(v->vg_p);
 }
 
+/* Verify vertex attributes */
 void nmg_vvua(vua)
 struct vertexuse_a *vua;
 {
 	NMG_CK_VERTEXUSE_A(vua);
 }
+
+/*
+ *			N M G _ V V U
+ *
+ *  Verify vertexuse
+ */
 void nmg_vvu(vu, up)
 struct vertexuse *vu;
 union {
@@ -2542,36 +2744,41 @@ union {
 {
 	NMG_CK_VERTEXUSE(vu);
 	if (vu->up.magic_p != up.magic_p)
-		rt_bomb("vertexuse denies parent\n");
+		rt_bomb("nmg_vvu() vertexuse denies parent\n");
 
-	if (!vu->next)
-		rt_bomb("vertexuse has null next pointer\n");
+	if (!vu->l.forw)
+		rt_bomb("nmg_vvu() vertexuse has null forw pointer\n");
 
-	if (vu->next->magic != NMG_VERTEXUSE_MAGIC)
-		rt_bomb("vertexuse next is bad vertexuse\n");
+	if( NMG_LIST_FIRST_MAGIC( &vu->l ) != NMG_VERTEXUSE_MAGIC)
+		rt_bomb("vertexuse forw is bad vertexuse\n");
 
-	if (vu->next->last != vu)
-		rt_bomb("vertexuse not last of next vertexuse\n");
+	if (NMG_LIST_PNEXT_PLAST(vertexuse,vu) != vu )
+		rt_bomb("vertexuse not back of next vertexuse\n");
 
 	nmg_vvertex(vu->v_p, vu);
 
 	if (vu->vua_p) nmg_vvua(vu->vua_p);
 }
 
-
-
+/* Verify edgeuse attributes */
 void nmg_veua(eua)
 struct edgeuse_a *eua;
 {
 	NMG_CK_EDGEUSE_A(eua);
 }
 
+/* Verify edge geometry */
 void nmg_veg(eg)
 struct edge_g *eg;
 {
 	NMG_CK_EDGE_G(eg);
 }
 
+/*
+ *			N M G _ V E D G E
+ *
+ *  Verify edge
+ */
 void nmg_vedge(e, eup)
 struct edge *e;
 struct edgeuse *eup;
@@ -2581,14 +2788,23 @@ struct edgeuse *eup;
 
 	NMG_CK_EDGE(e);
 	NMG_CK_EDGEUSE(eup);
+	NMG_CK_VERTEXUSE(eup->vu_p);
+	NMG_CK_VERTEX(eup->vu_p->v_p);
+	NMG_CK_EDGEUSE(eup->eumate_p);
+	NMG_CK_VERTEXUSE(eup->eumate_p->vu_p);
+	NMG_CK_VERTEX(eup->eumate_p->vu_p->v_p);
 
 	if (!e->eu_p) rt_bomb("edge has null edgeuse pointer\n");
 
 	eu = eup;
 	do {
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_EDGEUSE(eu->eumate_p);
 		if (eu == eup || eu->eumate_p == eup)
 			is_use = 1;
 
+		NMG_CK_VERTEXUSE(eu->vu_p);
+		NMG_CK_VERTEX(eu->vu_p->v_p);
 		if (eu->vu_p->v_p == eup->vu_p->v_p) {
 			if (eu->eumate_p->vu_p->v_p != eup->eumate_p->vu_p->v_p)
 				rt_bomb("edgeuse mate does not have correct vertex\n");
@@ -2607,39 +2823,45 @@ struct edgeuse *eup;
 	if (e->eg_p) nmg_veg(e->eg_p);
 }
 
-void nmg_veu(eup, up)
-struct edgeuse *eup;
+/*
+ *			N M G _ V E U
+ *
+ *  Verify edgeuse
+ */
+void nmg_veu(hp, up)
+struct nmg_list	*hp;
 union {
 	struct shell	*s;
 	struct loopuse	*lu;
 	long 		*magic_p;
 } up;
 {
-	struct edgeuse *eu;
+	struct edgeuse	*eu;
+	struct edgeuse	*eunext;
 	
-	eu = eup;
-	do {
+	for( NMG_LIST( eu, edgeuse, hp ) )  {
 		NMG_CK_EDGEUSE(eu);
 
 		if (eu->up.magic_p != up.magic_p)
 			rt_bomb("edgeuse denies parentage\n");
 
-		if (!eu->next)
-			rt_bomb("edgeuse has Null \"next\" pointer\n");
-		if (eu->next->magic != NMG_EDGEUSE_MAGIC)
-			rt_bomb("edgeuse next is bad edgeuse\n");
-		if (eu->next->last != eu)
-		    if (eu->next->last)
-			rt_bomb("next edgeuse has last that points elsewhere\n");
+		if (!eu->l.forw)
+			rt_bomb("edgeuse has Null \"forw\" pointer\n");
+		eunext = NMG_LIST_PNEXT_CIRC( edgeuse, eu );
+		if (eunext->l.magic != NMG_EDGEUSE_MAGIC)
+			rt_bomb("edgeuse forw is bad edgeuse\n");
+		if (NMG_LIST_PLAST_CIRC(edgeuse,eunext) != eu )  {
+		    if (eunext->l.back)
+			rt_bomb("next edgeuse has back that points elsewhere\n");
 		    else
-			rt_bomb("next edgeuse has NULL last\n");
-
-		if (eu->eumate_p->magic != NMG_EDGEUSE_MAGIC)
+			rt_bomb("next edgeuse has NULL back\n");
+		}
+		if (eu->eumate_p->l.magic != NMG_EDGEUSE_MAGIC)
 			rt_bomb("edgeuse mate is bad edgeuse\n");
 		else if (eu->eumate_p->eumate_p != eu)
 			rt_bomb("edgeuse mate spurns edgeuse\n");
 
-		if (eu->radial_p->magic != NMG_EDGEUSE_MAGIC)
+		if (eu->radial_p->l.magic != NMG_EDGEUSE_MAGIC)
 			rt_bomb("edgeuse radial is bad edgeuse\n");
 		else if (eu->radial_p->radial_p != eu)
 			rt_bomb("edgeuse radial denies knowing edgeuse\n");
@@ -2658,10 +2880,14 @@ union {
 		}
 
 		nmg_vvu(eu->vu_p, eu);
-
-		eu = eu->next;
-	} while (eu != eup);
+	}
 }
+
+/*
+ *			N M G _ V L G
+ *
+ *  Verify loop geometry
+ */
 void nmg_vlg(lg)
 struct loop_g *lg;
 {
@@ -2673,6 +2899,12 @@ struct loop_g *lg;
 		if (lg->min_pt[i] > lg->max_pt[i])
 			rt_bomb("loop geom min_pt greater than max_pt\n");
 }
+
+/*
+ *			N M G _ V L O O P
+ *
+ *  Verify loop
+ */
 void nmg_vloop(l, lup)
 struct loop *l;
 struct loopuse *lup;
@@ -2684,48 +2916,50 @@ struct loopuse *lup;
 
 	if (!l->lu_p) rt_bomb("loop has null loopuse pointer\n");
 
+#if 0
 	for (lu=lup ; lu && lu != l->lu_p && lu->next != lup ; lu = lu->next);
 	
 	if (l->lu_p != lu)
 		for (lu=lup->lumate_p ; lu && lu != l->lu_p && lu->next != lup->lumate_p ; lu = lu->next);
 
 	if (l->lu_p != lu) rt_bomb("can't get to parent loopuse from loop\n");
+#endif
 
 	if (l->lg_p) nmg_vlg(l->lg_p);
 }
 
+/* Verify loop attributes */
 void nmg_vlua(lua)
 struct loopuse_a *lua;
 {
 	NMG_CK_LOOPUSE_A(lua);
 }
 
-void nmg_vlu(lulist, up)
-struct loopuse *lulist;
-union {
-	struct shell	*s;
-	struct faceuse	*fu;
-	long		*magic_p;
-} up;
+/*
+ *			N M G _ V L U
+ *
+ *  Verify loopuse
+ */
+void nmg_vlu(hp, up)
+struct nmg_list	*hp;
 {
 	struct loopuse *lu;
-	
-	lu = lulist;
-	do {
+
+	for( NMG_LIST( lu, loopuse, hp ) )  {
 		NMG_CK_LOOPUSE(lu);
 
-		if (lu->up.magic_p != up.magic_p)
+		if (*lu->up.magic_p != hp->magic)
 			rt_bomb("loopuse denies parentage\n");
 
-		if (!lu->next)
-			rt_bomb("loopuse has null next pointer\n");
-		else if (lu->next->last != lu)
-			rt_bomb("next loopuse has last pointing somewhere else\n");
+		if (!lu->l.forw)
+			rt_bomb("loopuse has null forw pointer\n");
+		else if (NMG_LIST_PNEXT_PLAST(loopuse,lu) != lu )
+			rt_bomb("forw loopuse has back pointing somewhere else\n");
 
 		if (!lu->lumate_p)
 			rt_bomb("loopuse has null mate pointer\n");
 
-		if (lu->lumate_p->magic != NMG_LOOPUSE_MAGIC)
+		if (lu->lumate_p->l.magic != NMG_LOOPUSE_MAGIC)
 			rt_bomb("loopuse mate is bad loopuse\n");
 
 		if (lu->lumate_p->lumate_p != lu)
@@ -2750,14 +2984,20 @@ union {
 
 		if (lu->lua_p) nmg_vlua(lu->lua_p);
 
-		if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC)
-			nmg_veu(lu->down.eu_p, lu);
-		else if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC)
-			nmg_vvu(lu->down.vu_p, lu);
-
-		lu = lu->next;
-	} while (lu != lulist);
+		if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC)
+			nmg_veu( &lu->down_hd, lu);
+		else if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC)
+			nmg_vvu(NMG_LIST_FIRST(vertexuse,&lu->down_hd), lu);
+		else
+			rt_bomb("nmg_vlu bad magic\n");
+	}
 }
+
+/*
+ *			N M G _ V F G
+ *
+ *  Verify face geometry
+ */
 void nmg_vfg(fg)
 struct face_g *fg;
 {
@@ -2777,7 +3017,11 @@ struct face_g *fg;
 	}
 }
 
-
+/*
+ *			N M G _ V F A C E
+ *
+ *  Verify face
+ */
 void nmg_vface(f, fup)
 struct face *f;
 struct faceuse *fup;
@@ -2790,14 +3034,16 @@ struct faceuse *fup;
 	/* make sure we can get back to the parent faceuse from the face */
 	if (!f->fu_p) rt_bomb("face has null faceuse pointer\n");
 
-	for (fu = fup; fu && fu != f->fu_p && fu->next != fup; fu = fu->next);
+#if 0
+	for (fu = fup; fu && fu != f->fu_p && fu->forw != fup; fu = fu->forw);
 
 	if (f->fu_p != fu) rt_bomb("can't get to parent faceuse from face\n");
+#endif
 	
 	if (f->fg_p) nmg_vfg(f->fg_p);
 }
 
-
+/* Verify faceuse attributes */
 void nmg_vfua(fua)
 struct faceuse_a *fua;
 {
@@ -2808,14 +3054,13 @@ struct faceuse_a *fua;
  *
  *	Validate a list of faceuses
  */
-void nmg_vfu(fulist, s)
-struct faceuse *fulist;
+void nmg_vfu(hp, s)
+struct nmg_list	*hp;
 struct shell *s;
 {
 	struct faceuse *fu;
-	
-	fu = fulist;
-	do {
+
+	for( NMG_LIST( fu, faceuse, hp ) )  {
 		NMG_CK_FACEUSE(fu);
 		if (fu->s_p != s) {
 			rt_log("faceuse claims shell parent (%8x) instead of (%8x)\n",
@@ -2823,16 +3068,16 @@ struct shell *s;
 			rt_bomb("nmg_vfu\n");
 		}
 
-		if (!fu->next) {
-			rt_bomb("faceuse next is NULL\n");
-		} else if (fu->next->last != fu) {
-			rt_bomb("faceuse->next->last != faceuse\n");
+		if (!fu->l.forw) {
+			rt_bomb("faceuse forw is NULL\n");
+		} else if (fu->l.forw->back != (struct nmg_list *)fu) {
+			rt_bomb("faceuse->forw->back != faceuse\n");
 		}
 
 		if (!fu->fumate_p)
 			rt_bomb("null faceuse fumate_p pointer\n");
 
-		if (fu->fumate_p->magic != NMG_FACEUSE_MAGIC)
+		if (fu->fumate_p->l.magic != NMG_FACEUSE_MAGIC)
 			rt_bomb("faceuse mate is bad faceuse ptr\n");
 
 		if (fu->fumate_p->fumate_p != fu)
@@ -2855,11 +3100,8 @@ struct shell *s;
 		NMG_CK_FACE(fu->f_p);
 		nmg_vface(fu->f_p, fu);
 		
-		NMG_CK_LOOPUSE(fu->lu_p);
-		nmg_vlu(fu->lu_p, fu);
-		
-		fu = fu->next;
-	} while (fu != fulist);
+		nmg_vlu( &fu->lu_hd, fu);
+	}
 }
 
 
@@ -2867,15 +3109,14 @@ struct shell *s;
  *
  *	validate a list of shells and all elements under them
  */
-void nmg_vshell(sp, r)
-struct shell *sp;
+void nmg_vshell(hp, r)
+struct nmg_list	*hp;
 struct nmgregion *r;
 {
 	struct shell *s;
 	pointp_t lpt, hpt;
 
-	s = sp;
-	do {
+	for( NMG_LIST( s, shell, hp ) )  {
 		NMG_CK_SHELL(s);
 		if (s->r_p != r) {
 			rt_log("shell's r_p (%8x) doesn't point to parent (%8x)\n",
@@ -2883,11 +3124,11 @@ struct nmgregion *r;
 			rt_bomb("nmg_vshell");
 		}
 
-		if (!s->next) {
-			rt_bomb("nmg_vshell: Shell's next ptr is null\n");
-		} else if (s->next->last != s) {
-			rt_log("next shell's last(%8x) is not me (%8x)\n",
-				s->next->last, s);
+		if (!s->l.forw) {
+			rt_bomb("nmg_vshell: Shell's forw ptr is null\n");
+		} else if (s->l.forw->back != (struct nmg_list *)s) {
+			rt_log("forw shell's back(%8x) is not me (%8x)\n",
+				s->l.forw->back, s);
 			rt_bomb("nmg_vshell\n");
 		}
 
@@ -2912,47 +3153,35 @@ struct nmgregion *r;
 		 */
 
 		if (s->vu_p) {
-			if (s->fu_p || s->lu_p || s->eu_p) {
+			if( NMG_LIST_NON_EMPTY( &s->fu_hd ) ||
+			    NMG_LIST_NON_EMPTY( &s->lu_hd ) ||
+			    NMG_LIST_NON_EMPTY( &s->eu_hd ) )  {
 				rt_log("shell (%8x) with vertexuse (%8x) has other children\n",
 					s, s->vu_p);
 				rt_bomb("");
 			}
 		}
 
-		if (s->fu_p) {
-			NMG_CK_FACEUSE(s->fu_p);
-			nmg_vfu(s->fu_p, s);
-		}
-
-		if (s->lu_p) {
-			NMG_CK_LOOPUSE(s->lu_p);
-			nmg_vlu(s->lu_p, s);
-		}
-
-		if (s->eu_p) {
-			NMG_CK_EDGEUSE(s->eu_p);
-			nmg_veu(s->eu_p, s);
-		}
-
-
-
-		s = s->next;
-	} while (s != sp);
+		nmg_vfu( &s->fu_hd, s);
+		nmg_vlu( &s->lu_hd, s);
+		nmg_veu( &s->eu_hd, s);
+	}
 }
 
 
 
-/*	N M G _ V R E G I O N
+/*
+ *			N M G _ V R E G I O N
  *
  *	validate a list of nmgregions and all elements under them
  */
-void nmg_vregion(rp, m)
-struct nmgregion *rp;
+void nmg_vregion(hp, m)
+struct nmg_list	*hp;
 struct model *m;
 {
 	struct nmgregion *r;
-	r = rp;
-	do {
+
+	for( NMG_LIST( r, nmgregion, hp ) )  {
 		NMG_CK_REGION(r);
 		if (r->m_p != m) {
 			rt_log("nmgregion pointer m_p %8x should be %8x\n",
@@ -2963,16 +3192,12 @@ struct model *m;
 			NMG_CK_REGION_A(r->ra_p);
 		}
 
-		if (r->s_p) {
-			NMG_CK_SHELL(r->s_p);
-			nmg_vshell(r->s_p, r);
-		}
+		nmg_vshell( &r->s_hd, r);
 
-		if (r->next->last != r) {
-			rt_bomb("next nmgregion's last is not me\n");
+		if( NMG_LIST_PNEXT_PLAST(nmgregion, r) != r )  {
+			rt_bomb("forw nmgregion's back is not me\n");
 		}
-		r = r->next;
-	} while (r != rp);
+	}
 }
 
 /*	N M G _ V M O D E L
@@ -2986,8 +3211,7 @@ struct model *m;
 	if (m->ma_p) {
 		NMG_CK_MODEL_A(m->ma_p);
 	}
-	NMG_CK_REGION(m->r_p);
-	nmg_vregion(m->r_p, m);
+	nmg_vregion( &m->r_hd, m);
 }
 #if 0
 

@@ -65,6 +65,7 @@ void nmg_pr_m(m)
 struct model *m;
 {
 	struct nmgregion *r;
+
 	rt_log("MODEL %8x\n", m);
 	if (!m || m->magic != NMG_MODEL_MAGIC) {
 		rt_log("bad model magic\n");
@@ -72,15 +73,11 @@ struct model *m;
 	}
 	rt_log("%8x ma_p\n", m->ma_p);
 
-	rt_log("%8x r_p\n", m->r_p);
-	r = m->r_p;
-	do {
+	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
 		nmg_pr_r(r, (char *)NULL);
-		r = r->next;
-	} while (r != m->r_p);
-
-	return;
+	}
 }
+
 static char padstr[32];
 #define MKPAD(_h) { \
 	if (!_h) { _h = padstr; bzero(h, sizeof(padstr)); } \
@@ -98,34 +95,34 @@ char *h;
 
 	MKPAD(h);
 
-	if (!r || r->magic != NMG_REGION_MAGIC) {
+	if (!r || r->l.magic != NMG_REGION_MAGIC) {
 		rt_log("bad region magic\n");
 		Return;
 	}
 
 	rt_log("%8x m_p\n", r->m_p);
-	rt_log("%8x next\n", r->next);
-	rt_log("%8x last\n", r->last);
+	rt_log("%8x l.forw\n", r->l.forw);
+	rt_log("%8x l.back\n", r->l.back);
 	rt_log("%8x ra_p\n", r->ra_p);
-	rt_log("%8x s_p\n", r->s_p);
 
-	if (r->s_p) {
-		s = r->s_p;
-		do {
-			nmg_pr_s(s, h);
-			s = s->next;
-		} while (s != r->s_p);
+	for( NMG_LIST( s, shell, &r->s_hd ) )  {
+		nmg_pr_s(s, h);
 	}
 	Return;
 }
+
 void nmg_pr_sa(sa, h)
 struct shell_a *sa;
 char *h;
 {
 	MKPAD(h);
-	NMG_CK_SHELL_A(sa);
-	
+
 	rt_log("%sSHELL_A %8x\n", h, sa);
+	if (!sa || sa->magic != NMG_SHELL_A_MAGIC) {
+		rt_log("bad shell_a magic\n");
+		Return;
+	}
+	
 	rt_log("%s%f %f %f Min\n", h, sa->min_pt[X], sa->min_pt[Y],
 		sa->min_pt[Z]);
 	rt_log("%s%f %f %f Max\n", h, sa->max_pt[X], sa->max_pt[Y],
@@ -133,6 +130,7 @@ char *h;
 
 	Return;
 }
+
 void nmg_pr_lg(lg, h)
 struct loop_g *lg;
 char *h;
@@ -148,14 +146,16 @@ char *h;
 
 	Return;
 }
+
 void nmg_pr_fg(fg, h)
 struct face_g *fg;
 char *h;
 {
 	MKPAD(h);
+
+	rt_log("%sFACE_G %8x\n", h, fg);
 	NMG_CK_FACE_G(fg);
 	
-	rt_log("%sFACE_G %8x\n", h, fg);
 	rt_log("%s%f %f %f Min\n", h, fg->min_pt[X], fg->min_pt[Y],
 		fg->min_pt[Z]);
 	rt_log("%s%f %f %f Max\n", h, fg->max_pt[X], fg->max_pt[Y],
@@ -171,53 +171,42 @@ void nmg_pr_s(s, h)
 struct shell *s;
 char *h;
 {
+	struct faceuse	*fu;
+	struct loopuse	*lu;
+	struct edgeuse	*eu;
 
 	MKPAD(h);
-	NMG_CK_SHELL(s);
 	
 	rt_log("%sSHELL %8x\n", h, s);
-	if (!s || s->magic != NMG_SHELL_MAGIC) {
-		rt_log ("bad magic!\n");
+	if (!s || s->l.magic != NMG_SHELL_MAGIC) {
+		rt_log("bad shell magic\n");
 		Return;
 	}
+
 	rt_log("%s%8x r_p\n", h, s->r_p);
-	rt_log("%s%8x next\n", h, s->next );
-	rt_log("%s%8x last\n", h, s->last );
+	rt_log("%s%8x l.forw\n", h, s->l.forw );
+	rt_log("%s%8x l.back\n", h, s->l.back );
 	rt_log("%s%8x sa_p\n", h, s->sa_p );
 	if (s->sa_p)
 		nmg_pr_sa(s->sa_p, h);
 	
-	rt_log("%s%8x fu_p\n", h, s->fu_p);
-	rt_log("%s%8x lu_p\n", h, s->lu_p);
-	rt_log("%s%8x eu_p\n", h, s->eu_p);
-	rt_log("%s%8x vu_p\n", h, s->vu_p);
+	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+		nmg_pr_fu(fu, h);
+	}
 
-	if (s->fu_p) {
-		struct faceuse *fu = s->fu_p;
-		do {
-			nmg_pr_fu(fu, h);
-			fu = fu->next;
-		} while (fu != s->fu_p);
+	for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
+		nmg_pr_lu(lu, h);
 	}
-	if (s->lu_p) {
-		struct loopuse *lu = s->lu_p;
-		do {
-			nmg_pr_lu(lu, h);
-			lu = lu->next;
-		} while (lu != s->lu_p);
-	}
-	if (s->eu_p) {
-		struct edgeuse *eu = s->eu_p;
-		do {
-			nmg_pr_eu(eu, h);
-			eu = eu->next;
-		} while (eu != s->eu_p);
+
+	for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
+		nmg_pr_eu(eu, h);
 	}
 	if (s->vu_p)
 		nmg_pr_vu(s->vu_p, h);
 
 	Return;
 }
+
 void nmg_pr_f(f, h)
 struct face *f;
 char *h;
@@ -233,6 +222,7 @@ char *h;
 
 	Return;
 }
+
 void nmg_pr_fu(fu, h)
 struct faceuse *fu;
 char *h;
@@ -243,30 +233,26 @@ char *h;
 
 	rt_log("%sFACEUSE %8x\n", h, fu);
 
-	if (!fu || fu->magic != NMG_FACEUSE_MAGIC) {
+	if (!fu || fu->l.magic != NMG_FACEUSE_MAGIC) {
 		rt_log("bad faceuse magic\n");
 		Return;
 	}
 	
 	rt_log("%s%8x s_p\n", h, fu->s_p);
-	rt_log("%s%8x next\n", h, fu->next);
-	rt_log("%s%8x last\n", h, fu->last);
+	rt_log("%s%8x l.forw\n", h, fu->l.forw);
+	rt_log("%s%8x l.back\n", h, fu->l.back);
 	rt_log("%s%8x fumate_p\n", h, fu->fumate_p);
 	nmg_pr_orient(fu->orientation, h);
 	rt_log("%s%8x fua_p\n", h, fu->fua_p);
-	rt_log("%s%8x lu_p\n", h, fu->lu_p);
 
 	rt_log("%s%8x f_p\n", h, fu->f_p);
-	nmg_pr_f(fu->f_p, h);
 
-	lu = fu->lu_p;
-	do {
+	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pr_lu(lu, h);
-		lu = lu->next;
-	} while (lu != fu->lu_p);
-	
+	}
 	Return;
 }
+
 void nmg_pr_l(l, h)
 struct loop *l;
 char *h;
@@ -290,13 +276,15 @@ void nmg_pr_lu(lu, h)
 struct loopuse *lu;
 char *h;
 {
-	struct edgeuse *eu;
+	struct edgeuse	*eu;
+	struct vertexuse *vu;
+	long		magic1;
 	
 	MKPAD(h);
 	NMG_CK_LOOPUSE(lu);
 
 	rt_log("%sLOOPUSE %8x\n", h, lu);
-	if (!lu || lu->magic != NMG_LOOPUSE_MAGIC) {
+	if (!lu || lu->l.magic != NMG_LOOPUSE_MAGIC) {
 		rt_log("bad loopuse magic\n");
 		Return;
 	}
@@ -310,8 +298,8 @@ char *h;
 					Return;
 	}
 
-	rt_log("%s%8x next\n", h, lu->next);
-	rt_log("%s%8x last\n", h, lu->last);
+	rt_log("%s%8x l.forw\n", h, lu->l.forw);
+	rt_log("%s%8x l.back\n", h, lu->l.back);
 	rt_log("%s%8x lumate_p\n", h, lu->lumate_p);
 	rt_log("%s%8x lua_p\n", h, lu->lua_p);
 	nmg_pr_orient(lu->orientation, h);
@@ -320,23 +308,23 @@ char *h;
 		nmg_pr_l(lu->l_p, h);
 
 
-	if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC) {
-		rt_log("%s%8x down.vu_p\n", h, lu->down.vu_p);
-		nmg_pr_vu(lu->down.vu_p, h);
+	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+	if (magic1 == NMG_VERTEXUSE_MAGIC) {
+		vu = NMG_LIST_PNEXT( vertexuse, &lu->down_hd );
+		rt_log("%s%8x down_hd->forw (vu)\n", h, vu);
+		nmg_pr_vu(vu, h);
 	}
-	else if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC) {
-		rt_log("%s%8x down.eu_p\n", h, lu->down.eu_p);
-		eu = lu->down.eu_p;
-		do {
+	else if (magic1 == NMG_EDGEUSE_MAGIC) {
+		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
 			nmg_pr_eu(eu, h);
-			eu = eu->next;
-		} while (eu != lu->down.eu_p);
+		}
 	}
 	else
 		rt_log("bad loopuse child magic\n");
 
 	Return;
 }
+
 void nmg_pr_e(e, h)
 struct edge *e;
 char *h;
@@ -363,7 +351,7 @@ char *h;
 	NMG_CK_EDGEUSE(eu);
 
 	rt_log("%sEDGEUSE %8x\n", h, eu);
-	if (!eu || eu->magic != NMG_EDGEUSE_MAGIC) {
+	if (!eu || eu->l.magic != NMG_EDGEUSE_MAGIC) {
 		rt_log("bad edgeuse magic\n");
 		Return;
 	}
@@ -376,8 +364,8 @@ char *h;
 	default			: rt_log("bad edgeuse parent magic\n");
 				Return;
 	}
-	rt_log("%s%8x next\n", h, eu->next);
-	rt_log("%s%8x last\n", h, eu->last);
+	rt_log("%s%8x l.forw\n", h, eu->l.forw);
+	rt_log("%s%8x l.back\n", h, eu->l.back);
 	rt_log("%s%8x eumate_p\n", h, eu->eumate_p);
 	rt_log("%s%8x radial_p\n", h, eu->radial_p);
 	rt_log("%s%8x eua_p\n", h, eu->eua_p);
@@ -389,6 +377,7 @@ char *h;
 
 	Return;
 }
+
 void nmg_pr_vg(vg, h)
 struct vertex_g *vg;
 char *h;
@@ -407,6 +396,7 @@ char *h;
 
 	Return;
 }
+
 void nmg_pr_v(v, h)
 struct vertex *v;
 char *h;
@@ -419,7 +409,7 @@ char *h;
 		rt_log("bad vertex magic\n");
 		Return;
 	}
-	rt_log("%s%8x vu_p\n", h, v->vu_p);
+	/* vu_hd ? */
 	rt_log("%s%8x vg_p\n", h, v->vg_p);
 	if (v->vg_p)
 		nmg_pr_vg(v->vg_p, h);
@@ -435,7 +425,7 @@ char *h;
 	NMG_CK_VERTEXUSE(vu);
 
 	rt_log("%sVERTEXUSE %8x\n", h, vu);
-	if (!vu || vu->magic != NMG_VERTEXUSE_MAGIC) {
+	if (!vu || vu->l.magic != NMG_VERTEXUSE_MAGIC) {
 		rt_log("bad vertexuse magic\n");
 		Return;
 	}
@@ -447,8 +437,8 @@ char *h;
 	default			: rt_log("bad vertexuse parent magic\n"); 
 				Return;
 	}
-	rt_log("%s%8x next\n", h, vu->next);
-	rt_log("%s%8x last\n", h, vu->last);
+	rt_log("%s%8x l.forw\n", h, vu->l.forw);
+	rt_log("%s%8x l.back\n", h, vu->l.back);
 	rt_log("%s%8x vua_p\n", h, vu->vua_p);
 	rt_log("%s%8x v_p\n", h, vu->v_p);
 	nmg_pr_v(vu->v_p, h);
@@ -642,11 +632,11 @@ point_t base;
 	VUNITIZE(v_eu);
 
 	/* find a point not on the edge */
-	peu = eu->last;
+	peu = NMG_LIST_PLAST_CIRC( edgeuse, eu );
 	pt_other = peu->vu_p->v_p->vg_p->coord;
 	dist1 = rt_dist_line_point(pt_eu, v_eu, pt_other);
 	while (NEAR_ZERO(dist1, LEE_DIVIDE_TOL) && peu != eu) {
-		peu = peu->last;
+		peu = NMG_LIST_PLAST_CIRC( edgeuse, peu );
 		pt_other = peu->vu_p->v_p->vg_p->coord;
 		dist1 = rt_dist_line_point(pt_eu, v_eu, pt_other);
 	}
@@ -676,7 +666,7 @@ point_t base, tip;
 	vect_t eu_vec;
 
 	eu_coord(eu, base);
-	eu_coord(eu->next, tip);
+	eu_coord( NMG_LIST_PNEXT_CIRC(edgeuse, eu), tip );
 
 	/* compute edgeuse vector */
 	VSUB2SCALE(eu_vec, tip, base, 0.6);
@@ -691,6 +681,7 @@ static void eu_radial(fp, eu, tip, R, G, B)
 FILE *fp;
 struct edgeuse *eu;
 point_t tip;
+unsigned char R, G, B;
 {
 	point_t b2, t2, p;
 	vect_t v;
@@ -719,14 +710,17 @@ struct edgeuse *eu;
 point_t base;
 {
 	point_t b2, t2, p;
+	struct edgeuse	*eulast;
 	vect_t v;
 
-	NMG_CK_EDGEUSE(eu->last);
-	NMG_CK_VERTEXUSE(eu->last->vu_p);
-	NMG_CK_VERTEX(eu->last->vu_p->v_p);
-	NMG_CK_VERTEX_G(eu->last->vu_p->v_p->vg_p);
+	NMG_CK_EDGEUSE(eu);
+	eulast = NMG_LIST_PLAST_CIRC( edgeuse, eu );
+	NMG_CK_EDGEUSE(eulast);
+	NMG_CK_VERTEXUSE(eulast->vu_p);
+	NMG_CK_VERTEX(eulast->vu_p->v_p);
+	NMG_CK_VERTEX_G(eulast->vu_p->v_p->vg_p);
 
-	eu_coords(eu->last->radial_p, b2, t2);
+	eu_coords(eulast->radial_p, b2, t2);
 
 	/* form vector of last edgeuse's radial edgeuse and scale down */
 	VSUB2SCALE(v, t2, b2, 0.8);
@@ -737,7 +731,7 @@ point_t base;
 	VADD2(p, b2, v);
 
 	/* get coordinates of last edgeuse */
-	eu_coords(eu->last, b2, t2);
+	eu_coords(eulast, b2, t2);
 
 	/* form vector of last edgeuse's radial pointer and scale down */
 	VSUB2SCALE(v, p, t2, 0.2);
@@ -757,13 +751,16 @@ struct edgeuse *eu;
 point_t tip;
 {
 	point_t b2, t2;
+	register struct edgeuse	*nexteu;
 
-	NMG_CK_EDGEUSE(eu->next);
-	NMG_CK_VERTEXUSE(eu->next->vu_p);
-	NMG_CK_VERTEX(eu->next->vu_p->v_p);
-	NMG_CK_VERTEX_G(eu->next->vu_p->v_p->vg_p);
+	NMG_CK_EDGEUSE(eu);
+	nexteu = NMG_LIST_PNEXT_CIRC( edgeuse, eu );
+	NMG_CK_EDGEUSE(nexteu);
+	NMG_CK_VERTEXUSE(nexteu->vu_p);
+	NMG_CK_VERTEX(nexteu->vu_p->v_p);
+	NMG_CK_VERTEX_G(nexteu->vu_p->v_p->vg_p);
 
-	eu_coords(eu->next, b2, t2);
+	eu_coords(nexteu, b2, t2);
 
 	pl_color(fp, 0, 100, 0);
 	pd_3line(fp, tip[0], tip[1], tip[2], b2[0], b2[1], b2[2]);
@@ -833,7 +830,7 @@ unsigned char R, G, B;
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
 	if (nmg_tbl(b, TBL_LOC, eu) >= 0) return;
-	(void)nmg_tbl(b, TBL_INS, &eu->magic);
+	(void)nmg_tbl(b, TBL_INS, &eu->l.magic);
 
 	nmg_pl_e(fp, eu->e_p, b, R, G, B);
 
@@ -866,24 +863,23 @@ struct loopuse *lu;
 struct nmg_ptbl *b;
 unsigned char R, G, B;
 {
-	struct edgeuse *eu;	
+	struct edgeuse	*eu;
+	long		magic1;
 
 	NMG_CK_LOOPUSE(lu);
-	if (nmg_tbl(b, TBL_LOC, &lu->magic) >= 0) return;
+	if (nmg_tbl(b, TBL_LOC, &lu->l.magic) >= 0) return;
 
-	(void)nmg_tbl(b, TBL_INS, &lu->magic);
+	(void)nmg_tbl(b, TBL_INS, &lu->l.magic);
 
-	if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC &&
+	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+	if (magic1 == NMG_VERTEXUSE_MAGIC &&
 	    lu->orientation != OT_BOOLPLACE) {
-		nmg_pl_v(fp, lu->down.vu_p->v_p, b, R, G, B);
-	} else if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC) {
-		eu = lu->down.eu_p;
-
-		do {
+	    	nmg_pl_v(fp, NMG_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p,
+	    		b, R, G, B );
+	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
+		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
 			nmg_pl_eu(fp, eu, b, R, G, B);
-			eu = eu->next;
-		} while (eu != lu->down.eu_p);
-
+		}
 	}
 }
 
@@ -896,14 +892,12 @@ unsigned char R, G, B;
 	struct loopuse *lu;
 
 	NMG_CK_FACEUSE(fu);
-	if (nmg_tbl(b, TBL_LOC, &fu->magic) >= 0) return;
-	(void)nmg_tbl(b, TBL_INS, &fu->magic);
+	if (nmg_tbl(b, TBL_LOC, &fu->l.magic) >= 0) return;
+	(void)nmg_tbl(b, TBL_INS, &fu->l.magic);
 
-	lu = fu->lu_p;
-	do {
+	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pl_lu(fp, lu, b, R, G, B);
-		lu = lu->next;
-	} while (lu != fu->lu_p);
+	}
 }
 
 void nmg_pl_s(fp, s)
@@ -921,54 +915,41 @@ struct shell *s;
 	/* get space for list of items processed */
 	(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
 
-	if (s->fu_p) {
-		NMG_CK_FACEUSE(s->fu_p);
-		fu = s->fu_p;
-		do {
+	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+		NMG_CK_FACEUSE(fu);
 #if 0
-			static unsigned color = 0xff;
+		static unsigned color = 0xff;
 #define Rcolor(_i)	(((_i&0x01)<<7)+32)
 #define Gcolor(_i)	(((_i&0x02)<<6)+32)
 #define Bcolor(_i)	(((_i&0x04)<<5)+32)
-			nmg_pl_fu(fp, fu, &b, Rcolor(color), Gcolor(color), Bcolor(color));
-			--color;
+		nmg_pl_fu(fp, fu, &b, Rcolor(color), Gcolor(color), Bcolor(color));
+		--color;
 #else
-			nmg_pl_fu(fp, fu, &b, 80, 100, 170);
+		nmg_pl_fu(fp, fu, &b, 80, 100, 170);
 #endif
-			fu = fu->next;
-		} while (fu != s->fu_p);
 	}
 
-	if (s->lu_p) {
-		NMG_CK_LOOPUSE(s->lu_p);
-		lu = s->fu_p->lu_p;
-		do {
-			nmg_pl_lu(fp, lu, &b, 255, 0, 0);
-
-			lu = lu->next;
-		} while (lu != s->fu_p->lu_p);
+	for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu);
+		nmg_pl_lu(fp, lu, &b, 255, 0, 0);
 	}
 
-	if (s->eu_p) {
-		NMG_CK_EDGEUSE(s->eu_p);
-		pl_color(fp, 0, 255, 0);
-		eu = s->eu_p;
-		do {
-			NMG_CK_EDGEUSE(eu);
-			NMG_CK_EDGE(eu->e_p);
+	for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
+		pl_color(fp, 0, 255, 0);	/* XXX ? */
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_EDGE(eu->e_p);
 
-			nmg_pl_e(fp, eu->e_p, &b, (unsigned char)255, 
-				(unsigned char)255, 
-				(unsigned char)0);
-
-			eu = eu->next;
-		} while (eu != s->eu_p);
+		nmg_pl_e(fp, eu->e_p, &b, (unsigned char)255, 
+			(unsigned char)255, 
+			(unsigned char)0);
 	}
 	if (s->vu_p) {
 		nmg_pl_v(fp, s->vu_p->v_p, &b, 180, 180, 180);
 	}
 
-	if (!s->fu_p && !s->lu_p && !s->eu_p && !s->vu_p) {
+	if( NMG_LIST_IS_EMPTY( &s->fu_hd ) &&
+	    NMG_LIST_IS_EMPTY( &s->lu_hd ) &&
+	    NMG_LIST_IS_EMPTY( &s->eu_hd ) && !s->vu_p) {
 		rt_log("At %d in %s shell has no children\n",
 			__LINE__, __FILE__);
 		rt_bomb("exiting\n");
@@ -984,11 +965,9 @@ struct nmgregion *r;
 {
 	struct shell *s;
 
-	s = r->s_p;
-	do {
+	for( NMG_LIST( s, shell, &r->s_hd ) )  {
 		nmg_pl_s(fp, s);
-		s = s->next;
-	} while (s != r->s_p);
+	}
 }
 
 void nmg_pl_m(fp, m)
@@ -997,11 +976,9 @@ struct model *m;
 {
 	struct nmgregion *r;
 
-	r = m->r_p;
-	do {
+	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
 		nmg_pl_r(fp, r);
-		r = r->next;
-	} while (r != m->r_p);
+	}
 }
 
 
@@ -1095,8 +1072,16 @@ struct edgeuse *eu;
 	return(0);
 }
 
-/* 	N M G _ C K _ C L O S E D _ S U R F
- *	Verify that we have a closed object in shell s1
+/*
+ *		 	N M G _ C K _ C L O S E D _ S U R F
+ *
+ *  Verify that shell is closed.
+ *  Do this by verifying that it is not possible to get from outside
+ *  to inside the solid by crossing any face edge.
+ *
+ *  Returns -
+ *	 0	OK
+ *	!0	status code from check_radial()
  */
 int nmg_ck_closed_surf(s)
 struct shell *s;
@@ -1104,29 +1089,55 @@ struct shell *s;
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
-	int status;
+	int		status;
+	long		magic1;
 
-	fu = s->fu_p;
-	lu = fu->lu_p;
-	
-	do {
-		if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC) {
-			eu = lu->down.eu_p;
-			do {
-
-				if (status=check_radial(eu))
-					return(status);
-
-				eu = eu->next;
-			} while (eu != lu->down.eu_p);
-		} else if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC) {
-			NMG_CK_VERTEXUSE(lu->down.vu_p);
-			NMG_CK_VERTEX(lu->down.vu_p->v_p);
+	NMG_CK_SHELL(s);
+	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+		NMG_CK_FACEUSE(fu);
+		for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+			NMG_CK_LOOPUSE(lu);
+			magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+			if (magic1 == NMG_EDGEUSE_MAGIC) {
+				for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+					if (status=check_radial(eu))
+						return(status);
+				}
+			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
+				register struct vertexuse	*vu;
+				vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+				NMG_CK_VERTEXUSE(vu);
+				NMG_CK_VERTEX(vu->v_p);
+			}
 		}
-		lu = lu->next;
-	} while (lu != fu->lu_p);
+	}
 	return(0);
 }
+
+/*
+ *			N M G _ C K _ C L O S E D _ R E G I O N
+ *
+ *  Check all the shells in a region for being closed.
+ *
+ *  Returns -
+ *	 0	OK
+ *	!0	status code from check_radial()
+ */
+int
+nmg_ck_closed_region(r)
+struct nmgregion	*r;
+{
+	struct shell	*s;
+	int		ret;
+
+	NMG_CK_REGION(r);
+	for( NMG_LIST( s, shell, &r->s_hd ) )  {
+		ret = nmg_ck_closed_surf( s );
+		if( ret != 0 )  return(ret);
+	}
+	return(0);
+}
+
 
 /*	P O L Y T O N M G
  *
@@ -1160,6 +1171,7 @@ struct nmgregion *r;
 	point_t p;
 	struct shell *s;
 	struct faceuse *fu;
+	struct loopuse	*lu;
 	struct edgeuse *eu;
 	plane_t plane;
 
@@ -1219,25 +1231,27 @@ struct nmgregion *r;
 			vl[i] = v[j-1];
 		}
 
-		fu = nmg_cface(s, vl, (unsigned)pts_this_face);
-		eu = fu->lu_p->down.eu_p;
+		fu = nmg_cface(s, vl, pts_this_face);
+		lu = NMG_LIST_FIRST( loopuse, &fu->lu_hd );
+		/* XXX should check for vertex-loop */
+		eu = NMG_LIST_FIRST( edgeuse, &lu->down_hd );
+		NMG_CK_EDGEUSE(eu);
 		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
-					eu->next->vu_p->v_p->vg_p->coord,
-					eu->last->vu_p->v_p->vg_p->coord)) {
+		    NMG_LIST_PNEXT(edgeuse,eu)->vu_p->v_p->vg_p->coord,
+		    NMG_LIST_PLAST(edgeuse,eu)->vu_p->v_p->vg_p->coord ) )  {
 			rt_log("At %d in %s\n", __LINE__, __FILE__);
-			rt_bomb("cannot make plane equation\n");
+			rt_bomb("polytonmg() cannot make plane equation\n");
 		}
 		else nmg_face_g(fu, plane);
 	}
 
 	for (i=0 ; i < num_pts ; ++i) {
-		if (v[i]->vu_p == (struct vertexuse *)NULL)
-			FREE_VERTEX(v[i]);
+		if( NMG_LIST_IS_EMPTY( &v[i]->vu_hd ) )  continue;
+		FREE_VERTEX(v[i]);
 	}
-
+	rt_free( (char *)v, "vertex array");
 	return(s);
 }
-
 
 
 /**********************************************************************/
@@ -1336,7 +1350,7 @@ char *str;
 	nmg_ck_e(eu, eu->e_p, errstr);
 
 	NMG_CK_VERTEXUSE(eu->vu_p);
-	nmg_ck_vu(&eu->magic, eu->vu_p, errstr);
+	nmg_ck_vu(&eu->l.magic, eu->vu_p, errstr);
 
 	rt_free(errstr, "nmg_ck_eu error str");
 }
@@ -1386,10 +1400,11 @@ struct loopuse *lu;
 char *str;
 {
 	struct edgeuse *eu;
+	struct vertexuse *vu;
 	char *errstr;
 	int l;
 	int edgeuse_num=0;
-
+	long	magic1;
 
 	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_lu error str");
 	(void)sprintf(errstr, "%sloopuse %8x\n", str, lu);
@@ -1418,18 +1433,19 @@ char *str;
 	nmg_ck_l(lu, lu->l_p, errstr);
 
 	/* check the children of the loopuse */
-	if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC) {
-		nmg_ck_vu(&lu->magic, lu->down.vu_p, errstr);
-	} else if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC) {
-		NMG_CK_EDGEUSE(lu->down.eu_p);
+	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+	if (magic1 == NMG_VERTEXUSE_MAGIC) {
+		vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+		NMG_CK_VERTEXUSE(vu);
+		nmg_ck_vu(&lu->l.magic, vu, errstr);
+	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 		l = strlen(errstr);
-		eu = lu->down.eu_p;
-		do {
+		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+			NMG_CK_EDGEUSE(eu);
 			(void)sprintf(&errstr[l], "%sedgeuse #%d (%8x)\n",
 				errstr, edgeuse_num++, eu);
-			nmg_ck_eu(&lu->magic, eu, errstr);
-			eu = eu->next;
-		} while (eu != lu->down.eu_p);
+			nmg_ck_eu(&lu->l.magic, eu, errstr);
+		}
 	} else {
 		rt_bomb(strcat(errstr, "Bad loopuse down pointer\n") );
 	}
@@ -1497,11 +1513,11 @@ char *str;
 	if (fu->s_p != s) rt_bomb(
 		strcat(errstr, "faceuse child denies shell parentage\n") );
 
-	if (fu->next->last != fu) rt_bomb(
-		strcat(errstr, "Faceuse not lastward of next faceuse\n") );
+	if( NMG_LIST_PNEXT_PLAST( faceuse, fu ) )
+		rt_bomb( strcat(errstr, "Faceuse not lastward of next faceuse\n") );
 
-	if (fu->last->next != fu) rt_bomb(
-		strcat(errstr, "Faceuse not nextward from last faceuse\n") );
+	if( NMG_LIST_PLAST_PNEXT( faceuse, fu ) )
+		rt_bomb( strcat(errstr, "Faceuse not nextward from last faceuse\n") );
 
 	NMG_CK_FACEUSE(fu->fumate_p);
 	if (fu->fumate_p->fumate_p != fu) rt_bomb(
@@ -1512,16 +1528,13 @@ char *str;
 
 	nmg_ck_f(fu, fu->f_p, errstr);
 
-	NMG_CK_LOOPUSE(fu->lu_p);
-	lu = fu->lu_p;
 	l = strlen(errstr);
-	do {
+	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu);
 		(void)sprintf(&errstr[l] , "%sloopuse #%d (%8x)\n", 
 			errstr, loop_number++, lu);
-		nmg_ck_lu(&fu->magic, lu, errstr);
-		lu = lu->next;
-	} while (lu != fu->lu_p);
-
+		nmg_ck_lu(&fu->l.magic, lu, errstr);
+	}
 	rt_free(errstr, "nmg_ck_fu error str");
 }
 
@@ -1573,6 +1586,7 @@ struct shell *s;
 	struct edgeuse *eu;
 	struct nmg_ptbl b;
 	FILE *fd, *fopen();
+	long	magic1;
 
 	NMG_CK_SHELL(s);
 
@@ -1584,33 +1598,25 @@ struct shell *s;
 	(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
 
 	rt_log("Plotting to \"%s\"\n", filename);
-	fu = s->fu_p;
-	do {
+	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
-		lu = fu->lu_p;
-		do {
+		for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
 			NMG_CK_LOOPUSE(lu);
-			if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC) {
-				eu = lu->down.eu_p;
-				do {
+			magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+			if (magic1 == NMG_EDGEUSE_MAGIC) {
+				for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
 					NMG_CK_EDGEUSE(eu);
 					pl_isect_eu(fd, &b, eu);
-
-					eu = eu->next;
-				} while (eu != lu->down.eu_p);
-			} else if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC) {
+				}
+			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 				;
 			} else {
 				rt_log("in %s at %d bad loopuse child\n",
 					__FILE__, __LINE__);
 				rt_bomb("BAD NMG struct\n");
 			}
-			lu = lu->next;
-		} while (lu != fu->lu_p);
-
-		fu = fu->next;
-	} while (fu != s->fu_p);
-
+		}
+	}
 	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
 
 	(void)fclose(fd);

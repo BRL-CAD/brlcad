@@ -972,7 +972,7 @@ double			norm_tol;
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = m->r_p->s_p;
+	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
 
 	/* Process each face */
 	for( i=0; i < pa.pa_faces; i++ )  {
@@ -1039,28 +1039,37 @@ double			norm_tol;
 rt_mk_nmg_planeeqn( fu )
 struct faceuse	*fu;
 {
-	struct edgeuse		*eu;
+	struct edgeuse		*eu, *eu_last, *eu_next;
+	struct loopuse		*lu;
 	plane_t			plane;
 
 	if( fu == (struct faceuse *)0 )  {
 		rt_bomb("rt_mk_nmg_planeeqn(): null faceuse\n");
 	}
 
-	eu = fu->lu_p->down.eu_p;
+	lu = NMG_LIST_FIRST(loopuse, &fu->lu_hd);
+	NMG_CK_LOOPUSE(lu);
+
+	eu = NMG_LIST_FIRST(edgeuse, &lu->down_hd);
+	NMG_CK_EDGEUSE(eu);
+
+	eu_last = NMG_LIST_PLAST(edgeuse, eu);
+	eu_next = NMG_LIST_PNEXT(edgeuse, eu);
+
 	if (rt_mk_plane_3pts(plane,
 	    eu->vu_p->v_p->vg_p->coord,
-	    eu->last->vu_p->v_p->vg_p->coord,
-	    eu->next->vu_p->v_p->vg_p->coord) < 0 ) {
+	    eu_last->vu_p->v_p->vg_p->coord,
+	    eu_next->vu_p->v_p->vg_p->coord) < 0 ) {
 		rt_log("rt_mk_nmg_planeeqn(): rt_mk_plane_3pts failed on (%g,%g,%g) (%g,%g,%g) (%g,%g,%g)\n",
 		    eu->vu_p->v_p->vg_p->coord[X],
 		    eu->vu_p->v_p->vg_p->coord[Y],
 		    eu->vu_p->v_p->vg_p->coord[Z],
-		    eu->last->vu_p->v_p->vg_p->coord[X],
-		    eu->last->vu_p->v_p->vg_p->coord[Y],
-		    eu->last->vu_p->v_p->vg_p->coord[Z],
-		    eu->next->vu_p->v_p->vg_p->coord[X],
-		    eu->next->vu_p->v_p->vg_p->coord[Y],
-		    eu->next->vu_p->v_p->vg_p->coord[Z] );
+		    eu_last->vu_p->v_p->vg_p->coord[X],
+		    eu_last->vu_p->v_p->vg_p->coord[Y],
+		    eu_last->vu_p->v_p->vg_p->coord[Z],
+		    eu_next->vu_p->v_p->vg_p->coord[X],
+		    eu_next->vu_p->v_p->vg_p->coord[Y],
+		    eu_next->vu_p->v_p->vg_p->coord[Z] );
 	    	HPRINT("plane", plane);
 	}
 	else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
