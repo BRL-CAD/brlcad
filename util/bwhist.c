@@ -1,0 +1,96 @@
+/*
+ *		B W H I S T . C
+ *
+ * Display, and optionally dump to tty, a histogram of a
+ * black and white file.  Black is top of screen, white bottom.
+ *
+ *  Author -
+ *	Phillip Dykstra
+ *	18 June 1986
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
+#include <stdio.h>
+#include "fb.h"
+
+long	bin[256];
+int	verbose = 0;
+
+static char *Usage = "usage: bwhist [-v] [file.bw]\n";
+
+main( argc, argv )
+int argc;
+char **argv;
+{
+	int	n, i;
+	int	max;
+	unsigned char buf[512];
+	register unsigned char *bp;
+	Pixel white[512];
+	FILE *fp;
+
+	/* check for verbose flag */
+	if( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
+		verbose++;
+		argv++;
+		argc--;
+	}
+
+	/* look for optional input file */
+	if( argc > 1 ) {
+		if( (fp = fopen(argv[1],"r")) == 0 ) {
+			fprintf( stderr, "bwhist: can't open \"%s\"\n", argv[1] );
+			exit( 1 );
+		}
+		argv++;
+		argc--;
+	} else
+		fp = stdin;
+
+	/* check usage */
+	if( argc > 1 || isatty(fileno(fp)) ) {
+		fputs( Usage, stderr );
+		exit( 1 );
+	}
+
+	for( i = 0; i < 512; i++ )
+		white[i].red = white[i].green = white[i].blue = 255;
+
+	while( (n = fread(buf, sizeof(*buf), 512, fp)) > 0 ) {
+		bp = &buf[0];
+		for( i = 0; i < n; i++ )
+			bin[ *bp++ ]++;
+	}
+
+	/* find max */
+	max = 1;
+	for( i = 0; i < 256; i++ )
+		if( bin[i] > max ) max = bin[i];
+
+	/* Display the max? */
+	printf( "Full screen = %d pixels\n", max );
+
+	fbopen( 0, 0 );
+
+	/* Display them */
+	for( i = 0; i < 256; i++ ) {
+		int	value;
+		value = (float)bin[i]/(float)max * 511;
+		if( value == 0 && bin[i] != 0 ) value = 1;
+		fbwrite( 0, 2*i, &white[0], value );
+		fbwrite( 0, 2*i+1, &white[0], value );
+		if( verbose )
+			printf( "%3d: %10d (%10f)\n", i, bin[i], (float)bin[i]/(float)max );
+	}
+}
