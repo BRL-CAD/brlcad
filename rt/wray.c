@@ -113,25 +113,20 @@ struct vldray
  *  			W R A Y
  */
 void
-wray( pp, ap, fp )
+wray( pp, ap, fp, inormal )
 register struct partition *pp;
 register struct application *ap;
 FILE *fp;
+CONST vect_t	inormal;
 {
 	LOCAL struct vldray vldray;
-	vect_t	norm;
 	register struct hit *hitp= pp->pt_inhit;
 
 	VMOVE( &(vldray.ox), hitp->hit_point );
 	VSUB2( &(vldray.rx), pp->pt_outhit->hit_point,
 		hitp->hit_point );
 
-	if( pp->pt_inflip )  {
-		VREVERSE( norm, hitp->hit_normal );
-	} else {
-		VMOVE( norm, hitp->hit_normal );
-	}
-	WRAY_NORMAL( vldray, norm );
+	WRAY_NORMAL( vldray, inormal );
 
 	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
 
