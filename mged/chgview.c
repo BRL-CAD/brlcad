@@ -3705,6 +3705,11 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+#if 0
+	CHECK_DBI_NULL;
+
+	return invoke_db_wrapper(interp, argc, argv);
+#else
 	double	f;
 	int argind=1;
 
@@ -3835,6 +3840,7 @@ char	**argv;
 		argind += 2;
 	}
 	return TCL_OK;
+#endif
 }
 
 /* absolute_scale's value range is [-1.0, 1.0] */

@@ -2186,7 +2186,11 @@ Tcl_Interp	*interp;
 int		argc;
 char 		**argv;
 {
+#if 0
+	CHECK_DBI_NULL;
 
+	return invoke_db_wrapper(interp, argc, argv);
+#else
 	register struct solid *sp;
 	int skip_real, skip_phony;
 
@@ -2250,4 +2254,5 @@ char 		**argv;
 		sp->s_wflag = DOWN;
 
 	return TCL_OK;
+#endif
 }

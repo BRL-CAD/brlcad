@@ -174,6 +174,28 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+#if 0
+	int	ret;
+
+	CHECK_DBI_NULL;
+
+	if (argc < 2) {
+		/* get the path */
+		Tcl_AppendResult(interp, MORE_ARGS_STR,
+				 "Enter the path: ", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (setjmp(jmp_env) == 0)
+		(void)signal(SIGINT, sig3);  /* allow interupts */
+        else
+		return TCL_OK;
+
+	ret = invoke_db_wrapper(interp, argc, argv);
+
+	(void)signal( SIGINT, SIG_IGN );
+	return ret;
+#else
 	int i, flag, pos_in;
 
 	CHECK_DBI_NULL;
@@ -268,6 +290,7 @@ char	**argv;
 
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
+#endif
 }
 
 
