@@ -26,6 +26,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>	
 #include "fb.h"
 
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
 /* Zoom rate and limits.	*/
 #define MinZoom		(1)
 
@@ -37,18 +41,24 @@ static int PanFactor;			/* Speed with whitch to pan.	*/
 static int zoom;			/* Zoom Factor.			*/
 static int xPan, yPan;			/* Pan Location.		*/
 
-static int fbsize = 512;
-FBIO *fbp;
+static int	scr_width = 0;		/* screen size */
+static int	scr_height = 0;
+static char	*framebuffer = NULL;
+static FBIO	*fbp;
+
+static char usage[] = "\
+Usage: fbzoom [-h] [-F framebuffer]\n\
+	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n";
 
 main(argc, argv )
 char **argv;
 	{
 	if( ! pars_Argv( argc, argv ) )
 		{
-		(void) fprintf( stderr, "Usage : fbzoom	[-h]\n" );
+		(void)fputs(usage, stderr);
 		return	1;
 		}
-	if( (fbp = fb_open( NULL, fbsize, fbsize )) == NULL )
+	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
 		return	1;
 	zoom = 1;
 	xPan = fb_getwidth(fbp)/2;
@@ -65,17 +75,17 @@ char **argv;
 	do  {
 		fb_window( fbp, xPan, yPan );
 		(void) fprintf( stdout,
-				"zoom=%d, Center Pixel is %d,%d            \r",
+				"zoom=%3d, Center Pixel is %4d,%4d            \r",
 				zoom, xPan, yPan
 				);
 		(void) fflush( stdout );
 	}  while( doKeyPad() );
 
 	reset_Tty( 0 );
-	(void) fprintf( stdout,  "\n");	/* Move off of the output line.	*/
 	(void) fb_zoom( fbp, zoom, zoom );
 	(void) fb_window( fbp, xPan, yPan );
 	(void) fb_close( fbp );
+	(void) fprintf( stdout,  "\n");	/* Move off of the output line.	*/
 	return	0;
 	}
 
@@ -203,19 +213,35 @@ doKeyPad()
 int
 pars_Argv( argc, argv )
 register char	**argv;
-	{
+{
 	register int	c;
-	while( (c = getopt( argc, argv, "h" )) != EOF )
-		{
-		switch( c )
-			{
-			case 'h' : /* High resolution frame buffer.	*/
-				fbsize = 1024;
-				break;
-			case '?' :
-				return	0;
-			}
+
+	while( (c = getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			scr_height = scr_width = 1024;
+			break;
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 's':
+		case 'S':
+			scr_height = scr_width = atoi(optarg);
+			break;
+		case 'w':
+		case 'W':
+			scr_width = atoi(optarg);
+			break;
+		case 'n':
+		case 'N':
+			scr_height = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
 		}
-	return	1;
 	}
+	return	1;
+}
 
