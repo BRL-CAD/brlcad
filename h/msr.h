@@ -26,17 +26,6 @@
  *  $Header$
  */
 
-#if !defined(MACHINE_H)
-# include "machine.h"
-#endif
-#if !defined(VMATH_H)
-# include "vmath.h"
-#endif
-#if !defined(RAYTRACE_H)
-# include "raytrace.h"	/* needed for RT_CKMAG definition */
-#endif
-
-
 #define	MSRMAXTBL	4096	/* Size of random number tables. */
 #define MSR_UNIF_MAGIC	12481632
 #define MSR_GAUSS_MAGIC 512256128
