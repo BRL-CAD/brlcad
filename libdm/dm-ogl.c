@@ -1325,26 +1325,10 @@ Tk_Window tkwin;
 	  }
 	}
 
-	{
-	  Colormap default_cmap;
-	  int default_screen;
-
-	  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap =
-	    XCreateColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			    RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				       maxvip->screen), maxvip->visual, AllocNone);
-
-	  /* Copy default colors below CMAP_BASE to private colormap to help
-	     reduce flashing */
-	  default_screen = DefaultScreen(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
-	  default_cmap = DefaultColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-					 default_screen);
-	  dm_copy_cmap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap, /* destination */
-		       default_cmap,                            /* source */
-		       /* low, high,  use XAllocColor */
-		       0, CMAP_BASE, 0);
-	}
+	((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap =
+	  XCreateColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			  RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				     maxvip->screen), maxvip->visual, AllocNone);
 
 	if (Tk_SetWindowVisual(tkwin,
 			       maxvip->visual, maxvip->depth,
@@ -1357,9 +1341,19 @@ Tk_Window tkwin;
 	  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth > 0)
 	    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
 
-#if 0
-	  XFree((void *)vibase);
-#endif
+	  if (!dmp->dm_top) {
+	    /*
+	     * Try to set the visual of the toplevel window to be the same
+	     * as the display manager window . This seems to be necessary
+	     * to avoid the case where the toplevel window's colormap gets
+	     * swapped in and hoses things up.
+	     */
+	    Tk_SetWindowVisual(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top,
+			       maxvip->visual,
+			       maxvip->depth,
+			       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
+	  }
+
 	  return (maxvip); /* success */
 	} else { 
 	  /* retry with lesser depth */
@@ -1385,10 +1379,7 @@ Tk_Window tkwin;
       continue;
     }
 
-#if 0
-      XFree((void *)vibase);
-#endif
-      return(NULL); /* failure */
+    return(NULL); /* failure */
   }
 }
 
