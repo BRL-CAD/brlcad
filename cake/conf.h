@@ -27,7 +27,10 @@ typedef	int	Cast;
 	/* CPP is necessary on the Convex, cc -E needs .c suffix */
 #	define	CPP		"/lib/cpp"
 #endif
-#if defined(i386)
+#if defined(i386) && defined(__bsdi__)
+#	define	CPP	"/usr/bin/cpp"
+#endif
+#if defined(i386) && !defined(__bsdi__)
 	/* CPP is necessary on the PC/AT, cc -E needs .c suffix */
 #	define	CPP		"/lib/cpp"
 #endif
