@@ -728,7 +728,6 @@ struct rt_i {
 	int		rti_nrays;	/* # calls to rt_shootray() */
 	union cutter	rti_CutHead;	/* Head of cut tree */
 	union cutter	rti_inf_box;	/* List of infinite solids */
-	struct directory *rti_DirHead;	/* directory for this DB */
 	struct animate	*rti_anroot;	/* heads list of anim at root lvl */
 	int		rti_pt_bytes;	/* length of partition struct */
 	int		rti_bv_bytes;	/* length of BITV array */
