@@ -1236,26 +1236,24 @@ char	**argv;
 void
 check_nonzero_rates()
 {
-#define RATE_TOL 0.0001
-
-  if(-RATE_TOL < rate_rotate[X] && rate_rotate[X] < RATE_TOL &&
-     -RATE_TOL < rate_rotate[Y] && rate_rotate[Y] < RATE_TOL &&
-     -RATE_TOL < rate_rotate[Z] && rate_rotate[Z] < RATE_TOL)
-    rateflag_rotate = 0;
-  else
+  if( rate_rotate[X] != 0.0 ||
+      rate_rotate[Y] != 0.0 ||
+      rate_rotate[Z] != 0.0 )
     rateflag_rotate = 1;
-
-  if(-RATE_TOL < rate_slew[X] && rate_slew[X] < RATE_TOL &&
-     -RATE_TOL < rate_slew[Y] && rate_slew[Y] < RATE_TOL &&
-     -RATE_TOL < rate_slew[Z] && rate_slew[Z] < RATE_TOL)
-    rateflag_slew = 0;
   else
+    rateflag_rotate = 0;
+
+  if( rate_slew[X] != 0.0 ||
+      rate_slew[Y] != 0.0 ||
+      rate_slew[Z] != 0.0 )
     rateflag_slew = 1;
-
-  if(-RATE_TOL < rate_zoom && rate_zoom < RATE_TOL)
-    rateflag_zoom = 0;
   else
+    rateflag_slew = 0;
+
+  if( rate_zoom != 0.0 )
     rateflag_zoom = 1;
+  else
+    rateflag_zoom = 0;
 
   dmaflag = 1;	/* values changed so update faceplate */
 }

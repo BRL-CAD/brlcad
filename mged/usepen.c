@@ -111,16 +111,22 @@ char	**argv;
 	 * If mouse press is in scroll area, see if scrolling, and if so,
 	 * divert this mouse press.
 	 */
-	if( (xpos >= MENUXLIM) && up )  {
+	if( (xpos >= MENUXLIM) && up || scroll_active && up)  {
 		register int i;
+
+		if(scroll_active)
+		  ypos = scroll_y;
 
 		if( (i = scroll_select(xpos, ypos )) < 0 )  {
 		   Tcl_AppendResult(interp, "mouse press outside valid scroll area\n", (char *)NULL);
 		   return TCL_ERROR;
 		} 
 		if( i > 0 )  {
-			/* Scroller bars claimed button press */
-			return TCL_OK;
+		  scroll_active = 1;
+		  scroll_y = ypos;
+
+		  /* Scroller bars claimed button press */
+		  return TCL_OK;
 		}
 		/* Otherwise, fall through */
 	}

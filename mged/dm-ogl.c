@@ -65,9 +65,6 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-extern int dm_pipe[];
-
-extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 
 extern void sl_toggle_scroll();		/* from scroll.c */
@@ -143,6 +140,7 @@ struct dm dm_ogl = {
 #define dpy (((struct ogl_vars *)dm_vars)->_dpy)
 #define win (((struct ogl_vars *)dm_vars)->_win)
 #define xtkwin (((struct ogl_vars *)dm_vars)->_xtkwin)
+#define mb_mask (((struct ogl_vars *)dm_vars)->_mb_mask)
 #define omx (((struct ogl_vars *)dm_vars)->_omx)
 #define omy (((struct ogl_vars *)dm_vars)->_omy)
 #define perspective_angle (((struct ogl_vars *)dm_vars)->_perspective_angle)
@@ -188,6 +186,7 @@ struct ogl_vars {
   Tk_Window _xtkwin;
   Colormap cmap;
   GLdouble faceplate_mat[16];
+  unsigned int _mb_mask;
   int face_flag;
   int width;
   int height;
@@ -985,14 +984,6 @@ int dashed;
 
 }
 
-#define Ogl_NUM_SLID	7
-#define Ogl_XSLEW	0
-#define Ogl_YSLEW	1
-#define Ogl_ZSLEW	2
-#define Ogl_ZOOM	3
-#define Ogl_XROT	4
-#define Ogl_YROT	5
-#define Ogl_ZROT	6
 
 static int
 Ogl_doevent(clientData, eventPtr)
@@ -1056,9 +1047,11 @@ XEvent *eventPtr;
   } else if( eventPtr->type == MotionNotify ) {
     int mx, my;
 
+#if 0
     if( !OgldoMotion &&
 	(VIRTUAL_TRACKBALL_NOT_ACTIVE(struct ogl_vars *, mvars.virtual_trackball)) )
       goto end;
+#endif
 
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
@@ -1066,9 +1059,15 @@ XEvent *eventPtr;
     switch(((struct ogl_vars *)dm_vars)->mvars.virtual_trackball){
     case VIRTUAL_TRACKBALL_OFF:
     case VIRTUAL_TRACKBALL_ON:
-      /* do the regular thing */
-      /* Constant tracking (e.g. illuminate mode) bound to M mouse */
-      rt_vls_printf( &cmd, "M 0 %d %d\n", irisX2ged(mx), irisY2ged(my));
+      if(scroll_active && eventPtr->xmotion.state & mb_mask)
+	rt_vls_printf( &cmd, "M 1 %d %d\n", irisX2ged(mx), irisY2ged(my));
+      else if(OgldoMotion)
+	/* do the regular thing */
+	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
+	rt_vls_printf( &cmd, "M 0 %d %d\n", irisX2ged(mx), irisY2ged(my));
+      else /* not doing motion */
+	goto end;
+
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
       rt_vls_printf( &cmd, "irot %f %f 0\n", (my - omy)/2.0,
@@ -1925,15 +1924,33 @@ char	**argv;
   }
 
   if( !strcmp( argv[0], "mouse" )){
-    if( argc < 4){
-      Tcl_AppendResult(interp, "dm: need more parameters\n",
-		       "mouse 1|0 xpos ypos\n", (char *)NULL);
+    scroll_active = 0;
+
+    if( argc < 5){
+      Tcl_AppendResult(interp, "dm mouse: need more parameters\n",
+		       "dm mouse button 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    /* This assumes a 3-button mouse */
+    switch(*argv[1]){
+    case '1':
+      mb_mask = Button1Mask;
+      break;
+    case '2':
+      mb_mask = Button2Mask;
+      break;
+    case '3':
+      mb_mask = Button3Mask;
+      break;
+    default:
+      Tcl_AppendResult(interp, "dm mouse: bad button value - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
     }
 
     rt_vls_init(&vls);
-    rt_vls_printf(&vls, "M %s %d %d\n", argv[1],
-		  irisX2ged(atoi(argv[2])), irisY2ged(atoi(argv[3])));
+    rt_vls_printf(&vls, "M %s %d %d\n", argv[2],
+		  irisX2ged(atoi(argv[3])), irisY2ged(atoi(argv[4])));
     status = cmdline(&vls, FALSE);
     rt_vls_free(&vls);
 
@@ -1947,6 +1964,8 @@ char	**argv;
   if(((struct ogl_vars *)dm_vars)->mvars.virtual_trackball){
     if( !strcmp( argv[0], "vtb" )){
       int buttonpress;
+
+      scroll_active = 0;
 
       if( argc < 5){
 	Tcl_AppendResult(interp, "dm: need more parameters\n",

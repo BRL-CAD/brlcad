@@ -122,6 +122,7 @@ struct x_vars {
   Tk_Window xtkwin;
   Window win;
   Pixmap pix;
+  unsigned int mb_mask;
   int width;
   int height;
   int omx, omy;
@@ -534,9 +535,11 @@ XEvent *eventPtr;
   } else if( eventPtr->type == MotionNotify ) {
     int mx, my;
 
+#if 0
     if ( !XdoMotion &&
 	 (VIRTUAL_TRACKBALL_NOT_ACTIVE(struct x_vars *, mvars.virtual_trackball)) )
       goto end;
+#endif
 
     rt_vls_init(&cmd);
     mx = eventPtr->xmotion.x;
@@ -545,9 +548,15 @@ XEvent *eventPtr;
     switch(((struct x_vars *)dm_vars)->mvars.virtual_trackball){
     case VIRTUAL_TRACKBALL_OFF:
     case VIRTUAL_TRACKBALL_ON:
-      /* trackball not active so do the regular thing */
-      /* Constant tracking (e.g. illuminate mode) bound to M mouse */
-      rt_vls_printf( &cmd, "M 0 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
+      if(scroll_active && eventPtr->xmotion.state & ((struct x_vars *)dm_vars)->mb_mask)
+	rt_vls_printf( &cmd, "M 1 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
+      else if(XdoMotion)
+	/* trackball not active so do the regular thing */
+	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
+	rt_vls_printf( &cmd, "M 0 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
+      else
+	goto end;
+
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
       rt_vls_printf( &cmd, "irot %f %f 0\n",
@@ -1179,15 +1188,33 @@ char *argv[];
   }
 
   if( !strcmp( argv[0], "mouse")){
-    if( argc < 4){
-      Tcl_AppendResult(interp, "dm: need more parameters\n",
-		       "mouse 1|0 xpos ypos\n", (char *)NULL);
+    scroll_active = 0;
+
+    if( argc < 5){
+      Tcl_AppendResult(interp, "dm mouse: need more parameters\n",
+		       "mouse button 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    /* This assumes a 3-button mouse */
+    switch(*argv[1]){
+    case '1':
+      ((struct x_vars *)dm_vars)->mb_mask = Button1Mask;
+      break;
+    case '2':
+      ((struct x_vars *)dm_vars)->mb_mask = Button2Mask;
+      break;
+    case '3':
+      ((struct x_vars *)dm_vars)->mb_mask = Button3Mask;
+      break;
+    default:
+      Tcl_AppendResult(interp, "dm mouse: bad button value - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
     }
 
     rt_vls_init(&vls);
-    rt_vls_printf(&vls, "M %s %d %d\n", argv[1],
-		  Xx_TO_GED(atoi(argv[2])), Xy_TO_GED(atoi(argv[3])));
+    rt_vls_printf(&vls, "M %s %d %d\n", argv[2],
+		  Xx_TO_GED(atoi(argv[3])), Xy_TO_GED(atoi(argv[4])));
     status = cmdline(&vls, FALSE);
     rt_vls_free(&vls);
 
@@ -1202,6 +1229,8 @@ char *argv[];
     if( !strcmp( argv[0], "vtb" )){
       int buttonpress;
 
+      scroll_active = 0;
+    
       if( argc < 5){
 	Tcl_AppendResult(interp, "dm: need more parameters\n",
 			 "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);

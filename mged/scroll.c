@@ -156,12 +156,13 @@ char **argv;
  *  everything can bel handled by sl_tol().				*
  *									*
  ************************************************************************/
-#define SL_TOL	0.015		/* size of dead spot, 0.015 = 32/2047 */
+#define SL_TOL	0.015625		/* size of dead spot, 0.015 = 32/2048 */
 
 static void sl_tol( mptr, val )
 register struct scroll_item     *mptr;
 double				val;
 {
+#if 0
 	if( val < -SL_TOL )   {
 		val += SL_TOL;
 	} else if( val > SL_TOL )   {
@@ -169,6 +170,7 @@ double				val;
 	} else {
 		val = 0.0;
 	}
+#endif
 
 	rt_vls_printf( &dm_values.dv_string, "%s %f\n",
 		mptr->scroll_cmd, val );
@@ -276,10 +278,13 @@ int y_top;
 				 (char *)NULL);
 	    }
 
-	    if( f >= 0 )
-	      xpos = f * 2047;
+	    if( f > 0 )
+	      xpos = (f + SL_TOL - SL_TOL * f) * 2047;
+	    else if(f < 0)
+	      xpos = (f - SL_TOL - SL_TOL * f) * -MENUXLIM;
 	    else
-	      xpos = f * -MENUXLIM;
+	      xpos = 0;
+
 
 	    dmp->dmr_puts( mptr->scroll_string,
 			   xpos, y-SCROLL_DY/2, 0, DM_RED );

@@ -112,6 +112,8 @@ struct shared_info {
 /* Slider stuff */
   int _scroll_top;
   int _scroll_enabled;
+  int _scroll_active;
+  int _scroll_y;
   struct scroll_item *_scroll_array[6];
 
   int _rot_set;
@@ -198,6 +200,8 @@ extern struct dm_list *curr_dm_list;
 
 #define scroll_top curr_dm_list->s_info->_scroll_top
 #define scroll_enabled curr_dm_list->s_info->_scroll_enabled
+#define scroll_active curr_dm_list->s_info->_scroll_active
+#define scroll_y curr_dm_list->s_info->_scroll_y
 #define scroll_array curr_dm_list->s_info->_scroll_array
 
 #define VIRTUAL_TRACKBALL_NOT_ACTIVE(_type,_name)\
