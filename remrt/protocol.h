@@ -16,7 +16,8 @@
  *
  *  $Header$
  */
-#define PROTOCOL_VERSION	"$Header$"
+#define PROTOCOL_VERSION	\
+	"$Header$"
 
 #define MSG_START	1
 #define MSG_MATRIX	2
@@ -36,6 +37,7 @@ struct line_info  {
 	int	li_y;
 	int	li_nrays;
 	double	li_cpusec;
+	double	li_realsec;
 	/* A scanline it attached after here */
 };
 
@@ -45,5 +47,6 @@ struct imexport desc_line_info[] =  {
 	"%d",		LINE_INFO(li_y),	1,
 	"%d",		LINE_INFO(li_nrays),	1,
 	"%f",		LINE_INFO(li_cpusec),	1,
+	"%f",		LINE_INFO(li_realsec),	1,
 	"",		(stroff_t)0,		0
 };
