@@ -3089,13 +3089,28 @@ rt_log("force next eu to ray\n");
 		prev_lu = nmg_find_lu_of_vu( prev_vu );
 		NMG_CK_LOOPUSE(prev_lu);
 
+		/* See if there is an edge joining the 2 vertices already */
+		old_eu = nmg_findeu(prev_vu->v_p, vu->v_p, (struct shell *)NULL,
+			(struct edgeuse *)NULL, 0);
+
 		if( lu->l_p == prev_lu->l_p )  {
 			int is_crack;
+
 			/* Same loop, cut into two */
 			is_crack = nmg_loop_is_a_crack(lu);
 			if(rt_g.NMG_debug&DEBUG_FCUT)
-				rt_log("nmg_cut_loop(prev_vu=x%x, vu=x%x) is_crack=%d\n", prev_vu, vu, is_crack);
+				rt_log("Calling nmg_cut_loop(prev_vu=x%x, vu=x%x) is_crack=%d, old_eu=x%x\n", prev_vu, vu, is_crack, old_eu);
 			prev_lu = nmg_cut_loop( prev_vu, vu );
+
+			/* New edge has been created between 2 verts, fuse */
+#if 0
+			first_new_eu = RT_LIST_PREV( edgeuse, &prev_lu->down_hd );
+			NMG_CK_EDGEUSE(first_new_eu);
+/* XXX Need to pick proper value for first_new_eu! */
+			nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
+			if( old_eu )  nmg_radial_join_eu( old_eu, first_new_eu, rs->tol );
+#endif
+
 			nmg_loop_g( lu->l_p, rs->tol );
 			nmg_loop_g( prev_lu->l_p, rs->tol );
 
@@ -3115,11 +3130,7 @@ rt_log("force next eu to ray\n");
 		 *  join the two loops into one loop.
 		 *  No edgeuses are deleted at this stage,
 		 *  so some "snakes" may appear in the process.
-		 *  See if there is an edge joining the 2 vertices already.
 		 */
-		old_eu = nmg_findeu(prev_vu->v_p, vu->v_p, (struct shell *)NULL,
-			(struct edgeuse *)NULL, 0);
-
 		if(rt_g.NMG_debug&DEBUG_FCUT)  {
 			rt_log("nmg_face_state_transition() joining 2 loops, prev_vu=x%x, vu=x%x, old_eu=x%x\n",
 				prev_vu, vu, old_eu);
