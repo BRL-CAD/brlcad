@@ -2573,7 +2573,8 @@ int				n_interior;	/* typ. 10 */
 		stride = c->s_size[1] * coords;
 		vp = &c->ctl_points[j * coords];
 		RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_MOVE );
-		for( i = 0; i < c->s_size[0]; i++)
+		vp += stride;
+		for( i = 1; i < c->s_size[0]; i++)
 		{
 			RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_DRAW );
 			vp += stride;
@@ -2690,6 +2691,7 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 		}
 	} else {
 		struct snurb	s;	/* XXX hack, don't free! */
+		fastf_t		final[4];
 
 		/* cnurb on spline face -- ctl points are UV */
 		if( coords != 2 ) rt_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
@@ -2699,7 +2701,6 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 		/* Skip first and last points */
 		vp += coords;		/* skip i=0 */
 		for( i = 1; i < c->c_size-1; i++)  {
-			fastf_t		final[4];
 
 			/* convert 'vp' from UV coord to XYZ coord via surf! */
 			rt_nurb_s_eval( &s, vp[0], vp[1], final );
