@@ -116,8 +116,8 @@ struct structparse view_parse[] = {
 };
 
 /********* spectral parameters *************/
-CONST struct rt_spectrum	*spectrum;	/* definition of spectrum */
-struct rt_spect_sample		*ss_bg;		/* radiant emittance of bg */
+CONST struct rt_table		*spectrum;	/* definition of spectrum */
+struct rt_tabdata		*ss_bg;		/* radiant emittance of bg */
 /********* spectral parameters *************/
 
 /*
@@ -133,7 +133,7 @@ register struct application *ap;
 	RT_CK_RTI(ap->a_rt_i);
 
 	if( ap->a_uptr )  {
-		RT_CK_SPECT_SAMPLE( ap->a_uptr );
+		RT_CK_TABDATA( ap->a_uptr );
 		return;
 	}
 
@@ -141,12 +141,12 @@ register struct application *ap;
 	slp = &scanline[ap->a_y];
 	RES_ACQUIRE( &rt_g.res_results );
 	if( slp->sl_buf == (char *)0 )  {
-		slp->sl_buf = (char *)rt_get_spect_sample_array( spectrum, width );
+		slp->sl_buf = (char *)rt_tabdata_malloc_array( spectrum, width );
 	}
 	RES_RELEASE( &rt_g.res_results );
 
-	ap->a_uptr = slp->sl_buf+(ap->a_x*RT_SIZEOF_SPECT_SAMPLE(spectrum));
-	RT_CK_SPECT_SAMPLE( ap->a_uptr );
+	ap->a_uptr = slp->sl_buf+(ap->a_x*RT_SIZEOF_TABDATA(spectrum));
+	RT_CK_TABDATA( ap->a_uptr );
 }
 
 /*
@@ -182,7 +182,7 @@ register struct application *ap;
 
 		/* XXX This should be attenuated by some atmosphere now */
 		/* At least it's in proper power units */
-		rt_spect_scale( (struct rt_spect_sample *)ap->a_uptr, ss_bg, cm2 );
+		rt_tabdata_scale( (struct rt_tabdata *)ap->a_uptr, ss_bg, cm2 );
 	} else {
 		if( !ap->a_uptr )
 			rt_bomb("view_pixel called with no spectral curve associated\n");
@@ -202,10 +202,10 @@ register struct application *ap;
 		/* XXX This writes an array of structures out, including magic */
 		/* XXX in machine-specific format */
 		RES_ACQUIRE( &rt_g.res_syscall );
-		if( fseek( outfp, ap->a_y*(long)width*RT_SIZEOF_SPECT_SAMPLE(spectrum), 0 ) != 0 )
+		if( fseek( outfp, ap->a_y*(long)width*RT_SIZEOF_TABDATA(spectrum), 0 ) != 0 )
 			rt_log("fseek error\n");
 		count = fwrite( scanline[ap->a_y].sl_buf,
-			RT_SIZEOF_SPECT_SAMPLE(spectrum), width, outfp );
+			RT_SIZEOF_TABDATA(spectrum), width, outfp );
 		RES_RELEASE( &rt_g.res_syscall );
 		if( count != width )
 			rt_bomb("view_pixel:  fwrite failure\n");
@@ -412,7 +412,7 @@ struct partition *PartHeadp;
 	fastf_t		cm2;
 	fastf_t		cosine;
 	fastf_t		powerfrac;
-	struct rt_spect_sample	*pixelp;
+	struct rt_tabdata	*pixelp;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -534,8 +534,8 @@ struct partition *PartHeadp;
 	 *  says how much of the emitted power is going our way.
 	 */
 	if( !ap->a_uptr )  curve_attach(ap);
-	pixelp = (struct rt_spect_sample *)ap->a_uptr;
-	RT_CK_SPECT_SAMPLE(pixelp);
+	pixelp = (struct rt_tabdata *)ap->a_uptr;
+	RT_CK_TABDATA(pixelp);
 
 	degK = 10000;	/* XXX extract from region! */
 
@@ -571,7 +571,7 @@ if( cm2 > 10 ) rt_log("****\n");
 rt_log("area=%g, cos = %g, a*c = %g, pfrac = %g\n", cm2, cosine, cm2*cosine, powerfrac );
 powerfrac = 1;
 #endif
-	rt_spect_scale( pixelp, pixelp, cm2 * cosine * powerfrac );
+	rt_tabdata_scale( pixelp, pixelp, cm2 * cosine * powerfrac );
 
 	/* Spectrum is now in terms of Watts of power radiating
 	 * on the path to this pixel.
@@ -632,12 +632,12 @@ char *file, *obj;
 	rt_structprint( "rttherm variables", view_parse, NULL );
 
 	/* Build spectrum definition */
-	spectrum = rt_spect_uniform( (int)spectrum_param[0],
+	spectrum = rt_table_make_uniform( (int)spectrum_param[0],
 		spectrum_param[1], spectrum_param[2] );
 
 	rt_vls_init( &name );
 	rt_vls_printf( &name, "%s.spect", outputfile ? outputfile : "RTTHERM" );
-	rt_write_spectrum( rt_vls_addr(&name), spectrum );
+	rt_table_write( rt_vls_addr(&name), spectrum );
 	rt_vls_free( &name );
 
 	/* Output is destined for a file */
@@ -708,7 +708,7 @@ char	*framename;
 
 	/* Compute radiant emittance of background */
 	/* XXX This is wrong, need actual power (radiant flux) emitted */
-	RT_GET_SPECT_SAMPLE( ss_bg, spectrum );
+	RT_GET_TABDATA( ss_bg, spectrum );
 	rt_spect_black_body( ss_bg, bg_temp, 9 );
 }
 
