@@ -232,7 +232,7 @@ dnl additionally, a compiler might complain if /usr/local or /sw are already
 dnl in the system search path -- so need to try a compile test..
 
 dnl autosearch /usr/local
-AC_MSG_CHECK([for /usr/local])
+AC_MSG_CHECKING([for /usr/local])
 if test -d /usr/local/include ; then
 	AC_MSG_RESULT([found, adding /usr/local to search paths])
 	CPPFLAGS="$CPPFLAGS -I/usr/local/include"
@@ -500,7 +500,25 @@ AC_CHECK_DECL(sys_errlist,
 	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),
 	      [# include <stdio.h>])
 
+dnl XXX re_comp is old ..
 AC_CHECK_DECL(re_comp, AC_DEFINE(HAVE_REGEX_DECL,, BSD regular expressions))
+
+dnl See if regular expression support is available
+have_regex=no
+AC_MSG_CHECKING(for regular expression support)
+AC_TRY_RUN([
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#include <regex.h>
+int main() { regex_t re; regcomp(&re, 0, 0); regexec(&re, 0, 0, 0, 0); }
+        ],
+	[
+		AC_MSG_RESULT(yes)
+		have_regex=yes
+	],
+	[	AC_MSG_RESULT(no)]
+)
 
 
 dnl ******************************************
@@ -544,23 +562,6 @@ dnl AC_C_PROTOTYPES
 AM_C_PROTOTYPES
 
 AC_DEFINE(USE_PROTOTYPES,1,heh)
-
-dnl See if regular expression support is available
-have_regex=no
-AC_MSG_CHECKING(for regular expression support)
-AC_TRY_RUN([
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-#include <regex.h>
-int main() { regex_t re; regcomp(&re, 0, 0); regexec(&re, 0, 0, 0, 0); }
-        ],
-	[
-		AC_MSG_RESULT(yes)
-		have_regex=yes
-	],
-	[	AC_MSG_RESULT(no)]
-)
 
 dnl Last step is to make sure that we can actually compile
 AC_MSG_CHECKING(compiler and flags for sanity)
