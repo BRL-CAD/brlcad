@@ -80,6 +80,7 @@ then
 	make cakesub			# XXX
 	cp cakesub ${BINDIR}/.
 	make clobber
+	cd ..
 fi
 
 #
