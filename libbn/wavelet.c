@@ -113,16 +113,16 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 
 #ifdef __STDC__
-#define decompose( DATATYPE ) bn_wlt_1d_ ## DATATYPE ## _decompose
+#define decompose_1d(DATATYPE) bn_wlt_1d_ ## DATATYPE ## _decompose
 #else
-#define decompose( DATATYPE ) bn_wlt_1d_/* */DATATYPE/* */_decompose
+#define decompose_1d(DATATYPE) bn_wlt_1d_/**/DATATYPE/**/_decompose
 #endif
 
 
 
-#define make_wlt_1d_decompose( DATATYPE )  \
+#define make_wlt_1d_decompose(DATATYPE)  \
 void \
-decompose( DATATYPE ) \
+decompose_1d(DATATYPE) \
 ( tbuf, buf, dimen, depth, limit ) \
 DATATYPE *tbuf;		/* temporary buffer */ \
 DATATYPE *buf;		/* data buffer */ \
@@ -136,29 +136,29 @@ unsigned long limit;	/* extent of decomposition */ \
 	unsigned long half_size; \
 	int do_free = 0; \
 	unsigned long x, x_tmp, d, i, j; \
- \
+\
 	CK_POW_2( dimen ); \
- \
+\
 	if ( ! tbuf ) { \
 		tbuf = (DATATYPE *)bu_malloc( \
 				(dimen/2) * depth * sizeof( *buf ), \
 				"1d wavelet buffer"); \
 		do_free = 1; \
 	} \
- \
+\
 	/* each iteration of this loop decomposes the data into 2 halves: \
 	 * the "average image" and the "image detail" \
 	 */ \
 	for (img_size = dimen ; img_size > limit ; img_size = half_size ){ \
- \
+\
 		half_size = img_size/2; \
 		 \
 		detail = tbuf; \
 		avg = buf; \
- \
+\
 		for ( x=0 ; x < img_size ; x += 2 ) { \
 			x_tmp = x*depth; \
- \
+\
 			for (d=0 ; d < depth ; d++, avg++, detail++) { \
 				i = x_tmp + d; \
 				j = i + depth; \
@@ -166,7 +166,7 @@ unsigned long limit;	/* extent of decomposition */ \
 				*avg    = (buf[i] + buf[j]) / 2.0; \
 			} \
 		} \
- \
+\
 		/* "avg" now points to the first element AFTER the "average \
 		 * image" section, and hence is the START of the "image  \
 		 * detail" portion.  Convenient, since we now want to copy \
@@ -181,15 +181,15 @@ unsigned long limit;	/* extent of decomposition */ \
 }
 
 
-#ifdef __STDC__
-#define reconstruct( DATATYPE ) bn_wlt_1d_ ## DATATYPE ## _reconstruct
+#if defined(__STDC__) 
+#define reconstruct(DATATYPE ) bn_wlt_1d_ ## DATATYPE ## _reconstruct
 #else
-#define reconstruct( DATATYPE ) bn_wlt_1d_/* */DATATYPE/* */_reconstruct
+#define reconstruct(DATATYPE) bn_wlt_1d_/**/DATATYPE/**/_reconstruct
 #endif
 
 #define make_wlt_1d_reconstruct( DATATYPE ) \
 void \
-reconstruct( DATATYPE ) \
+reconstruct(DATATYPE) \
 ( tbuf, buf, dimen, depth, subimage_size, limit )\
 DATATYPE *tbuf; \
 DATATYPE *buf; \
@@ -204,36 +204,36 @@ unsigned long limit; \
 	unsigned long dbl_size; \
 	int do_free = 0; \
 	unsigned long x_tmp, d, x, i, j; \
- \
+\
 	CK_POW_2( subimage_size ); \
 	CK_POW_2( dimen ); \
 	CK_POW_2( limit ); \
- \
+\
 	/* XXX check for: \
 	 * subimage_size < dimen && subimage_size < limit \
 	 * limit <= dimen \
 	 */ \
- \
+\
 	if ( ! tbuf ) { \
 		tbuf = ( DATATYPE *)bu_malloc((dimen/2) * depth * sizeof( *buf ), \
 				"1d wavelet reconstruct tmp buffer"); \
 		do_free = 1; \
 	} \
- \
+\
 	/* Each iteration of this loop reconstructs an image twice as \
 	 * large as the original using a "detail image". \
 	 */ \
 	for (img_size=subimage_size ; img_size < limit ; img_size=dbl_size) { \
 		dbl_size = img_size * 2; \
- \
+\
 		d = img_size * depth; \
 		detail = &buf[ d ]; \
- \
+\
 		/* copy the original or "average" data to temporary buffer */ \
 		avg = tbuf; \
 		memcpy(avg, buf, sizeof(*buf) * d ); \
- \
- \
+\
+\
 		for (x=0 ; x < dbl_size ; x += 2 ) { \
 			x_tmp = x * depth; \
 			for (d=0 ; d < depth ; d++, avg++, detail++ ) { \
@@ -244,7 +244,7 @@ unsigned long limit; \
 			} \
 		} \
 	} \
- \
+\
 	if (do_free) \
 		bu_free( (genptr_t)tbuf, \
 			"1d wavelet reconstruct tmp buffer"); \
@@ -252,21 +252,137 @@ unsigned long limit; \
 
 /* Believe it or not, this is where the actual code is generated */
 
-make_wlt_1d_decompose( double ) 
-make_wlt_1d_reconstruct( double ) 
+make_wlt_1d_decompose(double)
+make_wlt_1d_reconstruct(double)
 
-make_wlt_1d_decompose( float ) 
-make_wlt_1d_reconstruct( float ) 
+make_wlt_1d_decompose(float)
+make_wlt_1d_reconstruct(float)
 
-make_wlt_1d_decompose( char ) 
-make_wlt_1d_reconstruct( char ) 
+make_wlt_1d_decompose(char)
+make_wlt_1d_reconstruct(char)
 
-make_wlt_1d_decompose( int ) 
-make_wlt_1d_reconstruct( int ) 
+make_wlt_1d_decompose(int)
+make_wlt_1d_reconstruct(int)
 
-make_wlt_1d_decompose( short ) 
-make_wlt_1d_reconstruct( short ) 
+make_wlt_1d_decompose(short)
+make_wlt_1d_reconstruct(short)
 
-make_wlt_1d_decompose( long ) 
-make_wlt_1d_reconstruct( long ) 
+make_wlt_1d_decompose(long)
+make_wlt_1d_reconstruct(long)
+
+
+#ifdef __STDC__
+#define decompose_2d( DATATYPE ) bn_wlt_2d_ ## DATATYPE ## _decompose
+#else
+#define decompose_2d(DATATYPE) bn_wlt_2d_/* */DATATYPE/* */_decompose
+#endif
+
+#define make_wlt_2d_decompose(DATATYPE) \
+void \
+decompose_2d(DATATYPE) \
+(tbuf, buf, dimen, depth, limit) \
+DATATYPE *tbuf; \
+DATATYPE *buf; \
+unsigned long dimen; \
+unsigned long depth; \
+unsigned long limit; \
+{ \
+	register DATATYPE *detail; \
+	register DATATYPE *avg; \
+	register DATATYPE *ptr; \
+	unsigned long img_size; \
+	unsigned long half_size; \
+	unsigned long x, y, x_tmp, y_tmp, d, i, j; \
+	int do_free; \
+	extern int debug; \
+\
+	CK_POW_2( dimen ); \
+\
+	if ( ! tbuf ) { \
+		tbuf = (DATATYPE *)bu_malloc( \
+				(dimen/2) * depth * sizeof( *buf ), \
+				"1d wavelet buffer"); \
+		do_free = 1; \
+	} else { \
+		do_free = 0; \
+	} \
+\
+	/* each iteration of this loop decomposes the data into 4 quarters: \
+	 * the "average image", the horizontal detail, the vertical detail \
+	 * and the horizontal-vertical detail \
+	 */ \
+	for (img_size = dimen ; img_size > limit ; img_size = half_size ) { \
+		half_size = img_size/2; \
+\
+		/* do a horizontal detail decomposition first */ \
+		for (y=0 ; y < img_size ; y++ ) { \
+			y_tmp = y * dimen * depth; \
+\
+			detail = tbuf; \
+			avg = &buf[y_tmp]; \
+\
+			for (x=0 ; x < img_size ; x += 2 ) { \
+				x_tmp = x*depth + y_tmp; \
+\
+				for (d=0 ; d < depth ; d++, avg++, detail++){ \
+					i = x_tmp + d; \
+					j = i + depth; \
+					*detail = (buf[i] - buf[j]) / 2.0; \
+					*avg    = (buf[i] + buf[j]) / 2.0; \
+				} \
+			} \
+			/* "avg" now points to the first element AFTER the \
+			 * "average image" section, and hence is the START \
+			 * of the "image detail" portion.  Convenient, since \
+			 * we now want to copy the contents of "tbuf" (which \
+			 * holds the image detail) into place. \
+			 */ \
+			memcpy(avg, tbuf, sizeof(*buf) * depth * half_size); \
+		} \
+\
+		/* Now do the vertical decomposition */ \
+		for (x=0 ; x < img_size ; x ++ ) { \
+			x_tmp = x*depth; \
+\
+			detail = tbuf; \
+			avg = &buf[x_tmp]; \
+\
+			for (y=0 ; y < img_size ; y += 2) { \
+				y_tmp =y*dimen*depth + x_tmp; \
+\
+				for (d=0 ; d < depth ; d++, avg++, detail++) { \
+					i = y_tmp + d; \
+					j = i + dimen*depth; \
+					*detail = (buf[i] - buf[j]) / 2.0; \
+					*avg    = (buf[i] + buf[j]) / 2.0; \
+				} \
+				avg += (dimen-1)*depth; \
+			} \
+\
+			/* "avg" now points to the element ABOVE the \
+			 * last "average image" pixel or the first "detail" \
+			 * location in the user buffer. \
+			 * \
+			 * There is no memcpy for the columns, so we have to \
+			 * copy the data back to the user buffer ourselves. \
+			 */ \
+			detail = tbuf; \
+			for (y=half_size ; y < img_size ; y++) { \
+				for (d=0; d < depth ; d++) { \
+					*avg++ = *detail++; \
+				} \
+				avg += (dimen-1)*depth; \
+			} \
+		} \
+	} \
+}
+
+#define make_wlt_2d_reconstruct(DATATYPE) /* DATATYPE */
+
+make_wlt_2d_decompose(double)
+make_wlt_2d_decompose(float)
+make_wlt_2d_decompose(char)
+make_wlt_2d_decompose(int)
+make_wlt_2d_decompose(short)
+make_wlt_2d_decompose(long)
 
