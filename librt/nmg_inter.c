@@ -1049,7 +1049,7 @@ topo:
 /*
  *			N M G _ I S E C T _ 3 E D G E _ 3 F A C E
  *
- *	Intersect an edge with a (non-colinear/coplanar) face
+ *	Intersect an edge with a (hopefully non-colinear/coplanar) face
  *
  * This code currently assumes that an edge can only intersect a face at one
  * point.  This is probably a bad assumption for the future
@@ -1094,27 +1094,6 @@ struct faceuse *fu;
 	v1mate = eu->eumate_p->vu_p->v_p;
 	NMG_CK_VERTEX(v1mate);
 	NMG_CK_VERTEX_G(v1mate->vg_p);
-
-	/*
-	 * First check the topology.  If the topology says that starting
-	 * vertex of this edgeuse is on the other face, enter the
-	 * two vertexuses of that starting vertex in the list and return.
-	 */
-	if (vu_other=nmg_find_v_in_face(v1, fu)) {
-		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			register pointp_t p1 = v1->vg_p->coord;
-			register pointp_t p2 = v1mate->vg_p->coord;
-			rt_log("Edgeuse %g, %g, %g -> %g, %g, %g\n",
-				V3ARGS(p1), V3ARGS(p2) );
-			rt_log("\tvertex topologically on isect plane.\n\tAdding vu1=x%x (v=x%x), vu_other=x%x (v=x%x)\n",
-				eu->vu_p, eu->vu_p->v_p,
-				vu_other, vu_other->v_p);
-		}
-
-		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
-		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
-		goto out;
-	}
 
 	/*
 	 *  Starting vertex does not lie on the face according to topology.
@@ -1188,6 +1167,27 @@ struct faceuse *fu;
 		rt_bomb("nmg_isect_3edge_3face: edge lies on face, 'shouldn't happen'\n");
 #endif
 	}
+
+	/*
+	 *  We now know that the the edge does not lie +in+ the other face,
+	 *  so it will intersect the face in at most one point.
+	 *  Before looking at the results of the geometric calculation,
+	 *  check the topology.  If the topology says that starting vertex
+	 *  of this edgeuse is on the other face, that is the hit point.
+	 *  Enter the two vertexuses of that starting vertex in the list,
+	 *  and return.
+	 */
+	if (vu_other=nmg_find_v_in_face(v1, fu)) {
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			rt_log("\tEdge start vertex lies on other face (topology).\n\tAdding vu1=x%x (v=x%x), vu_other=x%x (v=x%x)\n",
+				eu->vu_p, eu->vu_p->v_p,
+				vu_other, vu_other->v_p);
+		}
+		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
+		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
+		goto out;
+	}
+
 	if (status < 0)  {
 		/*  Ray does not strike plane.
 		 *  See if start point lies on plane.
@@ -1198,7 +1198,7 @@ struct faceuse *fu;
 
 		/* Start point lies on plane of other face */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\tStart point lies on plane of other face\n");
+			rt_log("\tEdge start vertex lies on other face (geometry)\n");
 		dist = VSUB2DOT( v1->vg_p->coord, start_pt, edge_vect )
 				/ edge_len;
 	}
