@@ -15,6 +15,7 @@ struct light_specific {
 	vect_t	lt_vec;		/* Unit vector from origin to light */
 	vect_t	lt_aim;		/* Unit vector - light beam direction */
 	int	lt_explicit;	/* set !0 if explicitly modeled */
+	char	*lt_name;	/* identifying string */
 	struct light_specific *lt_forw;	/* Forward link */
 };
 #define LIGHT_NULL	((struct light_specific *)0)
