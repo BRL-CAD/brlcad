@@ -778,7 +778,7 @@ struct loopuse *lu1;
 		else if ( magic1 == NMG_EDGEUSE_MAGIC) {
 			/* delete all edgeuse in the loopuse (&mate) */
 			while( RT_LIST_NON_EMPTY( &lu1->down_hd ) )  {
-				nmg_keu(RT_LIST_FIRST(edgeuse, &lu1->down_hd) );
+				(void)nmg_keu(RT_LIST_FIRST(edgeuse, &lu1->down_hd) );
 			}
 		}
 		else {
@@ -894,15 +894,21 @@ struct loopuse *lu1;
  *			N M G _ K E U
  *
  *	Delete an edgeuse & it's mate on a shell/loop.
+ *
+ *  Returns -
+ *	0	If all is well
+ *	1	If the loopuse now has no edgeuses, and is thus "illegal"
+ *		and in need of being deleted.  (The lu deletion can't be
+ *		handled at this level, but must be done by the caller).
  */
-void
+int
 nmg_keu(eu1)
 register struct edgeuse *eu1;
 {
 	register struct edgeuse *eu2;
 	struct edge		*e;
+	int			ret = 0;
 
-	/* prevent mishaps */
 	NMG_CK_EDGEUSE(eu1);
 	e = eu1->e_p;
 	NMG_CK_EDGE(e);
@@ -945,7 +951,7 @@ register struct edgeuse *eu1;
 		NMG_CK_LOOPUSE(lu1);
 		NMG_CK_LOOPUSE(lu2);
 
-		if( lu1 == lu2 )  rt_bomb("nmg_keu() edgeuses on same loop\n");
+		if( lu1 == lu2 )  rt_bomb("nmg_keu() edgeuses on same loopuse\n");
 		if (lu1->lumate_p != lu2 || lu1 != lu2->lumate_p ) {
 			rt_log("nmg_keu() lu1=x%x, mate=x%x\n", lu1, lu1->lumate_p);
 			rt_log("nmg_keu() lu2=x%x, mate=x%x\n", lu2, lu2->lumate_p);
@@ -956,14 +962,20 @@ register struct edgeuse *eu1;
 		RT_LIST_DEQUEUE( &eu1->l );
 		RT_LIST_DEQUEUE( &eu2->l );
 
-		/* if deleting this edge would cause parent loop to become
-		 * non-contiguous or if there are no more edges left in loop,
+		/* If loopuse list is empty, caller needs to delete it. */
+		if( RT_LIST_IS_EMPTY( &lu1->down_hd ) )  ret = 1;
+
+#if 0
+		/* XXX If deleting this edge would cause parent loop to become
+		 * non-contiguous
 		 * we must kill the parent loopuses.  (or demote it)
-		 *
-		 *if (eu2->vu_p->v_p != eu1->vu_p->v_p || 
-		 *    !lu1->down.eu_p)
-		 *	nmg_klu(lu1);
+		 * XXX This test isn't right
 		 */
+		else if (eu2->vu_p->v_p != eu1->vu_p->v_p )  {
+			rt_log("nmg_keu() WARNING: possible discontinuous loop?\n");
+			/** ret = 1; **/
+		}
+#endif
 	} else if (*eu1->up.magic_p == NMG_SHELL_MAGIC) {
 		if (eu1->up.s_p != eu2->up.s_p) {
 			rt_bomb("nmg_keu() edguses don't share parent shell\n");
@@ -972,8 +984,9 @@ register struct edgeuse *eu1;
 		/* unlink edgeuses from the parent shell */
 		RT_LIST_DEQUEUE( &eu1->l );
 		RT_LIST_DEQUEUE( &eu2->l );
+	} else {
+		rt_bomb("nmg_keu() bad up pointer\n");
 	}
-
 
 	/* get rid of any attributes */
 	if (eu1->eua_p) {
@@ -1004,6 +1017,7 @@ register struct edgeuse *eu1;
 
 	FREE_EDGEUSE(eu1);
 	FREE_EDGEUSE(eu2);
+	return ret;
 }
 
 /*			N M G _ K S
@@ -1022,7 +1036,7 @@ struct shell *s;
 	while( RT_LIST_NON_EMPTY( &s->lu_hd ) )
 		nmg_klu( RT_LIST_FIRST(loopuse, &s->lu_hd) );
 	while( RT_LIST_NON_EMPTY( &s->eu_hd ) )
-		nmg_keu( RT_LIST_FIRST(edgeuse, &s->eu_hd) );
+		(void)nmg_keu( RT_LIST_FIRST(edgeuse, &s->eu_hd) );
 	if( s->vu_p )
 		nmg_kvu( s->vu_p );
 
@@ -1691,7 +1705,7 @@ struct edgeuse *eu;
 	NMG_CK_EDGEUSE(eu->eumate_p);
 	nmg_ensure_vertex(eu->eumate_p->vu_p->v_p, s);
 
-	nmg_keu(eu);
+	(void)nmg_keu(eu);
 	return(0);
 }
 
