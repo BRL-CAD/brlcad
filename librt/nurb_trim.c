@@ -23,6 +23,8 @@ static char	rcs_ident[] = "$Header$";
 #include <math.h>
 #include "nurb.h"
 
+extern void	rt_clip_cnurb();
+
 struct _interior_line {
 	int axis;
 	fastf_t o_dist;
@@ -301,7 +303,7 @@ int pt_type;
  *  Subdivision is done using the Oslo Algorithm, rather than the other
  *  methods which were prossed.
  */
-
+void
 rt_clip_cnurb( plist, crv, u, v )
 struct rt_list *plist;
 struct cnurb * crv;
