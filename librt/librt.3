@@ -7,7 +7,7 @@ librt \- library for raytracing an MGED database
 \fB#include "vmath.h"
 \fB#include "raytrace.h"
 .sp
-extern struct rt_functab rt_functab[];
+extern struct rt_functab rt_functab[\|];
 extern struct rt_g rt_g;
 .sp
 struct rt_i *rt_dirbuild( mged_file_name, buf, len )
@@ -25,7 +25,7 @@ struct rt_i *rtip;
 int rt_shootray( ap )
 struct application *ap;
 .sp
-void rt_prep_timer()
+void rt_prep_timer(\|)
 .sp
 double rt_read_timer( buf, len )
 char *buf;
@@ -44,31 +44,31 @@ char *msg;
 void rt_log( fmt, ...\& )
 char *fmt;
 .sp
-struct soltab *rt_find_solid( )
+struct soltab *rt_find_solid(\|)
 .sp
-void mat_zero( m )		/* fill matrix m with zeros */
+void mat_zero( m )			/* fill matrix m with zeros */
 matp_t m;
 .sp
-void mat_idn( m )		/* fill matrix m with identity matrix */
+void mat_idn( m )			/* fill matrix m with identity matrix */
 matp_t m;
 .sp
 void mat_copy( o, i )		/* copy matrix i to matrix o */
 matp_t o, i;
 .sp
-void mat_mul( o, i1, i2 )	/* multiply i1 by i2 and store in o */
+void mat_mul( o, i1, i2 )		/* multiply i1 by i2 and store in o */
 matp_t o, i1, i2;
 .sp
-void matXvec( ov, m, iv )	/* multiply m by vector iv, store in ov */
+void matXvec( ov, m, iv )		/* multiply m by vector iv, store in ov */
 matp_t ov, m, iv;
 .sp
-void mat_inv( o, i )		/* invert matrix i, store result in o */
+void mat_inv( o, i )			/* invert matrix i, store result in o */
 matp_t o, i;
 .sp
-void mat_print( title, m )	/* print matrix m, (with title) on stdout */
+void mat_print( title, m )		/* print matrix m, (with title) on stdout */
 char *title;
 matp_t m;
 .sp
-void mat_trn( o, i )		/* transpose matrix i into matrix o */
+void mat_trn( o, i )			/* transpose matrix i into matrix o */
 matp_t o, i;
 .sp
 void mat_ae( o, a, e )		/* rotation matrix o from azimuth+elevation */
@@ -91,11 +91,19 @@ opens
 .I mged_file_name
 and builds a directory for quick lookup of objects.
 .I rt_dirbuild\^
-returns a pointer to a struct rt_i on success (often called ``rtip''),
-or RTI_NULL on failure (such as being unable to open the named database).
-This rt_i pointer must be saved, as it is a required parameter to
-.I rt_gettree .
-The user-supplied buffer ``buf'' is filled with up to ``len'' characters
+returns a pointer to a
+.I "struct rt_i"
+on success (often called ``\fIrtip\fP''),
+or
+.I RTI_NULL
+on failure (such as being unable to open the named database).
+This pointer must be saved, as it is a required parameter to
+.IR rt_gettree .
+The user-supplied buffer
+.I buf\^
+is filled with up to
+.I len
+characters
 of information from the first title record in the database.
 .P
 All objects (groups and regions) which are to be included in the description
@@ -103,7 +111,11 @@ to be raytraced must be preprocessed with
 .IR rt_gettree ,
 which returns \-1 for failure and 0 for success.
 This function can be called as many times as required.
-Be certain to pass the struct rt_i pointer from rt_dirbuild() each time.
+Be certain to pass the
+.I "struct rt_i"
+pointer from
+.I rt_dirbuild\^
+each time.
 .P
 After the last
 .I rt_gettree
@@ -115,20 +127,32 @@ If
 is not explicitly called, it will be indirectly invoked by the first use of
 .IR rt_shootray .
 .P
-To fire a ray at the model, an application structure must be
+To fire a ray at the model, an
+.I application
+structure must be
 prepared and its address passed to
 .IR rt_shootray .
 Note that it is mandatory that you provide values for
-a_ray.r_pt (the starting point of the ray to be fired),
-a_ray.r_dir (a unit-length direction vector),
-a_hit (address of user-supplied hit routine),
-a_miss (address of user-supplied miss routine),
-a_overlap (address of user-supplied overlap routine; may be null),
-a_rt_i (struct rt_i pointer, from rt_dirbuild()),
-a_onehit (flag controlling stop after first hit),
-a_level (recursion level, just for diagnostic printing),
+.I a_ray.r_pt
+(the starting point of the ray to be fired),
+.I a_ray.r_dir
+(a unit-length direction vector),
+.I a_hit
+(address of user-supplied hit routine),
+.I a_miss
+(address of user-supplied miss routine),
+.I a_overlap
+(address of user-supplied overlap routine; may be null),
+.I a_rt_i
+(\fIstruct rt_i\fP pointer, from
+.IR rt_dirbuild ),
+.I a_onehit
+(flag controlling stop after first hit),
+.I a_level\^
+(recursion level, just for diagnostic printing),
 and
-a_resource (address of resource structure; may be null).
+.I a_resource
+(address of resource structure; may be null).
 .P
 To obtain a report of CPU usage for a portion or portions of your program,
 frame the statements with calls to
@@ -143,9 +167,12 @@ can be called to get
 a double which is the elapsed CPU time in seconds since
 .I rt_prep_timer
 was last called.
-In addition, up to ``len'' bytes of
+In addition, up to
+.I len
+bytes of
 system-specific detailing of resource consumption
-is placed in the user-supplied buffer ``buf''.
+is placed in the user-supplied buffer
+.IR buf .
 .P
 .I rt_bomb
 can be used to exit your program with
@@ -153,18 +180,20 @@ can be used to exit your program with
 printed on the standard error output.
 .I rt_log
 is called with
-.IR printf\^ -like
+.IR printf -like
 arguments to print an error message without terminating.
 If this default behavior is inappropriate,
 these functions can be preempted by versions provided by the application.
 .SH "EXIT CODE"
 All truly fatal errors detected by the library use
-.I rtbomb
+.I rt_bomb
 to exit with a status of 12.
 .SH DEFINITION
-RPP \- Rectangular parallelepiped.
+RPP \- Rectangular ParallelePiped.
 A region of space defined by minimum and maximum values in X, Y, and Z.
-RPPs are used by librt as the bounding volume for solids.
+RPPs are used by
+.I librt
+as bounding volumes for solids.
 .SH DISCUSSION
 You should study the structures in
 .IR raytrace.h ,
@@ -192,16 +221,31 @@ If the ray intersects the model, the
 .I a_hit
 routine is called
 with a pointer to the application structure and a pointer to a
-linked list of ray \fBpartitions\fR (struct partition).  Within each
-partition are \fBsegment\fR and \fBhit\fR structure pointers
-for the places that the ray enters and leaves this partition of space.
-pt_inhit.hit_dist is the parametric distance at which the ray enters
-the partition,
-and pt_outhit.hit_dist is the parametric distance at which the ray leaves.
-Note that while the \fBhit\fR structure contains hit_point
-and hit_norm elements, they are not computed by rt_shootray().
-If these are needed, they can be filled in by using the RT_HIT_NORM()
-macro.
+linked list of ray
+.I partitions
+(\fIstruct partition\fP).
+Within each partition are
+.I segment
+and
+.I hit
+structure pointers
+for the places where the ray enters and leaves this partition of space.
+.I pt_inhit.hit_dist
+is the parametric distance at which the ray enters
+the partition, and
+.I pt_outhit.hit_dist
+is the parametric distance at which the ray leaves.
+Note that while the
+.I hit
+structure contains
+.I hit_point
+and
+.I hit_norm
+elements, they are not computed by
+.IR rt_shootray .
+If these are needed, they can be filled in by using the
+.I RT_HIT_NORM\^
+macro (see the following example).
 .P
 Helpful in generating a grid of ray origins, the bounding RPP of the
 model is computed by
@@ -210,13 +254,13 @@ and is stored in
 .I rtip\->mdl_min
 and
 .IR rtip\->mdl_max .
-.SH EXAMPLE(S)
+.SH EXAMPLE
 .RS
 A program can be loaded as follows:
 .sp
 $ \|\fIcc \|\-I/usr/include/brlcad \|main.c \|/usr/brl/lib/librt.a \|\-lm\fP
 .sp
-Here is a portion of a hypethetical program which uses the library:
+Here is a portion of a hypothetical program which uses the library:
 .sp
 .nf
 #include <machine.h>
@@ -224,23 +268,23 @@ Here is a portion of a hypethetical program which uses the library:
 #include <raytrace.h>
 main( argc, argv )
 int argc;
-char *argv[];
+char *argv[\|];
 {
 	extern int optind;			/* Used by getopt(3C) */
-	extern int do_if_hit(), do_if_miss();	/* Application routines */
+	extern int do_if_hit(\|), do_if_miss(\|);	/* Application routines */
 	register int h, v;
 	int grid_sz;
-	struct application ap;			/* Set up for rt_shootray() */
+	struct application ap;			/* Set up for rt_shootray(\|) */
 	struct rt_i *rtip;
-	...
+	/* ...\& */
 
 	/* Build the directory.	*/
 	rtip = rt_dirbuild( argv[optind++] );
 
 	/* Load the desired portion of the model. */
-	while( argv[optind] != NULL )  {
+	while( argv[optind] != NULL )
 		rt_gettree( rtip, argv[optind++] );
-	}
+
 	ap.a_hit = do_if_hit;		/* Supply routine for hit */
 	ap.a_miss = do_if_missed;	/* Supply routine for miss */
 	ap.a_overlap = 0;
@@ -249,19 +293,17 @@ char *argv[];
 	ap.a_onehit = 1;		/* Return only closest object hit */
 	ap.a_resource = 0;
 
-	for(	v = 0;			/* First scanline */
-		v < grid_sz;		/* Check for end */
-		++v			/* Next scanline */
-	    )  {
+	for( v = 0; v < grid_sz; ++v )	/* For each scanline */
+	    )
 		for( h = 0; h < grid_sz; ++h )  {
 			/* Set up ray origin. */
 			VMOVE( ap.a_ray.r_pt, get_grid( h, v ) );
 			/* Compute ray direction. */
 			VMOVE( ap.a_ray.r_dir, get_dir( h, v ) );
-			VUNITIZE( ap.a_ray.r_dir ); /* Must be unit vector. */
+			/* Must be unit vector. */
+			VUNITIZE( ap.a_ray.r_dir );
 			(void) rt_shootray( &ap );
 		}
-	}
 	/* ...\& */
 }
 
@@ -272,9 +314,10 @@ struct partition *PartHeadp;
 {
 	register struct partition	*pp = PartHeadp\->pt_forw;
 
-	RT_HIT_NORM( pp\->pt_inhit, pp\->pt_inseg\->seg_stp, &(ap\->a_ray) );
-	RT_HIT_NORM( pp\->pt_outhit, pp\->pt_outseg\->seg_stp, &(ap\->a_ray) );
-	/* Check for flipped normal and fix (if you intend to use it) */
+	RT_HIT_NORM( pp\->pt_inhit, pp\->pt_inseg\->seg_stp, &ap\->a_ray );
+	RT_HIT_NORM( pp\->pt_outhit, pp\->pt_outseg\->seg_stp, &ap\->a_ray );
+
+	/* Check for flipped normal and fix (if you intend to use it). */
 	if( pp\->pt_inflip )  {
 		VREVERSE( pp\->pt_inhit\->hit_normal, pp\->pt_inhit\->hit_normal );
 		pp\->pt_inflip = 0;
@@ -285,14 +328,13 @@ struct partition *PartHeadp;
 	}
 
 	/* Do something based on information in partition structure
-	 *	such as output a pixel to the frame buffer
+	 *	such as output a pixel to the frame buffer.
 	 */
 	light_model( pp\->pt_inhit );
 	/* ...\& */
 	return	1;	/* Report hit to main routine */
 }
 
-/*ARGSUSED*/
 static int
 do_if_miss( ap, PartHeadp )
 register struct application *ap;
@@ -303,26 +345,33 @@ struct partition *PartHeadp;
 .RE
 .sp
 .SH "SEE ALSO"
-mged(1B), rt(1B)
+mged(1B), rt(1B).
 .SH DIAGNOSTICS
-"rt_malloc: malloc failure",
-if librt is unable to allocate memory will malloc().
-"rt_XXX:  read error", if an error or EOF occurs while
+``rt_malloc: malloc failure'',
+if
+.I librt
+is unable to allocate memory with
+.IR malloc .
+``rt_\fI???\fP: read error'', if an error or EOF occurs while
 reading from the model database.
-"unexpected SIGFPE!" when a floating point error occurs.
+``unexpected SIGFPE!'' when a floating point error occurs.
 (The rootfinder traps SIGFPE, but SIGFPE elsewhere is unexpected.)
-"rt_shootray:  zero length dir vector" when the a_ray.r_dir
+``rt_shootray: zero length dir vector'' when the
+.I a_ray.r_dir
 vector is not unit length.
-"rt_gettree called again after rt_prep!" when an attempt is made
-to add more sub-trees to the active model after calling rt_prep
+``rt_gettree called again after rt_prep!'' when an attempt is made
+to add more sub-trees to the active model after calling
+.I rt_prep
 (or after firing the first ray).
-"rt_prep: re-invocation" when rt_prep called more than once.
-"rt_prep:  no solids to prep" when there are no valid solids
+``rt_prep: re-invocation'' when
+.I rt_prep
+is called more than once.
+``rt_prep: no solids to prep'' when there are no valid solids
 in the model.
 .SH AUTHOR(S)
 Michael John Muuss
 .SH BUGS
-The rootfinder detects "hard" cases by taking a SIGFPE and retrying
+The rootfinder detects ``hard'' cases by taking a SIGFPE and retrying
 with a slower but more stable algorithm.
 This is unfortunate.
 .SH SOURCE
