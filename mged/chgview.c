@@ -153,13 +153,8 @@ mged_vrot(x, y, z)
 double x, y, z;
 {
   mat_t newrot;
-  point_t model_pos;
-  point_t new_pos;
+  vect_t new_pos;
 
-#if 0
-  if(EDIT_TRAN)
-    MAT4X3PNT(model_pos, view2model, edit_absolute_tran);
-#endif
   mat_idn( newrot );
   buildHrot( newrot, x * degtorad, y * degtorad, z * degtorad);
   mat_mul2( newrot, Viewrot );
@@ -170,13 +165,15 @@ double x, y, z;
     mat_inv( newinv, newrot );
     wrt_view( ModelDelta, newinv, ModelDelta );
   }
+
   new_mats();
-#if 0
-  if(EDIT_TRAN)
-    MAT4X3PNT(edit_absolute_tran, model2view, model_pos);
-#endif
-  VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-  MAT4X3PNT(absolute_slew, model2view, new_pos);
+
+  if(absolute_slew[X] != 0.0 ||
+     absolute_slew[Y] != 0.0 ||
+     absolute_slew[Z] != 0.0){
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+  }
 
   return TCL_OK;
 }
@@ -2266,8 +2263,12 @@ abs_zoom()
 
   new_mats();
 
-  VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-  MAT4X3PNT(absolute_slew, model2view, new_pos);
+  if(absolute_slew[X] != 0.0 ||
+     absolute_slew[Y] != 0.0 ||
+     absolute_slew[Z] != 0.0){
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+  }
 
   if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
     (void)Tcl_Eval(interp, "set_sliders");
@@ -2309,8 +2310,12 @@ char	**argv;
   if(absolute_zoom < 0.0)
     absolute_zoom /= 9.0;
 
-  VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-  MAT4X3PNT(absolute_slew, model2view, new_pos);
+  if(absolute_slew[X] != 0.0 ||
+     absolute_slew[Y] != 0.0 ||
+     absolute_slew[Z] != 0.0){
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+  }
 
   if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
         (void)Tcl_Eval(interp, "set_sliders");
