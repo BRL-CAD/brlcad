@@ -434,6 +434,27 @@ register struct xray *rp;
 }
 
 /*
+ *			A R B _ C U R V E
+ *
+ *  Return the "curvature" of the ARB face.
+ *  Pick a principle direction orthogonal to normal, and 
+ *  indicate no curvature.
+ */
+arb_curve( cvp, hitp, stp, rp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
+struct xray *rp;
+{
+	register struct arb_specific *arbp =
+		(struct arb_specific *)hitp->hit_private;
+
+	rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
+	cvp->crv_c1 = cvp->crv_c2 = 0;
+}
+
+
+/*
  *  			A R B _ U V
  *  
  *  For a hit on a face of an ARB, return the (u,v) coordinates

@@ -49,12 +49,13 @@ struct half_specific  {
 #define HALF_NULL	((struct half_specific *)0)
 
 /*
- *			M A K E _ P E R P
+ *			R T _ M A K E _ P E R P
  *
- *  Given a vector, create another vector which is perpendicular to it.
+ *  Given a vector, create another vector which is perpendicular to it,
+ *  but may not have unit length.
  */
 void
-make_perp( new, old )
+rt_make_perp( new, old )
 vect_t new, old;
 {
 	register int i;
@@ -70,6 +71,49 @@ vect_t new, old;
 	} else {
 		VCROSS( new, another, old );
 	}
+}
+
+/*
+ *			R T _ O R T H O V E C
+ *
+ *  Given a vector, create another vector which is perpendicular to it,
+ *  and with unit length.  This algorithm taken from Gift's arvec.f;
+ *  a faster algorithm may be possible.
+ */
+rt_orthovec( out, in )
+register fastf_t *out, *in;
+{
+	register int j, k;
+	FAST fastf_t	f;
+
+	if( NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
+	    NEAR_ZERO(in[Z], 0.0001) )  {
+		VSETALL( out, 0 );
+		VPRINT("rt_orthovec: zero-length input", in);
+		return;
+	}
+
+	/* Find component closest to zero */
+	f = fabs(in[X]);
+	j = Y;
+	k = Z;
+	if( fabs(in[Y]) < f )  {
+		f = fabs(in[Y]);
+		j = Z;
+		k = X;
+	}
+	if( fabs(in[Z]) < f )  {
+		j = X;
+		k = Y;
+	}
+	f = hypot( in[j], in[k] );
+	if( NEAR_ZERO( f, SMALL ) ) {
+		VPRINT("rt_orthovec: zero hypot on", in);
+		VSETALL( out, 0 );
+		return;
+	}
+	f = 1.0/f;
+	VSET( out, 0, -in[k]*f, in[j]*f );
 }
 
 /*
@@ -105,7 +149,7 @@ matp_t mat;
 	VSCALE( stp->st_center, halfp->half_N, halfp->half_d );
 
 	/* X and Y basis for uv map */
-	make_perp( halfp->half_Xbase, stp->st_center );
+	rt_make_perp( halfp->half_Xbase, stp->st_center );
 	VCROSS( halfp->half_Ybase, halfp->half_Xbase, halfp->half_N );
 	VUNITIZE( halfp->half_Xbase );
 	VUNITIZE( halfp->half_Ybase );
@@ -227,6 +271,26 @@ register struct xray *rp;
 		rt_log("hlf_norm:  dist=INFINITY, pt=?\n");
 		VSETALL( hitp->hit_point, INFINITY );
 	}
+}
+
+/*
+ *			H L F _ C U R V E
+ *
+ *  Return the "curvature" of the halfspace.
+ *  Pick a principle direction orthogonal to normal, and 
+ *  indicate no curvature.
+ */
+hlf_curve( cvp, hitp, stp, rp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
+struct xray *rp;
+{
+	register struct half_specific *halfp =
+		(struct half_specific *)stp->st_specific;
+
+	rt_orthovec( cvp->crv_pdir, halfp->half_N );
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
 /*

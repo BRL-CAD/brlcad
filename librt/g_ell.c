@@ -108,6 +108,10 @@ static char RCSell[] = "@(#)$Header$ (BRL)";
 
 struct ell_specific {
 	vect_t	ell_V;		/* Vector to center of ellipsoid */
+	vect_t	ell_Au;		/* unit-length A vector */
+	vect_t	ell_Bu;
+	vect_t	ell_Cu;
+	vect_t	ell_invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
 	mat_t	ell_SoR;	/* Scale(Rot(vect)) */
 	mat_t	ell_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
 };
@@ -140,7 +144,6 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	LOCAL mat_t	mtemp;
 	LOCAL vect_t	A, B, C;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-	LOCAL vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
 	LOCAL vect_t	work;
 	LOCAL vect_t	vbc;	/* used for bounding RPP */
 	LOCAL fastf_t	f;
@@ -201,7 +204,10 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	/* Apply full 4x4mat to V */
 	MAT4X3PNT( ell->ell_V, mat, ELL_V );
 
-	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
+	VSET( ell->ell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
+	VMOVE( ell->ell_Au, Au );
+	VMOVE( ell->ell_Bu, Bu );
+	VMOVE( ell->ell_Cu, Cu );
 
 	mat_idn( ell->ell_SoR );
 	mat_idn( R );
@@ -214,18 +220,18 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Compute SoS (Affine transformation) */
 	mat_idn( SS );
-	SS[ 0] = invsq[0];
-	SS[ 5] = invsq[1];
-	SS[10] = invsq[2];
+	SS[ 0] = ell->ell_invsq[0];
+	SS[ 5] = ell->ell_invsq[1];
+	SS[10] = ell->ell_invsq[2];
 
 	/* Compute invRSSR */
 	mat_mul( mtemp, SS, R );
 	mat_mul( ell->ell_invRSSR, Rinv, mtemp );
 
 	/* Compute SoR */
-	VSCALE( &ell->ell_SoR[0], A, invsq[0] );
-	VSCALE( &ell->ell_SoR[4], B, invsq[1] );
-	VSCALE( &ell->ell_SoR[8], C, invsq[2] );
+	VSCALE( &ell->ell_SoR[0], A, ell->ell_invsq[0] );
+	VSCALE( &ell->ell_SoR[4], B, ell->ell_invsq[1] );
+	VSCALE( &ell->ell_SoR[8], C, ell->ell_invsq[2] );
 
 	/* Compute bounding sphere */
 	VMOVE( stp->st_center, ell->ell_V );
@@ -343,6 +349,126 @@ register struct xray *rp;
 	VSUB2( xlated, hitp->hit_point, ell->ell_V );
 	MAT4X3VEC( hitp->hit_normal, ell->ell_invRSSR, xlated );
 	VUNITIZE( hitp->hit_normal );
+}
+
+/*
+ *			E L L _ C U R V E
+ *
+ *  Return the curvature of the ellipsoid.
+ */
+ell_curve( cvp, hitp, stp, rp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
+struct xray *rp;
+{
+	register struct ell_specific *ell =
+		(struct ell_specific *)stp->st_specific;
+	vect_t	w4;		/* vector from V to hit point */
+	fastf_t *aup, *bup, *cup;	/* ptr to Aunit, Bunit, Cunit used */
+	fastf_t	fx, fy;
+	fastf_t	fxx, fyy, fxy;
+	fastf_t	e, f, g;
+	fastf_t	t1, t2;
+	fastf_t	t5, t6;
+	fastf_t	a1, b1, c1;
+	fastf_t	d;
+
+	VSUB2( w4, hitp->hit_point, ell->ell_V );
+	aup = ell->ell_Au;
+	bup = ell->ell_Bu;
+	cup = ell->ell_Cu;
+	{
+		fastf_t	*tup;
+		fastf_t	*iap, *ibp, *icp, *itp;
+		fastf_t	x0, y0, z0;
+		FAST fastf_t	c4;
+
+		iap = &ell->ell_invsq[X];
+		ibp = &ell->ell_invsq[Y];
+		icp = &ell->ell_invsq[Z];
+		while(1)  {
+			x0 = VDOT( w4, aup );
+			y0 = VDOT( w4, bup );
+			z0 = VDOT( w4, cup );
+			if( !NEAR_ZERO( z0, 0.001 ) )
+				break;
+			tup = aup;
+			aup = bup;
+			bup = cup;
+			cup = tup;
+			itp = iap;
+			iap = ibp;
+			ibp = icp;
+			icp = itp;
+		}
+		c4 = (*icp)*(*icp);
+		t2 = 1.0 / ((*iap)*(*ibp)*z0*z0*z0);
+		fxx = -(c4*((*ibp) - y0*y0))*t2;
+		fyy = -(c4*((*iap) - x0*x0))*t2;
+		fxy = -(c4*x0*y0)*t2;
+		fx = -((*icp)*x0) / ((*iap)*z0);
+		fy = -((*icp)*y0) / ((*ibp)*z0);
+	}
+	e = 1.0 + fx*fx;
+	f = fx*fy;
+	g = 1.0 + fy*fy;
+	t1 = e + fy*fy;
+	t2 = 1.0 / (2.0*t1*sqrt(t1));
+	t5 = sqrt( (g*fxx - e*fyy)*(g*fxx - e*fyy) +
+		4.0 * (g*fxy - f*fyy)*(e*fxy - f*fxx) );
+	t6 = g*fxx + e*fyy - 2.0*f*fxy;
+
+	if( (cvp->crv_c1 = (t6 + t5)*t2) < 0 )
+		cvp->crv_c1 = -cvp->crv_c1;
+	if( (cvp->crv_c2 = (t6 - t5)*t2) < 0 )
+		cvp->crv_c2 = -cvp->crv_c2;
+
+	a1 = 2.0*(g*fxy - f*fyy);
+	if( cvp->crv_c1 >= cvp->crv_c2 )
+		b1 = e*fyy - g*fxx + t5;
+	else
+		b1 = e*fyy - g*fxx - t5;
+	c1 = a1*fx + b1*fy;
+
+	d = sqrt(a1*a1 + b1*b1 + c1*c1);
+	if( NEAR_ZERO( d, 0.0001 ) )  {
+		if( cvp->crv_c1 >= cvp->crv_c2 )
+			a1 = g*fxx - e*fyy + t5;
+		else
+			a1 = g*fxx - e*fyy - t5;
+		b1 = 2.0*(e*fxy - f*fxx);
+		c1 = a1*fx + b1*fy;
+
+		d = sqrt(a1*a1 + b1*b1 + c1*c1);
+		if( NEAR_ZERO( d, 0.0001 ) )  {
+			/* Make an arbitrary choice of pdir */
+			a1 = 1.0;
+			b1 = 1.0;
+			c1 = fx + fy;
+		}
+	}
+	if( cvp->crv_c1 >= cvp->crv_c2 )  {
+		FAST fastf_t f;
+		f = cvp->crv_c2;
+		cvp->crv_c2 = cvp->crv_c1;
+		cvp->crv_c1 = f;
+	}
+	VCOMB3( cvp->crv_pdir, a1, aup, b1, bup, c1, cup );
+	VUNITIZE( cvp->crv_pdir );
+
+	if( VDOT( w4, hitp->hit_normal ) < 0 )  {
+		LOCAL vect_t temp;
+		rt_log("ell_curve(%s): normal flip?\n", stp->st_name);
+		VMOVE( temp, cvp->crv_pdir );
+		VCROSS( cvp->crv_pdir, hitp->hit_normal, temp);
+	} else {
+		FAST fastf_t f;
+		/* Why did we do it wrong to start with? */
+		f = -cvp->crv_c1;
+		cvp->crv_c1 = -cvp->crv_c2;
+		cvp->crv_c2 = f;
+	}
 }
 
 /*

@@ -107,11 +107,11 @@ DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print); DEF(nul_norm); DEF(nu
 DEF(nul_curve); DEF(nul_class);
 DEF(tor_curve); DEF(tor_class);
 DEF(tgc_curve); DEF(tgc_class);
-DEF(ell_curve); DEF(ell_class);
-DEF(arb_curve); DEF(arb_class);
-DEF(hlf_curve); DEF(hlf_class);
+DEF(ell_class);
+DEF(arb_class);
+DEF(hlf_class);
 DEF(ars_curve); DEF(ars_class);
-DEF(rec_curve); DEF(rec_class);
+DEF(rec_class);
 DEF(pg_curve); DEF(pg_class);
 DEF(spl_curve); DEF(spl_class);
 
@@ -1217,8 +1217,8 @@ register vect_t min, max;
 
 	if( min[X] >= INFINITY )  {
 		/* Only infinite solids (or none), hard to judge */
-		VSETALL( min, -10 );
-		VSETALL( max,  10 );
+		VSETALL( min, -0.1 );
+		VSETALL( max,  0.1 );
 		return;
 	}
 

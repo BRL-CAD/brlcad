@@ -139,6 +139,10 @@ struct rec_specific {
 	vect_t	rec_Hunit;	/* Unit H vector */
 	mat_t	rec_SoR;	/* Scale(Rot(vect)) */
 	mat_t	rec_invRoS;	/* invRot(Scale(vect)) */
+	vect_t	rec_A;		/* One axis of ellipse */
+	vect_t	rec_B;		/* Other axis of ellipse */
+	fastf_t	rec_iAsq;	/* 1/MAGSQ(A) */
+	fastf_t	rec_iBsq;	/* 1/MAGSQ(B) */
 };
 
 #define REC_V	&vec[0*ELEMENTS_PER_VECT]
@@ -248,6 +252,10 @@ matp_t mat;
 		register fastf_t *p = REC_V;
 		MAT4X3PNT( rec->rec_V, mat, p );
 	}
+	VMOVE( rec->rec_A, REC_A );
+	VMOVE( rec->rec_B, REC_B );
+	rec->rec_iAsq = 1.0/magsq_a;
+	rec->rec_iBsq = 1.0/magsq_b;
 
 	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_h );
 
@@ -495,6 +503,56 @@ register struct xray *rp;
 		rt_log("rec_norm: bad flag x%x\n", (int)hitp->hit_private);
 		break;
 	}
+}
+
+/*
+ *			R E C _ C U R V E
+ *
+ *  Return the "curvature" of the cylinder.  If an endplate,
+ *  pick a principle direction orthogonal to the normal, and 
+ *  indicate no curvature.  Otherwise, compute curvature.
+ *  Normal must have been computed before calling this routine.
+ */
+rec_curve( cvp, hitp, stp, rp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
+struct xray *rp;
+{
+	register struct rec_specific *rec =
+		(struct rec_specific *)stp->st_specific;
+	vect_t	uu;
+	fastf_t	ax, bx, q;
+
+	switch( hitp->hit_private-rec_compute )  {
+	case 0:
+		/* This could almost certainly be simpler if we used
+		 * inverse A rather than inverse A squared, right Ed?
+		 */
+		VMOVE( cvp->crv_pdir, rec->rec_Hunit );
+		VSUB2( uu, hitp->hit_point, rec->rec_V );
+		cvp->crv_c1 = 0;
+		ax = VDOT( uu, rec->rec_A ) * rec->rec_iAsq;
+		bx = VDOT( uu, rec->rec_B ) * rec->rec_iBsq;
+		q = sqrt( ax * ax * rec->rec_iAsq + bx * bx * rec->rec_iBsq );
+		cvp->crv_c2 = rec->rec_iAsq * rec->rec_iBsq / (q*q*q);
+		if( VDOT( uu, hitp->hit_normal ) >= 0 )
+			break;
+		rt_log("rec_curve:  flipping curvature?\n");
+		cvp->crv_c1 = -(cvp->crv_c2);
+		cvp->crv_c2 = 0;
+		VCROSS( cvp->crv_pdir, hitp->hit_normal, rec->rec_Hunit );
+		break;
+	case 1:
+	case 2:
+		rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
+		cvp->crv_c1 = cvp->crv_c2 = 0;
+		break;
+	default:
+		rt_log("rec_curve: bad flag x%x\n", (int)hitp->hit_private);
+		break;
+	}
+
 }
 
 /*
