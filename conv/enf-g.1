@@ -3,7 +3,7 @@
 enf-g \- Elysium Neutral Format Translator (ENF to BRL-CAD)
 .SH SYNOPSIS
 .B enf-g
-[-t tolerance] [-i starting_ident_number] input_enf_facet_file database.g
+[-t tolerance] [-i starting_ident_number] [-l name_length_limit] [-n part_number_to_name_mapping] input_enf_facet_file database.g
 .SH DESCRIPTION
 .I enf-g\^
 converts the specified
@@ -16,7 +16,17 @@ provided is the maximum distance (in mm) between two
 vertices at which they will be considered to be the same vertex. The
 .I starting_ident_number
 is the ident number to use for the first region created, each succeeding region will have their
-ident numbers incremented by one
+ident numbers incremented by one.
+If a
+.I name_length_limit
+is provided, then the resulting names in the BRL-CAD model will not be longer than
+that limit. If a
+.I part_number_to_name_mapping
+file is provided, then that file will be read and used to convert part numbers in the
+.I input_enf_facet_file
+to the corresponding names in the mapping. This file is expected to consist of a series
+of lines of text with each line having a part number and a legal BRL-CAD object name spearated
+by a tab.
 .SH EXAMPLE
 .RS
 $ \|\fIenf-g \|sample.enf \|sample.g\fP
