@@ -11,6 +11,8 @@
  *  Depends on having machine.h, vmath.h, and rtlist.h included first.
  *  RT_xxx_CK_MAGIC() can only be used if raytrace.h is included too.
  *
+ *  XXX Should structure names start with rt_ ?  Probably yes.
+ *
  *  Author -
  *	Michael John Muuss
  *  
@@ -56,7 +58,18 @@ struct tgc_internal {
 #define RT_TGC_INTERNAL_MAGIC	0xaabbdd87
 #define RT_TGC_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TGC_INTERNAL_MAGIC,"tgc_internal")
 
-/* ID_ELL */
+/*
+ *	ID_ELL, and ID_SPH
+ */
+struct ell_internal  {
+	long	magic;
+	point_t	v;
+	vect_t	a;
+	vect_t	b;
+	vect_t	c;
+};
+#define RT_ELL_INTERNAL_MAGIC	0x93bb23ff
+#define RT_ELL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ELL_INTERNAL_MAGIC,"ell_internal")
 
 /* ID_ARB8 */
 
@@ -82,11 +95,24 @@ struct half_internal  {
 #define RT_HALF_INTERNAL_MAGIC	0xaabbdd87
 #define RT_HALF_CK_MAGIC(_p)	RT_CKMAG(_p,RT_HALF_INTERNAL_MAGIC,"half_internal")
 
-/* ID_POLY */
+/*
+ *	ID_POLY
+ */
+struct rt_pg_internal {
+	long	magic;
+	int	npoly;
+	struct rt_pg_face_internal {
+		int	npts;		/* number of points for this polygon */
+		fastf_t	*verts;		/* has 3*npts elements */
+		fastf_t	*norms;		/* has 3*npts elements */
+	} *poly;			/* has npoly elements */
+	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
+	int	max_npts;		/* maximum value of npts in poly[] */
+};
+#define RT_PG_INTERNAL_MAGIC	0x9bffed887
+#define RT_PG_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PG_INTERNAL_MAGIC,"rt_pg_internal")
 
 /* ID_BSPLINE */
-
-/* ID_SPH */
 
 /* ID_NMG */
 
