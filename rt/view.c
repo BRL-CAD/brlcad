@@ -773,10 +773,7 @@ char *file, *obj;
 		extern struct mfuncs camo_mfuncs[];
 		extern struct mfuncs scloud_mfuncs[];
 		extern struct mfuncs air_mfuncs[];
-#ifndef __bsdi__
-		/* John:  srand48 is not portable */
 		extern struct mfuncs rtrans_mfuncs[];
-#endif
 		extern struct mfuncs fire_mfuncs[];
 
 		mlib_add( phg_mfuncs );
@@ -795,9 +792,7 @@ char *file, *obj;
 		mlib_add( camo_mfuncs );
 		mlib_add( scloud_mfuncs );
 		mlib_add( air_mfuncs );
-#ifndef __bsdi__
 		mlib_add( rtrans_mfuncs );
-#endif
 		mlib_add( fire_mfuncs );
 	}
 
