@@ -2,16 +2,18 @@ BRL-CAD Distribution
 ====================
 
 BRL-CAD is open source software controlled and maintained by the
-BRL-CAD developers.  BRL-CAD is made available under the terms of the
-BRL-CAD License Agreement, provided via doc/legal/brlcad.txt in the
-source distribution.  The BRL-CAD License Agreement should be referred
-to for exact details and clarification of how BRL-CAD may be used,
-incorporated into, or otherwise redistributed.
+BRL-CAD developers and the US Army Research Laboratory.  BRL-CAD is
+made available under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version.
 
-You should have received a copy of the BRL-CAD License Agreement along
-with this distribution; if not, please write to the Advanced Computer
-Systems Team Leader, U.S. Army Research Laboratory, AMSRD-ARL-SL-BE,
-Bldg 238, APG, MD 21005-5168 USA.
+BRL-CAD is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with this file.
 
 Overview
 --------
@@ -20,22 +22,23 @@ BRL-CAD consists primarily of libraries, applications, documentation,
 and build infrastructure.  The BRL-CAD libraries include the headers
 in the include/ directory as well as all of the directories that begin
 with the prefix "lib" in the src/ directory (e.g. src/librt/).  All of
-BRL-CAD's libraries are covered by the terms of the BRL-CAD License
-Agreement.
+BRL-CAD's libraries are covered by the terms of the GNU Lesser General
+Public License as published by the Free Software Foundation unless noted
+otherwise in the source files.
 
 BRL-CAD's documentation consists of manual pages located throughout
-the package, the majority of files in the doc/ directory, and the
+the package, most of the files in the doc/ directory, and the
 top-level administrative project text files (e.g. README & AUTHORS).
 
-All of BRL-CAD's build infrastructure (i.e. files required by the GNU
+Most of BRL-CAD's build infrastructure (i.e. files required by the GNU
 Autotools), a variety of scripts located in the misc/ and sh/
 directories, and the testing infrastructure are provided either under
 a rather unrestrictive BSD-style license or said files are in the
 public domain.  Refer to each individual file for specific terms.
 
 Unless previously described or otherwise already covered by another
-license, the BRL-CAD package is covered under the terms of the BRL-CAD
-License Agreement.
+license, the BRL-CAD package is covered under the terms of the 
+GNU General Public License as published by the Free Software Foundation.
 
 3rd Party Components
 --------------------
@@ -64,13 +67,12 @@ directory of the source code distribution.
 Copyright
 ---------
 
-All contributions to BRL-CAD have been provided under agreement.  This
-agreement allows the BRL-CAD project to continue to grow unhindered by
-requiring all contributions be given back to the BRL-CAD developers.
+All contributions to BRL-CAD have been provided under agreement.   By
+requiring all contributions be given back to the BRL-CAD developers,
+this agreement allows the BRL-CAD project to continue to grow unhindered.
 As such, a majority of the source code is copyright by the United
-States government in all countries except the United States.  In the
-United States, the terms of the BRL-CAD License Agreement do still
-apply regardless of copyright.
+States government.
+
 
 Authors and other BRL-CAD contributors must comply with the copyright
 terms for their respective contributions unless otherwise noted or
@@ -78,9 +80,7 @@ arranged.  The following notice should be prominent in the BRL-CAD
 sources:
 
   Copyright 2004, United States Government as represented by the
-  Director of the U.S. Army Research Laboratory.  No copyright is
-  claimed in the United States under Title 17, U.S.Code.  All Other
-  Rights Reserved.
+  U.S. Army Research Laboratory.  All Rights Reserved.
 
 Trademark
 ---------

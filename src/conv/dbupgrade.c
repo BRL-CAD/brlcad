@@ -1,5 +1,4 @@
-/*                     D B U P G R A D E . C
- * BRL-CAD
+/* BRL-CAD	D B U P G R A D E . C
  *
  * Copyright (c) 2004 United States Government as represented by the
  * U.S. Army Research Laboratory.
@@ -24,15 +23,13 @@
  *	This is a program to upgrade database files to the current
  *	version.
  *
- *	USAGE
- *		dbupgrade input.g output.g
- *
- *	DESCRIPTION
  *		Dbupgrade takes one input file and one output file name.
  *		It recognizes the version of the BRL-CAD database provided
  *		as input and converts it to the current database version.
  *		This code is intended to be upgraded as new database versions
  *		are created. Currently, only db version 4 can be upgraded.
+ *	USAGE
+ *		dbupgrade input.g output.g
  */
 
 

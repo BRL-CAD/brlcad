@@ -1,5 +1,5 @@
-/*                         G 4 - G 5 . C
- * BRL-CAD
+/* BRL-CAD	G 4 - G 5 . C
+ *
  *
  * Copyright (c) 2004 United States Government as represented by the
  * U.S. Army Research Laboratory.
@@ -20,15 +20,14 @@
  *
  */
 /** @file g4-g5.c
+ *               g4-g5: program to convert version 4 databases to version 5
  *
- *       g4-g5: program to convert version 4 databases to version 5
+ *               Imports version 4 database objects and writes out the equivalent v5 database
+ *               objects as best it can.
  *
  *       USAGE
  *               g4-g5 v4_input_database v5_output_database
  *
- *       DESCRIPTION
- *               Imports version 4 database objects and writes out the equivalent v5 database
- *               objects as best it can.
  *
  *       AUTHOR
  *               John R. Anderson

@@ -1,14 +1,23 @@
-dnl BRL-CAD
-dnl Copyright (c) 2004 BRL-CAD Developers
-dnl $Id$
+dnl BRL-CAD		configure.ac
+dnl
+dnl Copyright (c) 2004 United States Government as represented by the
+dnl U.S. Army Research Laboratory.
 dnl
 dnl This program is free software; you can redistribute it and/or
-dnl modify it under the terms of the appropriate license described in
-dnl the file named COPYING that should have accompanied this file.
+dnl modify it under the terms of the GNU General Public License as
+dnl published by the Free Software Foundation; either version 2 of the
+dnl License, or (at your option) any later version.
 dnl
-dnl This program is distributed in the hope that it will be useful,
-dnl but WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+dnl This program is distributed in the hope that it will be useful, but
+dnl WITHOUT ANY WARRANTY; without even the implied warranty of
+dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+dnl General Public License for more details.
+dnl
+dnl You should have received a copy of the GNU General Public License
+dnl along with this file; see the file named COPYING for more
+dnl information.
+dnl
+dnl $Id$
 dnl
 dnl ******************************************************************
 dnl ***                  BRL-CAD's configure.ac                    ***
