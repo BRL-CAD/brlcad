@@ -74,7 +74,7 @@
  */
 
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
-#if __STDC__
+#if __STDC__ && !alliant
 # define GETSTRUCT(p,str) \
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
 #else
