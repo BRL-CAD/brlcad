@@ -407,6 +407,9 @@ extern struct structparse view_parse[];
 #if CRAY
 #	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
+#  if IRIX > 5
+#	define byteoffset(_i)	((long)((char *)&(_i)))
+#  else
 #    if sgi || __convexc__
 	/* "Lazy" way.  Works on reasonable machines with byte addressing */
 #	define byteoffset(_i)	((int)((char *)&(_i)))
@@ -414,13 +417,14 @@ extern struct structparse view_parse[];
 	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
 #	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
 #    endif
+#  endif
 #endif
 struct structparse set_parse[] = {
 	{"%d",	1, "width",	byteoffset(width),		FUNC_NULL },
 	{"%d",	1, "height",	byteoffset(height),		FUNC_NULL },
 	{"%f",	1, "perspective", byteoffset(rt_perspective),	FUNC_NULL },
 	{"%f",	1, "angle",	byteoffset(rt_perspective),	FUNC_NULL },
-	{"i", (int)view_parse,"View_Module-Specific Parameters", 0, FUNC_NULL },
+	{"i", byteoffset(view_parse),"View_Module-Specific Parameters", 0, FUNC_NULL },
 	{"",	0, (char *)0,	0,				FUNC_NULL }
 };
 
