@@ -764,8 +764,10 @@ Ir_open()
 void
 Ir_close()
 {
+#ifdef DM_OGL
   if (ogl_ogl_used)
     return;
+#endif
 
   if(ir_count > 1){
     --ir_count;
