@@ -37,6 +37,9 @@ extern int RandomFlag;
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.3  90/04/12  17:36:57  cjohnson
+ * Add Random number processing.
+ * 
  * Revision 1.2  90/04/10  16:46:25  cjohnson
  * Fix Intensity methods 
  * 
@@ -51,15 +54,16 @@ int	New;
 {
 	static int *error = 0;
 	static int *thisline;
-	int diff,value;
+	register int diff,value;
 	int Dir = NX-X;
-	double w1,w3,w5,w7,val;
+	register double w1,w3,w5,w7;
 
 	if (RandomFlag) {
-		val = Random(0)*1.0/16.0;
+		register double val;
+		val = Random(0)*1.0/16.0; /* slowest */
 		w1 = 1.0/16.0 + val;
 		w3 = 3.0/16.0 - val;
-		val = Random(0)*5.0/16.0;
+		val = Random(0)*5.0/16.0; /* slowest */
 		w5 = 5.0/16.0 + val;
 		w7 = 7.0/16.0 - val;
 	} else {
@@ -69,6 +73,9 @@ int	New;
 		w7 = 7.0/16.0;
 	}
 
+/*
+ *	is this the first time through?
+ */
 	if (!error) {
 		register int i;
 		error = (int *) malloc(width*sizeof(int));
@@ -78,6 +85,9 @@ int	New;
 			thisline[i] = 0;
 		}
 	}
+/*
+ *	if this is a new line then trade error for thisline.
+ */
 	if (New) {
 		int *p;
 		p = error;
@@ -87,14 +97,15 @@ int	New;
 
 	Pix += thisline[X];
 	thisline[X] = 0;
+
 	value = (Pix*Levels + 127) / 255;
 	diff =  Pix - (value * 255 /Levels);
 
 	if (X+Dir < width && X+Dir >= 0) {
-		thisline[X+Dir] += diff*w7;
+		thisline[X+Dir] += diff*w7;	/* slow */
 		error[X+Dir] += diff*w1;
 	}
-	error[X] += diff*w5;
+	error[X] += diff*w5;			/* slow */
 	if (X-Dir < width && X-Dir >= 0) {
 		error[X-Dir] += diff*w3;
 	}
