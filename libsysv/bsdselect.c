@@ -8,6 +8,26 @@
  *  advantage of centralizing the struct timeval stuff.
  */
 
+#if defined(BSD) || defined(CRAY)
+#	include <sys/time.h>	/* for struct timeval.  Includes <time.h> */
+#else
+#	include <time.h>
+#endif
+#if defined(sgi)
+#	if !defined(mips) || defined(SGI4D_Rel2)
+		/* 3D systems, and Rel2 4D systems. */
+#		include <bsd/sys/types.h>
+#		include <bsd/sys/time.h>
+#	else
+		/* Rel3 4D systems got it right */
+#		include <sys/types.h>
+#		include <sys/time.h>
+#	endif
+#endif
+#ifdef stellar
+#	include <sys/timeval.h>
+#endif
+
 bsdselect( readfds, sec, us )
 long readfds;
 {
