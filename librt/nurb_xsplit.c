@@ -46,7 +46,6 @@ fastf_t param;
 int dir;
 {
 	struct knot_vector new_kv;
-	fastf_t value;
 	struct oslo_mat * oslo;
 	int i;
 	int k_index;
@@ -225,9 +224,7 @@ struct cnurb * crv;
 fastf_t param;
 {
 	struct knot_vector new_kv;
-	fastf_t value;
 	struct oslo_mat * oslo;
-	int i;
 	int k_index;
 	struct cnurb * crv1, * crv2;
 	int coords;

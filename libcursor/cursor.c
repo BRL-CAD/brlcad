@@ -45,7 +45,9 @@ static FILE	*out_fp;		/* Output stream.	*/
 static char	termCapBuf[TBUFSIZ];  	/* Termcap entry.	*/
 static char	tstrings[TBUFSIZ];    	/* Individual TCS.	*/
 static char	*tstr_addr = tstrings;	/* Used by tgetstr().	*/
+#ifdef TIOCGWINSZ
 static int	fd_stdout = 1;
+#endif
 
 static void	LoadTP(), LoadTCS();
 
@@ -111,7 +113,9 @@ InitTermCap( fp )
 FILE	*fp;
 	{	char	*term; /* Name of terminal from environment ($TERM).*/
 	out_fp = fp;
+#ifdef TIOCGWINSZ
 	fd_stdout = fileno( out_fp );
+#endif
 	if( (term = getenv( "TERM" )) == NULL )
 		{
 		(void) fprintf( stderr, "TERM not set or exported!\n" );

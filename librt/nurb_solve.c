@@ -103,7 +103,6 @@ int coords;
 	register fastf_t *ds;		/* See if swapping is needed */
 	fastf_t  maxd;
 	fastf_t tmp;
-	fastf_t * ptr;
 
 	int     max_pivot;
 

@@ -122,7 +122,6 @@ fastf_t *min, *max;
 	register int	j;
 	int	k;
 	int	coords;
-	int	stride;
 	int col_size, row_size;
 
 	col_size = srf->s_size[1];

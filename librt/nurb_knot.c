@@ -312,7 +312,6 @@ fastf_t		upper;
 {
     register int i;
     int total;
-    fastf_t knot_step;
 
     total = order * 2;
 
