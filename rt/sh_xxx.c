@@ -31,6 +31,34 @@
 #include "./mathtab.h"
 #include "./rdebug.h"
 
+/*
+ *  Generic settable parameters.
+ *  By setting the "base address" to zero in the rt_structparse call,
+ *  the actual memory address is given here as the structure offset.
+ *
+ *  Strictly speaking, the C language only permits initializers of the
+ *  form: address +- constant, where here the intent is to measure the
+ *  byte address of the indicated variable.
+ *  Matching compensation code for the CRAY is located in librt/parse.c
+ */
+#if CRAY
+#	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
+#else
+#  if IRIX > 5
+#	define byteoffset(_i)	((long)((char *)&(_i)))
+#  else
+#    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
+	/* "Lazy" way.  Works on reasonable machines with byte addressing */
+#	define byteoffset(_i)	((int)((char *)&(_i)))
+#    else
+	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
+#	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
+#    endif
+#  endif
+#endif
+
+
+
 
 #define xxx_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_xxx_SP(_p) RT_CKMAG(_p, xxx_MAGIC, "xxx_specific")
@@ -62,6 +90,7 @@ struct xxx_specific xxx_defaults = {
 #define SHDR_O(m)	offsetof(struct xxx_specific, m)
 #define SHDR_AO(m)	offsetofarray(struct xxx_specific, m)
 
+
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
@@ -73,7 +102,7 @@ struct structparse xxx_print_tab[] = {
 
 };
 struct structparse xxx_parse_tab[] = {
-	{"i",	(long)(xxx_print_tab), (char *)0, 0,		FUNC_NULL },
+	{"i",	byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, FUNC_NULL },
 	{"%f",  1, "v",			SHDR_O(xxx_val),	FUNC_NULL },
 	{"%f",  3, "d",			SHDR_AO(xxx_delta),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
