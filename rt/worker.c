@@ -236,6 +236,76 @@ do_run( a, b )
 int	stop_worker = 0;
 
 /*
+ * For certain hypersample values there is a particular advantage to subdividing
+ * the pixel and shooting a ray in each sub-pixel.  This structure keeps track of
+ * those patterns
+ */
+struct jitter_pattern {
+	int   num_samples;/* number of samples, or coordinate pairs in coords[] */
+	float rand_scale[2]; /* amount to scale bn_rand_half value */
+	float coords[32]; /* center of each sub-pixel */
+};
+
+static struct jitter_pattern pt_pats[] = {
+
+	{4, {0.5, 0.5}, 	/* -H 3 */
+	 { 0.25, 0.25,
+	   0.25, 0.75,
+	   0.75, 0.25,
+	   0.75, 0.75 } },
+
+	{5, {0.4, 0.4}, 	/* -H 4 */
+	 { 0.2, 0.2,
+	   0.2, 0.8,
+	   0.8, 0.2,
+	   0.8, 0.8,
+	   0.5, 0.5} },
+
+	{9, {0.3333, 0.3333}, /* -H 8 */
+	 { 0.17, 0.17,  0.17, 0.5,  0.17, 0.82,
+	   0.5, 0.17,    0.5, 0.5,   0.5, 0.82,
+	   0.82, 0.17,  0.82, 0.5,  0.82, 0.82 } },
+
+	{16, {0.25, 0.25}, 	/* -H 15 */
+	 { 0.125, 0.125,  0.125, 0.375, 0.125, 0.625, 0.125, 0.875,
+	   0.375, 0.125,  0.375, 0.375, 0.375, 0.625, 0.375, 0.875,
+	   0.625, 0.125,  0.625, 0.375, 0.625, 0.625, 0.625, 0.875,
+	   0.875, 0.125,  0.875, 0.375, 0.875, 0.625, 0.875, 0.875} },
+
+	{ 0, {0.0, 0.0}, {0.0} } /* must be here to stop search */
+};
+
+/***********************************************************************
+ *
+ *  compute_point
+ *
+ * Compute the origin for this ray, based upon the number of samples 
+ * per pixel and the number of the current sample.  For certain 
+ * ray-counts, it is highly advantageous to subdivide the pixel and 
+ * fire each ray in a specific sub-section of the pixel.
+ */
+static void 
+jitter_start_pt(vect_t point, struct application *a, int samplenum, int pat_num)
+{
+	FAST fastf_t dx, dy;
+
+	if (pat_num >= 0) {
+		dx = a->a_x + pt_pats[pat_num].coords[samplenum*2] +
+			(bn_rand_half(a->a_resource->re_randptr) * 
+			 pt_pats[pat_num].rand_scale[X] );
+	
+		dy = a->a_y + pt_pats[pat_num].coords[samplenum*2 + 1] +
+			(bn_rand_half(a->a_resource->re_randptr) * 
+			 pt_pats[pat_num].rand_scale[Y] );
+	} else {
+		dx = a->a_x + bn_rand_half(a->a_resource->re_randptr);
+		dy = a->a_y + bn_rand_half(a->a_resource->re_randptr);
+	}
+	VJOIN2( point, viewbase_model, dx, dx_model, dy, dy_model );
+}
+
+
+/*
  *  			W O R K E R
  *  
  *  Compute some pixels, and store them.
@@ -259,6 +329,8 @@ genptr_t	arg;
 	int	pixel_start;
 	int	pixelnum;
 	int	samplenum;
+	FAST fastf_t dx, dy;
+	int	pat_num = -1;
 
 	/* The more CPUs at work, the bigger the bites we take */
 	if( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
@@ -268,6 +340,20 @@ genptr_t	arg;
 		rt_bomb("rt/worker() cpu > MAX_PSW, array overrun\n");
 	}
 	RT_CK_RESOURCE( &resource[cpu] );
+
+	pat_num = -1;
+	if (hypersample) {
+		int i, ray_samples;
+
+		ray_samples = hypersample + 1;
+		for (i=0 ; pt_pats[i].num_samples != 0 ; i++) {
+			if (pt_pats[i].num_samples == ray_samples) {
+				pat_num = i;
+				goto pat_found;
+			}
+		}
+	}
+ pat_found:
 
 	while(1)  {
 		if( stop_worker )  return;
@@ -318,15 +404,12 @@ genptr_t	arg;
 			}
 
 			VSETALL( colorsum, 0 );
+
+
+
 			for( samplenum=0; samplenum<=hypersample; samplenum++ )  {
-				if( jitter & JITTER_CELL )  {
-					FAST fastf_t dx, dy;
-					dx = a.a_x + 
-						bn_rand_half(a.a_resource->re_randptr);
-					dy = a.a_y + 
-						bn_rand_half(a.a_resource->re_randptr);
-					VJOIN2( point, viewbase_model,
-						dx, dx_model, dy, dy_model );
+				if( jitter & JITTER_CELL ) {
+					jitter_start_pt(point, &a, samplenum, pat_num);
 				}  else  {
 					VJOIN2( point, viewbase_model,
 						a.a_x, dx_model,
@@ -422,7 +505,7 @@ genptr_t	arg;
 					VSET( a.a_color, left, 0, right );
 				}
 				VADD2( colorsum, colorsum, a.a_color );
-			}
+			} /* for samplenum <= hypersample */
 			if( hypersample )  {
 				FAST fastf_t f;
 				f = 1.0 / (hypersample+1);
