@@ -313,11 +313,13 @@ do_exit:
 		sub_ap.a_miss = ap->a_miss;
 		sub_ap.a_onehit = ap->a_onehit;
 		sub_ap.a_level = ap->a_level+1;
-		if( code == 3 )
+		if( code == 3 )  {
 			sub_ap.a_purpose = "rr recurse on next glass";
-		else
+		}  else  {
 			sub_ap.a_purpose = "rr recurse on escaping internal ray";
-		sub_ap.a_refrac_index = swp->sw_refrac_index;
+		}
+		/* sub_ap.a_refrac_index was set to RI of next material by rr_hit().
+		 */
 		sub_ap.a_cumlen = 0;
 		(void) rt_shootray( &sub_ap );
 
