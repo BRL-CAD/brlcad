@@ -192,6 +192,9 @@ MGED_EXTERN(int not_state, (int desired, char *str) );
 MGED_EXTERN(int chg_state, (int from, int to, char *str) );
 MGED_EXTERN(void state_err, (char *str) );
 
+MGED_EXTERN(void do_list, (struct rt_vls *outstrp, struct directory *dp, int verbose));
+
+
 #ifndef	NULL
 #define	NULL		0
 #endif
