@@ -583,7 +583,7 @@ do_extern_update:
 	}
 	db_free_external( &external );
 
-	if( dont_draw )  return CMD_OK;
+	if( dont_draw )  return TCL_OK;
 
 	/* draw the newly "made" solid */
 	new_cmd[0] = "e";
