@@ -305,7 +305,7 @@ namespace eval RtWizard {
 	#
 	itk_component add conFrame {
 	    iwidgets::labeledframe $itk_component(hierFrame).conFrame \
-		    -background sun2 \
+		    -background #666699 \
 		    -relief groove \
 		    -labeltext {} \
 		    -labelpos se
@@ -377,8 +377,7 @@ namespace eval RtWizard {
 		    -vscrollmode dynamic \
 		    -hscrollmode dynamic \
 		    -labeltext $database \
-		    -labelpos nw \
-		    -textbackground sun4
+		    -labelpos nw
 	    
 	} {
 	    usual
