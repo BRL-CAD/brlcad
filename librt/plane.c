@@ -1191,6 +1191,18 @@ CONST struct rt_tol	*tol;
 		return(-1);		/* No intersection */
 	}
 
+	if( NEAR_ZERO( MAGSQ( n ) , SMALL_FASTF ) )
+	{
+		vect_t a_to_p;
+
+		/* lines are parallel, must find another way to get normal vector */
+		VSUB2( a_to_p , p , a );
+		VCROSS( n , a_to_p , d );
+
+		/* if normal still has zero length, then lines are parallel and collinear
+		 * and the following code will work OK */
+	}
+
 	/*
 	 *  Solve for t and u in the system:
 	 *
