@@ -19,6 +19,19 @@
  *	This software is Copyright (C) 1988 by the United States Army.
  *	All rights reserved.
  *
+ *  Include Sequencing -
+ *	#include <stdio.h>	/* For FILE * *_/
+ *	#include <math.h>
+ *	#include "machine.h"	/* For fastf_t definition on this machine *_/
+ *	#include "vmath.h"	/* For vect_t definition *_/
+ *	#include "rtlist.h"	/* OPTIONAL, auto-included by wdb.h *_/
+ *	#include "nmg.h"	/* OPTIONAL, precedes wdb.h when used *_/
+ *	#include "nurb.h"	/* OPTIONAL, precedes wdb.h when used *_/
+ *	#include "wdb.h"
+ *
+ *  Libraries Used -
+ *	LIBWDB LIBRT LIBRT_LIBES -lm -lc
+ *
  *  $Header$
  */
 
