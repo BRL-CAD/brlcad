@@ -2882,8 +2882,8 @@ wdb_region_tcl(clientData, interp, argc, argv)
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 	register struct directory *dp;
 	int i;
+	int ident, air;
 	char oper;
-	struct bu_list head;
 
 	if (wdbp->dbip->dbi_read_only) {
 		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
@@ -2900,7 +2900,8 @@ wdb_region_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	BU_LIST_INIT(&head);
+ 	ident = wdbp->wdb_item_default;
+ 	air = wdbp->wdb_air_default;
 
 	/* skip past procname */
 	--argc;
@@ -2926,6 +2927,54 @@ wdb_region_tcl(clientData, interp, argc, argv)
 		}
 	}
 
+#if 1
+	/* Get operation and solid name for each solid */
+	for (i = 2; i < argc; i += 2) {
+		if (argv[i][1] != '\0') {
+			Tcl_AppendResult(interp, "bad operation: ", argv[i],
+					 " skip member: ", argv[i+1], "\n", (char *)NULL);
+			continue;
+		}
+		oper = argv[i][0];
+		if ((dp = db_lookup(wdbp->dbip,  argv[i+1], LOOKUP_NOISY )) == DIR_NULL ) {
+			Tcl_AppendResult(interp, "skipping ", argv[i+1], "\n", (char *)NULL);
+			continue;
+		}
+
+		if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
+			struct bu_vls tmp_vls;
+
+			bu_vls_init(&tmp_vls);
+			bu_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
+				      oper, dp->d_namep );
+			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			bu_vls_free(&tmp_vls);
+			continue;
+		}
+
+		/* Adding region to region */
+		if (dp->d_flags & DIR_REGION) {
+			Tcl_AppendResult(interp, "Note: ", dp->d_namep,
+					 " is a region\n", (char *)NULL);
+		}
+
+		if (wdb_combadd(interp, wdbp->dbip, dp,
+				argv[1], 1, oper, ident, air, wdbp) == DIR_NULL) {
+			Tcl_AppendResult(interp, "error in combadd", (char *)NULL);
+			return TCL_ERROR;
+		}
+	}
+
+	if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
+		/* failed to create region */
+		if (wdbp->wdb_item_default > 1)
+			wdbp->wdb_item_default--;
+		return TCL_ERROR;
+	}
+#else
+	/*XXX This is the way MGED used to do it. But, unfortunately this
+	 * creates a dependency for libwdb.
+	 */ 
 	/* Get operation and solid name for each solid */
 	for (i = 2; i < argc; i += 2) {
 		if (argv[i][1] != '\0') {
@@ -2974,6 +3023,7 @@ wdb_region_tcl(clientData, interp, argc, argv)
 		WDB_TCL_ERROR_RECOVERY_SUGGESTION;
 		return TCL_ERROR;
 	}
+#endif
 
 	return TCL_OK;
 }
