@@ -273,32 +273,32 @@ drawn and how snapping is performed." } }
 	    { { summary "Pops up a menu of distances to choose
 from for horizontal tick spacing." } }
     menu $top.hMB.spacing -title "Grid Spacing" -tearoff 0
-    $top.hMB.spacing add command -label "micrometer" -underline 4\
+    $top.hMB.spacing add command -label "Micrometer" -underline 4\
 	    -command "set_grid_spacing_htick $id micrometer"
-    $top.hMB.spacing add command -label "millimeter" -underline 2\
+    $top.hMB.spacing add command -label "Millimeter" -underline 2\
 	    -command "set_grid_spacing_htick $id millimeter"
-    $top.hMB.spacing add command -label "centimeter" -underline 0\
+    $top.hMB.spacing add command -label "Centimeter" -underline 0\
 	    -command "set_grid_spacing_htick $id centimeter"
-    $top.hMB.spacing add command -label "decimeter" -underline 0\
+    $top.hMB.spacing add command -label "Decimeter" -underline 0\
 	    -command "set_grid_spacing_htick $id decimeter"
-    $top.hMB.spacing add command -label "meter" -underline 0\
+    $top.hMB.spacing add command -label "Meter" -underline 0\
 	    -command "set_grid_spacing_htick $id meter"
-    $top.hMB.spacing add command -label "kilometer" -underline 0\
+    $top.hMB.spacing add command -label "Kilometer" -underline 0\
 	    -command "set_grid_spacing_htick $id kilometer"
     $top.hMB.spacing add separator
-    $top.hMB.spacing add command -label "1/10 inch" -underline 0\
+    $top.hMB.spacing add command -label "1/10 Inch" -underline 0\
 	    -command "set_grid_spacing_htick $id \"1/10 inch\""
-    $top.hMB.spacing add command -label "1/4 inch" -underline 2\
+    $top.hMB.spacing add command -label "1/4 Inch" -underline 2\
 	    -command "set_grid_spacing_htick $id \"1/4 inch\""
-    $top.hMB.spacing add command -label "1/2 inch" -underline 2\
+    $top.hMB.spacing add command -label "1/2 Inch" -underline 2\
 	    -command "set_grid_spacing_htick $id \"1/2 inch\""
-    $top.hMB.spacing add command -label "inch" -underline 0\
+    $top.hMB.spacing add command -label "Inch" -underline 0\
 	    -command "set_grid_spacing_htick $id inch"
-    $top.hMB.spacing add command -label "foot" -underline 0\
+    $top.hMB.spacing add command -label "Foot" -underline 0\
 	    -command "set_grid_spacing_htick $id foot"
-    $top.hMB.spacing add command -label "yard" -underline 0\
+    $top.hMB.spacing add command -label "Yard" -underline 0\
 	    -command "set_grid_spacing_htick $id yard"
-    $top.hMB.spacing add command -label "mile" -underline 0\
+    $top.hMB.spacing add command -label "Mile" -underline 3\
 	    -command "set_grid_spacing_htick $id mile"
     entry $top.maj_hE -relief flat -width 12 -textvar grid_control($id,mrh)
     hoc_register_data $top.maj_hE "Horizontal Major Spacing"\
@@ -318,32 +318,32 @@ is drawn and how snapping is performed." } }
 	    { { summary "Pops up a menu of distances to choose from for
 vertical tick spacing." } }
     menu $top.vMB.spacing -title "Grid Spacing" -tearoff 0
-    $top.vMB.spacing add command -label "micrometer" -underline 4\
+    $top.vMB.spacing add command -label "Micrometer" -underline 4\
 	    -command "set_grid_spacing_vtick $id micrometer"
-    $top.vMB.spacing add command -label "millimeter" -underline 2\
+    $top.vMB.spacing add command -label "Millimeter" -underline 2\
 	    -command "set_grid_spacing_vtick $id millimeter"
-    $top.vMB.spacing add command -label "centimeter" -underline 0\
+    $top.vMB.spacing add command -label "Centimeter" -underline 0\
 	    -command "set_grid_spacing_vtick $id centimeter"
-    $top.vMB.spacing add command -label "decimeter" -underline 0\
+    $top.vMB.spacing add command -label "Decimeter" -underline 0\
 	    -command "set_grid_spacing_vtick $id decimeter"
-    $top.vMB.spacing add command -label "meter" -underline 0\
+    $top.vMB.spacing add command -label "Meter" -underline 0\
 	    -command "set_grid_spacing_vtick $id meter"
-    $top.vMB.spacing add command -label "kilometer" -underline 0\
+    $top.vMB.spacing add command -label "Kilometer" -underline 0\
 	    -command "set_grid_spacing_vtick $id kilometer"
     $top.vMB.spacing add separator
-    $top.vMB.spacing add command -label "1/10 inch" -underline 0\
+    $top.vMB.spacing add command -label "1/10 Inch" -underline 0\
 	    -command "set_grid_spacing_vtick $id \"1/10 inch\""
-    $top.vMB.spacing add command -label "1/4 inch" -underline 2\
+    $top.vMB.spacing add command -label "1/4 Inch" -underline 2\
 	    -command "set_grid_spacing_vtick $id \"1/4 inch\""
-    $top.vMB.spacing add command -label "1/2 inch" -underline 2\
+    $top.vMB.spacing add command -label "1/2 Inch" -underline 2\
 	    -command "set_grid_spacing_vtick $id \"1/2 inch\""
-    $top.vMB.spacing add command -label "inch" -underline 0\
+    $top.vMB.spacing add command -label "Inch" -underline 0\
 	    -command "set_grid_spacing_vtick $id inch"
-    $top.vMB.spacing add command -label "foot" -underline 0\
+    $top.vMB.spacing add command -label "Foot" -underline 0\
 	    -command "set_grid_spacing_vtick $id foot"
-    $top.vMB.spacing add command -label "yard" -underline 0\
+    $top.vMB.spacing add command -label "Yard" -underline 0\
 	    -command "set_grid_spacing_vtick $id yard"
-    $top.vMB.spacing add command -label "mile" -underline 0\
+    $top.vMB.spacing add command -label "Mile" -underline 3\
 	    -command "set_grid_spacing_vtick $id mile"
     entry $top.maj_vE -relief flat -width 12 -textvar grid_control($id,mrv)
     hoc_register_data $top.maj_vE "Vertical Major Spacing"\
