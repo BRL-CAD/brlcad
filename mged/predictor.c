@@ -80,7 +80,7 @@ point_t		pt;
 /*
  *			D R A W _ T R A I L
  *
- *  Draw from the most recently added point, backwards.
+ *  Draw from the most recently added point, backwards, as vectors.
  */
 static void
 draw_trail(vhead, tp)
@@ -100,6 +100,61 @@ struct trail	*tp;
 			RT_ADD_VLIST( vhead, tp->pt[i], RT_VLIST_LINE_DRAW );
 		}
 		if( (--i) < 0 )  i = tp->nused-1;
+	}
+}
+
+/*
+ *			P O L Y _ T R A I L
+ *
+ *  Draw from the most recently added points in two trails, as polygons.
+ *  Proceeds backwards.
+ *  t1 should be below (lower screen Y) t2.
+ */
+static void
+poly_trail(vhead, t1, t2)
+struct rt_list	*vhead;
+struct trail	*t1;
+struct trail	*t2;
+{
+	int	i1, i2;
+	int	todo = t1->nused;
+	fastf_t	*s1, *s2;
+	vect_t	right, up;
+	vect_t	norm;
+
+	if( t2->nused < todo )  todo = t2->nused;
+
+	RT_LIST_INIT( vhead );
+	if( t1->nused <= 0 || t1->nused <= 0 )  return;
+
+	if( (i1 = t1->cur_index-1) < 0 )  i1 = t1->nused-1;
+	if( (i2 = t2->cur_index-1) < 0 )  i2 = t2->nused-1;
+
+	/* Get starting points, next to frame. */
+	s1 = t1->pt[i1];
+	s2 = t2->pt[i2];
+	if( (--i1) < 0 )  i1 = t1->nused-1;
+	if( (--i2) < 0 )  i2 = t2->nused-1;
+	todo--;
+
+	for( ; todo > 0; todo-- )  {
+		/* Go from s1 to s2 to t2->pt[i2] to t1->pt[i1] */
+		VSUB2( up, s1, s2 );
+		VSUB2( right, t1->pt[i1], s1 );
+		VCROSS( norm, right, up );
+
+		RT_ADD_VLIST( vhead, norm, RT_VLIST_POLY_START );
+		RT_ADD_VLIST( vhead, s1, RT_VLIST_POLY_MOVE );
+		RT_ADD_VLIST( vhead, s2, RT_VLIST_POLY_DRAW );
+		RT_ADD_VLIST( vhead, t2->pt[i2], RT_VLIST_POLY_DRAW );
+		RT_ADD_VLIST( vhead, t1->pt[i1], RT_VLIST_POLY_DRAW );
+		RT_ADD_VLIST( vhead, s1, RT_VLIST_POLY_END );
+
+		s1 = t1->pt[i1];
+		s2 = t2->pt[i2];
+
+		if( (--i1) < 0 )  i1 = t1->nused-1;
+		if( (--i2) < 0 )  i2 = t2->nused-1;
 	}
 }
 
@@ -329,6 +384,7 @@ predictor_frame()
 
 	/* Draw the trails */
 
+#if 0
 	draw_trail( &trail, &tA );
 	invent_solid( "_PREDIC_TRAIL_LL_", &trail, 0x00FF00FFL );
 
@@ -340,6 +396,19 @@ predictor_frame()
 
 	draw_trail( &trail, &tD );
 	invent_solid( "_PREDIC_TRAIL_UL_", &trail, 0x0000FFFFL );
+#else
+	poly_trail( &trail, &tA, &tE );
+	invent_solid( "_PREDIC_TRAIL_LL_", &trail, 0x00FF00FFL );
+
+	poly_trail( &trail, &tB, &tF );
+	invent_solid( "_PREDIC_TRAIL_LR_", &trail, 0x0000FFFFL );
+
+	poly_trail( &trail, &tG, &tC );
+	invent_solid( "_PREDIC_TRAIL_UR_", &trail, 0x00FF00FFL );
+
+	poly_trail( &trail, &tH, &tD );
+	invent_solid( "_PREDIC_TRAIL_UL_", &trail, 0x0000FFFFL );
+#endif
 
 	/* Done */
 	mat_idn( ModelDelta );
