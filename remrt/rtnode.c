@@ -585,6 +585,7 @@ char *buf;
 
 	Tcl_LinkVar(interp, "test_fb_speed", (char *)&test_fb_speed, TCL_LINK_INT);
 	Tcl_LinkVar(interp, "curframe", (char *)&curframe, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "print_on", (char *)&print_on, TCL_LINK_INT);
 }
 
 /*
