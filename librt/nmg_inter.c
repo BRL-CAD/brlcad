@@ -58,21 +58,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to raytrace.h */
-RT_EXTERN(double		rt_dist_pt3_pt3, (CONST point_t a, CONST point_t b));
-
-/* XXX move to plane.c */
-double
-rt_dist_pt3_pt3( a, b )
-CONST point_t	a;
-CONST point_t	b;
-{
-	vect_t	diff;
-
-	VSUB2( diff, a, b );
-	return MAGNITUDE( diff );
-}
-
 #define ISECT_NONE	0
 #define ISECT_SHARED_V	1
 #define ISECT_SPLIT1	2
@@ -3892,7 +3877,7 @@ struct faceuse		*fu1, *fu2;
 
 	/* Topology search */
 	/* See if 2 faces share an edge already.  If so, get edge_geom line */
-	if( (on_eu = nmg_find_edge_between_2fu(fu1, fu2)) )  {
+	if( (on_eu = nmg_find_edge_between_2fu(fu1, fu2, &(is->tol))) )  {
 		is->on_eg = on_eu->e_p->eg_p;
 		NMG_CK_EDGE_G(is->on_eg);
 		/* XXX Should call nmg_is_eu_on_line3() as double-check */
