@@ -158,7 +158,7 @@ BDIRS="bench \
 	remrt \
 	mged \
 	proc-db \
-	gutil \
+	mk \
 	comgeom-g \
 	iges \
 	fb \
