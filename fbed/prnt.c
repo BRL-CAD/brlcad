@@ -143,9 +143,9 @@ RGBpixel *pixelp;
 	{
 	prnt_Scroll(	"%s {%03d,%03d,%03d}",
 			msg,
-			(int) pixelp[RED],
-			(int) pixelp[GRN],
-			(int) pixelp[BLU]
+			pixelp[RED],
+			pixelp[GRN],
+			pixelp[BLU]
 			);
 	return;
 	}

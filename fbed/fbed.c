@@ -1281,7 +1281,7 @@ STATIC int
 f_Fill_Panel( buf ) /* Fill current rectangle with "paint" color. */
 char *buf;
 	{
-	fillRectangle( &current, (unsigned char *) paint );
+	fillRectangle( &current, (RGBpixel *) paint );
 	return 1;
 	}
 
