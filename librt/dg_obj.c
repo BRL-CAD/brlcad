@@ -31,6 +31,11 @@
 #include <fcntl.h>
 #include <math.h>
 #include "conf.h"
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "tcl.h"
 #include "machine.h"
 #include "externs.h"
@@ -2465,12 +2470,32 @@ dgo_eraseobjpath(dgop, interp, argc, argv, noisy, all)
 		char **av, **av_orig;
 		struct directory **dpp;
 
+#if 0
 		bu_vls_trunc(&vls, 0);
 		bu_vls_printf(&vls, "split %s /", argv[i]);
 		if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
 			continue;
 		}
 		list = Tcl_GetStringResult(interp);
+#else
+		{
+			char *begin;
+			char *end;
+			char *newstr = strdup(argv[i]);
+
+			begin = newstr;
+			bu_vls_trunc(&vls, 0);
+
+			while ((end = strchr(begin, '/')) != NULL) {
+				*end = '\0';
+				bu_vls_printf(&vls, "%s ", begin);
+				begin = end + 1;
+			}
+			bu_vls_printf(&vls, "%s ", begin);
+			free((void *)newstr);
+		}
+		list = bu_vls_addr(&vls);
+#endif
 		Tcl_SplitList(interp, list, &ac, &av_orig);
 
 		/* skip first element if empty */
