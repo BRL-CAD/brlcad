@@ -320,7 +320,17 @@ char    **argv;
 
   if(wp->dp == (struct dm *)0){
     Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
-    Tcl_AppendResult(interp, "\tPlease attach to either X, ogl, or glx.\n", (char *)NULL);
+    Tcl_AppendResult(interp, "\tPlease attach to one of the following display manager types: ", (char *)NULL);
+#ifdef DM_X
+    Tcl_AppendResult(interp, "X  ", (char *)NULL);
+#endif
+#ifdef DM_OGL
+    Tcl_AppendResult(interp, "ogl  ", (char *)NULL);
+#endif
+#ifdef DM_GLX
+    Tcl_AppendResult(interp, "glx", (char *)NULL);
+#endif
+    Tcl_AppendResult(interp, "\n", (char *)NULL);
     return TCL_ERROR;
   }
 
@@ -386,7 +396,7 @@ char    **argv;
 Bad:
   Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
-  if(dmp != (genptr_t)0)
+  if(dmp != (struct dm *)0)
     release((char *)NULL, 1);  /* relesae() will call dm_close */
   else
     release((char *)NULL, 0);  /* release() will not call dm_close */
