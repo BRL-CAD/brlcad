@@ -1018,7 +1018,7 @@ static int check_radial(eu)
 struct edgeuse *eu;
 {
 	char curr_orient;
-	struct edgeuse *eur, *eu1;
+	struct edgeuse *eur, *eu1, *eurstart;
 	struct shell *s;
 	pointp_t p, q;
 
@@ -1029,12 +1029,21 @@ struct edgeuse *eu;
 
 	curr_orient = eu->up.lu_p->up.fu_p->orientation;
 	eur = eu->radial_p;
+
+	/* skip the wire edges */
+	while (*eur->up.magic_p == NMG_SHELL_MAGIC) {
+		eur = eur->eumate_p->radial_p;
+	}
+
+	eurstart = eur;
+
 	eu1 = eu;
 	NMG_CK_EDGEUSE(eur);
 	do {
 
 		NMG_CK_LOOPUSE(eu1->up.lu_p);
 		NMG_CK_FACEUSE(eu1->up.lu_p->up.fu_p);
+
 		NMG_CK_LOOPUSE(eur->up.lu_p);
 		NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
 		/* go find a radial edgeuse of the same shell
@@ -1078,7 +1087,11 @@ struct edgeuse *eu;
 		eu1 = eur->eumate_p;
 		curr_orient = eu1->up.lu_p->up.fu_p->orientation;
 		eur = eu1->radial_p;
-	} while (eur != eu->radial_p);
+		while (*eur->up.magic_p == NMG_SHELL_MAGIC) {
+			eur = eur->eumate_p->radial_p;
+		}
+
+	} while (eur != eurstart);
 	return(0);
 }
 
