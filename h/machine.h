@@ -50,18 +50,12 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 #define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
-#define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
-
-#ifndef PARALLEL
-#define RES_INIT(ptr)		;
-#define RES_ACQUIRE(ptr)	;
-#define RES_RELEASE(ptr)	;
-#else
+/* All FX/8's have parallel capability -- compile the locking in always */
 #define RES_INIT(ptr)		RES_RELEASE(ptr)
 /* RES_ACQUIRE is a function in rt.c, using tas instruction */
 #define RES_RELEASE(ptr)	*(ptr)=0;
-#endif
 
 #endif alliant
 
