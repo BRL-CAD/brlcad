@@ -7,8 +7,6 @@ items are on top, older topics are on the bottom.
 
 THESE SHOULD HAPPEN BEFORE SOURCEFORGE UPLOAD
 
-* ensure successful build on solaris with gcc and sunwpro compiler
-
 * apply latest patches from survice
 
 * ensure successful build on windows 
@@ -29,6 +27,8 @@ THESE SHOULD HAPPEN BEFORE SOURCEFORGE UPLOAD
 
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
+
+* ensure successful build on solaris with gcc and sunwpro compiler
 
 * handle multiple threading models (irix) via configure
 
