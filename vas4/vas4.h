@@ -9,22 +9,31 @@
 #define C_EE		'&'
 #define C_EDIT		'.'
 #define C_ENTER		':'
-#define C_FFORWARD	'!'
 #define C_FRAME_CHANGE	'-'
 #define C_FRAME_CODE	'*'
 #define C_HOLD		','
-#define C_PAUSE		'"'
 #define C_PLAY		'$'
 #define C_PROGRAM	')'
 #define C_RECORD	'\''
 #define C_REGISTER	'('
 #define C_REPLACE	'/'
-#define C_REWIND	'#'
 #define C_STOP		' '
+
+#ifdef USNA
+#define C_FFORWARD	'!'
+#define C_PAUSE		'"'
+#define C_REWIND	'#'
+#else
+/* BRL version */
+#define C_FFORWARD	C_STOP
+#define C_PAUSE		C_STOP
+#define C_REWIND	C_STOP
+#endif
 
 #define C_INIT		'I'
 #define C_NO		'0'
 #define C_ACTIVITY	'A'
+#define C_VTR_STATUS	'V'
 
 /* Result codes */
 #define R_INIT		'I'

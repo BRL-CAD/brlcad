@@ -1,14 +1,14 @@
 /*
- * record_seq.c - control the display of a series of ikonas images
- *	and record them frame by frame on the ikonas
+ * record_seq.c - control the display of a series of images
+ *	and record them frame by frame
  *
- * 	The interface to the ikonas is that this program will execute
+ * 	The interface to the framebuffer is that this program will execute
  *	a command int the form: display_image n    where n will be a sequence
  *	number from 0 to N-1 where N is the number of images specified
  *	in the command line of this command.
  *
  *	The user will typically provide a shell script
- *	that will display the appropriate image on the Ikonas.
+ *	that will display the appropriate image on the framebuffer.
  */
 
 #include <stdio.h>
@@ -44,7 +44,6 @@ int start_seq_number;
 
 	
 	SYSTEM("ikcolorbars");	/* Start out with color bars */
-	init_ik();		/* Set up Ikonas */
 
 	/* Make initial scene title matte recording */
 	SYSTEM("vas4 new");
