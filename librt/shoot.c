@@ -590,7 +590,7 @@ register struct application *ap;
 	RT_RESOURCE_CHECK(resp);
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
-		bu_log_indent(2);
+		bu_log_indent_delta(2);
 		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
 			resp->re_cpu,
 			ap->a_x, ap->a_y,
@@ -942,7 +942,7 @@ out:
 
 	/* Terminate any logging */
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION))  {
-		bu_log_indent(-2);
+		bu_log_indent_delta(-2);
 		bu_log("----------shootray cpu=%d  %d,%d lvl=%d (%s) %s ret=%d\n",
 			resp->re_cpu,
 			ap->a_x, ap->a_y,
