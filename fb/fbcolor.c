@@ -1,9 +1,9 @@
 /*
- *			F B C O L . C
+ *			F B C O L O R . C
  *
  * Function -
  *	Dynamicly show the desired color as the background,
- *	and in bargraph form.
+ *	and in bargraph form, using the color map.
  *
  *  Author -
  *	Michael John Muuss
@@ -22,11 +22,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>	
+#include "machine.h"
 #include "fb.h"
 
-#ifdef SYSV
-#define bzero(p,cnt)	memset(p,'\0',cnt);
-#endif
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
 
 int curchan = 0;	/* 0=r, 1=g, 2=b */
 
@@ -36,10 +37,17 @@ RGBpixel buf[512];
 ColorMap old_map;
 ColorMap cm;
 
-FBIO *fbp;
-int size = 512;
+static char	*framebuffer = NULL;
+static FBIO	*fbp;
+static int	scr_height;
+static int	scr_width;
 
 void	new_rgb(), rgbhsv(), hsvrgb();
+
+static char usage[] = "\
+Usage: fbcolor [-h] [-F framebuffer]\n\
+	[-s squarescrsize] [-w scr_width] [-n scr_height]\n\
+	[-S squarescrsize] [-W scr_width] [-N scr_height]\n";
 
 main(argc, argv )
 char **argv;
@@ -47,13 +55,18 @@ char **argv;
 	register int i;
 
 	if( ! pars_Argv( argc, argv ) )  {
-		(void) fprintf( stderr, "Usage : fbcolor [-h]\n" );
+		(void)fputs(usage, stderr);
 		return	1;
 	}
-	if( (fbp = fb_open( NULL, size, size )) == FBIO_NULL )  {
-		fprintf(stderr,"fbcolor:  fb_open failure\n");
+	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
+		fprintf(stderr,"fbcolor:  fb_open(%s) failure\n", framebuffer);
 		return	1;
 	}
+
+	/* Get the actual screen size we were given */
+	scr_width = fb_getwidth(fbp);
+	scr_height = fb_getheight(fbp);
+
 	fb_rmap( fbp, &old_map );
 	fb_clear( fbp, RGBPIXEL_NULL );
 
@@ -243,19 +256,32 @@ new_rgb()  {
 int
 pars_Argv( argc, argv )
 register char	**argv;
-	{
+{
 	register int	c;
-	while( (c = getopt( argc, argv, "h" )) != EOF )
-		{
-		switch( c )
-			{
-			case 'h' : /* High resolution frame buffer.	*/
-				size = 1024;
-				break;
-			case '?' :
-				return	0;
-			}
+	while( (c = getopt( argc, argv, "h" )) != EOF )  {
+		switch( c )  {
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 'h' : /* High resolution frame buffer.	*/
+			scr_height = scr_width = 1024;
+			break;
+		case 's':
+		case 'S':
+			scr_height = scr_width = atoi(optarg);
+			break;
+		case 'w':
+		case 'W':
+			scr_width = atoi(optarg);
+			break;
+		case 'n':
+		case 'N':
+			scr_height = atoi(optarg);
+			break;
+		case '?' :
+			return	0;
 		}
+	}
 	return	1;
 }
 
