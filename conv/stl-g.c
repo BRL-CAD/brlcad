@@ -107,6 +107,41 @@ int face[3];
 	bot_fcurr++;
 }
 
+char *
+mk_unique_brlcad_name( char *name )
+{
+	char *c;
+	struct bu_vls vls;
+	int count=0;
+	int len;
+
+	bu_vls_init( &vls );
+
+	bu_vls_strcpy( &vls, name );
+
+	c = bu_vls_addr( &vls );
+
+	while( *c != '\0' ) {
+		if( *c == '/' || !isprint( *c ) ) {
+			*c = '_';
+		}
+		c++;
+	}
+
+	len = bu_vls_strlen( &vls );
+	while( db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET ) != DIR_NULL ) {
+		char suff[10];
+
+		bu_vls_trunc( &vls, len );
+		count++;
+		sprintf( suff, "_%d", count );
+		bu_vls_strcat( &vls, suff );
+	}
+
+	return( bu_vls_strgrab( &vls ) );
+	
+}
+
 static void
 Convert_part_ascii( line )
 char line[MAX_LINE_LEN];
@@ -214,7 +249,7 @@ char line[MAX_LINE_LEN];
 		bu_log( "Conv_part %s x%x\n" , name , obj );
 
 	solid_count++;
-	solid_name = name;
+	solid_name = mk_unique_brlcad_name( name );
 
 	bu_log( "\tUsing solid name: %s\n" , solid_name );
 
