@@ -27,6 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <netinet/in.h>		/* For htonl(), etc */
 #include <syslog.h>
 #include <sys/uio.h>		/* for struct iovec */
+#include <varargs.h>
 
 #include "fb.h"
 #include "pkg.h"
@@ -36,6 +37,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern	char	*malloc();
 extern	double	atof();
 
+static	void	comm_error();
+
+static	struct	pkg_conn *pcp;
 static	FBIO	*fbp;
 
 main( argc, argv )
@@ -43,7 +47,6 @@ int argc; char **argv;
 {
 	int	on = 1;
 	int	netfd;
-	struct	pkg_conn *pcp;
 
 #ifdef NEVER
 	/*
@@ -70,6 +73,7 @@ int argc; char **argv;
 	pcp->pkc_magic = PKG_MAGIC;
 	pcp->pkc_fd = netfd;
 	pcp->pkc_switch = pkg_switch;
+	pcp->pkc_errlog = comm_error;
 	pcp->pkc_left = -1;
 	pcp->pkc_buf = (char *)0;
 	pcp->pkc_curpos = (char *)0;
@@ -82,34 +86,99 @@ int argc; char **argv;
 }
 
 /*
- *			E R R L O G
+ *			C O M M _ E R R O R
  *
- *  Log an error.  Route it to user.
+ *  Communication error.  An error occured on the PKG link between us
+ *  and the client we are serving.  We can't safely route these down
+ *  that connection so for now we just blat to stderr.
+ *  Should use syslog.
  */
 static void
-errlog( str, pcp )
+comm_error( str )
 char *str;
 {
-#ifdef TTY
 	(void)fprintf( stderr, "%s\n", str );
-#else
-	pkg_send( MSG_ERROR, str, strlen(str), pcp );
-#endif
+}
+
+/*
+ *			F B _ L O G
+ *
+ *  Errors from the framebuffer library.  We route these back to
+ *  our client.
+ */
+/* VARARGS */
+void
+fb_log( va_alist )
+va_dcl
+{
+	va_list	ap;
+	char *fmt;
+	int a=0,b=0,c=0,d=0,e=0,f=0,g=0,h=0,i=0;
+	int cnt=0;
+	register char *cp;
+	static char errbuf[80];
+
+	va_start( ap );
+	fmt = va_arg(ap,char *);
+	cp = fmt;
+	while( *cp )  if( *cp++ == '%' )  {
+		cnt++;
+		/* WARNING:  This assumes no fancy format specs like %.1f */
+		switch( *cp )  {
+		case 'e':
+		case 'f':
+		case 'g':
+			cnt++;		/* Doubles are bigger! */
+		}
+	}
+	if( cnt > 0 )  {
+		a = va_arg(ap,int);
+	}
+	if( cnt > 1 )  {
+		b = va_arg(ap,int);
+	}
+	if( cnt > 2 )  {
+		c = va_arg(ap,int);
+	}
+	if( cnt > 3 )  {
+		d = va_arg(ap,int);
+	}
+	if( cnt > 4 )  {
+		e = va_arg(ap,int);
+	}
+	if( cnt > 5 )  {
+		f = va_arg(ap,int);
+	}
+	if( cnt > 6 )  {
+		g = va_arg(ap,int);
+	}
+	if( cnt > 7 )  {
+		h = va_arg(ap,int);
+	}
+	if( cnt > 8 )  {
+		i = va_arg(ap,int);
+	}
+	if( cnt > 9 )  {
+		a = (int)fmt;
+		fmt = "Max args exceeded on: %s\n";
+	}
+	va_end( ap );
+	
+	(void) sprintf( errbuf, fmt, a,b,c,d,e,f,g,h,i );
+	pkg_send( MSG_ERROR, errbuf, strlen(errbuf), pcp );
+	return;
 }
 
 /*
  * This is where we go for message types we don't understand.
  */
+int
 pkgfoo(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	register int i;
-	char str[256];
-
-	sprintf( str, "rlibfb: unable to handle message type %d\n",
+	fb_log( "rlibfb: unable to handle message type %d\n",
 		pcp->pkc_type );
-	errlog( str, pcp );
 	(void)free(buf);
 }
 
@@ -133,7 +202,7 @@ char *buf;
 #if 0
 	{	char s[81];
 sprintf( s, "Device: \"%s\"", &buf[8] );
-errlog(s, pcp);
+fb_log(s);
 	}
 #endif
 	ret = fbp == FBIO_NULL ? -1 : 0;
@@ -187,7 +256,7 @@ char *buf;
 		if( buflen < 1024*sizeof(Pixel) )
 			buflen = 1024*sizeof(Pixel);
 		if( (rbuf = malloc( buflen )) == NULL ) {
-			errlog("fb_read: malloc failed!", pcp);
+			fb_log("fb_read: malloc failed!");
 			if( buf ) (void)free(buf);
 			buflen = 0;
 			return;
