@@ -1003,7 +1003,7 @@ extern char *optarg;
 extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
-char scsi_device[1024] = "/dev/scsi/sc2d6l3";
+char scsi_device[1024] = "/dev/scsi/sc0d6l3";
 char ipu_gamma = IPU_GAMMA_CG;
 char tray = IPU_UPPER_CASSETTE;
 char conv = IPU_AUTOSCALE;
