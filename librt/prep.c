@@ -322,10 +322,21 @@ int			ncpu;
 	/* If region-id expression file exists, process it */
 	rt_regionfix(rtip);
 
-	/* Partition space */
-	/* This is the only part which uses multiple CPUs */
+	/*
+	 *	Partition space
+	 *
+	 *  Multiple CPUs can be used here.
+	 */
 	for( i=1; i<=CUT_MAXIMUM; i++ ) rtip->rti_ncut_by_type[i] = 0;
 	rt_cut_it(rtip, ncpu);
+
+	/* Release storage used for bounding RPPs of solid "pieces" */
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
+		if( stp->st_piece_rpps )  {
+			bu_free( (char *)stp->st_piece_rpps, "st_piece_rpps[]" );
+			stp->st_piece_rpps = NULL;
+		}
+	} RT_VISIT_ALL_SOLTABS_END
 
 	/* Plot bounding RPPs */
 	if( (rt_g.debug&DEBUG_PLOTBOX) )  {

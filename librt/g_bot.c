@@ -891,6 +891,8 @@ register struct soltab *stp;
 		(struct bot_specific *)stp->st_specific;
 	register struct tri_specific *tri, *ptr;
 
+	bu_free( (char *)bot->bot_facearray, "bot_facearray" );
+
 	if( bot->bot_thickness )
 		bu_free( (char *)bot->bot_thickness, "bot_thickness" );
 	if( bot->bot_facemode )
