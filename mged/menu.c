@@ -41,6 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./mgedtcl.h"
 
+extern struct menu_item second_menu[], sed_menu[];
 int	menuflag;	/* flag indicating if a menu item is selected */
 struct menu_item *menu_array[NMENU];	/* base of array of menu items */
 
@@ -157,6 +158,55 @@ struct menu_item *value;
     update_views = 1;
 }
 
+void
+mged_highlight_menu_item(mptr, y)
+struct menu_item *mptr;
+int y;
+{
+  char *cp;
+
+  switch(mptr->menu_arg){
+  case BV_RATE_TOGGLE:
+    if(mged_variables.rateknobs){
+      dmp->dm_setColor(dmp, DM_WHITE, 1);
+      dmp->dm_drawString2D( dmp, "Rate", MENUX, y-15 );
+      dmp->dm_setColor(dmp, DM_YELLOW, 1);
+      dmp->dm_drawString2D( dmp, "/Abs", MENUX+4*35, y-15 );
+    }else{
+      dmp->dm_setColor(dmp, DM_YELLOW, 1);
+      dmp->dm_drawString2D( dmp, "Rate/", MENUX, y-15 );
+      dmp->dm_setColor(dmp, DM_WHITE, 1);
+      dmp->dm_drawString2D( dmp, "Abs", MENUX+5*35, y-15 );
+    }
+    break;
+  case BV_EDIT_TOGGLE:
+    if(mged_variables.edit){
+      dmp->dm_setColor(dmp, DM_WHITE, 1);
+      dmp->dm_drawString2D( dmp, "Edit", MENUX, y-15 );
+      dmp->dm_setColor(dmp, DM_YELLOW, 1);
+      dmp->dm_drawString2D( dmp, "/View", MENUX+4*35, y-15 );
+    }else{
+      dmp->dm_setColor(dmp, DM_YELLOW, 1);
+      dmp->dm_drawString2D( dmp, "Edit/", MENUX, y-15 );
+      dmp->dm_setColor(dmp, DM_WHITE, 1);
+      dmp->dm_drawString2D( dmp, "View", MENUX+5*35, y-15 );
+    }
+    break;
+#if 0
+  case BE_S_CONTEXT:
+    if(mged_variables.context)
+      dmp->dm_setColor(dmp, DM_WHITE, 1);
+    else
+      dmp->dm_setColor(dmp, DM_YELLOW, 1);
+
+    dmp->dm_drawString2D( dmp, mptr->menu_string, MENUX, y-15 );
+    break;
+#endif
+  default:
+    break;
+  }
+}
+
 /*
  *			M M E N U _ D I S P L A Y
  *
@@ -183,11 +233,22 @@ int y_top;
     for( item=0, mptr = *m;
 	 mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
 	 mptr++, y += MENU_DY, item++ )  {
-      if(mptr == *m)
-	dmp->dm_setColor(dmp, DM_RED, 1);
-      else
-	dmp->dm_setColor(dmp, DM_YELLOW, 1);
-      dmp->dm_drawString2D( dmp, mptr->menu_string, MENUX, y-15 );
+#if 0
+      if((*m == (struct menu_item *)second_menu && (mptr->menu_arg == BV_RATE_TOGGLE ||
+				  mptr->menu_arg == BV_EDIT_TOGGLE))
+	  || (*m == (struct menu_item *)sed_menu && mptr->menu_arg == BE_S_CONTEXT))
+#else
+      if((*m == (struct menu_item *)second_menu && (mptr->menu_arg == BV_RATE_TOGGLE ||
+				  mptr->menu_arg == BV_EDIT_TOGGLE)))
+#endif
+	mged_highlight_menu_item(mptr, y);
+      else{
+	if(mptr == *m)
+	  dmp->dm_setColor(dmp, DM_RED, 1);
+	else
+	  dmp->dm_setColor(dmp, DM_YELLOW, 1);
+	dmp->dm_drawString2D( dmp, mptr->menu_string, MENUX, y-15 );
+      }
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
       dmp->dm_drawLine2D(dmp, MENUXLIM, y+(MENU_DY/2), XMIN,
 			 y+(MENU_DY/2));
