@@ -658,6 +658,8 @@ f_push( )
 		(void)signal( SIGINT, sig2 );		/* interupts */
 	}
 
+	(void)close( idfd );
+	(void)close( rd_idfd );
 	(void)unlink( "/tmp/mged_push\0" );
 }
 
