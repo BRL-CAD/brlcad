@@ -1967,13 +1967,24 @@ CONST char		*str;
 
 	cp = ep->ext_buf;
 	for( i=0; i < ep->ext_nbytes; i += 16 )  {
+		const char	*sp = cp;
+
 		for( j=0; j < 4; j++ )  {
 			for( k=0; k < 4; k++ )  {
 				fprintf(fp, "%2.2x ", *cp++ );
 			}
 			fprintf(fp, " ");
 		}
-		fprintf(fp, "\n");
+		fprintf(fp, " |");
+
+		for( j=0; j < 16; j++,sp++ )  {
+			if( isprint(*sp) )
+				putc(*sp, fp);
+			else
+				putc('.', fp);
+		}
+
+		fprintf(fp, "|\n");
 	}
 }
 
