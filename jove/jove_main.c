@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.8  1993/12/10  05:50:57  mike
+ * tchars should be defined only on old-style BSD systems.
+ *
  * Revision 10.7  93/12/10  05:35:40  mike
  * Additional POSIX support
  * 
@@ -811,7 +814,7 @@ DoKeys(first)
 	register int	c;
 	jmp_buf	savejmp;
 
-	bcopy((char *) mainjmp, (char *) savejmp, sizeof savejmp);
+	memcpy((char *) savejmp, (char *) mainjmp, sizeof savejmp);
 
 	switch( setjmp(mainjmp) ) {
 	case 0:
@@ -820,7 +823,7 @@ DoKeys(first)
 		break;
 
 	case QUIT:
-		bcopy((char *) savejmp, (char *) mainjmp, sizeof mainjmp);
+		memcpy((char *) mainjmp, (char *) savejmp, sizeof mainjmp);
 		return;
 
 	case ERROR:
@@ -918,7 +921,7 @@ char	*argv[];
 		putpad(KS, 1);
 	putpad(CL, 1);
 
-	bcopy(curbuf->b_flags, origflags, NFLAGS*sizeof(int));
+	memcpy(origflags, curbuf->b_flags, NFLAGS*sizeof(int));
 	/* All new buffers will have these flags when created. */
 	RedrawDisplay();	/* Start the redisplay process */
 	DoKeys(1);

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  1993/10/26  03:40:29  mike
+ * ANSI C
+ *
  * Revision 10.1  91/10/12  06:53:54  mike
  * Release_4.0
  * 
@@ -174,7 +177,7 @@ setfuncs(flags)
 int	*flags;
 {
 	UpdModLine++;	/* Kludge ... but speeds things up considerably */
-	bcopy(flags, curbuf->b_flags, NFLAGS*sizeof(int));
+	memcpy(curbuf->b_flags, flags, NFLAGS*sizeof(int));
 
 	if (IsFlagSet(flags, OVERWRITE))
 		BindInserts(OverWrite);
@@ -211,7 +214,7 @@ register int	*f;
 setflags(buf)
 BUFFER	*buf;
 {
-	bcopy(origflags, buf->b_flags, NFLAGS*sizeof(int));
+	memcpy(buf->b_flags, origflags, NFLAGS*sizeof(int));
 	SetUnmodified(buf);
 	ClrScratch(buf);	/* Normal until proven SCRATCHBUF */
 }
@@ -349,11 +352,11 @@ BUFFER	*newbuf;
 	if (newbuf == curbuf)
 		return;
 	lastbuf = curbuf;
-	bcopy(globflags, curbuf->b_flags, NFLAGS*sizeof(int));
+	memcpy(curbuf->b_flags, globflags, NFLAGS*sizeof(int));
 	lsave();
 	curbuf = newbuf;
 	getDOT();
-	bcopy(curbuf->b_flags, globflags, NFLAGS*sizeof(int));
+	memcpy( globflags, curbuf->b_flags, NFLAGS*sizeof(int));
 	setfuncs(curbuf->b_flags);
 }	
 

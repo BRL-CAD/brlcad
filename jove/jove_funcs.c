@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.3  1993/12/10  04:25:54  mike
+ * Added FindCursorTag(), bound to M-t.
+ *
  * Revision 10.2  93/10/26  03:47:08  mike
  * ANSI C
  * 
@@ -736,7 +739,7 @@ NameMac()
 	name = copystr(name);
 	*m = KeyMacro;				/* Copy the keyboard macro */
 	m->Body = emalloc(m->MacBuflen);
-	bcopy(KeyMacro.Body, m->Body, m->MacLength);
+	memcpy(m->Body, KeyMacro.Body, m->MacLength);
 	m->Ntimes = m->Flags = m->Offset = 0;	/* At the beginning */
 	m->Name = name;
 	DefMac(name, m);

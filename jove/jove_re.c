@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.5  1993/12/10  05:37:01  mike
+ * ANSI lint
+ *
  * Revision 10.4  93/12/10  04:25:35  mike
  * Added FindCursorTag(), bound to M-t.
  * 
@@ -280,9 +283,9 @@ reswitch:
 				    	m = MakeMark(curline, fromchar);
 				    	curchar = loc2 - genbuf;
 					message("Recursive edit ...");
-				    	bcopy(expbuf, pushexp, ESIZE + 4);
+				    	memcpy(pushexp, expbuf, ESIZE + 4);
 					Recurse();
-					bcopy(pushexp, expbuf, ESIZE + 4);
+					memcpy(expbuf, pushexp, ESIZE + 4);
 					SetBuf(oldbuf);
 				    	ToMark(m);
 				    	DelMark(m);
@@ -1087,7 +1090,7 @@ FindCursorTag()
 	/* Snatch out that string, and null terminate */
 	len = end - start;
 	if( len > MAX_FUNCTION_NAME_LEN-1 )  len = MAX_FUNCTION_NAME_LEN-1;
-	bcopy( linebuf+start, buf, len );
+	memcpy( buf, linebuf+start, len );
 	buf[len] = '\0';
 
 	find_tag(buf);

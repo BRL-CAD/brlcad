@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.3  1993/10/26  06:31:25  mike
+ * Modified to use tempnam(), so that $TMPDIR from user's environment
+ * will be honored if set
+ *
  * Revision 10.2  92/01/31  16:56:12  mike
  * Must do chown() *after* close(), so that on NFS clients, we don't
  * loose write permission on the file before we write any data into it.
@@ -770,10 +774,10 @@ int	(*iofcn)();
 #ifdef INCORB
 	if (b < INCORB) {
 		if (iofcn == read) {
-			bcopy(&incorb[pageround((b+1)*BSIZ)], buf, BSIZ);
+			memcpy(buf, &incorb[pageround((b+1)*BSIZ)], BSIZ);
 			return;
 		}
-		bcopy(buf, &incorb[pageround((b+1)*BSIZ)], BSIZ);
+		memcpy(&incorb[pageround((b+1)*BSIZ)], buf, BSIZ);
 		return;
 	}
 #endif
