@@ -831,7 +831,7 @@ int arg;
 				"nmg_ed tab[]");
 			vbp = rt_vlblock_init();
 
-			nmg_vlblock_around_eu(vbp, es_eu, tab);
+			nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &mged_tol);
 			cvt_vlblock_to_solids( vbp, "_EU_", 0 );	/* swipe vlist */
 
 			rt_vlblock_free(vbp);
@@ -3198,7 +3198,7 @@ oedit_reject()
  * 'es_menu' which is the plane being redefined. This function is only callable
  * when in solid edit and rotating the face of a GENARB8.
  */
-void
+int
 f_eqn(argc, argv)
 int	argc;
 char	*argv[];
@@ -3208,15 +3208,15 @@ char	*argv[];
 
 	if( state != ST_S_EDIT ){
 		(void)printf("Eqn: must be in solid edit\n");
-		return;
+		return CMD_BAD;
 	}
 	else if( es_rec.s.s_type != GENARB8 ){
 		(void)printf("Eqn: type must be GENARB8\n");
-		return;
+		return CMD_BAD;
 	}
 	else if( es_edflag != ECMD_ARB_ROTATE_FACE ){
 		(void)printf("Eqn: must be rotating a face\n");
-		return;
+		return CMD_BAD;
 	}
 
 	/* get the A,B,C from the command line */
@@ -3240,6 +3240,8 @@ char	*argv[];
 
 	/* update display information */
 	dmaflag = 1;
+
+	return CMD_OK;
 }
 
 /* Hooks from buttons.c */
