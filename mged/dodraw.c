@@ -1231,7 +1231,7 @@ char	**argv;
 	  nmg_triangulate_model( mged_nmg_model , &mged_tol );
 	}
 
-	Tcl_AppendResult(interp, "facetize:  converting NMG to database format\n");
+	Tcl_AppendResult(interp, "facetize:  converting NMG to database format\n", (char *)NULL);
 
 	/* Export NMG as a new solid */
 	RT_INIT_DB_INTERNAL(&intern);
