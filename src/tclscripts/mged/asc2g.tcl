@@ -76,7 +76,7 @@ current database." } {} } OK Cancel]
 			dbconcat $db_name $prefix
 		}
 		
-		exec rm $db_name
+		file delete $db_name
 	}
 }
 
