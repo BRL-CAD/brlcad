@@ -16,7 +16,7 @@
 			proc_reg hideline polyif red \
 			mater plot overlay inside \
 			concat utility1 utility2 track arbs \
-			facedef arb ell half tgc torus set animedit \
+			facedef arb set animedit \
 			TCP_FILES attach dm-tek dm-plot dm-ps \
 			dm-tek4109 MGED_OBJS
 

@@ -31,13 +31,11 @@ cake \
  dodraw.o \
  dozoom.o \
  edarb.o \
- edsol.o \
- ell.o &
+ edsol.o &
 
 cake \
  facedef.o \
  ged.o \
- half.o \
  hideline.o \
  inside.o \
  mater.o &
@@ -53,9 +51,7 @@ cake \
 cake \
  scroll.o \
  tedit.o \
- tgc.o \
  titles.o \
- torus.o \
  track.o &
 
 cake \
