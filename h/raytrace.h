@@ -68,6 +68,17 @@ struct hit {
 #define HIT_NULL	((struct hit *)0)
 
 
+/*
+ *			C U R V A T U R E
+ *
+ *  Information about curvature of the surface at a hit point.
+ */
+struct curvature {
+	vect_t		crv_pdir;	/* Principle direction */
+	fastf_t		crv_c1;		/* curvature in principle dir */
+	fastf_t		crv_c2;		/* curvature in other direction */
+};
+#define CURVE_NULL	((struct curvature *)0)
 
 /*
  *			S E G
@@ -381,6 +392,8 @@ struct application  {
 	int	a_user;		/* application-specific value */
 	point_t	a_color;	/* application-specific color */
 	vect_t	a_uvec;		/* application-specific vector */
+	fastf_t	a_rbeam;	/* initial beam radius (mm) */
+	fastf_t	a_diverge;	/* slope of beam divergance/mm */
 };
 
 /*
@@ -501,6 +514,7 @@ extern void rt_draw_box();		/* unix-plot an RPP */
 extern void rt_region_color_map();	/* regionid-driven color override */
 extern void rt_color_addrec();		/* process ID_MATERIAL record */
 extern void rt_cut_extend();		/* extend a cut box */
+extern int rt_rpp_region();		/* find RPP of one region */
 
 /* CxDiv, CxSqrt */
 extern void rt_pr_roots();		/* print complex roots */
