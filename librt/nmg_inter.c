@@ -1025,8 +1025,10 @@ CONST struct rt_tol	*tol;
 	VUNITIZE( dir );
 	vdist = rt_dist_pt3_along_line3( eg->e_pt, dir, v->vg_p->coord );
 
-	/* XXX Replace with walk of eg eu list */
-	nmg_edgeuse_with_eg_tabulate( &eutab, nmg_find_model(&v->magic), eg );
+	/* This has to be a table, because nmg_ebreaker() will
+	 * change the list on the fly, otherwise.
+	 */
+	nmg_edgeuse_with_eg_tabulate( &eutab, eg );
 
 	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
 	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab);
@@ -1039,14 +1041,19 @@ CONST struct rt_tol	*tol;
 		struct edgeuse	*new_eu;
 
 		NMG_CK_EDGEUSE(*eup);
-		if( (*eup)->g.lseg_p != eg )  continue;
+		if( (*eup)->g.lseg_p != eg )  rt_bomb("nmg_break_eg_on_v() eu disowns eg\n");
 
 		va = (*eup)->vu_p->v_p;
 		vb = (*eup)->eumate_p->vu_p->v_p;
-		if( rt_pt3_pt3_equal( v->vg_p->coord, va->vg_p->coord, tol ) )
+		if( v == va || v == vb )  continue;
+		if( rt_pt3_pt3_equal( v->vg_p->coord, va->vg_p->coord, tol ) )  {
+			nmg_jv( v, va );
 			continue;
-		if( rt_pt3_pt3_equal( v->vg_p->coord, vb->vg_p->coord, tol ) )
+		}
+		if( rt_pt3_pt3_equal( v->vg_p->coord, vb->vg_p->coord, tol ) )  {
+			nmg_jv( v, vb );
 			continue;
+		}
 		a = rt_dist_pt3_along_line3( eg->e_pt, dir, va->vg_p->coord );
 		b = rt_dist_pt3_along_line3( eg->e_pt, dir, vb->vg_p->coord );
 		if( NEAR_ZERO( a-vdist, tol->dist ) )  continue;
@@ -2711,6 +2718,8 @@ out:
  *  between the two edge geometries.
  *  If a new hit happens at a different vertex from a previous hit,
  *  that is a fatal error.
+ *
+ *  This routine exists only as a support routine for nmg_common_v_2eg().
  *  
  * XXX This is a lame name.
  */
@@ -2791,49 +2800,40 @@ CONST struct rt_tol		*tol;
 }
 
 /*
- *			N M G _ I S E C T _ 2 E G
+ *			N M G _ C O M M O N _ V _ 2 E G
  *
  *  Perform a topology search for a common vertex between two edge geometry
  *  lines.
  */
 struct vertex *
-nmg_isect_2eg( eg1, eg2, tol, m )
-struct edge_g_lseg		*eg1;
-struct edge_g_lseg		*eg2;
+nmg_common_v_2eg( eg1, eg2, tol )
+struct edge_g_lseg	*eg1;
+struct edge_g_lseg	*eg2;
 CONST struct rt_tol	*tol;
-struct model		*m;		/* XXX */
 {
-	struct nmg_ptbl		eu1_list;
-	struct edgeuse		**eu1;
+	struct edgeuse		*eu1;
 	struct vertex		*hit_v = (struct vertex *)NULL;
+	struct rt_list		*midway;	/* &eu->l2, midway into edgeuse */
 
 	NMG_CK_EDGE_G_LSEG(eg1);
 	NMG_CK_EDGE_G_LSEG(eg2);
 	RT_CK_TOL(tol);
-	NMG_CK_MODEL(m);
 
-	if( eg1 == eg2 || rt_2line3_colinear(
-	    eg1->e_pt, eg1->e_dir, eg2->e_pt, eg2->e_dir, 1e5, tol ) )
-		rt_bomb("nmg_isect_2eg() eg1 and eg2 are colinear\n");
+	if( eg1 == eg2 )
+		rt_bomb("nmg_common_v_2eg() eg1 and eg2 are colinear\n");
 
-	/* XXX "without regard to complexity".  This is a slow algorithm. */
-	/* XXX Re-write once edge_g heads a lists of edges, rather than ->usage */
-
-	/* Build a list of all edgeuses in this model on eg1 */
-	nmg_edgeuse_with_eg_tabulate( &eu1_list, &m->magic, eg1 );
-
-	for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(&eu1_list);
-	     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(&eu1_list); eu1--
-	)  {
-		NMG_CK_EDGEUSE(*eu1);
-		if( (*eu1)->g.lseg_p != eg1 )  rt_bomb("nmg_isect_2eg() sanity\n");
-		/* Both verts of *eu1 lie on line *eg1 */
-		hit_v = nmg_search_v_eg( *eu1, 0, eg1, eg2, hit_v, tol );
-		hit_v = nmg_search_v_eg( *eu1, 1, eg1, eg2, hit_v, tol );
+	/* Scan all edgeuses in the model that use eg1 */
+	for( RT_LIST_FOR( midway, rt_list, &eg1->eu_hd2 ) )  {
+		NMG_CKMAG(midway, NMG_EDGEUSE2_MAGIC, "edgeuse2 [l2]");
+		eu1 = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
+		NMG_CK_EDGEUSE(eu1);
+		if( eu1->g.lseg_p != eg1 )  rt_bomb("nmg_common_v_2eg() eu disavows eg\n");
+		/* Both verts of eu1 lie on line eg1 */
+		hit_v = nmg_search_v_eg( eu1, 0, eg1, eg2, hit_v, tol );
+		hit_v = nmg_search_v_eg( eu1, 1, eg1, eg2, hit_v, tol );
 	}
-	nmg_tbl( &eu1_list, TBL_FREE, (long *)0 );
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		rt_log("nmg_isect_2eg(eg1=x%x, eg2=x%x) hit_v=x%x\n",
+		rt_log("nmg_common_v_2eg(eg1=x%x, eg2=x%x) hit_v=x%x\n",
 			eg1, eg2, hit_v);
 	}
 	return hit_v;
@@ -3036,7 +3036,7 @@ fixup:
 				rt_log("non-colinear.  Searching for topological intersection between on_eg and eg1\n");
 			}
 			/* See if any vu along eg1 is used by edge from on_eg */
-			hit_v = nmg_isect_2eg( *eg1, is->on_eg, &(is->tol), nmg_find_model( &fu1->l.magic ) );
+			hit_v = nmg_common_v_2eg( *eg1, is->on_eg, &(is->tol) );
 			/*
 			 *  Note that while eg1 contains an eu from fu1,
 			 *  the intersection vertex just found may occur
