@@ -60,7 +60,7 @@ extern int optind,opterr,optopt;
 extern int errno;
 
 static char *brlcad_file;	/* name of output file */
-static int polysolid=0;		/* Flag for polysolid output rather than NMG's */
+static int polysolid=1;		/* Flag for polysolid output rather than NMG's */
 static int solid_count=0;	/* count of solids converted */
 static struct rt_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
@@ -73,7 +73,7 @@ static char *reg_cmp=(char *)NULL;		/* compiled regular expression */
 static char *usage="proe-g [-psdar] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
-	The -p option is to create polysolids rather than NMG's.\n\
+	The -n option is to NMG solids rather than polysolids.\n\
 	The -s option is to simplify the objects to ARB's where possible.\n\
 	The -d option prints additional debugging information.\n\
 	The -i option sets the initial region ident number (default is 1000).\n\
@@ -109,7 +109,7 @@ struct name_conv_list
 	char brlcad_name[NAMESIZE];
 	char solid_name[NAMESIZE];
 	char name[80];
-	char *obj;
+	unsigned int obj;
 	int solid_use_no;
 	int comb_use_no;
 	struct name_conv_list *next;
@@ -152,7 +152,8 @@ struct ptc_surf_list
 
 static struct name_conv_list *
 Add_new_name( name , obj , type )
-char *name,*obj;
+char *name;
+unsigned int obj;
 int type;
 {
 	struct name_conv_list *ptr,*ptr2;
@@ -310,7 +311,8 @@ int type;
 
 static char *
 Get_unique_name( name , obj , type )
-char *name,*obj;
+char *name;
+unsigned int obj;
 int type;
 {
 	struct name_conv_list *ptr,*prev;
@@ -350,7 +352,8 @@ int type;
 
 static char *
 Get_solid_name( name , obj )
-char *name,*obj;
+char *name;
+unsigned int obj;
 {
 	struct name_conv_list *ptr;
 
@@ -360,7 +363,7 @@ char *name,*obj;
 		ptr = ptr->next;
 
 	if( !ptr )
-		ptr = Add_new_name( name , (char *)NULL , PART_TYPE );
+		ptr = Add_new_name( name , 0 , PART_TYPE );
 
 	return( ptr->solid_name );
 }
@@ -373,11 +376,12 @@ char line[MAX_LINE_LEN];
 	struct wmember *wmem;
 	char line1[MAX_LINE_LEN];
 	char name[80];
-	char *obj;
+	unsigned int obj;
 	char memb_name[80];
-	char *memb_obj;
+	unsigned int memb_obj;
 	char *brlcad_name;
 	float mat_col[4];
+	float junk;
 	int start;
 	int i;
 
@@ -411,7 +415,7 @@ char line[MAX_LINE_LEN];
 	name[++i] = '\0';
 
 	/* get object pointer */
-	sscanf( &line[start] , "%x %f" , &obj );
+	sscanf( &line[start] , "%x %f" , &obj, &junk );
 
 	rt_log( "Converting Assembly: %s\n" , name );
 
@@ -636,7 +640,7 @@ point_t min, max;
 			cut_count++;
 
 			sprintf( haf_name, "cut.%d", cut_count );
-			ptr = Add_new_name( haf_name, (char *)NULL, CUT_SOLID_TYPE );
+			ptr = Add_new_name( haf_name, 0, CUT_SOLID_TYPE );
 			if( mk_arb8( fd_out, ptr->solid_name, (fastf_t *)arb_pt ) )
 				rt_log( "Failed to create ARB8 solid for Assembly cut in part %s\n", name );
 			else
@@ -714,7 +718,7 @@ char line[MAX_LINE_LEN];
 {
 	char line1[MAX_LINE_LEN];
 	char name[80];
-	char *obj;
+	unsigned int obj;
 	char *solid_name;
 	int start;
 	int i;
@@ -824,6 +828,7 @@ char line[MAX_LINE_LEN];
 			int endloop=0;
 			int vert_no=0;
 			struct loopuse *lu;
+			struct edgeuse *eu;
 			plane_t pl;
 
 			while( !endloop )
@@ -887,6 +892,8 @@ char line[MAX_LINE_LEN];
 				nmg_vertex_gv( verts[i].v , verts[i].pt );
 
 			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				nmg_edge_g( eu );
 
 			area = nmg_loop_plane_area( lu , pl );
 			if( area > 0.0 )
@@ -1006,11 +1013,11 @@ char line[MAX_LINE_LEN];
 		if( debug )
 			rt_log( "\tMake faces within tolerance\n" );
 		nmg_make_faces_within_tol( s, &tol );
-
+#if 0
 		nmg_shell_coplanar_face_merge( s , &tol , 0 );
 
 		nmg_simplify_shell( s );
-
+#endif
 		nmg_rebound( m , &tol );
 
 	}
@@ -1336,8 +1343,8 @@ char	*argv[];
 			rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 			rt_log("\n");
 			break;
-		case 'p':
-			polysolid = 1;
+		case 'n':
+			polysolid = 0;
 			break;
 		case 'u':
 			do_regex = 1;
