@@ -220,7 +220,7 @@ the database being inserted."} { see_also dbconcat } } OK CANCEL]
 	    if {$prefix != ""} {
 		dbconcat $ia_filename $prefix
 	    } else {
-		dbconcat $ia_filename
+		dbconcat $ia_filename /
 	    }
 	}
     }
