@@ -36,6 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "rtstring.h"
 #include "raytrace.h"
 
 #include "../librt/debug.h"
@@ -121,6 +122,8 @@ char	**argv;
 	/*
 	 * All the work happens in the functions
 	 * called by rt_do_cmd().
+	 * NOTE that the value of MAXWORDS in rt_do_cmd() limits
+	 * the maximum number of columns that a 'file' command can list.
 	 */
 	while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
 		if(verbose) rt_log("cmd: %s\n", buf );
@@ -176,8 +179,7 @@ char	**argv;
 {
 	FILE	*fp;
 	char	*file;
-	char	buf[4096*7];	/* old:	char	buf[512]; */
-
+	char	lbuf[512];	/* temporary label buffer */
 	int	*cnum;
 	int	i;
 	int	line;
@@ -187,6 +189,7 @@ char	**argv;
 	fastf_t	*times;
 	auto double	d;
 	int	errors = 0;
+	struct rt_vls	buf;	/* unlimited size input line buffer */
 
 	file = argv[1];
 	if( (fp = fopen( file, "r" )) == NULL )  {
@@ -211,6 +214,7 @@ char	**argv;
 	cnum = (int *)rt_malloc( argc * sizeof(int), "cnum[]");
 	nwords = argc - 1;
 	iwords = (char **)rt_malloc( (nwords+1) * sizeof(char *), "iwords[]" );
+	rt_vls_init(&buf);
 
 	/* Retained dynamic memory */
 	times = (fastf_t *)rt_malloc( nlines * sizeof(fastf_t), "times");
@@ -223,18 +227,23 @@ char	**argv;
 			continue;
 		}
 
-		sprintf( buf, "File '%s', Column %d", file, i );
-		if( (cnum[i] = create_chan( argv[i+1], nlines, buf )) < 0 )
-			return(-1);	/* abort */
+		sprintf( lbuf, "File '%s', Column %d", file, i );
+		if( (cnum[i] = create_chan( argv[i+1], nlines, lbuf )) < 0 )  {
+			errors = 1;
+			goto out;
+		}
 		/* Share array of times */
 		chan[cnum[i]].c_itime = times;
 	}
 
 	for( line=0; line < nlines; line++ )  {
-		buf[0] = '\0';
-		(void)fgets( buf, sizeof(buf), fp );
+		register char *bp;
 
-		if( buf[0] == '#' )  {
+		rt_vls_trunc( &buf, 0 );
+		if( rt_vls_gets( &buf, fp ) == -1 )  break;
+		bp = rt_vls_addr(&buf);
+
+		if( bp[0] == '#' )  {
 			line--;
 			nlines--;
 			for( i = 1; i < nwords; i++ )  {
@@ -244,7 +253,7 @@ char	**argv;
 			continue;
 		}
 
-		i = rt_split_cmd( iwords, nwords+1, buf );
+		i = rt_split_cmd( iwords, nwords+1, bp );
 
 		if( i != nwords )  {
 			rt_log("File '%s', Line %d:  expected %d columns, got %d\n",
@@ -281,8 +290,10 @@ char	**argv;
 	fclose(fp);
 
 	/* Free intermediate dynamic memory */
+out:
 	rt_free( (char *)cnum, "cnum[]");
 	rt_free( (char *)iwords, "iwords[]");
+	rt_vls_free(&buf);
 
 	if(errors)
 		return(-1);	/* abort */
@@ -1155,16 +1166,3 @@ int	ch;
 	}
 	return 0;
 }
-
-#if 0
-
-/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-/* X  H A C K !!!!!!                                                 X */
-/* X                                                                 X */
-/* X  Also, the size of buf[] in cm_file limits the amount of        X */
-/* X  of columns of data one can read into tabinterp.                X */
-/* X                                                                 X */
-/* X                    - JG                                         X */
-/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-
-#endif
