@@ -1297,7 +1297,20 @@ char	**argv;
 
 	VSUB2( dir, pt, rtif_eye_model );
 	VUNITIZE( dir );
+
+#if 1
+	/*
+	   At the moment mat_lookat will return NAN's if the direction vector
+	   is aligned with the Z axis. The following is a temporary workaround.
+	 */
+	{
+	  vect_t neg_Z_axis = { 0.0, 0.0, -1.0 };
+	  mat_fromto( rtif_viewrot, dir, neg_Z_axis);
+	}
+#else
 	mat_lookat( rtif_viewrot, dir, yflip );
+#endif
+
 	/*  Final processing is deferred until cm_end(), but eye_pt
 	 *  must have been specified before here (for now)
 	 */
