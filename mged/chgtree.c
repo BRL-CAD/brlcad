@@ -477,17 +477,6 @@ char	**argv;
 		}
 	}
 
-#ifdef DO_SINGLE_DISPLAY_LIST
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    save_dmlp = curr_dm_list;
-	    curr_dm_list = dmlp;
-	    createDList(&HeadSolid);
-	    curr_dm_list = save_dmlp;
-	  }
-	}
-#endif
-
 	return TCL_OK;
 }
 

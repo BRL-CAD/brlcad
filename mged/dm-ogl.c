@@ -104,23 +104,6 @@ char *argv[];
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
 
-#if 0
-  /*XXX Experimenting */
-  bu_vls_printf(&vls1, "dm_info(%s)", bu_vls_addr(&dmp->dm_pathName));
-  bu_vls_printf(&vls2, "%lu %lu %lu %lu %d %d %lu %d %d",
-		(unsigned long)((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		(unsigned long)((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		(unsigned long)((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
-		(unsigned long)((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
-		dmp->dm_width, dmp->dm_height,
-		(unsigned long)((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc,
-		((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer, 0);
-  Tcl_SetVar(interp, bu_vls_addr(&vls1), bu_vls_addr(&vls2), TCL_GLOBAL_ONLY);
-#endif
-
-  /* initialize the background color */
-  cs_set_bg();
-
   return TCL_OK;
 }
 

@@ -794,18 +794,7 @@ struct solid		*existing_sp;
 	}
 
 #ifdef DO_DISPLAY_LISTS
-#ifdef DO_SINGLE_DISPLAY_LIST
-	/* do nothing here */
-#else
-	save_dmlp = curr_dm_list;
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    curr_dm_list = dmlp;
-	    createDList(sp);
-	  }
-	}
-	curr_dm_list = save_dmlp;
-#endif
+	createDListALL(sp);
 #endif
 
 	/* Solid is successfully drawn */
@@ -1134,17 +1123,6 @@ int			copy;
 			shortname, vbp->rgb[i] );
 		invent_solid( namebuf, &vbp->head[i], vbp->rgb[i], copy );
 	}
-
-#ifdef DO_SINGLE_DISPLAY_LIST
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    save_dmlp = curr_dm_list;
-	    curr_dm_list = dmlp;
-	    createDList(&HeadSolid);
-	    curr_dm_list = save_dmlp;
-	  }
-	}
-#endif
 }
 
 /*
@@ -1225,18 +1203,7 @@ int		copy;
 	BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
 
 #ifdef DO_DISPLAY_LISTS
-#ifdef DO_SINGLE_DISPLAY_LIST
-	/* do nothing here */
-#else
-	save_dmlp = curr_dm_list;
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    curr_dm_list = dmlp;
-	    createDList(sp);
-	  }
-	}
-	curr_dm_list = save_dmlp;
-#endif
+	createDListALL(sp);
 #endif
 #endif
 	return(0);		/* OK */
@@ -1852,16 +1819,6 @@ char	**argv;
 		}
 	}
 
-#ifdef DO_SINGLE_DISPLAY_LIST
-	save_dmlp = curr_dm_list;
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    curr_dm_list = dmlp;
-	    createDList(&HeadSolid);
-	  }
-	}
-	curr_dm_list = save_dmlp;
-#endif
 
 	update_views = 1;
 	return TCL_OK;
