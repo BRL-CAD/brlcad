@@ -250,6 +250,10 @@ size_reset()
 		VADD2SCALE( center, max, min, 0.5 );
 		VSUB2( radial, max, center );
 	}
+
+	if( VNEAR_ZERO( radial , SQRT_SMALL_FASTF ) )
+		VSETALL( radial , 1.0 );
+
 	mat_idn( toViewcenter );
 	MAT_DELTAS( toViewcenter, -center[X], -center[Y], -center[Z] );
 	Viewscale = radial[X];
