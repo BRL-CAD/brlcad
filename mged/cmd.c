@@ -50,7 +50,7 @@ void	f_tedit(), f_memprint();
 void	f_mirface(), f_units(), f_title();
 void	f_rot_obj(), f_tr_obj(), f_sc_obj();
 void	f_analyze();
-void	f_ill(), f_knob();
+void	f_ill(), f_knob(), f_tops(), f_summary();
 
 static struct funtab {
 	char *ft_name;
@@ -107,6 +107,8 @@ static struct funtab {
 	"release",f_release,1,1,"release (release current display processor)",
 	"ted",f_tedit,1,1,"ted (text edit a solid's parameters)",
 	"make",f_make,3,3,"make name <arb8|ellg|tor|tgc> (create a primitive)",
+	"tops",f_tops,1,1,"tops (find all top level objects)",
+	"summary",f_summary,1,2,"summary [s r g] (count/list solids/regions/groups)\n",
 	"memprint",f_memprint,1,1,"memprint (print memory maps)"
 };
 #define NFUNC	( (sizeof(funtab)) / (sizeof(struct funtab)) )
@@ -341,4 +343,32 @@ f_press()
 
 	for( i = 1; i < numargs; i++ )
 		press( cmd_args[i] );
+}
+
+void
+f_summary()
+{
+	register char *cp;
+	int flags = 0;
+
+	if( numargs <= 1 )  {
+		dir_summary(0);
+		return;
+	}
+	cp = cmd_args[1];
+	while( *cp )  switch( *cp++ )  {
+		case 's':
+			flags |= DIR_SOLID;
+			break;
+		case 'r':
+			flags |= DIR_REGION;
+			break;
+		case 'g':
+			flags |= DIR_COMB;
+			break;
+		default:
+			printf("summary:  S R or G are only valid parmaters\n");
+			break;
+	}
+	dir_summary(flags);
 }
