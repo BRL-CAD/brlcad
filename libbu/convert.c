@@ -61,6 +61,22 @@ typedef void *genptr_t;
 #define IND_CRAY	4
 
 static int Indian = IND_NOTSET;
+#define DBL_IEEE	0
+#define DBL_OTHER	1
+#if defined(sun) || (defined(alliant) && !(defined(i860)) || \
+	defined(ardent) || \
+	defined(stellar) || defined(sparc) || defined(mips) || \
+	defined(pyr) || defined(apollo) || defined(aux)
+#define DBL_FORMAT	DLB_IEEE
+#elseif defined(n16) || defined(i860) || \
+	(defined(sgi) && !defined(mips)) || \
+	defined(vax) || defined(ibm) || defined(gould) || \
+	defined(CRAY1) || defined(CRAY2) || defined(eta10) || \
+	defined(convex)
+#define DBL_FORMAT	DBL_OTHER
+#else
+# include "vert.c: ERROR, no HtoND format defined (see htond.c)"
+#fi
 
 /* cv_cookie	Set's a bit vector after parsing an input string.
  *
@@ -203,6 +219,74 @@ int	count;
  *	out		output pointer.
  *	outcookie	output format cookie.
  *	size		size of output buffer in bytes;
+ *
+ * Method:
+ *	HOSTDBL defined as true or false
+ *	if ! hostother then
+ *		hostother = (Indian == IND_BIG) ? SAME : DIFFERENT;
+ *	fi
+ *	if (infmt == double) then
+ *		if (HOSTDBL == SAME) {
+ *			invert = host;
+ *		fi
+ *	else
+ *		if (hostother == SAME) {
+ *			invert = host;
+ *		fi
+ *	fi
+ *	if (outfmt == double) then
+ *		if (HOSTDBL == SAME) {
+ *			outvert == host;
+ *	else
+ *		if (hostother == SAME) {
+ *			outvert = host;
+ *		fi
+ *	fi
+ *	if (infmt == outfmt) {
+ *		if (invert == outvert) {
+ *			copy(in,out)
+ *			exit
+ *		else if (invert == net) {
+ *			ntoh?(in,out);
+ *			exit
+ *		else
+ *			hton?(in,out);
+ *			exit
+ *		fi
+ *	fi
+ *
+ *	while not done {
+ *		from = in;
+ *
+ *		if (outfmt == double ) {
+ *			if (invert == net) {
+ *				ntoh?(from,t1);
+ *				from = t1;
+ *			fi
+ *			if (outvert == host) {
+ *				castdbl(from,out);
+ *				continue;
+ *			else
+ *				castdbl(from,t2);
+ *				hton(t2,out);
+ *			fi
+ *		else 
+ *			if (invert == net) {
+ *				ntoh?(from,t1);
+ *				from = t1;
+ *			fi
+ *			if (infmt != double) {
+ *				castdbl(from,t2);
+ *				from = t2;
+ *			fi
+ *			if (outvert == host) {
+ *				dblcast(from,out);
+ *			else
+ *				dblcast(from,t3);
+ *				hton?(t3,out);
+ *			fi
+ *		fi
+ *	done
  */
 cv_w_cookie(out, outcookie, size, in, incookie, count)
 genptr_t out;
@@ -212,16 +296,12 @@ genptr_t in;
 int	incookie;
 int	count;
 {
-	int number_converted = 0;
 	static int host_size_table[5] = {sizeof(char), sizeof(short), sizeof(int),
 		sizeof(long int), sizeof(double)};
 	static int net_size_table[5] = {1,2,4,8,8};
-	int bytes_per;
-	double *working;
-	double *hostnet;
-	int i;
 	int	work_count = 4096;
-	int inputconvert = 0;
+	int	number_done;
+	int	invert,outvert,infmt,outfmt,insize,outsize;
 
 	if (work_count > count) work_count = count;
 
@@ -241,104 +321,275 @@ int	count;
 		}
 	}
 
+	invert = incookie & CV_HOST_MASK;	/* not zero if host */
+	outvert= outcookie& CV_HOST_MASK;
+	infmt  =  incookie & CV_TYPE_MASK;
+	outfmt = outcookie & CV_TYPE_MASK;
 
-	working = (double *) malloc(work_count*sizeof(double));
-
-	bytes_per = (outcookie & CV_HOST_MASK) ?
-	    host_size_table[ (outcookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT] :
-	    net_size_table[ (outcookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT] ;
-
-	if (Indian != IND_BIG && !(incookie & CV_HOST_MASK) &&
-	    (bytes_per != 1)) {
-		inputconvert = 1;
-		hostnet = (unsigned int *) malloc(work_count*bytes_per));
+	if (infmt == CV_D) {
+		if (DBL_FORMAT == DBL_IEEE) {
+			invert = CV_HOST_MASK;	/* host == net format */
+		}
 	} else {
-		hostnet = in;
+		if (Indian == IND_BIG || infmt == CV_8) {
+			invert = CV_HOST_MASK; /* host == net format */
+		}
 	}
-		
-/*
- * Currently we assume that all machines are big-indian - XXX
- */
-	while (size>= bytes_per && number_converted < count) {
+
+	if (outfmt == CV_D) {
+		if (DBL_FORMAT == DBL_IEEE) {
+			outvert = CV_HOST_MASK:
+		}
+	} else {
+		if (Indian == IND_BIG || outfmt == CV_8) {
+			outvert = CV_HOST_MASK;
+		}
+	}
+	outsize = (outvert) ? host_size_table[outfmt >> CV_TYPE_SHIFT] :
+	    net_size_table[outfmt >> CV_TYPE_SHIFT];
+	insize = (invert) ? host_size_table[infmt >> CV_TYPE_SHIFT] :
+	    net_size_table[infmt >> CV_TYPE_SHIFT];
+
+	if (infmt == outfmt) {
+		if (invert == outvert) {
+			if (count * outsize > size) {
+				number_done = size / outsize;
+			} else {
+				number_done = count;
+			}
+
+			(void) bcopy((genptr_t) in, (genptr_t) out,
+			    number_done * outsize);
+			return(number_done);
+
+		} else if (invert != CV_HOST_MASK) { /* net format */
+			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+			case CV_SIGNED_MASK | CV_16:
+				return(	ntohss(out, size, in, count));
+			case CV_16:
+				return( ntohus(out, size, in, count));
+			case CV_SIGNED_MASK | CV_32:
+				return( ntohsl(out, size, in, count));
+			case CV_32:
+				return( ntohul(out, size, in, count));
+			case CV_D:
+				(void) ntohd(out, in, count);
+				return(count);
+			}
+
+		} else {
+			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+			case CV_SIGNED_MASK | CV_16:
+				return(	htonss(out, size, in, count));
+			case CV_16:
+				return( htonus(out, size, in, count));
+			case CV_SIGNED_MASK | CV_32:
+				return( htonsl(out, size, in, count));
+			case CV_32:
+				return( htonul(out, size, in, count));
+			case CV_D:
+				(void) htond(out, in, count);
+				return(count);
+			}
+		}
+	}
+
+	bufsize = work_count * sizeof(double);
+
+	while ( size >= outsize  && number_done < count) {
 		int remaining;
 
-		remaining = size / bytes_per;
-		if (remaining > count-number_converted) {
-			remaining = count - number_converted;
+		remaining = size / outsize;
+		if (remaining > count - number_done) {
+			remaining = count - number_done;
 		}
 		if (remaining < work_count) work_count = remaining;
-/*
- * net to host
- */
-		if (inputconvert) {
-			switch (Indian) {
-			case IND_LITTLE:
-				if (bytes_per == 2) {
-					for (j=0; j<work_count*bytes_per; j+=bytes_per) {
-						hostnet[j]   = in[j+1];
-						hostnet[j+1] = in[j];
-					}
-				} else if (bytes_per == 4) {
-					for (j=0; j<work_count*bytes_per; j+=bytes_per) {
-						hostnet[j]   = in[j+3];
-						hostnet[j+1] = in[j+2];
-						hostnet[j+2] = in[j+1];
-						hostnet[j+3] = in[j];
-					}
-				} else if (bytes_per == 8) {
-					for (j=0; j<work_count*bytes_per; j+=bytes_per) {
-						hostnet[j]   = in[j+7];
-						hostnet[j+1] = in[j+6];
-						hostnet[j+2] = in[j+5];
-						hostnet[j+3] = in[j+4];
-						hostnet[j+4] = in[j+3];
-						hostnet[j+5] = in[j+2];
-						hostnet[j+6] = in[j+1];
-						hostnet[j+7] = in[j];
-					}
-				}
-				in += work_count*bytes_per;
+
+		from = in;
+		in += work_count * insize;
+
+		if (invert != CV_HOST_MASK) { /* net format */
+			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+			case CV_SIGNED_MASK | CV_16:
+				(void) ntohss(t1, bufsize , from, work_count);
 				break;
-			case IND_CRAY:
+			case CV_16:
+				(void) ntohus(t1, bufsize , from, work_count);
+				break;
+			case CV_SIGNED_MASK | CV_32:
+				(void) ntohsl(t1, bufsize , from, work_count);
+				break;
+			case CV_32:
+				(void) ntohul(t1, bufsize , from, work_count);
+				break;
+			case CV_D:
+				(void) ntohd(t1, from, work_count);
+				break;
+			}
+			from = t1;
 		}
 
-/*
- * to double.
- */
-
-/*
- * convert.  (Normalize, clip, literal)
- */
-
-/*
- * from double.
- */
-
-/*
- * to host.
- */
+		if (outfmt == CV_D) {
+			if (outvert == CV_HOST_MASK) {
+				to = out;
+			} else {
+				to = t2;
+			}
+			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+			case CV_SIGNED_MASK | CV_8:
+				for (i=0; i< work_count; i++) {
+					(*(double *)to)++ = 
+					    (*(signed char *)from)++;
+				}
+				break;
+			case CV_8:
+				for(i=0; i < work_count; i++) {
+					(*(double *)to)++ = 
+					    (*(unsigned char *)from)++;
+				}
+				break;
+			case CV_SIGNED_MASK | CV_16:
+				for (i=0; i < work_count; i++) {
+					(*(double *)to)++ =
+					    (*(signed short *)from)++;
+				}
+				break;
+			case CV_16:
+				for (i=0; i < work_count; i++) {
+					(*(double *)to)++ =
+					    (*(unsigned short *)from)++;
+				}
+				break;
+			case CV_SIGNED_MASK | CV_32:
+				for (i=0; i < work_count; i++) {
+					(*(double *)to)++ =
+					    (*(signed long int *)from)++;
+				}
+				break;
+			case CV_32:
+				for (i=0; i < work_count; i++) {
+					(*(double *)to)++ =
+					    (*(unsigned long int *)from)++;
+				}
+				break;
+			}
+			from = to;
+			if (outvert != CV_HOST_MASK) {
+				switch(outfmt) {
+				case CV_16:
+					htons(out, bufsize, from, work_count);
+					break;
+				case CV_32:
+					htons(out, bufsize, from, work_count);
+					break;
+				}
+			}
+			out += work_count * outsize;
+		} else {
+		}
 	}
 }
 
-
-/*
- * Vert procedures.
+/*	ntohss	Network TO Host Signed Short
+ *
+ * It is assumed that this routine will only be called if there is
+ * real work to do.  Ntohs does no checking to see if it is reasonable
+ * to do any conversions.
+ *
+ * Entry:
+ *	in	generic pointer for input.
+ *	count	number of shorts to be generated.
+ *	out	short pointer for output
+ *	size	number of bytes of space reserved for out.
+ *
+ * Exit:
+ *	returns	number of conversions done.
+ *
+ * Calls:
+ *	none.
+ *
+ * Method:
+ *	Straight-forward.
  */
-if {Host format) {
-	if (input format == double) {
-		work = in;
-	} else {
-		*work = *(cast *)in;
+int
+ntohss(out, size, in, count)
+register signed short	*out;
+int			size;
+register genptr_t	in;
+int			count;
+{
+	int limit;
+	register int i;
+
+	limit = size / sizeof(signed short);
+	if (limit < count) count = limit;
+
+	for (i=0; i<count; i++) {
+		*out++ = ((signed char *)in)[0] << 8 | ((unsigned char *)in)[1];
+		in+=2;
 	}
-} else {	/* network format */
-	if (input format == double) {
-		ntohd()
-	} else if (input size == native size || unsigned) {
-		*work = (cast) (*in << 8 | *(in+1));
-	} else if (input size != native size ) {
-		register long int tmp;
-		tmp = *in << 8 | *(in+1);
-		*work = (cast) (tmp & 0x800) ? ((-1L) & ~0xffff) | tmp :
-		    tmp;
+	return(count);
+}
+int
+ntohus(out, size, in, count)
+register unsigned short	*out;
+int			size;
+register genptr_t	in;
+int			count;
+{
+	int limit;
+	register int i;
+
+	limit = size / sizeof(unsigned short);
+	if (limit < count) count = limit;
+
+	for (i=0; i<count; i++) {
+		*out++ = ((unsigned char *)in)[0]<<8 | ((unsigned char *)in)[1]);
+		in += 2;
 	}
+	return(count);
+}
+int
+ntohsl(out, size, in, count)
+register signed long int	*out;
+int				size;
+register genptr_t		in;
+int				count;
+{
+	int limit;
+	register int i;
+
+	limit = size / sizeof(signed long int);
+	if (limit < count) count = limit;
+
+	for (i=0; i<count; i++) {
+		*out++ = ((signed char *)in)[0] << 24 |
+		    ((unsigned char *)in)[1] << 16 | 
+		    ((unsigned char *)in)[2] << 8  |
+		    ((unsinged char *)in)[3];
+		in += 4;
+	}
+	return(count);
+}
+int
+ntohul(out, size, in, count)
+register unsigned long int	*out;
+int				size;
+register genptr_t		in;
+int				count;
+{
+	int limit;
+	register int i;
+
+	limit = size / sizeof(unsigned long int);
+	if (limit < count) count = limit;
+
+	for (i=0; i<count; i++) {
+		*out++ = ((unsigned char *)in)[0] << 24 |
+		    ((unsigned char *)in)[1] << 16 |
+		    ((unsigned char *)in)[2] <<  8 |
+		    ((unsigned char *)in)[3];
+		int += 4;
+	}
+	return(count);
 }
