@@ -871,6 +871,14 @@ struct nmg_struct_counts {
 #define NMG_CP_MANIFOLD(_t, _p, _q) (_t)[(_p)->index] = (_t)[(_q)->index]
 
 /*
+ *  Bit-parameters for nmg_lu_to_vlist() poly_markers code.
+ */
+#define NMG_VLIST_STYLE_VECTOR			0
+#define NMG_VLIST_STYLE_POLYGON			1
+#define NMG_VLIST_STYLE_VISUALIZE_NORMALS	2
+#define NMG_VLIST_STYLE_USE_VU_NORMALS		4
+
+/*
  *  Function table, for use with nmg_visit()
  *  Indended to have same generally the organization as nmg_struct_counts.
  *  The handler's args are long* to allow generic handlers to be written,
