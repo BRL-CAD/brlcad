@@ -27,7 +27,7 @@ AM_CPPFLAGS = \
 	-I$(PROTOOL_SRC)/includes \
 	-I$(PRODEV_SRC)/includes
 
-proe_brldir = @PRO_ENGINEER_DIR@/$(PRO_MACHINE_TYPE)
+proe_brldir = ${prefix}/pro-engineer/$(PRO_MACHINE_TYPE)
 proe_brl_CFLAGS = $(AM_CFLAGS)
 proe_brl_LDADD = $(PTLIB) $(PDLIB) $(SYSLIBS)
 proe_brl_SOURCES = proe-brl.c
@@ -42,7 +42,7 @@ proe_brl_SOURCES = proe-brl.c
 # libproe2brl_la_CFLAGS = $(AM_CFLAGS)
 # libproe2brl_la_LDFLAGS = -multigot -rpath $(libdir) -T10000000 -B symbolic
 # libproe2brl_la_LIBADD = $(PTLIB_DLL) $(PDLIB_DLL) $(BRLLIBS) $(SYSLIBS)
-# libproe2brl_sodir = @PRO_ENGINEER_DIR@/$(PRO_MACHINE_TYPE)
+# libproe2brl_sodir = ${prefix}/pro-engineer/$(PRO_MACHINE_TYPE)
 
 libproe2brl.so: mk
 	make -f mk dll
@@ -98,19 +98,19 @@ unlock2:
 plugin: proe-brl
 	@@ECHO@ "---"
 	@@ECHO@ "Run 'make unlock' to unlock the Pro-Engineer plugin for distribution"
-	@@ECHO@ "Run 'make install' to install the Pro-Engineer plugin into @PRO_ENGINEER_DIR@"
+	@@ECHO@ "Run 'make install' to install the Pro-Engineer plugin"
 	@@ECHO# "You will need to edit protk.dat to use this plugin instead of libproe2brl.so"
 	@@ECHO@
 
 plugin2: libproe2brl.so
 	@@ECHO@ "---"
 	@@ECHO@ "Run 'make unlock2' to unlock the Pro-Engineer .so plugin for distribution"
-	@@ECHO@ "Run 'make install' to install the Pro-Engineer .so plugin into @PRO_ENGINEER_DIR@"
+	@@ECHO@ "Run 'make install' to install the Pro-Engineer .so plugin"
 	@@ECHO@
 
-proedir = @PRO_ENGINEER_DIR@
-tmsgdir = @PRO_ENGINEER_DIR@/text/usascii/
-rsrcdir = @PRO_ENGINEER_DIR@/text/usascii/resource/
+proedir = ${prefix}/pro-engineer
+tmsgdir = ${prefix}/pro-engineer/text/usascii/
+rsrcdir = ${prefix}/pro-engineer/text/usascii/resource/
 
 proe_DATA = \
 	install.doc \

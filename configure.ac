@@ -1879,14 +1879,6 @@ dnl sample applications
 SAMPLE_APPLICATIONS_DIR='${prefix}/sample_applications'
 AC_SUBST(SAMPLE_APPLICATIONS_DIR)
 
-dnl pro-engineer plug-in (lib/.. is needed to fake out libtool)
-if test "x${prefix}" = "xNONE" ; then
-	PRO_ENGINEER_DIR="${ac_default_prefix}/lib/../pro-engineer"
-else
-	PRO_ENGINEER_DIR="${prefix}/lib/../pro-engineer"
-fi
-AC_SUBST(PRO_ENGINEER_DIR)
-
 
 AC_CONFIG_FILES([
 	Makefile
