@@ -5,6 +5,142 @@
 #
 #	Author - Robert G. Parker
 #
+# This is the widget hierarchy from the top level down to the shader frames or Boolean
+# expression frames
+# 
+# widget names include $id to make them unique. Typically, $id == "id_0"
+# 
+# Top level combination editor widget: $id.comb
+# 
+# slaves:
+# 	.id_0.comb.control_buttons_frame
+# 		frame for control buttons (OK, Apply, Reset, Dismiss)
+# 	.id_0.comb.my_tabbed
+# 		frame for holding the Boolean or Shader stuff
+# 	.id_0.comb.region_inherit_frame
+# 		frame for "Is Region" and "Inherit" as well as button to
+# 		switch between Boolean and shader displays
+# 	.id_0.comb.name_stuff
+# 		frame for combination label, name and menubutton
+# 
+# -------------------------------------------------
+# .id_0.comb.my_tabbed
+# 
+# 	This frame is just a holder for either the Boolean stuff or the shader stuff
+# 
+# slaves:
+# 	.id_0.comb.my_tabbed.bool_labeled
+# 			or
+# 	.id_0.comb.my_tabbed.shader_labeled
+# 
+# -------------------------------------------------
+# .id_0.comb.my_tabbed.bool_labeled.childsite
+# 
+# 	This frame is a childsite of the ".id_0.comb.my_tabbed.bool_labeled" mentioned above
+# 	This frame is only mapped when the Boolean expression is displayed.
+# 
+# slaves:
+# 	.id_0.comb.id_los_air_mater
+# 		frame containing the region id, air code, material id, and LOS
+# 		This frame is toggled on and off using the "Is Region" checkbutton
+# 
+# 	.id_0.comb.bool_expr_frame
+# 		Frame for the Boolean expression. Contains a label, scrollbar,
+# 		and text widget.
+# 
+# -------------------------------------------------
+# .id_0.comb.my_tabbed.shader_labeled.childsite
+# 	This frame is the childsite of the ".id_0.comb.my_tabbed.shader_labeled"
+# 	mentioned above. This frame is only mapped when the shader is displayed.
+# slaves:
+# 
+# 	.id_0.comb.color_frame
+# 		frame for the color label, entry, and menubutton
+# 	.id_0.comb.shader_top_frame
+# 		frame for the shader stuff
+# 
+# -------------------------------------------------
+# .id_0.comb.shader_top_frame
+# slaves:
+# 	.id_0.comb.shader_label_entry_frame
+# 		frame for the shader label, entry, and menubutton
+# 	.id_0.comb.shader_frame
+# 		frame for the individual shaders to fill
+# 		this frame is passed by "do_shade" to the shaders
+# 
+# -------------------------------------------------
+# .id_0.comb.shader_frame
+# slaves:
+# 	.id_0.comb.shader_frame.fr
+# 		frame created by an individual shader to hold all its stuff
+# 
+# -------------------------------------------------
+# .id_0.comb.shader_frame.fr
+# slaves:
+# 	For the typical shader, the slaves of this frame are the individual
+# 	labels, buttons, checkbuttons, entry widgets, menubuttons, etc, for
+# 	that particular shader. This is the end of the hierarchy for simple
+# 	shaders. From here down, the discussion only relates to the "stack"
+# 	shader
+# 
+# 	For the "stack" shader, the slaves of this frame are:
+# 
+# 	.id_0.comb.shader_frame.fr.add
+# 		frame for the "Add shader" button
+# 	.id_0.comb.shader_frame.fr.leesf
+# 		scrolledframe to hold all the stacked shaders
+# 
+# -------------------------------------------------
+# .id_0.comb.shader_frame.fr.leesf
+# slaves:
+# 	.id_0.comb.shader_frame.fr.leesf.lwchildsite
+# 		frame internal to the scrolledframe
+# 
+# -------------------------------------------------
+# .id_0.comb.shader_frame.fr.leesf.lwchildsite
+# slaves:
+# 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.vertsb
+# 		vertical scrollbar for scrolledframe
+# 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.horizsb
+# 		horizontal scrollbar (dynamic)
+# 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper
+# 		frame internal to scrolledframe
+# 
+# -------------------------------------------------
+# .id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper
+# slaves:
+# 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas
+# 		another object internal to the scrolledframe widget
+# 
+# -------------------------------------------------
+# .id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite
+# 	This frame is the actual childsite provided by the scrolledframe widget "leesf"
+# 	It will contain a "stack" of frames, one for each shader currently
+# 	in the stack
+# 
+# slaves:
+# 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_1
+# 		frame for first stacked shader
+# 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_2
+# 		frame for second stacked shader
+# 	.
+# 	.
+# 	.
+# 
+# -------------------------------------------------
+# .id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_1
+# 	This is a frame for an individual shader in the stack
+# 
+# slaves:
+# 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_1.del
+# 		The delete button for this shader
+# 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_1.lab
+# 		The label identifying which type of shader this one is
+# 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_1.fr
+# 		The frame where the actual buttons, label, entries, etc for this
+# 		particular shader located.
+# 
+
 
 # We use the Labeledframe from Iwidgets
 package require Iwidgets
