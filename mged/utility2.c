@@ -9,6 +9,7 @@
  *	f_push()	control routine to push transformations to bottom of paths
  *	push()		pushes all transformations to solids at bottom of paths
  *	identitize()	makes all transformation matrices == identity for an object
+ *	f_showmats()	shows matrices along a path
  *
  */
 
@@ -1319,6 +1320,82 @@ char **argv;
 
 	/* Free use lists and delete unused directory entries */
 	db_functree( dbip, old_dp, Free_uses, Free_uses );
+
+	return CMD_OK;
+}
+
+int
+f_showmats( argc, argv )
+int argc;
+char **argv;
+{
+	char *parent;
+	char *child;
+	struct directory *dp;
+	union record *rp;
+	int max_count=1;
+	mat_t acc_matrix;
+
+	MAT_IDN( acc_matrix );
+
+	parent = strtok( argv[1], "/" );
+	while( child = strtok( (char *)NULL, "/" ) )
+	{
+		int j;
+		int found;
+		int count;
+
+		if( (dp = db_lookup( dbip, parent, LOOKUP_NOISY )) == DIR_NULL)
+			return CMD_BAD;
+
+		rt_log( "%s\n", parent );
+
+		if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+		{
+			READ_ERR;
+			return CMD_BAD;
+		}
+
+		found = 0;
+		count = 0;
+		for( j=1 ; j<dp->d_len ; j++ )
+		{
+			if( !strncmp( rp[j].M.m_instname, child, NAMESIZE ) )
+			{
+				mat_t matrix;
+
+				count++;
+				if( count > 1 )
+					rt_log( "\n\tOccurrence #%d:\n", count );
+				rt_mat_dbmat( matrix, rp[j].M.m_mat );
+				mat_print( "", matrix );
+				if( count == 1 )
+				{
+					mat_t tmp_mat;
+					mat_mul( tmp_mat, matrix, acc_matrix );
+					MAT_COPY( acc_matrix, tmp_mat );
+				}
+				found = 1;
+			}
+		}
+		if( !found )
+		{
+			rt_log( "%s is not a member of %s\n", child, parent );
+			return CMD_BAD;
+		}
+		if( count > max_count )
+			max_count = count;
+
+		rt_free( (char *)rp, "f_showmats: rp" );
+		parent = child;
+	}
+	rt_log( "%s\n", parent );
+
+	if( max_count > 1 )
+		rt_log( "\nAccumulated matrix (using first occurrence of each object):\n" );
+	else
+		rt_log( "\nAccumulated matrix:\n");
+	mat_print( "", acc_matrix );
 
 	return CMD_OK;
 }
