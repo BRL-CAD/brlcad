@@ -52,7 +52,7 @@ struct nmg_inter_struct {
 	fastf_t		*vert2d;	/* Array of 2d vertex projections [index] */
 	int		maxindex;	/* size of vert2d[] */
 	mat_t		proj;		/* Matrix to project onto XY plane */
-	struct face	*face;		/* fu of 2d projection plane */
+	struct face	*face;		/* face of 2d projection plane */
 };
 #define NMG_INTER_STRUCT_MAGIC	0x99912120
 #define NMG_CK_INTER_STRUCT(_p)	NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
@@ -652,20 +652,20 @@ CONST struct faceuse	*fu;
  *			N M G _ I S E C T _ T W O _ C O L I N E A R _ E D G E 2 P
  *
  *  Two colinear line segments (eu1 and eu2, or just "1" and "2" in the
- *  diagram) can overlap each other in one of 8 configurations,
- *  labeled A through H:
+ *  diagram) can overlap each other in one of 9 configurations,
+ *  labeled A through I:
  *
- *	A	B	C	D	E	F	G	H
+ *	A	B	C	D	E	F	G	H	I
  *
  *  vu1b,vu2b
- *	*	*	  *	  *	*	  *	*	  *
- *	1	1	  2	  2	1	  2	1	  2
- *	1=*	1	  2	*=2	1=*	*=2	*	  *
- *	1 2	*=*	*=*	1 2	1 2	1 2
- *	1 2	  2	1	1 2	1 2	1 2	  *	*
- *	1=*	  2	1	*=2	*=2	1=*	  2	1
- *	1	  *	*	  2	  2	1	  *	*
- *	*			  *	  *	*
+ *	*	*	  *	  *	*	  *	*	  *	*=*
+ *	1	1	  2	  2	1	  2	1	  2	1 2
+ *	1=*	1	  2	*=2	1=*	*=2	*	  *	1 2
+ *	1 2	*=*	*=*	1 2	1 2	1 2			1 2
+ *	1 2	  2	1	1 2	1 2	1 2	  *	*	1 2
+ *	1=*	  2	1	*=2	*=2	1=*	  2	1	1 2
+ *	1	  *	*	  2	  2	1	  *	*	1 2
+ *	*			  *	  *	*			*=*
  *   vu1a,vu2a
  *
  *  dist[0] has the distance (0..1) along eu1 from vu1a to vu2a.
@@ -675,7 +675,7 @@ CONST struct faceuse	*fu;
  *  completely processed by just one call.
  *  If the caller computes a second array where the sense of eu1 and eu2
  *  are exchanged, and calls again, then the full intersection 
- *  be achieved.
+ *  will be achieved.
  */
 void
 nmg_isect_two_colinear_edge2p( dist, l1, l2, vu1a, vu1b, vu2a, vu2b, eu1, eu2, fu1, fu2, str )
@@ -706,6 +706,8 @@ CONST char		*str;
 	nmg_ck_face_worthless_edges( fu1 );
 	nmg_ck_face_worthless_edges( fu2 );
 
+	if( dist[0] > dist[1] )  rt_bomb("nmg_isect_two_colinear_edge2p() dist [0] > [1]\n");
+
 	/* First intersection point:  break eu1 */
 	if( dist[0] == 0 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -723,21 +725,13 @@ CONST char		*str;
 		/* Break eu1 into two pieces */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu2a=x%x breaks eu1=x%x\n", vu2a, eu1 );
-		(void)nmg_ebreak( vu2a->v_p, eu1 );
+		/*
+		 *  Update eu1 to be new edgeuse;  if vu2b needs to break
+		 *  the edge as well, it will be this new one.
+		 */
+		eu1 = nmg_ebreak( vu2a->v_p, eu1 );
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
-	    {
-		vect_t	va, vb;
-	    	point_t	hit_pt;
-	    	VMOVE( hit_pt, vu2a->v_p->vg_p->coord );
-		VSUB2( va, hit_pt, eu1->vu_p->v_p->vg_p->coord  );
-		VSUB2( vb, eu1->eumate_p->vu_p->v_p->vg_p->coord, hit_pt );
-		VUNITIZE(va);
-		VUNITIZE(vb);
-		if( VDOT( va, vb ) <= 0.7071 )  {
-			rt_bomb("nmg_isect_two_colinear_edge2p() eu changes direction? A\n");
-		}
-	    }
 	}
 
 	/* Second intersection point: break eu1 again */
@@ -759,18 +753,6 @@ CONST char		*str;
 		(void)nmg_ebreak( vu2b->v_p, eu1 );
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
-	    {
-		vect_t	va, vb;
-	    	point_t	hit_pt;
-	    	VMOVE( hit_pt, vu2b->v_p->vg_p->coord );
-		VSUB2( va, hit_pt, eu1->vu_p->v_p->vg_p->coord  );
-		VSUB2( vb, eu1->eumate_p->vu_p->v_p->vg_p->coord, hit_pt );
-		VUNITIZE(va);
-		VUNITIZE(vb);
-		if( VDOT( va, vb ) <= 0.7071 )  {
-			rt_bomb("nmg_isect_two_colinear_edge2p() eu changes direction? B\n");
-		}
-	    }
 	}
 }
 
@@ -884,7 +866,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	 */
 	if( status != 0 && (
 	    vu1a->v_p == vu2a->v_p || vu1a->v_p == vu2b->v_p ||
-	    vu2a->v_p == vu1b->v_p || vu2b->v_p == vu1b->v_p )
+	    vu1b->v_p == vu2a->v_p || vu1b->v_p == vu2b->v_p )
 	)  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("edge2p_edge2p: non-colinear edges share one vertex (topology)\n");
@@ -1423,7 +1405,7 @@ struct faceuse *fu;
 		/* Intersection is between first and second vertex points.
 		 * Insert new vertex at intersection point.
 		 */
-		nmg_break_3edge_at_plane(hit_pt, fu, bs, eu, v1, v1mate);
+		nmg_break_3edge_at_plane(hit_pt, fu, bs, eu);
 		goto out;
 	}
 
@@ -2181,7 +2163,7 @@ struct edgeuse		*eu2;
 
 	status = rt_isect_line_lseg( dist,
 			vu1a->v_p->vg_p->coord, eu1_dir,
-			vu1a->v_p->vg_p->coord, eu2_dir, &is->tol );
+			vu2a->v_p->vg_p->coord, eu2_dir, &is->tol );
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		rt_log("\trt_isect_line3_lseg3()=%d, dist: %g, %g\n",
