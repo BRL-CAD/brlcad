@@ -1454,6 +1454,7 @@ struct rt_i {
 	long		rti_magic;	/* magic # for integrity check */
 	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ & MODIFY */
 	int		useair;		/* 1="air" regions are retained while prepping */
+	int		rti_save_overlaps; /* 1=fill in pt_overlap_reg, change boolweave behavior */
 	int		rti_dont_instance; /* 1=Don't compress instances of solids into 1 while prepping */
 	int		rti_hasty_prep;	/* 1=hasty prep, slower ray-trace */
 	int		rti_nlights;	/* number of light sources */

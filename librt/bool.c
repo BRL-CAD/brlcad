@@ -966,7 +966,7 @@ struct partition	*InputHdp;
 	lastregion = (struct region *)BU_PTBL_GET(regiontable, 0);
 	RT_CK_REGION(lastregion);
 
-	if( BU_PTBL_LEN(regiontable) > 1 )  {
+	if( BU_PTBL_LEN(regiontable) > 1 && ap->a_rt_i->rti_save_overlaps != 0 )  {
 		/*
 		 *  Snapshot current state of overlap list,
 		 *  so that downstream application code can resolve any
@@ -1589,9 +1589,10 @@ CONST struct bu_bitv	*solidbits;
 			    NEAR_ZERO( newpp->pt_inhit->hit_dist -
 				lastpp->pt_outhit->hit_dist,
 				ap->a_rt_i->rti_tol.dist ) &&
-			    lastpp->pt_overlap_reg == newpp->pt_overlap_reg
+			    ( ap->a_rt_i->rti_save_overlaps == 0 ||
+			      lastpp->pt_overlap_reg == newpp->pt_overlap_reg )
 			)  {
-				/* same region, extend last final partition */
+				/* same region, merge by extending last final partition */
 				if(rt_g.debug&DEBUG_PARTITION)bu_log("rt_boolfinal 'exact match', extending last partition, discarding x%x\n", newpp);
 				RT_CK_PT(lastpp);
 				RT_CHECK_SEG(lastpp->pt_inseg);	/* sanity */
