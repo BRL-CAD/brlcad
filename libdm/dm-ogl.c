@@ -73,7 +73,6 @@ void	Ogl_establish_zbuffer();
 int     Ogl_irisX2ged();
 int     Ogl_irisY2ged();
 
-static int     Ogl_load_startup();
 static XVisualInfo *Ogl_set_visual();
 
 /* Flags indicating whether the ogl and sgi display managers have been
@@ -234,8 +233,10 @@ char *argv[];
 #endif
 
   /* Only need to do this once for this display manager */
-  if(!count)
-    (void)Ogl_load_startup(dmp);
+  if(!count){
+    bzero((void *)&head_ogl_vars, sizeof(struct ogl_vars));
+    BU_LIST_INIT( &head_ogl_vars.l );
+  }
 
   dmp->dm_vars = bu_calloc(1, sizeof(struct ogl_vars), "Ogl_init: ogl_vars");
   if(!dmp->dm_vars){
@@ -353,6 +354,8 @@ char *argv[];
 	 Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
      }
 
+     bu_vls_free(&top_vls);
+
      /* Make xtkwin an embedded window */
      ((struct ogl_vars *)dmp->dm_vars)->xtkwin =
        Tk_CreateWindow(interp, ((struct ogl_vars *)dmp->dm_vars)->top,
@@ -370,11 +373,9 @@ char *argv[];
   bu_vls_printf(&dmp->dm_tkName, "%s",
 		(char *)Tk_Name(((struct ogl_vars *)dmp->dm_vars)->xtkwin));
 
-#if 1
   bu_vls_init(&str);
-  bu_vls_printf(&str, "_new_init_dm %S %S %S\n",
+  bu_vls_printf(&str, "_init_dm %S %S\n",
 		&dmp->dm_initWinProc,
-		&top_vls,
 		&dmp->dm_pathName);
 
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
@@ -384,25 +385,9 @@ char *argv[];
   }
 
   bu_vls_free(&str);
-  bu_vls_free(&top_vls);
 
   ((struct ogl_vars *)dmp->dm_vars)->dpy =
     Tk_Display(((struct ogl_vars *)dmp->dm_vars)->top);
-#else
-  bu_vls_init(&str);
-  bu_vls_printf(&str, "_init_dm %s %s\n",
-		bu_vls_addr(&dmp->dm_initWinProc),
-		bu_vls_addr(&dmp->dm_pathName));
-  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
-    bu_vls_free(&str);
-    (void)Ogl_close(dmp);
-    return DM_NULL;
-  }
-  bu_vls_free(&str);
-
-  ((struct ogl_vars *)dmp->dm_vars)->dpy =
-    Tk_Display(((struct ogl_vars *)dmp->dm_vars)->xtkwin);
-#endif
 
   Tk_GeometryRequest(((struct ogl_vars *)dmp->dm_vars)->xtkwin,
 		     dmp->dm_width,
@@ -559,20 +544,6 @@ Done:
   return dmp;
 }
 
-static int
-Ogl_load_startup(dmp)
-struct dm *dmp;
-{
-  char *filename;
-
-  bzero((void *)&head_ogl_vars, sizeof(struct ogl_vars));
-  BU_LIST_INIT( &head_ogl_vars.l );
-
-  if((filename = getenv("DM_OGL_RCFILE")) != (char *)NULL )
-    return Tcl_EvalFile(interp, filename);
-
-  return TCL_OK;
-}
 
 /*
  *  			O G L _ C L O S E
