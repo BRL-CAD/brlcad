@@ -202,9 +202,9 @@ char **argv;
 			fprintf(stderr,"rt:  can't open frame buffer\n");
 			exit(12);
 		}
-		/* ALERT:  The library wants zoom before window! */
-		fb_zoom( fbp, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
-		fb_window( fbp, width/2, height/2 );
+		/* New way:  center, zoom */
+		fb_view( fbp, width/2, height/2,
+			fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
 	} else if( outputfile == (char *)0 )  {
 		/* If not going to framebuffer, or to a file, then use stdout */
 		if( outfp == NULL )  outfp = stdout;
