@@ -1001,7 +1001,7 @@ set -S2 "/bin/sh"
 #	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support.  Requires ELF for Linux. */
 #		define	CC	gcc
-#		define	CC_DEFS -pipe -fPIC -Wall
+#		define	CC_DEFS -pipe -fPIC -Wall -pedantic
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	gcc -shared -o
@@ -1012,7 +1012,7 @@ set -S2 "/bin/sh"
 #		define	CC	gcc
 #		define	RANLIB	ar -s
 /*		Don't use -ansi, that gives __STRICT_ANSI__.  Default is _GNU_SOURCE. */
-#		define	CC_DEFS -pipe -Wall
+#		define	CC_DEFS -pipe -Wall -pedantic
 #	endif
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
