@@ -39,13 +39,6 @@ extern char *getenv();
 int _disk_enable = 1;
 
 /*
- * Debug flag.  Needed globally so debug interface can catch the
- * buffered IO calls as well.  This is a level: the higher the
- * value the more verbose it is.
- */
-int _fb_debug = 0;
-
-/*
  *		f b _ n u l l
  *
  *  Filler for FBIO function slots not used by a particular device
@@ -109,7 +102,7 @@ int	width, height;
 	char	*cp;
 	char	devnambuf[DEVNAMLEN+1];
 
-	if( (ifp = (FBIO *) malloc( sizeof(FBIO) )) == FBIO_NULL )  {
+	if( (ifp = (FBIO *) calloc( sizeof(FBIO), 1 )) == FBIO_NULL ) {
 		Malloc_Bomb( sizeof(FBIO) );
 		return	FBIO_NULL;
 	}
@@ -127,11 +120,9 @@ int	width, height;
 	 *
 	 *  "file" can in general look like: hostname:/pathname/devname#
 	 *  If we have a ':' assume the remote interface
-	 *    (should we check to see if it's us? XXX)
-	 *  else strip out "devname" and try to look it up in the
+	 *    (We don't check to see if it's us. Good for debugging.)
+	 *  else strip out "/path/devname" and try to look it up in the
 	 *    device array.  If we don't find it assume it's a file.
-	 *
-	 * XXX - devname can match a magic cookie regardless of pathname.
 	 */
 #ifdef IF_REMOTE
 	if( (cp = strchr( file, ':' )) != NULL ) {
