@@ -164,7 +164,6 @@ WDB_EXTERN(int mk_lrcomb, (FILE *fp, char *name, struct wmember *headp,
  */
 WDB_EXTERN(int mk_conversion, (char *units_string) );
 WDB_EXTERN(int mk_set_conversion, (double val) );
-#define mk_cvt_factor(_str)     rt_units_conversion(_str)
 
 /*
  * This internal variable should not be directly modified;
