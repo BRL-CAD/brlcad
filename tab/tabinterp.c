@@ -337,6 +337,11 @@ output()
 	register struct chan	*cp;
 	register int		t;
 
+	if( !o_time )  {
+		fprintf(stderr,"times command not given\n");
+		return;
+	}
+
 	for( t=0; t < o_len; t++ )  {
 		printf("%g", o_time[t]);
 
@@ -385,13 +390,6 @@ char	**argv;
 	for( i=0; i<o_len; i++ )
 		o_time[i] = a + ((double)i)/fps;
 
-	/* Allocate memory for all the output values */
-	for( ch = 0; ch < nchans; ch++ )  {
-		if( chan[ch].c_ilen <= 0 )
-			continue;
-		chan[ch].c_oval = (fastf_t *)rt_malloc(
-			o_len * sizeof(fastf_t), "c_oval[]");
-	}
 
 	return(0);
 }
@@ -458,12 +456,21 @@ go()
 	fastf_t		*times;
 	register int	t;
 
+	if( !o_time )  {
+		fprintf(stderr,"times command not given\n");
+		return;
+	}
+
 	times = (fastf_t *)rt_malloc( o_len*sizeof(fastf_t), "periodic times");
 
 	for( ch=0; ch < nchans; ch++ )  {
 		chp = &chan[ch];
 		if( chp->c_ilen <= 0 )
 			continue;
+
+		/* Allocate memory for all the output values */
+		chan[ch].c_oval = (fastf_t *)rt_malloc(
+			o_len * sizeof(fastf_t), "c_oval[]");
 
 		/*  As a service to interpolators, if this is a periodic
 		 *  interpolation, build the mapped time array.
