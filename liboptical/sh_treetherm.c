@@ -155,9 +155,7 @@ struct thrm_seg *ts;
 	bu_log("   dir: (%g %g %g)\n", V3ARGS(ts->dir));
 	bu_log(" Nodes:\n");
 	for (i=0 ; i < NUM_NODES ; i++) {
-		point_t pt;
 
-		VADD2(pt, ts->pt, ts->vect[i]);
 		bu_log("\t(%g %g %g) %17.14e  (%g %g %g)\n",
 			V3ARGS(ts->node[i]),
 			ts->temperature[i],
@@ -215,8 +213,6 @@ struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct tthrm_specific	*tthrm_sp;
-	mat_t	tmp;
-	vect_t	bb_min, bb_max, v_tmp;
 	struct bu_mapped_file	*tt_file;
 	char			*tt_data;
 	long			cyl_tot;
@@ -225,7 +221,6 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	float			fv[4];
 	double			min_temp;
 	double			max_temp;
-	double			temp_scale;
 	point_t			center;
 	point_t			pt;
 	vect_t			dir;
@@ -527,7 +522,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 	vect_t pt_v;
 	vect_t v;
 	int   solid_number;
-	float	*fp;
 	struct thrm_seg *thrm_seg;
 	int	best_idx;
 	double	best_val;
