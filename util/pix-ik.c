@@ -21,7 +21,7 @@ static int scanbytes;			/* # of bytes of scanline */
 
 static char outline[MAX_LINE*4];	/* Ikonas pixels */
 
-char usage[] = "Usage: pix-ik [-h] file.pix\n";
+char usage[] = "Usage: pix-ik [-h] file.pix [width] [fr_offset] [fr_count]\n";
 
 main(argc, argv)
 int argc;
@@ -29,20 +29,17 @@ char **argv;
 {
 	static int y;
 	static int infd;
-	static int nlines;
+	static int nlines;		/* Square:  nlines, npixels/line */
+	static int frame_offset;
+	static int frame_count;
 
-	if( argc < 2 || argc > 3 )  {
+	if( argc < 2 )  {
 		fprintf(stderr,"%s", usage);
 		exit(1);
 	}
 
 	nlines = 512;
-	if( argc == 3 )  {
-		if( strcmp( argv[1], "-h" ) != 0 )  {
-			fprintf(stderr,"%s", usage);
-			exit(2);
-		}
-		ikhires = 1;
+	if( strcmp( argv[1], "-h" ) == 0 )  {
 		nlines = 1024;
 		argc--; argv++;
 	}
@@ -50,28 +47,42 @@ char **argv;
 		perror( argv[1] );
 		exit(3);
 	}
-
-	ikopen();
-	load_map(1);		/* Standard map: linear */
-	ikclear();
+	if( argc >= 3 )
+		nlines = atoi(argv[2] );
+	frame_offset = 0;
+	if( argc >= 4 )
+		frame_offset = atoi(argv[3]);
+	frame_count = 1;
+	if( argc >= 5 )
+		frame_count = atoi(argv[4]);
+	if( nlines > 512 )
+		ikhires = 1;
 
 	scanbytes = nlines * 3;
 
-	y = nlines-1;
-	while( read( infd, (char *)scanline, scanbytes ) == scanbytes )  {
-		register char *in, *out;
-		register int i;
+	(void)lseek( infd, (long)frame_offset*scanbytes*nlines, 0 );
 
-		in = scanline;
-		out = outline;
-		for( i=0; i<nlines; i++ )  {
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = *in++;
-			*out++ = 0;
+	ikopen();
+	ikclear();
+
+	while(frame_count-- > 0)  {
+		for( y = nlines-1; y >= 0; y-- )  {
+			register char *in, *out;
+			register int i;
+
+			if( read( infd, (char *)scanline, scanbytes ) != scanbytes )
+				exit(0);
+
+			in = scanline;
+			out = outline;
+			for( i=0; i<nlines; i++ )  {
+				*out++ = *in++;
+				*out++ = *in++;
+				*out++ = *in++;
+				*out++ = 0;
+			}
+			clustwrite( outline, y, nlines );
 		}
-		clustwrite( outline, y, nlines );
-		if( --y < 0 )
-			break;
 	}
+	exit(0);
 }
