@@ -36,9 +36,13 @@ static char RCSid[] = "@(#) $Header$";
  *
  *	    Perform a preorder traversal of a red-black tree
  */
-static void prewalknodes
-	    (struct rb_node *root, int order,
-	    void (*visit)(), int depth)
+static void prewalknodes (root, order, visit, depth)
+
+struct rb_node	*root;
+int		order;
+void		(*visit)();
+int		depth;
+
 {
     RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root -> rbn_tree, order);
@@ -54,9 +58,13 @@ static void prewalknodes
  *
  *	    Perform an inorder traversal of a red-black tree
  */
-static void inwalknodes
-	    (struct rb_node *root, int order,
-	    void (*visit)(), int depth)
+static void inwalknodes (root, order, visit, depth)
+
+(struct rb_node	*root;
+int		order,
+void		(*visit)();
+int		depth;
+
 {
     RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root -> rbn_tree, order);
@@ -72,9 +80,13 @@ static void inwalknodes
  *
  *	    Perform a postorder traversal of a red-black tree
  */
-static void postwalknodes
-	    (struct rb_node *root, int order,
-	    void (*visit)(), int depth)
+static void postwalknodes (root, order, visit, depth)
+
+struct rb_node	*root;
+int		order;
+void		(*visit)();
+int		depth;
+
 {
     RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root -> rbn_tree, order);
@@ -90,9 +102,13 @@ static void postwalknodes
  *
  *	    Perform a preorder traversal of a red-black tree
  */
-static void prewalkdata
-	    (struct rb_node *root, int order,
-	    void (*visit)(), int depth)
+static void prewalkdata (root, order, visit, depth)
+
+struct rb_node	*root;
+int		order;
+void		(*visit)();
+int		depth;
+
 {
     RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root -> rbn_tree, order);
@@ -108,9 +124,13 @@ static void prewalkdata
  *
  *	    Perform an inorder traversal of a red-black tree
  */
-static void inwalkdata
-	    (struct rb_node *root, int order,
-	    void (*visit)(), int depth)
+static void inwalkdata (root, order, visit, depth)
+
+struct rb_node	*root;
+int		order;
+void		(*visit)();
+int		depth;
+
 {
     RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root -> rbn_tree, order);
@@ -126,9 +146,13 @@ static void inwalkdata
  *
  *	    Perform a postorder traversal of a red-black tree
  */
-static void postwalkdata
-	    (struct rb_node *root, int order,
-	    void (*visit)(), int depth)
+static void postwalkdata (root, order, visit, depth)
+
+struct rb_node	*root;
+int		order;
+void		(*visit)();
+int		depth;
+
 {
     RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root -> rbn_tree, order);
@@ -150,9 +174,14 @@ static void postwalkdata
  *	(or just to its data), and the type of traversal (preorder,
  *	inorder, or postorder).
  */
-void _rb_walk
-    (rb_tree *tree, int order, void (*visit)(),
-     int what_to_visit, int trav_type)
+void _rb_walk (tree, order, *visit, what_to_visit, trav_type)
+
+rb_tree	*tree;
+int	order;
+void	(*visit)();
+int	what_to_visit;
+int	trav_type;
+
 {
     static void (*walk[][3])() =
 		{
@@ -196,9 +225,13 @@ void _rb_walk
  *	to each node, and the type of traversal (preorder, inorder,
  *	or postorder).
  */
-void rb_walk
-	(rb_tree *tree, int order, void (*visit)(),
-	int trav_type)
+void rb_walk (tree, order, visit, trav_type)
+
+rb_tree	*tree;
+int	order;
+void	(*visit)();
+int	trav_type;
+
 {
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);

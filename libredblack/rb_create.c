@@ -28,7 +28,12 @@ static char RCSid[] = "@(#) $Header$";
  *	rb_create() returns a pointer to the red-black tree header
  *	record.
  */
-rb_tree *rb_create (char *description, int nm_orders, int (**order_funcs)())
+rb_tree *rb_create (description, nm_orders, order_funcs)
+
+char	*description;
+int	nm_orders;
+int	(**order_funcs)();
+
 {
     int		order;
     rb_tree	*tree;
@@ -86,7 +91,11 @@ rb_tree *rb_create (char *description, int nm_orders, int (**order_funcs)())
  *	rb_create1() returns a pointer to the red-black tree header
  *	record.
  */
-rb_tree *rb_create1 (char *description, int (*order_func)())
+rb_tree *rb_create1 (description, order_func)
+
+char	*description;
+int	(*order_func)();
+
 {
     int		(**ofp)();
 

@@ -29,7 +29,11 @@ typedef struct
 /*
  *	The order functions
  */
-last_name_sort (void *v1, void *v2)
+last_name_sort (v1, v2)
+
+void	*v1;
+void	*v2;
+
 {
     int		result;
     record	*r1 = v1;
@@ -43,7 +47,11 @@ last_name_sort (void *v1, void *v2)
     return(result);
 }
 
-first_name_sort (void *v1, void *v2)
+first_name_sort (v1, v2)
+
+void	*v1;
+void	*v2;
+
 {
     int		result;
     record	*r1 = v1;
@@ -57,7 +65,11 @@ first_name_sort (void *v1, void *v2)
     return(result);
 }
 
-party_sort (void *v1, void *v2)
+party_sort (v1, v2)
+
+void	*v1;
+void	*v2;
+
 {
     record	*r1 = v1;
     record	*r2 = v2;
@@ -66,7 +78,10 @@ party_sort (void *v1, void *v2)
 	    (r1 -> party > r2 -> party) ? 1 : 0);
 }
 
-void describe_president (void *v)
+void describe_president (v)
+
+void	*v;
+
 {
     record	*p = v;
 
@@ -86,7 +101,10 @@ void describe_president (void *v)
     fflush(stderr);
 }
 
-void print_last_name (void *v)
+void print_last_name (v)
+
+void	*v;
+
 {
     record	*p = v;
 

@@ -27,7 +27,12 @@ static char RCSid[] = "@(#) $Header$";
  *	is equal (modulo the linear order) to a node already in the tree,
  *	_rb_insert() returns 1.  Otherwise, it returns 0.
  */
-static int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
+static int _rb_insert (tree, order, new_node)
+
+rb_tree		*tree;
+int		order;
+struct rb_node	*new_node;
+
 {
     struct rb_node	*node;
     struct rb_node	*parent;
@@ -125,7 +130,11 @@ static int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
  *	the number of orders for which the new node was equal to a node
  *	already in the tree.
  */
-int rb_insert (rb_tree *tree, void *data)
+int rb_insert (tree, data)
+
+rb_tree	*tree;
+void	*data;
+
 {
     int			nm_orders;
     int			order;

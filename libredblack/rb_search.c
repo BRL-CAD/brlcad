@@ -25,8 +25,13 @@ static char RCSid[] = "@(#) $Header$";
  *	returns a pointer to the discovered node.  Otherwise, it returns
  *	(tree -> rbt_empty_node).
  */
-struct rb_node *_rb_search
-	(struct rb_node *root, int order_nm, int (*order)(), void *data)
+struct rb_node *_rb_search (root, order_nm, order, data)
+
+struct rb_node	*root;
+int		order_nm;
+int		(*order)();
+void		*data;
+
 {
     int		result;
     rb_tree	*tree;
@@ -61,7 +66,12 @@ struct rb_node *_rb_search
  *	pointer to the data block in the discovered node.  Otherwise,
  *	it returns NULL.
  */
-void *rb_search (rb_tree *tree, int order, void *data)
+void *rb_search (tree, order, data)
+
+rb_tree	*tree;
+int	order;
+void	*data;
+
 {
 
     int			(*compare)();

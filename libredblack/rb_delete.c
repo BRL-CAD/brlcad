@@ -28,7 +28,12 @@ static char RCSid[] = "@(#) $Header$";
  *	is an implementation of the routine RB-DELETE-FIXUP on p. 274
  *	of Cormen et al.
  */
-static void rb_fixup (rb_tree *tree, struct rb_node *node, int order)
+static void rb_fixup (tree, node, order)
+
+rb_tree		*tree;
+struct rb_node	*node;
+int		order;
+
 {
     int			direction;
     struct rb_node	*parent;
@@ -90,7 +95,10 @@ static void rb_fixup (rb_tree *tree, struct rb_node *node, int order)
  *	frees the memory allocated for the various members of the node
  *	and then frees the memory allocated for the node itself.
  */
-static void rb_free_node (struct rb_node *node)
+static void rb_free_node (node)
+
+struct rb_node	*node;
+
 {
     rb_tree	*tree;
 
@@ -117,7 +125,10 @@ static void rb_free_node (struct rb_node *node)
  *	nodes that contained the package and then frees the memory
  *	allocated for the package itself.
  */
-static void rb_free_package (struct rb_package *package)
+static void rb_free_package (package)
+
+struct rb_package	*package;
+
 {
     RB_CKMAG(package, RB_PKG_MAGIC, "red-black package");
 
@@ -133,7 +144,12 @@ static void rb_free_package (struct rb_package *package)
  *	and the order from which to delete it.  _rb_delete() is an
  *	implementation of the routine RB-DELETE on p. 273 of Cormen et al.
  */
-static void _rb_delete (rb_tree *tree, struct rb_node *node, int order)
+static void _rb_delete (tree, node, order)
+
+rb_tree		*tree;
+struct rb_node	*node;
+int		order;
+
 {
     struct rb_node	*y;		/* The node to splice out */
     struct rb_node	*parent;
@@ -186,7 +202,11 @@ static void _rb_delete (rb_tree *tree, struct rb_node *node, int order)
  *	in the current node (in the position of the specified order)
  *	from every order in the tree.
  */
-void rb_delete (rb_tree *tree, int order)
+void rb_delete (tree, order)
+
+rb_tree	*tree;
+int	order;
+
 {
     int			nm_orders;
     struct rb_node	**node;		/* Nodes containing data */

@@ -24,8 +24,13 @@ static char RCSid[] = "@(#) $Header$";
  *	as the nil node pointer. _rb_extreme() returns a pointer to the
  *	extreme node.
  */
-static struct rb_node *_rb_extreme (struct rb_node *root, int order,
-				    int sense, struct rb_node *empty_node)
+static struct rb_node *_rb_extreme (root, order, sense, empty_node)
+
+struct rb_node	*root;
+int		order;
+int		sense;
+struct rb_node	*empty_node;
+
 {
     struct rb_node	*child;
     rb_tree		*tree;
@@ -58,7 +63,12 @@ static struct rb_node *_rb_extreme (struct rb_node *root, int order,
  *	(min or max).  On success, rb_extreme() returns a pointer to the
  *	data in the extreme node.  Otherwise it returns NULL.
  */
-void *rb_extreme (rb_tree *tree, int order, int sense)
+void *rb_extreme (tree, order, sense)
+
+rb_tree	*tree;
+int	order;
+int	sense;
+
 {
     struct rb_node	*node;
 
@@ -91,7 +101,12 @@ void *rb_extreme (rb_tree *tree, int order, int sense)
  *	returns a pointer to the adjacent node.  This function is
  *	modeled after the routine TREE-SUCCESSOR on p. 249 of Cormen et al.
  */
-struct rb_node *_rb_neighbor (struct rb_node *node, int order, int sense)
+struct rb_node *_rb_neighbor (node, order, sense)
+
+struct rb_node	*node;
+int		order;
+int		sense;
+
 {
     struct rb_node	*child;
     struct rb_node	*parent;
@@ -133,7 +148,12 @@ struct rb_node *_rb_neighbor (struct rb_node *node, int order, int sense)
  *	in the specified direction, if that node exists.  Otherwise,
  *	it returns NULL.
  */
-void *rb_neighbor (rb_tree *tree, int order, int sense)
+void *rb_neighbor (tree, order, sense)
+
+rb_tree	*tree;
+int	order;
+int	sense;
+
 {
     struct rb_node	*node;
 
