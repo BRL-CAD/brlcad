@@ -83,6 +83,7 @@ mat_Print_Db( material_id )
 int		material_id;
 	{	register Mat_Db_Entry	*entry;
 		register int		stop;
+		register int		success = 0;
 		int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
 	if( material_id >= MAX_MAT_DB )
 		{
@@ -90,7 +91,7 @@ int		material_id;
 			MAX_MAT_DB
 			);
 		rt_log( "If this is not enough, notify the support staff.\n" );
-		return	-1;
+		return	success;
 		}
 	else
 	if( material_id < 0 )
@@ -105,6 +106,7 @@ int		material_id;
 		entry = &mat_db_table[material_id];
 		if( entry->mode_flag == MF_NULL )
 			continue;
+		success = 1;
 		if( lines <= 0 && ! do_More( &lines ) )
 			break;
 		prnt_Scroll( "\n" );
@@ -140,7 +142,7 @@ int		material_id;
 				entry->df_rgb[2]
 				);
 		}
-	return	1;
+	return	success;
 	}
 
 /*	m a t _ S a v e _ D b ( )
