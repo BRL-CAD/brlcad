@@ -2085,6 +2085,9 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
+	if( state == ST_VIEW || state == ST_S_PICK || state == ST_O_PICK )
+		return TCL_OK;
+
 	get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
 	return TCL_OK;
 }
