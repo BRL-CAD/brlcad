@@ -1,8 +1,8 @@
 /*
- *			iges-g/Cakefile
+ *			iges/Cakefile
  */
 
-#define SRCDIR	iges-g
+#define SRCDIR	iges
 #define PRODUCTS	iges-g g-iges
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -22,7 +22,7 @@
 	b-spline brep get_outer_shell add_inner_shell make_face \
 	add_face add_loop get_edge_list read_edge_list \
 	get_vertex_list read_vertex_list get_vertex get_att \
-	read_att check_names planar_nurb g-iges iges conv_drawings
+	read_att check_names planar_nurb g-iges iges conv_drawings orient_loops
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
@@ -41,18 +41,18 @@
         b-spline.o brep.o get_outer_shell.o add_inner_shell.o make_face.o \
         add_face.o add_loop.o get_edge_list.o read_edge_list.o \
         get_vertex_list.o read_vertex_list.o get_vertex.o get_att.o \
-        read_att.o check_names.o planar_nurb.o conv_drawings.o
+        read_att.o check_names.o planar_nurb.o conv_drawings.o orient_loops.o
 
-iges-g:	I_G_OBJ
+iges-g:	I_G_OBJ LIBRT_DEP LIBWDB_DEP
 	sh ../newvers.sh version "IGES-to-BRLCAD Translator"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS -o iges-g I_G_OBJ vers.o LIBWDB LIBRT LIBRT_LIBES LIBES
 
 #define G_I_OBJ g-iges.o iges.o
 
-g-iges: G_I_OBJ
+g-iges: G_I_OBJ LIBRT_DEP
 	sh ../newvers.sh version "BRLCAD-to-IGES Translator"
 	CC CFLAGS -c vers.c
-	CC LDFLAGS -o g-iges G_I_OBJ vers.o LIBWDB LIBRT LIBRT_LIBES LIBES
+	CC LDFLAGS -o g-iges G_I_OBJ vers.o LIBRT LIBRT_LIBES LIBES
 
 #include "../Cakefile.rules"
