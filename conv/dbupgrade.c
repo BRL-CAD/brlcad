@@ -158,6 +158,9 @@ char	**argv;
 	RT_CK_DBI(dbip);
 	db_dirbuild( dbip );
 
+        if( (strcmp( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )==0) && (dbip->dbi_version == 4) ) {
+          dbip->dbi_title="Untitled BRL-CAD Database";
+        }
 	db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );
 
 	/* Retrieve every item in the input database */
