@@ -2084,7 +2084,12 @@ sedit()
 
 	/* must re-calculate the face plane equations for arbs */
 	if( es_int.idb_type == ID_ARB8 )
+	{
+		arb = (struct rt_arb_internal *)es_int.idb_ptr;
+		RT_ARB_CK_MAGIC( arb );
+
 		(void)rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol );
+	}
 
 	/* If the keypoint changed location, find about it here */
 	if (! es_keyfixed)
