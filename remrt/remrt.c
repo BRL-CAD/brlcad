@@ -32,13 +32,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include "fb.h"
 #include "pkg.h"
-#include "rtsrv.h"
-#include "ctl.h"
 
-extern int ikfd;		/* defined in iklib.o */
-extern int ikhires;		/* defined in iklib.o */
-int ik_cur_size;		/* current fb size */
+#include "./rtsrv.h"
+#include "./ctl.h"
+
+FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
+int cur_fbsize;			/* current fb size */
 
 int running = 0;		/* actually working on it */
 int detached = 0;		/* continue after EOF */
@@ -50,16 +51,16 @@ int ph_default();	/* foobar message handler */
 int ph_pixels();
 int ph_print();
 int ph_start();
-struct pkg_switch pkg_switch[] = {
+struct pkg_switch pkgswitch[] = {
 	{ MSG_START, ph_start, "Startup ACK" },
 	{ MSG_MATRIX, ph_default, "Set Matrix" },
 	{ MSG_OPTIONS, ph_default, "Set options" },
 	{ MSG_LINES, ph_default, "Compute lines" },
 	{ MSG_END, ph_default, "End" },
 	{ MSG_PIXELS, ph_pixels, "Pixels" },
-	{ MSG_PRINT, ph_print, "Log Message" }
+	{ MSG_PRINT, ph_print, "Log Message" },
+	{ 0, 0, (char *)0 }
 };
-int pkg_swlen = sizeof(pkg_switch)/sizeof(struct pkg_switch);
 
 int clients;
 int print_on = 1;
@@ -130,6 +131,24 @@ extern char *malloc();
 
 int tcp_listen_fd;
 
+/*
+ *			E R R L O G
+ *
+ *  Log an error.  We supply the newline, and route to user.
+ */
+/* VARARGS */
+void
+errlog( str, a, b, c, d, e, f, g, h )
+char *str;
+{
+	char buf[256];		/* a generous output line */
+
+	(void)fprintf( stderr, str, a, b, c, d, e, f, g, h );
+}
+
+/*
+ *			M A I N
+ */
 main(argc, argv)
 int argc; char **argv;
 {
@@ -145,13 +164,13 @@ int argc; char **argv;
 	}
 
 	/* Listen for our PKG connections */
-	if( (tcp_listen_fd = pkg_initserver("rtsrv", 8)) < 0 )
+	if( (tcp_listen_fd = pkg_initserver("rtsrv", 8, errlog)) < 0 )
 		exit(1);
 	printf("CTL listening\n");
 	(void)signal( SIGPIPE, SIG_IGN );
 	clients = (1<<0);
 
-	init_fb();
+	(void)init_fb( (char *)0 );	/* take default */
 
 	while(clients)  {
 		check_input( 30 );	/* delay 30 secs */
@@ -182,12 +201,13 @@ int waittime;
 	/* First, accept any pending connections */
 	if( ibits & (1<<tcp_listen_fd) )  {
 		register struct pkg_conn *pc;
-		if( (pc = pkg_getclient(tcp_listen_fd,1)) != PKC_NULL )
+		pc = pkg_getclient(tcp_listen_fd, pkgswitch, errlog, 1);
+		if( pc != PKC_NULL && pc != PKC_ERROR )
 			addclient(pc);
 		ibits &= ~(1<<tcp_listen_fd);
 	}
 	/* Second, give priority to getting traffic off the network */
-	for( i=4; i<NFD; i++ )  {
+	for( i=3; i<NFD; i++ )  {
 		register struct pkg_conn *pc;
 		if( !(ibits&(1<<i)) )  continue;
 		pc = servers[i].sr_pc;
@@ -195,7 +215,7 @@ int waittime;
 			dropclient(pc);
 	}
 	/* Finally, handle any command input (This can recurse via "read") */
-	if( waittime>0 && (ibits & (1<<0)) )  {
+	if( waittime>0 && (ibits & (1<<(fileno(stdin)))) )  {
 		interactive(stdin);
 	}
 }
@@ -538,7 +558,19 @@ FILE *fp;
 			sprintf(cmd,
 				"rsh %s 'hostname; cd cad/remrt; rtsrv %s;uptime'",
 				cmd_args[i], ourname );
-			system( cmd );
+			if( fork() == 0 )  {
+				/* 1st level child */
+				(void)close(0);
+				for(i=3; i<40; i++)  (void)close(i);
+				if( fork() == 0 )  {
+					/* worker Child */
+					system( cmd );
+					exit(0);
+				}
+				exit(0);
+			} else {
+				(void)wait(0);
+			}
 			check_input(1);		/* get connections */
 		}
 		printf("add finished\n");
@@ -598,11 +630,8 @@ FILE *fp;
 	}
 	if( strcmp( cmd_args[0], "attach" ) == 0 )  {
 		register struct frame *fr;
-		if( ikfd > 0 )  {
-			printf("already attached\n");
-			return;
-		}
-		init_fb();
+
+		if( init_fb(cmd_args[1]) < 0 )  return;
 
 		if( (fr = FrameHead.fr_forw) == &FrameHead )  return;
 
@@ -616,8 +645,8 @@ FILE *fp;
 		return;
 	}
 	if( strcmp( cmd_args[0], "release" ) == 0 )  {
-		close(ikfd);
-		ikfd = -1;
+		if(fbp != FBIO_NULL) fb_close(fbp);
+		fbp = FBIO_NULL;
 		return;
 	}
 	if( strcmp( cmd_args[0], "frames" ) == 0 )  {
@@ -672,9 +701,9 @@ FILE *fp;
 		return;
 	}
 	if( strcmp( cmd_args[0], "clear" ) == 0 )  {
-		if( ikfd < 0 )  return;
-		ikclear();
-		ik_cur_size = 0;
+		if( fbp == FBIO_NULL )  return;
+		fb_clear( fbp, PIXEL_NULL );
+		cur_fbsize = 0;
 		return;
 	}
 	if( strcmp( cmd_args[0], "print" ) == 0 )  {
@@ -963,32 +992,17 @@ char *line;
 	return(0);
 }
 
-/*
- *			E R R L O G
- *
- *  Log an error.  We supply the newline, and route to user.
- */
-/* VARARGS */
-void
-errlog( str, a, b, c, d, e, f, g, h )
-char *str;
-{
-	char buf[256];		/* a generous output line */
-
-	(void)fprintf( stderr, str, a, b, c, d, e, f, g, h );
-}
-
 ph_default(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
 {
 	register int i;
 
-	for( i=0; i<pkg_swlen; i++ )  {
-		if( pkg_switch[i].pks_type == pc->pkc_type )  break;
+	for( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
+		if( pc->pkc_switch[i].pks_type == pc->pkc_type )  break;
 	}
-	errlog("CTL unable to handle %s message: len %d",
-		pkg_switch[i].pks_title, pc->pkc_len);
+	errlog("ctl: unable to handle %s message: len %d",
+		pc->pkc_switch[i].pks_title, pc->pkc_len);
 	*buf = '*';
 	(void)free(buf);
 }
@@ -1061,7 +1075,7 @@ char *buf;
 		(fr->fr_size-line-1)*fr->fr_size*3, i );
 
 	/* If display attached, also draw it */
-	if( ikfd > 0 )  {
+	if( fbp != FBIO_NULL )  {
 		size_display(fr->fr_size);
 		draw_pixline( buf+2, i, line );
 	}
@@ -1073,24 +1087,15 @@ char *buf;
 		schedule();
 }
 
+/* We now depend on the fact the the libfb RGBpixel is the format
+ * used internally by this routine.
+ */
 draw_pixline( cp, bytes, line )
 register char *cp;
 register int bytes;
 int line;
 {
-	static char pixels[1024*4];
-	register char *pp;
-	register int i;
-
-	pp = pixels;
-	for( i=bytes; i > 0; i -= 3 )  {
-		/* R G B */
-		*pp++ = *cp++;
-		*pp++ = *cp++;
-		*pp++ = *cp++;
-		*pp++ = 0;
-	}
-	clustwrite( pixels, line, bytes/3 );
+	fb_write( fbp, 0, line, cp, bytes/3 );
 }
 
 /* Given pointer to head of list of ranges, remove the item that's done */
@@ -1128,45 +1133,39 @@ register struct list *lhp;
 	}
 }
 
-
-init_fb()
+int
+init_fb(name)
+char *name;
 {
-	/* Output directly to Ikonas */
-	ik_cur_size = 0;
-	if( npts > 512 )
-		ikhires = 1;
-	else
-		ikhires = 0;
+	int res = 512;
 
-	ikopen();
-	load_map(1);		/* Standard map: linear */
+	if( fbp != FBIO_NULL )  fb_close(fbp);
+	while( npts > res )  res <<= 1;
+	if( (fbp = fb_open( name, res, res )) == FBIO_NULL )  {
+		printf("fb_open %d failed\n", res);
+		return(-1);
+	}
+	fb_wmap( fbp, COLORMAP_NULL );	/* Standard map: linear */
+	cur_fbsize = 0;
+	return(0);
 }
 size_display(n)
 register int n;
 {
-	if( ik_cur_size == n )
+	if( cur_fbsize == n )
 		return;
-	ik_cur_size = n;
-
-	if( n <= 32 )  {
-		ikzoom( 15, 15 );	/* 1 pixel gives 16 */
-		ikwindow( (0)*4, 4063+31 );
-	} else if( n <= 50 )  {
-		ikzoom( 9, 9 );		/* 1 pixel gives 10 */
-		ikwindow( (0)*4, 4063+31 );
-	} else if( n <= 64 )  {
-		ikzoom( 7, 7 );		/* 1 pixel gives 8 */
-		ikwindow( (0)*4, 4063+29 );
-	} else if( n <= 128 )  {
-		ikzoom( 3, 3 );		/* 1 pixel gives 4 */
-		ikwindow( (0)*4, 4063+25 );
-	} else if ( n <= 256 )  {
-		ikzoom( 1, 1 );		/* 1 pixel gives 2 */
-		ikwindow( (0)*4, 4063+17 );
-	} else if ( n <= 512 )  {
-		ikzoom( 0, 0 );		/* 1 pixel gives 1 */
-		ikwindow( (0)*4, 4063+11 );
+	if( fbp == FBIO_NULL )
+		return;
+	if( n > fb_getwidth(fbp) )  {
+		printf("current fb not big enough for %d pixels, releasing\n", n );
+		fb_close(fbp);
+		fbp = FBIO_NULL;
+		return;
 	}
+	cur_fbsize = n;
+
+	fb_zoom( fbp, fb_getwidth(fbp)/n, fb_getheight(fbp)/n );
+	fb_window( fbp, n/2, n/2 );		/* center of view */
 }
 
 send_start(sp)
