@@ -279,7 +279,7 @@ CONST struct rt_tol *ttol;
 							{
 								int class;
 
-								class = nmg_class_pt_s( eu->vu_p->v_p->vg_p->coord , s , ttol );
+								class = nmg_class_pt_s( eu->vu_p->v_p->vg_p->coord , s, 1 , ttol );
 
 								if( class == NMG_CLASS_AoutB )
 								{
@@ -334,6 +334,7 @@ struct nmgregion *r;
 struct db_tree_state *tsp;
 struct db_full_path *pathp;
 {
+	struct model *m;
 	struct shell *s;
 	struct nmg_ptbl shells;		/* list of shells to be decomposed */
 	struct nmg_ptbl vertices;	/* vertex list in TANKILL order */
@@ -341,6 +342,8 @@ struct db_full_path *pathp;
 	int i;
 
 	NMG_CK_REGION( r );
+	m = r->m_p;
+	NMG_CK_MODEL( m );
 
 	/* if bounds haven't been calculated, do it now */
 	if( r->ra_p == NULL )
@@ -382,10 +385,10 @@ struct db_full_path *pathp;
 	nmg_tbl( &shells , TBL_FREE , NULL );
 
 	/* Now triangulate the entire model */
-	nmg_triangulate_model( the_model , &tol );
+	nmg_triangulate_model( r->m_p , &tol );
 
 	/* XXXXX temporary fix for OT_UNSPEC loops */
-	for( RT_LIST_FOR( r , nmgregion , &the_model->r_hd ) )
+	for( RT_LIST_FOR( r , nmgregion , &l->r_hd ) )
 	{
 		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
 		{
@@ -445,10 +448,10 @@ struct db_full_path *pathp;
 	}
 #else
 	/* Now triangulate the entire model */
-	nmg_triangulate_model( the_model , &tol );
+	nmg_triangulate_model( m , &tol );
 
 	/* Need a flag array to insure that no loops are missed */
-	flags = (long *)rt_calloc( (*tsp->ts_m)->maxindex , sizeof( long ) , "g-tankill: flags" );
+	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "g-tankill: flags" );
 #endif
 
 	/* Output each shell as a TANKILL object */
@@ -631,6 +634,8 @@ struct db_full_path *pathp;
 			else
 				fprintf( fp_out , "%5.0f.%5.0f.%5.0f." , V3ARGS( v->vg_p->coord ) );
 		}
+		if( (NMG_TBL_END( &vertices )-2)%4 != 0 )
+			fprintf( fp_out, "\n" );
 
 		/* clear the vertices list for the next shell */
 		nmg_tbl( &vertices , TBL_RST , NULL );
@@ -646,8 +651,6 @@ struct db_full_path *pathp;
 			fp_name->d_namep , tsp->ts_aircode , tsp->ts_gmater , tsp->ts_los ,
 			tsp->ts_mater.ma_matname );
 	}
-
-	regions_written++;
 
  outt:	rt_free( (char *)flags , "g-tankill: flags" );
 	nmg_tbl( &vertices , TBL_FREE , NULL );
@@ -823,19 +826,19 @@ char	*argv[];
 	percent = 0;
 	if( regions_tried > 0 )
 		percent = ((double)regions_converted * 100) / regions_tried;
-	printf( "Tried %d regions, %d converted successfully.  %g%%\n",
+	printf( "Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 		regions_tried, regions_converted, percent );
 	percent = 0;
 	if( regions_tried > 0 )
 		percent = ((double)regions_written * 100) / regions_tried;
-	printf( "                  %d written successfully. %g%%\n",
+	printf( "                  %d triangulated successfully. %g%%\n",
 		regions_written, percent );
-
+#if 0
 	/* Release dynamic storage */
 	nmg_km(the_model);
 	rt_vlist_cleanup();
-	db_close(dbip);
-
+	db_close(dbip); 
+#endif
 #if MEMORY_LEAK_CHECKING
 	rt_prmem("After complete G-TANKILL conversion");
 #endif
@@ -882,8 +885,14 @@ union tree		*curtree;
 	/* Begin rt_bomb() protection */
 	if( RT_SETJUMP )
 	{
+		char *sofar;
+
 		/* Error, bail out */
 		RT_UNSETJUMP;		/* Relinquish the protection */
+
+		sofar = db_path_to_string(pathp);
+		rt_log( "FAILED in Boolean evaluation: %s\n", sofar );
+		rt_free( (char *)sofar, "sofar" );
 
 		/* Sometimes the NMG library adds debugging bits when
 		 * it detects an internal error, before rt_bomb().
@@ -892,9 +901,6 @@ union tree		*curtree;
 
 		/* Release any intersector 2d tables */
 		nmg_isect2d_final_cleanup();
-
-		/* Release the tree memory & input regions */
-		db_free_tree(curtree);		/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
 		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
@@ -952,14 +958,52 @@ union tree		*curtree;
 
 		if( !empty_region && !empty_model )
 		{
+			if( RT_SETJUMP )
+			{
+				char *sofar;
+
+				RT_UNSETJUMP;
+
+				sofar = db_path_to_string(pathp);
+				rt_log( "FAILED in triangulator: %s\n", sofar );
+				rt_free( (char *)sofar, "sofar" );
+
+				/* Sometimes the NMG library adds debugging bits when
+				 * it detects an internal error, before rt_bomb().
+				 */
+				rt_g.NMG_debug = NMG_debug;	/* restore mode */
+
+				/* Release any intersector 2d tables */
+				nmg_isect2d_final_cleanup();
+
+				/* Get rid of (m)any other intermediate structures */
+				if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
+				{
+					nmg_km(*tsp->ts_m);
+				}
+				else
+				{
+					rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+				}
+			
+				/* Now, make a new, clean model structure for next pass. */
+				*tsp->ts_m = nmg_mm();
+				goto out;
+			}
+
 			/* Write the region to the TANKILL file */
 			Write_tankill_region( r , tsp , pathp );
+
+			regions_written++;
+
+			RT_UNSETJUMP;
 		}
 
 		if( !empty_model )
 			nmg_kr( r );
 	}
 
+out:
 	/*
 	 *  Dispose of original tree, so that all associated dynamic
 	 *  memory is released now, not at the end of all regions.
@@ -968,7 +1012,6 @@ union tree		*curtree;
 	 */
 	db_free_tree(curtree);		/* Does an nmg_kr() */
 
-out:
 	GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
