@@ -315,7 +315,7 @@ struct bu_vls *overlay_vls;
 #endif
 
 #if 1
-	dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+	dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 0);
 #else
 	dmp->dm_setLineAttr(dmp, 1, 0); /* linewidth - 1, not dashed */
 #endif
@@ -325,7 +325,7 @@ struct bu_vls *overlay_vls;
 		mat_t			xform;
 		struct rt_point_labels	pl[8+1];
 
-		if( mged_variables.perspective <= 0)
+		if( mged_variables->perspective <= 0)
 		  bn_mat_mul( xform, model2objview, es_mat );
 		else{
 		  mat_t tmat;
@@ -345,13 +345,13 @@ struct bu_vls *overlay_vls;
 		}
 	}
 
-if(mged_variables.faceplate){
+if(mged_variables->faceplate){
 	/* Line across the bottom, above two bottom status lines */
 	dmp->dm_setColor(dmp, DM_YELLOW, 1);
 	dmp->dm_drawLine2D( dmp, XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
 			      TITLE_YBASE-TEXT1_DY );
 
-	if(mged_variables.orig_gui){
+	if(mged_variables->orig_gui){
 	  /* Enclose window in decorative box.  Mostly for alignment. */
 	  dmp->dm_drawLine2D( dmp, XMIN, YMIN, XMAX, YMIN );
 	  dmp->dm_drawLine2D( dmp, XMAX, YMIN, XMAX, YMAX );
@@ -392,7 +392,7 @@ if(mged_variables.faceplate){
 	  }
 	}
 
-	if(mged_variables.orig_gui){
+	if(mged_variables->orig_gui){
 	  /*
 	   * The top of the menu (if any) begins at the Y value specified.
 	   */
@@ -424,7 +424,7 @@ if(mged_variables.faceplate){
 	 * Prepare the numerical display of the currently edited solid/object.
 	 */
 	/*	create_text_overlay( &vls ); */
-	if(mged_variables.orig_gui){
+	if(mged_variables->orig_gui){
 	  screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, overlay_vls );
 	}else{
 	  screen_vls( x, y, overlay_vls );
@@ -459,7 +459,7 @@ if(mged_variables.faceplate){
 	 * This way the adc info will be displayed during editing
 	 */
 
-	if( mged_variables.adcflag ) {
+	if( mged_variables->adcflag ) {
 		/* Angle/Distance cursor */
 		point_t	pt1, pt2, pt3;
 		point_t	center_model;
@@ -479,7 +479,7 @@ if(mged_variables.faceplate){
 			pt3[X]*base2local, pt3[Y]*base2local,
 			(curs_x / 2047.0) *Viewscale*base2local,
 			(curs_y / 2047.0) *Viewscale*base2local );
-		if(mged_variables.faceplate){
+		if(mged_variables->faceplate){
 		  dmp->dm_setColor(dmp, DM_YELLOW, 1);
 		  dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
 					TITLE_YBASE + TEXT1_DY, 1, 0 );
@@ -500,7 +500,7 @@ if(mged_variables.faceplate){
 			es_keypoint[X] * base2local,
 			es_keypoint[Y] * base2local,
 			es_keypoint[Z] * base2local);
-		if(mged_variables.faceplate && ss_line_not_drawn){
+		if(mged_variables->faceplate && ss_line_not_drawn){
 		  dmp->dm_setColor(dmp, DM_YELLOW, 1);
 		  dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
 					TITLE_YBASE + TEXT1_DY, 1, 0 );
@@ -514,7 +514,7 @@ if(mged_variables.faceplate){
 	}
 
 	if( illump != SOLID_NULL )  {
-		if(mged_variables.faceplate && ss_line_not_drawn){
+		if(mged_variables->faceplate && ss_line_not_drawn){
 		  /* Illuminated path */
 		  bu_vls_strcat(&vls, " Path: ");
 		  for( i=0; i <= illump->s_last; i++ )  {
@@ -532,7 +532,7 @@ if(mged_variables.faceplate){
 	}
 
 	bu_vls_printf(&vls, "%.2f fps", 1/frametime );
-	if(mged_variables.faceplate && ss_line_not_drawn){
+	if(mged_variables->faceplate && ss_line_not_drawn){
 	  dmp->dm_setColor(dmp, DM_YELLOW, 1);
 	  dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
 				TITLE_YBASE + TEXT1_DY, 1, 0 );

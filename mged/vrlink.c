@@ -155,7 +155,7 @@ vr_viewpoint_hook()
 		V4ARGS(orient),
 		Viewscale,
 		V3ARGS(eye_pos_scr),
-		mged_variables.perspective
+		mged_variables->perspective
 		);
 
 	if( strcmp( bu_vls_addr(&old_str), bu_vls_addr(&str) ) == 0 )  {
@@ -221,7 +221,7 @@ char	*argv[];
 	eye_pos_scr[X] = atof(argv[9]);		/* interpreted in dozoom.c */
 	eye_pos_scr[Y] = atof(argv[10]);
 	eye_pos_scr[Z] = atof(argv[11]);
-	mged_variables.perspective = atof(argv[12]);
+	mged_variables->perspective = atof(argv[12]);
 	new_mats();
 
 	return TCL_OK;
