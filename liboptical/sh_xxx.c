@@ -14,9 +14,11 @@
  *			each shader name being built.
  *		edit the xxx_setup function to do shader-specific setup
  *		edit the xxx_render function to do the actual rendering
- *	3) Edit view.c to add extern for shader_mfuncs and call to mlib_add
- *	   to function view_init()
+ *	3) Edit view.c to add extern for xxx_mfuncs and call to mlib_add
+ *		to function view_init()
  *	4) Edit Cakefile to add shader file to "FILES" and "RT_OBJ" macros.
+ *	5) replace this list with a description of the shader, its parameters
+ *		and use.
  */
 #include "conf.h"
 
@@ -41,7 +43,6 @@ struct xxx_specific {
 	long	magic;	/* magic # for memory validity check, must come 1st */
 	double	xxx_val;	/* variables for shader ... */
 	vect_t	xxx_delta;
-	char	*xxx_reg_name;
 	mat_t	xxx_m_to_sh;	/* model to shader space matrix */
 };
 
@@ -51,7 +52,6 @@ struct xxx_specific xxx_defaults = {
 	xxx_MAGIC,
 	1.0,
 	{ 1.0, 1.0, 1.0 },
-	(char *) NULL,
 	{	0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
@@ -67,15 +67,15 @@ struct xxx_specific xxx_defaults = {
  * structure above
  */
 struct structparse xxx_print_tab[] = {
-	{"%f",  1, "val",		SHDR_O(val),		FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(delta),		FUNC_NULL },
+	{"%f",  1, "val",		SHDR_O(xxx_val),	FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(xxx_delta),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
 };
 struct structparse xxx_parse_tab[] = {
 	{"i",	(long)(xxx_print_tab), (char *)0, 0,		FUNC_NULL },
-	{"%f",  1, "v",			SHDR_O(val),		FUNC_NULL },
-	{"%f",  3, "d",			SHDR_AO(delta),		FUNC_NULL },
+	{"%f",  1, "v",			SHDR_O(xxx_val),	FUNC_NULL },
+	{"%f",  3, "d",			SHDR_AO(xxx_delta),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -91,7 +91,7 @@ HIDDEN void	xxx_print(), xxx_free();
  * values for the parameters.
  */
 struct mfuncs xxx_mfuncs[] = {
-	{"cs",	0,	0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+	{"xxx",	0,	0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	xxx_setup,	xxx_render,	xxx_print,	xxx_free },
 
 	{(char *)0,	0,		0,		0,		0,
@@ -144,13 +144,12 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * we need to get a matrix to perform the appropriate transform(s).
 	 */
 
-	db_shader_mat(xxx_sp->m_to_sh, rtip->rti_dbip, rp);
+	db_shader_mat(xxx_sp->xxx_m_to_sh, rtip->rti_dbip, rp);
 
-	xxx_sp->xxx_reg_name = rt_strdup(rp->reg_name);
 
 	if( rdebug&RDEBUG_SHADE) {
 		rt_structprint( " Parameters:", xxx_print_tab, (char *)xxx_sp );
-		mat_print( "m_to_sh", xxx_sp->m_to_sh );
+		mat_print( "m_to_sh", xxx_sp->xxx_m_to_sh );
 	}
 
 	return(1);
@@ -201,21 +200,19 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_xxx_SP(xxx_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( "cs", xxx_print_tab, (char *)xxx_sp );
+		rt_structprint( "xxx_render Parameters:", xxx_print_tab, (char *)xxx_sp );
 
 	/* If we are performing the shading in "region" space, we must 
 	 * transform the hit point from "model" space to "region" space.
 	 * See the call to db_region_mat in xxx_setup().
 	 */
-	MAT4X3PNT(pt, xxx_sp->m_to_sh, swp->sw_hit.hit_point);
+	MAT4X3PNT(pt, xxx_sp->xxx_m_to_sh, swp->sw_hit.hit_point);
 
-
-	if( rdebug&RDEBUG_SHADE)
-		rt_log("xxx_render(%s)  model:(%g %g %g)\nxxx_render(%s) region:(%g %g %g)\n", 
-		xxx_sp->xxx_reg_name,
+	if( rdebug&RDEBUG_SHADE) {
+		rt_log("xxx_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
 		V3ARGS(swp->sw_hit.hit_point),
-		xxx_sp->xxx_reg_name,
 		V3ARGS(pt) );
+	}
 
 	/* XXX perform shading operations here */
 	VMOVE(swp->sw_color, pt);
