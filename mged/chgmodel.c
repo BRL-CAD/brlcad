@@ -96,7 +96,7 @@ f_itemair()
 }
 
 /* Modify material information */
-/* Usage:  mater name material */
+/* Usage:  mater name [del] */
 void
 f_mater()
 {
@@ -112,33 +112,82 @@ f_mater()
 		(void)printf("%s: not a combination\n", dp->d_namep );
 		return;
 	}
-	(void)printf("Was %s %s\n", record.c.c_matname, record.c.c_matparm);
-	if( numargs <= 2 )  {
+	if( numargs >= 3 )  {
+		if( strncmp( cmd_args[2], "del", 3 ) != 0 )  {
+			(void)printf("Use 'mater name del' to delete\n");
+			return;
+		}
+		(void)printf("Was %s %s\n", record.c.c_matname, record.c.c_matparm);
 		record.c.c_matname[0] = '\0';
-	} else {
-		strncpy( record.c.c_matname, cmd_args[2],
+		record.c.c_override = 0;
+		goto out;
+	}
+	(void)printf("Material = %s\nMaterial?  (CR to skip) ", record.c.c_matname);
+	fflush(stdout);
+	(void)gets(line);
+	if( line[0] != '\n' && line[0] != '\0' )
+		strncpy( record.c.c_matname, line,
 			sizeof(record.c.c_matname)-1);
 
-		(void)printf("Parameter string? ");
-		fflush(stdout);
-		(void)gets(line);
+	(void)printf("Param = %s\nParameter string? (CR to skip) ", record.c.c_matparm);
+	fflush(stdout);
+	(void)gets(line);
+	if( line[0] != '\n' && line[0] != '\0' )
 		strncpy( record.c.c_matparm, line, sizeof(record.c.c_matparm)-1 );
 
-		(void)printf("Override material color (y|n)[n]? ");
-		fflush(stdout);
+	if( record.c.c_override )
+		(void)printf("RGB Color = %d %d %d\n", 
+			record.c.c_rgb[0],
+			record.c.c_rgb[1],
+			record.c.c_rgb[2] );
+	else
+		(void)printf("(No color specified)\n");
+	(void)printf("Override material color (y|n|CR)[CR]? ");
+	fflush(stdout);
+	(void)gets(line);
+	if( line[0] == 'y' )  {
+		int r=0, g=0, b=0;
+		(void)printf("R G B (0..255)? ");
 		(void)gets(line);
-		if( line[0] == 'y' )  {
-			int r,g,b;
-			(void)printf("R G B (0..255)? ");
-			scanf("%d %d %d", &r, &g, &b);
-			record.c.c_rgb[0] = r;
-			record.c.c_rgb[1] = g;
-			record.c.c_rgb[2] = b;
-			record.c.c_override = 1;
-		} else {
-			record.c.c_override = 0;
-		}
+		sscanf(line, "%d %d %d", &r, &g, &b);
+		record.c.c_rgb[0] = r;
+		record.c.c_rgb[1] = g;
+		record.c.c_rgb[2] = b;
+		record.c.c_override = 1;
+	} else if( line[0] == 'n' )  {
+		record.c.c_override = 0;
 	}
+
+	switch( record.c.c_inherit )  {
+	default:
+		/* This is necessary to clean up old databases with grunge here */
+		record.c.c_inherit = DB_INH_LOWER;
+		/* Fall through */
+	case DB_INH_LOWER:
+		(void)printf("inherit=0:  lower nodes (towards leaves) override\n");
+		break;
+	case DB_INH_HIGHER:
+		(void)printf("inherit=1:  higher nodes (towards root) override\n");
+		break;
+	}
+	(void)printf("Inheritance? (0|1|CR)[CR]? ");
+	fflush(stdout);
+	(void)gets(line);
+	switch( line[0] )  {
+	case '1':
+		record.c.c_inherit = DB_INH_HIGHER;
+		break;
+	case '0':
+		record.c.c_inherit = DB_INH_LOWER;
+		break;
+	case '\0':
+	case '\n':
+		break;
+	default:
+		(void)printf("Unknown response ignored\n");
+		break;
+	}		
+out:
 	db_putrec( dp, &record, 0 );
 }
 
@@ -468,7 +517,7 @@ a4toa6:
 	}
 
 	/* draw the new solid */
-	illump = redraw( illump, &es_rec );
+	illump = redraw( illump, &es_rec, es_mat );
 
 	/* Update display information */
 	pr_solid( &es_rec.s );
@@ -797,7 +846,7 @@ f_mirface()
 	}
 
 	/* draw the new solid */
-	illump = redraw( illump, &es_rec );
+	illump = redraw( illump, &es_rec, es_mat );
 
 	/* Update display information */
 	pr_solid( &es_rec.s );
