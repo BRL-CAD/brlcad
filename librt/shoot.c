@@ -23,8 +23,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 int debug = DEBUG_OFF;	/* non-zero for debugging, see debug.h */
 long nsolids;		/* total # of solids participating */
 long nregions;		/* total # of regions participating */
-long nshots;		/* # of ray-meets-solid "shots" */
-long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
+long nshots;		/* # of calls to ft_shot() */
+long nmiss_model;	/* rays missed model RPP */
+long nmiss_tree;	/* rays missed sub-tree RPP */
+long nmiss_solid;	/* rays missed solid RPP */
+long nmiss;		/* solid ft_shot() returned a miss */
+long nhits;		/* solid ft_shot() returned a hit */
 struct soltab *HeadSolid = SOLTAB_NULL;
 struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
 
@@ -77,7 +81,7 @@ register struct application *ap;
 	 */
 	if( !in_rpp( &ap->a_ray, model_min, model_max )  ||
 	    ap->a_ray.r_max <= 0.0 )  {
-		nmiss++;
+		nmiss_model++;
 		return( ap->a_miss( ap ) );
 	}
 
@@ -91,18 +95,10 @@ register struct application *ap;
 
 	/* For now, consider every region in the model */
 	for( rp=HeadRegion; rp != REGION_NULL; rp = rp->reg_forw )  {
-		
-		/* Check region bounding RPP */
-		if( !in_rpp(
-			&ap->a_ray, rp->reg_treetop->tr_min,
-			rp->reg_treetop->tr_max )  ||
-		    ap->a_ray.r_max <= 0.0 )  {
-			nmiss++;
-			continue;
-		}
-
-		/* Boolean TRUE signals hit of 1 or more solids in tree */
-		/* At leaf node, it will calll ft_shot & add to chain */
+		/*
+		 * Boolean TRUE signals hit of 1 or more solids in tree
+		 * At leaf node, it will call ft_shot & add to seg chain.
+		 */
 		(void)shoot_tree( ap, rp->reg_treetop, &HeadSeg );
 	}
 
@@ -188,31 +184,28 @@ register fastf_t *min, *max;
 	rp->r_max = INFINITY;
 
 	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
-		if( NEAR_ZERO( *dir ) )  {
-			/*
-			 *  If direction component along this axis is 0,
-			 *  (ie, this ray is aligned with this axis),
-			 *  merely check against the boundaries.
-			 */
-			if( (*min > *pt) || (*max < *pt) )
-				return(0);	/* MISS */;
-			continue;
-		}
-
-		if( *dir < 0.0 )  {
+		if( *dir < -EPSILON )  {
 			if( (sv = (*min - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
 			if(rp->r_max > sv)
 				rp->r_max = sv;
 			if( rp->r_min < (st = (*max - *pt) / *dir) )
 				rp->r_min = st;
-		}  else  {
+		}  else if( *dir > EPSILON )  {
 			if( (st = (*max - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
 			if(rp->r_max > st)
 				rp->r_max = st;
 			if( rp->r_min < ((sv = (*min - *pt) / *dir)) )
 				rp->r_min = sv;
+		}  else  {
+			/*
+			 *  If direction component along this axis is NEAR 0,
+			 *  (ie, this ray is aligned with this axis),
+			 *  merely check against the boundaries.
+			 */
+			if( (*min > *pt) || (*max < *pt) )
+				return(0);	/* MISS */;
 		}
 	}
 	if( rp->r_min >= rp->r_max )
@@ -236,32 +229,34 @@ register struct application *ap;
 register struct tree *tp;
 struct seg **HeadSegp;
 {
-
-	/* If ray does not strike the bounding RPP, skip on */
-	if( !in_rpp( &ap->a_ray, tp->tr_min, tp->tr_max )  ||
-	    ap->a_ray.r_max <= 0.0 )
-		return( FALSE );	/* MISS subtree */
-
-	switch( tp->tr_op )  {
-
-	case OP_SOLID:
-	    {
+	if( tp->tr_op == OP_SOLID )  {
 		register struct seg *newseg;
+
+		/* If ray does not strike the bounding RPP, skip on */
+		if( !in_rpp( &ap->a_ray, tp->tr_min, tp->tr_max )  ||
+		    ap->a_ray.r_max <= 0.0 )  {
+			nmiss_solid++;
+			return( FALSE );	/* MISS subtree */
+		}
 
 #	ifdef never
 		/* Consider bounding sphere */
 		VSUB2( diff, stp->st_center, ap->a_ray.r_pt );
 		distsq = VDOT(ap->a_ray.r_dir, diff);
 		if( (MAGSQ(diff) - distsq*distsq) > stp->st_radsq ) {
-			nmiss++;
+			nmiss_solid++;
 			continue;
 		}
 #	endif
 
 		nshots++;
-		newseg = functab[tp->tr_stp->st_id].ft_shot( tp->tr_stp, &ap->a_ray );
-		if( newseg == SEG_NULL )
-			return( FALSE );/* MISS subtree (solid) */
+		if( (newseg = functab[tp->tr_stp->st_id].ft_shot(
+			tp->tr_stp,
+			&ap->a_ray )
+		     ) == SEG_NULL )  {
+			nmiss++;
+			return( FALSE );	/* MISS */
+		}
 
 		/* First, some checking */
 		if( newseg->seg_in.hit_dist > newseg->seg_out.hit_dist )  {
@@ -283,16 +278,19 @@ struct seg **HeadSegp;
 			seg2->seg_next = (*HeadSegp);
 			(*HeadSegp) = newseg;
 		}
+		nhits++;
 		return( TRUE );		/* HIT, solid added */
-	    }
+	}
 
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-		shoot_tree( ap, tp->tr_left, HeadSegp );
-		shoot_tree( ap, tp->tr_right, HeadSegp );
-		return(TRUE);
-#ifdef never
+	/* If ray does not strike the bounding RPP, skip on */
+	if( !in_rpp( &ap->a_ray, tp->tr_min, tp->tr_max )  ||
+	    ap->a_ray.r_max <= 0.0 )  {
+		nmiss_tree++;
+		return( FALSE );	/* MISS subtree */
+	}
+
+	switch( tp->tr_op )  {
+
 	case OP_UNION:
 		/* NOTE:  It is important to always evaluate both */
 		if(	shoot_tree( ap, tp->tr_left, HeadSegp ) == FALSE &&
@@ -313,7 +311,6 @@ struct seg **HeadSegp;
 		 */
 		shoot_tree( ap, tp->tr_right, HeadSegp );
 		return( TRUE );		/* May have a hit */
-#endif
 
 	default:
 		fprintf(stderr,"shoot_tree: bad op=x%x", tp->tr_op );

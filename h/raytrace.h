@@ -262,8 +262,12 @@ extern int one_hit_flag;	/* non-zero to return first hit only */
 extern int debug;		/* non-zero for debugging, see debug.h */
 extern long nsolids;		/* total # of solids participating */
 extern long nregions;		/* total # of regions participating */
-extern long nshots;		/* # of ray-meets-solid "shots" */
-extern long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
+extern long nshots;		/* # of calls to ft_shot() */
+extern long nmiss_model;	/* rays missed model RPP */
+extern long nmiss_tree;		/* rays missed sub-tree RPP */
+extern long nmiss_solid;	/* rays missed solid RPP */
+extern long nmiss;		/* solid ft_shot() returned a miss */
+extern long nhits;		/* solid ft_shot() returned a hit */
 extern struct soltab *HeadSolid;/* pointer to list of solids in model */
 extern vect_t model_min;	/* min corner of model bounding RPP */
 extern vect_t model_max;	/* max corner of model bounding RPP */

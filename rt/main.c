@@ -53,6 +53,7 @@ char **argv;
 	static mat_t model2view;
 	static vect_t tempdir;
 	static int matflag = 0;		/* read matrix from stdin */
+	static double utime;
 
 	npts = 512;
 	azimuth = -35.0;			/* GIFT defaults */
@@ -237,16 +238,15 @@ char **argv;
 	/*
 	 *  All done.  Display run statistics.
 	 */
-	{
-		FAST double utime;
-		utime = timer_print("SHOT");
-		fprintf(stderr,"%ld calls to ft_shot(), %ld calls pruned\n",
-			nshots, (long)nmiss );
-		fprintf(stderr,"%ld calls in %f sec = %f calls/sec\n",
-			nshots, utime, (double)(nshots/utime) );
-		fprintf(stderr,"%d output rays in %f sec = %f rays/sec\n",
-			npts*npts, utime, (double)(npts*npts/utime) );
-	}
+	utime = timer_print("SHOT");
+	fprintf(stderr,"ft_shot(): %ld = %ld hits + %ld miss\n",
+		nshots, nhits, nmiss );
+	fprintf(stderr,"pruned:  %ld model RPP, %ld sub-tree RPP, %ld solid RPP\n",
+		nmiss_model, nmiss_tree, nmiss_solid );
+	fprintf(stderr,"pruning efficiency %.1f%%\n",
+		((double)nhits*100.0)/nshots );
+	fprintf(stderr,"%d output rays in %f sec = %f rays/sec\n",
+		npts*npts, utime, (double)(npts*npts/utime) );
 	return(0);
 }
 #ifdef never
