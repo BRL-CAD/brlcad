@@ -33,7 +33,7 @@ display:  display.o
         CC LDFLAGS display.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o display
 
 ir-X:	ir-X.o
-	CC LDFLAGS ir-X.o -L''XLIBDIR -lX11 -o ir-X
+	CC LDFLAGS ir-X.o -L''XLIBDIR -lX11 LIBES -o ir-X
 
 ir-sgi:	ir-sgi.o
 	CC LDFLAGS ir-sgi.o LIBFB_LIBES -o ir-sgi
