@@ -16,7 +16,6 @@ struct dm *Nu_open();
 unsigned Nu_unsign();
 
 struct dm dm_Null = {
-  Nu_open,
   Nu_int0,
   Nu_int0,
   Nu_int0,
@@ -35,8 +34,9 @@ struct dm dm_Null = {
   Nu_int0,
   0,			/* no displaylist */
   PLOTBOUND,
-  "nu", "Null Display",
-  0,
+  "nu",
+  "Null Display",
+  DM_TYPE_NULL,
   0,
   0,
   0,
