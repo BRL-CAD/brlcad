@@ -39,7 +39,8 @@ char *progname = "(noname)";
 char	*file_name;
 
 char usage[] = "\
-Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root} [file.bw]\n";
+Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
+                   -S shift -M and -O or -X xor -t trunc} [file.bw]\n";
 
 #define	ADD	1
 #define MULT	2
@@ -49,6 +50,7 @@ Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root} [file.bw]\n";
 #define AND	6
 #define OR	7
 #define	XOR	8
+#define	TRUNC	9
 #define	BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
 
 int	numop = 0;		/* number of operations */
@@ -66,7 +68,8 @@ register char **argv;
 	register int c;
 	double	d;
 
-	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:" )) != EOF )
+	{
 		switch( c )  {
 		case 'a':
 			op[ numop ] = ADD;
@@ -124,6 +127,10 @@ register char **argv;
 			op[ numop ] = XOR;
 			val[ numop++ ] = atof(optarg);
 			break;
+		case 't':
+			op[ numop ] = TRUNC;
+			val[ numop++ ] = atof(optarg);
+			break;
 		default:		/* '?' */
 			return(0);
 		}
@@ -167,6 +174,7 @@ void mk_trans_tbl()
 			case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
 			case AND : tmp=d; tmp &= (int)val[i]; d=tmp;break;
 			case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
+			case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break;
 			default  : (void)fprintf(stderr, "%s: error in op\n", progname);
 				   exit(-1);
 				   break;
@@ -198,6 +206,7 @@ void mk_char_trans_tbl()
 			case AND : d &= (int)val[i]; break;
 			case OR  : d |= (int)val[i]; break;
 			case XOR : d ^= (int)val[i]; break;
+			case TRUNC: d /= (int)val[i];d *= (int)val[i]; break;
 			default  : (void)fprintf(stderr, "%s: error in op\n", progname);
 				   exit(-1);
 				   break;
