@@ -197,6 +197,7 @@ register CONST struct directory	*dp;
 struct rt_i			*rtip;
 {
 	register struct soltab	*stp;
+	register struct rt_list	*head;
 	register int		i;
 	int			have_match;
 
@@ -205,9 +206,8 @@ struct rt_i			*rtip;
 	have_match = 0;
 	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
 
-	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
-		RT_CK_SOLTAB(stp);		/* sanity */
-
+	head = &(rtip->rti_headsolid);
+	for( RT_LIST_FOR( stp, soltab, head ) )  {
 		/* Leaf solids must be the same before comparing matrices */
 		if( dp != stp->st_dp )  continue;
 
@@ -237,6 +237,7 @@ next_one: ;
 		/*
 		 *  stp now points to re-referenced solid
 		 */
+		RT_CK_SOLTAB(stp);		/* sanity */
 		if( rt_g.debug & DEBUG_SOLIDS )  {
 			rt_log( mat ?
 			    "rt_find_identical_solid:  %s re-referenced\n" :
@@ -260,7 +261,7 @@ next_one: ;
 			stp->st_matp = (matp_t)0;
 		}
 
-		RT_LIST_INSERT( &(rtip->rti_headsolid), &(stp->l) );
+		RT_LIST_INSERT( head, &(stp->l) );
 	}
 
 	RES_RELEASE( &rt_g.res_model );	/* leave critical section */
@@ -443,7 +444,7 @@ int		ncpus;
 
 	if(rt_g.debug&DEBUG_SOLIDS)  {
 		register CONST struct soltab	*stp;
-		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+		for( RT_LIST_FOR( stp, soltab, &(rtip->rti_headsolid) ) )  {
 			RT_CK_SOLTAB(stp);
 			rt_pr_soltab( stp );
 		}
@@ -749,7 +750,7 @@ register CONST char	*name;
 	RT_CHECK_RTI(rtip);
 	c = name[0];
 
-	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+	for( RT_LIST_FOR( stp, soltab, &(rtip->rti_headsolid) ) )  {
 		if( *(cp = stp->st_dp->d_namep) == c  &&
 		    strcmp( cp, name ) == 0 )  {
 			return(stp);
