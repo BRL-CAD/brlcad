@@ -67,12 +67,12 @@ char		*sf_name = DEF_SF_NAME;		/* Name of state file */
 FILE		*outf = stdout;
 char		*def_fmt[] =
 		{
-		    "\"Origin (x,y,z) = ( %.2f, %.2f, %.2f)  (h,v,d) = ( %.2f, %.2f, %.2f)\nDirection (x,y,z) = ( %.4f, %.4f, %.4f)  (az,el) = ( %.2f, %.2f)\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e",
-		    "\"REG_ID   LOS\n\"",
-		    "\"%5d %8.2f\n\" reg_id los",
+		    "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e",
+		    "\"    Region Name               Entry (x y z)           Obliq_in  LOS\n\"",
+		    "\"%-20s (%9.3f %9.3f %9.3f) %8.2f %7.3f\n\" reg_name x_in y_in z_in los obliq_in",
 		    "\"\"",
 		    "\"You missed the target\n\"",
-		    "\"OVERLAP: '%s' and '%s' xyz_in=(%g, %g, %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"
+		    "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"
 		};
 extern double	base2local;
 extern struct application	ap;
