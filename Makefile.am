@@ -1,5 +1,7 @@
 # $Id$
 
+AUTOMAKE_OPTIONS = 1.6
+
 required_dirs = \
 	include \
 	src
