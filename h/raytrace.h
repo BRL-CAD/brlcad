@@ -691,6 +691,27 @@ struct structparse {
 #define FUNC_NULL	((void (*)())0)
 
 /*
+ *			H I S T O G R A M
+ */
+struct histogram  {
+	int		hg_min;		/* minimum value */
+	int		hg_max;		/* maximum value */
+	int		hg_nbins;	/* # of bins in hg_bins[] */
+	int		hg_clumpsize;	/* (max-min+1)/nbins+1 */
+	long		hg_nsamples;	/* total number of samples */
+	long		*hg_bins;	/* array of counters */
+};
+#define RT_HISTOGRAM_TALLY( _hp, _val )	{ \
+	if( (_val) <= (_hp)->hg_min )  { \
+		(_hp)->hg_bins[0]++; \
+	} else if( (_val) >= (_hp)->hg_max )  { \
+		(_hp)->hg_bins[(_hp)->hg_nbins]++; \
+	} else { \
+		(_hp)->hg_bins[((_val)-(_hp)->hg_min)/(_hp)->hg_clumpsize]++; \
+	} \
+	(_hp)->hg_nsamples++;  }
+
+/*
  *			A P P L I C A T I O N
  *
  *  This structure is the only parameter to rt_shootray().
@@ -801,6 +822,9 @@ struct rt_i {
 	int		rti_nsol_by_type[ID_MAXIMUM+1];
 	int		rti_maxsol_by_type;
 	int		rti_air_discards;/* # of air regions discarded */
+	struct histogram rti_hist_cellsize; /* occupancy of cut cells */
+	struct histogram rti_hist_cutdepth; /* depth of cut tree */
+	struct soltab	**rti_Solids;	/* ptrs to soltab [st_bit] */
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x01016580	/* magic # for integrity check */
