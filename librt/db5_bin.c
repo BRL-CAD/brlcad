@@ -396,6 +396,9 @@ rt_binunif_describe( struct bu_vls		*str,
 		bu_vls_strcat( str, "unsigned 32-bit ints\n"); break;
 	    case DB5_MINORTYPE_BINU_64BITINT_U:
 		bu_vls_strcat( str, "unsigned 64-bit ints\n"); break;
+	    default:
+		bu_log("%s:%d: This shouldn't happen", __FILE__, __LINE__);
+		return(1);
 	}
 	bu_made_it();
 	bu_log("str contains: '%s'\n", bu_vls_addr(str));
