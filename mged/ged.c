@@ -106,6 +106,9 @@ extern Tk_Window tkwin;
 /* defined in attach.c */
 extern int mged_slider_link_vars();
 
+/* defined in chgmodel.c */
+extern void set_localunit_TclVar();
+
 extern struct dm dm_Null;
 extern struct _mged_variables default_mged_variables;
 
@@ -489,8 +492,7 @@ char **argv;
 
 	if(classic_mged){
 	  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)STDIN_FILENO, TCL_UNIX_FD),
-				TCL_READABLE, stdin_input,
-				(ClientData)STDIN_FILENO);
+				TCL_READABLE, stdin_input, (ClientData)STDIN_FILENO);
 
 	  (void)signal( SIGINT, SIG_IGN );
 
@@ -2129,6 +2131,8 @@ char	**argv;
 	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 
   bu_vls_free(&vls);
+
+  set_localunit_TclVar();
 
   /* Print title/units information */
   if( interactive )
