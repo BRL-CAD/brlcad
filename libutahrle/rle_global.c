@@ -83,7 +83,11 @@ rle_hdr rle_dflt_hdr = {
     8,				/* cmaplen (log2 of length of color map) */
     NULL,			/* pointer to color map */
     NULL,			/* pointer to comment strings */
+#if defined(stdout)
     stdout,			/* output file */
+#else
+    NULL,			/* In LINUX, now "extern FILE *stdout" */
+#endif
     { 7 }			/* RGB channels only */
     /* Can't initialize the union */
 };
