@@ -1909,7 +1909,7 @@ char	**argv;
 		av[1] = "skt_";
 		Tcl_ResetResult( interp );
 		f_make_name( (ClientData)NULL, interp, 2, av );
-		strcpy( extrude_ip->sketch_name, interp->result );
+		extrude_ip->sketch_name = bu_strdup( interp->result );
 		Tcl_ResetResult( interp );
 		extrude_ip->skt = (struct rt_sketch_internal *)NULL;
 		av[0] = "make";
