@@ -147,15 +147,28 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+
+unsigned char bits[8] = { 128, 64, 32, 16, 8, 4, 2, 1 };
+
 main( argc, argv )
 int argc;
 char **argv;
 {
-	register int	i, c;
+	register int	x;
+	register int	off = 0;
+	register int	on = 255;
+	register int	width;			/* line width in bits */
+	register int	scanbytes;		/* bytes/line (padded to 16 bits) */
+	register int	n;
+	char	buf[4096];
 
 	if ( !get_args( argc, argv ) || (isatty(fileno(stdout)) && (hflag == 0)) ) {
 		(void)fputs(usage, stderr);
 		exit( 1 );
+	}
+	if( inverted ) {
+		off = 255;
+		on = 0;
 	}
 
 	if( !pure )  {
@@ -209,33 +222,26 @@ char **argv;
 	}
 
 	/*  Gobble colormap -- ought to know what to do with it */
-	for( c=0; c<header.ras_maplength; c++)  {
-		(void)getchar();
+	for( x=0; x<header.ras_maplength; x++)  {
+		(void)getc(fp);
 	}
+
+	width = header.ras_width;
+	scanbytes = ((width + 15) & ~15L) / 8;
+	x = 0;
 
 	switch( header.ras_depth )  {
 	case 1:
 		/* 1-bit image */
-		while( !feof(fp) ) {
-			c = getc(fp);
-			if( inverted ) {
-				for( i = 0x80; i > 0; i >>= 1 )
-					if( c & i ) {
-						putchar( 0 );
-						if(pixout){putchar(0);putchar(0);}
-					} else {
-						putchar( 255 );
-						if(pixout){putchar(255);putchar(255);}
-					}
-			} else {
-				for( i = 0x80; i > 0; i >>= 1 )
-					if( c & i ) {
-						putchar( 255 );
-						if(pixout){putchar(255);putchar(255);}
-					} else {
-						putchar( 0 );
-						if(pixout){putchar(0);putchar(0);}
-					}
+		while( n = fread(buf, sizeof(*buf), scanbytes, fp) ) {
+			for( x = 0; x < width; x++ ) {
+				if( buf[x>>3] & bits[x&7] ) {
+					putchar(on);
+					if(pixout){putchar(on);putchar(on);}
+				} else {
+					putchar(off);
+					if(pixout){putchar(off);putchar(off);}
+				}
 			}
 		}
 		break;
