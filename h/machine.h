@@ -170,6 +170,7 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+#define CONST	const
 
 /* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines */
 #define MAX_PSW		8
@@ -298,11 +299,13 @@ typedef long	bitv_t;		/* largest integer type */
 #  define GENPTR_NULL	((genptr_t)0)
 #endif
 
-/* A portable way of handling the ANSI C const keyword */
-#if (__STDC__ || (sgi && mips)) && !defined(CONST)
+/* A portable way of handling the ANSI C const keyword: use CONST */
+#if !defined(CONST)
+# if __STDC__
 #	define	CONST	const
-#else
+# else
 #	define	CONST	/**/
+# endif
 #endif
 
 /*
@@ -313,14 +316,17 @@ typedef long	bitv_t;		/* largest integer type */
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
-/* To aid in using ADB, for now */
-#ifdef lint
-#define HIDDEN	static		/* (nil)|static, for func's local to 1 file */
-#else
-#define HIDDEN	/***/		/* (nil)|static, for func's local to 1 file */
+/* Functions local to one file should be declared HIDDEN:  (nil)|static */
+/* To aid in using ADB, generally leave this as nil. */
+#if !defined(HIDDEN)
+# if defined(lint)
+#	define HIDDEN	static
+# else
+#	define HIDDEN	/***/
+# endif
 #endif
 
-/* some stuff the Utah Raster Toolkit wants */
+/* Some non-ANSI C compilers can take advantage of prototypes.  See above */
 #if __STDC__ && !defined(USE_PROTOTYPES)
 #	define USE_PROTOTYPES 1
 #endif
