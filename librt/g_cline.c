@@ -187,8 +187,14 @@ struct seg		*seghead;
 	}
 
 	cosa = VDOT( rp->r_dir, cline->h );
+        if( cosa > 0.0 )
+               tmp = cosa - 1.0;
+        else
+               tmp = cosa + 1.0;
 
-	if( bn_distsq_line3_line3( dist, cline->V, cline->height, rp->r_pt, rp->r_dir, pt1, pt2 ) )
+	(void) bn_distsq_line3_line3( dist, cline->V, cline->height, rp->r_pt, rp->r_dir, pt1, pt2 );
+
+	if( NEAR_ZERO( tmp, RT_DOT_TOL ) )
 	{
 		/* ray is parallel to CLINE */
 

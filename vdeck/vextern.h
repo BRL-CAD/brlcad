@@ -55,9 +55,9 @@ extern int	tmp_ct;
 
 extern char	*objfile;
 
-extern int	solfd;		extern char	st_file[];
-extern int	regfd;		extern char	rt_file[];
-extern int	ridfd;		extern char	id_file[];
+extern int	solfd;		extern char	*st_file;
+extern int	regfd;		extern char	*rt_file;
+extern int	ridfd;		extern char	*id_file;
 
 extern int	ndir, nns, nnr;
 

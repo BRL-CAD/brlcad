@@ -128,12 +128,15 @@ jmp_buf	env;
 
 /* File names and descriptors.						*/
 char	*objfile;
-FILE	*regfp;		
-char	rt_file[15];
+FILE	*regfp;
+char	*rt_file;
 FILE	*solfp;		
-char	st_file[73];
+char	*st_file;
 FILE	*ridfp;		
-char	id_file[73];
+char	*id_file;
+struct bu_vls rt_vls;
+struct bu_vls st_vls;
+struct bu_vls id_vls;
 
 /* Counters.								*/
 int	nns;		/* Solids.					*/
@@ -224,6 +227,10 @@ char	*argv[];
 {
 	setbuf( stdout, rt_malloc( BUFSIZ, "stdout buffer" ) );
 	RT_LIST_INIT( &(sol_hd.l) );
+
+	bu_vls_init( &rt_vls );
+	bu_vls_init( &st_vls );
+	bu_vls_init( &id_vls );
 
 	if( ! parsArg( argc, argv ) )
 	{
@@ -1297,11 +1304,12 @@ register char *prefix;
 	/* Create file for solid table.					*/
 	if( prefix != 0 )
 	{
-		(void) strncpy( st_file, prefix, 73 );
-		(void) strcat( st_file, ".st" );
+		(void) bu_vls_strcpy( &st_vls, prefix );
+		(void) bu_vls_strcat( &st_vls, ".st" );
 	}
 	else
-		(void) strncpy( st_file, "solids", 7 );
+		(void) bu_vls_strcpy( &st_vls, "solids" );
+	st_file = bu_vls_addr( &st_vls );
 	if( (solfp = fopen( st_file, "w")) == NULL )  {
 		perror( st_file );
 		exit( 10 );
@@ -1327,11 +1335,12 @@ register char *prefix;
 	/* Create file for region table.				*/
 	if( prefix != 0 )
 	{
-		(void) strncpy( rt_file, prefix, 73 );
-		(void) strcat( rt_file, ".rt" );
+		(void) bu_vls_strcpy( &rt_vls, prefix );
+		(void) bu_vls_strcat( &rt_vls, ".rt" );
 	}
 	else
-		(void) strncpy( rt_file, "regions", 8 );
+		(void) bu_vls_strcpy( &rt_vls, "regions" );
+	rt_file = bu_vls_addr( &rt_vls );
 	if( (regfp = fopen( rt_file, "w" )) == NULL )  {
 		perror( rt_file );
 		exit( 10 );
@@ -1341,11 +1350,12 @@ register char *prefix;
 	 */
 	if( prefix != 0 )
 	{
-		(void) strncpy( id_file, prefix, 73 );
-		(void) strcat( id_file, ".id" );
+		(void) bu_vls_strcpy( &id_vls, prefix );
+		(void) bu_vls_strcat( &id_vls, ".id" );
 	}
 	else
-		(void) strncpy( id_file, "region_ids", 11 );
+		(void) bu_vls_strcpy( &id_vls, "region_ids" );
+	id_file = bu_vls_addr( &id_vls );
 	if( (ridfp = fopen( id_file, "w" )) == NULL )  {
 		perror( id_file );
 		exit( 10 );

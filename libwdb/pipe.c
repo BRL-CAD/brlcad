@@ -86,7 +86,7 @@ FILE			*fp;
 char			*name;
 struct wdb_pipept	*headp;
 {
-	struct rt_pipe_internal		pipe;
+	struct rt_pipe_internal		*pipe;
 	int				ret;
 
 	if( rt_pipe_ck( headp ) )
@@ -95,15 +95,16 @@ struct wdb_pipept	*headp;
 		return( 1 );
 	}
 
-	pipe.pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-	BU_LIST_INIT( &pipe.pipe_segs_head );
+	BU_GETSTRUCT( pipe, rt_pipe_internal );
+	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+	BU_LIST_INIT( &pipe->pipe_segs_head );
 	/* "borrow" linked list from caller */
-	BU_LIST_APPEND_LIST( &pipe.pipe_segs_head, &headp->l );
+	BU_LIST_APPEND_LIST( &pipe->pipe_segs_head, &headp->l );
 
-	ret = mk_export_fwrite( fp, name, (genptr_t)&pipe, ID_PIPE );
+	ret = mk_export_fwrite( fp, name, (genptr_t)pipe, ID_PIPE );
 
 	/* "return" linked list to caller */
-	BU_LIST_APPEND_LIST( &headp->l, &pipe.pipe_segs_head );
+	BU_LIST_APPEND_LIST( &headp->l, &pipe->pipe_segs_head );
 	return ret;
 }
 

@@ -419,6 +419,9 @@ struct seg		*seghead;
 		/*
 		 *  RT_BOT_SOLID, RT_BOT_UNORIENTED.
 		 */
+		fastf_t rm_dist;
+		int	removed=0;
+
 		if( nhits == 1 )
 		{
 			/* make a zero length partition */
@@ -448,6 +451,8 @@ struct seg		*seghead;
 				dist = hits[i].hit_dist - hits[i+1].hit_dist;
 				if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) )
 				{
+					removed++;
+					rm_dist = hits[i+1].hit_dist;
 					for( j=i ; j<nhits-1 ; j++ )
 						hits[j] = hits[j+1];
 					nhits--;
@@ -458,6 +463,24 @@ struct seg		*seghead;
 
 		if( nhits == 1 )
 			return( 0 );
+
+		if( nhits&1 && removed ) {
+			/* If we have an odd number of hits and have removed
+			 * a duplicate, then it was likely on an edge, so
+			 * remove the one we left.
+			 */
+			register int j;
+
+			for( i=0 ; i<nhits ; i++ ) {
+				if( hits[i].hit_dist == rm_dist ) {
+					for( j=i ; j<nhits-1 ; j++ )
+						hits[j] = hits[j+1];
+					nhits--;
+					i--;
+					break;
+				}
+			}
+		}
 
 		for( i=0 ; i<(nhits&~1) ; i += 2 )
 		{

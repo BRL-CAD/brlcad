@@ -63,6 +63,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  endif
 #endif
 
+#ifdef linux
+#	include <time.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "rtstring.h"

@@ -53,7 +53,7 @@ fi
 
 FAILED=0
 if [ -x /usr/ucb/mail ] ; then
-	/usr/ucb/mail -s "BUG REPORT" cad-bugs@arl.mil "$USER" < $BUG_REPORT
+	/usr/ucb/mail -s "BUG REPORT" cad-bugs@arl.army.mil "$USER" < $BUG_REPORT
 	if [ $? -eq 0 ] ; then
 		rm -f $BUG_REPORT
 		exit
@@ -65,7 +65,7 @@ if [ -x /usr/ucb/mail ] ; then
 fi
 
 if [ -x /usr/bsd/Mail ] ; then
-	/usr/bsd/Mail -s "BUG REPORT" cad-bugs@arl.mil "$USER" < $BUG_REPORT
+	/usr/bsd/Mail -s "BUG REPORT" cad-bugs@arl.army.mil "$USER" < $BUG_REPORT
 	if [ $? -eq 0 ] ; then
 		rm -f $BUG_REPORT
 		exit
@@ -77,7 +77,7 @@ if [ -x /usr/bsd/Mail ] ; then
 fi
 
 if [ -x /bin/mail ] ; then
-	/bin/mail cad-bugs@arl.mil "$USER" < $BUG_REPORT
+	/bin/mail cad-bugs@arl.army.mil "$USER" < $BUG_REPORT
 	if [ $? -eq 0 ] ; then
 		rm -f $BUG_REPORT
 	else
@@ -88,8 +88,20 @@ if [ -x /bin/mail ] ; then
 	exit
 fi
 
+if [ -x /usr/bin/mail ] ; then
+	/usr/bin/mail cad-bugs@arl.army.mil "$USER" < $BUG_REPORT
+	if [ $? -eq 0 ] ; then
+		rm -f $BUG_REPORT
+	else
+		FAILED=1
+		echo "/usr/bin/mail exited with non-zero status."
+		echo "message file $BUG_REPORT not deleted"
+	fi
+	exit
+fi
+
 if [ $FAILED -eq 1] ; then
-	/bin/echo "Mail delivery failed.  Send file $BUG_REPORT to cad-bugs@arl.mil"
+	/bin/echo "Mail delivery failed.  Send file $BUG_REPORT to cad-bugs@arl.army.mil"
 else
-	/bin/echo "Mail agent not found.  Send file $BUG_REPORT to cad-bugs@arl.mil"
+	/bin/echo "Mail agent not found.  Send file $BUG_REPORT to cad-bugs@arl.army.mil"
 fi

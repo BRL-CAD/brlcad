@@ -678,7 +678,7 @@ char	**argv;
 {
 	register struct directory *dp;
 	struct rt_db_internal	internal;
-	struct rt_arb_internal	arb;
+	struct rt_arb_internal	*arb;
 	int i, j;
 	fastf_t rota, fb;
 	vect_t norm1,norm2,norm3;
@@ -707,14 +707,15 @@ char	**argv;
 	/* get fallback angle */
 	fb = atof( argv[3] ) * degtorad;
 
+	BU_GETSTRUCT( arb, rt_arb_internal );
 	RT_INIT_DB_INTERNAL( &internal );
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
-	internal.idb_ptr = (genptr_t)&arb;
-	arb.magic = RT_ARB_INTERNAL_MAGIC;
+	internal.idb_ptr = (genptr_t)arb;
+	arb->magic = RT_ARB_INTERNAL_MAGIC;
 
 	/* put vertex of new solid at center of screen */
-	VSET( arb.pt[0] , -view_state->vs_toViewcenter[MDX] , -view_state->vs_toViewcenter[MDY] , -view_state->vs_toViewcenter[MDZ] );
+	VSET( arb->pt[0] , -view_state->vs_toViewcenter[MDX] , -view_state->vs_toViewcenter[MDY] , -view_state->vs_toViewcenter[MDZ] );
 
 	/* calculate normal vector defined by rot,fb */
 	norm1[0] = cos(fb) * cos(rota);
@@ -736,17 +737,18 @@ char	**argv;
 	/* the 20x20 faces are in rot,fb plane */
 	VUNITIZE( norm2 );
 	VUNITIZE( norm3 );
-	VJOIN1( arb.pt[1] , arb.pt[0] , 508.0 , norm2 );
-	VJOIN1( arb.pt[3] , arb.pt[0] , -508.0 , norm3 );
-	VJOIN2( arb.pt[2] , arb.pt[0] , 508.0 , norm2 , -508.0 , norm3 );
+	VJOIN1( arb->pt[1] , arb->pt[0] , 508.0 , norm2 );
+	VJOIN1( arb->pt[3] , arb->pt[0] , -508.0 , norm3 );
+	VJOIN2( arb->pt[2] , arb->pt[0] , 508.0 , norm2 , -508.0 , norm3 );
 	for( i=0 ; i<4 ; i++ )
-		VJOIN1( arb.pt[i+4] , arb.pt[i] , -50.8 , norm1 );
+		VJOIN1( arb->pt[i+4] , arb->pt[i] , -50.8 , norm1 );
 
 	/* no interrupts */
 	(void)signal( SIGINT, SIG_IGN );
 
 	if( (dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
+		rt_db_free_internal( &internal );
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 		return TCL_ERROR;
 	}
