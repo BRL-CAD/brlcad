@@ -252,6 +252,13 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
 		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
 
+	/* Exterior radius is r1+r2;  rescale A and B here */
+	f = r1+r2;
+	VUNITIZE( A );
+	VSCALE( A, A, f );
+	VUNITIZE( B );
+	VSCALE( B, B, f );
+
 	/* There are 8 corners to the enclosing RPP;  find max and min */
 	VADD3( temp, tor->tor_V, B, Hv );
 	VADD2( work, temp, A ); MM( work );	/* V + A + B + Hv */
