@@ -274,10 +274,12 @@ struct	xinfo {
 				/* Note: values below are in preference order*/
 #define FLG_VD24        0x01	/* 24-bit DirectColor */
 #define FLG_VT24        0x02	/* 24-bit TrueColor */
-#define FLG_VP8         0x03	/* 8-bit PseudoColor */
-#define FLG_VS8         0x04	/* 8-bit StaticGray */
-#define FLG_VG8		0x05	/* 8-bit GrayScale */
-#define FLG_VS1         0x06	/* 1-bit StaticGray */
+#define FLG_VD16        0x03	/* 16-bit DirectColor */
+#define FLG_VT16        0x04	/* 16-bit TrueColor */
+#define FLG_VP8         0x05	/* 8-bit PseudoColor */
+#define FLG_VS8         0x06	/* 8-bit StaticGray */
+#define FLG_VG8		0x07	/* 8-bit GrayScale */
+#define FLG_VS1         0x08	/* 1-bit StaticGray */
 
 #define FLG_LINCMAP	0x10	/* We're using a linear colormap */
 #define FLG_XCMAP	0x20	/* The X server can do colormapping for us */
@@ -1384,6 +1386,20 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 			break;
 		}
 		/*FALLTHROUGH*/
+	case FLG_VD16:
+		if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 16, DirectColor,
+		    &visinfo)) {
+			xi->xi_flags |= FLG_XCMAP | FLG_VD16;
+			break;
+		}
+		/*FALLTHROUGH*/
+	case FLG_VT16:
+		if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 16, TrueColor,
+		    &visinfo)) {
+			xi->xi_flags |= FLG_VT16;
+			break;
+		}
+		/*FALLTHROUGH*/
 	case FLG_VP8:
 		if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 8, PseudoColor,
 		    &visinfo)) {
@@ -1433,6 +1449,27 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 		break;
 
 	case FLG_VT24:
+		/*
+		 * We need this colormap, even though we're not really going to
+		 * use it, because if we don't specify a colormap when we
+		 * create the window (thus getting the default), and the
+		 * default visual is not 24-bit, the window create will fail.
+		 */
+
+		xi->xi_cmap = XCreateColormap(xi->xi_dpy, RootWindow(xi->xi_dpy,
+			xi->xi_screen), xi->xi_visual, AllocNone);
+		xi->xi_wp = 0xFFFFFF;
+		xi->xi_bp = 0x000000;
+		break;
+
+	case FLG_VD16:
+		xi->xi_cmap = XCreateColormap(xi->xi_dpy, RootWindow(xi->xi_dpy,
+			xi->xi_screen), xi->xi_visual, AllocAll);
+		xi->xi_wp = 0xFFFFFF;
+		xi->xi_bp = 0x000000;
+		break;
+
+	case FLG_VT16:
 		/*
 		 * We need this colormap, even though we're not really going to
 		 * use it, because if we don't specify a colormap when we
@@ -1752,6 +1789,19 @@ printf("Creating window\n");
 			 sizeof(unsigned int) * 8, 0);
 		break;
 
+	case FLG_VD16:
+	case FLG_VT16:
+	  if ((xi->xi_pix = (unsigned char *) calloc(2, width*height)) == NULL) {
+			fb_log("X24_open: pix32 malloc failed\n");
+			return(-1);
+		}
+
+		xi->xi_image = XCreateImage(xi->xi_dpy,
+			xi->xi_visual, xi->xi_depth, ZPixmap, 0,
+			(char *) xi->xi_pix, width, height,
+			16, 0);
+		break;
+
 	case FLG_VP8:
 	case FLG_VS8:
 	case FLG_VG8:
@@ -2011,6 +2061,23 @@ int width, height;
 				xi->xi_depth, ZPixmap, 0, (char *) xi->xi_pix,
 				xi->xi_xwidth, xi->xi_xheight,
 				sizeof (unsigned int) * 8, 0);
+
+    break;
+  case FLG_VD16:
+  case FLG_VT16:
+    /* Destroy old image struct and image buffer */
+    XDestroyImage(xi->xi_image);
+
+    /* Make new buffer and new image */
+    if ((xi->xi_pix = (unsigned char *)calloc( 2, xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+      fb_log("X24: pix32 malloc failed in resize!\n");
+      return;
+    }
+
+    xi->xi_image = XCreateImage(xi->xi_dpy, xi->xi_visual,
+				xi->xi_depth, ZPixmap, 0, (char *) xi->xi_pix,
+				xi->xi_xwidth, xi->xi_xheight,
+				16, 0);
 
     break;
   case FLG_VP8:
@@ -2685,6 +2752,7 @@ printf("blit: postclip (%d, %d) to (%d, %d) wds (%d, %d) hts (%d, %d)\n",
 
 #if BLIT_DBG
 printf("blit: output to (%d, %d)\n", ox, oy);
+printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 #endif
 
 	/*
@@ -2965,6 +3033,247 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 				while (pyht--) {
 					memcpy(opix, prev_line, copied);
 					opix -= xi->xi_xwidth;
+				}
+			}
+		}
+		break;
+	}
+
+	case FLG_VD16:
+	case FLG_VT16:
+	{
+		unsigned char *irgb;
+		unsigned char *opix;
+
+		opix = (unsigned char *)&(xi->xi_pix[(oy * xi->xi_xwidth + ox) * 2]);
+
+		irgb = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) * sizeof(RGBpixel)]);
+
+		if (ifp->if_xzoom == 1 && ifp->if_yzoom == 1) {
+			/* Special case if no zooming */
+
+			int j, k;
+
+			for (j = y2 - y1 + 1; j; j--) {
+				unsigned char *line_irgb;
+				unsigned char *p;
+
+				line_irgb = irgb;
+				p = (unsigned char *)opix;
+
+				/* For each line, convert/copy pixels */
+
+				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))  {
+					if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+						if( xi->xi_visual->red_mask & 0xFF)  {
+							DEBUG1("FB1a\n")
+							for (k = x2 - x1 + 1; k; k--) {
+		 						*p++ = (line_irgb[BLU]>>3) | ((line_irgb[GRN]>>2)<<5);
+								*p++ = (line_irgb[GRN]>>5) | ((line_irgb[RED]>>3)<<3);
+								line_irgb += sizeof (RGBpixel);
+							}
+						} else {
+							DEBUG1("FB1b\n")
+							for (k = x2 - x1 + 1; k; k--) {
+								*p++ = (line_irgb[RED]>>3) | ((line_irgb[GRN]>>2)<<5);
+								*p++ = (line_irgb[GRN]>>5) | ((line_irgb[BLU]>>3)<<5);
+								line_irgb += sizeof (RGBpixel);
+							}
+						}
+					} else {
+						if( xi->xi_visual->red_mask & 0xFF)  {
+							DEBUG1("FB1c\n")
+							for (k = x2 - x1 + 1; k; k--) {
+								*p++ = (line_irgb[RED]>>3) | ((line_irgb[GRN]>>2)<<5);
+								*p++ = (line_irgb[GRN]>>5) | ((line_irgb[BLU]>>3)<<5);
+								line_irgb += sizeof (RGBpixel);
+							}
+						} else {
+							DEBUG1("FB1d 16 bit\n")
+							for (k = x2 - x1 + 1; k; k--) {
+		 						*p++ = (line_irgb[BLU]>>3) | ((line_irgb[GRN]>>2)<<5);
+								*p++ = (line_irgb[GRN]>>5) | ((line_irgb[RED]>>3)<<3);
+								line_irgb += sizeof (RGBpixel);
+							}
+						}
+					}
+				} else {
+					unsigned char *red = xi->xi_redmap;
+					unsigned char *grn = xi->xi_grnmap;
+					unsigned char *blu = xi->xi_blumap;
+
+					if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+						if( xi->xi_visual->red_mask & 0xFF)  {
+							DEBUG1("FB2a\n")
+							for (k = x2 - x1 + 1; k; k--) {
+		 						*p++ = (blu[line_irgb[BLU]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
+								*p++ = (grn[line_irgb[GRN]]>>5) | ((red[line_irgb[RED]]>>3)<<3);
+								line_irgb += sizeof (RGBpixel);
+							}
+						} else {
+							DEBUG1("FB2b\n")
+							for (k = x2 - x1 + 1; k; k--) {
+								*p++ = (red[line_irgb[RED]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
+								*p++ = (grn[line_irgb[GRN]]>>5) | ((blu[line_irgb[BLU]]>>3)<<5);
+								line_irgb += sizeof (RGBpixel);
+							}
+						}
+					} else {
+						if( xi->xi_visual->red_mask & 0xFF)  {
+							DEBUG1("FB2c\n")
+							for (k = x2 - x1 + 1; k; k--) {
+								*p++ = (red[line_irgb[RED]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
+								*p++ = (grn[line_irgb[GRN]]>>5) | ((blu[line_irgb[BLU]]>>3)<<5);
+								line_irgb += sizeof (RGBpixel);
+							}
+						} else {
+							DEBUG1("FB2d\n")
+							for (k = x2 - x1 + 1; k; k--) {
+		 						*p++ = (blu[line_irgb[BLU]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
+								*p++ = (grn[line_irgb[GRN]]>>5) | ((red[line_irgb[RED]]>>3)<<3);
+								line_irgb += sizeof (RGBpixel);
+							}
+						}
+					}
+				}
+				irgb += xi->xi_iwidth * sizeof (RGBpixel);
+				opix -= xi->xi_xwidth * 2;
+			}
+		} else {
+			/* General case, zooming in effect */
+
+			for (y = y1; y <= y2; y++) {
+				int pyht;
+				int copied;
+				unsigned char *line_irgb;
+				unsigned char  *prev_line;
+				unsigned char *p;
+
+				/* Calculate # lines needed */
+
+				if (y == y1)
+					pyht = y1ht;
+				else if (y == y2)
+					pyht = y2ht;
+				else
+					pyht = ifp->if_yzoom;
+
+
+				/* Save pointer to start of line */
+
+				line_irgb = irgb;
+				prev_line = opix;
+				p = (unsigned char *)opix;
+
+				/* For the first line, convert/copy pixels */
+
+				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))  {
+					for (x = x1; x <= x2; x++) {
+							int pxwd;
+
+						/* Calculate # pixels needed */
+
+						if (x == x1)
+							pxwd = x1wd;
+						else if (x == x2)
+							pxwd = x2wd;
+						else
+							pxwd = ifp->if_xzoom;
+
+						/* Make as many copies as needed */
+						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+							if( xi->xi_visual->red_mask & 0xFF)  {
+								DEBUG1("FB3a\n")
+								while (pxwd--)   {
+			 						*p++ = (line_irgb[BLU]>>3) | ((line_irgb[GRN]>>2)<<5);
+									*p++ = (line_irgb[GRN]>>5) | ((line_irgb[RED]>>3)<<3);
+								}
+							} else {
+								DEBUG1("FB3b\n")
+								while (pxwd--)   {
+									*p++ = (line_irgb[RED]>>3) | ((line_irgb[GRN]>>2)<<5);
+									*p++ = (line_irgb[GRN]>>5) | ((line_irgb[BLU]>>3)<<5);
+								}
+							}
+						} else {
+							if( xi->xi_visual->red_mask & 0xFF)  {
+								DEBUG1("FB3c\n")
+								while (pxwd--)   {
+									*p++ = (line_irgb[RED]>>3) | ((line_irgb[GRN]>>2)<<5);
+									*p++ = (line_irgb[GRN]>>5) | ((line_irgb[BLU]>>3)<<5);
+								}
+							} else {
+								DEBUG1("FB3d\n")
+								while (pxwd--)   {
+			 						*p++ = (line_irgb[BLU]>>3) | ((line_irgb[GRN]>>2)<<5);
+									*p++ = (line_irgb[GRN]>>5) | ((line_irgb[RED]>>3)<<3);
+								}
+							}
+						}
+						line_irgb += sizeof (RGBpixel);
+					}
+				} else {
+					unsigned char *red = xi->xi_redmap;
+					unsigned char *grn = xi->xi_grnmap;
+					unsigned char *blu = xi->xi_blumap;
+
+					for (x = x1; x <= x2; x++) {
+						int pxwd;
+
+						/* Calculate # pixels needed */
+
+						if (x == x1)
+							pxwd = x1wd;
+						else if (x == x2)
+							pxwd = x2wd;
+						else
+							pxwd = ifp->if_xzoom;
+
+
+						/* Make as many copies as needed */
+						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+							if( xi->xi_visual->red_mask & 0xFF)  {
+								DEBUG1("FB4a\n")
+								while (pxwd--)  {
+			 						*p++ = (blu[line_irgb[BLU]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
+									*p++ = (grn[line_irgb[GRN]]>>5) | ((red[line_irgb[RED]]>>3)<<3);
+								}
+							} else {
+								DEBUG1("FB4b\n")
+								while (pxwd--)  {
+									*p++ = (red[line_irgb[RED]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
+									*p++ = (grn[line_irgb[GRN]]>>5) | ((blu[line_irgb[BLU]]>>3)<<5);
+								}
+							}
+						} else {
+							if( xi->xi_visual->red_mask & 0xFF)  {
+								DEBUG1("FB4c\n")
+								while (pxwd--)  {
+									*p++ = (red[line_irgb[RED]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
+									*p++ = (grn[line_irgb[GRN]]>>5) | ((blu[line_irgb[BLU]]>>3)<<5);
+								}
+							} else {
+								DEBUG1("FB4d\n")
+								while (pxwd--)  {
+			 						*p++ = (blu[line_irgb[BLU]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
+									*p++ = (grn[line_irgb[GRN]]>>5) | ((red[line_irgb[RED]]>>3)<<3);
+								}
+							}
+						}
+						line_irgb += sizeof (RGBpixel);
+					}
+				}
+				copied = p - (unsigned char *)opix;	/* bytes */
+
+				irgb += xi->xi_iwidth * sizeof (RGBpixel);
+				opix -= xi->xi_xwidth * 2;
+
+				/* Copy remaining output lines from 1st output line */
+
+				pyht--;
+				while (pyht--) {
+					memcpy(opix, prev_line, copied);
+					opix -= xi->xi_xwidth * 2;
 				}
 			}
 		}
