@@ -1,5 +1,5 @@
 .\" $Header$
-.\"	groff -ms install.doc | print-postscript
+.\"	groff -t -ms install.doc | print-postscript
 .TL
 Installing the BRL-CAD Package
 .br
@@ -138,7 +138,7 @@ _
 fx	Alliant FX/8, /80	Concentrix 3.0, 4.0	net	-
 fy	Alliant FX/2800	Concentrix 5	net	-
 c1	Convex C1	UNIX 6.2.32.2	net	-
-xmp	Cray X-MP,Y-MP,C-90	UNICOS 7	net,X11	X11
+xmp	Cray X-MP,Y-MP,C-90	UNICOS 8	net,X11	X11
 cr2	Cray-2	UNICOS 7	net,X11	X11
 alpha	DEC Alpha	OSF/1 V3.0	net,X11	X11
 vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	adage, net	-
@@ -150,9 +150,11 @@ bsdi	IBM PC	BSDI	net,X11	X11
 6d	SGI 4D/TFP	Irix 6	sgi,net,X11	X11
 sun3	Sun-3/*	SunOS 4.1.X	net,X11	X11
 sun4	Sun-4/*	SunOS 4.1.X	net,X11	X11
-sun5	Sun-4/* SunOS 5.3,5.4	net,X11	X11,xgl
+sun5	Sun-4/*	SunOS 5.3,5.4	net,X11	X11,xgl
 ibm	RS/6000	AIX	net,X11	X11
 .TE
+For high-performance graphics, the SGI and Sun (GX) platforms
+work best.
 .IP b)
 With slight modifications to the configuration files, these
 additional hardware/software configurations can be easily supported.
@@ -236,12 +238,13 @@ The BRL-CAD Package is distributed in source code form only,
 so you will need enough space to simultaneously store
 the source material, documentation, binary files, and test images.
 .PP
-The TAR archive of the source materials requires about 35 MBytes.
-You will need about 250 MBytes of free space to compile in. On an SGI
+The TAR archive of the source materials requires about 48 MBytes.
+You will need about 350 MBytes of free space to compile in. On an SGI
 Irix 4.0.5 system, the installed /usr/brlcad tree requires 165 MBytes.
 On an SGI Irix 5.2 system, the installed /usr/brlcad tree requires only
 21 MBytes.  On a Sun-4 system, the installed /usr/brlcad tree requires
-only 20 MBytes.
+only 20 MBytes.  On a BSDI system, the installed /usr/brlcad tree requires
+300 MBytes (not a typo).
 On a DEC Alpha system, the installed /usr/brlcad tree requires 26 MBytes.
 The difference is due to the availability of shared
 library support in the later operating systems.
