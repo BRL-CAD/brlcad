@@ -4,7 +4,8 @@ libwdb \- library for procedural generation of MGED databases
 .SH SYNOPSIS
 .nf
 \fB#include ``machine.h''
-\fB#include ``vmath.h"''
+\fB#include ``vmath.h''
+\fB#include ``wdb.h''
 .sp
 mk_id( fp, title )
 FILE	*fp;
@@ -83,6 +84,14 @@ char	*name;
 point_t	base;
 vect_t	height;
 fastf_t	radius;
+.sp
+mk_pipe( fp, name headp )
+FILE	*fp;
+char	*name;
+struct wdb_pipept *headp;
+.sp
+mk_pipe_free( headp )
+struct wdb_pipept	*headp;
 .sp
 mk_comb( fp, name, len, region, matname, matparm, rgb, inherit )
 FILE	*fp;
@@ -246,6 +255,22 @@ with height vector ``height'' which is perpendicular to
 the two end plates, the length of which defines the location of
 the top plate.
 The radius given as ``radius'' defines the size of the end plates.
+.PP
+.I mk_pipe
+creates a ``pipe'' solid with the specified ``name'' and writes it to the
+file ``fp''.  The user must provide a linked list of ``pipe''
+segments headed by ``headp''.  Each pipe segment includes fields indicating a
+``control'' point for the pipe, an inner diameter, an outer diameter and a bend radius.
+The inner diameter must be less than the outer diameter, and a zero innner diameter
+creates a solid wire rather than a hollow pipe.  The pipe is constructed along straight
+lines through successive points, with circular bends (of the indicated radius) connecting
+the straight sections. The bend radius must be greater than the outer radius. The user
+is responsible for freeing the memory used by the list of pipe segments (see
+.I mk_pipe_free()
+below.
+.PP
+.I mk_pipe_free
+will free the memory used by a linked list of pipe segments.
 .PP
 .I mk_comb\^
 defines a combination of name ``name'', with material properties
