@@ -802,7 +802,7 @@ VPRINT("left", rs.left);
 	}
 
 	if( rs.state != NMG_STATE_OUT )  {
-		rt_log("ERROR nmg_face_combine() ended in state %s?\n",
+		rt_log("ERROR nmg_face_combine() ended in state '%s'?\n",
 			nmg_state_names[rs.state] );
 	}
 
@@ -1140,6 +1140,7 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 		NMG_CK_VERTEXUSE(prev_vu);
 		prev_lu = nmg_lu_of_vu( prev_vu );
 		NMG_CK_LOOPUSE(prev_lu);
+
 		if( lu->l_p == prev_lu->l_p )  {
 			/* Same loop, cut into two */
 if(rt_g.NMG_debug&DEBUG_COMBINE)
@@ -1152,34 +1153,21 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 }
 			break;
 		}
-		/* Different loops, join into one. */
 		/*
-		 *  If the edge from prev_vu to vu is already
-		 *  in both loops, use nmg_jl().
+		 *  prev_vu and vu are in different loops,
+		 *  join the two loops into one loop.
+		 *  No edgeuses are deleted at this stage,
+		 *  so some "snakes" may appear in the process.
 		 */
-		eu = nmg_eu_with_vu_in_lu( lu, vu );
-		/* XXX Need better check.  If prev_lu is found around
-		 * this edge, but is not "first hop" radial in both
-		 * directions, can not do any joining,
-		 * and need to go to state = out_internal if new_state=out.
-		 * (as opposed to out_external).
-		 */
-		if( eu->radial_p->up.lu_p == prev_lu &&
-		    eu->eumate_p->radial_p->up.lu_p == prev_lu )  {
-			if(rt_g.NMG_debug&DEBUG_COMBINE)
-				rt_log("using nmg_jl( lu=x%x, eu=x%x\n", lu, eu );
-			nmg_jl( lu, eu );
-#if 0
-rt_log("After nmg_jl, before nmg_kill_snakes: ");
-nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
-			/* nmg_kill_snakes( lu ); */
-#endif
-		} else {
-			nmg_join_2loops( prev_vu, vu );
-			/* update vu[pos], as it will have changed. */
-			rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse,
-				prev_vu->up.eu_p)->vu_p;
-		}
+if(rt_g.NMG_debug&DEBUG_COMBINE)
+rt_log("nmg_join_2loops(prev_vu=x%x, vu=x%x)\n", prev_vu, vu);
+
+		nmg_join_2loops( prev_vu, vu );
+
+		/* update vu[pos], as it will have changed. */
+		rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse,
+			prev_vu->up.eu_p)->vu_p;
+
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After JOIN, the final loop: ");
 			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
