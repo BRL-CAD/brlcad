@@ -67,7 +67,7 @@ proc do_camo {  shade_var id } {
 	entry $shader_params($id,window).fr.lacun_e -width 5 -textvariable shader_params($id,lacun)
 	bind $shader_params($id,window).fr.lacun_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.lacun "Lacunarity" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -78,7 +78,7 @@ proc do_camo {  shade_var id } {
 		{range "Must be greater than zero"}
 	}
 	hoc_register_data $shader_params($id,window).fr.lacun_e "Lacunarity" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -93,29 +93,29 @@ proc do_camo {  shade_var id } {
 	entry $shader_params($id,window).fr.h_e -width 5 -textvariable shader_params($id,hval)
 	bind $shader_params($id,window).fr.h_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.h "H Value" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
 			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
-		{description "The value for H (default is 1.0)"}
-		{range "??"}
+		{description "Larger values mean additional octaves have less effect"}
+		{range "At least 1.0 (default is 1.0)"}
 	}
 	hoc_register_data $shader_params($id,window).fr.h_e "H Value" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
 			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
-		{description "The value for H (default is 1.0)"}
-		{range "??"}
+		{description "Larger values mean additional octaves have less effect"}
+		{range "At least 1.0 (default is 1.0)"}
 	}
 
 	label $shader_params($id,window).fr.octaves -text "Octaves"
 	entry $shader_params($id,window).fr.octaves_e -width 5 -textvariable shader_params($id,octaves)
 	bind $shader_params($id,window).fr.octaves_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.octaves "Octaves" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -125,7 +125,7 @@ proc do_camo {  shade_var id } {
 		{range "Must be greater than 0 (default is  4.0)"}
 	}
 	hoc_register_data $shader_params($id,window).fr.octaves_e "Octaves" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -139,7 +139,7 @@ proc do_camo {  shade_var id } {
 	entry $shader_params($id,window).fr.size_e -width 5 -textvariable shader_params($id,size)
 	bind $shader_params($id,window).fr.size_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.size "Noise Size" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -148,7 +148,7 @@ proc do_camo {  shade_var id } {
 		{range "must be greater than zero"}
 	}
 	hoc_register_data $shader_params($id,window).fr.size_e "Noise Size" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -161,21 +161,23 @@ proc do_camo {  shade_var id } {
 	entry $shader_params($id,window).fr.scale_e -width 20 -textvariable shader_params($id,scale)
 	bind $shader_params($id,window).fr.scale_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.scale "Noise Scale" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
 			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
-		{description "Three scale values are required (X, Y, and Z)."}
+		{description "Three scale values are required (X, Y, and Z). These values\n\
+			allow scaling the noise pattern non-uniformly"}
 		{range "Must be greater than 0 Default values are (1.0 1.0 1.0)"}
 	}
 	hoc_register_data $shader_params($id,window).fr.scale_e "Noise Scale" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
 			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
-		{description "Three scale values are required (X, Y, and Z)."}
+		{description "Three scale values are required (X, Y, and Z). These values\n\
+			allow scaling the noise pattern non-uniformly"}
 		{range "Must be greater than 0 Default values are (1.0 1.0 1.0)"}
 	}
 
@@ -186,7 +188,7 @@ proc do_camo {  shade_var id } {
 		 shader_params $id,c1"\
 		12 $shader_params($id,c1)
 	hoc_register_data $shader_params($id,window).fr.c1 "Color #1" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -202,7 +204,7 @@ proc do_camo {  shade_var id } {
 		 shader_params $id,c2"\
 		12 $shader_params($id,c2)
 	hoc_register_data $shader_params($id,window).fr.c2 "Background Color" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -218,7 +220,7 @@ proc do_camo {  shade_var id } {
 		 shader_params $id,c3"\
 		12 $shader_params($id,c3)
 	hoc_register_data $shader_params($id,window).fr.c3 "Color #2" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -231,7 +233,7 @@ proc do_camo {  shade_var id } {
 	entry $shader_params($id,window).fr.t1_e -width 5 -textvariable  shader_params($id,t1)
 	bind $shader_params($id,window).fr.t1_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.t1 "Noise Scale" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -240,8 +242,8 @@ proc do_camo {  shade_var id } {
 			will be colored using color #1"}
 		{range " -1.0 to +1.0 (default is -0.25)"}
 	}
-	hoc_register_data $shader_params($id,window).fr.t1_e "Noise Scale" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+	hoc_register_data $shader_params($id,window).fr.t1_e "Threshold #1" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -255,31 +257,31 @@ proc do_camo {  shade_var id } {
 	entry $shader_params($id,window).fr.t2_e -width 5 -textvariable  shader_params($id,t2)
 	bind $shader_params($id,window).fr.t2_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.t2 "Noise Scale" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
 			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
 		{description "Areas where the noise function returns a value greater than this threshold\n\
-			will be colored using color #2 (default is 0.25)"}
-		{range " -1.0 to +1.0"}
+			will be colored using color #2"}
+		{range " -1.0 to +1.0 (default is 0.25)"}
 	}
-	hoc_register_data $shader_params($id,window).fr.t2_e "Noise Scale" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+	hoc_register_data $shader_params($id,window).fr.t2_e "Threshold #2" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
 			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
 		{description "Areas where the noise function returns a value greater than this threshold\n\
-			will be colored using color #2 (default is 0.25)"}
-		{range " -1.0 to +1.0"}
+			will be colored using color #2"}
+		{range " -1.0 to +1.0 (default is 0.25)"}
 	}
 
 	label $shader_params($id,window).fr.delta -text "Noise Delta (X, Y, Z)"
 	entry $shader_params($id,window).fr.delta_e -width 20  -textvariable shader_params($id,delta)
 	bind $shader_params($id,window).fr.delta_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.delta "Noise Delta" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -288,7 +290,7 @@ proc do_camo {  shade_var id } {
 			Default values are (1000.0 1000.0 1000.0)" }
 	}
 	hoc_register_data $shader_params($id,window).fr.delta_e "Noise Delta" {
-		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
 			on the object using a fractal noise pattern. This is a procedural shader\n\
 			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
 			The fractal noise function produces a pseudo-random number in the range\n\
@@ -1644,6 +1646,10 @@ proc stack_add { shader shade_var id } {
 			set_camo_defaults "$id,stk_$index"
 			set tmp_win [do_camo $shade_var $id,stk_$index]
 		}
+		air {
+			set_air_defaults "$id,stk_$index"
+			set tmp_win [do_air $shade_var $id,stk_$index]
+		}
 		default {
 			set_unknown_defaults "$id,stk_$index"
 			set tmp_win [do_unknown $shade_var $id,stk_$index]
@@ -1721,6 +1727,10 @@ proc stack_insert { index shader shade_var id } {
 		prj {
 			set_prj_defaults "$id,stk_$index"
 			set tmp_win [do_prj $shade_var $id,stk_$index]
+		}
+		air {
+			set_air_defaults "$id,stk_$index"
+			set tmp_win [do_air $shade_var $id,stk_$index]
 		}
 		default {
 			set_unknown_defaults "$id,stk_$index"
@@ -1867,6 +1877,8 @@ proc do_stack { shade_var id } {
 	$shader_params($id,window).fr.add.m add command \
 		-label projection -command "stack_add prj $shade_var $id; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
+		-label air -command "stack_add air $shade_var $id; do_shader_apply $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
 		-label testmap -command "stack_add testmap $shade_var $id; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
 		-label Unknown -command "stack_add unknown $shade_var $id; do_shader_apply $shade_var $id"
@@ -1952,6 +1964,10 @@ proc env_select { shader shade_var id } {
 		camo {
 			set_camo_defaults "$id,env"
 			set tmp_win [do_camo $shade_var $id,env]
+		}
+		air {
+			set_air_defaults "$id,env"
+			set tmp_win [do_air $shade_var $id,env]
 		}
 		default {
 			set_unknown_defaults "$id,env"
@@ -2286,6 +2302,103 @@ proc set_unknown_defaults { id } {
 	return
 }
 
+proc do_air { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shader_str
+
+	catch { destroy $shader_params($id,window).fr }
+	frame $shader_params($id,window).fr
+
+	label $shader_params($id,window).fr.density -text "Density"
+	entry $shader_params($id,window).fr.density_e -width 5 -textvariable shader_params($id,density)
+	bind $shader_params($id,window).fr.density_e <KeyRelease> "do_shader_apply $shade_var $id"
+
+	hoc_register_data $shader_params($id,window).fr.density "Density" {
+		{summary "The 'air' shader implements Beer's law to produce realistic\n\
+			fog or haze"}
+		{description "The 'density' (optical density) is the fraction of energy\n\
+			 scattered or absorbed per meter"}
+		{range "non-negative (default is 0.1)"}
+	}
+	hoc_register_data $shader_params($id,window).fr.density_e "Density" {
+		{summary "The 'air' shader implements Beer's law to produce realistic\n\
+			fog or haze"}
+		{description "The 'density' (optical density) is the fraction of energy\n\
+			 scattered or absorbed per meter"}
+		{range "non-negative (default is 0.1)"}
+	}
+
+	set_air_values $shader_str $id
+
+	grid $shader_params($id,window).fr.density -row 0 -column 0 -sticky e
+	grid $shader_params($id,window).fr.density_e -row 0 -column 1 -sticky w
+
+	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
+
+	return $shader_params($id,window).fr
+}
+
+proc set_air_values { shader_str id } {
+	global shader_params
+
+	set shader_params($id,density) ""
+
+	if { [llength $shader_str] > 1 } then {
+		set params [lindex $shader_str 1]
+	} else {
+		set params ""
+	}
+
+	set err [catch {set list_len [llength $params]}]
+	if { $err } {set list_len 0}
+	if { $list_len > 1 } then {
+		for { set index 0 } { $index < $list_len } { set index [expr $index + 2] } {
+			set key [lindex $params $index]
+			set value [lindex $params [expr $index + 1]]
+
+			switch $key {
+				dpm { catch {
+						if { $value != $shader_params($id,def_density) } then {
+							set $shader_params($id,dennsity) $value
+						}
+					}
+				}
+				delta -
+				d { catch {
+						if { $value != $shader_params($id,def_density) } then {
+							set $shader_params($id,dennsity) $value
+						}
+					}
+				}
+
+			}
+		}
+	}
+}
+
+proc do_air_apply { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shade_str
+
+	set params ""
+
+	if { [string length $shader_params($id,density) ] > 0 } then {
+		if { $shader_params($id,density) != $shader_params($id,def_density) } then {
+			lappend params dpm $shader_params($id,density)
+		}
+	}
+
+	set shade_str [list air $params]
+}
+
+proc set_air_defaults { id } {
+	global shader_params
+
+	set shader_params($id,def_density) 0.1
+	set shader_params($id,def_scale) 1.0
+	set shader_params($id,def_delta) 0.0
+}
+
 # This proc is called whenever the user types in the main 'shader' entry widget
 proc set_shader_params { shade_var id } {
 	upvar #0 $shade_var shade_str
@@ -2341,6 +2454,9 @@ proc set_shader_params { shade_var id } {
 			}
 			camo {
 				set_camo_values $shade_str $id
+			}
+			air {
+				aet_air_values $shade_str $id
 			}
 			default {
 				set_unknown_values $shade_str $id
@@ -2422,6 +2538,10 @@ proc do_shader { shade_var id frame_name } {
 				set_camo_defaults $id
 				set my_win [do_camo $shade_var $id]
 			}
+			air {
+				set_air_defaults $id
+				set my_win [do_air $shade_var $id]
+			}
 			default {
 				set_unknown_defaults $id
 				set my_win [do_unknown $shade_var $id]
@@ -2480,6 +2600,9 @@ proc do_shader_apply { shade_var id } {
 		camo {
 			do_camo_apply $shade_var $id
 		}
+		air {
+			do_air_apply $shade_var $id
+		}
 		default {
 			do_unknown_apply $shade_var $id
 		}
@@ -2501,6 +2624,7 @@ proc is_good_shader { shader } {
 		cloud -
 		prj -
 		camo -
+		air -
 		testmap { return 1 }
 		default { return 0 }
 	}
