@@ -208,7 +208,6 @@ char **argv;
 {
 
 	struct directory *dp;
-	struct bu_external external,new_ext;
 	struct rt_db_internal internal,new_int;
 	mat_t	start_mat;
 	int	id;
@@ -280,33 +279,22 @@ char **argv;
 		endpos = argc - 2;
 	}
 
+	objpos = endpos - 1;
+
 	/* Make sure that final component in path is a solid */
-	BU_INIT_EXTERNAL( &external );
-	if( db_get_external( &external , obj[endpos-1] , dbip ) )
+	if( (id = rt_db_get_internal( &internal, obj[endpos - 1], dbip, identity, &rt_uniresource )) < 0 )
 	{
-	  db_free_external( &external );
-	  (void)signal( SIGINT, SIG_IGN );
-	  TCL_READ_ERR_return;
-	}
-	BU_CK_EXTERNAL( &external );
-
-	if( (id=rt_id_solid( &external )) == ID_NULL )
-	{
-	  Tcl_AppendResult(interp, "Final name in full path must be a solid, ",
-			   argv[argc-1], " is not a solid\n", (char *)NULL);
-	  db_free_external( &external );
-	  (void)signal( SIGINT, SIG_IGN );
-	  return TCL_ERROR;
-	}
-
-	RT_INIT_DB_INTERNAL( &internal );
-	if( rt_functab[id].ft_import( &internal, &external, identity, dbip, &rt_uniresource ) < 0 )
-	{
-	  Tcl_AppendResult(interp, "solid import failure on ",
+	  Tcl_AppendResult(interp, "import failure on ",
 			   argv[argc-1], "\n", (char *)NULL);
-	  db_free_external( &external );
 	  (void)signal( SIGINT, SIG_IGN );
 	  return TCL_ERROR;
+	}
+
+	if( id >= ID_COMBINATION ) {
+		rt_db_free_internal( &internal, &rt_uniresource );
+		Tcl_AppendResult(interp, "final component on path must be a solid!!!\n", (char *)NULL );
+		(void)signal( SIGINT, SIG_IGN );
+		return TCL_ERROR;
 	}
 
 	trace(obj[0], 0, start_mat, CPEVAL);
@@ -318,7 +306,7 @@ char **argv;
 	    Tcl_AppendResult(interp, "/", obj[i]->d_namep, (char *)NULL);
 
 	  Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
-	  db_free_external( &external );
+	  rt_db_free_internal( &internal, &rt_uniresource );
 	  (void)signal( SIGINT, SIG_IGN );
 	  return TCL_ERROR;
 	}
@@ -330,38 +318,28 @@ char **argv;
 	RT_INIT_DB_INTERNAL( &new_int );
 	if( rt_generic_xform( &new_int, xform , &internal , 0, dbip, &rt_uniresource ) )
 	{
-	  db_free_external( &external );
+	  rt_db_free_internal( &internal, &rt_uniresource );
 	  Tcl_AppendResult(interp, "f_copyeval: rt_generic_xform failed\n", (char *)NULL);
 	  (void)signal( SIGINT, SIG_IGN );
 	  return TCL_ERROR;
 	}
 
-	if( rt_functab[id].ft_export( &new_ext , &new_int , 1.0, dbip, &rt_uniresource ) )
-	{
-	  db_free_external( &new_ext );
-	  db_free_external( &external );
-	  Tcl_AppendResult(interp, "f_copyeval: export failure for new solid\n",
-			   (char *)NULL);
-	  (void)signal( SIGINT, SIG_IGN );
-	  return TCL_ERROR;
-	}
-
 	if( (dp=db_diradd( dbip, argv[1], -1L, 0, obj[endpos-1]->d_flags, (genptr_t)&new_int.idb_type)) == DIR_NULL )  {
-	  db_free_external( &new_ext );
-	  db_free_external( &external );
+	  rt_db_free_internal( &internal, &rt_uniresource );
+	  rt_db_free_internal( &new_int, &rt_uniresource );
 	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_ALLOC_ERR_return;
 	}
 
-	if (db_put_external( &new_ext, dp, dbip ) < 0 )
+	if (rt_db_put_internal( dp, dbip, &new_int, &rt_uniresource ) < 0 )
 	{
-	  db_free_external( &new_ext );
-	  db_free_external( &external );
+	  rt_db_free_internal( &internal, &rt_uniresource );
+	  rt_db_free_internal( &new_int, &rt_uniresource );
 	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_WRITE_ERR_return;
 	}
-	db_free_external( &external );
-	db_free_external( &new_ext );
+	rt_db_free_internal( &internal, &rt_uniresource );
+	rt_db_free_internal( &new_int, &rt_uniresource );
 
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
