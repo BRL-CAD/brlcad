@@ -629,6 +629,9 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
+#	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY=\\\\"/usr/brlcad/tcl\\\\" -DTCL_PACKAGE_PATH=\\\\"/usr/brlcad/lib\\\\" -DNO_STRING_H=1 -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -Dstrtod=fixstrtod -DSTDC_HEADERS=1 -DNO_UNION_WAIT=1 -DNEED_MATHERR=1 -Dvfork=fork -DGETTOD_NOT_DECLARED=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
+#	define	TCL_COMPAT_FILES	fixstrtod
+#	define	TK_DEFS		-DTK_LIBRARY=\\\\"/usr/brlcad/tk\\\\" -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -Dstrtod=fixstrtod
 
 #  if 1	/* PRODUCTION=1 */
 #	define	LIBMESA_CONFIG	-DFBIND=2
