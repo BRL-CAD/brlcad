@@ -82,7 +82,7 @@ echo "Compilation Complete" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
 echo ./gen.sh -s install	  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
 ./gen.sh -s install		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG 2>&1
 
-echo "Installation complete" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
+echo "Installation Complete" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
 
 #echo "RUN ${REGRESS_DIR}/brlcad/regress/client_test.sh"
 
