@@ -72,12 +72,21 @@ char *argv[];
 				usage("percent missing");
 				exit(1);
 			}
-			percent = atof(argv[i]);
+			percent = atof(argv[i]) / 100.0;
 			if (percent < 0.0) {
 				usage("percent is negitive");
 				exit(1);
 			}
-			if (percent > 5.0 ) percent /= 100.0;
+		} else if (!strcmp(argv[i],"-f")) {
+			if (++i >= argc) {
+				usage("fraction missing");
+				exit(1);
+			}
+			percent = atof(argv[i]);
+			if (percent < 0.0) {
+				usage("fraction is negitive");
+				exit(1);
+			}
 		} else {
 			fclose(stdin);
 			inp = fopen(argv[i],"r");
@@ -95,24 +104,39 @@ char *argv[];
 
 /* fprintf(stderr,"max = %d, percent = %f\n",max,percent); */
 
-	fread(&cur_color,1,3,inp);
 
-	while (!feof(inp) ) {
-		cur_color.red = cur_color.red * percent + rand_half();
-		cur_color.green = cur_color.green * percent + rand_half();
-		cur_color.blue = cur_color.blue * percent + rand_half();
+	for(;;)  {
+		register double	t;
 
-		if (cur_color.red   > max) cur_color.red   = max;
-		if (cur_color.green > max) cur_color.green = max;
-		if (cur_color.blue  > max) cur_color.blue  = max;
+		if( fread(&cur_color,1,3,inp) != 3 )  break;
+		if( feof(inp) )  break;
+
+		t = cur_color.red * percent + rand_half();
+		if (t > max)
+			cur_color.red   = max;
+		else
+			cur_color.red = t;
+
+		t = cur_color.green * percent + rand_half();
+		if (t > max)
+			cur_color.green = max;
+		else
+			cur_color.green = t;
+
+		t = cur_color.blue * percent + rand_half();
+		if (t > max)
+			cur_color.blue  = max;
+		else
+			cur_color.blue = t;
 
 		fwrite(&cur_color,1,3,stdout);
-		fread(&cur_color,1,3,inp);
 	}
 }
+
 usage(s)
 char *s;
 {
-	fprintf(stderr,"pixfade: [-i max][-p percent] [pix-file]\n");
-	fprintf(stderr,"       : %s\n",s);
+	fprintf(stderr,"pixfade: %s\n",s);
+	fprintf(stderr,"\
+Usage: pixfade [-i max] [-p percent] [-f fraction] [pix-file]\n");
 }
