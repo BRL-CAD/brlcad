@@ -1156,6 +1156,7 @@ f_rot_obj()
 	}
 
 	/* find point for rotation to take place wrt */
+	/* XXX should have an es_keypoint for this */
 	MAT4X3PNT(model_pt, es_mat, es_rec.s.s_values);
 	MAT4X3PNT(point, modelchanges, model_pt);
 
@@ -1246,6 +1247,7 @@ f_sc_obj()
 	}
 
 	/* find point the scaling is to take place wrt */
+	/* XXX should have an es_keypoint for this */
 	MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
 	MAT4X3PNT(point, modelchanges, temp);
 
@@ -1278,6 +1280,7 @@ f_tr_obj()
 	for(i=0; i<3; i++) {
 		new_vertex[i] = atof(cmd_args[i+1]) * local2base;
 	}
+	/* XXX should have an es_keypoint for this */
 	MAT4X3PNT(model_sol_pt, es_mat, es_rec.s.s_values);
 	MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
 	VSUB2(model_incr, new_vertex, ed_sol_pt);
@@ -1325,7 +1328,7 @@ void
 f_edgedir()
 {
 	register int i;
-	vect_t work;
+	vect_t slope;
 	FAST fastf_t rot, fb;
 
 	if( not_state( ST_S_EDIT, "Edgedir" ) )
@@ -1348,25 +1351,25 @@ f_edgedir()
 	if( numargs == 3 ) {
 		rot = atof( cmd_args[1] ) * degtorad;
 		fb = atof( cmd_args[2] ) * degtorad;
-		es_m[0] = cos(fb) * cos(rot);
-		es_m[1] = cos(fb) * sin(rot);
-		es_m[2] = sin(fb);
+		slope[0] = cos(fb) * cos(rot);
+		slope[1] = cos(fb) * sin(rot);
+		slope[2] = sin(fb);
 	}
 	else {
 		for(i=0; i<3; i++) {
-			/* put edge slope in es_m array */
-			es_m[i] = atof( cmd_args[i+1] );
+			/* put edge slope in slope[] array */
+			slope[i] = atof( cmd_args[i+1] );
 		}
 	}
 
-	if(MAGNITUDE(es_m) == 0) {
+	if(MAGNITUDE(slope) == 0) {
 		(void)printf("BAD slope\n");
 		return;
 	}
 
 	/* get it done */
 	newedge = 1;
-	editarb( work );
+	editarb( slope );
 	sedraw++;
 
 }
