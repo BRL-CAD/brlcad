@@ -249,7 +249,7 @@ proc undo_edit_menus {} {
 	    }
 
 	    if {[.$id.menubar.edit entrycget 0 -label] != \
-		    "Solid Selection..."} {
+		    "Prim Selection..."} {
 		.$id.menubar.edit delete 0
 	    } else {
 		break
@@ -337,28 +337,28 @@ proc init_object_edit_menu_hoc {} {
 proc init_solid_edit_menu_hoc { stype } {
     # Generic solid edit operations
     hoc_register_menu_data "Edit" "Rotate" \
-	    "Solid Edit - Rotate" \
+	    "Prim Edit - Rotate" \
 	    {{summary "Rotate"}}
     hoc_register_menu_data "Edit" "Translate" \
-	    "Solid Edit - Translate" \
+	    "Prim Edit - Translate" \
 	    {{summary "Translate"}}
     hoc_register_menu_data "Edit" "Scale" \
-	    "Solid Edit - Scale" \
+	    "Prim Edit - Scale" \
 	    {{summary "Scale"}}
     hoc_register_menu_data "Edit" "none of above" \
-	    "Solid Edit - none of above" \
+	    "Prim Edit - none of above" \
 	    {{summary "none of above"}}
     hoc_register_menu_data "Edit" "Reject" \
-	    "Solid Edit - Reject" \
+	    "Prim Edit - Reject" \
 	    {{summary "Reject"}}
     hoc_register_menu_data "Edit" "Accept" \
-	    "Solid Edit - Accept" \
+	    "Prim Edit - Accept" \
 	    {{summary "Accept"}}
     hoc_register_menu_data "Edit" "Apply" \
-	    "Solid Edit - Apply" \
+	    "Prim Edit - Apply" \
 	    {{summary "Apply"}}
     hoc_register_menu_data "Edit" "Reset" \
-	    "Solid Edit - Reset" \
+	    "Prim Edit - Reset" \
 	    {{summary "Reset"}}
 
     # Solid specific edit operations
@@ -372,611 +372,611 @@ proc init_solid_edit_menu_hoc { stype } {
 	ARB8 {
 	    # ARB8 EDGES
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 12" \
-		    "Solid Edit - move edge 12" \
+		    "Prim Edit - move edge 12" \
 		    {{summary "move edge 12"}}
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 23" \
-		    "Solid Edit - move edge 23" \
+		    "Prim Edit - move edge 23" \
 		    {{summary "move edge 23"}}
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 34" \
-		    "Solid Edit - move edge 34" \
+		    "Prim Edit - move edge 34" \
 		    {{summary "move edge 34"}}
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 14" \
-		    "Solid Edit - move edge 14" \
+		    "Prim Edit - move edge 14" \
 		    {{summary "move edge 14"}}
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 15" \
-		    "Solid Edit - move edge 15" \
+		    "Prim Edit - move edge 15" \
 		    {{summary "move edge 15"}}
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 26" \
-		    "Solid Edit - move edge 26" \
+		    "Prim Edit - move edge 26" \
 		    {{summary "move edge 26"}}
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 56" \
-		    "Solid Edit - move edge 56" \
+		    "Prim Edit - move edge 56" \
 		    {{summary "move edge 56"}}
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 67" \
-		    "Solid Edit - move edge 67" \
+		    "Prim Edit - move edge 67" \
 		    {{summary "move edge 67"}}
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 78" \
-		    "Solid Edit - move edge 78" \
+		    "Prim Edit - move edge 78" \
 		    {{summary "move edge 78"}}
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 58" \
-		    "Solid Edit - move edge 58" \
+		    "Prim Edit - move edge 58" \
 		    {{summary "move edge 58"}}
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 37" \
-		    "Solid Edit - move edge 37" \
+		    "Prim Edit - move edge 37" \
 		    {{summary "move edge 37"}}
 	    hoc_register_menu_data "ARB8 EDGES" "move edge 48" \
-		    "Solid Edit - move edge 48" \
+		    "Prim Edit - move edge 48" \
 		    {{summary "move edge 48"}}
 
 	    # ARB8 FACES - MOVE
 	    hoc_register_menu_data "ARB8 FACES" "move face 1234" \
-		    "Solid Edit - move face 1234" \
+		    "Prim Edit - move face 1234" \
 		    {{summary "move face 1234"}}
 	    hoc_register_menu_data "ARB8 FACES" "move face 5678" \
-		    "Solid Edit - move face 5678" \
+		    "Prim Edit - move face 5678" \
 		    {{summary "move face 5678"}}
 	    hoc_register_menu_data "ARB8 FACES" "move face 1584" \
-		    "Solid Edit - move face 1584" \
+		    "Prim Edit - move face 1584" \
 		    {{summary "move face 1584"}}
 	    hoc_register_menu_data "ARB8 FACES" "move face 2376" \
-		    "Solid Edit - move face 2376" \
+		    "Prim Edit - move face 2376" \
 		    {{summary "move face 2376"}}
 	    hoc_register_menu_data "ARB8 FACES" "move face 1265" \
-		    "Solid Edit - move face 1265" \
+		    "Prim Edit - move face 1265" \
 		    {{summary "move face 1265"}}
 	    hoc_register_menu_data "ARB8 FACES" "move face 4378" \
-		    "Solid Edit - move face 4378" \
+		    "Prim Edit - move face 4378" \
 		    {{summary "move face 4378"}}
 
 	    # ARB8 FACES - ROTATE
 	    hoc_register_menu_data "ARB8 FACES" "rotate face 1234" \
-		    "Solid Edit - rotate face 1234" \
+		    "Prim Edit - rotate face 1234" \
 		    {{summary "rotate face 1234"}}
 	    hoc_register_menu_data "ARB8 FACES" "rotate face 5678" \
-		    "Solid Edit - rotate face 5678" \
+		    "Prim Edit - rotate face 5678" \
 		    {{summary "rotate face 5678"}}
 	    hoc_register_menu_data "ARB8 FACES" "rotate face 1584" \
-		    "Solid Edit - rotate face 1584" \
+		    "Prim Edit - rotate face 1584" \
 		    {{summary "rotate face 1584"}}
 	    hoc_register_menu_data "ARB8 FACES" "rotate face 2376" \
-		    "Solid Edit - rotate face 2376" \
+		    "Prim Edit - rotate face 2376" \
 		    {{summary "rotate face 2376"}}
 	    hoc_register_menu_data "ARB8 FACES" "rotate face 1265" \
-		    "Solid Edit - rotate face 1265" \
+		    "Prim Edit - rotate face 1265" \
 		    {{summary "rotate face 1265"}}
 	    hoc_register_menu_data "ARB8 FACES" "rotate face 4378" \
-		    "Solid Edit - rotate face 4378" \
+		    "Prim Edit - rotate face 4378" \
 		    {{summary "rotate face 4378"}}
 	}
 	ARB7 {
 	    # ARB7 EDGES
 	    hoc_register_menu_data "ARB7 EDGES" "move edge 12" \
-		    "Solid Edit - move edge 12" \
+		    "Prim Edit - move edge 12" \
 		    {{summary "move edge 12"}}
 	    hoc_register_menu_data "ARB7 EDGES" "move edge 23" \
-		    "Solid Edit - move edge 23" \
+		    "Prim Edit - move edge 23" \
 		    {{summary "move edge 23"}}
 	    hoc_register_menu_data "ARB7 EDGES" "move edge 34" \
-		    "Solid Edit - move edge 34" \
+		    "Prim Edit - move edge 34" \
 		    {{summary "move edge 34"}}
 	    hoc_register_menu_data "ARB7 EDGES" "move edge 14" \
-		    "Solid Edit - move edge 14" \
+		    "Prim Edit - move edge 14" \
 		    {{summary "move edge 14"}}
 	    hoc_register_menu_data "ARB7 EDGES" "move edge 15" \
-		    "Solid Edit - move edge 15" \
+		    "Prim Edit - move edge 15" \
 		    {{summary "move edge 15"}}
 	    hoc_register_menu_data "ARB7 EDGES" "move edge 26" \
-		    "Solid Edit - move edge 26" \
+		    "Prim Edit - move edge 26" \
 		    {{summary "move edge 26"}}
 	    hoc_register_menu_data "ARB7 EDGES" "move edge 56" \
-		    "Solid Edit - move edge 56" \
+		    "Prim Edit - move edge 56" \
 		    {{summary "move edge 56"}}
 	    hoc_register_menu_data "ARB7 EDGES" "move edge 67" \
-		    "Solid Edit - move edge 67" \
+		    "Prim Edit - move edge 67" \
 		    {{summary "move edge 67"}}
 	    hoc_register_menu_data "ARB7 EDGES" "move edge 37" \
-		    "Solid Edit - move edge 37" \
+		    "Prim Edit - move edge 37" \
 		    {{summary "move edge 37"}}
 	    hoc_register_menu_data "ARB7 EDGES" "move edge 57" \
-		    "Solid Edit - move edget 57" \
+		    "Prim Edit - move edget 57" \
 		    {{summary "move edge 57"}}
 	    hoc_register_menu_data "ARB7 EDGES" "move edge 45" \
-		    "Solid Edit - move edge 45" \
+		    "Prim Edit - move edge 45" \
 		    {{summary "move edge 45"}}
 	    hoc_register_menu_data "ARB7 EDGES" "move point 5" \
-		    "Solid Edit - move point 5" \
+		    "Prim Edit - move point 5" \
 		    {{summary "move point 5"}}
 
 	    # ARB7 FACES - MOVE
 	    hoc_register_menu_data "ARB7 FACES" "move face 1234" \
-		    "Solid Edit - move face 1234" \
+		    "Prim Edit - move face 1234" \
 		    {{summary "move face 1234"}}
 	    hoc_register_menu_data "ARB7 FACES" "move face 2376" \
-		    "Solid Edit - move face 2376" \
+		    "Prim Edit - move face 2376" \
 		    {{summary "move face 2376"}}
 
 	    # ARB7 FACES - ROTATE
 	    hoc_register_menu_data "ARB7 FACES" "rotate face 1234" \
-		    "Solid Edit - rotate face 1234" \
+		    "Prim Edit - rotate face 1234" \
 		    {{summary "rotate face 1234"}}
 	    hoc_register_menu_data "ARB7 FACES" "rotate face 2376" \
-		    "Solid Edit - rotate face 2376" \
+		    "Prim Edit - rotate face 2376" \
 		    {{summary "rotate face 2376"}}
 	}
 	ARB6 {
 	    # ARB6 EDGES
 	    hoc_register_menu_data "ARB6 EDGES" "move edge 12" \
-		    "Solid Edit - move edge 12" \
+		    "Prim Edit - move edge 12" \
 		    {{summary "move edge 12"}}
 	    hoc_register_menu_data "ARB6 EDGES" "move edge 23" \
-		    "Solid Edit - move edge 23" \
+		    "Prim Edit - move edge 23" \
 		    {{summary "move edge 23"}}
 	    hoc_register_menu_data "ARB6 EDGES" "move edge 34" \
-		    "Solid Edit - move edge 34" \
+		    "Prim Edit - move edge 34" \
 		    {{summary "move edge 34"}}
 	    hoc_register_menu_data "ARB6 EDGES" "move edge 14" \
-		    "Solid Edit - move edge 14" \
+		    "Prim Edit - move edge 14" \
 		    {{summary "move edge 14"}}
 	    hoc_register_menu_data "ARB6 EDGES" "move edge 15" \
-		    "Solid Edit - move edge 15" \
+		    "Prim Edit - move edge 15" \
 		    {{summary "move edge 15"}}
 	    hoc_register_menu_data "ARB6 EDGES" "move edge 25" \
-		    "Solid Edit - move edge 25" \
+		    "Prim Edit - move edge 25" \
 		    {{summary "move edge 25"}}
 	    hoc_register_menu_data "ARB6 EDGES" "move edge 36" \
-		    "Solid Edit - move edge 36" \
+		    "Prim Edit - move edge 36" \
 		    {{summary "move edge 36"}}
 	    hoc_register_menu_data "ARB6 EDGES" "move edge 46" \
-		    "Solid Edit - move edge 46" \
+		    "Prim Edit - move edge 46" \
 		    {{summary "move edge 46"}}
 	    hoc_register_menu_data "ARB6 EDGES" "move point 5" \
-		    "Solid Edit - move point 5" \
+		    "Prim Edit - move point 5" \
 		    {{summary "move point 5"}}
 	    hoc_register_menu_data "ARB6 EDGES" "move point 6" \
-		    "Solid Edit - move point 6" \
+		    "Prim Edit - move point 6" \
 		    {{summary "move point 6"}}
 
 	    # ARB6 FACES - MOVE
 	    hoc_register_menu_data "ARB6 FACES" "move face 1234" \
-		    "Solid Edit - move face 1234" \
+		    "Prim Edit - move face 1234" \
 		    {{summary "move face 1234"}}
 	    hoc_register_menu_data "ARB6 FACES" "move face 2365" \
-		    "Solid Edit - move face 2365" \
+		    "Prim Edit - move face 2365" \
 		    {{summary "move face 2365"}}
 	    hoc_register_menu_data "ARB6 FACES" "move face 1564" \
-		    "Solid Edit - move face 1564" \
+		    "Prim Edit - move face 1564" \
 		    {{summary "move face 1564"}}
 	    hoc_register_menu_data "ARB6 FACES" "move face 125" \
-		    "Solid Edit - move face 125" \
+		    "Prim Edit - move face 125" \
 		    {{summary "move face 125"}}
 	    hoc_register_menu_data "ARB6 FACES" "move face 346" \
-		    "Solid Edit - move face 346" \
+		    "Prim Edit - move face 346" \
 		    {{summary "move face 346"}}
 
 	    # ARB6 FACES - ROTATE
 	    hoc_register_menu_data "ARB6 FACES" "rotate face 1234" \
-		    "Solid Edit - rotate face 1234" \
+		    "Prim Edit - rotate face 1234" \
 		    {{summary "rotate face 1234"}}
 	    hoc_register_menu_data "ARB6 FACES" "rotate face 2365" \
-		    "Solid Edit - rotate face 2365" \
+		    "Prim Edit - rotate face 2365" \
 		    {{summary "rotate face 2365"}}
 	    hoc_register_menu_data "ARB6 FACES" "rotate face 1564" \
-		    "Solid Edit - rotate face 1564" \
+		    "Prim Edit - rotate face 1564" \
 		    {{summary "rotate face 1564"}}
 	    hoc_register_menu_data "ARB6 FACES" "rotate face 125" \
-		    "Solid Edit - rotate face 125" \
+		    "Prim Edit - rotate face 125" \
 		    {{summary "rotate face 125"}}
 	    hoc_register_menu_data "ARB6 FACES" "rotate face 346" \
-		    "Solid Edit - rotate face 346" \
+		    "Prim Edit - rotate face 346" \
 		    {{summary "rotate face 346"}}
 	}
 	ARB5 {
 	    # ARB5 EDGES
 	    hoc_register_menu_data "ARB5 EDGES" "move edge 12" \
-		    "Solid Edit - move edge 12" \
+		    "Prim Edit - move edge 12" \
 		    {{summary "move edge 12"}}
 	    hoc_register_menu_data "ARB5 EDGES" "move edge 23" \
-		    "Solid Edit - move edge 23" \
+		    "Prim Edit - move edge 23" \
 		    {{summary "move edge 23"}}
 	    hoc_register_menu_data "ARB5 EDGES" "move edge 34" \
-		    "Solid Edit - move edge 34" \
+		    "Prim Edit - move edge 34" \
 		    {{summary "move edge 34"}}
 	    hoc_register_menu_data "ARB5 EDGES" "move edge 14" \
-		    "Solid Edit - move edge 14" \
+		    "Prim Edit - move edge 14" \
 		    {{summary "move edge 14"}}
 	    hoc_register_menu_data "ARB5 EDGES" "move edge 15" \
-		    "Solid Edit - move edge 15" \
+		    "Prim Edit - move edge 15" \
 		    {{summary "move edge 15"}}
 	    hoc_register_menu_data "ARB5 EDGES" "move edge 25" \
-		    "Solid Edit - move edge 25" \
+		    "Prim Edit - move edge 25" \
 		    {{summary "move edge 25"}}
 	    hoc_register_menu_data "ARB5 EDGES" "move edge 35" \
-		    "Solid Edit - move edge 35" \
+		    "Prim Edit - move edge 35" \
 		    {{summary "move edge 35"}}
 	    hoc_register_menu_data "ARB5 EDGES" "move edge 45" \
-		    "Solid Edit - move edge 45" \
+		    "Prim Edit - move edge 45" \
 		    {{summary "move edge 45"}}
 	    hoc_register_menu_data "ARB5 EDGES" "move point 5" \
-		    "Solid Edit - move point 5" \
+		    "Prim Edit - move point 5" \
 		    {{summary "move point 5"}}
 
 	    # ARB5 FACES - MOVE
 	    hoc_register_menu_data "ARB5 FACES" "move face 1234" \
-		    "Solid Edit - move face 1234" \
+		    "Prim Edit - move face 1234" \
 		    {{summary "move face 1234"}}
 	    hoc_register_menu_data "ARB5 FACES" "move face 125" \
-		    "Solid Edit - move face 125" \
+		    "Prim Edit - move face 125" \
 		    {{summary "move face 125"}}
 	    hoc_register_menu_data "ARB5 FACES" "move face 235" \
-		    "Solid Edit - move face 235" \
+		    "Prim Edit - move face 235" \
 		    {{summary "move face 235"}}
 	    hoc_register_menu_data "ARB5 FACES" "move face 345" \
-		    "Solid Edit - move face 345" \
+		    "Prim Edit - move face 345" \
 		    {{summary "move face 345"}}
 	    hoc_register_menu_data "ARB5 FACES" "move face 145" \
-		    "Solid Edit - move face 145" \
+		    "Prim Edit - move face 145" \
 		    {{summary "move face 145"}}
 
 	    # ARB5 FACES - ROTATE
 	    hoc_register_menu_data "ARB5 FACES" "rotate face 1234" \
-		    "Solid Edit - rotate face 1234" \
+		    "Prim Edit - rotate face 1234" \
 		    {{summary "rotate face 1234"}}
 	    hoc_register_menu_data "ARB5 FACES" "rotate face 125" \
-		    "Solid Edit - rotate face 125" \
+		    "Prim Edit - rotate face 125" \
 		    {{summary "rotate face 125"}}
 	    hoc_register_menu_data "ARB5 FACES" "rotate face 235" \
-		    "Solid Edit - rotate face 235" \
+		    "Prim Edit - rotate face 235" \
 		    {{summary "rotate face 235"}}
 	    hoc_register_menu_data "ARB5 FACES" "rotate face 345" \
-		    "Solid Edit - rotate face 345" \
+		    "Prim Edit - rotate face 345" \
 		    {{summary "rotate face 345"}}
 	    hoc_register_menu_data "ARB5 FACES" "rotate face 145" \
-		    "Solid Edit - rotate face 145" \
+		    "Prim Edit - rotate face 145" \
 		    {{summary "rotate face 145"}}
 	}
 	ARB4 {
 	    # ARB4 POINTS
 	    hoc_register_menu_data "ARB4 POINTS" "move point 1" \
-		    "Solid Edit - move point 1" \
+		    "Prim Edit - move point 1" \
 		    {{summary "move point 1"}}
 	    hoc_register_menu_data "ARB4 POINTS" "move point 2" \
-		    "Solid Edit - move point 2" \
+		    "Prim Edit - move point 2" \
 		    {{summary "move point 2"}}
 	    hoc_register_menu_data "ARB4 POINTS" "move point 3" \
-		    "Solid Edit - move point 3" \
+		    "Prim Edit - move point 3" \
 		    {{summary "move point 3"}}
 	    hoc_register_menu_data "ARB4 POINTS" "move point 4" \
-		    "Solid Edit - move point 4" \
+		    "Prim Edit - move point 4" \
 		    {{summary "move point 4"}}
 
 	    # ARB4 FACES - MOVE
 	    hoc_register_menu_data "ARB4 FACES" "move face 123" \
-		    "Solid Edit - move face 123" \
+		    "Prim Edit - move face 123" \
 		    {{summary "move face 123"}}
 	    hoc_register_menu_data "ARB4 FACES" "move face 124" \
-		    "Solid Edit - move face 124" \
+		    "Prim Edit - move face 124" \
 		    {{summary "move face 124"}}
 	    hoc_register_menu_data "ARB4 FACES" "move face 234" \
-		    "Solid Edit - move face 234" \
+		    "Prim Edit - move face 234" \
 		    {{summary "move face 234"}}
 	    hoc_register_menu_data "ARB4 FACES" "move face 134" \
-		    "Solid Edit - move face 134" \
+		    "Prim Edit - move face 134" \
 		    {{summary "move face 134"}}
 
 	    # ARB4 FACES - ROTATE
 	    hoc_register_menu_data "ARB4 FACES" "rotate face 123" \
-		    "Solid Edit - rotate face 123" \
+		    "Prim Edit - rotate face 123" \
 		    {{summary "rotate face 123"}}
 	    hoc_register_menu_data "ARB4 FACES" "rotate face 124" \
-		    "Solid Edit - rotate face 124" \
+		    "Prim Edit - rotate face 124" \
 		    {{summary "rotate face 124"}}
 	    hoc_register_menu_data "ARB4 FACES" "rotate face 234" \
-		    "Solid Edit - rotate face 234" \
+		    "Prim Edit - rotate face 234" \
 		    {{summary "rotate face 234"}}
 	    hoc_register_menu_data "ARB4 FACES" "rotate face 134" \
-		    "Solid Edit - rotate face 134" \
+		    "Prim Edit - rotate face 134" \
 		    {{summary "rotate face 134"}}
 	}
 	ars {
 	    # ARS
 	    hoc_register_menu_data "Edit" "pick vertex" \
-		    "Solid Edit - pick vertex" \
+		    "Prim Edit - pick vertex" \
 		    {{summary "pick vertex"}}
 	    hoc_register_menu_data "Edit" "move point" \
-		    "Solid Edit - move point" \
+		    "Prim Edit - move point" \
 		    {{summary "move point"}}
 	    hoc_register_menu_data "Edit" "delete curve" \
-		    "Solid Edit - delete curve" \
+		    "Prim Edit - delete curve" \
 		    {{summary "delete curve"}}
 	    hoc_register_menu_data "Edit" "delete column" \
-		    "Solid Edit - delete column" \
+		    "Prim Edit - delete column" \
 		    {{summary "delete column"}}
 	    hoc_register_menu_data "Edit" "dup curve" \
-		    "Solid Edit - dup curve" \
+		    "Prim Edit - dup curve" \
 		    {{summary "dup curve"}}
 	    hoc_register_menu_data "Edit" "dup column" \
-		    "Solid Edit - dup column" \
+		    "Prim Edit - dup column" \
 		    {{summary "dup column"}}
 	    hoc_register_menu_data "Edit" "move curve" \
-		    "Solid Edit - move curve" \
+		    "Prim Edit - move curve" \
 		    {{summary "move curve"}}
 	    hoc_register_menu_data "Edit" "move column" \
-		    "Solid Edit - move column" \
+		    "Prim Edit - move column" \
 		    {{summary "move column"}}
 
 	    # ARS PICK
 	    hoc_register_menu_data "ARS PICK MENU" "pick vertex" \
-		    "Solid Edit - pick vertex" \
+		    "Prim Edit - pick vertex" \
 		    {{summary "pick vertex"}}
 	    hoc_register_menu_data "ARS PICK MENU" "next vertex" \
-		    "Solid Edit - next vertex" \
+		    "Prim Edit - next vertex" \
 		    {{summary "next vertex"}}
 	    hoc_register_menu_data "ARS PICK MENU" "prev vertex" \
-		    "Solid Edit - prev vertex" \
+		    "Prim Edit - prev vertex" \
 		    {{summary "prev vertex"}}
 	    hoc_register_menu_data "ARS PICK MENU" "next curve" \
-		    "Solid Edit - next curve" \
+		    "Prim Edit - next curve" \
 		    {{summary "next curve"}}
 	    hoc_register_menu_data "ARS PICK MENU" "prev curve" \
-		    "Solid Edit - prev curve" \
+		    "Prim Edit - prev curve" \
 		    {{summary "prev curve"}}
 	}
 	tor {
 	    # TOR
 	    hoc_register_menu_data "Edit" "scale radius 1" \
-		    "Solid Edit - scale radius 1" \
+		    "Prim Edit - scale radius 1" \
 		    {{summary "scale radius 1"}}
 	    hoc_register_menu_data "Edit" "scale radius 2" \
-		    "Solid Edit - scale radius 2" \
+		    "Prim Edit - scale radius 2" \
 		    {{summary "scale radius 2"}}
 	}
 	eto {
 	    # ETO
 	    hoc_register_menu_data "Edit" "scale r" \
-		    "Solid Edit - scale r" \
+		    "Prim Edit - scale r" \
 		    {{summary "scale r"}}
 	    hoc_register_menu_data "Edit" "scale D" \
-		    "Solid Edit - scale D" \
+		    "Prim Edit - scale D" \
 		    {{summary "scale D"}}
 	    hoc_register_menu_data "Edit" "scale C" \
-		    "Solid Edit - scale C" \
+		    "Prim Edit - scale C" \
 		    {{summary "scale C"}}
 	    hoc_register_menu_data "Edit" "rotate C" \
-		    "Solid Edit - rotate C" \
+		    "Prim Edit - rotate C" \
 		    {{summary "rotate C"}}
 	}
 	ell {
 	    # ELL
 	    hoc_register_menu_data "Edit" "scale A" \
-		    "Solid Edit - scale A" \
+		    "Prim Edit - scale A" \
 		    {{summary "scale A"}}
 	    hoc_register_menu_data "Edit" "scale B" \
-		    "Solid Edit - scale B" \
+		    "Prim Edit - scale B" \
 		    {{summary "scale B"}}
 	    hoc_register_menu_data "Edit" "scale C" \
-		    "Solid Edit - scale C" \
+		    "Prim Edit - scale C" \
 		    {{summary "scale C"}}
 	    hoc_register_menu_data "Edit" "scale A,B,C" \
-		    "Solid Edit - scale A,B,C" \
+		    "Prim Edit - scale A,B,C" \
 		    {{summary "scale A,B,C"}}
 	}
 	spl {
 	    # SPLINE
 	    hoc_register_menu_data "Edit" "pick vertex" \
-		    "Solid Edit - pick vertex" \
+		    "Prim Edit - pick vertex" \
 		    {{summary "pick vertex"}}
 	    hoc_register_menu_data "Edit" "move vertex" \
-		    "Solid Edit - move vertex" \
+		    "Prim Edit - move vertex" \
 		    {{summary "move vertex"}}
 	}
 	nmg {
 	    # NMG
 	    hoc_register_menu_data "Edit" "pick edge" \
-		    "Solid Edit - pick edge" \
+		    "Prim Edit - pick edge" \
 		    {{summary "pick edge"}}
 	    hoc_register_menu_data "Edit" "move edge" \
-		    "Solid Edit - move edge" \
+		    "Prim Edit - move edge" \
 		    {{summary "move edge"}}
 	    hoc_register_menu_data "Edit" "split edge" \
-		    "Solid Edit - split edge" \
+		    "Prim Edit - split edge" \
 		    {{summary "split edge"}}
 	    hoc_register_menu_data "Edit" "delete edge" \
-		    "Solid Edit - delete edge" \
+		    "Prim Edit - delete edge" \
 		    {{summary "delete edge"}}
 	    hoc_register_menu_data "Edit" "next eu" \
-		    "Solid Edit - next eu" \
+		    "Prim Edit - next eu" \
 		    {{summary "next eu"}}
 	    hoc_register_menu_data "Edit" "prev eu" \
-		    "Solid Edit - prev eu" \
+		    "Prim Edit - prev eu" \
 		    {{summary "prev eu"}}
 	    hoc_register_menu_data "Edit" "radial eu" \
-		    "Solid Edit - radial eu" \
+		    "Prim Edit - radial eu" \
 		    {{summary "radial eu"}}
 	    hoc_register_menu_data "Edit" "extrude loop" \
-		    "Solid Edit - extrude loop" \
+		    "Prim Edit - extrude loop" \
 		    {{summary "extrude loop"}}
 	    hoc_register_menu_data "Edit" "debug edge" \
-		    "Solid Edit - debug edge" \
+		    "Prim Edit - debug edge" \
 		    {{summary "debug edge"}}
 	}
 	part {
 	    # PARTICLE
 	    hoc_register_menu_data "Edit" "scale H" \
-		    "Solid Edit - scale H" \
+		    "Prim Edit - scale H" \
 		    {{summary "scale H"}}
 	    hoc_register_menu_data "Edit" "scale v" \
-		    "Solid Edit - scale v" \
+		    "Prim Edit - scale v" \
 		    {{summary "scale v"}}
 	    hoc_register_menu_data "Edit" "scale h" \
-		    "Solid Edit - scale h" \
+		    "Prim Edit - scale h" \
 		    {{summary "scale h"}}
 	}
 	rpc {
 	    # RPC
 	    hoc_register_menu_data "Edit" "scale B" \
-		    "Solid Edit - scale B" \
+		    "Prim Edit - scale B" \
 		    {{summary "scale B"}}
 	    hoc_register_menu_data "Edit" "scale H" \
-		    "Solid Edit - scale H" \
+		    "Prim Edit - scale H" \
 		    {{summary "scale H"}}
 	    hoc_register_menu_data "Edit" "scale r" \
-		    "Solid Edit - scale r" \
+		    "Prim Edit - scale r" \
 		    {{summary "scale r"}}
 	}
 	rhc {
 	    # RHC
 	    hoc_register_menu_data "Edit" "scale B" \
-		    "Solid Edit - scale B" \
+		    "Prim Edit - scale B" \
 		    {{summary "scale B"}}
 	    hoc_register_menu_data "Edit" "scale H" \
-		    "Solid Edit - scale H" \
+		    "Prim Edit - scale H" \
 		    {{summary "scale H"}}
 	    hoc_register_menu_data "Edit" "scale r" \
-		    "Solid Edit - scale r" \
+		    "Prim Edit - scale r" \
 		    {{summary "scale r"}}
 	    hoc_register_menu_data "Edit" "scale c" \
-		    "Solid Edit - scale c" \
+		    "Prim Edit - scale c" \
 		    {{summary "scale c"}}
 	}
 	epa {
 	    # EPA
 	    hoc_register_menu_data "Edit" "scale H" \
-		    "Solid Edit - scale H" \
+		    "Prim Edit - scale H" \
 		    {{summary "scale H"}}
 	    hoc_register_menu_data "Edit" "scale A" \
-		    "Solid Edit - scale A" \
+		    "Prim Edit - scale A" \
 		    {{summary "scale A"}}
 	    hoc_register_menu_data "Edit" "scale B" \
-		    "Solid Edit - scale B" \
+		    "Prim Edit - scale B" \
 		    {{summary "scale B"}}
 	}
 	ehy {
 	    # EHY
 	    hoc_register_menu_data "Edit" "scale H" \
-		    "Solid Edit - scale H" \
+		    "Prim Edit - scale H" \
 		    {{summary "scale H"}}
 	    hoc_register_menu_data "Edit" "scale A" \
-		    "Solid Edit - scale A" \
+		    "Prim Edit - scale A" \
 		    {{summary "scale A"}}
 	    hoc_register_menu_data "Edit" "scale B" \
-		    "Solid Edit - scale B" \
+		    "Prim Edit - scale B" \
 		    {{summary "scale B"}}
 	    hoc_register_menu_data "Edit" "scale c" \
-		    "Solid Edit - scale c" \
+		    "Prim Edit - scale c" \
 		    {{summary "scale c"}}
 	}
 	pipe {
 	    # PIPE
 	    hoc_register_menu_data "Edit" "select point" \
-		    "Solid Edit - select point" \
+		    "Prim Edit - select point" \
 		    {{summary "select point"}}
 	    hoc_register_menu_data "Edit" "next point" \
-		    "Solid Edit - next point" \
+		    "Prim Edit - next point" \
 		    {{summary "next point"}}
 	    hoc_register_menu_data "Edit" "previous point" \
-		    "Solid Edit - previous point" \
+		    "Prim Edit - previous point" \
 		    {{summary "previous point"}}
 	    hoc_register_menu_data "Edit" "move point" \
-		    "Solid Edit - move point" \
+		    "Prim Edit - move point" \
 		    {{summary "move point"}}
 	    hoc_register_menu_data "Edit" "delete point" \
-		    "Solid Edit - delete point" \
+		    "Prim Edit - delete point" \
 		    {{summary "delete point"}}
 	    hoc_register_menu_data "Edit" "append point" \
-		    "Solid Edit - append point" \
+		    "Prim Edit - append point" \
 		    {{summary "append point"}}
 	    hoc_register_menu_data "Edit" "prepend point" \
-		    "Solid Edit - prepend point" \
+		    "Prim Edit - prepend point" \
 		    {{summary "prepend point"}}
 	    hoc_register_menu_data "Edit" "scale point OD" \
-		    "Solid Edit - scale point OD" \
+		    "Prim Edit - scale point OD" \
 		    {{summary "scale point OD"}}
 	    hoc_register_menu_data "Edit" "scale point ID;" \
-		    "Solid Edit - scale point ID" \
+		    "Prim Edit - scale point ID" \
 		    {{summary "scale point ID"}}
 	    hoc_register_menu_data "Edit" "scale point bend" \
-		    "Solid Edit - scale point bend" \
+		    "Prim Edit - scale point bend" \
 		    {{summary "scale point bend"}}
 	    hoc_register_menu_data "Edit" "scale pipe OD" \
-		    "Solid Edit - scale pipe OD" \
+		    "Prim Edit - scale pipe OD" \
 		    {{summary "scale pipe OD;"}}
 	    hoc_register_menu_data "Edit" "scale pipe ID" \
-		    "Solid Edit - scale pipe ID" \
+		    "Prim Edit - scale pipe ID" \
 		    {{summary "scale pipe ID"}}
 	    hoc_register_menu_data "Edit" "scale pipe bend" \
-		    "Solid Edit - scale pipe bend" \
+		    "Prim Edit - scale pipe bend" \
 		    {{summary "scale pipe bend"}}
 	}
 	vol {
 	    # VOL
 	    hoc_register_menu_data "Edit" "file name" \
-		    "Solid Edit - file name" \
+		    "Prim Edit - file name" \
 		    {{summary "file name"}}
 	    hoc_register_menu_data "Edit" "file size (X Y Z)" \
-		    "Solid Edit - file size (X Y Z)" \
+		    "Prim Edit - file size (X Y Z)" \
 		    {{summary "file size (X Y Z)"}}
 	    hoc_register_menu_data "Edit" "voxel size (X Y Z)" \
-		    "Solid Edit - voxel size (X Y Z)" \
+		    "Prim Edit - voxel size (X Y Z)" \
 		    {{summary "voxel size (X Y Z)"}}
 	    hoc_register_menu_data "Edit" "threshold (low)" \
-		    "Solid Edit - threshold (low)" \
+		    "Prim Edit - threshold (low)" \
 		    {{summary "threshold (low)"}}
 	    hoc_register_menu_data "Edit" "threshold (hi)" \
-		    "Solid Edit - threshold (hi)" \
+		    "Prim Edit - threshold (hi)" \
 		    {{summary "threshold (hi)"}}
 	}
 	ebm {
 	    # EBM
 	    hoc_register_menu_data "Edit" "file name" \
-		    "Solid Edit - file name" \
+		    "Prim Edit - file name" \
 		    {{summary "file name"}}
 	    hoc_register_menu_data "Edit" "file size (W N)" \
-		    "Solid Edit - file size (W N)" \
+		    "Prim Edit - file size (W N)" \
 		    {{summary "file size (W N)"}}
 	    hoc_register_menu_data "Edit" "extrude depth" \
-		    "Solid Edit - extrude depth" \
+		    "Prim Edit - extrude depth" \
 		    {{summary "extrude depth"}}
 	}
 	dsp {
 	    # DSP
 	    hoc_register_menu_data "Edit" "file name" \
-		    "Solid Edit - file name" \
+		    "Prim Edit - file name" \
 		    {{summary "file name"}}
 	    hoc_register_menu_data "Edit" "Scale X" \
-		    "Solid Edit - Scale X" \
+		    "Prim Edit - Scale X" \
 		    {{summary "Scale X"}}
 	    hoc_register_menu_data "Edit" "Scale Y" \
-		    "Solid Edit - Scale Y" \
+		    "Prim Edit - Scale Y" \
 		    {{summary "Scale Y"}}
 	    hoc_register_menu_data "Edit" "Scale ALT" \
-		    "Solid Edit - Scale ALT" \
+		    "Prim Edit - Scale ALT" \
 		    {{summary "Scale ALT"}}
 	}
 	bot {
 		# BOT
 	    hoc_register_menu_data "Edit" "pick vertex" \
-		    "Solid Edit - pick vertex" \
+		    "Prim Edit - pick vertex" \
 		    {{summary "Use mouse to select vertex to edit"}}
 	    hoc_register_menu_data "Edit" "pick edge" \
-		    "Solid Edit - pick edge" \
+		    "Prim Edit - pick edge" \
 		    {{summary "Use mouse to select edge to edit"}}
 	    hoc_register_menu_data "Edit" "pick triangle" \
-		    "Solid Edit - pick triangle" \
+		    "Prim Edit - pick triangle" \
 		    {{summary "Use mouse to select triangle to edit"}}
 	    hoc_register_menu_data "Edit" "move vertex" \
-		    "Solid Edit - move vertex" \
+		    "Prim Edit - move vertex" \
 		    {{summary "Move selected vertex"}}
 	    hoc_register_menu_data "Edit" "move edge" \
-		    "Solid Edit - move edge" \
+		    "Prim Edit - move edge" \
 		    {{summary "Move selected edge"}}
 	    hoc_register_menu_data "Edit" "move triangle" \
-		    "Solid Edit - move triangle" \
+		    "Prim Edit - move triangle" \
 		    {{summary "Move selected triangle"}}
 	    hoc_register_menu_data "Edit" "select mode" \
-		    "Solid Edit - select mode" \
+		    "Prim Edit - select mode" \
 		    {{summary "Select mode for this BOT"}}
 	    hoc_register_menu_data "Edit" "select orientation" \
-		    "Solid Edit - select orientation" \
+		    "Prim Edit - select orientation" \
 		    {{summary "Select orientation for BOT faces"}}
 	}
     }
