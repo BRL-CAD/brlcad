@@ -2464,10 +2464,8 @@ int
 irot(x, y, z)
 fastf_t x, y, z;
 {
-  vect_t view_pos;
-  vect_t model_pos;
+  point_t model_pos;
   point_t new_pos;
-  point_t diff;
   int status;
   char *av[5];
   struct bu_vls xval, yval, zval;
