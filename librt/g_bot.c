@@ -347,6 +347,7 @@ struct seg		*seghead;
 					VREVERSE( segp->seg_in.hit_normal, segp->seg_in.hit_normal )
 
 				VJOIN1( segp->seg_out.hit_point, segp->seg_in.hit_point, los, rp->r_dir );
+				segp->seg_out.hit_surfno = surfno;
 				segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
 				VREVERSE( segp->seg_out.hit_normal, segp->seg_in.hit_normal );
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
@@ -356,15 +357,17 @@ struct seg		*seghead;
 				/* center thickness about hit point */
 				RT_GET_SEG( segp, ap->a_resource);
 				segp->seg_stp = stp;
+				segp->seg_in.hit_surfno = surfno;
 				VMOVE( segp->seg_in.hit_normal, hits[i].hit_normal )
 				if( dn > 0.0 )
 					VREVERSE( segp->seg_in.hit_normal, segp->seg_in.hit_normal )
 
 				segp->seg_in.hit_dist = hits[i].hit_dist - (los*0.5 );
 				VJOIN1( segp->seg_in.hit_point, rp->r_pt, segp->seg_in.hit_dist, rp->r_dir );
+
+				segp->seg_out.hit_surfno = surfno;
 				segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
-				VJOIN1( segp->seg_in.hit_point, rp->r_pt, segp->seg_in.hit_dist, rp->r_dir );
-				VMOVE( segp->seg_out.hit_normal, segp->seg_in.hit_normal );
+				VJOIN1( segp->seg_out.hit_point, rp->r_pt, segp->seg_out.hit_dist, rp->r_dir );
 				VREVERSE( segp->seg_out.hit_normal, segp->seg_in.hit_normal );
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 			}
