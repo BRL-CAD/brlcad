@@ -40,6 +40,7 @@ extern int	pg_prep(), pg_class();
 extern int	spl_prep(), spl_class();
 extern int	sph_prep(), sph_class();
 extern int	ebm_prep(), ebm_class();
+extern int	vol_prep(), vol_class();
 
 extern void	nul_print(), nul_norm(), nul_uv();
 extern void	tor_print(), tor_norm(), tor_uv();
@@ -53,6 +54,7 @@ extern void	pg_print(),  pg_norm(),  pg_uv();
 extern void	spl_print(), spl_norm(), spl_uv();
 extern void	sph_print(), sph_norm(), sph_uv();
 extern void	ebm_print(), ebm_norm(), ebm_uv();
+extern void	vol_print(), vol_norm(), vol_uv();
 
 extern void	nul_curve(), nul_free(), nul_plot();
 extern void	tor_curve(), tor_free(), tor_plot();
@@ -66,6 +68,7 @@ extern void	pg_curve(),  pg_free(),  pg_plot();
 extern void	spl_curve(), spl_free(), spl_plot();
 extern void	sph_curve(), sph_free(), sph_plot();
 extern void	ebm_curve(), ebm_free(), ebm_plot();
+extern void	vol_curve(), vol_free(), vol_plot();
 
 extern struct seg *nul_shot();
 extern struct seg *tor_shot();
@@ -79,6 +82,7 @@ extern struct seg *pg_shot();
 extern struct seg *spl_shot();
 extern struct seg *sph_shot();
 extern struct seg *ebm_shot();
+extern struct seg *vol_shot();
 
 extern void	nul_vshot();
 extern void	ell_vshot();
@@ -101,6 +105,8 @@ extern void	arb_tess();
 extern void	tgc_tess();
 #if 0
 extern void	tor_tess();
+extern void	ebm_tess();
+extern void	vol_tess();
 #endif
 
 struct rt_functab rt_functab[ID_MAXIMUM+2] = {
@@ -164,12 +170,17 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		nul_uv,		nul_curve,	nul_class,	nul_free,
 		nul_plot,	nul_vshot,	nul_tess,
 
-	"ID_EBM",	1,
+	"ID_EBM",	0,
 		ebm_prep,	ebm_shot,	ebm_print,	ebm_norm,
 		ebm_uv,		ebm_curve,	ebm_class,	ebm_free,
 		ebm_plot,	rt_vstub,	nul_tess,
 
-	">ID_NULL",	0,
+	"ID_VOL",	0,
+		vol_prep,	vol_shot,	vol_print,	vol_norm,
+		vol_uv,		vol_curve,	vol_class,	vol_free,
+		vol_plot,	rt_vstub,	nul_tess,
+
+	">ID_MAXIMUM",	0,
 		nul_prep,	nul_shot,	nul_print,	nul_norm,
 		nul_uv,		nul_curve,	nul_class,	nul_free,
 		nul_plot,	nul_vshot,	nul_tess
