@@ -1,6 +1,7 @@
 # rtsync.tcl
 # A prototype GUI for rtsync
-# Depends on rtsync defining $dbip and $rtip.
+# Depends on rtnode defining $dbip and $rtip.
+# Depends on rtnode having executed {set wdbp [wdb_open .inmem inmem $dbip]}
 # Uses various RTSYNC built-in commands, as well as LIBRT's Tcl commands.
 #  -Mike Muuss, ARL, March 97.
 
@@ -11,6 +12,13 @@ set blu 0
 
 global sun_region_name
 set sun_region_name "light.r"
+
+global sun_solid_name
+set sun_solid_name "LIGHT"
+global sunx suny sunz
+set sunx 0
+set suny 0
+set sunz 0
 
 puts "running rtsync.tcl"
 option add *background #ffffff
@@ -53,18 +61,22 @@ scale .sunangle -label "West to East" -from 180 -to 0 -orient horizontal \
 	-command new_sunangle
 pack .sunangle_title .sunangle -side top -in .sunangle_fr -fill x
 proc new_sunangle {degrees} {
-	puts "Sun angle ought to be $degrees"
+	global sunx suny sunz
+
+	set sunx [expr ( $degrees - 90) ]
+	set suny -13
+	set sunz 5
 }
 button .apply_angle -text "Apply" -command apply_angle
 pack .apply_angle -side top -in .sunangle_fr
 
 proc apply_angle {} {
-	global red grn blu
-	global sun_region_name
+	global sunx suny sunz
+	global sun_solid_name
 
-	puts "Sun color = $red $grn $blu"
+	puts "Sun pos = $sunx $suny $sunz"
 	# send new stuff to servers
-	node_send rt_wdb_inmem_rgb {$dbip} $sun_region_name $red $grn $blu
+	node_send .inmem adjust $sun_solid_name V "{" $sunx $suny $sunz "}"
 	# indicate re-prep required.
 	reprep
 	# Send this to MGED to get pov message sent back.
@@ -100,12 +112,24 @@ pack .suncolor_region -side top -in .suncolor_fr
 proc apply_color {} {
 	global red grn blu
 	global sun_region_name
+
+	# Less efficient way:
+	##node_send rt_wdb_inmem_rgb {$wdbp} $sun_region_name $red $grn $blu
+	##reprep
+
 	# send new stuff to servers.  No reprep needed for this.
-	node_send sh_directchange_rgb {$rtip} $sun_region_name $red $grn $blu
-	# Send this to MGED to get pov message sent back.
+	# However, change the inmem database too, for consistency.
+	node_send \
+	  sh_directchange_rgb {$rtip} $sun_region_name $red $grn $blu ";" \
+	  rt_wdb_inmem_rgb {$wdbp} $sun_region_name $red $grn $blu
+
+	# Send 'refresh' command to MGED to get pov message sent back to us.
 	vrmgr_send refresh
 }
 
 puts "done rtsync.tcl"
 
 # node_send sh_opt -P1 -x1 -X1
+# node_send .inmem get LIGHT
+# node_send {.inmem adjust LIGHT V {20 -13 5}}
+# node_send {.inmem adjust LIGHT V {50 -13 5}} ; reprep;vrmgr_send refresh
