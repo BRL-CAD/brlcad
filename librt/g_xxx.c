@@ -24,6 +24,7 @@ static char RCSxxx[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "nmg.h"
 #include "raytrace.h"
 #include "./debug.h"
 
@@ -349,8 +350,8 @@ struct rt_db_internal	*ip;
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_xxx_internal *)ip->idb_ptr;
-	xip->magic = 0;			/* sanity */
 	RT_XXX_CK_MAGIC(xip);
+	xip->magic = 0;			/* sanity */
 
 	rt_free( (char *)xip, "xxx ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
