@@ -989,17 +989,17 @@ dnl OFF_T
 dnl WRITEV
 dnl BSDGETTIMEOFDAY
 
-BN='${top_builddir}/src/libbn/libbn.la ${BU}'
+BN='${top_builddir}/src/libbn/libbn.la'
 AC_SUBST(BN)
 
-BU='${top_builddir}/src/libbu/libbu.la ${TCL_LIBS} ${PTHREAD_LIBS}'
+BU='${top_builddir}/src/libbu/libbu.la'
 AC_SUBST(BU)
 
 CURSOR='${top_builddir}/src/libcursor/libcursor.la ${CURSES}'
 AC_SUBST(CURSES)
 AC_SUBST(CURSOR)
 
-DM='${top_builddir}/src/libdm/libdm.la ${TK_LIBS} ${RT}'
+DM='${top_builddir}/src/libdm/libdm.la'
 AC_SUBST(DM)
 
 FB='${top_builddir}/src/libfb/libfb.la ${X_LIBS} ${PKG} ${BU} ${GL_LIBS}'
@@ -1020,7 +1020,7 @@ AC_SUBST(PKG)
 RLE='${top_builddir}/src/other/libutahrle/libutahrle.la -lm'
 AC_SUBST(RLE)
 
-RT='${top_builddir}/src/librt/librt.la ${BN} ${REGEX_LIBS}'
+RT='${top_builddir}/src/librt/librt.la'
 AC_SUBST(RT)
 
 SYSV='${top_builddir}/src/libsysv/libsysv.la'

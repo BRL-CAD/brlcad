@@ -29,6 +29,7 @@ BUILT_SOURCES = \
 libfft_la_SOURCES = \
 	$(SRCS) \
 	$(BUILT_SOURCES)
+libfft_la_LIBADD = -lm
 
 noinst_HEADERS = \
 	complex.h \

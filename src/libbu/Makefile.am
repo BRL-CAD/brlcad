@@ -64,6 +64,7 @@ EXTRA_DIST = $(man_MANS)
 AM_CFLAGS = -DPREFIX=\"$(prefix)\"
 
 libbu_la_LDFLAGS = -version-info 19:1
+libbu_la_LIBADD = ${PTHREAD_LIBS} ${TCL_LIBS}
 
 BUILT_SOURCES = vers.c
 

@@ -9,6 +9,7 @@ libcursor_la_SOURCES = \
 	vers.c
 
 libcursor_la_LDFLAGS = -version-info 19:1
+libcursor_la_LIBADD = ${CURSES}
 
 man_MANS = libcursor.3
 EXTRA_DIST = $(man_MANS)
