@@ -76,7 +76,7 @@ extern FBIO adage_interface;
 #ifdef IF_SUN
 extern FBIO sun_interface;
 #endif
-#if defined(IF_SGI) || defined(IF_4D)
+#if defined(IF_SGI) || defined(IF_4D) || defined(IF_5D)
 extern FBIO sgi_interface;
 #endif
 #ifdef IF_RAT
@@ -112,7 +112,7 @@ FBIO *_if_list[] = {
 #ifdef IF_SUN
 	&sun_interface,
 #endif
-#if defined(IF_SGI) || defined(IF_4D)
+#if defined(IF_SGI) || defined(IF_4D) || defined(IF_5D)
 	&sgi_interface,
 #endif
 #ifdef IF_RAT
