@@ -42,7 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* for struct timeval */
 #include <errno.h>
 
-#include "../h/pkg.h"
+#include "pkg.h"
 
 extern char *malloc();
 extern void perror();
@@ -59,9 +59,10 @@ extern int errno;
  *  Returns PKC_NULL on error.
  */
 struct pkg_conn *
-pkg_open( host, service )
+pkg_open( host, service, switchp )
 char *host;
 char *service;
+struct pkg_switch *switchp;
 {
 	struct sockaddr_in sinme;		/* Client */
 	struct sockaddr_in sinhim;		/* Server */
@@ -121,6 +122,7 @@ char *service;
 	}
 	pc->pkc_magic = PKG_MAGIC;
 	pc->pkc_fd = netfd;
+	pc->pkc_switch = switchp;
 	pc->pkc_left = -1;
 	pc->pkc_buf = (char *)0;
 	pc->pkc_curpos = (char *)0;
@@ -187,7 +189,8 @@ int backlog;
  *	PKC_ERROR	fatal error
  */
 struct pkg_conn *
-pkg_getclient(fd, nodelay)
+pkg_getclient(fd, switchp, nodelay)
+struct pkg_switch *switchp;
 {
 	struct sockaddr_in from;
 	register int s2;
@@ -224,6 +227,7 @@ pkg_getclient(fd, nodelay)
 	}
 	pc->pkc_magic = PKG_MAGIC;
 	pc->pkc_fd = s2;
+	pc->pkc_switch = switchp;
 	pc->pkc_left = -1;
 	pc->pkc_buf = (char *)0;
 	pc->pkc_curpos = (char *)0;
@@ -537,10 +541,10 @@ register struct pkg_conn *pc;
 	if( pc->pkc_left != 0 )  return(-1);
 
 	/* Whole message received, process it via switchout table */
-	for( i=0; i < pkg_swlen; i++ )  {
+	for( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
 		register char *tempbuf;
 
-		if( pkg_switch[i].pks_type != pc->pkc_hdr.pkg_type )
+		if( pc->pkc_switch[i].pks_type != pc->pkc_hdr.pkg_type )
 			continue;
 		/*
 		 * NOTICE:  User Handler must free() message buffer!
@@ -552,7 +556,7 @@ register struct pkg_conn *pc;
 		pc->pkc_curpos = (char *)0;
 		pc->pkc_left = -1;		/* safety */
 		/* pc->pkc_hdr.pkg_type, pc->pkc_hdr.pkg_len are preserved */
-		pkg_switch[i].pks_handler(pc, tempbuf);
+		pc->pkc_switch[i].pks_handler(pc, tempbuf);
 		return(1);
 	}
 	fprintf(stderr,"pkg_get:  no handler for message type %d, len %d\n",
@@ -592,7 +596,9 @@ char *buf;
 		return(-1);
 	}
 	while( pc->pkc_hdr.pkg_magic != htons(PKG_MAGIC ) )  {
-		fprintf(stderr,"pkg_gethdr: skipping noise\n");
+		fprintf(stderr,"pkg_gethdr: skipping noise x%x %c\n",
+			*((unsigned char *)&pc->pkc_hdr),
+			*((unsigned char *)&pc->pkc_hdr) );
 		/* Slide over one byte and try again */
 		bcopy( ((char *)&pc->pkc_hdr)+1, (char *)&pc->pkc_hdr, sizeof(struct pkg_header)-1);
 		if( (i=read( pc->pkc_fd,

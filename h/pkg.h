@@ -9,8 +9,6 @@ struct pkg_switch {
 	int	(*pks_handler)();	/* Message Handler */
 	char	*pks_title;		/* Description of message type */
 };
-extern struct pkg_switch pkg_switch[];	/* Array of message handlers */
-extern int pkg_swlen;			/* Number of message handlers */
 
 /*
  *  Format of the message header as it is transmitted over the network
@@ -28,6 +26,7 @@ struct pkg_header {
 
 struct pkg_conn {
 	int		pkc_fd;		/* TCP connection fd */
+	struct pkg_switch *pkc_switch;	/* Array of message handlers */
 	int		pkc_magic;	/* for validating pointers */
 	int		pkc_left;	/* # bytes pkg_get expects */
 		/* neg->read new hdr, 0->all here, >0 ->more to come */
