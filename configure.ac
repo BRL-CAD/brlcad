@@ -13,6 +13,9 @@ CONFIG_DATE=`date +%Y%m%d`
 BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
 echo "Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
 
+# necessary for proper file creation on nfs volumes
+umask 022
+
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
