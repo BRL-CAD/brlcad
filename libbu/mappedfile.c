@@ -78,7 +78,7 @@ bu_open_mapped_file( name, appl )
 CONST char	*name;		/* file name */
 CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 {
-	struct bu_mapped_file	*mp;
+	struct bu_mapped_file	*mp = (struct bu_mapped_file *)NULL;
 #ifdef HAVE_UNIX_IO
 	struct stat		sb;
 #endif
