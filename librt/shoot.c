@@ -577,8 +577,14 @@ out:
 	if( solidbits != BITV_NULL)  {
 		FREE_BITV( solidbits, ap->a_resource );
 	}
-	if(rt_g.debug&(DEBUG_SHOOT|DEBUG_ALLRAYS))
-		rt_log( "%s, ret%d\n", status, ret);
+	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION))  {
+		rt_log("----------shootray cpu=%d  %d,%d lvl=%d (%s) %s ret=%d\n",
+			ap->a_resource->re_cpu,
+			ap->a_x, ap->a_y,
+			ap->a_level,
+			ap->a_purpose != (char *)0 ? ap->a_purpose : "?",
+			status, ret);
+	}
 	return( ret );
 }
 
