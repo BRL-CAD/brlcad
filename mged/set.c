@@ -308,6 +308,8 @@ void
 set_scroll()
 {
   struct bu_vls vls;
+  struct bu_vls save_result1_vls;
+  struct bu_vls save_result2_vls;
 
   if(es_edclass && mged_variables->transform == 'e')
     scroll_edit = es_edclass;
@@ -318,6 +320,9 @@ set_scroll()
     return;
 
   bu_vls_init(&vls);
+  bu_vls_init(&save_result1_vls);
+  bu_vls_init(&save_result2_vls);
+  bu_vls_strcpy(&save_result1_vls, interp->result);
 
   if( mged_variables->slidersflag )
     bu_vls_printf(&vls, "sliders on");
@@ -325,7 +330,13 @@ set_scroll()
     bu_vls_printf(&vls, "sliders off");
 
   Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_strcpy(&save_result2_vls, interp->result);
+  Tcl_SetResult(interp, bu_vls_addr(&save_result1_vls), TCL_VOLATILE);
+  Tcl_AppendResult(interp, bu_vls_addr(&save_result2_vls), (char *)NULL);
+  
   bu_vls_free(&vls);
+  bu_vls_free(&save_result1_vls);
+  bu_vls_free(&save_result2_vls);
 }
 
 void
