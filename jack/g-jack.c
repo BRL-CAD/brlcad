@@ -42,13 +42,14 @@ void	nmg_to_psurf();
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
 static char	usage[] = "\
-Usage: %s [-v] [-d] [-xX lvl] [-u eu_dist]\n\
+Usage: %s [-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n\
 	[-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n\
 	[-D dist_calc_tol]\n\
 	[-p prefix] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
+static int	no_file_output;	/* -f:  Don't bother writing output files */
 static int	debug_plots;	/* Make debugging plots */
 static int	ncpu = 1;	/* Number of processors */
 static char	*prefix = NULL;	/* output filename prefix. */
@@ -123,13 +124,16 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:dn:p:r:u:vx:D:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:dfn:p:r:u:vx:D:P:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
 			break;
 		case 'd':
 			debug_plots = 1;
+			break;
+		case 'f':
+			no_file_output = 1;
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
@@ -314,7 +318,7 @@ union tree		*curtree;
 	failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol );	/* librt/nmg_bool.c */
 	RT_UNSETJUMP;		/* Relinquish the protection */
 	regions_done++;
-	if( !failed )  {
+	if( !failed && !no_file_output )  {
 		FILE	*fp_psurf;
 		int	i;
 		struct rt_vls	file_base;
@@ -399,6 +403,10 @@ union tree		*curtree;
 			rt_vls_free(&file);
 		}
 		rt_vls_free(&file_base);
+	}
+	if( no_file_output )  {
+		if(verbose) rt_log("*** Completed %s\n",
+			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 	}
 
 	/*
