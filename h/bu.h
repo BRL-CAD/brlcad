@@ -954,6 +954,13 @@ BU_EXTERN(void			bu_vls_blkset, (struct bu_vls *vp, int len, int ch) );
 /* vers.c (created by the Cakefile) */
 extern CONST char		bu_version[];
 
+/* units.c */
+BU_EXTERN(double bu_units_conversion, (CONST char *str) );
+BU_EXTERN(CONST char *bu_units_string, (CONST double mm) );
+BU_EXTERN(double bu_mm_value, (CONST char *s) );
+
+
+
 #ifdef __cplusplus
 }
 #endif

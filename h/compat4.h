@@ -420,6 +420,13 @@ extern "C" {
 #define rt_pr_roots			bn_pr_roots
 
 
+/* units.c */
+#define rt_units_conversion bu_units_conversion
+#define rt_units_string bu_units_string
+#define rt_mm_value bu_mm_value
+
+
+
 #ifdef __cplusplus
 }
 #endif
