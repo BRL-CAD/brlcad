@@ -415,11 +415,12 @@ char	*dp;
 	/* Emission.  0..1 is normal range, -1..0 sucks light out, like OpenGL */
 #if RT_MULTISPECTRAL
 	{
-		fastf_t emission = ps->emission;
+		fastf_t emission[3];
 		struct bn_tabdata	*ms_emission = BN_TABDATA_NULL;
+		VMOVE(emission,ps->emission);
 #if SW_SET_TRANSMIT
 		if (swp->sw_phong_set_vector & SW_SET_EMISSION) {
-			emission = swp->sw_phong_emission;
+			VSETALL(emission, swp->sw_phong_emission);
 		}
 #endif
 		/* XXX Really should get a curve at prep, not expand RGB samples */
