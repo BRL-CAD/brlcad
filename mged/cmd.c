@@ -989,22 +989,19 @@ mged_setup()
   history_setup();
   mged_variable_setup(interp);
 
-#ifdef MGED_TCL_LIBRARY
-  bu_vls_init(&str);
-#if 0
   filename = getenv("MGED_TCL_LIBRARY");
-  bu_vls_printf(&str, "set auto_path \\[linsert $auto_path 0 %s\\];\
-set junk \"\"", filename ? filename : MGED_TCL_LIBRARY);
-  (void)cmdline(&str, False);
-#else
-  if((filename = getenv("MGED_TCL_LIBRARY")) == NULL)
+
+  if(filename == NULL)
+#ifdef MGED_TCL_LIBRARY
     filename = MGED_TCL_LIBRARY;
+#else
+    filename = "/m/cad/tclscripts";
+#endif
+  bu_vls_init(&str);
   bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %s]", filename);
   (void)Tcl_Eval(interp, bu_vls_addr(&str));
-#endif
   bu_vls_free(&str);
   Tcl_ResetResult(interp);
-#endif
 }
 
 /* 			C M D _ S E T U P
