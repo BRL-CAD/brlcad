@@ -6,7 +6,11 @@ typedef struct {
 
 #define	CMAG(c)	(hypot( c.re, c.im ))
 
-#define	PI	3.141592653589793238462643
+/* Sometimes found in <math.h> */
+#if !defined(PI)
+#	define	PI	3.141592653589793238462643
+#endif
+
 #define	TWOPI	6.283185307179586476925286
 
 /* Degree <-> Radian conversions */
