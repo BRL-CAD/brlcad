@@ -443,6 +443,9 @@ establish_perspective()
   mged_variables->mv_perspective = mged_variables->mv_perspective_mode ?
     perspective_table[perspective_angle] : -1;
 
+  /* keep display manager in sync */
+  dmp->dm_perspective = mged_variables->mv_perspective_mode;
+
   set_dirty_flag();
 }
 
