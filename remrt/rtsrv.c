@@ -15,9 +15,7 @@
  *	This software is Copyright (C) 1985 by the United States Army.
  *	All rights reserved.
  */
-#ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include <stdio.h>
 #include <sys/ioctl.h>
@@ -172,9 +170,6 @@ char **argv;
 
 	beginptr = sbrk(0);
 
-#ifdef CRAY1
-	npsw = 1;			/* >1 on GOS crashes system */
-#endif
 
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
 	if( npsw > 1 )  {
@@ -226,10 +221,8 @@ char **argv;
 #endif
 	}
 
-/**
-	while( pkg_block(pcsrv) >= 0 )
-		;
-**/
+	rt_log("%s\n", RCSid+13 );
+
 	WorkHead.li_forw = WorkHead.li_back = &WorkHead;
 	nowait.tv_sec = 0;
 	nowait.tv_usec = 0;
