@@ -58,9 +58,9 @@ int		rt_nu_cells_per_axis[3];
 union cutter	*rt_nu_grid;
 /* XXX end NUgrid hack */
 
-static struct nmg_ptbl	rt_waiting_nodes={
-	0,0,0,(long**)0
-};	/* parallel work queue */
+static struct bu_ptbl	rt_waiting_nodes;	/* parallel work queue */
+
+static struct bu_ptbl	rt_busy_cutter_nodes;
 
 /*
  *			R T _ F I N D _ N U G R I D
@@ -105,13 +105,13 @@ again:
  *  histogram to perform a preliminary partitioning of space,
  *  along a single axis.
  *  The tree built here is expected to be further refined.
- *  The nmg_ptbl "boxes" contains a list of the boxnodes, for convenience.
+ *  The bu_ptbl "boxes" contains a list of the boxnodes, for convenience.
  *
  *  Each span runs from [min].nu_spos to [max].nu_epos.
  */
 union cutter *
 rt_cut_one_axis( boxes, rtip, axis, min, max )
-struct nmg_ptbl	*boxes;
+struct bu_ptbl	*boxes;
 struct rt_i	*rtip;
 int		axis;
 int		min;
@@ -151,7 +151,7 @@ int		max;
 			box->bn.bn_list[box->bn.bn_len++] = stp;
 		} RT_VISIT_ALL_SOLTABS_END
 
-		nmg_tbl( boxes, TBL_INS, (long *)box );
+		bu_ptbl_ins( boxes, (long *)box );
 		return box;
 	}
 
@@ -503,7 +503,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		}
 	} RT_VISIT_ALL_SOLTABS_END
 
-	nmg_tbl( &rt_waiting_nodes, TBL_INIT, 0 );
+	bu_ptbl_init( &rt_waiting_nodes, rtip->nsolids );
 
 	/*  Dynamic decisions on tree limits.
 	 *  Note that there will be (2**rt_cutDepth)*rt_cutLen leaf slots,
@@ -1133,11 +1133,17 @@ rt_ct_get()
 {
 	register union cutter *cutp;
 
+	if( !rt_busy_cutter_nodes.l.magic )
+		bu_ptbl_init( &rt_busy_cutter_nodes, 128 );
+
 	if( rt_g.rtg_CutFree == CUTTER_NULL )  {
 		register int bytes;
 
 		bytes = rt_byte_roundup(64*sizeof(union cutter));
 		cutp = (union cutter *)rt_malloc(bytes," rt_ct_get");
+		/* Remember this allocation for later */
+		bu_ptbl_ins( &rt_busy_cutter_nodes, (long *)cutp );
+		/* Now, dice it up */
 		while( bytes >= sizeof(union cutter) )  {
 			cutp->cut_forw = rt_g.rtg_CutFree;
 			rt_g.rtg_CutFree = cutp++;
@@ -1415,14 +1421,25 @@ int			depth;
 /*
  *			R T _ C U T _ C L E A N
  *
- * rt_g.rtg_CutFree list could be freed, but is bulk allocated, XXX
- * so cutter structures will hang around.  XXX
- *
+ *  The rt_g.rtg_CutFree list can not be freed directly
+ *  because  is bulk allocated.
+ *  Fortunately, we have a list of all the bu_malloc()'ed blocks.
  */
 void
 rt_cut_clean()
 {
-	if( rt_waiting_nodes.magic )
-		nmg_tbl( &rt_waiting_nodes, TBL_FREE, 0 );
+	genptr_t	*p;
+
+	if( rt_waiting_nodes.l.magic )
+		bu_ptbl_free( &rt_waiting_nodes );
+
+	/* Abandon the linked list of diced-up structures */
+	rt_g.rtg_CutFree = CUTTER_NULL;
+
+	/* Release the blocks we got from bu_malloc() */
+	for( BU_PTBL_FOR( p, (genptr_t *), &rt_busy_cutter_nodes ) )  {
+		bu_free( *p, "rt_ct_get" );
+	}
+	bu_ptbl_free( &rt_busy_cutter_nodes );
 }
 
