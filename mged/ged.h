@@ -449,6 +449,7 @@ struct _mged_variables {
         int     send_key;
         int     hot_key;
         int     context;
+	int	dlist;
 	char	coords;
 	char	rotate_about;
         char    transform;
