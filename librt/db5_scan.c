@@ -35,8 +35,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./debug.h"
 
-BU_EXTERN(CONST unsigned char *db5_get_raw_internal_ptr, (struct db5_raw_internal *rip, unsigned char * CONST ip));
-
 /*
  *			D B 5 _ S C A N
  *

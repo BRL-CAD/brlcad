@@ -35,8 +35,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./debug.h"
 
-BU_EXTERN(CONST unsigned char *db5_get_raw_internal_ptr, (struct db5_raw_internal *rip, unsigned char * CONST ip));
-
 const int db5_enc_len[4] = {
 	1,
 	2,
@@ -281,10 +279,8 @@ CONST unsigned char		*cp;
  *	on success, pointer to first unused byte
  *	NULL, on error
  */
-CONST unsigned char *
-db5_get_raw_internal_ptr( rip, ip )
-struct db5_raw_internal		*rip;
-unsigned char		* CONST ip;
+const unsigned char *
+db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
 {
 	CONST unsigned char	*cp = ip;
 
