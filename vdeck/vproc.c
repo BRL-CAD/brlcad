@@ -1,6 +1,6 @@
 /*
- *	@(#) vproc.c		retrieved 8/13/86 at 08:22:38,
- *	@(#) version 1.2		  created 2/23/83 at 14:48:39.
+ *	@(#) vproc.c		retrieved 8/13/86 at 08:22:56,
+ *	@(#) version 1.3		  created 2/24/83 at 13:10:04.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -17,10 +17,11 @@
  */
 #include <stdio.h>
 #include <signal.h>
+#include <setjmp.h>
 #include "ged_types.h"
 #include "3d.h"
 #include "deck.h"
-#include "deck_proc.h"
+#include "deck_ext.h"
 
 /*
  *	Section 1:	C O M M A N D S
@@ -38,7 +39,7 @@ register
 char *prefix;
 {
 	register int	i, j;
-
+	
 	nns = nnr = regflag = numrr = 0;
 	
 	/* rewind object file
@@ -118,8 +119,8 @@ char *prefix;
 	mat_idn( identity );
 	mat_idn( xform );
 
-	/* check integrity of list against directory and build
-	 * card deck
+	/* Check integrity of list against directory and build
+	 * card deck.
 	 */
 	for( i = 0; i < curr_ct; i++ )
 		if( (dp = lookup( curr_list[i], NOISY )) != -1 )
@@ -145,7 +146,7 @@ char *prefix;
 			for( j = 1; j <= nnr; j++ ) {
 				/* next region name in desc
 				 */
-				read( rd_rrfd, name, 16 );
+				readF( rd_rrfd, name, 16 );
 				if(	strcmp( findrr[i].rr_name, name )
 					== 0)
 				{	/* region number in desc is j
@@ -158,18 +159,20 @@ char *prefix;
 				}
 			}
 			if( j > nnr ) {
-				printf( "region %s is member of a region ",
+				fprintf( stderr,
+					"Region %s is member of a region ",
 					findrr[i].rr_name );
-				printf( ",but not in description\n" );
+				fprintf( stderr,
+					"but not in description.\n" );
 				exit( 10 );
  			}
 		}
 	}
-	printf( "\n====================================================" );
-	printf( "\nO U T P U T    F I L E S :\n\n" );
-	printf( "solid table = \"%s\"\n", st_file );
-	printf( "region table = \"%s\"\n", rt_file );
-	printf( "region identification table = \"%s\"\n", id_file );
+	prompt( "\n====================================================" );
+	prompt( "\nO U T P U T    F I L E S :\n\n" );
+	prompt( "solid table = \"%s\"\n", st_file );
+	prompt( "region table = \"%s\"\n", rt_file );
+	prompt( "region identification table = \"%s\"\n", id_file );
 	close( solfd );
 	close( regfd );
 	close( ridfd );
@@ -214,7 +217,7 @@ char  *args[];
 		*to++ = ' ';
 	}
 	to[-1] = '\0';
-	printf( "\n" );
+	prompt( "\n" );
 	argv[3] = 0;
 	if( (pid = fork()) == -1 ) {
 		perror( "shell()" );
@@ -255,17 +258,16 @@ char  *args[];
  * builds a directory of the object names, to allow rapid
  * named access to objects.
  */
-builddir() {
-	register Directory *dp;
-
+builddir()
+{ register Directory *dp;
 	dp = &directory[0];
 	while( 1 ) {
 		dp->d_addr = lseek( objfd, 0L, 1 );
-		if(	read( objfd, &record, sizeof record )
+		if(	readF( objfd, &record, sizeof record )
 			!= sizeof record
 		)	break;
 		if( ++ndir >= NDIR )  {
-			printf( "Too many objects in input\n" );
+			fprintf( stderr, "Too many objects in input\n" );
 			break;
 		}
 		switch( record.u_id ) {
@@ -310,7 +312,8 @@ builddir() {
 				1 );
 			break;
 		default:
-			printf(	"builddir:  unknown record %c (0%o)\n",
+			fprintf( stderr,
+				"Builddir:  unknown record %c (0%o).\n",
 				record.u_id,
 				record.u_id );
 			ndir--;
@@ -318,7 +321,7 @@ builddir() {
 		}
 		dp++;
 	}
-	printf( "\n%d objects tallied\n", ndir );
+	prompt( "\n%d objects tallied\n", ndir );
 }
 
 /*	==== t o c ( )
@@ -363,7 +366,8 @@ register char *str;
 			if( *np++ == 0 || i == 15 )	return( dp );
 		}
 	}
-	if( flag == NOISY ) printf( "lookup: could not find '%s'\n", str );
+	if( flag == NOISY )
+		fprintf( stderr, "Lookup: could not find '%s'.\n", str );
 	return( -1 );
 }
 
@@ -378,7 +382,7 @@ long laddr;
 	register Directory *dp;
 
 	if( ndir >= NDIR )  {
-		printf("diradd:  no more dir structs\n");
+		fprintf( stderr, "Diradd:  no more dir structs.\n");
 		return( -1 );
 	}
 
@@ -400,7 +404,7 @@ char	*cp;
 	register int	i;
 
 	if( dir_last >= &dir_names[NDIR*10-16] )  {
-		fprintf( stderr, "addname:  out of name space\n" );
+		fprintf( stderr, "Addname:  out of name space.\n" );
 		exit( 1 );
 	}
 	holder = dir_last;
@@ -508,7 +512,8 @@ register int	ct;
 			}
 		}
 		if( nomatch )
-			printf( "object \"%s\" not found\n", args[i] );
+			fprintf( stderr,
+				"Object \"%s\" not found.\n", args[i] );
 	}
 	return( curr_ct );
 }
@@ -543,8 +548,9 @@ char	*args[];
 				for( k = j; k < curr_ct; k++ )
 					curr_list[k] = curr_list[k+1];
 			} else	++j;
-		if( nomatch )	printf( "object \"%s\" not found\n",
-					args[i] );
+		if( nomatch )
+			fprintf( stderr,
+				"Object \"%s\" not found.\n", args[i] );
 	}
 	return( curr_ct );
 }
@@ -666,8 +672,10 @@ int   n,    w;
 	/* blank fill array
 	 */
 	for( j = i; j < w; j++ )	s[j] = ' ';
-	if( i > w )	printf( "itoa: field length too small\n" );
+	if( i > w )
+		fprintf( stderr, "Itoa: field length too small.\n" );
 	s[w] = '\0';
+
 	/* reverse the array
 	 */
 	for( i = 0, j = w - 1; i < j; i++, j-- ) {
@@ -690,10 +698,12 @@ float	  f;
 	long	n, sign;
 
 	if( w <= d + 2 ) {
-		printf( "ftoascii: incorrect format  need w.df  stop" );
+		fprintf( stderr,
+			"ftoascii: incorrect format  need w.df  stop" );
 		exit( 10 );
 	}
 	for( i = 1; i <= d; i++ )	f = f * 10.0;
+
 	/* round up */
 	if( f < 0.0 )	f -= 0.5;
 	else		f += 0.5;
@@ -717,7 +727,8 @@ float	  f;
 	/* blank fill rest of field
 	 */
 	for ( j = i; j < w; j++ )	s[j] = ' ';
-	if( i > w )	printf("ftoascii: field length too small\n");
+	if( i > w )
+		fprintf( stderr, "Ftoascii: field length too small\n" );
 	s[w] = '\0';
 
 	/* reverse the array
@@ -765,12 +776,11 @@ char	*args[];
 register
 int		ct;
 {
-	/* get arguments
-	 */
+	/* Get arguments.						 */
 	if( ct == 0 )	while( --arg_ct >= 0 )	free( args[arg_ct] );
 	for( arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct ) {
 		args[arg_ct] = malloc( MAXLN );
-		if( getarg( args[arg_ct] ) )	break;
+		if( !getarg( args[arg_ct] ) )	break;
 	}
 	++arg_ct;
 	args[arg_ct] = 0;
@@ -785,20 +795,24 @@ int		ct;
 }
 
 /*	==== g e t a r g ( )
- *	Get a word of input into 'str', return first character.
+ *	Get a word of input into 'str',
+ *	Return 0 if newline is encountered.
+  *	Return 1 otherwise.
  */
 char
 getarg(		 str )
 register char	*str;
 {
-	while( (*str = getchar()) != EOF && *str != '\n' ) {
+	do {
+		*str = getchar();
 		if( *str == ' ' ) {
 			*str = '\0';
-			return( 0 );
+			return( 1 );
 		} else	++str;
-	}
+	} while( str[-1] != EOF && str[-1] != '\n' );
+	if( str[-1] == '\n' )	--str;
 	*str = '\0';
-	return( 1 );
+	return( 0 );
 }
 
 /*	==== p a r s _ a r g ( )
@@ -851,7 +865,7 @@ char *addr;
 {
 	register char	**sbuf = addr;
 	
-	while( *sbuf )	printf( "%s\n", *sbuf++ );
+	while( *sbuf )	prompt( "%s\n", *sbuf++ );
 	fflush( stdout );
 }
 
