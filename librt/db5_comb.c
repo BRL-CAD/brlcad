@@ -132,7 +132,8 @@ db_tree_counter( CONST union tree *tp, struct db_tree_counter_state *tcsp )
 
 struct rt_comb_v5_serialize_state  {
 	long		magic;
-	long		mat_num;
+	long		mat_num;	/* current matrix number */
+	long		nmat;		/* # matricies, total */
 	unsigned char	*matp;
 	unsigned char	*leafp;
 	unsigned char	*exprp;
@@ -153,6 +154,7 @@ rt_comb_v5_serialize(
 	struct rt_comb_v5_serialize_state	*ssp)
 {
 	int	n;
+	int	mi;
 
 	RT_CK_TREE(tp);
 	RT_CK_COMB_V5_SERIALIZE_STATE(ssp);
@@ -169,10 +171,11 @@ rt_comb_v5_serialize(
 		ssp->leafp += n;
 
 		if( tp->tr_l.tl_mat )
-			n = ssp->mat_num++;
+			mi = ssp->mat_num++;
 		else
-			n = -1;
-		ssp->leafp = db5_encode_length( ssp->leafp, n, ssp->wid );
+			mi = -1;
+		BU_ASSERT_LONG( mi, <, ssp->nmat );
+		ssp->leafp = db5_encode_length( ssp->leafp, mi, ssp->wid );
 
 		/* Encoding of the matrix */
 		if( tp->tr_l.tl_mat )  {
@@ -324,6 +327,7 @@ CONST struct db_i		*dbip;
 	ss.magic = RT_COMB_V5_SERIALIZE_STATE_MAGIC;
 	ss.wid = wid;
 	ss.mat_num = 0;
+	ss.nmat = tcs.n_mat;
 	ss.matp = cp;
 	ss.leafp = cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
 	leafp_end = ss.leafp + tcs.leafbytes;
@@ -461,7 +465,7 @@ const struct db_i	*dbip;
 		int	i;
 		for( i = nleaf-1; i >= 0; i-- )  {
 			union tree	*tp;
-			int		mi;
+			long		mi;
 
 			BU_GETUNION( tp, tree );
 			tp->tr_l.magic = RT_TREE_MAGIC;
@@ -470,6 +474,7 @@ const struct db_i	*dbip;
 			leafp += strlen( (const char *)leafp) + 1;
 
 			/* Get matrix index */
+			mi = 4095;			/* sanity */
 			leafp += db5_decode_signed( &mi, leafp, wid );
 
 			if( mi < 0 )  {
