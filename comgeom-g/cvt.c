@@ -125,7 +125,8 @@ char **argv;
 {
 	register int i;
 	register float *op;
-	char ctitle[132];
+	char	ctitle[132];
+	char	units[16];
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -166,7 +167,17 @@ char **argv;
 	printf("Units: %2.2s\n", ctitle);
 	printf("Title: %s\n", ctitle+2);
 
-	mk_id( outfp, ctitle+2 );
+	/* Before converting any geometry, establish the units conversion
+	 * factor which all mk_* routines will apply.
+	 */
+	units[0] = ctitle[0];
+	units[1] = ctitle[1];
+	units[2] = '\0';
+	if( mk_conversion( units ) < 0 )
+		printf("WARNING:  unknown units '%s', using MM\n", units);
+
+	/* Output the MGED database header */
+	mk_id( outfp, ctitle+3 );
 
 
 	/*
