@@ -12,10 +12,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 /* Resource locks */
-int	res_pt;
-int	res_seg;
-int	res_malloc;
-int	res_printf;
+int	rt_g.res_pt;
+int	rt_g.res_seg;
+int	rt_g.res_malloc;
+int	rt_g.res_printf;
 
 /* Standard System V stuff */
 extern long time();
@@ -26,7 +26,7 @@ static long time0;
  *			P R E P _ T I M E R
  */
 void
-prep_timer()
+rt_prep_timer()
 {
 	(void)time(&time0);
 	(void)intime_();
@@ -38,7 +38,7 @@ prep_timer()
  * 
  */
 double
-read_timer(str,len)
+rt_read_timer(str,len)
 char *str;
 {
 	long now;

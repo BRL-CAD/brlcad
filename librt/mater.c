@@ -6,7 +6,7 @@
  *  (colors and outboard database "handles").
  *
  *  Functions -
- *	color_addrec	Called by dir_build on startup
+ *	color_addrec	Called by rt_dirbuild on startup
  *	color_map	Map one region reference to a material
  *
  *  Author -
@@ -26,13 +26,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "debug.h"
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "../h/db.h"
 #include "../h/mater.h"
 #include "rtdir.h"
 #include "../h/raytrace.h"
+#include "debug.h"
 
 /*
  *  It is expected that entries on this mater list will be sorted
@@ -56,7 +56,7 @@ register struct mater *mp;
 /*
  *  			C O L O R _ A D D R E C
  *  
- *  Called from dir_build() when initially scanning database.
+ *  Called from rt_dirbuild() when initially scanning database.
  */
 void
 color_addrec( recp, addr )
@@ -71,7 +71,7 @@ long addr;
 	mp->mt_r = recp->md.md_r;
 	mp->mt_g = recp->md.md_g;
 	mp->mt_b = recp->md.md_b;
-/*	mp->mt_handle = strdup( recp->md.md_material ); */
+/*	mp->mt_handle = rt_strdup( recp->md.md_material ); */
 	mp->mt_daddr = addr;
 	insert_color( mp );
 }

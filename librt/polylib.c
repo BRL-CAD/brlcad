@@ -37,7 +37,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/vmath.h"
 #include "polyno.h"
 #include "complex.h"
-#include "debug.h"
+
 #ifndef M_PI
 #define M_PI	3.14159265358979323846
 #endif
@@ -278,7 +278,7 @@ static int expecting_fpe = 0;
 static jmp_buf abort_buf;
 HIDDEN void catch_FPE()  {
 	if( !expecting_fpe )
-		rtbomb("unexpected SIGFPE!\n");
+		rt_bomb("unexpected SIGFPE!\n");
 	longjmp(abort_buf, 1);	/* return error code */
 }
 
@@ -300,10 +300,7 @@ register complex	root[];
 	expecting_fpe = 1;
 	if( setjmp( abort_buf ) )  {
 		(void)signal(SIGFPE, catch_FPE);
-		rtlog("rt: cubic() Floating Point Error\n");
-		if( debug & DEBUG_ROOTS )  {
-			pr_poly(eqn);
-		}
+		rt_log("rt: cubic() Floating Point Error\n");
 		return(0);	/* FAIL */
 	}
 #endif
@@ -342,7 +339,7 @@ register complex	root[];
 		LOCAL fastf_t		cs_phi, sn_phi_s3;
 
 		if( a > 0.0 )  {
-			rtlog("cubic: sqrt(%f)\n", fact);
+			rt_log("cubic: sqrt(%f)\n", fact);
 			fact = 0.0;
 			phi = 0.0;
 		} else {	FAST fastf_t	f;
@@ -455,9 +452,9 @@ register poly	*eqn;
 {
 	register int	n;
 
-	rtlog("\nDegree of polynomial = %d\n",eqn->dgr);
+	rt_log("\nDegree of polynomial = %d\n",eqn->dgr);
 	for ( n=0; n<=eqn->dgr; ++n){
-		rtlog(" %g ",eqn->cf[n]);
+		rt_log(" %g ",eqn->cf[n]);
 	}
-	rtlog("\n");
+	rt_log("\n");
 }

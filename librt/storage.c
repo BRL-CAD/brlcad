@@ -29,103 +29,132 @@ static char RCSid[] = "@(#)$Header$";
 
 
 /*
- *  malloc/Free wrappers, for debugging
+ *			R T _ M A L L O C
  */
 char *
-vmalloc(cnt, str)
+rt_malloc(cnt, str)
 unsigned int cnt;
 char *str;
 {
 	register char *ptr;
 	extern char *malloc();
 
-	RES_ACQUIRE( &res_malloc );		/* lock */
+	RES_ACQUIRE( &rt_g.res_malloc );		/* lock */
 	ptr = malloc(cnt);
-	RES_RELEASE( &res_malloc );		/* unlock */
+	RES_RELEASE( &rt_g.res_malloc );		/* unlock */
 
-	if( ptr==(char *)0 || debug&DEBUG_MEM )
-		rtlog("%x=malloc(%d) %s\n", ptr, cnt, str);
+	if( ptr==(char *)0 || rt_g.debug&DEBUG_MEM )
+		rt_log("%x=malloc(%d) %s\n", ptr, cnt, str);
 	if( ptr==(char *)0 )
-		rtbomb("vmalloc: malloc failure");
+		rt_bomb("rt_malloc: malloc failure");
 	return(ptr);
 }
 
+/*
+ *			R T _ F R E E
+ */
 void
-vfree(ptr,str)
+rt_free(ptr,str)
 char *ptr;
 {
 	extern void free();
 
-	RES_ACQUIRE( &res_malloc );		/* lock */
+	RES_ACQUIRE( &rt_g.res_malloc );		/* lock */
 	*((int *)ptr) = -1;	/* zappo! */
 	free(ptr);
-	RES_RELEASE( &res_malloc );		/* unlock */
-	if(debug&DEBUG_MEM) rtlog("%x freed %s\n", ptr, str);
+	RES_RELEASE( &rt_g.res_malloc );		/* unlock */
+	if(rt_g.debug&DEBUG_MEM) rt_log("%x freed %s\n", ptr, str);
 }
 
 /*
- *  			G E T _ S E G
+ *			R T _ S T R D U P
+ *
+ * Given a string, allocate enough memory to hold it using malloc(),
+ * duplicate the strings, returns a pointer to the new string.
+ */
+char *
+rt_strdup( cp )
+register char *cp;
+{
+	register char	*base;
+	register char	*current;
+
+	RES_ACQUIRE( &rt_g.res_malloc );		/* lock */
+	if( (base = malloc( strlen(cp)+1 )) == (char *)0 )
+		rt_bomb("rt_strdup:  unable to allocate memory");
+	RES_RELEASE( &rt_g.res_malloc );		/* unlock */
+
+	current = base;
+	do  {
+		*current++ = *cp;
+	}  while( *cp++ != '\0' );
+
+	return(base);
+}
+
+/*
+ *  			R T _ G E T _ S E G
  *  
  *  This routine is called by the GET_SEG macro when the freelist
  *  is exhausted.  Rather than simply getting one additional structure,
  *  we get a whole batch, saving overhead.  When this routine is called,
  *  the seg resource must already be locked.
- *  malloc() locking is done in vmalloc.
+ *  malloc() locking is done in rt_malloc.
  */
 void
-get_seg()  {
+rt_get_seg()  {
 	register char *cp;
 	register struct seg *sp;
 	register int bytes;
 
-	bytes = byte_roundup(64*sizeof(struct seg));
-	if( (cp = vmalloc(bytes, "get_seg")) == (char *)0 )  {
-		rtlog("get_seg: malloc failure\n");
+	bytes = rt_byte_roundup(64*sizeof(struct seg));
+	if( (cp = rt_malloc(bytes, "rt_get_seg")) == (char *)0 )  {
+		rt_log("rt_get_seg: malloc failure\n");
 		exit(17);
 	}
 	sp = (struct seg *)cp;
 	while( bytes >= sizeof(struct seg) )  {
-		sp->seg_next = FreeSeg;
-		FreeSeg = sp++;
+		sp->seg_next = rt_g.FreeSeg;
+		rt_g.FreeSeg = sp++;
 		bytes -= sizeof(struct seg);
 	}
 }
 
 /*
- *  			G E T _ P T
+ *  			R T _ G E T _ P T
  *  
  *  This routine is called by the GET_PT macro when the freelist
  *  is exhausted.  Rather than simply getting one additional structure,
  *  we get a whole batch, saving overhead.  When this routine is called,
  *  the partition resource must already be locked.
- *  malloc() locking is done in vmalloc.
+ *  malloc() locking is done in rt_malloc.
  *
  *  Also note that there is a bit of trickery going on here:
  *  the *real* size of pt_solhit[] array is determined at runtime, here.
  */
 void
-get_pt()  {
+rt_get_pt()  {
 	register char *cp;
 	register int bytes;
 	register int size;		/* size of structure to really get */
 
-	size = PT_BYTES;		/* depends on nsolids */
+	size = PT_BYTES;		/* depends on rt_i.nsolids */
 	size = (size + sizeof(long) -1) & (~(sizeof(long)-1));
-	bytes = byte_roundup(64*size);
-	if( (cp = vmalloc(bytes, "get_pt")) == (char *)0 )  {
-		rtlog("get_pt: malloc failure\n");
+	bytes = rt_byte_roundup(64*size);
+	if( (cp = rt_malloc(bytes, "rt_get_pt")) == (char *)0 )  {
+		rt_log("rt_get_pt: malloc failure\n");
 		exit(17);
 	}
 	while( bytes >= size )  {
-		((struct partition *)cp)->pt_forw = FreePart;
-		FreePart = (struct partition *)cp;
+		((struct partition *)cp)->pt_forw = rt_g.FreePart;
+		rt_g.FreePart = (struct partition *)cp;
 		cp += size;
 		bytes -= size;
 	}
 }
 
 /*
- *  			B Y T E _ R O U N D U P
+ *  			R T _ B Y T E _ R O U N D U P
  *  
  *  On systems with the CalTech malloc(), the amount of storage
  *  ACTUALLY ALLOCATED is the amount requested rounded UP to the
@@ -142,7 +171,7 @@ get_pt()  {
  *  unused memory will be consumed.
  */
 int
-byte_roundup(nbytes)
+rt_byte_roundup(nbytes)
 register int nbytes;
 {
 	static int pagesz;

@@ -112,7 +112,7 @@ double rand0to1()
 	f = ((double)rand()) *
 		0.00000000046566128752457969241057508271679984532147;
 	if( f > 1.0 || f < 0 )  {
-		rtlog("rand0to1 out of range\n");
+		rt_log("rand0to1 out of range\n");
 		return(0.42);
 	}
 	return(f);
@@ -265,9 +265,9 @@ struct partition *PartHeadp;
 		ap->a_color[2] = (hitp->hit_normal[2] * (-.5)) + .5;
 	}
 
-	if(debug&DEBUG_HITS)  {
-		pr_hit( " In", hitp );
-		rtlog("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
+	if(rt_g.debug&DEBUG_HITS)  {
+		rt_pr_hit( " In", hitp );
+		rt_log("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
 		VPRINT("RGB", ap->a_color);
 	}
 }
@@ -304,7 +304,7 @@ register struct application *ap;
 		*pixelp++ = g & 0xFF;
 		*pixelp++ = b & 0xFF;
 	}
-	if(debug&DEBUG_HITS) rtlog("rgb=%3d,%3d,%3d\n", r,g,b);
+	if(rt_g.debug&DEBUG_HITS) rt_log("rgb=%3d,%3d,%3d\n", r,g,b);
 }
 
 
@@ -391,16 +391,16 @@ struct partition *PartHeadp;
 	auto point_t	mcolor;		/* Material color */
 	Mat_Db_Entry	*entry = &mat_dfl_entry;
 
-	if(debug&DEBUG_HITS)  {
-		pr_pt(pp);
-		pr_hit( "view", pp->pt_inhit);
+	if(rt_g.debug&DEBUG_HITS)  {
+		rt_pr_pt(pp);
+		rt_pr_hit( "view", pp->pt_inhit);
 	}
 
 	/* Temporary check to make sure normals are OK */
 	if( hitp->hit_normal[X] < -1.01 || hitp->hit_normal[X] > 1.01 ||
 	    hitp->hit_normal[Y] < -1.01 || hitp->hit_normal[Y] > 1.01 ||
 	    hitp->hit_normal[Z] < -1.01 || hitp->hit_normal[Z] > 1.01 )  {
-		rtlog("colorview: N=(%f,%f,%f)?\n",
+		rt_log("colorview: N=(%f,%f,%f)?\n",
 			hitp->hit_normal[X],hitp->hit_normal[Y],hitp->hit_normal[Z]);
 		VSET( ap->a_color, 1, 1, 0 );
 		goto finish;
@@ -408,9 +408,9 @@ struct partition *PartHeadp;
 
 	/* Check to see if eye is "inside" the solid */
 	if( hitp->hit_dist < 0.0 )  {
-		if( debug || ap->a_level > MAX_BOUNCE )  {
+		if( rt_g.debug || ap->a_level > MAX_BOUNCE )  {
 			VSET( ap->a_color, 1, 0, 0 );
-			rtlog("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
+			rt_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 				pp->pt_inseg->seg_stp->st_name,
 				ap->a_x, ap->a_y, ap->a_level);
 			goto finish;
@@ -420,12 +420,12 @@ struct partition *PartHeadp;
 		sub_ap.a_level = ap->a_level+1;
 		f = pp->pt_outhit->hit_dist+0.0001;
 		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
-		(void)shootray( &sub_ap );
+		(void)rt_shootray( &sub_ap );
 		VSCALE( ap->a_color, sub_ap.a_color, 0.8 );
 		goto finish;
 	}
 
-	if( debug&DEBUG_RAYWRITE )  {
+	if( rt_g.debug&DEBUG_RAYWRITE )  {
 		/* Record the approach path */
 		if( hitp->hit_dist > EPSILON )
 			wraypts( ap->a_ray.r_pt,
@@ -447,7 +447,7 @@ struct partition *PartHeadp;
 			auto fastf_t uv[2];
 			double inten;
 			extern double texture();
-			functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
+			rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
 				pp->pt_inseg->seg_stp, hitp, uv );
 			inten = texture( uv[0], uv[1], 1.0, 2.0, 1.0 );
 			skycolor( inten, ap->a_color, 0.35, 0.3 );
@@ -458,7 +458,7 @@ struct partition *PartHeadp;
 			auto fastf_t uv[2];
 			register unsigned char *cp;
 			extern unsigned char *text_uvget();
-			functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
+			rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
 				pp->pt_inseg->seg_stp, hitp, uv );
 			cp = text_uvget( 0, uv );	/* tp hack */
 			VSET( mcolor, *cp++/255., *cp++/255., *cp++/255.);
@@ -467,9 +467,9 @@ struct partition *PartHeadp;
 		/* Debug map */
 		if( *cp == 'M' && strncmp( cp, "MAP", 3 )==0 )  {
 			auto fastf_t uv[2];
-			functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
+			rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
 				pp->pt_inseg->seg_stp, hitp, uv );
-			if(debug&DEBUG_HITS) rtlog("uv=%f,%f\n", uv[0], uv[1]);
+			if(rt_g.debug&DEBUG_HITS) rt_log("uv=%f,%f\n", uv[0], uv[1]);
 			VSET( ap->a_color, uv[0], 0, uv[1] );
 			goto finish;
 		}
@@ -488,7 +488,7 @@ struct partition *PartHeadp;
 	{
 		register struct mater *mp;
 		if( pp->pt_regionp == REGION_NULL )  {
-			rtlog("bad region pointer\n");
+			rt_log("bad region pointer\n");
 			VSET( ap->a_color, 0.7, 0.7, 0.7 );
 			goto finish;
 		}
@@ -513,7 +513,7 @@ colorit:
 	Rd1 = 0;
 	if( (cosI1 = VDOT( hitp->hit_normal, to_light )) > 0.0 )  {
 		if( cosI1 > 1 )  {
-			rtlog("cosI1=%f (x%d,y%d,lvl%d)\n", cosI1,
+			rt_log("cosI1=%f (x%d,y%d,lvl%d)\n", cosI1,
 				ap->a_x, ap->a_y, ap->a_level);
 			cosI1 = 1;
 		}
@@ -524,7 +524,7 @@ colorit:
 	d_a = 0;
 	if( (cosI2 = VDOT( hitp->hit_normal, to_eye )) > 0.0 )  {
 		if( cosI2 > 1 )  {
-			rtlog("cosI2=%f (x%d,y%d,lvl%d)\n", cosI2,
+			rt_log("cosI2=%f (x%d,y%d,lvl%d)\n", cosI2,
 				ap->a_x, ap->a_y, ap->a_level);
 			cosI2 = 1;
 		}
@@ -553,7 +553,7 @@ colorit:
 		sub_ap.a_ray.r_dir[Y] =  l0pos[Y] + rand_half()*f - hitp->hit_point[Y];
 		sub_ap.a_ray.r_dir[Z] =  l0pos[Z] + rand_half()*f - hitp->hit_point[Z];
 		VUNITIZE( sub_ap.a_ray.r_dir );
-		light_visible = shootray( &sub_ap );
+		light_visible = rt_shootray( &sub_ap );
 	} else {
 		light_visible = 1;
 	}
@@ -575,7 +575,7 @@ colorit:
 		VSUB2( reflected, work, to_light );
 		if( (cosS = VDOT( reflected, to_eye )) > 0 )  {
 			if( cosS > 1 )  {
-				rtlog("cosS=%f (x%d,y%d,lvl%d)\n", cosS,
+				rt_log("cosS=%f (x%d,y%d,lvl%d)\n", cosS,
 					ap->a_x, ap->a_y, ap->a_level);
 				cosS = 1;
 			}
@@ -587,11 +587,11 @@ colorit:
 
 	if( (entry->transmission <= 0 && entry->transparency <= 0) ||
 	    ap->a_level > MAX_BOUNCE )  {
-		if( debug&DEBUG_RAYWRITE )  {
+		if( rt_g.debug&DEBUG_RAYWRITE )  {
 			register struct soltab *stp;
 			/* Record passing through the solid */
 			stp = pp->pt_outseg->seg_stp;
-			functab[stp->st_id].ft_norm(
+			rt_functab[stp->st_id].ft_norm(
 				pp->pt_outhit, stp, &(ap->a_ray) );
 			wray( pp, ap, stdout );
 		}
@@ -613,7 +613,7 @@ colorit:
 		VSCALE( work, hitp->hit_normal, f );
 		/* I have been told this has unit length */
 		VSUB2( sub_ap.a_ray.r_dir, work, to_eye );
-		(void)shootray( &sub_ap );
+		(void)rt_shootray( &sub_ap );
 		VJOIN1( ap->a_color, ap->a_color,
 			entry->transmission, sub_ap.a_color );
 	}
@@ -636,11 +636,11 @@ colorit:
 do_inside:
 		sub_ap.a_hit =  rfr_hit;
 		sub_ap.a_miss = rfr_miss;
-		(void) shootray( &sub_ap );
+		(void) rt_shootray( &sub_ap );
 		/* NOTE: rfr_hit returns EXIT point in sub_ap.a_uvec,
 		 *  and returns EXIT normal in sub_ap.a_color.
 		 */
-		if( debug&DEBUG_RAYWRITE )  {
+		if( rt_g.debug&DEBUG_RAYWRITE )  {
 			wraypts( sub_ap.a_ray.r_pt, sub_ap.a_uvec,
 				ap, stdout );
 		}
@@ -654,9 +654,9 @@ do_inside:
 		) )  {
 			/* Reflected internally -- keep going */
 			if( ++sub_ap.a_level > 100+MAX_IREFLECT )  {
-				rtlog("Excessive internal reflection (x%d,y%d, lvl%d)\n",
+				rt_log("Excessive internal reflection (x%d,y%d, lvl%d)\n",
 					sub_ap.a_x, sub_ap.a_y, sub_ap.a_level );
-				if(debug) {
+				if(rt_g.debug) {
 					VSET( ap->a_color, 0, 1, 0 );	/* green */
 				} else {
 					VSET( ap->a_color, .16, .16, .16 );	/* grey */
@@ -669,7 +669,7 @@ do_exit:
 		sub_ap.a_hit =  colorview;
 		sub_ap.a_miss = hit_nothing;
 		sub_ap.a_level++;
-		(void) shootray( &sub_ap );
+		(void) rt_shootray( &sub_ap );
 		VJOIN1( ap->a_color, ap->a_color,
 			entry->transparency, sub_ap.a_color );
 	}
@@ -686,7 +686,7 @@ rfr_miss( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	rtlog("rfr_miss: Refracted ray missed!\n" );
+	rt_log("rfr_miss: Refracted ray missed!\n" );
 	/* Return entry point as exit point */
 	VREVERSE( ap->a_color, ap->a_ray.r_dir );	/* inward pointing */
 	VMOVE( ap->a_uvec, ap->a_ray.r_pt );
@@ -705,7 +705,7 @@ struct partition *PartHeadp;
 	register struct soltab *stp;
 
 	stp = PartHeadp->pt_forw->pt_outseg->seg_stp;
-	functab[stp->st_id].ft_norm(
+	rt_functab[stp->st_id].ft_norm(
 		hitp, stp, &(ap->a_ray) );
 	VMOVE( ap->a_uvec, hitp->hit_point );
 	/* For refraction, want exit normal to point inward. */
@@ -746,7 +746,7 @@ register vect_t	v_2;
 	FAST fastf_t	beta;
 
 	if( NEAR_ZERO(ri_1) || NEAR_ZERO( ri_2 ) )  {
-		rtlog("refract:ri1=%f, ri2=%f\n", ri_1, ri_2 );
+		rt_log("refract:ri1=%f, ri2=%f\n", ri_1, ri_2 );
 		beta = 1;
 	} else {
 		beta = ri_1/ri_2;		/* temp */
@@ -792,8 +792,8 @@ view_eol()
 	if( pixfd > 0 )  {
 		i = write( pixfd, (char *)scanline, scanbytes );
 		if( i != scanbytes )  {
-			rtlog("view_eol: wrote %d, got %d\n", scanbytes, i);
-			rtbomb("write error");
+			rt_log("view_eol: wrote %d, got %d\n", scanbytes, i);
+			rt_bomb("write error");
 		}			
 		pixelp = &scanline[0];
 	}
@@ -808,7 +808,7 @@ register struct application *ap;
 char *file, *obj;
 {
 	if( npts > MAX_LINE )  {
-		rtlog("view:  %d pixels/line > %d\n", npts, MAX_LINE);
+		rt_log("view:  %d pixels/line > %d\n", npts, MAX_LINE);
 		exit(12);
 	}
 	if( minus_o )  {
@@ -866,12 +866,12 @@ register struct application *ap;
 	case 0:
 		ap->a_hit = colorview;
 		/* If present, use user-specified light solid */
-		if( (l0stp=find_solid("LIGHT")) != SOLTAB_NULL )  {
+		if( (l0stp=rt_find_solid("LIGHT")) != SOLTAB_NULL )  {
 			VMOVE( l0pos, l0stp->st_center );
 			VPRINT("LIGHT0 at", l0pos);
 			break;
 		}
-		if(debug)rtlog("No explicit light\n");
+		if(rt_g.debug)rt_log("No explicit light\n");
 		goto debug_lighting;
 	case 1:
 	case 2:
@@ -897,6 +897,6 @@ debug_lighting:
 		VUNITIZE(l2vec);
 		break;
 	default:
-		rtbomb("bad lighting model #");
+		rt_bomb("bad lighting model #");
 	}
 }

@@ -18,8 +18,6 @@
  *  
  *  $Revision$
  */
-extern int debug;
-
 #define DEBUG_OFF	0	/* No debugging */
 
 /* These definitions are each for one bit */

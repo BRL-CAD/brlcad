@@ -3,7 +3,7 @@
  *
  *  Ray Tracing program RTPP bottom half.
  *
- *  This module takes the first hit from shootray(), and produces
+ *  This module takes the first hit from rt_shootray(), and produces
  *  GIFT format .PP (pretty picture) files
  *
  *  To make a picture out of a .PP file, use:

@@ -14,24 +14,24 @@
 #include "debug.h"
 #include "cut.h"
 
-int CutLen = 3;			/* normal limit on number objs per box node */
-int CutDepth = 32;		/* normal limit on depth of cut tree */
+int rt_cutLen = 3;			/* normal limit on number objs per box node */
+int rt_cutDepth = 32;		/* normal limit on depth of cut tree */
 
 union cutter CutHead;		/* Global head of cutting tree */
 union cutter *CutFree;		/* Head of freelist */
 
-extern int ck_overlap();
-extern void cut_it(), pr_cut();
-HIDDEN void cut_add(), cut_box(), cut_optim();
-HIDDEN union cutter *cut_get();
+HIDDEN int rt_ck_overlap();
+HIDDEN void rt_cut_add(), rt_cut_box(), rt_cut_optim();
+HIDDEN union cutter *rt_cut_get();
 
 #define AXIS(depth)	((depth>>1)%3)	/* cuts: X, X, Y, Y, Z, Z, repeat */
 
+HIDDEN void rt_plot_cut();
 static void space3(), plot_color(), move3(), cont3();
 static FILE *plotfp;
 
 /*
- *  			C U T _ I T
+ *  			R T _ C U T _ I T
  *  
  *  Go through all the solids in the model, given the model mins and maxes,
  *  and generate a cutting tree.  A strategy better than incrementally
@@ -39,44 +39,44 @@ static FILE *plotfp;
  *  in the model, and optimize it.
  */
 void
-cut_it()  {
+rt_cut_it()  {
 	register struct soltab *stp;
 
 	CutHead.bn.bn_type = CUT_BOXNODE;
-	VMOVE( CutHead.bn.bn_min, mdl_min );
-	VMOVE( CutHead.bn.bn_max, mdl_max );
+	VMOVE( CutHead.bn.bn_min, rt_i.mdl_min );
+	VMOVE( CutHead.bn.bn_max, rt_i.mdl_max );
 	CutHead.bn.bn_len = 0;
-	CutHead.bn.bn_maxlen = nsolids+1;
-	CutHead.bn.bn_list = (struct soltab **)vmalloc(
+	CutHead.bn.bn_maxlen = rt_i.nsolids+1;
+	CutHead.bn.bn_list = (struct soltab **)rt_malloc(
 		CutHead.bn.bn_maxlen * sizeof(struct soltab *),
-		"cut_it: root list" );
-	for(stp=HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
+		"rt_cut_it: root list" );
+	for(stp=rt_i.HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
 		CutHead.bn.bn_list[CutHead.bn.bn_len++] = stp;
 		if( CutHead.bn.bn_len > CutHead.bn.bn_maxlen )  {
-			rtlog("cut_it:  nsolids wrong, dropping solids\n");
+			rt_log("rt_cut_it:  rt_i.nsolids wrong, dropping solids\n");
 			break;
 		}
 	}
 	/*  Dynamic decisions on tree limits.
-	 *  Note that there will be (2**CutDepth)*CutLen leaf slots,
+	 *  Note that there will be (2**rt_cutDepth)*rt_cutLen leaf slots,
 	 *  but solids will typically span several leaves.
 	 */
-	CutLen = (int)log((double)nsolids);
-	if( CutLen < 3 )  CutLen = 3;
-	CutDepth = (int)(2 * log((double)nsolids));	/* ln ~= log2 */
-	if( CutDepth < 9 )  CutDepth = 9;
-	if( CutDepth > 24 )  CutDepth = 24;		/* !! */
-rtlog("Cut: Tree Depth=%d, Leaf Len=%d\n", CutDepth, CutLen );
-	cut_optim( &CutHead, 0 );
-	if(debug&DEBUG_CUT) pr_cut( &CutHead, 0 );
-	if(debug&DEBUG_PLOTBOX && (plotfp=fopen("rtbox.plot", "w"))!=NULL) {
+	rt_cutLen = (int)log((double)rt_i.nsolids);
+	if( rt_cutLen < 3 )  rt_cutLen = 3;
+	rt_cutDepth = (int)(2 * log((double)rt_i.nsolids));	/* ln ~= log2 */
+	if( rt_cutDepth < 9 )  rt_cutDepth = 9;
+	if( rt_cutDepth > 24 )  rt_cutDepth = 24;		/* !! */
+rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
+	rt_cut_optim( &CutHead, 0 );
+	if(rt_g.debug&DEBUG_CUT) rt_pr_cut( &CutHead, 0 );
+	if(rt_g.debug&DEBUG_PLOTBOX && (plotfp=fopen("rtbox.plot", "w"))!=NULL) {
 		space3( 0,0,0, 4096, 4096, 4096);
 		/* First, all the cutting boxes */
-		plot_cut( &CutHead, 0 );
+		rt_plot_cut( &CutHead, 0 );
 		/* Then, all the solid bounding boxes, in white */
 		plot_color( 255, 255, 255 );
-		for(stp=HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
-			draw_box( stp->st_min, stp->st_max );
+		for(stp=rt_i.HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
+			rt_draw_box( stp->st_min, stp->st_max );
 		}
 		(void)fclose(plotfp);
 	}
@@ -86,17 +86,17 @@ rtlog("Cut: Tree Depth=%d, Leaf Len=%d\n", CutDepth, CutLen );
  *  			C U T _ A D D
  *  
  *  Add a solid to the cut tree, extending the tree as necessary,
- *  but without being paranoid about obeying the CutLen limits,
+ *  but without being paranoid about obeying the rt_cutLen limits,
  *  so as to retain O(depth) performance.
  */
 HIDDEN void
-cut_add( cutp, stp, min, max, depth )
+rt_cut_add( cutp, stp, min, max, depth )
 register union cutter *cutp;
 struct soltab *stp;	/* should be object handle & routine addr */
 vect_t min, max;
 int depth;
 {
-	if(debug&DEBUG_CUT)rtlog("cut_add(x%x, %s, %d)\n",
+	if(rt_g.debug&DEBUG_CUT)rt_log("rt_cut_add(x%x, %s, %d)\n",
 		cutp, stp->st_name, depth);
 	if( cutp->cut_type == CUT_CUTNODE )  {
 		vect_t temp;
@@ -104,22 +104,22 @@ int depth;
 		/* Cut to the left of point */
 		VMOVE( temp, max );
 		temp[cutp->cn.cn_axis] = cutp->cn.cn_point;
-		if( ck_overlap( min, temp, stp ) )
-			cut_add( cutp->cn.cn_l, stp, min, temp, depth+1 );
+		if( rt_ck_overlap( min, temp, stp ) )
+			rt_cut_add( cutp->cn.cn_l, stp, min, temp, depth+1 );
 
 		/* Cut to the right of point */
 		VMOVE( temp, min );
 		temp[cutp->cn.cn_axis] = cutp->cn.cn_point;
-		if( ck_overlap( temp, max, stp ) )
-			cut_add( cutp->cn.cn_r, stp, temp, max, depth+1 );
+		if( rt_ck_overlap( temp, max, stp ) )
+			rt_cut_add( cutp->cn.cn_r, stp, temp, max, depth+1 );
 		return;
 	}
 	if( cutp->cut_type != CUT_BOXNODE )  {
-		rtlog("cut_add:  node type =x%x\n",cutp->cut_type);
+		rt_log("rt_cut_add:  node type =x%x\n",cutp->cut_type);
 		return;
 	}
 	/* BOX NODE */
-	if( cutp->bn.bn_len >= CutLen && depth <= CutDepth )  {
+	if( cutp->bn.bn_len >= rt_cutLen && depth <= rt_cutDepth )  {
 		register struct boxnode *bp;
 
 		/*
@@ -128,17 +128,17 @@ int depth;
 		 *  two BOXNODES.  Then, just tack on new object,
 		 *  without trying to limit size or doing recursion.
 		 */
-		cut_box( cutp, AXIS(depth) );
+		rt_cut_box( cutp, AXIS(depth) );
 		/* cutp now points to a CUTNODE */
 
 		/* add extra object to left, without recursing */
 		bp = &(cutp->cn.cn_l->bn);
-		if( ck_overlap( bp->bn_min, bp->bn_max, stp ) )
+		if( rt_ck_overlap( bp->bn_min, bp->bn_max, stp ) )
 			bp->bn_list[bp->bn_len++] = stp;
 
 		bp = &(cutp->cn.cn_r->bn);
 		/* add extra object to right, without recursing */
-		if( ck_overlap( bp->bn_min, bp->bn_max, stp ) )
+		if( rt_ck_overlap( bp->bn_min, bp->bn_max, stp ) )
 			bp->bn_list[bp->bn_len++] = stp;
 		return;
 	}
@@ -148,23 +148,23 @@ int depth;
 		/* Need to get more space in list.  */
 		if( cutp->bn.bn_maxlen <= 0 )  {
 			/* Initial allocation */
-			if( CutLen > 6 )
-				cutp->bn.bn_maxlen = CutLen;
+			if( rt_cutLen > 6 )
+				cutp->bn.bn_maxlen = rt_cutLen;
 			else
 				cutp->bn.bn_maxlen = 6;
-			cutp->bn.bn_list = (struct soltab **)vmalloc(
+			cutp->bn.bn_list = (struct soltab **)rt_malloc(
 				cutp->bn.bn_maxlen * sizeof(struct soltab *),
-				"cut_add: initial list alloc" );
+				"rt_cut_add: initial list alloc" );
 		} else {
 			char *newlist;
-			newlist = vmalloc(
+			newlist = rt_malloc(
 				sizeof(struct soltab *) * cutp->bn.bn_maxlen * 2,
-				"cut_add: list extend" );
+				"rt_cut_add: list extend" );
 			bcopy( cutp->bn.bn_list, newlist,
 				cutp->bn.bn_maxlen * sizeof(struct soltab *));
 			cutp->bn.bn_maxlen *= 2;
-			vfree( (char *)cutp->bn.bn_list,
-				"cut_add: list extend (old list)");
+			rt_free( (char *)cutp->bn.bn_list,
+				"rt_cut_add: list extend (old list)");
 			cutp->bn.bn_list = (struct soltab **)newlist;
 		}
 	}
@@ -179,7 +179,7 @@ int depth;
  *  be able to hold at least one more item in it's list.
  */
 HIDDEN void
-cut_box( cutp, axis )
+rt_cut_box( cutp, axis )
 register union cutter *cutp;
 register int axis;
 {
@@ -190,7 +190,7 @@ register int axis;
 	auto double d;
 	register int i;
 
-	if(debug&DEBUG_CUT)rtlog("cut_box(x%x, %c)\n",cutp,"XYZ345"[axis]);
+	if(rt_g.debug&DEBUG_CUT)rt_log("rt_cut_box(x%x, %c)\n",cutp,"XYZ345"[axis]);
 	oldbox = *cutp;		/* struct copy */
 	cutp->cut_type = CUT_CUTNODE;
 	cutp->cn.cn_axis = axis;
@@ -223,7 +223,7 @@ register int axis;
 		cutp->cn.cn_point = pt_close;
 
 	/* LEFT side */
-	cutp->cn.cn_l = cut_get();
+	cutp->cn.cn_l = rt_cut_get();
 	bp = &(cutp->cn.cn_l->bn);
 	bp->bn_type = CUT_BOXNODE;
 	VMOVE( bp->bn_min, oldbox.bn.bn_min );
@@ -231,17 +231,17 @@ register int axis;
 	bp->bn_max[axis] = cutp->cn.cn_point;
 	bp->bn_len = 0;
 	bp->bn_maxlen = oldbox.bn.bn_len + 1;
-	bp->bn_list = (struct soltab **) vmalloc(
+	bp->bn_list = (struct soltab **) rt_malloc(
 		sizeof(struct soltab *) * bp->bn_maxlen,
-		"cut_box: left list" );
+		"rt_cut_box: left list" );
 	for( i=0; i < oldbox.bn.bn_len; i++ )  {
-		if( !ck_overlap(bp->bn_min, bp->bn_max, oldbox.bn.bn_list[i]))
+		if( !rt_ck_overlap(bp->bn_min, bp->bn_max, oldbox.bn.bn_list[i]))
 			continue;
 		bp->bn_list[bp->bn_len++] = oldbox.bn.bn_list[i];
 	}
 
 	/* RIGHT side */
-	cutp->cn.cn_r = cut_get();
+	cutp->cn.cn_r = rt_cut_get();
 	bp = &(cutp->cn.cn_r->bn);
 	bp->bn_type = CUT_BOXNODE;
 	VMOVE( bp->bn_min, oldbox.bn.bn_min );
@@ -249,15 +249,15 @@ register int axis;
 	bp->bn_min[axis] = cutp->cn.cn_point;
 	bp->bn_len = 0;
 	bp->bn_maxlen = oldbox.bn.bn_len + 1;
-	bp->bn_list = (struct soltab **) vmalloc(
+	bp->bn_list = (struct soltab **) rt_malloc(
 		sizeof(struct soltab *) * bp->bn_maxlen,
-		"cut_box: right list" );
+		"rt_cut_box: right list" );
 	for( i=0; i < oldbox.bn.bn_len; i++ )  {
-		if( !ck_overlap(bp->bn_min, bp->bn_max, oldbox.bn.bn_list[i]))
+		if( !rt_ck_overlap(bp->bn_min, bp->bn_max, oldbox.bn.bn_list[i]))
 			continue;
 		bp->bn_list[bp->bn_len++] = oldbox.bn.bn_list[i];
 	}
-	vfree( (char *)oldbox.bn.bn_list, "cut_box:  old list" );
+	rt_free( (char *)oldbox.bn.bn_list, "rt_cut_box:  old list" );
 }
 
 /*
@@ -272,12 +272,12 @@ register int axis;
  *	0	if no overlap.
  */
 int
-ck_overlap( min, max, stp )
+rt_ck_overlap( min, max, stp )
 register vect_t min, max;
 register struct soltab *stp;
 {
-	if( debug&DEBUG_BOXING )  {
-		rtlog("ck_overlap(%s)\n",stp->st_name);
+	if( rt_g.debug&DEBUG_BOXING )  {
+		rt_log("rt_ck_overlap(%s)\n",stp->st_name);
 		VPRINT("box min", min);
 		VPRINT("sol min", stp->st_min);
 		VPRINT("box max", max);
@@ -287,10 +287,10 @@ register struct soltab *stp;
 	if( stp->st_min[Y] > max[Y]  || stp->st_max[Y] < min[Y] )  goto fail;
 	if( stp->st_min[Z] > max[Z]  || stp->st_max[Z] < min[Z] )  goto fail;
 	/* Need more sophistication here, per-object type */
-	if( debug&DEBUG_BOXING )  rtlog("ck_overlap:  TRUE\n");
+	if( rt_g.debug&DEBUG_BOXING )  rt_log("rt_ck_overlap:  TRUE\n");
 	return(1);
 fail:
-	if( debug&DEBUG_BOXING )  rtlog("ck_overlap:  FALSE\n");
+	if( rt_g.debug&DEBUG_BOXING )  rt_log("rt_ck_overlap:  FALSE\n");
 	return(0);
 }
 
@@ -304,37 +304,37 @@ fail:
  *  space.
  */
 HIDDEN void
-cut_optim( cutp, depth )
+rt_cut_optim( cutp, depth )
 register union cutter *cutp;
 int depth;
 {
 	register int oldlen;
 
 	if( cutp->cut_type == CUT_CUTNODE )  {
-		cut_optim( cutp->cn.cn_l, depth+1 );
-		cut_optim( cutp->cn.cn_r, depth+1 );
+		rt_cut_optim( cutp->cn.cn_l, depth+1 );
+		rt_cut_optim( cutp->cn.cn_r, depth+1 );
 		return;
 	}
 	if( cutp->cut_type != CUT_BOXNODE )  {
-		rtlog("cut_optim: bad node\n");
+		rt_log("rt_cut_optim: bad node\n");
 		return;
 	}
 	/*
 	 * BOXNODE
 	 */
 	if( cutp->bn.bn_len <= 1 )  return;	/* optimal */
-	if( depth > CutDepth )  return;		/* too deep */
-	/* Attempt to subdivide finer than CutLen near treetop */
-	if( depth >= 12 && cutp->bn.bn_len <= CutLen )
+	if( depth > rt_cutDepth )  return;		/* too deep */
+	/* Attempt to subdivide finer than rt_cutLen near treetop */
+	if( depth >= 12 && cutp->bn.bn_len <= rt_cutLen )
 		return;				/* Fine enough */
 	/* Keep subdividing until things don't get any better. */
 	/* Really we might want to proceed for 2-3 levels, but... */
 	oldlen = cutp->bn.bn_len;
-	cut_box( cutp, AXIS(depth) );
+	rt_cut_box( cutp, AXIS(depth) );
 	if( cutp->cn.cn_l->bn.bn_len < oldlen ||
 	    cutp->cn.cn_r->bn.bn_len < oldlen )  {
-		cut_optim( cutp->cn.cn_l, depth+1 );
-		cut_optim( cutp->cn.cn_r, depth+1 );
+		rt_cut_optim( cutp->cn.cn_l, depth+1 );
+		rt_cut_optim( cutp->cn.cn_r, depth+1 );
 	}
 }
 
@@ -342,15 +342,15 @@ int depth;
  *  			C U T _ G E T
  */
 HIDDEN union cutter *
-cut_get()
+rt_cut_get()
 {
 	register union cutter *cutp;
 
 	if( CutFree == CUTTER_NULL )  {
 		register int bytes;
 
-		bytes = byte_roundup(64*sizeof(union cutter));
-		cutp = (union cutter *)vmalloc(bytes," cut_get");
+		bytes = rt_byte_roundup(64*sizeof(union cutter));
+		cutp = (union cutter *)rt_malloc(bytes," rt_cut_get");
 		while( bytes >= sizeof(union cutter) )  {
 			cutp->cut_forw = CutFree;
 			CutFree = cutp++;
@@ -368,114 +368,116 @@ cut_get()
  *  Print out a cut tree.
  */
 void
-pr_cut( cutp, lvl )
+rt_pr_cut( cutp, lvl )
 register union cutter *cutp;
 int lvl;			/* recursion level */
 {
 	register int i,j;
 
-	rtlog("%.8x ", cutp);
+	rt_log("%.8x ", cutp);
 	for( i=lvl; i>0; i-- )
-		rtlog("   ");
+		rt_log("   ");
 
 	if( cutp == CUTTER_NULL )  {
-		rtlog("Null???\n");
+		rt_log("Null???\n");
 		return;
 	}
 
 	switch( cutp->cut_type )  {
 
 	case CUT_CUTNODE:
-		rtlog("CUT L %c < %f\n",
+		rt_log("CUT L %c < %f\n",
 			"XYZ?"[cutp->cn.cn_axis],
 			cutp->cn.cn_point );
-		pr_cut( cutp->cn.cn_l, lvl+1 );
+		rt_pr_cut( cutp->cn.cn_l, lvl+1 );
 
-		rtlog("%.8x ", cutp);
+		rt_log("%.8x ", cutp);
 		for( i=lvl; i>0; i-- )
-			rtlog("   ");
-		rtlog("CUT R %c >= %f\n",
+			rt_log("   ");
+		rt_log("CUT R %c >= %f\n",
 			"XYZ?"[cutp->cn.cn_axis],
 			cutp->cn.cn_point );
-		pr_cut( cutp->cn.cn_r, lvl+1 );
+		rt_pr_cut( cutp->cn.cn_r, lvl+1 );
 		return;
 
 	case CUT_BOXNODE:
-		rtlog("BOX Contains %d solids (%d alloc):\n",
+		rt_log("BOX Contains %d solids (%d alloc):\n",
 			cutp->bn.bn_len, cutp->bn.bn_maxlen );
-		rtlog("        ");
+		rt_log("        ");
 		for( i=lvl; i>0; i-- )
-			rtlog("   ");
+			rt_log("   ");
 		VPRINT(" min", cutp->bn.bn_min);
-		rtlog("        ");
+		rt_log("        ");
 		for( i=lvl; i>0; i-- )
-			rtlog("   ");
+			rt_log("   ");
 		VPRINT(" max", cutp->bn.bn_max);
 
 		for( i=0; i < cutp->bn.bn_len; i++ )  {
-			rtlog("        ");
+			rt_log("        ");
 			for( j=lvl; j>0; j-- )
-				rtlog("   ");
-			rtlog("    %s\n",
+				rt_log("   ");
+			rt_log("    %s\n",
 				cutp->bn.bn_list[i]->st_name);
 		}
 		return;
 
 	default:
-		rtlog("Unknown type=x%x\n", cutp->cut_type );
+		rt_log("Unknown type=x%x\n", cutp->cut_type );
 		break;
 	}
 	return;
 }
 
 /*
- *  			P L O T _ C U T
+ *  			R T _ P L O T _ C U T
  */
-plot_cut( cutp, lvl )
+HIDDEN void
+rt_plot_cut( cutp, lvl )
 register union cutter *cutp;
 int lvl;
 {
 	switch( cutp->cut_type )  {
 	case CUT_CUTNODE:
-		plot_cut( cutp->cn.cn_l, lvl+1 );
-		plot_cut( cutp->cn.cn_r, lvl+1 );
+		rt_plot_cut( cutp->cn.cn_l, lvl+1 );
+		rt_plot_cut( cutp->cn.cn_r, lvl+1 );
 		return;
 	case CUT_BOXNODE:
 		/* Should choose color based on lvl, need a table */
 		plot_color( (AXIS(lvl)==0)?255:0,
 			(AXIS(lvl)==1)?255:0,
 			(AXIS(lvl)==2)?255:0 );
-		draw_box( cutp->bn.bn_min, cutp->bn.bn_max );
+		rt_draw_box( cutp->bn.bn_min, cutp->bn.bn_max );
 		return;
 	}
 	return;
 }
 
 /*
- *  			D R A W _ B O X
+ *  			R T _ D R A W _ B O X
  *  
  *  Arrange to efficiently draw the edges of a box (RPP).
  *  Call on UNIX-Plot to do the actual drawing, which
  *  will fall out on plotfp.
  */
-draw_box( a, b )
+void
+rt_draw_box( a, b )
 register vect_t a, b;
 {
 	int ax, ay, az;
 	int bx, by, bz;
 	double conv, f;
-	conv = 4096.0 / (mdl_max[X]-mdl_min[X]);
-	f = 4096.0 / (mdl_max[Y]-mdl_min[Y]);
+	conv = 4096.0 / (rt_i.mdl_max[X]-rt_i.mdl_min[X]);
+	f = 4096.0 / (rt_i.mdl_max[Y]-rt_i.mdl_min[Y]);
 	if( f < conv )  conv = f;
-	f = 4096.0 / (mdl_max[Z]-mdl_min[Z]);
+	f = 4096.0 / (rt_i.mdl_max[Z]-rt_i.mdl_min[Z]);
 	if( f < conv )  conv = f;
 
-	ax =	(a[X]-mdl_min[X])*conv;
-	ay =	(a[Y]-mdl_min[Y])*conv;
-	az =	(a[Z]-mdl_min[Z])*conv;
-	bx =	(b[X]-mdl_min[X])*conv;
-	by =	(b[Y]-mdl_min[Y])*conv;
-	bz =	(b[Z]-mdl_min[Z])*conv;
+	ax =	(a[X]-rt_i.mdl_min[X])*conv;
+	ay =	(a[Y]-rt_i.mdl_min[Y])*conv;
+	az =	(a[Z]-rt_i.mdl_min[Z])*conv;
+	bx =	(b[X]-rt_i.mdl_min[X])*conv;
+	by =	(b[Y]-rt_i.mdl_min[Y])*conv;
+	bz =	(b[Z]-rt_i.mdl_min[Z])*conv;
 
 	move3( ax, ay, az );
 	cont3( bx, ay, az );

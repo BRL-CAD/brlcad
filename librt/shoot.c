@@ -26,47 +26,13 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 #include "../h/vmath.h"
 #include "../h/raytrace.h"
 #include "debug.h"
-
 #include "cut.h"
 
-int debug = DEBUG_OFF;	/* non-zero for debugging, see debug.h */
-long nsolids;		/* total # of solids participating */
-long nregions;		/* total # of regions participating */
-long nshots;		/* # of calls to ft_shot() */
-long nmiss_model;	/* rays missed model RPP */
-long nmiss_tree;	/* rays missed sub-tree RPP */
-long nmiss_solid;	/* rays missed solid RPP */
-long nmiss;		/* solid ft_shot() returned a miss */
-long nhits;		/* solid ft_shot() returned a hit */
-int rt_needprep = 1;	/* rt_prep() needs calling */
-struct soltab *HeadSolid = SOLTAB_NULL;
-struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
-
-HIDDEN int shoot_tree();
-
-void get_bitv();
-union bitv_elem {
-	union bitv_elem	*be_next;
-	bitv_t		be_v[2];
-};
-union bitv_elem *FreeBitv;		/* Head of freelist */
-#define BITV_NULL	((union bitv_elem *)0)
-
-#define GET_BITV(p)    {	RES_ACQUIRE(&res_bitv); \
-			while( ((p)=FreeBitv) == BITV_NULL ) \
-				get_bitv(); \
-			FreeBitv = (p)->be_next; \
-			p->be_next = BITV_NULL; \
-			RES_RELEASE(&res_bitv); }
-#define FREE_BITV(p)   {	RES_ACQUIRE(&res_bitv); \
-			(p)->be_next = FreeBitv; FreeBitv = (p); \
-			RES_RELEASE(&res_bitv); }
-
 /*
- *  			S H O O T R A Y
+ *			R T _ S H O O T R A Y
  *  
  *  Given a ray, shoot it at all the relevant parts of the model,
- *  (building the HeadSeg chain), and then call bool_regions()
+ *  (building the HeadSeg chain), and then call rt_bool_regions()
  *  to build and evaluate the partition chain.
  *  If the ray actually hit anything, call the application's
  *  a_hit() routine with a pointer to the partition chain,
@@ -91,11 +57,11 @@ union bitv_elem *FreeBitv;		/* Head of freelist */
  *
  *  Returns: whatever the application function returns (an int).
  *
- *  NOTE:  The appliction functions may call shootray() recursively.
+ *  NOTE:  The appliction functions may call rt_shootray() recursively.
  *	Thus, none of the local variables may be static.
  */
 int
-shootray( ap )
+rt_shootray( ap )
 register struct application *ap;
 {
 	auto struct seg *HeadSeg;
@@ -112,32 +78,32 @@ register struct application *ap;
 	auto struct partition InitialPart; /* Head of Initial Partitions */
 	auto struct partition FinalPart;	/* Head of Final Partitions */
 
-	if( rt_needprep )  rt_prep();		/* so things will work */
+	if( rt_i.needprep )  rt_prep();		/* so things will work */
 
 	InitialPart.pt_forw = InitialPart.pt_back = &InitialPart;
 	FinalPart.pt_forw = FinalPart.pt_back = &FinalPart;
 
 	solidbits = BITV_NULL;		/* not allocated yet */
 
-	if(debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
+	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
 		VPRINT("\nPnt", ap->a_ray.r_pt);
 		VPRINT("Dir", ap->a_ray.r_dir);
 		fflush(stderr);		/* In case of instant death */
 	}
 
 	/* Verify that direction vector has unit length */
-	if(debug) {
+	if(rt_g.debug) {
 		FAST fastf_t f, diff;
 		f = ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
 			ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y] +
 			ap->a_ray.r_dir[Z] * ap->a_ray.r_dir[Z];
 		if( NEAR_ZERO(f) )  {
-			rtbomb("shootray:  zero length dir vector\n");
+			rt_bomb("rt_shootray:  zero length dir vector\n");
 			return(0);
 		}
 		diff = f - 1;
 		if( !NEAR_ZERO( diff ) )  {
-			rtlog("shootray: non-unit dir vect (x%d y%d lvl%d)\n",
+			rt_log("rt_shootray: non-unit dir vect (x%d y%d lvl%d)\n",
 				ap->a_x, ap->a_y, ap->a_level );
 			f = 1/f;
 			VSCALE( ap->a_ray.r_dir, ap->a_ray.r_dir, f );
@@ -168,9 +134,9 @@ register struct application *ap;
 	/*
 	 *  If ray does not enter the model RPP, skip on.
 	 */
-	if( !in_rpp( &ap->a_ray, inv_dir, mdl_min, mdl_max )  ||
+	if( !rt_in_rpp( &ap->a_ray, inv_dir, rt_i.mdl_min, rt_i.mdl_max )  ||
 	    ap->a_ray.r_max <= 0.0 )  {
-		nmiss_model++;
+		rt_i.nmiss_model++;
 		ret = ap->a_miss( ap );
 		status = "MISS model";
 		goto out;
@@ -183,10 +149,10 @@ register struct application *ap;
 		box_start = 0.0;	/* don't look back */
 	last_bool_start = box_start;
 
-	GET_BITV( solidbits );	/* see get_bitv() for details */
-	regionbits = &solidbits->be_v[2+(BITS2BYTES(nsolids)/sizeof(bitv_t))];
-	BITZERO(solidbits->be_v,nsolids);
-	BITZERO(regionbits,nregions);
+	GET_BITV( solidbits );	/* see rt_get_bitv() for details */
+	regionbits = &solidbits->be_v[2+(BITS2BYTES(rt_i.nsolids)/sizeof(bitv_t))];
+	BITZERO(solidbits->be_v,rt_i.nsolids);
+	BITZERO(regionbits,rt_i.nregions);
 	HeadSeg = SEG_NULL;
 	lastcut = CUTTER_NULL;
 	trybool = 0;
@@ -199,7 +165,7 @@ register struct application *ap;
 	while( box_start < model_end )  {
 		register union cutter *cutp;
 		struct soltab *stp;
-		struct seg *waitsegs;	/* segs awaiting bool_weave() */
+		struct seg *waitsegs;	/* segs awaiting rt_bool_weave() */
 
 		waitsegs = SEG_NULL;
 
@@ -218,11 +184,11 @@ register struct application *ap;
 			}
 		}
 		if(cutp==CUTTER_NULL || cutp->cut_type != CUT_BOXNODE)
-			rtbomb("leaf not boxnode");
+			rt_bomb("leaf not boxnode");
 
 		/* Make sure we don't get stuck within the same box twice */
 		if( cutp==lastcut )  {
-			rtlog("straight box push failed\n");
+			rt_log("straight box push failed\n");
 			/* Advance 0.01% of last box size */
 			box_end += (box_end-box_start)*0.0001;
 			box_start = box_end;
@@ -230,18 +196,18 @@ register struct application *ap;
 		}
 		lastcut = cutp;
 
-		if( !in_rpp(&ap->a_ray, inv_dir,
+		if( !rt_in_rpp(&ap->a_ray, inv_dir,
 		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
-			rtlog("shootray:  ray misses box?\n");
+			rt_log("rt_shootray:  ray misses box?\n");
 			break;
 		}
 		box_end = ap->a_ray.r_max;	
 		ret = cutp->bn.bn_len;		/* loop count, below */
 
-		if(debug&DEBUG_SHOOT) {
-			rtlog("ray (%f, %f) %f\n", box_start, box_end, model_end);
+		if(rt_g.debug&DEBUG_SHOOT) {
+			rt_log("ray (%f, %f) %f\n", box_start, box_end, model_end);
 			VPRINT( "point", point );
-			pr_cut( cutp, 0 );
+			rt_pr_cut( cutp, 0 );
 		}
 
 		/* Consider all objects within the box */
@@ -250,39 +216,39 @@ register struct application *ap;
 
 			stp = cutp->bn.bn_list[ret];
 			if( BITTEST( solidbits->be_v, stp->st_bit ) )  {
-				if(debug&DEBUG_SHOOT)rtlog("skipping %s\n", stp->st_name);
-				nmiss_tree++;
+				if(rt_g.debug&DEBUG_SHOOT)rt_log("skipping %s\n", stp->st_name);
+				rt_i.nmiss_tree++;
 				continue;	/* already shot */
 			}
 
 			/* Shoot a ray */
-			if(debug&DEBUG_SHOOT)rtlog("shooting %s\n", stp->st_name);
+			if(rt_g.debug&DEBUG_SHOOT)rt_log("shooting %s\n", stp->st_name);
 			BITSET( solidbits->be_v, stp->st_bit );
 
 			/* If ray does not strike the bounding RPP, skip on */
 			if(
 			     /*  stp->st_id != ID_ARB8 && */
-			   ( !in_rpp( &ap->a_ray, inv_dir,
+			   ( !rt_in_rpp( &ap->a_ray, inv_dir,
 			      stp->st_min, stp->st_max ) ||
 			      ap->a_ray.r_max < -EPSILON )
 			)  {
-				nmiss_solid++;
+				rt_i.nmiss_solid++;
 				continue;	/* MISS */
 			}
 
-			nshots++;
-			if( (newseg = functab[stp->st_id].ft_shot( 
+			rt_i.nshots++;
+			if( (newseg = rt_functab[stp->st_id].ft_shot( 
 				stp, &ap->a_ray )
 			     ) == SEG_NULL )  {
-				nmiss++;
+				rt_i.nmiss++;
 				continue;	/* MISS */
 			}
-			if(debug&DEBUG_SHOOT)  pr_seg(newseg);
+			if(rt_g.debug&DEBUG_SHOOT)  rt_pr_seg(newseg);
 
 			/* First, some checking */
 			if( newseg->seg_in.hit_dist > newseg->seg_out.hit_dist )  {
 				LOCAL struct hit temp;		/* XXX */
-				rtlog("ERROR %s: in/out rev (%f,%f)\n",
+				rt_log("ERROR %s: in/out rev (%f,%f)\n",
 					newseg->seg_stp->st_name,
 					newseg->seg_in.hit_dist,
 					newseg->seg_out.hit_dist );
@@ -299,12 +265,12 @@ register struct application *ap;
 				newseg = seg2;
 			}
 			if( newseg == SEG_NULL )  {
-				nmiss++;
+				rt_i.nmiss++;
 				continue;	/* MISS */
 			}
 			trybool++;	/* flag to rerun bool, below */
 
-			/* Add seg chain to list awaiting bool_weave() */
+			/* Add seg chain to list awaiting rt_bool_weave() */
 			{
 				register struct seg *seg2 = newseg;
 				while( seg2->seg_next != SEG_NULL )
@@ -313,9 +279,10 @@ register struct application *ap;
 				waitsegs = newseg;
 			}
 			/* Would be even better done by per-partition bitv */
-			bitv_or( regionbits, stp->st_regions, stp->st_maxreg);
-			if(debug&DEBUG_PARTITION) pr_bitv( "shoot Regionbits", regionbits, nregions);
-			nhits++;	/* global counter */
+			rt_bitv_or( regionbits, stp->st_regions, stp->st_maxreg);
+			if(rt_g.debug&DEBUG_PARTITION)
+				rt_pr_bitv( "shoot Regionbits", regionbits, rt_i.nregions);
+			rt_i.nhits++;
 		}
 
 		/*
@@ -323,7 +290,7 @@ register struct application *ap;
 		 *  Done once per box.
 		 */
 		if( waitsegs != SEG_NULL )  {
-			bool_weave( waitsegs, &InitialPart );
+			rt_bool_weave( waitsegs, &InitialPart );
 
 			/* Add segment chain to list of used segments */
 			{
@@ -340,7 +307,7 @@ register struct application *ap;
 		/* Only run this every three hits, to balance cost/benefit */
 		if( trybool>=3 && ap->a_onehit )  {
 			/* Evaluate regions upto box_end */
-			bool_final( &InitialPart, &FinalPart,
+			rt_bool_final( &InitialPart, &FinalPart,
 				last_bool_start, box_end, regionbits, ap );
 
 			/* If anything was found, it's a hit! */
@@ -367,7 +334,7 @@ register struct application *ap;
 	 *  All intersections of the ray with the model have
 	 *  been computed.  Evaluate the boolean trees over each partition.
 	 */
-	bool_final( &InitialPart, &FinalPart, 0.0, model_end, regionbits, ap);
+	rt_bool_final( &InitialPart, &FinalPart, 0.0, model_end, regionbits, ap);
 
 	if( FinalPart.pt_forw == &FinalPart )  {
 		ret = ap->a_miss( ap );
@@ -387,16 +354,16 @@ hitit:
 			register struct soltab *stp;
 
 			stp = pp->pt_inseg->seg_stp;
-			functab[stp->st_id].ft_norm(
+			rt_functab[stp->st_id].ft_norm(
 				pp->pt_inhit, stp, &(ap->a_ray) );
 
 			if( ap->a_onehit )  break;
 			stp = pp->pt_outseg->seg_stp;
-			functab[stp->st_id].ft_norm(
+			rt_functab[stp->st_id].ft_norm(
 				pp->pt_outhit, stp, &(ap->a_ray) );
 		}
 	}
-	if(debug&DEBUG_SHOOT)  pr_partitions(&FinalPart,"a_hit()");
+	if(rt_g.debug&DEBUG_SHOOT)  rt_pr_partitions(&FinalPart,"a_hit()");
 
 	ret = ap->a_hit( ap, &FinalPart );
 	status = "HIT";
@@ -436,14 +403,14 @@ out:
 	if( solidbits != BITV_NULL)  {
 		FREE_BITV( solidbits );
 	}
-	if(debug&(DEBUG_SHOOT|DEBUG_ALLRAYS))
-		rtlog( "%s, ret%d\n", status, ret);
-	if( debug )  fflush(stderr);
+	if(rt_g.debug&(DEBUG_SHOOT|DEBUG_ALLRAYS))
+		rt_log( "%s, ret%d\n", status, ret);
+	if( rt_g.debug )  fflush(stderr);
 	return( ret );
 }
 
 /*
- *			I N _ R P P
+ *			R T _ I N _ R P P
  *
  *  Compute the intersections of a ray with a rectangular parallelpiped (RPP)
  *  that has faces parallel to the coordinate planes
@@ -465,7 +432,7 @@ out:
  *	rp->r_min = dist from start of ray to point at which ray ENTERS solid
  *	rp->r_max = dist from start of ray to point at which ray LEAVES solid
  */
-in_rpp( rp, invdir, min, max )
+rt_in_rpp( rp, invdir, min, max )
 register struct xray *rp;
 register fastf_t *invdir;	/* inverses of rp->r_dir[] */
 register fastf_t *min;
@@ -556,7 +523,11 @@ register fastf_t *max;
 	return(1);		/* HIT */
 }
 
-bitv_or( out, in, nbits )
+/*
+ *			R T _ B I T V _ O R
+ */
+void
+rt_bitv_or( out, in, nbits )
 register bitv_t *out;
 register bitv_t *in;
 int nbits;
@@ -569,33 +540,33 @@ int nbits;
 }
 
 /*
- *  			G E T _ B I T V
+ *  			R T _ G E T _ B I T V
  *  
  *  This routine is called by the GET_BITV macro when the freelist
  *  is exhausted.  Rather than simply getting one additional structure,
  *  we get a whole batch, saving overhead.  When this routine is called,
  *  the bitv resource must already be locked.
- *  malloc() locking is done in vmalloc.
+ *  malloc() locking is done in rt_malloc.
  *
  *  Also note that there is a bit of trickery going on here:
  *  the *real* size of be_v[] array is determined at runtime, here.
  */
 void
-get_bitv()  {
+rt_get_bitv()  {
 	register char *cp;
 	register int bytes;
 	register int size;		/* size of structure to really get */
 
-	size = BITS2BYTES(nsolids) + BITS2BYTES(nregions) + 4*sizeof(bitv_t);
+	size = BITS2BYTES(rt_i.nsolids) + BITS2BYTES(rt_i.nregions) + 4*sizeof(bitv_t);
 	size = (size+sizeof(long)-1) & ~(sizeof(long)-1);
-	bytes = byte_roundup(16*size);
-	if( (cp = vmalloc(bytes, "get_bitv")) == (char *)0 )  {
-		rtlog("get_bitv: malloc failure\n");
+	bytes = rt_byte_roundup(16*size);
+	if( (cp = rt_malloc(bytes, "rt_get_bitv")) == (char *)0 )  {
+		rt_log("rt_get_bitv: malloc failure\n");
 		exit(17);
 	}
 	while( bytes >= size )  {
-		((union bitv_elem *)cp)->be_next = FreeBitv;
-		FreeBitv = (union bitv_elem *)cp;
+		((union bitv_elem *)cp)->be_next = rt_i.FreeBitv;
+		rt_i.FreeBitv = (union bitv_elem *)cp;
 		cp += size;
 		bytes -= size;
 	}

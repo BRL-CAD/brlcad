@@ -26,7 +26,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "../h/raytrace.h"
-extern int debug;
 
 #ifdef HEP
 # include <synch.h>
@@ -108,8 +107,8 @@ char **argv;
 			AmbientIntensity = atof( &argv[0][2] );
 			break;
 		case 'x':
-			sscanf( &argv[0][2], "%x", &debug );
-			fprintf(stderr,"debug=x%x\n", debug);
+			sscanf( &argv[0][2], "%x", &rt_g.debug );
+			fprintf(stderr,"rt_g.debug=x%x\n", rt_g.debug);
 			break;
 		case 'f':
 			/* "Fast" -- just a few pixels.  Or, arg's worth */
@@ -159,39 +158,39 @@ char **argv;
 		fprintf(stderr, usage);
 		exit(2);
 	}
-	RES_RELEASE( &res_pt );
-	RES_RELEASE( &res_seg );
-	RES_RELEASE( &res_malloc );
-	RES_RELEASE( &res_bitv );
+	RES_RELEASE( &rt_g.res_pt );
+	RES_RELEASE( &rt_g.res_seg );
+	RES_RELEASE( &rt_g.res_malloc );
+	RES_RELEASE( &rt_g.res_bitv );
 #ifdef HEP
-	scanbuf = vmalloc( npts*npts*3 + sizeof(long), "scanbuf" );
+	scanbuf = rt_malloc( npts*npts*3 + sizeof(long), "scanbuf" );
 #endif
 
 	title_file = argv[0];
 	title_obj = argv[1];
 
-	prep_timer();		/* Start timing preparations */
+	rt_prep_timer();		/* Start timing preparations */
 
 	/* Build directory of GED database */
-	if( dir_build( argv[0], idbuf, sizeof(idbuf) ) < 0 )  {
-		fprintf(stderr,"rt:  dir_build failure\n");
+	if( rt_dirbuild( argv[0], idbuf, sizeof(idbuf) ) < 0 )  {
+		fprintf(stderr,"rt:  rt_dirbuild failure\n");
 		exit(2);
 	}
 	fprintf(stderr, "db title:  %s\n", idbuf);
 	argc--; argv++;
 
-	(void)read_timer( outbuf, sizeof(outbuf) );
+	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr,"DB TOC: %s\n", outbuf);
-	prep_timer();
+	rt_prep_timer();
 
 	/* Load the desired portion of the model */
 	while( argc > 0 )  {
-		(void)get_tree(argv[0]);
+		(void)rt_gettree(argv[0]);
 		argc--; argv++;
 	}
-	(void)read_timer( outbuf, sizeof(outbuf) );
+	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr,"DB WALK: %s\n", outbuf);
-	prep_timer();
+	rt_prep_timer();
 
 	/* Allow library to prepare itself */
 	rt_prep();
@@ -199,20 +198,20 @@ char **argv;
 	/* initialize application */
 	view_init( &ap, title_file, title_obj, npts, outputfile!=(char *)0 );
 
-	(void)read_timer( outbuf, sizeof(outbuf) );
+	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr, "PREP: %s\n", outbuf );
 
-	if( HeadSolid == SOLTAB_NULL )  {
+	if( rt_i.HeadSolid == SOLTAB_NULL )  {
 		fprintf(stderr,"rt: No solids remain after prep.\n");
 		exit(3);
 	}
 	fprintf(stderr,"shooting at %d solids in %d regions\n",
-		nsolids, nregions );
+		rt_i.nsolids, rt_i.nregions );
 
 	fprintf(stderr,"model X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
-		mdl_min[X], mdl_max[X],
-		mdl_min[Y], mdl_max[Y],
-		mdl_min[Z], mdl_max[Z] );
+		rt_i.mdl_min[X], rt_i.mdl_max[X],
+		rt_i.mdl_min[Y], rt_i.mdl_max[Y],
+		rt_i.mdl_min[Z], rt_i.mdl_max[Z] );
 
 #ifdef HEP
 	(void)Disete( &work_word );
@@ -220,11 +219,11 @@ char **argv;
 		npsw = 4;
 	/* Get enough dynamic memory to keep from making malloc sbrk() */
 	for( x=0; x<npsw; x++ )  {
-		get_pt();
-		get_seg();
+		rt_get_pt();
+		rt_get_seg();
 		get_bitv();
 	}
-	vfree( vmalloc( (20+npsw)*8192, "worker prefetch"), "worker");
+	rt_free( rt_malloc( (20+npsw)*8192, "worker prefetch"), "worker");
 
 	fprintf(stderr,"creating %d worker PSWs\n", npsw );
 	for( x=0; x<npsw; x++ )  {
@@ -235,8 +234,8 @@ char **argv;
 
 do_more:
 	if( !matflag )  {
-		vect_t view_min;		/* view position of mdl_min */
-		vect_t view_max;		/* view position of mdl_max */
+		vect_t view_min;		/* view position of rt_i.mdl_min */
+		vect_t view_max;		/* view position of rt_i.mdl_max */
 		fastf_t f;
 
 		mat_idn( Viewrotscale );
@@ -244,7 +243,7 @@ do_more:
 		fprintf(stderr,"Viewing %f azimuth, %f elevation off of front view\n",
 			azimuth, elevation);
 
-		viewbounds( view_min, view_max, Viewrotscale );
+		rt_viewbounds( view_min, view_max, Viewrotscale );
 		viewsize = (view_max[X]-view_min[X]);
 		f = (view_max[Y]-view_min[Y]);
 		if( f > viewsize )  viewsize = f;
@@ -329,7 +328,7 @@ do_more:
 
 	fflush(stdout);
 	fflush(stderr);
-	prep_timer();	/* start timing actual run */
+	rt_prep_timer();	/* start timing actual run */
 
 	for( y = npts-1; y >= 0; y--)  {
 		for( x = 0; x < npts; x++)  {
@@ -345,7 +344,7 @@ do_more:
 		view_eol( &ap );	/* End of scan line */
 #endif
 	}
-	utime = read_timer( outbuf, sizeof(outbuf) );	/* final time */
+	utime = rt_read_timer( outbuf, sizeof(outbuf) );	/* final time */
 #ifndef HEP
 	view_end( &ap );		/* End of application */
 #endif
@@ -355,10 +354,10 @@ do_more:
 	 */
 	fprintf(stderr, "SHOT: %s\n", outbuf );
 	fprintf(stderr,"%ld solid/ray intersections: %ld hits + %ld miss\n",
-		nshots, nhits, nmiss );
+		rt_i.nshots, rt_i.nhits, rt_i.nmiss );
 	fprintf(stderr,"pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
-		nshots>0?((double)nhits*100.0)/nshots:100.0,
-		nmiss_model, nmiss_tree, nmiss_solid );
+		rt_i.nshots>0?((double)rt_i.nhits*100.0)/rt_i.nshots:100.0,
+		rt_i.nmiss_model, rt_i.nmiss_tree, rt_i.nmiss_solid );
 	fprintf(stderr,"Frame %d: %d output rays in %f sec = %f rays/sec\n",
 		framenumber-1,
 		npts*npts, utime, (double)(npts*npts/utime) );
@@ -422,7 +421,7 @@ register struct application *ap;
 		}
 
 		a.a_level = 0;		/* recursion level */
-		shootray( &a );
+		rt_shootray( &a );
 #ifndef HEP
 		view_pixel( &a );
 #else
@@ -439,7 +438,7 @@ register struct application *ap;
 			if( g > 255 )  g=255;
 			if( b > 255 )  b=255;
 			if( r<0 || g<0 || b<0 )  {
-				rtlog("Negative RGB %d,%d,%d\n", r, g, b );
+				rt_log("Negative RGB %d,%d,%d\n", r, g, b );
 				r = 0x80;
 				g = 0xFF;
 				b = 0x80;

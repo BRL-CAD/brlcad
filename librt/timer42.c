@@ -34,7 +34,7 @@ static void psecs();
  *			P R E P _ T I M E R
  */
 void
-prep_timer()
+rt_prep_timer()
 {
 	gettimeofday(&time0, (struct timezone *)0);
 	getrusage(RUSAGE_SELF, &ru0);
@@ -45,7 +45,7 @@ prep_timer()
  * 
  */
 double
-read_timer(str,len)
+rt_read_timer(str,len)
 char *str;
 {
 	struct timeval timedol;

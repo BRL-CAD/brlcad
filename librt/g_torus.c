@@ -191,14 +191,14 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Validate that |A| > 0, |B| > 0, |H| > 0 */
 	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_h) ) {
-		rtlog("tor(%s):  zero length A, B, or H vector\n",
+		rt_log("tor(%s):  zero length A, B, or H vector\n",
 			stp->st_name );
 		return(1);		/* BAD */
 	}
 
 	/* Validate that |A| == |B| (for now) */
-	if( fdiff( r1, mag_b ) != 0 ) {
-		rtlog("tor(%s):  (|A|=%f) != (|B|=%f) \n",
+	if( rt_fdiff( r1, mag_b ) != 0 ) {
+		rt_log("tor(%s):  (|A|=%f) != (|B|=%f) \n",
 			stp->st_name, r1, mag_b );
 		return(1);		/* BAD */
 	}
@@ -207,27 +207,27 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	f = VDOT( A, B )/(r1*mag_b);
 
 	if( ! NEAR_ZERO(f) )  {
-		rtlog("tor(%s):  A not perpendicular to B, f=%f\n",
+		rt_log("tor(%s):  A not perpendicular to B, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( B, Hv )/(mag_b*r2);
 	if( ! NEAR_ZERO(f) )  {
-		rtlog("tor(%s):  B not perpendicular to H, f=%f\n",
+		rt_log("tor(%s):  B not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( A, Hv )/(r1*r2);
 	if( ! NEAR_ZERO(f) )  {
-		rtlog("tor(%s):  A not perpendicular to H, f=%f\n",
+		rt_log("tor(%s):  A not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that 0 < r2 <= r1 for alpha computation */
 	if( 0.0 >= r2  || r2 > r1 )  {
-		rtlog("r1 = %f, r2 = %f\n", r1, r2 );
-		rtlog("tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
+		rt_log("r1 = %f, r2 = %f\n", r1, r2 );
+		rt_log("tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
 		return(1);		/* BAD */
 	}
 
@@ -303,8 +303,8 @@ register struct soltab *stp;
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
 
-	rtlog("r2/r1 (alpha) = %f\n", tor->tor_alpha);
-	rtlog("r1 = %f\n", tor->tor_r1);
+	rt_log("r2/r1 (alpha) = %f\n", tor->tor_alpha);
+	rt_log("r1 = %f\n", tor->tor_r1);
 	VPRINT("V", tor->tor_V);
 	mat_print("S o R", tor->tor_SoR );
 	mat_print("invR", tor->tor_invR );
@@ -419,8 +419,8 @@ register struct xray *rp;
 	 *  if the root finder returns other than 4 roots, error.
 	 */
 	if ( (i = polyRoots( &C, val )) != 4 ){
-		rtlog("tor:  polyRoots() 4!=%d\n", i);
-		pr_roots( i, val );
+		rt_log("tor:  polyRoots() 4!=%d\n", i);
+		rt_pr_roots( i, val );
 		return(SEG_NULL);		/* MISS */
 	}
 
@@ -443,8 +443,8 @@ register struct xray *rp;
 	if( i == 0 )
 		return(SEG_NULL);		/* No hit */
 	if( i != 2 && i != 4 )  {
-		rtlog("tor_shot: reduced 4 to %d roots\n",i);
-		pr_roots( 4, val );
+		rt_log("tor_shot: reduced 4 to %d roots\n",i);
+		rt_pr_roots( 4, val );
 		return(SEG_NULL);		/* No hit */
 	}
 

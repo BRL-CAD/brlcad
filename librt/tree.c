@@ -28,21 +28,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtdir.h"
 #include "debug.h"
 
+struct rt_g rt_g;
+struct rt_i rt_i;	/* eventually, malloc'ed by rt_dir_build */
+
 int rt_pure_boolean_expressions = 0;
 
-union tree *RootTree;		/* Root of tree containing all regions */
-struct region *HeadRegion;
-struct region **Regions;	/* Ptr to array indexed by reg_bit */
-
-/* A bounding RPP around the whole model */
-vect_t mdl_min = {  INFINITY,  INFINITY,  INFINITY };
-vect_t mdl_max = { -INFINITY, -INFINITY, -INFINITY };
 #define MINMAX(a,b,c)	{ if( (c) < (a) )  a = (c);\
 			if( (c) > (b) )  b = (c); }
 
-HIDDEN union tree *drawHobj();
-HIDDEN void add_regtree();
-HIDDEN union tree *make_bool_tree();
+HIDDEN union tree *rt_draw_obj();
+HIDDEN void rt_add_regtree();
+HIDDEN union tree *rt_make_bool_tree();
 
 extern int nul_prep(),	nul_print(), nul_norm(), nul_uv();
 extern int tor_prep(),	tor_print(), tor_norm(), tor_uv();
@@ -66,7 +62,7 @@ extern struct seg *rec_shot();
 extern struct seg *pg_shot();
 extern struct seg *spl_shot();
 
-struct functab functab[] = {
+struct rt_functab rt_functab[] = {
 	nul_prep, nul_shot, nul_print, nul_norm, nul_uv, "ID_NULL",
 	tor_prep, tor_shot, tor_print, tor_norm, tor_uv, "ID_TOR",
 	tgc_prep, tgc_shot, tgc_print, tgc_norm, tgc_uv, "ID_TGC",
@@ -83,7 +79,7 @@ struct functab functab[] = {
 /*
  *  Hooks for unimplemented routines
  */
-#define DEF(func)	func() { rtlog("func unimplemented\n"); return(0); }
+#define DEF(func)	func() { rt_log("func unimplemented\n"); return(0); }
 
 DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print); DEF(nul_norm); DEF(nul_uv);
 
@@ -118,14 +114,13 @@ static char idmap[] = {
 	ID_NULL		/* n+1 */
 };
 
-HIDDEN char *path_str();
+HIDDEN char *rt_path_str();
 
 extern void color_map();
-extern int rt_needprep;
 
 
 /*
- *  			G E T _ T R E E
+ *  			R T _ G E T _ T R E E
  *
  *  User-called function to add a tree hierarchy to the displayed set.
  *  
@@ -134,23 +129,23 @@ extern int rt_needprep;
  *	-1	On major error
  */
 int
-get_tree(node)
+rt_gettree(node)
 char *node;
 {
 	register union tree *curtree;
 	register struct directory *dp;
 	mat_t	mat;
 
-	if(!rt_needprep)
-		rtbomb("get_tree called again after rt_prep!");
+	if(!rt_i.needprep)
+		rt_bomb("rt_gettree called again after rt_prep!");
 
 	mat_idn( mat );
 
-	dp = dir_lookup( node, LOOKUP_NOISY );
+	dp = rt_dir_lookup( node, LOOKUP_NOISY );
 	if( dp == DIR_NULL )
 		return(-1);		/* ERROR */
 
-	curtree = drawHobj( dp, REGION_NULL, 0, mat );
+	curtree = rt_draw_obj( dp, REGION_NULL, 0, mat );
 	if( curtree != TREE_NULL )  {
 		/*  Subtree has not been contained by a region.
 		 *  This should only happen when a top-level solid
@@ -159,12 +154,12 @@ char *node;
 		register struct region *regionp;	/* XXX */
 
 		GETSTRUCT( regionp, region );
-		rtlog("Warning:  Top level solid, region %s created\n",
-			path_str(0) );
+		rt_log("Warning:  Top level solid, region %s created\n",
+			rt_path_str(0) );
 		if( curtree->tr_op != OP_SOLID )
-			rtbomb("root subtree not Solid");
-		regionp->reg_name = strdup(path_str(0));
-		add_regtree( regionp, curtree );
+			rt_bomb("root subtree not Solid");
+		regionp->reg_name = rt_strdup(rt_path_str(0));
+		rt_add_regtree( regionp, curtree );
 	}
 	return(0);	/* OK */
 }
@@ -173,9 +168,12 @@ static vect_t xaxis = { 1.0, 0, 0, 0 };
 static vect_t yaxis = { 0, 1.0, 0, 0 };
 static vect_t zaxis = { 0, 0, 1.0, 0 };
 
+/*
+ *			R T _ A D D _ S O L I D
+ */
 HIDDEN
 struct soltab *
-add_solid( rec, name, mat )
+rt_add_solid( rec, name, mat )
 union record *rec;
 char	*name;
 matp_t	mat;
@@ -196,7 +194,7 @@ matp_t	mat;
 	fy = VDOT( B, C );
 	fz = VDOT( A, C );
 	if( ! NEAR_ZERO(fx) || ! NEAR_ZERO(fy) || ! NEAR_ZERO(fz) )  {
-		rtlog("add_solid(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%f, Y.Z=%f, X.Z=%f\n",
+		rt_log("rt_add_solid(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%f, Y.Z=%f, X.Z=%f\n",
 			name, fx, fy, fz );
 		mat_print("bad matrix", mat);
 		return( SOLTAB_NULL );		/* BAD */
@@ -206,7 +204,7 @@ matp_t	mat;
 	 *  Check to see if this exact solid has already been processed.
 	 *  Match on leaf name and matrix.
 	 */
-	for( nsp = HeadSolid; nsp != SOLTAB_NULL; nsp = nsp->st_forw )  {
+	for( nsp = rt_i.HeadSolid; nsp != SOLTAB_NULL; nsp = nsp->st_forw )  {
 		register int i;
 
 		if(
@@ -221,8 +219,8 @@ matp_t	mat;
 				goto next_one;
 		}
 		/* Success, we have a match! */
-		if( debug & DEBUG_SOLIDS )
-			rtlog("add_solid:  %s re-referenced\n",
+		if( rt_g.debug & DEBUG_SOLIDS )
+			rt_log("rt_add_solid:  %s re-referenced\n",
 				name );
 		return(nsp);
 next_one: ;
@@ -233,7 +231,7 @@ next_one: ;
 	case ID_SOLID:
 		stp->st_id = idmap[rec->s.s_type];
 		/* Convert from database (float) to fastf_t */
-		fastf_float( v, rec->s.s_values, 8 );
+		rt_fastf_float( v, rec->s.s_values, 8 );
 		break;
 	case ID_ARS_A:
 		stp->st_id = ID_ARS;
@@ -245,7 +243,7 @@ next_one: ;
 		stp->st_id = ID_BSPLINE;
 		break;
 	default:
-		rtlog("add_solid:  u_id=x%x unknown\n", rec->u_id);
+		rt_log("rt_add_solid:  u_id=x%x unknown\n", rec->u_id);
 		free(stp);
 		return( SOLTAB_NULL );		/* BAD */
 	}
@@ -256,35 +254,35 @@ next_one: ;
 	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
 	stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
 
-	if( functab[stp->st_id].ft_prep( v, stp, mat, &(rec->s) ) )  {
+	if( rt_functab[stp->st_id].ft_prep( v, stp, mat, &(rec->s) ) )  {
 		/* Error, solid no good */
 		free(stp);
 		return( SOLTAB_NULL );		/* BAD */
 	}
 
 	/* For now, just link them all onto the same list */
-	stp->st_forw = HeadSolid;
-	HeadSolid = stp;
+	stp->st_forw = rt_i.HeadSolid;
+	rt_i.HeadSolid = stp;
 
 	mat_copy( stp->st_pathmat, mat );
 
 	/* Update the model maxima and minima */
-#define MMM(v)		MINMAX( mdl_min[X], mdl_max[X], v[X] ); \
-			MINMAX( mdl_min[Y], mdl_max[Y], v[Y] ); \
-			MINMAX( mdl_min[Z], mdl_max[Z], v[Z] )
+#define MMM(v)		MINMAX( rt_i.mdl_min[X], rt_i.mdl_max[X], v[X] ); \
+			MINMAX( rt_i.mdl_min[Y], rt_i.mdl_max[Y], v[Y] ); \
+			MINMAX( rt_i.mdl_min[Z], rt_i.mdl_max[Z], v[Z] )
 	MMM( stp->st_min );
 	MMM( stp->st_max );
 
-	stp->st_bit = nsolids++;
-	if(debug&DEBUG_SOLIDS)  {
-		rtlog("-------------- %s (bit %d) -------------\n",
+	stp->st_bit = rt_i.nsolids++;
+	if(rt_g.debug&DEBUG_SOLIDS)  {
+		rt_log("-------------- %s (bit %d) -------------\n",
 			stp->st_name, stp->st_bit );
 		VPRINT("Bound Sph CENTER", stp->st_center);
-		rtlog("Approx Sph Radius = %f\n", stp->st_aradius);
-		rtlog("Bounding Sph Radius = %f\n", stp->st_bradius);
+		rt_log("Approx Sph Radius = %f\n", stp->st_aradius);
+		rt_log("Bounding Sph Radius = %f\n", stp->st_bradius);
 		VPRINT("Bound RPP min", stp->st_min);
 		VPRINT("Bound RPP max", stp->st_max);
-		functab[stp->st_id].ft_print( stp );
+		rt_functab[stp->st_id].ft_print( stp );
 	}
 	return( stp );
 }
@@ -303,10 +301,10 @@ struct tree_list {
 };
 
 /*
- *			D R A W H O B J
+ *			R T _ D R A W _ O B J
  *
  * This routine is used to get an object drawn.
- * The actual processing of solids is performed by add_solid(),
+ * The actual processing of solids is performed by rt_add_solid(),
  * but all transformations and region building is done here.
  *
  * NOTE that this routine is used recursively, so no variables may
@@ -314,7 +312,7 @@ struct tree_list {
  */
 HIDDEN
 union tree *
-drawHobj( dp, argregion, pathpos, old_xlate )
+rt_draw_obj( dp, argregion, pathpos, old_xlate )
 struct directory *dp;
 struct region *argregion;
 matp_t old_xlate;
@@ -330,8 +328,8 @@ matp_t old_xlate;
 	struct tree_list *tlp;		/* cur tree_list */
 
 	if( pathpos >= MAXLEVELS )  {
-		rtlog("%s: nesting exceeds %d levels\n",
-			path_str(MAXLEVELS), MAXLEVELS );
+		rt_log("%s: nesting exceeds %d levels\n",
+			rt_path_str(MAXLEVELS), MAXLEVELS );
 		return(TREE_NULL);
 	}
 	path[pathpos] = dp;
@@ -339,10 +337,10 @@ matp_t old_xlate;
 	/*
 	 * Load the first record of the object into local record buffer
 	 */
-	if( lseek( ged_fd, dp->d_addr, 0 ) < 0 ||
-	    read( ged_fd, (char *)&rec, sizeof rec ) != sizeof rec )  {
-		rtlog("drawHobj: %s record read error\n",
-			path_str(pathpos) );
+	if( lseek( rt_i.fd, dp->d_addr, 0 ) < 0 ||
+	    read( rt_i.fd, (char *)&rec, sizeof rec ) != sizeof rec )  {
+		rt_log("rt_draw_obj: %s record read error\n",
+			rt_path_str(pathpos) );
 		return(TREE_NULL);
 	}
 
@@ -354,24 +352,24 @@ matp_t old_xlate;
 		register struct soltab *stp;
 		register union tree *xtp;
 
-		if( (stp = add_solid( &rec, dp->d_namep, old_xlate )) ==
+		if( (stp = rt_add_solid( &rec, dp->d_namep, old_xlate )) ==
 		    SOLTAB_NULL )
 			return( TREE_NULL );
 
 		/**GETSTRUCT( xtp, union tree ); **/
-		if( (xtp=(union tree *)vmalloc(sizeof(union tree), "solid tree"))
+		if( (xtp=(union tree *)rt_malloc(sizeof(union tree), "solid tree"))
 		    == TREE_NULL )
-			rtbomb("drawHobj: solid tree malloc failed\n");
+			rt_bomb("rt_draw_obj: solid tree malloc failed\n");
 		bzero( (char *)xtp, sizeof(union tree) );
 		xtp->tr_op = OP_SOLID;
 		xtp->tr_a.tu_stp = stp;
-		xtp->tr_a.tu_name = strdup(path_str(pathpos));
+		xtp->tr_a.tu_name = rt_strdup(rt_path_str(pathpos));
 		xtp->tr_regionp = argregion;
 		return( xtp );
 	}
 
 	if( rec.u_id != ID_COMB )  {
-		rtlog("drawHobj:  defective database record, type '%c'\n",
+		rt_log("rt_draw_obj:  defective database record, type '%c'\n",
 			rec.u_id );
 		return(TREE_NULL);			/* ERROR */
 	}
@@ -380,7 +378,7 @@ matp_t old_xlate;
 	 *  Process a Combination (directory) node
 	 */
 	if( rec.c.c_length <= 0 )  {
-		rtlog(  "Warning: combination with zero members \"%.16s\".\n",
+		rt_log(  "Warning: combination with zero members \"%.16s\".\n",
 			rec.c.c_name );
 		return(TREE_NULL);
 	}
@@ -389,9 +387,9 @@ matp_t old_xlate;
 	/* Handle combinations which are the top of a "region" */
 	if( rec.c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
-			if( debug & DEBUG_REGIONS )
-				rtlog("Warning:  region %s within region %s\n",
-					path_str(pathpos),
+			if( rt_g.debug & DEBUG_REGIONS )
+				rt_log("Warning:  region %s within region %s\n",
+					rt_path_str(pathpos),
 					argregion->reg_name );
 /***			argregion = REGION_NULL;	/* override! */
 		} else {
@@ -407,7 +405,7 @@ matp_t old_xlate;
 			nrp->reg_regionid = rec.c.c_regionid;
 			nrp->reg_aircode = rec.c.c_aircode;
 			nrp->reg_material = rec.c.c_material;
-			nrp->reg_name = strdup(path_str(pathpos));
+			nrp->reg_name = rt_strdup(rt_path_str(pathpos));
 			regionp = nrp;
 		}
 	}
@@ -415,15 +413,15 @@ matp_t old_xlate;
 	/* Read all the member records */
 	i = sizeof(union record) * rec.c.c_length;
 	j = sizeof(struct tree_list) * rec.c.c_length;
-	if( (members = (union record *)vmalloc(i, "member records")) ==
+	if( (members = (union record *)rt_malloc(i, "member records")) ==
 	    (union record *)0  ||
-	    (trees = (struct tree_list *)vmalloc( j, "tree_list array" )) ==
+	    (trees = (struct tree_list *)rt_malloc( j, "tree_list array" )) ==
 	    (struct tree_list *)0 )
-		rtbomb("drawHobj:  malloc failure\n");
+		rt_bomb("rt_draw_obj:  malloc failure\n");
 
-	if( read( ged_fd, (char *)members, i ) != i )  {
-		rtlog("drawHobj:  %s member read error\n",
-			path_str(pathpos) );
+	if( read( rt_i.fd, (char *)members, i ) != i )  {
+		rt_log("rt_draw_obj:  %s member read error\n",
+			rt_path_str(pathpos) );
 		return(TREE_NULL);
 	}
 
@@ -436,7 +434,7 @@ matp_t old_xlate;
 		auto mat_t new_xlate;		/* Accum translation mat */
 
 		mp = &(members[i].M);
-		if( (nextdp = dir_lookup( mp->m_instname, LOOKUP_NOISY )) ==
+		if( (nextdp = rt_dir_lookup( mp->m_instname, LOOKUP_NOISY )) ==
 		    DIR_NULL )
 			continue;
 
@@ -450,7 +448,7 @@ matp_t old_xlate;
 		}
 
 		/* Recursive call */
-		if( (tlp->tl_tree = drawHobj(
+		if( (tlp->tl_tree = rt_draw_obj(
 		    nextdp, regionp, pathpos+1, new_xlate )) == TREE_NULL )
 			continue;
 
@@ -464,13 +462,13 @@ matp_t old_xlate;
 			 * other subtrees might themselves contain regions.
 			 * This matches GIFT's current behavior.
 			 */
-			rtlog("Warning:  Forced to create region %s\n",
-				path_str(pathpos+1) );
+			rt_log("Warning:  Forced to create region %s\n",
+				rt_path_str(pathpos+1) );
 			if((tlp->tl_tree)->tr_op != OP_SOLID )
-				rtbomb("subtree not Solid");
+				rt_bomb("subtree not Solid");
 			GETSTRUCT( xrp, region );
-			xrp->reg_name = strdup(path_str(pathpos+1));
-			add_regtree( xrp, (tlp->tl_tree) );
+			xrp->reg_name = rt_strdup(rt_path_str(pathpos+1));
+			rt_add_regtree( xrp, (tlp->tl_tree) );
 			tlp->tl_tree = TREE_NULL;
 			continue;	/* no remaining subtree, go on */
 		}
@@ -478,7 +476,7 @@ matp_t old_xlate;
 		/* Store operation on subtree */
 		switch( mp->m_relation )  {
 		default:
-			rtlog("%s: bad m_relation '%c'\n",
+			rt_log("%s: bad m_relation '%c'\n",
 				regionp->reg_name, mp->m_relation );
 			/* FALL THROUGH */
 		case UNION:
@@ -498,8 +496,8 @@ matp_t old_xlate;
 	if( subtreecount <= 0 )  {
 		/* Null subtree in region, release region struct */
 		if( argregion == REGION_NULL && regionp != REGION_NULL )  {
-			vfree( regionp->reg_name, "unused region name" );
-			vfree( (char *)regionp, "unused region struct" );
+			rt_free( regionp->reg_name, "unused region name" );
+			rt_free( (char *)regionp, "unused region struct" );
 		}
 		curtree = TREE_NULL;
 		goto out;
@@ -507,7 +505,7 @@ matp_t old_xlate;
 
 	/* Build tree representing boolean expression in Member records */
 	if( rt_pure_boolean_expressions )  {
-		curtree = make_bool_tree( trees, subtreecount, regionp );
+		curtree = rt_make_bool_tree( trees, subtreecount, regionp );
 	} else {
 		register struct tree_list *tstart;
 
@@ -529,33 +527,33 @@ matp_t old_xlate;
 				continue;
 			if( (j = tlp-tstart) <= 0 )
 				continue;
-			tstart->tl_tree = make_bool_tree( tstart, j, regionp );
-			if(debug&DEBUG_REGIONS) pr_tree(tstart->tl_tree, 0);
+			tstart->tl_tree = rt_make_bool_tree( tstart, j, regionp );
+			if(rt_g.debug&DEBUG_REGIONS) rt_pr_tree(tstart->tl_tree, 0);
 			/* has side effect of zapping all trees,
 			 * so build new first node */
 			tstart->tl_op = OP_UNION;
 			/* tstart here at union */
 			tstart = tlp;
 		}
-		curtree = make_bool_tree( trees, subtreecount, regionp );
-		if(debug&DEBUG_REGIONS) pr_tree(curtree, 0);
+		curtree = rt_make_bool_tree( trees, subtreecount, regionp );
+		if(rt_g.debug&DEBUG_REGIONS) rt_pr_tree(curtree, 0);
 	}
 
 	if( argregion == REGION_NULL )  {
 		/* Region began at this level */
-		add_regtree( regionp, curtree );
+		rt_add_regtree( regionp, curtree );
 		curtree = TREE_NULL;		/* no remaining subtree */
 	}
 
 	/* Release dynamic memory and return */
 out:
-	vfree( (char *)trees, "tree_list array");
-	vfree( (char *)members, "member records" );
+	rt_free( (char *)trees, "tree_list array");
+	rt_free( (char *)members, "member records" );
 	return( curtree );
 }
 
 /*
- *			M A K E _ B O O L _ T R E E
+ *			R T _ M A K E _ B O O L _ T R E E
  *
  *  Given a tree_list array, build a tree of "union tree" nodes
  *  appropriately connected together.  Every element of the
@@ -564,7 +562,7 @@ out:
  *  Returns a pointer to the top of the tree.
  */
 HIDDEN union tree *
-make_bool_tree( tree_list, howfar, regionp )
+rt_make_bool_tree( tree_list, howfar, regionp )
 struct tree_list *tree_list;
 int howfar;
 struct region *regionp;
@@ -586,8 +584,8 @@ struct region *regionp;
 		if( inuse++ == 0 )
 			first_tlp = tlp;
 	}
-	if( debug & DEBUG_REGIONS && first_tlp->tl_op != OP_UNION )
-		rtlog("Warning: %s: non-union first operation ignored\n",
+	if( rt_g.debug & DEBUG_REGIONS && first_tlp->tl_op != OP_UNION )
+		rt_log("Warning: %s: non-union first operation ignored\n",
 			regionp->reg_name);
 
 	/* Handle trivial cases */
@@ -601,8 +599,8 @@ struct region *regionp;
 
 	/* Allocate all the tree structs we will need */
 	i = sizeof(union tree)*(inuse-1);
-	if( (xtp=(union tree *)vmalloc( i, "tree array")) == TREE_NULL )
-		rtbomb("make_bool_tree: malloc failed\n");
+	if( (xtp=(union tree *)rt_malloc( i, "tree array")) == TREE_NULL )
+		rt_bomb("rt_make_bool_tree: malloc failed\n");
 	bzero( (char *)xtp, i );
 
 	curtree = first_tlp->tl_tree;
@@ -622,8 +620,11 @@ struct region *regionp;
 	return(curtree);
 }
 
+/*
+ *			R T _ P A T H _ S T R
+ */
 HIDDEN char *
-path_str( pos )
+rt_path_str( pos )
 int pos;
 {
 	static char line[MAXLEVELS*(16+2)];
@@ -640,63 +641,69 @@ int pos;
 	return( &line[0] );
 }
 
+/*
+ *			R T _ P R _ R E G I O N
+ */
 void
-pr_region( rp )
+rt_pr_region( rp )
 register struct region *rp;
 {
-	rtlog("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit );
-	rtlog("id=%d, air=%d, material=%d, los=%d\n",
+	rt_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit );
+	rt_log("id=%d, air=%d, material=%d, los=%d\n",
 		rp->reg_regionid, rp->reg_aircode,
 		rp->reg_material, rp->reg_los );
-	pr_tree( rp->reg_treetop, 0 );
-	rtlog("\n");
+	rt_pr_tree( rp->reg_treetop, 0 );
+	rt_log("\n");
 }
 
+/*
+ *			R T _ P R _ T R E E
+ */
 void
-pr_tree( tp, lvl )
+rt_pr_tree( tp, lvl )
 register union tree *tp;
 int lvl;			/* recursion level */
 {
 	register int i;
 
-	rtlog("%.8x ", tp);
+	rt_log("%.8x ", tp);
 	for( i=lvl; i>0; i-- )
-		rtlog("  ");
+		rt_log("  ");
 
 	if( tp == TREE_NULL )  {
-		rtlog("Null???\n");
+		rt_log("Null???\n");
 		return;
 	}
 
 	switch( tp->tr_op )  {
 
 	case OP_SOLID:
-		rtlog("SOLID %s (bit %d)",
+		rt_log("SOLID %s (bit %d)",
 			tp->tr_a.tu_stp->st_name,
 			tp->tr_a.tu_stp->st_bit );
 		break;
 
 	default:
-		rtlog("Unknown op=x%x\n", tp->tr_op );
+		rt_log("Unknown op=x%x\n", tp->tr_op );
 		return;
 
 	case OP_UNION:
-		rtlog("UNION");
+		rt_log("UNION");
 		break;
 	case OP_INTERSECT:
-		rtlog("INTERSECT");
+		rt_log("INTERSECT");
 		break;
 	case OP_SUBTRACT:
-		rtlog("MINUS");
+		rt_log("MINUS");
 		break;
 	case OP_XOR:
-		rtlog("XOR");
+		rt_log("XOR");
 		break;
 	case OP_NOT:
-		rtlog("NOT");
+		rt_log("NOT");
 		break;
 	}
-	rtlog("\n");
+	rt_log("\n");
 
 	switch( tp->tr_op )  {
 	case OP_SOLID:
@@ -706,20 +713,24 @@ int lvl;			/* recursion level */
 	case OP_SUBTRACT:
 	case OP_XOR:
 		/* BINARY type */
-		pr_tree( tp->tr_b.tb_left, lvl+1 );
-		pr_tree( tp->tr_b.tb_right, lvl+1 );
+		rt_pr_tree( tp->tr_b.tb_left, lvl+1 );
+		rt_pr_tree( tp->tr_b.tb_right, lvl+1 );
 		break;
 	case OP_NOT:
 	case OP_GUARD:
 		/* UNARY tree */
-		pr_tree( tp->tr_b.tb_left, lvl+1 );
+		rt_pr_tree( tp->tr_b.tb_left, lvl+1 );
 		break;
 	}
 }
 
-/* Convert TO 4xfastf_t FROM 3xfloats (for database)  */
+/*
+ *			R T _ F A S T F _ F L O A T
+ *
+ *  Convert TO 4xfastf_t FROM 3xfloats (for database) 
+ */
 void
-fastf_float( ff, fp, n )
+rt_fastf_float( ff, fp, n )
 register fastf_t *ff;
 register float *fp;
 register int n;
@@ -733,48 +744,18 @@ register int n;
 }
 
 /*
- *  			S O L I D _ P O S
- *  
- *  Let the user enquire about the position of the Vertex (V vector)
- *  of a solid.  Useful mostly to find the light sources.
- *
- *  Returns:
- *	0	If solid found and ``pos'' vector filled in.
- *	-1	If error.  ``pos'' vector left untouched.
- */
-int
-solid_pos( name, pos )
-char *name;
-vect_t *pos;
-{
-	register struct directory *dp;
-	auto union record rec;		/* local copy of this record */
-
-	if( (dp = dir_lookup( name, LOOKUP_QUIET )) == DIR_NULL )
-		return(-1);	/* BAD */
-	
-	(void)lseek( ged_fd, dp->d_addr, 0 );
-	(void)read( ged_fd, (char *)&rec, sizeof rec );
-
-	if( rec.u_id != ID_SOLID )
-		return(-1);	/* BAD:  too hard */
-	fastf_float( pos, rec.s.s_values, 1 );
-	return(0);		/* OK */
-}
-
-/*
- *  			F I N D _ S O L I D
+ *  			R T _ F I N D _ S O L I D
  *  
  *  Given the (leaf) name of a solid, find the first occurance of it
  *  in the solid list.  Used mostly to find the light source.
  */
 struct soltab *
-find_solid( name )
+rt_find_solid( name )
 register char *name;
 {
 	register struct soltab *stp;
 	register char *cp;
-	for( stp = HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
+	for( stp = rt_i.HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
 		if( *(cp = stp->st_name) == *name  &&
 		    strcmp( cp, name ) == 0 )  {
 			return(stp);
@@ -785,7 +766,7 @@ register char *name;
 
 
 /*
- *  			A D D _ R E G T R E E
+ *  			R T _ A D D _ R E G T R E E
  *  
  *  Add a region and it's boolean tree to all the appropriate places.
  *  The region and treetop are cross-linked, and the region is added
@@ -794,7 +775,7 @@ register char *name;
  *  Also, this tree is also included in the overall RootTree.
  */
 HIDDEN void
-add_regtree( regp, tp )
+rt_add_regtree( regp, tp )
 register struct region *regp;
 register union tree *tp;
 {
@@ -804,32 +785,36 @@ register union tree *tp;
 	regp->reg_treetop = tp;
 	tp->tr_regionp = regp;
 	/* Add to linked list */
-	regp->reg_forw = HeadRegion;
-	HeadRegion = regp;
+	regp->reg_forw = rt_i.HeadRegion;
+	rt_i.HeadRegion = regp;
 	/* Determine material properties */
 	color_map(regp);
 	/* Add to bit vectors */
-	regp->reg_bit = nregions;
-	/* Will be added to Regions[] in final prep stage */
-	nregions++;
-	if( debug & DEBUG_REGIONS )
-		rtlog("Add Region %s\n", regp->reg_name);
+	regp->reg_bit = rt_i.nregions;
+	/* Will be added to rt_i.Regions[] in final prep stage */
+	rt_i.nregions++;
+	if( rt_g.debug & DEBUG_REGIONS )
+		rt_log("Add Region %s\n", regp->reg_name);
 
-	if( RootTree == TREE_NULL )  {
-		RootTree = tp;
+	if( rt_i.RootTree == TREE_NULL )  {
+		rt_i.RootTree = tp;
 		return;
 	}
 	/**GETSTRUCT( xor, union tree ); **/
-	xor = (union tree *)vmalloc(sizeof(union tree), "add_regtree tree");
+	xor = (union tree *)rt_malloc(sizeof(union tree), "rt_add_regtree tree");
 	bzero( (char *)xor, sizeof(union tree) );
 	xor->tr_b.tb_op = OP_XOR;
-	xor->tr_b.tb_left = RootTree;
+	xor->tr_b.tb_left = rt_i.RootTree;
 	xor->tr_b.tb_right = tp;
 	xor->tr_b.tb_regionp = REGION_NULL;
-	RootTree = xor;
+	rt_i.RootTree = xor;
 }
 
-optim_tree( tp )
+/*
+ *			R T _ O P T I M _ T R E E
+ */
+HIDDEN void
+rt_optim_tree( tp )
 register union tree *tp;
 {
 	register union tree *low;
@@ -853,12 +838,12 @@ register union tree *tp;
 		/* Need to look at 3-level optimizations here, both sides */
 		goto binary;
 	default:
-		rtlog("optim_tree: bad op x%x\n", tp->tr_op);
+		rt_log("rt_optim_tree: bad op x%x\n", tp->tr_op);
 		return;
 	}
 binary:
-	optim_tree( tp->tr_b.tb_left );
-	optim_tree( tp->tr_b.tb_right );
+	rt_optim_tree( tp->tr_b.tb_left );
+	rt_optim_tree( tp->tr_b.tb_right );
 }
 
 /*
@@ -869,7 +854,7 @@ binary:
  *  have been assigned.
  */
 HIDDEN void
-solid_bitfinder( treep, regbit )
+rt_solid_bitfinder( treep, regbit )
 register union tree *treep;
 register int regbit;
 {
@@ -880,8 +865,8 @@ register int regbit;
 		stp = treep->tr_a.tu_stp;
 		BITSET( stp->st_regions, regbit );
 		if( regbit+1 > stp->st_maxreg )  stp->st_maxreg = regbit+1;
-		if( debug&DEBUG_REGIONS )  {
-			pr_bitv( stp->st_name, stp->st_regions,
+		if( rt_g.debug&DEBUG_REGIONS )  {
+			rt_pr_bitv( stp->st_name, stp->st_regions,
 				stp->st_maxreg );
 		}
 		return;
@@ -889,11 +874,11 @@ register int regbit;
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 		/* BINARY type */
-		solid_bitfinder( treep->tr_b.tb_left, regbit );
-		solid_bitfinder( treep->tr_b.tb_right, regbit );
+		rt_solid_bitfinder( treep->tr_b.tb_left, regbit );
+		rt_solid_bitfinder( treep->tr_b.tb_right, regbit );
 		return;
 	default:
-		rtlog("solid_bitfinder:  op=x%x\n", treep->tr_op);
+		rt_log("rt_solid_bitfinder:  op=x%x\n", treep->tr_op);
 		return;
 	}
 	/* NOTREACHED */
@@ -902,7 +887,7 @@ register int regbit;
 /*
  *  			R T _ P R E P
  *  
- *  This routine should be called just before the first call to shootray().
+ *  This routine should be called just before the first call to rt_shootray().
  *  Right now, it should only be called ONCE per execution.
  */
 void
@@ -911,18 +896,18 @@ rt_prep()
 	register struct region *regp;
 	register struct soltab *stp;
 
-	if(!rt_needprep)
-		rtbomb("second invocation of rt_prep");
-	rt_needprep = 0;
+	if(!rt_i.needprep)
+		rt_bomb("second invocation of rt_prep");
+	rt_i.needprep = 0;
 
 	/*
-	 *  Allocate space for a per-solid bit of nregions length.
+	 *  Allocate space for a per-solid bit of rt_i.nregions length.
 	 */
-	for( stp=HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
-		stp->st_regions = (bitv_t *)vmalloc(
-			BITS2BYTES(nregions)+sizeof(bitv_t),
+	for( stp=rt_i.HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
+		stp->st_regions = (bitv_t *)rt_malloc(
+			BITS2BYTES(rt_i.nregions)+sizeof(bitv_t),
 			"st_regions bitv" );
-		BITZERO( stp->st_regions, nregions );
+		BITZERO( stp->st_regions, rt_i.nregions );
 		stp->st_maxreg = 0;
 	}
 
@@ -931,37 +916,37 @@ rt_prep()
 	 *  Set this region's bit in the bit vector of every solid
 	 *  contained in the subtree.
 	 */
-	Regions = (struct region **)vmalloc(
-		nregions * sizeof(struct region *),
-		"Regions[]" );
-	for( regp=HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
-		Regions[regp->reg_bit] = regp;
-		optim_tree( regp->reg_treetop );
-		solid_bitfinder( regp->reg_treetop, regp->reg_bit );
-		if(debug&DEBUG_REGIONS)  {
-			pr_region( regp );
+	rt_i.Regions = (struct region **)rt_malloc(
+		rt_i.nregions * sizeof(struct region *),
+		"rt_i.Regions[]" );
+	for( regp=rt_i.HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		rt_i.Regions[regp->reg_bit] = regp;
+		rt_optim_tree( regp->reg_treetop );
+		rt_solid_bitfinder( regp->reg_treetop, regp->reg_bit );
+		if(rt_g.debug&DEBUG_REGIONS)  {
+			rt_pr_region( regp );
 		}
 	}
-	if(debug&DEBUG_REGIONS)  {
-		for( stp=HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
-			rtlog("solid %s ", stp->st_name);
-			pr_bitv( "regions ref", stp->st_regions,
+	if(rt_g.debug&DEBUG_REGIONS)  {
+		for( stp=rt_i.HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
+			rt_log("solid %s ", stp->st_name);
+			rt_pr_bitv( "regions ref", stp->st_regions,
 				stp->st_maxreg);
 		}
 	}
 
 	/* Partition space */
-	cut_it();
+	rt_cut_it();
 }
 
 /*
- *			V I E W B O U N D S
+ *			R T _ V I E W B O U N D S
  *
  *  Given a model2view transformation matrix, compute the RPP which
  *  encloses all the solids in the model, in view space.
  */
 void
-viewbounds( min, max, m2v )
+rt_viewbounds( min, max, m2v )
 matp_t m2v;
 register vect_t min, max;
 {
@@ -971,7 +956,7 @@ register vect_t min, max;
 	max[X] = max[Y] = max[Z] = -INFINITY;
 	min[X] = min[Y] = min[Z] =  INFINITY;
 
-	for( stp=HeadSolid; stp != 0; stp=stp->st_forw ) {
+	for( stp=rt_i.HeadSolid; stp != 0; stp=stp->st_forw ) {
 		MAT4X3PNT( xlated, m2v, stp->st_center );
 #define VBMIN(v,t) {FAST fastf_t rt; rt=(t); if(rt<v) v = rt;}
 #define VBMAX(v,t) {FAST fastf_t rt; rt=(t); if(rt>v) v = rt;}

@@ -101,10 +101,10 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		register struct surf *spl;
 
 /***		db_getrec( dp, &rec, cur_gran++ ); ***/
-		i = read( ged_fd, (char *) &rec, sizeof(rec) );
+		i = read( rt_i.fd, (char *) &rec, sizeof(rec) );
 		if( i==0 )  break;
 		if( i != sizeof(rec) )
-			rtbomb("spl_prep:  read error");
+			rt_bomb("spl_prep:  read error");
 		cur_gran++;
 
 		if( rec.u_id != ID_BSURF )  {
@@ -132,8 +132,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		}
 		fp = vp;
 /***		db_getmany( dp, (char *)vp, cur_gran, rec.d.d_nknots ); ***/
-		i = read( ged_fd, (char *)vp, nby );
-		if( i != nby )  rtbomb("spl_prep:  knot read");
+		i = read( rt_i.fd, (char *)vp, nby );
+		if( i != nby )  rt_bomb("spl_prep:  knot read");
 		cur_gran += rec.d.d_nknots;
 
 		spl->spl_ku = (int *)malloc( spl->spl_kv_size[0]*sizeof(int) );
@@ -151,8 +151,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 			return;
 		}
 /***		db_getmany( dp, (char *)spl->spl_mesh, cur_gran, rec.d.d_nctls ); ***/
-		i = read( ged_fd, (char *)spl->spl_mesh, nby );
-		if( i != nby )  rtbomb("spl_prep:  knot read");
+		i = read( rt_i.fd, (char *)spl->spl_mesh, nby );
+		if( i != nby )  rt_bomb("spl_prep:  knot read");
 		cur_gran += rec.d.d_nctls;
 
 		/* Transform all the control points */
@@ -313,7 +313,7 @@ printf("%d: low u,w=%f,%f\n", spl->spl_lvl, spl->spl_ulow[spl->spl_lvl], spl->sp
 		goto labela;
 	}
 
-	if(debug&DEBUG_SPLINE)printf("hit at lvl %d\n", spl->spl_lvl);
+	if(rt_g.debug&DEBUG_SPLINE)printf("hit at lvl %d\n", spl->spl_lvl);
 	if (spl->spl_lvl < 3)  {
 		int wintrval;
 		/* Have a hit, want to be certain that this is accurate.
@@ -601,7 +601,7 @@ double q[];
 
 	/*	LIST POINTS IN COLUMN-MAJOR ORDER		      */
 #ifdef never
-	if(debug&DEBUG_SPLINE) for( ii=1; ii <= npts; ii += 3 )  {
+	if(rt_g.debug&DEBUG_SPLINE) for( ii=1; ii <= npts; ii += 3 )  {
 		fprintf(stdout," %f, %f, %f\n",
 				q[ii], q[ii+1], q[ii+2]);
 	}
@@ -628,7 +628,7 @@ double q[];
 	/* Loop-Read the triangle order list. */
 	for (i=1; i <= ntri; i++)  {
 #ifdef never
-		if( debug&DEBUG_SPLINE)  {
+		if( rt_g.debug&DEBUG_SPLINE)  {
 			fprintf(stdout, "		Triangle %d Pointers\n", i);
 			fprintf(stdout, "	%d,  %d,  %d\n", index[i][1], index[i][2], index[i][3]);
 		}
@@ -644,7 +644,7 @@ double q[];
 			vertex[ii][2] = q[j+2];
 			vertex[ii][3] = q[j+3];
 #ifdef never
-			if(debug&DEBUG_SPLINE) fprintf(stdout, "	vertex[%d] = (%f, %f, %f)\n",
+			if(rt_g.debug&DEBUG_SPLINE) fprintf(stdout, "	vertex[%d] = (%f, %f, %f)\n",
 				ii, vertex[ii][1], vertex[ii][2], vertex[ii][3]);
 #endif
 		}
@@ -750,7 +750,7 @@ double *k1;
 	tl = rp->r_min;		/* could be 0 */
 	tu = rp->r_max;		/* could be INFINITY */
 #ifdef never
-	if( debug&DEBUG_SPLINE )  printf("cybk: %f<=t<=%f\n", tl, tu);
+	if( rt_g.debug&DEBUG_SPLINE )  printf("cybk: %f<=t<=%f\n", tl, tu);
 #endif
 	
 	for(i=1; i<=5; i++)  {
@@ -763,7 +763,7 @@ double *k1;
 			wdotn += w[i][j] * norm[i][j];
 		}
 #ifdef never
-		if( debug&DEBUG_SPLINE )  {
+		if( rt_g.debug&DEBUG_SPLINE )  {
 		   	fprintf(stdout, "Normal Used = #%d", i);
 			fprintf(stdout, "	<%f, %f, %f>\n", norm[i][1], norm[i][2], norm[i][3]);
 		   	fprintf(stdout, "	ddotn = %f", ddotn);
@@ -781,7 +781,7 @@ double *k1;
 	
 		t = -wdotn / ddotn;
 #ifdef never
-		if( debug&DEBUG_SPLINE) fprintf(stdout, " t = %f\n", t);
+		if( rt_g.debug&DEBUG_SPLINE) fprintf(stdout, " t = %f\n", t);
 #endif
 		if(ddotn > 0)  {
 			/* Ray is headed INTO halfspace */
@@ -798,11 +798,11 @@ double *k1;
 	/* Check for valid intersection */
 	if( tl > rp->r_max )
 		return(0);		/* MISS */
-	if( fdiff(tl,tu) > 0 ) 
+	if( rt_fdiff(tl,tu) > 0 ) 
 		return(0);		/* MISS */
 
 	*k1 = tl;			/* take entry distance */
-	if( debug&DEBUG_SPLINE )  printf("hit, dist=%f\n", tl);
+	if( rt_g.debug&DEBUG_SPLINE )  printf("hit, dist=%f\n", tl);
 	return(1);			/* HIT */
 }
 /*** normal.c ****/
@@ -901,7 +901,7 @@ double pt[4][4], norm[6][4];            /* Declare Passed Variables */
 	}
 
 #ifdef never
-	if( debug&DEBUG_SPLINE) for(i=1; i<=5; i++)  {
+	if( rt_g.debug&DEBUG_SPLINE) for(i=1; i<=5; i++)  {
 		fprintf(stdout, "	norm[%d][1] = %f, norm[%d][2] = %f, norm[%d][3] = %f\n", 
 			i, norm[i][1], i, norm[i][2], i, norm[i][3]);
 	}
@@ -947,7 +947,7 @@ int c,np,nplusc,*tcount;
 	int i,k;
 
 #ifdef never
-	if( debug & DEBUG_SPLINE )
+	if( rt_g.debug & DEBUG_SPLINE )
 		fprintf(stderr, "	In Basis.c, t=%f\n", t);
 #endif
 
@@ -958,7 +958,7 @@ int c,np,nplusc,*tcount;
 		if(t>=x[i-1] && t<x[i])
 			temp[i]=1;
 #ifdef never
-		if(debug&DEBUG_SPLINE) fprintf(stderr, "%d %d %d\n", i, x[i-1], temp[i] );
+		if(rt_g.debug&DEBUG_SPLINE) fprintf(stderr, "%d %d %d\n", i, x[i-1], temp[i] );
 #endif
 	}
 
@@ -984,7 +984,7 @@ int c,np,nplusc,*tcount;
 		n[*tcount]=temp[i];
 
 #ifdef never
-		if( debug&DEBUG_SPLINE)
+		if( rt_g.debug&DEBUG_SPLINE)
 			fprintf(stderr, "	n[%d] = %f\n", *tcount, n[*tcount]);
 #endif
 	}

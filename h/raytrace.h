@@ -18,14 +18,6 @@
  *  $Header$
  */
 
-/*
- *  Definitions necessary to operate in a parallel environment.
- */
-extern int	res_pt;			/* lock on free partition structs */
-extern int	res_seg;		/* lock on free seg structs */
-extern int	res_malloc;		/* lock on memory allocation */
-extern int	res_printf;		/* lock on printing */
-extern int	res_bitv;		/* lock on bitvectors */
 #ifdef HEP
 /* full means resource free, empty means resource busy */
 #define	RES_ACQUIRE(ptr)	(void)Daread(ptr)	/* wait full set empty */
@@ -41,7 +33,7 @@ extern int	res_bitv;		/* lock on bitvectors */
 
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
 #define GETSTRUCT(p,str) \
-	p = (struct str *)vmalloc(sizeof(struct str), "getstruct str"); \
+	p = (struct str *)rt_malloc(sizeof(struct str), "getstruct str"); \
 	if( p == (struct str *)0 ) \
 		exit(17); \
 	bzero( (char *)p, sizeof(struct str));
@@ -51,7 +43,7 @@ extern int	res_bitv;		/* lock on bitvectors */
  *			X R A Y
  *
  * All necessary information about a ray.
- * Not called just "ray" to prevent conflicts with other VLD stuff.
+ * Not called just "ray" to prevent conflicts with VLD stuff.
  */
 struct xray {
 	point_t		r_pt;		/* Point at which ray starts */
@@ -97,16 +89,16 @@ struct seg {
 	struct seg	*seg_next;	/* non-zero if more segments */
 };
 #define SEG_NULL	((struct seg *)0)
-extern struct seg *FreeSeg;		/* Head of freelist */
-#define GET_SEG(p)    {	RES_ACQUIRE(&res_seg); \
-			while( ((p)=FreeSeg) == SEG_NULL ) \
-				get_seg(); \
-			FreeSeg = (p)->seg_next; \
+
+#define GET_SEG(p)    {	RES_ACQUIRE(&rt_g.res_seg); \
+			while( ((p)=rt_g.FreeSeg) == SEG_NULL ) \
+				rt_get_seg(); \
+			rt_g.FreeSeg = (p)->seg_next; \
 			p->seg_next = SEG_NULL; \
-			RES_RELEASE(&res_seg); }
-#define FREE_SEG(p)   {	RES_ACQUIRE(&res_seg); \
-			(p)->seg_next = FreeSeg; FreeSeg = (p); \
-			RES_RELEASE(&res_seg); }
+			RES_RELEASE(&rt_g.res_seg); }
+#define FREE_SEG(p)   {	RES_ACQUIRE(&rt_g.res_seg); \
+			(p)->seg_next = rt_g.FreeSeg; rt_g.FreeSeg = (p); \
+			RES_RELEASE(&rt_g.res_seg); }
 
 
 /*
@@ -146,7 +138,7 @@ struct soltab {
 #define ID_POLY		8	/* Polygonal facted object */
 #define ID_BSPLINE	9	/* B-spline object */
 
-struct functab {
+struct rt_functab {
 	int		(*ft_prep)();
 	struct seg 	*((*ft_shot)());
 	int		(*ft_print)();
@@ -154,11 +146,11 @@ struct functab {
 	int		(*ft_uv)();
 	char		*ft_name;
 };
-extern struct functab functab[];
+extern struct rt_functab rt_functab[];
 
 #define EPSILON		0.0001
 #define NEAR_ZERO(f)	( ((f) > -EPSILON) && ((f) < EPSILON) )
-#define INFINITY	1000000000.0
+#define INFINITY	(1.0e20)
 
 
 /*
@@ -217,17 +209,14 @@ struct region  {
 };
 #define REGION_NULL	((struct region *)0)
 
-extern struct region **Regions;		/* ptrs to regions [reg_bit] */
-extern long nregions;			/* total # of regions participating */
-
 
 /*
  *  			P A R T I T I O N
  *
  *  Partitions of a ray
  *
- *  NOTE:  get_pt allows enough storage at the end of the partition
- *  for a bit vector of "nsolids" bits in length.
+ *  NOTE:  rt_get_pt allows enough storage at the end of the partition
+ *  for a bit vector of "rt_i.nsolids" bits in length.
  */
 struct partition {
 	struct seg	*pt_inseg;		/* IN seg ptr (gives stp) */
@@ -241,12 +230,10 @@ struct partition {
 	char		pt_outflip;		/* flip outhit->hit_normal */
 	long		pt_solhit[2];		/* VAR bit array:solids hit */
 };
-
 #define PT_NULL	((struct partition *)0)
-extern struct partition *FreePart;		 /* Head of freelist */
 
 #define PT_BYTES	(sizeof(struct partition) + \
-			 BITS2BYTES(nsolids) + sizeof(bitv_t))
+			 BITS2BYTES(rt_i.nsolids) + sizeof(bitv_t))
 
 #define COPY_PT(out,in)	bcopy((char *)in, (char *)out, PT_BYTES)
 
@@ -254,14 +241,14 @@ extern struct partition *FreePart;		 /* Head of freelist */
 #define GET_PT_INIT(p)	\
 	{ GET_PT(p); bzero( ((char *) (p)), PT_BYTES ); }
 
-#define GET_PT(p)   { RES_ACQUIRE(&res_pt); \
-			while( ((p)=FreePart) == PT_NULL ) \
-				get_pt(); \
-			FreePart = (p)->pt_forw; \
-			RES_RELEASE(&res_pt); }
-#define FREE_PT(p) { RES_ACQUIRE(&res_pt); \
-			(p)->pt_forw = FreePart; FreePart = (p); \
-			RES_RELEASE(&res_pt); }
+#define GET_PT(p)   { RES_ACQUIRE(&rt_g.res_pt); \
+			while( ((p)=rt_g.FreePart) == PT_NULL ) \
+				rt_get_pt(); \
+			rt_g.FreePart = (p)->pt_forw; \
+			RES_RELEASE(&rt_g.res_pt); }
+#define FREE_PT(p) { RES_ACQUIRE(&rt_g.res_pt); \
+			(p)->pt_forw = rt_g.FreePart; rt_g.FreePart = (p); \
+			RES_RELEASE(&rt_g.res_pt); }
 
 /* Insert "new" partition in front of "old" partition */
 #define INSERT_PT(new,old)	{ \
@@ -283,6 +270,25 @@ extern struct partition *FreePart;		 /* Head of freelist */
 	(cur)->pt_back->pt_forw = (cur)->pt_forw;  }
 
 /*
+ *  Bit vectors
+ */
+union bitv_elem {
+	union bitv_elem	*be_next;
+	bitv_t		be_v[2];
+};
+#define BITV_NULL	((union bitv_elem *)0)
+
+#define GET_BITV(p)    {	RES_ACQUIRE(&rt_g.res_bitv); \
+			while( ((p)=rt_i.FreeBitv) == BITV_NULL ) \
+				rt_get_bitv(); \
+			rt_i.FreeBitv = (p)->be_next; \
+			p->be_next = BITV_NULL; \
+			RES_RELEASE(&rt_g.res_bitv); }
+#define FREE_BITV(p)   {	RES_ACQUIRE(&rt_g.res_bitv); \
+			(p)->be_next = rt_i.FreeBitv; rt_i.FreeBitv = (p); \
+			RES_RELEASE(&rt_g.res_bitv); }
+
+/*
  *  Bit-string manipulators for arbitrarily long bit strings
  *  stored as an array of bitv_t's.
  *  BITV_SHIFT and BITV_MASK are defined in machine.h
@@ -296,13 +302,13 @@ extern struct partition *FreePart;		 /* Head of freelist */
 /*
  *		A P P L I C A T I O N
  *
- * Note:  When calling shootray(), these fields are mandatory:
+ * Note:  When calling rt_shootray(), these fields are mandatory:
  *	a_ray.r_pt	Starting point of ray to be fired
  *	a_ray.r_dir	UNIT VECTOR with direction to fire in (dir cosines)
  *	a_hit		Routine to call when something is hit
  *	a_miss		Routine to call when ray misses everything
  *
- * Also note that shootray() returns the (int) return of a_hit()/a_miss().
+ * Also note that rt_shootray() returns the (int) return of a_hit()/a_miss().
  */
 struct application  {
 	/* THESE ELEMENTS ARE MANDATORY */
@@ -320,41 +326,70 @@ struct application  {
 };
 
 /*
- *  Global variables used by the RT library.
+ *  Definitions for librt.a which are global to the library
+ *  regardless of how many different models are being worked on
  */
-extern int ged_fd;		/* fd of object file */
-extern int debug;		/* non-zero for debugging, see debug.h */
-extern long nsolids;		/* total # of solids participating */
-extern long nregions;		/* total # of regions participating */
-extern long nshots;		/* # of calls to ft_shot() */
-extern long nmiss_model;	/* rays missed model RPP */
-extern long nmiss_tree;		/* rays missed sub-tree RPP */
-extern long nmiss_solid;	/* rays missed solid RPP */
-extern long nmiss;		/* solid ft_shot() returned a miss */
-extern long nhits;		/* solid ft_shot() returned a hit */
-extern struct soltab *HeadSolid;/* pointer to list of solids in model */
-extern vect_t mdl_min;		/* min corner of model bounding RPP */
-extern vect_t mdl_max;		/* max corner of model bounding RPP */
+struct rt_g {
+	int		debug;		/* non-zero for debug, see debug.h */
+	struct seg 	*FreeSeg;	/* Head of segment freelist */
+	struct partition *FreePart;	/* Head of freelist */
+	/*  Definitions necessary to interlock in a parallel environment */
+	int		res_pt;		/* lock on free partition structs */
+	int		res_seg;	/* lock on free seg structs */
+	int		res_malloc;	/* lock on memory allocation */
+	int		res_printf;	/* lock on printing */
+	int		res_bitv;	/* lock on bitvectors */
+};
+extern struct rt_g rt_g;
+
+/*
+ *  Definitions for librt.a which are specific to the
+ *  particular model being processed;  ultimately,
+ *  there could be several instances of this structure.
+ */
+struct rt_i {
+	struct region	**Regions;	/* ptrs to regions [reg_bit] */
+	struct soltab	*HeadSolid;	/* ptr to list of solids in model */
+	struct region	*HeadRegion;	/* ptr of list of regions in model */
+	union tree	*RootTree;	/* ptr to total tree (non-region) */
+	long		nregions;	/* total # of regions participating */
+	int		fd;		/* fd of database */
+	long		nsolids;	/* total # of solids participating */
+	long		nshots;		/* # of calls to ft_shot() */
+	long		nmiss_model;	/* rays missed model RPP */
+	long		nmiss_tree;	/* rays missed sub-tree RPP */
+	long		nmiss_solid;	/* rays missed solid RPP */
+	long		nmiss;		/* solid ft_shot() returned a miss */
+	long		nhits;		/* solid ft_shot() returned a hit */
+	vect_t		mdl_min;	/* min corner of model bounding RPP */
+	vect_t		mdl_max;	/* max corner of model bounding RPP */
+	union bitv_elem *FreeBitv;	/* head of freelist */
+	int		needprep;	/* needs rt_prep */
+	char		*file;		/* name of file */
+};
+extern struct rt_i rt_i;	/* Eventually, will be a return value */
 
 /*
  *  Global routines to interface with the RT library.
  */
-extern void rtbomb();			/* Fatal error */
-extern void rtlog();			/* Log message */
+extern void rt_bomb();			/* Fatal error */
+extern void rt_log();			/* Log message */
 
-extern int get_tree();			/* Get expr tree for object */
+extern int rt_gettree();		/* Get expr tree for object */
 extern void rt_prep();			/* Prepare for raytracing */
-extern int shootray();			/* Shoot a ray */
-extern void prep_timer();		/* Start the timer */
-extern double read_timer();		/* Read timer, return time + str */
-extern int dir_build();			/* Read named GED db, build toc */
-extern void pr_seg();			/* Print seg struct */
-extern void pr_partitions();		/* Print the partitions */
-extern void viewbounds();		/* Find bounding view-space RPP */
-extern struct soltab *find_solid();	/* Find solid by leaf name */
+extern int rt_shootray();		/* Shoot a ray */
+extern void rt_prep_timer();		/* Start the timer */
+extern double rt_read_timer();		/* Read timer, return time + str */
+extern int rt_dirbuild();		/* Read named GED db, build toc */
+extern void rt_pr_seg();			/* Print seg struct */
+extern void rt_pr_partitions();		/* Print the partitions */
+extern void rt_viewbounds();		/* Find bounding view-space RPP */
+extern struct soltab *rt_find_solid();	/* Find solid by leaf name */
 
-extern char *vmalloc();			/* visible malloc() */
-extern void vfree();			/* visible free() */
+/* RT Storage allocators */
+extern char *rt_malloc();			/* visible malloc() */
+extern void rt_free();			/* visible free() */
+extern char *rt_strdup();			/* Duplicate str w/malloc */
 
 /* The matrix math routines */
 extern void mat_zero(), mat_idn(), mat_copy(), mat_mul(), matXvec();
@@ -363,19 +398,32 @@ extern void vtoh_move(), htov_move(), mat_print();
 
 /*
  *  Internal routines in RT library.
- *  Not for general use.
+ *  Not intended for general use.
  */
-extern struct directory *dir_lookup();	/* Look up name in toc */
-extern struct directory *dir_add();	/* Add name to toc */
-extern char *strdup();			/* Duplicate str w/malloc */
-extern void bool_regions();		/* Eval booleans */
-extern int bool_eval();			/* Eval bool tree node */
-extern int fdiff();			/* Approx Floating compare */
-extern double reldiff();		/* Relative Difference */
-extern void pr_region();		/* Print a region */
-extern void pr_tree();			/* Print an expr tree */
-extern void fastf_float();		/* convert float->fastf_t */
-extern void get_seg(), get_pt();	/* storage obtainers */
+extern struct directory *rt_dir_lookup();/* Look up name in toc */
+extern struct directory *rt_dir_add();	/* Add name to toc */
+extern void rt_bool_weave();		/* Weave segs into partitions */
+extern void rt_bool_final();		/* Eval booleans over partitions */
+extern int rt_bool_eval();		/* Eval bool tree node */
+extern int rt_fdiff();			/* Approx Floating compare */
+extern double rt_reldiff();		/* Relative Difference */
+extern void rt_pr_region();		/* Print a region */
+extern void rt_pr_tree();		/* Print an expr tree */
+extern void rt_pr_pt();			/* Print a partition */
+extern void rt_pr_bitv();		/* Print a bit vector */
+extern void rt_pr_hit();		/* Print a hit point */
+extern void rt_fastf_float();		/* convert float->fastf_t */
+extern void rt_get_seg();		/* storage obtainer */
+extern void rt_get_pt();
+extern void rt_get_bitv();
+extern int rt_byte_roundup();		/* malloc rounder */
+extern void rt_bitv_or();		/* logical OR on bit vectors */
+extern void rt_cut_it();		/* space partitioning */
+extern void rt_pr_cut();		/* print cut node */
+extern void rt_draw_box();		/* unix-plot an RPP */
+
+/* CxDiv, CxSqrt */
+extern void rt_pr_roots();		/* print complex roots */
 
 /*
  *  Library routines used by the RT library.

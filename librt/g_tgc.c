@@ -37,7 +37,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./complex.h"
 #include <math.h>
 
-HIDDEN int	stdCone();
 static void	tgc_rotate(), tgc_shear(), tgc_sort();
 static void	tgc_scale();
 static void	tgc_minmax();
@@ -121,7 +120,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	mag_d = sqrt( magsq_d = MAGSQ( D ) );
 
 	if( NEAR_ZERO( magsq_h ) ) {
-		rtlog("tgc(%s):  zero length H vector\n", stp->st_name );
+		rt_log("tgc(%s):  zero length H vector\n", stp->st_name );
 		return(1);		/* BAD */
 	}
 
@@ -129,41 +128,41 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	VCROSS( work, A, B );
 	f = VDOT( Hv, work )/ ( mag_a*mag_b*mag_h );
 	if ( NEAR_ZERO(f) ) {
-		rtlog("tgc(%s):  H lies in A-B plane\n",stp->st_name);
+		rt_log("tgc(%s):  H lies in A-B plane\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that figure is not two-dimensional			*/
 	if ( NEAR_ZERO( magsq_a ) && NEAR_ZERO( magsq_c ) ) {
-		rtlog("tgc(%s):  vectors A, C zero length\n", stp->st_name );
+		rt_log("tgc(%s):  vectors A, C zero length\n", stp->st_name );
 		return (1);
 	}
 	if ( NEAR_ZERO( magsq_b ) && NEAR_ZERO( magsq_d ) ) {
-		rtlog("tgc(%s):  vectors B, D zero length\n", stp->st_name );
+		rt_log("tgc(%s):  vectors B, D zero length\n", stp->st_name );
 		return (1);
 	}
 
 	/* Validate that A.B == 0, C.D == 0				*/
 	f = VDOT( A, B ) / (mag_a * mag_b);
 	if( ! NEAR_ZERO(f) ) {
-		rtlog("tgc(%s):  A not perpendicular to B\n",stp->st_name);
+		rt_log("tgc(%s):  A not perpendicular to B\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 	f = VDOT( C, D ) / (mag_c * mag_d);
 	if( ! NEAR_ZERO(f) ) {
-		rtlog("tgc(%s):  C not perpendicular to D\n",stp->st_name);
+		rt_log("tgc(%s):  C not perpendicular to D\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that  A || C  and  B || D, for parallel planes	*/
 	f = 1.0 - VDOT( A, C ) / (mag_a * mag_c);
 	if( ! NEAR_ZERO(f) ) {
-		rtlog("tgc(%s):  A not parallel to C\n",stp->st_name);
+		rt_log("tgc(%s):  A not parallel to C\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 	f = 1.0 - VDOT( B, D ) / (mag_b * mag_d);
 	if( ! NEAR_ZERO(f) ) {
-		rtlog("tgc(%s):  B not parallel to D\n",stp->st_name);
+		rt_log("tgc(%s):  B not parallel to D\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
@@ -196,7 +195,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	 *  then the cone equation reduces to a much simpler quadratic
 	 *  form.  Otherwise it is a (gah!) quartic equation.
 	 */
-	f = reldiff( (tgc->tgc_A*tgc->tgc_D), (tgc->tgc_C*tgc->tgc_B) );
+	f = rt_reldiff( (tgc->tgc_A*tgc->tgc_D), (tgc->tgc_C*tgc->tgc_B) );
 	tgc->tgc_AD_CB = (f < EPSILON);		/* A*D == C*B */
 	tgc_rotate( A, B, Hv, Rot, iRot, tgc );
 	MAT4X3VEC( nH, Rot, Hv );
@@ -402,25 +401,25 @@ register struct soltab	*stp;
 		(struct tgc_specific *)stp->st_specific;
 
 	VPRINT( "V", tgc->tgc_V );
-	rtlog( "mag sheared H = %f\n", tgc->tgc_sH );
-	rtlog( "mag A = %f\n", tgc->tgc_A );
-	rtlog( "mag B = %f\n", tgc->tgc_B );
-	rtlog( "mag C = %f\n", tgc->tgc_C );
-	rtlog( "mag D = %f\n", tgc->tgc_D );
+	rt_log( "mag sheared H = %f\n", tgc->tgc_sH );
+	rt_log( "mag A = %f\n", tgc->tgc_A );
+	rt_log( "mag B = %f\n", tgc->tgc_B );
+	rt_log( "mag C = %f\n", tgc->tgc_C );
+	rt_log( "mag D = %f\n", tgc->tgc_D );
 	VPRINT( "Top normal", tgc->tgc_N );
 
 	mat_print( "Sc o Sh o R", tgc->tgc_ScShR );
 	mat_print( "invR o trnSh o Sc", tgc->tgc_invRtShSc );
 
 	if( tgc->tgc_AD_CB )  {
-		rtlog( "A*D == C*B.  Equal eccentricities gives quadratic equation.\n");
+		rt_log( "A*D == C*B.  Equal eccentricities gives quadratic equation.\n");
 	} else {
-		rtlog( "A*D != C*B.  Quartic equation.\n");
+		rt_log( "A*D != C*B.  Quartic equation.\n");
 	}
-	rtlog( "(C-A)/H = %f\n", tgc->tgc_CA_H );
-	rtlog( "(D-B)/H = %f\n", tgc->tgc_DB_H );
-	rtlog( "(|A|**2)/(|C|**2) = %f\n", tgc->tgc_AAdCC );
-	rtlog( "(|B|**2)/(|D|**2) = %f\n", tgc->tgc_BBdDD );
+	rt_log( "(C-A)/H = %f\n", tgc->tgc_CA_H );
+	rt_log( "(D-B)/H = %f\n", tgc->tgc_DB_H );
+	rt_log( "(|A|**2)/(|C|**2) = %f\n", tgc->tgc_AAdCC );
+	rt_log( "(|B|**2)/(|D|**2) = %f\n", tgc->tgc_BBdDD );
 }
 
 /*
@@ -466,6 +465,10 @@ register struct xray	*rp;
 	LOCAL vect_t		cor_pprime;	/* corrected P prime */
 	LOCAL fastf_t		cor_proj;	/* corrected projected dist */
 	LOCAL int		i;
+	LOCAL poly		C;	/*  final equation	*/
+	LOCAL poly		Xsqr, Ysqr;
+	LOCAL poly		R, Rsqr;
+	LOCAL poly		sum;
 
 	/* find rotated point and direction				*/
 	MAT4X3VEC( dprime, tgc->tgc_ScShR, rp->r_dir );
@@ -491,7 +494,100 @@ register struct xray	*rp;
 	VSCALE( cor_pprime, dprime, cor_proj );
 	VSUB2( cor_pprime, pprime, cor_pprime );
 
-	npts = stdCone( cor_pprime, dprime, tgc, k );
+	/*
+	 *  Given a line and the parameters for a standard cone, finds
+	 *  the roots of the equation for that cone and line.
+	 *  Returns the number of real roots found.
+	 * 
+	 *  Given a line and the cone parameters, finds the equation
+	 *  of the cone in terms of the variable 't'.
+	 *
+	 *  The equation for the cone is:
+	 *
+	 *      X**2 * Q**2  +  Y**2 * R**2  -  R**2 * Q**2 = 0
+	 *
+	 *  where	R = a + ((c - a)/|H'|)*Z 
+	 *		Q = b + ((d - b)/|H'|)*Z
+	 *
+	 *  First, find X, Y, and Z in terms of 't' for this line, then
+	 *  substitute them into the equation above.
+	 *
+	 *  Express each variable (X, Y, and Z) as a linear equation
+	 *  in 'k', eg, (dprime[X] * k) + cor_pprime[X], and
+	 *  substitute into the cone equation.
+	 */
+	Xsqr.dgr = 2;
+	Xsqr.cf[0] = dprime[X] * dprime[X];
+	Xsqr.cf[1] = 2.0 * dprime[X] * cor_pprime[X];
+	Xsqr.cf[2] = cor_pprime[X] * cor_pprime[X];
+
+	Ysqr.dgr = 2;
+	Ysqr.cf[0] = dprime[Y] * dprime[Y];
+	Ysqr.cf[1] = 2.0 * dprime[Y] * cor_pprime[Y];
+	Ysqr.cf[2] = cor_pprime[Y] * cor_pprime[Y];
+
+	R.dgr = 1;
+	R.cf[0] = dprime[Z] * tgc->tgc_CA_H;
+	/* A vector is unitized (tgc->tgc_A == 1.0) */
+	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CA_H) + 1.0;
+	(void) polyMul( &R, &R, &Rsqr );
+
+	/*  If the eccentricities of the two ellipses are the same,
+	 *  then the cone equation reduces to a much simpler quadratic
+	 *  form.  Otherwise it is a (gah!) quartic equation.
+	 */
+	if ( tgc->tgc_AD_CB ){
+		FAST fastf_t roots;
+
+		(void) polyAdd( &Xsqr, &Ysqr, &sum );
+		(void) polySub( &sum, &Rsqr, &C );
+		/* Find the real roots the easy way.  C.dgr==2 */
+		if( (roots = C.cf[1]*C.cf[1] - 4 * C.cf[0] * C.cf[2]) < 0 ) {
+			npts = 0;	/* no real roots */
+		} else {
+			roots = sqrt(roots);
+			k[0] = (roots - C.cf[1]) * 0.5 / C.cf[0];
+			k[1] = (roots + C.cf[1]) * (-0.5) / C.cf[0];
+			npts = 2;
+		}
+	} else {
+		LOCAL poly	Q, Qsqr;
+		LOCAL poly	T1, T2, T3;
+		LOCAL complex	val[MAXP];	/* roots of final equation */
+		register int	l;
+		register int nroots;
+
+		Q.dgr = 1;
+		Q.cf[0] = dprime[Z] * tgc->tgc_DB_H;
+		/* B vector is unitized (tgc->tgc_B == 1.0) */
+		Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DB_H) + 1.0;
+		(void) polyMul( &Q, &Q, &Qsqr );
+
+		(void) polyMul( &Qsqr, &Xsqr, &T1 );
+		(void) polyMul( &Rsqr, &Ysqr, &T2 );
+		(void) polyMul( &Rsqr, &Qsqr, &T3 );
+		(void) polyAdd( &T1, &T2, &sum );
+		(void) polySub( &sum, &T3, &C );
+
+		/*  The equation is 4th order, so we expect 0 to 4 roots */
+		nroots = polyRoots( &C , val );
+
+		/*  Only real roots indicate an intersection in real space.
+		 *
+		 *  Look at each root returned; if the imaginary part is zero
+		 *  or sufficiently close, then use the real part as one value
+		 *  of 't' for the intersections
+		 */
+		for ( l=0, npts=0; l < nroots; l++ ){
+			if ( NEAR_ZERO( val[l].im ) )
+				k[npts++] = val[l].re;
+		}
+		/* Here, 'npts' is number of points being returned */
+		if ( npts != 0 && npts != 2 && npts != 4 ){
+			rt_log("tgc:  reduced %d to %d roots\n",nroots,npts);
+			rt_pr_roots( nroots, val );
+		}
+	}
 
 	/*
 	 * Reverse above translation by adding distance to all 'k' values.
@@ -500,7 +596,7 @@ register struct xray	*rp;
 		k[i] -= cor_proj;
 
 	if ( npts != 0 && npts != 2 && npts != 4 ){
-		rtlog("tgc(%s):  %d intersects != {0,2,4}\n",
+		rt_log("tgc(%s):  %d intersects != {0,2,4}\n",
 			stp->st_name, npts );
 		return( SEG_NULL );			/* No hit	*/
 	}
@@ -508,9 +604,7 @@ register struct xray	*rp;
 	/* Most distant to least distant	*/
 	tgc_sort( k, npts );
 
-	/* Now, t[0] > t[npts-1].  See if this is an easy out. */
-	if( npts > 0 && k[0] <= 0.0 )
-		return(SEG_NULL);		/* No hit out front. */
+	/* Now, k[0] > k[npts-1] */
 
 	/* General Cone may have 4 intersections, but	*
 	 * Truncated Cone may only have 2.		*/
@@ -564,7 +658,7 @@ register struct xray	*rp;
 		 *  whether this lies within the governing ellipse.
 		 */
 		if( dprime[Z] == 0.0 )  {
-			rtlog("tgc: dprime[Z] = 0!\n" );
+			rt_log("tgc: dprime[Z] = 0!\n" );
 			return(SEG_NULL);
 		}
 		b = ( -pprime[Z] )/dprime[Z];
@@ -588,7 +682,7 @@ register struct xray	*rp;
 			nflag = 1;		/* copy normal */
 		} else {
 			/* intersection apparently invalid  */
-			rtlog("tgc(%s):  only 1 intersect\n", stp->st_name);
+			rt_log("tgc(%s):  only 1 intersect\n", stp->st_name);
 			return( SEG_NULL );
 		}
 
@@ -675,118 +769,7 @@ register struct xray	*rp;
 
 
 /*
- *		>>>  s t d C o n e ( )  <<<
- *
- *  Given a line and the parameters for a standard cone, finds
- *  the roots of the equation for that cone and line.
- *  Returns the number of real roots found.
- * 
- *  Given a line and the cone parameters, finds the equation
- *  of the cone in terms of the variable 't'.
- *
- *  The equation for the cone is:
- *
- *      X**2 * Q**2  +  Y**2 * R**2  -  R**2 * Q**2 = 0
- *
- *  where	R = a + ((c - a)/|H'|)*Z 
- *		Q = b + ((d - b)/|H'|)*Z
- *
- *  First, find X, Y, and Z in terms of 't' for this line, then
- *  substitute them into the equation above.
- */
-HIDDEN int
-stdCone( pprime, dprime, tgc, t )
-vect_t		pprime;
-vect_t		dprime;
-struct tgc_specific	*tgc;
-fastf_t		t[];
-{
-	LOCAL poly	C;	/*  final equation	*/
-	LOCAL poly	Xsqr, Ysqr;
-	LOCAL poly	R, Rsqr;
-	LOCAL poly	sum;
-
-	/*  Express each variable (X, Y, and Z) as a linear equation
-	 *  in 't', eg, (dprime[X] * t) + pprime[X], and
-	 *  substitute into the cone equation.
-	 */
-	Xsqr.dgr = 2;
-	Xsqr.cf[0] = dprime[X] * dprime[X];
-	Xsqr.cf[1] = 2.0 * dprime[X] * pprime[X];
-	Xsqr.cf[2] = pprime[X] * pprime[X];
-
-	Ysqr.dgr = 2;
-	Ysqr.cf[0] = dprime[Y] * dprime[Y];
-	Ysqr.cf[1] = 2.0 * dprime[Y] * pprime[Y];
-	Ysqr.cf[2] = pprime[Y] * pprime[Y];
-
-	R.dgr = 1;
-	R.cf[0] = dprime[Z] * tgc->tgc_CA_H;
-	/* A vector is unitized (tgc->tgc_A == 1.0) */
-	R.cf[1] = (pprime[Z] * tgc->tgc_CA_H) + 1.0;
-	(void) polyMul( &R, &R, &Rsqr );
-
-	/*  If the eccentricities of the two ellipses are the same,
-	 *  then the cone equation reduces to a much simpler quadratic
-	 *  form.  Otherwise it is a (gah!) quartic equation.
-	 */
-	if ( tgc->tgc_AD_CB ){
-		FAST fastf_t roots;
-
-		(void) polyAdd( &Xsqr, &Ysqr, &sum );
-		(void) polySub( &sum, &Rsqr, &C );
-		/* Find the real roots the easy way.  C.dgr==2 */
-		if( (roots = C.cf[1]*C.cf[1] - 4 * C.cf[0] * C.cf[2]) < 0 )
-			return(0);	/* no real roots */
-		roots = sqrt(roots);
-		t[0] = (roots - C.cf[1]) * 0.5 / C.cf[0];
-		t[1] = (roots + C.cf[1]) * (-0.5) / C.cf[0];
-		return(2);
-	} else {
-		LOCAL poly	Q, Qsqr;
-		LOCAL poly	T1, T2, T3;
-		LOCAL complex	val[MAXP];	/* roots of final equation */
-		register int	i, l;
-		register int	npts;
-
-		Q.dgr = 1;
-		Q.cf[0] = dprime[Z] * tgc->tgc_DB_H;
-		/* B vector is unitized (tgc->tgc_B == 1.0) */
-		Q.cf[1] = (pprime[Z] * tgc->tgc_DB_H) + 1.0;
-		(void) polyMul( &Q, &Q, &Qsqr );
-
-		(void) polyMul( &Qsqr, &Xsqr, &T1 );
-		(void) polyMul( &Rsqr, &Ysqr, &T2 );
-		(void) polyMul( &Rsqr, &Qsqr, &T3 );
-		(void) polyAdd( &T1, &T2, &sum );
-		(void) polySub( &sum, &T3, &C );
-
-		/*  The equation is 4th order, so we expect 0 to 4 roots */
-		npts = polyRoots( &C , val );
-
-		/*  Only real roots indicate an intersection in real space.
-		 *
-		 *  Look at each root returned; if the imaginary part is zero
-		 *  or sufficiently close, then use the real part as one value
-		 *  of 't' for the intersections
-		 */
-		for ( l=0, i=0; l < npts; l++ ){
-			if ( NEAR_ZERO( val[l].im ) )
-				t[i++] = val[l].re;
-		}
-		/* Here, 'i' is number of points being returned */
-		if ( i != 0 && i != 2 && i != 4 ){
-			rtlog("stdCone:  reduced %d to %d roots\n",npts,i);
-			pr_roots( npts, val );
-		}
-		return(i);
-	}
-	/* NOTREACHED */
-}
-
-
-/*
- *		>>>  P t S o r t ( )  <<<
+ *			T G C _ S O R T
  *
  *  Sorts the values of 't' in descending order.  The sort is
  *  simplified to deal with only 2 or 4 values.  Returns the

@@ -7,7 +7,7 @@
 #include "../h/machine.h"
 #include "text.h"
 
-extern char *vmalloc();
+extern char *rt_malloc();
 
 struct texture txt = {
 	"./text.pix",
@@ -31,7 +31,7 @@ register struct texture *tp;
 fastf_t *uvp;
 {
 tp = &txt;	/* HACK */
-	/* If File could not be opened -- give debug colors */
+	/* If File could not be opened -- give rt_g.debug colors */
 top:
 	if( tp->tx_file == (char *)0 )  {
 		static char ret[3];
@@ -51,22 +51,22 @@ top:
 			tp->tx_file = (char *)0;
 			goto top;
 		}
-		linebuf = vmalloc(tp->tx_fw*3,"texture file line");
-		tp->tx_pixels = vmalloc(
+		linebuf = rt_malloc(tp->tx_fw*3,"texture file line");
+		tp->tx_pixels = rt_malloc(
 			tp->tx_w * tp->tx_l * 3,
 			tp->tx_file );
 		for( i=0; i<tp->tx_l; i++ )  {
 			if( read(fd,linebuf,tp->tx_fw*3) != tp->tx_fw*3 )  {
-				rtlog("text_uvget: read error on %s\n", tp->tx_file);
+				rt_log("text_uvget: read error on %s\n", tp->tx_file);
 				tp->tx_file = (char *)0;
 				(void)close(fd);
-				vfree(linebuf,"file line, error");
+				rt_free(linebuf,"file line, error");
 				goto top;
 			}
 			bcopy( linebuf, tp->tx_pixels + i*tp->tx_w*3, tp->tx_w*3 );
 		}
 		(void)close(fd);
-		vfree(linebuf,"texture file line");
+		rt_free(linebuf,"texture file line");
 	}
 	/* u is left->right index, v is line number */
 	return( (unsigned char *)tp->tx_pixels +

@@ -29,7 +29,31 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "debug.h"
 
 
-/* Describe algorithm here */
+/*
+ *			Ray/ARB Intersection
+ *
+An ARB is a convex volume bounded by
+4 (pyramid), 5 (wedge), or 6 (box) planes.
+This analysis depends on the properties of objects with convex hulls.
+Let the ray in question be defined such that any point $bold X vec$
+on the ray may be expressed as
+$bold X vec = bold P vec + k bold D vec$.
+Intersect the ray with each of the
+planes bounding the ARB as discussed above,
+and record the values of the
+parametric distance $k$ along the ray.
+With outward pointing normal vectors, note that the
+ray \fIenters\fR the half-space defined by a plane when
+$bold D vec cdot bold N vec < 0$,
+is \fIparallel\fR to the plane when $bold D vec cdot bold N vec = 0$,
+and \fIexits\fR otherwise.
+Find the \fIentry\fR point farthest away from the starting point $bold P vec$,
+i.e. it has the largest value of $k$ among the entry points.
+The ray enters the solid at this point.
+Similarly, find the \fIexit\fR point closest to point
+$bold P vec$, i.e. it has the smallest value of $k$ among the exit points.
+The ray exits the solid here.
+ */
 
 #define MAXPTS	4			/* All we need are 4 points */
 static point_t	points[MAXPTS];		/* Actual points on plane */
@@ -125,7 +149,7 @@ matp_t mat;
 #undef P
 
 	if( faces < 4  || faces > 6 )  {
-		rtlog("arb(%s):  only %d faces present\n",
+		rt_log("arb(%s):  only %d faces present\n",
 			stp->st_name, faces);
 		/* Should free storage for good faces */
 		return(1);			/* Error */
@@ -185,8 +209,8 @@ pointp_t ap, bp, cp, dp;
 		register struct arb_specific *arbp;
 		register int bytes;
 
-		bytes = byte_roundup(64*sizeof(struct arb_specific));
-		arbp = (struct arb_specific *)vmalloc(bytes, "get_arb");
+		bytes = rt_byte_roundup(64*sizeof(struct arb_specific));
+		arbp = (struct arb_specific *)rt_malloc(bytes, "get_arb");
 		while( bytes >= sizeof(struct arb_specific) )  {
 			arbp->arb_forw = FreeArb;
 			FreeArb = arbp++;
@@ -285,7 +309,7 @@ int a;
 		f = VDOT( arbp->arb_N, P_A );
 		if( ! NEAR_ZERO(f) )  {
 			/* Non-planar face */
-			rtlog("arb(%s): face %s non-planar, dot=%f\n",
+			rt_log("arb(%s): face %s non-planar, dot=%f\n",
 				stp->st_name, arb_code, f );
 #ifdef CONSERVATIVE
 			arb_npts--;
@@ -308,17 +332,17 @@ register struct soltab *stp;
 	register int i;
 
 	if( arbp == (struct arb_specific *)0 )  {
-		rtlog("arb(%s):  no faces\n", stp->st_name);
+		rt_log("arb(%s):  no faces\n", stp->st_name);
 		return;
 	}
 	do {
 		VPRINT( "A", arbp->arb_A );
 		VPRINT( "Xbasis", arbp->arb_Xbasis );
 		VPRINT( "Ybasis", arbp->arb_Ybasis );
-		rtlog("XX fact =%f, YY fact = %f\n",
+		rt_log("XX fact =%f, YY fact = %f\n",
 			arbp->arb_XXlen, arbp->arb_YYlen);
 		VPRINT( "Normal", arbp->arb_N );
-		rtlog( "N.A = %f\n", arbp->arb_NdotA );
+		rt_log( "N.A = %f\n", arbp->arb_NdotA );
 	} while( arbp = arbp->arb_forw );
 }
 
@@ -376,14 +400,14 @@ register struct xray *rp;
 			if( dxbdn > 0.0 )
 				return( SEG_NULL );	/* MISS */
 		}
-		if( debug & DEBUG_ARB8 )
-			rtlog("arb: in=%f, out=%f\n", in, out);
+		if( rt_g.debug & DEBUG_ARB8 )
+			rt_log("arb: in=%f, out=%f\n", in, out);
 		if( in > out )
 			return( SEG_NULL );	/* MISS */
 	}
 	/* Validate */
 	if( iplane == ARB_NULL || oplane == ARB_NULL )  {
-		rtlog("arb_shoot(%s): 1 hit => MISS\n",
+		rt_log("arb_shoot(%s): 1 hit => MISS\n",
 			stp->st_name);
 		return( SEG_NULL );	/* MISS */
 	}
@@ -444,8 +468,8 @@ register fastf_t *uvp;
 	uvp[0] = VDOT( P_A, arbp->arb_Xbasis ) * arbp->arb_XXlen;
 	uvp[1] = 1.0 - ( VDOT( P_A, arbp->arb_Ybasis ) * arbp->arb_YYlen );
 	if( uvp[0] < 0 || uvp[1] < 0 )  {
-		if( debug )
-			rtlog("arb_uv: bad uv=%f,%f\n", uvp[0], uvp[1]);
+		if( rt_g.debug )
+			rt_log("arb_uv: bad uv=%f,%f\n", uvp[0], uvp[1]);
 		/* Fix it up */
 		if( uvp[0] < 0 )  uvp[0] = (-uvp[0]);
 		if( uvp[1] < 0 )  uvp[1] = (-uvp[1]);

@@ -4,10 +4,9 @@
  * Ray Tracing program, GED database directory manager.
  *
  *  Functions -
- *	dir_build	Read GED database, build directory
- *	dir_lookup	Look up name in directory
- *	dir_add		Add entry to directory
- *	strdup		Duplicate string
+ *	rt_dirbuild	Read GED database, build directory
+ *	rt_dir_lookup	Look up name in directory
+ *	rt_dir_add		Add entry to directory
  *
  *  Author -
  *	Michael John Muuss
@@ -33,13 +32,10 @@ static char RCSid[] = "@(#)$Header$";
 #include "rtdir.h"
 #include "debug.h"
 
-static struct directory *DirHead = DIR_NULL;
-
-int	ged_fd = -1;		/* FD of object file */
-extern char *malloc();
+static struct directory *DirHead = DIR_NULL;	/* rt_i, eventually */
 
 /*
- *			D I R _ B U I L D
+ *			R T _ D I R B U I L D
  *
  * This routine reads through the 3d object file and
  * builds a directory of the object names, to allow rapid
@@ -50,7 +46,7 @@ extern char *malloc();
  *	-1	Fatal Error
  */
 int
-dir_build(filename, buf, len)
+rt_dirbuild(filename, buf, len)
 char *filename;
 char *buf;
 int len;
@@ -58,28 +54,31 @@ int len;
 	static union record	record;
 	static long	addr;
 
-	if( (ged_fd = open(filename, 0)) < 0 )  {
+	bzero( (char *)&rt_i, sizeof(rt_i) );
+	if( (rt_i.fd = open(filename, 0)) < 0 )  {
 		perror(filename);
 		return(-1);
 	}
+	rt_i.needprep = 1;
+	rt_i.file = rt_strdup( filename );
 	buf[0] = '\0';
 
-	(void)lseek( ged_fd, 0L, 0 );
-	(void)read( ged_fd, (char *)&record, sizeof record );
+	(void)lseek( rt_i.fd, 0L, 0 );
+	(void)read( rt_i.fd, (char *)&record, sizeof record );
 	if( record.u_id != ID_IDENT )  {
-		rtlog("WARNING:  File is not a proper GED database\n");
-		rtlog("This database should be converted before further use.\n");
+		rt_log("WARNING:  File is not a proper GED database\n");
+		rt_log("This database should be converted before further use.\n");
 	}
-	(void)lseek( ged_fd, 0L, 0 );
+	(void)lseek( rt_i.fd, 0L, 0 );
 	while(1)  {
-		addr = lseek( ged_fd, 0L, 1 );
-		if( (unsigned)read( ged_fd, (char *)&record, sizeof record )
+		addr = lseek( rt_i.fd, 0L, 1 );
+		if( (unsigned)read( rt_i.fd, (char *)&record, sizeof record )
 				!= sizeof record )
 			break;
 
 		if( record.u_id == ID_IDENT )  {
 			if( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
-				rtlog("WARNING: File is Version %s, Program is version %s\n",
+				rt_log("WARNING: File is Version %s, Program is version %s\n",
 					record.i.i_version, ID_VERSION );
 			}
 			if( buf[0] == '\0' )
@@ -90,10 +89,10 @@ int len;
 			continue;
 		}
 		if( record.u_id == ID_ARS_A )  {
-			dir_add( record.a.a_name, addr );
+			rt_dir_add( record.a.a_name, addr );
 
 			/* Skip remaining B type records.	*/
-			(void)lseek( ged_fd,
+			(void)lseek( rt_i.fd,
 				(long)(record.a.a_totlen) *
 				(long)(sizeof record),
 				1 );
@@ -101,7 +100,7 @@ int len;
 		}
 
 		if( record.u_id == ID_SOLID )  {
-			dir_add( record.s.s_name, addr );
+			rt_dir_add( record.s.s_name, addr );
 			continue;
 		}
 		if( record.u_id == ID_MATERIAL )  {
@@ -114,20 +113,20 @@ int len;
 			register int j;
 			nrec = 1;
 			while(1) {
-				j = read( ged_fd, (char *)&rec, sizeof(rec) );
+				j = read( rt_i.fd, (char *)&rec, sizeof(rec) );
 				if( j != sizeof(rec) )
 					break;
 				if( rec.u_id != ID_P_DATA )  {
-					lseek( ged_fd, -(sizeof(rec)), 1 );
+					lseek( rt_i.fd, -(sizeof(rec)), 1 );
 					break;
 				}
 				nrec++;
 			}
-			dir_add( record.p.p_name, addr );
+			rt_dir_add( record.p.p_name, addr );
 			continue;
 		}
 		if( record.u_id == ID_BSOLID )  {
-			dir_add( record.B.B_name, addr );
+			rt_dir_add( record.B.B_name, addr );
 			continue;
 		}
 		if( record.u_id == ID_BSURF )  {
@@ -135,20 +134,20 @@ int len;
 			/* Just skip over knots and control mesh */
 			j = (record.d.d_nknots + record.d.d_nctls) *
 				sizeof(union record);
-			lseek( ged_fd, j, 1 );
-			dir_add( record.p.p_name, addr );
+			lseek( rt_i.fd, j, 1 );
+			rt_dir_add( record.p.p_name, addr );
 			continue;
 		}
 		if( record.u_id != ID_COMB )  {
-			rtlog("dir_build:  unknown record %c (0%o)\n",
+			rt_log("rt_dirbuild:  unknown record %c (0%o)\n",
 				record.u_id, record.u_id );
 			/* skip this record */
 			continue;
 		}
 
-		dir_add( record.c.c_name, addr );
+		rt_dir_add( record.c.c_name, addr );
 		/* Skip over member records */
-		(void)lseek( ged_fd,
+		(void)lseek( rt_i.fd,
 			(long)record.c.c_length * (long)sizeof record,
 			1 );
 	}
@@ -156,7 +155,7 @@ int len;
 }
 
 /*
- *			D I R _ L O O K U P
+ *			R T _ D I R _ L O O K U P
  *
  * This routine takes a name, and looks it up in the
  * directory table.  If the name is present, a pointer to
@@ -167,7 +166,7 @@ int len;
  * the return code indicates failure.
  */
 struct directory *
-dir_lookup( str, noisy )
+rt_dir_lookup( str, noisy )
 register char *str;
 {
 	register struct directory *dp;
@@ -182,49 +181,26 @@ register char *str;
 	}
 
 	if( noisy )
-		rtlog("dir_lookup:  could not find '%s'\n", str );
+		rt_log("rt_dir_lookup:  could not find '%s'\n", str );
 	return( DIR_NULL );
 }
 
 /*
- *			D I R _ A D D
+ *			R T _ D I R _ A D D
  *
  * Add an entry to the directory
  */
 struct directory *
-dir_add( name, laddr )
+rt_dir_add( name, laddr )
 register char *name;
 long laddr;
 {
 	register struct directory *dp;
 
 	GETSTRUCT( dp, directory );
-	dp->d_namep = strdup( name );
+	dp->d_namep = rt_strdup( name );
 	dp->d_addr = laddr;
 	dp->d_forw = DirHead;
 	DirHead = dp;
 	return( dp );
-}
-
-/*
- *			S T R D U P
- *
- * Given a string, allocate enough memory to hold it using malloc(),
- * duplicate the strings, returns a pointer to the new string.
- */
-char *strdup( cp )
-register char *cp;
-{
-	register char	*base;
-	register char	*current;
-
-	if( (base = malloc( strlen(cp)+1 )) == (char *)0 )
-		rtbomb("strdup:  unable to allocate memory");
-
-	current = base;
-	do  {
-		*current++ = *cp;
-	}  while( *cp++ != '\0' );
-
-	return(base);
 }

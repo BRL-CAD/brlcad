@@ -39,7 +39,7 @@ static long time0;
  *			P R E P _ T I M E R
  */
 void
-prep_timer()
+rt_prep_timer()
 {
 	(void)time(&time0);
 }
@@ -50,7 +50,7 @@ prep_timer()
  * 
  */
 double
-read_timer(str,len)
+rt_read_timer(str,len)
 char *str;
 {
 	long now;
@@ -58,7 +58,7 @@ char *str;
 	char line[132];
 
 	(void)time(&now);
-	sprintf(line,"%ld clock seconds\n", (long)now-time0);
+	sprintf(line,"%ld clock seconds", (long)now-time0);
 	usert = now-time0;
 	if( usert < 0.00001 )  usert = 0.00001;
 	(void)strncpy( str, line, len );

@@ -207,15 +207,15 @@ int npts;
 	/* Leave room for first point to be repeated */
 	bytes = (npts+1) * sizeof(fastf_t) * ELEMENTS_PER_VECT;
 	if( (fp = (fastf_t *)malloc(bytes)) == (fastf_t *) 0 )
-		rtbomb("ars.c/rd_curve():  malloc error");
+		rt_bomb("ars.c/rd_curve():  malloc error");
 	base = fp;
 
 	while( npts > 0 )  {
-		if( read( ged_fd, (char *) &r, sizeof(r) ) != sizeof(r) )
-			rtbomb("ars.c/rd_curve():  read error");
+		if( read( rt_i.fd, (char *) &r, sizeof(r) ) != sizeof(r) )
+			rt_bomb("ars.c/rd_curve():  read error");
 
 		if( r.b.b_id != ID_ARS_B )  {
-			rtlog("ars.c/rd_curve():  non-ARS_B record!\n");
+			rt_log("ars.c/rd_curve():  non-ARS_B record!\n");
 			break;
 		}
 		lim = (npts>8) ? 8 : npts;
@@ -262,8 +262,8 @@ pointp_t ap, bp, cp;
 	if( NEAR_ZERO(m1) || NEAR_ZERO(m2) ||
 	    NEAR_ZERO(m3) || NEAR_ZERO(m4) )  {
 		free( (char *)trip);
-		if( debug & DEBUG_ARB8 )
-			(void)rtlog("ars(%s): degenerate facet\n", stp->st_name);
+		if( rt_g.debug & DEBUG_ARB8 )
+			(void)rt_log("ars(%s): degenerate facet\n", stp->st_name);
 		return(0);			/* BAD */
 	}		
 
@@ -293,7 +293,7 @@ register struct soltab *stp;
 	register int i;
 
 	if( trip == (struct tri_specific *)0 )  {
-		rtlog("ars(%s):  no faces\n", stp->st_name);
+		rt_log("ars(%s):  no faces\n", stp->st_name);
 		return;
 	}
 	do {
@@ -302,7 +302,7 @@ register struct soltab *stp;
 		VPRINT( "C-A", trip->tri_CA );
 		VPRINT( "BA x CA", trip->tri_wn );
 		VPRINT( "Normal", trip->tri_N );
-		rtlog("\n");
+		rt_log("\n");
 	} while( trip = trip->tri_forw );
 }
 
@@ -345,8 +345,8 @@ register struct xray *rp;
 		 *  Ray Direction dot N.  (N is outward-pointing normal)
 		 */
 		dn = VDOT( trip->tri_wn, rp->r_dir );
-		if( debug & DEBUG_ARB8 )
-			rtlog("Face N.Dir=%f\n", dn );
+		if( rt_g.debug & DEBUG_ARB8 )
+			rt_log("Face N.Dir=%f\n", dn );
 		/*
 		 *  If ray lies directly along the face, drop this face.
 		 */
@@ -384,9 +384,9 @@ register struct xray *rp;
 		/* HIT is within planar face */
 		hp->hit_dist = k;
 		VMOVE( hp->hit_normal, trip->tri_N );
-		if(debug&DEBUG_ARB8) rtlog("ars: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
+		if(rt_g.debug&DEBUG_ARB8) rt_log("ars: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
 		if( nhits++ >= MAXHITS )  {
-			rtlog("ars(%s): too many hits\n", stp->st_name);
+			rt_log("ars(%s): too many hits\n", stp->st_name);
 			break;
 		}
 		hp++;
@@ -410,12 +410,12 @@ register struct xray *rp;
 		hits[nhits] = hits[nhits-1];	/* struct copy */
 		VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
 		hits[nhits].hit_dist *= 1.0001;
-		rtlog("ERROR: ars(%s): %d hits, false exit\n",
+		rt_log("ERROR: ars(%s): %d hits, false exit\n",
 			stp->st_name, nhits);
 		nhits++;
 		for(i=0; i < nhits; i++ )
-			rtlog("%f, ", hits[i].hit_dist );
-		rtlog("\n");
+			rt_log("%f, ", hits[i].hit_dist );
+		rt_log("\n");
 	}
 
 	/* nhits is even, build segments */
