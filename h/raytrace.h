@@ -245,8 +245,8 @@ union tree {
  */
 struct mater_info {
 	float	ma_transmit[3];		/* 0..1 light transmission [RGB] */
-	char	ma_override;		/* non-0 ==> c_rgb is color */
-	unsigned char ma_rgb[3];	/* explicit color:  0..255  */
+	float	ma_color[3];		/* explicit color:  0..1  */
+	char	ma_override;		/* non-0 ==> ma_color is valid */
 	char	ma_matname[32];		/* Material name */
 	char	ma_matparm[60];		/* String Material parms */
 };
