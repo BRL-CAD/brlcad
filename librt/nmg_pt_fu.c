@@ -771,7 +771,7 @@ found:
 		break;
 
 	case 5: /* PCA is along length of edge, but point is NOT on edge. */
-		if (nmg_find_eu_leftvec( left, eu ))
+		if (nmg_find_eu_left_non_unit( left, eu ))
 			rt_bomb("can't find left vector\n");
 		/* take dot product of v->pt vector with left to determine
 		 * if pt is inside/left of edge
