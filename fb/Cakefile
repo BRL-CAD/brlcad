@@ -1,5 +1,5 @@
 /*
- *			util/Cakefile
+  *			util/Cakefile
  */
 
 #define SRCDIR	util
@@ -285,8 +285,9 @@ pldebug:	pldebug.o LIBPLOT
 plgetframe:	plgetframe.o LIBPLOT
 	CC LDFLAGS -o plgetframe plgetframe.o LIB_PRE''LIBPLOT LIBES
 
-plrot:		plrot.o LIBPLOT
-	CC LDFLAGS -o plrot plrot.o LIB_PRE''LIBPLOT LIBES
+/* Gets LIBPLOT from within LIBRT */
+plrot:		plrot.o LIBRT
+	CC LDFLAGS -o plrot plrot.o LIB_PRE''LIBRT LIBRT_LIBES LIBES
 
 op-bw:		op-bw.o
 	CC LDFLAGS -o op-bw op-bw.o LIBES
@@ -384,6 +385,6 @@ polar-fb:		polar-fb.o LIBFB
 	CC LDFLAGS -o polar-fb polar-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 cell-fb:		cell-fb.o LIBFB
-	CC LDFLAGS -o cell-fb cell-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
+	CC LDFLAGS -o cell-fb cell-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRT LIBRT_LIBES LIBES
 
 #include "../Cakefile.rules"
