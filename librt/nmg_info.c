@@ -1374,9 +1374,9 @@ CONST struct edgeuse	*eu;
 
 	VSUB2( edgevect, eu->eumate_p->vu_p->v_p->vg_p->coord,
 		eu->vu_p->v_p->vg_p->coord );
-	VUNITIZE( edgevect );
 
 	VCROSS( left, Norm, edgevect );
+	VUNITIZE( left );
 	return 0;
 }
 
