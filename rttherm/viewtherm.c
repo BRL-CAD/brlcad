@@ -50,9 +50,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "fb.h"
 #include "tabdata.h"
 #include "spectrum.h"
+#include "shadefuncs.h"
+#include "shadework.h"
 #include "./ext.h"
 #include "./rdebug.h"
-#include "./material.h"
 #include "./mathtab.h"
 #include "./light.h"
 
@@ -619,15 +620,15 @@ char *file, *obj;
 
 	/*
 	 *  Connect up material library interfaces
-	 *  Note that plastic.c defines the required "default" entry.
+	 *  Note that sh_plastic.c defines the required "default" entry.
 	 */
 #if NO_MATER
 	{
 		extern struct mfuncs phg_mfuncs[];
 		extern struct mfuncs light_mfuncs[];
 
-		mlib_add( phg_mfuncs );
-		mlib_add( light_mfuncs );
+		mlib_add_shader( &mfHead, phg_mfuncs );
+		mlib_add_shader( &mfHead, light_mfuncs );
 	}
 #endif
 

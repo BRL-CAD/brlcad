@@ -52,9 +52,10 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "raytrace.h"
 #include "fb.h"
+#include "shadefuncs.h"
+#include "shadework.h"
 #include "./ext.h"
 #include "./rdebug.h"
-#include "./material.h"
 #include "./mathtab.h"
 #include "./light.h"
 
@@ -120,6 +121,8 @@ static struct scanline {
 } *scanline;
 
 static int	pwidth;			/* Width of each pixel (in bytes) */
+
+struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 
 
 /* Viewing module specific "set" variables */
@@ -485,7 +488,7 @@ struct rt_i	*rtip;
 	 *  may be clear how to repackage this operation.
 	 */
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
-		switch( mlib_setup( regp, rtip ) )  {
+		switch( mlib_setup( &mfHead, regp, rtip ) )  {
 		case -1:
 		default:
 			bu_log("mlib_setup failure on %s\n", regp->reg_name);
@@ -893,58 +896,11 @@ view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
+	extern char	liboptical_version[];
 
-	/*
-	 *  Connect up material library interfaces
-	 *  Note that plastic.c defines the required "default" entry.
-	 */
-	{
-		extern struct mfuncs phg_mfuncs[];
-		extern struct mfuncs light_mfuncs[];
-		extern struct mfuncs cloud_mfuncs[];
-		extern struct mfuncs spm_mfuncs[];
-		extern struct mfuncs txt_mfuncs[];
-		extern struct mfuncs stk_mfuncs[];
-		extern struct mfuncs cook_mfuncs[];
-		extern struct mfuncs marble_mfuncs[];
-		extern struct mfuncs stxt_mfuncs[];
-		extern struct mfuncs points_mfuncs[];
-		extern struct mfuncs toyota_mfuncs[];
-		extern struct mfuncs wood_mfuncs[];
-		extern struct mfuncs camo_mfuncs[]; 
-		extern struct mfuncs scloud_mfuncs[];
-		extern struct mfuncs air_mfuncs[];
-		extern struct mfuncs rtrans_mfuncs[];
-		extern struct mfuncs fire_mfuncs[];
-		extern struct mfuncs brdf_mfuncs[];
-		extern struct mfuncs gauss_mfuncs[];
-		extern struct mfuncs gravel_mfuncs[];
-		extern struct mfuncs prj_mfuncs[];
-		extern struct mfuncs grass_mfuncs[];
+	bu_log("%s", liboptical_version+5);
 
-		mlib_add( phg_mfuncs );
-		mlib_add( light_mfuncs );
-		mlib_add( cloud_mfuncs );
-		mlib_add( spm_mfuncs );
-		mlib_add( txt_mfuncs );
-		mlib_add( stk_mfuncs );
-		mlib_add( cook_mfuncs );
-		mlib_add( marble_mfuncs );
-		mlib_add( stxt_mfuncs );
-		mlib_add( points_mfuncs );
-		mlib_add( toyota_mfuncs );
-		mlib_add( wood_mfuncs );
-		mlib_add( camo_mfuncs );
-		mlib_add( scloud_mfuncs );
-		mlib_add( air_mfuncs );
-		mlib_add( rtrans_mfuncs );
-		mlib_add( fire_mfuncs );
-		mlib_add( brdf_mfuncs );
-		mlib_add( gauss_mfuncs );
-		mlib_add( gravel_mfuncs );
-		mlib_add( prj_mfuncs );
-		mlib_add( grass_mfuncs );
-	}
+	optical_shader_init(&mfHead);	/* in liboptical/init.c */
 
 	if( minus_o )  {
 		/* Output is destined for a pixel file */

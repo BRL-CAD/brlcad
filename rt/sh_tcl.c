@@ -46,6 +46,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "externs.h"
+#include "shadefuncs.h"
+
+extern struct mfuncs	*mfHead;	/* rt/view.c */
 
 #define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,DBI_MAGIC,"struct db_i")
 #define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p, RTI_MAGIC, "struct rt_i")
@@ -109,7 +112,7 @@ bu_log("sh_directchange_rgb() changing %s\n", regp->reg_name);
 
 		/* Update the shader */
 		mlib_free(regp);
-		if( mlib_setup( regp, rtip ) != 1 )  {
+		if( mlib_setup( &mfHead, regp, rtip ) != 1 )  {
 			Tcl_AppendResult(interp, regp->reg_name, ": mlib_setup() failure\n", NULL);
 		}
 	}
@@ -179,7 +182,7 @@ bu_log("sh_directchange_shader() changing %s\n", regp->reg_name);
 
 		/* Update the shader */
 		mlib_free(regp);
-		if( mlib_setup( regp, rtip ) != 1 )  {
+		if( mlib_setup( &mfHead, regp, rtip ) != 1 )  {
 			Tcl_AppendResult(interp, regp->reg_name, ": mlib_setup() failure\n", NULL);
 		}
 	}

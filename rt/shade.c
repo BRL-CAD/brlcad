@@ -33,13 +33,12 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "rtlist.h"
 #include "raytrace.h"
+#include "shadefuncs.h"
+#include "shadework.h"
 #include "./ext.h"
 #include "./rdebug.h"
-#include "./material.h"
 #include "./mathtab.h"
 #include "./light.h"
-
-extern int	light_hit(), light_miss();	/* in light.c */
 
 HIDDEN void	shade_inputs();
 
