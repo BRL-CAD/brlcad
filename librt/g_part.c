@@ -732,10 +732,10 @@ struct soltab		*stp;
 /*
  *  			R T _ P A R T _ U V
  *  
- *  For a hit on the surface of an part, return the (u,v) coordinates
+ *  For a hit on the surface of a particle, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
- *  v = elevation
+ *  v = elevation along H
  *
  *  The 'u' coordinate wraps around the particle, once.
  *  The 'v' coordinate covers the 'height' of the particle,
@@ -750,8 +750,37 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct part_specific *part =
+	register CONST struct part_specific *part =
 		(struct part_specific *)stp->st_specific;
+	point_t	hit_local;	/* hit_point, with V as origin */
+	point_t	hit_unit;	/* hit_poit in unit coords, +Z along H */
+	fastf_t hsize;
+	fastf_t	hmag_inv;
+	fastf_t vrad_unit;
+	fastf_t	r;
+	fastf_t minrad;
+
+	hmag_inv = 1.0/MAGNITUDE(part->part_int.part_H);
+	hsize = 1 + (vrad_unit = part->part_int.part_vrad*hmag_inv) +
+		part->part_int.part_hrad*hmag_inv;
+
+	/* Transform hit point into unit particle coords */
+	VSUB2( hit_local, hitp->hit_point, part->part_int.part_V );
+	MAT4X3VEC( hit_unit, part->part_SoR, hit_local );
+	/* normalize 0..1 */
+	uvp->uv_v = (hit_unit[Z] + vrad_unit) / hsize;
+
+	/* U is azimuth, atan() range: -pi to +pi */
+	uvp->uv_u = bn_atan2( hit_unit[Y], hit_unit[X] ) * bn_inv2pi;
+	if( uvp->uv_u < 0 )
+		uvp->uv_u += 1.0;
+
+	/* approximation: beam_r / (solid_circumference = 2 * pi * radius) */
+	minrad = part->part_int.part_vrad;
+	V_MIN(minrad, part->part_int.part_hrad);
+	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+	uvp->uv_du = uvp->uv_dv =
+		bn_inv2pi * r / minrad;
 }
 
 /*
