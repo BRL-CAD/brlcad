@@ -3198,9 +3198,16 @@ struct shell		*s2;
 	/* Add a wire loop in s2 connecting the two vertices */
 	lu2 = nmg_mlv( &s2->l.magic, eu1->vu_p->v_p, OT_UNSPEC );
 	NMG_CK_LOOPUSE(lu2);
-	eu2 = nmg_meonvu( RT_LIST_FIRST( vertexuse, &lu2->down_hd ) );
-	NMG_CK_EDGEUSE(eu2);
-	(void)nmg_eusplit( eu1->eumate_p->vu_p->v_p, eu2 );
+	{
+		struct edgeuse	*neu1, *neu2;
+
+		neu1 = nmg_meonvu( RT_LIST_FIRST( vertexuse, &lu2->down_hd ) );
+		neu2 = nmg_eusplit( eu1->eumate_p->vu_p->v_p, neu1 );
+		NMG_CK_EDGEUSE(eu1);
+		/* Attach new edge in s2 to original edge in s1 */
+		nmg_moveeu( eu1, neu2 );
+		nmg_moveeu( eu1, neu1 );
+	}
 	nmg_loop_g(lu2->l_p, &is->tol);
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		rt_log("nmg_isect_edge3p_shell(, eu1=x%x, s2=x%x) Added wire lu=x%x\n",
