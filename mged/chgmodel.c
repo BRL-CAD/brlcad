@@ -643,6 +643,7 @@ char	**argv;
 		BU_INIT_EXTERNAL( &ext );
 		RT_INIT_DB_INTERNAL( &internal );
 
+/* XXX should be able to use rt_db_get_internal() */
 		if( db_get_external( &ext, proto, dbip ) < 0 )
 			return TCL_ERROR;
 
@@ -1083,6 +1084,7 @@ char	**argv;
 			}
 		}
 
+/* XXX should be able to just db_diradd(), then rt_db_put_internal() */
 		if( rt_functab[internal.idb_type].ft_export( &ext, &internal, 1.0 ) < 0 )
 		{
 		  Tcl_AppendResult(interp, "f_mirror: export failure\n", (char *)NULL);
@@ -1094,6 +1096,7 @@ char	**argv;
 		/* no interuprts */
 		(void)signal( SIGINT, SIG_IGN );
 
+/* XXX shouldn't have to do ngran or db_alloc() here */
 		ngran = (ext.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
 		if( (dp = db_diradd( dbip, argv[2], -1L, ngran, DIR_SOLID)) == DIR_NULL ||
 		    db_alloc( dbip, dp, 1 ) < 0 )
@@ -1110,6 +1113,7 @@ char	**argv;
 		db_free_external( &ext );
 
 	} else if( proto->d_flags & DIR_COMB ) {
+/*MIKE*/
 		if( (rec = db_getmrec( dbip, proto )) == (union record *)0 ) {
 		  TCL_READ_ERR_return;
 		}
@@ -1121,6 +1125,7 @@ char	**argv;
 		NAMEMOVE(argv[2], rec[0].c.c_name);
 		bn_mat_idn( mirmat );
 		mirmat[k*5] = -1.0;
+/* use db_tree_mul_dbleaf( comb->tree ); */
 		for( i=1; i < proto->d_len; i++) {
 			mat_t	xmat;
 
