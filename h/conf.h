@@ -355,5 +355,9 @@
 #	undef	_KERNEL
 #endif
 
+#if !defined(TK_FILE_COUNT) && !defined(TK_FILE_GPTR) && !defined(TK_FILE_READ_PTR)
+# define TK_FILE_COUNT _cnt
+#endif
+
 #endif /* CONF_H */
 
