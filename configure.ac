@@ -302,6 +302,7 @@ if test "x$cache_file" = "x/dev/null" ; then
 fi
 AC_MSG_RESULT($cache_file)
 
+
 dnl ***************************
 dnl *** Check for libraries ***
 dnl ***************************
