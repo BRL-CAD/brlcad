@@ -1,3 +1,4 @@
+#define NUgrid 0
 /*
  *			S H O O T . C
  *
@@ -33,7 +34,7 @@
 static char RCSshoot[] = "@(#)$Header$ (BRL)";
 #endif
 
-char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
+char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 
 #include <stdio.h>
 #include <math.h>
@@ -49,6 +50,18 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 #else
 #define AUTO auto
 #endif
+
+/* start NUgrid XXX  --  associated with cut.c */
+#define RT_NUGRID_CELL(_array,_x,_y,_z)		(&(_array)[ \
+	((((_z)*nu_cells_per_axis[Y])+(_y))*nu_cells_per_axis[X])+(_x) ])
+struct nu_axis {
+	fastf_t	nu_pos;		/* cell start pos */
+	fastf_t	nu_width;	/* voxel size */
+};
+extern struct nu_axis	*nu_axis[3];
+extern int		nu_cells_per_axis[3];
+extern union cutter	*nu_grid;
+/* end NUgrid XXX */
 
 #define BACKING_DIST	(-2.0)		/* mm to look behind start point */
 #define OFFSET_DIST	0.01		/* mm to advance point into box */
@@ -98,6 +111,52 @@ struct shootray_status	*ssp;
 				ssp->dist_corr);
 		}
 
+#if NUgrid
+# if 0
+		if( ssp->lastcut == CUTTER_NULL )  {
+# else
+		if(1) {
+# endif
+			/*
+			 *  First time through -- find starting cell.
+			 *  For now, linear search to find x,y,z index.
+			 *  This should become a binary search
+			 */
+			register int	x, y, z;
+
+			if( ssp->newray.r_pt[X] < nu_axis[X][0].nu_pos )
+				break;
+			for( x=0; x < nu_cells_per_axis[X]; x++ )  {
+				if( ssp->newray.r_pt[X] < nu_axis[X][x].nu_pos +
+					nu_axis[X][x].nu_width )
+					break;
+			}
+			if( x >= nu_cells_per_axis[X] )  break;
+
+			if( ssp->newray.r_pt[Y] < nu_axis[Y][0].nu_pos )
+				break;
+			for( y=0; y < nu_cells_per_axis[Y]; y++ )  {
+				if( ssp->newray.r_pt[Y] < nu_axis[Y][y].nu_pos +
+					nu_axis[Y][y].nu_width )
+					break;
+			}
+			if( y >= nu_cells_per_axis[Y] )  break;
+
+			if( ssp->newray.r_pt[Z] < nu_axis[Z][0].nu_pos )
+				break;
+			for( z=0; z < nu_cells_per_axis[Z]; z++ )  {
+				if( ssp->newray.r_pt[Z] < nu_axis[Z][z].nu_pos +
+					nu_axis[Z][z].nu_width )
+					break;
+			}
+			if( z >= nu_cells_per_axis[Z] )  break;
+			cutp = RT_NUGRID_CELL( nu_grid, x, y, z );
+		} else {
+			/* Advance from previous cell to next cell */
+			/* Finds new ray segment end distance, for free */
+			rt_bomb("NUgrid advance\n");
+		}
+#else
 		cutp = &(ap->a_rt_i->rti_CutHead);
 		while( cutp->cut_type == CUT_CUTNODE )  {
 			if( ssp->newray.r_pt[cutp->cn.cn_axis] >=
@@ -107,6 +166,7 @@ struct shootray_status	*ssp;
 				cutp=cutp->cn.cn_l;
 			}
 		}
+#endif
 		if(cutp==CUTTER_NULL || cutp->cut_type != CUT_BOXNODE)
 			rt_bomb("rt_advance_to_next_cell(): leaf not boxnode");
 
@@ -133,11 +193,18 @@ struct shootray_status	*ssp;
 				/* Never advance less than 1mm */
 				ssp->box_start = ssp->box_end + 1.0;
 			} else {
+				if( rt_g.debug & DEBUG_ADVANCE )  {
+					rt_log("exp=%d, fraction=%.20e\n", exponent, fraction);
+				}
 				if( sizeof(fastf_t) <= 4 )
 					fraction += 1.0e-5;
 				else
 					fraction += 1.0e-14;
 				ssp->box_start = ldexp( fraction, exponent );
+			}
+			if( rt_g.debug & DEBUG_ADVANCE )  {
+				rt_log("push: was=%.20e, now=%.20e\n",
+					ssp->box_end, ssp->box_start);
 			}
 			push_flag++;
 			continue;
@@ -152,7 +219,8 @@ struct shootray_status	*ssp;
 
 		if( !rt_in_rpp(&ssp->newray, ssp->inv_dir,
 		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
-rt_log("\nrt_advance_to_next_cell():  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
+			rt_log("\nrt_advance_to_next_cell():  MISSED BOX\n");
+			rt_log("rmin,rmax(%g,%g) box(%g,%g)\n",
 				ssp->newray.r_min, ssp->newray.r_max,
 				ssp->box_start, ssp->box_end);
 /**		     	if( rt_g.debug & DEBUG_ADVANCE )  ***/
@@ -328,6 +396,7 @@ register struct application *ap;
 		ap->a_ray.r_dir[Z] = 0.0;
 	}
 
+#if !NUgrid
 	/*
 	 *  If there are infinite solids in the model,
 	 *  shoot at all of them, all of the time
@@ -357,6 +426,7 @@ register struct application *ap;
 			rtip->nhits++;
 		}
 	}
+#endif
 
 	/*
 	 *  If ray does not enter the model RPP, skip on.
@@ -400,7 +470,7 @@ register struct application *ap;
 	ss.box_start = ap->a_ray.r_min;
 	if( ss.box_start < BACKING_DIST )
 		ss.box_start = BACKING_DIST; /* Only look a little bit behind */
-	ss.box_start -= OFFSET_DIST;	/* Compensate for OFFSET_DIST below on 1st loop */
+	ss.box_start -= OFFSET_DIST;	/* Compensate for OFFSET_DIST in rt_advance_to_next_cell on 1st loop */
 	ss.box_end = ss.model_end = ap->a_ray.r_max;
 	ss.lastcut = CUTTER_NULL;
 	last_bool_start = BACKING_DIST;
@@ -420,6 +490,12 @@ register struct application *ap;
 
 		if(debug_shoot) {
 			rt_pr_cut( cutp, 0 );
+		}
+
+		if( cutp->bn.bn_len <= 0 )  {
+			/* Push ray onwards to next box */
+			ss.box_start = ss.box_end;
+			continue;
 		}
 
 		/* Consider all objects within the box */
