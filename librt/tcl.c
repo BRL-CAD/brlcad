@@ -87,40 +87,6 @@ extern struct bu_structparse rt_fgp_parse[];
 
 static struct db_i *dbip = DBI_NULL;
 
-/* XXX This should probably become part of the rt_functab in librt/table.c */
-
-struct rt_solid_type_lookup {
-	char			id;
-	size_t			db_internal_size;
-	long			magic;
-	char		       *label;
-	struct bu_structparse  *parsetab;
-} rt_solid_type_lookup[] = {
-	{ ID_TOR,     sizeof(struct rt_tor_internal), (long)RT_TOR_INTERNAL_MAGIC, "tor", rt_tor_parse },
-	{ ID_TGC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "tgc", rt_tgc_parse },
-	{ ID_ELL,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "ell", rt_ell_parse },
-	{ ID_ARB8,    sizeof(struct rt_arb_internal), (long)RT_ARB_INTERNAL_MAGIC, "arb8", rt_arb_parse },
-	{ ID_HALF,    sizeof(struct rt_half_internal),(long)RT_HALF_INTERNAL_MAGIC,"half", rt_hlf_parse },
-	{ ID_REC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "rec", rt_tgc_parse },
-	{ ID_ELL,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "sph", rt_ell_parse },
-	{ ID_EBM,     sizeof(struct rt_ebm_internal), (long)RT_EBM_INTERNAL_MAGIC, "ebm", rt_ebm_parse },
-	{ ID_VOL,     sizeof(struct rt_vol_internal), (long)RT_VOL_INTERNAL_MAGIC, "vol", rt_vol_parse },
-	{ ID_PARTICLE,sizeof(struct rt_part_internal),(long)RT_PART_INTERNAL_MAGIC,"part", rt_part_parse },
-	{ ID_RPC,     sizeof(struct rt_rpc_internal), (long)RT_RPC_INTERNAL_MAGIC, "rpc", rt_rpc_parse },
-	{ ID_RHC,     sizeof(struct rt_rhc_internal), (long)RT_RHC_INTERNAL_MAGIC, "rhc", rt_rhc_parse },
-	{ ID_EPA,     sizeof(struct rt_epa_internal), (long)RT_EPA_INTERNAL_MAGIC, "epa", rt_epa_parse },
-	{ ID_EHY,     sizeof(struct rt_ehy_internal), (long)RT_EHY_INTERNAL_MAGIC, "ehy", rt_ehy_parse },
-	{ ID_ETO,     sizeof(struct rt_eto_internal), (long)RT_ETO_INTERNAL_MAGIC, "eto", rt_eto_parse },
-	{ ID_HF,      sizeof(struct rt_hf_internal),  (long)RT_HF_INTERNAL_MAGIC,  "hf",  rt_hf_parse },
-	{ ID_DSP,     sizeof(struct rt_dsp_internal), (long)RT_DSP_INTERNAL_MAGIC, "dsp", rt_dsp_parse },
-	{ ID_ARS, 0, 0, "ars", 0 },
-	{ ID_NMG, 0, 0, "nmg", 0 },
-	{ ID_PIPE, 0, 0, "pipe", 0 },
-	{ ID_VOL, 0, 0, "vol", 0 },
-	{ ID_FGP,   sizeof( struct rt_fgp_internal), (long)RT_FGP_INTERNAL_MAGIC, "fgp", rt_fgp_parse },
-	{ 0, 0, 0, 0 }
-};
-
 struct dbcmdstruct {
 	char *cmdname;
 	int (*cmdfunc)();
@@ -527,42 +493,6 @@ char **argv;
 		Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
 	}
 	return TCL_ERROR;
-}
-
-/*
- *		R T _ G E T _ P A R S E T A B _ B Y _ I D
- */
-
-struct rt_solid_type_lookup *
-rt_get_parsetab_by_id( s_id )
-int s_id;
-{
-	register struct rt_solid_type_lookup   *stlp;
-	static struct rt_solid_type_lookup	solid_type;
-
-	for( stlp = rt_solid_type_lookup; stlp->id != 0; stlp++ )
-		if( stlp->id == s_id )
-			return stlp;
-
-	return NULL;
-}
-
-/*
- *		R T _ G E T _ P A R S E T A B _ B Y _ N A M E
- */
-
-struct rt_solid_type_lookup *
-rt_get_parsetab_by_name( s_type )
-char *s_type;
-{
-	register int				i;
-	register struct rt_solid_type_lookup   *stlp;
-
-	for( stlp = rt_solid_type_lookup; stlp->id != 0; stlp++ )
-		if( strcmp(s_type, stlp->label) == 0 )
-			return stlp;
-
-	return NULL;
 }
 
 /*
@@ -1175,14 +1105,21 @@ char	      **argv;
 	return TCL_OK;
 }
 
+/*
+ *			R T _ D B _ R E P O R T
+ *
+ *  Report on a particular object from the database.
+ *  Used to support "db get".
+ */
 int
 rt_db_report( interp, intern, attr )
 Tcl_Interp		*interp;
 struct rt_db_internal	*intern;
 char			*attr;
 {
-	register struct bu_structparse         *sp = NULL;
-	register struct rt_solid_type_lookup   *stlp;
+	register CONST struct bu_structparse	*sp = NULL;
+	register CONST struct rt_functab	*ftp;
+
 	int                     id, status;
 	Tcl_DString             ds;
 	struct bu_vls           str;
@@ -1191,6 +1128,9 @@ char			*attr;
 
        /* Find out what type of object we are dealing with and report on it. */
 	id = intern->idb_type;
+	ftp = intern->idb_meth;
+	RT_CK_FUNCTAB(ftp);
+
 	switch( id ) {
 	case ID_COMBINATION:
 		status = db_tcl_comb_describe( interp,
@@ -1198,16 +1138,9 @@ char			*attr;
 					       attr );
 		break;
 	default:
-		if( (stlp=rt_get_parsetab_by_id(id)) == NULL ) {
-			Tcl_AppendResult( interp,
- "invalid {an output routine for this data type has not yet been implemented}",
-				  (char *)NULL );
-			return TCL_OK;
-		}
-
-		if( stlp->parsetab == (struct bu_structparse *)NULL ) {
-			Tcl_AppendResult( interp, stlp->label,
- " {an output routine for this data type has not yet been implemented}",
+		if( ftp->ft_parsetab == (struct bu_structparse *)NULL ) {
+			Tcl_AppendResult( interp, ftp->ft_label,
+ " {a Tcl output routine for this type of object has not yet been implemented}",
 				  (char *)NULL );
 			return TCL_OK;
 		}
@@ -1215,10 +1148,10 @@ char			*attr;
 		bu_vls_init( &str );
 		Tcl_DStringInit( &ds );
 
-		sp = stlp->parsetab;
+		sp = ftp->ft_parsetab;
 		if( attr == (char *)0 ) {
 			/* Print out solid type and all attributes */
-			Tcl_DStringAppendElement( &ds, stlp->label );
+			Tcl_DStringAppendElement( &ds, ftp->ft_label );
 			while( sp->sp_name != NULL ) {
 				Tcl_DStringAppendElement( &ds, sp->sp_name );
 				bu_vls_trunc( &str, 0 );
@@ -1373,7 +1306,7 @@ char	      **argv;
 #endif
 	status = rt_db_report( interp, &intern, argv[2] );
 
-	rt_functab[intern.idb_type].ft_ifree( &intern );
+	intern.idb_meth->ft_ifree( &intern );
 	return status;
 }
 
@@ -1392,9 +1325,9 @@ int		argc;
 char	      **argv;
 {
 	struct rt_db_internal			intern;
-	register struct rt_solid_type_lookup   *stlp;
+	register CONST struct rt_functab	*ftp;
 	register struct directory	       *dp;
-	int					status, ngran, id, i;
+	int					status, ngran, i;
 	char				       *name;
 	struct rt_wdb			  *wdb = (struct rt_wdb *)clientData;
 	char				        type[16];
@@ -1431,7 +1364,7 @@ char	      **argv;
 
 	if( strcmp(type, "comb")==0 ) {
 		struct rt_comb_internal *comb;
-		id = intern.idb_type = ID_COMBINATION;
+		intern.idb_type = ID_COMBINATION;
 		intern.idb_ptr = bu_calloc( sizeof(struct rt_comb_internal), 1,
 					    "rt_db_put" );
 		/* Create combination with appropriate values */
@@ -1456,27 +1389,28 @@ char	      **argv;
 			return TCL_ERROR;
 		}
 	} else {
-		stlp = rt_get_parsetab_by_name( type );
-		if( stlp == NULL ) {
-			Tcl_AppendResult( interp,
-					  "unknown object type",
+		ftp = rt_get_functab_by_label( type );
+		if( ftp == NULL ) {
+			Tcl_AppendResult( interp, type,
+					  " is an unknown object type.",
 					  (char *)NULL );
 			return TCL_ERROR;
 		}
 
-		if( stlp->parsetab == (struct bu_structparse *)NULL ) {
-			Tcl_AppendResult( interp, stlp->label,
-					  " object type not supported",
+		if( ftp->ft_parsetab == (struct bu_structparse *)NULL ) {
+			Tcl_AppendResult( interp, type,
+					  " type objects do not yet have a 'db put' handler.",
 					  (char *)NULL );
 			return TCL_ERROR;
 		}
 
-		id = intern.idb_type = stlp->id;
-		intern.idb_meth = &rt_functab[id];
-		intern.idb_ptr = bu_calloc( stlp->db_internal_size, 1,
+		intern.idb_type = ftp - rt_functab;
+		BU_ASSERT(&rt_functab[intern.idb_type] == ftp);
+		intern.idb_meth = ftp;
+		intern.idb_ptr = bu_calloc( ftp->ft_internal_size, 1,
 					    "rt_db_put" );
-		*((long *)intern.idb_ptr) = stlp->magic;
-		if( bu_structparse_argv(interp, argc-3, argv+3, stlp->parsetab,
+		*((long *)intern.idb_ptr) = ftp->ft_internal_magic;
+		if( bu_structparse_argv(interp, argc-3, argv+3, ftp->ft_parsetab,
 					(char *)intern.idb_ptr )==TCL_ERROR ) {
 			rt_db_free_internal(&intern);
 			return TCL_ERROR;
@@ -1513,7 +1447,7 @@ int		argc;
 char	      **argv;
 {
 	register struct directory	*dp;
-	register struct bu_structparse	*sp = NULL;
+	register CONST struct bu_structparse	*sp = NULL;
 	int				 id, status, i;
 	char				*name;
 	struct rt_db_internal		 intern;
@@ -1550,6 +1484,7 @@ char	      **argv;
 
 	/* Find out what type of object we are dealing with and tweak it. */
 	id = intern.idb_type;
+	RT_CK_FUNCTAB(intern.idb_meth);
 
 	if( id == ID_COMBINATION ) {
 		struct rt_comb_internal *comb =
@@ -1558,10 +1493,11 @@ char	      **argv;
 
 		/* .inmem adjust light.r rgb { 255 255 255 } */
 		status = db_tcl_comb_adjust( comb, interp, argc-3, argv+3 );
-	} else if( rt_get_parsetab_by_id(id) == NULL ||
-		   (sp=rt_get_parsetab_by_id(id)->parsetab) == NULL ) {
+	} else if( (sp = intern.idb_meth->ft_parsetab) == NULL )  {
 		Tcl_AppendResult( interp,
-           "manipulation routines for this type have not yet been implemented",
+	           "Manipulation routines for objects of type ",
+		   intern.idb_meth->ft_label,
+		   " have not yet been implemented.",
 				  (char *)NULL );
 		status = TCL_ERROR;
 	} else {
@@ -1599,8 +1535,8 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	register struct bu_structparse *sp = NULL;
-	struct rt_solid_type_lookup	*stlp = NULL;
+	CONST struct bu_structparse	*sp = NULL;
+	CONST struct rt_functab		*ftp;
 
 	--argc;
 	++argv;
@@ -1611,12 +1547,12 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	if( (stlp = rt_get_parsetab_by_name(argv[1])) == NULL )  {
+	if( (ftp = rt_get_functab_by_label(argv[1])) == NULL )  {
 		Tcl_AppendResult(interp, "There is no geometric object type \"",
 			argv[1], "\".", (char *)NULL);
 		return TCL_ERROR;
 	}
-	sp = stlp->parsetab;
+	sp = ftp->ft_parsetab;
     
 	if (sp != NULL)
 		bu_structparse_get_terse_form(interp, sp);
