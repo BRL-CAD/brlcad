@@ -1,13 +1,13 @@
 /*
-	SCCS id:	@(#) fbcmap.c	1.8
-	Last edit: 	7/26/86 at 21:29:38	D A Gwyn
-	Retrieved: 	8/13/86 at 03:13:29
+	SCCS id:	@(#) fbcmap.c	1.9
+	Last edit: 	7/26/86 at 21:33:10	D A Gwyn
+	Retrieved: 	8/13/86 at 03:13:36
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbcmap.c
 
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbcmap.c	1.8	last edit 7/26/86 at 21:29:38";
+char	sccsTag[] = "@(#) fbcmap.c	1.9	last edit 7/26/86 at 21:33:10";
 #endif
 /*
 	F B C M A P
@@ -169,7 +169,7 @@ char *argv[];
 		break;
 
 	case 12:	/* 18% Grey */
-		(void) fprintf( stderr, "Color map #12, 18% neutral grey.\n" );
+		(void) fprintf( stderr, "Color map #12, 18%% neutral grey.\n" );
 		for( i = 0; i < 256; i++ )  {
 			cp->cm_red[i] =
 			cp->cm_green[i] =
