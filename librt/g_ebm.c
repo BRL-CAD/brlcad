@@ -993,11 +993,13 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	struct rt_ebm_internal	*eip;
-/*	register int	i; 		*/
-/*	struct shell	*s;		*/
-/*	struct vertex	**verts;	/* dynamic array of pointers */
-/*	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
-/*	struct faceuse	*fu;		*/
+#if 0
+	register int	i; 
+	struct shell	*s;
+	struct vertex	**verts;	/* dynamic array of pointers */
+	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
+	struct faceuse	*fu;
+#endif
 
 	RT_CK_DB_INTERNAL(ip);
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
