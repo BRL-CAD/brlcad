@@ -690,8 +690,7 @@ struct rt_i	*rtip;
 		*cp++ = '\0';
 	}
 
-	env_region.reg_mater.ma_matname = bu_vls_strdup( &material );
-	env_region.reg_mater.ma_matparm = bu_strdup( cp );
+	env_region.reg_mater.ma_shader = bu_vls_strdup( &material );
 
 	if( mlib_setup( &env_region, rtip ) < 0 )
 		rt_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );

@@ -24,7 +24,14 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "rtstring.h"
 #include "raytrace.h"
@@ -69,6 +76,7 @@ struct rt_i		*rtip;
 	int	ret;
 	struct rt_vls	param;
 	char	*material;
+	int	mlen;
 
 	RT_CK_REGION(rp);
 	RT_CK_RTI(rtip);
@@ -78,23 +86,30 @@ struct rt_i		*rtip;
 		return(-1);
 	}
 	rt_vls_init( &param );
-	material = rp->reg_mater.ma_matname;
+	material = rp->reg_mater.ma_shader;
 	if( material == NULL || material[0] == '\0' )  {
 		material = mdefault;
+		mlen = strlen(mdefault);
 	} else {
-		rt_vls_strcpy( &param, rp->reg_mater.ma_matparm );
+		char	*endp;
+		endp = strchr( material, ' ' );
+		if( endp )  {
+			mlen = endp - material;
+			rt_vls_strcpy( &param, rp->reg_mater.ma_shader+mlen+1 );
+		}
 	}
 retry:
 	for( mfp=mfHead; mfp != MF_NULL; mfp = mfp->mf_forw )  {
 		if( material[0] != mfp->mf_name[0]  ||
-		    strcmp( material, mfp->mf_name ) != 0 )
+		    strncmp( material, mfp->mf_name, mlen ) != 0 )
 			continue;
 		goto found;
 	}
-	rt_log("\n*ERROR mlib_setup('%s'):  material not known, default assumed\n",
-		material );
+	rt_log("\n*ERROR mlib_setup('%s'):  material not known, default assumed %s\n",
+		material, rp->reg_name );
 	if( material != mdefault )  {
 		material = mdefault;
+		mlen = strlen(mdefault);
 		rt_vls_trunc( &param, 0 );
 		goto retry;
 	}
