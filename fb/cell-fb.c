@@ -458,13 +458,16 @@ long	ncells;
 		    fprintf(stderr, "%d = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
 		    fflush(stderr);
 		}
-		for(y0 = V2SCRY(lasty), y1 = y0 + hgt; y0 < y1; y0++)
-		    if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
-		    {
-			fb_log("Couldn't write to <%d,%d>\n", 0, y0);
-			(void) fb_close(fbiop);
-			return (false);
-		    }
+		y0 = V2SCRY(lasty);
+	    	if( y0 >= 0 && y0 < fb_height )  {
+			for(y1 = y0 + hgt; y0 < y1; y0++)
+			    if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
+			    {
+				fb_log("Couldn't write to <%d,%d>\n", 0, y0);
+				(void) fb_close(fbiop);
+				return (false);
+			    }
+	    	}
 	    }
 
 	    /* Clear buffer. */
