@@ -94,7 +94,8 @@ fastf_t		maxangle; /* Value of the cosine of the angle between
 			   */
 
 typedef int color[3];
-color	foreground = { 255, 255, 255};
+color	fgcolor = { 255, 255, 255};
+color	bgcolor = { 0, 0, 0};
 
 /*
  * Flags that set which edges are detected.
@@ -109,7 +110,7 @@ int	detect_distance = 1;
 int	detect_normals = 1;
 int     detect_attributes = 0; /* unsupported yet */
 
-RGBpixel bg_color;
+RGBpixel fb_bg_color;
 
 /*
  * Overlay Mode
@@ -229,10 +230,10 @@ struct bu_structparse view_parse[] = {
   {"%d", 1, "dn", byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "detect_ids", byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "di", byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 3, "foreground", byteoffset(foreground), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 3, "fg", byteoffset(foreground), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 3, "background", byteoffset(background), BU_STRUCTPARSE_FUNC_NULL},
-  {"%d", 3, "bg", byteoffset(background), BU_STRUCTPARSE_FUNC_NULL},	
+  {"%d", 3, "foreground", byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "fg", byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "background", byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},
+  {"%d", 3, "bg", byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},	
   {"%d", 1, "overlay", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "ov", byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
   {"%d", 1, "blend", byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
@@ -477,7 +478,7 @@ view_2init( struct application *ap )
    */
   if (overlay || blend) {
     
-    if (fb_read(fbp,0,0,bg_color,1) < 0) {
+    if (fb_read(fbp,0,0,fb_bg_color,1) < 0) {
       bu_bomb ("rt_edge: specified framebuffer is not readable, cannot merge.\n");
       
     }
@@ -505,13 +506,13 @@ view_2init( struct application *ap )
    *
    */
   if (overlay) {
-    if (background[RED] == 0 && 
-	background[GRN] == 0 &&
-	background[BLU] == 1) {
+    if (bgcolor[RED] == 0 && 
+	bgcolor[GRN] == 0 &&
+	bgcolor[BLU] == 1) {
       
-      background[RED] = bg_color[RED];
-      background[GRN] = bg_color[GRN];
-      background[BLU] = bg_color[BLU];
+      bgcolor[RED] = fb_bg_color[RED];
+      bgcolor[GRN] = fb_bg_color[GRN];
+      bgcolor[BLU] = fb_bg_color[BLU];
     }
   }
   return;
@@ -588,7 +589,7 @@ view_eol( struct application *ap )
 	 * edge. Unless, of course, we are on the bottom 
 	 * scanline or the leftmost column (x=y=0)
 	 */
-	if (i != 0 && ap->a_y != 0 && !diffpixel (rgb,bg_color)) {
+	if (i != 0 && ap->a_y != 0 && !diffpixel (rgb,fb_bg_color)) {
 	  RGBpixel left;
 	  RGBpixel down;
 	  
@@ -600,7 +601,7 @@ view_eol( struct application *ap )
 	  fb_read (fbp, i, ap->a_y - 1, down, 1);	  
 	  bu_semaphore_release (BU_SEM_SYSCALL);
 
-	  if (diffpixel (left, bg_color)) {
+	  if (diffpixel (left, fb_bg_color)) {
 	    /* 
 	     * Use this one.
 	     */
@@ -608,7 +609,7 @@ view_eol( struct application *ap )
 	    rgb[GRN] = left[GRN];
 	    rgb[BLU] = left[BLU];
 	  }
-	  else if (diffpixel (down, bg_color)) {
+	  else if (diffpixel (down, fb_bg_color)) {
 	    /*
 	     * Use the pixel from the scanline below
 	     */
@@ -994,9 +995,9 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
     
   } else {
     
-    scanline[cpu][ap->a_x*3+RED] = background[RED];
-    scanline[cpu][ap->a_x*3+GRN] = background[GRN];
-    scanline[cpu][ap->a_x*3+BLU] = background[BLU];	  
+    scanline[cpu][ap->a_x*3+RED] = bgcolor[RED];
+    scanline[cpu][ap->a_x*3+GRN] = bgcolor[GRN];
+    scanline[cpu][ap->a_x*3+BLU] = bgcolor[BLU];	  
   }
 
   /*
@@ -1031,9 +1032,9 @@ int diffpixel (RGBpixel a, RGBpixel b)
 void choose_color (RGBpixel col, struct cell *me,
 		  struct cell *left, struct cell *below)
 {
-  col[RED] = foreground[RED];
-  col[GRN] = foreground[GRN];
-  col[BLU] = foreground[BLU];
+  col[RED] = fgcolor[RED];
+  col[GRN] = fgcolor[GRN];
+  col[BLU] = fgcolor[BLU];
 
   if (region_colors) {
 
