@@ -72,7 +72,7 @@
 		(angle_ctrl.HelpText		"(0.0 - 1.0) larger values here produce finer tesselations")
 		(facets_only.Label		"Facetize everything (no CSG)")
 		(facets_only.HelpText		"Select this to produce a faceted approximation for each region with no CSG")
-		(facets_only.Set		False)
+		(facets_only.Set		True)
 		(facets_only.AttachLeft		True)
 		(elim_small.Label		"Eliminate small features")
 		(elim_small.HelpText		"Select this to ignore holes, rounds, and chamfers smaller than the specified minimums")
