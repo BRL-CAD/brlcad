@@ -81,19 +81,22 @@ dotitles()
 	dmp->dmr_2d_line(  2047, -2048,  2047,  2047, 0 );
 	dmp->dmr_2d_line(  2047,  2047, -2048,  2047, 0 );
 	dmp->dmr_2d_line( -2048,  2047, -2048, -2048, 0 );
+
+	/* Line across the bottom, above two bottom status lines */
+	dmp->dmr_2d_line( -2047, TITLE_YBASE-TEXT1_DY, 2047, TITLE_YBASE-TEXT1_DY, 0 );
+
+	/* Display state and local unit in upper right corner, boxed */
+	dmp->dmr_puts(state_str[state], MENUX, MENUY - MENU_DY, 1, DM_WHITE );
+	dmp->dmr_puts( local_unit[localunit], MENUX, MENUY - (2*MENU_DY), 1, DM_YELLOW);
+#define YPOS	(MENUY - MENU_DY - 75 )
+	dmp->dmr_2d_line(XLIM, YPOS, 2047, YPOS, 0);
+	dmp->dmr_2d_line(XLIM, YPOS, XLIM, 2047, 0);
+#undef YPOS
+
+	/* Menu area border */
 	if( illump != SOLID_NULL )  {
 		dmp->dmr_2d_line(  XLIM,  2047,  XLIM,  TITLE_YBASE-TEXT1_DY, 0 );
 	}
-	dmp->dmr_2d_line( -2047, TITLE_YBASE-TEXT1_DY, 2047, TITLE_YBASE-TEXT1_DY, 0 );
-
-	/* Display current state in upper right corner */
-	dmp->dmr_puts( state_str[state], MENUX, MENUY - MENU_DY, 1, DM_YELLOW );
-
-	/* Display current local unit in effect */
-	dmp->dmr_puts( local_unit[localunit], MENUX, MENUY - (2*MENU_DY), 1, DM_BLUE);
-	dmp->dmr_2d_line(XLIM, 1825, 2047, 1825, 0);
-	dmp->dmr_2d_line(XLIM, 1815, 2047, 1815, 0);
-	dmp->dmr_2d_line(XLIM, 1815, XLIM, 2047, 0);
 
 	/*
 	 * Print information about object illuminated
@@ -102,11 +105,12 @@ dotitles()
 
 	if( illump != SOLID_NULL )  {
 		for( i=0; i <= illump->s_last; i++ )  {
-			dmp->dmr_puts( illump->s_path[i]->d_namep, MENUX, y, 0, DM_YELLOW );
-			if( state == ST_O_PATH && i == ipathpos )  {
-				dmp->dmr_puts( illump->s_path[i]->d_namep, MENUX, y, 0, DM_WHITE );
-				dmp->dmr_puts( illump->s_path[i]->d_namep, MENUX, y, 0, DM_WHITE );
+			if( i == ipathpos  &&
+			    (state == ST_O_PATH || state == ST_O_EDIT) )  {
+				dmp->dmr_puts( "[MATRIX]", MENUX, y, 0, DM_WHITE );
+				y += MENU_DY;
 			}
+			dmp->dmr_puts( illump->s_path[i]->d_namep, MENUX, y, 0, DM_YELLOW );
 			y += MENU_DY;
 		}
 	}
@@ -131,8 +135,8 @@ dotitles()
 		MAT4X3PNT(temp, model2objview, es_rec.s.s_values);
 		xloc = (int)(temp[X]*2048);
 		yloc = (int)(temp[Y]*2048);
-		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY, yloc-TEXT0_DY);
-		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY, yloc+TEXT0_DY);
+		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY, yloc-TEXT0_DY, 0);
+		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY, yloc+TEXT0_DY, 0);
 		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY, yloc+TEXT0_DY, 0);
 		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc-TEXT0_DY, xloc-TEXT0_DY, yloc-TEXT0_DY, 0);
 		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY, yloc-TEXT0_DY, 0);
@@ -210,9 +214,9 @@ dotitles()
 
 	/* prefix item selected with "==>" to let user know it is selected */
 	if( es_edflag >= 0 && menuflag ) {
-			dmp->dmr_puts("==>", MENUX-114, menuyy, 0, DM_WHITE);
-			dmp->dmr_puts("==>", MENUX-114, menuyy, 0, DM_WHITE);
-			dmp->dmr_puts("==>", MENUX-114, menuyy, 0, DM_WHITE);
+		dmp->dmr_puts("==>", MENUX-114, menuyy, 0, DM_WHITE);
+		dmp->dmr_puts("==>", MENUX-114, menuyy, 0, DM_WHITE);
+		dmp->dmr_puts("==>", MENUX-114, menuyy, 0, DM_WHITE);
 	}
 
 	/*
@@ -353,18 +357,31 @@ dotitles()
 	dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE, 1, DM_WHITE );
 
 	/*
-	 * Angle/Distance cursor below status line.
+	 * Second status line
 	 */
-	if (adcflag)  {
+	if( illump != SOLID_NULL )  {
+		/* Illuminated path */
+		(void)sprintf( linebuf, " Path: ");
+		for( i=0; i <= illump->s_last; i++ )  {
+			if( i == ipathpos  &&
+			    (state == ST_O_PATH || state == ST_O_EDIT) )
+				(void)strcat( &linebuf[0], "/__MATRIX__" );
+			cp = &linebuf[0];
+			FINDNULL(cp);
+			(void)sprintf(cp, "/%s", illump->s_path[i]->d_namep );
+		}
+		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+	} else if (adcflag)  {
+		/* Angle/Distance cursor */
 		(void)sprintf( &linebuf[0],
-" curs:  ang1=%.1f,  ang2=%.1f,  dist=%.3f,  cent=(%.3f, %.3f)",
-				angle1 * radtodeg, angle2 * radtodeg,
-				(c_tdist / 2047.0) / VIEWFACTOR*base2local,
-				(curs_x / 2047.0) / VIEWFACTOR*base2local,
-				(curs_y / 2047.0) / VIEWFACTOR*base2local
-			     );
-		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_BLUE );
+" curs:  a1=%.1f,  a2=%.1f,  dst=%.3f,  cent=(%.3f, %.3f)",
+			angle1 * radtodeg, angle2 * radtodeg,
+			(c_tdist / 2047.0) / VIEWFACTOR*base2local,
+			(curs_x / 2047.0) / VIEWFACTOR*base2local,
+			(curs_y / 2047.0) / VIEWFACTOR*base2local );
+		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	} else {
+		/* Title of model */
 		(void)sprintf(&linebuf[0], " %s", cur_title);
 		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	}
