@@ -26,18 +26,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 _LOCAL_ int	mem_open(),
 		mem_close(),
-		mem_reset(),
 		mem_clear(),
 		mem_read(),
 		mem_write(),
 		mem_rmap(),
 		mem_wmap(),
-		mem_viewport(),
-		mem_window(),
-		mem_zoom(),
+		mem_view(),
+		mem_getview(),
 		mem_setcursor(),
 		mem_cursor(),
-		mem_scursor(),
+		mem_getcursor(),
+		mem_poll(),
 		mem_flush(),
 		mem_help();
 
@@ -45,20 +44,19 @@ _LOCAL_ int	mem_open(),
 FBIO memory_interface =  {
 	mem_open,		/* device_open		*/
 	mem_close,		/* device_close		*/
-	mem_reset,		/* device_reset		*/
 	mem_clear,		/* device_clear		*/
 	mem_read,		/* buffer_read		*/
 	mem_write,		/* buffer_write		*/
 	mem_rmap,		/* colormap_read	*/
 	mem_wmap,		/* colormap_write	*/
-	mem_viewport,		/* viewport_set		*/
-	mem_window,		/* window_set		*/
-	mem_zoom,		/* zoom_set		*/
+	mem_view,		/* set view		*/
+	mem_getview,		/* get view		*/
 	mem_setcursor,		/* define cursor	*/
-	mem_cursor,		/* cursor - memory addr */
-	mem_scursor,		/* cursor - screen addr */
+	mem_cursor,		/* set cursor		*/
+	mem_getcursor,		/* get cursor		*/
 	fb_sim_readrect,	/* rectangle read	*/
 	fb_sim_writerect,	/* rectangle write	*/
+	mem_poll,		/* poll			*/
 	mem_flush,		/* flush		*/
 	mem_close,		/* free			*/
 	mem_help,		/* help message		*/
@@ -68,7 +66,11 @@ FBIO memory_interface =  {
 	"/dev/mem",		/* short device name	*/
 	512,			/* default/current width  */
 	512,			/* default/current height */
+	-1,			/* select fd		*/
 	-1,			/* file descriptor	*/
+	1, 1,			/* zoom			*/
+	256, 256,		/* window center	*/
+	0, 0, 0,		/* cursor		*/
 	PIXEL_NULL,		/* page_base		*/
 	PIXEL_NULL,		/* page_curp		*/
 	PIXEL_NULL,		/* page_endp		*/
@@ -191,6 +193,7 @@ int	width, height;
 		MI(ifp)->fbp = fbp;
 		ifp->if_width = fbp->if_width;
 		ifp->if_height = fbp->if_height;
+		ifp->if_selfd = fbp->if_selfd;
 		if( (mode & MODE_1MASK) == MODE_1IMMEDIATE )
 			MI(ifp)->write_thru = 1;
 	} else {
@@ -240,16 +243,6 @@ FBIO	*ifp;
 	(void)free( (char *)MI(ifp)->mem );
 	(void)free( (char *)MIL(ifp) );
 
-	return(0);
-}
-
-_LOCAL_ int
-mem_reset( ifp )
-FBIO	*ifp;
-{
-	if( MI(ifp)->write_thru ) {
-		return( fb_reset(MI(ifp)->fbp) );
-	}
 	return(0);
 }
 
@@ -372,35 +365,30 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-mem_viewport( ifp, left, top, right, bottom )
+mem_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	left, top, right, bottom;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
+	fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom );
 	if( MI(ifp)->write_thru ) {
-		return fb_viewport( MI(ifp)->fbp, left, top, right, bottom );
+		return fb_view( MI(ifp)->fbp, xcenter, ycenter,
+			xzoom, yzoom );
 	}
 	return(0);
 }
 
 _LOCAL_ int
-mem_window( ifp, x, y )
+mem_getview( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	x, y;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
 {
 	if( MI(ifp)->write_thru ) {
-		return fb_window( MI(ifp)->fbp, x, y );
+		return fb_getview( MI(ifp)->fbp, xcenter, ycenter,
+			xzoom, yzoom );
 	}
-	return(0);
-}
-
-_LOCAL_ int
-mem_zoom( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
-{
-	if( MI(ifp)->write_thru ) {
-		return fb_zoom( MI(ifp)->fbp, x, y );
-	}
+	fb_sim_getview( ifp, xcenter, ycenter, xzoom, yzoom );
 	return(0);
 }
 
@@ -424,6 +412,7 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
+	fb_sim_cursor( ifp, mode, x, y );
 	if( MI(ifp)->write_thru ) {
 		return fb_cursor( MI(ifp)->fbp, mode, x, y );
 	}
@@ -431,13 +420,24 @@ int	x, y;
 }
 
 _LOCAL_ int
-mem_scursor( ifp, mode, x, y )
+mem_getcursor( ifp, mode, x, y )
 FBIO	*ifp;
-int	mode;
-int	x, y;
+int	*mode;
+int	*x, *y;
 {
 	if( MI(ifp)->write_thru ) {
-		return fb_scursor( MI(ifp)->fbp, mode, x, y );
+		return fb_getcursor( MI(ifp)->fbp, mode, x, y );
+	}
+	fb_sim_getcursor( ifp, mode, x, y );
+	return(0);
+}
+
+_LOCAL_ int
+mem_poll( ifp )
+FBIO	*ifp;
+{
+	if( MI(ifp)->write_thru ) {
+		return fb_poll( MI(ifp)->fbp );
 	}
 	return(0);
 }
