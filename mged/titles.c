@@ -160,6 +160,18 @@ register struct rt_vls	*vp;
 		if( (end = strchr( start, '\n' )) == NULL )  return;
 
 		*end = '\0';
+#if 1
+		{
+		  register char *p;
+
+		  /* Some display managers don't handle TABs properly, so
+		     we replace any TABs with spaces. */
+		  for(p = start; *p != '\0'; ++p)
+		    if(*p == '\t')
+		      *p = ' ';
+
+		}
+#endif
 		dmp->dmr_puts( start, xbase, y, 0, DM_YELLOW );
 		start = end+1;
 		y += TEXT0_DY;
