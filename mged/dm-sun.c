@@ -4,6 +4,9 @@
  * Driver for SUN using SunView pixwins library.
  * This will use a GP if present, but will not do shaded stuff.
  *
+ *  Prerequisites -
+ *	SUN 3.2.  Will not compile on 3.0 and below.
+ *
  *  Author -
  *	Bill Lindemann
  *  
