@@ -6,6 +6,11 @@
 # Uses various RTSYNC built-in commands, as well as LIBRT's Tcl commands.
 #  -Mike Muuss, ARL, March 97.
 
+# Set the application name by which other applications will be able to
+# SEND commands to us with "send rtsync _stuff_".
+tk appname rtsync
+wm title . rtsync
+
 global red grn blu
 set red 0
 set grn 0
@@ -248,9 +253,6 @@ proc memdebug {}  {
 }
 # Follow this up by issuing a:
 # one_node_send 01 bu_prmem
-
-# Allow "send rtsync _stuff_" directives to reach us.
-tk appname rtsync
 
 puts "done rtsync.tcl"
 
