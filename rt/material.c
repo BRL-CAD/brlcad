@@ -62,6 +62,8 @@ mlib_init()
 	extern struct mfuncs txt_mfuncs[];
 	extern struct mfuncs stk_mfuncs[];
 	extern struct mfuncs cook_mfuncs[];
+	extern struct mfuncs marble_mfuncs[];
+	extern struct mfuncs stxt_mfuncs[];
 
 	mlib_add( phg_mfuncs );
 	mlib_add( light_mfuncs );
@@ -70,6 +72,8 @@ mlib_init()
 	mlib_add( txt_mfuncs );
 	mlib_add( stk_mfuncs );
 	mlib_add( cook_mfuncs );
+	mlib_add( marble_mfuncs );
+	mlib_add( stxt_mfuncs );
 }
 
 /*
