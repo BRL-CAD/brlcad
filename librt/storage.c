@@ -7,6 +7,7 @@
  *	rt_malloc	Allocate storage, with visibility & checking
  *	rt_free		Similarly, free storage
  *	rt_realloc	Reallocate storage, with visibility & checking
+ *	rt_calloc	Allocate zero'ed storage
  *	rt_prmem	When debugging, print memory map
  *	rt_strdup	Duplicate a string in dynamic memory
  *	rt_get_seg	Invoked by GET_SEG() macro
@@ -127,6 +128,10 @@ ok:	;
 #endif /* MEMDEBUG */
 
 	if(rt_g.debug&DEBUG_MEM) rt_log("%7x free %s\n", ptr, str);
+	if(ptr == (char *)0)  {
+		rt_log("%7x free ERROR %s\n", ptr, str);
+		return;
+	}
 	if( rt_g.rtg_parallel ) {
 		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	}
@@ -189,6 +194,27 @@ ok:	;
 	}
 #endif /* MEMDEBUG */
 	return(ptr);
+}
+
+/*
+ *			R T _ C A L L O C
+ */
+char *
+rt_calloc( nelem, elsize, str )
+unsigned int	nelem;
+unsigned int	elsize;
+char		*str;
+{
+	unsigned	len;
+	char		*ret;
+
+	ret = rt_malloc( (len = nelem*elsize), str );
+#ifdef SYSV
+	(void)memset( ret, '\0', len );
+#else
+	bzero( ret, len );
+#endif
+	return(ret);
 }
 
 /*
