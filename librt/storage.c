@@ -50,6 +50,7 @@ struct memdebug {
 };
 static struct memdebug	*rt_memdebug;
 static int		rt_memdebug_len = 0;
+#define MEMDEBUG_NULL	((struct memdebug *)0)
 
 /*
  *			R T _ M E M D E B U G _ A D D
@@ -105,12 +106,12 @@ top:
 }
 
 /*
- *			R T _ M E M D E B U G _ D E L E T E
+ *			R T _ M E M D E B U G _ C H E C K
  *
- *  Delete an entry from the memory debug table, based upon it's address.
+ *  Check an entry against the memory debug table, based upon it's address.
  */
-HIDDEN int
-rt_memdebug_delete( ptr, str )
+HIDDEN struct memdebug *
+rt_memdebug_check( ptr, str )
 register char	*ptr;
 char		*str;
 {
@@ -118,23 +119,21 @@ char		*str;
 	register long	*ip;
 
 	if( rt_memdebug == (struct memdebug *)0 )  {
-		rt_log("rt_memdebug_delete(x%x, %s)  no memdebug table yet\n",
+		rt_log("rt_memdebug_check(x%x, %s)  no memdebug table yet\n",
 			ptr, str);
-		return(-3);
+		return MEMDEBUG_NULL;
 	}
 	for( ; mp >= rt_memdebug; mp-- )  {
 		if( mp->mdb_len <= 0 )  continue;
 		if( mp->mdb_addr != ptr )  continue;
 		ip = (long *)(ptr+mp->mdb_len-sizeof(long));
-		mp->mdb_len = 0;	/* successful free */
 		if( *ip != MDB_MAGIC )  {
-			rt_log("ERROR rt_memdebug_delete(x%x, %s) barrier word corrupted! was=x%x s/b=x%x\n",
-				ptr, str, *ip, MDB_MAGIC);
-			return(-2);
+			rt_log("ERROR rt_memdebug_check(x%x, %s) barrier word corrupted!\nbarrier at x%x was=x%x s/b=x%x, len=%d\n",
+				ptr, str, ip, *ip, MDB_MAGIC, mp->mdb_len);
 		}
-		return(0);		/* OK */
+		return(mp);		/* OK */
 	}
-	return(-1);
+	return MEMDEBUG_NULL;
 }
 
 /*
@@ -230,9 +229,12 @@ char	*str;
 		return;
 	}
 	if( rt_g.debug&DEBUG_MEM_FULL )  {
-		if( rt_memdebug_delete( ptr, str ) < 0 )  {
+		struct memdebug	*mp;
+		if( (mp = rt_memdebug_check( ptr, str )) == MEMDEBUG_NULL )  {
 			rt_log("ERROR rt_free(x%x, %s) pointer bad, or not allocated with rt_malloc!\n",
 				ptr, str);
+		} else {
+			mp->mdb_len = 0;	/* successful delete */
 		}
 	}
 	if( rt_g.rtg_parallel ) {
@@ -256,6 +258,10 @@ char *str;
 {
 	char	*original_ptr = ptr;
 
+	if( rt_memdebug_check( ptr, str ) == MEMDEBUG_NULL )  {
+		rt_log("%7x realloc%6d %s ** barrier check failure\n",
+			ptr, cnt, str );
+	}
 	if( rt_g.debug&DEBUG_MEM_FULL )  {
 		/* Pad, plus full int for magic number */
 		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
@@ -277,7 +283,8 @@ char *str;
 		rt_log("rt_realloc: Insufficient memory available, sbrk(0)=x%x\n", sbrk(0));
 		rt_bomb("rt_realloc: malloc failure");
 	}
-	if( ptr != original_ptr && rt_g.debug&DEBUG_MEM_FULL )  {
+	if( rt_g.debug&DEBUG_MEM_FULL )  {
+		/* Even if ptr didn't change, need to update cnt & barrier */
 		rt_memdebug_move( original_ptr, ptr, cnt, str );
 
 		/* Install a barrier word at the end of the dynamic arena */
