@@ -22,6 +22,7 @@
  */
 
 #include <math.h>
+#include <string.h>
 #include "ProToolkit.h"
 #include "ProUtil.h"
 #include "ProMessage.h"
@@ -38,7 +39,7 @@ static wchar_t  MSGFIL[] = {'u','s','e','r','m','s','g','.','t','x','t','\0'};
 
 static double proe_to_brl_conv=25.4;	/* inches to mm */
 
-static double max_error=0.1;	/* (mm) maximimum allowable error in facetized approximation */
+static double max_error=1.5;	/* (mm) maximimum allowable error in facetized approximation */
 static double tol_dist=0.005;	/* (mm) minimum distance between two distinct vertices */
 static double angle_cntrl=0.5;	/* angle control for tessellation ( 0.0 - 1.0 ) */
 static double local_tol=0.0;	/* tolerance in Pro/E units */
@@ -93,6 +94,13 @@ struct asm_head {
 	ProMdl model;
 	struct asm_member *members;
 };
+
+struct empty_parts {
+	char *name;
+	struct empty_parts *next;
+};
+
+static struct empty_parts *empty_parts_root=NULL;
 
 /* structure to make vertex searching fast
  * Each leaf represents a vertex, and has an index into the
@@ -164,6 +172,61 @@ already_done( ProMdl model )
 	}
 
 	return( 0 );
+}
+
+void
+add_to_empty_list( char *name )
+{
+	struct empty_parts *ptr;
+	int found=0;
+
+	if( empty_parts_root == NULL ) {
+		empty_parts_root = (struct empty_parts *)malloc( sizeof( struct empty_parts ) );
+		ptr = empty_parts_root;
+	} else {
+		ptr = empty_parts_root;
+		while( !found && ptr->next ) {
+			if( !strcmp( name, ptr->name ) ) {
+				found = 1;
+				break;
+			}
+			ptr = ptr->next;
+		}
+		if( !found ) {
+			ptr->next = (struct empty_parts *)malloc( sizeof( struct empty_parts ) );
+			ptr = ptr->next;
+		}
+	}
+
+	ptr->next = NULL;
+	ptr->name = (char *)strdup( name );
+}
+
+void
+kill_empty_parts()
+{
+	struct empty_parts *ptr;
+
+	ptr = empty_parts_root;
+	while( ptr ) {
+		fprintf( outfp, "set combs [find %s]\n", ptr->name );
+		fprintf( outfp, "foreach comb $combs {\n\trm $comb %s\n}\n", ptr->name );
+		ptr = ptr->next;
+	}
+}
+
+void
+free_empty_parts()
+{
+	struct empty_parts *ptr, *prev;
+
+	ptr = empty_parts_root;
+	while( ptr ) {
+		prev = ptr;
+		ptr = ptr->next;
+		free( prev->name );
+		free( prev );
+	}
 }
 
 /* routine to check for bad triangles
@@ -410,6 +473,7 @@ output_part( ProMdl model )
 		ProMessageClear();
 		fprintf( stderr, "%s\n", astr );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+		add_to_empty_list( curr_part_name );
 		ret = 2;
 	} else {
 		/* output the triangles */
@@ -935,6 +999,8 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	char output_file[128];
 	double range[2];
 
+	empty_parts_root = NULL;
+
 	/* default output file name */
 	strcpy( output_file, "proe.asc" );
 
@@ -1042,6 +1108,9 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	 */
 	output_top_level_object( model, type );
 
+	/* kill any references to empty parts */
+	kill_empty_parts();
+
 	/* let user know we are done */
 	ProMessageDisplay(MSGFIL, "USER_INFO", "Conversion complete" );
 
@@ -1068,6 +1137,8 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
 	max_vert = 0;
 	max_tri = 0;
+
+	free_empty_parts();
 
 	fclose( outfp );
 
