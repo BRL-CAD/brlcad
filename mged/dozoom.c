@@ -105,8 +105,10 @@ CONST point_t	eye;
 	mat_t	xlate;
 	mat_t	t1, t2;
 	point_t	sheared_eye;
+#if 0
 	fastf_t	near, far;
-point_t	a,b;
+	point_t	a,b;
+#endif
 
 	if( eye[Z] < SMALL )  {
 		VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);

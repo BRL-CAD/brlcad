@@ -48,14 +48,6 @@ extern double       frametime;
 int	no_memory;	/* flag indicating memory for drawing is used up */
 long	nvectors;	/* number of vectors drawn so far */
 
-static struct mater_info mged_no_mater = {
-	/* RT default is white.  This is red, to stay clear of illuminate mode */
-	1.0, 0, 0,		/* */
-	0,			/* override */
-	DB_INH_LOWER,		/* color inherit */
-	DB_INH_LOWER		/* mater inherit */
-};
-
 /*
  *  This is just like the rt_initial_tree_state in librt/tree.c,
  *  except that the default color is red instead of white.
@@ -578,7 +570,6 @@ struct db_tree_state	*tsp;
 struct solid		*existing_sp;
 {
 	register struct solid *sp;
-	register struct vlist *vp;
 	register int	i;
 
 	if( !existing_sp )  {
@@ -969,7 +960,6 @@ register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
-	struct nmgregion	*r;
 	struct rt_list		vhead;
 
 	RT_LIST_INIT( &vhead );

@@ -67,7 +67,6 @@ void
 create_text_overlay( vp )
 register struct rt_vls	*vp;
 {
-	auto char linebuf[512];
 	struct directory	*dp;
 	register int	i;
 
@@ -171,9 +170,7 @@ dotitles()
 	register int y;			/* for menu computations */
 	static vect_t work,work1;		/* work vector */
 	static vect_t temp,temp1;
-	mat_t new_mat,temp_mat1,temp_mat2;
 	register int yloc, xloc;
-	register float y_val;
 	auto fastf_t	az, el, twist;
 	auto char linebuf[512];
 	struct rt_vls	vls;
