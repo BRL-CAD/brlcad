@@ -280,7 +280,7 @@ char			*buf;
 void
 ph_vlist(pc, buf)
 register struct pkg_conn *pc;
-char			*buf;
+unsigned char		*buf;
 {
 	struct rt_list	vhead;
 	struct rt_vls	name;
