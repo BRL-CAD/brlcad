@@ -229,6 +229,7 @@ struct nmg_inter_struct {
 	vect_t		dir;
 	int		coplanar;
 	fastf_t		*vert2d;	/* Array of 2d vertex projections [index] */
+	int		maxindex;	/* size of vert2d[] */
 	mat_t		proj;		/* Matrix to project onto XY plane */
 };
 #define NMG_INTER_STRUCT_MAGIC	0x99912120
@@ -281,6 +282,7 @@ CONST struct faceuse	*fu;	/* for plane equation */
 	if( !v->vg_p )  rt_bomb("nmg_get_2d_vertex:  vertex with no geometry!\n");
 	vg = v->vg_p;
 	NMG_CK_VERTEX_G(vg);
+	if( v->index >= is->maxindex )  rt_bomb("nmg_get_2d_vertex:  array overrun\n");
 	pt2d = &is->vert2d[v->index*3];
 	if( pt2d[2] == 0 )  {
 		/* Flag set.  Conversion is done.  Been here before */
@@ -324,7 +326,6 @@ struct face		*f1;
 {
 	struct model	*m;
 	struct face_g	*fg;
-	int		words;
 	vect_t		to;
 	point_t		centroid;
 	point_t		centroid_proj;
@@ -337,8 +338,8 @@ struct face		*f1;
 
 	m = nmg_find_model( &f1->magic );
 
-	words = 3 * ( 2 * m->maxindex );
-	is->vert2d = (fastf_t *)rt_malloc( words * sizeof(fastf_t), "vert2d[]");
+	is->maxindex = ( 2 * m->maxindex );
+	is->vert2d = (fastf_t *)rt_malloc( 3 * is->maxindex * sizeof(fastf_t), "vert2d[]");
 
 	/*
 	 *  Rotate so that f1's N vector points up +Z.
@@ -358,7 +359,7 @@ HPRINT("fg->N", fg->N);
 	MAT_DELTAS_VEC_NEG( is->proj, centroid_proj );
 
 	/* Clear out the 2D vertex array, setting flag in [2] to -1 */
-	for( i = words-1-2; i >= 0; i -= 3 )  {
+	for( i = (3*is->maxindex)-1-2; i >= 0; i -= 3 )  {
 		VSET( &is->vert2d[i], 0, 0, -1 );
 	}
 }
@@ -515,6 +516,7 @@ struct vertexuse	*vu;
  *  Since this is an intersection of a vertex, no loop cut/join action
  *  is needed, since the only possible actions are fusing vertices
  *  and breaking edges into two edges about this vertex.
+ *  This also means that no nmg_tbl( , TBL_INS_UNIQUE ) ops need be done.
  */
 static void
 nmg_isect_vert2p_face2p(is, vu, fu)
@@ -611,19 +613,30 @@ struct faceuse *fu;
 
 	/* The point lies on the plane of the face, by geometry. */
 
-	/* XXX shouldn't the edges be intersected?  point-on-line? */
-	/* XXX nmg_isect_vert2p_face2p( is, vu, fu ); */
-	if (nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic) < 0) {
-		/* XXX should re-check nmg_find_vertexuse_on_face(),
-		 * XXX use new vu if it turned up, else make lone-vert-loop */
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		    	VPRINT("Making vertexloop", vu->v_p->vg_p->coord);
+	/*
+	 *  Intersect this point with all the edges of the face.
+	 *  Note that no nmg_tbl() calls will be done during vert2p_face2p,
+	 *  which is exactly what is needed here.
+	 */
+	nmg_isect_vert2p_face2p( bs, vu, fu );
 
-		plu = nmg_mlv(&fu->l.magic, vu->v_p, OT_UNSPEC);
-		nmg_loop_g(plu->l_p);
-	    	(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE,
-			&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
+	/* Re-check the topology */
+	if (vup=nmg_find_vertexuse_on_face(vu->v_p, fu)) {
+		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
+		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
+		return;
 	}
+
+	/* Make lone vertex-loop in fu to indicate sharing */
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	    	VPRINT("nmg_isect_3vertex_3face() making vertexloop", vu->v_p->vg_p->coord);
+
+	plu = nmg_mlv(&fu->l.magic, vu->v_p, OT_UNSPEC);
+	nmg_loop_g(plu->l_p);
+	vup = RT_LIST_FIRST(vertexuse, &plu->down_hd);
+	NMG_CK_VERTEXUSE(vup);
+	(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
+    	(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
 }
 
 /*	M E G A _ C H E C K _ E B R E A K _ R E S U L T
