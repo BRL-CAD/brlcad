@@ -988,9 +988,9 @@ CONST struct db_i		*dbip;
 	    }
 	  if( !bot_ip->thickness )
 	      bot_ip->thickness = (fastf_t *)bu_calloc( bot_ip->num_faces, sizeof( fastf_t ), "BOT thickness" );
-		bu_vls_init( &face_mode );
-		bu_bitv_to_hex( &face_mode, bot_ip->face_mode );
-		ep->ext_nbytes += bot_ip->num_faces * 8 + bu_vls_strlen( &face_mode ) + 1;
+	  bu_vls_init( &face_mode );
+	  bu_bitv_to_hex( &face_mode, bot_ip->face_mode );
+	  ep->ext_nbytes += bot_ip->num_faces * 8 + bu_vls_strlen( &face_mode ) + 1;
 	}
 
 	/* round up to the nearest granule */
@@ -2011,4 +2011,100 @@ char			**argv;
 	  }
 
 	return( TCL_OK );
+}
+
+/*	This routine adjusts the vertex pointers in each face so that 
+ *	pointers to duplicate vertices end up pointing to the same vertex.
+ *	The unused vertices are not removed (bot_condense will do that).
+ *	Returns the number of vertices fused.
+ */
+int
+bot_vertex_fuse( bot )
+struct rt_bot_internal *bot;
+{
+	int i,j,k;
+	int count=0;
+
+	RT_BOT_CK_MAGIC( bot );
+
+	for( i=0 ; i<bot->num_vertices ; i++ )
+	{
+		point_t pt1;
+
+		VMOVE( pt1, &bot->vertices[i*3] );
+		for( j=i+1 ; j<bot->num_vertices ; j++ )
+		{
+			point_t pt2;
+
+			VMOVE( pt2, &bot->vertices[j*3] );
+
+			/* specifically not using tolerances here */
+			if( VEQUAL( pt1, pt2 ) )
+			{
+				count++;
+				for( k=0 ; k<bot->num_faces*3 ; k++ )
+				{
+					if( bot->faces[k] == j )
+					{
+						bot->faces[k] = i;
+					}
+				}
+			}
+		}
+	}
+
+	return( count );
+}
+
+int
+bot_condense( bot )
+struct rt_bot_internal *bot;
+{
+	int i,j,k;
+	int count=0;
+	int num_verts;
+	int dead_verts=0;
+	int *verts;
+
+	RT_BOT_CK_MAGIC( bot );
+
+	num_verts = bot->num_vertices;
+	verts = (int *)bu_calloc( num_verts, sizeof( int ), "VERTEX LIST" );
+	for( i=0 ; i<bot->num_faces*3 ; i++ )
+	{
+		j = bot->faces[i];
+		if( j >= num_verts || j < 0 )
+		{
+			bu_log( "Illegal vertex number %d, should be 0 through %d\n", j, num_verts-1 );
+			bu_bomb( "Illegal vertex number\n" );
+		}
+		verts[j] = 1;
+	}
+
+	i = 0;
+	while( i < num_verts-dead_verts )
+	{
+		while( !verts[i] && i < num_verts-dead_verts )
+		{
+			dead_verts++;
+			for( j=i ; j<num_verts-dead_verts ; j++ )
+			{
+				k = j+1;
+				VMOVE( &bot->vertices[j*3], &bot->vertices[k*3] );
+				verts[j] = verts[k];
+			}
+			for( j=0 ; j<bot->num_faces*3 ; j++ )
+			{
+				if( bot->faces[j] >= i )
+					bot->faces[j]--;
+			}
+		}
+		i++;
+	}
+
+	if( !dead_verts )
+		return( 0 );
+
+	bot->num_vertices -= dead_verts;
+	bot->vertices = (fastf_t *)bu_realloc( bot->vertices, bot->num_vertices*3*sizeof( fastf_t ), "bot verts realloc" );
 }
