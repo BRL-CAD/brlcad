@@ -424,8 +424,10 @@ int	fd;
 	{
 #if defined(SYSV) || defined(BSD)
 	return	fcntl( fd, F_SETFL, O_NDELAY );
-#elseif HAVE_TERMIOS_H
+#else
+#if HAVE_TERMIOS_H
 	return	fcntl( fd, F_SETFL, FNDELAY );
+#endif
 #endif
 	}
 
