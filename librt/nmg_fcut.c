@@ -2255,7 +2255,8 @@ point_t mid_pt;
 struct nmg_ray_state *rs;
 {
 	struct loopuse *lu1,*lu2;
-	struct vertexuse *vu1,*vu2;
+	struct vertexuse *vu1 = (struct vertexuse *)NULL;
+	struct vertexuse *vu2 = (struct vertexuse *)NULL;
 	struct loopuse *match_lu=(struct loopuse *)NULL;
 	struct loopuse *prior_lu,*next_lu;
 	struct bu_ptbl *cuts=(struct bu_ptbl *)NULL;
@@ -2682,7 +2683,7 @@ struct nmg_ray_state *rs;
 	struct loopuse *best_lu;
 	fastf_t best_angle;
 	int best_index;
-	int other_is_in_best;
+	int other_is_in_best = -42;
 	int class;
 	int i;
 
@@ -4023,7 +4024,7 @@ int			other_rs_state;
 	int			new_state;
 	CONST struct state_transitions	*stp;
 	struct vertexuse	*vu;
-	struct vertexuse	*prev_vu;
+	struct vertexuse	*prev_vu = (struct vertexuse *)NULL;
 	struct loopuse		*lu;
 	struct loopuse		*prev_lu;
 	struct faceuse		*fu;
