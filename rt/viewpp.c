@@ -36,7 +36,7 @@ int		use_air = 0;		/* Handling of air in librt */
 char usage[] = "\
 Usage:  rtpp [options] model.g objects... >file.pp\n\
 Options:\n\
- -f #		Grid size in pixels, default 512, max 1024\n\
+ -s #		Grid size in pixels, default 512, max 1024\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
