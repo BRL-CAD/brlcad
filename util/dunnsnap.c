@@ -160,8 +160,7 @@ goodstatus()
 	if( (readfds & (1<<fd)) !=0) {
 		mread(fd, status, 4);
 		if ((status[0]&0xf) == 0 &&
-		    (status[1]&0xf) == 0x8 &&
-		    (status[2]&0x3) == 0x3)
+		    (status[1]&0x3) == 0x0 )
 			return 1;	/* status is ok */
 		else {
 			printf("\007dunnsnap: status error from camera\n");
