@@ -184,7 +184,7 @@ int scanlen;
 	 * the input file is to decide if we should buffer
 	 * less than our max.
 	 */
-	if( max > 512 ) max = 512;
+	if( max > 4096 ) max = 4096;
 
 	buflines = max;
 	buffer = malloc( buflines * scanlen );
