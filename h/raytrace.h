@@ -416,8 +416,17 @@ struct directory  {
 	long		d_addr;			/* disk address in obj file */
 	struct directory *d_forw;		/* link to next dir entry */
 	struct animate	*d_animate;		/* link to animation */
+	long		d_uses;			/* # uses, from instancing */
+	short		d_flags;		/* flags */
+	short		d_len;			/* # of db granules used */
+	short		d_nref;			/* # times ref'ed by COMBs */
 };
 #define DIR_NULL	((struct directory *)0)
+
+#define DIR_SOLID	0x1		/* this name is a solid */
+#define DIR_COMB	0x2		/* combination */
+#define DIR_REGION	0x4		/* region */
+#define DIR_BRANCH	0x8		/* branch name */
 
 /* Args to rt_dir_lookup() */
 #define LOOKUP_NOISY	1
