@@ -24,6 +24,12 @@ typedef	struct	stat	Stat;
 extern	Pwent	*getpwuid();
 #endif
 
+#if __STDC__
+extern char	*tempnam(const char *, const char *);
+#else
+extern char	*tempnam();
+#endif
+
 int	Gflag = FALSE;
 int	Lflag = FALSE;
 int	Rflag = FALSE;
