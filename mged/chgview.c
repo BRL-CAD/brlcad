@@ -568,11 +568,20 @@ void
 solid_list_callback()
 {
   struct bu_vls vls;
+  Tcl_Obj *save_obj;
+
+  /* save result */
+  save_obj = Tcl_GetObjResult(interp);
+  Tcl_IncrRefCount(save_obj);
 
   bu_vls_init(&vls);
   bu_vls_strcpy(&vls, "solid_list_callback");
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
+
+  /* restore result */
+  Tcl_SetObjResult(interp, save_obj);
+  Tcl_DecrRefCount(save_obj);
 }
 
 /*
