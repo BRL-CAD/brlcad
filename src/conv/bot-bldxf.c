@@ -420,6 +420,7 @@ void add_bots(struct rt_bot_internal *bot_dest,
     int i = bot_dest->num_vertices + bot_src->num_vertices;
     int sz = sizeof(fastf_t) * 3;
     int *ptr;
+    int limit;
 
     if (debug&DEBUG_BOTS)
     bu_log("adding bots v:%d f:%d  v:%d f:%d\n",
@@ -444,7 +445,7 @@ void add_bots(struct rt_bot_internal *bot_dest,
      * point to their new locations
      */
     ptr = &bot_src->faces[bot_src->num_faces*3];
-    int limit = bot_src->num_faces * 3;
+    limit = bot_src->num_faces * 3;
     for (i=0 ; i < limit ; i++)
 	ptr[i] = bot_src->faces[i] + bot_dest->num_vertices;
 
