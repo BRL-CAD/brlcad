@@ -271,7 +271,7 @@ struct holes
 
 point_t *grid_pts;
 
-int getline(void);
+int get_line(void);
 void Add_holes( int type, int gr, int comp, struct hole_list *ptr );
 void make_bot_object(void);
 int skip_region( int id );
@@ -1526,7 +1526,7 @@ do_ccone1(void)
 	if( !pass )
 	{
 		make_region_name( group_id , comp_id );
-		if( !getline() )
+		if( !get_line() )
 		{
 			bu_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
 			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
@@ -1551,7 +1551,7 @@ do_ccone1(void)
 	strncpy( field , &line[72] , 8 );
 	c1 = atoi( field );
 
-	if( !getline() )
+	if( !get_line() )
 	{
 		bu_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
 		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
@@ -1752,7 +1752,7 @@ do_ccone2(void)
 	if( !pass )
 	{
 		make_region_name( group_id , comp_id );
-		if( !getline() )
+		if( !get_line() )
 		{
 			bu_log( "Unexpected EOF while reading continuation card for CCONE2\n" );
 			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
@@ -1774,7 +1774,7 @@ do_ccone2(void)
 	strncpy( field , &line[72] , 8 );
 	c1 = atoi( field );
 
-	if( !getline() )
+	if( !get_line() )
 	{
 		bu_log( "Unexpected EOF while reading continuation card for CCONE2\n" );
 		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
@@ -1877,7 +1877,7 @@ do_ccone3(void)
 	if( !pass )
 	{
 		make_region_name( group_id , comp_id );
-		if( !getline() )
+		if( !get_line() )
 		{
 			bu_log( "Unexpected EOF while reading continuation card for CCONE3\n" );
 			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
@@ -1901,7 +1901,7 @@ do_ccone3(void)
 
 	strncpy( field, &line[72], 8 );
 
-	if( !getline() )
+	if( !get_line() )
 	{
 		bu_log( "Unexpected EOF while reading continuation card for CCONE3\n" );
 		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %8.8s\n",
@@ -2267,7 +2267,7 @@ do_hole_wall(int type)
 }
 
 int
-getline(void)
+get_line(void)
 {
 	int len;
 
@@ -2596,7 +2596,7 @@ skip_section(void)
 
 	/* skip to start of next section */
 	section_start = ftell( fdin );
-	if( getline() )
+	if( get_line() )
 	{
 		while( line[0] && strncmp( line, "SECTION" , 7 ) &&
 				strncmp( line, "HOLE", 4 ) &&
@@ -2604,7 +2604,7 @@ skip_section(void)
 				strncmp( line, "VEHICLE", 7 ) )
 		{
 			section_start = ftell( fdin );
-			if( !getline() )
+			if( !get_line() )
 				break;
 		}
 	}
@@ -2704,7 +2704,7 @@ do_hex1(void)
 
 	if( !pass )
 	{
-		if( !getline() )
+		if( !get_line() )
 		{
 			bu_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
 			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
@@ -2732,7 +2732,7 @@ do_hex1(void)
 	strncpy( field , &line[72] , 8 );
 	cont1 = atoi( field );
 
-	if( !getline() )
+	if( !get_line() )
 	{
 		bu_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
 		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
@@ -2807,7 +2807,7 @@ do_hex2(void)
 	if( !pass )
 	{
 		make_region_name( group_id , comp_id );
-		if( !getline() )
+		if( !get_line() )
 		{
 			bu_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
 			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
@@ -2826,7 +2826,7 @@ do_hex2(void)
 	strncpy( field , &line[72] , 8 );
 	cont1 = atoi( field );
 
-	if( !getline() )
+	if( !get_line() )
 	{
 		bu_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
 		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
@@ -2891,7 +2891,7 @@ Process_hole_wall(void)
 		else if( !strncmp( line , "ENDDATA" , 7 ) )
 			break;
 
-		if( !getline() || !line[0] )
+		if( !get_line() || !line[0] )
 			break;
 	}
 
@@ -2968,7 +2968,7 @@ Process_input(int pass_number)
 
 	region_id = 0;
 	pass = pass_number;
-	if( !getline() || !line[0] )
+	if( !get_line() || !line[0] )
 		strcpy( line, "ENDDATA" );
 	while( 1 )
 	{
@@ -3018,7 +3018,7 @@ Process_input(int pass_number)
 		else
 			bu_log( "ERROR: skipping unrecognized data type\n%s\n" , line );
 
-		if( !getline() || !line[0] )
+		if( !get_line() || !line[0] )
 			strcpy( line, "ENDDATA" );
 	}
 

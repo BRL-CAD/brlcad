@@ -48,7 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 /* defined in read.c */
-extern int getline(register char *cp, int buflen, char *title);
+extern int get_line(register char *cp, int buflen, char *title);
 extern int getint(char *cp, int start, int len);
 extern void namecvt(register int n, register char **cp, int c);
 
@@ -91,7 +91,7 @@ getsoldata(double *dp, int num, int solid_num)
 	fp = dp;
 	for( cd=1; num > 0; cd++ )  {
 		if( cd != 1 )  {
-			if( getline( scard, sizeof(scard), "solid continuation card" ) == EOF )  {
+			if( get_line( scard, sizeof(scard), "solid continuation card" ) == EOF )  {
 				printf("too few cards for solid %d\n",
 					solid_num);
 				return(-1);
@@ -140,7 +140,7 @@ getxsoldata(double *dp, int num, int solid_num)
 
 	fp = dp;
 	for( cd=1; num > 0; cd++ )  {
-		if( getline( scard, sizeof(scard), "x solid card" ) == EOF )  {
+		if( get_line( scard, sizeof(scard), "x solid card" ) == EOF )  {
 			printf("too few cards for solid %d\n",
 				solid_num);
 			return(-1);
@@ -209,7 +209,7 @@ getsolid(void)
 #define D(_i)	(&(dd[_i*3]))
 #define T(_i)	(&(tmp[_i][0]))
 
-	if( (i = getline( scard, sizeof(scard), "solid card" )) == EOF )  {
+	if( (i = get_line( scard, sizeof(scard), "solid card" )) == EOF )  {
 		printf("getsolid: unexpected EOF\n");
 		return( 1 );
 	}
@@ -801,7 +801,7 @@ bad:
 
 	/* Get planes defined by three points, 6 per card */
 	for( i=0; i<npe; i += 6 )  {
-		if( getline( scard, sizeof(scard), "arbn vertex point indices" ) == EOF )  {
+		if( get_line( scard, sizeof(scard), "arbn vertex point indices" ) == EOF )  {
 			printf("too few cards for arbn %d\n",
 				sol_work);
 			return(-1);
@@ -853,7 +853,7 @@ bad:
 	/* Get planes defined by their equation */
 	for( i=0; i < neq; i++ )  {
 		register double	scale;
-		if( getline( scard, sizeof(scard), "arbn plane equation card" ) == EOF )  {
+		if( get_line( scard, sizeof(scard), "arbn plane equation card" ) == EOF )  {
 			printf("too few cards for arbn %d\n",
 				sol_work);
 			return(-1);
@@ -875,7 +875,7 @@ bad:
 
 	/* Get planes defined by azimuth, elevation, and pt, 2 per card */
 	for( i=0; i < nae;  i += 2 )  {
-		if( getline( scard, sizeof(scard), "arbn az/el card" ) == EOF )  {
+		if( get_line( scard, sizeof(scard), "arbn az/el card" ) == EOF )  {
 			printf("too few cards for arbn %d\n",
 				sol_work);
 			return(-1);
@@ -1048,6 +1048,6 @@ eat(int count)
 	int	i;
 
 	for( i=0; i<count; i++ )  {
-		(void)getline( lbuf, sizeof(lbuf), "eaten card" );
+		(void)get_line( lbuf, sizeof(lbuf), "eaten card" );
 	}
 }

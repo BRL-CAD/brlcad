@@ -52,7 +52,7 @@ extern void region_register(int reg_num, int id, int air, int mat, int los);
 extern void group_write(void);
 
 /* defined in read.c */
-extern int getline(register char *cp, int buflen, char *title);
+extern int get_line(register char *cp, int buflen, char *title);
 
 /* defined in solid.c */
 extern void trim_trail_spaces(register char *cp);
@@ -200,7 +200,7 @@ main(int argc, char **argv)
 	/*
 	 *  Read title card
 	 */
-	if( getline( ctitle, sizeof(ctitle), "title card" ) == EOF ) {
+	if( get_line( ctitle, sizeof(ctitle), "title card" ) == EOF ) {
 		printf("Empty input file:  no title record\n");
 		exit(10);
 	}
@@ -264,14 +264,14 @@ main(int argc, char **argv)
 		break;
 
 	case 4:
-		if( getline( ctitle, sizeof(ctitle), "control card" ) == EOF ) {
+		if( get_line( ctitle, sizeof(ctitle), "control card" ) == EOF ) {
 			printf("No control card .... STOP\n");
 			exit(10);
 		}
 		sscanf( ctitle, "%20d%10d", &sol_total, &reg_total );
 		break;
 	case 5:
-		if( getline( ctitle, sizeof(ctitle), "control card" ) == EOF ) {
+		if( get_line( ctitle, sizeof(ctitle), "control card" ) == EOF ) {
 			printf("No control card .... STOP\n");
 			exit(10);
 		}
@@ -328,7 +328,7 @@ main(int argc, char **argv)
 		if( version == 4 )  {
 			char	dummy[88];
 			/* read the blank card (line) */
-			(void)getline( dummy, sizeof(dummy), "blank card" );
+			(void)get_line( dummy, sizeof(dummy), "blank card" );
 		}
 
 		if(verbose) printf("\nRegion ident table\n");

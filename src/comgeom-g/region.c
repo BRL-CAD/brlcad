@@ -36,7 +36,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 /* defined in read.c */
-extern int getline(register char *cp, int buflen, char *title);
+extern int get_line(register char *cp, int buflen, char *title);
 extern int getint(char *cp, int start, int len);
 extern void namecvt(register int n, register char **cp, int c);
 
@@ -86,7 +86,7 @@ getregion(void)
 	reg_num = 0;		/* safety */
 
 	/* Pre-load very first region card */
-	if( getline( rcard, sizeof(rcard), "region card" ) == EOF )  {
+	if( get_line( rcard, sizeof(rcard), "region card" ) == EOF )  {
 		printf("getregion: premature EOF\n");
 		return( -1 );
 	}
@@ -115,7 +115,7 @@ top:
 
 			namecvt( reg_num, &(wmp[reg_num].wm_name), 'r' );
 		} else {
-			if( getline( rcard, sizeof(rcard), "region card" ) == EOF )  {
+			if( get_line( rcard, sizeof(rcard), "region card" ) == EOF )  {
 				printf("getregion: premature EOF\n");
 				return( -1 );
 			}
@@ -224,7 +224,7 @@ getid(void)
 	char	idcard[132];
 
 	while(1)  {
-		if( getline( idcard, sizeof(idcard), "region ident card" ) == EOF )  {
+		if( get_line( idcard, sizeof(idcard), "region ident card" ) == EOF )  {
 			printf("\ngetid:  EOF\n");
 			return;
 		}

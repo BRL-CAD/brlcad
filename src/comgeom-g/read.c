@@ -50,7 +50,7 @@ void	namecvt(register int n, register char **cp, int c);
  *			G E T L I N E
  */
 int
-getline(register char *cp, int buflen, char *title)
+get_line(register char *cp, int buflen, char *title)
 {
 	register int	c;
 	register int	count = buflen;
@@ -61,7 +61,7 @@ getline(register char *cp, int buflen, char *title)
 		*cp++ = c;
 		count--;
 		if( count <= 0 )  {
-			printf("getline(x%lx, %d) input record overflows buffer for %s\n",
+			printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
 			       (unsigned long)cp, buflen, title);
 			break;
 		}
