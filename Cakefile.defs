@@ -260,7 +260,7 @@ set -S2 "/bin/sh"
 #	define	IRIX	5
 #	define	LGT_CONFIG	GFLAG
 
-# if 1
+# if 0
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
 # else
 /*	Carl's test version */
