@@ -1,27 +1,4 @@
 /*
-   Just a note:
-
-   These particular commands should not be used in
-   mixed mode programming.
-
-   qdevice
-   blkqread
-   qtest
-   getbutton
-   getvaluator
-   setvaluator
-   unqdevice
-   mapcolor
-   gconfig
-   doublebuffer
-   RGBmode
-   winopen
-   foreground
-   noborder
-   keepaspect
-   prefposition
-*/
-/*
  *			D M - G L X . C
  *
  *  This display manager started out with the guts from DM-4D which
@@ -162,26 +139,36 @@ int argc;
 char *argv[];
 {
   int i;
+  char **av;
 
   /* register application provided routines */
   cmd_hook = Glx_dm;
   state_hook = Glx_statechange;
 
-  for(i = argc-1; i-1; --i)
-    argv[i] = argv[i-1];
+  /* stuff in a default initialization script */
+  av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "Glx_dm_init: av");
+  av[0] = "glx_open";
+  av[1] = "-i";
+  av[2] = "mged_bind_dm";
 
-  argv[0] = "-i";
-  argv[1] = "mged_bind_dm";
+  /* copy the rest except last */
+  for(i = 1; i < argc-1; ++i)
+    av[i+2] = argv[i];
+
+  av[i+2] = (char *)NULL;
 
   dm_var_init(o_dm_list);
   Tk_DeleteGenericHandler(Glx_doevent, (ClientData)DM_TYPE_GLX);
-  if((dmp = Glx_open(DM_EVENT_HANDLER_NULL, argc, argv)) == DM_NULL)
+  if((dmp = dm_open(DM_TYPE_GLX, DM_EVENT_HANDLER_NULL, argc+1, av)) == DM_NULL){
+    bu_free(av, "Glx_dm_init: av");
     return TCL_ERROR;
+  }
 
+  bu_free(av, "Glx_dm_init: av");
   dmp->dm_eventHandler = Glx_doevent;
   curr_dm_list->s_info->opp = &tkName;
   Tk_CreateGenericHandler(Glx_doevent, (ClientData)DM_TYPE_GLX);
-  Glx_configure_window_shape(dmp);
+  glx_configure_window_shape(dmp);
 
   return TCL_OK;
 }
@@ -241,14 +228,13 @@ XEvent *eventPtr;
 
   /* Now getting X events */
   if(eventPtr->type == Expose && eventPtr->xexpose.count == 0){
-    /* Window may have moved */
-    Glx_configure_window_shape(dmp);
+    glx_clear_to_black(dmp);
 
     dirty = 1;
     goto end;
   }else if( eventPtr->type == ConfigureNotify ){
     /* Window may have moved */
-    Glx_configure_window_shape(dmp);
+    glx_configure_window_shape(dmp);
 
     dirty = 1;
     goto end;
@@ -262,12 +248,12 @@ XEvent *eventPtr;
     case ALT_MOUSE_MODE_IDLE:
       if(scroll_active && eventPtr->xmotion.state & ((struct glx_vars *)dmp->dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n",
-		       Glx_irisX2ged(dmp, mx, 0), Glx_irisY2ged(dmp, my));
+		       glx_irisX2ged(dmp, mx, 0), glx_irisY2ged(dmp, my));
       else if(GlxdoMotion)
 	/* do the regular thing */
 	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
 	bu_vls_printf( &cmd, "M 0 %d %d\n",
-		       Glx_irisX2ged(dmp, mx, 1), Glx_irisY2ged(dmp, my));
+		       glx_irisX2ged(dmp, mx, 1), glx_irisY2ged(dmp, my));
       else
 	goto end;
 
@@ -342,8 +328,8 @@ XEvent *eventPtr;
     switch(DIAL0 + M->first_axis){
     case DIAL0:
       if(mged_variables.adcflag) {
-	if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !dv_1adc )
 	  ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -363,8 +349,8 @@ XEvent *eventPtr;
 	else
 	  f = rate_zoom;
 
-	if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !f )
 	  ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -381,8 +367,8 @@ XEvent *eventPtr;
 	else
 	  f = absolute_zoom;
 
-	if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !f )
 	  ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -397,8 +383,8 @@ XEvent *eventPtr;
       break;
     case DIAL2:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !dv_2adc )
 	  ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -416,8 +402,8 @@ XEvent *eventPtr;
 	  else
 	    f = rate_rotate[Z];
 
-	  if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -434,8 +420,8 @@ XEvent *eventPtr;
 	  else
 	    f = absolute_rotate[Z];
 
-	  if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -451,8 +437,8 @@ XEvent *eventPtr;
       break;
     case DIAL3:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !dv_distadc)
 	  ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -469,8 +455,8 @@ XEvent *eventPtr;
 	  else
 	    f = rate_slew[Z];
 
-	  if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -487,8 +473,8 @@ XEvent *eventPtr;
 	  else
 	    f = absolute_slew[Z];
 
-	  if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -504,8 +490,8 @@ XEvent *eventPtr;
       break;
     case DIAL4:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !dv_yadc)
 	  ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -522,8 +508,8 @@ XEvent *eventPtr;
 	  else
 	    f = rate_rotate[Y];
 
-	  if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -540,8 +526,8 @@ XEvent *eventPtr;
 	  else
 	    f = absolute_rotate[Y];
 
-	  if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -562,8 +548,8 @@ XEvent *eventPtr;
 	  else
 	    f = rate_slew[Y];
 
-	  if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -580,8 +566,8 @@ XEvent *eventPtr;
 	  else
 	    f = absolute_slew[Y];
 
-	  if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] -
@@ -597,8 +583,8 @@ XEvent *eventPtr;
       break;
     case DIAL6:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !dv_xadc)
 	  ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -615,8 +601,8 @@ XEvent *eventPtr;
 	  else
 	    f = rate_rotate[X];
 
-	  if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -633,8 +619,8 @@ XEvent *eventPtr;
 	  else
 	    f = absolute_rotate[X];
 
-	  if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -655,8 +641,8 @@ XEvent *eventPtr;
 	else
 	  f = rate_slew[X];
 
-	if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !f )
 	  ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -673,8 +659,8 @@ XEvent *eventPtr;
 	else
 	  f = absolute_slew[X];
 
-	if(-NOISE < ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !f )
 	  ((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -877,8 +863,8 @@ char	**argv;
 
       old_show_menu = mged_variables.show_menu;
 
-      x = Glx_irisX2ged(dmp, atoi(argv[3]), 0);
-      y = Glx_irisY2ged(dmp, atoi(argv[4]));
+      x = glx_irisX2ged(dmp, atoi(argv[3]), 0);
+      y = glx_irisY2ged(dmp, atoi(argv[4]));
 
       if(mged_variables.faceplate &&
 	 mged_variables.show_menu &&
@@ -894,7 +880,7 @@ char	**argv;
 	  goto end;
       }
 
-      x = Glx_irisX2ged(dmp, atoi(argv[3]), 1);
+      x = glx_irisX2ged(dmp, atoi(argv[3]), 1);
       mged_variables.show_menu = 0;
 end:
       bu_vls_init(&vls);
@@ -1032,14 +1018,14 @@ Glx_colorchange()
 static void
 establish_zbuffer()
 {
-  Glx_establish_zbuffer(dmp);
+  glx_establish_zbuffer(dmp);
   ++dmaflag;
 }
 
 static void
 establish_lighting()
 {
-  Glx_establish_lighting(dmp);
+  glx_establish_lighting(dmp);
   color_soltab();
   ++dmaflag;
 }
@@ -1047,14 +1033,14 @@ establish_lighting()
 static void
 establish_perspective()
 {
-  Glx_establish_perspective(dmp);
+  glx_establish_perspective(dmp);
   ++dmaflag;
 }
 
 static void
 set_perspective()
 {
-  Glx_set_perspective(dmp);
+  glx_set_perspective(dmp);
   ++dmaflag;
 }
 
