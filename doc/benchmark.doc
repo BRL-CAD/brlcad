@@ -193,6 +193,7 @@ amber	HP 9000/720, 32 MB memory
 amsaa-seer	Gould PN 9080, w/MACCs, UTX 2.0, 4x4Mb mem boards
 ardec-3	Pyramid 90Mx, Dual-CPU, OSx 2.5, 16 Mbytes
 bob	Cray-2, SN 2009, 4.3ns clock
+cor3	Pyramid MIS-12T/3, OSx 192
 patton	Cray X-MP/48, SN213, UNICOS 5.0, 8.5ns clock
 shpcrc2	IBM RS/6000, AIX 3.1
 slc1	Macintosh II, 68020, 68881, AUX 1.1, GCC 1.39
@@ -651,6 +652,9 @@ Abs	veto	827.25	436.38	361.89	348.99	422.19	479.34	1
 _
 Abs	vhs	1040.44	500.52	436.90	415.15	496.30	577.86	1
 *vgr	vhs	7.59	7.46	7.79	7.78	7.02	7.52
+_
+Abs	cor3	1203.14	553.22	445.45	398.79	534.18	626.95	1
+*vgr	cor3	8.78	8.24	7.94	7.47	7.55	7.99
 _
 Abs	wilted	1556.66	800.18	722.95	708.21	858.90	929.38	1
 *vgr	wilted	11.36	11.93	12.89	13.27	12.15	12.32
