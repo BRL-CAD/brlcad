@@ -556,7 +556,6 @@ register struct application *ap;
 	int			end_free_len;
 	AUTO struct rt_i	*rtip;
 	int			debug_shoot = rt_g.debug & DEBUG_SHOOT;
-	struct rt_tol		tol;
 
 	RT_AP_CHECK(ap);
 	if( ap->a_resource == RESOURCE_NULL )  {
@@ -578,13 +577,6 @@ register struct application *ap;
 		VPRINT("Pnt", ap->a_ray.r_pt);
 		VPRINT("Dir", ap->a_ray.r_dir);
 	}
-
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
 
 	/* Since this count provides the RTFM, it must be semaphored */
 	RES_ACQUIRE( &rt_g.res_stats );
@@ -671,7 +663,8 @@ register struct application *ap;
 			BITSET( solidbits->be_v, stp->st_bit );
 			rtip->nshots++;
 			if( rt_functab[stp->st_id].ft_shot( 
-			    stp, &ap->a_ray, ap, &waiting_segs, &tol ) <= 0 )  {
+			    stp, &ap->a_ray, ap, &waiting_segs,
+			    &ap->a_rt_i->rti_tol ) <= 0 )  {
 				rtip->nmiss++;
 				continue;	/* MISS */
 			}
@@ -790,7 +783,8 @@ register struct application *ap;
 			rtip->nshots++;
 			RT_LIST_INIT( &(new_segs.l) );
 			if( rt_functab[stp->st_id].ft_shot( 
-			    stp, &ss.newray, ap, &new_segs, &tol ) <= 0 )  {
+			    stp, &ss.newray, ap, &new_segs,
+			    &ap->a_rt_i->rti_tol ) <= 0 )  {
 				rtip->nmiss++;
 				continue;	/* MISS */
 			}
