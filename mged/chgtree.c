@@ -971,7 +971,7 @@ char	**argv;
     ep = bu_vls_addr(avp);
     for (i = 0; i < 16; ++i)
     {
-	if ((eep = strchr(ep, ' ')) == NULL)
+	if ((eep = strchr(ep, ' ')) == NULL && i < 15)
 	{
 	  struct bu_vls tmp_vls;
 
@@ -983,8 +983,11 @@ char	**argv;
 	  break;
 	}
 	newargv[4 + i] = ep;
-	*eep = '\0';
-	ep = eep + 1;
+    	if( eep )
+    	{
+		*eep = '\0';
+		ep = eep + 1;
+    	}
     }
 
     if (result != TCL_ERROR)
