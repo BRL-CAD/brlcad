@@ -1038,3 +1038,30 @@ f_tr_obj()
 	}
 	(void)printf("Not in object translate mode\n");
 }
+
+/* Change the default region ident codes: item air mat los
+ */
+void
+f_regdef()
+{
+
+	dmaflag = 1;
+	item_default = atoi(cmd_args[1]);
+
+	if(numargs == 2)
+		return;
+
+	air_default = atoi(cmd_args[2]);
+	if(air_default) 
+		item_default = 0;
+
+	if(numargs == 3)
+		return;
+
+	mat_default = atoi(cmd_args[3]);
+
+	if(numargs == 4)
+		return;
+
+	los_default = atoi(cmd_args[4]);
+}
