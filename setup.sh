@@ -143,7 +143,7 @@ trap '/bin/rm -f ${IN_FILE} ${OUT_FILE}; exit 1' 1 2 3 15	# Clean up temp file
 
 rm -f ${OUT_FILE}
 
-cat << EOF > ${IN_FILE}
+cat > ${IN_FILE} << EOF
 #line 1 "$0"
 #include "Cakefile.defs"
 
