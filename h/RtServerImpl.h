@@ -23,9 +23,9 @@ extern "C" {
 /*
  * Class:     mil_army_arl_muves_rtserver_RtServerImpl
  * Method:    rtsInit
- * Signature: ([Ljava/lang/String;)Z
+ * Signature: ([Ljava/lang/String;)I
  */
-JNIEXPORT jboolean JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit
+JNIEXPORT jint JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit
   (JNIEnv *, jobject, jobjectArray);
 
 /*
