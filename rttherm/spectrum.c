@@ -444,8 +444,8 @@ spect->wavel[spect->nwave] * 0.001	/* nm to um */
 }
 
 /*
- *  Returns spectral radiant emittance, watts/cm**2/um
- *  straight from Planck's formula.
+ *  Returns radiant emittance in units of watts/cm**2
+ *  by integrating each wavelength span of spectral radiant emittance.
  */
 void
 rt_spect_black_body2( ss, temp )
@@ -459,6 +459,30 @@ double			temp;		/* Degrees Kelvin */
 	spect = ss->spectrum;
 	RT_CK_SPECTRUM(spect);
 rt_log("rt_spect_black_body2( x%x, %g degK )\n", ss, temp );
+
+	for( j = 0; j < spect->nwave; j++ )  {
+		ss->val[j] = PLANCK( (spect->wavel[j]*0.001), temp ) *
+			(spect->wavel[j+1] - spect->wavel[j]) * 0.001;
+	}
+}
+
+/*
+ *  Returns point-samples values of spectral radiant emittance,
+ *  in units of watts/cm**2/um,
+ *  straight from Planck's formula.
+ */
+void
+rt_spect_black_body_points( ss, temp )
+struct rt_spect_sample	*ss;
+double			temp;		/* Degrees Kelvin */
+{
+	CONST struct rt_spectrum	*spect;
+	int				j;
+
+	RT_CK_SPECT_SAMPLE(ss);
+	spect = ss->spectrum;
+	RT_CK_SPECTRUM(spect);
+rt_log("rt_spect_black_body_points( x%x, %g degK )\n", ss, temp );
 
 	for( j = 0; j < spect->nwave; j++ )  {
 		ss->val[j] = PLANCK( (spect->wavel[j]*0.001), temp );
@@ -480,10 +504,10 @@ main()
 	rt_write_spect_sample( "/tmp/z", z );
 #endif
 
-	spect = rt_spect_uniform( 200, 10.0, 10000.0 );
+	spect = rt_spect_uniform( 8, 3.0, 3000.0 );
 
 	RT_GET_SPECT_SAMPLE( x, spect );
-	rt_spect_black_body( x, 6500.0 );
+	rt_spect_black_body_points( x, 10000.0 );
 	rt_write_spect_sample( "/tmp/x", x );
 
 	RT_GET_SPECT_SAMPLE( y, spect );
