@@ -181,8 +181,8 @@ struct rt_i * rtip;
 		for( i = 0; i < rec.d.d_kv_size[1]; i++)	/* V knots */
 			new_srf->v_kv->knots[i] =  (fastf_t) *vp++;
 
-		norm_kv( new_srf->u_kv);
-		norm_kv( new_srf->v_kv);
+		spl_kvnorm( new_srf->u_kv);
+		spl_kvnorm( new_srf->v_kv);
 		
 		rt_free( (char *) fp, "spl_prep: fp" );
 
@@ -245,16 +245,16 @@ struct rt_i * rtip;
 		s_tree->left = NULLTREE;
 		s_tree->right = NULLTREE;
 		s_tree->root = new_srf;
-		s_tree->u_diff = (struct b_spline *) u_diff_spline( new_srf );
-		s_tree->v_diff = (struct b_spline *) v_diff_spline( new_srf );
+		s_tree->u_diff = (struct b_spline *) spl_u_diff( new_srf );
+		s_tree->v_diff = (struct b_spline *) spl_v_diff( new_srf );
 		s_tree->dir = COL;
 		s_tree->level = 0;
 
-		bound_spl( s_tree->root, s_tree->min, s_tree->max);
+		spl_bound( s_tree->root, s_tree->min, s_tree->max);
 		MM(s_tree->min);
 		MM(s_tree->max);
 		if ( rt_g.debug & DEBUG_SPLINE ) {
-			pr_spl( "initial surface",s_tree->root );
+			rt_pr_spl( "initial surface",s_tree->root );
 			fprintf(stderr, "bounding box\n");
 			VPRINT("min", s_tree->min);
 			VPRINT("max", s_tree->max);
@@ -296,7 +296,7 @@ register struct soltab * stp;
 	}
 
 	for( ; ncnt != NULLTREE; ncnt = ncnt->next )
-		pr_spl( "B_Spline", ncnt->root );
+		rt_pr_spl( "B_Spline", ncnt->root );
 }
 
 /* 
@@ -360,13 +360,13 @@ struct b_tree * tree;
 	}
 
 	if ( rootp->root != (struct b_spline *) 0 )
-		free_spl( rootp->root );
+		spl_sfree( rootp->root );
 
 	if ( rootp->u_diff != (struct b_spline *) 0 )
-		free_spl( rootp->u_diff );
+		spl_sfree( rootp->u_diff );
 
 	if ( rootp->v_diff != (struct b_spline *) 0 )
-		free_spl( rootp->v_diff );
+		spl_sfree( rootp->v_diff );
 	
 	rt_free( rootp, "n_free: tree structure ");
 
@@ -510,10 +510,10 @@ struct application *ap;
 			}
 
 			sub = (struct b_spline *) 
-				split_spl( tree->root, tree->dir);
+				spl_split( tree->root, tree->dir);
 
 			if( tree->level >= 1) {
-				free_spl( tree->root );
+				spl_sfree( tree->root );
 				tree->root = (struct b_spline *) 0;
 			}
 
@@ -526,7 +526,7 @@ struct application *ap;
 
 			tree->left->root = sub;
 			tree->left->next = NULLTREE;
-			bound_spl( tree->left->root, tree->left->min, tree->left->max);
+			spl_bound( tree->left->root, tree->left->min, tree->left->max);
 			tree->left->dir = (tree-> dir == 0) ? 1:0;
 			tree->left->level = tree->level + 1;
 			tree->left->left = tree->left->right = NULLTREE;
@@ -535,7 +535,7 @@ struct application *ap;
 
 			tree->right->root = sub->next; 		
 			tree->right->next = NULLTREE;
-			bound_spl( tree->right->root, tree->right->min, tree->right->max);
+			spl_bound( tree->right->root, tree->right->min, tree->right->max);
 			tree->right->dir = (tree-> dir == 0) ? 1:0;
 			tree->right->level = tree->level + 1; 
 			tree->right->left =
@@ -589,7 +589,7 @@ struct b_tree * tree;
 	if ( !hit_count && rt_g.debug & DEBUG_SPLINE )
 	{
 		(void) rt_log("Bounding Box hit but no surface hit");
-		pr_spl("B_Spline surface", tree->root);
+		rt_pr_spl("B_Spline surface", tree->root);
 	}
 
 }
@@ -712,13 +712,13 @@ struct spl_poly * p1;
 	h0->hit_vpriv[0] = uv[0];
 	h0->hit_vpriv[1] = uv[1];
 
-	tmp_hit = (fastf_t *) srf_eval( curr_tree->root, uv[0], uv[1]);
+	tmp_hit = (fastf_t *) spl_srf_eval( curr_tree->root, uv[0], uv[1]);
 
 	VSUB2( diff, tmp_hit, h0->hit_point);
 	
-	u_eval = (fastf_t *) srf_eval( curr_tree->u_diff, uv[0], uv[1]);
+	u_eval = (fastf_t *) spl_srf_eval( curr_tree->u_diff, uv[0], uv[1]);
 
-	v_eval = (fastf_t *) srf_eval( curr_tree->v_diff, uv[0], uv[1]);
+	v_eval = (fastf_t *) spl_srf_eval( curr_tree->v_diff, uv[0], uv[1]);
 
 	VCROSS( norm, u_eval, v_eval);
 	VUNITIZE( norm);
