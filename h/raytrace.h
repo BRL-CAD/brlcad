@@ -1962,7 +1962,8 @@ struct rt_functab {
 			const struct rt_db_internal * /*ip*/,
 			int /*verbose*/,
 			double /*mm2local*/,
-			struct resource * /*resp*/));
+			struct resource * /*resp*/,
+			struct db_i *));
 	int	(*ft_xform) BU_ARGS((struct rt_db_internal * /*op*/,
 			const mat_t /*mat*/, struct rt_db_internal * /*ip*/,
 			int /*free*/, struct db_i * /*dbip*/,
