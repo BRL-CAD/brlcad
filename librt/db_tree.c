@@ -1256,6 +1256,7 @@ CONST union tree	*tp;
 	switch( tp->tr_op )  {
 	case OP_NOP:
 	case OP_SOLID:
+	case OP_DB_LEAF:
 		/* If this is a leaf, done */
 		return(new);
 	case OP_REGION:
