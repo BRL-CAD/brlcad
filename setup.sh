@@ -69,7 +69,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 #include "Cakefile.defs"
 
 C_MACHINE=MTYPE;
-#if UNIXTYPE == BSD
+#ifdef BSD
 	C_UNIXTYPE="BSD";
 #else
 	C_UNIXTYPE="SYSV";
