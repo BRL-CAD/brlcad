@@ -124,21 +124,29 @@ $(PACKAGE)-$(VERSION).bin.zip:
 	@$(ECHO) "Building a zip-compressed file archive"
 	@$(ECHO)
 	@@SH@ sh/make_zip.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@$(ECHO)
+	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.zip for $(host_triplet)"
 
  $(PACKAGE)-$(VERSION).bin.tar.gz: $(PACKAGE)-$(VERSION).bin.tar
 	@$(ECHO) "Building a gzip-compressed tape archive"
 	@$(ECHO)
 	@@SH@ sh/make_tgz.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@$(ECHO)
+	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.tar.gz for $(host_triplet)"
 
  $(PACKAGE)-$(VERSION).bin.tar.bz2: $(PACKAGE)-$(VERSION).bin.tar
 	@$(ECHO) "Building a bzip2-compressed tape archive"
 	@$(ECHO)
 	@@SH@ sh/make_bz2.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@$(ECHO)
+	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.tar.bz2 for $(host_triplet)"
 
  $(PACKAGE)-$(VERSION).bin.tar:
-	@$(ECHO) "Building a uncompressed tape archive"
+	@$(ECHO) "Building an uncompressed tape archive"
 	@$(ECHO)
 	@@SH@ sh/make_tar.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)"
+	@$(ECHO)
+	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.tar for $(host_triplet)"
 
 
 #############
