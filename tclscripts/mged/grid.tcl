@@ -300,32 +300,32 @@ proc init_grid_control { id } {
 	    -menu $top.hMB.spacing -indicatoron 1
     menu $top.hMB.spacing -tearoff 0
     $top.hMB.spacing add command -label "micrometer" -underline 4\
-	    -command "set_grid_spacing $id micrometer"
+	    -command "set_grid_spacing $id micrometer 0"
     $top.hMB.spacing add command -label "millimeter" -underline 2\
-	    -command "set_grid_spacing $id millimeter"
+	    -command "set_grid_spacing $id millimeter 0"
     $top.hMB.spacing add command -label "centimeter" -underline 0\
-	    -command "set_grid_spacing $id centimeter"
+	    -command "set_grid_spacing $id centimeter 0"
     $top.hMB.spacing add command -label "decimeter" -underline 0\
-	    -command "set_grid_spacing $id decimeter"
+	    -command "set_grid_spacing $id decimeter 0"
     $top.hMB.spacing add command -label "meter" -underline 0\
-	    -command "set_grid_spacing $id meter"
+	    -command "set_grid_spacing $id meter 0"
     $top.hMB.spacing add command -label "kilometer" -underline 0\
-	    -command "set_grid_spacing $id kilometer"
+	    -command "set_grid_spacing $id kilometer 0"
     $top.hMB.spacing add separator
     $top.hMB.spacing add command -label "1/10 inch" -underline 0\
-	    -command "set_grid_spacing $id \"1/10 inch\""
+	    -command "set_grid_spacing $id \"1/10 inch\" 0"
     $top.hMB.spacing add command -label "1/4 inch" -underline 2\
-	    -command "set_grid_spacing $id \"1/4 inch\""
+	    -command "set_grid_spacing $id \"1/4 inch\" 0"
     $top.hMB.spacing add command -label "1/2 inch" -underline 2\
-	    -command "set_grid_spacing $id \"1/2 inch\""
+	    -command "set_grid_spacing $id \"1/2 inch\" 0"
     $top.hMB.spacing add command -label "inch" -underline 0\
-	    -command "set_grid_spacing $id inch"
+	    -command "set_grid_spacing $id inch 0"
     $top.hMB.spacing add command -label "foot" -underline 0\
-	    -command "set_grid_spacing $id foot"
+	    -command "set_grid_spacing $id foot 0"
     $top.hMB.spacing add command -label "yard" -underline 0\
-	    -command "set_grid_spacing $id yard"
+	    -command "set_grid_spacing $id yard 0"
     $top.hMB.spacing add command -label "mile" -underline 0\
-	    -command "set_grid_spacing $id mile"
+	    -command "set_grid_spacing $id mile 0"
     entry $top.maj_hE -relief flat -width 12 -textvar grid_control_maj_h($id)
 
     label $top.vL -text "Vert." -anchor w
@@ -334,32 +334,32 @@ proc init_grid_control { id } {
 	    -menu $top.vMB.spacing -indicatoron 1
     menu $top.vMB.spacing -tearoff 0
     $top.vMB.spacing add command -label "micrometer" -underline 4\
-	    -command "set_grid_spacing $id micrometer"
+	    -command "set_grid_spacing $id micrometer 0"
     $top.vMB.spacing add command -label "millimeter" -underline 2\
-	    -command "set_grid_spacing $id millimeter"
+	    -command "set_grid_spacing $id millimeter 0"
     $top.vMB.spacing add command -label "centimeter" -underline 0\
-	    -command "set_grid_spacing $id centimeter"
+	    -command "set_grid_spacing $id centimeter 0"
     $top.vMB.spacing add command -label "decimeter" -underline 0\
-	    -command "set_grid_spacing $id decimeter"
+	    -command "set_grid_spacing $id decimeter 0"
     $top.vMB.spacing add command -label "meter" -underline 0\
-	    -command "set_grid_spacing $id meter"
+	    -command "set_grid_spacing $id meter 0"
     $top.vMB.spacing add command -label "kilometer" -underline 0\
-	    -command "set_grid_spacing $id kilometer"
+	    -command "set_grid_spacing $id kilometer 0"
     $top.vMB.spacing add separator
     $top.vMB.spacing add command -label "1/10 inch" -underline 0\
-	    -command "set_grid_spacing $id \"1/10 inch\""
+	    -command "set_grid_spacing $id \"1/10 inch\" 0"
     $top.vMB.spacing add command -label "1/4 inch" -underline 2\
-	    -command "set_grid_spacing $id \"1/4 inch\""
+	    -command "set_grid_spacing $id \"1/4 inch\" 0"
     $top.vMB.spacing add command -label "1/2 inch" -underline 2\
-	    -command "set_grid_spacing $id \"1/2 inch\""
+	    -command "set_grid_spacing $id \"1/2 inch\" 0"
     $top.vMB.spacing add command -label "inch" -underline 0\
-	    -command "set_grid_spacing $id inch"
+	    -command "set_grid_spacing $id inch 0"
     $top.vMB.spacing add command -label "foot" -underline 0\
-	    -command "set_grid_spacing $id foot"
+	    -command "set_grid_spacing $id foot 0"
     $top.vMB.spacing add command -label "yard" -underline 0\
-	    -command "set_grid_spacing $id yard"
+	    -command "set_grid_spacing $id yard 0"
     $top.vMB.spacing add command -label "mile" -underline 0\
-	    -command "set_grid_spacing $id mile"
+	    -command "set_grid_spacing $id mile 0"
     entry $top.maj_vE -relief flat -width 12 -textvar grid_control_maj_v($id)
 
     checkbutton $top.squareGridCB -relief flat -text "Square Grid"\
@@ -487,25 +487,31 @@ proc init_grid_control { id } {
 }
 
 proc grid_control_choose_color { id top } {
-    global player_screen
     global grid_control_color
 
-    set colors [chooseColor $top]
+    cadColorWidget dialog $top -title "Grid Color"\
+	    -initialcolor [$top.colorMB cget -background]\
+	    -ok "grid_color_ok $id $top $top.colorWidget"\
+	    -cancel "grid_color_cancel $id $top.colorWidget"
+}
 
-    if {[llength $colors] == 0} {
-	return
-    }
+proc grid_color_ok { id top w } {
+    global grid_control_color
 
-    if {[llength $colors] != 2} {
-	mged_dialog .$id.gridDialog $player_screen($id)\
-		"Error choosing a color!"\
-		"Error choosing a color!"\
-		"" 0 OK
-	return
-    }
+    upvar #0 $w data
 
-    $top.colorMB configure -bg [lindex $colors 0]
-    set grid_control_color($id) [lindex $colors 1]
+    $top.colorMB configure -bg $data(finalColor)
+    set grid_control_color($id) "$data(red) $data(green) $data(blue)"
+
+    destroy $w
+    unset data
+}
+
+proc grid_color_cancel { id w } {
+    upvar #0 $w data
+
+    destroy $w
+    unset data
 }
 
 proc grid_control_set_colorMB { id top } {
@@ -536,7 +542,7 @@ proc grid_control_apply { id } {
     global grid_res_major_v
     global grid_control_square
 
-    winset $mged_active_dm($id)
+#    winset $mged_active_dm($id)
     mged_apply $id "set grid_draw \$grid_control_draw($id)"
     mged_apply $id "set grid_snap \$grid_control_snap($id)"
     mged_apply $id "set grid_color \$grid_control_color($id)"
@@ -667,11 +673,6 @@ proc grid_control_autosize { id } {
     global grid_control_maj_v
     global base2local
 
-# Gives between 10 and 100 ticks in metric units
-#    set result [regexp "\(\[0-9\]+\)" [_mged_viewget size] match val]
-#    set pow [expr [string length $val] - 1]
-#    set val [expr pow(10,$pow-1) * $base2local]
-
 # Gives between 20 and 200 ticks in user units
     set lower [expr log10(20)]
     set upper [expr $lower+1]
@@ -714,16 +715,11 @@ proc grid_spacing_apply { id spacing_type } {
 	set grid_res_h $grid_control_h($id)
 	set grid_res_major_h $grid_control_maj_h($id)
     } elseif {$spacing_type == "v"} {
-#	set save_v $grid_control_v($id)
-#	set save_maj_v $grid_control_maj_v($id)
-
 	set grid_control_square($id) 0
 	set_grid_square $id
 	set grid_control_h($id) $grid_res_h
 	set grid_control_maj_h($id) $grid_res_major_h
 
-#	set grid_control_v($id) $save_v
-#	set grid_control_maj_v($id) $save_maj_v
 	set grid_res_v $grid_control_v($id)
 	set grid_res_major_v $grid_control_maj_v($id)
     } else {
@@ -763,8 +759,8 @@ proc grid_spacing_load { id spacing_type } {
     }
 }
 
-proc set_grid_spacing { id grid_unit } {
-    global mged_active_dm
+proc set_grid_spacing { id grid_unit apply } {
+#    global mged_active_dm
     global grid_control_h
     global grid_control_v
     global grid_control_maj_h
@@ -776,7 +772,7 @@ proc set_grid_spacing { id grid_unit } {
     global grid_control_square
     global base2local
 
-    winset $mged_active_dm($id)
+#    winset $mged_active_dm($id)
 
     switch $grid_unit {
 	micrometer {
@@ -833,13 +829,15 @@ proc set_grid_spacing { id grid_unit } {
 	}
     }
 
-    set grid_res_h $res
-    set grid_res_v $res
-    set grid_res_major_h $res_major
-    set grid_res_major_v $res_major
-
     set grid_control_h($id) $res
     set grid_control_v($id) $res
     set grid_control_maj_h($id) $res_major
     set grid_control_maj_h($id) $res_major
+
+    if { $apply } {
+	mged_apply $id "set grid_res_h $res"
+	mged_apply $id "set grid_res_v $res"
+	mged_apply $id "set grid_res_major_h $res_major"
+	mged_apply $id "set grid_res_major_v $res_major"
+    }
 }
