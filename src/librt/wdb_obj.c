@@ -7257,13 +7257,13 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 					}
 				}
 			} else if( Tcl_GetVar2Ex( interp, "tk_version", NULL, TCL_GLOBAL_ONLY ) ) {
+#if 0
 				struct bu_vls vls;
 
 /*
  * We should give the user some credit here
  * and not annoy them with a message dialog.
 */
-#if 0
 				/* Tk is active, we can pop-up a window */
 				bu_vls_init( &vls );
 				bu_vls_printf( &vls, "Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep );
