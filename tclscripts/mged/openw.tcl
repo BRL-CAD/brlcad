@@ -146,6 +146,10 @@ if ![info exists mged_default(max_text_lines)] {
     set mged_default(max_text_lines) 1000
 }
 
+if ![info exists mged_default(doubleClickTol)] {
+    set mged_default(doubleClickTol) 500
+}
+
 ##
 # Set the class bindings for use with help. This requires the
 # widget to register its data using hoc_register_data. Also, for now,
@@ -326,6 +330,8 @@ set mged_gui($id,num_lines) $mged_default(num_lines)
 set mged_gui($id,multi_pane) $mged_default(multi_pane)
 set mged_gui($id,dm_loc) $mged_default(pane)
 set mged_gui($id,dtype) $dtype
+set mged_gui($id,lastButtonPress) 0
+set mged_gui($id,lastItem) ""
 
 if ![dm_validXType $gscreen $dtype] {
     return "gui: $gscreen does not support $dtype"

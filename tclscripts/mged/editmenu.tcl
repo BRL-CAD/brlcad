@@ -86,7 +86,7 @@ proc ray_build_edit_menu { type x y } {
 	s {
 	    if {[llength $paths] == 1} {
 		_mged_press sill
-		_mged_ill [lindex $paths 0]
+		_mged_ill -i 1 [lindex $paths 0]
 	    } elseif {[llength $paths] > 1} {
 		build_solid_menu s $id $paths
 	    }
@@ -94,7 +94,7 @@ proc ray_build_edit_menu { type x y } {
 	o {
 	    if {[llength $paths] == 1} {
 		_mged_press oill
-		_mged_ill [lindex $paths 0]
+		_mged_ill -i 1 [lindex $paths 0]
 		build_matrix_menu $id [lindex $paths 0]
 	    } elseif {[llength $paths] > 1} {
 		build_solid_menu o $id $paths
@@ -139,37 +139,10 @@ proc build_solid_menu { type id paths } {
     create_listbox $top $screen Solid $rpaths "destroy $top"
     set mged_gui($id,edit_menu) $top
 
-    switch $type {
-	s {
-	    bind_listbox $top "<B1-Motion>"\
-		    "set item \[get_listbox_entry %W %x %y\];\
-		    solid_illum \$item"
-	    bind_listbox $top "<ButtonPress-1>"\
-		    "set item \[get_listbox_entry %W %x %y\];\
-		    solid_illum \$item"
-	    bind_listbox $top "<Double-1>"\
-		    "set item \[get_listbox_entry %W %x %y\];\
-		    _mged_sed \$item;\ 
-		    destroy $top"
-	}
-	o {
-	    bind_listbox $top "<B1-Motion>"\
-		    "set item \[get_listbox_entry %W %x %y\];\
-		    solid_illum \$item"
-	    bind_listbox $top "<ButtonPress-1>"\
-		    "set item \[get_listbox_entry %W %x %y\];\
-		    solid_illum \$item"
-	    bind_listbox $top "<Double-1>"\
-		    "set item \[get_listbox_entry %W %x %y\];\
-		    build_matrix_menu $id \$item;\
-		    destroy $top"
-	}
-	default {
-	    destroy $top
-	    return "build_solid_menu: bad type - $type"
-	}
-    }
-
+    bind_listbox $top "<B1-Motion>"\
+	    "set item \[get_listbox_entry %W %x %y\];\
+	    solid_illum \$item"
+    bind_listbox $top "<ButtonPress-1>" "doubleClickHack %W %x %y %t $id $type junkpath"
     bind_listbox $top "<ButtonRelease-1>" "%W selection clear 0 end; _mged_press reject"
 }
 
@@ -201,16 +174,58 @@ proc build_matrix_menu { id path } {
     bind_listbox $top "<B1-Motion>"\
 	    "set path_pos \[%W index @%x,%y\];\
 	    matrix_illum $path \$path_pos"
-    bind_listbox $top "<ButtonPress-1>"\
-	    "set path_pos \[%W index @%x,%y\];\
-	    matrix_illum $path \$path_pos"
-    bind_listbox $top "<Double-1>"\
-	    "set path_pos \[%W index @%x,%y\];\
-	    _mged_press oill;\
-	    _mged_ill $path;\
-	    _mged_matpick \$path_pos;\
-	    destroy $top"
+    bind_listbox $top "<ButtonPress-1>" "doubleClickHack %W %x %y %t $id m $path"
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\
 	    _mged_press reject"
+}
+
+proc doubleClickHack {w x y t id type path} {
+    global mged_gui
+    global mged_default
+
+    switch $type {
+	s -
+	o {
+	    set item [get_listbox_entry $w $x $y]
+	}
+	m {
+	    set item [$w index @$x,$y]
+	}
+    }
+
+    if {$mged_gui($id,lastButtonPress) == 0 ||
+        $mged_gui($id,lastItem) != $item ||
+        [expr {abs($mged_gui($id,lastButtonPress) - $t) > $mged_default(doubleClickTol)}]} {
+
+	switch $type {
+	    s -
+	    o {
+		solid_illum $item
+	    }
+	    m {
+		matrix_illum $path $item
+	    }
+	}
+    } else {
+	switch $type {
+	    s {
+		_mged_sed -i 1 $item
+		destroy [winfo parent $w]
+	    }
+	    o {
+		destroy [winfo parent $w]
+		build_matrix_menu $id $item
+	    }
+	    m {
+		_mged_press oill
+		_mged_ill -i 1 $path
+		_mged_matpick $item
+		destroy [winfo parent $w]
+	    }
+	}
+    }
+
+    set mged_gui($id,lastButtonPress) $t
+    set mged_gui($id,lastItem) $item
 }
