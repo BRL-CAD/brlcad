@@ -103,11 +103,15 @@ union record  {
 		char	i_id;		/* ID_IDENT */
 		char	i_units;	/* units */
 #define ID_NO_UNIT	0		/* unspecified */
-#define ID_MM_UNIT	1		/* milimeters (preferred) */
-#define ID_CM_UNIT	2		/* centimeters */
-#define ID_M_UNIT	3		/* meters */
-#define ID_IN_UNIT	4		/* inches */
-#define ID_FT_UNIT	5		/* feet */
+#define ID_MM_UNIT	1		/* millimeters (preferred) */
+#define ID_UM_UNIT	2		/* micrometers */
+#define ID_CM_UNIT	3		/* centimeters */
+#define ID_M_UNIT	4		/* meters */
+#define ID_KM_UNIT	5		/* kilometers */
+#define ID_IN_UNIT	6		/* inches */
+#define ID_FT_UNIT	7		/* feet */
+#define ID_YD_UNIT	8		/* yards */
+#define ID_MI_UNIT	9		/* miles */
 		char	i_version[6];	/* Version code of Database format */
 #define ID_VERSION	"v4"		/* Current Version */
 		char	i_title[72];	/* Title or description */

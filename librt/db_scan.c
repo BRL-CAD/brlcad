@@ -331,6 +331,7 @@ int		units;
 	dir.d_addr = 0L;
 	dir.d_len = 1;
 	dir.d_magic = RT_DIR_MAGIC;
+	dir.d_flags = 0;
 	if( db_get( dbip, &dir, &rec, 0, 1 ) < 0 ||
 	    rec.u_id != ID_IDENT )
 		return(-1);
@@ -369,6 +370,11 @@ int local;
 		dbip->dbi_local2base = 1.0;
 		break;
 
+	case ID_UM_UNIT:
+		/* local unit is um */
+		dbip->dbi_local2base = 0.001;		/* UM to MM */
+		break;
+
 	case ID_MM_UNIT:
 		/* local unit is mm */
 		dbip->dbi_local2base = 1.0;
@@ -384,6 +390,11 @@ int local;
 		dbip->dbi_local2base = 1000.0;		/* M to MM */
 		break;
 
+	case ID_KM_UNIT:
+		/* local unit is km */
+		dbip->dbi_local2base = 1000000.0;	/* KM to MM */
+		break;
+
 	case ID_IN_UNIT:
 		/* local unit is inches */
 		dbip->dbi_local2base = 25.4;		/* IN to MM */
@@ -394,9 +405,25 @@ int local;
 		dbip->dbi_local2base = 304.8;		/* FT to MM */
 		break;
 
+	case ID_YD_UNIT:
+		/* local unit is yards */
+		dbip->dbi_local2base = 914.4;		/* YD to MM */
+		break;
+
+	case ID_MI_UNIT:
+		/* local unit is miles */
+		dbip->dbi_local2base = 1609344;		/* MI to MM */
+		break;
+
 	default:
 		dbip->dbi_local2base = 1.0;
-		dbip->dbi_localunit = 6;
+		/*
+		 *	XXX	dbi_localunit is set to 10 here
+		 *		as a sentinel for out of range!
+		 *		A constant buried in the code as
+		 *		a sentinel??  Yecch!!
+		 */
+		dbip->dbi_localunit = 10;
 		break;
 	}
 	dbip->dbi_base2local = 1.0 / dbip->dbi_local2base;

@@ -1280,14 +1280,13 @@ char	**argv;
 {
 	double	loc2mm;
 	int	new_unit = 0;
+	struct bu_vls vls;
 	CONST char	*str;
 
 	CHECK_READ_ONLY;
 
+	bu_vls_init(&vls);
 	if(argc < 1 || 2 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
 	  bu_vls_printf(&vls, "help units");
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
@@ -1295,19 +1294,19 @@ char	**argv;
 	}
 
 	if( argc < 2 )  {
-	  struct bu_vls tmp_vls;
-
-	  bu_vls_init(&tmp_vls);
 	  str = rt_units_string(dbip->dbi_local2base);
-	  bu_vls_printf(&tmp_vls, "You are currently editing in '%s'.  1%s = %gmm \n",
+	  bu_vls_printf(&vls, "You are currently editing in '%s'.  1 %s = %g mm \n",
 			str, str, dbip->dbi_local2base );
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
+	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	  bu_vls_free(&vls);
 	  return TCL_OK;
 	}
 
 	if( strcmp(argv[1], "mm") == 0 || strcmp(argv[1], "millimeters") == 0 ) 
 		new_unit = ID_MM_UNIT;
+	else
+	if( strcmp(argv[1], "um") == 0 || strcmp(argv[1], "micrometers") == 0) 
+		new_unit = ID_UM_UNIT;
 	else
 	if( strcmp(argv[1], "cm") == 0 || strcmp(argv[1], "centimeters") == 0) 
 		new_unit = ID_CM_UNIT;
@@ -1315,11 +1314,20 @@ char	**argv;
 	if( strcmp(argv[1],"m")==0 || strcmp(argv[1],"meters")==0 ) 
 		new_unit = ID_M_UNIT;
 	else
+	if( strcmp(argv[1], "km") == 0 || strcmp(argv[1], "kilometers") == 0) 
+		new_unit = ID_KM_UNIT;
+	else
 	if( strcmp(argv[1],"in")==0 || strcmp(argv[1],"inches")==0 || strcmp(argv[1],"inch")==0 ) 
 		new_unit = ID_IN_UNIT;
 	else
 	if( strcmp(argv[1],"ft")==0 || strcmp(argv[1],"feet")==0 || strcmp(argv[1],"foot")==0 ) 
 		new_unit = ID_FT_UNIT;
+	else
+	if( strcmp(argv[1],"yd")==0 || strcmp(argv[1],"yards")==0 || strcmp(argv[1],"yard")==0 ) 
+		new_unit = ID_YD_UNIT;
+	else
+	if( strcmp(argv[1],"mi")==0 || strcmp(argv[1],"miles")==0 || strcmp(argv[1],"mile")==0 ) 
+		new_unit = ID_MI_UNIT;
 
 	if( new_unit ) {
 		/* One of the recognized db.h units */
@@ -1333,7 +1341,7 @@ char	**argv;
 
 	} else if( (loc2mm = bu_units_conversion(argv[1]) ) <= 0 )  {
 	  Tcl_AppendResult(interp, argv[1], ": unrecognized unit\n",
-			   "valid units: <mm|cm|m|in|ft|meters|inches|feet>\n", (char *)NULL);
+			   "valid units: <um|mm|cm|m|km|in|ft|yd|mi>\n", (char *)NULL);
 	  return TCL_ERROR;
 	} else {
 		/*
@@ -1347,8 +1355,11 @@ char	**argv;
 Due to a database restriction in the current format of .g files,\n\
 this choice of units will not be remembered on your next editing session.\n", (char *)NULL);
 	}
-	Tcl_AppendResult(interp, "New editing units = '", rt_units_string(dbip->dbi_local2base),
-			 "'\n", (char *)NULL);
+	str = rt_units_string(dbip->dbi_local2base);
+	bu_vls_printf(&vls, "You will now be editing in '%s'.  1 %s = %g mm \n",
+			str, str, dbip->dbi_local2base );
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 	dmaflag = 1;
 
 	return TCL_OK;

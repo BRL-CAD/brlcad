@@ -2136,14 +2136,22 @@ char **argv;
 	    dbip->dbi_title);
 
 	switch (dbip->dbi_localunit) {
+	case ID_UM_UNIT:
+		fputs("units um;\n",fop); break;
 	case ID_CM_UNIT:
 		fputs("units cm;\n",fop); break;
 	case ID_M_UNIT:
 		fputs("units meters;\n",fop); break;
+	case ID_KM_UNIT:
+		fputs("units km;\n",fop); break;
 	case ID_IN_UNIT:
 		fputs("units inches;\n",fop); break;
 	case ID_FT_UNIT:
 		fputs("units feet;\n",fop); break;
+	case ID_YD_UNIT:
+		fputs("units yards;\n",fop); break;
+	case ID_MI_UNIT:
+		fputs("units miles;\n",fop); break;
 	case ID_NO_UNIT:
 	case ID_MM_UNIT:
 	default:

@@ -970,24 +970,29 @@ char	**argv;
 
 	bu_vls_init( &units);
 	
-	if( localunit == ID_NO_UNIT)
-		bu_vls_strcat( &units, "none");
-
-	if( localunit == ID_MM_UNIT)
-		bu_vls_strcat( &units, "mm");
-
-	if( localunit == ID_CM_UNIT)
-		bu_vls_strcat( &units, "cm");
-
-	if( localunit == ID_M_UNIT)
-		bu_vls_strcat( &units, "m");
-
-	if( localunit == ID_IN_UNIT)
-		bu_vls_strcat( &units, "in");
-
-	if( localunit == ID_FT_UNIT)
-		bu_vls_strcat( &units, "ft");
-
+	switch (localunit)
+	{
+	    case ID_NO_UNIT:
+		bu_vls_strcat( &units, "none"); break;
+	    case ID_UM_UNIT:
+		bu_vls_strcat( &units, "um"); break;
+	    case ID_MM_UNIT:
+		bu_vls_strcat( &units, "mm"); break;
+	    case ID_CM_UNIT:
+		bu_vls_strcat( &units, "cm"); break;
+	    case ID_M_UNIT:
+		bu_vls_strcat( &units, "m"); break;
+	    case ID_KM_UNIT:
+		bu_vls_strcat( &units, "km"); break;
+	    case ID_IN_UNIT:
+		bu_vls_strcat( &units, "in"); break;
+	    case ID_FT_UNIT:
+		bu_vls_strcat( &units, "ft"); break;
+	    case ID_YD_UNIT:
+		bu_vls_strcat( &units, "yd"); break;
+	    case ID_MI_UNIT:
+		bu_vls_strcat( &units, "mi"); break;
+	}
 	if( mk_id_units( keepfp, bu_vls_addr(&title), bu_vls_addr(&units) ) < 0 )  {
 		perror("fwrite");
 		Tcl_AppendResult(interp, "mk_id_units() failed\n", (char *)NULL);

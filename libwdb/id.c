@@ -49,7 +49,7 @@ CONST char	*title;
 }
 
 /*
- *			M K _ I D
+ *			M K _ I D _ U N I T S
  *
  *  Make a database header (ID) record, and note the
  *  user's preferred editing units.
@@ -68,16 +68,24 @@ register CONST char	*units;
 
 	if( strcmp( units, "none" ) == 0 )  {
 		rec.i.i_units = ID_NO_UNIT;
+	} else if( strcmp( units, "um" ) == 0 )  {
+		rec.i.i_units = ID_UM_UNIT;
 	} else if( strcmp( units, "mm" ) == 0 )  {
 		rec.i.i_units = ID_MM_UNIT;
 	} else if( strcmp( units, "cm" ) == 0 )  {
 		rec.i.i_units = ID_CM_UNIT;
 	} else if( strcmp( units, "m" ) == 0 )  {
 		rec.i.i_units = ID_M_UNIT;
+	} else if( strcmp( units, "km" ) == 0 )  {
+		rec.i.i_units = ID_KM_UNIT;
 	} else if( strcmp( units, "in" ) == 0 )  {
 		rec.i.i_units = ID_IN_UNIT;
 	} else if( strcmp( units, "ft" ) == 0 )  {
 		rec.i.i_units = ID_FT_UNIT;
+	} else if( strcmp( units, "yd" ) == 0 )  {
+		rec.i.i_units = ID_YD_UNIT;
+	} else if( strcmp( units, "mi" ) == 0 )  {
+		rec.i.i_units = ID_MI_UNIT;
 	} else {
 		return -2;
 	}

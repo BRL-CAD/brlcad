@@ -121,10 +121,14 @@ struct bn_tol	mged_tol;		/* calculation tolerance */
 static char *units_str[] = {
 	"none",
 	"mm",
+	"um",
 	"cm",
+	"km",
 	"meters",
 	"inches",
 	"feet",
+	"yards",
+	"miles",
 	"extra"
 };
 
@@ -264,6 +268,7 @@ char **argv;
 	frametime = 1;
 	adc_a1_deg = adc_a2_deg = 45.0;
 	curr_dm_list->s_info->opp = &pathName;
+	mged_view_init();
 
 	bu_vls_init(&fps_name);
 	bu_vls_printf(&fps_name, "mged_display(%S,fps)",

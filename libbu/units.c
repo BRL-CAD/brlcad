@@ -1,7 +1,7 @@
 /*
  *			U N I T S . C
  * 
- *  Module of librt to handle units conversion between strings and mm.
+ *  Module of libbu to handle units conversion between strings and mm.
  *
  *  Author -
  *	Michael John Muuss
@@ -38,11 +38,11 @@ static CONST struct cvt_tab {
 	char	name[32];
 } bu_units_tab[] = {
 	1.0e-7,		"angstrom",
-	1.0e-7,		"decinanometer",
-	1.0e-6,		"nanometer",
 	1.0e-6,		"nm",
-	1.0e-3,		"micron",
+	1.0e-6,		"nanometer",
+	1.0e-3,		"um",
 	1.0e-3,		"micrometer",
+	1.0e-3,		"micron",
 	1.0,		"mm",
 	1.0,		"millimeter",
 	10.0,		"cm",
@@ -66,9 +66,10 @@ static CONST struct cvt_tab {
 	1609344.0,	"mile",
 	1852000.0,	"nmile",
 	1852000.0,	"nautical mile",
-	1.495979e+14,	"au",
+	1.495979e+14,	"AU",
 	1.495979e+14,	"astronomical unit",
-	9.460530e+18,	"lightyear",
+	9.460730e+18,	"lightyear",
+	3.085678e+19,	"pc",
 	3.085678e+19,	"parsec",
 	0.0,		"",			/* LAST ENTRY */
 };

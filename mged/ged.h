@@ -56,11 +56,15 @@
 #define NAMEMOVE(from,to)       (void)strncpy(to, from, NAMESIZE)
 
 #define ID_NO_UNIT	0		/* unspecified */
-#define ID_MM_UNIT	1		/* milimeters (preferred) */
-#define ID_CM_UNIT	2		/* centimeters */
-#define ID_M_UNIT	3		/* meters */
-#define ID_IN_UNIT	4		/* inches */
-#define ID_FT_UNIT	5		/* feet */
+#define ID_MM_UNIT	1		/* millimeters (preferred) */
+#define ID_UM_UNIT	2		/* micrometers */
+#define ID_CM_UNIT	3		/* centimeters */
+#define ID_M_UNIT	4		/* meters */
+#define ID_KM_UNIT	5		/* kilometers */
+#define ID_IN_UNIT	6		/* inches */
+#define ID_FT_UNIT	7		/* feet */
+#define ID_YD_UNIT	8		/* yards */
+#define ID_MI_UNIT	9		/* miles */
 
 #define ARB4	4	/* tetrahedron */
 #define ARB5	5	/* pyramid */
@@ -441,7 +445,6 @@ struct _mged_variables {
 	int     e_axes;  /* edit axes */
         int     send_key;
         int     hot_key;
-	int     view;
 	int	edit;
         int     context;
         int     eyerot;
