@@ -45,6 +45,7 @@ static int	noverlaps;		/* Number of overlaps seen */
  * Null function -- handle a hit
  */
 /*ARGSUSED*/
+int
 hit( ap, PartHeadp )
 struct application *ap;
 register struct partition *PartHeadp;
@@ -58,6 +59,7 @@ register struct partition *PartHeadp;
  *  Null function -- handle a miss
  */
 /*ARGSUSED*/
+int
 miss( ap )
 struct application *ap;
 {
@@ -69,6 +71,7 @@ struct application *ap;
  *
  *  Write end points of partition to the standard output.
  */
+int
 overlap( ap, pp, reg1, reg2 )
 struct application	*ap;
 struct partition	*pp;
@@ -97,6 +100,7 @@ struct region		*reg2;
  *
  *  Called once for this run.
  */
+int
 view_init( ap, file, obj, npts, minus_o )
 register struct application *ap;
 char *file, *obj;
@@ -113,6 +117,7 @@ char *file, *obj;
  *
  *  Called at the beginning of each frame
  */
+void
 view_2init( ap )
 register struct application *ap;
 {
@@ -120,7 +125,6 @@ register struct application *ap;
 	
 	pdv_3space( outfp, rtip->rti_pmin, rtip->rti_pmax );
 	noverlaps = 0;
-	return(0);
 }
 
 /*
@@ -128,6 +132,7 @@ register struct application *ap;
  *
  *  Called at the end of each frame
  */
+void
 view_end() {
 	pl_flush(outfp);
 	fflush(outfp);
@@ -137,12 +142,12 @@ view_end() {
 /*
  *	Stubs
  */
-view_pixel() {}
+void view_pixel() {}
 
-view_eol() {}
+void view_eol() {}
 
-mlib_setup() { 
+int mlib_setup() { 
 	return(1); 
 }
 
-mlib_free() { ; }
+void mlib_free() { ; }
