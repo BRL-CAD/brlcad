@@ -48,12 +48,13 @@ struct	stxt_specific  {
 #define SOL_O(m)	offsetof(struct stxt_specific, m)
 
 struct	structparse stxt_parse[] = {
-#ifndef CRAY
+#if CRAY && !__STDC__
+	/* Hack for Cray compiler */
+	"%C",	"transp",	0,			FUNC_NULL,
+	"%s",	"file",		8,			FUNC_NULL,
+#else
 	"%C",	"transp",	offsetofarray(struct stxt_specific, stx_transp),	FUNC_NULL,
 	"%s",	"file",		offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL,
-#else
-	"%C",	"transp",	0,			FUNC_NULL,
-	"%s",	"file",		1,			FUNC_NULL,
 #endif
 	"%d",	"w",		SOL_O(stx_w),		FUNC_NULL,
 	"%d",	"n",		SOL_O(stx_n),		FUNC_NULL,
