@@ -219,7 +219,6 @@ struct rt_i		*rtip;
 	mag_h = sqrt( magsq_h = MAGSQ( xip->rpc_H ) );
 	mag_r = xip->rpc_r;
 	magsq_r = mag_r * mag_r;
-	rpc->rpc_inv_rsq = 1 / magsq_r;
 
 	/* Check for |H| > 0, |B| > 0, |R| > 0 */
 	if( NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_b, RT_LEN_TOL)
@@ -241,6 +240,7 @@ struct rt_i		*rtip;
 	GETSTRUCT( rpc, rpc_specific );
 	stp->st_specific = (genptr_t)rpc;
 	rpc->rpc_b = mag_b;
+	rpc->rpc_inv_rsq = 1 / magsq_r;
 
 	/* make unit vectors in B, H, and BxH directions */
 	VMOVE(    rpc->rpc_Hunit, xip->rpc_H );
