@@ -11,6 +11,8 @@
 #include <math.h>
 #include "./complex.h"
 
+void cdiv();
+
 /*
  *  Returns the magnitude of the transfer function Hs(s) for a
  *  1/3 octave 6-pole Butterworth bandpass filter of the given
