@@ -25,29 +25,22 @@
  * Copyright (c) 1983 Spencer W. Thomas
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <errno.h>
-#include <sys/types.h>
-#if defined(vax) && defined(BSD) && BSD < 44
-#undef BSD	/* /usr/include/sys/param.h redefines this */
-#endif
-#include <sys/param.h>			/* for MAXPATHLEN */
-#include <sys/stat.h>
-
-#include "rle_config.h"
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
 #ifdef USE_STRING_H
 #include <string.h>
 #define rindex strrchr
 #else
 #include <strings.h>
 #endif
-
-#endif /* USE_STDLIB_H */
+#include <errno.h>		/* For errno and sys_errlist */
+#include <sys/types.h>
+#if defined(vax) && defined(BSD) && BSD < 44
+#undef BSD	/* /usr/include/sys/param.h redefines this */
+#endif
+#include <sys/param.h>			/* for MAXPATHLEN */
+#include <sys/stat.h>
 
 #ifdef S_IFSOCK				/* should work */
 # define BSD42
@@ -62,10 +55,7 @@ static char temp[] = "intoXXXXXXXX";
 static char buf[MAXPATHLEN+1];
 short forceflg;				/* overwrite an unwritable file? */
 
-extern int errno;
-extern char *sys_errlist[];
-
-void
+int
 main(argc, argv)
 int argc;
 char **argv;

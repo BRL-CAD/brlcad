@@ -34,7 +34,11 @@
  * top left instead of the bottom.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
 #include "rle.h"
 
 /* Default color values */
