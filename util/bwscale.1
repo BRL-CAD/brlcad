@@ -10,6 +10,7 @@ bwscale \- change the size of a black and white bw file
 .RB [ \-S\  squareoutsize]
 .RB [ \-W\  out_width]
 .RB [ \-N\  out_height]
+.RB [ \-h ]
 [infile.bw] \>\ outfile.bw
 .SH DESCRIPTION
 .I Bwscale
@@ -49,6 +50,15 @@ Specifying the
 flag changes from bilinear interpolation to
 nearest neighbor interpolation, i.e. it enlarges the image by
 pixel replication.
+.PP
+The
+.B \-h
+flag causes the frame buffer to be
+used in high resolution mode (1024x1024).
+This is important for frame buffers such as the Adage which operate
+differently depending on the display size.  Without this flag
+the default size for the selected device will be used (usually
+the entire screen).
 .SH "SEE ALSO"
 brlcad(1), bwcrop(1), bwrect(1), bw(5), pixscale(1)
 .SH BUGS
