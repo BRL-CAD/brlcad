@@ -64,17 +64,17 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "./fblocal.h"
 
-#ifdef HAVE_MMAP
-#include <unistd.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#define CAN_LINGER 1
-#endif
-
-#ifdef HAVE_SHM
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#define	CAN_LINGER 1
+#ifdef HAVE_SYS_MMAN_H
+#  include <unistd.h>
+#  include <sys/mman.h>
+#  include <fcntl.h>
+#  define CAN_LINGER 1
+# else
+#  ifdef HAVE_SYS_SHM_H
+#	include <sys/ipc.h>
+#	include <sys/shm.h>
+#	define	CAN_LINGER 1
+#  endif
 #endif
 
 #include <X11/X.h>
@@ -202,7 +202,7 @@ struct	xinfo {
 	unsigned char	*xi_mem;	/* 24-bit backing store */
 	unsigned char	*xi_pix;	/* X Image buffer */
 
-#ifdef HAVE_SHM
+#ifdef HAVE_SYS_SHM_H
 	int		xi_shmid;	/* Sys V shared mem id */
 #endif
 
@@ -2053,7 +2053,7 @@ FBIO	*ifp;
 	{
 		/* First try to attach to an existing shared memory */
 
-#ifdef HAVE_MMAP
+#ifdef HAVE_SYS_MMAN_H
 		int fd;
 
 		if ((fd = open(BS_NAME, O_RDWR | O_CREAT, 0666)) < 0)
@@ -2074,7 +2074,7 @@ using private memory instead, errno %d\n", errno);
 		/* Change it to local */
 		xi->xi_mode = (xi->xi_mode & ~MODE10_MASK) | MODE10_MALLOC;
 #endif
-#ifdef HAVE_SHM
+#ifdef HAVE_SYS_SHM_H
 		if ((xi->xi_shmid = shmget(SHMEM_KEY, size, 0)) < 0) {
 			/* No existing one, create a new one */
 			xi->xi_shmid = shmget(SHMEM_KEY, size, IPC_CREAT|0666);
@@ -2135,15 +2135,15 @@ store\n", size);
 static void
 X24_zapmem()
 {
-#ifndef HAVE_MMAP
+#ifndef HAVE_SYS_MMAN_H
  	int	shmid;
 	int	i;
 #endif
 
-#ifdef HAVE_MMAP
+#ifdef HAVE_SYS_MMAN_H
 	unlink(BS_NAME);
 #endif
-#ifdef HAVE_SHM
+#ifdef HAVE_SYS_SHM_H
 	if ((shmid = shmget(SHMEM_KEY, 0, 0)) < 0) {
 		fb_log("X24_zapmem shmget failed, errno=%d\n", errno);
 		return;
