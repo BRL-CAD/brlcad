@@ -421,7 +421,9 @@ struct partition *PartHeadp;
 		VREVERSE( sw.sw_hit.hit_normal, ap->a_ray.r_dir );
 		/* U is azimuth, atan() range: -pi to +pi */
 		sw.sw_uv.uv_u = mat_atan2( ap->a_ray.r_dir[Y],
-			ap->a_ray.r_dir[X] ) * rt_inv2pi + 0.5;
+			ap->a_ray.r_dir[X] ) * rt_inv2pi;
+		if( sw.sw_uv.uv_u < 0 )
+			sw.sw_uv.uv_u += 1.0;
 		/*
 		 *  V is elevation, atan() range: -pi/2 to +pi/2,
 		 *  because sqrt() ensures that X parameter is always >0
