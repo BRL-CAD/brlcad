@@ -57,7 +57,7 @@ void	f_edit(), f_evedit(), f_delobj(), f_hideline();
 void	f_debug(), f_regdebug(), f_debuglib();
 void	f_name(), f_copy(), f_instance();
 void	f_copy_inv(), f_killall(), f_killtree();
-void	f_region(), f_itemair(), f_mater(), f_kill(), f_list();
+void	f_region(), f_itemair(), f_mater(), f_kill(), f_list(), f_cat();
 void	f_zap(), f_group(), f_mirror(), f_extrude();
 void	f_rm(), f_arbdef(), f_quit();
 void	f_edcomb(), f_status(), f_vrot();
@@ -71,7 +71,7 @@ void	f_analyze(), f_sed();
 void	f_ill(), f_knob(), f_tops(), f_summary();
 void	f_prcolor(), f_color(), f_edcolor(), f_3ptarb(), f_rfarb(), f_which_id();
 void	f_plot(), f_area(), f_find(), f_edgedir();
-void	f_regdef(), f_aeview(), f_in(), f_tables(), f_edcodes(), f_dup(), f_cat();
+void	f_regdef(), f_aeview(), f_in(), f_tables(), f_edcodes(), f_dup(), f_concat();
 void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack();
 void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
 void	f_overlay(), f_rtcheck(), f_comb();
@@ -105,8 +105,8 @@ static struct funtab {
 	f_attach,1,2,
 "B", "<objects>", "clear screen, edit objects",
 	f_blast,2,MAXARGS,
-"cat", "<objects>", "list attributes",
-	f_list,2,MAXARGS,
+"cat", "<objects>", "list attributes (brief)",
+	f_cat,2,MAXARGS,
 "center", "x y z", "set view center",
 	f_center, 4,4,
 "color", "low high r g b str", "make color entry",
@@ -114,7 +114,7 @@ static struct funtab {
 "comb", "comb_name <operation solid>", "create or extend combination w/booleans",
 	f_comb,4,MAXARGS,
 "concat", "file [prefix]", "concatenate 'file' onto end of present database",
-	f_cat, 1, 27,
+	f_concat, 1, 27,
 "copyeval", "", "copys an 'evaluated' path solid",
 	f_copyeval, 1, 27,
 "cp", "from to", "copy [duplicate] object",
@@ -181,7 +181,7 @@ static struct funtab {
 	f_killtree, 2, MAXARGS,
 "knob", "id [val]", "emulate knob twist",
 	f_knob,2,3,
-"l", "<objects>", "list attributes",
+"l", "<objects>", "list attributes (verbose)",
 	f_list,2,MAXARGS,
 "listeval", "", "lists 'evaluated' path solids",
 	f_pathsum, 1, 27,
@@ -423,8 +423,11 @@ mged_cmd()
 		/* We have a match */
 		if( (ftp->ft_min <= numargs) &&
 		    (numargs <= ftp->ft_max) )  {
-			/* We have the right number of args */
-			ftp->ft_func(numargs);	/* finally! */
+			/* Input has the right number of args.
+		    	 * Call function listed in table, with
+		    	 * main(argc, argv) style args
+		    	 */
+			ftp->ft_func(numargs, cmd_args);
 			return;
 		}
 		(void)printf("Usage: %s %s\n", ftp->ft_name, ftp->ft_parms);
