@@ -802,21 +802,21 @@ and numbers coded into the solid names are used to build the region.
 </DD>
 <HR>
 
-<DT><a NAME="c"><B>c</B> [<I>-g|r</I>] <I>combination_name</I> [<I>Boolean_expression</I>]</DT>
+<DT><a NAME="c"><B>c</B> [<I>-c|r</I>] <I>combination_name</I> [<I>Boolean_expression</I>]</DT>
 
 <DD> The ``c'' command creates a <I>BRL&#173CAD</I> <a href="brlcad_glossary.html#COMBINATION">combination</a>
 with the name
-<I>combination_name</I>. The <I>-g</I> option is the default and indicates that the
-combination should be flagged as a <I>BRL&#173CAD</I> <a href="brlcad_glossary.html#GROUP">group</a>
-and the <I>-r</I> option indicates that the
-combination is a <I>BRL&#173CAD</I> <a href="brlcad_glossary.html#REGION">region</a>. The <I>Boolean_expression</I>
+<I>combination_name</I>. The <I>-r</I> option indicates that the
+combination is a <I>BRL&#173CAD</I> <a href="brlcad_glossary.html#REGION">region</a>. The
+<I>-c</I> option is the default, and indicates that the combination is not a region.
+ The <I>Boolean_expression</I>
 allows parentheses. Where no order is specified, intersections are performed before
 subtractions or unions, then subtractions and unions are performed, left to right.
 With no <I>Boolean_expression</I> and <I>combination_name</I> does not already exist,
 a new empty combination will be created. If no <I>Boolean_expression</I> is provided, and
-<I>combination_name</I> does already exist and one of <I>-g</I> or <I>-r</I> is specified,
+<I>combination_name</I> does already exist and one of <I>-c</I> or <I>-r</I> is specified,
 then <I>combination_name</I> is flagged to agree with the indicated option.
-If a new <I>region</I> is created with this command, its region specific attributes
+If a new <I>region</I> is created, or an existing combination is flagged as a region with this command, its region specific attributes
 will be set according to the current defaults (see <a href="#regdef">regdef</a>).
 The <a href="#comb">comb</a> and <a href="#r">r</a> commands may also be used to create combinations.
 
