@@ -648,7 +648,19 @@ com_table	*ctp;
     /* Clean up from previous output destination */
     if (outf != stdout)
 	fclose(outf);
-    free(dest_string);
+    /*
+     * We were calling free(dest_string) at this point, since any destination
+     * the user specifies explicitly (i.e., anything but "default") gets
+     * a call to malloc().  However, this free was causing a memory fault
+     * when you did several successive "dest default" commands at the
+     * "nirt> " prompt.  I guess freeing memory that belongs to a
+     * string constant is not such a bright idea.  Anyway, we should
+     * probably be returning the malloced memory when appropriate,
+     * but a few destination strings shouldnt' take up much room, and
+     * there are other bigger mallocs elsewhere that are probably bigger
+     * wasters of memory.
+     *	PJT	25 Feb 91
+     */
 
     /* Establish the new destination */
     outf = newf;
