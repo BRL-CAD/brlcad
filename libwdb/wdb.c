@@ -382,13 +382,16 @@ fastf_t		rad2;
 }
 
 
-/*		M K _ T R C
+/*
+ *		M K _ T R C _ H
  *
  *  mk_trc( name, base, height, radius1, radius2 )
- *  Make a truncated right cylinder. 
+ *  Make a truncated right cylinder, with base and height.
+ *  Not just called mk_trc() to avoid conflict with a previous routine
+ *  of that name with different calling sequence.
  */
 int
-mk_trc( fp, name, base, height, radbase, radtop )
+mk_trc_h( fp, name, base, height, radbase, radtop )
 FILE		*fp;
 char		*name;
 CONST point_t	base;
@@ -419,7 +422,7 @@ fastf_t		radtop;
 /*
  *			M K _ T R C _ T O P
  *
- *  Convenience wrapper for mk_trc().
+ *  Convenience wrapper for mk_trc_h().
  */
 int
 mk_trc_top( fp, name, ibase, itop, radbase, radtop )
@@ -433,5 +436,5 @@ fastf_t		radtop;
 	vect_t	height;
 
 	VSUB2( height, itop, ibase );
-	return( mk_trc( fp, name, ibase, height, radbase, radtop ) );
+	return( mk_trc_h( fp, name, ibase, height, radbase, radtop ) );
 }

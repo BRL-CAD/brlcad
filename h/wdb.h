@@ -99,7 +99,8 @@ WDB_EXTERN(int mk_tgc, (FILE *fp, char *name, CONST point_t base,
 WDB_EXTERN(int mk_cone, (FILE *fp, char *name, CONST point_t base,
 			CONST vect_t dirv, fastf_t height, fastf_t rad1,
 			fastf_t rad2) );
-WDB_EXTERN(int mk_trc, (FILE *fp, char *name, CONST point_t base,
+#define mk_trc(wrong)	+++error+++	/* This routine no longer exists */
+WDB_EXTERN(int mk_trc_h, (FILE *fp, char *name, CONST point_t base,
 			CONST vect_t height, fastf_t radbase, fastf_t radtop) );
 WDB_EXTERN(int mk_trc_top, (FILE *fp, char *name, CONST point_t ibase,
 			CONST point_t itop, fastf_t radbase, fastf_t radtop) );
