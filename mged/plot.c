@@ -30,20 +30,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
+#include "plot3.h"
 #include "./solid.h"
 #include "./dm.h"
-
-extern FILE	*popen();	/* stdio pipe open routine */
-
-extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
-extern char	*local_unit[];
-
-/* BRL CAD package UNIX-Plot library routines */
-extern int pl_color(), pl_cont(), pl_3cont(), pl_erase(), pl_label();
-extern int pl_line(), pl_3line(), pl_linmod();
-extern int pl_move(), pl_3move(), pl_space(), pl_3space();
-
 
 /*
  *  			F _ P L O T
@@ -53,7 +42,9 @@ extern int pl_move(), pl_3move(), pl_space(), pl_3space();
  *	grid, 3d w/color, |filter, infinite Z
  */
 void
-f_plot()
+f_plot( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct solid *sp;
 	register struct vlist *vp;
@@ -76,7 +67,7 @@ f_plot()
 	Three_D = 1;				/* 3-D w/color, by default */
 	Z_clip = 0;				/* NO Z clipping, by default*/
 	floating = 0;
-	argv = &cmd_args[1];
+	argv = &argv[1];
 	while( argv[0] != (char *)0 && argv[0][0] == '-' )  {
 		switch( argv[0][1] )  {
 		case 'f':
@@ -231,14 +222,16 @@ f_plot()
 		}
 	}
 out:
-	if( cmd_args[1][0] == '|' )
+	if( argv[1][0] == '|' )
 		(void)pclose( fp );
 	else
 		(void)fclose( fp );
 }
 
 void
-f_area()
+f_area( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct solid *sp;
 	register struct vlist *vp;
@@ -258,9 +251,9 @@ f_area()
 	}
 
 	/* Create pipes to boundp | parea */
-	if( numargs == 2 )  {
-		sprintf( buf, "boundp -t %s | parea", cmd_args[1] );
-		(void)printf("Tolerance is %s\n", cmd_args[1] );
+	if( argc == 2 )  {
+		sprintf( buf, "boundp -t %s | parea", argv[1] );
+		(void)printf("Tolerance is %s\n", argv[1] );
 	}  else  {
 		double tol = VIEWSIZE * 0.001;
 		sprintf( buf, "boundp -t %e | parea", tol );
