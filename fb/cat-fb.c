@@ -54,12 +54,12 @@ RGBpixel	writing_color = {255, 255, 255};
 /* Single-bit wide typesetting buffer.
  * NLINES limits maximum backward vertical motion (eg, in tables).
  */
-int	bytes_per_line;		/* # bytes of bitmap per line */
 #define NLINES			1024
 #define BUFFER_SIZE		(NLINES*1280/8)
 
-char	buffer[BUFFER_SIZE];	/* Big bitmap line buffers  */
-char	*buf0p = &buffer[0];	/* Zero origin in circular buffer  */
+int		bytes_per_line;		/* # bytes of bitmap per line */
+unsigned char	buffer[BUFFER_SIZE];	/* Big bitmap line buffers  */
+unsigned char	*buf0p = &buffer[0];	/* Zero origin in circular buffer  */
 
 struct	fontdes {
 	int	fnum;
@@ -807,7 +807,7 @@ outc(code)
 		fprintf(stderr, "cat-fb: '%c' off right edge of screen\n", c);
 		return(0);
 	}
-	addr = &fontdes[cfont].vfp->vf_bits[vdp->vd_addr];
+	addr = (unsigned char *)&fontdes[cfont].vfp->vf_bits[vdp->vd_addr];
 	llen = (vdp->vd_left + vdp->vd_right+7)/8;
 	nlines = vdp->vd_up + vdp->vd_down;
 	if (xpos+vdp->vd_down >= NLINES)
