@@ -1091,7 +1091,7 @@ CONST struct rt_tol	*tol;
 	rt_bomb("class_eu_vs_s() inconsistent edgeuse\n");
 out:
 	if (rt_g.NMG_debug & DEBUG_GRAPHCL)
-		show_broken_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
+		nmg_show_broken_classifier_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 		rt_log("class_eu_vs_s(eu=x%x) return %s because %s\n",
 			eu, nmg_class_status(status), reason );

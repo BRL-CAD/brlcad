@@ -1996,7 +1996,7 @@ static struct rt_vlblock *vbp = (struct rt_vlblock *)NULL;
 static int stepalong = 0;
 
 void
-sigstepalong(i)
+nmg_plot_sigstepalong(i)
 int i;
 {
 	stepalong=1;
@@ -2009,7 +2009,7 @@ int i;
  * that this is a graphical display of classifier operation.
  */
 void
-show_broken_stuff(p, classlist, all_new, fancy, a_string)
+nmg_show_broken_classifier_stuff(p, classlist, all_new, fancy, a_string)
 long	*classlist[4];
 long	*p;
 int	all_new;
@@ -2064,10 +2064,10 @@ CONST char	*a_string;
 			int i;
 			void            (*cur_sigint)();
 
-			cur_sigint = signal(SIGINT, sigstepalong);
+			cur_sigint = signal(SIGINT, nmg_plot_sigstepalong);
 			for (stepalong=0;!stepalong;) {
 				for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-					show_broken_stuff(lu, classlist, 1, fancy);
+					nmg_show_broken_classifier_stuff(lu, classlist, 1, fancy);
 					for (i=0 ; ++i ; );
 				}
 			}
@@ -2106,7 +2106,7 @@ CONST char	*a_string;
 		} else {
 
 			fprintf(stderr, "NMG Intermediate display Ctrl-C to continue (%s)\n", a_string);
-			cur_sigint = signal(SIGINT, sigstepalong);
+			cur_sigint = signal(SIGINT, nmg_plot_sigstepalong);
 			(*nmg_vlblock_anim_upcall)( vbp,
 				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
 				1 );

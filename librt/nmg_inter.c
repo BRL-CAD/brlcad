@@ -3520,8 +3520,8 @@ struct faceuse		*fu1, *fu2;
 	}
 
 #if 0
-	show_broken_stuff((long *)fu1, (long **)NULL, 1, 0);
-	show_broken_stuff((long *)fu2, (long **)NULL, 1, 0);
+	nmg_show_broken_classifier_stuff((long *)fu1, (long **)NULL, 1, 0);
+	nmg_show_broken_classifier_stuff((long *)fu2, (long **)NULL, 1, 0);
 #endif
 
 out:
