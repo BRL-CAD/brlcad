@@ -480,11 +480,12 @@ CONST struct bn_tol		*tol;
  *	 0	success
  */
 int
-rt_hlf_xform(op, mat, ip, free)
+rt_hlf_xform(op, mat, ip, free, dbip)
 struct rt_db_internal	*op;
 CONST mat_t		mat;
 struct rt_db_internal *ip;
 CONST int	free;
+struct db_i	*dbip;
 {
 	struct rt_half_internal *hip, *hop;
 	point_t			orig_pt, pt;

@@ -1194,10 +1194,11 @@ CONST struct bn_tol           *tol;
 }
 
 int
-rt_bot_xform( op, mat, ip, free )
+rt_bot_xform( op, mat, ip, free, dbip )
 struct rt_db_internal *op, *ip;
 CONST mat_t	mat;
 CONST int free;
+struct db_i	*dbip;
 {
 	struct rt_bot_internal *botip, *botop;
 	register int		i;

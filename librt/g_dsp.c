@@ -2474,7 +2474,7 @@ rt_dsp_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	struct rt_dsp_internal	*dsp_ip =
 		(struct rt_dsp_internal *)ip->idb_ptr;
@@ -2645,7 +2645,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	LOCAL struct rt_dsp_internal	*dsp_ip;
 
@@ -2843,7 +2843,7 @@ CONST struct db_i		*dbip;
 int
 rt_dsp_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal *ip;
 int			verbose;
 double			mm2local;
 {

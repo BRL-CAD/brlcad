@@ -1415,11 +1415,12 @@ struct rt_db_internal	*ip;
 }
 
 int
-rt_extrude_xform( op, mat, ip, free )
+rt_extrude_xform( op, mat, ip, free, dbip )
 struct rt_db_internal *op;
 CONST mat_t mat;
 struct rt_db_internal *ip;
 int free;
+struct db_i *dbip;
 {
 	struct rt_extrude_internal	*eip, *eop;
 	point_t tmp_vec;

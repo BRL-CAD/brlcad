@@ -25,7 +25,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static char rt_hf_RcSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -142,7 +142,7 @@ struct rt_i		*rtip;
 	static int first_time=1;
 
 	if (first_time) {
-		bu_log("%s\n",RCSid);
+		bu_log("%s\n",rt_hf_RcSid);
 		first_time=0;
 	}
 	RT_CK_DB_INTERNAL(ip);
