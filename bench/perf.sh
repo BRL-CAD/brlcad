@@ -25,6 +25,15 @@ NEW_FILES="moss.log world.log star.log bldg391.log m35.log"
 REF_FILES="../pix/moss.log ../pix/world.log ../pix/star.log \
 	../pix/bldg391.log ../pix/m35.log"
 
+for i in $NEW_FILES $REF_FILES
+do
+	if test ! -f $i
+	then
+		echo "${NAME}: file $i does not exist, aborting"
+		exit 1
+	fi
+done
+
 # Use TR to convert newlines to tabs.
 VGRREF=`grep RTFM $REF_FILES | \
 	sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | \
