@@ -158,7 +158,10 @@ SunPw_open()
 		gfxfd = open(gfxwinname, 2);
 		win_insertblanket(sun_win_fd, gfxfd);
 
-		sun_master_pw = pw_open(sun_win_fd);
+		if( (sun_master_pw = pw_open(sun_win_fd)) == (Pixwin *)0 )  {
+			fprintf(stderr,"sun: pw_open failed\n");
+			return(-1);
+		}
 		win_getsize(sun_win_fd, &sun_master_rect);
 		width = sun_master_rect.r_width;
 		height = sun_master_rect.r_height;
@@ -219,6 +222,8 @@ SunPw_open()
 		grn[7] = 255;
 		blu[7] = 255;
 		pw_putcolormap(sun_pw, 0, 8, red, grn, blu);
+	} else {
+		pr_blackonwhite( sun_pw->pw_pixrect, 0, 1 );
 	}
 
 	sun_clear_win();
@@ -226,7 +231,7 @@ SunPw_open()
 	if (sun_font_ptr == (struct pixfont *) 0)
 	{
 		perror(LABELING_FONT);
-		exit(1);
+		return(-1);
 	}
 	pf_textbound(&bound, 1, sun_font_ptr, "X");
 	notify_set_signal_func(SunPw_open, sun_sigwinch, SIGWINCH, NOTIFY_ASYNC);
@@ -247,6 +252,51 @@ void	SunPw_close()
 }
 
 /*
+ *			S U N _ C O L O R
+ */
+sun_color(color)
+int             color;
+{
+	/* Note that DM_BLACK is only used for clearing to background */
+	if( sun_depth < 8 )  {
+		/*
+		 * Sun Monochrome:  Following normal Sun usage,
+		 * background (DM_BLACK) is white, from Sun color value 0,
+		 * foreground (DM_WHITE) is black, from Sun color value 1.
+		 * HOWEVER, in a graphics window, somehow this seems reversed.
+		 */
+		if( color == DM_BLACK )
+			sun_cmap_color = 1;
+		else
+			sun_cmap_color = 0;
+		/* Note that color value of 0 becomes -1 (foreground) (=1),
+		 * according to pg 14 of Pixrect Ref Man (V.A or 17-Feb-86) */
+		return;
+	}
+	switch (color)
+	{
+	case DM_BLACK:
+		sun_cmap_color = 0;
+		break;
+	case DM_RED:
+		sun_cmap_color = 1;
+		break;
+	case DM_BLUE:
+		sun_cmap_color = 4;
+		break;
+	case DM_YELLOW:
+		sun_cmap_color = 3;
+		break;
+	case DM_WHITE:
+		sun_cmap_color = 7;
+		break;
+	default:
+		printf("sun_color:  mged color %d not known\n", color);
+		break;
+	}
+}
+
+/*
  *			S U N P W _ P R O L O G
  *
  * There are global variables which are parameters to this routine.
@@ -259,15 +309,9 @@ void            SunPw_prolog()
 	/* clear the screen for a redraw */
 	sun_clear_win();
 
-	/* Put the center point up */
+	/* Put the center point up, in foreground */
 	sun_color(DM_WHITE);
-	sun_point(0, 0);
-}
-
-sun_point(x, y)
-int             x, y;
-{
-	pw_put(sun_pw, GED_TO_SUNPW(x), GED_TO_SUNPW(-y), sun_cmap_color);
+	pw_put(sun_pw, GED_TO_SUNPW(0), GED_TO_SUNPW(0), 1);
 }
 
 /*
@@ -288,6 +332,8 @@ mat_t           mat;
 {
     return;
 }
+
+static Pr_brush sun_whitebrush = { 4 };
 
 /*
  *  			S U N P W _ O B J E C T
@@ -311,10 +357,14 @@ double          ratio;
 	struct mater   *mp;
 	int             nvec, totalvec;
 	int             useful = 0;
-	struct pr_pos   polylist[1024];
-	u_char          mvlist[1024];
+	struct pr_pos   polylist[1024+1];
+	u_char          mvlist[1024+1];
 	Pr_texture     *texP;
+	Pr_brush	*brush;
 	int		color;
+
+	if( white )  brush = &sun_whitebrush;
+	else brush = (Pr_brush *)0;
 
 	texP = sun_get_texP(sp->s_soldash);
 	mp = (struct mater *) sp->s_materp;
@@ -330,6 +380,12 @@ double          ratio;
 	for (vp = sp->s_vlist; nvec-- > 0; vp++)  {
 		MAT4X3PNT(pt, mat, vp->vl_pnt);
 		/* Visible range is +/- 1.0 */
+		/* 2^31 ~= 2e9 -- dynamic range of a long int */
+		/* 2^(31-11) = 2^20 ~= 1e6 */
+		if( pt[0] < -1e6 || pt[0] > 1e6 ||
+		    pt[1] < -1e6 || pt[1] > 1e6 )
+			continue;		/* omit this point (ugh) */
+		/* Integerize and let the Sun library do the clipping */
 		ptP->x = GED_TO_SUNPW( 2048*pt[0]);
 		ptP->y = GED_TO_SUNPW(-2048*pt[1]);
 		ptP++;
@@ -337,6 +393,7 @@ double          ratio;
 			*mvP++ = 1;
 		else
 			*mvP++ = 0;
+		useful++;
 	}
 	mvlist[0] = 0;
 	if( sun_depth < 8 )  {
@@ -344,9 +401,9 @@ double          ratio;
 		color = PIX_COLOR(sun_cmap_color);
 	} else
 		color = PIX_COLOR(mp->mt_dm_int);
-	pw_polyline(sun_pw, 0, 0, totalvec, polylist, mvlist, (Pr_brush *) 0,
+	pw_polyline(sun_pw, 0, 0, totalvec, polylist, mvlist, brush,
 	    texP, PIX_SRC | color );
-	return (1);			/* ## is more clipping information useful ? */
+	return(useful);
 }
 
 /*
@@ -382,15 +439,9 @@ void            SunPw_puts(str, x, y, size, color)
 register u_char *str;
 {
 	sun_color(color);
-	if( sun_depth < 8 )  {
-		/* Color, write transparant text */
-		pw_ttext(sun_pw, GED_TO_SUNPW(x), GED_TO_SUNPW(-y),
-		    PIX_SRC | PIX_COLOR(sun_cmap_color), sun_font_ptr, str);
-	} else {
-		/* Monochrome */
-		pw_text(sun_pw, GED_TO_SUNPW(x), GED_TO_SUNPW(-y),
-		    PIX_SRC | PIX_COLOR(sun_cmap_color), sun_font_ptr, str);
-	}
+	pw_text(sun_pw, GED_TO_SUNPW(x), GED_TO_SUNPW(-y),
+		(PIX_NOT(PIX_SRC)) | PIX_COLOR(sun_cmap_color),
+		sun_font_ptr, str);
 }
 
 /*
@@ -516,9 +567,11 @@ SunPw_input(cmd_fd, noblock)
 		    case XY_ROT_BUTTON:
 			dm_values.dv_xjoy = xval;
 			dm_values.dv_yjoy = yval;
+		    	break;
 		    case YZ_ROT_BUTTON:
 			dm_values.dv_yjoy = yval;
 			dm_values.dv_zjoy = xval;
+		    	break;
 		    case XZ_ROT_BUTTON:
 			dm_values.dv_xjoy = xval;
 			dm_values.dv_zjoy = yval;
@@ -757,45 +810,11 @@ register int    w[];
     clipmax[2] = w[4] / 2047.;
 }
 
-sun_color(color)
-int             color;
-{
-	if( sun_depth < 8 )  {
-		/* Sun Monochrome:  0 gives white (bg), 1 gives black (fg) */
-		if( color == DM_BLACK )
-			sun_cmap_color = 1;
-		else
-			sun_cmap_color = 0;
-		return;
-	}
-	switch (color)
-	{
-	case DM_BLACK:
-		sun_cmap_color = 0;
-		break;
-	case DM_RED:
-		sun_cmap_color = 1;
-		break;
-	case DM_BLUE:
-		sun_cmap_color = 4;
-		break;
-	case DM_YELLOW:
-		sun_cmap_color = 3;
-		break;
-	case DM_WHITE:
-		sun_cmap_color = 7;
-		break;
-	default:
-		printf("sun_color:  mged color %d not known\n", color);
-		break;
-	}
-}
-
 sun_clear_win()
 {
 	sun_color(DM_BLACK);
 	/* Clear entire window, regardless of how much is being used */
-	/* XXX oddlyl using sun_master_pw here does not work! */
+	/* XXX oddly, using sun_master_pw here does not work! */
 	pw_rop(sun_pw, 0, 0,
 		sun_master_rect.r_width, sun_master_rect.r_height,
 		PIX_SRC | PIX_COLOR(sun_cmap_color), (Pixrect *) 0, 0, 0);
