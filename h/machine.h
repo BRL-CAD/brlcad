@@ -181,9 +181,17 @@ typedef long	bitv_t;		/* largest integer type */
  * Eventually, should be tied to type of hardware (IEEE, IBM, Cray)
  * used to implement the fastf_t type.
  */
+#ifdef vax
+	/* DEC VAX "D" format, the most restrictive */
 #define MAX_FASTF		1.0e37	/* Very close to the largest number */
 #define SMALL_FASTF		1.0e-37	/* Anything smaller is zero */
 #define SQRT_SMALL_FASTF	1.0e-18	/* This squared gives zero */
+#else
+	/* IBM format, being the next most restrictive format */
+#define MAX_FASTF		1.0e73	/* Very close to the largest number */
+#define SMALL_FASTF		1.0e-77	/* Anything smaller is zero */
+#define SQRT_SMALL_FASTF	1.0e-39	/* This squared gives zero */
+#endif
 #define SMALL			SQRT_SMALL_FASTF
 
 /*
