@@ -3,6 +3,7 @@
 brlcadincludedir = $(includedir)/brlcad
 
 brlcadinclude_required = \
+	RtServerImpl.h \
 	bn.h \
 	bu.h \
 	common.h \
@@ -11,6 +12,7 @@ brlcadinclude_required = \
 	rtgeom.h \
 	rtlist.h \
 	rtprivate.h \
+	rtserver.h \
 	rtstring.h
 
 brlcadinclude_wanted = \
