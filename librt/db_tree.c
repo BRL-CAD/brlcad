@@ -2042,37 +2042,25 @@ genptr_t	arg;
  *			For example:  rt_initial_tree_state,
  *			and mged_initial_tree_state.
  *
- *	reg_start_func	Func returns 0 if region should be skipped,
+ *	reg_start_func	Called at beginning of each region, before visiting
+ *			any nodes within the region.
+ *			Return 0 if region should be skipped without recursing,
  *			 otherwise non-zero.  DO NOT USE FOR OTHER PURPOSES!
+ *			For example, can be used to quickly skip air regions.
  *
- *	reg_end_func	Func to process collected region data.
- *			returns a pointer to "any unused subtree for freeing"
- *			  XXX What does that mean???
+ *	reg_end_func	Called after all nodes within a region have been
+ *			recursively processed by leaf_func.
+ *			If it wants to retain 'curtree' then it may steal
+ *			that pointer and return TREE_NULL.
+ *			If it wants us to clean up some or all of that
+ *			tree, then it returns a non-null (union tree *)
+ *			pointer, and that tree is safely freed
+ *			in a non-parallel section before we return.
  *  
  *	leaf_func	Function to process a leaf node.
- *				Unknown significance of returned parameter
- *
- * Function Prototypes:
- *
- *	int	reg_start_func(
- *			struct db_tree_state	*nts,
- *			struct db_full_path	*pathp,
- *			struct rt_comb_internal	*comb,
- *			genptr_t		client_data)
- *
- *
- *	union tree *reg_end_func(
- *			struct db_tree_state	*db_ts,
- *	                struct db_full_path	*db_fp,
- *	                union tree		*curtree,
- *	                genptr_t		client_data)
- *
- *	union tree *leaf_func(
- *			struct db_tree_state	*tsp,
- *			struct db_full_path	*pathp,
- *			struct bu_external	*ep,
- *			int			id, /_* rt_id_solid() result *_/
- *			genptr_t		client_data)
+ *			It is actually invoked from db_recurse() from db_walk_subtree().
+ *			Returns (union tree *) representing the leaf, or
+ *			TREE_NULL if leaf does not exist or has an error.
  *
  *
  *  This routine will employ multiple CPUs if asked,
