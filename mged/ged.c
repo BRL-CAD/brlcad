@@ -362,7 +362,7 @@ char **argv;
 
 #if TRY_PIPES
 	(void)pipe(ged_pipe);
-	Tk_CreateFileHandler(fileno(stdin), TK_READABLE, stdin_input,
+	Tk_CreateFileHandler(STDIN_FILENO, TK_READABLE, stdin_input,
 			     (ClientData)STDIN_FILENO);
 	Tk_CreateFileHandler(ged_pipe[0], TK_READABLE, stdin_input,
 			     (ClientData)ged_pipe[0]);
