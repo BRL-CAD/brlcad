@@ -1,3 +1,6 @@
+#ifndef SEEN_DM_X
+#define SEEN_DM_X
+
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
@@ -47,3 +50,5 @@ extern struct x_vars head_x_vars;
 extern void X_configure_window_shape();
 extern void X_establish_perspective();
 extern void X_set_perspective();
+
+#endif /* SEEN_DM_X */
