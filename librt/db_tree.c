@@ -53,6 +53,7 @@ db_free_combined_tree_state( ctsp )
 register struct combined_tree_state	*ctsp;
 {
 	db_free_full_path( &(ctsp->cts_p) );
+	bzero( (char *)ctsp, sizeof(*ctsp) );		/* sanity */
 	rt_free( (char *)ctsp, "combined_tree_state");
 }
 
@@ -411,7 +412,7 @@ found_it:
 		}
 
 		/* Free record */
-		rt_free( (char *)rp, comb_dp->d_namep );
+		rt_free( (char *)rp, "db_follow_path_for_state record[]" );
 		rp = (union record *)0;
 
 		/* Advance to next path element */
@@ -420,7 +421,7 @@ found_it:
 	} while( oldc != '\0' );
 
 out:
-	if( rp )  rt_free( (char *)rp, dp->d_namep );
+	if( rp )  rt_free( (char *)rp, "db_follow_path_for_state record[] out" );
 	rt_free( str, "dupped path" );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
@@ -430,7 +431,7 @@ out:
 	}
 	return(0);		/* SUCCESS */
 fail:
-	if( rp )  rt_free( (char *)rp, dp->d_namep );
+	if( rp )  rt_free( (char *)rp, "db_follow_path_for_state record[] fail" );
 	rt_free( str, "dupped path" );
 	return(-1);		/* FAIL */
 }
@@ -793,7 +794,7 @@ region_end:
 		curtree = TREE_NULL;
 	}
 out:
-	if( rp )  rt_free( (char *)rp, dp->d_namep );
+	if( rp )  rt_free( (char *)rp, "db_recurse record[]" );
 	if( trees )  rt_free( (char *)trees, "tree_list array" );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
@@ -874,20 +875,24 @@ union tree	*tp;
 		break;
 
 	case OP_SOLID:
-		if( tp->tr_a.tu_stp )
+		if( tp->tr_a.tu_stp )  {
 			rt_free( (char *)tp->tr_a.tu_stp, "(union tree) solid" );
+			tp->tr_a.tu_stp = RT_SOLTAB_NULL;
+		}
 		break;
 	case OP_REGION:
 		/* REGION leaf, free combined_tree_state & path */
-		if( tp->tr_a.tu_stp )
+		if( tp->tr_a.tu_stp )  {
 			db_free_combined_tree_state(
 				(struct combined_tree_state *)tp->tr_a.tu_stp );
+		}
 		break;
 
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
 		db_free_tree( tp->tr_b.tb_left );
+		tp->tr_b.tb_left = TREE_NULL;
 		break;
 
 	case OP_UNION:
@@ -896,12 +901,15 @@ union tree	*tp;
 	case OP_XOR:
 		/* This node is known to be a binary op */
 		db_free_tree( tp->tr_b.tb_left );
+		tp->tr_b.tb_left = TREE_NULL;
 		db_free_tree( tp->tr_b.tb_right );
+		tp->tr_b.tb_right = TREE_NULL;
 		break;
 
 	default:
 		rt_bomb("db_free_tree: bad op\n");
 	}
+	tp->tr_op = 0;		/* sanity */
 	rt_free( (char *)tp, "union tree" );
 }
 
