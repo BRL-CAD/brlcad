@@ -144,6 +144,7 @@ proc read_output { id } {
 		if { [string length $inn] > 0 } {
 			set over_cont($id,glint_ret) $over_cont($id,glint_ret)$inn
 		}
+		exec rm /tmp/g_lint_error
 		$over_cont($id,top).status configure -text "Processing output..."
 		update
 
