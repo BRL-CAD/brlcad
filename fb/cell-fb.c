@@ -71,8 +71,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *		Includes offsetting the viewport anywhere on the screen.
  */
 
-#define H2CX(_h)	((int)( ((_h) - xmin) / cell_size ))
-#define V2CY(_v)	((int)( ((_v) - ymin) / cell_size ))
+#define H2CX(_h)	( (int)(((_h) - xmin) / cell_size + 0.5) )
+#define V2CY(_v)	( (int)(((_v) - ymin) / cell_size + 0.5) )
 
 #define CX2VPX(_cx)	( ((_cx)             ) * (wid + grid_flag) )
 #define CY2VPY(_cy)	( ((_cy) + key_height) * (hgt + grid_flag) )
@@ -510,7 +510,7 @@ long	ncells;
 	    if (lasty != NEG_INFINITY)
 	    {
 		if (debug_flag & CFB_DBG_GRID)
-		    bu_log("%d = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
+		    bu_log("%g = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
 		y0 = V2SCRY(lasty);
 	    	if( y0 >= 0 && y0 < fb_height )  {
 			for(y1 = y0 + hgt; y0 < y1; y0++)
@@ -554,6 +554,8 @@ long	ncells;
     }
 
     /* Write out last row of cells. */
+    if (debug_flag & CFB_DBG_GRID)
+	bu_log("%g = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
     for (y0 = V2SCRY(lasty), y1 = y0 + hgt; y0 < y1;  y0++)
 	if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
 	{
