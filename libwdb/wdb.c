@@ -317,67 +317,15 @@ point_t	center;
 vect_t	inorm;
 double	r1, r2;
 {
-	union record rec;
-	vect_t	norm;
-	vect_t	cross1, cross2;
-	double	r3, r4;
-	double	m2;
+	struct rt_tor_internal	tor;
 
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.s.s_id = ID_SOLID;
-	rec.s.s_type = TOR;
-	NAMEMOVE(name,rec.s.s_name);
+	tor.magic = RT_TOR_INTERNAL_MAGIC;
+	VMOVE( tor.v, center );
+	VMOVE( tor.h, inorm );
+	tor.r_a = r1;
+	tor.r_h = r2;
 
-	/* Validate that 0 < r2 <= r1 */
-	if( r2 <= 0.0 )  {
-		fprintf(stderr, "mk_tor(%s):  illegal r2=%.12e <= 0\n",
-			name, r2);
-		return(-1);
-	}
-	if( r2 > r1 )  {
-		fprintf(stderr, "mk_tor(%s):  illegal r2=%.12e > r1=%.12e\n",
-			name, r2, r1);
-		return(-1);
-	}
-
-	r1 *= mk_conv2mm;
-	r2 *= mk_conv2mm;
-	r3=r1-r2;	/* Radius to inner circular edge */
-	r4=r1+r2;	/* Radius to outer circular edge */
-
-	VSCALE( F1, center, mk_conv2mm );
-
-	VMOVE( norm, inorm );
-	m2 = MAGNITUDE( norm );		/* F2 is NORMAL to torus */
-	if( m2 <= SQRT_SMALL_FASTF )  {
-		(void)fprintf(stderr, "mk_tor(%s): normal magnitude is zero!\n", name);
-		return(-1);		/* failure */
-	}
-	m2 = 1.0/m2;
-	VSCALE( norm, norm, m2 );	/* Give normal unit length */
-	VSCALE( F2, norm, r2 );		/* Give F2 normal radius length */
-
-	/* Create two mutually perpendicular vectors, perpendicular to Norm */
-	vec_ortho( cross1, norm );
-	VCROSS( cross2, cross1, norm );
-	VUNITIZE( cross2 );
-
-	/* F3, F4 are perpendicular, goto center of solid part */
-	VSCALE( F3, cross1, r1 );
-	VSCALE( F4, cross2, r1 );
-
-	/* The rest of these provide no real extra information */
-	/* F5, F6 are perpendicular, goto inner edge of ellipse */
-	VSCALE( F5, cross1, r3 );
-	VSCALE( F6, cross2, r3 );
-
-	/* F7, F8 are perpendicular, goto outer edge of ellipse */
-	VSCALE( F7, cross1, r4 );
-	VSCALE( F8, cross2, r4 );
-	
-	if( fwrite( (char *) &rec, sizeof(rec), 1, fp) != 1 )
-		return(-1);	/* failure */
-	return(0);		/* OK */
+	return mk_export_fwrite( fp, name, (genptr_t)&tor, ID_TOR );
 }
 
 /*
