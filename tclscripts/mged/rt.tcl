@@ -10,6 +10,8 @@ check_externs "_mged_opendb _mged_rt"
 
 proc init_Raytrace { id } {
     global player_screen
+    global mged_active_dm
+    global fb
     global rt_fb_or_file
     global rt_fb
     global rt_file
@@ -27,12 +29,10 @@ proc init_Raytrace { id } {
 	return
     }
 
+    winset $mged_active_dm($id)
+
     if ![info exists rt_fb_or_file($id)] {
 	set rt_fb_or_file($id) framebuffer
-    }
-
-    if ![info exists rt_fb($id)] {
-	set rt_fb($id) ""
     }
 
     if ![info exists rt_file($id)] {
@@ -64,40 +64,73 @@ proc init_Raytrace { id } {
 	set rt_lmodel($id) 0
     }
 
-    toplevel $top -screen $player_screen($id)
-
-    frame $top.gridF1 -relief groove -bd 2
-    frame $top.gridF2 -relief groove -bd 2
-    frame $top.gridF3
-    frame $top.framebufferF -relief sunken -bd 2
-    frame $top.filenameF -relief sunken -bd 2
-    frame $top.sizeF -relief sunken -bd 2
-    frame $top.colorF -relief sunken -bd 2
-
-    if {$rt_fb_or_file($id) == "framebuffer"} {
+    if {$fb} {
+	set rt_fb_or_file($id) "framebuffer"
 	set fb_state normal
 	set file_state disabled
     } else {
+	set rt_fb_or_file($id) "filename"
 	set fb_state disabled
 	set file_state normal
     }
 
+    toplevel $top -screen $player_screen($id) -menu $top.menubar
+
+    frame $top.gridF1
+    frame $top.gridF2 -relief groove -bd 2
+    frame $top.gridF3 -relief groove -bd 2
+    frame $top.gridF4
+#    frame $top.framebufferF -relief sunken -bd 2
+    frame $top.filenameF -relief sunken -bd 2
+    frame $top.sizeF -relief sunken -bd 2
+    frame $top.colorF -relief sunken -bd 2
+
+    menu $top.menubar -tearoff 0
+    $top.menubar add cascade -label "Active Pane" -underline 0 -menu $top.menubar.active
+    $top.menubar add cascade -label "Framebuffer" -underline 0 -menu $top.menubar.fb
+
+    menu $top.menubar.active -tearoff 0
+    $top.menubar.active add radiobutton -value ul -variable mged_dm_loc($id)\
+	    -label "Upper Left" -underline 6\
+	    -command "set_active_dm $id"
+    $top.menubar.active add radiobutton -value ur -variable mged_dm_loc($id)\
+	    -label "Upper Right" -underline 6\
+	    -command "set_active_dm $id"
+    $top.menubar.active add radiobutton -value ll -variable mged_dm_loc($id)\
+	    -label "Lower Left" -underline 2\
+	    -command "set_active_dm $id"
+    $top.menubar.active add radiobutton -value lr -variable mged_dm_loc($id)\
+	    -label "Lower Right" -underline 3\
+	    -command "set_active_dm $id"
+
+    menu $top.menubar.fb -tearoff 0
+    $top.menubar.fb add radiobutton -value 1 -variable mged_fb_all($id)\
+	    -label "All" -underline 0\
+	    -command "mged_apply $id \"set fb_all \$mged_fb_all($id)\""
+    $top.menubar.fb add radiobutton -value 0 -variable mged_fb_all($id)\
+	    -label "Rectangle Area" -underline 0\
+	    -command "mged_apply $id \"set fb_all \$mged_fb_all($id)\""
+    $top.menubar.fb add separator
+    $top.menubar.fb add radiobutton -value 1 -variable mged_fb_overlay($id)\
+	    -label "Overlay" -underline 0\
+	    -command "mged_apply $id \"set fb_overlay \$mged_fb_overlay($id)\""
+    $top.menubar.fb add radiobutton -value 0 -variable mged_fb_overlay($id)\
+	    -label "Underlay" -underline 0\
+	    -command "mged_apply $id \"set fb_overlay \$mged_fb_overlay($id)\""
+#    $top.menubar.fb add separator
+#    $top.menubar.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
+#	    -label "Framebuffer Active" -underline 0\
+#	    -command "set_fb $id"
+#    $top.menubar.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
+#	    -label "Listen For Clients" -underline 0\
+#	    -command "set_listen $id" -state disabled
+
     radiobutton $top.framebufferRB -text "Frame Buffer" -anchor w\
 	    -value framebuffer -variable rt_fb_or_file($id)\
 	    -command "rt_set_fb_state $id"
-    entry $top.framebufferE -relief flat -width 12 -textvar rt_fb($id)\
-	    -state $fb_state
-    menubutton $top.framebufferMB -relief raised -bd 2\
-	    -menu $top.framebufferMB.m
-    menu $top.framebufferMB.m -tearoff 0
-    $top.framebufferMB.m add command -label "Upper Left"\
-	    -command "set_rt_fb $id ul"
-    $top.framebufferMB.m add command -label "Upper Right"\
-	    -command "set_rt_fb $id ur"
-    $top.framebufferMB.m add command -label "Lower Left"\
-	    -command "set_rt_fb $id ll"
-    $top.framebufferMB.m add command -label "Lower Right"\
-	    -command "set_rt_fb $id lr"
+#    entry $top.framebufferE -relief flat -width 12 -textvar rt_fb($id)\
+#	    -state $fb_state
+    label $top.framebufferL -textvariable rt_fb($id)
 
     radiobutton $top.filenameRB -text "File Name" -anchor w\
 	    -value filename -variable rt_fb_or_file($id)\
@@ -159,37 +192,38 @@ proc init_Raytrace { id } {
     button $top.dismissB -relief raised -text "Dismiss" \
 	    -command "catch { destroy $top }"
 
-    grid $top.framebufferE -sticky "ew" -in $top.framebufferF
-    grid $top.framebufferF $top.framebufferRB -sticky "ew"\
-	    -in $top.gridF1 -padx 8 -pady 8
+#    grid $top.framebufferE -sticky "ew" -in $top.framebufferF
+#    grid $top.framebufferF $top.framebufferRB -sticky "ew"\
+#	    -in $top.gridF2 -padx 8 -pady 8
+    grid $top.framebufferL $top.framebufferRB -sticky "ew"\
+	    -in $top.gridF2 -padx 8 -pady 8
     grid $top.filenameE -sticky "ew" -in $top.filenameF
     grid $top.filenameF $top.filenameRB -sticky "ew"\
-	    -in $top.gridF1 -padx 8 -pady 8
-    grid columnconfigure $top.framebufferF 0 -weight 1
+	    -in $top.gridF2 -padx 8 -pady 8
+#    grid columnconfigure $top.framebufferF 0 -weight 1
     grid columnconfigure $top.filenameF 0 -weight 1
-    grid columnconfigure $top.gridF1 0 -weight 1
+    grid columnconfigure $top.gridF2 0 -weight 1
 
     grid $top.sizeE $top.sizeMB -sticky "ew" -in $top.sizeF
-    grid $top.sizeF $top.sizeL -sticky "ew" -in $top.gridF2 -padx 8 -pady 8
+    grid $top.sizeF $top.sizeL -sticky "ew" -in $top.gridF3 -padx 8 -pady 8
     grid $top.colorE $top.colorMB -sticky "ew" -in $top.colorF
-    grid $top.colorF $top.colorL -sticky "ew" -in $top.gridF2 -padx 8 -pady 8
-    grid $top.advancedB - -in $top.gridF2 -padx 8 -pady 8
+    grid $top.colorF $top.colorL -sticky "ew" -in $top.gridF3 -padx 8 -pady 8
+    grid $top.advancedB - -in $top.gridF3 -padx 8 -pady 8
 
     grid columnconfigure $top.sizeF 0 -weight 1
     grid columnconfigure $top.colorF 0 -weight 1
-    grid columnconfigure $top.gridF2 0 -weight 1
+    grid columnconfigure $top.gridF3 0 -weight 1
 
-#    grid $top.advancedB -sticky "nsew" -in $top.gridF3
-#    grid configure $top.advancedB -columnspan 5
-    grid $top.raytraceB x $top.clearB x $top.dismissB -sticky "nsew" -in $top.gridF3
-    grid columnconfigure $top.gridF3 1 -weight 1 -minsize 8
-    grid columnconfigure $top.gridF3 3 -weight 1 -minsize 8
+    grid $top.raytraceB x $top.clearB x $top.dismissB -sticky "nsew" -in $top.gridF4
+    grid columnconfigure $top.gridF4 1 -weight 1 -minsize 8
+    grid columnconfigure $top.gridF4 3 -weight 1 -minsize 8
 
-    pack $top.gridF1 $top.gridF2 $top.gridF3 -side top -expand 1 -fill both\
+    pack $top.gridF2 $top.gridF3 $top.gridF4 -side top -expand 1 -fill both\
 	    -padx 8 -pady 8
 
     bind $top.colorE <Return> "rt_set_colorMB $id"
     rt_set_colorMB $id
+    update_Raytrace $id
 
     set pxy [winfo pointerxy $top]
     set x [lindex $pxy 0]
@@ -200,6 +234,10 @@ proc init_Raytrace { id } {
 
 proc do_Raytrace { id } {
     global player_screen
+    global mged_active_dm
+    global mged_dm_loc
+    global port
+    global fb_all
     global rt_fb_or_file
     global rt_fb
     global rt_file
@@ -209,8 +247,10 @@ proc do_Raytrace { id } {
     global rt_hsample
     global rt_jitter
     global rt_lmodel
+    global debug_rt_cmd
 
-    cmd_set $id
+    winset $mged_active_dm($id)
+#    cmd_set $id
     set rt_cmd "_mged_rt"
 
     if {$rt_fb_or_file($id) == "filename"} {
@@ -235,18 +275,24 @@ proc do_Raytrace { id } {
 	    return
 	}
     } else {
-	if {$rt_fb($id) != ""} {
-	    append rt_cmd " -F $rt_fb($id)"
-	}
+	append rt_cmd " -F $port"
+#	if {$rt_fb($id) != ""} {
+#	    append rt_cmd " -F $rt_fb($id)"
+#	}
     }
 
     if {$rt_size($id) != ""} {
-	set result [regexp "^(\[0-9\]+)\[xX\]?(\[0-9\]*)$"\
-		$rt_size($id) smatch width height]
+	set result [regexp "^(\[ \]*\[0-9\]+)((\[ \]*\[xX\]?\[ \]*)|(\[ \]+))(\[0-9\]*\[ \]*)$"\
+		$rt_size($id) smatch width junkA junkB junkC height]
 	if {$result} {
 	    if {$height != ""} {
 		append rt_cmd " -w $width -n $height"
+		set width "$width.0"
+		set height "$height.0"
+		set aspect [expr $width / $height]
+		append rt_cmd " -V $aspect"
 	    } else {
+		set aspect 1
 		append rt_cmd " -s $width"
 	    }
 	} else {
@@ -256,6 +302,8 @@ proc do_Raytrace { id } {
 		    "" 0 OK
 	    return
 	}
+    } else {
+	set aspect 1
     }
 
     if {$rt_color($id) != ""} {
@@ -288,14 +336,47 @@ proc do_Raytrace { id } {
 	append rt_cmd " -l$rt_lmodel($id)"
     }
 
+    if {!$fb_all} {
+	set rect [_mged_get_rect]
+	set xmin [lindex $rect 0]
+	set ymin [lindex $rect 1]
+	set width [lindex $rect 2]
+	set height [expr [lindex $rect 3] * $aspect]
+	regexp "^\[-\]?\[0-9\]+" $height height
+
+	if {$width != 0 && $height != 0} {
+	    if {$width > 0} {
+		set xmax [expr $xmin + $width]
+	    } else {
+		set xmax $xmin
+		set xmin [expr $xmax + $width]
+	    }
+
+	    if {$height > 0} {
+		set ymax [expr $ymin + $height]
+	    } else {
+		set ymax $ymin
+		set ymin [expr $ymax + $height]
+	    }
+
+	    append rt_cmd " -j $xmin,$ymin,$xmax,$ymax"
+	}
+    }
+
+    set debug_rt_cmd $rt_cmd
+
     catch {eval $rt_cmd}
 }
 
 proc do_fbclear { id } {
     global player_screen
+    global mged_active_dm
+    global port
     global rt_fb_or_file
     global rt_fb
     global rt_color
+
+    winset $mged_active_dm($id)
 
     if {$rt_color($id) != ""} {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
@@ -314,7 +395,7 @@ proc do_fbclear { id } {
     }
 
     if {$rt_fb($id) != ""} {
-	set result [catch { exec fbclear -F $rt_fb($id) $red $green $blue & } rt_error]
+	set result [catch { exec fbclear -F $port $red $green $blue & } rt_error]
     } else {
 	set result [catch { exec fbclear $red $green $blue & } rt_error]
     }
@@ -326,22 +407,29 @@ proc do_fbclear { id } {
 }
 
 proc rt_set_fb_state { id } {
-    set top .$id.do_rt
+    global mged_fb
 
+    set mged_fb($id) 1
+    set_fb $id
+
+    set top .$id.do_rt
     $top.clearB configure -state normal
-    $top.framebufferE configure -state normal
+    $top.menubar entryconfigure 1 -state normal
     $top.filenameE configure -state disabled
 
-    focus $top.framebufferE
+    rt_set_fb_size $id
 }
 
 proc rt_set_file_state { id } {
+    global mged_fb
+
+    set mged_fb($id) 0
+    set_fb $id
+
     set top .$id.do_rt
-
     $top.clearB configure -state disabled
-    $top.framebufferE configure -state disabled
+    $top.menubar entryconfigure 1 -state disabled
     $top.filenameE configure -state normal
-
     focus $top.filenameE
 }
 
@@ -388,11 +476,13 @@ proc rt_set_colorMB { id } {
 }
 
 proc rt_set_fb_size { id } {
-    global mged_active_dm
+    global mged_top
     global rt_size
+    global mged_dm_loc
 
-    winset $mged_active_dm($id)
-    set rt_size($id) [dm size]
+    winset $mged_top($id).$mged_dm_loc($id)
+    set size [dm size]
+    set rt_size($id) "[lindex $size 0]x[lindex $size 1]"
 }
 
 proc do_Advanced_Settings { id } {
@@ -523,29 +613,47 @@ proc do_Advanced_Settings { id } {
     wm title $top "Advanced Settings..."
 }
 
-proc set_rt_fb { id loc } {
-    global mged_top
+proc update_Raytrace { id } {
     global mged_active_dm
-    global rt_fb
+    global mged_dm_loc
     global fb
     global mged_fb
     global listen
     global mged_listen
-    
-    switch $loc {
+    global port
+    global rt_fb
+    global rt_fb_or_file
+
+    set top .$id.do_rt
+    if ![winfo exists $top] {
+	return
+    }
+
+    winset $mged_active_dm($id)
+    switch $mged_dm_loc($id) {
 	ul {
-	    winset $mged_top.ul
-	    set rt_fb($id)
+	    set rt_fb($id) "Upper Left"
+	}
+	ur {
+	    set rt_fb($id) "Upper Right"
+	}
+	ll {
+	    set rt_fb($id) "Lower Left"
+	}
+	lr {
+	    set rt_fb($id) "Upper Right"
 	}
     }
 
     if {$mged_fb($id)} {
-	.$id.m.settings.m.cm_fb entryconfigure 7 -state normal
-	set mged_listen($id) $listen
+	set rt_fb_or_file($id) "framebuffer"
+	set fb_state normal
+	set file_state disabled
+	rt_set_fb_state $id
     } else {
-	.$id.m.settings.m.cm_fb entryconfigure 7 -state disabled
-	set mged_listen($id) $listen
+	set rt_fb_or_file($id) "filename"
+	set fb_state disabled
+	set file_state normal
+	rt_set_file_state $id
     }
-
-    winset $mged_active_dm($id)
 }

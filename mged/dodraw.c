@@ -1800,5 +1800,6 @@ char	**argv;
 	curr_dm_list = save_dmlp;
 #endif
 
+	update_views = 1;
 	return TCL_OK;
 }

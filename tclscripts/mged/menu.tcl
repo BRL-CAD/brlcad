@@ -331,7 +331,7 @@ proc undo_edit_menu {} {
 		continue
 	    }
 
-	    if {[.$id.menubar.edit entrycget 0 -label] != "Solid"} {
+	    if {[.$id.menubar.edit entrycget 0 -label] != "Solid..."} {
 		.$id.menubar.edit delete 0
 	    } else {
 		break

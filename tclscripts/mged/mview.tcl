@@ -6,16 +6,23 @@ if ![info exists bob_testing] {
     set bob_testing 0
 }
 
+if ![info exists debug_setmv] {
+    set debug_setmv 0
+}
+
+set mged_default_bd 2
+
 proc openmv { id w wc dpy dtype S } {
     global win_to_id
     global bob_testing
+    global mged_default_bd
 
     frame $wc.u
     frame $wc.l
-    frame $wc.u.l -relief sunken -borderwidth 2
-    frame $wc.u.r -relief sunken -borderwidth 2
-    frame $wc.l.l -relief sunken -borderwidth 2
-    frame $wc.l.r -relief sunken -borderwidth 2
+    frame $wc.u.l -relief sunken -borderwidth $mged_default_bd
+    frame $wc.u.r -relief sunken -borderwidth $mged_default_bd
+    frame $wc.l.l -relief sunken -borderwidth $mged_default_bd
+    frame $wc.l.r -relief sunken -borderwidth $mged_default_bd
 
     attach -d $dpy -t 0 -S $S -n $w.ul $dtype
     attach -d $dpy -t 0 -S $S -n $w.ur $dtype
@@ -28,21 +35,14 @@ proc openmv { id w wc dpy dtype S } {
     set win_to_id($w.lr) $id
 
     if { $bob_testing } {
-	grid $w.ul -in $wc.u.l -sticky "nsew"
-	grid $w.ur -in $wc.u.r -sticky "nsew"
-	grid $w.ll -in $wc.l.l -sticky "nsew"
-	grid $w.lr -in $wc.l.r -sticky "nsew"
-	grid $w.u.l $wc.u.r -sticky "nsew"
-	grid $w.l.l $wc.l.r -sticky "nsew"
-
-	grid columnconfigure $w.ul 0 -weight 1
-	grid rowconfigure $w.ul 0 -weight 1
-	grid columnconfigure $w.ur 0 -weight 1
-	grid rowconfigure $w.ur 0 -weight 1
-	grid columnconfigure $w.ll 0 -weight 1
-	grid rowconfigure $w.ll 0 -weight 1
-	grid columnconfigure $w.lr 0 -weight 1
-	grid rowconfigure $w.lr 0 -weight 1
+	grid $w.ul -in $wc.u.l -sticky "nsew" -row 0 -column 0
+	grid $w.ur -in $wc.u.r -sticky "nsew" -row 0 -column 0
+	grid $w.ll -in $wc.l.l -sticky "nsew" -row 0 -column 0
+	grid $w.lr -in $wc.l.r -sticky "nsew" -row 0 -column 0
+	grid $wc.u.l -sticky "nsew" -row 0 -column 0
+	grid $wc.u.r -sticky "nsew" -row 0 -column 1
+	grid $wc.l.l -sticky "nsew" -row 0 -column 0
+	grid $wc.l.r -sticky "nsew" -row 0 -column 1
 
 	grid columnconfigure $wc.u.l 0 -weight 1
 	grid rowconfigure $wc.u.l 0 -weight 1
@@ -181,8 +181,11 @@ proc packmv { id } {
     global bob_testing
 
     if { $bob_testing } {
-	grid $mged_dmc($id).u -sticky "nsew"
-	grid $mged_dmc($id).l -sticky "nsew"
+	grid $mged_dmc($id).u -sticky "nsew" -row 0 -column 0
+	grid $mged_dmc($id).l -sticky "nsew" -row 1 -column 0
+	grid columnconfigure $mged_dmc($id) 0 -weight 1
+	grid rowconfigure $mged_dmc($id) 0 -weight 1
+	grid rowconfigure $mged_dmc($id) 1 -weight 1
     } else {
 	pack $mged_dmc($id).u $mged_dmc($id).l -expand 1 -fill both
     }
@@ -222,6 +225,10 @@ proc setupmv { id } {
 
     set_default_views $id
     mged_apply_local $id "set faceplate 0"
+    set height [expr [winfo screenheight $mged_top($id)] - 50]
+    set width $height
+    wm geometry $mged_top($id) $width\x$height
+#    setmv $id
 
 #    bind $mged_top($id).ul m "togglemv $id"
 #    bind $mged_top($id).ur m "togglemv $id"
@@ -233,45 +240,81 @@ proc set_default_views { id } {
     global mged_top
 
     winset $mged_top($id).ul
+    _mged_press reset
     ae 0 90
 
     winset $mged_top($id).ur
+    _mged_press reset
     press 35,25
 
     winset $mged_top($id).ll
+    _mged_press reset
     press front
 
     winset $mged_top($id).lr
+    _mged_press reset
     press left
 }
 
 proc setmv { id } {
     global mged_top
     global mged_dmc
+    global mged_comb
+    global mged_show_cmd
+    global mged_show_status
     global win_size
-    global multi_view
+    global mged_multi_view
     global mged_active_dm
     global mged_small_dmc
+    global mged_default_bd
     global bob_testing
+    global debug_setmv
 
-    if $multi_view($id) {
-	unpackmv $id
+    incr debug_setmv
 
-	set mv_size [expr $win_size($id) / 2 - 4]
+    set border_offset [expr $mged_default_bd * 2]
 
-# In case of resize/reconfiguration --- resize everybody
-	winset $mged_top($id).ul
-	dm size $mv_size $mv_size
-	winset $mged_top($id).ur
-	dm size $mv_size $mv_size
-	winset $mged_top($id).ll
-	dm size $mv_size $mv_size
-	winset $mged_top($id).lr
-	dm size $mv_size $mv_size
-
+    if { $mged_multi_view($id) } {
 	if { $bob_testing } {
-	    grid $mged_active_dm($id) -in $mged_small_dmc($id) -sticky "nsew"
+	    set width [expr ([winfo width $mged_top($id)] - $border_offset) / 2]
+	    set height [expr ([winfo height $mged_top($id)] - $border_offset) / 2]
+
+	    if {$mged_comb($id)} {
+		if {$mged_show_cmd($id)} {
+		    set height [expr $height - [winfo height .$id.tf]]
+		}
+
+		if {$mged_show_status($id)} {
+		    set height [expr $height - [winfo height .$id.status]]
+		}
+	    }
+
+	    # In case of resize/reconfiguration --- resize everybody
+	    winset $mged_top($id).ul
+	    dm size $width $height
+	    winset $mged_top($id).ur
+	    dm size $width $height
+	    winset $mged_top($id).ll
+	    dm size $width $height
+	    winset $mged_top($id).lr
+	    dm size $width $height
+
+	    grid $mged_active_dm($id) -in $mged_small_dmc($id) -sticky "nsew" -row 0 -column 0
 	} else {
+	    unpackmv $id
+
+	    set mv_size [expr $win_size($id) / 2 - $border_offset]
+
+	    # In case of resize/reconfiguration --- resize everybody
+	    winset $mged_top($id).ul
+	    dm size $mv_size $mv_size
+	    winset $mged_top($id).ur
+	    dm size $mv_size $mv_size
+	    winset $mged_top($id).ll
+	    dm size $mv_size $mv_size
+	    winset $mged_top($id).lr
+	    dm size $mv_size $mv_size
+
 	    pack $mged_active_dm($id) -in $mged_small_dmc($id) -expand 1 -fill both
 	}
 
@@ -279,24 +322,42 @@ proc setmv { id } {
     } else {
 	winset $mged_active_dm($id)
 	unpackmv $id
-	dm size $win_size($id) $win_size($id)
 
 	if { $bob_testing } {
-	    grid $mged_active_dm($id) -in $mged_dmc($id) -sticky "nsew"
+	    set width [expr [winfo width $mged_top($id)] - $border_offset]
+	    set height [expr [winfo height $mged_top($id)] - $border_offset]
+
+	    if {$mged_comb($id)} {
+		if {$mged_show_cmd($id)} {
+		    set height [expr $height - [winfo height .$id.tf]]
+		}
+
+		if {$mged_show_status($id)} {
+		    set height [expr $height - [winfo height .$id.status]]
+		}
+	    }
+
+	    dm size $width $height
+
+	    grid $mged_active_dm($id) -in $mged_dmc($id) -sticky "nsew" -row 0 -column 0
+	    grid columnconfigure $mged_dmc($id) 0 -weight 1
+	    grid rowconfigure $mged_dmc($id) 0 -weight 1
 	} else {
+	    dm size $win_size($id) $win_size($id)
 	    pack $mged_active_dm($id) -in $mged_dmc($id)
 	}
     }
 }
 
 proc togglemv { id } {
-    global multi_view
+    global mged_multi_view
 
-    if $multi_view($id) {
-	set multi_view($id) 0
+    if $mged_multi_view($id) {
+	set mged_multi_view($id) 0
     } else {
-	set multi_view($id) 1
+	set mged_multi_view($id) 1
     }
 
     setmv $id
 }
+
