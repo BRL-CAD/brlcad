@@ -132,7 +132,7 @@ char	*argv[];
 	    inf_name = argv[optind++];
 	    if ((infd = open(inf_name, O_RDONLY)) == -1)
 	    {
-		rt_log ("Cannot open file '%s'\n", inf_name);
+		bu_log ("Cannot open file '%s'\n", inf_name);
 		exit (1);
 	    }
 	    break;
@@ -154,7 +154,7 @@ char	*argv[];
     }
     else if ((cfd = open(cf_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1)
     {
-	rt_log ("Cannot open file '%s'\n", cf_name);
+	bu_log ("Cannot open file '%s'\n", cf_name);
 	exit (1);
     }
     /*
@@ -171,7 +171,7 @@ char	*argv[];
     }
     else if ((dfd = open(df_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1)
     {
-	rt_log ("Cannot open file '%s'\n", df_name);
+	bu_log ("Cannot open file '%s'\n", df_name);
 	exit (1);
     }
 
