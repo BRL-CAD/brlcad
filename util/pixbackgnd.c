@@ -39,6 +39,7 @@ double hsv[3];				/* h,s,v */
 
 int	file_width = 512;
 int	file_height = 512;
+int	invert = 0;
 
 double	deltav;
 int	title_height = 80;
@@ -48,7 +49,7 @@ int	h_end = 50;
 void	rgbhsv(), hsvrgb();
 
 char usage[] = "\
-Usage:  pixbackgnd [-h] [-s squaresize] [-w width] [-n height]\n\
+Usage:  pixbackgnd [-h -i] [-s squaresize] [-w width] [-n height]\n\
 	[-t title_height]\n\
 	hue saturation\n\
 or	r g b\n";
@@ -58,8 +59,11 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hs:w:n:t:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "his:w:n:t:" )) != EOF )  {
 		switch( c )  {
+		case 'i':
+			invert = 1;
+			break;
 		case 'h':
 			/* high-res */
 			file_height = file_width = 1024;
@@ -161,17 +165,33 @@ char **argv;
 	 *  and write the scanline out.  Here we proceed bottom-to-top
 	 *  for pix(5) format.
 	 */
-	for( line = file_height-1; line >= 0; line-- )  {
-		register unsigned char *op;
+	if( !invert )  {
+		for( line = file_height-1; line >= 0; line-- )  {
+			register unsigned char *op;
 
-		vp = &vert_buf[line*3];
-		op = &horiz_buf[(file_width*3)-1];
-		while( op > horiz_buf )  {
-			*op-- = vp[2];
-			*op-- = vp[1];
-			*op-- = *vp;
+			vp = &vert_buf[line*3];
+			op = &horiz_buf[(file_width*3)-1];
+			while( op > horiz_buf )  {
+				*op-- = vp[2];
+				*op-- = vp[1];
+				*op-- = *vp;
+			}
+			write( 1, horiz_buf, file_width*3 );
 		}
-		write( 1, horiz_buf, file_width*3 );
+	} else {
+		/* Inverted:  top-to-bottom.  Good with cat-fb */
+		for( line=0; line < file_height; line++ )  {
+			register unsigned char *op;
+
+			vp = &vert_buf[line*3];
+			op = &horiz_buf[(file_width*3)-1];
+			while( op > horiz_buf )  {
+				*op-- = vp[2];
+				*op-- = vp[1];
+				*op-- = *vp;
+			}
+			write( 1, horiz_buf, file_width*3 );
+		}
 	}
 	exit(0);
 }
