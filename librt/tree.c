@@ -531,7 +531,7 @@ again:
 			stp->st_regions = (bitv_t *)0;
 			stp->st_dp = DIR_NULL;		/* was ptr to directory */
 			rt_free( (char *)stp, "dead struct soltab" );
-			rtip->nsolids--;
+			/* Can't do rtip->nsolids--, that doubles as max bit number! */
 			/* The macro makes it hard to regain place, punt */
 			goto again;
 		}
