@@ -303,7 +303,7 @@ int				count;
 	bu_log_indent_vls( v );
 	bu_vls_strcat( v, str );
 
-	for( i=0; i<count; i++ )  {
+	for( i=0; i<count; i++, hitp++ )  {
 		bu_vls_printf(v, "HIT%d dist=%g (surf %d)\n", i,
 			hitp->hit_dist, hitp->hit_surfno );
 	}
