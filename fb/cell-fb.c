@@ -63,12 +63,22 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  * coordinates.
  */
 
-#define H2VPX(_h)	((_h) - xmin)/cell_size * (wid + grid_flag)
-#define V2VPY(_v)	((_v) - ymin)/cell_sixe * (hgt + grid_flag)
-#define VPX2SCRX(_vp_x)	((_vp_x) + xorigin)
-#define VPY2SCRY(_vp_y)	((_vp_y) + yorigin)
-#define SCRX2H(_scr_x)	((_scr_x) - xorigin) * (cell_size/(wid + grid_flag) ) + xmin
-#define SCRY2V(_scr_y)  ((_scr_y) - yorigin) * (cell_size/(hgt + grid_flag) ) + ymin
+#define H2VPX(_h)	( ((_h) - xmin)/cell_size * (wid + grid_flag) )
+#define V2VPY(_v)	( ((_v) - ymin)/cell_size * (hgt + grid_flag) )
+#define VPX2SCRX(_vp_x)	( (_vp_x) + xorigin )
+#define VPY2SCRY(_vp_y)	( (_vp_y) + yorigin )
+
+/* When used with rtcell and without the -c flag, these macros give huge figures.
+ * With the -c flag, however, they ALMOST register perfectly.
+ */
+
+#define SCRX2H(_scr_x)	( ( (_scr_x) - xorigin ) * (cell_size/(wid + grid_flag) ) + xmin )
+#define SCRY2V(_scr_y)  ( ( (_scr_y) - yorigin ) * (cell_size/(hgt + grid_flag) ) + ymin )
+
+/*  These looked like they might work, but they produce really humongous figures.
+ *#define SCRX2H(_scr_x)	( ( (_scr_x) - xorigin ) / cell_size * (wid + grid_flag)  + xmin )
+ *#define SCRY2V(_scr_y)  ( ( (_scr_y) - yorigin ) / cell_size * (hgt + grid_flag)  + ymin )
+ */
 
 /* Map pixels into user units */
 #define	fbh2uu(_h)	(cell_size*(((_h)-xorigin)/(wid+grid_flag)-.5)+xmin)
@@ -858,6 +868,10 @@ STATIC void log_Run()
 	mat_idn( model2hv );
 	mat_idn( hv2model );
 
+	/* Print out the "view" just to keep rtregis from belly-aching */
+
+	printf("View: %g azimuth, %g elevation\n", az, el);
+
 	/** mat_ae( model2hv, az, el ); **/
 	/* Formula from rt/do.c */
 	mat_angles( model2hv, 270.0+el, 0.0, 270.0-az );
@@ -884,7 +898,7 @@ printf("SCRX2H(fb_width -1) = %g; SCRX2H(0) = %g; hv_viewsize= %g\n",
 
 	/* Now find the model eye_position and report on that */
 
-printf("hv_eye= %g\n", hv_eye);
+printf("hv_eye= %g, %g, %g\n", V3ARGS(hv_eye) );
 
 	MAT4X3PNT( m_eye, hv2model, hv_eye );
 
