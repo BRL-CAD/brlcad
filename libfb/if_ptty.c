@@ -56,7 +56,7 @@ FBIO ptty_interface =
 		ptty_viewport_set,
 		ptty_window_set,
 		ptty_zoom_set,
-		fb_null,			/* initialize bitmap */
+		fb_null,			/* curs_set */
 		ptty_cmemory_addr,
 		fb_null,			/* screen addr cursor move */
 		"Unix pseudo-tty Interface",

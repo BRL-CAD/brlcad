@@ -81,7 +81,7 @@ FBIO remote_interface =
 		fb_null,			/* viewport_set		*/
 		rem_window_set,
 		rem_zoom_set,
-		fb_null,			/* cursor_init_bitmap	*/
+		fb_null,			/* curs_set		*/
 		rem_cmemory_addr,
 		fb_null,			/* cursor_move_screen_addr */
 		"Remote Device Interface",	/* should be filled in	*/
