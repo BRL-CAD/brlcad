@@ -29,35 +29,32 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "wdb.h"
 
-struct wdb_pipeseg  pipe1[] = {
+struct wdb_pipept  pipe1[] = {
 	{
 		{(long)WDB_PIPESEG_MAGIC, 0, 0},
 		0, 1, 0,
-		0, 0, 0,
-		0.05, 0.1, WDB_PIPESEG_TYPE_LINEAR
+		0.05, 0.1, 0.1
 	},
 
 
 	{
 		{(long)WDB_PIPESEG_MAGIC, 0, 0},
-		0, 5, 0,
 		4, 5, 0,
-		0.05, 0.1, WDB_PIPESEG_TYPE_BEND
+		0.05, 0.1, 0.1
 	},
 
 	{
 		{(long)WDB_PIPESEG_MAGIC, 0, 0},
 		4, 9, 0,
-		0, 0, 0,
-		0.05, 0.1, WDB_PIPESEG_TYPE_LINEAR
+		0.05, 0.1, 0.1
 	},
 	{
 		{(long)WDB_PIPESEG_MAGIC, 0, 0},
 		9, 9, 0,
-		0, 0, 0,
-		0.05, 0.1, WDB_PIPESEG_TYPE_END
+		0.05, 0.1, 0.1
 	}
 };
+int	pipe1_npts = sizeof(pipe1)/sizeof(struct wdb_pipept);
 
 #define Q	0.05	/* inset from borders of enclsing cube */
 #define R	0.05	/* pushout factor */
@@ -101,7 +98,7 @@ char	**argv;
 	point_t	vert;
 	vect_t	h;
 	int	i;
-	struct wdb_pipeseg head;
+	struct wdb_pipept head;
 
 	mk_conversion("meters");
 	mk_id( stdout, "Pipe & Particle Test" );
@@ -123,10 +120,8 @@ char	**argv;
 
 	/* Make a piece of pipe */
 	RT_LIST_INIT( &head.l );
-	for( i=0; ; i++ )  {
+	for( i=0; i<pipe1_npts ; i++ )  {
 		RT_LIST_INSERT( &head.l, &pipe1[i].l );
-		if( pipe1[i].ps_type == WDB_PIPESEG_TYPE_END )
-			break;
 	}
 	pr_pipe( "pipe1", &head );
 	if( (i = mk_pipe( stdout, "pipe1", &head )) < 0 )
@@ -143,55 +138,31 @@ int	npts;
 double	bend;
 double	od;
 {
-	struct wdb_pipeseg	head;
-	struct wdb_pipeseg	*ps;
+	struct wdb_pipept	head;
+	struct wdb_pipept	*ps;
 	vect_t			prev, next;
 	point_t			my_end, next_start;
 	int			i;
 
 	RT_LIST_INIT( &head.l );
-	ps = (struct wdb_pipeseg *)calloc(1,sizeof(struct wdb_pipeseg));
-	ps->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+	ps = (struct wdb_pipept *)calloc(1,sizeof(struct wdb_pipept));
 	ps->l.magic = WDB_PIPESEG_MAGIC;
-	ps->ps_id = 0;
-	ps->ps_od = od;
-	VMOVE( ps->ps_start, pts[0] );
+	ps->pp_id = 0;
+	ps->pp_od = od;
+	ps->pp_bendradius = bend;
+	VMOVE( ps->pp_coord, pts[0] );
 	RT_LIST_INSERT( &head.l, &ps->l );
 
 	for( i=1; i < npts-1; i++ )  {
-		VSUB2( prev, pts[i-1], pts[i] );
-		VSUB2( next, pts[i+1], pts[i] );
-		VUNITIZE( prev );
-		VUNITIZE( next );
-		VJOIN1( my_end, pts[i], bend, prev );
-		VJOIN1( next_start, pts[i], bend, next );
-		/* End the linear segment by starting the bend */
-		ps = (struct wdb_pipeseg *)calloc(1,sizeof(struct wdb_pipeseg));
-		ps->ps_type = WDB_PIPESEG_TYPE_BEND;
+		ps = (struct wdb_pipept *)calloc(1,sizeof(struct wdb_pipept));
 		ps->l.magic = WDB_PIPESEG_MAGIC;
-		ps->ps_id = 0;
-		ps->ps_od = od;
-		VMOVE( ps->ps_start, my_end );
-		VJOIN1( ps->ps_bendcenter, my_end, bend, next );
+		ps->pp_id = 0;
+		ps->pp_od = od;
+		ps->pp_bendradius = bend;
+		VMOVE( ps->pp_coord, pts[i] );
 		RT_LIST_INSERT( &head.l, &ps->l );
 
-		/* End the bend by starting the next linear section */
-		ps = (struct wdb_pipeseg *)calloc(1,sizeof(struct wdb_pipeseg));
-		ps->ps_type = WDB_PIPESEG_TYPE_LINEAR;
-		ps->l.magic = WDB_PIPESEG_MAGIC;
-		ps->ps_id = 0;
-		ps->ps_od = od;
-		VMOVE( ps->ps_start, next_start );
-		RT_LIST_INSERT( &head.l, &ps->l );
 	}
-
-	ps = (struct wdb_pipeseg *)calloc(1,sizeof(struct wdb_pipeseg));
-	ps->ps_type = WDB_PIPESEG_TYPE_END;
-	ps->l.magic = WDB_PIPESEG_MAGIC;
-	ps->ps_id = 0;
-	ps->ps_od = od;
-	VMOVE( ps->ps_start, pts[npts-1] );
-	RT_LIST_INSERT( &head.l, &ps->l );
 
 	pr_pipe( name, &head );
 
@@ -204,42 +175,18 @@ double	od;
 
 pr_pipe( name, head )
 char	*name;
-struct wdb_pipeseg *head;
+struct wdb_pipept *head;
 {
-	register struct wdb_pipeseg	*psp;
+	register struct wdb_pipept	*psp;
 
 	fprintf(stderr,"\n--- %s:\n", name);
-	for( RT_LIST_FOR( psp, wdb_pipeseg, &head->l ) )  {
-		switch( psp->ps_type )  {
-		case WDB_PIPESEG_TYPE_END:
-			fprintf(stderr,"END	id=%g od=%g, start=(%g,%g,%g)\n",
-				psp->ps_id, psp->ps_od,
-				psp->ps_start[X],
-				psp->ps_start[Y],
-				psp->ps_start[Z] );
-			break;
-		case WDB_PIPESEG_TYPE_LINEAR:
-			fprintf(stderr,"LINEAR	id=%g od=%g, start=(%g,%g,%g)\n",
-				psp->ps_id, psp->ps_od,
-				psp->ps_start[X],
-				psp->ps_start[Y],
-				psp->ps_start[Z] );
-			break;
-		case WDB_PIPESEG_TYPE_BEND:
-			fprintf(stderr,"BEND	id=%g od=%g, start=(%g,%g,%g)\n",
-				psp->ps_id, psp->ps_od,
-				psp->ps_start[X],
-				psp->ps_start[Y],
-				psp->ps_start[Z] );
-			fprintf(stderr,"		bendcenter=(%g,%g,%g)\n",
-				psp->ps_bendcenter[X],
-				psp->ps_bendcenter[Y],
-				psp->ps_bendcenter[Z] );
-			break;
-		default:
-			fprintf(stderr," *** unknown ps_type=%d psp=x%x ***\n",
-				psp->ps_type, psp );
-			break;
-		}
+	for( RT_LIST_FOR( psp, wdb_pipept, &head->l ) )
+	{
+		fprintf(stderr,"id=%g od=%g, coord=(%g,%g,%g), bend radius=%g\n",
+			psp->pp_id, psp->pp_od,
+			psp->pp_coord[X],
+			psp->pp_coord[Y],
+			psp->pp_coord[Z],
+			psp->pp_bendradius );
 	}
 }
