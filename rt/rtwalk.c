@@ -204,16 +204,8 @@ char **argv;
 
 	/* Plot all of the solids */
 	if( rdebug > 0 )  {
-		register struct soltab *stp;
-
-		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
 		pl_color( plotfp, 150, 150, 150 );
-
-		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
-			if( stp->st_aradius >= INFINITY )
-				continue;
-			(void)rt_plot_solid( plotfp, rtip, stp );
-		}
+		rt_plot_all_solids( plotfp, rtip );
 	}
 
 	/* Take a walk */
