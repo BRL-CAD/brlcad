@@ -96,6 +96,9 @@ static int	curframe = 0;
 static char	*outputfile = (char *)0;/* name of base of output file */
 static char	*framebuffer = NULL;	/* Name of framebuffer */
 
+static int	nobjs;			/* Number of cmd-line treetops */
+static char	**objtab;		/* array of treetop strings */
+
 #ifdef PARALLEL
 static int	lock_tab[12];		/* Lock usage counters */
 static char	*all_title[12] = {
@@ -244,7 +247,6 @@ char **argv;
 	char outbuf[132];
 	char idbuf[132];		/* First ID record info */
 	char cbuf[512];			/* Input command buffer */
-	static struct region *regp;
 
 	beginptr = sbrk(0);
 	npts = 512;
@@ -255,8 +257,8 @@ char **argv;
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
-	if( optind+1 >= argc )  {
-		fprintf(stderr,"database & object(s) list missing\n");
+	if( optind >= argc )  {
+		fprintf(stderr,"rt: MGED database not specified\n");
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
@@ -268,63 +270,21 @@ char **argv;
 	scanbuf = rt_malloc( npts*npts*3 + sizeof(long), "scanbuf" );
 #endif
 
+	if(rdebug&RDEBUG_RTMEM)
+		rt_g.debug |= DEBUG_MEM;
+
 	title_file = argv[optind];
 	title_obj = argv[optind+1];
-
-	rt_prep_timer();		/* Start timing preparations */
+	nobjs = argc - optind - 1;
+	objtab = &(argv[optind+1]);
 
 	/* Build directory of GED database */
-	if( (rtip=rt_dirbuild(argv[optind++], idbuf, sizeof(idbuf))) == RTI_NULL ) {
+	if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
 		fprintf(stderr,"rt:  rt_dirbuild failure\n");
 		exit(2);
 	}
 	ap.a_rt_i = rtip;
 	fprintf(stderr, "db title:  %s\n", idbuf);
-
-	(void)rt_read_timer( outbuf, sizeof(outbuf) );
-	fprintf(stderr,"DB TOC: %s\n", outbuf);
-	rt_prep_timer();
-
-#ifdef never
-/** experimental animation code ***/
-{
-	static struct directory *dir[4];
-	static struct animate a;
-	int k;
-	dir[0] = rt_dir_lookup("tor.r", LOOKUP_NOISY);
-	a.an_path = dir;
-	a.an_pathlen = 1;
-	a.an_type = AN_MATRIX;
-	a.an_u.anu_m.anm_op = ANM_RMUL;
-	mat_idn( a.an_u.anu_m.anm_mat );
-	MAT_DELTAS( a.an_u.anu_m.anm_mat, 0, 60, 0 );
-	k = rt_add_anim( rtip, &a );
-	rt_log("return=%d\n", k);
-	rt_pr_dir(rtip);
-}
-#endif
-
-	/* Load the desired portion of the model */
-	for( ; optind < argc; optind++ )  {
-		if( rt_gettree(rtip, argv[optind]) < 0 )
-			fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[optind]);
-	}
-	(void)rt_read_timer( outbuf, sizeof(outbuf) );
-	fprintf(stderr,"DB WALK: %s\n", outbuf);
-#ifdef CRAY_COS
-	remark(outbuf);		/* Info for JStat */
-#endif CRAY_COS
-
-	/* Allow library to prepare itself */
-	rt_prep_timer();
-	rt_prep(rtip);
-
-	/* Initialize the material library for all regions */
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
-		if( mlib_setup( regp ) == 0 )  {
-			rt_log("mlib_setup failure on %s\n", regp->reg_name);
-		}
-	}
 
 	/* 
 	 *  Initialize application.
@@ -345,31 +305,17 @@ char **argv;
 		fb_window( fbp, npts/2, npts/2 );
 	}
 
-	(void)rt_read_timer( outbuf, sizeof(outbuf) );
-	fprintf(stderr, "PREP: %s\n", outbuf );
+	/* Load the trees */
+	def_tree( rtip );
 
-	if( rtip->HeadSolid == SOLTAB_NULL )  {
-		fprintf(stderr,"rt: No solids remain after prep.\n");
-		exit(3);
-	}
-	fprintf(stderr,"shooting at %d solids in %d regions\n",
-		rtip->nsolids, rtip->nregions );
-
-	fprintf(stderr,"model X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
-		rtip->mdl_min[X], rtip->mdl_max[X],
-		rtip->mdl_min[Y], rtip->mdl_max[Y],
-		rtip->mdl_min[Z], rtip->mdl_max[Z] );
-
-	if(rdebug&RDEBUG_RTMEM)
-		rt_g.debug |= DEBUG_MEM;
-
-#ifdef PARALLEL
-	/* Get enough dynamic memory to keep from making malloc sbrk() */
+	/* Get some dynamic memory to keep from making malloc sbrk() early */
 	for( x=0; x<npsw; x++ )  {
 		rt_get_pt(&resource[x]);
 		rt_get_seg(&resource[x]);
 		rt_get_bitv(&resource[x]);
 	}
+
+#ifdef PARALLEL
 #ifdef HEP
 	/* This isn't useful with the Caltech malloc() in most systems,
 	 * but is very helpful with the ordinary malloc(). */
@@ -384,7 +330,9 @@ char **argv;
 	}
 #endif HEP
 #endif PARALLEL
+
 	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-beginptr );
+	beginptr = sbrk(0);
 
 	if( !matflag )  {
 		do_ae( azimuth, elevation );
@@ -425,8 +373,7 @@ char **argv;
  *			O L D _ W A Y
  * 
  *  Determine if input file is old or new format, and if
- *  old format, handle processing of it.
- *  Returns 0 if new way, 1 if old way (and all done).
+ *  old format, handle process *  Returns 0 if new way, 1 if old way (and all done).
  *  Note that the rewind() will fail on ttys, pipes, and sockets (sigh).
  */
 int
@@ -573,6 +520,48 @@ char *cmd, *arg;
 	return(-1);	/* end RT by returning an error */
 }
 
+/** experimental animation code ***/
+cm_anim( cmd, arg )
+char *cmd, *arg;
+{
+	static struct directory *dir[4];
+	static struct animate a;
+	int k;
+
+#ifdef never
+	dir[0] = rt_dir_lookup("tor.r", LOOKUP_NOISY);
+	a.an_path = dir;
+	a.an_pathlen = 1;
+	a.an_type = AN_MATRIX;
+	a.an_u.anu_m.anm_op = ANM_RMUL;
+	mat_idn( a.an_u.anu_m.anm_mat );
+	MAT_DELTAS( a.an_u.anu_m.anm_mat, 0, 60, 0 );
+	k = rt_add_anim( rtip, &a );
+	rt_log("return=%d\n", k);
+	rt_pr_dir(rtip);
+#endif
+}
+
+/*
+ *			D E F _ T R E E
+ *
+ *  Load default tree list, from command line.
+ */
+def_tree( rtip )
+register struct rt_i	*rtip;
+{
+	char outbuf[132];
+	register int i;
+
+	rt_prep_timer();
+	for( i=0; i < nobjs; i++ )  {
+		if( rt_gettree(rtip, objtab[i]) < 0 )
+			fprintf(stderr,"rt_gettree(%s) FAILED\n", objtab[i]);
+	}
+	(void)rt_read_timer( outbuf, sizeof(outbuf) );
+	fprintf(stderr,"GETTREE: %s\n", outbuf);
+}
+
 /*
  *			D O _ F R A M E
  *
@@ -583,10 +572,38 @@ char *cmd, *arg;
 do_frame( framenumber )
 int framenumber;
 {
+	char outbuf[132];
 	char framename[128];		/* File name to hold current frame */
 	struct rt_i *rtip = ap.a_rt_i;
-	char outbuf[132];
 	static double utime;
+	register struct region *regp;
+
+	fprintf(stderr, "\n...................Frame %5d...................\n",
+		framenumber);
+	if( rtip->needprep )  {
+		/* Allow RT library to prepare itself */
+		rt_prep_timer();
+		rt_prep(rtip);
+
+		/* Initialize the material library for all regions */
+		for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+			if( mlib_setup( regp ) == 0 )  {
+				rt_log("mlib_setup failure on %s\n", regp->reg_name);
+			}
+		}
+		(void)rt_read_timer( outbuf, sizeof(outbuf) );
+		fprintf(stderr, "PREP: %s\n", outbuf );
+	}
+	fprintf(stderr,"shooting at %d solids in %d regions\n",
+		rtip->nsolids, rtip->nregions );
+	if( rtip->HeadSolid == SOLTAB_NULL )  {
+		fprintf(stderr,"rt ERROR: No solids\n");
+		exit(3);
+	}
+	fprintf(stderr,"model X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
+		rtip->mdl_min[X], rtip->mdl_max[X],
+		rtip->mdl_min[Y], rtip->mdl_max[Y],
+		rtip->mdl_min[Z], rtip->mdl_max[Z] );
 
 	if( outputfile != (char *)0 )  {
 #ifdef CRAY_COS
@@ -634,6 +651,7 @@ int framenumber;
 	rtip->nhits = 0;
 	rtip->rti_nrays = 0;
 
+	fprintf(stderr,"\n");
 	fflush(stdout);
 	fflush(stderr);
 
@@ -654,16 +672,21 @@ int framenumber;
 	/*
 	 *  All done.  Display run statistics.
 	 */
-	fprintf(stderr,"Dynamic memory use=%d.\n",sbrk(0)-beginptr );
-	fprintf(stderr, "SHOT: %s\n", outbuf );
+	fprintf(stderr,"SHOT: %s\n", outbuf );
+	fprintf(stderr,"Additional dynamic memory used=%d. bytes\n",
+		sbrk(0)-beginptr );
+		beginptr = sbrk(0);
 	fprintf(stderr,"%ld solid/ray intersections: %ld hits + %ld miss\n",
 		rtip->nshots, rtip->nhits, rtip->nmiss );
 	fprintf(stderr,"pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
 		rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
 		rtip->nmiss_model, rtip->nmiss_tree, rtip->nmiss_solid );
-	fprintf(stderr,"%d pixels in %.2f sec = %.2f pixels/sec\n",
+	fprintf(stderr,
+		"Frame %5d: %8d pixels in %10.2f sec = %10.2f pixels/sec\n",
+		framenumber,
 		npts*npts, utime, (double)(npts*npts)/utime );
-	fprintf(stderr,"Frame %d: %d rays in %.2f sec = %.2f rays/sec\n",
+	fprintf(stderr,
+		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (RTFM)\n",
 		framenumber,
 		rtip->rti_nrays, utime, (double)(rtip->rti_nrays)/utime );
 
