@@ -25,7 +25,8 @@ _LOCAL_ int	deb_dopen(),
 		deb_zoom_set(),
 		deb_curs_set(),
 		deb_cmemory_addr(),
-		deb_cscreen_addr();
+		deb_cscreen_addr(),
+		deb_help();
 
 /* This is the ONLY thing that we "export" */
 FBIO debug_interface =
@@ -44,6 +45,7 @@ FBIO debug_interface =
 		deb_curs_set,
 		deb_cmemory_addr,
 		deb_cscreen_addr,
+		deb_help,
 		"Debugging Interface",
 		8*1024,			/* max width */
 		8*1024,			/* max height */
@@ -93,7 +95,7 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
-	return( 1 );
+	return	0;
 }
 
 _LOCAL_ int
@@ -101,7 +103,7 @@ deb_dclose( ifp )
 FBIO	*ifp;
 {
 	fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
-	return	1;
+	return	0;
 }
 
 _LOCAL_ int
@@ -109,7 +111,7 @@ deb_dreset( ifp )
 FBIO	*ifp;
 {
 	fb_log( "fb_reset( 0x%lx )\n", (unsigned long)ifp );
-	return	1;
+	return	0;
 }
 
 _LOCAL_ int
@@ -124,7 +126,7 @@ RGBpixel	*pp;
 			(unsigned long)ifp,
 			(int)((*pp)[RED]), (int)((*pp)[GRN]),
 			(int)((*pp)[BLU]) );
-	return	1;
+	return	0;
 }
 
 _LOCAL_ int
@@ -177,7 +179,7 @@ ColorMap	*cmp;
 {
 	fb_log( "fb_rmap( 0x%lx, 0x%lx )\n",
 		(unsigned long)ifp, (unsigned long)cmp );
-	return	1;
+	return	0;
 }
 
 _LOCAL_ int
@@ -204,7 +206,7 @@ ColorMap	*cmp;
 		}
 	}
 
-	return	1;
+	return	0;
 }
 
 _LOCAL_ int
@@ -214,7 +216,7 @@ int	left, top, right, bottom;
 {
 	fb_log( "fb_viewport( 0x%lx,%4d,%4d,%4d,%4d )\n",
 		(unsigned long)ifp, left, top, right, bottom );
-	return	1;
+	return	0;
 }
 
 _LOCAL_ int
@@ -224,7 +226,7 @@ int	x, y;
 {
 	fb_log( "fb_window( 0x%lx,%4d,%4d )\n",
 		(unsigned long)ifp, x, y );
-	return	1;
+	return	0;
 }
 
 _LOCAL_ int
@@ -234,7 +236,7 @@ int	x, y;
 {
 	fb_log( "fb_zoom( 0x%lx, %d, %d )\n",
 		(unsigned long)ifp, x, y );
-	return	1;
+	return	0;
 }
 
 _LOCAL_ int
@@ -246,7 +248,7 @@ int	xorig, yorig;
 {
 	fb_log( "fb_setcursor( 0x%lx, 0x%lx, %d, %d, %d, %d )\n",
 		(unsigned long)ifp, bits, xbits, ybits, xorig, yorig );
-	return	1;
+	return	0;
 }
 
 _LOCAL_ int
@@ -257,7 +259,7 @@ int	x, y;
 {
 	fb_log( "fb_cursor( 0x%lx, %d,%4d,%4d )\n",
 		(unsigned long)ifp, mode, x, y );
-	return	1;
+	return	0;
 }
 
 _LOCAL_ int
@@ -268,5 +270,29 @@ int	x, y;
 {
 	fb_log( "fb_scursor( 0x%lx, %d,%4d,%4d )\n",
 		(unsigned long)ifp, mode, x, y );
-	return	1;
+	return	0;
+}
+
+/*ARGSUSED*/
+_LOCAL_ int
+deb_help( ifp )
+FBIO	*ifp;
+{
+	fb_log( "Description: %s\n", debug_interface.if_type );
+	fb_log( "Device: %s\n", ifp->if_name );
+	fb_log( "Max width/height: %d %d\n",
+		debug_interface.if_max_width,
+		debug_interface.if_max_height );
+	fb_log( "Default width/height: %d %d\n",
+		debug_interface.if_width,
+		debug_interface.if_height );
+	fb_log( "\
+Usage: /dev/debug[#]\n\
+  where # is a optional bit vector from:\n\
+    1    debug buffered I/O calls\n\
+    2    show colormap entries in rmap/wmap calls\n\
+    4    show actual pixel values in read/write calls\n" );
+	/*8    buffered read/write values - ifdef'd out*/
+
+	return	0;
 }
