@@ -23,8 +23,8 @@
 class Mged {
     inherit QuadDisplay
 
-    constructor {file args} {
-	eval QuadDisplay::constructor $args
+    constructor {file {type X} args} {
+	eval QuadDisplay::constructor $type
     } {}
     destructor {}
 
@@ -87,10 +87,11 @@ class Mged {
     private variable dg ""
 }
 
-body Mged::constructor {file args} {
+body Mged::constructor {file {type X} args} {
     set db [Database #auto $file]
     set dg [$db Drawable::get_name]
     addall $dg
+    eval itk_initialize $args
 }
 
 body Mged::destructor {} {
@@ -99,9 +100,7 @@ body Mged::destructor {} {
 
 ######################### Commands related to the Database #########################
 body Mged::opendb {args} {
-    set file [eval $db open $args]
-    wm title $top $file
-    return $file
+    eval $db open $args
 }
 
 body Mged::match {args} {
