@@ -3070,21 +3070,48 @@ struct edgeuse		*eu2;
 
 /*
  *			N M G _ I S E C T _ V E R T E X 3 _ E D G E 3 P
+ *
+ *  Intersect a lone vertex from s1 with a single edge from s2.
  */
 static void
-nmg_isect_vertex3_edge3p( is, vu, eu )
+nmg_isect_vertex3_edge3p( is, vu1, eu2 )
 struct nmg_inter_struct		*is;
-struct vertexuse	*vu;
-struct edgeuse		*eu;
+struct vertexuse	*vu1;
+struct edgeuse		*eu2;
 {
+	fastf_t		dist;
+	int		code;
+	struct vertexuse	*vu2;
 
 	NMG_CK_INTER_STRUCT(is);
-	NMG_CK_VERTEXUSE(vu);
-	NMG_CK_EDGEUSE(eu);
+	NMG_CK_VERTEXUSE(vu1);
+	NMG_CK_EDGEUSE(eu2);
 
-/* XXXXXXXXXXXXXXXXXXXX */
+	code = rt_isect_pt_lseg( &dist, eu2->vu_p->v_p->vg_p->coord,
+		eu2->vu_p->v_p->vg_p->coord,
+		vu1->v_p->vg_p->coord, &is->tol );
 
-	rt_bomb("nmg_isect_vertex3_edge3p()\n");
+	if( code < 0 )  return;		/* Not on line */
+	switch( code )  {
+	case 1:
+		/* Hit is at A */
+		vu2 = eu2->vu_p;
+		break;
+	case 2:
+		/* Hit is at B */
+		vu2 = RT_LIST_NEXT( edgeuse, &eu2->l)->vu_p;
+		break;
+	case 3:
+		/* Hit is in the span AB somewhere, break edge */
+		vu2 = nmg_ebreak( vu1->v_p, eu2 )->vu_p;
+		break;
+	default:
+		rt_bomb("nmg_isect_vertex3_edge3p()\n");
+	}
+	/* Make sure verts are shared at hit point. They _should_ already be. */
+	nmg_jv( vu1->v_p, vu2->v_p );
+	(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1->l.magic);
+	(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2->l.magic);
 }
 
 /*
@@ -3142,7 +3169,7 @@ struct shell		*s2;
 
 	if( eu2 = nmg_find_matching_eu_in_s( eu1, s2 ) )  {
 		/* XXX Is the fact that s2 has a corresponding edge good enough? */
-		/* We can't fuse wire edges */
+		nmg_radial_join_eu( eu1, eu2, &is->tol );
 		return;
 	}
 
