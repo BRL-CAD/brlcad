@@ -89,7 +89,6 @@ DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print); DEF(nul_norm); DEF(nu
 
 /* To be replaced with code someday */
 DEF(haf_prep); struct seg * DEF(haf_shot); DEF(haf_print); DEF(haf_norm); DEF(haf_uv);
-DEF(spl_prep); struct seg * DEF(spl_shot); DEF(spl_print); DEF(spl_norm); DEF(spl_uv);
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
@@ -242,7 +241,7 @@ next_one: ;
 	case ID_P_HEAD:
 		stp->st_id = ID_POLY;
 		break;
-	case ID_B_SPL_HEAD:
+	case ID_BSOLID:
 		stp->st_id = ID_BSPLINE;
 		break;
 	default:
@@ -346,7 +345,7 @@ matp_t old_xlate;
 	 *  Draw a solid
 	 */
 	if( rec.u_id == ID_SOLID || rec.u_id == ID_ARS_A ||
-	    rec.u_id == ID_P_HEAD || rec.u_id == ID_B_SPL_HEAD )  {
+	    rec.u_id == ID_P_HEAD || rec.u_id == ID_BSOLID )  {
 		register struct soltab *stp;
 		register union tree *xtp;
 

@@ -126,6 +126,19 @@ int len;
 			dir_add( record.p.p_name, addr );
 			continue;
 		}
+		if( record.u_id == ID_BSOLID )  {
+			dir_add( record.B.B_name, addr );
+			continue;
+		}
+		if( record.u_id == ID_BSURF )  {
+			register int j;
+			/* Just skip over knots and control mesh */
+			j = (record.d.d_nknots + record.d.d_nctls) *
+				sizeof(union record);
+			lseek( ged_fd, j, 1 );
+			dir_add( record.p.p_name, addr );
+			continue;
+		}
 		if( record.u_id != ID_COMB )  {
 			rtlog("dir_build:  unknown record %c (0%o)\n",
 				record.u_id, record.u_id );
