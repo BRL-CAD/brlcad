@@ -1,14 +1,12 @@
 
 /*  File:  mk_bolt.c  */
-/*  S.Coates - 4 August 1992  */
-/*  To compile:  */
+/*  S.Coates - 2 September 1992  */
+/*  To compile for use separately:  */
 /*  cc mk_bolt.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
 /*	-lmpc -lm -o mk_bolt  */
 
 /*  Program to make a bolt using libwdb.  The objects will be  */
 /*  in millimeters.  */
-
-/*  This program will eventually be added to the directory /m/cad/proc-db.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,8 +32,10 @@ char *argv[];
    double wd,wh;		/*  Diameter & height of washer.  */
    double sd,sh;		/*  Diameter & height of bolt stem.  */
    double leg,hyp;		/*  Length of leg & hypotenus of triangle.  */
-   double pts[8][3];		/*  Eight points of arb8.  */
-   double bs[3],ht[3],rad;	/*  Base, height, & radius of rcc.  */
+   point_t pts[8];		/*  Eight points of arb8.  */
+   point_t bs;			/*  Base of rcc.  */
+   vect_t ht;			/*  Height of rcc.  */
+   fastf_t rad;			/*  Radius of rcc.  */
    int iopt;			/*  Type of bolt to be built: 1=>bolt head,  */
 				/*  2=>head & washer; 3=>head, washer, &  */
 				/*  stem; 4=>head & stem.  */
@@ -165,8 +165,6 @@ char *argv[];
 		if(temp[2] == '3') iopt = 3;
 		if(temp[2] == '4') iopt = 4;
 
-		(void)printf("Option choosen:  %d\n",iopt);
-		(void)fflush(stdout);
 	   }						/*  END # 4  */
 
 	   /*  -f - mged file name.  */
@@ -181,9 +179,6 @@ char *argv[];
 		   k++;
 		}					/*  END # 6  */
 		filemged[k] = '\0';
-
-		(void)printf("File name set:  %s\n",filemged);
-		(void)fflush(stdout);
 	   }						/*  END # 5  */
 
 	   /*  -n - number of bolts to be created.  */
@@ -288,72 +283,72 @@ char *argv[];
    hyp = leg * leg + (hd / 2.) * (hd / 2.);
    hyp = sqrt(hyp);
    /*  Bolt head is two solids, create first solid.  */
-   pts[0][0] = (-hd) / 2.;
-   pts[0][1] = leg;
-   pts[0][2] = hh;
-   pts[1][0] = 0.;
-   pts[1][1] = hyp;
-   pts[1][2] = hh;
-   pts[2][0] = 0.;
-   pts[2][1] = (-hyp);
-   pts[2][2] = hh;
-   pts[3][0] = (-hd) / 2.;
-   pts[3][1] = (-leg);
-   pts[3][2] = hh;
-   pts[4][0] = (-hd) / 2.;
-   pts[4][1] = leg;
-   pts[4][2] = 0.;
-   pts[5][0] = 0.;
-   pts[5][1] = hyp;
-   pts[5][2] = 0.;
-   pts[6][0] = 0.;
-   pts[6][1] = (-hyp);
-   pts[6][2] = 0.;
-   pts[7][0] = (-hd) / 2.;
-   pts[7][1] = (-leg);
-   pts[7][2] = 0.;
+   pts[0][0] = (fastf_t) ((-hd) / 2.);
+   pts[0][1] = (fastf_t)leg;
+   pts[0][2] = (fastf_t)hh;
+   pts[1][0] = (fastf_t)0.;
+   pts[1][1] = (fastf_t)hyp;
+   pts[1][2] = (fastf_t)hh;
+   pts[2][0] = (fastf_t)0.;
+   pts[2][1] = (fastf_t)(-hyp);
+   pts[2][2] = (fastf_t)hh;
+   pts[3][0] = (fastf_t) ((-hd) / 2.);
+   pts[3][1] = (fastf_t)(-leg);
+   pts[3][2] = (fastf_t)hh;
+   pts[4][0] = (fastf_t) ((-hd) / 2.);
+   pts[4][1] = (fastf_t)leg;
+   pts[4][2] = (fastf_t)0.;
+   pts[5][0] = (fastf_t)0.;
+   pts[5][1] = (fastf_t)hyp;
+   pts[5][2] = (fastf_t)0.;
+   pts[6][0] = (fastf_t)0.;
+   pts[6][1] = (fastf_t)(-hyp);
+   pts[6][2] = (fastf_t)0.;
+   pts[7][0] = (fastf_t) ((-hd) / 2.);
+   pts[7][1] = (fastf_t)(-leg);
+   pts[7][2] = (fastf_t)0.;
    solnam[6] = 97 + i;
    solnam[7] = '1';
    mk_arb8(fpw,solnam,pts);
 
    /*  Create second solid.  */
-   pts[0][0] = hd / 2.;
-   pts[0][1] = leg;
-   pts[0][2] = hh;
-   pts[1][0] = 0.;
-   pts[1][1] = hyp;
-   pts[1][2] = hh;
-   pts[2][0] = 0.;
-   pts[2][1] = (-hyp);
-   pts[2][2] = hh;
-   pts[3][0] = hd / 2.;
-   pts[3][1] = (-leg);
-   pts[3][2] = hh;
-   pts[4][0] = hd / 2.;
-   pts[4][1] = leg;
-   pts[4][2] = 0.;
-   pts[5][0] = 0.;
-   pts[5][1] = hyp;
-   pts[5][2] = 0.;
-   pts[6][0] = 0.;
-   pts[6][1] = (-hyp);
-   pts[6][2] = 0.;
-   pts[7][0] = hd / 2.;
-   pts[7][1] = (-leg);
-   pts[7][2] = 0.;
+   pts[0][0] = (fastf_t) (hd / 2.);
+   pts[0][1] = (fastf_t)leg;
+   pts[0][2] = (fastf_t)hh;
+   pts[1][0] = (fastf_t)0.;
+   pts[1][1] = (fastf_t)hyp;
+   pts[1][2] = (fastf_t)hh;
+   pts[2][0] = (fastf_t)0.;
+   pts[2][1] = (fastf_t)(-hyp);
+   pts[2][2] = (fastf_t)hh;
+   pts[3][0] = (fastf_t) (hd / 2.);
+   pts[3][1] = (fastf_t)(-leg);
+   pts[3][2] = (fastf_t)hh;
+   pts[4][0] = (fastf_t) (hd / 2.);
+   pts[4][1] = (fastf_t)leg;
+   pts[4][2] = (fastf_t)0.;
+   pts[5][0] = (fastf_t)0.;
+   pts[5][1] = (fastf_t)hyp;
+   pts[5][2] = (fastf_t)0.;
+   pts[6][0] = (fastf_t)0.;
+   pts[6][1] = (fastf_t)(-hyp);
+   pts[6][2] = (fastf_t)0.;
+   pts[7][0] = (fastf_t) (hd / 2.);
+   pts[7][1] = (fastf_t)(-leg);
+   pts[7][2] = (fastf_t)0.;
    solnam[7] = '2';
    mk_arb8(fpw,solnam,pts);
 
    /*  Create washer if necessary.  */
    if( (iopt == 2) || (iopt == 3) )
    {
-	bs[0] = 0.;
-	bs[1] = 0.;
-	bs[2] = 0.;
-	ht[0] = 0.;
-	ht[1] = 0.;
-	ht[2] = (-wh);
-	rad = wd / 2.;
+	bs[0] = (fastf_t)0.;
+	bs[1] = (fastf_t)0.;
+	bs[2] = (fastf_t)0.;
+	ht[0] = (fastf_t)0.;
+	ht[1] = (fastf_t)0.;
+	ht[2] = (fastf_t)(-wh);
+	rad = (fastf_t) (wd / 2.);
 	solnam[7] = '3';
 	mk_rcc(fpw,solnam,bs,ht,rad);
    }
@@ -361,13 +356,13 @@ char *argv[];
    /*  Create bolt stem if necessary.  */
    if( (iopt == 3) || (iopt == 4) )
    {
-	bs[0] = 0.;
-	bs[1] = 0.;
-	bs[2] = 0.;
-	ht[0] = 0.;
-	ht[1] = 0.;
-	ht[2] = (-sh);
-	rad = sd / 2.;
+	bs[0] = (fastf_t)0.;
+	bs[1] = (fastf_t)0.;
+	bs[2] = (fastf_t)0.;
+	ht[0] = (fastf_t)0.;
+	ht[1] = (fastf_t)0.;
+	ht[2] = (fastf_t)(-sh);
+	rad = (fastf_t) (sd / 2.);
 	solnam[7] = '4';
 	mk_rcc(fpw,solnam,bs,ht,rad);
    }
@@ -461,7 +456,7 @@ char *argv[];
    }
    /*  Actually create the group.  */
    grpnam[4] = 97 + i;
-   mk_lcomb(fpw,grpnam,&comb1,0);
+   mk_lfcomb(fpw,grpnam,&comb1,0);
 
    }							/*  END # 20  */
 
