@@ -72,7 +72,8 @@ char	*argv[];
     struct bu_external		ext;
     struct db5_raw_internal	raw;
     struct stat			stat_buf;
-    unsigned char		major_code, minor_code;
+    int				major_code, minor_code;
+    unsigned char		majc, minc;
     char			*descrip;
     struct bu_vls		vls;
     struct rt_db_internal	intern;
@@ -99,9 +100,9 @@ char	*argv[];
 	case 2:
 	    break;
 	case 0:
-	    if ( db5_type_codes_from_descrip(&major_code, &minor_code,
+	    if ( db5_type_codes_from_descrip(&majc, &minc,
 						argv[3])
-	     && db5_type_codes_from_tag(&major_code, &minor_code,
+	     && db5_type_codes_from_tag(&majc, &minc,
 						argv[3])) {
 		bu_vls_init( &vls );
 		bu_vls_printf( &vls,
@@ -109,8 +110,10 @@ char	*argv[];
 		Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 		bu_vls_free( &vls );
 		mged_print_result( TCL_ERROR );
-		return;
+		return TCL_ERROR;
 	    }
+    	    major_code = majc;
+    	    minor_code = minc;
 	    break;
     }
     bu_vls_init( &vls );
@@ -121,7 +124,7 @@ char	*argv[];
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 	bu_vls_free( &vls );
 	mged_print_result( TCL_ERROR );
-	return;
+	return TCL_ERROR;
     }
     bu_log( "Type is %d %d '%s'\n", major_code, minor_code, descrip);
 
@@ -134,7 +137,7 @@ char	*argv[];
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 	bu_vls_free( &vls );
 	mged_print_result( TCL_ERROR );
-	return;
+	return TCL_ERROR;
 
 #if 0
 	/* Update the in-core directory */
@@ -143,7 +146,7 @@ char	*argv[];
 	  Tcl_AppendResult(interp, "An error has occured while adding '",
 			   argv[1], "' to the database.\n", (char *)NULL);
 	  TCL_ERROR_RECOVERY_SUGGESTION;
-	  return DIR_NULL;
+	  return TCL_ERROR;
 	}
 
 	BU_GETSTRUCT( comb, rt_comb_internal );
@@ -167,7 +170,7 @@ char	*argv[];
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 	bu_vls_free( &vls );
 	mged_print_result( TCL_ERROR );
-	return;
+	return TCL_ERROR;
     }
     bu_log ("File '%s' is %d bytes long\n", argv[2], stat_buf.st_size);
     if( (fd = open( argv[2], O_RDONLY  )) == -1 ) {
@@ -177,7 +180,7 @@ char	*argv[];
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 	bu_vls_free( &vls );
 	mged_print_result( TCL_ERROR );
-	return;
+	return TCL_ERROR;
     }
 
     if (db5_type_descrip_from_codes( &descrip, major_code, minor_code )) {
@@ -186,7 +189,7 @@ char	*argv[];
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 	bu_vls_free( &vls );
 	mged_print_result( TCL_ERROR );
-	return;
+	return TCL_ERROR;
     }
     switch (major_code) {
 	case DB5_MAJORTYPE_BINARY_UNIF:
@@ -209,7 +212,7 @@ char	*argv[];
 		Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 		bu_vls_free( &vls );
 		mged_print_result( TCL_ERROR );
-		return;
+		return TCL_ERROR;
 	    }
 	    bip->count = gotten / db5_type_sizeof_n_binu( minor_code );
 	    bu_log("Got 'em!\nThink I own %d of 'em\n", bip->count);
@@ -227,7 +230,7 @@ char	*argv[];
 	    Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 	    bu_vls_free( &vls );
 	    mged_print_result( TCL_ERROR );
-	    return;
+	    return TCL_ERROR;
     }
 
     return TCL_OK;
@@ -279,7 +282,7 @@ char	*argv[];
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 	bu_vls_free( &vls );
 	mged_print_result( TCL_ERROR );
-	return;
+	return TCL_ERROR;
     }
     if ( db_get_external( &ext, dp, dbip ) < 0 )
     {
@@ -304,7 +307,7 @@ char	*argv[];
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 	bu_vls_free( &vls );
 	mged_print_result( TCL_ERROR );
-	return;
+	return TCL_ERROR;
     }
     switch (raw.major_type) {
 	case DB5_MAJORTYPE_BINARY_UNIF:
@@ -347,15 +350,16 @@ char	*argv[];
 	    break;
     }
     if ( (written = write(fd, bufp, nbytes) ) != nbytes ) {
+    	perror(argv[1]);
 	bu_free_external( &ext );
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls,
-	    "Incomplete write of object %s to file %s\n",
-	    argv[2], argv[1] );
+	    "Incomplete write of object %s to file %s, got %d, s/b=%d\n",
+	    argv[2], argv[1], written, nbytes );
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 	bu_vls_free( &vls );
 	mged_print_result( TCL_ERROR );
-	return;
+	return TCL_ERROR;
     }
 
     bu_free_external( &ext );
