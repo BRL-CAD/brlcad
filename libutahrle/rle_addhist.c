@@ -38,9 +38,8 @@
 
 #ifdef USE_SYS_TIME_H
 #include <sys/time.h>
-#else
-#include <time.h>
 #endif
+#include <time.h>
 
 #include "machine.h"
 #include "externs.h"
