@@ -208,31 +208,3 @@ FBIO	*ifp;
 	free( (void *) ifp );
 	return	0;
 }
-
-/*	f a s t _ d m a _ b g
-	Clear the frame buffer to the background color.
- */
-int
-fb_fast_dma_bg( ifp, bpp )
-register FBIO	*ifp;
-register Pixel	*bpp;
-{	
-	static Pixel	*pix_buf = NULL;
-	register int	i, y, scans_per_dma;
-	register Pixel	*pix_to;
-	if( pix_buf == NULL )
-		if( (pix_buf = (Pixel *) malloc(MAX_BYTES_DMA)) == PIXEL_NULL )
-		{
-			Malloc_Bomb(MAX_BYTES_DMA);
-			return	-1;
-		}
-	/* Fill buffer with background color.				*/
-	for( i = 0, pix_to = pix_buf; i < MAX_PIXELS_DMA; ++i )
-		*pix_to++ = *bpp;
-	/* Send until frame buffer is full.				*/
-	scans_per_dma = MAX_PIXELS_DMA / ifp->if_width;
-	for( y = ifp->if_height-1; y > 0; y -= scans_per_dma )
-		if( fb_write( ifp, 0, y, pix_buf, (long) MAX_PIXELS_DMA	) == -1 )
-			return	-1;
-	return	0;
-}
