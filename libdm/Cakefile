@@ -11,7 +11,7 @@
 #include "../Cakefile.defs"
 
 #define FILES	\
-	dm-X dm-ogl dm-glx dm-pex dm-ps
+	dm-X dm-ogl dm-glx dm-pex dm-ps dm-plot dm-Null clip
 
 #define VERSION_VARIABLE	dm_version
 #define LIBRARY_TITLE		"The BRL-CAD Display Manager Library"
