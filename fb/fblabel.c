@@ -267,7 +267,7 @@ int x, y;
 			     (int)(pixcolor[BLU]*resbuf[j]+(1-resbuf[j])*tmp);
 			 fbline[j][BLU] &= 0377;
 		}
-		if( fb_write( fbp, x, y-vdp->vd_down+i, fbline, totwid+3 ) <= totwid+3 )  {
+		if( fb_write( fbp, x, y-vdp->vd_down+i, fbline, totwid+3 ) < totwid+3 )  {
 			fprintf(stderr, "fblabel: pixel write error\n");
 			exit(1);
 		}
