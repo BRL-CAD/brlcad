@@ -72,7 +72,6 @@ AC_ARG_ENABLE(only-rts, AC_HELP_STRING(--enable-only-rts,
 		fi
 	]
 )
-echo "onlyrts: $onlyrts"
 AM_CONDITIONAL(ONLYRTS, test "x$onlyrts" = xyes)
 
 # XXX these flags are GCC-specific -- perhaps should set after the compiler check
