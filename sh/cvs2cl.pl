@@ -4,7 +4,7 @@ exec perl -w -x $0 ${1+"$@"} # -*- mode: perl; perl-indent-level: 2; -*-
 
 #
 # BRL-CAD options for cvs2cl.pl
-#  ./cvs2cl.pl -r -b -t -P -C
+#  sh/cvs2cl.pl -r -b -t -P -C --accum
 #
 
 ##############################################################
