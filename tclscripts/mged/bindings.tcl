@@ -179,9 +179,9 @@ proc forward_key_bindings { w } {
 # that .$id.t gets the event.
     bind $w <KeyPress> "\
 	    focus .$id.t;\
-	    set dm_insert_char_flag 1;\
+	    set dm_insert_char_flag(%W) 1;\
 	    event generate .$id.t <KeyPress> -state %s -keysym %K;\
-	    set dm_insert_char_flag 0;\
+	    set dm_insert_char_flag(%W) 0;\
 	    focus %W"
 }
 
