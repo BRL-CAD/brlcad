@@ -56,7 +56,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "vmath.h"
 #include "rtlist.h"
-#include "rtstring.h"
+#include "bu.h"
 #include "externs.h"
 #include "raytrace.h"
 #include "pkg.h"
@@ -757,13 +757,14 @@ out:
 
 #if (defined(BSD) && !defined(_sgi3d)) || defined(mips) || defined(CRAY2)
 /*
- *  			R T _ L O G
+ *  			B U _ L O G
  *  
+ *  Replacement for the LIBBU routine.
  *  Log an RT library event using the Berkeley _doprnt() routine.
  */
 /* VARARGS */
 void
-rt_log(va_alist)
+bu_log(va_alist)
 va_dcl
 {
 	va_list		ap;
@@ -812,7 +813,7 @@ out:
 #else
 /* VARARGS */
 void
-rt_log( str, a, b, c, d, e, f, g, h )
+bu_log( str, a, b, c, d, e, f, g, h )
 char	*str;
 int	a, b, c, d, e, f, g, h;
 {
@@ -843,13 +844,13 @@ out:
 
 
 /*
- *			R T _ B O M B
+ *			B U _ B O M B
  *  
- *  Abort the RT library
+ *  Replacement for LIBBU routine of same name.
  */
 void
-rt_bomb(str)
-char *str;
+bu_bomb(str)
+CONST char *str;
 {
 	char	*bomb = "RTSRV terminated by rt_bomb()\n";
 
@@ -862,7 +863,7 @@ char *str;
 
 	if(debug)  fprintf(stderr,"\n%s\n", str);
 	fflush(stderr);
-	if( rt_g.debug || rt_g.NMG_debug || debug )
+	if( rt_g.debug || rt_g.NMG_debug || bu_debug || debug )
 		abort();	/* should dump */
 	exit(12);
 }
