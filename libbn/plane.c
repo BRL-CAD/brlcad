@@ -24,6 +24,7 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./debug.h"
 
 /*
  *			R T _ P T 3 _ P T 3 _ E Q U A L
@@ -66,6 +67,7 @@ CONST struct rt_tol	*tol;
 	vect_t	C_A;
 	vect_t	C_B;
 
+	RT_CK_TOL(tol);
 	VSUB2( B_A, b, a );
 	if( MAGSQ( B_A ) <= tol->dist_sq )  return(0);
 	VSUB2( C_A, c, a );
@@ -123,6 +125,8 @@ CONST struct rt_tol	*tol;
 	vect_t	C_A;
 	vect_t	C_B;
 	register fastf_t mag;
+
+	RT_CK_TOL(tol);
 
 	VSUB2( B_A, b, a );
 	if( MAGSQ( B_A ) <= tol->dist_sq )  return(-1);
@@ -382,10 +386,10 @@ CONST struct rt_tol	*tol;
 	register fastf_t	det1;
 
 	RT_CK_TOL(tol);
-#	if DEBUG_2D_LINES
-		rt_log("rt_isect_line_line2() p=(%g,%g), d=(%g,%g)\n\t\ta=(%g,%g), c=(%g,%g)\n",
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_isect_line2_line2() p=(%g,%g), d=(%g,%g)\n\t\ta=(%g,%g), c=(%g,%g)\n",
 			V2ARGS(p), V2ARGS(d), V2ARGS(a), V2ARGS(c) );
-#	endif
+	}
 
 	/*
 	 *  From the two components q and r, form a system
@@ -451,9 +455,9 @@ CONST struct rt_tol	*tol;
 		/* Lines are parallel */
 		if( !NEAR_ZERO( det1, SQRT_SMALL_FASTF ) )  {
 			/* Lines are NOT co-linear, just parallel */
-#			if DEBUG_2D_LINES
+			if( rt_g.debug & DEBUG_MATH )  {
 				rt_log("parallel, not co-linear\n");
-#			endif
+			}
 			return -1;	/* parallel, no intersection */
 		}
 
@@ -471,17 +475,17 @@ CONST struct rt_tol	*tol;
 			dist[0] = hy/d[Y];
 			dist[1] = (hy + c[Y]) / d[Y];
 		}
-#		if DEBUG_2D_LINES
+		if( rt_g.debug & DEBUG_MATH )  {
 			rt_log("colinear, t = %g, u = %g\n", dist[0], dist[1] );
-#		endif
+		}
 		return 0;	/* Lines co-linear */
 	}
 	det = 1/det;
 	dist[0] = det * det1;
 	dist[1] = det * (d[X] * hy - hx * d[Y]);
-#	if DEBUG_2D_LINES
+	if( rt_g.debug & DEBUG_MATH )  {
 		rt_log("intersection, t = %g, u = %g\n", dist[0], dist[1] );
-#	endif
+	}
 
 	return 1;		/* Intersection found */
 }
@@ -628,10 +632,10 @@ struct rt_tol	*tol;
 	int	status;
 
 	RT_CK_TOL(tol);
-#	if DEBUG_2D_LINES
+	if( rt_g.debug & DEBUG_MATH )  {
 		rt_log("rt_isect_lseg2_lseg2() p=(%g,%g), pdir=(%g,%g)\n\t\tq=(%g,%g), qdir=(%g,%g)\n",
 			V2ARGS(p), V2ARGS(pdir), V2ARGS(q), V2ARGS(qdir) );
-#	endif
+	}
 
 	status = rt_isect_line2_line2( dist, p, pdir, q, qdir, tol );
 	if( status < 0 )  {
@@ -643,9 +647,9 @@ struct rt_tol	*tol;
 		/* Lines are colinear */
 		/*  If P within tol of either endpoint (0, 1), make exact. */
 		ptol = tol->dist / sqrt( pdir[X]*pdir[X] + pdir[Y]*pdir[Y] );
-#		if DEBUG_2D_LINES
+		if( rt_g.debug & DEBUG_MATH )  {
 			rt_log("ptol=%g\n", ptol);
-#		endif
+		}
 		if( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
 		else if( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
 
@@ -656,9 +660,9 @@ struct rt_tol	*tol;
 		if( dist[0] < 0 || dist[0] > 1 )  nogood++;
 		if( nogood >= 2 )
 			return -1;	/* colinear, but not overlapping */
-#		if DEBUG_2D_LINES
+		if( rt_g.debug & DEBUG_MATH )  {
 			rt_log("  HIT colinear!\n");
-#		endif
+		}
 		return 0;		/* colinear and overlapping */
 	}
 	/* Lines intersect */
@@ -671,18 +675,18 @@ struct rt_tol	*tol;
 	if( dist[1] > -qtol && dist[1] < qtol )  dist[1] = 0;
 	else if( dist[1] > 1-qtol && dist[1] < 1+qtol ) dist[1] = 1;
 
-#	if DEBUG_2D_LINES
+	if( rt_g.debug & DEBUG_MATH )  {
 		rt_log("ptol=%g, qtol=%g\n", ptol, qtol);
-#	endif
+	}
 	if( dist[0] < 0 || dist[0] > 1 || dist[1] < 0 || dist[1] > 1 ) {
-#		if DEBUG_2D_LINES
+		if( rt_g.debug & DEBUG_MATH )  {
 			rt_log("  MISS\n");
-#		endif
+		}
 		return -1;		/* missed */
 	}
-#	if DEBUG_2D_LINES
+	if( rt_g.debug & DEBUG_MATH )  {
 		rt_log("  HIT!\n");
-#	endif
+	}
 	return 1;			/* hit, normal intersection */
 }
 
@@ -730,6 +734,8 @@ CONST struct rt_tol	*tol;
 	register fastf_t	det;
 	register fastf_t	det1;
 	register short int	q,r,s;
+
+	RT_CK_TOL(tol);
 
 	/*
 	 *  Any intersection will occur in the plane with surface
@@ -949,6 +955,8 @@ CONST struct rt_tol	*tol;
 	register int	ret;
 	fastf_t		fuzz;
 
+	RT_CK_TOL(tol);
+
 	VSUB2( c, b, a );
 	/*
 	 *  To keep the values of u between 0 and 1,
@@ -1111,6 +1119,8 @@ CONST struct rt_tol	*tol;
 	fastf_t	APprABunit;	/* Mag of projection of AtoP onto ABunit */
 	fastf_t	distsq;
 
+	RT_CK_TOL(tol);
+
 	VSUB2(AtoP, p, a);
 	if (MAGSQ(AtoP) < tol->dist_sq)
 		return(1);	/* P at A */
@@ -1152,6 +1162,19 @@ CONST struct rt_tol	*tol;
  *	Find the distance from a point P to a line segment described
  *	by the two endpoints A and B.
  *
+ *			P
+ *		       *
+ *		      /.
+ *		     / .
+ *		    /  .
+ *		   /   . (dist)
+ *		  /    .
+ *		 /     .
+ *		*------*--------*
+ *		A      PCA	B
+ *
+ *  There are six distinct cases:
+ *
  *	Explicit return
  *	    distance from the point of closest approach on lseg to point
  *	    0.0 if within tol->dist of A or B or the line segment.
@@ -1168,53 +1191,81 @@ CONST point_t	a, b, p;
 CONST struct rt_tol *tol;
 {
 	vect_t	PtoA;		/* P-A */
+	vect_t	PtoB;		/* P-B */
 	vect_t	AtoB;		/* B-A */
-	fastf_t	seglen;		/* |B-A| */
-	fastf_t	seglen_sq;
+	fastf_t	P_A_sq;		/* |P-A|**2 */
+	fastf_t	P_B_sq;		/* |P-B|**2 */
+	fastf_t	B_A;		/* |B-A| */
+	fastf_t	B_A_sq;
 	fastf_t	t;		/* distance along ray of projection of P */
-	
-	VSUB2(PtoA, p, a);
-	VSUB2(AtoB, b, a);
-	seglen_sq = MAGSQ(AtoB);
-	seglen = sqrt(seglen_sq);
 
-	/* compute distance (in actual units) along line to pca */
-	t = VDOT(PtoA, AtoB) / seglen;
+	RT_CK_TOL(tol);
 
-	if( t < -tol->dist )  {
-		/* P is "below" A */
-		VMOVE( pca, a );
-		return MAGNITUDE(PtoA);
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_dist_pt_lseg() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
+			V3ARGS(a),
+			V3ARGS(b),
+			V3ARGS(p),
+			tol->dist, tol->dist_sq );
 	}
-	if( t < tol->dist )  {
+
+	/* Check proximity to endpoint A */
+	VSUB2(PtoA, p, a);
+	if( (P_A_sq = MAGSQ(PtoA)) < tol->dist_sq )  {
 		/* P is within the tol->dist radius circle around A */
 		VMOVE( pca, a );
+		if( rt_g.debug & DEBUG_MATH )  rt_log("  at A\n");
 		return 0.0;
 	}
-	if( t < seglen - tol->dist )  {
+
+	/* Check proximity to endpoint B */
+	VSUB2(PtoB, p, b);
+	if( (P_B_sq = MAGSQ(PtoB)) < tol->dist_sq )  {
+		/* P is within the tol->dist radius circle around B */
+		VMOVE( pca, b );
+		if( rt_g.debug & DEBUG_MATH )  rt_log("  at B\n");
+		return 0.0;
+	}
+
+	VSUB2(AtoB, b, a);
+	B_A = sqrt( B_A_sq = MAGSQ(AtoB) );
+
+	/* compute distance (in actual units) along line to PROJECTION of
+	 * point p onto the line: point pca
+	 */
+	t = VDOT(PtoA, AtoB) / B_A;
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_dist_pt_lseg() B_A=%g, t=%g\n",
+			B_A, t );
+	}
+
+	if( t <= 0 )  {
+		/* P is "below" A */
+		VMOVE( pca, a );
+		if( rt_g.debug & DEBUG_MATH )  rt_log("  below A\n");
+		return sqrt(P_A_sq);
+	}
+	if( t < B_A )  {
 		/* P falls between A and B */
 		register fastf_t	dsq;
 		fastf_t			param_dist;	/* parametric dist */
 
 		/* Find PCA */
-		param_dist = VDOT(PtoA, AtoB) / seglen_sq;
+		param_dist = t / B_A;		/* Range 0..1 */
 		VJOIN1(pca, a, param_dist, AtoB);
 
-		/* Find distance from PCA to line segment */
-		if( (dsq = VDOT( PtoA, PtoA ) - t * t ) <= tol->dist_sq )  {
+		/* Find distance from PCA to line segment (Pythagorus) */
+		if( (dsq = P_A_sq - t * t ) <= tol->dist_sq )  {
+			if( rt_g.debug & DEBUG_MATH )  rt_log("  on lseg\n");
 			return 0.0;
 		}
+		if( rt_g.debug & DEBUG_MATH )  rt_log("  closest to lseg\n");
 		return sqrt(dsq);
-	}
-	if( t < seglen + tol->dist )  {
-		/* P is within the tol->dist radius circle around B */
-		VMOVE( pca, b );
-		return 0.0;
 	}
 	/* P is "above" B */
 	VMOVE(pca, b);
-	VSUB2(PtoA, p, b);
-	return MAGNITUDE(PtoA);
+	if( rt_g.debug & DEBUG_MATH )  rt_log("  above B\n");
+	return sqrt(P_B_sq);
 }
 
 /*
@@ -1303,6 +1354,8 @@ CONST struct rt_tol	*tol;
 {
 	register fastf_t	f;
 	register fastf_t	dot;
+
+	RT_CK_TOL(tol);
 
 	/* Check to see if the planes are parallel */
 	dot = VDOT( a, b );
