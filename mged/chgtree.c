@@ -638,13 +638,14 @@ cmd_pathlist(clientData, interp, argc, argv)
 ClientData	clientData;
 Tcl_Interp	*interp;
 int		argc;
-CONST char	**argv;
+char	        **argv;
 {
 	mged_initial_tree_state.ts_ttol = &mged_ttol;
 	mged_initial_tree_state.ts_tol = &mged_tol;
 
-	if( db_walk_tree( dbip, argc-1, argv+1, 1, &mged_initial_tree_state,
-	    0, 0, pathlist_leaf_func ) < 0 )  {
+	if( db_walk_tree( dbip, argc-1, (CONST char **)argv+1, 1,
+			 &mged_initial_tree_state,
+			 0, 0, pathlist_leaf_func ) < 0 )  {
 	    	Tcl_SetResult(interp, "db_walk_tree() error", TCL_STATIC);
 		return TCL_ERROR;
 	}
@@ -697,7 +698,7 @@ cmd_oed(clientData, interp, argc, argv)
 ClientData	clientData;
 Tcl_Interp	*interp;
 int		argc;
-CONST char	**argv;
+char      	**argv;
 {
 	struct db_full_path	lhs;
 	struct db_full_path	rhs;
