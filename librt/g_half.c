@@ -15,8 +15,9 @@
  *
  *  The inside of the halfspace bounded by the plane
  *  consists of all points P such that
- *	VDOT(P,N) - N[3] <= 0
+ *	VDOT(P,N) - N[3] <= 0,
  *
+ *  where N[3] stores the value d.
  *  See the remarks in h/vmath.h for more details.
  *  
  *  Authors -
