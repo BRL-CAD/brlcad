@@ -76,8 +76,26 @@ extern struct light_specific *LightHeadp;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 extern double AmbientIntensity;
 
+vect_t	background = { 0.25, 0, 0.5 };	/* Dark Blue Background */
+int	ibackground[3];			/* integer 0..255 version */
+
 #define MAX_IREFLECT	9	/* Maximum internal reflection level */
 #define MAX_BOUNCE	4	/* Maximum recursion level */
+
+/*
+ *			H I T _ N O T H I N G
+ *
+ *  a_miss() routine called when no part of the model is hit.
+ *  Background texture mapping could be done here.
+ *  For now, return a pleasant dark blue.
+ */
+hit_nothing( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
+{
+	ap->a_user = 0;		/* Signal view_pixel:  MISS */
+	return(0);
+}
 
 /*
  *			V I E W I T
@@ -199,6 +217,7 @@ struct partition *PartHeadp;
 		rt_log("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
 		VPRINT("RGB", ap->a_color);
 	}
+	ap->a_user = 1;		/* Signal view_pixel:  HIT */
 	return(0);
 }
 
@@ -212,18 +231,30 @@ register struct application *ap;
 {
 	register int r,g,b;
 
-	/* To prevent bad color aliasing, add some color dither */
-	r = ap->a_color[0]*255.+rand_half();
-	g = ap->a_color[1]*255.+rand_half();
-	b = ap->a_color[2]*255.+rand_half();
-	if( r > 255 ) r = 255;
-	if( g > 255 ) g = 255;
-	if( b > 255 ) b = 255;
-	if( r<0 || g<0 || b<0 )  {
-		VPRINT("@@ Negative RGB @@", ap->a_color);
-		r = 0x80;
-		g = 0xFF;
-		b = 0x80;
+	if( ap->a_user == 0 )  {
+		/* Shot missed the model, don't dither */
+		r = ibackground[0];
+		g = ibackground[1];
+		b = ibackground[2];
+	} else {
+		/*
+		 *  To prevent bad color aliasing, add some color dither.
+		 *  Be certain to NOT output the background color here;
+		 *  dither away from it.
+		 */
+		do {
+			r = ap->a_color[0]*255.+rand_half();
+			g = ap->a_color[1]*255.+rand_half();
+			b = ap->a_color[2]*255.+rand_half();
+			if( r > 255 ) r = 255;
+			else if( r < 0 )  r = 0;
+			if( g > 255 ) g = 255;
+			else if( g < 0 )  g = 0;
+			if( b > 255 ) b = 255;
+			else if( b < 0 )  b = 0;
+		} while( r == ibackground[0] &&
+			 g == ibackground[1] &&
+			 b == ibackground[2] );
 	}
 
 #if !defined(PARALLEL) && !defined(RTSRV)
@@ -296,6 +327,7 @@ struct partition *PartHeadp;
 	if( hitp->hit_dist >= INFINITY )  {
 		rt_log("colorview:  entry beyond infinity\n");
 		VSET( ap->a_color, .5, 0, 0 );
+		ap->a_user = 1;		/* Signal view_pixel:  HIT */
 		return(1);
 	}
 
@@ -314,6 +346,7 @@ struct partition *PartHeadp;
 		    	} else {
 		    		VSETALL( ap->a_color, 0.18 );	/* 18% Grey */
 		    	}
+			ap->a_user = 1;		/* Signal view_pixel:  HIT */
 			return(1);
 		}
 		/* Push on to exit point, and trace on from there */
@@ -323,6 +356,7 @@ struct partition *PartHeadp;
 		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
 		(void)rt_shootray( &sub_ap );
 		VSCALE( ap->a_color, sub_ap.a_color, 0.8 );
+		ap->a_user = 1;		/* Signal view_pixel:  HIT */
 		return(1);
 	}
 
@@ -364,6 +398,7 @@ struct partition *PartHeadp;
 	 */
 	{
 		register struct mfuncs *mfp = pp->pt_regionp->reg_mfuncs;
+		register int ret;
 
 		if( mfp == MF_NULL )  {
 			rt_log("colorview:  reg_mfuncs NULL\n");
@@ -374,7 +409,9 @@ struct partition *PartHeadp;
 				mfp->mf_magic, MF_MAGIC );
 			return(0);
 		}
-		return( mfp->mf_render( ap, pp ) );
+		ret = mfp->mf_render( ap, pp );
+		ap->a_user = 1;		/* Signal view_pixel:  HIT */
+		return(ret);
 	}
 }
 
@@ -473,8 +510,10 @@ register struct application *ap;
 			light_maker(1, view2model);
 		}
 		break;
-	case 1:
 	case 2:
+		VSETALL( background, 0 );	/* Neutral Normal */
+		/* FALL THROUGH */
+	case 1:
 	case 3:
 	case 4:
 	case 5:
@@ -485,4 +524,8 @@ register struct application *ap;
 		rt_bomb("bad lighting model #");
 	}
 	light_init();
+
+	ibackground[0] = background[0] * 255;
+	ibackground[1] = background[1] * 255;
+	ibackground[2] = background[2] * 255;
 }
