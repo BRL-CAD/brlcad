@@ -751,7 +751,12 @@ register struct uvcoord *uvp;
 	if( pprime[X] < 0 )
 		uvp->uv_u = 1.0 - uvp->uv_u;
 
-	/* uv_du should be relative to rotation, uv_dv relative to height */
+	if( uvp->uv_u < 0 )  uvp->uv_u = 0;
+	else if( uvp->uv_u > 1 )  uvp->uv_u = 1;
+	if( uvp->uv_v < 0 )  uvp->uv_v = 0;
+	else if( uvp->uv_v > 1 )  uvp->uv_v = 1;
+
+	/* XXX uv_du should be relative to rotation, uv_dv relative to height */
 	uvp->uv_du = uvp->uv_dv = 0;
 }
 
