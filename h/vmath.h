@@ -137,9 +137,22 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define MDY	7
 #define MDZ	11
 #define MAT_DELTAS(m,x,y,z)	{ \
-			(m)[MDX] = x; \
-			(m)[MDY] = y; \
-			(m)[MDZ] = z; }
+			(m)[MDX] = (x); \
+			(m)[MDY] = (y); \
+			(m)[MDZ] = (z); }
+
+#define MAT_DELTAS_VEC(_m,_v)	\
+			MAT_DELTAS(_m, (_v)[X], (_v)[Y], (_v)[Z] )
+#define MAT_DELTAS_VEC_NEG(_m,_v)	\
+			MAT_DELTAS(_m,-(_v)[X],-(_v)[Y],-(_v)[Z] )
+#define MAT_DELTAS_GET(_v,_m)	{ \
+			(_v)[X] = (_m)[MDX]; \
+			(_v)[Y] = (_m)[MDY]; \
+			(_v)[Z] = (_m)[MDZ]; }
+#define MAT_DELTAS_GET_NEG(_v,_m)	{ \
+			(_v)[X] = -(_m)[MDX]; \
+			(_v)[Y] = -(_m)[MDY]; \
+			(_v)[Z] = -(_m)[MDZ]; }
 
 /* Set vector at `a' to have coordinates `b', `c', `d' */
 #define VSET(a,b,c,d)	{ \
