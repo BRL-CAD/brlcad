@@ -161,9 +161,13 @@ dnl BSDGETTIMEOFDAY
 
 AC_OUTPUT([
 	anim/Makefile
+	brlman/Makefile
+	burst/Makefile
 	bwish/Makefile
+	conv/Makefile
 	doc/Makefile
 	fb/Makefile
+	gtools/Makefile
 	h/Makefile
 	html/Makefile
 	html/manuals/Anim_Tutorial/Makefile
@@ -180,6 +184,7 @@ AC_OUTPUT([
 	html/ReleaseNotes/Rel5.0/Makefile
 	html/ReleaseNotes/Rel5.0/Summary/Makefile
 	html/ReleaseNotes/Rel6.0/Makefile
+	irprep/Makefile
 	libbn/Makefile
 	libbu/Makefile
 	libdm/Makefile
@@ -231,5 +236,6 @@ AC_OUTPUT([
 	tclscripts/rtwizard/lib/Makefile
 	tclscripts/rtwizard/Makefile
 	tclscripts/util/Makefile
+	tools/Makefile
 	util/Makefile
 ])

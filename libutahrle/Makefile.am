@@ -1,3 +1,5 @@
+# $Id$
+
 lib_LTLIBRARIES = libutahrle.la
 
 libutahrle_la_SOURCES = Runput.c buildmap.c cmd_name.c colorquant.c dither.c float_to_exp.c inv_cmap.c rle_addhist.c rle_cp.c rle_getcom.c rle_getraw.c rle_getrow.c rle_getskip.c rle_global.c rle_open_f.c rle_putcom.c rle_putraw.c rle_putrow.c rle_raw_alc.c rle_rawrow.c rle_row_alc.c scanargs.c vaxshort.c

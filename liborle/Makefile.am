@@ -1,3 +1,4 @@
+# $Id$
 
 lib_LTLIBRARIES = liborle.la
 

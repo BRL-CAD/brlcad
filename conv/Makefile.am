@@ -1,0 +1,83 @@
+# $Id$
+
+bin_PROGRAMS = asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g g-euclid euclid_format euclid_unformat tankill-g g-tankill viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g g-nff asc-nmg nmg-rib g-vrml g-x3d g-acad cy-g nastran-g g-wave g-stl nmg-bot g-shell.rect stl-g poly-bot dbupgrade enf-g bot_shell-vtk g-dxf ply-g
+
+BN=$(top_builddir)/libbn/libbn.la $(BU)
+BU=$(top_builddir)/libbu/libbu.la @TCL_LIBS@ @PTHREAD_LIBS@ -lm
+SYSV=$(top_builddir)/libsysv/libsysv.la
+RT=$(top_builddir)/librt/librt.la $(BN)
+WDB=$(top_builddir)/libwdb/libwdb.la
+
+asc2g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+asc_nmg_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+bot_shell_vtk_LDADD = ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  ${SYSV} 
+cy_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+dbupgrade_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+dxf_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+enf_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  ${SYSV} 
+euclid_format_LDADD = ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+euclid_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+fast4_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g2asc_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_acad_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_dxf_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_euclid1_LDADD = ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_euclid_LDADD = ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_nff_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_nmg_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_shell_rect_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_stl_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_tankill_LDADD = ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_vrml_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_wave_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+g_x3d_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+nastran_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+nmg_bot_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+nmg_rib_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+ply_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  ${SYSV} 
+poly_bot_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+proe_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  ${SYSV} 
+stl_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  ${SYSV} 
+tankill_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+viewpoint_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${BU} @TCL_LIBS@  
+
+asc2g_SOURCES = asc2g.c 
+asc2pix_SOURCES = asc2pix.c
+asc_nmg_SOURCES = asc-nmg.c 
+bot_shell_vtk_SOURCES = bot_shell-vtk.c 
+conv_vg2g_SOURCES = conv-vg2g.c
+cy_g_SOURCES = cy-g.c 
+dbupgrade_SOURCES = dbupgrade.c 
+dxf_g_SOURCES = dxf-g.c 
+enf_g_SOURCES = enf-g.c 
+euclid_format_SOURCES = euclid_format.c 
+euclid_g_SOURCES = euclid-g.c 
+euclid_unformat_SOURCES = euclid_unformat.c
+fast4_g_SOURCES = fast4-g.c 
+g2asc_SOURCES = g2asc.c 
+g_acad_SOURCES = g-acad.c 
+g_dxf_SOURCES = g-dxf.c 
+g_euclid1_SOURCES = g-euclid1.c 
+g_euclid_SOURCES = g-euclid.c 
+g_nff_SOURCES = g-nff.c 
+g_nmg_SOURCES = g-nmg.c 
+g_shell_rect_SOURCES = g-shell.rect.c 
+g_stl_SOURCES = g-stl.c 
+g_tankill_SOURCES = g-tankill.c 
+g_vrml_SOURCES = g-vrml.c 
+g_wave_SOURCES = g-wave.c 
+g_x3d_SOURCES = g-x3d.c 
+nastran_g_SOURCES = nastran-g.c 
+nmg_bot_SOURCES = nmg-bot.c 
+nmg_rib_SOURCES = nmg-rib.c 
+pix2asc_SOURCES = pix2asc.c
+ply_g_SOURCES = ply-g.c 
+poly_bot_SOURCES = poly-bot.c 
+proe_g_SOURCES = proe-g.c 
+stl_g_SOURCES = stl-g.c 
+tankill_g_SOURCES = tankill-g.c 
+viewpoint_g_SOURCES = viewpoint-g.c 
+
+
+man_MANS = asc-nmg.1 bot_shell-vtk.1 conv-vg2g.1 cy-g.1 dbclean.1 dxf-g.1 enf-g.1 euclid-g.1 fast4-g.1 g2asc.1 g-acad.1 g-dxf.1 g-euclid.1 g-nff.1 g-nmg.1 g-shell.rect.1 g-stl.1 g-tankill.1 g-vrml.1 g-wave.1 g-x3d.1 nastran-g.1 nmg-bot.1 nmg-rib.1 pix2asc.1 ply-g.1 poly-bot.1 proe-g.1 stl-g.1 tankill-g.1 viewpoint-g.1
+EXTRA_DIST = $(man_MANS)

@@ -17,13 +17,19 @@ SUBDIRS=@TCL@ @TK@ @ITCL@\
 	libutahrle\
 	libwdb\
 	anim\
+	brlman\
+	burst\
 	bwish\
+	conv\
 	fb\
+	gtools\
+	irprep\
 	mged\
 	rt\
 	sh\
 	sig\
 	tclscripts\
+	tools\
 	util\
 	html\
 	doc

@@ -1,3 +1,5 @@
+# $Id$
+
 lib_LTLIBRARIES = libfft.la
 
 noinst_PROGRAMS = fftc ifftc

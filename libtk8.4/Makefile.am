@@ -1,3 +1,5 @@
+# $Id$
+
 SUBDIRS = generic unix doc
 
 lib_LTLIBRARIES = libtk.la

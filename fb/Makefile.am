@@ -1,3 +1,5 @@
+# $Id$
+
 bin_PROGRAMS = bw-fb cat-fb cell-fb cmap-fb fbgammamod fb-bw fb-cmap fb-fb fb-orle fb-pix fb-rle fbanim fbcbars fbclear fbcmap fbcmrot fbcolor fbfade fbframe fbfree fbgamma fbgrid fbhelp fblabel fbline fbpoint fbscanplot fbstretch fbzoom gif-fb gif2fb orle-fb pix-fb pixflip-fb pl-fb polar-fb pp-fb rle-fb spm-fb pixautosize png-fb fb-png
 
 BN=$(top_builddir)/libbn/libbn.la $(BU)
