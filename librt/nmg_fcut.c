@@ -1665,6 +1665,7 @@ rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT;
 			rt_log("joining loops\n");
 		vs[inner_wedge].vu = nmg_join_2loops( vs[outer_wedge].vu,
 			vs[inner_wedge].vu );
+		nmg_loop_g( outer_lu->l_p, tol );
 		return 1;		/* cutjoin was done */
 	}
 
@@ -1684,6 +1685,7 @@ rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT;
 
 	vs[inner_wedge].vu = nmg_join_2loops( vs[outer_wedge].vu,
 		vs[inner_wedge].vu );
+	nmg_loop_g( outer_lu->l_p, tol );
 	return 1;		/* cutjoin was done */
 }
 
