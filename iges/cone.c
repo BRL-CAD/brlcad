@@ -34,7 +34,7 @@ int entityno;
 	vect_t		b, bvec;	/* another base radius vector */
 	vect_t		c, cvec;	/* one nose radius vector */
 	vect_t		d, dvec;	/* another nose radius vector */
-	fastf_t		scale=0.0;
+	fastf_t		scale_height=0.0;
 	fastf_t		x1;
 	fastf_t		y1;
 	fastf_t		z1;
@@ -61,7 +61,7 @@ int entityno;
 	}
 	Readrec( dir[entityno]->param );
 	Readint( &sol_num , "" );
-	Readcnv( &scale , "" );
+	Readcnv( &scale_height , "" );
 	Readcnv( &rad1 , "" );
 	Readcnv( &rad2 , "" );
 	Readcnv( &x1 , "" );
@@ -71,11 +71,44 @@ int entityno;
 	Readcnv( &y2 , "" );
 	Readcnv( &z2 , "" );
 
-	if( scale <= 0.0 || (rad1 <= 0.0 && rad2 <= 0.0) )
+	if( scale_height <= 0.0 || rad2 < rad1 || rad2 < 0.0 )
 	{
 		printf( "Illegal parameters for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
-		return(0);
+		if( scale_height == 0.0 )
+		{
+			printf( "\tCone height is zero!!\n" );
+			return( 0 );
+		}
+		if( rad1 == 0.0 && rad2 == 0.0 )
+		{
+			printf( "\tBoth radii for cone are zero!!!\n" );
+			return( 0 );
+		}
+		if( rad1 < 0.0 )
+		{
+			printf( "\tUsing absloute value of a negative face radius (%f)\n" , rad1 );
+			rad1 = (-rad1);
+		}
+		else if( rad1 == 0.0 )
+			rad1 = SMALL_FASTF;
+
+		if( rad2 < 0.0 )
+		{
+			printf( "\tUsing absloute value of a negative face radius (%f)\n" , rad2 );
+			rad2 = (-rad2);
+		}
+		else if( rad2 == 0.0 )
+			rad2 = SMALL_FASTF;
+
+		if(scale_height < 0.0 )
+		{
+			printf( "\tUsing absloute value of a negative height (%f)\n" , scale_height );
+			printf( "\t\tand reversing height direction\n" );
+			x2 = (-x2);
+			y2 = (-y2);
+			z2 = (-z2);
+		}
 	}
 
 
@@ -100,7 +133,7 @@ int entityno;
 	}
 	VUNITIZE(hdir);
 
-	if( mk_cone( fdout, dir[entityno]->name, base, hdir, scale, rad1, rad2 ) < 0 )  {
+	if( mk_cone( fdout, dir[entityno]->name, base, hdir, scale_height, rad1, rad2 ) < 0 )  {
 		printf("Unable to write entity D%07d (%s)\n",
 			dir[entityno]->direct , dir[entityno]->name );
 		return(0);
