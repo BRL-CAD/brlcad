@@ -212,9 +212,9 @@ char	*dp;
 	if( tp->tx_transp[3] == 0 )  {
 opaque:
 		VSET( swp->sw_color,
-			(r+0.5) * rt_inv255,
-			(g+0.5) * rt_inv255,
-			(b+0.5) * rt_inv255 );
+			r * rt_inv255,
+			g * rt_inv255,
+			b * rt_inv255 );
 		return(1);
 	}
 	/* This circumlocution needed to keep expression simple for Cray, others */
@@ -321,9 +321,9 @@ char	*dp;
 		cp = ckp->ckr_b;
 	}
 	VSET( swp->sw_color,
-		(cp[0]+0.5) * rt_inv255,
-		(cp[1]+0.5) * rt_inv255,
-		(cp[2]+0.5) * rt_inv255 );
+		cp[0] * rt_inv255,
+		cp[1] * rt_inv255,
+		cp[2] * rt_inv255 );
 	return(1);
 }
 
