@@ -465,33 +465,31 @@ char *dstr;
     return TCL_ERROR;
   }
 
-#if 0
-  Tcl_StaticPackage(interp, "Tk", Tk_Init, Tk_SafeInit);
-#endif
-
-#if 1
-  /* XXX Initialize [incr Tk] */
+  /* Initialize [incr Tk] */
   if (Itk_Init(interp) == TCL_ERROR) {
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
-#if 0
-  Tcl_StaticPackage(interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
-#endif
-
-  /* Import [incr Tcl] commands into the global namespace */
+  /* Import [incr Tk] commands into the global namespace */
   if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		 "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
-  if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
+  /* Initialize the Iwidgets package */
+  if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
-#endif
+
+  /* Import iwidgets into the global namespace */
+  if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		 "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
   /* Initialize libdm */
   (void)Dm_Init(interp);
