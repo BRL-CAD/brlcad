@@ -118,15 +118,15 @@ char **argv;
 			framebuffer = optarg;
 			break;
 		default:	/* '?' */
-			usage();
+			usage(argv);
 			exit(1);
 		}
 	}
 
 	if( optind >= argc )  {
 		if( isatty(fileno(stdin)) ) {
-			(void) fprintf(stderr, "gif-fb: No input file.\n");
-			usage();
+			(void) fprintf(stderr, "%s: No input file.\n",argv[0]);
+			usage(argv);
 			exit(1);
 		}
 		file_name = "-";
@@ -135,9 +135,9 @@ char **argv;
 		file_name = argv[optind];
 		if( (fp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
-			    "gif-fb: cannot open \"%s\" for reading\n",
+			    "%s: cannot open \"%s\" for reading\n",argv[0],
 			    file_name );
-			usage();
+			usage(argv);
 			exit(1);
 		}
 	}
@@ -147,7 +147,7 @@ char **argv;
 	n= fread(&Header, 1, 13, fp);
 
 	if (n != 13) {
-		fprintf(stderr,"gif-fb: only %d bytes in header.\n",n);
+		fprintf(stderr,"%s: only %d bytes in header.\n",argv[0],n);
 		exit(1);
 	}
 
@@ -171,7 +171,7 @@ char **argv;
 	}
 	
 	if (Header.GH_EOB) {
-		fprintf(stderr,"gif-fb: missing EOB in header.\n");
+		fprintf(stderr,"%s: missing EOB in header.\n",argv[0]);
 		exit(1);
 	}
 	maxcolors = 1 << GlobalPixels;
@@ -182,8 +182,8 @@ char **argv;
 	for (i=0;i<maxcolors;i++) {
 		n = fread(&GlobalColors[i], 1, 3, fp);
 		if (n != 3) {
-			fprintf(stdout,"gif-fb: only read %d global colors.\n",
-			    i);
+			fprintf(stdout,"%s: only read %d global colors.\n",
+			    argv[0], i);
 			exit(1);
 		}
 	}
@@ -193,7 +193,8 @@ char **argv;
 	n= fread(&Im, 1, sizeof(Im), fp);
 
 	if (n != sizeof(Im)) {
-		fprintf(stderr,"gif-fb: only %d bytes in image header.\n",n);
+		fprintf(stderr,"%s: only %d bytes in image header.\n",
+		    argv[0], n);
 		exit(1);
 	}
 	if (verbose) {
@@ -215,15 +216,16 @@ char **argv;
 			n = fread(&GlobalColors[i], 1, 3, fp);
 			if (n != 3) {
 				fprintf(stdout,
-				    "gif-fb: only read %d global colors.\n",
-				    i);
+				    "%s: only read %d global colors.\n",
+				    argv[0], i);
 				exit(1);
 			}
 		}
 	}
 
 	if (WORD(Im.IH_Width) > 2048) {
-		fprintf(stderr, "gif-fb: Input line greater than internal buffer!\n");
+		fprintf(stderr, "%s: Input line greater than internal buffer!\n",
+		    argv[0]);
 		exit(1);
 	}
 
@@ -457,7 +459,8 @@ FILE	*inp;
 	}
 	return(code);
 }
-usage()
+usage(argv)
+char **argv;
 {
-	fprintf(stderr,"gif-fb [-v] [-F frame_buffer] [gif_file]\n");
+	fprintf(stderr,"%s [-h] [-v] [-F frame_buffer] [gif_file]\n",argv[0]);
 }
