@@ -17,6 +17,9 @@
 ascript: ascript.o anim.o
 	CC LDFLAGS ascript.o anim.o LIBRT -lm -lmpc -o ascript
 
+channel: channel.o
+	CC LDFLAGS channel.o -o channel
+
 convert: convert.o anim.o
 	CC LDFLAGS convert.o anim.o -lm -o convert
 
