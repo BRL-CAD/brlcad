@@ -655,3 +655,115 @@ register point_t a, b, c;
 
 	return( 0.5 * sqrt(area) );
 }
+
+
+/*	R T _ I S E C T _ P T _ L S E G
+ *
+ * Intersect a point P with the line segment defined by two distinct
+ * points A and B.
+ *	
+ * Explicit Return
+ *	-2	P on line AB but outside range of AB,
+ *			dist = distance from A to P on line.
+ *	-1	P not on line of AB within tolerance
+ *	1	P is at A
+ *	2	P is at B
+ *	3	P is on AB, dist = distance from A to P on line.
+ *	
+ *    B *
+ *	|  
+ *    P'*-tol-*P 
+ *	|    /  _
+ *    dist  /   /|
+ *	|  /   /
+ *	| /   / AtoP
+ *	|/   /
+ *    A *   /
+ *	
+ *	tol = distance limit from line to pt P;
+ *	dist = distance from A to P'
+ */
+int rt_isect_pt_lseg(dist, a, b, p, tolsq)
+fastf_t *dist;	/* distance along line from A to P */
+point_t a, b, p; /* points for line and intersect */
+fastf_t tolsq;	/* distance tolerance (squared) for point being */
+{		/ * on line or other-point */
+
+	vect_t	AtoP,
+		BtoP,
+		AtoB,
+		ABunit;	/* unit vector from A to B */
+
+	fastf_t	APprABunit;	/* Magnitude of the projection of
+				 * AtoP onto ABunit
+				 */
+	fastf_t distsq;		/* distance^2 from parametric line to pt */
+
+	VSUB2(AtoP p, a);
+	if (MAGSQ(AtoP) < tolsq)
+		return(1);	/* P at A */
+
+	VSUB2(BtoP, p, b);
+	if (MAGSQ(BtoP) < tolsq)
+		return(2);	/* P at B */
+
+	VSUB2(AtoB, b, a);
+	VMOVE(ABunit, AtoB);
+	VUNITIZE(ABunit);
+
+/* This part is similar to rt_dist_line_pt.  The difference being that we
+ * never actually have to do the sqrt that the other routine does.
+ */
+
+	/* find dist as a function of ABunit, actually the projection
+	 * of AtoP onto ABunit
+	 */
+	APprABunit = VDOT(AtoP, ABunit);
+
+	/* because of pythgorean theorem ... */
+	distsq = MAGSQ(AtoP) - APprABunit * APprABunit;
+
+	if (distsq > tolsq)
+		return(-1);	/* dist pt to line too large */
+
+/* at this point we know the distance from the point to the line is
+ * within tolerance.
+ */
+	*dist = VDOT(AtoP, AtoB) / MAGSQ(AtoB);
+
+	if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
+		return(-2);
+
+	return(3);	/* P on AtoB */
+}
+
+/*	R T _ D I S T _ P T _ L S E G
+ *
+ *	Find the distance from a point P to a line segment described
+ *	by the two endpoints A and B.
+ */
+double rt_dist_pt_lseg(a, b, p)
+point_t a, b, p;
+{
+	vect_t ENDPTtoP, AtoB;
+	double dist, APdist;
+	
+	VSUB2(ENDPTtoP, p, a);
+	VSUB2(AtoB, b, a);
+
+	dist = VDOT(ENDPTtoP, AtoB) / MAGSQ(AtoB);
+	if (dist <= 1.0 && dist >= 0.0) {
+		/* pt is along edge of lseg */
+		VUNITIZE(AtoB);
+		return(rt_dist_pt_line(a, AtoB, p));
+	}
+
+	/* pt is closer to an endpoint than to the line segment */
+
+	APdist = MAGNITUDE(ENDPTtoP);
+	VSUB2(ENDPTtoP, p, b);
+	dist = MAGNITUDE(ENDPTtoP);
+
+	if (APdist < dist) return(APdist);
+	return(dist);
+}
