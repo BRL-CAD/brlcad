@@ -34,6 +34,7 @@
 				in case there are no LF's */
 extern int errno;
 
+int
 Recsize()
 {
 
