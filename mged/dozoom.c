@@ -47,6 +47,7 @@ extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
 static void draw_axes();
 
+mat_t	perspective_mat;
 mat_t	incr_change;
 mat_t	modelchanges;
 mat_t	identity;
@@ -270,7 +271,6 @@ int	which_eye;
 	register struct solid *sp;
 	FAST fastf_t ratio;
 	fastf_t		inv_viewsize;
-	mat_t		pmat;
 	mat_t		tmat, tvmat;
 	mat_t		new;
 	matp_t		mat;
@@ -333,36 +333,36 @@ if( mged_variables.faceplate > 0 )  {
 #endif
 			if( eye_pos_scr[Z] == 1.0 )  {
 				/* This way works, with reasonable Z-clipping */
-				persp_mat( pmat, mged_variables.perspective,
+				persp_mat( perspective_mat, mged_variables.perspective,
 					1.0, 0.01, 1.0e10, 1.0 );
 			} else {
 				/* This way does not have reasonable Z-clipping,
 				 * but includes shear, for GDurf's testing.
 				 */
-				deering_persp_mat( pmat, l, h, eye_pos_scr );
+				deering_persp_mat( perspective_mat, l, h, eye_pos_scr );
 			}
 } else {
 			/* New way, should handle all cases */
-			mike_persp_mat( pmat, eye_pos_scr );
+			mike_persp_mat( perspective_mat, eye_pos_scr );
 }
 #if HACK
-bn_mat_print("pmat", pmat);
+bn_mat_print("perspective_mat", perspective_mat);
 #endif
 			break;
 		case 1:
 			/* R */
 			mat = model2view;
 			eye[X] = eye_delta_scr;
-			deering_persp_mat( pmat, l, h, eye );
+			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
 		case 2:
 			/* L */
 			mat = model2view;
 			eye[X] = -eye_delta_scr;
-			deering_persp_mat( pmat, l, h, eye );
+			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
 		}
-		bn_mat_mul( new, pmat, mat );
+		bn_mat_mul( new, perspective_mat, mat );
 		mat = new;
 	}
 
@@ -435,7 +435,7 @@ bn_mat_print("pmat", pmat);
 	if( mged_variables.perspective <= 0 )  {
 		mat = model2objview;
 	} else {
-		bn_mat_mul( new, pmat, model2objview );
+		bn_mat_mul( new, perspective_mat, model2objview );
 		mat = new;
 	}
 	dmp->dm_newrot( dmp, mat, which_eye );
