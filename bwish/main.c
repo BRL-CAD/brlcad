@@ -134,6 +134,12 @@ Cad_AppInit(interp)
 	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
 	  return TCL_ERROR;
 	}
+	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK) {
+	  return TCL_ERROR;
+	}
+	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
+	  return TCL_ERROR;
+	}
 
 #ifdef BWISH
 	/* Initialize libdm */

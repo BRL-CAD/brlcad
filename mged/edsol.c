@@ -214,17 +214,18 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_BOT_THICK		99
 #define	MENU_BOT_FMODE		100
 #define MENU_BOT_DELETE_TRI	101
-#define MENU_EXTR_SCALE_H	102
-#define MENU_EXTR_MOV_H		103
-#define MENU_EXTR_ROT_H		104
-#define MENU_EXTR_SKT_NAME	105
-#define	MENU_CLINE_SCALE_H	106
-#define	MENU_CLINE_MOVE_H	107
-#define MENU_CLINE_SCALE_R	108
-#define	MENU_CLINE_SCALE_T	109
+#define MENU_BOT_FLAGS		102
+#define MENU_EXTR_SCALE_H	103
+#define MENU_EXTR_MOV_H		104
+#define MENU_EXTR_ROT_H		105
+#define MENU_EXTR_SKT_NAME	106
+#define	MENU_CLINE_SCALE_H	107
+#define	MENU_CLINE_MOVE_H	108
+#define MENU_CLINE_SCALE_R	109
+#define	MENU_CLINE_SCALE_T	110
 
-#define MENU_TGC_SCALE_H_CD	110
-#define	MENU_TGC_SCALE_H_V_AB	111
+#define MENU_TGC_SCALE_H_CD	111
+#define	MENU_TGC_SCALE_H_V_AB	112
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -626,6 +627,7 @@ struct menu_item bot_menu[] = {
 	{ "Delete Triangle", bot_ed, ECMD_BOT_FDEL },
 	{ "Select Mode", bot_ed, ECMD_BOT_MODE },
 	{ "Select Orientation", bot_ed, ECMD_BOT_ORIENT },
+	{ "Set flags", bot_ed, ECMD_BOT_FLAGS },
 	{ "Set Face Thickness", bot_ed, ECMD_BOT_THICK },
 	{ "Set Face Mode", bot_ed, ECMD_BOT_FMODE },
 	{ "", (void (*)())NULL, 0 }
@@ -3155,6 +3157,55 @@ sedit()
 				}
 
 				bot->thickness[face_no] = es_para[0];
+			}
+		}
+		break;
+	case ECMD_BOT_FLAGS:
+		{
+			int ret_tcl;
+			const char *dialog_result;
+			char cur_settings[11];
+			struct rt_bot_internal *bot =
+				(struct rt_bot_internal *)es_int.idb_ptr;
+
+			RT_BOT_CK_MAGIC( bot );
+
+			strcpy( cur_settings, " { 0 0 }" );
+
+			if( bot->bot_flags & RT_BOT_USE_NORMALS ) {
+				cur_settings[3] = '1';
+			}
+			if( bot->bot_flags & RT_BOT_USE_FLOATS ) {
+				cur_settings[5] = '1';
+			}
+
+			ret_tcl = Tcl_VarEval( interp,
+					       "cad_list_buts",
+					       " .bot_list_flags ",
+					       bu_vls_addr( &pathName ),
+					       " _bot_flags_result ",
+					       cur_settings,
+					       " \"BOT Flags\"",
+					       " \"Select the desired flags\"",
+					       " { {Use vertex normals} {Use single precision ray-tracing} }",
+					       " { {This selection indicates that surface normals at hit points should be interpolated from vertex normals} {This selection indicates that the prepped form of the BOT triangles should use sigle precision to save memory} } ",
+					       (char *)NULL );
+			if( ret_tcl != TCL_OK )
+			{
+				bu_log( "ERROR: cad_list_buts: %s\n", interp->result );
+				break;
+			}
+			dialog_result = Tcl_GetVar( interp, "_bot_flags_result", TCL_GLOBAL_ONLY );
+
+			if( dialog_result[0] == '1' ) {
+				bot->bot_flags |= RT_BOT_USE_NORMALS;
+			} else {
+				bot->bot_flags &= ~RT_BOT_USE_NORMALS;
+			}
+			if( dialog_result[2] == '1' ) {
+				bot->bot_flags |= RT_BOT_USE_FLOATS;
+			} else {
+				bot->bot_flags &= ~RT_BOT_USE_FLOATS;
 			}
 		}
 		break;

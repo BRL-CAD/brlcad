@@ -662,6 +662,109 @@ escaped_from_model:
 	return curcut;
 }
 
+/*		R T _ F I N D _ B A C K I N G _ D I S T
+ *
+ *	This routine traces a ray from its start point to model exit through the space partitioning tree.
+ *	The objective is to find all primitives that use "pieces" and also have a bounding box that
+ *	extends behind the ray start point. The minimum (most negative) intersection with such a bounding
+ *	box is returned. The "backbits" bit vector (provided by the caller) gets a bit set for every
+ *	primitive that meets the above criteria.
+ *	No primitive intersections are performed.
+ *
+ *	XXXX This routine does not work for NUGRID XXXX
+ */
+fastf_t
+rt_find_backing_dist( struct rt_shootray_status *ss, struct bu_bitv *backbits ) {
+	fastf_t min_backing_dist=BACKING_DIST;
+	fastf_t cur_dist=0.0;
+	point_t cur_pt;
+	union cutter *cutp;
+	struct bu_bitv *solidbits;
+	struct xray ray;
+	struct resource	*resp;
+	struct rt_i *rtip;
+	int i;
+
+	resp = ss->ap->a_resource;
+	rtip = ss->ap->a_rt_i;
+
+	/* get a bit vector of our own to avoid duplicate bounding box intersection calculations */
+	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
+		solidbits = bu_bitv_new( rtip->nsolids );
+	} else {
+		solidbits = BU_LIST_FIRST( bu_bitv, &resp->re_solid_bitv );
+		BU_LIST_DEQUEUE( &solidbits->l );
+		BU_CK_BITV(solidbits);
+		BU_BITV_NBITS_CHECK( solidbits, rtip->nsolids );
+	}
+	bu_bitv_clear(solidbits);
+
+	ray = ss->ap->a_ray;	/* struct copy, don't mess with the original */
+
+	/* cur_dist keeps track of where we are along the ray */
+	/* stop when cur_dist reaches far intersection of ray and model bounding box */
+	while( cur_dist <= ss->ap->a_ray.r_max ) {
+		/* calculate the current point along the ray */
+		VJOIN1( cur_pt, ss->ap->a_ray.r_pt, cur_dist, ss->ap->a_ray.r_dir );
+
+		/* descend into the space partitioning tree based on this point */
+		cutp = &ss->ap->a_rt_i->rti_CutHead;
+		while( cutp->cut_type == CUT_CUTNODE ) {
+			if( cur_pt[cutp->cn.cn_axis] >= cutp->cn.cn_point )  {
+				cutp=cutp->cn.cn_r;
+			}  else  {
+				cutp=cutp->cn.cn_l;
+			}
+		}
+
+		/* we are now at the box node for the current point */
+		/* check if the ray intersects this box */
+		if( !rt_in_rpp( &ray, ss->inv_dir, cutp->bn.bn_min, cutp->bn.bn_max ) ) {
+			/* ray does not intersect this cell
+			 * one of two situations must exist:
+			 *	1. ray starts outside model bounding box (no need for these calculations)
+			 *	2. we have proceeded beyond end of model bounding box (we are done)
+			 * in either case, we are finished
+			 */
+			goto done;
+		} else {
+			/* increment cur_dist into next cell for next execution of this loop */
+			cur_dist = ray.r_max + OFFSET_DIST;
+		}
+
+		/* process this box node (look at all the pieces) */
+		for( i=0 ; i<cutp->bn.bn_piecelen ; i++ ) {
+			struct rt_piecelist *plp=&cutp->bn.bn_piecelist[i];
+
+			if( BU_BITTEST( solidbits, plp->stp->st_bit ) == 0 ) {
+				/* we haven't looked at this primitive before */
+				if( rt_in_rpp( &ray, ss->inv_dir, plp->stp->st_min, plp->stp->st_max ) ) {
+					/* ray intersects this primitive bounding box */
+
+					if( ray.r_min < BACKING_DIST ) {
+						if( ray.r_min < min_backing_dist ) {
+							/* move our backing distance back to catch this one */
+							min_backing_dist = ray.r_min;
+						}
+
+						/* add this one to our list of primitives to check */
+						BU_BITSET( backbits, plp->stp->st_bit );
+					}
+				}
+				/* set bit so we don't repeat this calculation */
+				BU_BITSET( solidbits, plp->stp->st_bit );
+			}
+		}
+	}
+ done:
+	/* put our bit vector on the resource list */
+	BU_CK_BITV(solidbits);
+	BU_LIST_APPEND( &resp->re_solid_bitv, &solidbits->l );
+
+	/* return our minimum backing distance */
+	return min_backing_dist;
+}
+
 /*
  *			R T _ S H O O T R A Y
  *
@@ -700,6 +803,8 @@ register struct application *ap;
 	struct seg		finished_segs;	/* processed by rt_boolweave() */
 	fastf_t			last_bool_start;
 	struct bu_bitv		*solidbits;	/* bits for all solids shot so far */
+	struct bu_bitv		*backbits=NULL;	/* bits for all solids using pieces that need to be intersected behind
+						   the the ray start point */
 	struct bu_ptbl		*regionbits;	/* table of all involved regions */
 	char			*status;
 	auto struct partition	InitialPart;	/* Head of Initial Partitions */
@@ -927,12 +1032,59 @@ register struct application *ap;
 	 *  what region they are leaving from should probably back their
 	 *  own start-point up, rather than depending on it here, but
 	 *  it isn't much trouble here.
+	 *
+	 *  Modification by JRA for pieces methodology:
+	 *	The original algorithm here assumed that if we encountered any primitive
+	 *	along the positive direction of the ray, ALL its intersections would be calculated.
+	 *	With pieces, we may see only an exit hit if the entrance piece is in a space partition cell
+	 *	that is more than "BACKING_DIST" behind the ray start point (leading to incorrect results).
+	 *	I have modified the setting of "ss.box_start" (when pieces are present and the ray start point is
+	 *	inside the model bounding box) as follows (see rt_find_backing_dist()):
+	 *		The ray is traced through the space partitioning tree
+	 *		The ray is intersected with the bounding box of each primitive using pieces in each cell
+	 *		The minimum of all these intersections is set as the initial "ss.box_start".
+	 *		The "backbits" bit vector has a bit set for each of the primitives using pieces that have
+	 *			bounding boxes that extend behind the ray start point
+	 *	Further below (in the "pieces" loop), I have added code to ignore primitives that do not have a bit
+	 *	set in the backbits vector when we are behind the ray start point.
 	 */
+
+	/* these two values set the point where the ray tracing actually begins and ends */
 	ss.box_start = ss.model_start = ap->a_ray.r_min;
 	ss.box_end = ss.model_end = ap->a_ray.r_max;
 
-	if( ss.box_start < BACKING_DIST )
-		ss.box_start = BACKING_DIST; /* Only look a little bit behind */
+	if( ap->a_rt_i->rti_nsolids_with_pieces > 0 ) {
+		/* pieces are present */
+		if( ss.box_start < BACKING_DIST ) {
+			/* the first ray intersection with the model bounding box is more than BACKING_DIST
+			 * behind the ray start point
+			 */
+
+			/* get a bit vector to keep track of which primitives need to be intersected
+			 * behind the ray start point (those having bounding boxes extending behind the
+			 * ray start point and using pieces)
+			 */
+			if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
+				backbits = bu_bitv_new( rtip->nsolids );
+				BU_CK_BITV(backbits);
+			} else {
+				backbits = BU_LIST_FIRST( bu_bitv, &resp->re_solid_bitv );
+				BU_LIST_DEQUEUE( &backbits->l );
+				BU_CK_BITV(backbits);
+				BU_BITV_NBITS_CHECK( backbits, rtip->nsolids );
+			}
+			bu_bitv_clear(backbits);
+
+			/* call "rt_find_backing_dist()" to calculate the required
+			 * start point for calculation, and to fill in the "backbits" bit vector
+			 */
+			ss.box_start = rt_find_backing_dist( &ss, backbits );
+		}
+	} else {
+		/* no pieces present, use the old scheme */
+		if( ss.box_start < BACKING_DIST )
+			ss.box_start = BACKING_DIST; /* Only look a little bit behind */
+	}
 
 	ss.lastcut = CUTTER_NULL;
 	ss.old_status = (struct rt_shootray_status *)NULL;
@@ -997,6 +1149,13 @@ start_cell:
 				stp = plp->stp;
 				RT_CK_SOLTAB(stp);
 
+				if( backbits && ss.box_end < BACKING_DIST && BU_BITTEST( backbits, stp->st_bit ) == 0 ) {
+					/* we are behind the ray start point and this primitive is not one
+					 * that we need to intersect back here
+					 */
+					continue;
+				}
+
 				psp = &(resp->re_pieces[stp->st_piecestate_num]);
 				RT_CK_PIECESTATE(psp);
 				if( psp->ray_seqno != resp->re_nshootray )  {
@@ -1037,7 +1196,6 @@ start_cell:
 				 */
 				resp->re_piece_shots++;
 				psp->cutp = cutp;
-
 				if( (ret = stp->st_meth->ft_piece_shot(
 				    psp, plp, ss.dist_corr, &ss.newray, ap, &waiting_segs )) <= 0 )  {
 				    	/* No hits at all */
@@ -1069,7 +1227,7 @@ start_cell:
 		}
 
 		/* Consider all solids within the box */
-		if( cutp->bn.bn_len > 0 )  {
+		if( cutp->bn.bn_len > 0 && ss.box_end >= BACKING_DIST )  {
 			stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
 			for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
 				register struct soltab *stp = *stpp;
@@ -1280,6 +1438,10 @@ out:
 	/*  Return dynamic resources to their freelists.  */
 	BU_CK_BITV(solidbits);
 	BU_LIST_APPEND( &resp->re_solid_bitv, &solidbits->l );
+	if( backbits ) {
+		BU_CK_BITV(backbits);
+		BU_LIST_APPEND( &resp->re_solid_bitv, &backbits->l );
+	}
 	BU_CK_PTBL(regionbits);
 	BU_LIST_APPEND( &resp->re_region_ptbl, &regionbits->l );
 

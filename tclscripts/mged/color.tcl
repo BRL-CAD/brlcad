@@ -114,7 +114,7 @@ a color using either RGB or HSV. The resulting
 color is RGB." } }
 
     # initialize color
-    catch [list uplevel #0 [list set $vn $icolor]]
+    catch {[list uplevel #0 [list set $vn $icolor]]}
     setWidgetRGBColor $top.$key\MB $vn $icolor
 
     grid $top.$key\E $top.$key\MB -sticky "nsew" -in $top.$key\F

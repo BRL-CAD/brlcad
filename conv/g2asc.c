@@ -75,6 +75,45 @@ FILE	*ifp;
 FILE	*ofp;
 char	*iname = "-";
 
+static char *tclified_name=NULL;
+static int tclified_name_buffer_len=0;
+
+
+/*	This routine escapes the '{' and '}' characters in any string and returns a static buffer containing the
+ *	resulting string. Used for names and db title on output.
+ *
+ *	NOTE: RETURN OF STATIC BUFFER
+ */
+char *
+tclify_name( const char *name )
+{
+	const char *src=name;
+	char *dest;
+
+	int max_len=2*strlen( name ) + 1;
+
+	if( max_len < 2 ) {
+		return( (char *)NULL );
+	}
+
+	if( max_len > tclified_name_buffer_len ) {
+		tclified_name_buffer_len = max_len;
+		tclified_name = bu_realloc( tclified_name, tclified_name_buffer_len, "tclified_name buffer" );
+	}
+
+	dest = tclified_name;
+
+	while( *src ) {
+		if( *src == '{' || *src == '}' ) {
+			*dest++ = '\\';
+		}
+		*dest++ = *src++;
+	}
+	*dest = '\0';
+
+	return( tclified_name );
+}
+
 int
 main(argc, argv)
 char **argv;
@@ -154,18 +193,9 @@ char **argv;
 		RT_CK_DBI(dbip);
 		db_dirbuild( dbip );
 		if( dbip->dbi_title[0] ) {
-			char *c;
-
-			fprintf( ofp, "title ");
-			c = dbip->dbi_title;
-			while( *c ) {
-				if( ispunct( *c ) ) {
-					putc( '\\', ofp );
-				}
-				putc( *c, ofp );
-				c++;
-			}
-                        putc( '\n', ofp );
+			fprintf( ofp, "title {%s}\n", tclify_name( dbip->dbi_title ) );
+		} else {
+			fprintf( ofp, "title {Untitled BRL-CAD Database}\n" );
 		}
 		fprintf( ofp, "units %s\n", bu_units_string( dbip->dbi_local2base ) );
 		FOR_ALL_DIRECTORY_START(dp, dbip)  {
@@ -216,12 +246,12 @@ char **argv;
 					continue;
 				}
 				if( dp->d_flags & DIR_REGION ) {
-					fprintf( ofp, "put %s comb region yes tree {%s}\n",
-						 dp->d_namep,
+					fprintf( ofp, "put {%s} comb region yes tree {%s}\n",
+						 tclify_name( dp->d_namep ),
 						 interp->result );
 				} else {
-					fprintf( ofp, "put %s comb region no tree {%s}\n",
-						 dp->d_namep,
+					fprintf( ofp, "put {%s} comb region no tree {%s}\n",
+						 tclify_name( dp->d_namep ),
 						 interp->result );
 				}
 			} else {
@@ -230,17 +260,18 @@ char **argv;
 					bu_log("Unable to export '%s', skipping\n", dp->d_namep );
 					continue;
 				}
-				fprintf( ofp, "put %s %s\n",
-					 dp->d_namep,
+				fprintf( ofp, "put {%s} %s\n",
+					 tclify_name( dp->d_namep ),
 					 interp->result );
 			}
 			avs = &intern.idb_avs;
 			if( avs->magic == BU_AVS_MAGIC && avs->count > 0 ) {
 				int i;
 
-				fprintf( ofp, "attr set %s", dp->d_namep );
+				fprintf( ofp, "attr set {%s}", tclify_name( dp->d_namep ) );
 				for( i=0 ; i<avs->count ; i++ ) {
-					fprintf( ofp, " %s {%s}", avs->avp[i].name, avs->avp[i].value );
+					fprintf( ofp, " {%s}", avs->avp[i].name );
+					fprintf( ofp, " {%s}", avs->avp[i].value );
 				}
 				fprintf( ofp, "\n" );
 			}

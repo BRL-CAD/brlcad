@@ -3,6 +3,7 @@
 # make your shader param names unique
 # the 'id' is passed to these routines to use for uniqueness
 # the top-level interface is 'do_shader'
+# See "comb.tcl" for an explanation of the widget hierarchy
 
 # To implement a new shader gui:
 #	1. add the new shader to the switch command in 'stack_add',
@@ -757,7 +758,9 @@ proc do_fakestar { shade_var id } {
 	catch { destroy $shader_params($id,window).fr }
 	frame $shader_params($id,window).fr
 
-	label $shader_params($id,window).fr.fakestar_m -text "There are no parameters to set for the fakestar texture map"
+	label $shader_params($id,window).fr.fakestar_m \
+	    -text "There are no parameters to set \n\
+                   for the fakestar texture map"
 	hoc_register_data $shader_params($id,window).fr.fakestar_m "Fake Star" {
 		{summary "The Fake Star texture maps an imaginary star field onto the object."}
 	}
@@ -880,7 +883,7 @@ proc do_checker { shade_var id } {
 	grid columnconfigure $shader_params($id,window).fr.color1_e 0 -weight 1
 	grid columnconfigure $shader_params($id,window).fr.color2_e 0 -weight 1
 
-	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
+	grid $shader_params($id,window).fr -sticky new -ipadx 3 -ipady 3
 	grid columnconfigure $shader_params($id,window).fr 0 -weight 1
 	grid columnconfigure $shader_params($id,window).fr 1 -weight 1
 
@@ -1212,7 +1215,7 @@ proc do_phong { shade_var id } {
 	grid $shader_params($id,window).fr.emiss -row 3 -column 2 -sticky e
 	grid $shader_params($id,window).fr.emiss_e -row 3 -column 3 -sticky w
 	
-	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
+	grid $shader_params($id,window).fr -sticky new -ipadx 3 -ipady 3
 	return $shader_params($id,window).fr
 }
 
@@ -1817,196 +1820,206 @@ proc do_bwtexture { shade_var id } {
 }
 
 proc do_texture { shade_var id } {
-	global shader_params
-	upvar #0 $shade_var shader_str
+    global shader_params
+    upvar #0 $shade_var shader_str
 
-	catch { destroy $shader_params($id,window).fr }
-	frame $shader_params($id,window).fr
-        frame $shader_params($id,window).fr.repl -relief groove -bd 3
+    catch { destroy $shader_params($id,window).fr }
+    frame $shader_params($id,window).fr
+    frame $shader_params($id,window).fr.file_fr -relief flat
+    frame $shader_params($id,window).fr.repl -relief groove -bd 2
+    frame $shader_params($id,window).fr.transp_fr -relief flat
 
-	label $shader_params($id,window).fr.file -text "Texture File Name"
-	entry $shader_params($id,window).fr.file_e -width 40 -textvariable shader_params($id,file)
-	bind $shader_params($id,window).fr.file_e <KeyRelease> "do_shader_apply $shade_var $id"
-	label $shader_params($id,window).fr.width -text "File Width (pixels)"
-	entry $shader_params($id,window).fr.width_e -width 5 -textvariable shader_params($id,width)
-	bind $shader_params($id,window).fr.width_e <KeyRelease> "do_shader_apply $shade_var $id"
-	label $shader_params($id,window).fr.height -text "File height (pixels)"
-	entry $shader_params($id,window).fr.height_e -width 5 -textvariable shader_params($id,height)
-	bind $shader_params($id,window).fr.height_e <KeyRelease> "do_shader_apply $shade_var $id"
-	label $shader_params($id,window).fr.repl.mirror -text "Mirror Adjacent tiles"
-	checkbutton $shader_params($id,window).fr.repl.mirror_e \
-		-variable shader_params($id,mirror) \
-		-command "do_shader_apply $shade_var $id"
-	label $shader_params($id,window).fr.repl.u_scale -text "in U-direction"
-	entry $shader_params($id,window).fr.repl.u_scale_e -width 4 -textvariable shader_params($id,tx_scale_u)
-	bind $shader_params($id,window).fr.repl.u_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
-	label $shader_params($id,window).fr.repl.v_scale -text "in V-direction"
-	entry $shader_params($id,window).fr.repl.v_scale_e -width 4 -textvariable shader_params($id,tx_scale_v)
-	bind $shader_params($id,window).fr.repl.v_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
-	label $shader_params($id,window).fr.trans -text "Transparency (RGB)"
-	entry $shader_params($id,window).fr.trans_e -width 15 -textvariable shader_params($id,transp)
-	bind $shader_params($id,window).fr.trans_e <KeyRelease> "do_shader_apply $shade_var $id"
-	label $shader_params($id,window).fr.valid -text "Use transparency"
-	checkbutton $shader_params($id,window).fr.valid_e \
-		-variable shader_params($id,trans_valid) \
-		-command  "do_shader_apply $shade_var $id"
+    label $shader_params($id,window).fr.file_fr.file -text "Texture File Name"
+    entry $shader_params($id,window).fr.file_fr.file_e -width 20 \
+	-textvariable shader_params($id,file)
+    bind $shader_params($id,window).fr.file_fr.file_e <KeyRelease> "do_shader_apply $shade_var $id"
+    label $shader_params($id,window).fr.file_fr.width -text "File Width (pixels)"
+    entry $shader_params($id,window).fr.file_fr.width_e -width 5 \
+	-textvariable shader_params($id,width)
+    bind $shader_params($id,window).fr.file_fr.width_e <KeyRelease> "do_shader_apply $shade_var $id"
+    label $shader_params($id,window).fr.file_fr.height -text "File height (pixels)"
+    entry $shader_params($id,window).fr.file_fr.height_e -width 5 \
+	-textvariable shader_params($id,height)
+    bind $shader_params($id,window).fr.file_fr.height_e \
+	<KeyRelease> "do_shader_apply $shade_var $id"
+    label $shader_params($id,window).fr.repl.mirror -text "Mirror Adjacent tiles"
+    checkbutton $shader_params($id,window).fr.repl.mirror_e \
+	-variable shader_params($id,mirror) \
+	-command "do_shader_apply $shade_var $id"
+    label $shader_params($id,window).fr.repl.u_scale -text "in U-direction"
+    entry $shader_params($id,window).fr.repl.u_scale_e -width 4 \
+	-textvariable shader_params($id,tx_scale_u)
+    bind $shader_params($id,window).fr.repl.u_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+    label $shader_params($id,window).fr.repl.v_scale -text "in V-direction"
+    entry $shader_params($id,window).fr.repl.v_scale_e -width 4 \
+	-textvariable shader_params($id,tx_scale_v)
+    bind $shader_params($id,window).fr.repl.v_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+    label $shader_params($id,window).fr.transp_fr.trans -text "Transparency (RGB)"
+    entry $shader_params($id,window).fr.transp_fr.trans_e -width 11 \
+	-textvariable shader_params($id,transp)
+    bind $shader_params($id,window).fr.transp_fr.trans_e <KeyRelease> \
+	"do_shader_apply $shade_var $id"
+    checkbutton $shader_params($id,window).fr.transp_fr.valid_e \
+	-variable shader_params($id,trans_valid) \
+	-command  "do_shader_apply $shade_var $id"
 
-	hoc_register_data $shader_params($id,window).fr.file_e File {
-		{ summary "Enter the name of the file containing the texture to be mapped to this\n\
-			object. This file should be a 'pix' file for the 'texture' or 'bump' shaders,\n\
-			or a 'bw' file for 'bwtexture'. For the 'bump' shader, the red and blue\n\
-			channels of the image are used to perturb the true surface normal.\n\
-			Red and blue values of 128 produce no perturbation, while values of 0\n\
-			produce maximum perturbation in one direction and 255 produces maximum\n\
-			perturbation in the opposite"}
-	}
+    hoc_register_data $shader_params($id,window).fr.file_e File {
+	{ summary "Enter the name of the file containing the texture to be mapped to this\n\
+		object. This file should be a 'pix' file for the 'texture' or 'bump' shaders,\n\
+		or a 'bw' file for 'bwtexture'. For the 'bump' shader, the red and blue\n\
+		channels of the image are used to perturb the true surface normal.\n\
+		Red and blue values of 128 produce no perturbation, while values of 0\n\
+		produce maximum perturbation in one direction and 255 produces maximum\n\
+		perturbation in the opposite"}
+    }
 
-	hoc_register_data $shader_params($id,window).fr.width_e Width {
-		{ summary "Enter the width of the texture in pixels\n(default is 512)"}
-	}
+    hoc_register_data $shader_params($id,window).fr.width_e Width {
+	{ summary "Enter the width of the texture in pixels\n(default is 512)"}
+    }
 
-	hoc_register_data $shader_params($id,window).fr.height_e Height {
-		{ summary "Enter the height of the texture in pixels\n(default is 512)"}
-	}
+    hoc_register_data $shader_params($id,window).fr.height_e Height {
+	{ summary "Enter the height of the texture in pixels\n(default is 512)"}
+    }
 
-	hoc_register_data $shader_params($id,window).fr.trans_e Transparency {
-		{ summary "Enter the color in the texture that will be treated as\n\
-			transparent. All pixels on this object that get assigned this\n\
-			color from the texture will be treated as though this object\n\
-			does not exist. For the 'texture' shader, this must be an RGB\n\
-			triple. For the 'bwtexture' shader, a single value is sufficient\n\
-			This is ignored for the 'bump' shader"}
-		{ range "RGB values must be integers from 0 to 255"}
-	}
+    hoc_register_data $shader_params($id,window).fr.transp_fr.trans_e Transparency {
+	{ summary "Enter the color in the texture that will be treated as\n\
+		transparent. All pixels on this object that get assigned this\n\
+		color from the texture will be treated as though this object\n\
+		does not exist. For the 'texture' shader, this must be an RGB\n\
+		triple. For the 'bwtexture' shader, a single value is sufficient\n\
+		This is ignored for the 'bump' shader"}
+	{ range "RGB values must be integers from 0 to 255"}
+    }
 
-	hoc_register_data $shader_params($id,window).fr.repl.mirror Mirror {
-		{ summary "Turn this option on to get smooth transitions between adjacent tiles\n\
-			of the texture by mirroring. This only has an effect when texture\n\
-			replication is greater than 1"}
-	}
+    hoc_register_data $shader_params($id,window).fr.repl.mirror Mirror {
+	{ summary "Turn this option on to get smooth transitions between adjacent tiles\n\
+		of the texture by mirroring. This only has an effect when texture\n\
+		replication is greater than 1"}
+    }
 
-	hoc_register_data $shader_params($id,window).fr.repl.mirror_e Mirror {
-		{ summary "Turn this option on to get smooth transitions between adjacent tiles\n\
-			of the texture by mirroring. This only has an effect when texture\n\
-			replication is greater than 1"}
-	}
+    hoc_register_data $shader_params($id,window).fr.repl.mirror_e Mirror {
+	{ summary "Turn this option on to get smooth transitions between adjacent tiles\n\
+		of the texture by mirroring. This only has an effect when texture\n\
+		replication is greater than 1"}
+    }
 
-	hoc_register_data $shader_params($id,window).fr.repl.u_scale "Texture Replication" {
-		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
-			lookup which part of the texture should be applied where.  Normally,\n\
-			one entire copy of the texture is stretched or compressed to fit the object.\n\
-			This is changed when a value other than 1 is entered here. The value entered here\n\
-			specifies the number of texture patterns to be used across the object in the U\n\
-			parameter direction"}
-		{ range "Real numbers greater than 0.0" }
-	}
+    hoc_register_data $shader_params($id,window).fr.repl.u_scale "Texture Replication" {
+	{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
+		lookup which part of the texture should be applied where.  Normally,\n\
+		one entire copy of the texture is stretched or compressed to fit the object.\n\
+		This is changed when a value other than 1 is entered here. The value entered here\n\
+		specifies the number of texture patterns to be used across the object in the U\n\
+		parameter direction"}
+	{ range "Real numbers greater than 0.0" }
+    }
 
-	hoc_register_data $shader_params($id,window).fr.repl.u_scale_e "Texture Replication" {
-		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
-			lookup which part of the texture should be applied where.  Normally,\n\
-			one entire copy of the texture is stretched or compressed to fit the object.\n\
-			This is changed when a value other than 1 is entered here. The value entered here\n\
-			specifies the number of texture patterns to be used across the object in the U\n\
-			parameter direction"}
-		{ range "Real numbers greater than 0.0" }
-	}
+    hoc_register_data $shader_params($id,window).fr.repl.u_scale_e "Texture Replication" {
+	{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
+		lookup which part of the texture should be applied where.  Normally,\n\
+		one entire copy of the texture is stretched or compressed to fit the object.\n\
+		This is changed when a value other than 1 is entered here. The value entered here\n\
+		specifies the number of texture patterns to be used across the object in the U\n\
+		parameter direction"}
+	{ range "Real numbers greater than 0.0" }
+    }
 
-	hoc_register_data $shader_params($id,window).fr.repl.v_scale "Texture Replication" {
-		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
-			lookup which part of the texture should be applied where.  Normally,\n\
-			one entire copy of the texture is stretched or compressed to fit the object.\n\
-			This is changed when a value other than 1 is entered here. The value entered here\n\
-			specifies the number of texture patterns to be used across the object in the V\n\
-			parameter direction"}
-		{ range "Real numbers greater than 0.0" }
-	}
+    hoc_register_data $shader_params($id,window).fr.repl.v_scale "Texture Replication" {
+	{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
+		lookup which part of the texture should be applied where.  Normally,\n\
+		one entire copy of the texture is stretched or compressed to fit the object.\n\
+		This is changed when a value other than 1 is entered here. The value entered here\n\
+		specifies the number of texture patterns to be used across the object in the V\n\
+		parameter direction"}
+	{ range "Real numbers greater than 0.0" }
+    }
 
-	hoc_register_data $shader_params($id,window).fr.repl.v_scale_e "Texture Replication" {
-		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
-			lookup which part of the texture should be applied where.  Normally,\n\
-			one entire copy of the texture is stretched or compressed to fit the object.\n\
-			This is changed when a value other than 1 is entered here. The value entered here\n\
-			specifies the number of texture patterns to be used across the object in the V\n\
-			parameter direction"}
-		{ range "Real numbers greater than 0.0" }
-	}
+    hoc_register_data $shader_params($id,window).fr.repl.v_scale_e "Texture Replication" {
+	{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
+		lookup which part of the texture should be applied where.  Normally,\n\
+		one entire copy of the texture is stretched or compressed to fit the object.\n\
+		This is changed when a value other than 1 is entered here. The value entered here\n\
+		specifies the number of texture patterns to be used across the object in the V\n\
+		parameter direction"}
+	{ range "Real numbers greater than 0.0" }
+    }
 
-	hoc_register_data $shader_params($id,window).fr.valid_e Transparency {
-		{ summary "If depressed, transparency is enabled using the transparency\n\
-			color. Otherwise, the transparency color is ignored. The 'bump'\n\
-			shader does not use this button."}
-	}
+    hoc_register_data $shader_params($id,window).fr.transp_fr.valid_e Transparency {
+	{ summary "If depressed, transparency is enabled using the transparency\n\
+		color. Otherwise, the transparency color is ignored. The 'bump'\n\
+		shader does not use this button."}
+    }
 
-	hoc_register_data $shader_params($id,window).fr.file File {
-		{ summary "Enter the name of the file containing the texture to be mapped to this\n\
-			object. This file should be a 'pix' file for the 'texture' or 'bump' shaders,\n\
-			or a 'bw' file for 'bwtexture'. For the 'bump' shader, the red and blue\n\
-			channels of the image are used to perturb the true surface normal.\n\
-			Red and blue values of 128 produce no perturbation, while values of 0\n\
-			produce maximum perturbation in one direction and 255 produces maximum\n\
-			perturbation in the opposite"}
-	}
+    hoc_register_data $shader_params($id,window).fr.file File {
+	{ summary "Enter the name of the file containing the texture to be mapped to this\n\
+		object. This file should be a 'pix' file for the 'texture' or 'bump' shaders,\n\
+		or a 'bw' file for 'bwtexture'. For the 'bump' shader, the red and blue\n\
+		channels of the image are used to perturb the true surface normal.\n\
+		Red and blue values of 128 produce no perturbation, while values of 0\n\
+		produce maximum perturbation in one direction and 255 produces maximum\n\
+		perturbation in the opposite"}
+    }
+    
+    hoc_register_data $shader_params($id,window).fr.width Width {
+	{ summary "Enter the width of the texture in pixels\n(default is 512)"}
+    }
 
-	hoc_register_data $shader_params($id,window).fr.width Width {
-		{ summary "Enter the width of the texture in pixels\n(default is 512)"}
-	}
+    hoc_register_data $shader_params($id,window).fr.height Height {
+	{ summary "Enter the height of the texture in pixels\n(default is 512)"}
+    }
 
-	hoc_register_data $shader_params($id,window).fr.height Height {
-		{ summary "Enter the height of the texture in pixels\n(default is 512)"}
-	}
-
-	hoc_register_data $shader_params($id,window).fr.trans Transparency {
-		{ summary "Enter the color in the texture that will be treated as\n\
-			transparent. All pixels on this object that get assigned this\n\
-			color from the texture will be treated as though this object\n\
-			does not exist. For the 'texture' shader, this must be an RGB\n\
-			triple. For the 'bwtexture' shader, a single value is sufficient.\n\
-			This is ignored for the 'bump' shader"}
-		{ range "RGB values must be integers from 0 to 255"}
-	}
-
-	hoc_register_data $shader_params($id,window).fr.valid Transparency {
-		{ summary "If depressed, transparency is enabled using the transparency\n\
-			color. Otherwise, the transparency color is ignored. The 'bump'\n\
-			shader does not use this button."}
-	}
+    hoc_register_data $shader_params($id,window).fr.transp_fr.trans Transparency {
+	{ summary "Enter the color in the texture that will be treated as\n\
+		transparent. All pixels on this object that get assigned this\n\
+		color from the texture will be treated as though this object\n\
+		does not exist. For the 'texture' shader, this must be an RGB\n\
+		triple. For the 'bwtexture' shader, a single value is sufficient.\n\
+		The checkbutton to the left must be depressed for transparency\n\
+		to be active. This is ignored for the 'bump' shader"}
+	{ range "RGB values must be integers from 0 to 255"}
+    }
 
 #	set variables from current 'params' list
 
-	set_texture_values $shader_str $id
+    set_texture_values $shader_str $id
 
-        label $shader_params($id,window).fr.repl.repl_label \
-	    -text "Texture Replication"
-        grid $shader_params($id,window).fr.repl.repl_label \
-	    -row 0 -column 0 -columnspan 4 -sticky ew
-        grid $shader_params($id,window).fr.repl.u_scale \
-	    -row 1 -column 0 -sticky e
-        grid $shader_params($id,window).fr.repl.u_scale_e \
-	    -row 1 -column 1 -sticky w
-        grid $shader_params($id,window).fr.repl.v_scale \
-	    -row 1 -column 2 -sticky e
-        grid $shader_params($id,window).fr.repl.v_scale_e \
-	    -row 1 -column 3 -sticky w
-        grid $shader_params($id,window).fr.repl.mirror_e \
-	    -row 2 -column 1 -sticky e
-        grid $shader_params($id,window).fr.repl.mirror \
-	    -row 2 -column 2 -sticky w
+    label $shader_params($id,window).fr.repl.repl_label \
+	-text "Texture Replication"
+    grid $shader_params($id,window).fr.repl.repl_label \
+	-row 0 -column 0 -columnspan 4 -sticky ew
+    grid $shader_params($id,window).fr.repl.u_scale \
+	-row 1 -column 0 -sticky e
+    grid $shader_params($id,window).fr.repl.u_scale_e \
+	-row 1 -column 1 -sticky w
+    grid $shader_params($id,window).fr.repl.v_scale \
+	-row 1 -column 2 -sticky e
+    grid $shader_params($id,window).fr.repl.v_scale_e \
+	-row 1 -column 3 -sticky w
+    grid $shader_params($id,window).fr.repl.mirror_e \
+	-row 2 -column 1 -sticky e
+    grid $shader_params($id,window).fr.repl.mirror \
+	-row 2 -column 2 -sticky w
 
-	grid $shader_params($id,window).fr.file -row 0 -column 0 -sticky e
-	grid $shader_params($id,window).fr.file_e -row 0 -column 1 -columnspan 5 -sticky w
-	grid $shader_params($id,window).fr.width -row 1 -column 0 -sticky e
-	grid $shader_params($id,window).fr.width_e -row 1 -column 1 -sticky w
-	grid $shader_params($id,window).fr.height -row 1 -column 2 -sticky e
-	grid $shader_params($id,window).fr.height_e -row 1 -column 3 -sticky w
-        grid $shader_params($id,window).fr.repl -row 2 -column 0 -sticky nsew -columnspan 5
-	grid $shader_params($id,window).fr.trans -row 3 -column 0 -sticky e
-	grid $shader_params($id,window).fr.trans_e -row 3 -column 1 -sticky w
-	grid $shader_params($id,window).fr.valid_e -row 3 -column 2 -sticky e
-	grid $shader_params($id,window).fr.valid -row 3 -column 3 -sticky w
+    grid $shader_params($id,window).fr.file_fr.file -row 0 -column 0 -sticky e
+    grid $shader_params($id,window).fr.file_fr.file_e -row 0 -column 1 -columnspan 3 -sticky ew
+    grid $shader_params($id,window).fr.file_fr.width -row 1 -column 0 -sticky e
+    grid $shader_params($id,window).fr.file_fr.width_e -row 1 -column 1 -sticky w
+    grid $shader_params($id,window).fr.file_fr.height -row 1 -column 2 -sticky e
+    grid $shader_params($id,window).fr.file_fr.height_e -row 1 -column 3 -sticky w
+    grid $shader_params($id,window).fr.file_fr -row 0 -column 0 -sticky ew
+    grid columnconfigure $shader_params($id,window).fr.file_fr 0 -weight 1
+    grid columnconfigure $shader_params($id,window).fr.file_fr 1 -weight 1
+    grid columnconfigure $shader_params($id,window).fr.file_fr 2 -weight 1
+    grid columnconfigure $shader_params($id,window).fr.file_fr 3 -weight 1
+    grid $shader_params($id,window).fr.repl -row 1 -column 0 -sticky nsew
+    grid $shader_params($id,window).fr.transp_fr.valid_e -row 0 -column 0 -sticky w
+    grid $shader_params($id,window).fr.transp_fr.trans -row 0 -column 1 -sticky e
+    grid $shader_params($id,window).fr.transp_fr.trans_e -row 0 -column 2 -sticky w
+    grid $shader_params($id,window).fr.transp_fr -row 2 -column 0
+    
+    grid $shader_params($id,window).fr -sticky new -ipadx 3 -ipady 3
+    grid columnconfigure $shader_params($id,window).fr 0 -weight 1
 
-	grid $shader_params($id,window).fr -columnspan 4 -sticky ew -ipadx 3 -ipady 3
-
-	return $shader_params($id,window).fr
+    return $shader_params($id,window).fr
 }
 
 # STACK routines
@@ -2074,13 +2087,13 @@ proc stack_add { shader shade_var id childsite} {
 
 	set index $shader_params($id,stack_len)
 	incr shader_params($id,stack_len)
-	frame $childsite.stk_$index -relief raised -bd 3
+	frame $childsite.stk_$index -bd 2 -relief groove
 	set shader_params($id,stk_$index,window) $childsite.stk_$index
 
 	if { [is_good_shader $shader] } then {
-		label $childsite.stk_$index.lab -text $shader
+		label $childsite.stk_$index.lab -text $shader -bg CadetBlue -fg white
 	} else {
-		label $childsite.stk_$index.lab -text "Unrecognized Shader"
+		label $childsite.stk_$index.lab -text "Unrecognized Shader" -bg CadetBlue -fg white
 	}
 	grid $childsite.stk_$index.lab -columnspan 4 -sticky ew
 	set shader_params($id,stk_$index,shader_name) $shader
@@ -2165,9 +2178,9 @@ proc stack_insert { index shader shade_var id } {
 	set shader_params($id,stk_$index,window) $childsite.stk_$index
 
 	if { [is_good_shader $shader] } then {
-		label $childsite.stk_$index.lab -text $shader
+		label $childsite.stk_$index.lab -text $shader -bg CadetBlue -fg white
 	} else {
-		label $childsite.stk_$index.lab -text "Unrecognized Shader"
+		label $childsite.stk_$index.lab -text "Unrecognized Shader" -bg CadetBlue -fg white
 	}
 	button $childsite.stk_$index.del -text delete -width 8 \
 		-command "stack_delete $index $shade_var $id;\
@@ -2237,13 +2250,13 @@ proc stack_insert { index shader shade_var id } {
 			set tmp_win [do_unknown $shade_var $id,stk_$index]
 		}
 	}
-	grid $childsite.stk_$index.del -columnspan 4
+	grid $childsite.stk_$index.del -columnspan 4 -sticky ew
 
 	set index 0
 	for { set i 0 } { $i < $shader_params($id,stack_len) } { incr i } {
 		if { [string compare $shader_params($id,stk_$i,window) "deleted"] == 0 } continue
 		grid $childsite.stk_$i -columnspan 2 -sticky ew -row [expr $index + 2]
-		grid columnconfigure $childsite.stk_$i 0 -minsize 400
+		grid columnconfigure $childsite.stk_$i 0 -minsize 400 -weight 1
 		incr index
 	}
 }
@@ -2341,9 +2354,10 @@ proc do_stack { shade_var id } {
 	upvar #0 $shade_var shade_str
 
 	catch { destroy $shader_params($id,window).fr }
-	frame $shader_params($id,window).fr -bd 3 -relief sunken
+	frame $shader_params($id,window).fr -padx 3 -pady 3
 
-    set childsite [[scrolledframe $shader_params($id,window).fr.leesf -width 425 -height 250 -hscrollmode dynamic ] childsite]
+    set childsite [[iwidgets::scrolledframe $shader_params($id,window).fr.leesf -width 432 -height 250 -hscrollmode dynamic ] childsite]
+
 	set shader_params($id,shade_var) $shade_var
 
 	menubutton $shader_params($id,window).fr.add\
@@ -2389,17 +2403,19 @@ proc do_stack { shade_var id } {
 		-label Unknown -command "stack_add unknown $shade_var $id $childsite; do_shader_apply $shade_var $id"
 
     grid $shader_params($id,window).fr.add -columnspan 2 -row 0
-    grid $shader_params($id,window).fr.leesf -sticky ew -row 1
+    grid $shader_params($id,window).fr.leesf -sticky nsew -row 1
     grid columnconfigure $shader_params($id,window).fr 0 -weight 1
     grid rowconfigure $shader_params($id,window).fr 1 -weight 1
 
-    grid rowconfigure $shader_params($id,window) 1 -weight 1
+    grid rowconfigure $shader_params($id,window) 0 -weight 1
+    grid rowconfigure $shader_params($id,window) 1 -weight 0
     grid columnconfigure $shader_params($id,window) 0 -weight 1
     grid $shader_params($id,window).fr -sticky ewns
+    grid rowconfigure $shader_params($id,window).fr 1 -weight 1
 
-	set_stack_values $shade_str $id
+    set_stack_values $shade_str $id
 
-	return $shader_params($id,window).fr
+    return $shader_params($id,window).fr
 }
 
 proc env_select { shader shade_var id } {
@@ -2747,7 +2763,7 @@ proc do_unknown { shade_var id } {
 	entry $shader_params($id,window).fr.name_e -width 15 -textvariable shader_params($id,unk_name)
 	bind $shader_params($id,window).fr.name_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.param -text "Shader Parameters"
-	entry $shader_params($id,window).fr.param_e -width 40 -textvariable shader_params($id,unk_param)
+	entry $shader_params($id,window).fr.param_e -width 20 -textvariable shader_params($id,unk_param)
 	bind $shader_params($id,window).fr.param_e <KeyRelease> "do_shader_apply $shade_var $id"
 
 	hoc_register_data $shader_params($id,window).fr.name_e "Shader Name" {
@@ -2770,11 +2786,8 @@ proc do_unknown { shade_var id } {
 	grid $shader_params($id,window).fr.param -row 1 -column 0 -sticky e
 	grid $shader_params($id,window).fr.param_e -row 1 -column 1 -sticky w
 
-	grid columnconfigure $shader_params($id,window).fr.name_e 0 -weight 1
-	grid columnconfigure $shader_params($id,window).fr.param_e 0 -weight 1
-
 	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
-	grid columnconfigure $shader_params($id,window).fr 0 -weight 1
+	grid columnconfigure $shader_params($id,window).fr 0 -weight 0
 	grid columnconfigure $shader_params($id,window).fr 1 -weight 1
 
 	return $shader_params($id,window).fr

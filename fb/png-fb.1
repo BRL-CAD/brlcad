@@ -4,6 +4,7 @@ png-fb - display a Portable Network Graphics (PNG) image file on a framebuffer
 .SH SYNOPSIS
 .B png-fb
 .RB [ -Hhicvz1 ]
+.RB [ -g screen_gamma]
 .RB [ -F  framebuffer]
 .RB [ -m  #lines]
 .RB [ -S  squarescrsize]
@@ -32,6 +33,11 @@ flag.
 By default, the requested framebuffer size, is assumed to be 512x512 pixels.
 .I -h
 flag changes the size to 1024x1024.
+.PP
+The
+.I -g
+option specifies the gamma value for the screen where the image is to be displayed.
+Larger values will produce lighter colored display.
 .PP
 If the
 .I -i

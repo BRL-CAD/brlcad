@@ -1042,7 +1042,7 @@ set -S2 "/bin/sh"
 #	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
 #	else
-#		define	OPTIMIZER	-g
+#		define	OPTIMIZER	-O0 -pg -g
 #	endif
 #	if BUILD_SHARED	
 /*		Shared library version support.  Requires ELF for Linux. */
@@ -1054,7 +1054,7 @@ set -S2 "/bin/sh"
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ar -s
-#		define	STANDARD_LIBES	-lpthread -lm -lc -Wl,-rpath -Wl,LIBDIR
+#		define	STANDARD_LIBES	-g -lpthread -lm -lc -Wl,-rpath -Wl,LIBDIR
 #	endif
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib

@@ -3,7 +3,7 @@
 dxf-g \- DXF Translator (DXF to BRL-CAD)
 .SH SYNOPSIS
 .B dxf-g
-[-d] [-v] [-t tolerance] file.dxf database.g
+[-c] [-d] [-v] [-s scale_factor] [-t tolerance] file.dxf database.g
 .SH DESCRIPTION
 .I dxf-g\^
 converts the specified
@@ -12,12 +12,20 @@ to a BRL-CAD
 .I database.g
 file.
 The
+.I -c
+option specifies that only the first color seen for a layer should be used. Without this option,
+layers may be broken into seperate BOT primitives according to color assigned.
+The
 .I -d
 option sets a debug flag. The only effect is to cause a core dump on failure.
 This is probably not useful except for developers.
 The
 .I -v
 option produces very verbose output on stderr.
+The
+.I -s
+option provides a scale factor to be applied to the DXF input. This can be used for DXF files
+that do not provide units information.
 The
 .I -t
 option specifies the maximum distance (in mm) between two vertices at which the two vertices

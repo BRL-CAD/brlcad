@@ -1014,6 +1014,7 @@ struct seg *finished_segs;
 #endif
 	int	light_visible;
 	int	air_sols_seen = 0;
+	int 	is_proc;
 	char	*reason = "???";
 
 	memset(&sw, 0, sizeof(sw));		/* make sure nothing nasty on the stack */
@@ -1223,8 +1224,13 @@ struct seg *finished_segs;
 	}
 
 	/* If we hit an entirely opaque object, this light is invisible */
+	is_proc = ((struct mfuncs *)regp->reg_mfuncs)->mf_flags|MFF_PROC;
+
+
 	if (pp->pt_outhit->hit_dist >= INFINITY ||
-	    (regp->reg_transmit == 0 /* XXX && Not procedural shader */) )  {
+	    (regp->reg_transmit == 0 &&
+	     ! is_proc /* procedural shader */) ) {
+
 #if RT_MULTISPECTRAL
 		bn_tabdata_constval( ap->a_spectrum, 0.0 );
 #else
