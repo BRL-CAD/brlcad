@@ -235,7 +235,9 @@ int		noblock;
 
 	if( !isatty(fileno(stdin)) )  return;	/* input awaits! */
 
-	if( (width = getdtablesize()) <= 0 )
+#if defined(_SC_OPEN_MAX)
+	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 || width > 32)
+#endif
 		width = 32;
 
 	if( noblock )  {
