@@ -567,7 +567,7 @@ png_debug_free(png_structp png_ptr, png_voidp ptr)
          }
          if (pinfo->next == NULL)
          {
-            fprintf(STDERR, "Pointer %x not found\n", (unsigned int)ptr);
+            fprintf(STDERR, "Pointer %lx not found\n", (unsigned long int)ptr);
             break;
          }
          ppinfo = &pinfo->next;
@@ -1422,8 +1422,8 @@ main(int argc, char *argv[])
                current_allocation);
             while (pinfo != NULL)
             {
-               fprintf(STDERR, " %lu bytes at %x\n", pinfo->size, 
-                 (unsigned int) pinfo->pointer);
+               fprintf(STDERR, " %lu bytes at %lx\n", pinfo->size, 
+                 (unsigned long int) pinfo->pointer);
                pinfo = pinfo->next;
             }
          }
@@ -1497,8 +1497,8 @@ main(int argc, char *argv[])
                 current_allocation);
              while (pinfo != NULL)
              {
-                fprintf(STDERR," %lu bytes at %x\n",
-                   pinfo->size, (unsigned int)pinfo->pointer);
+                fprintf(STDERR," %lu bytes at %lx\n",
+                   pinfo->size, (unsigned long int)pinfo->pointer);
                 pinfo = pinfo->next;
              }
           }
