@@ -53,6 +53,8 @@ char	*cmd_args[MAXARGS+2];	/* array of pointers to args */
 extern int	cmd_glob();
 
 static void	f_help(), f_fhelp(), f_comm();
+void	f_pov();
+void	f_vrmgr();
 void	f_echo();
 void	f_param();
 void	mged_cmd();
@@ -240,6 +242,8 @@ static struct funtab {
 	f_plot, 2, MAXARGS,
 "polybinout", "file", "store vlist polygons into polygon file (experimental)",
 	f_polybinout, 2, 2,
+"pov", "args", "experimental:  set point-of-view",
+	f_pov, 3+4+1, MAXARGS,
 "prcolor", "", "print color&material table",
 	f_prcolor, 1, 1,
 "prefix", "new_prefix object(s)", "prefix each occurrence of object name(s)",
@@ -320,6 +324,8 @@ static struct funtab {
 	f_tree, 2, MAXARGS,
 "units", "[mm|cm|m|in|ft|...]", "change units",
 	f_units,1,2,
+"vrmgr", "host {master|slave|observer}", "link with Virtual Reality manager",
+	f_vrmgr, 3, MAXARGS,
 "vrot", "xdeg ydeg zdeg", "rotate viewpoint",
 	f_vrot,4,4,
 "whichid", "ident(s)", "lists all regions with given ident code",
@@ -359,7 +365,7 @@ struct rt_vls	*vp;
 	RT_VLS_CHECK(vp);
 
 	if( (len = rt_vls_strlen( vp )) <= 0 )  return 0;
-
+		
 	cp = rt_vls_addr( vp );
 	end = cp + len;
 
