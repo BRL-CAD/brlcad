@@ -668,8 +668,6 @@ FILE *fp_dir,*fp_param;
 {
 	int color_de;
 
-rt_log( "get_color: %d %d %d\n" , V3ARGS( color ) );
-
 	for( color_de=0 ; color_de < 9 ; color_de++ )
 	{
 		if( color[0] == colortab[color_de][1] &&
@@ -679,8 +677,7 @@ rt_log( "get_color: %d %d %d\n" , V3ARGS( color ) );
 	}
 
 	if( color_de == 9 )
-		color_de = (-write_color_entity( color ));
-rt_log( "\tcolor_de = %d\n" , color_de );
+		color_de = (-write_color_entity( color , fp_dir , fp_param ));
 
 	return( color_de );
 }
