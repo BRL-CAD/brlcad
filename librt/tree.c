@@ -605,6 +605,8 @@ again:
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		RT_CK_SOLTAB(stp);
 		if( stp->st_aradius <= 0 )  {
+			/* XXX is this rt_bomb is a problem? */
+			rt_log("%s[%d]: ", __FILE__, __LINE__);
 			rt_bomb("Found a dead solid\n");
 			rt_free_soltab(stp);
 			/* Can't do rtip->nsolids--, that doubles as max bit number! */
