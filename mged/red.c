@@ -1665,6 +1665,11 @@ char *old_name;
 			rt_comb_ifree( &intern );
 			return( 1 );
 		}
+	}else {
+		if( comb->region_flag )
+			dp->d_flags |= DIR_REGION;
+		else
+			dp->d_flags &= ~DIR_REGION;
 	}
 
 	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
