@@ -53,7 +53,6 @@ int readcodes(), writecodes();
 int loadcodes(), printcodes();
 void		tables(), edcodes(), changes(), prfield();
 
-#define NAMESIZE	16	/* from db.h */
 #define LINELEN 256
 #define MAX_LEVELS 12
 struct directory *path[MAX_LEVELS];
