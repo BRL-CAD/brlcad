@@ -43,10 +43,11 @@ extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
 extern void	sync();
 
+#define	MAXARGS		2000	/* Maximum number of args per line */
 int	maxargs = MAXARGS;	/* For dir.c */
 int	inpara;			/* parameter input from keyboard */
 int	numargs;		/* number of args */
-char *cmd_args[MAXARGS + 1];	/* array of pointers to args */
+char	*cmd_args[MAXARGS+2];	/* array of pointers to args */
 
 extern int	cmd_glob();
 

@@ -423,11 +423,13 @@ cmd_glob()
 			if( !regexp_match( word, dp->d_namep ) )
 				continue;
 			/* Successful match */
-			cmd_args[numargs++] = dp->d_namep;
+			/* See if already over the limit */
 			if( numargs >= maxargs )  {
-				(void)printf("%s: expansion stopped after %d matches\n", word, maxargs);
+				(void)printf("%s: expansion stopped after %d matches (%d args)\n",
+					word, numargs-orig_numargs, maxargs);
 				break;
 			}
+			cmd_args[numargs++] = dp->d_namep;
 		}
 	}
 	/* If one or matches occurred, decrement final numargs,

@@ -62,6 +62,7 @@ int		argcnt;		/* holder for number of args added later */
 int		vals;		/* number of args for s_values[] */
 int		newargs;	/* number of args from getcmd() */
 extern int	numargs;	/* number of args */
+extern int	maxargs;	/* size of cmd_args[] */
 extern char	*cmd_args[];	/* array of pointers to args */
 char		**promp;	/* pointer to a pointer to a char */
 
@@ -948,10 +949,10 @@ int pos;
 			lp1 = lp + 1;
 			if( (*lp1 != ' ') && (*lp1 != '\t') &&
 			    (*lp1 != '\n') && (*lp1 != '\0') )  {
-				if( (newargs + pos) >= MAXARGS )  {
-					(void)printf("More than %d arguments, excess flushed\n", MAXARGS);
-					cmd_args[MAXARGS] = (char *)0;
-					return(MAXARGS - pos);
+				if( (newargs + pos) >= maxargs )  {
+					(void)printf("More than %d arguments, excess flushed\n", maxargs);
+					cmd_args[maxargs] = (char *)0;
+					return(maxargs - pos);
 				}
 				cmd_args[newargs + pos] = lp1;
 			    	newargs++;
