@@ -93,8 +93,14 @@ long		*novote;
 		EUPRINT("Easy question time", eu);
 		VPRINT("Point", pt);
 	}
-	if (eu_rinf != eu->eumate_p && eu_rinf != eu &&
-	    eu->up.lu_p->orientation == eu_rinf->up.lu_p->orientation ) {
+	if( eu_rinf == eu )  {
+		rt_bomb("joint_hitmiss2: radial eu is me?\n");
+	}
+	/* If eu_rinf == eu->eumate_p, thats OK, this is a dangling face,
+	 * or a face that has not been fully hooked up yet.
+	 * It's OK as long the the orientations both match.
+	 */
+	if( eu->up.lu_p->orientation == eu_rinf->up.lu_p->orientation ) {
 		if (eu->up.lu_p->orientation == OT_SAME) {
 			closest->dist = 0.0;
 			closest->p.eu = eu;
@@ -110,9 +116,11 @@ long		*novote;
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_NMGRT) )
 		EUPRINT("Hard question time", eu);
 
-
 	rt_log("nmg intersection: assuming miss\n");
-	return;
+	rt_log(" eu_rinf=x%x, eu->eumate_p=x%x, eu=x%x\n", eu_rinf, eu->eumate_p, eu);
+	rt_log(" eu lu orient=%s, eu_rinf lu orient=%s\n",
+		nmg_orientation(eu->up.lu_p->orientation),
+		nmg_orientation(eu_rinf->up.lu_p->orientation) );
 }
 
 /*
@@ -154,13 +162,14 @@ long		*novote;
 		EUPRINT("          \tVS. eu", eu);
 	}
 	dist = rt_dist_pt_lseg(pca, eupt, matept, pt, tol);
+	if( dist < 0.0 )  rt_log("pt_hitmis_e: neg dist=%g?\n", dist);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 		rt_log("          \tdist: %g\n", dist);
 		VPRINT("          \tpca:", pca);
 	}
 
-	if (dist < closest->dist && dist >= 0.0) {
+	if (dist < closest->dist) {
 
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 				EUPRINT("\t\tcloser to edgeuse", eu);
@@ -171,6 +180,7 @@ long		*novote;
 		    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
 
 		    	if (NEAR_ZERO(dist, tol->dist)) {
+		    		/* The ray has hit the edge! */
 		    		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 			    		VPRINT("Vertex", pt);
 			    		EUPRINT("hits edge, calling Joint_HitMiss", eu);
