@@ -1371,10 +1371,155 @@ const char				*base;	/* structure ponter */
 }
 
 
+/*
+ *			B U _ V L S _ S T R U C T P R I N T 2
+ *
+ *	This differs from bu_struct_print in that it prints to a vls.
+ */
+void
+bu_vls_struct_print2(struct bu_vls			*vls_out,     
+		     const char				*title,
+		     const struct bu_structparse	*parsetab,	/* structure description */
+		     const char				*base)	  	/* base address of users structure */
+{
+	register const struct bu_structparse	*sdp;
+	register char			*loc;
+	register int			lastoff = -1;
+	struct bu_vls vls;
 
+	bu_vls_init(&vls);
+	bu_vls_printf(vls_out, "%s\n", title);
+	if (parsetab == (struct bu_structparse *)NULL) {
+		bu_log("Null \"struct bu_structparse\" pointer\n");
+		return;
+	}
 
+	for (sdp = parsetab; sdp->sp_name != (char *)0; sdp++) {
 
+		/* Skip alternate keywords for same value */
+		if (lastoff == sdp->sp_offset)
+			continue;
+		lastoff = sdp->sp_offset;
 
+#if CRAY && !__STDC__
+		loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
+#else
+		loc = (char *)(base + ((int)sdp->sp_offset));
+#endif
+
+		if (sdp->sp_fmt[0] == 'i' )  {
+			bu_vls_struct_print2(vls_out, sdp->sp_name,
+					     (struct bu_structparse *)sdp->sp_count,
+					     base);
+			continue;
+		}
+
+		if (sdp->sp_fmt[0] != '%') {
+			bu_log("bu_struct_print:  %s: unknown format '%s'\n",
+			       sdp->sp_name, sdp->sp_fmt );
+			continue;
+		}
+#if 0
+		bu_vls_trunc( &vls, 0 );
+		bu_vls_struct_item( &vls, sdp, base, ',' );
+		bu_log( " %s=%s\n", sdp->sp_name, bu_vls_addr(&vls) );
+#else
+		switch( sdp->sp_fmt[1] )  {
+		case 'c':
+		case 's':
+			if (sdp->sp_count < 1)
+				break;
+			if (sdp->sp_count == 1)
+				bu_vls_printf(vls_out, " %s='%c'\n", sdp->sp_name, *loc);
+			else
+				bu_vls_printf(vls_out, " %s=\"%s\"\n", sdp->sp_name,
+					(char *)loc );
+			break;
+		case 'S':
+			{
+				int delta = strlen(sdp->sp_name)+2;
+				register struct bu_vls *vls =
+					(struct bu_vls *)loc;
+
+				bu_log_indent_delta(delta);
+				bu_log(" %s=(vls_magic)%d (vls_offset)%d (vls_len)%d (vls_max)%d\n",
+					sdp->sp_name, vls->vls_magic,
+					vls->vls_offset,
+					vls->vls_len, vls->vls_max);
+				bu_log_indent_delta(-delta);
+				bu_log("\"%s\"\n", vls->vls_str+vls->vls_offset);
+			}
+			break;
+		case 'i':
+			{	register int i = sdp->sp_count;
+				register short *sp = (short *)loc;
+
+				bu_log( " %s=%hd", sdp->sp_name, *sp++ );
+
+				while (--i > 0) bu_log( ",%d", *sp++ );
+
+				bu_log("\n");
+			}
+			break;
+		case 'd':
+			{	register int i = sdp->sp_count;
+				register int *dp = (int *)loc;
+
+				bu_log( " %s=%d", sdp->sp_name, *dp++ );
+
+				while (--i > 0) bu_log( ",%d", *dp++ );
+
+				bu_log("\n");
+			}
+			break;
+		case 'f':
+			{	register int i = sdp->sp_count;
+				register double *dp = (double *)loc;
+
+				if (sdp->sp_count == 16) {
+					bu_matprint(sdp->sp_name, dp);
+				} else if (sdp->sp_count <= 3){
+					bu_log( " %s=%.25G", sdp->sp_name, *dp++ );
+
+					while (--i > 0)
+						bu_log( ",%.25G", *dp++ );
+
+					bu_log("\n");
+				}else  {
+					int delta = strlen(sdp->sp_name)+2;
+
+					bu_log_indent_delta(delta);
+
+					bu_log( " %s=%.25G\n", sdp->sp_name, *dp++ );
+
+					while (--i > 1)
+						bu_log( "%.25G\n", *dp++ );
+
+					bu_log_indent_delta(-delta);
+					bu_log( "%.25G\n", *dp );
+				}
+			}
+			break;
+		case 'x':
+			{	register int i = sdp->sp_count;
+				register int *dp = (int *)loc;
+
+				bu_log( " %s=%08x", sdp->sp_name, *dp++ );
+
+				while (--i > 0) bu_log( ",%08x", *dp++ );
+
+				bu_log("\n");
+			}
+			break;
+		default:
+			bu_log( " bu_struct_print: Unknown format: %s=%s??\n",
+				sdp->sp_name, sdp->sp_fmt );
+			break;
+		}
+#endif
+	}
+	bu_vls_free(&vls);
+}
 
 
 /* This allows us to specify the "size" parameter as values like ".5m"
