@@ -40,11 +40,27 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#if !defined(CRAY1)
-# include <sys/time.h>		/* for struct timeval */
-#endif
-#if !defined(sun)
-# include <time.h>
+
+/*
+ *  The situation with sys/time.h and time.h is crazy.
+ *  We need sys/time.h for struct timeval,
+ *  and time.h for struct tm.
+ *
+ *  on BSD (and SGI 4D), sys/time.h includes time.h,
+ *  on the XMP (UNICOS 3 & 4), time.h includes sys/time.h,
+ *  on the Cray-2, there is no automatic including.
+ *
+ *  Note that on many SYSV machines, the Cakefile has to set BSD
+ */
+#if BSD && !SYSV
+#  include <sys/time.h>		/* includes <time.h> */
+#else
+#  if CRAY1
+#	include <time.h>	/* includes <sys/time.h> */
+#  else
+#	include <sys/time.h>
+#	include <time.h>
+#  endif
 #endif
 
 #include "machine.h"
