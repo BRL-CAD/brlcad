@@ -60,8 +60,7 @@ struct dm dm_X = {
 	X_update,
 	X_puts, X_2d_line,
 	X_light,
-	X_object,
-	X_cvtvecs, X_load,
+	X_object,	X_cvtvecs, X_load,
 	X_statechange,
 	X_viewchange,
 	X_colorchange,
@@ -798,7 +797,7 @@ checkevents()
 			dm_values.dv_ypen = (0.5 - event.xbutton.y/(double)height) * 4095;
 		} else if( event.type == KeyPress ) {
 			/* Turn these into MGED "buttonpress" or knob functions */
-			key = XLookupKeysym( &keyevent, 0 );
+			key = XLookupKeysym( (XKeyEvent *) &event, 0 );
 			switch( key ) {
 			case '?':
 				fprintf( stderr, "\nKey Help Menu\n" );
