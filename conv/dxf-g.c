@@ -247,17 +247,6 @@ main( int argc , char *argv[] )
 					{
 /* rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[i] ) ); */
 						vp[i] = (struct vertex *)NULL;
-						for( j=0 ; j<NMG_TBL_END( &vertices ) ; j++ )
-						{
-							struct vertex *v;
-
-							v = (struct vertex *)NMG_TBL_GET( &vertices , j );
-							if( VAPPROXEQUAL( pt[i] , v->vg_p->coord , tol.dist ) )
-							{
-								vp[i] = v;
-								break;
-							}
-						}
 					}
 					fu = nmg_cface( s , vp , no_of_pts );
 					nmg_tbl( &faces , TBL_INS , (long *)fu );
@@ -271,18 +260,15 @@ main( int argc , char *argv[] )
 					}
 			                if( nmg_fu_planeeqn( fu , &tol ) )
 			                        rt_log( "Failed to calculate plane eqn\n" );
-					for( i=0 ; i<no_of_pts ; i++ )
-					{
-						for( j=i+1 ; j<no_of_pts ; j++ )
-						{
-							if( vp[i] == vp[j] )
-								rt_log( "vertex %d is same as vertex %d\n" , i , j );
-						}
-					}
 					break;
 			}
 		}
 	}
+
+	/* fuse vertices that are within tolerance of each other */
+	rt_log( "Checking %d vertices for repeats...\n" , NMG_TBL_END( &vertices ) );
+	(void)nmg_region_self_vfuse( &vertices , &tol );
+	rt_log( "\t%d unique vertices found\n" , NMG_TBL_END( &vertices ) );
 
 	/* glue faces together */
 	rt_log( "Glueing %d faces together...\n" , NMG_TBL_END( &faces ) );
