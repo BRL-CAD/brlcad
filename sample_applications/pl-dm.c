@@ -119,7 +119,7 @@ struct plot_list{
   int pl_draw;
   int pl_edit;
   struct bu_vls pl_name;
-  struct rt_vlblock *pl_vbp;
+  struct bn_vlblock *pl_vbp;
 };
 
 struct plot_list HeadPlot;
@@ -354,7 +354,7 @@ refresh(){
 	  DM_SET_FGCOLOR(dmp, (rgb>>16) & 0xFF, (rgb>>8) & 0xFF, rgb & 0xFF, 0);
 	}
 
-	DM_DRAW_VLIST(dmp, (struct rt_vlist *)&plp->pl_vbp->head[i], 0);
+	DM_DRAW_VLIST(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i], 0);
       }
   }
 
@@ -368,12 +368,12 @@ double x, y, z;
 {
   mat_t newrot;
 
-  mat_idn( newrot );
+  bn_mat_idn( newrot );
   buildHrot( newrot,
 	     x * degtorad,
 	     y * degtorad,
 	     z * degtorad );
-  mat_mul2( newrot, Viewrot );
+  bn_mat_mul2( newrot, Viewrot );
 }
 
 /*
@@ -452,7 +452,7 @@ static void
 size_reset()
 {
   int i;
-  register struct rt_vlist *tvp;
+  register struct bn_vlist *tvp;
   vect_t min, max;
   vect_t center;
   vect_t radial;
@@ -462,13 +462,13 @@ size_reset()
   VSETALL( max, -INFINITY );
 
   for(BU_LIST_FOR(plp, plot_list, &HeadPlot.l)){
-    struct rt_vlblock *vbp;
+    struct bn_vlblock *vbp;
 
     vbp = plp->pl_vbp;
     for(i=0; i < vbp->nused; i++){
-      register struct rt_vlist *vp = (struct rt_vlist *)&vbp->head[i];
+      register struct bn_vlist *vp = (struct bn_vlist *)&vbp->head[i];
 
-      for(BU_LIST_FOR(tvp, rt_vlist, &vp->l)){
+      for(BU_LIST_FOR(tvp, bn_vlist, &vp->l)){
 	register int j;
 	register int nused = tvp->nused;
 	register int *cmd = tvp->cmd;
@@ -476,14 +476,14 @@ size_reset()
 
 	for(j = 0; j < nused; j++,cmd++,pt++ ){
 	  switch(*cmd){
-	  case RT_VLIST_POLY_START:
-	  case RT_VLIST_POLY_VERTNORM:
+	  case BN_VLIST_POLY_START:
+	  case BN_VLIST_POLY_VERTNORM:
 	    break;
-	  case RT_VLIST_POLY_MOVE:
-	  case RT_VLIST_LINE_MOVE:
-	  case RT_VLIST_POLY_DRAW:
-	  case RT_VLIST_POLY_END:
-	  case RT_VLIST_LINE_DRAW:
+	  case BN_VLIST_POLY_MOVE:
+	  case BN_VLIST_LINE_MOVE:
+	  case BN_VLIST_POLY_DRAW:
+	  case BN_VLIST_POLY_END:
+	  case BN_VLIST_LINE_DRAW:
 	    VMIN(min, *pt);
 	    VMAX(max, *pt);
 	    break;
@@ -499,7 +499,7 @@ size_reset()
   if( VNEAR_ZERO( radial , SQRT_SMALL_FASTF ) )
     VSETALL( radial , 1.0 );
 
-  mat_idn( toViewcenter );
+  bn_mat_idn( toViewcenter );
   MAT_DELTAS( toViewcenter, -center[X], -center[Y], -center[Z] );
   Viewscale = radial[X];
   V_MAX( Viewscale, radial[Y] );
@@ -515,9 +515,9 @@ size_reset()
 static void
 new_mats()
 {
-  mat_mul( model2view, Viewrot, toViewcenter );
+  bn_mat_mul( model2view, Viewrot, toViewcenter );
   model2view[15] = Viewscale;
-  mat_inv( view2model, model2view );
+  bn_mat_inv( view2model, model2view );
 }
 
 /*

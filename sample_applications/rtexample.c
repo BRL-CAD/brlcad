@@ -112,7 +112,7 @@ struct partition *PartHeadp;
 
 	/* examine each partition until we get back to the head */
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
-		rt_log("\n--- Hit region %s (in %s, out %s)\n",
+		bu_log("\n--- Hit region %s (in %s, out %s)\n",
 			pp->pt_regionp->reg_name,
 			pp->pt_inseg->seg_stp->st_name,
 			pp->pt_outseg->seg_stp->st_name );
@@ -138,8 +138,8 @@ struct partition *PartHeadp;
 		 */
 		RT_CURVATURE( &cur, hitp, pp->pt_inflip, stp );
 		VPRINT("PDir", cur.crv_pdir );
-		rt_log(" c1=%g\n", cur.crv_c1);
-		rt_log(" c2=%g\n", cur.crv_c2);
+		bu_log(" c1=%g\n", cur.crv_c1);
+		bu_log(" c2=%g\n", cur.crv_c2);
 
 		/* outhit info */
 		hitp = pp->pt_outhit;
@@ -171,6 +171,6 @@ struct partition *PartHeadp;
 miss( ap )
 register struct application *ap;
 {
-	rt_log("missed\n");
+	bu_log("missed\n");
 	return(0);
 }
