@@ -162,7 +162,7 @@ static CONST int		union_actions[8] = {
 static CONST int		intersect_actions[8] = {
 	BACTION_RETAIN,
 	BACTION_RETAIN,		/* shared */
-	BACTION_RETAIN,		/* anti-shared ==> non-manifold result */
+	BACTION_KILL,		/* anti-shared ==> non-manifold result */
 	BACTION_KILL,
 
 	BACTION_RETAIN,
