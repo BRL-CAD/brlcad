@@ -2737,7 +2737,7 @@ struct rt_tree_array *db_flatten_tree(
 	struct rt_tree_array	*rt_tree_array,
 	union tree		*tp,
 	int			op,
-	int			free,
+	int			avail,
 	struct resource		*resp);
 int rt_comb_import4(
 	struct rt_db_internal		*ip,
@@ -3171,7 +3171,7 @@ int rt_generic_xform(
 	struct rt_db_internal	*op,
 	const mat_t		mat,
 	struct rt_db_internal	*ip,
-	int			free,
+	int			avail,
 	struct db_i		*dbip,
 	struct resource		*resp);
 
