@@ -496,7 +496,7 @@ struct partition {
 	struct region	*pt_regionp;		/* ptr to containing region */
 	char		pt_inflip;		/* flip inhit->hit_normal */
 	char		pt_outflip;		/* flip outhit->hit_normal */
-	struct bu_ptbl	pt_solids_hit;
+	struct bu_ptbl	pt_solids_hit;		/* all segs in this partition */
 };
 #define PT_NULL		((struct partition *)0)
 #define PT_MAGIC	0x87687681
