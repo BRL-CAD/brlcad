@@ -29,6 +29,7 @@
 
 extern FILE	*outfp;
 extern int	version;
+extern int	verbose;
 
 extern double	getdouble();
 extern int	sol_total, sol_work;
@@ -115,7 +116,7 @@ getsolid()
 	}
 
 	namecvt( sol_work, name, 's' );
-	col_pr( name );
+	if(verbose) col_pr( name );
 
 	if( strcmp( solid_type, "ars" ) == 0 )  {
 		int		ncurves;
@@ -351,6 +352,13 @@ ell1:
 		if( getsoldata( dd, 2*3+2, sol_work ) < 0 )
 			return(-1);
 		return( mk_tor( outfp, name, D(0), D(1), dd[6], dd[7] ) );
+	}
+
+	if( strcmp( solid_type, "haf" ) == 0 )  {
+		/* N, d */
+		if( getsoldata( dd, 1*3+1, sol_work ) < 0 )
+			return(-1);
+		return( mk_half( outfp, name, D(0), dd[3] ) );
 	}
 
 	/*
