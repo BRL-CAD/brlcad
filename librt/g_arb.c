@@ -1,5 +1,5 @@
 /*
- *  			A R B 8 . C
+ *  			A R B . C
  *  
  *  Function -
  *  	Intersect a ray with an Arbitrary Regular Polyhedron with
@@ -32,9 +32,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 			if( ftemp > (b) )  b = ftemp; }
 
 /*
- *  			A R B 8 _ P R E P
+ *  			A R B _ P R E P
  */
-arb8_prep( vec, stp, mat )
+arb_prep( vec, stp, mat )
 fastf_t *vec;
 struct soltab *stp;
 matp_t mat;
@@ -100,7 +100,7 @@ matp_t mat;
 #undef P
 
 	if( faces < 4  || faces > 6 )  {
-		printf("arb8(%s):  only %d faces present\n",
+		printf("arb(%s):  only %d faces present\n",
 			stp->st_name, faces);
 		/* Should free storage for good faces */
 		return(1);			/* Error */
@@ -264,7 +264,7 @@ int noise;			/* non-0: check 4,> pts for being planar */
 		if( ! NEAR_ZERO(f) )  {
 			/* Non-planar face */
 			if( noise )  {
-				printf("ERROR: arb8(%s) face %s non-planar\n",
+				printf("ERROR: arb(%s) face %s non-planar\n",
 				stp->st_name, plp->pl_code );
 			}
 #ifdef CONSERVATIVE
@@ -278,9 +278,9 @@ int noise;			/* non-0: check 4,> pts for being planar */
 }
 
 /*
- *  			A R B 8 _ P R I N T
+ *  			A R B _ P R I N T
  */
-arb8_print( stp )
+arb_print( stp )
 register struct soltab *stp;
 {
 	register struct plane_specific *plp =
@@ -288,7 +288,7 @@ register struct soltab *stp;
 	register int i;
 
 	if( plp == (struct plane_specific *)0 )  {
-		printf("arb8(%s):  no faces\n", stp->st_name);
+		printf("arb(%s):  no faces\n", stp->st_name);
 		return;
 	}
 	do {
@@ -312,7 +312,7 @@ register struct soltab *stp;
 }
 
 /*
- *			A R B 8 _ S H O T
+ *			A R B _ S H O T
  *  
  * Function -
  *	Shoot a ray at an ARB8.
@@ -322,7 +322,7 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-arb8_shot( stp, rp )
+arb_shot( stp, rp )
 struct soltab *stp;
 register struct xray *rp;
 {
@@ -377,9 +377,9 @@ register struct xray *rp;
 		/* HIT is within planar face */
 		hp->hit_dist = k;
 		VMOVE( hp->hit_normal, plp->pl_N );
-		if(debug&DEBUG_ARB8) printf("arb8: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
+		if(debug&DEBUG_ARB8) printf("arb: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
 		if( nhits++ >= MAXHITS )  {
-			printf("arb8(%s): too many hits\n", stp->st_name);
+			printf("arb(%s): too many hits\n", stp->st_name);
 			break;
 		}
 		hp++;
@@ -401,7 +401,7 @@ register struct xray *rp;
 		 */
 		hits[nhits] = hits[nhits-1];	/* struct copy */
 		VREVERSE( hp->hit_normal, hits[nhits-1].hit_normal );
-		printf("ERROR: arb8(%s): %d hits, false exit\n",
+		printf("ERROR: arb(%s): %d hits, false exit\n",
 			stp->st_name, nhits);
 		nhits++;
 	}

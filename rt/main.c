@@ -25,7 +25,7 @@ extern int null_prep(),	null_print();
 extern int tor_prep(),	tor_print();
 extern int tgc_prep(),	tgc_print();
 extern int ellg_prep(),	ellg_print();
-extern int arb8_prep(),	arb8_print();
+extern int arb_prep(),	arb_print();
 extern int half_prep(),	half_print();
 extern int ars_prep();
 extern int rec_print();
@@ -34,7 +34,7 @@ extern struct seg *null_shot();
 extern struct seg *tor_shot();
 extern struct seg *tgc_shot();
 extern struct seg *ellg_shot();
-extern struct seg *arb8_shot();
+extern struct seg *arb_shot();
 extern struct seg *half_shot();
 extern struct seg *rec_shot();
 
@@ -43,8 +43,8 @@ struct functab functab[] = {
 	tor_prep,	tor_shot,	tor_print,	"ID_TOR",
 	tgc_prep,	tgc_shot,	tgc_print,	"ID_TGC",
 	ellg_prep,	ellg_shot,	ellg_print,	"ID_ELL",
-	arb8_prep,	arb8_shot,	arb8_print,	"ID_ARB8",
-	ars_prep,	arb8_shot,	arb8_print,	"ID_ARS",
+	arb_prep,	arb_shot,	arb_print,	"ID_ARB8",
+	ars_prep,	arb_shot,	arb_print,	"ID_ARS",
 	half_prep,	half_shot,	half_print,	"ID_HALF",
 	null_prep,	null_shot,	null_print,	">ID_NULL"
 };
