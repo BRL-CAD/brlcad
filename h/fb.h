@@ -34,7 +34,12 @@
  *			R G B p i x e l
  *
  *  Format of disk pixels in .pix files.
- *  Also used as arguments to many of the library routines.
+ *  Formerly used as arguments to many of the library routines,
+ *  but has fallen into disuse due to the difficulties with
+ *  ANSI function prototypes, and the fact that arrays are not
+ *  real types in C.  The most notable problem is that of passing
+ *  a pointer to an array of RGBpixel.  It looks doubly dimensioned,
+ *  but isn't.
  */
 typedef unsigned char RGBpixel[3];
 
@@ -74,9 +79,9 @@ typedef struct FBIO_ {
 	/* Static information: per device TYPE.	*/
 	int	(*if_open)FB_ARGS((struct FBIO_ *ifp, char *file, int width, int height));		/* open device		*/
 	int	(*if_close)FB_ARGS((struct FBIO_ *ifp));				/* close device		*/
-	int	(*if_clear)FB_ARGS((struct FBIO_ *ifp, RGBpixel pp));		/* clear device 	*/
-	int	(*if_read)FB_ARGS((struct FBIO_ *ifp, int x, int y, RGBpixel *pp, int count));		/* read pixels		*/
-	int	(*if_write)FB_ARGS((struct FBIO_ *ifp, int x, int y, RGBpixel *pp, int count));		/* write pixels		*/
+	int	(*if_clear)FB_ARGS((struct FBIO_ *ifp, unsigned char *pp));		/* clear device 	*/
+	int	(*if_read)FB_ARGS((struct FBIO_ *ifp, int x, int y, unsigned char *pp, int count));		/* read pixels		*/
+	int	(*if_write)FB_ARGS((struct FBIO_ *ifp, int x, int y, unsigned char *pp, int count));		/* write pixels		*/
 	int	(*if_rmap)FB_ARGS((struct FBIO_ *ifp, ColorMap *cmap));		/* read colormap 	*/
 	int	(*if_wmap)FB_ARGS((struct FBIO_ *ifp, ColorMap *cmap));		/* write colormap 	*/
 	int	(*if_view)FB_ARGS((struct FBIO_ *ifp, int xcent, int ycent, int xzoom, int yzoom));		/* set view		*/
@@ -84,8 +89,8 @@ typedef struct FBIO_ {
 	int	(*if_setcursor)FB_ARGS((struct FBIO_ *ifp, unsigned char *bits, int xb, int yb, int xo, int yo));	/* define cursor 	*/
 	int	(*if_cursor)FB_ARGS((struct FBIO_ *ifp, int mode, int x, int y));		/* set cursor		*/
 	int	(*if_getcursor)FB_ARGS((struct FBIO_ *ifp, int *mode, int *x, int *y));	/* get cursor		*/
-	int	(*if_readrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, RGBpixel *pp));	/* read rectangle 	*/
-	int	(*if_writerect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, RGBpixel *pp));	/* write rectangle 	*/
+	int	(*if_readrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, unsigned char *pp));	/* read rectangle 	*/
+	int	(*if_writerect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, unsigned char *pp));	/* write rectangle 	*/
 	int	(*if_poll)FB_ARGS((struct FBIO_ *ifp));		/* handle events 	*/
 	int	(*if_flush)FB_ARGS((struct FBIO_ *ifp));	/* flush output 	*/
 	int	(*if_free)FB_ARGS((struct FBIO_ *ifp));		/* free resources 	*/
@@ -107,9 +112,9 @@ typedef struct FBIO_ {
 	int	if_cursmode;	/* cursor on/off */
 	int	if_xcurs;	/* cursor position */
 	int	if_ycurs;
-	RGBpixel *if_pbase;/* Address of malloc()ed page buffer.	*/
-	RGBpixel *if_pcurp;/* Current pointer into page buffer.	*/
-	RGBpixel *if_pendp;/* End of page buffer.			*/
+	unsigned char *if_pbase;/* Address of malloc()ed page buffer.	*/
+	unsigned char *if_pcurp;/* Current pointer into page buffer.	*/
+	unsigned char *if_pendp;/* End of page buffer.			*/
 	int	if_pno;		/* Current "page" in memory.		*/
 	int	if_pdirty;	/* Page modified flag.			*/
 	long	if_pixcur;	/* Current pixel number in framebuffer. */
@@ -125,13 +130,13 @@ typedef struct FBIO_ {
 #define FB_MAGIC	0xfbfb00fb
 
 #ifdef NULL
-#define PIXEL_NULL	(RGBpixel *) NULL
-#define RGBPIXEL_NULL	(RGBpixel *) NULL
+#define PIXEL_NULL	(unsigned char *) NULL
+#define RGBPIXEL_NULL	(unsigned char *) NULL
 #define COLORMAP_NULL	(ColorMap *) NULL
 #define FBIO_NULL	(FBIO *) NULL
 #else
-#define PIXEL_NULL	(RGBpixel *) 0
-#define RGBPIXEL_NULL	(RGBpixel *) 0
+#define PIXEL_NULL	(unsigned char *) 0
+#define RGBPIXEL_NULL	(unsigned char *) 0
 #define COLORMAP_NULL	(ColorMap *) 0
 #define FBIO_NULL	(FBIO *) 0
 #endif
@@ -169,8 +174,8 @@ extern int	fb_genhelp(void);
 extern int	fb_ioinit(FBIO *ifp);
 extern int	fb_seek(FBIO *ifp, int x, int y);
 extern int	fb_tell(FBIO *ifp, int *xp, int *yp);
-extern int	fb_rpixel(FBIO *ifp, RGBpixel *pp);
-extern int	fb_wpixel(FBIO *ifp, RGBpixel *pp);
+extern int	fb_rpixel(FBIO *ifp, unsigned char *pp);
+extern int	fb_wpixel(FBIO *ifp, unsigned char *pp);
 extern int	fb_flush(FBIO *ifp);
 extern void	fb_log(char *fmt, ...);
 extern int	fb_null(FBIO *ifp);
@@ -196,8 +201,8 @@ extern int	_fb_pgin();
 extern int	_fb_pgout();
 extern int	_fb_pgflush();
 extern int	_fb_disk_enable;
-extern int	fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, RGBpixel *pp);
-extern int	fb_sim_writerect(FBIO *ifp, int	xmin, int ymin, int width, int height, RGBpixel *pp);
+extern int	fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
+extern int	fb_sim_writerect(FBIO *ifp, int	xmin, int ymin, int width, int height, unsigned char *pp);
 extern int	fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
 extern int	fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
 extern int	fb_sim_cursor(FBIO *ifp, int mode, int x, int y);
@@ -256,8 +261,8 @@ extern int	fb_sim_getcursor();
  *  of an RGBpixel rather than a pointer to one.
  */
 #define	FB_WPIXEL(ifp,pp) {if((ifp)->if_pno==-1)_fb_pgin((ifp),(ifp)->if_pixcur/(ifp)->if_ppixels);\
-	(*((ifp)->if_pcurp))[0]=(pp)[0];(*((ifp)->if_pcurp))[1]=(pp)[1];(*((ifp)->if_pcurp))[2]=(pp)[2];\
-	(ifp)->if_pcurp++;(ifp)->if_pixcur++;(ifp)->if_pdirty=1;\
+	(*((ifp)->if_pcurp+0))=(pp)[0];(*((ifp)->if_pcurp+1))=(pp)[1];(*((ifp)->if_pcurp+2))=(pp)[2];\
+	(ifp)->if_pcurp+=3;(ifp)->if_pixcur++;(ifp)->if_pdirty=1;\
 	if((ifp)->if_pcurp>=(ifp)->if_pendp){_fb_pgout((ifp));(ifp)->if_pno= -1;}}
 
 /* Debug Bitvector Definition */
