@@ -240,3 +240,4 @@ MGED_EXTERN(int cmd_put, (ClientData clientData, Tcl_Interp *interp, int argc, c
 MGED_EXTERN(int cmd_dbip, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_dump, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_ls, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_binary, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

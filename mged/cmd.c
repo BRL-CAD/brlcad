@@ -99,6 +99,7 @@ void mged_global_variable_setup();
 int f_bot_fuse(), f_bot_condense(), f_bot_face_fuse();
 extern int f_hide(), f_unhide();
 
+
 #ifndef HAVE_UNISTD_H
 extern void sync();
 #endif
@@ -163,6 +164,7 @@ static struct cmdtab cmdtab[] = {
 	{"bev", f_bev},
 	{"import_body", cmd_import_body},
 	{"export_body", cmd_export_body},
+	{"binary", f_binary},
 	{"bot_face_fuse", f_bot_face_fuse},
 	{"bot_vertex_fuse", f_bot_fuse},
 	{"bot_condense", f_bot_condense},
@@ -573,7 +575,7 @@ cmd_tk(clientData, interp, argc, argv)
 		status = gui_setup(argv[1]);
 
 	return status;
-}    
+}
 
 /*
  *   C M D _ O U T P U T _ H O O K
