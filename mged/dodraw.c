@@ -72,7 +72,7 @@ struct db_tree_state	mged_initial_tree_state = {
 		0,			/* override */
 		DB_INH_LOWER,		/* color inherit */
 		DB_INH_LOWER,		/* mater inherit */
-		""			/* shader */
+		(char *)NULL		/* shader */
 #if __STDC__
 	}
 #endif
