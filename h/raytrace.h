@@ -1459,10 +1459,12 @@ struct rt_functab {
 #endif
 	int	(*ft_import) RT_ARGS((struct rt_db_internal * /*ip*/,
 			CONST struct bu_external * /*ep*/,
-			CONST mat_t /*mat*/));
+			CONST mat_t /*mat*/,
+			CONST struct db_i * /*dbip*/));
 	int	(*ft_export) RT_ARGS((struct bu_external * /*ep*/,
 			CONST struct rt_db_internal * /*ip*/,
-			double /*local2mm*/));
+			double /*local2mm*/,
+			CONST struct db_i * /*dbip*/));
 	void	(*ft_ifree) RT_ARGS((struct rt_db_internal * /*ip*/));
 	int	(*ft_describe) RT_ARGS((struct bu_vls * /*str*/,
 			struct rt_db_internal * /*ip*/,
