@@ -146,36 +146,17 @@ int argc;
 char *argv[];
 {
   int i;
-#if 0
-  char **av;
-  struct dm *ogldmp;
 
   /* register application provided routines */
   cmd_hook = Ogl_dm;
   state_hook = Ogl_statechange;
 
-  av = (char **)bu_malloc(sizeof(char *) * (argc + 3), "Ogl_dm_init: av");
-  for(i = 0; i < argc; ++i)
-    av[i] = argv[i];
-  av[i + 1] = "-i";
-  av[i + 2] = "mged_bind_dm";
-  av[i + 3] = (char *)NULL;
-  ogldmp = Ogl_open(Ogl_doevent, argc + 2, av);
-  bu_free((genptr_t)av, "Ogl_dm_init: av");
+  for(i = argc-1; i-1; --i)
+    argv[i] = argv[i-1];
 
-  return ogldmp;
-#else
-  /* register application provided routines */
-  cmd_hook = Ogl_dm;
-  state_hook = Ogl_statechange;
+  argv[0] = "-i";
+  argv[1] = "mged_bind_dm";
 
-  for(i = 2; i < argc; ++i)
-    argv[i-2] = argv[i-1];
-
-  argv[i-2] = "-i";
-  argv[i-1] = "mged_bind_dm";
-
-#if DO_NEW_LIBDM_OPEN
   dm_var_init(o_dm_list);
   Tk_DeleteGenericHandler(Ogl_doevent, (ClientData)DM_TYPE_OGL);
   if((dmp = Ogl_open(DM_EVENT_HANDLER_NULL, argc, argv)) == DM_NULL)
@@ -189,11 +170,6 @@ char *argv[];
   Ogl_configure_window_shape(dmp);
 
   return TCL_OK;
-#else
-   dmp->dm_eventHandler = Ogl_doevent;
-  return Ogl_open(dmp, argc, argv);
-#endif
-#endif
 }
 
 static int
