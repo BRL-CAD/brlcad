@@ -234,7 +234,7 @@ prntAspectInit()
 	}
 
 /*
-	void prntBurstHdr( fastf_t *bpt, fastf_t *vdir )
+	void prntBurstHdr( fastf_t *bpt, fastf_t *shotdir )
 
 	This routine must be called before bursting when doing either a
 	ground plane burst or bursting at user-specified coordinates.  The
@@ -244,15 +244,15 @@ prntAspectInit()
 
  */
 void
-prntBurstHdr( bpt, vdir )
-fastf_t *bpt;	/* burst point in model coords */
-fastf_t *vdir;	/* direction of view (unit vector) */
+prntBurstHdr( bpt, shotdir )
+fastf_t *bpt;		/* burst point in model coords */
+fastf_t *shotdir;	/* shotline direction vector */
 	{	fastf_t vec[3];
 	/* Transform burst point (model coordinate system) into the shotline
 	   coordinate system. */
 	vec[Y] = Dot( gridhor, bpt );	/* Y' */
 	vec[Z] = Dot( gridver, bpt );	/* Z' */
-	vec[X] = Dot( vdir, bpt );	/* X' */
+	vec[X] = -Dot( shotdir, bpt );	/* X' - shotdir is reverse of X' */
 
 	if(	outfile[0] != NUL
 	    &&	fprintf(outfp,
