@@ -1278,7 +1278,6 @@ int			copy;
 		sprintf( namebuf, "%s%lx",
 			shortname, vbp->rgb[i] );
 		invent_solid( namebuf, &vbp->head[i], vbp->rgb[i], copy );
-		Tcl_AppendResult( interp, namebuf, " ", (char *)NULL);
 	}
 }
 
