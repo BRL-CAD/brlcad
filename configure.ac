@@ -44,15 +44,13 @@ dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
-AC_INIT(src/librt/bool.c)
-
-dnl put configure stuff here
-dnl AC_CONFIG_AUX_DIR(config)
-
 AC_PREREQ(2.50)
 
-MAJOR_VERSION=6
-MINOR_VERSION=1
+AC_INIT(BRL-CAD, 7.0, [http://brlcad.org], brlcad)
+dnl put configure stuff here
+
+MAJOR_VERSION=7
+MINOR_VERSION=0
 PATCH_VERSION=0
 CONFIG_DATE=`date +%Y%m%d`
 BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
@@ -69,7 +67,9 @@ AC_CANONICAL_TARGET
 if test "x$build_vendor" = "xsgi" ; then
    PATH="`echo $PATH | sed 's/\/brl\/bin/bin/g'`"
 fi
-AM_INIT_AUTOMAKE(brlcad, $BRLCAD_VERSION.$CONFIG_DATE)
+AM_INIT_AUTOMAKE
+AC_CONFIG_AUX_DIR(.)
+AC_CONFIG_SRCDIR([src/librt/bool.c])
 AM_CONFIG_HEADER(include/config.h)
 
 AC_PREFIX_DEFAULT(/usr/brlcad)
@@ -354,9 +354,13 @@ dnl **************************
 AC_PROG_CC
 AM_PROG_CC_STDC
 AC_PROG_CPP
-
+AC_PROG_AWK
 AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_YACC
 AC_PROG_LIBTOOL
+AC_PROG_RANLIB
 AM_PROG_LEX
 
 dnl check for basic shell facilities
@@ -498,34 +502,56 @@ dnl *** Check for headers ***
 dnl *************************
 
 AC_HEADER_STDC
+AC_PATH_X
+AC_HEADER_DIRENT
+AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
+	arpa/inet.h \
 	errno.h \
 	fcntl.h \
 	float.h \
 	getopt.h \
+	langinfo.h \
 	limits.h \
-	limits.h \
+	locale.h \
+	malloc.h \
 	math.h \
 	memory.h \
+	netdb.h \
+	netinet/in.h \
 	pthread.h \
+	sgtty.h \
 	stdarg.h \
+	stddef.h \
 	stdlib.h \
 	string.h \
+	strings.h \
 	sys/errno.h \
+	sys/file.h \
+	sys/ioctl.h \
 	sys/ioctl_compat.h \
 	sys/machd.h \
 	sys/mman.h \
+	sys/mount.h \
+	sys/param.h \
 	sys/select.h \
 	sys/socket.h \
 	sys/stat.h \
+	sys/statfs.h \
 	sys/time.h \
+	sys/timeb.h \
 	sys/types.h \
 	sys/unistd.h \
+	syslog.h \
 	termcap.h \
+	termio.h \
 	termios.h \
 	time.h \
 	unistd.h \
+	utime.h \
+	values.h \
 	varargs.h \
+	wchar.h \
 	xosdefs.h \
 )
 AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
@@ -601,7 +627,18 @@ dnl **********************************
 dnl *** Check for types/structures ***
 dnl **********************************
 
+AC_HEADER_STAT
+AC_HEADER_STDBOOL
+AC_HEADER_TIME
+AC_STRUCT_ST_BLOCKS
+AC_CHECK_MEMBERS([struct stat.st_blksize])
+AC_CHECK_MEMBERS([struct stat.st_rdev])
 AC_STRUCT_TM
+AC_TYPE_UID_T
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
 
 dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped?
 dnl ============================================================
@@ -621,8 +658,6 @@ dnl ============================================================
 
 dnl XXX -- need to really check for time zone
 AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
-
-AC_CHECK_MEMBERS([struct stat.st_blksize],[AC_DEFINE(HAVE_ST_BLKSIZE, 1, [the old blksize define])])
 
 AC_CHECK_DECL(sys_errlist, 
 	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]), 
@@ -694,17 +729,65 @@ dnl ***************************
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(\
 	access \
+	alarm \
+	atexit \
 	bzero \
 	dlopen \
 	drand \
+	dup2 \
+	endgrent \
+	endpwent \
 	fabs  \
+	floor \
+	ftime \
+	ftruncate \
+	getcwd \
+	gethostbyaddr \
+	gethostbyname \
 	gethostname \
 	getopt \
+	getpagesize \
+	getpass \
+	gettimeofday \
+	inet_ntoa \
+	isascii \
+	localtime_r \
+	memchr \
+	memmove \
+	memset \
+	mkdir \
+	mkfifo \
+	modf \
+	munmap \
+	nl_langinfo \
+	pow \
+	putenv \
+	re_comp \
+	realpath \
+	regcomp \
+	rmdir \
 	sbrk \
+	select \
+	setlocale \
+	socket \
+	sqrt \
 	strcasecmp \
 	strchr \
 	strcpy \
+	strcspn \
 	strdup \
+	strerror \
+	strncasecmp \
+	strpbrk \
+	strrchr \
+	strspn \
+	strstr \
+	strtol \
+	strtoul \
+	strtoull \
+	tzset \
+	uname \
+	utime\
 	vfork \
 	vprintf \
 	writev \
