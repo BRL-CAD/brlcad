@@ -13,7 +13,7 @@
 #include <math.h>
 #include <setjmp.h>
 
-#include "../mged/machine.h"	/* WARNING:  Special for MGED, for now */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 
