@@ -56,7 +56,7 @@ void		(*free_data)();
     /*
      *	Free all the nodes
      */
-    while (RT_LIST_WHILE(rblp, bu_rb_list, &(tree -> rbt_nodes.l)))
+    while (BU_LIST_WHILE(rblp, bu_rb_list, &(tree -> rbt_nodes.l)))
     {
 	BU_CKMAG(rblp, BU_RB_LIST_MAGIC, "red-black list element");
 	bu_rb_free_node(rblp -> rbl_node);
@@ -65,7 +65,7 @@ void		(*free_data)();
     /*
      *	Free all the packages
      */
-    while (RT_LIST_WHILE(rblp, bu_rb_list, &(tree -> rbt_packages.l)))
+    while (BU_LIST_WHILE(rblp, bu_rb_list, &(tree -> rbt_packages.l)))
     {
 	BU_CKMAG(rblp, BU_RB_LIST_MAGIC, "red-black list element");
 	package = rblp -> rbl_package;
@@ -120,7 +120,7 @@ struct bu_rb_node	*node;
      *	Remove node from the list of all nodes
      */
     BU_CKMAG(node -> rbn_list_pos, BU_RB_LIST_MAGIC, "red-black list element");
-    RT_LIST_DEQUEUE(&(node -> rbn_list_pos -> l));
+    BU_LIST_DEQUEUE(&(node -> rbn_list_pos -> l));
 
     bu_free((genptr_t) node -> rbn_parent, "red-black parents");
     bu_free((genptr_t) node -> rbn_left, "red-black left children");
@@ -152,7 +152,7 @@ struct bu_rb_package	*package;
      */
     BU_CKMAG(package -> rbp_list_pos, BU_RB_LIST_MAGIC,
 	"red-black list element");
-    RT_LIST_DEQUEUE(&(package -> rbp_list_pos -> l));
+    BU_LIST_DEQUEUE(&(package -> rbp_list_pos -> l));
 
     bu_free((genptr_t) package -> rbp_node, "red-black package nodes");
     bu_free((genptr_t) package -> rbp_list_pos, "red-black list element");

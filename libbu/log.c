@@ -78,13 +78,13 @@ struct bu_vls	*v;
 
 
 struct bu_hook_list {
-	struct rt_list	l;
+	struct bu_list	l;
 	bu_hook_t	hookfunc;
 	genptr_t 	clientdata;
 };
 
 static struct bu_hook_list bu_log_hook_list = {
-	{	RT_LIST_HEAD_MAGIC, 
+	{	BU_LIST_HEAD_MAGIC, 
 		&bu_log_hook_list.l, 
 		&bu_log_hook_list.l
 	}, 
@@ -119,12 +119,12 @@ genptr_t clientdata;
     /* Grab a hunk of memory for a new node, and put it at the head of the
        list */
 
-    GETSTRUCT(toadd, bu_hook_list);
+    BU_GETSTRUCT(toadd, bu_hook_list);
     toadd->hookfunc = func;
     toadd->clientdata = clientdata;
     toadd->l.magic = BUHOOK_LIST_MAGIC;
 
-    RT_LIST_APPEND( &(bu_log_hook_list.l), &(toadd->l) );
+    BU_LIST_APPEND( &(bu_log_hook_list.l), &(toadd->l) );
 }
 
 
@@ -141,10 +141,10 @@ genptr_t clientdata;
 {
     struct bu_hook_list *cur = &bu_log_hook_list;
 
-    for ( RT_LIST_FOR( cur, bu_hook_list, &(bu_log_hook_list.l) ) ) {
+    for ( BU_LIST_FOR( cur, bu_hook_list, &(bu_log_hook_list.l) ) ) {
         if ( cur->hookfunc == func && cur->clientdata == clientdata) {
-	    struct bu_hook_list *old = RT_LIST_PLAST(bu_hook_list, cur);
-	    RT_LIST_DEQUEUE( &(cur->l) );
+	    struct bu_hook_list *old = BU_LIST_PLAST(bu_hook_list, cur);
+	    BU_LIST_DEQUEUE( &(cur->l) );
 	    bu_free((genptr_t)cur, "bu_log hook");
 	    cur = old;
 	}
@@ -160,8 +160,8 @@ genptr_t	buf;
 
     bu_log_hooks_called = 1;
 
-    hookfunc = RT_LIST_FIRST(bu_hook_list, &(bu_log_hook_list.l))->hookfunc;
-    clientdata = RT_LIST_FIRST(bu_hook_list, &(bu_log_hook_list.l))->clientdata;
+    hookfunc = BU_LIST_FIRST(bu_hook_list, &(bu_log_hook_list.l))->hookfunc;
+    clientdata = BU_LIST_FIRST(bu_hook_list, &(bu_log_hook_list.l))->clientdata;
 
     (hookfunc)( clientdata, buf);
 
@@ -207,7 +207,7 @@ void
 bu_putchar( c )
 int c;
 {
-    if ( RT_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) ) {
+    if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) ) {
 	fputc(c, stderr);
     } else {
 	char buf[2];
@@ -293,7 +293,7 @@ char *fmt;
 #  endif
 #endif
     
-    if ( RT_LIST_IS_EMPTY( &(bu_log_hook_list.l) )  || bu_log_hooks_called) {
+    if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) )  || bu_log_hooks_called) {
     	int ret;
 	int len;
 
@@ -393,7 +393,7 @@ char *fmt;
 #  endif
 #endif
     
-    if ( RT_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) || bu_log_hooks_called) {
+    if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) || bu_log_hooks_called) {
     	int ret;
 	int len;
 

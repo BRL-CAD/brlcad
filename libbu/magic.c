@@ -32,14 +32,14 @@ static char RCSmagic[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "externs.h"
 #include "nmg.h"
+#include "bu.h"
+#include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "msr.h"
 #include "wdb.h"
 #include "spm.h"
 #include "../libbu/rb_internals.h"
-#include "bu.h"
-#include "bn.h"
 
 /*
  *			B U _ I D E N T I F Y _ M A G I C
