@@ -52,10 +52,10 @@ This software is Copyright (C) 1985,1987,1990,1993 by the United States Army \
 in all countries except the USA.  All rights reserved.";
 
 #include <stdio.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 #include <fcntl.h>
 #include <signal.h>
@@ -98,13 +98,8 @@ int		extrapoll_fd;		/* XXX Ultra hack XXX */
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
 static jmp_buf	jmp_env;		/* For non-local gotos */
-#if defined(sgi) && !defined(mips)
-int		(*cur_sigint)();	/* Current SIGINT status */
-int		sig2();
-#else
 void		(*cur_sigint)();	/* Current SIGINT status */
 void		sig2();
-#endif
 void		new_mats();
 void		usejoy();
 int		interactive = 0;	/* !0 means interactive */
@@ -261,17 +256,10 @@ char **argv;
 	/* Caught interrupts take us back here, via longjmp() */
 	if( setjmp( jmp_env ) == 0 )  {
 		/* First pass, determine SIGINT handler for interruptable cmds */
-#if defined(sgi) && !defined(mips)
-		if( cur_sigint == (int (*)())SIG_IGN )
-			cur_sigint = (int (*)())SIG_IGN; /* detached? */
-		else
-			cur_sigint = sig2;	/* back to here w/!0 return */
-#else
 		if( cur_sigint == (void (*)())SIG_IGN )
 			cur_sigint = (void (*)())SIG_IGN; /* detached? */
 		else
 			cur_sigint = sig2;	/* back to here w/!0 return */
-#endif
 	} else {
 		(void)fprintf(outfile, "\nAborted.\n");
 		/* If parallel routine was interrupted, need to reset */
@@ -808,21 +796,12 @@ quit()
 /*
  *  			S I G 2
  */
-#if defined(sgi) && !defined(mips)
-int
-sig2()
-{
-	longjmp( jmp_env, 1 );
-	/* NOTREACHED */
-}
-#else
 void
 sig2()
 {
 	longjmp( jmp_env, 1 );
 	/* NOTREACHED */
 }
-#endif
 
 
 /*
@@ -888,14 +867,6 @@ do_rc()
 	}
 	return(-1);
 }
-
-#if defined(BSD) && !defined(__convexc__)
-extern void bcopy();
-void memcpy(to,from,cnt)
-{
-	bcopy(from,to,cnt);
-}
-#endif
 
 /*
  *			F _ O P E N D B
