@@ -88,7 +88,7 @@ extern int	max_ireflect;		/* from refract.c */
 extern int	curframe;		/* from main.c */
 extern fastf_t	frame_delta_t;		/* from main.c */
 
-extern struct region	env_region;	/* from text.c */
+struct region	env_region;		/* environment map region */
 
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 
