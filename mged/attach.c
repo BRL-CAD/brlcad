@@ -401,6 +401,7 @@ reattach()
 {
   char *name;
 
+#if 0
   if(curr_dm_list == &head_dm_list)
     return;
 
@@ -410,6 +411,15 @@ reattach()
   free((void *)name);
 
   dmaflag = 1;
+#else
+  struct rt_vls cmd;
+
+  rt_vls_init(&cmd);
+  rt_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
+  release(NULL);
+  cmdline(&cmd, FALSE);
+  rt_vls_free(&cmd);
+#endif
 }
 
 int
@@ -444,10 +454,12 @@ char    **argv;
   if(dp == &which_dm[0])
     return CMD_OK;
 
+#if 0
   if(argc == 2){
     rt_log("X Display: ? ");
     return CMD_MORE;
   }
+#endif
 
   dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list), "dm_list");
   bzero((void *)dmlp, sizeof(struct dm_list));
@@ -455,10 +467,15 @@ char    **argv;
   o_dm_list = curr_dm_list;
   curr_dm_list = dmlp;
   dmp = *dp;
-  dm_var_init(o_dm_list);
+
+  if(argc == 2)
+    /* Use local display */
+    dm_var_init(o_dm_list, ":0");
+  else
+    dm_var_init(o_dm_list, argv[2]);
 
   no_memory = 0;
-  if( dmp->dmr_open(argv[2]) )
+  if( dmp->dmr_open() )
     goto Bad;
 
   rt_log("ATTACHING %s (%s)\n",
@@ -591,12 +608,14 @@ struct dm_list *op;
 
 
 void
-dm_var_init(initial_dm_list)
+dm_var_init(initial_dm_list, name)
 struct dm_list *initial_dm_list;
+char *name;
 {
   curr_dm_list->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
 							    "shared_info");
   bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
+  strcpy(dname, name);
   mged_variables = default_mged_variables;
   mat_copy( Viewrot, initial_dm_list->s_info->_Viewrot );
   size_reset();
