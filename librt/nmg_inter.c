@@ -40,6 +40,7 @@ struct nmg_inter_struct {
 	fastf_t		*vert2d;	/* Array of 2d vertex projections [index] */
 	int		maxindex;	/* size of vert2d[] */
 	mat_t		proj;		/* Matrix to project onto XY plane */
+	struct face	*face;		/* fu of 2d projection plane */
 };
 #define NMG_INTER_STRUCT_MAGIC	0x99912120
 #define NMG_CK_INTER_STRUCT(_p)	NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
@@ -97,6 +98,12 @@ CONST struct faceuse	*fu;	/* for plane equation */
 		nmg_isect2d_prep( is, fu->f_p );
 	}
 
+	if( fu->f_p != is->face )  {
+		rt_log("nmg_get_2d_vertex(,fu=%x) f=x%x, is->face=%x\n",
+			fu, fu->f_p, is->face);
+		rt_bomb("nmg_get_2d_vertex:  face mis-match\n");
+	}
+
 	if( !v->vg_p )  rt_bomb("nmg_get_2d_vertex:  vertex with no geometry!\n");
 	vg = v->vg_p;
 	NMG_CK_VERTEX_G(vg);
@@ -118,6 +125,13 @@ CONST struct faceuse	*fu;	/* for plane equation */
 	if( !NEAR_ZERO( pt[2], is->tol.dist ) )  {
 		rt_log("nmg_get_2d_vertex ERROR #%d (%g,%g,%g) becomes (%g,%g) %g != zero!\n",
 			v->index, V3ARGS(vg->coord), V3ARGS(pt) );
+		if( !NEAR_ZERO( pt[2], 10*is->tol.dist ) )  {
+			rt_log("nmg_get_2d_vertex(,fu=%x) f=x%x, is->face=%x\n",
+				fu, fu->f_p, is->face);
+			PLPRINT("is->face N", is->face->fg_p->N);
+			PLPRINT("fu->f_p N", fu->f_p->fg_p->N);
+			rt_bomb("3D->2D point projection error\n");
+		}
 	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
@@ -157,6 +171,7 @@ struct face		*f1;
 	NMG_CK_FACE(f1);
 	fg = f1->fg_p;
 	NMG_CK_FACE_G(fg);
+	is->face = f1;
 rt_log("nmg_isect2d_prep(f=x%x)\n", f1);
 PLPRINT("N", fg->N);
 
@@ -730,8 +745,8 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	nmg_get_2d_vertex( eu1_end, vu1b->v_p, is, fu1 );
 	VSUB2( eu1_dir, eu1_end, eu1_start );
 
-	nmg_get_2d_vertex( eu2_start, vu2a->v_p, is, fu2 );
-	nmg_get_2d_vertex( eu2_end, vu2b->v_p, is, fu2 );
+	nmg_get_2d_vertex( eu2_start, vu2a->v_p, is, fu1 );
+	nmg_get_2d_vertex( eu2_end, vu2b->v_p, is, fu1 );
 	VSUB2( eu2_dir, eu2_end, eu2_start );
 
 	dist[0] = dist[1] = 0;	/* for clean prints, below */
@@ -1146,25 +1161,13 @@ struct faceuse *fu;
 		 *  possible intersections (there may be many),
 		 *  and any cut/joins, then resume with the previous work.
 		 */
-		is = *bs;	/* make private copy */
-		is.vert2d = 0;
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("nmg_isect_3edge_3face: edge lies ON face, using 2D code\n");
 
-		rt_log("nmg_isect_3edge_3face: edge lies on face, 'shouldn't happen', using 2D code\n");
-		EUPRINT("eu", eu);
-		VPRINT("start_pt", start_pt);
-		VPRINT("edge_vect", edge_vect);
-		PLPRINT("N", fu->f_p->fg_p->N);
-		rt_g.NMG_debug |= DEBUG_POLYSECT;
-		nmg_get_2d_vertex( foo, eu->vu_p->v_p, &is, fu );
-		VPRINT("eu_v1", eu->vu_p->v_p->vg_p->coord );
-		VPRINT("eu_v1 2d", foo);
-		nmg_get_2d_vertex( foo, eu->eumate_p->vu_p->v_p, &is, fu );
-		VPRINT("eu_v2", eu->eumate_p->vu_p->v_p->vg_p->coord );
-		VPRINT("eu_v2 2d", foo);
-		mat_print("is->proj", is.proj);
+		is = *bs;	/* make private copy */
+		is.vert2d = 0;	/* Don't use previously initialized stuff */
 
 		nmg_isect_edge2p_face2p( &is, eu, fu, nmg_find_fu_of_eu(eu) );
-		rt_log("nmg_isect_3edge_3face: END END END\n");
 
 		if( is.vert2d )  rt_free( (char *)is.vert2d, "vert2d");
 
