@@ -259,7 +259,7 @@ mlib_setup( struct mfuncs **headp,
 retry:
 	for( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
 	    if (material[0] != mfp->mf_name[0] ||
-		strcmp(material, mfp->mf_name))
+		strncmp(material, mfp->mf_name, strlen(mfp->mf_name)))
 		continue;
 	    goto found;
 	}
@@ -274,6 +274,7 @@ retry:
 
 	if ((mfp_new = load_dynamic_shader(material, mlen))) {
 		mlib_add_shader(headp, mfp_new);
+		bu_log("retrying\n");
 		goto retry;
 	}
 #else
