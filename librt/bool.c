@@ -188,8 +188,10 @@ struct application	*ap;
 	RT_CK_RESOURCE(res);
 	RT_CK_RTI(rtip);
 
-	if(rt_g.debug&DEBUG_PARTITION)
-		bu_log("-------------------BOOL_WEAVE\n");
+	if(rt_g.debug&DEBUG_PARTITION)  {
+		rt_pr_partitions( rtip, PartHdp, "-----------------BOOL_WEAVE" );
+	}
+
 	while( BU_LIST_NON_EMPTY( &(in_hd->l) ) ) {
 		register struct partition	*newpp = PT_NULL;
 		register struct seg		*lastseg = RT_SEG_NULL;
@@ -204,10 +206,12 @@ struct application	*ap;
 			rt_pr_seg(segp);
 			rt_pr_hit(" In", &segp->seg_in );
 			VJOIN1( pt, ap->a_ray.r_pt, segp->seg_in.hit_dist, ap->a_ray.r_dir );
+			/* XXX needs indentation added here */
 			VPRINT(" IPoint", pt );
 
 			rt_pr_hit("Out", &segp->seg_out );
 			VJOIN1( pt, ap->a_ray.r_pt, segp->seg_out.hit_dist, ap->a_ray.r_dir );
+			/* XXX needs indentation added here */
 			VPRINT(" OPoint", pt );
 		}
 		if( segp->seg_stp->st_bit >= rtip->nsolids) rt_bomb("rt_boolweave: st_bit");
