@@ -1036,6 +1036,7 @@ register fastf_t *min_rpp, *max_rpp;
 
 	case OP_SOLID:
 		VMINMAX( min_rpp, max_rpp, tp->tr_a.tu_stp->st_min );
+		VMINMAX( min_rpp, max_rpp, tp->tr_a.tu_stp->st_max );
 		return(1);
 
 	default:
