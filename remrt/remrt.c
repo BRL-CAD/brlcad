@@ -152,6 +152,8 @@ fd_set clients;
 int print_on = 1;
 char *frame_script = NULL;
 
+int save_overlaps=0;
+
 #define NFD 32
 #ifdef FD_SETSIZE
 #define MAXSERVERS	FD_SETSIZE

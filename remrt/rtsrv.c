@@ -107,6 +107,8 @@ static char *title_file, *title_obj;	/* name of file and first object */
 static int	avail_cpus;		/* # of cpus avail on this system */
 static int	max_cpus;		/* max # cpus for use, <= avail_cpus */
 
+int	save_overlaps=0;
+
 /*
  * Package Handlers.
  */
