@@ -321,11 +321,15 @@ char	*argv[];
 			do_Key_Cmd( (int) *cptr++, 1 );
 			status_change = true;
 			}
+		/*
+		 * This is a golden opportunity for SELECT() here,
+		 * monitoring both the bitpad and the keyboard.
+		 * The current code in empty is a CPU-eater.
+		 */
 		if( cptr > cread_buf )
 			*(cptr = cread_buf) = NUL;
 		else
 			{	char	c;
-			(void) fb_cursor( fbp, 1, cursor_pos.p_x, cursor_pos.p_y );
 			if( ! empty( tty_fd ) )
 				if(  read( tty_fd, &c, 1 ) == 1 )
 					{
@@ -356,6 +360,7 @@ char	*argv[];
 			fb_Pick_Menu( menu_press, &pick_one );
 		if( status_change )
 			{
+			(void) fb_cursor( fbp, 1, cursor_pos.p_x, cursor_pos.p_y );
 			(void) fb_flush(fbp);
 			if( report_status )
 				prnt_Status();
