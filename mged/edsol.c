@@ -3270,6 +3270,9 @@ sedit()
 
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+			bot_verts[0] = -1;
+			bot_verts[1] = -1;
+			bot_verts[2] = -1;
 			if(inpara) {
 				/* accumulate the scale factor */
 				es_scale = es_para[0] / acc_sc_sol;
@@ -3294,6 +3297,9 @@ sedit()
 
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+			bot_verts[0] = -1;
+			bot_verts[1] = -1;
+			bot_verts[2] = -1;
 			if(inpara) {
 				/* Need vector from current vertex/keypoint
 				 * to desired new location.
@@ -3327,6 +3333,9 @@ sedit()
 		/* translate a vertex */
 		es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 		es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+		bot_verts[0] = -1;
+		bot_verts[1] = -1;
+		bot_verts[2] = -1;
 		if( es_mvalid )  {
 			/* Mouse parameter:  new position in model space */
 			VMOVE( es_para, es_mparam );
@@ -3452,6 +3461,9 @@ sedit()
 
 	case PSCALE:
 		es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
+		bot_verts[0] = -1;
+		bot_verts[1] = -1;
+		bot_verts[2] = -1;
 		pscale();
 		break;
 
@@ -3478,6 +3490,9 @@ sedit()
 		{
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+			bot_verts[0] = -1;
+			bot_verts[1] = -1;
+			bot_verts[2] = -1;
 			if(inpara) {
 				static mat_t invsolr;
 				/*
@@ -6813,6 +6828,9 @@ sedit_accept()
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+	bot_verts[0] = -1;
+	bot_verts[1] = -1;
+	bot_verts[2] = -1;
 	if( lu_copy )
 	{
 		struct model *m;
@@ -6864,6 +6882,9 @@ sedit_reject()
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+	bot_verts[0] = -1;
+	bot_verts[1] = -1;
+	bot_verts[2] = -1;
 	es_ars_crv = (-1);
 	es_ars_col = (-1);
 
@@ -7537,6 +7558,39 @@ struct rt_db_internal	*ip;
 				POINT_LABEL_STR( pos_view, "pt" );
 			}
 		}
+		break;
+	case ID_BOT:
+		{
+			register struct rt_bot_internal *bot =
+				(struct rt_bot_internal *)es_int.idb_ptr;
+
+			RT_BOT_CK_MAGIC( bot );
+
+			if( bot_verts[2] > -1 &&
+				bot_verts[1] > -1 &&
+				bot_verts[0] > -1 )
+			{
+				/* editing a face */
+			}
+			else if( bot_verts[1] > -1 && bot_verts[0] > -1 )
+			{
+				/* editing an edge */
+				point_t mid_pt;
+
+				VBLEND2( mid_pt, 0.5, &bot->vertices[bot_verts[0]*3],
+						 0.5, &bot->vertices[bot_verts[1]*3] );
+
+				MAT4X3PNT( pos_view, xform, mid_pt );
+				POINT_LABEL_STR( pos_view, "edge" );
+			}
+			else if( bot_verts[0] > -1 )
+			{
+				/* editing a vertex */
+				MAT4X3PNT( pos_view, xform, &bot->vertices[bot_verts[0]*3] );
+				POINT_LABEL_STR( pos_view, "pt" );
+			}
+		}
+		break;
 	}
 
 	pl[npl].str[0] = '\0';	/* Mark ending */
