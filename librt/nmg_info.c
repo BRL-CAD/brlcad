@@ -29,6 +29,70 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 /*
+ *			N M G _ F I N D _ M O D E L
+ *
+ *  Given a pointer to the magic number in any NMG data structure,
+ *  return a pointer to the model structure that contains that NMG item.
+ *
+ *  The reason for the register variable is to leave the argument variable
+ *  unmodified;  this may aid debugging in event of a core dump.
+ */
+struct model *
+nmg_find_model( magic_p_arg )
+long	*magic_p_arg;
+{
+	register long	*magic_p = magic_p_arg;
+
+top:
+	if( magic_p == (long *)0 )  {
+		rt_log("nmg_find_model(x%x) enountered null pointer\n",
+			magic_p_arg );
+		rt_bomb("nmg_find_model() null pointer\n");
+		/* NOTREACHED */
+	}
+
+	switch( *magic_p )  {
+	case NMG_MODEL_MAGIC:
+		return( (struct model *)magic_p );
+	case NMG_REGION_MAGIC:
+		return( ((struct nmgregion *)magic_p)->m_p );
+	case NMG_SHELL_MAGIC:
+		return( ((struct shell *)magic_p)->r_p->m_p );
+	case NMG_FACEUSE_MAGIC:
+		magic_p = &((struct faceuse *)magic_p)->s_p->l.magic;
+		goto top;
+	case NMG_FACE_MAGIC:
+		magic_p = &((struct face *)magic_p)->fu_p->l.magic;
+		goto top;
+	case NMG_LOOP_MAGIC:
+		magic_p = ((struct loop *)magic_p)->lu_p->up.magic_p;
+		goto top;
+	case NMG_LOOPUSE_MAGIC:
+		magic_p = ((struct loopuse *)magic_p)->up.magic_p;
+		goto top;
+	case NMG_EDGE_MAGIC:
+		magic_p = ((struct edge *)magic_p)->eu_p->up.magic_p;
+		goto top;
+	case NMG_EDGEUSE_MAGIC:
+		magic_p = ((struct edgeuse *)magic_p)->up.magic_p;
+		goto top;
+	case NMG_VERTEX_MAGIC:
+		magic_p = &(RT_LIST_FIRST(vertexuse,
+			&((struct vertex *)magic_p)->vu_hd)->l.magic);
+		goto top;
+	case NMG_VERTEXUSE_MAGIC:
+		magic_p = ((struct vertexuse *)magic_p)->up.magic_p;
+		goto top;
+
+	default:
+		rt_log("nmg_find_model() can't get model for magic=x%x (%s)\n",
+			*magic_p, rt_identify_magic( *magic_p ) );
+		rt_bomb("nmg_find_model() failure\n");
+	}
+	return( (struct model *)NULL );
+}
+
+/*
  *			N M G _ F I N D E U
  *
  *  Find an edgeuse in a shell between a given pair of vertex structs.
