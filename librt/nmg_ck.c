@@ -1000,6 +1000,8 @@ CONST struct faceuse	*fu;
  *			N M G _ C K _ L I S T
  *
  *  Generic rt_list doubly-linked list checker.
+ *
+ *  XXX Probably should be called rt_ck_list().
  */
 void
 nmg_ck_list( hd, str )
@@ -1012,21 +1014,31 @@ CONST char		*str;
 	cur = hd;
 	do  {
 		if( cur->magic == RT_LIST_HEAD_MAGIC )  head_count++;
-		if( cur->forw->back != cur )  {
-			rt_log("nmg_ck_list(%s) cur=x%x, cur->forw=x%x, cur->forw->back=x%x\n",
-				str, cur, cur->forw, cur->forw->back );
+		if( !cur->forw )  {
+			rt_log("nmg_ck_list(%s) cur=x%x, cur->forw=x%x, hd=x%x\n",
+				str, cur, cur->forw, hd );
 			rt_bomb("nmg_ck_list() forw\n");
 		}
+		if( cur->forw->back != cur )  {
+			rt_log("nmg_ck_list(%s) cur=x%x, cur->forw=x%x, cur->forw->back=x%x, hd=x%x\n",
+				str, cur, cur->forw, cur->forw->back, hd );
+			rt_bomb("nmg_ck_list() forw\n");
+		}
+		if( !cur->back )  {
+			rt_log("nmg_ck_list(%s) cur=x%x, cur->back=x%x, hd=x%x\n",
+				str, cur, cur->back, hd );
+			rt_bomb("nmg_ck_list() back\n");
+		}
 		if( cur->back->forw != cur )  {
-			rt_log("nmg_ck_list(%s) cur=x%x, cur->back=x%x, cur->back->forw=x%x\n",
-				str, cur, cur->back, cur->back->forw );
+			rt_log("nmg_ck_list(%s) cur=x%x, cur->back=x%x, cur->back->forw=x%x, hd=x%x\n",
+				str, cur, cur->back, cur->back->forw, hd );
 			rt_bomb("nmg_ck_list() back\n");
 		}
 		cur = cur->forw;
 	} while( cur != hd );
 
 	if( head_count != 1 )  {
-		rt_log("nmg_ck_list(%s) head_count = %d\n", str, head_count);
+		rt_log("nmg_ck_list(%s) head_count = %d, hd=x%x\n", str, head_count, hd);
 		rt_bomb("nmg_ck_list() headless!\n");
 	}
 }
