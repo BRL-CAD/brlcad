@@ -117,3 +117,23 @@ struct mater_info	*materp;
 	}
 	return(0);				/* OK */
 }
+
+/*
+ *			R T _ F R _ A N I M
+ *
+ *  Release chain of animation structures
+ */
+rt_fr_anim( rtip )
+register struct rt_i *rtip;
+{
+	register struct animate *anp;
+
+	for( anp = rtip->rti_anroot; anp != ANIM_NULL; )  {
+		register struct animate *nextanp = anp->an_forw;
+
+		rt_free( (char *)anp->an_path, "animation path[]");
+		rt_free( (char *)anp, "struct animate");
+		anp = nextanp;
+	}
+	rtip->rti_anroot = ANIM_NULL;
+}
