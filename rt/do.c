@@ -308,18 +308,22 @@ int		argc;
 CONST char	**argv;
 {
 	register struct rt_i *rtip = ap.a_rt_i;
-	char outbuf[132];
-	register int i;
+	struct rt_vls	times;
+	register int	i;
 
 	if( argc <= 1 )  {
 		def_tree( rtip );		/* Load the default trees */
 		return(0);
 	}
+	rt_vls_init( &times );
+
 	rt_prep_timer();
 	if( rt_gettrees(rtip, argc-1, &argv[1], npsw) < 0 )
 		rt_log("rt_gettrees(%s) FAILED\n", argv[0]);
-	(void)rt_read_timer( outbuf, sizeof(outbuf) );
-	rt_log("GETTREE: %s\n", outbuf);
+	(void)rt_get_timer( &times, NULL );
+
+	rt_log("GETTREE: %s\n", rt_vls_addr(&times) );
+	rt_vls_free( &times );
 	return(0);
 }
 
@@ -480,8 +484,8 @@ void
 def_tree( rtip )
 register struct rt_i	*rtip;
 {
-	char outbuf[132];
-	register int i;
+	struct rt_vls	times;
+	register int	i;
 
 	if( rtip->rti_magic != RTI_MAGIC )  {
 		rt_log("rtip=x%x, rti_magic=x%x s/b x%x\n", rtip,
@@ -489,11 +493,13 @@ register struct rt_i	*rtip;
 		rt_bomb("def_tree:  bad rtip\n");
 	}
 
+	rt_vls_init( &times );
 	rt_prep_timer();
 	if( rt_gettrees(rtip, nobjs, (CONST char **)objtab, npsw) < 0 )
 		rt_log("rt_gettrees(%s) FAILED\n", objtab[0]);
-	(void)rt_read_timer( outbuf, sizeof(outbuf) );
-	rt_log("GETTREE: %s\n", outbuf);
+	(void)rt_get_timer( &times, NULL );
+	rt_log("GETTREE: %s\n", rt_vls_addr(&times));
+	rt_vls_free( &times );
 	if(rdebug&RDEBUG_STATS)  {
 		/* Print additional statistics */
 		rt_pr_lock_stats();
@@ -515,7 +521,7 @@ void
 do_prep( rtip )
 struct rt_i	*rtip;
 {
-	char	outbuf[132];
+	struct rt_vls	times;
 
 	RT_CHECK_RTI(rtip);
 	if( rtip->needprep )  {
@@ -523,11 +529,13 @@ struct rt_i	*rtip;
 		view_setup(rtip);
 
 		/* Allow RT library to prepare itself */
+		rt_vls_init( &times );
 		rt_prep_timer();
 		rt_prep(rtip);
 
-		(void)rt_read_timer( outbuf, sizeof(outbuf) );
-		rt_log( "PREP: %s\n", outbuf );
+		(void)rt_get_timer( &times, NULL );
+		rt_log( "PREP: %s\n", rt_vls_addr(&times) );
+		rt_vls_free( &times );
 	}
 #ifdef HAVE_SBRK
 	rt_log("Additional dynamic memory used=%d. bytes\n",
