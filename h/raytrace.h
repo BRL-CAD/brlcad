@@ -814,6 +814,7 @@ struct combined_tree_state {
 #define OP_NOT		MKOP(8)		/* Unary:  not L */
 #define OP_GUARD	MKOP(9)		/* Unary:  not L, or else! */
 #define OP_XNOP		MKOP(10)	/* Unary:  L, mark region */
+#define OP_NMG_TESS	MKOP(11)	/* Leaf: tr_stp -> nmgregion */
 
 union tree {
 	int	tr_op;		/* Operation */
@@ -833,6 +834,15 @@ union tree {
 		struct region	*tc_pad;	/* unused */
 		struct combined_tree_state	*tc_ctsp;
 	} tr_c;
+	struct tree_nmgregion {
+		int		td_op;		/* leaf, OP_NMG_TESS */
+		struct region	*td_pad;	/* unused */
+#if defined(MODEL_DEFINED) && defined(NMGREGION_DEFINED)
+		struct nmgregion *td_r;		/* ptr to NMG region */
+#else
+		genptr_t	td_r;
+#endif
+	} tr_d;
 };
 /* Things which are in the same place in both structures */
 #define tr_regionp	tr_a.tu_regionp
