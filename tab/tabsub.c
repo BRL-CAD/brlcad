@@ -302,7 +302,8 @@ int	nwords;
 		MAT_DELTAS( mat, args[1], args[2], args[3] );
 		if( args[7] > -1e-17 && args[7] < 1e-17 )  {
 			/* Nearly zero, signal error */
-			fprintf(stderr,"Line %d, orient scale arg '%s' is zero\n", words[7] );
+			fprintf(stderr,"Orient scale arg is near zero ('%s')\n",
+				words[7] );
 			return(-1);
 		}
 		mat[15] = 1 / args[7];
