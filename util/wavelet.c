@@ -106,7 +106,7 @@ char *av[];
 	int  c;
 	char *strrchr();
 
-	if ( progname=strrchr(*av, '/') )
+	if ( (progname=strrchr(*av, '/')) )
 		progname++;
 	else
 		progname = *av;
