@@ -53,14 +53,15 @@ fastf_t desired_step = 0.1;
 #define PREP	-1
 #define START	0
 #define MIDDLE	1
-#define	END	2
-#define STOP	3
+#define WANE	2
+#define	END	3
+#define STOP	4
 
 main(argc,argv)
 int argc;
 char **argv;
 {
-	int count, endcount, status, num_read, enn, i;
+	int count, endcount, status, num_read, enn, i, pp;
 	fastf_t *points, *cur;
 	fastf_t yaw, pch, rll, stepsize, first[4], second[4];
 	fastf_t f_prm_0(), f_prm_1(), f_prm_2();
@@ -79,68 +80,77 @@ char **argv;
 	/* determine n, the number of points to store ahead and behind 
 	 * the current point. 2n points are stored, minimum enn=2 */
 	enn = (int) (desired_step/stepsize);
-	enn++;
 	if (enn>MAXN) enn=MAXN;	
-	if (enn<2) enn=2;
+	if (enn<1) enn=1;
 
 	/* allocate storage */
-	points = (fastf_t *) calloc(2*enn*4, sizeof(fastf_t));
+	points = (fastf_t *) calloc((3*enn+1)*4, sizeof(fastf_t));
 
-	/* read the first 2n-1 points into the storage array*/
-	VMOVEN(points, first, 4);
-	VMOVEN(points+4, second, 4);
+	/* read the first 3n points into the storage array*/
+	VMOVEN(points+4, first, 4);
+	VMOVEN(points+8, second, 4);
 	num_read=4; /* in order to pass test if n=1 */
-	for (cur=points+8; cur<points+(4*2*enn); cur+=4){
+	for (cur=points+12; cur<points+(4*(3*enn+1)); cur+=4){
 		num_read=scanf("%lf %lf %lf %lf", cur,cur+1,cur+2,cur+3);
 	}
 	if (num_read<4){
-		fprintf(stderr,"Anim_fly: Not enough lines in input table./n");
-		fprintf(stderr,"/tIncrease number of lines or reduce the desired stepsize with -s.\n");
+		fprintf(stderr,"Anim_fly: Not enough lines in input table.\n");
+		fprintf(stderr,"Increase number of lines or reduce the minimum stepsize with -s.\n");
+		fprintf(stderr,"Currently the minumum step size is %g seconds.\n",desired_step);
 		exit(0);
 	}
 
 	max_cross = 0;
 	count = 0;
+	pp = 0;
 	status = START;
 	while (status != STOP) {
-
-		/* read in one more point and shift all points down */
-		if ((status != START)&&(status != END)) {
-			for (i=0; i<2*enn-1; i++){
+		switch (status) {
+		case START: /* first n points */
+			pp += 4;
+			get_orientation(points+pp,points+pp+4*enn,points+pp+4*2*enn, f_prm_0, &yaw, &pch, &rll);
+			if (!(count%print_int)&&!estimate_f) {
+				printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n",points[pp+0],points[pp+1],points[pp+2],points[pp+3],yaw,pch,rll);
+			}
+			if (pp >= 4*enn)
+				status=MIDDLE;
+			break;
+		case MIDDLE: /* middle points (at least one)*/
+			for (i=0; i<3*enn*4; i++){
 				VMOVEN(points+(4*i), points+(4*(i+1)), 4);
 			}
-			num_read=scanf("%lf %lf %lf %lf", points+(4*(2*enn-1)),points+(4*(2*enn-1)+1),points+(4*(2*enn-1)+2),points+(4*(2*enn-1)+3));
+			num_read=scanf("%lf %lf %lf %lf", points+(4*(3*enn)),points+(4*(3*enn)+1),points+(4*(3*enn)+2),points+(4*(3*enn)+3));
 			if (num_read < 4) {
-				endcount = enn;
+				pp = 0;
+				status = WANE;
+			}
+			get_orientation(points,points+(4*enn),points+4*(2*enn), f_prm_1, &yaw, &pch, &rll);
+			if (!(count%print_int)&&!estimate_f) {
+				printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n",points[4*(enn)+0],points[4*(enn)+1],points[4*(enn)+2],points[4*(enn)+3],yaw,pch,rll);
+			}
+			break;
+		case WANE: /* last n - 1 middle points */
+			pp += 4;
+			if (pp >= 4*enn){
 				status = END;
+				count--;
+				pp = 0;
+				break;
 			}
-		}
-
-		/* The first n points  - yaw pitch and roll will be constant*/
-		if (status==START) { 
-			get_orientation(points,points+(4*(enn-1)),points+(4*(2*enn-2)), f_prm_0, &yaw, &pch, &rll);
+			get_orientation(points+pp,points+pp+4*enn,points+pp+4*2*enn, f_prm_1, &yaw, &pch, &rll);
 			if (!(count%print_int)&&!estimate_f) {
-				printf("%f %f %f %f %f %f %f\n",points[4*count+0],points[4*count+1],points[4*count+2],points[4*count+3],yaw,pch,rll);
+				printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n",points[4*(enn)+0+pp],points[4*(enn)+1+pp],points[4*(enn)+2+pp],points[4*(enn)+3+pp],yaw,pch,rll);
 			}
-			if (count>=enn-1)
-				status=MIDDLE;
-		}
-		/* all interior points */
-		else if (status==MIDDLE) {/*do calculations for all middle points*/
-			get_orientation(points,points+(4*(enn-1)),points+(4*(2*enn-2)), f_prm_1, &yaw, &pch, &rll);
+			break;
+		case END: /* last n points */
+			get_orientation(points+pp,points+pp+4*enn,points+pp+4*2*enn, f_prm_2, &yaw, &pch, &rll);
 			if (!(count%print_int)&&!estimate_f) {
-				printf("%f %f %f %f %f %f %f\n",points[4*(enn-1)+0],points[4*(enn-1)+1],points[4*(enn-1)+2],points[4*(enn-1)+3],yaw,pch,rll);
+				printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n",points[8*enn+pp+0],points[8*enn+pp+1],points[8*enn+pp+2],points[8*enn+pp+3],yaw,pch,rll);
 			}
-		}
-		/* last n-1 points - yaw pitch and roll will be constant */
-		else if (status==END) { /*do calculations for the last point*/
-			get_orientation(points,points+(4*(enn-1)),points+(4*(2*enn-2)), f_prm_2, &yaw, &pch, &rll);
-			if (!(count%print_int)&&!estimate_f) {
-				printf("%f %f %f %f %f %f %f\n",points[4*endcount+0],points[4*endcount+1],points[4*endcount+2],points[4*endcount+3],yaw,pch,rll);
-			}
-			if (endcount>=2*enn-2)
+			pp += 4;
+			if (pp >= 4*enn)
 				status = STOP;
-			endcount++;
+			break;
 		}
 		count++;
 
@@ -150,9 +160,9 @@ char **argv;
 	/* Return the factor needed to achieve the requested max_bank */
 	if (estimate_f){
 		if (max_cross < VDIVIDE_TOL) {
-			printf("%f\n",0.0);
+			printf("%.10g\n",0.0);
 		} else {
-			printf("%f\n", 1000.0 * max_bank/max_cross);
+			printf("%.10g\n", 1000.0 * max_bank/max_cross);
 		}
 	}
 }
