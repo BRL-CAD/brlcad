@@ -35,16 +35,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "mater.h"
 #include "./sedit.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./solid.h"
 #include "./dm.h"
 
 extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
-
-extern char	*filename;	/* Name of database file */
+extern double	atof();
 
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
@@ -108,7 +107,7 @@ vect_t eye_model;
 /*
  *  			R T _ R E A D
  *  
- *  Read in one view in RT format.
+ *  Read in one view in the old RT format.
  */
 HIDDEN int
 rt_read(fp, scale, eye, mat)
@@ -265,7 +264,7 @@ f_rt()
 	*vp++ = "-M";
 	for( i=1; i < numargs; i++ )
 		*vp++ = cmd_args[i];
-	*vp++ = filename;
+	*vp++ = dbip->dbi_filename;
 
 	setup_rt( vp );
 	retcode = run_rt();
@@ -308,7 +307,7 @@ f_rrt()
 	vp = &rt_cmd_vec[0];
 	for( i=1; i < numargs; i++ )
 		*vp++ = cmd_args[i];
-	*vp++ = filename;
+	*vp++ = dbip->dbi_filename;
 
 	setup_rt( vp );
 	retcode = run_rt();
@@ -349,7 +348,7 @@ f_rtcheck()
 	*vp++ = "-M";
 	for( i=1; i < numargs; i++ )
 		*vp++ = cmd_args[i];
-	*vp++ = filename;
+	*vp++ = dbip->dbi_filename;
 
 	setup_rt( vp );
 
@@ -452,7 +451,7 @@ f_saveview()
 	for( i=2; i < numargs; i++ )
 		(void)fprintf(fp,"%s ", cmd_args[i]);
 	(void)fprintf(fp,"$*\\\n -o %s.pix\\\n", base);
-	(void)fprintf(fp," %s\\\n ", filename);
+	(void)fprintf(fp," %s\\\n ", dbip->dbi_filename);
 
 	/* Find all unique top-level entrys.
 	 *  Mark ones already done with s_iflag == UP
@@ -526,11 +525,11 @@ f_rmats()
 		mode = atoi(cmd_args[2]);
 	switch(mode)  {
 	case 1:
-		if( (dp=lookup("EYE",LOOKUP_NOISY)) == DIR_NULL )  {
+		if( (dp = db_lookup(dbip, "EYE", LOOKUP_NOISY)) == DIR_NULL )  {
 			mode = -1;
 			break;
 		}
-		db_getrec( dp, &rec, 0 );
+		db_get( dbip,  dp, &rec, 0 , 1);
 		FOR_ALL_SOLIDS(sp)  {
 			if( sp->s_path[sp->s_last] != dp )  continue;
 			if( sp->s_vlist == VL_NULL )  continue;
@@ -635,4 +634,177 @@ f_savekey()
 	MAT4X3PNT( eye_model, view2model, temp );
 	rt_oldwrite(fp, eye_model);
 	(void)fclose( fp );
+}
+
+/*
+ *			F _ P R E V I E W
+ *
+ *  Preview a new style RT animation scrtip.
+ *  Note that the RT command parser code is used, rather than the
+ *  MGED command parser, because of the differences in format.
+ *  The RT parser expects command handlers of the form "cm_xxx()",
+ *  and all communications are done via global variables.
+ *
+ *  For the moment, the only preview mode is the normal one,
+ *  moving the eyepoint as directed.
+ *  However, as a bonus, the eye path is left behind as a vector plot.
+ */
+#include "../rt/cmd.c"
+static vect_t	rtif_eye_model;
+static mat_t	rtif_viewrot;
+static struct vlhead rtif_vhead;
+
+void
+f_preview()
+{
+	register FILE *fp;
+	char	buf[512];
+
+	if( not_state( ST_VIEW, "animate viewpoint from new RT file") )
+		return;
+
+	if( (fp = fopen(cmd_args[1], "r")) == NULL )  {
+		perror(cmd_args[1]);
+		return;
+	}
+	printf("eyepoint at (0,0,1) viewspace\n");
+
+	/* If user hits ^C, this will stop, but will leave hanging filedes */
+	(void)signal(SIGINT, cur_sigint);
+
+	rtif_vhead.vh_first = rtif_vhead.vh_last = VL_NULL;
+
+	while( read_cmd( fp, buf, sizeof(buf) ) >= 0 )  {
+		if( do_cmd( buf ) < 0 )
+			rt_log("command failed: %s\n", buf);
+	}
+
+	invent_solid( "EYE_PATH", &rtif_vhead );
+	fclose(fp);
+}
+
+cm_start(argc, argv)
+char	**argv;
+int	argc;
+{
+	if( argc < 2 )
+		return(-1);
+	/* Has frame number */
+	return(0);
+}
+
+cm_vsize(argc, argv)
+char	**argv;
+int	argc;
+{
+	if( argc < 2 )
+		return(-1);
+	Viewscale = atof(argv[1]);
+	return(0);
+}
+
+cm_eyept(argc, argv)
+char	**argv;
+int	argc;
+{
+	vect_t	x, y;
+
+	if( argc < 4 )
+		return(-1);
+	rtif_eye_model[X] = atof(argv[1]);
+	rtif_eye_model[Y] = atof(argv[2]);
+	rtif_eye_model[Z] = atof(argv[3]);
+	/* Processing is deferred until cm_end() */
+	return(0);
+}
+
+cm_vrot(argc, argv)
+char	**argv;
+int	argc;
+{
+	register int	i;
+
+	if( argc < 17 )
+		return(-1);
+	for( i=0; i<16; i++ )
+		rtif_viewrot[i] = atof(argv[i+1]);
+	/* Processing is deferred until cm_end() */
+	return(0);
+}
+
+cm_end(argc, argv)
+char	**argv;
+int	argc;
+{
+	vect_t	xlate;
+	vect_t	new_cent;
+	vect_t	xv, yv;			/* view x, y */
+	vect_t	xm, ym;			/* model x, y */
+
+	/* Record eye path as a polyline.  Move, then draws */
+	ADD_VL( &rtif_vhead, rtif_eye_model, rtif_vhead.vh_first != VL_NULL );
+	
+	/* First step:  put eye at view center (view 0,0,0) */
+       	mat_copy( Viewrot, rtif_viewrot );
+	MAT_DELTAS( toViewcenter,
+		-rtif_eye_model[X],
+		-rtif_eye_model[Y],
+		-rtif_eye_model[Z] );
+	new_mats();
+	/*  Second step:  put eye at view 0,0,1.
+	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
+	 */
+	VSET( xlate, 0, 0, -1 );	/* correction factor */
+	MAT4X3PNT( new_cent, view2model, xlate );
+	MAT_DELTAS( toViewcenter,
+		-new_cent[X],
+		-new_cent[Y],
+		-new_cent[Z] );
+	new_mats();
+
+#if 1
+	/* Draw camera orientation notch to right (+X) and up (+Y) */
+	VSET( xv, 0.05, 0, 0 );
+	VSET( yv, 0, 0.05, 0 );
+	MAT4X3PNT( xm, view2model, xv );
+	MAT4X3PNT( ym, view2model, yv );
+	ADD_VL( &rtif_vhead, xm, 1 );
+	ADD_VL( &rtif_vhead, ym, 1 );
+	ADD_VL( &rtif_vhead, rtif_eye_model, 1 );
+#endif
+
+	dmaflag = 1;
+	refresh();	/* Draw new display */
+	return(0);
+}
+
+cm_multiview(argc, argv)
+char	**argv;
+int	argc;
+{
+	return(-1);
+}
+cm_anim(argc, argv)
+char	**argv;
+int	argc;
+{
+	return(-1);
+}
+cm_tree(argc, argv)
+char	**argv;
+int	argc;
+{
+	return(-1);
+}
+cm_clean(argc, argv)
+char	**argv;
+int	argc;
+{
+	return(-1);
+}
+cm_set(argc, argv)
+char	**argv;
+int	argc;
+{
+	return(-1);
 }
