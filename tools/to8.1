@@ -1,0 +1,95 @@
+.\" Copyright (c) 1986, University of Utah
+.\" Template man page.  Taken from wtm's page for getcx3d
+.TH TO8 1 "Month DD, YYYY" 1
+.UC 4 
+.SH NAME
+to8 \- Convert a 24 bit RLE file to eight bits using dithering.
+.SH SYNOPSIS
+.B to8
+[
+.B \-g
+.I display_gamma
+] [
+.B \-{iI}
+.I image_gamma
+] [
+.B \-o
+.I outfile
+] [
+.I infile
+]
+.SH DESCRIPTION
+.IR To8
+Converts an image with 24 bit pixel values (eight bits each of red, green and
+blue) to eight bits of color using a dithered color map (the special color
+map is automatically written into the output file).
+If no input file is specified, 
+.I to8
+reads from stdin.  If no output file is specified with
+.B \-o
+it writes the result to the standard output.
+
+Other options allow control over the gamma, or contrast, of the image.
+The dithering process assumes that the incoming image has a gamma of
+1.0 (i.e., a 200 in the input represents an intensity twice that of
+a 100.)  If this is not the case, the input values must be adjusted
+before dithering via the
+.B \-i
+or 
+.B \-I
+option.  The input file may also specify the gamma of the image via a
+picture comment (see below).  The output display is assumed to have a gamma of
+2.5 (standard for color TV monitors).  This may be modified via the
+.B \-g
+option if a display with a different gamma is used.
+
+.I To8
+will put a picture comment into the output file indicating the display
+gamma assumed in constructing the dithering color map.
+.SH OPTIONS
+.TP
+.BI \-i " image_gamma"
+Specify the gamma (contrast) of the image.  A low contrast image,
+suited for direct display without compensation on a high contrast
+monitor (as most monitors are) will have a gamma of less than one.
+The default image gamma is 1.0.  Image gamma may also be specified by
+a picture comment in the
+.I RLE (5)
+file of the form
+.BI image_gamma= gamma.
+The command line argument will override the value in the file if specified.
+.TP
+.BI \-I " image_gamma"
+An alternate method of specifying the image gamma, the number
+following
+.B \-I
+is the gamma of the display for which the image was originally
+computed (and is therefore 1.0 divided by the actual gamma of the
+image).  Image display gamma may also be specified by
+a picture comment in the
+.I RLE (5)
+file of the form
+.BI display_gamma= gamma.
+The command line argument will override the value in the file if specified.
+.TP
+.BI \-g " display_gamma"
+Specify the gamma of the 
+.I X
+display monitor.  The default value is 2.5, suitable for most color TV
+monitors (this is the gamma value assumed by the NTSC video standard).
+.TP
+.BI \-o " outfile"
+If specified, the output will be written to this file.  If 
+.I outfile
+is "\-", or if it is not specified, the output will be written to the
+standard output stream.
+.SH SEE ALSO
+.IR tobw (1),
+.IR getx11 (1),
+.IR mcut (1),
+.IR rlequant (1),
+.IR urt (1),
+.IR dither (3),
+.IR RLE (5).
+.SH AUTHOR
+Spencer Thomas

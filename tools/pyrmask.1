@@ -1,0 +1,68 @@
+.\" Copyright (c) 1986, University of Utah
+.TH PYRMASK 1 "Nov 8, 1987" 1
+.UC 4 
+.SH NAME
+pyrmask \- Blend two images together using Gaussian pyramids.
+.SH SYNOPSIS
+.B pyrmask 
+[
+.B \-l
+.I levels
+] [
+.B \-o
+.I outfile
+]
+.I "inmask outmask maskfile"
+.SH DESCRIPTION
+.I Pyrmask
+blends two images together by first breaking the images down into
+separate bandpass images, combining these separate images, and then adding
+the new bandpass images back into a single output image.  This can produce
+very seamless blends of digital images.  The two images
+are combined on the basis of a third "mask" image.  The resulting image
+will contain the 
+.I inmask
+image where the mask contains a maximum value (255) and the 
+.I outmask 
+image where the mask contains zeros.  This is done on a channel by channel
+basis, i.e. the maskfile should have data in each channel describing how
+to combine each channel of the 
+.I inmask
+and
+.I outmask
+images.  All three images
+must have exactly the same dimensions (both image size and number of channels).
+For best results, it's often useful to filter the mask image a little with
+.IR smush (1)
+first.
+.SH OPTIONS
+.TP
+.BI \-l " levels"
+How many pyramid levels to use (maximum is log(2) of image size).
+.TP
+.BI \-o " outfile"
+If specified, output will be written to this file, otherwise it will
+go to stdout.
+.SH SEE ALSO
+.IR smush (1),
+.IR rleswap (1),
+.IR urt (1),
+.IR RLE (5),
+.br
+Burt and Adelson, "A Multiresolution Spline With Applications to Image
+Mosaics", \fIACM Transactions on Graphics\fP, October 1983, V2 #4, p. 217.
+.br
+Ogden, Adelson, Bergen and Burt, "Pyramid-based Computer Graphics", \fIRCA
+Engineer\fP, Sept/Oct 1985, p. 4.
+.SH AUTHOR
+Rod Bogart
+.SH BUGS
+The current implementation has very
+strict requirements for image sizes and dimensions.  The extensive
+use of floating point computation makes it very slow for normal sized
+images.  It also keeps all of the bandpass images in core at
+once, which requires considerable amounts of memory.
+
+Pyrmask is built on top of a library of functions for working with
+Gaussian pyramids.  This library has yet to be documented or fully
+tested.

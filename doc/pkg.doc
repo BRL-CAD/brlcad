@@ -1,0 +1,367 @@
+.\"  @(#)$Header$ (BRL)
+.RT
+.nf
+The following is a description of the libpkg routines kindly provided
+by Peter B. Shames, updated to reflect BRL extensions since the first
+writing.  It is intended that an RFC be published at some point,
+but for now this (plus the source code) is all the documentation we have.
+In the CAD distribution, the remote framebuffer interface (libfb/if_remote.c)
+and server (rfbd), communicate using this protocol.  
+
+Contributors:
+
+	BRL	U.S.Army Ballistic Research Laboratory
+	STScI	Space Telescope Science Institute
+
+==================================================================
+
+PKG Interface Description				26 Sept 1986
+=========================				PMB Shames
+					      [Updated: 14 Nov 1986
+							PC Dykstra]
+Overview
+--------
+
+A prototype interface that implements a fairly simple message passing
+abstraction between cooperating processes running over TCP connections
+has been developed by Mike Muuss, Charles Kennedy, and Phillip Dykstra
+at BRL.  Some experiments have been run at STScI to implement this
+interface on a DECnet link with good success.  A few changes have been
+suggested to improve network throughput for data flows that consist of
+short message traffic or byte-stream traffic.
+
+This note describes the motivation for developing such an interface and
+describes the subroutine interfaces and functionality.  The interface
+routine descriptions and portions of the textual descriptions have been
+taken directly from the source code provided by Muuss and Kennedy
+which has been the only available description to date.
+
+Why a message interface?
+------------------------
+
+The interface - PKG provides a simple interface for managing
+client/server connections in a distributed environment.  A server task
+is initialized to wait for incoming requests from clients.  Clients open
+a connection to the server task which executes on some host processor
+waiting for incoming requests.  Messages with identifying type codes are
+passed between processes, with optional appended data blocks.  The
+interface is non-blocking and accepts arbitrary data messages of
+arbitrary length.
+
+An example - interaction with a remote data archive may require request
+for services, user authentication, permission granting, index hierarchy
+queries - with manipulation of results, archive request processing,
+delivery of output products - electronically or otherwise.  The archive
+is a server that responds to service requests from clients, how many
+may be served at one time and whether public access and private services
+are supported is an implementation issue.  Since no direct interactive
+support is required (if smart client agents are in use) the message
+paradigm can support the requirements.
+
+A [counter] example - Athena's XWindow uses a client-server model to
+provide screen/window management services for distributed processes.
+XWindow is very permissive of different window management policies and
+provides hooks for implementing various user interfaces.  At the lowest
+level, XWindow requires a reliable duplex byte-stream, which can be
+implemented in many operating environments.  Because XWindow wants to
+manage all process-window communications directly, it builds its own block
+stream protocol to manage the connection.  This permits the interactive
+update required by some processes, but basically is the same paradigm as
+PKG, defined within the window system.
+
+PKG Interface description
+-------------------------
+
+The PKG interface implements an client-server network connection that
+multiplexes synchronous and asynchronous messages across stream
+connections.  Connection control is provided by open/ close routines,
+where the client authentication is handled prior to establishing the
+connection.  Server side actions include initialization, client connection,
+and client request servicing.  Client side actions include server request,
+reply processing, possible connection negotiation, and data transfer
+processing.
+
+A connection is established when a client issues an open to a server,
+running on some host.  Which hosts provide required services must be
+determined prior to connection requests, using some service directory.
+Default connection processing is stream oriented, where a process may
+get data as it is available on the connection.  A blocking read may
+also be issued, waiting for any complete message, or just for messages
+of a specified type.  The connection remains open until explicitly
+closed by either client or server.
+
+Once the connection is established it may be used to process a full-
+duplex asynchronous byte stream, or a buffered, synchronous query/reply
+exchange.  Message type multiplexing supports user actions based upon
+message type, where the multiplexing is handled in the interface.
+Different message type streams may operate using different flow control
+over the same connection.  Multiplexing is handled in the interface by
+pre-pending a header block to the message before transmitting it
+to the reader.  Data is transmitted as received, but the header is
+transmitted in Internet network byte/bit order.
+
+An package connection may incur significant overhead if
+many short messages are passed between processes, so
+a buffered stream connection may be requested.  The
+application calls the pkg_stream interface rather than the usual pkg_send
+request, and PKG builds a message buffer and passes it to the
+client as it gets filled.  A stream buffer may be flushed with an
+explicit call to the pkg_flush routine.
+
+PKG Interface Definition
+------------------------
+
+Control Interfaces -
+
+PKG_OPEN	- 	Open a connection to a host
+
+	pkg_open( host, service, protocol, uname, passwd, pkg_switch, errlog )
+		returns ptr_to_connection
+
+		We are a client, make a connection to a server running
+		on some host.  The return value is the connection handle.
+		Protocol, username, and password are optional.
+
+PKG_CLOSE	-	Close a connection
+
+	pkg_close( ptr_to_connection ) returns VOID
+
+		We are a client or server wishing to gracefully close
+		a connection.
+
+PKG_TRANSERVER	-	Become a one-time network server on the already
+			accepted connection.
+
+	pkg_transerver( pkg_switch, errlog ) returns ptr_to_connection
+
+		Given an established connection, this routine creates a
+		pkg_conn structure for it and initializes it to use the
+		given pkg_switch and error logging function.  This routine
+		is needed by servers which get created by some other
+		process after the connection is established.  Processes
+		started by the UNIX "inetd" are one example.
+
+PKG_PERMSERVER	-	Create a network server and listen for connections
+
+	pkg_permserver( service, protocol, backlog ) returns listen_file_desc
+
+		The service port is determined and a listen is hung on
+		the port that is bound to the socket.  The return value
+		is the file descriptor of the socket.
+		For this kind of server, pkg_getclient is used to
+		accept connections from clients.
+
+PKG_GETCLIENT	-	Used by a server to accept a client connection
+
+	pkg_getclient( listen_file_desc, pkg_switch, errlog, nodelay_flag )
+		returns ptr_to_connection or NULL or ERROR
+
+		If possible, the connection request from the client is
+		accepted, a pkg_connection block is created and a ptr to
+		it is returned to the server.  The server may request
+		non-blocked service by setting the nodelay_flag TRUE.
+
+I/O Interfaces -
+
+PKG_GET		-	Read bytes from connection, assembling message
+
+	pkg_get( ptr_to_connection ) returns message_arrived,
+		more_data_coming or ERROR.
+
+		Get waits until a message header is received and the
+		calls the user specified message handler for that message
+		type.  This routine should be called by a program whenever
+		there is data waiting on a connection and the program is
+		not otherwise waiting on a specific message type.  The
+		routine will return directly to the caller if no header
+		is available or if only a partial message is received,
+		otherwise it calls the user specified message type handler.
+
+PKG_SEND	-	Send a message on the connection
+
+	pkg_send( message_type, data_buff, buff_len, ptr_to_connection )
+		returns bytes_sent or ERROR
+
+		Send constructs a message header for the data buffer
+		and transmits it on the connection.  If only part of the
+		message can be sent the actual number of bytes transmitted
+		returned.
+		Any data in the stream buffer is first flushed.  If the
+		stream buffer needs flushing, and the message is less than
+		MAXQLEN (currently 512) bytes long, and sufficient room
+		is left in the stream buffer, this message gets "piggybacked"
+		on by copying it to the buffer before flushing.
+		If available, "writev" is used to send the header and data
+		with one syscall.
+
+PKG_2SEND	-	Send a two part message on the connection
+
+	pkg_2send( message_type, data_buff1, buff1_len,
+		   data_buff2, buff2_len, ptr_to_connection )
+		returns bytes_sent or ERROR
+
+		2Send performs the same job as pkg_send except the data
+		comes in two parts.  This is often the case for say a
+		command followed by user data.  User data copies can be
+		avoided while still allowing a single trip in and out of
+		the kernel on the receiving end.
+
+PKG_STREAM	- 	Send a buffered data stream on the connection
+
+	pkg_stream( message_type, data_buff, buff_len, ptr_to_connection )
+		returns bytes_sent or ERROR
+
+		Pkg_stream connections provide a low network overhead
+		connection where interactive responsiveness is not
+		required.
+		Connections have a PKG_STREAMLEN (currently 4096)
+		byte stream buffer.  If the current message is less
+		than MAXQLEN (currently 512) bytes in length, and space
+		remains for it, it will be appended onto the end of this
+		buffer.  Otherwise the buffer is implicity flushed by
+		sending this message via PKG_SEND.
+
+PKG_FLUSH	-	Flush the stream buffer out on the connection
+
+	pkg_flush( ptr_to_connection ) returns bytes_sent or
+		ERROR
+
+		Flush takes the current contents of the stream buffer being
+		constructed by stream and flushes it to the connection.
+		This allows programs explicit control over the stream
+		interface where required.
+
+PKG_BLOCK	- 	Wait for a complete message of any type
+
+	pkg_block( ptr_to_connection ) returns message_arrived or ERROR
+
+		This routine blocks, waiting for a complete message of
+		ant type to arrive on the connection.  The user message
+		handler is called to process the message.  This routine
+		can be called in a loop waiting for asynchronous messages
+		or for the arrival of messages of uncertain type.
+
+PKG_WAITFOR	-	Wait for a message of specific type, return in
+				user buffer
+
+	pkg_waitfor( message_type, user_buff, buff_len, ptr_to_connection )
+		returns buff_len or ERROR
+
+		This routine does a blocking read on the connection until
+		a message of message_type is received.  Asynchronous
+		messages and messages of other types are processed while
+		this routine waits.  The message is returned in the user's
+		buffer.
+
+PKG_BWAITFOR	-	Wait for a message of specific type, return in
+				allocated buffer
+
+	pkg_bwaitfor( message_type, ptr_to_connection )
+		returns ptr_to_buffer or ERROR
+
+		This routine does a blocking read on the connection until
+		a message of message_type is received.  Asynchronous
+		messages and messages of other types are processed while
+		this routine waits.  The message is returned in a newly
+		allocated buffer that the caller must free.
+
+User Message Handler Interface -
+
+PKG_SWITCH	-	Table of User Message Handler Pointers
+
+		struct pkg_switch {
+			unsigned short	pks_type;	/* Type code */
+			int	(*pks_handler)();	/* Message Handler */
+			char	*pks_title;		/* Description */
+		};
+
+	pks_handler( ptr_to_connection, message_buff ) returns ignored int.
+
+		The user may specify handlers for one or more message types.
+		When these routines are called they are passed a pointer
+		to the connection and a pointer to a buffer that contains
+		the message.  The user message handler routine is resonsible
+		for freeing the message buffer after processing it.  If there
+		is no message handler for that message type the message is
+		discarded and the buffered freed.  The switch routine uses
+		an external message handler array, created by the caller,
+		that defines message types, handler entry points, and a
+		message descriptor field.
+ 		The pkg_switch list which is passed to some of the above
+		functions is a NULL terminated array of structures containing
+		the message type, a pointer to an function which handles
+		messages of that type, and a descriptive string.  A seperate
+		pkg_switch array is kept for each connection so that several
+		entirely different PKG conversations can be carried out by a
+		single application at the same time.
+
+PKG_CONN	-	Connection block structure
+
+	struct pkg_conn {
+		pkg_file_desc, pkg_magic, mess_len, ptr_to_buffer,
+		curr_buffer_pos, pkg_switch, errlog, stream_buff,
+		curr_stream_pos
+	};
+
+		Connection block structures are created by pkg_open or
+		pkg_getclient when a connection is established, and are freed
+		when a connection is closed.  This connection block is used
+		during all I/O requests and contains the pointer to the start
+		of the current buffer and to the current position in the
+		buffer for incomplete read or writes.  The mess_len field
+		specifies the number of bytes expected by get.
+		The pkg_switch array, and a pointer to an error logging
+		function for this connection is included.  The stream
+		buffer is also contained in the structure.
+
+		See pkg.h for the actual names of the structure elements.
+
+Implementation Notes
+--------------------
+
+At least two implementations of the PKG interface have been done, one
+based on TCP/IP connections, the other based on DECnet connections.
+Future releases of PKG will be layered on top of a virtual stream
+library known as NET.
+
+The implementation running on 4.2BSD UNIX takes advantage of
+the "writev" syscall which can output the header and data in a single
+syscall/TCP_PUSH cycle.  The advantage of the short data copy is realized
+only when writev can not be used, or when a pkg_flush is not required
+(a la PKG_STREAM).]
+
+Future Developments
+-------------------
+
+Further development of the lower levels of the interface will be provided
+so that this message passing abstraction can be provided on top of both
+DECnet and TCP/IP network layers, with other implementations provided
+as required.  The program interface layer is to be as described in the
+body of this note, the lower layers will interface to the network layers
+using whatever subroutine interfaces are most appropriate for the system
+hosting the interface.  A simple read/write/open/close abstraction may
+be provided at a lower layer to further isolate the network layers from
+the message handling layer.
+
+Where it is necessary to cross network protocol boundaries, message relay
+processes will be created to reside on a Janus host that straddles the
+two domains.  Domain routing and relay point information will be
+maintained above the network layer within the extended PKG interface.
+Clients and servers will need to determine server host id information
+from some available database.  Server names must either carry domain
+information or such information must be available as part of the server
+database.  Within the extended PKG interface routing information for
+domain boundary transits must be maintained, and appropriate Janus
+host systems connected to provide relay services.
+
+It is not anticipated that full asynchronous I/O implementation will
+work particularly well across domain boundaries, but all other forms
+of message transfer should work quite well.  As already noted, buffered
+stream I/O may be prefectly satisfactory for many applications where
+full interaction is not required.  Where applicable, this mode of
+interface is to be prefered over full asynchronous I/O.  Further
+development of this interface layer on other protocol families is
+possible, perhaps even on low level networks like BITNET and certainly
+on connection oriented X.25 or OSI networks.
+
+------
