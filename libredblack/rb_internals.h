@@ -86,8 +86,7 @@
     int	_b = (o) / 8;							\
     int _p = (o) - _b * 8;						\
 									\
-    RB_CKMAG((n), RB_NODE_MAGIC, "red-black node");			\
-    ((n) -> rbn_color)[_b] &= 0x1 << _p;				\
+    ((n) -> rbn_color)[_b] &= ~(0x1 << _p);				\
     ((n) -> rbn_color)[_b] |= (c) << _p;				\
 }
 #define	RB_RED			0
@@ -101,6 +100,22 @@
 #define	WALK_NODES		0
 #define	WALK_DATA		1
 
+/*		    R B _ R O T A T E ( )
+ *			    and
+ *		R B _ O T H E R _ R O T A T E ( )
+ *
+ *	These macros have three parameters: the node about which
+ *	to rotate, the order to be rotated, and the direction of
+ *	rotation.  They allow indirection in the use of _rb_rot_left()
+ *	and _rb_rot_right().
+ */
+#define	rb_rotate(n, o, d)	(((d) == RB_LEFT)		? 	\
+				    _rb_rot_left((n), (o))	:	\
+				    _rb_rot_right((n), (o)))
+#define	rb_other_rotate(n, o, d) (((d) == RB_LEFT)		? 	\
+				    _rb_rot_right((n), (o))	:	\
+				    _rb_rot_left((n), (o)))
+
 /*
  *	Functions internal to LIBREDBLACK
  */
@@ -108,6 +123,14 @@ struct rb_node *_rb_neighbor	(
 				    struct rb_node	*node,
 				    int			order,
 				    int			sense
+				);
+void _rb_rot_left		(
+				    struct rb_node	*x,
+				    int order
+				);
+void _rb_rot_right		(
+				    struct rb_node	*y,
+				    int order
 				);
 struct rb_node *_rb_search	(
 				    struct rb_node	*root,
@@ -124,3 +147,7 @@ void _rb_walk			(
 				);
 
 #endif /* RB_INTERNALS_H */
+
+#define	made_it()	fprintf(stderr, "Made it to file '%s' line %d\n", \
+					__FILE__, __LINE__);fflush(stderr);
+
