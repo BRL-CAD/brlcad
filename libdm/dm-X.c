@@ -298,7 +298,7 @@ char *argv[];
   XSynchronize(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, 1);
 #endif
 
-  k_ScreenNumber(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
+  Tk_ScreenNumber(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
 
   /* must do this before MakeExist */
   if((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip = X_choose_visual(dmp)) == NULL){
