@@ -68,6 +68,8 @@ extern int Fbo_Init();
 extern int ogl_open_existing();
 extern int ogl_close_existing();
 extern FBIO ogl_interface;
+extern void ogl_configureWindow();
+extern int ogl_refresh();
 #endif
 
 #ifdef IF_X
