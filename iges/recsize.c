@@ -27,11 +27,6 @@
 	with just CR at end of records (but I haven't seen such an animal
 	yet) */
 
-#include "conf.h"
-
-#include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 #define	NRECS	20	/* Maximum number of records to sample */

@@ -19,25 +19,8 @@
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#include "conf.h"
-
-#include <stdio.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "wdb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-
-RT_EXTERN( struct model *nmg_mmr , () );
-RT_EXTERN( struct shell *Get_outer_shell , ( struct nmgregion *r, int entityno, int shell_orient ) );
-RT_EXTERN( struct shell *Add_inner_shell , ( struct nmgregion *r, int entityno, int shell_orient ) );
 
 brep( entityno )
 int entityno;

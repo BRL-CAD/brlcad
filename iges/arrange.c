@@ -17,12 +17,6 @@
 	that BRLCAD likes, i.e. (((a+b)-c)+d) as opposed to (a+(b-(c-d))).
 	The tree is traversed in LRN order.	*/
 
-#include "conf.h"
-
-#include <stdio.h>
-
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 
 Arrange( root )

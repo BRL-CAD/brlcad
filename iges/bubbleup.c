@@ -23,12 +23,6 @@
 	in the tree.  Traverses the tree in LRN order.  Returns 1
 	if no change was made to the tree, 0 otherwise.	*/
 
-#include "conf.h"
-
-#include <stdio.h>
-
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 
 Bubbleup( root )

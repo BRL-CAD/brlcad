@@ -11,26 +11,8 @@
  *	This software is Copyright (C) 1993 by the United States Army.
  *	All rights reserved.
  */
-#include "conf.h"
-
-#include <stdio.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
-#include "vmath.h"
-#include "rtlist.h"
-#include "rtstring.h"
-#include "nmg.h"
-#include "raytrace.h"
-#include "wdb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-
-RT_EXTERN( struct faceuse *Make_face , ( struct shell *s, int entityno, int face_orient ) );
 
 int
 Add_loop_to_face( s , fu , entityno , face_orient )
@@ -48,7 +30,7 @@ int face_orient;
 		fu = fu->fumate_p;
 	if( fu->orientation != OT_SAME )
 	{
-		rt_log( "fu x%x (%s) nad mate x%x (%s) have no OT_SAME use\n" ,
+		rt_log( "fu x%x (%s) and mate x%x (%s) have no OT_SAME use\n" ,
 			fu , nmg_orientation( fu->orientation ) ,
 			fu->fumate_p , nmg_orientation( fu->fumate_p->orientation ) );
 		rt_bomb( "Faceuse and mate have no OT_SAME use\n" );
@@ -56,7 +38,7 @@ int face_orient;
 	}
 
 	/* first make a new face from the loop */
-	fu_tmp = Make_face( s , entityno , face_orient );
+	fu_tmp = Make_planar_face( s , entityno , face_orient );
 
 	if( !fu_tmp )
 		return( 0 );

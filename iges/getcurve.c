@@ -13,22 +13,9 @@
  *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
  */
-#include "conf.h"
 
-#include <stdio.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-#include <math.h>
-
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "wdb.h"
 
 #define	ARCSEGS	25	/* number of segments to use in representing a circle */
 
@@ -275,7 +262,43 @@ struct ptlist **curv_pts;
 					npts = ntuples;
 					break;
 				}
-				default:	/* form must be 1,2,11,12, or 63 */
+#if 0
+				case 20:
+				case 21:
+				{
+					if( interpflag != 1 )
+					{
+						printf( "Error in Getcurve for copius data entity D%07d, IP=%d, should be 1\n",
+							dir[curve]->direct , interpflag );
+						npts = 0;
+						break;
+					}
+					Readcnv( &common_z , "" );
+					(*curv_pts) = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+						"Getcurve: curv_pts" );
+					ptr = (*curv_pts);
+					ptr->prev = NULL;
+					for( i=0 ; i<ntuples ; i += 2 )
+					{
+						Readcnv( &pt1[X] , "" );
+						Readcnv( &pt1[Y] , "" );
+						pt1[Z] = common_z;
+						MAT4X3PNT( ptr->pt , *dir[curve]->rot , pt1 );
+						prev = ptr;
+						ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+							"Getcurve: ptr->next" );
+						ptr = ptr->next;
+						ptr->prev = prev;
+						ptr->next = NULL;
+					}
+					ptr = ptr->prev;
+					rt_free( (char *)ptr->next, "Getcurve: ptr->next" );
+					ptr->next = NULL;
+					npts = ntuples;
+					break;
+				}
+#endif
+				default:
 				{
 					printf( "Error in Getcurve for copius data entity D%07d, form %d is not a legal choice\n",
 						dir[curve]->direct , dir[curve]->form );

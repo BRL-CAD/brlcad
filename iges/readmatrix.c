@@ -18,13 +18,6 @@
 	xform is the pointer to the parameter entry for the matrix,
 	rot is where the matrix is to be placed. */
 
-#include "conf.h"
-
-#include <stdio.h>
-#include <math.h>
-
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 

@@ -12,29 +12,8 @@
  *	All rights reserved.
  */
 
-#include "conf.h"
-
-#include <stdio.h>
-
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
-#include "vmath.h"
-#include "rtlist.h"
-#include "rtstring.h"
-#include "nmg.h"
-#include "raytrace.h"
-#include "wdb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-
-RT_EXTERN( struct faceuse *Make_face , ( struct shell *s , int entityno , int face_orient ) );
-RT_EXTERN( int Add_loop_to_face , (struct shell *s , struct faceuse *fu , int entityno , int face_orient ));
-RT_EXTERN( int planar_nurb , ( int entityno ) );
 
 struct faceuse *
 Add_face_to_shell( s , entityno , face_orient )
@@ -51,6 +30,7 @@ int face_orient;
 	int		loop;
 	int		planar=0;
 	struct faceuse	*fu;			/* NMG face use */
+	struct snurb	*srf;			/* NURB Surface */
 
 	/* Acquiring Data */
 
@@ -73,6 +53,7 @@ int face_orient;
 	/* Check that this is a planar surface */
 	if( dir[(surf_de-1)/2]->type == 190 ) /* plane entity */
 		planar = 1;
+#if 0
 	else if( dir[(surf_de-1)/2]->type == 128 )
 	{
 		/* This is a NURB, but it might still be planar */
@@ -85,20 +66,33 @@ int face_orient;
 				planar = 1;
 		}
 	}
+#endif
 
-	if( !planar )
+	if( planar )
 	{
-		rt_log( "Face entity at DE=%d is not planar, object not converted\n" , (entityno*2+1) );
-		return( (struct faceuse *)NULL );
-	}
-
-	fu = Make_face( s , (loop_de[0]-1)/2 , face_orient );
-	for( loop=1 ; loop<no_of_loops ; loop++ )
-	{
-		if( !Add_loop_to_face( s , fu , ((loop_de[loop]-1)/2) , face_orient ))
+		fu = Make_planar_face( s , (loop_de[0]-1)/2 , face_orient );
+		if( !fu )
 			goto err;
+		for( loop=1 ; loop<no_of_loops ; loop++ )
+		{
+			if( !Add_loop_to_face( s , fu , ((loop_de[loop]-1)/2) , face_orient ))
+				goto err;
+		}
 	}
-
+	else if( dir[(surf_de-1)/2]->type == 128 )
+	{
+		fu = Make_nurb_face( &srf, s, (surf_de-1)/2 );
+		for( loop=0 ; loop<no_of_loops ; loop++ )
+		{
+			if( !Add_nurb_loop_to_face( s, fu, srf, ((loop_de[loop]-1)/2) , face_orient ))
+				goto err;
+		}
+	}
+	else
+	{
+		fu = (struct faceuse *)NULL;
+		rt_log( "Add_face_to_shell: face at DE%d is neither planar nor NURB, ignoring\n", surf_de );
+	}
 
   err :
 	rt_free( (char *)loop_de , "Add_face_to_shell: loop DE's" );

@@ -17,14 +17,8 @@
 /*	This routine creates a group called "all" consisting of
 	all unreferenced entities	*/
 
-#include "conf.h"
-
-#include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "wdb.h"
 
 Makegroup()
 {

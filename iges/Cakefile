@@ -23,7 +23,7 @@
 	add_face add_loop get_edge_list read_edge_list \
 	get_vertex_list read_vertex_list get_vertex get_att \
 	read_att check_names planar_nurb g-iges iges conv_drawings orient_loops \
-	trimsurf
+	trimsurf iges_types make_nurb_face get_iges_vertex get_cnurb_curve
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
@@ -43,7 +43,7 @@
         add_face.o add_loop.o get_edge_list.o read_edge_list.o \
         get_vertex_list.o read_vertex_list.o get_vertex.o get_att.o \
         read_att.o check_names.o planar_nurb.o conv_drawings.o orient_loops.o \
-	trimsurf.o
+	trimsurf.o iges_types.o make_nurb_face.o get_iges_vertex.o get_cnurb_curve.o
 
 iges-g:	I_G_OBJ LIBRT_DEP LIBWDB_DEP
 	sh ../newvers.sh version "IGES-to-BRLCAD Translator"

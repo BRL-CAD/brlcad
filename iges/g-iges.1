@@ -6,9 +6,9 @@ g-iges \- IGES Translator (BRL-CAD to IGES)
 [-f|t] [-v] [-s] [-x flag1] [-X flag2] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o file.iges] database.g object(s)
 .SH DESCRIPTION
 .I g-iges\^
-converts the specified objects of the BRLCAD database,
-.I database.g
-, to an IGES version 5.1 file,
+converts the specified objects of the BRL-CAD database,
+.I database.g,
+to an IGES version 5.1 file,
 .I file.iges.
 The
 .B \-f
@@ -17,15 +17,15 @@ Objects.  All CSG solids in the specified objects are tessellated to
 produce facetted BREP objects, then the indicated Boolean operations
 are performed for each region. Individual regions are written to the
 IGES file as individual BREP objects.  This procedure results in
-some approximations since curved surface solids, such as TGC's or
+some approximations since curved surface solids, such as TGCs or
 ellipsoids, are approximated by flat facets. The accuracy of the
 tessellation may be controlled through the use of the
 .B \-a, -r, and -n
 options to specify tolerances.
 The
 .B \-t
-option indicates that an IGES file consisting of only trimmed NURBS
-should be created. The trimmed NURBS will all be planar NURBS, and they
+option indicates that an IGES file consisting of only trimmed NURBs
+should be created. The trimmed NURBs will all be planar NURBs, and they
 are the facets derived from the tessellation and Boolean evaluation as in
 the
 .B \-f
@@ -40,15 +40,15 @@ option or without the
 or
 .B \-t
 options to indicate that all facets in BREP objects should be output
-in the form of planar NURBS (Intergraph likes their IGES files this way).
+in the form of planar NURBs (Intergraph likes their IGES files this way).
 If neither the
 .B \-f
 nor the
 .B \-t
-options are selected, the defalt is a CSG IGES file. In this situation,
+options are selected, the default is a CSG IGES file. In this situation,
 all regions will be written to the IGES file as Boolean trees with
 all possible solids represented by their IGES CSG equivalent. In cases
-where there is no IGES CSG equivalent, the BRLCAD solid is tesellated
+where there is no IGES CSG equivalent, the BRL-CAD solid is tesellated
 (using the provided tolerances), and a BREP object is written for that
 solid.
 The
@@ -66,14 +66,14 @@ This command will produce an IGES BREP output file,
 .I sample.iges,
 from
 .I object1
-of the BRLCAD database file
+of the BRL-CAD database file
 .I sample.g.
 .SH "SEE ALSO"
 iges-g(1).
 .br
 .I
-The Initial Graphics Exchange Specification (IGES) Version 5.1
-,IGES/PDES Organization, September 1991.
+The Initial Graphics Exchange Specification (IGES) Version 5.1,
+IGES/PDES Organization, September 1991.
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
 .SH AUTHOR
@@ -84,7 +84,7 @@ SECAD/VLD Computing Consortium, Bldg 394
 .br
 The U. S. Army Research Laboratory
 .br
-Aberdeen Proving Ground, Maryland  21005
+Aberdeen Proving Ground, MD  21005
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
 mail to <CAD@BRL.MIL>.

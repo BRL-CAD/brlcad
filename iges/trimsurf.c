@@ -20,23 +20,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "conf.h"
-
-#include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
-#include "nmg.h"
-#include "raytrace.h"
-#include "nurb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "wdb.h"
 
 /* translations to get knot vectors in first quadrant */
 static fastf_t u_translation=0.0;
 static fastf_t v_translation=0.0;
-
-RT_EXTERN( struct cnurb *rt_arc2d_to_cnurb, ( point_t center, point_t start, point_t end, int pt_type, struct rt_tol *tol ) );
 
 #define CTL_INDEX(_i,_j)	((_i * n_cols + _j) * ncoords)
 
@@ -45,6 +34,7 @@ Get_nurb_surf( entityno )
 int entityno;
 {
 	struct snurb *srf;
+	point_t pt;
 	int entity_type;
 	int i,j;
 	int num_knots;
@@ -140,19 +130,22 @@ int entityno;
 	{
 			Readcnv( &a , "" );
 			if( rational )
-				srf->ctl_points[i*ncoords] = a*srf->ctl_points[i*ncoords+3];
+				pt[X] = a*srf->ctl_points[i*ncoords+3];
 			else
-				srf->ctl_points[i*ncoords] = a;
+				pt[X] = a;
 			Readcnv( &a , "" );
 			if( rational )
-				srf->ctl_points[i*ncoords+1] = a*srf->ctl_points[i*ncoords+3];
+				pt[Y] = a*srf->ctl_points[i*ncoords+3];
 			else
-				srf->ctl_points[i*ncoords+1] = a;
+				pt[Y] = a;
 			Readcnv( &a , "" );
 			if( rational )
-				srf->ctl_points[i*ncoords+2] = a*srf->ctl_points[i*ncoords+3];
+				pt[Z] = a*srf->ctl_points[i*ncoords+3];
 			else
-				srf->ctl_points[i*ncoords+2] = a;
+				pt[Z] = a;
+
+			/* apply transformation */
+			MAT4X3PNT( &srf->ctl_points[i*ncoords], *dir[entityno]->rot, pt );
 	}
 
 	Readdbl( &a , "" );
@@ -203,6 +196,7 @@ Get_cnurb( entity_no )
 int entity_no;
 {
 	struct cnurb *crv;
+	point_t pt,pt2;
 	int entity_type;
 	int num_pts;
 	int degree;
@@ -286,14 +280,20 @@ int entity_no;
 		}
 		if( rational )
 		{
-			crv->ctl_points[i*ncoords] = (x + u_translation) * crv->ctl_points[i*ncoords+2];
-			crv->ctl_points[i*ncoords+1] = (y + v_translation) * crv->ctl_points[i*ncoords+2];
+			pt[X] = (x + u_translation) * crv->ctl_points[i*ncoords+2];
+			pt[Y] = (y + v_translation) * crv->ctl_points[i*ncoords+2];
 		}
 		else
 		{
-			crv->ctl_points[i*ncoords] = x + u_translation;
-			crv->ctl_points[i*ncoords+1] = y + v_translation;
+			pt[X] = x + u_translation;
+			pt[Y] = y + v_translation;
 		}
+		pt[Z] = z;
+
+		/* apply transformation */
+		MAT4X3PNT( pt2, *dir[entity_no]->rot, pt );
+		crv->ctl_points[i*ncoords] = pt2[X];
+		crv->ctl_points[i*ncoords+1] = pt2[Y];
 	}
 
 	return( crv );
@@ -343,6 +343,7 @@ struct snurb *srf;
 	struct vertex *vp;
 	double x,y,z;
 	fastf_t u,v;
+	point_t pt, pt2;
 	int ncoords;
 	int i;
 
@@ -384,6 +385,10 @@ struct snurb *srf;
 			Readdbl( &x , "" );
 			Readdbl( &y , "" );
 			Readdbl( &z , "" );
+			VSET( pt, x + u_translation, y + v_translation, z )
+
+			/* apply transformation */
+			MAT4X3PNT( pt2, *dir[entity_no]->rot, pt )
 
 			/* Split last edge in loop */
 			eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
@@ -392,21 +397,18 @@ struct snurb *srf;
 
 			/* if old edge doesn't have vertex geometry, assign some */
 			if( !vp->vg_p )
-			{
-				u = x + u_translation;
-				v = y + v_translation;
-				Assign_vu_geom( eu->vu_p, u, v, srf );
-			}
+				Assign_vu_geom( eu->vu_p, pt2[X], pt2[Y], srf );
 
 			/* read terminate point */
 			Readdbl( &x , "" );
 			Readdbl( &y , "" );
 			Readdbl( &z , "" );
+			VSET( pt, x + u_translation, y + v_translation, z )
 
-			/* assign geometry to vertex of new edgeuse */
-			u = x + u_translation;
-			v = y + v_translation;
-			Assign_vu_geom( new_eu->vu_p, u, v, srf );
+			/* apply transformation */
+			MAT4X3PNT( pt2, *dir[entity_no]->rot, pt )
+
+			Assign_vu_geom( new_eu->vu_p, pt2[X], pt2[Y], srf );
 
 			/* assign edge geometry */
 			nmg_edge_g_cnurb( eu, 2, 0, (fastf_t *)NULL, 2,
@@ -435,6 +437,15 @@ struct snurb *srf;
 				/* build cnurb arc */
 				crv = rt_arc2d_to_cnurb( center, start, end, RT_NURB_PT_UV, &tol );
 
+				/* apply transformation to control points */
+				for( i=0 ; i<crv->c_size ; i++ )
+				{
+					V2MOVE( pt2, &crv->ctl_points[i*3] )
+					pt2[Z] = z;
+					MAT4X3PNT( pt, *dir[entity_no]->rot, pt2 )
+					V2MOVE( &crv->ctl_points[i*3], pt );
+				}
+
 				/* add a new edge to loop */
 				eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
 				new_eu = nmg_eusplit( (struct vertex *)NULL, eu, 0 );
@@ -442,16 +453,14 @@ struct snurb *srf;
 
 				/* if old edge doesn't have vertex geometry, assign some */
 				if( !vp->vg_p )
-				{
-					u = start[X];
-					v = start[Y];
-					Assign_vu_geom( eu->vu_p, u, v, srf );
-				}
+					Assign_vu_geom( eu->vu_p,
+						crv->ctl_points[0], crv->ctl_points[1], srf );
 
 				/* Assign geometry to new vertex */
-				u = end[X];
-				v = end[Y];
-				Assign_vu_geom( new_eu->vu_p, u, v, srf );
+				Assign_vu_geom( new_eu->vu_p,
+						crv->ctl_points[(crv->c_size-1)*3],
+						crv->ctl_points[(crv->c_size-1)*3 + 1],
+						srf );
 
 				/* Assign edge geometry */
 				Assign_cnurb_to_eu( eu, crv );
@@ -558,83 +567,66 @@ struct faceuse *fu;
 				nmg_keu( eu );
 			}
 			break;
-		case 110:	/* line */
-
-			/* get sart point */
-			Readdbl( &x , "" );
-			Readdbl( &y , "" );
-			Readdbl( &z , "" );
-
-			vp = eu->vu_p->v_p;
-
-			/* if old edge doesn't have vertex geometry, assign some */
-			if( !vp->vg_p )
-			{
-				u = x + u_translation;
-				v = y + v_translation;
-				Assign_vu_geom( eu->vu_p, u, v, srf );
-			}
-
-			/* read terminate point */
-			Readdbl( &x , "" );
-			Readdbl( &y , "" );
-			Readdbl( &z , "" );
-
-			/* assign geometry to vertex of eu mate */
-			u = x + u_translation;
-			v = y + v_translation;
-			Assign_vu_geom( eu->eumate_p->vu_p, u, v, srf );
-
-			/* assign edge geometry */
-			nmg_edge_g_cnurb( eu, 2, 0, (fastf_t *)NULL, 2,
-				RT_NURB_MAKE_PT_TYPE( 3, RT_NURB_PT_UV, RT_NURB_PT_RATIONAL),
-				 (fastf_t *)NULL );
-			break;
-		case 100:	/* circular arc */
+		case 100:	/* circular arc (must be full cirle here) */
 			{
 				struct cnurb *crv;
+				struct cnurb *crv1,*crv2;
 				point_t center, start, end;
+				struct rt_list curv_hd;
+rt_log( "Full circle\n" );
 
 				/* read Arc center start and end points */
 				Readcnv( &z , "" );	/* common Z-coord */
 				Readcnv( &x , "" );	/* center */
 				Readcnv( &y , "" );	/* center */
-				VSET( center, y+u_translation, x+v_translation, z )
+				VSET( center, x+u_translation, y+v_translation, z )
 
 				Readcnv( &x , "" );	/* start */
 				Readcnv( &y , "" );	/* start */
-				VSET( start, y+u_translation, x+v_translation, z )
+				VSET( start, x+u_translation, y+v_translation, z )
 
 				Readcnv( &x , "" );	/* end */
 				Readcnv( &y , "" );	/* end */
-				VSET( end, y+u_translation, x+v_translation, z )
+				VSET( end, x+u_translation, y+v_translation, z )
 
-				/* build cnurb arc */
+				/* build cnurb circle */
 				crv = rt_arc2d_to_cnurb( center, start, end, RT_NURB_PT_UV, &tol );
 
+				/* split circle into two pieces */
+				RT_LIST_INIT( &curv_hd );
+				rt_nurb_c_split( &curv_hd, crv );
+				crv1 = RT_LIST_FIRST( cnurb, &curv_hd );
+				crv2 = RT_LIST_LAST( cnurb, &curv_hd );
+
+				/* Split last edge in loop */
+				eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
+				new_eu = nmg_eusplit( (struct vertex *)NULL, eu, 0 );
 				vp = eu->vu_p->v_p;
 
 				/* if old edge doesn't have vertex geometry, assign some */
 				if( !vp->vg_p )
 				{
-					u = start[X];
-					v = start[Y];
+					u = crv1->ctl_points[0]/crv1->ctl_points[2];
+					v = crv1->ctl_points[1]/crv1->ctl_points[2];
 					Assign_vu_geom( eu->vu_p, u, v, srf );
 				}
 
-				vp = eu->eumate_p->vu_p->v_p;
+				vp = new_eu->vu_p->v_p;
 				if( !vp->vg_p )
 				{
-					/* Assign geometry to eu mate vertex */
-					u = end[X];
-					v = end[Y];
-					Assign_vu_geom( eu->eumate_p->vu_p, u, v, srf );
+					/* Assign geometry to new_eu vertex */
+					u = crv2->ctl_points[0]/crv2->ctl_points[2];
+					v = crv2->ctl_points[1]/crv2->ctl_points[2];
+					Assign_vu_geom( new_eu->vu_p, u, v, srf );
 				}
 
 				/* Assign edge geometry */
-				Assign_cnurb_to_eu( eu, crv );
+				Assign_cnurb_to_eu( eu, crv1 );
+				Assign_cnurb_to_eu( new_eu, crv2 );
 
 				rt_nurb_free_cnurb( crv );
+				rt_nurb_free_cnurb( crv1 );
+				rt_nurb_free_cnurb( crv2 );
 			}
 			break;
 
@@ -642,30 +634,69 @@ struct faceuse *fu;
 			rt_log( "Conic Arc not yet handled as a trimming curve\n" );
 			break;
 
-		case 126:	/* spline curve */
-			/* Get spline curve */
-			crv = Get_cnurb( entity_no );
+		case 126:	/* spline curve (must be closed loop) */
+			{
+				struct cnurb *crv;
+				struct cnurb *crv1,*crv2;
+				struct rt_list curv_hd;
 
-			ncoords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
+				/* Get spline curve */
+rt_log( "CLosed loop spline curve\n" );
+				crv = Get_cnurb( entity_no );
 
-			vp = eu->vu_p->v_p;
+				ncoords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
 
-			/* if old edge doesn't have vertex geometry, assign some */
-			if( !vp->vg_p )
-				Assign_vu_geom( eu->vu_p, crv->ctl_points[0],
-					crv->ctl_points[1], srf );
+				/* split circle into two pieces */
+				RT_LIST_INIT( &curv_hd );
+				rt_nurb_c_split( &curv_hd, crv );
+				crv1 = RT_LIST_FIRST( cnurb, &curv_hd );
+				crv2 = RT_LIST_LAST( cnurb, &curv_hd );
+				/* Split last edge in loop */
+				eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
+				new_eu = nmg_eusplit( (struct vertex *)NULL, eu, 0 );
+				vp = eu->vu_p->v_p;
 
-			/* Assign geometry to eu mate vertex */
-			vp = eu->eumate_p->vu_p->v_p;
-			if( !vp->vg_p )
-				Assign_vu_geom( eu->eumate_p->vu_p, crv->ctl_points[(crv->c_size-1)*ncoords],
-					crv->ctl_points[(crv->c_size-1)*ncoords+1], srf );
+				/* if old edge doesn't have vertex geometry, assign some */
+				if( !vp->vg_p )
+				{
+					if( RT_NURB_IS_PT_RATIONAL( crv1->pt_type ) )
+					{
+						u = crv1->ctl_points[0]/crv1->ctl_points[ncoords-1];
+						v = crv1->ctl_points[1]/crv1->ctl_points[ncoords-1];
+					}
+					else
+					{
+						u = crv1->ctl_points[0];
+						v = crv1->ctl_points[1];
+					}
+					Assign_vu_geom( eu->vu_p, u, v, srf );
+				}
 
-			/* Assign edge geometry */
-			Assign_cnurb_to_eu( eu, crv );
+				/* Assign geometry to new_eu vertex */
+				vp = new_eu->vu_p->v_p;
+				if( !vp->vg_p )
+				{
+					if( RT_NURB_IS_PT_RATIONAL( crv2->pt_type ) )
+					{
+						u = crv2->ctl_points[0]/crv2->ctl_points[ncoords-1];
+						v = crv2->ctl_points[1]/crv2->ctl_points[ncoords-1];
+					}
+					else
+					{
+						u = crv2->ctl_points[0];
+						v = crv2->ctl_points[1];
+					}
+					Assign_vu_geom( new_eu->vu_p, u, v, srf );
+				}
 
-			rt_nurb_free_cnurb( crv );
+				/* Assign edge geometry */
+				Assign_cnurb_to_eu( eu, crv1 );
+				Assign_cnurb_to_eu( new_eu, crv2 );
 
+				rt_nurb_free_cnurb( crv );
+				rt_nurb_free_cnurb( crv1 );
+				rt_nurb_free_cnurb( crv2 );
+			}
 			break;
 		default:
 			rt_log( "Curves of type %d are not yet handled for trimmed surfaces\n", entity_type );
@@ -702,7 +733,7 @@ struct faceuse *fu;
 	Readint( &entity_type , "" );
 	if( entity_type != 142 )
 	{
-		rt_log( "Expected Curve on a Parametric Surface, found entity type %d\n" , entity_type );
+		rt_log( "Expected Curve on a Parametric Surface, found %s\n" , iges_type( entity_type ) );
 		return( 0 );
 	}
 	Readint( &i , "" );
@@ -960,6 +991,10 @@ Convtrimsurfs()
 
 	(void)nmg_model_vertex_fuse( m, &tol );
 
-	mk_nmg( fdout , "Trimmed_surf" , m );
+	if( solid_name )
+		mk_nmg( fdout , solid_name , m );
+	else
+		mk_nmg( fdout , "Trimmed_surf" , m );
+
 	nmg_km( m );
 }

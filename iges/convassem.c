@@ -18,16 +18,8 @@
 /*	This routine controls the conversion of IGES solid assemblies
 	to BRLCAD groups	*/
 
-#include "conf.h"
-
-#include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "wdb.h"
-
-void Read_att();
 
 /* Linked list to hold needed data for the group members */
 struct solid_list
@@ -45,9 +37,9 @@ Convassem()
 	int			i,j,k,comblen,conv=0,totass=0;
 	struct solid_list	*root,*ptr;
 	struct wmember		head,*wmem;
-	int			no_of_assoc;
-	int			no_of_props;
-	int			att_de;
+	int			no_of_assoc=0;
+	int			no_of_props=0;
+	int			att_de=0;
 	unsigned char		*rgb;
 	struct brlcad_att	brl_att;
 	fastf_t			*flt;

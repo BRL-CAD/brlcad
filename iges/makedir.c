@@ -20,13 +20,6 @@
 	The directory entry for entity #n is located on
 	line D'2n+1' of the iges file.	*/
 
-#include "conf.h"
-
-#include <stdio.h>
-#include <math.h>
-
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 

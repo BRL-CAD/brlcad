@@ -13,17 +13,7 @@
  *
  *  Checks if nurb surface is planar, returns 1 if so, 0 otherwise
  */
-#include "conf.h"
 
-#include <stdio.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 

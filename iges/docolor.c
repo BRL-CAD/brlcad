@@ -17,11 +17,6 @@
 /*	This routine loops through all the directory entries and calls
 	and sets colors according to the directory entry field #13 */
 
-#include "conf.h"
-
-#include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 

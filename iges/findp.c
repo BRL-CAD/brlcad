@@ -21,13 +21,6 @@
 	space is then reserved for the directory.  This routine depends on
 	"fseek" and "ftell" operating with offsets given in bytes.	*/
 
-#include "conf.h"
-
-#include <stdio.h>
-#include <errno.h>
-
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 

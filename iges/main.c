@@ -19,16 +19,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "conf.h"
-
-#include <stdio.h>
-#include <errno.h>
-
-#include "machine.h"
-#include "externs.h"		/* For getopt */
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_types.h"
+
+extern char *optarg;
+extern int optind, opterr, optopt;
 
 char eor,eof,card[256];
 fastf_t scale,inv_scale,conv_factor;
@@ -42,6 +37,7 @@ struct reglist *regroot;
 struct iges_edge_list *edge_root;
 struct iges_vertex_list *vertex_root;
 struct rt_tol tol;
+char *solid_name=(char *)NULL;
 
 char operator[]={
 	' ',
@@ -134,7 +130,7 @@ char *argv[];
 	int c;
 	char *output_file=(char *)NULL;
 
-	while( (c=getopt( argc , argv , "dntpo:x:X:" )) != EOF )
+	while( (c=getopt( argc , argv , "dntpo:x:X:N:" )) != EOF )
 	{
 		switch( c )
 		{
@@ -152,6 +148,9 @@ char *argv[];
 				break;
 			case 'p':
 				do_polysolids = 1;
+				break;
+			case 'N':
+				solid_name = optarg;
 				break;
 			case 'x':
 				sscanf( optarg, "%x", &rt_g.debug );

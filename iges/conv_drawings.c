@@ -18,17 +18,8 @@
  *	in all countries except the USA.  All rights reserved.
  */
 
-#include "conf.h"
-
-#include <stdio.h>
-#include <math.h>
-
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "raytrace.h"
-#include "wdb.h"
 
 struct views_visible
 {

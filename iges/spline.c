@@ -12,17 +12,8 @@
  *	All rights reserved.
  */
 
-#include "conf.h"
-
-#include <stdio.h>
-#include <math.h>
-
-#include "machine.h"		/* BRL-CAD specific machine data types */
-#include "vmath.h"		/* BRL-CAD Vector macros */
-#include "nurb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "wdb.h"
 
 #define	PATCH_COUNT	1
 
@@ -40,7 +31,7 @@ int entityno;
 	int	prop5;	/* !0 if periodic in second direction */
 	int	sol_num; /* IGES solid type number */
 	int	n1, n2;
-	int	i, j;
+	int	i, j, k;
 	int	count=0;
 	fastf_t	min_knot;
 	fastf_t max_wt;
@@ -144,6 +135,20 @@ int entityno;
 			count++;
 		}
 	}
+
+	/* apply weights */
+	count = 0;
+	for (i = 0; i <= k2; i++)
+	{
+		for (j = 0; j <= k1; j++)
+		{
+			for( k=0 ; k<3 ; k++ )
+				b_patch->ctl_points[ count*4 + k ] *= b_patch->ctl_points[ count*4 + 3];
+			count++;
+		}
+	}
+
+
 
 	/* Output the the b_spline through the libwdb interface */
 	mk_bsurf(fdout, b_patch);

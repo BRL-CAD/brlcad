@@ -17,17 +17,8 @@
 /*	This routine controls the conversion of IGES boolean trees
 	to BRLCAD objects	*/
 
-#include "conf.h"
-
-#include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
-#include "rtlist.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "wdb.h"
-
-void Read_att();
 
 Convtree()
 {
@@ -37,9 +28,9 @@ Convtree()
 	int			tottrees=0;
 	struct node		*ptr,*oldptr;
 	struct node		*Readtree(),*Copytree();
-	int			no_of_assoc;
-	int			no_of_props;
-	int			att_de;
+	int			no_of_assoc=0;
+	int			no_of_props=0;
+	int			att_de=0;
 	unsigned char 		*rgb;
 	struct brlcad_att	brl_att;
 	int			i,j,k;

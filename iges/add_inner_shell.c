@@ -11,27 +11,8 @@
  *	This software is Copyright (C) 1993 by the United States Army.
  *	All rights reserved.
  */
-#include "conf.h"
-
-#include <stdio.h>
-
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
-#include "vmath.h"
-#include "rtlist.h"
-#include "rtstring.h"
-#include "nmg.h"
-#include "raytrace.h"
-#include "wdb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-
-RT_EXTERN( struct faceuse *Add_face_to_shell , ( struct shell *s , int entityno , int face_orient) );
 
 struct shell *
 Add_inner_shell( r , entityno , shell_orient )

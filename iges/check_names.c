@@ -11,22 +11,8 @@
  *	This software is Copyright (C) 1993 by the United States Army.
  *	All rights reserved.
  */
-#include "conf.h"
-
-#include <stdio.h>
-#include <ctype.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
-#include "vmath.h"
-
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "raytrace.h"
 
 int
 Fix_name( entityno )
@@ -184,7 +170,7 @@ int entityno;
 	int no_of_assoc;
 	int no_of_props;
 	int i,j,k;
-	int name_de;
+	int name_de=0;
 
 	if( dir[entityno]->param <= pstart )
 	{

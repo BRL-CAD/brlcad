@@ -18,14 +18,8 @@
 	appropriate routines to convert solid entities to BRLCAD
 	equivalents	*/
 
-#include "conf.h"
-
-#include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "wdb.h"
 
 Convsurfs()
 {
@@ -44,7 +38,10 @@ Convsurfs()
 	if( totsurfs )
 	{
 		/* Make the spline solid header record */
-		mk_bsolid( fdout , "nurb.s" , totsurfs , (double)1.0 );
+		if( solid_name )
+			mk_bsolid( fdout , solid_name , totsurfs , (double)1.0 );
+		else
+			mk_bsolid( fdout , "nurb.s" , totsurfs , (double)1.0 );
 	}
 
 	for( i=0 ; i<totentities ; i++ )

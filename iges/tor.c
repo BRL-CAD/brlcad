@@ -14,20 +14,8 @@
  *	All rights reserved.
  */
 
-#include "conf.h"
-
-#include <stdio.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "wdb.h"
 
 torus( entityno )
 int entityno;

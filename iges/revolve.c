@@ -15,21 +15,6 @@
  */
 /*				SOLID OF REVOLUTION	*/
 
-
-#include "conf.h"
-
-#include <stdio.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-#include <math.h>
-#include <errno.h>
-
-#include "machine.h"
-#include "vmath.h"
-#include "wdb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 

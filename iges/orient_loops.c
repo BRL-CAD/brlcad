@@ -19,19 +19,6 @@
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#include "conf.h"
-
-#include <stdio.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "wdb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
@@ -226,6 +213,153 @@ struct faceuse *fu;
 }
 
 void
+Orient_nurb_face_loops( fu )
+struct faceuse *fu;
+{
+	struct face *f;
+	struct face_g_snurb *fg;
+	struct loopuse *lu;
+	int flipped;
+
+	NMG_CK_FACEUSE( fu );
+
+	f = fu->f_p;
+	NMG_CK_FACE( f );
+	flipped = f->flip;
+
+	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+		rt_bomb( "Orient_nurb_face_loops: called with non-nurb faceuse\n" );
+
+	fg = f->g.snurb_p;
+	NMG_CK_FACE_G_SNURB( fg );
+
+	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	{
+		struct edgeuse *eu;
+		int edge_count=0;
+		int edge_no;
+		point_t *pts;
+		vect_t area;
+
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+		{
+			lu->orientation = OT_SAME;
+			lu->lumate_p->orientation = OT_SAME;
+			continue;
+		}
+
+		/* count "psuedo-vertices" in loop */
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		{
+			struct edge_g_cnurb *eg;
+
+			NMG_CK_EDGEUSE( eu );
+
+			if( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )
+				rt_bomb( "EU on NURB face does not have cnurb geometry\n" );
+
+			eg = eu->g.cnurb_p;
+			NMG_CK_EDGE_G_CNURB( eg );
+
+			if( eg->order <= 0 )
+				edge_count++;
+			else
+				edge_count += 5;
+		}
+
+		/* allocate memory for "psuedo-vertices" */
+		pts = (point_t *)rt_calloc( edge_count, sizeof( point_t ), "Orient_nurb_face_loops: pts" );
+
+		/* Assign uv geometry to each "psuedo-vertex" */
+		edge_no = 0;
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		{
+			struct edge_g_cnurb *eg;
+			struct vertexuse *vu;
+			struct vertexuse_a_cnurb *vg1,*vg2;
+
+			eg = eu->g.cnurb_p;
+
+			if( eg->order <= 0 )
+			{
+				vu = eu->vu_p;
+				NMG_CK_VERTEXUSE( vu );
+				if( *vu->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+					rt_bomb( "Orient_nurb_face_loops: vertexuse in snurb faceuse doesn't have cnurb attribute\n" );
+				vg1 = vu->a.cnurb_p;
+				VMOVE( pts[edge_no], vg1->param )
+				edge_no++;
+			}
+			else
+			{
+				fastf_t t1,t2;
+				struct cnurb crv;
+				hpoint_t crv_pt;
+				int coords;
+				int i;
+
+				nmg_hack_cnurb( &crv, eg );
+				t1 = crv.knot.knots[0];
+				t2 = crv.knot.knots[crv.knot.k_size-1];
+				coords = RT_NURB_EXTRACT_COORDS( crv.pt_type );
+
+				for( i=0 ; i<5 ; i++ )
+				{
+					fastf_t t;
+
+					t = t1 + (t2 - t1)*0.2*(fastf_t)i;
+
+					VSETALLN( crv_pt, 0.0, coords )
+					rt_nurb_c_eval( &crv, t, crv_pt );
+					if( RT_NURB_IS_PT_RATIONAL( crv.pt_type ) )
+						VSCALE( pts[edge_no], crv_pt, crv_pt[coords-1] )
+					else
+						VMOVE( pts[edge_no], crv_pt )
+					edge_no++;
+				}
+			}
+		}
+
+		/* translate loop such that pts[0] is at (0,0,0) */
+		for( edge_no=1 ; edge_no<edge_count ; edge_no++ )
+		{
+			VSUB2( pts[edge_no], pts[edge_no], pts[0] )
+			pts[edge_no][Z] = 0.0;
+		}
+		VSETALL( pts[0], 0.0 )
+
+		/* calculate area of loop in uv-space */
+		VSETALL( area, 0.0 );
+		for( edge_no=1 ; edge_no<edge_count-1 ; edge_no++ )
+		{
+			vect_t cross;
+
+			VCROSS( cross, pts[edge_no], pts[edge_no+1] );
+			VADD2( area, area, cross );
+		}
+
+		/* if area is in +Z-direction loop encloses area counter-clockwise
+		 * and must be OT_SAME. if area is in -Z-direction, loop encloses
+		 * area in clockwise direction nad must be OT_OPPOOSITE
+		 */
+		if( (area[Z] > 0.0 && !flipped) || (area[Z] < 0.0 && flipped) )
+		{
+			lu->orientation = OT_SAME;
+			lu->lumate_p->orientation = OT_SAME;
+		}
+		else if( (area[Z] < 0.0 && !flipped) || (area[Z] > 0.0 && flipped) )
+		{
+			lu->orientation = OT_OPPOSITE;
+			lu->lumate_p->orientation = OT_OPPOSITE;
+		}
+		else
+			rt_bomb( "Orient_nurb_face_loops: loop encloses no area in uv-space\n" );
+
+		rt_free( (char *)pts, "Orient_nurb_face_loops: pts" );
+	}
+}
+
+void
 Orient_loops( r )
 struct nmgregion *r;
 {
@@ -241,13 +375,25 @@ struct nmgregion *r;
 
 		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 		{
+			struct face *f;
+
 			NMG_CK_FACEUSE( fu );
 
 			if( fu->orientation != OT_SAME )
 				continue;
 
-			Orient_face_loops( fu );
+			f = fu->f_p;
+			NMG_CK_FACE( f );
+
+			if( !f->g.magic_p )
+				rt_bomb( "Face has no geometry!!\n" );
+
+			if( *f->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
+				Orient_face_loops( fu );
+			else if( *f->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
+				Orient_nurb_face_loops( fu );
+			else
+				rt_bomb( "Face has unrecognized geometry type\n" );
 		}
 	}
-	nmg_vregion( &r->m_p->r_hd , r->m_p );
 }

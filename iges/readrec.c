@@ -24,13 +24,6 @@
 	to get to the desired record.  The "read" routines then call this routine
 	if the buffer empties.	*/
 
-#include "conf.h"
-
-#include <stdio.h>
-#include <errno.h>
-
-#include "machine.h"
-#include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 

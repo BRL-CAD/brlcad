@@ -1,8 +1,17 @@
+#include "conf.h"
+
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
-#include "machine.h"
-#include "vmath.h"
+#include "nmg.h"
+#include "raytrace.h"
+#include "nurb.h"
 #include "./b_spline.h"
 
 struct b_spline *

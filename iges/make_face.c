@@ -15,27 +15,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "conf.h"
-
-#include <stdio.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "wdb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-RT_EXTERN( struct vertex **Get_vertex , (struct iges_edge_use *edge ) );
-RT_EXTERN( struct faceuse *nmg_cmface , ( struct shell *s, struct vertex ***verts, int no_of_edges ) );
-
 struct faceuse *
-Make_face( s , entityno , face_orient )
+Make_planar_face( s , entityno , face_orient )
 struct shell *s;
 int entityno;
 int face_orient;
@@ -66,7 +50,7 @@ int face_orient;
 	Readint( &sol_num , "" );
 	if( sol_num != 508 )
 	{
-		rt_log( "Entity #%d is not a loop (it's a type %d)\n" , entityno , sol_num );
+		rt_log( "Entity #%d is not a loop (it's a %s)\n" , entityno , iges_type(sol_num) );
 		rt_bomb( "Fatal error\n" );
 	}
 
@@ -86,9 +70,28 @@ int face_orient;
 			else
 				edge_list[i].orient = 1;
 		}
+		edge_list[i].root = (struct iges_param_curve *)NULL;
 		Readint( &no_of_param_curves , "" );
-		for( j=0 ; j<2*no_of_param_curves ; j++ )
-			Readint( &k , "" );
+		for( j=0 ; j<no_of_param_curves ; j++ )
+		{
+			struct iges_param_curve *new_crv;
+			struct iges_param_curve *crv;
+
+			Readint( &k , "" );	/* ignore iso-parametric flag */
+			new_crv = (struct iges_param_curve *)rt_malloc( sizeof( struct iges_param_curve ),
+				"Make_planar_face: new_crv" );
+			if( edge_list[i].root == (struct iges_param_curve *)NULL )
+				edge_list[i].root = new_crv;
+			else
+			{
+				crv = edge_list[i].root;
+				while( crv->next != (struct iges_param_curve *)NULL )
+					crv = crv->next;
+				crv->next = new_crv;
+			}
+			Readint( &new_crv->curve_de, "" );
+			new_crv->next = (struct iges_param_curve *)NULL;
+		}
 	}
 
 	verts = (struct vertex ***)rt_calloc( no_of_edges , sizeof( struct vertex **) ,
@@ -116,7 +119,7 @@ int face_orient;
 
 			if( verts[i] == verts[k] )
 			{
-				printf( "Ignoring zero length edge\n" );
+				rt_log( "Ignoring zero length edge\n" );
 				done = 0;
 				vert_count--;
 				for( j=i ; j<vert_count ; j++ )
@@ -176,7 +179,7 @@ int face_orient;
 
 		if( nmg_classify_pt_loop( outside_pt , lu , &tol ) != NMG_CLASS_AoutB )
 		{
-			nmg_reverse_face( fu , &tol );
+			nmg_reverse_face( fu );
 			if( fu->orientation != OT_SAME )
 			{
 				fu = fu->fumate_p;
@@ -185,6 +188,8 @@ int face_orient;
 			}
 		}
 	}
+	else
+		rt_log( "No edges left!!\n" );
 
   err:
 	rt_free( (char *)edge_list , "Make_face (edge_list)" );

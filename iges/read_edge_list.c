@@ -12,19 +12,6 @@
  *	All rights reserved.
  */
 
-#include "conf.h"
-
-#include <stdio.h>
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <string.h>
-#endif
-
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "wdb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
