@@ -30,8 +30,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 struct nmg_boolstruct {
-	struct nmg_ptbl *l1, *l2;
-	fastf_t tol;
+	struct nmg_ptbl	*l1;
+	struct nmg_ptbl *l2;
+	fastf_t		tol;
+	point_t		pt;		/* line of intersection */
+	vect_t		dir;
+	int		coplanar;
 };
 
 
@@ -597,6 +601,39 @@ struct faceuse *fu1, *fu;
 	} while (lu != lu_start);
 }
 
+/*
+ *  Note that 'str' is expected to contain a %d to place the frame number.
+ */
+void
+nmg_pl_2fu( str, num, fu1, fu2, show_mates )
+char		*str;
+int		num;
+struct faceuse	*fu1;
+struct faceuse	*fu2;
+int		show_mates;
+{
+	FILE		*fp;
+	char		name[32];
+	struct nmg_ptbl	b;
+
+	(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
+
+	(void)sprintf(name, str, num);
+	rt_log("plotting to %s\n", name);
+	if ((fp=fopen(name, "w")) == (FILE *)NULL)
+		rt_bomb(name);
+
+	(void)nmg_pl_fu(fp, fu1, &b, 100, 100, 180);
+	if( show_mates )
+		(void)nmg_pl_fu(fp, fu1->fumate_p, &b, 100, 100, 180);
+
+	(void)nmg_pl_fu(fp, fu2, &b, 100, 100, 180);
+	if( show_mates )
+		(void)nmg_pl_fu(fp, fu2->fumate_p, &b, 100, 100, 180);
+
+	(void)fclose(fp);
+	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+}
 
 /*
  *			N M G _ I S E C T _ 2 F A C E S
@@ -608,13 +645,11 @@ struct faceuse *fu1, *fu2;
 fastf_t tol;
 {
 	struct nmg_ptbl vert_list1, vert_list2;
-	struct nmg_boolstruct bs;
+	struct nmg_boolstruct	bs;
 	int		i;
 	fastf_t		*pl1, *pl2;
 	struct face	*f1;
 	struct face	*f2;
-	point_t		pt;
-	vect_t		dir;
 	point_t		min_pt;
 	union {
 		struct vertexuse **vu;
@@ -647,17 +682,19 @@ fastf_t tol;
 	/* Extents of face1 overlap face2 */
 	VMOVE(min_pt, f1->fg_p->min_pt);
 	VMIN(min_pt, f2->fg_p->min_pt);
-	status = rt_isect_2planes( pt, dir, f1->fg_p->N, f2->fg_p->N, min_pt );
+	status = rt_isect_2planes( bs.pt, bs.dir, f1->fg_p->N, f2->fg_p->N, min_pt );
 	switch( status )  {
 	case 0:
 		/* All is well */
+		bs.coplanar = 0;
 		break;
 	case -1:
 		/* co-planar */
 		rt_log("co-planar faces?\n");
+		bs.coplanar = 1;
 		return;
 	case -2:
-		/* parallel and distinct */
+		/* parallel and distinct, no intersection */
 		return;
 	default:
 		/* internal error */
@@ -674,25 +711,8 @@ fastf_t tol;
 
     	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_COMBINE|DEBUG_MESH)
     	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
-    		FILE *fd, *fopen();
-    		static char name[32];
-    		static struct nmg_ptbl b;
     		static int fno=1;
-
-    		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
-    		(void)sprintf(name, "Isect_faces%d.pl", fno++);
-    		rt_log("plotting to %s\n", name);
-    		if ((fd=fopen(name, "w")) == (FILE *)NULL)
-    			rt_bomb(name);
-
-    		(void)nmg_pl_fu(fd, fu1, &b, 100, 100, 180);
-/*    		(void)nmg_pl_fu(fd, fu1->fumate_p, &b, 100, 100, 180);
-*/
-    		(void)nmg_pl_fu(fd, fu2, &b, 100, 100, 180);
-/*    		(void)nmg_pl_fu(fd, fu2->fumate_p, &b, 100, 100, 180);
-*/
-    		(void)fclose(fd);
-    		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+    	    	nmg_pl_2fu( "Isect_faces%d.pl", fno++, fu1, fu2, 0 );
     	}
 
 	isect_loops(&bs, fu1, fu2);
@@ -724,10 +744,10 @@ fastf_t tol;
 		(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
     		return;
     	}
-	tbl_vsort(&vert_list1, fu1, fu2, pt);
+	tbl_vsort(&vert_list1, fu1, fu2, bs.pt);
 	nmg_face_combine(&vert_list1, fu1, fu2);
 
-	tbl_vsort(&vert_list2, fu2, fu1, pt);
+	tbl_vsort(&vert_list2, fu2, fu1, bs.pt);
 	nmg_face_combine(&vert_list2, fu2, fu1);
 
 	/* When two faces are intersected
@@ -737,50 +757,16 @@ fastf_t tol;
 	 */
     	if (rt_g.NMG_debug & DEBUG_MESH &&
     	    rt_g.NMG_debug & DEBUG_PLOTEM) {
-    		FILE *fd, *fopen();
-    		static char name[32];
-    		static struct nmg_ptbl b;
     		static int fnum=1;
-
-    		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
-    		(void)sprintf(name, "Before_mesh%d.pl", fnum++);
-    		if ((fd=fopen(name, "w")) == (FILE *)NULL)
-    			rt_bomb(name);
-
-    		rt_log("plotting %s\n", name);
-    		(void)nmg_pl_fu(fd, fu1, &b, 100, 100, 180);
-    		(void)nmg_pl_fu(fd, fu1->fumate_p, &b, 100, 100, 180);
-
-    		(void)nmg_pl_fu(fd, fu2, &b, 100, 100, 180);
-    		(void)nmg_pl_fu(fd, fu2->fumate_p, &b, 100, 100, 180);
-
-    		(void)fclose(fd);
-    		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+    	    	nmg_pl_2fu( "Before_mesh%d.pl", fnum++, fu1, fu2, 1 );
     	}
 
 	nmg_mesh_faces(fu1, fu2);
 
     	if (rt_g.NMG_debug & DEBUG_MESH &&
     	    rt_g.NMG_debug & DEBUG_PLOTEM) {
-    		FILE *fd, *fopen();
-    		static char name[32];
-    		static struct nmg_ptbl b;
     		static int fno=1;
-
-    		(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
-    		(void)sprintf(name, "After_mesh%d.pl", fno++);
-    		rt_log("plotting to %s\n", name);
-    		if ((fd=fopen(name, "w")) == (FILE *)NULL)
-    			rt_bomb(name);
-
-    		(void)nmg_pl_fu(fd, fu1, &b, 100, 100, 180);
-    		(void)nmg_pl_fu(fd, fu1->fumate_p, &b, 100, 100, 180);
-
-    		(void)nmg_pl_fu(fd, fu2, &b, 100, 100, 180);
-    		(void)nmg_pl_fu(fd, fu2->fumate_p, &b, 100, 100, 180);
-
-    		(void)fclose(fd);
-    		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+    	    	nmg_pl_2fu( "After_mesh%d.pl", fno++, fu1, fu2, 1 );
     	}
 
 	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
