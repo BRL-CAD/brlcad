@@ -59,6 +59,11 @@
 #endif
 
 
+/* Needed on Irix 6 to declare struct timeval for unistd.h for select() */
+#ifdef IRIX
+#	include <sys/time.h>
+#endif
+
 /* Here, we want to include unistd.h if we have it to get the definitions
    of things such as off_t.  If we don't have it, make some good guesses. */
 
