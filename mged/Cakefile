@@ -17,7 +17,8 @@
 			proc_reg hideline polyif red \
 			mater plot overlay inside \
 			concat utility1 utility2 track arbs \
-			facedef arb set animedit db \
+			facedef arb set animedit db comb_std \
+			bool_rewrite \
 			TCP_FILES attach dm-tek dm-plot dm-ps \
 			dm-tek4109 MGED_OBJS
 
@@ -34,7 +35,7 @@
 #    define	TCP_FILES	/**/
 #endif
 
-mged:	OBJ LIBRT_DEP LIBWDB_DEP LIBTCL_DEP LIBTK_DEP
+mged:	OBJ LIBRT_DEP LIBWDB_DEP LIBTCL_DEP LIBTK_DEP comb_bool_parse.o
 	sh ../newvers.sh version "Graphics Editor (MGED)"
 	CC CFLAGS -c vers.c
 	CC -o mged LDFLAGS OBJ LIBTCL LIBTK COMPLETE_LIBES vers.o
@@ -44,5 +45,10 @@ cad_boundp: cad_boundp.o
 
 cad_parea: cad_parea.o
 	CC -o cad_parea LDFLAGS cad_parea.o LIBES
+
+comb_bool_parse.o:	comb_bool_parse.y
+	yacc ../mged/comb_bool_parse.y
+	mv y.tab.c ../mged/comb_bool_parse.c
+	CC ../mged/comb_bool_parse.c
 
 #include "../Cakefile.rules"
