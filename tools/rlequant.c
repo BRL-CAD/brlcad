@@ -100,7 +100,7 @@ static CONST char *MY_NAME = "rlequant";
  * Algorithm:
  * 	Read image, call colorquant, write image with new colormap.
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

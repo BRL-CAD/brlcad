@@ -53,7 +53,7 @@ int get_scanlines();
 int get_color_bits();
 void GIFEncode();
 
-void
+int
 main(argc, argv)
 int argc;
 char *argv[];
