@@ -43,6 +43,7 @@ extern int rr_render(struct application	*ap,
 		     struct shadework   *swp);
 extern struct region	env_region;		/* import from view.c */
 
+HIDDEN void rt_binunif_free();
 HIDDEN void	txt_transp_hook();
 HIDDEN void txt_source_hook();
 HIDDEN int txt_load_datasource();
