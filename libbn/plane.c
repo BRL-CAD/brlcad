@@ -133,6 +133,7 @@ struct rt_tol	*tol;
 
 	switch( max_edge_no )
 	{
+		default:
 		case 1:
 			cos_b = (-VDOT( ab , bc ))/(mag_ab * mag_bc );
 			dist_sq = mag_bc*mag_bc*( 1.0 - cos_b*cos_b);

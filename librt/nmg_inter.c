@@ -153,8 +153,8 @@ struct vertexuse	*dualvu;		/* vu's dual in other shell.  May be NULL */
 {
 	struct shell		*sv;		/* shell of vu */
 	struct loopuse		*lu;		/* lu of new self-loop */
-	struct faceuse		*dualfu;	/* faceuse of vu's dual */
-	struct shell		*duals;		/* shell of vu's dual */
+	struct faceuse		*dualfu = (struct faceuse *)NULL; /* faceuse of vu's dual */
+	struct shell		*duals = (struct shell *)NULL;	/* shell of vu's dual */
 	struct faceuse		*fuv;		/* faceuse of vu */
 
 	NMG_CK_INTER_STRUCT(is);
@@ -3872,7 +3872,7 @@ struct edgeuse		*eu2;
 {
 	fastf_t		dist;
 	int		code;
-	struct vertexuse	*vu2;
+	struct vertexuse	*vu2 = (struct vertexuse *)NULL;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_VERTEXUSE(vu1);

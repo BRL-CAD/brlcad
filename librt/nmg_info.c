@@ -546,7 +546,7 @@ CONST struct rt_tol	*tol;
 	fastf_t		theta = 0;
 	fastf_t		x,y;
 	fastf_t		rad;
-	fastf_t		npi;		/* n * pi, hopefully */
+	fastf_t		npi = 0;	/* n * pi, hopefully */
 	double		n;		/* integer part of npi */
 	fastf_t		residue;	/* fractional part of npi */
 	int		n_angles=0;	/* number of edge/edge angles measured */

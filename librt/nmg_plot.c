@@ -1244,6 +1244,9 @@ CONST struct rt_tol		*tol;
 
 		/* Yellow, for now */
 		vh = rt_vlblock_find( vbp, 255, 200, 0 );
+	} else {
+		vh = (struct rt_list *)NULL;
+		len = 1;
 	}
 
 	orig_eu = arg_eu->eumate_p;
