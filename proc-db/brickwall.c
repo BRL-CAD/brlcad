@@ -3,12 +3,16 @@
  *	Options
  *	h	help
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+
+#include "machine.h"
+#include "externs.h"
+
 /* declarations to support use of getopt() system call */
 char *options = "w:h:d:W:H:sn:t:Du:mc:C:";
-extern char *optarg;
-extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
 double brick_width=8.0;
@@ -52,10 +56,6 @@ int ac;
 char *av[];
 {
 	int  c;
-#if defined(BSD) && BSD < 43
-#define strrchr rindex
-#endif
-	char *strrchr();
 	double d;
 	int red, grn, blu;
 
