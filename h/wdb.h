@@ -101,7 +101,11 @@ WDB_EXTERN(int mk_arbn, (FILE *fp, char *name, int neqn, plane_t eqn[]) );
 WDB_EXTERN(int mk_ars, (FILE *fp, char *name, int ncurves, int pts_per_curve,
 			fastf_t	*curves[]) );
 WDB_EXTERN(int mk_bsolid, (FILE *fp, char *name, int nsurf, double res) );
+#if defined(__STDC__) && defined(B_SPLINE_DEFINED)
 WDB_EXTERN(int mk_bsurf, (FILE *fp, struct b_spline *bp) );
+#else /* !__STDC__ || !B_SPLINE_DEFINED */
+WDB_EXTERN(int mk_bsurf, (FILE *fp, genptr_t bp) );
+#endif /* __STDC__ && B_SPLINE_DEFINED */
 WDB_EXTERN(int mk_particle, (FILE *fp, char *name, point_t vertex,
 			vect_t height, double vradius, double hradius) );
 WDB_EXTERN(int mk_pipe, (FILE *fp, char *name, struct wdb_pipeseg *headp) );
