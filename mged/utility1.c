@@ -432,7 +432,7 @@ char	**argv;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	int		item;
-	int sflag = 0;
+	register int sflag = 0;
 	struct id_to_names headIdName;
 	struct id_to_names *itnp;
 	struct id_names *inp;
