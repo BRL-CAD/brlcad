@@ -563,34 +563,9 @@ cmd_solid_report(ClientData	clientData,
 		 int		argc,
 		 char		**argv)
 {
-#if 1
+	CHECK_DBI_NULL;
+
 	return dgo_report_cmd(dgop, interp, argc, argv);
-#else
-  int	lvl = 0;
-  struct bu_vls vls;
-
-  if(argc < 1 || 2 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help x");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if( argc > 1 )  lvl = atoi(argv[1]);
-
-  bu_vls_init(&vls);
-  if( 0 <= lvl )
-      bu_vls_printf(&vls, "ndrawn=%d\n", ndrawn);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
-
-  pr_schain( &HeadSolid, lvl );
-
-  return TCL_OK;
-#endif
 }
 
 /*
@@ -4117,7 +4092,9 @@ char    **argv;
 
 	bu_vls_init(&vls);
 	bn_encode_vect(&vls, model_vec);
+#if 0
 	bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(model_vec));
+#endif
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 
 	bu_vls_free(&vls);
