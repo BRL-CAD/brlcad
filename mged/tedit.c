@@ -123,9 +123,9 @@ register struct solidrec *sp;
 	fclose(fp);
 }
 
-#ifdef BSD42
 editit()
 {
+#ifdef BSD42
 	register pid, xpid;
 	int stat, omask;
 
@@ -152,11 +152,8 @@ editit()
 			break;
 	sigsetmask(omask);
 	return (!stat);
-}
 #else
-/* System 5 */
-editit()
-{
+	/* System 5 */
 	register pid, xpid;
 	int stat, omask;
 	void (*s2)(), (*s3)();
@@ -189,5 +186,5 @@ editit()
 	(void)signal(SIGINT, s2);
 	(void)signal(SIGQUIT, s3);
 	return (!stat);
-}
 #endif
+}
