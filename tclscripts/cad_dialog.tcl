@@ -34,6 +34,11 @@
 proc cad_dialog { w screen title text bitmap default args } {
     global button$w
 
+    if [winfo exists $w] {
+	raise $w
+	return
+    }
+
     toplevel $w -screen $screen
     wm title $w $title
     wm iconname $w Dialog
