@@ -1,6 +1,7 @@
 /*
  *			mged/Cakefile
  */
+#define       CONFIGDEFS      MGED_CONFIG "-Dyylex=cmd_nop"
 
 #define SRCDIR	mged
 #define PRODUCTS	mged cad_boundp cad_parea
