@@ -920,17 +920,26 @@ const struct bn_tol *tol;
 		struct faceuse *fu;
 		vect_t normal;
 
-		f = nmg_find_top_face( s, &dir , flags );
-		fu = f->fu_p;
-		if( fu->orientation != OT_SAME )
-			fu = fu->fumate_p;
-		if( fu->orientation != OT_SAME )
-			rt_bomb( "nmg_find_outer_and_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
+		f = (struct face *)NULL;
+		for( dir = X ; dir <= Z ; dir++ ) {
+			if( (f = nmg_find_top_face_in_dir( s, dir , flags )) == (struct face *)NULL )
+				continue;
 
-		NMG_GET_FU_NORMAL( normal , fu );
-		if( normal[dir] > 0.0)
-		{
-			bu_ptbl_ins( outer_shells , (long *)s );	/* outer shell */
+			fu = f->fu_p;
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
+			if( fu->orientation != OT_SAME )
+				rt_bomb( "nmg_find_outer_and_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
+
+			NMG_GET_FU_NORMAL( normal , fu );
+			if( normal[dir] >= 0.0)	{
+				bu_ptbl_ins( outer_shells , (long *)s );	/* outer shell */
+				break;
+			}
+		}
+
+		if( f == (struct face *)NULL ) {
+			bu_bomb( "nmg_find_outer_and_void_shells: cannot find top face in a shell\n" );
 		}
 	}
 
