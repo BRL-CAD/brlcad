@@ -120,7 +120,7 @@ XEvent *eventPtr;
   if(eventPtr->type == ConfigureNotify){
     XConfigureEvent *conf = (XConfigureEvent *)eventPtr;
 
-    dm_configureWindowShape(dmp);
+    DM_CONFIGURE_WIN(dmp);
     rect_image2view();
     dirty = 1;
 
