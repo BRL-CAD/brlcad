@@ -2542,7 +2542,7 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 		dp += rt_nmg_disk_sizes[ecnt[i].kind];
 	}
 
-	/* Always? */
+	/* Face min_pt and max_pt are not stored, so this is mandatory. */
 	nmg_rebound(m, &tol);
 
 	RT_CK_DB_INTERNAL( ip );
