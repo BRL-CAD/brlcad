@@ -1610,7 +1610,9 @@ CONST struct rt_tol *tol;
 	}
 
 	fu1 = lu1->up.fu_p;
+	NMG_CK_FACEUSE( fu1 );
 	fu2 = lu2->up.fu_p;
+	NMG_CK_FACEUSE( fu2 );
 
 	if( fu1->f_p != fu2->f_p )
 	{
@@ -1627,12 +1629,18 @@ CONST struct rt_tol *tol;
 
 		same_loop = 1;
 		eu1_start = RT_LIST_FIRST( edgeuse , &lu1->down_hd );
+		NMG_CK_EDGEUSE( eu1_start );
 		eu2_start = RT_LIST_FIRST( edgeuse , &lu2->down_hd );
-		while( eu2_start->vu_p->v_p != eu1_start->vu_p->v_p &&
-			RT_LIST_NOT_HEAD( eu2_start , &lu2->down_hd ) )
+		NMG_CK_EDGEUSE( eu2_start );
+		while( RT_LIST_NOT_HEAD( eu2_start , &lu2->down_hd ) &&
+			eu2_start->vu_p->v_p != eu1_start->vu_p->v_p )
+			{
+				NMG_CK_EDGEUSE( eu2_start );
 				eu2_start = RT_LIST_PNEXT( edgeuse , &eu2_start->l );
+			}
 
-		if( eu1_start->vu_p->v_p == eu2_start->vu_p->v_p )
+		if( RT_LIST_NOT_HEAD( eu2_start , &lu2->down_hd ) &&
+			eu1_start->vu_p->v_p == eu2_start->vu_p->v_p )
 		{
 			/* check the rest of the loop */
 			eu1 = eu1_start;
