@@ -310,7 +310,7 @@ struct menu_item rot4_menu[] = {
 };
 
 struct menu_item cntrl_menu[] = {
-	{ "ARB CONTROL MENU", (void (*)())NULL, 0 },
+	{ "ARB MENU", (void (*)())NULL, 0 },
 	{ "move edges", arb_control, EDGEMENU },
 	{ "move faces", arb_control, MOVEMENU },
 	{ "rotate faces", arb_control, ROTMENU },
