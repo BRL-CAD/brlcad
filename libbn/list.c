@@ -159,7 +159,7 @@ double		size;			/* marker size */
  */
 void
 F2MLST( fp, x, y, np, flag, mark, interval, size )
-FILE	*fp;
+FILE	**fp;
 float	*x, *y;
 int	*np;
 int	*flag;		/* indicates user's mode request */
