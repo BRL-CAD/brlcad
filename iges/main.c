@@ -45,6 +45,8 @@ char operator[]={
 
 mat_t *identity;
 extern int errno;
+extern char *optarg;
+extern int optind,opterr;
 
 extern char	version[];
 
@@ -53,10 +55,31 @@ int argc;
 char *argv[];
 {
 	int i;
+	int c;
 	int do_splines=0;
+	int do_drawings=0;
+	char *output_file=(char *)NULL;
 
-	if( argc != 3 && argc != 4 )
+	while( (c=getopt( argc , argv , "dno:" )) != EOF )
+	{
+		switch( c )
+		{
+			case 'd':
+				do_drawings = 1;
+				break;
+			case 'n':
+				do_splines = 1;
+				break;
+			case 'o':
+				output_file = optarg;
+				break;
+		}
+	}
+
+	if (optind >= argc || output_file == (char *)NULL) {
 		usage();
+		exit(1);
+	}
 
 	printf( "%s", version+5);
 	printf( "Please direct bug reports to <jra@brl.mil>\n\n" );
@@ -66,37 +89,31 @@ char *argv[];
 	edge_root = NULL;
 	vertex_root = NULL;
 
-	if( argc == 4 )
-	{
-		if( strcmp( *++argv , "-n" ) )
-			usage();
-		else
-			do_splines = 1;
-	}
-
-	fd = fopen( *++argv , "r" );	/* open IGES file */
+	argc -= optind;
+	argv += optind;
+	fd = fopen( argv[0] , "r" );	/* open IGES file */
 	if( fd == NULL )
 	{
-		fprintf( stderr , "Cannot open %s\n" , *argv );
+		fprintf( stderr , "Cannot open %s\n" , argv[0] );
 		perror( "iges-g" );
+		usage();
 		exit( 1 );
 	}
+
+	if( (fdout = fopen( output_file , "w" )) == NULL )
+	{
+		fprintf( stderr , "Cannot open %s\n" , output_file );
+		perror( "iges-g" );
+		usage();
+		exit( 1 );
+	}
+	strcpy( brlcad_file ,  output_file );
 
 	reclen = Recsize() * sizeof( char ); /* Check length of records */
 	if( reclen == 0 )
 	{
 		fprintf( stderr , "File not in IGES ASCII format\n" );
 		exit(1);
-	}
-
-	strcpy( brlcad_file ,  *++argv );
-
-	fdout = fopen( brlcad_file , "w" );	/* open BRLCAD file */
-	if( fdout == NULL )
-	{
-		fprintf( stderr , "Cannot open %s\n" , brlcad_file );
-		perror( "iges-g" );
-		exit( 1 );
 	}
 
 	identity = (mat_t *)malloc( sizeof( mat_t ) );
@@ -128,15 +145,19 @@ char *argv[];
 
 	Check_names();	/* Look for name entities */
 
-	Convinst();	/* Handle Instances */
+	if( do_drawings )
+		Conv_drawings();	/* convert drawings to wire edges */
+	else
+	{
+		Convinst();	/* Handle Instances */
 
-	Convsolids();	/* Convert solid entities */
+		Convsolids();	/* Convert solid entities */
 
-	if( do_splines )
-		Convsurfs();	/* Convert NURBS */
+		if( do_splines )
+			Convsurfs();	/* Convert NURBS */
 
-	Convtree();	/* Convert Boolean Trees */
+		Convtree();	/* Convert Boolean Trees */
 
-	Convassem();	/* Convert solid assemblies */
-
+		Convassem();	/* Convert solid assemblies */
+	}
 }
