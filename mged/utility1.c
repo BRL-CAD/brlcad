@@ -776,7 +776,7 @@ char	**argv;
 		{
 			struct shell *tmp_s;
 			struct shell *decomp_s;
-			long *trans_tbl;
+			long **trans_tbl;
 
 			/* duplicate shell */
 			tmp_s = (struct shell *)nmg_dup_shell( s, &trans_tbl, &mged_tol );
