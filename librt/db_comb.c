@@ -1,6 +1,17 @@
 /*
  *			D B _ C O M B . C
  *
+ *  This module contains the import/export routines for "Combinations",
+ *  the non-leaf nodes in the directed acyclic graphs (DAGs) in the
+ *  BRL-CAD ".g" database.
+ *
+ *  This parallels the function of the geometry (leaf-node) import/export
+ *  routines found in the g_xxx.c routines.
+ *
+ *  As a reminder, some combinations are special, when marked with
+ *  the "Region" flag, everything from that node down is considered to
+ *  be made of uniform material.
+ *
  *  Authors -
  *	Michael John Muuss
  *	John R. Anderson
@@ -265,13 +276,10 @@ CONST matp_t			matrix;		/* NULL if identity */
 
 /*
  *			R T _ C O M B _ V 4 _ E X P O R T
- *
- *  XXX Note:  all export routines need to know name of object,
- *  XXX compression flags, other header-common fields.  Via directory pointer??
  */
 int
 rt_comb_v4_export( ep, ip, local2mm )
-struct rt_external		*ep;
+struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
@@ -346,13 +354,15 @@ double				local2mm;
 
 	/* Build the Combination record, on the front */
 	rp[0].u_id = ID_COMB;
-	/* XXX c_name[] filled in by caller? */
+	/* c_name[] filled in by db_wrap_v4_external() */
 	if( comb->region_flag )  {
 		rp[0].c.c_flags = 'R';
 		rp[0].c.c_regionid = comb->region_id;
 		rp[0].c.c_aircode = comb->aircode;
 		rp[0].c.c_material = comb->GIFTmater;
 		rp[0].c.c_los = comb->los;
+	} else {
+		rp[0].c.c_flags = ' ';
 	}
 	if( comb->rgb_valid )  {
 		rp[0].c.c_override = 1;
@@ -429,6 +439,81 @@ CONST struct db_i	*dbip;
 	db_free_external( &ext );
 	return 0;
 }
+
+/*
+ *			D B _ W R A P _ V 4 _ E X T E R N A L
+ *
+ *  Wraps the v4 object body in "ip" into a v4 wrapper in "op".
+ *  db_free_external(ip) will be performed.
+ *  op and ip must not point at the same bu_external structure.
+ *
+ *  As the v4 database does not really have the notion of "wrapping",
+ *  this function primarily writes the object name into the
+ *  proper place (a standard location in all granules),
+ *  and (maybe) checks/sets the u_id field.
+ */
+int
+db_wrap_v4_external( op, ip, dp )
+struct bu_external	*op;
+struct bu_external	*ip;
+CONST struct directory	*dp;
+{
+	union record *rec;
+
+	BU_CK_EXTERNAL(ip);
+	RT_CK_DIR(dp);
+
+	*op = *ip;		/* struct copy */
+	ip->ext_buf = NULL;
+	ip->ext_nbytes = 0;
+
+	rec = (union record *)op->ext_buf;
+	NAMEMOVE( dp->d_namep, rec->s.s_name );
+
+	return 0;
+}
+
+/*
+ *			R T _ V 4 _ E X P O R T
+ *
+ *  Soup-to-nuts v4 export, for combinations and geometry.
+ *  (See also rt_db_put_internal() ).
+ *  The next step after this is probably to call db_put_external().
+ *  (which needs to be changed to not do the NAMEMOVE.)
+ */
+int
+rt_v4_export( ep, ip, local2mm, dp )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct directory		*dp;
+{
+	struct bu_external	temp;
+	int			ret;
+
+	RT_CK_DB_INTERNAL(ip);
+	RT_CK_DIR(dp);
+
+	if( ip->idb_type == ID_COMBINATION )  {
+		ret = rt_comb_v4_export( &temp, ip, local2mm );
+	} else {
+		ret = rt_functab[ip->idb_type].ft_export( &temp, ip, 1.0 );
+	}
+	if( ret < 0 )  {
+		bu_log("rt_v4_export(%s): ft_export error %d\n",
+			dp->d_namep, ret );
+		return ret;
+	}
+
+	if( (ret = db_wrap_v4_external( ep, &temp, dp )) < 0 )  {
+		bu_log("rt_v4_export(%s): db_wrap_v4_external error %d\n",
+			dp->d_namep, ret );
+		return ret;
+	}
+	/* "temp" has been freed by db_wrap_v4_external() */
+	return 0;
+}
+
 /* Some export support routines */
 
 /*
