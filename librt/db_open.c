@@ -109,6 +109,7 @@ char	*mode;
 	if( mode[0] == 'r' && mode[1] == '\0' )  {
 		/* Read-only mode */
 #		if unix
+			if( sb.st_size == 0 )  goto fail;
 			if( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
 				goto fail;
 			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
