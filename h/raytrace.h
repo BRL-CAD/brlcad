@@ -439,7 +439,7 @@ struct soltab {
 struct mater_info {
 	float	ma_color[3];		/* explicit color:  0..1  */
 	float	ma_temperature;		/* positive ==> degrees Kelvin */
-	char	ma_override;		/* non-0 ==> ma_color is valid */
+	char	ma_color_valid;		/* non-0 ==> ma_color is non-default */
 	char	ma_cinherit;		/* color: DB_INH_LOWER / DB_INH_HIGHER */
 	char	ma_minherit;		/* mater: DB_INH_LOWER / DB_INH_HIGHER */
 	char	*ma_shader;		/* shader name & parms */
