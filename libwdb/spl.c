@@ -87,8 +87,8 @@ struct snurb * srf;
 	register int	i;
 	int		n;
 
-	if( srf->u_knots->k_size != srf->mesh->s_size[COL] + srf->order[0] ||
-	    srf->v_knots->k_size != srf->mesh->s_size[ROW] + srf->order[1]) {
+	if( srf->u_knots.k_size != srf->mesh.s_size[RT_NURB_SPLIT_COL] + srf->order[0] ||
+	    srf->v_knots.k_size != srf->mesh.s_size[RT_NURB_SPLIT_ROW] + srf->order[1]) {
 	    	fprintf(stderr,"mk_bsurf:  mis-matched knot/mesh/order\n");
 	    	return(-1);
 	}
@@ -96,38 +96,38 @@ struct snurb * srf;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.d.d_id = ID_BSURF;
 
-	n = srf->u_knots->k_size + srf->v_knots->k_size;
+	n = srf->u_knots.k_size + srf->v_knots.k_size;
 	n = ((n * sizeof(dbfloat_t)) + sizeof(rec)-1) / sizeof(rec);
 	kp = (dbfloat_t *)malloc(n*sizeof(rec));
 	bzero( (char *)kp, n*sizeof(rec) );
 	rec.d.d_nknots = n;
-	rec.d.d_order[ROW] = srf->order[ROW];	/* [0] */
-	rec.d.d_order[COL] = srf->order[COL];	/* [1] */
-	rec.d.d_kv_size[ROW] = srf->u_knots->k_size;
-	rec.d.d_kv_size[COL] = srf->v_knots->k_size;
+	rec.d.d_order[RT_NURB_SPLIT_ROW] = srf->order[RT_NURB_SPLIT_ROW];	/* [0] */
+	rec.d.d_order[RT_NURB_SPLIT_COL] = srf->order[RT_NURB_SPLIT_COL];	/* [1] */
+	rec.d.d_kv_size[RT_NURB_SPLIT_ROW] = srf->u_knots.k_size;
+	rec.d.d_kv_size[RT_NURB_SPLIT_COL] = srf->v_knots.k_size;
 
-	n = srf->mesh->s_size[ROW] * srf->mesh->s_size[COL] *
-	    EXTRACT_COORDS(srf->mesh->pt_type);
+	n = srf->mesh.s_size[RT_NURB_SPLIT_ROW] * srf->mesh.s_size[RT_NURB_SPLIT_COL] *
+	    RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type);
 	n = ((n * sizeof(dbfloat_t)) + sizeof(rec)-1) / sizeof(rec);
 	mp = (dbfloat_t *)malloc(n*sizeof(rec));
 	bzero( (char *)mp, n*sizeof(rec) );
 	rec.d.d_nctls = n;
-	rec.d.d_geom_type = EXTRACT_COORDS(srf->mesh->pt_type);
-	rec.d.d_ctl_size[ROW] = srf->mesh->s_size[ROW];
-	rec.d.d_ctl_size[COL] = srf->mesh->s_size[COL];
+	rec.d.d_geom_type = RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type);
+	rec.d.d_ctl_size[RT_NURB_SPLIT_ROW] = srf->mesh.s_size[RT_NURB_SPLIT_ROW];
+	rec.d.d_ctl_size[RT_NURB_SPLIT_COL] = srf->mesh.s_size[RT_NURB_SPLIT_COL];
 
 	/* Reformat the knot vectors */
 	dbp = kp;
-	for( i=0; i<srf->u_knots->k_size; i++ )
-		*dbp++ = srf->u_knots->knots[i];
-	for( i=0; i<srf->v_knots->k_size; i++ )
-		*dbp++ = srf->v_knots->knots[i];
+	for( i=0; i<srf->u_knots.k_size; i++ )
+		*dbp++ = srf->u_knots.knots[i];
+	for( i=0; i<srf->v_knots.k_size; i++ )
+		*dbp++ = srf->v_knots.knots[i];
 
 	/* Reformat the mesh */
 	dbp = mp;
-	fp = srf->mesh->ctl_points;
-	i = srf->mesh->s_size[ROW] * srf->mesh->s_size[COL] *
-	    EXTRACT_COORDS(srf->mesh->pt_type);	/* # floats/point */
+	fp = srf->mesh.ctl_points;
+	i = srf->mesh.s_size[RT_NURB_SPLIT_ROW] * srf->mesh.s_size[RT_NURB_SPLIT_COL] *
+	    RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type);	/* # floats/point */
 	for( ; i>0; i-- )
 		*dbp++ = *fp++ * mk_conv2mm;
 
