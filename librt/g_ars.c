@@ -27,21 +27,11 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "raytrace.h"
 #include "nmg.h"
+#include "rtgeom.h"
 #include "./debug.h"
 #include "./plane.h"
 
 #define TRI_NULL	((struct tri_specific *)0)
-
-/* The internal (in memory) form of an ARS */
-struct ars_internal {
-	int	magic;
-	int	ncurves;
-	int	pts_per_curve;
-	fastf_t	**curves;
-};
-#define RT_ARS_INTERNAL_MAGIC	0x77ddbbe3
-#define RT_ARS_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARS_INTERNAL_MAGIC,"ars_internal")
-
 
 /* Describe algorithm here */
 
@@ -51,7 +41,6 @@ HIDDEN void	rt_ars_hitsort();
 extern int	rt_ars_face();
 
 extern struct vertex *rt_nmg_find_pt_in_shell();
-
 
 /*
  *			R T _ A R S _ I M P O R T
@@ -336,6 +325,7 @@ struct rt_i	*rtip;
 	RT_CK_DB_INTERNAL( ip );
 #endif
 	arip = (struct ars_internal *)ip->idb_ptr;
+	RT_ARS_CK_MAGIC(arip);
 
 	/*
 	 * Compute bounding sphere.
