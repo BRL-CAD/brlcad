@@ -385,6 +385,7 @@ done:	;
 	ip->idb_type = ID_PIPE;
 	ip->idb_ptr = rt_malloc( sizeof(struct pipe_internal), "pipe_internal");
 	pipe = (struct pipe_internal *)ip->idb_ptr;
+	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	pipe->pipe_count = count;
 
 	/*

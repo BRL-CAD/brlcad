@@ -534,6 +534,7 @@ mat_t			mat;
 	ip->idb_type = ID_HALF;
 	ip->idb_ptr = rt_malloc( sizeof(struct half_internal), "half_internal");
 	hip = (struct half_internal *)ip->idb_ptr;
+	hip->magic = RT_HALF_INTERNAL_MAGIC;
 
 	rt_fastf_float( orig_eqn, rp->s.s_values, 2 );	/* 2 floats too many */
 

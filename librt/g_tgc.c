@@ -1512,7 +1512,7 @@ register mat_t		mat;
 	ip->idb_type = ID_TGC;
 	ip->idb_ptr = rt_malloc( sizeof(struct tgc_internal), "tgc_internal");
 	tip = (struct tgc_internal *)ip->idb_ptr;
-	RT_TGC_CK_MAGIC(tip);
+	tip->magic = RT_TGC_INTERNAL_MAGIC;
 
 	/* Convert from database to internal format */
 	rt_fastf_float( vec, rp->s.s_values, 6 );
