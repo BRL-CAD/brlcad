@@ -166,7 +166,6 @@ vect_t eye_model;
 	(void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
 		eye_model[X], eye_model[Y], eye_model[Z] );
 
-#define DIR_USED	0x80	/* XXX move to raytrace.h */
 	(void)fprintf(fp, "start 0; clean;\n");
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
 		for (i=0;i<sp->s_fullpath.fp_len;i++) {
