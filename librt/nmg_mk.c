@@ -1590,6 +1590,10 @@ struct edge_g	*eg;
 /*			N M G _ L O O P _ G
  *
  *	Build the bounding box for a loop
+ * XXX Should take tol struct.  Should enlarge bounding box by 1*tol->dist,
+ * XXX perhaps as much as 10*tol->dist.
+ * XXX This might be the only place it actually has to be changed,
+ * XXX but this is the bottom of the call stack.
  */
 void
 nmg_loop_g(l)
@@ -1681,6 +1685,9 @@ plane_t p;
 /*			N M G _ F A C E _ B B
  *
  *	Build the bounding box for a face
+ *
+ * XXX Should take tol struct.  Should enlarge bounding box by 1*tol->dist,
+ * XXX perhaps as much as 10*tol->dist.
  */
 void
 nmg_face_bb(f)
@@ -1724,6 +1731,9 @@ struct face *f;
 /*			N M G _ S H E L L _ A
  *
  *	Build the bounding box for a shell
+ *
+ * XXX Should take tol struct.  Should enlarge bounding box by 1*tol->dist,
+ * XXX perhaps as much as 10*tol->dist.
  */
 void
 nmg_shell_a(s)
@@ -1796,6 +1806,9 @@ struct shell *s;
 /*			N M G _ R E G I O N _ A
  *
  *	build attributes/extents for all shells in a region
+ *
+ * XXX Should take tol struct.  Should enlarge bounding box by 1*tol->dist,
+ * XXX perhaps as much as 10*tol->dist.
  */
 void
 nmg_region_a(r)
