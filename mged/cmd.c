@@ -53,6 +53,7 @@ static void	do_cmd();
 void	f_help(), f_center(), f_press(), f_view(), f_blast();
 void	f_edit(), f_evedit(), f_delobj();
 void	f_debug(), f_regdebug(), f_name(), f_copy(), f_instance();
+void	f_copy_inv(), f_killall();
 void	f_region(), f_itemair(), f_mater(), f_kill(), f_list();
 void	f_zap(), f_group(), f_param(), f_mirror(), f_extrude();
 void	f_rm(), f_arbdef(), f_comm(), f_quit();
@@ -95,6 +96,8 @@ static struct funtab {
 	f_name,3,3,
 "cp", "from to", "copy [duplicate] object",
 	f_copy,3,3,
+"cpi", "from to", "copy cylinder and position at end of original cylinder",
+	f_copy_inv,3,3,
 "i", "obj combination [operation]", "add instance of obj to comb",
 	f_instance,3,4,
 "r", "region <operation solid>", "create region",
@@ -245,6 +248,8 @@ static struct funtab {
 	f_tabobj, 2, MAXARGS,
 "push", "object[s]", "pushes object's path transformations to solids",
 	f_push, 2, MAXARGS,
+"killall", "object[s]", "kill object[s] and all references",
+	f_killall, 2, MAXARGS,
 "memprint", "", "print memory maps",
 	f_memprint, 1, 1
 };
