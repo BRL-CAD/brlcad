@@ -4,15 +4,18 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:07:05  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
 #endif
 
 #include <stdio.h>
-#include "jove_tune.h"
 
 extern char	_sobuf[];
+extern char	*Describe;
 
 main(argc, argv)
 int	argc;
@@ -27,8 +30,8 @@ char	*argv[];
 		printf("Incorrect number of arguments to findcom\n");
 		exit(1);
 	}
-	if ((fp = fopen(DESCRIBE, "r")) == NULL) {
-		printf("Cannot open %s\n", DESCRIBE);
+	if ((fp = fopen(Describe, "r")) == NULL) {
+		printf("Cannot open %s\n", Describe);
 		exit(1);
 	}
 

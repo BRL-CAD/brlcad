@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:07:12  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -41,7 +44,8 @@ itoa(num)
 {
 	static char	line[10];
 
-	return sprintf(line,"%d", num);
+	sprintf(line, "%d", num);
+	return line;
 }
 
 AllInts(str)
@@ -72,13 +76,13 @@ char	*name;
 	/* Doesn't match any names.  Try for a buffer number */
 
 	if (AllInts(name) && (n = atoi(name)) > 0) {
-		for (bp = world; n - 1 > 0; ) {
+		for (bp = world; bp; bp = bp->b_next) {
 			if (bp == 0)
 				break;
 			if (bp->b_zero == 0)
 				continue;
-			bp = bp->b_next;
-			--n;
+			if (--n == 0)
+				return (bp);
 		}
 		return bp;
 	}
@@ -99,8 +103,9 @@ char	*fname;
 		for (bp = world; bp; bp = bp->b_next) {
 			if (bp->b_zero == 0)
 				continue;
-/****** What is this?   BUG??? (next two lines) **********/
-			if ((bp->b_ino != -1) && (bp->b_ino == stbuf.st_ino))
+			if ((bp->b_ino != -1)
+			  && (bp->b_ino == stbuf.st_ino)
+			  && (bp->b_dev == stbuf.st_dev))
 				return bp;
 			if (bp->b_fname == 0)
 				continue;
@@ -152,7 +157,7 @@ setfuncs(flags)
 int	*flags;
 {
 	UpdModLine++;	/* Kludge ... but speeds things up considerably */
-	copy_n(curbuf->b_flags, flags, NFLAGS);
+	bcopy(flags, curbuf->b_flags, NFLAGS*sizeof(int));
 
 	if (IsFlagSet(flags, OVERWRITE))
 		BindInserts(OverWrite);
@@ -189,9 +194,9 @@ register int	*f;
 setflags(buf)
 BUFFER	*buf;
 {
-	copy_n(buf->b_flags, origflags, NFLAGS);
+	bcopy(origflags, buf->b_flags, NFLAGS*sizeof(int));
 	SetUnmodified(buf);
-	buf->b_type = NORMALBUF;	/* Normal until proven SCRATCHBUF */
+	ClrScratch(buf);	/* Normal until proven SCRATCHBUF */
 }
 
 BUFFER *
@@ -211,6 +216,7 @@ char	*fname,
 		set_ino(freebuf);
 		freebuf->b_marks = 0;
 		freebuf->b_themark = 0;		/* Index into markring */
+		freebuf->b_status = 0;
 		for (i = 0; i < NMARKS; i++)
 			freebuf->b_markring[i] = 0;
 		/* No marks yet */
@@ -266,8 +272,10 @@ BUFFER	*bp;
 
 	if (bp->b_fname && stat(bp->b_fname, &stbuf) == -1)
 		bp->b_ino = -1;
-	else
+	else {
 		bp->b_ino = stbuf.st_ino;
+		bp->b_dev = stbuf.st_dev;
+	}
 }
 
 /* Find the file `fname' into buf and put in in window `wp' */
@@ -321,11 +329,11 @@ BUFFER	*newbuf;
 	if (newbuf == curbuf)
 		return;
 	lastbuf = curbuf;
-	copy_n(curbuf->b_flags, globflags, NFLAGS);
+	bcopy(globflags, curbuf->b_flags, NFLAGS*sizeof(int));
 	lsave();
 	curbuf = newbuf;
 	getDOT();
-	copy_n(globflags, curbuf->b_flags, NFLAGS);
+	bcopy(curbuf->b_flags, globflags, NFLAGS*sizeof(int));
 	setfuncs(curbuf->b_flags);
 }	
 
@@ -334,7 +342,6 @@ SelBuf()
 	char	*bname;
 
 	bname = ask(lastbuf ? lastbuf->b_name : 0, FuncName());
-	lastbuf = curbuf;
 	SetBuf(do_select(curwind, bname));
 }
 
@@ -375,16 +382,22 @@ BUFFER *
 AskBuf(prompt)
 char	*prompt;
 {
-	BUFFER	*delbuf;
-	char	*bname;
+	register BUFFER	*delbuf;
+	register char	*bname;
 
 	bname = ask(curbuf->b_name, prompt);
-	if (strcmp(bname, Mainbuf) == 0)
-		return 0;
 	delbuf = buf_exists(bname);
-	if (delbuf == 0)
+	if (delbuf == 0) {
 		complain("%s: no such buffer", bname);
-	if (delbuf->b_modified)
+		return delbuf;
+	}
+
+	/* You cannot delete "Main" */
+	if (strcmp(delbuf->b_name, Mainbuf) == 0) {
+		complain("You may not delete %s", Mainbuf);
+		return 0;
+	}
+	if (IsModified(delbuf))
 		confirm("%s modified, are you sure? ", bname);
 	return delbuf;
 }
@@ -404,13 +417,17 @@ BufKill()
 
 	if ((delbuf = AskBuf(FuncName())) == 0)
 		return;
-	defb_wind(delbuf);
+	defb_wind(delbuf);			/* Erase the windows */
 	if (curbuf == delbuf)
 		SetBuf(curwind->w_bufp);
 	lfreelist(delbuf->b_zero);
 	delbuf->b_zero = 0;
+	delbuf->b_name = (char *)(-1);
+	delbuf->b_fname = (char *)(-1);
+	delbuf->b_ino = (-1);
 	if (delbuf == lastbuf)
 		lastbuf = curbuf;
+	UpdModLine++;				/* Update buffer numbers */
 }
 
 BufList()
@@ -424,7 +441,7 @@ BufList()
 
 	if (UseBuffers) {
 		TellWBuffers("Buffer list", 0);
-		curwind->w_bufp->b_type = SCRATCHBUF;
+		SetScratch(curwind->w_bufp);
 	} else
 		TellWScreen(0);
 
@@ -434,8 +451,7 @@ BufList()
 		if (bp->b_zero == 0)
 			continue;
 		what = DoTell(sprint(format, itoa(bcount++),
-					bp->b_type == SCRATCHBUF ?
-						"SCRATCH" : "FILE",
+					IsScratch(bp) ?	"SCRATCH" : "FILE",
 					filename(bp),
 					bp->b_name,
 					bufmod(bp)));
@@ -458,6 +474,8 @@ char	*fmt;
 	blen = 11;
 
 	for (bp = world; bp; bp = bp->b_next) {
+		if (bp->b_zero == 0)
+			continue;
 		flen = max(flen, (bp->b_fname ? strlen(bp->b_fname) : 0));
 		blen = max(blen, strlen(bp->b_name));
 	}
