@@ -59,7 +59,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
-#define bzero(p,cnt)	memset(p,'\0',cnt)
+#ifndef bzero
+# define bzero(p,cnt)	memset(p,'\0',cnt)
+#endif
 
 extern char *sbrk();
 extern char *malloc();
