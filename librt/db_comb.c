@@ -382,6 +382,7 @@ rt_comb_import4(
 			bu_log( "rt_comb_import4: Error: Cannot convert following shader to TCL format:\n" );
 			bu_log( "\t%s\n", shader_str );
 			bu_vls_free( &comb->shader );
+			return -1;
 		}
 	}
 	/* XXX Separate flags for color inherit, shader inherit, (new) material inherit? */
@@ -535,7 +536,7 @@ rt_comb_export4(
 				bu_log("WARNING: leading spaces on shader '%s' implies NULL shader\n",
 					bu_vls_addr(&tmp_vls) );
 			}
-			if( bu_vls_strlen(&tmp_vls) >= sizeof(rp[0].c.c_matname) )  {
+			if( len >= sizeof(rp[0].c.c_matname) )  {
 				bu_log("ERROR:  Shader name '%s' exceeds v4 database field, aborting.\n",
 					bu_vls_addr(&tmp_vls) );
 				return -1;
@@ -545,7 +546,7 @@ rt_comb_export4(
 					endp+1);
 				return -1;
 			}
-			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), sizeof(rp[0].c.c_matname) );
+			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), len );
 			strncpy( rp[0].c.c_matparm, endp+1, sizeof(rp[0].c.c_matparm) );
 		} else {
 			if( bu_vls_strlen(&tmp_vls) >= sizeof(rp[0].c.c_matname) )  {
