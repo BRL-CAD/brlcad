@@ -117,13 +117,17 @@ getsolid()
 	if( strcmp( solid_type, "ars" ) == 0 )  {
 		static int j,n,jj,m,mx;
 		static float *fp;
-		int cd,cds,M,N,Nb_strcx,Nb_strsl,nst,structn,rmcx,cdcx;
+		int cd,cds;
+		int	ncurves;
+		int	pts_per_curve;
+		int	Nb_strcx,Nb_strsl,nst,structn,rmcx,cdcx;
 		static char nbuf[6];
 		static float ibuf[10];
 		static float jbuf[10];
 		struct ars_rec *arsap;
 		union record *b;
 		union record	rec;
+		double		**curve;
 
 
 		/*
@@ -135,21 +139,54 @@ getsolid()
 		namecvt( sol_work, arsap->a_name, 's');
 		col_pr( arsap->a_name );
 
-		/* M is # of curves, N is # of points per curve */
-		M = getint( &scard, 10, 10 );
-		N = getint( &scard, 20, 10 );
-		arsap->a_m = M;
-		arsap->a_n = N;
+		/* ncurves is # of curves, pts_per_curve is # of points per curve */
+		ncurves = getint( &scard, 10, 10 );
+		pts_per_curve = getint( &scard, 20, 10 );
+		arsap->a_m = ncurves;
+		arsap->a_n = pts_per_curve;
 
+		/* Allocate curves pointer array */
+		if( (curve = (double **)malloc((ncurves+1)*sizeof(double *))) == ((double **)0) )  {
+			printf("malloc failure for ARS %d\n", sol_work);
+			return(-1);
+		}
+		/* Allocate space for a curve, and read it in */
+		for( i=0; i<ncurves; i++ )  {
+			if( (curve[i] = (double *)malloc(
+			    (pts_per_curve+1)*3*sizeof(double) )) ==
+			    ((double *)0) )  {
+				printf("malloc failure for ARS %d curve %d\n",
+					sol_work, i);
+				return(-1);
+			}
+			/* Get data for this curve */
+			if( getxsoldata( curve[i], pts_per_curve*3, sol_work ) < 0 )  {
+				printf("ARS %d: getxsoldata failed, curve %d\n",
+					sol_work, i);
+				return(-1);
+			}
+		}
+		if( mk_ars( outfp, arsap->a_name, ncurves, pts_per_curve, curve ) < 0 )  {
+			printf("mk_ars(%s) failed\n", arsap->a_name );
+			return(-1);
+		}
+
+		/* Free memory */
+		for( i=0; i<ncurves; i++ )  {
+			free( (char *)curve[i] );
+		}
+		free( (char *)curve);
+		/* DONE */
+#if 0
 		/*
 		 *   the number of b type structures needed to store 1
-		 * cross section is equal to N/8;  if N modulo 8 is not
+		 * cross section is equal to pts_per_curve/8;  if pts_per_curve modulo 8 is not
 		 * equal to 0 then 1 more structure is needed.
 		 */
-		Nb_strcx = N/8;
-		if(( N % 8) !=0)
+		Nb_strcx = pts_per_curve/8;
+		if(( pts_per_curve % 8) !=0)
 			Nb_strcx++;
-		rmcx = N % 8;
+		rmcx = pts_per_curve % 8;
 
 		/*
 		 * (8 - rmcx) required # of unused storage locations for the
@@ -162,7 +199,7 @@ getsolid()
 		 * by the total number of cross sections equals the total
 		 * amount of storage required.
 		 */
-		Nb_strsl = Nb_strcx * M;
+		Nb_strsl = Nb_strcx * ncurves;
 		arsap->a_totlen = Nb_strsl;
 
 		/*
@@ -179,11 +216,11 @@ getsolid()
 		}
 
 		/*    number of data cards per cross section calculated here */
-		cdcx = (N+1)/2;
+		cdcx = (pts_per_curve+1)/2;
 
 		/* calculate number of ARS data cards that have to be read in */
 		/*   as given in GIFT users manual  */
-		cd = M*(cdcx);
+		cd = ncurves*(cdcx);
 
 		/*  2 sets of xyz coordinates for every data card
 		 *  set up counters to read in coordinate points and load into 
@@ -193,7 +230,7 @@ getsolid()
 		nst = -1;	/* b type structure number currently loaded */
 
 		structn = 0;	/* granule # within a cross secton  */
-		for(m=1; m < (M+1); m++)  {
+		for(m=1; m < (ncurves+1); m++)  {
 			structn=0;
 			for(n=1; n <(cdcx+1); n++)  {
 				if( getline(&scard, sizeof(scard), "ars solid card") == EOF)
@@ -276,7 +313,7 @@ getsolid()
 		/* free dynamic storage alloated for ARS */
 		free (b);
 		return(2);
-
+#endif
 	}  else   {
 		/* solid type other than ARS */
 		convert( sol_work, solid_type );
@@ -339,6 +376,59 @@ int	solid_num;
 }
 
 /*
+ *			G E T X S O L D A T A
+ *
+ *  Obtain 'num' data items from input card(s).
+ *  All input cards must be freshly read.
+ *
+ *  Returns -
+ *	 0	OK
+ *	-1	failure
+ */
+int
+getxsoldata( dp, num, solid_num )
+double	*dp;
+int	num;
+int	solid_num;
+{
+	int	cd;
+	double	*fp;
+	int	i;
+	int	j;
+
+	fp = dp;
+	for( cd=1; num > 0; cd++ )  {
+		if( getline( &scard, sizeof(scard), "x solid card" ) == EOF )  {
+			printf("too few cards for solid %d\n",
+				solid_num);
+			return(-1);
+		}
+		if( cd != 1 )  {
+			/* continuation card
+			 * solid type should be blank 
+			 */
+			if( (version==5 && ((char *)&scard)[5] != ' ' ) ||
+			    (version==4 && ((char *)&scard)[3] != ' ' ) )  {
+				printf("solid %d (continuation) card %d non-blank\n",
+					solid_num, cd);
+				return(-1);
+			}
+		}
+
+		if( num < 6 )
+			j = num;
+		else
+			j = 6;
+
+		for( i=0; i<j; i++ )  {
+			*fp++ = getdouble( &scard, 10+i*10, 10 );
+		}
+		num -= j;
+	}
+	return(0);
+}
+
+/*
  *			C O N V E R T
  *
  *  This routine is expected to write the records out itself.
@@ -350,7 +440,7 @@ char	*solid_type;
 {
 	double	r1, r2;
 	vect_t	work;
-	double	m1, m2;	/* Magnitude temporaries */
+	double	m1, m2;		/* Magnitude temporaries */
 	static int i;
 	char	name[16+2];
 	double	dd[4*6];	/* 4 cards of 6 nums each */
@@ -575,8 +665,8 @@ ellcom:
  *	-1	Fail
  */
 int
-mk_ars( fp, name, ncurves, pts_per_curve, curves )
-FILE	*fp;
+mk_ars( filep, name, ncurves, pts_per_curve, curves )
+FILE	*filep;
 char	*name;
 int	ncurves;
 int	pts_per_curve;
@@ -585,7 +675,7 @@ fastf_t	**curves;
 	union record	rec;
 	vect_t		base_pt;
 	int		per_curve_grans;
-	int		i;
+	int		cur;
 
 	bzero( (char *)&rec, sizeof(rec) );
 
@@ -598,35 +688,39 @@ fastf_t	**curves;
 	per_curve_grans = (pts_per_curve+7)/8;
 	rec.a.a_curlen = per_curve_grans;
 	rec.a.a_totlen = per_curve_grans * ncurves;
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+	if( fwrite( (char *)&rec, sizeof(rec), 1, filep ) != 1 )
 		return(-1);
 
 	VMOVE( base_pt, &curves[0][0] );
 	/* The later subtraction will "undo" this, leaving just base_pt */
 	VADD2( &curves[0][0], &curves[0][0], base_pt);
 
-	for( i=0; i<ncurves; i++ )  {
+	for( cur=0; cur<ncurves; cur++ )  {
 		register fastf_t	*fp;
 		int			npts;
+		int			left;
 
-		fp = curves[i];
-		for( npts = pts_per_curve; npts > 0; npts -= 8 )  {
-			register int	i;
+		fp = curves[cur];
+		left = pts_per_curve;
+		for( npts=0; npts < pts_per_curve; npts+=8, left -= 8 )  {
+			register int	el;
 			register int	lim;
 
 			bzero( (char *)&rec, sizeof(rec) );
 			rec.b.b_id = ID_ARS_B;
 			rec.b.b_type = ARSCONT;	/* obsolete? */
-			rec.b.b_n = i;		/* obsolete? */
-			rec.b.b_ngranule = pts_per_curve - npts; /* obsolete? */
+			rec.b.b_n = cur+1;	/* obsolete? */
+			rec.b.b_ngranule = (npts/8)+1; /* obsolete? */
 
-			lim = (npts > 8 ) ? 8 : npts;
-			for( i=0; i < lim; i++ )  {
-				/* XXX also converts to dbfloat_t */
-				VSUB2( &(rec.b.b_values[i*3]), fp, base_pt );
+			lim = (left > 8 ) ? 8 : left;
+			for( el=0; el < lim; el++ )  {
+				vect_t	diff;
+				VSUB2( diff, fp, base_pt );
+				/* XXX converts to dbfloat_t */
+				VMOVE( &(rec.b.b_values[el*3]), diff );
 				fp += ELEMENTS_PER_VECT;
 			}
-			if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+			if( fwrite( (char *)&rec, sizeof(rec), 1, filep ) != 1 )
 				return(-1);
 		}
 	}
