@@ -885,6 +885,11 @@ CONST struct nmg_ptbl	*tbl;
 	vup = (CONST struct vertexuse **)tbl->buffer;
 	for (i=0 ; i < tbl->end ; ++i) {
 		vu = vup[i];
+		if( vu->l.magic != NMG_VERTEXUSE_MAGIC )
+		{
+			rt_log( "\tWARNING: vertexuse #%d has bad MAGIC (%x)\n" , i, vu->l.magic );
+			continue;
+		}
 		NMG_CK_VERTEXUSE(vu);
 		v = vu->v_p;
 		NMG_CK_VERTEX(v);
