@@ -750,8 +750,12 @@ struct nmg_ptbl *view_vis_list;
 			{
 				struct wmember *wm;
 
-				mk_nmg( fdout , dir[view_entno[i]]->name , m );
-				wm = mk_addmember( dir[view_entno[i]]->name , &headp , WMOP_UNION );
+				if( RT_LIST_NON_EMPTY( &s->eu_hd ) )
+				{
+					nmg_rebound( m , &tol );
+					mk_nmg( fdout , dir[view_entno[i]]->name , m );
+					wm = mk_addmember( dir[view_entno[i]]->name , &headp , WMOP_UNION );
+				}
 			}
 		}
 
@@ -859,8 +863,12 @@ Conv_drawings()
 					{
 						struct wmember *wm;
 
-						mk_nmg( fdout , dir[i]->name , m );
-						wm = mk_addmember( dir[i]->name , &headp , WMOP_UNION );
+						if( RT_LIST_NON_EMPTY( &s->eu_hd ) )
+						{
+							nmg_rebound( m , &tol );
+							mk_nmg( fdout , dir[i]->name , m );
+							wm = mk_addmember( dir[i]->name , &headp , WMOP_UNION );
+						}
 					}
 				}
 
@@ -895,7 +903,13 @@ Conv_drawings()
 		NMG_CK_REGION( r );
 		s = RT_LIST_FIRST( shell , &r->s_hd );
 		if( RT_LIST_NOT_HEAD( &s->l , &r->s_hd ) )
-			mk_nmg( fdout , default_drawing_name , m );
+		{
+			if( RT_LIST_NON_EMPTY( &s->eu_hd ) )
+			{
+				nmg_rebound( m , &tol );
+				mk_nmg( fdout , default_drawing_name , m );
+			}
+		}
 	}
 
 	/* Get rid of the model */
