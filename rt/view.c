@@ -173,9 +173,7 @@ register struct application *ap;
 	 */
 	if( buf_mode <= 1 && outfp != NULL )  {
 		/* Single pixel I/O or "line buffering" (to screen) case */
-		if( hex_out )  {
-			fprintf(outfp, "%2.2x%2.2x%2.2x\n", r, g, b);
-		} else {
+		{
 			unsigned char p[4];
 			p[0] = r;
 			p[1] = g;
