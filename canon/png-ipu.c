@@ -233,8 +233,10 @@ char *av[];
 
 	/* create rows array */
 	scanline = (unsigned char **)bu_calloc( file_height, sizeof( unsigned char *), "scanline" );
+
+	/* Change order top-to-bottom */
 	for( i=0 ; i<file_height ; i++ )
-		scanline[i] = image+(i*file_width*3);
+		scanline[file_height-1-i] = image+(i*file_width*3);
 
 	png_read_image( png_p, scanline );
 
