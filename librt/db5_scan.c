@@ -372,3 +372,145 @@ genptr_t		client_data;	/* argument for handler */
 
 	return 0;			/* success */
 }
+
+/*
+ *			D B 5 _ D I R A D D _ H A N D L E R
+ *
+ * In support of db5_scan, add a named entry to the directory.
+ */
+void
+db5_diradd_handler( dbip, rip, laddr, client_data )
+register struct db_i	*dbip;
+CONST struct db5_raw_internal *rip;
+long			laddr;
+genptr_t		client_data;	/* unused client_data from db_scan() */
+{
+	register struct directory **headp;
+	register struct directory *dp;
+	struct bu_vls	local;
+	char		*cp = NULL;
+
+	RT_CK_DBI(dbip);
+
+	if( rip->major_type == DB5HDR_MAJORTYPE_DLI )  {
+		if( rip->minor_type != DB5HDR_MINORTYPE_DLI_FREE )  return;
+		/* Record available free storage */
+		rt_memfree( &(dbip->dbi_freep), rip->object_length, laddr );
+		return;
+	}
+	
+	/* If somehow it doesn't have a name, ignore it */
+	if( rip->name == NULL )  return;
+
+	if(rt_g.debug&DEBUG_DB)  {
+		bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
+			dbip, rip->name, laddr, rip->object_length );
+	}
+
+	if( db_lookup( dbip, rip->name, LOOKUP_QUIET ) != DIR_NULL )  {
+		register int	c;
+
+		bu_vls_init(&local);
+		bu_vls_strcpy( &local, "A_" );
+		bu_vls_strcat( &local, rip->name );
+		cp = bu_vls_addr(&local);
+
+		for( c = 'A'; c <= 'Z'; c++ )  {
+			*cp = c;
+			if( db_lookup( dbip, cp, 0 ) == DIR_NULL )
+				break;
+		}
+		if( c > 'Z' )  {
+			bu_log("db5_diradd_handler: Duplicate of name '%s', ignored\n",
+				cp );
+			bu_vls_free(&local);
+			return;
+		}
+		bu_log("db5_diradd_handler: Duplicate of '%s', given temporary name '%s'\n",
+			rip->name, cp );
+	}
+
+	BU_GETSTRUCT( dp, directory );
+	dp->d_magic = RT_DIR_MAGIC;
+	BU_LIST_INIT( &dp->d_use_hd );
+	if( cp )  {
+		dp->d_namep = bu_strdup( cp );
+		bu_vls_free( &local );
+	} else {
+		dp->d_namep = bu_strdup( rip->name );
+	}
+	dp->d_un.file_offset = laddr;
+	switch( rip->major_type )  {
+	case DB5HDR_MAJORTYPE_BRLCAD_NONGEOM:
+		dp->d_flags = DIR_COMB;
+		/* How to check for region attribute here? */
+		break;
+	case DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY:
+		dp->d_flags = DIR_SOLID;
+		break;
+	case DB5HDR_MAJORTYPE_OPAQUE_BINARY:
+		/* XXX Do we want to define extra flags for this? */
+		dp->d_flags = 0;
+		break;
+	case DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY:
+		dp->d_flags = 0;
+	}
+	dp->d_len = rip->object_length;		/* in bytes */
+
+	headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
+	dp->d_forw = *headp;
+	*headp = dp;
+
+	return;
+}
+
+/*
+ *			D B _ D I R B U I L D
+ *
+ *  A generic routine to determine the type of the database,
+ *  and to invoke the appropriate db_scan()-like routine to
+ *  build the in-memory directory.
+ *
+ *  It is the caller's responsibility to close the database in case of error.
+ *
+ *  Called from rt_dirbuild(), and g_submodel.c
+ *
+ *  Returns -
+ *	0	OK
+ *	-1	failure
+ */
+db_dirbuild( dbip )
+struct db_i	*dbip;
+{
+	char	header[8];
+
+	RT_CK_DBI(dbip);
+
+	/* First, determine what version database this is */
+	rewind(dbip->dbi_fp);
+	if( fread( header, sizeof header, 1, dbip->dbi_fp ) != 1  )  {
+		bu_log("db_dirbuild(%s) ERROR, file too short to be BRL-CAD database\n",
+			dbip->dbi_filename);
+		return -1;
+	}
+
+	if( db5_header_is_valid( header ) )  {
+		/* File is v5 format */
+		dbip->dbi_version = 5;
+		return db5_scan( dbip, db5_diradd_handler, NULL );
+	}
+
+	/* Make a very simple check for a v4 database */
+	if( header[0] == 'I' )  {
+		dbip->dbi_version = 4;
+		if( db_scan( dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
+			dbip->dbi_version = 0;
+		    	return -1;
+		}
+		return 0;		/* ok */
+	}
+
+	bu_log("db_dirbuild(%s) ERROR, file is not in BRL-CAD geometry database format\n",
+		dbip->dbi_filename);
+	return -1;
+}
