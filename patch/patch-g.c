@@ -22,10 +22,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "/usr/brlcad/include/machine.h"
-#include "/usr/brlcad/include/db.h"
-#include "/usr/brlcad/include/vmath.h"
-#include "/usr/brlcad/include/wdb.h"
+#include "machine.h"
+#include "db.h"
+#include "vmath.h"
+#include "wdb.h"
 #include "./patch-g.h"
 #include "../rt/mathtab.h"
 
