@@ -188,6 +188,9 @@ RT_EXTERN(struct knot_vector *rt_nurb_gen_knot_vector, (int order,
 /* nurb_norm.c */
 RT_EXTERN(fastf_t *rt_nurb_s_norm, (struct snurb *srf, fastf_t u, fastf_t v));
 
+/* nurb_c2.c */
+RT_EXTERN(fastf_t *rt_nurb_curvature, (struct snurb *srf, fastf_t u, fastf_t v));
+
 /* nurb_plot.c */
 
 /* nurb_poly.c */
