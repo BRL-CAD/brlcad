@@ -67,12 +67,12 @@ BU_EXTERN(void pd_box, (FILE *plotfp, double x1, double y1, double x2, double y2
 
 /* Double 3-D both in vector and enumerated versions */
 #ifdef VMATH_H
-BU_EXTERN(void pdv_3space, (FILE *plotfp, vect_t min, vect_t max));
-BU_EXTERN(void pdv_3point, (FILE *plotfp, vect_t pt));
-BU_EXTERN(void pdv_3move, (FILE *plotfp, vect_t pt));
-BU_EXTERN(void pdv_3cont, (FILE *plotfp, vect_t pt));
-BU_EXTERN(void pdv_3line, (FILE *plotfp, vect_t a, vect_t b));
-BU_EXTERN(void pdv_3box, (FILE *plotfp, vect_t a, vect_t b));
+BU_EXTERN(void pdv_3space, (FILE *plotfp, CONST vect_t min, CONST vect_t max));
+BU_EXTERN(void pdv_3point, (FILE *plotfp, CONST vect_t pt));
+BU_EXTERN(void pdv_3move, (FILE *plotfp, CONST vect_t pt));
+BU_EXTERN(void pdv_3cont, (FILE *plotfp, CONST vect_t pt));
+BU_EXTERN(void pdv_3line, (FILE *plotfp, CONST vect_t a, CONST vect_t b));
+BU_EXTERN(void pdv_3box, (FILE *plotfp, CONST vect_t a, CONST vect_t b));
 #endif /* VMATH_H */
 BU_EXTERN(void pd_3space, (FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2));
 BU_EXTERN(void pd_3point, (FILE *plotfp, double x, double y, double z));
