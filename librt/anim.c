@@ -33,7 +33,7 @@ static char RCSanim[] = "@(#)$Header$ (BRL)";
  *
  *  Add a user-supplied animate structure to the end of the chain of such
  *  structures hanging from the directory structure of the last node of
- *  the path specifier.  A pathlen of 1 indicates that this change is
+ *  the path specifier.  A pathlen of 0 indicates that this change is
  *  to affect the root of the tree itself, rather than an arc, and is
  *  stored differently.
  *
@@ -55,7 +55,7 @@ register struct animate *anp;
 			return(-1);	/* BAD */
 
 	anp->an_forw = ANIM_NULL;
-	if( anp->an_pathlen <= 1 )  {
+	if( anp->an_pathlen <= 0 )  {
 		if( rt_g.debug&DEBUG_ANIM )
 			rt_log("rt_add_anim(x%x) ROOT\n", anp);
 		headp = &(rtip->rti_anroot);
