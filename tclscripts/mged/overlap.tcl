@@ -200,7 +200,7 @@ proc read_output { id } {
 			cad_dialog $over_cont($id,dialog_window) $mged_gui($id,screen) "Overlap Tool" "No overlaps found" info 0 OK
 		}
 		set over_cont($id,overlap_no) 1
-		grid $over_cont($id,work_frame) -row 5 -column 0 -columnspan 6 -sticky ew
+		grid $over_cont($id,work_frame) -row 4 -column 0 -columnspan 6 -sticky ew
 		next_overlap $id
 	}
 	append over_cont($id,glint_ret) $inn
@@ -210,42 +210,57 @@ proc read_output { id } {
 proc fix_overlaps { id } {
 	global over_cont 
 
-	# check on validity of objects for raytracing
-	set bad_objs ""
-	foreach obj $over_cont($id,objs) {
-		catch {set ret [t $obj]}
-		if { [string first $obj $ret] != 0 } {
-			lappend bad_objs $obj
-		}
-	}
-	if { [llength $bad_objs] > 0 } {
-		tk_messageBox -icon error -type ok -title "Bad Object Names" -message "Unrecognized object names:\n$bad_objs"
-		return
-	}
-
 	set over_cont($id,glint_ret) ""
-	set size_in_mm [expr $over_cont($id,local2base) * $over_cont($id,size)]
-	$over_cont($id,top).status configure -text "Shooting rays at $size_in_mm mm, this may take some time ..."
-	$over_cont($id,top).go_quit.go configure -state disabled
-	$over_cont($id,work_frame).b5 configure -state normal
-	update
-	set model [opendb]
-	set file_name "| g_lint -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) 2> /tmp/g_lint_error"
-	set over_cont($id,fd) [open $file_name]
-	fconfigure $over_cont($id,fd) -blocking false
-	
-	if { $over_cont($id,fd) < 1 } {
-		set fd [open /tmp/g_lint_error]
-		set mess [read $fd]
-		close $fd
-		exec rm /tmp/g_lint_error
-		tk_messageBox -icon error -message $mess -title "g_lint error" -type ok
-		$over_cont($id,top).status configure -text "ready"
-		$over_cont($id,top).go_quit.go configure -state normal
-		return
+
+	if { $over_cont($id,ray) == "ray" } {
+		# check on validity of objects for raytracing
+		set bad_objs ""
+		foreach obj $over_cont($id,objs) {
+			catch {set ret [t $obj]}
+			if { [string first $obj $ret] != 0 } {
+				lappend bad_objs $obj
+			}
+		}
+		if { [llength $bad_objs] > 0 } {
+			tk_messageBox -icon error -type ok -title "Bad Object Names" -message "Unrecognized object names:\n$bad_objs"
+			return
+		}
+
+		set size_in_mm [expr $over_cont($id,local2base) * $over_cont($id,size)]
+		$over_cont($id,top).status configure -text "Shooting rays at $size_in_mm mm, this may take some time ..."
+		$over_cont($id,top).go_quit.go configure -state disabled
+		$over_cont($id,work_frame).b5 configure -state normal
+		update
+		set model [opendb]
+		set file_name "| g_lint -s -a $over_cont($id,az) -e $over_cont($id,el) -g $size_in_mm $model $over_cont($id,objs) 2> /tmp/g_lint_error"
+		set over_cont($id,fd) [open $file_name]
+		fconfigure $over_cont($id,fd) -blocking false
+		
+		if { $over_cont($id,fd) < 1 } {
+			set fd [open /tmp/g_lint_error]
+			set mess [read $fd]
+			close $fd
+			exec rm /tmp/g_lint_error
+			tk_messageBox -icon error -message $mess -title "g_lint error" -type ok
+			$over_cont($id,top).status configure -text "ready"
+			$over_cont($id,top).go_quit.go configure -state normal
+			return
+		}
+		set over_cont($id,pid) [pid $over_cont($id,fd)]
+		fileevent $over_cont($id,fd) readable "read_output $id"
+	} else {
+		# read overlap file
+		if { [catch {open $over_cont($id,file) "r"} over_cont($id,fd)] } {
+			tk_messageBox -icon error -type ok -title "Bad File Name" -message "Cannot open $over_cont($id,file)\n\
+					$over_cont($id,fd)"
+			return
+		}
+		$over_cont($id,top).status configure -text "Reading overlap file..."
+		$over_cont($id,top).go_quit.go configure -state disabled
+		$over_cont($id,work_frame).b5 configure -state normal
+		update
+		read_output $id
 	}
-	set over_cont($id,pid) [pid $over_cont($id,fd)]
-	fileevent $over_cont($id,fd) readable "read_output $id"
 }
 
 #	This routine takes the name of a region and a tree (as returned by
@@ -378,13 +393,37 @@ proc over_quit { id } {
 	catch [vdraw delete all]
 	vdraw show
 
-	if { $over_cont($id,fd) > 0 } {
+	if { $over_cont($id,ray) == "ray" && $over_cont($id,fd) > 0 } {
 		catch [exec kill -9 [lindex $over_cont($id,pid) 0]]
 		catch [close $over_cont($id,fd)]
 	}
 	catch [destroy $over_cont($id,dialog_window)]
 	catch [unset over_cont($id,glint_ret)]
 	destroy $over_cont($id,top)
+}
+
+proc ray_setup { id } {
+	global over_cont
+
+	set fr [grid slaves $over_cont($id,top) -row 2]
+	set fr_list [split $fr "."]
+	set cur_fr [lindex $fr_list end]
+	if { $cur_fr == "ray_fr" } return
+
+	grid forget $over_cont($id,top).glint_fr
+	grid $over_cont($id,top).ray_fr -row 2 -column 0 -columnspan 6
+}
+
+proc glint_setup { id } {
+	global over_cont
+
+	set fr [grid slaves $over_cont($id,top) -row 2]
+	set fr_list [split $fr "."]
+	set cur_fr [lindex $fr_list end]
+	if { $cur_fr == "glint_fr" } return
+
+	grid forget $over_cont($id,top).ray_fr
+	grid $over_cont($id,top).glint_fr -row 2 -column 0 -columnspan 6
 }
 
 # This is the top level entry point
@@ -420,55 +459,62 @@ proc overlap_tool { id } {
 		{summary "This is a tool to help the user eliminate unwanted overlaps\n\
 			between regions in a BRL-CAD model." }
 	}
-	label $over_cont($id,top).objs_l -text "Object(s)"
-	entry $over_cont($id,top).objs_e -width 50 -textvariable over_cont($id,objs)
-	hoc_register_data $over_cont($id,top).objs_l "Object(s)" {
+	set over_cont($id,ray) "ray"
+	radiobutton $over_cont($id,top).raytrace -variable over_cont($id,ray) -value "ray" -command "ray_setup $id"
+	label $over_cont($id,top).ray_lab -text "Raytrace to find overlaps"
+	radiobutton $over_cont($id,top).glint -variable over_cont($id,ray) -value "glint" -command "glint_setup $id"
+	label $over_cont($id,top).glint_lab -text "Read overlaps from g_lint output"
+
+	frame $over_cont($id,top).ray_fr
+	label $over_cont($id,top).ray_fr.objs_l -text "Object(s)"
+	entry $over_cont($id,top).ray_fr.objs_e -width 50 -textvariable over_cont($id,objs)
+	hoc_register_data $over_cont($id,top).ray_fr.objs_l "Object(s)" {
 		{summary "Enter a list of objects to be checked for overlapping regions\n\
 			This is normally a top level group."}
 	}
-	hoc_register_data $over_cont($id,top).objs_e "Object(s)" {
+	hoc_register_data $over_cont($id,top).ray_fr.objs_e "Object(s)" {
 		{summary "Enter a list of objects to be checked for overlapping regions\n\
 			This is normally a top level group."}
 	}
-	label $over_cont($id,top).ray -text "Ray Tracing Parameters:"
-	hoc_register_data $over_cont($id,top).ray "Ray Tracing Parameters" {
+	label $over_cont($id,top).ray_fr.ray -text "Ray Tracing Parameters:"
+	hoc_register_data $over_cont($id,top).ray_fr.ray "Ray Tracing Parameters" {
 		{summary "This is a list of parameters that will be passed to 'g_lint'\n\
 			to check the object list for overlapping regions."}
 	}
-	label $over_cont($id,top).az_l -text "Azimuth:"
-	entry $over_cont($id,top).az_e -width 5 -textvariable over_cont($id,az)
-	hoc_register_data $over_cont($id,top).az_l "Azimuth" {
+	label $over_cont($id,top).ray_fr.az_l -text "Azimuth:"
+	entry $over_cont($id,top).ray_fr.az_e -width 5 -textvariable over_cont($id,az)
+	hoc_register_data $over_cont($id,top).ray_fr.az_l "Azimuth" {
 		{summary "Enter the azimuth angle to be passed to 'g_lint' for its\n\
 			check for overlapping regions."}
 		{range "0 through 360 degrees"}
 	}
-	hoc_register_data $over_cont($id,top).az_e "Azimuth" {
+	hoc_register_data $over_cont($id,top).ray_fr.az_e "Azimuth" {
 		{summary "Enter the azimuth angle to be passed to 'g_lint' for its\n\
 			check for overlapping regions."}
 		{range "0 through 360 degrees"}
 	}
-	label $over_cont($id,top).el_l -text "Elevation:"
-	entry $over_cont($id,top).el_e -width 5 -textvariable over_cont($id,el)
-	hoc_register_data $over_cont($id,top).el_l "Elevation" {
+	label $over_cont($id,top).ray_fr.el_l -text "Elevation:"
+	entry $over_cont($id,top).ray_fr.el_e -width 5 -textvariable over_cont($id,el)
+	hoc_register_data $over_cont($id,top).ray_fr.el_l "Elevation" {
 		{summary "Enter the elevation angle to be passed to 'g_lint' for its\n\
 			check for overlapping regions."}
 		{range "-90 through 90 degrees"}
 	}
-	hoc_register_data $over_cont($id,top).el_e "Elevation" {
+	hoc_register_data $over_cont($id,top).ray_fr.el_e "Elevation" {
 		{summary "Enter the elevation angle to be passed to 'g_lint' for its\n\
 			check for overlapping regions."}
 		{range "-90 through 90 degrees"}
 	}
-	label $over_cont($id,top).size_l -text "Ray Spacing ($localunit):"
-	entry $over_cont($id,top).size_e -width 5 -textvariable over_cont($id,size)
-	hoc_register_data $over_cont($id,top).size_l "Ray Spacing" {
+	label $over_cont($id,top).ray_fr.size_l -text "Ray Spacing ($localunit):"
+	entry $over_cont($id,top).ray_fr.size_e -width 5 -textvariable over_cont($id,size)
+	hoc_register_data $over_cont($id,top).ray_fr.size_l "Ray Spacing" {
 		{summary "Enter the spacing between rays to be fired while\n\
 			looking for overlapping regions."}
 		{description "A very small spacing will result in a large number of rays\n\
 			being traced. This may take some time. A very large spacing\n\
 			is likely to miss some overlapping regions."}
 	}
-	hoc_register_data $over_cont($id,top).size_e "Ray Spacing" {
+	hoc_register_data $over_cont($id,top).ray_fr.size_e "Ray Spacing" {
 		{summary "Enter the spacing between rays to be fired while\n\
 			looking for overlapping regions."}
 		{description "A very small spacing will result in a large number of rays\n\
@@ -477,6 +523,17 @@ proc overlap_tool { id } {
 			to start with larger spacing and work towards smaller, eliminating\n\
 			the worst overlaps first."}
 	}
+
+	frame $over_cont($id,top).glint_fr
+	label $over_cont($id,top).glint_fr.file_l -text "Enter overlap file:"
+	entry $over_cont($id,top).glint_fr.file_e -textvariable over_cont($id,file) -width 40
+	hoc_register_data $over_cont($id,top).glint_fr.file_l "Overlap File" {
+		{summary "Enter the name of a file containing overlap data from 'g_lint -s'" }
+	}
+	hoc_register_data $over_cont($id,top).glint_fr.file_e "Overlap File" {
+		{summary "Enter the name of a file containing overlap data from 'g_lint -s'" }
+	}
+
 	frame $over_cont($id,top).go_quit
 	button $over_cont($id,top).go_quit.go -text go -command "fix_overlaps $id"
 	hoc_register_data $over_cont($id,top).go_quit.go "Go" {
@@ -495,19 +552,31 @@ proc overlap_tool { id } {
 			'ready' - ready for the user to press 'go' and start the check\n\
 			'done' - all the discovered overlaps have been processed\n\
 			'Shooting rays at ...' - Rays are being traced to discover overlapping regions\n\
+			'Reading overlap file ...' - Specified overlap file is beinmg scanned\n\
 			'Processing output...' - Individual overlaps are being presented to the user" }
 	}
-	grid $over_cont($id,top).objs_l -row 0 -column 0 -sticky e
-	grid $over_cont($id,top).objs_e -row 0 -column 1 -sticky ew -columnspan 5
-	grid $over_cont($id,top).ray -row 1 -column 0 -columnspan 3
-	grid $over_cont($id,top).az_l -row 2 -column 0 -sticky e
-	grid $over_cont($id,top).az_e -row 2 -column 1 -sticky ew
-	grid $over_cont($id,top).el_l -row 2 -column 2 -sticky e
-	grid $over_cont($id,top).el_e -row 2 -column 3 -sticky ew
-	grid $over_cont($id,top).size_l -row 2 -column 4 -sticky e
-	grid $over_cont($id,top).size_e -row 2 -column 5 -sticky ew
+	grid $over_cont($id,top).raytrace -row 0 -column 1 -sticky e
+	grid $over_cont($id,top).ray_lab -row 0 -column 2 -sticky w -columnspan 3
+	grid $over_cont($id,top).glint -row 1 -column 1 -sticky e
+	grid $over_cont($id,top).glint_lab -row 1 -column 2 -sticky w -columnspan 3
+
+	grid $over_cont($id,top).ray_fr.objs_l -row 2 -column 0 -sticky e
+	grid $over_cont($id,top).ray_fr.objs_e -row 2 -column 1 -sticky ew -columnspan 5
+	grid $over_cont($id,top).ray_fr.ray -row 3 -column 0 -columnspan 3
+	grid $over_cont($id,top).ray_fr.az_l -row 4 -column 0 -sticky e
+	grid $over_cont($id,top).ray_fr.az_e -row 4 -column 1 -sticky ew
+	grid $over_cont($id,top).ray_fr.el_l -row 4 -column 2 -sticky e
+	grid $over_cont($id,top).ray_fr.el_e -row 4 -column 3 -sticky ew
+	grid $over_cont($id,top).ray_fr.size_l -row 4 -column 4 -sticky e
+	grid $over_cont($id,top).ray_fr.size_e -row 4 -column 5 -sticky ew
+
+	grid $over_cont($id,top).ray_fr -row 2 -column 0 -columnspan 6
+
+	grid $over_cont($id,top).glint_fr.file_l -row 0 -column 0 -sticky e
+	grid $over_cont($id,top).glint_fr.file_e -row 0 -column 1 -sticky w
+
 	grid $over_cont($id,top).go_quit -row 3 -column 0 -columnspan 6
-	grid $over_cont($id,top).status -row 6 -column 0 -columnspan 6 -sticky ew -padx 3 -pady 3
+	grid $over_cont($id,top).status -row 5 -column 0 -columnspan 6 -sticky ew -padx 3 -pady 3
 	update
 	set over_cont($id,work_frame) [frame $over_cont($id,top).f1]
 	label $over_cont($id,work_frame).l0 -text "Overlap #0 of 0"
