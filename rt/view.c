@@ -87,6 +87,8 @@ extern int	max_bounces;		/* from refract.c */
 extern int	max_ireflect;		/* from refract.c */
 extern int	curframe;		/* from main.c */
 extern fastf_t	frame_delta_t;		/* from main.c */
+extern double	airdensity;		/* from opt.c */
+extern double	haze[3];		/* from opt.c */
 
 extern int viewshade(struct application *ap,
 		     register const struct partition *pp,
@@ -925,6 +927,17 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	ap->a_dist = hitp->hit_dist;
 
 out:
+	/*
+	 *  e ^(-density * distance)
+	 */
+	if (airdensity != 0.0) {
+	    double g;
+	    double f = exp(-hitp->hit_dist * airdensity);
+	    g = (1.0 - f);
+
+	    VSCALE(ap->a_color, ap->a_color, f);
+	    VJOIN1(ap->a_color, ap->a_color, g, haze);
+	}
 	RT_CK_REGION(ap->a_uptr);
 	if(rdebug&RDEBUG_HITS)  {
 		bu_log("colorview: lvl=%d ret a_user=%d %s\n",

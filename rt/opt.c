@@ -109,6 +109,9 @@ int		sub_ymax = 0;
 
 /***** variables shared with view.c *****/
 fastf_t		frame_delta_t = 1./30.; /* 1.0 / frames_per_second_playback */
+double		airdensity;    /* is the scene hazy (we shade the void space */
+double		haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
+
 /***** end variables shared with view.c *****/
 
 /* temporary kludge to get rt to use a tighter tolerance for raytracing */
@@ -140,7 +143,7 @@ int get_args( int argc, register char **argv )
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:q:rs:tv:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:X:!:"
+	".:,:@:a:b:c:d:e:f:g:h:ij:l:n:o:p:q:rs:tv:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:X:!:"
 
 	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -157,6 +160,10 @@ int get_args( int argc, register char **argv )
 			}
 			bn_randhalftabsize = i;
 			break;
+		case 'h':
+		    i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", 
+			       &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		    break;
 		case 't':
 			transpose_grid = 1;
 			break;
