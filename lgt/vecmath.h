@@ -5,17 +5,9 @@
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
 */
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) vecmath.h	1.14
-		Last edit: 	9/4/86 at 12:19:40	G S M
-		Retrieved: 	9/4/86 at 12:19:46
-		SCCS archive:	/vld/moss/src/vecmath/s.vecmath.h
-*/
 #ifndef _POLY9
 #include <math.h>
 #endif
-extern double	sqrt();
 #ifndef Abs
 #define Abs( a )		((a) > 0 ? (a) : -(a))
 #endif
