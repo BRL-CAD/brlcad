@@ -46,6 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #define __EXTENSIONS__
+#undef CONST	/* xview/xv_c_types.h re-defines this symbol */
 #include <xview/xview.h>
 #include <xview/panel.h>
 #include <xview/termsw.h>
