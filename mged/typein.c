@@ -660,7 +660,7 @@ char			*promp[];
 
 	if( argc < 5 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-3], (char *)NULL);
-	  return TCL_ERROR;
+	  return CMD_MORE;
 	}
 
 	num_pts = atoi(argv[3]);
@@ -668,12 +668,12 @@ char			*promp[];
 
 	if (num_pts < 3 || num_curves < 3 ) {
 	  Tcl_AppendResult(interp, "Invalid number of lines or pts_per_curve\n", (char *)NULL);
-	  return TCL_ERROR;
+	  return CMD_BAD;
 	}
 
 	if( argc < 8 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-3], (char *)NULL);
-	  return TCL_ERROR;
+	  return CMD_MORE;
 	}
 
 #if 0
@@ -700,13 +700,13 @@ char			*promp[];
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, rt_vls_addr(&tmp_vls), (char *)NULL);
 	  rt_vls_free(&tmp_vls);
 
-	  return TCL_ERROR;
+	  return CMD_MORE;
 	}
 
 	if( argc < 5+3*num_curves*num_pts ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[5+(argc-8)%3],
 			   " for point of last waterline : ", (char *)NULL);
-	  return TCL_ERROR;
+	  return CMD_MORE;
 	}
 #endif
 
