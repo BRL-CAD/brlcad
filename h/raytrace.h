@@ -979,7 +979,7 @@ extern char *rt_strdup(char *cp);
 extern void rt_boolweave(struct seg *segp_in, struct partition *PartHeadp,
 	struct application *ap);
 					/* Eval booleans over partitions */
-extern void rt_boolfinal(struct partition *InputHdp,
+extern int rt_boolfinal(struct partition *InputHdp,
 	struct partition *FinalHdp,
 	fastf_t startdist, fastf_t enddist,
 	bitv_t *regionbits, struct application *ap);
@@ -992,6 +992,8 @@ extern void rt_grow_boolstack(struct resource *res);
 extern int rt_fdiff(double a, double b);
 					/* Relative Difference */
 extern double rt_reldiff(double a, double b);
+					/* Print a soltab */
+extern void rt_pr_soltab(struct soltab *stp);
 					/* Print a region */
 extern void rt_pr_region(struct region *rp);
 					/* Print an expr tree */
@@ -1111,11 +1113,12 @@ extern char *rt_calloc();		/* visible calloc() */
 extern char *rt_strdup();		/* Duplicate str w/malloc */
 
 extern void rt_boolweave();		/* Weave segs into partitions */
-extern void rt_boolfinal();		/* Eval booleans over partitions */
+extern int rt_boolfinal();		/* Eval booleans over partitions */
 extern int rt_booleval();		/* Eval bool tree node */
 extern void rt_grow_boolstack();
 extern int rt_fdiff();			/* Approx Floating compare */
 extern double rt_reldiff();		/* Relative Difference */
+extern void rt_pr_soltab();		/* Print a soltab */
 extern void rt_pr_region();		/* Print a region */
 extern void rt_pr_tree();		/* Print an expr tree */
 extern void rt_pr_pt();			/* Print a partition */
