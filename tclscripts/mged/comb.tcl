@@ -140,8 +140,8 @@ proc init_comb { id } {
 
     button $top.applyB -relief raised -text "Apply"\
 	    -command "comb_apply $id"
-    button $top.loadDefB -relief raised -text "Reset"\
-	    -command "comb_load_defaults $id"
+    button $top.resetB -relief raised -text "Reset"\
+	    -command "comb_reset $id"
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
 
@@ -202,7 +202,7 @@ proc init_comb { id } {
     grid rowconfigure $top.gridF3 1 -weight 1
     grid columnconfigure $top.gridF3 0 -weight 1
 
-    grid $top.applyB $top.loadDefB x $top.dismissB -sticky "ew"\
+    grid $top.applyB $top.resetB x $top.dismissB -sticky "ew"\
 	    -in $top.gridF4 -pady 8
     grid columnconfigure $top.gridF4 2 -weight 1
 
@@ -216,7 +216,7 @@ proc init_comb { id } {
     bind $top.colorE <Return> "comb_set_colorMB $id; break"
     comb_set_colorMB $id
 
-    bind $top.nameE <Return> "comb_load_defaults $id; break"
+    bind $top.nameE <Return> "comb_reset $id; break"
 
     set pxy [winfo pointerxy $top]
     set x [lindex $pxy 0]
@@ -286,7 +286,7 @@ proc comb_apply { id } {
     }
 }
 
-proc comb_load_defaults { id } {
+proc comb_reset { id } {
     global player_screen
     global comb_name
     global comb_isRegion
@@ -313,7 +313,7 @@ proc comb_load_defaults { id } {
     set result [catch {get_comb $comb_name($id)} comb_defs]
     if {$result == 1} {
 	cad_dialog .$id.combDialog $player_screen($id)\
-		"comb_load_defaults: Error"\
+		"comb_reset: Error"\
 		$comb_defs\
 		"" 0 OK
 	return
@@ -486,7 +486,7 @@ proc comb_set_colorMB { id } {
 #    label $top.giftL -text "Gift List:" -anchor w
 #    entry $top.giftE -width 12 -textvar comb_gift_list($id)
 #
-#    button $top.loadB -relief raised -text "Load"\
+#    button $top.resetB -relief raised -text "Reset"\
 #	    -command "load_gift_material $id"
 #    button $top.dismissB -relief raised -text "Dismiss"\
 #	    -command "catch { destroy $top }"
@@ -496,7 +496,7 @@ proc comb_set_colorMB { id } {
 #    grid columnconfigure $top.gridF 0 -weight 1
 #
 #    grid $top.giftL x -sticky "ew" -in $top.gridF2
-#    grid $top.giftE $top.loadB -sticky "nsew" -in $top.gridF2
+#    grid $top.giftE $top.resetB -sticky "nsew" -in $top.gridF2
 #    grid columnconfigure $top.gridF2 0 -weight 1
 #
 #    grid $top.dismissB -in $top.gridF3 -pady 8
