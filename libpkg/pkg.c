@@ -53,7 +53,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* for struct timeval */
 #endif
 
-#if defined(BSD) && !defined(cray)
+#if defined(BSD) && !defined(cray) && !defined(mips)
 #define	HAS_WRITEV
 #endif
 
