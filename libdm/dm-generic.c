@@ -61,11 +61,11 @@ dm_open(interp, type, argc, argv)
 {
 	switch (type) {
 	case DM_TYPE_NULL:
-		return Nu_open(argc, argv);
+		return Nu_open(interp, argc, argv);
 	case DM_TYPE_PLOT:
-		return plot_open(argc, argv);
+		return plot_open(interp, argc, argv);
 	case DM_TYPE_PS:
-		return ps_open(argc, argv);
+		return ps_open(interp, argc, argv);
 #ifdef DM_X
 	case DM_TYPE_X:
 		return X_open(interp, argc, argv);
