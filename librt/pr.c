@@ -74,7 +74,7 @@ register CONST struct region *rp;
 		rp->reg_instnum,
 		rp->reg_regionid, rp->reg_aircode,
 		rp->reg_gmater, rp->reg_los );
-	if( rp->reg_mater.ma_override == 1 )
+	if( rp->reg_mater.ma_color_valid )
 		bu_log("Color %d %d %d\n",
 			(int)rp->reg_mater.ma_color[0]*255.,
 			(int)rp->reg_mater.ma_color[1]*255.,

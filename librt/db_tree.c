@@ -231,14 +231,15 @@ register CONST struct rt_comb_internal	*comb;
 			}
 			/* Just quietly ignore it -- it's being subtracted off */
 		} else if( tsp->ts_mater.ma_cinherit == 0 )  {
-			/* DB_INH_LOWER -- lower nodes in tree override */
-			tsp->ts_mater.ma_override = 1;
+			/* DB_INH_LOWER was set -- lower nodes in tree override */
+			tsp->ts_mater.ma_color_valid = 1;
 			tsp->ts_mater.ma_color[0] =
 				(((double)(comb->rgb[0]))*bn_inv255);
 			tsp->ts_mater.ma_color[1] =
 				(((double)(comb->rgb[1]))*bn_inv255);
 			tsp->ts_mater.ma_color[2] =
 				(((double)(comb->rgb[2]))*bn_inv255);
+			/* Track further inheritance as specified by this combination */
 			tsp->ts_mater.ma_cinherit = comb->inherit;
 		}
 	}

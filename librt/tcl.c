@@ -2084,7 +2084,7 @@ char		**argv;
 		Tcl_DStringAppendElement( &ds, "no" );
 	}
 		
-	if( ts.ts_mater.ma_override ) {
+	if( ts.ts_mater.ma_color_valid ) {
 		Tcl_DStringAppendElement( &ds, "rgb" );
 		sprintf( buf, "%d %d %d",
 			(int)(ts.ts_mater.ma_color[0]*255),

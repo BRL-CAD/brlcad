@@ -177,7 +177,7 @@ struct mater_info	*materp;
 		 * mater pointer is given.
 		 */
 		if (!materp) break;
-		materp->ma_override = 1;	/* XXX - really override? */
+		materp->ma_color_valid = 1;	/* XXX - really override? */
 		materp->ma_color[0] =
 		    (((double)anp->an_u.anu_c.anc_rgb[0])+0.5)*bn_inv255;
 		materp->ma_color[1] =

@@ -195,7 +195,7 @@ union tree			*curtree;
 	/* Determine material properties */
 	rp->reg_mfuncs = (char *)0;
 	rp->reg_udata = (char *)0;
-	if( rp->reg_mater.ma_override == 0 )
+	if( rp->reg_mater.ma_color_valid == 0 )
 		rt_region_color_map(rp);
 
 	bu_semaphore_acquire( RT_SEM_RESULTS );	/* enter critical section */
