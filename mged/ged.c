@@ -74,10 +74,6 @@ struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
 int	dmaflag;			/* Set to 1 to force new screen DMA */
 
 /**** Begin global display information, used by dm.c *******/
-int		xcross = 0;
-int		ycross = 0;		/* tracking cross position */
-int		inten_offset;		/* intensity offset (IOR) */
-int		inten_scale;		/* intensity scale (ISR) */
 int		windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 /**** End global display information ******/
 
@@ -145,8 +141,6 @@ char **argv;
 	reg_error = 0;		/* no errors yet */
 	no_memory = 0;		/* memory left */
 	es_edflag = -1;		/* no solid editing just now */
-
-	inten_scale = 0x7FF0;	/* full positive, to start with */
 
 	windowbounds[0] = 2047;		/* XHR */
 	windowbounds[1] = -2048;	/* XLR */
