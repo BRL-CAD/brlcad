@@ -261,7 +261,7 @@ set -S2 "/bin/sh"
 /*		Static linked executables */
 #		define	GFLAG		
 #		define	RANLIB	ranlib5.sh
-#		define	STANDARD_LIBES	-L/usr/lib -lm -lmalloc_cv -lc_s
+#		define	STANDARD_LIBES	-L/usr/lib -lm -lmalloc -lc_s
 #		define	LD_OPTS		GFLAG
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lGL -lgl -lXt -lXm -lX11
 #		define	TCL_MGED_LIBES	LIBTKGLX -L''XLIBDIR -lX11_s -lgl_s -lGL_s
