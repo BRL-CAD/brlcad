@@ -1012,7 +1012,9 @@ cmd_setup()
     Tcl_LinkVar(interp, "output_as_return", (char *)&output_as_return,
 		TCL_LINK_BOOLEAN);
 
+	/* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
 	bn_tcl_setup(interp);
+	rt_tcl_setup(interp);
 
     bu_vls_free(&temp);
     tkwin = NULL;
