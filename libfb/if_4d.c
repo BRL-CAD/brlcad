@@ -348,6 +348,7 @@ FBIO	*ifp;
 		/* Take the memory and run */
 	}
 
+success:
 	ifp->if_mem = sp;
 	ifp->if_cmap = sp + pixsize;	/* cmap at end of area */
 
@@ -361,8 +362,8 @@ fail:
 		fb_log("gt_getmem:  malloc failure\n");
 		return(-1);
 	}
-	ifp->if_mem = sp;
-	return(0);
+	new = 1;
+	goto success;
 }
 
 /*
