@@ -56,7 +56,7 @@ struct vldray
 
 /* The normal is expected to be pointing out from the object */
 #define WRAY_NORMAL(_ray, _norm)	\
-	_ray.na = atan2( _norm[Y], _norm[X] ); \
+	_ray.na = mat_atan2( _norm[Y], _norm[X] ); \
 	_ray.ne = asin( _norm[Z] );
 
 /*
