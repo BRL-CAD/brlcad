@@ -979,6 +979,337 @@ CONST struct db_i		*dbip;
 	return(0);
 }
 
+
+/*
+ *			R T _ S K E T C H _ I M P O R T 5
+ *
+ *  Import an SKETCH from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_sketch_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	LOCAL struct rt_sketch_internal	*sketch_ip;
+	vect_t				v;
+	int				seg_no;
+	int				curve_no;
+	unsigned char			*ptr;
+	genptr_t			*segs;
+	struct curve			*crv;
+	int				i;
+
+	BU_CK_EXTERNAL( ep );
+
+	if( bu_debug&BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "Barrier check at start of sketch_import():\n" );
+		bu_mem_barriercheck();
+	}
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_SKETCH;
+	ip->idb_meth = &rt_functab[ID_SKETCH];
+	ip->idb_ptr = bu_calloc( 1, sizeof(struct rt_sketch_internal), "rt_sketch_internal");
+	sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
+	sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
+
+	ptr = ep->ext_buf;
+	ntohd( (unsigned char *)v, ptr, 3 );
+	MAT4X3PNT( sketch_ip->V, mat, v );
+	ptr += SIZEOF_NETWORK_DOUBLE * 3;
+	ntohd( (unsigned char *)v, ptr, 3 );
+	MAT4X3VEC( sketch_ip->u_vec, mat, v );
+	ptr += SIZEOF_NETWORK_DOUBLE * 3;
+	ntohd( (unsigned char *)v, ptr, 3 );
+	MAT4X3VEC( sketch_ip->v_vec, mat, v );
+	ptr += SIZEOF_NETWORK_DOUBLE * 3;
+	sketch_ip->vert_count = bu_glong( ptr );
+	ptr += SIZEOF_NETWORK_LONG;
+	sketch_ip->skt_curve.seg_count = bu_glong( ptr );
+	ptr += SIZEOF_NETWORK_LONG;
+
+	if( sketch_ip->vert_count )
+		sketch_ip->verts = (point2d_t *)bu_calloc( sketch_ip->vert_count, sizeof( point2d_t ), "sketch_ip->vert" );
+	ntohd( (unsigned char *)sketch_ip->verts, ptr, sketch_ip->vert_count*2 );
+	ptr += SIZEOF_NETWORK_DOUBLE * 2 * sketch_ip->vert_count;
+
+	if( sketch_ip->skt_curve.seg_count )
+		sketch_ip->skt_curve.segments = (genptr_t *)bu_calloc( sketch_ip->skt_curve.seg_count, sizeof( genptr_t ), "segs" );
+	else
+		sketch_ip->skt_curve.segments = (genptr_t *)NULL;
+	for( seg_no=0 ; seg_no < sketch_ip->skt_curve.seg_count ; seg_no++ )
+	{
+		long magic;
+		struct line_seg *lsg;
+		struct carc_seg *csg;
+		struct nurb_seg *nsg;
+		int i;
+
+		magic = bu_glong( ptr );
+		ptr += SIZEOF_NETWORK_LONG;
+		switch( magic )
+		{
+			case CURVE_LSEG_MAGIC:
+				lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "lsg" );
+				lsg->magic = magic;
+				lsg->start = bu_glong( ptr );
+				ptr += SIZEOF_NETWORK_LONG;
+				lsg->end = bu_glong( ptr );
+				ptr += SIZEOF_NETWORK_LONG;
+				sketch_ip->skt_curve.segments[seg_no] = (genptr_t)lsg;
+				break;
+			case CURVE_CARC_MAGIC:
+				csg = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "csg" );
+				csg->magic = magic;
+				csg->start = bu_glong( ptr );
+				ptr += SIZEOF_NETWORK_LONG;
+				csg->end = bu_glong( ptr );
+				ptr += SIZEOF_NETWORK_LONG;
+				csg->orientation = bu_glong( ptr );
+				ptr += SIZEOF_NETWORK_LONG;
+				csg->center_is_left = bu_glong( ptr );
+				ptr += SIZEOF_NETWORK_LONG;
+				ntohd( (unsigned char *)&csg->radius, ptr, 1 );
+				ptr += SIZEOF_NETWORK_DOUBLE;
+				sketch_ip->skt_curve.segments[seg_no] = (genptr_t)csg;
+				break;
+			case CURVE_NURB_MAGIC:
+				nsg = (struct nurb_seg *)bu_malloc( sizeof( struct nurb_seg ), "nsg" );
+				nsg->magic = magic;
+				nsg->order = bu_glong( ptr );
+				ptr += SIZEOF_NETWORK_LONG;
+				nsg->pt_type = bu_glong( ptr );
+				ptr += SIZEOF_NETWORK_LONG;
+				nsg->k.k_size = bu_glong( ptr );
+				ptr += SIZEOF_NETWORK_LONG;
+				nsg->k.knots = (fastf_t *)bu_malloc( nsg->k.k_size * sizeof( fastf_t ), "nsg->k.knots" );
+				ntohd( (unsigned char *)nsg->k.knots, ptr, nsg->k.k_size );
+				ptr += SIZEOF_NETWORK_DOUBLE * nsg->k.k_size;
+				nsg->c_size = bu_glong( ptr );
+				ptr += SIZEOF_NETWORK_LONG;
+				nsg->ctl_points = (int *)bu_malloc( nsg->c_size * sizeof( int ), "nsg->ctl_points" );
+				for( i=0 ; i<nsg->c_size ; i++ )
+				{
+					nsg->ctl_points[i] = bu_glong( ptr );
+					ptr += SIZEOF_NETWORK_LONG;
+				}
+				if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) )
+				{
+					nsg->weights = (fastf_t *)bu_malloc( nsg->c_size * sizeof( fastf_t ), "nsg->weights" );
+					ntohd( (unsigned char *)nsg->weights, ptr, nsg->c_size );
+					ptr += SIZEOF_NETWORK_DOUBLE * nsg->c_size;
+				}
+				else
+					nsg->weights = (fastf_t *)NULL;
+				sketch_ip->skt_curve.segments[seg_no] = (genptr_t)nsg;
+				break;
+			default:
+				bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!!!\n" );
+				break;
+		}
+	}
+
+	crv = &sketch_ip->skt_curve;
+
+	crv->reverse = (int *)bu_calloc( crv->seg_count, sizeof(int), "crv->reverse" );
+	for( i=0 ; i<crv->seg_count ; i++ )
+	{
+		crv->reverse[i] = bu_glong( ptr );
+		ptr += SIZEOF_NETWORK_LONG;
+	}
+
+	if( bu_debug&BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "Barrier check at end of sketch_import():\n" );
+		bu_mem_barriercheck();
+	}
+
+	return(0);			/* OK */
+}
+
+/*
+ *			R T _ S K E T C H _ E X P O R T 5
+ *
+ *  The name is added by the caller, in the usual place.
+ */
+int
+rt_sketch_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_sketch_internal	*sketch_ip;
+	unsigned char			*cp;
+	int				seg_no;
+	int				i;
+	vect_t				tmp_vec;
+
+	if( bu_debug&BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "Barrier check at start of sketch_export():\n" );
+		bu_mem_barriercheck();
+	}
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_SKETCH )  return(-1);
+	sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
+	RT_SKETCH_CK_MAGIC(sketch_ip);
+
+	BU_INIT_EXTERNAL(ep);
+
+	/* tally up size of buffer needed */
+	ep->ext_nbytes = 3 * (3 * SIZEOF_NETWORK_DOUBLE)	/* V, u_vec, v_vec */
+		+ 2 * SIZEOF_NETWORK_LONG		/* vert_count and seg_count */
+		+ 2 * sketch_ip->vert_count * SIZEOF_NETWORK_DOUBLE	/* 2D-vertices */
+		+ sketch_ip->skt_curve.seg_count * SIZEOF_NETWORK_LONG;	/* reverse flags */
+
+	for( seg_no=0 ; seg_no < sketch_ip->skt_curve.seg_count ; seg_no++ )
+	{
+		long *lng;
+		struct nurb_seg *nseg;
+
+		lng = (long *)sketch_ip->skt_curve.segments[seg_no];
+		switch( *lng )
+		{
+			case CURVE_LSEG_MAGIC:
+				ep->ext_nbytes += 2 * SIZEOF_NETWORK_LONG;
+				break;
+			case CURVE_CARC_MAGIC:
+				ep->ext_nbytes += 5 * SIZEOF_NETWORK_LONG + SIZEOF_NETWORK_DOUBLE;
+				break;
+			case CURVE_NURB_MAGIC:
+				nseg = (struct nurb_seg *)lng;
+				ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG; /* order, pt_type, c_size */
+				ep->ext_nbytes +=  SIZEOF_NETWORK_LONG + nseg->k.k_size * SIZEOF_NETWORK_DOUBLE;	/* knot vector */
+				ep->ext_nbytes += nseg->c_size * SIZEOF_NETWORK_LONG; /* control point indices */
+				if( RT_NURB_IS_PT_RATIONAL( nseg->pt_type ) )
+					ep->ext_nbytes += nseg->c_size * SIZEOF_NETWORK_DOUBLE;	/* weights */
+				break;
+			default:
+				bu_log( "rt_sketch_export: unsupported segement type (x%x)\n", *lng );
+				bu_bomb( "rt_sketch_export: unsupported segement type\n" );
+		}
+	}
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "sketch external");
+
+	cp = (unsigned char *)ep->ext_buf;
+
+	/* scale and export */
+	VSCALE( tmp_vec, sketch_ip->V, local2mm );
+	htond( cp, (unsigned char *)tmp_vec, 3 );
+	cp += 3 * SIZEOF_NETWORK_DOUBLE;
+
+	/* uvec and uvec are unit vectors, do not convert to/from mm */
+	htond( cp, (unsigned char *)sketch_ip->u_vec, 3 );
+	cp += 3 * SIZEOF_NETWORK_DOUBLE;
+	htond( cp, (unsigned char *)sketch_ip->v_vec, 3 );
+	cp += 3 * SIZEOF_NETWORK_DOUBLE;
+
+	(void)bu_plong( cp, sketch_ip->vert_count );
+	cp += SIZEOF_NETWORK_LONG;
+	(void)bu_plong( cp, sketch_ip->skt_curve.seg_count );
+	cp += SIZEOF_NETWORK_LONG;
+
+	/* convert 2D points to mm */
+	for( i=0 ; i<sketch_ip->vert_count ; i++ )
+	{
+		point2d_t pt2d;
+
+		V2SCALE( pt2d, sketch_ip->verts[i], local2mm )
+		htond( cp, (CONST unsigned char *)pt2d, 2 );
+		cp += 2 * SIZEOF_NETWORK_DOUBLE;
+	}
+
+	for( seg_no=0 ; seg_no < sketch_ip->skt_curve.seg_count ; seg_no++ )
+	{
+		struct line_seg *lseg;
+		struct carc_seg *cseg;
+		struct nurb_seg *nseg;
+		long *lng;
+		fastf_t tmp_fastf;
+
+		/* write segment type ID, and segement parameters */
+		lng = (long *)sketch_ip->skt_curve.segments[seg_no];
+		switch (*lng )
+		{
+			case CURVE_LSEG_MAGIC:
+				lseg = (struct line_seg *)lng;
+				(void)bu_plong( cp, CURVE_LSEG_MAGIC );
+				cp += SIZEOF_NETWORK_LONG;
+				(void)bu_plong( cp, lseg->start );
+				cp += SIZEOF_NETWORK_LONG;
+				(void)bu_plong( cp, lseg->end );
+				cp += SIZEOF_NETWORK_LONG;
+				break;
+			case CURVE_CARC_MAGIC:
+				cseg = (struct carc_seg *)lng;
+				(void)bu_plong( cp, CURVE_CARC_MAGIC );
+				cp += SIZEOF_NETWORK_LONG;
+				(void)bu_plong( cp, cseg->start );
+				cp += SIZEOF_NETWORK_LONG;
+				(void)bu_plong( cp, cseg->end );
+				cp += SIZEOF_NETWORK_LONG;
+				(void) bu_plong( cp, cseg->orientation );
+				cp += SIZEOF_NETWORK_LONG;
+				(void) bu_plong( cp, cseg->center_is_left );
+				cp += SIZEOF_NETWORK_LONG;
+				tmp_fastf = cseg->radius * local2mm;
+				htond( cp, (unsigned char *)&tmp_fastf, 1 );
+				cp += SIZEOF_NETWORK_DOUBLE;
+				break;
+			case CURVE_NURB_MAGIC:
+				nseg = (struct nurb_seg *)lng;
+				(void)bu_plong( cp, CURVE_NURB_MAGIC );
+				cp += SIZEOF_NETWORK_LONG;
+				(void)bu_plong( cp, nseg->order );
+				cp += SIZEOF_NETWORK_LONG;
+				(void)bu_plong( cp, nseg->pt_type );
+				cp += SIZEOF_NETWORK_LONG;
+				(void)bu_plong( cp, nseg->k.k_size );
+				cp += SIZEOF_NETWORK_LONG;
+				htond( cp, (CONST unsigned char *)nseg->k.knots, nseg->k.k_size );
+				cp += nseg->k.k_size * 8;
+				(void)bu_plong( cp, nseg->c_size );
+				cp += SIZEOF_NETWORK_LONG;
+				for( i=0 ; i<nseg->c_size ; i++ )
+				{
+					(void)bu_plong( cp, nseg->ctl_points[i] );
+					cp += SIZEOF_NETWORK_LONG;
+				}
+				if( RT_NURB_IS_PT_RATIONAL( nseg->pt_type ) )
+				{
+					htond( cp, (CONST unsigned char *)nseg->weights, nseg->c_size );
+					cp += SIZEOF_NETWORK_DOUBLE * nseg->c_size;
+				}
+				break;
+			default:
+				bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!!!!\n" );
+				break;
+				
+		}
+	}
+
+	for( seg_no=0 ; seg_no < sketch_ip->skt_curve.seg_count ; seg_no++ )
+	{
+		(void)bu_plong( cp, sketch_ip->skt_curve.reverse[seg_no] );
+		cp += SIZEOF_NETWORK_LONG;
+	}
+	if( bu_debug&BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "Barrier check at end of sketch_export():\n" );
+		bu_mem_barriercheck();
+	}
+
+	return(0);
+}
+
+
+
 /*
  *			R T _ S K E T C H _ D E S C R I B E
  *
