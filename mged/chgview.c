@@ -196,17 +196,6 @@ char    **argv;
       eraseobj(dp);
   }
 
-#ifdef DO_SINGLE_DISPLAY_LIST
-  FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-    if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-      save_dmlp = curr_dm_list;
-      curr_dm_list = dmlp;
-      createDList(&HeadSolid);
-      curr_dm_list = save_dmlp;
-    }
-  }
-#endif
-
   return TCL_OK;
 }
 
@@ -238,17 +227,6 @@ char    **argv;
     if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
       eraseobjall(dp);
   }
-
-#ifdef DO_SINGLE_DISPLAY_LIST
-  FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-    if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-      save_dmlp = curr_dm_list;
-      curr_dm_list = dmlp;
-      createDList(&HeadSolid);
-      curr_dm_list = save_dmlp;
-    }
-  }
-#endif
 
   return TCL_OK;
 }
@@ -566,10 +544,6 @@ int	catch_sigint;
       for(BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
 	vrp->vr_scale = view_state->vs_Viewscale;
     }
-
-#ifdef DO_SINGLE_DISPLAY_LIST
-    createDList(&HeadSolid);
-#endif
   }
 
   color_soltab();
@@ -1016,19 +990,9 @@ char	**argv;
 		button( BE_REJECT );
 
 #ifdef DO_DISPLAY_LISTS
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist &&
-	     dmlp->dml_mged_variables->mv_dlist &&
-	     BU_LIST_NON_EMPTY(&HeadSolid.l))
-#ifdef DO_SINGLE_DISPLAY_LIST
-	    DM_FREEDLISTS(dmlp->dml_dmp, 1, 1);
-#else
-	    DM_FREEDLISTS(dmlp->dml_dmp,
-				      BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist,
-				      BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
-				      BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist + 1);
-#endif
-	}
+	freeDListsAll(BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist,
+		      BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
+		      BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist + 1);
 #endif
 
 	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
@@ -1663,14 +1627,7 @@ register struct directory *dp;
       if( sp->s_path[i] != dp )  continue;
 
 #ifdef DO_DISPLAY_LISTS
-#ifdef DO_SINGLE_DISPLAY_LIST
-    /* do nothing here */
-#else
-      FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist)
-	  DM_FREEDLISTS(dmlp->dml_dmp, sp->s_dlist, 1);
-      }
-#endif
+      freeDListsAll(sp->s_dlist, 1);
 #endif
 
       if( state != ST_VIEW && illump == sp )
@@ -1719,14 +1676,7 @@ register struct directory *dp;
     }
 
 #ifdef DO_DISPLAY_LISTS
-#ifdef DO_SINGLE_DISPLAY_LIST
-    /* do nothing here */
-#else
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-      if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist)
-	DM_FREEDLISTS(dmlp->dml_dmp, sp->s_dlist, 1);
-    }
-#endif
+    freeDListsAll(sp->s_dlist, 1);
 #endif
 
     if(state != ST_VIEW && illump == sp)
