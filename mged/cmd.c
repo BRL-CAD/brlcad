@@ -80,6 +80,7 @@ void	f_debugdir();
 void	f_polybinout();
 void	f_facetize();
 void	f_adc();
+void	f_autosize();
 
 static struct funtab {
 	char *ft_name;
@@ -109,6 +110,9 @@ static struct funtab {
 	f_area, 1, 2,
 "attach", "[device]", "attach to a display processor, or NU",
 	f_attach,1,2,
+"autosize", "[0|1]",
+	"toggle/set automatic center/size of display for new geometry",
+	f_autosize,1,2,
 "B", "<objects>", "clear screen, edit objects",
 	f_blast,2,MAXARGS,
 "cat", "<objects>", "list attributes (brief)",
