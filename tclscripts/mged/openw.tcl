@@ -22,6 +22,15 @@
 
 check_externs "_mged_attach _mged_tie _mged_view_ring"
 
+#
+# Remove Prim Editor and Combination Editor entries from Create menu.
+#
+
+set mged_Priv(arb8) {arb8 arb7 arb6 arb5 arb4 rpp}
+set mged_Priv(cones) {rcc rec rhc rpc tec tgc trc}
+set mged_Priv(ellipses) {ehy ell ell1 epa sph}
+set mged_Priv(other_prims) {ars arbn bot epa eto extrude grip half nmg part pipe sketch tor}
+
 if {![info exists tk_version]} {
     loadtk
 }
@@ -227,6 +236,7 @@ proc gui { args } {
     global view_ring
     global vi_state
     global mged_color_scheme
+    global mged_Priv
 
 # set defaults
     set save_id [cmd_win get]
@@ -706,37 +716,69 @@ hoc_register_menu_data "Edit" "Combination Editor" "Combination Editor"\
 
 
 menu .$id.menubar.create -title "Create" -tearoff $mged_default(tearoff_menus)
-.$id.menubar.create add cascade\
-	-label "Make Prim" -underline 0 -menu .$id.menubar.create.solid
-#.$id.menubar.create add command\
-#	-label "Instance Creation Panel..." -underline 0 -command "icreate $id"
-.$id.menubar.create add command -label "Prim Editor" -underline 0 \
-	-command "init_edit_solid $id"
-hoc_register_menu_data "Create" "Prim Editor" "Prim Editor"\
-	{ { summary "A tool for editing/creating primitives." } }
-.$id.menubar.create add command -label "Combination Editor" -underline 0 \
-	-command "init_comb $id"
-hoc_register_menu_data "Create" "Combination Editor" "Combination Editor"\
-	{ { summary "A tool for editing/creating combinations." } }
 
-menu .$id.menubar.create.solid -title "Make Prim" -tearoff $mged_default(tearoff_menus)
-set make_solid_types [_mged_make -t]
-foreach solid_type $make_solid_types {
-    .$id.menubar.create.solid add command -label "$solid_type..."\
-	    -command "init_solid_create $id $solid_type"
+.$id.menubar.create add cascade\
+	-label "Arb8" -underline 0 -menu .$id.menubar.create.arb8 -command "puts Arb8; update"
+.$id.menubar.create add cascade\
+	-label "Cones & Cyls" -underline 0 -menu .$id.menubar.create.cones
+.$id.menubar.create add cascade\
+	-label "Ellipses" -underline 0 -menu .$id.menubar.create.ell
+   
+menu .$id.menubar.create.arb8 -title "Arb8" -tearoff $mged_default(tearoff_menus)
+menu .$id.menubar.create.cones -title "Cones & Cyls" -tearoff $mged_default(tearoff_menus)
+menu .$id.menubar.create.ell -title "Ellipses" -tearoff $mged_default(tearoff_menus)
+
+# populate Arb8 menu
+foreach ptype $mged_Priv(arb8) {
+    .$id.menubar.create.arb8 add command -label "$ptype..."\
+	    -command "init_solid_create $id $ptype"
 
     set ksl {}
-    lappend ksl "summary \"Make a $solid_type using the values found in the tcl variable solid_data(attr,$solid_type).\"" "see_also \"make, in\""
-    hoc_register_menu_data "Make Prim" "$solid_type..." "Make a $solid_type" $ksl
+    lappend ksl "summary \"Make a $ptype using the values found in the tcl variable solid_data(attr,$ptype).\"" "see_also \"make, in\""
+    hoc_register_menu_data "Arb8" "$ptype..." "Make a $ptype" $ksl
 }
 
-.$id.menubar.create.solid add separator
+# populate "Cones & Cyls" menu
+foreach ptype $mged_Priv(cones) {
+    .$id.menubar.create.cones add command -label "$ptype..."\
+	    -command "init_solid_create $id $ptype"
 
-.$id.menubar.create.solid add command -label "dsp..."\
-    -command "dsp_create $id"
+    set ksl {}
+    lappend ksl "summary \"Make a $ptype using the values found in the tcl variable solid_data(attr,$ptype).\"" "see_also \"make, in\""
+    hoc_register_menu_data "Cones & Cyls" "$ptype..." "Make a $ptype" $ksl
+}
+
+# populate Ellipses menu
+foreach ptype $mged_Priv(ellipses) {
+    .$id.menubar.create.ell add command -label "$ptype..."\
+	    -command "init_solid_create $id $ptype"
+
+    set ksl {}
+    lappend ksl "summary \"Make a $ptype using the values found in the tcl variable solid_data(attr,$ptype).\"" "see_also \"make, in\""
+    hoc_register_menu_data "Ellipses" "$ptype..." "Make a $ptype" $ksl
+}
+
+# separate cascades from other entries
+#    .$id.menubar.create add separator
+
+# populate the remainder of the Create menu
+foreach ptype $mged_Priv(other_prims) {
+    .$id.menubar.create add command -label "$ptype..."\
+	    -command "init_solid_create $id $ptype"
+
+    set ksl {}
+    lappend ksl "summary \"Make a $ptype using the values found in the tcl variable solid_data(attr,$ptype).\"" "see_also \"make, in\""
+    hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
+}
+
+# separate dsp from other entries
+.$id.menubar.create add separator
+
+.$id.menubar.create add command -label "dsp..."\
+	-command "dsp_create $id"
 set ksl {}
 lappend ksl "summary \"Make a dsp solid.\"" "see_also \"make, in\""
-hoc_register_menu_data "Make Prim" "dsp..." "Make a dsp solid" $ksl
+hoc_register_menu_data "Create" "dsp..." "Make a dsp solid" $ksl
 
 menu .$id.menubar.view -title "View" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.view add command -label "Top" -underline 0\
