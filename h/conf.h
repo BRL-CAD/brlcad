@@ -36,7 +36,6 @@
 #		define HAS_OPENGL	1	/* OpenGL */
 #	endif
 #	define HAVE_GETOPT_H	1
-#	define HAVE_REGEX_DECL	1
 #	define HAVE_SBRK_DECL	1
 #	define HAVE_STDLIB_H	1
 #	define HAVE_UNISTD_H	1
