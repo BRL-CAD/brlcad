@@ -1642,13 +1642,13 @@ mat_t		mat;
 		}
 	case ID_POLY:
 		{
-			struct rt_pg_face_internal *poly;
+			struct rt_pg_face_internal *_poly;
 			struct rt_pg_internal *pg = 
 				(struct rt_pg_internal *)ip->idb_ptr;
 			RT_PG_CK_MAGIC( pg );
 
-			poly = pg->poly;
-			VMOVE( mpt , poly->verts );
+			_poly = pg->poly;
+			VMOVE( mpt , _poly->verts );
 			*strp = "V";
 			break;
 		}
