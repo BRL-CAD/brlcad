@@ -494,6 +494,16 @@ mat_t		TformMat;
 
 	/* convert each vertex in the face to its 2-D equivalent */
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		if (rt_g.NMG_debug & DEBUG_TRI) {
+			switch (lu->orientation) {
+			case OT_NONE:	rt_log("flattening OT_NONE loop\n"); break;
+			case OT_SAME:	rt_log("flattening OT_SAME loop\n"); break;
+			case OT_OPPOSITE:rt_log("flattening OT_OPPOSITE loop\n"); break;
+			case OT_UNSPEC:	rt_log("flattening OT_UNSPEC loop\n"); break;
+			case OT_BOOLPLACE:rt_log("flattening OT_BOOLPLACE loop\n"); break;
+			default: rt_log("flattening bad orientation loop\n"); break;
+			}
+		}
 		if (RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC) {
 			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 			map_vu_to_2d(vu, tbl2d, TformMat, fu);
@@ -1032,13 +1042,18 @@ struct rt_list *tlist, *tbl2d;
 		 * the one we want.
 		 */
 		NMG_CK_TRAP(tp);
-		if (rt_g.NMG_debug & DEBUG_TRI)
-			print_trap(tp, tbl2d);
 
 		if (tp->bot) {
-			if (rt_g.NMG_debug & DEBUG_TRI)
+#if 0
+			if (rt_g.NMG_debug & DEBUG_TRI) {
+				print_trap(tp, tbl2d);
 				rt_log("Completed... Skipping\n");
+			}
+#endif
 			continue;
+		} else {
+			if (rt_g.NMG_debug & DEBUG_TRI)
+				print_trap(tp, tbl2d);
 		}
 
 		if (tp->e_left == eunext || tp->e_right == eunext) {
@@ -2376,25 +2391,36 @@ CONST struct rt_tol	*tol;
 	int vert_count;
 	static int iter=0;
 	static int monotone=0;
+	vect_t N;
 
 	char db_name[32];
 
 	RT_CK_TOL(tol);
 	NMG_CK_FACEUSE(fu);
 
+	if (rt_g.NMG_debug & DEBUG_TRI) {
+		NMG_GET_FU_NORMAL(N, fu);
+		rt_log("---------------- Triangulate face %g %g %g\n", N[0], N[1], N[2]);
+	}
+
+
 	/* make a quick check to see if we need to bother or not */
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		if (lu->orientation != OT_SAME)
+		if (lu->orientation != OT_SAME) {
+			if (rt_g.NMG_debug & DEBUG_TRI)
+				rt_log("faceus has non-OT_SAME orientation loop\n");
 			goto triangulate;
-
+		}
 		vert_count = 0;
 		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd ))
-			if (++vert_count > 3) goto triangulate;
+			if (++vert_count > 3) {
+				if (rt_g.NMG_debug & DEBUG_TRI)
+					rt_log("loop has more than 3 verticies\n");
+				goto triangulate;
+			}
 	}
 
 	if (rt_g.NMG_debug & DEBUG_TRI) {
-		vect_t N;
-		NMG_GET_FU_NORMAL(N, fu);
 		rt_log("---------------- face %g %g %g already triangular\n",
 			N[0], N[1], N[2]);
 
