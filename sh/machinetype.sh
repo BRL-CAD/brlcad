@@ -62,6 +62,7 @@ then
 		4)  UNIXTYPE=BSD; MACHINE=sun4;;
 		5)  UNIXTYPE=SYSV; MACHINE=sun5;;
 		esac;;
+	alpha)  MACHINE=alpha; UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;;
 	esac
 fi
 
