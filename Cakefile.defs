@@ -905,7 +905,8 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
 #	if 1	/* PRODUCTION=1 */
-#		define	OPTIMIZER	-O2
+/*		Bug in O2 optimization for gcc 2.96 */
+#		define	OPTIMIZER	-O1
 #	else
 #		define	OPTIMIZER	-g
 #	endif
