@@ -592,10 +592,14 @@ dmo_drawSList(dmop, hsp)
 			DM_SET_LINE_ATTR(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
 		}
 
-		DM_SET_FGCOLOR(dmop->dmo_dmp,
-			       (short)sp->s_color[0],
-			       (short)sp->s_color[1],
-			       (short)sp->s_color[2], 0);
+		if (sp->s_iflag == UP)
+			DM_SET_FGCOLOR(dmop->dmo_dmp, 255, 255, 255, 0);
+		else
+			DM_SET_FGCOLOR(dmop->dmo_dmp,
+				       (short)sp->s_color[0],
+				       (short)sp->s_color[1],
+				       (short)sp->s_color[2], 0);
+
 		DM_DRAW_VLIST(dmop->dmo_dmp, (struct rt_vlist *)&sp->s_vlist);
 	}
 
