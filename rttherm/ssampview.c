@@ -48,6 +48,31 @@ Tk_Window	tkwin;
 int	doit(), doit1();
 
 int
+getspectrum( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
+{
+	int	wl;
+
+	if( argc != 2 )  {
+		interp->result = "Usage: getspectrum wl";
+		return TCL_ERROR;
+	}
+	wl = atoi(argv[2]);
+
+	RT_CK_SPECTRUM(spectrum);
+
+	if( wl < 0 || wl >= spectrum->nwave )  {
+		interp->result = "wavelength out of range";
+		return TCL_ERROR;
+	}
+	sprintf( interp->result, "%g", spectrum->wavel[wl] );
+	return TCL_OK;
+}
+
+int
 getspectval( cd, interp, argc, argv )
 ClientData	cd;
 Tcl_Interp	*interp;
@@ -76,7 +101,8 @@ char		*argv[];
 		interp->result = "wavelength out of range";
 		return TCL_ERROR;
 	}
-	cp = pixels + (y * RT_SIZEOF_SPECT_SAMPLE(spectrum) + x) * RT_SIZEOF_SPECT_SAMPLE(spectrum);
+	cp = (char *)ss;
+	cp = cp + (y * width + x) * RT_SIZEOF_SPECT_SAMPLE(spectrum);
 	sp = (struct rt_spect_sample *)cp;
 	RT_CK_SPECT_SAMPLE(sp);
 	sprintf( interp->result, "%g", sp->val[wl] );
@@ -91,19 +117,21 @@ Tcl_Interp	*inter;
 	if( Tcl_Init(interp) == TCL_ERROR )  {
 		return TCL_ERROR;
 	}
-	Tcl_CreateCommand(interp, "doit", doit, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "doit1", doit1, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-
-	tkwin = Tk_CreateMainWindow( interp, (char *)NULL, "disp", "disp" );
-	if( tkwin == NULL )  return TCL_ERROR;
-	Tk_GeometryRequest(tkwin, 100, 20);
 
 	/* Run tk.tcl script */
 	if( Tk_Init(interp) == TCL_ERROR )  return TCL_ERROR;
 
-	/* Handle any delayed events which result */
-	while (Tk_DoOneEvent(TK_DONT_WAIT | TK_ALL_EVENTS))
-		;
+	Tcl_CreateCommand(interp, "doit", doit, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "doit1", doit1, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+
+	Tcl_CreateCommand(interp, "getspectval", getspectval, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "getspectrum", getspectrum, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+
+	Tcl_LinkVar( interp, "minval", (char *)&minval, TCL_LINK_DOUBLE );
+	Tcl_LinkVar( interp, "maxval", (char *)&maxval, TCL_LINK_DOUBLE );
+
+	Tcl_LinkVar( interp, "width", (char *)&width, TCL_LINK_INT );
+	Tcl_LinkVar( interp, "height", (char *)&height, TCL_LINK_INT );
 
 	return TCL_OK;
 }
@@ -144,7 +172,7 @@ char	**argv;
 	find_minmax();
 	rt_log("min = %g, max=%g Watts\n", minval, maxval );
 
-	Tcl_Main( argc, argv, tcl_appinit );
+	Tk_Main( argc, argv, tcl_appinit );
 	/* NOTREACHED */
 
 	return 0;
@@ -175,6 +203,7 @@ int		argc;
 char		*argv[];
 {
 	int	wl;
+	char	buf[32];
 
 	if( argc != 2 )  {
 		interp->result = "Usage: doit1 wavel#";
@@ -193,6 +222,14 @@ char		*argv[];
 	rescale(wl);
 	fb_writerect( fbp, 0, 0, width, height, pixels );
 	fb_poll(fbp);
+
+	/* set global variables */
+	sprintf(buf, "%d", wl);
+	Tcl_SetVar(interp, "wavel", buf, TCL_GLOBAL_ONLY);
+	sprintf(buf, "%g", spectrum->wavel[wl] * 0.001);
+	Tcl_SetVar(interp, "lambda", buf, TCL_GLOBAL_ONLY);
+
+	return TCL_OK;
 }
 
 /*
@@ -241,10 +278,6 @@ int	wav;
 	nbytes = RT_SIZEOF_SPECT_SAMPLE(spectrum);
 
 	pp = pixels;
-
-	/* Hack the scaling */
-	minval = maxval * 0.001;
-	maxval = maxval * 0.9;
 
 	scale = 255 / (maxval - minval);
 #if 1
