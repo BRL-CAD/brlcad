@@ -72,7 +72,6 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
-#define NFS	1
 
 /****************************************************************
  *								*
@@ -196,7 +195,7 @@ set -S2 "/bin/sh"
 #		define	CC_OPTS	-g
 #		define	LD_OPTS	-m 8 -g
 #	endif
-#	if 0
+#	if 1
 /*		Normal Configuration */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
 #		define	LIBFB_OBJS	if_remote pkg if_ptty
@@ -335,7 +334,7 @@ set -S2 "/bin/sh"
 /*	Select correct floating point flag, -fswitch if unsure */
 #	if 1
 /*		Using the Sun Compiler (the default) */
-#		if 0
+#		if 1
 /*			Generic unoptimized Sun configuration */
 #			define	CC_OPTS	-fswitch
 #		else
@@ -345,7 +344,7 @@ set -S2 "/bin/sh"
 #			define	CC_OPTS	-f68881
 #		endif
 #	else
-/*		Using the Gun C Compiler */
+/*		Using the Gnu C Compiler */
 #		define	CC	gcc
 #		if 0
 /*			Use this one to generate code */
@@ -356,10 +355,12 @@ set -S2 "/bin/sh"
 #		endif
 #	endif
 #	define	FC_OPTS	CC_OPTS
-#	define	LD_OPTS	CC_OPTS
+#	ifndef	LD_OPTS
+#		define	LD_OPTS	CC_OPTS
+#	endif
 #	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
-#	if 0
+#	if 1
 /*		Normal Sun configuration */
 #		define	LIBFB_OBJS	if_remote pkg if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
@@ -437,7 +438,7 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(CRAY1)
-/*	Cray X-M/P running UNICOS 3.  Define CRAY_COS for use on COS. */
+/*	Cray X-M/P running UNICOS.  Define CRAY_COS for use on COS. */
 #	undef	xmp
 #	undef	cray
 #	define	MTYPE	xmp
@@ -483,7 +484,7 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(CRAY2)
-/*	Cray-2 running UNICOS 4 */
+/*	Cray-2 running UNICOS */
 #	undef	cr2
 #	undef	cray
 #	define	MTYPE	cr2
@@ -494,6 +495,7 @@ set -S2 "/bin/sh"
 #		define	CC_DEFS	-hvreport
 #	else
 #		if 1
+/*			Plain old /bin/cc */
 #			define	CC_DEFS -hvector,olevel_3
 #		else
 /*			Cray C 4.0 (experimental) */
