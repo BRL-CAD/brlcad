@@ -985,6 +985,7 @@ identbld()
 	char		version[6];
 	char		title[72];
 	char		*unit_str = "none";
+	double		local2mm;
 
 	cp = buf;
 	cp++;				/* ident */
@@ -1014,7 +1015,7 @@ identbld()
 
 	switch(units)  {
 	case ID_NO_UNIT:
-		unit_str = "none";
+		unit_str = "mm";
 		break;
 	case ID_MM_UNIT:
 		unit_str = "mm";
@@ -1044,11 +1045,17 @@ identbld()
 		unit_str = "mile";
 		break;
 	default:
-		fprintf(stderr,"asc2g: unknown units = %d\n", units);
+		fprintf(stderr,"asc2g: unknown v4 units code = %d\n", units);
 		exit(1);
 	}
+	local2mm = bu_units_conversion(unit_str);
+	if( local2mm <= 0 )  {
+		fprintf(stderr, "asc2g: unable to convert v4 units string '%s', got local2mm=%g\n",
+			unit_str, local2mm);
+		exit(3);
+	}
 
-	if( mk_id_units(ofp, title, unit_str) < 0 )  {
+	if( mk_id_editunits(ofp, title, local2mm) < 0 )  {
 		bu_log("asc2g: unable to write database ID\n");
 		exit(2);
 	}
