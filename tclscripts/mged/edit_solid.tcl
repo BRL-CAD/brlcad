@@ -360,10 +360,22 @@ proc esol_do_cmd { id w sform } {
     esol_build_form $id $sform $esol_type($id) {} 0 1 0
 
     if $esol_draw($id) {
-	set lineup [_mged_who]
-	_mged_draw $esol_name($id)
-	eval _mged_draw $lineup
+	if [esol_isdrawn $esol_name($id)] {
+	    eval _mged_draw [_mged_who]
+	} else {
+	    _mged_draw $esol_name($id)
+	}
     }
+}
+
+proc esol_isdrawn { sol } {
+    set sol_list [_mged_x -2]
+
+    if {-1 < [lsearch -exact $sol_list $sol]} {
+	return 1
+    }
+
+    return 0
 }
 
 ## - esol_inc
