@@ -129,7 +129,7 @@ union cutter *
 rt_advance_to_next_cell( ssp )
 register struct shootray_status	*ssp;
 {
-	register union cutter	*cutp;
+	register CONST union cutter	*cutp;
 	int			push_flag = 0;
 	double			fraction;
 	int			exponent;
