@@ -610,6 +610,7 @@ struct directory *dp;
 
 	ip = &rp[0].s.s_values[1*3];
 	op = &points[1*3];
+#	include "noalias.h"
 	for(i=1; i<4; i++) {
 		MAT4X3VEC( op, matp, ip );
 		op += ELEMENTS_PER_VECT;
