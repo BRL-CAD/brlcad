@@ -25,10 +25,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "vectfont.h"
 
-/*
- *  Big bit of magic:  include some of TIG-PACK (LIBPLOT3) source here.
- */
-#include "../libplot3/vectfont.c"
+/* References tp_xxx symbols from libbn/vectfont.c */
 
 /*
  *			R T _ V L I S T _ 3 S T R I N G
