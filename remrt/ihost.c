@@ -88,12 +88,22 @@ struct hostent	*addr;
 int		enter;
 {
 	register struct ihost	*ihp;
+	struct hostent	*addr2;
+	struct hostent	*addr3;
 
-	if( !(addr == gethostbyname(addr->h_name)) )
+	addr2 = gethostbyname(addr->h_name);
+	if( addr != addr2 )  {
+		rt_log("host_lookup_by_hostent(%s) got %s?\n",
+			addr->h_name, addr2->h_name );
 		return IHOST_NULL;
-	if( !(addr == gethostbyaddr(addr->h_addr_list[0],
-	    sizeof(struct in_addr), addr->h_addrtype)) )
+	}
+	addr3 = gethostbyaddr(addr2->h_addr_list[0],
+	    sizeof(struct in_addr), addr2->h_addrtype);
+	if( addr != addr3 )  {
+		rt_log("host_lookup_by_hostent(%s) got %s?\n",
+			addr->h_name, addr3->h_name );
 		return IHOST_NULL;
+	}
 	/* Now addr->h_name points to the "formal" name of the host */
 
 	/* Search list for existing instance */
@@ -159,8 +169,10 @@ int	enter;
 	addr_tmp = from->sin_addr.s_addr;
 	addr = gethostbyaddr( (char *)&from->sin_addr, sizeof (struct in_addr),
 		from->sin_family);
-	if( addr != NULL )
-		return( host_lookup_by_hostent( addr, enter ) );
+	if( addr != NULL )  {
+		ihp = host_lookup_by_hostent( addr, enter );
+		if( ihp )  return ihp;
+	}
 
 	/* Host name is not known */
 	addr_tmp = ntohl(addr_tmp);
