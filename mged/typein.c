@@ -387,8 +387,6 @@ char **argv;
 	argc -= optind-1;
 	argv += optind-1;
 
-	(void)signal( SIGINT, sig2);    /* allow interupts */
-
 	vals = 0;
 
 	/* Get the name of the solid to be created */
@@ -569,9 +567,6 @@ do_new_update:
 	rt_functab[id].ft_ifree( &internal );	/* free internal rep */
 
 do_extern_update:
-	/* don't allow interrupts while we update the database! */
-	(void)signal( SIGINT, SIG_IGN);
-
 	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
 	if ((dp=db_diradd(dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
 	     db_alloc(dbip, dp, ngran ) < 0) {
