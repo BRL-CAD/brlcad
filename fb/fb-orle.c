@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fb-rle.c	1.10
-	Last edit: 	2/12/86 at 12:57:27
-	Retrieved: 	8/13/86 at 03:11:31
+	SCCS id:	@(#) fb-rle.c	1.11
+	Last edit: 	2/12/86 at 13:22:00
+	Retrieved: 	8/13/86 at 03:11:38
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fb-rle.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fb-rle.c	1.10	last edit 2/12/86 at 12:57:27";
+char	sccsTag[] = "@(#) fb-rle.c	1.11	last edit 2/12/86 at 13:22:00";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -27,7 +27,7 @@ char	sccsTag[] = "@(#) fb-rle.c	1.10	last edit 2/12/86 at 12:57:27";
 #define PIXEL_OFFSET	((scan_ln%dma_scans)*_fbsize)
 static char	*usage[] = {
 "",
-"fb-rle (1.10)",
+"fb-rle (1.11)",
 "",
 "Usage: fb-rle [-CScdhvw][-l X Y][-p X Y][file.rle]",
 "",
@@ -137,6 +137,11 @@ char	*argv[];
 			return	1;
 		if( page_fault = ! (scan_ln%dma_scans) )
 			y_buffer -= dma_scans;
+		if( y_buffer < 0 )
+			{
+			dma_scans += y_buffer * xlen;
+			y_buffer = 0;
+			}
 		}
 	}
 	return	0;
