@@ -2020,12 +2020,15 @@ double			mm2local;
 
 	if( !verbose )  return(0);
 
+#if 0
+	/* This really is not useful for the MGED overlay! */
 	ptrs = nmg_m_struct_count( &count, m );
 
 	/* If verbose, should print out structure counts */
 	nmg_vls_struct_counts( str, &count );
 
 	rt_free( (char *)ptrs, "struct_count *ptrs[]" );
+#endif
 
 	return(0);
 }
