@@ -47,7 +47,9 @@ typedef struct
     int			(**rbt_order)();  /* Comparison functions */
     void		(*rbt_print)();	  /* Data pretty-print function */
     struct rb_node	**rbt_root;	  /* The actual trees */
+    char		*rbt_unique;	  /* Uniqueness flags */
     struct rb_node	*rbt_current;	  /* Current node */
+    int			rbt_debug;	  /* Debug bits */
     struct rb_node	*rbt_empty_node;  /* Sentinel representing nil */
 }	rb_tree;
 #define	RB_TREE_NULL	((rb_tree *) 0)
@@ -138,6 +140,10 @@ RB_EXTERN(void *rb_extreme,	(rb_tree	*tree,
 RB_EXTERN(int rb_insert,	(rb_tree	*tree,
 				 void		*data
 				));
+RB_EXTERN(int rb_is_uniq,	(rb_tree	*tree,
+				 int		order
+				));
+#define		rb_is_uniq1(t)	rb_is_uniq((t), 0)
 RB_EXTERN(void *rb_neighbor,	(rb_tree	*tree,
 				 int		order,
 				 int		sense
@@ -147,13 +153,35 @@ RB_EXTERN(void *rb_search,	(rb_tree	*tree,
 				 void	*data
 				));
 #define		rb_search1(t,d)	rb_search((t), 0, (d))
+RB_EXTERN(void rb_set_uniqv,	(rb_tree	*tree,
+				 bitv_t		vec
+				));
 RB_EXTERN(void rb_summarize_tree,(rb_tree	*tree
 				 ));
+RB_EXTERN(void rb_uniq_all_off,	(rb_tree	*tree
+				));
+RB_EXTERN(void rb_uniq_all_on,	(rb_tree	*tree
+				));
+RB_EXTERN(int rb_uniq_off,	(rb_tree	*tree,
+				 int		order
+				));
+#define		rb_uniq_off1(t)	rb_uniq_off((t), 0)
+RB_EXTERN(int rb_uniq_on,	(rb_tree	*tree,
+				 int		order
+				));
+#define		rb_uniq_on1(t)	rb_uniq_on((t), 0)
 RB_EXTERN(void rb_walk,		(rb_tree	*tree,
 				 int		order,
 				 void		(*visit)(),
 				 int		trav_type
 				));
 #define		rb_walk1(t,v,d)	rb_walk((t), 0, (v), (d))
+
+/*
+ *	Debug bit flags
+ */
+#define RB_DEBUG_INSERT	0x00000001	/* Insertion process */
+#define RB_DEBUG_UNIQ	0x00000002	/* Uniqueness of inserts */
+#define RB_DEBUG_ROTATE	0x00000004	/* Rotation process */
 
 #endif /* REDBLACK_H */
