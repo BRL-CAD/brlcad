@@ -491,10 +491,14 @@ long	ncells;
 	    lasty = gp->c_y;
 	}
 	val_To_RGB(gp->c_val, pixel);
-	for (x0 = H2SCRX(gp->c_x), x1 = x0 + wid; x0 < x1;  x0++)
-	{
-	    COPYRGB(buf[x0], pixel);
-	}
+    	/* Be careful only to write color within bounds of the screen */
+    	x0 = H2SCRX(gp->c_x);
+    	if( x0 >= 0 && x0 < fb_width )  {
+		for (x1 = x0 + wid; x0 < x1;  x0++)
+		{
+		    COPYRGB(buf[x0], pixel);
+		}
+    	}
     }
 
     /* Write out last row of cells. */
@@ -505,34 +509,50 @@ long	ncells;
 	    (void) fb_close(fbiop);
 	    return (false);
 	}
+
     /* Draw color key. */
     if (key_flag)
     {	
 	register int	i, j;
 	double		base;
+    	int		scr_min, scr_max;
+    	int		scr_center;	/* screen coord of center of view */
+    	int		center_cell;	/* cell # of center of view */
 
 	/* Clear buffer. */
 	for (i = 0; i < fb_width; i++)
 	{
 	    COPYRGB(buf[i], BACKGROUND);
 	}
-	base = (xmin+xmax) / 2 - 5 * cell_size;
-	base = H2SCRX(base);
+    	/*  Center the color key from side-to-side in the viewport.
+    	 *  Find screen coords of min and max vals, clip to (0,fb_width).
+	 */
+    	scr_min = H2SCRX(xmin);
+    	scr_max = H2SCRX(xmax);
+    	if( scr_min < 0 )  scr_min = 0;
+    	if( scr_min > fb_width )  scr_min = fb_width;
+    	if( scr_max < 0 )  scr_max = 0;
+    	if( scr_max > fb_width )  scr_max = fb_width;
+    	scr_center = (scr_max + scr_min)/2;
+
+    	center_cell = VPX2CX( SCRX2VPX( scr_center ) );
+    	/* Draw 10 cells for the color key */
 	for (i = 0; i <= 10; i++)
 	{	
 	    cell_val	cv;
+
+    	    base = VPX2SCRX( CX2VPX( center_cell - 10/2 + i ) );
 
 	    cv.v_scalar = i / 10.0;
 
 	    val_To_RGB(cv, pixel);
 	    for (j = 0; j < wid; j++)
 	    {	
-		int offset = i * (wid+grid_flag);
-		register int index = base + offset + j;
+		register int index = base + j;
 		COPYRGB(buf[index], pixel);
 	    }
 	}
-
+
 	for (i = yorigin; i < yorigin+hgt; i++)
 	    if (fb_write(fbiop, 0, i, buf, fb_width) == -1)
 	    {
