@@ -8,7 +8,7 @@ librt_la_LDFLAGS = -version-info 19:1
 include_HEADERS= bot.h debug.h fixpt.h plane.h qray.h
 EXTRA_DIST = g_bot_include.c
 
-AM_CFLAGS = -I$(top_srcdir)/h -fno-strict-aliasing
+AM_CFLAGS = -I$(top_srcdir)/h
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)

@@ -13,7 +13,7 @@ AM_PROG_LEX
 
 AM_C_PROTOTYPES
 
-CFLAGS="$CFLAGS "'-I$(top_srcdir)/h'
+CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
 
 case "$target" in
 	*-*-linux*)
