@@ -89,6 +89,7 @@ char **argv;
     FILE		*fPtr;
     int                 i;               /* counter                       */
     int			Ch;		/* Option name */
+    int			mat_flag = 0;	/* Read matrix from stdin? */
     int			use_of_air = 0;
     outval		*vtp;
     extern outval	ValTab[];
@@ -122,6 +123,9 @@ char **argv;
     while ((Ch = getopt(argc, argv, OPT_STRING)) != EOF)
         switch (Ch)
         {
+	    case 'M':
+		mat_flag = 1;
+		break;
             case 'x':
 		sscanf( optarg, "%x", &rt_g.debug );
 		break;
@@ -224,19 +228,27 @@ char **argv;
 	rtip -> mdl_max[Z] * base2local);
 
     /* Perform the user interface */
-    interact(stdin);
+    if (mat_flag)
+    {
+	read_mat();
+	exit (0);
+    }
+    else
+	interact(stdin);
 }
  
-#if 0
 char	usage[] = "\
 Usage: 'nirt [options] model.g objects...'\n\
 Options:\n\
- -u n    specifies use of air (default 0)\n\
+ -M      read matrix, cmds on stdin\n\
+ -u n    set use_air=n (default 0)\n\
+ -x f    set diagnostic flag=n\n\
 ";
-#endif
+#if 0
 char	usage[] = "\
 Usage: 'nirt [-u n] [-x f] model.g objects...'\n\
 ";
+#endif
 
 void printusage() 
 {
