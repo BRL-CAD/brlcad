@@ -61,17 +61,17 @@ like:
 
 			    top of frame
 	---------------------------------------------------------
-	|-----> plot						|
-	||	X axis						|
- ^	||							|
- |	|v							|
-	|plot							|
-	|Y axis
-	|			|				|
- ^	|			v				|
- |	|			.				|
-	|scan line ->...........................................|
 	|			.				|
+	|scan line ->...........................................|
+ ^	|			.				|
+ |	|			^				|
+	|			|				|
+	|Y axis							|
+	|plot							|
+ ^	|^							|
+ |	||							|
+	||	X axis						|
+	|-----> plot						|
 	---------------------------------------------------------
 			    bottom of frame
 
@@ -86,8 +86,6 @@ Green, and Blue for each pixel, times the number of pixels desired
 
 /*	Device Parameters				 */
 
-#define	PIXELSIZE	sizeof(RGBpixel) /* # bytes per pixel */
-
 /* the following parameter should be tweaked for fine-tuning */
 #define SPB		16		/* scan lines per band */
 #define	X_CHAR_SIZE	(8)		/* pixels per char horizontal */
@@ -99,7 +97,7 @@ Green, and Blue for each pixel, times the number of pixels desired
 /*	Program constants computed from device parameters:	*/
 
 #define BANDS	(Nscanlines / SPB)		/* # of "bands" */
-#define BYTES	(Npixels * PIXELSIZE)	/* max data bytes per scan */
+#define BYTES	(Npixels * sizeof(RGBpixel))	/* max data bytes per scan */
 #define XMAX	(Npixels - 1)
 #define YMAX	(Nscanlines - 1)
 
@@ -237,7 +235,7 @@ struct band  {
 STATIC struct band	*band;		/* array of descriptor lists */
 STATIC struct band	*bandEnd;
 
-STATIC char	*buffer;		/* ptr to active band buffer */
+STATIC RGBpixel	*buffer;		/* ptr to active band buffer */
 STATIC long	buffersize;		/* active band buffer bytes */
 STATIC short	ystart = 0;		/* active band starting scan */
 STATIC short	debug  = 0;
@@ -327,8 +325,8 @@ char **argv;
 	delta = Nscanlines;
 	deltao2 = Nscanlines/2;
 
-	buffersize = SPB*Npixels*PIXELSIZE;
-	if( (buffer = malloc(buffersize)) == (char *)0)  {
+	buffersize = SPB*Npixels*sizeof(RGBpixel);
+	if( (buffer = (RGBpixel *)malloc(buffersize)) == RGBPIXEL_NULL)  {
 		fprintf(stderr,"fbplot:  malloc error\n");
 		exit(1);
 	}
@@ -790,7 +788,7 @@ BuildStr( pt1, pt2 )			/* returns true unless bug */
 	vp->major = pt2->y - vp->pixel.y;	/* always nonnegative */
 	vp->ysign = vp->major ? 1 : 0;
 	vp->minor = pt2->x - vp->pixel.x;
-	*((long *)vp->col) = *((long *)color);		/* record color fast */
+	COPYRGB( vp->col, color );
 	if ( (vp->xsign = vp->minor ? (vp->minor > 0 ? 1 : -1) : 0) < 0
 	   )
 		vp->minor = -vp->minor;
@@ -862,7 +860,7 @@ OutBuild()				/* returns true if successful */
 	    			fprintf(stderr,"fbplot:  band read error\n");
 	    	} else {
 			/* clear pixels in the band */
-			bzero( buffer, buffersize );
+			bzero( (char *)buffer, buffersize );
 	    	}
 
 		while ( (vp = Dequeue( hp, &hp->first )) != NULL )
@@ -900,11 +898,14 @@ Raster( vp, np )
 	 */
 	for ( dy = vp->pixel.y - ystart; dy < SPB; )
 		{
+		register RGBpixel *pp;
 
 		/* set the appropriate pixel in the buffer */
+		pp = (RGBpixel *)&buffer[(dy*Npixels) + vp->pixel.x][RED];
+		COPYRGB( *pp, vp->col );
 /**		*((long *)buffer[dy][vp->pixel.x]) = *((long *)vp->col); **/
-		*((long *)(buffer+(((dy*Npixels)+vp->pixel.x)*PIXELSIZE))) =
-			*((long *)vp->col);
+/**		*((long *)(buffer+(((dy*Npixels)+vp->pixel.x)*sizeof(RGBpixel)))) =
+			*((long *)vp->col);  **/
 
 		if ( vp->major-- == 0 ) /* done! */
 			{
