@@ -74,7 +74,11 @@ adcursor()
 	idxy[1] = (idxy[1] > MAXVAL ? MAXVAL : idxy[1]);
 
 	dmp->dm_setColor(dmp, DM_YELLOW, 1);
+#if 1
+	dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+#else
 	dmp->dm_setLineAttr(dmp, 1, 0);    /* linewidth - 1, not dashed */
+#endif
 	dmp->dm_drawLine2D( dmp, MINVAL, idxy[1], MAXVAL, idxy[1] ); /* Horizontal */
 	dmp->dm_drawLine2D( dmp, idxy[0], MAXVAL, idxy[0], MINVAL );  /* Vertical */
 
@@ -122,10 +126,18 @@ adcursor()
 	y4 = curs_y + d1;
 	(void)clip ( &x3, &y3, &x4, &y4 );
 
+#if 1
+	dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 1);
+#else
 	dmp->dm_setLineAttr(dmp, 1, 1);  /* linewidth - 1, dashed */
+#endif
 	dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
 	dmp->dm_drawLine2D( dmp, (int)x3, (int)y3, (int)x4, (int)y4 );
+#if 1
+	dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+#else
 	dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
+#endif
 
 	/*
 	 * Position tic marks from dial 9.
@@ -250,9 +262,10 @@ char	**argv;
 	argc -= 2;
 	for (i = 0; i < argc; ++i)
 		pt[i] = atof(argv[i + 2]);
-	VSET(center_model,
-	    -toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ]);
+	MAT_DELTAS_GET_NEG(center_model, toViewcenter);
+#if 0
 	MAT4X3VEC(center_view, Viewrot, center_model);
+#endif
 
 	if( strcmp( parameter, "a1" ) == 0 )  {
 	  if (argc == 1) {
@@ -359,10 +372,15 @@ char	**argv;
 	}
 	if( strcmp(parameter, "hv") == 0)  {
 	  if (argc == 2) {
+#if 0
 	    VSCALE(pt, pt, local2base);
 	    VSUB2(pt3, pt, center_view);
 	    dv_xadc = pt3[X] * view2dm;
 	    dv_yadc = pt3[Y] * view2dm;
+#else
+	    dv_xadc = pt[X] * 2047.0 / (Viewscale * base2local);
+	    dv_yadc = pt[Y] * 2047.0 / (Viewscale * base2local);
+#endif
 	    dmaflag = 1;
 	    return TCL_OK;
 	  }

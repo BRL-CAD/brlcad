@@ -367,8 +367,11 @@ bn_mat_print("perspective_mat", perspective_mat);
 	}
 
 	dmp->dm_newrot( dmp, mat, which_eye );
-
+#if 1
+	dmp->dm_setLineAttr(dmp, mged_variables.linewidth, linestyle);
+#else
 	dmp->dm_setLineAttr(dmp, 1, linestyle); /* linewidth - 0, not dashed */
+#endif
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  sp->s_flag = DOWN;		/* Not drawn yet */
 	  /* If part of object rotation, will be drawn below */
@@ -386,7 +389,11 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
+#if 1
+	    dmp->dm_setLineAttr(dmp, mged_variables.linewidth, linestyle);
+#else
 	    dmp->dm_setLineAttr(dmp, 1, linestyle);
+#endif
 	  }
 
 	  if(!DM_SAME_COLOR(r,g,b,
@@ -447,7 +454,11 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
+#if 1
+	    dmp->dm_setLineAttr(dmp, mged_variables.linewidth, linestyle);
+#else
 	    dmp->dm_setLineAttr(dmp, 1, linestyle);
+#endif
 	  }
 
 	  if( dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK){
@@ -677,6 +688,10 @@ int axes;
 
   /* draw axes */
   dmp->dm_setColor(dmp, r, g, b, 1);
+#if 1
+  dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+#else
   dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
+#endif
   dmp->dm_drawVList(dmp, &h_vlist, model2view);
 }

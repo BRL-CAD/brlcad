@@ -237,7 +237,11 @@ int y_top;
 
   menu_top = y - MENU_DY / 2;
   dmp->dm_setColor(dmp, DM_YELLOW, 1);
+#if 1
+  dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+#else
   dmp->dm_setLineAttr(dmp, 1, 0);
+#endif
   dmp->dm_drawLine2D(dmp, MENUXLIM, menu_top, XMIN, menu_top);
 
   for( menu=0, m = menu_array; m < &menu_array[NMENU]; m++,menu++ )  {
@@ -278,7 +282,11 @@ int y_top;
     return;	/* no active menus */
 
   dmp->dm_setColor(dmp, DM_YELLOW, 1);
+#if 1
+  dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+#else
   dmp->dm_setLineAttr(dmp, 1, 0);
+#endif
   dmp->dm_drawLine2D( dmp, MENUXLIM, menu_top-1, MENUXLIM, y-(MENU_DY/2) );
 }
 

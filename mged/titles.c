@@ -316,7 +316,11 @@ struct bu_vls *overlay_vls;
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "fps", "", TCL_GLOBAL_ONLY);
 #endif
 
+#if 1
+	dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+#else
 	dmp->dm_setLineAttr(dmp, 1, 0); /* linewidth - 1, not dashed */
+#endif
 
 	/* Label the vertices of the edited solid */
 	if(es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))  {
