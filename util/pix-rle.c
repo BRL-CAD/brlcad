@@ -157,7 +157,7 @@ char	*argv[];
 	outrle.xmin = outrle.ymin = 0;
 	outrle.xmax = file_width-1;
 	outrle.ymax = file_height-1;
-	outrle.comments = (char **)0;
+	outrle.comments = (CONST_DECL char **)0;
 
 	/* Add comments to the header file, since we have one */
 	sprintf( comment, "converted_from=%s", infile );
