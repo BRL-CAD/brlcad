@@ -981,33 +981,6 @@ struct directory *dp;
 }
 
 static void
-zero_dp_counts( db_ip, dp, ptr )
-struct db_i *db_ip;
-struct directory *dp;
-genptr_t	ptr;
-{
-  Tcl_Interp	*interp = (Tcl_Interp *)ptr;
-  RT_CK_DIR( dp );
-
-  dp->d_nref = 0;
-  dp->d_uses = 0;
-
-  if( BU_LIST_NON_EMPTY( &dp->d_use_hd ) )
-    Tcl_AppendResult(interp, "List for ", dp->d_namep, " is not empty\n", (char *)NULL);
-}
-
-static void
-zero_nrefs( db_ip, dp, ptr )
-struct db_i *db_ip;
-struct directory *dp;
-genptr_t	ptr;
-{
-	RT_CK_DIR( dp );
-
-	dp->d_nref = 0;
-}
-
-static void
 increment_uses( db_ip, dp, ptr )
 struct db_i *db_ip;
 struct directory *dp;
@@ -1117,7 +1090,7 @@ genptr_t	ptr;
 		 * This insures that the original will be last to be modified
 		 * If original were modified earlier, copies would be screwed-up
 		 */
-		if( use_no == dp->d_uses-1 )
+		if( use_no == dp->d_uses-1 && dp->d_uses == dp->d_nref )
 			use->dp = dp;
 		else
 		{
@@ -1165,6 +1138,10 @@ mat_t xform;
 			   " is not a solid!!!!\n", (char *)NULL);
 	  return( DIR_NULL );
 	}
+
+	/* If no transformation is to be applied, just use the original */
+	if( bn_mat_is_identity( xform ) )
+		return( dp );
 
 	/* Look for a copy that already has this transform matrix */
 	for( BU_LIST_FOR( use, object_use, &dp->d_use_hd ) )
@@ -1394,6 +1371,8 @@ int argc;
 char **argv;
 {
 	struct directory *old_dp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
 	struct bu_ptbl tops;
 	mat_t xform;
 	int i;
@@ -1415,10 +1394,22 @@ char **argv;
 	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
 
-	/* initialize use and reference counts */
-	db_functree( dbip, old_dp, zero_dp_counts, zero_dp_counts, (genptr_t)interp );
+	/* Initialize use and reference counts of all directory entries */
+	for( i=0 ; i<RT_DBNHASH ; i++ )
+	{
+		struct directory *dp;
 
-	/* Count uses */
+		for( dp=dbip->dbi_Head[i] ; dp!=DIR_NULL ; dp=dp->d_forw )
+		{
+			if( !(dp->d_flags & ( DIR_SOLID | DIR_COMB ) ) )
+				continue;
+
+			dp->d_uses = 0;
+			dp->d_nref = 0;
+		}
+	}
+
+	/* Count uses in the tree being pushed (updates dp->d_uses) */
 	db_functree( dbip, old_dp, increment_uses, increment_uses, NULL );
 
 	/* Get list of tree tops in this model */
@@ -1433,6 +1424,9 @@ char **argv;
 			struct rt_comb_internal *comb;
 
 			if( dp->d_flags & DIR_SOLID )
+				continue;
+
+			if( !(dp->d_flags & ( DIR_SOLID | DIR_COMB ) ) )
 				continue;
 
 			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
@@ -1459,13 +1453,19 @@ char **argv;
 	}
 
 	/* zero nrefs in entire model */
-	for( i=0 ; i<BU_PTBL_END( &tops ) ; i++ )
+	for( i=0 ; i<RT_DBNHASH ; i++ )
 	{
 		struct directory *dp;
 
-		dp = (struct directory *)BU_PTBL_GET( &tops, i );
-		db_functree( dbip, dp, zero_nrefs, zero_nrefs, NULL );
+		for( dp=dbip->dbi_Head[i] ; dp!=DIR_NULL ; dp=dp->d_forw )
+		{
+			if( !(dp->d_flags & ( DIR_SOLID | DIR_COMB ) ) )
+				continue;
+
+			dp->d_nref = 0;
+		}
 	}
+
 
 	/* count references in entire model */
 	for( i=0 ; i<BU_PTBL_END( &tops ) ; i++ )
@@ -1485,7 +1485,31 @@ char **argv;
 	bn_mat_idn( xform );
 
 	/* Make new objects */
-	(void) Copy_object( old_dp, xform );
+	if( rt_db_get_internal( &intern, old_dp, dbip, (fastf_t *)NULL ) < 0 )
+	{
+		bu_log( "ERROR: cannot load %s feom the database!!!\n", old_dp->d_namep );
+		bu_log( "\tNothing has been changed!!\n" );
+		db_functree( dbip, old_dp, Free_uses, Free_uses, NULL );
+		return TCL_ERROR;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	if( !comb->tree )
+	{
+		db_functree( dbip, old_dp, Free_uses, Free_uses, NULL );
+		return TCL_OK;
+	}
+
+	db_tree_funcleaf( dbip, comb, comb->tree, Do_copy_membs,
+		(genptr_t)xform, (genptr_t)NULL, (genptr_t)NULL );
+
+	if( rt_db_put_internal( old_dp, dbip, &intern ) < 0 )
+	{
+		Tcl_AppendResult(interp, "rt_db_put_internal failed for ", old_dp->d_namep,
+			"\n", (char *)NULL );
+		rt_comb_ifree( &intern );
+		db_functree( dbip, old_dp, Free_uses, Free_uses, NULL );
+		return TCL_ERROR;
+	}
 
 	/* Free use lists and delete unused directory entries */
 	db_functree( dbip, old_dp, Free_uses, Free_uses, NULL );
