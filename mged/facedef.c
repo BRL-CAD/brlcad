@@ -272,7 +272,6 @@ f_facedef()
 	replot_editing_solid();
 
 	/* update display information */
-	pr_solid( &es_rec.s );
 	dmaflag = 1;
 	return;				/* everything OK */
 }

@@ -539,7 +539,6 @@ a4toa6:
 
 	/* draw the updated solid */
 	replot_editing_solid();
-	pr_solid( &es_rec.s );
 	dmaflag = 1;
 }
 
@@ -873,7 +872,6 @@ char	**argv;
 
 	/* draw the updated solid */
 	replot_editing_solid();
-	pr_solid( &es_rec.s );
 	dmaflag = 1;
 }
 
@@ -941,8 +939,6 @@ this choice of units will not be remembered on your next editing session.\n");
 	}
 	(void)printf("New editing units = '%s'\n",
 		rt_units_string(dbip->dbi_local2base) );
-	if(state == ST_S_EDIT)
-		pr_solid( &es_rec.s );
 	dmaflag = 1;
 }
 
