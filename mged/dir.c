@@ -6,7 +6,6 @@
  *	dir_print	Print table-of-contents of object file
  *	f_memprint	Debug, print memory & db free maps
  *	dir_nref	Count number of times each db element referenced
- *	regexp_match	Does regular exp match given string?
  *	dir_summary	Summarize contents of directory by categories
  *	f_tops		Prints top level items in database
  *	cmd_glob	Does regular expression expansion
@@ -254,110 +253,6 @@ dir_nref( )
 }
 
 /*
- *			R E G E X P _ M A T C H
- *
- *	If string matches pattern, return 1, else return 0
- *
- *	special characters:
- *		*	Matches any string including the null string.
- *		?	Matches any single character.
- *		[...]	Matches any one of the characters enclosed.
- *		-	May be used inside brackets to specify range
- *			(i.e. str[1-58] matches str1, str2, ... str5, str8)
- *		\	Escapes special characters.
- */
-int
-regexp_match( pattern, string )
-register char *pattern, *string;
-{
-    do {
-	switch( *pattern ) {
-	case '*':
-	    /* match any string including null string */
-	    ++pattern;
-	    do {
-		if( regexp_match( pattern, string ) )
-		    return( 1 );
-	    } while( *string++ != '\0' );
-	    return( 0 );
-	case '?':
-	    /* match any character  */
-	    if( *string == '\0' )
-		return( 0 );
-	    break;
-	case '[':
-	    /* try to match one of the characters in brackets */
-	    ++pattern;
-	    if( *pattern == '\0' )
-		return( 0 );
-	    while( *pattern != *string ) {
-		if( pattern[0] == '-' && pattern[-1] != '\\')
-		    if(	pattern[-1] <= *string &&
-		        pattern[-1] != '[' &&
-		       	pattern[ 1] >= *string &&
-		        pattern[ 1] != ']' )
-			break;
-		++pattern;
-		if( *pattern == '\0' || *pattern == ']' )
-		    return( 0 );
-	    }
-	    /* skip to next character after closing bracket */
-	    while( *pattern != '\0' && *pattern != ']' )
-		++pattern;
-	    break;
-	case '\\':
-	    /* escape special character */
-	    ++pattern;
-	    /* compare characters */
-	    if( *pattern != *string )
-		return( 0 );
-	    break;
-	default:
-	    /* compare characters */
-	    if( *pattern != *string )
-		return( 0 );
-	}
-	++string;
-    } while( *pattern++ != '\0' );
-    return( 1 );
-}
-
-/*
- *			R E G E X P _ M A T C H _ A L L
- *
- * Appends a list of all database matches to the given vls, or the pattern
- * itself if no matches are found.
- * Returns the number of matches.
- *
- */
- 
-int
-regexp_match_all( dest, pattern )
-struct bu_vls *dest;
-char *pattern;
-{
-    register int i, num;
-    register struct directory *dp;
-
-    for( i = num = 0; i < RT_DBNHASH; i++ )  {
-	for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ){
-	    if( !regexp_match( pattern, dp->d_namep ) )
-		continue;
-	    if( num == 0 )
-		bu_vls_strcat( dest, dp->d_namep );
-	    else {
-		bu_vls_strcat( dest, " " );
-		bu_vls_strcat( dest, dp->d_namep );
-	    }
-	    ++num;
-	}
-    }
-
-    return num;
-}
-
-
-/*
  *  			D I R _ S U M M A R Y
  *
  * Summarize the contents of the directory by categories
@@ -554,7 +449,7 @@ int   maxargs;
 
 	for( i = 0; i < RT_DBNHASH; i++ )  {
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if( !regexp_match( word, dp->d_namep ) )
+			if( !db_regexp_match( word, dp->d_namep ) )
 				continue;
 			/* Successful match */
 			/* See if already over the limit */
@@ -683,7 +578,7 @@ char **argv;
 	thismatch = 0;
 	for( i = 0; i < RT_DBNHASH; i++ )  {
 	    for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-	        if( !regexp_match( pattern, dp->d_namep ) )
+	        if( !db_regexp_match( pattern, dp->d_namep ) )
 		    continue;
 		/* Successful match */
 		if( nummatch == 0 )
