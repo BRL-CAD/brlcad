@@ -163,9 +163,17 @@ struct rt_i		*rtip;
 	{
 		VCROSS( extr->rot_axis, tmp, extr->unit_h );
 		VUNITIZE( extr->rot_axis );
-		VCROSS( tmp2, tmp, extr->rot_axis );
-		MAT4X3VEC( extr->perp, extr->rot, tmp2 );
-		VUNITIZE( extr->perp );
+		if( MAGNITUDE( extr->rot_axis ) < SQRT_SMALL_FASTF )
+		{
+			VSET( extr->rot_axis, 1.0, 0.0, 0.0 );
+			VSET( extr->perp, 0.0, 1.0, 0.0 );
+		}
+		else
+		{
+			VCROSS( tmp2, tmp, extr->rot_axis );
+			MAT4X3VEC( extr->perp, extr->rot, tmp2 );
+			VUNITIZE( extr->perp );
+		}
 	}
 
 	/* calculate plane equations of top and bottom planes */
