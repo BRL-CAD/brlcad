@@ -312,6 +312,7 @@ struct ihost {
 #define HT_PASSIVE	3		/* May call in, never initiated */
 #define HT_RS		4		/* While rays/second > ht_rs */
 #define HT_PASSRS	5		/* passive rays/second */
+#define HT_HACKNIGHT	6		/* Only use during "hackers night" */
 	int		ht_rs;		/* rays/second level */
 	int		ht_rs_miss;	/* number of consecutive misses */
 	int		ht_rs_wait;	/* # of auto adds to wait before */
@@ -863,6 +864,7 @@ struct timeval	*nowp;
 {
 	register struct ihost	*ihp;
 	register struct servers	*sp;
+	int	hackers_night;
 	int	night;
 	int	add;
 
@@ -872,6 +874,7 @@ struct timeval	*nowp;
 		return;
 
 	rt_log("%s Seeking servers to start\n", stamp() );
+	hackers_night = is_hackers_night( nowp );
 	night = is_night( nowp );
 	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
 
@@ -882,6 +885,12 @@ struct timeval	*nowp;
 			break;
 		case HT_NIGHT:
 			if( night )
+				add = 1;
+			else
+				add = 0;
+			break;
+		case HT_HACKNIGHT:
+			if( hackers_night )
 				add = 1;
 			else
 				add = 0;
@@ -947,6 +956,29 @@ struct timeval	*tv;
 	/* Sunday(0) and Saturday(6) are "night" */
 	if( tp->tm_wday == 0 || tp->tm_wday == 6 )  return(1);
 	if( tp->tm_hour < 8 || tp->tm_hour >= 18 )  return(1);
+	return(0);
+}
+
+/*
+ *			I S _ H A C K E R S _ N I G H T
+ *
+ *  Indicate whether the given time is "night", ie, off-peak time,
+ *  for a computer hacker, who stays up late.
+ *  The simple algorithm used here does not take into account
+ *  using machines in another time zone.
+ */
+int
+is_hackers_night( tv )
+struct timeval	*tv;
+{
+	struct tm	*tp;
+
+	tp = localtime( &tv->tv_sec );
+
+	/* Sunday(0) and Saturday(6) are "night" */
+	if( tp->tm_wday == 0 || tp->tm_wday == 6 )  return(1);
+	/* Hacking tends to run from 1300 to midnight, and on to 0400 */
+	if( tp->tm_hour >= 4 && tp->tm_hour <= 12 )  return(1);
 	return(0);
 }
 
@@ -3589,6 +3621,9 @@ char	**argv;
 			case HT_NIGHT:
 				rt_log("night ");
 				break;
+			case HT_HACKNIGHT:
+				rt_log("hacknight ");
+				break;
 			case HT_PASSIVE:
 				rt_log("passive ");
 				break;
@@ -3624,6 +3659,8 @@ char	**argv;
 		ihp->ht_when = HT_ALWAYS;
 	} else if( strcmp( argv[argpoint], "night" ) == 0 )  {
 		ihp->ht_when = HT_NIGHT;
+	} else if( strcmp( argv[argpoint], "hacknight" ) == 0 )  {
+		ihp->ht_when = HT_HACKNIGHT;
 	} else if( strcmp( argv[argpoint], "passive" ) == 0 )  {
 		ihp->ht_when = HT_PASSIVE;
 	} else if( strcmp( argv[argpoint], "rs" ) == 0 ) {
