@@ -53,6 +53,8 @@ extern int	lightmodel;		/* Select lighting model */
 mat_t		view2model;
 mat_t		model2view;
 extern int	use_air;		/* Handling of air in librt */
+int		srv_startpix;		/* offset for view_pixel */
+int		srv_scanlen = 8*1024;	/* max assignment */
 /***** end of sharing with viewing model *****/
 
 extern void grid_setup();
@@ -496,6 +498,9 @@ char *buf;
 		exit(2);
 	}
 
+	srv_startpix = a;		/* buffer un-offset for view_pixel */
+	if( b-a+1 > srv_scanlen )  b = a + srv_scanlen - 1;
+
 	rtip->rti_nrays = 0;
 	info.li_startpix = a;
 	info.li_endpix = b;
@@ -519,15 +524,6 @@ char *buf;
 			info.li_frame,
 			info.li_startpix, info.li_endpix,
 			info.li_nrays, info.li_cpusec);
-	}
-	if( (pix_offset = a % width) != 0 )  {
-		/* Temporary hack to repair damage done by rt/view.c */
-		char	newbuf[4096*3];
-		int	pix_len;		/* len of 1st part */
-		pix_len = width-pix_offset;
-		bcopy( scanbuf+pix_offset*3, newbuf, pix_len*3 );
-		bcopy( scanbuf, newbuf+pix_len*3, pix_offset*3 );
-		bcopy( newbuf, scanbuf, width*3 );
 	}
 	if( pkg_2send( MSG_PIXELS, cp, len, scanbuf, (b-a+1)*3, pcsrv ) < 0 )  {
 		fprintf(stderr,"MSG_PIXELS send error\n");
