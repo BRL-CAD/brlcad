@@ -87,7 +87,7 @@ static int do_2nd_attach_prompt();
 void mged_fb_open();
 void mged_fb_close();
 
-int mged_default_dlist = 1;   /* This variable is available via Tcl for controlling use of display lists */
+int mged_default_dlist = 0;   /* This variable is available via Tcl for controlling use of display lists */
 struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list;
 char tmp_str[1024];
