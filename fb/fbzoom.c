@@ -34,7 +34,8 @@ extern int	optind;
 #define MinZoom		(1)
 
 /* Pan limits.	*/
-#define MaxPan		fb_getwidth(fbp)
+#define MaxXPan		(fb_getwidth(fbp)-1)
+#define MaxYPan		(fb_getheight(fbp)-1)
 #define MinPan		(0)
 
 static int PanFactor;			/* Speed with whitch to pan.	*/
@@ -166,13 +167,13 @@ doKeyPad()
 		break;
 	case 'F' :
 	case 'l' :				/* move LEFT.	*/
-		if( ++xPan > MaxPan )
-			xPan = MaxPan;
+		if( ++xPan > MaxXPan )
+			xPan = MaxXPan;
 		break;
 	case ctl(f) :
 	case 'L' :
-		if( (xPan += PanFactor) > MaxPan )
-			xPan = MaxPan;
+		if( (xPan += PanFactor) > MaxXPan )
+			xPan = MaxXPan;
 		break;
 	case 'N' :
 	case 'k' :				/* move DOWN.	*/
@@ -186,13 +187,13 @@ doKeyPad()
 		break;
 	case 'P' :
 	case 'j' :				/* move UP.	*/
-		if( ++yPan > MaxPan )
-			yPan = MaxPan;
+		if( ++yPan > MaxYPan )
+			yPan = MaxYPan;
 		break;
 	case ctl(p) :
 	case 'J' :
-		if( (yPan += PanFactor) > MaxPan )
-			yPan = MaxPan;
+		if( (yPan += PanFactor) > MaxYPan )
+			yPan = MaxYPan;
 		break;
 	case 'B' :
 	case 'h' :				/* move RIGHT.	*/
