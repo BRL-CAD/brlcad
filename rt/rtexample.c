@@ -104,6 +104,8 @@ struct partition *PartHeadp;
 	register struct hit *hitp;
 	register struct soltab *stp;
 	struct curvature cur;
+	struct hit	ihit;
+	struct hit	ohit;
 
 	/* examine each partition until we get back to the head */
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
@@ -126,13 +128,17 @@ struct partition *PartHeadp;
 		 * If the flip flag is on, it means that the outward
 		 * pointing normal actually points the other way so we
 		 * need to reverse it.  The application is responsible
-		 * for doing this for some rather complicated reasons.
+		 * for doing this because it's just a reference to the
+		 * actual hit point on the segment, and may be referred to
+		 * in it's non-flipped sense in the next (or previous)
+		 * partition.  It is this sharing which requires the
+		 * application to make it's own copy of the hit, too.
 		 */
+		ihit = *hitp;	/* struct copy */
 		if( pp->pt_inflip ) {
-			VREVERSE( hitp->hit_normal, hitp->hit_normal );
-			pp->pt_inflip = 0;
+			VREVERSE( ihit.hit_normal, ihit.hit_normal );
 		}
-		rt_pr_hit( "  In", hitp );
+		rt_pr_hit( "  In", &ihit );
 		/*
 		 * This next macro fills in the curvature information
 		 * which consists on a principle direction vector, and
@@ -140,7 +146,7 @@ struct partition *PartHeadp;
 		 * and perpendicular to it.  Positive curvature bends
 		 * toward the outward pointing normal.
 		 */
-		RT_CURVE( &cur, hitp, stp );
+		RT_CURVE( &cur, &ihit, stp );
 		VPRINT("PDir", cur.crv_pdir );
 		rt_log(" c1=%g\n", cur.crv_c1);
 		rt_log(" c2=%g\n", cur.crv_c2);
@@ -149,11 +155,11 @@ struct partition *PartHeadp;
 		hitp = pp->pt_outhit;
 		stp = pp->pt_outseg->seg_stp;
 		RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
+		ohit = *hitp;		/* struct copy */
 		if( pp->pt_outflip ) {
-			VREVERSE( hitp->hit_normal, hitp->hit_normal );
-			pp->pt_outflip = 0;
+			VREVERSE( ohit.hit_normal, ohit.hit_normal );
 		}
-		rt_pr_hit( " Out", hitp );
+		rt_pr_hit( " Out", &ohit );
 	}
 
 	/*
