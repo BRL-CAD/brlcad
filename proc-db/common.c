@@ -59,7 +59,7 @@ int	curcolor = 0;
 
 void
 get_rgb( rgb )
-register char	*rgb;
+register unsigned char	*rgb;
 {
 	register struct colors *cp;
 	if( ++curcolor >= ncolors )  curcolor = 0;
@@ -76,7 +76,7 @@ point_t	pos;
 vect_t	dir_at;		/* direction or aim point */
 int	da_flag;	/* 0 = direction, !0 = aim point */
 double	r;		/* radius of light */
-char	*rgb;
+unsigned char	*rgb;
 struct wmember	*headp;
 {
 	char	nbuf[64];

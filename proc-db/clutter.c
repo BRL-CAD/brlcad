@@ -59,7 +59,7 @@ main(argc, argv)
 char	**argv;
 {
 	vect_t	norm;
-	char	rgb[3];
+	unsigned char	rgb[3];
 	int	ix, iy;
 	double	x, y;
 	double	size;
@@ -156,7 +156,7 @@ double	size;
 	point_t	center;
 	vect_t	maj, min;
 	int	nsolids;
-	char	rgb[4];		/* needs all 4 */
+	unsigned char	rgb[4];		/* needs all 4 */
 	double	high;
 	double	height = 0;
 	double	esz;
@@ -305,7 +305,7 @@ double	size;
 	double	esz;
 	vect_t	minpt, maxpt;
 	char	sname[64];
-	char	rgb[4];		/* needs all 4 */
+	unsigned char	rgb[4];		/* needs all 4 */
 	int	i;
 
 	sprintf(sname, "%s.s", name);
@@ -331,7 +331,7 @@ double	size;
 	vect_t	min, max;
 	point_t	center;
 	double	esz;
-	char	rgb[4];		/* needs all 4 */
+	unsigned char	rgb[4];		/* needs all 4 */
 	int	i;
 	int	n;
 	char	name[32];
@@ -366,7 +366,7 @@ double	size;
 	vect_t	min, max;
 	vect_t	base, hvec;
 	point_t	center;
-	char	rgb[4];		/* needs all 4 */
+	unsigned char	rgb[4];		/* needs all 4 */
 	int	nobj;
 	int	i;
 	int	n;
@@ -447,7 +447,7 @@ int	n;
 {
 	int	i;
 	vect_t	normal;
-	char	rgb[4];
+	unsigned char	rgb[4];
 	char	rname[32];
 	char	sname[32];
 	struct wmember head;
