@@ -6,7 +6,8 @@
 
 #define SRCDIR	conv
 #define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g g-euclid \
-			euclid_format tankill-g g-tankill viewpoint-g dxf-g g-nmg g-euclid1 class_regions
+			euclid_format tankill-g g-tankill viewpoint-g dxf-g g-nmg \
+			g-euclid1 fast4-g
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -15,8 +16,8 @@
 
 /* Explicit composition of each product */
 
-class_regions:	class_regions.o
-	CC LDFLAGS class_regions.o LIBRT LIBRT_LIBES LIBES -o class_regions
+fast4-g: fast4-g.0 LIBRT LIBWDB
+	CC LDFLAGS fast4-g.o LIBRT LIBRT_LIBES LIBES -o fast4-g
 
 asc2g:	asc2g.o LIBRT LIBWDB
 	CC LDFLAGS asc2g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o asc2g
