@@ -268,11 +268,13 @@ bu_avail_cpus()
 {
 	int	ret = 1;
 
-#if 0
+#if defined(linux)
+#  if 0
 	//#ifdef linux 
-#define CPUINFO_FILE "/proc/cpuinfo"
+#    define CPUINFO_FILE "/proc/cpuinfo"
 	FILE *fp;
 	char buf[128];
+#  endif
 #endif
 
 #ifdef __ppc__
@@ -354,6 +356,7 @@ bu_avail_cpus()
  * These machines may or may not have posix threads, but (more importantly)
  * they do have other mechanisms for determining cpu count
  */
+#if defined(linux)
 #if 0
 	/* old linux method */
 	/*
@@ -401,6 +404,7 @@ bu_avail_cpus()
 	}
 	/* this should also work: sysconf(_SC_NPROCESSORS_CONF);  */
 #	define RT_AVAIL_CPUS
+#endif
 #endif
 
 #if defined(n16)
