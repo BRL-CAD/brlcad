@@ -762,12 +762,9 @@ char *file, *obj;
 		/* Output is destined for a file */
 		return(0);		/* don't open framebuffer */
 	}
-	if (rpt_dist)
-	{
-		bu_log("Warning: -d ignored.  Writing to frame buffer\n");
-		rpt_dist = 0;
-	}
-	return(1);		/* open a framebuffer */
+	bu_bomb("rttherm: No -o flag specified, can't write to framebuffer, aborting\n");
+	exit(2);
+	/* NOTREACHED */
 }
 
 /*
