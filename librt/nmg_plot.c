@@ -1126,6 +1126,31 @@ int				fancy;
 }
 
 /*
+ *			N M G _ V L B L O C K _ A R O U N D _ E U
+ *
+ *  Given an edgeuse, plot all the edgeuses around the common edge.
+ *  A graphical parallel to nmg_pr_fu_around_eu_vecs().
+ */
+void
+nmg_vlblock_around_eu(vbp, orig_eu, tab )
+struct rt_vlblock		*vbp;
+CONST struct edgeuse		*orig_eu;
+long				*tab;
+{
+	register CONST struct edgeuse	*eu;
+
+	orig_eu = orig_eu->eumate_p;
+
+	eu = orig_eu;
+	do {
+		nmg_vlblock_eu(vbp, eu, tab, 80, 100, 170, 3 );
+		eu = eu->eumate_p;
+		nmg_vlblock_eu(vbp, eu, tab, 80, 100, 170, 3 );
+		eu = eu->radial_p;
+	} while( eu != orig_eu );
+}
+
+/*
  *			N M G _ V L B L O C K _ L U
  */
 void
