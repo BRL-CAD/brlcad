@@ -495,13 +495,12 @@ set -S2 "/bin/sh"
 #	endif
 #	define	GFLAG		-G 15
 /*	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
-/*	Warning 293 is a nuissance, and shouldn't even be printed */
-#	define  CC_OPTS		GFLAG -ansiposix -woff 293
+#	define  CC_OPTS		GFLAG -ansiposix
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
 #	define	LIBMALLOC	/* needs malloc() from -lmpc */
-/*		X11 Configuration */
+/*	X11 Configuration is standard in IRIX 4.0 */
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I/usr/X11/include -DIF_X
 #	define	LIBFB_LIBES	-lX11''SHARED LIBPKG -lgl''SHARED
