@@ -98,7 +98,7 @@ int	pixel_size;		/* bytes per pixel */
 	else
 		cp = filename;		/* no slash */
 
-	if( pix_common_name_size( widthp, heightp, cp ) )
+	if( bn_common_name_size( widthp, heightp, cp ) )
 	        return 1;
 
 	if( stat( filename, &sbuf ) < 0 )
@@ -106,7 +106,7 @@ int	pixel_size;		/* bytes per pixel */
 
 	size = sbuf.st_size / pixel_size;
 
-	return pix_common_image_size( widthp, heightp, size );
+	return bn_common_image_size( widthp, heightp, size );
 }
 
 
