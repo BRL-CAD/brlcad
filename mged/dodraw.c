@@ -1,9 +1,11 @@
 /*
+ * XXXXX Big-E is badly broken right now
+ * XXXXX redraw() is broken too -- breaks solid edits.
+ *
  *			D O D R A W . C
  *
  * Functions -
- *	drawtree	Call drawHobj to draw a tree
- *	drawHobj	Call drawsolid for all solids in an object
+ *	drawtree	Draw a tree
  *	drawHsolid	Manage the drawing of a COMGEOM solid
  *	pathHmat	Find matrix across a given path
  *	redraw		redraw a single solid, given matrix and record.
@@ -35,17 +37,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
+#include "../librt/debug.h"	/* XXX */
+
 struct vlist	*rtg_vlFree;	/* should be rt_g.rtg_vlFree !! XXX dm.h */
 
-int	reg_error;	/* error encountered in region processing */
 int	no_memory;	/* flag indicating memory for drawing is used up */
 long	nvectors;	/* number of vectors drawn so far */
 
 int	regmemb;	/* # of members left to process in a region */
 char	memb_oper;	/* operation for present member of processed region */
 int	reg_pathpos;	/* pathpos of a processed region */
-
-struct directory	*cur_path[MAX_PATH];	/* Record of current path */
 
 static struct mater_info mged_no_mater = {
 	/* RT default is white.  This is red, to stay clear of illuminate mode */
@@ -56,6 +57,295 @@ static struct mater_info mged_no_mater = {
 };
 
 /*
+ *  This is just like the rt_initial_tree_state in librt/tree.c,
+ *  except that the default color is red instead of white.
+ *  This avoids confusion with illuminate mode.
+ *  Red is a one-gun color, avoiding convergence problems too.
+ */
+static struct db_tree_state	mged_initial_tree_state = {
+	0,			/* ts_dbip */
+	0,			/* ts_sofar */
+	0, 0, 0,		/* region, air, gmater */
+	1.0, 0.0, 0.0,		/* color, RGB */
+	0,			/* override */
+	DB_INH_LOWER,		/* color inherit */
+	DB_INH_LOWER,		/* mater inherit */
+	"",			/* material name */
+	"",			/* material params */
+	1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0,
+};
+
+static struct model	*mged_nmg_model;
+
+/*
+ *			M G E D _ W I R E F R A M E _ R E G I O N _ E N D
+ *
+ *  This routine must be prepared to run in parallel.
+ */
+HIDDEN union tree *mged_wireframe_region_end( tsp, pathp, curtree )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+{
+	return( curtree );
+}
+
+/*
+ *			M G E D _ W I R E F R A M E _ L E A F
+ *
+ *  This routine must be prepared to run in parallel.
+ */
+HIDDEN union tree *mged_wireframe_leaf( tsp, pathp, rp, id )
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union record		*rp;
+int			id;
+{
+	union tree	*curtree;
+
+	if(rt_g.debug&DEBUG_TREEWALK)  {
+		char	*sofar = db_path_to_string(pathp);
+		rt_log("mged_wireframe_leaf(%s) path='%s'\n",
+			rt_functab[id].ft_name, sofar );
+		rt_free(sofar, "path string");
+	}
+
+	/*
+	 * Enter new solid (or processed region) into displaylist.
+	 */
+	if( drawHsolid( rp, pathp, id, tsp ) < 0 ) {
+	    	return(TREE_NULL);		/* ERROR */
+	}
+
+	/* Indicate success by returning something other than TREE_NULL */
+	GETUNION( curtree, tree );
+	curtree->tr_op = OP_NOP;
+
+	return( curtree );
+}
+
+/*
+ *			M G E D _ B I G e _ L E A F
+ *
+ *  This routine must be prepared to run in parallel.
+ */
+HIDDEN union tree *mged_bigE_leaf( tsp, pathp, rp, id )
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union record		*rp;
+int			id;
+{
+}
+
+/*
+ *			M G E D _ B I G e _ R E G I O N _ E N D
+ *
+ *  This routine must be prepared to run in parallel.
+ */
+HIDDEN union tree *mged_bigE_region_end( tsp, pathp, curtree )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+{
+}
+
+/*
+ *			M G E D _ N M G _ L E A F
+ *
+ *  This routine must be prepared to run in parallel.
+ */
+HIDDEN union tree *mged_nmg_leaf( tsp, pathp, rp, id )
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union record		*rp;
+int			id;
+{
+	struct nmgregion	*r1;
+	union tree	*curtree;
+	struct directory	*dp;
+
+	dp = DB_FULL_PATH_CUR_DIR(pathp);
+
+	/* Tessellate Solid to NMG */
+	if( rt_functab[id].ft_tessellate(
+	    &r1, mged_nmg_model, rp, tsp->ts_mat, dp ) < 0 )  {
+		rt_log("%s tessellation failure\n", dp->d_namep);
+	    	return(TREE_NULL);
+	}
+	nmg_ck_closed_surf( r1->s_p );	/* debug */
+	NMG_CK_REGION( r1 );
+
+	GETUNION( curtree, tree );
+	curtree->tr_op = OP_REGION;	/* tag for nmg */
+	curtree->tr_a.tu_stp = (struct soltab *)r1;
+	curtree->tr_a.tu_name = (char *)0;
+	curtree->tr_a.tu_regionp = (struct region *)0;
+
+	if(rt_g.debug&DEBUG_TREEWALK)
+		rt_log("mged_nmg_leaf() %s\n", curtree->tr_a.tu_name );
+
+	return(curtree);
+}
+
+struct nmgregion *
+mged_nmg_doit( tp )
+union tree	*tp;
+{
+	struct nmgregion	*l, *r;
+	int	op;
+
+	switch( tp->tr_op )  {
+	case OP_NOP:
+		return( 0 );
+
+	case OP_REGION:
+		r = (struct nmgregion *)tp->tr_a.tu_stp;
+		tp->tr_a.tu_stp = SOLTAB_NULL;	/* Disconnect */
+		return( r );
+
+	case OP_UNION:
+		op = NMG_BOOL_ADD;
+		goto com;
+	case OP_INTERSECT:
+		op = NMG_BOOL_ISECT;
+		goto com;
+	case OP_SUBTRACT:
+		op = NMG_BOOL_SUB;
+		goto com;
+
+	default:
+		rt_log("mged_nmg_doit: bad op %d\n", tp->tr_op);
+		return(0);
+	}
+com:
+	l = mged_nmg_doit( tp->tr_b.tb_left );
+	r = mged_nmg_doit( tp->tr_b.tb_right );
+	if( l == 0 )  {
+		if( r == 0 )
+			return( 0 );
+		return( r );
+	}
+	if( r == 0 )  {
+		if( l == 0 )
+			return(0);
+		return( l );
+	}
+	NMG_CK_REGION( r );
+	NMG_CK_REGION( l );
+	nmg_ck_closed_surf( r->s_p );	/* debug */
+	nmg_ck_closed_surf( l->s_p );	/* debug */
+
+	/* input r1 and r2 are destroyed, output is new r1 */
+	r = nmg_do_bool( l, r, op );
+	NMG_CK_REGION( r );
+	nmg_ck_closed_surf( r->s_p );	/* debug */
+	return( r );
+}
+
+/*
+ *			M G E D _ N M G _ R E G I O N _ E N D
+ *
+ *  This routine must be prepared to run in parallel.
+ */
+HIDDEN union tree *mged_nmg_region_end( tsp, pathp, curtree )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+{
+	struct nmgregion	*r;
+	struct vlhead	vhead;
+
+	vhead.vh_first = vhead.vh_last = VL_NULL;
+
+	if(rt_g.debug&DEBUG_TREEWALK)  {
+		char	*sofar = db_path_to_string(pathp);
+		rt_log("mged_nmg_region_end() path='%s'\n",
+			sofar);
+		rt_free(sofar, "path string");
+	}
+
+	r = mged_nmg_doit( curtree );
+	if( r != 0 )  {
+		/* Convert NMG to vlist */
+		NMG_CK_REGION(r);
+
+		/* 0 = vectors, 1 = w/polygon markers */
+		nmg_s_to_vlist( &vhead, r->s_p, 1 );
+
+		drawH_part2( 0, vhead.vh_first, pathp, tsp );
+	}
+
+	/* Return original tree -- it needs to be freed (by caller) */
+	return( curtree );
+}
+
+/*
+ *			D R A W T R E E S
+ *
+ *  This routine is MGED's analog of rt_gettrees().
+ *  Add a set of tree hierarchies to the active set.
+ *
+ *  Kind =
+ *	1	regular wireframes
+ *	2	big-E
+ *	3	NMG polygons
+ *  
+ *  Returns -
+ *  	0	Ordinarily
+ *	-1	On major error
+ */
+int
+drawtrees( argc, argv, kind )
+int	argc;
+char	**argv;
+int	kind;
+{
+	int			i;
+
+	RT_CHECK_DBI(dbip);
+
+	if( argc <= 0 )  return(-1);	/* FAIL */
+
+	switch( kind )  {
+	default:
+		rt_log("ERROR, bad kind\n");
+		return(-1);
+	case 1:		/* Wireframes */
+	case 2:		/* Big-E */
+		i = db_walk_tree( dbip, argc, argv,
+			1,	/* # cpus */
+			&mged_initial_tree_state,
+			0,			/* take all regions */
+			mged_wireframe_region_end,
+			mged_wireframe_leaf );
+		if( i < 0 )  return(-1);
+		break;
+	case 3:
+	  {
+		/* NMG */
+	  	mged_nmg_model = nmg_mm();
+		i = db_walk_tree( dbip, argc, argv,
+			1,	/* # cpus */
+			&mged_initial_tree_state,
+			0,			/* take all regions */
+			mged_nmg_region_end,
+			mged_nmg_leaf );
+
+		/* Destroy NMG */
+		nmg_km( mged_nmg_model );
+
+		if( i < 0 )  return(-1);
+	  	break;
+	  }
+	}
+
+	return(0);	/* OK */
+}
+
+/*
  *			D R A W T R E E
  *
  *  This routine is the analog of rt_gettree().
@@ -64,186 +354,7 @@ void
 drawtree( dp )
 struct directory	*dp;
 {
-	mat_t		root;
-	struct mater_info	root_mater;
-
-	root_mater = mged_no_mater;	/* struct copy */
-
-	mat_idn( root );
-	/* Could apply root animations here ? */
-
-	drawHobj( dp, ROOT, 0, root, 0, &root_mater );
-}
-
-/*
- *			D R A W H O B J
- *
- * This routine is used to get an object drawn.
- * The actual drawing of solids is performed by drawsolid(),
- * but all transformations down the path are done here.
- */
-void
-drawHobj( dp, flag, pathpos, old_xlate, regionid, materp )
-register struct directory *dp;
-int		flag;
-int		pathpos;
-matp_t		old_xlate;
-int		regionid;
-struct mater_info *materp;
-{
-	union record	*rp;
-	auto mat_t	new_xlate;	/* Accumulated translation matrix */
-	auto int	i;
-	struct mater_info curmater;
-
-	if( pathpos >= MAX_PATH )  {
-		(void)printf("nesting exceeds %d levels\n", MAX_PATH );
-		for(i=0; i<MAX_PATH; i++)
-			(void)printf("/%s", cur_path[i]->d_namep );
-		(void)putchar('\n');
-		return;			/* ERROR */
-	}
-
-	/*
-	 * Load the record into local record buffer
-	 */
-	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-		return;
-
-	if( rp[0].u_id != ID_COMB )  {
-		register struct solid *sp;
-
-		if( rt_id_solid( rp ) == ID_NULL )  {
-			(void)printf("drawobj(%s):  defective database record, type='%c' (0%o) addr=x%x\n",
-				dp->d_namep,
-				rp[0].u_id, rp[0].u_id, dp->d_addr );
-			goto out;		/* ERROR */
-		}
-		/*
-		 * Enter new solid (or processed region) into displaylist.
-		 */
-		cur_path[pathpos] = dp;
-
-		GET_SOLID( sp );
-		if( sp == SOLID_NULL )
-			return;		/* ERROR */
-		if( drawHsolid( sp, flag, pathpos, old_xlate, rp, regionid, materp ) != 1 ) {
-			FREE_SOLID( sp );
-		}
-		goto out;
-	}
-
-	/*
-	 *  At this point, u_id == ID_COMB.
-	 *  Process a Combination (directory) node
-	 */
-	if( dp->d_len <= 1 )  {
-		(void)printf("Warning: combination with zero members \"%s\".\n",
-			dp->d_namep );
-		goto out;			/* non-fatal ERROR */
-	}
-
-	/*
-	 *  Handle inheritance of material property.
-	 *  Color and the material property have separate
-	 *  inheritance interlocks.
-	 */
-	curmater = *materp;	/* struct copy */
-	if( rp[0].c.c_override == 1 )  {
-		if( regionid != 0 )  {
-			rt_log("rt_drawobj: ERROR: color override in combination within region %s\n",
-				dp->d_namep );
-		} else {
-			if( curmater.ma_cinherit == DB_INH_LOWER )  {
-				curmater.ma_override = 1;
-				curmater.ma_color[0] = (rp[0].c.c_rgb[0])*rt_inv255;
-				curmater.ma_color[1] = (rp[0].c.c_rgb[1])*rt_inv255;
-				curmater.ma_color[2] = (rp[0].c.c_rgb[2])*rt_inv255;
-				curmater.ma_cinherit = rp[0].c.c_inherit;
-			}
-		}
-	}
-	if( rp[0].c.c_matname[0] != '\0' )  {
-		if( regionid != 0 )  {
-			rt_log("rt_drawobj: ERROR: material property spec in combination within region %s\n",
-				dp->d_namep );
-		} else {
-			if( curmater.ma_minherit == DB_INH_LOWER )  {
-				strncpy( curmater.ma_matname, rp[0].c.c_matname, sizeof(rp[0].c.c_matname) );
-				strncpy( curmater.ma_matparm, rp[0].c.c_matparm, sizeof(rp[0].c.c_matparm) );
-				curmater.ma_minherit = rp[0].c.c_inherit;
-			}
-		}
-	}
-
-	/* Handle combinations which are the top of a "region" */
-	if( rp[0].c.c_flags == 'R' )  {
-		if( regionid != 0 )
-			(void)printf("regionid %d overriden by %d\n",
-				regionid, rp[0].c.c_regionid );
-		regionid = rp[0].c.c_regionid;
-	}
-
-	/*
-	 *  This node is a combination (eg, a directory).
-	 *  Process all the arcs (eg, directory members).
-	 */
-	if( drawreg && rp[0].c.c_flags == 'R' && dp->d_len > 1 ) {
-		if( regmemb >= 0  ) {
-			(void)printf(
-			"ERROR: region (%s) is member of region (%s)\n",
-				dp->d_namep,
-				cur_path[reg_pathpos]->d_namep);
-			goto out;	/* ERROR */
-		}
-		/* Well, we are processing regions and this is a region */
-		/* if region has only 1 member, don't process as a region */
-		if( dp->d_len > 2) {
-			regmemb = dp->d_len-1;
-			reg_pathpos = pathpos;
-		}
-	}
-
-	/* Process all the member records */
-	for( i=1; i < dp->d_len; i++ )  {
-		register struct member	*mp;
-		register struct directory *nextdp;
-		static mat_t		xmat;	/* temporary fastf_t matrix */
-
-		mp = &(rp[i].M);
-		if( mp->m_id != ID_MEMB )  {
-			fprintf(stderr,"drawHobj:  %s bad member rec\n",
-				dp->d_namep);
-			goto out;			/* ERROR */
-		}
-		cur_path[pathpos] = dp;
-		if( regmemb > 0  ) { 
-			regmemb--;
-			memb_oper = mp->m_relation;
-		}
-		if( (nextdp = db_lookup( dbip,  mp->m_instname, LOOKUP_NOISY )) == DIR_NULL )
-			continue;
-
-		/* s' = M3 . M2 . M1 . s
-		 * Here, we start at M3 and descend the tree.
-		 * convert matrix to fastf_t from disk format.
-		 */
-		rt_mat_dbmat( xmat, mp->m_mat );
-		/* Check here for animation to apply */
-		mat_mul(new_xlate, old_xlate, xmat);
-
-		/* Recursive call */
-		drawHobj(
-			nextdp,
-			(mp->m_relation != SUBTRACT) ? ROOT : INNER,
-			pathpos + 1,
-			new_xlate,
-			regionid,
-			&curmater
-		);
-	}
-out:
-	rt_free( (char *)rp, "drawHobj recs");
+	(void)drawtrees( 1, &(dp->d_namep) );
 }
 
 /*
@@ -251,57 +362,41 @@ out:
  *
  * Returns -
  *	-1	on error
- *	 0	if NO OP
- *	 1	if solid was drawn
+ *	 0	if OK
  */
 int
-drawHsolid( sp, flag, pathpos, xform, recordp, regionid, materp )
-register struct solid *sp;
-int		flag;
-int		pathpos;
-matp_t		xform;
+drawHsolid( recordp, pathp, id, tsp )
 union record	*recordp;
-int		regionid;
-struct mater_info *materp;
+struct db_full_path	*pathp;
+int		id;
+struct db_tree_state	*tsp;
 {
-	register struct vlist *vp;
-	register int i;
-	int dashflag;		/* draw with dashed lines */
-	int count;
+	register int	i;
+	int		dashflag;		/* draw with dashed lines */
 	struct vlhead	vhead;
-	vect_t		maxvalue, minvalue;
 
 	vhead.vh_first = vhead.vh_last = VL_NULL;
 	if( regmemb >= 0 ) {
+		int	flag = '-';
 		/* processing a member of a processed region */
 		/* regmemb  =>  number of members left */
 		/* regmemb == 0  =>  last member */
-		/* reg_error > 0  =>  error condition  no more processing */
-		if(reg_error) { 
-			if(regmemb == 0) {
-				reg_error = 0;
-				regmemb = -1;
-			}
-			return(-1);		/* ERROR */
-		}
 		if(memb_oper == UNION)
 			flag = 999;
 
 		/* The hard part */
-		i = proc_region( recordp, xform, flag );
+		/* XXX flag is the boolean operation */
+		i = proc_region( recordp, tsp->ts_mat, flag );
 
 		if( i < 0 )  {
 			/* error somwhere */
-			(void)printf("will skip region: %s\n",
-					cur_path[reg_pathpos]->d_namep);
-			reg_error = 1;
+			(void)printf("Error in converting solid %s to ARBN\n",
+				DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 			if(regmemb == 0) {
 				regmemb = -1;
-				reg_error = 0;
 			}
 			return(-1);		/* ERROR */
 		}
-		reg_error = 0;		/* reset error flag */
 
 		/* if more member solids to be processed, no drawing was done
 		 */
@@ -313,53 +408,40 @@ struct mater_info *materp;
 			(void)printf("error in finish_region()\n");
 			return(-1);		/* ERROR */
 		}
-		dashflag = 0;
+		drawH_part2( 0, vhead.vh_first, pathp, tsp );
 	}  else  {
 		/* Doing a normal solid */
-		int id;
-		extern int use_nmg_flag;	/* XXX from chgview.c */
 
-		dashflag = (flag != ROOT);
+		dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER) );
 
-		id = rt_id_solid( recordp );
-		if( id < 0 || id >= rt_nfunctab )  {
-			printf("drawHsolid(%s):  unknown database object\n",
-				cur_path[pathpos]->d_namep);
-			return(-1);			/* ERROR */
+		if( rt_functab[id].ft_plot( recordp, tsp->ts_mat, &vhead,
+		    DB_FULL_PATH_CUR_DIR(pathp) ) < 0 )  {
+			printf("%s: vector conversion failure\n",
+				DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 		}
-
-		if( use_nmg_flag )  {
-			struct model		*m;
-			struct nmgregion	*r;
-
-			/* Tessellate Solid to NMG region */
-			m = nmg_mm();		/* Make model */
-			if( rt_functab[id].ft_tessellate( &r, m,
-			    recordp, xform, cur_path[pathpos] ) < 0 )  {
-				printf("%s: tessellate failure\n", cur_path[pathpos]->d_namep );
-			} else {
-				/* Convert NMG to vlist */
-				NMG_CK_REGION(r);
-				/* 0 = vectors, 1 = w/polygon markers */
-				nmg_s_to_vlist( &vhead, r->s_p, 1 );
-			}
-
-			/* Destroy NMG */
-			nmg_km( m );
-		} else {
-			if( rt_functab[id].ft_plot( recordp, xform, &vhead,
-			    cur_path[pathpos] ) < 0 )  {
-				printf("%s: vector conversion failure\n",
-					cur_path[pathpos]->d_namep);
-			}
-		}
+		drawH_part2( dashflag, vhead.vh_first, pathp, tsp );
 	}
+	return(1);		/* OK */
+}
+
+drawH_part2( dashflag, vfirst, pathp, tsp )
+int		dashflag;
+struct vlist	*vfirst;
+struct db_full_path	*pathp;
+struct db_tree_state	*tsp;
+{
+	register struct solid *sp;
+	register struct vlist *vp;
+	register int	i;
+	vect_t		maxvalue, minvalue;
+
+	GET_SOLID( sp );
 
 	/* Take note of the base color */
-	if( materp )  {
-		sp->s_basecolor[0] = materp->ma_color[0] * 255.;
-		sp->s_basecolor[1] = materp->ma_color[1] * 255.;
-		sp->s_basecolor[2] = materp->ma_color[2] * 255.;
+	if( tsp )  {
+		sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
+		sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
+		sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
 	}
 
 	/*
@@ -367,9 +449,9 @@ struct mater_info *materp;
 	 */
 	VSETALL( maxvalue, -INFINITY );
 	VSETALL( minvalue,  INFINITY );
-	sp->s_vlist = vhead.vh_first;
+	sp->s_vlist = vfirst;
 	sp->s_vlen = 0;
-	for( vp = vhead.vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
+	for( vp = vfirst; vp != VL_NULL; vp = vp->vl_forw )  {
 		VMINMAX( minvalue, maxvalue, vp->vl_pnt );
 		sp->s_vlen++;
 	}
@@ -396,13 +478,13 @@ struct mater_info *materp;
 			sp->s_Eflag = 1;	/* This is processed region */
 		}  else  {
 			sp->s_Eflag = 0;	/* This is a solid */
-			sp->s_last = pathpos;
+			sp->s_last = pathp->fp_len-1;
 		}
 		/* Copy path information */
 		for( i=0; i<=sp->s_last; i++ )
-			sp->s_path[i] = cur_path[i];
+			sp->s_path[i] = pathp->fp_names[i];
 	}
-	sp->s_regionid = regionid;
+	sp->s_regionid = tsp->ts_regionid;
 	sp->s_addr = 0;
 	sp->s_bytes = 0;
 
@@ -429,8 +511,6 @@ struct mater_info *materp;
 		sp->s_iflag = UP;
 		dmp->dmr_viewchange( DM_CHGV_REPL, sp );
 	}
-
-	return(1);		/* OK */
 }
 
 /*
@@ -499,6 +579,8 @@ mat_t	mat;
 
 	if( sp == SOLID_NULL )
 		return( sp );
+
+/* XXX This is really broken!! */
 
 	/* Remember displaylist location of previous solid */
 	addr = sp->s_addr;

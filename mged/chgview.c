@@ -63,45 +63,67 @@ extern long	time();
 extern long	nvectors;	/* from dodraw.c */
 
 int		drawreg;	/* if > 0, process and draw regions */
-extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
 
 static void	eedit();
 void	f_zap();
 
+/* Delete an object or several objects from the display */
+/* Format: d object1 object2 .... objectn */
+void
+f_delobj(argc, argv)
+int	argc;
+char	**argv;
+{
+	register struct directory *dp;
+	register int i;
+
+	for( i = 1; i < argc; i++ )  {
+		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
+			eraseobj( dp );
+	}
+	no_memory = 0;
+	dmaflag = 1;
+}
+
 /* DEBUG -- force view center */
 /* Format: C x y z	*/
 void
-f_center()
+f_center(argc, argv)
+int	argc;
+char	**argv;
 {
 	/* must convert from the local unit to the base unit */
-	toViewcenter[MDX] = -atof( cmd_args[1] ) * local2base;
-	toViewcenter[MDY] = -atof( cmd_args[2] ) * local2base;
-	toViewcenter[MDZ] = -atof( cmd_args[3] ) * local2base;
+	toViewcenter[MDX] = -atof( argv[1] ) * local2base;
+	toViewcenter[MDY] = -atof( argv[2] ) * local2base;
+	toViewcenter[MDZ] = -atof( argv[3] ) * local2base;
 	new_mats();
 	dmaflag++;
 }
 
 void
-f_vrot()
+f_vrot(argc, argv)
+int	argc;
+char	**argv;
 {
 	/* Actually, it would be nice if this worked all the time */
 	/* usejoy isn't quite the right thing */
 	if( not_state( ST_VIEW, "View Rotate") )
 		return;
 
-	usejoy(	atof(cmd_args[1]) * degtorad,
-		atof(cmd_args[2]) * degtorad,
-		atof(cmd_args[3]) * degtorad );
+	usejoy(	atof(argv[1]) * degtorad,
+		atof(argv[2]) * degtorad,
+		atof(argv[3]) * degtorad );
 }
 
 /* DEBUG -- force viewsize */
 /* Format: view size	*/
 void
-f_view()
+f_view(argc, argv)
+int	argc;
+char	**argv;
 {
 	fastf_t f;
-	f = atof( cmd_args[1] );
+	f = atof( argv[1] );
 	if( f < 0.0001 ) f = 0.0001;
 	Viewscale = f * 0.5 * local2base;
 	new_mats();
@@ -111,7 +133,9 @@ f_view()
 /* ZAP the display -- then edit anew */
 /* Format: B object	*/
 void
-f_blast()
+f_blast(argc, argv)
+int	argc;
+char	**argv;
 {
 
 	f_zap();
@@ -127,30 +151,30 @@ f_blast()
 
 	drawreg = 0;
 	regmemb = -1;
-	eedit();
+	eedit( argc, argv, 1 );
 }
 
-int	use_nmg_flag = 0;	/* XXX temporary.  Used by dodraw.c */
 /* Edit something (add to visible display) */
 /* Format: e object	*/
 void
-f_edit()
+f_edit(argc, argv)
+int	argc;
+char	**argv;
 {
-	use_nmg_flag = 0;	/* XXX */
 	drawreg = 0;
 	regmemb = -1;
-	eedit();
+	eedit( argc, argv, 1 );
 }
 
 /* Format: enmg objects	*/
 void
-f_enmg()
+f_enmg(argc, argv)
+int	argc;
+char	**argv;
 {
-	use_nmg_flag = 1;
 	drawreg = 0;
 	regmemb = -1;
-	eedit();
-	use_nmg_flag = 0;
+	eedit( argc, argv, 3 );
 }
 
 /*
@@ -161,12 +185,13 @@ f_enmg()
  *  Usage: E object(s)
  */
 void
-f_evedit()
+f_evedit(argc, argv)
+int	argc;
+char	**argv;
 {
-	use_nmg_flag = 0;
 	drawreg = 1;
 	regmemb = -1;
-	eedit();
+	eedit( argc, argv, 2 );
 }
 
 /*
@@ -220,71 +245,47 @@ size_reset()
  * B, e, and E commands uses this area as common
  */
 static void
-eedit()
+eedit(argc, argv, kind)
+int	argc;
+char	**argv;
+int	kind;
 {
 	register struct directory *dp;
 	register int	i;
 	long		stime, etime;	/* start & end times */
-	static int	first_time = 1;
+	int		initial_blank_screen;
+
+	initial_blank_screen = (HeadSolid.s_forw == &HeadSolid);
+
+	/* First, delete any mention of these objects */
+	f_delobj( argc, argv );
+	if( dmp->dmr_displaylist )  {
+		/* Force displaylist update before starting new drawing */
+		dmaflag = 1;
+		refresh();
+	}
+
+	if( no_memory )  {
+		(void)printf("No memory left\n");
+		drawreg = 0;
+		regmemb = -1;
+		return;
+	}
 
 	nvectors = 0;
 	(void)time( &stime );
-	for( i=1; i < numargs; i++ )  {
-		if( (dp = db_lookup( dbip,  cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
-			continue;
-
-		if( dmp->dmr_displaylist )  {
-			/*
-			 * Delete any portion of object
-			 * remaining from previous draw.
-			 */
-			eraseobj( dp );
-			dmaflag++;
-			refresh();
-			dmaflag++;
-		}
-
-		/*
-		 * Draw this object as a ROOT object, level 0
-		 * on the path, with no displacement, and
-		 * unit scale.
-		 */
-		if( no_memory )  {
-			(void)printf("No memory left so cannot draw %s\n",
-				dp->d_namep);
-			drawreg = 0;
-			regmemb = -1;
-			continue;
-		}
-
-		drawtree( dp );
-		regmemb = -1;
-	}
+	/* XXX For big-E, regmemb must be set to -1 after each object */
+	drawtrees( argc-1, &argv[1], kind );
 	(void)time( &etime );
-	if( first_time && HeadSolid.s_forw != &HeadSolid)  {
-		first_time = 0;
+	(void)printf("%ld vectors in %ld sec\n", nvectors, etime - stime );
+	
+	/* If we went from blank screen to non-blank, resize */
+	if( initial_blank_screen && HeadSolid.s_forw != &HeadSolid)  {
 		size_reset();
 		new_mats();
 	}
 
-	(void)printf("%ld vectors in %ld sec\n", nvectors, etime - stime );
 	dmp->dmr_colorchange();
-	dmaflag = 1;
-}
-
-/* Delete an object or several objects from the display */
-/* Format: d object1 object2 .... objectn */
-void
-f_delobj()
-{
-	register struct directory *dp;
-	register int i;
-
-	for( i = 1; i < numargs; i++ )  {
-		if( (dp = db_lookup( dbip,  cmd_args[i], LOOKUP_NOISY )) != DIR_NULL )
-			eraseobj( dp );
-	}
-	no_memory = 0;
 	dmaflag = 1;
 }
 
@@ -302,23 +303,27 @@ char	**argv;
 }
 
 void
-f_regdebug()
+f_regdebug(argc, argv)
+int	argc;
+char	**argv;
 {
 	static int regdebug = 0;
 
-	if( numargs <= 1 )
+	if( argc <= 1 )
 		regdebug = !regdebug;	/* toggle */
 	else
-		regdebug = atoi( cmd_args[1] );
+		regdebug = atoi( argv[1] );
 	(void)printf("regdebug=%d\n", regdebug);
 	dmp->dmr_debug(regdebug);
 }
 
 void
-f_debuglib()
+f_debuglib(argc, argv)
+int	argc;
+char	**argv;
 {
-	if( numargs >= 2 )  {
-		sscanf( cmd_args[1], "%x", &rt_g.debug );
+	if( argc >= 2 )  {
+		sscanf( argv[1], "%x", &rt_g.debug );
 	}
 	rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
 	rt_log("\n");
@@ -536,7 +541,9 @@ char	**argv;
 /* ZAP the display -- everything dropped */
 /* Format: Z	*/
 void
-f_zap()
+f_zap(argc, argv)
+int	argc;
+char	**argv;
 {
 	register struct solid *sp;
 	register struct solid *nsp;
@@ -561,7 +568,9 @@ f_zap()
 }
 
 void
-f_status()
+f_status(argc, argv)
+int	argc;
+char	**argv;
 {
 	(void)printf("STATE=%s, ", state_str[state] );
 	(void)printf("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
@@ -578,36 +587,46 @@ f_status()
 
 /* Fix the display processor after a hardware error by re-attaching */
 void
-f_fix()
+f_fix(argc, argv)
+int	argc;
+char	**argv;
 {
 	attach( dmp->dmr_name );	/* reattach */
 	dmaflag = 1;		/* causes refresh() */
 }
 
 void
-f_refresh()
+f_refresh(argc, argv)
+int	argc;
+char	**argv;
 {
 	dmaflag = 1;		/* causes refresh() */
 }
 
 /* set view using azimuth and elevation angles */
 void
-f_aeview()
+f_aeview(argc, argv)
+int	argc;
+char	**argv;
 {
-	setview( 270 + atoi(cmd_args[2]), 0, 270 - atoi(cmd_args[1]) );
+	setview( 270 + atoi(argv[2]), 0, 270 - atoi(argv[1]) );
 }
 
 void
-f_attach()
+f_attach(argc, argv)
+int	argc;
+char	**argv;
 {
-	if (numargs == 1)
+	if (argc == 1)
 		get_attached();
 	else
-		attach( cmd_args[1] );
+		attach( argv[1] );
 }
 
 void
-f_release()
+f_release(argc, argv)
+int	argc;
+char	**argv;
 {
 	release();
 }
@@ -701,7 +720,9 @@ int		lvl;			/* debug level */
 /* Illuminate the named object */
 /* TODO:  allow path specification on cmd line */
 void
-f_ill()
+f_ill(argc, argv)
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	register struct solid *sp;
@@ -709,7 +730,7 @@ f_ill()
 	register int i;
 	int nmatch;
 
-	if( (dp = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 	if( state != ST_O_PICK && state != ST_S_PICK )  {
 		state_err("keyboard illuminate pick");
@@ -727,11 +748,11 @@ f_ill()
 		sp->s_iflag = DOWN;
 	}
 	if( nmatch <= 0 )  {
-		(void)printf("%s not being displayed\n", cmd_args[1]);
+		(void)printf("%s not being displayed\n", argv[1]);
 		return;
 	}
 	if( nmatch > 1 )  {
-		(void)printf("%s multiply referenced\n", cmd_args[1]);
+		(void)printf("%s multiply referenced\n", argv[1]);
 		return;
 	}
 	/* Make the specified solid the illuminated solid */
@@ -749,7 +770,9 @@ f_ill()
 
 /* Simulate pressing "Solid Edit" and doing an ILLuminate command */
 void
-f_sed()
+f_sed(argc, argv)
+int	argc;
+char	**argv;
 {
 	if( not_state( ST_VIEW, "keyboard solid edit start") )
 		return;
@@ -760,20 +783,22 @@ f_sed()
 
 /* Simulate a knob twist.  "knob id val" */
 void
-f_knob()
+f_knob(argc, argv)
+int	argc;
+char	**argv;
 {
 	fastf_t f;
 
-	if(numargs == 2)
+	if(argc == 2)
 		f = 0;
 	else {
-		f = atof(cmd_args[2]);
+		f = atof(argv[2]);
 		if( f < -1.0 )
 			f = -1.0;
 		else if( f > 1.0 )
 			f = 1.0;
 	}
-	switch( cmd_args[1][0] )  {
+	switch( argv[1][0] )  {
 	case 'x':
 		dm_values.dv_xjoy = f;
 		break;
