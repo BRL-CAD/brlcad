@@ -9,6 +9,8 @@
 #include "nmg.h"
 #include "raytrace.h"
 
+#define	tri_debug	&
+
 /* macros for comparing 2D points in scanline order */
 #define P_GT_V(_p, _v) \
 	(((_p)->coord[Y] > (_v)->coord[Y]) || ((_p)->coord[Y] == (_v)->coord[Y] && (_p)->coord[X] < (_v)->coord[X]))
@@ -1203,7 +1205,7 @@ vect_t dir;
 
 	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		rt_log("pick_eu(%g %g %g  <-> %g %g %g,   %g %g %g)\n",
-			V3ARGS(eu_p->vu_p->v_p->vg_p
+			V3ARGS(eu_p->vu_p->v_p->vg_p ) );
 
 	if (find_max) dot_limit = -2.0;
 	else dot_limit = 2.0;
