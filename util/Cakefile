@@ -25,7 +25,7 @@
 		spm-fb pix-spm \
 		fbfree fbhelp gif2fb pix3filter \
 		fbfade fbstretch gif-fb \
-		pix-sun pix-alias alias-pix pixcolors hd
+		pix-sun pix-alias alias-pix pixcolors hd sgi-pix
 
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -39,13 +39,13 @@ dunncolor:	dunncolor.o dunncomm.o
 	CC LDFLAGS -o dunncolor dunncolor.o dunncomm.o LIBES
 
 dunnsnap:	dunnsnap.o dunncomm.o LIBFB
-	CC LDFLAGS -o dunnsnap dunnsnap.o dunncomm.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o dunnsnap dunnsnap.o dunncomm.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 fbanim:		fbanim.o LIBFB
-	CC LDFLAGS -o fbanim fbanim.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbanim fbanim.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pl-fb:		pl-fb.o LIBFB
-	CC LDFLAGS -o pl-fb pl-fb.o LIB_PRE''LIBFB LIB_PRE''LIBPLOT LIBES
+	CC LDFLAGS -o pl-fb pl-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBPLOT LIBES
 
 loop:		loop.o
 	CC LDFLAGS -o loop loop.o LIBES
@@ -63,13 +63,13 @@ pixmatte:	pixmatte.o
 	CC LDFLAGS -o pixmatte pixmatte.o LIBES
 
 fbcbars:	fbcbars.o LIBFB
-	CC LDFLAGS -o fbcbars fbcbars.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbcbars fbcbars.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pix-fb:		pix-fb.o LIBFB
-	CC LDFLAGS -o pix-fb pix-fb.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o pix-fb pix-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 fb-pix:		fb-pix.o linear-cmap.o cmap-crunch.o LIBFB
-	CC LDFLAGS -o fb-pix fb-pix.o linear-cmap.o cmap-crunch.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fb-pix fb-pix.o linear-cmap.o cmap-crunch.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pixbustup:	pixbustup.o
 	CC LDFLAGS -o pixbustup pixbustup.o LIBES
@@ -91,33 +91,33 @@ pixtile:	pixtile.o
 	CC LDFLAGS -o pixtile pixtile.o LIBES
 
 pixflip-fb:	pixflip-fb.o LIBFB
-	CC LDFLAGS -o pixflip-fb pixflip-fb.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o pixflip-fb pixflip-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pixuntile:	pixuntile.o
 	CC LDFLAGS -o pixuntile pixuntile.o LIBES
 
 pp-fb:		pp-fb.o LIBFB LIBTERMIO
-	CC LDFLAGS -o pp-fb pp-fb.o LIB_PRE''LIBFB LIBTERMIO LIBES
+	CC LDFLAGS -o pp-fb pp-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBTERMIO LIBES
 
 fbclear:	fbclear.o LIBFB
-	CC LDFLAGS -o fbclear fbclear.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbclear fbclear.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 fbfree:	fbfree.o LIBFB
-	CC LDFLAGS -o fbfree fbfree.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbfree fbfree.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 fbhelp:	fbhelp.o LIBFB
-	CC LDFLAGS -o fbhelp fbhelp.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbhelp fbhelp.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 fbgrid:		fbgrid.o LIBFB
-	CC LDFLAGS -o fbgrid fbgrid.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbgrid fbgrid.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 /* Old RLE Programs (Utah format Edition 2) */
 
 orle-fb:	orle-fb.o LIBFB LIBORLE
-	CC LDFLAGS -o orle-fb orle-fb.o LIB_PRE''LIBFB LIBORLE LIBES
+	CC LDFLAGS -o orle-fb orle-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBORLE LIBES
 
 fb-orle:	fb-orle.o linear-cmap.o cmap-crunch.o LIBFB LIBORLE
-	CC LDFLAGS -o fb-orle fb-orle.o linear-cmap.o cmap-crunch.o LIB_PRE''LIBFB LIB_PRE''LIBORLE LIBES
+	CC LDFLAGS -o fb-orle fb-orle.o linear-cmap.o cmap-crunch.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBORLE LIBES
 
 orle-pix:	orle-pix.o linear-cmap.o LIBORLE
 	CC LDFLAGS -o orle-pix orle-pix.o linear-cmap.o LIB_PRE''LIBORLE LIBES
@@ -130,10 +130,10 @@ pix-orle:	pix-orle.o LIBORLE
 /*** oldtonewrle.c ? */
 
 rle-fb:		rle-fb.o LIBFB LIBRLE
-	CC LDFLAGS -o rle-fb rle-fb.o LIB_PRE''LIBFB LIB_PRE''LIBRLE LIBES
+	CC LDFLAGS -o rle-fb rle-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRLE LIBES
 
 fb-rle:		fb-rle.o strdup.o cmap-crunch.o linear-cmap.o LIBFB LIBRLE
-	CC LDFLAGS -o fb-rle fb-rle.o strdup.o cmap-crunch.o linear-cmap.o LIB_PRE''LIBFB LIB_PRE''LIBRLE LIBES
+	CC LDFLAGS -o fb-rle fb-rle.o strdup.o cmap-crunch.o linear-cmap.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRLE LIBES
 
 rle-pix:	rle-pix.o strdup.o LIBRLE
 	CC LDFLAGS -o rle-pix rle-pix.o strdup.o LIB_PRE''LIBRLE LIBES
@@ -142,49 +142,49 @@ pix-rle:	pix-rle.o strdup.o LIBRLE
 	CC LDFLAGS -o pix-rle pix-rle.o strdup.o LIB_PRE''LIBRLE LIBES
 
 fbcmap:		fbcmap.o LIBFB
-	CC LDFLAGS -o fbcmap fbcmap.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbcmap fbcmap.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 fb-cmap:	fb-cmap.o LIBFB
-	CC LDFLAGS -o fb-cmap fb-cmap.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fb-cmap fb-cmap.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 cmap-fb:	cmap-fb.o LIBFB
-	CC LDFLAGS -o cmap-fb cmap-fb.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o cmap-fb cmap-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 fbgamma:	fbgamma.o LIBFB
-	CC LDFLAGS -o fbgamma fbgamma.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbgamma fbgamma.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 fbscanplot:	fbscanplot.o LIBFB
-	CC LDFLAGS -o fbscanplot fbscanplot.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbscanplot fbscanplot.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 fbzoom:		fbzoom.o LIBFB LIBTERMIO
-	CC LDFLAGS -o fbzoom fbzoom.o LIB_PRE''LIBFB LIBTERMIO LIBES 
+	CC LDFLAGS -o fbzoom fbzoom.o LIB_PRE''LIBFB LIBFB_LIBES LIBTERMIO LIBES 
 
 fbpoint:	fbpoint.o LIBFB LIBTERMIO
-	CC LDFLAGS -o fbpoint fbpoint.o LIB_PRE''LIBFB LIBTERMIO LIBES 
+	CC LDFLAGS -o fbpoint fbpoint.o LIB_PRE''LIBFB LIBFB_LIBES LIBTERMIO LIBES 
 
 fblabel:	fblabel.o LIBFB LIBFONT
-	CC LDFLAGS -o fblabel fblabel.o LIB_PRE''LIBFONT LIB_PRE''LIBFB LIBES 
+	CC LDFLAGS -o fblabel fblabel.o LIB_PRE''LIBFONT LIB_PRE''LIBFB LIBFB_LIBES LIBES 
 
 fbline:		fbline.o LIBFB
-	CC LDFLAGS -o fbline fbline.o LIB_PRE''LIBFB LIBES 
+	CC LDFLAGS -o fbline fbline.o LIB_PRE''LIBFB LIBFB_LIBES LIBES 
 
 fbcolor:	fbcolor.o LIBFB LIBTERMIO
-	CC LDFLAGS -o fbcolor fbcolor.o LIB_PRE''LIBFB LIBTERMIO LIBES 
+	CC LDFLAGS -o fbcolor fbcolor.o LIB_PRE''LIBFB LIBFB_LIBES LIBTERMIO LIBES 
 
 ap-pix:		ap-pix.o
 	CC LDFLAGS -o ap-pix ap-pix.o LIBES
 
 fbcmrot:	fbcmrot.o LIBFB
-	CC LDFLAGS -o fbcmrot fbcmrot.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbcmrot fbcmrot.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pixbackgnd:	pixbackgnd.o
 	CC LDFLAGS -o pixbackgnd pixbackgnd.o LIBES
 
 fbframe:	fbframe.o LIBFB
-	CC LDFLAGS -o fbframe fbframe.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbframe fbframe.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 bw-fb:		bw-fb.o LIBFB
-	CC LDFLAGS -o bw-fb bw-fb.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o bw-fb bw-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 bw-imp:	bw-imp.o
 	CC LDFLAGS -o bw-imp bw-imp.o LIBES
@@ -208,7 +208,7 @@ bwfilter:	bwfilter.o
 	CC LDFLAGS -o bwfilter bwfilter.o LIBES
 
 bwhist:		bwhist.o LIBFB
-	CC LDFLAGS -o bwhist bwhist.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o bwhist bwhist.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 bwhisteq:	bwhisteq.o
 	CC LDFLAGS -o bwhisteq bwhisteq.o LIBES
@@ -229,7 +229,7 @@ bwstat:		bwstat.o
 	CC LDFLAGS -o bwstat bwstat.o LIBES
 
 fb-bw:		fb-bw.o LIBFB
-	CC LDFLAGS -o fb-bw fb-bw.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fb-bw fb-bw.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 gencolor:	gencolor.o
 	CC LDFLAGS -o gencolor gencolor.o LIBES
@@ -244,10 +244,10 @@ pixfilter:	pixfilter.o
 	CC LDFLAGS -o pixfilter pixfilter.o LIBES
 
 pixhist:	pixhist.o LIBFB
-	CC LDFLAGS -o pixhist pixhist.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o pixhist pixhist.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pixhist3d:	pixhist3d.o LIBFB
-	CC LDFLAGS -o pixhist3d pixhist3d.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o pixhist3d pixhist3d.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pixrect:	pixrect.o
 	CC LDFLAGS -o pixrect pixrect.o LIBES
@@ -265,7 +265,7 @@ pixhist3d-pl:	pixhist3d-pl.o LIBPLOT
 	CC LDFLAGS -o pixhist3d-pl pixhist3d-pl.o LIB_PRE''LIBPLOT LIBES
 
 pl-sgi:		pl-sgi.o LIBPLOT LIBFB
-	CC LDFLAGS -o pl-sgi pl-sgi.o LIB_PRE''LIBPLOT LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o pl-sgi pl-sgi.o LIB_PRE''LIBPLOT LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pl-ps:		pl-ps.o LIBPLOT
 	CC LDFLAGS -o pl-ps pl-ps.o LIB_PRE''LIBPLOT LIBES
@@ -283,7 +283,7 @@ op-bw:		op-bw.o
 	CC LDFLAGS -o op-bw op-bw.o LIBES
 
 cat-fb:		cat-fb.o LIBFONT LIBFB
-	CC LDFLAGS -o cat-fb cat-fb.o LIB_PRE''LIBFONT LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o cat-fb cat-fb.o LIB_PRE''LIBFONT LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 plcolor:	plcolor.o LIBPLOT
 	CC LDFLAGS -o plcolor plcolor.o LIB_PRE''LIBPLOT LIBES
@@ -303,22 +303,22 @@ files-tape:	files-tape.o
 /* "gif2fb" is an alternative implementation of "gif-fb"; use either or both */
 
 gif2fb:		gif2fb.o LIBFB
-	CC LDFLAGS -o gif2fb gif2fb.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o gif2fb gif2fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pix3filter:	pix3filter.o
 	CC LDFLAGS -o pix3filter pix3filter.o LIBES
 
 fbfade:		fbfade.o LIBFB
-	CC LDFLAGS -o fbfade fbfade.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbfade fbfade.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 fbstretch:	fbstretch.o LIBFB
-	CC LDFLAGS -o fbstretch fbstretch.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o fbstretch fbstretch.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 gif-fb:		gif-fb.o LIBFB
-	CC LDFLAGS -o gif-fb gif-fb.o LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o gif-fb gif-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 spm-fb:		spm-fb.o LIBRT LIBFB
-	CC LDFLAGS -o spm-fb spm-fb.o LIB_PRE''LIBRT LIB_PRE''LIBFB RT_LIBES LIBES
+	CC LDFLAGS -o spm-fb spm-fb.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES RT_LIBES LIBES
 
 pix-spm:	pix-spm.o LIBRT
 	CC LDFLAGS -o pix-spm pix-spm.o LIB_PRE''LIBRT RT_LIBES LIBES
@@ -337,5 +337,8 @@ pixcolors:	pixcolors.o
 
 hd:	hd.o
 	CC LDFLAGS -o hd hd.o LIBES
+
+sgi-pix:	sgi-pix.o
+	CC LDFLAGS -o sgi-pix sgi-pix.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 #include "../Cakefile.rules"
