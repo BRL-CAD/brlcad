@@ -2450,6 +2450,9 @@ char *argv[];
 
   MAT_DELTAS_GET(old_pos, toViewcenter);
 
+#if 1
+  sprintf(cmd, "vrot %f %f %f\n", x, y, z);
+#else
   if(state == ST_VIEW)
     sprintf(cmd, "vrot %f %f %f\n", x, y, z);
   else{
@@ -2464,6 +2467,7 @@ char *argv[];
     else
       return TCL_OK;
   }
+#endif
 
   rot_set = 1;
   rt_vls_strcpy( &str, cmd );
