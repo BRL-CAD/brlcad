@@ -151,7 +151,7 @@ CONST struct edge_g_cnurb *crv;
 fastf_t epsilon;
 {
 	struct edge_g_cnurb *d1, *d2;
-	fastf_t der1[5], der2[5], t, *pt;
+	fastf_t der2[5], t, *pt;
 	fastf_t num_coord_factor, final_t;
 	int num_coords;
 	int i,j;
@@ -169,7 +169,6 @@ fastf_t epsilon;
 
 	for( i=0 ; i<num_coords ; i++ )
 	{
-		der1[i] = 0.0;
 		der2[i] = 0.0;
 	}
 
@@ -213,8 +212,6 @@ fastf_t epsilon;
 
 	for( j=0 ; j<num_coords ; j++ )
 	{
-		fastf_t tmp, sqrt_tmp;
-
 		if( NEAR_ZERO( der2[j], SMALL_FASTF ) )
 			continue;
 

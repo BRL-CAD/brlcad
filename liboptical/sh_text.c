@@ -142,9 +142,7 @@ char	*dp;
 	register struct txt_specific *tp =
 		(struct txt_specific *)dp;
 	fastf_t xmin, xmax, ymin, ymax;
-	int line;
 	int dx, dy;
-	int x,y;
 	register fastf_t r,g,b;
 
 	if( rdebug & RDEBUG_SHADE )
@@ -214,7 +212,6 @@ char	*dp;
 		int start_line, stop_line, line;
 		int start_col, stop_col, col;
 		fastf_t xstart, xstop, ystart, ystop;
-		fastf_t u, v;
 
 		xstart = xmin * (tp->tx_w-1);
 		xstop = xmax * (tp->tx_w-1);
@@ -238,7 +235,6 @@ char	*dp;
 		for( line = start_line ; line <= stop_line ; line++ )
 		{
 			register unsigned char *cp;
-			register unsigned char *ep;
 			fastf_t line_factor;
 			fastf_t line_upper, line_lower;
 
@@ -791,8 +787,6 @@ CONST struct mfuncs	*mfp;
 struct rt_i	*rtip;
 struct mfuncs	**headp;
 {
-	register char	*cp;
-	struct bu_vls	material;
 
 	BU_CK_VLS( matparm );
 	RT_CK_RTI(rtip);

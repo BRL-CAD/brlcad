@@ -177,7 +177,7 @@ CONST int depth;	/* number of values per knot */
 CONST double alpha;	/* 0 <= alpha <= 1 */
 {
 	int i;
-	double p0, p1, p2, p3, v;
+	double p0, p1, p2, p3;
 
 	for (i=0 ; i < depth ; i++) {
 		p0 = m[ 0]*a[i] + m[ 1]*b[i] + m[ 2]*c[i] + m[ 3]*d[i];
@@ -227,7 +227,6 @@ CONST double	alpha;	/* point on surface (0..1) to evaluate */
 	double *a, *b, *c, *d, x;
 	int nspans = nknots - 3;
 	int span;
-	int i, j;
 
 	/* validate args */
 	if (nspans < 1 || depth < 1 || alpha < 0.0 || alpha > 1.0 ||
