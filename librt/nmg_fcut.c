@@ -2847,7 +2847,7 @@ nmg_fu_touchingloops(rs->fu2);
 	action = stp->action;
 	new_state = stp->new_state;
 	rs->last_action = action;
-#if 1
+
 	/*
 	 *  Major optimization here.
 	 *  If the state machine for the other face is still in OUT state,
@@ -2856,12 +2856,10 @@ nmg_fu_touchingloops(rs->fu2);
 	 *  on the final result of the boolean, it's just extra work.
 	 *  This can reduce the amount of unnecessary topology by 75% or more.
 	 */
-/* XXX This is a bit too agressive.  r5 */
 	if( other_rs_state == NMG_STATE_OUT && action != NMG_ACTION_ERROR &&
 	    action != NMG_ACTION_NONE )  {
 		action = NMG_ACTION_NONE_OPTIM;
 	}
-#endif
 
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
 		rt_log("nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
@@ -2878,7 +2876,7 @@ nmg_fu_touchingloops(rs->fu2);
 		eu = nmg_find_eu_of_vu(vu);
 		eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
 		NMG_CK_EDGEUSE(eu);
-		if( rs->eg_p && eu->e_p->eg_p != rs->eg_p )  {
+		if( !rs->eg_p || eu->e_p->eg_p != rs->eg_p )  {
 rt_log("force prev eu to ray\n");
 			nmg_edge_geom_isect_line( eu->e_p, rs );
 		}
@@ -2886,7 +2884,7 @@ rt_log("force prev eu to ray\n");
 	if( NMG_V_ASSESSMENT_NEXT(assessment) == NMG_E_ASSESSMENT_ON_FORW )  {
 		eu = nmg_find_eu_of_vu(vu);
 		NMG_CK_EDGEUSE(eu);
-		if( rs->eg_p && eu->e_p->eg_p != rs->eg_p )  {
+		if( !rs->eg_p || eu->e_p->eg_p != rs->eg_p )  {
 rt_log("force next eu to ray\n");
 			nmg_edge_geom_isect_line( eu->e_p, rs );
 		}
@@ -3207,5 +3205,11 @@ rt_log("force next eu to ray\n");
 nmg_fu_touchingloops(rs->fu1);
 nmg_fu_touchingloops(rs->fu2);
 	}
+out:
+	if(rt_g.NMG_debug&DEBUG_FCUT)  {
+		rt_log("nmg_face_state_transition(vu x%x, pos=%d) END\n",
+			rs->vu[pos], pos);
+	}
+	return 0;
 }
                                                                                                                                       
