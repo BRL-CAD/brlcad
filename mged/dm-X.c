@@ -36,6 +36,7 @@ extern char	*getenv();
 static void	label();
 static void	draw();
 static void	checkevents();
+static int	xsetup();
 
 /* Display Manager package interface */
 
@@ -541,7 +542,7 @@ char	*str;
 
 #define	FONT	"6x10"
 
-XWMHints xwmh = {
+static XWMHints xwmh = {
 	(InputHint|StateHint),		/* flags */
 	False,				/* input */
 	NormalState,			/* initial_state */
@@ -552,6 +553,7 @@ XWMHints xwmh = {
 	0				/* Window group */
 };
 
+static int
 xsetup( name )
 char	*name;
 {
