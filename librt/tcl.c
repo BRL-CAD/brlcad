@@ -1628,8 +1628,8 @@ int *array_len;
 	int len, i;
 	int ret;
 
-	if( (ret=Tcl_ListObjGetElements( interp, list, &len, &obj_array )) != TCL_OK )
-		return( ret );
+	if( Tcl_ListObjGetElements( interp, list, &len, &obj_array ) != TCL_OK )
+		return( 0 );
 
 	if( len < 1 )
 		return( 0 );
