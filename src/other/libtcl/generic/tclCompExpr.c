@@ -212,7 +212,8 @@ TclCompileExpr(interp, script, numBytes, envPtr)
     ExprInfo info;
     Tcl_Parse parse;
     Tcl_HashEntry *hPtr;
-    int new, i, code;
+    long i;
+    int new, code;
 
     /*
      * If this is the first time we've been called, initialize the table
@@ -345,7 +346,8 @@ CompileSubExpr(exprTokenPtr, infoPtr, envPtr)
     Tcl_HashEntry *hPtr;
     CONST char *operator;
     Tcl_DString opBuf;
-    int objIndex, opIndex, length, code;
+    long opIndex;
+    int objIndex, length, code;
     char buffer[TCL_UTF_MAX];
 
     if (exprTokenPtr->type != TCL_TOKEN_SUB_EXPR) {
@@ -441,7 +443,7 @@ CompileSubExpr(exprTokenPtr, infoPtr, envPtr)
 		break;
 	    }
 	    Tcl_DStringFree(&opBuf);
-	    opIndex = (int) Tcl_GetHashValue(hPtr);
+	    opIndex = (long) Tcl_GetHashValue(hPtr);
 	    opDescPtr = &(operatorTable[opIndex]);
 
 	    /*
