@@ -197,7 +197,7 @@ int	xpos, ypos, mode;
 rle_rhdr( fp, flags, bgpixel )
 FILE		*fp;
 int		*flags;
-register RGBpixel	*bgpixel;
+register unsigned char	*bgpixel;
 	{
 	static short	x_magic;
 	static char	*verbage[] =
@@ -315,7 +315,7 @@ register RGBpixel	*bgpixel;
 			_bg_pixel[RED] = r_setup.h_background[0];
 			_bg_pixel[GRN] = r_setup.h_background[1];
 			_bg_pixel[BLU] = r_setup.h_background[2];
-			COPYRGB( *bgpixel, _bg_pixel );
+			COPYRGB( bgpixel, _bg_pixel );
 			}
 		}
 	_bw_flag = r_setup.h_ncolors == 1;
