@@ -52,15 +52,16 @@ static char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #define MAXANGLE 0.9961947		/* cos 5 */
 
 struct cell {
-	float	c_dist;		/* distance from emanation plane to in_hit */
-	int	c_id;		/* region_id of component hit */
-	point_t	c_hit;		/* 3-space hit point of ray */
-	vect_t	c_normal;	/* surface normal at the hit point */
-	vect_t	c_rdir;		/* ray direction, permits perspective */
+	float	c_dist;			/* distance from emanation plane to in_hit */
+	int	c_id;			/* region_id of component hit */
+	point_t	c_hit;			/* 3-space hit point of ray */
+	vect_t	c_normal;		/* surface normal at the hit point */
+	vect_t	c_rdir;			/* ray direction, permits perspective */
 };
 
 static FILE	*plotfp;
 extern	int	width;			/* # of pixels in X; picture width */
+fastf_t		pit_depth;		/* min. distance for drawing pits/mountains */
 
 void		swapbuff();
 void		cleanline();
@@ -184,6 +185,16 @@ struct application	*ap;
 	 */
 
 	pdv_3space(plotfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
+
+	/* Now calculated and store the minimun depth change that will
+	 * trigger the drawing of "pits" and "pendula" (mountains).  In
+	 * this case, a change in distance of 2 pixels was picked.  Note
+	 * that the distance of one pixel in model space is MAGNITUDE(dx_model).
+	 * This is calculated once per frame dx_model may be different in
+	 * another frame.
+	 */
+
+	pit_depth = 4 * MAGNITUDE( dx_model );
 }
 
 
@@ -405,12 +416,17 @@ int		y;
 		 * are not the same OR if either id is not 0 AND the cosine
 		 * of the angle between the normals is less than MAXANGLE. 
 		 * This test prevents the background from being shaded in.
-		 * Furthermore, it is necessary to select the hit_point
+		 * Furthermore, it is necessary to select the hit_point.
+		 * Check for pits and pendula.  The below if statement can
+		 * be translated as follows: if(ids don't match ||
+		 * (cur_id is not 0 && ( (there's a pit) || (there's a mtn) ).
 		 */
 
 		if (botp->c_id != (botp+1)->c_id ||
 		   ( botp->c_id != 0 && 
-		   (VDOT(botp->c_normal, (botp + 1)->c_normal) < MAXANGLE)))  {
+		   ( (botp->c_dist + pit_depth < (botp+1)->c_dist) ||
+		     ((botp+1)->c_dist + pit_depth < botp->c_dist)  ||
+ 		     (VDOT(botp->c_normal, (botp + 1)->c_normal) < MAXANGLE))))  {
 							     
 		   	cellp = find_cell(botp, (botp+1)); 
 
@@ -495,9 +511,17 @@ int		y;
 	 */
 
 	for (x=0; x < mem_width; x++, botp++, topp++)  {
+
+		/* If the id's are not the same, or if bottom id is not
+		 * zero, find pits (botp->c_dist+pit_depth < topp->c_dist)
+		 * and mountains (topp->c_dist+pit_depth < botp->c_dist).
+		 */
+
 		if (botp->c_id != topp->c_id ||
 		   ( botp->c_id != 0 && 
-		   (VDOT(botp->c_normal, topp->c_normal) < MAXANGLE)))  {
+		     ((botp->c_dist + pit_depth < topp->c_dist) ||
+		      (topp->c_dist + pit_depth < botp->c_dist) ||
+		      (VDOT(botp->c_normal, topp->c_normal) < MAXANGLE))))  {
 			if( state == FOUND_START_PT ) {
 				continue;
 			} else {
