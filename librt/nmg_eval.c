@@ -465,10 +465,12 @@ struct nmg_bool_state *bs;
 			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 			case BACTION_KILL:
 				/* Kill by demoting loop to edges */
-				if( nmg_demote_lu( lu ) == 0 )
+				if( nmg_demote_lu( lu ) == 0 )  {
 					nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
-				else
-					loops_retained++; /* loop of single vertex */
+				} else {
+					/* loop of single vertex */
+					nmg_klu( lu );	/* removes from fu list */
+				}
 				lu = nextlu;
 				continue;
 			case BACTION_RETAIN:
