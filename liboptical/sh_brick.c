@@ -256,9 +256,13 @@ char			*dp;	/* ptr to the shader-specific struct */
 	/* If we are performing the shading in "region" space, we must 
 	 * transform the hit point from "model" space to "region" space.
 	 * See the call to db_region_mat in brick_setup().
+	 */
+#if 0
 	MAT4X3PNT(pt, brick_sp->brick_m_to_sh, swp->sw_hit.hit_point);
 	MAT4X3PNT(pt, brick_sp->brick_m_to_r, swp->sw_hit.hit_point);
-	 */
+#else
+	VMOVE(pt, swp->sw_hit.hit_point);
+#endif
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_log("brick_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
