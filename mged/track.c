@@ -38,8 +38,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
-#include "db.h"
 #include "raytrace.h"
+#include "rtgeom.h"
+#include "wdb.h"
 #include "./ged.h"
 #include "./mged_dm.h"
 
@@ -48,7 +49,12 @@ extern void aexists();
 static int	Trackpos = 0;
 static fastf_t	plano[4], plant[4];
 
-static union record record;
+static struct track_solid
+{
+	int s_type;
+	char s_name[NAMESIZE];
+	fastf_t s_values[24];
+} sol;
 
 void		crname(), slope(), crdummy(), trcurve();
 void		bottom(), top(), crregion(), itoa();
@@ -85,8 +91,8 @@ char **argv;
 	else
 	  return TCL_OK;
 
-	oper[0] = oper[2] = INTERSECT;
-	oper[1] = SUBTRACT;
+	oper[0] = oper[2] = WMOP_INTERSECT;
+	oper[1] = WMOP_SUBTRACT;
 
 	arg = 1;
 
@@ -312,18 +318,15 @@ tryagain:	/* sent here to try next set of names */
 	/* no interupts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	record.s.s_id = ID_SOLID;
-
 	/* find the front track slope to the idler */
 	for(i=0; i<24; i++)
-		record.s.s_values[i] = 0.0;
+		sol.s_values[i] = 0.0;
 
 	slope(fw, iw, tr);
-	VMOVE(temp2, &record.s.s_values[0]);
+	VMOVE(temp2, &sol.s_values[0]);
 	crname(solname, 1);
-	(void)strcpy(record.s.s_name, solname);
-	record.s.s_type = GENARB8;
-	record.s.s_cgtype = BOX;		/* BOX */
+	(void)strcpy(sol.s_name, solname);
+	sol.s_type = ID_ARB8;
 	if( wrobj(solname, DIR_SOLID) ) 
 	  return TCL_ERROR;
 
@@ -331,33 +334,31 @@ tryagain:	/* sent here to try next set of names */
 
 	/* find track around idler */
 	for(i=0; i<24; i++)
-		record.s.s_values[i] = 0.0;
-	record.s.s_type = GENTGC;
-	record.s.s_cgtype = RCC;
+		sol.s_values[i] = 0.0;
+	sol.s_type = ID_TGC;
 	trcurve(iw, tr);
 	crname(solname, 2);
-	(void)strcpy(record.s.s_name, solname);
+	(void)strcpy(sol.s_name, solname);
 	if( wrobj( solname , DIR_SOLID ) )
 	  return TCL_ERROR;
 	solname[8] = '\0';
 	/* idler dummy rcc */
-	record.s.s_values[6] = iw[2];
-	record.s.s_values[11] = iw[2];
-	VMOVE(&record.s.s_values[12], &record.s.s_values[6]);
-	VMOVE(&record.s.s_values[15], &record.s.s_values[9]);
+	sol.s_values[6] = iw[2];
+	sol.s_values[11] = iw[2];
+	VMOVE(&sol.s_values[12], &sol.s_values[6]);
+	VMOVE(&sol.s_values[15], &sol.s_values[9]);
 	crname(solname, 3);
-	(void)strcpy(record.s.s_name, solname);
+	(void)strcpy(sol.s_name, solname);
 	if( wrobj( solname , DIR_SOLID ) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* find idler track dummy arb8 */
 	for(i=0; i<24; i++)
-		record.s.s_values[i] = 0.0;
+		sol.s_values[i] = 0.0;
 	crname(solname, 4);
-	(void)strcpy(record.s.s_name, solname);
-	record.s.s_type = GENARB8;
-	record.s.s_cgtype = ARB8;		/* arb8 */
+	(void)strcpy(sol.s_name, solname);
+	sol.s_type = ID_ARB8;
 	crdummy(iw, tr, 1);
 	if( wrobj(solname,DIR_SOLID) )
 	  return TCL_ERROR;
@@ -365,57 +366,53 @@ tryagain:	/* sent here to try next set of names */
 
 	/* track slope to drive */
 	for(i=0; i<24; i++)
-		record.s.s_values[i] = 0.0;
+		sol.s_values[i] = 0.0;
 	slope(lw, dw, tr);
-	VMOVE(temp1, &record.s.s_values[0]);
+	VMOVE(temp1, &sol.s_values[0]);
 	crname(solname, 5);
-	(void)strcpy(record.s.s_name, solname);
-	record.s.s_cgtype = BOX;		/* box */
+	(void)strcpy(sol.s_name, solname);
 	if(wrobj(solname,DIR_SOLID))
 		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* track around drive */
 	for(i=0; i<24; i++)
-		record.s.s_values[i] = 0.0;
-	record.s.s_type = GENTGC;
-	record.s.s_cgtype = RCC;
+		sol.s_values[i] = 0.0;
+	sol.s_type = ID_TGC;
 	trcurve(dw, tr);
 	crname(solname, 6);
-	(void)strcpy(record.s.s_name, solname);
+	(void)strcpy(sol.s_name, solname);
 	if( wrobj(solname,DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* drive dummy rcc */
-	record.s.s_values[6] = dw[2];
-	record.s.s_values[11] = dw[2];
-	VMOVE(&record.s.s_values[12], &record.s.s_values[6]);
-	VMOVE(&record.s.s_values[15], &record.s.s_values[9]);
+	sol.s_values[6] = dw[2];
+	sol.s_values[11] = dw[2];
+	VMOVE(&sol.s_values[12], &sol.s_values[6]);
+	VMOVE(&sol.s_values[15], &sol.s_values[9]);
 	crname(solname, 7);
-	(void)strcpy(record.s.s_name, solname);
+	(void)strcpy(sol.s_name, solname);
 	if( wrobj(solname,DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* drive dummy arb8 */
 	for(i=0; i<24; i++)
-		record.s.s_name[i] = 0.0;
+		sol.s_name[i] = 0.0;
 	crname(solname, 8);
-	(void)strcpy(record.s.s_name, solname);
-	record.s.s_type = GENARB8;
-	record.s.s_cgtype = ARB8;		/* arb8 */
+	(void)strcpy(sol.s_name, solname);
+	sol.s_type = ID_ARB8;
 	crdummy(dw, tr, 2);
 	if( wrobj(solname,DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 	
 	/* track bottom */
-	record.s.s_cgtype = ARB8;		/* arb8 */
 	temp1[1] = temp2[1] = tr[0];
 	bottom(temp1, temp2, tr);
 	crname(solname, 9);
-	(void)strcpy(record.s.s_name, solname);
+	(void)strcpy(sol.s_name, solname);
 	if( wrobj(solname,DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -428,35 +425,12 @@ tryagain:	/* sent here to try next set of names */
 	temp2[2] = iw[1] + iw[2];
 	top(temp1, temp2, tr);
 	crname(solname, 10);
-	(void)strcpy(record.s.s_name, solname);
+	(void)strcpy(sol.s_name, solname);
 	if( wrobj(solname,DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
 	/* add the regions */
-	bzero( (char *)&record , sizeof( union record ) );
-	record.c.c_id = ID_COMB;
-	record.c.c_flags = 'R';
-	record.c.c_aircode = 0;
-	record.c.c_regionid = 111;
-	record.c.c_material = 0;
-	record.c.c_los = 0;
-
-	/* regions 3, 4, 7, 8 - dummy regions */
-	for(i=3; i<5; i++) {
-		regname[8] = '\0';
-		crname(regname, i);
-		(void)strcpy(record.c.c_name, regname);
-		if( wrobj(regname,DIR_REGION|DIR_COMB) )
-			return TCL_ERROR;
-		regname[8] = '\0';
-		crname(regname, i+4);
-		(void)strcpy(record.c.c_name, regname);
-		if( wrobj(regname,DIR_REGION|DIR_COMB) )
-			return TCL_ERROR;
-	}
-	regname[8] = '\0';
-
 	item = item_default;
 	mat = mat_default;
 	los = los_default;
@@ -498,7 +472,7 @@ tryagain:	/* sent here to try next set of names */
 	memb[0] = 9;
 	memb[1] = 1;
 	memb[2] = 5;
-	oper[2] = SUBTRACT;
+	oper[2] = WMOP_SUBTRACT;
 	crregion(regname, oper, memb, 3, solname);
 	solname[8] = regname[8] = '\0';
 
@@ -518,6 +492,8 @@ tryagain:	/* sent here to try next set of names */
 	(void)strcat(grpname, temp);
 	grpname[8] = '\0';
 	for(i=1; i<11; i++) {
+		if( i == 3 || i ==4 || i == 7 || i == 8 )
+			continue;
 		regname[8] = '\0';
 		crname(regname, i);
 		if( (dp = db_lookup( dbip, regname, LOOKUP_QUIET)) == DIR_NULL ) {
@@ -525,7 +501,7 @@ tryagain:	/* sent here to try next set of names */
 				   regname, "\n", (char *)NULL);
 		  continue;
 		}
-		(void)combadd(dp, grpname, 0, UNION, 0, 0);
+		(void)combadd(dp, grpname, 0, WMOP_UNION, 0, 0);
 	}
 
 	/* draw this track */
@@ -575,18 +551,77 @@ char name[];
 int flags;
 {
 	struct directory *tdp;
+	struct rt_db_internal intern;
+	int i;
 
 	if( db_lookup( dbip, name, LOOKUP_QUIET) != DIR_NULL ) {
-	  Tcl_AppendResult(interp, "amtrack naming error: ", name,
+	  Tcl_AppendResult(interp, "track naming error: ", name,
 			   " already exists\n", (char *)NULL);
 	  return(-1);
 	}
-	if( (tdp = db_diradd( dbip, name, -1, 1, flags)) == DIR_NULL ||
-	    db_alloc( dbip, tdp, 1) < 0 ||
-	    db_put( dbip, tdp, &record, 0, 1 ) < 0 )  {
-	  Tcl_AppendResult(interp, "wrobj(", name, "):  write error\n", (char *)NULL);
-	  TCL_ERROR_RECOVERY_SUGGESTION;
-	  return( -1 );
+
+	if( flags != DIR_SOLID )
+	{
+		Tcl_AppendResult(interp, "wrobj can only write solids, aborting\n" );
+		return( -1 );
+	}
+
+	RT_INIT_DB_INTERNAL( &intern );
+	switch( sol.s_type )
+	{
+		case ID_ARB8:
+			{
+				struct rt_arb_internal *arb;
+
+				BU_GETSTRUCT( arb, rt_arb_internal );
+
+				arb->magic = RT_ARB_INTERNAL_MAGIC;
+
+				VMOVE( arb->pt[0], &sol.s_values[0] );
+				for( i=1 ; i<8 ; i++ )
+					VADD2( arb->pt[i], &sol.s_values[i*3], arb->pt[0] )
+
+				intern.idb_ptr = (genptr_t)arb;
+				intern.idb_type = ID_ARB8;
+			}
+			break;
+		case ID_TGC:
+			{
+				struct rt_tgc_internal *tgc;
+
+				BU_GETSTRUCT( tgc, rt_tgc_internal );
+
+				tgc->magic = RT_TGC_INTERNAL_MAGIC;
+
+				VMOVE( tgc->v, &sol.s_values[0] );
+				VMOVE( tgc->h, &sol.s_values[3] );
+				VMOVE( tgc->a, &sol.s_values[6] );
+				VMOVE( tgc->b, &sol.s_values[9] );
+				VMOVE( tgc->c, &sol.s_values[12] );
+				VMOVE( tgc->d, &sol.s_values[15] );
+
+				intern.idb_ptr = (genptr_t)tgc;
+				intern.idb_type = ID_TGC;
+			}
+			break;
+		default:
+			Tcl_AppendResult(interp, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL );
+			return( -1 );
+	}
+
+	if( (tdp = db_diradd( dbip, name, -1L, 0, flags)) == DIR_NULL )
+	{
+		rt_db_free_internal( &intern );
+		Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL );
+		return( -1 );
+	}
+
+	if( rt_db_put_internal( tdp, dbip, &intern ) < 0 )
+	{
+		rt_db_free_internal( &intern );
+		Tcl_AppendResult(interp, "wrobj(", name, "):  write error\n", (char *)NULL);
+		TCL_ERROR_RECOVERY_SUGGESTION;
+		return( -1 );
 	}
 	return(0);
 }
@@ -678,20 +713,20 @@ fastf_t wh1[], wh2[], t[];
 		z = wh2[1];
 		r = wh2[2];
 	}
-	record.s.s_values[2] = z - r - t[2];
-	record.s.s_values[1] = t[0];
-	record.s.s_values[0] = (record.s.s_values[2] - b) / (del[2] / del[0]);
-	record.s.s_values[3] = plano[0] + (del[0]/mag) - work[0] - record.s.s_values[0];
-	record.s.s_values[4] = 0.0;
-	record.s.s_values[5] = plano[1] + (del[2]/mag) - work[2] - record.s.s_values[2];
-	VADD2(&record.s.s_values[6], &record.s.s_values[3], work);
-	VMOVE(&record.s.s_values[9], work);
+	sol.s_values[2] = z - r - t[2];
+	sol.s_values[1] = t[0];
+	sol.s_values[0] = (sol.s_values[2] - b) / (del[2] / del[0]);
+	sol.s_values[3] = plano[0] + (del[0]/mag) - work[0] - sol.s_values[0];
+	sol.s_values[4] = 0.0;
+	sol.s_values[5] = plano[1] + (del[2]/mag) - work[2] - sol.s_values[2];
+	VADD2(&sol.s_values[6], &sol.s_values[3], work);
+	VMOVE(&sol.s_values[9], work);
 	work[0] = work[2] = 0.0;
 	work[1] = t[1] - t[0];
-	VMOVE(&record.s.s_values[12], work);
+	VMOVE(&sol.s_values[12], work);
 	for(i=3; i<=9; i+=3) {
 		j = i + 12;
-		VADD2(&record.s.s_values[j], &record.s.s_values[i], work);
+		VADD2(&sol.s_values[j], &sol.s_values[i], work);
 	}
 
 	return;
@@ -721,20 +756,20 @@ int	flag;
 		vec[0] *= -1.0;
 	if(vec[2] >= 0.0)
 		vec[2] *= -1.0;
-	record.s.s_values[0] = w[0];
-	record.s.s_values[1] = t[0] -1.0;
-	record.s.s_values[2] = w[1];
-	VMOVE(&record.s.s_values[3] , vec);
+	sol.s_values[0] = w[0];
+	sol.s_values[1] = t[0] -1.0;
+	sol.s_values[2] = w[1];
+	VMOVE(&sol.s_values[3] , vec);
 	vec[2] = w[2] + t[2] + 1.0;
-	VMOVE(&record.s.s_values[6], vec);
+	VMOVE(&sol.s_values[6], vec);
 	vec[0] = 0.0;
-	VMOVE(&record.s.s_values[9], vec);
+	VMOVE(&sol.s_values[9], vec);
 	vec[2] = 0.0;
 	vec[1] = t[1] - t[0] + 2.0;
-	VMOVE(&record.s.s_values[12], vec);
+	VMOVE(&sol.s_values[12], vec);
 	for(i=3; i<=9; i+=3) {
 		j = i + 12;
-		VADD2(&record.s.s_values[j], &record.s.s_values[i], vec);
+		VADD2(&sol.s_values[j], &sol.s_values[i], vec);
 	}
 
 	return;
@@ -745,14 +780,14 @@ void
 trcurve( wh, t )
 fastf_t wh[], t[];
 {
-	record.s.s_values[0] = wh[0];
-	record.s.s_values[1] = t[0];
-	record.s.s_values[2] = wh[1];
-	record.s.s_values[4] = t[1] - t[0];
-	record.s.s_values[6] = wh[2] + t[2];
-	record.s.s_values[11] = wh[2] + t[2];
-	VMOVE(&record.s.s_values[12], &record.s.s_values[6]);
-	VMOVE(&record.s.s_values[15], &record.s.s_values[9]);
+	sol.s_values[0] = wh[0];
+	sol.s_values[1] = t[0];
+	sol.s_values[2] = wh[1];
+	sol.s_values[4] = t[1] - t[0];
+	sol.s_values[6] = wh[2] + t[2];
+	sol.s_values[11] = wh[2] + t[2];
+	VMOVE(&sol.s_values[12], &sol.s_values[6]);
+	VMOVE(&sol.s_values[15], &sol.s_values[9]);
 }
 
 void
@@ -763,21 +798,21 @@ fastf_t	t[];
 	vect_t	tvec;
 	int i, j;
 
-	VMOVE(&record.s.s_values[0], vec1);
+	VMOVE(&sol.s_values[0], vec1);
 	tvec[0] = vec2[0] - vec1[0];
 	tvec[1] = tvec[2] = 0.0;
-	VMOVE(&record.s.s_values[3], tvec);
+	VMOVE(&sol.s_values[3], tvec);
 	tvec[0] = tvec[1] = 0.0;
 	tvec[2] = t[2];
-	VADD2(&record.s.s_values[6], &record.s.s_values[3], tvec);
-	VMOVE(&record.s.s_values[9], tvec);
+	VADD2(&sol.s_values[6], &sol.s_values[3], tvec);
+	VMOVE(&sol.s_values[9], tvec);
 	tvec[0] = tvec[2] = 0.0;
 	tvec[1] = t[1] - t[0];
-	VMOVE(&record.s.s_values[12], tvec);
+	VMOVE(&sol.s_values[12], tvec);
 
 	for(i=3; i<=9; i+=3) {
 		j = i + 12;
-		VADD2(&record.s.s_values[j], &record.s.s_values[i], tvec);
+		VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
 	}
 }
 
@@ -796,22 +831,22 @@ fastf_t	t[];
 	del[2] = vec2[2] - vec1[2];
 	mag = MAGNITUDE( del );
 	VSCALE(tvec, del, tooch/mag);
-	VSUB2(&record.s.s_values[0], vec1, tvec);
+	VSUB2(&sol.s_values[0], vec1, tvec);
 	VADD2(del, del, tvec);
-	VADD2(&record.s.s_values[3], del, tvec);
+	VADD2(&sol.s_values[3], del, tvec);
 	tvec[0] = tvec[2] = 0.0;
 	tvec[1] = t[1] - t[0];
-	VCROSS(del, tvec, &record.s.s_values[3]);
+	VCROSS(del, tvec, &sol.s_values[3]);
 	mag = MAGNITUDE( del );
 	if(del[2] < 0)
 		mag *= -1.0;
-	VSCALE(&record.s.s_values[9], del, t[2]/mag);
-	VADD2(&record.s.s_values[6], &record.s.s_values[3], &record.s.s_values[9]);
-	VMOVE(&record.s.s_values[12], tvec);
+	VSCALE(&sol.s_values[9], del, t[2]/mag);
+	VADD2(&sol.s_values[6], &sol.s_values[3], &sol.s_values[9]);
+	VMOVE(&sol.s_values[12], tvec);
 
 	for(i=3; i<=9; i+=3) {
 		j = i + 12;
-		VADD2(&record.s.s_values[j], &record.s.s_values[i], tvec);
+		VADD2(&sol.s_values[j], &sol.s_values[i], tvec);
 	}
 }
 
