@@ -3,7 +3,7 @@
  */
 #define PRODUCTS	libwdb.ARCH_SUF
 #define SRCDIR	libwdb
-#define FILES	wdb reg spl
+#define FILES	wdb reg spl ars arbn units
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
