@@ -44,8 +44,8 @@ mat_t	rmat;			/* rotation matrix to be applied */
 double	scale;			/* scale factor to be applied */
 int	doscale;
 int	verbose;
-int	space;			/* take center and space values from space option */
-point_t	space_min, space_max;	/* min and max coordinates */
+int	forced_space;			/* take center and space values from space option */
+point_t	forced_space_min, forced_space_max;	/* min and max coordinates */
 
 int	rpp;			/* indicates new center and space values */
 double	centx, centy, centz;	/* new center of rotation values */
@@ -166,12 +166,9 @@ mat_print("rmat", rmat);
 			num = sscanf(optarg, "%lf %lf %lf %lf %lf %lf",
 				&mtmp[0], &mtmp[1], &mtmp[2],
 				&mtmp[3], &mtmp[4], &mtmp[5]);
-			VSET(space_min, mtmp[0], mtmp[1], mtmp[2]);
-			VSET(space_max, mtmp[3], mtmp[4], mtmp[5]);
-VPRINT("space_min", space_min);
-VPRINT("space_max", space_max);
-
-			space++;
+			VSET(forced_space_min, mtmp[0], mtmp[1], mtmp[2]);
+			VSET(forced_space_max, mtmp[3], mtmp[4], mtmp[5]);
+			forced_space++;
 			break;
 		default:		/* '?' */
 			return(0);	/* Bad */
@@ -295,8 +292,8 @@ FILE	*fp;
 					/* output viewsize cube */
 					v = viewsize/2.0 + 0.5;
 					pl_3space( stdout, -v, -v, -v, v, v, v );
-				} else if (space)  {
-					pdv_3space(stdout, space_min, space_max);
+				} else if (forced_space)  {
+					pdv_3space(stdout, forced_space_min, forced_space_max);
 				} else {
 					pl_3space( stdout, minx, miny, -1, maxx, maxy, 1 );
 				}
@@ -320,9 +317,9 @@ FILE	*fp;
 				/* output viewsize cube */
 				v = viewsize/2.0 + 0.5;
 				pl_3space( stdout, -v, -v, -v, v, v, v );
-			} else if (space)  {
+			} else if (forced_space)  {
 				SKIP(6*2);
-				pdv_3space(stdout, space_min, space_max);
+				pdv_3space(stdout, forced_space_min, forced_space_max);
 			} else {
 				/* leave it unchanged */
 				putchar(c);
@@ -352,8 +349,8 @@ FILE	*fp;
 					/* output viewsize cube */
 					v = viewsize/2.0;
 					pd_3space( stdout, -v, -v, -v, v, v, v );
-				} else if (space)  {
-					pdv_3space(stdout, space_min, space_max);
+				} else if (forced_space)  {
+					pdv_3space(stdout, forced_space_min, forced_space_max);
 				} else {
 					pd_3space( stdout, minx, miny, -1.0, maxx, maxy, 1.0 );
 				}
@@ -377,11 +374,9 @@ FILE	*fp;
 				/* output viewsize cube */
 				v = viewsize/2.0;
 				pd_3space( stdout, -v, -v, -v, v, v, v );
-			} else if (space)  {
+			} else if (forced_space)  {
 				SKIP(6*8);
-				pdv_3space(stdout, space_min, space_max);
-VPRINT("space_min", space_min);
-VPRINT("space_max", space_max);
+				pdv_3space(stdout, forced_space_min, forced_space_max);
 			} else {
 				/* leave it unchanged */
 				putchar(c);
@@ -442,7 +437,7 @@ FILE	*fp;
 model_rpp( minx, miny, minz, maxx, maxy, maxz )
 double	minx, miny, minz, maxx, maxy, maxz;
 {
-	float	dx, dy, dz;
+	double	dx, dy, dz;
 
 	centx = (maxx + minx) / 2.0;
 	centy = (maxy + miny) / 2.0;
