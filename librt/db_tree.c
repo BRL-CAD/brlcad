@@ -968,6 +968,7 @@ struct combined_tree_state	**region_start_statepp;
 			RT_CK_TREE(subtree);
 			*tmp = *tp;	/* struct copy */
 			*tp = *subtree;	/* struct copy */
+			bu_free( (char *)subtree, "subtree" );
 			db_free_tree( tmp );
 			RT_CK_TREE(tp);
 		} else {
