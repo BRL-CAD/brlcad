@@ -508,10 +508,6 @@ register struct rt_i	*rtip;
 	(void)rt_get_timer( &times, NULL );
 	rt_log("GETTREE: %s\n", rt_vls_addr(&times));
 	rt_vls_free( &times );
-	if(rdebug&RDEBUG_STATS)  {
-		/* Print additional statistics */
-		rt_pr_lock_stats();
-	}
 
 #ifdef HAVE_SBRK
 	rt_log("Additional dynamic memory used=%d. bytes\n",
@@ -892,7 +888,6 @@ int framenumber;
 
 	if(rdebug&RDEBUG_STATS)  {
 		/* Print additional statistics */
-		rt_pr_lock_stats();
 		res_pr();
 	}
 
