@@ -83,7 +83,7 @@ static char DAT_TIM[80];   /* when? */
 static char COMMENT[80];   /* comment! */
 #endif
     
-WriteVICARHeader(fd, width, height, BandsPerPixel)
+void WriteVICARHeader(fd, width, height, BandsPerPixel)
 FILE *fd;
 int width, height, BandsPerPixel;
 {
@@ -254,7 +254,7 @@ int main(argc,argv)
 int argc;
 char *argv[];
 {
-    char *infname = NULL, outfname = NULL;
+    char *infname = NULL, *outfname = NULL;
     int oflag = 0;
     unsigned char *VICARImage;
     rle_hdr the_hdr;
