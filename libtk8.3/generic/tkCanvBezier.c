@@ -559,7 +559,7 @@ double NearestPointOnCurve(P, degree, V)
     /*  Convert problem to Bezier form	*/
     w = ConvertToBezierForm(P, degree, V);
 
-    t_candidate = (double *)ckalloc( (2*degree - 1)*sizeof( double ) );
+    t_candidate = (double *)ckalloc( (2*degree +3)*sizeof( double ) );
 
     /* Find all possible roots of  equation */
     n_solutions = FindRoots(w, 2*degree-1, t_candidate, 0);
@@ -751,15 +751,14 @@ static int FindRoots(w, degree, t, depth)
 
     /* Otherwise, solve recursively after	*/
     /* subdividing control polygon		*/
-    Left = (Point2 *)ckalloc( (degree + 1) * sizeof( Point2 ) );
-    Right = (Point2 *)ckalloc( (degree + 1) * sizeof( Point2 ) );
-    left_t = (double *)ckalloc( (degree + 1 ) * sizeof( double ) );
-    right_t = (double *)ckalloc( (degree + 1 ) * sizeof( double ) );
+    Left = (Point2 *)ckalloc( (degree + 2) * sizeof( Point2 ) );
+    Right = (Point2 *)ckalloc( (degree + 2) * sizeof( Point2 ) );
+    left_t = (double *)ckalloc( (degree + 3 ) * sizeof( double ) );
+    right_t = (double *)ckalloc( (degree + 3 ) * sizeof( double ) );
 
     Bezier(w, degree, 0.5, Left, Right);
     left_count  = FindRoots(Left,  degree, left_t, depth+1);
     right_count = FindRoots(Right, degree, right_t, depth+1);
-
 
     /* Gather solutions together	*/
     for (i = 0; i < left_count; i++) {
