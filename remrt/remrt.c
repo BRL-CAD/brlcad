@@ -382,7 +382,6 @@ extern int	height;
 extern int	matflag;
 extern int	interactive;
 extern int	benchmark;
-int		rdebug;
 int		rt_verbosity = -1;
 extern char	*outputfile;		/* output file name */
 extern int	desiredframe;
