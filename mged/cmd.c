@@ -649,6 +649,7 @@ void
 mged_setup()
 {
   struct bu_vls str;
+  struct bu_vls str2;
   char *filename;
 
   /* The following is for GUI output hooks: contains name of function to
@@ -744,18 +745,20 @@ mged_setup()
   Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_scale_vls),
 	      (char *)&edit_absolute_scale, TCL_LINK_DOUBLE);
 
-  filename = getenv("MGED_TCL_LIBRARY");
-
-  if(filename == NULL)
-#ifdef MGED_TCL_LIBRARY
-    filename = MGED_TCL_LIBRARY;
+#ifdef BRLCAD_TCL_LIBRARY
+  filename = BRLCAD_TCL_LIBRARY;
 #else
-    filename = "/usr/brlcad/tclscripts";
+  filename = "/usr/brlcad/tclscripts";
 #endif
   bu_vls_init(&str);
-  bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %s]", filename);
+  bu_vls_init(&str2);
+  bu_vls_printf(&str2, "%s/mged", filename);
+  bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %s %s]",
+		bu_vls_addr(&str2), filename);
   (void)Tcl_Eval(interp, bu_vls_addr(&str));
   bu_vls_free(&str);
+  bu_vls_free(&str2);
+
   Tcl_ResetResult(interp);
 }
 
