@@ -34,7 +34,7 @@ extern void f_quit();
 
 extern int	args;		/* total number of args available */
 extern int	argcnt;		/* holder for number of args added later */
-extern int	numargs;	/* number of args */
+
 extern char	*cmd_args[];	/* array of pointers to args */
 extern char	*local_unit[];
 
