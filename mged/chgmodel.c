@@ -1317,14 +1317,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-#if 1
 	ret = invoke_db_wrapper(interp, argc, argv);
-#else
-	bu_vls_init(&vls);
-	bu_build_cmd_vls(&vls, MGED_DB_NAME, argc, argv);
-	ret = Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-#endif
 
 	set_localunit_TclVar();
 	sf = dbip->dbi_base2local / sf;
@@ -1344,6 +1337,8 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+#if 0
+#else
 	struct bu_vls	title;
 	int bad = 0;
 
@@ -1378,6 +1373,7 @@ char	**argv;
 	view_state->vs_flag = 1;
 
 	return bad ? TCL_ERROR : TCL_OK;
+#endif
 }
 
 /* tell him it already exists */
@@ -1436,6 +1432,7 @@ char	**argv;
 	    Tcl_AppendElement(interp, "ell1");
 	    Tcl_AppendElement(interp, "epa");
 	    Tcl_AppendElement(interp, "eto");
+	    Tcl_AppendElement(interp, "extrude");
 	    Tcl_AppendElement(interp, "grip");
 	    Tcl_AppendElement(interp, "half");
 	    Tcl_AppendElement(interp, "nmg");
@@ -1445,13 +1442,12 @@ char	**argv;
 	    Tcl_AppendElement(interp, "rec");
 	    Tcl_AppendElement(interp, "rhc");
 	    Tcl_AppendElement(interp, "rpc");
+	    Tcl_AppendElement(interp, "sketch");
 	    Tcl_AppendElement(interp, "sph");
 	    Tcl_AppendElement(interp, "tec");
 	    Tcl_AppendElement(interp, "tgc");
 	    Tcl_AppendElement(interp, "tor");
 	    Tcl_AppendElement(interp, "trc");
-	    Tcl_AppendElement(interp, "extrude");
-	    Tcl_AppendElement(interp, "sketch");
 
 	    return TCL_OK;
 	  }
@@ -1952,8 +1948,10 @@ char	**argv;
 	  return TCL_ERROR;
 	} else {
 	  Tcl_AppendResult(interp, "make:  ", argv[2], " is not a known primitive\n",
-			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, bot, sph, ell, ellg, grip, tor,\n",
-			   "\t\ttgc, tec, rec, trc, rcc, half, rpc, rhc, epa, ehy, eto, part, sketch extrude\n",
+			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, bot, ehy,\n",
+			   "\t\tell, ell1, epa, eto, extrude, grip, half, nmg,\n",
+			   "\t\tpart, pipe, rcc, rec, rhc, rpc, sketch, sph,\n",
+			   "\t\ttec, tgc, tor, trc\n",
 			   (char *)NULL);
 	  return TCL_ERROR;
 	}
