@@ -410,7 +410,8 @@ genptr_t arg;
 
 	resource[cpu].re_cpu = cpu;
 #ifdef RESOURCE_MAGIC
-	resource[cpu].re_magic = RESOURCE_MAGIC;
+	if( BU_LIST_UNINITIALIZED( &resource[cpu].re_parthead ) )
+		rt_init_resource( &resource[cpu], cpu, rt_ip );
 #endif
 
 	for( ; ! user_interrupt; )
