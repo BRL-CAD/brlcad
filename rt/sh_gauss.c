@@ -189,25 +189,43 @@ struct tree_bark *tb;
 		} else {
 			ell_p = dbint->ip.idb_ptr;
 
-			rt_log(" got a solid type %d \"%s\"\n", sol_id,
-				rt_functab[sol_id].ft_name);
+			if( rdebug&RDEBUG_SHADE)
+				rt_log(" got a solid type %d \"%s\"\n",
+					sol_id,
+					rt_functab[sol_id].ft_name);
 
 			RT_ELL_CK_MAGIC(ell_p);
 
-			VPRINT("point", ell_p->v); 
-			VPRINT("a", ell_p->a); 
-			VPRINT("b", ell_p->b); 
-			VPRINT("c", ell_p->c); 
+			if( rdebug&RDEBUG_SHADE) {
+				VPRINT("point", ell_p->v); 
+				VPRINT("a", ell_p->a); 
+				VPRINT("b", ell_p->b); 
+				VPRINT("c", ell_p->c); 
+			}
 		}
 
 		/* XXX Only works for axis aligned solids */
+
+
+		if ((! NEAR_ZERO(ell_p->a[0], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->a[0] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
+		    (! NEAR_ZERO(ell_p->a[1], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->a[1] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
+		    (! NEAR_ZERO(ell_p->a[2], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->a[2] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
+		    (! NEAR_ZERO(ell_p->b[0], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->b[0] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
+		    (! NEAR_ZERO(ell_p->b[1], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->b[1] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
+		    (! NEAR_ZERO(ell_p->b[2], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->b[2] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
+		    (! NEAR_ZERO(ell_p->c[2], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->c[2] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ) {
+			rt_log("Warning: gauss ellipse not axis aligned\n");
+		}
+
 		VSET(dbint->one_sigma,
 			MAGNITUDE(ell_p->a) / tb->gs->gauss_sigma,
 			MAGNITUDE(ell_p->b) / tb->gs->gauss_sigma,
 			MAGNITUDE(ell_p->c) / tb->gs->gauss_sigma);
 
 
-		VPRINT("sigma", dbint->one_sigma);
+		if( rdebug&RDEBUG_SHADE) {
+			VPRINT("sigma", dbint->one_sigma);
+		}
 		RT_LIST_APPEND(tb->l, &(dbint->l) );
 
 		break;
@@ -372,8 +390,9 @@ vect_t sigma;
 
 	val = exp( -0.5 * term2 );
 
-	rt_log("pt(%g %g %g) term2:%g val:%g\n",
-		V3ARGS(pt), term2, val);
+	if( rdebug&RDEBUG_SHADE)
+		rt_log("pt(%g %g %g) term2:%g val:%g\n",
+			V3ARGS(pt), term2, val);
 
 	return val;
 }
@@ -402,14 +421,15 @@ struct seg *seg_p;
 
 	step_dist = span / (double)steps;
 
-	rt_log("r_pt(%g %g %g)  r_dir(%g %g %g)\n", V3ARGS(ap->a_ray.r_pt),
-		V3ARGS(ap->a_ray.r_dir) );
 
-	rt_log("dist_in:%g dist_out:%g span:%g step_dist:%g steps:%d\n",
-		seg_p->seg_in.hit_dist,
-		seg_p->seg_out.hit_dist,
-		span, step_dist, steps);
+	if( rdebug&RDEBUG_SHADE) {
+		rt_log("Evaluating Segment:\n");
+		rt_log("dist_in:%g dist_out:%g span:%g step_dist:%g steps:%d\n",
+			seg_p->seg_in.hit_dist,
+			seg_p->seg_out.hit_dist,
+			span, step_dist, steps);
 
+	}
 #if 1
 	for (dist=seg_p->seg_in.hit_dist ; dist < seg_p->seg_out.hit_dist ; dist += step_dist ) {
 		VJOIN1(pt, ap->a_ray.r_pt, dist, ap->a_ray.r_dir);
@@ -451,27 +471,13 @@ char			*dp;	/* ptr to the shader-specific struct */
 	RT_CHECK_PT(pp);
 	CK_gauss_SP(gauss_sp);
 
-	if( rdebug&RDEBUG_SHADE)
+	if( rdebug&RDEBUG_SHADE) {
 		rt_structprint( "gauss_render Parameters:", gauss_print_tab, (char *)gauss_sp );
 
-	/* If we are performing the shading in "region" space, we must 
-	 * transform the hit point from "model" space to "region" space.
-	 * See the call to db_region_mat in gauss_setup().
-	 */
-	MAT4X3PNT(pt, gauss_sp->gauss_m_to_sh, swp->sw_hit.hit_point);
-
-	if( rdebug&RDEBUG_SHADE) {
-		rt_log("gauss_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
-		V3ARGS(swp->sw_hit.hit_point),
-		V3ARGS(pt) );
+		rt_log("r_pt(%g %g %g)  r_dir(%g %g %g)\n",
+			V3ARGS(ap->a_ray.r_pt),
+			V3ARGS(ap->a_ray.r_dir) );
 	}
-
-	/* perform shading operations here */
-
-	/* XXX First of all, we need to rotate the ray and ellipse into an
-	 * axis-aligned state
-	 */
-
 
 	RT_CK_LIST_HEAD(&swp->sw_segs->l);
 	RT_CK_LIST_HEAD(&gauss_sp->dbil);
@@ -480,28 +486,43 @@ char			*dp;	/* ptr to the shader-specific struct */
 	/* look at each segment that participated in the ray */
 	for (RT_LIST_FOR(seg_p, seg, &swp->sw_segs->l) ) {
 
+		if( rdebug&RDEBUG_SHADE) {
+			rt_log("seg %g -> %g\n",
+				seg_p->seg_in.hit_dist,
+				seg_p->seg_out.hit_dist);
+		}
 		RT_CK_SEG(seg_p);
 		RT_CK_SOLTAB(seg_p->seg_stp);
 
 		/* check to see if the seg/solid is in this partition */
 		if (BITTEST(pp->pt_solhit, seg_p->seg_stp->st_bit) ) {
 
-			/* check to see if the solid is in the region */
-			for (RT_LIST_FOR(dbint_p, reg_db_internals, &gauss_sp->dbil)){
+
+			/* check to see if the solid is in this region */
+			for (RT_LIST_FOR(dbint_p, reg_db_internals,
+			    &gauss_sp->dbil)){
 
 				CK_DBINT(dbint_p);
 
 				if (dbint_p->st_p == seg_p->seg_stp) {
+					/* The solid from the region is
+					 * the solid from the segment
+					 * from the partition
+					 */
 					optical_density +=
 						eval_seg(ap, dbint_p, seg_p);
 					break;
 				}
 			}
+		} else {
+				if( rdebug&RDEBUG_SHADE)
+					rt_log("bittest failed\n");
 		}
 	}
 
 
-	rt_log("Optical Density %g\n", optical_density);
+	if( rdebug&RDEBUG_SHADE)
+		rt_log("Optical Density %g\n", optical_density);
 
 	/* get the path length right */
 	if (pp->pt_inhit->hit_dist < 0.0)

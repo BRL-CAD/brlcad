@@ -131,6 +131,7 @@ register struct shadework *swp;
 		pr_shadework( "before mf_render", swp );
 	}
 
+
 	/* Invoke the actual shader (may be a tree of them) */
 	(void)mfp->mf_render( ap, pp, swp, rp->reg_udata );
 

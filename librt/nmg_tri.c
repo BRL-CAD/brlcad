@@ -1,5 +1,4 @@
-/*
- *			N M G _ T R I . C
+/*			N M G _ T R I . C
  *
  *  Triangulate the faces of a polygonal NMG
  * 
@@ -327,9 +326,7 @@ int dir;
 	if ( *(pt)->vu_p->up.magic_p != NMG_LOOPUSE_MAGIC) {
 		rt_log("%s %d Bad vertexuse parent (%g %g %g)\n",
 			__FILE__, __LINE__,
-			(pt)->vu_p->v_p->vg_p->coord[0],
-			(pt)->vu_p->v_p->vg_p->coord[1],
-			(pt)->vu_p->v_p->vg_p->coord[2]);
+			V3ARGS( (pt)->vu_p->v_p->vg_p->coord ) );
 		rt_bomb("goodbye\n");
 	}
 
@@ -978,9 +975,7 @@ struct rt_list *tlist, *tbl2d;
 		"lone hole start");
 
 	rt_log("didn't find trapezoid for hole-start point at:\n\t%g %g %g\n",
-		pt->vu_p->v_p->vg_p->coord[0],
-		pt->vu_p->v_p->vg_p->coord[1],
-		pt->vu_p->v_p->vg_p->coord[2]);
+		V3ARGS(pt->vu_p->v_p->vg_p->coord) );
 
 	rt_bomb("bombing\n");
 gotit:
@@ -1256,14 +1251,14 @@ vect_t dir;
 
 		if (rt_g.NMG_debug & DEBUG_TRI)
 			rt_log("\t\tchecking forward edgeuse to %g %g %g\n",
-				vu_next->v_p->vg_p->coord[0],
-				vu_next->v_p->vg_p->coord[1],
-				vu_next->v_p->vg_p->coord[2]);
+				V3ARGS(vu_next->v_p->vg_p->coord) );
 
 		if (eu_length_sq >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
-					rt_log("\t\t\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
+					rt_log("\t\t\teu_dir %g %g %g\n",
+						V3ARGS(eu_dir));
+
 					rt_log("\t\t\tnew_last/max 0x%08x %g %g %g -> %g %g %g vdot %g\n",
 						vu,
 						V3ARGS(vu->v_p->vg_p->coord),
@@ -1276,7 +1271,7 @@ vect_t dir;
 			}
 			if (vu_dot < dot_min) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
-					rt_log("\t\t\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
+					rt_log("\t\t\teu_dir %g %g %g\n", V3ARGS(eu_dir));
 					rt_log("\t\t\tnew_first/min 0x%08x %g %g %g -> %g %g %g vdot %g\n",
 						vu, 
 						V3ARGS(vu->v_p->vg_p->coord),
@@ -1310,14 +1305,13 @@ vect_t dir;
 
 		if (rt_g.NMG_debug & DEBUG_TRI)
 			rt_log("\t\tchecking reverse edgeuse to %g %g %g\n",
-				vu_prev->v_p->vg_p->coord[0],
-				vu_prev->v_p->vg_p->coord[1],
-				vu_prev->v_p->vg_p->coord[2]);
+				V3ARGS(vu_prev->v_p->vg_p->coord) );
 
 		if (eu_length_sq >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
-					rt_log("\t\t\t-eu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
+					rt_log("\t\t\t-eu_dir %g %g %g\n", 
+						V3ARGS(eu_dir));
 					rt_log("\t\t\tnew_last/max 0x%08x %g %g %g <- %g %g %g vdot %g\n",
 						vu, 
 						V3ARGS(vu->v_p->vg_p->coord),
@@ -1330,7 +1324,7 @@ vect_t dir;
 			}
 			if (vu_dot < dot_min) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
-					rt_log("\t\t\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
+					rt_log("\t\t\teu_dir %g %g %g\n", V3ARGS(eu_dir));
 					rt_log("\t\t\tnew_first/min 0x%08x %g %g %g <- %g %g %g vdot %g\n",
 						vu,
 						V3ARGS(vu->v_p->vg_p->coord),
@@ -1779,12 +1773,8 @@ int void_ok;
 
 
 			sprintf(buf, "cut %g %g %g -> %g %g %g\n",
-				p1->vu_p->v_p->vg_p->coord[0],
-				p1->vu_p->v_p->vg_p->coord[1],
-				p1->vu_p->v_p->vg_p->coord[2],
-				p2->vu_p->v_p->vg_p->coord[0],
-				p2->vu_p->v_p->vg_p->coord[1],
-				p2->vu_p->v_p->vg_p->coord[2]);
+				V3ARGS(p1->vu_p->v_p->vg_p->coord),
+				V3ARGS(p2->vu_p->v_p->vg_p->coord) );
 
 			nmg_stash_model_to_file( "bad_tri_cut.g",
 				nmg_find_model(&p1->vu_p->l.magic), buf );
@@ -1812,7 +1802,7 @@ int void_ok;
 	}
 
 	if (plot_fd) {
-		pl_color(plot_fd, color[0], color[1], color[2]);
+		pl_color(plot_fd, V3ARGS(color) );
 		pdv_3line(plot_fd, p1->coord, p2->coord);
 	}
 
@@ -1949,16 +1939,25 @@ CONST struct rt_tol	*tol;
 
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		rt_log("join_mapped_loops()\n");
+
+
 	if (p1 == p2) {
 		rt_log("%s %d: Attempting to join loop to itself at (%g %g %g)?\n",
 			__FILE__, __LINE__,
-			p1->vu_p->v_p->vg_p->coord[0],
-			p1->vu_p->v_p->vg_p->coord[1],
-			p1->vu_p->v_p->vg_p->coord[2]);
+			V3ARGS(p1->vu_p->v_p->vg_p->coord) );
 		rt_bomb("bombing\n");
 	} else if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
 		rt_log("parent loops are the same %s %d\n", __FILE__, __LINE__);
 		rt_bomb("goodnight\n");
+	}
+	/* check to see if we're joining two loops that share a vertex */
+	if (p1->vu_p->v_p == p2->vu_p->v_p) {
+		struct vertexuse *vu;
+	rt_log("Joining two loops that share a vertex at (%g %g %g)\n",
+			V3ARGS(p1->vu_p->v_p->vg_p->coord) );
+		vu = nmg_join_2loops(p1->vu_p,  p2->vu_p);
+
+		return;
 	}
 
 	pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);
@@ -1971,9 +1970,7 @@ CONST struct rt_tol	*tol;
 	if (p1 == p2) {
 		rt_log("%s: %d I'm a fool...\n\ttrying to join a vertexuse (%g %g %g) to itself\n",
 			__FILE__, __LINE__,
-			p1->vu_p->v_p->vg_p->coord[0],
-			p1->vu_p->v_p->vg_p->coord[1],
-			p1->vu_p->v_p->vg_p->coord[2]);
+			V3ARGS(p1->vu_p->v_p->vg_p->coord) );
 	} else if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
 		if (rt_g.NMG_debug & DEBUG_TRI) {
 			rt_log("parent loops are the same %s %d\n",
@@ -2014,7 +2011,7 @@ CONST struct rt_tol	*tol;
 
 	vu = nmg_join_2loops(vu1, vu2);
 	if (plot_fd) {
-		pl_color(plot_fd, color[0], color[1], color[2]);
+		pl_color(plot_fd, V3ARGS(color) );
 		pdv_3line(plot_fd, p1->coord,  p2->coord);
 	}
 
@@ -2198,9 +2195,7 @@ CONST struct rt_tol	*tol;
 
 				if (rt_g.NMG_debug & DEBUG_TRI)
 					rt_log("splitting self-touching loop at (%g %g %g)\n",
-					tp->bot->vu_p->v_p->vg_p->coord[0],
-					tp->bot->vu_p->v_p->vg_p->coord[1],
-					tp->bot->vu_p->v_p->vg_p->coord[2]);
+					V3ARGS(tp->bot->vu_p->v_p->vg_p->coord) );
 
 				nmg_split_touchingloops(toplu, tol);
 				for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
@@ -2306,9 +2301,7 @@ CONST struct rt_tol *tol;
 		new = find_pt2d(tbl2d, eu->vu_p);
 		if (!new) {
 			rt_log("why can't I find a 2D point for %g %g %g?\n",
-			eu->vu_p->v_p->vg_p->coord[0],
-			eu->vu_p->v_p->vg_p->coord[1],
-			eu->vu_p->v_p->vg_p->coord[2]);
+			V3ARGS(eu->vu_p->v_p->vg_p->coord));
 			rt_bomb("bombing\n");
 		}
 
@@ -2333,12 +2326,9 @@ CONST struct rt_tol *tol;
 		first = max;
 	else {
 		rt_log("is this a unimonotone loop of just 2 points?:\t%g %g %g and %g %g %g?\n",
-			min->vu_p->v_p->vg_p->coord[0],
-			min->vu_p->v_p->vg_p->coord[1],
-			min->vu_p->v_p->vg_p->coord[2],
-			max->vu_p->v_p->vg_p->coord[0],
-			max->vu_p->v_p->vg_p->coord[1],
-			max->vu_p->v_p->vg_p->coord[2]);
+			V3ARGS(min->vu_p->v_p->vg_p->coord), 
+			V3ARGS(max->vu_p->v_p->vg_p->coord) );
+
 		rt_bomb("aborting\n");
 	}
 	
@@ -2442,9 +2432,8 @@ struct rt_list *tbl2d;
 			vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 			if (rt_g.NMG_debug & DEBUG_TRI)
 				rt_log( "lone vert @ %g %g %g\n",
-					vu->v_p->vg_p->coord[0],
-					vu->v_p->vg_p->coord[1],
-					vu->v_p->vg_p->coord[2]);
+					V3ARGS(vu->v_p->vg_p->coord) );
+
 			pl_color(plot_fd, 200, 200, 100);
 
 			if (! (p=find_pt2d(tbl2d, vu)) )
@@ -2465,9 +2454,8 @@ struct rt_list *tbl2d;
 #if 0
 			if (rt_g.NMG_debug & DEBUG_TRI)
 				rt_log( "eu vert @ %g %g %g\n",
-					eu->vu_p->v_p->vg_p->coord[0],
-					eu->vu_p->v_p->vg_p->coord[1],
-					eu->vu_p->v_p->vg_p->coord[2]);
+					V3ARGS(eu->vu_p->v_p->vg_p->coord) );
+
 #endif
 			if (! (p=find_pt2d(tbl2d, eu->vu_p)) )
 				rt_bomb("didn't find vertexuse in list!\n");
@@ -2483,7 +2471,8 @@ struct rt_list *tbl2d;
 
 			pl_color(plot_fd, 200, 200, 200);
 			pdv_3line(plot_fd, p->coord, pt);
-			pd_3move(plot_fd, p->coord[0], p->coord[1], p->coord[2]);
+			pd_3move(plot_fd, V3ARGS(p->coord));
+
 			sprintf(buf, "%g, %g", p->coord[0], p->coord[1]);
 			pl_label(plot_fd, buf);
 		}
@@ -2516,7 +2505,8 @@ CONST struct rt_tol	*tol;
 
 	if (rt_g.NMG_debug & DEBUG_TRI) {
 		NMG_GET_FU_NORMAL(N, fu);
-		rt_log("---------------- Triangulate face %g %g %g\n", N[0], N[1], N[2]);
+		rt_log("---------------- Triangulate face %g %g %g\n",
+			V3ARGS(N));
 	}
 
 
@@ -2538,7 +2528,7 @@ CONST struct rt_tol	*tol;
 
 	if (rt_g.NMG_debug & DEBUG_TRI) {
 		rt_log("---------------- face %g %g %g already triangular\n",
-			N[0], N[1], N[2]);
+			V3ARGS(N));
 
 		for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
 			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd ))
@@ -2547,11 +2537,11 @@ CONST struct rt_tol	*tol;
 	}
 	return;
 
-	triangulate:
+triangulate:
 	if (rt_g.NMG_debug & DEBUG_TRI) {
 		vect_t N;
 		NMG_GET_FU_NORMAL(N, fu);
-		rt_log("---------------- proceeding to triangulate face %g %g %g\n", N[0], N[1], N[2]);
+		rt_log("---------------- proceeding to triangulate face %g %g %g\n", V3ARGS(N));
 	}
 
 
@@ -2611,9 +2601,7 @@ CONST struct rt_tol	*tol;
 			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 			
 			rt_log("How did I miss this vertex loop %g %g %g?\n%s\n",
-				vu->v_p->vg_p->coord[0],
-				vu->v_p->vg_p->coord[1],
-				vu->v_p->vg_p->coord[2],
+				V3ARGS(vu->v_p->vg_p->coord),
 				"I'm supposed to be dealing with unimonotone loops now");
 			rt_bomb("aborting\n");
 
