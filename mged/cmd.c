@@ -122,6 +122,7 @@ extern int (*knob_hook)();
 extern int (*cue_hook)(), (*zclip_hook)(), (*zbuffer_hook)();
 extern int (*light_hook)(), (*perspective_hook)();
 extern int f_nmg_simplify();
+extern int f_make_bb();
 
 extern short earb4[5][18];
 extern short earb5[9][18];
@@ -398,6 +399,8 @@ static struct funtab funtab[] = {
 	f_mouse, 4,4, FALSE,
 "make", "name <arb8|sph|ellg|tor|tgc|rpc|rhc|epa|ehy|eto|part|grip|half|nmg|pipe>", "create a primitive",
 	f_make,3,3,FALSE,
+"make_bb", "new_rpp_name obj1 [obj2 obj3 ...]", "make a bounding box solid enclosing specified objects",
+	f_make_bb, 1, MAXARGS, FALSE,
 "mater", "comb [material]", "assign/delete material to combination",
 	f_mater,2,3,FALSE,
 "matpick", "# or a/b", "select arc which has matrix to be edited, in O_PATH state",
