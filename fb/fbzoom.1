@@ -1,116 +1,120 @@
 .TH FBZOOM 1 BRL/CAD
 .SH NAME
-fbzoom \(em enlarge a frame buffer image
+fbzoom \- modify zoom and window parameters of a frame buffer
 .SH SYNOPSIS
 .B fbzoom
-.RB [ \-hT ]
-.RB [ \-F\  framebuffer]
-.RB [ \-{sS}\  squarescrsize]
-.RB [ \-{wW}\  scr_width]
-.RB [ \-{nN}\  scr_height]
+.RB [ \-F\  frame_buffer]
+.RB [ \-h ]
+.RB [ \-s\  image_sqrsize]
+.RB [ \-w\  image_width]
+.RB [ \-n\  image_height]
 .SH DESCRIPTION
-.I Fbzoom\^
-is used to
-zoom-in
-on a frame buffer image by enlarging each pixel and windowing in on
-a portion of the image.
-The environment
-variable
-.B
-.SM FB_FILE
-is used to select the display device (see
-.IR brlcad (1)).
-If this variable is not set, the default device for your system will
-be used.
+Using
+.IR vi (1)
+and/or
+.IR emacs (1)
+-like keystrokes,
+.I fbzoom
+allows interactive zooming and panning of a frame buffer.  Using the
+optional command line arguments,
 .PP
-The requested framebuffer size will be the default size for the
-selected device (often 512x512 pixels).
-Specifying the
+.TP
+.B \-F\  frame_buffer
+explicitly specifies the frame buffer.  Otherwise, the environment variable 
+.I FB_FILE
+specifies
+the current framebuffer, see
+.IR brlcad (1).
+.TP
 .B \-h
-flag changes the size to 1024x1024.
+changes the frame buffer size to 1024x1024.
+By default, it is assumed to be 512x512 pixels.
+.TP
+.B \-s\  image_sqrsize
+disaplays the image file as a square,
+.B image_sqrsize
+pixels per side (default is 512x512).
+.TP
+.B \-w\  image_width
+disaplays the image
+.B image_width
+pixels wide (default is 512).
+.TP
+.B \-n\  image_height
+disaplays the image
+.B image_height
+pixels high (default is 512).
 .PP
-The
-.BI \-w\  scr_width
-and
-.BI \-W\  scr_width
-flags specifies the width of each scanline for the display device,
-in pixels.
+.I Fbzoom
+will display the image currently in the frame buffer and then act on commands
+entered by the user.  Available commands are:
 .PP
-The
-.BI \-n\  scr_height
-and
-.BI \-N\  scr_height
-flags specifies the height of each scanline for the display device.
+
+.TP
+.B b ^V
+zoom Bigger (*2)
+.TP
+.B s
+zoom Smaller (*0.5)
+.TP
+.B +
+zoom Bigger (+1)
+.TP
+.B -
+zoom Smaller (-1)
+.TP
+.B h B
+pan Left (1)
+.TP
+.B j N
+pan Down (1)
+.TP
+.B k P
+pan Up (1)
+.TP
+.B l F
+pan Right (1)
+.TP
+.B H ^B
+pan Left (many)
+.TP
+.B J ^N
+pan Down (many)
+.TP
+.B K ^P
+pan Up (many)
+.TP
+.B L ^F
+pan Right (many)
+.TP
+.B T
+toggle sense of pan commands
+.TP
+.B c
+goto Center
+.TP
+.B z
+zoom 1 1
+.TP
+.B r
+Reset to normal
+.TP
+.B q
+Exit
+.TP
+.B RETURN
+Exit
 .PP
-.BI \-s\  squarescrsize
-and
-.BI \-S\  squarescrsize
-set both the height and width to the size given.
-The
-.B \-T
-flag reverses the sense of the pan commands
-(see the discussion of the
-.RB `` T ''
-command below).
-.PP
-The 
-.IR vi (1)-like
-commands
-.RB `` h '',
-.RB `` j '',
-.RB `` k '',
-and
-.RB `` l ''
-pan one pixel left, down, up, and right, respectively,
-and the 
-.RB `` H '',
-.RB `` J '',
-.RB `` K '',
-and
-.RB `` L ''
-commands pan in the corresponding directions in big steps.
-These commands also have
-.IR jove (1)-like
-counterparts in the
-.RB `` B '',
-.RB `` N  '',
-.RB `` P '',
-and
-.RB `` F '',
-and
-.RB `` ^B '',
-(control-B),
-.RB `` ^N '',
-.RB `` ^P '',
-and
-.RB `` ^F ''
-commands.
-The
-.RB `` T ''
-command toggles the sense of all the pan commands.
-Initially (unless the
-.B \-T
-flag is specified)
-the pan commands move the center of view across the image.
-When their sense is reversed,
-they move the image under the center of view.
-.PP
-A
-.RB `` ? ''
-prints a short command summary,
-and typing
-.RB `` q ''
-or
-.RB `` Q ''
-exits the program.
+Note that these commands change the way the frame buffer is viewed
+but not the image in the frame buffer.
 .SH "SEE ALSO"
-brlcad(1)
-.SH AUTHORS
-Gary S. Moss
+bw-fb(1), gif-fb(1), pix-fb(1), pl-fb(1), rle-fb(1)
+.SH AUTHOR
+Bob Suckling
 .br
 Michael John Muuss
 .br
-J. Robert Suckling
+Gary S. Moss
 .SH SOURCE
 SECAD/VLD Computing Consortium, Bldg 394
 .br
