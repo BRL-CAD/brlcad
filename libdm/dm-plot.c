@@ -80,6 +80,8 @@ struct dm dm_plot = {
   0,
   0,
   0,
+  0,
+  0,
   1.0, /* aspect ratio */
   0,
   0,
@@ -432,12 +434,15 @@ int strict;
 
 
 static int
-plot_setLineAttr(dmp, width, dashed)
+plot_setLineAttr(dmp, width, style)
 struct dm *dmp;
 int width;
-int dashed;
+int style;
 {
-  if(dashed)
+  dmp->dm_lineWidth = width;
+  dmp->dm_lineStyle = style;
+
+  if(style == DM_DASHED_LINE)
     pl_linmod( ((struct plot_vars *)dmp->dm_vars)->up_fp, "dotdashed");
   else
     pl_linmod( ((struct plot_vars *)dmp->dm_vars)->up_fp, "solid");
