@@ -62,6 +62,8 @@ int		use_air = 1;		/* Handling of air in librt */
 
 extern int 	 rpt_overlap;
 
+extern fastf_t	rt_cline_radius;	/* from g_cline.c */
+
 extern struct bu_vls	ray_data_file;	/* file name for ray data output (declared in do.c) */
 FILE	*shot_fp;		/* FILE pointer for ray data output */
 
@@ -89,6 +91,7 @@ Options:\n\
  -U #		Set use_air boolean to # (default=1)\n\
  -c \"set ray_data_file=ray_file_name\"		Specify ray data output file (az el x_start y_start z_start x_dir y_dir z_dir line_number_in_shotline_file)\n\
  -c \"set save_overlaps=1\"	Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n\
+ -c \"set rt_cline_radius=radius\"	Additional radius to be added to CLINE solids\n\
  -x #		Set librt debug flags\n\
 ";
 
@@ -153,7 +156,6 @@ char *file, *obj;
 			npsw = 1;
 		}
 	}
-
 
 	return(0);		/* No framebuffer needed */
 }

@@ -96,6 +96,11 @@ extern int	max_ireflect;		/* max internal reflection level */
 struct bu_vls	ray_data_file;	/* file name for ray data output */
 /***** end variables shared with viewg3.c *****/
 
+/***** variables shared with g_cline.c ******/
+extern fastf_t rt_cline_radius;
+/***** end variables shared with g_cline.c ******/
+
+
 void		def_tree();
 void		do_ae();
 void		res_pr();
@@ -459,6 +464,7 @@ struct bu_structparse set_parse[] = {
 	{"%f",	1, "perspective", byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "angle",	byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "rt_bot_minpieces", byteoffset(rt_bot_minpieces),BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "rt_cline_radius", byteoffset(rt_cline_radius),BU_STRUCTPARSE_FUNC_NULL },
 	{"%S",  1, "ray_data_file", byteoffset(ray_data_file),BU_STRUCTPARSE_FUNC_NULL },
 	{"i", byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
 #endif

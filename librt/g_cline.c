@@ -51,6 +51,9 @@ CONST struct bu_structparse rt_cline_parse[] = {
 	{ "%f", 1, "t", RT_CLINE_O( thickness ), BU_STRUCTPARSE_FUNC_NULL },
 	{0} };
 
+/* shared with do.c */
+fastf_t rt_cline_radius=-1.0;
+
 /*
  *  			R T _ C L I N E _ P R E P
  *  
@@ -78,7 +81,7 @@ struct rt_i		*rtip;
 	vect_t					rad;
 	point_t					top;
 	fastf_t					tmp;
-	fastf_t					max_tr=50.0;
+	fastf_t					max_tr;
 
 	RT_CK_DB_INTERNAL(ip);
 	cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
@@ -93,10 +96,13 @@ struct rt_i		*rtip;
 	VUNITIZE( cline->h );
 	stp->st_specific = (genptr_t)cline;
 
-	/* XXXX max_tr (maximum threat radius) is a temporary kludge */
+	if( rt_cline_radius > 0.0 )
+		max_tr = rt_cline_radius;
+	else
+		max_tr = 0.0;
 	tmp = MAGNITUDE( cline_ip->h ) * 0.5;
 	stp->st_aradius = sqrt( tmp*tmp + cline_ip->radius*cline_ip->radius );
-	stp->st_bradius = stp->st_aradius + 50.0;
+	stp->st_bradius = stp->st_aradius + max_tr;
 	VSETALL( stp->st_min, MAX_FASTF );
 	VREVERSE( stp->st_max, stp->st_min );
 
@@ -164,11 +170,21 @@ struct seg		*seghead;
 	vect_t diff;
 	fastf_t tmp;
 	fastf_t distmin, distmax;
+	fastf_t add_radius;
 
 	BU_LIST_INIT( &ref_seghead.l );
 
 	/* This is a CLINE FASTGEN element */
-	reff = cline->radius + ap->a_rbeam;
+	if( rt_cline_radius > 0.0 )
+	{
+		add_radius = rt_cline_radius;
+		reff = cline->radius + add_radius;
+	}
+	else
+	{
+		add_radius = 0.0;
+		reff = cline->radius;
+	}
 
 	cosa = VDOT( rp->r_dir, cline->h );
 
@@ -219,8 +235,8 @@ struct seg		*seghead;
 		return( 0 );	/* missed */
 
 	sina = sqrt( 1.0 - cosa*cosa);
-	tmp = sqrt( dist[2] ) - ap->a_rbeam;
-	if( dist[2] > ap->a_rbeam * ap->a_rbeam )
+	tmp = sqrt( dist[2] ) - add_radius;
+	if( dist[2] > add_radius * add_radius )
 		half_los = sqrt( cline->radius*cline->radius - tmp*tmp) / sina;
 	else
 		half_los = cline->radius / sina;
