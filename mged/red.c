@@ -219,11 +219,8 @@ checkcomb()
 	{
 		/* Read a line */
 		i = (-1);
-#ifdef XMGED
-		while( (ch=mged_fgetc( fp )) != EOF && ch != '\n' && i<MAXLINE )
-#else
+
 		while( (ch=getc( fp )) != EOF && ch != '\n' && i<MAXLINE )
-#endif
 			line[++i] = ch;
 
 		if( ch == EOF )	/* We must be done */
@@ -377,11 +374,8 @@ struct directory *dp;
 	{
 		/* Read a line */
 		i = (-1);
-#ifdef XMGED
-		while( (ch=mged_fgetc( fp )) != EOF && ch != '\n' && i<MAXLINE )
-#else
+
 		while( (ch=getc( fp )) != EOF && ch != '\n' && i<MAXLINE )
-#endif
 			line[++i] = ch;
 
 		if( ch == EOF )	/* We must be done */

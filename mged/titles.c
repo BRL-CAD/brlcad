@@ -60,10 +60,6 @@ char	*state_str[] = {
 	"UNKNOWN",
 };
 
-#ifdef XMGED
-void    (*dotitles_hook)();
-#endif
-
 extern double			frametime;	/* from ged.c */
 extern struct rt_db_internal	es_int;
 

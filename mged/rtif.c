@@ -49,10 +49,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./mgedtcl.h"
 
-#ifdef XMGED
-extern  int     mged_wait();
-#endif
-
 void		setup_rt();
 
 static int	tree_walk_needed;
@@ -284,10 +280,6 @@ run_rt()
 	int o_pipe[2];
 	FILE *fp;
 
-#ifdef XMGED
-	alarm((unsigned)0);     /* shut off alarm */
-#endif
-
 	(void)pipe( o_pipe );
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
@@ -319,13 +311,8 @@ run_rt()
 	(void)fclose( fp );
 
 	/* Wait for program to finish */
-#ifdef XMGED
-	while ((rpid = mged_wait(&retcode, pid)) != pid && rpid != -1)
-                ;       /* NULL */
-#else
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;	/* NULL */
-#endif
 
 	if( retcode != 0 )
 		pr_wait_status( retcode );
@@ -380,11 +367,7 @@ char	**argv;
 	if( needs_reattach && retcode == 0 )  {
 		/* Wait for a return, then reattach display */
 		rt_log("Press RETURN to reattach\007\n");
-#ifdef XMGED
-		while( mged_fgetc(stdin) != '\n' )
-#else
 		while( getchar() != '\n' )
-#endif
 			/* NIL */  ;
 	}
 	if( needs_reattach )
@@ -432,11 +415,7 @@ char	**argv;
 	if( needs_reattach && retcode == 0 )  {
 		/* Wait for a return, then reattach display */
 		rt_log("Press RETURN to reattach\007\n");
-#ifdef XMGED
-		while( mged_fgetc(stdin) != '\n' )
-#else
 		while( getchar() != '\n' )
-#endif
 			/* NIL */  ;
 	}
 	if( needs_reattach )
@@ -467,10 +446,6 @@ char	**argv;
 
 	if( not_state( ST_VIEW, "Overlap check in current view" ) )
 		return CMD_BAD;
-
-#ifdef XMGED
-/*XXX*/ alarm((unsigned)0);     /* shut off alarm */
-#endif
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "rtcheck";
@@ -524,13 +499,9 @@ char	**argv;
 	fclose(fp);
 
 	/* Wait for program to finish */
-#ifdef XMGED
-	while ((rpid = mged_wait(&retcode, pid)) != pid && rpid != -1)
-                ;       /* NULL */
-#else
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;	/* NULL */
-#endif
+
 	if( retcode != 0 )
 		pr_wait_status( retcode );
 	(void)signal(SIGINT, cur_sigint);
@@ -1062,10 +1033,6 @@ char	**argv;
 	if( not_state( ST_VIEW, "Single ray-trace from current view" ) )
 		return CMD_BAD;
 
-#ifdef XMGED
-	alarm((unsigned)0);     /* shut off alarm */
-#endif
-
 	vp = &rt_cmd_vec[0];
 	*vp++ = "nirt";
 	*vp++ = "-M";
@@ -1166,13 +1133,9 @@ char	**argv;
 	(void)fclose( fp );
 
 	/* Wait for program to finish */
-#ifdef XMGED
-	while ((rpid = mged_wait(&retcode, pid)) != pid && rpid != -1)
-		;	/* NULL */
-#else
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;	/* NULL */
-#endif
+
 	if( retcode != 0 )
 		pr_wait_status( retcode );
 	(void)signal(SIGINT, cur_sigint);
