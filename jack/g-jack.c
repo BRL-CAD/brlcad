@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../librt/debug.h"
 
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
+void	nmg_to_psurf();
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
@@ -40,7 +41,6 @@ Usage: %s [-v] [-d] [-xX lvl] [-u eu_dist]\n\
 	[-D dist_calc_tol]\n\
 	[-p prefix] brlcad_db.g object(s)\n";
 
-static fastf_t	dist_calc_tol = 0; /* arg of -D */
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	debug_plots;	/* Make debugging plots */
@@ -67,7 +67,6 @@ int	argc;
 char	*argv[];
 {
 	char		*dot;
-	int		i, ret;
 	register int	c;
 	double		percent;
 	struct rt_vls	fig_file;
@@ -210,7 +209,7 @@ RT_CK_TOL(jack_tree_state.ts_tol);
 RT_CK_TESS_TOL(jack_tree_state.ts_ttol);
 
 	/* Walk indicated tree(s).  Each region will be output separately */
-	ret = db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
+	(void) db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
 		1,			/* ncpu */
 		&jack_tree_state,
 		0,			/* take all regions */
@@ -421,7 +420,7 @@ out:
 *	data is called.
 */
 
-int
+void
 nmg_to_psurf(r, fp_psurf)
 struct nmgregion *r;		/* NMG region to be converted. */
 FILE		*fp_psurf;	/* Jack format file to write vertex list to. */

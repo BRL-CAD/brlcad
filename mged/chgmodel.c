@@ -1102,7 +1102,6 @@ char	**argv;
 	register int i;
 	struct directory *old_dp;
 	struct rt_db_internal	old_intern;
-	struct rt_db_internal	new_intern;
 	struct model	*m, *new_model;
 	char		newname[32];
 	char		prefix[32];
@@ -1110,8 +1109,6 @@ char	**argv;
 	struct nmgregion *r, *new_r;
 	struct shell *s, *new_s;
 	struct faceuse *fu;
-	struct loopuse *lu;
-	struct edgeuse *eu;
 	struct vertex *v_new, *v;
 	unsigned long tw, tf, tp;
 
@@ -1173,7 +1170,7 @@ char	**argv;
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
 
 				mged_add_nmg_part(newname, new_model,
-							dbip, old_dp);
+							dbip);
 				if (frac_stat) return CMD_BAD;
 				continue;
 			}
@@ -1196,7 +1193,7 @@ char	**argv;
 
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
 				mged_add_nmg_part(newname, new_model,
-							dbip, old_dp);
+							dbip);
 				if (frac_stat) return CMD_BAD;
 			}
 #if 0
@@ -1211,7 +1208,7 @@ char	**argv;
 
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
 				mged_add_nmg_part(newname, new_model,
-							dbip, old_dp);
+							dbip);
 				if (frac_stat) return CMD_BAD;
 			}
 			while (RT_LIST_NON_EMPTY(&s->eu_hd)) {
