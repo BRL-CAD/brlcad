@@ -232,6 +232,44 @@ struct frame *FreeFrame;
 
 /* --- */
 
+/*
+ *  In order to preserve asynchrony, each server is marched through
+ *  a series of state transitions.
+ *  Each transition is triggered by some event being satisfied.
+ *  The valid state transition sequences are:
+ *
+ *  If a "transient" server shows up, just to send in one command:
+ *
+ *	Original	New		Event
+ *	--------	-----		-----
+ *	UNUSED		NEW		connection rcvd
+ *	NEW		CLOSING		ph_cmd pkg rcvd.
+ *	CLOSING		UNUSED		next schedule() pass closes conn.
+ *
+ *  If a "permanent" server shows up:
+ *
+ *	Original	New		Event
+ *	--------	-----		-----
+ *	UNUSED		NEW		connection rcvd
+ *	NEW		VERSOK		ph_version pkg rcvd.
+ *					Optionally send loglvl & "cd" cmds.
+ *	VERSOK		LOADING		send "start" command.
+ *	LOADING		READY		ph_start pkg rcvd.
+ *
+ * --	READY		READY		new frame:  call send_matrix()
+ *
+ * --	READY		READY		call send_do_lines(),
+ *					receive ph_pixels pkg.
+ *
+ * --	READY		CLOSING		drop_server called.  Requeue work.
+ *	CLOSING		UNUSED		next schedule() pass closes conn.
+ *
+ * XXX need to split sending of db name & the treetops.
+ * XXX treetops need to be resent at start of each frame.
+ * XXX should probably re-vamp send_matrix routine.
+ * XXX LOADING --> NEEDFRAME, NEEDFRAME --> READY
+ */
+
 struct servers {
 	struct pkg_conn	*sr_pc;		/* PKC_NULL means slot not in use */
 	struct list	sr_work;
@@ -760,7 +798,8 @@ char	*why;
 		fr = lp->li_frame;
 		CHECK_FRAME(fr);
 		DEQUEUE_LIST( lp );
-		rt_log("requeueing fr%d %d..%d\n",
+		rt_log("%s requeueing fr%d %d..%d\n",
+			stamp(),
 			fr->fr_number,
 			lp->li_start, lp->li_stop);
 		APPEND_LIST( lp, &(fr->fr_todo) );
