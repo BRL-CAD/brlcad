@@ -1014,6 +1014,7 @@ struct directory	Tdir;
 struct application	Tappl;
 struct rt_ebm_specific	*bmsp;
 struct resource		resource;
+mat_t			Tmat;
 
 main( argc, argv )
 int	argc;
@@ -1040,7 +1041,8 @@ char	**argv;
 	Tsolid.st_dp = &Tdir;
 	Tappl.a_purpose = "testing";
 	Tappl.a_resource = &resource;
-	mat_idn( Tsolid.st_pathmat );
+	Tsolid.st_matp = &Tmat;
+	mat_idn( Tsolid.st_matp );
 
 	strcpy( rec.ss.ss_keyword, "ebm" );
 	strcpy( rec.ss.ss_args, "file=bm.bw w=6 n=6 d=6.0" );
@@ -1052,7 +1054,7 @@ char	**argv;
 	rt_ebm_print( &Tsolid );
 	ebmp = bmsp = (struct rt_ebm_specific *)Tsolid.st_specific;
 
-	outline( Tsolid.st_pathmat, &rec );
+	outline( Tsolid.st_matp, &rec );
 
 #if 1
 	if( (fp = fopen("ebm.rays", "r")) == NULL )  {
