@@ -1229,9 +1229,10 @@ Ircheckevents()  {
 	static	pending_x = 0;
 	static	pending_y = 0;
 
+	/*
 	if (qtest() == 0)
 	    return;
-
+ */
 	n = blkqread( values, NVAL );	/* n is # of shorts returned */
 	if( ir_debug ) rt_log("blkqread gave %d\n", n);
 	for( valp = values; n > 0; n -= 2, valp += 2 )  {
