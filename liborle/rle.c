@@ -33,7 +33,7 @@ typedef unsigned char	u_char;
 	if(rle_debug) (void)fprintf(stderr,"%s(%d)\n",_op,_n)
 #define PRNT_A2_DEBUG(_op,_n,_c) \
 	if(rle_debug) (void)fprintf(stderr,"%s(%d,%d)\n",_op,_n,_c)
-#define CUR red		/* Must be rightmost part of Pixel.		*/
+#define CUR	RED		/* Must be rightmost part of Pixel.		*/
 
 /*	States for run detection					*/
 #define	DATA	0
@@ -103,15 +103,15 @@ typedef unsigned char	u_char;
 #define NSEG	1024/3		/* Number of run segments of storage */
 static struct runs
 	{
-	Pixel *first;
-	Pixel *last;
+	RGBpixel *first;
+	RGBpixel *last;
 	} runs[NSEG];		/* ptrs to non-background run segs */
 
 /* Global data.								*/
 int	_bg_flag;
 int	_bw_flag;
 int	_cm_flag;
-Pixel	_bg_pixel;
+RGBpixel	_bg_pixel;
 
 int	_ncmap = 3;	/* Default : (3) channels in color map.		*/
 int	_cmaplen = 8;	/* Default : (8) log base 2 entries in map.	*/
@@ -195,7 +195,7 @@ int	xpos, ypos, mode;
 rle_rhdr( fp, flags, bgpixel )
 FILE		*fp;
 int		*flags;
-register Pixel	*bgpixel;
+register RGBpixel	*bgpixel;
 	{
 	static short	x_magic;
 	static char	*verbage[] =
@@ -307,13 +307,13 @@ register Pixel	*bgpixel;
 					r_setup.h_background[1],
 					r_setup.h_background[2]
 					);
-		if( bgpixel != (Pixel *) NULL )
+		if( bgpixel != RGBPIXEL_NULL )
 			{
 			/* No command-line backgr., use saved values.	*/
-			_bg_pixel.red = r_setup.h_background[0];
-			_bg_pixel.green = r_setup.h_background[1];
-			_bg_pixel.blue = r_setup.h_background[2];
-			*bgpixel = _bg_pixel;
+			_bg_pixel[RED] = r_setup.h_background[0];
+			_bg_pixel[GRN] = r_setup.h_background[1];
+			_bg_pixel[BLU] = r_setup.h_background[2];
+			COPYRGB( *bgpixel, _bg_pixel );
 			}
 		}
 	_bw_flag = r_setup.h_ncolors == 1;
@@ -343,7 +343,7 @@ register Pixel	*bgpixel;
 rle_whdr( fp, ncolors, bgflag, cmflag, bgpixel )
 FILE		*fp;
 int		ncolors, bgflag, cmflag;
-Pixel		*bgpixel;
+RGBpixel		bgpixel;
 	{
 	/* Magic numbers for output file.				*/
 	register int	bbw;
@@ -356,16 +356,18 @@ Pixel		*bgpixel;
 			(void) fprintf( stderr,
 					"Image being saved as monochrome.\n"
 					);
-		bbw = 0.35*bgpixel->red+0.55*bgpixel->green+0.1*bgpixel->blue;
+		bbw = 0.35 * bgpixel[RED] +
+			0.55 * bgpixel[GRN] +
+			0.10 * bgpixel[BLU];
 		}
 	w_setup.h_flags = bgflag ? H_CLEARFIRST : 0;
 	w_setup.h_ncolors = ncolors;
 	w_setup.h_pixelbits = _pixelbits;
 	w_setup.h_ncmap = cmflag ? _ncmap : 0;
 	w_setup.h_cmaplen = _cmaplen;
-	w_setup.h_background[0] = ncolors == 0 ? bbw : bgpixel->red;
-	w_setup.h_background[1] = ncolors == 0 ? bbw : bgpixel->green;
-	w_setup.h_background[2] = ncolors == 0 ? bbw : bgpixel->blue;
+	w_setup.h_background[0] = ncolors == 0 ? bbw : bgpixel[RED];
+	w_setup.h_background[1] = ncolors == 0 ? bbw : bgpixel[GRN];
+	w_setup.h_background[2] = ncolors == 0 ? bbw : bgpixel[BLU];
 
 	if( fp != stdout && fseek( fp, 0L, 0 ) == -1 )
 		{
@@ -399,7 +401,7 @@ Pixel		*bgpixel;
 	_bg_flag = bgflag;
 	_bw_flag = ncolors == 1;
 	_cm_flag = cmflag;
-	_bg_pixel = *bgpixel;
+	COPYRGB(_bg_pixel, bgpixel);
 	return	0;
 	}
 
@@ -463,7 +465,7 @@ ColorMap	*cmap;
  */
 rle_decode_ln( fp, scan_buf )
 register FILE	*fp;
-Pixel	*scan_buf;
+RGBpixel	*scan_buf;
 	{	static int	lines_to_skip = 0;
 		static int	opcode, datum;
 		static short	word;
@@ -477,7 +479,7 @@ Pixel	*scan_buf;
 		lines_to_skip--;
 		return	dirty_flag;
 		}
-	pp = (u_char *) (scan_buf+r_setup.h_xpos); /* Pointer into pixel. */
+	pp = &(scan_buf[r_setup.h_xpos][RED]); /* Pointer into pixel. */
 	while( (*_func_Get_Inst)( fp, &opcode, &datum ) != EOF )
 		{
 		switch( opcode )
@@ -501,13 +503,13 @@ Pixel	*scan_buf;
 			switch( (n = _bw_flag ? 0 : datum) )
 				{
 			case 0:
-				pp = &((scan_buf+r_setup.h_xpos)->red);
+				pp = &(scan_buf[r_setup.h_xpos][RED]);
 				break;
 			case 1:
-				pp = &((scan_buf+r_setup.h_xpos)->green);
+				pp = &(scan_buf[r_setup.h_xpos][GRN]);
 				break;
 			case 2:
-				pp = &((scan_buf+r_setup.h_xpos)->blue);
+				pp = &(scan_buf[r_setup.h_xpos][BLU]);
 				break;
 			default:
 				(void) fprintf( stderr,	"Bad color %d\n", n );
@@ -613,12 +615,15 @@ Pixel	*scan_buf;
  */
 rle_encode_ln( fp, scan_buf )
 register FILE	*fp;
-Pixel		*scan_buf;
-	{	register Pixel *scan_p = &scan_buf[w_setup.h_xpos];
-		register Pixel *last_p = &scan_buf[w_setup.h_xpos+(w_setup.h_xlen-1)];
+RGBpixel		*scan_buf;
+	{	register RGBpixel *scan_p;
+		register RGBpixel *last_p;
 		register int	i;
 		register int	color;		/* holds current color */
 		register int	nseg;		/* number of non-bg run segments */
+
+	scan_p = (RGBpixel *)&(scan_buf[w_setup.h_xpos][RED]);
+	last_p = (RGBpixel *)&(scan_buf[w_setup.h_xpos+(w_setup.h_xlen-1)][RED]);
 	if( _bg_flag )
 		{
 		if( (nseg = _bg_Get_Runs( scan_p, last_p )) == -1 )
@@ -636,12 +641,12 @@ Pixel		*scan_buf;
 		return	0;
 		}
 	if( _bw_flag )
-		{	register Pixel *pixelp;
+		{	register RGBpixel *pixelp;
 		/* Compute NTSC Black & White in blue row.		*/
 		for( pixelp=scan_p; pixelp <= last_p; pixelp++ )
-			pixelp->blue =  .35 * pixelp->red +
-					.55 * pixelp->green +
-					.10 * pixelp->blue;
+			(*pixelp)[BLU] =  .35 * (*pixelp)[RED] +
+					.55 * (*pixelp)[GRN] +
+					.10 * (*pixelp)[BLU];
 		}
 
 	/* do all 3 colors */
@@ -675,15 +680,15 @@ Pixel		*scan_buf;
 	before all pixels are processed, otherwise a 'nseg' is returned.
  */
 _bg_Get_Runs( pixelp, endpix )
-register Pixel *pixelp;
-register Pixel *endpix;
+register RGBpixel *pixelp;
+register RGBpixel *endpix;
 	{	/* find non-background runs */
 		register int	nseg = 0;
 	while( pixelp <= endpix && nseg < NSEG )
 		{
-		if(	pixelp->red != _bg_pixel.red
-		    ||	pixelp->green != _bg_pixel.green
-		    ||	pixelp->blue != _bg_pixel.blue
+		if(	*pixelp[RED] != _bg_pixel[RED]
+		    ||	*pixelp[GRN] != _bg_pixel[GRN]
+		    ||	*pixelp[BLU] != _bg_pixel[BLU]
 			)
 			{
 			/* We have found the start of a segment */
@@ -691,9 +696,9 @@ register Pixel *endpix;
 
 			/* find the end of this run */
 			while(	pixelp <= endpix
-			    &&	 (	pixelp->red != _bg_pixel.red
-				   ||	pixelp->green != _bg_pixel.green
-				   ||	pixelp->blue != _bg_pixel.blue
+			    &&	 (	(*pixelp)[RED] != _bg_pixel[RED]
+				   ||	(*pixelp)[GRN] != _bg_pixel[GRN]
+				   ||	(*pixelp)[BLU] != _bg_pixel[BLU]
 		    		 )
 				)
 				pixelp++;
@@ -720,23 +725,12 @@ _encode_Seg_Color( fp, seg, color )
 FILE		*fp;
 register int	seg;
 register int	color;
-	{	static Pixel *data_p;
-		static Pixel *last_p;
-	switch( color )
-		{
-		case 0:
-			data_p = (Pixel *) &(runs[seg].first->red);
-			last_p = (Pixel *) &(runs[seg].last->red);
-			break;
-		case 1:
-			data_p = (Pixel *) &(runs[seg].first->green);
-			last_p = (Pixel *) &(runs[seg].last->green);
-			break;
-		case 2:
-			data_p = (Pixel *) &(runs[seg].first->blue);
-			last_p = (Pixel *) &(runs[seg].last->blue);
-			break;
-		}
+	{	static RGBpixel *data_p;
+		static RGBpixel *last_p;
+
+	data_p = (RGBpixel *) &((*(runs[seg].first))[color]);
+	last_p = (RGBpixel *) &((*(runs[seg].last))[color]);
+
 	_encode_Segment( fp, data_p, last_p );
 	return;
 	}
@@ -746,18 +740,18 @@ register int	color;
  */
 _encode_Segment( fp, data_p, last_p )
 FILE		*fp;
-register Pixel	*data_p;
-register Pixel	*last_p;
-	{	register Pixel	*pixelp;
-		register Pixel	*runs_p = data_p;
+register RGBpixel	*data_p;
+register RGBpixel	*last_p;
+	{	register RGBpixel	*pixelp;
+		register RGBpixel	*runs_p = data_p;
 		register int	state = DATA;
-		register u_char	runval = data_p->CUR;
+		register u_char	runval = (*data_p)[CUR];
 	for( pixelp = data_p + 1; pixelp <= last_p; pixelp++ )
 		{
 		switch( state )
 			{
 		case DATA :
-			if( runval == pixelp->CUR )
+			if( runval == (*pixelp)[CUR] )
 				/* 2 in a row, may be a run.		*/
 				state = RUN2;
 			else
@@ -765,12 +759,12 @@ register Pixel	*last_p;
 				/* Continue accumulating data, look for a
 					new run starting here, too
 				 */
-				runval = pixelp->CUR;
+				runval = (*pixelp)[CUR];
 				runs_p = pixelp;
 				}
 			break;
 		case RUN2:
-			if( runval == pixelp->CUR )
+			if( runval == (*pixelp)[CUR] )
 				{
 				/* 3 in a row is a run.			*/
 				state = INRUN;
@@ -779,25 +773,25 @@ register Pixel	*last_p;
 				 */
 				if( runs_p > data_p )
 					_put_Data(	fp,
-							&(data_p->CUR),
+							&((*data_p)[CUR]),
 						 	runs_p-data_p
 						 	);
 				}
 			else
 				{ /* Not a run, but maybe this starts one. */
 				state = DATA;
-				runval = pixelp->CUR;
+				runval = (*pixelp)[CUR];
 				runs_p = pixelp;
 				}
 			break;
 		case INRUN:
-			if( runval != pixelp->CUR )
+			if( runval != (*pixelp)[CUR] )
 				{
 				/* If run out				*/
 				state = DATA;
 				PutRun(	runval,	pixelp - runs_p );
 				/* who knows, might be more */
-				runval = pixelp->CUR;
+				runval = (*pixelp)[CUR];
 				runs_p = pixelp;
 				/* starting new 'data' run */
 				data_p = pixelp;
@@ -812,7 +806,7 @@ register Pixel	*last_p;
 			}
 		else
 		if( pixelp > data_p )
-			_put_Data( fp, &data_p->CUR, pixelp - data_p );
+			_put_Data( fp, &(*data_p)[CUR], pixelp - data_p );
 	return;
 	}
 
