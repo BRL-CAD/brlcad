@@ -613,7 +613,8 @@ int		nlines;
 				sgip++;
 			}
 			if( sw_cmap )  {
-				for( x=(clip.xmax-clip.xmin); x>=0; x-- )  {
+				x=(clip.xmax-clip.xmin)*SGI(ifp)->mi_xzoom;
+				for( ; x>=0; x-- )  {
 					one_scan[x].red   = CMR(ifp)[one_scan[x].red];
 					one_scan[x].green = CMG(ifp)[one_scan[x].green];
 					one_scan[x].blue  = CMB(ifp)[one_scan[x].blue];
