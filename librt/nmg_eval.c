@@ -290,19 +290,40 @@ struct nmg_bool_state *bs;
 
 			NMG_CK_LOOPUSE(lu);
 			NMG_CK_LOOP( lu->l_p );
-			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)  {
+#if 0
+			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
+#endif
+			{
 				/* XXX Needing a tol here is just for debugging */
 				struct rt_tol	tol;
+				int		ccw;
+
 				tol.magic = RT_TOL_MAGIC;
 				tol.dist = 0.005;
 				tol.dist_sq = tol.dist * tol.dist;
 				tol.perp = 0;
 				tol.para = 1;
-				rt_log("lu=x%x, ccw=%d, fu_orient=%s, lu_orient=%s\n", lu,
-					nmg_loop_is_ccw(lu, peqn, &tol),
-					nmg_orientation(fu->orientation),
-					nmg_orientation(lu->orientation)
-				);
+				ccw = nmg_loop_is_ccw(lu, peqn, &tol);
+				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)  {
+					rt_log("lu=x%x, ccw=%d, fu_orient=%s, lu_orient=%s\n", lu,
+						ccw,
+						nmg_orientation(fu->orientation),
+						nmg_orientation(lu->orientation)
+					);
+				}
+				if( ccw != 0 )  {
+					if( ((fu->orientation == OT_SAME) ==
+					     (lu->orientation == OT_SAME) ) &&
+					     ccw != 1 )  {
+						rt_log("lu=x%x, ccw=%d, fu_orient=%s, lu_orient=%s\n", lu,
+							ccw,
+							nmg_orientation(fu->orientation),
+							nmg_orientation(lu->orientation)
+						);
+					     	rt_bomb("loop orientation flags do not match geometry\n");
+					}
+					
+				}
 			}
 			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 			case BACTION_KILL:
