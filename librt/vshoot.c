@@ -33,12 +33,6 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 
 struct resource rt_uniresource;		/* Resources for uniprocessor */
 
-#ifdef cray
-#define AUTO register
-#else
-#define AUTO auto
-#endif
-
 /*
  *			R T _ S H O O T R A Y
  *  
@@ -83,12 +77,12 @@ int
 rt_shootray( ap )
 register struct application *ap;
 {
-	AUTO struct seg		*HeadSeg;
-	AUTO int		ret;
+	struct seg		*HeadSeg;
+	int		ret;
 	auto vect_t		inv_dir;	/* inverses of ap->a_ray.r_dir */
-	AUTO union bitv_elem	*solidbits;	/* bits for all solids shot so far */
-	AUTO bitv_t		*regionbits;	/* bits for all involved regions */
-	AUTO char		*status;
+	union bitv_elem	*solidbits;	/* bits for all solids shot so far */
+	bitv_t		*regionbits;	/* bits for all involved regions */
+	char		*status;
 	auto struct partition	InitialPart;	/* Head of Initial Partitions */
 	auto struct partition	FinalPart;	/* Head of Final Partitions */
 	int			nrays = 1;	/* for now */

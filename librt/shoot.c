@@ -49,12 +49,6 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 
 extern void	rt_plot_cell();		/* at end of file */
 
-#ifdef CRAY
-#define AUTO register
-#else
-#define AUTO /*let the compiler decide*/
-#endif
-
 /*
  *			R T _ F I N D _ N U G R I D
  *
@@ -592,16 +586,16 @@ register struct application *ap;
 	struct seg		new_segs;	/* from solid intersections */
 	struct seg		waiting_segs;	/* awaiting rt_boolweave() */
 	struct seg		finished_segs;	/* processed by rt_boolweave() */
-	AUTO fastf_t		last_bool_start;
+	fastf_t			last_bool_start;
 	struct bu_bitv		*solidbits;	/* bits for all solids shot so far */
 	struct bu_ptbl		*regionbits;	/* table of all involved regions */
-	AUTO char		*status;
+	char			*status;
 	auto struct partition	InitialPart;	/* Head of Initial Partitions */
 	auto struct partition	FinalPart;	/* Head of Final Partitions */
-	AUTO struct soltab	**stpp;
+	struct soltab		**stpp;
 	register CONST union cutter *cutp;
 	struct resource		*resp;
-	AUTO struct rt_i	*rtip;
+	struct rt_i		*rtip;
 	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
 
 	RT_AP_CHECK(ap);
