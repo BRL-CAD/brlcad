@@ -491,8 +491,8 @@ struct resource	*resp;
 		resp->re_boolslen = 0;
 	}
 
-	/* Zero out storage.  Prevent any residue */
-	bzero( (char *)resp, sizeof(*resp) );
+	/* Reinitialize, to be ready for next frame */
+	rt_init_resource( resp, resp->re_cpu );
 }
 
 /*
