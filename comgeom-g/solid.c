@@ -177,7 +177,7 @@ getsolid()
 	if( sol_work == sol_total )	/* processed all solids */
 		return( 0 );
 
-	if( (i = getline( &scard )) == EOF )  {
+	if( (i = getline( &scard, sizeof(scard), "solid card" )) == EOF )  {
 		printf("getsolid: unexpected EOF\n");
 		return( 0 );
 	}
@@ -288,7 +288,7 @@ getsolid()
 		for(m=1; m < (M+1); m++)  {
 			structn=0;
 			for(n=1; n <(cdcx+1); n++)  {
-				if( getline(&scard) == EOF)
+				if( getline(&scard, sizeof(scard), "ars solid card") == EOF)
 					{
 					printf("read of ARS granule failed\n");
 					return	0;
@@ -410,7 +410,7 @@ getsolid()
 
 		for( cd=1; cd <= ncards[solidp->s_type]; cd++ )  {
 			if( cd != 1 )  {
-				if( getline( &scard ) == EOF )  {
+				if( getline( &scard, sizeof(scard), "solid continuation card" ) == EOF )  {
 					printf("too few cards for solid %d\n",
 						solidp->s_num);
 					return	0;

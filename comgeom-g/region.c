@@ -47,7 +47,7 @@ getregion()
 	char *cp;
 
 	/* Pre-load very first region card */
-	if( getline( &rcard ) == EOF )  {
+	if( getline( &rcard, sizeof(rcard), "region card" ) == EOF )  {
 		printf("getregion: premature EOF\n");
 		return( -1 );
 	}
@@ -67,7 +67,7 @@ top:
 
 			namecvt( reg_num, wmp[reg_num].wm_name, 'r' );
 		} else {
-			if( getline( &rcard ) == EOF )  {
+			if( getline( &rcard, sizeof(rcard), "region card" ) == EOF )  {
 				printf("getregion: premature EOF\n");
 				return( -1 );
 			}
@@ -159,27 +159,6 @@ top:
 	goto top;
 }
 
-struct idcard  {
-	char	id_foo[80];
-#if 0
-#ifdef GIFT5
-	char	id_region[5];
-	char	id_rid[5];
-	char	id_air[5];
-	char	id_mat[5];
-	char	id_los[5];
-	char	id_waste[55];
-#else
-	char	id_region[10];
-	char	id_rid[10];
-	char	id_air[10];
-	char	id_waste[44];
-	char	id_mat[3];	/* use any existing material code */
-	char	id_los[3];	/* use any existing los percentage */
-#endif
-#endif
-} idcard;
-
 /*
  *			G E T I D
  *
@@ -196,27 +175,28 @@ getid()
 	char buff[11];
 	int	buflen;
 	register struct wmember	*wp;
+	char	idcard[132];
 
 	while(1)  {
-		if( getline( (char *) &idcard ) == EOF )  {
+		if( getline( idcard, sizeof(idcard), "region ident card" ) == EOF )  {
 			printf("\ngetid:  EOF\n");
 			return(0);
 		}
-		if( ((char *) &idcard)[0] == '\n' )
+		if( idcard[0] == '\n' )
 			return( 0 );
 
 		if( version == 5 )  {
-			reg_num = getint( &idcard, 0, 5 );
-			id =	getint( &idcard, 5, 5 );
-			air =	getint( &idcard, 10, 5 );
-			mat =	getint( &idcard, 15, 5 );
-			los =	getint( &idcard, 20, 5 );
+			reg_num = getint( idcard, 0, 5 );
+			id =	getint( idcard, 5, 5 );
+			air =	getint( idcard, 10, 5 );
+			mat =	getint( idcard, 15, 5 );
+			los =	getint( idcard, 20, 5 );
 		} else {
-			reg_num = getint( &idcard, 0, 10 );
-			id =	getint( &idcard, 10, 10 );
-			air =	getint( &idcard, 20, 10 );
-			mat =	getint( &idcard, 74, 3 );
-			los =	getint( &idcard, 77, 3 );
+			reg_num = getint( idcard, 0, 10 );
+			id =	getint( idcard, 10, 10 );
+			air =	getint( idcard, 20, 10 );
+			mat =	getint( idcard, 74, 3 );
+			los =	getint( idcard, 77, 3 );
 		}
 #if 0
 printf("reg_num=%d,id=%d,air=%d,mat=%d,los=%d\n", reg_num,id,air,mat,los);
