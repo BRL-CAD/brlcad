@@ -1176,11 +1176,15 @@ BU_EXTERN(void	bn_vlist_2string, (struct bu_list *vhead,
  */
 struct vert_root {
 	long magic;
+	int tree_type;			/* vertices or vertices with normals */
 	union vert_tree *the_tree;	/* the actual vertex tree */
 	fastf_t *the_array;		/* the array of vertices */
 	unsigned long curr_vert;	/* the number of vertices currently in the array */
 	unsigned long max_vert;		/* the current maximum capacity of the array */
 };
+
+#define TREE_TYPE_VERTS			1
+#define TREE_TYPE_VERTS_AND_NORMS	2
 
 #define VERT_BLOCK 512			/* number of vertices to malloc per call when building the array */
 
@@ -1188,8 +1192,13 @@ struct vert_root {
 #define BN_CK_VERT_TREE(_p)	BU_CKMAG(_p, VERT_TREE_MAGIC, "vert_tree")
 
 extern struct vert_root *create_vert_tree();
+extern struct vert_root *create_vert_tree_w_norms();
 extern void free_vert_tree( struct vert_root *tree_root );
 extern int Add_vert( double x, double y, double z, struct vert_root *tree_root, fastf_t local_tol_sq );
+extern int Add_vert_and_norm( double x, double y, double z,
+			      double nx, double ny, double nz,
+			      struct vert_root *tree_root,
+			      fastf_t local_tol_sq );
 extern void clean_vert_tree( struct vert_root *tree_root );
 
 /*----------------------------------------------------------------------*/
