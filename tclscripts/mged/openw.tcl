@@ -2786,6 +2786,11 @@ proc update_view_ring_labels { id } {
     set views [view_ring get -a]
     set llen [llength $views]
 
+    # we need to also save the previous view so that
+    # toggle will continue to work
+    view_ring toggle
+    set prev [view_ring get]
+
     set ws .$id.menubar.viewring.select
     set wd .$id.menubar.viewring.delete
     for {set i 0} {$i < $llen} {incr i} {
@@ -2801,6 +2806,8 @@ proc update_view_ring_labels { id } {
 	$wd entryconfigure $i -label "$center $size $aet"
     }
 
+    # restore both previous and current views
+    view_ring goto $prev
     view_ring goto $view_ring($id)
 }
 
