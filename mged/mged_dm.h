@@ -40,13 +40,6 @@ struct device_values  {
 };
 extern struct device_values dm_values;
 
-struct mem_map {
-	struct mem_map	*m_nxtp;	/* Linking pointer to next element */
-	unsigned	 m_size;	/* Size of this free element */
-	unsigned long	 m_addr;	/* Address of start of this element */
-};
-#define MAP_NULL	((struct mem_map *) 0)
-
 /* Interface to a specific Display Manager */
 struct dm {
 	int	(*dmr_open)();
@@ -76,45 +69,6 @@ struct dm {
 	struct mem_map *dmr_map;	/* displaylist mem map */
 };
 extern struct dm *dmp;			/* ptr to current display mgr */
-
-/***** START TEMPORARY COPY OF DEFINITIONS FROM h/raytrace.h ****/
-struct vlist {
-	point_t		vl_pnt;		/* coordinates in space */
-	int		vl_draw;	/* 1=draw, 0=move */
-	struct vlist	*vl_forw;	/* next structure in list */
-};
-#define VL_NULL		((struct vlist *)0)
-
-struct vlhead {
-	struct vlist	*vh_first;
-	struct vlist	*vh_last;
-};
-extern struct vlist	*rtg_vlFree;	/* should be rt_g.rtg_vlFree !! XXX */
-
-#define GET_VL(p)	{ \
-			if( ((p) = rtg_vlFree) == VL_NULL )  { \
-				(p) = (struct vlist *)malloc(sizeof(struct vlist) ); \
-			} else { \
-				rtg_vlFree = (p)->vl_forw; \
-			} }
-/* Free an entire chain of vlist structs */
-#define FREE_VL(p)	{ register struct vlist *_vp = (p); \
-			while( _vp->vl_forw != VL_NULL ) _vp=_vp->vl_forw; \
-			_vp->vl_forw = rtg_vlFree; \
-			rtg_vlFree = (p);  }
-#define ADD_VL(hd,pnt,draw)  { \
-			register struct vlist *_vp; \
-			GET_VL(_vp); \
-			VMOVE( _vp->vl_pnt, (pnt) ); \
-			_vp->vl_draw = draw; \
-			_vp->vl_forw = VL_NULL; \
-			if( (hd)->vh_first == VL_NULL ) { \
-				(hd)->vh_first = (hd)->vh_last = _vp; \
-			} else { \
-				(hd)->vh_last->vl_forw = _vp; \
-				(hd)->vh_last = _vp; \
-			} }
-/*****   END TEMPORARY COPY OF DEFINITIONS FROM h/raytrace.h ****/
 
 /*
  * Definitions for dealing with the buttons and lights.
