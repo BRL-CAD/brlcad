@@ -23,11 +23,13 @@ DOMAIN:.ascii	"sqrt\72 DOMAIN error\12\0"
 --
 .data
 .align	3
-ZERO:.word	0x0,0x0
+ZERO:	.word	0x0,0x0
 .align	3
-ONE:.word	0x41100000,0x0
+ONE:	.word	0x41100000,0x0
 .align	3
-HALF:.word	0x40800000,0x0
+HALF:	.word	0x40800000,0x0
+.align	3
+BIGNUM:	.word	0x7fffffff,0xffffffe0
 --
 --	code
 --
@@ -117,20 +119,68 @@ L30:	movd	ONE,r2			-- 1.0 -> r2,r3
 	asrw	#1,r5			-- iexp/2
 	subw	#1,r5			--   - 1
 --
---	construct stack frame for ldexp()
+--	invoke inline LDEXP - code stolen from LDEXP, without the packaging
+--	args are EXP in r5, y in r6,r7
 --
-	movd	r6,8w[b2]		-- 2nd arg, (y+1)
-	movw	r5,10w[b2]		-- 1st arg, (iexp/2 - 1)
-	movd	r0,r4			-- save x ->r4
-	func	#0x3,_ldexp		-- returns value in r0 (new y)
-	movd	r0,r6			-- y = ldexp() return;
-	movd	r4,r0			-- x = back in r0
+--	uses r2,r3 as scratch
+--	Create a floating point number that represents 2 ^ exp
+--	and then multiply by the incoming fraction
+--
+	movw	r5,r2
+	andw	#0x00000003,r5		-- r5 = exp % 4
+	asrw	#2,r2			-- r2 = exp / 4
+	addw	#0x41,r2		-- r2 = exp / 4 + 1 + bias
+--
+	cmpw	#0x00,r2		-- if exp < 0, go away...
+	jlt	SMALL
+	cmpw	#0x7F,r2		-- if exp > 127, go away...
+	jgt	HUGE
+
+	lslw	#0x18,r2
+	andw	#0x7F000000,r2		-- mask all other bits
+--
+--	now take the leftover exponent (in r5), and translate into
+--	mantissa value of 1/16, 1/8, 1/4 or 1/2 for values of 0,1,2,3
+--
+	movw	#0x00100000,r3		-- starting mantissa = 1/16
+	cmpw	#0x00,r5
+	jeq	COMB			-- goto combine number
+--
+	lslw	#1,r3			-- now 1/8
+	cmpw	#0x01,r5
+	jeq	COMB
+--
+	lslw	#1,r3			-- now 1/4
+	cmpw	#0x02,r5
+	jeq	COMB
+--
+	lslw	#1,r3			-- now 1/2
+--
+COMB:	orw	r3,r2
+	movw	#0x0,r3			-- r2,r3 is now a floating pt #
+--
+	muld	r2,r6			-- multiply by original #
+	jbf	AFTER			-- ldexp complete, no overflow
+--
+--	Overflow - determine if over or under flow by condition of CC4
+--	(eq/ne bit)
+--
+OVFLO:	jeq	HUGE			-- CC4 set means overflow = toobig
+--
+--	Exponent too small, return a little number
+--
+SMALL:	movd	ZERO,r6
+	jmp	AFTER
+--
+--	Exponent is too big, return a large number
+--
+HUGE:	movd	BIGNUM,r6
 --
 --	Newtonian iteration unrolled, 5 iterations
 --
 --	Iteration One
 --
-	movd	r0,r2			-- x -> temp location (t)
+AFTER:	movd	r0,r2			-- x -> temp location (t)
 	divd	r6,r2			-- t = x/y
 	addd	r6,r2			-- t = (y + x/y)
 	movl	r2,r6			-- y = t
