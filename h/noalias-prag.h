@@ -22,7 +22,7 @@
  *
  *  @(#)$Header$ (BRL)
  */
-#if defined(__STDC__) || defined(CRAY)
+#if __STDC__
 #	if defined(CRAY)
 #		pragma ivdep
 #	endif
