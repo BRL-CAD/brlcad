@@ -778,9 +778,9 @@ bu_bomb("vol_vol s2");
 		}
 	} else {
 		/*
-		 * take the region who's seg started at start of partition
+		 * take the region with largest inhit
 		 */
-		if( s1->seg_in.hit_dist == pp->pt_inhit->hit_dist )  {
+		if( s1->seg_in.hit_dist >= s2->seg_in.hit_dist )  {
 			/* keep fr1, delete fr2 */
 			*fr2 = REGION_NULL;
 		} else {
