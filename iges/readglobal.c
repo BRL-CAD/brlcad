@@ -56,7 +56,7 @@ Readglobal()
 	{
 		counter--;
 		while( card[++counter] == ' ' );
-		if( card[counter] != '1' || card[++counter] != 'H' )
+		if( card[counter] != '1' || card[counter+1] != 'H' )
 		{
 			fprintf( stderr , "Error in new delimiter\n" );
 			fprintf( stderr , "%s\n" , card );
@@ -66,6 +66,7 @@ Readglobal()
 			fprintf( stderr , "\n" );
 			exit( 1 );
 		}
+		counter++;
 		eof = card[++counter];
 		while( card[++counter] != eof );
 	}
@@ -78,11 +79,12 @@ Readglobal()
 	{
 		counter--;
 		while( card[++counter] == ' ' );
-		if( card[counter] != '1' || card[++counter] != 'H' )
+		if( card[counter] != '1' || card[counter+1] != 'H' )
 		{
 			fprintf( stderr , "Error in new record delimiter\n" );
 			exit( 1 );
 		}
+		counter++;
 		eor = card[++counter];
 		while( card[++counter] != eof );
 	}
