@@ -899,7 +899,7 @@ struct bu_structparse {
  */
 struct bu_external  {
 	long	ext_magic;
-	int	ext_nbytes;
+	long	ext_nbytes;
 	genptr_t ext_buf;
 };
 #define BU_EXTERNAL_MAGIC	0x768dbbd0
