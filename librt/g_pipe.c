@@ -333,6 +333,8 @@ struct rt_i		*rtip;
 		vect_t n1,n2;
 		vect_t norm;
 		vect_t v1,v2;
+		fastf_t dot;
+		fastf_t dotm1;
 		fastf_t angle;
 		fastf_t dist_to_bend;
 		point_t bend_start, bend_end, bend_center;
@@ -353,7 +355,11 @@ struct rt_i		*rtip;
 
 		VSUB2( n2, pp3->pp_coord, pp2->pp_coord );
 		VCROSS( norm, n1, n2 );
-		if( VNEAR_ZERO( norm, SQRT_SMALL_FASTF ) )
+		VUNITIZE( n1 );
+		VUNITIZE( n2 );
+		dot = VDOT( n1, n2 );
+		dotm1 = fabs( dot ) - 1.0;
+		if( VNEAR_ZERO( norm, SQRT_SMALL_FASTF) || NEAR_ZERO( dotm1, SQRT_SMALL_FASTF) )
 		{
 			/* points are colinear, treat as a linear segment */
 			rt_linear_pipe_prep( stp, head, curr_pt, curr_id, curr_od,
@@ -362,12 +368,10 @@ struct rt_i		*rtip;
 			goto next_pt;
 		}
 
-		VUNITIZE( n1 );
-		VUNITIZE( n2 );
 		VUNITIZE( norm );
 
 		/* linear section */
-		angle = bn_pi - acos( VDOT( n1, n2 ) );
+		angle = bn_pi - acos( dot );
 		dist_to_bend = pp2->pp_bendradius * tan( angle/2.0 );
 		VJOIN1( bend_start, pp2->pp_coord, dist_to_bend, n1 );
 		rt_linear_pipe_prep( stp, head, curr_pt, curr_id, curr_od,
@@ -1321,7 +1325,9 @@ struct seg		*seghead;
 	if( total_hits%2 )
 	{
 		i = 0;
-		bu_log( "rt_pipe_shot: bad number of hits (%d)\n" , total_hits );
+		bu_log( "rt_pipe_shot: bad number of hits on solid %s (%d)\n", stp->st_dp->d_namep, total_hits );
+		bu_log( "Ignoring this solid for this ray\n" );
+		bu_log( "\tray start = (%e %e %e), ray dir = (%e %e %e)\n", V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
 		for( BU_LIST_FOR( hitp, hit_list, &hit_head.l ) )
 		{
 			point_t hit_pt;
@@ -1330,7 +1336,16 @@ struct seg		*seghead;
 			VJOIN1( hit_pt, rp->r_pt, hitp->hitp->hit_dist,  rp->r_dir );
 			bu_log( "\t( %g %g %g )\n" , V3ARGS( hit_pt ) );
 		}
-		rt_bomb( "rt_pipe_shot\n" );
+
+		/* free the list of hits */
+		while( BU_LIST_WHILE( hitp, hit_list, &hit_head.l ) )
+		{
+			BU_LIST_DEQUEUE( &hitp->l );
+			bu_free( (char *)hitp->hitp, "rt_pipe_shot: hitp->hitp" );
+			bu_free( (char *)hitp, "rt_pipe_shot: hitp" );
+		}
+
+		return( 0 );
 	}
 
 	hitp = BU_LIST_FIRST( hit_list, &hit_head.l );
@@ -1698,6 +1713,7 @@ CONST struct bn_tol		*tol;
 	{
 		LOCAL vect_t n1,n2;
 		LOCAL vect_t norm;
+		LOCAL fastf_t dot, dotm1;
 
 		if( BU_LIST_IS_HEAD( &nextp->l, &pip->pipe_segs_head ) )
 		{
@@ -1715,7 +1731,11 @@ CONST struct bn_tol		*tol;
 		}
 		VSUB2( n2, nextp->pp_coord, curp->pp_coord );
 		VCROSS( norm, n1, n2 );
-		if( VNEAR_ZERO( norm, SQRT_SMALL_FASTF ) )
+		VUNITIZE( n1 );
+		VUNITIZE( n2 );
+		dot = VDOT( n1, n2 );
+		dotm1 = fabs( dot ) - 1.0;
+		if( VNEAR_ZERO( norm, SQRT_SMALL_FASTF ) || NEAR_ZERO( dotm1, SQRT_SMALL_FASTF) )
 		{
 			/* points are colinear, draw linear segment */
 			draw_linear_seg( vhead, current_point, prevp->pp_od/2.0, prevp->pp_id/2.0,
@@ -1731,8 +1751,6 @@ CONST struct bn_tol		*tol;
 			LOCAL point_t bend_end;
 			LOCAL vect_t v1,v2;
 
-			VUNITIZE( n1 );
-			VUNITIZE( n2 );
 			VUNITIZE( norm );
 
 			angle = bn_pi - acos( VDOT( n1, n2 ) );
