@@ -44,6 +44,7 @@ static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	debug_plots;	/* Make debugging plots */
+static int	ncpu = 1;	/* Number of processors */
 int		heap_cur_sz;	/* Next free spot in heap. */
 static char	*prefix = NULL;	/* output filename prefix. */
 static FILE	*fp_fig;	/* Jack Figure file. */
@@ -98,8 +99,10 @@ char	*argv[];
 	the_model = nmg_mm();
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
+/**	rt_g.debug = 1;			/* DEBUG_ALLRAYS -- to get core dumps */
+
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:dn:p:r:vx:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:dn:p:r:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
@@ -118,6 +121,9 @@ char	*argv[];
 			break;
 		case 'v':
 			verbose++;
+			break;
+		case 'P':
+			ncpu = atoi( optarg );
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
@@ -372,7 +378,7 @@ union tree		*curtree;
 
 	regions_tried++;
 	/* Begin rt_bomb() protection */
-	if( RT_SETJUMP )  {
+	if( ncpu == 1 && RT_SETJUMP )  {
 		/* Error, bail out */
 		rt_log("bailed out via longjmp\n");
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
