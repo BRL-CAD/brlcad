@@ -88,62 +88,51 @@ as an offset." } }
     grid columnconfigure $top.gridF1 3 -weight 1
 
     frame $top.gridF2 -relief groove -bd 2
-    frame $top.posF
-    frame $top.tickF
-    frame $top.a1F
-    frame $top.a2F
-    label $top.posL -text "Position" -anchor w
+    frame $top.gridFF2
+    label $top.posL -text "Position" -anchor e
     entry $top.posE -relief sunken -textvar mged_adc_control($id,pos)
 
     set hoc_data { { summary "The tick distance indicates the distance (local units)
 from the ADC position to one of its ticks." } }
-    label $top.tickL -text "Tick Distance" -anchor w
+    label $top.tickL -text "Tick Distance" -anchor e
     hoc_register_data $top.tickL "Tick Distance" $hoc_data
     entry $top.tickE -relief sunken -width 15 -textvar mged_adc_control($id,dst)
     hoc_register_data $top.tickE "Tick Distance" $hoc_data
 
     set hoc_data { { summary "Angle 1 is one of two axes used to measure angles." } }
-    label $top.a1L -text "Angle 1" -anchor w
+    label $top.a1L -text "Angle 1" -anchor e
     hoc_register_data $top.a1L "Angle 1" $hoc_data
     entry $top.a1E -relief sunken -width 15 -textvar mged_adc_control($id,a1)
     hoc_register_data $top.a1E "Angle 1" $hoc_data
 
     set hoc_data { { summary "Angle 2 is one of two axes used to measure angles." } }
-    label $top.a2L -text "Angle 2" -anchor w
+    label $top.a2L -text "Angle 2" -anchor e
     hoc_register_data $top.a2L "Angle 2" $hoc_data
     entry $top.a2E -relief sunken -width 15 -textvar mged_adc_control($id,a2)
     hoc_register_data $top.a2E "Angle 2" $hoc_data
 
-    grid $top.posL -sticky "ew" -in $top.posF
-    grid $top.posE -sticky "ew" -in $top.posF
-    grid columnconfigure $top.posF 0 -weight 1
-    grid $top.a1L -sticky "ew" -in $top.a1F
-    grid $top.a1E -sticky "ew" -in $top.a1F
-    grid columnconfigure $top.a1F 0 -weight 1
-    grid $top.a2L -sticky "ew" -in $top.a2F
-    grid $top.a2E -sticky "ew" -in $top.a2F
-    grid columnconfigure $top.a2F 0 -weight 1
-    grid $top.tickL -sticky "ew" -in $top.tickF
-    grid $top.tickE -sticky "ew" -in $top.tickF
-    grid columnconfigure $top.tickF 0 -weight 1
-    grid $top.posF - - -sticky "ew" -in $top.gridF2 -padx $padx -pady $pady
-    grid $top.tickF $top.a1F $top.a2F -sticky "ew" -in $top.gridF2 -padx $padx -pady $pady
+    grid $top.posL $top.posE -sticky "nsew" -in $top.gridFF2
+    grid $top.tickL $top.tickE -sticky "nsew" -in $top.gridFF2
+    grid $top.a1L $top.a1E -sticky "nsew" -in $top.gridFF2
+    grid $top.a2L $top.a2E -sticky "nsew" -in $top.gridFF2
+    grid columnconfigure $top.gridFF2 1 -weight 1
+    grid rowconfigure $top.gridFF2 0 -weight 1
+    grid rowconfigure $top.gridFF2 1 -weight 1
+    grid rowconfigure $top.gridFF2 2 -weight 1
+    grid rowconfigure $top.gridFF2 3 -weight 1
+    grid $top.gridFF2 -sticky "nsew" -in $top.gridF2 -padx $padx -pady $pady
     grid columnconfigure $top.gridF2 0 -weight 1
-    grid columnconfigure $top.gridF2 1 -weight 1
-    grid columnconfigure $top.gridF2 2 -weight 1
+    grid rowconfigure $top.gridF2 0 -weight 1
 
     frame $top.gridF3 -relief groove -bd 2
-    frame $top.anchor_xyzF
-    frame $top.anchor_tickF
-    frame $top.anchor_a1F
-    frame $top.anchor_a2F
+    frame $top.gridFF3
     label $top.anchorL -text "Anchor Points"
     label $top.enableL -text "Enable"
     hoc_register_data $top.enableL "Enable"\
 	    { { summary "The \"Enable\" checkbuttons are used
 to toggle anchoring for the participating
 ADC attributes." } }
-    label $top.anchor_xyzL -text "Position" -anchor w
+    label $top.anchor_xyzL -text "Position" -anchor e
     entry $top.anchor_xyzE -relief sunken -textvar mged_adc_control($id,pos)
     checkbutton $top.anchor_xyzCB -relief flat\
 	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_pos)
@@ -153,7 +142,7 @@ If anchoring is enabled, the ADC will remain
 positioned at the anchor point. So if the view
 changes while the ADC position is anchored, the
 ADC will move with respect to the view." } }
-    label $top.anchor_tickL -text "Tick Distance" -anchor w
+    label $top.anchor_tickL -text "Tick Distance" -anchor e
     entry $top.anchor_tickE -relief sunken -textvar mged_adc_control($id,anchor_pt_dst)
     checkbutton $top.anchor_tickCB -relief flat\
 	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_dst)
@@ -163,7 +152,7 @@ If anchoring is enabled, the tick is drawn at
 a distance from the ADC center position that is
 equal to the distance between the ADC center
 position and the anchor point." } }
-    label $top.anchor_a1L -text "Angle 1" -anchor w
+    label $top.anchor_a1L -text "Angle 1" -anchor e
     entry $top.anchor_a1E -relief sunken -textvar mged_adc_control($id,anchor_pt_a1)
     checkbutton $top.anchor_a1CB -relief flat\
 	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_a1)
@@ -171,7 +160,7 @@ position and the anchor point." } }
 	    { { summary "Toggle anchoring of angle 1. If anchoring
 is enabled, angle 1 is always drawn through
 its anchor point." } }
-    label $top.anchor_a2L -text "Angle 2" -anchor w
+    label $top.anchor_a2L -text "Angle 2" -anchor e
     entry $top.anchor_a2E -relief sunken -textvar mged_adc_control($id,anchor_pt_a2)
     checkbutton $top.anchor_a2CB -relief flat\
 	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_a2)
@@ -179,24 +168,19 @@ its anchor point." } }
 	    { { summary "Toggle anchoring of angle 2. If anchoring
 is enabled, angle 2 is always drawn through
 its anchor point." } }
-    grid $top.anchor_xyzL -sticky "ew" -in $top.anchor_xyzF
-    grid $top.anchor_xyzE -sticky "ew" -in $top.anchor_xyzF
-    grid $top.anchor_tickL -sticky "ew" -in $top.anchor_tickF
-    grid $top.anchor_tickE -sticky "ew" -in $top.anchor_tickF
-    grid $top.anchor_a1L -sticky "ew" -in $top.anchor_a1F
-    grid $top.anchor_a1E -sticky "ew" -in $top.anchor_a1F
-    grid $top.anchor_a2L -sticky "ew" -in $top.anchor_a2F
-    grid $top.anchor_a2E -sticky "ew" -in $top.anchor_a2F
-    grid $top.anchorL $top.enableL -sticky "ew" -in $top.gridF3 -padx $padx
-    grid $top.anchor_xyzF $top.anchor_xyzCB -sticky "ew" -in $top.gridF3 -padx $padx -pady $pady
-    grid $top.anchor_tickF $top.anchor_tickCB -sticky "ew" -in $top.gridF3 -padx $padx -pady $pady
-    grid $top.anchor_a1F $top.anchor_a1CB -sticky "ew" -in $top.gridF3 -padx $padx -pady $pady
-    grid $top.anchor_a2F $top.anchor_a2CB -sticky "ew" -in $top.gridF3 -padx $padx -pady $pady
-    grid columnconfigure $top.anchor_xyzF 0 -weight 1
-    grid columnconfigure $top.anchor_tickF 0 -weight 1
-    grid columnconfigure $top.anchor_a1F 0 -weight 1
-    grid columnconfigure $top.anchor_a2F 0 -weight 1
+    grid $top.anchorL - $top.enableL -sticky "ew" -in $top.gridFF3
+    grid $top.anchor_xyzL $top.anchor_xyzE $top.anchor_xyzCB -sticky "nsew" -in $top.gridFF3
+    grid $top.anchor_tickL $top.anchor_tickE $top.anchor_tickCB -sticky "nsew" -in $top.gridFF3
+    grid $top.anchor_a1L $top.anchor_a1E $top.anchor_a1CB -sticky "nsew" -in $top.gridFF3
+    grid $top.anchor_a2L $top.anchor_a2E $top.anchor_a2CB -sticky "nsew" -in $top.gridFF3
+    grid columnconfigure $top.gridFF3 1 -weight 1
+    grid rowconfigure $top.gridFF3 1 -weight 1
+    grid rowconfigure $top.gridFF3 2 -weight 1
+    grid rowconfigure $top.gridFF3 3 -weight 1
+    grid rowconfigure $top.gridFF3 4 -weight 1
+    grid $top.gridFF3 -sticky "nsew" -in $top.gridF3 -padx $padx -pady $pady
     grid columnconfigure $top.gridF3 0 -weight 1
+    grid rowconfigure $top.gridF3 0 -weight 1
 
     frame $top.gridF4
     checkbutton $top.drawB -relief flat -text "Draw"\
@@ -238,11 +222,13 @@ default values." } }
     grid columnconfigure $top.gridF5 5 -weight 1
 
     grid $top.gridF1 -sticky "ew" -padx $padx -pady $pady
-    grid $top.gridF2 -sticky "ew" -padx $padx -pady $pady
-    grid $top.gridF3 -sticky "ew" -padx $padx -pady $pady
+    grid $top.gridF2 -sticky "nsew" -padx $padx -pady $pady
+    grid $top.gridF3 -sticky "nsew" -padx $padx -pady $pady
     grid $top.gridF4 -sticky "ew" -padx $padx -pady $pady
     grid $top.gridF5 -sticky "ew" -padx $padx -pady $pady
     grid columnconfigure $top 0 -weight 1
+    grid rowconfigure $top 1 -weight 1
+    grid rowconfigure $top 2 -weight 1
 
     adc_interpval $id
     adc_adjust_coords $id
@@ -267,6 +253,11 @@ proc adc_ok { id top } {
 
 proc adc_apply { id } {
     global mged_adc_control
+
+    adc anchor_pos 0
+    adc anchor_a1 0
+    adc anchor_a2 0
+    adc anchor_dst 0
 
     switch $mged_adc_control($id,interpval) {
 	abs {
