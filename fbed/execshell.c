@@ -55,13 +55,13 @@ char	*args[];
 		default :
 			{	register int	pid;
 				int		stat_loc;
-#if __STDC__ || defined( SYSV ) || defined( mips )
-				register void	(*istat)(), (*qstat)(), (*cstat)();
+#if __STDC__ || defined( SYSV )
+				register void (*istat)(), (*qstat)(), (*cstat)();
 #else
 #ifndef SIGCLD
 #define SIGCLD	SIGCHLD
 #endif
-				register int	(*istat)(), (*qstat)(), (*cstat)();
+				register int (*istat)(), (*qstat)(), (*cstat)();
 #endif
 			istat = signal(SIGINT, SIG_IGN);
 			qstat = signal(SIGQUIT, SIG_IGN);
