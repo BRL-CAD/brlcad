@@ -967,10 +967,12 @@ char	**argv;
 
 	while( ( cmd = rt_read_cmd( rtif_fp )) != NULL )  {
 		/* Hack to prevent running framedone scripts prematurely */
-		if( rtif_currentframe < rtif_desiredframe &&
-		    cmd[0] == '!' )  {
-			rt_free( cmd, "preview cmd" );
-		    	continue;
+		if( cmd[0] == '!' )  {
+			if( rtif_currentframe < rtif_desiredframe ||
+			    rtif_finalframe && rtif_currentframe > rtif_finalframe )  {
+				rt_free( cmd, "preview ! cmd" );
+			    	continue;
+			}
 		}
 		if( rt_do_cmd( (struct rt_i *)0, cmd, cmdtab ) < 0 )
 			rt_log("command failed: %s\n", cmd);
