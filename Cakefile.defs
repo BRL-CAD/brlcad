@@ -694,7 +694,7 @@ set -S2 "/bin/sh"
 #   else
 #	define	BSD	43
 #	define	HAS_TCP	1
-#	if 0
+#	if 1
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
