@@ -230,10 +230,17 @@ char *str;{
 	}
 
 	if(strcmp(str, "help") == 0) {
-		for( bp = button_table; bp->bu_code >= 0; bp++ )
-			col_item(bp->bu_name);
-		col_eol();
-		return;
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+
+	  for( bp = button_table; bp->bu_code >= 0; bp++ )
+	    vls_col_item(&vls, bp->bu_name);
+	  vls_col_eol(&vls);
+
+	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	  bu_vls_free(&vls);
+	  return;
 	}
 
 	/* Process the button function requested. */
