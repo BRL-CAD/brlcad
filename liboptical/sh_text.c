@@ -531,8 +531,8 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	if (tp->tx_file[0] == '\0' )  return -1;	/* FAIL, no file */
 
 	tp->mp = bu_open_mapped_file_with_path(
-		(char *const *)tp->tx_file, NULL, 
-		(const char *)rtip->rti_dbip->dbi_filepath);
+		rtip->rti_dbip->dbi_filepath,
+		tp->tx_file, NULL);
 
 	if (!(tp->mp) )
 		return -1;				/* FAIL */
