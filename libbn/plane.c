@@ -2386,3 +2386,111 @@ fail:
 	}
 	return 0;
 }
+
+#if 0
+/*
+ *			B N _ I S E C T _ R A Y _ T R I
+ *
+ *  Intersect a infinite ray with a triangle specified by 3 points.
+ *  From: "Graphics Gems" ed Andrew S. Glassner:
+ *		"An Efficient Ray-Polygon Intersection"  P 390
+ *
+ *	      o A
+ *	      |\
+ *	      | \
+ *	      |  \
+ *	      |   \
+ *	   _  |  o \
+ *   alpha|   |  P  \
+ *	  |   |      \
+ *	  |_  o-------o
+ *	       V       B
+ *	
+ *	      |__|
+ *		beta
+ *
+ *  The intersection point P is computed by determining 2 quantities,
+ *  (alpha,beta) which indicate the parametric distance along VA and VB
+ *  respectively.  The intersection point is thus:
+ *
+ *	P = V + (alpha * VA) + (beta * VB)
+ *
+ *  Return:
+ *	0	Miss
+ *	1	Hit, incoming
+ *	-1	Hit, outgoing
+ *
+ *    If Hit, the following parameters are also set:
+ *	dist	parametric distance to the triangle intercept.
+ *	N	If non-null, surface normal of triangle
+ *	Alpha	If non-null, parametric distance along VA
+ *	Beta	If non-null, parametric distance along VB
+
+ *  The parameters Alpha and Beta may be null, otherwise they will be
+ *	set.
+ */
+int
+bn_isect_ray_tri(dist_p, N_p, Alpha_p, Beta_p, pt, dir, V, A, B)
+fastf_t *dist_p;
+fastf_t *N_p;
+fastf_t *Alpha_p;
+fastf_t *Beta_p;
+CONST point_t pt;
+CONST vect_t dir;
+CONST point_t V;
+CONST point_t A;
+CONST point_t B;
+{
+	vect_t VA;	/* V -> A vector */
+	vect_t VB;	/* V -> B vector */
+	vect_t pt_V;	/* Ray_origin -> V  vector */
+	vect_t N;	/* Triangle Normal */
+	vect_t VPP;	/* perpendicular to vector V -> P */
+	fastf_t alpha;	/* parametric distance along VA */
+	fastf_t beta;	/* parametric distance along VB */
+	fastf_t NdotDir;
+	fastf_t entleave;
+	fastf_t k;
+
+	/* form edge vectors of triangle */
+	VSUB2(VB, B, V);
+	VSUB2(VA, A, V);
+
+	/* form triangle normal */
+	VCROSS( N, VA, VB );
+
+	NdotDir = VDOT( N, dir );
+	if (fabs(NdotDir) < SQRT_SMALL_FASTF)
+		return 0;	/* ray parallel to triangle */
+
+	if (NdotDir >= 0.0) entleave = -1;	/* leaving */
+	else entleave = 1;			/* entering */
+
+	VSUB2( pt_V, V, pt );
+	VCROSS( VPP, pt_V, dir );
+
+	/* alpha is projection of VPP onto VA (not necessaily in plane)
+	 * If alpha < 0.0 then p is "before" point V on line V->A
+	 * No-one can figure out why alpha > NdotDir is important.
+	 */
+	alpha = VDOT( VA, VPP ) * entleave;
+	if (alpha < 0.0 || alpha > fabs(NdotDir) ) return 0;
+
+
+	/* beta is projection of VPP onto VB (not necessaily in plane) */
+	beta = VDOT(VB, VP_right ) * (-1 * entleave);
+	if (beta < 0.0 || beta > fabs(NdotDir)) return 0;
+
+	k = VDOT(VPP, N) / NdotDIR;
+	
+	if (dist_p) *dist_p = k;
+	if (N_p) {
+		VUNITIZE(N);
+		VMOVE(N_p, N);
+	}
+	if (Alpha_p) *Alpha_p = alpha;
+	if (Beta_p) *Beta_p = beta;
+
+	return entleave;
+}
+#endif
