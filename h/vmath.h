@@ -432,9 +432,15 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /* Compute dot product of vectors at `a' and `b' */
 #define VDOT(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] + (a)[Z]*(b)[Z] )
 
+/* Turn a vector into comma-separated list of elements, for subroutine args */
+#define V3ARGS(a)	(a)[X], (a)[Y], (a)[Z]
+#define V4ARGS(a)	(a)[X], (a)[Y], (a)[Z], (a)[W]
+
 /* Print vector name and components on stdout */
-#define VPRINT(a,b)	(void)fprintf(stderr,"%s (%g, %g, %g)\n", a, (b)[X], (b)[Y], (b)[Z])
-#define HPRINT(a,b)	(void)fprintf(stderr,"%s (%g, %g, %g, %g)\n", a, (b)[X], (b)[Y], (b)[Z], (b)[3])
+#define VPRINT(a,b)	\
+	(void)fprintf(stderr,"%s (%g, %g, %g)\n", a, V3ARGS(b) );
+#define HPRINT(a,b)	\
+	(void)fprintf(stderr,"%s (%g, %g, %g, %g)\n", a, V4ARGS(b) );
 
 /* Vector element multiplication.  Really: diagonal matrix X vect */
 #ifdef SHORT_VECTORS
