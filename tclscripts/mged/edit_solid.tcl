@@ -22,9 +22,6 @@
 #	and solcreate.tcl (to create solids).
 #
 
-# Call this routine to initialize the "solid_data" array
-solid_data_init
-
 ## - init_edit_solid
 #
 proc init_edit_solid { id args } {
