@@ -39,19 +39,11 @@ static char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
-
+#include "./ext.h"
 #include "rdebug.h"
 
 /* x, y, region_id, hit_dist */
 #define	SHOT_FMT	"%d %d %d %g\n"
-
-/***** view.c variables imported from rt.c *****/
-extern int	output_is_binary;	/* !0 means output file is binary */
-
-/***** worker.c variables imported from rt.c *****/
-extern int	width;			/* # of pixels in X */
-extern int	height;			/* # of lines in Y */
-/*****/
 
 int		use_air = 1;		/* Handling of air in librt */
 
@@ -61,10 +53,6 @@ int		using_mlib = 0;		/* Material routines NOT used */
 struct structparse view_parse[] = {
 	(char *)0,(char *)0,	0,			FUNC_NULL
 };
-
-FILE            *plotfp;		/* optional plotting file */
-
-extern FILE	*outfp;			/* optional output file */
 
 
 char usage[] = "\
@@ -103,13 +91,6 @@ char *file, *obj;
 
 	output_is_binary = 0;		/* output is printable ascii */
 
-#ifdef
-	if(rdebug & RDEBUG_RAYPLOT) {
-		plotfp = fopen("rt_hide.pl", "w");
-	}
-#endif
-
-
 	return(0);		/* No framebuffer needed */
 }
 
@@ -128,7 +109,6 @@ struct application	*ap;
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
 
-	
 	regionfix( ap, "rtray.regexp" );		/* XXX */
 }
 
@@ -186,12 +166,9 @@ register struct partition *PartHeadp;
 	char			*fmt;		/* printf() format string */
 	int			region_id;	/* solid region's id */
 
-
-
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
-	
 	/*
 	 * Output the ray data: screen plane (pixel) coordinates
 	 * for x and y positions of a ray, region_id, and hit_distance.
@@ -199,48 +176,12 @@ register struct partition *PartHeadp;
 	 *
 	 *  Assume all rays are parallel.
 	 */
-
 	dist = pp->pt_inhit->hit_dist;
 	region_id = pp->pt_regionp->reg_regionid;
 	
 	fprintf(outfp, SHOT_FMT,
 		ap->a_x, ap->a_y,
 		region_id, dist );
-
-#ifdef
-		if( (region_id = pp->pt_regionp->reg_regionid) <= 0 )  {
-			region_id = 1;
-		}
-
-
-		/* A color rtg3.pl UnixPlot file of output commands
-		 * is generated.  This is processed by plot(1)
-		 * plotting filters such as pl-fb or pl-xxx.
-		 * Inhits are assigned green; outhits are assigned
-		 * blue.
-		 */
-
-		if(rdebug & RDEBUG_RAYPLOT) {
-			vect_t     inpt;
-			vect_t     outpt;
-			VJOIN1(inpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
-				ap->a_ray.r_dir);
-			VJOIN1(outpt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
-				ap->a_ray.r_dir);
-				pl_color(plotfp, 0, 255, 0);	/* green */
-			pdv_3line(plotfp, inpt,outpt);
-			
-			if(air_thickness > 0) {
-				vect_t     air_end;
-				VJOIN1(air_end, ap->a_ray.r_pt,
-					pp->pt_outhit->hit_dist + air_thickness,
-					ap->a_ray.r_dir);
-				pl_color(plotfp, 0, 0, 255);	/* blue */
-				pdv_3cont(plotfp, air_end);
-			}
-		}
-	}
-#endif
 
 	return(0);
 }
