@@ -189,7 +189,7 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+	db_dirbuild(dbip);
 
 	/* Create .fig file name and open it. */
 	rt_vls_init( &fig_file );
