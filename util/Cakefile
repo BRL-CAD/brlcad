@@ -16,7 +16,7 @@
 	op-bw orle-pix \
 	pix-alias pix-bw pix-bw3 pix-orle \
 	pix-ps pix-rle pix-spm pix-sun \
-	pix3filter pixbackgnd pixbustup pixcolors pixdiff \
+	pix3filter pixbackgnd pixbgstrip pixbustup pixcolors pixdiff \
 	pixfade pixfields pixfilter pixhalve pixhist \
 	pixhist3d-pl pixhist3d pixinterp2x pixmatte pixmerge \
 	pixrect pixrot pixsaturate pixscale pixshrink pixstat \
@@ -105,6 +105,9 @@ ap-pix:		ap-pix.o
 
 pixbackgnd:	pixbackgnd.o
 	CC LDFLAGS -o pixbackgnd pixbackgnd.o LIBES
+
+pixbgstrip:	pixbgstrip.o LIBFB
+	CC LDFLAGS -o pixbgstrip pixbgstrip.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 bw-a:		bw-a.o LIBFB
 	CC LDFLAGS -o bw-a bw-a.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
