@@ -572,22 +572,26 @@ phong_render(register struct application *ap,
     vect_t Hvec;
 
     if (rdebug&RDEBUG_SHADE)
-	bu_log("phong_render (new) %s/%s\n",
+	bu_log("%s:%d phong_render (new) %s/%s\n", __FILE__, __LINE__,
 	       pp->pt_regionp->reg_name, 
 	       pp->pt_inseg->seg_stp->st_dp->d_namep);
 
+    if (ps->magic != PL_MAGIC )  bu_log("phong_render: bad magic\n");
 
     if (PM_Visualize) { /* photon mapping */
 	IrradianceEstimate(ap, swp->sw_color, swp->sw_hit.hit_point,
 			   swp->sw_hit.hit_normal, 100, 100);
 	return 1;
     }
-
     swp->sw_transmit = ps->transmit;
     swp->sw_reflect = ps->reflect;
     swp->sw_refrac_index = ps->refrac_index;
     swp->sw_extinction = ps->extinction;
     if (swp->sw_xmitonly ) {
+
+	if (rdebug&RDEBUG_SHADE)
+	    bu_log("%s:%d xmitonly\n", __FILE__, __LINE__);
+
 	if (swp->sw_xmitonly > 1 )
 	    return(1);	/* done -- wanted parameters only */
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 ) {
@@ -608,7 +612,14 @@ phong_render(register struct application *ap,
     for( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
 
 	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL){
+	    if (rdebug&RDEBUG_SHADE) 
+		bu_log("%s:%d light %d not visible\n", __FILE__, __LINE__, i);
+
 	    continue;
+	} else {
+	    if (rdebug&RDEBUG_SHADE) 
+		bu_log("%s:%d light %d visible\n", __FILE__, __LINE__, i);
+
 	}
 	to_light = swp->sw_tolight+3*i;
 	intensity = swp->sw_intensity+3*i;
@@ -629,17 +640,20 @@ phong_render(register struct application *ap,
 		value = lp->lt_intensity / (0.0001 + value*value);
 
 		VSCALE(diff, diff, value);
+	    } else {
+
 	    }
 	    VADD2(diffuse, diffuse, diff);
+
 	}
 
 	/* specular term */
 	VADD2(Hvec, to_eye, to_light);
 	VSCALE(Hvec, Hvec, 0.5);
+	VUNITIZE(Hvec);
 	cosine = VDOT(Hvec, swp->sw_hit.hit_normal);
 	if (cosine > 0) {
 	    if (cosine > 1.0) cosine = 1.0;
-
 	    VELMUL( work, lp->lt_color, intensity );
 
 	    value = ltfrac * cosine / (ps->shine - ps->shine*cosine + cosine);
@@ -647,7 +661,14 @@ phong_render(register struct application *ap,
 	    VSCALE(spec, work, value);
 
 	    VADD2(specular, specular, spec);
+
+	    
 	}
+
+	if (rdebug&RDEBUG_SHADE) 
+	    bu_log("  diffuse %g %g %g   specular %g %g %g\n",
+		   V3ARGS(diff), V3ARGS(spec));
+
     }
 
 
