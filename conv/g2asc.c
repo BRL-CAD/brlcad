@@ -82,9 +82,13 @@ char **argv;
 	ifp = stdin;
 	ofp = stdout;
 
+	bu_debug = BU_DEBUG_COREDUMP;
+
 #if 0
-	if( argc == 2 || argc == 4 )
+	if( argc > 1 && strcmp( argv[1], "-d" ) == 0 )  {
+		argc--; argv++;
 		debug = 1;
+	}
 #endif
 
 	if( argc >= 3 ) {
@@ -432,6 +436,7 @@ cline_dump()
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
+	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_CLINE].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: cline import failure\n");
 		exit(-1);
@@ -466,6 +471,7 @@ bot_dump()
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
+	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_BOT].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: bot import failure\n");
 		exit(-1);
@@ -523,6 +529,7 @@ pipe_dump()	/* Print out Pipe record information */
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
+	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_PIPE].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: pipe import failure\n");
 		exit(-1);
@@ -574,6 +581,7 @@ particle_dump()
 	get_ext( &ext, 1 );
 
 	/* Hand off to librt's import() routine */
+	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_PARTICLE].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: particle import failure\n");
 		exit(-1);
@@ -631,6 +639,7 @@ arbn_dump()
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
+	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_ARBN].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: arbn import failure\n");
 		exit(-1);
