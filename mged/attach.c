@@ -110,6 +110,10 @@ extern struct dm dm_X;
 extern struct dm dm_XGL;
 #endif
 
+#ifdef DM_XOGL
+extern struct dm dm_Xogl;
+#endif
+
 struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 
 /* The [0] entry will be the startup default */
@@ -151,6 +155,9 @@ static struct dm *which_dm[] = {
 #endif
 #ifdef DM_PS
 	&dm_Ps,
+#endif
+#ifdef DM_XOGL
+	&dm_Xogl,
 #endif
 	0
 };
