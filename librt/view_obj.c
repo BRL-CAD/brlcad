@@ -1425,7 +1425,7 @@ vo_rot(struct view_obj	*vop,
 	mat_t temp1, temp2;
 
 	if (func != (int (*)())0)
-		return (*func)(vop, coord, rotate_about, rmat);
+		return (*func)(vop, interp, coord, rotate_about, rmat);
 
 	switch (coord) {
 	case 'm':
@@ -1576,7 +1576,7 @@ vo_tra(struct view_obj	*vop,
 	point_t vc, nvc;
 
 	if (func != (int (*)())0)
-		return (*func)(vop, coord, tvec);
+		return (*func)(vop, interp, coord, tvec);
 
 	switch (coord) {
 	case 'm':
