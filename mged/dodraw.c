@@ -47,6 +47,7 @@ extern void	(*nmg_plot_anim_upcall)();
 extern void	(*nmg_vlblock_anim_upcall)();
 extern void	(*nmg_mged_debug_display_hack)();
 long	nvectors;	/* number of vectors drawn so far */
+float default_wireframe_color[] = { 1.0, 0.0, 0.0 };  /* start with red */
 
 /*
  *  This is just like the rt_initial_tree_state in librt/tree.c,
@@ -85,6 +86,8 @@ static int		mged_draw_normals;
 static int		mged_draw_solid_lines_only=0;
 static int		mged_draw_no_surfaces = 0;
 static int		mged_shade_per_vertex_normals=0;
+int			mged_wireframe_color_override;
+int			mged_wireframe_color[3];
 static struct model	*mged_nmg_model;
 struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
@@ -452,7 +455,7 @@ int	kind;
 
 	if( argc <= 0 )  return(-1);	/* FAIL */
 
-	/* Initial vaues for options, must be reset each time */
+	/* Initial values for options, must be reset each time */
 	ncpu = 1;
 	mged_draw_nmg_only = 0;	/* no booleans */
 	mged_nmg_triangulate = 1;
@@ -462,10 +465,11 @@ int	kind;
 	mged_draw_solid_lines_only = 0;
 	mged_shade_per_vertex_normals = 0;
 	mged_draw_no_surfaces = 0;
+	mged_wireframe_color_override = 0;
 
 	/* Parse options. */
 	bu_optind = 1;		/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"dnqstuvwSTP:")) != EOF )  {
+	while( (c=bu_getopt(argc,argv,"dnqstuvwSTP:C:")) != EOF )  {
 		switch(c)  {
 		case 'u':
 			mged_draw_edge_uses = 1;
@@ -500,16 +504,42 @@ int	kind;
 		case 'd':
 			mged_draw_nmg_only = 1;
 			break;
+		case 'C':
+			{
+				char		buf[128];
+				int		r,g,b;
+				register char	*cp = bu_optarg;
+
+				r = atoi(cp);
+				while( (*cp >= '0' && *cp <= '9') )  cp++;
+				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				g = atoi(cp);
+				while( (*cp >= '0' && *cp <= '9') )  cp++;
+				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				b = atoi(cp);
+
+				if( r < 0 || r > 255 )  r = 255;
+				if( g < 0 || g > 255 )  g = 255;
+				if( b < 0 || b > 255 )  b = 255;
+
+				mged_wireframe_color_override = 1;
+				mged_wireframe_color[0] = r;
+				mged_wireframe_color[1] = g;
+				mged_wireframe_color[2] = b;
+			}
+			break;
 		default:
-		  {
-		    struct bu_vls tmp_vls;
+			{
+				struct bu_vls vls;
 
-		    bu_vls_init(&tmp_vls);
-		    bu_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
-		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		    bu_vls_free(&tmp_vls);
-		  }
+				bu_vls_init(&vls);
+				bu_vls_printf(&vls, "help %s", argv[0]);
+				Tcl_Eval(interp, bu_vls_addr(&vls));
+				bu_vls_free(&vls);
 
+				return TCL_ERROR;
+			}
+#if 0
 		  Tcl_AppendResult(interp, "Usage: ev [-dnqstuvwST] [-P ncpu] object(s)\n\
 	-d draw nmg without performing boolean operations\n\
 	-w draw wireframes (rather than polygons)\n\
@@ -520,7 +550,8 @@ int	kind;
 	-u debug: draw edgeuses\n\
 	-S draw tNURBs with trimming curves only, no surfaces.\n\
 	-T debug: disable triangulator\n", (char *)NULL);
-		break;
+			break;
+#endif
 		}
 	}
 	argc -= bu_optind;
@@ -534,6 +565,9 @@ int	kind;
 	/* Establish tolerances */
 	mged_initial_tree_state.ts_ttol = &mged_ttol;
 	mged_initial_tree_state.ts_tol = &mged_tol;
+
+	/* set default wireframe color */
+	VMOVE(mged_initial_tree_state.ts_mater.ma_color, default_wireframe_color);
 
 	mged_ttol.magic = RT_TESS_TOL_MAGIC;
 	mged_ttol.abs = mged_abs_tol;
@@ -725,10 +759,18 @@ struct solid		*existing_sp;
 	 */
 	if( !existing_sp )  {
 		/* Take note of the base color */
-		if( tsp )  {
-			sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
-			sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
-			sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
+		if( mged_wireframe_color_override ) {
+			sp->s_useBaseColor = 1;
+			sp->s_basecolor[0] = mged_wireframe_color[0];
+			sp->s_basecolor[1] = mged_wireframe_color[1];
+			sp->s_basecolor[2] = mged_wireframe_color[2];
+		} else {
+			sp->s_useBaseColor = 0;
+			if( tsp )  {
+				sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
+				sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
+				sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
+			}
 		}
 		sp->s_iflag = DOWN;
 		sp->s_soldash = dashflag;
