@@ -477,28 +477,102 @@ struct seg		*seghead;
 	 * Check for hitting the end hemispheres.
 	 */
 check_hemispheres:
-	if( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
+	if( hitp < &hits[2] )  {
+		LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
+		FAST fastf_t	rad_sq;
+		FAST fastf_t	magsq_ov;	/* length squared of ov */
+		FAST fastf_t	a,b,c;
+		FAST fastf_t	root;		/* root of radical */
+		FAST fastf_t	t;
 		/* 0 or 1 hits so far, this is worthwhile */
-/* XXXX */
-		k1 = -pprime[Z] / dprime[Z];		/* bottom plate */
-		k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
 
-		VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
-		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
-		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
-			hitp->hit_dist = k1;
+		/*
+		 *  First, consider a hit on V hemisphere.
+		 */
+		VSUB2( ov, part->part_int.part_V, rp->r_pt );
+		b = VDOT( rp->r_dir, ov );
+		magsq_ov = MAGSQ(ov);
+		if( magsq_ov >= (rad_sq = part->part_int.part_vrad *
+		    part->part_int.part_vrad) ) {
+			/* ray origin is outside of sphere */
+			if( b < 0 ) {
+				/* ray direction is away from sphere */
+				goto check_h;
+			}
+			root = b*b - magsq_ov + rad_sq;
+			if( root <= 0 ) {
+				/* no real roots */
+				goto check_h;
+			}
+		} else {
+			root = b*b - magsq_ov + rad_sq;
+		}
+		root = sqrt(root);
+		t = b - root;
+		/* Check for intersect in desired part of sphere */
+		VJOIN1( hitp->hit_vpriv, pprime, t, dprime );	/* hit' */
+		if( hitp->hit_vpriv[Z] <= 0.0 )  {
+			hitp->hit_dist = t;
 			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_VSPHERE;
 			hitp++;
 		}
+		t = b + root;
+		VJOIN1( hitp->hit_vpriv, pprime, t, dprime );	/* hit' */
+		if( hitp->hit_vpriv[Z] <= 0.0 )  {
+			hitp->hit_dist = t;
+			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_VSPHERE;
+			hitp++;
+		}
+	}
 
-		VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );	/* hit' */
-		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
-		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
-			hitp->hit_dist = k2;
+check_h:
+	if( hitp < &hits[2] )  {
+		LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
+		FAST fastf_t	rad_sq;
+		FAST fastf_t	magsq_ov;	/* length squared of ov */
+		FAST fastf_t	b;		/* second term of quadratic eqn */
+		FAST fastf_t	root;		/* root of radical */
+		FAST fastf_t	t;
+
+		/*
+		 *  Next, consider a hit on H hemisphere
+		 */
+		VADD2( ov, part->part_int.part_V, part->part_int.part_H );
+		VSUB2( ov, ov, rp->r_pt );
+		b = VDOT( rp->r_dir, ov );
+		magsq_ov = MAGSQ(ov);
+		if( magsq_ov >= (rad_sq = part->part_int.part_hrad *
+		    part->part_int.part_hrad) ) {
+			/* ray origin is outside of sphere */
+			if( b < 0 ) {
+				/* ray direction is away from sphere */
+				goto out;
+			}
+			root = b*b - magsq_ov + rad_sq;
+			if( root <= 0 ) {
+				/* no real roots */
+				goto out;
+			}
+		} else {
+			root = b*b - magsq_ov + rad_sq;
+		}
+		root = sqrt(root);
+		t = b - root;
+		VJOIN1( hitp->hit_vpriv, pprime, t, dprime );	/* hit' */
+		if( hitp->hit_vpriv[Z] >= 1.0 )  {
+			hitp->hit_dist = t;
+			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_HSPHERE;
+			hitp++;
+		}
+		t = b + root;
+		VJOIN1( hitp->hit_vpriv, pprime, t, dprime );	/* hit' */
+		if( hitp->hit_vpriv[Z] >= 1.0 )  {
+			hitp->hit_dist = t;
 			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_HSPHERE;
 			hitp++;
 		}
 	}
+out:
 	if( hitp != &hits[2] )
 		return(0);	/* MISS */
 
@@ -563,15 +637,16 @@ register struct xray	*rp;
 		VUNITIZE( hitp->hit_normal );
 		break;
 	case RT_PARTICLE_SURF_HSPHERE:
-		VSUB2( hitp->hit_normal, hitp->hit_point, part->part_int.part_H );
+		VSUB3( hitp->hit_normal, hitp->hit_point,
+			part->part_int.part_V, part->part_int.part_H );
 		VUNITIZE( hitp->hit_normal );
 		break;
 	case RT_PARTICLE_SURF_BODY:
 		/* compute it */
-		hitp->hit_vpriv[Z] = 0.0;
 		MAT4X3VEC( hitp->hit_normal, part->part_invRoS,
 			hitp->hit_vpriv );
 		VUNITIZE( hitp->hit_normal );
+		/* XXX probably wrong for cone case */
 		break;
 	}
 }
