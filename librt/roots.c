@@ -2,7 +2,7 @@
  *  			R O O T S . C
  *
  *  Functions -
- *	polyRoots		Find the roots of a polynomial
+ *	rt_poly_roots		Find the roots of a polynomial
  *
  *  Author -
  *	Jeff Hanes
@@ -30,7 +30,7 @@ static char RCSroots[] = "@(#)$Header$ (BRL)";
 #include "./polyno.h"
 #include "./complex.h"
 
-int		polyRoots();
+int		rt_poly_roots();
 void	rt_poly_eval_w_2derivatives(), rt_poly_deflate();
 int	rt_poly_findroot(), rt_poly_checkroots();
 
@@ -45,7 +45,7 @@ int	rt_poly_findroot(), rt_poly_checkroots();
  *		Some changes in the algorithm will also be required.
  */
 int
-polyRoots( eqn, roots )
+rt_poly_roots( eqn, roots )
 register poly		*eqn;		/* equation to be solved	*/
 register complex	roots[];	/* space to put roots found	*/
 {
@@ -67,7 +67,7 @@ register complex	roots[];	/* space to put roots found	*/
 	 * for ease of handling.
 	 */
 	factor = 1.0 / eqn->cf[0];
-	(void) polyScal( eqn, factor );
+	(void) rt_poly_scale( eqn, factor );
 	n = 0;		/* Number of roots found */
 
 	/* A trailing coefficient of zero indicates that zero
@@ -81,13 +81,13 @@ register complex	roots[];	/* space to put roots found	*/
 
 	while ( eqn->dgr > 2 ){
 		if ( eqn->dgr == 4 )  {
-			if( quartic( eqn, &roots[n] ) )  {
+			if( rt_poly_quartic_roots( eqn, &roots[n] ) )  {
 				if( rt_poly_checkroots( eqn, &roots[n], 4 ) == 0 )  {
 					return( n+4 );
 				}
 			}
 		} else if ( eqn->dgr == 3 )  {
-			if( cubic( eqn, &roots[n] ) )  {
+			if( rt_poly_cubic_roots( eqn, &roots[n] ) )  {
 				if ( rt_poly_checkroots( eqn, &roots[n], 3 ) == 0 )  {
 					return ( n+3 );
 				}
@@ -127,7 +127,7 @@ register complex	roots[];	/* space to put roots found	*/
 		roots[n].im = 0.0;
 		++n;
 	} else if ( eqn->dgr == 2 ){
-		quadratic( eqn, &roots[n] );
+		rt_poly_quadratic_roots( eqn, &roots[n] );
 		n += 2;
 	}
 	return n;
@@ -371,5 +371,5 @@ register complex	*root;
 	 * and the remainder (should be zero if the root was really a
 	 * root).
 	 */
-	synDiv( oldP, &div, oldP, &rem );
+	rt_poly_synthetic_division( oldP, &div, oldP, &rem );
 }

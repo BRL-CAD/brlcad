@@ -4,11 +4,11 @@
  *	Library for dealing with polynomials.
  *
  *  Functions -
- *	polyMul		Multiply two polynomials
- *	polyScal	Scale a polynomial
- *	polyAdd		Add two polynomials
- *	polySub		Subtract two polynomials
- *	synDiv		Divide 1 poly into another using Synthetic Division
+ *	rt_poly_mul		Multiply two polynomials
+ *	rt_poly_scale	Scale a polynomial
+ *	rt_poly_add		Add two polynomials
+ *	rt_poly_sub		Subtract two polynomials
+ *	rt_poly_synthetic_division		Divide 1 poly into another using Synthetic Division
  *	quadratic	Solve quadratic formula
  *	cubic		Solve cubic forumla
  *	rt_pr_poly	Print a polynomial
@@ -52,10 +52,10 @@ extern void	rt_pr_poly();
 static poly	Zpoly = { 0, 0.0 };
 
 /*
- *	polyMul -- multiply two polynomials
+ *	rt_poly_mul -- multiply two polynomials
  */
 poly *
-polyMul(m1,m2,product)
+rt_poly_mul(m1,m2,product)
 register poly	*m1, *m2, *product;
 {
 	if( m1->dgr == 1 && m2->dgr == 1 )  {
@@ -105,10 +105,10 @@ register poly	*m1, *m2, *product;
 
 
 /*
- *	polyScal -- scale a polynomial
+ *	rt_poly_scale -- scale a polynomial
  */
 poly *
-polyScal(eqn,factor)
+rt_poly_scale(eqn,factor)
 register poly	*eqn;
 double	factor;
 {
@@ -122,10 +122,10 @@ double	factor;
 
 
 /*
- *	polyAdd -- add two polynomials
+ *	rt_poly_add -- add two polynomials
  */
 poly *
-polyAdd(poly1,poly2,sum)
+rt_poly_add(poly1,poly2,sum)
 register poly	*poly1, *poly2, *sum;
 {
 	LOCAL poly		tmp;
@@ -155,10 +155,10 @@ register poly	*poly1, *poly2, *sum;
 
 
 /*
- *	polySub -- subtract two polynomials
+ *	rt_poly_sub -- subtract two polynomials
  */
 poly *
-polySub(poly1,poly2,diff)
+rt_poly_sub(poly1,poly2,diff)
 register poly	*poly1, *poly2, *diff;
 {
 	LOCAL poly		tmp;
@@ -194,7 +194,7 @@ register poly	*poly1, *poly2, *diff;
  *	division.  Both polynomials must have real coefficients.
  */
 void
-synDiv(dvdend,dvsor,quo,rem)
+rt_poly_synthetic_division(dvdend,dvsor,quo,rem)
 register poly	*dvdend, *dvsor, *quo, *rem;
 {
 	register int	div;
@@ -227,7 +227,7 @@ register poly	*dvdend, *dvsor, *quo, *rem;
  *	of any quadratic equation with real coefficients.
  */
 void
-quadratic( quadrat, root )
+rt_poly_quadratic_roots( quadrat, root )
 register poly		*quadrat;
 register complex	root[];
 {
@@ -237,7 +237,7 @@ register complex	root[];
 		/* root = -cf[2] / cf[1] */
 		if( NEAR_ZERO( quadrat->cf[1], SMALL ) )  {
 			/* No solution.  Now what? */
-			rt_log("quadratic(): ERROR, no solution\n");
+			rt_log("rt_poly_quadratic_roots(): ERROR, no solution\n");
 			return;
 		}
 		/* Fake it as a repeated root. */
@@ -297,18 +297,18 @@ register complex	root[];
  */
 static int expecting_fpe = 0;
 static jmp_buf abort_buf;
-HIDDEN void catch_FPE(sig)
+HIDDEN void rt_catch_FPE(sig)
 int	sig;
 {
 	if( !expecting_fpe )
 		rt_bomb("unexpected SIGFPE!");
 	if( !rt_g.rtg_parallel )
-		(void)signal(SIGFPE, catch_FPE);	/* Renew handler */
+		(void)signal(SIGFPE, rt_catch_FPE);	/* Renew handler */
 	longjmp(abort_buf, 1);	/* return error code */
 }
 
 int
-cubic( eqn, root )
+rt_poly_cubic_roots( eqn, root )
 register poly		*eqn;
 register complex	root[];
 {
@@ -320,12 +320,12 @@ register complex	root[];
 		/* abort_buf is NOT parallel! */
 		if( first_time )  {
 			first_time = 0;
-			(void)signal(SIGFPE, catch_FPE);
+			(void)signal(SIGFPE, rt_catch_FPE);
 		}
 		expecting_fpe = 1;
 		if( setjmp( abort_buf ) )  {
-			(void)signal(SIGFPE, catch_FPE);
-			rt_log("rt: cubic() Floating Point Error\n");
+			(void)signal(SIGFPE, rt_catch_FPE);
+			rt_log("rt: rt_poly_cubic_roots() Floating Point Error\n");
 			return(0);	/* FAIL */
 		}
 	}
@@ -411,7 +411,7 @@ register complex	root[];
  *	Returns 1 for success, 0 for fail.
  */
 int
-quartic( eqn, root )
+rt_poly_quartic_roots( eqn, root )
 register poly		*eqn;
 register complex	root[];
 {
@@ -429,7 +429,7 @@ register complex	root[];
 			- eqn->cf[4]*eqn->cf[1]*eqn->cf[1]
 			+ 4*eqn->cf[4]*eqn->cf[2];
 
-	if( !cubic( &cube, u ) )  {
+	if( !rt_poly_cubic_roots( &cube, u ) )  {
 		return( 0 );		/* FAIL */
 	}
 	if ( u[1].im != 0.0 ){
@@ -481,8 +481,8 @@ register complex	root[];
 		}
 	}
 
-	quadratic( &quad1, root );
-	quadratic( &quad2, &root[2] );
+	rt_poly_quadratic_roots( &quad1, root );
+	rt_poly_quadratic_roots( &quad2, &root[2] );
 	return(1);		/* SUCCESS */
 }
 

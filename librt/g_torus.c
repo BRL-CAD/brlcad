@@ -395,7 +395,7 @@ struct seg		*seghead;
 	A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
 		  1.0 - tor->tor_alpha * tor->tor_alpha;
 
-	/* Inline expansion of (void) polyMul( &A, &A, &Asqr ) */
+	/* Inline expansion of (void) rt_poly_mul( &A, &A, &Asqr ) */
 	/* Both polys have degree two */
 	Asqr.dgr = 4;
 	Asqr.cf[0] = A.cf[0] * A.cf[0];
@@ -404,8 +404,8 @@ struct seg		*seghead;
 	Asqr.cf[3] = A.cf[1] * A.cf[2] + A.cf[2] * A.cf[1];
 	Asqr.cf[4] = A.cf[2] * A.cf[2];
 
-	/* Inline expansion of polyScal( &X2_Y2, 4.0 ) and
-	 * polySub( &Asqr, &X2_Y2, &C ).
+	/* Inline expansion of rt_poly_scale( &X2_Y2, 4.0 ) and
+	 * rt_poly_sub( &Asqr, &X2_Y2, &C ).
 	 */
 	C.dgr   = 4;
 	C.cf[0] = Asqr.cf[0];
@@ -417,9 +417,9 @@ struct seg		*seghead;
 	/*  It is known that the equation is 4th order.  Therefore,
 	 *  if the root finder returns other than 4 roots, error.
 	 */
-	if ( (i = polyRoots( &C, val )) != 4 ){
+	if ( (i = rt_poly_roots( &C, val )) != 4 ){
 		if( i != 0 )  {
-			rt_log("tor:  polyRoots() 4!=%d\n", i);
+			rt_log("tor:  rt_poly_roots() 4!=%d\n", i);
 			rt_pr_roots( stp->st_name, val, i );
 		}
 		return(0);		/* MISS */
@@ -605,7 +605,7 @@ struct application	*ap;
 		A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
 			  1.0 - tor->tor_alpha * tor->tor_alpha;
 
-		/* Inline expansion of (void) polyMul( &A, &A, &Asqr ) */
+		/* Inline expansion of (void) rt_poly_mul( &A, &A, &Asqr ) */
 		/* Both polys have degree two */
 		Asqr.dgr = 4;
 		Asqr.cf[0] = A.cf[0] * A.cf[0];
@@ -618,12 +618,12 @@ struct application	*ap;
 				 A.cf[2] * A.cf[1];
 		Asqr.cf[4] = A.cf[2] * A.cf[2];
 
-		/* Inline expansion of (void) polyScal( &X2_Y2, 4.0 ) */
+		/* Inline expansion of (void) rt_poly_scale( &X2_Y2, 4.0 ) */
 		X2_Y2.cf[0] *= 4.0;
 		X2_Y2.cf[1] *= 4.0;
 		X2_Y2.cf[2] *= 4.0;
 
-		/* Inline expansion of (void) polySub( &Asqr, &X2_Y2, &C ) */
+		/* Inline expansion of (void) rt_poly_sub( &Asqr, &X2_Y2, &C ) */
 		/* offset is know to be 2 */
 		C[i].dgr	= 4;
 		C[i].cf[0] = Asqr.cf[0];
@@ -640,9 +640,9 @@ struct application	*ap;
 		/*  It is known that the equation is 4th order.  Therefore,
 	 	*  if the root finder returns other than 4 roots, error.
 	 	*/
-		if ( (num_roots = polyRoots( &(C[i]), &(val[i][0]) )) != 4 ){
+		if ( (num_roots = rt_poly_roots( &(C[i]), &(val[i][0]) )) != 4 ){
 			if( num_roots != 0 )  {
-				rt_log("tor:  polyRoots() 4!=%d\n", num_roots);
+				rt_log("tor:  rt_poly_roots() 4!=%d\n", num_roots);
 				rt_pr_roots( "tor", val, num_roots );
 			}
 			SEG_MISS(segp[i]);		/* MISS */

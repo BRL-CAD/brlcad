@@ -602,7 +602,7 @@ struct seg		*seghead;
 	/* A vector is unitized (tgc->tgc_A == 1.0) */
 	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CdAm1) + 1.0;
 
-	/* (void) polyMul( &R, &R, &Rsqr ); */
+	/* (void) rt_poly_mul( &R, &R, &Rsqr ); */
 	Rsqr.dgr = 2;
 	Rsqr.cf[0] = R.cf[0] * R.cf[0];
 	Rsqr.cf[1] = R.cf[0] * R.cf[1] * 2;
@@ -617,8 +617,8 @@ struct seg		*seghead;
 		FAST fastf_t roots;
 
 		/*
-		 *  (void) polyAdd( &Xsqr, &Ysqr, &sum );
-		 *  (void) polySub( &sum, &Rsqr, &C );
+		 *  (void) rt_poly_add( &Xsqr, &Ysqr, &sum );
+		 *  (void) rt_poly_sub( &sum, &Rsqr, &C );
 		 */
 		C.dgr = 2;
 		C.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
@@ -646,18 +646,18 @@ struct seg		*seghead;
 		/* B vector is unitized (tgc->tgc_B == 1.0) */
 		Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DdBm1) + 1.0;
 
-		/* (void) polyMul( &Q, &Q, &Qsqr ); */
+		/* (void) rt_poly_mul( &Q, &Q, &Qsqr ); */
 		Qsqr.dgr = 2;
 		Qsqr.cf[0] = Q.cf[0] * Q.cf[0];
 		Qsqr.cf[1] = Q.cf[0] * Q.cf[1] * 2;
 		Qsqr.cf[2] = Q.cf[1] * Q.cf[1];
 
 		/*
-		 * (void) polyMul( &Qsqr, &Xsqr, &T1 );
-		 * (void) polyMul( &Rsqr, &Ysqr, &T2 );
-		 * (void) polyMul( &Rsqr, &Qsqr, &T3 );
-		 * (void) polyAdd( &T1, &T2, &sum );
-		 * (void) polySub( &sum, &T3, &C );
+		 * (void) rt_poly_mul( &Qsqr, &Xsqr, &T1 );
+		 * (void) rt_poly_mul( &Rsqr, &Ysqr, &T2 );
+		 * (void) rt_poly_mul( &Rsqr, &Qsqr, &T3 );
+		 * (void) rt_poly_add( &T1, &T2, &sum );
+		 * (void) rt_poly_sub( &sum, &T3, &C );
 		 */
 		C.dgr = 4;
 		C.cf[0] = Qsqr.cf[0] * Xsqr.cf[0] +
@@ -680,7 +680,7 @@ struct seg		*seghead;
 			  (Rsqr.cf[2] * Qsqr.cf[2]);
 
 		/*  The equation is 4th order, so we expect 0 to 4 roots */
-		nroots = polyRoots( &C , val );
+		nroots = rt_poly_roots( &C , val );
 
 		/*  Only real roots indicate an intersection in real space.
 		 *
@@ -1013,7 +1013,7 @@ struct application	*ap;
 	/* A vector is unitized (tgc->tgc_A == 1.0) */
 	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CdAm1) + 1.0;
 
-	/* (void) polyMul( &R, &R, &Rsqr ); inline expands to: */
+	/* (void) rt_poly_mul( &R, &R, &Rsqr ); inline expands to: */
                 Rsqr.dgr = 2;
                 Rsqr.cf[0] = R.cf[0] * R.cf[0];
                 Rsqr.cf[1] = R.cf[0] * R.cf[1] * 2;
@@ -1025,8 +1025,8 @@ struct application	*ap;
 	 *  form.  Otherwise it is a (gah!) quartic equation.
 	 */
 	if ( tgc->tgc_AD_CB ){
-		/* (void) polyAdd( &Xsqr, &Ysqr, &sum ); and */
-		/* (void) polySub( &sum, &Rsqr, &C ); inline expand to */
+		/* (void) rt_poly_add( &Xsqr, &Ysqr, &sum ); and */
+		/* (void) rt_poly_sub( &sum, &Rsqr, &C ); inline expand to */
 		C[ix].dgr = 2;
 		C[ix].cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
 		C[ix].cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
@@ -1039,13 +1039,13 @@ struct application	*ap;
 		/* B vector is unitized (tgc->tgc_B == 1.0) */
 		Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DdBm1) + 1.0;
 
-		/* (void) polyMul( &Q, &Q, &Qsqr ); inline expands to */
+		/* (void) rt_poly_mul( &Q, &Q, &Qsqr ); inline expands to */
 			Qsqr.dgr = 2;
 			Qsqr.cf[0] = Q.cf[0] * Q.cf[0];
 			Qsqr.cf[1] = Q.cf[0] * Q.cf[1] * 2;
 			Qsqr.cf[2] = Q.cf[1] * Q.cf[1];
 
-		/* (void) polyMul( &Qsqr, &Xsqr, &T1 ); inline expands to */
+		/* (void) rt_poly_mul( &Qsqr, &Xsqr, &T1 ); inline expands to */
 			C[ix].dgr = 4;
 			C[ix].cf[0] = Qsqr.cf[0] * Xsqr.cf[0];
 			C[ix].cf[1] = Qsqr.cf[0] * Xsqr.cf[1] +
@@ -1057,8 +1057,8 @@ struct application	*ap;
 					 Qsqr.cf[2] * Xsqr.cf[1];
 			C[ix].cf[4] = Qsqr.cf[2] * Xsqr.cf[2];
 
-		/* (void) polyMul( &Rsqr, &Ysqr, &T2 ); and */
-		/* (void) polyAdd( &T1, &T2, &sum ); inline expand to */
+		/* (void) rt_poly_mul( &Rsqr, &Ysqr, &T2 ); and */
+		/* (void) rt_poly_add( &T1, &T2, &sum ); inline expand to */
 			C[ix].cf[0] += Rsqr.cf[0] * Ysqr.cf[0];
 			C[ix].cf[1] += Rsqr.cf[0] * Ysqr.cf[1] +
 					 Rsqr.cf[1] * Ysqr.cf[0];
@@ -1069,8 +1069,8 @@ struct application	*ap;
 					 Rsqr.cf[2] * Ysqr.cf[1];
 			C[ix].cf[4] += Rsqr.cf[2] * Ysqr.cf[2];
 
-		/* (void) polyMul( &Rsqr, &Qsqr, &T3 ); and */
-		/* (void) polySub( &sum, &T3, &C ); inline expand to */
+		/* (void) rt_poly_mul( &Rsqr, &Qsqr, &T3 ); and */
+		/* (void) rt_poly_sub( &sum, &T3, &C ); inline expand to */
 			C[ix].cf[0] -= Rsqr.cf[0] * Qsqr.cf[0];
 			C[ix].cf[1] -= Rsqr.cf[0] * Qsqr.cf[1] +
 					 Rsqr.cf[1] * Qsqr.cf[0];
@@ -1108,7 +1108,7 @@ struct application	*ap;
 		register int nroots;
 
 		/*  The equation is 4th order, so we expect 0 to 4 roots */
-		nroots = polyRoots( &C[ix] , val );
+		nroots = rt_poly_roots( &C[ix] , val );
 
 		/*  Only real roots indicate an intersection in real space.
 		 *

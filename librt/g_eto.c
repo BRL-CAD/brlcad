@@ -430,9 +430,9 @@ struct seg		*seghead;
 	/*  It is known that the equation is 4th order.  Therefore,
 	 *  if the root finder returns other than 4 roots, error.
 	 */
-	if ( (i = polyRoots( &C, val )) != 4 ){
+	if ( (i = rt_poly_roots( &C, val )) != 4 ){
 		if( i != 0 )  {
-			rt_log("eto:  polyRoots() 4!=%d\n", i);
+			rt_log("eto:  rt_poly_roots() 4!=%d\n", i);
 			rt_pr_roots( stp->st_name, val, i );
 		}
 		return(0);		/* MISS */
