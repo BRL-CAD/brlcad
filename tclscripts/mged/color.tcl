@@ -27,27 +27,68 @@
 proc color_entry_build { top key var_name user_color_cmd width icolor } {
     frame $top.$key\F -relief sunken -bd 2
     entry $top.$key\E -relief flat -width $width -textvar $var_name
+    hoc_register_data $top.$key\E "Color"\
+	    { { summary "Enter a color specification. The color
+is specified using three integers (i.e. r g b)
+in the range 0 to 255. For example:
+
+\tblack\t\t0 0 0
+\twhite\t\t255 255 255
+\tred\t\t255 0 0
+\tgreen\t\t0 255 0
+\tblue\t\t0 0 255
+\tyellow\t\t255 255 0
+\tcyan\t\t0 255 255
+\tmagenta\t\t255 0 255
+
+Note - when entering colors directly,
+pressing \"Enter\" will update the color
+of the menubutton." } }
+
     menubutton $top.$key\MB -relief raised -bd 2\
 	    -menu $top.$key\MB.m -indicatoron 1
-    menu $top.$key\MB.m -tearoff 0
+    hoc_register_data $top.$key\MB "Color Menu"\
+	    { { summary "Pops up a menu of colors. Also included
+in the menu is an entry for a color tool." } }
+    menu $top.$key\MB.m -title "Color" -tearoff 0
     $top.$key\MB.m add command -label black\
 	    -command "set $var_name \"0 0 0\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+    hoc_register_menu_data "Color" black "Color - Black"\
+	    { { summary "Black is specified by \"0 0 0\"." } }
     $top.$key\MB.m add command -label white\
 	    -command "set $var_name \"255 255 255\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+    hoc_register_menu_data "Color" white "Color - White"\
+	    { { summary "White is specified by \"255 255 255\"." } }
     $top.$key\MB.m add command -label red\
 	    -command "set $var_name \"255 0 0\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+    hoc_register_menu_data "Color" red "Color - Red"\
+	    { { summary "Red is specified by \"255 0 0\"." } }
     $top.$key\MB.m add command -label green\
 	    -command "set $var_name \"0 255 0\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+    hoc_register_menu_data "Color" green "Color - Green"\
+	    { { summary "Green is specified by \"0 255 0\"." } }
     $top.$key\MB.m add command -label blue\
 	    -command "set $var_name \"0 0 255\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+    hoc_register_menu_data "Color" blue "Color - Blue"\
+	    { { summary "Blue is specified by \"0 0 255\"." } }
     $top.$key\MB.m add command -label yellow\
 	    -command "set $var_name \"255 255 0\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+    hoc_register_menu_data "Color" yellow "Color - Yellow"\
+	    { { summary "Yellow is specified by \"255 255 0\"." } }
     $top.$key\MB.m add command -label cyan\
 	    -command "set $var_name \"0 255 255\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+    hoc_register_menu_data "Color" cyan "Color - Cyan"\
+	    { { summary "Cyan is specified by \"0 255 255\"." } }
     $top.$key\MB.m add command -label magenta\
 	    -command "set $var_name \"255 0 255\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+    hoc_register_menu_data "Color" magenta "Color - Magenta"\
+	    { { summary "Magenta is specified by \"255 0 255\"." } }
     $top.$key\MB.m add separator
     $top.$key\MB.m add command -label "Color Tool..." -command $user_color_cmd
+    hoc_register_menu_data "Color" "Color Tool..." "Color Tool"\
+	    { { summary "The color tool allows the user to specify
+a color using either RGB or HSV. The resulting
+color is RGB." } }
 
     # initialize color
     catch [list uplevel #0 [list set $var_name $icolor]]
