@@ -10,7 +10,7 @@
 	fbfade fbframe fbfree fbgamma fbgrid fbhelp \
 	fblabel fbline fbpoint fbscanplot fbstretch fbzoom \
 	gif-fb gif2fb orle-fb pix-fb pixflip-fb \
-	pl-fb polar-fb pp-fb rle-fb spm-fb
+	pl-fb polar-fb pp-fb rle-fb spm-fb pixautosize
 
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -55,6 +55,9 @@ fbhelp:	fbhelp.o LIBFB
 
 fbgrid:		fbgrid.o LIBFB
 	CC LDFLAGS -o fbgrid fbgrid.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
+
+pixautosize:	pixautosize.o LIBFB
+	CC LDFLAGS -o pixautosize pixautosize.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 /* Old RLE Programs (Utah format Edition 2) */
 
