@@ -46,6 +46,7 @@ int hex_out;
 extern void grid_setup();
 extern void worker();
 /***** variables shared with worker() ******/
+int	nworkers;
 struct application ap;
 int	stereo = 0;	/* stereo viewing */
 vect_t left_eye_delta;
@@ -385,12 +386,23 @@ char *buf;
 	(void)free(buf);
 }
 
+/* 
+ *			P H _ L I N E S
+ *
+ *  Process scanlines from 'a' to 'b', inclusive, sending each back
+ *  as soon as it's done.
+ *
+ *  Don't use registers in this function.  At least on the Alliant,
+ *  register context is NOT preserved when exiting the parallel mode,
+ *  because the serial portion executes on some arbitrary processor,
+ *  not necessarily the one that serial execution started on.
+ */
 ph_lines(pc, buf)
-register struct pkg_comm *pc;
+struct pkg_comm *pc;
 char *buf;
 {
-	register int x,y;
-	int a,b;
+	auto int x,y;
+	auto int a,b;
 
 	if( !seen_start )  {
 		rt_log("ph_lines:  no start yet\n");
@@ -414,8 +426,10 @@ char *buf;
 		cur_pixel = y*npts + 0;
 		last_pixel = cur_pixel + npts - 1;
 #ifdef PARALLEL
+		nworkers = 0;
 #ifdef cray
 		/* Create any extra worker tasks */
+
 		for( x=0; x<npsw; x++ ) {
 			TSKSTART( &taskcontrol[x], worker );
 		}
@@ -430,14 +444,17 @@ char *buf;
 			asm("	subql		#1,d0");
 			asm("	cstart		d0");
 			asm("super_loop:");
-			asm("	cawait		cs1,#0");
 			worker();
-			asm("	cadvance	cs1");
 			asm("	crepeat		super_loop");
 		}
 #endif
+		x = 0;
+		while( nworkers > 0 )  x++;
+		if( x > 0 )  rt_log("y=%d: termination took %d extra loops\n", y, x);
 #else
-		/* Simple serial case */
+		/*
+		 * Simple serial case -- one CPU does all the work.
+		 */
 		worker();
 #endif
 
