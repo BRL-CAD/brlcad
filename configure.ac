@@ -292,10 +292,10 @@ AC_ARG_ENABLE(only-rtserver, AC_HELP_STRING(--enable-only-rtserver,
 )
 AC_MSG_RESULT($only_rts)
 if test "x$warn_only_both" != "xno" ; then
-	AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	AC_MSG_WARN([Requesting BOTH benchmark and librtserver "only"?])
 	AC_MSG_WARN([Building both benchmark and librtserver])
-	AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
+	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 fi
 
 
@@ -728,7 +728,7 @@ if test "x$use_doxygen" = "xyes" ; then
 	if test "x$DOXYGEN" = "x" ; then
 		BC_EXTRA_SEARCH_DIRS
 		BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
-		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_ERROR([*** Unable to find doxygen ***])
 	fi
 fi
@@ -752,7 +752,7 @@ AC_CHECK_LIB(ncurses, tputs, CURSES="-lncurses",
     )]
 )
 #AC_SEARCH_LIBS(initscr, ncurses curses termlib termcap,, 
-#	       AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+#	       AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 #	       AC_MSG_ERROR([*** Need curses! ***]) )
 #CURSES="${LIBS}"
 AC_SUBST(CURSES)
@@ -925,17 +925,17 @@ if test "x$search_for_jni_h_more" != "xno" ; then
 
 	if test "x$found_jni_h" != "xno" ; then
 		with_java=yes
-		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_WARN([jni.h was found by hunting through the JavaVM framework])
 		AC_MSG_WARN([This means you probably need to install the latest Java SDK])
 		AC_MSG_WARN([Build will try to use what it found, but you should update])
 		AC_MSG_NOTICE([See http://developer.apple.com/java/ for updates])
-		AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	else
 		CPPFLAGS="$pre_cppflags"
-		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_WARN([Code dependant upon java and jni.h will not be built])
-		AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	fi
 fi
 
@@ -1258,7 +1258,7 @@ AC_C_VOLATILE
 AC_C_INLINE
 AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), 
 	       AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique),
-	       AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+	       AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	       AC_MSG_ERROR([*** Don't know the endian of this machine! ***]) )
 
 dnl AC_C_PROTOTYPES
@@ -1279,7 +1279,7 @@ int main(){exit(0);}
 	[	AC_MSG_RESULT(yes) ],
 	[
 		AC_MSG_RESULT(no)
-		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_ERROR([*** compiler cannot create working executables, check config.log ***])
 	]
 )
@@ -1382,7 +1382,7 @@ AC_CHECK_FUNCS(socket, SOCKET="" ,
 	       [AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", 
 	       		BC_EXTRA_SEARCH_DIRS
 			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
-			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_ERROR([*** No internet socket found ***]))
 	       ])
 AC_SUBST(SOCKET)
@@ -1405,7 +1405,7 @@ if test "x$only_rts" != "xno" ; then
 		AC_MSG_RESULT(no)
 		BC_EXTRA_SEARCH_DIRS
 		BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
-		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	fi
@@ -1457,7 +1457,7 @@ else
 		if test "x$png_works" != "xyes" ; then
 			BC_EXTRA_SEARCH_DIRS
 			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
-			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-png-build])
 			AC_MSG_ERROR([*** Building libpng was disabled, yet no system png library was found ***])
 		fi
@@ -1508,7 +1508,7 @@ else
 		if test "x$regex_works" != "xyes" ; then
 			BC_EXTRA_SEARCH_DIRS
 			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
-			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-regex-build])
 			AC_MSG_ERROR([*** Building libregex was disabled, yet no system regex was found ***])
 		fi
@@ -1553,7 +1553,7 @@ else
 		if test "x$zlib_works" != "xyes" ; then
 			BC_EXTRA_SEARCH_DIRS
 			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
-			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-zlib-build])
 			AC_MSG_ERROR([*** Building libz was disabled, yet no system zlib compression was found ***])
 		fi
@@ -1584,7 +1584,7 @@ dnl figure out whether we are building 64-bit
 build_brlcad_64bit="no"
 if test "x$build_64bit" = "xyes" ; then
 	if test "x$pointer_size" != "x8" ; then
-		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_NOTICE([Try removing --enable-64bit-build or modifying the CFLAGS/LDFLAGS])
 		AC_MSG_ERROR([*** Building 64-bit was requested, yet the build seems to be non-64-bit ***])
 	fi
@@ -1592,7 +1592,7 @@ if test "x$build_64bit" = "xyes" ; then
 else
 	if test "x$build_64bit" = "xno" ; then
 		if test "x$pointer_size" = "x8" ; then
-			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try removing --disable-64bit-build or modifying the CFLAGS/LDFLAGS])
 			AC_MSG_ERROR([*** Building non-64-bit was requested, yet the build seems to be 64-bit ***])
 		fi
@@ -1660,14 +1660,14 @@ dnl      capability to output debug messages and commands that take a debug-leve
 dnl      will not output as expected.  see h/raytrace.h for the implementation details.
 
 if test "x$build_runtime_debug" = "xno" ; then
-	AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	AC_MSG_WARN([While disabling run-time debugging should increase])
 	AC_MSG_WARN([performance, it will likewise remove several])
 	AC_MSG_WARN([data-protection safeguards that are in place to])
 	AC_MSG_WARN([minimize the possibility of corrupted data files])
 	AC_MSG_WARN([in the inevitable event of a user encountering a bug.])
 	AC_MSG_WARN([You have been warned.  Proceed at your own risk.])
-	AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
+	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	AC_DEFINE(NO_BOMBING_MACROS, 1, [Define to not do anything for macros that only bomb on a fatal error])
 	AC_DEFINE(NO_MAGIC_CHECKING, 1, [Define to not perform magic number checking])
 	AC_DEFINE(NO_BADRAY_CHECKING, 1, [Define to not check for divide by zero during ray shots])
