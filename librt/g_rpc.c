@@ -215,7 +215,7 @@ struct rt_i		*rtip;
 	RT_RPC_CK_MAGIC(xip);
 
 	/* compute |B| |H| */
-	mag_b = rpc->rpc_b = sqrt( magsq_b = MAGSQ( xip->rpc_B ) );
+	mag_b = sqrt( magsq_b = MAGSQ( xip->rpc_B ) );
 	mag_h = sqrt( magsq_h = MAGSQ( xip->rpc_H ) );
 	mag_r = xip->rpc_r;
 	magsq_r = mag_r * mag_r;
@@ -240,6 +240,7 @@ struct rt_i		*rtip;
 
 	GETSTRUCT( rpc, rpc_specific );
 	stp->st_specific = (genptr_t)rpc;
+	rpc->rpc_b = mag_b;
 
 	/* make unit vectors in B, H, and BxH directions */
 	VMOVE(    rpc->rpc_Hunit, xip->rpc_H );
