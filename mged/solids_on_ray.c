@@ -478,6 +478,41 @@ struct seg		*finished_segs;
 }
 
 /*
+ *			R P T _ H I T S _ M I K E
+ *
+ *  Each partition represents a segment, i.e. a single solid.
+ *  Boolean operations have not been performed.
+ *  The partition list is sorted by ascending inhit distance.
+ *  This code does not attempt to eliminate duplicate segs,
+ *  e.g. from piercing the torus twice.
+ */
+static int
+rpt_hits_mike(ap, PartHeadp, segp)
+struct application	*ap;
+struct partition	*PartHeadp;
+struct seg		*segp;
+{
+	register struct partition	*pp;
+	int		len;
+	char		**list;
+	int		i;
+
+	len = rt_partition_len(PartHeadp) + 2;
+	list = (char **)bu_calloc( len, sizeof(char *), "hit list[]");
+
+	i = 0;
+	for( pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+		RT_CK_PT(pp);
+		list[i++] = db_path_to_string( &(pp->pt_inseg->seg_stp->st_path) );
+	}
+	list[i++] = NULL;
+	if( i > len )  bu_bomb("rpt_hits_mike: array overflow\n");
+
+	ap->a_uptr = (genptr_t)list;
+	return len;
+}
+
+/*
  *			R P T _ M I S S
  *
  *		Miss handler for use by rt_shootray().
@@ -486,12 +521,10 @@ struct seg		*finished_segs;
  */
 
 static int
-rpt_miss(ap, ph)
+rpt_miss(ap)
 struct application	*ap;
-struct partition	*ph;
 {
-    ap -> a_uptr = bu_malloc(sizeof(char *), "names of solids on ray");
-    *((char **) (ap -> a_uptr)) = 0;
+	ap->a_uptr = NULL;
 
     return (0);
 }
@@ -527,71 +560,32 @@ int		full_path;
     struct bu_list	sol_list;
     struct sol_name_dist	*sol;
 
-    if (argc <= 0) {
-	char **ptr;
-	ptr = (char **)bu_malloc(sizeof(char *), "empty solid list");
-	*ptr = 0;
-	return ptr;
-    }
+	if (argc <= 0) {
+		Tcl_AppendResult( interp, "skewer_solids argc<=0\n", (char *)NULL );
+		return ((char **) 0);
+	}
 
-    {
-	char			**result;
-	register struct solid	*sp;
-	struct bu_vls		vls;
-	register int		nm_solids;
-	register int		i;
+	/* .inmem rt_gettrees .rt -i -u [who] */
+	rtip = rt_new_rti( dbip );
+	rtip->useair = 1;
+	rtip->rti_dont_instance = 1;	/* full paths to solids, too. */
+	if (rt_gettrees(rtip, argc, argv, 1) == -1) {
+		Tcl_AppendResult( interp, "rt_gettrees() failed\n", (char *)NULL );
+		rt_clean(rtip);
+		bu_free((genptr_t)rtip, "struct rt_i");
+		return ((char **) 0);
+	}
 
-	/*
-	 *	Count the solids presently in view
-	 */
-	nm_solids = 0;
-	FOR_ALL_SOLIDS (sp, &HeadSolid.l)
-	    if (sp -> s_flag == UP)
-		++nm_solids;
-
-	/*
-	 *	Now go back and record all their names
-	 */
-	result = (char **) bu_malloc((nm_solids + 1) * sizeof(char *),
-			  "names of solids in view");
-	bu_vls_init(&vls);
-	i = 0;
-	FOR_ALL_SOLIDS (sp, &HeadSolid.l)
-	    if (sp -> s_flag == UP)
-	    {
-		build_path_name_of_solid(&vls, sp);
-		result[i++] = bu_vls_strdup(&vls);
-	    }
-	result[i] = 0;
-	/*
-	 *	XXX	The calling routine is responsible to free
-	 *		the result!
-	 */
-	return (result);
-    }
-#if 0
-    if ((rtip = rt_dirbuild(dbip -> dbi_filename, (char *) 0, 0)) == RTI_NULL)
-    {
-      Tcl_AppendResult(interp, "Cannot build directory for file '",
-		       dbip -> dbi_filename, "'\n", (char *)NULL);
-      return ((char **) 0);
-    }
-    rtip -> useair = 1;
-    /*
-     *	XXX	I've hardwired in here to use a single CPU.
-     *		Should that be bu_avail_cpus()?
-     */
-    if (rt_gettrees(rtip, argc, argv, 1) == -1) {
-	return ((char **) 0);
-    }
-    rt_prep(rtip);
+	/* .rt prep 1 */
+	rtip->rti_hasty_prep = 1;
+	rt_prep(rtip);
 
     BU_LIST_INIT(&sol_list);
 
     /*
      *	Initialize the application
      */
-    ap.a_hit = rpt_solids;
+    ap.a_hit = rpt_hits_mike;
     ap.a_miss = rpt_miss;
     ap.a_resource = RESOURCE_NULL;
     ap.a_overlap = no_op;
@@ -600,11 +594,14 @@ int		full_path;
     ap.a_rt_i = rtip;
     ap.a_zero1 = ap.a_zero2 = 0;
     ap.a_purpose = "skewer_solids()";
+    ap.a_no_booleans = 1;		/* full paths, no booleans */
     VMOVE(ap.a_ray.r_pt, ray_orig);
     VMOVE(ap.a_ray.r_dir, ray_dir);
 
     (void) rt_shootray(&ap);
 
+	rt_clean(rtip);
+	bu_free((genptr_t)rtip, "struct rt_i");
+
     return ((char **) ap.a_uptr);
-#endif
 }
