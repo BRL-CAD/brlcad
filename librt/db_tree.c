@@ -906,6 +906,7 @@ union tree	*tp;
 				"combined region state");
 			cts->cts_s = ots->cts_s;	/* struct copy */
 			db_dup_full_path( &(cts->cts_p), &(ots->cts_p) );
+			new->tr_a.tu_stp = (struct soltab *)cts;
 		}
 		return(new);
 
@@ -1325,7 +1326,7 @@ db_walk_dispatcher()
 		mine = db_reg_current++;
 		RES_RELEASE( &rt_g.res_worker );
 
-		if( mine > db_reg_count )
+		if( mine >= db_reg_count )
 			break;
 
 rt_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
