@@ -1398,9 +1398,9 @@ Directory	*dirp;
 char *
 emalloc( size )
 int	size;
-	{	extern char	*malloc();
+	{
 		char		*ptr;
-	if( (ptr = malloc( (unsigned) size )) == NULL )
+	if( (ptr = (char *)malloc( (unsigned) size )) == NULL )
 		{
 		(void) fprintf( stderr, "Malloc() failed!\n" );
 		exit( 1 );
