@@ -23,14 +23,14 @@
  *  Include Sequencing -
  *	#include <stdio.h>
  *	#include <math.h>
- *	#include "machine.h"	/* For fastf_t definition on this machine *_/
- *	#include "vmath.h"	/* For vect_t definition *_/
- *	#include "rtlist.h"	/* OPTIONAL, auto-included by raytrace.h *_/
- *	#include "rtstring.h"	/* OPTIONAL, auto-included by raytrace.h *_/
- *	#include "db.h"		/* OPTIONAL, precedes raytrace.h when used *_/
- *	#include "nmg.h"	/* OPTIONAL, precedes raytrace.h when used *_/
+ *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
+ *	#include "vmath.h"	/_* For vect_t definition *_/
+ *	#include "rtlist.h"	/_* OPTIONAL, auto-included by raytrace.h *_/
+ *	#include "rtstring.h"	/_* OPTIONAL, auto-included by raytrace.h *_/
+ *	#include "db.h"		/_* OPTIONAL, precedes raytrace.h when used *_/
+ *	#include "nmg.h"	/_* OPTIONAL, precedes raytrace.h when used *_/
  *	#include "raytrace.h"
- *	#include "nurb.h"	/* OPTIONAL, follows raytrace.h when used *_/
+ *	#include "nurb.h"	/_* OPTIONAL, follows raytrace.h when used *_/
  *
  *  Libraries Used -
  *	LIBRT LIBRT_LIBES -lm -lc
@@ -1004,7 +1004,7 @@ extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
  *  because of the limitations placed on compile-time initializers.
  */
 #if __STDC__ && !defined(ipsc860)
-#	define offsetofarray(_t, _m)	offsetof(_t, _m)
+#	define offsetofarray(_t, _m)	offsetof(_t, _m[0])
 #else
 #	if !defined(offsetof)
 #		define offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
@@ -1981,6 +1981,8 @@ RT_EXTERN(void			nmg_pr_vu, (CONST struct vertexuse *vu, char *h) );
 RT_EXTERN(void			nmg_pr_vu_briefly, (CONST struct vertexuse *vu, char *h) );
 RT_EXTERN(void			nmg_euprint, (CONST char *str, CONST struct edgeuse *eu) );
 RT_EXTERN(void			nmg_rebound, (struct model *m) );
+RT_EXTERN(struct faceuse	*nmg_find_fu_of_vu, (struct vertexuse *vu) );
+RT_EXTERN(struct loopuse	*nmg_find_lu_of_vu, (struct vertexuse *vu) );
 RT_EXTERN(void			nmg_count_shell_kids, (CONST struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
 
 /* nmg_manif.c */
