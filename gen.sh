@@ -144,12 +144,12 @@ export BRLCAD_ROOT
 
 CAKE=../cake.$MACHINE/cake
 
-if [ ! -f Cakefile.defs ] ; then
-	You must run this from root of brlcad source tree.
+if [ ! -f Cakefile.defs -a $1 != dist ] ; then
+	echo "You must run this from root of brlcad source tree."
 	exit -1
 fi
-DISTDIR=`pwd`/dist
-ARCHDIR=`pwd`/arch
+DISTDIR=dist
+ARCHDIR=arch
 ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 
 # Every shell script to be distributed must be listed here.
@@ -250,7 +250,7 @@ esac
 case "${MACHINE}" in
 	li|fbsd)
 		BDIRS=`echo ${BDIRS} | \
-			sed -e  's/libtcl//' -e 's/libtk//' -e 's/libz//'`
+			sed -e  's/libtcl//' -e 's/libtk//' -e 's/libz//' -e 's/libpng//'`
 		;;
 	m4i65)
 		# Be sure to look in /usr/lib64, not /usr/lib!
@@ -504,20 +504,61 @@ checkin)
 
 #
 # Steps in creating a distribution:
-#	"make rcs-lock"	to make sure everything is checked in & locked already
-#	"make checkin"	to mark the RCS archives as released.  Unlock.
-#	"make inst-dist" to copy source tree over to /dist
-#	"make dist"	to polish up distribution tree in /dist
-#	"make arch"	to create TAR archive in /arch
+#	Make sure the CVS repository is up-to-date and in the state for distribution
+#	"cvs rtag REL_TAG brlcad" to mark the CVS archives with the release version
+#	"gen.sh dist" to create the distribution in "dist" and the TAR archive in "arch"
+#	Note that "gen.sh dist -r REL_TAG" may be used later to recreate the same distribution
+#	Any additional arguments to "gen.sh" after the "dist" will be passed to "cvs"
 #
 dist)
-	if test `grep '^#define[ 	]*NFS' Cakefile.defs|wc -l` -eq 0
+#	if this is a tty, get the encryption key
+	if tty -s
+	then
+		DO_ENCRYPTION=1
+		echo "Enter encryption key:"
+		read KEY
+		echo "encryption key is /$KEY/"
+	else
+		DO_ENCRYPTION=0
+	fi
+
+#	create fresh distribution and archive directories
+	rm -rf ${DISTDIR}
+	mkdir ${DISTDIR}
+	rm -rf ${ARCHDIR}
+	mkdir ${ARCHDIR}
+
+#	note that date and time
+	date > ${DISTDIR}/Date_of_distribution
+
+#	create the args for the "cvs export"
+	shift
+	if test $# -eq 0
+	then
+		CVS_ARGS="-D now"
+	else
+		CVS_ARGS=$*
+	fi
+
+#	get the distribution
+	cvs export -d ${DISTDIR} ${CVS_ARGS} brlcad
+
+#	fix "gen.sh" to set NFS=0
+	sed -e 's/^NFS=1/NFS=0/' < ${DISTDIR}/gen.sh > ${DISTDIR}/tmp
+	mv ${DISTDIR}/tmp ${DISTDIR}/gen.sh
+
+#	fix "Cakefile.defs" to production values
+	sed -e '/^#define[ 	]*NFS/d' < ${DISTDIR}/Cakefile.defs > ${DISTDIR}/tmp
+	sed -e '/PRODUCTION/s/0/1/' < ${DISTDIR}/tmp > ${DISTDIR}/Cakefile.defs
+	rm -f ${DISTDIR}/tmp
+
+	if test `grep '^#define[ 	]*NFS' ${DISTDIR}/Cakefile.defs|wc -l` -eq 0
 	then 	echo "Shipping non-NFS version of Cakefile.defs (this is good)";
 	else
 		echo "ERROR: Update Cakefile.defs for non-NFS before proceeding!"
 		exit 1;
 	fi
-	if test `grep "^NFS=1" gen.sh|wc -l` -eq 0
+	if test `grep "^NFS=1" ${DISTDIR}/gen.sh|wc -l` -eq 0
 	then 	echo "Shipping non-NFS version of gen.sh (this is good)";
 	else
 		echo "ERROR: Update gen.sh for non-NFS before proceeding!"
@@ -527,104 +568,100 @@ dist)
 	echo "I hope you have made Cakefile.defs tidy!"
 	echo "(Check for PRODUCTION values properly set)"
 	echo
-	grep PRODUCTION Cakefile.defs
+	grep PRODUCTION ${DISTDIR}/Cakefile.defs
 	echo
 
-	echo "Copying CDIRS and top level files"
-	for i in ${CDIRS} ${TDIRS}
-	do
-		rm -fr ${DISTDIR}/$i
-		mkdir -p ${DISTDIR}/$i
-		# Get everything (recursively) except the RCS & CVS subdirs
-		# XXX Note that this rule will also miss README files
-		cp -r $i/[!CR]* ${DISTDIR}/$i/.
-	done
-	for i in ${TOP_FILES}
-	do
-		rm -f ${DISTDIR}/$i
-	done
-	cp ${TOP_FILES} ${DISTDIR}/.
-
 	echo "Formatting the INSTALL.TXT file"
-	rm -f ${DISTDIR}/INSTALL.TXT
-	tbl doc/install.doc | nroff -ms | col -b -x  > ${DISTDIR}/INSTALL.TXT
+	rm -f ${DISTDIR}/INSTALL.ps
+	gtbl ${DISTDIR}/doc/install.doc | groff  > ${DISTDIR}/INSTALL.ps
 
 	echo "Preparing the 'bench' directory"
-	(cd bench; cake clobber; cake install)
+	(cd ${DISTDIR}/bench; cake clobber; cake install)
 	echo "End of BRL-CAD Release $RELEASE archive, `date`" > ${DISTDIR}/zzzEND
-	cd ${DISTDIR}; du -a > Contents
-	;;
+	(cd ${DISTDIR}; du -a > Contents)
 
-# Use as final step of making a distribution -- write the archive
-arch)
-	mkdir ${ARCHDIR}
-	cd ${DISTDIR}; tar cfv ${ARCHIVE} *
+#	making archive
+	cd ${DISTDIR}; tar cfv ../${ARCHIVE} *
 	# $4 will be file size in bytes (BSD machine)
 	# $5 will be file size in bytes (SYSV machine)
 	# pad to 200K byte boundary for SGI cartridge tapes.
-	set -- `ls -l ${ARCHIVE}`
+	set -- `ls -l ../${ARCHIVE}`
 	PADBYTES=`echo "204800 $5 204800 %-p" | dc`
 	if test ${PADBYTES} -lt 204800
 	then
-		gencolor -r${PADBYTES} 0 >> ${ARCHIVE}
+		gencolor -r${PADBYTES} 0 >> ../${ARCHIVE}
 	fi
-	chmod 444 ${ARCHIVE}
+	chmod 444 ../${ARCHIVE}
 	echo "${ARCHIVE} created"
 
 	# The FTP images:
-	FTP_ARCHIVE=$ARCHDIR/cad${RELEASE}.tar
-	echo "Enter encryption key:"
-	read KEY
-	echo "encryption key is /$KEY/"
+	FTP_ARCHIVE=../${ARCHDIR}/cad${RELEASE}.tar
 	EXCLUDE=/tmp/cad-exclude
 	rm -f ${EXCLUDE}
 	echo 'vfont/*' >> ${EXCLUDE}
 	echo 'doc/*' >> ${EXCLUDE}
 	echo 'html/*' >> ${EXCLUDE}
 	echo 'pix/*' >> ${EXCLUDE}
+	echo 'pro-engineer/*' >> ${EXCLUDE}
+	echo 'libtcl/*' >> ${EXCLUDE}
+	echo 'libtk/*' >> ${EXCLUDE}
 
-	/usr/gnu/bin/tar cfv - Copy* README doc html papers \
+	/usr/gnu/bin/tar cfv - Copy* README doc html \
 	    zzzEND |\
-		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-a.gz
+		gzip -9 > ${FTP_ARCHIVE}-a.gz
 	chmod 444 ${FTP_ARCHIVE}-a.gz
 	echo "${FTP_ARCHIVE}-a.gz created (doc)"
 
 	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} [A-Z]* [a-k]* zzzEND |\
-		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-b.gz
+		gzip -9 > ${FTP_ARCHIVE}-b.gz
 	chmod 444 ${FTP_ARCHIVE}-b.gz
 	echo "${FTP_ARCHIVE}-b.gz created (core 1)"
 
-	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [l]* zzzEND |\
-		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-c.gz
+	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README l[a-g]* lia* lib[a-s]* zzzEND |\
+		gzip -9 > ${FTP_ARCHIVE}-c.gz
 	chmod 444 ${FTP_ARCHIVE}-c.gz
 	echo "${FTP_ARCHIVE}-c.gz created (core 2)"
 
-	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [m-t]* zzzEND |\
-		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-d.gz
+	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README lib[t-z]* li[c-z]* l[j-z]* [m-t]* zzzEND |\
+		gzip -9 > ${FTP_ARCHIVE}-d.gz
 	chmod 444 ${FTP_ARCHIVE}-d.gz
 	echo "${FTP_ARCHIVE}-d.gz created (core 3)"
 
-	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [u-z]* zzzEND |\
-		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-e.gz
+	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [m-t]* [u-z]* zzzEND |\
+		gzip -9 > ${FTP_ARCHIVE}-e.gz
 	chmod 444 ${FTP_ARCHIVE}-e.gz
 	echo "${FTP_ARCHIVE}-e.gz created (core 4)"
 
 	/usr/gnu/bin/tar cfv - Copy* README pix zzzEND |\
-		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-f.gz
+		gzip -9 > ${FTP_ARCHIVE}-f.gz
 	chmod 444 ${FTP_ARCHIVE}-f.gz
 	echo "${FTP_ARCHIVE}-f.gz created (pix)"
 
 	/usr/gnu/bin/tar cfv - Copy* README vfont zzzEND |\
-		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-g.gz
+		gzip -9 > ${FTP_ARCHIVE}-g.gz
 	chmod 444 ${FTP_ARCHIVE}-g.gz
 	echo "${FTP_ARCHIVE}-g.gz created (vfont)"
 
-##	/usr/gnu/bin/tar cfv - Copy* README contributed zzzEND |\
-##		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-h.gz
-##	chmod 444 ${FTP_ARCHIVE}-h.gz
-##	echo "${FTP_ARCHIVE}-h.gz created (contrib)"
+	/usr/gnu/bin/tar cfv - Copy* README pro-engineer zzzEND |\
+		gzip -9 > ${FTP_ARCHIVE}-h.gz
+	chmod 444 ${FTP_ARCHIVE}-h.gz
+	echo "${FTP_ARCHIVE}-h.gz created (pro-engineer)"
+
+	/usr/gnu/bin/tar cfv - Copy* README libtcl libtk zzzEND |\
+		gzip -9 > ${FTP_ARCHIVE}-i.gz
+	chmod 444 ${FTP_ARCHIVE}-i.gz
+	echo "${FTP_ARCHIVE}-i.gz created (libtcl libtk)"
 
 	rm -f ${EXCLUDE}
+	if test ${DO_ENCRYPTION} -eq 1
+	then
+		for FILE in ${FTP_ARCHIVE}-*.gz ; do
+			crypt ${KEY} < ${FILE} > ${FILE}.crypt
+			rm -f ${FILE}
+		done
+	else
+		echo "not encrypted" > ../${ARCHDIR}/NOT_ENCRYPTED
+	fi	
 	;;
 
 # on a FreeBSD system, create the install package
