@@ -363,7 +363,7 @@ int			in;	/* 1 = inbound edge, 0 = outbound edge */
 		}
 	}
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
-		rt_log("ang=%g (%e), vec=(%g,%g,%g)\n", ang*rt_radtodeg, ang*rt_radtodeg, V3ARGS(vec) );
+		rt_log("  final ang=%g (%e), vec=(%g,%g,%g)\n", ang*rt_radtodeg, ang*rt_radtodeg, V3ARGS(vec) );
 	return ang;
 }
 
@@ -770,9 +770,10 @@ got_loop:
 		}
 		rt_log("Vertexuse table:\n");
 		for( i=0; i < nvu; i++ )  {
-			rt_log("  vu=x%x, loop_index=%d, in_vu_angle=%g, min_vu_dot=%g, seq=%d\n",
+			rt_log("  vu=x%x, loop_ind=%d, in ang=%g, out ang=%g, min_vu_dot=%g, seq=%d\n",
 				vs[i].vu, vs[i].loop_index,
-				vs[i].in_vu_angle, vs[i].min_vu_dot, vs[i].seq );
+				vs[i].in_vu_angle, vs[i].out_vu_angle,
+				vs[i].min_vu_dot, vs[i].seq );
 		}
 	}
 #endif
@@ -788,9 +789,10 @@ got_loop:
 	{
 		rt_log("Vertexuse table (after sort):\n");
 		for( i=0; i < nvu; i++ )  {
-			rt_log("  vu=x%x, loop_index=%d, in_vu_angle=%g, min_vu_dot=%g, seq=%d\n",
+			rt_log("  vu=x%x, loop_ind=%d, in ang=%g, out ang=%g, min_vu_dot=%g, seq=%d\n",
 				vs[i].vu, vs[i].loop_index,
-				vs[i].in_vu_angle, vs[i].min_vu_dot, vs[i].seq );
+				vs[i].in_vu_angle, vs[i].out_vu_angle,
+				vs[i].min_vu_dot, vs[i].seq );
 		}
 	}
 
