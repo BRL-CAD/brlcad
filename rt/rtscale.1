@@ -6,7 +6,7 @@ rtscale \(em supplements \fBrthide\fR output by plotting a scale to indicate
 drawing size in arbitrary units.
 .SH SYNOPSIS
 .B rtscale
-width units intervals file.log > scale.pl
+width units intervals file.log [optional string] > scale.pl
 .SH DESCRIPTION
 .I Rtscale
 supplements the use of \fBrthide\fR by generating a UNIX-Plot of a scale that
@@ -51,7 +51,10 @@ string may be given to identify the view or the model:
 	\fIrtscale 30 mm 10 rt.log "UH-60 a90 e0" > scale.pl\fR
 .fi
 
-This plot file is now concatenated
+Note that a descriptive string longer than 28 characters will be cut 
+off by \fBpl-fb\fR.
+.PP
+The plot file is now concatenated
 with the plot file of the image to scale needs to be put on.  The order in
 which they are concatenated is important: the scale is always concatenated
 over top of the model plot:
