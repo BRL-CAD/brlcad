@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern void	(*nmg_plot_anim_upcall)();
 extern void	(*nmg_vlblock_anim_upcall)();
+extern void	(*nmg_mged_debug_display_hack)();
 
 int	no_memory;	/* flag indicating memory for drawing is used up */
 long	nvectors;	/* number of vectors drawn so far */
@@ -185,6 +186,13 @@ int		copy;
 			close(fd);
 		}
 	}
+}
+static void
+hack_for_lee()
+{
+	event_check( 1 );	/* Take any device events */
+
+	refresh();		/* Force screen update */
 }
 
 /*
@@ -569,6 +577,7 @@ int	kind;
 	/* Establish upcall interfaces for use by bottom of NMG library */
 	nmg_plot_anim_upcall = mged_plot_anim_upcall_handler;
 	nmg_vlblock_anim_upcall = mged_vlblock_anim_upcall_handler;
+	nmg_mged_debug_display_hack = hack_for_lee;
 
 	switch( kind )  {
 	default:
