@@ -430,10 +430,10 @@ char *p_eto[] = {
 	"Enter X, Y, Z, of normal vector: ",
 	"Enter Y: ",
 	"Enter Z: ",
+	"Enter radius of revolution, r: ",
 	"Enter X, Y, Z, of vector C: ",
 	"Enter Y: ",
 	"Enter Z: ",
-	"Enter radius of revolution, r: ",
 	"Enter magnitude of elliptical semi-minor axis, d: "
 };
 
@@ -2112,9 +2112,9 @@ struct rt_db_internal	*intern;
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
 		eip->eto_V[i] = atof(cmd_argvs[3+i]) * local2base;
 		eip->eto_N[i] = atof(cmd_argvs[6+i]) * local2base;
-		eip->eto_C[i] = atof(cmd_argvs[9+i]) * local2base;
+		eip->eto_C[i] = atof(cmd_argvs[10+i]) * local2base;
 	}
-	eip->eto_r = atof(cmd_argvs[12]) * local2base;
+	eip->eto_r = atof(cmd_argvs[9]) * local2base;
 	eip->eto_rd = atof(cmd_argvs[13]) * local2base;
 	
 	if (MAGNITUDE(eip->eto_N) < RT_LEN_TOL
