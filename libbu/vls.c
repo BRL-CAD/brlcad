@@ -29,9 +29,11 @@ static char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #if defined(HAVE_STDARG_H)
+/* ANSI C */
 # include <stdarg.h>
 #endif
 #if !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
+/* VARARGS */
 # include <varargs.h>
 #endif
 

@@ -47,6 +47,10 @@ static char RCSlog[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "bu.h"
 
+#if defined(HAVE_VARARGS_H) || defined(HAVE_STDARG_H)
+BU_EXTERN(void	bu_vls_vprintf, (struct bu_vls *vls, CONST char *fmt, va_list ap));
+#endif
+
 static int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
 /*
  *			B U _ L O G _ I N D E N T _ D E L T A
