@@ -81,7 +81,8 @@ proc icreate args {
     label $w.t.l.oper     -text "Operation"
     label $w.t.l.type     -text "Prototype"
     label $w.t.l.comb     -text "Comb to add to"
-    label $w.t.l.ref      -text "Reference path"
+    label $w.t.l.ref      -text "Reference path" -relief raised -bd 1
+    bind $w.t.l.ref <1> "ic_reflist $w"
 
     pack $w.t.l.format $w.t.l.indexvar $w.t.l.index $w.t.l.oper $w.t.l.type \
 	    $w.t.l.comb $w.t.l.ref -side top -fill y -expand yes -anchor w
@@ -121,20 +122,12 @@ proc icreate args {
     # Bottom contains two frames: left and right, which each contain two
     # buttons
 
-    frame $w.b.l
-    frame $w.b.r
+    button $w.b.quit   -text "Quit"   -command "ic_quit $w"
+    button $w.b.create -text "Create" -command "ic_create $w"
+    pack $w.b.quit $w.b.create -side left -fill x -expand yes
 
-    pack $w.b.l $w.b.r -side left -fill x -expand yes
-
-    button $w.b.l.quit   -text "Quit"   -command "ic_quit $w"
-    button $w.b.l.create -text "Create" -command "ic_create $w"
-
-    pack $w.b.l.quit $w.b.l.create -side top -fill x -expand yes
-
-    button $w.b.r.ref    -text "Solids" -command "ic_reflist $w"
-    button $w.b.r.accept -text "Accept" -state disabled -command "ic_accept $w"
-
-    pack $w.b.r.ref $w.b.r.accept -side top -fill x -expand yes
+    button $w.accept -text "Accept" -state disabled -command "ic_accept $w"
+    pack $w.accept -side top -fill x -expand yes
 }
 
 #=============================================================================
@@ -156,8 +149,8 @@ proc ic_newvar { w } {
 # ic_accept
 
 proc ic_accept { w } {
-    $w.b.r.accept configure -state disabled
-    $w.b.l.create configure -state normal
+    $w.accept configure -state disabled
+    $w.b.create configure -state normal
     press accept
 }
 
@@ -202,8 +195,8 @@ proc ic_create { w } {
     oed $ic($w,comb) $name$ic($w,ref)
     press oxy
 
-    $w.b.r.accept configure -state normal
-    $w.b.l.create configure -state disabled
+    $w.accept configure -state normal
+    $w.b.create configure -state disabled
 }
 
 # ic_reflist
@@ -213,6 +206,11 @@ proc ic_reflist { w } {
     global ic
 
     catch { destroy $w.ref }
+    if {[llength $ic($w,type)]==0} then {
+	error "Please enter a prototype first."
+	return
+    }
+    
     toplevel $w.ref
     wm title $w.ref "Reference solid list"
 

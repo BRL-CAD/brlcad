@@ -201,9 +201,13 @@ proc solc_list { w } {
 	$w.slist.l insert end $soltype
     }
     pack $w.slist.descr $w.slist.l $w.slist.accept -side top
-    bind $w.slist.l <ButtonRelease> "set solc($w,descr) \
-	    \$solc(descr_\[selection get\])"
+    set new_descr "catch \{ set solc($w,descr) \
+	    \$solc(descr_\[selection get\]) \}"
+
+    bind $w.slist.l <ButtonRelease> $new_descr
     bind $w.slist.descr <1> $doit
+    bind $w.slist.l <2> "tkListboxBeginSelect \%W \[\%W index \@\%x,\%y\] ; \
+	    $new_descr"
     bind $w.slist <Return> $doit
 }
 
@@ -233,7 +237,6 @@ proc solc_accept { w } {
 proc solc_quit { w } {
     global solc
     global $solc($w,indexvar)
-    uplevel #0
 
     set solc(default_indexvar) $solc($w,indexvar)
     set solc(default_type) $solc($w,type)

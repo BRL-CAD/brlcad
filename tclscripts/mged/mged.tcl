@@ -1,783 +1,650 @@
-#	T M G E D . T C L
+#			M G E D . T C L
 #
-#	Tcl/Tk GUI (graphical user interface) for mged-tcl.
+# Author -
+#	Glenn Durfee
 #
-#	This implementation makes extensive use of the Tk toolkit.
-#	It also requires special hooks in mged's cmd.c, which are compiled in
-#		when the -DMGED_TCL option is present.
+# Source -
+#	The U. S. Army Ballistic Research Laboratory
+#	Aberdeen Proving Ground, Maryland  21005
+#  
+# Distribution Notice -
+#	Re-distribution of this software is restricted, as described in
+#	your "Statement of Terms and Conditions for the Release of
+#	The BRL-CAD Package" agreement.
 #
-#	Author -
-#		Glenn Durfee
+# Copyright Notice -
+#	This software is Copyright (C) 1995 by the United States Army
+#	in all countries except the USA.  All rights reserved.
 #
-#	Source -
-#		The U. S. Army Ballistic Research Laboratory
-#		Aberdeen Proving Ground, Maryland 21005
-#
-#	Copyright Notice -
-#		This software is Copyright (C) 1995 by the United States Army.
-#		All rights reserved.
-
-set RCSid { "@(#)$Header$ (BRL)" }
-
-mset sgi_win_size=600
+# Description -
+#       Sample user interface for MGED
 
 
-#=============================================================================
-# PHASE 0: Tcl Variable defaults
-#=============================================================================
+#==============================================================================
+# PHASE 0: Support routines: MGED dialog boxes
+#------------------------------------------------------------------------------
+# "mged_dialog" and "mged_input_dialog" are based off of the "tk_dialog" that
+# comes with Tk 4.0.
+#==============================================================================
 
-# "printend" is the last printed character, before whatever the user types.
-# Input to MGED is defined as everything between printend and the end of line.
-set printend insert
+# mged_dialog
+# Much like tk_dialog, but doesn't perform a grab.
+# Makes a dialog window with the given title, text, bitmap, and buttons.
 
-# Some slider defaults.
-set sliders(exist) 0
-set sliders(fov) 0
+proc mged_dialog { w title text bitmap default args } {
+    global button$w
 
-# size of dead spot on sliders
-set sliders(NOISE) 128
+    toplevel $w
+    wm title $w $title
+    wm iconname $w Dialog
+    frame $w.top -relief raised -bd 1
+    pack $w.top -side top -fill both
+    frame $w.bot -relief raised -bd 1
+    pack $w.bot -side bottom -fill both
 
+    message $w.top.msg -text $text -width 12i
+    pack $w.top.msg -side right -expand yes -fill both -padx 2m -pady 2m
+    if { $bitmap != "" } then {
+	label $w.top.bitmap -bitmap $bitmap
+	pack $w.top.bitmap -side left -padx 2m -pady 2m
+    }
 
-#=============================================================================
-# PHASE 1: The button menu
-#-----------------------------------------------------------------------------
-# The button menu has three parts -- edit options, view options, and 
-#   miscellaneous options.  Ideally, we would disable those buttons that are
-#   not valid at the time.
-#=============================================================================
-
-frame .edit -borderwidth 1 -relief sunken
-button .edit.reject -text "Reject Edit" -command "press reject"
-button .edit.accept -text "Accept Edit" -command "press accept"
-
-frame .view -borderwidth 1 -relief sunken
-button .view.top -text "Top" -command "press top"
-button .view.bottom -text "Bottom" -command "press bottom"
-button .view.right -text "Right" -command "press right"
-button .view.left -text "Left" -command "press left"
-button .view.front -text "Front" -command "press front"
-button .view.rear -text "Rear" -command "press rear"
-button .view.4545 -text "45, 45" -command "press 45,45"
-button .view.3525 -text "35, 25" -command "press 35,25"
-button .view.restore -text "Restore View" -command "press restore"
-button .view.save -text "Save View" -command "press save"
-button .view.reset -text "Reset View" -command "press reset"
-button .view.sliders -text "Sliders" -command "sliders_create"
-button .view.calibrate -text "Calibrate Sliders" -command { knob calibrate; foreach knob { aX aY aZ } { .sliders.f.k$knob set 0 } }
-button .view.zero -text "Zero Sliders" -command "sliders_zero"
-
-frame .misc -borderwidth 1 -relief sunken
-button .misc.tcolor -text "Color Edit" -command "tcolor"
-
-pack .edit .view .misc -padx 1m -pady 1m -fill x
-
-pack .edit.reject .edit.accept -padx 1m -pady 1 -fill x
-pack .view.top .view.bottom .view.right .view.left .view.front .view.rear \
-	.view.4545 .view.3525 .view.restore .view.save .view.reset \
-	.view.sliders .view.zero .view.calibrate -padx 1m -pady 1 -fill x
-pack .misc.tcolor -padx 1m -pady 1 -fill x
-
-
-#=============================================================================
-# PHASE 2: Slider behavior
-#-----------------------------------------------------------------------------
-# When the sliders exist, pressing the "sliders" button makes them go away.
-# When they don't exist, pressing the "sliders" button makes them appear.
-# They are modeled after the 4D knobs (dials), right down to the -2048 to 2047
-#   range established in dm-4d.c.
-# Only the field-of-view slider has its value shown (0 to 120); it might be
-#   confusing to see -2048 to 2047 on the others (besides, it would take up
-#   more space.)
-#=============================================================================
-
-proc sliders_create { } {
-	global sliders
-
-	if { $sliders(exist) } then {
-		catch { destroy .sliders }
-		set sliders(exist) 0
+    set i 0
+    foreach but $args {
+	button $w.bot.button$i -text $but -command "set button$w $i"
+	if { $i == $default } {
+	    frame $w.bot.default -relief sunken -bd 1
+	    raise $w.bot.button$i
+	    pack $w.bot.default -side left -expand yes -padx 2m -pady 1m
+	    pack $w.bot.button$i -in $w.bot.default -side left -padx 1m \
+		    -pady 1m -ipadx 1m -ipady 1
 	} else {
-		catch { destroy .sliders }
-		toplevel .sliders -class Dialog
-
-		frame .sliders.f -borderwidth 3
-		label .sliders.f.ratelabel -text "Rate Based Sliders" -anchor c
-		scale .sliders.f.kX -label "X Translate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal \
-			-length 400 -command "sliders_change X"
-		scale .sliders.f.kY -label "Y Translate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal \
-			-length 400 -command "sliders_change Y"
-		scale .sliders.f.kZ -label "Z Translate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal \
-			-length 400 -command "sliders_change Z"
-		scale .sliders.f.kS -label "Zoom" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal -length 400 \
-			-command "sliders_change S"
-		scale .sliders.f.kx -label "X Rotate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal -length 400 \
-			-command "sliders_change x"
-		scale .sliders.f.ky -label "Y Rotate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal -length 400 \
-			-command "sliders_change y"
-		scale .sliders.f.kz -label "Z Rotate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal -length 400 \
-			-command "sliders_change z"
-		
-		label .sliders.f.abslabel -text "Absolute Sliders" -anchor c
-		scale .sliders.f.kaX -label "X Translate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal \
-			-length 400 -command "sliders_change aX"
-		scale .sliders.f.kaY -label "Y Translate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal \
-			-length 400 -command "sliders_change aY"
-		scale .sliders.f.kaZ -label "Z Translate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal \
-			-length 400 -command "sliders_change aZ"
-		scale .sliders.f.kaS -label "Zoom" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal -length 400 \
-			-command "sliders_change aS"
-		scale .sliders.f.kax -label "X Rotate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal -length 400 \
-			-command "sliders_change ax"
-		scale .sliders.f.kay -label "Y Rotate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal -length 400 \
-			-command "sliders_change ay"
-		scale .sliders.f.kaz -label "Z Rotate" -showvalue no \
-			-from -2048 -to 2047 -orient horizontal -length 400 \
-			-command "sliders_change az"
-		scale .sliders.f.fov -label "Field of view" -showvalue yes \
-			-from 0 -to 120 -orient horizontal -length 400 \
-			-command sliders_fov
-
-		pack .sliders.f -padx 1m -pady 1m
-		pack .sliders.f.ratelabel -pady 4
-		pack .sliders.f.kX .sliders.f.kY .sliders.f.kZ .sliders.f.kS \
-		     .sliders.f.kx .sliders.f.ky .sliders.f.kz
-		pack .sliders.f.abslabel -pady 4
-		pack .sliders.f.kaX .sliders.f.kaY .sliders.f.kaZ \
-		     .sliders.f.kaS .sliders.f.kax .sliders.f.kay \
-		     .sliders.f.kaz .sliders.f.fov
-
-		foreach knob { X Y Z S x y z aX aY aZ aS ax ay az } {
-		    .sliders.f.k$knob set [expr round(2048.0*[getknob $knob])]
-		}
-
-		.sliders.f.fov set $sliders(fov)
-
-		set sliders(exist) 1
+	    pack $w.bot.button$i -side left -expand yes \
+		    -padx 2m -pady 2m -ipadx 1m -ipady 1
 	}
+	incr i
+    }
+
+    if { $default >= 0 } then {
+	bind $w <Return> "$w.bot.button$default flash ; set button$w $default"
+    }
+
+    tkwait variable button$w
+    catch { destroy $w }
+    return [set button$w]
 }
 
+## mged_input_dialog
+##   Creates a dialog with the given title, text, and buttons, along with an
+##   entry box (with possible default value) whose contents are to be returned
+##   in the variable name contained in entryvar.
 
-## sliders_irlimit
-##   Because the sliders may seem too sensitive, setting them exactly to zero
-##   may be hard.  This function can be used to extend the location of "zero" 
-##   into "the dead zone".
+proc mged_input_dialog { w title text entryvar defaultentry default args } {
+    global button$w entry$w
+    upvar $entryvar entrylocal
 
-proc sliders_irlimit { val } {
-	global sliders
+    set entry $defaultentry
+    
+    toplevel $w
+    wm title $w $title
+    wm iconname $w Dialog
+    frame $w.top -relief raised -bd 1
+    pack $w.top -side top -fill both
+    frame $w.mid -relief raised -bd 1
+    pack $w.mid -side top -fill both
+    frame $w.bot -relief raised -bd 1
+    pack $w.bot -side bottom -fill both
 
-	if { [expr $val > $sliders(NOISE)] } then {
-	    return [expr ($val-$sliders(NOISE))*2048/(2048-$sliders(NOISE))]
-	}
+    message $w.top.msg -text $text -width 12i
+    pack $w.top.msg -side right -expand yes -fill both -padx 2m -pady 2m
 
-	if { [expr $val < -$sliders(NOISE)] } then {
-	    return [expr ($val+$sliders(NOISE))*2048/(2048-$sliders(NOISE))]
-	}
+    entry $w.mid.ent -relief sunken -width 16 -textvariable entry$w
+    pack $w.mid.ent -side top -expand yes -fill both -padx 1m -pady 1m
 
-	return 0
-}
-
-
-## sliders_change
-##   Generic slider-changing callback.
-
-proc sliders_change { which val } {
-	knob $which [expr [sliders_irlimit $val] / 2048.0]
-}
-
-
-## sliders_fov
-##   Callback for field-of-view slider.
-
-proc sliders_fov { val } {
-	global sliders
-
-	set sliders(fov) $val
-	if { [expr $val==0] } then {
-		mset perspective=-1
+    set i 0
+    foreach but $args {
+	button $w.bot.button$i -text $but -command "set button$w $i"
+	if { $i == $default } {
+	    frame $w.bot.default -relief sunken -bd 1
+	    raise $w.bot.button$i
+	    pack $w.bot.default -side left -expand yes -padx 2m -pady 1m
+	    pack $w.bot.button$i -in $w.bot.default -side left -padx 1m \
+		    -pady 1m -ipadx 1m -ipady 1
 	} else {
-		mset perspective=$val
+	    pack $w.bot.button$i -side left -expand yes \
+		    -padx 2m -pady 2m -ipadx 1m -ipady 1
 	}
+	incr i
+    }
+
+    if { $default >= 0 } then {
+	bind $w <Return> "$w.bot.button$default flash ; set button$w $default"
+    }
+
+    tkwait variable button$w
+    set entrylocal [set entry$w]
+    catch { destroy $w }
+    return [set button$w]
 }
 
+#==============================================================================
+# PHASE 0.5: Loading MGED support routines from other files:
+#------------------------------------------------------------------------------
+#        vmath.tcl  :  The vector math library
+#         menu.tcl  :  The Tk menu replacement
+#      sliders.tcl  :  The Tk sliders replacement
+# html_library.tcl  :  Stephen Uhler's routines for processing HTML
+#==============================================================================
 
-## sliders_zero
-##   Zeroes the sliders.
-
-proc sliders_zero { } {
-	global sliders
-
-	if { [expr $sliders(exist)!=0] } then {
-		foreach knob { X Y Z S x y z aX aY aZ aS ax ay az } {
-			knob $knob 0
-			.sliders.f.k$knob set 0
-		}
-	}
+if [info exists env(MGED_LIBRARY)] then {
+    set mged_library $env(MGED_LIBRARY)
+} else {
+    set mged_library ../mged
 }
 
+while { [file exists $mged_library/vmath.tcl]==0 } {
+    mged_input_dialog .mgeddir "Need path to MGED .tcl files" \
+	    "Please enter the full path to the MGED .tcl files:" \
+	    mged_library $mged_library 0 OK
+}
 
-## sliders_togglerate
-##   Callback for toggling the "Rate Based" togglebutton.
+catch { source $mged_library/vmath.tcl }
+catch { source $mged_library/menu.tcl }
+catch { source $mged_library/editobj.tcl }
+update
+catch { source $mged_library/sliders.tcl }
+update
+catch { source $mged_library/html_library.tcl }
 
-proc sliders_togglerate { } {
-	global sliders
+#==============================================================================
+# PHASE 1: Creation of main window
+#==============================================================================
 
-	if { [expr $sliders(rate_based)==0] } then {
-		mset rateknobs=0
+catch { destroy .ia }
+toplevel .ia
+wm title .ia "MGED Interaction Window"
+
+#==============================================================================
+# PHASE 2: Construction of menu bar
+#==============================================================================
+
+frame .ia.m -relief raised -bd 1
+pack .ia.m -side top -fill x
+
+menubutton .ia.m.file -text "File" -menu .ia.m.file.m -underline 0
+menu .ia.m.file.m
+.ia.m.file.m add command -label "Open" -underline 0 -command {
+    if { [mged_input_dialog .ia.open "Open New File" \
+	    "Enter filename of database you wish to open:" \
+	    ia_filename "" 0 Open Cancel] == 0 } then {
+	if [file exists $ia_filename] then {
+	    opendb $ia_filename
+	    mged_dialog .ia.cool "File loaded" \
+		    "Database $ia_filename successfully loaded." info 0 OK
 	} else {
-		mset rateknobs=1
+	    mged_dialog .ia.toobad "Error" \
+		    "No such file exists." warning 0 OK
 	}
+    }
+}
+    
+.ia.m.file.m add command -label "Quit" -command quit -underline 0
+
+menubutton .ia.m.tools -text "Tools" -menu .ia.m.tools.m -underline 0
+menu .ia.m.tools.m
+.ia.m.tools.m add command -label "Place new solid" -underline 10 -command {
+    if { [info exists solc]==0 } then {
+	source $mged_library/solcreate.tcl
+    }
+    solcreate
+}
+.ia.m.tools.m add command -label "Place new instance" -underline 10 -command {
+    if { [info exists ic]==0 } then {
+	source $mged_library/icreate.tcl
+    }
+    icreate
+}
+.ia.m.tools.m add command -label "Solid Click" -underline 6 -command {
+    if { [winfo exists .metasolclick]==0 } then {
+	source $mged_library/solclick.tcl
+    }
 }
 
+menubutton .ia.m.help -text "Help" -menu .ia.m.help.m -underline 0
+menu .ia.m.help.m
+.ia.m.help.m add command -label "About MGED" -underline 6 -command {
+    mged_dialog .ia_about "About MGED..." \
+	    "MGED: Multidisplay \[combinatorial solid\] Geometry EDitor\n\
+\n\
+MGED is a part of the BRL-CAD package developed at the Army\n\
+Research Laboratory at Aberdeen Proving Ground, Maryland, U.S.A." \
+	    {} 0 OK
 
-#=============================================================================
-# PHASE 3: MGED Interaction
-#-----------------------------------------------------------------------------
-# Sets up the MGED Interaction window ".i", which has the following structure:
-# At the top, a menu ".i.menu" with some Useful Functions, and a help option.
-# Note that some of those functions request filenames in a rather rudimentary
-#   fashion.  An honest-to-goodness file selection box would be rather nice.
-# The remainder of the window is contained within a sunken frame, ".i.f".
-# This frame has two parts: the text widget, ".i.f.text", which contains all
-#   mged output (rt_log is hooked into outputting there, see cmd.c), as well
-#   as the input from the user.
-# In gui_output in cmd.c, when output is sent to ".i.f.text", the variable
-#   "printend" is set to the end of the MGED output, which is also the
-#   beginning of the user's input.  When the user hits return, everything 
-#   from printend to the end of the line is snarfed from .i.f.text and fed 
-#   to mged to process as it pleases (see gui_cmdline in cmd.c)
-#=============================================================================
+    
+}
+.ia.m.help.m add command -label "On command..." -underline 0 \
+	-command [list ia_help [lrange [?] 5 end]]
+.ia.m.help.m add command -label "Apropos" -underline 0 -command ia_apropos
+.ia.m.help.m add command -label "MGED Manual" -underline 0 -command ia_man
 
-toplevel .i
-wm title .i "MGED Interaction"
+pack .ia.m.file .ia.m.tools -side left
+pack .ia.m.help -side right
 
-#-----------------------------------------------------------------------------
-# MENUS
-#-----------------------------------------------------------------------------
+proc ia_help { cmds } {
+    set w .ia.help
 
-frame .i.menu -relief raised -borderwidth 1
-menubutton .i.menu.file -text "File" -menu .i.menu.file.m -underline 0
-menu .i.menu.file.m
-.i.menu.file.m add command -label "Source" -command sourcefile -underline 0
-.i.menu.file.m add command -label "Save History" -command savehist \
-	-underline 5
-.i.menu.file.m add command -label "Save Timed History" -command savethist \
-	-underline 5
-.i.menu.file.m add command -label "Save Full Transcript" -command savetrans \
-	-underline 5
-.i.menu.file.m add command -label "Quit" -command quit -underline 0
+    catch { destroy $w }
+    toplevel $w
+    wm title $w "MGED Help"
 
-menubutton .i.menu.help -text "Help" -menu .i.menu.help.m -underline 0
-menu .i.menu.help.m
-.i.menu.help.m add command -label "Still under construction." -underline 0
+    button $w.cancel -command "destroy $w" -text "Cancel"
+    pack $w.cancel -side bottom -fill x
 
-pack .i.menu -side top -fill x
-pack .i.menu.file -side left
-pack .i.menu.help -side right
+    scrollbar $w.s -command "$w.l yview"
+    listbox $w.l -bd 2 -yscroll "$w.s set"
+    pack $w.s -side right -fill y
+    pack $w.l -side top -fill both -expand yes
 
-tk_menuBar .i.menu .i.menu.file .i.menu.help
-tk_bindForTraversal .
+    foreach cmd $cmds {
+	$w.l insert end $cmd
+    }
 
-## fsb
-##   Conjures up a file "selection" box with the given properties.
-
-proc fsb { w title caption oktext callback } {
-	global filename
-
-	catch { destroy $w }
-	toplevel $w -class Dialog
-	wm title $w $title
-
-	set filename($w) ""
-
-	frame  $w.f -relief flat
-	pack   $w.f -padx 1m -pady 1m
-	label  $w.f.label -text $caption
-	pack   $w.f.label -side top
-	entry  $w.f.entry -textvariable filename($w) -width 16 -relief sunken
-	bind   $w.f.entry <Return> "$callback \$filename($w) ; destroy $w"
-	pack   $w.f.entry -expand yes -fill x -side top
-	button $w.f.ok -text $oktext \
-		-command "$callback \$filename($w) ; destroy $w"
-	button $w.f.cancel -text "Cancel" -command "destroy $w"
-	pack   $w.f.ok -side left -pady 1m
-	pack   $w.f.cancel -side right -pady 1m
+    set doit "catch { destroy $w.u } ; \
+	    catch { help \[selection get\] } msg ; \
+	    mged_dialog $w.u Usage \$msg info 0 OK"
+    bind $w.l <Double-Button-1> $doit
+    bind $w.l <2> "tkListboxBeginSelect \%W \[\%W index \@\%x,\%y\] ; $doit"
+    bind $w.l <Return> $doit
 }
 
+proc ia_apropos { } {
+    set w .ia.apropos
 
-## sourcefile
-##   Callback for "Source File" menu item
-
-proc sourcefile { } {
-	fsb .sf "Source file" "Enter name of file to be sourced:" \
-		"Source" source
-}
-
-
-## savetrans
-##   Callback for "Save Transcript" menu item
-
-proc savetrans { } {
-	fsb .st "Save Transcript" "Enter filename to store transcript in:" \
-		"Save" recordtrans
-}
-
-
-## recordtrans
-##   Used by savetrans/fsb to record a transcript to the end of the given file
-
-proc recordtrans { fname } {
-	set f [open $fname a+]
-	puts $f [.i.f.text get 1.0 end]
-	close $f
-}
-
-
-## savehist 
-##   Callback for "Save History" menu item
-
-proc savehist { } {
-	fsb .sh "Save History" "Enter filename to store history in:" \
-		"Save" "history -outfile"
-}
-
-
-## savethist 
-##   Callback for "Save Timed History" menu item
-
-proc savethist { } {
-	fsb .sh "Save Timed History" \
-		"Enter filename to store timed history in:" \
-		"Save" "history -delays -outfile"
-}
-
-
-#-----------------------------------------------------------------------------
-# MGED INTERACTION WIDGET
-#-----------------------------------------------------------------------------
-
-frame .i.f -relief sunken -borderwidth 2
-pack .i.f -padx 3 -pady 3
-
-text .i.f.text -relief raised -bd 2 -yscrollcommand ".i.f.scroll set" \
-	-width 80 -height 10 -wrap char
-scrollbar .i.f.scroll -command ".i.f.text yview"
-pack .i.f.scroll -side right -fill y
-pack .i.f.text -side left
-
-# give it some rudimentary tcsh/jove/emacs-like bindings
-
-bind .i.f.text <Return> +execute
-bind .i.f.text <Control-a> ".i.f.text mark set insert \$printend"
-bind .i.f.text <Control-e> ".i.f.text mark set insert end"
-bind .i.f.text <Control-d> ".i.f.text delete insert"
-bind .i.f.text <Control-k> "set yankbuffer \[.i.f.text get insert \
-	\"insert lineend\"\] ; .i.f.text delete insert \"insert lineend\""
-bind .i.f.text <Control-y> ".i.f.text insert insert \$yankbuffer ; \
-	.i.f.text yview -pickplace insert"
-bind .i.f.text <Control-b> ".i.f.text mark set insert \"insert - 1 chars\""
-bind .i.f.text <Control-f> ".i.f.text mark set insert \"insert + 1 chars\""
-set yankbuffer ""
-
-## execute 
-##   Callback for a carriage-return in the MGED Interaction window.
-##   Note that if the end of the line on which the carriage return was pressed
-##     is before the end of the last prompt, the ".i.f.text get" returns
-##     nothing and no command is executed.
-
-proc execute { } {
-	global printend sliders
-
-	set commandend [.i.f.text index "insert lineend"]
-
-	.i.f.text mark set insert end
-	.i.f.text insert insert \n
-	cmdline "[format "%s\n" [.i.f.text get $printend $commandend]]"
-	.i.f.text yview -pickplace insert
-}
-
-
-
-
-
-#=============================================================================
-# PHASE 4: tcolor -- the color editor
-#-----------------------------------------------------------------------------
-# Standard Tcl/Tk demo "/usr/{brl,local,contrib}/lib/tk/demos/tcolor".
-# It has been assimilated (with minor changes).
-# When the color of your choice has been selected, it is spat into the
-#   .i.f.text MGED Interaction widget as if you had typed it there.
-#=============================================================================
-
-# colorSpace -			Color space currently being used for
-#				editing.  Must be "rgb", "cmy", or "hsb".
-# label1, label2, label3 -	Labels for the scales.
-# red, green, blue -		Current color intensities in decimal
-#				on a scale of 0-65535.
-# color -			A string giving the current color value
-#				in the proper form for x:
-#				#RRRRGGGGBBBB
-# updating -			Non-zero means that we're in the middle of
-#				updating the scales to load a new color,so
-#				information shouldn't be propagating back
-#				from the scales to other elements of the
-#				program:  this would make an infinite loop.
-# command -			Holds the command that has been typed
-#				into the "Command" entry.
-# autoUpdate -			1 means execute the update command
-#				automatically whenever the color changes.
-# name -			Name for new color, typed into entry.
-
-set colorSpace hsb
-set red 65535
-set green 0
-set blue 0
-set color #ffff00000000
-set updating 0
-set autoUpdate 1
-set name ""
-		
-proc tcolor { } {
-	global colorSpace red green blue color updating autoUpdate name
-
-	catch { destroy .c }
-	toplevel .c
-
-	wm title .c "Color Editor"
-	tk_bindForTraversal .c
-	focus .c
-
-# Create the menu bar at the top of the window.
-
-	frame .c.menu -relief raised -borderwidth 2
-	pack .c.menu -side top -fill x
-	menubutton .c.menu.file -text "Color space" -menu .c.menu.file.m \
-		-underline 0
-	menu .c.menu.file.m
-	.c.menu.file.m add radio -label "RGB color space" \
-		-variable colorSpace -value rgb -underline 0 \
-		-command {changeColorSpace rgb}
-	.c.menu.file.m add radio -label "CMY color space" \
-		-variable colorSpace -value cmy -underline 0 \
-		-command {changeColorSpace cmy}
-	.c.menu.file.m add radio -label "HSB color space" \
-		-variable colorSpace -value hsb -underline 0 \
-		-command {changeColorSpace hsb}
-	pack .c.menu.file -side left
-	tk_menuBar .c.menu .c.menu.file
-
-# Create the command entry window at the bottom of the window, along
-# with the update button.
-
-	frame .c.bot -relief raised -borderwidth 2
-	pack .c.bot -side bottom -fill x
-	button .c.cancel -text "Cancel" -command "destroy .c"
-	button .c.ok -text "Ok" -command ".i.f.text insert \
-		insert \"\$red \$green \$blue\"; destroy .c"
-	pack .c.cancel .c.ok -in .c.bot -side left -pady .1c -padx .25c \
-		-expand yes -fill x -ipadx 0.25c
-	
-# Create the listbox that holds all of the color names in rgb.txt,
-# if an rgb.txt file can be found.
-
-	frame .c.middle -relief raised -borderwidth 2
-	pack .c.middle -side top -fill both
-	foreach i {/usr/local/lib/X11/rgb.txt /usr/lib/X11/rgb.txt
-		/X11/R5/lib/X11/rgb.txt /X11/R4/lib/rgb/rgb.txt
-		/usr/X11R6/lib/X11/rgb.txt } {
-		if ![file readable $i] {
-			continue;
-		}
-		set f [open $i]
-		frame .c.middle.left
-		pack .c.middle.left -side left -padx .25c -pady .25c
-		listbox .c.names -geometry 20x12 \
-			-yscrollcommand ".c.scroll set" -relief sunken \
-			-borderwidth 2 -exportselection false
-		tk_listboxSingleSelect .c.names
-		bind .c.names <Double-1> {
-		    tc_loadNamedColor [.c.names get [.c.names curselection]]
-		}
-		scrollbar .c.scroll -orient vertical -command \
-			".c.names yview" -relief sunken -borderwidth 2
-		pack .c.names -in .c.middle.left -side left
-		pack .c.scroll -in .c.middle.left -side right -fill y
-		while {[gets $f line] >= 0} {
-			if {[llength $line] == 4} {
-				.c.names insert end [lindex $line 3]
-			}
-		}
-		close $f
-		break;
-	}
-
-# Create the three scales for editing the color, and the entry for
-# typing in a color value.
-
-	frame .c.middle.middle
-	pack .c.middle.middle -side left -expand yes -fill y
-	frame .c.middle.middle.1
-	frame .c.middle.middle.2
-	frame .c.middle.middle.3
-	frame .c.middle.middle.4
-	pack .c.middle.middle.1 .c.middle.middle.2 .c.middle.middle.3 \
-		-side top -expand yes
-	pack .c.middle.middle.4 -side top -expand yes -fill x
-	foreach i {1 2 3} {
-		label .c.label$i -textvariable label$i
-		scale .c.scale$i -from 0 -to 1000 -length 10c \
-			-orient horizontal -command tc_scaleChanged
-		button .c.up$i -width 2 -text + -command "tc_inc $i 1"
-		button .c.down$i -width 2 -text - -command "tc_inc $i -1"
-		pack .c.label$i -in .c.middle.middle.$i -side top -anchor w
-		pack .c.down$i -in .c.middle.middle.$i -side left -padx .25c
-		pack .c.scale$i -in .c.middle.middle.$i -side left
-		pack .c.up$i -in .c.middle.middle.$i -side left -padx .25c
-	}
-	label .c.nameLabel -text "Name of new color:"
-	entry .c.name -relief sunken -borderwidth 2 -textvariable name \
-		-width 30 -font -Adobe-Courier-Medium-R-Normal-*-120-*
-	pack .c.nameLabel .c.name -in .c.middle.middle.4 -side left
-	bind .c.name <Return> {tc_loadNamedColor $name}
-
-# Create the color display swatch on the right side of the window.
-
-	frame .c.middle.right
-	pack .c.middle.right -side left -pady .25c -padx .25c -anchor s
-	frame .c.swatch -width 2c -height 5c -background $color
-	label .c.value -textvariable color -width 13 \
-		-font -Adobe-Courier-Medium-R-Normal-*-120-*
-	pack .c.swatch -in .c.middle.right -side top -expand yes -fill both
-	pack .c.value -in .c.middle.right -side bottom -pady .25c
-
-	changeColorSpace hsb
-}
-
-# The procedure below handles the "+" and "-" buttons next to
-# the adjustor scales.  They just increment or decrement the
-# appropriate scale value.
-
-proc tc_inc {scale inc} {
-	.c.scale$scale set [expr [.c.scale$scale get]+$inc]
-}
-
-# The procedure below is invoked when one of the scales is adjusted.
-# It propagates color information from the current scale readings
-# to everywhere else that it is used.
-
-proc tc_scaleChanged args {
-    global red green blue colorSpace color updating autoUpdate
-    if $updating {
+    catch { destroy $w }
+    if { [mged_input_dialog $w Apropos \
+	   "Enter keyword to search for:" keyword "" 0 OK Cancel] == 1 } then {
 	return
     }
-    if {$colorSpace == "rgb"} {
-	set red   [format %.0f [expr [.c.scale1 get]*65.535]]
-	set green [format %.0f [expr [.c.scale2 get]*65.535]]
-	set blue  [format %.0f [expr [.c.scale3 get]*65.535]]
-    } else {
-	if {$colorSpace == "cmy"} {
-	    set red   [format %.0f [expr {65535 - [.c.scale1 get]*65.535}]]
-	    set green [format %.0f [expr {65535 - [.c.scale2 get]*65.535}]]
-	    set blue  [format %.0f [expr {65535 - [.c.scale3 get]*65.535}]]
-	} else {
-	    set list [hsbToRgb [expr {[.c.scale1 get]/1000.0}] \
-		    [expr {[.c.scale2 get]/1000.0}] \
-		    [expr {[.c.scale3 get]/1000.0}]]
-	    set red [lindex $list 0]
-	    set green [lindex $list 1]
-	    set blue [lindex $list 2]
-	}
-    }
-    set color [format "#%04x%04x%04x" $red $green $blue]
-    .c.swatch config -bg $color
-    update idletasks
+
+    ia_help [apropos $keyword]
 }
 
-# The procedure below is invoked to update the scales from the
-# current red, green, and blue intensities.  It's invoked after
-# a change in the color space and after a named color value has
-# been loaded.
+#==============================================================================
+# PHASE 3: Bottom-row display
+#==============================================================================
 
-proc tc_setScales {} {
-    global red green blue colorSpace updating
-    set updating 1
-    if {$colorSpace == "rgb"} {
-	.c.scale1 set [format %.0f [expr $red/65.535]]
-	.c.scale2 set [format %.0f [expr $green/65.535]]
-	.c.scale3 set [format %.0f [expr $blue/65.535]]
+frame .ia.dpy
+pack .ia.dpy -side bottom -anchor w -fill x
+
+label .ia.dpy.cent -text "Center: " -anchor w
+label .ia.dpy.centvar -textvar mged_display(center) -anchor w
+label .ia.dpy.size -text "Size: " -anchor w
+label .ia.dpy.sizevar -textvar mged_display(size) -anchor w
+label .ia.dpy.unitsvar -textvar mged_display(units) -anchor w
+label .ia.dpy.azim -text "Azim: " -anchor w
+label .ia.dpy.azimvar -textvar mged_display(azimuth) -anchor w
+label .ia.dpy.elev -text "Elev: " -anchor w
+label .ia.dpy.elevvar -textvar mged_display(elevation) -anchor w
+label .ia.dpy.twist -text "Twist: " -anchor w
+label .ia.dpy.twistvar -textvar mged_display(twist) -anchor w
+
+pack .ia.dpy.cent .ia.dpy.cent .ia.dpy.centvar .ia.dpy.size .ia.dpy.sizevar \
+	.ia.dpy.unitsvar -side left -anchor w
+
+pack .ia.dpy.twistvar .ia.dpy.twist .ia.dpy.elevvar .ia.dpy.elev \
+	.ia.dpy.azimvar .ia.dpy.azim -side right -anchor w
+
+frame .ia.illum
+pack .ia.illum -side bottom -before .ia.dpy -anchor w -fill x
+
+proc ia_changestate args {
+    global mged_display ia_illum_label
+
+    if { [string compare $mged_display(state) VIEWING]==0 } then {
+	set ia_illum_label "No objects illuminated"
     } else {
-	if {$colorSpace == "cmy"} {
-	    .c.scale1 set [format %.0f [expr (65535-$red)/65.535]]
-	    .c.scale2 set [format %.0f [expr (65535-$green)/65.535]]
-	    .c.scale3 set [format %.0f [expr (65535-$blue)/65.535]]
-	} else {
-	    set list [rgbToHsv $red $green $blue]
-	    .c.scale1 set [format %.0f [expr {[lindex $list 0] * 1000.0}]]
-	    .c.scale2 set [format %.0f [expr {[lindex $list 1] * 1000.0}]]
-	    .c.scale3 set [format %.0f [expr {[lindex $list 2] * 1000.0}]]
-	}
+	set ia_illum_label [format "Illuminated path:    %s    %s" \
+		$mged_display(path_lhs) $mged_display(path_rhs)]
     }
-    set updating 0
+    
+#    if { [string length $mged_display(adc)]>0 } then {
+#	set ia_illum_label $mged_display(adc)
+#    } elseif { [string length $mged_display(keypoint)]>0 } then {
+#	set ia_illum_label $mged_display(keypoint)
+#    } elseif { [string compare $mged_display(state) VIEWING]==0 } then {
+#	set ia_illum_label "No objects illuminated"
+#    } else {
+#	set ia_illum_label [format "Illuminated path:    %s    %s" \
+#		$mged_display(path_lhs) $mged_display(path_rhs)]
+#    }
 }
 
-# The procedure below is invoked when a named color has been
-# selected from the listbox or typed into the entry.  It loads
-# the color into the editor.
+ia_changestate
 
-proc tc_loadNamedColor name {
-    global red green blue color autoUpdate
+label .ia.illum.label -textvar ia_illum_label
+pack .ia.illum.label -side left -anchor w
 
-    if {[string index $name 0] != "#"} {
-	set list [winfo rgb .c.swatch $name]
-	set red [lindex $list 0]
-	set green [lindex $list 1]
-	set blue [lindex $list 2]
-    } else {
-	case [string length $name] {
-	    4 {set format "#%1x%1x%1x"; set shift 12}
-	    7 {set format "#%2x%2x%2x"; set shift 8}
-	    10 {set format "#%3x%3x%3x"; set shift 4}
-	    13 {set format "#%4x%4x%4x"; set shift 0}
-	    default {error "syntax error in color name \"$name\""}
-	}
-	if {[scan $name $format red green blue] != 3} {
-	    error "syntax error in color name \"$name\""
-	}
-	set red [expr $red<<$shift]
-	set green [expr $green<<$shift]
-	set blue [expr $blue<<$shift]
-    }
-    tc_setScales
-    set color [format "#%04x%04x%04x" $red $green $blue]
-    .c.swatch config -bg $color
+trace variable mged_display(state)    w ia_changestate
+trace variable mged_display(path_lhs) w ia_changestate
+trace variable mged_display(path_rhs) w ia_changestate
+trace variable mged_display(keypoint) w ia_changestate
+trace variable mged_display(adc)      w ia_changestate
+
+#==============================================================================
+# PHASE 4: Text widget for interaction
+#==============================================================================
+
+text .ia.t -relief sunken -bd 2 -yscrollcommand ".ia.s set" -setgrid true
+scrollbar .ia.s -relief flat -command ".ia.t yview"
+pack .ia.s -side right -fill y
+pack .ia.t -side top -fill both -expand yes
+
+bind .ia.t <Return> {
+    .ia.t mark set insert {end - 1c}
+    .ia.t insert insert \n
+    ia_invoke
+    break
 }
 
-# The procedure below is invoked when a new color space is selected.
-# It changes the labels on the scales and re-loads the scales with
-# the appropriate values for the current color in the new color space
+bind .ia.t <Delete> {
+    catch {.ia.t tag remove sel sel.first promptEnd}
+    if {[.ia.t tag nextrange sel 1.0 end] == ""} {
+	if [.ia.t compare insert < promptEnd] {
+	    break
+	}
+    }
+}
 
-proc changeColorSpace space {
-    global label1 label2 label3
-    if {$space == "rgb"} {
-	set label1 Red
-	set label2 Green
-	set label3 Blue
-	tc_setScales
+bind .ia.t <BackSpace> {
+    catch {.ia.t tag remove sel sel.first promptEnd}
+    if {[.ia.t tag nextrange sel 1.0 end] == ""} then {
+	if [.ia.t compare insert <= promptEnd] then {
+	    break
+	}
+    }
+}
+
+bind .ia.t <Control-a> {
+    .ia.t mark set insert promptEnd
+    break
+}
+
+bind .ia.t <Control-u> {
+    .ia.t delete promptEnd {promptEnd lineend}
+    .ia.t mark set insert promptEnd
+}
+
+bind .ia.t <Control-p> {
+    .ia.t delete promptEnd {promptEnd lineend}
+    .ia.t mark set insert promptEnd
+    set result [catch hist_prev msg]
+    if {$result==0} then {
+	.ia.t insert insert [string range $msg 0 \
+		[expr [string length $msg]-2]]
+    }
+    break
+}
+
+bind .ia.t <Control-n> {
+    .ia.t delete promptEnd {promptEnd lineend}
+    .ia.t mark set insert promptEnd
+    set result [catch hist_next msg]
+    if {$result==0} then {
+	.ia.t insert insert [string range $msg 0 \
+		[expr [string length $msg]-2]]
+    }
+    break
+}
+
+bind .ia.t <Control-d> {
+    if [.ia.t compare insert < promptEnd] {
+	break
+    }
+}
+
+bind .ia.t <Control-k> {
+    if [.ia.t compare insert < promptEnd] {
+	break
+    }
+}
+
+bind .ia.t <Control-t> {
+    if [.ia.t compare insert < promptEnd] {
+	break
+    }
+}
+
+bind .ia.t <Meta-d> {
+    if [.ia.t compare insert < promptEnd] {
+	break
+    }
+}
+
+bind .ia.t <Meta-BackSpace> {
+    if [.ia.t compare insert <= promptEnd] {
+	break
+    }
+}
+
+bind .ia.t <Control-h> {
+    if [.ia.t compare insert <= promptEnd] {
+	break
+    }
+}
+
+auto_load tkTextInsert
+proc tkTextInsert {w s} {
+    if {$s == ""} {
 	return
     }
-    if {$space == "cmy"} {
-	set label1 Cyan
-	set label2 Magenta
-	set label3 Yellow
-	tc_setScales
-	return
-    }
-    if {$space == "hsb"} {
-	set label1 Hue
-	set label2 Saturation
-	set label3 Brightness
-	tc_setScales
-	return
-    }
-}
-
-# The procedure below converts an RGB value to HSB.  It takes red, green,
-# and blue components (0-65535) as arguments, and returns a list containing
-# HSB components (floating-point, 0-1) as result.  The code here is a copy
-# of the code on page 615 of "Fundamentals of Interactive Computer Graphics"
-# by Foley and Van Dam.
-
-proc rgbToHsv {red green blue} {
-    if {$red > $green} {
-	set max $red.0
-	set min $green.0
-    } else {
-	set max $green.0
-	set min $red.0
-    }
-    if {$blue > $max} {
-	set max $blue.0
-    } else {
-	if {$blue < $min} {
-	    set min $blue.0
+    catch {
+	if {[$w compare sel.first <= insert] && \
+		[$w compare sel.last >= insert]} then {
+	    $w tag remove sel sel.first promptEnd
+	    $w delete sel.first sel.last
 	}
     }
-    set range [expr $max-$min]
-    if {$max == 0} {
-	set sat 0
-    } else {
-	set sat [expr {($max-$min)/$max}]
-    }
-    if {$sat == 0} {
-	set hue 0
-    } else {
-	set rc [expr {($max - $red)/$range}]
-	set gc [expr {($max - $green)/$range}]
-	set bc [expr {($max - $blue)/$range}]
-	if {$red == $max} {
-	    set hue [expr {.166667*($bc - $gc)}]
+    $w insert insert $s
+    $w see insert
+}
+
+proc ia_rtlog { str } {
+    set logStart [.ia.t index insert]
+    .ia.t insert insert $str
+    .ia.t mark set promptEnd {insert}
+    .ia.t mark gravity promptEnd left
+    .ia.t tag add bold $logStart promptEnd
+    .ia.t yview -pickplace insert
+}
+
+proc ia_invoke {} {
+    global ia_cmd_prefix
+    
+    set cmd [concat $ia_cmd_prefix [.ia.t get promptEnd insert]]
+    if [info complete $cmd] {
+	set result [catch [list uplevel #0 $cmd] ia_msg]
+	if {$result != 0} then {
+	    if { [regexp "more arguments needed::" $ia_msg] } then {
+		set ia_prompt [string range $ia_msg 23 end]
+		ia_rtlog $ia_prompt
+		set ia_cmd_prefix $cmd
+		return
+	    }
+	    ia_rtlog "Error: $ia_msg\n"
 	} else {
-	    if {$green == $max} {
-		set hue [expr {.166667*(2 + $rc - $bc)}]
-	    } else {
-		set hue [expr {.166667*(4 + $gc - $rc)}]
+	    if {$ia_msg != ""} {
+		ia_rtlog $ia_msg\n
 	    }
 	}
+	hist_add $cmd
+	set ia_cmd_prefix ""
+	ia_rtlog "mged> "
     }
-    return [list $hue $sat [expr {$max/65535}]]
+    .ia.t yview -pickplace insert
 }
 
-# The procedure below converts an HSB value to RGB.  It takes hue, saturation,
-# and value components (floating-point, 0-1.0) as arguments, and returns a
-# list containing RGB components (integers, 0-65535) as result.  The code
-# here is a copy of the code on page 616 of "Fundamentals of Interactive
-# Computer Graphics" by Foley and Van Dam.
+set ia_cmd_prefix ""
+ia_rtlog "mged> "
+set output_as_return 1
+set faceplate 0
+# output_hook ia_rtlog
 
-proc hsbToRgb {hue sat value} {
-    set v [format %.0f [expr 65535.0*$value]]
-    if {$sat == 0} {
-	return "$v $v $v"
-    } else {
-	set hue [expr $hue*6.0]
-	if {$hue >= 6.0} {
-	    set hue 0.0
+proc echo args {
+    return $args
+}
+
+.ia.t tag configure bold -font -*-Courier-Bold-R-Normal-*-120-*-*-*-*-*-*
+set ia_font -*-Courier-Medium-R-Normal-*-120-*-*-*-*-*-*
+.ia.t configure -font $ia_font
+
+#==============================================================================
+# PHASE 5: HTML support
+#==============================================================================
+
+if [info exists env(MGED_HTML_DIR)] then {
+    set mged_html_dir $env(MGED_HTML_DIR)
+} else {
+    set mged_html_dir ../html/mged
+}
+
+proc ia_man { } {
+    global mged_library mged_html_dir ia_url message
+    
+    set w .ia.man
+    catch { destroy $w }
+    toplevel $w
+    wm title $w "MGED HTML browser"
+
+    frame $w.f -relief sunken -bd 1
+    pack $w.f -side top -fill x
+
+    button $w.f.close -text Close -command "destroy $w"
+    button $w.f.goto -text "Go To" -command {
+	mged_input_dialog .ia.man.goto "Go To" "Enter filename to read:" \
+		filename $ia_url(current) 0 OK
+	if { [file exists filename]!=0 } then {
+	    if { [string match /* $filename] } then {
+		set new_url $filename
+	    } else {
+		set new_url [pwd]/$filename
+	    }
+
+    	    HMlink_callback .ia.man.text $new_url
+	} else {
+	    mged_dialog .ia.man.gotoerror "Error reading file" \
+		    "Cannot read file $filename." error 0 OK
 	}
-	scan $hue. %d i
-	set f [expr $hue-$i]
-	set p [format %.0f [expr {65535.0*$value*(1 - $sat)}]]
-	set q [format %.0f [expr {65535.0*$value*(1 - ($sat*$f))}]]
-	set t [format %.0f [expr {65535.0*$value*(1 - ($sat*(1 - $f)))}]]
-	case $i \
-	    0 {return "$v $t $p"} \
-	    1 {return "$q $v $p"} \
-	    2 {return "$p $v $t"} \
-	    3 {return "$p $q $v"} \
-	    4 {return "$t $p $v"} \
-	    5 {return "$v $p $q"}
-	error "i value $i is out of range"
+    }
+    button $w.f.back -text "Back" -command "ia_man_back $w.text"
+
+    pack $w.f.close $w.f.goto $w.f.back -side left -fill x -expand yes
+
+    label $w.message -textvar message -anchor w
+    pack $w.message -side top -anchor w -fill x
+
+    scrollbar $w.scrolly -command "$w.text yview"
+    scrollbar $w.scrollx -command "$w.text xview" -orient horizontal
+    text $w.text -relief ridge -yscroll "$w.scrolly set" \
+	    -xscroll "$w.scrollx set"
+    pack $w.scrolly -side right -fill y
+    pack $w.text -side top -fill both -expand yes
+    pack $w.scrollx -side bottom -fill x
+
+    if { [info exists ia_url]==0 } then {
+	while { [file exists $mged_html_dir/index.html]==0 } {
+	    mged_input_dialog .mgedhtmldir "Need path to MGED .html files" \
+		    "Please enter the full path to the MGED .html files:" \
+		    mged_html_dir $mged_html_dir 0 OK
+	}
+    }
+
+    set w $w.text
+
+    HMinit_win $w
+    set ia_url(current)   $mged_html_dir/
+    set ia_url(last)      ""
+    set ia_url(backtrack) ""
+    HMlink_callback $w index.html
+}
+
+proc HMlink_callback { w href } {
+    global ia_url message
+
+    if {[string match /* $href]} {
+	set new_url $href
+    } else {
+	set new_url [file dirname $ia_url(current)]/$href
+    }
+
+    # Remove tags
+    regsub {#[0-9a-zA-Z]*} $new_url {} ia_url(current)
+    
+    lappend ia_url(last) $ia_url(current)
+    set ia_url(backtrack) [lrange $ia_url(last) 0 \
+	    [expr [llength $ia_url(last)]-2]]
+
+    HMreset_win $w
+    HMparse_html [ia_get_html $ia_url(current)] "HMrender $w"
+    update
+}
+
+proc ia_man_back { w } {
+    global ia_url message
+
+    if {[llength $ia_url(backtrack)]<1} then {
+	return
+    }
+    
+    set new_url [lindex $ia_url(backtrack) end]
+    set ia_url(backtrack) [lrange $ia_url(backtrack) 0 \
+	    [expr [llength $ia_url(backtrack)]-2]]
+
+    HMreset_win $w
+    HMparse_html [ia_get_html $new_url] "HMrender $w"
+    update
+}
+
+proc HMset_image { handle src } {
+    global ia_url message
+
+    if {[string match http://* $src]} then {
+	return
+    }
+    
+    if {[string match /* $src]} then {
+	set image $src
+    } else {
+	set image [file dirname $ia_url(current)]/$src
+    }
+
+    set message "Fetching image $image."
+    update
+    if {[string first " $image " " [image names] "] >= 0} then {
+	HMgot_image $handle $image
+    } else {
+	catch {image create photo $image -file $image} image
+	HMgot_image $handle $image
     }
 }
 
+proc ia_get_html {file} {
+    global message ia_url
 
+    set message "Reading file $file"
+    update
 
-#============================================================================
-# PHASE 5: Commands MGED to set things up all nice and pretty.
-#============================================================================
-
-# The usual faceplate is now superfluous
-mset faceplate=0
-
-# Tell MGED to put in necessary GUI hooks.
-gui .i.f.text
+    if {[string match *.gif $file]} then {
+	return "<img src=\"[file tail $file]\">"
+    }
+    
+    if {[catch {set fd [open $file]} msg]} {
+	return "
+	<title>Bad file $file</title>
+	<h1>Error reading $file</h1><p>
+	$msg<hr>
+	"
+    }
+    set result [read $fd]
+    close $fd
+    return $result
+}
