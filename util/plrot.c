@@ -85,7 +85,7 @@ register char **argv;
 			mat_mul( rmat, tmp, m );
 			break;
 		case 'a':
-			mat_angles( tmp, 0.0, 0.0, atof(optarg) );
+			mat_angles( tmp, 0.0, 0.0, -atof(optarg) );
 			mat_copy( m, rmat );
 			mat_mul( rmat, tmp, m );
 			rpp++;
