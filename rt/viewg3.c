@@ -95,6 +95,9 @@ int	rayhit(), raymiss();
 
 /*
  *  			V I E W _ I N I T
+ *
+ *  This routine is called by main().  It prints the overall shotline
+ *  header.
  */
 int
 view_init( ap, file, obj, minus_o )
