@@ -288,9 +288,7 @@ register int *svec;	/* array of like points */
  *	rt_arb_internal pt[] array reorganized into GIFT "standard" order.
  */
 int
-rt_arb_std_type( ip, tol )
-struct rt_db_internal	*ip;
-CONST struct bn_tol	*tol;
+rt_arb_std_type( const struct rt_db_internal *ip, const struct bn_tol *tol )
 {
 	struct rt_arb_internal	*arb;
 	int uvec[8], svec[11];
@@ -316,13 +314,9 @@ CONST struct bn_tol	*tol;
  *
  * Find the center point for the arb whose values are in the s array,
  * with the given number of verticies.  Return the point in center_pt.
- * WARNING: The s array is dbfloat_t's not fastf_t's.
  */
 void
-rt_arb_centroid( center_pt, arb, npoints )
-point_t			center_pt;
-struct rt_arb_internal	*arb;
-int			npoints;
+rt_arb_centroid( point_t center_pt, const struct rt_arb_internal *arb, int npoints )
 {
 	register int	j;
 	fastf_t		div;

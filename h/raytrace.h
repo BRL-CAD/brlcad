@@ -2875,6 +2875,7 @@ BU_EXTERN(void db_functree, (struct db_i *dbip, struct directory *dp,
 	genptr_t client_data));
 
 /* g_arb.c */
+int rt_arb_std_type( const struct rt_db_internal *ip, const struct bn_tol *tol );
 int rt_arb_calc_points();		/* needs wdb.h for arg list */
 int rt_arb_3face_intersect(
 	point_t			point,
