@@ -37,9 +37,9 @@ static char extr_RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 int
-mk_extrusion( fp, name, sketch_name, curve_name, V, h, u_vec, v_vec, keypoint )
+mk_extrusion( fp, name, sketch_name, V, h, u_vec, v_vec, keypoint )
 FILE *fp;
-char *name, *sketch_name, *curve_name;
+char *name, *sketch_name;
 point_t V;
 vect_t h, u_vec, v_vec;
 {
@@ -50,7 +50,6 @@ vect_t h, u_vec, v_vec;
 	extr = (struct rt_extrude_internal *)bu_malloc( sizeof( struct rt_extrude_internal ), "extrusion" );
 	extr->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 	NAMEMOVE( sketch_name, extr->sketch_name );
-	NAMEMOVE( curve_name, extr->curve_name );
 	VMOVE( extr->V, V );
 	VMOVE( extr->h, h );
 	VMOVE( extr->u_vec, u_vec );
