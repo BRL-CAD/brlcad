@@ -28,6 +28,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <math.h>
@@ -235,7 +236,7 @@ ab_open(register FBIO *ifp, register char *file, int width, int height)
 
 		/* Measure length, allocate memory for string */
 		for( ep=cp; *ep != '\0' && *ep != '#'; ep++ ) /* NULL */ ;
-		ifp->if_host = malloc(ep-cp+2);
+		ifp->if_host = (char *)malloc(ep-cp+2);
 
 		ep = ifp->if_host;
 		for( ; *cp != '\0' && *cp != '#'; )
