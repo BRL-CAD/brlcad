@@ -551,8 +551,10 @@ static struct math_func_link {
 	"hdivide",            bn_hdivide,
 	"vjoin1",	      bn_vjoin1,
 	"mat_ae",             bn_mat_ae,
-	"mat_ae_vec",         bn_ae_vec,
+	"mat_ae_vec",         bn_ae_vec,	/* wrong name! */
+	"bn_ae_vec",          bn_ae_vec,
 	"mat_aet_vec",        bn_aet_vec,
+	"bn_aet_vec",         bn_aet_vec,	/* wrong name! */
 	"mat_angles",         bn_mat_angles,
 	"mat_eigen2x2",       bn_eigen2x2,
 	"mat_fromto",         bn_mat_fromto,
@@ -560,8 +562,10 @@ static struct math_func_link {
 	"mat_yrot",           bn_mat_yrot,
 	"mat_zrot",           bn_mat_zrot,
 	"mat_lookat",         bn_mat_lookat,
-	"mat_vec_ortho",      bn_vec_ortho,
-	"mat_vec_perp",       bn_vec_perp,
+	"mat_vec_ortho",      bn_vec_ortho,	/* wrong name! */
+	"bn_vec_ortho",       bn_vec_ortho,
+	"mat_vec_perp",       bn_vec_perp,	/* wrong name! */
+	"bn_vec_perp",        bn_vec_perp,
 	"mat_scale_about_pt", bn_mat_scale_about_pt_wrapper,
 	"mat_xform_about_pt", bn_mat_xform_about_pt,
 	"mat_arb_rot",        bn_mat_arb_rot,
