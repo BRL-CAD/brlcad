@@ -181,7 +181,7 @@ typedef long	bitv_t;		/* largest integer type */
  * Eventually, should be tied to type of hardware (IEEE, IBM, Cray)
  * used to implement the fastf_t type.
  */
-#ifdef vax
+#if defined(vax) || (defined(sgi) && !defined(mips))
 	/* DEC VAX "D" format, the most restrictive */
 #define MAX_FASTF		1.0e37	/* Very close to the largest number */
 #define SMALL_FASTF		1.0e-37	/* Anything smaller is zero */
