@@ -71,6 +71,11 @@ FBIO sgi_interface =
 		0L			/* page_pixels */
 		};
 
+
+int _sgi_cmap_flag;
+
+ColorMap _sgi_cmap;
+
 _LOCAL_ int
 sgi_dopen( ifp, file, width, height )
 FBIO	*ifp;
@@ -86,6 +91,9 @@ int	width, height;
 	ginit();
 	RGBmode();
 	gconfig();		/* Must be called after RGBmode() */
+
+
+	_sgi_cmap_flag = FALSE;
 
 	if ( width > ifp->if_max_width) 
 		width = ifp->if_max_width;
@@ -139,17 +147,14 @@ Pixel	*pixelp;
 int	count;
 {
 	short scan_count;
-	Coord xpos, ypos;
-	static RGBvalue rr[1024], gg[1024], bb[1024];
+	short xpos, ypos;
+	RGBvalue rr[1024], gg[1024], bb[1024];
 	Pixel * pixptr;
 	int first_time;
 	register int i;
 	int x_pos, y_pos;
 
 	first_time = 1;
-	
-
-	pixelp = (Pixel *) malloc( sizeof( Pixel) * count );
 
 	pixptr = pixelp;
 
@@ -159,7 +164,6 @@ int	count;
 		{
 			first_time = 0;
 			scan_count = ifp->if_width - x;
-
 			if ( count > scan_count )
 				count -= scan_count;
 			else
@@ -167,31 +171,41 @@ int	count;
 				scan_count = count;
 				count = 0;
 			}
+
 			xpos = x;
-			ypos = ifp->if_height - y;
+			ypos = y;
 		}
 
-		cmov2i( xpos, ypos-- );		/* move to current position */
-		
-		readRGB( scan_count, rr, gg, bb );
+		cmov2s( xpos, ypos );		/* move to current position */
+
+		readRGB( scan_count, rr, gg, bb ); 
 
 		for( i = 0; i < scan_count; i++, pixptr++)
 		{
-			pixptr->red = rr[i];
-			pixptr->green = gg[i];
-			pixptr->blue = bb[i];
+			if ( _sgi_cmap_flag == FALSE )
+			{
+				pixptr->red = rr[i];
+				pixptr->green = gg[i];
+				pixptr->blue = bb[i];
+			}
+			else
+			{
+				pixptr->red = _sgi_cmap.cm_red[ rr[i] ];
+				pixptr->green = _sgi_cmap.cm_green[ gg[i] ];
+				pixptr->blue = _sgi_cmap.cm_blue[ bb[i] ];
+			}
 		}
 
-		if ( count >= ifp->if_max_width )
-		{
+		if ( count >= ifp->if_max_width )  {
 			scan_count = ifp->if_max_width;
 			count -= scan_count;
 			x_pos = 0;
-		} else
-		{
+			ypos--;
+		} else	{
 			scan_count = 0;
 			count = 0;
 			x_pos = 0;
+			ypos--;
 		}
 	}
 }
@@ -238,9 +252,21 @@ short	count;
 
 		for( i = 0; i < scan_count; i++, pixptr++)
 		{
-			rr[i] = (RGBvalue) pixptr->red;
-			gg[i] = (RGBvalue) pixptr->green;
-			bb[i] = (RGBvalue) pixptr->blue;
+			if ( _sgi_cmap_flag == FALSE )
+			{
+				rr[i] = (RGBvalue) pixptr->red;
+				gg[i] = (RGBvalue) pixptr->green;
+				bb[i] = (RGBvalue) pixptr->blue;
+			}
+			else
+			{
+				rr[i] = (RGBvalue) 
+				    _sgi_cmap.cm_red[ (int) pixptr->red ];
+				gg[i] = (RGBvalue) 
+				    _sgi_cmap.cm_green[ (int) pixptr->green ];
+				bb[i] = (RGBvalue) 
+				    _sgi_cmap.cm_blue[ (int) pixptr->blue ];
+			}
 		}
 
 		writeRGB( scan_count, rr, gg, bb ); 
@@ -267,3 +293,40 @@ int	left, top, right, bottom;
 	viewport( left, right, top, bottom );
 }
 
+_LOCAL_ int
+DEVNAME_cmread( ifp, cmp )
+FBIO	*ifp;
+ColorMap	*cmp;
+{
+	register int i;
+
+	for( i = 0; i < 255; i++)
+	{
+		cmp->cm_red[i] = _sgi_cmap.cm_red[i];
+		cmp->cm_green[i] = _sgi_cmap.cm_green[i];
+		cmp->cm_blue[i] = _sgi_cmap.cm_blue[i];
+	}
+}
+
+_LOCAL_ int
+DEVNAME_cmwrite( ifp, cmp )
+FBIO	*ifp;
+ColorMap	*cmp;
+{
+	register int i;
+
+	if ( cmp == ( ColorMap *) 0)
+	{
+		return -1;
+	}
+	
+	_sgi_cmap_flag = TRUE;
+
+	for(i = 0; i < 255; i++)
+	{
+		_sgi_cmap.cm_red[i] = cmp -> cm_red[i];
+		_sgi_cmap.cm_green[i] = cmp-> cm_green[i]; 
+		_sgi_cmap.cm_blue[i] = cmp-> cm_blue[i];
+
+	}
+}
