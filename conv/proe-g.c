@@ -906,10 +906,8 @@ char line[MAX_LINE_LEN];
 					}
 				}
 				nmg_face_g( fu , pl );
-			}
-
-			if( area > 0.0 )
 				face_count++;
+			}
 			else
 				(void)nmg_kfu( fu );
 		}
@@ -1010,13 +1008,15 @@ char line[MAX_LINE_LEN];
 		}
 
 		/* verify face plane calculations */
-		if( debug )
-			rt_log( "\tMake faces within tolerance\n" );
-		nmg_make_faces_within_tol( s, &tol );
-#if 0
+
+#if 1
 		nmg_shell_coplanar_face_merge( s , &tol , 0 );
 
 		nmg_simplify_shell( s );
+
+		if( debug )
+			rt_log( "\tMake faces within tolerance\n" );
+		nmg_make_faces_within_tol( s, &tol );
 #endif
 		nmg_rebound( m , &tol );
 
@@ -1311,9 +1311,9 @@ char	*argv[];
 
         /* XXX These need to be improved */
         tol.magic = RT_TOL_MAGIC;
-        tol.dist = 0.1;
+        tol.dist = 0.005;
         tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-3;
+        tol.perp = 1e-6;
         tol.para = 1 - tol.perp;
 
 	nmg_tbl( &null_parts, TBL_INIT, (long *)NULL );
@@ -1325,7 +1325,7 @@ char	*argv[];
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "i:rsdax:X:pu:")) != EOF) {
+	while ((c = getopt(argc, argv, "i:rsdax:X:nu:")) != EOF) {
 		switch (c) {
 		case 'i':
 			id_no = atoi( optarg );
