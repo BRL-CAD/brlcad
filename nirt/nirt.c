@@ -217,6 +217,7 @@ int argc;
 char **argv;
 {
     char                db_title[TITLE_LEN+1];/* title from MGED file      */
+    const char		*tmp_str;
     extern char		local_u_name[];
     extern double	base2local;
     extern double	local2base;
@@ -445,7 +446,12 @@ char **argv;
     /* initialize NIRT's local units */
     base2local = rtip -> rti_dbip -> dbi_base2local;
     local2base = rtip -> rti_dbip -> dbi_local2base;
-    strncpy(local_u_name, bu_units_string(local2base), 64);
+    tmp_str = bu_units_string(local2base);
+    if( tmp_str ) {
+	    strncpy(local_u_name, bu_units_string(local2base), 64);
+    } else {
+	    strcpy( local_u_name, "Unknown units" );
+    }
 
     if (silent_flag != SILENT_YES)
     {
