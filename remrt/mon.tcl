@@ -60,6 +60,7 @@ proc find_db {} {
 		}
 		set db_path($host) [lindex $reply 1]
 	}
+	array donesearch nodes $j
 }
 
 proc server_sense {host} {
@@ -107,6 +108,7 @@ proc sense_servers {} {
 		server_sense $host
 		##.title_$shost configure -text "$status($host)"
 	}
+	array donesearch nodes $j
 }
 
 proc reconnect {} {
@@ -130,10 +132,11 @@ proc reconnect {} {
 		}
 		# fds($host) is now set non-dead, to the actual fd.
 		# establish per-connection state
-		set db_path($formalname) "unknown"
+		set db_path($name) "unknown"
 
 		server_sense $host
 	}
+	array donesearch nodes $j
 }
 
 proc register {informal_name formalname _cmd_ dir} {
