@@ -585,6 +585,81 @@ int				zzz;		/* compression, someday */
 }
 
 /*
+ *			D B 5 _ I M P O R T _ A T T R I B U T E S
+ *
+ *  Convert the on-disk encoding into a handy easy-to-use
+ *  bu_attribute_value_set structure.
+ *  Take advantage of the readonly_min/readonly_max capability
+ *  so that we don't have to bu_strdup() each string, but can
+ *  simply point to it in the provided buffer *ap.
+ *  Important implication:  don't free *ap until you're done with this avs.
+ *
+ *  The upshot of this is that bu_avs_add() and bu_avs_remove() can
+ *  be safely used with this *avs.
+ *
+ *  The input *avs should not have been previously initialized.
+ *
+ *  Returns -
+ *	>0	count of attributes successfully imported
+ *	-1	Error, mal-formed input
+ */
+int
+db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_external *ap )
+{
+	const char	*cp;
+	const char	*ep;
+	int		count = 0;
+	struct bu_attribute_value_pair *app;
+
+	BU_CK_EXTERNAL(ap);
+
+	BU_ASSERT_LONG( ap->ext_nbytes, >=, 5 );
+
+	/* First pass -- count number of attributes */
+	cp = (const char *)ap->ext_buf;
+	ep = (const char *)ap->ext_buf+ap->ext_nbytes;
+
+	/* Null "name" string indicates end of attribute list */
+	while( *cp != '\0' )  {
+		if( cp >= ep )  {
+			bu_log("db5_import_attributes() ran off end of buffer, database is corrupted\n");
+			return -1;
+		}
+		cp += strlen(cp)+1;	/* name */
+		cp += strlen(cp)+1;	/* value */
+		count++;
+	}
+	/* Ensure we're exactly at the end */
+	BU_ASSERT_PTR( cp+1, ==, ep );
+
+	bu_avs_init( avs, count+3, "db5_import_attributes" );
+
+	/* Signal region of memory that input comes from */
+	avs->readonly_min = ap->ext_buf;
+	avs->readonly_max = ap->ext_buf + ap->ext_nbytes-1;
+
+	/* Second pass -- populate attributes.  Peek inside struct. */
+	cp = (const char *)ap->ext_buf;
+	app = avs->avp;
+	while( *cp != '\0' )  {
+		app->name = cp;
+		cp += strlen(cp)+1;	/* name */
+		app->value = cp;
+		cp += strlen(cp)+1;	/* value */
+		app++;
+		avs->count++;
+	}
+	BU_ASSERT_PTR( cp+1, ==, ep );
+	BU_ASSERT_LONG( avs->count, <, avs->max );
+	BU_ASSERT_LONG( avs->count, ==, count );
+
+	app->name = NULL;
+	app->value = NULL;
+
+	return avs->count;
+}
+
+/*
  *			D B 5 _ E X P O R T _ A T T R I B U T E S
  *
  *  One attempt at encoding attribute-value information in the external
