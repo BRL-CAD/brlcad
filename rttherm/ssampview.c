@@ -132,7 +132,7 @@ char		*argv[];
 		rt_tabdata_add( sum, ntsc_r, ntsc_g );
 		rt_tabdata_add( sum, sum, ntsc_b );
 		assign_tabdata_to_tcl_var( interp, "ntsc_sum", sum );
-		bu_free( sum, "rt_tabdata sum" );
+		rt_tabdata_free( sum );
 	}
 
 #if 0
@@ -162,10 +162,10 @@ char		*argv[];
 		rt_tabdata_add( sum, sum, b );
 		assign_tabdata_to_tcl_var( interp, "reflectance_sum", sum );
 
-		bu_free( r, "r" );
-		bu_free( g, "g" );
-		bu_free( b, "b" );
-		bu_free( sum, "sum" );
+		rt_tabdata_free( r );
+		rt_tabdata_free( g );
+		rt_tabdata_free( b );
+		rt_tabdata_free( sum );
 	}
 #endif
 
@@ -186,9 +186,9 @@ char		*argv[];
 		rt_spect_black_body_fast( c, 10000.0 );
 		assign_tabdata_to_tcl_var( interp, "c_10000", c );
 
-		bu_free( a, "a" );
-		bu_free( b, "b" );
-		bu_free( c, "c" );
+		rt_tabdata_free( a );
+		rt_tabdata_free( b );
+		rt_tabdata_free( c );
 	}
 
 	return TCL_OK;
@@ -477,7 +477,7 @@ double x, y, z;
 	MAT3X3VEC( rgb2, xyz2rgb, xyz2 );
 	VPRINT( "rgb2", rgb2 );
 
-	rt_free( (char *)tabp, "struct rt_tabdata" );
+	rt_tabdata_free( tabp );
 exit(2);
 }
 
@@ -578,6 +578,7 @@ char	**argv;
 
 	/* Allocate and read 2-D spectrum array */
 	data = rt_tabdata_binary_read( basename, width*height, spectrum );
+	if( !data )  bu_bomb("rt_tabdata_binary_read() of basename failed\n");
 
 	/* Allocate framebuffer image buffer */
 	pixels = (unsigned char *)bu_malloc( width * height * 3, "pixels[]" );
@@ -617,6 +618,7 @@ char		*argv[];
 {
 	int	wl;
 	char	buf[32];
+	int	got;
 
 	if( argc != 2 )  {
 		interp->result = "Usage: doit1 wavel#";
@@ -641,7 +643,7 @@ char		*argv[];
 		show_color(wl);
 	else
 		rescale(wl);
-	fb_writerect( fbp, 0, 0, width, height, pixels );
+	got = fb_writerect( fbp, 0, 0, width, height, pixels );
 	fb_poll(fbp);
 
 	/* export C variables to TCL, one-way */
@@ -746,6 +748,7 @@ int	off;
 	int		todo;
 	int		nbytes;
 	fastf_t		scale;
+	struct rt_tabdata *new;
 
 	cp = (char *)data;
 	nbytes = RT_SIZEOF_TABDATA(spectrum);
@@ -755,13 +758,10 @@ int	off;
 	scale = 255 / (maxval - minval);
 
 	/* Build CIE curves */
-	rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
+	if( cie_x->magic == 0 )
+		rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
 
-	if( use_atmosphere )  {
-		rt_tabdata_mul( cie_x, cie_x, atmosphere );
-		rt_tabdata_mul( cie_y, cie_y, atmosphere );
-		rt_tabdata_mul( cie_z, cie_z, atmosphere );
-	}
+	RT_GET_TABDATA(new, spectrum);
 
 	for( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
 		struct rt_tabdata	*sp;
@@ -772,10 +772,33 @@ int	off;
 		sp = (struct rt_tabdata *)cp;
 		RT_CK_TABDATA(sp);
 
-		/* rt_spect_curve_to_xyz( xyz, sp, cie_x, cie_y, cie_z ); */
-		xyz[X] = rt_tabdata_mul_area1( sp, cie_x );
-		xyz[Y] = rt_tabdata_mul_area1( sp, cie_y );
-		xyz[Z] = rt_tabdata_mul_area1( sp, cie_z );
+		if( use_atmosphere )  {
+			rt_tabdata_mul( new, sp, atmosphere );
+			rt_tabdata_freq_shift( new, new, spectrum->x[off] - 380.0 );
+		} else {
+			rt_tabdata_freq_shift( new, sp, spectrum->x[off] - 380.0 );
+		}
+
+#if 0
+		if( todo == (width/2)*(height/2) )  {
+			struct bu_vls str;
+			bu_vls_init(&str);
+
+			bu_vls_printf(&str, "popup_plot_tabdata centerpoint {");
+			rt_tabdata_to_tcl(&str, sp);
+			bu_vls_printf(&str, "}" );
+			Tcl_Eval( interp, bu_vls_addr(&str) );
+
+			bu_vls_trunc(&str,0);
+			bu_vls_printf(&str, "popup_plot_tabdata centerpoint_shifted {");
+			rt_tabdata_to_tcl(&str, new);
+			bu_vls_printf(&str, "}" );
+			Tcl_Eval( interp, bu_vls_addr(&str) );
+			bu_vls_free(&str);
+		}
+#endif
+
+		rt_spect_curve_to_xyz( xyz, new, cie_x, cie_y, cie_z );
 
 		MAT3X3VEC( rgb, xyz2rgb, xyz );
 
@@ -794,4 +817,6 @@ int	off;
 		else if( val < 0 ) val = 0;
 		pp[BLU] = val;
 	}
+
+	rt_tabdata_free( new );
 }

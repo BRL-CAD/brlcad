@@ -277,6 +277,8 @@ puts "disp.tcl: about to define proc popup_plot_tabdata"
 #
 #  Create a one-time throwaway pop-up window with a tabdata plot in it.
 #
+#  This can be called from TCL or invoked from C code.
+#
 set popup_counter 0
 proc popup_plot_tabdata { title data {minval -1} {maxval -1} {screen_xmax 255} {screen_ymax 255} }  {
 	global	popup_counter
@@ -287,13 +289,10 @@ proc popup_plot_tabdata { title data {minval -1} {maxval -1} {screen_xmax 255} {
 	toplevel $popup
 	wm title $popup $title
 
-	puts "About to run canvas ${popup}.canvas"
-
 	canvas ${popup}.canvas -width [expr $screen_xmax + 1] -height [expr $screen_ymax + 1]
 	button ${popup}.dismiss -text "Dismiss" -command "destroy $popup"
 	pack ${popup}.canvas ${popup}.dismiss -side top -in $popup
 
-puts "about to call plot_tabdata"
 	plot_tabdata ${popup}.canvas $data $minval $maxval $screen_xmax $screen_ymax
 	return $popup
 }

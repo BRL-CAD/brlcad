@@ -110,6 +110,9 @@ CONST struct rt_table	*tabp;
 
 	RT_CK_TABLE(tabp);
 
+	i = rt_table_interval_num_samples( tabp, 430., 650. );
+	if( i <= 4 )  bu_log("rt_spect_make_CIE_XYZ: insufficient samples (%d) in visible band\n", i);
+
 	RT_GET_TABDATA( a, tabp );
 	RT_GET_TABDATA( b, tabp );
 	RT_GET_TABDATA( c, tabp );
@@ -234,45 +237,6 @@ static CONST double rt_NTSC_B[][2] = {
 struct rt_tabdata *rt_NTSC_r_tabdata;
 struct rt_tabdata *rt_NTSC_g_tabdata;
 struct rt_tabdata *rt_NTSC_b_tabdata;
-
-/* XXX Move to librt/tabdata.c */
-/*
- *			R T _ T A B D A T A _ F R O M _ A R R A Y
- *
- *  Given an array of (x,y) pairs, build the relevant rt_table and
- *  rt_tabdata structures.
- *  The table is terminated by an x value <= 0.
- *  Consistent with the interpretation of the spans,
- *  invent a final span ending x value.
- */
-struct rt_tabdata *
-rt_tabdata_from_array( array )
-CONST double *array;
-{
-	register CONST double	*dp;
-	int			len = 0;
-	struct rt_table		*tabp;
-	struct rt_tabdata	*data;
-	register int		i;
-
-	/* First, find len */
-	for( dp = array; *dp > 0; dp += 2 )	/* NIL */ ;
-	len = (dp - array) >> 1;
-
-	/* Second, build rt_table */
-	RT_GET_TABLE( tabp, len );
-	for( i = 0; i < len; i++ )  {
-		tabp->x[i] = array[i<<1];
-	}
-	tabp->x[len] = tabp->x[len-1] + 1;	/* invent span end */
-
-	/* Third, build rt_tabdata (last input "y" is ignored) */
-	RT_GET_TABDATA( data, tabp );
-	for( i = 0; i < len-1; i++ )  {
-		data->y[i] = array[(i<<1)+1];
-	}
-	return data;
-}
 
 /*
  *			R T _ S P E C T _ M A K E _ N T S C _ R G B
@@ -739,6 +703,35 @@ CONST struct rt_tabdata	*cie_z;
 		xyz[X], cie_x,
 		xyz[Y], cie_y,
 		xyz[Z], cie_z );
+}
+
+/*
+ *			R T _ T A B L E _ M A K E _ V I S I B L E _ A N D _ U N I F O R M
+ *
+ *  A quick hack to make sure there are enough samples in the visible band.
+ */
+struct rt_table *
+rt_table_make_visible_and_uniform( num, first, last, vis_nsamp )
+int	num;
+double	first;
+double	last;
+int	vis_nsamp;
+{
+	struct rt_table	*new;
+	struct rt_table *uniform;
+	struct rt_table	*vis;
+
+	if( vis_nsamp < 10 )  vis_nsamp = 10;
+	uniform = rt_table_make_uniform( num, first, last );
+	vis = rt_table_make_uniform( vis_nsamp, 340.0, 700.0 );
+
+	new = rt_table_merge2( uniform, vis );
+	rt_ck_table(new);
+
+	rt_table_free(uniform);
+	rt_table_free(vis);
+
+	return new;
 }
 
 #if 0

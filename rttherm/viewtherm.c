@@ -58,10 +58,15 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../rt/light.h"
 
 /* XXX Move to raytrace.h when routine goes into LIBRT */
-RT_EXTERN( double	rt_pixel_footprint, (CONST struct application *ap,
+BU_EXTERN( double	rt_pixel_footprint, (CONST struct application *ap,
 				CONST struct hit *hitp,
 				CONST struct seg *segp,
 				CONST vect_t normal));
+
+
+/* XXX move to h/tabdata.h when function moves out of spectrum.c */
+BU_EXTERN(struct rt_table	*rt_table_make_visible_and_uniform, (int num,
+				double first, double last, int vis_nsamp));
 
 
 int		use_air = 0;		/* Handling of air in librt */
@@ -634,8 +639,8 @@ char *file, *obj;
 	bu_struct_print( "rttherm variables", view_parse, NULL );
 
 	/* Build spectrum definition */
-	spectrum = rt_table_make_uniform( (int)spectrum_param[0],
-		spectrum_param[1], spectrum_param[2] );
+	spectrum = rt_table_make_visible_and_uniform( (int)spectrum_param[0],
+		spectrum_param[1], spectrum_param[2], 20 );
 
 	rt_vls_init( &name );
 	rt_vls_printf( &name, "%s.spect", outputfile ? outputfile : "RTTHERM" );
