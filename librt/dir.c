@@ -73,13 +73,18 @@ int len;
 	rt_i.rti_inf_box.bn.bn_type = CUT_BOXNODE;
 
 	buf[0] = '\0';
-	(void)fread( (char *)&record, sizeof record, 1, rt_i.fp );
-	if( record.u_id != ID_IDENT )  {
-		rt_log("WARNING:  File is not a proper GED database\n");
+
+	/* In a portable way, read the header (even if not rewound) */
+	if(rewind( rt_i.fp )==EOF)
+		rt_log("rt_dirbuild: rewind() failure 1\n");
+	if( fread( (char *)&record, sizeof record, 1, rt_i.fp ) != 1  ||
+	    record.u_id != ID_IDENT )  {
+		rt_log("WARNING:  File is lacking a proper MGED database header\n");
 		rt_log("This database should be converted before further use.\n");
 	}
 	if(rewind( rt_i.fp )==EOF)
-		rt_log("rt_dirbuild: rewind() failure\n");
+		rt_log("rt_dirbuild: rewind() failure 2\n");
+
 	while(1)  {
 		if( (addr = ftell(rt_i.fp)) == EOF )
 			rt_log("rt_dirbuild:  ftell() failure\n");
@@ -207,9 +212,13 @@ register char *name;
 long laddr;
 {
 	register struct directory *dp;
+	char local[NAMESIZE+2];
 
+	(void)strncpy( local, name, NAMESIZE );	/* Trim the name */
+	local[NAMESIZE] = '\0';			/* Ensure null termination */
+	if(rt_g.debug&DEBUG_DB)rt_log("rt_dir_add(%s,x%x)\n", local, laddr);
 	GETSTRUCT( dp, directory );
-	dp->d_namep = rt_strdup( name );
+	dp->d_namep = rt_strdup( local );
 	dp->d_addr = laddr;
 	dp->d_forw = rt_i.rti_DirHead;
 	rt_i.rti_DirHead = dp;
