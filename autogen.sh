@@ -152,6 +152,14 @@ if test ! -f NEWS ; then
 fi
 
 
+##################################
+# protect COPYING from overwrite #
+##################################
+if test -f COPYING ; then
+  cp -pf COPYING misc/COPYING.backup
+fi
+
+
 ##################################################
 # make sure certain generated files do not exist #
 ##################################################
@@ -221,6 +229,16 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
   [ ! $? = 0 ] && echo "ERROR: automake failed" && exit 2
 fi
 
+
+###############################
+# restore COPYING from backup #
+###############################
+if test -f misc/COPYING.backup ; then
+  cp -pf misc/COPYING.backup COPYING
+  if test -f COPYING ; then
+    rm -f misc/COPYING.backup
+  fi
+fi
 
 ################
 # restore path #
