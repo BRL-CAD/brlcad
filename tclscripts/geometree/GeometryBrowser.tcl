@@ -43,25 +43,24 @@
 #
 
 
-global glob_compat_mode
-set prevGlobCompatMode [ set glob_compat_mode ]
-set glob_compat_mode 0
+#global glob_compat_mode
+#set prevGlobCompatMode [ set glob_compat_mode ]
+#set glob_compat_mode 0
 
 package require Itcl
 package require Itk
 package require Iwidgets
 
 # go ahead and blow away the class if we are reloading
-if [ catch {delete class GeometryBrowser} error ] { 
+#if [ catch {delete class GeometryBrowser} error ] { 
 #	puts $error
-}
+#}
 
+package provide GeometryBrowser 1.0
 
 class GeometryBrowser {
-	inherit itk::Toplevel
+	inherit itk::Toplevel	
 
-	package provide GeometryBrowser 1.0
-	
 	constructor {} {}
 	destructor {} 
 	
@@ -1508,6 +1507,6 @@ body GeometryBrowser::extractNodeName { { node "" } } {
 
 # !!! remove glob hack once included into menu properly
 # restore previous globbing mode
-if { [ catch { set glob_compat_mode [ set prevGlobCompatMode ] } error ] } {
-	puts "unable to restore glob_compat_mode?"
-}
+#if { [ catch { set glob_compat_mode [ set prevGlobCompatMode ] } error ] } {
+#	puts "unable to restore glob_compat_mode?"
+#}
