@@ -24,6 +24,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+int
 Findp()
 {
 	int saverec,rec2,i;
