@@ -508,45 +508,41 @@ char **argv;
 	    get_attached();
 #endif
 	  } else {
-	      struct bu_vls vls;
-	      int status;
-
-	      /* make this a process group leader */
-	      setpgid(0, 0);
-
-	      bu_vls_init(&vls);
-	      bu_vls_strcpy(&vls, "gui");
-	      status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	      bu_vls_free(&vls);
-
-	      if (status != TCL_OK) {
-		bu_log("%s", interp->result);
-		exit(1);
-	      }
+	    struct bu_vls vls;
+	    int status;
+	    
+	    /* make this a process group leader */
+	    setpgid(0, 0);
+	    
+	    bu_vls_init(&vls);
+	    bu_vls_strcpy(&vls, "gui");
+	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    
+	    if (status != TCL_OK) {
+	      bu_log("%s", interp->result);
+	      exit(1);
+	    }
 
 #ifndef WIN32
-	      (void)pipe(pipe_out);
-	      (void)pipe(pipe_err);
-
-	      /* Redirect stdout */
-	      (void)close(1);
-	      (void)dup(pipe_out[1]);
-	      (void)close(pipe_out[1]);
-
-	      /* Redirect stderr */
-	      (void)close(2);
-	      (void)dup(pipe_err[1]);
-	      (void)close(pipe_err[1]);
+	    (void)pipe(pipe_out);
+	    (void)pipe(pipe_err);
+	    
+	    /* Redirect stdout */
+	    (void)close(1);
+	    (void)dup(pipe_out[1]);
+	    (void)close(pipe_out[1]);
+	    
+	    /* Redirect stderr */
+	    (void)close(2);
+	    (void)dup(pipe_err[1]);
+	    (void)close(pipe_err[1]);
 
 #  if 0
-	      /* close stdin */
-	      (void)close(0);
+	    /* close stdin */
+	    (void)close(0);
 #  endif
-	    }
 #endif  /* WIN32 */
-	    else{
-	      exit(0);
-	    }
 
 	    bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, GENPTR_NULL);
 	  }
