@@ -66,6 +66,11 @@ static int	nmg_debug=0;		/* rt_g.NMG_debug */
 static int	polysolids=0;		/* Flag: >0 -> Build polysolids, not NMG's */
 static int	comp_count=0;		/* Count of components in FASTGEN4 file */
 static int	conv_count=0;		/* Count of components successfully converted to BRLCAD */
+static int	second_chance=0;	/* Count of PLATE-MODE objects converted on second try */
+static long	curr_offset=0;		/* Offset into input file for current element */
+static long	curr_sect=0;		/* Offset into input file for current section card */
+static long	prev_sect=0;		/* Offset into input file for previous section card */
+static int	try_count=0;		/* Counter for number of tries to build currect section */
 static struct cline    *cline_last_ptr; /* Pointer to last element in linked list of clines */
 static struct wmember  group_head[11];	/* Lists of regions for groups */
 static struct nmg_ptbl stack;		/* Stack for traversing name_tree */
@@ -169,8 +174,8 @@ struct name_tree
 	int region_id;
 	int element_id;		/* > 0  -> normal fastgen4 element id
 				 * < 0  -> CLINE element (-pt1)
-				 * == 0 -> component name
-				 */
+				 * == 0 -> component name */
+	int in_comp_group;	/* > 0 -> region already in a component group */
 	char name[NAMESIZE+1];
 	struct name_tree *nleft,*nright,*rleft,*rright;
 } *name_root;
@@ -789,6 +794,7 @@ char *name;
 	new_ptr->rleft = (struct name_tree *)NULL;
 	new_ptr->rright = (struct name_tree *)NULL;
 	new_ptr->region_id = (-region_id);
+	new_ptr->in_comp_group = 0;
 	new_ptr->element_id = 0;
 
 	if( !*root )
@@ -854,6 +860,7 @@ int el_id;
 	new_ptr->nright = (struct name_tree *)NULL;
 	new_ptr->region_id = reg_id;
 	new_ptr->element_id = el_id;
+	new_ptr->in_comp_group = 0;
 	strncpy( new_ptr->name , name , NAMESIZE+1 );
 
 	if( !name_root )
@@ -1004,13 +1011,14 @@ make_comp_group()
 		if( !ptr )
 			break;
 
-		if(ptr->region_id == region_id && ptr->element_id )
+		if(ptr->region_id == region_id && ptr->element_id && !ptr->in_comp_group )
 		{
 			if( mk_addmember( ptr->name , &g_head , WMOP_UNION ) == (struct wmember *)NULL )
 			{
 				rt_log( "make_comp_group: Could not add %s to group for ident %d\n" , ptr->name , ptr->region_id );
 				break;
 			}
+			ptr->in_comp_group = 1;
 		}
 		ptr = ptr->nright;
 	}
@@ -1159,9 +1167,6 @@ char type;
 	tmp_name = find_region_name( g_id , c_id , element_id );
 	if( tmp_name )
 	{
-		if( !pass )
-			rt_log( "make_region_name: Name for region with g_id=%d, c_id=%d, el_id=%d, and type %c already exists (%s)\n",
-				g_id, c_id, element_id, type , tmp_name );
 		strncpy( name , tmp_name , NAMESIZE+1 );
 		return;
 	}
@@ -2260,21 +2265,7 @@ Extrude_faces()
 
 		/* Extrude distance is one-half the thickness */
 		if( Adjust_vertices( shells[ thick_no*2 + center - 1 ] , (fastf_t)(thicks[thick_no]/2.0) ) )
-		{
-			/* debugging: write an NMG of the outer shell named "name.BAD" */
-			char bad[NAMESIZE+1];
-
-			sprintf( bad , "BAD.%d.%d" , group_id , comp_id );
-			mk_nmg( fdout , bad , m );
-			fflush( fdout );
-			rt_log( "Extrude_faces: Could not extrude shell x%x.\n\tBAD shell written as %s\n" , shells[ thick_no*2 + center - 1 ] , bad );
-			nmg_km( m );
-			m = (struct model *)NULL;
-			r = (struct nmgregion*)NULL;
-			s = (struct shell *)NULL;
-			rt_free( (char *)dup_tbl , "Extrude_faces: copy_tbl" );
-			return( 1 );
-		}
+			rt_bomb( "Failure in Adjusting vertices\n" );
 	}
 
 	/* make a translation table to store correspondence between original and dups */
@@ -2309,21 +2300,7 @@ Extrude_faces()
 			nmg_invert_shell( dup_shells[ thick_no*2 + center - 1 ] , &tol );
 
 			if( Adjust_vertices( dup_shells[ thick_no*2 + center - 1 ] , thicks[thick_no] ) )
-			{
-				/* debugging: write an NMG of the outer shell named "name.BAD" */
-				char bad[NAMESIZE+1];
-
-				sprintf( bad , "BAD.%d.%d" , group_id , comp_id );
-				mk_nmg( fdout , bad , m );
-				fflush( fdout );
-				rt_log( "Extrude_faces: Could not extrude shell x%x.\n\tBAD shell written as %s\n" , shells[ thick_no*2 + center - 1 ] , bad );
-				nmg_km( m );
-				m = (struct model *)NULL;
-				r = (struct nmgregion*)NULL;
-				s = (struct shell *)NULL;
-				rt_free( (char *)dup_tbl , "Extrude_faces: copy_tbl" );
-				return( 1 );
-			}
+				rt_bomb( "Failure in Adjust vertices\n" );
 		}
 	}
 
@@ -2366,19 +2343,7 @@ Extrude_faces()
 	if( debug )
 		rt_log( "Close shell\n" );
 	if( nmg_open_shells_connect( s1 , s2 , dup_tbl , &tol ) )
-	{
-		/* debugging: write an NMG of the outer shell named "name.BAD" */
-		char bad[NAMESIZE+1];
-
-		sprintf( bad , "BAD.%d.%d" , group_id , comp_id );
-		mk_nmg( fdout , bad , m );
-		fflush( fdout );
-		rt_log( "Extrude_faces: Could not connect plate mode shells.\n\tBAD shell written as %s\n" , bad );
-		nmg_km( m );
-		m = (struct model *)NULL;
-		rt_free( (char *)dup_tbl , "Extrude_faces: copy_tbl" );
-		return( 1 );
-	}
+		rt_bomb( "Extrude_faces: Could not connect plate mode shells.\n" );
 
 	rt_free( (char *)thicks , "Extrude_faces: thicks" );
 	rt_free( (char *)shells , "Extrude_faces: shells" );
@@ -2386,6 +2351,127 @@ Extrude_faces()
 	rt_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
 	s = s1;
 	Glue_shell_faces( s );
+}
+
+void
+Make_arb6_obj()
+{
+	int arb_count=0;
+	point_t pts[8];
+	struct fast_fus *fus;
+	char name[NAMESIZE+1];
+	struct wmember head;
+	struct wmember arb6_head;
+
+	RT_LIST_INIT( &arb6_head.l );
+
+	fus = fus_root;
+	while( fus )
+	{
+		struct faceuse *fu;
+		struct loopuse *lu;
+		struct edgeuse *eu;
+		struct vertex *v;
+		struct vertex_g *vg;
+		vect_t normal;
+		char arb6_name[NAMESIZE+1];
+
+		fu = fus->fu;
+
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+		if( fu->orientation != OT_SAME )
+		{
+			rt_log( "Make_arb6_obj: face has no OT_SAME use (fu=x%x)\n" , fu );
+			return;
+		}
+
+		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		{
+			rt_log( "Make_arb6_obj: Failed (loop without edgeuses)\n" );
+			return;
+		}
+
+		NMG_GET_FU_NORMAL( normal , fu );
+
+		eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+		NMG_CK_EDGEUSE( eu );
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX( v );
+		vg = v->vg_p;
+		NMG_CK_VERTEX_G( vg );
+		VMOVE( pts[0] , vg->coord );
+
+		eu = RT_LIST_PNEXT( edgeuse , eu );
+		NMG_CK_EDGEUSE( eu );
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX( v );
+		vg = v->vg_p;
+		NMG_CK_VERTEX_G( vg );
+		VMOVE( pts[1] , vg->coord );
+
+		eu = RT_LIST_PNEXT( edgeuse , eu );
+		NMG_CK_EDGEUSE( eu );
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX( v );
+		vg = v->vg_p;
+		NMG_CK_VERTEX_G( vg );
+		VMOVE( pts[4] , vg->coord );
+		VMOVE( pts[5] , pts[4] );
+
+		VJOIN1( pts[3] , pts[0] , fus->thick , normal );
+		VJOIN1( pts[2] , pts[1] , fus->thick , normal );
+		VJOIN1( pts[6] , pts[4] , fus->thick , normal );
+		VMOVE( pts[7] , pts[6] );
+
+		sprintf( arb6_name , "arb%d.%d.%d" , group_id , comp_id , arb_count );
+		arb_count++;
+
+		mk_arb8( fdout , arb6_name , pts );
+
+		if( mk_addmember( arb6_name , &arb6_head , WMOP_UNION ) == WMEMBER_NULL )
+			rt_log( "Make_arb6_obj: Failed to add %s to member list\n" , arb6_name );
+
+		fus = fus->next;
+	}
+
+out:	nmg_km( m );
+
+	m = (struct model *)NULL;
+	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
+
+	fus = fus_root;
+	while( fus )
+	{
+		struct fast_fus *tmp;
+
+		tmp = fus;
+		fus = fus->next;
+		rt_free( (char *)tmp , "make_nmg_objects: fus" );
+	}
+	fus_root = (struct fast_fus *)NULL;
+
+	/* make arb6 group */
+	make_nmg_name( name , region_id );
+	mk_lfcomb( fdout, name, &arb6_head, 0 );
+
+	/* make region containing nmg object */
+	RT_LIST_INIT( &head.l );
+
+	if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
+	{
+		rt_log( "make_nmg_objects: mk_addmember failed\n" , name );
+		rt_bomb( "Cannot make nmg region\n" );
+	}
+
+	/* subtract any holes for this component */
+	Subtract_holes( &head , comp_id , group_id );
+
+	MK_REGION( fdout , &head , group_id , comp_id , nmgs , NMG )
 }
 
 void
@@ -2429,7 +2515,12 @@ make_nmg_objects()
 
 	nmg_fix_normals( s , &tol );
 
-	if( mode == PLATE_MODE )
+	if( mode == PLATE_MODE && try_count )
+	{
+		Make_arb6_obj();
+		return;
+	}
+	else if( mode == PLATE_MODE )
 	{
 		if( debug )
 		{
@@ -2516,6 +2607,8 @@ make_nmg_objects()
 		mk_nmg( fdout , name , m );
 		fflush( fdout );
 	}
+
+	try_count = 0;
 
 out:	nmg_km( m );
 
@@ -3361,11 +3454,15 @@ int final;
 	if( debug )
 		rt_log( "do_section: %s\n" , line );
 
+	prev_sect = curr_sect;
+	curr_sect = curr_offset;
+
 	if( pass )
 	{
 		if( region_id )
 		{
-			comp_count++;
+			if( !try_count )
+				comp_count++;
 			rt_log( "Making component %s, group #%d, component #%d\n",
 					name_name, group_id , comp_id );
 			if( RT_SETJUMP )
@@ -3434,13 +3531,44 @@ int final;
 					rt_free( (char *)tmp , "Do_section: adj" );
 				}
 				adj_root = (struct adjacent_faces *)NULL;
+
+				/* If a plate-mode component failed, try again using arb6's */
+				if( mode == PLATE_MODE )
+				{
+					/* increment try counter */
+					try_count++;
+
+					if( try_count == 1 )
+					{
+						if( fseek( fdin , prev_sect , SEEK_SET ) )
+						{
+							rt_log( "Cannot seek in input file, not retrying group %d, comnponent %d\n",
+								group_id , comp_id );
+						}
+						else
+						{
+							rt_log( "Retrying group %d, component %d\n",
+								group_id , comp_id );
+							if( !final )
+								(void)getline();
+						}
+					}
+				}
 			}
 			else
 			{
 				make_nmg_objects();
 				make_cline_regions();
 				make_comp_group();
-				conv_count++;
+
+				if( try_count )
+				{
+					second_chance++;
+					try_count = 0;
+				}
+				else
+					conv_count++;
+
 				RT_UNSETJUMP;
 			}
 		}
@@ -3799,13 +3927,13 @@ do_hex2()
 	MK_REGION( fdout , &head , group_id , comp_id , element_id , CHEX1 )
 }
 
-void
+int
 Process_input( pass_number )
 int pass_number;
 {
 
 /*	if( debug ) */
-		rt_log( "\n\nProcess_input( pass = %d )\n" , pass_number );
+		rt_log( "\n\nProcess_input( pass = %d ), try = %d\n" , pass_number , try_count );
 /*	rt_prmem( "At start of Process_input:" );	*/
 
 	if( pass_number != 0 && pass_number != 1 )
@@ -3816,9 +3944,9 @@ int pass_number;
 
 	region_id = 0;
 	pass = pass_number;
+	curr_offset = ftell( fdin );
 	while( getline() )
 	{
-
 		if( !strncmp( line , "VEHICLE" , 7 ) )
 			do_vehicle();
 		else if( !strncmp( line , "HOLE" , 4 ) )
@@ -3856,13 +3984,20 @@ int pass_number;
 		}
 		else
 			rt_log( "ERROR: skipping unrecognized data type\n%s\n" , line );
+
+		curr_offset = ftell( fdin );
 	}
+
+	if( try_count )
+		return( 1 );
 
 	if( debug )
 	{
 		rt_log( "At pass %d:\n" , pass );
 		List_names();
 	}
+
+	return( 0 );
 }
 
 main( argc , argv )
@@ -3970,7 +4105,7 @@ char *argv[];
 	if( !vehicle[0] )
 		mk_id_units( fdout , argv[optind] , "in" );
 
-	Process_input( 1 );
+	while( Process_input( 1 ) );
 
 	/* make groups */
 	do_groups();
@@ -3979,4 +4114,5 @@ char *argv[];
 		List_holes();
 
 	rt_log( "%d components converted out of %d attempted\n" , conv_count , comp_count );
+	rt_log( "\t%d failures converted on second try (as a group of ARB6 solids)\n", second_chance );
 }
