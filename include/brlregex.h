@@ -42,9 +42,7 @@
 #ifndef _REGEX_H_
 #define	_REGEX_H_
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"	/* BRLCAD file */
-#endif
+#include "common.h"
 
 /* From #include <sys/cdefs.h> */
 #if !defined(__P)

@@ -21,7 +21,7 @@
  *	All rights reserved.
  *
  *  Include Sequencing -
- *	#include "config.h"	/_* Must come before system <> includes *_/
+ *	#include "common.h"	/_* Must come before system <> includes *_/
  *	#ifdef USE_STRING_H	/_* OPTIONAL, for strcmp() etc. *_/
  *	#  include <string.h>
  *	#else
