@@ -161,9 +161,15 @@ int		flipflag;
 	bu_vls_printf( &str, "} c1 %g c2 %g pdir {",
 		crv.crv_c1, crv.crv_c2 );
 	bn_encode_vect( &str, crv.crv_pdir );
-	bu_vls_printf( &str, "} surfno %d solid %s}",
-		hitp->hit_surfno,
-		dp->d_namep );
+	bu_vls_printf( &str, "} surfno %d", hitp->hit_surfno );
+	if( stp->st_path.magic == DB_FULL_PATH_MAGIC )  {
+		/* Magic is left 0 if the path is not filled in. */
+		char	*sofar = db_path_to_string(&stp->st_path);
+		bu_vls_printf( &str, " path ");
+		bu_vls_strcat( &str, sofar );
+		bu_free( (genptr_t)sofar, "path string" );
+	}
+	bu_vls_printf( &str, " solid %s}", dp->d_namep );
 
 	Tcl_AppendResult( interp, bu_vls_addr( &str ), (char *)NULL );
 	bu_vls_free( &str );
@@ -218,7 +224,7 @@ struct application	*ap;
  *			R T _ T C L _ S H O O T R A Y
  *
  *  Usage -
- *	widgetname shootray {P} dir|at {V}
+ *	procname shootray {P} dir|at {V}
  *
  *  Example -
  *	set glob_compat_mode 0
@@ -294,8 +300,8 @@ char **argv;
 /*
  *			R T _ T C L _ R T _ O N E H I T
  *  Usage -
- *	widgetname onehit
- *	widgetname onehit #
+ *	procname onehit
+ *	procname onehit #
  */
 int
 rt_tcl_rt_onehit( clientData, interp, argc, argv )
@@ -331,9 +337,12 @@ char **argv;
 
 /*
  *			R T _ T C L _ R T _ P R E P
+ *
+ *  When run with no args, just prints current status of prepping.
+ *
  *  Usage -
- *	widgetname prep
- *	widgetname prep use_air [hasty_prep [dont_instance]]
+ *	procname prep
+ *	procname prep use_air [hasty_prep]
  */
 int
 rt_tcl_rt_prep( clientData, interp, argc, argv )
@@ -350,7 +359,7 @@ char **argv;
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
 				argv[0], " ", argv[1],
-				" [use_air [hasty_prep [dont_instance]]]\"",
+				" [use_air [hasty_prep]]\"",
 				(char *)NULL );
 		return TCL_ERROR;
 	}
@@ -370,18 +379,18 @@ char **argv;
 
 	if( argc >= 3 )  rtip->useair = atoi(argv[2]);
 	if( argc >= 4 )  rtip->rti_hasty_prep = atoi(argv[3]);
-	if( argc >= 5 )  rtip->rti_dont_instance = atoi(argv[4]);
 
 	/* If args were given, prep now. */
 	if( argc >= 3 )  rt_prep_parallel( rtip, 1 );
 
 	/* Now, describe the current state */
 	bu_vls_init( &str );
-	bu_vls_printf( &str, "needprep %d useair %d hasty_prep %d dont_instance %d",
-		rtip->needprep,
+	bu_vls_printf( &str, "useair %d hasty_prep %d dont_instance %d needprep %d",
 		rtip->useair,
 		rtip->rti_hasty_prep,
-		rtip->rti_dont_instance );
+		rtip->rti_dont_instance,
+		rtip->needprep
+	);
 
 	Tcl_AppendResult( interp, bu_vls_addr(&str), (char *)NULL );
 	bu_vls_free( &str );
@@ -398,10 +407,10 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
 /*
  *			R T _ T C L _ R T
  *
- * Generic interface for the database_class manipulation routines.
+ * Generic interface for the LIBRT_class manipulation routines.
  * Usage:
- *        widget_command dbCmdName ?args?
- * Returns: result of cmdName database command.
+ *        procname dbCmdName ?args?
+ * Returns: result of cmdName LIBRT operation.
  */
 int
 rt_tcl_rt( clientData, interp, argc, argv )
@@ -1483,9 +1492,9 @@ ClientData clientData;
  *			R T _ D B _ R T _ G E T T R E E S
  *
  *  Given an instance of a database and the name of some treetops,
- *  create a named "ray-tracing" object which will respond to
+ *  create a named "ray-tracing" object (proc) which will respond to
  *  subsequent operations.
- *  Returns new function name as result.
+ *  Returns new proc name as result.
  *
  *  Example:
  *	.inmem rt_gettrees .rt all.g light.r
@@ -1500,6 +1509,7 @@ char	      **argv;
 	struct rt_wdb *wdp = (struct rt_wdb *)clientData;
 	struct rt_i	*rtip;
 	struct application	*ap;
+	char		*newprocname;
 	char		buf[64];
 
 	RT_CK_WDB_TCL( wdp );
@@ -1509,11 +1519,18 @@ char	      **argv;
 		Tcl_AppendResult( interp,
 			"rt_gettrees: wrong # args: should be \"",
 			argv[0], " ", argv[1],
-			"widgetname treetops...\"\n", (char *)NULL );
+			" newprocname [-i] treetops...\"\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
 	rtip = rt_new_rti( wdp->dbip );
+	newprocname = argv[2];
+
+	if( strcmp( argv[3], "-i" ) == 0 )  {
+		rtip->rti_dont_instance = 1;
+		argc--;
+		argv++;
+	}
 
 	if( rt_gettrees( rtip, argc-3, (CONST char **)&argv[3], 1 ) < 0 )  {
 		Tcl_AppendResult( interp,
@@ -1536,14 +1553,14 @@ char	      **argv;
 	ap->a_rt_i = rtip;
 	ap->a_purpose = "Conquest!";
 
-	/* Instantiate the widget_command, with clientData of wdb */
+	/* Instantiate the proc, with clientData of wdb */
 	/* XXX should we see if it exists first? default=overwrite */
 	/* Beware, returns a "token", not TCL_OK. */
-	(void)Tcl_CreateCommand( interp, argv[2], rt_tcl_rt,
+	(void)Tcl_CreateCommand( interp, newprocname, rt_tcl_rt,
 				 (ClientData)ap, rt_tcl_deleteproc_rt );
 
 	/* Return new function name as result */
-	Tcl_AppendResult( interp, argv[2], (char *)NULL );
+	Tcl_AppendResult( interp, newprocname, (char *)NULL );
 	
 	return TCL_OK;
 
@@ -1565,7 +1582,7 @@ static struct dbcmdstruct rt_db_cmds[] = {
  *
  * Generic interface for the database_class manipulation routines.
  * Usage:
- *        widget_command dbCmdName ?args?
+ *        procname dbCmdName ?args?
  * Returns: result of cmdName database command.
  */
 
@@ -1654,11 +1671,11 @@ char		**argv;
 
 	if( argc != 4 )  {
 		Tcl_AppendResult(interp, "\
-Usage: wdb_open widget_command file filename\n\
-       wdb_open widget_command disk $dbip\n\
-       wdb_open widget_command disk_append $dbip\n\
-       wdb_open widget_command inmem $dbip\n\
-       wdb_open widget_command inmem_append $dbip\n",
+Usage: wdb_open newprocname file filename\n\
+       wdb_open newprocname disk $dbip\n\
+       wdb_open newprocname disk_append $dbip\n\
+       wdb_open newprocname inmem $dbip\n\
+       wdb_open newprocname inmem_append $dbip\n",
 		NULL);
 		return TCL_ERROR;
 	}
@@ -1691,7 +1708,7 @@ Usage: wdb_open widget_command file filename\n\
 		return TCL_ERROR;
 	}
 
-	/* Instantiate the widget_command, with clientData of wdb */
+	/* Instantiate the newprocname, with clientData of wdb */
 	/* XXX should we see if it exists first? default=overwrite */
 	/* Beware, returns a "token", not TCL_OK. */
 	(void)Tcl_CreateCommand( interp, argv[1], rt_db,
