@@ -2580,3 +2580,75 @@ min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%d, %d, %d, %d)\n",
 			half_eqn[3]);
 	return class;
 }
+
+/*		B N _ D I S T S Q _ L I N E 3 _ L I N E 3
+ *
+ * calculate the square of the distance of closest approach for two lines
+ * The lines are specifed as a point and a vector each. The vectors need not be unit length.
+ * P and d define one line; Q and e define the other.
+ *
+ * return:
+ *	0 - normal return
+ *	1 - lines are parallel, dist[0] is set to 0.0
+ *
+ * Output values:
+ * dist[0] is the parametric distance along the first line P + dist[0] * d of the PCA
+ * dist[1] is the parametric distance along the second line Q + dist[1] * e of the PCA
+ * dist[3] is the square of the distance between the points of closest approach
+ * pt1 is the point of closest approach on the first line
+ * pt2 is the point of closest approach on the second line
+ *
+ * This algoritm is based on expressing the distance sqaured, taking partials with respect
+ * to the two unknown parameters (dist[0] and dist[1]), seeting the two partails equal to 0,
+ * and solving the two simutaneous equations
+ */
+
+int
+bn_distsq_line3_line3( dist, P, d, Q, e, pt1, pt2 )
+fastf_t dist[3];
+point_t P;
+vect_t d;
+point_t Q;
+vect_t e;
+point_t pt1, pt2;
+{
+	fastf_t de, dd, ee, Qe, Pe, denom;
+	vect_t diff, PmQ, tmp;
+	int ret=0;
+
+	de = VDOT( d, e );
+
+	if( NEAR_ZERO( de, SMALL_FASTF ) )
+	{
+		/* lines are perpendicular */
+		dist[0] = (VDOT( Q, d ) - VDOT( P, d ))/VDOT( d, d );
+		dist[1] = (VDOT( P, e ) - VDOT( Q, e ))/VDOT( e, e );
+	}
+	else
+	{
+		dd = VDOT( d, d );
+		ee = VDOT( e, e );
+		VSUB2( PmQ, P, Q );
+		denom = dd*ee - de*de;
+		if( NEAR_ZERO( denom, SMALL_FASTF ) )
+		{
+			/* lines are parallel */
+			dist[0] = 0.0;
+			dist[1] = VDOT( PmQ, d ) / VDOT( d, e );
+			ret = 1;
+		}
+		else
+		{
+			VBLEND2( tmp, dd, e, -de, d );
+			dist[1] = VDOT( PmQ, tmp )/denom;
+			Qe = VDOT( Q, e );
+			Pe = VDOT( P, e );
+			dist[0] = (dist[1] * ee + (Qe - Pe))/de;
+		}
+	}
+	VJOIN1( pt1, P, dist[0], d );
+	VJOIN1( pt2, Q, dist[1], e );
+	VSUB2( diff, pt1, pt2 );
+	dist[2] =  MAGSQ( diff );
+	return( ret );
+}
