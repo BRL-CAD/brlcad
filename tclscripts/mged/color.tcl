@@ -57,46 +57,28 @@ of the menubutton." } }
 	    { { summary "Pop up a menu of colors. Also included
 in the menu is an entry for a color tool." } }
     menu $top.$key\MB.m -title "Color" -tearoff 0
-    $top.$key\MB.m add command -label black\
-	    -command "set $vn \"0 0 0\"; \
+
+    $top.$key\MB.m add command -background #000032 -activebackground #000032 \
+	    -command "set $vn \"0 0 50\"; \
 	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
-    hoc_register_menu_data "Color" black "Color - Black"\
-	    { { summary "Black is specified by \"0 0 0\"." } }
-    $top.$key\MB.m add command -label white\
+    $top.$key\MB.m add command -background #84dfff -activebackground #84dfff \
+	    -command "set $vn \"132 223 255\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+    $top.$key\MB.m add command -background #008000 -activebackground #008000 \
+	    -command "set $vn \"0 128 0\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+    $top.$key\MB.m add command -background #f0f0a0 -activebackground #f0f0a0 \
+	    -command "set $vn \"240 240 160\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+    $top.$key\MB.m add command -background #ffffff -activebackground #ffffff \
 	    -command "set $vn \"255 255 255\"; \
 	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
-    hoc_register_menu_data "Color" white "Color - White"\
-	    { { summary "White is specified by \"255 255 255\"." } }
-    $top.$key\MB.m add command -label red\
-	    -command "set $vn \"255 0 0\"; \
+    $top.$key\MB.m add command -background #808080 -activebackground #808080 \
+	    -command "set $vn \"128 128 128\"; \
 	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
-    hoc_register_menu_data "Color" red "Color - Red"\
-	    { { summary "Red is specified by \"255 0 0\"." } }
-    $top.$key\MB.m add command -label green\
-	    -command "set $vn \"0 255 0\"; \
+    $top.$key\MB.m add command -background #000000 -activebackground #000000 \
+	    -command "set $vn \"0 0 0\"; \
 	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
-    hoc_register_menu_data "Color" green "Color - Green"\
-	    { { summary "Green is specified by \"0 255 0\"." } }
-    $top.$key\MB.m add command -label blue\
-	    -command "set $vn \"0 0 255\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
-    hoc_register_menu_data "Color" blue "Color - Blue"\
-	    { { summary "Blue is specified by \"0 0 255\"." } }
-    $top.$key\MB.m add command -label yellow\
-	    -command "set $vn \"255 255 0\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
-    hoc_register_menu_data "Color" yellow "Color - Yellow"\
-	    { { summary "Yellow is specified by \"255 255 0\"." } }
-    $top.$key\MB.m add command -label cyan\
-	    -command "set $vn \"0 255 255\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
-    hoc_register_menu_data "Color" cyan "Color - Cyan"\
-	    { { summary "Cyan is specified by \"0 255 255\"." } }
-    $top.$key\MB.m add command -label magenta\
-	    -command "set $vn \"255 0 255\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
-    hoc_register_menu_data "Color" magenta "Color - Magenta"\
-	    { { summary "Magenta is specified by \"255 0 255\"." } }
     $top.$key\MB.m add separator
     $top.$key\MB.m add command -label "Color Tool..." -command $user_color_cmd
     hoc_register_menu_data "Color" "Color Tool..." "Color Tool"\
@@ -142,6 +124,7 @@ proc color_entry_ok { id top w key vn vin } {
     upvar #0 $w data $vn varname
 
     $top.$key\MB configure -bg $data(finalColor)
+    $top.$key\MB configure -activebackground $data(finalColor)
 
     if {$vin == ""} {
 	set varname "$data(red) $data(green) $data(blue)"
@@ -176,6 +159,7 @@ proc setWidgetRGBColor { w vn rgb } {
     }
 
     $w configure -bg [format "#%02x%02x%02x" $red $green $blue]
+    $w configure -activebackground [format "#%02x%02x%02x" $red $green $blue]
 }
 
 ## -- setWidgetColor
