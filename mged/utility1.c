@@ -368,7 +368,7 @@ int pathpos;
 
 	if( comb->region_flag )
 	{
-		fprintf(fp, "%-6d%-3d%-3d%-4d  ",
+		fprintf(fp, "%-6d %-3d %-3d %-4d  ",
 			comb->region_id,
 			comb->aircode,
 			comb->GIFTmater,
