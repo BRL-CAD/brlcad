@@ -664,9 +664,7 @@ CONST struct db_i		*dbip;
 	union record			*rp;
 	vect_t				v;
 	int				seg_no;
-	int				curve_no;
 	unsigned char			*ptr;
-	genptr_t			*segs;
 	struct curve			*crv;
 	int				i;
 
@@ -815,10 +813,9 @@ CONST struct db_i		*dbip;
 {
 	struct rt_sketch_internal	*sketch_ip;
 	union record		*rec;
-	int	i, curve_no, seg_no, nbytes=0, ngran;
+	int	i, seg_no, nbytes=0, ngran;
 	vect_t tmp_vec;
 	unsigned char *ptr;
-	struct curve *crv;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_SKETCH )  return(-1);
@@ -996,9 +993,7 @@ CONST struct db_i		*dbip;
 	LOCAL struct rt_sketch_internal	*sketch_ip;
 	vect_t				v;
 	int				seg_no;
-	int				curve_no;
 	unsigned char			*ptr;
-	genptr_t			*segs;
 	struct curve			*crv;
 	int				i;
 
@@ -1664,7 +1659,6 @@ CONST struct rt_sketch_internal *sketch_ip;
 {
 	struct rt_sketch_internal *out;
 	int i;
-	struct bu_ptbl curves;
 	struct curve *crv_out;
 
 	RT_SKETCH_CK_MAGIC( sketch_ip );
@@ -1834,8 +1828,7 @@ Tcl_Interp *interp;
 struct curve *crv;
 Tcl_Obj *seg_list;
 {
-	Tcl_Obj *SL, *segments;
-	int len2, seg_count;
+	int seg_count;
 	int ret, j;
 
 	/* get number of segments */
@@ -2123,7 +2116,7 @@ char			**argv;
 			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new_vert, &array_len )) != TCL_OK )
 				return( ret );
 		}
-next_arg:
+
 		argc -= 2;
 		argv += 2;
 	}
