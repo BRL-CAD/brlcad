@@ -172,6 +172,7 @@ AC_OUTPUT([
 	html/ReleaseNotes/Rel6.0/Makefile
 	irprep/Makefile
 	iwidgets4.0.1/Makefile
+	iwidgets4.0.1/generic/Makefile
 	libbn/Makefile
 	libbu/Makefile
 	libcursor/Makefile
@@ -217,6 +218,7 @@ AC_OUTPUT([
 	libtk8.4/library/msgs/Makefile
 	libutahrle/Makefile
 	libwdb/Makefile
+	libz/Makefile
 	Makefile
 	mged/Makefile
 	rt/Makefile

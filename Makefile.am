@@ -6,6 +6,7 @@ SUBDIRS=\
 	libtk8.4\
 	libitcl3.2\
 	iwidgets4.0.1\
+	libz\
 	libbn\
 	libbu\
 	libcursor\
