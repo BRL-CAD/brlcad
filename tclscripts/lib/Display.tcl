@@ -33,7 +33,7 @@ class Display {
 	eval Dm::constructor $_type
 	View::constructor
     } {
-	attach
+	attach_view
 	doBindings
 	handle_configure
 	eval itk_initialize $args
@@ -45,7 +45,11 @@ class Display {
     public method refresh {}
     public method rt {args}
     public method rtcheck {args}
-    public method autoview {}
+    public method autoview {{g_index 0}}
+    public method attach_view {}
+    public method attach_drawable {dg}
+    public method detach_view {}
+    public method detach_drawable {dg}
 
     # methods for maintaining the list of geometry objects
     public method add {glist}
@@ -67,8 +71,6 @@ class Display {
     public method toggle_perspective {}
     public method toggle_perspective_angle {}
 
-    protected method attach {}
-    protected method detach {}
     protected method idle_mode {}
     protected method rotate_mode {x y}
     protected method translate_mode {x y}
@@ -95,10 +97,12 @@ class Display {
 ########################### ###########################
 ########################### Public/Interface Methods ###########################
 body Display::update {obj} {
+#puts "Display::update: obj - $obj" 
     refresh
 }
 
 body Display::refresh {} {
+#puts "Display::refresh - enter, [get_name]"
     Dm::drawBegin
 
     if {$itk_option(-perspective)} {
@@ -169,14 +173,29 @@ body Display::rtcheck {args} {
     eval $geo rtcheck $v_obj -F $itk_option(-listen) $args
 }
 
-
-body Display::autoview {} {
-    if [llength $geolist] {
-	set geo [lindex $geolist 0]
+body Display::autoview {{g_index 0}} {
+    if {$g_index < [llength $geolist]} {
+	set geo [lindex $geolist $g_index]
 	set aview [$geo get_autoview]
 	eval [lrange $aview 0 1]
 	eval [lrange $aview 2 3]
     }
+}
+
+body Display::attach_view {} {
+    View::observer attach $this
+}
+
+body Display::attach_drawable {dg} {
+    $dg observer attach $this
+}
+
+body Display::detach_view {} {
+    View::observer detach $this
+}
+
+body Display::detach_drawable {dg} {
+    $dg observer detach $this
 }
 
 body Display::add {glist} {
@@ -188,18 +207,20 @@ body Display::add {glist} {
 
     foreach geo $glist {
 	set index [lsearch $geolist $geo]
+
+	# already in list
 	if {$index != -1} {
 	    continue
 	}
 
 	lappend geolist $geo
-	$geo observer attach $this
+	attach_drawable $geo
     }
 
     if {$blank} {
-	detach
+	detach_view
 	autoview
-	attach
+	attach_view
     }
 
     refresh
@@ -213,7 +234,7 @@ body Display::remove {glist} {
 	}
 
 	set geolist [lreplace $geolist $index $index]
-	$geo observer detach $this
+	detach_drawable $geo
     }
 
     refresh
@@ -300,16 +321,6 @@ body Display::toggle_perspective_angle {} {
 }
 
 ########################### Protected Methods ###########################
-body Display::attach {} {
-    Dm::observer attach $this
-    View::observer attach $this
-}
-
-body Display::detach {} {
-    Dm::observer detach $this
-    View::observer detach $this
-}
-
 body Display::idle_mode {} {
     # stop receiving motion events
     bind $itk_component(dm) <Motion> {}
