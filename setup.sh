@@ -266,5 +266,9 @@ if [ X${SILENT} = X ] ; then
 # Just doing "make install" isn't good enough, it doesn't
 # compile things in bench, db, or proc-db.  You may want db.
 echo "Next, run:"
+echo " "
 echo "	make; make install"
+echo " "
+echo "(It is vitally important that you run both of these commands"
+echo "as this is a two-step operation.)"
 fi
