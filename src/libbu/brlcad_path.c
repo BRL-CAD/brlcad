@@ -93,6 +93,15 @@ bu_brlcad_path(const char *rhs, int fail_quietly)
 		goto ok;
 
 	if( (lhs = getenv("BRLCAD_ROOT")) != NULL )  {
+#ifdef WIN32
+	    {
+		int len = strlen(lhs);
+
+		if (lhs[len-1] == '\\')
+		    lhs[len-1] = '\0';
+	    }
+#endif
+
 		if( bu_file_exists(lhs) )
 			goto ok;
 		if (fail_quietly) {
