@@ -109,6 +109,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
+#include <X11/Sunkeysym.h>
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XInput.h>
 
@@ -392,9 +393,14 @@ XGL_prolog()
 void
 XGL_epilog()
 {
+
 	DPRINTF("XGL_epilog\n");
 
 	Flush3D();
+	/*
+	 * Place a "centering dot" in the center of the screen 
+	 */
+	XGL_2d_line( 0, 0, 0, 0, 0 );
 
 	display_buff();	/* Display the screen and clear the hidden buffer */
 	return;
@@ -593,6 +599,8 @@ double ratio;
                         case RT_VLIST_POLY_END:
 				FlushPgList();
 				continue;
+			case RT_VLIST_POLY_VERTNORM:
+				continue;
                         case RT_VLIST_LINE_MOVE:
 					/* Don't draw edge */
 				flag_f3d_ptr->flag = 0x00;
@@ -610,7 +618,6 @@ double ratio;
 	}
 	return (1);
 }
-
 static void
 XGL_object_flush()
 {
@@ -990,9 +997,6 @@ XGL_colorchange()
 	SetColor(bg_color, DM_BLACK);
 	xgl_object_set (ctx_3d, XGL_CTX_BACKGROUND_COLOR, &bg_color, NULL);
 	xgl_object_set (ctx_2d, XGL_CTX_BACKGROUND_COLOR, &bg_color, NULL);
-
-		/*xgl_context_new_frame(ctx_3d);*/
-		/*xgl_context_new_frame(ctx_2d);*/
 	return;
 }
 
@@ -1078,6 +1082,7 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 	Visual		*visual;
         XSizeHints 	xsh;
 	int		depth;
+	int		x, y;
 	XEvent  	event;
 	Colormap        xcmap;
         static XSetWindowAttributes xswa;
@@ -1099,11 +1104,31 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 			XDisplayName(NULL));
 		return (-1);
 	}
+
 	*screen = DefaultScreen (*dpy);
 	visual =  DefaultVisual (*dpy, *screen);
         depth = DefaultDepth (*dpy, *screen);
         xcmap = CopyFromParent;
 
+	/* Make the window full screen */
+	*w = DisplayWidth(*dpy, *screen);
+	*h = DisplayHeight(*dpy, *screen);
+	/*
+	 * Since there is no ICCCM protocol for determining the size of the
+	 * window decoration, let's assume we're using olwm.
+	 */
+#define WM_BORDER_HEIGHT 30
+#define WM_BORDER_WIDTH  10
+	*h -= WM_BORDER_HEIGHT;
+	*w -= WM_BORDER_WIDTH;
+	if (*w < *h)
+		*h = *w;
+	if (*h < *w)
+		*w = *h;
+
+	/* Position window at lower-right side of screen */
+	x = DisplayWidth(*dpy, *screen) - *w - WM_BORDER_WIDTH;
+	y = DisplayHeight(*dpy, *screen) - *h - WM_BORDER_HEIGHT;
 	/* 
 	 * If we have a 24-bit display, let's use that visual. Otherwise use
 	 * the default visual
@@ -1134,7 +1159,7 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 	xswa.border_pixel = BlackPixel(*dpy, *screen);
 	xswa.background_pixel = BlackPixel(*dpy, *screen);
 
-	*win = XCreateWindow (*dpy, DefaultRootWindow(*dpy),  0, 0, *w, *h,
+	*win = XCreateWindow (*dpy, DefaultRootWindow(*dpy),  x, y, *w, *h,
 		1, depth, InputOutput, visual,
 		CWBorderPixel |CWColormap | CWBackPixel, &xswa);
 
@@ -1142,9 +1167,11 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 		fprintf (stderr, "Could not create X window\n");
 		return (-1);
 	}
-	xsh.flags = (PSize);
+	xsh.flags = (PSize | PPosition);
 	xsh.height = *h;
 	xsh.width =  *w;
+	xsh.x = x;
+	xsh.y = y;
 	XSetStandardProperties(*dpy, *win, "MGED", "MGED", 
 			None, NULL, 0, &xsh );
 	XSetWMHints(*dpy, *win, &xwmh );
@@ -1311,6 +1338,7 @@ XGL_setup()
 		XGL_CTX_CLIP_PLANES,	XGL_CLIP_XMIN | XGL_CLIP_YMIN |
 					XGL_CLIP_XMAX | XGL_CLIP_YMAX,
 		XGL_CTX_RENDERING_ORDER, XGL_RENDERING_ORDER_HLHSR,
+		XGL_3D_CTX_HLHSR_MODE, XGL_HLHSR_Z_BUFFER,
                 XGL_CTX_LINE_PATTERN,   xgl_lpat_dashed,
 		XGL_CTX_LINE_STYLE,	XGL_LINE_SOLID,
 		XGL_CTX_DEFERRAL_MODE, XGL_DEFER_ASTI,
@@ -1356,6 +1384,7 @@ XGL_setup()
 			    | XGL_CTX_NEW_FRAME_SWITCH_BUFFER 
 			    | XGL_CTX_NEW_FRAME_HLHSR_ACTION),
 		    0);
+
 	} else {
 		/* No double buffering */
 		xgl_object_set(ctx_3d,
@@ -1364,6 +1393,15 @@ XGL_setup()
 			 XGL_CTX_NEW_FRAME_HLHSR_ACTION),
 		    0);
 	}
+
+	/*
+	 * Initialize the z-buffer by clearing the frame 
+	 * (XGL_CTX_NEW_FRAME_HLHSR_ACTION is already turned on). Then
+	 * Turn z-buffering back off (off is the default).
+	 */
+	xgl_context_new_frame(ctx_3d);
+	xgl_context_new_frame(ctx_2d);
+	xgl_object_set (ctx_3d, XGL_3D_CTX_HLHSR_MODE, XGL_HLHSR_NONE, 0);
 
 	trans = xgl_object_create(sys_state, XGL_TRANS, NULL,
 			XGL_TRANS_DATA_TYPE, XGL_DATA_DBL,
@@ -1605,7 +1643,9 @@ checkevents()
 		    	cnt = XLookupString(&event.xkey, keybuf, sizeof(keybuf),
 						&key, &compose_stat);
 
-			if (key >= XK_F1 && key <= XK_F10) 
+			if (key >= XK_F1 && key <= XK_F12 || 
+			    key == SunXK_F36 || key == SunXK_F37) 
+				/* F36 and F37 are really F11 and F12! */
 				process_func_key(key);
 			else {
 				switch( key ) {
@@ -1862,7 +1902,7 @@ handle_sundials_event(XDeviceMotionEvent *ev)
 
 static void fk_depth_cue(), fk_zclip(), fk_perspective(), 
 	   fk_zbuffering(), fk_lighting(), fk_p_angle(), fk_faceplate(),
-	   fk_anti_alias(), fk_nop();
+	   fk_anti_alias(), fk_zero_knobs(), fk_nop();
 static void 
 process_func_key(KeySym key) 
 {
@@ -1894,7 +1934,13 @@ process_func_key(KeySym key)
 		break;
 	case XK_F9:
 	case XK_F10:
+	case XK_F11:
+	case SunXK_F36:
 		fk_nop();
+		break;
+	case XK_F12:
+	case SunXK_F37:
+		fk_zero_knobs();
 		break;
 	}
 }
@@ -1968,14 +2014,16 @@ fk_perspective()
 	 * If depth-cueing is on, re-set the depth-cue scale factors to allow
 	 * for more light so the screen is not too dark.
 	 */
-	dcue_on = 0; /* fk_depth_cue() will turn the flag back on */
-	fk_depth_cue();
-	
+	if (dcue_on) {
+		dcue_on = 0; /* fk_depth_cue() will turn the flag back on */
+		fk_depth_cue();
+	}
 	dmaflag = 1;
 }
 static void
 fk_zbuffering()
 {
+
 	if (zbuff_on == 0) {
 		xgl_object_set (ctx_3d, 
 			XGL_3D_CTX_HLHSR_MODE, XGL_HLHSR_Z_BUFFER,
@@ -2006,7 +2054,7 @@ fk_lighting()
 		 */
 		w = xgl_mat[3][3];
 		pos.x = pos.y = -w;
-		pos.z = w;
+		pos.z = -w;
 		xgl_object_set (lights[1],
 			XGL_LIGHT_POSITION, &pos,
 			NULL);
@@ -2070,6 +2118,14 @@ fk_anti_alias()
 	}
 	anti_alias_on = !anti_alias_on;
 	dmaflag = 1;
+}
+
+static void
+fk_zero_knobs()
+{
+	reset_sundials();
+	rt_vls_printf( &dm_values.dv_string,
+		"knob zero\n" );
 }
 
 static void
