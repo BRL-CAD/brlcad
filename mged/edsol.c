@@ -46,9 +46,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./menu.h"
 
-extern char    *cmd_args[];
-extern int 	numargs;
-
 static int	new_way = 0;	/* Set 1 for import/export handling */
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
@@ -167,7 +164,6 @@ CONST point_t	pt;
 }
 
 extern int arb_faces[5][24];	/* from edarb.c */
-extern int arb_planes[5][24];	/* from edarb.c */
 
 struct menu_item  edge8_menu[] = {
 	{ "ARB8 EDGES", (void (*)())NULL, 0 },
@@ -1101,7 +1097,8 @@ sedit()
 			VMOVE( work, eqp );
 			MAT4X3VEC( eqp, invsolr, work );
 
-			if( numargs == (1+3) ){		/* absolute X,Y,Z rotations */
+			if( inpara == 3 ){
+				/* 3 params:  absolute X,Y,Z rotations */
 				/* Build completely new rotation change */
 				mat_idn( modelchanges );
 				buildHrot( modelchanges,
@@ -1115,9 +1112,10 @@ sedit()
 				VMOVE( work, eqp );
 				MAT4X3VEC( eqp, modelchanges, work );
 			}
-			else if( numargs== (1+2) ){	/* rot,fb given */
-				rota= atof(cmd_args[1]) * degtorad;
-				fb  = atof(cmd_args[2]) * degtorad;
+			else if( inpara == 2 ){
+				/* 2 parameters:  rot,fb were given */
+				rota= es_para[0] * degtorad;
+				fb  = es_para[1] * degtorad;
 	
 				/* calculate normal vector (length=1) from rot,fb */
 				es_peqn[es_menu][0] = cos(fb) * cos(rota);
@@ -2369,40 +2367,6 @@ oedit_reject()
 	db_free_external( &es_ext );
 }
 
-
-/* 	CALC_PLANES()
- *		calculate the plane (face) equations for an arb
- *		in solidrec pointed at by sp
- */
-void
-calc_planes( sp, type )
-struct solidrec *sp;
-int type;
-{
-	struct solidrec temprec;
-	register int i, p1, p2, p3;
-
-	/* find the plane equations */
-	/* point notation - use temprec record */
-	VMOVE( &temprec.s_values[0], &sp->s_values[0] );
-	for(i=3; i<=21; i+=3) {
-		VADD2( &temprec.s_values[i], &sp->s_values[i], &sp->s_values[0] );
-	}
-	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
-	for(i=0; i<6; i++) {
-		if(arb_faces[type][i*4] == -1)
-			break;	/* faces are done */
-		p1 = arb_faces[type][i*4];
-		p2 = arb_faces[type][i*4+1];
-		p3 = arb_faces[type][i*4+2];
-		if(planeqn(i, p1, p2, p3, &temprec)) {
-			(void)printf("No eqn for face %d%d%d%d\n",
-				p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
-			return;
-		}
-	}
-}
-
 /* 			F _ E Q N ( )
  * Gets the A,B,C of a  planar equation from the command line and puts the
  * result into the array es_peqn[] at the position pointed to by the variable
@@ -2410,7 +2374,9 @@ int type;
  * when in solid edit and rotating the face of a GENARB8.
  */
 void
-f_eqn()
+f_eqn(argc, argv)
+int	argc;
+char	*argv[];
 {
 	short int i;
 	vect_t tempvec;
@@ -2430,7 +2396,7 @@ f_eqn()
 
 	/* get the A,B,C from the command line */
 	for(i=0; i<3; i++)
-		es_peqn[es_menu][i]= atof(cmd_args[i+1]);
+		es_peqn[es_menu][i]= atof(argv[i+1]);
 	VUNITIZE( &es_peqn[es_menu][0] );
 
 	/* set D of planar equation to anchor at fixed vertex */
@@ -2528,10 +2494,10 @@ char	**argv;
 		return;
 	}
 
-	inpara = 1;
+	inpara = 0;
 	sedraw++;
-	for( i = 1; i < argc; i++ )  {
-		es_para[ i - 1 ] = atof( argv[i] );
+	for( i = 1; i < argc && i <= 3 ; i++ )  {
+		es_para[ inpara++ ] = atof( argv[i] );
 		if( es_edflag == PSCALE || es_edflag == SSCALE )  {
 			if(es_para[0] <= 0.0) {
 				(void)printf("ERROR: SCALE FACTOR <= 0\n");
@@ -2952,4 +2918,78 @@ mat_t		mat;
 		break;
 	}
 	MAT4X3PNT( pt, mat, mpt );
+}
+
+/* 	CALC_PLANES()
+ *		calculate the plane (face) equations for an arb
+ *		in solidrec pointed at by sp
+ * XXX replaced by rt_arb_calc_planes()
+ */
+void
+calc_planes( sp, type )
+struct solidrec *sp;
+int type;
+{
+	struct solidrec temprec;
+	register int i, p1, p2, p3;
+
+	/* find the plane equations */
+	/* point notation - use temprec record */
+	VMOVE( &temprec.s_values[0], &sp->s_values[0] );
+	for(i=3; i<=21; i+=3) {
+		VADD2( &temprec.s_values[i], &sp->s_values[i], &sp->s_values[0] );
+	}
+	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
+	for(i=0; i<6; i++) {
+		if(arb_faces[type][i*4] == -1)
+			break;	/* faces are done */
+		p1 = arb_faces[type][i*4];
+		p2 = arb_faces[type][i*4+1];
+		p3 = arb_faces[type][i*4+2];
+		if(planeqn(i, p1, p2, p3, &temprec)) {
+			(void)printf("No eqn for face %d%d%d%d\n",
+				p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
+			return;
+		}
+	}
+}
+
+/* -------------------------------- */
+/*
+ *			R T _ A R B _ C A L C _ P L A N E S
+ *
+ *	Calculate the plane (face) equations for an arb
+ *	output previously went to es_peqn[i].
+ *
+ *  Returns -
+ *	-1	Failure
+ *	 0	OK
+ */
+int
+rt_arb_calc_planes( planes, arb, type, tol )
+plane_t			planes[6];
+struct rt_arb_internal	*arb;
+int			type;
+struct rt_tol		*tol;
+{
+	register int i, p1, p2, p3;
+
+	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
+
+	for(i=0; i<6; i++) {
+		if(arb_faces[type][i*4] == -1)
+			break;	/* faces are done */
+		p1 = arb_faces[type][i*4];
+		p2 = arb_faces[type][i*4+1];
+		p3 = arb_faces[type][i*4+2];
+
+		if( rt_mk_plane_3pts( planes[i],
+		    arb->pt[p1], arb->pt[p2], arb->pt[p3], tol ) < 0 )  {
+			rt_log("rt_arb_calc_planes: No eqn for face %d%d%d%d\n",
+				p1+1, p2+1, p3+1,
+				arb_faces[type][i*4+3]+1);
+			return -1;
+		}
+	}
+	return 0;
 }
