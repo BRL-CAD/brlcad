@@ -16,7 +16,7 @@
  *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 2002-2003 by the United States Army
+ *	This software is Copyright (C) 2002-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint

@@ -17,7 +17,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
+ *	This software is Copyright (C) 1989-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -37,7 +37,7 @@ static const char RCSview[] = "@(#)$Header";
 #include "rtprivate.h"
 #include "light.h"
 #include "plot3.h"
-
+#include "spectrum.h"
 
 /*
  *			P R _ S H A D E W O R K
