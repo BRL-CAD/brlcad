@@ -37,7 +37,7 @@
  *	PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *  
  * History -
- *	Modified 11/94 to support XGL 3.X by Sun Microsystems Computer Company
+ *	Modified 12/94 to support XGL 3.X by Sun Microsystems Computer Company
  *		XView code stripped out for the following reasons:
  *			XView is a 'dead' product
  *			Provide similar interface to X and SGI versions of mged
@@ -52,10 +52,13 @@
  *			The dials can be re-set (ie. "knob zero") by pressing 
  *			the '0' key.
  *		Z-Buffering (done in h/w for SX, ZX, s/w for others)
- *		24-bit color (for SX, ZX)
- *		Lighting, Depth Cueing (for SX, ZX)
+ *		24-bit color (for SX, ZX, S24)
+ *		Lighting, Depth Cueing (for SX, ZX, S24)
  *		Anti-alias support for vectors (done in h/w for SX, ZX, s/w 
  *						for others)
+ *		Hardware double-buffering for TGX, SX, ZX
+ *		Colormap double-buffering for GX frame buffers
+ *		No double-buffering for S24
  *		Function Key Support:
  *			F1 - Depth Cue Toggle
  *			F2 - Z-clip Toggle
@@ -1369,6 +1372,13 @@ XGL_setup()
 			    | XGL_CTX_NEW_FRAME_SWITCH_BUFFER 
 			    | XGL_CTX_NEW_FRAME_HLHSR_ACTION),
 		    0);
+	} else {
+		/* No double buffering */
+		xgl_object_set(ctx_3d,
+                    XGL_CTX_NEW_FRAME_ACTION,
+                        (XGL_CTX_NEW_FRAME_CLEAR | XGL_CTX_NEW_FRAME_VRETRACE |
+			 XGL_CTX_NEW_FRAME_HLHSR_ACTION),
+		    0);
 	}
 
 	trans = xgl_object_create(sys_state, XGL_TRANS, NULL,
@@ -1433,34 +1443,43 @@ init_check_buffering( int bufs)
 		return(-1);
 
 	} else {
-		printf("\nUsing colormap double buffering, 8 bit color.\n");
-		switch(DEFAULT_DB) {
-		case OPTION_ZERO:
-			type = NO_DBUFF;
-			maxcolors = 2;
-			colortablesize = 2;
-			break;
-
-		 case OPTION_ONE:
-			type = NO_DBUFF;
-			maxcolors = 128;
-			colortablesize = 128;
-			break;
-
-		  case OPTION_TWO:
-			type = CMAP8_DBUFF;
-			maxcolors = 8;
-			colortablesize = 64;
-			break;
-
-		  case OPTION_THREE:
-			type = CMAP16_DBUFF;
-			maxcolors = 16;
-			colortablesize = 256;
-			break;
-		  default:
-			printf("Undefined DEFAULT_DB option, exiting\n");
-			exit(1);
+		if (color_type == XGL_COLOR_INDEX) {
+			printf(
+			   "\nUsing colormap double buffering, 8 bit color.\n");
+			switch(DEFAULT_DB) {
+			case OPTION_ZERO:
+				type = NO_DBUFF;
+				maxcolors = 2;
+				colortablesize = 2;
+				break;
+		 	case OPTION_ONE:
+				type = NO_DBUFF;
+				maxcolors = 128;
+				colortablesize = 128;
+				break;
+		  	case OPTION_TWO:
+				type = CMAP8_DBUFF;
+				maxcolors = 8;
+				colortablesize = 64;
+				break;
+		  	case OPTION_THREE:
+				type = CMAP16_DBUFF;
+				maxcolors = 16;
+				colortablesize = 256;
+				break;
+		  	default:
+				printf("Undefined DEFAULT_DB option,exiting\n");
+				exit(1);
+			}
+		} else {
+			/* 
+			 * We don't have HW double buffering AND we're a
+			 * 24-bit frame buffer (XGL_COLOR_RGB). So let's
+			 * not do double-buffering at all so we can do 24-bit
+			 * colors for lighting, etc.
+			 *
+			 * type is already set to NO_DBUFF
+			 */
 		}
 	}
 	return(type);
