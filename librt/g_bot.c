@@ -2107,4 +2107,6 @@ struct rt_bot_internal *bot;
 
 	bot->num_vertices -= dead_verts;
 	bot->vertices = (fastf_t *)bu_realloc( bot->vertices, bot->num_vertices*3*sizeof( fastf_t ), "bot verts realloc" );
+
+	return( dead_verts );
 }
