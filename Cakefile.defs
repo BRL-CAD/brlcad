@@ -614,17 +614,22 @@ set -S2 "/bin/sh"
 /*		Using the Sun Compiler (the default) */
 #		if 0
 /*			Generic unoptimized Sun configuration */
-#			define	CC_OPTS	-fswitch
+#			define	CC_OPTS	-fswitch -PIC
 #			define OPTIMIZER	-g
 #		else
 /*			Model-specific floating point options */
-/*#			define	CC_OPTS	-ffpa */
-/*#			define	CC_OPTS	-ffpa /usr/lib/ffpa.il*/
-/*#			define	CC_OPTS	-f68881 -g*/
-/*#			define	CC_OPTS	-f68881 /usr/lib/f68881.il*/
-/*#			define	LD_OPTS	-f68881*/
-#			define	CC_OPTS	-f68881
+/*#			define	CC_OPTS	-PIC -ffpa */
+/*#			define	CC_OPTS	-PIC -ffpa /usr/lib/ffpa.il*/
+/*#			define	CC_OPTS	-PIC -f68881 -g*/
+/*#			define	CC_OPTS	-PIC -f68881 /usr/lib/f68881.il*/
+/*#			define	LD_OPTS	-PIC -f68881*/
+#			define	CC_OPTS	-PIC -f68881
 #		endif
+/*		Shared library support on Sun compiler */
+#		define	ARCH_SUF	so
+#		define	LIBVERS		[[../sharedlibvers.sh]]
+#		define	BUILD_LIBRARY	ld -Bdynamic -o
+#		define	RANLIB		/**/
 #	else
 /*		Using the Gnu C Compiler */
 #		define	CC	gcc
@@ -734,7 +739,6 @@ set -S2 "/bin/sh"
 # if 1
 #	define	ARCH_SUF	so
 #	define	LIBVERS		[[../sharedlibvers.sh]]
-/* Does -dp help? */
 #	define	BUILD_LIBRARY	ld -Bdynamic -o
 #	define	RANLIB		/**/
 # endif
