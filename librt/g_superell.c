@@ -6,7 +6,7 @@
  *
  *  Authors -
  *      Christopher Sean Morrison (Programming)
- *      Edwin O. Davisson (Mathmatics)
+ *      Edwin O. Davisson (Mathematics)
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -142,12 +142,19 @@ const struct bu_structparse rt_superell_parse[] = {
  */
 
 struct superell_specific {
-	vect_t	superell_V;		/* Vector to center of superellipsoid */
-	vect_t	superell_Au;		/* unit-length A vector */
-	vect_t	superell_Bu;
-	vect_t	superell_Cu;
+  vect_t superell_V; /* Vector to center of superellipsoid */
+  vect_t superell_Au; /* unit-length A vector */
+  vect_t superell_Bu;
+  vect_t superell_Cu;
   double superell_n; /* north-south curvature power */
   double superell_e; /* east-west curvature power */
+  double superell_invmsAu; /* 1.0 / |Au|^2 */
+  double superell_invmsBu; /* 1.0 / |Bu|^2 */
+  double superell_invmsCu; /* 1.0 / |Cu|^2 */
+  vect_t superell_invsq;
+  mat_t	superell_SoR; /* matrix for local cordinate system, Scale(Rotate(V))*/
+  mat_t superell_invRSSR; /* invR(Scale(Scale(Rot(V)))) */
+  mat_t superell_invR; /* transposed rotation matrix */
 };
 #define SUPERELL_NULL	((struct superell_specific *)0)
 
@@ -169,109 +176,146 @@ struct superell_specific {
 int
 rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-	register struct superell_specific *superell;
-	struct rt_superell_internal	*eip;
-	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
-	LOCAL mat_t	R;
-	LOCAL mat_t	Rinv;
-	LOCAL mat_t	SS;
-	LOCAL mat_t	mtemp;
-	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-	LOCAL vect_t	w1, w2, P;	/* used for bounding RPP */
-	LOCAL fastf_t	f;
+  
+  register struct superell_specific *superell;
+  struct rt_superell_internal	*eip;
+  LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
+  LOCAL mat_t	R, TEMP;
+  LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+  LOCAL vect_t	w1, w2, P;	/* used for bounding RPP */
+  LOCAL fastf_t	f;
+  
+  eip = (struct rt_superell_internal *)ip->idb_ptr;
+  RT_SUPERELL_CK_MAGIC(eip);
+  
+  /* Validate that |A| > 0, |B| > 0, |C| > 0 */
+  magsq_a = MAGSQ( eip->a );
+  magsq_b = MAGSQ( eip->b );
+  magsq_c = MAGSQ( eip->c );
+  
+  if( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
+    bu_log("superell(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
+	   stp->st_name, magsq_a, magsq_b, magsq_c );
+    return(1);		/* BAD */
+  }
+  if (eip->n < rtip->rti_tol.dist || eip->e < rtip->rti_tol.dist) {
+    bu_log("superell(%s):  zero length <n,e> curvature (%g, %g) causes problems\n", 
+	   stp->st_name, eip->n, eip->e);
+    /* BAD */
+  }
+  if (eip->n > 10000.0 || eip->e > 10000.0) {
+    bu_log("superell(%s):  very large <n,e> curvature (%g, %g) causes problems\n", 
+	   stp->st_name, eip->n, eip->e);
+    /* BAD */
+  }
+  
+  /* Create unit length versions of A,B,C */
+  f = 1.0/sqrt(magsq_a);
+  VSCALE( Au, eip->a, f );
+  f = 1.0/sqrt(magsq_b);
+  VSCALE( Bu, eip->b, f );
+  f = 1.0/sqrt(magsq_c);
+  VSCALE( Cu, eip->c, f );
+  
+  /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
+  f = VDOT( Au, Bu );
+  if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+    bu_log("superell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
+    return(1);		/* BAD */
+  }
+  f = VDOT( Bu, Cu );
+  if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+    bu_log("superell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
+    return(1);		/* BAD */
+  }
+  f = VDOT( Au, Cu );
+  if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+    bu_log("superell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
+    return(1);		/* BAD */
+  }
+  
+  /* Solid is OK, compute constant terms now */
 
-	eip = (struct rt_superell_internal *)ip->idb_ptr;
-	RT_SUPERELL_CK_MAGIC(eip);
+  BU_GETSTRUCT( superell, superell_specific );
+  stp->st_specific = (genptr_t)superell;
 
-	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( eip->a );
-	magsq_b = MAGSQ( eip->b );
-	magsq_c = MAGSQ( eip->c );
+  superell->superell_n = eip->n;
+  superell->superell_e = eip->e;
 
-	/* XXX this coded constant stuff will bite us someday soon */
-	if( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
-		bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
-			stp->st_name, magsq_a, magsq_b, magsq_c );
-		return(1);		/* BAD */
-	}
+  VMOVE( superell->superell_V, eip->v );
 
-	/* Create unit length versions of A,B,C */
-	f = 1.0/sqrt(magsq_a);
-	VSCALE( Au, eip->a, f );
-	f = 1.0/sqrt(magsq_b);
-	VSCALE( Bu, eip->b, f );
-	f = 1.0/sqrt(magsq_c);
-	VSCALE( Cu, eip->c, f );
+  VSET( superell->superell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
+  VMOVE( superell->superell_Au, Au );
+  VMOVE( superell->superell_Bu, Bu );
+  VMOVE( superell->superell_Cu, Cu );
 
-	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
-	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("superell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
-		return(1);		/* BAD */
-	}
-	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("superell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
-		return(1);		/* BAD */
-	}
-	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("superell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
-		return(1);		/* BAD */
-	}
+  /* compute the inverse magnitude square for equations during shot */
+  superell->superell_invmsAu = 1.0 / magsq_a;
+  superell->superell_invmsBu = 1.0 / magsq_b;
+  superell->superell_invmsCu = 1.0 / magsq_c;
 
-	/* Solid is OK, compute constant terms now */
+  /* compute the rotation matrix */
+  MAT_IDN(R);
+  VMOVE( &R[0], Au );
+  VMOVE( &R[4], Bu );
+  VMOVE( &R[8], Cu );
+  bn_mat_trn( superell->superell_invR, R );
 
-	BU_GETSTRUCT( superell, superell_specific );
-	stp->st_specific = (genptr_t)superell;
+  /* computer invRSSR */
+  MAT_IDN(superell->superell_invRSSR);
+  MAT_IDN(TEMP);
+  TEMP[0] = superell->superell_invsq[0];
+  TEMP[5] = superell->superell_invsq[1];
+  TEMP[10] = superell->superell_invsq[2];
+  bn_mat_mul(TEMP, TEMP, R);
+  bn_mat_mul(superell->superell_invRSSR, superell->superell_invR, TEMP);
 
-	VMOVE( superell->superell_V, eip->v );
+  /* compute Scale(Rotate(vect)) */
+  MAT_IDN(superell->superell_SoR);
+  VSCALE( &superell->superell_SoR[0], eip->a, superell->superell_invsq[0]);
+  VSCALE( &superell->superell_SoR[4], eip->b, superell->superell_invsq[1]);
+  VSCALE( &superell->superell_SoR[8], eip->c, superell->superell_invsq[2]);
 
-	//	VSET( superell->superell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
-	VMOVE( superell->superell_Au, Au );
-	VMOVE( superell->superell_Bu, Bu );
-	VMOVE( superell->superell_Cu, Cu );
-
-	/* Compute bounding sphere */
-	VMOVE( stp->st_center, eip->v );
-	f = magsq_a;
-	if( magsq_b > f )
-		f = magsq_b;
-	if( magsq_c > f )
-		f = magsq_c;
-	stp->st_aradius = stp->st_bradius = sqrt(f);
-
-	/* Compute bounding RPP */
-	VSET( w1, magsq_a, magsq_b, magsq_c );
-
-	/* X */
-	VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
-	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
-	VELMUL( w2, w2, w2 );		/* square each term */
-	f = VDOT( w1, w2 );
-	f = sqrt(f);
-	stp->st_min[X] = superell->superell_V[X] - f;	/* V.P +/- f */
-	stp->st_max[X] = superell->superell_V[X] + f;
-
-	/* Y */
-	VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
-	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
-	VELMUL( w2, w2, w2 );		/* square each term */
-	f = VDOT( w1, w2 );
-	f = sqrt(f);
-	stp->st_min[Y] = superell->superell_V[Y] - f;	/* V.P +/- f */
-	stp->st_max[Y] = superell->superell_V[Y] + f;
-
-	/* Z */
-	VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
-	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
-	VELMUL( w2, w2, w2 );		/* square each term */
-	f = VDOT( w1, w2 );
-	f = sqrt(f);
-	stp->st_min[Z] = superell->superell_V[Z] - f;	/* V.P +/- f */
-	stp->st_max[Z] = superell->superell_V[Z] + f;
-
-	return(0);			/* OK */
+  /* Compute bounding sphere */
+  VMOVE( stp->st_center, eip->v );
+  f = magsq_a;
+  if( magsq_b > f )
+    f = magsq_b;
+  if( magsq_c > f )
+    f = magsq_c;
+  stp->st_aradius = stp->st_bradius = sqrt(f);
+  
+  /* Compute bounding RPP */
+  VSET( w1, magsq_a, magsq_b, magsq_c );
+  
+  /* X */
+  VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
+  MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
+  VELMUL( w2, w2, w2 );		/* square each term */
+  f = VDOT( w1, w2 );
+  f = sqrt(f);
+  stp->st_min[X] = superell->superell_V[X] - f;	/* V.P +/- f */
+  stp->st_max[X] = superell->superell_V[X] + f;
+  
+  /* Y */
+  VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
+  MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
+  VELMUL( w2, w2, w2 );		/* square each term */
+  f = VDOT( w1, w2 );
+  f = sqrt(f);
+  stp->st_min[Y] = superell->superell_V[Y] - f;	/* V.P +/- f */
+  stp->st_max[Y] = superell->superell_V[Y] + f;
+  
+  /* Z */
+  VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
+  MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
+  VELMUL( w2, w2, w2 );		/* square each term */
+  f = VDOT( w1, w2 );
+  f = sqrt(f);
+  stp->st_min[Z] = superell->superell_V[Z] - f;	/* V.P +/- f */
+  stp->st_max[Z] = superell->superell_V[Z] + f;
+  
+  return(0);			/* OK */
 }
 
 /*
@@ -300,7 +344,219 @@ rt_superell_print(register const struct soltab *stp)
 int
 rt_superell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-  return 0;
+  static int counter=10;
+
+#if 1
+  register struct superell_specific *superell = (struct superell_specific *)stp->st_specific;
+  LOCAL bn_poly_t equation; /* equation of superell to be solved */
+  LOCAL vect_t translated;  /* translated shot vector */
+  LOCAL vect_t newShotPoint; /* P' */
+  LOCAL vect_t newShotDir; /* D' */
+  LOCAL vect_t normalizedShotPoint; /* P' with normalized dist from superell */
+  LOCAL bn_complex_t complexRoot[4]; /* roots returned from poly solver */
+  LOCAL double realRoot[4];  /* real ray distance values */
+  register int i,j;
+  register struct seg *segp;
+
+  /* translate ray point */
+  /*  VSUB2(translated, rp->r_pt, superell->superell_V); */
+  (translated)[X] = (rp->r_pt)[X] - (superell->superell_V)[X];
+  (translated)[Y] = (rp->r_pt)[Y] - (superell->superell_V)[Y];
+  (translated)[Z] = (rp->r_pt)[Z] - (superell->superell_V)[Z];
+
+  /* scale and rotate point to get P' */
+
+  /*  MAT4X3VEC(newShotPoint, superell->superell_SoR, translated); */
+  newShotPoint[X] = (superell->superell_SoR[0]*translated[X] + superell->superell_SoR[1]*translated[Y] + superell->superell_SoR[ 2]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
+  newShotPoint[Y] = (superell->superell_SoR[4]*translated[X] + superell->superell_SoR[5]*translated[Y] + superell->superell_SoR[ 6]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
+  newShotPoint[Z] = (superell->superell_SoR[8]*translated[X] + superell->superell_SoR[9]*translated[Y] + superell->superell_SoR[10]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
+
+  /* translate ray direction vector */
+  MAT4X3VEC(newShotDir, superell->superell_SoR, rp->r_dir);
+  VUNITIZE(newShotDir);
+
+  /* normalize distance from the superell.  substitues a corrected ray
+   * point, which contains a translation along the ray direction to the 
+   * closest approach to vertex of the superell.  Translating the ray
+   * along the direction of the ray to the closest point near the
+   * primitives center vertex.  New ray origin is hence, normalized.
+   */
+  VSCALE( normalizedShotPoint, newShotDir, 
+	  VDOT( newShotPoint, newShotDir ));
+  VSUB2( normalizedShotPoint, newShotPoint, normalizedShotPoint );
+
+  /* Now generate the polynomial equation for passing to the root finder */
+  
+  equation.dgr = 2;
+
+  equation.cf[0] = newShotPoint[X] * newShotPoint[X] * superell->superell_invmsAu + newShotPoint[Y] * newShotPoint[Y] * superell->superell_invmsBu + newShotPoint[Z] * newShotPoint[Z] * superell->superell_invmsCu - 1;
+  equation.cf[1] = 2 * newShotDir[X] * newShotPoint[X] * superell->superell_invmsAu + 2 * newShotDir[Y] * newShotPoint[Y] * superell->superell_invmsBu + 2 * newShotDir[Z] * newShotPoint[Z] * superell->superell_invmsCu;
+  equation.cf[2] = newShotDir[X] * newShotDir[X] * superell->superell_invmsAu  + newShotDir[Y] * newShotDir[Y] * superell->superell_invmsBu + newShotDir[Z] * newShotDir[Z] * superell->superell_invmsCu;
+
+  if ( (i = rt_poly_roots( &equation, complexRoot)) != 2 ) {
+    if (i != 0) {
+      bu_log("superell, rt_poly_roots() 2 != %d\n", i);
+      bn_pr_roots(stp->st_name, complexRoot, i);
+    }
+    return (0); /* MISS */
+  }
+
+  /* XXX BEGIN CUT */
+  /*  Only real roots indicate an intersection in real space.
+   *
+   *  Look at each root returned; if the imaginary part is zero
+   *  or sufficiently close, then use the real part as one value
+   *  of 't' for the intersections
+   */
+  for ( j=0, i=0; j < 2; j++ ){
+    if( NEAR_ZERO( complexRoot[j].im, 0.001 ) )
+      realRoot[i++] = complexRoot[j].re;
+  }
+  
+  /* reverse above translation by adding distance to all 'k' values. */
+  //  for( j = 0; j < i; ++j )
+  //    realRoot[j] -= VDOT(newShotPoint, newShotDir);
+  
+  /* Here, 'i' is number of points found */
+  switch( i )  {
+  case 0:
+    return(0);		/* No hit */
+    
+  default:
+    bu_log("rt_superell_shot: reduced 4 to %d roots\n",i);
+    bn_pr_roots( stp->st_name, complexRoot, 4 );
+    return(0);		/* No hit */
+    
+  case 2:
+    {
+      /* Sort most distant to least distant. */
+      FAST fastf_t	u;
+      if( (u=realRoot[0]) < realRoot[1] )  {
+	/* bubble larger towards [0] */
+	realRoot[0] = realRoot[1];
+	realRoot[1] = u;
+      }
+    }
+    break;
+  case 4:
+    {
+      register short	n;
+      register short	lim;
+      
+      /*  Inline rt_pt_sort().  Sorts realRoot[] into descending order. */
+      for( lim = i-1; lim > 0; lim-- )  {
+	for( n = 0; n < lim; n++ )  {
+	  FAST fastf_t	u;
+	  if( (u=realRoot[n]) < realRoot[n+1] )  {
+	    /* bubble larger towards [0] */
+	    realRoot[n] = realRoot[n+1];
+	    realRoot[n+1] = u;
+	  }
+	}
+      }
+    }
+    break;
+  }
+
+  if (counter > 0) {
+    bu_log("realroot: in %d  out %d\n", realRoot[1], realRoot[0]);
+    counter--;
+  }
+
+
+  /* Now, t[0] > t[npts-1] */
+  /* realRoot[1] is entry point, and realRoot[0] is farthest exit point */
+  RT_GET_SEG(segp, ap->a_resource);
+  segp->seg_stp = stp;
+  segp->seg_in.hit_dist = realRoot[1];
+  segp->seg_out.hit_dist = realRoot[0];
+  //  segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
+  /* Set aside vector for rt_superell_norm() later */
+  //  VJOIN1( segp->seg_in.hit_vpriv, newShotPoint, realRoot[1], newShotDir );
+  //  VJOIN1( segp->seg_out.hit_vpriv, newShotPoint, realRoot[0], newShotDir );
+  BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+  
+  if( i == 2 ) {
+    return(2);			/* HIT */
+  }
+  
+  /* 4 points */
+  /* realRoot[3] is entry point, and realRoot[2] is exit point */
+  RT_GET_SEG(segp, ap->a_resource);
+  segp->seg_stp = stp;
+  segp->seg_in.hit_dist = realRoot[3]*superell->superell_e;
+  segp->seg_out.hit_dist = realRoot[2]*superell->superell_e;
+  segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 1;
+  VJOIN1( segp->seg_in.hit_vpriv, newShotPoint, realRoot[3], newShotDir );
+  VJOIN1( segp->seg_out.hit_vpriv, newShotPoint, realRoot[2], newShotDir );
+  BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+  return(4);			/* HIT */
+  /* XXX END CUT */
+  
+  /* Is there any possibility of hitting another segment?  Only when there
+   * is a concave curvature (<n,e> > <2.0, 2.0>).
+   */
+  if ( (superell->superell_n > 2.0) || (superell->superell_e > 2.0) ) {
+    
+  }
+
+  return 1;
+#else
+  /* XXX ell code */
+	register struct superell_specific *superell =
+		(struct superell_specific *)stp->st_specific;
+	register struct seg *segp;
+	LOCAL vect_t	dprime;		/* D' */
+	LOCAL vect_t	pprime;		/* P' */
+	LOCAL vect_t	xlated;		/* translated vector */
+	LOCAL fastf_t	dp, dd;		/* D' dot P', D' dot D' */
+	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
+	FAST fastf_t	root;		/* root of radical */
+
+	/* out, Mat, vect */
+	MAT4X3VEC( dprime, superell->superell_SoR, rp->r_dir );
+	VSUB2( xlated, rp->r_pt, superell->superell_V );
+	MAT4X3VEC( pprime, superell->superell_SoR, xlated );
+
+	dp = VDOT( dprime, pprime );
+	dd = VDOT( dprime, dprime );
+
+	if( (root = dp*dp - dd * (VDOT(pprime,pprime)-1.0)) < 0 )
+		return(0);		/* No hit */
+	root = sqrt(root);
+
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+	if( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
+		/* k1 is entry, k2 is exit */
+		segp->seg_in.hit_dist = k1;
+		segp->seg_out.hit_dist = k2;
+
+		/* !!! please room */
+		if (counter > 0) {
+		  bu_log("realroot: in %d  out %d\n", k1, k2);
+		  counter--;
+		}
+
+	} else {
+		/* k2 is entry, k1 is exit */
+		segp->seg_in.hit_dist = k2;
+		segp->seg_out.hit_dist = k1;
+
+		/* !!! please room */
+		if (counter > 0) {
+		  bu_log("realroot: in %d  out %d\n", k2, k1);
+		  counter--;
+		}
+
+	}
+
+
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+	return(2);			/* HIT */
+
+
+#endif
 }
 
 
@@ -329,6 +585,18 @@ rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n
 void
 rt_superell_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+  register struct superell_specific *superell =
+    (struct superell_specific *)stp->st_specific;
+
+  LOCAL vect_t xlated;
+  LOCAL fastf_t scale;
+
+  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+  VSUB2( xlated, hitp->hit_point, superell->superell_V );
+  MAT4X3VEC( hitp->hit_normal, superell->superell_invRSSR, xlated );
+  scale = 1.0 / MAGNITUDE( hitp->hit_normal );
+  VSCALE( hitp->hit_normal, hitp->hit_normal, scale );
+
   return;
 }
 
@@ -341,7 +609,8 @@ rt_superell_norm(register struct hit *hitp, struct soltab *stp, register struct 
 void
 rt_superell_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
-  return 0;
+  bu_log("called rt_superell_curve!\n");
+  return;
 }
 
 
@@ -356,6 +625,7 @@ rt_superell_curve(register struct curvature *cvp, register struct hit *hitp, str
 void
 rt_superell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
+  bu_log("called rt_superell_uv!\n");
   return;
 }
 
@@ -548,6 +818,7 @@ struct superell_vert_strip {
 int
 rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
+  bu_log("rt_superell_tess called!\n");
   return -1;
 }
 
@@ -812,15 +1083,7 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
 int
 rt_superell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
+  bu_log("rt_superell_tnurb called!\n");
 	return 0;
 }
 
-/*
- *  u,v=(0,0) is supposed to be the south pole, at Z=-1.0
- *  The V direction runs from the south to the north pole.
- */
-static void
-nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
-{
-  return;
-}
