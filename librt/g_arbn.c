@@ -247,6 +247,7 @@ struct  seg            segp[]; /* array of segs (results returned) */
 int		 	    n; /* Number of ray/object pairs */
 struct resource         *resp; /* pointer to a list of free segs */
 {
+	rt_vstub( stp, rp, segp, n, resp );
 }
 
 /*
@@ -471,12 +472,15 @@ register mat_t		mat;
  *  Purely a mechanical transformation of one faceted object
  *  into another.
  */
-void
-rt_arbn_tess( s, rp, mat, dp )
+int
+rt_arbn_tess( s, rp, mat, dp, abs_tol, rel_tol, norm_tol )
 struct shell		*s;
 register union record	*rp;
 register mat_t		mat;
 struct directory	*dp;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
-	rt_nul_tess( s, rp, mat, dp );
+	return(-1);
 }
