@@ -1064,7 +1064,7 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(CRAY2)
-/*	Cray-2 running UNICOS 5.0; earlier versions not supported */
+/*	Cray-2 running UNICOS 7.0.4; earlier versions not supported */
 #	undef	cr2
 #	undef	cray
 #	define	MTYPE	cr2
