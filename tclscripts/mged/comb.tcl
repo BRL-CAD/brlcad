@@ -238,10 +238,18 @@ the form of the selected shader type." } }
 	    -command "comb_shader_gui $id fakestar $top.shaderF"
     hoc_register_menu_data "Shader" "fake star pattern" "Shader - fakestar"\
 		{ { summary "Map a fake star field on this object." } }
+    $top.shaderMB.m add command -label "cloud"\
+	-command "comb_shader_gui $id cloud $top.shaderF"
+    hoc_register_menu_data "Shader" "cloud" "Shader - cloud"\
+	{ { summary "Map a cloud texture on this object." } }
     $top.shaderMB.m add command -label "stack"\
 	-command "comb_shader_gui $id stack $top.shaderF"
     hoc_register_menu_data "Shader" "stack" "Shader - stack"\
 	{ { summary "Consecutively apply multiple shaders to this object." } }
+    $top.shaderMB.m add command -label "envmap"\
+	-command "comb_shader_gui $id envmap $top.shaderF"
+    hoc_register_menu_data "Shader" "envmap" "Shader - envmap"\
+	{ { summary "Apply an environment map using this region." } }
 
     label $top.combL -text "Boolean Expression:" -anchor w
     hoc_register_data $top.combL "Boolean Expression"\

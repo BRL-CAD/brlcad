@@ -9,8 +9,8 @@
 #	1. add the new shader to the 'switch' in 'do_shader_apply'
 #	2. add the new shader to the 'switch' in 'do_shader'
 #	3. add the new shader to the 'switch' in 'set_shader_params'
-#	4. add the new shader to the switch command in 'stack_add', if this shader is
-#		appropriate for being in a stack
+#	4. add the new shader to the switch command in 'stack_add' and 'env_select', if this shader is
+#		appropriate for being in a stack or environment map
 #	5. add a menu item for the new shader in 'init_comb' (comb.tcl)
 #	6. add the new shader to the list of shader names in the 'is_good_shader' proc
 #	7. add the following routines:
@@ -541,7 +541,7 @@ proc do_phong_apply { id } {
 		if { [expr $shader_params($id,diff) != $shader_params($id,def_diff)] } then {
 			lappend params di $shader_params($id,diff) } }
 	if { [string length $shader_params($id,ri) ] > 0 } then {
-		if { [expr $shader_params($id,ri) != $shader_params($id,def_ri)] } then {
+		if { [expr compare $shader_params($id,ri) != $shader_params($id,def_ri)] } then {
 			lappend params ri $shader_params($id,ri) } }
 	if { [string length $shader_params($id,shine)] > 0 } then {
 		if { [expr $shader_params($id,shine) != $shader_params($id,def_shine)] } then {
@@ -760,7 +760,8 @@ proc do_texture { shade_var id } {
 
 	hoc_register_data $shader_params($id,window).fr.valid_e Transparency {
 		{ summary "If depressed, transparency is enabled using the transparency\n\
-			color. Otherwise, the transparency color is ignored"}
+			color. Otherwise, the transparency color is ignored. The 'bump'\n\
+			shader does not use this button."}
 	}
 
 	hoc_register_data $shader_params($id,window).fr.file File {
@@ -793,7 +794,8 @@ proc do_texture { shade_var id } {
 
 	hoc_register_data $shader_params($id,window).fr.valid Transparency {
 		{ summary "If depressed, transparency is enabled using the transparency\n\
-			color. Otherwise, the transparency color is ignored"}
+			color. Otherwise, the transparency color is ignored. The 'bump'\n\
+			shader does not use this button."}
 	}
 
 #	set variables from current 'params' list
@@ -901,10 +903,6 @@ proc stack_add { shader shade_var id } {
 			set_mirror_defaults "$id,stk_$index"
 			set tmp_win [do_phong $shade_var $id,stk_$index]
 		}
-		fakestar {
-			set_fakestar_defaults "$id,stk_$index"
-			set tmp_win [do_fakestar $shade_var $id,stk_$index]
-		}
 		bump -
 		bwtexture -
 		texture {
@@ -919,6 +917,14 @@ proc stack_add { shader shade_var id } {
 			set_testmap_defaults "$id,stk_$index"
 			set tmp_win [do_testmap $shade_var $id,stk_$index]
 		}
+		fakestar {
+			set_fakestar_defaults "$id,stk_$index"
+			set tmp_win [do_fakestar $shade_var $id,stk_$index]
+		}
+		cloud {
+			set_cloud_defaults "$id,stk_$index"
+			set tmp_win [do_cloud $shade_var $id,stk_$index]
+		}
 	}
 
 	grid $shader_params($id,window).fr.stk_$index -columnspan 2 -sticky ew
@@ -932,7 +938,20 @@ proc set_stack_values { shade_str id } {
 
 	if {$shade_length < 2 } {return}
 
+	set shader [lindex $shade_str 0]
 	set shader_list [lindex $shade_str 1]
+
+	if { [string compare $shader envmap] == 0 } {
+		# envmap shader using a stack
+		set err [catch "set shade_length [llength $shader_list]"]
+		if { $err != 0 } {return}
+
+		if {$shade_length < 2 } {return}
+
+		 set shader [lindex $shader_list 0]
+		 set shader_list [lindex $shader_list 1]
+	}
+
 
 	set err [catch "set no_of_shaders [llength $shader_list]"]
 	if { $err != 0 } {return}
@@ -1001,6 +1020,8 @@ proc do_stack { shade_var id } {
 	$shader_params($id,window).fr.add.m add command \
 		-label fakestar -command "stack_add fakestar $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
+		-label cloud -command "stack_add cloud $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
 		-label testmap -command "stack_add testmap $shade_var $id"
 
 	menubutton $shader_params($id,window).fr.del\
@@ -1020,6 +1041,254 @@ proc do_stack { shade_var id } {
 	set_stack_values $shade_str $id
 
 	return $shader_params($id,window).fr
+}
+
+proc env_select { shader shade_var id } {
+	global shader_params
+
+	if { [is_good_shader $shader] == 0 } {return}
+	set err [catch "set tmp $shader_params($id,env,shader_name)"]
+	if { $err != 0 } {
+		set old_shader ""
+	} else {
+		set old_shader $tmp
+	}
+	if { [string compare $old_shader $shader] == 0 } {return}
+	set shader_params($id,env,shader_name) $shader
+
+	catch {destroy $shader_params($id,window).fr.env}
+	frame $shader_params($id,window).fr.env -relief raised -bd 3
+	set shader_params($id,env,window) $shader_params($id,window).fr.env
+
+	label $shader_params($id,window).fr.env.lab -text $shader
+	grid $shader_params($id,window).fr.env.lab -columnspan 4
+
+	switch $shader {
+		plastic {
+			set_plastic_defaults "$id,env"
+			set tmp_win [do_phong $shade_var $id,env]
+		}
+		glass {
+			set_glass_defaults "$id,env"
+			set tmp_win [do_phong $shade_var $id,env]
+		}
+		mirror {
+			set_mirror_defaults "$id,env"
+			set tmp_win [do_phong $shade_var $id,env]
+		}
+		bump -
+		bwtexture -
+		texture {
+			set_texture_defaults "$id,env"
+			set tmp_win [do_texture $shade_var $id,env]
+		}
+		checker {
+			set_checker_defaults "$id,env"
+			set tmp_win [do_checker $shade_var $id,env]
+		}
+		testmap {
+			set_testmap_defaults "$id,env"
+			set tmp_win [do_testmap $shade_var $id,env]
+		}
+		fakestar {
+			set_fakestar_defaults "$id,env"
+			set tmp_win [do_fakestar $shade_var $id,env]
+		}
+		cloud {
+			set_cloud_defaults "$id,env"
+			set tmp_win [do_cloud $shade_var $id,env]
+		}
+		stack {
+			set_stack_defaults "$id,env"
+			set tmp_win [do_stack $shade_var $id,env]
+		}
+	}
+
+	grid $shader_params($id,window).fr.env -sticky ew
+}
+
+proc set_envmap_defaults { id } {
+	set shader_params($id,env,shader_name) ""
+	return
+}
+
+proc do_envmap_apply { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shade_str
+
+	set params ""
+
+# this may be called via a binding in some other shader and so might get the 'id' from
+# that shader. So it may be of the form 'id_#,env' (where # is some number)
+
+	set index [string first ",env" $id]
+	if { $index == -1 } then {
+		set use_id $id
+	} else {
+		set index2 [expr $index - 1]
+		set use_id [string range $id 0 $index2]
+	}
+
+	set shade_str $shader_params($use_id,env,shader_name)
+	do_shader_apply $shade_var $use_id,env
+	set params $shade_str
+
+	if {$params == "" } {
+		tk_messageBox -type ok -icon error -title "ERROR: Empty envmap"\
+			-message "The envmap shader is meaningless without selecting another shader as the environmant"
+		set shade_str envmap
+	} else {
+		set shade_str "envmap {$params}"
+	}
+}
+
+proc set_envmap_values { shade_str id } {
+	global shader_params
+
+	set err [catch "set shade_length [llength $shade_str]"]
+	if { $err != 0 } {return}
+
+	if { $shade_length < 2 } { return }
+	set env_params [lindex $shade_str 1]
+	set err [catch "set sub_len [llength $env_params]"]
+	if { $err != 0 } {return}
+
+	set shader [lindex $env_params 0]
+
+	if { [is_good_shader $shader] == 0 } {return}
+
+	env_select $shader $shader_params($id,shade_var) $id
+	set_${shader}_values $env_params $id,env
+}
+
+proc do_envmap { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shade_str
+
+	catch { destroy $shader_params($id,window).fr }
+	frame $shader_params($id,window).fr
+
+	set shader_params($id,shade_var) $shade_var
+
+	menubutton $shader_params($id,window).fr.sel_env\
+		-menu $shader_params($id,window).fr.sel_env.m\
+		-text "Select shader" -relief raised
+	hoc_register_data $shader_params($id,window).fr.sel_env "Select Shader" {
+		{summary "Use this menu to select a shader for the environment map"}
+	}
+
+	menu $shader_params($id,window).fr.sel_env.m -tearoff 0
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label plastic -command "env_select plastic $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label glass -command "env_select glass $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label mirror -command "env_select mirror $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label "bump map" -command "env_select bump $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label texture -command "env_select texture $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label bwtexture -command "env_select bwtexture $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label fakestar -command "env_select fakestar $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label cloud -command "env_select cloud $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label checker -command "env_select checker $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label testmap -command "env_select testmap $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label stack -command "env_select stack $shade_var $id"
+
+	grid $shader_params($id,window).fr.sel_env
+
+	grid $shader_params($id,window).fr -ipadx 3 -ipady 3 -sticky ew
+	grid columnconfigure $shader_params($id,window).fr 0 -weight 1
+
+	set_envmap_values $shade_str $id
+
+	return $shader_params($id,window).fr
+}
+
+proc do_cloud { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shader_str
+
+	catch { destroy $shader_params($id,window).fr }
+	frame $shader_params($id,window).fr
+
+	label $shader_params($id,window).fr.cl_thresh -text Threshold
+	entry $shader_params($id,window).fr.cl_thresh_e -width 5 -textvariable shader_params($id,cl_thresh)
+	bind $shader_params($id,window).fr.cl_thresh_e <KeyRelease> "do_shader_apply $shade_var $id"
+	label $shader_params($id,window).fr.cl_range -text Range
+	entry $shader_params($id,window).fr.cl_range_e -width 5 -textvariable shader_params($id,cl_range)
+	bind $shader_params($id,window).fr.cl_range_e <KeyRelease> "do_shader_apply $shade_var $id"
+
+	set_cloud_values $shader_str $id
+
+	grid $shader_params($id,window).fr.cl_thresh -row 0 -column 0 -sticky e
+	grid $shader_params($id,window).fr.cl_thresh_e -row 0 -column 1 -sticky w
+	grid $shader_params($id,window).fr.cl_range -row 0 -column 2 -sticky e
+	grid $shader_params($id,window).fr.cl_range_e -row 0 -column 3 -sticky w
+
+	grid $shader_params($id,window).fr -columnspan 4
+
+	return $shader_params($id,window).fr
+}
+
+proc set_cloud_values { shader_str id } {
+	global shader_params
+
+	set shader_params($id,cl_thresh) ""
+	set shader_params($id,cl_range) ""
+	if { [llength $shader_str] > 1 } then {
+		set params [lindex $shader_str 1]
+	} else {
+		set params ""
+	}
+	set list_len [llength $params]
+	if { $list_len > 1 } then {
+		for { set index 0 } { $index < $list_len } { set index [expr $index + 2] } {
+			set key [lindex $params $index]
+			set value [lindex $params [expr $index + 1]]
+			switch $key {
+				thresh {
+					if { $value != $shader_params($id,def_cl_thresh) } then {
+						set shader_params($id,cl_thresh) $value }
+				}
+				range {
+					if { $value != $shader_params($id,def_cl_range) } then {
+						set shader_params($id,cl_range) $value }
+				}
+			}
+		}
+	}
+}
+
+proc do_cloud_apply { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shader
+
+	set params ""
+
+	# check each parameter to see if it's been set
+	# if set to the default, ignore it
+	if { [string length $shader_params($id,cl_thresh) ] > 0 } then {
+		if { [expr $shader_params($id,cl_thresh) != $shader_params($id,def_cl_thresh)] } then {
+			lappend params thresh $shader_params($id,cl_thresh) } }
+	if { [string length $shader_params($id,cl_range) ] > 0 } then {
+		if { [expr $shader_params($id,cl_range) != $shader_params($id,def_cl_range)] } then {
+			lappend params range $shader_params($id,cl_range) } }
+
+	set shader [list cloud $params ]
+}
+
+proc set_cloud_defaults { id } {
+	global shader_params
+
+	set shader_params($id,def_cl_thresh) 0.35
+	set shader_params($id,def_cl_range) 0.3
 }
 
 proc set_shader_params { shade_var id } {
@@ -1065,6 +1334,12 @@ proc set_shader_params { shade_var id } {
 		}
 		stack {
 			set_stack_values $shade_str $id
+		}
+		envmap {
+			set_envmap_values $shade_str $id
+		}
+		cloud {
+			set_cloud_values $shade_str $id
 		}
 	}
 }
@@ -1124,6 +1399,14 @@ proc do_shader { shade_var id frame_name } {
 				set_stack_defaults $id
 				set my_win [do_stack $shade_var $id]
 			}
+			envmap {
+				set_envmap_defaults $id
+				set my_win [do_envmap $shade_var $id]
+			}
+			cloud {
+				set_cloud_defaults $id
+				set my_win [do_cloud $shade_var $id]
+			}
 		}
 	}
 
@@ -1166,6 +1449,12 @@ proc do_shader_apply { shade_var id } {
 		stack {
 			do_stack_apply $shade_var $id
 		}
+		envmap {
+			do_envmap_apply $shade_var $id
+		}
+		cloud {
+			do_cloud_apply $shade_var $id
+		}
 	}
 }
 
@@ -1180,6 +1469,8 @@ proc is_good_shader { shader } {
 		bwtexture -
 		fakestar -
 		checker -
+		envmap -
+		cloud -
 		testmap { return 1 }
 		default { return 0 }
 	}
