@@ -78,6 +78,13 @@ if [ ! -d "$ARCHIVE" ] ; then
     exit 1
 fi
 
+if [ "x`id -u`" != "x0" ] ; then
+    echo "This script requires superuser privileges, restarting via sudo"
+    sudo "$0" "$1" "$2" "$3" "$4" "$5"
+    exit $?
+fi
+
+
 VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 PKG_NAME="${NAME}-${VERSION}"
 mkdir "${PKG_NAME}.pkg"
@@ -151,37 +158,9 @@ if [ ! -f "${PKG_NAME}.pkg/Contents/Info.plist" ] ; then
     exit 1
 fi
 
-# strip any trailing slash so that the archive location is relative
-pax -w -x cpio -s ',^//*,,' -f "${PKG_NAME}.pkg/Contents/Archive.pax" "$ARCHIVE"
-if [ $? != 0 ] ; then
-    echo "ERROR: unable to successfully create a pax archive of $ARCHIVE"
-    exit 1
-fi
-if [ ! -f "${PKG_NAME}.pkg/Contents/Archive.pax" ] ; then
-    echo "ERROR: pax archive does not exist"
-    exit 1
-fi
-
-gzip -c "${PKG_NAME}.pkg/Contents/Archive.pax" > "${PKG_NAME}.pkg/Contents/Archive.pax.gz"
-if [ $? != 0 ] ; then
-    echo "ERROR: unable to successfully compress the pax archive"
-    exit 1
-fi
-if [ ! -f "${PKG_NAME}.pkg/Contents/Archive.pax.gz" ] ; then
-    echo "ERROR: compressed pax archive does not exist"
-    exit 1
-fi
-
-rm -f "${PKG_NAME}.pkg/Contents/Archive.pax"
-if [ -f "${PKG_NAME}.pkg/Contents/Archive.pax" ] ; then
-    echo "ERROR: unable to remove uncompressed pax archive"
-    exit 1
-fi
-
-# make a temporary root directory for making the bill of materials
 mkdir ${PKG_NAME}.pkg/Contents/Root
 if [ $? != 0 ] ; then
-    echo "ERROR: unable to successfully create the BOM root"
+    echo "ERROR: unable to successfully create the archive root"
     exit 1
 fi
 if [ ! -d "${PKG_NAME}.pkg/Contents/Root" ] ; then
@@ -189,10 +168,31 @@ if [ ! -d "${PKG_NAME}.pkg/Contents/Root" ] ; then
     exit 1
 fi
 
-# fill the bom root
-pax -rw "$ARCHIVE" "${PKG_NAME}.pkg/Contents/Root"
+chmod 1775 "${PKG_NAME}.pkg/Contents/Root"
 if [ $? != 0 ] ; then
-    echo "ERROR: unable to successfully create the BOM root of $ARCHIVE"
+    echo "ERROR: unable to set the mode on the archive root"
+    exit 1
+fi
+
+chown root:admin "${PKG_NAME}.pkg/Contents/Root"
+if [ $? != 0 ] ; then
+    echo "ERROR: unable to set the owner/group on the archive root"
+    exit 1
+fi
+
+pax -p e -rw "$ARCHIVE" "${PKG_NAME}.pkg/Contents/Root"
+if [ $? != 0 ] ; then
+    echo "ERROR: unable to successfully create the archive root of $ARCHIVE"
+    exit 1
+fi
+
+pax -z -w -x cpio -s ",${PKG_NAME}.pkg/Contents/Root,.," "${PKG_NAME}.pkg/Contents/Root" > "${PKG_NAME}.pkg/Contents/Archive.pax.gz"
+if [ $? != 0 ] ; then
+    echo "ERROR: unable to successfully create a compressed pax archive"
+    exit 1
+fi
+if [ ! -f "${PKG_NAME}.pkg/Contents/Archive.pax.gz" ] ; then
+    echo "ERROR: compressed pax archive does not exist"
     exit 1
 fi
 
@@ -206,7 +206,6 @@ if [ ! -f "${PKG_NAME}.pkg/Contents/Archive.bom" ] ; then
     exit 1
 fi
 
-# remove the bom root
 rm -rf "${PKG_NAME}.pkg/Contents/Root"
 if [ -d "${PKG_NAME}.pkg/Contents/Root" ] ; then
     echo "ERROR: unable to remove temporary BOM root"
