@@ -49,6 +49,7 @@ static char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #define SEEKING_START_PT 0
 #define FOUND_START_PT 1
 #define CELLNULL ( (struct cell *) 0)
+#define ID_BACKGROUND (-999)
 
 struct cell {
 	float	c_dist;			/* distance from emanation plane to in_hit */
@@ -76,7 +77,7 @@ struct cell	*topp;			/* pointer to top line	    */
 
 
 
-int		use_air = 1;		/* Handling of air in librt */
+int		use_air = 0;		/* Internal air recognition is off */
 
 int		using_mlib = 0;		/* Material routines NOT used */
 
@@ -254,7 +255,7 @@ register struct application	*ap;
 	 * "smeared".
 	 */
 
-	posp->c_id = 0;
+	posp->c_id = ID_BACKGROUND;
 	posp->c_dist = 0;
 	VSET(posp->c_hit, 0, 0, 0);
 	VSET(posp->c_normal, 0, 0, 0);
@@ -275,7 +276,11 @@ view_pixel()
 	return;
 }
 
-void view_cleanup() {}
+void view_cleanup()
+{
+
+}
+
 
 /*
  *			R A Y H I T
@@ -343,7 +348,7 @@ register struct partition *PartHeadp;
 	/* make sure that if there is a hit, the region_id is not the
 	 * same as the background.  If it is, set to 1.
 	 */
-	if(posp->c_id == 0)
+	if(posp->c_id == ID_BACKGROUND)
 		posp->c_id = 1;
 	posp->c_dist = pp->pt_inhit->hit_dist;
 	VMOVE(posp->c_hit, pp->pt_inhit->hit_point);
@@ -464,7 +469,7 @@ int		y;
 		 */
 
 		if (botp->c_id != (botp+1)->c_id ||
-		   ( botp->c_id != 0 && 
+		   ( botp->c_id != ID_BACKGROUND && 
 		   ( (botp->c_dist + pit_depth < (botp+1)->c_dist) ||
 		     ((botp+1)->c_dist + pit_depth < botp->c_dist)  ||
  		     (VDOT(botp->c_normal, (botp + 1)->c_normal) < maxangle))))  {
@@ -550,7 +555,7 @@ int		y;
 		 */
 
 		if (botp->c_id != topp->c_id ||
-		   ( botp->c_id != 0 && 
+		   ( botp->c_id != ID_BACKGROUND && 
 		     ((botp->c_dist + pit_depth < topp->c_dist) ||
 		      (topp->c_dist + pit_depth < botp->c_dist) ||
 		      (VDOT(botp->c_normal, topp->c_normal) < maxangle))))  {
@@ -726,8 +731,8 @@ int		file_width;
 	int	i;
 
 	for(i = 0; i < file_width + 2; i++, inbuffp++)  {
-		inbuffp->c_id = '\0';
-		inbuffp->c_dist = '\0';
+		inbuffp->c_id = ID_BACKGROUND;
+		inbuffp->c_dist = 0;
 		VSET(inbuffp->c_hit, 0, 0, 0);
 		VSET(inbuffp->c_normal, 0, 0, 0);
 		VSET(inbuffp->c_rdir, 0, 0, 0);
