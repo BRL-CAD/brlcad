@@ -1021,7 +1021,7 @@ CONST struct rt_tol	*tol;
 	{
 		VSET( xvec , 1 , 0 , 0 );
 		VSET( yvec , 0 , 1 , 0 );
-		VSET( zvec , 0 , 1 , 1 );
+		VSET( zvec , 0 , 0 , 1 );
 	}
 	else
 	{
