@@ -2710,7 +2710,6 @@ dgo_rt_write(dgop, vop, fp, eye_model)
 	(void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
 		      eye_model[X], eye_model[Y], eye_model[Z] );
 
-#define DIR_USED	0x80	/* XXX move to raytrace.h */
 	(void)fprintf(fp, "start 0; clean;\n");
 	FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid) {
 		for (i=0;i<sp->s_fullpath.fp_len;i++) {
@@ -2735,7 +2734,6 @@ dgo_rt_write(dgop, vop, fp, eye_model)
 			DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_flags &= ~DIR_USED;
 		}
 	}
-#undef DIR_USED
 	(void)fprintf(fp, "end;\n");
 }
 
