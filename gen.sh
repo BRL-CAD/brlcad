@@ -416,6 +416,7 @@ dist)
 	grep PRODUCTION Cakefile.defs
 	echo
 
+	echo "Copying CDIRS and top level files"
 	for i in ${CDIRS}
 	do
 		rm -fr ${DISTDIR}/$i
@@ -429,6 +430,11 @@ dist)
 		rm -f ${DISTDIR}/$i
 	done
 	cp ${TOP_FILES} ${DISTDIR}/.
+
+	echo "Formatting the INSTALL.TXT file"
+	rm -f ${DISTDIR}/INSTALL.TXT
+	tbl doc/install.doc | nroff -ms | col -b -x  > ${DISTDIR}/INSTALL.TXT
+
 	echo "Preparing the 'bench' directory"
 	(cd bench; cake clobber; cake install)
 	echo "End of BRL-CAD Release $RELEASE tape, `date`" > ${DISTDIR}/zzzEND
