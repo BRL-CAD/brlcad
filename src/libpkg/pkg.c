@@ -42,7 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
 #ifndef WIN32
