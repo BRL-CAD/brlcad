@@ -265,6 +265,9 @@ dnl ***********************
 dnl *** Check arguments ***
 dnl ***********************
 
+AC_MSG_CHECKING([... a r g u m e n t s ])
+AC_MSG_RESULT([])
+
 dnl Arguments that are auto should check both yes and no values,
 dnl otherwise there only needs to be a check for not no to imply a yes
 dnl value.  Arguments should only set their flag as to whether they
@@ -713,6 +716,9 @@ dnl **************************
 dnl *** Check for programs ***
 dnl **************************
 
+AC_MSG_CHECKING([... p r o g r a m s ])
+AC_MSG_RESULT([])
+
 AC_LANG(C)
 
 AC_AIX
@@ -828,6 +834,9 @@ dnl ***************************
 dnl *** Check for libraries ***
 dnl ***************************
 
+AC_MSG_CHECKING([... l i b r a r i e s ])
+AC_MSG_RESULT([])
+
 dnl need curses, would prefer ncurses  (XXX should look for tputs)
 #LIBS=
 AC_CHECK_LIB(ncurses, tputs, CURSES="-lncurses",
@@ -896,6 +905,9 @@ AC_CHECK_LIB(gl, getvideo, gl_link_works=yes)
 dnl *************************
 dnl *** Check for headers ***
 dnl *************************
+
+AC_MSG_CHECKING([... h e a d e r s ])
+AC_MSG_RESULT([])
 
 AC_HEADER_STDC
 AC_PATH_X
@@ -1046,6 +1058,9 @@ dnl **********************************
 dnl *** Check for types/structures ***
 dnl **********************************
 
+AC_MSG_CHECKING([... t y p e s ])
+AC_MSG_RESULT([])
+
 AC_C_CHAR_UNSIGNED
 AC_HEADER_STAT
 AC_HEADER_STDBOOL
@@ -1092,6 +1107,9 @@ SC_TCL_64BIT_FLAGS
 dnl ******************************************
 dnl *** Check for compiler characteristics ***
 dnl ******************************************
+
+AC_MSG_CHECKING([... c o m p i l e r ])
+AC_MSG_RESULT([])
 
 dnl include the BRL-CAD include directory
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/include"
@@ -1390,6 +1408,9 @@ dnl ***************************
 dnl *** Check for functions ***
 dnl ***************************
 
+AC_MSG_CHECKING([... f u n c t i o n s ])
+AC_MSG_RESULT([])
+
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(\
 	access \
@@ -1483,6 +1504,9 @@ AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
 dnl *********************************
 dnl *** Check for system services ***
 dnl *********************************
+
+AC_MSG_CHECKING([... s e r v i c e s ])
+AC_MSG_RESULT([])
 
 dnl *** X11 ***
 
@@ -1810,6 +1834,9 @@ AC_SUBST(ECHO_N)
 dnl ***************************
 dnl *** Configure Makefiles ***
 dnl ***************************
+
+AC_MSG_CHECKING([... M a k e f i l e s ])
+AC_MSG_RESULT([])
 
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_jove" = "xyes"])
 # XXX only irix can build libtkglx right now?
