@@ -450,6 +450,17 @@ case "$lineone" in
 		;;
 	esac
 	;;
+    "# !/bin/"*)
+        echo "Found script exec line"
+	echo "$lineone" >> $FILE
+	skip=2
+	case "$linetwo" in
+	    "# "*${title})
+	        echo "Found old file header"
+		skip=3
+		;;
+	esac
+	;;
     "")
         echo "Found empty line"
 	skip=2
@@ -493,6 +504,11 @@ case "$lineone" in
 	esac
 	;;
     [a-z]*)
+        echo "found code"
+	skip=0
+	closeit=1
+	;;
+    #include*)
         echo "found code"
 	skip=0
 	closeit=1
