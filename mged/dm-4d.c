@@ -331,7 +331,7 @@ Ir_open()
 	if( ir_has_zbuf && zbuffer_on ) 
 	{
 		zbuffer(1);
-		lsetdepth(0, 768 );
+		lsetdepth(0, 0x07fffff );
 	}
 
 	/* Clear out image from windows underneath */
@@ -622,10 +622,10 @@ double ratio;
 		}
 		if(cueing_on)  {
 			/* RGBrange marked obsolete, use lRGBrange! */
-			RGBrange(
+			lRGBrange(
 				r/10, g/10, b/10,
 				r, g, b,
-				0, 768 );
+				0, 0x007fffff );
 			/* XXX should investigate lRGBrange, lshaderange, lsetdepth */
 		}
 		RGBcolor( r, g, b );
@@ -633,7 +633,7 @@ double ratio;
 		if( white ) {
 			ovec = nvec = MAP_ENTRY(DM_WHITE);
 			/* Use the *next* to the brightest white entry */
-			if(cueing_on) shaderange(nvec+1, nvec+1, 0, 768);
+			if(cueing_on) lshaderange(nvec+1, nvec+1, 0, 0x007fffff);
 
 			color( nvec );
 		} else {
@@ -643,7 +643,7 @@ double ratio;
 				 * The code will use the "reserved" color map entries
 				 * to display it when in depthcued mode.
 				 */
-			  	if(cueing_on) shaderange(nvec+1, nvec+14, 0, 768);
+			  	if(cueing_on) lshaderange(nvec+1, nvec+14, 0, 0x007fffff);
 				color( nvec );
 			  	ovec = nvec;
 			  }
@@ -756,15 +756,15 @@ int dashed;
 	if( ir_has_rgb )  {
 		/* Yellow */
 		if(cueing_on)  {
-			RGBrange(
+			lRGBrange(
 				255, 255, 0,
 				255, 255, 0,
-				0, 768 );
+				0, 0x007fffff );
 		}
 		RGBcolor( (short)255, (short)255, (short) 0 );
 	} else {
 		if((nvec = MAP_ENTRY(DM_YELLOW)) != ovec) {
-		  	if(cueing_on) shaderange(nvec, nvec, 0, 768);
+		  	if(cueing_on) lshaderange(nvec, nvec, 0, 0x007fffff);
 			color( nvec );
 		  	ovec = nvec;
 		}
@@ -995,7 +995,7 @@ checkevents()  {
 				/* toggle zbuffer status */
 				zbuffer_on = zbuffer_on ? 0 : 1;
 				zbuffer( zbuffer_on );
-				if( zbuffer_on) lsetdepth(0, 768);
+				if( zbuffer_on) lsetdepth(0, 0x007fffff);
 				dmaflag = 1;
 				kblights();
 				continue;
