@@ -19,6 +19,7 @@ double		local2base;		/* from db_i struct, not fastf_t */
 
 extern struct application	ap;
 extern struct rt_i		*rti_tab[];	/* For use w/ and w/o air */
+extern struct nirt_obj		object_list;
 extern com_table		ComTab[];
 extern outval			ValTab[];
 
@@ -297,11 +298,18 @@ char			*buffer;
 com_table		*ctp;
 
 {
-    int		new_use = 0;      /* current position on the *buffer        */
+    int			new_use = 0;      /* current position on the *buffer */
+    char		response[128];
+    char		*rp = response;
+    char		db_title[TITLE_LEN+1];	/* title from MGED database */
+    struct rt_i		*rtip;
+    struct nirt_obj	*op;
+
+    extern char	*db_name;		/* Name of MGED database file */
 
     while (isspace(*buffer))
 	    ++buffer;
-    if (*buffer == '\0')     /* display current use_air value */
+    if (*buffer == '\0')     /* display current value of use_of_air */
     {
 	printf("use_air = %d\n", ap.a_rt_i -> useair);
 	return;
@@ -316,7 +324,51 @@ com_table		*ctp;
 	new_use *= 10;
 	new_use += *buffer++ - '0';
     }
-    ap.a_rt_i = rti_tab[new_use != 0];
+    if (new_use && (new_use != 1))
+    {
+	fprintf(stderr,
+	    "Warning: useair=%d specified, will set to 1\n",
+	    new_use);
+	new_use = 1;
+    }
+    if (rti_tab[new_use] == RTI_NULL)
+    {
+	printf(" Air %s in the current directory of database objects.\n",
+	    new_use ? "is not included" : "is included");
+	printf(
+	    " To set useair=%d requires building/prepping another directory.\n",
+	    new_use);
+	printf(" Do you want to do that now (y|n)[n]? ");
+	gets(response);
+	while ((*rp == ' ') || (*rp == '\t'))
+	    ++rp;
+	if ((*rp != 'y') && (*rp != 'Y'))
+	{
+	    printf("useair remains %d\n", ap.a_rt_i -> useair);
+	    return;
+	}
+#if 0
+	printf("Building the directory...");fflush(stdout);
+#endif
+	fprintf(stderr, "Building the directory...");fflush(stderr);
+	if ((rtip = rt_dirbuild( db_name , db_title, TITLE_LEN )) == RTI_NULL)
+	{
+	    fflush(stdout);
+	    fprintf(stderr, "Could not load file %s\n", db_name);
+	    printusage();
+	    exit(1);
+	}
+	rti_tab[new_use] = rtip;
+	rtip -> useair = new_use;
+
+#if 0
+	printf("\nPrepping the geometry...");fflush(stdout);
+#endif
+	fprintf(stderr, "Prepping the geometry...");fflush(stderr);
+	for (op = &object_list; op -> obj_next != NULL; op = op -> obj_next)
+	    do_rt_gettree( rtip, op -> obj_name, 0);
+    }
+    ap.a_rt_i = rti_tab[new_use];
 }
 
 void nirt_units (buffer, ctp)
