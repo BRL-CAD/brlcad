@@ -2223,6 +2223,17 @@ f_pl(clientData, interp, argc, argv)
 	return status;
 }
 
+void
+mged_update()
+{
+  event_check(1);  /* non-blocking */
+
+  if(sedraw > 0)
+    sedit();
+
+  refresh();
+}
+
 int
 f_update(clientData, interp, argc, argv)
 	ClientData clientData;
@@ -2240,12 +2251,7 @@ f_update(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	event_check(1);  /* non-blocking */
-
-	if(sedraw > 0)
-		sedit();
-
-	refresh();
+	mged_update();
 
 	return TCL_OK;
 }
