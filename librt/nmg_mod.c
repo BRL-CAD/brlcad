@@ -1351,7 +1351,8 @@ struct vertexuse	*vu2;
 	if( vu1->v_p != vu2->v_p )  rt_bomb("nmg_join_2loops: jaunt failed\n");
 
 	/*
-	 *  Gobble edges off of loop2, and insert them into loop1,
+	 *  Gobble edges off of loop2 (starting with eu2),
+	 *  and insert them into loop1,
 	 *  between first_new_eu and second_new_eu.
 	 *  The final edge from loop 2 will then be followed by
 	 *  second_new_eu.
