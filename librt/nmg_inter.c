@@ -58,9 +58,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to raytrace.h (from nmg_info.c) */
-RT_EXTERN(CONST struct edgeuse *nmg_find_edge_between_2fu, (CONST struct faceuse *fu1, CONST struct faceuse *fu2));
-
 #define ISECT_NONE	0
 #define ISECT_SHARED_V	1
 #define ISECT_SPLIT1	2
@@ -2179,7 +2176,7 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	if (vert_list1.end == 0 && vert_list2.end == 0) goto out;
 
 	/* Invoke the face cutter to snip and join loops along isect line */
-	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, &is->tol);
+	is->on_eg = nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, is->on_eg, &is->tol);
 	ret = 1;		/* face cutter was called. */
 
 out:
@@ -3239,6 +3236,8 @@ struct vertexuse		*hit_vu;	/* often will be NULL */
 			/* Yes, this "can't happen" */
 			rt_log("vu=x%x, v=x%x; hit_vu=x%x, v=x%x\n",
 				vu, v, hit_vu, hit_vu->v_p );
+			VPRINT("vu ", vu->v_p->vg_p->coord);
+			VPRINT("hit", hit_vu->v_p->vg_p->coord);
 			rt_bomb("nmg_search_v_eg() two different vertices for intersect point?\n");
 		}
 		hit_vu = vu;
@@ -3375,6 +3374,7 @@ colinear:
 			)  {
 				NMG_CK_EDGEUSE(*eu1);
 				if( (*eu1)->e_p->eg_p != *eg1 )  continue;
+				/* Both verts of *eu1 lie on line *eg1 */
 				hit_vu = nmg_search_v_eg( (*eu1)->vu_p, is->on_eg, hit_vu );
 				hit_vu = nmg_search_v_eg( RT_LIST_PNEXT_CIRC(edgeuse, (*eu1))->vu_p, is->on_eg, hit_vu );
 			}
@@ -3684,7 +3684,7 @@ rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
 		rt_log("nmg_isect_two_face3pNEW( fu1=x%x, fu2=x%x )  MIDDLE\n", fu1, fu2);
 	}
 
-	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, &is->tol);
+	is->on_eg = nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, is->on_eg, &is->tol);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_fu_touchingloops(fu1);
