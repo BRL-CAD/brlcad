@@ -783,13 +783,18 @@ void nmg_crackshells(s1, s2, tol)
 struct shell *s1, *s2;
 fastf_t tol;
 {
-	struct faceuse *fu1, *fu2;
-	struct nmg_ptbl faces;
+	struct face	*f1;
+	struct faceuse	*fu1, *fu2;
+	struct shell_a	*sa1, *sa2;
+	long		*flags;
+
+	NMG_CK_SHELL(s1);
+	sa1 = s1->sa_p;
+	NMG_CK_SHELL_A(sa1);
 
 	NMG_CK_SHELL(s2);
-	NMG_CK_SHELL_A(s2->sa_p);
-	NMG_CK_SHELL(s1);
-	NMG_CK_SHELL_A(s1->sa_p);
+	sa2 = s2->sa_p;
+	NMG_CK_SHELL_A(sa2);
 
 	/* XXX this isn't true for non-manifold geometry! */
 	if( RT_LIST_IS_EMPTY( &s1->fu_hd ) ||
@@ -798,54 +803,56 @@ fastf_t tol;
 		return;
 	}
 
-	if ( ! NMG_EXTENT_OVERLAP(s1->sa_p->min_pt, s1->sa_p->max_pt,
-	    s2->sa_p->min_pt, s2->sa_p->max_pt) )
+	/* See if shells overlap */
+	if ( ! NMG_EXTENT_OVERLAP(sa1->min_pt, sa1->max_pt,
+	    sa2->min_pt, sa2->max_pt) )
 		return;
 
-	(void)nmg_tbl(&faces, TBL_INIT, (long *)NULL);
+	flags = (long *)rt_calloc( s1->r_p->m_p->maxindex, sizeof(long),
+		"nmg_crackshells flags[]" );
 
-	/* shells overlap */
+	/*
+	 *  Check each of the faces in shell 1 to see
+	 *  if they overlap the extent of shell 2
+	 */
 	for( RT_LIST_FOR( fu1, faceuse, &s1->fu_hd ) )  {
-		/* check each of the faces in shell 1 to see
-		 * if they overlap the extent of shell 2
-		 */
 		NMG_CK_FACEUSE(fu1);
-		NMG_CK_FACE(fu1->f_p);
-		NMG_CK_FACE_G(fu1->f_p->fg_p);
+		f1 = fu1->f_p;
+		NMG_CK_FACE(f1);
 
-		if (nmg_tbl(&faces, TBL_LOC, &fu1->f_p->magic) < 0 &&
-		    NMG_EXTENT_OVERLAP(s2->sa_p->min_pt,
-		    s2->sa_p->max_pt, fu1->f_p->fg_p->min_pt,
-		    fu1->f_p->fg_p->max_pt) ) {
+		if( NMG_INDEX_IS_SET(flags, f1) )  continue;
+		NMG_CK_FACE_G(f1->fg_p);
 
-			/* poly1 overlaps shell2 */
-		    	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
-		    		NMG_CK_FACEUSE(fu2);
-		    		NMG_CK_FACE(fu2->f_p);
-				/* now check the face of shell 1
-				 * against each of the faces of shell 2
-	 			 */
-				nmg_isect_2faces(fu1, fu2, tol);
+		/* See if face f1 overlaps shell2 */
+		if( ! NMG_EXTENT_OVERLAP(sa2->min_pt, sa2->max_pt,
+		    f1->fg_p->min_pt, f1->fg_p->max_pt) )
+			continue;
 
-				/* try not to process redundant faceuses (mates) */
-				if( RT_LIST_NOT_HEAD( fu2, &s2->fu_hd ) )  {
-					register struct faceuse	*nextfu;
-					nextfu = RT_LIST_PNEXT(faceuse, fu2 );
-					if( nextfu->f_p == fu2->f_p )
-						fu2 = nextfu;
-				}
-		    	}
-			(void)nmg_tbl(&faces, TBL_INS, &fu1->f_p->magic);
-		}
+		/*
+		 *  Now, check the face f1 from shell 1
+		 *  against each of the faces of shell 2
+		 */
+	    	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
+	    		NMG_CK_FACEUSE(fu2);
+	    		NMG_CK_FACE(fu2->f_p);
 
-		/* try not to process redundant faceuses (mates) */
-		if( RT_LIST_NOT_HEAD( fu1, &s1->fu_hd ) )  {
-			register struct faceuse	*nextfu;
-			nextfu = RT_LIST_PNEXT(faceuse, fu1 );
-			if( nextfu->f_p == fu1->f_p )
-				fu1 = nextfu;
-		}
+	    		/* See if face f1 overlaps face 2 */
+			if( ! NMG_EXTENT_OVERLAP(
+			    fu2->f_p->fg_p->min_pt, fu2->f_p->fg_p->max_pt,
+			    f1->fg_p->min_pt, f1->fg_p->max_pt) )
+				continue;
+
+			nmg_isect_2faces(fu1, fu2, tol);
+
+			/* try not to process redundant faceuses (mates) */
+			if( RT_LIST_NOT_HEAD( fu2, &s2->fu_hd ) )  {
+				register struct faceuse	*nextfu;
+				nextfu = RT_LIST_PNEXT(faceuse, fu2 );
+				if( nextfu->f_p == fu2->f_p )
+					fu2 = nextfu;
+			}
+	    	}
+	    	NMG_INDEX_SET(flags, f1);
 	}
-
-	(void)nmg_tbl(&faces, TBL_FREE, (long *)NULL );
+	rt_free( (char *)flags, "nmg_crackshells flags[]" );
 }
