@@ -230,7 +230,23 @@ several subcommands.
 
 <DT><a NAME="make_name"><B>make_name</B> <I>template</I></DT>
 
-<DD>Make an object name not occuring in the database.
+<DD>This command generates an object name that does not occur in the database.
+The name, which is generated in the format specified by <I>template</I>,
+contains an integer count.
+By default, this count appears at the end of the generated name,
+but if <I>template</I> contains the '@' character,
+then the count appears at that position in the name.
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>
+	mged> <b>make_name wheel</b><br>
+	-- returns, say ``wheel5''<br>
+	mged> <b>make_name tree@trunk</b><br>
+	-- returns ``tree6trunk''
+	</DD>
+	</DL>
+The two-character string '@@' is interpreted as the literal '@',
+and thus is ignored for the purposes of positioning the name count.
 </DD>
 <HR>
 
