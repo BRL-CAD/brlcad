@@ -189,6 +189,7 @@ char **argv;
 			close(fd);
 		}
 		(void)write( 1, obuf, swathbytes );
+		rel = 0;	/* in case we fall through */
 	}
 done:
 	/* Flush partial frame? */
