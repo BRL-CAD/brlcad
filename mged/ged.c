@@ -48,6 +48,12 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 #else
 #include <time.h>
 #endif
+#ifdef sgi
+struct timeval {
+	long	tv_sec;		/* seconds */
+	long 	tv_usec;	/* and microseconds */
+};
+#endif
 
 #include "./machine.h"	/* special copy */
 #include "vmath.h"
@@ -564,7 +570,7 @@ new_mats()
  *			B S D S E L E C T
  *
  *  Ordinarily, a stub for select() could have been implemented here,
- *  but the IRIS uses the library routine select() for something else.
+ *  but the IRIS defines a graphics library routine select().
  *  On non-BSD systems, select() is name likely to have been reused,
  *  so this special interface has been created.  This has the slight
  *  advantage of centralizing the struct timeval stuff.
@@ -573,10 +579,7 @@ new_mats()
 bsdselect( readfds, sec, us )
 long readfds;
 {
-#ifdef SYSV
-	return(32-1);	/* Always has lots of input */
-#endif
-#ifdef BSD
+#if defined(BSD) || defined(sgi)
 	struct timeval tv;
 
 	tv.tv_sec = sec;
@@ -584,6 +587,8 @@ long readfds;
 	if( select( 32, &readfds, 0L, 0L, &tv ) <= 0 )
 		return(0);
 	return( readfds );
+#else
+	return(32-1);	/* SYSV always has lots of input */
 #endif
 }
 
