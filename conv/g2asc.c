@@ -142,6 +142,21 @@ char **argv;
 		}
 		RT_CK_DBI(dbip);
 		db_dirbuild( dbip );
+		if( dbip->dbi_title[0] ) {
+			unsigned char *c;
+
+			fprintf( ofp, "db title ");
+			c = dbip->dbi_title;
+			while( *c ) {
+				if( ispunct( *c ) ) {
+					bu_log( "Adding a \\ to %c\n", *c );
+					putc( '\\', ofp );
+				}
+				putc( *c, ofp );
+				c++;
+			}
+                        putc( '\n', ofp );
+		}
 		FOR_ALL_DIRECTORY_START(dp, dbip)  {
 			struct rt_db_internal	intern;
 
@@ -306,7 +321,7 @@ nmg_dump()
 	/* output the structure counts */
 	for( j=0 ; j<26 ; j++ )
 		(void)fprintf(ofp,  " %ld" , struct_count[j] );
-	(void)putchar( '\n' );
+	(void)fputc( '\n', ofp );
 
 	/* dump the reminder in hex format */
 	for( i=0 ; i<granules ; i++ )
@@ -325,7 +340,7 @@ nmg_dump()
 		{
 			for( j=0 ; j<32 ; j++ )
 				fprintf(ofp,  "%02x" , (0xff & (*cp++)) );	 /* two hex digits per byte */
-			putchar( '\n' );
+			fputc( '\n', ofp );
 		}
 	}
 }
