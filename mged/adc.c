@@ -47,6 +47,11 @@ fastf_t	c_tdist;		/* Cursor tick distance */
 fastf_t	angle1;		/* Angle to solid wiper */
 fastf_t	angle2;		/* Angle to dashed wiper */
 
+static int	dv_xadc;		/* A/D cursor -2048 <= adc <= +2047 */
+static int	dv_yadc;
+static int	dv_1adc;		/* angle 1 for A/D cursor */
+static int	dv_2adc;		/* angle 2 for A/D cursor */
+static int	dv_distadc;		/* Tick distance */
 
 /*
  *			A D C U R S O R
@@ -70,8 +75,8 @@ adcursor()
 	 */
 #define MINVAL	-2048
 #define MAXVAL	 2047
-	idxy[0] = dm_values.dv_xadc;
-	idxy[1] = dm_values.dv_yadc;
+	idxy[0] = dv_xadc;
+	idxy[1] = dv_yadc;
 	idxy[0] = (idxy[0] < MINVAL ? MINVAL : idxy[0]);
 	idxy[0] = (idxy[0] > MAXVAL ? MAXVAL : idxy[0]);
 	idxy[1] = (idxy[1] < MINVAL ? MINVAL : idxy[1]);
@@ -87,8 +92,8 @@ adcursor()
 	 * Calculate a-d cursor rotation.
 	 */
 	/* - to make rotation match knob direction */
-	idxy[0] = -dm_values.dv_1adc;	/* solid line */
-	idxy[1] = -dm_values.dv_2adc;	/* dashed line */
+	idxy[0] = -dv_1adc;	/* solid line */
+	idxy[1] = -dv_2adc;	/* dashed line */
 	angle1 = ((2047.0 + (fastf_t) (idxy[0])) * pi) / (4.0 * 2047.0);
 	angle2 = ((2047.0 + (fastf_t) (idxy[1])) * pi) / (4.0 * 2047.0);
 
@@ -133,7 +138,7 @@ adcursor()
 	 */
 	/* map -2048 - 2047 into 0 - 2048 * sqrt (2) */
 	/* Tick distance */
-	c_tdist = ((fastf_t)(dm_values.dv_distadc) + 2047.0) * 0.5 * M_SQRT2;
+	c_tdist = ((fastf_t)(dv_distadc) + 2047.0) * 0.5 * M_SQRT2;
 
 	d1 = c_tdist * cos (angle1);
 	d2 = c_tdist * sin (angle1);
@@ -231,8 +236,8 @@ char	**argv;
 
 	if( strcmp( parameter, "a1" ) == 0 )  {
 		if (argc == 1) {
-			dm_values.dv_1adc = (1.0 - pt[0] / 45.0) * 2047.0;
-			dm_values.dv_flagadc = 1;
+			dv_1adc = (1.0 - pt[0] / 45.0) * 2047.0;
+			dmaflag = 1;
 			return CMD_OK;
 		}
 		rt_log("The 'adc a1' command accepts only 1 argument\n");
@@ -240,8 +245,8 @@ char	**argv;
 	}
 	if( strcmp( parameter, "a2" ) == 0 )  {
 		if (argc == 1) {
-			dm_values.dv_2adc = (1.0 - pt[0] / 45.0) * 2047.0;
-			dm_values.dv_flagadc = 1;
+			dv_2adc = (1.0 - pt[0] / 45.0) * 2047.0;
+			dmaflag = 1;
 			return CMD_OK;
 		}
 		rt_log("The 'adc a2' command accepts only 1 argument\n");
@@ -249,9 +254,9 @@ char	**argv;
 	}
 	if(strcmp(parameter, "dst") == 0)  {
 		if (argc == 1) {
-			dm_values.dv_distadc = (pt[0] /
+			dv_distadc = (pt[0] /
 			    (Viewscale * base2local * M_SQRT2) - 1.0) * 2047.0;
-			dm_values.dv_flagadc = 1;
+			dmaflag = 1;
 			return CMD_OK;
 		}
 		rt_log("The 'adc dst' command accepts only 1 argument\n");
@@ -259,8 +264,8 @@ char	**argv;
 	}
 	if( strcmp( parameter, "dh" ) == 0 )  {
 		if (argc == 1) {
-			dm_values.dv_xadc += pt[0] * 2047.0 / (Viewscale * base2local);
-			dm_values.dv_flagadc = 1;
+			dv_xadc += pt[0] * 2047.0 / (Viewscale * base2local);
+			dmaflag = 1;
 			return CMD_OK;
 		}
 		rt_log("The 'adc dh' command accepts only 1 argument\n");
@@ -268,8 +273,8 @@ char	**argv;
 	}
 	if( strcmp( parameter, "dv" ) == 0 )  {
 		if (argc == 1) {
-			dm_values.dv_yadc += pt[0] * 2047.0 / (Viewscale * base2local);
-			dm_values.dv_flagadc = 1;
+			dv_yadc += pt[0] * 2047.0 / (Viewscale * base2local);
+			dmaflag = 1;
 			return CMD_OK;
 		}
 		rt_log("The 'adc dv' command accepts only 1 argument\n");
@@ -279,9 +284,9 @@ char	**argv;
 		if (argc == 1) {
 			VSET(pt2, pt[0]*local2base, 0.0, 0.0);
 			MAT4X3VEC(pt3, Viewrot, pt2);
-			dm_values.dv_xadc += pt3[X] * view2dm;
-			dm_values.dv_yadc += pt3[Y] * view2dm;
-			dm_values.dv_flagadc = 1;
+			dv_xadc += pt3[X] * view2dm;
+			dv_yadc += pt3[Y] * view2dm;
+			dmaflag = 1;
 			return CMD_OK;
 		}
 		rt_log("The 'adc dx' command accepts only 1 argument\n");
@@ -291,9 +296,9 @@ char	**argv;
 		if (argc == 1) {
 			VSET(pt2, 0.0, pt[0]*local2base, 0.0);
 			MAT4X3VEC(pt3, Viewrot, pt2);
-			dm_values.dv_xadc += pt3[X] * view2dm;
-			dm_values.dv_yadc += pt3[Y] * view2dm;
-			dm_values.dv_flagadc = 1;
+			dv_xadc += pt3[X] * view2dm;
+			dv_yadc += pt3[Y] * view2dm;
+			dmaflag = 1;
 			return CMD_OK;
 		}
 		rt_log("The 'adc dy' command accepts only 1 argument\n");
@@ -303,9 +308,9 @@ char	**argv;
 		if (argc == 1) {
 			VSET(pt2, 0.0, 0.0, pt[0]*local2base);
 			MAT4X3VEC(pt3, Viewrot, pt2);
-			dm_values.dv_xadc += pt3[X] * view2dm;
-			dm_values.dv_yadc += pt3[Y] * view2dm;
-			dm_values.dv_flagadc = 1;
+			dv_xadc += pt3[X] * view2dm;
+			dv_yadc += pt3[Y] * view2dm;
+			dmaflag = 1;
 			return CMD_OK;
 		}
 		rt_log("The 'adc dz' command accepts only 1 argument\n");
@@ -315,9 +320,9 @@ char	**argv;
 		if (argc == 2) {
 			VSCALE(pt, pt, local2base);
 			VSUB2(pt3, pt, center_view);
-			dm_values.dv_xadc = pt3[X] * view2dm;
-			dm_values.dv_yadc = pt3[Y] * view2dm;
-			dm_values.dv_flagadc = 1;
+			dv_xadc = pt3[X] * view2dm;
+			dv_yadc = pt3[Y] * view2dm;
+			dmaflag = 1;
 			return CMD_OK;
 		}
 		rt_log("The 'adc hv' command requires 2 arguments\n");
@@ -328,20 +333,38 @@ char	**argv;
 			VSCALE(pt, pt, local2base);
 			VSUB2(pt2, pt, center_model);
 			MAT4X3VEC(pt3, Viewrot, pt2);
-			dm_values.dv_xadc = pt3[X] * view2dm;
-			dm_values.dv_yadc = pt3[Y] * view2dm;
-			dm_values.dv_flagadc = 1;
+			dv_xadc = pt3[X] * view2dm;
+			dv_yadc = pt3[Y] * view2dm;
+			dmaflag = 1;
 			return CMD_OK;
 		}
 		rt_log("The 'adc xyz' command requires 2 arguments\n");
 		return CMD_BAD;
 	}
+	if( strcmp(parameter, "x") == 0 ) {
+		if( argc == 1 ) {
+			dv_xadc = pt[0];
+			dmaflag = 1;
+			return CMD_OK;
+		}
+		rt_log( "The 'adc x' command requires one argument\n" );
+		return CMD_BAD;
+	}
+	if( strcmp(parameter, "y") == 0 ) {
+		if( argc == 1 ) {
+			dv_yadc = pt[0];
+			dmaflag = 1;
+			return CMD_OK;
+		}
+		rt_log( "The 'adc y' command requires one argument\n" );
+		return CMD_BAD;
+	}
 	if( strcmp(parameter, "reset") == 0)  {
 		if (argc == 0) {
-			dm_values.dv_xadc = dm_values.dv_yadc = 0;
-			dm_values.dv_1adc = dm_values.dv_2adc = 0;
-			dm_values.dv_distadc = 0;
-			dm_values.dv_flagadc = 1;
+			dv_xadc = dv_yadc = 0;
+			dv_1adc = dv_2adc = 0;
+			dv_distadc = 0;
+			dmaflag = 1;
 			return CMD_OK;
 		}
 		rt_log("The 'adc reset' command accepts no arguments\n");
