@@ -1498,9 +1498,9 @@ CONST struct bu_bitv	*solidbits;
 		if( diff > ap->a_rt_i->rti_tol.dist )  {
 			if(rt_g.debug&DEBUG_PARTITION)bu_log(
 				"partition ends beyond current box end\n");
-			if( ap->a_onehit == 0 )  {
+			if( ap->a_onehit != 1 )  {
 				ret = 0;
-				reason = "a_onehit=0, trace remaining boxes";
+				reason = "a_onehit != 1, trace remaining boxes";
 				goto out;
 			}
 			/* pt_outhit may not be correct */
