@@ -114,11 +114,14 @@ set -S2 "/bin/sh"
  *	LGT_CONFIG						*
  *	RFBD_CONFIG						*
  *	CC							*
+ *	TCL_DEFS		(default=undefined)		*
+ *	TCL_COMPAT_FILES	(default=undefined)		*
+ *	TK_DEFS			(default=undefined)		*
  *	FC							*
  *	GETHOST							*
  *	RANLIB							*
  *	BINDIR, LIBDIR, ETCDIR, INCLUDE_DIR			*
- *	XLIBDIR, XINCDIR
+ *	XLIBDIR, XINCDIR					*
  *	ARCH_SUF						*
  *	MANDIR							*
  *	OPTIMIZER						*
@@ -177,6 +180,8 @@ set -S2 "/bin/sh"
 #		define	SHARED	/**/
 #	endif
 #	define	GFLAG		-G 7
+#	define	TCL_DEFS OPTIMIZER -DTCL_LIBRARY=\\\\"/usr/brlcad/tcl\\\\" -DTCL_PACKAGE_PATH=\\\\"/usr/brlcad/lib\\\\" -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -Dvfork=fork -DHAVE_SYS_IOCTL_H=1
+#	define	TK_DEFS	OPTIMIZER -DTK_LIBRARY=\\\\"/usr/brlcad/tk\\\\" -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -D__CHAR_UNSIGNED__=1
 /*	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=4
 #	define	IRIX	4
@@ -212,6 +217,7 @@ set -S2 "/bin/sh"
 #endif
 #	endif
 #	define	HAS_TCP	1
+
 #if 1
 /*      Experimental     */
 #	define  CC_OPTS		GFLAG -DIRIX=4
@@ -290,6 +296,8 @@ set -S2 "/bin/sh"
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
 #	define	IRIX	5
 #	define	LGT_CONFIG	GFLAG
+#	define	TCL_DEFS OPTIMIZER -DTCL_LIBRARY=\\\\"/usr/brlcad/tcl\\\\" -DTCL_PACKAGE_PATH=\\\\"/usr/brlcad/lib\\\\" -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
+#	define	TK_DEFS	OPTIMIZER -DTK_LIBRARY=\\\\"/usr/brlcad/tk\\\\" -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 
 # if 0
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
@@ -366,6 +374,8 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
 #	endif
+#	define	TCL_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTCL_LIBRARY=\\\\"/usr/brlcad/tcl\\\\" -DTCL_PACKAGE_PATH=\\\\"/usr/brlcad/lib\\\\" -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
+#	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY=\\\\"/usr/brlcad/tk\\\\" -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=6
 #	define	IRIX	6
@@ -532,6 +542,9 @@ set -S2 "/bin/sh"
 #		define	RANLIB	ranlib
 #	endif
 #	define	LIBRT_TIMER	timer42
+#	define	TCL_DEFS OPTIMIZER -DTCL_LIBRARY=\\\\"/usr/brlcad/tcl\\\\" -DTCL_PACKAGE_PATH=\\\\"/usr/brlcad/lib\\\\" -DNO_STRERROR=1 -DNO_FLOAT_H=1 -DNO_STDLIB_H=1 -DNO_STRING_H=1 -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TM_ZONE=1 -DHAVE_TM_GMTOFF=1 -DHAVE_TIMEZONE_VAR=1 -Dstrtod=fixstrtod -DNEED_MATHERR=1 -Dvfork=fork -DGETTOD_NOT_DECLARED=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1 -DUSE_FIONBIO=1
+#	define	TCL_COMPAT_FILES strtoul fixstrtod
+#	define	TK_DEFS	OPTIMIZER -DTK_LIBRARY=\\\\"/usr/brlcad/tk\\\\" -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DNO_STDLIB_H=1 -Dmemmove=memcpy -Dstrtod=fixstrtod
 
 #	if 0	/* PRODUCTION=1 */
 /*		Sun with X11 (aka "openwin") Default for SunOS 41.1 */
@@ -1726,6 +1739,18 @@ set -S2 "/bin/sh"
 #endif
 #if !defined(CONFIGDEFS)
 #	define	CONFIGDEFS	/**/
+#endif
+#if !defined(TCL_COMPAT_FILES)
+#	define	TCL_COMPAT_FILES	/**/
+#endif
+#if !defined(TCL_DEFS)
+#	define	TCL_DEFS	/**/
+#endif
+#if !defined(TK_DEFS)
+#	define	TK_DEFS	/**/
+#endif
+#if !defined(GFLAG)
+#	define	GFLAG	/**/
 #endif
 
 /* C compiler flags */
