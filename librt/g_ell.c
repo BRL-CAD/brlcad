@@ -1213,7 +1213,7 @@ double			mm2local;
 	vect_t	unitv;
 
 	RT_ELL_CK_MAGIC(tip);
-	bu_vls_strcat( str, "ellipsoid (ELL)\n");
+	bu_vls_strcat( str, "ellipsoid (ELLG)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
 		tip->v[X] * mm2local,
