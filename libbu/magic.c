@@ -172,7 +172,7 @@ register long	magic;
 		return("librt soltab");
 	case RT_REGION_MAGIC:
 		return("librt region");
-	case RT_PT_MAGIC:
+	case PT_MAGIC:
 		return("librt partition");
 	case DBI_MAGIC:
 		return("librt db_i");

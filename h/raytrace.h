@@ -598,11 +598,9 @@ struct partition {
 	struct region	**pt_overlap_reg;	/* NULL-terminated array of overlapping regions.  NULL if no overlap. */
 	struct bu_ptbl	pt_seglist;		/* all segs in this partition */
 };
-#define RT_PT_NULL	((struct partition *)0)
-#define RT_PT_MAGIC	0x87687681
-#define PT_NULL		RT_PT_NULL
-#define PT_MAGIC	RT_PT_MAGIC
-#define PT_HD_MAGIC	BU_LIST_HEAD_MAGIC	/* was 0x87687680 */
+#define PT_NULL		((struct partition *)0)
+#define PT_MAGIC	0x87687681
+#define PT_HD_MAGIC	0x87687680
 
 #define RT_CHECK_PT(_p)	RT_CK_PT(_p)	/* compat */
 #define RT_CK_PT(_p)	BU_CKMAG(_p,PT_MAGIC, "struct partition")
@@ -653,7 +651,7 @@ struct partition {
 			_pp = _pp->pt_forw; \
 			FREE_PT(_zap, _res); \
 		} \
-		BU_LIST_INIT((struct bu_list *)(_headp)); \
+		(_headp)->pt_forw = (_headp)->pt_back = (_headp); \
 	}
 
 /* Insert "new" partition in front of "old" partition.  Note order change */
