@@ -3,6 +3,21 @@
  *  
  *  Function -
  *  	Intersect a ray with a Halfspace
+ *
+ *
+ *  A HALFSPACE is defined by an outward pointing normal vector,
+ *  and the distance from the origin to the plane, which is defined
+ *  by N and d.
+ *
+ *  With outward pointing normal vectors,
+ *  the ray enters the half-space defined by a plane when D dot N < 0,
+ *  is parallel to the plane when D dot N = 0, and exits otherwise.
+ *
+ *  The inside of the halfspace bounded by the plane
+ *  consists of all points P such that
+ *	VDOT(P,N) - N[3] <= 0
+ *
+ *  See the remarks in h/vmath.h for more details.
  *  
  *  Authors -
  *	Michael John Muuss
@@ -33,21 +48,8 @@ static char RCShalf[] = "@(#)$Header$ (BRL)";
 extern double   modf();
 #endif
 
-/*
- *			Ray/HALF Intersection
- *
- *  A HALFSPACE is defined by an outward pointing normal vector,
- *  and the distance from the origin to the plane, which is defined
- *  by N and d.
- *
- *  With outward pointing normal vectors,
- *  note that the ray enters the half-space defined by a plane when D cdot N <
- *  0, is parallel to the plane when D cdot N = 0, and exits otherwise.
- */
-
 struct half_specific  {
-	fastf_t	half_d;			/* dist from origin along N */
-	vect_t	half_N;			/* Unit-length Normal (outward) */
+	plane_t	half_eqn;		/* Plane equation, outward normal */
 	vect_t	half_Xbase;		/* "X" basis direction */
 	vect_t	half_Ybase;		/* "Y" basis direction */
 };
@@ -63,10 +65,6 @@ union record	*rec;
 struct rt_i	*rtip;
 {
 	register struct half_specific *halfp;
-	FAST fastf_t f;
-	fastf_t	vec[3*2];
-
-	rt_fastf_float( vec, rec->s.s_values, 2 );	/* 2 floats too many */
 
 	/*
 	 * Process a HALFSPACE, which is represented as a 
@@ -75,23 +73,17 @@ struct rt_i	*rtip;
 	GETSTRUCT( halfp, half_specific );
 	stp->st_specific = (int *)halfp;
 
-	MAT4X3VEC( halfp->half_N, stp->st_pathmat, &vec[0] );
-	f = MAGSQ( halfp->half_N );
-	if( f < 0.001 )  {
-		rt_log("half(%s):  bad normal\n", stp->st_name );
+	if( hlf_import( halfp->half_eqn, rec, stp->st_pathmat ) < 0 )  {
+		rt_log("hlf_prep(%s): db import failure\n", stp->st_name);
+		rt_free( (char *)halfp, "half_specific" );
 		return(1);	/* BAD */
 	}
-	f -= 1.0;
-	if( !NEAR_ZERO( f, 0.001 ) )  {
-		rt_log("half(%s):  normal not unit length\n", stp->st_name );
-		VUNITIZE( halfp->half_N );
-	}
-	halfp->half_d = vec[1*ELEMENTS_PER_VECT];
-	VSCALE( stp->st_center, halfp->half_N, halfp->half_d );
+
+	VSCALE( stp->st_center, halfp->half_eqn, halfp->half_eqn[3] );
 
 	/* X and Y basis for uv map */
 	vec_perp( halfp->half_Xbase, stp->st_center );
-	VCROSS( halfp->half_Ybase, halfp->half_Xbase, halfp->half_N );
+	VCROSS( halfp->half_Ybase, halfp->half_Xbase, halfp->half_eqn );
 	VUNITIZE( halfp->half_Xbase );
 	VUNITIZE( halfp->half_Ybase );
 
@@ -118,8 +110,8 @@ register struct soltab *stp;
 		rt_log("half(%s):  no data?\n", stp->st_name);
 		return;
 	}
-	VPRINT( "Normal", halfp->half_N );
-	rt_log( "d = %f\n", halfp->half_d );
+	VPRINT( "Normal", halfp->half_eqn );
+	rt_log( "d = %f\n", halfp->half_eqn[3] );
 	VPRINT( "Xbase", halfp->half_Xbase );
 	VPRINT( "Ybase", halfp->half_Ybase );
 }
@@ -154,8 +146,8 @@ struct application	*ap;
 		FAST fastf_t	slant_factor;	/* Direction dot Normal */
 		FAST fastf_t	norm_dist;
 
-		norm_dist = VDOT( halfp->half_N, rp->r_pt ) - halfp->half_d;
-		if( (slant_factor = -VDOT( halfp->half_N, rp->r_dir )) < -1.0e-10 )  {
+		norm_dist = VDOT( halfp->half_eqn, rp->r_pt ) - halfp->half_eqn[3];
+		if( (slant_factor = -VDOT( halfp->half_eqn, rp->r_dir )) < -1.0e-10 )  {
 			/* exit point, when dir.N < 0.  out = min(out,s) */
 			out = norm_dist/slant_factor;
 		} else if ( slant_factor > 1.0e-10 )  {
@@ -213,9 +205,9 @@ struct resource         *resp; /* pointer to a list of free segs */
 		in = -INFINITY;
 		out = INFINITY;
 
-		norm_dist = VDOT(halfp->half_N, rp[i]->r_pt) - halfp->half_d;
+		norm_dist = VDOT(halfp->half_eqn, rp[i]->r_pt) - halfp->half_eqn[3];
 
-		if((slant_factor = -VDOT(halfp->half_N, rp[i]->r_dir)) <
+		if((slant_factor = -VDOT(halfp->half_eqn, rp[i]->r_dir)) <
 								-1.0e-10) {
 			/* exit point, when dir.N < 0.  out = min(out,s) */
 			out = norm_dist/slant_factor;
@@ -257,9 +249,9 @@ register struct xray *rp;
 
 	/*
 	 * At most one normal is really defined, but whichever one
-	 * it is, it has value half_N.
+	 * it is, it has value half_eqn.
 	 */
-	VMOVE( hitp->hit_normal, halfp->half_N );
+	VMOVE( hitp->hit_normal, halfp->half_eqn );
 
 	/* We are expected to compute hit_point here.  May be infinite. */
 	f = hitp->hit_dist;
@@ -287,7 +279,7 @@ struct soltab *stp;
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
 
-	vec_ortho( cvp->crv_pdir, halfp->half_N );
+	vec_ortho( cvp->crv_pdir, halfp->half_eqn );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
@@ -407,17 +399,25 @@ mat_t		mat;
 struct vlhead	*vhead;
 struct directory *dp;
 {
+	plane_t	eqn;
 	vect_t cent;		/* some point on the plane */
 	vect_t xbase, ybase;	/* perpendiculars to normal */
 	vect_t x1, x2;
 	vect_t y1, y2;
-	vect_t tip;	
+	vect_t tip;
 
-	/* "center" point on the plane */
-	VSCALE( cent, &(rp[0].s.s_half_N), rp[0].s.s_half_d );
+	if( hlf_import( eqn, rp, mat ) < 0 )  {
+		rt_log("hlf_plot(%s): db import failure\n", dp->d_namep);
+		return;
+	}
+
+	/* Invent a "center" point on the plane -- point closets to origin */
+	VSCALE( cent, eqn, eqn[3] );
+
 	/* The use of "x" and "y" here is not related to the axis */
 	vec_perp( xbase, cent );
-	VCROSS( ybase, xbase, &(rp[0].s.s_half_N) );
+	VCROSS( ybase, xbase, eqn );
+
 	/* Arrange for the cross to be 2 meters across */
 	VUNITIZE( xbase );
 	VUNITIZE( ybase);
@@ -438,8 +438,62 @@ struct directory *dp;
 	ADD_VL( vhead, x1, 1 );
 	ADD_VL( vhead, y2, 1 );
 
-	VSCALE( tip, &(rp[0].s.s_half_N), 500 );
+	VSCALE( tip, eqn, 500 );
 	VADD2( tip, cent, tip );
 	ADD_VL( vhead, cent, 0 );
 	ADD_VL( vhead, tip, 1 );
+}
+
+/*
+ *			H A L F _ I M P O R T
+ *
+ *  Returns -
+ *	-1	failure
+ *	 0	success
+ */
+int
+hlf_import( eqn, rp, mat )
+plane_t		eqn;
+union record	*rp;
+mat_t		mat;
+{
+	point_t		orig_pt;
+	point_t		pt;
+	fastf_t		orig_eqn[3*2];
+	register double	f,t;
+
+	if( rp->u_id != ID_SOLID )  {
+		rt_log("hlf_import: defective record, id=x%x\n", rp->u_id);
+		return(-1);
+	}
+
+	rt_fastf_float( orig_eqn, rp->s.s_values, 2 );	/* 2 floats too many */
+
+	/* Pick a point on the original halfspace */
+	VSCALE( orig_pt, orig_eqn, orig_eqn[1*ELEMENTS_PER_VECT] );
+
+	/* Transform the point, and the normal */
+	MAT4X3VEC( eqn, mat, orig_eqn );
+	MAT4X3PNT( pt, mat, orig_pt );
+
+	/*
+	 *  The transformed normal is all that is required.
+	 *  The new distance is found from the transformed point on the plane.
+	 */
+	eqn[3] = VDOT( pt, eqn );
+
+	/* Verify that normal has unit length */
+	f = MAGNITUDE( eqn );
+	if( f < SMALL )  {
+		rt_log("hlf_import:  bad normal, len=%g\n", f );
+		return(-1);		/* BAD */
+	}
+	t = f - 1.0;
+	if( !NEAR_ZERO( t, 0.001 ) )  {
+		/* Restore normal to unit length */
+		f = 1/f;
+		VSCALE( eqn, eqn, f );
+		eqn[3] *= f;
+	}
+	return(0);			/* OK */
 }
