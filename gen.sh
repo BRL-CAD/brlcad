@@ -166,6 +166,7 @@ BDIRS="bench \
 	remrt \
 	mged \
 	proc-db \
+	jack \
 	mk \
 	comgeom-g \
 	iges \
