@@ -60,6 +60,8 @@ extern int	npsw;			/* number of worker PSWs to run */
 
 int		use_air = 1;		/* Handling of air in librt */
 
+extern int 	 rpt_overlap;
+
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
@@ -123,6 +125,9 @@ char *file, *obj;
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
 	ap->a_onehit = 0;
+
+	if( !rpt_overlap )
+		 ap->a_logoverlap = rt_silent_logoverlap;
 
 	output_is_binary = 0;		/* output is printable ascii */
 
