@@ -1504,6 +1504,7 @@ CONST struct db_i		*dbip;
 	LOCAL fastf_t		vec[2*3+2];
 
 	BU_CK_EXTERNAL( ep );
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (2*3+2) );
 
 	RT_INIT_DB_INTERNAL( ip );
 

@@ -1281,6 +1281,7 @@ CONST struct db_i		*dbip;
 	fastf_t			vec[3*8];
 
 	BU_CK_EXTERNAL( ep );
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*8);
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ARB8;
 	ip->idb_meth = &rt_functab[ID_ARB8];
