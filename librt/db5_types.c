@@ -97,13 +97,13 @@ CONST static struct db5_type type_table[] = {
 	DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_RHC, 1, "rhc", "right hyperbolic cylinder"
     },
     {
-	DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_EPA, 1, "epa", "elliptic paraboloid"
+	DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_EPA, 1, "epa", "elliptical paraboloid"
     },
     {
-	DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_EHY, 1, "ehy", "elliptic hyperboloid"
+	DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_EHY, 1, "ehy", "elliptical hyperboloid"
     },
     {
-	DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_ETO, 1, "eto", "elliptic torus"
+	DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_ETO, 1, "eto", "elliptical torus"
     },
     {
 	DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_GRIP, 1, "grip", "grip"
@@ -140,6 +140,36 @@ CONST static struct db5_type type_table[] = {
     },
     {
 	DB5_MAJORTYPE_BINARY_EXPM, 0, 0, "binexpm", "experimental binary"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_FLOAT, 1, "bin_float", "array of floats"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_DOUBLE, 1, "bin_double", "array of doubles"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_8BITINT_U, 1, "bin_8u", "array of unsigned 8-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_16BITINT_U, 1, "bin_16u", "array of unsigned 16-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT_U, 1, "bin_32u", "array of unsigned 32-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_64BITINT_U, 1, "bin_64u", "array of unsigned 64-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_8BITINT, 1, "bin_8", "array of 8-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_16BITINT, 1, "bin_16", "array of 16-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT, 1, "bin_32", "array of 32-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_64BITINT, 1, "bin_64", "array of 64-bit ints"
     },
     {
 	DB5_MAJORTYPE_BINARY_UNIF, 0, 0, "binunif", "uniform-array binary"
@@ -251,20 +281,59 @@ db5_type_codes_from_descrip( unsigned char *major, unsigned char *minor,
     register struct db5_type	*tp;
     register int		found_minors = 0;
 
-    bu_log("codes_from_descrip(%s)...\n", descrip);
     for (tp = (struct db5_type *) type_table;
 	    tp -> major_code != DB5_MAJORTYPE_RESERVED;
 	    ++tp) {
-	bu_log("(%d, %d, %d, %s, %s)\n",
-	    tp -> major_code, tp -> minor_code, tp -> heed_minor,
-	    tp -> tag, tp -> description);
 	if ((*(tp -> description) == *descrip)
 	 && (strcmp(tp -> description, descrip) == 0)) {
-	    bu_log("Found it!\n");
 	    *major = tp -> major_code;
 	    *minor = tp -> minor_code;
 	    return 0;
 	}
     }
     return 1;
+}
+
+size_t
+db5_type_sizeof_h_binu( CONST unsigned char minor ) {
+    switch ( minor ) {
+	case DB5_MINORTYPE_BINU_FLOAT:
+	    return sizeof(float);
+	case DB5_MINORTYPE_BINU_DOUBLE:
+	    return sizeof(double);
+	case DB5_MINORTYPE_BINU_8BITINT:
+	case DB5_MINORTYPE_BINU_8BITINT_U:
+	    return (size_t) 1;
+	case DB5_MINORTYPE_BINU_16BITINT:
+	case DB5_MINORTYPE_BINU_16BITINT_U:
+	    return (size_t) 2;
+	case DB5_MINORTYPE_BINU_32BITINT:
+	case DB5_MINORTYPE_BINU_32BITINT_U:
+	    return (size_t) 4;
+	case DB5_MINORTYPE_BINU_64BITINT:
+	case DB5_MINORTYPE_BINU_64BITINT_U:
+	    return (size_t) 8;
+    }
+}
+
+size_t
+db5_type_sizeof_n_binu( CONST unsigned char minor ) {
+    switch ( minor ) {
+	case DB5_MINORTYPE_BINU_FLOAT:
+	    return (size_t) SIZEOF_NETWORK_FLOAT;
+	case DB5_MINORTYPE_BINU_DOUBLE:
+	    return (size_t) SIZEOF_NETWORK_DOUBLE;
+	case DB5_MINORTYPE_BINU_8BITINT:
+	case DB5_MINORTYPE_BINU_8BITINT_U:
+	    return (size_t) 1;
+	case DB5_MINORTYPE_BINU_16BITINT:
+	case DB5_MINORTYPE_BINU_16BITINT_U:
+	    return (size_t) 2;
+	case DB5_MINORTYPE_BINU_32BITINT:
+	case DB5_MINORTYPE_BINU_32BITINT_U:
+	    return (size_t) 4;
+	case DB5_MINORTYPE_BINU_64BITINT:
+	case DB5_MINORTYPE_BINU_64BITINT_U:
+	    return (size_t) 8;
+    }
 }
