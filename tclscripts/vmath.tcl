@@ -535,6 +535,46 @@ proc qblend2 { b c  d e } {
     return [qadd2 [qscale $c $b] [qscale $e $d]]
 }
 
+#
+# qtom -- Quaternion to Matrix
+#
+#
+proc qtom {q} {
+    set qx 	[lindex $q 0]
+    set qy 	[lindex $q 1]
+    set qz 	[lindex $q 2]
+    set qw 	[lindex $q 3]
+
+    set Nq [expr $qx * $qx + $qy * $qy + $qz * $qz + $qw * $qw]
+    if {$Nq > 0.0} {
+    	set s [expr 2.0 / $Nq]
+    } else {
+    	set s 0.0
+    }
+
+    set xs [expr $qx * $s]
+    set ys [expr $qy * $s]
+    set zs [expr $qz * $s]
+    set wx [expr $qw * $xs]
+    set wy [expr $qw * $ys]
+    set wz [expr $qw * $zs]
+    set xx [expr $qx * $xs]
+    set xy [expr $qx * $ys]
+    set xz [expr $qx * $zs]
+    set yy [expr $qy * $ys]
+    set yz [expr $qy * $zs]
+    set zz [expr $qz * $zs]
+
+    return [list \
+	[ expr 1.0 - ( $yy + $zz ) ] 	[expr $xy - $wz] \
+		[expr $xz + $wy] 	0.0 \
+	[expr $xy + $wz] 		[expr 1.0 - ( $xx + $zz ) ] \
+		[expr $yz - $wx] 	0.0 \
+	[expr $xz - $wy] 		[expr $yz + $wx] \
+		[expr 1.0 - ( $xx + $yy ) ] 	0.0 \
+	0.0 0.0 0.0 1.0 ]
+}
+
 proc v3rpp_overlap { l1 h1 l2 h2 } {
     return [expr !([lindex $l1 0]>[lindex $h2 0] || \
                    [lindex $l1 1]>[lindex $h2 1] || \
@@ -725,4 +765,21 @@ proc vjoin3n { b  c d  e f  g h  n } {
 
 proc vblend2n { b c  d e  n } {
 	return [vcomb2n $c $b $e $d $n]
+}
+
+#  mat_fmt matrix
+#
+#  Formats a matrix sort of like mat_print,
+#  only it doesn't explicitly do any I/O
+#
+proc mat_fmt {m} {
+	set str [format "%8.3f %8.3f %8.3f %8.3f\n"\
+		[lindex $m 0] [lindex $m 1] [lindex $m 2] [lindex $m 3]]
+	append str [format "%8.3f %8.3f %8.3f %8.3f\n"\
+		[lindex $m 4] [lindex $m 5] [lindex $m 6] [lindex $m 7]]
+	append str [format "%8.3f %8.3f %8.3f %8.3f\n"\
+		[lindex $m 8] [lindex $m 9] [lindex $m 10] [lindex $m 11]]
+	append str [format "%8.3f %8.3f %8.3f %8.3f\n"\
+		[lindex $m 12] [lindex $m 13] [lindex $m 14] [lindex $m 15]]
+	return $str
 }
