@@ -1263,8 +1263,6 @@ int			end;		/* last index + 1 */
 	int		ass;
 	int		l;
 
-	if(rt_g.NMG_debug&DEBUG_VU_SORT)
-		rt_log("nmg_face_coincident_vu_sort(, %d, %d)\n", start, end);
 	num = end - start;
 	vs = (struct nmg_vu_stuff *)rt_malloc( sizeof(struct nmg_vu_stuff)*num,
 		"nmg_vu_stuff" );
@@ -1272,6 +1270,9 @@ int			end;		/* last index + 1 */
 		"nmg_loop_stuff" );
 
 top:
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)
+		rt_log("nmg_face_coincident_vu_sort(, %d, %d)\n", start, end);
+
 	/* Assess each vu, create list of loopuses, find max angles */
 	nloop = 0;
 	nvu = 0;
@@ -1290,22 +1291,6 @@ top:
 				lu->orientation =
 				  lu->lumate_p->orientation = OT_BOOLPLACE;
 				/* "continue" keeps vu from being added to vs[] */
-				continue;
-			}
-		}
-
-		/*
-		 *  At a multiple vertexuse vertex, eliminate all the
-		 *  NMG_ON_REV_ON_FORW and NMG_ON_FORW_ON_REV vu's.
-		 *  If they are all such, then send just one through.
-		 */
-		if( ass==NMG_ON_REV_ON_FORW || ass==NMG_ON_FORW_ON_REV )  {
-			if( nvu > 0 || i > start )  {
-				/* At least one other kind already seen,
-				 * or at least one other vu still to be
-				 * processed, toss this one.
-				 * XXX What about if last one is a lone-vu-loop, and should be tossed in place of this corner vu?
-				 */
 				continue;
 			}
 		}
