@@ -51,7 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./solid.h"
 #include "./sedit.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 #include "./menu.h"
 
 extern struct rt_tol		mged_tol;	/* from ged.c */
@@ -1911,15 +1911,9 @@ init_sedit()
 	sedit_menu();		/* put up menu header */
 
 	/* Finally, enter solid edit state */
-#ifdef USE_LIBDM
 	dmp->dmr_light( dmp, LIGHT_ON, BE_ACCEPT );
 	dmp->dmr_light( dmp, LIGHT_ON, BE_REJECT );
 	dmp->dmr_light( dmp, LIGHT_OFF, BE_S_ILLUMINATE );
-#else
-	dmp->dmr_light( LIGHT_ON, BE_ACCEPT );
-	dmp->dmr_light( LIGHT_ON, BE_REJECT );
-	dmp->dmr_light( LIGHT_OFF, BE_S_ILLUMINATE );
-#endif
 
 	(void)chg_state( ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
 	chg_l2menu(ST_S_EDIT);

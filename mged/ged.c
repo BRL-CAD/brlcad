@@ -80,7 +80,7 @@ extern Tk_Window tkwin;
 #include "./titles.h"
 #include "./solid.h"
 #include "./sedit.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 #ifndef	LOGFILE
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
@@ -329,11 +329,7 @@ char **argv;
 #endif
 
 	/* Reset the lights */
-#ifdef USE_LIBDM
 	dmp->dmr_light( dmp, LIGHT_RESET, 0 );
-#else
-	dmp->dmr_light( LIGHT_RESET, 0 );
-#endif
 
 	(void)pipe(dm_pipe);
 	Tk_CreateFileHandler(STDIN_FILENO, TK_READABLE, stdin_input,
@@ -997,11 +993,7 @@ refresh()
      */
 
     curr_dm_list = p;
-#ifdef USE_LIBDM
     dmp->dmr_window(dmp, windowbounds);
-#else
-    dmp->dmr_window(windowbounds);
-#endif
 
     if(update_views || dmaflag || dirty) {
       double	elapsed_time;
@@ -1014,11 +1006,7 @@ refresh()
       if( mged_variables.predictor )
 	predictor_frame();
 
-#ifdef USE_LIBDM
       dmp->dmr_prolog(dmp);	/* update displaylist prolog */
-#else
-      dmp->dmr_prolog();	/* update displaylist prolog */
-#endif
 
       /*  Draw each solid in it's proper place on the screen
        *  by applying zoom, rotation, & translation.
@@ -1034,11 +1022,7 @@ refresh()
       }
 
       /* Restore to non-rotated, full brightness */
-#ifdef USE_LIBDM
       dmp->dmr_normal(dmp);
-#else
-      dmp->dmr_normal();
-#endif
 
       /* Compute and display angle/distance cursor */
       if (mged_variables.adcflag)
@@ -1047,11 +1031,7 @@ refresh()
       /* Display titles, etc., if desired */
       dotitles(mged_variables.faceplate);
 
-#ifdef USE_LIBDM
       dmp->dmr_epilog(dmp);
-#else
-      dmp->dmr_epilog();
-#endif
 
       (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
       /* Only use reasonable measurements */
@@ -1286,13 +1266,8 @@ int	exitcode;
 	for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
 	  curr_dm_list = p;
 
-#ifdef USE_LIBDM
 	  dmp->dmr_light( dmp, LIGHT_RESET, 0 );	/* turn off the lights */
 	  dmp->dmr_close(dmp);
-#else
-	  dmp->dmr_light( LIGHT_RESET, 0 );	/* turn off the lights */
-	  dmp->dmr_close();
-#endif
 	}
 
 	if (cbreak_mode > 0)
