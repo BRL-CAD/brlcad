@@ -257,7 +257,7 @@ char		*jfile;	/* Name of Jack data base file. */
 	nmg_gluefaces(outfaceuses, face);
 
 	/* Compute "geometry" for region and shell */
-	nmg_region_a(r);
+	nmg_region_a(r, &tol);
 
 	return(0);
 }
