@@ -566,7 +566,7 @@ char *h;
 			bu_log("%sEDGE_G_LSEG %8x pt:(%f %f %f)\n",
 				h, eg_l, V3ARGS(eg_l->e_pt));
 			bu_log("%s       eu uses=%d  dir:(%f %f %f)\n",
-				h, rt_list_len( &eg_l->eu_hd2 ), V3ARGS(eg_l->e_dir));
+				h, bu_list_len( &eg_l->eu_hd2 ), V3ARGS(eg_l->e_dir));
 			break;
 		}
 		case NMG_EDGE_G_CNURB_MAGIC:

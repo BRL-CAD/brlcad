@@ -5158,7 +5158,7 @@ int	after;
 
 	/* if the edge geometry doesn't have at least two uses, this
 	 * is not a candidate for unbreaking */		
-	if( rt_list_len( &eg->eu_hd2 ) < 2*2 )  {
+	if( bu_list_len( &eg->eu_hd2 ) < 2*2 )  {
 		/* bu_log("nmg_unbreak_handler: usage < 4\n"); */
 		return;
 	}

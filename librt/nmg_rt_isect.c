@@ -2366,7 +2366,7 @@ CONST struct xray	*rp;
 
 	sprintf( buf, "%s%d.pl", str, num );
 
-	if( rt_list_len(hd) <= 0 )  {
+	if( bu_list_len(hd) <= 0 )  {
 		bu_log("nmg_pl_hitmiss_list(): empty list, no %s written\n", buf);
 		return;
 	}

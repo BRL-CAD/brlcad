@@ -4636,7 +4636,7 @@ struct edgeuse	*eu1_first;
 
 	/* If the edge geometry doesn't have at least four edgeuses, this
 	 * is not a candidate for unbreaking */		
-	if( rt_list_len( &eg->eu_hd2 ) < 2*2 )  {
+	if( bu_list_len( &eg->eu_hd2 ) < 2*2 )  {
 		ret = -2;
 		goto out;
 	}
