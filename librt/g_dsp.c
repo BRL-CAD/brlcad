@@ -2105,7 +2105,7 @@ int bool;
 	 *		D
 	 */
 	
-	point_t A, B, C, D, E, tmp;
+	point_t A, C, D, E, tmp;
 	vect_t Vac, Vde;
 
 	if (x == 0) {	VSET(tmp, x, y, DSP(dsp, x, y) );	}
@@ -2150,8 +2150,7 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	vect_t N, t, tmp, A, B, C, D, AB, AC, AD, N_orig;
-	int cell[2];
+	vect_t N, t, tmp, A, B, C, D, N_orig;
 	char buf[32];
 	struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
 	vect_t Anorm, Bnorm, Dnorm, Cnorm, ABnorm, CDnorm;
@@ -2161,6 +2160,7 @@ register struct xray	*rp;
 	double dot;
 	double len;
 	FILE *fd = (FILE *)NULL;
+
 
 	RT_DSP_CK_MAGIC(dsp);
 	BU_CK_VLS(&dsp->dsp_i.dsp_file);
@@ -2770,10 +2770,10 @@ CONST struct db_i		*dbip;
 	LOCAL struct rt_dsp_internal	*dsp_ip;
 	union record			*rp;
 	struct bu_vls			str;
-	mat_t tmp;
-	struct bu_mapped_file		*mf;
-	int				count;
-	int				in_cookie, out_cookie;
+
+
+
+
 
 #define IMPORT_FAIL(_s) \
 	bu_log("rt_dsp_import(%d) '%s' %s\n", __LINE__, \
@@ -2915,9 +2915,9 @@ register CONST mat_t		mat;
 CONST struct db_i		*dbip;
 {
 	struct rt_dsp_internal	*dsp_ip;
-	unsigned short 		name_len;
 	unsigned char		*cp;
-	mat_t			tmp;
+
+
 
 	BU_CK_EXTERNAL( ep );
 
@@ -2975,11 +2975,7 @@ double				local2mm;
 CONST struct db_i		*dbip;
 {
 	struct rt_dsp_internal	*dsp_ip;
-	struct rt_dsp_internal	dsp;
-	union record		*rec;
-	struct bu_vls		str;
 	unsigned long		name_len;
-	register unsigned long	tmp;
 	unsigned char		*cp;
 
 	RT_CK_DB_INTERNAL(ip);
