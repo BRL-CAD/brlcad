@@ -102,7 +102,7 @@ double		*elapsed;
 
 	if( vp )  {
 		percent = user_cpu_secs/elapsed_secs*100.0;
-		RT_VLS_CHECK(vp);
+		BU_VLS_CHECK(vp);
 #ifdef DEFAULT_HZ
 		bu_vls_printf( vp,
 "%g user + %g sys in %g elapsed secs (%g%%) WARNING: HZ=60 assumed, fix librt/timerunix.c",
