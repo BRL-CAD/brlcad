@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.11
-	Last edit: 	2/4/86 at 16:54:39	G S M
-	Retrieved: 	8/13/86 at 10:29:11
+	SCCS id:	@(#) librle.c	1.12
+	Last edit: 	3/7/86 at 15:56:58	G S M
+	Retrieved: 	8/13/86 at 10:29:26
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -15,7 +15,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.11	last edit 2/4/86 at 16:54:39";
+char	sccsTag[] = "@(#) librle.c	1.12	last edit 3/7/86 at 15:56:58";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -212,6 +212,7 @@ register Pixel	*bgpixel;
 		(void) fprintf( stderr, "Read of magic word failed!\n" );
 		return	-1;
 		}
+	SWAB( x_magic );
 	if( x_magic != XtndRMAGIC )
 		{ Old_Rle_Header	setup;
 		if( fread( (char *) &setup, sizeof(setup), 1, fp ) != 1 )
@@ -221,6 +222,10 @@ register Pixel	*bgpixel;
 					);
 			return	-1;
 			}
+		SWAB( setup.xpos );
+		SWAB( setup.ypos );
+		SWAB( setup.xsize );
+		SWAB( setup.ysize );
 		r_setup.h_xpos = setup.xpos;
 		r_setup.h_ypos = setup.ypos;
 		r_setup.h_xlen = setup.xsize;
@@ -272,6 +277,10 @@ register Pixel	*bgpixel;
 					);
 			return	-1;
 			}
+		SWAB( r_setup.h_xpos );
+		SWAB( r_setup.h_ypos );
+		SWAB( r_setup.h_xlen );
+		SWAB( r_setup.h_ylen );
 		_func_Get_Inst = _get_New_Inst;
 		}
 	if( rle_verbose )
@@ -356,16 +365,25 @@ Pixel		*bgpixel;
 		(void) fprintf( stderr, "Seek to RLE header failed!\n" );
 		return	-1;
 		}
+	SWAB( x_magic );
 	if( fwrite( (char *) &x_magic, sizeof(short), 1, fp ) != 1 )
 		{
 		(void) fprintf( stderr, "Write of magic number failed!\n" );
 		return	-1;
 		}
+	SWAB( w_setup.h_xpos );
+	SWAB( w_setup.h_ypos );
+	SWAB( w_setup.h_xlen );
+	SWAB( w_setup.h_ylen );
 	if( fwrite( (char *) &w_setup, sizeof w_setup, 1, fp ) != 1 )
 		{
 		(void) fprintf( stderr, "Write of RLE header failed!\n" );
 		return	-1;
 		}
+	SWAB( w_setup.h_xpos );
+	SWAB( w_setup.h_ypos );
+	SWAB( w_setup.h_xlen );
+	SWAB( w_setup.h_ylen );
 	if( rle_debug )
 		{
 		(void) fprintf( stderr, "Magic=0x%x\n", x_magic );
