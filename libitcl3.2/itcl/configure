@@ -1118,7 +1118,7 @@ case "`uname -s`" in
     ;;
     *)
 	CYGPATH=echo
-	RELPATH=..
+	RELPATH=../lib
     ;;
 esac
 
