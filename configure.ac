@@ -1643,6 +1643,17 @@ if test "x$host_os" = "xirix6.5" ; then
 	fi
 fi
 
+# make sure ECHO and ECHO_N got defined and substituted
+if test "x$ECHO" = "x" ; then
+	ECHO=echo
+	AC_SUBST(ECHO)
+	AC_MSG_NOTICE([echowas not defined by configure])
+fi
+if test "x$ECHO_N" = "x" ; then
+	ECHO_N=
+	AC_SUBST(ECHO_N)
+fi
+
 
 dnl ***************************
 dnl *** Configure Makefiles ***
