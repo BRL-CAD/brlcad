@@ -862,7 +862,7 @@ int			ncpu;
 
 	if( rt_g.debug&DEBUG_CUTDETAIL ) {
 		/* Produce a voluminous listing of the cut tree */
-		rt_pr_cut( rtip->rti_CutHead.nubn.first_cut, 0 );
+		rt_pr_cut( &rtip->rti_CutHead, 0 );
 	}
 
 	if( rt_g.debug&DEBUG_PLOTBOX ) {
