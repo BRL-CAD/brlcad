@@ -191,7 +191,7 @@ proc default_mouse_bindings { w } {
 
     set adcflag [adc draw]
 
-    if {$adcflag && $transform == "a"} {
+    if {$adcflag == "1" && $transform == "a"} {
 	bind $w <Shift-ButtonPress-1> "winset $w; dm adc t %x %y; break"
 	bind $w <Shift-ButtonPress-2> "winset $w; dm adc t %x %y; break"
 	bind $w <Shift-ButtonPress-3> "winset $w; dm adc d %x %y; break"
