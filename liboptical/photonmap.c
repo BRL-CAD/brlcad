@@ -37,6 +37,7 @@ void Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi);
 
 int			PM_Activated;
 double			PM_Intensity;
+int			PM_Visualize;
 
 struct	PhotonMap	*PMap[3];		/* Photon Map (KD-TREE) */
 struct	Photon		*Emit[3];		/* Emitted Photons */
@@ -808,7 +809,7 @@ void IrradianceThread(int pid, genptr_t arg) {
 /*
  *  Main Photon Mapping Function
  */
-void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int IrradianceHypersampling, double LightIntensity) {
+void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int IrradianceHypersampling, int VisualizeIrradiance, double LightIntensity) {
   struct	light_specific	*lp;
   int				i,MapSize[3];
 

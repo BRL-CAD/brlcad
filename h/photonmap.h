@@ -112,6 +112,8 @@ struct IrradCache {
 
 
 extern	int	PM_Activated;	/* Photon Mapping Activated, 0=off, 1=on */
+extern	double	PM_Intensity;	/* Photon Mapping Intensity applied to all Light Sources, a coefficient to lt_fraction */
+extern	int	PM_Visualize;	/* Photon Mapping Visualization of Irradiance Cache */
 
-BU_EXTERN(void BuildPhotonMap, (struct application *ap, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int IrradianceHypersampling));
+BU_EXTERN(void BuildPhotonMap, (struct application *ap, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int IrradianceHypersampling, int VisualizeIrradiance, double LightIntensity));
 BU_EXTERN(void IrradianceEstimate, (struct application *ap, vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np));

@@ -98,7 +98,7 @@ extern struct floatpixel	*prev_float_frame;
 /***** end variables shared with worker() *****/
 
 /***** Photon Mapping Variables *****/
-extern	double		pmargs[7];
+extern	double		pmargs[8];
 /***** ************************ *****/
 
 /***** variables shared with do.c *****/
