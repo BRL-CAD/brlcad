@@ -284,6 +284,7 @@ CONST struct member	*mp;
 		register int j = pathp->fp_len-1;
 		register int anim_flag;
 		
+		RT_CK_ANIMATE(anp);
 		anim_flag = 1;
 
 		if (rt_g.debug & DEBUG_ANIM) {
@@ -380,6 +381,7 @@ int			noisy;
 			mat_t	old_xlate, xmat;
 
 			for( anp=tsp->ts_dbip->dbi_anroot; anp != ANIM_NULL; anp = anp->an_forw ) {
+				RT_CK_ANIMATE(anp);
 				if( dp != anp->an_path.fp_names[0] )
 					continue;
 				mat_copy( old_xlate, tsp->ts_mat );
