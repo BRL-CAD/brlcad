@@ -724,6 +724,14 @@ mged_setup(void)
 	}
 #endif
 
+#ifdef WIN32
+#ifdef _DEBUG
+	Tcl_FindExecutable("mged_d");
+#else
+	Tcl_FindExecutable("mged");
+#endif
+#endif
+
 	/* Create the interpreter */
 	interp = Tcl_CreateInterp();
 
@@ -772,7 +780,12 @@ mged_setup(void)
 #endif
 
 	bu_vls_init(&str);
+#ifdef WIN32
+	bu_vls_printf(&str,
+		      "set auto_path [linsert $auto_path 0 \"%stclscripts/mged\" \"%stclscripts\" \"%stclscripts/lib\" \"%stclscripts/util\" \"%stclscripts/geometree\"]", filename, filename, filename, filename, filename);
+#else
 	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %stclscripts/mged %stclscripts %stclscripts/lib %stclscripts/util %stclscripts/geometree]", filename, filename, filename, filename, filename);
+#endif
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
 
 	/* Tcl needs to write nulls onto subscripted variable names */
