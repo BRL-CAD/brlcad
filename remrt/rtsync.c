@@ -90,6 +90,7 @@ extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 #define VRMSG_EVENT	3	/* from MGED: device event */
 #define VRMSG_POV	4	/* from MGED: point of view info */
 #define VRMSG_VLIST	5	/* transfer binary vlist block */
+#define VRMSG_CMD_REPLY	6	/* from MGED: reply to VRMSG_CMD */
 
 void	ph_default();	/* foobar message handler */
 void	vrmgr_ph_role();
@@ -427,6 +428,7 @@ int argc;
 char **argv;
 {
 	struct bu_vls	cmd;
+	char		*reply;
 	int		i;
 
 	if( argc < 2 )  {
@@ -451,7 +453,21 @@ char **argv;
 		return TCL_ERROR;
 	}
 	bu_vls_free(&cmd);
-	return TCL_OK;
+
+	reply = pkg_bwaitfor( VRMSG_CMD_REPLY, vrmgr_pc );
+	if( !reply )  {
+		Tcl_AppendResult(interp, "Error reading reply from vrmgr\n", NULL);
+		return TCL_ERROR;
+	}
+
+	/* Bring across result string from other side, as our result. */
+	Tcl_AppendResult( interp, reply+1, NULL );
+	if( reply[0] == 'Y' )  {
+		(void)free(reply);
+		return TCL_OK;
+	}
+	(void)free(reply);
+	return TCL_ERROR;
 }
 
 /*
