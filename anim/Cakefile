@@ -15,35 +15,35 @@
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-#define FILES	anim anim_cascade anim_fly anim_hardtrack anim_keyread \
+#define FILES	anim_cascade anim_fly anim_hardtrack anim_keyread \
 		anim_lookat anim_offset anim_orient anim_script anim_sort \
 		anim-time anim_track anim_turn cattrack chan_add chan_mult \
 		chan_permute
 
 /* Explicit composition of each product */
-anim_cascade: anim_cascade.o anim.o
-	CC LDFLAGS anim_cascade.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_cascade
+anim_cascade: anim_cascade.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS anim_cascade.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_cascade
 
 anim_fly: anim_fly.o
 	CC LDFLAGS anim_fly.o LIBES -o anim_fly
 
-anim_hardtrack: anim_hardtrack.o anim.o
-	CC LDFLAGS anim_hardtrack.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_hardtrack
+anim_hardtrack: anim_hardtrack.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS anim_hardtrack.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_hardtrack
 
-anim_keyread: anim_keyread.o anim.o
-	CC LDFLAGS anim_keyread.o anim.o LIBES -o anim_keyread
+anim_keyread: anim_keyread.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS anim_keyread.o LIBBN LIBBU LIBBU_LIBES LIBES -o anim_keyread
 
-anim_lookat: anim_lookat.o anim.o
-	CC LDFLAGS anim_lookat.o anim.o LIBES -o anim_lookat
+anim_lookat: anim_lookat.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS anim_lookat.o LIBBN LIBBU LIBBU_LIBES LIBES -o anim_lookat
 
-anim_offset: anim_offset.o anim.o
-	CC LDFLAGS anim_offset.o anim.o LIBES -o anim_offset
+anim_offset: anim_offset.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS anim_offset.o LIBBN LIBBU LIBBU_LIBES LIBES -o anim_offset
 
-anim_orient: anim_orient.o anim.o
-	CC LDFLAGS anim_orient.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_orient
+anim_orient: anim_orient.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS anim_orient.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_orient
 
-anim_script: anim_script.o anim.o
-	CC LDFLAGS anim_script.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_script
+anim_script: anim_script.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS anim_script.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_script
 
 anim_sort: anim_sort.o
 	CC LDFLAGS anim_sort.o LIBES -o anim_sort
@@ -51,11 +51,11 @@ anim_sort: anim_sort.o
 anim_time: anim_time.o 
 	CC LDFLAGS anim_time.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_time
 
-anim_track: anim_track.o cattrack.o anim.o
-	CC LDFLAGS anim_track.o cattrack.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_track
+anim_track: anim_track.o cattrack.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS anim_track.o cattrack.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_track
 
-anim_turn: anim_turn.o anim.o
-	CC LDFLAGS anim_turn.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_turn
+anim_turn: anim_turn.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS anim_turn.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_turn
 
 chan_add: chan_add.o
 	CC LDFLAGS chan_add.o LIBES -o chan_add
