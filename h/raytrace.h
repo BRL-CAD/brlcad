@@ -1888,19 +1888,19 @@ RT_EXTERN(struct vertexuse	*nmg_find_v_in_face, (CONST struct vertex *,
 				CONST struct faceuse *) );
 RT_EXTERN(struct vertexuse	*nmg_find_vu_in_face, (CONST point_t pt,
 				CONST struct faceuse *fu, CONST struct rt_tol *tol) );
-RT_EXTERN(int			nmg_find_vertex_in_edgelist, (CONST struct vertex *v,
+RT_EXTERN(int			nmg_is_vertex_in_edgelist, (CONST struct vertex *v,
 				CONST struct rt_list *hd) );
-RT_EXTERN(int			nmg_find_vertex_in_looplist, (CONST struct vertex *v,
+RT_EXTERN(int			nmg_is_vertex_in_looplist, (CONST struct vertex *v,
 				CONST struct rt_list *hd, int singletons) );
-RT_EXTERN(int			nmg_find_vertex_in_facelist, (CONST struct vertex *v,
+RT_EXTERN(int			nmg_is_vertex_in_facelist, (CONST struct vertex *v,
 				CONST struct rt_list *hd) );
-RT_EXTERN(int			nmg_find_edge_in_edgelist, (CONST struct edge *e,
+RT_EXTERN(int			nmg_is_edge_in_edgelist, (CONST struct edge *e,
 				CONST struct rt_list *hd) );
-RT_EXTERN(int			nmg_find_edge_in_looplist, (CONST struct edge *e,
+RT_EXTERN(int			nmg_is_edge_in_looplist, (CONST struct edge *e,
 				CONST struct rt_list *hd) );
-RT_EXTERN(int			nmg_find_edge_in_facelist, (CONST struct edge *e,
+RT_EXTERN(int			nmg_is_edge_in_facelist, (CONST struct edge *e,
 				CONST struct rt_list *hd) );
-RT_EXTERN(int			nmg_find_loop_in_facelist, (CONST struct loop *l,
+RT_EXTERN(int			nmg_is_loop_in_facelist, (CONST struct loop *l,
 				CONST struct rt_list *fu_hd) );
 RT_EXTERN(struct edgeuse	*nmg_eu_with_vu_in_lu, (CONST struct loopuse *lu,
 				CONST struct vertexuse *vu) );
@@ -1909,6 +1909,12 @@ RT_EXTERN(int			nmg_loop_is_ccw, (CONST struct loopuse *lu,
 				CONST plane_t norm, CONST struct rt_tol *tol) );
 RT_EXTERN(struct vertex		*nmg_find_pt_in_shell, (CONST struct shell *s,
 				CONST point_t pt, CONST struct rt_tol *tol) );
+RT_EXTERN(int			nmg_shell_is_empty, (CONST struct shell *s) );
+RT_EXTERN(struct loopuse	*nmg_lu_of_vu, (struct vertexuse *vu) );
+RT_EXTERN(struct shell		*nmg_lups, (struct loopuse *lu) );
+RT_EXTERN(struct shell		*nmg_eups, (struct edgeuse *eu) );
+RT_EXTERN(CONST struct edgeuse	*nmg_faceradial, (CONST struct edgeuse *eu) );
+RT_EXTERN(struct edgeuse	*nmg_radial_face_edge_in_shell, (struct edgeuse *eu) );
 
 /* From nmg_misc.c */
 RT_EXTERN(int			nmg_tbl, (struct nmg_ptbl *b, int func, long *p) );
@@ -1936,15 +1942,6 @@ RT_EXTERN(void			nmg_pr_vg, (struct vertex_g *vg, char *h) );
 RT_EXTERN(void			nmg_pr_v, (struct vertex *v, char *h) );
 RT_EXTERN(void			nmg_pr_vu, (struct vertexuse *vu, char *h) );
 RT_EXTERN(void			nmg_pr_vu_briefly, (struct vertexuse *vu, char *h) );
-RT_EXTERN(int			nmg_check_radial, (struct edgeuse *eu));
-RT_EXTERN(int			nmg_ck_closed_surf, (struct shell *s) );
-RT_EXTERN(int			nmg_ck_closed_region, (struct nmgregion *r) );
-RT_EXTERN(struct shell		*nmg_polytonmg, (FILE *fp, struct nmgregion *r, CONST struct rt_tol *tol) );
-RT_EXTERN(struct loopuse	*nmg_lu_of_vu, (struct vertexuse *vu) );
-RT_EXTERN(struct shell		*nmg_lups, (struct loopuse *lu) );
-RT_EXTERN(struct shell		*nmg_eups, (struct edgeuse *eu) );
-RT_EXTERN(CONST struct edgeuse	*nmg_faceradial, (CONST struct edgeuse *eu) );
-RT_EXTERN(struct edgeuse	*nmg_radial_face_edge_in_shell, (struct edgeuse *eu) );
 RT_EXTERN(void			nmg_euprint, (CONST char *str, CONST struct edgeuse *eu) );
 RT_EXTERN(void			nmg_rebound, (struct model *m) );
 RT_EXTERN(void			nmg_count_shell_kids, (struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
@@ -2073,6 +2070,9 @@ RT_EXTERN(void			nmg_eval_plot, (struct nmg_bool_state *bs,
 /* XXX many others here */
 RT_EXTERN(void			nmg_ck_list, (struct rt_list *hd, CONST char *str) );
 RT_EXTERN(void			nmg_ck_lueu, (struct loopuse *lu, char *s) );
+RT_EXTERN(int			nmg_check_radial, (CONST struct edgeuse *eu));
+RT_EXTERN(int			nmg_ck_closed_surf, (CONST struct shell *s) );
+RT_EXTERN(int			nmg_ck_closed_region, (CONST struct nmgregion *r) );
 
 /* From nmg_inter.c */
 RT_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST struct rt_tol *tol) );
