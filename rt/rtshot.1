@@ -32,15 +32,32 @@ The
 .B \-a
 option is followed by three numbers specifying a point to be fired ``at''.
 .TP
-The
-.B \-f
-option indicates that rtshot should handle regions as FASTGEN would.
-.TP
 .B \-x #
 Set debug flags to (hexadecimal) number.
 .TP
 .B \-U #
 Set use_air flag.
+.TP
+.B \-O # or keyword
+This option indicates how overlaps should be handled. The
+.I resolve
+or
+.I 0
+argument is the default (normal BRL-CAD mode, all overlaps are resolved
+and no overlaps appear in the output). The
+.I rebuild_fastgen
+or
+.I 1
+argument mimics FASTGEN4 raytracing (plate-mode overlaps appear in the output). The
+.I rebuild_all
+or
+.I 2
+argument rebuilds all overlaps that occured along the ray (all overlaps appear in the output). The
+.I retain
+or
+.I 3
+argument does not resolve any overlaps (each unique combination of
+intersection extent and list of claiming regions produces a single partition).
 .LP
 The
 .B rtshot

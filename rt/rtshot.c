@@ -45,7 +45,7 @@ Usage:  rtshot [options] model.g objects...\n\
  -d # # #	Set direction vector\n\
  -p # # #	Set starting point\n\
  -a # # #	Set shoot-at point\n\
- -f		Set emulate FASTGEN mode\n\
+ -O #		Set overlap-claimant handling\n\
  -o #		Set onehit flag\n\
  -r #		Set ray length\n";
 
@@ -60,7 +60,7 @@ int		set_at = 0;
 int		set_onehit = 0;
 fastf_t		set_ray_length = 0.0;
 vect_t		at_vect;
-int		emulate_fastgen = 0;
+int		overlap_claimant_handling = 0;
 int		use_air = 0;		/* Handling of air */
 
 extern int hit(), miss();
@@ -158,10 +158,28 @@ char **argv;
 		argv += 4;
 		continue;
 
-	case 'f':
-		emulate_fastgen = 1;
-		argc--;
-		argv++;
+	case 'O':
+		{
+			if( !strcmp( argv[1], "resolve" ) || !strcmp( argv[1], "0") )
+				overlap_claimant_handling = 0;
+			else if( !strcmp( argv[1], "rebuild_fastgen" ) || !strcmp( argv[1], "1") )
+				overlap_claimant_handling = 1;
+			else if( !strcmp( argv[1], "rebuild_all" ) || !strcmp( argv[1], "2") )
+				overlap_claimant_handling = 2;
+			else if( !strcmp( argv[1], "retain" ) || !strcmp( argv[1], "3") )
+				overlap_claimant_handling = 3;
+			else
+			{
+				bu_log( "Illegal argument (%s) to '-O' option.  Must be:\n", argv[1] );
+				bu_log( "\t'resolve' or '0'\n");
+				bu_log( "\t'rebuild_fastgen' or '1'\n");
+				bu_log( "\t'rebuild_all' or '2'\n");
+				bu_log( "\t'retain' or '3'\n");
+				exit( 1 );
+			}
+			argc -= 2;
+			argv += 2;
+		}
 		continue;
 
 	default:
@@ -186,7 +204,7 @@ err:
 		exit(2);
 	}
 
-	if( emulate_fastgen )
+	if( overlap_claimant_handling )
 		rtip->rti_save_overlaps = 1;
 
 	ap.a_rt_i = rtip;
@@ -261,8 +279,10 @@ struct partition *PartHeadp;
 	if( (pp=PartHeadp->pt_forw) == PartHeadp )
 		return(0);		/* Nothing hit?? */
 
-	if( emulate_fastgen )
+	if( overlap_claimant_handling == 1 )
 		rt_rebuild_overlaps( PartHeadp, ap, 1 );
+	else if( overlap_claimant_handling == 2 )
+		rt_rebuild_overlaps( PartHeadp, ap, 0 );
 
 	/* First, plot ray start to inhit */
 	if( rdebug&RDEBUG_RAYPLOT )  {
