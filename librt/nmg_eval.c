@@ -81,45 +81,28 @@ nmg_ck_lu_orientation( lu, tolp )
 struct loopuse		*lu;
 CONST struct rt_tol	*tolp;
 {
-	struct rt_tol	tol;
-	int		ccw;
 	struct faceuse	*fu;
-	plane_t		peqn;
+	plane_t		fu_peqn;
+	plane_t		lu_peqn;
+	fastf_t		dot;
 
 	NMG_CK_LOOPUSE(lu);
 	fu = lu->up.fu_p;		/* parent had better be faceuse */
 	NMG_CK_FACEUSE(fu);
 
-	NMG_GET_FU_PLANE( peqn, fu );
+	NMG_GET_FU_PLANE( fu_peqn, fu );
+	nmg_loop_plane_newell( lu, lu_peqn );
 
-	if( tolp )  {
-		RT_CK_TOL(tolp);
-		tol = *tolp;		/* struct copy */
-	} else {
-		/* Build something suitable, when no user tol is handy */
-		tol.magic = RT_TOL_MAGIC;
-		tol.dist = 0.005;
-		tol.dist_sq = tol.dist * tol.dist;
-		tol.perp = 0;
-		tol.para = 1;
-	}
-	ccw = nmg_loop_is_ccw(lu, peqn, &tol);
-	if (rt_g.NMG_debug & DEBUG_BOOLEVAL)  {
-		rt_log("nmg_ck_lu_orientation(x%x) ccw=%d, fu=%s, lu=%s\n",
-			lu,
-			ccw,
-			nmg_orientation(fu->orientation),
-			nmg_orientation(lu->orientation)
-		);
-	}
-	if( ccw == 0 )
+	dot = VDOT( fu_peqn, lu_peqn );
+
+	if( dot == 0.0 )
 		return;		/* can't determine geometric orientation */
 
 
-	if( ((fu->orientation == OT_SAME) == (lu->orientation == OT_SAME) ) &&
-	     ccw != 1 )  {
-		rt_log("nmg_ck_lu_orientation() lu=x%x, ccw=%d, fu_orient=%s, lu_orient=%s\n", lu,
-			ccw,
+	if( dot < 0.0 )
+	{
+		rt_log("nmg_ck_lu_orientation() lu=x%x, dot=%g, fu_orient=%s, lu_orient=%s\n", lu,
+			dot,
 			nmg_orientation(fu->orientation),
 			nmg_orientation(lu->orientation)
 		);
