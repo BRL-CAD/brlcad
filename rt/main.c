@@ -262,19 +262,19 @@ do_more:
 		MAT4X3PNT( eye_model, view2model, temp );
 	}  else  {
 		register int i;
-		double d;
+		float d;
 
 		/* Visible part is from -1 to +1 in view space */
-		if( scanf( "%lf", &d ) != 1 )  goto out;
+		if( scanf( "%f", &d ) != 1 )  goto out;
 		viewsize = d;
-		if( scanf( "%lf", &d ) != 1 )  goto out;
+		if( scanf( "%f", &d ) != 1 )  goto out;
 		eye_model[X] = d;
-		if( scanf( "%lf", &d ) != 1 )  goto out;
+		if( scanf( "%f", &d ) != 1 )  goto out;
 		eye_model[Y] = d;
-		if( scanf( "%lf", &d ) != 1 )  goto out;
+		if( scanf( "%f", &d ) != 1 )  goto out;
 		eye_model[Z] = d;
 		for( i=0; i < 16; i++ )  {
-			if( scanf( "%lf", &d ) != 1 )
+			if( scanf( "%f", &d ) != 1 )
 				goto out;
 			Viewrotscale[i] = d;
 		}
