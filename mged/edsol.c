@@ -2439,7 +2439,9 @@ char *str;
 		bu_free((genptr_t)dir, "get_file_name: directory string");
 	}
 
-	bu_vls_printf(&cmd, "getFile mged . %s {{{All Files} {*}}} {Get File}",
+	bu_vls_printf(&cmd,
+		      "getFile %s %s {{{All Files} {*}}} {Get File}",
+		      bu_vls_addr(&pathName),
 		      bu_vls_addr(&varname_vls));
 	bu_vls_free(&varname_vls);
 
