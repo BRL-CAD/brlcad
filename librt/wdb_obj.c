@@ -6129,8 +6129,8 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 		}
 		goto not_found;
 
-		if (regp != REGION_NULL) {
 found:
+		if (regp != REGION_NULL) {
 			/* input name was a region  */
 			if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
 				Tcl_AppendResult(interp, "rt_bound_tree failed for ",
