@@ -418,6 +418,7 @@ struct _mged_variables {
 	int     view;
 	int	edit;
         int     context;
+        int     eyerot;
 	int	predictor;
 	double	predictor_advance;
 	double	predictor_length;
