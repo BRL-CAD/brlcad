@@ -161,7 +161,7 @@ register struct wmember *headp;
 			ret--;
 		BU_LIST_DEQUEUE( &wp->l );
 		wp->l.magic = -1;	/* Sanity */
-		free( (char *)wp );
+		bu_free( (char *)wp, "wmember" );
 	}
 	return(ret);
 }
