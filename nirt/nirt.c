@@ -112,7 +112,7 @@ char **argv;
     void		   targ2grid();
     void		   ae2dir();
     void		   dir2ae();
-    double	           dist_default();  /* computes grid[DIST] default val*/
+    void	           set_radius();
     int	           	   str_dbl();	
     void		   az_el();
     void		   sh_esc();
@@ -203,10 +203,10 @@ char **argv;
     direct(Y) = 0.0;
     direct(Z) = 0.0;
     grid(HORZ) = 0.0;
-    grid(DIST) = dist_default();     /* extreme of the target */
     grid(VERT) = 0.0;
     grid(DIST) = 0.0;
     grid2targ();
+    set_radius(rtip);
 
     /* initialize the output specification */
     default_ospec();
