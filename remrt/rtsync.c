@@ -1038,7 +1038,7 @@ char	*argv[];
 	Tcl_LinkVar( interp, "node_search_path", (char *)&node_search_path, TCL_LINK_STRING );
 	Tcl_SetVar( interp, "node_search_path",
 "/m/cad /m/cad/db /n/vapor/m/cad /n/vapor/m/cad/db \
-~/mike ~mike/cad/db ~/butler ~butler/cad/db \
+~mike ~mike/db ~mike/cad/db ~butler ~butler/cad/db \
 /home/army/mike/SGI/cad /var/tmp /tmp",
 		TCL_GLOBAL_ONLY );
 
