@@ -166,6 +166,8 @@ struct pt_node {
 	struct pt_node	*next;	/* ptr to next pt */
 };
 
+extern void	rt_ell();
+
 /*
  *  			R T _ E P A _ P R E P
  *  
@@ -882,6 +884,7 @@ struct rt_tol		*tol;
 
 #define ELLOUT(n)	ov+(n-1)*3
 
+void
 rt_ell( ov, V, A, B, sides )
 register fastf_t	*ov;
 register fastf_t	*V;
@@ -901,7 +904,6 @@ int			sides;
 		VJOIN2( ELLOUT(n), V, x, A, y, B );
 	}
 	VMOVE(ELLOUT(n), ELLOUT(1));
-	return(ret);
 }
 
 /*
