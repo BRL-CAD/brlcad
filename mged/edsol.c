@@ -2417,12 +2417,15 @@ get_file_name( str )
 char *str;
 {
 	struct bu_vls cmd;
+	struct bu_vls varname_vls;
 	char *dir;
 	char *fptr;
 	char *ptr1;
 	char *ptr2;
 
 	bu_vls_init( &cmd );
+	bu_vls_init( &varname_vls );
+	bu_vls_strcpy( &varname_vls, "mged_gui(getFileDir)" );
 
 	if( (fptr=strrchr( str, '/')))
 	{
@@ -2432,12 +2435,13 @@ char *str;
 		while( ptr1 != fptr )
 			*ptr2++ = *ptr1++;
 		*ptr2 = '\0';
-		strcat( dir, "/*" );
-
-		bu_vls_printf( &cmd, "fs_dialog .w . %s", dir );
+		Tcl_SetVar(interp, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
+		bu_free((genptr_t)dir, "get_file_name: directory string");
 	}
-	else
-		bu_vls_printf( &cmd, "fs_dialog .w . *" );
+
+	bu_vls_printf(&cmd, "getFile mged . %s {{{All Files} {*}}} {Get File}",
+		      bu_vls_addr(&varname_vls));
+	bu_vls_free(&varname_vls);
 
 	if( Tcl_Eval( interp, bu_vls_addr( &cmd ) ) )
 	{
