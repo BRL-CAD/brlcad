@@ -148,7 +148,7 @@ static int	is_linear_cmap();
 
 /*
  * Our image (window) pixwin
- * WARNING: this should be in suninfo but isn't there yet
+ * XXX WARNING: this should be in suninfo but isn't there yet
  * because of signal routines the need to find it.
  */
 static Pixwin	*imagepw;
@@ -330,6 +330,7 @@ sun_sigalarm( sig )
 	return	sig;
 	}
 
+#ifdef INEFFICIENT
 _LOCAL_ void
 sun_storepixel( ifp, x, y, p, count )
 FBIO			*ifp;
@@ -347,6 +348,7 @@ register int		count;
 		}
 	return;
 	}
+#endif
 
 _LOCAL_ void
 sun_storebackground( ifp, x, y, p, count )
@@ -354,17 +356,27 @@ FBIO			*ifp;
 int			x, y;
 register RGBpixel	*p;
 register int		count;
-	{	register RGBpixel	*memp;
-	for(	memp =	(RGBpixel *)
-			(&ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]);
-		count > 0;
-		memp++, count--
-		)
-		{
-		COPYRGB( *memp, *p );
+{
+	register RGBpixel	*memp;
+
+	memp = (RGBpixel *)
+		(&ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]);
+
+	if( (p == (RGBpixel *)0) ||
+	    ((*p)[RED] == 0 && (*p)[GRN] == 0 && (*p)[BLU] == 0) ) {
+	    	/* black */
+	    	bzero( memp, count*sizeof(RGBpixel) );
+	} else if( ((*p)[RED] == (*p)[GRN]) && ((*p)[GRN] == (*p)[BLU]) ) {
+		/* R, G, and B are equal */
+		memset( memp, (*p)[RED] );
+	} else {
+		while( count-- > 0 ) {
+			COPYRGB( *memp, *p );
+			memp++;
 		}
-	return;
 	}
+	return;
+}
 
 /* These lock routines are unused.  They do not seem to provide any speedup when
 bracketing raster op routines.  This may pan out differently when other processes
@@ -457,6 +469,10 @@ static char	scan_mpr_buf[XMAXWINDOW];
 mpr_static( scan1_mpr, XMAXWINDOW, DITHERSZ, 1, (short *)scan_mpr_buf );
 mpr_static( scan8_mpr, XMAXWINDOW, DITHERSZ, 8, (short *)scan_mpr_buf );
 
+/*
+ * XXX - 512 calls to scanwrite consumed 10.8 seconds or 78% of
+ * the runtime of pix-fb dragon.pix on a monochrome Sun.
+ */
 _LOCAL_ void
 sun_scanwrite( ifp, xlft, ybtm, xrgt, pp )
 FBIO		*ifp;
@@ -464,70 +480,78 @@ int		xlft;
 int		ybtm;
 register int	xrgt;
 RGBpixel	*pp;
-	{	register int	sy = YIMAGE2SCR( ybtm+1 ) + 1;
-		register int	xzoom = SUN(ifp)->su_xzoom;
-		int		xl = XIMAGE2SCR( xlft );
+{
+	register int	sy = YIMAGE2SCR( ybtm+1 ) + 1;
+	register int	xzoom = SUN(ifp)->su_xzoom;
+	int		xl = XIMAGE2SCR( xlft );
 
 	/*fb_log( "sun_scanwrite(%d,%d,%d,0x%x)\n", xlft, ybtm, xrgt, pp );
 		/* XXX-debug */
- 	if( SUN(ifp)->su_depth == 1 )
-		{	register int	x;
-			register int	sx = xl;
-			int		yzoom = SUN(ifp)->su_yzoom;
+
+ 	if( SUN(ifp)->su_depth == 1 ) {
+		register int	x;
+		register int	sx = xl;
+		int		yzoom = SUN(ifp)->su_yzoom;
+
 		/* Clear buffer to black. */
 		(void) memset( scan_mpr_buf, 0xff, XMAXWINDOW );
-		for( x = xlft; x <= xrgt; x++, sx += xzoom, pp++ )
-			{	register int		value;
-				RGBpixel		v;
+
+		for( x = xlft; x <= xrgt; x++, sx += xzoom, pp++ ) {
+			register int	value;
+			RGBpixel	v;
+
 			/* Get color map value for pixel. */
 			SUN_CMAPVAL( pp, v );
 			value = v[RED] + v[GRN] + v[BLU];
-			if( value != 0 )
-				{ register int	maxdy = yzoom < DITHERSZ ?
+
+			if( value ) {
+				register int	maxdy = yzoom < DITHERSZ ?
 							yzoom : DITHERSZ;
-				  register int	dy;
-				  register int	yoffset = sx;
+				register int	dy;
+				register int	yoffset = sx;
+
 				/* Construct dither pattern. */
 				value /= 3;
-				for( dy = 0; dy < maxdy; dy++, yoffset += XMAXWINDOW )
-					{ register int dx;
-					  register int ydit = DITHMASK(sy+dy);
-					for( dx = 0; dx < xzoom; dx++ )
-						{ register int xdit =
+				for( dy = 0; dy < maxdy; dy++, yoffset += XMAXWINDOW ) {
+					register int dx;
+					register int ydit = DITHMASK(sy+dy);
+					for( dx = 0; dx < xzoom; dx++ ) {
+						register int xdit =
 							DITHMASK(sx+dx);
 						if( value >= dither[xdit][ydit] )
 							scan_mpr_buf[(yoffset+dx)>>3] &= ~(0x80>>xdit);
-						}
 					}
 				}
 			}
+		}
 		sunreplrop( xl, sy,
 			(xrgt-xlft+1)*xzoom, yzoom,
 			PIX_SRC, &scan1_mpr,
-			xl, 0
-			);
-		}
-	else /* Grey-scale or color image. */
-		{	register int	x;
-			register int	sx = xl;
-		for( x = xlft; x <= xrgt; x++, pp++, sx += xzoom )
-			{	register int		dx;
-				register int		value;
-				RGBpixel		v;
+			xl, 0 );
+	} else {
+		/* Grey-scale or color image. */
+		register int	x;
+		register int	sx = xl;
+
+		for( x = xlft; x <= xrgt; x++, pp++, sx += xzoom ) {
+			register int	dx;
+			register int	value;
+			RGBpixel	v;
+
 			/* Get color map value for pixel. */
 			SUN_CMAPVAL( pp, v );
 			value = COLOR_APPROX(v);
+
 			for( dx = 0; dx < xzoom; dx++ )
 				scan_mpr_buf[sx+dx] = value; 
-			}
+		}
 		sunreplrop( xl, sy,
 			(xrgt-xlft+1)*xzoom, SUN(ifp)->su_yzoom,
 			PIX_SRC, &scan8_mpr,
-			xl, 0
-			);
-		}
-	return;
+			xl, 0 );
 	}
+	return;
+}
 
 _LOCAL_ void
 sun_rectwrite( ifp, xmin, ymin, xmax, ymax, buf, offset )
@@ -629,66 +653,62 @@ register FBIO	*ifp;
 _LOCAL_ int
 sun_getmem( ifp )
 FBIO	*ifp;
-	{	int	pixsize;
-		int	size;
-		int	new = 0;
-		static char	*sp = NULL;
-		extern caddr_t	sbrk();
+{
+	int	pixsize;
+	int	size;
+	int	new = 0;
+	static char	*sp = NULL;
+	extern caddr_t	sbrk();
 
 	errno = 0;
 	pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
 	size = pixsize + sizeof(struct sun_cmap);
 	size = (size + 4096-1) & ~(4096-1);
 #define SHMEM_KEY	42
-	if( sp == (char *) NULL ) /* Do once per process. */
-		{
+	/* Do once per process. */
+	if( sp == (char *) NULL ) {
 		if( (SUN(ifp)->su_mode & MODE_1MASK) == MODE_1MALLOC )
 			goto localmem;
 
-		/* First try to attach to an existing one */
-		if( (SUN(ifp)->su_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )
-			{ /* No existing one, create a new one */
-			if(	(SUN(ifp)->su_shmid =
-				shmget( SHMEM_KEY, size, IPC_CREAT|0666 ))
-				< 0 )
-				{
-				fb_log( "if_sun: shmget failed, errno=%d\n", errno );
+		/* First try to attach to an existing shared memory */
+		if( (SUN(ifp)->su_shmid = shmget(SHMEM_KEY, size, 0)) < 0 ) {
+			/* No existing one, create a new one */
+			SUN(ifp)->su_shmid =
+				shmget( SHMEM_KEY, size, IPC_CREAT|0666 );
+			if( SUN(ifp)->su_shmid < 0 )
 				goto fail;
-				}
 			new = 1;
-			}
+		}
 		/* Open the segment Read/Write, near the current break */
-		if( (sp = shmat( SUN(ifp)->su_shmid, 0, 0 )) < 0 )
-			{
+		if( (sp = shmat( SUN(ifp)->su_shmid, 0, 0 )) < 0 ) {
 			fb_log("shmat returned x%x, errno=%d\n", sp, errno );
 			goto fail;
-			}
+		}
 		goto	common;
 fail:
-		fb_log("sun_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_sun.c for details\n");
+		fb_log("sun_getmem:  Unable to attach to shared memory, using private.\n");
+		fb_log("Consult comment in cad/libfb/if_sun.c for details.\n");
 		/* Change it to local */
 		SUN(ifp)->su_mode = (SUN(ifp)->su_mode & ~MODE_1MASK)
 			| MODE_1MALLOC;
 localmem:
-		if( (sp = malloc( size )) == NULL )
-			{
+		if( (sp = malloc( size )) == NULL ) {
 			fb_log( "sun_getmem:  malloc failure, couldn't allocate %d bytes\n", size );
 			return	-1;
-			}
-		new = 1;
 		}
+		new = 1;
+	}
 common:
 	ifp->if_mem = sp;
 	ifp->if_cmap = sp + pixsize;	/* Color map at end of area */
 	
-	/* Provide non-black colormap on creation of new shared mem */
-	if( new )
-		{
+	/* Initialize the colormap and clear memory frame buffer to black */
+	if( new ) {
 		sun_cmwrite( ifp, COLORMAP_NULL );
 		sun_storebackground( ifp, 0, 0, black, ifp->if_max_width*ifp->if_max_height );
-		}
-	return	0;
 	}
+	return	0;
+}
 
 /*
  *			S U N _ Z A P M E M
@@ -1247,7 +1267,9 @@ register int	count;
 	/*fb_log( "sun_bwrite(0x%x,%d,%d,0x%x,%d)\n", ifp, x, y, p, count );
 		/* XXX--debug */
 	/* Store pixels in memory. */
-	sun_storepixel( ifp, x, y, p, count );
+	/*sun_storepixel( ifp, x, y, p, count );*/
+	bcopy( p, &ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)],
+		count*sizeof(RGBpixel) );
 
 	xwidth = ifp->if_width/SUN(ifp)->su_xzoom;
 	xmax = count >= xwidth-x ? xwidth-1 : x+count-1;
