@@ -80,6 +80,8 @@ FBIO disk_interface = {
 	0
 };
 
+#define if_seekpos	u5.l	/* stored seek position */
+
 _LOCAL_ int	disk_color_clear();
 
 _LOCAL_ int
@@ -105,6 +107,7 @@ int	width, height;
 		ifp->if_fd = 1;		/* fileno(stdin) */
 		ifp->if_width = width;
 		ifp->if_height = height;
+		ifp->if_seekpos = 0L;
 		return 0;
 	}
 
@@ -129,6 +132,7 @@ int	width, height;
 		fb_log( "disk_device_open : can not seek to beginning.\n" );
 		return	-1;
 	}
+	ifp->if_seekpos = 0L;
 	return	0;
 }
 
@@ -169,21 +173,28 @@ int	count;
 {
 	register long bytes = count * (long) sizeof(RGBpixel);
 	register long todo;
+	long		got;
+	long		dest;
 
-	if( lseek(ifp->if_fd,
-	     (((long) y * (long) ifp->if_width) + (long) x)
-	     * (long) sizeof(RGBpixel), 0) == -1L ) {
-		fb_log( "disk_buffer_read : seek to %ld failed.\n",
-			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(RGBpixel) );
+	dest = (((long) y * (long) ifp->if_width) + (long) x)
+	     * (long) sizeof(RGBpixel);
+	if( lseek(ifp->if_fd, dest, 0) == -1L ) {
+		fb_log( "disk_buffer_read : seek to %ld failed.\n", dest );
 		return	-1;
 	}
+	ifp->if_seekpos = dest;
 	while( bytes > 0 ) {
 		todo = bytes;
-		if( read( ifp->if_fd, (char *) pixelp, todo ) != todo )
-			return	-1;
+		if( (got = read( ifp->if_fd, (char *) pixelp, todo )) != todo )  {
+			if( got != 0 )  {
+				fb_log("disk_buffer_read: read failed\n");
+				return	-1;
+			}
+			return  0;
+		}
 		bytes -= todo;
 		pixelp += todo / sizeof(RGBpixel);
+		ifp->if_seekpos += todo;
 	}
 	return	count;
 }
@@ -196,15 +207,17 @@ RGBpixel	*pixelp;
 long	count;
 {
 	register long	bytes = count * (long) sizeof(RGBpixel);
-	register int	todo;
+	register long	todo;
+	long		dest;
 
-	if( lseek(ifp->if_fd,
-	     ((long) y * (long) ifp->if_width + (long) x)
-	     * (long) sizeof(RGBpixel), 0) == -1L ) {
-		fb_log( "disk_buffer_write : seek to %ld failed.\n",
-			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(RGBpixel) );
-		return	-1;
+	dest = ((long) y * (long) ifp->if_width + (long) x)
+	     * (long) sizeof(RGBpixel);
+	if( dest != ifp->if_seekpos )  {
+		if( lseek(ifp->if_fd, dest, 0) == -1L ) {
+			fb_log( "disk_buffer_write : seek to %ld failed.\n", dest );
+			return	-1;
+		}
+		ifp->if_seekpos = dest;
 	}
 	while( bytes > 0 ) {
 		todo = bytes;
@@ -214,6 +227,7 @@ long	count;
 		}
 		bytes -= todo;
 		pixelp += todo / sizeof(RGBpixel);
+		ifp->if_seekpos += todo;
 	}
 	return	count;
 }
@@ -247,6 +261,8 @@ ColorMap	*cmap;
 	if( cmap == (ColorMap *) NULL )
 		/* Do not write default map to file. */
 		return	0;
+	if( fb_is_linear_cmap( cmap ) )
+		return  0;
 	if( lseek( ifp->if_fd, FILE_CMAP_ADDR, 0 ) == -1 ) {
 		fb_log(	"disk_colormap_write : seek to %ld failed.\n",
 				FILE_CMAP_ADDR );
@@ -289,7 +305,7 @@ register RGBpixel	*bpp;
 
 	/* Set start of framebuffer */
 	fd = ifp->if_fd;
-	if( lseek( fd, 0L, 0 ) == -1 ) {
+	if( ifp->if_seekpos != 0L && lseek( fd, 0L, 0 ) == -1 ) {
 		fb_log( "disk_color_clear : seek failed.\n" );
 		return	-1;
 	}
@@ -301,6 +317,7 @@ register RGBpixel	*bpp;
 		if( write( fd, pix_buf, i * sizeof(RGBpixel) ) == -1 )
 			return	-1;
 		pixelstodo -= i;
+		ifp->if_seekpos += i * sizeof(RGBpixel);
 	}
 
 	return	0;
