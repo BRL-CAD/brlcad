@@ -39,9 +39,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "rtlist.h"
+#include "rtstring.h"
+#include "externs.h"
 #include "raytrace.h"
 #include "pkg.h"
 #include "fb.h"
+
 #include "../librt/debug.h"
 #include "../rt/material.h"
 #include "../rt/ext.h"
@@ -50,11 +53,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./list.h"
 #include "./protocol.h"
 
+extern char	*sbrk();
+
 struct list	*FreeList;
 struct list	WorkHead;
-
-extern char	*sbrk();
-extern double atof();
 
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
@@ -258,10 +260,6 @@ char **argv;
 
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
 	npsw = rt_avail_cpus();
-#ifdef CRAY
-	/* The Cray does not have any way to know how many CPUs it has */
-	npsw = MAX_PSW;
-#endif
 	if( npsw > 1 )  {
 		rt_g.rtg_parallel = 1;
 	} else
@@ -529,6 +527,13 @@ char	*buf;
 	if( debug )  fprintf(stderr, "ph_options: %s\n", buf );
 
 	process_cmd( buf );
+
+	/* Just in case command processed was "opt -P" */
+	if( npsw < 0 )  {
+		/* Negative number means "all but" npsw */
+		npsw = rt_avail_cpus() + npsw;
+	}
+	if( npsw > MAX_PSW )  npsw = MAX_PSW;
 
 	if( width <= 0 || height <= 0 )  {
 		rt_log("ph_options:  width=%d, height=%d\n", width, height);
