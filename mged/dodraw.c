@@ -24,15 +24,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./objdir.h"
 #include "./dm.h"
 
 struct vlist	*rtg_vlFree;	/* should be rt_g.rtg_vlFree !! XXX dm.h */
 
 int	reg_error;	/* error encountered in region processing */
 int	no_memory;	/* flag indicating memory for drawing is used up */
+long	nvectors;	/* number of vectors drawn so far */
 
 extern struct directory	*cur_path[MAX_PATH];	/* from path.c */
 
@@ -99,63 +100,24 @@ int regionid;
 		dashflag = 0;
 	}  else  {
 		/* Doing a normal solid */
+		int id;
+
 		dashflag = (flag != ROOT);
-	
-		switch( recordp->u_id )  {
 
-		case ID_SOLID:
-			switch( recordp->s.s_type )  {
-
-			case GENARB8:
-				draw_arb8( &recordp->s, xform, &vhead );
-				break;
-
-			case GENTGC:
-				draw_tgc( &recordp->s, xform, &vhead );
-				break;
-
-			case GENELL:
-				draw_ell( &recordp->s, xform, &vhead );
-				break;
-
-			case TOR:
-				draw_torus( &recordp->s, xform, &vhead );
-				break;
-
-			case HALFSPACE:
-				draw_half( &recordp->s, xform, &vhead );
-				break;
-
-			default:
-				(void)printf("draw:  bad SOLID type %d.\n",
-					recordp->s.s_type );
-				return(-1);		/* ERROR */
-			}
-			break;
-
-		case ID_ARS_A:
-			draw_ars( &recordp->a, cur_path[pathpos], xform, &vhead );
-			break;
-
-		case ID_BSOLID:
-			draw_spline( &recordp->B, cur_path[pathpos], xform, &vhead );
-			break;
-
-		case ID_P_HEAD:
-			draw_poly( cur_path[pathpos], xform, &vhead );
-			break;
-
-		default:
-			(void)printf("draw:  bad database OBJECT type %d\n",
-				recordp->u_id );
+		id = rt_id_solid( recordp );
+		if( id < 0 || id >= rt_nfunctab )  {
+			printf("drawHsolid(%s):  unknown database object\n",
+				cur_path[pathpos]->d_namep);
 			return(-1);			/* ERROR */
 		}
+
+		rt_functab[id].ft_plot( recordp, xform, &vhead,
+			cur_path[pathpos] );
 	}
 
 	/*
 	 * Compute the min, max, and center points.
 	 */
-#define INFINITY	1.0e20
 	VSETALL( max, -INFINITY );
 	VSETALL( min,  INFINITY );
 	sp->s_vlist = vhead.vh_first;
@@ -164,11 +126,9 @@ int regionid;
 		VMINMAX( min, max, vp->vl_pnt );
 		sp->s_vlen++;
 	}
+	nvectors += sp->s_vlen;
 
-	VSET( sp->s_center,
-		(max[X] + min[X])*0.5,
-		(max[Y] + min[Y])*0.5,
-		(max[Z] + min[Z])*0.5 );
+	VADD2SCALE( sp->s_center, min, max, 0.5 );
 
 	sp->s_size = max[X] - min[X];
 	MAX( sp->s_size, max[Y] - min[Y] );
@@ -213,12 +173,7 @@ int regionid;
 		}
 	}
 
-	/* Solid is successfully drawn.  Compute maximum. */
-	/* This should be done with an RPP instead! XXX */
-	MAX( maxview, sp->s_center[X] + sp->s_size );
-	MAX( maxview, sp->s_center[Y] + sp->s_size );
-	MAX( maxview, sp->s_center[Z] + sp->s_size );
-
+	/* Solid is successfully drawn */
 	if( sp != illump )  {
 		/* Add to linked list of solid structs */
 		APPEND_SOLID( sp, HeadSolid.s_back );
