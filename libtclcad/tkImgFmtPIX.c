@@ -35,8 +35,8 @@
 
 static char rcsid[] = "@(#) tkImgFmtPIX.c 1.7 95/06/14 22:49:55";
 
-#include "tkInt.h"
-#include "tkPort.h"
+#include "./tkInt.h"
+#include "./tkPort.h"
 
 /*
  * The maximum amount of memory to allocate for data read from the
@@ -113,8 +113,8 @@ FileMatchPIX(f, fileName, formatString, widthPtr, heightPtr)
 	strstr(formatString, "PIX") == NULL)
 	return 0;
 
-    if (pix_common_name_size(widthPtr, heightPtr, formatString) <= 0)
-	if (pix_common_file_size(widthPtr, heightPtr, fileName, 3) <= 0)
+    if (bn_common_name_size(widthPtr, heightPtr, formatString) <= 0)
+	if (bn_common_file_size(widthPtr, heightPtr, fileName, 3) <= 0)
 	    return 0;
 
     return 1;
@@ -162,8 +162,8 @@ FileReadPIX(interp, f, fileName, formatString, imageHandle, destX, destY,
 
     /* Determine dimensions of file. */
 
-    if (pix_common_name_size(&fileWidth, &fileHeight, formatString) <= 0)
-	if (pix_common_file_size(&fileWidth, &fileHeight, fileName, 3) <= 0) {
+    if (bn_common_name_size(&fileWidth, &fileHeight, formatString) <= 0)
+	if (bn_common_file_size(&fileWidth, &fileHeight, fileName, 3) <= 0) {
 	    Tcl_AppendResult(interp, "cannot determine dimensions of \"",
 			     fileName, "\": please use -format pix-w#-n#",
 			     NULL);
@@ -202,7 +202,7 @@ FileReadPIX(interp, f, fileName, formatString, imageHandle, destX, destY,
     }
 
     nBytes = block.pitch;
-    pixelPtr = (unsigned char *) rt_malloc((unsigned) nBytes,
+    pixelPtr = (unsigned char *) bu_malloc((unsigned) nBytes,
 					   "PIX image buffer");
     block.pixelPtr = pixelPtr + srcX * block.pixelSize;
 
@@ -213,14 +213,14 @@ FileReadPIX(interp, f, fileName, formatString, imageHandle, destX, destY,
 		    fileName, "\": ",
 		    feof(f) ? "not enough data" : Tcl_PosixError(interp),
 		    (char *) NULL);
-	    rt_free((char *) pixelPtr, "PIX image");
+	    bu_free((char *) pixelPtr, "PIX image");
 	    return TCL_ERROR;
 	}
 	block.height = 1;
 	Tk_PhotoPutBlock(imageHandle, &block, destX, destY+h-1, width, 1);
     }
 
-    rt_free((char *) pixelPtr, "PIX image buffer");
+    bu_free((char *) pixelPtr, "PIX image buffer");
     return TCL_OK;
 }
 
