@@ -32,10 +32,8 @@ class RtControl {
     itk_option define -omode omode Omode {}
     itk_option define -nproc nproc Nproc 1
     itk_option define -hsample hsample Hsample 0
-    itk_option define -jitter jitter Jitter 0
-    itk_option define -jitterTitle jitterTitle JitterTitle "None"
+    itk_option define -jitter jitter Jitter "None"
     itk_option define -lmodel lmodel Lmodel 0
-    itk_option define -lmodelTitle lmodelTitle LmodelTitle "Full"
     itk_option define -other other Other {}
     itk_option define -size size Size 512
     itk_option define -color color Color {0 0 0}
@@ -43,12 +41,15 @@ class RtControl {
     itk_option define -mged mged Mged ""
 
     public method activate {}
+    public method activate_adv {}
     public method deactivate {}
+    public method deactivate_adv {}
     public method center {}
 
     private method set_src {pane}
     private method set_dest {pane}
     private method set_size {size}
+    private method set_jitter {j}
     private method cook_dest {dest}
     private method fb_mode {}
     private method ok {}
@@ -59,10 +60,17 @@ class RtControl {
     private method get_size {}
     private method get_cooked_dest {}
     private method update_control_panel {}
+    private method build_adv {}
 
     private variable fb_mode 0
     private variable raw_src ""
     private variable win_geom ""
+    private variable win_geom_adv ""
+
+    # This variable is used to determine
+    # what value gets passed to rt
+    private variable jitter_val 0
+    private variable jitter_name 0
 
     constructor {args} {}
 }
@@ -111,7 +119,9 @@ body RtControl::constructor {args} {
     }
 
     $itk_component(menubar) add cascade -label "Framebuffer" -underline 0 -menu $itk_component(fbM)
-    $itk_component(menubar) add cascade -label "Objects" -underline 0 -menu $itk_component(objM)
+    if {0} {
+	$itk_component(menubar) add cascade -label "Objects" -underline 0 -menu $itk_component(objM)
+    }
 
     $itk_component(fbM) add radiobutton -value 0 -variable [scope fb_mode] \
 	    -label "Inactive" -underline 0 \
@@ -128,7 +138,7 @@ body RtControl::constructor {args} {
     } {}
 
     itk_component add srcCB {
-	cadwidgets::ComboBox $itk_interior.srcCB -state disabled
+	cadwidgets::ComboBox $itk_interior.srcCB
     } {
 	rename -state -sourceState sourceState SourceState
     }
@@ -206,7 +216,7 @@ body RtControl::constructor {args} {
 
     itk_component add advB {
 	button $itk_interior.advB -relief raised -text "Advanced Settings..." \
-		-command {puts "do advanced settings"}
+		-command [code $this activate_adv]
     } {
 	usual
     }
@@ -273,16 +283,28 @@ body RtControl::constructor {args} {
     grid columnconfigure $itk_component(hull) 0 -weight 1
     grid rowconfigure $itk_component(hull) 0 -weight 1
 
+    # build the advanced settings panel
+    build_adv
+
     # process options
     eval itk_initialize $args
+
+    # Disable the source CombBox's entry widget
+    configure -sourceState disabled
 
     # Link the ComboBox's entry widgets to this class' variables
     $itk_component(sizeCB) configure -entryvariable [scope itk_option(-size)]
     $itk_component(bgcolorCB) configure -entryvariable [scope itk_option(-color)]
     $itk_component(destCB) configure -entryvariable [scope itk_option(-dest)]
+    $itk_component(adv_jitterCB) configure -entryvariable [scope jitter_name]
+    $itk_component(adv_lmodelCB) configure -entryvariable [scope itk_option(-lmodel)]
 
     wm withdraw $itk_component(hull)
     center
+}
+
+configbody RtControl::jitter {
+    set_jitter $itk_option(-jitter)
 }
 
 configbody RtControl::mged {
@@ -294,14 +316,26 @@ configbody RtControl::mged {
 }
 
 itcl::body RtControl::activate {} {
-    puts "activate: win_geom - $win_geom"
+    raise $itk_component(hull)
     wm geometry $itk_component(hull) $win_geom
     wm deiconify $itk_component(hull)
+}
+
+itcl::body RtControl::activate_adv {} {
+    raise $itk_component(adv)
+    wm geometry $itk_component(adv) $win_geom_adv
+    wm deiconify $itk_component(adv)
 }
 
 itcl::body RtControl::deactivate {} {
     set win_geom [wm geometry $itk_component(hull)]
     wm withdraw $itk_component(hull)
+    deactivate_adv
+}
+
+itcl::body RtControl::deactivate_adv {} {
+    set win_geom_adv [wm geometry $itk_component(adv)]
+    wm withdraw $itk_component(adv)
 }
 
 itcl::body RtControl::center {} {
@@ -338,8 +372,11 @@ itcl::body RtControl::set_dest {pane} {
 	set pane [$itk_option(-mged) pane]
     }
 
-#    $itk_component(destCB) setText $pane
+    # update the destCB entry
     set itk_option(-dest) $pane
+
+    # update the Inactive/Underlay/Overlay radiobutton
+    set fb_mode [$itk_option(-mged) component $itk_option(-dest) fb_active]
 }
 
 itcl::body RtControl::set_size {size} {
@@ -349,7 +386,6 @@ itcl::body RtControl::set_size {size} {
 
     if {$size == "Size of Pane"} {
 	# Try using the destination for obtaining the size.
-#	set pane [$itk_component(destCB) getText]
 	set pane $itk_option(-dest)
 	switch -- $pane {
 	    ul -
@@ -385,6 +421,34 @@ itcl::body RtControl::set_size {size} {
     set itk_option(-size) $size
 }
 
+itcl::body RtControl::set_jitter {j} {
+    switch -- $j {
+	0 -
+	None {
+	    set jitter_val 0
+	    set jitter_name "None"
+	}
+	1 -
+	Cell {
+	    set jitter_val 1
+	    set jitter_name "Cell"
+	}
+	2 -
+	Frame {
+	    set jitter_val 2
+	    set jitter_name "Frame"
+	}
+	3 -
+	Both {
+	    set jitter_val 3
+	    set jitter_name "Both"
+	}
+	default {
+	    error "RtControl::set_jitter: bad value - $j"
+	}
+    }
+}
+
 ## - cook_dest
 #
 # Return a port number if possible. Otherwise, return
@@ -398,6 +462,9 @@ itcl::body RtControl::cook_dest {dest} {
 	lr {
 	    if {![$itk_option(-mged) component $dest fb_active]} {
 		$itk_option(-mged) component $dest fb_active 1
+
+		# update the Inactive/Underlay/Overlay radiobutton
+		set fb_mode 1
 	    }
 	    return [$itk_option(-mged) component $dest listen]
 	}
@@ -475,9 +542,7 @@ itcl::body RtControl::raytrace {} {
 	append rt_cmd " -H$itk_option(-hsample)"
     }
 
-    if {$itk_option(-jitter) != ""} {
-	append rt_cmd " -J$itk_option(-jitter)"
-    }
+    append rt_cmd " -J$jitter_val"
 
     if {$itk_option(-lmodel) != ""} {
 	append rt_cmd " -l$itk_option(-lmodel)"
@@ -497,7 +562,8 @@ itcl::body RtControl::abort {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
-    puts "RtControl::abort - fix me!"
+
+    $itk_option(-mged) component [$itk_component(srcCB) getText] rtabort
 }
 
 itcl::body RtControl::clear {} {
@@ -541,7 +607,6 @@ itcl::body RtControl::get_size {} {
 # checking is performed on user specified strings.
 #
 itcl::body RtControl::get_cooked_dest {} {
-#    set dest [$itk_component(destCB) getText]
     set dest $itk_option(-dest)
     if {$dest == ""} {
 	# use the active pane
@@ -590,4 +655,135 @@ itcl::body RtControl::update_control_panel {} {
 
     # Calling setColor so that the menubutton color gets set.
     eval $itk_component(bgcolorCB) setColor [$itk_option(-mged) bg]
+}
+
+itcl::body RtControl::build_adv {} {
+    itk_component add adv {
+	toplevel $itk_interior.adv
+    }
+
+    itk_component add adv_gridF1 {
+	frame $itk_component(adv).gridF1
+    } {
+	usual
+    }
+
+    itk_component add adv_gridF2 {
+	frame $itk_component(adv).gridF2 -relief groove -bd 2
+    } {
+	usual
+    }
+
+    itk_component add adv_nprocL {
+	label $itk_component(adv).nprocL -text "# of Processors" -anchor e
+    } {
+	usual
+    }
+
+    itk_component add adv_nprocE {
+	entry $itk_component(adv).nprocE -relief sunken -bd 2 -width 2 \
+		-textvar [scope itk_option(-nproc)]
+    } {
+	usual
+    }
+
+    itk_component add adv_hsampleL {
+	label $itk_component(adv).hsampleL -text "Hypersample" -anchor e
+    } {
+	usual
+    }
+
+    itk_component add adv_hsampleE {
+	entry $itk_component(adv).hsampleE -relief sunken -bd 2 -width 2 \
+		-textvar [scope itk_option(-hsample)]
+    } {
+	usual
+    }
+
+    itk_component add adv_jitterL {
+	label $itk_component(adv).jitterL -text "Jitter" -anchor e
+    } {
+	usual
+    }
+
+    itk_component add adv_jitterCB {
+	cadwidgets::ComboBox $itk_component(adv).jitterCB
+    } {
+	rename -state -jitterState jitterState JitterState
+    }
+
+    # populate jitter's combobox menu
+    $itk_component(adv_jitterCB) add command -label "None" \
+	    -command [code $this set_jitter "None"]
+    $itk_component(adv_jitterCB) add command -label "Cell" \
+	    -command [code $this set_jitter "Cell"]
+    $itk_component(adv_jitterCB) add command -label "Frame" \
+	    -command [code $this set_jitter "Frame"]
+    $itk_component(adv_jitterCB) add command -label "Both" \
+	    -command [code $this set_jitter "Both"]
+
+    itk_component add adv_lmodelL {
+	label $itk_component(adv).lightL -text "Light Model" -anchor e
+    } {
+	usual
+    }
+
+    itk_component add adv_lmodelCB {
+	cadwidgets::ComboBox $itk_component(adv).lightCB
+    } {
+	rename -state -lmodelState lmodelState LmodelState
+    }
+
+    itk_component add adv_otherL {
+	label $itk_component(adv).otherL -text "Other Options" -anchor e
+    } {
+	usual
+    }
+
+    itk_component add adv_otherE {
+	entry $itk_component(adv).otherE -relief sunken -bd 2 -width 2 \
+		-textvar [scope itk_option(-other)]
+    } {
+	usual
+    }
+
+    itk_component add adv_dismissB {
+	button $itk_component(adv).buttonB -relief raised -text "Dismiss" \
+		-command [code $this deactivate_adv]
+    } {
+	usual
+    }
+
+    # remove labels from the ComboBox
+    grid forget [$itk_component(adv_jitterCB) component label]
+    grid forget [$itk_component(adv_lmodelCB) component label]
+
+    grid $itk_component(adv_nprocL) $itk_component(adv_nprocE) \
+	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+    grid $itk_component(adv_hsampleL) $itk_component(adv_hsampleE) \
+	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+    grid $itk_component(adv_jitterL) $itk_component(adv_jitterCB) \
+	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+    grid $itk_component(adv_lmodelL) $itk_component(adv_lmodelCB) \
+	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+    grid $itk_component(adv_otherL) $itk_component(adv_otherE) \
+	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+    grid columnconfigure $itk_component(adv_gridF1) 1 -weight 1
+    grid rowconfigure $itk_component(adv_gridF1) 0 -weight 1
+    grid rowconfigure $itk_component(adv_gridF1) 1 -weight 1
+    grid rowconfigure $itk_component(adv_gridF1) 2 -weight 1
+    grid rowconfigure $itk_component(adv_gridF1) 3 -weight 1
+    grid rowconfigure $itk_component(adv_gridF1) 4 -weight 1
+
+    grid $itk_component(adv_gridF1) -sticky nsew -padx 8 -pady 8 -in $itk_component(adv_gridF2)
+    grid columnconfigure $itk_component(adv_gridF2) 0 -weight 1
+    grid rowconfigure $itk_component(adv_gridF2) 0 -weight 1
+
+    grid $itk_component(adv_gridF2) -sticky nsew -padx 2 -pady 2
+    grid $itk_component(adv_dismissB) -sticky s -padx 2 -pady 2
+    grid columnconfigure $itk_component(adv) 0 -weight 1
+    grid rowconfigure $itk_component(adv) 0 -weight 1
+
+    wm withdraw $itk_component(adv)
+    wm title $itk_component(adv) "Advanced Settings ($itk_component(adv))"
 }
