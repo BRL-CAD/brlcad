@@ -3047,9 +3047,9 @@ wdb_print_node(wdbp, interp, dp, pathpos, prefix)
 									   sizeof( struct rt_tree_array ), "tree list" );
 			actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
 			if (actual_count > node_count)
-				bu_bomb("rt_comb_v4_export() array overflow!");
+				bu_bomb("wdb_print_node() array overflow!");
 			if (actual_count < node_count)
-				bu_log("WARNING rt_comb_v4_export() array underflow! %d < %d", actual_count, node_count);
+				bu_log("WARNING wdb_print_node() array underflow! %d < %d", actual_count, node_count);
 		}
 
 		for (i=0 ; i<actual_count ; i++) {
