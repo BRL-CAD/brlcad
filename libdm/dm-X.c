@@ -147,13 +147,9 @@ int argc;
 char *argv[];
 {
   static int count = 0;
-  int i, j, k;
-  int a_screen;
+  int j, k;
   int make_square = -1;
   XGCValues gcv;
-  XColor a_color;
-  Visual *a_visual;
-  Colormap  a_cmap;
   int ndevices;
   int nclass = 0;
   XDeviceInfoPtr olist, list;
@@ -162,7 +158,6 @@ char *argv[];
   XInputClassInfo *cip;
   struct bu_vls str;
   struct bu_vls init_proc_vls;
-  Display *tmp_dpy;
   struct dm *dmp;
 
   BU_GETSTRUCT(dmp, dm);
@@ -189,7 +184,7 @@ char *argv[];
   bu_vls_init(&dmp->dm_dName);
   bu_vls_init(&init_proc_vls);
 
-  i = dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
+  dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
   if(bu_vls_strlen(&dmp->dm_pathName) == 0)
     bu_vls_printf(&dmp->dm_pathName, ".dm_X%d", count);
@@ -303,7 +298,7 @@ char *argv[];
   XSynchronize(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, 1);
 #endif
 
-  a_screen = Tk_ScreenNumber(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
+  k_ScreenNumber(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
 
   /* must do this before MakeExist */
   if((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip = X_choose_visual(dmp)) == NULL){
@@ -584,7 +579,6 @@ register struct rt_vlist *vp;
     register struct rt_vlist *tvp;
     XSegment segbuf[1024];		/* XDrawSegments list */
     XSegment *segp;			/* current segment */
-    XGCValues gcv;
     int	nseg;			        /* number of segments */
     fastf_t delta;
     register point_t *pt_prev = NULL;
