@@ -40,7 +40,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 int rt_pure_boolean_expressions = 0;
 
 int		rt_bound_tree();	/* used by rt/sh_light.c */
-extern char	*rt_basename();
+extern CONST char	*rt_basename();
 HIDDEN struct region *rt_getregion();
 HIDDEN void	rt_tree_region_assign();
 
@@ -222,7 +222,7 @@ register CONST matp_t		mat;
 register struct directory	*dp;
 struct rt_i			*rtip;
 {
-	register struct soltab	*stp;
+	register struct soltab	*stp = RT_SOLTAB_NULL;
 	register struct rt_list	*head;
 	register int		i;
 	int			have_match;
@@ -863,11 +863,11 @@ top:
  *  Given a string containing slashes such as a pathname, return a
  *  pointer to the first character after the last slash.
  */
-char *
+CONST char *
 rt_basename( str )
-register char	*str;
+register CONST char	*str;
 {	
-	register char	*p = str;
+	register CONST char	*p = str;
 	while( *p != '\0' )
 		if( *p++ == '/' )
 			str = p;
@@ -894,7 +894,7 @@ register char	*reg_name;
 	register CONST char *reg_base = rt_basename(reg_name);
 
 	for( ; regp != REGION_NULL; regp = regp->reg_forw )  {	
-		register char	*cp;
+		register CONST char	*cp;
 		/* First, check for a match of the full path */
 		if( *reg_base == regp->reg_name[0] &&
 		    strcmp( reg_base, regp->reg_name ) == 0 )
