@@ -88,6 +88,11 @@ matp_t old_xlate;
 		(void)printf("drawobj:  defective input '%c'\n", rec.u_id );
 		return;			/* ERROR */
 	}
+	if( rec.c.c_length <= 0 )  {
+		(void)printf("Warning: combination with zero members \"%.16s\".\n",
+			rec.c.c_name );
+		return;			/* non-fatal ERROR */
+	}
 	if( rec.c.c_flags == 'R' )  {
 		if( regionid != 0 )
 			(void)printf("regionid %d overriden by %d\n",
