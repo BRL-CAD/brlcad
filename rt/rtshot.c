@@ -232,9 +232,8 @@ struct partition *PartHeadp;
 		}
 		rt_pr_hit( "  In", hitp );
 		RT_CURVE( &cur, hitp, stp );
-		VPRINT("PDir", cur.crv_pdir );
-		rt_log(" c1=%g\n", cur.crv_c1);
-		rt_log(" c2=%g\n", cur.crv_c2);
+		rt_log("    PDir (%g, %g, %g) c1=%g, c2=%g\n",
+			V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
 		/* outhit info - out curvature? */
 		hitp = pp->pt_outhit;
