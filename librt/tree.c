@@ -213,7 +213,7 @@ next_one: ;
 	stp->st_dp = dp;
 	stp->st_name = dp->d_namep;	/* st_name could be eliminated */
 	mat_copy( stp->st_pathmat, mat );
-	stp->st_specific = (int *)0;
+	stp->st_specific = (genptr_t)0;
 
 	/* init solid's maxima and minima */
 	VSETALL( stp->st_max, -INFINITY );
