@@ -1038,7 +1038,19 @@ struct histogram  {
  *
  *  Note that rt_shootray() returns the (int) return of the a_hit()/a_miss()
  *  function called, as well as placing it in a_return.
- *  A future "multiple rays" interface will only provide a_return.
+ *  A future "multiple rays at a time" interface will only provide a_return.
+ *
+ *  Note that the organization of this structure, and the details of
+ *  the non-mandatory elements are subject to change in every release.
+ *  Therefore, rather than using compile-time structure initialization,
+ *  you should create a zeroed-out structure, and then assign the intended
+ *  values at runtime.  A zeroed structure can be obtained at compile
+ *  time with "static CONST struct application zero_ap;", or at run time
+ *  by using "bzero( (char *)ap, sizeof(struct application) );" or
+ *  rt_calloc( 1, sizeof(struct application), "application" );
+ *  While this practice may not work on machines where "all bits off"
+ *  does not signify a floating point zero, BRL-CAD does not support any
+ *  such machines, so this is a moot issue.
  */
 struct application  {
 	/* THESE ELEMENTS ARE MANDATORY */
