@@ -12,10 +12,10 @@ static char RCScut[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/raytrace.h"
-#include "debug.h"
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./debug.h"
 
 int rt_cutLen = 3;			/* normal limit on number objs per box node */
 int rt_cutDepth = 32;		/* normal limit on depth of cut tree */

@@ -44,8 +44,8 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
+#include "machine.h"
+#include "vmath.h"
 
 extern int	fprintf();
 extern double	sin(), cos();

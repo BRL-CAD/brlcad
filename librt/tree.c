@@ -21,11 +21,11 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "../h/raytrace.h"
-#include "debug.h"
+#include "machine.h"
+#include "vmath.h"
+#include "db.h"
+#include "raytrace.h"
+#include "./debug.h"
 
 struct rt_g rt_g;
 struct rt_i rt_i;	/* eventually, malloc'ed by rt_dir_build */

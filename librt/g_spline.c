@@ -24,11 +24,11 @@ static char RCSspline[] = "@(#)$Header $ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "../h/raytrace.h"
-#include "debug.h"
+#include "machine.h"
+#include "vmath.h"
+#include "db.h"
+#include "raytrace.h"
+#include "./debug.h"
 
 /*
  *  Algorithm:

@@ -27,14 +27,14 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "../h/raytrace.h"
-#include "debug.h"
-#include "polyno.h"
-#include "complex.h"
 #include <math.h>
+#include "machine.h"
+#include "vmath.h"
+#include "db.h"
+#include "raytrace.h"
+#include "./debug.h"
+#include "./complex.h"
+#include "./polyno.h"
 
 static void	tgc_rotate(), tgc_shear(), tgc_sort();
 static void	tgc_scale();

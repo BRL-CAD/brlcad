@@ -32,10 +32,10 @@ static char RCSbool[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/raytrace.h"
-#include "debug.h"
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./debug.h"
 
 /* Boolean values.  Not easy to change, but defined symbolicly */
 #define FALSE	0

@@ -22,10 +22,10 @@ static char RCSshoot[] = "@(#)$Header$ (BRL)";
 char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 
 #include <stdio.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/raytrace.h"
-#include "debug.h"
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./debug.h"
 
 /*
  *			R T _ S H O O T R A Y

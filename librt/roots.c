@@ -22,10 +22,10 @@ static char RCSroots[] = "@(#)$Header$ (BRL)";
 
 #include <math.h>
 #include <stdio.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "polyno.h"
-#include "complex.h"
+#include "machine.h"
+#include "vmath.h"
+#include "./polyno.h"
+#include "./complex.h"
 
 int		polyRoots();
 HIDDEN void	synthetic(), deflate();

@@ -33,10 +33,10 @@ static char RCSpolylib[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <signal.h>
 #include <setjmp.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "polyno.h"
-#include "complex.h"
+#include "machine.h"
+#include "vmath.h"
+#include "./polyno.h"
+#include "./complex.h"
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846

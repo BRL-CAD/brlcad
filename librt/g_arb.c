@@ -23,10 +23,10 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/raytrace.h"
-#include "debug.h"
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./debug.h"
 
 
 /*

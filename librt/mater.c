@@ -26,12 +26,12 @@ static char RCSmater[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "../h/mater.h"
-#include "../h/raytrace.h"
-#include "debug.h"
+#include "machine.h"
+#include "vmath.h"
+#include "db.h"
+#include "mater.h"
+#include "raytrace.h"
+#include "./debug.h"
 
 /*
  *  It is expected that entries on this mater list will be sorted
