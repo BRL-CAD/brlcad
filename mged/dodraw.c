@@ -403,8 +403,8 @@ struct rt_tess_tol	*ttol;
 		return(0);
 	}
 com:
-	l = mged_nmg_doit( tp->tr_b.tb_left );
-	r = mged_nmg_doit( tp->tr_b.tb_right );
+	l = mged_nmg_doit( tp->tr_b.tb_left, ttol );
+	r = mged_nmg_doit( tp->tr_b.tb_right, ttol );
 	if( l == 0 )  {
 		if( r == 0 )
 			return( 0 );
