@@ -62,24 +62,22 @@
  *	Permission is granted to freely distribute this software as part of
  *	the BRL-CAD package.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
+#include "conf.h"
 
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
 #include "./mathtab.h"
 #include "./rdebug.h"
-
-/*
- *	Sundry external references
- */
-
-extern	double	rt_inv255;
-extern	double	mat_degtorad;
-extern	double	mat_pi;
 
 /*
  *	Sundry routine declarations
@@ -296,7 +294,7 @@ char			**dpp;
 	register double c,A,B,C;
 	mat_t	xlate;
 	vect_t	g, h, a_vertex, a_dir, corner, max_V;
-	double	rt_45 = 45 * mat_degtorad;
+	double	rt_45 = 45 * rt_degtorad;
 
 	extern struct resource		rt_uniresource;
 	register struct resource	*resp = &rt_uniresource;
@@ -602,9 +600,9 @@ struct wood_specific *mp;
  *  which is then used to compute the distance from the ring center.  This
  *  distance is then multiplied by a velocity coefficient that is sined.
  */
-HIDDEN int wood_render( ap, pp, swp, dp )
+HIDDEN int wood_render( ap, partp, swp, dp )
 struct application	*ap;
-struct partition	*pp;
+struct partition	*partp;
 struct shadework	*swp;
 char			*dp;
 {
@@ -657,8 +655,8 @@ char			*dp;
 	 *	Dither the "q" control
 	 */
 
-	pq = cos (((wd->qd * wt) + wd->qp + wd->phase) * mat_degtorad);
-	pp = cos (wd->phase * mat_degtorad);
+	pq = cos (((wd->qd * wt) + wd->qp + wd->phase) * rt_degtorad);
+	pp = cos (wd->phase * rt_degtorad);
 
 	/*
 	 *	Color the hit point based on the phase of the ring
