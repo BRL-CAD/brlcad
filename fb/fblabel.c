@@ -41,7 +41,8 @@ static char	*font1 = NULL;
 FBIO		*fbp;
 
 static char usage[] = "\
-Usage: fblabel [-h -c ] [-F framebuffer] [-C r/g/b]\n\
+Usage: fblabel [-h -c -a] [-F framebuffer] [-C r/g/b]\n\
+	[-S scr_squaresize] [-W scr_width] [-N scr_height]\n\
 	[-f fontstring] xpos ypos textstring\n";
 
 /* Variables controlling the font itself */
@@ -51,8 +52,8 @@ int		height = 0;
 
 static int	filterbuf[FONTBUFSZ][FONTBUFSZ];
 
-static int	file_width = 512;	/* default input width */
-static int	file_height = 512;	/* default input height */
+static int	scr_width = 0;		/* default input width */
+static int	scr_height = 0;	/* default input height */
 static int	clear = 0;
 
 static RGBpixel	pixcolor;
@@ -60,6 +61,7 @@ static int	xpos;
 static int	ypos;
 static char	*textstring;
 static int	debug;
+static int	alias_off;
 
 void	do_char(), do_line(), squash(), fill_buf();
 
@@ -73,14 +75,30 @@ register char **argv;
 	pixcolor[GRN]  = 255;
 	pixcolor[BLU]  = 255;
 
-	while ( (c = getopt( argc, argv, "dhcF:f:r:g:b:C:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "adhcF:f:r:g:b:C:s:S:w:W:n:N:" )) != EOF )  {
 		switch( c )  {
+		case 'a':
+			alias_off = 1;
+			break;
 		case 'd':
 			debug = 1;
 			break;
 		case 'h':
 			/* high-res */
-			file_height = file_width = 1024;
+			scr_height = scr_width = 1024;
+			break;
+		case 's':
+		case 'S':
+			/* square size */
+			scr_height = scr_width = atoi( optarg );
+			break;
+		case 'w':
+		case 'W':
+			scr_width = atoi( optarg );
+			break;
+		case 'n':
+		case 'N':
+			scr_height = atoi( optarg );
 			break;
 		case 'c':
 			clear = 1;
@@ -145,7 +163,7 @@ char **argv;
 		exit(1);
 	}
 
-	if( (fbp = fb_open( framebuffer, file_width, file_height )) == NULL )  {
+	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )  {
 		fprintf(stderr, "fblabel:  Unable to open framebuffer %s\n", framebuffer);
 		exit(12);
 	}
@@ -155,7 +173,8 @@ char **argv;
 	}
 
 	if( (vfp = vfont_get(font1)) == VFONT_NULL )  {
-		fprintf(stderr, "fblabel:  Can't get font %s\n", font1);
+		fprintf(stderr, "fblabel:  Can't get font \"%s\"\n",
+			font1 == NULL ? "(null)" : font1);
 		exit(1);
 	}
 
@@ -336,18 +355,25 @@ register int	n;
 	register int    j;
 
 	for (j = 1; j < n - 1; j++) {
-		ret_buf[j] =
-			(
-			 buf2[j - 1] * CRNR_WT +
-			 buf2[j] * MID_WT +
-			 buf2[j + 1] * CRNR_WT +
-			 buf1[j - 1] * MID_WT +
-			 buf1[j] * CNTR_WT +
-			 buf1[j + 1] * MID_WT +
-			 buf0[j - 1] * CRNR_WT +
-			 buf0[j] * MID_WT +
-			 buf0[j + 1] * CRNR_WT
-			);
+		if (alias_off)
+		{
+			ret_buf[j] = buf1[j];
+		}
+		else
+		{
+			ret_buf[j] =
+				(
+				 buf2[j - 1] * CRNR_WT +
+				 buf2[j] * MID_WT +
+				 buf2[j + 1] * CRNR_WT +
+				 buf1[j - 1] * MID_WT +
+				 buf1[j] * CNTR_WT +
+				 buf1[j + 1] * MID_WT +
+				 buf0[j - 1] * CRNR_WT +
+				 buf0[j] * MID_WT +
+				 buf0[j + 1] * CRNR_WT
+				);
+		}
 	}
 }
 
