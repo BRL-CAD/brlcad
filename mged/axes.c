@@ -66,8 +66,8 @@ int linewidth;
   DM_SET_LINE_ATTR(dmp, linewidth, 0);  /* solid lines */
 
   /* build X axis about view center */
-  VSET(v1, -half_size, 0, 0);
-  VSET(v2, half_size, 0, 0);
+  VSET(v1, -half_size, 0.0, 0.0);
+  VSET(v2, half_size, 0.0, 0.0);
 
   /* rotate X axis into position */
   MAT4X3PNT(rv1, rot_mat, v1)
@@ -84,8 +84,8 @@ int linewidth;
 		  rv2[X] + vpos[X], (rv2[Y] + vpos[Y]) * dmp->dm_aspect);
 
   /* build Y axis about view center */
-  VSET(v1, 0, -half_size, 0);
-  VSET(v2, 0, half_size, 0);
+  VSET(v1, 0.0, -half_size, 0.0);
+  VSET(v2, 0.0, half_size, 0.0);
 
   /* rotate Y axis into position */
   MAT4X3PNT(rv1, rot_mat, v1)
@@ -102,8 +102,8 @@ int linewidth;
 		  rv2[X] + vpos[X], (rv2[Y] + vpos[Y]) * dmp->dm_aspect);
 
   /* build Z axis about view center */
-  VSET(v1, 0, 0, -half_size);
-  VSET(v2, 0, 0, half_size);
+  VSET(v1, 0.0, 0.0, -half_size);
+  VSET(v2, 0.0, 0.0, half_size);
 
   /* rotate Z axis into position */
   MAT4X3PNT(rv1, rot_mat, v1)
@@ -186,12 +186,9 @@ draw_v_axes()
 
   VSET(v_ap,
        mged_variables->v_axes_pos[X] * INV_GED,
-#if 0
-       mged_variables->v_axes_pos[Y] * INV_GED * dmp->dm_aspect,
-#else
-       mged_variables->v_axes_pos[Y] * INV_GED,
-#endif
+       mged_variables->v_axes_pos[Y] * INV_GED / dmp->dm_aspect,
        0.0);
+
   draw_axes(v_ap,
 	    Viewrot,
 	    mged_variables->v_axes_size * INV_GED,
