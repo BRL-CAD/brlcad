@@ -3219,13 +3219,6 @@ Note that this may significantly slow the <I>preview</I>.
 </DD>
 <HR>
 
-<DT><A NAME="print_tree"><B>print_tree</B> <I>file objects</I></DT>
-
-<DD>Print the objects' trees to the specified file. If file exists, it
-will be appended to. Otherwise, it will be created.
-</DD>
-<HR>
-
 <DT><a NAME="prj_add"><B>prj_add</B> <I>shaderfile</I> [<I>image_file</I>] [<I>image_width</I>] [<I>image_height</I>]</DT>
 
 <DD> The ``prj_add'' command appends information to the specified <I>shaderfile</I>. The information
@@ -4465,13 +4458,15 @@ solid editing.
 </DD>
 <HR>
 
-<DT><a NAME="tree"><B>tree</B> &lt;<I>objects</I>&gt</DT>
+<DT><a NAME="tree"><B>tree</B> [<I>-c</I>] [<I>-i #</I>] [<I>-o outfile</I>] <I>object(s)</I></DT>
 
 <DD>The ``tree'' command will list the contents of the specified <I>objects</I>
 in a tree-like format that displays the hierarchical structure of the <I>objects</I>,
 and all objects referenced by them, down to the
 <a href="brlcad_glossary.html#SOLID">primitive solid</a> level.
- 
+If <I>-c</I> is given, the solids are not printed.
+The <I>-o outfile</I> option prints the results to <I>outfile</I>.
+The <I>-i #</I> option allows the user to set the number of spaces to indent.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -4479,6 +4474,10 @@ and all objects referenced by them, down to the
 	<kbd>mged></kbd> <b>tree group1</b><br>
 	-- show the structure of the tree rooted at <I>group1</I> down to
 		the primitive solid level.<br>
+	<kbd>mged></kbd> <b>tree -i 2 group1</b><br>
+	-- this time use 2 spaces for each level of indentation<br>
+	<kbd>mged></kbd> <b>tree -c group1</b><br>
+	-- no solids are printed<br>
 	</DD>
 	</DL>
 </DD>
