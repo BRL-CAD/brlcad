@@ -704,9 +704,8 @@ wdb_put_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	if (wdb_export(wdbp, name, intern.idb_ptr, intern.idb_type,
-			1.0) < 0)  {
-		Tcl_AppendResult(interp, "wdb_export(", argv[1],
+	if (wdb_put_internal(wdbp, name, &intern, 1.0) < 0)  {
+		Tcl_AppendResult(interp, "wdb_put_internal(", argv[1],
 				 ") failure", (char *)NULL);
 		rt_db_free_internal(&intern);
 		return TCL_ERROR;
@@ -774,8 +773,7 @@ wdb_adjust_tcl( clientData, interp, argc, argv )
 	RT_CK_FUNCTAB(intern.idb_meth);
 
 	status = intern.idb_meth->ft_tcladjust(interp, &intern, argc-3, argv+3);
-	if( status == TCL_OK && wdb_export(wdbp, name, intern.idb_ptr,
-					   intern.idb_type, 1.0) < 0)  {
+	if( status == TCL_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0)  {
 		Tcl_AppendResult(interp, "wdb_export(", name,
 				 ") failure", (char *)NULL);
 		rt_db_free_internal(&intern);
