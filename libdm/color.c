@@ -22,13 +22,30 @@ int cd; /* cube dimension */
 {
   fastf_t f;
   int rf, gf, bf;
+  int index;
+
+  if(r == 0 && g == 0 && b == 0)
+    return pixels[0];
 
   f = cd / 256.0;
   rf = r * f;
   gf = g * f;
   bf = b * f;
 
-  return pixels[rf * cd * cd + gf * cd + bf];
+  index = rf * cd * cd + gf * cd + bf;
+
+  if(index == 0){
+    if(r != 0)
+      index = cd * cd;
+
+    if(g != 0)
+      index += cd;
+
+    if(b != 0)
+      index += 1;
+  }
+
+  return pixels[index];
 }
 
 /*
