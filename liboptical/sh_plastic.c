@@ -376,30 +376,50 @@ register struct partition *pp;
 		VJOIN1(ap->a_color, ap->a_color, ps->reflect, sub_ap.a_color);
 	}
 	if( ps->transmit > 0 )  {
+		LOCAL vect_t incident_dir;
+
 		/* Calculate refraction at entrance. */
-		sub_ap.a_level = ap->a_level * 100;	/* flag */
-		sub_ap.a_x = ap->a_x;
-		sub_ap.a_y = ap->a_y;
-		sub_ap.a_rt_i = ap->a_rt_i;
-		if( !phg_refract(ap->a_ray.r_dir, /* Incident ray (IN) */
+		sub_ap = *ap;		/* struct copy */
+		sub_ap.a_level = (ap->a_level+1) * 100;	/* flag */
+		sub_ap.a_onehit = 1;
+		sub_ap.a_user = (int)(pp->pt_regionp);
+		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
+		VMOVE( incident_dir, ap->a_ray.r_dir );
+		if( !phg_refract(incident_dir, /* Incident ray (IN) */
 			hitp->hit_normal,
 			RI_AIR, ps->refrac_index,
 			sub_ap.a_ray.r_dir	/* Refracted ray (OUT) */
 		) )  {
 			/* Reflected back outside solid */
-			VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 			goto do_exit;
 		}
 		/* Find new exit point from the inside. */
-		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 do_inside:
 		sub_ap.a_hit =  phg_rhit;
 		sub_ap.a_miss = phg_rmiss;
 		if( rt_shootray( &sub_ap ) == 0 )  {
-			rt_log("phong: Refracted ray missed %s, lvl=%d\n",
+			rt_log("phong: Refracted ray missed '%s', lvl=%d\n",
 				pp->pt_inseg->seg_stp->st_name,
 				sub_ap.a_level );
-			goto finish;		/* abandon hope */
+			/* Back off just a little bit, and try again */
+			/* Useful when striking exactly in corners */
+			VJOIN1( sub_ap.a_ray.r_pt, sub_ap.a_ray.r_pt,
+				-3.0, incident_dir );
+			if( rt_shootray( &sub_ap ) == 0 )  {
+				rt_log("phong: Refracted ray missed 2x '%s', lvl=%d\n",
+					pp->pt_inseg->seg_stp->st_name,
+					sub_ap.a_level );
+				VPRINT("pt", sub_ap.a_ray.r_pt );
+				VPRINT("dir", sub_ap.a_ray.r_dir );
+				VSET( ap->a_color, 0, 1, 0 );	/* green */
+#ifdef never
+odebug= rt_g.debug;
+rt_g.debug = DEBUG_ALLRAYS|DEBUG_BOXING|DEBUG_SHOOT;
+rt_shootray( &sub_ap );
+rt_g.debug = odebug;
+#endif
+				goto finish;		/* abandon hope */
+			}
 		}
 		/* NOTE: phg_rhit returns EXIT Point in sub_ap.a_uvec,
 		 *  and returns EXIT Normal in sub_ap.a_color.
@@ -411,7 +431,8 @@ do_inside:
 		VMOVE( sub_ap.a_ray.r_pt, sub_ap.a_uvec );
 
 		/* Calculate refraction at exit. */
-		if( !phg_refract( sub_ap.a_ray.r_dir,	/* input direction */
+		VMOVE( incident_dir, sub_ap.a_ray.r_dir );
+		if( !phg_refract( incident_dir,		/* input direction */
 			sub_ap.a_color,			/* exit normal */
 			ps->refrac_index, RI_AIR,
 			sub_ap.a_ray.r_dir		/* output direction */
@@ -474,24 +495,35 @@ struct partition *PartHeadp;
 	register struct partition *pp;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist > 0.01 )  break;
+		if( pp->pt_outhit->hit_dist > 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("phg_rhit:  no hit out front?\n");
-		return(0);
+		if(rt_g.debug&DEBUG_HITS)rt_log("phg_rhit:  no hit out front?\n");
+		goto bad;
+	}
+	if( pp->pt_regionp != (struct region *)(ap->a_user) )  {
+		if(rt_g.debug&DEBUG_HITS)rt_log("phg_rhit:  Ray reflected within %s now in %s!\n",
+			((struct region *)(ap->a_user))->reg_name,
+			pp->pt_regionp->reg_name );
+		goto bad;
 	}
 
 	hitp = pp->pt_inhit;
 	if( !NEAR_ZERO(hitp->hit_dist, 10) )  {
-		rt_log("phg_rhit:   inhit %g not near zero!\n", hitp->hit_dist);
-		rt_pr_hit("inhit", hitp);
-		rt_pr_hit("outhit", pp->pt_outhit);
-		return(0);
+		if(rt_g.debug&DEBUG_HITS)  {
+			rt_log("phg_rhit:  '%s' inhit %g not near zero!\n",
+				pp->pt_inseg->seg_stp->st_name, hitp->hit_dist);
+			rt_pr_hit("inhit", hitp);
+			rt_pr_hit("outhit", pp->pt_outhit);
+		}
+		goto bad;
 	}
 
 	hitp = pp->pt_outhit;
 	if( hitp->hit_dist >= INFINITY )  {
-		rt_log("phg_rhit:  (%g,%g) bad!\n", pp->pt_inhit->hit_dist, hitp->hit_dist);
-		return(0);
+		if(rt_g.debug&DEBUG_HITS)
+			rt_log("phg_rhit:  (%g,%g) bad!\n",
+				pp->pt_inhit->hit_dist, hitp->hit_dist);
+		goto bad;
 	}
 
 	stp = pp->pt_outseg->seg_stp;
@@ -499,16 +531,21 @@ struct partition *PartHeadp;
 		hitp, stp, &(ap->a_ray) );
 	VMOVE( ap->a_uvec, hitp->hit_point );
 	/* Safety check */
-	if( rt_g.debug && (!NEAR_ZERO(hitp->hit_normal[X], 1) ||
-	    !NEAR_ZERO(hitp->hit_normal[Y], 1) ||
-	    !NEAR_ZERO(hitp->hit_normal[Z], 1) ) )  {
-	    	rt_log("phg_rhit: TROUBLE refracting in %s\n", stp->st_name);
+	if( rt_g.debug && (!NEAR_ZERO(hitp->hit_normal[X], 1.001) ||
+	    !NEAR_ZERO(hitp->hit_normal[Y], 1.001) ||
+	    !NEAR_ZERO(hitp->hit_normal[Z], 1.001) ) )  {
+	    	rt_log("phg_rhit: defective normal hitting %s\n", stp->st_name);
 	    	VPRINT("hit_normal", hitp->hit_normal);
-	    	return(0);
+	    	goto bad;
 	}
 	/* For refraction, want exit normal to point inward. */
 	VREVERSE( ap->a_color, hitp->hit_normal );
 	return(1);
+
+	/* Give serious information when problems are encountered */
+bad:
+	if(rt_g.debug&DEBUG_HITS) rt_pr_partitions( PartHeadp, "phg_rhit" );
+	return(0);
 }
 
 /*
