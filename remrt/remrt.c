@@ -1,7 +1,3 @@
-/***
-****remaining bug:  when rolling from one frame to another,
-****a new matrix and options pkg need to be sent!
-****/
 /*
  *  			R E M R T . C
  *  
@@ -29,6 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include <signal.h>
 #include <errno.h>
 #include <netdb.h>
@@ -80,6 +77,7 @@ char *cmd_args[MAXARGS];
 int numargs;
 
 #define NFD 32
+#define MAXSERVERS	NFD		/* No relay function yet */
 
 /* Lists */
 struct list {
@@ -106,40 +104,42 @@ struct frame {
 	double		fr_viewsize;
 	double		fr_eye_model[3];
 	double		fr_mat[16];
+	char		fr_servinit[MAXSERVERS]; /* sent server options & matrix? */
 };
 struct frame FrameHead;
 struct frame *FreeFrame;
 #define FRAME_NULL	((struct frame *)0)
 
 struct servers {
-	struct pkg_conn	*sr_pc;	/* PKC_NULL means slot not in use */
+	struct pkg_conn	*sr_pc;		/* PKC_NULL means slot not in use */
 	struct list	sr_work;
 	int		sr_speed;	/* # lines to send at once */
 	int		sr_started;
-#define SRST_NEW	1	/* connected, no model loaded yet */
-#define SRST_LOADING	2	/* loading, awaiting ready response */
-#define SRST_READY	3	/* loaded, ready */
+#define SRST_NEW	1		/* connected, no model loaded yet */
+#define SRST_LOADING	2		/* loading, awaiting ready response */
+#define SRST_READY	3		/* loaded, ready */
 	struct frame	*sr_curframe;	/* ptr to current frame */
 	long		sr_addr;	/* NET order inet addr */
 	char		sr_name[32];	/* host name */
-} servers[NFD];
+	int		sr_index;	/* fr_servinit[] index */
+} servers[MAXSERVERS];
 #define SERVERS_NULL	((struct servers *)0)
 
 /* Options */
-int npts = 64;
-int hypersample = 0;
-double zoomout = 0;
-extern double atof();
+int	npts = 64;
+int	hypersample = 0;
+double	zoomout = 0;
+extern double	atof();
 
 /* START */
-char start_cmd[256];	/* contains file name & objects */
+char	start_cmd[256];	/* contains file name & objects */
 
-char ourname[32];
-char out_file[256];		/* output file name */
+char	ourname[32];
+char	out_file[256];		/* output file name */
 
 extern char *malloc();
 
-int tcp_listen_fd;
+int	tcp_listen_fd;
 
 /*
  *			E R R L O G
@@ -168,7 +168,7 @@ int argc; char **argv;
 	/* Random inits */
 	gethostname( ourname, sizeof(ourname) );
 	FrameHead.fr_forw = FrameHead.fr_back = &FrameHead;
-	for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		sp->sr_work.li_forw = sp->sr_work.li_back = &sp->sr_work;
 		sp->sr_pc = PKC_NULL;
 	}
@@ -190,6 +190,9 @@ int argc; char **argv;
 	exit(0);
 }
 
+/*
+ *			C H E C K _ I N P U T
+ */
 check_input(waittime)
 int waittime;
 {
@@ -229,6 +232,9 @@ int waittime;
 	}
 }
 
+/*
+ *			A D D C L I E N T
+ */
 addclient(pc)
 struct pkg_conn *pc;
 {
@@ -258,6 +264,7 @@ struct pkg_conn *pc;
 	sp->sr_started = SRST_NEW;
 	sp->sr_curframe = FRAME_NULL;
 	sp->sr_speed = 3;
+	sp->sr_index = fd;
 #ifdef cray
 	sp->sr_addr = from.sin_addr;
 	hp = gethostbyaddr(&(sp->sr_addr), sizeof (struct in_addr),
@@ -281,11 +288,15 @@ struct pkg_conn *pc;
 	}
 }
 
+/*
+ *			D R O P C L I E N T
+ */
 dropclient(pc)
 register struct pkg_conn *pc;
 {
 	register struct list *lhp, *lp;
 	register struct servers *sp;
+	register struct frame *fr;
 	int fd;
 
 	fd = pc->pkc_fd;
@@ -302,13 +313,16 @@ register struct pkg_conn *pc;
 	/* Need to remove any work in progress, and re-schedule */
 	lhp = &(sp->sr_work);
 	while( (lp = lhp->li_forw) != lhp )  {
+		fr = lp->li_frame;
+		fr->fr_servinit[sp->sr_index] = 0;
+
 		DEQUEUE_LIST( lp );
 		printf("requeueing fr%d %d..%d\n",
-			lp->li_frame->fr_number,
+			fr->fr_number,
 			lp->li_start, lp->li_stop);
-		APPEND_LIST( lp, &(lp->li_frame->fr_todo) );
+		APPEND_LIST( lp, &(fr->fr_todo) );
 		printf("ToDo:\n");
-		pr_list(&(lp->li_frame->fr_todo));
+		pr_list(&(fr->fr_todo));
 	}
 	if(running) schedule();
 }
@@ -361,6 +375,10 @@ char *str;
 		return(i);
 	}
 }
+
+/*
+ *			G E T _ S E R V E R _ B Y _ N A M E
+ */
 struct servers *
 get_server_by_name( str )
 char *str;
@@ -368,19 +386,22 @@ char *str;
 	register long i;
 	register struct servers *sp;
 
-	if( *str == '#' )  {
-		i = atoi( str+1 );
-		if( i < 0 || i > NFD )  return( SERVERS_NULL );
+	if( isdigit( *str ) )  {
+		i = atoi( str );
+		if( i < 0 || i >= MAXSERVERS )  return( SERVERS_NULL );
 		return( &servers[i] );
 	}
 	i = host2addr(str);
-	for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
 		if( sp->sr_addr == i )  return(sp);
 	}
 	return( SERVERS_NULL );
 }
 
+/*
+ *			I N T E R A C T I V E
+ */
 interactive(fp)
 FILE *fp;
 {
@@ -415,7 +436,7 @@ FILE *fp;
 		close( tcp_listen_fd ); tcp_listen_fd = -1;
 
 		/* We might want to wait if something is running? */
-		for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			if( !running )
 				dropclient(sp->sr_pc);
@@ -440,7 +461,7 @@ FILE *fp;
 		if(start_cmd[0] != '\0' )  {
 			printf("Was loaded with %s, restarting all\n", start_cmd);
 			strncpy( start_cmd, &buf[5], strlen(&buf[5])-1 );
-			for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+			for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 				if( sp->sr_pc == PKC_NULL )  continue;
 				send_restart( sp );
 			}
@@ -448,7 +469,7 @@ FILE *fp;
 		}
 		strncpy( start_cmd, &buf[5], strlen(&buf[5])-1 );
 		/* Start any idle servers */
- 		for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+ 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			if( sp->sr_started != SRST_NEW )  continue;
 			send_start(sp);
@@ -464,7 +485,7 @@ FILE *fp;
 		char rbuf[64];
 
 		sprintf(rbuf, "-x%s", cmd_args[1] );
-		for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			(void)pkg_send( MSG_OPTIONS, rbuf, strlen(buf)+1, sp->sr_pc);
 		}
@@ -616,7 +637,7 @@ FILE *fp;
 		if( numargs <= 1 )  {
 			/* Restart all */
 			printf("restarting all\n");
-			for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+			for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 				if( sp->sr_pc == PKC_NULL )  continue;
 				send_restart( sp );
 			}
@@ -689,12 +710,15 @@ FILE *fp;
 		/* Sumarize frames waiting */
 		printf("Frames waiting:\n");
 		for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
-			printf(" %d  ", fr->fr_number);
+			printf(" %4d  ", fr->fr_number);
 			printf("size=%d, zoomout=%f, ",
 				fr->fr_size, fr->fr_zoomout );
 			printf("viewsize = %f, ", fr->fr_viewsize);
 			printf("hypersample = %d", fr->fr_hyper);
 			if( fr->fr_picture )  printf(" (Pic)");
+			printf("\n       servinit: ");
+			for( i=0; i<MAXSERVERS; i++ )
+				printf("%d ", fr->fr_servinit[i]);
 			printf("\n");
 			pr_list( &(fr->fr_todo) );
 		}
@@ -721,19 +745,23 @@ FILE *fp;
 
 		/* Print work assignments */
 		printf("Servers:\n");
-		for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
-			printf("  %s ", sp->sr_name );
+			printf("  %2d  %s ", sp->sr_index, sp->sr_name );
 			switch( sp->sr_started )  {
 			case SRST_NEW:
-				printf("IDLE\n"); break;
+				printf("Idle"); break;
 			case SRST_LOADING:
-				printf("(Loading)\n"); break;
+				printf("(Loading)"); break;
 			case SRST_READY:
-				printf("READY\n"); break;
+				printf("Ready"); break;
 			default:
-				printf("Unknown\n"); break;
+				printf("Unknown"); break;
 			}
+			if( sp->sr_curframe != FRAME_NULL )
+				printf(" frame %d\n", sp->sr_curframe->fr_number);
+			else
+				printf("\n");
 			pr_list( &(sp->sr_work) );
 		}
 		return;
@@ -750,7 +778,7 @@ FILE *fp;
 			print_on = atoi(cmd_args[1]);
 		else
 			print_on = !print_on;	/* toggle */
-		for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			send_loglvl( sp );
 		}
@@ -788,7 +816,11 @@ FILE *fp;
 	printf("%s: Unknown command, ? for help\n", cmd_args[0]);
 }
 
-/* Fill in frame structure after reading MAT */
+/*
+ *			P R E P _ F R A M E
+ *
+ * Fill in frame structure after reading MAT
+ */
 prep_frame(fr)
 register struct frame *fr;
 {
@@ -799,6 +831,7 @@ register struct frame *fr;
 	fr->fr_zoomout = zoomout;
 	if( fr->fr_picture )  free(fr->fr_picture);
 	fr->fr_picture = (char *)0;
+	bzero( fr->fr_servinit, sizeof(fr->fr_servinit) );
 
 	/* Build work list */
 	fr->fr_todo.li_forw = fr->fr_todo.li_back = &(fr->fr_todo);
@@ -809,6 +842,9 @@ register struct frame *fr;
 	APPEND_LIST( lp, fr->fr_todo.li_back );
 }
 
+/*
+ *			D O _ A _ F R A M E
+ */
 do_a_frame()
 {
 	register struct frame *fr;
@@ -829,6 +865,8 @@ do_a_frame()
 }
 
 /*
+ *			S C H E D U L E
+ *
  *  If there is work to do, and a free server, send work
  *  When done, we leave the last finished frame around for attach/release.
  */
@@ -849,7 +887,7 @@ schedule()
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw )  {
 		if( (lp = fr->fr_todo.li_forw) != &(fr->fr_todo) )
 			continue;	/* still work to be done */
-		for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			if( sp->sr_curframe != fr )  continue;
 			if( sp->sr_work.li_forw != &(sp->sr_work) )  {
@@ -911,7 +949,7 @@ top:
 		/*
 		 * Look for a free server to dispatch work to
 		 */
-		for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			if( sp->sr_started == SRST_NEW )  {
 				/*  advance to state 1 (loading) */
@@ -922,6 +960,12 @@ top:
 				continue;	/* not running yet */
 			if( sp->sr_work.li_forw != &(sp->sr_work) )
 				continue;	/* busy */
+
+			if( fr->fr_servinit[sp->sr_index] == 0 )  {
+				send_matrix( sp, fr );
+				fr->fr_servinit[sp->sr_index] = 1;
+				sp->sr_curframe = fr;
+			}
 
 			a = lp->li_start;
 			b = a+sp->sr_speed-1;	/* work increment */
@@ -935,10 +979,7 @@ top:
 
 			printf("fr%d %d..%d -> %s\n", fr->fr_number,
 				a, b, sp->sr_name);
-			if( sp->sr_curframe != fr )  {
-				sp->sr_curframe = fr;
-				send_matrix(sp);
-			}
+
 			/* Record newly allocated scanlines */
 			GET_LIST(lp);
 			lp->li_frame = fr;
@@ -950,10 +991,13 @@ top:
 			send_do_lines( sp, a, b );
 			goto top;
 		}
-		if( sp >= &servers[NFD] )  return;	/* no free servers */
+		if( sp >= &servers[MAXSERVERS] )  return;	/* no free servers */
 	}
 }
 
+/*
+ *			R E A D _ M A T R I X
+ */
 read_matrix( fp, fr )
 register FILE *fp;
 register struct frame *fr;
@@ -983,6 +1027,9 @@ out:
 	return(0);	/* OK */
 }
 
+/*
+ *			P A R S E _ C M D
+ */
 parse_cmd( line )
 char *line;
 {
@@ -1028,6 +1075,9 @@ char *line;
 	return(0);
 }
 
+/*
+ *			P H _ D E F A U L T
+ */
 ph_default(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
@@ -1070,6 +1120,9 @@ char *buf;
 	if(running) schedule();
 }
 
+/*
+ *			P H _ P R I N T
+ */
 ph_print(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
@@ -1079,6 +1132,11 @@ char *buf;
 	if(buf) (void)free(buf);
 }
 
+/*
+ *			P H _ P I X E L S
+ *
+ *  When a scanline is received from a server, file it away.
+ */
 ph_pixels(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
@@ -1096,6 +1154,7 @@ char *buf;
 	/* Stash pixels in memory in bottom-to-top .pix order */
 	if( fr->fr_picture == (char *)0 )  {
 		i = fr->fr_size*fr->fr_size*3+3;
+		printf("allocating %d bytes for image\n", i);
 		fr->fr_picture = malloc( i );
 		if( fr->fr_picture == (char *)0 )  {
 			fprintf(stdout, "ph_pixels: malloc(%d) error\n",i);
@@ -1126,7 +1185,11 @@ char *buf;
 		schedule();
 }
 
-/* Given pointer to head of list of ranges, remove the item that's done */
+/*
+ *			L I S T _ R E M O V E
+ *
+ * Given pointer to head of list of ranges, remove the item that's done
+ */
 list_remove( lhp, line )
 register struct list *lhp;
 {
@@ -1161,6 +1224,9 @@ register struct list *lhp;
 	}
 }
 
+/*
+ *			I N I T _ F B
+ */
 int
 init_fb(name)
 char *name;
@@ -1177,6 +1243,10 @@ char *name;
 	cur_fbsize = 0;
 	return(0);
 }
+
+/*
+ *			S I Z E _ D I S P L A Y
+ */
 size_display(n)
 register int n;
 {
@@ -1195,6 +1265,9 @@ register int n;
 	fb_window( fbp, n/2, n/2 );		/* center of view */
 }
 
+/*
+ *			S E N D _ S T A R T
+ */
 send_start(sp)
 register struct servers *sp;
 {
@@ -1205,6 +1278,9 @@ register struct servers *sp;
 	sp->sr_started = SRST_LOADING;
 }
 
+/*
+ *			S E N D _ R E S T A R T
+ */
 send_restart(sp)
 register struct servers *sp;
 {
@@ -1212,6 +1288,9 @@ register struct servers *sp;
 		dropclient(sp->sr_pc);
 }
 
+/*
+ *			S E N D _ L O G L V L
+ */
 send_loglvl(sp)
 register struct servers *sp;
 {
@@ -1219,21 +1298,23 @@ register struct servers *sp;
 		dropclient(sp->sr_pc);
 }
 
-send_matrix(sp)
+/*
+ *			S E N D _ M A T R I X
+ *
+ *  Send current options, and the view matrix information.
+ */
+send_matrix(sp, fr)
 struct servers *sp;
+register struct frame *fr;
 {
 	char buf[BUFSIZ];
-	register struct frame *fr;
 
-	fr = sp->sr_curframe;
-	if( fr->fr_viewsize <= 0 )  return;
 	if( fr->fr_zoomout > 0 )  {
 		sprintf(buf, "-f%d -h%d -p%f",
 			fr->fr_size, fr->fr_hyper, fr->fr_zoomout );
 	}  else  {
 		sprintf(buf, "-f%d -h%d", fr->fr_size, fr->fr_hyper );
 	}
-
 	if( pkg_send( MSG_OPTIONS, buf, strlen(buf)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
 
@@ -1261,7 +1342,12 @@ struct servers *sp;
 		(fr->fr_mat[15]) );
 	if( pkg_send( MSG_MATRIX, buf, strlen(buf)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
+	printf("sent matrix to %s\n", sp->sr_name);
 }
+
+/*
+ *			S E N D _ D O _ L I N E S
+ */
 send_do_lines( sp, start, stop )
 register struct servers *sp;
 {
@@ -1271,6 +1357,9 @@ register struct servers *sp;
 		dropclient(sp->sr_pc);
 }
 
+/*
+ *			P R _ L I S T
+ */
 pr_list( lhp )
 register struct list *lhp;
 {

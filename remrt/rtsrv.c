@@ -362,7 +362,8 @@ char *buf;
 	(void)free(buf);
 
 	/* Acknowledge that we are ready */
-	pkg_send( MSG_START, "", 0, pcsrv );
+	if( pkg_send( MSG_START, "", 0, pcsrv ) < 0 )
+		fprintf(stderr,"MSG_START error\n");
 }
 
 ph_matrix(pc, buf)
@@ -386,6 +387,12 @@ char *buf;
 		while( *cp && *cp++ != ' ') ;
 		Viewrotscale[i] = atof(cp);
 	}
+
+	/*
+	 * initialize application -- it will allocate 1 line and
+	 * set buf_mode=1, as well as do mlib_init().
+	 */
+	(void)view_init( &ap, title_file, title_obj, 0 );
 
 	/* This code from do.c/do_frame() */
 	if( rtip->needprep )  {
@@ -430,11 +437,6 @@ char *buf;
 		rt_log("rt: No solids remain after prep.\n");
 		exit(3);
 	}
-
-
-	/* initialize application -- it will allocate 1 line & set buf_mode=1 */
-	/* width XXXX */
-	(void)view_init( &ap, title_file, title_obj, 0 );
 
 	grid_setup();
 
@@ -490,8 +492,9 @@ char *buf;
 
 		rbuf[0] = y&0xFF;
 		rbuf[1] = (y>>8);
-		pkg_2send( MSG_PIXELS, rbuf, 2,
-			scanbuf, width*3, pcsrv );
+		if( pkg_2send( MSG_PIXELS, rbuf, 2,
+			scanbuf, width*3, pcsrv ) < 0 )
+			fprintf(stderr,"MSG_PIXELS send error\n");
 	}
 	(void)free(buf);
 }
@@ -532,6 +535,7 @@ char *str;
 		fprintf(stderr, "%s", buf+1);
 		goto out;
 	}
+	if(debug) fprintf(stderr, "%s", buf+1);
 	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )
 		exit(12);
 	cp = buf+1;
