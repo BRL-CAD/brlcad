@@ -42,171 +42,78 @@ vect_t		Vec;	/* Magnitude and direction of extrusion. */
 struct rt_tol	*tol;	/* NMG tolerances. */
 {
 	fastf_t		cosang;
-	int		cnt, i, j, nfaces;
+	int		nfaces;
 	struct edgeuse	*eu;
-	struct faceuse	*back, *front, *fu2, *nmg_dup_face(), **outfaceuses;
+	struct faceuse	*fu2, *nmg_dup_face(), **outfaces;
+	int		face_count=2;
 	struct loopuse	*lu, *lu2;
-	struct shell	*s;
-	struct vertex	*v, *vertlist[4], **verts, **verts2;
 	plane_t		n;
 
 #define MIKE_TOL 0.0001
 
-	j = 0;
+	NMG_CK_FACEUSE( fu );
+	RT_CK_TOL( tol );
 
-	/* Duplicate face. */
+	/* Duplicate and reverse face. */
 	fu2 = nmg_dup_face(fu, fu->s_p);
+	nmg_reverse_face( fu2 );
+	if( fu2->orientation != OT_OPPOSITE )
+		fu2 = fu2->fumate_p;
 
-	/* Figure out which face to flip. */
+	/* Figure out which face to translate. */
 	NMG_GET_FU_PLANE( n, fu );
 	cosang = VDOT(Vec, n);
-	front = fu;
-	back = fu2;
-	if (NEAR_ZERO(cosang, MIKE_TOL)) {
+	if (NEAR_ZERO(cosang, MIKE_TOL))
 		rt_bomb("extrude_nmg_face: extrusion cannot be parallel to face\n");
-	} else if (cosang > 0.) {
-		flip_nmg_face(back, tol);
-		translate_nmg_face(front, Vec, tol);
-	} else if (cosang < 0.) {
-		flip_nmg_face(back, tol);
-		translate_nmg_face(back, Vec, tol);
-	}
+	else if (cosang > 0.)
+		translate_nmg_face(fu, Vec, tol);
+	else if (cosang < 0.)
+		translate_nmg_face(fu2->fumate_p, Vec, tol);
 
-	lu = (struct loopuse *)((&front->lu_hd)->forw);
-	lu2 = (struct loopuse *)((&back->lu_hd)->forw);
-	nfaces = verts_in_nmg_face(front);
-	outfaceuses = (struct faceuse **)
-		rt_malloc((nfaces+2) * sizeof(struct faceuse *), "faces");
+	nfaces = verts_in_nmg_face( fu );
+	outfaces = (struct faceuse **)rt_calloc( nfaces , sizeof( struct faceuse *) ,
+		"nmg_extrude_face: outfaces" );
 
-	do {
-		cnt = verts_in_nmg_loop(lu);
-		if (cnt < 3)
-			rt_bomb("extrude_nmg_face: need at least 3 points\n");
-		verts = (struct vertex **)
-			rt_malloc((cnt+1)*sizeof(struct vertex *), "verts");
-		verts2 = (struct vertex **)
-			rt_malloc((cnt+1)*sizeof(struct vertex *), "verts");
+	outfaces[0] = fu;
+	outfaces[1] = fu2->fumate_p;
 
-		/* Collect vertex structures from 1st face. */
-		i = 0;
-		NMG_CK_LOOPUSE(lu);
-		if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-				verts[i++] = eu->vu_p->v_p;
-			}
-		} else
-			rt_bomb("extrude_nmg_face: bad loopuse (1)\n");
+	for( RT_LIST_FOR2(lu , lu2 , loopuse , &fu->lu_hd , &fu2->lu_hd ) )
+	{
+		struct edgeuse *eu,*eu2;
 
-		/* Collect vertex structures from 2nd face. */
-		i = 0;
-		NMG_CK_LOOPUSE(lu2);
-		if (RT_LIST_FIRST_MAGIC(&lu2->down_hd) == NMG_EDGEUSE_MAGIC) {
-			for (RT_LIST_FOR(eu, edgeuse, &lu2->down_hd)) {
-				verts2[cnt-i-1] = eu->vu_p->v_p;
-				i++;
-			}
-		} else
-			rt_bomb("extrude_nmg_face: bad loopuse (2)\n");
+		NMG_CK_LOOPUSE( lu );
+		NMG_CK_LOOPUSE( lu2 );
 
-		verts[cnt] = verts[0];
-		verts2[cnt] = verts2[0];
-
-		for (i = 0; i < cnt; i++) {
-			/* Generate connecting faces. */
-			vertlist[0] = verts[i];
-			vertlist[1] = verts2[i];
-			vertlist[2] = verts2[i+1];
-			vertlist[3] = verts[i+1];
-			outfaceuses[2+i+j] = nmg_cface(fu->s_p, vertlist, 4);
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+		if( RT_LIST_FIRST_MAGIC( &lu2->down_hd ) != NMG_EDGEUSE_MAGIC )
+		{
+			rt_log( "nmg_extrude_face: Original face and dup face don't match up!!\n" );
+			return( -1 );
 		}
-		j += cnt;
+		for( RT_LIST_FOR2( eu , eu2 , edgeuse , &lu->down_hd , &lu2->down_hd ) )
+		{
+			struct vertex	*vertlist[4];
 
-		/* Free memory. */
-		rt_free((char *)verts, "verts");
-		rt_free((char *)verts2, "verts");
+			NMG_CK_EDGEUSE( eu );
+			NMG_CK_EDGEUSE( eu2 );
 
-		/* On to next loopuse. */
-		lu = (struct loopuse *)((struct rt_list *)(lu))->forw;
-		lu2 = (struct loopuse *)((struct rt_list *)(lu2))->forw;
+			vertlist[0] = eu->vu_p->v_p;
+			vertlist[1] = eu2->vu_p->v_p;
+			vertlist[2] = eu2->eumate_p->vu_p->v_p;
+			vertlist[3] = eu->eumate_p->vu_p->v_p;
+			outfaces[face_count] = nmg_cface( fu->s_p , vertlist , 4 );
+			if( nmg_fu_planeeqn( outfaces[face_count] , tol ) < 0 )
+			{
+				rt_log( "nmg_extrude_face: failed to calculate plane eqn\n" );
+				return( -1 );
+			}
+			face_count++;
+		}
 
-	} while (lu != (struct loopuse *)(&fu->lu_hd));
-
-	outfaceuses[0] = fu;
-	outfaceuses[1] = fu2;
-
-	/* Associate the face geometry. */
-	for (i = 0; i < nfaces+2; i++) {
-		if (nmg_fu_planeeqn(outfaceuses[i], tol) < 0)
-			return(-1);	/* FAIL */
 	}
 
-	/* Glue the edges of different outward pointing face uses together. */
-	nmg_gluefaces(outfaceuses, nfaces+2);
-
-	/* Compute geometry for region and shell. */
-	nmg_region_a(fu->s_p->r_p, tol);
-
-	/* Free memory. */
-	rt_free((char *)outfaceuses, "faces");
-}
-
-/*
- *	F l i p _ N M G _ F a c e
- *
- *	Given a pointer to a faceuse, flip the face by reversing the
- *	order of vertex pointers in each loopuse.
- */
-flip_nmg_face(fu, tol)
-struct faceuse	*fu;
-struct rt_tol	*tol;
-{
-	int		cnt,		/* Number of vertices in face. */
-			i;
-	struct vertex	**verts;	/* List of verts in face. */
-	struct edgeuse	*eu;
-	struct loopuse	*lu, *lu2;
-	struct vertex	*v;
-
-	/* Go through each loop and flip it. */
-	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		cnt = verts_in_nmg_loop(lu);	/* # of vertices in loop. */
-		verts = (struct vertex **)
-			rt_malloc(cnt * sizeof(struct vertex *), "verts");
-
-		/* Collect vertex structure pointers from current loop. */
-		i = 0;
-		NMG_CK_LOOPUSE(lu);
-		if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-				verts[i++] = eu->vu_p->v_p;
-			}
-		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd)
-			== NMG_VERTEXUSE_MAGIC) {
-			v = RT_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
-			verts[i++] = v;
-		} else
-			rt_bomb("extrude_nmg_face: loopuse mess up!\n");
-
-		/* Reverse order of vertex structures in current loop. */
-		i = 0;
-		if (RT_LIST_FIRST_MAGIC(&lu->down_hd)
-			== NMG_EDGEUSE_MAGIC) {
-			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-				eu->vu_p->v_p = verts[cnt-i-1];
-				i++;
-			}
-		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd)
-			== NMG_VERTEXUSE_MAGIC) {
-			RT_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p
-				= verts[cnt-i-1];
-			i++;
-		} else
-			rt_bomb("extrude_nmg_face: loopuse mess up!\n");
-
-		rt_free((char *)verts, "verts");
-	}
-
-	nmg_fu_planeeqn(fu, tol);
+	nmg_gluefaces( outfaces , face_count );
 }
 
 /*
@@ -1288,18 +1195,18 @@ CONST struct rt_tol *tol;
 	}
 
 	/* put it all back together */
-	s_tmp = (struct shell *)NMG_TBL_GET( &shells , 0 );
-	for( shell_no=1 ; shell_no<NMG_TBL_END( &shells ) ; shell_no++ )
+	for( shell_no=0 ; shell_no<NMG_TBL_END( &shells ) ; shell_no++ )
 	{
 		struct shell *s2;
 
 		s2 = (struct shell *)NMG_TBL_GET( &shells , shell_no );
-		nmg_js( s_tmp , s2 , tol );
+		if( s2 != s )
+			nmg_js( s , s2 , tol );
 	}
 
 	nmg_tbl( &shells , TBL_FREE , (long *)NULL );
 
-	(void)nmg_mv_shell_to_region( s_tmp , old_r );
+	(void)nmg_mv_shell_to_region( s , old_r );
 	nmg_kr( new_r );
 }
 
