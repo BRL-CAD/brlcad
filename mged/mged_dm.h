@@ -22,8 +22,26 @@ struct device_values  {
 	int	dv_flagadc;		/* A/D cursor "changed" flag */
 };
 
-/* Declarations of functions in the Display Manager module */
+
+/* Display manager routines */
+extern void	dm_open(), dm_init(), dm_restart();
+extern void	dm_prolog(), dm_epilog(), dm_call();
+extern void	dm_normal(), dm_newrot(), dm_update();
+extern void	dm_finish(), dm_puts(), dm_2d_line();
 extern void	dm_light();
+extern float	dm_bound;		/* zoom-in limit */
+extern int	dm_object();		/* Set up for an object */
+
+/* Global solid center & sizing information */
+extern float	dl_xcent, dl_ycent, dl_zcent;
+extern float	dl_scale;
+
+/* Functions to generate displaylist */
+extern void dl_preamble();
+extern void dl_epilogue();
+extern unsigned dl_load();
+extern unsigned dl_size();
+extern void	dl_goto();	/* Produce optimized absolute vectors */
 
 
 /*
