@@ -1863,7 +1863,12 @@ hl_Postprocess()
 			/* Output pixel based on bitmap value.  If bit is
 				ON, pixel should be ON. */
 			if( anti_aliasing )
-				{	register int xa, ya, xn, yn;
+				{
+#if defined(sgi) && ! defined(mips)
+					int xa, ya, xn, yn;
+#else
+					register int xa, ya, xn, yn;
+#endif
 				/* Anti-aliasing, map square matrix to pixel.
 					If one bit is ON, turn pixel ON. */
 				for(	ya = 0, yn = yi*aperture_sz;
