@@ -39,6 +39,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "rtlist.h"
 #include "db.h"
+#include "nmg.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "externs.h"
@@ -170,6 +172,10 @@ after_read:
 			pipebld();
 			continue;
 
+		case DBID_STRSOL:
+			strsolbld();
+			continue;
+
 		case DBID_NMG:
 			nmgbld();
 			continue;
@@ -189,6 +195,113 @@ after_read:
 		}
 	}
 	exit(0);
+}
+
+/* XXX structparse for EBM and VOL taken from g_ebm.c and g_vol.c, should be kept in just one place */
+#define RT_EBM_O(m)	offsetof(struct rt_ebm_internal, m)
+
+struct structparse ebm_parse[] = {
+#if CRAY && !__STDC__
+	{"%s",	RT_EBM_NAME_LEN, "file",	1,	FUNC_NULL },
+#else
+	{"%s",	RT_EBM_NAME_LEN, "file", offsetofarray(struct rt_ebm_internal, file), FUNC_NULL },
+#endif
+	{"%d",	1, "w",		RT_EBM_O(xdim),		FUNC_NULL },
+	{"%d",	1, "n",		RT_EBM_O(ydim),		FUNC_NULL },
+	{"%f",	1, "d",		RT_EBM_O(tallness),	FUNC_NULL },
+	{"%f",	16, "mat", offsetofarray(struct rt_ebm_internal, mat), FUNC_NULL },
+	{"",	0, (char *)0, 0,			FUNC_NULL }
+};
+
+#define VOL_O(m)	offsetof(struct rt_vol_internal, m)
+
+struct structparse vol_parse[] = {
+#if CRAY && !__STDC__
+	{"%s",	RT_VOL_NAME_LEN, "file",	1,		FUNC_NULL },
+#else
+	{"%s",	RT_VOL_NAME_LEN, "file",	offsetofarray(struct rt_vol_internal, file), FUNC_NULL },
+#endif
+	{"%d",	1, "w",		VOL_O(xdim),	FUNC_NULL },
+	{"%d",	1, "n",		VOL_O(ydim),	FUNC_NULL },
+	{"%d",	1, "d",		VOL_O(zdim),	FUNC_NULL },
+	{"%d",	1, "lo",	VOL_O(lo),		FUNC_NULL },
+	{"%d",	1, "hi",	VOL_O(hi),		FUNC_NULL },
+	{"%f",	ELEMENTS_PER_VECT, "size",offsetofarray(struct rt_vol_internal, cellsize), FUNC_NULL },
+	{"%f",	16, "mat", offsetofarray(struct rt_vol_internal,mat), FUNC_NULL },
+	{"",	0, (char *)0,	0,			FUNC_NULL }
+};
+
+void
+strsolbld()
+{
+	register char *cp;
+	register char *np;
+	char keyword[10];
+	char name[NAMELEN+1];
+	struct rt_vls vls;
+
+	cp = buf;
+
+	if( *cp != DBID_STRSOL )
+	{
+		rt_log( "asc2g: expecting STRSOL, found '%c' (0%o) (skipping)\n" , buf[0], buf[0] );
+		rt_log( "%s\n" , buf );
+		return;
+	}
+
+	cp = nxt_spc( cp );
+	np = keyword;
+	while( *cp != ' ' )
+		*np++ = *cp++;
+	*np = '\0';
+
+	cp = nxt_spc( cp );
+	np = name;
+	while( *cp != ' ' )
+		*np++ = *cp++;
+	*np = '\0';
+
+	cp = nxt_spc( cp );
+
+	if( !strcmp( keyword , "ebm" ) )
+	{
+		struct rt_ebm_internal ebm;
+
+		mat_idn( ebm.mat );
+		rt_vls_init( &vls );
+		rt_vls_strcat( &vls , cp );
+		rt_structparse( &vls , ebm_parse , (char *)&ebm );
+		ebm.magic =  RT_EBM_INTERNAL_MAGIC;
+		if( mk_export_fwrite( ofp , name , (genptr_t)&ebm , ID_EBM ) )
+		{
+			rt_log( "asc2g: Failed to convert EBM solid\n" );
+			rt_log( "buf=%s\n" , buf );
+		}
+		rt_vls_free( &vls );
+	}
+	else if( !strcmp( keyword , "vol" ) )
+	{
+		struct rt_vol_internal vol;
+
+		mat_idn( vol.mat );
+		VSET( vol.cellsize , 1 , 1 , 1 );
+		rt_vls_init( &vls );
+		rt_vls_strcat( &vls , cp );
+		rt_structparse( &vls , vol_parse , (char *)&vol );
+		vol.magic =  RT_VOL_INTERNAL_MAGIC;
+		if( mk_export_fwrite( ofp , name , (genptr_t)&vol , ID_VOL ) )
+		{
+			rt_log( "asc2g: Failed to convert VOL solid\n" );
+			rt_log( "buf=%s\n" , buf );
+		}
+		rt_vls_free( &vls );
+	}
+	else
+	{
+		rt_log( "asc2g: Unrecognized STRSOL keyword '%s', skipping\n" , keyword );
+		rt_log( "buf=%s\n" , buf );
+		return;
+	}
 }
 
 void
@@ -283,6 +396,7 @@ solbld()
 	point_t	min, max;
 	vect_t	a, b, c, d, n, r1, r2;	/* various vectors required */
 	vect_t	height;			/* height vector for tgc */
+	vect_t	breadth;		/* breadth vector for rpc */
 	double	dd, rad1, rad2;
 
 	cp = buf;
@@ -366,6 +480,58 @@ solbld()
 			dd = val[3];
 
 			mk_half(ofp, name, norm, dd);
+			break;
+
+		case RPC:
+			VSET( center, val[0], val[1], val[2] );
+			VSET( height, val[3], val[4], val[5] );
+			VSET( breadth, val[6], val[7], val[8] );
+			dd = val[9];
+
+			mk_rpc( ofp, name, center, height, breadth, dd );
+			break;
+
+		case RHC:
+			VSET( center, val[0], val[1], val[2] );
+			VSET( height, val[3], val[4], val[5] );
+			VSET( breadth, val[6], val[7], val[8] );
+			rad1 = val[9];
+			dd = val[10];
+
+			mk_rhc( ofp, name, center, height, breadth, rad1, dd );
+			break;
+
+		case EPA:
+			VSET( center, val[0], val[1], val[2] );
+			VSET( height, val[3], val[4], val[5] );
+			VSET( a, val[6], val[7], val[8] );
+			VUNITIZE( a );
+			rad1 = val[9];
+			rad2 = val[10];
+
+			mk_epa( ofp, name, center, height, a, rad1, rad2 );
+			break;
+
+		case EHY:
+			VSET( center, val[0], val[1], val[2] );
+			VSET( height, val[3], val[4], val[5] );
+			VSET( a, val[6], val[7], val[8] );
+			VUNITIZE( a );
+			rad1 = val[9];
+			rad2 = val[10];
+			dd = val[11];
+
+			mk_ehy( ofp, name, center, height, a, rad1, rad2, dd );
+			break;
+
+		case ETO:
+			VSET( center, val[0], val[1], val[2] );
+			VSET( norm, val[3], val[4], val[5] );
+			VSET( c, val[6], val[7], val[8] );
+			rad1 = val[9];
+			rad2 = val[10];
+
+			mk_eto( ofp, name, center, norm, c, rad1, rad2 );
 			break;
 
 		default:
