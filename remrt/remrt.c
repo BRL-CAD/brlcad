@@ -2326,7 +2326,7 @@ int	enter;
 	unsigned long	addr_tmp;
 	char		name[64];
 
-#ifdef CRAY
+#if CRAY && OLDTCP
 	addr_tmp = from->sin_addr;
 	addr = gethostbyaddr(&addr_tmp, sizeof (struct in_addr),
 		from->sin_family);
@@ -2366,7 +2366,7 @@ int	enter;
 	if( isdigit( *name ) )  {
 		/* Numeric */
 		sockhim.sin_family = AF_INET;
-#ifdef CRAY
+#if CRAY && OLDTCP
 		sockhim.sin_addr = inet_addr(name);
 #else
 		sockhim.sin_addr.s_addr = inet_addr(name);
