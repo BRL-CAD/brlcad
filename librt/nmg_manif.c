@@ -245,7 +245,7 @@ char *tbl;
 		do {
 			found = 0;
 			for (RT_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
-				if (nmg_dangling_face(fu_p, tbl)) {
+				if (nmg_dangling_face(fu_p /**,tbl**/)) {
 					found = 1;
 
 					NMG_SET_MANIFOLD(tbl, fu_p, 
