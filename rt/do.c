@@ -865,20 +865,20 @@ int framenumber;
 	rt_log(
 		"Frame %5d: %8d pixels in %10.2f sec = %10.2f pixels/sec\n",
 		framenumber,
-		width*height, nutime, (double)(width*height)/nutime );
+		width*height, nutime, ((double)(width*height))/nutime );
 	rt_log(
 		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (RTFM)\n",
 		framenumber,
-		rtip->rti_nrays, nutime, (double)(rtip->rti_nrays)/nutime );
+		rtip->rti_nrays, nutime, ((double)(rtip->rti_nrays))/nutime );
 	rt_log(
 		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/CPU_sec\n",
 		framenumber,
-		rtip->rti_nrays, utime, (double)(rtip->rti_nrays)/utime );
+		rtip->rti_nrays, utime, ((double)(rtip->rti_nrays))/utime );
 	rt_log(
 		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (wallclock)\n",
 		framenumber,
 		rtip->rti_nrays,
-		wallclock, (double)(rtip->rti_nrays)/wallclock );
+		wallclock, ((double)(rtip->rti_nrays))/wallclock );
 
 	if( outfp != NULL )  {
 #ifdef CRAY_COS
