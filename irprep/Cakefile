@@ -1,7 +1,7 @@
 /*
  *			I R P R E P
  */
-#define CONFIGDEFS	RT_CONFIG
+#define CONFIGDEFS	RT_CONFIG -I''XINCDIR
 
 #define SRCDIR	irprep
 #define PRODUCTS	firpass secpass shapefact all_sf \
@@ -13,6 +13,7 @@
 #include "../Cakefile.prog"
 
 #define FILES	firpass secpass shapefact all_sf subroutines
+
 
 /* Explicit composition of each product */
 
@@ -32,10 +33,10 @@ display:  display.o
         CC LDFLAGS display.o LIBRT RT_LIBES LIBMALLOC LIBES -o display
 
 see:	see.o
-	CC LDFLAGS -I/usr/X11/include see.o -L/usr/X11/lib -lX11 -o see
+	CC LDFLAGS see.o -L''XLIBDIR -lX11 -o see
 
 pictx:	pictx.o
-	CC LDFLAGS -I/usr/X11/include pictx.o -L/usr/X11/lib -lX11 -o pictx
+	CC LDFLAGS pictx.o -L''XLIBDIR -lX11 -o pictx
 
 lint:
 	lint LFLAGS -I''INCDIR ../irprep/firpass.c ../irprep/subroutines.c > SRCDIR.lint
