@@ -601,23 +601,6 @@ struct partition {
 /*
  *  Bit vectors
  */
-union bitv_elem {
-	union bitv_elem	*be_next;
-	bitv_t		be_v[2];
-};
-#define BITV_NULL	((union bitv_elem *)0)
-
-#define GET_BITV(ip,p,res)  { \
-			while( ((p)=res->re_bitv) == BITV_NULL ) \
-				rt_get_bitv(ip,res); \
-			res->re_bitv = (p)->be_next; \
-			p->be_next = BITV_NULL; \
-			res->re_bitvget++; }
-
-#define FREE_BITV(p,res)  { \
-			(p)->be_next = res->re_bitv; \
-			res->re_bitv = (p); \
-			res->re_bitvfree++; }
 
 /*
  *  Bit-string manipulators for arbitrarily long bit strings
@@ -985,6 +968,7 @@ struct animate {
  */
 struct resource {
 	long		re_magic;	/* Magic number */
+	int		re_cpu;		/* processor number, for ID */
 	struct seg 	re_seg;		/* Head of segment freelist */
 	long		re_seglen;
 	long		re_segget;
@@ -993,13 +977,10 @@ struct resource {
 	long		re_partlen;
 	long		re_partget;
 	long		re_partfree;
-	union bitv_elem *re_bitv;	/* head of freelist */
-	long		re_bitvlen;
-	long		re_bitvget;
-	long		re_bitvfree;
+	struct rt_list	re_solid_bitv;	/* head of freelist */
+	struct rt_list	re_region_bitv;	/* head of freelist */
 	union tree	**re_boolstack;	/* Stack for rt_booleval() */
 	long		re_boolslen;	/* # elements in re_boolstack[] */
-	int		re_cpu;		/* processor number, for ID */
 	float		*re_randptr;	/* ptr into random number table */
 	/* Statistics.  Only for examination by rt_add_res_stats() */
 	long		re_nshootray;	/* Calls to rt_shootray() */
@@ -1649,7 +1630,7 @@ RT_EXTERN(void rt_boolweave, (struct seg *out_hd, struct seg *in_hd,
 RT_EXTERN(int rt_boolfinal, (struct partition *InputHdp,
 	struct partition *FinalHdp,
 	fastf_t startdist, fastf_t enddist,
-	bitv_t *regionbits, struct application *ap) );
+	struct bu_bitv *regionbits, struct application *ap) );
 
 RT_EXTERN(void rt_grow_boolstack, (struct resource *res) );
 					/* Approx Floating compare */
