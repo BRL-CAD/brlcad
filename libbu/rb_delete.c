@@ -174,6 +174,12 @@ int	order;
 		tree -> rbt_nm_nodes);
 	exit (0);
     }
+    if (rb_current(tree) == rb_null(tree))
+    {
+	rt_log("Warning: rb_delete(): current node is undefined\n");
+	return;
+    }
+
     nm_orders = tree -> rbt_nm_orders;
     package = (rb_current(tree) -> rbn_package)[order];
 
