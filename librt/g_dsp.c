@@ -3523,12 +3523,12 @@ get_obj_data(struct rt_dsp_internal	*dsp_ip,
  */
 static int
 dsp_get_data(struct rt_dsp_internal	*dsp_ip,
-						 struct rt_db_internal	*ip,
-						 const struct bu_external	*ep,
-						 register const mat_t	mat,
-						 const struct db_i		*dbip)
+	     struct rt_db_internal	*ip,
+	     const struct bu_external	*ep,
+	     register const mat_t	mat,
+	     const struct db_i		*dbip)
 {
-	mat_t	tmp;
+    mat_t	tmp;
     char	*p;
 		
     /* Apply Modeling transform */
@@ -3548,7 +3548,7 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 			
 			if (get_file_data(dsp_ip, ip, ep, mat, dbip) != 0) {
 				p = "file";
-			}	else {
+			} else {
 				return 0;
 			}			
 
@@ -4212,7 +4212,29 @@ char			**argv;
 				(char *)intern->idb_ptr );
 }
 
+void
+rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
+{
+    struct rt_dsp_internal *dsp;
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_DSP;
+
+    BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    dsp =(struct rt_dsp_internal *)bu_calloc(sizeof(struct rt_dsp_internal),1, "rt_dsp_internal");
+
+    intern->idb_ptr = (genptr_t)dsp;
+    dsp->magic = RT_DSP_INTERNAL_MAGIC;
+    bu_vls_init(&dsp->dsp_name);
+    bu_vls_strcpy(&dsp->dsp_name, "/dev/null");
+    dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
+    MAT_IDN( dsp->dsp_mtos );
+    MAT_IDN( dsp->dsp_stom );
+    dsp->dsp_datasrc = RT_DSP_SRC_FILE;
+
+}
 /* Important when concatenating source files together */
 #undef dlog
 #undef XMIN

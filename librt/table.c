@@ -388,6 +388,8 @@ extern int rt_dsp_tcladjust(Tcl_Interp *interp,
 			    int		argc,
 			    char	**argv,
 			    struct resource *resp);
+BU_EXTERN(void rt_dsp_make, (const struct rt_functab *,	struct rt_db_internal *,
+			     double /*diameter*/));
 
 /* PIPE solid */
 BU_EXTERN(int rt_pipe_tclget, (Tcl_Interp *interp,
@@ -869,7 +871,7 @@ const struct rt_functab rt_functab[] = {
 		rt_dsp_describe,rt_dsp_xform,	rt_dsp_parse,
 		sizeof(struct rt_dsp_internal), RT_DSP_INTERNAL_MAGIC,
 	        rt_dsp_tclget,  rt_dsp_tcladjust, rt_nul_tclform, 
-	        rt_nul_make,
+	        rt_dsp_make,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_SKETCH", "sketch",
