@@ -55,6 +55,8 @@ struct sizes fb_common_sizes[] = {
 	{ 1280,	1024 },		/* SGI-4D screen size */
 	{ 1440,  972 },		/* double Abekas video format */
 	{ 1536, 1024 },		/* Kodak Photo-CD, level 4, 4*Base */
+	{ 1600, 1200 },		/* Digital camera */
+	{ 1600, 1280 },		/* Large monitor */
 	{ 3072, 2048 },		/* Kodak Photo-CD, level 5, 16*Base */
 	{ 3200, 4000 },		/* 8x10 inches, 400 dpi */
 	{ 3400, 4400 },		/* 8.5x11 inches, 400 dpi */
