@@ -252,8 +252,9 @@
 #      undef _BSD_SOURCE
 #    endif
 #    ifdef _SETJMP_H
-      __png.h__ already includes setjmp.h;
-      __dont__ include it again.;
+/*      __png.h__ already includes setjmp.h;
+ *     __dont__ include it again.;
+ */
 #    endif
 #  endif /* __linux__ */
 
