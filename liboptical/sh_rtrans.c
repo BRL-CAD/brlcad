@@ -101,7 +101,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	if( bu_struct_parse( matparm, rtrans_parse, (char *)rtrans_sp ) < 0 )
 		return(-1);
 
-	rtrans_sp->msr = msr_unif_init( 0, 0 );
+	rtrans_sp->msr = msr_unif_init( 3, 0 );
 
 	if( rdebug&RDEBUG_SHADE)
 		bu_struct_print( rp->reg_name, rtrans_parse, (char *)rtrans_sp );
