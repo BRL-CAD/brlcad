@@ -1543,7 +1543,8 @@ double h_val, lacunarity, octaves;
 	ep->magic = MAGIC_fbm_spec_wgt;	ep->octaves = octaves;
 	ep->h_val = h_val;		ep->lacunarity = lacunarity;
 	spec_wgts = ep->spec_wgts = 
-		(double *)malloc( ((int)(octaves+1)) * sizeof(double) );
+		(double *)rt_malloc( ((int)(octaves+1)) * sizeof(double),
+		"spectral weights" );
 
 	/* precompute and store spectral weights table */
 	for (frequency = 1.0, i=0 ; i < octaves ; i++) {
