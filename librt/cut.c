@@ -759,6 +759,11 @@ int			ncpu;
 	bu_ptbl_init( &rtip->rti_cuts_waiting, rtip->nsolids,
 		      "rti_cuts_waiting ptbl" );
 
+	if( rtip->rti_hasty_prep )  {
+		rtip->rti_space_partition = RT_PART_NUBSPT;
+		rt_cutDepth = 6;
+	}
+
 	switch( rtip->rti_space_partition ) {
 	case RT_PART_NUGRID:
 		rtip->rti_CutHead.cut_type = CUT_NUGRIDNODE;
