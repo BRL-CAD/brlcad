@@ -23,11 +23,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 
+extern void	predictor_hook();		/* in ged.c */
+
 struct mged_variables mged_variables = {
 /* autosize */		1,
 /* sgi_win_size */	0,
 /* sgi_win_origin */	{ 0, 0 },
-/* faceplate */		1
+/* faceplate */		1,
+/* predictor */		0,
+/* predictor_advance */	1.0,
+/* predictor_length */	2.0
 };
 
 /*
@@ -45,6 +50,9 @@ struct structparse mged_vparse[] = {
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),FUNC_NULL },
 	{"%d",	1, "faceplate",		MV_O(faceplate),	refresh_hook },
+	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
+	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
+	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
