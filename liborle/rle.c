@@ -27,8 +27,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "orle.h"
 
-typedef unsigned char	u_char;
-
 #define PRNT_A1_DEBUG(_op,_n) \
 	if(rle_debug) (void)fprintf(stderr,"%s(%d)\n",_op,_n)
 #define PRNT_A2_DEBUG(_op,_n,_c) \
@@ -484,7 +482,7 @@ RGBpixel	*scan_buf;
 		static short	word;
 
 		register int	n;
-		register u_char	*pp;
+		register unsigned char	*pp;
 		register int	dirty_flag = 0;
 
 	if( lines_to_skip > 0 )
@@ -539,7 +537,7 @@ RGBpixel	*scan_buf;
 				 * STDIO internals (sorry) to improve speed.
 				 */
 				if( fp->_cnt >= n )
-					{ register u_char *cp = (u_char *)fp->_ptr;
+					{ register unsigned char *cp = (unsigned char *)fp->_ptr;
 					fp->_cnt -= n;
 					while( n-- > 0 )
 						{
@@ -561,7 +559,7 @@ RGBpixel	*scan_buf;
 				}
 			else
 				{ /* Ugh, black & white.		*/
-				register u_char c;
+				register unsigned char c;
 				while( n-- > 0 )
 					{
 					/* Implicit knowledge of sizeof(RGBpixel) */
@@ -586,7 +584,7 @@ RGBpixel	*scan_buf;
 			PRNT_A2_DEBUG( "Run-Data", n,	word );
 			if( ! _bw_flag )
 				{
-				register u_char inten = (u_char)word;
+				register unsigned char inten = (unsigned char)word;
 				while( n-- > 0 )
 					{
 					*pp = inten;
@@ -598,9 +596,9 @@ RGBpixel	*scan_buf;
 				while( n-- > 0 )
 					{
 					/* Implicit knowledge of sizeof(RGBpixel) */
-					*pp++ = (u_char) word;
-					*pp++ = (u_char) word;
-					*pp++ = (u_char) word;
+					*pp++ = (unsigned char) word;
+					*pp++ = (unsigned char) word;
+					*pp++ = (unsigned char) word;
 					}
 				}
 			dirty_flag = 1;
@@ -755,7 +753,7 @@ register RGBpixel	*last_p;
 	{	register RGBpixel	*pixelp;
 		register RGBpixel	*runs_p = data_p;
 		register int	state = DATA;
-		register u_char	runval = (*data_p)[CUR];
+		register unsigned char	runval = (*data_p)[CUR];
 	for( pixelp = data_p + 1; pixelp <= last_p; pixelp++ )
 		{
 		switch( state )
@@ -826,14 +824,14 @@ register RGBpixel	*last_p;
 HIDDEN void
 _put_Data( fp, cp, n )
 register FILE	*fp;
-register u_char *cp;
+register unsigned char *cp;
 int		n;
 	{	register int	count = n;
 	RByteData(n-1);
 
 	/* More STDIO optimization, watch out...			*/
 	if( fp->_cnt >= count )
-		{ register u_char *op = (u_char *)fp->_ptr;
+		{ register unsigned char *op = (unsigned char *)fp->_ptr;
 		fp->_cnt -= count;
 		while( count-- > 0 )
 			{
