@@ -210,6 +210,7 @@ register struct mater *mp;
 
 	/* Fake up a directory entry for db_* routines */
 	dir.d_namep = "color_putrec";
+	dir.d_magic = RT_DIR_MAGIC;
 	if( mp->mt_daddr == MATER_NO_ADDR )  {
 		/* Need to allocate new database space */
 		if( db_alloc( dbip, &dir, 1 ) < 0 )  ALLOC_ERR_return;
@@ -234,6 +235,7 @@ register struct mater *mp;
 
 	if( dbip->dbi_read_only || mp->mt_daddr == MATER_NO_ADDR )
 		return;
+	dir.d_magic = RT_DIR_MAGIC;
 	dir.d_namep = "color_zaprec";
 	dir.d_len = 1;
 	dir.d_addr = mp->mt_daddr;
