@@ -97,6 +97,7 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 # define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
 # include <sys/types.h>
 # include <ulocks.h>
+# include <sys/sysmp.h> /* for sysmp() */
 /* ulocks.h #include's <limits.h> and <malloc.h> */
 /* ulocks.h #include's <task.h> for getpid stuff */
 /* task.h #include's <sys/prctl.h> */
@@ -267,7 +268,21 @@ bu_avail_cpus()
 #endif
 
 #ifdef SGI_4D
+	/* XXX LAB 04 June 2002
+	 * The call prctl(PR_MAXPPROCS) is supposed to indicate the number
+	 * of processors this process can use.  Unfortuantely, this returns
+	 * 0 when running under a CPU set.  A bug report has been filed with
+	 * SGI.
+	 *
+	 * The sysmp(MP_NPROCS) call returns the number of physically 
+	 * configured processors.  This will have to suffice until SGI
+	 * comes up with a fix.
+	 */
+#if 0
 	ret = (int)prctl(PR_MAXPPROCS);
+#else
+	ret = sysmp(MP_NPROCS);
+#endif
 #	define	RT_AVAIL_CPUS
 #endif
 
