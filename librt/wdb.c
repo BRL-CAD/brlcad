@@ -265,6 +265,7 @@ wdb_put_internal(
 	RT_CK_DB_INTERNAL(ip);
 
 	if( wdbp->dbip->dbi_version <= 4 )  {
+		BU_INIT_EXTERNAL( &ext );
 		ret = ip->idb_meth->ft_export( &ext, ip, local2mm, wdbp->dbip );
 		if( ret < 0 )  {
 			bu_log("rt_db_put_internal(%s):  solid export failure\n",
