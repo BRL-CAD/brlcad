@@ -335,6 +335,9 @@ register struct soltab *stp;
 	mat_print("invR o S", rec->rec_invRoS );
 }
 
+/* To be clean, hit_private (a char *), is set to one of these */
+static char rec_compute[4];
+
 /*
  *  			R E C _ S H O T
  *  
@@ -399,14 +402,14 @@ register struct xray *rp;
 	VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
 		hitp->hit_dist = k1;
-		hitp->hit_private = (char *)3;	/* compute */
+		hitp->hit_private = &rec_compute[0];	/* compute N */
 		hitp++;
 	}
 
 	VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
 		hitp->hit_dist = k2;
-		hitp->hit_private = (char *)3;		/* compute */
+		hitp->hit_private = &rec_compute[0];	/* compute N */
 		hitp++;
 	}
 
@@ -423,7 +426,7 @@ check_plates:
 		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k1;
-			hitp->hit_private = (char *)2;	/* -H */
+			hitp->hit_private = &rec_compute[1];	/* H */
 			hitp++;
 		}
 
@@ -431,7 +434,7 @@ check_plates:
 		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k2;
-			hitp->hit_private = (char *)1;	/* H */
+			hitp->hit_private = &rec_compute[2];	/* -H */
 			hitp++;
 		}
 	}
@@ -475,8 +478,8 @@ register struct xray *rp;
 		(struct rec_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	switch( (int)hitp->hit_private )  {
-	case 3:
+	switch( hitp->hit_private-rec_compute )  {
+	case 0:
 		/* compute it */
 		MAT4X3VEC( hitp->hit_normal, rec->rec_invRoS,
 			hitp->hit_vpriv );
@@ -489,7 +492,7 @@ register struct xray *rp;
 		VREVERSE( hitp->hit_normal, rec->rec_Hunit );
 		break;
 	default:
-		rt_log("rec_norm: bad flag %d\n", (int)hitp->hit_private);
+		rt_log("rec_norm: bad flag x%x\n", (int)hitp->hit_private);
 		break;
 	}
 }
