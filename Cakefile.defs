@@ -261,7 +261,7 @@ set -S2 "/bin/sh"
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	define	GFLAG	-n32 -mips3 -KPIC -G 7
+#	define	GFLAG	-n32 -mips4 -KPIC -G 7
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib32
 #	if 1	/* PRODUCTION=1 */
