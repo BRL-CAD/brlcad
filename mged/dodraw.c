@@ -236,8 +236,14 @@ int			id;
 		rt_log("%s tessellation failure\n", dp->d_namep);
 	    	return(TREE_NULL);
 	}
-	nmg_ck_closed_surf( r1->s_p );	/* debug */
+	/* debug */
 	NMG_CK_REGION( r1 );
+	if( nmg_ck_closed_surf( r1->s_p ) != 0 )  {
+#if 0
+		nmg_kr( r1 );
+		return(TREE_NULL);
+#endif
+	}
 
 	GETUNION( curtree, tree );
 	curtree->tr_op = OP_REGION;	/* tag for nmg */
@@ -297,15 +303,22 @@ com:
 			return(0);
 		return( l );
 	}
+	/* debug */
 	NMG_CK_REGION( r );
 	NMG_CK_REGION( l );
-	nmg_ck_closed_surf( r->s_p );	/* debug */
-	nmg_ck_closed_surf( l->s_p );	/* debug */
+	if( nmg_ck_closed_surf( r->s_p ) != 0 ||
+	    nmg_ck_closed_surf( l->s_p ) != 0 )  {
+	    	rt_log("mged_nmg_doit:  non-closed shell, skipped\n");
+	    	nmg_kr( r );
+	    	nmg_kr( l );
+		return(0);
+	}
 
 	/* input r1 and r2 are destroyed, output is new r1 */
 	r = nmg_do_bool( l, r, op );
+	/* debug */
 	NMG_CK_REGION( r );
-	nmg_ck_closed_surf( r->s_p );	/* debug */
+	(void)nmg_ck_closed_surf( r->s_p );
 	return( r );
 }
 
