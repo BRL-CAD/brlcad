@@ -135,24 +135,26 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 	} else
 	 {
 		hvect_t h1, h2, h3, h4;
+	 	int	offset;
 
-		HVMOVE(h1, mesh_ptr);
-		HVMOVE(h2,
-		    (mesh_ptr + (srf->mesh->s_size[1] - 1) * coords));
-		HVMOVE(h3,
-		    (mesh_ptr + 
+		HMOVE(h1, mesh_ptr);
+		HDIVIDE( p1, h1 );
+
+	 	offset = (srf->mesh->s_size[1] - 1) * coords;
+		HMOVE(h2, mesh_ptr + offset);
+		HDIVIDE( p2, h2 );
+
+	 	offset = 
 		    ((srf->mesh->s_size[1] * 
 		    (srf->mesh->s_size[0] - 1)) + 
-		    (srf->mesh->s_size[1] - 1)) * coords));
-
-		HVMOVE(h4,
-		    (mesh_ptr + 
-		    (srf->mesh->s_size[1] * 
-		    (srf->mesh->s_size[0] - 1)) * coords));
-
-		HDIVIDE( p1, h1 );
-		HDIVIDE( p2, h2 );
+		    (srf->mesh->s_size[1] - 1)) * coords;
+		HMOVE(h3, mesh_ptr + offset);
 		HDIVIDE( p3, h3 );
+
+	 	offset = 
+		    (srf->mesh->s_size[1] * 
+		    (srf->mesh->s_size[0] - 1)) * coords;
+		HMOVE(h4, mesh_ptr + offset);
 		HDIVIDE( p4, h4 );
 	}
 
@@ -203,7 +205,7 @@ int	pt_type;
 	if ( !rational) {
 		VMOVE(p1, crv);
 	} else	 {
-		HVMOVE( h1, crv);
+		HMOVE( h1, crv);
 		HDIVIDE( p1, h1);
 	}
 
@@ -217,7 +219,7 @@ int	pt_type;
 		if ( !rational) {
 			VMOVE(p2, (crv + (i * coords)));
 		} else {
-			HVMOVE( h2, (crv + ( i * coords)));
+			HMOVE( h2, (crv + ( i * coords)));
 			HDIVIDE( p2, h2 );
 		}
 
