@@ -708,6 +708,7 @@ extern void		nmg_ck_lueu(struct loopuse *cklu, char *s);
 extern void		nmg_jl(struct loopuse *lu, struct edgeuse *eu);
 extern void		nmg_simplify_loop(struct loopuse *lu);
 extern void		nmg_simplify_face(struct faceuse *fu);
+extern void		nmg_simplify_shell(struct shell *s);
 
 #else
 extern struct model	*nmg_mmr();
@@ -784,6 +785,7 @@ extern void		nmg_ck_lueu();
 extern void		nmg_jl();
 extern void		nmg_simplify_loop();
 extern void		nmg_simplify_face();
+extern void		nmg_simplify_shell();
 
 #endif
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
