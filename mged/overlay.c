@@ -238,8 +238,13 @@ char	**argv;
 			continue;
 		/* Find uses of this solid in the solid table */
 		FOR_ALL_SOLIDS(s)  {
-			if( s->s_path[s->s_last] != dp )  continue;
-			label_vlist_verts( vbp, &s->s_vlist, mat, scale );
+			int	j;
+			for( j = s->s_last; j >= 0; j-- )  {
+				if( s->s_path[j] == dp )  {
+					label_vlist_verts( vbp, &s->s_vlist, mat, scale );
+					break;
+				}
+			}
 		}
 	}
 
