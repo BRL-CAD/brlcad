@@ -3375,19 +3375,23 @@ wdb_title_tcl(clientData, interp, argc, argv)
  *  NON-PARALLEL due to rt_uniresource
  */
 static void
-wdb_print_node(wdbp, interp, dp, pathpos, prefix)
-     struct rt_wdb *wdbp;
-     Tcl_Interp *interp;
-     register struct directory *dp;
-     int pathpos;
-     char prefix;
+wdb_print_node(wdbp, interp, dp, pathpos, prefix, cflag)
+     struct rt_wdb		*wdbp;
+     Tcl_Interp			*interp;
+     register struct directory	*dp;
+     int			pathpos;
+     char			prefix;
+     int			cflag;
 {	
-	register int	i;
-	register struct directory *nextdp;
-	struct rt_db_internal intern;
-	struct rt_comb_internal *comb;
+	register int			i;
+	register struct directory	*nextdp;
+	struct rt_db_internal		intern;
+	struct rt_comb_internal		*comb;
 
-	for( i=0; i<pathpos; i++) 
+	if (cflag && !(dp->d_flags & DIR_COMB))
+		return;
+
+	for (i=0; i<pathpos; i++) 
 		Tcl_AppendResult(interp, "\t", (char *)NULL);
 
 	if (prefix) {
@@ -3480,7 +3484,7 @@ wdb_print_node(wdbp, interp, dp, pathpos, prefix)
 
 				Tcl_AppendResult(interp, rt_tree_array[i].tl_tree->tr_l.tl_name, "\n", (char *)NULL);
 			} else
-				wdb_print_node(wdbp, interp, nextdp, pathpos+1, op);
+				wdb_print_node(wdbp, interp, nextdp, pathpos+1, op, cflag);
 			db_free_tree( rt_tree_array[i].tl_tree, &rt_uniresource );
 		}
 		if(rt_tree_array) bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
@@ -3499,9 +3503,10 @@ wdb_tree_tcl(clientData, interp, argc, argv)
      int     argc;
      char    **argv;
 {
-	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-	register struct directory *dp;
-	register int j;
+	struct rt_wdb			*wdbp = (struct rt_wdb *)clientData;
+	register struct directory	*dp;
+	register int			j;
+	int				cflag = 0;
 
 	if (argc < 3 || MAXARGS < argc) {
 		struct bu_vls vls;
@@ -3513,12 +3518,18 @@ wdb_tree_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
+	if (argv[2][0] == '-' && argv[2][1] == 'c') {
+		cflag = 1;
+		--argc;
+		++argv;
+	}
+
 	for (j = 2; j < argc; j++) {
 		if (j > 2)
 			Tcl_AppendResult(interp, "\n", (char *)NULL);
 		if ((dp = db_lookup(wdbp->dbip, argv[j], LOOKUP_NOISY)) == DIR_NULL)
 			continue;
-		wdb_print_node(wdbp, interp, dp, 0, 0);
+		wdb_print_node(wdbp, interp, dp, 0, 0, cflag);
 	}
 
 	return TCL_OK;
@@ -4261,7 +4272,7 @@ wdb_whatid_tcl(clientData, interp, argc, argv)
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%d", comb->region_id);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_comb_ifree(&intern, &rt_uniresource);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
