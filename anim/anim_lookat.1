@@ -1,0 +1,38 @@
+.TH ANIM_LOOKAT 1 BRL/CAD
+.SH NAME
+anim_lookat - create a view animation script which looks from an eye point to 
+a specified point.
+.SH SYNOPSIS
+.B anim_lookat 
+.B [-f #] 
+.B < in.table 
+.B > out.script
+.SH DESCRIPTION
+This program takes as input a seven-column animation table
+consisting of time, an eye point, and a "look-at point", and prints a
+view animation script to control the virtual camera. A similar effect
+could be acheived by using the 
+.I tabsub 
+to create a script which uses the
+"lookat_pt" command. The advantage to using 
+.I anim_lookat 
+instead is that the
+camera remains "right side up", and that when the view is vertically up
+or down, the orientation is controlled by the previous orientation of the
+camera. This avoids sudden jumps as much as possible. 
+.PP
+The 
+.B \-f#
+option is used to specify an integer with which to begin
+numbering frames. The default is 0.
+.SH BUGS
+Looking straight up or straight down for two or more frames in a
+row may cause errors.
+.SH AUTHOR
+Carl J. Nuzman
+.SH COPYRIGHT
+	This software is Copyright (C) 1993 by the United States Army
+in all countries except the USA.  All rights reserved.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.MIL>.
