@@ -9,15 +9,6 @@
 # Source function library
 . `dirname $0`/library
 
-# use machinetype.sh's naming convention instead of the default name we get
-# from uname
-if [ -f "${REGRESS_DIR}/${PACKAGE_NAME}/sh/machinetype.sh" ] ; then
-    mt="`${REGRESS_DIR}/${PACKAGE_NAME}/sh/machinetype.sh > /dev/null 2>&1`"
-    [ $? = 0 ] && ARCH="$mt"
-fi
-initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}"
-
-
 start ( ) {
 
     # acquire an architecture lock in the package source to avoid nfs clobbering.
@@ -25,11 +16,6 @@ start ( ) {
         bomb "Unable to obtain build-$ARCH.lock"
     fi
 
-    __PATH="$PATH"
-    PATH="${BRLCAD_ROOT}/bin:$PATH" ; export PATH
-
-    STARTPWD="`pwd`"
-    
     cd ${REGRESS_DIR}/${PACKAGE_NAME}
 
     ./setup.sh -s > $REGRESS_DIR/setup.log 2>&1 <<EOF
@@ -42,10 +28,6 @@ EOF
     
     ./gen.sh -s install > $REGRESS_DIR/installation.log 2>&1
     log "Installation complete"
-
-    # restore to previous state
-    cd $STARTPWD
-    PATH="$__PATH" ; export PATH
 
     releaseLock $REGRESS_DIR/$PACKAGE_NAME/build-$ARCH
 }

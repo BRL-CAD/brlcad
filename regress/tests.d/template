@@ -1,19 +1,22 @@
 #!/bin/sh
 #
 # t e m p l a t e
-#
-# This is a test template that does nothing.  There is a stub for the 
-# start function, which is the only function that must be defined.
+# 
+# This is the BRL-CAD build test script.  It take a given source of brlcad
+# and builds it.
 #
 ###
 # Source function library
 . `dirname $0`/library
 
-# see library for a list of variables available for use in your script
-
-
 start ( ) {
-    log "This is the $TEST test.  It does nothing."
+
+    log "Starting template test"
+    for i in 1 2 3 4 5 6 7 8 ; do
+        log "Sleeping $i seconds"
+        sleep $i
+    done
+    log "Done with template test"
     return 0
 }
 
