@@ -670,17 +670,14 @@ CONST struct bu_attribute_value_pair	*attr;
 	if( ret < 0 )  {
 		bu_log("rt_db_put_internal5(%s):  solid export failure\n",
 			dp->d_namep);
+		rt_db_free_internal( ip );
 		db_free_external( &body );
 		return -2;		/* FAIL */
 	}
+	rt_db_free_internal( ip );
 
-	if( ip->idb_type == ID_COMBINATION )  {
-		major = DB5HDR_MAJORTYPE_BRLCAD_NONGEOM;
-		minor = 1;
-	} else {
-		major = DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY;
-		minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
-	}
+	major = DB5HDR_MAJORTYPE_BRLCAD;
+	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
 	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		dp->d_namep, attr, &body,
@@ -693,9 +690,6 @@ CONST struct bu_attribute_value_pair	*attr;
 		return -1;		/* FAIL */
 	}
 
-    	if( ip->idb_ptr )  ip->idb_meth->ft_ifree( ip );
-
-	RT_INIT_DB_INTERNAL(ip);
 	db_free_external( &ext );
 	return 0;			/* OK */
 }
@@ -736,13 +730,8 @@ CONST struct bu_attribute_value_pair	*attr;
 	}
 	BU_CK_EXTERNAL( &body );
 
-	if( ip->idb_type == ID_COMBINATION )  {
-		major = DB5HDR_MAJORTYPE_BRLCAD_NONGEOM;
-		minor = 1;
-	} else {
-		major = DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY;
-		minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
-	}
+	major = DB5HDR_MAJORTYPE_BRLCAD;
+	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
 	BU_INIT_EXTERNAL( &ext );
 	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
@@ -798,9 +787,7 @@ CONST mat_t		mat;
 		return -3;
 	}
 
-	if( raw.major_type == DB5HDR_MAJORTYPE_BRLCAD_NONGEOM )  {
-		id = ID_COMBINATION;
-	} else if( raw.major_type == DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY )  {
+	if( raw.major_type == DB5HDR_MAJORTYPE_BRLCAD )  {
 		id = raw.minor_type;
 		/* As a convenience to older ft_import routines */
 		if( mat == NULL )  mat = bn_mat_identity;
@@ -821,7 +808,7 @@ CONST mat_t		mat;
 	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip ) < 0 )  {
 		bu_log("rt_db_get_internal5(%s):  import failure\n",
 			dp->d_namep );
-	    	if( ip->idb_ptr )  ip->idb_meth->ft_ifree( ip );
+		rt_db_free_internal( ip );
 		db_free_external( &ext );
 		return -1;		/* FAIL */
 	}

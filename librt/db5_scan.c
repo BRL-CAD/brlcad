@@ -186,12 +186,13 @@ genptr_t		client_data;	/* unused client_data from db_scan() */
 	}
 	dp->d_un.file_offset = laddr;
 	switch( rip->major_type )  {
-	case DB5HDR_MAJORTYPE_BRLCAD_NONGEOM:
-		dp->d_flags = DIR_COMB;
-		/* How to check for region attribute here? */
-		break;
-	case DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY:
-		dp->d_flags = DIR_SOLID;
+	case DB5HDR_MAJORTYPE_BRLCAD:
+		if( rip->minor_type == ID_COMBINATION )  {
+			dp->d_flags = DIR_COMB;
+			/* XXX How to check for region attribute here? */
+		} else {
+			dp->d_flags = DIR_SOLID;
+		}
 		break;
 	case DB5HDR_MAJORTYPE_OPAQUE_BINARY:
 		/* XXX Do we want to define extra flags for this? */
