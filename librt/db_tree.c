@@ -1249,9 +1249,10 @@ region_end:
 		curtree = tsp->ts_leaf_func( tsp, pathp, &intern, client_data );
 		if(curtree) RT_CK_TREE(curtree);
 	} else {
-		bu_log("db_recurse:  %s is neither COMB nor SOLID?\n",
+		bu_log("db_recurse:  %s is neither a combination nor a solid and is not drawable\n",
 			dp->d_namep );
 		curtree = TREE_NULL;
+		return(curtree);
 	}
 out:
 	rt_db_free_internal( &intern, tsp->ts_resp );
