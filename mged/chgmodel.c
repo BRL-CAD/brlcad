@@ -1312,75 +1312,23 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	double	loc2mm;
-	struct bu_vls vls;
-	CONST char	*str;
-	fastf_t sf;
-	int sflag = 0;
+	int		ret;
+	struct bu_vls	vls;
+	fastf_t		sf;
 
 	CHECK_DBI_NULL;
 
 	bu_vls_init(&vls);
-	if(argc < 1 || 2 < argc){
-	  bu_vls_printf(&vls, "help units");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if(argc == 2 && strcmp(argv[1], "-s") == 0){
-	  --argc;
-	  ++argv;
-
-	  sflag = 1;
-	}
-
-	if( argc < 2 )  {
-	  str = bu_units_string(dbip->dbi_local2base);
-	  if(!str) str = "Unknown_unit";
-
-	  if(sflag)
-	    bu_vls_printf(&vls, "%s", str);
-	  else
-	    bu_vls_printf(&vls, "You are editing in '%s'.  1 %s = %g mm \n",
-			  str, str, dbip->dbi_local2base );
-
-	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	  bu_vls_free(&vls);
-	  return TCL_OK;
-	}
-
-	sf = dbip->dbi_base2local;
-
-	/* Allow inputs of the form "25cm" or "3ft" */
-	if( (loc2mm = bu_mm_value(argv[1]) ) <= 0 )  {
-		  Tcl_AppendResult(interp, argv[1], ": unrecognized unit\n",
-			   "valid units: <um|mm|cm|m|km|in|ft|yd|mi>\n", (char *)NULL);
-		return TCL_ERROR;
-	}
-
-	if( db_update_ident( dbip, dbip->dbi_title, loc2mm ) < 0 )  {
-		  Tcl_AppendResult(interp,
-			   "Warning: unable to stash working units into database\n",
-			   (char *)NULL);
-	}
-
-	dbip->dbi_local2base = loc2mm;
-	dbip->dbi_base2local = 1.0 / loc2mm;
+	bu_build_cmd_vls(&vls, MGED_DB_NAME, argc, argv);
+	ret = Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 
 	set_localunit_TclVar();
 	sf = dbip->dbi_base2local / sf;
 	update_grids(sf);
-
-	str = bu_units_string(dbip->dbi_local2base);
-	if(!str) str = "Unknown_unit";
-	bu_vls_printf(&vls, "You are now editing in '%s'.  1 %s = %g mm \n",
-			str, str, dbip->dbi_local2base );
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
 	update_views = 1;
 
-	return TCL_OK;
+	return ret;
 }
 
 /*
