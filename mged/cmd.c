@@ -78,6 +78,7 @@ void	f_ev(), f_debugnmg();
 void	f_tol();
 void	f_debugdir();
 void	f_polybinout();
+void	f_facetize();
 
 static struct funtab {
 	char *ft_name;
@@ -154,6 +155,8 @@ static struct funtab {
 	f_extrude,3,3,
 "facedef", "####", "define new face for an arb",
 	f_facedef, 2, MAXARGS,
+"facetize", "new_obj old_obj(s)", "convert objects to faceted NMG objects at current tol",
+	f_facetize, 3, MAXARGS,
 "find", "<objects>", "find all references to objects",
 	f_find, 1, MAXARGS,
 "fix", "", "fix display after hardware error",

@@ -40,8 +40,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern void	(*nmg_plot_anim_upcall)();
 extern void	(*nmg_vlblock_anim_upcall)();
 
-struct vlist	*rtg_vlFree;	/* should be rt_g.rtg_vlFree !! XXX dm.h */
-
 int	no_memory;	/* flag indicating memory for drawing is used up */
 long	nvectors;	/* number of vectors drawn so far */
 
@@ -918,4 +916,126 @@ long		rgb;
 	dmp->dmr_colorchange();
 #endif
 	return(0);		/* OK */
+}
+
+/*
+ *			M G E D _ F A C E T I Z E _ R E G I O N _ E N D
+ *
+ *  This routine must be prepared to run in parallel.
+ */
+HIDDEN union tree *mged_facetize_region_end( tsp, pathp, curtree )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+{
+	struct nmgregion	*r;
+	struct rt_list		vhead;
+
+	RT_LIST_INIT( &vhead );
+
+	if(rt_g.debug&DEBUG_TREEWALK)  {
+		char	*sofar = db_path_to_string(pathp);
+		rt_log("mged_facetize_region_end() path='%s'\n",
+			sofar);
+		rt_free(sofar, "path string");
+	}
+
+	(void)mged_nmg_doit( curtree );
+	/* New region remains part of this nmg "model" */
+
+	/* Return original tree -- it needs to be freed (by caller) */
+	return( curtree );
+}
+
+/* facetize [opts] new_obj old_obj(s) */
+void
+f_facetize( argc, argv )
+int	argc;
+char	**argv;
+{
+	int			i;
+	register int		c;
+	int			ncpu;
+	char			*newname;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
+	union record		*rec;
+	struct directory	*dp;
+	int			ngran;
+
+	RT_CHECK_DBI(dbip);
+
+	/* Initial vaues for options, must be reset each time */
+	ncpu = 1;
+
+	/* Parse options. */
+	optind = 1;		/* re-init getopt() */
+	while( (c=getopt(argc,argv,"P:")) != EOF )  {
+		switch(c)  {
+		case 'P':
+			ncpu = atoi(optarg);
+			break;
+		default:
+			printf("option '%c' unknown\n", c);
+			break;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	newname = argv[0];
+	argv++;
+	argc--;
+
+	if( db_lookup( dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
+		printf("error: solid '%s' already exists, aborting\n", newname);
+		return;
+	}
+
+  	mged_nmg_model = nmg_mm();
+	i = db_walk_tree( dbip, argc, argv,
+		ncpu,
+		&mged_initial_tree_state,
+		0,			/* take all regions */
+		mged_facetize_region_end,
+		mged_nmg_leaf );
+
+	if( i < 0 )  {
+		rt_log("facetize: error in db_walk_tree()\n");
+		/* Destroy NMG */
+		nmg_km( mged_nmg_model );
+		return;
+	}
+	/* Export NMG as a new solid */
+	RT_INIT_DB_INTERNAL(&intern);
+	intern.idb_type = ID_NMG;
+	intern.idb_ptr = (genptr_t)mged_nmg_model;
+	RT_INIT_EXTERNAL( &ext );
+
+	/* Scale change on export is 1.0 -- no change */
+	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
+		rt_log("facetize(%s):  solid export failure\n",
+			newname );
+		if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
+		db_free_external( &ext );
+		return;				/* FAIL */
+	}
+	rt_functab[ID_NMG].ft_ifree( &intern );
+
+	rec = (union record *)ext.ext_buf;
+	NAMEMOVE( newname, rec->s.s_name );
+
+	ngran = (ext.ext_nbytes + sizeof(union record)-1)/sizeof(union record);
+	if( (dp=db_diradd( dbip, newname, -1, ngran, DIR_SOLID)) == DIR_NULL ||
+	    db_alloc( dbip, dp, ngran ) < 0 )  {
+	    	ALLOC_ERR_return;
+	}
+
+	if( db_put_external( &ext, dp, dbip ) < 0 )  {
+		db_free_external( &ext );
+		ERROR_RECOVERY_SUGGESTION;
+		WRITE_ERR_return;
+	}
+	db_free_external( &ext );
+	return;					/* OK */
 }
