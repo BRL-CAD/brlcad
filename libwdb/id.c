@@ -45,7 +45,7 @@ mk_id( fp, title )
 FILE		*fp;
 CONST char	*title;
 {
-	return mk_id_units( fp, title, "mm" );
+	return db_fwrite_ident( fp, title, 1.0 );
 }
 
 /*
@@ -64,21 +64,7 @@ FILE		*fp;
 CONST char	*title;
 register CONST char	*units;
 {
-	union record rec;
-	int	code;
-
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.i.i_id = ID_IDENT;
-
-	if( (code = db_v4_get_units_code(units)) < 0 )
-		return -2;		/* ERROR */
-	rec.i.i_units = code;
-
-	strncpy( rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version) );
-	strncpy( rec.i.i_title, title, sizeof(rec.i.i_title) );
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
-		return(-1);
-	return(0);
+	return db_fwrite_ident( fp, title, bu_units_conversion(units) );
 }
 
 /*
@@ -104,10 +90,5 @@ FILE		*fp;
 CONST char	*title;
 double		local2mm;
 {
-	CONST char *str = bu_units_string(local2mm);
-
-	/* If user is in whacko units (like 2.5feet), don't fail */
-	if(!str)  str = "mm";
-
-	return mk_id_units( fp, title, str );
+	return db_fwrite_ident( fp, title, local2mm );
 }
