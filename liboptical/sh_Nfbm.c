@@ -20,7 +20,9 @@ struct Nfbm_specific {
 	double	lacunarity;
 	double	h_val;
 	double	octaves;
-	point_t	scale;		/* scale noise space */
+	double	max_angle;
+	double	size;
+	point_t vsize;
 	vect_t	delta;
 	mat_t	xform;
 };
@@ -31,7 +33,9 @@ static struct Nfbm_specific Nfbm_defaults = {
 	2.1753974,			/* lacunarity */
 	1.0,				/* h_val */
 	4,				/* octaves */
-	{ 1.0, 1.0, 1.0 },		/* scale */
+	22.5,				/* Angle  */
+	1.0,				/* size */
+	{ 1.0, 1.0, 1.0 },		/* Vector Size */
 	{ 1000.0, 1000.0, 1000.0 }	/* delta */
 	};
 
@@ -39,17 +43,35 @@ static struct Nfbm_specific Nfbm_defaults = {
 #define SHDR_O(m)	offsetof(struct Nfbm_specific, m)
 #define SHDR_AO(m)	offsetofarray(struct Nfbm_specific, m)
 
+void
+cvt_parse( sdp, name, base, value )
+register CONST struct structparse	*sdp;	/* structure description */
+register CONST char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+CONST char				*value;	/* string containing value */
+{
+	double v;
+	double *p = (double *)(base+sdp->sp_offset);
+
+	/* reconvert with optional units */
+	*p = rt_mm_value(value);
+}
+
 struct structparse Nfbm_parse[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
 	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  3, "scale",		SHDR_AO(scale),		FUNC_NULL },
-	{"%f",  3, "s",			SHDR_AO(scale),		FUNC_NULL },
+	{"%f",	1, "angle",		SHDR_O(max_angle),	FUNC_NULL },
+	{"%f",	1, "a", 		SHDR_O(max_angle),	FUNC_NULL },
+	{"%f",  1, "size",		SHDR_O(size),		cvt_parse },
+	{"%f",  1, "s",			SHDR_O(size),		cvt_parse },
+	{"%f",  3, "vsize",		SHDR_AO(vsize),		FUNC_NULL },
+	{"%f",  3, "v",			SHDR_AO(vsize),		FUNC_NULL },
 	{"%f",  3, "delta",		SHDR_AO(delta),		FUNC_NULL },
 	{"%f",  3, "d",			SHDR_AO(delta),		FUNC_NULL },
-
+	
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -101,9 +123,13 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	/* add the noise-space scaling */
 	mat_idn(tmp);
-	tmp[0] = Nfbm_sp->scale[0];
-	tmp[5] = Nfbm_sp->scale[1];
-	tmp[10] = Nfbm_sp->scale[2];
+	if (Nfbm_sp->size != 1.0) {
+		tmp[0] = tmp[5] = tmp[10] = 1.0/Nfbm_sp->size;
+	} else {
+		tmp[0] = 1.0/Nfbm_sp->vsize[0];
+		tmp[5] = 1.0/Nfbm_sp->vsize[1];
+		tmp[10] = 1.0/Nfbm_sp->vsize[2];
+	}
 
 	mat_mul(Nfbm_sp->xform, tmp, model_to_region);
 
@@ -157,15 +183,19 @@ char	*dp;
 {
 	register struct Nfbm_specific *Nfbm_sp =
 		(struct Nfbm_specific *)dp;
-	vect_t	v_noise;	/* noise vector for each octave */
-	vect_t	N;		/* sum of noise vector "octaves" */
+
 	point_t pt;
-	double freq;
-	int i;
-	double cos_angle;
-	double new_cos_angle;
-	double tmp;
-	double radius;
+	vect_t	v_noise;	/* noise vector for each octave */
+	vect_t	freq_v;
+	double	cos_angle;
+	double	angle;
+	quat_t	q;
+	const static vect_t up = { 0.0, 0.0, 1.0 };
+	vect_t	N;
+	mat_t	mat;
+	int	i;
+	double	freq;
+	point_t	p;
 
 	RT_AP_CHECK(ap);
 	RT_CHECK_PT(pp);
@@ -174,15 +204,54 @@ char	*dp;
 	if( rdebug&RDEBUG_SHADE)
 		rt_structprint( "foo", Nfbm_parse, (char *)Nfbm_sp );
 
-	/* compute the footprint of the ray intersect point */
-	radius = ap->a_rbeam + ap->a_diverge * swp->sw_hit.hit_dist;
-
-	/* get angle between ray and original surface normal */
-	cos_angle = VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir);
 
 	/* transform hit point into "shader-space coordinates" */
 	MAT4X3PNT(pt, Nfbm_sp->xform, swp->sw_hit.hit_point);
 
+
+	/* Compute random vector from point */
+	VSETALL(v_noise, 0.0);
+	freq = 1.0;
+	for (i=0 ; i < Nfbm_sp->octaves ; i++ ) {
+
+#if 0
+		noise_vec(pt, freq_v);
+#else
+		freq_v[X] = noise_g(pt);
+		VSCALE(p, pt, Nfbm_sp->lacunarity);
+		freq_v[Y] = noise_g(p);
+		VSCALE(p, pt, Nfbm_sp->lacunarity*Nfbm_sp->lacunarity);
+		freq_v[Z] = noise_g(p);
+#endif
+		VJOIN1(v_noise, v_noise, 1.0/freq, freq_v);
+		VSCALE(pt, pt, Nfbm_sp->lacunarity);
+		freq *= Nfbm_sp->lacunarity;
+	}
+
+	VUNITIZE(v_noise);
+	cos_angle = VDOT(v_noise, up);
+	angle = acos(cos_angle);
+	
+	angle *= Nfbm_sp->max_angle / 180.0;
+
+
+	/* form quaternion to rotate Normal to new location */
+	VCROSS(q, up, v_noise);
+
+	QUAT_FROM_VROT_RAD(q, angle, q);
+	quat_quat2mat(mat, q);
+	VMOVE(N, swp->sw_hit.hit_normal);
+	MAT4X3VEC(swp->sw_hit.hit_normal, mat, N);
+	
+	return(1);
+}
+#if 0
+
+/* compute the footprint of the ray intersect point */
+radius = ap->a_rbeam + ap->a_diverge * swp->sw_hit.hit_dist;
+
+
+	/* Compute random vector from point */
 	VSET(v_noise, 0.0, 0.0, 0.0);
 	VSET(N, 0.0, 0.0, 0.0);
 	freq = 1.0;
@@ -208,5 +277,4 @@ char	*dp;
 	    cos_angle > 0.0 && new_cos_angle <= 0.0) {
 		VREVERSE(swp->sw_hit.hit_normal, swp->sw_hit.hit_normal);
 	}
-	return(1);
-}
+#endif
