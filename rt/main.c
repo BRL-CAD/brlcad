@@ -25,8 +25,8 @@ Usage:  rt [options] model.vg object [objects]\n\
 Options:  -f[#] -x# -aAz -eElev -A%Ambient -l# [-o model.pix]\n";
 
 /* Used for autosizing */
-static fastf_t xbase, ybase, zbase;
-static fastf_t deltas;
+static vect_t base;		/* view position of model_min */
+static fastf_t deltas;		/* distance between rays */
 extern double atof();
 
 /***** Variables shared with viewing model *** */
@@ -146,6 +146,11 @@ char **argv;
 	if( !(debug&DEBUG_QUICKIE) )
 		dev_setup(npts);
 
+	fprintf(stderr,"model X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
+		model_min[X], model_max[X],
+		model_min[Y], model_max[Y],
+		model_min[Z], model_max[Z] );
+
 	VSET( tempdir, 0, 0, -1 );
 	if( !matflag )  {
 		/*
@@ -160,11 +165,11 @@ char **argv;
 		mat_inv( view2model, model2view );
 
 		if( !(debug&DEBUG_QUICKIE) )  {
-			autosize( view2model, npts );
+			autosize( model2view, npts );
 		} else {
-			xbase = -3;
-			ybase = -3;
-			zbase = -10;
+			base[X] = -3;
+			base[Y] = -3;
+			base[Z] = -10;
 			deltas = 1;
 			npts = 8;
 			VSET( tempdir, 0, 0, 1 );
@@ -176,7 +181,7 @@ char **argv;
 		for( i=0; i < 16; i++ )
 			scanf( "%f", &model2view[i] );
 
-		xbase = ybase = zbase = -1;
+		base[X] = base[Y] = base[Z] = -1;
 		deltas = 2.0 / ((double)npts);
 		mat_inv( view2model, model2view );
 	}
@@ -184,30 +189,30 @@ char **argv;
 	MAT4X3VEC( ap.a_ray.r_dir, view2model, tempdir );
 	VUNITIZE( ap.a_ray.r_dir );
 
-	VSET( tempdir, 	xbase, ybase, zbase );
+	VSET( tempdir, 	base[X], base[Y], base[Z] );
 	MAT4X3PNT( ap.a_ray.r_pt, view2model, tempdir );
 
 	fprintf(stderr,"Ambient light at %f%%\n", AmbientIntensity * 100.0 );
 
 	/* Determine the Light location(s) in model space, xlate to view */
 	/* 0:  Blue, at left edge, 1/2 high */
-	tempdir[0] = 2 * (xbase);
-	tempdir[1] = (2/2) * (ybase);
-	tempdir[2] = 2 * (zbase + npts*deltas);
+	tempdir[0] = 2 * (base[X]);
+	tempdir[1] = (2/2) * (base[Y]);
+	tempdir[2] = 2 * (base[Z] + npts*deltas);
 	MAT4X3VEC( l0vec, view2model, tempdir );
 	VUNITIZE(l0vec);
 
 	/* 1: Red, at right edge, 1/2 high */
-	tempdir[0] = 2 * (xbase + npts*deltas);
-	tempdir[1] = (2/2) * (ybase);
-	tempdir[2] = 2 * (zbase + npts*deltas);
+	tempdir[0] = 2 * (base[X] + npts*deltas);
+	tempdir[1] = (2/2) * (base[Y]);
+	tempdir[2] = 2 * (base[Z] + npts*deltas);
 	MAT4X3VEC( l1vec, view2model, tempdir );
 	VUNITIZE(l1vec);
 
 	/* 2:  Grey, behind, and overhead */
-	tempdir[0] = 2 * (xbase + (npts/2)*deltas);
-	tempdir[1] = 2 * (ybase + npts*deltas);
-	tempdir[2] = 2 * (zbase + (npts/2)*deltas);
+	tempdir[0] = 2 * (base[X] + (npts/2)*deltas);
+	tempdir[1] = 2 * (base[Y] + npts*deltas);
+	tempdir[2] = 2 * (base[Z] + (npts/2)*deltas);
 	MAT4X3VEC( l2vec, view2model, tempdir );
 	VUNITIZE(l2vec);
 
@@ -218,9 +223,9 @@ char **argv;
 	for( ap.a_y = npts-1; ap.a_y >= 0; ap.a_y--)  {
 		for( ap.a_x = 0; ap.a_x < npts; ap.a_x++)  {
 			VSET( tempdir,
-				xbase + ap.a_x * deltas,
-				ybase + (npts-ap.a_y-1) * deltas,
-				zbase +  2*npts*deltas );
+				base[X] + ap.a_x * deltas,
+				base[Y] + (npts-ap.a_y-1) * deltas,
+				base[Z] +  2*npts*deltas );
 			MAT4X3PNT( ap.a_ray.r_pt, view2model, tempdir );
 
 			shootray( &ap );
@@ -244,12 +249,37 @@ char **argv;
 	}
 	return(0);
 }
+#ifdef never
+/*
+ *			A U T O S I Z E
+ */
+autosize( m2v, n )
+register matp_t m2v;
+int n;
+{
+	register struct soltab *stp;
+	vect_t top;
+	double f;
+
+	MAT4X3PNT( base, m2v, model_min );
+	MAT4X3PNT( top, m2v, model_max );
+
+	deltas = (top[X]-base[X])/n;
+	f = (top[Y]-base[Y])/n;
+	if( f > deltas )  deltas = f;
+	fprintf(stderr,"view  X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
+		base[X], top[X],
+		base[Y], top[Y],
+		base[Z], top[Z] );
+	fprintf(stderr,"Deltas=%f (units between rays)\n", deltas );
+}
+#else
 
 /*
  *			A U T O S I Z E
  */
-autosize( rot, n )
-matp_t rot;
+autosize( m2v, n )
+matp_t m2v;
 int n;
 {
 	register struct soltab *stp;
@@ -257,9 +287,6 @@ int n;
 	static fastf_t ymin, ymax;
 	static fastf_t zmin, zmax;
 	static vect_t xlated;
-	static mat_t invrot;		/* model2view */
-
-	mat_inv( invrot, rot );		/* Inverse rotation matrix */
 
 	/* init maxima and minima */
 	xmax = ymax = zmax = -100000000.0;
@@ -269,7 +296,7 @@ int n;
 		FAST fastf_t rad;
 
 		rad = sqrt(stp->st_radsq);
-		MAT4X3PNT( xlated, invrot, stp->st_center );
+		MAT4X3PNT( xlated, m2v, stp->st_center );
 #define MIN(v,t) {FAST fastf_t rt; rt=(t); if(rt<v) v = rt;}
 #define MAX(v,t) {FAST fastf_t rt; rt=(t); if(rt>v) v = rt;}
 		MIN( xmin, xlated[0]-rad );
@@ -288,13 +315,12 @@ int n;
 	ymax *= 1.03;
 	zmax *= 1.03;
 
-	xbase = xmin;
-	ybase = ymin;
-	zbase = zmin;
+	VSET( base, xmin, ymin, zmin );
 
 	deltas = (xmax-xmin)/n;
 	MAX( deltas, (ymax-ymin)/n );
-	fprintf(stderr,"X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
+	fprintf(stderr,"view X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
 		xmin, xmax, ymin, ymax, zmin, zmax );
 	fprintf(stderr,"Deltas=%f (units between rays)\n", deltas );
 }
+#endif
