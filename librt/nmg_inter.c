@@ -447,7 +447,7 @@ struct vertex	*v1mate;
 	 * other face, we'll build a new vertex.  Otherwise
 	 * we re-use an old one.
 	 */
-	vu_other = nmg_find_vu_in_face(hit_pt, fu, &(bs->tol));
+	vu_other = nmg_find_pt_in_face(hit_pt, fu, &(bs->tol));
 	if (vu_other) {
 		/* the other face has a convenient vertex for us */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -1181,7 +1181,7 @@ struct faceuse *fu;
 			rt_log("\tedge starts at plane intersect\n");
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
 
-		vu_other = nmg_find_vu_in_face(v1->vg_p->coord, fu, &(bs->tol));
+		vu_other = nmg_find_pt_in_face(v1->vg_p->coord, fu, &(bs->tol));
 		if (vu_other) {
 			register pointp_t	p3;
 			/* Face has a very similar vertex.  Add to list */
@@ -1226,7 +1226,7 @@ struct faceuse *fu;
 
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eunext->vu_p->l.magic);
 
-		vu_other = nmg_find_vu_in_face(v1mate->vg_p->coord, fu, &(bs->tol));
+		vu_other = nmg_find_pt_in_face(v1mate->vg_p->coord, fu, &(bs->tol));
 		if (vu_other) {
 			register pointp_t	p3;
 			/* Face has a very similar vertex.  Add to list */

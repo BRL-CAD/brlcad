@@ -268,15 +268,17 @@ CONST struct faceuse	*fu;
 }
 
 /*
- *			N M G _ F I N D _ V U _ I N _ F A C E
+ *			N M G _ F I N D _ P T _ I N _ F A C E
  *
- *	try to find a vertex(use) in a face wich appoximately matches the
- *	coordinates given.  
- *	
- *	This is a geometric search, not a topological one.
+ *  Conduct a geometric search for a vertex in face 'fu' which is
+ *  "identical" to the given point, within the specified tolerance.
+ *
+ *  Returns -
+ *	NULL			No vertex matched
+ *	(struct vertexuse *)	A matching vertexuse from that face.
  */
 struct vertexuse *
-nmg_find_vu_in_face(pt, fu, tol)
+nmg_find_pt_in_face(pt, fu, tol)
 CONST point_t		pt;
 CONST struct faceuse	*fu;
 CONST struct rt_tol	*tol;
@@ -304,8 +306,7 @@ CONST struct rt_tol	*tol;
 			VSUB2(delta, vg->coord, pt);
 			if ( MAGSQ(delta) < tol->dist_sq)
 				return(vu);
-		}
-		else if (magic1 == NMG_EDGEUSE_MAGIC) {
+		} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 				v = eu->vu_p->v_p;
 				NMG_CK_VERTEX(v);
@@ -315,8 +316,9 @@ CONST struct rt_tol	*tol;
 				if ( MAGSQ(delta) < tol->dist_sq)
 					return(eu->vu_p);
 			}
-		} else
+		} else {
 			rt_bomb("nmg_find_vu_in_face() Bogus child of loop\n");
+		}
 	}
 	return ((struct vertexuse *)NULL);
 }
@@ -763,7 +765,7 @@ CONST struct rt_tol	*tol;
 	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd) ) {
 		/* Shell has faces */
 		NMG_CK_FACEUSE(fu);
-			if( (vu = nmg_find_vu_in_face( pt, fu, tol )) )
+			if( (vu = nmg_find_pt_in_face( pt, fu, tol )) )
 				return(vu->v_p);
 
 			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
