@@ -3,7 +3,7 @@
 png-fb - display a Portable Network Graphics (PNG) image file on a framebuffer
 .SH SYNOPSIS
 .B png-fb
-.RB [ -hicvz1 ]
+.RB [ -Hhicvz1 ]
 .RB [ -F  framebuffer]
 .RB [ -m  #lines]
 .RB [ -S  squarescrsize]
@@ -45,7 +45,13 @@ with the new image without clearing the screen.
 .PP
 The
 .I -v
-option will print verbose about the PNG file.
+option will print verbose information about the PNG file.
+.PP
+The
+.I -H
+option will print a single line on standard output providing
+the dimensions of the image in a format readily usable in shell scripts,
+e.g. WIDTH=42 HEIGHT=17.
 .PP
 The
 .I -z
