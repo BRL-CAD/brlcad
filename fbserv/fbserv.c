@@ -345,23 +345,24 @@ do1()
 {
 	int	on = 1;
 
-#ifdef BSD
+#if defined(SO_KEEPALIVE)
 	if( setsockopt( rem_pcp->pkc_fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
 #		ifndef CRAY2
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
 #		endif
 	}
 #endif
-#if BSD >= 43
-	/* try to set our buffers to 32k bytes */
+#if defined(SO_RCVBUF)
+	/* try to set our buffers up larger */
 	{
 		int	n;
 		int	val;
-		val = 32767;
+#define MAXVAL	(31*1024)
+		val = MAXVAL;
 		n = setsockopt( rem_pcp->pkc_fd, SOL_SOCKET,
 			SO_RCVBUF, (char *)&val, sizeof(val) );
 		if( n < 0 )  perror("setsockopt: SO_RCVBUF");
-		val = 32767;
+		val = MAXVAL;
 		n = setsockopt( rem_pcp->pkc_fd, SOL_SOCKET,
 			SO_SNDBUF, (char *)&val, sizeof(val) );
 		if( n < 0 )  perror("setsockopt: SO_SNDBUF");
