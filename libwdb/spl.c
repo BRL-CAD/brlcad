@@ -28,9 +28,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
-#include "wdb.h"
 
 #include "../libspl/b_spline.h"
+#include "wdb.h"
 
 #ifdef SYSV
 #define bzero(str,n)		memset( str, '\0', n )
