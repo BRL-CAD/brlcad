@@ -27,11 +27,12 @@ extern char *optarg;
 extern int optind, opterr, getopt();
 extern int isatty();
 char *progname = "(noname)";
+int dither = 0;
 
 #define MAPSIZE 256   /* Number of unique color values in Sun Colormap */
 /* Description of header for files containing raster images */
 struct rasterfile {
-    int	 ras_magic;	/* magic number */
+    long ras_magic;	/* magic number */
     int	 ras_width;	/* width (pixels) of image */
     int	 ras_height;	/* height (pixels) of image */
     int	 ras_depth;	/* depth (1, 8, or 24 bits) of pixel */
@@ -120,12 +121,9 @@ static unsigned char bvec[16] = {  0, 236, 237,  36, 238, 239,  72, 240,
 static unsigned char nvec[16] = {  0, 246, 247,  43, 248, 249,  86, 250, 
 				251, 129, 252, 253, 172, 254, 255, 215};
 
-#define DITHER(_v) { register int _t;\
-	if ((_v = _t = _v + noise*mag) > 255) _v = 255; \
-	else if (_t < 0) _v = 0; }
+#define MAG1	51.0	/* magnitude of dither noise in color cube */
+#define MAG2	8.0	/* magnitude of dither noise along primaries*/
 
-#define MAG1	26.0	/* magnitude of dither noise in color cube */
-#define MAG2	9.0	/* magnitude of dither noise along primaries*/
 /* map an 8 bit value into a "bin" on the color cube */
 #define MAP(x, c) { \
 	if (c < 26 ) x=0; \
@@ -135,38 +133,59 @@ static unsigned char nvec[16] = {  0, 246, 247,  43, 248, 249,  86, 250,
 	else if (c < 230 ) x=4; \
 	else x=5; }
 
+#define DITHER(d, v, noise, mag) { \
+	if ( (d = v + noise * mag) > 255) d=255; \
+	else if (d < 0) d = 0; }
+
+double table[10] = {0.0, 0.1, -0.4, 0.2, -0.3, 0.3, -0.2, 0.4, -0.1, 0.5};
+double *noise_ptr = table;
+double *end_table = &table[10];
+#define NOISE() (noise_ptr < end_table ? *noise_ptr++ : *(noise_ptr=table) )
+
 /* convert 24 bit pixel into appropriate 8 bit pixel */
-void  remapixel(red, green, blue, i)
-unsigned char red, green, blue, *i;
-{
-	int r, g, b;
-	double dr, dg, db;	/* noise values */
-	int	dither=0;
-	float	noise, mag;
+#define DITHERMAP(red, green, blue, i) {\
+	register _r, _g, _b; double dr, dg, db; \
+	dr = NOISE(); DITHER(_r, red, dr, MAG1); MAP(_r, _r); \
+	dg = NOISE(); DITHER(_g, green, dg, MAG1); MAP(_g, _g); \
+	db = NOISE(); DITHER(_b, blue, db, MAG1); MAP(_b, _b); \
+	if (_r == _g) { \
+		if (_r == _b) {		/* grey */ \
+			DITHER(_r, red, dr, MAG2); \
+			DITHER(_g, green, dg, MAG2); \
+			DITHER(_b, blue, db, MAG2); \
+			i = nvec[ ( (_r+_g+_b)/3) >> 4]; \
+		} else if (_r == 0) {	/* all blue */ \
+			DITHER(_r, red, dr, MAG2); \
+			DITHER(_g, green, dg, MAG2); \
+			DITHER(_b, blue, db, MAG2); \
+			i = bvec[ _b >> 4]; \
+		} else	/* color cube # */ \
+			i = (unsigned char)(_r + _g * 6 + _b * 36); \
+	} \
+	else if (_g == _b && _g == 0) {	/* all red */ \
+		DITHER(_r, red, dr, MAG2); \
+		DITHER(_g, green, dg, MAG2); \
+		DITHER(_b, blue, db, MAG2); \
+		i = rvec[ _r >> 4]; \
+	} else if (_r == _b && _r == 0) {	/* all green */ \
+		DITHER(_r, red, dr, MAG2); \
+		DITHER(_g, green, dg, MAG2); \
+		DITHER(_b, blue, db, MAG2); \
+		i = gvec[_g >> 4]; \
+	} else	/* color cube # */ \
+		i = (unsigned char)(_r + _g * 6 + _b * 36); }
 
-	if (dither) {
-		DITHER(red);
-		DITHER(green);
-		DITHER(blue);
-		MAP(r, red);
-		MAP(g, green);
-		MAP(b, blue);
-	}
-	else {
-		MAP(r, red);
-		MAP(g, green);
-		MAP(b, blue);
-	}
-
-	if (r == g) {
-	    if (r == b) /* grey */
-		*i = nvec[ ( (red+green+blue) /3) >> 4];
-	    else if (r == 0)  *i = bvec[blue/16];	   /* all blue */
-	    else *i = (unsigned char)(r + g * 6 + b * 36);  /* color cube # */
-	}
-	else if (g == b && g == 0) *i = rvec[red/16];	   /* all red */
-	else if (r == b && r == 0) *i = gvec[green/16]; 	   /* all green */
-	else *i = (unsigned char)(r + g * 6 + b * 36);	   /* color cube # */
+#define REMAPIXEL(red, green, blue, i) {\
+	register unsigned char _r, _g, _b; \
+	MAP(_r, red); MAP(_g, green); MAP(_b, blue); \
+	if (_r == _g) { \
+	    if (_r == _b) i = nvec[ ( (red+green+blue) /3) >> 4]; /* grey */ \
+	    else if (_r == 0)  i = bvec[blue/16];	   /* all blue */ \
+	    else i = (unsigned char)(_r + _g * 6 + _b * 36);  /* cube # */ \
+	} \
+	else if (_g == _b && _g == 0) i = rvec[red/16];   /* all red */ \
+	else if (_r == _b && _r == 0) i = gvec[green/16]; /* all green */ \
+	else i = (unsigned char)(_r + _g * 6 + _b * 36);  /* color cube # */ \
 }
 /*
  *   D O I T --- convert stdin pix file to stdout rasterfile
@@ -211,13 +230,24 @@ void doit()
      * switching top to bottom to compensate for the different origin 
      * representations of PIX files and Sun pixrects
      */
-    for(cy=0 ; cy < ras.ras_height ; cy++)
-	for(cx=0 ; cx < ras.ras_width ; cx++) {
-	    red = pix[(cx + cy * ras.ras_width)*3];
-	    green = pix[1 + (cx + cy * ras.ras_width)*3];
-	    blue = pix[2 + (cx + cy * ras.ras_width)*3];
-	    remapixel(red, green, blue, &rast[cx + cy * ras.ras_width]);
-	}
+    if (dither) {
+	for(cy=0 ; cy < ras.ras_height ; cy++)
+	    for(cx=0 ; cx < ras.ras_width ; cx++) {
+		red = pix[(cx + cy * ras.ras_width)*3];
+		green = pix[1 + (cx + cy * ras.ras_width)*3];
+		blue = pix[2 + (cx + cy * ras.ras_width)*3];
+		DITHERMAP(red, green, blue, rast[cx + cy * ras.ras_width]);
+	    }
+    }
+    else {
+	for(cy=0 ; cy < ras.ras_height ; cy++)
+	    for(cx=0 ; cx < ras.ras_width ; cx++) {
+		red = pix[(cx + cy * ras.ras_width)*3];
+		green = pix[1 + (cx + cy * ras.ras_width)*3];
+		blue = pix[2 + (cx + cy * ras.ras_width)*3];
+		REMAPIXEL(red, green, blue, rast[cx + cy * ras.ras_width]);
+	    }
+    }
 
     /* now that we have the 8 bit pixels,
      *  we don't need the 24 bit pixels
@@ -259,7 +289,9 @@ void doit()
 
 void usage()
 {
-    (void)fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] < BRLpixfile > rasterfile\n", progname, options);
+
+    (void)fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
+    (void)fprintf(stderr, "\t< BRLpixfile > rasterfile\n");
     exit(1);
 }
 
@@ -291,6 +323,7 @@ char *av[];
     */
     while ((c=getopt(ac,av,options)) != EOF)
 	switch (c) {
+	case 'd'    : dither = !dither; break;
 	case 'w'    : ras.ras_width = atoi(optarg); break;
 	case 'n'    : ras.ras_height = atoi(optarg); break;
 	case 's'    : ras.ras_width = ras.ras_height = atoi(optarg); break;
