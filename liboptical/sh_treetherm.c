@@ -232,6 +232,8 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	static const double	inv_nodes = 1.0/8.0;
 	int			node;
 	int			i;
+	int			long_size = sizeof(long);
+	int			computed_size;
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
@@ -273,11 +275,41 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 		bu_log("tthrm_setup() data: %08lx total cyl: %ld\n",
 			(unsigned long)tt_data, cyl_tot);
 
-	if (cyl_tot <= 0) {
-		bu_log("%s:%d  Thermal file \"%s\" indicates %ld segments\n"
-			__FILE__, __LINE__, tthrm_sp->tt_name, cyl_tot);
-		bu_bomb("Probable machine architecture mis-match.\n");
+	if (sizeof(cyl_tot) == 4 && cyl_tot == 0) {
+
+		bu_log(
+"-------- Probable architecture mismatch from treetherm run ---\n");
+		bu_log("attempting to correct .... ");
+
+		/* very high probability that treetherm was run on 64 bit
+		 * machine, and we're running on a 32 bit machine.
+		 */
+		tthrm_sp->tt_max_seg = cyl_tot = ((long *)tt_data)[1];
+		long_size = 8;
+
+
+		computed_size = long_size + 
+			cyl_tot * 
+			(sizeof(short) + sizeof(float) * 4 * NUM_NODES);
+
+		if (computed_size == tt_file->buflen) {
+			bu_log("corrected\n");
+
+			bu_log("buflen %ld\n", tt_file->buflen);
+			bu_log("cyl_tot %ld\n", cyl_tot);
+			bu_log("computed: %d\n", computed_size);
+		} else {
+			bu_log("failed: possible node count != %d?\n",
+			NUM_NODES);
+
+			bu_log("buflen %ld\n", tt_file->buflen);
+			bu_log("cyl_tot %ld\n", cyl_tot);
+			bu_log("computed: %d\n", computed_size);
+
+			bu_bomb("please use correct data file\n");
+		}
 	}
+
 
 	tthrm_sp->tt_segs = (struct thrm_seg *)
 		bu_calloc(cyl_tot, sizeof(struct thrm_seg), "thermal segs");
@@ -286,10 +318,9 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	max_temp = -MAX_FASTF;
 
 #define CYL_DATA(_n) ((float *) (&tt_data[ \
-	( sizeof(long) + \
-	  (_n) * (sizeof(float) * 4 * NUM_NODES) + \
-	  (_n) * sizeof(short) + 2 \
-	)  \
+	 long_size + \
+	(_n) * (sizeof(short) + sizeof(float) * 4 * NUM_NODES) + \
+	sizeof(short) \
 	] ))
 
 	for (tseg = 0 ; tseg < cyl_tot ; tseg++) {
@@ -610,7 +641,23 @@ too large.  Probable mis-match between geometry and thermal data\n"
 	best_val = (thrm_seg->temperature[best_idx] - 
 		    tthrm_sp->tt_min_temp) * tthrm_sp->tt_temp_scale;
 
-	VSET(swp->sw_color, best_val, best_val, best_val);
+	/* We do non-grayscale to indicate values 
+	 * outside the range specified
+	 */
+	if (best_val > 1.0) {
+		/* hotter than maximum */
+		best_val -= 1.0;
+		if (best_val > 1.0) best_val = 1.0;
+		VSET(swp->sw_color, 1.0, best_val, 0.03921568);
+	} else if (best_val < 0.0) {
+		/* Colder than minimum */
+		best_val += 2.0;
+		if (best_val < 0.0) best_val = 0.0;
+
+		VSET(swp->sw_color, 0.03921568, best_val, 1.0);
+	} else {
+		VSET(swp->sw_color, best_val, best_val, best_val);
+	}
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_log("closest point is: (%g %g %g) temp: %17.14e\n",
