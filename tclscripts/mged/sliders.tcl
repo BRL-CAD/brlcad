@@ -257,6 +257,9 @@ proc set_sliders {} {
     global adcflag
 
     set id_list [cmd_get]
+    if { [string compare [lindex $id_list 0] "mged"] == 0 } {
+	return
+    }
 
     if { $rateknobs } {
 	foreach id $id_list {
