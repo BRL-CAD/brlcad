@@ -136,12 +136,12 @@ struct nugridnode *nuginfop;
  *  until none remain.
  *  This routine is run in parallel.
  */
-static struct rt_i	*rt_cut_rtip;	/* Shared across threads */
-
 void
-rt_cut_optimize_parallel()
+rt_cut_optimize_parallel( cpu, arg )
+int		cpu;
+genptr_t	arg;
 {
-	struct rt_i	*rtip = rt_cut_rtip;
+	struct rt_i	*rtip = (struct rt_i *)arg;
 	union cutter	*cp;
 	int		i;
 
@@ -813,11 +813,10 @@ int			ncpu;
 				rt_pr_cut( &rtip->rti_CutHead, 0 );
 			}
 			
-			rt_cut_rtip = rtip;
 			if( ncpu <= 1 )  {
-				rt_cut_optimize_parallel(rtip);
+				rt_cut_optimize_parallel(0, rtip);
 			} else {
-				bu_parallel( rt_cut_optimize_parallel, ncpu );
+			bu_parallel( rt_cut_optimize_parallel, ncpu, rtip );
 			}
 		}
 #endif
