@@ -402,7 +402,7 @@ struct directory	*dp;
 				point_count++;
 next_k:				;
 			}
-			if( point_count == 1 ) rt_log("arbn_plot: warning, point_count=1\n");
+			if( point_count == 1 ) rt_log("arbn_plot(%s): warning, point_count=1\n", dp->d_namep);
 		}
 	}
 }
