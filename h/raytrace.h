@@ -653,7 +653,6 @@ struct partition {
  *
  *  If a solid has 'pieces', it will be listed either in bn_list (initially),
  *  or in bn_piecelist, but not both.
-XXX question: is bn_piecelist an array, or a bu_list, of struct rt_piecelist's?
  */
 union cutter  {
 #define CUT_CUTNODE	1
@@ -676,7 +675,7 @@ union cutter  {
 		struct soltab **bn_list; /* bn_list[bn_len] */
 		int	bn_len;		/* # of solids in list */
 		int	bn_maxlen;	/* # of ptrs allocated to list */
-		struct rt_piecelist *bn_piecelist; /* solids with pieces */
+		struct rt_piecelist **bn_piecelist; /* [] solids with pieces */
 		int	bn_piecelen;	/* # of solids with pieces */
 	} bn;
 	struct nugridnode {
@@ -1166,6 +1165,7 @@ struct rt_pm_res {
  *  There is a separate array of these for each cpu.
  *  Storage for the bit vectors is pre-allocated at prep time.
  *  The array is subscripted by st_piecestate_num.
+ *  The bit vector is subscripted by values found in rt_piecelist pieces[].
  */
 struct rt_piecestate  {
 	long		magic;
@@ -1190,10 +1190,12 @@ struct rt_piecestate  {
  *
  *  The piece indices are used as a subscript into a solid-specific table,
  *  and also into the 'shot' bitv of the corresponding rt_piecestate.
+ *
+ *  The values (subscripts) in pieces[] are specific to a single solid (stp).
  */
 struct rt_piecelist  {
-	struct bu_list	l;
-	long		npieces;
+	long		magic;
+	long		npieces;	/* number of pieces in pieces[] array */
 	long		*pieces;	/* pieces[npieces], piece indices */
 	struct soltab	*stp;		/* ref back to solid */
 };
@@ -1254,6 +1256,10 @@ struct resource {
 	long		re_nempty_cells; /* number of empty NUgrid cells passed through */
 	/* Experimental stuff for accelerating "pieces" of solids */
 	struct rt_piecestate *re_pieces; /* array [rti_nsolids_with_pieces] */
+	long		re_piece_ndup;	/* ft_piece_shot() calls skipped for already-ft_shot() solids */
+	long		re_piece_shots;	/* # calls to ft_piece_shot() */
+	long		re_piece_shot_hit;	/* ft_piece_shot() returned a miss */
+	long		re_piece_shot_miss;	/* ft_piece_shot() returned a hit */
 };
 extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 #define RESOURCE_NULL	((struct resource *)0)
@@ -1633,11 +1639,18 @@ struct nurb_seg		/* NURB curve segment */
 /*
  *			R T _ F U N C T A B
  *
- *  Object-oriented interface to geometry modules.
- *  Table is indexed by ID_xxx value of particular solid.
- *  This needs to be at the end of the header file,
+ *  Object-oriented interface to BRL-CAD geometry.
+ *
+ *  These are the methods for a notional object class "brlcad_solid".
+ *  The data for each instance is found separately in struct soltab.
+ *  This table is indexed by ID_xxx value of particular solid
+ *  found in st_id, or directly pointed at by st_meth.
+ *
+ *  This needs to be at the end of the raytrace.h header file,
  *  so that all the structure names are known.
- *  XXX the "union record" and "struct nmgregion" pointers are problematic.
+ *  The "union record" and "struct nmgregion" pointers are problematic,
+ *  so generic pointers are used when those header files have not yet
+ *  been seen.
  *
  *  XXX On SGI, can not use identifiers in prototypes inside structure!
  */
@@ -1657,6 +1670,13 @@ struct rt_functab {
 	void	(*ft_norm) BU_ARGS((struct hit * /*hitp*/,
 			struct soltab * /*stp*/,
 			struct xray * /*rp*/));
+	int 	(*ft_piece_shot) BU_ARGS((
+			struct rt_piecestate * /*psp*/,
+			struct rt_piecelist * /*plp*/,
+			struct xray * /*rp*/,
+			struct application * /*ap*/,
+			struct seg * /*seghead*/,
+			struct resource * /*resp*/));
 	void	(*ft_uv) BU_ARGS((struct application * /*ap*/,
 			struct soltab * /*stp*/,
 			struct hit * /*hitp*/,
