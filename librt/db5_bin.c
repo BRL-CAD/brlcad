@@ -24,6 +24,7 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <ctype.h>
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -719,9 +720,62 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 
 	while( argc >= 2 ) {
 		if( !strcmp( argv[0], "T" ) ) {
-			int new_type;
+			int new_type=-1;
+			char *c;
+			int type_is_digit=1;
 
-			new_type = atoi( argv[1] );
+			c = argv[1];
+			while( *c != '\0' ) {
+				if( !isdigit( *c ) ) {
+					type_is_digit = 0;
+					break;
+				}
+				c++;
+			}
+
+			if( type_is_digit ) {
+				new_type = atoi( argv[1] );
+			} else {
+				if( argv[1][1] != '\0' ) {
+					Tcl_AppendResult( interp, "Illegal type: ",
+					   argv[1],
+					   ", must be 'f', 'd', 'c', 'i', 'l', 'C', 'S', 'I', or 'L'",
+					   (char *)NULL );
+					return TCL_ERROR;
+				}
+				switch( argv[1][0] ) {
+					case 'f':
+						new_type = 2;
+						break;
+					case 'd':
+						new_type = 3;
+						break;
+					case 'c':
+						new_type = 4;
+						break;
+					case 's':
+						new_type = 5;
+						break;
+					case 'i':
+						new_type = 6;
+						break;
+					case 'l':
+						new_type = 7;
+						break;
+					case 'C':
+						new_type = 12;
+						break;
+					case 'S':
+						new_type = 13;
+						break;
+					case 'I':
+						new_type = 14;
+						break;
+					case 'L':
+						new_type = 15;
+						break;
+				}
+			}
 			if( new_type < 0 ||
 			    new_type > DB5_MINORTYPE_BINU_64BITINT ||
 			    binu_types[new_type] == NULL ) {
