@@ -29,8 +29,8 @@
 proc sketch_init_main {} {
 	# global variable initialisations
 	uplevel #0 set mged_sketch_init_main 1
-	uplevel #0 set mged_sketch_anim_dir "/m/cad/anim/"
-	uplevel #0 set mged_sketch_tab_dir "/m/cad/tab/"
+	uplevel #0 set mged_sketch_anim_path "/m/cad/anim/"
+	uplevel #0 set mged_sketch_tab_path "/m/cad/tab/"
 	uplevel #0 set mged_sketch_temp1 "./_mged_sketch_temp1_"
 	uplevel #0 set mged_sketch_temp2 "./_mged_sketch_temp2_"
 }
@@ -551,7 +551,7 @@ proc sketch_color { color } {
 proc sketch_do_spline { mode } {
 	global mged_sketch_fps mged_sketch_splname \
 		mged_sketch_temp1 mged_sketch_temp2 \
-		mged_sketch_tab_dir
+		mged_sketch_tab_path
 
 	#write vertices to temp2, result to temp1
 	set fo [open $mged_sketch_temp2 w]
@@ -568,7 +568,7 @@ proc sketch_do_spline { mode } {
 	upvar #0 [format "mged_sketch_time_%s" [vdraw r n]] tlist
 	set start [lindex $tlist 0]
 	set end [lindex $tlist [expr $length - 1]]
-	set fo [open "| ${mged_sketch_tab_dir}tabinterp -q > $mged_sketch_temp1" w]
+	set fo [open "| ${mged_sketch_tab_path}tabinterp -q > $mged_sketch_temp1" w]
 	puts $fo "file $mged_sketch_temp2 0 1 2;"
 	puts $fo [concat times $start $end $mged_sketch_fps {;}]
 	puts $fo "interp $mode 0 1 2;"
@@ -679,7 +679,7 @@ proc sketch_popup_name {{mode new}} {
 			{"Cancel" "destroy ._sketch_input"} \
 		]
 	} elseif { $mode == "copy" } {
-		sketch_popup_input "Curve Copy" {
+		sketch_popup_input "Copy Curve" {
 			{"Name for copy:" ""}
 		} [list \
 			[list "OK" "sketch_copy \[._sketch_input.f0.e get\]" ] \
@@ -814,6 +814,13 @@ proc sketch_init_view {} {
 	uplevel #0 set mged_sketch_vtinc 1.0	
 	uplevel #0 {set mged_sketch_vname ""}
 	uplevel #0 {set mged_sketch_vparams {size eye quat}}
+	uplevel #0 {set mged_sketch_vchoices {
+		{size eye quat}
+		{size eye ypr}
+		{size center quat}
+		{size center ypr}
+		{eye center}
+		}}
 	uplevel #0 set mged_sketch_cmdlen(quat) 4
 	uplevel #0 set mged_sketch_cmdlen(eye) 3
 	uplevel #0 set mged_sketch_cmdlen(center) 3
@@ -831,7 +838,8 @@ proc sketch_init_view {} {
 proc sketch_popup_view { p } {
 	global mged_sketch_vtime \
 		 mged_sketch_vname mged_sketch_vcount mged_sketch_vnode \
-		mged_sketch_vparams mged_sketch_vwidget mged_sketch_vprefix
+		mged_sketch_vparams mged_sketch_vwidget mged_sketch_vprefix \
+		mged_sketch_vchoices
 
 	if { $p == "." } { 
 		set root ".view" 
@@ -890,12 +898,10 @@ proc sketch_popup_view { p } {
 	frame $root.f3
 	menubutton $root.f3.mb0 -text "Parameters:" -menu $root.f3.mb0.m
 	menu $root.f3.mb0.m -tearoff 0
-	$root.f3.mb0.m add command -label "{size eye quat}" \
-		-command "sketch_set_vparams {size eye quat}"
-	$root.f3.mb0.m add command -label "{size eye ypr}" \
-		-command "sketch_set_vparams {size eye ypr}"
-	$root.f3.mb0.m add command -label "{eye center}" \
-		-command "sketch_set_vparams {eye center}"
+	foreach choice $mged_sketch_vchoices {
+		$root.f3.mb0.m add command -label $choice \
+			-command "sketch_set_vparams \{$choice\}"
+	}
 	label $root.f3.l0 -textvariable mged_sketch_vparams
 
 	frame  $root.f5
@@ -995,18 +1001,21 @@ proc sketch_post_vcurve_list { menu function } {
 #set the viewparameters for the current view curve and convert if necessary
 proc sketch_set_vparams { newlist } {
 	global mged_sketch_vname mged_sketch_vparams \
-		mged_sketch_temp1 mged_sketch_temp2 mged_sketch_anim_dir\
-		mged_sketch_vwidget mged_sketch_vprefix
+		mged_sketch_temp1 mged_sketch_temp2 mged_sketch_anim_path\
+		mged_sketch_vwidget mged_sketch_vprefix mged_sketch_vchoices
 
 	#make it one of the allowable values
-	switch $newlist {
-		{size eye quat} -
-		{size eye ypr} -
-		{eye center} {}
-		default {
-			set newlist {size eye quat}
+	set flag 0
+	foreach choice $mged_sketch_vchoices {
+		if { $newlist == $choice } {
+			set flag 1
+			break
 		}
 	}
+	if { !$flag} {
+			set newlist {size eye quat}
+	}
+
 	set mged_sketch_vparams $newlist
 	uplevel #0 "append mged_sketch_vparams_$mged_sketch_vname {}"
 	upvar #0 mged_sketch_vparams_$mged_sketch_vname oldlist
@@ -1018,10 +1027,15 @@ proc sketch_set_vparams { newlist } {
 	}
 	#otherwise, we must convert the text
 	#convert to {size eye ypr}
+	set buffer $text._params_scratch_
+	if { [info commands $buffer] != "" } {
+		destroy $buffer
+	}
+	text $buffer
 	$text configure -state normal
 	switch $oldlist {
 		{size eye quat} {
-			set fd [open "| ${mged_sketch_anim_dir}anim_orient qv y \
+			set fd [open "| ${mged_sketch_anim_path}anim_orient qv y \
 					> $mged_sketch_temp1 " w]
 			sketch_text_to_fd $text $fd "5,6,7,8"
 			catch {close $fd}
@@ -1033,7 +1047,7 @@ proc sketch_set_vparams { newlist } {
 		}
 		{eye center} {
 			
-			set fd [open "| ${mged_sketch_anim_dir}anim_lookat -y -v \
+			set fd [open "| ${mged_sketch_anim_path}anim_lookat -y -v \
 					> $mged_sketch_temp1" w]
 			sketch_text_to_fd $text $fd all
 			close $fd
@@ -1042,14 +1056,43 @@ proc sketch_set_vparams { newlist } {
 			close $fd
 			exec rm $mged_sketch_temp1
 		}
+		{size center ypr} {
+			set fd [open "| ${mged_sketch_anim_path}anim_cascade -ry 0 0 0 > $mged_sketch_temp1" w]
+			sketch_text_do_script $buffer $text all {@0 @2 @3 @4 @5 @6 @7 {-@1/2.0} 0.0 0.0}
+			sketch_text_to_fd $buffer $fd all
+			close $fd
+			set fd [open $mged_sketch_temp1 r]
+			sketch_text_from_fd $buffer $fd "1,2,3" right
+			close $fd
+			$text delete 1.0 end
+			sketch_text_do_script $text $buffer all {@0 {-2.0*@7} @10 @11 @12 @4 @5 @6}
+			exec rm $mged_sketch_temp1
+		}
+		{size center quat} {
+			set fd [open "| ${mged_sketch_anim_path}anim_orient qv y > $mged_sketch_temp1" w]
+			sketch_text_to_fd $text $fd "5,6,7,8"
+			catch {close $fd}
+			sketch_text_do_script $buffer $text all {@0 @2 @3 @4 {-@1/2.0} 0.0 0.0}
+			set fd [open "| ${mged_sketch_anim_path}chan_permute -i stdin 0 1 2 3 4 5 6 -i $mged_sketch_temp1 8 9 10 -o stdout 0 1 2 3 8 9 10 4 5 6 | ${mged_sketch_anim_path}anim_cascade -ry 0 0 0 > $mged_sketch_temp2" w]
+			sketch_text_to_fd $buffer $fd all
+			close $fd
+			set fd [open $mged_sketch_temp2 r]
+			$text delete 1.0 end
+			sketch_text_do_script $text $buffer all {@0 {-2.0*@4} }
+			sketch_text_from_fd $text $fd "1,2,3,4,5,6" right
+			close $fd
+			exec rm $mged_sketch_temp1 $mged_sketch_temp2
+		}
 		{size eye ypr} -
 		default {}
 	}
 
+	$buffer delete 1.0 end
+
 	#convert from {size eye ypr}
 	switch $newlist {
 		{size eye quat} {
-			set fd [open "| ${mged_sketch_anim_dir}anim_orient y qv \
+			set fd [open "| ${mged_sketch_anim_path}anim_orient y qv \
 					> $mged_sketch_temp1 " w]
 			sketch_text_to_fd $text $fd "5,6,7"
 			catch {close $fd}
@@ -1060,25 +1103,48 @@ proc sketch_set_vparams { newlist } {
 			exec rm $mged_sketch_temp1
 		}
 		{eye center} {
-			text $text._scratch_
-			sketch_text_do_script $text $text._scratch_ all \
+			sketch_text_do_script $buffer $text all \
 			   {@0 @2 @3 @4 @5 @6 @7 {@1*0.5} 0.0 0.0 0.0 0.0 0.0}
-			set fd [open "| ${mged_sketch_anim_dir}anim_cascade \
+			set fd [open "| ${mged_sketch_anim_path}anim_cascade \
 					> $mged_sketch_temp2" w]
-			sketch_text_to_fd $text._scratch_ $fd all
+			sketch_text_to_fd $buffer $fd all
 			close $fd
-			destroy $text._scratch_
 			sketch_text_col_arith $text all {@0 @2 @3 @4}
 			set fd [open $mged_sketch_temp2 r]
 			sketch_text_from_fd $text $fd "1,2,3" right
 			close $fd
 			exec rm $mged_sketch_temp2
 		}
+		{size center ypr} {
+			set fd [open "| ${mged_sketch_anim_path}anim_cascade -ry 0 0 0 > $mged_sketch_temp1" w]
+			sketch_text_do_script $buffer $text all {@0 @2 @3 @4 @5 @6 @7 {@1/2.0} 0.0 0.0}
+			sketch_text_to_fd $buffer $fd all
+			close $fd
+			set fd [open $mged_sketch_temp1 r]
+			sketch_text_from_fd $buffer $fd "1,2,3" right
+			close $fd
+			$text delete 1.0 end
+			sketch_text_do_script $text $buffer all {@0 {2.0*@7} @10 @11 @12 @4 @5 @6}
+			exec rm $mged_sketch_temp1
+		}
+		{size center quat} {
+			set fd [open "| ${mged_sketch_anim_path}anim_cascade -ry 0 0 0 > $mged_sketch_temp1" w]
+			sketch_text_do_script $buffer $text all {@0 @2 @3 @4 @5 @6 @7 {@1/2.0} 0.0 0.0}
+			sketch_text_to_fd $buffer $fd all
+			close $fd
+			set fd [open "| ${mged_sketch_anim_path}chan_permute -i $mged_sketch_temp1 0 1 2 3 4 5 6 -o stdout 4 5 6 | ${mged_sketch_anim_path}anim_orient y qv | ${mged_sketch_anim_path}chan_permute -i stdin 7 8 9 10 -i $mged_sketch_temp1 0 1 2 3 4 5 6 -o stdout 1 2 3 7 8 9 10" r]
+			$text delete 1.0 end
+			sketch_text_do_script $text $buffer all {@0 {2.0*@7}}
+			sketch_text_from_fd $text $fd all right
+			close $fd
+			exec rm $mged_sketch_temp1
+		}
 		{size eye ypr} -
 		default {}
 	}
 
 	$text configure -state disabled
+	destroy $buffer
 	set oldlist $newlist
 	return
 }
@@ -1388,15 +1454,23 @@ proc sketch_vload { filename vcurve cols mode} {
 
 proc sketch_popup_vname {{mode select}} {
 	if { $mode == "select"} {
-		sketch_popup_input "View Curve Select" {
-			{"V-curve to select:" ""}
+		sketch_popup_input "Select View Curve" {
+			{"Name for new v-curve:" ""}
 		} {
 			{"OK" {sketch_vname [._sketch_input.f0.e get]}}
 			{"Cancel" "destroy ._sketch_input"}
 		}
-	} elseif { ($mode == "rename") || ($mode == "copy") } {
-		sketch_popup_input "View Curve Rename" {
+	} elseif { $mode == "rename" } {
+		sketch_popup_input "Rename View Curve" {
 			{"New name for v-curve:" ""}
+		} [list \
+			[list "OK" "sketch_vrename \[._sketch_input.f0.e get\] \
+				$mode" ] \
+			{"Cancel" "destroy ._sketch_input"} \
+		]
+	} elseif { $mode == "copy" } {
+		sketch_popup_input "Copy View Curve" {
+			{"Name for copy:" ""}
 		} [list \
 			[list "OK" "sketch_vrename \[._sketch_input.f0.e get\] \
 				$mode" ] \
@@ -1560,7 +1634,7 @@ proc sketch_popup_text { p args } {
 	}
 
 	#finish textbar initialization
-	$root$z.textbar insert 1.0 "\ttime(0)\tx(1)\ty(2)\tz(3)"
+	#$root$z.textbar insert 1.0 "\ttime(0)\tx(1)\ty(2)\tz(3)"
 	sketch_text_bar_set $root$z.t $root$z.textbar 0.0
 }
 
@@ -1594,8 +1668,8 @@ proc sketch_popup_text_create { p suffix label {mode rw}} {
 	if { $mode == "rw" } {
 		button $name.f0.b3 -text "Clear" -command "$name.t delete 1.0 end"
 		button $name.f0.b4 -text "Interpolate" -command "sketch_popup_text_interp $name.t $name.textbar"
-		button $name.f0.b5 -text "Estimate Time" -command "sketch_popup_text_time $name.t"
-		button $name.f0.b7 -text "Edit Columns" -command "sketch_popup_text_col $name.t $name.textbar"
+		button $name.f0.b5 -text "Edit Columns" -command "sketch_popup_text_col $name.t $name.textbar"
+		button $name.f0.b7 -text "Estimate Time" -command "sketch_popup_text_time $name.t"
 
 		menubutton $name.f0.mb0 -text "Read" -menu $name.f0.mb0.m
 		menu $name.f0.mb0.m -tearoff 0 -postcommand "sketch_post_read_menu $name.f0.mb0.m $name.t"
@@ -1690,7 +1764,7 @@ proc sketch_popup_text_time { w } {
 }
 
 proc sketch_text_time {w v0 v1 cols } {
-	global mged_sketch_temp1 mged_sketch_temp2 mged_sketch_anim_dir
+	global mged_sketch_temp1 mged_sketch_temp2 mged_sketch_anim_path
 
 	#global mged_sketch_text_lmode
 
@@ -1720,7 +1794,7 @@ proc sketch_text_time {w v0 v1 cols } {
 	#count number of lines, doesn't matter if a couple extra
 	scan [$w index end] %d maxlen
 	set arg2 "-m $maxlen"
-	set cmd "| ${mged_sketch_anim_dir}anim_time $arg0 $arg1 $arg2 > $mged_sketch_temp1"
+	set cmd "| ${mged_sketch_anim_path}anim_time $arg0 $arg1 $arg2 > $mged_sketch_temp1"
 	#puts $cmd
 	set f1 [open $cmd w] 
 	set mycols "0,$cols"
@@ -1861,6 +1935,7 @@ proc sketch_popup_text_col {w wbar} {
 	label ._sketch_col.fb.l0 -text "Number of Rows:" 
 	entry ._sketch_col.fb.e0 -width 5
 	._sketch_col.fb.e0 insert end "all"
+	bind ._sketch_col.fb.e0 <Key-Return> {._sketch_col.fa.b0 invoke}
 	pack ._sketch_col.fa.b2 ._sketch_col.fa.b0 ._sketch_col.fa.b1 -side left
 	pack ._sketch_col.fb.l0 ._sketch_col.fb.e0 -side left -fill x
 
@@ -1909,7 +1984,7 @@ proc sketch_text_col_arith {w rows arglist} {
 		destroy $buffer
 	}
 	text $buffer
-	sketch_text_do_script $w $buffer $rows $arglist
+	sketch_text_do_script $buffer $w $rows $arglist
 	$w delete 1.0 end
 	$w insert end [$buffer get 1.0 end]
 	destroy $buffer
@@ -1917,17 +1992,18 @@ proc sketch_text_col_arith {w rows arglist} {
 
 #win - take text from
 #wout - write text to
-#rows - number of rows to write (copies source length if rows not int >= 0)
+#rows - number of rows to write (copies source length if rows not pos. int.)
 #args - series of column arithmetic descriptions
 # @1 refers to column 1, @pi refers to pi, @i refers to row index
-# @n refers to number of rows
-proc sketch_text_do_script {win wout rows slist} {
+# @n refers to number of rows, @e refers to e
+proc sketch_text_do_script {wout win rows slist} {
 	#parse scripts
 	set colout 0
 
 	foreach script $slist {
 		if {$script != ""} {
-			regsub -all {@pi} $script 3.141592654 temp
+			regsub -all {@pi} $script 3.14159265358979323846 temp2
+			regsub -all {@e} $temp2 2.7182818284590452354 temp
 			regsub -all {(@)([in])} $temp {$column(\2)} \
 				script
 			regsub -all {(@)([0-9]+)}  $script {$column(\2)} \
@@ -2037,7 +2113,7 @@ proc sketch_popup_text_interp {w wbar}	{
 }
 
 proc sketch_text_interpolate { w start stop fps slist } {
-	global mged_sketch_temp1 mged_sketch_temp2 mged_sketch_tab_dir
+	global mged_sketch_temp1 mged_sketch_temp2 mged_sketch_tab_path
 	#global mged_sketch_text_lmode
 	#check all instructions in args
 	set i 0
@@ -2109,7 +2185,7 @@ proc sketch_text_interpolate { w start stop fps slist } {
 	}
 	close $fd
 
-	set fd [open "| ${mged_sketch_tab_dir}tabinterp -q < $mged_sketch_temp2 " r]
+	set fd [open "| ${mged_sketch_tab_path}tabinterp -q < $mged_sketch_temp2 " r]
 	#set mged_sketch_text_lmode replace	
 	sketch_text_from_fd $w $fd all replace
 	#catch can be removed when -q option added to tabinterp
@@ -2526,7 +2602,7 @@ proc sketch_objanim { objorview } {
 		mged_sketch_objmang \
 		mged_sketch_objorv mged_sketch_objvsize \
 		mged_sketch_objlaf mged_sketch_objrv mged_sketch_objrotonly \
-		mged_sketch_temp1 mged_sketch_temp2 mged_sketch_anim_dir \
+		mged_sketch_temp1 mged_sketch_temp2 mged_sketch_anim_path \
 		mged_sketch_text_prefix
 
 	upvar #0 mged_sketch_objsrctype type
@@ -2613,7 +2689,7 @@ proc sketch_objanim { objorview } {
 					append outcol " $i"
 				}
 			}
-			set filecmd "${mged_sketch_anim_dir}chan_permute -i $src $incol -o stdout $outcol"
+			set filecmd "${mged_sketch_anim_path}chan_permute -i $src $incol -o stdout $outcol"
 		} elseif { $nsrc < $ncols } {
 			tk_dialog ._sketch_msg {Insufficient columns} \
 			"The animation you requested requires $ncols \
@@ -2640,7 +2716,7 @@ proc sketch_objanim { objorview } {
 		if {$wcen == ""} { set wcen "0 0 0"; incr i }
 		if {$wypr == ""} { set wypr "0 0 0"; incr i }
 		if { $i < 4 } {
-			set fd [open "| ${mged_sketch_anim_dir}anim_cascade \
+			set fd [open "| ${mged_sketch_anim_path}anim_cascade \
 			   -or -fc $wcen -fy $wypr -ac $rcen -ay $rypr" r]
 			gets $fd line
 			close $fd
@@ -2669,7 +2745,7 @@ proc sketch_objanim { objorview } {
 	#puts "anim_script options: $opts"
 
 	if { $mged_sketch_objopt == "lookat" } {
-		set anim_lookat ${mged_sketch_anim_dir}anim_lookat
+		set anim_lookat ${mged_sketch_anim_path}anim_lookat
 		if { $type == "curve:" } {
 			#This shouldn't happen
 			puts "sketch_objanim: Can't do lookat orientation \
@@ -2677,7 +2753,7 @@ proc sketch_objanim { objorview } {
 			return
 		} elseif { $type == "editor:" } {
 			set fd [open "| $anim_lookat -y $lookat_v | \
-			  ${mged_sketch_anim_dir}anim_script $opts $ovname > \
+			  ${mged_sketch_anim_path}anim_script $opts $ovname > \
 			  $mged_sketch_objscript" w]
 			sketch_text_to_fd $w $fd $colsp
 			catch {close $fd}
@@ -2685,11 +2761,11 @@ proc sketch_objanim { objorview } {
 		} elseif { $type == "file:" } {
 			if { $filecmd == "" } {
 				catch {eval exec $anim_lookat -y $lookat_v < $src | \
-				  ${mged_sketch_anim_dir}anim_script $opts $ovname > \
+				  ${mged_sketch_anim_path}anim_script $opts $ovname > \
 				  $mged_sketch_objscript}
 			} else {
 				catch {eval exec $filecmd | $anim_lookat -y $lookat_v | \
-				  ${mged_sketch_anim_dir}anim_script $opts $ovname > \
+				  ${mged_sketch_anim_path}anim_script $opts $ovname > \
 				  $mged_sketch_objscript}
 			}
 
@@ -2703,7 +2779,7 @@ proc sketch_objanim { objorview } {
 		if { $mged_sketch_objmang > 89 } {
 			set mged_sketch_objmang 89
 		}
-		set do_bank ${mged_sketch_anim_dir}anim_fly
+		set do_bank ${mged_sketch_anim_path}anim_fly
 		if { $type == "curve:" } {
 			set sfile $mged_sketch_temp1
 			set fd [open $sfile w]
@@ -2725,7 +2801,7 @@ proc sketch_objanim { objorview } {
 
 		set factor [exec $do_bank -b $mged_sketch_objmang < $sfile]
 		eval exec $do_bank -f $factor < $sfile \
-			| ${mged_sketch_anim_dir}anim_script $opts $ovname > $mged_sketch_objscript
+			| ${mged_sketch_anim_path}anim_script $opts $ovname > $mged_sketch_objscript
 			
 		if { $type == "curve:" } {
 			sketch_open_curve $oldcurve
@@ -2756,22 +2832,22 @@ proc sketch_objanim { objorview } {
 	if { $type == "file:"} {
 		#puts "filecmd = $filecmd src = $src"
 		if { $filecmd == "" } {
-			eval exec ${mged_sketch_anim_dir}anim_script $opts $ovname < $src > \
+			eval exec ${mged_sketch_anim_path}anim_script $opts $ovname < $src > \
 			  $mged_sketch_objscript
 		} else {
-			eval exec $filecmd | ${mged_sketch_anim_dir}anim_script $opts $ovname | \
+			eval exec $filecmd | ${mged_sketch_anim_path}anim_script $opts $ovname | \
 			  $mged_sketch_objscript
 		}
 	} elseif { $type == "curve:" } {
 		set fd [open \
-		     [concat | ${mged_sketch_anim_dir}anim_script $opts $ovname > \
+		     [concat | ${mged_sketch_anim_path}anim_script $opts $ovname > \
 		     $mged_sketch_objscript] w ]
 		sketch_write_to_fd $fd [vdraw r l]
 		close $fd
 		sketch_open_curve $oldcurve
 	} elseif { $type == "editor:" } {
 		set fd [open \
-		     [concat | ${mged_sketch_anim_dir}anim_script $opts $ovname > \
+		     [concat | ${mged_sketch_anim_path}anim_script $opts $ovname > \
 		     $mged_sketch_objscript] w ]
 		sketch_text_to_fd $w $fd $colsp
 		close $fd
@@ -2929,7 +3005,7 @@ proc sketch_popup_track_anim { p } {
 
 proc sketch_do_track { outfile wcurve tcurve ypr center radius numlinks \
 								linkname} {
-	global mged_sketch_temp1 mged_sketch_anim_dir
+	global mged_sketch_temp1 mged_sketch_anim_path
 
 
 	set oldname [vdraw r n]
@@ -2965,7 +3041,7 @@ proc sketch_do_track { outfile wcurve tcurve ypr center radius numlinks \
 	}
 	while { [llength $ypr] < 3 } { lappend ypr 0}
 	while { [llength $center] < 3 } { lappend ypr 0}
-	set fd [ open "| ${mged_sketch_anim_dir}anim_hardtrack -s -b $ypr \
+	set fd [ open "| ${mged_sketch_anim_path}anim_hardtrack -s -b $ypr \
 		-d $center $linkname $mged_sketch_temp1 > $outfile" w]
 	sketch_write_to_fd $fd $len
 	close $fd
@@ -3063,7 +3139,7 @@ proc sketch_sort_entry1 { entry list nentry } {
 }
 
 proc sketch_sort { sortp outfile list } {
-	global mged_sketch_anim_dir mged_sketch_sort_temp
+	global mged_sketch_anim_path mged_sketch_sort_temp
 
 	if { [info commands $sortp.fa] != "" } {
 		tk_dialog ._sketch_msg {Script already sorting} \
@@ -3076,7 +3152,7 @@ proc sketch_sort { sortp outfile list } {
 	}
 	append cmd " > $mged_sketch_sort_temp"
 	eval exec $cmd
-	set pid [exec ${mged_sketch_anim_dir}anim_sort \
+	set pid [exec ${mged_sketch_anim_path}anim_sort \
 		< $mged_sketch_sort_temp > $outfile &]
 
 	frame $sortp.fa
@@ -3611,7 +3687,7 @@ proc sketch_text_from_text { wout win col mode {rows all}} {
 proc sketch_text_from_fd { w fd col mode } {
 	if { ($col != "all") || ($mode == "left") || ($mode == "right")} {
 		set mymode two
-		set myw $w._scratch_
+		set myw $w._scratch
 		text $myw
 	} else {
 		#simple case, don't need intermediate buffer
