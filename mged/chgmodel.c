@@ -1090,12 +1090,6 @@ char	**argv;
 	if( not_state( ST_O_EDIT, "Object Rotation" ) )
 	  return TCL_ERROR;
 
-	if(!rot_set){
-	  rot_x = atof(argv[1]);
-	  rot_y = atof(argv[2]);
-	  rot_z = atof(argv[3]);
-	}
-
 	update_views = 1;
 
 	if(movedir != ROTARROW) {

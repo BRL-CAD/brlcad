@@ -4460,13 +4460,7 @@ char	**argv;
 			break;
 	}
 
-	if(es_edflag >= SROT && es_edflag <= ECMD_ETO_ROT_C){
-	  if(!rot_set){
-	    rot_x = es_para[0];
-	    rot_y = es_para[1];
-	    rot_z = es_para[2];
-	  }
-	}else if(es_edflag >= STRANS && es_edflag <= PTARB){
+        if(es_edflag >= STRANS && es_edflag <= PTARB){
 	  if(!tran_set)
 	    set_tran(es_para[0], es_para[1], es_para[2]);
 	}
