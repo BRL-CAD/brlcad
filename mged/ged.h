@@ -89,6 +89,7 @@ extern double	degtorad, radtodeg;	/* Defined in usepen.c */
  * These factors convert database unit to local (or working) units.
  */
 extern struct db_i	*dbip;		       /* defined in ged.c */
+extern int		 dbih;		       /* defined in ged.c */
 #define	base2local	(dbip->dbi_base2local)
 #define local2base	(dbip->dbi_local2base)
 #define localunit	(dbip->dbi_localunit)  /* current local unit (index) */
