@@ -30,7 +30,7 @@
 /*
  *	ID_TOR
  */
-struct tor_internal {
+struct rt_tor_internal {
 	long	magic;
 	point_t	v;
 	vect_t	h;		/* r_h length */
@@ -41,12 +41,12 @@ struct tor_internal {
 	fastf_t	r_b;		/* radius in B direction (typ == r_a) */
 };
 #define RT_TOR_INTERNAL_MAGIC	0x9bffed887
-#define RT_TOR_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TOR_INTERNAL_MAGIC,"tor_internal")
+#define RT_TOR_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TOR_INTERNAL_MAGIC,"rt_tor_internal")
 
 /*
  *	ID_TGC and ID_REC
  */
-struct tgc_internal {
+struct rt_tgc_internal {
 	long	magic;
 	vect_t	v;
 	vect_t	h;
@@ -56,12 +56,12 @@ struct tgc_internal {
 	vect_t	d;
 };
 #define RT_TGC_INTERNAL_MAGIC	0xaabbdd87
-#define RT_TGC_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TGC_INTERNAL_MAGIC,"tgc_internal")
+#define RT_TGC_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TGC_INTERNAL_MAGIC,"rt_tgc_internal")
 
 /*
  *	ID_ELL, and ID_SPH
  */
-struct ell_internal  {
+struct rt_ell_internal  {
 	long	magic;
 	point_t	v;
 	vect_t	a;
@@ -69,7 +69,7 @@ struct ell_internal  {
 	vect_t	c;
 };
 #define RT_ELL_INTERNAL_MAGIC	0x93bb23ff
-#define RT_ELL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ELL_INTERNAL_MAGIC,"ell_internal")
+#define RT_ELL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ELL_INTERNAL_MAGIC,"rt_ell_internal")
 
 /*
  *	ID_ARB8
@@ -87,24 +87,24 @@ struct rt_arb_internal {
 /*
  *	ID_ARS
  */
-struct ars_internal {
+struct rt_ars_internal {
 	int	magic;
 	int	ncurves;
 	int	pts_per_curve;
 	fastf_t	**curves;
 };
 #define RT_ARS_INTERNAL_MAGIC	0x77ddbbe3
-#define RT_ARS_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARS_INTERNAL_MAGIC,"ars_internal")
+#define RT_ARS_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARS_INTERNAL_MAGIC,"rt_ars_internal")
 
 /*
  *	ID_HALF
  */
-struct half_internal  {
+struct rt_half_internal  {
 	long	magic;
 	plane_t	eqn;
 };
 #define RT_HALF_INTERNAL_MAGIC	0xaabbdd87
-#define RT_HALF_CK_MAGIC(_p)	RT_CKMAG(_p,RT_HALF_INTERNAL_MAGIC,"half_internal")
+#define RT_HALF_CK_MAGIC(_p)	RT_CKMAG(_p,RT_HALF_INTERNAL_MAGIC,"rt_half_internal")
 
 /*
  *	ID_POLY
@@ -165,29 +165,29 @@ struct rt_vol_internal  {
 /*
  *	ID_ARBN
  */
-struct arbn_internal  {
+struct rt_arbn_internal  {
 	long	magic;
 	int	neqn;
 	plane_t	*eqn;
 };
 #define RT_ARBN_INTERNAL_MAGIC	0x18236461
-#define RT_ARBN_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARBN_INTERNAL_MAGIC,"arbn_internal")
+#define RT_ARBN_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARBN_INTERNAL_MAGIC,"rt_arbn_internal")
 
 /*
  *	ID_PIPE
  */
-struct pipe_internal {
+struct rt_pipe_internal {
 	int		pipe_magic;
 	int		pipe_count;
 	struct rt_list	pipe_segs_head;
 };
 #define RT_PIPE_INTERNAL_MAGIC	0x77ddbbe3
-#define RT_PIPE_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PIPE_INTERNAL_MAGIC,"pipe_internal")
+#define RT_PIPE_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PIPE_INTERNAL_MAGIC,"rt_pipe_internal")
 
 /*
  *	ID_PARTICLE
  */
-struct part_internal {
+struct rt_part_internal {
 	long	part_magic;
 	point_t	part_V;
 	vect_t	part_H;
@@ -196,7 +196,7 @@ struct part_internal {
 	int	part_type;		/* sphere, cylinder, cone */
 };
 #define RT_PART_INTERNAL_MAGIC	0xaaccee87
-#define RT_PART_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PART_INTERNAL_MAGIC,"part_internal")
+#define RT_PART_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PART_INTERNAL_MAGIC,"rt_part_internal")
 
 #define RT_PARTICLE_TYPE_SPHERE		1
 #define RT_PARTICLE_TYPE_CYLINDER	2
