@@ -88,14 +88,12 @@ char *av[];
 	if (ac <= 1) {
 		rt_structprint("mged variables", mged_vparse, (CONST char *)&mged_variables);
 		rt_log("%s", rt_vls_addr(&vls) );
-		fflush(stdout);
 	} else if (ac == 2) {
 		rt_vls_strcpy(&vls, av[1]);
 		rt_structparse(&vls, mged_vparse, (char *)&mged_variables);
 	} else {
 		rt_log("Usage: set\t\t- prints all options\n\tset opt=val\t- sets an option\n");
 		bad = 1;
-		fflush(stdout);
 	}
 	rt_vls_free(&vls);
 
