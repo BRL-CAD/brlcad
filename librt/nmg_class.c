@@ -864,7 +864,7 @@ CONST struct rt_tol	*tol;
 			/* XXX bug hunt helper */
 			rt_g.NMG_debug |= DEBUG_FINDEU;
 			rt_g.NMG_debug |= DEBUG_MESH;
-			eup = nmg_findeu( eu->vu_p->v_p, eu->eumate_p->vu_p->v_p, s, eu );
+			eup = nmg_findeu( eu->vu_p->v_p, eu->eumate_p->vu_p->v_p, s, eu, 0 );
 			if(!eup) rt_log("Unable to find it\n");
 			nmg_mesh_face_shell( eu->up.lu_p->up.fu_p, s );
 #endif
