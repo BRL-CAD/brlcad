@@ -720,7 +720,7 @@ register struct application *ap;
 
 	if( ss.box_start < BACKING_DIST )
 		ss.box_start = BACKING_DIST; /* Only look a little bit behind */
-	ss.box_start -= OFFSET_DIST;	/* Compensate for OFFSET_DIST in rt_advance_to_next_cell on 1st loop */
+
 	ss.first_box_start = ss.box_start;
 	ss.lastcut = CUTTER_NULL;
 	last_bool_start = BACKING_DIST;
