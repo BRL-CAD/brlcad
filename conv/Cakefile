@@ -8,7 +8,7 @@
 #define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g \
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
-			asc-nmg nmg-rib g-vrml g-acad
+			asc-nmg nmg-rib g-vrml g-acad cy-g
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -45,6 +45,9 @@ pix2asc:	pix2asc.o
 
 asc2pix:	asc2pix.o
 	CC LDFLAGS asc2pix.o -o asc2pix
+
+cy-g:	cy-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
+	CC LDFLAGS cy-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o cy-g
 
 euclid-g:	euclid-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 	CC LDFLAGS euclid-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o euclid-g
