@@ -30,8 +30,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "../librt/debug.h"
 
-RT_EXTERN(struct nmgregion * doit, (union tree	*tp, struct rt_tess_tol	*ttol));
-RT_EXTERN(union tree *do_leaf, (struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_external *ep, int id));
+RT_EXTERN(struct nmgregion *nmg_booltree_evaluate, (union tree *tp, CONST struct rt_tol *tol));
+RT_EXTERN(union tree *nmg_booltree_leaf_tess, (struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_external *ep, int id));
+
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 
 int		heap_find(), heap_insert();
@@ -49,10 +50,12 @@ int		heap_cur_sz;	/* Next free spot in heap. */
 static char	*prefix = NULL;	/* output filename prefix. */
 static FILE	*fp_fig;	/* Jack Figure file. */
 static struct db_i	*dbip;
-static struct model		*the_model;
+static struct rt_vls		base_seg;
 static struct rt_tess_tol	ttol;
 static struct rt_tol		tol;
-static struct rt_vls		base_seg;
+static struct model		*the_model;
+
+static struct db_tree_state	jack_tree_state;	/* includes tol & model */
 
 static int	regions_tried = 0;
 static int	regions_done = 0;
@@ -82,6 +85,11 @@ char	*argv[];
 			perror("setlinebuf(stderr)");
 #	endif
 #endif
+
+	jack_tree_state = rt_initial_tree_state;	/* struct copy */
+	jack_tree_state.ts_tol = &tol;
+	jack_tree_state.ts_ttol = &ttol;
+	jack_tree_state.ts_m = &the_model;
 
 	ttol.magic = RT_TESS_TOL_MAGIC;
 	/* Defaults, updated by command line options. */
@@ -180,10 +188,10 @@ char	*argv[];
 	/* Walk indicated tree(s).  Each region will be output separately */
 	ret = db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
 		1,			/* ncpu */
-		&rt_initial_tree_state,
+		&jack_tree_state,
 		0,			/* take all regions */
 		do_region_end,
-		do_leaf);
+		nmg_booltree_leaf_tess);
 
 	fprintf(fp_fig, "\troot=%s_seg.base;\n", rt_vls_addr(&base_seg));
 	fprintf(fp_fig, "}\n");
@@ -201,111 +209,105 @@ char	*argv[];
 
 
 /*
-*			D O I T
-*
-* Swiped from mged/dodraw.c mged_nmg_doit().
-*/
+ *			N M G _ B O O L T R E E _ E V A L U A T E
+ *
+ *  Given a tree of leaf nodes tesselated earlier by nmg_booltree_leaf_tess(),
+ *  use recursion to do a depth-first traversal of the tree,
+ *  evaluating each pair of boolean operations
+ *  and reducing that result to a single nmgregion.
+ *
+ *  Usually called from a do_region_end() handler from db_walk_tree().
+ *  For an example of one, see XXX.
+ *
+ * Swiped from mged/dodraw.c mged_nmg_doit().
+ */
 struct nmgregion *
-doit(tp, ttol_arg)
-register union tree	*tp;
-struct rt_tess_tol	*ttol_arg;
+nmg_booltree_evaluate(tp, tol)
+register union tree		*tp;
+CONST struct rt_tol		*tol;
 {
 	register struct nmgregion	*l;
 	register struct nmgregion	*r;
-	vect_t			diag;
-	fastf_t			rel;
 	int			op;
-	struct rt_tol		tol;
 
-	RT_CK_TESS_TOL(ttol_arg);
+	RT_CK_TOL(tol);
 
 	switch(tp->tr_op) {
 	case OP_NOP:
 		return(0);
 	case OP_NMG_TESS:
+		/* Hit a tree leaf, just grab nmgregion and return it */
 		r = tp->tr_d.td_r;
 		tp->tr_d.td_r = (struct nmgregion *)NULL;	/* Disconnect */
 		tp->tr_op = OP_NOP;	/* Keep quiet */
-		return(r);
+		return r;
 	case OP_UNION:
 		op = NMG_BOOL_ADD;
-		goto com;
+		break;
 	case OP_INTERSECT:
 		op = NMG_BOOL_ISECT;
-		goto com;
+		break;
 	case OP_SUBTRACT:
 		op = NMG_BOOL_SUB;
-		goto com;
+		break;
 	default:
-		rt_log("doit: bad op %d\n", tp->tr_op);
+		rt_log("nmg_booltree_evaluate: bad op %d\n", tp->tr_op);
 		return(0);
 	}
-com:
-	l = doit(tp->tr_b.tb_left, ttol_arg);
-	r = doit(tp->tr_b.tb_right, ttol_arg);
+	l = nmg_booltree_evaluate(tp->tr_b.tb_left, tol);
+	r = nmg_booltree_evaluate(tp->tr_b.tb_right, tol);
 	if (l == 0) {
 		if (r == 0)
-			return(0);
-		return(r);
+			return 0;
+		if( op == NMG_BOOL_ADD )
+			return r;
+		/* For sub and intersect, if lhs is 0, result is null */
+		nmg_kr(r);
+		return 0;
 	}
 	if (r == 0) {
 		if (l == 0)
-			return(0);
-		return(l);
+			return 0;
+		if( op == NMG_BOOL_ISECT )  {
+			nmg_kr(l);
+			return 0;
+		}
+		/* For sub and add, if rhs is 0, result is lhs */
+		return l;
 	}
-	/* debug */
+
 	NMG_CK_REGION(r);
 	NMG_CK_REGION(l);
 	if (nmg_ck_closed_region(r) != 0)
-	    	rt_log("doit:  WARNING, non-closed shell (r), barging ahead\n");
+	    	rt_log("nmg_booltree_evaluate:  WARNING, non-closed shell (r), barging ahead\n");
 	if (nmg_ck_closed_region(l) != 0)
-	    	rt_log("doit:  WARNING, non-closed shell (l), barging ahead\n");
-
-	/*
-	 *  Compute appropriate tolerance for the boolean routine.
-	 *  This tolerance is an absolute distance metric.
-	 *  The geometry is guaranteed to contain no errors larger than
-	 *  this tolerance value.
-	 */
-	tol.dist = ttol_arg->abs;
-	if (ttol_arg->rel > 0.0) {
-		if (l->ra_p) {
-			VSUB2(diag, l->ra_p->max_pt, l->ra_p->min_pt);
-			rel = MAGNITUDE(diag) * ttol_arg->rel;
-			if (tol.dist <= 0.0 || rel < tol.dist)  tol.dist = rel;
-		}
-		if (r->ra_p) {
-			VSUB2(diag, r->ra_p->max_pt, r->ra_p->min_pt);
-			rel = MAGNITUDE(diag) * ttol_arg->rel;
-			if (tol.dist <= 0.0 || rel < tol.dist)  tol.dist = rel;
-		}
-	}
-	if (tol.dist <= 0.0)  tol.dist = 0.1;		/* mm */
-
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist /= 128;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
+	    	rt_log("nmg_booltree_evaluate:  WARNING, non-closed shell (l), barging ahead\n");
 
 	/* input r1 and r2 are destroyed, output is new r1 */
-	r = nmg_do_bool(l, r, op, &tol);
+	r = nmg_do_bool(l, r, op, tol);
 
-	/* debug */
 	NMG_CK_REGION(r);
-	(void)nmg_ck_closed_region(r);
-	return(r);
+	return r;
 }
 
 /*
-*			D O _ L E A F
-*
-*  Tessellate Solid into NMG
-*
-*  This routine must be prepared to run in parallel.
-*/
-union tree *do_leaf(tsp, pathp, ep, id)
+ *			N M G _ B O O L T R E E _ L E A F _ T E S S
+ *
+ *  Called from db_walk_tree() each time a tree leaf is encountered.
+ *  The primitive solid, in external format, is provided in 'ep',
+ *  and the type of that solid (e.g. ID_ELL) is in 'id'.
+ *  The full tree state including the accumulated transformation matrix
+ *  and the current tolerancing is in 'tsp',
+ *  and the full path from root to leaf is in 'pathp'.
+ *
+ *  Import the solid, tessellate it into an NMG, stash a pointer to
+ *  the tessellation in a new tree structure (union), and return a
+ *  pointer to that.
+ *
+ *  This routine must be prepared to run in parallel.
+ */
+union tree *
+nmg_booltree_leaf_tess(tsp, pathp, ep, id)
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct rt_external	*ep;
@@ -316,35 +318,38 @@ int			id;
 	union tree		*curtree;
 	struct directory	*dp;
 
+	RT_CK_TESS_TOL(tsp->ts_ttol);
+	RT_CK_TOL(tsp->ts_tol);
+	NMG_CK_MODEL(*tsp->ts_m);
+
+	/* RT_CK_FULL_PATH(pathp) */
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
+	RT_CK_DIR(dp);
 
 	RT_INIT_DB_INTERNAL(&intern);
 	if (rt_functab[id].ft_import(&intern, ep, tsp->ts_mat) < 0) {
-		rt_log("%s:  solid import failure\n",
-			DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+		rt_log("nmg_booltree_leaf_tess(%s):  solid import failure\n", dp->d_namep);
 	    	if (intern.idb_ptr)  rt_functab[id].ft_ifree(&intern);
 	    	return(TREE_NULL);		/* ERROR */
 	}
 	RT_CK_DB_INTERNAL(&intern);
 
 	if (rt_functab[id].ft_tessellate(
-	    &r1, the_model, &intern, &ttol, &tol) < 0) {
-		rt_log("%s: tessellation failure\n", dp->d_namep);
+	    &r1, *tsp->ts_m, &intern, tsp->ts_ttol, tsp->ts_tol) < 0) {
+		rt_log("nmg_booltree_leaf_tess(%s): tessellation failure\n", dp->d_namep);
 		rt_functab[id].ft_ifree(&intern);
 	    	return(TREE_NULL);
 	}
 	rt_functab[id].ft_ifree(&intern);
 
-	/* debug */
 	NMG_CK_REGION(r1);
-	(void) nmg_ck_closed_region(r1);	/* ignore error return */
 
 	GETUNION(curtree, tree);
 	curtree->tr_op = OP_NMG_TESS;
 	curtree->tr_d.td_r = r1;
 
 	if (rt_g.debug&DEBUG_TREEWALK)
-		rt_log("do_leaf()\n");
+		rt_log("nmg_booltree_leaf_tess(%s) OK\n", dp->d_namep);
 
 	return(curtree);
 }
@@ -362,6 +367,10 @@ union tree		*curtree;
 	extern FILE		*fp_fig;
 	struct nmgregion	*r;
 	struct rt_list		vhead;
+
+	RT_CK_TESS_TOL(tsp->ts_ttol);
+	RT_CK_TOL(tsp->ts_tol);
+	NMG_CK_MODEL(*tsp->ts_m);
 
 	RT_LIST_INIT(&vhead);
 
@@ -392,14 +401,14 @@ union tree		*curtree;
 		db_free_tree(curtree);		/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
-		if( the_model->magic != -1L )
-			nmg_km(the_model);
+		if( (*tsp->ts_m)->magic != -1L )
+			nmg_km(*tsp->ts_m);
 	
 		/* Now, make a new, clean model structure for next pass. */
-		the_model = nmg_mm();
+		*tsp->ts_m = nmg_mm();
 		goto out;
 	}
-	r = doit(curtree, &ttol);
+	r = nmg_booltree_evaluate(curtree, &tol);
 	RT_UNSETJUMP;		/* Relinquish the protection */
 	regions_done++;
 	if (r != 0) {
