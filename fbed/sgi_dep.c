@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) sgi_dep.c	2.1
-	Modified: 	12/9/86 at 15:58:22
-	Retrieved: 	12/26/86 at 21:54:43
+	SCCS id:	@(#) sgi_dep.c	2.2
+	Modified: 	12/29/86 at 11:20:24
+	Retrieved: 	12/30/86 at 17:02:29
 	SCCS archive:	/vld/moss/src/fbed/s.sgi_dep.c
 
 	Author:		Gary S. Moss
@@ -12,10 +12,11 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) sgi_dep.c 2.1, modified 12/9/86 at 15:58:22, archive /vld/moss/src/fbed/s.sgi_dep.c";
+char	sccsTag[] = "@(#) sgi_dep.c 2.2, modified 12/29/86 at 11:20:24, archive /vld/moss/src/fbed/s.sgi_dep.c";
 #endif
 #ifdef sgi
 #include <device.h>
+#include "fb.h"
 void
 sgi_Init()
 	{
@@ -24,10 +25,15 @@ sgi_Init()
 
 int
 sgi_Getchar()
-	{	short	val;
-	winattach();
-	while( qread( &val ) != KEYBD )
-		;
-	return	(int) val;
+	{	extern FBIO	*fbp;
+	if( fbp != FBIO_NULL && strncmp( fbp->if_name, "/dev/sgi", 8 ) == 0 )
+		{	short	val;
+		winattach();
+		while( qread( &val ) != KEYBD )
+			;
+		return	(int) val;
+		}
+	else
+		return	getchar();
 	}
 #endif

@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) empty.c	2.1
-	Modified: 	12/9/86 at 15:55:14
-	Retrieved: 	12/26/86 at 21:54:00
+	SCCS id:	@(#) empty.c	2.2
+	Modified: 	12/29/86 at 11:20:00
+	Retrieved: 	12/30/86 at 17:01:32
 	SCCS archive:	/vld/moss/src/fbed/s.empty.c
 
 	Author:		Gary S. Moss
@@ -12,9 +12,8 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) empty.c 2.1, modified 12/9/86 at 15:55:14, archive /vld/moss/src/fbed/s.empty.c";
+char	sccsTag[] = "@(#) empty.c 2.2, modified 12/29/86 at 11:20:00, archive /vld/moss/src/fbed/s.empty.c";
 #endif
-
 #ifdef BSD
 #include <sys/types.h>
 #include <sys/time.h>
@@ -34,9 +33,22 @@ struct timeval
 #ifdef sgi
 #include <bsd/sys/types.h>
 #include <bsd/sys/time.h>
-#endif
-#endif
+#include "fb.h"
+#endif sgi
+#endif VLDSYSV
+/* Not a chance */
 #endif SYSV
+
+#ifndef FD_ZERO
+/* 4.2 does not define these */
+#define	FD_SET(n, p)	((p)->fds_bits[0] |= (n) == 0 ? 1 : (1 << (n)))
+#define FD_ZERO(p)	(p)->fds_bits[0] = 0
+#ifndef alliant
+typedef	struct fd_set {
+	fd_mask	fds_bits[1];
+} fd_set;
+#endif alliant
+#endif FD_ZERO
 
 /*	e m p t y ( )
 	Examine file descriptor for input with no time delay.
@@ -46,17 +58,22 @@ struct timeval
 int
 empty( fd )
 int	fd;
-#ifdef sgi
 	{
-	winattach();
-	return	! qtest();
-	}
-#else	
-	{	static struct timeval	timeout = { 0L, 600L };
-		auto long	readfds = 1 << fd;
-		register int	nfound;
-	readfds = 1<<fd;
-	nfound = select( fd+1, &readfds, (fd_set *)0, (fd_set *)0, &timeout );
-	return	nfound == -1 ? 1 : (nfound == 0);
-	}
+#ifdef sgi
+		extern FBIO	*fbp;
+	if( fbp != FBIO_NULL && strncmp( fbp->if_name, "/dev/sgi", 8 ) == 0 )
+		{	
+		winattach();
+		return	! qtest();
+		}
+	else
 #endif
+		{	static struct timeval	timeout = { 0L, 600L };
+			fd_set		readfds;
+			register int	nfound;
+		FD_ZERO( &readfds );
+		FD_SET( fd, &readfds );
+		nfound = select( fd+1, &readfds, (fd_set *)0, (fd_set *)0, &timeout );
+		return	nfound == -1 ? 1 : (nfound == 0);
+		}
+	}

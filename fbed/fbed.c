@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fbed.c	2.2
-	Modified: 	12/17/86 at 15:46:35
-	Retrieved: 	12/26/86 at 21:54:07
+	SCCS id:	@(#) fbed.c	2.5
+	Modified: 	12/29/86 at 16:16:06
+	Retrieved: 	12/30/86 at 17:01:43
 	SCCS archive:	/vld/moss/src/fbed/s.fbed.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbed.c 2.2, modified 12/17/86 at 15:46:35, archive /vld/moss/src/fbed/s.fbed.c";
+char	sccsTag[] = "@(#) fbed.c 2.5, modified 12/29/86 at 16:16:06, archive /vld/moss/src/fbed/s.fbed.c";
 #endif
 
 #include <stdio.h>
@@ -1584,7 +1584,7 @@ char	*buf;
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
 		fb_Off_Menu( &pick_one );
-	(void) fb_wmap( fbp, &cmap );
+	/*(void) fb_wmap( fbp, &cmap );*/
 	exit( 0 );
 	/*NOTREACHED*/
 	}
@@ -1755,7 +1755,7 @@ fb_Setup()
 		return	-1;
 		}
 	fb_ioinit( fbp );
-	if( fb_rmap( fbp, &cmap ) == -1 )
+	/*if( fb_rmap( fbp, &cmap ) == -1 )
 		{
 		fb_log( "Can't read color map.\n" );
 		return	0;
@@ -1764,7 +1764,7 @@ fb_Setup()
 		{
 		fb_log( "Can't write color map.\n" );
 		return	0;
-		}
+		}*/
 	if( fb_setcursor( fbp, cursor.bits, cursor.xbits, cursor.ybits,
 	    cursor.xorig, cursor.yorig ) == -1 )
 		{
@@ -2015,8 +2015,7 @@ int
 get_Char()
 	{	int	c;
 #ifdef sgi		
-	if( ismex() && tty )
-		return	(c = sgi_Getchar()) == EOF ? EOF : toascii( c );
+	return	(c = sgi_Getchar()) == EOF ? EOF : toascii( c );
 #else
 	return	(c = getchar()) == EOF ? EOF : toascii( c );
 #endif
