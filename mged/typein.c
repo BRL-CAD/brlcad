@@ -406,9 +406,15 @@ f_in()
 			(void)printf("ERROR, rpp not made!\n");
 			return;
 		}
-	} else if( strcmp( cmd_args[2], "str" ) == 0 )  {
-		if( strsol_in( &record ) < 0 )  {
-			(void)printf("ERROR, string solid not made!\n");
+	} else if( strcmp( cmd_args[2], "ebm" ) == 0 )  {
+		if( strsol_in( &record, "ebm" ) < 0 )  {
+			(void)printf("ERROR, EBM solid not made!\n");
+			return;
+		}
+		goto do_update;
+	} else if( strcmp( cmd_args[2], "vol" ) == 0 )  {
+		if( strsol_in( &record, "vol" ) < 0 )  {
+			(void)printf("ERROR, VOL solid not made!\n");
 			return;
 		}
 		goto do_update;
@@ -502,11 +508,12 @@ do_new_update:
  *			S T R S O L _ I N
  *
  *  Read string solid info from keyboard
- *  "in" name str arg(s)
+ *  "in" name ebm|vol arg(s)
  */
 int
-strsol_in( rp )
+strsol_in( rp, sol )
 union record	*rp;
+char		*sol;
 {
 	int	left;
 	register char	*cp;
@@ -515,7 +522,7 @@ union record	*rp;
 
 	/* Read at least one "arg(s)" */
 	while( args < (3 + 1) )  {
-		(void)printf("Arg? ");
+		(void)printf("%s Arg? ", sol);
 		if( (argcnt = getcmd(args)) < 0 )  {
 			return(-1);	/* failure */
 		}
@@ -525,6 +532,11 @@ union record	*rp;
 	/* Up to DB_SS_LEN chars of arg, space separated, null terminated */
 	left = DB_SS_LEN-1;
 	cp = &rp->ss.ss_str[0];
+	len = strlen(sol);
+	strncpy( cp, sol, len );
+	cp += len;
+	*cp++ = ' ';
+	left -= len+1;
 	for( i = 3; i < args; i++ )  {
 		len = strlen( cmd_args[i] );
 		if( len > left )  {
