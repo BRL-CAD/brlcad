@@ -45,7 +45,7 @@ vect_t			BBMax;			/* Max Bounding Box */
 int			Depth;			/* Used to determine how many times the photon has propogated */
 int			PType;			/* Used to determine the type of Photon: Direct,Indirect,Specular,Caustic */
 int			PInit;
-int			EPM;			/* Emitted Photons Master */
+int			EPL;			/* Emitted Photons Per Light Source */
 int			EPS[3];			/* Emitted Photons Seperate, one for each map */
 int			ICSize;
 double			ScaleFactor;
@@ -167,7 +167,6 @@ void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
   int			i;
 
 
-  EPM++;
   if (PMap[Map] -> StoredPhotons < PMap[Map] -> MaxPhotons) {
 
     for (i= 0; i < 3; i++) {
@@ -182,8 +181,10 @@ void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
 /* bu_log("Map: %d, Size: %d\n",Map,PMap[Map] -> StoredPhotons);*/
   }
 
+/*
   if (!EPS[Map] && PMap[Map] -> StoredPhotons == PMap[Map] -> MaxPhotons)
     EPS[Map]= EPM;
+*/
 
 /*
   bu_log("[%d][%d][%.3f,%.3f,%.3f]\n",Map,PMap[Map] -> StoredPhotons,CurPh.Power[0],CurPh.Power[1],CurPh.Power[2]);
@@ -581,7 +582,6 @@ int Hit(struct application *ap, struct partition *PartHeadp, struct seg *finishe
 
 /* Callback for Ray Miss */
 int Miss(struct application *ap) {
-  EPM++;
   return 0;
 }
 
@@ -621,7 +621,7 @@ void EmitPhotonsRandom(struct application *ap, struct light_specific *lp) {
     if (PMap[PM_GLOBAL] -> StoredPhotons == PMap[PM_GLOBAL] -> MaxPhotons && (!PMap[PM_CAUSTIC] -> StoredPhotons || PMap[PM_CAUSTIC] -> StoredPhotons == PMap[PM_CAUSTIC] -> MaxPhotons))
       return;
 
-    do {
+/*    do {*/
     do {
       /* Set Ray Direction to application ptr */
 /*
@@ -636,7 +636,7 @@ void EmitPhotonsRandom(struct application *ap, struct light_specific *lp) {
     } while (ap -> a_ray.r_dir[0]*ap -> a_ray.r_dir[0] + ap -> a_ray.r_dir[1]*ap -> a_ray.r_dir[1] + ap -> a_ray.r_dir[2]*ap -> a_ray.r_dir[2] > 1);
       /* Normalize Ray Direction */
       VUNITIZE(ap -> a_ray.r_dir);
-    } while (drand48() > VDOT(ap -> a_ray.r_dir,ldir)); /* we want this to terminate when a rnd# is less than the angle */
+/*    } while (drand48() > VDOT(ap -> a_ray.r_dir,ldir)); */ /* we want this to terminate when a rnd# is less than the angle */
 
     /* Set Ray Position to application ptr */
     ap -> a_ray.r_pt[0]= lp -> lt_pos[0];
@@ -648,10 +648,11 @@ void EmitPhotonsRandom(struct application *ap, struct light_specific *lp) {
 /*bu_log("Shooting Ray: [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n",lp -> lt_pos[0], lp -> lt_pos[1], lp -> lt_pos[2], x,y,z);*/
     CurPh.Power[0]=
     CurPh.Power[1]=
-    CurPh.Power[2]= 1000.0 * 1000.0 * 3.0 * 10.0;
+    CurPh.Power[2]= 1000.0 * 1000.0 * 20.0;
 
     Depth= 0;
     PType= PM_GLOBAL;
+    EPL++;
     rt_shootray(ap);
 /*    bu_log("1: %d, 2: %d\n",PMap[PM_GLOBAL] -> StoredPhotons, PMap[PM_CAUSTIC] -> StoredPhotons);*/
   }
@@ -680,7 +681,7 @@ int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *finis
   RT_HIT_NORMAL(normal, part -> pt_inhit, part -> pt_inseg -> seg_stp, &(ap->a_ray), part -> pt_inflip);
 /*  GetEstimate(C1, pt, normal, ScaleFactor/10.0, PMap[PM_GLOBAL] -> StoredPhotons / 100, PM_GLOBAL, 5, 1);*/
 /*  GetEstimate(C1, pt, normal, ScaleFactor/1000.0, 10.0*log(PMap[PM_GLOBAL] -> StoredPhotons), PM_GLOBAL, ScaleFactor/5.0, 1);*/
-  GetEstimate(C1, pt, normal, ScaleFactor/1000.0, 256, PM_GLOBAL, ScaleFactor/4.0, 1);
+  GetEstimate(C1, pt, normal, ScaleFactor/1000.0, 128, PM_GLOBAL, ScaleFactor/8.0, 1);
   GetEstimate(C2 ,pt, normal, (int)(ScaleFactor/pow(2,(log(PMap[PM_CAUSTIC] -> MaxPhotons/2)/log(4)))), PMap[PM_CAUSTIC] -> MaxPhotons / 50,PM_CAUSTIC, 0, 0);
 /*    GetEstimate(IMColor2, pt, normal, (int)(ScaleFactor/100.0),PMap[PM_CAUSTIC] -> MaxPhotons/50,PM_CAUSTIC,1, 0);*/
 
@@ -834,7 +835,7 @@ void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int
 */
 
   /* Initialize Emitted Photons for each map to 0 */
-  EPM= 0;
+  EPL= 0;
   for (i= 0; i < 3; i++)
     EPS[i]= 0;
 
@@ -879,8 +880,9 @@ void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int
   /* Scale Photon Power */
   for (i= 0; i < 3; i++)
     if (PMap[i] -> StoredPhotons)
-      ScalePhotonPower(1.0/(double)EPS[i],i);
+      ScalePhotonPower(1.0/(double)EPL,i);
 
+  bu_log("EPL: %d\n",EPL);
 
 /*
   for (i= 0; i < PMap -> StoredPhotons; i++)
@@ -935,9 +937,11 @@ void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int
 */
 
 
+/*
   for (i= 0; i < 3; i++)
     if (PMap[i] -> StoredPhotons)
       bu_log("  Results:  Map: %d, Total Emitted: %d, Local Emitted: %d, Map Size: %d\n",i, EPM, EPS[i], PMap[i] -> MaxPhotons);
+*/
 
 bu_log("Max.Avg: %.3f.... Gen.Avg: %.3f\n",temp1/temp2,temp3/temp2);
   for (i= 0; i < 3; i++)
@@ -1166,7 +1170,7 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
 /*  NP.RadSq= (4.0*ScaleFactor/PMap[PM_GLOBAL] -> MaxPhotons) * (4.0*ScaleFactor/PMap[PM_GLOBAL] -> MaxPhotons);*/
 /*  NP.Max= 2.0*pow(PMap[PM_GLOBAL] -> StoredPhotons, 0.5);*/
 /*  Search.Max= PMap[PM_GLOBAL] -> StoredPhotons / 50;*/
-  Search.Max= 256;
+  Search.Max= 32;
 
   Search.Normal[0]= normal[0];
   Search.Normal[1]= normal[1];
@@ -1307,9 +1311,9 @@ void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, 
       t[2]= Search.List[i].P.Pos[2] - pos[2];
 
       dist= t[0]*t[0] + t[1]*t[1] + t[2]*t[2];
-      Filter= 0.75;
+/*      Filter= 0.75;*/
 /*      Filter= ConeFilter(dist,NP.RadSq);*/
-/*      Filter= GaussFilter(dist,NP.RadSq);*/
+      Filter= GaussFilter(dist,Search.RadSq);
 
       irrad[0]+= Search.List[i].P.Power[0]*Filter;
       irrad[1]+= Search.List[i].P.Power[1]*Filter;
