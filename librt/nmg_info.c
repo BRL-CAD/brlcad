@@ -389,13 +389,22 @@ CONST struct loopuse	*lu;
 	struct vertexuse *test_vu;
 	struct edgeuse	*test_eu;
 	struct loopuse	*test_lu;
+	int		ret = 0;
 
 	NMG_CK_LOOPUSE(lu);
-	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  return 0;
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  {
+	    	if (rt_g.NMG_debug & DEBUG_BASIC)  rt_log("lu up is not faceuse\n");
+		ret = 0;
+		goto out;
+	}
 	fu = lu->up.fu_p;
 	NMG_CK_FACEUSE(fu);
 
-	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  {
+	    	if (rt_g.NMG_debug & DEBUG_BASIC)  rt_log("lu down is not edgeuse\n");
+		ret = 0;
+		goto out;
+	}
 
 	/*
 	 *  For every edgeuse, see if there is another edgeuse from 'lu',
@@ -429,12 +438,18 @@ CONST struct loopuse	*lu;
 			if( test_eu->eumate_p->vu_p->v_p == cur_v )  goto match;
 		}
 		/* No path back, this can't be a crack, abort */
-		return 0;
+		ret = 0;
+		goto out;
 		
 		/* One edgeuse matched, all the others have to as well */
 match:		;
 	}
-	return 1;
+	ret = 1;
+out:
+    	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+    		rt_log("nmg_loop_is_a_crack(lu=x%x) ret=%d\n", lu, ret );
+    	}
+	return ret;
 }
 
 /*
