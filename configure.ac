@@ -411,14 +411,14 @@ AC_MSG_RESULT($use_doxygen)
 
 # jove
 AC_MSG_CHECKING(whether to compile jove or not)
-use_jove=no
+build_jove=no
 AC_ARG_ENABLE(jove, AC_HELP_STRING(--enable-jove,
 		[enable compilation of jove (default=no)]),
 	[if test "x$enable_jove" != "xno" ; then
-		use_jove=yes
+		build_jove=yes
 	fi]
 )
-AC_MSG_RESULT($use_jove)
+AC_MSG_RESULT($build_jove)
 
 # optimized
 dnl optimized has aliases
@@ -1714,7 +1714,7 @@ dnl ***************************
 dnl *** Configure Makefiles ***
 dnl ***************************
 
-AM_CONDITIONAL(BUILD_JOVE, [test "x$use_jove" = "xyes"])
+AM_CONDITIONAL(BUILD_JOVE, [test "x$build_jove" = "xyes"])
 # XXX only irix can build libtkglx right now?
 AM_CONDITIONAL(BUILD_LIBTKGLX, [test "x$host_os" = "xirix6.5"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
@@ -2150,7 +2150,7 @@ echo Build Tcl ............................: yes
 echo Build libpng .........................: $build_brlcad_png
 echo Build libregex .......................: $build_brlcad_regex
 echo Build libz ...........................: $build_brlcad_zlib
-echo Build jove ...........................: $use_jove
+echo Build jove ...........................: $build_jove
 echo 
 echo Java Developer Kit support ...........: $with_java
 echo X11 support ..........................: yes
