@@ -28,6 +28,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 11.2  2000/09/01 19:15:42  mike
+ *
+ * Lint
+ *
  * Revision 11.1  1995/01/04 10:04:57  mike
  * Release_4.4
  *
@@ -94,6 +98,12 @@
 
 #include <stdio.h>
 #include <math.h>
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"

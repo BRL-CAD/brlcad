@@ -316,6 +316,7 @@ reswitch:				/* after finding '*' or ',' */
 				;	/* it's ok, then */
 			    }
 			    else if ( *argp == '-' && argp[1] != '\0' )
+			    {
 				if ( optarg > 0 ) /* end optional args? */
 				{
 				    /* Eat the arg, too, if necessary */
@@ -329,7 +330,10 @@ reswitch:				/* after finding '*' or ',' */
 				    break;
 				}
 				else
+				{
 				    continue;
+				}
+			    }
 			    else if ( typchr != 's' )
 				continue;	/* not number, keep looking */
 			    

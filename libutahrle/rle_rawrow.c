@@ -15,6 +15,12 @@
 #include "machine.h"
 #include "externs.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "rle.h"
 #include "rle_code.h"
 #include "rle_raw.h"

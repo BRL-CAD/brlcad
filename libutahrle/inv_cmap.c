@@ -53,6 +53,10 @@ static long outercount = 0, innercount = 0;
 
 void	maxfill();
 
+int	redloop(void);
+int	greenloop(int restart);
+int	blueloop(int restart);
+
 /*****************************************************************
  * TAG( inv_cmap )
  *
@@ -280,7 +284,7 @@ unsigned long *dist_buf;
 
 /* redloop -- loop up and down from red center. */
 int
-redloop()
+redloop(void)
 {
     int detect;
     int r;
@@ -327,7 +331,7 @@ redloop()
 
 /* greenloop -- loop up and down from green center. */
 int
-greenloop( restart )
+greenloop( int restart )
 {
     int detect;
     int g;
@@ -467,7 +471,7 @@ greenloop( restart )
 
 /* blueloop -- loop up and down from blue center. */
 int
-blueloop( restart )
+blueloop( int restart )
 {
     int detect;
     register unsigned long *dp;
