@@ -211,7 +211,7 @@ X_close()
 
 #if 1
   rt_free(dm_vars, "X_close: dm_vars");
-  Tk_DeleteGenericHandler(Xdoevent, (ClientData)rt_vls_addr(&pathName));
+  Tk_DeleteGenericHandler(Xdoevent, (ClientData)curr_dm_list);
 #else
   /* to prevent events being processed after window destroyed */
   win = -1;
@@ -493,6 +493,7 @@ XEvent *eventPtr;
   register struct dm_list *save_dm_list;
 
   save_dm_list = curr_dm_list;
+
   curr_dm_list = get_dm_list(eventPtr->xany.window);
 
   if(curr_dm_list == DM_LIST_NULL)
@@ -996,8 +997,7 @@ char	*name;
 #endif
     
     /* Register the file descriptor with the Tk event handler */
-    Tk_CreateGenericHandler(Xdoevent,
-			    (ClientData)rt_vls_addr(&pathName));
+    Tk_CreateGenericHandler(Xdoevent, (ClientData)curr_dm_list);
 
 #if DO_XSELECTINPUT
     /* start with constant tracking OFF */
@@ -1062,16 +1062,30 @@ char *argv[];
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
+#ifdef MULTI_ATTACH
+      rt_structprint("dm_X internal variables", X_vparse,
+		     (CONST char *)&((struct x_vars *)dm_vars)->mvars );
+#else
       rt_structprint("dm_X internal variables", X_vparse, (char *)0 );
+#endif
       rt_log("%s", rt_vls_addr(&vls) );
     } else if( argc == 2 ) {
+#ifdef MULTI_ATTACH
+      rt_vls_name_print( &vls, X_vparse, argv[1],
+			 (CONST char *)&((struct x_vars *)dm_vars)->mvars);
+#else
       rt_vls_name_print( &vls, X_vparse, argv[1], (char *)0 );
+#endif
       rt_log( "%s\n", rt_vls_addr(&vls) );
     } else {
       rt_vls_printf( &vls, "%s=\"", argv[1] );
       rt_vls_from_argv( &vls, argc-2, argv+2 );
       rt_vls_putc( &vls, '\"' );
+#ifdef MULTI_ATTACH
+      rt_structparse( &vls, X_vparse, (char *)&((struct x_vars *)dm_vars)->mvars);
+#else
       rt_structparse( &vls, X_vparse, (char *)0 );
+#endif
     }
 
     rt_vls_free(&vls);
@@ -1114,6 +1128,7 @@ X_load_startup()
   FILE    *fp;
   struct rt_vls str;
   char *path;
+  char *filename;
   int     found;
 
 #define DM_X_RCFILE "xinit.tk"
@@ -1121,10 +1136,13 @@ X_load_startup()
   found = 0;
   rt_vls_init( &str );
 
+  if((filename = getenv("DM_X_RCFILE")) == (char *)NULL )
+        filename = DM_X_RCFILE;
+
   if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
     rt_vls_strcpy( &str, path );
     rt_vls_strcat( &str, "/" );
-    rt_vls_strcat( &str, DM_X_RCFILE );
+    rt_vls_strcat( &str, filename );
 
     if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL )
       found = 1;
@@ -1134,7 +1152,7 @@ X_load_startup()
     if( (path = getenv("HOME")) != (char *)NULL )  {
       rt_vls_strcpy( &str, path );
       rt_vls_strcat( &str, "/" );
-      rt_vls_strcat( &str, DM_X_RCFILE );
+      rt_vls_strcat( &str, filename );
 
       if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
 	found = 1;
@@ -1142,8 +1160,8 @@ X_load_startup()
   }
 
   if( !found ) {
-    if( (fp = fopen( DM_X_RCFILE, "r" )) != NULL )  {
-      rt_vls_strcpy( &str, DM_X_RCFILE );
+    if( (fp = fopen( filename, "r" )) != NULL )  {
+      rt_vls_strcpy( &str, filename );
       found = 1;
     }
   }
@@ -1152,7 +1170,7 @@ X_load_startup()
       variables */
   if( !found ) {
     rt_vls_strcpy( &str, "/m/cad/mged/");
-    rt_vls_strcat( &str, DM_X_RCFILE);
+    rt_vls_strcat( &str, filename);
 
     if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
       found = 1;
@@ -1166,7 +1184,7 @@ X_load_startup()
   fclose( fp );
 
   if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
-    rt_log("Error reading %s: %s\n", DM_X_RCFILE, interp->result);
+    rt_log("Error reading %s: %s\n", filename, interp->result);
     rt_vls_free(&str);
     return -1;
   }

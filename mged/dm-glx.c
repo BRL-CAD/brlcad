@@ -28,6 +28,9 @@
  *  was modified to use the glx widget.
  *
  *  Authors -
+ *      Paul R. Stay
+ *      Michael John Muuss
+ *      Robert J. Reschly
  *      Robert G. Parker
  *  
  *  Source -
@@ -119,7 +122,7 @@ static struct dm_list *get_dm_list();
 #ifdef USE_PROTOTYPES
 static Tk_GenericProc Glx_doevent;
 #else
-static int Glxcheckevents();
+static int Glx_doevent();
 #endif
 
 #ifndef MULTI_ATTACH
@@ -721,7 +724,7 @@ char *name;
 Done:
   XFreeDeviceList(olist);
   Tk_CreateGenericHandler(Glx_doevent,
-			  (ClientData)rt_vls_addr(&pathName));
+			  (ClientData)curr_dm_list);
 
   /* start with constant tracking OFF */
   XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
@@ -737,18 +740,22 @@ Glx_load_startup()
   FILE    *fp;
   struct rt_vls str;
   char *path;
+  char *filename;
   int     found;
 
 /*XXX*/
-#define DM_GLX_RCFILE "glxinit2.tk"
+#define DM_GLX_RCFILE "glxinit.tk"
 
   found = 0;
   rt_vls_init( &str );
 
+  if((filename = getenv("DM_GLX_RCFILE")) == (char *)NULL )
+    filename = DM_GLX_RCFILE;
+
   if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
     rt_vls_strcpy( &str, path );
     rt_vls_strcat( &str, "/" );
-    rt_vls_strcat( &str, DM_GLX_RCFILE );
+    rt_vls_strcat( &str, filename );
 
     if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL )
       found = 1;
@@ -758,7 +765,7 @@ Glx_load_startup()
     if( (path = getenv("HOME")) != (char *)NULL )  {
       rt_vls_strcpy( &str, path );
       rt_vls_strcat( &str, "/" );
-      rt_vls_strcat( &str, DM_GLX_RCFILE );
+      rt_vls_strcat( &str, filename );
 
       if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
 	found = 1;
@@ -766,8 +773,8 @@ Glx_load_startup()
   }
 
   if( !found ) {
-    if( (fp = fopen( DM_GLX_RCFILE, "r" )) != NULL )  {
-      rt_vls_strcpy( &str, DM_GLX_RCFILE );
+    if( (fp = fopen( filename, "r" )) != NULL )  {
+      rt_vls_strcpy( &str, filename );
       found = 1;
     }
   }
@@ -776,7 +783,7 @@ Glx_load_startup()
       variables */
   if( !found ) {
     rt_vls_strcpy( &str, "/m/cad/mged/");
-    rt_vls_strcat( &str, DM_GLX_RCFILE);
+    rt_vls_strcat( &str, filename);
 
     if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
       found = 1;
@@ -790,7 +797,7 @@ Glx_load_startup()
   fclose( fp );
 
   if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
-    rt_log("Error reading %s: %s\n", DM_GLX_RCFILE, interp->result);
+    rt_log("Error reading %s: %s\n", filename, interp->result);
     rt_vls_free(&str);
     return -1;
   }
@@ -826,8 +833,7 @@ Glx_close()
   frontbuffer(0);
 
   Tk_DestroyWindow(Tk_Parent(xtkwin));
-  Tk_DeleteGenericHandler(Glx_doevent,
-			  (ClientData)rt_vls_addr(&pathName));
+  Tk_DeleteGenericHandler(Glx_doevent, (ClientData)curr_dm_list);
   knob_offset_hook = NULL;
   rt_free(dm_vars, "Glx_close: dm_vars");
   rt_vls_free(&pathName);
@@ -835,7 +841,7 @@ Glx_close()
 }
 
 /*
- *			I R _ P R O L O G
+ *			G L X _ P R O L O G
  *
  * Define the world, and include in it instances of all the
  * important things.  Most important of all is the object "faceplate",
@@ -851,7 +857,12 @@ Glx_prolog()
     rt_log( "Glx_prolog\n");
 
   ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
-  glx_clear_to_black();
+
+  if( !mvars.doublebuffer ){
+    glx_clear_to_black();
+    return;
+  }
+
   linewidth(mvars.linewidth);
 }
 
@@ -893,8 +904,11 @@ Glx_epilog()
   Glx_2d_line( 0, 0, 0, 0, 0 );
   /* End of faceplate */
 
-  if(mvars.doublebuffer )
+  if(mvars.doublebuffer ){
     swapbuffers();
+    /* give Graphics pipe time to work */
+    glx_clear_to_black();
+  }
 }
 
 /*
@@ -1298,7 +1312,6 @@ XEvent *eventPtr;
 #ifdef MULTI_ATTACH
   static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   register struct dm_list *save_dm_list;
-  register struct dm_list *save_dm_list2;
   register struct dm_list *p;
   struct rt_vls cmd;
 
@@ -1309,6 +1322,7 @@ annoying when running remotely. */
 
   rt_vls_init(&cmd);
   save_dm_list = curr_dm_list;
+
   curr_dm_list = get_dm_list(eventPtr->xany.window);
 
   if(curr_dm_list == DM_LIST_NULL)
