@@ -138,7 +138,7 @@ information on available commands.
 </DD>
 <HR>
 
-<DT><a NAME="B"><B>B</B> &lt;<I>objects</I>&gt</DT>
+<DT><a NAME="B"><B>B</B> [<I>-C#/#/#</I>] &lt;<I>objects</I>&gt</DT>
 
 <DD> Clear the <I>mged</I> display of any currently
 displayed objects, then display the list of objects provided in the
@@ -147,6 +147,10 @@ Equivalent to
 the <a href="#Z">Z</a> command
 followed by the command
 <a href="#draw">draw</a> &lt;<I>objects</I>&gt.
+The <I>-C</I> option provides the user a way to
+specify a color that overrides all other color
+specifications including combination colors and
+region id based colors.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -1266,12 +1270,16 @@ before the next command will be processed.
      </DL>
 <HR>
 
-<DT><a NAME="draw"><B>draw</B> &lt;<I>objects</I>&gt</DT>
+<DT><a NAME="draw"><B>draw</B> [<I>-C#/#/#</I>] &lt;<I>objects</I>&gt</DT>
 
 <DD> Add &lt;<I>objects</I>&gt to the
 display list so that they will appear on the <I>MGED</I> display.
 The <a href="#e">e</a> command
 is a synonym for <I>draw</I>.
+The <I>-C</I> option provides the user a way to
+specify a color that overrides all other color
+specifications including combination colors and
+region id based colors.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -1306,11 +1314,15 @@ to insure that there are no name clashes.
 </DD>
 <HR>
 
-<DT><a NAME="e"><B>e</B> &lt;<I>objects</I>&gt</DT>
+<DT><a NAME="e"><B>e</B> [<I>-C#/#/#</I>] &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``e'' command adds the objects in the argument list to the
 display list so that they will appear on the <I>MGED</I> display. This
 is a synonym for the <a href="#draw">draw</a> command.
+The <I>-C</I> option provides the user a way to
+specify a color that overrides all other color
+specifications including combination colors and
+region id based colors.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
