@@ -53,6 +53,8 @@ int maxlines = 	 0;
 int domem = 	 0;
 int debug = 	 0;
 
+int get_args();
+
 fastf_t
 gettime(dist, a, b, c, init)
 fastf_t dist;
@@ -88,12 +90,13 @@ fastf_t init;
 
 }
 
+int
 main(argc,argv)
 int argc;
 char **argv;
 {
 	fastf_t *l, *x, *y, *z;
-	fastf_t temp0,temp1,temp2,start,end,v0,v1;
+	fastf_t temp0,temp1,temp2,start=0.0,end,v0,v1;
 	int i,j , num,plen;
 	
 
@@ -225,7 +228,7 @@ char **argv;
 	bu_free((char *) x, "x[]");
 	bu_free((char *) y, "y[]");
 	bu_free((char *) z, "z[]");
-
+	return( 0 );
 }
 
 /* code to read command line arguments*/

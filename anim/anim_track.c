@@ -21,6 +21,13 @@
  */
 
 #include "conf.h"
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <math.h>
 #include <stdio.h>
 #include "machine.h"
@@ -113,6 +120,7 @@ int read_wheels;		/* flag: read new wheel positions each frame */
 int len_mode;		/* mode for track_len */
 int anti_strobe;	/* flag: take measures against strobing effect */
 
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -127,7 +135,7 @@ char **argv;
 	FILE *stream;
 	struct wheel *wh;
 	int last_steer, last_frame;
-	int rndtabi;
+	int rndtabi=0;
 	fastf_t halfpadlen, delta, prev_dist;
 
 	VSETALL(zero,0.0);
@@ -159,12 +167,12 @@ char **argv;
 	num_wheels = -1;
 	if (one_radius) {
 		while (!feof(stream)) {
-			fscanf(stream,"%*lf %*lf %*lf");
+			fscanf(stream,"%*f %*f %*f");
 			num_wheels++;
 		}
 	} else {
 		while (!feof(stream)) {
-			fscanf(stream,"%*lf %*lf %*lf %*lf");
+			fscanf(stream,"%*f %*f %*f %*f");
 			num_wheels++;
 		}
 	}
@@ -353,6 +361,7 @@ char **argv;
 	}
 	free(x);
 	free(wh);
+	return( 0 );
 }
 
 #define OPT_STR "sycuvb:d:f:i:r:p:w:g:m:l:a"

@@ -29,12 +29,16 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
 #include "anim.h"
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846
 #endif
 
+int		get_args();
+extern void	anim_y_p_r2mat();
+extern void	anim_add_trans();
 
 extern int bu_optind;
 extern char *bu_optarg;
@@ -45,6 +49,7 @@ int turn_wheels = 0;
 fastf_t length, angle, radius;
 fastf_t factor = 1.0;
 
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -139,7 +144,7 @@ char **argv;
 		}
 		count++;
 	}
-
+	return( 0 );
 }
 
 #define OPT_STR "r:l:a:f:p:"
