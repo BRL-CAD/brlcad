@@ -1147,7 +1147,6 @@ struct directory *dp;
 mat_t xform;
 {
 	struct directory *found;
-	struct bu_external sol_ext;
 	struct rt_db_internal sol_int;
 	struct object_use *use;
 	int id;
@@ -1201,19 +1200,7 @@ mat_t xform;
 	  return( DIR_NULL );
 	}
 
-	BU_INIT_EXTERNAL( &sol_ext );
-
-	if( db_get_external( &sol_ext, dp, dbip ) < 0 )
-	{
-	  Tcl_AppendResult(interp, "Cannot get external form of ",
-			   dp->d_namep, "\n", (char *)NULL);
-	  return( DIR_NULL );
-	}
-
-	RT_INIT_DB_INTERNAL( &sol_int );
-
-	id = rt_id_solid( &sol_ext );
-	if( rt_functab[id].ft_import( &sol_int, &sol_ext, xform, dbip, &rt_uniresource ) < 0 )
+	if( (id=rt_db_get_internal( &sol_int, dp, dbip, xform, &rt_uniresource )) < 0 )
 	{
 	  Tcl_AppendResult(interp, "Cannot import solid ",
 			   dp->d_namep, "\n", (char *)NULL);
@@ -1414,10 +1401,10 @@ char **argv;
 	  return TCL_ERROR;
 
 	/* initialize use and reference counts */
-	db_functree( dbip, old_dp, zero_dp_counts, zero_dp_counts, (genptr_t)interp );
+	db_functree( dbip, old_dp, zero_dp_counts, zero_dp_counts, &rt_uniresource, (genptr_t)interp );
 
 	/* Count uses */
-	db_functree( dbip, old_dp, increment_uses, increment_uses, NULL );
+	db_functree( dbip, old_dp, increment_uses, increment_uses, &rt_uniresource, NULL );
 
 	/* Get list of tree tops in this model */
 	bu_ptbl( &tops, BU_PTBL_INIT, (long *)NULL );
@@ -1431,6 +1418,9 @@ char **argv;
 			struct rt_comb_internal *comb;
 
 			if( dp->d_flags & DIR_SOLID )
+				continue;
+
+			if( !(dp->d_flags & ( DIR_SOLID | DIR_COMB ) ) )
 				continue;
 
 			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
@@ -1451,6 +1441,9 @@ char **argv;
 			if( dp->d_flags & DIR_SOLID )
 				continue;
 
+			if( !(dp->d_flags & ( DIR_SOLID | DIR_COMB ) ) )
+				continue;
+
 			if( dp->d_nref == 0 )
 				bu_ptbl( &tops, BU_PTBL_INS, (long *)dp );
 		}
@@ -1462,7 +1455,7 @@ char **argv;
 		struct directory *dp;
 
 		dp = (struct directory *)BU_PTBL_GET( &tops, i );
-		db_functree( dbip, dp, zero_nrefs, zero_nrefs, NULL );
+		db_functree( dbip, dp, zero_nrefs, zero_nrefs, &rt_uniresource, NULL );
 	}
 
 	/* count references in entire model */
@@ -1471,14 +1464,14 @@ char **argv;
 		struct directory *dp;
 
 		dp = (struct directory *)BU_PTBL_GET( &tops, i );
-		db_functree( dbip, dp, increment_nrefs, increment_nrefs, NULL );
+		db_functree( dbip, dp, increment_nrefs, increment_nrefs, &rt_uniresource, NULL );
 	}
 
 	/* Free list of tree-tops */
 	bu_ptbl( &tops, BU_PTBL_FREE, (long *)NULL );
 
 	/* Make new names */
-	db_functree( dbip, old_dp, Make_new_name, Make_new_name, NULL );
+	db_functree( dbip, old_dp, Make_new_name, Make_new_name, &rt_uniresource, NULL );
 
 	bn_mat_idn( xform );
 
@@ -1486,7 +1479,7 @@ char **argv;
 	(void) Copy_object( old_dp, xform );
 
 	/* Free use lists and delete unused directory entries */
-	db_functree( dbip, old_dp, Free_uses, Free_uses, NULL );
+	db_functree( dbip, old_dp, Free_uses, Free_uses, &rt_uniresource, NULL );
 
 	return TCL_OK;
 }
