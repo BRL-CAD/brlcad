@@ -64,8 +64,8 @@ struct structparse rt_hit_parsetab[] = {
 	nmg_rt_segs_exit("Goodbye"); }
 #define DO_LONGJMP
 #ifdef DO_LONGJMP
-jmp_buf env;
-#define nmg_rt_segs_exit(_s) {rt_log("%s\n",_s);longjmp(env, -1);}
+jmp_buf nmg_longjump_env;
+#define nmg_rt_segs_exit(_s) {rt_log("%s\n",_s);longjmp(nmg_longjump_env, -1);}
 #else
 #define nmg_rt_segs_exit(_s) rt_bomb(_s)
 #endif
@@ -1245,7 +1245,7 @@ struct ray_data	*rd;
 	static int last_miss=0;
 
 #ifdef DO_LONGJMP
-	if (setjmp(env) != 0) {
+	if (setjmp(nmg_longjump_env) != 0) {
 		return 0;
 	}
 #endif
