@@ -4,9 +4,7 @@
    FONTDIR is pathname to font file (times.r.6) which is included with sources
    but on real BSD systems is found in /usr/lib/vfont.  So on non-BSD systems,
    change path to the absolute directory path name where 'times.r.6' lives in
-   the following line, and add it to CONFIGDEFS:
-
-	 -DFONTDIR=\\\\"path\\\\"
+   the variable FONTDIR, and add it to CONFIGDEFS with 4 backslashes.
 
    Also, for debugging, ADB and DBX typically don't see 'static' functions, so
    add the following to CONFIGDEFS:
@@ -21,7 +19,11 @@
 
  */
 
-#define CONFIGDEFS	LGT_CONFIG -DBEHIND_ME_TOL=0.05 /* -DDEBUG */
+#if 1
+# define CONFIGDEFS	LGT_CONFIG -DBEHIND_ME_TOL=0.05 /* -DDEBUG */
+#else
+# define CONFIGDEFS	LGT_CONFIG -DBEHIND_ME_TOL=0.05 -DFONTDIR=\\\\"/usr/brlcad/vfont\\\\"
+#endif
 
 #define SRCDIR	lgt
 #define PRODUCTS	lgt
