@@ -1102,7 +1102,6 @@ char                    **argv;
 {
 	struct rt_cline_internal *cli =
 		(struct rt_cline_internal *)intern->idb_ptr;
-	int ret;
 	fastf_t *new;
 
 	RT_CK_DB_INTERNAL( intern );
@@ -1115,14 +1114,24 @@ char                    **argv;
 		if( *argv[0] == 'V' )
 		{
 			new = cli->v;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
-				return( ret );
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			    array_len ) {
+				Tcl_SetResult( interp,
+				      "ERROR: Incorrect number of coordinates for vector\n",
+				      TCL_STATIC );
+				return( TCL_ERROR );
+			}
 		}
 		else if( *argv[0] == 'H' )
 		{
 			new = cli->h;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
-				return( ret );
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			    array_len ) {
+				Tcl_SetResult( interp,
+				      "ERROR: Incorrect number of coordinates for point\n",
+				      TCL_STATIC );
+				return( TCL_ERROR );
+			}
 		}
 		else if( *argv[0] == 'R' )
 			cli->radius = atof( argv[1] );

@@ -1747,7 +1747,6 @@ int                     argc;
 char                    **argv;
 {
         struct rt_extrude_internal *extr;
-        int ret;
         fastf_t *new;
 
         RT_CK_DB_INTERNAL( intern );
@@ -1761,26 +1760,46 @@ char                    **argv;
 		if( *argv[0] == 'V' )
 		{
 			new = extr->V;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
-				return( ret );
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			    array_len ) {
+				Tcl_SetResult( interp,
+				      "ERROR: incorrect number of coordinates for vertex\n",
+				      TCL_STATIC );
+				return( TCL_ERROR );
+			}
 		}
 		else if( *argv[0] == 'H' )
 		{
 			new = extr->h;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
-				return( ret );
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			    array_len ) {
+				Tcl_SetResult( interp,
+				      "ERROR: incorrect number of coordinates for vector\n",
+				      TCL_STATIC );
+				return( TCL_ERROR );
+			}
 		}
 		else if( *argv[0] == 'A' )
 		{
 			new = extr->u_vec;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
-				return( ret );
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			    array_len ) {
+				Tcl_SetResult( interp,
+				      "ERROR: incorrect number of coordinates for vector\n",
+				      TCL_STATIC );
+				return( TCL_ERROR );
+			}
 		}
 		else if( *argv[0] == 'B' )
 		{
 			new = extr->v_vec;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
-				return( ret );
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+			    array_len ) {
+				Tcl_SetResult( interp,
+				      "ERROR: incorrect number of coordinates for vector\n",
+				      TCL_STATIC );
+				return( TCL_ERROR );
+			}
 		}
 		else if( *argv[0] =='K' )
 			extr->keypoint = atoi( argv[1] );
@@ -1796,3 +1815,8 @@ char                    **argv;
 
 	return( TCL_OK );
 }
+
+
+
+
+

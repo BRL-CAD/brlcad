@@ -2147,12 +2147,14 @@ Tcl_Obj *seg_list;
 				switch( *elem )
 				{
 					case 'D': /* degree */
-						Tcl_GetIntFromObj( interp, seg_val, &bsg->degree );
+						Tcl_GetIntFromObj( interp, seg_val,
+								   &bsg->degree );
 						break;
 					case 'P': /* list of control points */
 						num_points = 0;
-						if( (ret=tcl_obj_to_int_array( interp, seg_val, &bsg->ctl_points, &num_points ) ) != TCL_OK )
-							return( ret );
+						(void)tcl_obj_to_int_array( interp,
+						              seg_val, &bsg->ctl_points,
+							      &num_points );
 
 						if( num_points != bsg->degree + 1 ) {
 							Tcl_SetResult( interp, "ERROR: degree and number of control points disagree for a Bezier segment\n", TCL_STATIC );
@@ -2270,22 +2272,37 @@ char			**argv;
 		{
 			new = skt->V;
 			array_len = 3;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len )) != TCL_OK )
-				return( ret );
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) != 
+			    array_len ) {
+				Tcl_SetResult( interp,
+				      "ERROR: Incorrect number of coordinates for vertex\n",
+				      TCL_STATIC );
+				return( TCL_ERROR );
+		         }
 		}
 		else if( !strcmp( argv[0], "A" ) )
 		{
 			new = skt->u_vec;
 			array_len = 3;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len )) != TCL_OK )
-				return( ret );
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) != 
+			    array_len ) {
+				Tcl_SetResult( interp,
+				      "ERROR: Incorrect number of coordinates for vertex\n",
+				      TCL_STATIC );
+				return( TCL_ERROR );
+		         }
 		}
 		else if( !strcmp( argv[0], "B" ) )
 		{
 			new = skt->v_vec;
 			array_len = 3;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len )) != TCL_OK )
-				return( ret );
+			if( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) != 
+			    array_len ) {
+				Tcl_SetResult( interp,
+				      "ERROR: Incorrect number of coordinates for vertex\n",
+				      TCL_STATIC );
+				return( TCL_ERROR );
+		         }
 		}
 		else if( !strcmp( argv[0], "VL" ) )
 		{
@@ -2305,8 +2322,13 @@ char			**argv;
 			}
 
 			len = 0;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new_verts, &len )) != TCL_OK )
-				return( ret );
+                        (void)tcl_list_to_fastf_array( interp, argv[1], &new_verts, &len );
+                        if( len%2 ) {
+				Tcl_SetResult( interp,
+				    "ERROR: Incorrect number of coordinates for vertices\n",
+				    TCL_STATIC );
+				return( TCL_ERROR );
+                        }
 
 			if( skt->verts )
 				bu_free( (char *)skt->verts, "verts" );
@@ -2333,8 +2355,9 @@ char			**argv;
 			}
 			Tcl_DecrRefCount( tmp );
 		}
-		else if( *argv[0] == 'V' && isdigit( *(argv[0]+1) )  )	/* changing a specific vertex */
+		else if( *argv[0] == 'V' && isdigit( *(argv[0]+1) )  )
 		{
+			/* changing a specific vertex */
 			int vert_no;
 			fastf_t *new_vert;
 
@@ -2342,12 +2365,19 @@ char			**argv;
 			new_vert = skt->verts[vert_no];
 			if( vert_no < 0 || vert_no > skt->vert_count )
 			{
-				Tcl_SetResult( interp, "ERROR: Illegal vertex number\n", TCL_STATIC );
+				Tcl_SetResult( interp, "ERROR: Illegal vertex number\n",
+					       TCL_STATIC );
 				return( TCL_ERROR );
 			}
 			array_len = 2;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new_vert, &array_len )) != TCL_OK )
-				return( ret );
+                        if(tcl_list_to_fastf_array( interp, argv[1], &new_vert, &array_len)
+				!= array_len ) 
+			{
+				Tcl_SetResult( interp,
+				    "ERROR: Incorrect number of coordinates for vertex\n",
+				    TCL_STATIC );
+				return( TCL_ERROR );
+			}
 		}
 
 		argc -= 2;

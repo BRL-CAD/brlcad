@@ -1608,6 +1608,15 @@ db_full_path_appendresult( Tcl_Interp *interp, const struct db_full_path *pp )
 	}
 }
 
+/*
+ *		T C L _ O B J _ T O _ I N T _ A R R A Y
+ *
+ *	Expects the Tcl_obj argument (list) to be a Tcl list and
+ *	extracts list elements, converts them to int, and stores
+ *	them in the passed in array. If the array_len argument is zero,
+ *	a new array of approriate length is allocated. The return value
+ *	is the number of elements converted.
+ */
 int
 tcl_obj_to_int_array( interp, list, array, array_len )
 Tcl_Interp *interp;
@@ -1623,7 +1632,7 @@ int *array_len;
 		return( ret );
 
 	if( len < 1 )
-		return( TCL_OK );
+		return( 0 );
 
 	if( *array_len < 1 )
 	{
@@ -1631,11 +1640,21 @@ int *array_len;
 		*array_len = len;
 	}
 
-	for( i=0 ; i<len && i<*array_len ; i++ )
+	for( i=0 ; i<len && i<*array_len ; i++ ) {
 		(*array)[i] = atoi( Tcl_GetStringFromObj( obj_array[i], NULL ) );
+		Tcl_DecrRefCount( obj_array[i] );
+	}
 
-	return( TCL_OK );
+	return( len < *array_len ? len : *array_len );
 }
+
+/*	T C L _ L I S T _ T O _ I N T _ A R R A Y
+ *
+ *	interface to above tcl_obj_to_int_array() routine. This routine
+ *	expects a character string instead of a Tcl_Obj.
+ *
+ *	Returns the number of elements converted.
+ */
 
 int
 tcl_list_to_int_array( interp, char_list, array, array_len )
@@ -1651,10 +1670,18 @@ int *array_len;
 
 	ret = tcl_obj_to_int_array( interp, obj, array, array_len );
 
-	Tcl_DecrRefCount( obj );
-
 	return( ret );
 }
+
+/*
+ *		T C L _ O B J _ T O _ F A S T F _ A R R A Y
+ *
+ *	Expects the Tcl_obj argument (list) to be a Tcl list and
+ *	extracts list elements, converts them to fastf_t, and stores
+ *	them in the passed in array. If the array_len argument is zero,
+ *	a new array of approriate length is allocated. The return value
+ *	is the number of elements converted.
+ */
 
 int
 tcl_obj_to_fastf_array( interp, list, array, array_len )
@@ -1671,7 +1698,7 @@ int *array_len;
 		return( ret );
 
 	if( len < 1 )
-		return( TCL_OK );
+		return( 0 );
 
 	if( *array_len < 1 )
 	{
@@ -1684,8 +1711,16 @@ int *array_len;
 		Tcl_DecrRefCount( obj_array[i] );
 	}
 
-	return( TCL_OK );
+	return( len < *array_len ? len : *array_len );
 }
+
+/*	T C L _ L I S T _ T O _ F A S T F _ A R R A Y
+ *
+ *	interface to above tcl_obj_to_fastf_array() routine. This routine
+ *	expects a character string instead of a Tcl_Obj.
+ *
+ *	Returns the number of elements converted.
+ */
 
 int
 tcl_list_to_fastf_array( interp, char_list, array, array_len )

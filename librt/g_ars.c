@@ -23,7 +23,11 @@ static const char RCSars[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include <math.h>
+#include <ctype.h>
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -1158,4 +1162,222 @@ const struct bn_tol	*tol;
 	nmg_region_a( *r, tol );
 
 	return(0);
+}
+
+int
+rt_ars_tclget( interp, intern, attr )
+Tcl_Interp			*interp;
+const struct rt_db_internal	*intern;
+const char			*attr;
+{
+	register struct rt_ars_internal *ars=(struct rt_ars_internal *)intern->idb_ptr;
+	Tcl_DString	ds;
+	struct bu_vls	vls;
+	int		i,j;
+
+	RT_ARS_CK_MAGIC( ars );
+
+	Tcl_DStringInit( &ds );
+	bu_vls_init( &vls );
+
+	if( attr == (char *)NULL ) {
+		bu_vls_strcpy( &vls, "ars" );
+		bu_vls_printf( &vls, " NC %d PPC %d", ars->ncurves, ars->pts_per_curve );
+		for( i=0 ; i<ars->ncurves ; i++ ) {
+			bu_vls_printf( &vls, " C%d {", i );
+			for( j=0 ; j<ars->pts_per_curve ; j++ ) {
+				bu_vls_printf( &vls, " { %.25g %.25g %.25g }",
+					       V3ARGS( &ars->curves[i][j*3] ) );
+			}
+			bu_vls_printf( &vls, " }" );
+		}
+	}
+	else if( !strcmp( attr, "NC" ) ) {
+		bu_vls_printf( &vls, "%d", ars->ncurves );
+	}
+	else if( !strcmp( attr, "PPC" ) ) {
+		bu_vls_printf( &vls, "%d", ars->pts_per_curve );
+	}
+	else if( attr[0] == 'C' ) {
+		char *ptr;
+
+		if( attr[1] == '\0' ) {
+			/* all the curves */
+			for( i=0 ; i<ars->ncurves ; i++ ) {
+				bu_vls_printf( &vls, " C%d {", i );
+				for( j=0 ; j<ars->pts_per_curve ; j++ ) {
+					bu_vls_printf( &vls, " { %.25g %.25g %.25g }",
+						       V3ARGS( &ars->curves[i][j*3] ) );
+				}
+				bu_vls_printf( &vls, " }" );
+			}
+		}
+		else if( !isdigit( attr[1] ) ) {
+			Tcl_SetResult( interp,
+			      "ERROR: illegal argument, must be NC, PPC, C, C#, or C#P#\n",
+			      TCL_STATIC );
+			return( TCL_ERROR );
+		}
+
+		if( (ptr=strchr( attr, 'P' )) ) {
+			/* a specific point on a specific curve */
+			if( !isdigit( *(ptr+1) ) ) {
+			   Tcl_SetResult( interp,
+			       "ERROR: illegal argument, must be NC, PPC, C, C#, or C#P#\n",
+				TCL_STATIC );
+			   return( TCL_ERROR );
+			}
+			j = atoi( (ptr+1) );
+			*ptr = '\0';
+			i = atoi( &attr[1] );
+			bu_vls_printf( &vls, "%.25g %.25g %.25g",
+				 V3ARGS( &ars->curves[i][j*3] ) );      
+		}
+		else {
+			/* the entire curve */
+			i = atoi( &attr[1] );
+			for( j=0 ; j<ars->pts_per_curve ; j++ ) {
+				bu_vls_printf( &vls, " { %.25g %.25g %.25g }",
+					       V3ARGS( &ars->curves[i][j*3] ) );
+			}
+		}
+	}
+	Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &vls );
+	return( TCL_OK );
+}
+
+int
+rt_ars_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
+{
+	struct rt_ars_internal		*ars;
+	int				i,j,k;
+	int				len;
+	fastf_t				*array;
+
+	RT_CK_DB_INTERNAL( intern );
+
+	ars = (struct rt_ars_internal *)intern->idb_ptr;
+	RT_ARS_CK_MAGIC( ars );
+
+	while( argc >= 2 ) {
+		if( !strcmp( argv[0], "NC" ) ) {
+			/* change number of curves */
+			i = atoi( argv[1] );
+			if( i < ars->ncurves ) {
+				for( j=i ; j<ars->ncurves ; j++ )
+					bu_free( (char *)ars->curves[j], "ars->curves[j]" );
+				ars->curves = (fastf_t **)bu_realloc( ars->curves,
+						    i*sizeof( fastf_t *), "ars->curves" );
+				ars->ncurves = i;
+			}
+			else if( i > ars->ncurves ) {
+				ars->curves = (fastf_t **)bu_realloc( ars->curves,
+						    i*sizeof( fastf_t *), "ars->curves" );
+				/* new curves are duplicates of the last */
+				for( j=ars->ncurves ; j<i ; j++ ) {
+					ars->curves[j] = (fastf_t *)bu_malloc(
+					      ars->pts_per_curve * 3 * sizeof( fastf_t ),
+					      "ars->curves[j]" );
+					for( k=0 ; k<ars->pts_per_curve ; k++ ) {
+						VMOVE( &ars->curves[j][k*3],
+						       &ars->curves[j-1][k*3] );
+					}
+				}
+				ars->ncurves = i;
+			}
+		}
+		else if( !strcmp( argv[0], "PPC" ) ) {
+			/* change the number of points per curve */
+			i = atoi( argv[1] );
+			if( i < 3 ) {
+				Tcl_SetResult( interp,
+				      "ERROR: must have at least 3 points per curve\n",
+				      TCL_STATIC );
+				return( TCL_ERROR );
+			}
+			if( i < ars->pts_per_curve ) {
+				for( j=0 ; j<ars->ncurves ; j++ ) {
+					ars->curves[j] = bu_realloc( ars->curves[j],
+						    i * 3 * sizeof( fastf_t ),
+						    "ars->curves[j]" );
+				}
+				ars->pts_per_curve = i;
+			}
+			else if( i > ars->pts_per_curve ) {
+				for( j=0 ; j<ars->ncurves ; j++ ) {
+					ars->curves[j] = bu_realloc( ars->curves[j],
+						    i * 3 * sizeof( fastf_t ),
+						    "ars->curves[j]" );
+					/* new points are duplicates of last */
+					for( k=ars->pts_per_curve ; k<i ; k++ ) {
+						VMOVE( &ars->curves[j][k*3],
+						       &ars->curves[j][(k-1)*3] );
+					}
+				}
+				ars->pts_per_curve = i;
+			}
+		}
+		else if( argv[0][0] == 'C' ) {
+			if( isdigit( argv[0][1] ) ) {
+				char *ptr;
+
+				/* a specific curve */
+				if( (ptr=strchr( argv[0], 'P' )) ) {
+					/* a specific point on this curve */
+					i = atoi( &argv[0][1] );
+					j = atoi( ptr+1 );
+					len = 3;
+					array = &ars->curves[i][j*3];
+					if( tcl_list_to_fastf_array( interp, argv[1],
+						   &array,
+						   &len )!= len ) {
+						Tcl_SetResult( interp,
+						    "WARNING: incorrect number of parameters provided for a point\n",
+						       TCL_STATIC );
+					}
+				}
+				else {
+					/* one complete curve */
+					i = atoi( &argv[0][1] );
+					len = ars->pts_per_curve * 3;
+					ptr = argv[1];
+					while( *ptr ) {
+						if( *ptr == '{' || *ptr == '}' )
+							*ptr = ' ';
+						ptr++;
+					}
+					if( tcl_list_to_fastf_array( interp, argv[1],
+						   &ars->curves[i],
+						   &len ) != len ) {
+						Tcl_SetResult( interp,
+						    "WARNING: incorrect number of parameters provided for a curve\n",
+						       TCL_STATIC );
+					}
+				}
+			}
+			else {
+				Tcl_SetResult( interp,
+				  "ERROR: Illegal argument, must be NC, PPC, C#, or C#P#\n",
+				  TCL_STATIC );
+				return( TCL_ERROR );
+			}
+		}
+		else {
+			Tcl_SetResult( interp,
+				 "ERROR: Illegal argument, must be NC, PPC, C#, or C#P#\n",
+				 TCL_STATIC );
+			return( TCL_ERROR );
+		}
+		argc -= 2;
+		argv += 2;
+	}
+
+	return( TCL_OK );
 }

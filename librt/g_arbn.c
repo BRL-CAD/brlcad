@@ -1177,10 +1177,9 @@ char			**argv;
 	struct rt_arbn_internal *arbn;
 	unsigned char		*c;
 	int			len;
-	int			i;
+	int			i, j;
 	fastf_t			*new_planes;
 	fastf_t			*array;
-	int			ret;
 
 	RT_CK_DB_INTERNAL( intern );
 
@@ -1189,17 +1188,18 @@ char			**argv;
 
 	while( argc >= 2 ) {
 		if( !strcmp( argv[0], "N" ) ) {
-			i = arbn->neqn;
-			arbn->neqn = atoi( argv[1] );
-			if( arbn->neqn > 0 ) {
+			i = atoi( argv[1] );
+			if( i == arbn->neqn )
+				goto cont;
+			if( i > 0 ) {
 				arbn->eqn = (plane_t *)bu_realloc( arbn->eqn,
-						   arbn->neqn * sizeof( plane_t ),
+						   i * sizeof( plane_t ),
 								   "arbn->eqn");
-				for( ; i<arbn->neqn ; i++ ) {
-					VSETALLN( arbn->eqn[i], 0.0, 4 );
+				for( j=arbn->neqn ; j<i ; j++ ) {
+					VSETALLN( arbn->eqn[j], 0.0, 4 );
 				}
-			} else {
 				arbn->neqn = i;
+			} else {
 				Tcl_SetResult( interp,
 				       "ERROR: number of planes must be greater than 0\n",
 					TCL_STATIC );
@@ -1214,10 +1214,7 @@ char			**argv;
 				c++;
 			}
 			len = 0;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new_planes,
-							  &len )) != TCL_OK ) {
-				return( ret );
-			}
+			(void)tcl_list_to_fastf_array( interp, argv[1], &new_planes, &len );
 
 			if( len%4 ) {
 				Tcl_SetResult( interp,
@@ -1246,8 +1243,8 @@ char			**argv;
 				i = atoi( &argv[0][1] );
 			} else {
 				Tcl_SetResult( interp,
-					       "ERROR: illegal argument, choices are P, P#, P+, or N\n",
-					       TCL_STATIC );
+				   "ERROR: illegal argument, choices are P, P#, P+, or N\n",
+				   TCL_STATIC );
 				return( TCL_ERROR );
 			}
 			if( i < 0 || i >= arbn->neqn ) {
@@ -1258,12 +1255,22 @@ char			**argv;
 			}
 			len = 4;
 			array = (fastf_t *)&arbn->eqn[i];
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1],
-							  &array, &len ) ) != TCL_OK ) {
-				return( ret );
+			if( tcl_list_to_fastf_array( interp, argv[1],
+							  &array, &len ) != 4 ) {
+				Tcl_SetResult( interp,
+				    "ERROR: incorrect number of coefficients for a plane\n",
+				    TCL_STATIC );
+				return( TCL_ERROR );
 			}
 			VUNITIZE( arbn->eqn[i] );
 		}
+		else {
+			Tcl_SetResult( interp,
+			      "ERROR: illegal argument, choices are P, P#, P+, or N\n",
+			      TCL_STATIC );
+			return( TCL_ERROR );
+		}
+	cont:
 		argc -= 2;
 		argv += 2;
 	}

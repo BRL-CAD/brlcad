@@ -343,6 +343,13 @@ BU_EXTERN(int rt_arbn_tcladjust, (Tcl_Interp *interp,
 		struct rt_db_internal *intern, int argc, char **argv,
 		struct resource *resp));
 
+/* ARS solid */
+BU_EXTERN(int rt_ars_tclget, (Tcl_Interp *interp,
+		const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_ars_tcladjust, (Tcl_Interp *interp,
+		struct rt_db_internal *intern, int argc, char **argv,
+		struct resource *resp));
+
 /* PIPE solid */
 BU_EXTERN(int rt_pipe_tclget, (Tcl_Interp *interp,
 		const struct rt_db_internal *intern, const char *attr));
@@ -524,7 +531,7 @@ const struct rt_functab rt_functab[] = {
 		rt_ars_import,	rt_ars_export,	rt_ars_ifree,
 		rt_ars_describe,rt_ars_xform,	NULL,
 		sizeof(struct rt_ars_internal), RT_ARS_INTERNAL_MAGIC,
-		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		rt_ars_tclget, rt_ars_tcladjust, rt_parsetab_tclform,
 		NULL,
 	},
 
