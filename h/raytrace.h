@@ -1280,6 +1280,7 @@ struct rt_vlist  {
 };
 #define RT_VLIST_NULL	((struct rt_vlist *)0)
 #define RT_VLIST_MAGIC	0x98237474
+#define RT_CK_VLIST(_p) RT_CKMAG((_p), RT_VLIST_MAGIC, "rt_vlist")
 
 /* Values for cmd[] */
 #define RT_VLIST_LINE_MOVE	0
@@ -1302,10 +1303,14 @@ struct rt_vlist  {
 	}
 
 /* Place an entire chain of rt_vlist structs on the global freelist */
-#define RT_FREE_VLIST(hd)	RT_LIST_APPEND_LIST( &rt_g.rtg_vlfree, (hd) )
+#define RT_FREE_VLIST(hd)	{ \
+	RT_CK_VLIST( (hd) ); \
+	RT_LIST_APPEND_LIST( &rt_g.rtg_vlfree, (hd) ); \
+	}
 
 #define RT_ADD_VLIST(hd,pnt,draw)  { \
 	register struct rt_vlist *_vp = RT_LIST_LAST( rt_vlist, (hd) ); \
+	RT_CK_VLIST(_vp); \
 	if( RT_LIST_IS_HEAD( _vp, (hd) ) || _vp->nused >= RT_VLIST_CHUNK )  { \
 		RT_GET_VLIST(_vp); \
 		RT_LIST_INSERT( (hd), &(_vp->l) ); \
@@ -1323,7 +1328,7 @@ struct rt_vlblock {
 	struct rt_list	*head;		/* head[max] */
 };
 #define RT_VLBLOCK_MAGIC	0x981bd112
-#define RT_CK_VLBLOCK(_p)	RT_CKMAG(_p, RT_VLBLOCK_MAGIC, "rt_vlblock")
+#define RT_CK_VLBLOCK(_p)	RT_CKMAG((_p), RT_VLBLOCK_MAGIC, "rt_vlblock")
 /*
  *  Replacements for definitions from ../h/vmath.h
  */
