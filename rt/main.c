@@ -63,7 +63,6 @@ static char unimp[] = "Unimplemented Routine";
 #define DEF(func)	func() { printf("func unimplemented\n"); }
 
 UNIMPLEMENTED(null);
-UNIMPLEMENTED(tor);
 UNIMPLEMENTED(half);
 
 double timer_print();
@@ -289,7 +288,7 @@ char **argv;
 			 *
 			 * Free up Seg memory.
 			 */
-			while( HeadSeg != 0 )  {
+			while( HeadSeg != SEG_NULL )  {
 				register struct seg *hsp;	/* XXX */
 
 				hsp = HeadSeg->seg_next;
