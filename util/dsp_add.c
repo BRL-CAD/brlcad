@@ -6,6 +6,8 @@
 #include "conf.h"
 
 #include <stdio.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "machine.h"
 #include "externs.h"
@@ -15,15 +17,15 @@
 
 
 /* declarations to support use of getopt() system call */
-char *options = "hw:n:s:";
+char *options = "h";
 extern char *optarg;
 extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
 
-int width;
-int length;
-int conv = 1;	/* flag: do conversion from network to host format */
+#define ADD_STYLE_INT 0
+#define ADD_STYLE_FLOAT 1
+int style = ADD_STYLE_INT;
 
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
@@ -57,36 +59,6 @@ int parse_args(int ac, char *av[])
 	while ((c=getopt(ac,av,options)) != EOF)
 		switch (c) {
 		case '?'	:
-		case 'w'	:
-			c = atoi(optarg);
-			if (c > 0) width = c;
-			else {
-				fprintf(stderr,
-				    "%s: Width must be greater than 0 (-w %s)",
-					progname, optarg);
-				exit(-1);
-			}
-			break;
-		case 'n'	:
-			c = atoi(optarg);
-			if (c > 0) length = c;
-			else {
-				fprintf(stderr,
-				   "%s: Length must be greater than 0 (-n %s)",
-					progname, optarg);
-				exit(-1);
-			}
-			break;
-		case 's'	:
-			c = atoi(optarg);
-			if (c > 0) width = length = c;
-			else {
-				fprintf(stderr,
-				    "%s: size must be greater than 0 (-s %s)",
-					progname, optarg);
-				exit(-1);
-			}
-			break;
 		case 'h'	:
 		default		: usage("Bad or help flag specified\n"); break;
 		}
@@ -94,40 +66,77 @@ int parse_args(int ac, char *av[])
 	return(optind);
 }
 
+
 void
-read_and_convert(FILE *inp, FILE *in,
-		 int count,
-		 short *buf1, short *buf2,
-		 int in_cookie, int out_cookie)
+swap_bytes(unsigned short *buf, unsigned long count)
 {
-	
-	int got;
-	short *tmp;
+	register unsigned short *p;
 
-	tmp = (short *)bu_malloc(sizeof(short)*count, "tmp");
-
-	if (fread(tmp, sizeof(short), count, inp) != count) {
-		fprintf(stderr, "read error on file 1\n");
-		exit(-1);
-	}
-
-	got = bu_cv_w_cookie(buf1, out_cookie, count, tmp, in_cookie, count);
-
-	if (got != count) bu_bomb("bu_cv_w_cookie failed\n");
-
-	if (fread(tmp, sizeof(short), count, in) != count) {
-		fprintf(stderr, "read error on file 1\n");
-		exit(-1);
-	}
-
-	got = bu_cv_w_cookie(buf2, out_cookie, count, tmp, in_cookie, count);
-
-	if (got != count) bu_bomb("bu_cv_w_cookie failed\n");
-
-	bu_free(tmp, "tmp");
+	for (p = &buf[count-1] ; p >= buf ; p--)
+		*p = ((*p << 8) & 0x0ff00) | (*p >> 8);
 }
 
 
+/*
+ *  A D D _ F L O A T
+ *  
+ *  Perform floating point addition and re-normalization of the data.
+ *
+ */
+void
+add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
+{
+	register unsigned short *p, *q, *e;
+	register double *dbuf, *d;
+	double min, max, k;
+
+	dbuf = bu_malloc(sizeof(double) * count, "buffer of double");
+
+	min = MAX_FASTF;
+	max = -MAX_FASTF;
+	e = &buf1[count];
+
+	for (d=dbuf, p=buf1, q=buf2 ; p < e ; p++, q++, d++) {
+		*d = *p + *q;
+		if (*d > max) max = *d;
+		if (*d < min) min = *d;
+	}
+
+	k = 65534.0 / (max - min);
+
+	for (d=dbuf, p=buf1, q=buf2 ; p < e ; p++, q++, d++)
+		*p = (unsigned short)  ((*d - min) * k) + 1;
+
+	bu_free(dbuf, "buffer of double");
+}
+
+/*
+ *  A D D _ I N T
+ *
+ *  Perform simple integer addition to the input streams.  
+ *  Issue warning on overflow.
+ *
+ *  Result:	buf1 contents modified
+ */
+void
+add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
+{
+	register int int_value;
+	int i;
+	unsigned short s;
+
+	for (i=0; i < count ; i++) {
+		int_value = buf1[i] + buf2[i];
+		s = (unsigned short)int_value;
+
+		if (s != int_value) {
+			bu_log("overflow (%d+%d) == %d at %d\n",
+			       buf1[i], buf2[i], int_value, i );
+		}
+		buf1[i] = s;
+	}
+
+}
 
 
 /*
@@ -139,68 +148,79 @@ read_and_convert(FILE *inp, FILE *in,
 int
 main(int ac, char *av[])
 {
-	int arg_count;
+	int next_arg;
 	FILE *inp, *in;
-	short *buf1, *buf2, s;
-	int count, i, v;
+	unsigned short *buf1, *buf2;
+	unsigned long count;
 	int in_cookie, out_cookie;
+	int conv;
+	struct stat sb;
 
-	arg_count = parse_args(ac, av);
+	next_arg = parse_args(ac, av);
 	
-	if (width == 0 || length == 0) 
-		usage("must specify both grid dimensions\n");
-
-	count = width * length;
-
 	if (isatty(fileno(stdout))) usage("Redirect standard output\n");
 
-	if (arg_count >= ac) usage("No files specified\n");
+	if (next_arg >= ac) usage("No files specified\n");
 
 
 	/* Open the files */
 
-	if ((inp = fopen(av[arg_count], "r")) == (FILE *)NULL) {
-		perror(av[arg_count]);
+	if (stat(av[next_arg], &sb) ||
+	    (inp = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
+		perror(av[next_arg]);
 		return -1;
 	}
-	arg_count++;
+	    
+	count = sb.st_size;
+	buf1 = bu_malloc(sb.st_size, "buf1");
 
-	if ((in = fopen(av[arg_count], "r")) == (FILE *)NULL) {
-		perror(av[arg_count]);
+	next_arg++;
+
+	if (stat(av[next_arg], &sb) ||
+	    (inp = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
+		perror(av[next_arg]);
 		return -1;
 	}
+	    
+	if (sb.st_size != count)
+		bu_bomb("**** ERROR **** file size mis-match\n");
+
+	buf2 = bu_malloc(sb.st_size, "buf1");
+
+	count = count >> 1; /* convert count of char to count of short */
+
+	/* Read the terrain data */
+	fread(buf1, sizeof(short), count, inp);
+	fclose(inp);
+
+	fread(buf2, sizeof(short), count, in);
+	fclose(in);
 
 
-	buf1 = bu_malloc(sizeof(short)*count, "buf1");
-	buf2 = bu_malloc(sizeof(short)*count, "buf1");
 
-	/* Read the terrain data 
-	 * Convert from network to host format (unless the user says not to)
-	 */
-
+	/* Convert from network to host format */
 	in_cookie = bu_cv_cookie("nus");
 	out_cookie = bu_cv_cookie("hus");
+	conv = (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie));
 
-	if (conv && bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie))
-		read_and_convert(inp, in, count, buf1, buf2, 
-				 in_cookie, out_cookie);
-	else {
-		fread(buf1, sizeof(short), count, inp);
-		fread(buf2, sizeof(short), count, in);
+	if (conv) {
+		swap_bytes(buf1, count);
+		swap_bytes(buf2, count);
 	}
 
 
 	/* add the two datasets together */
 
-	for (i=0; i < count ; i++) {
-		v = buf1[i] + buf2[i];
-		s = (short)v;
+	switch (style) {
+	case ADD_STYLE_FLOAT	: add_float(buf1, buf2, count); break;
+	case ADD_STYLE_INT	: add_int(buf1, buf2, count); break;
+	}
 
-		if (s != v) {
-			bu_log("error adding value #%d, (%d+%d)\n",
-			       i, buf1[i], buf2[i]);
-		}
-		buf1[i] = s;
+
+	/* convert back to network format & write out */
+	if (conv) {
+		swap_bytes(buf1, count);
+		swap_bytes(buf2, count);
 	}
 
 	if (fwrite(buf1, sizeof(short), count, stdout) != count)
@@ -208,3 +228,4 @@ main(int ac, char *av[])
 
 	return 0;
 }
+
