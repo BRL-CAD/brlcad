@@ -1,0 +1,6 @@
+name Pro/E to BRL-CAD Converter
+startup spawn
+exec_file /m/cad/pro-engineer/sgi_elf2/proe-brl
+text_dir /m/cad/pro-engineer/text
+revision 18
+end
