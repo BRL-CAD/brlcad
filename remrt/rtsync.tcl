@@ -36,6 +36,8 @@ menu .mbar.file.menu
 menu .mbar.help.menu
 .mbar.help.menu add command -label "Exit" -command "exit"
 menu .mbar.debug.menu
+.mbar.debug.menu add command -label "Reproject ON" -command "do_reproject_mode 1"
+.mbar.debug.menu add command -label "Reproject OFF" -command "do_reproject_mode 0"
 .mbar.debug.menu add command -label "Net Speed Test ON" -command "net_speed_test 1"
 .mbar.debug.menu add command -label "Net Speed Test OFF" -command "net_speed_test 0"
 .mbar.debug.menu add command -label "Remote bu_log ON" -command "node_send set print_on 1"
@@ -138,6 +140,13 @@ proc space_partitioning {val} {
 		sh_opt -,$val ";" \
 		set curframe 0
 	reprep
+}
+
+proc do_reproject_mode {val} {
+	node_send \
+		set fullfloat_mode $val ";" \
+		set reproject_mode $val ";" \
+		set curframe 0
 }
 
 # Aids for memory debugging
