@@ -71,7 +71,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define RES_ACQUIRE(ptr)	;
 #define RES_RELEASE(ptr)	;
 
-#define bzero(str,n)		memset( str, '\0', n )
+/**buggy #define bzero(str,n)		memset( str, '\0', n ) ***/
 #define bcopy(from,to,count)	memcpy( to, from, count )
 
 #define CRAY_COS	1	/* Running on Cray under COS w/bugs */
