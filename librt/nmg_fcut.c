@@ -242,8 +242,11 @@ fastf_t		dist_tol;
 		vect_t		vect;
 		NMG_CK_VERTEXUSE(vu[i]);
 
-		VSUB2(vect, vu[i]->v_p->vg_p->coord, pt);
-		mag[i] = VDOT( vect, dir );
+		if( mag[i] == MAX_FASTF )
+		{
+			VSUB2(vect, vu[i]->v_p->vg_p->coord, pt);
+			mag[i] = VDOT( vect, dir );
+		}
 
 		/* Find previous vu's at "same" distance, within dist_tol */
 		for( j = 0; j < i; j++ )  {
@@ -620,6 +623,7 @@ again:
 
 		/* Compute edge vector, for purposes of orienting answer */
 really_on:
+#if 0
 		if( forw )  {
 			/* Edge goes from v to otherv */
 			VSUB2( heading, otherv->vg_p->coord, v->vg_p->coord );
@@ -634,6 +638,15 @@ really_on:
 		} else {
 			ret = NMG_E_ASSESSMENT_ON_FORW;
 		}
+
+		if( i > pos )  {
+			start = pos+1;
+			end = i;
+		} else {
+			start = i+1;
+			end = pos;
+		}
+#else
 		/*
 		 *  There are 2 ways of determining the assessment:
 		 *  edge direction DOT ray direction, above, and
@@ -642,26 +655,21 @@ really_on:
 		 */
 		if( i > pos )  {
 			if( forw )
-				ret2 = NMG_E_ASSESSMENT_ON_FORW;
+				ret = NMG_E_ASSESSMENT_ON_FORW;
 			else
-				ret2 = NMG_E_ASSESSMENT_ON_REV;
+				ret = NMG_E_ASSESSMENT_ON_REV;
 			start = pos+1;
 			end = i;
 		} else {
 			/* i < pos  (They can't be equal) */
 			if( forw )
-				ret2 = NMG_E_ASSESSMENT_ON_REV;
+				ret = NMG_E_ASSESSMENT_ON_REV;
 			else
-				ret2 = NMG_E_ASSESSMENT_ON_FORW;
+				ret = NMG_E_ASSESSMENT_ON_FORW;
 			start = i+1;
 			end = pos;
 		}
-		if( ret != ret2 )  {
-			rt_log("ret=%s, ret2=%s?\n",
-				nmg_e_assessment_names[ret],
-				nmg_e_assessment_names[ret2]);
-			rt_bomb("nmg_assess_eu() assessment inconsistency\n");
-		}
+#endif
 		/*
 		 *  Verify that any other vertexuses on the intersect line
 		 *  along the ON edge are uses of one of the two edge
@@ -2275,8 +2283,9 @@ fastf_t			*mag2;
  *			N M G _ U N L I S T _ V
  */
 void
-nmg_unlist_v(b, v)
+nmg_unlist_v(b, mag, v)
 struct nmg_ptbl	*b;
+fastf_t *mag;
 struct vertex	*v;
 {
 	register int		i;
@@ -2287,7 +2296,11 @@ struct vertex	*v;
 	for( i=0; i<NMG_TBL_END(b); i++ )  {
 		vu = (struct vertexuse *)NMG_TBL_GET(b, i);
 		if( !vu )  continue;
-		if( vu->v_p == v )  NMG_TBL_GET(b, i) = (long *)0;
+		if( vu->v_p == v )
+		{
+			NMG_TBL_GET(b, i) = (long *)0;
+			mag[i] = MAX_FASTF;
+		}
 	}
 }
 
@@ -2302,10 +2315,12 @@ struct vertex	*v;
  *  Must be called after vu list has been sorted.
  */
 int
-nmg_onon_fix( rs, b, ob )
+nmg_onon_fix( rs, b, ob, mag, omag )
 struct nmg_ray_state	*rs;
 struct nmg_ptbl		*b;
 struct nmg_ptbl		*ob;	/* other rs's vu list */
+fastf_t			*mag;	/* list of distances from intersect ray start point */
+fastf_t			*omag;	/* list of distances from intersect ray start point */
 {
 	int		i;
 	int		zapped;
@@ -2335,8 +2350,8 @@ doit:
 			NMG_CK_VERTEXUSE(vu);
 			v = vu->v_p;
 			/* Need to null out all uses of this vertex from both lists */
-			nmg_unlist_v(b, v);
-			nmg_unlist_v(ob, v);
+			nmg_unlist_v(b, mag, v);
+			nmg_unlist_v(ob, omag, v);
 			zapped++;
 			goto again;
 		}
@@ -2349,11 +2364,40 @@ doit:
 		}
 	}
 	if( zapped )  {
+		int removed;
+
 		/* If any vertexuses got zapped, their pointer was set to NULL.
 		 *  They can all be removed from the list in one easy operation.
 		 */
 		rt_log("nmg_onon_fix(): removing %d dead vertexuses\n", zapped);
+		/* remove entries from distance list first */
+		removed = 0;
+		for( i=NMG_TBL_END( b ) ; i>=0 ; i-- )
+		{
+			int count=0;
+			int j,k;
+
+			j = i;
+			while( j>=0 && !NMG_TBL_GET( b, j ) ) --j;
+			count = i-j;
+			removed += count;
+			for( k=j+1; k<NMG_TBL_END(b)-removed ; k++ )
+				mag[k] = mag[k+count];
+		}
 		nmg_tbl(b, TBL_RM, 0 );
+		removed = 0;
+		for( i=NMG_TBL_END( ob ) ; i>=0 ; i-- )
+		{
+			int count=0;
+			int j,k;
+
+			j = i;
+			while( j>=0 && !NMG_TBL_GET( ob, j ) ) --j;
+			count = i-j;
+			removed += count;
+			for( k=j+1 ; k<NMG_TBL_END(ob)-removed ; k++ )
+				omag[k] = omag[k+count];
+		}
 		nmg_tbl(ob, TBL_RM, 0 );
 rt_bomb("nmg_onon_fix(): check the intersector\n");
 		return 1;
@@ -2375,9 +2419,11 @@ rt_bomb("nmg_onon_fix(): check the intersector\n");
  *  a single use of that same vertex.
  */
 struct edge_g_lseg *
-nmg_face_cutjoin(b1, b2, fu1, fu2, pt, dir, eg, tol)
+nmg_face_cutjoin(b1, b2, mag1, mag2, fu1, fu2, pt, dir, eg, tol)
 struct nmg_ptbl	*b1;		/* table of vertexuses in fu1 on intercept line */
 struct nmg_ptbl	*b2;		/* table of vertexuses in fu2 on intercept line */
+fastf_t		*mag1;		/* table of distances to vertexuses from is->pt */
+fastf_t		*mag2;		/* table of distances to vertexuses from is->pt */
 struct faceuse	*fu1;		/* face being worked */
 struct faceuse	*fu2;		/* for plane equation */
 point_t		pt;
@@ -2385,8 +2431,6 @@ vect_t		dir;
 struct edge_g_lseg		*eg;	/* may be null.  geometry of isect line */
 CONST struct rt_tol	*tol;
 {
-	fastf_t		*mag1;
-	fastf_t		*mag2;
 	struct vertexuse **vu1, **vu2;
 	int		i;
 	struct nmg_ray_state	rs1;
@@ -2408,11 +2452,6 @@ CONST struct rt_tol	*tol;
 	}
 
 top:
-	mag1 = (fastf_t *)rt_calloc(b1->end+1, sizeof(fastf_t),
-		"vector magnitudes along ray, for sort");
-	mag2 = (fastf_t *)rt_calloc(b2->end+1, sizeof(fastf_t),
-		"vector magnitudes along ray, for sort");
-
 	/*
 	 *  Sort hit points by increasing distance, vertex ptr, vu ptr,
 	 *  and eliminate any duplicate vu's.
@@ -2506,12 +2545,9 @@ top:
 	nmg_face_rs_init( &rs2, b2, fu2, fu1, pt, dir, eg, tol );
 
 	/* Ensure that small angles don't plunk vertexuses down onto the intersection line */
-	if( nmg_onon_fix( &rs1, b1, b2 ) || nmg_onon_fix( &rs2, b2, b1 ) )  goto top;
+	if( nmg_onon_fix( &rs1, b1, b2, mag1, mag2 ) || nmg_onon_fix( &rs2, b2, b1, mag2, mag1 ) )  goto top;
 
 	nmg_face_combineX( &rs1, mag1, &rs2, mag2 );
-
-	rt_free((char *)mag1, "vector magnitudes");
-	rt_free((char *)mag2, "vector magnitudes");
 
 	/* Can't do simplifications here,
 	 * because the caller's linked lists & pointers might get disrupted.
