@@ -110,7 +110,6 @@ DEF(tgc_curve); DEF(tgc_class);
 DEF(ell_class);
 DEF(arb_class);
 DEF(hlf_class);
-DEF(ars_curve); DEF(ars_class);
 DEF(rec_class);
 DEF(pg_curve); DEF(pg_class);
 DEF(spl_curve); DEF(spl_class);
@@ -165,18 +164,33 @@ char *node;
 {
 	register union tree *curtree;
 	register struct directory *dp;
-	mat_t	mat;
+	mat_t	root;
+	struct mater_info root_mater;
 
-	if(!rt_i.needprep)
+	if(!rtip->needprep)
 		rt_bomb("rt_gettree called again after rt_prep!");
 
-	mat_idn( mat );
+	root_mater = rt_no_mater;	/* struct copy */
+
+	/* Process animations located at the root */
+	mat_idn( root );
+	if( rtip->rti_anroot )  {
+		register struct animate *anp;
+		mat_t	temp_root, arc;
+
+		for( anp=rtip->rti_anroot; anp != ANIM_NULL; anp = anp->an_forw ) {
+			mat_copy( temp_root, root );
+			mat_idn( arc );
+			rt_do_anim( anp, temp_root, arc, &root_mater );
+			mat_mul( root, temp_root, arc );
+		}
+	}
 
 	dp = rt_dir_lookup( node, LOOKUP_NOISY );
 	if( dp == DIR_NULL )
 		return(-1);		/* ERROR */
 
-	curtree = rt_drawobj( dp, REGION_NULL, 0, mat, &rt_no_mater );
+	curtree = rt_drawobj( rtip, dp, REGION_NULL, 0, root, &root_mater );
 	if( curtree != TREE_NULL )  {
 		/*  Subtree has not been contained by a region.
 		 *  This should only happen when a top-level solid
@@ -190,7 +204,7 @@ char *node;
 		if( curtree->tr_op != OP_SOLID )
 			rt_bomb("root subtree not Solid");
 		regionp->reg_name = rt_strdup(rt_path_str(0));
-		rt_add_regtree( regionp, curtree );
+		rt_add_regtree( rtip, regionp, curtree );
 	}
 	return(0);	/* OK */
 }
@@ -204,10 +218,11 @@ static vect_t zaxis = { 0, 0, 1.0 };
  */
 HIDDEN
 struct soltab *
-rt_add_solid( rec, name, mat )
-union record *rec;
-char	*name;
-matp_t	mat;
+rt_add_solid( rtip, rec, name, mat )
+struct rt_i	*rtip;
+union record	*rec;
+char		*name;
+matp_t		mat;
 {
 	register struct soltab *stp;
 	static vect_t v[8];
@@ -237,7 +252,7 @@ matp_t	mat;
 	 *  Check to see if this exact solid has already been processed.
 	 *  Match on leaf name and matrix.
 	 */
-	for( nsp = rt_i.HeadSolid; nsp != SOLTAB_NULL; nsp = nsp->st_forw )  {
+	for( nsp = rtip->HeadSolid; nsp != SOLTAB_NULL; nsp = nsp->st_forw )  {
 		register int i;
 
 		if(
@@ -294,8 +309,8 @@ next_one: ;
 	}
 
 	/* For now, just link them all onto the same list */
-	stp->st_forw = rt_i.HeadSolid;
-	rt_i.HeadSolid = stp;
+	stp->st_forw = rtip->HeadSolid;
+	rtip->HeadSolid = stp;
 
 	mat_copy( stp->st_pathmat, mat );
 
@@ -306,13 +321,13 @@ next_one: ;
 	 *  to the list of infinite solids, for special handling.
 	 */
 	if( stp->st_aradius >= INFINITY )  {
-		rt_cut_extend( &rt_i.rti_inf_box, stp );
+		rt_cut_extend( &rtip->rti_inf_box, stp );
 	}  else  {
-		VMINMAX( rt_i.mdl_min, rt_i.mdl_max, stp->st_min );
-		VMINMAX( rt_i.mdl_min, rt_i.mdl_max, stp->st_max );
+		VMINMAX( rtip->mdl_min, rtip->mdl_max, stp->st_min );
+		VMINMAX( rtip->mdl_min, rtip->mdl_max, stp->st_max );
 	}
 
-	stp->st_bit = rt_i.nsolids++;
+	stp->st_bit = rtip->nsolids++;
 	if(rt_g.debug&DEBUG_SOLIDS)  {
 		rt_log("-------------- %s (bit %d) -------------\n",
 			stp->st_name, stp->st_bit );
@@ -351,10 +366,11 @@ struct tree_list {
  */
 HIDDEN
 union tree *
-rt_drawobj( dp, argregion, pathpos, old_xlate, materp )
+rt_drawobj( rtip, dp, argregion, pathpos, old_xlate, materp )
+struct rt_i	*rtip;
 struct directory *dp;
-struct region *argregion;
-matp_t old_xlate;
+struct region	*argregion;
+matp_t		old_xlate;
 struct mater_info *materp;
 {
 	auto union record rec;		/* local copy of this record */
@@ -379,17 +395,17 @@ struct mater_info *materp;
 	 * Load the first record of the object into local record buffer
 	 */
 #ifdef DB_MEM
-	rec = rt_i.rti_db[dp->d_addr];	/* struct copy */
+	rec = rtip->rti_db[dp->d_addr];	/* struct copy */
 #else DB_MEM
 #ifdef CRAY_COS
 	/* CRAY COS can't fseek() properly, hence this hideous I/O hack */
-	rewind(rt_i.fp);
-	while( !feof(rt_i.fp) && ftell(rt_i.fp) <= dp->d_addr  &&
-	    fread( (char *)&rec, sizeof rec, 1, rt_i.fp ) == 1 )
+	rewind(rtip->fp);
+	while( !feof(rtip->fp) && ftell(rtip->fp) <= dp->d_addr  &&
+	    fread( (char *)&rec, sizeof rec, 1, rtip->fp ) == 1 )
 		/* NULL */ ;
 #else CRAY_COS
-	if( fseek( rt_i.fp, dp->d_addr, 0 ) < 0 ||
-	    fread( (char *)&rec, sizeof rec, 1, rt_i.fp ) != 1 )  {
+	if( fseek( rtip->fp, dp->d_addr, 0 ) < 0 ||
+	    fread( (char *)&rec, sizeof rec, 1, rtip->fp ) != 1 )  {
 		rt_log("rt_drawobj: %s record read error\n",
 			rt_path_str(pathpos) );
 		return(TREE_NULL);
@@ -405,7 +421,7 @@ struct mater_info *materp;
 		register struct soltab *stp;
 		register union tree *xtp;
 
-		if( (stp = rt_add_solid( &rec, dp->d_namep, old_xlate )) ==
+		if( (stp = rt_add_solid( rtip, &rec, dp->d_namep, old_xlate )) ==
 		    SOLTAB_NULL )
 			return( TREE_NULL );
 
@@ -469,7 +485,7 @@ struct mater_info *materp;
 			register struct region *nrp;
 
 			/* Ignore "air" regions unless wanted */
-			if( rt_i.useair == 0 &&  rec.c.c_aircode != 0 )
+			if( rtip->useair == 0 &&  rec.c.c_aircode != 0 )
 				return(TREE_NULL);
 
 			/* Start a new region here */
@@ -499,7 +515,7 @@ struct mater_info *materp;
 #else DB_MEM
 	/* Read in all members of this combination before recursing */
 	if( fread( (char *)members, sizeof(union record), rec.c.c_length,
-	    rt_i.fp ) != rec.c.c_length )  {
+	    rtip->fp ) != rec.c.c_length )  {
 		rt_log("rt_drawobj:  %s member read error\n",
 			rt_path_str(pathpos) );
 		return(TREE_NULL);
@@ -513,9 +529,11 @@ struct mater_info *materp;
 		register struct member *mp;
 		auto struct directory *nextdp;
 		auto mat_t new_xlate;		/* Accum translation mat */
+		auto struct mater_info newmater;
+		mat_t xmat;		/* temp fastf_t matrix for conv */
 
 #ifdef DB_MEM
-		mp = &(rt_i.rti_db[dp->d_addr+i+1].M);
+		mp = &(rtip->rti_db[dp->d_addr+i+1].M);
 #else DB_MEM
 		mp = &(members[i].M);
 #endif DB_MEM
@@ -527,18 +545,40 @@ struct mater_info *materp;
 		    DIR_NULL )
 			continue;
 
+		newmater = curmater;	/* struct copy -- modified below */
+
 		/* convert matrix to fastf_t from disk format */
 		{
 			register int k;
-			static mat_t xmat;	/* temporary fastf_t matrix */
+
 			for( k=0; k<4*4; k++ )
 				xmat[k] = mp->m_mat[k];
+		}
+
+		/* Check here for animation to apply */
+		{
+			register struct animate *anp;
+
+			for( anp = nextdp->d_animate; anp != ANIM_NULL; anp = anp->an_forw ) {
+				register int i = anp->an_pathlen-2;
+				register int j = pathpos-1;
+
+				for( ; i>=0 && j>=0; i--, j-- )  {
+					if( anp->an_path[i] != path[j] )  {
+rt_log("%s != %s\n", anp->an_path[i]->d_namep, path[j]->d_namep);
+						goto next_one;
+					}
+				}
+				rt_do_anim( anp,
+					old_xlate, xmat, &newmater );
+next_one:			;
+			}
 			mat_mul(new_xlate, old_xlate, xmat);
 		}
 
 		/* Recursive call */
-		if( (tlp->tl_tree = rt_drawobj(
-		    nextdp, regionp, pathpos+1, new_xlate, &curmater )
+		if( (tlp->tl_tree = rt_drawobj( rtip,
+		    nextdp, regionp, pathpos+1, new_xlate, &newmater )
 		    ) == TREE_NULL )
 			continue;
 
@@ -558,7 +598,7 @@ struct mater_info *materp;
 				rt_bomb("subtree not Solid");
 			GETSTRUCT( xrp, region );
 			xrp->reg_name = rt_strdup(rt_path_str(pathpos+1));
-			rt_add_regtree( xrp, (tlp->tl_tree) );
+			rt_add_regtree( rtip, xrp, (tlp->tl_tree) );
 			tlp->tl_tree = TREE_NULL;
 			continue;	/* no remaining subtree, go on */
 		}
@@ -631,7 +671,7 @@ struct mater_info *materp;
 
 	if( argregion == REGION_NULL )  {
 		/* Region began at this level */
-		rt_add_regtree( regionp, curtree );
+		rt_add_regtree( rtip, regionp, curtree );
 		curtree = TREE_NULL;		/* no remaining subtree */
 	}
 
@@ -946,12 +986,12 @@ register fastf_t	*min_rpp, *max_rpp;
 /*
  *			R T _ F A S T F _ F L O A T
  *
- *  Convert TO 4xfastf_t FROM 3xfloats (for database) 
+ *  Convert TO fastf_t FROM 3xfloats (for database) 
  */
 void
 rt_fastf_float( ff, fp, n )
 register fastf_t *ff;
-register float *fp;
+register dbfloat_t *fp;
 register int n;
 {
 	while( n-- )  {
@@ -996,7 +1036,8 @@ register char *name;
  *  Also, this tree is also included in the overall RootTree.
  */
 HIDDEN void
-rt_add_regtree( regp, tp )
+rt_add_regtree( rtip, regp, tp )
+struct rt_i *rtip;
 register struct region *regp;
 register union tree *tp;
 {
@@ -1006,32 +1047,32 @@ register union tree *tp;
 	regp->reg_treetop = tp;
 	tp->tr_regionp = regp;
 	/* Add to linked list */
-	regp->reg_forw = rt_i.HeadRegion;
-	rt_i.HeadRegion = regp;
+	regp->reg_forw = rtip->HeadRegion;
+	rtip->HeadRegion = regp;
 
 	/* Determine material properties */
 	regp->reg_ufunc = 0;
 	regp->reg_udata = (char *)0;
 	rt_region_color_map(regp);
 
-	regp->reg_bit = rt_i.nregions;	/* Add to bit vectors */
-	/* Will be added to rt_i.Regions[] in final prep stage */
-	rt_i.nregions++;
+	regp->reg_bit = rtip->nregions;	/* Add to bit vectors */
+	/* Will be added to rtip->Regions[] in final prep stage */
+	rtip->nregions++;
 	if( rt_g.debug & DEBUG_REGIONS )
 		rt_log("Add Region %s\n", regp->reg_name);
 
-	if( rt_i.RootTree == TREE_NULL )  {
-		rt_i.RootTree = tp;
+	if( rtip->RootTree == TREE_NULL )  {
+		rtip->RootTree = tp;
 		return;
 	}
 	/**GETSTRUCT( xor, union tree ); **/
 	xor = (union tree *)rt_malloc(sizeof(union tree), "rt_add_regtree tree");
 	bzero( (char *)xor, sizeof(union tree) );
 	xor->tr_b.tb_op = OP_XOR;
-	xor->tr_b.tb_left = rt_i.RootTree;
+	xor->tr_b.tb_left = rtip->RootTree;
 	xor->tr_b.tb_right = tp;
 	xor->tr_b.tb_regionp = REGION_NULL;
-	rt_i.RootTree = xor;
+	rtip->RootTree = xor;
 }
 
 /*
@@ -1129,9 +1170,9 @@ register struct rt_i *rtip;
 	if( rtip->nsolids <= 0 )
 		rt_bomb("rt_prep:  no solids to prep");
 
-	if( rt_i.rti_db )  {
-		rt_free( (char *)rt_i.rti_db, "in-core database");
-		rt_i.rti_db = (union record *)0;
+	if( rtip->rti_db )  {
+		rt_free( (char *)rtip->rti_db, "in-core database");
+		rtip->rti_db = (union record *)0;
 	}
 
 	/*
