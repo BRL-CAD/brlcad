@@ -25,7 +25,6 @@ static char RCSdir[] = "@(#)$Header$";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"
 #include "raytrace.h"
 #include "./debug.h"
 
@@ -86,4 +85,92 @@ int	len;
 		strncpy( buf, dbip->dbi_title, len );
 
 	return( rtip );				/* OK */
+}
+
+/*
+ *			R T _ D B _ G E T _ I N T E R N A L
+ *
+ *  Get an object from the database, and convert it into it's internal
+ *  representation.
+ */
+int
+rt_db_get_internal( ip, dp, dbip, mat )
+struct rt_db_internal	*ip;
+struct directory	*dp;
+struct db_i		*dbip;
+CONST mat_t		mat;
+{
+	struct rt_external	ext;
+	register int		id;
+
+	RT_INIT_EXTERNAL(&ext);
+	RT_INIT_DB_INTERNAL(ip);
+	if( db_get_external( &ext, dp, dbip ) < 0 )
+		return -2;		/* FAIL */
+
+	id = rt_id_solid( &ext );
+	if( rt_functab[id].ft_import( ip, &ext, mat ) < 0 )  {
+		rt_log("rt_db_get_internal(%s):  solid import failure\n",
+			dp->d_namep );
+	    	if( ip->idb_ptr )  rt_functab[id].ft_ifree( ip );
+		db_free_external( &ext );
+		return -1;		/* FAIL */
+	}
+	db_free_external( &ext );
+	RT_CK_DB_INTERNAL( ip );
+	return 0;			/* OK */
+}
+
+/*
+ *			R T _ D B _ P U T _ I N T E R N A L
+ *
+ *  Convert the internal representation of a solid to the external one,
+ *  and write it into the database.
+ *  On success only, the internal representation is freed.
+ *
+ *  Returns -
+ *	<0	error
+ *	 0	success
+ */
+int
+rt_db_put_internal( dp, dbip, ip )
+struct rt_db_internal	*ip;
+struct directory	*dp;
+struct db_i		*dbip;
+{
+	struct rt_external	ext;
+	register int		id;
+
+	RT_INIT_EXTERNAL(&ext);
+	RT_CK_DB_INTERNAL( ip );
+
+	/* Scale change on export is 1.0 -- no change */
+	if( rt_functab[ip->idb_type].ft_export( &ext, ip, 1.0 ) < 0 )  {
+		rt_log("rt_db_put_internal(%s):  solid export failure\n",
+			dp->d_namep);
+		db_free_external( &ext );
+		return -2;		/* FAIL */
+	}
+
+	if( db_put_external( &ext, dp, dbip ) < 0 )  {
+		db_free_external( &ext );
+		return -1;		/* FAIL */
+	}
+
+    	if( ip->idb_ptr )  rt_functab[ip->idb_type].ft_ifree( ip );
+	RT_INIT_DB_INTERNAL(ip);
+	db_free_external( &ext );
+	return 0;			/* OK */
+}
+
+/*
+ *			R T _ D B _ F R E E _ I N T E R N A L
+ */
+void
+rt_db_free_internal( ip )
+struct rt_db_internal	*ip;
+{
+	RT_CK_DB_INTERNAL( ip );
+    	if( ip->idb_ptr )  rt_functab[ip->idb_type].ft_ifree( ip );
+	RT_INIT_DB_INTERNAL(ip);
 }
