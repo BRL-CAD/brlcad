@@ -138,6 +138,11 @@ extern char	*realloc();
 	if( !(_ptr) || *((long *)(_ptr)) != (_magic) )  { \
 		bu_badmagic( (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
 	}
+#define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)	\
+	if( !(_ptr) || *((long *)(_ptr)) != (_magic) )  { \
+		bu_badmagic_tcl( (_interp), (long *)(_ptr), _magic, _str, __FILE__, __LINE__ ); \
+		return TCL_ERROR; \
+	}
 
 /*----------------------------------------------------------------------*/
 /* list.c */
