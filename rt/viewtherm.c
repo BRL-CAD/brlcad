@@ -142,11 +142,11 @@ register struct application *ap;
 
 	/* If scanline buffer has not yet been allocated, do so now */
 	slp = &scanline[ap->a_y];
-	RES_ACQUIRE( &rt_g.res_results );
+	bu_semaphore_acquire( RT_SEM_RESULTS );
 	if( slp->sl_buf == (char *)0 )  {
 		slp->sl_buf = (char *)rt_tabdata_malloc_array( spectrum, width );
 	}
-	RES_RELEASE( &rt_g.res_results );
+	bu_semaphore_release( RT_SEM_RESULTS );
 
 	ap->a_uptr = slp->sl_buf+(ap->a_x*RT_SIZEOF_TABDATA(spectrum));
 	RT_CK_TABDATA( ap->a_uptr );
@@ -192,10 +192,10 @@ register struct application *ap;
 	}
 
 	slp = &scanline[ap->a_y];
-	RES_ACQUIRE( &rt_g.res_results );
+	bu_semaphore_acquire( RT_SEM_RESULTS );
 	if( --(slp->sl_left) <= 0 )
 		do_eol = 1;
-	RES_RELEASE( &rt_g.res_results );
+	bu_semaphore_release( RT_SEM_RESULTS );
 
 	if( !do_eol )  return;
 
@@ -204,12 +204,12 @@ register struct application *ap;
 
 		/* XXX This writes an array of structures out, including magic */
 		/* XXX in machine-specific format */
-		RES_ACQUIRE( &rt_g.res_syscall );
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		if( fseek( outfp, ap->a_y*(long)width*RT_SIZEOF_TABDATA(spectrum), 0 ) != 0 )
 			rt_log("fseek error\n");
 		count = fwrite( scanline[ap->a_y].sl_buf,
 			RT_SIZEOF_TABDATA(spectrum), width, outfp );
-		RES_RELEASE( &rt_g.res_syscall );
+		bu_semaphore_release( BU_SEM_SYSCALL );
 		if( count != width )
 			rt_bomb("view_pixel:  fwrite failure\n");
 	}

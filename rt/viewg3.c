@@ -361,7 +361,7 @@ register struct partition *PartHeadp;
 
 #ifdef SPRINTF_NOT_PARALLEL
 	/* On some systems, sprintf() is not parallel! ^%@#&^@^&#% */
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 #endif
 
 	sprintf(buf, SHOT_FMT,
@@ -371,7 +371,7 @@ register struct partition *PartHeadp;
 		dfirst * MM2IN, dlast * MM2IN,
 		azimuth, elevation );
 #ifdef SPRINTF_NOT_PARALLEL
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 #endif
 	rt_vls_strcat( &str, buf );
 
@@ -524,7 +524,7 @@ register struct partition *PartHeadp;
 		else
 			fmt = "%4d%6.2f%5.1f%5.1f%1d%5.1f";
 #ifdef SPRINTF_NOT_PARALLEL
-		RES_ACQUIRE( &rt_g.res_syscall );
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 #endif
 		sprintf(buf, fmt,
 			region_id,
@@ -532,7 +532,7 @@ register struct partition *PartHeadp;
 			in_obliq, out_obliq,
 			air_id, air_thickness*MM2IN );
 #ifdef SPRINTF_NOT_PARALLEL
-		RES_RELEASE( &rt_g.res_syscall );
+		bu_semaphore_release( BU_SEM_SYSCALL );
 #endif
 		rt_vls_strcat( &str, buf );
 		card_count++;
@@ -586,12 +586,12 @@ register struct partition *PartHeadp;
 	 * ray header and its associated data are not separated.  CAVEAT:
 	 * COVART will not accept headers out of sequence.
 	 */
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 
 	fputs( rt_vls_addr( &str ), outfp );
 
 	/* End of single-thread region */
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	/* Release vls storage */
 	rt_vls_free( &str );

@@ -172,14 +172,12 @@ char **argv;
 	    fprintf(stderr,"Planning to run with %d processors\n", npsw );
 	} else
 		rt_g.rtg_parallel = 0;
-	RES_INIT( &rt_g.res_syscall );
-	RES_INIT( &rt_g.res_worker );
-	RES_INIT( &rt_g.res_stats );
-	RES_INIT( &rt_g.res_results );
-	RES_INIT( &rt_g.res_model );
+
+	/* Initialize parallel processor support */
+	bu_semaphore_init( BU_SEM_LAST );
 
 	/*
-	 *  Do not use rt_log() or rt_malloc() before this point!
+	 *  Do not use bu_log() or bu_malloc() before this point!
 	 */
 
 	if( bu_debug )  {
@@ -250,16 +248,16 @@ char **argv;
 			xx = width;
 			yy = height;
 		}
-		RES_ACQUIRE( &rt_g.res_syscall );
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		fbp = fb_open( framebuffer, xx, yy );
-		RES_RELEASE( &rt_g.res_syscall );
+		bu_semaphore_release( BU_SEM_SYSCALL );
 		if( fbp == FBIO_NULL )  {
 			fprintf(stderr,"rt:  can't open frame buffer\n");
 			exit(12);
 		}
 
 		/* If the fb is lots bigger (>= 2X), zoom up & center */
-		RES_ACQUIRE( &rt_g.res_syscall );
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		if( width > 0 && height > 0 )  {
 			zoom = fb_getwidth(fbp)/width;
 			if( fb_getheight(fbp)/height < zoom )
@@ -269,7 +267,7 @@ char **argv;
 		}
 		(void)fb_view( fbp, width/2, height/2,
 			zoom, zoom );
-		RES_RELEASE( &rt_g.res_syscall );
+		bu_semaphore_release( BU_SEM_SYSCALL );
 	} else if( outputfile == (char *)0 )  {
 		/* If not going to framebuffer, or to a file, then use stdout */
 		if( outfp == NULL )  outfp = stdout;

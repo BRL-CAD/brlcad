@@ -141,10 +141,10 @@ struct region		*reg2;
 	if( depth < OVLP_TOL )
 		return(0);
 
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	pdv_3line( outfp, ihit, ohit );
 	noverlaps++;
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if( !rpt_overlap ) {
 		rt_log("OVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g) mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n------------------------------------------------------------\n",
@@ -165,14 +165,14 @@ struct region		*reg2;
 		new_op =(struct overlap_list *)rt_malloc(sizeof(struct overlap_list),"overlap list");
 
 		/* look for it in our list */
-		RES_ACQUIRE( &rt_g.res_syscall );
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		for( op=olist; op; prev_ol=op,op=op->next ) {
 			if( (strcmp(reg1->reg_name,op->reg1) == 0)
 			 && (strcmp(reg2->reg_name,op->reg2) == 0) ) {
 				op->count++;
 				if( depth > op->maxdepth )
 					op->maxdepth = depth;
-				RES_RELEASE( &rt_g.res_syscall );
+				bu_semaphore_release( BU_SEM_SYSCALL );
 				rt_free( (char *) new_op, "overlap list");
 				return	0;	/* already on list */
 			}
@@ -190,7 +190,7 @@ struct region		*reg2;
 		op->maxdepth = depth;
 		op->next = NULL;
 		op->count = 1;
-		RES_RELEASE( &rt_g.res_syscall );
+		bu_semaphore_release( BU_SEM_SYSCALL );
 	}
 
 	return(0);	/* No further consideration to this partition */

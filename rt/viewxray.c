@@ -157,12 +157,12 @@ view_eol( ap )
 register struct application *ap;
 {
 	if( lightmodel == LGT_BW ) {
-		RES_ACQUIRE( &rt_g.res_syscall );
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		if( outfp != NULL )
 			fwrite( scanbuf, pixsize, width, outfp );
 		else if( fbp != FBIO_NULL )
 			fb_write( fbp, 0, ap->a_y, scanbuf, width );
-		RES_RELEASE( &rt_g.res_syscall );
+		bu_semaphore_release( BU_SEM_SYSCALL );
 	}
 }
 
@@ -228,16 +228,16 @@ struct partition *PartHeadp;
 
 	switch( lightmodel ) {
 	case LGT_FLOAT:
-		RES_ACQUIRE( &rt_g.res_syscall );
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		fwrite( &totdist, sizeof(totdist), 1, outfp );
-		RES_RELEASE( &rt_g.res_syscall );
+		bu_semaphore_release( BU_SEM_SYSCALL );
 		break;
 	case LGT_BW:
 		fvalue = 1.0 - contrast_boost*totdist/viewsize;
 		if( fvalue > 1.0 ) fvalue = 1.0;
 		else if( fvalue <= 0.0 ) fvalue = 0.0;
 		value = 1.0 + 254.99 * fvalue;
-		RES_ACQUIRE( &rt_g.res_results );
+		bu_semaphore_acquire( RT_SEM_RESULTS );
 		if( pixsize == 1 ) {
 			scanbuf[ap->a_x] = value;
 		} else {
@@ -245,7 +245,7 @@ struct partition *PartHeadp;
 			scanbuf[ap->a_x*3+GRN] = value;
 			scanbuf[ap->a_x*3+BLU] = value;
 		}
-		RES_RELEASE( &rt_g.res_results );
+		bu_semaphore_release( RT_SEM_RESULTS );
 		break;
 	}
 
@@ -261,7 +261,7 @@ struct partition *PartHeadp;
 
 	switch( lightmodel ) {
 	case LGT_BW:
-		RES_ACQUIRE( &rt_g.res_results );
+		bu_semaphore_acquire( RT_SEM_RESULTS );
 		if( pixsize == 1 ) {
 			scanbuf[ap->a_x] = 0;
 		} else {
@@ -269,12 +269,12 @@ struct partition *PartHeadp;
 			scanbuf[ap->a_x*3+GRN] = 0;
 			scanbuf[ap->a_x*3+BLU] = 0;
 		}
-		RES_RELEASE( &rt_g.res_results );
+		bu_semaphore_release( RT_SEM_RESULTS );
 		break;
 	case LGT_FLOAT:
-		RES_ACQUIRE( &rt_g.res_syscall );
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		fwrite( &zero, sizeof(zero), 1, outfp );
-		RES_RELEASE( &rt_g.res_syscall );
+		bu_semaphore_release( BU_SEM_SYSCALL );
 		break;
 	default:
 		rt_log( "xraymiss: Bad lighting model %d\n", lightmodel );

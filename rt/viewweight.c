@@ -366,7 +366,7 @@ struct partition *PartHeadp;
 		part_count++;
 		/* add the datapoint structure in and then calculate it
 		   in parallel, the region structures are a shared resource */
-		RES_ACQUIRE( &rt_g.res_syscall );
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
 #if 0
 		rt_log( "\nhit: partition %d\n", part_count );
 #endif
@@ -374,13 +374,13 @@ struct partition *PartHeadp;
 		addp = reg->reg_udata;
 		reg->reg_udata = (genptr_t) dp;
 		dp->next = (struct datapoint *) addp;
-        	RES_RELEASE( &rt_g.res_syscall );
+        	bu_semaphore_release( BU_SEM_SYSCALL );
 
 		if( density[ reg->reg_gmater ] < 0 ) {
 			rt_log( "Material type %d used, but has no density file entry.\n", reg->reg_gmater );
-			RES_ACQUIRE( &rt_g.res_syscall );
+			bu_semaphore_acquire( BU_SEM_SYSCALL );
 			reg->reg_gmater = 0;
-        		RES_RELEASE( &rt_g.res_syscall );
+        		bu_semaphore_release( BU_SEM_SYSCALL );
 			}
 		else if( density[ reg->reg_gmater ] > 0 ) {
 			VBLEND2( dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point );
@@ -391,12 +391,12 @@ struct partition *PartHeadp;
 				cell_height * cell_height * 0.00001;
 			dp->volume = depth * cell_height * cell_width;
 #if 0
-			RES_ACQUIRE( &rt_g.res_syscall );
+			bu_semaphore_acquire( BU_SEM_SYSCALL );
 			rt_log( "hit: reg_name=\"%s\"\n",reg->reg_name );
 			rt_log( "hit: gmater=%d, los=%d, density=%gg/cc, depth=%gmm, wt=%gg\n",
 			reg->reg_gmater, reg->reg_los, density[reg->reg_gmater],
 			depth, dp->weight );
-        		RES_RELEASE( &rt_g.res_syscall );
+        		bu_semaphore_release( BU_SEM_SYSCALL );
 #endif
 			}
 		}
@@ -417,9 +417,9 @@ struct partition        *pp;
 struct region           *reg1;
 struct region           *reg2;
 	{
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	noverlaps++;
-        RES_RELEASE( &rt_g.res_syscall );
+        bu_semaphore_release( BU_SEM_SYSCALL );
 	return(0);
 	}
 
