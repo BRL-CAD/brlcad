@@ -46,6 +46,11 @@ static const char RCSmalloc[] = "@(#)$Header$ (ARL)";
 
 int	bu_debug = 0;
 
+typedef enum {
+  MALLOC,
+  CALLOC
+} alloc_t;
+
 /* These counters are not semaphore-protected, and thus are only estimates */
 long	bu_n_malloc = 0;
 long	bu_n_free = 0;
@@ -66,12 +71,15 @@ static size_t		bu_memdebug_len = 0;
 const char bu_strdup_message[] = "bu_strdup string";
 extern const char bu_vls_message[];	/* from vls.c */
 
+
 #ifdef WIN32
 char *sbrk(i)
 {
 	return( (char *)0 );
 }
 #endif
+
+
 /*
  *			B U _ M E M D E B U G _ A D D
  *
@@ -171,38 +179,58 @@ bu_memdebug_check(register char *ptr, const char *str)
 	return MEMDEBUG_NULL;
 }
 
+
 /*
- *			B U _ M A L L O C
+ *			B U _ A L L O C
  *
  *  This routine only returns on successful allocation.
  *  We promise never to return a NULL pointer; caller doesn't have to check.
  *  Failure results in bu_bomb() being called.
+ *
+ *  type is 0 for malloc, 1 for calloc
  */
-genptr_t
-bu_malloc(unsigned int cnt, const char *str)
+static genptr_t
+bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 {
 	register genptr_t ptr;
+	register unsigned long int size = cnt * sz;
 
-	if( cnt == 0 )  {
-		fprintf(stderr,"ERROR: bu_malloc count=0 %s\n", str );
+	if( size == 0 )  {
+		fprintf(stderr,"ERROR: bu_alloc size=0 (cnt=%d, sz=%d) %s\n", cnt, sz, str );
 		bu_bomb("ERROR: bu_malloc(0)\n");
 	}
 
-	if( cnt < sizeof( int ) ) {
-		cnt = sizeof( int );
+	if( size < sizeof( int ) ) {
+		size = sizeof( int );
 	}
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )  {
 		/* Pad, plus full int for magic number */
-		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
+		size = (size+2*sizeof(long)-1)&(~(sizeof(long)-1));
 	}
 
 #if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 #endif
-	ptr = malloc(cnt);
+
+	switch (type) {
+	  case MALLOC:
+	    ptr = malloc(size);
+	    break;
+	  case CALLOC:
+#if defined(HAVE_CALLOC)
+	    ptr = calloc(cnt, sz);
+#else
+	    ptr = malloc(size);
+	    bzero(ptr);
+#endif
+	    break;
+	  default:
+	    bu_bomb("ERROR: bu_alloc with unknown type\n");
+	}
+
 	if( ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG )  {
-		fprintf(stderr, "%8lx malloc%7d %s\n", (long)ptr, cnt, str);
+		fprintf(stderr, "%8lx malloc%7d %s\n", (long)ptr, size, str);
 	}
 #if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_release( BU_SEM_SYSCALL );
@@ -213,16 +241,44 @@ bu_malloc(unsigned int cnt, const char *str)
 		bu_bomb("bu_malloc: malloc failure");
 	}
 	if( bu_debug&BU_DEBUG_MEM_CHECK )  {
-		bu_memdebug_add( ptr, cnt, str );
+		bu_memdebug_add( ptr, size, str );
 
 		/* Install a barrier word at the end of the dynamic arena */
-		/* Correct location depends on 'cnt' being rounded up, above */
+		/* Correct location depends on 'size' being rounded up, above */
 
-		*((long *)(((char *)ptr)+cnt-sizeof(long))) = MDB_MAGIC;
+		*((long *)(((char *)ptr)+size-sizeof(long))) = MDB_MAGIC;
 	}
 	bu_n_malloc++;
 	return(ptr);
 }
+
+/*
+ *			B U _ M A L L O C
+ *
+ *  This routine only returns on successful allocation.
+ *  We promise never to return a NULL pointer; caller doesn't have to check.
+ *  Failure results in bu_bomb() being called.
+w */
+genptr_t
+bu_malloc(unsigned int size, const char *str)
+{
+  return bu_alloc(MALLOC, 1, size, str);
+}
+
+
+/*
+ *			B U _ C A L L O C
+ *
+ *  This routine only returns on successful allocation.
+ *  We promise never to return a NULL pointer; caller doesn't have to check.
+ *  Failure results in bu_bomb() being called.
+ */
+genptr_t
+bu_calloc(unsigned int nelem, unsigned int elsize, const char *str)
+{
+  return bu_alloc(CALLOC, nelem, elsize, str);
+}
+
 
 /*
  *			B U _ F R E E
@@ -335,22 +391,6 @@ bu_realloc(register genptr_t ptr, unsigned int cnt, const char *str)
 	return(ptr);
 }
 
-/*
- *			B U _ C A L L O C
- */
-genptr_t
-bu_calloc(unsigned int nelem,
-	  unsigned int elsize,
-	  const char *str)
-{
-	unsigned	len;
-	genptr_t	ret;
-
-	len = nelem*elsize;
-	ret = bu_malloc( len, str );
-	bzero( ret, len );
-	return ret;
-}
 
 /*
  *			B U _ P R M E M
