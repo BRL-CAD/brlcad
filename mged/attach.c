@@ -54,9 +54,10 @@ struct dm dm_Null = {
 };
 
 /* All systems can compile these! */
-extern struct dm dm_Tek;
+extern struct dm dm_Tek;	/* Tek 4014 */
 extern struct dm dm_T49;	/* Tek 4109 */
-extern struct dm dm_Plot;
+extern struct dm dm_Plot;	/* Unix Plot */
+extern struct dm dm_PS;		/* PostScript */
 
 #ifdef DM_MG
 /* We only supply a kernel driver for Berkeley VAX systems for the MG */
@@ -107,6 +108,7 @@ static struct dm *which_dm[] = {
 	&dm_Null,		/* This should go first */
 	&dm_Tek,
 	&dm_T49,
+	&dm_PS,
 	&dm_Plot,
 #ifdef DM_IR
 	&dm_Ir,
