@@ -750,6 +750,18 @@ CONST char		*str;
 		(void)nmg_ebreak( vu2a->v_p, eu1 );
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
+	    {
+		vect_t	va, vb;
+	    	point_t	hit_pt;
+	    	VMOVE( hit_pt, vu2a->v_p->vg_p->coord );
+		VSUB2( va, hit_pt, eu1->vu_p->v_p->vg_p->coord  );
+		VSUB2( vb, eu1->eumate_p->vu_p->v_p->vg_p->coord, hit_pt );
+		VUNITIZE(va);
+		VUNITIZE(vb);
+		if( VDOT( va, vb ) <= 0.7071 )  {
+			rt_bomb("nmg_isect_two_colinear_edge2p() eu changes direction? A\n");
+		}
+	    }
 	}
 
 	/* Second intersection point: break eu1 again */
@@ -771,6 +783,18 @@ CONST char		*str;
 		(void)nmg_ebreak( vu2b->v_p, eu1 );
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
+	    {
+		vect_t	va, vb;
+	    	point_t	hit_pt;
+	    	VMOVE( hit_pt, vu2b->v_p->vg_p->coord );
+		VSUB2( va, hit_pt, eu1->vu_p->v_p->vg_p->coord  );
+		VSUB2( vb, eu1->eumate_p->vu_p->v_p->vg_p->coord, hit_pt );
+		VUNITIZE(va);
+		VUNITIZE(vb);
+		if( VDOT( va, vb ) <= 0.7071 )  {
+			rt_bomb("nmg_isect_two_colinear_edge2p() eu changes direction? B\n");
+		}
+	    }
 	}
 }
 
