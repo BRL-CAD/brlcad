@@ -111,22 +111,22 @@ int main(int ac, char *av[])
 	    }
 
 	    if (intern.idb_minor_type != ID_BOT) {
-		fprintf(stderr, "not a BOT\n");
+		fprintf(stderr, "%s is not a BOT\n", av[arg_count]);
 		continue;
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
 
-	    bu_log("%s:\n%d verticies\n", av[arg_count], bot->num_vertices);
+	    printf("%s:\n%d verticies\n", av[arg_count], bot->num_vertices);
 	    for (i=0 ; i < bot->num_vertices ; i++) {
 		fastf_t *v = &bot->vertices[i*3];
-		bu_log("\t%g %g %g\n", V3ARGS(v));
+		printf("\t%g %g %g\n", V3ARGS(v));
 	    }
 
-	    bu_log("%d faces\n", bot->num_faces);
+	    printf("%d faces\n", bot->num_faces);
 	    for (i=0 ; i < bot->num_faces ; i++) {
 		int *f = &bot->faces[i*3];
-		bu_log("\t%d %d %d\n", V3ARGS(f));
+		printf("\t%d %d %d\n", V3ARGS(f));
 	    }
 
 	}
