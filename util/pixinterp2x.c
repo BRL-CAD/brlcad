@@ -4,10 +4,6 @@
  *  Read a .pix file of a given resolution, and produce one with
  *  twice as many pixels by interpolating between the pixels.
  *
- *  This program is prepared for the .pix files to be comming from
- *  and/or going to a raw
- *  magtape with a block size of 24k, regardless of image resolution.
- *
  *  Author -
  *	Michael John Muuss
  *  
@@ -26,86 +22,114 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-#define BLOCKSIZE	(24*1024)	/* Size of tape record */
+FILE	*infp = stdin;
 
-static char tapebuf[BLOCKSIZE];		/* multi-scanline pixel buffer */
+int	file_width = 512;
+int	file_height = 512;
 
-int inbytes;				/* # bytes of one input scanline */
-int outbytes;				/* # bytes of one output scanline */
-int outsize;				/* size of output buffer */
-char *outbuf;				/* ptr to output image buffer */
+int	inbytes;			/* # bytes of one input scanline */
+int	outbytes;			/* # bytes of one output scanline */
+int	outsize;			/* size of output buffer */
+unsigned char	*outbuf;		/* ptr to output image buffer */
+
 extern char *malloc();
 
-char usage[] = "Usage: pixinterp2x file.pix [in_width]\n";
+char usage[] = "\
+Usage: pixinterp2x [-h] [-s squarefilesize]\n\
+	[-w file_width] [-n file_height] [file.pix]\n";
 
+/*
+ *			G E T _ A R G S
+ */
+static int
+get_args( argc, argv )
+register char	**argv;
+{
+	register int	c;
+	extern int	optind;
+	extern char	*optarg;
+
+	while( (c = getopt( argc, argv, "hs:w:n:" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			file_height = file_width = 1024;
+			break;
+		case 's':
+			/* square file size */
+			file_height = file_width = atoi(optarg);
+			break;
+		case 'w':
+			file_width = atoi(optarg);
+			break;
+		case 'n':
+			file_height = atoi(optarg);
+			break;
+		case '?':
+			return	0;
+		}
+	}
+	if( argv[optind] != NULL )  {
+		if( (infp = fopen( argv[optind], "r" )) == NULL )  {
+			perror(argv[optind]);
+			return	0;
+		}
+		optind++;
+	}
+	if( argc > ++optind )
+		(void) fprintf( stderr, "Excess arguments ignored\n" );
+
+	if( isatty(fileno(infp)) || isatty(fileno(stdout)) )
+		return 0;
+	return	1;
+}
+
+/*
+ *			M A I N
+ */
 main(argc, argv)
 int argc;
 char **argv;
 {
 	register int iny, outy;
-	static int infd;
-	static int nlines;		/* Square:  nlines, npixels/line */
-	static int lines_per_block;
-	static int j;
+	unsigned char *inbuf;
 
-	if( argc < 2 )  {
-		fprintf(stderr,"%s", usage);
-		exit(1);
+	if( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
 
-	nlines = 512;
-	if( strcmp( argv[1], "-h" ) == 0 )  {
-		nlines = 1024;
-		argc--; argv++;
-	}
-	if( (infd = open( argv[1], 0 )) < 0 )  {
-		perror( argv[1] );
-		exit(3);
-	}
-	if( argc >= 3 )
-		nlines = atoi(argv[2] );
+	inbytes = file_width * 3;	/* bytes/ input line */
+	inbuf = (unsigned char *)malloc( inbytes );
 
-	inbytes = nlines * 3;		/* bytes/ input line */
-	outbytes = nlines * 2 * 3;	/* bytes/ output line */
-	lines_per_block = BLOCKSIZE / inbytes;
-	outsize = nlines * nlines * 4 * 3;
-	outbuf = malloc( outsize );
+	outbytes = inbytes * 2;		/* bytes/ output line */
+	outsize = file_width * file_height * 4 * 3;
+	if( (outbuf = (unsigned char *)malloc( outsize )) == (unsigned char *)0 )  {
+		fprintf(stderr,"pixinterp2x:  unable to malloc buffer\n");
+		exit( 1 );
+	}
 
 	outy = -2;
-	for( iny = 0; iny < nlines;  )  {
+	for( iny = 0; iny < file_height; iny++ )  {
 		register char *in;
-		if( read( infd, (char *)tapebuf, BLOCKSIZE ) != BLOCKSIZE ) {
-			perror("pix-interp read");
+
+		if( fread( (char *)inbuf, 1, inbytes, infp ) != inbytes )  {
+			fprintf(stderr,"pixinterp2x fread error\n");
 			break;
 		}
-		in = tapebuf;
 
-		for( j=0; j<lines_per_block; j++ )  {
-			outy += 2;
-			/* outy is line we will write on */
-			widen_line( in, outy );
-			if( outy == 0 )
-				widen_line( in, ++outy );
-			else
-				interp_lines( outy-1, outy, outy-2 );
-			in += inbytes;
-			iny++;
-		}
+		outy += 2;
+		/* outy is line we will write on */
+		widen_line( inbuf, outy );
+		if( outy == 0 )
+			widen_line( inbuf, ++outy );
+		else
+			interp_lines( outy-1, outy, outy-2 );
 	}
-	{
-		register char *cp = outbuf;
-		while( outsize > 0 )  {
-			if( write( 1, cp, BLOCKSIZE ) != BLOCKSIZE )  {
-				perror("pix-interp write");
-				exit(1);
-			}
-			cp += BLOCKSIZE;
-			outsize -= BLOCKSIZE;
-		}
+	if( write( 1, (char *)outbuf, outsize ) != outsize )  {
+		perror("pixinterp2x write");
+		exit(1);
 	}
-
-	if( read( infd, (char *)tapebuf, BLOCKSIZE ) > 0 )
-		printf("EOF missing?\n");
 	exit(0);
 }
 
