@@ -39,7 +39,7 @@ void	interp_lines();
 
 char usage[] = "\
 Usage: pixinterp2x [-h] [-s squarefilesize]\n\
-	[-w file_width] [-n file_height] [file.pix]\n";
+	[-w file_width] [-n file_height] [file.pix] > outfile.pix\n";
 
 /*
  *			G E T _ A R G S
