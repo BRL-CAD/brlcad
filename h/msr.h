@@ -1,25 +1,38 @@
-/*	$Header$
+/*
+ *			M S R . H
  *
- * Define random number structures and constants.
+ * Define data structures and constants for the "MSR" random number package.
+ *
  * Also define a set of macros to access the random number tables
  * and to limit the area/volume that a set of random numbers inhabit.
  *
- *	$Log$
- * Revision 1.3  91/07/24  23:02:20  butler
- * added magic numbers to structs
- * 
- * Revision 1.2  91/06/22  02:22:23  cjohnson
- * Fix some types and otherwise clean up the include file.
- * 
- * Revision 1.1  90/04/20  02:05:15  cjohnson
- * Initial revision
- * 
- * 
+ * Note:  Application must include "machine.h" and "vmath.h" so that
+ * #include of raytrace.h will work.  Necessary because of use of
+ * rt_malloc() by the library routines.
+ *
+ * Note: MSRMAXTBL must be an even number.
+ *
+ *  Author -
+ *	Christopher T. Johnson
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
+ *
+ *  $Header$
  */
-/*
- * NOTE!!! MSRMAXTBL must be an even number!!!
- */
-#ifndef RATRACE_H
+
+#if !defined(MACHINE_H)
+# include "machine.h"
+#endif
+#if !defined(VMATH_H)
+# include "vmath.h"
+#endif
+#if !defined(RAYTRACE_H)
 # include "raytrace.h"	/* needed for RT_CKMAG definition */
 #endif
 
