@@ -60,30 +60,30 @@ struct application *ap;
 register CONST struct partition *pp;
 register struct shadework *swp;
 {
-	register struct mfuncs *mfp;
-	register struct region *rp;
-	register struct light_specific *lp;
+	register CONST struct mfuncs *mfp;
+	register CONST struct region *rp;
+	register CONST struct light_specific *lp;
 	register int	want;
 
 	RT_AP_CHECK(ap);
 	RT_CK_RTI(ap->a_rt_i);
 	RT_CK_PT(pp);
 	RT_CK_HIT(pp->pt_inhit);
-
-	swp->sw_hit = *(pp->pt_inhit);		/* struct copy */
-
-	if( (mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs) == MF_NULL )  {
-		bu_log("viewshade:  reg_mfuncs NULL\n");
-		return(0);
-	}
-	if( mfp->mf_magic != MF_MAGIC )  {
-		bu_log("viewshade:  reg_mfuncs bad magic, %x != %x\n",
-			mfp->mf_magic, MF_MAGIC );
-		return(0);
-	}
-
 	rp = pp->pt_regionp;
 	RT_CK_REGION(rp);
+	mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs;
+	RT_CK_MF(mfp);
+
+	want = mfp->mf_inputs;
+
+	if( rdebug&RDEBUG_SHADE ) {
+		bu_log("viewshade(%s)\n Using \"%s\" shader, ",
+			rp->reg_name, mfp->mf_name);
+		bu_printb( "mfp_inputs", want, MFI_FORMAT );
+		bu_log( "\n");
+	}
+
+	swp->sw_hit = *(pp->pt_inhit);		/* struct copy */
 
 #if RT_MULTISPECTRAL
 	/* XXX where does region get reflectance?  Default temperature? */
@@ -104,8 +104,6 @@ register struct shadework *swp;
 	if( swp->sw_hit.hit_dist < 0.0 )
 		swp->sw_hit.hit_dist = 0.0;	/* Eye inside solid */
 	ap->a_cumlen += swp->sw_hit.hit_dist;
-
-	want = mfp->mf_inputs;
 
 	/* If light information is not needed, set the light
 	 * array to "safe" values,
@@ -144,8 +142,6 @@ register struct shadework *swp;
 	}
 
 	if( rdebug&RDEBUG_SHADE ) {
-		bu_log("About to shade %s: using \"%s\" shader\n",
-			rp->reg_name, mfp->mf_name);
 		pr_shadework( "before mf_render", swp );
 	}
 
@@ -182,7 +178,7 @@ register struct shadework *swp;
 HIDDEN void
 shade_inputs( ap, pp, swp, want )
 struct application *ap;
-register struct partition *pp;
+register CONST struct partition *pp;
 register struct shadework *swp;
 register int	want;
 {
@@ -282,6 +278,8 @@ vdraw o norm;vdraw p c 00ffff;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\
 		}
 		have |= MFI_UV;
 	}
+	/* NOTE:  Lee has changed the shaders to do light themselves now. */
+	/* This isn't where light visibility is determined any more. */
 	if( want & MFI_LIGHT )  {
 		light_visibility(ap, swp, have);
 		have |= MFI_LIGHT;
@@ -307,6 +305,7 @@ register CONST struct shadework *swp;
 	int	i;
 
 	bu_log( "Shadework %s: 0x%x\n", str, swp );
+	bu_printb( " sw_inputs", swp->sw_inputs, MFI_FORMAT );
 	if (swp->sw_inputs && MFI_HIT)
 		bu_log( " sw_hit.dist:%g  sw_hit.point(%g %g %g)\n",
 			swp->sw_hit.hit_dist, 
@@ -333,8 +332,6 @@ register CONST struct shadework *swp;
 	bu_log( " sw_uv  %f %f\n", swp->sw_uv.uv_u, swp->sw_uv.uv_v );
 	bu_log( " sw_dudv  %f %f\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
 	bu_log( " sw_xmitonly %d\n", swp->sw_xmitonly );
-	bu_printb( " sw_inputs", swp->sw_inputs,
-		"\020\4HIT\3LIGHT\2UV\1NORMAL" );
 	bu_log( "\n");
 	if( swp->sw_inputs & MFI_LIGHT ) for( i=0; i < SW_NLIGHTS; i++ )  {
 		if( swp->sw_visible[i] == (char *)0 )  continue;
