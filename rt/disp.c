@@ -154,6 +154,39 @@ char		*argv[];
 	return TCL_OK;
 }
 
+/*
+ *  Return value of one pixel as RGB tripple, in decimal
+ */
+int
+tcl_fb_readpixel( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
+{
+	FBIO	*ifp;
+	int	mode, x, y;
+	unsigned char	pixel[4];
+
+	if( argc != 4 )  {
+		interp->result = "Usage: fb_readpixel fbp x y";
+		return TCL_ERROR;
+	}
+	ifp = (FBIO *)atoi(argv[1]);
+	x = atoi(argv[2]);
+	y = atoi(argv[3]);
+
+	ifp = fbp;	/* XXX hack, ignore tcl arg. */
+
+	FB_CK_FBIO(ifp);
+	if( fb_read( ifp, x, y, pixel, 1 ) < 0 )  {
+		interp->result = "fb_readpixel got error from library";
+		return TCL_ERROR;
+	}
+	sprintf(interp->result, "%d %d %d", pixel[RED], pixel[GRN], pixel[BLU] );
+	return TCL_OK;
+}
+
 int
 tcl_appinit(inter)
 Tcl_Interp	*inter;
@@ -167,6 +200,7 @@ Tcl_Interp	*inter;
 	if( Tk_Init(interp) == TCL_ERROR )  return TCL_ERROR;
 
 	Tcl_CreateCommand(interp, "fb_cursor", tcl_fb_cursor, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "fb_readpixel", tcl_fb_readpixel, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_CreateCommand(interp, "doit", doit, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	Tcl_CreateCommand(interp, "doit1", doit1, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);

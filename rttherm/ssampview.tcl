@@ -16,6 +16,10 @@ global pixel_num
 
 set cursor_on 1
 
+# Indicate whether Min/Max sliders apply to this plot.  1=yes.
+set rescale_scanline 1
+set rescale_spectral 0
+
 set initial_maxval $maxval
 
 # This should be imported from the C code.
@@ -69,6 +73,7 @@ proc update { {foo 0} } {
 
 	# Points to lower left corner of selected pixel, bump up one.
 	fb_cursor -42 $cursor_on [expr $pixel_num + 1] [expr $line_num + 1]
+	puts [fb_readpixel -42 $pixel_num $line_num]
 }
 
 proc scalechange {var value} {
@@ -82,6 +87,7 @@ proc scalechange {var value} {
 }
 
 label .scanline4 -text "Scanline Plot"
+checkbutton .scanline5 -text "Rescale" -variable rescale_scanline -command {update}
 scale .scanline3 -label Scanline -from $height -to 0 -showvalue yes -length 280 \
 	-orient vertical -variable line_num -command {update}
 canvas .canvas_scanline -width $width -height 280
@@ -89,14 +95,15 @@ canvas .canvas_scanline -width $width -height 280
 scale .pixel1 -label Pixel -from 0 -to $width -showvalue yes \
 	-orient horizontal -variable pixel_num -command {update}
 
-pack .scanline4 .canvas_scanline .pixel1 -side top -in .spatial_v
+pack .scanline4 .scanline5 .canvas_scanline .pixel1 -side top -in .spatial_v
 pack .spatial_v .scanline3 -side left -in .spatial
 
-label .spatial1 -text "Spectral Plot"
+label .spectral1 -text "Spectral Plot"
+checkbutton .spectral2 -text "Rescale" -variable rescale_spectral -command {update}
 canvas .canvas_pixel -width $nwave -height 280
 scale .wl2 -label "Wavelen" -from 0 -to [expr $nwave - 1] -showvalue yes \
 	-orient horizontal -variable wavel -command {update}
-pack .spatial1 .canvas_pixel .wl2 -side top -in .spectral
+pack .spectral1 .spectral2 .canvas_pixel .wl2 -side top -in .spectral
 
 pack .spatial .spectral -side left -in .plot
 
@@ -109,6 +116,7 @@ proc scanline { {foo 0} } {
 	global maxval
 	global line_num
 	global pixel_num
+	global rescale_scanline
 
 	set ymax 256
 
@@ -117,7 +125,11 @@ proc scanline { {foo 0} } {
 	set y $line_num
 	set x0 0
 	set y0 [expr $ymax - 1]
-	set scale [expr 255 / ($maxval - $minval) ]
+	if {$rescale_scanline == 0}  {
+		set scale [expr 255 / ($initial_maxval - $minval) ]
+	} else {
+		set scale [expr 255 / ($maxval - $minval) ]
+	}
 	for {set x1 0} {$x1 < $width} {incr x1} {
 		set y1 [expr $ymax - 1 - \
 			( [getspectval $x1 $y $wavel] - $minval ) * $scale]
@@ -148,6 +160,7 @@ proc pixelplot { {foo 0} } {
 	global pixel_num
 	global nwave
 	global wavel
+	global rescale_spectral
 
 	set ymax 256
 
@@ -157,7 +170,11 @@ proc pixelplot { {foo 0} } {
 	set y $line_num
 	set x0 0
 	set y0 [expr $ymax - 1]
-	set scale [expr 255 / ($initial_maxval - $minval) ]
+	if {$rescale_spectral == 0}  {
+		set scale [expr 255 / ($initial_maxval - $minval) ]
+	} else {
+		set scale [expr 255 / ($maxval - $minval) ]
+	}
 	for {set x1 0} {$x1 < $nwave} {incr x1} {
 		set y1 [expr $ymax - 1 - \
 			( [getspectval $x $y $x1] - $minval ) * $scale]
