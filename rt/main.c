@@ -29,6 +29,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
+#include <signal.h>
 #include <math.h>
 
 #include "machine.h"
@@ -58,6 +59,7 @@ mat_t		model2view;
 /***** variables shared with worker() ******/
 struct application ap;
 vect_t		left_eye_delta;
+int		report_progress;	/* !0 = user wants progress report */
 extern int	width;			/* # of pixels in X */
 extern int	height;			/* # of lines in Y */
 extern int	incr_mode;		/* !0 for incremental resolution */
@@ -89,6 +91,23 @@ extern struct command_tab	rt_cmdtab[];
 extern char	version[];		/* From vers.c */
 
 extern struct resource	resource[];	/* from opt.c */
+
+/*
+ *			S I G I N F O _ H A N D L E R
+ */
+void
+siginfo_handler( arg )
+int	arg;
+{
+	report_progress = 1;
+#ifdef SIGUSR1
+	(void)signal( SIGUSR1, siginfo_handler );
+#endif
+#ifdef SIGINFO
+	(void)signal( SIGINFO, siginfo_handler );
+#endif
+}
+
 
 /*
  *			M A I N
@@ -313,6 +332,13 @@ char **argv;
 		fprintf(stderr,"initial dynamic memory use=%ld.\n",
 			(long)((char *)sbrk(0)-beginptr) );
 	beginptr = (char *) sbrk(0);
+#endif
+
+#ifdef SIGUSR1
+	(void)signal( SIGUSR1, siginfo_handler );
+#endif
+#ifdef SIGINFO
+	(void)signal( SIGINFO, siginfo_handler );
 #endif
 
 	if( !matflag )  {

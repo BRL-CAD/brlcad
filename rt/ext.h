@@ -45,6 +45,7 @@ extern int		output_is_binary;	/* !0 means output is binary */
 extern mat_t		view2model;
 extern mat_t		model2view;
 extern vect_t		left_eye_delta;
+extern int		report_progress;	/* !0 = user wants progress report */
 extern struct application	ap;
 extern vect_t		left_eye_delta;
 extern int		rt_verbosity;

@@ -478,9 +478,14 @@ genptr_t	arg;
 							a.a_ray.r_dir);
 					}
 				}
+				if( report_progress )  {
+					report_progress = 0;
+					bu_log("\tframe %d, xy=%d,%d on cpu %d, samp=%d\n", curframe, a.a_x, a.a_y, cpu, samplenum );
+				}
+
 				a.a_level = 0;		/* recursion level */
 				a.a_purpose = "main ray";
-				rt_shootray( &a );
+				(void)rt_shootray( &a );
 
 				if( stereo )  {
 					FAST fastf_t right,left;
@@ -499,7 +504,7 @@ genptr_t	arg;
 					}
 					a.a_level = 0;		/* recursion level */
 					a.a_purpose = "left eye ray";
-					rt_shootray( &a );
+					(void)rt_shootray( &a );
 
 					left = CRT_BLEND(a.a_color);
 					VSET( a.a_color, left, 0, right );
