@@ -182,6 +182,7 @@ db_create( name )
 CONST char *name;
 {
 	FILE	*fp;
+	struct db_i	*dbip;
 
 	if(rt_g.debug&DEBUG_DB) bu_log("db_create(%s, %s)\n", name );
 
@@ -206,7 +207,13 @@ CONST char *name;
 
 	(void)fclose(fp);
 
-	return( db_open( name, "r+w" ) );
+	if( (dbip = db_open( name, "r+w" ) ) == DBI_NULL )
+		return DBI_NULL;
+
+	/* Do a quick scan to determine version, find _GLOBAL, etc. */
+	if( db_dirbuild( dbip ) < 0 )
+		return DBI_NULL;
+	return dbip;
 }
 
 /*
