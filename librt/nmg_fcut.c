@@ -1573,7 +1573,7 @@ struct faceuse	*fu;
  *  make this happen;  see the comments in nmg_inter.c for details, or
  *  Mike's notes "The 'Left' Vector Choice" dated 27-Aug-93, page 1.
  */
-HIDDEN void
+void
 nmg_face_rs_init( rs, b, fu1, fu2, pt, dir )
 struct nmg_ray_state	*rs;
 struct nmg_ptbl	*b;		/* table of vertexuses in fu1 on intercept line */
