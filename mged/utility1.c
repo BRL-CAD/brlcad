@@ -163,7 +163,9 @@ char	**argv;
 	(void)fprintf(tabptr,"\n\n");
 
 	/* make table of the objects */
+#if 0
 	mat_idn( identity );
+#endif
 	for(i=2; i<argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i],LOOKUP_NOISY)) != DIR_NULL )
 			tables(dp, 0, identity, flag);

@@ -178,8 +178,9 @@ int air;				/* Air code */
 {
 	register struct directory *dp;
 	union record record;
+#if 0
 	mat_t	identity;
-
+#endif
 	/*
 	 * Check to see if we have to create a new combination
 	 */
@@ -238,7 +239,9 @@ int air;				/* Air code */
 
 		record.M.m_id = ID_MEMB;
 		record.M.m_relation = relation;
+#if 0
 		mat_idn( identity );
+#endif
 		rt_dbmat_mat( record.M.m_mat, identity );
 		if( db_put( dbip,  dp, &record, 1, 1 ) < 0 )  {
 		  Tcl_AppendResult(interp, "write error, aborting\n", (char *)NULL);
@@ -283,8 +286,9 @@ int air;				/* Air code */
 	record.M.m_id = ID_MEMB;
 	record.M.m_relation = relation;
 	(void)strcpy( record.M.m_instname, objp->d_namep );
-
+#if 0
 	mat_idn( identity );
+#endif
 	rt_dbmat_mat( record.M.m_mat, identity );
 	if( db_put( dbip,  dp, &record, dp->d_len-1, 1 ) < 0 )  {
 	  Tcl_AppendResult(interp, "write error, aborting\n", (char *)NULL);

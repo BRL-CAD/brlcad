@@ -315,7 +315,9 @@ char	**argv;
 	    return TCL_ERROR;
 	}
 
+#if 0
 	mat_idn(identity);
+#endif
 	mat_idn( xform );
 
 	trace(obj[0], 0, identity, flag);
@@ -916,9 +918,11 @@ struct directory *dp;
 
 	struct directory *nextdp;
 	int nparts, i;
+#if 0
 	mat_t	identity;
 
 	mat_idn( identity );
+#endif
 	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
 	if( record.u_id == ID_COMB ) {
 		nparts = dp->d_len-1;
