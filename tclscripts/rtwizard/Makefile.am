@@ -1,13 +1,9 @@
 # $Id$
 SUBDIRS = examples lib
 tcldir = $(prefix)/tclscripts/rtwizard
-tcl_SCRIPTS = rtwizard.tcl pkgIndex.tcl tclIndex
-EXTRA_DIST = rtwizard.tcl
+dist_tcl_SCRIPTS = rtwizard.tcl
 
-.PHONY : tclIndex
-tclIndex:
-	echo 'set auto_index(::RtWizard::main) [list source [file join $$dir rtwizard.tcl]]' > tclIndex
-
-pkgIndex.tcl:
-	$(top_srcdir)/tclscripts/ampi.tcl $(top_srcdir)/tclscripts/rtwizard
+install-data-hook:
+	${bindir}/btclsh $(top_srcdir)/tclscripts/ami.tcl $(PWD) && ${INSTALL_DATA} tclIndex $(tcldir)/tclIndex
+	${bindir}/btclsh $(top_srcdir)/tclscripts/ampi.tcl $(PWD) && ${INSTALL_DATA} pkgIndex.tcl $(tcldir)/pkgIndex.tcl
 
