@@ -274,8 +274,8 @@ files-tape:	files-tape.o
 pix3filter:	pix3filter.o
 	CC LDFLAGS -o pix3filter pix3filter.o LIBES
 
-pix-spm:	pix-spm.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
-	CC LDFLAGS -o pix-spm pix-spm.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
+pix-spm:	pix-spm.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pix-spm pix-spm.o LIBBN LIBBU LIBBU_LIBES LIBES
 
 pix-sun:	pix-sun.o
 	CC LDFLAGS -o pix-sun pix-sun.o LIBES
