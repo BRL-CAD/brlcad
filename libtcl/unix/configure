@@ -4320,6 +4320,7 @@ if test "$tcl_ok" = "yes" -a "${SHLIB_SUFFIX}" != "" ; then
     TCL_SHLIB_CFLAGS="${SHLIB_CFLAGS}"
     TCL_LD_SEARCH_FLAGS="${LD_SEARCH_FLAGS}"
     eval "TCL_LIB_FILE=libtcl${TCL_SHARED_LIB_SUFFIX}"
+    AFTER_MAKE="mv libtcl.so libtcl.so.11; ../sh/sharedliblink.sh libtcl.so.11"
     if test "x$DL_OBJS" = "xtclLoadAout.o"; then
 	MAKE_LIB="ar cr ${TCL_LIB_FILE} \${OBJS}"
     else
@@ -4540,6 +4541,7 @@ s%@TCL_SHLIB_CFLAGS@%$TCL_SHLIB_CFLAGS%g
 s%@TCL_SRC_DIR@%$TCL_SRC_DIR%g
 s%@TCL_UNSHARED_LIB_SUFFIX@%$TCL_UNSHARED_LIB_SUFFIX%g
 s%@TCL_VERSION@%$TCL_VERSION%g
+s%@AFTER_MAKE@%$AFTER_MAKE%g
 
 CEOF
 EOF

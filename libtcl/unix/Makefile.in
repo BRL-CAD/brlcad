@@ -318,6 +318,7 @@ ${TCL_LIB_FILE}: ${OBJS}
 	rm -f ${TCL_LIB_FILE}
 	@MAKE_LIB@
 	$(RANLIB) ${TCL_LIB_FILE}
+	@AFTER_MAKE@
 
 # Make target which outputs the list of the .o contained in the Tcl lib
 # usefull to build a single big shared library containing Tcl and other
