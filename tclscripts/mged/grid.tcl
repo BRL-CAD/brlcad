@@ -19,10 +19,7 @@
 
 proc do_grid_spacing { id spacing_type } {
     global player_screen
-    global grid_control_h
-    global grid_control_v
-    global grid_control_maj_h
-    global grid_control_maj_v
+    global grid_control_spacing
     global localunit
 
     set top .$id.grid_spacing
@@ -42,16 +39,16 @@ proc do_grid_spacing { id spacing_type } {
 
     if {$spacing_type == "h"} {
 	label $top.resL -text "Horiz." -anchor w
-	entry $top.resE -relief sunken -width 12 -textvar grid_control_h($id)
-	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_maj_h($id)
+	entry $top.resE -relief sunken -width 12 -textvar grid_control_spacing($id,tick)
+	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_spacing($id,ticksPerMajor)
     } elseif {$spacing_type == "v"} {
 	label $top.resL -text "Vert." -anchor w
-	entry $top.resE -relief sunken -width 12 -textvar grid_control_v($id)
-	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_maj_v($id)
+	entry $top.resE -relief sunken -width 12 -textvar grid_control_spacing($id,tick)
+	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_spacing($id,ticksPerMajor)
     } elseif {$spacing_type == "b"} {
 	label $top.resL -text "Horiz. & Vert." -anchor w
-	entry $top.resE -relief sunken -width 12 -textvar grid_control_h($id)
-	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_maj_h($id)
+	entry $top.resE -relief sunken -width 12 -textvar grid_control_spacing($id,tick)
+	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_spacing($id,ticksPerMajor)
     } else {
 	catch {destroy $top}
 	return
@@ -59,10 +56,10 @@ proc do_grid_spacing { id spacing_type } {
 
     button $top.applyB -relief raised -text "Apply"\
 	    -command "grid_spacing_apply $id $spacing_type"
-    button $top.loadB -relief raised -text "Load"\
-	    -command "grid_spacing_load $id $spacing_type"
+    button $top.resetB -relief raised -text "Reset"\
+	    -command "grid_spacing_reset $id $spacing_type"
     button $top.autosizeB -relief raised -text "Autosize"\
-	    -command "grid_control_autosize $id"
+	    -command "grid_spacing_autosize $id"
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
 
@@ -72,7 +69,7 @@ proc do_grid_spacing { id spacing_type } {
     grid columnconfigure $top.gridF1 1 -weight 1
     grid columnconfigure $top.gridF1 3 -weight 1
 
-    grid $top.applyB x $top.loadB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF2
+    grid $top.applyB x $top.resetB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF2
     grid columnconfigure $top.gridF2 1 -weight 1
     grid columnconfigure $top.gridF2 1 -minsize 10
     grid columnconfigure $top.gridF2 4 -weight 1
@@ -83,7 +80,7 @@ proc do_grid_spacing { id spacing_type } {
 
     grid columnconfigure $top 0 -weight 1
 
-    grid_spacing_load $id $spacing_type
+    grid_spacing_reset $id $spacing_type
 
     set pxy [winfo pointerxy $top]
     set x [lindex $pxy 0]
@@ -96,8 +93,8 @@ proc do_grid_spacing { id spacing_type } {
 
 proc do_grid_anchor { id } {
     global player_screen
+    global mged_active_dm
     global grid_control_anchor
-    global grid_anchor
 
     set top .$id.grid_anchor
 
@@ -106,6 +103,10 @@ proc do_grid_anchor { id } {
 
 	return
     }
+
+    # Initialize variables
+    winset $mged_active_dm($id)
+    set grid_control_anchor($id) [_mged_rset grid anchor]
 
     toplevel $top -screen $player_screen($id)
 
@@ -118,9 +119,10 @@ proc do_grid_anchor { id } {
     entry $top.anchorE -relief sunken -bd 2 -width 12 -textvar grid_control_anchor($id)
 
     button $top.applyB -relief raised -text "Apply"\
-	    -command "mged_apply $id \"set grid_anchor \\\$grid_control_anchor($id)\""
-    button $top.loadB -relief raised -text "Load"\
-	    -command "winset \$mged_active_dm($id); set grid_control_anchor($id) \$grid_anchor"
+	    -command "mged_apply $id \"rset grid anchor \\\$grid_control_anchor($id)\""
+    button $top.resetB -relief raised -text "Reset"\
+	    -command "winset \$mged_active_dm($id);\
+	    set grid_control_anchor($id) \[rset grid anchor\]"
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
 
@@ -131,7 +133,7 @@ proc do_grid_anchor { id } {
     grid $top.anchorF -sticky "ew" -in $top.gridF1 -padx 8 -pady 8
     grid columnconfigure $top.gridF1 0 -weight 1
 
-    grid $top.applyB x $top.loadB x $top.dismissB -sticky "ew" -in $top.gridF2
+    grid $top.applyB x $top.resetB x $top.dismissB -sticky "ew" -in $top.gridF2
     grid columnconfigure $top.gridF2 1 -weight 1
     grid columnconfigure $top.gridF2 1 -weight 3
 
@@ -149,122 +151,16 @@ proc do_grid_anchor { id } {
     wm title $top "Grid Anchor Point ($id)"
 }
 
-proc do_grid_color { id } {
-    global player_screen
-    global mged_active_dm
-    global grid_control_color
-
-    set top .$id.grid_color
-
-    if [winfo exists $top] {
-	raise $top
-
-	return
-    }
-
-    toplevel $top -screen $player_screen($id)
-
-    frame $top.gridF1 -relief groove -bd 2
-    frame $top.gridF2
-
-    frame $top.colorF
-    frame $top.colorFF -relief sunken -bd 2
-
-    label $top.colorL -text "Color" -anchor w
-    entry $top.colorE -relief flat -width 12 -textvar grid_control_color($id)
-    menubutton $top.colorMB -relief raised -bd 2\
-	    -menu $top.colorMB.m -indicatoron 1
-    menu $top.colorMB.m -tearoff 0
-    $top.colorMB.m add command -label black\
-	    -command "set grid_control_color($id) \"0 0 0\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label white\
-	    -command "set grid_control_color($id) \"255 255 255\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label red\
-	    -command "set grid_control_color($id) \"255 0 0\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label green\
-	    -command "set grid_control_color($id) \"0 255 0\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label blue\
-	    -command "set grid_control_color($id) \"0 0 255\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label yellow\
-	    -command "set grid_control_color($id) \"255 255 0\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label cyan\
-	    -command "set grid_control_color($id) \"0 255 255\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add command -label magenta\
-	    -command "set grid_control_color($id) \"255 0 255\"; grid_control_set_colorMB $id $top"
-    $top.colorMB.m add separator
-    $top.colorMB.m add command -label "Color Tool..."\
-	    -command "grid_control_choose_color $id $top"
-
-    button $top.applyB -relief raised -text "Apply"\
-	    -command "mged_apply $id \"cs_set grid \\\$grid_control_color($id)\""
-    button $top.loadB -relief raised -text "Load"\
-	    -command "winset \$mged_active_dm($id);\
-	    set grid_control_color($id) \[cs_set grid\];\
-	    grid_control_set_colorMB $id $top;"
-    button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top }" 
-
-    grid $top.colorL -sticky "ew" -in $top.colorF
-    grid $top.colorE $top.colorMB -sticky "ew" -in $top.colorFF
-    grid $top.colorFF -sticky "ew" -in $top.colorF
-    grid columnconfigure $top.colorFF 0 -weight 1
-    grid columnconfigure $top.colorF 0 -weight 1
-
-    grid $top.colorF -sticky "ew" -in $top.gridF1 -padx 8 -pady 8
-    grid columnconfigure $top.gridF1 0 -weight 1
-
-    grid $top.applyB x $top.loadB x $top.dismissB -sticky "ew" -in $top.gridF2
-    grid columnconfigure $top.gridF2 1 -weight 1
-    grid columnconfigure $top.gridF2 3 -weight 1
-
-    grid $top.gridF1 -sticky "ew" -padx 8 -pady 8
-    grid $top.gridF2 -sticky "ew" -padx 8 -pady 8
-
-    grid columnconfigure $top 0 -weight 1
-
-    bind $top.colorE <Return> "grid_control_set_colorMB $id $top; break"
-
-    winset $mged_active_dm($id)
-    set grid_control_color($id) [cs_set grid]
-    grid_control_set_colorMB $id $top
-
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-
-    wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
-    wm geometry $top +$x+$y
-    wm title $top "Grid Color ($id)"
-}
-
 proc init_grid_control { id } {
     global player_screen
-    global mged_grid_control
-    global mged_grid_draw
-    global mged_grid_snap
-    global grid_control_draw
-    global grid_control_snap
-    global grid_control_square
-    global grid_control_color
-    global grid_control_anchor
-    global grid_control_h
-    global grid_control_v
-    global grid_control_maj_h
-    global grid_control_maj_v
-    global grid_draw
-    global grid_snap
-    global grid anchor
-    global grid_res_h
-    global grid_res_v
-    global grid_res_major_h
-    global grid_res_major_v
+    global grid_control
+    global mged_grid
     global localunit
 
     set top .$id.grid_control
 
     if [winfo exists $top] {
 	raise $top
-	set mged_grid_control($id) 1
 
 	return
     }
@@ -286,14 +182,12 @@ proc init_grid_control { id } {
 
     frame $top.anchorF
     frame $top.anchorFF -relief sunken -bd 2
-#    frame $top.colorF
-#    frame $top.colorFF -relief sunken -bd 2
 
     label $top.tickSpacingL -text "Tick Spacing\n($localunit/tick)"
     label $top.majorSpacingL -text "Major Spacing\n(ticks/major)"
 
     label $top.hL -text "Horiz." -anchor w
-    entry $top.hE -relief flat -width 12 -textvar grid_control_h($id)
+    entry $top.hE -relief flat -width 12 -textvar grid_control($id,rh)
     menubutton $top.hMB -relief raised -bd 2\
 	    -menu $top.hMB.spacing -indicatoron 1
     menu $top.hMB.spacing -tearoff 0
@@ -324,10 +218,10 @@ proc init_grid_control { id } {
 	    -command "set_grid_spacing $id yard 0"
     $top.hMB.spacing add command -label "mile" -underline 0\
 	    -command "set_grid_spacing $id mile 0"
-    entry $top.maj_hE -relief flat -width 12 -textvar grid_control_maj_h($id)
+    entry $top.maj_hE -relief flat -width 12 -textvar grid_control($id,mrh)
 
     label $top.vL -text "Vert." -anchor w
-    entry $top.vE -relief flat -width 12 -textvar grid_control_v($id)
+    entry $top.vE -relief flat -width 12 -textvar grid_control($id,rv)
     menubutton $top.vMB -relief raised -bd 2\
 	    -menu $top.vMB.spacing -indicatoron 1
     menu $top.vMB.spacing -tearoff 0
@@ -358,56 +252,31 @@ proc init_grid_control { id } {
 	    -command "set_grid_spacing $id yard 0"
     $top.vMB.spacing add command -label "mile" -underline 0\
 	    -command "set_grid_spacing $id mile 0"
-    entry $top.maj_vE -relief flat -width 12 -textvar grid_control_maj_v($id)
+    entry $top.maj_vE -relief flat -width 12 -textvar grid_control($id,mrv)
 
     checkbutton $top.squareGridCB -relief flat -text "Square Grid"\
-	    -offvalue 0 -onvalue 1 -variable grid_control_square($id)\
+	    -offvalue 0 -onvalue 1 -variable grid_control($id,square)\
 	    -command "set_grid_square $id"
 
     label $top.anchorL -text "Anchor Point" -anchor w
-    entry $top.anchorE -relief flat -width 12 -textvar grid_control_anchor($id)
-
-#    label $top.colorL -text "Color" -anchor w
-#    entry $top.colorE -relief flat -width 12 -textvar grid_control_color($id)
-#    menubutton $top.colorMB -relief raised -bd 2\
-#	    -menu $top.colorMB.m -indicatoron 1
-#    menu $top.colorMB.m -tearoff 0
-#    $top.colorMB.m add command -label black\
-#	    -command "set grid_control_color($id) \"0 0 0\"; grid_control_set_colorMB $id $top"
-#    $top.colorMB.m add command -label white\
-#	    -command "set grid_control_color($id) \"255 255 255\"; grid_control_set_colorMB $id $top"
-#    $top.colorMB.m add command -label red\
-#	    -command "set grid_control_color($id) \"255 0 0\"; grid_control_set_colorMB $id $top"
-#    $top.colorMB.m add command -label green\
-#	    -command "set grid_control_color($id) \"0 255 0\"; grid_control_set_colorMB $id $top"
-#    $top.colorMB.m add command -label blue\
-#	    -command "set grid_control_color($id) \"0 0 255\"; grid_control_set_colorMB $id $top"
-#    $top.colorMB.m add command -label yellow\
-#	    -command "set grid_control_color($id) \"255 255 0\"; grid_control_set_colorMB $id $top"
-#    $top.colorMB.m add command -label cyan\
-#	    -command "set grid_control_color($id) \"0 255 255\"; grid_control_set_colorMB $id $top"
-#    $top.colorMB.m add command -label magenta\
-#	    -command "set grid_control_color($id) \"255 0 255\"; grid_control_set_colorMB $id $top"
-#    $top.colorMB.m add separator
-#    $top.colorMB.m add command -label "Color Tool..."\
-#	    -command "grid_control_choose_color $id $top"
+    entry $top.anchorE -relief flat -width 12 -textvar grid_control($id,anchor)
 
     label $top.gridEffectsL -text "Grid Effects" -anchor w
 
     checkbutton $top.drawCB -relief flat -text "Draw"\
-	    -offvalue 0 -onvalue 1 -variable grid_control_draw($id)
+	    -offvalue 0 -onvalue 1 -variable grid_control($id,draw)
 
     checkbutton $top.snapCB -relief flat -text "Snap"\
-	    -offvalue 0 -onvalue 1 -variable grid_control_snap($id)
+	    -offvalue 0 -onvalue 1 -variable grid_control($id,snap)
 
     button $top.applyB -relief raised -text "Apply"\
 	    -command "grid_control_apply $id"
-    button $top.loadB -relief raised -text "Load"\
-	    -command "grid_control_load $id $top"
+    button $top.resetB -relief raised -text "Reset"\
+	    -command "grid_control_reset $id $top"
     button $top.autosizeB -relief raised -text "Autosize"\
 	    -command "grid_control_autosize $id"
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top; set mged_grid_control($id) 0 }"
+	    -command "catch { destroy $top }"
 
     grid x $top.tickSpacingL x $top.majorSpacingL -in $top.gridFF1 -padx 8 -pady 8
     grid $top.hE $top.hMB -sticky ew -in $top.hF
@@ -425,20 +294,14 @@ proc init_grid_control { id } {
     grid $top.anchorL -sticky "ew" -in $top.anchorF
     grid $top.anchorE -sticky "ew" -in $top.anchorFF
     grid $top.anchorFF -sticky "ew" -in $top.anchorF
-#    grid $top.colorL -sticky "ew" -in $top.colorF
-#    grid $top.colorE $top.colorMB -sticky "ew" -in $top.colorFF
-#    grid $top.colorFF -sticky "ew" -in $top.colorF
-#    grid $top.anchorF x $top.colorF -sticky "ew" -in $top.gridFF2 -padx 8 -pady 8
     grid $top.anchorF x x -sticky "ew" -in $top.gridFF2 -padx 8 -pady 8
     grid columnconfigure $top.anchorF 0 -weight 1
     grid columnconfigure $top.anchorFF 0 -weight 1
-#    grid columnconfigure $top.colorF 0 -weight 1
-#    grid columnconfigure $top.colorFF 0 -weight 1
 
     grid $top.gridEffectsL x $top.drawCB x $top.snapCB x -sticky "ew" -in $top.gridFF3\
 	    -padx 8 -pady 8
 
-    grid $top.applyB x $top.loadB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF4
+    grid $top.applyB x $top.resetB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF4
 
     grid columnconfigure $top.gridFF1 1 -weight 1
     grid columnconfigure $top.gridFF1 3 -weight 1
@@ -469,178 +332,112 @@ proc init_grid_control { id } {
     grid columnconfigure $top 0 -weight 1
     grid columnconfigure $top 0 -minsize 400
 
-#    bind $top.colorE <Return> "grid_control_set_colorMB $id $top; break"
-
-    grid_control_load $id $top
-#    grid_control_set_colorMB $id $top
-    set grid_control_square($id) 1
+    grid_control_reset $id $top
+    set grid_control($id,square) 1
     set_grid_square $id
 
     set pxy [winfo pointerxy $top]
     set x [lindex $pxy 0]
     set y [lindex $pxy 1]
 
-    wm protocol $top WM_DELETE_WINDOW "catch { destroy $top; set mged_grid_control($id) 0 }"
+    wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
     wm geometry $top +$x+$y
     wm title $top "Grid Control Panel ($id)"
 }
 
-proc grid_control_choose_color { id parent } {
-    set child color
-
-    cadColorWidget dialog $parent $child\
-	    -title "Grid Color"\
-	    -initialcolor [$parent.colorMB cget -background]\
-	    -ok "grid_color_ok $id $parent $parent.$child"\
-	    -cancel "cadColorWidget_destroy $parent.$child"
-}
-
-proc grid_color_ok { id parent w } {
-    global grid_control_color
-
-    upvar #0 $w data
-
-    $parent.colorMB configure -bg $data(finalColor)
-    set grid_control_color($id) "$data(red) $data(green) $data(blue)"
-
-    destroy $w
-    unset data
-}
-
-proc grid_control_set_colorMB { id top } {
-    global grid_control_color
-
-    set_WidgetRGBColor $top.colorMB $grid_control_color($id)
-}
-
 proc grid_control_apply { id } {
-    global mged_active_dm
-    global grid_control_draw
-    global grid_control_snap
-    global grid_control_color
-    global grid_control_anchor
-    global grid_control_h
-    global grid_control_v
-    global grid_control_maj_h
-    global grid_control_maj_v
-    global grid_draw
-    global mged_grid_draw
-    global grid_snap
-    global mged_grid_snap
-    global grid_anchor
-    global grid_res_h
-    global grid_res_v
-    global grid_res_major_h
-    global grid_res_major_v
-    global grid_control_square
+    global grid_control
+    global mged_grid
 
-#    winset $mged_active_dm($id)
-    mged_apply $id "set grid_draw \$grid_control_draw($id)"
-    mged_apply $id "set grid_snap \$grid_control_snap($id)"
-    mged_apply $id "cs_set grid \$grid_control_color($id)"
-    mged_apply $id "set grid_anchor \$grid_control_anchor($id)"
+    mged_apply $id "rset grid anchor \$grid_control($id,anchor)"
+    mged_apply $id "rset grid rh \$grid_control($id,rh)"
+    mged_apply $id "rset grid mrh \$grid_control($id,mrh)"
 
-    mged_apply $id "set grid_res_h \$grid_control_h($id)"
-    mged_apply $id "set grid_res_major_h \$grid_control_maj_h($id)"
+    mged_apply $id "rset cs grid \$grid_control($id,color)"
 
-    if {$grid_control_square($id)} {
-	mged_apply $id "set grid_res_v \$grid_control_h($id)"
-	mged_apply $id "set grid_res_major_v \$grid_control_maj_h($id)"
-	mged_apply $id "set grid_control_v($id) \$grid_control_h($id)"
-	mged_apply $id "set grid_control_maj_v($id) \$grid_control_maj_h($id)"
+    if {$grid_control($id,square)} {
+	mged_apply $id "rset grid rv \$grid_control($id,rh)"
+	mged_apply $id "rset grid mrv \$grid_control($id,mrh)"
+	set grid_control($id,rv) $grid_control($id,rh)
+	set grid_control($id,mrv) $grid_control($id,mrh)
     } else {
-	mged_apply $id "set grid_res_v \$grid_control_v($id)"
-	mged_apply $id "set grid_res_major_v \$grid_control_maj_v($id)"
+	mged_apply $id "rset grid rv \$grid_control($id,rv)"
+	mged_apply $id "rset grid mrv \$grid_control($id,mrv)"
     }
 
-    set mged_grid_draw($id) $grid_control_draw($id)
-    set mged_grid_snap($id) $grid_control_snap($id)
+    mged_apply $id "rset grid snap \$grid_control($id,snap)"
+    mged_apply $id "rset grid draw \$grid_control($id,draw)"
+
+    # update the main GUI
+    set mged_grid($id,draw) $grid_control($id,draw)
+    set mged_grid($id,snap) $grid_control($id,snap)
 }
 
-proc grid_control_load { id top } {
+proc grid_control_reset { id top } {
     global mged_active_dm
-    global grid_control_draw
-    global grid_control_snap
-    global grid_control_color
-    global grid_control_anchor
-    global grid_control_h
-    global grid_control_v
-    global grid_control_maj_h
-    global grid_control_maj_v
-    global grid_draw
-    global mged_grid_draw
-    global grid_snap
-    global mged_grid_snap
-    global grid_anchor
-    global grid_res_h
-    global grid_res_v
-    global grid_res_major_h
-    global grid_res_major_v
-    global grid_control_square
+    global mged_grid
+    global grid_control
 
     winset $mged_active_dm($id)
-    set grid_control_draw($id) $grid_draw
-    set grid_control_snap($id) $grid_snap
-    set grid_control_color($id) [cs_set grid]
-    set grid_control_anchor($id) $grid_anchor
 
-    set grid_control_h($id) $grid_res_h
-    set grid_control_maj_h($id) $grid_res_major_h
+    set grid_control($id,draw) [rset grid draw]
+    set grid_control($id,snap) [rset grid snap]
+    set grid_control($id,anchor) [rset grid anchor]
+    set grid_control($id,rh) [rset grid rh]
+    set grid_control($id,mrh) [rset grid mrh]
+    set grid_control($id,rv) [rset grid rv]
+    set grid_control($id,mrv) [rset grid mrv]
+    set grid_control($id,color) [rset cs grid]
 
-    if {!$grid_control_square($id)} {
-	set grid_control_v($id) $grid_res_v
-	set grid_control_maj_v($id) $grid_res_major_v
+    if {$grid_control($id,rh) != $grid_control($id,rv) ||\
+	$grid_control($id,mrh) != $grid_control($id,mrv)} {
+	set grid_control($id,square) 0
+	set_grid_square $id
     }
 
-    set mged_grid_draw($id) $grid_control_draw($id)
-    set mged_grid_snap($id) $grid_control_snap($id)
+    set mged_grid($id,draw) $grid_control($id,draw)
+    set mged_grid($id,snap) $grid_control($id,snap)
 
     grid_control_set_colorMB $id $top
 }
 
 proc set_grid_square { id } {
-    global grid_control_h
-    global grid_control_v
-    global grid_control_maj_h
-    global grid_control_maj_v
-    global grid_control_square
+    global grid_control
 
     set top .$id.grid_control
     if [winfo exists $top] {
-	if {$grid_control_square($id)} {
-	    $top.vE configure -textvar grid_control_h($id)
-	    $top.maj_vE configure -textvar grid_control_maj_h($id)
+	if {$grid_control($id,square)} {
+	    $top.vE configure -textvar grid_control($id,rh)
+	    $top.maj_vE configure -textvar grid_control($id,mrh)
 	} else {
-	    $top.vE configure -textvar grid_control_v($id)
-	    $top.maj_vE configure -textvar grid_control_maj_v($id)
+	    $top.vE configure -textvar grid_control($id,rv)
+	    $top.maj_vE configure -textvar grid_control($id,mrv)
 	}
     }
 }
 
 proc grid_control_update { sf } {
     global mged_players
-    global grid_control_h
-    global grid_control_v
-    global grid_control_anchor
+    global grid_control
     global localunit
 
     foreach id $mged_players {
-	if {[info exists grid_control_anchor($id)] &&\
-		[llength $grid_control_anchor($id)] == 3} {
-	    set x [lindex $grid_control_anchor($id) 0]
-	    set y [lindex $grid_control_anchor($id) 1]
-	    set z [lindex $grid_control_anchor($id) 2]
+	if {[info exists grid_control($id,anchor)] &&\
+		[llength $grid_control($id,anchor)] == 3} {
+	    set x [lindex $grid_control($id,anchor) 0]
+	    set y [lindex $grid_control($id,anchor) 1]
+	    set z [lindex $grid_control($id,anchor) 2]
 
 	    set x [expr $sf * $x]
 	    set y [expr $sf * $y]
 	    set z [expr $sf * $z]
 
-	    set grid_control_anchor($id) "$x $y $z"
+	    set grid_control($id,anchor) "$x $y $z"
 	}
 
-	if [info exists grid_control_h($id)] {
-	    set grid_control_h($id) [expr $sf * $grid_control_h($id)]
-	    set grid_control_v($id) [expr $sf * $grid_control_v($id)]
+	if [info exists grid_control($id,rh)] {
+	    set grid_control($id,rh) [expr $sf * $grid_control($id,rh)]
+	    set grid_control($id,rv) [expr $sf * $grid_control($id,rv)]
 	}
 
 	set top .$id.grid_control
@@ -655,15 +452,7 @@ proc grid_control_update { sf } {
     }
 }
 
-proc grid_control_autosize { id } {
-    global mged_display
-    global mged_active_dm
-    global grid_control_h
-    global grid_control_v
-    global grid_control_maj_h
-    global grid_control_maj_v
-    global base2local
-
+proc grid_autosize {} {
 # Gives between 20 and 200 ticks in user units
     set lower [expr log10(20)]
     set upper [expr $lower+1]
@@ -677,93 +466,69 @@ proc grid_control_autosize { id } {
 	set val 1.0
     }
 
-    set grid_control_h($id) $val
-    set grid_control_v($id) $val
-    set grid_control_maj_h($id) 10
-    set grid_control_maj_v($id) 10
+    return $val
+}
+
+proc grid_spacing_autosize { id } {
+    global grid_control_spacing
+
+    set val [grid_autosize]
+
+    set grid_control_spacing($id,tick) $val
+    set grid_control_spacing($id,ticksPerMajor) 10
+}
+
+proc grid_control_autosize { id } {
+    global grid_control
+
+    set val [grid_autosize]
+
+    set grid_control($id,rh) $val
+    set grid_control($id,rv) $val
+    set grid_control($id,mrh) 10
+    set grid_control($id,mrv) 10
 }
 
 proc grid_spacing_apply { id spacing_type } {
     global mged_active_dm
-    global grid_control_h
-    global grid_control_v
-    global grid_control_maj_h
-    global grid_control_maj_v
-    global grid_res_h
-    global grid_res_v
-    global grid_res_major_h
-    global grid_res_major_v
-    global grid_control_square
+    global grid_control_spacing
 
     winset $mged_active_dm($id)
 
     if {$spacing_type == "h"} {
-	set grid_control_square($id) 0
-	set_grid_square $id
-	set grid_control_v($id) $grid_res_v
-	set grid_control_maj_v($id) $grid_res_major_v
-
-	set grid_res_h $grid_control_h($id)
-	set grid_res_major_h $grid_control_maj_h($id)
+	rset grid rh $grid_control_spacing($id,tick)
+	rset grid mrh $grid_control_spacing($id,ticksPerMajor)
     } elseif {$spacing_type == "v"} {
-	set grid_control_square($id) 0
-	set_grid_square $id
-	set grid_control_h($id) $grid_res_h
-	set grid_control_maj_h($id) $grid_res_major_h
-
-	set grid_res_v $grid_control_v($id)
-	set grid_res_major_v $grid_control_maj_v($id)
+	rset grid rv $grid_control_spacing($id,tick)
+	rset grid mrv $grid_control_spacing($id,ticksPerMajor)
     } else {
-	set grid_res_h $grid_control_h($id)
-	set grid_res_major_h $grid_control_maj_h($id)
-	set grid_res_v $grid_control_h($id)
-	set grid_res_major_v $grid_control_maj_h($id)
-	set grid_control_v($id) $grid_control_h($id)
-	set grid_control_maj_v($id) $grid_control_maj_h($id)
+	rset grid rh $grid_control_spacing($id,tick)
+	rset grid mrh $grid_control_spacing($id,ticksPerMajor)
+	rset grid rv $grid_control_spacing($id,tick)
+	rset grid mrv $grid_control_spacing($id,ticksPerMajor)
     }
 
     catch { destroy .$id.grid_spacing }
 }
 
-proc grid_spacing_load { id spacing_type } {
+proc grid_spacing_reset { id spacing_type } {
     global mged_active_dm
-    global grid_control_h
-    global grid_control_v
-    global grid_control_maj_h
-    global grid_control_maj_v
-    global grid_res_h
-    global grid_res_v
-    global grid_res_major_h
-    global grid_res_major_v
+    global grid_control_spacing
 
     winset $mged_active_dm($id)
 
-    if {$spacing_type == "h"} {
-	set grid_control_h($id) $grid_res_h
-	set grid_control_maj_h($id) $grid_res_major_h
-    } elseif {$spacing_type == "v"} {
-	set grid_control_v($id) $grid_res_v
-	set grid_control_maj_v($id) $grid_res_major_v
+    if {$spacing_type == "v"} {
+	set grid_control_spacing($id,tick) [rset grid rv]
+	set grid_control_spacing($id,ticksPerMajor) [rset grid mrv]
     } else {
-	set grid_control_h($id) $grid_res_h
-	set grid_control_maj_h($id) $grid_res_major_h
+	set grid_control_spacing($id,tick) [rset grid rh]
+	set grid_control_spacing($id,ticksPerMajor) [rset grid mrh]
     }
 }
 
 proc set_grid_spacing { id grid_unit apply } {
-#    global mged_active_dm
-    global grid_control_h
-    global grid_control_v
-    global grid_control_maj_h
-    global grid_control_maj_v
-    global grid_res_h
-    global grid_res_v
-    global grid_res_major_h
-    global grid_res_major_v
-    global grid_control_square
     global base2local
-
-#    winset $mged_active_dm($id)
+    global grid_control
 
     switch $grid_unit {
 	micrometer {
@@ -820,15 +585,15 @@ proc set_grid_spacing { id grid_unit apply } {
 	}
     }
 
-    set grid_control_h($id) $res
-    set grid_control_v($id) $res
-    set grid_control_maj_h($id) $res_major
-    set grid_control_maj_h($id) $res_major
-
-    if { $apply } {
-	mged_apply $id "set grid_res_h $res"
-	mged_apply $id "set grid_res_v $res"
-	mged_apply $id "set grid_res_major_h $res_major"
-	mged_apply $id "set grid_res_major_v $res_major"
+    if {$apply} {
+	mged_apply $id "rset grid rh $res"
+	mged_apply $id "rset grid rv $res"
+	mged_apply $id "rset grid mrh $res_major"
+	mged_apply $id "rset grid mrv $res_major"
+    } else {
+	set grid_control($id,rh) $res
+	set grid_control($id,rv) $res
+	set grid_control($id,mrh) $res_major
+	set grid_control($id,mrv) $res_major
     }
 }
