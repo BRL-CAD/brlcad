@@ -644,7 +644,8 @@ char	**dpp;
 	strncpy( env_region.reg_mater.ma_matparm, cp,
 		sizeof(rp->reg_mater.ma_matparm) );
 
-	(void)mlib_setup( &env_region );
+	if( mlib_setup( &env_region ) < 0 )
+		rt_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );
 	rt_vls_free( &material );
 	return(0);		/* This region should be dropped */
 }
