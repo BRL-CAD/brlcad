@@ -39,10 +39,6 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 #include "../librt/debug.h"
 
-#ifdef HAVE_SBRK
-extern char	*sbrk();
-#endif
-
 extern int	rdebug;			/* RT program debugging (not library) */
 
 /***** Variables shared with viewing model *** */
