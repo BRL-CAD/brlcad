@@ -82,18 +82,35 @@ proc init_edit_solid { id args } {
     frame $w._F$row -relief flat -bd 2
     frame $w.nameF
     label $w.nameL -text "Name:" -anchor e
+    hoc_register_data $w.nameL "Solid Name"\
+	    { { summary "The name of a solid must be unique
+within a database." } }
     entry $w.nameE -relief sunken -bd 2 -textvar esol_name($id)
+    hoc_register_data $w.nameE "Solid Name"\
+	    { { summary "Enter a solid name. Note that the
+name must be unique." } }
     grid $w.nameL $w.nameE -in $w.nameF
     bind $w.nameE <Return> "esol_reset $id $w 0"
     #
     frame $w.typeF
     label $w.typeL -text "Type:" -anchor e
+    hoc_register_data $w.typeL "Solid Type"\
+	    { { summary "The supported solid types are: arb8, sph,
+ell, tor, rec, half, rpc, rhc, epa, ehy, eto
+and part." } }
     menubutton $w.typeMB -relief raised -bd 2 -textvariable esol_type($id)\
 	    -menu $w.typeMB.m -indicatoron 1
-    menu $w.typeMB.m -tearoff 0
+    hoc_register_data $w.typeMB "Solid Type"\
+	    { { summary "Indicates the current solid type. Note that
+the left mouse button will pop up a menu
+of the supported solid types." } }
+    menu $w.typeMB.m -title "Solid Type" -tearoff 0
     foreach type $solid_data(types) {
 	$w.typeMB.m add command -label $type\
 		-command "esol_process_type $id $w.sformF $type"
+	hoc_register_menu_data "Solid Type" $type "Solid Type - $type"\
+		"\"synopsis \\\"Change solid type to $type.\\\"\"
+	         \"description \\\"$solid_data(hoc,$type)\\\"\""
     }
     grid $w.typeL $w.typeMB -in $w.typeF
     #
@@ -116,21 +133,51 @@ proc init_edit_solid { id args } {
     #
     frame $w.decF
     label $w.decL -text "-operator:" -width 9 -anchor e
+    hoc_register_data $w.decL "Decrement Operator Equation"\
+	    { { summary "The decrement equation is used to modify
+the solid parameter values. Note that \"$val\"
+represents the current value in a solid
+parameter entry widget and must be present
+somewhere in the equation." } }
     entry $w.decE -relief sunken -bd 2 -textvar esol_dec_operation($id)
+    hoc_register_data $w.decE "Decrement Operator Equation"\
+	    { { summary "Enter the decrement operator equation.
+Note that \"$val\" represents the current value
+in a solid parameter entry widget and must
+be present somewhere in the equation." } }
     grid $w.decL $w.decE -in $w.decF -sticky nsew
     grid columnconfigure $w.decF 0 -weight 0
     grid columnconfigure $w.decF 1 -weight 1
     #
     frame $w.incF
     label $w.incL -text "+operator:" -width 9 -anchor e
+    hoc_register_data $w.incL "Increment Operator Equation"\
+	    { { summary "The increment equation is used to modify
+the solid parameter values. Note that \"$val\"
+represents the current value in a solid
+parameter entry widget and must be present
+somewhere in the equation." } }
     entry $w.incE -relief sunken -bd 2 -textvar esol_inc_operation($id)
+    hoc_register_data $w.incE "Increment Operator Equation"\
+	    { { summary "Enter the increment operator equation.
+Note that \"$val\" represents the current value
+in a solid parameter entry widget and must
+be present somewhere in the equation." } }
     grid $w.incL $w.incE -in $w.incF -sticky nsew
     grid columnconfigure $w.incF 0 -weight 0
     grid columnconfigure $w.incF 1 -weight 1
     #
     frame $w.fmtF
     label $w.fmtL -text "format:" -width 9 -anchor e
+    hoc_register_data $w.fmtL "Format"\
+	    { { summary "This string is used with the Tcl
+format command to format the values
+of the solid parameter entries." }
+              { see_also format } }
     entry $w.fmtE -relief sunken -bd 2 -textvar esol_format_string($id)
+    hoc_register_data $w.fmtE "Format"\
+	    { { summary "Enter the format string." }
+              { see_also format } }
     grid $w.fmtL $w.fmtE -in $w.fmtF -sticky nsew
     grid columnconfigure $w.fmtF 0 -weight 0
     grid columnconfigure $w.fmtF 1 -weight 1
@@ -147,21 +194,35 @@ proc init_edit_solid { id args } {
     incr row
     checkbutton $w.drawCB -relief flat -bd 2 -text "Draw"\
 	    -offvalue 0 -onvalue 1 -variable esol_draw($id)
+    hoc_register_data $w.drawCB "Draw"\
+	    { { summary "Toggle drawing/updating the solid
+in the panes (geometry windows)." } }
     grid $w.drawCB -row $row -column 0 -sticky nsew -padx 8
     grid rowconfigure $w $row -weight 0
 
     incr row
     set esol_row(buttons) $row
     frame $w._F$row -borderwidth 2
+    button $w.okB -text "Ok" \
+	    -command "esol_ok $id $w $w.sformF"
+    hoc_register_data $w.okB "Ok"\
+	    { { summary "Apply the control panel settings to the
+database solid, then dismiss/close the
+control panel." } }
     button $w.applyB -text "Apply" -command "esol_do_cmd $id $w $w.sformF"
+    hoc_register_data $w.applyB "Apply"\
+	    { { summary "Apply the control panel settings
+to the database solid." } }
     button $w.resetB -text "Reset" -command "esol_reset $id $w 1"
+    hoc_register_data $w.resetB "Reset"\
+	    { { summary "Reset the solid parameter entries
+with values from the database." } }
     button $w.dismissB -text "Dismiss" -command "destroy $w"
-    grid $w.applyB x $w.resetB x $w.dismissB -sticky nsew -in $w._F$row
-    grid columnconfigure $w._F$row 0 -weight 0
-    grid columnconfigure $w._F$row 1 -weight 1
-    grid columnconfigure $w._F$row 2 -weight 0
-    grid columnconfigure $w._F$row 3 -weight 1
-    grid columnconfigure $w._F$row 4 -weight 0
+    hoc_register_data $w.dismissB "Dismiss"\
+	    { { summary "Dismiss/close the control panel." } }
+    grid $w.okB $w.applyB x $w.resetB x $w.dismissB -sticky nsew -in $w._F$row
+    grid columnconfigure $w._F$row 2 -weight 1
+    grid columnconfigure $w._F$row 4 -weight 1
     grid $w._F$row -row $row -column 0 -sticky nsew -padx 6 -pady 8
     grid rowconfigure $w $row -weight 0
     esol_rename_applyB $id $w
@@ -301,6 +362,11 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 	grid columnconfigure $w 0 -weight 1
 	grid rowconfigure $w 0 -weight 1
     }
+}
+
+proc esol_ok { id w sform } {
+    esol_do_cmd $id $w $sform
+    catch { destroy $w }
 }
 
 ## - esol_do_cmd
