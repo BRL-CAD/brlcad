@@ -427,8 +427,9 @@ struct soltab {
 #define ID_DSP		25	/* Displacement map */
 #define	ID_SKETCH	26	/* 2D sketch */
 #define	ID_EXTRUDE	27	/* Solid of extrusion */
+#define ID_SUBMODEL	28	/* Instanced submodel */
 
-#define ID_MAXIMUM	27	/* Maximum defined ID_xxx value */
+#define ID_MAXIMUM	28	/* Maximum defined ID_xxx value */
 
 #define ID_COMBINATION	(ID_MAXIMUM+1)	/* Combination Record (non-geometric) */
 
