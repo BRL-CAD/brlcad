@@ -294,7 +294,7 @@ char *buf;
 	ret = fb_read( fbp, x, y, scanbuf, num );
 	if( ret < 0 )  ret = 0;		/* map error indications */
 	/* sending a 0-length package indicates error */
-	pkg_send( MSG_DATA, scanbuf, ret*sizeof(RGBpixel), pcp );
+	pkg_send( MSG_RETURN, scanbuf, ret*sizeof(RGBpixel), pcp );
 	if( buf ) (void)free(buf);
 }
 
