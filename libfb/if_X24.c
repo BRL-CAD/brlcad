@@ -592,7 +592,6 @@ int height;
 GC gc;
 {
   struct xinfo *xi;
-  int getmem_stat;
   XRectangle rect;
 
   ifp->if_width = width;
@@ -698,7 +697,7 @@ GC gc;
   xi->xi_iheight = height;
 
   /* Allocate backing store (shared memory or local) */
-  if ((getmem_stat = X24_getmem(ifp)) == -1) {
+  if ((X24_getmem(ifp)) == -1) {
     free((char *)xi);
     return -1;
   }
@@ -1550,8 +1549,6 @@ int	width, height;
 	XWMHints	xwmh;		/* size guidelines for window mngr */
 	XSetWindowAttributes xswa;
 	XRectangle rect;
-
-	XVisualInfo	visinfo;	/* Visual we'll use */
 
 #if X_DBG
 printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
@@ -2970,26 +2967,12 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 		/* General case, zooming in effect */
 
 		for (y = y1; y <= y2; y++) {
-			int pyht;
-			int copied;
 			unsigned char *line_irgb;
-			unsigned char *prev_line;
 			unsigned char *p;
-
-			/* Calculate # lines needed */
-
-			if (y == y1)
-				pyht = y1ht;
-			else if (y == y2)
-				pyht = y2ht;
-			else
-				pyht = ifp->if_yzoom;
-
 
 			/* Save pointer to start of line */
 
 			line_irgb = irgb;
-			prev_line = opix;
 			p = (unsigned char *)opix;
 
 			/* For the first line, convert/copy pixels */
@@ -3063,7 +3046,6 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 				}
 				line_irgb += sizeof (RGBpixel);
 			}
-			copied = p - (unsigned char *)opix;	/* bytes */
 			irgb += xi->xi_iwidth * sizeof(RGBpixel);
 			opix -= xi->xi_image->bytes_per_line;
 		}

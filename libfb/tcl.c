@@ -396,7 +396,6 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  struct fbcmd *fbp;
   FBIO *ifp;
   int status;
 
@@ -439,7 +438,6 @@ char **argv;
   char *ogl_name = "/dev/ogl";
 #endif
   struct bu_vls vls;
-  int status;
 
   if(argc < 2){
     Tcl_AppendResult(interp, "XXXfb_open_existing: wrong number of args\n", (char *)NULL);
@@ -461,7 +459,7 @@ char **argv;
     /* Mark OK by filling in magic number */
     ifp->if_magic = FB_MAGIC;
 
-    if((status = X24_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+    if((X24_open_existing(ifp, argc - 1, argv + 1)) <= -1){
       ifp->if_magic = 0; /* sanity */
       free((void *) ifp->if_name);
       free((void *) ifp);
@@ -479,7 +477,7 @@ char **argv;
     /* Mark OK by filling in magic number */
     ifp->if_magic = FB_MAGIC;
 
-    if((status = ogl_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+    if((ogl_open_existing(ifp, argc - 1, argv + 1)) <= -1){
       ifp->if_magic = 0; /* sanity */
       free((void *) ifp->if_name);
       free((void *) ifp);
