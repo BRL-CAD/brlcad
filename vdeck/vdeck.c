@@ -127,11 +127,11 @@ jmp_buf	env;
 
 /* File names and descriptors.						*/
 char	*objfile;
-int	regfd;		
+FILE	*regfp;		
 char	rt_file[15];
-int	solfd;		
+FILE	*solfp;		
 char	st_file[73];
-int	ridfd;		
+FILE	*ridfp;		
 char	id_file[73];
 
 /* Counters.								*/
@@ -147,7 +147,7 @@ long		savsol;		/* File postion of # of solids & regions */
 /* Structures.								*/
 mat_t		identity;
 
-extern void		blank_fill(), menu();
+extern void		menu();
 extern void		quit();
 
 char			getarg();
@@ -155,7 +155,9 @@ void			quit(), abort_sig();
 
 char			getcmd();
 void			prompt();
-void			ewrite();
+
+RT_EXTERN(void ewrite, (FILE *fp, CONST char *buf, unsigned bytes) );
+RT_EXTERN(void blank_fill, (FILE *fp, int count) );
 
 /* Head of linked list of solids */
 struct soltab	sol_hd;
@@ -458,7 +460,7 @@ union tree		*curtree;
 		op += strlen(op);
 		*op++ = '\n';
 		*op = '\0';
-		ewrite( regfd, obuf, strlen(obuf) );
+		ewrite( regfp, obuf, strlen(obuf) );
 	} while( left > 0 );
 
 	/*
@@ -483,7 +485,7 @@ union tree		*curtree;
 		rt_vls_strcat( &ident, fullname+1 );
 	}
 	rt_vls_strcat( &ident, "\n" );
-	ewrite( ridfd, rt_vls_addr(&ident), rt_vls_strlen(&ident) );
+	ewrite( ridfp, rt_vls_addr(&ident), rt_vls_strlen(&ident) );
 
 	rt_vls_free( &ident );
 	rt_vls_free( &reg );
@@ -632,7 +634,7 @@ next_one:
 		break;
 	}
 
-	ewrite( solfd, rt_vls_addr(&sol), rt_vls_strlen(&sol) );
+	ewrite( solfp, rt_vls_addr(&sol), rt_vls_strlen(&sol) );
 
 	/* Free storage for internal form */
 	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
@@ -1143,19 +1145,20 @@ int			num;
 	Write with error checking.
  */
 void
-ewrite( fd, buf, bytes )
-int		fd;
-char		*buf;
+ewrite( fp, buf, bytes )
+FILE		*fp;
+CONST char	*buf;
 unsigned	bytes;
 {	
 	int	bytes_written;
-	if( (bytes_written = write( fd, buf, bytes )) != (int) bytes )
-		(void) fprintf( stderr,
-		    "ERROR: Write of %d bytes returned %d\n",
-		    (int)bytes,
-		    bytes_written
-		    );
-	return;
+
+	if( bytes == 0 )  return;
+
+	if( fwrite( buf, bytes, 1, fp ) != 1 )  {
+		perror("write");
+		(void)fprintf(stderr, "vdeck: write error\n");
+		exit(2);
+	}
 }
 
 /*
@@ -1184,28 +1187,27 @@ register char *prefix;
 	}
 	else
 		(void) strncpy( st_file, "solids", 7 );
-	if( (solfd = creat( st_file, 0644 )) < 0 )
-	{
+	if( (solfp = fopen( st_file, "w")) == NULL )  {
 		perror( st_file );
 		exit( 10 );
 	}
 
 
 	/* Target units (a2,3x)						*/
-	ewrite( solfd, rt_units_string(dbip->dbi_local2base), 2 );
-	blank_fill( solfd, 3 );
+	ewrite( solfp, rt_units_string(dbip->dbi_local2base), 2 );
+	blank_fill( solfp, 3 );
 
 	/* Title							*/
 	if( dbip->dbi_title == NULL )
-		ewrite( solfd, objfile, (unsigned) strlen( objfile ) );
+		ewrite( solfp, objfile, (unsigned) strlen( objfile ) );
 	else
-		ewrite( solfd, dbip->dbi_title, (unsigned) strlen( dbip->dbi_title ) );
-	ewrite( solfd, LF, 1 );
+		ewrite( solfp, dbip->dbi_title, (unsigned) strlen( dbip->dbi_title ) );
+	ewrite( solfp, LF, 1 );
 
 	/* Save space for number of solids and regions.			*/
-	savsol = lseek( solfd, 0L, 1 );
-	blank_fill( solfd, 10 );
-	ewrite( solfd, LF, 1 );
+	savsol = lseek( solfp, 0L, 1 );
+	blank_fill( solfp, 10 );
+	ewrite( solfp, LF, 1 );
 
 	/* Create file for region table.				*/
 	if( prefix != 0 )
@@ -1215,8 +1217,7 @@ register char *prefix;
 	}
 	else
 		(void) strncpy( rt_file, "regions", 8 );
-	if( (regfd = creat( rt_file, 0644 )) < 0 )
-	{
+	if( (regfp = fopen( rt_file, "w" )) == NULL )  {
 		perror( rt_file );
 		exit( 10 );
 	}
@@ -1230,14 +1231,13 @@ register char *prefix;
 	}
 	else
 		(void) strncpy( id_file, "region_ids", 11 );
-	if( (ridfd = creat( id_file, 0644 )) < 0 )
-	{
+	if( (ridfp = fopen( id_file, "w" )) == NULL )  {
 		perror( id_file );
 		exit( 10 );
 	}
 	itoa( -1, buff, 5 );
-	ewrite( ridfd, buff, 5 );
-	ewrite( ridfd, LF, 1 );
+	ewrite( ridfp, buff, 5 );
+	ewrite( ridfp, LF, 1 );
 
 	/* Initialize matrices.						*/
 	mat_idn( identity );
@@ -1253,23 +1253,23 @@ register char *prefix;
 	}
 
 	/* Go back, and add number of solids and regions on second card. */
-	(void) lseek( solfd, savsol, 0 );
+	(void) lseek( solfp, savsol, 0 );
 	itoa( nns, buff, 5 );
-	ewrite( solfd, buff, 5 );
+	ewrite( solfp, buff, 5 );
 	itoa( nnr, buff, 5 );
-	ewrite( solfd, buff, 5 );
+	ewrite( solfp, buff, 5 );
 
 	/* Finish region id table.					*/
-	ewrite( ridfd, LF, 1 );
+	ewrite( ridfp, LF, 1 );
 
 	(void) printf( "====================================================\n" );
 	(void) printf( "O U T P U T    F I L E S :\n\n" );
 	(void) printf( "solid table = \"%s\"\n", st_file );
 	(void) printf( "region table = \"%s\"\n", rt_file );
 	(void) printf( "region identification table = \"%s\"\n", id_file );
-	(void) close( solfd );
-	(void) close( regfd );
-	(void) close( ridfd );
+	(void) fclose( solfp );
+	(void) fclose( regfp );
+	(void) fclose( ridfp );
 
 	/* reset starting numbers for solids and regions
 	 */
@@ -1402,7 +1402,7 @@ char	 *args[];
 #define MAX_COL	(NAMESIZE*5)
 #define SEND_LN()	{\
 			buf[column++] = '\n';\
-			ewrite( 1, buf, (unsigned) column );\
+			ewrite( stdout, buf, (unsigned) column );\
 			column = 0;\
 			}
 
@@ -1787,12 +1787,11 @@ char **addr;
 	Write count blanks to fildes.
  */
 void
-blank_fill( fildes, count )
-register int	fildes,	count;
+blank_fill( fp, count )
+FILE		*fp;
+register int	count;
 {	
-	register char	*blank_buf = BLANKS;
-	ewrite( fildes, blank_buf, (unsigned) count );
-	return;
+	ewrite( fp, BLANKS, (unsigned) count );
 }
 
 /*
