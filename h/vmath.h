@@ -93,9 +93,30 @@ typedef fastf_t	*pointp_t;
 typedef fastf_t hvect_t[HVECT_LEN];
 typedef fastf_t hpoint_t[HPT_LEN];
 
-typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
-
 #define quat_t	hvect_t		/* 4-element quaternion */
+
+/*
+ *  Definition of a plane equation:
+ *  A plane is defined by a unit-length outward pointing normal vector (N),
+ *  and the perpendicular (shortest) distance from the origin to the plane
+ *  (in element N[3]).
+ *
+ *  The plane consists of all points P=(x,y,z) such that
+ *	VDOT(P,N) - N[3] == 0
+ *  that is,
+ *	N[X]*x + N[Y]*y + N[Z]*z - N[3] == 0
+ *
+ *  The inside of the halfspace bounded by the plane
+ *  consists of all points P such that
+ *	VDOT(P,N) - N[3] <= 0
+ *
+ *  A ray with direction D is classified w.r.t. the plane by
+ *
+ *	VDOT(D,N) < 0	ray enters halfspace defined by plane
+ *	VDOT(D,N) == 0	ray is parallel to plane
+ *	VDOT(D,N) > 0	ray exits halfspace defined by plane
+ */
+typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /* Element names in homogeneous vector (4-tuple) */
 #define	X	0
@@ -273,15 +294,15 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef VECTORIZE
 #define VSUB2SCALE( o, a, b, s )	VSUB2SCALEN( o, a, b, s, 3 )
 #else
-#define VSUB2SCALE( o, a, b, s )	o[X] = ((a)[X] + (b)[X]) * (s); \
-					o[Y] = ((a)[Y] + (b)[Y]) * (s); \
-					o[Z] = ((a)[Z] + (b)[Z]) * (s);
+#define VSUB2SCALE( o, a, b, s )	o[X] = ((a)[X] - (b)[X]) * (s); \
+					o[Y] = ((a)[Y] - (b)[Y]) * (s); \
+					o[Z] = ((a)[Z] - (b)[Z]) * (s);
 #endif
 
 #define VSUB2SCALEN( o, a, b, n ) \
 	{ register int _vsub2scale; \
 	for( _vsub2scale = 0; _vsub2scale < (n); _vsub2scale++ ) \
-		(o)[_vsub2scale] = ((a)[_vsub2scale] + (b)[_vsub2scale]) * (s); \
+		(o)[_vsub2scale] = ((a)[_vsub2scale] - (b)[_vsub2scale]) * (s); \
 	}
 
 
@@ -379,7 +400,20 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /* Return scalar magnitude of vector at `a' */
 #define MAGNITUDE(a)	sqrt( MAGSQ( a ) )
 
-/* Store cross product of vectors at `b' and `c' in vector at `a' */
+/*
+ *  Store cross product of vectors at `b' and `c' in vector at `a'.
+ *  Note that the "right hand rule" applies:
+ *  If closing your right hand goes from `b' to `c', then your
+ *  thumb points in the direction of the cross product.
+ *
+ *  If the angle from `b' to `c' goes clockwise, then 
+ *  the result vector points "into" the plane (inward normal).
+ *  Example:  b=(0,1,0), c=(1,0,0), then bXc=(0,0,-1).
+ *
+ *  If the angle from `b' to `c' goes counter-clockwise, then
+ *  the result vector points "out" of the plane.
+ *  This outward pointing normal is the BRL convention.
+ */
 #define VCROSS(a,b,c)	(a)[X] = (b)[Y] * (c)[Z] - (b)[Z] * (c)[Y];\
 			(a)[Y] = (b)[Z] * (c)[X] - (b)[X] * (c)[Z];\
 			(a)[Z] = (b)[X] * (c)[Y] - (b)[Y] * (c)[X]
@@ -558,6 +592,19 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /* Compare two vectors for EXACT equality.  Use carefully. */
 #define VEQUAL(a,b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z])
+
+/*
+ *  Compare two vectors for approximate equality,
+ *  within the specified absolute tolerance.
+ */
+#define VAPPROXEQUAL(a,b,tol)	( \
+	NEAR_ZERO( (a)[X]-(b)[X], tol ) && \
+	NEAR_ZERO( (a)[Y]-(b)[Y], tol ) && \
+	NEAR_ZERO( (a)[Z]-(b)[Z], tol ) )
+
+/* Test for all elements of `v' being smaller than `tol' */
+#define VNEAR_ZERO(v, tol)	( \
+	NEAR_ZERO(v[X],tol) && NEAR_ZERO(v[Y],tol) && NEAR_ZERO(v[Z],tol)  )
 
 /* Macros to update min and max X,Y,Z values to contain a point */
 #define V_MIN(r,s)	if( (r) > (s) ) r = (s)
