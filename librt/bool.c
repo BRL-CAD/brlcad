@@ -66,8 +66,11 @@ struct application	*ap;
 	register struct seg *segp;
 	register struct partition *pp;
 	struct resource		*res = ap->a_resource;
+	struct rt_i		*rtip = ap->a_rt_i;
 
 	RT_CHECK_RTI(ap->a_rt_i);
+	RT_CK_RESOURCE(res);
+	RT_CK_RTI(rtip);
 
 	if(rt_g.debug&DEBUG_PARTITION)
 		rt_log("-------------------BOOL_WEAVE\n");
@@ -80,7 +83,7 @@ struct application	*ap;
 		segp = RT_LIST_FIRST( seg, &(in_hd->l) );
 		RT_CHECK_SEG(segp);
 		if(rt_g.debug&DEBUG_PARTITION) rt_pr_seg(segp);
-		if( segp->seg_stp->st_bit >= ap->a_rt_i->nsolids) rt_bomb("rt_boolweave: st_bit");
+		if( segp->seg_stp->st_bit >= rtip->nsolids) rt_bomb("rt_boolweave: st_bit");
 
 		RT_LIST_DEQUEUE( &(segp->l) );
 		RT_LIST_INSERT( &(out_hd->l), &(segp->l) );
@@ -115,7 +118,7 @@ struct application	*ap;
 		 */
 		if( PartHdp->pt_forw == PartHdp )  {
 			/* No partitions yet, simple! */
-			GET_PT_INIT( ap->a_rt_i, pp, res );
+			GET_PT_INIT( rtip, pp, res );
 			BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
@@ -130,7 +133,7 @@ struct application	*ap;
 			 * Segment starts exactly at last partition's end,
 			 * or beyond last partitions end.  Make new partition.
 			 */
-			GET_PT_INIT( ap->a_rt_i, pp, res );
+			GET_PT_INIT( rtip, pp, res );
 			BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
@@ -171,7 +174,7 @@ struct application	*ap;
 				if(rt_g.debug&DEBUG_PARTITION)  rt_log("seg start fused to partition end\n");
 				continue;
 			}
-			if(rt_g.debug&DEBUG_PARTITION)  rt_pr_pt(ap->a_rt_i, pp);
+			if(rt_g.debug&DEBUG_PARTITION)  rt_pr_pt(rtip, pp);
 
 			/*
 			 * i < 0,  Seg starts before current partition ends
@@ -224,8 +227,8 @@ equal_start:
 				 *	SSSSSS
 				 *	newpp| pp
 				 */
-				GET_PT( ap->a_rt_i, newpp, res );
-				COPY_PT( ap->a_rt_i,newpp,pp);
+				GET_PT( rtip, newpp, res );
+				COPY_PT( rtip, newpp,pp);
 				/* new partition contains segment */
 				BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 				newpp->pt_outseg = segp;
@@ -246,7 +249,7 @@ equal_start:
 				 *	     PPPPP...
 				 *	newpp|pp
 				 */
-				GET_PT_INIT( ap->a_rt_i, newpp, res );
+				GET_PT_INIT( rtip, newpp, res );
 				BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 				newpp->pt_inseg = lastseg;
 				newpp->pt_inhit = lasthit;
@@ -317,8 +320,8 @@ equal_start:
 			 *	     SSSS...
 			 *	newpp|pp
 			 */
-			GET_PT( ap->a_rt_i, newpp, res );
-			COPY_PT( ap->a_rt_i, newpp, pp );
+			GET_PT( rtip, newpp, res );
+			COPY_PT( rtip, newpp, pp );
 			/* new part. is the span before seg joins partition */
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
@@ -338,7 +341,7 @@ equal_start:
 		 *  	     SSSSS
 		 */
 		if(rt_g.debug&DEBUG_PARTITION) rt_log("seg extends beyond p end\n");
-		GET_PT_INIT( ap->a_rt_i, newpp, res );
+		GET_PT_INIT( rtip, newpp, res );
 		BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 		newpp->pt_inseg = lastseg;
 		newpp->pt_inhit = lasthit;
@@ -349,7 +352,7 @@ equal_start:
 
 done_weave:	; /* Sorry about the goto's, but they give clarity */
 		if(rt_g.debug&DEBUG_PARTITION)
-			rt_pr_partitions( ap->a_rt_i, PartHdp, "After weave" );
+			rt_pr_partitions( rtip, PartHdp, "After weave" );
 	}
 }
 
