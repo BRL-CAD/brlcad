@@ -417,8 +417,8 @@ char *h;
 
 	if( f->g.magic_p && *f->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
 	{
-		bu_log("%sFACEUSE %8x (%s) f_p=x%x flip=%d pl= %f %f %f %f\n",
-			h, fu, nmg_orientation(fu->orientation), fu->f_p, fu->f_p->flip, V4ARGS( f->g.plane_p->N ));
+		bu_log("%sFACEUSE %8x (%s) f_p=x%x fg=x%x flip=%d pl= %f %f %f %f\n",
+			h, fu, nmg_orientation(fu->orientation), fu->f_p, f->g.magic_p, fu->f_p->flip, V4ARGS( f->g.plane_p->N ));
 	}
 	else
 		bu_log("%sFACEUSE %8x (%s) f_p=x%x\n",
