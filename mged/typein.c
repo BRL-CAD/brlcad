@@ -442,10 +442,7 @@ char **argv;
 	register struct directory *dp;
 	char			name[NAMESIZE+2];
 	struct rt_db_internal	internal;
-	struct bu_external	external;
 	char			*new_cmd[3], **menu;
-	int			ngran;		/* number of db granules */
-	int			id;
 	int			c;
 	int			do_solid_edit = 0;
 	int			dont_draw = 0;
@@ -821,7 +818,6 @@ char			*cmd_argvs[];
 struct rt_db_internal	*intern;
 {
 	struct rt_hf_internal	*hf;
-	vect_t work;
 
 	CHECK_DBI_NULL;
 

@@ -334,7 +334,6 @@ vect_t eye_model;
     vect_t  direction;
     vect_t  extremum[2];
     vect_t  minus, plus;    /* vers of this solid's bounding box */
-    vect_t  unit_H, unit_V;
 
     VSET(eye_model, -view_state->vs_toViewcenter[MDX],
 	 -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
@@ -385,19 +384,15 @@ run_rt()
 {
 	register struct solid *sp;
 	register int i;
-	int pid, rpid;
-	int retcode;
 	FILE *fp_in;
 	int pipe_in[2];
 	int pipe_err[2];
-	char line[MAXLINE];
-	struct bu_vls vls;
 	vect_t eye_model;
 
 	(void)pipe( pipe_in );
 	(void)pipe( pipe_err );
 	(void)signal( SIGINT, SIG_IGN );
-	if ( ( pid = fork()) == 0 )  {
+	if ( (fork()) == 0 )  {
 	  /* make this a process group leader */
 	  setpgid(0, 0);
 
@@ -453,10 +448,7 @@ char	**argv;
 {
 	register char **vp;
 	register int i;
-	int retcode;
-	char *dm;
 	char	pstring[32];
-	struct bu_vls cmd;
 
 	CHECK_DBI_NULL;
 
@@ -508,7 +500,7 @@ char	**argv;
 
 	    Tcl_AppendResult(interp, "\n", (char *)NULL);
 	}
-	retcode = run_rt();
+	(void)run_rt();
 
 	return TCL_OK;
 }
@@ -529,9 +521,6 @@ char	**argv;
 {
 	register char **vp;
 	register int i;
-	int	retcode;
-	char	*dm;
-	struct bu_vls cmd;
 
 	CHECK_DBI_NULL;
 
@@ -554,7 +543,7 @@ char	**argv;
 	*vp++ = dbip->dbi_filename;
 
 	setup_rt( vp, 1 );
-	retcode = run_rt();
+	(void)run_rt();
 
 	return TCL_OK;
 }
@@ -636,7 +625,6 @@ char	**argv;
 	register char **vp;
 	register int i;
 	int	pid; 	 
-	int	retcode;
 	int	i_pipe[2];	/* MGED reads results for building vectors */
 	int	o_pipe[2];	/* MGED writes view parameters */
 	int	e_pipe[2];	/* MGED reads textual results */
@@ -1320,7 +1308,6 @@ char	**argv;
 	int pipe_out[2];
 	int pipe_err[2];
 	int use_input_orig = 0;
-	int use_air;
 	vect_t	center_model;
 	vect_t dir;
 	register int i;
@@ -1456,7 +1443,6 @@ done:
 	}
 
 	if(QRAY_TEXT){
-	  int j;
 
 	  bu_vls_init(&t_vls);
 
@@ -1748,15 +1734,12 @@ char	**argv;
 {
 	point_t	pt;
 	vect_t	dir;
-	int	yflip = 0;
 
 	if( argc < 4 )
 		return(-1);
 	pt[X] = atof(argv[1]);
 	pt[Y] = atof(argv[2]);
 	pt[Z] = atof(argv[3]);
-	if( argc > 4 )
-		yflip = atoi(argv[4]);
 
 	VSUB2( dir, pt, rtif_eye_model );
 	VUNITIZE( dir );

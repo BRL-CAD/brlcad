@@ -792,8 +792,6 @@ part_anal(vp, ip)
 struct bu_vls	*vp;
 CONST struct rt_db_internal	*ip;
 {
-	struct rt_part_internal	*part = (struct rt_part_internal *)ip->idb_ptr;
-
 	bu_vls_printf(vp,"PARTICLE analyze not implemented\n");
 }
 
