@@ -1207,13 +1207,13 @@ register struct solidrec *sp;
 	case HALFSPACE:
 		PR_PT( 0, 'N', &sp->s_values[0]);
 		(void)sprintf( &es_display[1*ES_LINELEN],
-			"\td=%f", sp->s_values[3]);
+			"\td=%f", local.s_values[3]);
 		es_nlines = 2;
 		break;
 
 	case ARS:
 	case ARSCONT:
-		PR_PT( 0, 'V', &sp->s_values[0]);
+		PR_PT( 0, 'V', &local.s_values[0]);
 		es_nlines = 1;
 		break;
 
