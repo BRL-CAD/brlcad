@@ -124,6 +124,7 @@ reread:
 		goto reread;		/* See if ACK is buffered up */
 	}
 	fprintf(stderr,"vas4:  unable to perform cmd %c after retries\n", c);
+	return(-1);
 }
 
 /*
