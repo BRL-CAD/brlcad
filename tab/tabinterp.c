@@ -176,7 +176,8 @@ char	**argv;
 {
 	FILE	*fp;
 	char	*file;
-	char	buf[512];
+	char	buf[4096*7];	/* old:	char	buf[512]; */
+
 	int	*cnum;
 	int	i;
 	int	line;
@@ -206,6 +207,7 @@ char	**argv;
 	rewind(fp);
 
 	/* Intermediate dynamic memory */
+
 	cnum = (int *)rt_malloc( argc * sizeof(int), "cnum[]");
 	nwords = argc - 1;
 	iwords = (char **)rt_malloc( (nwords+1) * sizeof(char *), "iwords[]" );
@@ -231,6 +233,7 @@ char	**argv;
 	for( line=0; line < nlines; line++ )  {
 		buf[0] = '\0';
 		(void)fgets( buf, sizeof(buf), fp );
+
 		if( buf[0] == '#' )  {
 			line--;
 			nlines--;
@@ -242,6 +245,7 @@ char	**argv;
 		}
 
 		i = rt_split_cmd( iwords, nwords+1, buf );
+
 		if( i != nwords )  {
 			rt_log("File '%s', Line %d:  expected %d columns, got %d\n",
 				file, line, nwords, i );
@@ -301,6 +305,7 @@ char	*itag;
 
 	if( n >= max_chans )  {
 		int	prev = max_chans;
+
 		if( max_chans <= 0 )  {
 			max_chans = 32;
 			chan = (struct chan *)rt_malloc(
@@ -1150,3 +1155,16 @@ int	ch;
 	}
 	return 0;
 }
+
+#if 0
+
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
+/* X  H A C K !!!!!!                                                 X */
+/* X                                                                 X */
+/* X  Also, the size of buf[] in cm_file limits the amount of        X */
+/* X  of columns of data one can read into tabinterp.                X */
+/* X                                                                 X */
+/* X                    - JG                                         X */
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
+
+#endif
