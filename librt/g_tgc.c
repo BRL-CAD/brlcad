@@ -1828,6 +1828,242 @@ struct soltab *stp;
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
+
+#if 0
+
+struct tgc_pts
+{
+	point_t pt;
+	vect_t norm;
+	struct vertex *v;
+};
+
+/* version using tolerances */
+int
+rt_tgc_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
+{
+	struct faceuse		*fu;
+	struct rt_tgc_internal	*tip;
+	fastf_t			radius;		/* bounding sphere radius */
+	fastf_t			max_radius,min_radius; /* max/min of a,b,c,d */
+	fastf_t			h,a,b,c,d;	/* lengths of TGC vectors */
+	fastf_t			rel,abs,norm;	/* interpreted tolerances */
+	fastf_t			alpha_tol;	/* final tolerance for ellipse parameter */
+	fastf_t			ratio;		/* L/D for narrowest triangle */
+	int			nsplits;	/* number of intermediate ellipse to avoid large L/D faces */
+	int			nells;		/* total number of ellipses */
+	vect_t			*A;		/* array of A vectors for ellipses */
+	vect_t			*B;		/* array of B vectors for ellipses */
+	struct tgc_pts		**pts;		/* array of points (pts[ellipse#][seg#]) */
+	struct nmg_ptbl		verts;		/* table of vertices used for top and bottom faces */
+	struct vertex		**v[3];		/* array for making triangular faces */
+	int			i;
+
+	RT_CK_DB_INTERNAL(ip);
+	tip = (struct rt_tgc_internal *)ip->idb_ptr;
+	RT_TGC_CK_MAGIC(tip);
+
+
+	h = MAGNITUDE( tip->h );
+	a = MAGNITUDE( tip->a );
+	b = MAGNITUDE( tip->b );
+	c = MAGNITUDE( tip->c );
+	d = MAGNITUDE( tip->d );
+
+	/* get bounding sphere radius for relative tolerance */
+	radius = h/2.0;
+	max_radius = 0.0;
+	if( a > max_radius )
+		max_radius = a;
+	if( b > max_radius )
+		max_radius = b;
+	if( c > max_radius )
+		max_radius = c;
+	if( d > max_radius )
+		max_radius = d;
+
+	if( max_radius > radius )
+		radius = max_radius;
+
+	min_radius = MAX_FASTF;
+	if( a < min_radius )
+		min_radius = a;
+	if( b < min_radius )
+		min_radius = b;
+	if( c < min_radius )
+		min_radius = c;
+	if( d < min_radius )
+		min_radius = d;
+
+	if( ttol.abs <= 0.0 && ttol.rel <= 0.0 && ttol.norm <= 0.0 )
+	{
+		/* no tolerances specified, use 10% relative tolerance */
+		alpha_tol = 2.0 * acos( 0.8 ); /* 2.0 * acos( 1.0 - (2.0*radius*.1)/radius) */
+	}
+	else
+	{
+		if( ttol.abs > 0.0 )
+			abs = 2.0 * acos( 1.0 - ttol.abs/radius );
+		else
+			abs = rt_halfpi;
+
+		if( ttol.rel > 0.0 )
+			rel = 2.0 * acos( 1.0 - ttol.rel * 2.0 );
+		else
+			rel = rt_halfpi;
+
+		if( ttol.norm > 0.0 )
+		{
+			fastf_t norm_top,norm_bot;
+
+			if( a>b )
+				norm_bot = 2.0 * atan( tan( ttol.norm ) * (a/b) );
+			else
+				norm_bot = 2.0 * atan( tan( ttol.norm ) * (b/a) );
+
+			if( c>d )
+				norm_top = 2.0 * atan( tan( ttol.norm ) * (c/d) );
+			else
+				norm_top = 2.0 * atan( tan( ttol.norm ) * (d/c) );
+
+			if( norm_bot < norm_top )
+				norm = norm_bot;
+			else
+				norm = norm_top;
+		}
+		else
+			norm = rt_halfpi;
+
+		if( abs < rel )
+			alpha_tol = abs;
+		else
+			alpha_tol = rel;
+		if( norm < alpha_tol )
+			alpha_tol = norm;
+	}
+
+	/* get number of segments per quadrant */
+	nsegs = rt_halfpi / alpha_tol + 0.9999;
+	if( nsegs < 2 )
+		nsegs = 2;
+
+	/* and for complete ellipse */
+	nsegs *= 4;
+
+	/* check for long skinny triangles.
+	 * narrowest will be: */
+	narrow = 2.0 * min_radius * sin( alpha_tol );
+	/* use h for height of triangle,
+	 * (note that this may not be true for AxB !|| CxD */
+	ratio = h/narrow;
+	if( ratio > 10.0 )
+		nsplits = ratio/10.0;
+	else
+		nsplits = 0;
+
+	nells = nsplits + 2;
+
+	/* construct a list of ellipses from the bottom to
+	 * the top of the tgc, with intermediate ellipses interpolated
+	 * from top and bottom
+	 */
+	A = (vect_t *)rt_calloc( nells , sizeof( vect_t ) , "rt_tgc_tess: A" );
+	B = (vect_t *)rt_calloc( nells , sizeof( vect_t ) , "rt_tgc_tess: B" );
+
+	/* set top and bottom ellipses */
+	VMOVE( A[0] , tip->a );
+	VMOVE( B[0] , tip->b );
+	VMOVE( A[nells-1] , tip->c );
+	VMOVE( B[nells-1] , tip->d );
+
+	/* set intermediate ellipses */
+	for( i=1 ; i<nells-1 ; i++ )
+	{
+		fastf_t factor;
+
+		factor = (double)i/(double)(nells-1);
+		VCOMB2( A[i] , factor , A[nells-1] , (1.0-factor) , A[0] );
+		VCOMB2( B[i] , factor , B[nells-1] , (1.0-factor) , B[0] );
+	}
+
+	/* get memory for points */
+	pts = (struct tgc_pts **)rt_calloc( nells , sizeof( struct tgc_pts *) , "rt_tgc_tess: pts" );
+	for( i=0 ; i<nells ; i++ )
+		pts[i] = (struct tgc_pts *)rt_calloc( nsegs , sizeof( struct tgc_pts ) , "rt_tgc_tess: pts" );
+
+	/* make region, shell, vertex */
+	*r = nmg_mrsv( m );
+	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+
+	/* Make bottom face */
+	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
+	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
+	for( i=0 ; i<nsegs ; i++ )
+		nmg_tbl( &verts , TBL_INS , (long *)&pts[0][i].v );
+
+	fu = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), nsegs );
+	nmg_tbl( &faces , TBL_INS , (long *)fu );
+
+	/* Make top face */
+	for( i=0 ; i<nsegs ; i++ )
+		nmg_tbl( &verts , TBL_INS , (long *)&pts[nells-1][i].v );
+
+	fu = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), nsegs );
+	nmg_tbl( &faces , TBL_INS , (long *)fu );
+
+	/* Make triangular faces */
+	for i=0 ; i<nells-1 ; i++ )
+	{
+		int j;
+
+		for( j=0 ; j<nsegs ; j++ )
+		{
+			int k;
+
+			k = j+1;
+			if( k == nsegs )
+				k = 0;
+			v[0] = &pts[i][j].v;
+			v[1] = &pts[i][k].v;
+			v[2] = &pts[i+1][j].v;
+			fu = nmg_cmface( s , v , 3 );
+			nmg_tbl( &faces , TBL_INS , (long *)fu );
+
+			v[0] = &pts[i+1][k].v;
+			v[1] = &pts[i+1][j].v;
+			v[2] = &pts[i][k].v;
+			fu = nmg_cmface( s , v , 3 );
+			nmg_tbl( &faces , TBL_INS , (long *)fu );
+		}
+	}
+
+	/* Assign geometry */
+	for( i=0 ; i<nells ; i++ )
+	{
+		fastf_t h_factor;
+
+		h_factor = (double)i/(double)(nells-1);
+		for( j=0 ; j<nsegs ; j++ )
+		{
+			fastf_t alpha;
+
+			alpha = rt_twopi * (double)(2*j+1)/(double)(2*nsegs);
+
+			/* vertex geometry */
+			VJOIN3( pts[i][j].pt , tip->v , h_factor , tip->h , cos( alpha ) , A[i] , sin( alpha ) , B[i] );
+
+			/* normal at vertex */
+		}
+	}
+}
+
+#else
+
 int
 rt_tgc_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
@@ -1933,3 +2169,4 @@ struct rt_tol		*tol;
 
 	return(0);
 }
+#endif
