@@ -59,12 +59,12 @@ int fbfd = -1;			/* framebuffer file descriptor */
 extern int lightmodel;		/* lighting model # to use */
 extern mat_t view2model;
 extern mat_t model2view;
+extern int hex_out;		/* Output format, 0=binary, !0=hex */
 
 #define MAX_LINE	(1024*8)	/* Max pixels/line */
 /* Current arrangement is definitely non-parallel! */
 static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer, R,G,B */
 static char *pixelp;			/* pointer to first empty pixel */
-static int scanbytes;			/* # bytes in scanline to write */
 static FILE *pixfp = NULL;		/* fd of .pix file */
 
 struct soltab *l0stp = SOLTAB_NULL;	/* ptr to light solid tab entry */
@@ -201,9 +201,13 @@ register struct application *ap;
 		fbwrite( ap->a_x, ap->a_y, &p, 1 );
 	}
 	if( pixfp != NULL )  {
-		*pixelp++ = r & 0xFF;
-		*pixelp++ = g & 0xFF;
-		*pixelp++ = b & 0xFF;
+		if( hex_out )  {
+			fprintf(pixfp, "%2.2x %2.2x %2.2x\n", r, g, b);
+		} else {
+			*pixelp++ = r;
+			*pixelp++ = g;
+			*pixelp++ = b;
+		}
 	}
 	if(rt_g.debug&DEBUG_HITS) rt_log("rgb=%3d,%3d,%3d\n", r,g,b);
 }
@@ -311,11 +315,20 @@ struct partition *PartHeadp;
  */
 view_eol()
 {
+	register int cnt;
 	register int i;
 	if( pixfp != NULL )  {
-		i = fwrite( (char *)scanline, 1, scanbytes, pixfp );
-		if( i != scanbytes )  {
-			rt_log("view_eol: wrote %d, got %d\n", scanbytes, i);
+		if( hex_out )  return;
+		cnt = pixelp - scanline;
+		if( cnt <= 0 || cnt > sizeof(scanline) )  {
+			rt_log("corrupt pixelp=x%x, scanline=x%x, cnt=%d\n",
+				pixelp, scanline, cnt );
+			pixelp = scanline;
+			return;
+		}
+		i = fwrite( (char *)scanline, cnt, 1, pixfp );
+		if( i != 1 )  {
+			rt_log("view_eol: fwrite returned %d\n", i);
 			rt_bomb("write error");
 		}			
 		pixelp = &scanline[0];
@@ -345,7 +358,6 @@ char *file, *obj;
 	if( minus_o )  {
 		/* Output is destined for a pixel file */
 		pixelp = &scanline[0];
-		scanbytes = npts * 3;
 	}  else  {
 		int width;
 
