@@ -130,7 +130,7 @@ re_exec( s )				/* returns 1 if s matches, else 0 */
 
 
 /* For systems with the POSIX regcomp() support */
-#if defined(USE_REGCOMP)
+#if defined(HAVE_REGCOMP)
 
 #include <sys/types.h>
 #include <regex.h>
