@@ -121,6 +121,9 @@ void	ph_end();
 void	ph_restart();
 void	ph_loglvl();
 void	ph_cd();
+
+void	prepare();
+
 struct pkg_switch pkgswitch[] = {
 	{ MSG_DIRBUILD,	ph_dirbuild,	"DirBuild" },
 	{ MSG_GETTREES,	ph_enqueue,	"Get Trees" },
@@ -643,6 +646,7 @@ char *buf;
 	seen_matrix = 1;
 }
 
+void
 prepare()
 {
 	register struct rt_i *rtip = ap.a_rt_i;

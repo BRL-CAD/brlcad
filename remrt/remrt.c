@@ -114,7 +114,8 @@ void		start_helper();
 void		build_start_cmd();
 void		drop_server();
 void		send_do_lines();
-
+void		do_work();
+void		source();
 
 FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
 int cur_fbwidth;		/* current fb width */
@@ -618,6 +619,7 @@ char	**argv;
 /*
  *			D O _ W O R K
  */
+void
 do_work(auto_start)
 int	auto_start;
 {
@@ -3223,6 +3225,7 @@ char	**argv;
 	return 0;
 }
 
+void
 source(fp)
 FILE	*fp;
 {
@@ -3408,6 +3411,8 @@ char	**argv;
 	add_host( ihp );
 	return 0;
 }
+
+int
 cd_allocate( argc, argv )
 int argc;
 char **argv;
@@ -3420,7 +3425,10 @@ char **argv;
 		work_allocate_method = OPT_LOAD;
 	} else {
 		rt_log("%s Bad allocateby type '%s'\n", stamp(), argv[1]);
+		return( -1 );
 	}
+
+	return( 0 );
 }
 		
 
