@@ -71,7 +71,7 @@ long addr;
 	mp->mt_r = recp->md.md_r;
 	mp->mt_g = recp->md.md_g;
 	mp->mt_b = recp->md.md_b;
-	mp->mt_handle = strdup( recp->md.md_material );
+/*	mp->mt_handle = strdup( recp->md.md_material ); */
 	mp->mt_daddr = addr;
 	insert_color( mp );
 }

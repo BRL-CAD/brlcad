@@ -380,7 +380,6 @@ matp_t old_xlate;
 			regionp->reg_regionid = rec.c.c_regionid;
 			regionp->reg_aircode = rec.c.c_aircode;
 			regionp->reg_material = rec.c.c_material;
-			regionp->reg_los = rec.c.c_los;
 			regionp->reg_name = "being created";
 		}
 	}
