@@ -1145,17 +1145,7 @@ genptr_t	client_data;
 			const char *value;
 
 			/* get attribute/value structure */
-			for( i=0 ; i<nts.ts_attrs.count ; i++ ) {
-				if( nts.ts_attrs.avp[i].value ) {
-					if( AVS_IS_FREEABLE( &nts.ts_attrs, nts.ts_attrs.avp[i].value ) )
-						bu_free( (char *)nts.ts_attrs.avp[i].value, "tree state AVS value" );
-				}
-				value = bu_avs_get( &intern.idb_avs, nts.ts_attrs.avp[i].name );
-				if( value )
-					nts.ts_attrs.avp[i].value = bu_strdup( value );
-				else
-					nts.ts_attrs.avp[i].value = (char *)NULL;
-			}
+			bu_avs_merge( &nts.ts_attrs, &intern.idb_avs );
 
 			/*
 			 *  This is the start of a new region.
