@@ -112,6 +112,7 @@ set -S2 "/bin/sh"
  *	GETHOST							*
  *	RANLIB							*
  *	BINDIR, LIBDIR, ETCDIR, INCLUDE_DIR			*
+ *	XLIBDIR, XINCDIR
  *	ARCH_SUF						*
  *	MANDIR							*
  *	OPTIMIZER						*
@@ -129,7 +130,6 @@ set -S2 "/bin/sh"
  *  library.  Thus, they should not occur in dependency		*
  *  lists.							*
  *								*
- * XXX We really need defines for X11.  e.g. irprep dir, etc.	*
  ****************************************************************/
 
 #ifdef vax
@@ -165,8 +165,8 @@ set -S2 "/bin/sh"
 #	if	0
 /*      These defines are for rfbd version of libfb. */
 #		define  LIBFB_OBJS      if_remote if_X
-#		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -lX11
+#		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	else
 /*      And the next two are for all the rest. */
 #		define  LIBFB_OBJS      if_remote
@@ -174,8 +174,8 @@ set -S2 "/bin/sh"
 #		define	LIBFB_LIBES	LIBPKG
 #	endif
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	-lX11
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
 
 #if defined(_AIX)
@@ -192,8 +192,8 @@ set -S2 "/bin/sh"
 #	if	0
 /*      X and remote fb */
 #		define  LIBFB_OBJS      if_remote if_X
-#		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -lX11
+#		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	else
 /*      And the next two are for all the rest. */
 #		define  LIBFB_OBJS      if_remote
@@ -201,8 +201,8 @@ set -S2 "/bin/sh"
 #		define	LIBFB_LIBES	LIBPKG
 #	endif
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	-lX11
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
 
 #if defined(i386) && defined(__bsdi__)
@@ -216,14 +216,16 @@ set -S2 "/bin/sh"
 #	define	CC	/usr/bin/cc
 #	define	OPTIMIZER	/**/
 #	define	CC_OPTS -g
+#	define	XINCDIR		/usr/X11/include
+#	define	XLIBDIR		/usr/X11/lib
 
 #	define	LIBRT_TIMER	timer42
-#	define	LIBFB_CONFIG	-DIF_REMOTE -I/usr/X11/include -DIF_X
-#	define	LIBFB_LIBES	LIBPKG -L/usr/X11/lib -lX11
+#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I/usr/X11/include
-#	define	MGED_LIBES	-L/usr/X11/lib -lX11
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
 
 #if defined(i386) && !defined(__bsdi__) && !defined(__NetBSD__) && !defined(__386BSD__) && !defined(__FreeBSD__)
@@ -270,17 +272,16 @@ set -S2 "/bin/sh"
 #	define	STANDARD_LIBES	-lm
 	/* i386 users have XFree86, usually */
 #	if defined(i386)
-#		define	LIBFB_CONFIG	-DIF_REMOTE -I/usr/X386/include -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -L/usr/X386/lib -lX11
-#		define	MGED_CONFIG	-DDM_X -I/usr/X386/include
-#		define	MGED_LIBES	-L/usr/X386/lib -lX11
-#	else
-#		define	LIBFB_CONFIG	-DIF_REMOTE -I/usr/X11/include -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -L/usr/X11/lib -lX11
-#		define	MGED_CONFIG	-DDM_X -I/usr/X11/include
-#		define	MGED_LIBES	-L/usr/X11/lib -lX11
+#		define	XINCDIR		/usr/X386/include
+#		define	XLIBDIR		/usr/X386/lib
 #	endif
+
+#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X
+
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
 #endif
 
@@ -376,11 +377,11 @@ set -S2 "/bin/sh"
 #	define	CC_OPTS	-D__stardent=1 -Xc
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define  LIBFB_OBJS      if_remote if_X
-#	define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X
-#	define	LIBFB_LIBES	LIBPKG -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
+#	define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	-lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
 #endif
 
 #if defined(gould) && !defined(NP1)
@@ -448,111 +449,12 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #endif
 
-#if defined(sgi) && !defined(mips)
-/*	Silicon Graphics 3D product (e.g., 3030) */
-/*	OS Versions 3.5 and 3.6 only */
-#	undef	sgi
-#	define	MTYPE	3d
-#	define	HAS_TCP	1
-/*	set CC_OPTS= -Zf only if Weitek FP chip installed */
-#	define	CC_OPTS	-Zf
-#	define	FC_OPTS	CC_OPTS
-#	define	LD_OPTS	-s CC_OPTS
-#	define	FC	/bin/f77
-#	define	RANLIB	ranlib
-#	define	MGED_OBJS	dm-ir
-#	define	MGED_CONFIG	-DDM_IR
-/*		mged_config:  append -DMC68010 for non-turbo 2400 */
-/*		mged_config:  append -DNOBLOCK for XNS kernels */
-#	define	LIBSYSV_SETUP	( \
-		AR x /usr/lib/libbsd.a select.o getdtab.o; \
-		AR u libsysv.a select.o getdtab.o)
-#	define	LIBSYSV_OBJ	select.o
-#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=42
-#	define	LIBPKG_SETUP	cp /usr/lib/libbsd.a PRODUCTS
-#	define	LIBFB_OBJS	if_remote if_sgi
-#	define	LIBFB_LIBES	LIBPKG -lbsd -ldbm -lgl2
-#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=42
-#	define	MGED_LIBES	-lbsd -lgl2
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SGI
-#	define	LIBRT_TIMER	timerunix
-#endif
-
-#if defined(__CAKE__irix3)
-/*	Silicon Graphics 4D, which uses the MIPS chip.
- *	NOTE:  "IRIX 3.3, 3.3.1, and 3.3.2" are the ONLY software releases
- *	supported by this configuration section.  See below for 4.0.
- *	IRIX 3.2 and older versions of the operating system can not be used.
- *	NOTE:  If the shared library is used, then all machine types can
- *	use the same binary programs, and no type discrimination is
- *	necessary.  However, this prevents PIXIE from being used...
- */
-#	undef	sgi
-#	define	MTYPE	4d
-#	if 0
-/*		This version for production: optimization & shared libraries */
-#		define	OPTIMIZER	-O2
-/*		Use shared libraries */
-#		define	SHARED	_s
-#	else
-/*		This version for debugging/profiling:  DBX or PIXIE */
-#		if 1
-/*			DBX works OK with shared libraries */
-#			define	OPTIMIZER	-g
-#			define	SHARED	_s
-#		else
-/*			To use PIXIE, you have to use the non-shared libraries */
-#			define	OPTIMIZER	-O2
-#			define	SHARED	/**/
-#		endif
-#	endif
-#	define	GFLAG		-G 14
-#	define  CC_OPTS		GFLAG  -prototypes -DIRIX=3
-#	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
-#	define	LIBRT_LIBES	-lmpc
-#	define	LGT_CONFIG	GFLAG -lmpc
-#	define	LIBMALLOC	/* needs malloc() from -lmpc */
-#if	1
-/*		Production: Non-X11 Configuration */
-#		define	LIBFB_OBJS	if_remote if_ab if_4d
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43
-#		define	LIBFB_LIBES	LIBPKG -lgl''SHARED
-#		define	MGED_OBJS	dm-4d mged_widget
-#		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D
-#		define	MGED_LIBES	-lgl''SHARED
-#else
-/*		X11 Configuration using MIT (not SGI) libraries */
-#		define	LIBFB_OBJS	if_remote if_ab if_4d if_X
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I/usr/X11/include -DIF_X
-#		define	LIBFB_LIBES	-L/usr/X11/lib -lX11 LIBPKG -lgl''SHARED
-# if 1
-/*		X11 for MGED */
-#		define	MGED_OBJS	dm-4d dm-X
-#		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I/usr/X11/include
-#		define	MGED_LIBES	-L/usr/X11/lib -lX11 -lgl''SHARED
-# else
-/*		Lee Butler experimental version */
-#		define	MGED_OBJS	dm-4d mged_widget dm-X
-#		define	MGED_CONFIG	GFLAG -DIR_WIDGETS=1 -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I/usr/X11/include
-#		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L/usr/X11/lib -lX11 -lgl''SHARED
-# endif
-#endif
-#	define	HAS_TCP	1
-#	define	CC	/usr/bin/cc
-#	define	LD_OPTS		GFLAG
-#	define	RANLIB	ranlib5.sh
-#	define	GETHOST	hostname
-#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
-#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=43
-#	define	LIBRT_TIMER	timerunix
-#endif
-
 #if defined(__CAKE__irix4) || (defined(__sgi) && defined(__mips))
 /*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
 #	undef	sgi
 #	define	MTYPE	5d
 /*** WARNING WARNING:  *not* using -O2 on Irix 4.0.4 gives bad code ***/
-#	if 1
+#	if 0
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
@@ -570,19 +472,22 @@ set -S2 "/bin/sh"
 #	define	LGT_CONFIG	GFLAG -lmpc
 #	define	LIBMALLOC	/* needs malloc() from -lmpc */
 /*	X11 Configuration is standard in IRIX 4.0 */
+#	define	XINCDIR		/usr/X11/include
+#	define	XLIBDIR		/usr/X11/lib
+
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I/usr/X11/include -DIF_X
-#	define	LIBFB_LIBES	-lX11''SHARED LIBPKG -lgl''SHARED
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I''XINCDIR -DIF_X
+#	define	LIBFB_LIBES	-L''XLIBDIR -lX11''SHARED LIBPKG -lgl''SHARED
 #	if 1
 /*		X11 for MGED */
 #		define	MGED_OBJS	dm-4d dm-X
-#		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I/usr/X11/include
-#		define	MGED_LIBES	-lX11''SHARED -lgl''SHARED
+#		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #	else
 /*		Lee Butler experimental version */
 #		define	MGED_OBJS	dm-4d mged_widget dm-X
-#		define	MGED_CONFIG	GFLAG -DIR_WIDGETS=1 -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I/usr/X11/include
-#		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -lX11''SHARED -lgl''SHARED
+#		define	MGED_CONFIG	GFLAG -DIR_WIDGETS=1 -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #	endif
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
@@ -630,13 +535,14 @@ set -S2 "/bin/sh"
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
 #	define	LIBMALLOC	/* needs malloc() from -lmpc */
+
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I/usr/X11/include -DIF_X
-#	define	LIBFB_LIBES	-lX11''SHARED LIBPKG -lgl''SHARED
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -DIF_X -I''XINCDIR
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED -lgl''SHARED
 /*	X11 for MGED */
 #	define	MGED_OBJS	dm-4d dm-X
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I/usr/X11/include
-#	define	MGED_LIBES	-lX11''SHARED -lgl''SHARED
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	GETHOST	hostname
@@ -666,7 +572,7 @@ set -S2 "/bin/sh"
 /*#			define	CC_OPTS	-PIC -f68881 -g*/
 /*#			define	CC_OPTS	-PIC -f68881 /usr/lib/f68881.il*/
 /*#			define	LD_OPTS	-PIC -f68881*/
-#			define	CC_OPTS	-PIC -f68881 -DHAVE_UNISTD_H=1
+#			define	CC_OPTS	-PIC -f68881 -DHAVE_UNISTD_H=1 -DHAVE_STDLIB_H=1
 #		endif
 /*		Shared library support on Sun compiler */
 #		define	ARCH_SUF	so
@@ -692,6 +598,10 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
+
+#	define	XINCDIR		/usr/X11/include
+#	define	XLIBDIR		/usr/X11/lib
+
 #	define	sun_no_opts	/* Production configuration */
 #	undef	sun_x11
 #	undef	sun_openwin
@@ -709,13 +619,13 @@ set -S2 "/bin/sh"
 /*		Sun with X11 configuration */
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
-			-I/usr/X11/include -DIF_X
+			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
-			-L/usr/X11/lib -lX11
+			-L''XLIBDIR -lX11
 #		define	MGED_OBJS	dm-sun dm-X
-#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I/usr/X11/include
+#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
-			-L/usr/X11/lib -lX11
+			-L''XLIBDIR -lX11
 #	endif
 #	ifdef sun_openwin
 /*		Sun with SunOS 4.1.1 and OpenWindows configuration */
@@ -733,13 +643,13 @@ set -S2 "/bin/sh"
 /*		Sun with X11 configuration and TekSource GDS hardware*/
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_ts
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN -DIF_TS \
-			-I/usr/X11/include -DIF_X
+			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
-			-L/usr/X11/lib -lX11 -lgds
+			-L''XLIBDIR -lX11 -lgds
 #		define	MGED_OBJS	dm-sun dm-X
-#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I/usr/X11/include
+#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
-			-L/usr/X11/lib -lX11
+			-L''XLIBDIR -lX11
 #	endif
 #	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
@@ -760,8 +670,8 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP		1
 
 #	define	LIBFB_OBJS	if_remote if_X
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I/usr/openwin/include
-#	define	LIBFB_LIBES	LIBPKG -L/usr/openwin/lib -R/usr/openwin/lib -lX11
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I/usr/openwin/include -I''XINCDIR
+#	define	LIBFB_LIBES	LIBPKG -L/usr/openwin/lib -R/usr/openwin/lib -L''XLIBDIR -lX11
 
 #	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
 #	define	LIBRT_TIMER	timerunix
@@ -778,7 +688,7 @@ set -S2 "/bin/sh"
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-#	define	CC_DEFS	-PIC	/* Position independent code, for shared libraries */
+#	define	CC_DEFS	-PIC -DHAVE_UNISTD_H -DHAVE_STDLIB_H	/* Position independent code, for shared libraries, and unistd.h*/
 # if 1
 #	define	ARCH_SUF	so
 #	define	LIBVERS		[[../sharedlibvers.sh]]
@@ -788,6 +698,10 @@ set -S2 "/bin/sh"
 # endif
 #	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_TIMER	timer42
+
+#	define	XINCDIR		/usr/X11/include
+#	define	XLIBDIR		/usr/X11/lib
+
 #	if 0
 /*		Bare Sun configuration */
 #		define	LIBFB_OBJS	if_remote if_sun
@@ -802,38 +716,40 @@ set -S2 "/bin/sh"
 /*			Sun with X11 (aka "openwin") & Suntools.  Default for SunOS 4.1.1 */
 #			define	LIBFB_OBJS	if_remote if_ab if_sun if_X
 #			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
-				-I/usr/openwin/include -DIF_X
+				-I/usr/openwin/include -I''XINCDIR -DIF_X
 #			define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
-				-L/usr/openwin/lib -lX11
+				-L/usr/openwin/lib -L''XLIBDIR -lX11
 #			if 1
 /*				Sun with X11 only */
 #				define	MGED_OBJS	dm-sun dm-X
-#				define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I/usr/openwin/include
+#				define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I/usr/openwin/include -I''XINCDIR
 #				define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
-					-L/usr/openwin/lib -lX11
+					-L/usr/openwin/lib -L''XLIBDIR -lX11
 #			else
 /*				Sun with X11 and XGL (an unbundled product) */
 /*				Note that at MSIC, -lgks may also be needed */
 #				define	MGED_OBJS	dm-xgl dm-X
-#				define	MGED_CONFIG	-DDM_XGL -DDM_X -I/usr/openwin/include
-#				define	MGED_LIBES	-lxgl -L/usr/openwin/lib -lX11
+#				define	MGED_CONFIG	-DDM_XGL -DDM_X -I/usr/openwin/include -I''XINCDIR
+#				define	MGED_LIBES	-lxgl -L/usr/openwin/lib -L''XLIBDIR -lX11
 #			endif
 #		else
 /*			Sun with X11 ("openwin") ONLY. No Suntools support. */
 #			define	LIBFB_OBJS	if_remote if_ab if_X
 #			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
-				-I/usr/openwin/include -DIF_X
+				-I/usr/openwin/include -I''XINCDIR -DIF_X
 #			define	LIBFB_LIBES	LIBPKG \
-				-L/usr/openwin/lib -lX11
+				-L/usr/openwin/lib -L''XLIBDIR -lX11
 #			define	MGED_OBJS	dm-X
-#			define	MGED_CONFIG	-DDM_X -I/usr/openwin/include
-#			define	MGED_LIBES	-L/usr/openwin/lib -lX11
+#			define	MGED_CONFIG	-DDM_X -I/usr/openwin/include -I''XINCDIR
+#			define	MGED_LIBES	-L/usr/openwin/lib -L''XLIBDIR -lX11
 #		endif
 #	endif
 #	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
 #		define	CC	/usr/lang/cc
 #		define	FC	/usr/lang/f77
+#	else
+#		define	FC	/usr/gnu/bin/f77
 #	endif
 #   endif	/* __STDC__ */
 #endif
@@ -856,11 +772,11 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 /*	NeXT with X11 configuration */
 #	define	LIBFB_OBJS	if_remote if_ab if_X
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X
-#	define	LIBFB_LIBES	LIBPKG -lX11
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	-lX11
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
 
 #if defined(apollo)
@@ -881,10 +797,10 @@ set -S2 "/bin/sh"
 #	define	LIBMALLOC	/* may be able to use local libmalloc */
 #	define	LIBRT_TIMER	timer42
 #	define	LIBFB_OBJS	if_remote if_X
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X
-#	define	LIBFB_LIBES	LIBPKG -lX11
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I''XINCDIR
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	/usr/lib/X11/libX11.a
 #endif
 
@@ -923,14 +839,17 @@ set -S2 "/bin/sh"
 #	define	LIBRT_LIBES	-L/lib/multi -lu -lio
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBTERMLIB	-lcurses
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I/usr/include/X11
+
+#	define	XINCDIR		/usr/include/X11
+
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_remote if_ab if_X
-#	define	LIBFB_LIBES	LIBPKG -lX11
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	-lX11 -lnet
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11 -lnet
 #endif
 
 #if defined(hpux)
@@ -941,11 +860,11 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP=0
 #	define	LIBRT_TIMER 	timerunix
 #	define	LIBFB_OBJS 	if_X
-#	define	LIBFB_CONFIG 	-DIF_X 
-#	define	LIBFB_LIBES   	-lX11
+#	define	LIBFB_CONFIG 	-DIF_X -I''XINCDIR
+#	define	LIBFB_LIBES   	-L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	-lX11
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XINCDIR -lX11
 #endif
 
 #if defined(CRAY2)
@@ -977,12 +896,15 @@ set -S2 "/bin/sh"
 #	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I/usr/include/X11
+
+#	define	XINCDIR		/usr/include/X11
+
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_remote if_ab if_X
-#	define	LIBFB_LIBES	LIBPKG -lX11
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	-lX11 -lnet
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11 -lnet
 #endif
 
 #if defined(convex) || defined(__convex__)
@@ -991,13 +913,17 @@ set -S2 "/bin/sh"
 #	define	MTYPE	c1
 #	define	BSD	43
 #	define	HAS_TCP	1
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I/usr/X11/include
+
+#	define	XINCDIR		/usr/X11/include
+#	define	XLIBDIR		/usr/X11/lib
+
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_remote if_ab if_X
-#	define	LIBFB_LIBES	LIBPKG -lX11
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBRT_TIMER	timer42
 #	define 	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	-lX11
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
 #	define	FC	/usr/convex/fc
 /*	libplot3/htond.c depends on running in native mode (CC_OPTS= -fn) */
 #	define	CC_OPTS -D__STDC__=1
@@ -1026,12 +952,15 @@ set -S2 "/bin/sh"
 /*#	define	OPTIMIZER	-O1*/
 #	define	OPTIMIZER	-g
 /*	Note that a cc -43 option gives a workable BSD environment */
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X
+
+#	define	XLIBDIR		/usr/X11/lib
+
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_remote if_X
-#	define	LIBFB_LIBES	LIBPKG -L/usr/X11/lib -lX11
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	-L/usr/X11/lib -lX11
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
 
 #ifdef stellar
@@ -1042,12 +971,12 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	0
 #	define	LIBRT_TIMER	timerunix
 /*XXX	Note that this X11 configuration may need tweaking */
-#	define	LIBFB_CONFIG	-DIF_X
+#	define	LIBFB_CONFIG	-DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_X
-#	define	LIBFB_LIBES	-lX11
+#	define	LIBFB_LIBES	-L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	/usr/lib/libX11.a
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
 
 #if defined(__ksr_cc)
@@ -1060,12 +989,12 @@ set -S2 "/bin/sh"
 #	endif
 #	define	HAS_TCP	1
 #	define	LIBRT_TIMER	timerunix
-#	define	LIBFB_CONFIG	-DIF_X
+#	define	LIBFB_CONFIG	-DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_X
-#	define	LIBFB_LIBES	-lX11
+#	define	LIBFB_LIBES	-L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X
-#	define	MGED_LIBES	/usr/lib/libX11.a
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
 
 #ifdef eta10
@@ -1238,6 +1167,14 @@ set -S2 "/bin/sh"
 #	define	ETCDIR	/usr/brlcad/etc
 #	define	INCLUDE_DIR	/usr/brlcad/include
 #	define	VFONTDIR	/usr/brlcad/vfont
+#endif
+
+#if	!defined(XLIBDIR)
+#	define	XLIBDIR	/usr/lib
+#endif
+
+#if	!defined(XINCDIR)
+#	define	XINCDIR	/usr/include
 #endif
 
 #if !defined(MANDIR)
