@@ -1,1 +1,1 @@
-30 5 * * * /vld/regress/brlcad_scripts/client_wait.sh -d /c/regres
+30 5 * * * /vld/regress/brlcad_scripts/client_wait.sh -d /c/regress
