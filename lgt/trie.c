@@ -448,7 +448,7 @@ char	*msg;
 	do
 		{
 		(void) fflush( stdout );
-		c = get_Char();
+		c = hm_getchar();
 		switch( c )
 			{
 		case SP :
@@ -607,7 +607,7 @@ char	*msg;
 				}
 		case Ctrl('V') :
 			/* Escape character, do not process next char.	*/
-			c = get_Char();
+			c = hm_getchar();
 			/* Fall through to default case!		*/
 		default : /* Insert character at cursor.		*/
 			{	register char	*q = p;
