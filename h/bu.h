@@ -428,6 +428,15 @@ typedef struct bu_list bu_list_t;
 	(cur)->back->forw = (cur)->forw; \
 	(cur)->forw = (cur)->back = BU_LIST_NULL;  /* sanity */ }
 
+/* This version of BU_LIST_DEQUEUE uses the comma operator
+ * inorder to return a typecast version of the dequeued pointer
+ */
+#define BU_LIST_DEQUEUE_T( cur, type ) ((cur)->forw->back = (cur)->back, \
+	(cur)->back->forw = (cur)->forw, \
+	(cur)->forw = (cur)->back = BU_LIST_NULL, \
+	(type *)cur )
+
+
 /*
  *  The Stack Discipline
  *
