@@ -34,7 +34,7 @@ int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
 jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
 
 /*
- *			R T _ B O M B
+ *			B U _ B O M B
  *  
  *  Abort the program with a message.
  *  Only produce a core-dump when that debugging bit is set.
