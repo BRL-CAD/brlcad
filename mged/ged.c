@@ -1129,8 +1129,6 @@ int	non_blocking;
 	fastf_t	factor;
 	mat_t scale_mat;
 
-#define MINVIEW		0.001	/* smallest view.  Prevents runaway zoom */
-
 	factor = 1.0 - (rate_zoom / 10);
 	Viewscale *= factor;
 	if( Viewscale < MINVIEW )
