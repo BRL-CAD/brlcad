@@ -30,6 +30,9 @@
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
 #define CLAMP(v, l, h)  if (v < l) v = l; if (v > h) v = h
 
+#if RT_MULTISPECTRAL
+extern CONST struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
+#endif
 
 #define camo_MAGIC 0x18364	/* XXX change this number for each shader */
 struct camo_specific {
@@ -311,6 +314,16 @@ char	*dp;
 	val = bn_noise_fbm(pt, camo_sp->noise_h_val,
 		camo_sp->noise_lacunarity, camo_sp->noise_octaves );
 
+#if RT_MULTISPECTRAL
+	BN_CK_TABDATA(swp->msw_color);
+	if (val < camo_sp->t1) {
+		rt_spect_reflectance_rgb( swp->msw_color, camo_sp->c1 );
+	} else if (val < camo_sp->t2 ) {
+		rt_spect_reflectance_rgb( swp->msw_color, camo_sp->c2 );
+	} else {
+		rt_spect_reflectance_rgb( swp->msw_color, camo_sp->c3 );
+	}
+#else
 	if (val < camo_sp->t1) {
 		VMOVE(swp->sw_color, camo_sp->c1);
 	} else if (val < camo_sp->t2 ) {
@@ -318,6 +331,7 @@ char	*dp;
 	} else {
 		VMOVE(swp->sw_color, camo_sp->c3);
 	}
+#endif
 
 	return(1);
 }
@@ -435,7 +449,20 @@ char	*dp;
 #endif
 	inv_val = 1.0 - val;
 
+#if RT_MULTISPECTRAL
+	{
+		struct bn_tabdata *tcolor;
+
+		BN_CK_TABDATA(swp->msw_color);
+		BN_GET_TABDATA( tcolor, spectrum );
+		rt_spect_reflectance_rgb( tcolor, camo_sp->c2 );
+		bn_tabdata_blend2( swp->msw_color, val, swp->msw_color,
+			inv_val, tcolor );
+		bn_tabdata_free( tcolor );
+	}
+#else
 	VCOMB2(swp->sw_color, val, swp->sw_color, inv_val, camo_sp->c2);
+#endif
 
 	return(1);
 }
