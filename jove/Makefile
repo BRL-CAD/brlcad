@@ -10,10 +10,9 @@
 #CFLAGS=	-O -DBSD=42
 #LB=	-ltermlib
 
-# For SGI 4D
+# For SGI and Linux
 CC = cc
 CFLAGS= -O2 -DSYS5 -DHAVE_TERMIOS_H
-#CFLAGS= -ansi -O2 -DSYS5 -DHAVE_TERMIOS_H
 LDFLAGS = -O2
 LB=	-lcurses
 
@@ -22,10 +21,10 @@ LB=	-lcurses
 #CFLAGS = -O -i -Xc -xstrconst -DSYS5 -DHAVE_TERMIOS_H
 #LB = -lcurses
 
-# For BSD/OS
-CC = cc
-CFLAGS= -O2 -DBSD=44 -DHAVE_TERMIOS_H
-LB=	-ltermlib
+# For BSD/OS and FreeBSD
+#CC = cc
+#CFLAGS= -O2 -DBSD=44 -DHAVE_TERMIOS_H
+#LB=	-ltermlib
 
 DESTDIR=
 BINDIR=${DESTDIR}/usr/brl/bin
