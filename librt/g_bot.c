@@ -44,7 +44,8 @@ struct bot_specific
 	unsigned char bot_errmode;
 	fastf_t *bot_thickness;
 	struct bu_bitv *bot_facemode;
-	struct tri_specific *bot_facelist;
+	struct tri_specific *bot_facelist;	/* head of linked list */
+	struct tri_specific **bot_facearray;	/* head of face array */
 };
 
 /*
@@ -135,6 +136,21 @@ struct rt_i		*rtip;
 
 	/* XXX Should use actual face count (len of list) */
 	stp->st_npieces = bot_ip->num_faces;
+
+	/* Support for solid 'pieces' */
+	bot->bot_facearray = (struct tri_specific **)
+		bu_malloc( sizeof(struct tri_specific *) * bot_ip->num_faces,
+			"bot_facearray" );
+
+	{
+		struct tri_specific **fap = bot->bot_facearray;
+		register struct tri_specific *trip = bot->bot_facelist;
+		for( ; trip; trip = trip->tri_forw )  {
+			*fap = trip;
+			fap++;
+		}
+
+	}
 
 	return 0;
 }
@@ -608,6 +624,117 @@ struct seg		*seghead;
 		}
 	}
 	return(nhits);			/* HIT */
+}
+
+/*
+ *			R T _ B O T _ P I E C E _ S H O T
+ *
+ *  Intersect a ray with a list of "pieces" of a BoT.
+ *
+ */
+int
+rt_bot_piece_shot( psp, plp, rp, ap, seghead, resp )
+struct rt_piecestate	*psp;
+struct rt_piecelist	*plp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
+struct resource		*resp;
+{
+	long		*sol_piece_subscr_p;
+	CONST int	debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	struct soltab	*stp;
+	long		piecenum;
+	LOCAL struct hit hits[MAXHITS];
+	register struct hit *hp;
+	LOCAL int	nhits;
+	struct bot_specific *bot;
+
+	RT_CK_PIECELIST(plp);
+	RT_CK_PIECESTATE(psp);
+	stp = plp->stp;
+	RT_CK_SOLTAB(stp);
+	RT_CK_RESOURCE(resp);
+	bot = (struct bot_specific *)stp->st_specific;
+
+	sol_piece_subscr_p = &(plp->pieces[plp->npieces-1]);
+	for( ; sol_piece_subscr_p >= plp->pieces; sol_piece_subscr_p-- )  {
+		FAST fastf_t	dn;		/* Direction dot Normal */
+		LOCAL fastf_t	abs_dn;
+		FAST fastf_t	k;
+		LOCAL fastf_t	alpha, beta;
+		LOCAL vect_t	wxb;		/* vertex - ray_start */
+		LOCAL vect_t	xp;		/* wxb cross ray_dir */
+		register struct tri_specific *trip;
+
+		piecenum = *sol_piece_subscr_p;
+
+		if( BU_BITTEST( psp->shot, piecenum ) )  {
+			resp->re_piece_ndup++;
+			continue;	/* this piece already shot */
+		}
+
+		/* Shoot a ray */
+		BU_BITSET( psp->shot, piecenum );
+
+		if(debug_shoot)bu_log("shooting %s piece %d\n", stp->st_name, piecenum );
+		resp->re_piece_shots++;
+
+		/* Now intersect with each piece */
+		trip = bot->bot_facearray[piecenum];
+
+		/*
+		 *  Ray Direction dot N.  (N is outward-pointing normal)
+		 *  wn points inwards, and is not unit length.
+		 */
+		dn = VDOT( trip->tri_wn, rp->r_dir );
+
+		/*
+		 *  If ray lies directly along the face, (ie, dot product
+		 *  is zero), drop this face.
+		 */
+		abs_dn = dn >= 0.0 ? dn : (-dn);
+		if( abs_dn < SQRT_SMALL_FASTF )
+			continue;
+		VSUB2( wxb, trip->tri_A, rp->r_pt );
+		VCROSS( xp, wxb, rp->r_dir );
+
+		/* Check for exceeding along the one side */
+		alpha = VDOT( trip->tri_CA, xp );
+		if( dn < 0.0 )  alpha = -alpha;
+		if( alpha < 0.0 || alpha > abs_dn )
+			continue;
+
+		/* Check for exceeding along the other side */
+		beta = VDOT( trip->tri_BA, xp );
+		if( dn > 0.0 )  beta = -beta;
+		if( beta < 0.0 || beta > abs_dn )
+			continue;
+		if( alpha+beta > abs_dn )
+			continue;
+		k = VDOT( wxb, trip->tri_wn ) / dn;
+
+		/* HIT is within planar face */
+		hp->hit_magic = RT_HIT_MAGIC;
+		hp->hit_dist = k;
+		hp->hit_private = (genptr_t)trip;
+		hp->hit_vpriv[X] = VDOT( trip->tri_N, rp->r_dir );
+		hp->hit_vpriv[Y] = bot->bot_orientation;
+		hp->hit_surfno = trip->tri_surfno;
+		if( ++nhits >= MAXHITS )  {
+			bu_log("rt_bot_piece_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
+			break;
+		}
+		hp++;
+	}
+	if( nhits == 0 )
+		return(0);		/* MISS */
+
+	/* Now, drop into all that gore to sort hits and build segs */
+
+	bu_bomb("rt_bot_piece_shot(): needs more code\n");
+
+	return 0;	/* MISS */
 }
 
 #define RT_BOT_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL

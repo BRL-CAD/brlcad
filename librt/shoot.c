@@ -917,44 +917,40 @@ register struct application *ap;
 			continue;
 		}
 
-		/* Consider all "pieces" of solids within the box */
-#if 0
-		struct bn_piecelist **plpp;
+		/* Consider all "pieces" of all solids within the box */
+#if 0	/* pieces*/
+  {
+		struct rt_piecelist **plpp;
 		plpp = &(cutp->bn.bn_piecelist[cutp->bn.bn_piecelen-1]);
 		for( ; plpp >= cutp->bn.bn_piecelist; plpp-- )  {
-			register struct bn_piecelist *plp = *plpp;
-			struct bn_piecestate *psp;
+			register struct rt_piecelist *plp = *plpp;
+			struct rt_piecestate *psp;
+			struct soltab	*stp;
 			int piecenum;
 
 			RT_CK_PIECELIST(plp);
-			piecenum = plp->stp->st_piecestate_num;
-			psp = &(resp->re_pieces[piecenum]);
+
+			/* Consider all pieces of this one solid in this cell */
+			stp = plp->stp;
+			RT_CK_SOLTAB(stp);
+
+			psp = &(resp->re_pieces[stp->st_piecestate_num]);
 			RT_CK_PIECESTATE(psp);
 			if( psp->ray_seqno != resp->re_nshootray )  {
 				/* state is from an earlier ray, scrub */
-/* XXX move to h/bu.h */
-#define BU_BITV_ZEROALL(_bv)	\
-	{ bzero( (char *)((_bv)->bits), BU_BITS2BYTES( (_bv)->nbits ) ); }
 				BU_BITV_ZEROALL(psp->shot);
 				psp->ray_seqno = resp->re_nshootray;
 				psp->oddhit.hit_dist = INFINITY;
 			}
 
-			if( BU_BITTEST( psp->shot, plp->stp->st_piecestate_num ) )  {
-				resp->re_ndup++;
-				continue;	/* already shot */
-			}
-
-			/* Shoot a ray */
-			BU_BITSET( psp->shot, piecenum );
-
-			if(debug_shoot)bu_log("shooting %s piece %d\n", stp->st_name, piecenum );
-			resp->re_shots++;
+			/* Allow solid to shoot all pieces at once */
 			BU_LIST_INIT( &(new_segs.l) );
-	/* XXX */
-			if( rt_functab[stp->st_id].ft_shot( 
-			    stp, &ss.newray, ap, &new_segs ) <= 0 )  {
-				resp->re_shot_miss++;
+
+			if( rt_functab[stp->st_id].ft_piece_shot(
+			    psp, plp,
+			    &ss.newray, ap, &new_segs, resp ) <= 0 )  {
+			    	/* No hits at all */
+				resp->re_piece_shot_miss++;
 				continue;	/* MISS */
 			}
 
@@ -970,10 +966,11 @@ register struct application *ap;
 					BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
 				}
 			}
-			resp->re_shot_hit++;
-
+			/* There may still be an odd hit left over */
+			resp->re_piece_shot_hit++;
 		}
-#endif
+  }
+#endif /* pieces*/
 
 		/* Consider all solids within the box */
 		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
