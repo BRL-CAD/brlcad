@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:54:06  mike
+ * Release_4.0
+ * 
  * Revision 2.6  91/08/30  20:24:18  mike
  * global var "ospeed" clashed with some library on the Stardent.
  * 
@@ -54,10 +57,18 @@ static char RCSid[] = "@(#)$Header$";
    of the basic features on the particular terminal. */
 
 #include "./jove.h"
-#ifndef SYS5
-#include <sgtty.h>
+
+#if HAS_TERMIOS
+#  if !defined(_XOPEN_SOURCE)
+#	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
+#  endif
+# include <termios.h>
 #else
-#include <termio.h>
+# ifndef SYS5
+#  include <sgtty.h>
+# else
+#  include <termio.h>
+# endif
 #endif
 
 /* Termcap definitions */
@@ -131,30 +142,47 @@ char	*str;
 getTERM()
 {
 	char	*getenv();
-#ifndef SYS5
-	struct sgttyb tty;
+#if defined(HAS_TERMIOS)
+	struct termios	tty;
 #else
+# ifndef SYS5
+	struct sgttyb tty;
+# else
 	struct termio tty;
-#endif
+# endif
+#endif	/* HAS_TERMIOS */
 	char	termbuf[32],
 		*termname,
 		*termp = tspace,
 		tbuff[1024];
 	int	i;
 
-#ifdef SYS5
-	if (ioctl (0, TCGETA, &tty))
+#if defined(HAS_TERMIOS)
+	if (tcgetattr( 0, &tty ) < 0 )
 #else
+# ifdef SYS5
+	if (ioctl (0, TCGETA, &tty))
+# else
 	if (gtty(0, &tty))
-#endif
+# endif
+#endif	/* HAS_TERMIOS */
 		TermError("ioctl fails");
-#ifdef SYS5
+#if defined(HAS_TERMIOS)
+#	if defined(TAB3)
+		TABS = !((tty.c_oflag & TAB3) == TAB3);
+#	else
+		TABS = 0;
+#	endif
+	jove_ospeed = cfgetospeed( &tty );
+#else
+# ifdef SYS5
 	TABS = !((tty.c_oflag & TAB3) == TAB3);
 	jove_ospeed = tty.c_cflag & CBAUD;
-#else
+# else
 	TABS = !(tty.sg_flags & XTABS);
 	jove_ospeed = tty.sg_ospeed;
-#endif
+# endif
+#endif	/* HAS_TERMIOS */
 
 	termname = getenv("TERM");
 	if (termname == 0 || *termname == 0) {
