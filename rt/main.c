@@ -298,7 +298,7 @@ char **argv;
 	/* This isn't useful with the Caltech malloc() in most systems,
 	 * but is very helpful with the ordinary malloc(). */
 	rt_free( rt_malloc( (20+npsw)*8192, "worker prefetch"), "worker");
-#endif
+#endif HEP
 
 	fprintf(stderr,"PARALLEL: npsw=%d\n", npsw );
 #ifdef HEP
@@ -306,8 +306,8 @@ char **argv;
 		/* This is expensive when GEMINUS>1 */
 		Dcreate( worker );
 	}
-#endif
-#endif
+#endif HEP
+#endif PARALLEL
 	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-beginptr );
 
 do_more:
@@ -361,17 +361,34 @@ do_more:
 	if( framenumber++ < desiredframe )  goto do_more;
 
 	if( outputfile != (char *)0 )  {
-		if( framenumber-1 <= 0 )
+#ifdef CRAY_COS
+		/* Dots in COS file names make them permanant files. */
+		sprintf( framename, "F%d", framenumber-1 );
+		if( (outfp = fopen( framename, "w" )) == NULL )  {
+			perror( framename );
+			if( matflag )  goto do_more;
+			exit(22);
+		}
+		/* Dispose to shell script starts with "!" */
+		if( framenumber-1 <= 0 || outputfile[0] == '!' )  {
 			sprintf( framename, outputfile );
-		else
+		}  else  {
 			sprintf( framename, "%s.%d", outputfile, framenumber-1 );
+		}
+#else
+		if( framenumber-1 <= 0 )  {
+			sprintf( framename, outputfile );
+		}  else  {
+			sprintf( framename, "%s.%d", outputfile, framenumber-1 );
+		}
 		if( (outfp = fopen( framename, "w" )) == NULL )  {
 			perror( framename );
 			if( matflag )  goto do_more;
 			exit(22);
 		}
 		chmod( framename, 0444 );
-		fprintf(stderr,"Output file is %s\n", framename);
+#endif CRAY_COS
+		fprintf(stderr,"Output file is '%s'\n", framename);
 	}
 
 	grid_setup();
@@ -412,24 +429,47 @@ do_more:
 		framenumber-1,
 		rtip->rti_nrays, utime, (double)(rtip->rti_nrays)/utime );
 #ifdef PARALLEL
-	{
-	if( outfp != NULL &&
-	    write( fileno(outfp), scanbuf, npts*npts*3 ) != npts*npts*3 )  {
-		perror("pixel output write");
-		goto out;
+	if( outfp != NULL )  {
+#ifdef CRAY_COS
+		int status;
+		char dn[16];
+		char message[128];
+
+		strncpy( dn, outfp->ldn, sizeof(outfp->ldn) );	/* COS name */
+		if( fwrite( scanbuf, sizeof(char), npts*npts*3, outfp ) != npts*npts*3 )  {
+			fprintf(stderr,"fwrite failure\n");
+			goto out;
+		}
+#else
+		if( write( fileno(outfp), scanbuf, npts*npts*3 ) != npts*npts*3 )  {
+			perror("pixel output write");
+			goto out;
+		}
+#endif CRAY_COS
+		(void)fclose(outfp);
+		outfp = NULL;
+#ifdef CRAY_COS
+		status = 0;
+		(void)DISPOSE( &status, "DN      ", dn,
+			"TEXT    ", framename,
+			"NOWAIT  ",
+			"DF      ", "BB      " );
+		sprintf(message,
+			"Dispose,dn='%s',text='%s',nowait,df=bb.  Status = 0%o (%s)",
+			dn, framename, status,
+			(status==0) ? "Good" : "---BAD---" );
+		fprintf(stderr, "%s\n", message);
+		remark(message);	/* Send to log files */
+#endif CRAY_COS
 	}
 	if( fbp )
 		fb_write( fbp, 0, 0, scanbuf, npts*npts*3 );
-	}
-#endif
+
 #ifdef alliant
 	alliant_pr();
-#endif
+#endif alliant
+#endif PARALLEL
 
-	if( outfp != NULL )  {
-		(void)fclose(outfp);
-		outfp = NULL;
-	}
 	if( matflag )  goto do_more;
 out:
 #ifdef HEP
