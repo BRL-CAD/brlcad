@@ -113,7 +113,7 @@ CONST char *str;
 /*
  *			D B _ L O O K U P
  *
- * This routine takes a name, trims to NAMESIZE, and looks it up in the
+ * This routine takes a name and looks it up in the
  * directory table.  If the name is present, a pointer to
  * the directory struct element is returned, otherwise
  * NULL is returned.
@@ -132,21 +132,17 @@ register CONST char	*name;
 int			noisy;
 {
 	register struct directory *dp;
-	char		local[NAMESIZE+2];
+	register char	n0 = name[0];
+	register char	n1 = name[1];
 
 	RT_CK_DBI(dbip);
 
-	if( (int)strlen(name) > NAMESIZE )  {
-		(void)strncpy( local, name, NAMESIZE );	/* Trim the name */
-		local[NAMESIZE] = '\0';			/* ensure null termination */
-		name = local;
-	}
 	dp = dbip->dbi_Head[db_dirhash(name)];
 	for(; dp != DIR_NULL; dp=dp->d_forw )  {
 		register char	*this;
 		if(
-			name[0] == (this=dp->d_namep)[0]  &&	/* speed */
-			name[1] == this[1]  &&	/* speed */
+			n0 == *(this=dp->d_namep)  &&	/* speed */
+			n1 == this[1]  &&	/* speed */
 			strcmp( name, this ) == 0
 		)  {
 			if(rt_g.debug&DEBUG_DB) bu_log("db_lookup(%s) x%x\n", name, dp);
