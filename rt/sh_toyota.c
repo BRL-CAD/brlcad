@@ -74,8 +74,8 @@ struct structparse toyota_parse[] = {
 	{"%f", 1, "sun_sang",	CL_O(sun_sang),		FUNC_NULL },
 	{"%f", 1, "index_refrac",CL_O(index_refrac),	FUNC_NULL },
 	{"%f", 1, "atmos_trans",CL_O(atmos_trans),	FUNC_NULL },
-	{"%f", 3, "Zenith",	CL_O(Zenith),		FUNC_NULL },
-	{"%s", 1, "material",	CL_O(material),		FUNC_NULL },
+	{"%f", 3, "Zenith",	offsetofarray(struct toyota_specific, Zenith),		FUNC_NULL },
+	{"%s", 1, "material",	offsetofarray(struct toyota_specific, material),		FUNC_NULL },
 	{"%d", 1, "glass",	CL_O(glass),		FUNC_NULL },
 	{"",   0, (char *)0,	0,			FUNC_NULL }
 };
