@@ -504,6 +504,7 @@ struct vertexuse_a {
 
 /*
  * storage allocation and de-allocation support
+ *  Primarily used by nmg_mk.c
  */
 
 #if __STDC__ && !alliant && !apollo
@@ -514,63 +515,15 @@ struct vertexuse_a {
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
 #endif
 
-#define NMG_INCR_INDEX(_p,_m)	\
-	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
-
-#define GET_MODEL_A(p,m)    {NMG_GETSTRUCT(p, model_a); NMG_INCR_INDEX(p,m);}
-#define GET_REGION(p,m)	    {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p,m);}
-#define GET_REGION_A(p,m)   {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p,m);}
-#define GET_SHELL(p,m)	    {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p,m);}
-#define GET_SHELL_A(p,m)    {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p,m);}
-#define GET_FACE(p,m)	    {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p,m);}
-#define GET_FACE_G(p,m)	    {NMG_GETSTRUCT(p, face_g); NMG_INCR_INDEX(p,m);}
-#define GET_FACEUSE(p,m)    {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p,m);}
-#define GET_FACEUSE_A(p,m)  {NMG_GETSTRUCT(p, faceuse_a); NMG_INCR_INDEX(p,m);}
-#define GET_LOOP(p,m)	    {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p,m);}
-#define GET_LOOP_G(p,m)	    {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p,m);}
-#define GET_LOOPUSE(p,m)    {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p,m);}
-#define GET_LOOPUSE_A(p,m)  {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p,m);}
-#define GET_EDGE(p,m)	    {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p,m);}
-#define GET_EDGE_G(p,m)	    {NMG_GETSTRUCT(p, edge_g); (p)->usage = 1; NMG_INCR_INDEX(p,m);}
-#define GET_EDGEUSE(p,m)    {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p,m);}
-#define GET_EDGEUSE_A(p,m)  {NMG_GETSTRUCT(p, edgeuse_a); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEX(p,m)	    {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEX_G(p,m)   {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEXUSE(p,m)  {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEXUSE_A(p,m) {NMG_GETSTRUCT(p, vertexuse_a); NMG_INCR_INDEX(p,m);}
-
 #if __STDC__ && !alliant && !apollo
-# define FREESTRUCT(ptr, str) \
+# define NMG_FREESTRUCT(ptr, str) \
 	{ bzero((char *)(ptr), sizeof(struct str)); \
 	  rt_free((char *)(ptr), "freestruct " #str); }
 #else
-# define FREESTRUCT(ptr, str) \
+# define NMG_FREESTRUCT(ptr, str) \
 	{ bzero((char *)(ptr), sizeof(struct str)); \
 	  rt_free((char *)(ptr), "freestruct str"); }
 #endif
-
-#define FREE_MODEL(p)	    FREESTRUCT(p, model)
-#define FREE_MODEL_A(p)	    FREESTRUCT(p, model_a)
-#define FREE_REGION(p)	    FREESTRUCT(p, nmgregion)
-#define FREE_REGION_A(p)    FREESTRUCT(p, nmgregion_a)
-#define FREE_SHELL(p)	    FREESTRUCT(p, shell)
-#define FREE_SHELL_A(p)	    FREESTRUCT(p, shell_a)
-#define FREE_FACE(p)	    FREESTRUCT(p, face)
-#define FREE_FACE_G(p)	    FREESTRUCT(p, face_g)
-#define FREE_FACEUSE(p)	    FREESTRUCT(p, faceuse)
-#define FREE_FACEUSE_A(p)   FREESTRUCT(p, faceuse_a)
-#define FREE_LOOP(p)	    FREESTRUCT(p, loop)
-#define FREE_LOOP_G(p)	    FREESTRUCT(p, loop_g)
-#define FREE_LOOPUSE(p)	    FREESTRUCT(p, loopuse)
-#define FREE_LOOPUSE_A(p)   FREESTRUCT(p, loopuse_a)
-#define FREE_EDGE(p)	    FREESTRUCT(p, edge)
-#define FREE_EDGE_G(p)	    if (--((p)->usage) <= 0)  FREESTRUCT(p, edge_g)
-#define FREE_EDGEUSE(p)	    FREESTRUCT(p, edgeuse)
-#define FREE_EDGEUSE_A(p)   FREESTRUCT(p, edgeuse_a)
-#define FREE_VERTEX(p)	    FREESTRUCT(p, vertex)
-#define FREE_VERTEX_G(p)    FREESTRUCT(p, vertex_g)
-#define FREE_VERTEXUSE(p)   FREESTRUCT(p, vertexuse)
-#define FREE_VERTEXUSE_A(p) FREESTRUCT(p, vertexuse_a)
 
 #if defined(SYSV) && !defined(bzero)
 #	define bzero(str,n)		memset( str, '\0', n )
