@@ -25,11 +25,11 @@
 #include <string.h>
 #include <wchar.h>
 #include "ProToolkit.h"
-#include "ProUtil.h"
 #include "ProMessage.h"
 #include "ProMenuBar.h"
 #include "ProMode.h"
 #include "ProMdl.h"
+#include "ProFaminstance.h"
 #include "pd_prototype.h"
 #include "ProPart.h"
 #include "ProSolid.h"
@@ -37,31 +37,52 @@
 #include "ProUIInputpanel.h"
 #include "ProUILabel.h"
 #include "ProUIPushbutton.h"
+#include "ProUICheckbutton.h"
+#include "ProUITextarea.h"
 #include "ProAsmcomppath.h"
+#include "ProHole.h"
+#include "ProNotify.h"
 #include "prodev_light.h"
-
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
 
+extern int errno;
+
 static wchar_t  MSGFIL[] = {'u','s','e','r','m','s','g','.','t','x','t','\0'};
+
+static char *err_mess_form="During the conversion %d features of part %s\n\
+were suppressed. After the conversion was complete, an\n\
+attempt was made to unsuppress these same features.\n\
+The unsuppression failed, so these features are still\n\
+suppressed. Please exit Pro/E without saving any\n\
+changes so that this problem will not persist.";
 
 static double proe_to_brl_conv=25.4;	/* inches to mm */
 
+static ProBool do_facets_only;	/* flag to indicate no CSG should be done */
+static ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
+static ProBool do_elims;	/* flag to indicate that small features are to be eliminated */
 static double max_error=1.5;	/* (mm) maximimum allowable error in facetized approximation */
 static double tol_dist=0.005;	/* (mm) minimum distance between two distinct vertices */
 static double angle_cntrl=0.5;	/* angle control for tessellation ( 0.0 - 1.0 ) */
 static double local_tol=0.0;	/* tolerance in Pro/E units */
 static double local_tol_sq=0.0;	/* tolerance squared */
+static double min_hole_diameter=0.0; /* if > 0.0, all holes features smaller than this will be deleted */
+static double min_chamfer_dim=0.0;   /* if > 0.0, all chamfers with both dimensions less
+				      * than this value will be deleted */
+static double min_round_radius=0.0;  /* if > 0.0, all rounds with radius less than this
+				      * value will be deleted */
+static int *feat_ids_to_delete=NULL; /* list of hole features to delete */
+static int feat_id_len=0;		/* number of available slots in the above array */
+static int feat_id_count=0;		/* number of hole features actually in the above list */
+#define FEAT_ID_BLOCK	64		/* number of slots to allocate in above list */
 
 static int reg_id = 1000;	/* region ident number (incremented with each part) */
 
-static ProVector *part_verts=NULL;	/* list of vertices for current part */
-static int max_vert=0;			/* number of vertices currently malloced */
-static int curr_vert=0;			/* number of vertices currently being used */
-
-#define VERT_BLOCK 512			/* numer of vertices to malloc per call */
+static struct vert_root *vert_tree_root;	/* structure for storing and searching on vertices */
+static struct vert_root *norm_tree_root;	/* structure for storing and searching on normals */
 
 static ProTriangle *part_tris=NULL;	/* list of triangles for current part */
 static int max_tri=0;			/* number of triangles currently malloced */
@@ -69,18 +90,58 @@ static int curr_tri=0;			/* number of triangles currently being used */
 
 #define TRI_BLOCK 512			/* number of triangles to malloc per call */
 
+static int *part_norms=NULL;		/* list of indices into normals (matches part_tris) */
+
 static FILE *outfp=NULL;		/* output file */
 
 static ProCharName curr_part_name;	/* current part name */
 static ProCharName curr_asm_name;	/* current assembly name */
+static ProFeattype curr_feat_type;	/* current feature type */
+
+static struct bu_ptbl search_path_list;	/* parsed list of search path directories */
+static ProName assem_ext;		/* "asm" */
+static ProName part_ext;		/* "prt" */
+
 static ProCharLine astr;		/* buffer for Pro/E output messages */
 
+#define DONE_BLOCK 512			/* number of slots to malloc when above array gets full */
+
+#define COPY_BUFFER_SIZE	1024
+
+/* global variables for dimension visits */
+static double radius=0.0, diameter=0.0, distance1=0.0, distance2=0.0;
+static int got_diameter=0, got_distance1=0;
+static int hole_type;
+static int add_cbore;
+static int add_csink;
+static int hole_depth_type;
+
+static double cb_depth=0.0;		/* counter-bore depth */
+static double cb_diam=0.0;		/* counter-bore diam */
+static double cs_diam=0.0;		/* counter-sink diam */
+static double cs_angle=0.0;		/* counter-sink angle */
+static double hole_diam=0.0;		/* drilled hle diameter */
+static double hole_depth=0.0;		/* drilled hole depth */
+static double drill_angle=0.0;		/* drill tip angle */
+#define MIN_RADIUS	1.0e-7		/* BRL-CAD does not allow tgc's with zero radius */
+static Pro3dPnt end1, end2;		/* axis endpoints for holes */
 static bu_rb_tree *done_list_part=NULL;	/* list of parts already done */
 static bu_rb_tree *done_list_asm=NULL;	/* list of assemblies already done */
 
 /* declaration of functions passed to the feature visit routine */
 static ProError assembly_comp( ProFeature *feat, ProError status, ProAppData app_data );
 static ProError assembly_filter( ProFeature *feat, ProAppData *data );
+
+/* structure to hold info about CSG operations for current part */
+struct csg_ops {
+	char operator;
+	struct bu_vls name;
+	struct bu_vls dbput;
+	struct csg_ops *next;
+};
+struct csg_ops *csg_root;
+static int hole_no=0;	/* hole counter for unique names */
+static char *tgc_format="tgc V {%.25G %.25G %.25G} H {%.25G %.25G %.25G} A {%.25G %.25G %.25G} B {%.25G %.25G %.25G} C {%.25G %.25G %.25G} D {%.25G %.25G %.25G}\n";
 
 /* structure to hold info about a member of the current asssembly
  * this structure is created during feature visit
@@ -108,51 +169,376 @@ struct empty_parts {
 
 static struct empty_parts *empty_parts_root=NULL;
 
-/* structure to make vertex searching fast
- * Each leaf represents a vertex, and has an index into the
- * part_verts array.
- * Each node is a cutting plane at the "cut_val" on the "coord" (0, 1, or 2) axis.
- * All vertices with "coord" value less than the "cut_val" are in the "lower"
- * subtree, others are in the "higher".
- */
-union vert_tree {
-	char type;
-	struct vert_leaf {
-		char type;
-		int index;
-	} vleaf;
-	struct vert_node {
-		char type;
-		double cut_val;
-		int coord;
-		union vert_tree *higher, *lower;
-	} vnode;
-} *vert_root=NULL;
+#define NUM_OBJ_TYPES 629
+int obj_type_count[NUM_OBJ_TYPES];
+char *obj_type[NUM_OBJ_TYPES];
 
-/* types for the above "vert_tree" */
-#define VERT_LEAF	'l'
-#define VERT_NODE	'n'
+#define NUM_FEAT_TYPES 314
+#define FEAT_TYPE_OFFSET 910
+int feat_type_count[NUM_FEAT_TYPES];
+char *feat_type[NUM_FEAT_TYPES];
 
+void
+do_initialize()
+{
+	int i;
+
+	/* initailize */
+	bu_ptbl_init( &search_path_list, 8, "search_path" );
+
+	ProStringToWstring( assem_ext, "asm" );
+	ProStringToWstring( part_ext, "prt" );
+
+	csg_root = NULL;
+	for( i=0 ; i<NUM_OBJ_TYPES ; i++ ) {
+		obj_type_count[i] = 0;
+		obj_type[i] = NULL;
+	}
+
+	for( i=0 ; i<NUM_FEAT_TYPES ; i++ ) {
+		feat_type_count[i] = 0;
+		feat_type[i] = NULL;
+	}
+
+	obj_type[0] = "PRO_TYPE_UNUSED";
+	obj_type[1] = "PRO_ASSEMBLY";
+	obj_type[2] = "PRO_PART";
+	obj_type[3] = "PRO_FEATURE";
+	obj_type[4] = "PRO_DRAWING";
+	obj_type[5] = "PRO_SURFACE";
+	obj_type[6] = "PRO_EDGE";
+	obj_type[7] = "PRO_3DSECTION";
+	obj_type[8] = "PRO_DIMENSION";
+	obj_type[11] = "PRO_2DSECTION";
+	obj_type[12] = "PRO_PAT_MEMBER";
+	obj_type[13] = "PRO_PAT_LEADER";
+	obj_type[19] = "PRO_LAYOUT";
+	obj_type[21] = "PRO_AXIS";
+	obj_type[25] = "PRO_CSYS";
+	obj_type[28] = "PRO_REF_DIMENSION";
+	obj_type[32] = "PRO_GTOL";
+	obj_type[33] = "PRO_DWGFORM";
+	obj_type[34] = "PRO_SUB_ASSEMBLY";
+	obj_type[37] = "PRO_MFG";
+	obj_type[57] = "PRO_QUILT";
+	obj_type[62] = "PRO_CURVE";
+	obj_type[66] = "PRO_POINT";
+	obj_type[68] = "PRO_NOTE";
+	obj_type[69] = "PRO_IPAR_NOTE";
+	obj_type[71] = "PRO_EDGE_START";
+	obj_type[72] = "PRO_EDGE_END";
+	obj_type[74] = "PRO_CRV_START";
+	obj_type[75] = "PRO_CRV_END";
+	obj_type[76] = "PRO_SYMBOL_INSTANCE";
+	obj_type[77] = "PRO_DRAFT_ENTITY";
+	obj_type[79] = "PRO_DRAFT_DATUM";
+	obj_type[83] = "PRO_DRAFT_GROUP";
+	obj_type[84] = "PRO_DRAW_TABLE";
+	obj_type[92] = "PRO_VIEW";
+	obj_type[96] = "PRO_CABLE";
+	obj_type[105] = "PRO_REPORT";
+	obj_type[116] = "PRO_MARKUP";
+	obj_type[117] = "PRO_LAYER";
+	obj_type[121] = "PRO_DIAGRAM";
+	obj_type[133] = "PRO_SKETCH_ENTITY";
+	obj_type[144] = "PRO_DATUM_TEXT";
+	obj_type[145] = "PRO_ENTITY_TEXT";
+	obj_type[147] = "PRO_DRAW_TABLE_CELL";
+	obj_type[176] = "PRO_DATUM_PLANE";
+	obj_type[180] = "PRO_COMP_CRV";
+	obj_type[211] = "PRO_BND_TABLE";
+	obj_type[240] = "PRO_PARAMETER";
+	obj_type[305] = "PRO_DIAGRAM_OBJECT";
+	obj_type[308] = "PRO_DIAGRAM_WIRE";
+	obj_type[309] = "PRO_SIMP_REP";
+	obj_type[371] = "PRO_WELD_PARAMS";
+	obj_type[377] = "PRO_SNAP_LINE";
+	obj_type[385] = "PRO_EXTOBJ";
+	obj_type[500] = "PRO_EXPLD_STATE";
+	obj_type[504] = "PRO_CABLE_LOCATION";
+	obj_type[533] = "PRO_RELSET";
+	obj_type[555] = "PRO_ANALYSIS";
+	obj_type[556] = "PRO_SURF_CRV";
+	obj_type[625] = "PRO_LOG_SRF";
+	obj_type[622] = "PRO_SOLID_GEOMETRY";
+	obj_type[626] = "PRO_LOG_EDG";
+	obj_type[627] = "PRO_DESKTOP";
+	obj_type[628] = "PRO_SYMBOL_DEFINITION";
+
+	feat_type[0] = "PRO_FEAT_FIRST_FEAT";
+	feat_type[911 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HOLE";
+	feat_type[912 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHAFT";
+	feat_type[913 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ROUND";
+	feat_type[914 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CHAMFER";
+	feat_type[915 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLOT";
+	feat_type[916 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT";
+	feat_type[917 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PROTRUSION";
+	feat_type[918 - FEAT_TYPE_OFFSET] = "PRO_FEAT_NECK";
+	feat_type[919 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLANGE";
+	feat_type[920 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIB";
+	feat_type[921 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EAR";
+	feat_type[922 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DOME";
+	feat_type[923 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM";
+	feat_type[924 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LOC_PUSH";
+	feat_type[925 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF";
+	feat_type[926 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_AXIS";
+	feat_type[927 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRAFT";
+	feat_type[928 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHELL";
+	feat_type[929 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DOME2";
+	feat_type[930 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CORN_CHAMF";
+	feat_type[931 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_POINT";
+	feat_type[932 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IMPORT";
+	feat_type[932 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IGES";
+	feat_type[933 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COSMETIC";
+	feat_type[934 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ETCH";
+	feat_type[935 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MERGE";
+	feat_type[936 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MOLD";
+	feat_type[937 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SAW";
+	feat_type[938 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TURN";
+	feat_type[939 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MILL";
+	feat_type[940 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRILL";
+	feat_type[941 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OFFSET";
+	feat_type[942 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_SURF";
+	feat_type[943 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REPLACE_SURF";
+	feat_type[944 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GROOVE";
+	feat_type[945 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE";
+	feat_type[946 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DATUM_QUILT";
+	feat_type[947 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSEM_CUT";
+	feat_type[948 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_THREAD";
+	feat_type[949 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CURVE";
+	feat_type[950 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SRF_MDL";
+	feat_type[952 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WALL";
+	feat_type[953 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEND";
+	feat_type[954 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UNBEND";
+	feat_type[955 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT_SMT";
+	feat_type[956 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FORM";
+	feat_type[957 - FEAT_TYPE_OFFSET] = "PRO_FEAT_THICKEN";
+	feat_type[958 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEND_BACK";
+	feat_type[959 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_NOTCH";
+	feat_type[960 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_PUNCH";
+	feat_type[961 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INT_UDF";
+	feat_type[962 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPLIT_SURF";
+	feat_type[963 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GRAPH";
+	feat_type[964 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_PUNCH";
+	feat_type[965 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_CUT";
+	feat_type[966 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLATTEN";
+	feat_type[967 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SET";
+	feat_type[968 - FEAT_TYPE_OFFSET] = "PRO_FEAT_VDA";
+	feat_type[969 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_MFG_FORM";
+	feat_type[970 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_PUNCH_PNT";
+	feat_type[971 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LIP";
+	feat_type[972 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MANUAL";
+	feat_type[973 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_GATHER";
+	feat_type[974 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_TRIM";
+	feat_type[975 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_USEVOL";
+	feat_type[976 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LOCATION";
+	feat_type[977 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE_SEGM";
+	feat_type[978 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE";
+	feat_type[979 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CSYS";
+	feat_type[980 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CHANNEL";
+	feat_type[937 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WIRE_EDM";
+	feat_type[981 - FEAT_TYPE_OFFSET] = "PRO_FEAT_AREA_NIBBLE";
+	feat_type[982 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PATCH";
+	feat_type[983 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PLY";
+	feat_type[984 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CORE";
+	feat_type[985 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXTRACT";
+	feat_type[986 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_REFINE";
+	feat_type[987 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SILH_TRIM";
+	feat_type[988 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPLIT";
+	feat_type[989 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXTEND";
+	feat_type[990 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SOLIDIFY";
+	feat_type[991 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INTERSECT";
+	feat_type[992 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ATTACH";
+	feat_type[993 - FEAT_TYPE_OFFSET] = "PRO_FEAT_XSEC";
+	feat_type[994 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_ZONE";
+	feat_type[995 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_CLAMP";
+	feat_type[996 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRL_GRP";
+	feat_type[997 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ISEGM";
+	feat_type[998 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CABLE_COSM";
+	feat_type[999 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPOOL";
+	feat_type[1000 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COMPONENT";
+	feat_type[1001 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MFG_MERGE";
+	feat_type[1002 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FIXSETUP";
+	feat_type[1002 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SETUP";
+	feat_type[1003 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLAT_PAT";
+	feat_type[1004 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CONT_MAP";
+	feat_type[1005 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXP_RATIO";
+	feat_type[1006 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIP";
+	feat_type[1007 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OPERATION";
+	feat_type[1008 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WORKCELL";
+	feat_type[1009 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUT_MOTION";
+	feat_type[1013 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BLD_PATH";
+	feat_type[1013 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CUSTOMIZE";
+	feat_type[1014 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_SKETCH";
+	feat_type[1015 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_EDGE";
+	feat_type[1016 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_CURVE";
+	feat_type[1017 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_SURF";
+	feat_type[1018 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MAT_REMOVAL";
+	feat_type[1019 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TORUS";
+	feat_type[1020 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_SET_START";
+	feat_type[1021 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_PNT_PNT";
+	feat_type[1022 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_EXT";
+	feat_type[1023 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_TRIM";
+	feat_type[1024 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_FOLL";
+	feat_type[1025 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_JOIN";
+	feat_type[1026 - FEAT_TYPE_OFFSET] = "PRO_FEAT_AUXILIARY";
+	feat_type[1027 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_LINE";
+	feat_type[1028 - FEAT_TYPE_OFFSET] = "PRO_FEAT_LINE_STOCK";
+	feat_type[1029 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLD_PIPE ";
+	feat_type[1030 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BULK_OBJECT";
+	feat_type[1031 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHRINKAGE  ";
+	feat_type[1032 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_JOINT ";
+	feat_type[1033 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PIPE_BRANCH ";
+	feat_type[1034 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_TWO_CNTR";
+	feat_type[1035 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SUBHARNESS";
+	feat_type[1036 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_OPTIMIZE";
+	feat_type[1037 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DECLARE";
+	feat_type[1038 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_POPULATE";
+	feat_type[1039 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OPER_COMP";
+	feat_type[1040 - FEAT_TYPE_OFFSET] = "PRO_FEAT_MEASURE";
+	feat_type[1041 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRAFT_LINE";
+	feat_type[1042 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REMOVE_SURFS";
+	feat_type[1043 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_CABLE";
+	feat_type[1046 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ATTACH_VOLUME";
+	feat_type[1047 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BLD_OPERATION";
+	feat_type[1048 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_WRK_REG";
+	feat_type[1049 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPINAL_BEND";
+	feat_type[1050 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TWIST";
+	feat_type[1051 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FREE_FORM";
+	feat_type[1052 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ZONE";
+	feat_type[1053 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELDING_ROD";
+	feat_type[1054 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_FILLET";
+	feat_type[1055 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_GROOVE";
+	feat_type[1056 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_PLUG_SLOT";
+	feat_type[1057 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_SPOT";
+	feat_type[1058 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_SHEAR";
+	feat_type[1059 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PATH_SEGM";
+	feat_type[1060 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_SEGM";
+	feat_type[1059 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_PATH";
+	feat_type[1060 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_EXTEND";
+	feat_type[1061 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASMCUT_COPY";
+	feat_type[1062 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DEFORM_AREA";
+	feat_type[1063 - FEAT_TYPE_OFFSET] = "PRO_FEAT_RIBBON_SOLID";
+	feat_type[1064 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLAT_RIBBON_SEGM";
+	feat_type[1065 - FEAT_TYPE_OFFSET] = "PRO_FEAT_POSITION_FOLD";
+	feat_type[1066 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SPRING_BACK";
+	feat_type[1067 - FEAT_TYPE_OFFSET] = "PRO_FEAT_BEAM_SECTION";
+	feat_type[1068 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHRINK_DIM";
+	feat_type[1070 - FEAT_TYPE_OFFSET] = "PRO_FEAT_THREAD";
+	feat_type[1071 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CONVERSION";
+	feat_type[1072 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_MEASSTEP";
+	feat_type[1073 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_CONSTR";
+	feat_type[1074 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CMM_VERIFY";
+	feat_type[1075 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_SCAN_SET";
+	feat_type[1076 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_FIT";
+	feat_type[1077 - FEAT_TYPE_OFFSET] = "PRO_FEAT_CAV_DEVIATION";
+	feat_type[1078 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_ZONE";
+	feat_type[1079 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CLAMP";
+	feat_type[1080 - FEAT_TYPE_OFFSET] = "PRO_FEAT_PROCESS_STEP";
+	feat_type[1081 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EDGE_BEND";
+	feat_type[1082 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_PROF";
+	feat_type[1083 - FEAT_TYPE_OFFSET] = "PRO_FEAT_EXPLODE_LINE";
+	feat_type[1084 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GEOM_COPY";
+	feat_type[1085 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ANALYSIS";
+	feat_type[1086 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WATER_LINE";
+	feat_type[1087 - FEAT_TYPE_OFFSET] = "PRO_FEAT_UDF_RMDT";
+	feat_type[1088 - FEAT_TYPE_OFFSET] = "PRO_FEAT_VOL_SPLIT";
+	feat_type[1089 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WLD_EDG_PREP";
+	feat_type[1090 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_OFFSET";
+	feat_type[1091 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_MATREM";
+	feat_type[1092 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_COSMETIC";
+	feat_type[1093 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_APPROACH";
+	feat_type[1094 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_SLOT";
+	feat_type[1095 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMM_SHAPE";
+	feat_type[1096 - FEAT_TYPE_OFFSET] = "PRO_FEAT_IPM_QUILT";
+	feat_type[1097 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRVD";
+	feat_type[1098 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_CRN_REL";
+	feat_type[1101 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLDBEND";
+	feat_type[1102 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FLATQLT ";
+	feat_type[1103 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DRV_TOOL_TURN ";
+	feat_type[1104 - FEAT_TYPE_OFFSET] = "PRO_FEAT_GROUP_HEAD";
+	feat_type[1211 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_PLATE";
+	feat_type[1212 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_HOLE  ";
+	feat_type[1213 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_CUTOUT";
+	feat_type[1214 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_STIFFENER";
+	feat_type[1215 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BEAM";
+	feat_type[1216 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_ENDCUT";
+	feat_type[1217 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_WLD_FLANGE";
+	feat_type[1218 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_COLLAR";
+	feat_type[1219 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_DRAW";
+	feat_type[1220 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BRACKET";
+	feat_type[1221 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_FOLDED_FLG";
+	feat_type[1222 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BLOCK";
+	feat_type[1223 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_BLOCK_DEF";
+	feat_type[1105 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FR_SYS";
+	feat_type[1106 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_COMPT";
+	feat_type[1107 - FEAT_TYPE_OFFSET] = "PRO_FEAT_REFERENCE";
+	feat_type[1108 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SHELL_EXP";
+	feat_type[1109 - FEAT_TYPE_OFFSET] = "PRO_FEAT_FREEFORM";
+	feat_type[1110 - FEAT_TYPE_OFFSET] = "PRO_FEAT_KERNEL ";
+	feat_type[1111 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WELD_PROCESS";
+	feat_type[1112 - FEAT_TYPE_OFFSET] = "PRO_FEAT_HULL_REP_TMP";
+	feat_type[1113 - FEAT_TYPE_OFFSET] = "PRO_FEAT_INSULATION";
+	feat_type[1114 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SLD_PIP_INSUL";
+	feat_type[1115 - FEAT_TYPE_OFFSET] = "PRO_FEAT_SMT_EXTRACT";
+	feat_type[1116 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSY_MERGE";
+	feat_type[1117 - FEAT_TYPE_OFFSET] = "PRO_FEAT_DS_OPTIMIZE";
+	feat_type[1118 - FEAT_TYPE_OFFSET] = "PRO_FEAT_COMP_INTERFACE";
+	feat_type[1119 - FEAT_TYPE_OFFSET] = "PRO_FEAT_OLE";
+	feat_type[1120 - FEAT_TYPE_OFFSET] = "PRO_FEAT_TERMINATOR";
+	feat_type[1121 - FEAT_TYPE_OFFSET] = "PRO_FEAT_WLD_NOTCH";
+	feat_type[1122 - FEAT_TYPE_OFFSET] = "PRO_FEAT_ASSY_WLD_NOTCH";
+
+}
+
+void
+model_units( ProMdl model )
+{
+	int unit_subtype;
+	wchar_t unit_name[PRO_NAME_SIZE];
+	double proe_conv;
+
+	/* get units, and adjust conversion factor */
+	if( prodb_get_model_units( model, LENGTH_UNIT, &unit_subtype,
+				   unit_name, &proe_conv ) ) {
+		if( unit_subtype == UNIT_MM )
+			proe_to_brl_conv = 1.0;
+		else
+			proe_to_brl_conv = proe_conv * 25.4;
+	} else {
+		ProMessageDisplay(MSGFIL, "USER_NO_UNITS" );
+		ProMessageClear();
+		fprintf( stderr, "No units specified, assuming inches\n" );
+		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+		proe_to_brl_conv = 25.4;
+	}
+
+	/* adjust tolerance for Pro/E units */
+	local_tol = tol_dist / proe_to_brl_conv;
+	local_tol_sq = local_tol * local_tol;
+}
+
+/* routine to free the list of CSG operations */
+void
+free_csg_ops()
+{
+	struct csg_ops *ptr1, *ptr2;
+
+	ptr1 = csg_root;
+
+	while( ptr1 ) {
+		ptr2 = ptr1->next;
+		bu_vls_free( &ptr1->name );
+		bu_vls_free( &ptr1->dbput );
+		free( ptr1 );
+		ptr1 = ptr2;
+	}
+
+	csg_root = NULL;
+}
 
 void doit( char *dialog, char *compnent, ProAppData appdata );
 void do_quit( char *dialog, char *compnent, ProAppData appdata );
-
-/* routine to free the "vert_tree"
- * called after each part is output
- */
-void
-free_vert_tree( union vert_tree *ptr )
-{
-	if( !ptr )
-		return;
-
-	if( ptr->type == VERT_NODE ) {
-		free_vert_tree( ptr->vnode.higher );
-		free_vert_tree( ptr->vnode.lower );
-	}
-
-	free( (char *)ptr );
-}
 
 void
 add_to_done_part( wchar_t *name )
@@ -262,8 +648,8 @@ kill_empty_parts()
 
 	ptr = empty_parts_root;
 	while( ptr ) {
-		fprintf( outfp, "set combs [dbfind %s]\n", ptr->name );
-		fprintf( outfp, "foreach comb $combs {\n\trm $comb %s\n}\n", ptr->name );
+		fprintf( outfp, "set combs [find %s]\n", ptr->name );
+		fprintf( outfp, "foreach comb $combs {\n\tcatch {rm $comb %s}\n}\n", ptr->name );
 		ptr = ptr->next;
 	}
 }
@@ -288,7 +674,7 @@ free_empty_parts()
  * only checks for triangles with duplicate vertices
  */
 int
-bad_triangle( int v1, int v2, int v3, ProVector *vertices )
+bad_triangle( int v1, int v2, int v3 )
 {
 	double dist;
 	double coord;
@@ -299,7 +685,7 @@ bad_triangle( int v1, int v2, int v3, ProVector *vertices )
 
 	dist = 0;
 	for( i=0 ; i<3 ; i++ ) {
-		coord = vertices[v1][i] - vertices[v2][i];
+		coord = vert_tree_root->the_array[v1*3+i] - vert_tree_root->the_array[v2*3+i];
 		dist += coord * coord;
 	}
 	dist = sqrt( dist );
@@ -309,7 +695,7 @@ bad_triangle( int v1, int v2, int v3, ProVector *vertices )
 
 	dist = 0;
 	for( i=0 ; i<3 ; i++ ) {
-		coord = vertices[v2][i] - vertices[v3][i];
+		coord = vert_tree_root->the_array[v2*3+i] - vert_tree_root->the_array[v3*3+i];
 		dist += coord * coord;
 	}
 	dist = sqrt( dist );
@@ -319,7 +705,7 @@ bad_triangle( int v1, int v2, int v3, ProVector *vertices )
 
 	dist = 0;
 	for( i=0 ; i<3 ; i++ ) {
-		coord = vertices[v1][i] - vertices[v3][i];
+		coord = vert_tree_root->the_array[v1*3+i] - vert_tree_root->the_array[v3*3+i];
 		dist += coord * coord;
 	}
 	dist = sqrt( dist );
@@ -330,121 +716,37 @@ bad_triangle( int v1, int v2, int v3, ProVector *vertices )
 	return( 0 );
 }
 
-/* routine to add a vertex to the current list of part vertices */
-int
-Add_vert( ProVector vertex )
+/* routine to add a new triangle and its normals to the current part */
+void
+add_triangle_and_normal( int v1, int v2, int v3, int n1, int n2, int n3 )
 {
-	int i;
-	union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
-	ProVector diff;
-
-	/* look for this vertex already in the list */
-	ptr = vert_root;
-	while( ptr ) {
-		if( ptr->type == VERT_NODE ) {
-			prev = ptr;
-			if( vertex[ptr->vnode.coord] >= ptr->vnode.cut_val ) {
-				ptr = ptr->vnode.higher;
-			} else {
-				ptr = ptr->vnode.lower;
-			}
-		} else {
-			diff[0] = fabs( vertex[0] - part_verts[ptr->vleaf.index][0] ); 
-			diff[1] = fabs( vertex[1] - part_verts[ptr->vleaf.index][1] ); 
-			diff[2] = fabs( vertex[2] - part_verts[ptr->vleaf.index][2] ); 
-			if( (diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]) <= local_tol_sq ) {
-				/* close enough, use this vertex again */
-				return( ptr->vleaf.index );
-			}
-			break;
-		}
-	}
-
-	/* add this vertex to the list */
-	if( curr_vert >= max_vert ) {
-		/* allocate more memory for vertices */
-		max_vert += VERT_BLOCK;
-
-		part_verts = (ProVector *)realloc( part_verts, sizeof( ProVector ) * max_vert );
-		if( !part_verts ) {
+	if( curr_tri >= max_tri ) {
+		/* allocate more memory for triangles and normals */
+		max_tri += TRI_BLOCK;
+		part_tris = (ProTriangle *)realloc( part_tris, sizeof( ProTriangle ) * max_tri );
+		if( !part_tris ) {
 			(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
-						"Failed to allocate memory for part vertices" );
-			fprintf( stderr, "Failed to allocate memory for part vertices\n" );
+						"Failed to allocate memory for part triangles" );
+			fprintf( stderr, "Failed to allocate memory for part triangles\n" );
 			(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 			exit( 1 );
 		}
+		part_norms = (int *)realloc( part_norms, sizeof( int ) * max_tri * 3 );
 	}
 
-	part_verts[curr_vert][0] = vertex[0];
-	part_verts[curr_vert][1] = vertex[1];
-	part_verts[curr_vert][2] = vertex[2];
+	/* fill in triangle info */
+	part_tris[curr_tri][0] = v1;
+	part_tris[curr_tri][1] = v2;
+	part_tris[curr_tri][2] = v3;
 
-	/* add to the tree also */
-	new_leaf = (union vert_tree *)malloc( sizeof( union vert_tree ) );
-	new_leaf->vleaf.type = VERT_LEAF;
-	new_leaf->vleaf.index = curr_vert++;
-	if( !vert_root ) {
-		/* first vertex, it becomes the root */
-		vert_root = new_leaf;
-	} else if( ptr && ptr->type == VERT_LEAF ) {
-		/* search above ended at a leaf, need to add a node above this leaf and the new leaf */
-		new_node = (union vert_tree *)malloc( sizeof( union vert_tree ) );
-		new_node->vnode.type = VERT_NODE;
+	part_norms[curr_tri*3]     = n1;
+	part_norms[curr_tri*3 + 1] = n2;
+	part_norms[curr_tri*3 + 2] = n3;
 
-		/* select the cutting coord based on the biggest difference */
-		if( diff[0] >= diff[1] && diff[0] >= diff[2] ) {
-			new_node->vnode.coord = 0;
-		} else if( diff[1] >= diff[2] && diff[1] >= diff[0] ) {
-			new_node->vnode.coord = 1;
-		} else if( diff[2] >= diff[1] && diff[2] >= diff[0] ) {
-			new_node->vnode.coord = 2;
-		}
-
-		/* set the cut value to the mid value between the two vertices */
-		new_node->vnode.cut_val = (vertex[new_node->vnode.coord] +
-					   part_verts[ptr->vleaf.index][new_node->vnode.coord]) * 0.5;
-
-		/* set the node "lower" nad "higher" pointers */
-		if( vertex[new_node->vnode.coord] >= part_verts[ptr->vleaf.index][new_node->vnode.coord] ) {
-			new_node->vnode.higher = new_leaf;
-			new_node->vnode.lower = ptr;
-		} else {
-			new_node->vnode.higher = ptr;
-			new_node->vnode.lower = new_leaf;
-		}
-
-		if( ptr == vert_root ) {
-			/* if the above search ended at the root, redefine the root */
-			vert_root =  new_node;
-		} else {
-			/* set the previous node to point to our new one */
-			if( prev->vnode.higher == ptr ) {
-				prev->vnode.higher = new_node;
-			} else {
-				prev->vnode.lower = new_node;
-			}
-		}
-	} else if( ptr && ptr->type == VERT_NODE ) {
-		/* above search ended at a node, just add the new leaf */
-		prev = ptr;
-		if( vertex[prev->vnode.coord] >= prev->vnode.cut_val ) {
-			if( prev->vnode.higher ) {
-				exit(1);
-			}
-			prev->vnode.higher = new_leaf;
-		} else {
-			if( prev->vnode.lower ) {
-				exit(1);
-			}
-			prev->vnode.lower = new_leaf;
-		}
-	} else {
-		fprintf( stderr, "*********ERROR********\n" );
-	}
-
-	/* return the index into the vertex array */
-	return( new_leaf->vleaf.index );
+	/* increment count */
+	curr_tri++;
 }
+
 
 /* routine to add a new triangle to the current part */
 void
@@ -472,6 +774,713 @@ add_triangle( int v1, int v2, int v3 )
 	curr_tri++;
 }
 
+ProError
+check_dimension( ProDimension *dim, ProError status, ProAppData data )
+{
+	ProDimensiontype dim_type;
+	ProError ret;
+	double tmp;
+
+	if( (ret=ProDimensionTypeGet( dim, &dim_type ) ) != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "ProDimensionTypeGet Failed for %s\n", curr_part_name );
+		return ret;
+	}
+
+	switch( dim_type ) {
+		case PRODIMTYPE_RADIUS:
+			if( (ret=ProDimensionValueGet( dim, &radius ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
+				return ret;
+			}
+			diameter = 2.0 * radius;
+			got_diameter = 1;
+			break;
+		case PRODIMTYPE_DIAMETER:
+			if( (ret=ProDimensionValueGet( dim, &diameter ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
+				return ret;
+			}
+			radius = diameter / 2.0;
+			got_diameter = 1;
+			break;
+		case PRODIMTYPE_LINEAR:
+			if( (ret=ProDimensionValueGet( dim, &tmp ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "ProDimensionValueGet Failed for %s\n", curr_part_name );
+				return ret;
+			}
+			if( got_distance1 ) {
+				distance2 = tmp;
+			} else {
+				got_distance1 = 1;
+				distance1 = tmp;
+			}
+			break;
+	}
+
+	return PRO_TK_NO_ERROR;
+}
+
+ProError
+dimension_filter( ProDimension *dim, ProAppData data ) {
+	return PRO_TK_NO_ERROR;
+}
+
+void
+Add_to_feature_delete_list( int id )
+{
+	if( feat_id_count >= feat_id_len ) {
+		feat_id_len += FEAT_ID_BLOCK;
+		feat_ids_to_delete = (int *)realloc( (char *)feat_ids_to_delete,
+						     feat_id_len * sizeof( int ) );
+
+	}
+	feat_ids_to_delete[feat_id_count++] = id;
+}
+
+ProError
+geomitem_visit( ProGeomitem *item, ProError status, ProAppData data )
+{
+	ProGeomitemdata *geom;
+	ProCurvedata *crv;
+	ProError ret;
+
+	if( (ret=ProGeomitemdataGet( item, &geom )) != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to get geomitem for type %d\n",
+			 item->type );
+		return ret;
+	}
+
+	crv = PRO_CURVE_DATA( geom );
+	if( (ret=ProLinedataGet( crv, end1, end2 ) ) != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to get line data for axis\n" );
+		return ret;
+	}
+
+	return PRO_TK_NO_ERROR;
+}
+
+ProError
+geomitem_filter( ProGeomitem *item, ProAppData data )
+{
+	return PRO_TK_NO_ERROR;
+}
+
+ProError
+hole_elem_visit( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data )
+{
+	ProError ret;
+	ProElemId elem_id;
+	ProValue val_junk;
+	ProValueData val;
+
+	if( (ret=ProElementIdGet( elem, &elem_id ) ) != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to get element id!!!\n" );
+		return ret;
+	}
+
+	switch( elem_id ) {
+		case PRO_E_HLE_ADD_CBORE:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			add_cbore = val.v.i;
+			break;
+		case PRO_E_HLE_ADD_CSINK:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			add_csink = val.v.i;
+			break;
+		case PRO_E_DIAMETER:
+			/* diameter of straight hole */
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			hole_diam = val.v.d;
+			break;
+		case PRO_E_HLE_HOLEDIAM:
+			/* diameter of main portion of standard drilled hole */
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			hole_diam = val.v.d;
+			break;
+		case PRO_E_HLE_CBOREDEPTH:
+			/* depth of counterbore */
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			cb_depth = val.v.d;
+			break;
+		case PRO_E_HLE_CBOREDIAM:
+			/* diameter of counterbore */
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			cb_diam = val.v.d;
+			break;
+		case PRO_E_HLE_CSINKANGLE:
+			/* angle of countersink (degrees ) */
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			cs_angle = val.v.d;
+			break;
+		case PRO_E_HLE_CSINKDIAM:
+			/* diameter of countersink */
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			cs_diam = val.v.d;
+			break;
+		case PRO_E_HLE_DRILLDEPTH:
+			/* overall depth of standard drilled hole without drill tip */
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			hole_depth = val.v.d;
+			break;
+		case PRO_E_HLE_DRILLANGLE:
+			/* drill tip angle (degrees) */
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			drill_angle = val.v.d;
+			break;
+		case PRO_E_HLE_DEPTH:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			hole_depth_type = val.v.i;
+			break;
+		case PRO_E_HLE_TYPE_NEW:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			hole_type = val.v.i;
+			break;
+		case PRO_E_HLE_STAN_TYPE:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			break;
+		case PRO_E_STD_EDGE_CHAMF_DIM1:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			break;
+		case PRO_E_STD_EDGE_CHAMF_DIM2:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			break;
+		case PRO_E_STD_EDGE_CHAMF_ANGLE:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			break;
+		case PRO_E_STD_EDGE_CHAMF_DIM:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			break;
+		case PRO_E_STD_EDGE_CHAMF_SCHEME:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			break;
+		case PRO_E_EXT_DEPTH_FROM_VALUE:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			break;
+		case PRO_E_EXT_DEPTH_TO_VALUE:
+			if( (ret=ProElementValueGet( elem, &val_junk )) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value\n" );
+				return ret;
+			}
+			if( (ret=ProValueDataGet( val_junk, &val ) ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to get value data\n" );
+				return ret;
+			}
+			break;
+	}
+
+	return PRO_TK_NO_ERROR;
+}
+
+ProError
+hole_elem_filter( ProElement elem_tree, ProElement elem, ProElempath elem_path, ProAppData data )
+{
+	return PRO_TK_NO_ERROR;
+}
+
+/* Subtract_hole()
+ *	routine to create TGC primitives to make holes
+ *
+ *	return value:
+ *		0 - do not delete this hole feature before tessellating
+ *		1 - delete this hole feature before tessellating
+ */
+int
+Subtract_hole()
+{
+	struct csg_ops *csg;
+	vect_t a, b, c, d, h;
+
+	if( do_facets_only ) {
+		if( diameter < min_hole_diameter )
+			return 1;
+		else
+			return 0;
+	}
+
+	/* make a replacement hole using CSG */
+	if( hole_type == PRO_HLE_NEW_TYPE_STRAIGHT ) {
+		/* plain old striaght hole */
+
+		if( diameter < min_hole_diameter )
+			return 1;
+		if( !csg_root ) {
+			csg_root = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+			csg = csg_root;
+			csg->next = NULL;
+		} else {
+			csg = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+			csg->next = csg_root;
+			csg_root = csg;
+		}
+		bu_vls_init( &csg->name );
+		bu_vls_init( &csg->dbput );
+
+		csg->operator = '-';
+		hole_no++;
+		bu_vls_printf( &csg->name, "hole.%d ", hole_no );
+		VSUB2( h, end1, end2 );
+		bn_vec_ortho( a, h );
+		VCROSS( b, a, h );
+		VUNITIZE( b );
+		VSCALE( end2, end2, proe_to_brl_conv );
+		VSCALE( a, a, radius*proe_to_brl_conv );
+		VSCALE( b, b, radius*proe_to_brl_conv );
+		VSCALE( h, h, proe_to_brl_conv );
+		bu_vls_printf( &csg->dbput, tgc_format,
+			       V3ARGS( end2 ),
+			       V3ARGS( h ),
+			       V3ARGS( a ),
+			       V3ARGS( b ),
+			       V3ARGS( a ),
+			       V3ARGS( b ) );
+	} else if( hole_type == PRO_HLE_NEW_TYPE_STANDARD ) {
+		/* drilled hole with possible countersink and counterbore */
+		point_t start;
+		vect_t dir;
+		double cb_radius;
+		double accum_depth=0.0;
+		double hole_radius=hole_diam / 2.0;
+
+		if( hole_diam < min_hole_diameter )
+			return 1;
+
+		VSUB2( dir, end1, end2 );
+		VUNITIZE( dir );
+
+		VMOVE( start, end2 );
+		VSCALE( start, start, proe_to_brl_conv );
+
+		if( add_cbore == PRO_HLE_ADD_CBORE ) {
+
+			if( !csg_root ) {
+				csg_root = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg = csg_root;
+				csg->next = NULL;
+			} else {
+				csg = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg->next = csg_root;
+				csg_root = csg;
+			}
+			bu_vls_init( &csg->name );
+			bu_vls_init( &csg->dbput );
+			
+			csg->operator = '-';
+			hole_no++;
+			bu_vls_printf( &csg->name, "hole.%d ", hole_no );
+			bn_vec_ortho( a, dir );
+			VCROSS( b, a, dir );
+			VUNITIZE( b );
+			cb_radius = cb_diam * proe_to_brl_conv / 2.0;
+			VSCALE( a, a, cb_radius );
+			VSCALE( b, b, cb_radius );
+			VSCALE( h, dir, cb_depth * proe_to_brl_conv );
+			bu_vls_printf( &csg->dbput, tgc_format,
+			       V3ARGS( start ),
+			       V3ARGS( h ),
+			       V3ARGS( a ),
+			       V3ARGS( b ),
+			       V3ARGS( a ),
+			       V3ARGS( b ) );
+			VADD2( start, start, h );
+			accum_depth += cb_depth;
+			cb_diam = 0.0;
+			cb_depth = 0.0;
+		}
+		if( add_csink == PRO_HLE_ADD_CSINK ) {
+			double cs_depth;
+			double cs_radius=cs_diam / 2.0;
+
+			if( !csg_root ) {
+				csg_root = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg = csg_root;
+				csg->next = NULL;
+			} else {
+				csg = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg->next = csg_root;
+				csg_root = csg;
+			}
+			bu_vls_init( &csg->name );
+			bu_vls_init( &csg->dbput );
+			
+			csg->operator = '-';
+			hole_no++;
+			bu_vls_printf( &csg->name, "hole.%d ", hole_no );
+			cs_depth = (cs_diam - hole_diam) / (2.0 * tan( cs_angle * M_PI / 360.0 ) );
+			bn_vec_ortho( a, dir );
+			VCROSS( b, a, dir );
+			VUNITIZE( b );
+			VMOVE( c, a );
+			VMOVE( d, b );
+			VSCALE( h, dir, cs_depth * proe_to_brl_conv );
+			VSCALE( a, a, cs_radius * proe_to_brl_conv );
+			VSCALE( b, b, cs_radius * proe_to_brl_conv );
+			VSCALE( c, c, hole_diam * proe_to_brl_conv / 2.0 );
+			VSCALE( d, d, hole_diam * proe_to_brl_conv / 2.0 );
+			bu_vls_printf( &csg->dbput, tgc_format,
+			       V3ARGS( start ),
+			       V3ARGS( h ),
+			       V3ARGS( a ),
+			       V3ARGS( b ),
+			       V3ARGS( c ),
+			       V3ARGS( d ) );
+			VADD2( start, start, h );
+			accum_depth += cs_depth;
+			cs_diam = 0.0;
+			cs_angle = 0.0;
+		}
+
+		if( !csg_root ) {
+			csg_root = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+			csg = csg_root;
+			csg->next = NULL;
+		} else {
+			csg = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+			csg->next = csg_root;
+			csg_root = csg;
+		}
+		bu_vls_init( &csg->name );
+		bu_vls_init( &csg->dbput );
+			
+		csg->operator = '-';
+		hole_no++;
+		bu_vls_printf( &csg->name, "hole.%d ", hole_no );
+		bn_vec_ortho( a, dir );
+		VCROSS( b, a, dir );
+		VUNITIZE( b );
+		VMOVE( c, a );
+		VMOVE( d, b );
+		VSCALE( a, a, hole_radius * proe_to_brl_conv );
+		VSCALE( b, b, hole_radius * proe_to_brl_conv );
+		VSCALE( c, c, hole_radius * proe_to_brl_conv );
+		VSCALE( d, d, hole_radius * proe_to_brl_conv );
+		VSCALE( h, dir, (hole_depth - accum_depth) * proe_to_brl_conv );
+		bu_vls_printf( &csg->dbput, tgc_format,
+			       V3ARGS( start ),
+			       V3ARGS( h ),
+			       V3ARGS( a ),
+			       V3ARGS( b ),
+			       V3ARGS( c ),
+			       V3ARGS( d ) );
+		VADD2( start, start, h );
+		hole_diam = 0.0;
+		hole_depth = 0.0;
+		if( hole_depth_type == PRO_HLE_STD_VAR_DEPTH ) {
+			double tip_depth;
+
+			if( !csg_root ) {
+				csg_root = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg = csg_root;
+				csg->next = NULL;
+			} else {
+				csg = (struct csg_ops *)malloc( sizeof( struct csg_ops ) );
+				csg->next = csg_root;
+				csg_root = csg;
+			}
+			bu_vls_init( &csg->name );
+			bu_vls_init( &csg->dbput );
+			
+			csg->operator = '-';
+			hole_no++;
+			bu_vls_printf( &csg->name, "hole.%d ", hole_no );
+			bn_vec_ortho( a, dir );
+			VCROSS( b, a, dir );
+			VUNITIZE( b );
+			VMOVE( c, a );
+			VMOVE( d, b );
+			tip_depth = (hole_radius - MIN_RADIUS) / tan( drill_angle * M_PI / 360.0 );
+			VSCALE( h, dir, tip_depth * proe_to_brl_conv );
+			VSCALE( a, a, hole_radius * proe_to_brl_conv );
+			VSCALE( b, b, hole_radius * proe_to_brl_conv );
+			VSCALE( c, c, MIN_RADIUS );
+			VSCALE( d, d, MIN_RADIUS );
+			bu_vls_printf( &csg->dbput, tgc_format,
+			       V3ARGS( start ),
+			       V3ARGS( h ),
+			       V3ARGS( a ),
+			       V3ARGS( b ),
+			       V3ARGS( c ),
+			       V3ARGS( d ) );
+			drill_angle = 0.0;
+		}
+	} else {
+		fprintf( stderr, "Unrecognized hole type\n" );
+		return 0;
+	}
+
+	return 1;
+}
+
+ProError
+do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
+{
+	ProError ret;
+	ProElement elem_tree;
+	ProElempath elem_path=NULL;
+
+	if( (ret=ProFeatureElemtreeCreate( feat, &elem_tree ) ) == PRO_TK_NO_ERROR ) {
+		if( (ret=ProElemtreeElementVisit( elem_tree, elem_path,
+						  hole_elem_filter, hole_elem_visit,
+						  data ) ) != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Element visit failed for feature (%d) of %s\n",
+				 feat->id, curr_part_name );
+			if( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Error freeing element tree\n" );
+			}
+			return ret;
+		}
+		if( ProElementFree( &elem_tree ) != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Error freeing element tree\n" );
+		}
+	}
+
+	radius = 0.0;
+	diameter = 0.0;
+	distance1 = 0.0;
+	distance2 = 0.0;
+	got_diameter = 0;
+	got_distance1 = 0;
+
+	if( (ret=ProFeatureDimensionVisit( feat, check_dimension, dimension_filter, data ) ) !=
+	    PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "ProFeatureDimensionVisit Failed for %s!!\n", curr_part_name );
+	}
+
+	if( curr_feat_type == PRO_FEAT_HOLE ) {
+		/* need more info to recreate holes */
+		if( (ret=ProFeatureGeomitemVisit( feat, PRO_AXIS, geomitem_visit,
+				    geomitem_filter, data ) ) != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "ProFeatureGeomitemVisit failed for feature %d of %s\n",
+				 feat->id, curr_part_name );
+			return ret;
+		}
+	}
+
+	switch( curr_feat_type ) {
+		case PRO_FEAT_HOLE:
+			if( Subtract_hole() )
+				Add_to_feature_delete_list( feat->id );
+			break;
+		case PRO_FEAT_ROUND:
+			if( got_diameter && radius < min_round_radius ) {
+				Add_to_feature_delete_list( feat->id );
+			}
+			break;
+		case PRO_FEAT_CHAMFER:
+			if( got_distance1 && distance1 < min_chamfer_dim &&
+			    distance2 < min_chamfer_dim ) {
+				Add_to_feature_delete_list( feat->id );
+			}
+			break;
+	}
+
+
+	return ret;
+}
+
+
+/* this routine filters out which features should be visited by the feature visit initiated in
+ * the output_part() routine.
+ */
+ProError
+feature_filter( ProFeature *feat, ProAppData data )
+{
+	ProError ret;
+
+	if( (ret=ProFeatureTypeGet( feat, &curr_feat_type )) != PRO_TK_NO_ERROR ) {
+		
+		fprintf( stderr, "ProFeatureTypeGet Failed for %s!!\n", curr_part_name );
+		return ret;
+	}
+	if( curr_feat_type > 0 ) {
+		feat_type_count[curr_feat_type - FEAT_TYPE_OFFSET]++;
+	} else if( curr_feat_type == 0 ) {
+		feat_type_count[0]++;
+	}
+
+	/* handle holes, chamfers, and rounds only */
+	if( curr_feat_type == PRO_FEAT_HOLE ||
+	    curr_feat_type == PRO_FEAT_CHAMFER ||
+	    curr_feat_type == PRO_FEAT_ROUND ) {
+		return PRO_TK_NO_ERROR;
+	}
+
+	/* skip everything else */
+	return PRO_TK_CONTINUE;
+}
+
+void
+build_tree( char *sol_name, struct bu_vls *tree )
+{
+	struct csg_ops *ptr;
+
+	ptr = csg_root;
+	while( ptr ) {
+		bu_vls_printf( tree, "{%c ", ptr->operator );
+		ptr = ptr->next;
+	}
+
+	bu_vls_strcat( tree, "{ l " );
+	bu_vls_strcat( tree, sol_name );
+	bu_vls_putc( tree, '}' );
+	ptr = csg_root;
+	while( ptr ) {
+		bu_vls_printf( tree, " {l %s}}", bu_vls_addr( &ptr->name ) );
+		ptr = ptr->next;
+	}
+}
+
+void
+output_csg_prims()
+{
+	struct csg_ops *ptr;
+
+	ptr = csg_root;
+
+	while( ptr ) {
+		fprintf( outfp, "put %s %s", bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
+		ptr = ptr->next;
+	}
+}
+
+void
+kill_error_dialog( char *dialog, char *component, ProAppData appdata )
+{
+	(void)ProUIDialogDestroy( "proe_brl_error" );
+}
+
 /* routine to output a part as a BRL-CAD region with one BOT solid
  * The region will have the name from Pro/E.
  * The solid will have the same name with "s." prefix.
@@ -489,8 +1498,8 @@ output_part( ProMdl model )
 	char sol_name[PRO_NAME_SIZE + 30];
 	ProSurfaceTessellationData *tess=NULL;
 	ProError status;
+	ProMdlType type;
 	char str[PRO_NAME_SIZE + 1];
-	int surf_no;
 	int ret=0;
 	int ret_status=0;
 
@@ -502,6 +1511,11 @@ output_part( ProMdl model )
 	if( already_done_part( part_name ) )
 		return( 0 );
 
+	if( ProMdlTypeGet( model, &type ) != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to get part type\n" );
+	} else {
+		obj_type_count[type]++;
+	}
 	/* let user know we are doing something */
 #if 1
 	status = ProUILabelTextSet( "proe_brl", "curr_proc", part_name );
@@ -521,6 +1535,24 @@ output_part( ProMdl model )
 	ProMessageClear();
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 #endif
+
+	if( !do_facets_only || do_elims ) {
+		free_csg_ops();
+		ProSolidFeatVisit( ProMdlToSolid(model), do_feature_visit,
+				   feature_filter, (ProAppData)model );
+
+		if( feat_id_count ) {
+			fprintf( stderr, "suppressing %d features\n", feat_id_count );
+			if( (ret=ProFeatureSuppress( ProMdlToSolid(model),
+						   feat_ids_to_delete, feat_id_count,
+						   NULL, 0 )) != PRO_TK_NO_ERROR) {
+				fprintf( stderr, "Failed to delete %d features from %s\n",
+					 feat_id_count, curr_part_name );
+				return ret;
+			}
+			fprintf( stderr, "features suppressed!!\n" );
+		}
+	}
 
 	/* can get bounding box of a solid using "ProSolidOutlineGet"
 	 * may want to use this to implement relative facetization talerance
@@ -570,30 +1602,54 @@ output_part( ProMdl model )
 			ret = 2;
 		} else {
 			int i;
-			int v1, v2, v3;
+			int v1, v2, v3, n1, n2, n3;
 			int surfno;
 			int vert_no;
 			int stat;
 			ProName material;
+			struct bu_vls tree;
 
-			curr_vert = 0;
 			curr_tri = 0;
-			free_vert_tree(vert_root);
-			vert_root = (union vert_tree *)NULL;
+			clean_vert_tree(vert_tree_root);
+			clean_vert_tree(norm_tree_root);
 
 			/* add all vertices and triangles to our lists */
 			for( surfno=0 ; surfno<surface_count ; surfno++ ) {
 				for( i=0 ; i<tess[surfno].n_facets ; i++ ) {
+					/* grab the triangle */
 					vert_no = tess[surfno].facets[i][0];
-					v1 = Add_vert( tess[surfno].vertices[vert_no] );
+					v1 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+						       tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
 					vert_no = tess[surfno].facets[i][1];
-					v2 = Add_vert( tess[surfno].vertices[vert_no] );
+					v2 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+						       tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
 					vert_no = tess[surfno].facets[i][2];
-					v3 = Add_vert( tess[surfno].vertices[vert_no] );
-					if( bad_triangle( v1, v2, v3, part_verts ) ) {
+					v3 = Add_vert( tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+						       tess[surfno].vertices[vert_no][2], vert_tree_root, local_tol_sq );
+					if( bad_triangle( v1, v2, v3 ) ) {
 						continue;
 					}
-					add_triangle( v1, v2, v3 );
+
+					if( !get_normals ) {
+						add_triangle( v1, v2, v3 );
+						continue;
+					}
+
+					/* grab the surface normals */
+					vert_no = tess[surfno].facets[i][0];
+					VUNITIZE( tess[surfno].normals[vert_no] );
+					n1 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+						       tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
+					vert_no = tess[surfno].facets[i][1];
+					VUNITIZE( tess[surfno].normals[vert_no] );
+					n2 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+						       tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
+					vert_no = tess[surfno].facets[i][2];
+					VUNITIZE( tess[surfno].normals[vert_no] );
+					n3 = Add_vert( tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+						       tess[surfno].normals[vert_no][2], norm_tree_root, local_tol_sq );
+
+					add_triangle_and_normal( v1, v2, v3, n1, n2, n3 );
 				}
 			}
 
@@ -601,18 +1657,37 @@ output_part( ProMdl model )
 			/* first the BOT solid with a made-up name */
 			sprintf( sol_name, "s.%s", curr_part_name );
 			fprintf( outfp, "put %s bot mode volume orient no V { ", sol_name );
-			for( i=0 ; i<curr_vert ; i++ ) {
+			for( i=0 ; i<vert_tree_root->curr_vert ; i++ ) {
 				fprintf( outfp, " {%.12e %.12e %.12e}",
-					 part_verts[i][0] * proe_to_brl_conv,
-					 part_verts[i][1] * proe_to_brl_conv,
-					 part_verts[i][2] * proe_to_brl_conv );
+					 vert_tree_root->the_array[i*3] * proe_to_brl_conv,
+					 vert_tree_root->the_array[i*3+1] * proe_to_brl_conv,
+					 vert_tree_root->the_array[i*3+2] * proe_to_brl_conv );
 			}
 			fprintf( outfp, " } F {" );
 			for( i=0 ; i<curr_tri ; i++ ) {
 				fprintf( outfp, " {%d %d %d}", part_tris[i][0],
 					 part_tris[i][1], part_tris[i][2] ); 
 			}
+			if( get_normals ) {
+				fprintf( outfp, " } flags { has_normals use_normals } N {" );
+				for( i=0 ; i<norm_tree_root->curr_vert ; i++ ) {
+				fprintf( outfp, " {%.12e %.12e %.12e}",
+					 norm_tree_root->the_array[i*3] * proe_to_brl_conv,
+					 norm_tree_root->the_array[i*3+1] * proe_to_brl_conv,
+					 norm_tree_root->the_array[i*3+2] * proe_to_brl_conv );
+				}
+				fprintf( outfp, " } fn {" );
+				for( i=0 ; i<curr_tri ; i++ ) {
+					fprintf( outfp, " {%d %d %d}", part_norms[i*3],
+						 part_norms[i*3+1], part_norms[i*3+2] ); 
+				}
+			}
 			fprintf( outfp, " }\n" );
+
+			/* build the tree for this region */
+			bu_vls_init( &tree );
+			build_tree( sol_name, &tree );
+			output_csg_prims();
 
 			/* get the surface properties for the part
 			 * and create a region using the actual part name
@@ -620,11 +1695,13 @@ output_part( ProMdl model )
 			stat = prodb_get_surface_props( model, SEL_3D_PART, -1, 0, &props );
 			if( stat == PRODEV_SURF_PROPS_NOT_SET ) {
 				/* no surface properties */
-				fprintf( outfp, "put %s comb region yes id %d los 100 GIFTmater 1 tree { l %s }\n",
-					 curr_part_name, reg_id, sol_name );
+				fprintf( outfp,
+				   "put %s comb region yes id %d los 100 GIFTmater 1 tree %s\n",
+					 curr_part_name, reg_id, bu_vls_addr( &tree) );
 			} else if( stat == PRODEV_SURF_PROPS_SET ) {
 				/* use the colors, ... that was set in Pro/E */
-				fprintf( outfp, "put %s comb region yes id %d los 100 GIFTmater 1 rgb {%d %d %d} shader {plastic {",
+				fprintf( outfp,
+				    "put %s comb region yes id %d los 100 GIFTmater 1 rgb {%d %d %d} shader {plastic {",
 					 curr_part_name,
 					 reg_id,
 					 (int)(props.color_rgb[0]*255.0),
@@ -648,8 +1725,8 @@ output_part( ProMdl model )
 				/* something is wrong, but just ignore the missing properties */
 				fprintf( stderr, "Error getting surface properties for %s\n",
 					 curr_part_name );
-				fprintf( outfp, "put %s comb region yes id %d los 100 GIFTmater 1 tree { l %s }\n",
-					 curr_part_name, reg_id, sol_name );
+				fprintf( outfp, "put %s comb region yes id %d los 100 GIFTmater 1 tree %s\n",
+					 curr_part_name, reg_id, bu_vls_addr( &tree ) );
 			}
 
 			/* if the part has a material, add it as an attribute */
@@ -662,6 +1739,9 @@ output_part( ProMdl model )
 
 			/* increment the region id */
 			reg_id++;
+
+			/* free the tree */
+			bu_vls_free( &tree );
 		}
 	}
 
@@ -672,6 +1752,47 @@ output_part( ProMdl model )
 
 	/* add this part to the list of objects already output */
 	add_to_done_part( part_name );
+
+	/* unsuppress anything we suppressed */
+	if( feat_id_count ) {
+		fprintf( stderr, "Unsuppressing %d features\n", feat_id_count );
+		if( (ret=ProFeatureResume( ProMdlToSolid(model),
+					     feat_ids_to_delete, feat_id_count,
+					     NULL, 0 )) != PRO_TK_NO_ERROR) {
+			char err_mess[512];
+			wchar_t werr_mess[512];
+			int ret_status;
+
+			fprintf( stderr, "Failed to unsuppress %d features from %s\n",
+				 feat_id_count, curr_part_name );
+
+			/* use UI dialog */
+			status = ProUIDialogCreate( "proe_brl_error", "proe_brl_error" );
+			if( status != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
+				return( 0 );
+			}
+			sprintf( err_mess, err_mess_form, feat_id_count, curr_part_name );
+			(void)ProStringToWstring( werr_mess, err_mess );
+			status = ProUITextareaValueSet( "proe_brl_error", "the_message", werr_mess );
+			if( status != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
+				return( 0 );
+			}
+			(void)ProUIPushbuttonActivateActionSet( "proe_brl_error", "ok", kill_error_dialog, NULL );
+			status = ProUIDialogActivate( "proe_brl_error", &ret_status );
+			if( status != PRO_TK_NO_ERROR ) {
+				fprintf( stderr, "Error in proe-brl error Dialog, error = %d\n",
+					 status );
+				fprintf( stderr, "\t dialog returned %d\n", ret_status );
+			}
+
+			feat_id_count = 0;
+			return ret;
+		}
+		fprintf( stderr, "features unsuppressed!!\n" );
+		feat_id_count = 0;
+	}
 
 	return( ret );
 }
@@ -838,20 +1959,29 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	struct asm_member *member, *prev=NULL;
 	int i, j;
 
+#if 1
+	status = ProAsmcompMdlNameGet( feat, &type, name );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "ProAsmcompMdlNameGet() failed\n" );
+		return status;
+	}
+	(void)ProWstringToString( curr_part_name, name );
+#else
 	/* get the model associated with this member */
 	status = ProAsmcompMdlGet( feat, &model );
 	if( status != PRO_TK_NO_ERROR ) {
-		sprintf( astr, "Failed to get model for component %s",
-			 curr_part_name );
+		sprintf( astr, "Failed to get model for component of %s id = %d, error = %d",
+			 curr_part_name, feat->id, status );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 		ProMessageClear();
 		fprintf( stderr, "%s\n", astr );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-		return( status );
+		return( PRO_TK_NO_ERROR );
 	}
 
 	/* and get its name */
 	if( ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) {
+		/* this should never happen, everything must have a name */
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR",
 					"Could not get name for part!!" );
 		ProMessageClear();
@@ -859,10 +1989,11 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 		strcpy( curr_part_name, "noname" );
 	} else {
-		/* this should never happen, everything must have a name */
 		(void)ProWstringToString( curr_part_name, name );
 	}
+#endif
 
+	/*	status = ProAsmcompIsBulkitem( */
 	/* the next two Pro/Toolkit calls are the only way I could find to get
 	 * the transformation matrix to apply to this member.
 	 * this call is creating a path from the assembly to this particular member
@@ -883,13 +2014,13 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	/* this call accumulates the xform matrix along the path created above */
 	status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
 	if( status != PRO_TK_NO_ERROR ) {
-		sprintf( astr, "Failed to get transformation matrix %s/%s",
-			 curr_asm_name, curr_part_name );
+		sprintf( astr, "Failed to get transformation matrix %s/%s, error = %d, id = %d",
+			 curr_asm_name, curr_part_name, status, feat->id );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 		ProMessageClear();
 		fprintf( stderr, "%s\n", astr );
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-		return( status );
+		return( PRO_TK_NO_ERROR );
 	}
 
 	/* add this member to our assembly info */
@@ -920,7 +2051,11 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	member->next = NULL;
 
 	/* capture its name */
+#if 1
+	(void)ProWstringToString( member->name, name );
+#else
 	strcpy( member->name, curr_part_name );
+#endif
 
 	/* copy xform matrix */
 	for( i=0 ; i<4 ; i++ ) {
@@ -1020,6 +2155,21 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 	return( PRO_TK_NO_ERROR );
 }
 
+void
+set_identity( ProMatrix xform )
+{
+	int i,j;
+
+	for( i=0 ; i<4 ; i++ ) {
+		for( j=0 ; j<4 ; j++ ) {
+			if( i == j ) {
+				xform[i][j] = 1.0;
+			} else {
+				xform[i][j] = 0.0;
+			}
+		}
+	}
+}
 
 /* routine to check if xform is an identity */
 int
@@ -1102,19 +2252,10 @@ free_rb_data( void *data )
 	bu_free( data, "rb_data" );
 }
 
-/* this is the driver routine for converting Pro/E to BRL-CAD */
 int
-proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
+create_temp_directory()
 {
 	ProError status;
-	ProMdl model;
-	ProMdlType type;
-	int unit_subtype;
-	wchar_t unit_name[PRO_NAME_SIZE];
-	double proe_conv;
-	wchar_t w_output_file[128];
-	char output_file[128];
-	double range[2];
 	int ret_status;
 
 	empty_parts_root = NULL;
@@ -1151,37 +2292,6 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	/* default output file name */
 	strcpy( output_file, "proe.asc" );
 
-	/* get the output file name */
-	(void)ProMessageDisplay( MSGFIL, "USER_PROMPT_STRING",
-				 "Enter name of file to receive output: ",
-				 output_file );
-	status = ProMessageStringRead( 127, w_output_file );
-	if( status == PRO_TK_NO_ERROR ) {
-		(void)ProWstringToString( output_file, w_output_file );
-	} else if( status == PRO_TK_MSG_USER_QUIT) {
-		return( 0 );
-	}
-
-	/* get starting ident number */
-	(void)ProMessageDisplay( MSGFIL, "USER_PROMPT_INT",
-				 "Enter staring ident number: ",
-				 &reg_id );
-	status = ProMessageIntegerRead( NULL, &reg_id );
-	if( status == PRO_TK_MSG_USER_QUIT ) {
-		return( 0 );
-	}
-
-	/* get the maximum allowed error */
-	(void)ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
-				 "Enter maximum allowable error for tessellation (mm): ",
-				 &max_error );
-	range[0] = 0.0;
-	range[1] = 500.0;
-	status = ProMessageDoubleRead( range, &max_error );
-	if( status == PRO_TK_MSG_USER_QUIT ) {
-		return( 0 );
-	}
-
 	/* get the angle control */
 	(void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
 				  "Enter a value for angle control: ",
@@ -1209,7 +2319,6 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	wchar_t *w_output_file;
 	wchar_t *tmp_str;
 	char output_file[128];
-	double range[2];
 
 	/* get the name of the output file */
 	status = ProUIInputpanelValueGet( "proe_brl", "output_file", &w_output_file );
@@ -1258,6 +2367,80 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProWstringToString( astr, tmp_str );
 	ProWstringFree( tmp_str );
 	angle_cntrl = atof( astr );
+
+	/* check if user wants to do any CSG */
+	status = ProUICheckbuttonGetState( "proe_brl", "facets_only", &do_facets_only );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to get checkbutton setting (facetize only)\n" );
+		ProUIDialogDestroy( "proe_brl" );
+		return;
+	}
+
+	/* check if user wants to eliminate small features */
+	status = ProUICheckbuttonGetState( "proe_brl", "elim_small", &do_elims );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to get checkbutton setting (eliminate small features)\n" );
+		ProUIDialogDestroy( "proe_brl" );
+		return;
+	}
+
+	/* check if user wants surface normals in the BOT's */
+	status = ProUICheckbuttonGetState( "proe_brl", "get_normals", &get_normals );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to get checkbutton setting (extract surface normals)\n" );
+		ProUIDialogDestroy( "proe_brl" );
+		return;
+	}
+
+	if( do_elims ) {
+
+		/* get the minimum hole diameter */
+		status = ProUIInputpanelValueGet( "proe_brl", "min_hole", &tmp_str );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Failed to get minimum hole diameter\n" );
+			ProUIDialogDestroy( "proe_brl" );
+			return;
+		}
+
+		ProWstringToString( astr, tmp_str );
+		ProWstringFree( tmp_str );
+		min_hole_diameter = atof( astr );
+		if( min_hole_diameter < 0.0 )
+			min_hole_diameter = 0.0;
+
+		/* get the minimum chamfer dimension */
+		status = ProUIInputpanelValueGet( "proe_brl", "min_chamfer", &tmp_str );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Failed to get minimum chamfer dimension\n" );
+			ProUIDialogDestroy( "proe_brl" );
+			return;
+		}
+
+		ProWstringToString( astr, tmp_str );
+		ProWstringFree( tmp_str );
+		min_chamfer_dim = atof( astr );
+		if( min_chamfer_dim < 0.0 )
+			min_chamfer_dim = 0.0;
+
+		/* get the minimum round radius */
+		status = ProUIInputpanelValueGet( "proe_brl", "min_round", &tmp_str );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Failed to get minimum round radius\n" );
+			ProUIDialogDestroy( "proe_brl" );
+			return;
+		}
+
+		ProWstringToString( astr, tmp_str );
+		ProWstringFree( tmp_str );
+		min_round_radius = atof( astr );
+
+		if( min_round_radius < 0.0 )
+			min_round_radius = 0.0;
+	} else {
+		min_hole_diameter = 0.0;
+		min_round_radius = 0.0;
+		min_chamfer_dim = 0.0;
+	}
 
 	/* open output file */
 	if( (outfp=fopen( output_file, "w" ) ) == NULL ) {
@@ -1320,6 +2503,9 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	local_tol = tol_dist / proe_to_brl_conv;
 	local_tol_sq = local_tol * local_tol;
 
+	vert_tree_root = create_vert_tree();
+	norm_tree_root = create_vert_tree();
+
 	/* output the top level object
 	 * this will recurse through the entire model
 	 */
@@ -1348,15 +2534,14 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 	part_tris = NULL;
 
-	if( part_verts ) {
-		free( (char *)part_verts );
+	if( part_norms ) {
+		free( (char *)part_norms );
 	}
-	part_verts = NULL;
+	part_norms = NULL;
 
-	free_vert_tree( vert_root );
-	vert_root = NULL;
+	free_vert_tree( vert_tree_root );
+	free_vert_tree( norm_tree_root );
 
-	max_vert = 0;
 	max_tri = 0;
 
 	free_empty_parts();
@@ -1364,6 +2549,305 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	fclose( outfp );
 
 	return;
+}
+
+void
+elim_small_activate( char *dialog_name, char *button_name, ProAppData data )
+{
+	ProBoolean state;
+	ProError status;
+
+	status = ProUICheckbuttonGetState( dialog_name, button_name, &state );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "checkbutton activate routine: failed to get state\n" );
+		return;
+	}
+
+	if( state ) {
+		status = ProUIInputpanelEditable( dialog_name, "min_hole" );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Failed to activate \"minimum hole diameter\"\n" );
+			return;
+		}
+		status = ProUIInputpanelEditable( dialog_name, "min_chamfer" );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Failed to activate \"minimum chamfer dimension\"\n" );
+			return;
+		}
+		status = ProUIInputpanelEditable( dialog_name, "min_round" );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Failed to activate \"minimum round radius\"\n" );
+			return;
+		}
+	} else {
+		status = ProUIInputpanelReadOnly( dialog_name, "min_hole" );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Failed to de-activate \"minimum hole diameter\"\n" );
+			return;
+		}
+		status = ProUIInputpanelReadOnly( dialog_name, "min_chamfer" );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Failed to de-activate \"minimum chamfer dimension\"\n" );
+			return;
+		}
+		status = ProUIInputpanelReadOnly( dialog_name, "min_round" );
+		if( status != PRO_TK_NO_ERROR ) {
+			fprintf( stderr, "Failed to de-activate \"minimum round radius\"\n" );
+			return;
+		}
+	}
+}
+
+/* this is the driver routine for converting Pro/E to BRL-CAD */
+int
+proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
+{
+	ProError status;
+	int ret_status=0;
+
+	empty_parts_root = NULL;
+#if 1
+	/* use UI dialog */
+	status = ProUIDialogCreate( "proe_brl", "proe_brl" );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
+		return( 0 );
+	}
+
+	status = ProUICheckbuttonActivateActionSet( "proe_brl", "elim_small", elim_small_activate, NULL );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to set action for \"eliminate small features\" checkbutton, error = %d\n", status );
+		return( 0 );
+	}
+
+	status = ProUIPushbuttonActivateActionSet( "proe_brl", "doit", doit, NULL );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to set action for 'Go' button\n" );	
+		ProUIDialogDestroy( "proe_brl" );
+		return( 0 );
+	}
+
+	status = ProUIPushbuttonActivateActionSet( "proe_brl", "quit", do_quit, NULL );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Failed to set action for 'Go' button\n" );	
+		ProUIDialogDestroy( "proe_brl" );
+		return( 0 );
+	}
+
+	status = ProUIDialogActivate( "proe_brl", &ret_status );
+	if( status != PRO_TK_NO_ERROR ) {
+		fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
+			 status );
+		fprintf( stderr, "\t dialog returned %d\n", ret_status );
+	}
+
+#else
+	/* get the curently displayed model in Pro/E */
+	status = ProMdlCurrentGet( &model );
+	if( status == PRO_TK_BAD_CONTEXT ) {
+		ProName dialog_label;
+		ProLine w_answer;
+		char answer[PRO_LINE_SIZE];
+		char *ptr;
+
+		ProStringToWstring( dialog_label, "Select an Object for Conversion" );
+		ProStringToWstring( dialog_filter, "*.prt,*.asm" );
+		status = ProFileOpen( dialog_label, dialog_filter, (ProPath *)NULL,
+				      (ProName *)NULL, NULL,
+				      NULL, file_to_open );
+		if( status != PRO_TK_NO_ERROR )
+			return status;
+
+		(void)ProWstringToString( file_name, file_to_open );
+	}
+
+	/* default output file name */
+	strcpy( output_file, "proe.asc" );
+
+	/* get the output file name */
+	(void)ProMessageDisplay( MSGFIL, "USER_PROMPT_STRING",
+				 "Enter name of file to receive output: ",
+				 output_file );
+	status = ProMessageStringRead( 127, w_output_file );
+	if( status == PRO_TK_NO_ERROR ) {
+		(void)ProWstringToString( output_file, w_output_file );
+	} else if( status == PRO_TK_MSG_USER_QUIT) {
+		return( 0 );
+	}
+
+	/* get starting ident number */
+	(void)ProMessageDisplay( MSGFIL, "USER_PROMPT_INT",
+				 "Enter starting ident number: ",
+				 &reg_id );
+	status = ProMessageIntegerRead( NULL, &reg_id );
+	if( status == PRO_TK_MSG_USER_QUIT ) {
+		return( 0 );
+	}
+
+	/* get the maximum allowed error */
+	(void)ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
+				 "Enter maximum allowable error for tessellation (mm): ",
+				 &max_error );
+	range[0] = 0.0;
+	range[1] = 500.0;
+	status = ProMessageDoubleRead( range, &max_error );
+	if( status == PRO_TK_MSG_USER_QUIT ) {
+		return( 0 );
+	}
+
+	/* get the angle control */
+	(void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
+				  "Enter a value for angle control: ",
+				  &angle_cntrl );
+	range[0] = 0.0;
+	range[1] = 1.0;
+	status = ProMessageDoubleRead( range, &angle_cntrl );
+	if( status == PRO_TK_MSG_USER_QUIT ) {
+		return( 0 );
+	}
+
+	/* get the minimum hole diameter */
+	(void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
+				  "Enter the minimum allowed hole diameter (smaller holes will be deleted): ",
+				  &min_hole_diameter );
+	status = ProMessageDoubleRead( NULL, &min_hole_diameter );
+	if( status == PRO_TK_MSG_USER_QUIT ) {
+		return( 0 );
+	}
+	if( min_hole_diameter < 0.0 ) {
+		min_hole_diameter = 0.0;
+	}
+
+	/* get the minimum round radius */
+	(void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
+				  "Enter the minimum allowed round radius (smaller rounds will be deleted): ",
+				  &min_round_radius );
+	status = ProMessageDoubleRead( NULL, &min_round_radius );
+	if( status == PRO_TK_MSG_USER_QUIT ) {
+		return( 0 );
+	}
+	if( min_round_radius < 0.0 ) {
+		min_round_radius = 0.0;
+	}
+
+	/* get the minimum chamfer dimension */
+	(void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
+				  "Enter the minimum allowed chamfer dimension (smaller chamfers will be deleted): ",
+				  &min_chamfer_dim );
+	status = ProMessageDoubleRead( NULL, &min_chamfer_dim );
+	if( status == PRO_TK_MSG_USER_QUIT ) {
+		return( 0 );
+	}
+	if( min_chamfer_dim < 0.0 ) {
+		min_chamfer_dim = 0.0;
+	}
+
+	/* initailize */
+	do_initialize();
+
+	/* open output file */
+	mode = create_for_writing;
+	if( (outfp=fopen( output_file, mode ) ) == NULL ) {
+		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open output file" );
+		ProMessageClear();
+		fprintf( stderr, "Cannot open output file\n" );
+		perror( "\t" );
+		return( PRO_TK_GENERAL_ERROR );
+	}
+
+	/* get model type */
+	status = ProMdlTypeGet( model, &type );
+	if( status == PRO_TK_BAD_INPUTS ) {
+		(void)ProMessageDisplay(MSGFIL, "USER_NO_TYPE" );
+		ProMessageClear();
+		fprintf( stderr, "Cannot get type of current model\n" );
+		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+		return( PRO_TK_NO_ERROR );
+	}
+
+	/* can only do parts and assemblies, no drawings, etc */
+	if( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
+		(void)ProMessageDisplay(MSGFIL, "USER_TYPE_NOT_SOLID" );
+		ProMessageClear();
+		fprintf( stderr, "Current model is not a solid object\n" );
+		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+		return( PRO_TK_NO_ERROR );
+	}
+
+	/* get units, and adjust conversion factor */
+	model_units( model );
+
+	vert_tree_root = create_vert_tree();
+
+	/* output the top level object
+	 * this will recurse through the entire model
+	 */
+	output_top_level_object( model, type );
+
+	free_vert_tree( vert_tree_root );
+
+	/* kill any references to empty parts */
+	kill_empty_parts();
+
+	/* let user know we are done */
+	ProMessageDisplay(MSGFIL, "USER_INFO", "Conversion complete" );
+
+	/* let user know we are done */
+	ProStringToWstring( tmp_line, "Conversion complete" );
+	ProUILabelTextSet( "proe_brl", "curr_proc", tmp_line );
+
+	/* free a bunch of stuff */
+	if( done_list_part ) {
+		bu_rb_free( done_list_part, free_rb_data );
+		done_list_part = NULL;
+	}
+
+	if( done_list_asm ) {
+		bu_rb_free( done_list_asm, free_rb_data );
+		done_list_asm = NULL;
+	}
+
+	/* free a bunch of stuff */
+	if( done ) {
+		free( (char *)done );
+	}
+	done = NULL;
+	max_done = 0;
+	curr_done = 0;
+
+	for( i=0 ; i<BU_PTBL_LEN( &search_path_list ) ; i++ ) {
+		bu_free( (char *)BU_PTBL_GET( &search_path_list, i ), "search_path entry" );
+	}
+	bu_ptbl_free( &search_path_list );
+
+	if( part_tris ) {
+		free( (char *)part_tris );
+	}
+	part_tris = NULL;
+
+	free_vert_tree( vert_tree_root );
+
+	max_tri = 0;
+
+	free_empty_parts();
+
+	fclose( outfp );
+
+	/* list summary of objects and feature type seen */
+	fprintf( stderr, "Object types encountered:\n" );
+	for( i=0 ; i<NUM_OBJ_TYPES ; i++ ) {
+		if( !obj_type_count[i] )
+			continue;
+		fprintf( stderr, "\t%s\t%d\n", obj_type[i], obj_type_count[i] );
+	}
+	fprintf( stderr, "Feature types encountered:\n" );
+	for( i=0 ; i<NUM_FEAT_TYPES ; i++ ) {
+		if( !feat_type_count[i] )
+			continue;
+		fprintf( stderr, "\t%s\t%d\n", feat_type[i], feat_type_count[i] );
+	}
+#endif
+	return( 0 );
 }
 
 /* this routine determines whether the "proe-brl" menu item in Pro/E
@@ -1377,7 +2861,6 @@ proe_brl_access( uiCmdAccessMode access_mode )
 	/* doing the correct checks appears to be unreliable */
 	return( ACCESS_AVAILABLE );
 #else
-
 	ProMode mode;
 	ProError status;
 
@@ -1453,14 +2936,7 @@ do_quit( char *dialog, char *compnent, ProAppData appdata )
 }
 
 
-/* required terminate routine, we do not use it */
 void
 user_terminate()
 {
 }
-
-
-
-
-
-
