@@ -61,6 +61,8 @@ struct _mged_variables default_mged_variables = {
 /* predictor_advance */		1.0,
 /* predictor_length */		2.0,
 /* perspective */		-1,
+/* perspective_mode */           0,
+/* toggle_perspective */         1,
 /* nmg_eu_dist */		0.05,
 /* eye_sep_dist */		0.0,
 /* union lexeme */		"u",
@@ -68,7 +70,12 @@ struct _mged_variables default_mged_variables = {
 /* difference lexeme */		"-"
 };
 
+static int perspective_table[] = { 90, 30, 45, 60 };
+
 static void set_dlist();
+static void set_perspective();
+static void establish_perspective();
+static void toggle_perspective();
 void set_dirty_flag();
 void set_scroll();
 void set_absolute_tran();
@@ -134,7 +141,9 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
 	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
-	{"%f",	1, "perspective",	MV_O(perspective),	set_dirty_flag },
+	{"%f",	1, "perspective",	MV_O(perspective),	set_perspective },
+	{"%d",  1, "perspective_mode",  MV_O(perspective_mode),establish_perspective },
+	{"%d",  1, "toggle_perspective",MV_O(toggle_perspective),toggle_perspective },
 	{"%f",  1, "nmg_eu_dist",	MV_O(nmg_eu_dist),	nmg_eu_dist_set },
 	{"%f",  1, "eye_sep_dist",	MV_O(eye_sep_dist),	set_dirty_flag },
 	{"%s",  MAXLINE, "union_op",	MV_O(union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
@@ -400,4 +409,53 @@ set_dlist()
 
   /* restore */
   curr_dm_list = save_dmlp;
+}
+
+static void
+set_perspective()
+{
+  if(mged_variables->perspective > 0)
+    mged_variables->perspective_mode = 1;
+  else
+    mged_variables->perspective_mode = 0;
+
+  set_dirty_flag();
+}
+
+static void
+establish_perspective()
+{
+  mged_variables->perspective = mged_variables->perspective_mode ?
+    perspective_table[perspective_angle] : -1;
+
+  set_dirty_flag();
+}
+
+/*
+   This routine toggles the perspective_angle if the
+   toggle_perspective value is 0 or less. Otherwise, the
+   perspective_angle is set to the value of (toggle_perspective - 1).
+*/
+static void
+toggle_perspective()
+{
+  /* set perspective matrix */
+  if(mged_variables->toggle_perspective > 0)
+    perspective_angle = mged_variables->toggle_perspective <= 4 ?
+      mged_variables->toggle_perspective - 1: 3;
+  else if (--perspective_angle < 0) /* toggle perspective matrix */
+    perspective_angle = 3;
+
+  /*
+     Just in case the "!" is used with the set command. This
+     allows us to toggle through more than two values.
+   */
+  mged_variables->toggle_perspective = 1;
+
+  if(!mged_variables->perspective_mode)
+    return;
+
+  mged_variables->perspective = perspective_table[perspective_angle];
+
+  set_dirty_flag();
 }
