@@ -1014,11 +1014,9 @@ nmg_s_radial_check( sA, tol );
 		if( nmg_has_dangling_faces( (long *)rB, (char *)NULL ) )
 			bu_log("Dangling faces detected in rB after boolean\n");
 		if( nmg_has_dangling_faces( (long *)m, (char *)NULL ) )  {
-			bu_log("Dangling faces detected in model after boolean\n");
-#if 1
-			nmg_stash_model_to_file( "dangle.g", m, "After Boolean" );
-			rt_bomb("Dangling faces detected after boolean\n");
-#endif
+			if(rt_g.NMG_debug)
+				nmg_stash_model_to_file( "dangle.g", m, "After Boolean" );
+			rt_bomb("nmg_bool() Dangling faces detected after boolean\n");
 		}
 
 		/* Do this before table size changes */

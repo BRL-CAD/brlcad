@@ -1769,7 +1769,8 @@ int void_ok;
 
 	if (p1->vu_p->up.eu_p->up.lu_p != p2->vu_p->up.eu_p->up.lu_p) {
 		if (void_ok) {
-			bu_log("parent loops are not the same %s %d,\n\ttrying join ", __FILE__, __LINE__);
+			if(rt_g.NMG_debug)
+				bu_log("cut_mapped_loop() parent loops are not the same %s %d, trying join\n", __FILE__, __LINE__);
 			join_mapped_loops(tbl2d, p1, p2, color, tol);
 			return (struct pt2d *)NULL;
 		} else {
