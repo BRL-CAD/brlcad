@@ -26,7 +26,6 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 #include "../h/vmath.h"
 #include "../h/raytrace.h"
 #include "debug.h"
-#include "cut.h"
 
 /*
  *			R T _ S H O O T R A Y
@@ -77,12 +76,18 @@ register struct application *ap;
 	auto union cutter *lastcut;
 	auto struct partition InitialPart; /* Head of Initial Partitions */
 	auto struct partition FinalPart;	/* Head of Final Partitions */
+	auto struct seg *waitsegs;	/* segs awaiting rt_boolweave() */
+	register union cutter *cutp;
+	auto int hack_flag;
 
-	if( rt_i.needprep )  rt_prep();		/* so things will work */
+	ap->a_rt_i->rti_nrays++;
+	if( ap->a_rt_i->needprep )
+		rt_prep(ap->a_rt_i);
 
 	InitialPart.pt_forw = InitialPart.pt_back = &InitialPart;
 	FinalPart.pt_forw = FinalPart.pt_back = &FinalPart;
 
+	HeadSeg = SEG_NULL;
 	solidbits = BITV_NULL;		/* not allocated yet */
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
@@ -134,28 +139,49 @@ register struct application *ap;
 	/*
 	 *  If ray does not enter the model RPP, skip on.
 	 */
-	if( !rt_in_rpp( &ap->a_ray, inv_dir, rt_i.mdl_min, rt_i.mdl_max )  ||
+	hack_flag = 0;
+	if( !rt_in_rpp( &ap->a_ray, inv_dir, ap->a_rt_i->mdl_min, ap->a_rt_i->mdl_max )  ||
 	    ap->a_ray.r_max <= 0.0 )  {
-		rt_i.nmiss_model++;
-		ret = ap->a_miss( ap );
-		status = "MISS model";
-		goto out;
+	    	if( ap->a_rt_i->rti_inf_box.bn.bn_len > 0 )  {
+	    		/*
+	    		 *  Because there are some infinite solids in this
+	    		 *  model, we need to shoot at them even outside
+	    		 *  the model RPP.  Thus, this hack.
+	    		 */
+	    		hack_flag = 1;
+	    	}  else  {
+			ap->a_rt_i->nmiss_model++;
+			ret = ap->a_miss( ap );
+			status = "MISS model";
+			goto out;
+	    	}
 	}
 
-	/* Push ray starting point to edge of model RPP */
-	box_start = ap->a_ray.r_min;
-	model_end = ap->a_ray.r_max;
-	if( box_start < 0.0 )
-		box_start = 0.0;	/* don't look back */
+top:
+	if( hack_flag == 0 )  {
+		/* Push ray starting point to edge of model RPP */
+		box_start = ap->a_ray.r_min;
+		model_end = ap->a_ray.r_max;
+		if( box_start < -10.0 )
+			box_start = -10.0;	/* don't look back far */
+	}  else  {
+		cutp = &(ap->a_rt_i->rti_inf_box);
+    		box_start = -100000;
+		box_end = ap->a_ray.r_max = INFINITY;
+    		model_end = box_end * 0.99999;
+		waitsegs = SEG_NULL;
+	}
 	last_bool_start = box_start;
 
-	GET_BITV( solidbits );	/* see rt_get_bitv() for details */
-	regionbits = &solidbits->be_v[2+(BITS2BYTES(rt_i.nsolids)/sizeof(bitv_t))];
-	BITZERO(solidbits->be_v,rt_i.nsolids);
-	BITZERO(regionbits,rt_i.nregions);
-	HeadSeg = SEG_NULL;
+	if( solidbits == BITV_NULL )  {
+		GET_BITV( solidbits );	/* see rt_get_bitv() for details */
+		regionbits = &solidbits->be_v[2+(BITS2BYTES(ap->a_rt_i->nsolids)/sizeof(bitv_t))];
+		BITZERO(solidbits->be_v,ap->a_rt_i->nsolids);
+		BITZERO(regionbits,ap->a_rt_i->nregions);
+	}
 	lastcut = CUTTER_NULL;
 	trybool = 0;
+	if( hack_flag )  goto middle;
 
 	/*
 	 *  While the ray remains inside model space,
@@ -163,9 +189,7 @@ register struct application *ap;
 	 *  model space again (or first hit is found, if user is impatient).
 	 */
 	while( box_start < model_end )  {
-		register union cutter *cutp;
 		struct soltab *stp;
-		struct seg *waitsegs;	/* segs awaiting rt_boolweave() */
 
 		waitsegs = SEG_NULL;
 
@@ -175,7 +199,7 @@ register struct application *ap;
 			f = box_start + 0.005;
 			VJOIN1( point, ap->a_ray.r_pt, f, ap->a_ray.r_dir );
 		}
-		cutp = &CutHead;
+		cutp = &(ap->a_rt_i->rti_CutHead);
 		while( cutp->cut_type == CUT_CUTNODE )  {
 			if( point[cutp->cn.cn_axis] >= cutp->cn.cn_point )  {
 				cutp=cutp->cn.cn_r;
@@ -200,6 +224,7 @@ register struct application *ap;
 			rt_log("rt_shootray:  ray misses box?\n");
 			break;
 		}
+middle:
 		box_end = ap->a_ray.r_max;	
 		ret = cutp->bn.bn_len;		/* loop count, below */
 
@@ -216,7 +241,7 @@ register struct application *ap;
 			stp = cutp->bn.bn_list[ret];
 			if( BITTEST( solidbits->be_v, stp->st_bit ) )  {
 				if(rt_g.debug&DEBUG_SHOOT)rt_log("skipping %s\n", stp->st_name);
-				rt_i.nmiss_tree++;
+				ap->a_rt_i->nmiss_tree++;
 				continue;	/* already shot */
 			}
 
@@ -226,20 +251,21 @@ register struct application *ap;
 
 			/* If ray does not strike the bounding RPP, skip on */
 			if(
-			     /*  stp->st_id != ID_ARB8 && */
+			   stp->st_id != ID_HALF &&
+			   stp->st_id != ID_ARB8 &&
 			   ( !rt_in_rpp( &ap->a_ray, inv_dir,
 			      stp->st_min, stp->st_max ) ||
-			      ap->a_ray.r_max < -0.005 )
+			      ap->a_ray.r_max < -10.0 )
 			)  {
-				rt_i.nmiss_solid++;
+				ap->a_rt_i->nmiss_solid++;
 				continue;	/* MISS */
 			}
 
-			rt_i.nshots++;
+			ap->a_rt_i->nshots++;
 			if( (newseg = rt_functab[stp->st_id].ft_shot( 
 				stp, &ap->a_ray )
 			     ) == SEG_NULL )  {
-				rt_i.nmiss++;
+				ap->a_rt_i->nmiss++;
 				continue;	/* MISS */
 			}
 			if(rt_g.debug&DEBUG_SHOOT)  rt_pr_seg(newseg);
@@ -258,13 +284,13 @@ register struct application *ap;
 
 			/* Discard seg entirely behind start point of ray */
 			while( newseg != SEG_NULL && 
-				newseg->seg_out.hit_dist < -0.005 )  {
+				newseg->seg_out.hit_dist < -10.0 )  {
 				register struct seg *seg2 = newseg->seg_next;
 				FREE_SEG( newseg );
 				newseg = seg2;
 			}
 			if( newseg == SEG_NULL )  {
-				rt_i.nmiss++;
+				ap->a_rt_i->nmiss++;
 				continue;	/* MISS */
 			}
 			trybool++;	/* flag to rerun bool, below */
@@ -280,8 +306,8 @@ register struct application *ap;
 			/* Would be even better done by per-partition bitv */
 			rt_bitv_or( regionbits, stp->st_regions, stp->st_maxreg);
 			if(rt_g.debug&DEBUG_PARTITION)
-				rt_pr_bitv( "shoot Regionbits", regionbits, rt_i.nregions);
-			rt_i.nhits++;
+				rt_pr_bitv( "shoot Regionbits", regionbits, ap->a_rt_i->nregions);
+			ap->a_rt_i->nhits++;
 		}
 
 		/*
@@ -326,6 +352,15 @@ register struct application *ap;
 	if( HeadSeg == SEG_NULL )  {
 		ret = ap->a_miss( ap );
 		status = "MISS solids";
+		if( hack_flag == 0 && ap->a_rt_i->rti_inf_box.bn.bn_len > 0 )  {
+	    		/*
+	    		 *  Because there are some infinite solids in this
+	    		 *  model, we need to shoot at them even outside
+	    		 *  the model RPP.  Thus, this hack.
+	    		 */
+	    		hack_flag = 1;
+			goto top;
+		}
 		goto out;
 	}
 
@@ -338,6 +373,15 @@ register struct application *ap;
 	if( FinalPart.pt_forw == &FinalPart )  {
 		ret = ap->a_miss( ap );
 		status = "MISS bool";
+		if( hack_flag == 0 && ap->a_rt_i->rti_inf_box.bn.bn_len > 0 )  {
+	    		/*
+	    		 *  Because there are some infinite solids in this
+	    		 *  model, we need to shoot at them even outside
+	    		 *  the model RPP.  Thus, this hack.
+	    		 */
+	    		hack_flag = 1;
+			goto top;
+		}
 		goto freeup;
 	}
 
