@@ -622,6 +622,7 @@ int framenumber;
 	static double utime;
 	int	npix;			/* # of pixel values to be done */
 	int	lim;
+	vect_t	work, temp;
 
 	fprintf(stderr, "\n...................Frame %5d...................\n",
 		framenumber);
@@ -629,13 +630,13 @@ int framenumber;
 	/* Compute model RPP, etc */
 	do_prep( rtip );
 
-	fprintf(stderr,"shooting at %d solids in %d regions\n",
+	fprintf(stderr,"Tree: %d solids in %d regions\n",
 		rtip->nsolids, rtip->nregions );
 	if( rtip->HeadSolid == SOLTAB_NULL )  {
 		fprintf(stderr,"rt ERROR: No solids\n");
 		exit(3);
 	}
-	fprintf(stderr,"model X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
+	fprintf(stderr,"Model: X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
 		rtip->mdl_min[X], rtip->mdl_max[X],
 		rtip->mdl_min[Y], rtip->mdl_max[Y],
 		rtip->mdl_min[Z], rtip->mdl_max[Z] );
@@ -645,10 +646,18 @@ int framenumber;
 	 *  This may alter cell size or width/height.
 	 */
 	grid_setup();
+	/* az/el 0,0 is when screen +Z is model +X */
+	VSET( work, 0, 0, 1 );
+	MAT3X3VEC( temp, view2model, work );
+	ae_vec( &azimuth, &elevation, temp );
+	fprintf(stderr,
+		"View: %g azimuth, %g elevation off of front view\n",
+		azimuth, elevation);
+	fprintf(stderr,"Size: %gmm\n", viewsize);
 	fprintf(stderr,"Grid: (%g, %g) mm, (%d, %d) pixels\n",
 		cell_width, cell_height,
 		width, height );
-	fprintf(stderr,"Beam radius=%g mm, divergence=%g mm/1mm\n",
+	fprintf(stderr,"Beam: radius=%g mm, divergence=%g mm/1mm\n",
 		ap.a_rbeam, ap.a_diverge );
 
 	if( pix_start == -1 )  {
@@ -918,7 +927,6 @@ double azim, elev;
 	if( rtip->mdl_max[X] >= INFINITY || rtip->mdl_max[X] <= -INFINITY )
 		rt_bomb("do_ae called before rt_gettree");
 
-
 	/*
 	 *  Enlarge the model RPP just slightly, to avoid nasty
 	 *  effects with a solid's face being exactly on the edge
@@ -935,9 +943,6 @@ double azim, elev;
 
 	mat_idn( Viewrotscale );
 	mat_angles( Viewrotscale, 270.0+elev, 0.0, 270.0-azim );
-	fprintf(stderr,
-		"Viewing %g azimuth, %g elevation off of front view\n",
-		azim, elev);
 
 	/* Look at the center of the model */
 	mat_idn( toEye );
@@ -956,8 +961,6 @@ double azim, elev;
 			viewsize *= aspect;
 		}
 	}
-	fprintf(stderr,"view size = %g\n", viewsize);
-
 	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
 	mat_mul( model2view, Viewrotscale, toEye );
 	mat_inv( view2model, model2view );
