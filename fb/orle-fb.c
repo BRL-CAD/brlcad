@@ -46,6 +46,7 @@ static int	xpos = -1, ypos = -1;
 static void	prnt_Cmap();
 static void	prnt_Usage();
 static int	width = 512;
+static int	height = 512;
 static int	topdown = 0;
 static int	pixels_per_buffer;
 
@@ -84,19 +85,19 @@ char	*argv[];
 
 	/* Automatic selection of high res. device.			*/
 	if( xpos + xlen > 512 || ypos + ylen > 512 )
-		width = 1024;
+		width = height = 1024;
 	if( xpos + xlen > width )
 		xlen = width - xpos;
-	if( ypos + ylen > width )
-		ylen = width - ypos;
+	if( ypos + ylen > height )
+		ylen = height - ypos;
 	rle_wlen( xlen, ylen, 0 );
 
-	if( (fbp = fb_open( NULL, width, width )) == NULL )  {
+	if( (fbp = fb_open( NULL, width, height )) == NULL )  {
 		exit(12);
 	}
 
 	if( topdown )
-		pixels_per_buffer = width * width;
+		pixels_per_buffer = width * height;
 	else
 		pixels_per_buffer = width * 64;
 	scanbuf = RGBPIXEL_NULL;
@@ -206,7 +207,7 @@ char	*argv[];
 	} /* end block */
 #else
 	/* Simplified version, for testing */
-	for( y = 0; y < width; y++ )  {
+	for( y = 0; y < height; y++ )  {
 		if( olflag )  {
 			/* Overlay - read cluster from fb.	*/
 			if( fb_read( fbp, 0, y, scanbuf, width ) == -1 )
