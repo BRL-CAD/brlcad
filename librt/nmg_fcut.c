@@ -1131,7 +1131,7 @@ struct vertexuse	*vu1, *vu2;
 {
     	struct edgeuse	*eu1;
 	struct edgeuse	*first_new_eu, *second_new_eu;
-	struct loopuse	*lu2;
+	struct loopuse	*lu1, *lu2;
 
 rt_log("nmg_join_2singvu_loops( x%x, x%x )\n", vu1, vu2 );
 
@@ -1156,6 +1156,11 @@ rt_log("nmg_join_2singvu_loops( x%x, x%x )\n", vu1, vu2 );
 	lu2 = vu2->up.lu_p;
 	NMG_CK_LOOPUSE(lu2);
 	nmg_klu(lu2);
+
+	lu1 = vu1->up.eu_p->up.lu_p;
+	NMG_CK_LOOPUSE(lu1);
+nmg_pr_lu( lu1, "  ");
+
 	return second_new_eu->vu_p;
 }
 
@@ -1336,7 +1341,7 @@ int			other_rs_state;
 
 	action = stp->action;
 	new_state = stp->new_state;
-#if 0
+#if 1
 	/*
 	 *  Major optimization here.
 	 *  If the state machine for the other face is still in OUT state,
@@ -1539,6 +1544,9 @@ rt_log("force next eu to ray\n");
 		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, rs->vu[pos]->up.eu_p);
 		nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
 
+		/* Recompute loop geometry.  Bounding box may have expanded */
+		nmg_loop_g(nmg_lu_of_vu(rs->vu[pos])->l_p);
+
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After LONE_V_JAUNT, the final loop:\n");
 			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
@@ -1622,6 +1630,7 @@ rt_log("force next eu to ray\n");
 		 * force it's geometry to lie on the ray.
 		 */
 		vu = rs->vu[pos];
+		lu = nmg_lu_of_vu(vu);
 		prev_vu = rs->vu[pos-1];
 		eu = prev_vu->up.eu_p;
 		NMG_CK_EDGEUSE(eu);
@@ -1632,9 +1641,12 @@ rt_log("force next eu to ray\n");
 			nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
 		}
 
+		/* Recompute loop geometry.  Bounding box may have expanded */
+		nmg_loop_g(lu->l_p);
+
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After JOIN, the final loop:\n");
-			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
+			nmg_face_lu_plot( lu, rs->vu[0], rs->vu[rs->nvu-1] );
 		}
 		break;
 	}
