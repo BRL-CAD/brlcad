@@ -321,7 +321,10 @@ float xangle, yangle, zangle;
 		mat_idn( incr_change );
 		buildHrot( incr_change, xangle, yangle, zangle );
 
-		if( es_edflag == SROT )  {
+		if( es_edflag == SROT || es_edflag == PROT )  {
+			/* accumulate the rotations */
+			mat_mul(tempp, incr_change, acc_rot_sol);
+			mat_copy(acc_rot_sol, tempp);
 			sedit();	/* change es_rec only, NOW */
 			return;
 		}
