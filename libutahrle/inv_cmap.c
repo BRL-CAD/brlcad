@@ -754,7 +754,7 @@ maxfill( buffer, side )
 unsigned long *buffer;
 long side;
 {
-    register unsigned long maxv = ~0L;
+    register unsigned long maxv = (unsigned long)~0L;
     register long i;
     register unsigned long *bp;
 
