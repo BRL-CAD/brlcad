@@ -61,7 +61,7 @@ bn_wlt_1d_double_decompose(
 	}
 	
 	if (do_free)
-		bu_free( tbuf, "1d 'double' wavelet buffer");
+		bu_free( (genptr_t)tbuf, "1d 'double' wavelet buffer");
 }
 
 void
@@ -116,5 +116,5 @@ bn_wlt_1d_double_reconstruct(
 	}
 
 	if (do_free)
-		bu_free( tbuf, "1d 'double' wavelet buffer");
+		bu_free( (genptr_t)tbuf, "1d 'double' wavelet buffer");
 }
