@@ -47,11 +47,6 @@ extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
 static void draw_axes();
 
-#if 0
-void createDList();
-void createDLists();
-#endif
-
 mat_t	perspective_mat;
 mat_t	incr_change;
 mat_t	modelchanges;
@@ -371,7 +366,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 		mat = new;
 	}
 
-	dmp->dm_newrot( dmp, mat, which_eye );
+	DM_LOADMATRIX( dmp, mat, which_eye );
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  sp->s_flag = DOWN;		/* Not drawn yet */
@@ -390,14 +385,14 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
-	    dmp->dm_setLineAttr(dmp, mged_variables->linewidth, linestyle);
+	    DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, linestyle);
 	  }
 
 	  if(!DM_SAME_COLOR(r,g,b,
 			    (short)sp->s_color[0],
 			    (short)sp->s_color[1],
 			    (short)sp->s_color[2])){
-	    dmp->dm_setColor(dmp,
+	    DM_SET_COLOR(dmp,
 			     (short)sp->s_color[0],
 			     (short)sp->s_color[1],
 			     (short)sp->s_color[2], 0);
@@ -411,7 +406,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 #ifdef DO_SINGLE_DISPLAY_LIST
 	    /* don't draw anything here --- just update variables */
 #else
-	    DM_DRAWDLIST(dmp, sp->s_dlist + displaylist);
+	    DM_DRAWDLIST(dmp, sp->s_dlist);
 #endif
 	    sp->s_flag = UP;
 	    ndrawn++;
@@ -422,7 +417,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 	    }
 	  }
 #else
-	  if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist ) == TCL_OK) {
+	  if(DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist ) == TCL_OK) {
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
@@ -432,14 +427,14 @@ bn_mat_print("perspective_mat", perspective_mat);
 #ifdef DO_SINGLE_DISPLAY_LIST
 	if(displaylist && mged_variables->dlist){
 	  /* draw single display list containing all solids */
-	  DM_DRAWDLIST(dmp, displaylist + 1);
+	  DM_DRAWDLIST(dmp, 1);
 	}
 #endif
 
 	/* draw predictor vlist */
 	if(mged_variables->predictor){
-	  dmp->dm_setColor(dmp, DM_WHITE, 1);
-	  dmp->dm_drawVList(dmp, (struct rt_vlist *)&curr_dm_list->p_vlist);
+	  DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->p_vlist);
 	}
 
 	if(mged_variables->m_axes)
@@ -461,9 +456,9 @@ bn_mat_print("perspective_mat", perspective_mat);
 		bn_mat_mul( new, perspective_mat, model2objview );
 		mat = new;
 	}
-	dmp->dm_newrot( dmp, mat, which_eye );
+	DM_LOADMATRIX( dmp, mat, which_eye );
 	inv_viewsize /= modelchanges[15];
-	dmp->dm_setColor(dmp, DM_WHITE, 1);
+	DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  /* Ignore all objects not being rotated */
@@ -481,7 +476,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
-	    dmp->dm_setLineAttr(dmp, mged_variables->linewidth, linestyle);
+	    DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, linestyle);
 	  }
 
 #ifdef DO_DISPLAY_LISTS
@@ -493,7 +488,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  }
 #else
 	  if(displaylist && mged_variables->dlist){
-	    DM_DRAWDLIST(dmp, sp->s_dlist + displaylist);
+	    DM_DRAWDLIST(dmp, sp->s_dlist);
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }else{
@@ -505,7 +500,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  }
 #endif
 #else
-	  if( dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist ) == TCL_OK){
+	  if( DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist ) == TCL_OK){
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
@@ -531,12 +526,12 @@ struct solid *hsp;
   short g = -1;
   short b = -1;
 
-  DM_BEGINDLIST(dmp, displaylist + 1);
+  DM_BEGINDLIST(dmp, 1);
 
   FOR_ALL_SOLIDS(sp, &hsp->l){
     if(linestyle != sp->s_soldash){
       linestyle = sp->s_soldash;
-      dmp->dm_setLineAttr(dmp, mged_variables->linewidth, linestyle);
+      DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, linestyle);
     }
 
     if(!DM_SAME_COLOR(r,g,b,
@@ -566,7 +561,7 @@ void
 createDList(sp)
 struct solid *sp;
 {
-  DM_BEGINDLIST(dmp, sp->s_dlist + displaylist);
+  DM_BEGINDLIST(dmp, sp->s_dlist);
   DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist);
   DM_ENDDLIST(dmp);
 }
@@ -612,7 +607,7 @@ int axes;
   BU_LIST_APPEND(&h_vlist.l, &vlist.l);
 
   bn_mat_idn(mr_mat);
-  dmp->dm_newrot(dmp, mr_mat, 0);
+  DM_LOADMATRIX(dmp, mr_mat, 0);
 
   if(axes_color_hook)
     (*axes_color_hook)(axes, &r, &g, &b, &index);
@@ -646,7 +641,7 @@ int axes;
     vlist.nused = 6;
 
   /* set the vertex label color */
-  dmp->dm_setColor(dmp, DM_YELLOW, 1);
+  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
 
   /* load vlist with axes */
   for(i = 0; i < 3; ++i){
@@ -770,12 +765,12 @@ int axes;
 
 #ifdef DM_X
       /* label axes */
-      if(dmp->dm_drawString2D == X_drawString2D)
-	dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+      if(dmp->dm_type == DM_TYPE_X)
+	DM_DRAW_STRING_2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
 			     ((int)(2048.0 * v2[Y])) + 15, 1, 1);
       else
 #endif
-	dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+	DM_DRAW_STRING_2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
 			     ((int)(2048.0 * v2[Y])) + 15, 1, 0);
     }else{
       VMOVE(vlist.pt[i*2], m1);
@@ -789,23 +784,23 @@ int axes;
 
 #ifdef DM_X
     /* label axes */
-    if(dmp->dm_drawString2D == X_drawString2D)
-      dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+    if(dmp->dm_type == DM_TYPE_X)
+      DM_DRAW_STRING_2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
 			   ((int)(2048.0 * v2[Y])) + 15, 1, 1);
     else
 #endif
-      dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+      DM_DRAW_STRING_2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
 			   ((int)(2048.0 * v2[Y])) + 15, 1, 0);
   }
 
-  dmp->dm_newrot(dmp, model2view, 0);
+  DM_LOADMATRIX(dmp, model2view, 0);
 
   /* draw axes */
-  dmp->dm_setColor(dmp, r, g, b, 1);
+  DM_SET_COLOR(dmp, r, g, b, 1);
 #if 1
-  dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 0);
+  DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
 #else
-  dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
+  DM_SET_LINE_ATTR(dmp, 1, 0);  /* linewidth - 1, not dashed */
 #endif
-  dmp->dm_drawVList(dmp, &h_vlist);
+  DM_DRAW_VLIST(dmp, &h_vlist);
 }

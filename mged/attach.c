@@ -85,7 +85,7 @@ extern struct _mged_variables default_mged_variables;
 struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list;
 char tmp_str[1024];
-static int windowbounds[6] = { XMAX, XMIN, YMAX, YMIN, 2047, -2048 };
+static int windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, -2048, 2047 };
 
 static char *default_view_strings[] = {
   "top",
@@ -203,15 +203,14 @@ int need_close;
        mged_variables->dlist &&
        BU_LIST_NON_EMPTY(&HeadSolid.l))
 #ifdef DO_SINGLE_DISPLAY_LIST
-    dmp->dm_freeDLists(dmp, dmp->dm_displaylist + 1, 1);
+    DM_FREEDLISTS(dmp, 1, 1);
 #else
-    dmp->dm_freeDLists(dmp, BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist +
-		       dmp->dm_displaylist,
+    DM_FREEDLISTS(dmp, BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist,
 		       BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
 		       BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist + 1);
 #endif
 #endif
-    dmp->dm_close(dmp);
+    DM_CLOSE(dmp);
   }
 
   RT_FREE_VLIST(&p->p_vlist);
@@ -440,7 +439,7 @@ char *argv[];
 
   color_soltab();
   ++dirty;
-  dmp->dm_setWinBounds(dmp, windowbounds);
+  DM_SET_WIN_BOUNDS(dmp, windowbounds);
 
   return TCL_OK;
 

@@ -331,48 +331,18 @@ set_absolute_tran()
 {
   point_t new_pos;
   point_t diff;
-#if 1
 
-    /* calculate absolute_model_tran */
-    MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
-    VSUB2(diff, orig_pos, new_pos);
-    VSCALE(absolute_model_tran, diff, 1/Viewscale);
-    /* This is used in f_knob()  ---- needed in case absolute_model_tran is set from Tcl */
-    VMOVE(last_absolute_model_tran, absolute_model_tran);
+  /* calculate absolute_model_tran */
+  MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
+  VSUB2(diff, orig_pos, new_pos);
+  VSCALE(absolute_model_tran, diff, 1/Viewscale);
+  /* This is used in f_knob()  ---- needed in case absolute_model_tran is set from Tcl */
+  VMOVE(last_absolute_model_tran, absolute_model_tran);
 
-    /* calculate absolute_tran */
-    MAT4X3PNT(absolute_tran, model2view, orig_pos);
-    /* This is used in f_knob()  ---- needed in case absolute_tran is set from Tcl */
-    VMOVE(last_absolute_tran, absolute_tran);
-
-#else
-  struct dm_list *dmlp;
-  struct dm_list *save_dmlp;
-
-  save_dmlp = curr_dm_list;
-
-  FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-    if(dmlp->_mged_variables != save_dmlp->_mged_variables)
-      continue;
-
-    curr_dm_list = dmlp;
-
-    /* calculate absolute_model_tran */
-    MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
-    VSUB2(diff, orig_pos, new_pos);
-    VSCALE(absolute_model_tran, diff, 1/Viewscale);
-
-    /* calculate absolute_tran */
-    MAT4X3PNT(absolute_tran, model2view, orig_pos);
-
-    if(mged_variables->faceplate && mged_variables->orig_gui)
-      dirty = 1;
-  }
-
-  /* restore */
-  curr_dm_list = save_dmlp;
-
-#endif
+  /* calculate absolute_tran */
+  MAT4X3PNT(absolute_tran, model2view, orig_pos);
+  /* This is used in f_knob()  ---- needed in case absolute_tran is set from Tcl */
+  VMOVE(last_absolute_tran, absolute_tran);
 }
 
 static void
@@ -417,9 +387,9 @@ set_dlist()
       if(displaylist){
 	dirty = 1;
 #ifdef DO_SINGLE_DISPLAY_LIST
-	dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + displaylist, 1);
+	DM_FREEDLISTS(dmp, HeadSolid.s_dlist, 1);
 #else
-	dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + displaylist,
+	DM_FREEDLISTS(dmp, HeadSolid.s_dlist,
 			   BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
 			   HeadSolid.s_dlist + 1);
 #endif

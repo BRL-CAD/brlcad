@@ -412,11 +412,6 @@ char **argv;
 
 	refresh();			/* Put up faceplate */
 
-#if 0
-	/* Reset the lights */
-	dmp->dm_light( dmp, LIGHT_RESET, 0 );
-#endif
-
 	if(classic_mged){
 	  (void)pipe(dm_pipe);
 	  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)STDIN_FILENO, TCL_UNIX_FD),
@@ -1432,12 +1427,12 @@ refresh()
       rt_prep_timer();
       elapsed_time = -1;		/* timer running */
 
-      dmp->dm_drawBegin(dmp);	/* update displaylist prolog */
+      DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
 
       if(dbip != DBI_NULL){
 	/*  Draw each solid in it's proper place on the screen
 	 *  by applying zoom, rotation, & translation.
-	 *  Calls dmp->dm_newrot() and dmp->dm_drawVList().
+	 *  Calls DM_LOADMATRIX() and DM_DRAW_VLIST().
 	 */
 	if( dmp->dm_stereo == 0 || mged_variables->eye_sep_dist <= 0 )  {
 	  /* Normal viewing */
@@ -1449,7 +1444,7 @@ refresh()
 	}
 
 	/* Restore to non-rotated, full brightness */
-	dmp->dm_normal(dmp);
+	DM_NORMAL(dmp);
 
 	/* Compute and display angle/distance cursor */
 	if (mged_variables->adcflag)
@@ -1462,10 +1457,10 @@ refresh()
       }
 
       /* Draw center dot */
-      dmp->dm_setColor(dmp, DM_YELLOW, 1);
-      dmp->dm_drawVertex2D(dmp, 0, 0);
+      DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+      DM_DRAW_POINT_2D(dmp, 0, 0);
 
-      dmp->dm_drawEnd(dmp);
+      DM_DRAW_END(dmp);
 
       dirty = 0;
 
@@ -1546,10 +1541,7 @@ int	exitcode;
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
 	  curr_dm_list = p;
 
-	  dmp->dm_close(dmp);
-#if 0
-	  dmp->dm_light( dmp, LIGHT_RESET, 0 );	/* turn off the lights */
-#endif
+	  DM_CLOSE(dmp);
 	}
 
 	if (cbreak_mode > 0)

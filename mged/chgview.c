@@ -635,7 +635,7 @@ char	**argv;
 
 	Tcl_AppendResult(interp, "regdebug=", debug_str, "\n", (char *)NULL);
 
-	dmp->dm_debug(dmp, regdebug);
+	DM_DEBUG(dmp, regdebug);
 
 	return TCL_OK;
 }
@@ -1000,11 +1000,10 @@ char	**argv;
 	     dmlp->_mged_variables->dlist &&
 	     BU_LIST_NON_EMPTY(&HeadSolid.l))
 #ifdef DO_SINGLE_DISPLAY_LIST
-	    dmlp->_dmp->dm_freeDLists(dmlp->_dmp, dmlp->_dmp->dm_displaylist + 1, 1);
+	    DM_FREEDLISTS(dmlp->_dmp, 1, 1);
 #else
-	    dmlp->_dmp->dm_freeDLists(dmlp->_dmp,
-				      BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist +
-				      dmlp->_dmp->dm_displaylist,
+	    DM_FREEDLISTS(dmlp->_dmp,
+				      BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist,
 				      BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
 				      BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist + 1);
 #endif
@@ -1212,8 +1211,7 @@ register struct directory *dp;
 #else
       FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
 	if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist)
-	  dmlp->_dmp->dm_freeDLists(dmlp->_dmp,
-				    sp->s_dlist + dmlp->_dmp->dm_displaylist, 1);
+	  DM_FREEDLISTS(dmlp->_dmp, sp->s_dlist, 1);
       }
 #endif
 #endif
@@ -1269,8 +1267,7 @@ register struct directory *dp;
 #else
     FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
       if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist)
-	dmlp->_dmp->dm_freeDLists(dmlp->_dmp,
-			    sp->s_dlist + dmlp->_dmp->dm_displaylist, 1);
+	DM_FREEDLISTS(dmlp->_dmp, sp->s_dlist, 1);
     }
 #endif
 #endif
