@@ -1006,3 +1006,50 @@ char	**argv;
 	}
 	return TCL_OK;
 }
+/*
+ *	F _ W H I C H _ A I R ( ) :	finds all regions with given air codes
+ */
+int
+f_which_air(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	union record	rec;
+	register int	i,j;
+	register struct directory *dp;
+	int		item;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
+
+	for( j=1; j<argc; j++) {
+		item = atoi( argv[j] );
+		Tcl_AppendResult(interp, "Region[s] with air code ", argv[j],
+				 ":\n", (char *)NULL);
+
+		/* Examine all COMB nodes */
+		for( i = 0; i < RT_DBNHASH; i++ )  {
+			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+				if( (dp->d_flags & DIR_COMB|DIR_REGION) !=
+				    (DIR_COMB|DIR_REGION) )
+					continue;
+				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 ) {
+				  TCL_READ_ERR_return;
+				}
+				if( rec.c.c_regionid != 0 || rec.c.c_aircode != item )
+					continue;
+
+				Tcl_AppendResult(interp, "   ", rec.c.c_name,
+						 "\n", (char *)NULL);
+			}
+		}
+	}
+	return TCL_OK;
+}

@@ -68,6 +68,7 @@ extern mat_t    ModelDelta;
 extern int cmd_stuff_str();
 extern int f_nmg_simplify();
 extern int f_make_bb();
+extern int f_which_air();
 
 extern short earb4[5][18];
 extern short earb5[9][18];
@@ -524,6 +525,8 @@ static struct funtab funtab[] = {
 	f_vrot_center, 5, 5,TRUE,
 "wcodes", "filename object(s)", "write region ident codes to filename",
         f_wcodes, 3, MAXARGS, TRUE,
+"whichair", "air_codes(s)", "lists all regions with given air code",
+	f_which_air, 2, MAXARGS,TRUE,
 "whichid", "ident(s)", "lists all regions with given ident code",
 	f_which_id, 2, MAXARGS,TRUE,
 "who", "[r(eal)|p(hony)|b(oth)]", "list the displayed objects",
