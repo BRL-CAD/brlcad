@@ -65,6 +65,7 @@ struct rt_table {
 };
 #define RT_TABLE_MAGIC	0x53706374
 #define RT_CK_TABLE(_p)	RT_CKMAG(_p, RT_TABLE_MAGIC, "rt_table")
+#define RT_TABLE_NULL	((struct rt_table *)NULL)
 
 /* Gets an rt_table, with x[] having size _nx+1 */
 #define RT_GET_TABLE(_table, _nx)  { \
@@ -84,6 +85,7 @@ struct rt_tabdata {
 };
 #define RT_TABDATA_MAGIC	0x53736d70
 #define RT_CK_TABDATA(_p)	RT_CKMAG(_p, RT_TABDATA_MAGIC, "rt_tabdata")
+#define RT_TABDATA_NULL		((struct rt_tabdata *)NULL)
 
 #define RT_SIZEOF_TABDATA(_table)	( sizeof(struct rt_tabdata) + \
 			sizeof(fastf_t)*((_table)->nx-1) )
