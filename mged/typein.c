@@ -81,8 +81,19 @@ char *p_half[] = {
 	"Enter the distance from the origin: "
 };
 
-char *p_dsp[] = {
+char *p_dsp_v4[] = {
 	"Enter name of displacement-map file: ",
+	"Enter width of displacement-map (number of values): ",
+	"Enter length of displacement-map (number of values): ",
+	"Normal Interpolation? 0=no 1=yes: ",
+	"Cell size: ",
+	"Unit elevation: "
+};
+
+
+char *p_dsp_v5[] = {
+	"Take data from file or database binary object [f|o]:",
+	"Enter name of file/object: ",
 	"Enter width of displacement-map (number of values): ",
 	"Enter length of displacement-map (number of values): ",
 	"Normal Interpolation? 0=no 1=yes: ",
@@ -460,7 +471,7 @@ char **argv;
 				rcc_in(), rhc_in(), rpc_in(), rpp_in(), orpp_in(),
 				sph_in(), tec_in(), tgc_in(), tor_in(), ars_in(),
 				trc_in(), ebm_in(), vol_in(), hf_in(), bot_in(),
-				dsp_in(), submodel_in(), part_in(), pipe_in();
+				dsp_in_v4(),dsp_in_v5(), submodel_in(), part_in(), pipe_in();
 
 	CHECK_DBI_NULL;
 
@@ -543,7 +554,8 @@ char **argv;
 	} else if( strcmp( argv[2], "bot" ) == 0 ) {
 		switch( bot_in(argc, argv, &internal, &p_bot[0]) ) {
 		case CMD_BAD:
-		  Tcl_AppendResult(interp, "ERROR, BOT not made!\n", (char *)NULL);
+		  Tcl_AppendResult(interp, "ERROR, BOT not made!\n",
+				   (char *)NULL);
 		  rt_db_free_internal( &internal, &rt_uniresource );
 		  return TCL_ERROR;
 		case CMD_MORE:
@@ -563,9 +575,16 @@ char **argv;
 		menu = p_hf;
 		fn_in = hf_in;
 	} else if( strcmp( argv[2], "dsp" ) == 0 )  {
-		nvals = 6;
-		menu = p_dsp;
-		fn_in = dsp_in;
+		if (dbip->dbi_version <= 4) {
+			nvals = 6;
+			menu = p_dsp_v4;
+			fn_in = dsp_in_v4;
+		} else {
+			nvals = 7;
+			menu = p_dsp_v5;
+			fn_in = dsp_in_v5;
+		}
+
 	} else if( strcmp( argv[2], "pipe" ) == 0 ) {
 		switch( pipe_in(argc, argv, &internal, &p_pipe[0]) ) {
 		case CMD_BAD:
@@ -795,7 +814,7 @@ struct rt_db_internal	*intern;
  *	Read DSP solid from keyboard
  */
 int
-dsp_in ( cmd_argvs, intern )
+dsp_in_v4 ( cmd_argvs, intern )
 char			*cmd_argvs[];
 struct rt_db_internal	*intern;
 {
@@ -807,8 +826,8 @@ struct rt_db_internal	*intern;
 	intern->idb_ptr = (genptr_t)dsp;
 	dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
-	bu_vls_init( &dsp->dsp_file );
-	bu_vls_strcpy( &dsp->dsp_file, cmd_argvs[3] );
+	bu_vls_init( &dsp->dsp_name );
+	bu_vls_strcpy( &dsp->dsp_name, cmd_argvs[3] );
 
 	dsp->dsp_xcnt = atoi( cmd_argvs[4] );
 	dsp->dsp_ycnt = atoi( cmd_argvs[5] );
@@ -819,6 +838,50 @@ struct rt_db_internal	*intern;
 		atof( cmd_argvs[7] ) * local2base;
 
 	dsp->dsp_stom[10] = atof( cmd_argvs[8] ) * local2base;
+
+	bn_mat_inv( dsp->dsp_mtos, dsp->dsp_stom );
+
+	return( 0 );
+}
+
+extern void dsp_dump(struct rt_dsp_internal *dsp);
+
+/*			D S P _ I N
+ *
+ *	Read DSP solid from keyboard
+ */
+int
+dsp_in_v5 ( cmd_argvs, intern )
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	struct rt_dsp_internal	*dsp;
+
+	BU_GETSTRUCT( dsp, rt_dsp_internal );
+	intern->idb_type = ID_DSP;
+	intern->idb_meth = &rt_functab[ID_DSP];
+	intern->idb_ptr = (genptr_t)dsp;
+	dsp->magic = RT_DSP_INTERNAL_MAGIC;
+
+	if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
+		dsp->dsp_datasrc = RT_DSP_SRC_FILE;
+	else if (*cmd_argvs[3] == 'O' || *cmd_argvs[3] == 'o')
+		dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
+	else
+		return -1;
+
+	bu_vls_init( &dsp->dsp_name );
+	bu_vls_strcpy( &dsp->dsp_name, cmd_argvs[4] );
+
+	dsp->dsp_xcnt = atoi( cmd_argvs[5] );
+	dsp->dsp_ycnt = atoi( cmd_argvs[6] );
+	dsp->dsp_smooth = atoi( cmd_argvs[7] );
+	bn_mat_idn( dsp->dsp_stom );
+	
+	dsp->dsp_stom[0] = dsp->dsp_stom[5] = 
+		atof( cmd_argvs[8] ) * local2base;
+
+	dsp->dsp_stom[10] = atof( cmd_argvs[9] ) * local2base;
 
 	bn_mat_inv( dsp->dsp_mtos, dsp->dsp_stom );
 

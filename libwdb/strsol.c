@@ -66,8 +66,9 @@ CONST matp_t	mat;		/* convert solid coords to model space */
 	
 	BU_GETSTRUCT( dsp, rt_dsp_internal );
 	dsp->magic = RT_DSP_INTERNAL_MAGIC;
-	bu_vls_init( &dsp->dsp_file );
-	bu_vls_strcpy( &dsp->dsp_file, file);
+	bu_vls_init( &dsp->dsp_name );
+	bu_vls_strcpy( &dsp->dsp_name, "file:");
+	bu_vls_strcat( &dsp->dsp_name, file);
 
 	dsp->dsp_xcnt = xdim;
 	dsp->dsp_ycnt = ydim;

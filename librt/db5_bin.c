@@ -108,7 +108,6 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 	int				i;
 	unsigned char			*srcp;
 	unsigned long			*ldestp;
-	unsigned short			*sdestp;
 	int				in_cookie, out_cookie;
 	int				gotten;
 
@@ -173,8 +172,9 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 		out_cookie = bu_cv_cookie("hus");
 		if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
 		    gotten =
-		    bu_cv_w_cookie(ep->ext_buf, in_cookie, bip->count,
-			(genptr_t) bip->u.uint8, out_cookie, ep->ext_nbytes);
+		    bu_cv_w_cookie((genptr_t)bip->u.uint8, out_cookie,
+				   ep->ext_nbytes,
+				   ep->ext_buf, in_cookie, bip->count);
 		    if (gotten != bip->count) {
 			bu_log("%s:%d: Tried to convert %d, did %d",
 			    __FILE__, __LINE__, bip->count, gotten);
@@ -213,10 +213,11 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 void
 rt_binunif_dump( struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
-    bu_log("rt_bin_unif_internal <%x>...", bip);
+    bu_log("rt_bin_unif_internal <%x>...\n", bip);
     bu_log("  type = x%x = %d", bip -> type, bip -> type);
-    bu_log("  count = %ld", bip -> count);
-    bu_log("- - - - -");
+    bu_log("  count = %ld  first = 0x%02x", bip -> count,
+	   bip->u.uint8[0] & 0x0ff);
+    bu_log("- - - - -\n");
 }
 
 
@@ -295,9 +296,10 @@ rt_binunif_export5( struct bu_external		*ep,
 	int				i;
 	unsigned char			*destp;
 	unsigned long			*lsrcp;
-	unsigned short			*ssrcp;
 	int				in_cookie, out_cookie;
 	int				gotten;
+
+	bu_log("rt_binunif_export5\n");
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_minor_type != minor_type ) {
@@ -350,14 +352,16 @@ rt_binunif_export5( struct bu_external		*ep,
 		    (void) bu_pshort( destp, *ssrcp );
 		    bu_log("Just put from %d", *ssrcp);
 		}
-#endif
+#else
 		in_cookie = bu_cv_cookie("hus");
 		out_cookie = bu_cv_cookie("nus");
 		if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
 		    gotten =
-		    bu_cv_w_cookie((genptr_t) bip->u.uint8, in_cookie,
-			bip->count,
-			ep->ext_buf, out_cookie, ep->ext_nbytes);
+			    bu_cv_w_cookie(ep->ext_buf, out_cookie,
+					   ep->ext_nbytes,
+					   (genptr_t) bip->u.uint8, in_cookie,
+					   bip->count);
+
 		    if (gotten != bip->count) {
 			bu_log("%s:%d: Tried to convert %d, did %d",
 			    __FILE__, __LINE__, bip->count, gotten);
@@ -367,6 +371,7 @@ rt_binunif_export5( struct bu_external		*ep,
 		    bcopy( (char *) bip->u.uint8, (char *) ep->ext_buf,
 			ep->ext_nbytes );
 		}
+#endif
 		break;
 	    case DB5_MINORTYPE_BINU_32BITINT:
 	    case DB5_MINORTYPE_BINU_32BITINT_U:
@@ -467,4 +472,106 @@ rt_binunif_ifree( struct rt_db_internal	*ip )
 	bu_free( (genptr_t) bip->u.uint8, "binunif ifree" );
 	bu_free( ip->idb_ptr, "binunif ifree" );
 	ip->idb_ptr = GENPTR_NULL;
+}
+
+
+int
+rt_retrieve_binunif(struct rt_db_internal *intern,
+		    struct db_i	*dbip,
+		    char *name)
+{
+	register struct directory	*dp;
+	struct rt_binunif_internal	*bip;
+	size_t				nbytes; /* not really needed */
+	struct bu_external		ext;
+	struct db5_raw_internal		raw;
+	char				*tmp;
+
+	/*
+	 *	Find the guy we're told to write
+	 */
+	if( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == DIR_NULL )
+		return -1;
+
+	RT_INIT_DB_INTERNAL(intern);
+	if ( rt_db_get_internal5( intern, dp, dbip, NULL, &rt_uniresource) 
+	     != ID_BINUNIF     || db_get_external( &ext, dp, dbip ) < 0 )
+		return -1;
+
+	if ( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 ) {
+	    bu_log("%s:%d\n", __FILE__, __LINE__);
+		bu_free_external( &ext );
+		return -1;
+	}
+	if (db5_type_descrip_from_codes(&tmp, raw.major_type, raw.minor_type))
+		tmp = 0;
+
+	if (rt_g.debug & DEBUG_VOL)
+		bu_log("get_body() sees type (%d, %d)='%s'\n",
+		       raw.major_type, raw.minor_type, tmp);
+
+	if (raw.major_type != DB5_MAJORTYPE_BINARY_UNIF)
+		return -1;
+
+	bip = intern->idb_ptr;
+	RT_CK_BINUNIF(bip);
+	if (rt_g.debug & DEBUG_HF)
+		rt_binunif_dump(bip);
+
+	if (rt_g.debug & DEBUG_VOL)
+		bu_log("cmd_export_body() thinks bip->count=%d\n",
+		       bip->count);
+
+	switch (bip -> type) {
+	case DB5_MINORTYPE_BINU_FLOAT:
+		if (rt_g.debug & DEBUG_VOL)
+			bu_log("bip->type switch... float");
+		nbytes = (size_t) (bip->count * sizeof(float));
+		break;
+	case DB5_MINORTYPE_BINU_DOUBLE:
+		if (rt_g.debug & DEBUG_VOL)
+			bu_log("bip->type switch... double");
+		nbytes = (size_t) (bip->count * sizeof(double));
+		break;
+	case DB5_MINORTYPE_BINU_8BITINT:
+		if (rt_g.debug & DEBUG_VOL)
+			bu_log("bip->type switch... 8bitint");
+		nbytes = (size_t) (bip->count);
+		break;
+	case DB5_MINORTYPE_BINU_8BITINT_U:
+		if (rt_g.debug & DEBUG_VOL)
+			bu_log("bip->type switch... 8bituint");
+		nbytes = (size_t) (bip->count);
+		break;
+	case DB5_MINORTYPE_BINU_16BITINT:
+		if (rt_g.debug & DEBUG_VOL)
+			bu_log("bip->type switch... 16bituint");
+		nbytes = (size_t) (bip->count * 2);
+		break;
+	case DB5_MINORTYPE_BINU_16BITINT_U:
+		if (rt_g.debug & DEBUG_VOL)
+			bu_log("bip->type switch... 16bitint");
+		nbytes = (size_t) (bip->count * 2);
+		break;
+	case DB5_MINORTYPE_BINU_32BITINT:
+	case DB5_MINORTYPE_BINU_32BITINT_U:
+		if (rt_g.debug & DEBUG_VOL)
+			bu_log("bip->type switch... 32bitint");
+		nbytes = (size_t) (bip->count * 4);
+		break;
+	case DB5_MINORTYPE_BINU_64BITINT:
+	case DB5_MINORTYPE_BINU_64BITINT_U:
+		if (rt_g.debug & DEBUG_VOL)
+			bu_log("bip->type switch... 64bitint");
+		nbytes = (size_t) (bip->count * 8);
+		break;
+	default:
+		/* XXX	This shouln't happen!!    */
+		bu_log("bip->type switch... default");
+		break;
+	}
+
+	bu_free_external( &ext );
+
+	return 0;
 }

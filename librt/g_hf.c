@@ -137,8 +137,8 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
 	}
 
 	BU_GETSTRUCT( dsp, rt_dsp_internal );
-	bu_vls_init( &dsp->dsp_file );
-	bu_vls_strcat( &dsp->dsp_file, hip->dfile );
+	bu_vls_init( &dsp->dsp_name );
+	bu_vls_strcat( &dsp->dsp_name, hip->dfile );
 	dsp->dsp_xcnt = hip->w;
 	dsp->dsp_ycnt = hip->n;
 	dsp->dsp_smooth = 0;

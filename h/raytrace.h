@@ -94,7 +94,7 @@ extern "C" {
 #define DEBUG_SPLINE	0x00000100	/* 9 Splines */
 #define DEBUG_ANIM	0x00000200	/* 10 Animation */
 #define DEBUG_ANIM_FULL	0x00000400	/* 11 Animation matrices */
-#define DEBUG_VOL	0x00000800	/* 12 Volume solids */
+#define DEBUG_VOL	0x00000800	/* 12 Volume & opaque Binary solid */
 
 /* Options useful for debugging the library */
 #define DEBUG_ROOTS	0x00001000	/* 13 Print rootfinder details */

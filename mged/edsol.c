@@ -603,7 +603,7 @@ struct menu_item ebm_menu[] = {
 
 struct menu_item dsp_menu[] = {
 	{"DSP MENU", (void (*)())NULL, 0 },
-	{"File Name", dsp_ed, MENU_DSP_FNAME },
+	{"Name", dsp_ed, MENU_DSP_FNAME },
 	{"Set X", dsp_ed, MENU_DSP_SCALE_X },
 	{"Set Y", dsp_ed, MENU_DSP_SCALE_Y },
 	{"Set ALT", dsp_ed, MENU_DSP_SCALE_ALT },
@@ -2736,7 +2736,7 @@ sedit()
 			RT_DSP_CK_MAGIC( dsp );
 
 			/* Pop-up the Tk file browser */
-			fname = get_file_name( bu_vls_addr(&dsp->dsp_file) );
+			fname = get_file_name( bu_vls_addr(&dsp->dsp_name) );
 			if ( ! fname) break;
 
 			if( stat( fname, &stat_buf ) ) {
@@ -2757,7 +2757,7 @@ sedit()
 				mged_print_result( TCL_ERROR );
 				return;
 			}
-			bu_vls_strcpy( &dsp->dsp_file, fname );
+			bu_vls_strcpy( &dsp->dsp_name, fname );
 
 			break;
 		}

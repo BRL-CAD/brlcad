@@ -276,7 +276,7 @@ strsolbld()
 		struct rt_dsp_internal *dsp;
 
 		BU_GETSTRUCT( dsp, rt_dsp_internal );
-		bu_vls_init( &dsp->dsp_file );
+		bu_vls_init( &dsp->dsp_name );
 		bu_vls_strcpy( &str, args );
 		if( bu_struct_parse( &str, rt_functab[ID_DSP].ft_parsetab, (char *)dsp ) < 0 )  {
 			bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",

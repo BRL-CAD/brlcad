@@ -359,7 +359,8 @@ struct rt_eto_internal {
 #define DSP_NAME_LEN 128
 struct rt_dsp_internal{
 	long		magic;
-	struct bu_vls	dsp_file;		/* name of data file */
+#define dsp_file dsp_name /* for backwards compatibility */
+	struct bu_vls	dsp_name;		/* name of data file */
 	unsigned int	dsp_xcnt;		/* # samples in row of data */
 	unsigned int	dsp_ycnt;		/* # of columns in data */
 	unsigned short	dsp_smooth;		/* bool: surf normal interp */
@@ -367,11 +368,17 @@ struct rt_dsp_internal{
 	/* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
 	mat_t		dsp_stom;		/* solid to model space 
 						 * computed from dsp_mtos */
-	unsigned short	*dsp_buf;
-	struct bu_mapped_file *dsp_mp;	/* actual data */
+	unsigned short	*dsp_buf;		/* actual data */
+	struct bu_mapped_file *dsp_mp;		/* mapped file for data */
+	struct rt_db_internal *dsp_bip;		/* db object for data */
+	char		dsp_datasrc;		/* which type of data source */
 };
 #define RT_DSP_INTERNAL_MAGIC	0xde6
 #define RT_DSP_CK_MAGIC(_p)	BU_CKMAG(_p,RT_DSP_INTERNAL_MAGIC,"rt_dsp_internal")
+
+#define RT_DSP_SRC_V4_FILE	'4'
+#define RT_DSP_SRC_FILE	'f'
+#define RT_DSP_SRC_OBJ	'o'
 
 /*
  *	ID_SKETCH
