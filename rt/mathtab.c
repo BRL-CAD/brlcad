@@ -5,7 +5,7 @@
  *  using table lookups.
  *
  *  Authors -
- *	Philip Dykstra
+ *	Phillip Dykstra
  *	Michael John Muuss
  *  
  *  Source -
@@ -26,9 +26,9 @@ static char RCSmathtab[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "./mathtab.h"
 
-double	pi =	3.1415926535898;
-double	twopi =	6.283185307179;
-double halfpi =	1.570796326794896615;
+double	pi =	3.141592653589793238462643;
+double	twopi =	6.283185307179586476925286;
+double halfpi =	1.5707963267948966192313215;
 
 float *rand_ptr = rand_tab-1;
 
