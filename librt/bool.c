@@ -1133,8 +1133,13 @@ out:
 	}
 
 	/* Sanity check */
-	if( InputHdp->pt_forw != InputHdp && enddist >= INFINITY )
+	if( rt_g.debug && ap->a_onehit == 0 &&
+	    InputHdp->pt_forw != InputHdp && enddist >= INFINITY )  {
+		bu_log("rt_boolfinal() ret=%d, %s\n", ret, reason);
+		rt_pr_partitions( ap->a_rt_i, FinalHdp, "rt_boolfinal: Final partition list at return:" );
+		rt_pr_partitions( ap->a_rt_i, InputHdp, "rt_boolfinal: Input/pending partition list at return:" );
 		rt_bomb("rt_boolfinal() failed to process InputHdp list\n");
+	}
 
 	return ret;
 }
