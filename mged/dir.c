@@ -189,6 +189,22 @@ char	**argv;
   return TCL_OK;
 }
 
+HIDDEN void
+Count_refs( dbip, comb, comb_leaf, user_ptr1, user_ptr2 )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		user_ptr1, user_ptr2;
+{
+	struct directory *dp;
+
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( comb_leaf );
+
+	if( (dp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != DIR_NULL )
+		dp->d_nref++;
+}
+
 /*
  *			D I R _ N R E F
  *
@@ -198,11 +214,10 @@ char	**argv;
 void
 dir_nref( )
 {
-	register int		j;
-	register union record	*rp;
+	register int		i,j;
 	register struct directory *dp;
-	register struct directory *newdp;
-	register int		i;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal *comb;
 
 	/* First, clear any existing counts */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -215,17 +230,12 @@ dir_nref( )
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
-			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-				READ_ERR_return;
-			/* [0] is COMB, [1..n] are MEMBERs */
-			for( j=1; j < dp->d_len; j++ )  {
-				if( rp[j].M.m_instname[0] == '\0' )
-					continue;
-				if( (newdp = db_lookup( dbip, rp[j].M.m_instname,
-				    LOOKUP_QUIET)) != DIR_NULL )
-					newdp->d_nref++;
-			}
-			bu_free( (genptr_t)rp, "dir_nref recs" );
+
+			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+				continue;
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			comb_functree( dbip, comb, comb->tree, Count_refs, (genptr_t)NULL, (genptr_t)NULL );
+			rt_comb_ifree( &intern );
 		}
 	}
 }
@@ -667,6 +677,28 @@ char **argv;
     return TCL_OK;
 }
 
+HIDDEN void
+Find_ref( dbip, comb, comb_leaf, object, comb_name_ptr )
+struct db_i		*dbip;
+struct rt_comb_internal	*comb;
+union tree		*comb_leaf;
+genptr_t		object;
+genptr_t		comb_name_ptr;
+{
+	char *obj_name;
+	char *comb_name;
+
+	RT_CK_TREE( comb_leaf );
+
+	obj_name = (char *)object;
+	if( strcmp( comb_leaf->tr_l.tl_name, obj_name ) )
+		return;
+
+	comb_name = (char *)comb_name_ptr;
+
+	Tcl_AppendResult(interp, obj_name, ":  member of ", comb_name, "\n", (char *)NULL );
+}
+
 /*
  *  			F _ F I N D
  *  
@@ -681,7 +713,8 @@ char	**argv;
 {
   register int	i,j,k;
   register struct directory *dp;
-  register union record	*rp = (union record *)NULL;
+  register struct rt_db_internal intern;
+  register struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
@@ -689,9 +722,8 @@ char	**argv;
   if( setjmp( jmp_env ) == 0 )
     (void)signal( SIGINT, sig3);	/* allow interupts */
   else{
-    if(rp)
-      bu_free( (genptr_t)rp, "dir_nref recs" );
-
+    if( comb )
+  	rt_comb_ifree( &intern );
     return TCL_OK;
   }
 
@@ -700,24 +732,17 @@ char	**argv;
     for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
       if( !(dp->d_flags & DIR_COMB) )
 	continue;
-      if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
-	(void)signal( SIGINT, SIG_IGN );
-	TCL_READ_ERR_return;
-      }
-      /* [0] is COMB, [1..n] are MEMBERs */
-      for( j=1; j < dp->d_len; j++ )  {
-	if( rp[j].M.m_instname[0] == '\0' )
-	  continue;
-	for( k=0; k<argc; k++ )  {
-	  if( strncmp( rp[j].M.m_instname,
-		       argv[k], NAMESIZE) != 0 )
-	    continue;
-	  Tcl_AppendResult(interp, rp[j].M.m_instname,
-			   ":  member of ", rp[0].c.c_name,
-			   "\n", (char *)NULL);
+
+    	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+	{
+		(void)signal( SIGINT, SIG_IGN );
+		TCL_READ_ERR_return;
 	}
-      }
-      bu_free( (genptr_t)rp, "dir_nref recs" );
+    	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	for( k=0; k<argc; k++ )
+	    	comb_functree( dbip, comb, comb->tree, Find_ref, (genptr_t)argv[k], dp->d_namep );
+
+    	rt_comb_ifree( &intern );
     }
   }
 
