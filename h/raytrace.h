@@ -190,13 +190,13 @@ struct rt_functab {
 	int		ft_use_rpp;
 	int		(*ft_prep)();
 	struct seg 	*((*ft_shot)());
-	int		(*ft_print)();
-	int		(*ft_norm)();
-	int		(*ft_uv)();
-	int		(*ft_curve)();
+	void		(*ft_print)();
+	void		(*ft_norm)();
+	void		(*ft_uv)();
+	void		(*ft_curve)();
 	int		(*ft_classify)();
-	int		(*ft_free)();
-	int		(*ft_plot)();
+	void		(*ft_free)();
+	void		(*ft_plot)();
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
@@ -653,6 +653,31 @@ struct vlhead {
  *                                                               *
  *****************************************************************/
 
+#ifdef __STDC__
+extern void rt_bomb(char *str);		/* Fatal error */
+extern void rt_log();			/* Log message */
+					/* Read named MGED db, build toc */
+extern struct rt_i *rt_dirbuild(char *filename, char *buf, int len);
+					/* Prepare for raytracing */
+extern void rt_prep(struct rt_i *rtip);
+					/* Shoot a ray */
+extern int rt_shootray(struct application *ap);
+					/* Get expr tree for object */
+extern int rt_gettree(struct rt_i *rtip, char *node);
+					/* Print seg struct */
+extern void rt_pr_seg(struct seg *segp);
+					/* Print the partitions */
+extern void rt_pr_partitions(struct rt_i *rtip,
+	struct partition *phead, char *title);
+					/* Find solid by leaf name */
+extern struct soltab *rt_find_solid(struct rt_t *rtip, char *name);
+					/* Start the timer */
+extern void rt_prep_timer(void);
+					/* Read timer, return time + str */
+extern double rt_read_timer(char *str, int len);
+
+#else
+
 extern void rt_bomb();			/* Fatal error */
 extern void rt_log();			/* Log message */
 
@@ -667,6 +692,7 @@ extern struct soltab *rt_find_solid();	/* Find solid by leaf name */
 
 extern void rt_prep_timer();		/* Start the timer */
 extern double rt_read_timer();		/* Read timer, return time + str */
+#endif
 
 /* The matrix math routines */
 extern void mat_zero(), mat_idn(), mat_copy(), mat_mul(), matXvec();
@@ -680,6 +706,68 @@ extern double mat_atan2();
  *  Internal routines in the RT library.  Not for Applications   *
  *                                                               *
  *****************************************************************/
+
+#ifdef __STDC__
+					/* visible malloc() */
+extern char *rt_malloc(unsigned int cnt, char *str);
+					/* visible free() */
+extern void rt_free(char *ptr, char *str);
+					/* Duplicate str w/malloc */
+extern char *rt_strdup(char *cp);
+
+					/* Look up name in toc */
+extern struct directory *rt_dir_lookup(struct rt_i *rtip, char *str, int noisy);
+					/* Add name to toc */
+extern struct directory *rt_dir_add(struct rt_i *rtip, char *name, long laddr);
+					/* Weave segs into partitions */
+extern void rt_boolweave(struct seg *segp_in, struct partition *PartHeadp,
+	struct application *ap);
+					/* Eval booleans over partitions */
+extern void rt_boolfinal(struct partition *InputHdp,
+	struct partition *FinalHdp,
+	fastf_t startdist, fastf_t enddist,
+	bitv_t *regionbits, struct application *ap);
+					/* Eval bool tree node */
+extern int rt_booleval(union tree *treep, struct partition *partp,
+	 struct region **trueregp);
+					/* Approx Floating compare */
+extern int rt_fdiff(double a, double b);
+					/* Relative Difference */
+extern double rt_reldiff(double a, double b);
+					/* Print a region */
+extern void rt_pr_region(struct region *rp);
+					/* Print an expr tree */
+extern void rt_pr_tree(union tree *tp, int lvl);
+					/* Print a partition */
+extern void rt_pr_pt(struct rt_i *rtip, struct partition *pp);
+					/* Print a bit vector */
+extern void rt_pr_bitv(char *str, bitv_t *bv, int len);
+					/* Print a hit point */
+extern void rt_pr_hit(char *str, struct hit *hitp);
+					/* convert dbfloat->fastf_t */
+/* XXX these next two should be dbfloat_t, but that means
+ * XXX including db.h in absolutely everything.  No way.
+ */
+extern void rt_fastf_float(fastf_t *ff, float *fp, int n);
+					/* convert dbfloat mat->fastf_t */
+extern void rt_mat_dbmat(fastf_t *ff, float *dbp);
+					/* storage obtainers */
+extern void rt_get_seg(struct resource *res);
+extern void rt_get_pt(struct rt_i *rtip, struct resource *res);
+extern void rt_get_bitv(struct rt_i *rtip, struct resource *res);
+					/* malloc rounder */
+extern int rt_byte_roundup(int nbytes);
+/* ran out of energy here */
+extern void rt_bitv_or();		/* logical OR on bit vectors */
+extern void rt_cut_it();		/* space partitioning */
+extern void rt_pr_cut();		/* print cut node */
+extern void rt_draw_box();		/* unix-plot an RPP */
+extern void rt_region_color_map();	/* regionid-driven color override */
+extern void rt_color_addrec();		/* process ID_MATERIAL record */
+extern void rt_cut_extend();		/* extend a cut box */
+extern int rt_rpp_region();		/* find RPP of one region */
+
+#else
 
 extern char *rt_malloc();		/* visible malloc() */
 extern void rt_free();			/* visible free() */
@@ -711,6 +799,7 @@ extern void rt_region_color_map();	/* regionid-driven color override */
 extern void rt_color_addrec();		/* process ID_MATERIAL record */
 extern void rt_cut_extend();		/* extend a cut box */
 extern int rt_rpp_region();		/* find RPP of one region */
+#endif
 
 /* CxDiv, CxSqrt */
 extern void rt_pr_roots();		/* print complex roots */
