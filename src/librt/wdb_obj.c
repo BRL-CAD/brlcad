@@ -210,7 +210,7 @@ static int wdb_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, con
 static int wdb_close_tcl();
 #endif
 static int wdb_decode_dbip(Tcl_Interp *interp, const char *dbip_string, struct db_i **dbipp);
-static struct db_i *wdb_prep_dbip(Tcl_Interp *interp, const char *filename);
+struct db_i *wdb_prep_dbip(Tcl_Interp *interp, const char *filename);
 
 static int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_match_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -277,8 +277,11 @@ static int wdb_move_arb_edge_tcl();
 static int wdb_move_arb_face_tcl();
 static int wdb_rotate_arb_face_tcl();
 static int wdb_rmap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+#ifdef IMPORT_FASTGEN4_SECTION
+static int wdb_importFg4Section_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+#endif
 
-static void wdb_deleteProc(ClientData clientData);
+void wdb_deleteProc(ClientData clientData);
 static void wdb_deleteProc_rt(ClientData clientData);
 
 static void wdb_do_trace(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3);
@@ -328,6 +331,9 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"get_type",	wdb_get_type_tcl},
 	{"hide",	wdb_hide_tcl},
 	{"i",		wdb_instance_tcl},
+#ifdef IMPORT_FASTGEN4_SECTION
+	{"importFg4Section",		wdb_importFg4Section_tcl},
+#endif
 	{"keep",	wdb_keep_tcl},
 	{"kill",	wdb_kill_tcl},
 	{"killall",	wdb_killall_tcl},
@@ -417,7 +423,7 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /*
  * Called by Tcl when the object is destroyed.
  */
-static void
+void
 wdb_deleteProc(ClientData clientData)
 {
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
@@ -432,6 +438,31 @@ wdb_deleteProc(ClientData clientData)
 	BU_LIST_DEQUEUE(&wdbp->l);
 	bu_vls_free(&wdbp->wdb_name);
 	wdb_close(wdbp);
+}
+
+/*
+ * Create a command named "oname" in "interp"
+ * using "wdbp" as its state.
+ */
+int
+wdb_create_cmd(Tcl_Interp	*interp,
+	       struct rt_wdb	*wdbp,	/* pointer to object */
+	       const char	*oname)	/* object name */
+{
+    if (wdbp == RT_WDB_NULL) {
+	Tcl_AppendResult(interp, "wdb_init_cmd ", oname, " failed", NULL);
+	return TCL_ERROR;
+    }
+
+    /* Instantiate the newprocname, with clientData of wdbp */
+    /* Beware, returns a "token", not TCL_OK. */
+    (void)Tcl_CreateCommand(interp, oname, (Tcl_CmdProc *)wdb_cmd,
+			    (ClientData)wdbp, wdb_deleteProc);
+
+    /* Return new function name as result */
+    Tcl_AppendResult(interp, oname, (char *)NULL);
+	
+    return TCL_OK;
 }
 
 /*
@@ -487,6 +518,7 @@ wdb_init_obj(Tcl_Interp		*interp,
 	/* append to list of rt_wdb's */
 	BU_LIST_APPEND(&rt_g.rtg_headwdb.l,&wdbp->l);
 
+#if 0
 	/* Instantiate the newprocname, with clientData of wdbp */
 	/* Beware, returns a "token", not TCL_OK. */
 	(void)Tcl_CreateCommand(interp, oname, (Tcl_CmdProc *)wdb_cmd,
@@ -494,6 +526,7 @@ wdb_init_obj(Tcl_Interp		*interp,
 
 	/* Return new function name as result */
 	Tcl_AppendResult(interp, oname, (char *)NULL);
+#endif
 	
 	return TCL_OK;
 }
@@ -528,6 +561,7 @@ wdb_open_tcl(ClientData	clientData,
 	     const char	**argv)
 {
 	struct rt_wdb *wdbp;
+	int ret;
 
 	if (argc == 1) {
 		/* get list of database objects */
@@ -599,7 +633,10 @@ Usage: wdb_open\n\
 		}
 	}
 
-	return wdb_init_obj(interp, wdbp, argv[1]);
+	if ((ret = wdb_init_obj(interp, wdbp, argv[1])) != TCL_OK)
+	    return ret;
+
+	return wdb_create_cmd(interp, wdbp, argv[1]);
 }
 
 int
@@ -617,7 +654,7 @@ wdb_decode_dbip(Tcl_Interp *interp, const char *dbip_string, struct db_i **dbipp
 /*
  * Open/Create the database and build the in memory directory.
  */
-static struct db_i *
+struct db_i *
 wdb_prep_dbip(Tcl_Interp *interp, const char *filename)
 {
 	struct db_i *dbip;
@@ -1273,8 +1310,14 @@ wdb_tops_cmd(struct rt_wdb	*wdbp,
 	struct directory		**dirp0 = (struct directory **)NULL;
 	struct bu_vls			vls;
 	int				c;
+#ifdef NEW_TOPS_BEHAVIOR
+	int				aflag = 0;
+	int				hflag = 0;
+	int				pflag = 0;
+#else
 	int				gflag = 0;
 	int				uflag = 0;
+#endif
 	int				no_decorate = 0;
 
 	RT_CK_WDB_TCL(interp, wdbp);
@@ -1282,6 +1325,26 @@ wdb_tops_cmd(struct rt_wdb	*wdbp,
 
 	/* process any options */
 	bu_optind = 1;	/* re-init bu_getopt() */
+#ifdef NEW_TOPS_BEHAVIOR
+	while ((c = bu_getopt(argc, argv, "ahnp")) != EOF) {
+		switch (c) {
+		case 'a':
+			aflag = 1;
+			break;
+		case 'h':
+			hflag = 1;
+			break;
+		case 'n':
+			no_decorate = 1;
+			break;
+		case 'p':
+			pflag = 1;
+			break;
+		default:
+			break;
+		}
+	}
+#else
 	while ((c = bu_getopt(argc, argv, "gun")) != EOF) {
 		switch (c) {
 		case 'g':
@@ -1297,6 +1360,7 @@ wdb_tops_cmd(struct rt_wdb	*wdbp,
 			break;
 		}
 	}
+#endif
 
 	argc -= (bu_optind - 1);
 	argv += (bu_optind - 1);
@@ -1324,10 +1388,21 @@ wdb_tops_cmd(struct rt_wdb	*wdbp,
 			for (dp = wdbp->dbip->dbi_Head[i];
 			     dp != DIR_NULL;
 			     dp = dp->d_forw)  {
+#ifdef NEW_TOPS_BEHAVIOR
+				if (dp->d_nref == 0 &&
+				    (aflag ||
+				     (hflag && (dp->d_flags & DIR_HIDDEN)) ||
+				     (pflag && dp->d_addr == RT_DIR_PHONY_ADDR) ||
+				     (!aflag && !hflag && !pflag &&
+				      !(dp->d_flags & DIR_HIDDEN) &&
+				      (dp->d_addr != RT_DIR_PHONY_ADDR))))
+					*dirp++ = dp;
+#else
 				if (dp->d_nref == 0 &&
 				    ((!gflag || (gflag && dp->d_major_type == DB5_MAJORTYPE_BRLCAD)) &&
 				     (!uflag || (uflag && !(dp->d_flags & DIR_HIDDEN)))))
 					*dirp++ = dp;
+#endif
 			}
 	}
 
@@ -8646,6 +8721,23 @@ wdb_bot_face_sort_tcl(ClientData	clientData,
 	return wdb_bot_face_sort_cmd(wdbp, interp, argc-1, argv+1);
 }
 
+
+#ifdef IMPORT_FASTGEN4_SECTION
+/*
+ * Usage:
+ *        importFg4Section name sdata
+ */
+static int
+wdb_importFg4Section_tcl(ClientData	clientData,
+			 Tcl_Interp	*interp,
+			 int		argc,
+			 char		**argv)
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+    return wdb_importFg4Section_cmd(wdbp, interp, argc-1, argv+1);
+}
+#endif
 
 #if 0
 /* skeleton functions for wdb_obj methods */
