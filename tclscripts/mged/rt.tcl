@@ -263,7 +263,6 @@ proc do_Raytrace { id } {
     global rt_control
 
     winset $mged_active_dm($id)
-#    cmd_set $id
     set rt_cmd "_mged_rt"
 
     if {$rt_control($id,fb_or_file) == "filename"} {
@@ -489,24 +488,20 @@ proc do_Advanced_Settings { id } {
     frame $top.lmodelF
     frame $top.lmodelFF -relief sunken -bd 2
 
+    set hoc_data { { summary "Indicates the number of processors
+to use for raytracing." } }
     label $top.nprocL -text "# of Processors" -anchor w
-    hoc_register_data $top.nprocL "# of Processors"\
-	    { { summary "The number of processors to use
-for raytracing." } }
+    hoc_register_data $top.nprocL "# of Processors" $hoc_data
     entry $top.nprocE -relief flat -width 4 -textvar rt_control($id,nproc)
-    hoc_register_data $top.nprocE "# of Processors"\
-	    { { summary "Enter the number of processors to use
-for raytracing." } }
+    hoc_register_data $top.nprocE "# of Processors" $hoc_data
 
-    label $top.hsampleL -text "Hypersample" -anchor w
-    hoc_register_data $top.hsampleL "Hypersample"\
-	    { { summary "Hypersampling is the number of extra rays
+    set hoc_data { { summary "Hypersampling is the number of extra rays
 to fire for each pixel. The results are then
 averaged to determine the pixel value." } }
+    label $top.hsampleL -text "Hypersample" -anchor w
+    hoc_register_data $top.hsampleL "Hypersample" $hoc_data
     entry $top.hsampleE -relief flat -width 4 -textvar rt_control($id,hsample)
-    hoc_register_data $top.hsampleE "Hypersample"\
-	    { { summary "Enter the number of extra rays to
-fire for each pixel." } }
+    hoc_register_data $top.hsampleE "Hypersample" $hoc_data
 
     label $top.jitterL -text "Jitter" -anchor w
     hoc_register_data $top.jitterL "Jitter"\
