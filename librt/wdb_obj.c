@@ -3228,7 +3228,6 @@ wdb_region_cmd(struct rt_wdb	*wdbp,
 		}
 	}
 
-#if 1
 	/* Get operation and solid name for each solid */
 	for (i = 2; i < argc; i += 2) {
 		if (argv[i][1] != '\0') {
@@ -3272,60 +3271,6 @@ wdb_region_cmd(struct rt_wdb	*wdbp,
 			wdbp->wdb_item_default--;
 		return TCL_ERROR;
 	}
-#else
-	/*XXX
-	 * This is the way MGED used to do it.
-	 * However, this creates a dependency on libwdb
-	 */
-	/* Get operation and solid name for each solid */
-	for (i = 2; i < argc; i += 2) {
-		if (argv[i][1] != '\0') {
-			Tcl_AppendResult(interp, "bad operation: ", argv[i],
-					 " skip member: ", argv[i+1], "\n", (char *)NULL);
-			continue;
-		}
-		oper = argv[i][0];
-		if ((dp = db_lookup(wdbp->dbip,  argv[i+1], LOOKUP_NOISY )) == DIR_NULL ) {
-			Tcl_AppendResult(interp, "skipping ", argv[i+1], "\n", (char *)NULL);
-			continue;
-		}
-
-		if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
-			struct bu_vls tmp_vls;
-
-			bu_vls_init(&tmp_vls);
-			bu_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
-				      oper, dp->d_namep );
-			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-			bu_vls_free(&tmp_vls);
-			continue;
-		}
-
-		/* Adding region to region */
-		if (dp->d_flags & DIR_REGION) {
-			Tcl_AppendResult(interp, "Note: ", dp->d_namep,
-					 " is a region\n", (char *)NULL);
-		}
-
-		mk_addmember(argv[i+1], &head, oper);
-	}
-
-	if (mk_comb(wdbp, argv[1], &head,
-		    1, NULL, NULL, NULL,
-		    wdbp->wdb_item_default, wdbp->wdb_air_default,
-		    wdbp->wdb_mat_default, wdbp->wdb_los_default,
-		    0, 1, 1) < 0) {
-		/* failed to create region */
-		if (wdbp->wdb_item_default > 1)
-			wdbp->wdb_item_default--;
-
-		Tcl_AppendResult(interp,
-				 "An error has occured while adding '",
-				 argv[1], "' to the database.\n", (char *)NULL);
-		WDB_TCL_ERROR_RECOVERY_SUGGESTION;
-		return TCL_ERROR;
-	}
-#endif
 
 	return TCL_OK;
 }
@@ -5673,11 +5618,10 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 }
 
 int
-wdb_attr_tcl(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp     *interp;
-     int		argc;
-     char	      **argv;
+wdb_attr_tcl(ClientData	clientData,
+	     Tcl_Interp     *interp,
+	     int		argc,
+	     char	      **argv)
 {
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
