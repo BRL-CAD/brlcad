@@ -6,16 +6,16 @@ static const char RCSid[] = "$Header$";
 /*	INCLUDES	*/
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+
 #include "./nirt.h"
 #include "./usrfmt.h"
+
 
 extern outval		ValTab[];
 extern int		nirt_debug;
@@ -48,6 +48,7 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
     struct bu_vls       *vls;
     struct bu_vls       attr_vls;
     struct bu_mro **attr_values;
+    char regionPN[512] = {0};
 
     report(FMT_RAY);
     report(FMT_HEAD);
@@ -113,10 +114,9 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	ValTab[VTI_LOS].value.fval = r_entry(D) - r_exit(D);
 	ValTab[VTI_SLOS].value.fval = 0.01 * ValTab[VTI_LOS].value.fval *
 	    part -> pt_regionp -> reg_los;
-	ValTab[VTI_PATH_NAME].value.sval =
-	    (char *)(part -> pt_regionp -> reg_name);
-	ValTab[VTI_REG_NAME].value.sval =
-	    basename(part -> pt_regionp -> reg_name);
+	strncpy(regionPN, part->pt_regionp->reg_name, 512);
+	ValTab[VTI_PATH_NAME].value.sval = regionPN;
+	ValTab[VTI_REG_NAME].value.sval = basename(regionPN);
 	ValTab[VTI_REG_ID].value.ival = part -> pt_regionp -> reg_regionid;
 	ValTab[VTI_SURF_NUM_IN].value.ival = part -> pt_inhit -> hit_surfno;
 	ValTab[VTI_SURF_NUM_OUT].value.ival = part -> pt_outhit -> hit_surfno;
@@ -131,9 +131,10 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 #endif
 	{
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 1;
+	    strncpy(regionPN, part->pt_regionp->reg_name, 512);
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =
 	    ValTab[VTI_CLAIMANT_LISTN].value.sval =
-		basename(part -> pt_regionp -> reg_name);
+		basename(regionPN);
 	}
 	else
 	{
@@ -146,7 +147,8 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	    {
 		if (ValTab[VTI_CLAIMANT_COUNT].value.ival++)
 		    bu_vls_strcat(&claimant_list, " ");
-		bu_vls_strcat(&claimant_list, basename((*rpp) -> reg_name));
+		strncpy(regionPN, (*rpp)->reg_name, 512);
+		bu_vls_strcat(&claimant_list, basename(regionPN));
 	    }
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =
 		bu_vls_addr(&claimant_list);
@@ -188,11 +190,11 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 
 	while ((ovp = find_ovlp(part)) != OVERLAP_NULL)
 	{
-	    ValTab[VTI_OV_REG1_NAME].value.sval =
-		basename(ovp -> reg1 -> reg_name);
+	    strncpy(regionPN, ovp -> reg1 -> reg_name, 512);
+	    ValTab[VTI_OV_REG1_NAME].value.sval = basename(regionPN);
 	    ValTab[VTI_OV_REG1_ID].value.ival = ovp -> reg1 -> reg_regionid;
-	    ValTab[VTI_OV_REG2_NAME].value.sval =
-		basename(ovp -> reg2 -> reg_name);
+	    strncpy(regionPN, ovp -> reg2 -> reg_name, 512);
+	    ValTab[VTI_OV_REG2_NAME].value.sval = basename(regionPN);
 	    ValTab[VTI_OV_REG2_ID].value.ival = ovp -> reg2 -> reg_regionid;
 	    ValTab[VTI_OV_SOL_IN].value.sval =
 		(char *)(part -> pt_inseg -> seg_stp -> st_dp -> d_namep);
