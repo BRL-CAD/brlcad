@@ -363,10 +363,13 @@ AC_MSG_CHECKING(whether to enable doxygen)
 AC_MSG_RESULT($use_doxygen)
 
 dnl now that the compiler is known, we can enable a compiler-specific cache file
+dnl unless we are on sgi, where bash may choke on sed syntax in the cache
 AC_MSG_CHECKING(what cache file is set to)
 if test "x$cache_file" = "x/dev/null" ; then
-      compiler="`echo $CC | awk '{print $1}'`"
-      cache_file="config.cache.${compiler}.${host_os}"
+	if ! test "x$host_os" = "xirix6.5" ; then
+		compiler="`echo $CC | awk '{print $1}'`"
+		cache_file="config.cache.${compiler}.${host_os}"
+	fi
 fi
 AC_MSG_RESULT($cache_file)
 
