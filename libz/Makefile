@@ -21,7 +21,7 @@ CFLAGS=-O
 #           -Wstrict-prototypes -Wmissing-prototypes
 
 LDFLAGS=-L. -lz
-LDSHARED=$(CC)
+LDSHARED=$(LDSHARED)
 CPP=$(CC) -E
 
 VER=1.1.4
