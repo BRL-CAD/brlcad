@@ -201,35 +201,6 @@ typedef char *pointer;			/* generic pointer */
 #define OutsideAir(rp)	((rp)->reg_aircode == OUTSIDE_AIR)
 #define InsideAir(rp)	(Air(rp)&& !OutsideAir(rp))
 
-#define Check_Iflip( _pp, _normal, _rdir )\
-	{	fastf_t	f;\
-	if( _pp->pt_inflip )\
-		{\
-		ScaleVec( _normal, -1.0 );\
-		_pp->pt_inflip = 0;\
-		}\
-	f = Dot( _rdir, _normal );\
-	if( f >= 0.0 )\
-		{\
-		ScaleVec( _normal, -1.0 );\
-		rt_log( "Fixed flipped entry normal\n" );\
-		}\
-	}
-#define Check_Oflip( _pp, _normal, _rdir )\
-	{	fastf_t	f;\
-	if( _pp->pt_outflip )\
-		{\
-		ScaleVec( _normal, -1.0 );\
-		_pp->pt_outflip = 0;\
-		}\
-	f = Dot( _rdir, _normal );\
-	if( f <= 0.0 )\
-		{\
-		ScaleVec( _normal, -1.0 );\
-		rt_log( "Fixed flipped exit normal\n" );\
-		}\
-	}
-
 #define Malloc_Bomb( _bytes_ ) \
                 rt_log( "\"%s\"(%d) : allocation of %d bytes failed.\n",\
                                 __FILE__, __LINE__, _bytes_ )
