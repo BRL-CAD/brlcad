@@ -228,12 +228,13 @@ register int	want;
 		}
 		if( swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 ||
 		    swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
-			rt_log("shade_inputs:  bad u,v=%e,%e du,dv=%g,%g seg=%s %s surf=%d.  Making green.\n",
+			rt_log("shade_inputs:  bad u,v=%e,%e du,dv=%g,%g seg=%s %s surf=%d. xy=%d,%d Making green.\n",
 				swp->sw_uv.uv_u, swp->sw_uv.uv_v,
 				swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 				pp->pt_inseg->seg_stp->st_name,
 		    		rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
-		    		pp->pt_inhit->hit_surfno );
+		    		pp->pt_inhit->hit_surfno,
+				ap->a_x, ap->a_y );
 			VSET( swp->sw_color, 0, 9, 0 );	/* Green */
 			return;
 		}
