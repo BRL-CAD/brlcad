@@ -167,6 +167,8 @@ db5_diradd(
 		RT_DIR_SET_NAMEP( dp, rip->name.ext_buf ); /* sets d_namep */
 	}
 	dp->d_un.file_offset = laddr;
+	dp->d_major_type = rip->major_type;
+	dp->d_minor_type = rip->minor_type;
 	switch( rip->major_type )  {
 	case DB5_MAJORTYPE_BRLCAD:
 		if( rip->minor_type == ID_COMBINATION )  {
@@ -199,6 +201,8 @@ db5_diradd(
 	case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		dp->d_flags = 0;
 	}
+	if( rip->h_name_hidden )
+		dp->d_flags |= DIR_HIDDEN;
 	dp->d_len = rip->object_length;		/* in bytes */
 	BU_LIST_INIT( &dp->d_use_hd );
 	dp->d_animate = NULL;

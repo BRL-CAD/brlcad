@@ -2139,7 +2139,7 @@ wdb_dir_add5(
 	if( rip->minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION ) {
 
 		/* export object */
-		db5_export_object3( &ext, rip->h_dli, local, &rip->attributes,
+		db5_export_object3( &ext, rip->h_dli, local, 0, &rip->attributes,
 			    &rip->body, rip->major_type, rip->minor_type,
 			    rip->a_zzz, rip->b_zzz );
 
@@ -2184,7 +2184,7 @@ wdb_dir_add5(
 		struct rt_comb_internal *comb;
 
 		/* export object */
-		db5_export_object3( &ext, rip->h_dli, local, &rip->attributes,
+		db5_export_object3( &ext, rip->h_dli, local, 0, &rip->attributes,
 			    &rip->body, rip->major_type, rip->minor_type,
 			    rip->a_zzz, rip->b_zzz );
 

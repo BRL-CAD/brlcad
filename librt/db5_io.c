@@ -246,6 +246,7 @@ CONST unsigned char		*cp;
 	rip->h_object_width = (cp[1] & DB5HDR_HFLAGS_OBJECT_WIDTH_MASK) >>
 		DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT;
 	rip->h_name_present = (cp[1] & DB5HDR_HFLAGS_NAME_PRESENT);
+	rip->h_name_hidden = (cp[1] & DB5HDR_HFLAGS_HIDDEN_OBJECT);
 	rip->h_name_width = (cp[1] & DB5HDR_HFLAGS_NAME_WIDTH_MASK) >>
 		DB5HDR_HFLAGS_NAME_WIDTH_SHIFT;
 
@@ -465,10 +466,11 @@ FILE			*fp;
  *  Any of name, attrib, and body may be null.
  */
 void
-db5_export_object3( out, dli, name, attrib, body, major, minor, a_zzz, b_zzz )
+db5_export_object3( out, dli, name, hidden, attrib, body, major, minor, a_zzz, b_zzz )
 struct bu_external		*out;			/* output */
 int				dli;
 CONST char			*name;
+CONST unsigned char		hidden;
 CONST struct bu_external	*attrib;
 CONST struct bu_external	*body;
 int				major;
@@ -547,6 +549,9 @@ int				b_zzz;
 		odp->db5h_hflags |= DB5HDR_HFLAGS_NAME_PRESENT |
 			(n_width << DB5HDR_HFLAGS_NAME_WIDTH_SHIFT);
 		
+	}
+	if( hidden ) {
+		odp->db5h_hflags |= DB5HDR_HFLAGS_HIDDEN_OBJECT;
 	}
 
 	/* aflags */
@@ -891,6 +896,7 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 	db5_export_object3( &ext2,
 		raw.h_dli,
 		dp->d_namep,
+		raw.h_name_hidden,
 		&attr,
 		&raw.body,
 		raw.major_type, raw.minor_type,
@@ -966,7 +972,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 		/* OK, make one.  It will be empty to start with, updated below. */
 		db5_export_object3( &global,
 			DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-			DB5_GLOBAL_OBJECT_NAME, NULL, NULL,
+			DB5_GLOBAL_OBJECT_NAME, DB5HDR_HFLAGS_HIDDEN_OBJECT, NULL, NULL,
 			DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
 			DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
 
@@ -1036,7 +1042,7 @@ double		local2mm;
 
 	/* First, write the header object */
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
-		NULL, NULL, NULL,
+		NULL, 0, NULL, NULL,
 		DB5_MAJORTYPE_RESERVED, 0,
 		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
 	if( bu_fwrite_external( fp, &out ) < 0 )  return -1;
@@ -1052,7 +1058,7 @@ double		local2mm;
 
 	db5_export_attributes( &attr, &avs );
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-		DB5_GLOBAL_OBJECT_NAME, &attr, NULL,
+		DB5_GLOBAL_OBJECT_NAME, DB5HDR_HFLAGS_HIDDEN_OBJECT, &attr, NULL,
 		DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
 		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
 	if( bu_fwrite_external( fp, &out ) < 0 )  return -1;
@@ -1125,7 +1131,7 @@ rt_db_cvt_to_external5(
 	}
 
 	db5_export_object3( ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-		name, &attributes, &body,
+		name, 0, &attributes, &body,
 		major, minor,
 		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
 	BU_CK_EXTERNAL( ext );
@@ -1168,6 +1174,7 @@ db_wrap_v5_external( struct bu_external *ep, const char *name )
 		db5_export_object3( ep,
 			DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 			name,
+			raw.h_name_hidden,
 			&raw.attributes,
 			&raw.body,
 			raw.major_type, raw.minor_type,
