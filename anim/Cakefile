@@ -22,13 +22,13 @@
 
 /* Explicit composition of each product */
 anim_cascade: anim_cascade.o anim.o
-	CC LDFLAGS anim_cascade.o anim.o LIBRT LIBBU LIBBU_LIBES LIBES -o anim_cascade
+	CC LDFLAGS anim_cascade.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_cascade
 
 anim_fly: anim_fly.o
 	CC LDFLAGS anim_fly.o LIBES -o anim_fly
 
 anim_hardtrack: anim_hardtrack.o anim.o
-	CC LDFLAGS anim_hardtrack.o anim.o LIBRT LIBBU LIBBU_LIBES LIBES -o anim_hardtrack
+	CC LDFLAGS anim_hardtrack.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_hardtrack
 
 anim_keyread: anim_keyread.o anim.o
 	CC LDFLAGS anim_keyread.o anim.o LIBES -o anim_keyread
@@ -40,22 +40,22 @@ anim_offset: anim_offset.o anim.o
 	CC LDFLAGS anim_offset.o anim.o LIBES -o anim_offset
 
 anim_orient: anim_orient.o anim.o
-	CC LDFLAGS anim_orient.o anim.o LIBRT LIBBU LIBBU_LIBES LIBES -o anim_orient
+	CC LDFLAGS anim_orient.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_orient
 
 anim_script: anim_script.o anim.o
-	CC LDFLAGS anim_script.o anim.o LIBRT LIBBU LIBBU_LIBES LIBES -o anim_script
+	CC LDFLAGS anim_script.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_script
 
 anim_sort: anim_sort.o
 	CC LDFLAGS anim_sort.o LIBES -o anim_sort
 
 anim_time: anim_time.o 
-	CC LDFLAGS anim_time.o LIBRT LIBBU LIBBU_LIBES LIBES -o anim_time
+	CC LDFLAGS anim_time.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_time
 
 anim_track: anim_track.o cattrack.o anim.o
-	CC LDFLAGS anim_track.o cattrack.o anim.o LIBRT LIBBU LIBBU_LIBES LIBES -o anim_track
+	CC LDFLAGS anim_track.o cattrack.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_track
 
 anim_turn: anim_turn.o anim.o
-	CC LDFLAGS anim_turn.o anim.o LIBRT LIBBU LIBBU_LIBES LIBES -o anim_turn
+	CC LDFLAGS anim_turn.o anim.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_turn
 
 chan_add: chan_add.o
 	CC LDFLAGS chan_add.o LIBES -o chan_add
