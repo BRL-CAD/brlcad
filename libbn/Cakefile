@@ -8,6 +8,10 @@
 
 #include "../Cakefile.defs"
 
+#if defined(RESOLVE_LIBRARIES)
+#	define EXTRA_OBJ_NO_DEPENDENCY -lc -lm -brtl -L../.libbu.sp3 -lbu -L../.libtcl8.4.sp3 -ltcl
+#endif
+
 #define FILES	\
 	bn_tcl \
 	complex \

@@ -15,6 +15,10 @@
 
 #include "../Cakefile.defs"
 
+#if defined(RESOLVE_LIBRARIES)
+#	define EXTRA_OBJ_NO_DEPENDENCY -lc
+#endif
+
 #ifdef	LIBPKG_SETUP
 #define	EXTRA_SETUP	LIBPKG_SETUP
 #endif

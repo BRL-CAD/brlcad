@@ -13,5 +13,9 @@
 
 #include "../Cakefile.defs"
 
+#if defined(RESOLVE_LIBRARIES)
+#	define EXTRA_OBJ_NO_DEPENDENCY -lc -lcurses
+#endif
+
 #include "../Cakefile.lib"
 #include "../Cakefile.rules"

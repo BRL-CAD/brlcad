@@ -16,7 +16,13 @@
 #define LIBRARY_TITLE		"BRL-CAD FFT Library"
 
 #include "../Cakefile.defs"
+
+#if defined(RESOLVE_LIBRARIES)
+#	define EXTRA_OBJ_NO_DEPENDENCY -lc -lm
+#endif
+
 #include "../Cakefile.lib"
+
 
 /* Don't use LIBES here, we don't want to tangle with the
  * shared libraries still being prepared at this point.
