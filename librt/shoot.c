@@ -27,7 +27,8 @@ extern long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
 
 extern struct soltab *HeadSolid;
 extern struct functab functab[];
-extern struct seg *HeadSeg;
+
+extern struct partition *bool_regions();
 
 /*
  *  			S H O O T R A Y
@@ -40,20 +41,22 @@ extern struct seg *HeadSeg;
  *
  *  This code is executed more often than any other part, generally.
  */
-shootray( rayp )
-register struct ray *rayp;
+shootray( ap )
+register struct application *ap;
 {
 	register struct soltab *stp;
 	static vect_t diff;	/* diff between shot base & solid center */
 	FAST fastf_t distsq;	/* distance**2 */
+	static struct partition *PartHeadp, *pp;
+	static struct seg *HeadSeg;
 
 	if(debug&DEBUG_ALLRAYS) {
-		VPRINT("\nRay Start", rayp->r_pt);
-		VPRINT("Ray Direction", rayp->r_dir);
+		VPRINT("\nRay Start", ap->a_ray.r_pt);
+		VPRINT("Ray Direction", ap->a_ray.r_dir);
 		fflush(stdout);		/* In case of instant death */
 	}
 
-	HeadSeg = SEG_NULL;	/* Should check, actually */
+	HeadSeg = SEG_NULL;
 
 	/*
 	 * For now, shoot at all solids in model.
@@ -62,14 +65,14 @@ register struct ray *rayp;
 		register struct seg *newseg;		/* XXX */
 
 		/* Consider bounding sphere */
-		VSUB2( diff, stp->st_center, rayp->r_pt );
-		distsq = VDOT(rayp->r_dir, diff);
+		VSUB2( diff, stp->st_center, ap->a_ray.r_pt );
+		distsq = VDOT(ap->a_ray.r_dir, diff);
 		if( (MAGSQ(diff) - distsq*distsq) > stp->st_radsq ) {
 			nmiss++;
 			continue;
 		}
 		nshots++;
-		newseg = functab[stp->st_id].ft_shot( stp, rayp );
+		newseg = functab[stp->st_id].ft_shot( stp, ap->a_ray );
 		if( newseg == SEG_NULL )
 			continue;
 
@@ -94,4 +97,45 @@ register struct ray *rayp;
 			HeadSeg = newseg;
 		}
 	}
+
+	/* HeadSeg chain now has all segments hit by this ray */
+	if( HeadSeg == SEG_NULL )  {
+		ap->a_miss( ap );
+		goto done;
+	}
+
+	/*
+	 *  All intersections of the ray with the model have
+	 *  been computed.  Evaluate the boolean functions.
+	 */
+	PartHeadp = bool_regions( HeadSeg );
+
+	if( PartHeadp->pt_forw == PartHeadp )  {
+		ap->a_miss( ap );
+	}  else  {
+		/* Hand final partitioned intersection list to application. */
+		ap->a_hit( ap, PartHeadp );
+	}
+
+	/*
+	 * Processing of this ray is complete, so release resources.
+	 *
+	 * Free up Seg memory.
+	 */
+done:
+	while( HeadSeg != SEG_NULL )  {
+		register struct seg *hsp;	/* XXX */
+
+		hsp = HeadSeg->seg_next;
+		FREE_SEG( HeadSeg );
+		HeadSeg = hsp;
+	}
+	/* Free up partition list */
+	for( pp = PartHeadp->pt_forw; pp != PartHeadp;  )  {
+		register struct partition *newpp;
+		newpp = pp;
+		pp = pp->pt_forw;
+		FREE_PART(newpp);
+	}
+	if( debug )  fflush(stdout);
 }

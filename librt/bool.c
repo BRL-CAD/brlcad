@@ -476,3 +476,17 @@ pr_bins()
 		printf("%d: %s\n", stp->st_bin, stp->st_name );
 	}
 }
+
+/*
+ *			P R _ S E G
+ */
+pr_seg(segp)
+register struct seg *segp;
+{
+	printf("%.8x: SEG %s (%f,%f) bin=%d\n",
+		segp,
+		segp->seg_stp->st_name,
+		segp->seg_in.hit_dist,
+		segp->seg_out.hit_dist,
+		segp->seg_stp->st_bin );
+}

@@ -49,6 +49,7 @@ extern int ikhires;		/* defined in iklib.o */
 extern int outfd;		/* defined in rt.c */
 extern FILE *outfp;		/* defined in rt.c */
 extern int lightmodel;		/* lighting model # to use */
+extern int view_only;
 
 #define MAX_LINE	1024	/* Max pixels/line */
 static long scanline[MAX_LINE];	/* 1 scanline pixel buffer */
@@ -72,81 +73,104 @@ extern vect_t l1vec;
 extern vect_t l2vec;
 extern double AmbientIntensity;
 
-viewit( PartHeadp, rayp, xscreen, yscreen )
-struct partition *PartHeadp;
-struct ray *rayp;
-int xscreen, yscreen;
+/* Null function */
+nullf() { ; }
+l3init(ap, title1, title2 )
+register struct application *ap;
 {
+	extern double azimuth, elevation;
+	extern int npts;
+
+	fprintf(outfp, "%s: %s (RT)\n", title1, title2 );
+	fprintf(outfp, "%10d%10d", (int)azimuth, (int)elevation );
+	fprintf(outfp, "%10d%10d\n", npts, npts );
+}
+
+/* Support for Gwyn's ray files -- write a hit */
+l4hit( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
+{
+	register struct partition *pp = PartHeadp->pt_forw;
+	register struct hit *hitp= pp->pt_inhit;
+	register int i;	/* XXX */
+
+	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
+		/* TODO: Not all may have both in & out points! */
+		VMOVE( &(vldray.ox), pp->pt_inhit->hit_point );
+		VSUB2( &(vldray.rx), pp->pt_outhit->hit_point,
+			pp->pt_inhit->hit_point );
+		vldray.na = vldray.ne = 0.0;	/* need angle/azim */
+		i = pp->pt_regionp->reg_regionid;
+		vldray.ob_lo = i & 0xFFFF;
+		vldray.ob_hi = (i>>16) & 0xFFFF;
+		vldray.rt_lo = ap->a_x;
+		vldray.rt_hi = ap->a_y;
+		fwrite( &vldray, sizeof(struct vldray), 1, outfp );
+	}
+}
+
+/* Support for pretty-picture files */
+l3hit( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
+{
+	register struct partition *pp = PartHeadp->pt_forw;
+	register struct hit *hitp= pp->pt_inhit;
+	static fastf_t diffuse2, cosI2;
+	static fastf_t diffuse1, cosI1;
+	static fastf_t diffuse0, cosI0;
+	static vect_t work0, work1;
+	register int i,j;
+
+#define pchar(c) {putc(c,outfp);if(col++==74){putc('\n',outfp);col=0;}}
+	if( (cosI0 = -VDOT(hitp->hit_normal, ap->a_ray.r_dir)) <= 0.0 )  {
+		ntomiss++;
+		return;
+	}
+	if( ntomiss > 0 )  {
+		pchar(' ');	/* miss target cmd */
+		pknum( ntomiss );
+		ntomiss = 0;
+		last_solidp = SOLTAB_NULL;
+	}
+	if( last_item != pp->pt_regionp->reg_regionid )  {
+		last_item = pp->pt_regionp->reg_regionid;
+		pchar( '#' );	/* new item cmd */
+		pknum( last_item );
+		last_solidp = SOLTAB_NULL;
+	}
+	if( last_solidp != pp->pt_instp )  {
+		last_solidp = pp->pt_instp;
+		pchar( '!' );		/* new solid cmd */
+	}
+	i = cosI0 * 255.0;		/* integer angle */
+	j = (i>>5) & 07;
+	if( j != last_ihigh )  {
+		last_ihigh = j;
+		pchar( '0'+j );		/* new inten high */
+	}
+	j = i & 037;
+	pchar( '@'+j );			/* low bits of pixel */
+}
+
+/*
+ *			V I E W I T
+ *
+ *  a_hit() routine for simple lighting model.
+ */
+viewit( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
+{
+	register struct partition *pp = PartHeadp->pt_forw;
+	register struct hit *hitp= pp->pt_inhit;
 	static long inten;
 	static fastf_t diffuse2, cosI2;
 	static fastf_t diffuse1, cosI1;
 	static fastf_t diffuse0, cosI0;
 	static vect_t work0, work1;
 	static int r,g,b;
-	register struct partition *pp;
-	register struct hit *hitp;
-
-	pp = PartHeadp->pt_forw;
-	if( pp == PartHeadp )  {
-		printf("viewit:  null partition list\n");
-		return;
-	}
-	hitp = pp->pt_inhit;
-
-	/* Support for Gwyn's ray files */
-	if( lightmodel == 4 )  {
-		register int i;	/* XXX */
-		for( ; pp != PartHeadp; pp = pp->pt_forw )  {
-			/* TODO: Not all may have both in & out points! */
-			VMOVE( &(vldray.ox), pp->pt_inhit->hit_point );
-			VSUB2( &(vldray.rx), pp->pt_outhit->hit_point,
-				pp->pt_inhit->hit_point );
-			vldray.na = vldray.ne = 0.0;	/* need angle/azim */
-			i = pp->pt_regionp->reg_regionid;
-			vldray.ob_lo = i & 0xFFFF;
-			vldray.ob_hi = (i>>16) & 0xFFFF;
-			vldray.rt_lo = xscreen;
-			vldray.rt_hi = yscreen;
-			fwrite( &vldray, sizeof(struct vldray), 1, outfp );
-		}
-		return;
-	}
-
-	/* Support for pretty-picture files */
-	if( lightmodel == 3 )  {
-		register int i,j;
-
-#define pchar(c) {putc(c,outfp);if(col++==74){putc('\n',outfp);col=0;}}
-		if( (cosI0 = -VDOT(hitp->hit_normal, rayp->r_dir)) <= 0.0 )  {
-			ntomiss++;
-			return;
-		}
-		if( ntomiss > 0 )  {
-			pchar(' ');	/* miss target cmd */
-			pknum( ntomiss );
-			ntomiss = 0;
-			last_solidp = SOLTAB_NULL;
-		}
-		if( last_item != pp->pt_regionp->reg_regionid )  {
-			last_item = pp->pt_regionp->reg_regionid;
-			pchar( '#' );	/* new item cmd */
-			pknum( last_item );
-			last_solidp = SOLTAB_NULL;
-		}
-		if( last_solidp != pp->pt_instp )  {
-			last_solidp = pp->pt_instp;
-			pchar( '!' );		/* new solid cmd */
-		}
-		i = cosI0 * 255.0;		/* integer angle */
-		j = (i>>5) & 07;
-		if( j != last_ihigh )  {
-			last_ihigh = j;
-			pchar( '0'+j );		/* new inten high */
-		}
-		j = i & 037;
-		pchar( '@'+j );			/* low bits of pixel */
-		return;		
-	}
 
 	/*
 	 * Diffuse reflectance from each light source
@@ -154,7 +178,7 @@ int xscreen, yscreen;
 	if( lightmodel == 1 )  {
 		/* Light from the "eye" (ray source).  Note sign change */
 		diffuse0 = 0;
-		if( (cosI0 = -VDOT(hitp->hit_normal, rayp->r_dir)) >= 0.0 )
+		if( (cosI0 = -VDOT(hitp->hit_normal, ap->a_ray.r_dir)) >= 0.0 )
 			diffuse0 = cosI0 * ( 1.0 - AmbientIntensity);
 		VSCALE( work0, l0color, diffuse0 );
 
@@ -223,30 +247,33 @@ int xscreen, yscreen;
 	}
 
 	if( ikfd > 0 )
-		ikwpixel( xscreen, yscreen, inten);
+		ikwpixel( ap->a_x, ap->a_y, inten);
 	if( outfd > 0 )
 		*pixelp++ = inten;
 }
 
-wbackground( x, y )
-int x, y;
-{
-	register int bg;
+l3miss()  {
+	last_solidp = SOLTAB_NULL;
+	ntomiss++;
+}
 
-	if( lightmodel == 4 )
-		return;
-	if( lightmodel == 3 )  {
-		last_solidp = SOLTAB_NULL;
-		ntomiss++;
-		return;
-	}
+/*
+ *			W B A C K G R O U N D
+ *
+ *  a_miss() routine.
+ */
+wbackground( ap )
+register struct application *ap;
+{
+	register long bg;
+
 	if( lightmodel == 2 )
 		bg = 0;
 	else
 		bg = BACKGROUND;
 		
 	if( ikfd > 0 )
-		ikwpixel( x, y, bg );
+		ikwpixel( ap->a_x, ap->a_y, bg );
 	if( outfd > 0 )
 		*pixelp++ = bg;
 }
@@ -304,23 +331,21 @@ int npts;
 	}
 }
 
+l3eol()
+{
+		pchar( '.' );		/* End of scanline */
+		last_solidp = SOLTAB_NULL;
+		ntomiss = 0;
+}
+
 /*
  *  			D E V _ E O L
  *  
  *  This routine is called by main when the end of a scanline is
  *  reached.
  */
-dev_eol( y )
-int y;
+dev_eol()
 {
-	if( lightmodel == 4 )
-		return;
-	if( lightmodel == 3 )  {
-		pchar( '.' );		/* End of scanline */
-		last_solidp = SOLTAB_NULL;
-		ntomiss = 0;
-		return;
-	}
 	if( outfd > 0 )  {
 		write( outfd, (char *)scanline, scanbytes );
 		bzero( (char *)scanline, scanbytes );
@@ -329,16 +354,12 @@ int y;
 }
 
 /*
- *  			D E V _ E N D
- *  
  *  Called when the picture is finally done.
  */
-dev_end()
+l3end()
 {
-	if( lightmodel == 3 )  {
-		fprintf( outfp, "/\n" );	/* end of view */
-		fflush( outfp );
-	}
+	fprintf( outfp, "/\n" );	/* end of view */
+	fflush( outfp );
 }
 
 /*
@@ -355,4 +376,47 @@ register long i;
 		pchar( '@'+(i & 037) );
 		i >>= 5;
 	} while( i > 0 );
+}
+
+/*
+ *  			V I E W _ I N I T
+ */
+view_init( ap )
+register struct application *ap;
+{
+	/* Initialize the application selected */
+	ap->a_hit = ap->a_miss = nullf;	/* ?? */
+	ap->a_init = ap->a_eol = ap->a_end = nullf;
+
+	switch( lightmodel )  {
+	case 0:
+	case 1:
+	case 2:
+		ap->a_hit = viewit;
+		ap->a_miss = wbackground;
+		ap->a_eol = dev_eol;
+		view_only = 1;
+		break;
+	case 3:
+		ap->a_hit = l3hit;
+		ap->a_miss = l3miss;
+		ap->a_init = l3init;
+		ap->a_end = l3end;
+		ap->a_eol = l3eol;
+		view_only = 1;
+		break;
+	case 4:
+		ap->a_hit = l4hit;
+		ap->a_miss = nullf;
+		ap->a_eol = nullf;
+		break;
+	default:
+		bomb("bad lighting model #");
+	}
+
+	if( lightmodel == 3 || lightmodel == 4 )
+		if( outfd > 0 )
+			outfp = fdopen( outfd, "w" );
+		else
+			bomb("No output file specified");
 }

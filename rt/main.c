@@ -67,8 +67,6 @@ UNIMPLEMENTED(half);
 
 double timer_print();
 
-extern struct partition *bool_regions();
-
 int debug = DEBUG_OFF;
 int view_only;		/* non-zero if computation is for viewing only */
 int lightmodel;		/* Select lighting model */
@@ -84,7 +82,7 @@ struct soltab *HeadSolid = SOLTAB_NULL;
 
 struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
 
-struct seg *HeadSeg = SEG_NULL;
+extern int viewit(), wbackground();
 
 char usage[] = "\
 Usage:  rt [options] model.vg object [objects]\n\
@@ -100,22 +98,24 @@ vect_t l0vec;		/* 0th light vector */
 vect_t l1vec;		/* 1st light vector */
 vect_t l2vec;		/* 2st light vector */
 
+double azimuth, elevation;
+int npts;			/* # of points to shoot: x,y */
+
 static char ttyObuf[4096];
 
+/*
+ *			M A I N
+ */
 main(argc, argv)
 int argc;
 char **argv;
 {
-	register struct ray *rayp;
-	register int xscreen, yscreen;
-	static int npts;		/* # of points to shoot: x,y */
+	static struct application ap;
 	static mat_t view2model;
 	static mat_t model2view;
 	static mat_t mat1, mat2;	/* temporary matrices */
 	static vect_t tempdir;
-	static struct partition *PartHeadp, *pp;
 	static fastf_t distsq;
-	static double azimuth, elevation;
 	static int matflag = 0;		/* read matrix from stdin */
 
 	npts = 512;
@@ -182,20 +182,9 @@ char **argv;
 		exit(2);
 	}
 
-	if( lightmodel != 4 )
-		view_only = 1;
-
-	if( lightmodel == 3 || lightmodel == 4 )
-		if( outfd > 0 )
-			outfp = fdopen( outfd, "w" );
-		else
-			bomb("No output file specified");
-
-	if( lightmodel == 3 )  {
-		fprintf(outfp, "%s: %s (RT)\n", argv[0], argv[1] );
-		fprintf(outfp, "%10d%10d", (int)azimuth, (int)elevation );
-		fprintf(outfp, "%10d%10d\n", npts, npts );
-	}
+	/* initialize application based upon lightmodel # */
+	view_init( &ap );
+	ap.a_init( &ap, argv[0], argv[1] );
 
 	/* 4.2 BSD stdio debugging assist */
 	if( debug )
@@ -222,11 +211,6 @@ char **argv;
 	}
 
 	timer_prep();	/* start timing actual run */
-
-	/*
-	 * Determine the view
-	 */
-	GETSTRUCT(rayp, ray);
 
 	VSET( tempdir, 0, 0, -1 );
 	if( !matflag )  {
@@ -263,11 +247,11 @@ char **argv;
 		mat_inv( view2model, model2view );
 	}
 
-	MAT4X3VEC( rayp->r_dir, view2model, tempdir );
-	VUNITIZE( rayp->r_dir );
+	MAT4X3VEC( ap.a_ray.r_dir, view2model, tempdir );
+	VUNITIZE( ap.a_ray.r_dir );
 
 	VSET( tempdir, 	xbase, ybase, zbase );
-	MAT4X3PNT( rayp->r_pt, view2model, tempdir );
+	MAT4X3PNT( ap.a_ray.r_pt, view2model, tempdir );
 
 	printf("Ambient light at %f%%\n", AmbientIntensity * 100.0 );
 
@@ -295,64 +279,19 @@ char **argv;
 
 	fflush(stdout);
 
-	for( yscreen = npts-1; yscreen >= 0; yscreen--)  {
-		for( xscreen = 0; xscreen < npts; xscreen++)  {
+	for( ap.a_y = npts-1; ap.a_y >= 0; ap.a_y--)  {
+		for( ap.a_x = 0; ap.a_x < npts; ap.a_x++)  {
 			VSET( tempdir,
-				xbase + xscreen * deltas,
-				ybase + (npts-yscreen-1) * deltas,
+				xbase + ap.a_x * deltas,
+				ybase + (npts-ap.a_y-1) * deltas,
 				zbase +  2*npts*deltas );
-			MAT4X3PNT( rayp->r_pt, view2model, tempdir );
+			MAT4X3PNT( ap.a_ray.r_pt, view2model, tempdir );
 
-			shootray( rayp );
-			/* Implicit return of HeadSeg chain */
-
-			if( HeadSeg == SEG_NULL )  {
-				wbackground( xscreen, yscreen );
-				continue;
-			}
-
-			/*
-			 *  All intersections of the ray with the model have
-			 *  been computed.  Evaluate the boolean functions.
-			 */
-			PartHeadp = bool_regions( HeadSeg );
-			if( PartHeadp->pt_forw == PartHeadp )  {
-				wbackground( xscreen, yscreen );
-			}  else  {
-				/*
-				 * Hand final partitioned intersection list
-				 * to application.
-				 */
-				viewit( PartHeadp, rayp, xscreen, yscreen );
-			}
-
-			/*
-			 * Processing of this ray is complete.
-			 * Release resources.
-			 *
-			 * Free up Seg memory.
-			 */
-			while( HeadSeg != SEG_NULL )  {
-				register struct seg *hsp;	/* XXX */
-
-				hsp = HeadSeg->seg_next;
-				FREE_SEG( HeadSeg );
-				HeadSeg = hsp;
-			}
-			/* Free up partition list */
-			for( pp = PartHeadp->pt_forw; pp != PartHeadp;  )  {
-				register struct partition *newpp;
-				newpp = pp;
-				pp = pp->pt_forw;
-				FREE_PART(newpp);
-			}
-			if( debug )  fflush(stdout);
+			shootray( &ap );
 		}
-		/* End of scan line */
-		dev_eol( yscreen );
+		ap.a_eol( &ap );	/* End of scan line */
 	}
-
-	dev_end();
+	ap.a_end( &ap );		/* End of application */
 
 	/*
 	 *  All done.  Display run statistics.
@@ -372,6 +311,9 @@ char **argv;
 	return(0);
 }
 
+/*
+ *			A U T O S I Z E
+ */
 autosize( rot, npts )
 matp_t rot;
 int npts;
@@ -429,15 +371,4 @@ char *str;
 	fflush(stdout);
 	fprintf(stderr,"\nrt: %s.  FATAL ERROR.\n", str);
 	exit(12);
-}
-
-pr_seg(segp)
-register struct seg *segp;
-{
-	printf("%.8x: SEG %s (%f,%f) bin=%d\n",
-		segp,
-		segp->seg_stp->st_name,
-		segp->seg_in.hit_dist,
-		segp->seg_out.hit_dist,
-		segp->seg_stp->st_bin );
 }
