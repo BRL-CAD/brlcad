@@ -61,6 +61,7 @@ BU_EXTERN(union tree		*db_find_named_leaf, (union tree *tp,
 				CONST char *cp));
 
 
+extern void solid_list_callback(); /* chgview.c */
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
 extern struct bn_tol		mged_tol;	/* from ged.c */
 extern struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. from dodraw.c */
@@ -477,6 +478,7 @@ char	**argv;
 		}
 	}
 
+	solid_list_callback();
 	return TCL_OK;
 }
 

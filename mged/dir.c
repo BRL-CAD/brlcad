@@ -1369,6 +1369,7 @@ char	**argv;
 	}
 
 	(void)signal( SIGINT, SIG_IGN );
+	solid_list_callback();
 	return TCL_OK;
 }
 

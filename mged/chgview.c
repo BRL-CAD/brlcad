@@ -80,6 +80,7 @@ extern void set_absolute_tran(); /* defined in set.c */
 extern void set_absolute_view_tran(); /* defined in set.c */
 extern void set_absolute_model_tran(); /* defined in set.c */
 
+void solid_list_callback();
 void knob_update_rate_vars();
 int mged_svbase();
 int knob_tran();
@@ -196,6 +197,8 @@ char    **argv;
       eraseobj(dp);
   }
 
+  solid_list_callback();
+
   return TCL_OK;
 }
 
@@ -227,6 +230,8 @@ char    **argv;
     if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
       eraseobjall(dp);
   }
+
+  solid_list_callback();
 
   return TCL_OK;
 }
@@ -555,7 +560,19 @@ int	catch_sigint;
 
   bu_vls_free(&vls);
   (void)signal( SIGINT, SIG_IGN );
+  solid_list_callback();
   return TCL_OK;
+}
+
+void
+solid_list_callback()
+{
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+  bu_vls_strcpy(&vls, "solid_list_callback");
+  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
 }
 
 /*
@@ -1072,6 +1089,7 @@ char	**argv;
 
 	(void)chg_state( state, state, "zap" );
 
+	solid_list_callback();
 	return TCL_OK;
 }
 
