@@ -316,7 +316,7 @@ cmdline()
 
 	i = parse_line();
 	if( i == 0 ) {
-		mged_cmd();
+		mged_cmd( numargs, cmd_args );
 		return 1;
 	}
 	if( i < 0 )
@@ -411,41 +411,43 @@ parse_line()
  *  incorrect, print out a short help message.
  */
 void
-mged_cmd()
+mged_cmd( argc, argv )
+int	argc;
+char	**argv;
 {
-	extern char *cmd_args[];
-	extern int numargs;
 	register struct funtab *ftp;
 
-	if( numargs == 0 )  {
+	if( argc == 0 )  {
 		(void)printf("no command entered, type ? for help\n");
 		return;
 	}
 
 	for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
-		if( strcmp( ftp->ft_name, cmd_args[0] ) != 0 )
+		if( strcmp( ftp->ft_name, argv[0] ) != 0 )
 			continue;
 		/* We have a match */
-		if( (ftp->ft_min <= numargs) &&
-		    (numargs <= ftp->ft_max) )  {
+		if( (ftp->ft_min <= argc) &&
+		    (argc <= ftp->ft_max) )  {
 			/* Input has the right number of args.
 		    	 * Call function listed in table, with
 		    	 * main(argc, argv) style args
 		    	 */
-			ftp->ft_func(numargs, cmd_args);
+			ftp->ft_func(argc, argv);
 			return;
 		}
 		(void)printf("Usage: %s %s\n", ftp->ft_name, ftp->ft_parms);
 		(void)printf("\t(%s)\n", ftp->ft_comment);
 		return;
 	}
-	(void)printf("%s: no such command, type ? for help\n", cmd_args[0] );
+	(void)printf("%s: no such command, type ? for help\n", argv[0] );
 }
 
 /* Input parameter editing changes from keyboard */
 /* Format: p dx [dy dz]		*/
 static void
-f_param()
+f_param( argc, argv )
+int	argc;
+char	**argv;
 {
 	register int i;
 
@@ -460,8 +462,8 @@ f_param()
 
 	inpara = 1;
 	sedraw++;
-	for( i = 1; i < numargs; i++ )  {
-		es_para[ i - 1 ] = atof( cmd_args[i] );
+	for( i = 1; i < argc; i++ )  {
+		es_para[ i - 1 ] = atof( argv[i] );
 		if( es_edflag == PSCALE ||
 					es_edflag == SSCALE )  {
 			if(es_para[0] <= 0.0) {
@@ -495,7 +497,9 @@ f_param()
 /* Let the user temporarily escape from the editor */
 /* Format: %	*/
 static void
-f_comm()
+f_comm( argc, argv )
+int	argc;
+char	**argv;
 {
 
 	register int pid, rpid;
@@ -517,7 +521,9 @@ f_comm()
 /* Quit and exit gracefully */
 /* Format: q	*/
 void
-f_quit()
+f_quit( argc, argv )
+int	argc;
+char	**argv;
 {
 	if( state != ST_VIEW )
 		button( BE_REJECT );
@@ -531,22 +537,24 @@ f_quit()
  *  Common code for help commands
  */
 static void
-helpcomm()
+helpcomm( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct funtab *ftp;
 	register int	i;
 
 	/* Help command(s) */
-	for( i=1; i<numargs; i++ )  {
+	for( i=1; i<argc; i++ )  {
 		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
-			if( strcmp( ftp->ft_name, cmd_args[i] ) != 0 )
+			if( strcmp( ftp->ft_name, argv[i] ) != 0 )
 				continue;
 			(void)printf("Usage: %s %s\n", ftp->ft_name, ftp->ft_parms);
 			(void)printf("\t(%s)\n", ftp->ft_comment);
 			break;
 		}
 		if( ftp == &funtab[NFUNC] )
-			(void)printf("%s: no such command, type ? for help\n", cmd_args[i] );
+			(void)printf("%s: no such command, type ? for help\n", argv[i] );
 	}
 }
 
@@ -557,12 +565,14 @@ helpcomm()
  *  Or, help with the indicated commands.
  */
 static void
-f_help()
+f_help( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct funtab *ftp;
 	register int	i;
 
-	if( numargs <= 1 )  {
+	if( argc <= 1 )  {
 		(void)printf("The following commands are available:\n");
 		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
 			(void)printf("%s %s\n", ftp->ft_name, ftp->ft_parms);
@@ -570,7 +580,7 @@ f_help()
 		}
 		return;
 	}
-	helpcomm();
+	helpcomm( argc, argv );
 }
 
 /*
@@ -580,11 +590,13 @@ f_help()
  *  Or, help with the indicated commands.
  */
 static void
-f_fhelp()
+f_fhelp( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct funtab *ftp;
 
-	if( numargs <= 1 )  {
+	if( argc <= 1 )  {
 		(void)printf("The following commands are available:\n");
 		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
 			col_item(ftp->ft_name);
@@ -592,30 +604,34 @@ f_fhelp()
 		col_eol();
 		return;
 	}
-	helpcomm();
+	helpcomm( argc, argv );
 }
 
 /* Hook for displays with no buttons */
 void
-f_press()
+f_press( argc, argv )
+int	argc;
+char	**argv;
 {
 	register int i;
 
-	for( i = 1; i < numargs; i++ )
-		press( cmd_args[i] );
+	for( i = 1; i < argc; i++ )
+		press( argv[i] );
 }
 
 void
-f_summary()
+f_summary( argc, argv )
+int	argc;
+char	**argv;
 {
 	register char *cp;
 	int flags = 0;
 
-	if( numargs <= 1 )  {
+	if( argc <= 1 )  {
 		dir_summary(0);
 		return;
 	}
-	cp = cmd_args[1];
+	cp = argv[1];
 	while( *cp )  switch( *cp++ )  {
 		case 's':
 			flags |= DIR_SOLID;
