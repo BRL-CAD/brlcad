@@ -95,6 +95,7 @@ union record  {
 #define DBID_ARBN	'n'	/* Convex polyhedron with N faces */
 #define DBID_PIPE	'w'	/* pipe (wire) solid */
 #define DBID_PARTICLE	'p'	/* a particle (lozenge) */
+#define DBID_NMG	'N'	/* An NMG solid */
 
 	char	u_size[DB_MINREC];	/* Minimum record size */
 
@@ -319,6 +320,13 @@ union record  {
 		char	p_vrad[8];		/* radius at vertex */
 		char	p_hrad[8];		/* radius at end of height */
 	}  part;
+	struct nmg_rec  {
+		char	N_id;			/* DBID_NMG */
+		char	N_pad;
+		char	N_name[NAMESIZE];
+		int	N_count;		/* # additional granules */
+		char	N_structs[22*4+16];	/* # of structs needed */
+	} nmg;
 };
 #endif /* !RECORD_DEFINED || !__STDC__ */
 #define DB_RECORD_NULL	((union record *)0)
