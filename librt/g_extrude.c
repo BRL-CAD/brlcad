@@ -59,7 +59,6 @@ static const char RCSextrude[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-
 struct extrude_specific {
 	mat_t rot, irot;	/* rotation and translation to get extrsuion vector in +z direction with V at origin */
 	vect_t unit_h;		/* unit vector in direction of extrusion vector */
@@ -88,6 +87,7 @@ static struct bn_tol extr_tol={			/* a fake tolerance structure for the intersec
 #define LINE_SEG	3
 #define CARC_SEG	4
 #define NURB_SEG	5
+#define BEZIER_SEG	6
 
 /*
  *  			R T _ E X T R U D E _ P R E P
@@ -603,7 +603,7 @@ struct seg		*seghead;
 	fastf_t dist[2];
 	fastf_t dot_pl1, dir_dot_z;
 	point_t tmp, tmp2;
-	point_t ray_start, ray_dir;	/* 2D */
+	point_t ray_start, ray_dir, ray_dir_unit;	/* 2D */
 	struct curve *crv;
 	struct hit hits[MAX_HITS];
 	fastf_t dists_before[MAX_HITS];
@@ -617,6 +617,10 @@ struct seg		*seghead;
 	int top_face=TOP_FACE, bot_face=BOTTOM_FACE;
 	int surfno= -42;
 	int free_dists=0;
+	point2d_t *verts;
+	point2d_t *intercept;
+	point2d_t *normal;
+	point2d_t ray_perp;
 
 	crv = &extr->crv;
 
@@ -680,11 +684,10 @@ struct seg		*seghead;
 		long *lng=(long *)crv->segments[i];
 		struct line_seg *lsg;
 		struct carc_seg *csg=NULL;
+		struct bezier_seg *bsg=NULL;
 		fastf_t diff;
 
-		if( free_dists )
-			bu_free( (char *)dists, "dists" );
-
+		free_dists = 0;
 		switch( *lng )
 		{
 			case CURVE_LSEG_MAGIC:
@@ -700,7 +703,6 @@ struct seg		*seghead;
 
 				dists = dist;
 				dist_count = 1;
-				free_dists = 0;
 				surfno = LINE_SEG;
 				break;
 			case CURVE_CARC_MAGIC:
@@ -734,8 +736,35 @@ struct seg		*seghead;
 					continue;
 
 				dists = dist;
-				free_dists = 0;
 				surfno = CARC_SEG;
+				break;
+			case CURVE_BEZIER_MAGIC:
+				bsg = (struct bezier_seg *)lng;
+				verts = (point2d_t *)bu_calloc( bsg->degree + 1, sizeof( point2d_t ), "Bezier verts" );
+				for( j=0 ; j<=bsg->degree ; j++ ) {
+					V2MOVE( verts[j], extr->verts[bsg->ctl_points[j]] );
+				}
+				V2MOVE( ray_dir_unit, ray_dir );
+				diff = sqrt( MAG2SQ( ray_dir ) );
+				ray_dir_unit[X] /= diff;
+				ray_dir_unit[Y] /= diff;
+				ray_dir_unit[Z] = 0.0;
+				ray_perp[X] = ray_dir[Y];
+				ray_perp[Y] = -ray_dir[X];
+				dist_count = FindRoots( verts, bsg->degree, &intercept, &normal, ray_start, ray_dir_unit, ray_perp,
+							0, extr_tol.dist );
+				if( dist_count ) {
+					free_dists = 1;
+					dists = (fastf_t *)bu_calloc( dist_count, sizeof( fastf_t ), "dists (Bezier)" );
+					for( j=0 ; j<dist_count ; j++ ) {
+						point2d_t to_pt;
+						V2SUB2( to_pt, intercept[j], ray_start );
+						dists[j] = VDOT( to_pt, ray_dir_unit) / diff;
+					}
+					bu_free( (char *)intercept, "Bezier intercept" );
+					surfno = BEZIER_SEG;
+				}
+				bu_free( (char *)verts, "Bezier verts" );
 				break;
 			case CURVE_NURB_MAGIC:
 				break;
@@ -746,6 +775,7 @@ struct seg		*seghead;
 				break;
 		}
 
+		/* eliminate duplicate hit distances */
 		for( j=0 ; j<hit_count ; j++ )
 		{
 			k = 0;
@@ -755,14 +785,20 @@ struct seg		*seghead;
 				if( NEAR_ZERO( diff, extr_tol.dist ) )
 				{
 					int n;
-					for( n=k ; n<dist_count-1 ; n++ )
+					for( n=k ; n<dist_count-1 ; n++ ) {
 						dists[n] = dists[n+1];
+						if( *lng == CURVE_BEZIER_MAGIC ) {
+							V2MOVE( normal[n], normal[n+1] );
+						}
+					}
 					dist_count--;
 				}
 				else
 					k++;
 			}
 		}
+
+		/* eliminate duplicate hits below the bottom plane of the extrusion */
 		for( j=0 ; j<hits_before_bottom ; j++ )
 		{
 			k = 0;
@@ -773,14 +809,20 @@ struct seg		*seghead;
 				{
 					int n;
 
-					for( n=k ; n<dist_count-1 ; n++ )
+					for( n=k ; n<dist_count-1 ; n++ ) {
 						dists[n] = dists[n+1];
+						if( *lng == CURVE_BEZIER_MAGIC ) {
+							V2MOVE( normal[n], normal[n+1] );
+						}
+					}
 					dist_count--;
 				}
 				else
 					k++;
 			}
 		}
+
+		/* eliminate duplicate hits above the top plane of the extrusion */
 		for( j=0 ; j<hits_after_top ; j++ )
 		{
 			k = 0;
@@ -800,7 +842,7 @@ struct seg		*seghead;
 			}
 		}
 
-
+		/* if we are just doing the Jordan curve thereom */
 		if( check_inout )
 		{
 			for( j=0 ; j<dist_count ; j++ )
@@ -811,6 +853,7 @@ struct seg		*seghead;
 			continue;
 		}
 
+		/* process remaining distances into hits */
 		for( j=0 ; j<dist_count ; j++ )
 		{
 			if( dists[j] < dist_bottom )
@@ -858,6 +901,10 @@ struct seg		*seghead;
 				case CURVE_LSEG_MAGIC:
 					VMOVE( hits[hit_count].hit_vpriv, tmp );
 					break;
+				case CURVE_BEZIER_MAGIC:
+					V2MOVE( hits[hit_count].hit_vpriv, normal[j] );
+					hits[hit_count].hit_vpriv[Z] = 0.0;
+					break;
 				default:
 					bu_log( "ERROR: rt_extrude_shot: unrecognized segment type in solid %s\n",
 						stp->st_dp->d_namep );
@@ -866,10 +913,9 @@ struct seg		*seghead;
 			}
 			hit_count++;
 		}
+		if( free_dists )
+			bu_free( (char *)dists, "dists" );
 	}
-
-	if( free_dists )
-		bu_free( (char *)dists, "dists" );
 
 	if( check_inout )
 	{
@@ -941,9 +987,13 @@ struct seg		*seghead;
 
 	if( hit_count%2 )
 	{
+		point_t pt;
+
 		bu_log( "ERROR: rt_extrude_shot(): odd number of hits (%d) (ignoring last hit)\n", hit_count );
 		bu_log( "ray start = (%20.10f %20.10f %20.10f)\n", V3ARGS( rp->r_pt ) );
-		bu_log( "ray dir = (%20.10f %20.10f %20.10f)", V3ARGS( rp->r_dir ) );
+		bu_log( "\tray dir = (%20.10f %20.10f %20.10f)", V3ARGS( rp->r_dir ) );
+		VJOIN1( pt, rp->r_pt, hits[hit_count-1].hit_dist, rp->r_dir );
+		bu_log( "\tignored hit at (%g %g %g)\n", V3ARGS( pt ) );
 		hit_count--;
 	}
 
@@ -1024,6 +1074,11 @@ register struct xray	*rp;
 			VSUB2( tmp, hit_in_plane, hitp->hit_vpriv );
 			VCROSS( tmp2, extr->pl1, tmp );
 			VCROSS( hitp->hit_normal, tmp2, extr->unit_h );
+			VUNITIZE( hitp->hit_normal );
+			break;
+		case BEZIER_SEG:
+		case -BEZIER_SEG:
+			MAT4X3VEC( hitp->hit_normal, extr->irot, hitp->hit_vpriv );
 			VUNITIZE( hitp->hit_normal );
 			break;
 		default:

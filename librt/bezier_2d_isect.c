@@ -181,9 +181,12 @@ Bezier(
     double 	t,			/* Parameter value [0..1]	*/
     point2d_t 	*Left,			/* RETURN left half ctl pts	*/
     point2d_t 	*Right,			/* RETURN right half ctl pts	*/
-    point2d_t	eval_pt)		/* RETURN evaluated point	*/
+    point2d_t	eval_pt,		/* RETURN evaluated point	*/
+    point2d_t	normal )		/* RETURN unit normal at evaluated pt (may be NULL) */
 {
     int 	i, j;		/* Index variables	*/
+    fastf_t	len;
+    point2d_t	tangent;
     point2d_t 	**Vtemp;
 
 
@@ -218,6 +221,16 @@ Bezier(
     }
 
     V2MOVE( eval_pt, Vtemp[degree][0] );
+
+    if( normal ) {
+	    V2SUB2( tangent, Vtemp[degree-1][1], Vtemp[degree-1][0] );
+	    normal[X] = tangent[Y];
+	    normal[Y] = -tangent[X];
+	    len = sqrt( MAG2SQ( normal ) );
+	    normal[X] /= len;
+	    normal[Y] /= len;
+    }
+
     for( i=0 ; i<=degree ; i++ )
 	    bu_free( (char *)Vtemp[i], "Bezier: Vtemp[i]" );
     bu_free( (char *)Vtemp, "Bezier: Vtemp" );
@@ -245,32 +258,51 @@ ComputeXIntercept(
     point2d_t	ray_start,		/*  starting point of ray */
     point2d_t	ray_dir,		/* unit ray direction	*/
     double	epsilon,		/* maximum allowable error */
-    point2d_t	intercept )		/* calculated intercept point */
+    point2d_t	intercept,		/* calculated intercept point */
+    point2d_t	normal )		/* calculated unit normal at intercept */
 {
-	point_t a;
-	vect_t	c;
-	point_t p;
-	vect_t d;
-	fastf_t dist[2];
-	struct bn_tol     tol;
-	int	ret;
+	fastf_t beta;
+	fastf_t denom;
+	fastf_t len;
+	point2d_t seg_line;
 
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = epsilon;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1.0 - tol.perp;
+	denom = (V[degree][X] - V[0][X]) * ray_dir[Y] -
+		(V[degree][Y] - V[0][Y]) * ray_dir[X];
 
+	if( NEAR_ZERO( denom, SMALL_FASTF ) )
+		return 0;
+
+	beta = (V[0][Y] * ray_dir[X] - V[0][X] * ray_dir[Y] +
+		ray_start[X] * ray_dir[Y] - ray_start[Y] * ray_dir[X] ) / denom;
+
+	if( beta < 0.0 || beta > 1.0 )
+		return 0;
+
+	V2SUB2( seg_line, V[degree], V[0] );
+	V2JOIN1( intercept, V[0], beta, seg_line );
+
+	/* calculate normal */
+	normal[X] = seg_line[Y];
+	normal[Y] = -seg_line[X];
+	len = sqrt( MAG2SQ( seg_line ) );
+	normal[X] /= len;
+	normal[Y] /= len;
+
+	return 1;
+#if 0
 	V2MOVE( p, ray_start );
 	p[Z] = 0.0;
 	V2MOVE( d, ray_dir );
-	c[Z] = 0.0;
+	d[Z] = 0.0;
 	V2MOVE( a, V[0] );
 	a[Z] = 0.0;
 	V2SUB2( c, V[degree], V[0] );
 	c[Z] = 0.0;
 
+	/* calculate intercept */
 	ret = bn_isect_line2_lseg2( dist, p, d, a, c, &tol );
+
+	bu_log( "\tbn_isect_line2_lseg2() returned %d\n", ret );
 
 	if( ret <= 0 )
 		return 0;
@@ -290,7 +322,15 @@ ComputeXIntercept(
 			break;
 	}
 
+	/* calculate normal */
+	normal[X] = c[Y];
+	normal[Y] = -c[X];
+	len = sqrt( MAG2SQ( c ) );
+	normal[X] /= len;
+	normal[Y] /= len;
+
 	return 1;
+#endif
 }
 
 
@@ -305,6 +345,7 @@ FindRoots(
     point2d_t      *w,                     /* The control points           */
     int         degree,         /* The degree of the polynomial */
     point2d_t	**intercept,	/* list of intersections found	*/
+    point2d_t	**normal,	/* corresponding normals	*/
     point2d_t	ray_start,	/* starting point of ray */
     point2d_t	ray_dir,	/* Unit direction for ray */
     point2d_t	ray_perp,	/* Unit vector normal to ray_dir */
@@ -318,6 +359,8 @@ FindRoots(
                 right_count;            /* children                     */
     point2d_t   *left_t,                /* Solutions from kids          */
                 *right_t;
+    point2d_t	*left_n,		/* normals from kids		*/
+		*right_n;
     int		total_count;
     point2d_t	eval_pt;
 
@@ -329,14 +372,17 @@ FindRoots(
             /* Stop recursion when the tree is deep enough      */
             /* if deep enough, return 1 solution at midpoint    */
             if (depth >= MAXDEPTH) {
-		    *intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution" );
-		    Bezier( w, degree, 0.5, NULL, NULL, *intercept[0] );
+		    *intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (intercept)" );
+		    *normal = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (normal)" );
+		    Bezier( w, degree, 0.5, NULL, NULL, *intercept[0], *normal[0] );
                     return 1;
             }
             if (ControlPolygonFlatEnough(w, degree, epsilon)) {
-		    *intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution" );
-		    if( !ComputeXIntercept( w, degree, ray_start, ray_dir, epsilon, *intercept[0] ) ){
+		    *intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (intercept)" );
+		    *normal = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (normal)" );
+		    if( !ComputeXIntercept( w, degree, ray_start, ray_dir, epsilon, *intercept[0], *normal[0] ) ){
 			    bu_free( (char *)(*intercept), "FindRoots: no solution" );
+			    bu_free( (char *)(*normal), "FindRoots: no solution" );
 			    return 0;
 		    }
                     return 1;
@@ -349,31 +395,40 @@ FindRoots(
     /* subdividing control polygon              */
     Left = (point2d_t *)bu_calloc( degree+1, sizeof( point2d_t ), "FindRoots: Left" );
     Right = (point2d_t *)bu_calloc( degree+1, sizeof( point2d_t ), "FindRoots: Right" );
-    Bezier(w, degree, 0.5, Left, Right, eval_pt);
+    Bezier(w, degree, 0.5, Left, Right, eval_pt, NULL);
 
-    left_count  = FindRoots(Left,  degree, &left_t, ray_start, ray_dir, ray_perp, depth+1, epsilon);
-    right_count = FindRoots(Right, degree, &right_t, ray_start, ray_dir, ray_perp, depth+1, epsilon);
+    left_count  = FindRoots(Left,  degree, &left_t, &left_n, ray_start, ray_dir, ray_perp, depth+1, epsilon);
+    right_count = FindRoots(Right, degree, &right_t, &right_n, ray_start, ray_dir, ray_perp, depth+1, epsilon);
 
     total_count = left_count + right_count;
 
     bu_free( (char *)Left, "FindRoots: Left" );
     bu_free( (char *)Right, "FindRoots: Right" );
-    if( total_count )
+    if( total_count ) {
 	    *intercept = (point2d_t *)bu_calloc( total_count, sizeof( point2d_t ),
 				       "FindRoots: roots compilation" );
+	    *normal = (point2d_t *)bu_calloc( total_count, sizeof( point2d_t ),
+					  "FindRoots: normal compilation" );     
+    }
 
     /* Gather solutions together        */
     for (i = 0; i < left_count; i++) {
 	    V2MOVE( (*intercept)[i], left_t[i] );
+	    V2MOVE( (*normal)[i], left_n[i] );
     }
     for (i = 0; i < right_count; i++) {
 	    V2MOVE( (*intercept)[i+left_count], right_t[i] );
+	    V2MOVE( (*normal)[i+left_count], right_n[i] );
     }
 
-    if( left_count )
+    if( left_count ) {
 	    bu_free( (char *)left_t, "Left roots" );
-    if( right_count )
+	    bu_free( (char *)left_n, "Left normals" );
+    }
+    if( right_count ) {
 	    bu_free( (char *)right_t, "Right roots" );
+	    bu_free( (char *)right_n, "Right normals" );
+    }
 
     /* Send back total number of solutions      */
     return (total_count);
@@ -411,7 +466,7 @@ subdivide_bezier( struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon,
 					    "subdivide_bezier: bz_r->ctl" );
 
 	/* subdivide at t = 0.5 */
-	Bezier( bezier_in->ctl, degree, 0.5, bz_l->ctl, bz_r->ctl, pt );
+	Bezier( bezier_in->ctl, degree, 0.5, bz_l->ctl, bz_r->ctl, pt, NULL );
 
 	/* eliminate original */
 	BU_LIST_DEQUEUE( &bezier_in->l );
