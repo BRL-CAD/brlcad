@@ -372,6 +372,12 @@ struct partition *PartHeadp;
 		inten = 0x00FFFFFF;	/* white */
 		goto done;
 	}
+	/* Check to see if eye is "inside" the solid */
+	if( hitp->hit_dist < 0.0 )  {
+		inten = 0L;		/* black */
+		if(debug)fprintf(stderr,"colorview:  eye inside solid\n");
+		goto done;
+	}
 
 	if( pp->pt_inflip )  {
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
