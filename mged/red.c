@@ -1782,7 +1782,7 @@ struct directory *dp;
   av[1] = red_tmpcomb;
   av[2] = name;
 
-  (void)f_name((ClientData)NULL, interp, 3, av);
+  (void)cmd_name((ClientData)NULL, interp, 3, av);
 
   bu_free( name, "bu_strdup'd name" );
 }

@@ -1302,57 +1302,6 @@ char	**argv;
 	return TCL_OK;
 }
 
-/*
- *			F _ U N I T S
- *
- * Change the local units of the description.
- * Base unit is fixed in mm, so this just changes the current local unit
- * that the user works in.
- */
-int
-f_units(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-	int		ret;
-	fastf_t		sf;
-
-	CHECK_DBI_NULL;
-
-	sf = dbip->dbi_base2local;
-	ret = wdb_units_cmd(wdbp, interp, argc, argv);
-
-	set_localunit_TclVar();
-	sf = dbip->dbi_base2local / sf;
-	update_grids(sf);
-	update_views = 1;
-
-	return ret;
-}
-
-/*
- *	Change the current title of the description
- */
-int
-f_title(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-	int	ret;
-
-	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
-
-	ret = wdb_title_cmd(wdbp, interp, argc, argv);
-	view_state->vs_flag = 1;
-
-	return ret;
-}
-
 /* tell him it already exists */
 void
 aexists( name )
@@ -1832,7 +1781,7 @@ char	**argv;
 		av[0] = "make_name";
 		av[1] = "skt_";
 		Tcl_ResetResult( interp );
-		f_make_name( (ClientData)NULL, interp, 2, av );
+		cmd_make_name( (ClientData)NULL, interp, 2, av );
 		extrude_ip->sketch_name = bu_strdup( interp->result );
 		Tcl_ResetResult( interp );
 		extrude_ip->skt = (struct rt_sketch_internal *)NULL;

@@ -111,9 +111,6 @@ char	*argv[];
   char **av;
 
   CHECK_DBI_NULL;
-#if 0
-  CHECK_READ_ONLY;
-#endif
 
   if(argc < 2){
     struct bu_vls vls;
@@ -425,31 +422,6 @@ struct id_to_names {
 	int id;				/* starting id (i.e. region id or air code) */
 	struct id_names headName;	/* head of list of names */
 };
-
-/*
- *      F _ W H I C H ( ) :	finds all regions with given region ids or air codes
- */
-int
-f_which(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int	argc;
-     char	**argv;
-{
-	int		ret;
-
-	CHECK_DBI_NULL;
-
-	if (setjmp(jmp_env) == 0)
-		(void)signal(SIGINT, sig3);  /* allow interupts */
-        else
-		return TCL_OK;
-
-	ret = wdb_which_cmd(wdbp, interp, argc, argv);
-
-	(void)signal(SIGINT, SIG_IGN);
-	return ret;
-}
 
 /*		F _ W H I C H _ S H A D E R
  *

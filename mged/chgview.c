@@ -1001,7 +1001,7 @@ int recurse;
       tmp_argv[0] = listeval;
       tmp_argv[1] = argv[arg];
 
-      f_pathsum(clientData, interp, 2, tmp_argv);
+      cmd_pathsum(clientData, interp, 2, tmp_argv);
     } else if (strchr(argv[arg], '/')) {
       struct db_tree_state ts;
       struct db_full_path path;
@@ -1134,55 +1134,6 @@ char	**argv;
 #if 0
   (void)signal(SIGINT, SIG_IGN);
 #endif
-  return TCL_OK;
-}
-
-/* List object information, briefly */
-/* Format: cat object	*/
-int
-f_cat(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-  register struct directory *dp;
-  register int arg;
-  struct bu_vls str;
-
-  CHECK_DBI_NULL;
-
-  if(argc < 2){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help cat");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  bu_vls_init( &str );
-
-  if( setjmp( jmp_env ) == 0 )
-    (void)signal( SIGINT, sig3 );	/* allow interupts */
-  else{
-    bu_vls_free( &str );
-    return TCL_OK;
-  }
-
-  for( arg = 1; arg < argc; arg++ )  {
-    if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
-      continue;
-
-    bu_vls_trunc( &str, 0 );
-    do_list( &str, dp, 0 );	/* non-verbose */
-    Tcl_AppendResult(interp, bu_vls_addr(&str), "\n", (char *)NULL);
-  }
-
-  bu_vls_free( &str );
-
-  (void)signal(SIGINT, SIG_IGN);
   return TCL_OK;
 }
 

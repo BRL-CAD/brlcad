@@ -162,22 +162,22 @@ static struct cmdtab cmdtab[] = {
 	{"bot_vertex_fuse", f_bot_fuse},
 	{"bot_condense", f_bot_condense},
 	{"bottom",	bv_bottom},
-	{"c", f_comb_std},
-	{"cat", f_cat},
+	{"c", cmd_comb_std},
+	{"cat", cmd_cat},
 	{"center", f_center},
 	{"cmd_win", cmd_cmd_win},
-	{"color", f_color},
-	{"comb", f_comb},
+	{"color", cmd_color},
+	{"comb", cmd_comb},
 	{"comb_color", f_comb_color},
-	{"copyeval", f_copyeval},
+	{"copyeval", cmd_copyeval},
 	{"copymat", f_copymat},
-	{"cp", f_copy},
+	{"cp", cmd_copy},
 	{"cpi", f_copy_inv},
 	{"d", f_erase},
 	{"dall", f_erase_all},
 	{"db_glob", cmd_mged_glob},
-	{"dbconcat", f_concat},
-	{"dbfind", f_find},
+	{"dbconcat", cmd_concat},
+	{"dbfind", cmd_find},
 	{"dbip",	cmd_dbip},
 	{"dump",	cmd_dump},
 	{"debugbu", f_debugbu},
@@ -191,7 +191,7 @@ static struct cmdtab cmdtab[] = {
 	{"dm", f_dm},
 #endif
 	{"draw", f_edit},
-	{"dup", f_dup},
+	{"dup", cmd_dup},
 #ifdef DM_X
 	{"E", f_evedit},
 #endif
@@ -233,7 +233,7 @@ static struct cmdtab cmdtab[] = {
 #ifdef HIDELINE
 	{"H", f_hideline},
 #endif
-	{"hide", f_hide },
+	{"hide", cmd_hide },
 	{"history", f_history},
 	{"hist", cmd_hist},
 	{"i", f_instance},
@@ -254,16 +254,16 @@ static struct cmdtab cmdtab[] = {
 	{"l_muves", f_l_muves},
 	{"labelvert", f_labelvert},
 	{"left",		bv_left},
-	{"listeval", f_pathsum},
+	{"listeval", cmd_pathsum},
 #ifdef DM_X
 	{"loadtk", cmd_tk},
 #endif
 	{"lookat", f_lookat},
-	{"ls", dir_print},
+	{"ls", cmd_ls},
 	{"M", f_mouse},
 	{"make", f_make},
-	{"make_bb", f_make_bb},
-	{"make_name", f_make_name},
+	{"make_bb", cmd_make_bb},
+	{"make_name", cmd_make_name},
 	{"match",	cmd_match},
 	{"mater", f_mater},
 	{"matpick", f_matpick},
@@ -282,11 +282,11 @@ static struct cmdtab cmdtab[] = {
 	{"model2view", f_model2view},
 	{"model2view_lu", f_model2view_lu},
 	{"mrot", f_mrot},
-	{"mv", f_name},
-	{"mvall", f_mvall},
+	{"mv", cmd_name},
+	{"mvall", cmd_mvall},
 	{"nirt", f_nirt},
-	{"nmg_collapse", f_edge_collapse},
-	{"nmg_simplify", f_nmg_simplify},
+	{"nmg_collapse", cmd_nmg_collapse},
+	{"nmg_simplify", cmd_nmg_simplify},
 	{"o_rotate",		be_o_rotate},
 	{"o_scale",	be_o_scale},
 	{"oed", cmd_oed},
@@ -309,18 +309,18 @@ static struct cmdtab cmdtab[] = {
 	{"ozscale",	be_o_zscale},
 	{"p", f_param},
 	{"pathlist", cmd_pathlist},
-	{"paths", f_pathsum},
+	{"paths", cmd_pathsum},
 	{"permute", f_permute},
 	{"plot", f_plot},
 	{"pl", f_pl},
 	{"polybinout", f_polybinout},
 	{"pov", f_pov},
-	{"prcolor", f_prcolor},
+	{"prcolor", cmd_prcolor},
 	{"prefix", f_prefix},
 	{"press", f_press},
 	{"preview", f_preview},
 	{"ps", f_ps},
-	{"push", f_push},
+	{"push", cmd_push},
 	{"put",		cmd_put},
 	{"put_comb", cmd_put_comb},
 	{"put_sed", f_put_sedit},
@@ -331,7 +331,7 @@ static struct cmdtab cmdtab[] = {
 	{"quit", f_quit},
 	{"qorot", f_qorot},
 	{"qvrot", f_qvrot},
-	{"r", f_region},
+	{"r", cmd_region},
 	{"rate",		bv_rate_toggle},
 	{"rcodes", f_rcodes},
 	{"read_muves", f_read_muves},
@@ -350,7 +350,7 @@ static struct cmdtab cmdtab[] = {
 	{"restore",	bv_vrestore},
 	{"right",	bv_right},
 	{"rfarb", f_rfarb},
-	{"rm", f_rm},
+	{"rm", cmd_remove},
 	{"rmater", f_rmater},
 	{"rmats", f_rmats},
 	{"rot", f_rot},
@@ -360,6 +360,7 @@ static struct cmdtab cmdtab[] = {
 	{"rt", f_rt},
 	{"rt_abort", cmd_rt_abort},
 	{"rtcheck", f_rtcheck},
+	{"rt_gettrees", cmd_rt_gettrees},
 	{"save",		bv_vsave},
 #if 0
 	{"savedit", f_savedit},
@@ -375,8 +376,8 @@ static struct cmdtab cmdtab[] = {
 	{"setview", f_setview},
 	{"shader", f_shader},
 	{"share", f_share},
-	{"shells", f_shells},
-	{"showmats", f_showmats},
+	{"shells", cmd_shells},
+	{"showmats", cmd_showmats},
 	{"sill",		be_s_illuminate},
 	{"size", f_size},
 	{"solids", f_tables},
@@ -385,25 +386,25 @@ static struct cmdtab cmdtab[] = {
 	{"sscale",	be_s_scale},
 	{"status", f_status},
 	{"stuff_str", cmd_stuff_str},
-	{"summary", f_summary},
+	{"summary", cmd_summary},
 	{"sv", f_slewview},
 	{"svb", f_svbase},
 	{"sync", f_sync},
 	{"sxy",		be_s_trans},
-	{"t", dir_print},
+	{"t", cmd_ls},
 	{"ted", f_tedit},
 	{"tie", f_tie},
-	{"title", f_title},
+	{"title", cmd_title},
 	{"tol", f_tol},
 	{"top",		bv_top},
-	{"tops", f_tops},
+	{"tops", cmd_tops},
 	{"tra", f_tra},
 	{"track", f_amtrack},
 	{"translate", f_tr_obj},
-	{"tree", f_tree},
+	{"tree", cmd_tree},
 	{"t_muves", f_t_muves},
-	{"unhide", f_unhide},
-	{"units", f_units},
+	{"unhide", cmd_unhide},
+	{"units", cmd_units},
 	{"vars", f_set},
 	{"vdraw", cmd_vdraw},
 	{"view", f_view},
@@ -423,15 +424,15 @@ static struct cmdtab cmdtab[] = {
 	{"vrot_center", f_vrot_center},
 #endif
 	{"wcodes", f_wcodes},
-	{"whatid", f_whatid},
-	{"whichair", f_which},
-	{"whichid", f_which},
+	{"whatid", cmd_whatid},
+	{"whichair", cmd_which},
+	{"whichid", cmd_which},
 	{"which_shader", f_which_shader},
 	{"who", cmd_who},
 	{"winset", f_winset},
 	{"wmater", f_wmater},
 	{"x", f_debug},
-	{"xpush", f_xpush},
+	{"xpush", cmd_xpush},
 	{"Z", f_zap},
 	{"zoom", f_zoom},
 	{"zoomin",	bv_zoomin},
@@ -1733,51 +1734,15 @@ f_fhelp2( argc, argv, functions)
 }
 
 int
-f_summary(clientData, interp, argc, argv )
+wdb_summary(clientData, interp, argc, argv )
 	ClientData clientData;
 	Tcl_Interp *interp;
 	int	argc;
 	char	**argv;
 {
-	register char *cp;
-	int flags = 0;
-	int bad;
+	CHECK_DBI_NULL;
 
-	if(argc < 1 || 2 < argc){
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help summary");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	bad = 0;
-	if( argc <= 1 )  {
-		dir_summary(0);
-		return TCL_OK;
-	}
-	cp = argv[1];
-	while( *cp )  switch( *cp++ )  {
-	case 's':
-		flags |= DIR_SOLID;
-		break;
-	case 'r':
-		flags |= DIR_REGION;
-		break;
-	case 'g':
-		flags |= DIR_COMB;
-		break;
-	default:
-		Tcl_AppendResult(interp, "summary:  S R or G are only valid parmaters\n",
-				 (char *)NULL);
-		bad = 1;
-		break;
-	}
-
-	dir_summary(flags);
-	return bad ? TCL_ERROR : TCL_OK;
+	return wdb_summary_cmd(wdbp, interp, argc, argv);
 }
 
 /*
@@ -2419,4 +2384,673 @@ cmd_put(ClientData	clientData,
 	char		**argv)
 {
 	return wdb_put_cmd(wdbp, interp, argc, argv);
+}
+
+static int
+cmd_rt_gettrees(ClientData	clientData,
+		Tcl_Interp	*interp,
+		int		argc,
+		char		**argv)
+{
+	return wdb_rt_gettrees_cmd(wdbp, interp, argc, argv);
+}
+
+/*
+ *		    C M D _ C O M B _ S T D
+ *
+ *	Input a combination in standard set-theoetic notation
+ *
+ *	Syntax: c [-gr] comb_name [boolean_expr]
+ */
+int
+cmd_comb_std(ClientData	clientData,
+	     Tcl_Interp	*interp,
+	     int	argc,
+	     char	**argv)
+{
+	CHECK_DBI_NULL;
+
+	return wdb_comb_std_cmd(wdbp, interp, argc, argv);
+}
+
+int
+cmd_nmg_collapse( clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	char *av[3];
+
+	CHECK_DBI_NULL;
+
+	if (wdb_nmg_collapse_cmd(wdbp, interp, argc, argv) == TCL_ERROR)
+		return TCL_ERROR;
+
+	av[0] = "e";
+	av[1] = argv[2];
+	av[2] = NULL;
+
+	return f_edit(clientData, interp, 2, av);
+}
+
+/*			F _ M A K E _ N A M E
+ *
+ * Generate an identifier that is guaranteed not to be the name
+ * of any object currently in the database.
+ *
+ */
+int
+cmd_make_name(ClientData	clientData,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char		**argv)
+{
+	CHECK_DBI_NULL;
+	return wdb_make_name_cmd(wdbp, interp, argc, argv);
+}
+
+int
+cmd_shells(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	CHECK_DBI_NULL;
+
+	return wdb_shells_cmd(wdbp, interp, argc, argv);
+}
+
+/*  	F _ P A T H S U M :   does the following
+ *		1.  produces path for purposes of matching
+ *      	2.  gives all paths matching the input path OR
+ *		3.  gives a summary of all paths matching the input path
+ *		    including the final parameters of the solids at the bottom
+ *		    of the matching paths
+ */
+int
+cmd_pathsum(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	int	ret;
+
+	CHECK_DBI_NULL;
+
+	if (argc < 2) {
+		/* get the path */
+		Tcl_AppendResult(interp, MORE_ARGS_STR,
+				 "Enter the path: ", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (setjmp(jmp_env) == 0)
+		(void)signal(SIGINT, sig3);  /* allow interupts */
+        else
+		return TCL_OK;
+
+	ret = wdb_pathsum_cmd(wdbp, interp, argc, argv);
+
+	(void)signal( SIGINT, SIG_IGN );
+	return ret;
+}
+
+/*   	F _ C O P Y E V A L : copys an evaluated solid
+ */
+
+int
+cmd_copyeval(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int ret;
+
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	if (argc < 3) {
+		Tcl_AppendResult(interp, MORE_ARGS_STR,
+				 "Enter new_solid_name and full path to old_solid\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (setjmp(jmp_env) == 0)
+		(void)signal(SIGINT, sig3);  /* allow interupts */
+        else
+		return TCL_OK;
+
+	ret = wdb_copyeval_cmd(wdbp, interp, argc, argv);
+
+	(void)signal( SIGINT, SIG_IGN );
+	return ret;
+}
+
+
+/*			F _ P U S H
+ *
+ * The push command is used to move matrices from combinations 
+ * down to the solids. At some point, it is worth while thinking
+ * about adding a limit to have the push go only N levels down.
+ *
+ * the -d flag turns on the treewalker debugging output.
+ * the -P flag allows for multi-processor tree walking (not useful)
+ * the -l flag is there to select levels even if it does not currently work.
+ */
+int
+cmd_push(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	return wdb_push_cmd(wdbp, interp, argc, argv);
+}
+
+int
+cmd_hide(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	return wdb_hide_cmd(wdbp, interp, argc, argv);
+}
+
+int
+cmd_unhide(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	return wdb_unhide_cmd(wdbp, interp, argc, argv);
+}
+
+int
+cmd_xpush(ClientData	clientData,
+	Tcl_Interp	*interp,
+	int		argc,
+	char		**argv)
+{
+	CHECK_DBI_NULL;
+
+	return wdb_xpush_cmd(wdbp, interp, argc, argv);
+}
+
+int
+cmd_showmats(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	CHECK_DBI_NULL;
+
+	return wdb_showmats_cmd(wdbp, interp, argc, argv);
+}
+
+int
+cmd_nmg_simplify(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char *argv[];
+{
+	CHECK_DBI_NULL;
+
+	return wdb_nmg_simplify_cmd(wdbp, interp, argc, argv);
+}
+
+/*			F _ M A K E _ B B
+ *
+ *	Build an RPP bounding box for the list of objects and/or paths passed to this routine
+ */
+
+int
+cmd_make_bb(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	return wdb_make_bb_cmd(wdbp, interp, argc, argv);
+}
+
+int
+cmd_whatid(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	CHECK_DBI_NULL;
+
+	return wdb_whatid_cmd(wdbp, interp, argc, argv);
+}
+
+/*
+ *      C M D _ W H I C H
+ *
+ *	Finds all regions with given region ids or air codes.
+ */
+int
+cmd_which(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	int		ret;
+
+	CHECK_DBI_NULL;
+
+	if (setjmp(jmp_env) == 0)
+		(void)signal(SIGINT, sig3);  /* allow interupts */
+        else
+		return TCL_OK;
+
+	ret = wdb_which_cmd(wdbp, interp, argc, argv);
+
+	(void)signal(SIGINT, SIG_IGN);
+	return ret;
+}
+
+/*
+ *  			C M D _ T O P S
+ *  
+ *  Find all top level objects.
+ *  TODO:  Perhaps print all objects, sorted by use count, as an option?
+ */
+int
+cmd_tops(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	int		ret;
+
+	CHECK_DBI_NULL;
+
+	if (setjmp(jmp_env) == 0)
+		(void)signal(SIGINT, sig3);  /* allow interupts */
+        else
+		return TCL_OK;
+
+	ret = wdb_tops_cmd(wdbp, interp, argc, argv);
+
+	(void)signal(SIGINT, SIG_IGN);
+	return ret;
+}
+
+/*
+ *			C M D _ T R E E
+ *
+ *	Print out a list of all members and submembers of an object.
+ */
+int
+cmd_tree(ClientData	clientData,
+       Tcl_Interp	*interp,
+       int		argc,
+       char		**argv)
+{
+	int		ret;
+
+	CHECK_DBI_NULL;
+
+	if (setjmp(jmp_env) == 0)
+		(void)signal(SIGINT, sig3);  /* allow interupts */
+	else
+		return TCL_OK;
+
+	/*
+	 * The tree command is wrapped by tclscripts/tree.tcl and calls this
+	 * routine with the name _mged_tree. So, we put back the original name.
+	 */ 
+	argv[0] = "tree";
+	ret = wdb_tree_cmd(wdbp, interp, argc, argv);
+
+	(void)signal(SIGINT, SIG_IGN);
+	return ret;
+}
+
+/*	C M D _ M V A L L
+ *
+ *	rename all occurences of an object
+ *	format:	mvall oldname newname
+ *
+ */
+int
+cmd_mvall(ClientData	clientData,
+	Tcl_Interp	*interp,
+	int		argc,
+	char		**argv)
+{
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	return wdb_move_all_cmd(wdbp, interp, argc, argv);
+}
+
+/*
+ *
+ *			C M D _ D U P
+ *
+ *  Check for duplicate names in preparation for cat'ing of files
+ *
+ *  Usage:  dup file.g [prefix]
+ *  becomes: db dup file.g [prefix]
+ */
+int
+cmd_dup(clientData, interp, argc, argv )
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	CHECK_DBI_NULL;
+
+	return wdb_dup_cmd(wdbp, interp, argc, argv);
+}
+
+/*
+ *			C M D _ C O N C A T
+ *
+ *  Concatenate another GED file into the current file.
+ *  Interrupts are not permitted during this function.
+ *
+ *  Usage:  dbconcat file.g [prefix]
+ *  becomes: db concat file.g prefix
+ *
+ *  NOTE:  If a prefix is not given on the command line,
+ *  then the users insist that they be prompted for the prefix,
+ *  to prevent inadvertently sucking in a non-prefixed file.
+ *  Slash ("/") specifies no prefix.
+ */
+int
+cmd_concat(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	CHECK_DBI_NULL;
+
+	/* get any prefix */
+	if (argc < 2) {
+		Tcl_AppendResult(interp, MORE_ARGS_STR,
+				 "concat: Enter database: ",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc < 3) {
+		Tcl_AppendResult(interp, MORE_ARGS_STR,
+				 "concat: Enter prefix string or / for no prefix: ",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	/* replace dbconcat with concat */
+	argv[0] = "concat";
+
+	return wdb_concat_cmd(wdbp, interp, argc, argv);
+}
+
+/* Rename an object */
+/* Format: mv oldname newname	*/
+int
+cmd_name(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	CHECK_DBI_NULL;
+
+	return wdb_move_cmd(wdbp, interp, argc, argv);
+}
+
+/* add solids to a region or create the region */
+/* and then add solids */
+/* Format: r regionname opr1 sol1 opr2 sol2 ... oprn soln */
+int
+cmd_region(ClientData	clientData,
+	   Tcl_Interp	*interp,
+	   int		argc,
+	   char		**argv)
+{
+	CHECK_DBI_NULL;
+
+	return wdb_region_cmd(wdbp, interp, argc, argv);
+}
+
+/* Delete members of a combination */
+/* Format: rm comb memb1 memb2 .... membn	*/
+int
+cmd_remove(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	CHECK_DBI_NULL;
+
+	return wdb_remove_cmd(wdbp, interp, argc, argv);
+}
+
+/*
+ *			C M D _ U N I T S
+ *
+ * Change the local units of the description.
+ * Base unit is fixed in mm, so this just changes the current local unit
+ * that the user works in.
+ */
+int
+cmd_units(ClientData	clientData,
+	  Tcl_Interp	*interp,
+	  int		argc,
+	  char		**argv)
+{
+	int		ret;
+	fastf_t		sf;
+
+	CHECK_DBI_NULL;
+
+	sf = dbip->dbi_base2local;
+	ret = wdb_units_cmd(wdbp, interp, argc, argv);
+
+	set_localunit_TclVar();
+	sf = dbip->dbi_base2local / sf;
+	update_grids(sf);
+	update_views = 1;
+
+	return ret;
+}
+
+/*
+ *	Change the current title of the description
+ */
+int
+cmd_title(ClientData	clientData,
+	  Tcl_Interp	*interp,
+	  int		argc,
+	  char		**argv)
+{
+	int	ret;
+
+	CHECK_DBI_NULL;
+
+	ret = wdb_title_cmd(wdbp, interp, argc, argv);
+	view_state->vs_flag = 1;
+
+	return ret;
+}
+
+/*
+ *  			C M D _ P R C O L O R
+ */
+int
+cmd_prcolor(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
+{
+	return wdb_prcolor_cmd(wdbp, interp, argc, argv);
+}
+
+/* List object information, briefly */
+/* Format: cat object	*/
+int
+cmd_cat(ClientData	clientData,
+	Tcl_Interp	*interp,
+	int		argc,
+	char		**argv)
+{
+	int ret;
+
+	CHECK_DBI_NULL;
+
+	if (setjmp(jmp_env) == 0)
+		(void)signal(SIGINT, sig3);	/* allow interupts */
+	else
+		return TCL_OK;
+
+	ret = wdb_cat_cmd(wdbp, interp, argc, argv);
+
+	(void)signal(SIGINT, SIG_IGN);
+	return ret;
+}
+
+/*
+ *  			C M D _ C O L O R
+ *  
+ *  Add a color table entry.
+ */
+int
+cmd_color(ClientData	clientData,
+	  Tcl_Interp	*interp,
+	  int		argc,
+	  char		**argv)
+{
+	int ret;
+
+	CHECK_DBI_NULL;
+
+	ret = wdb_color_cmd(wdbp, interp, argc, argv);
+	color_soltab();
+
+	return ret;
+}
+
+/*
+ *			C M D _ C O M B
+ *
+ *  Create or add to the end of a combination, with one or more solids,
+ *  with explicitly specified operations.
+ *
+ *  Format: comb comb_name sol1 opr2 sol2 ... oprN solN
+ */
+int
+cmd_comb(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	CHECK_DBI_NULL;
+
+	return wdb_comb_cmd(wdbp, interp, argc, argv);
+}
+
+/* Copy an object */
+/* Format: cp oldname newname	*/
+int
+cmd_copy(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	int ret;
+	char *av[3];
+
+	CHECK_DBI_NULL;
+
+	if ((ret = wdb_copy_cmd(wdbp, interp, argc, argv)) != TCL_OK)
+		return ret;
+
+	av[0] = "e";
+	av[1] = argv[2]; /* depends on solid name being in argv[2] */
+	av[2] = NULL;
+
+	/* draw the new object */
+	return f_edit(clientData, interp, 2, av);
+}
+
+/*
+ *                C M D _ E X P A N D
+ *
+ * Performs wildcard expansion (matched to the database elements)
+ * on its given arguments.  The result is returned in interp->result.
+ */
+int
+cmd_expand( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+    CHECK_DBI_NULL;
+
+    return wdb_expand_cmd(wdbp, interp, argc, argv);
+}
+
+/*
+ *			C M D _ L S
+ *
+ * This routine lists the names of all the objects accessible
+ * in the object file.
+ */
+int
+cmd_ls(ClientData	clientData,
+       Tcl_Interp	*interp,
+       int		argc,
+       char		**argv)
+{
+	CHECK_DBI_NULL;
+
+	return wdb_ls_cmd(wdbp, interp, argc, argv);
+}
+
+/*
+ *  			C M D _ F I N D
+ *  
+ *  Find all references to the named objects.
+ */
+int
+cmd_find(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	CHECK_DBI_NULL;
+
+	return wdb_find_cmd(wdbp, interp, argc, argv);
 }
