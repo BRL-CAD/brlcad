@@ -134,11 +134,9 @@ char **argv;
 			rt_vls_strcat( &v, "kill " );
 			rt_vls_strcat( &v , red_tmpcomb );
 			rt_vls_strcat( &v , "\n" );
-#ifdef XMGED
-			cmdline( &v, False );
-#else
-			cmdline( &v );
-#endif
+
+			cmdline( &v, FALSE );
+
 			rt_vls_free( &v );
 		}
 	}
@@ -522,11 +520,9 @@ struct directory *dp;
 	rt_vls_strcat( &v , "kill " );
 	rt_vls_strcat( &v , dp->d_namep );
 	rt_vls_strcat( &v , "\n" );
-#ifdef Xmged
-	cmdline( &v, False );
-#else
-	cmdline( &v );
-#endif
+
+	cmdline( &v, FALSE );
+
 	rt_vls_free( &v );
 
 	/* Move temp to original */
@@ -535,10 +531,8 @@ struct directory *dp;
 	rt_vls_strcat( &v , " " );
 	rt_vls_strcat( &v , name );
 	rt_vls_strcat( &v , "\n" );
-#ifdef XMGED
-	cmdline( &v, False );
-#else
-	cmdline( &v );
-#endif
+
+	cmdline( &v, FALSE );
+
 	rt_vls_free( &v );
 }

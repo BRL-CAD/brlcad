@@ -110,11 +110,7 @@ long	us;		/* microseconds of extra delay */
 	rt_vls_init( &str );
 	rt_vls_printf( &str, "overlay %s\n", file );
 
-#ifdef XMGED
-	(void)cmdline( &str, False );
-#else
-	(void)cmdline( &str );
-#endif
+	(void)cmdline( &str, FALSE );
 
 	rt_vls_free( &str );
 
@@ -892,11 +888,7 @@ int			copy;
 	rt_vls_init(&str);
 	rt_vls_printf( &str, "kill -f %s*\n", shortname );
 
-#ifdef XMGED
-	(void)cmdline( &str, False );
-#else
-	(void)cmdline(&str);
-#endif
+	(void)cmdline( &str, FALSE );
 
 	rt_vls_free(&str);
 
