@@ -1,6 +1,13 @@
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
+#include <errno.h>
 #include "machine.h"
 #include "db.h"
 #include "externs.h"
@@ -13,7 +20,6 @@
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , (struct loopuse *lu , plane_t pl ) );
 
-extern int errno;
 
 #define	LINELEN	256 /* max input line length from elements file */
 
@@ -310,4 +316,5 @@ char *argv[];
 	}
 
 	fprintf( stderr , "%d polygons\n" , NMG_TBL_END( &faces ) );
+	return 0;
 }

@@ -24,9 +24,17 @@
 static char RCSid[] = "$Header$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
+#include <errno.h>
+
 #include "machine.h"
 #include "db.h"
 #include "externs.h"
@@ -36,10 +44,6 @@ static char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "wdb.h"
 #include "../librt/debug.h"
-
-extern int errno;
-extern int optind,opterr;
-extern char *optarg;
 
 #define		LINELEN		128	/* Length of char array for input line */
 
