@@ -69,7 +69,8 @@ void	make_border();
 void	make_bounding_rpp();
 
 static FILE	*fp;
-
+int		border;
+int		verbose;
 
 /*
  *
@@ -121,8 +122,6 @@ char	**argv;
 	strcat(label, units);
 	strcpy(name, argv[4]);
 
-fprintf(stderr, "label=%s\n", label);
-
 	intervals = atof(argv[3]);
 
 	m_len = atof(argv[1]) * mk_cvt_factor(argv[2]);
@@ -149,8 +148,10 @@ fprintf(stderr, "label=%s\n", label);
 
 	mat_inv(view2model, model2view);
 
-/* mat_print("view2model", view2model);
- */
+	if(verbose)  {
+		fprintf(stderr, "label=%s\n", label);
+		mat_print("view2model", view2model);
+	}
 
 	/* Make a bounding rpp for the model and put out a space command. */
 	make_bounding_rpp(stdout, view2model);
@@ -160,9 +161,10 @@ fprintf(stderr, "label=%s\n", label);
 		exit(-1);
 	}
 
-	/* For diagnostic purposes, a border can be put out. */
-	make_border(stdout, view2model);
-
+	if(border)  {
+		/* For diagnostic purposes, a border can be put out. */
+		make_border(stdout, view2model);
+	}
 
 	exit(0);
 
@@ -228,9 +230,10 @@ fastf_t	m_len;
 	nticks =  intervals - 1;
 	v_tick_hgt = 0.05;
 
+	if(verbose)  {
+		fprintf(stderr, "plot: nticks=%d,\n", nticks);
+	}
 
-/*  fprintf(stderr, "plot: nticks=%d,\n", nticks);
- */
 	/* Make the starting point (in view-coordinates) of the scale.
 	 * Note that there is no Z coordinate since the view-coordinate
 	 * system is a flat world.  The length and height vectors also
@@ -254,8 +257,10 @@ fastf_t	m_len;
 	MAT4X3PNT(m_startpt, v2mod, v_startpt);
 	m_tick_hgt = v_tick_hgt / v2mod[15];		/* scale tick_hgt */
 
-/* fprintf(stderr, "layout: m_tick_hgt=%g, v_tick_hgt=%g\n", m_tick_hgt, v_tick_hgt);
- */
+	if(verbose)  {
+		fprintf(stderr, "layout: m_tick_hgt=%g, v_tick_hgt=%g\n", 
+			m_tick_hgt, v_tick_hgt);
+	}
 
 	/* Lay out the label in view space.  Find the number of characters
 	 * in the label and calculate their width.  Since characters are
@@ -308,8 +313,10 @@ fastf_t	m_len;
 		for( tickno = 1; tickno < nticks; tickno++ )  {
 
 			VJOIN1(centerpt, m_startpt, m_len * tickno/nticks, m_lenv);
-/* VPRINT("centerpt", centerpt);
- */
+
+			if(verbose)  {
+				VPRINT("centerpt", centerpt);
+			}
 
 			ret = drawticks(outfp, centerpt, m_hgtv, m_tick_hgt * 0.5, m_inv_hgtv );
 			if( ret < 0 )  {
@@ -320,11 +327,11 @@ fastf_t	m_len;
 
 	}
 	
-
-fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %g, %g, %g, m_char_width=%g\n",
-        label, V3ARGS(m_label_st), m_char_width);
-mat_print("v2symbol", v2symbol);
-
+	if(verbose)  {
+		fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %g, %g, %g, m_char_width=%g\n",
+		        label, V3ARGS(m_label_st), m_char_width);
+		mat_print("v2symbol", v2symbol);
+	}
 
 	/* Now put the label on the plot. */
 	tp_3symbol(outfp, label, m_label_st, v2symbol, m_char_width);
@@ -362,10 +369,11 @@ vect_t		inv_hgtv;
 	pdv_3move(outfp, startpt);
 	pdv_3cont(outfp, endpt);
 
-/* fprintf(stderr, "drawscale invoked drawticks\n");
- * VPRINT("startpt", startpt);
- * VPRINT("endpt", endpt);
- */
+	if(verbose)  {
+		fprintf(stderr, "drawscale invoked drawticks\n");
+		VPRINT("startpt", startpt);
+		VPRINT("endpt", endpt);
+	}
 
 	drawticks(outfp, startpt, hgtv, hgt, inv_hgtv);
 	drawticks(outfp, endpt, hgtv, hgt, inv_hgtv);
@@ -394,16 +402,19 @@ vect_t		inv_hgtv;
 	point_t		top;		/* top of tick mark */
 	point_t		bot;		/* bottom of tick mark */
 
-/* VPRINT("hgtv", hgtv);
- */
+	if(verbose)  {
+		VPRINT("hgtv", hgtv);
+	}
 
 	VJOIN1(top, centerpt, hgt, hgtv);
 	VJOIN1(bot, centerpt, hgt, inv_hgtv);
 
-/* VPRINT("top", top);
- * VPRINT("bot", bot);
- * fprintf(stderr, "drawticks now using top, bot to plot\n");
- */
+	if(verbose)  {
+		VPRINT("top", top);
+		VPRINT("bot", bot);
+		fprintf(stderr, "drawticks now using top, bot to plot\n");
+	}
+
 	pdv_3move(outfp, top);
 	pdv_3cont(outfp, bot);
 
