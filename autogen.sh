@@ -34,11 +34,13 @@ if [ $? = 0 ] ; then
     if [ "x`echo $ARGS | sed 's/.*help.*/help/'`" = "xhelp" ] ; then
 	echo "$PATH_TO_AUTOGEN/configure $ARGS"
 	$PATH_TO_AUTOGEN/configure $ARGS
+	[ ! $? = 0 ] && echo "Configure failed. (returned $?)" && exit 6
 	exit
     fi
 elif [ "x$ARGS" = "x--help" ] ; then
     echo "$PATH_TO_AUTOGEN/configure $ARGS"
     $PATH_TO_AUTOGEN/configure $ARGS
+    [ ! $? = 0 ] && echo "Configure failed. (returned $?)" && exit 6
     exit
 fi
 
@@ -48,7 +50,9 @@ if [ ! "x$ARGS" = "x" ] ; then
     echo "The BRL-CAD build system is now prepared.  Building here with:"
     echo "$PATH_TO_AUTOGEN/configure $ARGS"
     $PATH_TO_AUTOGEN/configure $ARGS
+    [ ! $? = 0 ] && echo "Configure failed. (returned $?)" && exit 6
     make
+    [ ! $? = 0 ] && echo "Make failed. (returned $?)" && exit 7
 else
     echo "The BRL-CAD build system is now prepared.  To build here, run:"
     echo "  $PATH_TO_AUTOGEN/configure"
