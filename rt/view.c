@@ -7,10 +7,10 @@
  *  The output format is a .PIX file (a byte stream of R,G,B as u_char's).
  *
  *  The extern "lightmodel" selects which one is being used:
- *	0	model with color, based on Moss's LGT
+ *	0	Full lighting model (default)
  *	1	1-light, from the eye.
  *	2	Spencer's surface-normals-as-colors display
- *	3	3-light debugging model
+ *	3	(removed)
  *	4	curvature debugging display (inv radius of curvature)
  *	5	curvature debugging (principal direction)
  *
@@ -46,6 +46,7 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "mater.h"
+#include "rtlist.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "./ext.h"
@@ -80,7 +81,6 @@ extern int	max_ireflect;		/* from refract.c */
 
 extern struct region	env_region;	/* from text.c */
 
-extern struct light_specific *LightHeadp;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 
 vect_t	background = { 0.25, 0, 0.5 };	/* Dark Blue Background */
@@ -321,26 +321,13 @@ register struct application *ap;
 view_end(ap)
 struct application *ap;
 {
-	register struct light_specific *lp, *nlp;
 
 	if( incr_mode )  {
 		if( incr_level < incr_nlevel )
 			return(0);		 /* more res to come */
 	}
 	free_scanlines();
-
-	/* Eliminate invisible lights (typ. implicit lights) */
-	lp=LightHeadp;
-	while( lp != LIGHT_NULL )  {
-		if( lp->lt_invisible )  {
-			nlp = lp->lt_forw;
-			light_free( (char *)lp );
-			lp = nlp;
-			continue;
-		}
-		/* will be cleaned by mlib_free() */
-		lp = lp->lt_forw;
-	}
+	light_cleanup();
 	return(0);		/* OK */
 }
 
@@ -569,6 +556,7 @@ struct partition *PartHeadp;
 	LOCAL fastf_t diffuse1, cosI1;
 	LOCAL fastf_t diffuse0, cosI0;
 	LOCAL vect_t work0, work1;
+	LOCAL struct light_specific *lp;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -588,39 +576,12 @@ struct partition *PartHeadp;
 	switch( lightmodel )  {
 	case 1:
 		/* Light from the "eye" (ray source).  Note sign change */
+		lp = RT_LIST_FIRST( light_specific, &(LightHead.l) );
 		diffuse0 = 0;
 		if( (cosI0 = -VDOT(hitp->hit_normal, ap->a_ray.r_dir)) >= 0.0 )
 			diffuse0 = cosI0 * ( 1.0 - AmbientIntensity);
-		VSCALE( work0, LightHeadp->lt_color, diffuse0 );
+		VSCALE( work0, lp->lt_color, diffuse0 );
 
-		/* Add in contribution from ambient light */
-		VSCALE( work1, ambient_color, AmbientIntensity );
-		VADD2( ap->a_color, work0, work1 );
-		break;
-	case 3:
-		/* Simple attempt at a 3-light model. */
-		{
-			struct light_specific *l0, *l1, *l2;
-			l0 = LightHeadp;
-			l1 = l0->lt_forw;
-			l2 = l1->lt_forw;
-
-			diffuse0 = 0;
-			if( (cosI0 = VDOT(hitp->hit_normal, l0->lt_vec)) >= 0.0 )
-				diffuse0 = cosI0 * l0->lt_fraction;
-			diffuse1 = 0;
-			if( (cosI1 = VDOT(hitp->hit_normal, l1->lt_vec)) >= 0.0 )
-				diffuse1 = cosI1 * l1->lt_fraction;
-			diffuse2 = 0;
-			if( (cosI2 = VDOT(hitp->hit_normal, l2->lt_vec)) >= 0.0 )
-				diffuse2 = cosI2 * l2->lt_fraction;
-
-			VSCALE( work0, l0->lt_color, diffuse0 );
-			VSCALE( work1, l1->lt_color, diffuse1 );
-			VADD2( work0, work0, work1 );
-			VSCALE( work1, l2->lt_color, diffuse2 );
-			VADD2( work0, work0, work1 );
-		}
 		/* Add in contribution from ambient light */
 		VSCALE( work1, ambient_color, AmbientIntensity );
 		VADD2( ap->a_color, work0, work1 );
@@ -877,8 +838,9 @@ char	*framename;
 	switch( lightmodel )  {
 	case 0:
 		ap->a_hit = colorview;
-		/* If present, use user-specified light solid */
-		if( LightHeadp == LIGHT_NULL )  {
+		/* If present, use user-specified light solids */
+		if( RT_LIST_IS_EMPTY( &(LightHead.l) )  ||
+		    RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
 			if(rdebug&RDEBUG_SHOWERR)rt_log("No explicit light\n");
 			light_maker(1, view2model);
 		}
@@ -887,7 +849,6 @@ char	*framename;
 		VSETALL( background, 0 );	/* Neutral Normal */
 		/* FALL THROUGH */
 	case 1:
-	case 3:
 	case 4:
 	case 5:
 		ap->a_hit = viewit;
@@ -906,7 +867,7 @@ char	*framename;
 	/*
 	 * If a non-background pixel comes out the same color as the
 	 * background, modify it slightly, to permit compositing.
-	 * Peterb the background color channel with the largest intensity.
+	 * Perturb the background color channel with the largest intensity.
 	 */
 	if( inonbackground[0] > inonbackground[1] )  {
     		if( inonbackground[0] > inonbackground[2] )  i = 0;

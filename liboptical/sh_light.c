@@ -23,6 +23,7 @@ static char RCSlight[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "rtlist.h"
 #include "raytrace.h"
 #include "./material.h"
 #include "./light.h"
@@ -40,7 +41,7 @@ struct structparse light_parse[] = {
 	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
-struct light_specific *LightHeadp = LIGHT_NULL;		/* Linked list of lights */
+struct light_specific	LightHead;	/* Heads linked list of lights */
 
 extern double AmbientIntensity;
 
@@ -102,8 +103,8 @@ char	*dp;
 HIDDEN int
 light_setup( rp, matparm, dpp )
 register struct region *rp;
-char	*matparm;
-char	**dpp;
+char		*matparm;
+genptr_t	*dpp;
 {
 	register struct light_specific *lp;
 	register struct soltab *stp;
@@ -111,8 +112,9 @@ char	**dpp;
 	fastf_t	f;
 
 	GETSTRUCT( lp, light_specific );
-	*dpp = (char *)lp;
+	*dpp = (genptr_t)lp;
 
+	RT_LIST_MAGIC_SET( &(lp->l), LIGHT_MAGIC );
 	lp->lt_intensity = 1000.0;	/* Lumens */
 	lp->lt_fraction = -1.0;		/* Recomputed later */
 	lp->lt_invisible = 0;		/* explicitly modeled */
@@ -141,14 +143,20 @@ char	**dpp;
 			return(-1);
 
 		if( max_rpp[X] >= INFINITY )  {
-			rt_log("light_setup(%s) Infinite light sources not supported\n",
+			rt_log("light_setup(%s) Infinitely large light sources not supported\n",
 				lp->lt_name );
 			return(-1);
 		}
 		VADD2SCALE( lp->lt_pos, min_rpp, max_rpp, 0.5 );
 		VSUB2( rad, max_rpp, lp->lt_pos );
-		/* XXX This radius is way too big */
-		lp->lt_radius = MAGNITUDE( rad );
+		/* Use smallest radius from center to max as light radius */
+		/* Having the radius too large can give very poor lighting */
+		if( rad[X] < rad[Y] )
+			lp->lt_radius = rad[X];
+		else
+			lp->lt_radius = rad[Y];
+		if( rad[Z] < lp->lt_radius )
+			lp->lt_radius = rad[Z];
 
 		/* Find first leaf node on left of tree */
 		tp = rp->reg_treetop;
@@ -167,11 +175,6 @@ char	**dpp;
 	} else {
 		VSETALL( lp->lt_color, 1 );
 	}
-	rt_log( "%s at (%g, %g, %g), aimed at (%g, %g, %g), angle=%g\n",
-		lp->lt_name,
-		lp->lt_pos[X], lp->lt_pos[Y], lp->lt_pos[Z],
-		lp->lt_aim[X], lp->lt_aim[Y], lp->lt_aim[Z],
-		lp->lt_angle );
 
 	VMOVE( lp->lt_vec, lp->lt_pos );
 	f = MAGNITUDE( lp->lt_vec );
@@ -183,8 +186,10 @@ char	**dpp;
 	}
 
 	/* Add to linked list of lights */
-	lp->lt_forw = LightHeadp;
-	LightHeadp = lp;
+	if( RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+		RT_LIST_INIT( &(LightHead.l) );
+	}
+	RT_LIST_INSERT( &(LightHead.l), &(lp->l) );
 
 	if( lp->lt_invisible )
 		return(0);	/* don't show it */
@@ -213,33 +218,13 @@ char *cp;
 	register struct light_specific *light =
 		(struct light_specific *)cp;
 
-	if( LightHeadp == LIGHT_NULL )  {
-		rt_log("light_free(x%x), list is null\n", cp);
-		return;
-	}
-	if( LightHeadp == light )  {
-		LightHeadp = LightHeadp->lt_forw;
-	} else {
-		register struct light_specific *lp;	/* current light */
-		register struct light_specific **llp;	/* last light lt_forw */
-
-		llp = &LightHeadp;
-		lp = LightHeadp;
-		while( lp != LIGHT_NULL )  {
-			if( lp == light )  {
-				*llp = lp->lt_forw;
-				goto found;
-			}
-			llp = &(lp->lt_forw);
-			lp = lp->lt_forw;
-		}
-		rt_log("light_free:  unable to find light in list\n");
-	}
-found:
+	if( RT_LIST_MAGIC_WRONG( &(light->l), LIGHT_MAGIC ) )  rt_bomb("light_free magic");
+	RT_LIST_DEQUEUE( &(light->l) );
 	if( light->lt_name )  {
 		rt_free( light->lt_name, "light name" );
 		light->lt_name = (char *)0;
 	}
+	light->l.magic = 0;	/* sanity */
 	rt_free( (char *)light, "light_specific" );
 }
 
@@ -284,6 +269,7 @@ mat_t	v2m;
 			return;
 		}
 		GETSTRUCT( lp, light_specific );
+		lp->l.magic = LIGHT_MAGIC;
 		VMOVE( lp->lt_color, color );
 		MAT4X3VEC( lp->lt_pos, v2m, temp );
 		VMOVE( lp->lt_vec, lp->lt_pos );
@@ -301,8 +287,10 @@ mat_t	v2m;
 		lp->lt_cosangle = -1;		/* cos(180) */
 		lp->lt_infinite = 0;
 		lp->lt_rp = REGION_NULL;
-		lp->lt_forw = LightHeadp;
-		LightHeadp = lp;
+		if( RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+			RT_LIST_INIT( &(LightHead.l) );
+		}
+		RT_LIST_INSERT( &(LightHead.l), &(lp->l) );
 	}
 }
 
@@ -325,10 +313,10 @@ int
 light_init()
 {
 	register struct light_specific *lp;
-	register int	nlights = 0;
+	register int		nlights = 0;
 	register fastf_t	inten = 0.0;
 
-	for( lp = LightHeadp; lp; lp = lp->lt_forw )  {
+	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		nlights++;
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
 		if( lp->lt_intensity <= 0 )
@@ -342,9 +330,23 @@ light_init()
 	/* This is non-physical and risky, but gives nicer pictures for now */
 	inten *= (1 + AmbientIntensity*0.5);
 
-	for( lp = LightHeadp; lp; lp = lp->lt_forw )  {
+	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
 		lp->lt_fraction = lp->lt_intensity / inten;
+	}
+	rt_log("Lighting: Ambient = %d%%\n", (int)(AmbientIntensity*100));
+	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+		rt_log( "  %s: (%g, %g, %g), aimed at (%g, %g, %g)\n",
+			lp->lt_name,
+			lp->lt_pos[X], lp->lt_pos[Y], lp->lt_pos[Z],
+			lp->lt_aim[X], lp->lt_aim[Y], lp->lt_aim[Z] );
+		rt_log( "  %s: %s, %s, %g lumens (%d%%), halfang=%g\n",
+			lp->lt_name,
+			lp->lt_invisible ? "invisible":"visible",
+			lp->lt_shadows ? "casts shadows":"no shadows",
+			lp->lt_intensity,
+			(int)(lp->lt_fraction*100),
+			lp->lt_angle );
 	}
 	if( nlights > SW_NLIGHTS )  {
 		rt_log("Number of lights limited to %d\n", SW_NLIGHTS);
@@ -396,6 +398,7 @@ struct partition *PartHeadp;
 
 	/* Check to see if we hit the light source */
 	lp = (struct light_specific *)(ap->a_user);
+	if( RT_LIST_MAGIC_WRONG( &(lp->l), LIGHT_MAGIC ) )  rt_bomb("light_hit magic");
 	if( lp->lt_rp == regp )  {
 		VSETALL( ap->a_color, 1 );
 		light_visible = 1;
@@ -482,23 +485,37 @@ light_miss(ap, PartHeadp)
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	extern struct light_specific *LightHeadp;
 	struct light_specific *lp = (struct light_specific *)(ap->a_user);
 
+	if( RT_LIST_MAGIC_WRONG( &(lp->l), LIGHT_MAGIC ) )  rt_bomb("light_miss magic");
 	if( lp->lt_invisible || lp->lt_infinite ) {
 		VSETALL( ap->a_color, 1 );
-		return( 1 );
+		return(1);		/* light_visible = 1 */
 	}
-	if( LightHeadp )  {
-		/* Explicit lights exist, somehow we missed (dither?) */
-		VSETALL( ap->a_color, 0 );
-		return(0);		/* light_visible = 0 */
-	}
-	/* No explicit light -- it's hard to hit */
-	rt_log( "light: warning - invisible light not on list?!\n" );
-	VSETALL( ap->a_color, 1 );
-	return(1);			/* light_visible = 1 */
+	/* Missed light, either via blockage or dither.  Return black */
+	VSETALL( ap->a_color, 0 );
+	return(0);			/* light_visible = 0 */
 }
 
-/* Null function */
-nullf() { return(0); }
+/*
+ *			L I G H T _ C L E A N U P
+ *
+ *  Called from view_end().
+ *  Take care of releasing storage for any lights which will not
+ *  be cleaned up by mlib_free(), i.e., implicitly created lights.
+ */
+void
+light_cleanup()
+{
+	register struct light_specific *lp, *zaplp;
+
+	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+		if( lp->lt_rp != REGION_NULL )  {
+			/* Will be cleaned up by mlib_free() */
+			continue;
+		}
+		zaplp = lp;
+		lp = RT_LIST_PREV( light_specific, &(lp->l) );
+		light_free( (genptr_t)zaplp );
+	}
+}

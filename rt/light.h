@@ -1,7 +1,21 @@
 /*
  *			L I G H T . H
+ *
+ *  Declarations related to light sources
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
+ *
+ *  @(#)$Header$ (BRL)
  */
 struct light_specific {
+	struct rt_list	l;	/* doubly linked list */
 	/* User-specified fields */
 	fastf_t	lt_intensity;	/* Intensity Lumens (cd*sr): total output */
 	fastf_t	lt_angle;	/* beam dispersion angle (degrees) 0..180 */
@@ -18,6 +32,8 @@ struct light_specific {
 	vect_t	lt_aim;		/* Unit vector - light beam direction */
 	char	*lt_name;	/* identifying string */
 	struct	region *lt_rp;	/* our region of origin */
-	struct	light_specific *lt_forw;	/* Forward link */
 };
 #define LIGHT_NULL	((struct light_specific *)0)
+#define LIGHT_MAGIC	0xdbddbdb7
+
+extern struct light_specific	LightHead;

@@ -29,6 +29,7 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "rtlist.h"
 #include "raytrace.h"
 #include "./ext.h"
 #include "./rdebug.h"
@@ -37,8 +38,6 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "./light.h"
 
 extern int	light_hit(), light_miss();	/* in light.c */
-
-extern struct light_specific	*LightHeadp;
 
 HIDDEN void	shade_inputs();
 
@@ -103,8 +102,9 @@ register struct shadework *swp;
 		for( i = ap->a_rt_i->rti_nlights*3 - 1; i >= 0; i-- )
 			swp->sw_intensity[i] = 1;
 
-		for( i=0, lp=LightHeadp; lp; lp = lp->lt_forw, i++ )
-			swp->sw_visible[i] = (char *)lp;
+		i=0;
+		for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )
+			swp->sw_visible[i++] = (char *)lp;
 	}
 
 	/* If optional inputs are required, have them computed */
@@ -237,9 +237,11 @@ register int	want;
 		/*
 		 *  Determine light visibility
 		 */
-		for( i=0, lp=LightHeadp, intensity = swp->sw_intensity, tolight = swp->sw_tolight;
-			lp;
-			lp = lp->lt_forw, i++, intensity += 3, tolight += 3
+		i = 0;
+		intensity = swp->sw_intensity;
+		tolight = swp->sw_tolight;
+		for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ),
+		    i++, intensity += 3, tolight += 3
 		)  {
 			/* compute the light direction */
 			if( lp->lt_infinite ) {
@@ -265,7 +267,7 @@ register int	want;
 			/*
 			 *  If we have a normal, test against light direction
 			 */
-			if( (have & MFI_NORMAL) && (swp->sw_transmit == 0) )  {
+			if( (have & MFI_NORMAL) && (swp->sw_transmit <= 0) )  {
 				if( VDOT(swp->sw_hit.hit_normal,tolight) < 0 ) {
 					/* backfacing, opaque */
 					swp->sw_visible[i] = (char *)0;
