@@ -322,6 +322,7 @@ double	r1, r2;
 	VSCALE( F8, F4, r4/m6 );
 	
 	fwrite( (char *) &rec, sizeof(rec), 1, fp);
+	return(0);		/* OK */
 }
 
 
@@ -377,6 +378,7 @@ fastf_t	radius;
 	VMOVE( F6, F4);
 
 	fwrite( (char *)&rec, sizeof( rec), 1, fp);
+	return(0);		/* OK */
 }
 
 /*
