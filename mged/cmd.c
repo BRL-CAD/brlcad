@@ -318,6 +318,8 @@ static struct cmdtab cmdtab[] = {
 	"shells", f_shells,
 	"shader", f_shader,
 	"share_menu", f_share_menu,
+	"share_vars", f_share_vars,
+	"share_view", f_share_view,
 	"size", f_view,
 	"sliders", cmd_sliders,
 	"solids", f_tables,
@@ -329,7 +331,6 @@ static struct cmdtab cmdtab[] = {
 	"sync", f_sync,
 	"t", dir_print,
 	"ted", f_tedit,
-	"tie", f_tie,
 	"title", f_title,
 	"toggle_view", f_toggle_view,
 	"tol", f_tol,
@@ -340,7 +341,9 @@ static struct cmdtab cmdtab[] = {
 	"tree", f_tree,
 	"unaim", f_unaim,
 	"units", f_units,
-	"untie", f_untie,
+	"unshare_menu", f_unshare_menu,
+	"unshare_vars", f_unshare_vars,
+	"unshare_view", f_unshare_view,
 	"mged_update", f_update,
 	"vars", f_set,
 	"vdraw", cmd_vdraw,
@@ -1040,7 +1043,7 @@ cmd_get(clientData, interp, argc, argv)
 	bu_vls_init(&vls);
 
 	/* return all ids associated with the current command window */
-	for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
 		/* The display manager tied to the current command window shares
 		   information with display manager p */
 		if(curr_cmd_list->aim->s_info == p->s_info)
@@ -1916,7 +1919,7 @@ f_aim(clientData, interp, argc, argv)
 	else
 		bu_vls_strcpy(&vls2, argv[2]);
 
-	for( BU_LIST_FOR(dlp, dm_list, &head_dm_list.l) )
+	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
 		if(!strcmp(bu_vls_addr(&vls2), bu_vls_addr(&dlp->_dmp->dm_pathName)))
 			break;
 
@@ -2024,7 +2027,7 @@ f_ps(clientData, interp, argc, argv)
 
 	sip = curr_dm_list->s_info;  /* save state info pointer */
 	curr_dm_list->s_info = dml->s_info;  /* use dml's state info */
-	mged_variables = dml->_mged_variables; /* struct copy */
+	*mged_variables = *dml->_mged_variables; /* struct copy */
 #if 1
 	bu_free((genptr_t)curr_dm_list->menu_vars,"f_ps: menu_vars");
 	curr_dm_list->menu_vars = dml->menu_vars;
@@ -2089,7 +2092,7 @@ f_pl(clientData, interp, argc, argv)
 
 	sip = curr_dm_list->s_info;  /* save state info pointer */
 	curr_dm_list->s_info = dml->s_info;  /* use dml's state info */
-	mged_variables = dml->_mged_variables; /* struct copy */
+	*mged_variables = *dml->_mged_variables; /* struct copy */
 #if 1
 	bu_free((genptr_t)curr_dm_list->menu_vars,"f_pl: menu_vars");
 	curr_dm_list->menu_vars = dml->menu_vars;
@@ -2173,7 +2176,7 @@ f_winset(clientData, interp, argc, argv)
 	}
 
 	/* change primary focus to window argv[1] */
-	for( BU_LIST_FOR(p, dm_list, &head_dm_list.l ) ){
+	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
 		if( !strcmp( argv[1], bu_vls_addr( &p->_dmp->dm_pathName ) ) ){
 			curr_dm_list = p;
 
