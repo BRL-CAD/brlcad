@@ -303,41 +303,6 @@ struct soltab {
 
 #define ID_MAXIMUM	16	/* Maximum defined ID_xxx value */
 
-/*
- *			F U N C T A B
- *
- *  Object-oriented interface to geometry modules.
- *  Table is indexed by ID_xxx value of particular solid.
- */
-struct rt_functab {
-	char	*ft_name;
-	int	ft_use_rpp;
-	int	(*ft_prep) RT_ARGS((struct soltab *stp, union record *rec,
-			struct rt_i *rtip));
-	int 	(*ft_shot) RT_ARGS((struct soltab *stp, struct xray *rp,
-			struct application *ap, struct seg *seghead));
-	void	(*ft_print) RT_ARGS((struct soltab *stp));
-	void	(*ft_norm) RT_ARGS((struct hit *hitp, struct soltab *stp,
-			struct xray *rp));
-	void	(*ft_uv) RT_ARGS((struct application *ap, struct soltab *stp,
-			struct hit *hitp, struct uvcoord *uvp));
-	void	(*ft_curve) RT_ARGS((struct curvature *cvp, struct hit *hitp,
-			struct soltab *stp));
-	int	(*ft_classify)();
-	void	(*ft_free) RT_ARGS((struct soltab *stp));
-	int	(*ft_plot) RT_ARGS((union record *rp, mat_t mat,
-			struct vlhead *vhead, struct directory *dp,
-			double abs_tol, double rel_tol, double norm_tol));
-	void	(*ft_vshot) RT_ARGS((struct soltab *stp[], struct xray *rp[],
-			struct seg segp[], int n, struct resource *resp));
-	int	(*ft_tessellate) RT_ARGS((struct nmgregion **r,
-			struct model *m, union record *rp,
-			mat_t mat, struct directory *dp,
-			double abs_tol, double rel_tol, double norm_tol));
-};
-extern struct rt_functab rt_functab[];
-extern int rt_nfunctab;
-
 
 /*
  *			T R E E
@@ -1099,6 +1064,44 @@ struct command_tab {
 	int	ct_min;		/* min number of words in cmd */
 	int	ct_max;		/* max number of words in cmd */
 };
+
+/*
+ *			F U N C T A B
+ *
+ *  Object-oriented interface to geometry modules.
+ *  Table is indexed by ID_xxx value of particular solid.
+ *  This needs to be at the end of the header file,
+ *  so that all the structure names are known.
+ *  XXX the "union record" and "struct nmgregion" pointers are problematic.
+ */
+struct rt_functab {
+	char	*ft_name;
+	int	ft_use_rpp;
+	int	(*ft_prep) RT_ARGS((struct soltab *stp, union record *rec,
+			struct rt_i *rtip));
+	int 	(*ft_shot) RT_ARGS((struct soltab *stp, struct xray *rp,
+			struct application *ap, struct seg *seghead));
+	void	(*ft_print) RT_ARGS((struct soltab *stp));
+	void	(*ft_norm) RT_ARGS((struct hit *hitp, struct soltab *stp,
+			struct xray *rp));
+	void	(*ft_uv) RT_ARGS((struct application *ap, struct soltab *stp,
+			struct hit *hitp, struct uvcoord *uvp));
+	void	(*ft_curve) RT_ARGS((struct curvature *cvp, struct hit *hitp,
+			struct soltab *stp));
+	int	(*ft_classify)();
+	void	(*ft_free) RT_ARGS((struct soltab *stp));
+	int	(*ft_plot) RT_ARGS((union record *rp, mat_t mat,
+			struct vlhead *vhead, struct directory *dp,
+			double abs_tol, double rel_tol, double norm_tol));
+	void	(*ft_vshot) RT_ARGS((struct soltab *stp[], struct xray *rp[],
+			struct seg segp[], int n, struct resource *resp));
+	int	(*ft_tessellate) RT_ARGS((struct nmgregion **r,
+			struct model *m, union record *rp,
+			mat_t mat, struct directory *dp,
+			double abs_tol, double rel_tol, double norm_tol));
+};
+extern struct rt_functab rt_functab[];
+extern int rt_nfunctab;
 
 /*****************************************************************
  *                                                               *
