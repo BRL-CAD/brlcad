@@ -963,6 +963,7 @@ CONST struct bn_tol *tol;
  *
  *	Calculates the determinant of the 3X3 "rotation"
  *	part of the passed amtrix
+XXX should be re-named bn_mat_det3(), and moved to libbn/mat.c
  */
 fastf_t
 mat_det3( m )
@@ -981,6 +982,7 @@ CONST mat_t m;
 /*		M A T _ D E T E R M I N A N T
  *
  *	Calculates the determinant of the 4X4 matrix
+XXX should be re-named bn_mat_determinant(), and moved to libbn/mat.c
  */
 fastf_t
 mat_determinant( m )
@@ -1134,6 +1136,7 @@ CONST struct face_g_plane *fg;
  * Checks if these planes form a singular matrix and returns:
  *	0 - all is well
  *	1 - planes form a singular matrix (no solution)
+XXX Should be renamed bn_isect_nplanes() and moved to libbn/plane.c
  */
 int
 rt_isect_planes( pt , planes , pl_count )
@@ -1983,7 +1986,10 @@ struct faceuse *fu;
 	return( ret_val );
 }
 
-/*	The following routines calculate surface area of
+/*
+ *			N M G _ F A C E U S E _ A R E A
+ *
+ *	The following routines calculate surface area of
  *	NMG objects. Note that this includes all surfaces,
  *	not just external surfaces, i.e., an NMG object consisting
  *	of two adjacent cubes with a coincident face will have a
@@ -2094,6 +2100,10 @@ CONST struct model *m;
  *  from p1 in the d1 direction to the point of closest
  *  approach for that line.  Similar for the second line.
  *  d1 and d2 must be unit direction vectors.
+XXX How is this different from bn_isect_line3_line3() ?
+XXX Why are the calling sequences just slightly different?
+XXX Can we pick the better one, and get rid of the other one?
+XXX If not, can we document how they differ?
  */
 
 int
@@ -2180,6 +2190,8 @@ CONST struct bn_tol *tol;
  *  For return values less than 0, closest approach is defined as
  *  closest to point p.
  *  Direction vector, d, must be unit length.
+XXX This should be moved to libbn/plane.c
+XXX probably renamed as bn_dist_line3_line3().
  */
 
 int
@@ -5357,6 +5369,8 @@ long		*magic_p;
  *
  * XXX For efficiency, a version of this routine that provides the
  * XXX distance squared would be faster.
+XXX This should be moved into libbn/plane.c,
+XXX probably named bn_dist_pt3_line3().
  */
 int
 rt_dist_pt3_line3( dist, pca, a, dir, p, tol )
