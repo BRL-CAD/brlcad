@@ -477,35 +477,28 @@ proc gui { args } {
 	hoc_register_menu_data "File" "Open..." "Open Database"\
 			{ { summary "Open an existing database." }
 	{ see_also opendb } }
-	.$id.menubar.file add command -label "Insert..." -underline 0 -command "do_Concat $id"
-	hoc_register_menu_data "File" "Insert..." "Insert Database"\
-			{ { summary "Insert another database into the current database." }
-	{ see_also dbconcat } }
-	.$id.menubar.file add command -label "Extract..." -underline 0 -command "init_extractTool $id"
-	hoc_register_menu_data "File" "Extract..." "Extract Objects"\
-			{ { summary "Tool for extracting objects out of the current database." }
-	{ see_also keep } }
-	.$id.menubar.file add command -label "G2asc..." -underline 0 -command "init_g2asc $id"
-	hoc_register_menu_data "File" "G2asc..." "Convert to Ascii"\
-			{ { summary "Convert the current database into an ascii file." } }
+	.$id.menubar.file add separator
+	.$id.menubar.file add cascade -label "Import" -underline 0 -menu .$id.menubar.file.import
+	.$id.menubar.file add cascade -label "Export" -underline 0 -menu .$id.menubar.file.export
+
 	.$id.menubar.file add separator
 	.$id.menubar.file add command -label "Load Script..." -underline 0 \
 			-command "do_LoadScript $id"
 	hoc_register_menu_data "File" "Load Script..." "Load Script"\
-			{ { summary "Browse directories for a Tcl script file to load." } }
+			{ { summary "Browse directories for a Tcl script file to load." } { see_also "loadview, source" } }
 	.$id.menubar.file add separator
 	.$id.menubar.file add command -label "Raytrace" -underline 0 -command "init_Raytrace $id"
 	hoc_register_menu_data "File" "Raytrace" "Raytrace View"\
 			{ { summary "Tool for raytracing the current view." }
 	{ see_also rt } }
-	.$id.menubar.file add cascade -label "Save View As" -underline 0 -menu .$id.menubar.file.saveview
+	.$id.menubar.file add cascade -label "Render View" -underline 0 -menu .$id.menubar.file.renderview
 	.$id.menubar.file add separator
 	.$id.menubar.file add cascade -label "Preferences" -underline 0 -menu .$id.menubar.file.pref
 	.$id.menubar.file add separator
-	.$id.menubar.file add command -label "Update/Create .mgedrc" -underline 0 \
+	.$id.menubar.file add command -label "Create/Initialize .mgedrc" -underline 0 \
 			-command "update_mgedrc"
-	hoc_register_menu_data "File" "Update/Create .mgedrc" "Update/Create .mgedrc"\
-			{ { summary "Update or create the .mgedrc startup file." }
+	hoc_register_menu_data "File" "Create/Initialize .mgedrc" "Create/Initialize .mgedrc"\
+			{ { summary "Create or initialize the .mgedrc startup file with default variable settings." }
 	{ see_also } }
 	.$id.menubar.file add command -label "Close" -underline 0 \
 			-command "gui_destroy $id"
@@ -517,21 +510,33 @@ proc gui { args } {
 			{ { summary "Exit MGED." }
 	{ see_also "exit q quit" } }
 
-	menu .$id.menubar.file.saveview -title "Save View As" -tearoff $mged_default(tearoff_menus)
-	.$id.menubar.file.saveview add command -label "RT Script..." -underline 0\
+	menu .$id.menubar.file.import -title "Import" -tearoff $mged_default(tearoff_menus)
+	.$id.menubar.file.import add command -label "Ascii Database" -underline 0 -command "init_asc2g $id"
+	hoc_register_menu_data "Import" "Ascii Database" "g2asc Ascii Database" { { summary "Import a database in ascii format using asc2g" } { see_also asc2g } }
+	.$id.menubar.file.import add command -label "Binary Database" -underline 0 -command "do_Concat $id"
+	hoc_register_menu_data "Import" "Insert Database" "Insert Database"	{ { summary "Insert another database into the current database." }	{ see_also dbconcat } }
+
+	menu .$id.menubar.file.export -title "Export" -tearoff $mged_default(tearoff_menus)
+	.$id.menubar.file.export add command -label "Ascii Database" -underline 0 -command "init_g2asc $id"
+	hoc_register_menu_data "Export" "Ascii Database" "g2asc Ascii Database" { { summary "Export the current database in ascii format using g2asc" } { see_also g2asc } }
+	.$id.menubar.file.export add command -label "Database Objects" -underline 0 -command "init_extractTool $id"
+	hoc_register_menu_data "Export" "Extract Objects" "Extract Objects" { { summary "Tool for extracting objects out of the current database." } { see_also keep } }
+
+	menu .$id.menubar.file.renderview -title "Render View" -tearoff $mged_default(tearoff_menus)
+	.$id.menubar.file.renderview add command -label "RT Script..." -underline 0\
 			-command "init_rtScriptTool $id"
-	hoc_register_menu_data "Save View As" "RT Script..." "RT Script File"\
+	hoc_register_menu_data "Render View" "RT Script..." "RT Script File"\
 			{ { summary "Save the current view as an RT script file." }
 	{ see_also saveview } }
-	.$id.menubar.file.saveview add command -label "Plot..." -underline 1\
+	.$id.menubar.file.renderview add command -label "Plot..." -underline 1\
 			-command "init_plotTool $id"
-	hoc_register_menu_data "Save View As" "Plot..." "Plot File"\
-			{ { summary "Save the current view as a Plot file." }
+	hoc_register_menu_data "Render View As" "Plot..." "Plot File"\
+			{ { summary "Render the current view to a Plot file." }
 	{ see_also pl } }
-	.$id.menubar.file.saveview add command -label "PostScript..." -underline 0\
+	.$id.menubar.file.renderview add command -label "PostScript..." -underline 0\
 			-command "init_psTool $id"
-	hoc_register_menu_data "Save View As" "PostScript..." "PostScript File"\
-			{ { summary "Save the current view as a PostScript file." }
+	hoc_register_menu_data "Render View As" "PostScript..." "PostScript File"\
+			{ { summary "Render the current view to a PostScript file." }
 	{ see_also ps } }
 
 	menu .$id.menubar.file.pref -title "Preferences" -tearoff $mged_default(tearoff_menus)
