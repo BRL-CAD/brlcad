@@ -82,9 +82,6 @@ proc init_red { id } {
     menubutton $top.colorMB -relief raised -bd 2\
 	    -menu $top.colorMB.m -indicatoron 1
     menu $top.colorMB.m -tearoff 0
-    $top.colorMB.m add command -label "Choose Color"\
-	    -command "red_choose_color $id"
-    $top.colorMB.m add separator
     $top.colorMB.m add command -label black\
 	     -command "set red_color($id) \"0 0 0\"; red_set_colorMB $id"
     $top.colorMB.m add command -label white\
@@ -101,6 +98,9 @@ proc init_red { id } {
 	    -command "set red_color($id) \"0 220 220\"; red_set_colorMB $id"
     $top.colorMB.m add command -label magenta\
 	    -command "set red_color($id) \"220 0 220\"; red_set_colorMB $id"
+    $top.colorMB.m add separator
+    $top.colorMB.m add command -label "Color Tool..."\
+	    -command "red_choose_color $id"
 
     label $top.shaderL -text "Shader" -anchor w
     entry $top.shaderE -relief flat -width 12 -textvar red_shader($id)
@@ -132,7 +132,7 @@ proc init_red { id } {
 
     button $top.applyB -relief raised -text "Apply"\
 	    -command "red_apply $id"
-    button $top.loadDefB -relief raised -text "Load Defaults"\
+    button $top.loadDefB -relief raised -text "Reset"\
 	    -command "red_load_defaults $id"
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"

@@ -117,9 +117,6 @@ proc init_Raytrace { id } {
     menubutton $top.colorMB -relief raised -bd 2\
 	    -menu $top.colorMB.colorM -indicatoron 1
     menu $top.colorMB.colorM -tearoff 0
-    $top.colorMB.colorM add command -label "Choose Color"\
-	    -command "rt_choose_color $id"
-    $top.colorMB.colorM add separator
     $top.colorMB.colorM add command -label black\
 	     -command "set rt_color($id) \"0 0 0\"; rt_set_colorMB $id"
     $top.colorMB.colorM add command -label white\
@@ -136,6 +133,9 @@ proc init_Raytrace { id } {
 	    -command "set rt_color($id) \"0 220 220\"; rt_set_colorMB $id"
     $top.colorMB.colorM add command -label magenta\
 	    -command "set rt_color($id) \"220 0 220\"; rt_set_colorMB $id"
+    $top.colorMB.colorM add separator
+    $top.colorMB.colorM add command -label "Color Tool..."\
+	    -command "rt_choose_color $id"
 
     button $top.advancedB -relief raised -text "Advanced Settings..."\
 	    -command "do_Advanced_Settings $id"
