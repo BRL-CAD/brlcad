@@ -178,37 +178,6 @@ char *argv[];
   dm_configureWindowShape(dmp);
 
   bu_vls_init(&value_vls);
-#ifdef USE_FRAMEBUFFER
-  {
-    int status;
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "fb_open_existing /dev/X %lu %lu %lu %lu %d %d %lu",
-		  (unsigned long)((struct x_vars *)dmp->dm_vars)->dpy,
-		  (unsigned long)((struct x_vars *)dmp->dm_vars)->pix,
-		  (unsigned long)((struct x_vars *)dmp->dm_vars)->cmap,
-		  (unsigned long)((struct x_vars *)dmp->dm_vars)->vip,
-		  dmp->dm_width, dmp->dm_height,
-		  (unsigned long)((struct x_vars *)dmp->dm_vars)->gc);
-    status = Tcl_Eval(interp, bu_vls_addr(&vls));
-
-    if(status == TCL_OK){
-      if(sscanf(interp->result, "%lu", (unsigned long *)&fbp) != 1){
-	fbp = (FBIO *)0;   /* sanity */
-	Tcl_AppendResult(interp, "X_dm_init: failed to get framebuffer pointer\n",
-			 (char *)NULL);
-      }else
-	bu_vls_printf(&value_vls, "%s ", interp->result);
-    }else{
-      Tcl_AppendResult(interp, "X_dm_init: failed to get framebuffer\n",
-		       (char *)NULL);
-    }
-
-    bu_vls_free(&vls);
-  }
-#endif
-
 #if 1
   /*XXX Experimenting */
   bu_vls_init(&name_vls);
@@ -227,6 +196,36 @@ char *argv[];
 
   return TCL_OK;
 }
+
+#ifdef USE_FRAMEBUFFER
+void
+X_fb_open()
+{
+  int status;
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "fb_open_existing /dev/X %lu %lu %lu %lu %d %d %lu",
+		(unsigned long)((struct x_vars *)dmp->dm_vars)->dpy,
+		(unsigned long)((struct x_vars *)dmp->dm_vars)->pix,
+		(unsigned long)((struct x_vars *)dmp->dm_vars)->cmap,
+		(unsigned long)((struct x_vars *)dmp->dm_vars)->vip,
+		dmp->dm_width, dmp->dm_height,
+		(unsigned long)((struct x_vars *)dmp->dm_vars)->gc);
+  status = Tcl_Eval(interp, bu_vls_addr(&vls));
+
+  if(status == TCL_OK){
+    if(sscanf(interp->result, "%lu", (unsigned long *)&fbp) != 1){
+      fbp = (FBIO *)0;   /* sanity */
+      Tcl_AppendResult(interp, "X_fb_open: failed to get framebuffer pointer\n",
+		       (char *)NULL);
+    }
+  }else
+    Tcl_AppendResult(interp, "X_fb_open: failed to get framebuffer\n", (char *)NULL);
+
+  bu_vls_free(&vls);
+}
+#endif
 
 /*
    This routine is being called from doEvent().
@@ -278,7 +277,8 @@ XEvent *eventPtr;
     dirty = 1;
 
 #ifdef USE_FRAMEBUFFER
-    X24_configureWindow(fbp, conf->width, conf->height);
+    if(fbp)
+      X24_configureWindow(fbp, conf->width, conf->height);
 #endif
 
     goto handled;
@@ -340,10 +340,10 @@ XEvent *eventPtr;
     case AMM_ROT:
       if((state == ST_S_EDIT || state == ST_O_EDIT) &&
 	 mged_variables->transform == 'e'){
-	char save_ecoords;
+	char save_coords;
 
-	save_ecoords = mged_variables->ecoords;
-	mged_variables->ecoords = 'v';
+	save_coords = mged_variables->coords;
+	mged_variables->coords = 'v';
 
 	if(state == ST_S_EDIT){
 	  save_edflag = es_edflag;
@@ -364,7 +364,7 @@ XEvent *eventPtr;
 
 	(void)Tcl_Eval(interp, bu_vls_addr(&cmd));
 
-	mged_variables->ecoords = save_ecoords;
+	mged_variables->coords = save_coords;
 	if(state == ST_S_EDIT)
 	  es_edflag = save_edflag;
 	else
@@ -391,10 +391,10 @@ XEvent *eventPtr;
       
       if((state == ST_S_EDIT || state == ST_O_EDIT) &&
 	 mged_variables->transform == 'e'){
-	char save_ecoords;
+	char save_coords;
 
-	save_ecoords = mged_variables->ecoords;
-	mged_variables->ecoords = 'v';
+	save_coords = mged_variables->coords;
+	mged_variables->coords = 'v';
 
 	if(state == ST_S_EDIT){
 	  save_edflag = es_edflag;
@@ -413,7 +413,7 @@ XEvent *eventPtr;
 
 	(void)Tcl_Eval(interp, bu_vls_addr(&cmd));
 
-	mged_variables->ecoords = save_ecoords;
+	mged_variables->coords = save_coords;
 	if(state == ST_S_EDIT)
 	  es_edflag = save_edflag;
 	else
@@ -904,7 +904,7 @@ XEvent *eventPtr;
 	if(mged_variables->rateknobs){
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->ecoords){
+	    switch(mged_variables->coords){
 	    case 'm':
 	      f = edit_rate_model_rotate[Z];
 	      break;
@@ -944,7 +944,7 @@ XEvent *eventPtr;
 	}else{
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->ecoords){
+	    switch(mged_variables->coords){
 	    case 'm':
 	      f = edit_absolute_model_rotate[Z];
 	      break;
@@ -1001,7 +1001,7 @@ XEvent *eventPtr;
 	if(mged_variables->rateknobs){
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->ecoords){
+	    switch(mged_variables->coords){
 	    case 'm':
 	    case 'o':
 	      f = edit_rate_model_tran[Z];
@@ -1039,7 +1039,7 @@ XEvent *eventPtr;
 	}else{
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->ecoords){
+	    switch(mged_variables->coords){
 	    case 'm':
 	    case 'o':
 	      f = edit_absolute_model_tran[Z];
@@ -1094,7 +1094,7 @@ XEvent *eventPtr;
 	if(mged_variables->rateknobs){
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->ecoords){
+	    switch(mged_variables->coords){
 	    case 'm':
 	      f = edit_rate_model_rotate[Y];
 	      break;
@@ -1134,7 +1134,7 @@ XEvent *eventPtr;
 	}else{
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->ecoords){
+	    switch(mged_variables->coords){
 	    case 'm':
 	      f = edit_absolute_model_rotate[Y];
 	      break;
@@ -1178,7 +1178,7 @@ XEvent *eventPtr;
       if(mged_variables->rateknobs){
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->ecoords){
+	    switch(mged_variables->coords){
 	    case 'm':
 	    case 'o':
 	      f = edit_rate_model_tran[Y];
@@ -1216,7 +1216,7 @@ XEvent *eventPtr;
       }else{
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
 	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->ecoords){
+	  switch(mged_variables->coords){
 	  case 'm':
 	  case 'o':
 	    f = edit_absolute_model_tran[Y];
@@ -1271,7 +1271,7 @@ XEvent *eventPtr;
 	if(mged_variables->rateknobs){
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->ecoords){
+	    switch(mged_variables->coords){
 	    case 'm':
 	      f = edit_rate_model_rotate[X];
 	      break;
@@ -1311,7 +1311,7 @@ XEvent *eventPtr;
 	}else{
 	  if((state == ST_S_EDIT || state == ST_O_EDIT)
 	     && mged_variables->transform == 'e'){
-	    switch(mged_variables->ecoords){
+	    switch(mged_variables->coords){
 	    case 'm':
 	      f = edit_absolute_model_rotate[X];
 	      break;
@@ -1355,7 +1355,7 @@ XEvent *eventPtr;
       if(mged_variables->rateknobs){
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
 	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->ecoords){
+	  switch(mged_variables->coords){
 	  case 'm':
 	  case 'o':
 	    f = edit_rate_model_tran[X];
@@ -1393,7 +1393,7 @@ XEvent *eventPtr;
       }else{
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
 	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->ecoords){
+	  switch(mged_variables->coords){
 	  case 'm':
 	  case 'o':
 	    f = edit_absolute_model_tran[X];
@@ -1727,13 +1727,13 @@ end:
       am_mode = AMM_TRAN;
 
       if(EDIT_TRAN && mged_variables->transform == 'e'){
-	char save_ecoords;
+	char save_coords;
 	point_t mouse_view_pos;
 	point_t ea_view_pos;
 	point_t diff;
 
-	save_ecoords = mged_variables->ecoords;
-	mged_variables->ecoords = 'v';
+	save_coords = mged_variables->coords;
+	mged_variables->coords = 'v';
 
 	MAT4X3PNT(ea_view_pos, model2view, e_axes_pos);
 	mouse_view_pos[X] = dm_Xx2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1);
@@ -1746,7 +1746,7 @@ end:
 	bu_vls_printf(&vls, "knob aX %lf aY %lf\n", diff[X], diff[Y]);
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	mged_variables->ecoords = save_ecoords;
+	mged_variables->coords = save_coords;
       }
 
       break;
