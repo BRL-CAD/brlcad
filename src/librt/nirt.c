@@ -270,7 +270,7 @@ done:
 
 	/* Note - dgo_build_tops sets the last vp to (char *)0 */
 	dgop->dgo_rt_cmd_len += dgo_build_tops(interp,
-					       &dgop->dgo_headSolid,
+					       (struct solid *)&dgop->dgo_headSolid,
 					       vp,
 					       &dgop->dgo_rt_cmd[RT_MAXARGS]);
 
