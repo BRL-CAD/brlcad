@@ -15,7 +15,7 @@
  *	This software is Copyright (C) 1985 by the United States Army.
  *	All rights reserved.
  */
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
