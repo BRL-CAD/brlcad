@@ -64,16 +64,23 @@ Findp()
 
 	/* make space for directory entries */
 	totentities = (pstart - dstart)/2;
-	dirarraylen = totentities;
-	dir = (struct iges_directory **)rt_calloc( totentities ,
-		sizeof( struct iges_directory *),
-		"IGES directory*" );
-
-	for( i=0 ; i<totentities ; i++ )
+	if( totentities > 0 )
 	{
-		dir[i] = (struct iges_directory *)rt_malloc( sizeof( struct iges_directory ) , "IGES directory" );
-		dir[i]->name = (char *)NULL;
+		dir = (struct iges_directory **)rt_calloc( totentities ,
+			sizeof( struct iges_directory *),
+			"IGES directory*" );
+
+		for( i=0 ; i<totentities ; i++ )
+		{
+			dir[i] = (struct iges_directory *)rt_malloc( sizeof( struct iges_directory ) , "IGES directory" );
+			dir[i]->name = (char *)NULL;
+			dir[i]->trans = (-1);
+		}
 	}
+	else
+		totentities = 0;
+
+	dirarraylen = totentities;
 
 	return( pstart );
 }
@@ -90,5 +97,6 @@ Free_dir()
 		rt_free( (char *)dir[i], "Free_dir: dir[i]" );
 	}
 
-	rt_free( (char *)dir, "Free_dir: dir" );
+	if( totentities > 0 )
+		rt_free( (char *)dir, "Free_dir: dir" );
 }

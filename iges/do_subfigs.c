@@ -18,6 +18,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "/m/cad/librt/debug.h"
 
 void
 Do_subfigs()
@@ -26,6 +27,9 @@ Do_subfigs()
 	int entity_type;
 	struct wmember head1;
 	struct wmember *wmem;
+
+	if( rt_g.debug & DEBUG_MEM_FULL )
+		rt_mem_barriercheck();
 
 	RT_LIST_INIT( &head1.l );
 
@@ -37,9 +41,15 @@ Do_subfigs()
 		int *members;
 		char *name;
 		struct wmember head2;
+		vect_t tmp_vec;
+		double mat_scale[3];
+		int non_unit;
 
 		if( dir[i]->type != 408 )
 			continue;
+
+		if( rt_g.debug & DEBUG_MEM_FULL )
+			rt_mem_barriercheck();
 
 		if( dir[i]->param <= pstart )
 		{
@@ -49,7 +59,7 @@ Do_subfigs()
 		}
 
 		Readrec( dir[i]->param );
-		Readint( &entity_type , "Entity Type: " );
+		Readint( &entity_type , "" );
 		if( entity_type != 408 )
 		{
 			rt_log( "Expected Singular Subfigure Instance Entity, found %s\n",
@@ -57,7 +67,7 @@ Do_subfigs()
 			continue;
 		}
 
-		Readint( &subfigdef_de, "Subfigure DE: " );
+		Readint( &subfigdef_de, "" );
 		subfigdef_index = (subfigdef_de - 1)/2;
 		if( subfigdef_index >= totentities )
 		{
@@ -80,7 +90,7 @@ Do_subfigs()
 			continue;
 		}
 		Readrec( dir[subfigdef_index]->param );
-		Readint( &entity_type , "Entity Type: " );
+		Readint( &entity_type , "" );
 		if( entity_type != 308 )
 		{
 			rt_log( "Expected Subfigure Definition Entity, found %s\n",
@@ -88,16 +98,43 @@ Do_subfigs()
 			continue;
 		}
 
-		Readint( &j, "" );		/* ignore depth */
-		Readname( &name, "Name: ");		/* get subfigure name */
-
-		dir[subfigdef_index]->name = Make_unique_brl_name( name );
-		rt_free( name, "Do_subfigs: name" );
+		Readint( &j, "" );	/* ignore depth */
+		Readstrg( "");		/* ignore subfigure name */
 
 		wmem = mk_addmember( dir[subfigdef_index]->name, &head1, WMOP_UNION );
-		bcopy( dir[subfigdef_index]->rot, wmem->wm_mat, sizeof( mat_t ) );
+		non_unit = 0;
+		for( j=0 ; j<3 ; j++ )
+		{
+			double mag_sq;
 
-		Readint( &no_of_members, "No. of members: " );	/* get number of members */
+			mat_scale[j] = 1.0;
+			mag_sq = MAGSQ( &(*dir[i]->rot)[j*4] );
+			if( !NEAR_ZERO( mag_sq - 1.0, 100.0*SQRT_SMALL_FASTF ) )
+			{
+				mat_scale[j] = 1.0/sqrt( mag_sq );
+				non_unit = 1;
+			}
+		}
+
+		if( non_unit )
+		{
+			rt_log( "Illegal transformation matrix in %s for member %s\n",
+				curr_file->obj_name, wmem->wm_name );
+			rt_log( " row vector magnitudes are %g, %g, and %g\n", 
+				1.0/mat_scale[0], 1.0/mat_scale[1], 1.0/mat_scale[2] );
+			mat_print( "", *dir[i]->rot );
+			for( j=0 ; j<11 ; j++ )
+			{
+				if( (j+1)%4 == 0 )
+					continue;
+				(*dir[i]->rot)[j] *= mat_scale[0];
+			}
+			mat_print( "After scaling:", *dir[i]->rot );
+			
+		}
+		bcopy( *dir[i]->rot, wmem->wm_mat, sizeof( mat_t ) );
+
+		Readint( &no_of_members, "" );	/* get number of members */
 		members = (int *)rt_calloc( no_of_members, sizeof( int ), "Do_subfigs: members" );
 		for( j=0 ; j<no_of_members ; j++ )
 			Readint( &members[j], "" );
@@ -126,11 +163,13 @@ Do_subfigs()
 			if( dir[index]->type == 416 )
 			{
 				struct file_list *list_ptr;
+				char *file_name;
+				int found=0;
 
 				/* external reference */
 
 				Readrec( dir[index]->param );
-				Readint( &entity_type, "Entity type: " );
+				Readint( &entity_type, "" );
 
 				if( entity_type != 416 )
 				{
@@ -147,21 +186,41 @@ Do_subfigs()
 					continue;
 				}
 
-				list_ptr = (struct file_list *)rt_malloc( sizeof( struct file_list ),
-						"Do_subfigs: list_ptr" );
+				Readname( &file_name, "" );
 
-				Readname( &list_ptr->file_name, "File Name: " );
-				if( no_of_members == 1 )
-					strcpy( list_ptr->obj_name, dir[subfigdef_index]->name );
-				else
+				/* Check if this external reference is already on the list */
+				for( RT_LIST_FOR( list_ptr, file_list, &iges_list.l ) )
 				{
-					strcpy( list_ptr->obj_name, "subfig" );
-					(void) Make_unique_brl_name( list_ptr->obj_name );
+					if( !strcmp( file_name, list_ptr->file_name ) )
+					{
+						found = 1;
+						name = list_ptr->obj_name;
+						break;
+					}
 				}
 
-				RT_LIST_APPEND( &curr_file->l, &list_ptr->l );
+				if( !found )
+				{
+					/* Need to add this one to the list */
+					list_ptr = (struct file_list *)rt_malloc( sizeof( struct file_list ),
+							"Do_subfigs: list_ptr" );
 
-				name = list_ptr->obj_name;
+					list_ptr->file_name = file_name;
+					if( no_of_members == 1 )
+						strcpy( list_ptr->obj_name, dir[subfigdef_index]->name );
+					else
+					{
+						strcpy( list_ptr->obj_name, "subfig" );
+						(void) Make_unique_brl_name( list_ptr->obj_name );
+					}
+
+
+					RT_LIST_APPEND( &curr_file->l, &list_ptr->l );
+
+					name = list_ptr->obj_name;
+				}
+				else
+					rt_free( (char *)file_name, "Do_subfigs: file_name" );
 
 			}
 			else
@@ -175,21 +234,20 @@ Do_subfigs()
 		}
 
 		if( no_of_members > 1 )
-		{
-rt_log( "Making group (%s)\n", dir[subfigdef_index]->name );
-for( RT_LIST_FOR( wmem, wmember, &head2.l ) )
-	rt_log( "\tu %s\n", wmem->wm_name );
 			(void)mk_lcomb( fdout, dir[subfigdef_index]->name, &head2, 0, 
 					(char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
-		}
 	}
+
+	if( rt_g.debug & DEBUG_MEM_FULL )
+		rt_mem_barriercheck();
 
 	if( RT_LIST_IS_EMPTY( &head1.l ) )
 		return;
 
-rt_log( "Making group (%s)\n", curr_file->obj_name );
-for( RT_LIST_FOR( wmem, wmember, &head1.l ) )
-	rt_log( "\tu %s\n", wmem->wm_name );
 	(void) mk_lcomb( fdout, curr_file->obj_name, &head1, 0,
 			(char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
+
+	if( rt_g.debug & DEBUG_MEM_FULL )
+		rt_mem_barriercheck();
+
 }

@@ -34,6 +34,10 @@ Makedir()
 	str[8] = '\0';
 	rt_log( "Reading Directory Section...\n" );
 	rt_log( "Number of entities checked:\n" );
+
+	if( totentities < 1 )
+		goto out;
+
 	Readrec( dstart+1 );	/* read first record in directory section */
 	
 	while( 1 )
@@ -92,8 +96,11 @@ Makedir()
 
 		Readcols( str , 8 );	/* read pointer to transformation entity */
 
-		/* convert it to a "dir" index */
-		dir[entcount]->trans = (atoi( str ) - 1)/2;
+		/* convert it to a "dir" index
+		 * Use (DE + 1)/2 - 1 rather than (DE-1)/2 to get
+		 * a (-1) value in "trans" field when DE is 0
+		 */
+		dir[entcount]->trans = (atoi( str ) + 1)/2 - 1;
 
 		/* skip next field */
 		counter += 8;
@@ -154,6 +161,7 @@ Makedir()
 	Readrec( saverec ); /* restore previous record */
 	}
 
+out:
 	rt_log( "\t%d\n\n" ,entcount+1 );
 	if( paramguess )
 		rt_log( "Some entities did not have proper parameter pointers, so a resonable guess was made\n" );

@@ -44,12 +44,12 @@ Evalxform()
 		if( dir[i]->type != 124 && dir[i]->type != 700 )
 			continue;
 
-		if( dir[i]->trans && !dir[i]->referenced )
+		if( dir[i]->trans >= 0 && !dir[i]->referenced )
 		{
 			/* Make a linked list of the xform matrices
 				in reverse order */
 			xform = i;
-			while( xform )
+			while( xform >= 0 )
 			{
 				if( ptr == NULL )
 					ptr = (struct list *)rt_malloc( sizeof( struct list ),
@@ -104,7 +104,7 @@ Evalxform()
 		if( dir[i]->type == 124 || dir[i]->type == 700 )
 			continue;
 
-		if( dir[i]->trans )
+		if( dir[i]->trans >= 0 )
 			dir[i]->rot = dir[dir[i]->trans]->rot;
 		else
 			dir[i]->rot = identity;

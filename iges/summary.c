@@ -39,3 +39,11 @@ Summary()
 	}
 	rt_log( "%d Independent entities\n" , indep_entities );
 }
+
+Zero_counts()
+{
+	int i;
+
+	for( i=0 ; i<=ntypes ; i++ )
+		typecount[i].count = 0;
+}

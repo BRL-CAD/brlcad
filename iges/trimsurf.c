@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include "/m/cad/librt/debug.h"
 
 /* translations to get knot vectors in first quadrant */
 static fastf_t u_translation=0.0;
@@ -1022,6 +1023,9 @@ Convtrimsurfs()
 
 	rt_log( "\n\nConverting Trimmed Surface entities:\n" );
 
+	if( rt_g.debug & DEBUG_MEM_FULL )
+		rt_mem_barriercheck();
+
 	m = nmg_mm();
 	r = nmg_mrsv( m );
 	s = RT_LIST_FIRST( shell , &r->s_hd );
@@ -1030,6 +1034,9 @@ Convtrimsurfs()
 	{
 		if( dir[i]->type == 144 )
 		{
+			if( rt_g.debug & DEBUG_MEM_FULL )
+				rt_mem_barriercheck();
+
 			totsurfs++;
 			fu = trim_surf( i , s );
 			if( fu )
@@ -1037,17 +1044,33 @@ Convtrimsurfs()
 				nmg_face_bb( fu->f_p , &tol );
 				convsurf++;
 			}
+			if( rt_g.debug & DEBUG_MEM_FULL )
+				rt_mem_barriercheck();
+
 		}
 	}
 
 	rt_log( "Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n" , convsurf , totsurfs );
 
-	(void)nmg_model_vertex_fuse( m, &tol );
+	if( rt_g.debug & DEBUG_MEM_FULL )
+		rt_mem_barriercheck();
 
-	if( curr_file->obj_name )
-		mk_nmg( fdout , curr_file->obj_name , m );
-	else
-		mk_nmg( fdout , "Trimmed_surf" , m );
+	if( convsurf )
+	{
+		(void)nmg_model_vertex_fuse( m, &tol );
+
+		if( curr_file->obj_name )
+			mk_nmg( fdout , curr_file->obj_name , m );
+		else
+			mk_nmg( fdout , "Trimmed_surf" , m );
+	}
+	if( rt_g.debug & DEBUG_MEM_FULL )
+		rt_mem_barriercheck();
+
 
 	nmg_km( m );
+
+	if( rt_g.debug & DEBUG_MEM_FULL )
+		rt_mem_barriercheck();
+
 }

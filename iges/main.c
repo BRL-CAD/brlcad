@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./iges_struct.h"
 #include "./iges_types.h"
+#include "/m/cad/librt/debug.h"
 
 extern char *optarg;
 extern int optind, opterr, optopt;
@@ -174,6 +175,9 @@ char *argv[];
 		exit(1);
 	}
 
+	if( rt_g.debug & DEBUG_MEM_FULL )
+		rt_mem_barriercheck();
+
 	rt_log( "%s", version+5);
 	rt_log( "Please direct bug reports to <jra@brl.mil>\n\n" );
 
@@ -225,6 +229,9 @@ char *argv[];
 
 	while( RT_LIST_NON_EMPTY( &iges_list.l ) )
 	{
+		if( rt_g.debug & DEBUG_MEM_FULL )
+			rt_mem_barriercheck();
+
 		curr_file = RT_LIST_FIRST( file_list, &iges_list.l );
 		iges_file = curr_file->file_name;
 
@@ -237,6 +244,8 @@ char *argv[];
 			exit( 1 );
 		}
 
+		rt_log( "\n\n\nIGES FILE: %s\n", iges_file );
+
 		reclen = Recsize() * sizeof( char ); /* Check length of records */
 		if( reclen == 0 )
 		{
@@ -245,6 +254,8 @@ char *argv[];
 		}
 
 		Freestack();	/* Set node stack to empty */
+
+		Zero_counts();	/* Set summary information to all zeros */
 
 		Readstart();	/* Read start section */
 
@@ -264,12 +275,14 @@ char *argv[];
 
 		Check_names();	/* Look for name entities */
 
-		Do_subfigs();	/* Look for Singular Subfigure Instances */
-
 		if( do_drawings )
 			Conv_drawings();	/* convert drawings to wire edges */
 		else if( trimmed_surf )
+		{
+			Do_subfigs();		/* Look for Singular Subfigure Instances */
+
 			Convtrimsurfs();	/* try to convert trimmed surfaces to a single solid */
+		}
 		else if( do_splines )
 			Convsurfs();		/* Convert NURBS to a single solid */
 		else
@@ -283,12 +296,22 @@ char *argv[];
 			Convassem();	/* Convert solid assemblies */
 		}
 
+		if( rt_g.debug & DEBUG_MEM_FULL )
+			rt_mem_barriercheck();
+
 		Free_dir();
+
+		if( rt_g.debug & DEBUG_MEM_FULL )
+			rt_mem_barriercheck();
 
 		RT_LIST_DEQUEUE( &curr_file->l );
 		rt_free( (char *)curr_file->file_name, "iges-g: curr_file->file_name" );
 		rt_free( (char *)curr_file, "iges-g: curr_file" );
 		file_count++;
+
+		if( rt_g.debug & DEBUG_MEM_FULL )
+			rt_mem_barriercheck();
+
 	}
 
 	iges_file = argv[0];

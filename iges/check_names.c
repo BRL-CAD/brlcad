@@ -15,6 +15,50 @@
 #include "./iges_extern.h"
 
 char *
+Add_brl_name( name )
+char *name;
+{
+	struct name_list *ptr;
+	int namelen;
+	int i;
+	int found=0;
+
+	/* replace white space */
+	namelen = strlen( name );
+	if( namelen > NAMESIZE)
+	{
+		namelen = NAMESIZE;
+		name[namelen] = '\0';
+	}
+	for( i=0 ; i<namelen ; i++ )
+	{
+		if( isspace( name[i] ) || name[i] == '/' )
+			name[i] = '_';
+	}
+
+	/* Check if name already in list */
+	ptr = name_root;
+	while( ptr )
+	{
+		if( !strncmp( ptr->name, name, NAMESIZE ) )
+		{
+			found = 1;
+rt_log( "Add_brl_name: %s already in list\n" , name );
+			return( ptr->name );
+		}
+		ptr = ptr->next;
+	}
+
+	/* add this name to the list */
+	ptr = (struct name_list *)rt_malloc( sizeof( struct name_list ), "Add_brl_name: ptr" );
+	strcpy( ptr->name, name );
+	ptr->next = name_root;
+	name_root = ptr;
+rt_log( "Add_brl_name: new name is %s\n", ptr->name );
+	return( ptr->name );
+}
+
+char *
 Make_unique_brl_name( name )
 char *name;
 {
@@ -46,14 +90,9 @@ char *name;
 	}
 
 	if( !found )
-	{
-		/* add this name to the list */
-		ptr = (struct name_list *)rt_malloc( sizeof( struct name_list ), "Make_unique_brl_name: ptr" );
-		strcpy( ptr->name, name );
-		ptr->next = name_root;
-		name_root = ptr;
-		return( ptr->name );
-	}
+		return( Add_brl_name( name ) );
+
+rt_log( "Make_unique_brl_name: name is already in list: %s\n", name );
 
 	/* name is not unique, make it unique with a single character suffix */
 	if( namelen < NAMESIZE )
@@ -83,14 +122,8 @@ char *name;
 	}
 
 	if( !found )
-	{
-		/* add this name to the list */
-		ptr = (struct name_list *)rt_malloc( sizeof( struct name_list ), "Make_unique_brl_name: ptr" );
-		strcpy( ptr->name, name );
-		ptr->next = name_root;
-		name_root = ptr;
-		return( ptr->name );
-	}
+		return( Add_brl_name( name ) );
+
 
 	/* still not unique!!! Try two character suffix */
 	char_ptr--;
@@ -133,14 +166,7 @@ char *name;
 		rt_bomb( "Make_unique_brl_name: failed\n" );
 	}
 	else
-	{
-		/* add this name to the list */
-		ptr = (struct name_list *)rt_malloc( sizeof( struct name_list ), "Make_unique_brl_name: ptr" );
-		strcpy( ptr->name, name );
-		ptr->next = name_root;
-		name_root = ptr;
-		return( ptr->name );
-	}
+		return( Add_brl_name( name ) );
 }
 
 
@@ -492,6 +518,50 @@ int entityno;
 }
 
 void
+Get_subfig_name( entityno )
+int entityno;
+{
+	int i;
+	int def_de;
+	int def_index;
+	int entity_type;
+	char *name;
+
+	if( entityno >= totentities )
+		rt_bomb( "Get_subfig_name: entityno too big!!\n" );
+
+	if( dir[entityno]->type != 308 )
+	{
+		rt_log( "Get_subfig_name called with entity type %s, should be Subfigure Definition\n",
+			iges_type( dir[entityno]->type  ) );
+		rt_bomb( "Get_subfig_name: bad type\n" );
+	}
+
+	if( dir[entityno]->param <= pstart )
+	{
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+				dir[entityno]->direct , dir[entityno]->name );
+		rt_bomb( "Get_subfig_name: Bad entity\n" );
+	}
+
+	Readrec( dir[entityno]->param );
+
+	Readint( &entity_type, "" );
+	if( entity_type != 308 )
+	{
+		rt_log( "Get_subfig_name: Read entity type %s, should be Subfigure Definition\n",
+			iges_type( dir[entityno]->type  ) );
+		rt_bomb( "Get_subfig_name: bad type\n" );
+	}
+
+	Readint( &i, "" );	/* ignore depth */
+	Readname( &name, "" );	/* get subfigure name */
+
+	dir[entityno]->name = Add_brl_name( name );
+	rt_free( (char *)name, "Get_name: name" );
+}
+
+void
 Check_names()
 {
 
@@ -529,6 +599,9 @@ Check_names()
 				break;
 			case 186:
 				Get_brep_name( i );
+				break;
+			case 308:
+				Get_subfig_name( i );
 				break;
 			case 404:
 				Get_drawing_name( i );

@@ -39,7 +39,7 @@ struct file_list
 {
 	struct rt_list		l;			/* for links */
 	char			*file_name;		/* Name of external file */
-	char			obj_name[NAMESIZE];	/* BRL-CAD name for top level object */
+	char			obj_name[NAMESIZE+1];	/* BRL-CAD name for top level object */
 };
 
 /* linked list of used BRL-CAD object names */

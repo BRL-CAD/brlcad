@@ -34,4 +34,5 @@ extern struct iges_vertex_list *vertex_root;
 extern struct rt_tol tol;
 extern char *solid_name;
 extern struct file_list *curr_file;
+extern struct file_list iges_list;
 extern struct name_list *name_root;
