@@ -519,7 +519,7 @@ const struct db_i	*dbip;
 
 	for( i=0; i < rpn_len; i++,exprp++ )  {
 		union tree	*tp;
-		int		mi;
+		long		mi;
 
 		BU_GETUNION( tp, tree );
 		tp->tr_b.magic = RT_TREE_MAGIC;
@@ -531,8 +531,8 @@ const struct db_i	*dbip;
 			leafp += strlen( (const char *)leafp) + 1;
 
 			/* Get matrix index */
-			mi = bu_glong( leafp );
-			leafp += 4;
+			mi = 4095;			/* sanity */
+			leafp += db5_decode_signed( &mi, leafp, wid );
 
 			if( mi < 0 )  {
 				/* Signal identity matrix */
