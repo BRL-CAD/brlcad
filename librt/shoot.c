@@ -63,6 +63,7 @@ register struct application *ap;
 	for( stp=HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw ) {
 		register struct seg *newseg;		/* XXX */
 
+#ifndef never
 		/* Consider bounding sphere */
 		VSUB2( diff, stp->st_center, ap->a_ray.r_pt );
 		distsq = VDOT(ap->a_ray.r_dir, diff);
@@ -70,15 +71,13 @@ register struct application *ap;
 			nmiss++;
 			continue;
 		}
+#endif
 
-#ifdef never
-/*** First, we have to computer the bounding RPPs right! ** */
 		/* Here we also consider the bounding RPP */
 		if( !in_rpp( &ap->a_ray, stp->st_min, stp->st_max ) )  {
 			nmiss++;
 			continue;
 		}
-#endif
 
 		nshots++;
 		newseg = functab[stp->st_id].ft_shot( stp, &ap->a_ray );
@@ -162,56 +161,57 @@ register struct application *ap;
  * enter_dist = distance from start of ray to point at which ray enters solid
  * exit_dist  = distance from start of ray to point at which ray leaves solid
  *
+ * Note -
+ *  The computation of entry and exit distance is mandatory, as the final
+ *  test catches the majority of misses.
+ *
  *  Returns -
  *	 0  if ray does not hit RPP,
  *	!0  if ray hits RPP.
  */
 in_rpp( rp, min, max )
-register struct xray *rp;
-register vect_t min, max;
+struct xray *rp;
+register fastf_t *min, *max;
 {
 	LOCAL fastf_t enter_dist, exit_dist;
 	LOCAL fastf_t sv;
 	LOCAL fastf_t st;
+	register fastf_t *pt = &rp->r_pt[0];
+	register fastf_t *dir = &rp->r_dir[0];
 	register int i;
 
 	enter_dist = -INFINITY;
 	exit_dist = INFINITY;
 
-	for( i=0; i < 3; i++ )  {
-		if( NEAR_ZERO( rp->r_dir[i] ) )  {
+	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
+		if( NEAR_ZERO( *dir ) )  {
 			/*
 			 *  If direction component along this axis is 0,
 			 *  (ie, this ray is aligned with this axis),
 			 *  merely check against the boundaries.
 			 */
-			if( (min[i] > rp->r_pt[i]) || (max[i] < rp->r_pt[i]) )
+			if( (*min > *pt) || (*max < *pt) )
 				return(0);	/* MISS */;
 			continue;
 		}
 
-		if( rp->r_dir[i] < 0.0 )  {
-			sv = (min[i] - rp->r_pt[i]) / rp->r_dir[i];
-			if(sv < 0.0)
+		if( *dir < 0.0 )  {
+			if( (sv = (*min - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
-			st = (max[i] - rp->r_pt[i]) / rp->r_dir[i];
 			if(exit_dist > sv)
 				exit_dist = sv;
-			if(enter_dist < st)
+			if( enter_dist < (st = (*max - *pt) / *dir) )
 				enter_dist = st;
 		}  else  {
-			st = (max[i] - rp->r_pt[i]) / rp->r_dir[i];
-			if(st < 0.)
+			if( (st = (*max - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
-			sv = (min[i] - rp->r_pt[i]) / rp->r_dir[i];
 			if(exit_dist > st)
 				exit_dist = st;
-			if(enter_dist < sv)
+			if( enter_dist < ((sv = (*min - *pt) / *dir)) )
 				enter_dist = sv;
 		}
 	}
-#define	TOL .0001
-	if( enter_dist+TOL >= exit_dist )
+	if( enter_dist >= exit_dist )
 		return(0);	/* MISS */
 	return(1);		/* HIT */
 }
