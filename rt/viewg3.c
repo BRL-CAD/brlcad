@@ -359,27 +359,37 @@ register struct partition *PartHeadp;
 	 *  411	format(2f7.1,2f9.3,i3,2f8.2,' A',f6.1,' E',f6.1)
 	 */
 
-#define	SHOT_FMT	"%7.1f%7.1f%9.3f%9.3f%3d%8.2f%8.2f A%6.1f E%6.1f\n"
+#define	SHOT_FMT	"%7.1f%7.1f%9.3f%9.3f%3d%8.2f%8.2f A%6.1f E%6.1f"
 
 	if( rt_perspective > 0 )  {
 		bn_ae_vec( &azimuth, &elevation, ap->a_ray.r_dir );
 	}
 
-#ifdef SPRINTF_NOT_PARALLEL
-	/* On some systems, sprintf() is not parallel! ^%@#&^@^&#% */
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
-#endif
-
-	sprintf(buf, SHOT_FMT,
+	bu_vls_printf( &str, SHOT_FMT,
 		hvcen[0], hvcen[1],
 		hv[0], hv[1],
 		comp_count,
 		dfirst * MM2IN, dlast * MM2IN,
 		azimuth, elevation );
-#ifdef SPRINTF_NOT_PARALLEL
-	bu_semaphore_release( BU_SEM_SYSCALL );
-#endif
-	bu_vls_strcat( &str, buf );
+
+	/*
+	 *  As an aid to debugging, take advantage of the fact that
+	 *  there are more than 80 columns on UNIX "cards", and
+	 *  add debugging information to the end of the line to
+	 *  allow this shotline to be reproduced offline.
+	 *   -b gives the shotline x,y coordinates when re-running RTG3,
+	 *   -p and -d are used with RTSHOT
+	 *  The easy way to activate this is with the harmless -!1 option
+	 *  when running RTG3.
+	 */
+	if( rdebug || bu_debug || rt_g.debug )  {
+		bu_vls_printf( &str, "   -b%d,%d -p %26.20e %26.20e %26.20e -d %26.20e %26.20e %26.20e\n",
+			ap->a_x, ap->a_y,
+			V3ARGS(ap->a_ray.r_pt),
+			V3ARGS(ap->a_ray.r_dir) );
+	} else {
+		bu_vls_putc( &str, '\n' );
+	}
 
 	/* loop here to deal with individual components */
 	card_count = 0;
