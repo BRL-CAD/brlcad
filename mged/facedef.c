@@ -268,7 +268,7 @@ f_facedef()
 	}
 
 	/* draw the new solid */
-	illump = redraw( illump, &es_rec );
+	illump = redraw( illump, &es_rec, es_mat );
 
 	/* update display information */
 	pr_solid( &es_rec.s );

@@ -614,6 +614,38 @@ union record *where;
 }
 
 /*
+ *  			D B _ G E T M R E C
+ *
+ *  Retrieve all records in the database pertaining to an object,
+ *  and place them in malloc()'ed storage, which the caller is
+ *  responsible for free()'ing.
+ */
+union record *
+db_getmrec( dp )
+struct directory *dp;
+{
+	union record *where;
+	int	want;
+	int	got;
+
+	want = dp->d_len * sizeof(union record);
+	if( (where = (union record *)malloc(want)) == (union record *)0 )  {
+		perror("db_getmrec malloc");
+		return( (union record *)0 );	/* VERY BAD */
+	}
+	(void)lseek( objfd, (long)(dp->d_addr), 0 );
+	got = read( objfd, (char *)where, want );
+	if( got != want )  {
+		perror("db_getmrec");
+		(void)printf("db_getmrec(%s):  read error.  Wanted %d, got %d bytes\n",
+			dp->d_namep, want, got );
+		free( (char *)where );
+		return( (union record *)0 );	/* VERY BAD */
+	}
+	return( where );
+}
+
+/*
  *  			D B _ G E T M A N Y
  *
  *  Retrieve several records from the database,

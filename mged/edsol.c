@@ -573,9 +573,10 @@ int arg;
  *  Probably misnamed.
  */
 struct solid *
-redraw( sp, recp )
+redraw( sp, recp, mat )
 struct solid *sp;
 union record *recp;
+mat_t	mat;
 {
 	int addr, bytes;
 
@@ -589,9 +590,8 @@ union record *recp;
 	if( drawHsolid(
 		sp,
 		sp->s_soldash,
-
 		sp->s_last,
-		es_mat,
+		mat,
 		recp,
 		sp->s_regionid
 	) != 1 )  {
@@ -932,7 +932,7 @@ sedit()
 		mat_idn( incr_change );
 
 		/* no need to calc_planes again */
-		illump = redraw( illump, &es_rec );
+		illump = redraw( illump, &es_rec, es_mat );
 
 		inpara = 0;
 		pr_solid( &es_rec.s );
@@ -1120,7 +1120,7 @@ sedit()
 	if( es_rec.s.s_type == GENARB8 )
 		calc_planes( &es_rec.s, es_rec.s.s_cgtype );
 
-	illump = redraw( illump, &es_rec );
+	illump = redraw( illump, &es_rec, es_mat );
 
 	inpara = 0;
 	pr_solid( &es_rec.s );
@@ -1772,7 +1772,7 @@ f_eqn()
 	calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
 
 	/* draw the new solid */
-	illump = redraw( illump, &es_rec );
+	illump = redraw( illump, &es_rec, es_mat );
 
 	/* update display information */
 	pr_solid( &es_rec.s );
