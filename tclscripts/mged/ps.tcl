@@ -181,7 +181,7 @@ proc do_ps { id } {
 
     if {$ps_file($id) != ""} {
 	if {[file exists $ps_file($id)]} {
-	    set result [mged_dialog .$id.psDialog $player_screen($id)\
+	    set result [cad_dialog .$id.psDialog $player_screen($id)\
 		    "Overwrite $ps_file($id)?"\
 		    "Overwrite $ps_file($id)?"\
 		    "" 0 OK CANCEL]
@@ -191,7 +191,7 @@ proc do_ps { id } {
 	    }
 	}
     } else {
-	mged_dialog .$id.psDialog $player_screen($id)\
+	cad_dialog .$id.psDialog $player_screen($id)\
 		"No file name specified!"\
 		"No file name specified!"\
 		"" 0 OK

@@ -72,7 +72,7 @@ proc do_rtScript { id } {
 
     if {$rts_file($id) != ""} {
 	if [file exists $rts_file($id)] {
-	    set result [mged_dialog .$id.rtsDialog $player_screen($id)\
+	    set result [cad_dialog .$id.rtsDialog $player_screen($id)\
 		    "Overwrite $rts_file($id)?"\
 		    "Overwrite $rts_file($id)?"\
 		    "" 0 OK CANCEL]
@@ -82,7 +82,7 @@ proc do_rtScript { id } {
 	    }
 	}
     } else {
-	mged_dialog .$id.rtsDialog $player_screen($id)\
+	cad_dialog .$id.rtsDialog $player_screen($id)\
 		"No file name specified!"\
 		"No file name specified!"\
 		"" 0 OK

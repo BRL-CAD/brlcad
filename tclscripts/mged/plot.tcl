@@ -136,7 +136,7 @@ proc do_plot { id } {
     if {$pl_file_or_filter($id) == "file"} {
 	if {$pl_file($id) != ""} {
 	    if [file exists $pl_file($id)] {
-		set result [mged_dialog .$id.plotDialog $player_screen($id)\
+		set result [cad_dialog .$id.plotDialog $player_screen($id)\
 			"Overwrite $pl_file($id)?"\
 			"Overwrite $pl_file($id)?"\
 			"" 0 OK CANCEL]
@@ -146,7 +146,7 @@ proc do_plot { id } {
 		}
 	    }
 	} else {
-	    mged_dialog .$id.plotDialog $player_screen($id)\
+	    cad_dialog .$id.plotDialog $player_screen($id)\
 		    "No file name specified!"\
 		    "No file name specified!"\
 		    "" 0 OK
@@ -157,7 +157,7 @@ proc do_plot { id } {
 	append pl_cmd " $pl_file($id)"
     } else {
 	if {$pl_filter($id) == ""} {
-	    mged_dialog .$id.plotDialog $player_screen($id)\
+	    cad_dialog .$id.plotDialog $player_screen($id)\
 		    "No filter specified!"\
 		    "No filter specified!"\
 		    "" 0 OK
