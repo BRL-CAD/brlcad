@@ -402,8 +402,8 @@ int line;
 		point_t in, t;
 		VJOIN1(t, isp->r.r_pt, dist, isp->r.r_dir);
 		MAT4X3PNT(in, isp->dsp->dsp_i.dsp_stom, t);
-		bu_log("line %d New in pt(%g %g %g) ss_dist %g surf: %d\n",
-			__LINE__, V3ARGS(in), dist, surf);
+		bu_log("line %d(%d) New in pt(%g %g %g) ss_dist %g surf: %d\n",
+			__LINE__, line, V3ARGS(in), dist, surf);
 		bu_log("\tNormal: %g %g %g\n", V3ARGS(norm));
 	}
 }
@@ -447,8 +447,8 @@ int line;
 
 		VJOIN1(t, isp->r.r_pt, dist, isp->r.r_dir);
 		MAT4X3PNT(out, isp->dsp->dsp_i.dsp_stom, t);
-		bu_log("line %d New out pt(%g %g %g) ss_dist %g surf:%d\n",
-			__LINE__, V3ARGS(out), dist, surf);
+		bu_log("line %d(%d) New out pt(%g %g %g) ss_dist %g surf:%d\n",
+			__LINE__, line, V3ARGS(out), dist, surf);
 		bu_log("\tNormal: %g %g %g\n", V3ARGS(norm));
 	}
 }
@@ -1840,12 +1840,12 @@ struct isect_stuff *isect;
 		VMOVE(cs.curr_pt, cs.next_pt);
 	}
 
-	if (isect->sp_is_valid) {
+	if (isect->sp_is_valid && !isect->sp_is_done) {
 		OUTHIT( isect, 
 		isect->bbox.out_dist,
 		isect->bbox.out_surf,
 		bbout_cell,
-		dsp_pl[isect->bbox.out_surf]);
+		dsp_pl[BBSURF(isect->bbox.out_surf)]);
 
 
 		HIT_COMMIT( isect );
