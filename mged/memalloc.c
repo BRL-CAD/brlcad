@@ -81,7 +81,6 @@ register unsigned size;
 	}
 
 	if( curp == MAP_NULL )  {
-		printf("memalloc(%d):  no more space\n", size );
 		return(0L);		/* No more space */
 	}
 
