@@ -256,7 +256,10 @@ struct db_i	*dbip;
 
 	if( db5_header_is_valid( header ) )  {
 		struct directory	*dp;
-		struct rt_db_internal	intern;
+		struct bu_external	ext;
+		struct db5_raw_internal	raw;
+		struct bu_attribute_value_set	avs;
+		const char		*cp;
 
 		/* File is v5 format */
 bu_log("WARNING:  %s is BRL-CAD v5 format.\nWARNING:  You probably need a newer version of this program to read it.\n", dbip->dbi_filename);
@@ -273,14 +276,50 @@ bu_log("WARNING:  %s is BRL-CAD v5 format.\nWARNING:  You probably need a newer 
 			dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
 			return 0;	/* not a fatal error, user may have deleted it */
 		}
-		if( rt_db_get_internal( &intern, dp, dbip, NULL ) < 0 )  {
-			bu_log("db_dirbuild(%s): improper v5 database, corrupted %s object\n",
+		BU_INIT_EXTERNAL(&ext);
+		if( db_get_external( &ext, dp, dbip ) < 0 ||
+		    db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 )  {
+			bu_log("db_dirbuild(%s): improper v5 database, unable to read %s object\n",
 				dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
+			return -1;
+		}
+		if( raw.major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY )  {
+			bu_log("db_dirbuild(%s): improper v5 database, %s exists but is not an attribute-only object\n",
+				dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
+			dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
+			return 0;	/* not a fatal error, need to let user proceed to fix it */
+		}
+		if( db5_import_attributes( &avs, &raw.attributes ) < 0 )  {
+			bu_log("db_dirbuild(%s): improper v5 database, corrupted attribute-only %s object\n",
+				dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
+		    	bu_free_external(&ext);
 			return -1;	/* this is fatal */
 		}
-		BU_CK_AVS( &intern.idb_avs );
-bu_avs_print( &intern.idb_avs, DB5_GLOBAL_OBJECT_NAME );
-return -1;
+		BU_CK_AVS( &avs );
+
+		/* Parse out the attributes */
+		if( (cp = bu_avs_get( &avs, "title" )) != NULL )  {
+			dbip->dbi_title = bu_strdup( cp );
+		} else {
+			dbip->dbi_title = bu_strdup( "Untitled BRL-CAD v5 database" );
+		}
+		if( (cp = bu_avs_get( &avs, "units" )) != NULL )  {
+			double	dd;
+			if( sscanf( cp, "%lf", &dd ) != 1 ||
+			    NEAR_ZERO( dd, VUNITIZE_TOL ) )  {
+			    	bu_log("db_dirbuild(%s): improper v5 database, %s object attribute 'units'=%s is invalid\n",
+					dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME,
+				    	cp );
+			    	/* Not fatal, just stick with default value from db_open() */
+			} else {
+				dbip->dbi_local2base = dd;
+				dbip->dbi_base2local = 1/dd;
+			}
+		}
+		/* XXX Need to grab the region-id coloring table here too */
+		bu_avs_free( &avs );
+		bu_free_external(&ext);	/* not until after done with avs! */
+		return 0;
 	}
 
 	/* Make a very simple check for a v4 database */
