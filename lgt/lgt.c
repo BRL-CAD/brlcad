@@ -28,11 +28,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./lgt.h"
 #include "./screen.h"
 #include "./extern.h"
-#ifdef cray
+#if 0
 #include <sys/category.h>
 #include <sys/resource.h>
 #include <sys/types.h>
-#define MAX_CPU_TICKS	(200000*HZ) /* Max ticks = seconds * ticks/sec.	*/
+#if defined( CRAY2 )
+#undef MAXINT
+#include <sys/param.h>
+#endif
+#define MAX_CPU_TICKS	(100000*HZ) /* Max ticks = seconds * ticks/sec.	*/
 #define NICENESS	12
 #endif
 int	ready_Output_Device();
@@ -53,12 +57,15 @@ void		exit_Neatly();
 main( argc, argv )
 char	*argv[];
 {	register int	i;
-
+#if ! defined( BSD ) && ! defined( sgi ) && ! defined( CRAY2 )
+	(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
+#endif
 	beginptr = sbrk(0);
+
 	RES_INIT( &rt_g.res_syscall );
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
-#if cray
+#if 0
 	nicem( C_PROC, 0, NICENESS );
 	rt_log( "Program niced to %d.\n", NICENESS );
 	limit( C_PROC, 0, L_CPU, MAX_CPU_TICKS );
@@ -69,10 +76,6 @@ char	*argv[];
 		);
 #endif
 	
-#if ! defined( BSD ) && ! defined( sgi )
-	(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
-#endif
-
 	init_Lgts();
 
 	if( ! pars_Argv( argc, argv ) )
@@ -120,7 +123,6 @@ char	*argv[];
 			}
 	/* Main loop.							*/
 	user_Interaction();
-	exit_Neatly( 0 );
 	/*NOTREACHED*/
 	}
 
