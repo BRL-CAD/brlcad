@@ -305,6 +305,11 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 			pp=pp->pt_forw;			/* onwards! */
 			continue;
 		}
+		if( pp->pt_outdist <= EPSILON )  {
+			/* partition is behind start point (k=0), ignore */
+			pp=pp->pt_forw;
+			continue;
+		}
 
 		/* Add this partition to the result queue */
 		{
@@ -401,7 +406,7 @@ register struct partition *partp;
 }
 
 /* Called with address of head of chain */
-static
+void
 pr_partitions( phead, title )
 register struct partition *phead;
 char *title;
