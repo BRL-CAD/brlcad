@@ -1652,7 +1652,7 @@ fi
 	    ;;
 	IRIX-6.*)
 	    SHLIB_CFLAGS=""
-	    SHLIB_LD="ld -n32 -shared -rdata_shared"
+	    SHLIB_LD="ld -shared -rdata_shared"
 	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
@@ -1665,13 +1665,9 @@ fi
 		case $system in
 		    IRIX-6.3)
 			# Use to build 6.2 compatible binaries on 6.3.
-			EXTRA_CFLAGS="-n32 -D_OLD_TERMIOS"
-			;;
-		    *)
-			EXTRA_CFLAGS="-n32"
+			EXTRA_CFLAGS="-D_OLD_TERMIOS"
 			;;
 		esac
-		LDFLAGS="-n32"
 	    fi
 	    ;;
 	IRIX64-6.*)
