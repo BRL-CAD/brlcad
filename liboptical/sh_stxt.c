@@ -344,12 +344,22 @@ char	*dp;
 	}
 
 	/* NORMALIZE x,y,z to [0..1) */
+#if 1
+	/* XXX hack hack, permute axes, for vertical letters.  -M */
+	sz = (swp->sw_hit.hit_point[0] - stp->stx_min[0]) /
+		(stp->stx_max[0] - stp->stx_min[0] + 1.0);
+	sx = (swp->sw_hit.hit_point[1] - stp->stx_min[1]) /
+		(stp->stx_max[1] - stp->stx_min[1] + 1.0);
+	sy = (swp->sw_hit.hit_point[2] - stp->stx_min[2]) /
+		(stp->stx_max[2] - stp->stx_min[2] + 1.0);
+#else
 	sx = (swp->sw_hit.hit_point[0] - stp->stx_min[0]) /
 		(stp->stx_max[0] - stp->stx_min[0] + 1.0);
 	sy = (swp->sw_hit.hit_point[1] - stp->stx_min[1]) /
 		(stp->stx_max[1] - stp->stx_min[1] + 1.0);
 	sz = (swp->sw_hit.hit_point[2] - stp->stx_min[2]) /
 		(stp->stx_max[2] - stp->stx_min[2] + 1.0);
+#endif
 
 	/* Index into TEXTURE SPACE */
 	tx = sx * (stp->stx_w-1);
