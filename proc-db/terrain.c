@@ -26,11 +26,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include "machine.h"		/* BRLCAD specific machine data types */
+#include "externs.h"
 #include "vmath.h"		/* BRLCAD Vector macros */
 #include "nurb.h"		/* BRLCAD Spline data structures */
 #include "raytrace.h"
-#include "../librt/debug.h"	/* rt_g.debug flag settings */
-#include "externs.h"
+#include "wdb.h"
 
 fastf_t grid[10][10][3];
 
@@ -39,6 +39,7 @@ char *Usage = "This program ordinarily generates a database on stdout.\n\
 
 void interpolate_data();
 
+int
 main(argc, argv)
 int argc; char * argv[];
 {
@@ -94,8 +95,9 @@ int argc; char * argv[];
 
 	interpolate_data();
 		
-
+	return 0;
 }
+
 /* Interpoate the data using b-splines */
 void
 interpolate_data()
