@@ -15,6 +15,11 @@
 #include "./mathtab.h"
 #include "./rdebug.h"
 
+#define SHADE_CONT	0
+#define SHADE_ABORT_GRASS	1	/* bit_flag */
+#define SHADE_ABORT_STACK	2	/* bit_flag */
+
+
 #define grass_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_grass_SP(_p) RT_CKMAG(_p, grass_MAGIC, "grass_specific")
 
@@ -33,15 +38,17 @@ struct grass_ray {
 struct grass_specific {
 	long	magic;	/* magic # for memory validity check, must come 1st */
 	double	cell[2];	/* size of a cell in Region coordinates */
-	double	ppc;		/* plants_per_cell */
+	double	ppc;		/* mean # plants_per_cell */
 	double	ppcd;		/* deviation of plants_per_cell */
 	double	t;		/* mean length of leaf segment */
 	double	blade_width;	/* max width of blade segment */
+	int	nsegs;		/* #segs per blade */
+	double	seg_ratio;
 	double	lacunarity;	/* the usual noise parameters */
 	double	h_val;
 	double	octaves;
-	double	size;
-	point_t	vscale;	/* size of noise coordinate space */
+	double	size;		/* size of noise coordinate space */
+	point_t	vscale;		/* size of noise coordinate space */
 	vect_t	delta;
 
 	mat_t	m_to_sh;	/* model to shader space matrix */
@@ -52,11 +59,13 @@ struct grass_specific {
 CONST static
 struct grass_specific grass_defaults = {
 	grass_MAGIC,
-	{1.0, 1.0},			/* cell */
+	{300.0, 300.0},			/* cell */
 	2.0,				/* plants_per_cell */
 	1.0,				/* deviation of plants_per_cell */
 	70.0,				/* "t" mean length of leaf seg */
 	3.0,				/* max width (mm) of blade segment */
+	3,				/* # segs per blade */
+	1.0,				/* seg ratio */
 	2.1753974,			/* lacunarity */
 	1.0,				/* h_val */
 	4.0,				/* octaves */
@@ -78,15 +87,17 @@ struct grass_specific grass_defaults = {
  * structure above
  */
 struct bu_structparse grass_print_tab[] = {
-	{"%f",  2, "cell",		SHDR_AO(cell),	FUNC_NULL },
-	{"%f",	1, "ppc",		SHDR_O(ppc),	FUNC_NULL },
-	{"%f",	1, "ppcd",		SHDR_O(ppcd),	FUNC_NULL },
-	{"%f",	1, "t",			SHDR_O(t),	FUNC_NULL },
+	{"%f",  2, "cell",		SHDR_AO(cell),		FUNC_NULL },
+	{"%f",	1, "ppc",		SHDR_O(ppc),		FUNC_NULL },
+	{"%f",	1, "ppcd",		SHDR_O(ppcd),		FUNC_NULL },
+	{"%f",	1, "t",			SHDR_O(t),		FUNC_NULL },
 	{"%f",	1, "width",		SHDR_O(blade_width),	FUNC_NULL },
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 		SHDR_O(h_val),	FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  1, "size",		SHDR_O(size),	FUNC_NULL },
+	{"%f",  1, "size",		SHDR_O(size),		FUNC_NULL },
+	{"%d",	1, "nsegs",		SHDR_O(nsegs),		FUNC_NULL },
+	{"%f",	1, "seg_ratio",		SHDR_O(seg_ratio),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
 };
@@ -99,6 +110,9 @@ struct bu_structparse grass_parse_tab[] = {
 	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
 	{"%f",  1, "s",			SHDR_O(size),		FUNC_NULL },
 	{"%f",	1, "w",			SHDR_O(blade_width),	FUNC_NULL },
+	{"%d",	1, "n",			SHDR_O(nsegs),		FUNC_NULL },
+	{"%f",	1, "r",			SHDR_O(seg_ratio),	FUNC_NULL },
+	
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -114,7 +128,7 @@ HIDDEN void	grass_print(), grass_free();
  * values for the parameters.
  */
 struct mfuncs grass_mfuncs[] = {
-	{"grass",	0,	0,	MFI_HIT,  MFF_PROC,
+	{"grass",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,  MFF_PROC,
 	grass_setup,	grass_render,	grass_print,	grass_free },
 
 	{(char *)0,	0,		0,		0,		0,
@@ -176,6 +190,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	if( rdebug&RDEBUG_SHADE) {
 		bu_struct_print( " Parameters:", grass_print_tab, (char *)grass_sp );
 		mat_print( "m_to_sh", grass_sp->m_to_sh );
+		mat_print( "sh_to_m", grass_sp->sh_to_m );
 	}
 
 	return(1);
@@ -202,7 +217,8 @@ char *cp;
 	rt_free( cp, "grass_specific" );
 }
 
-#define CELL_POS(cell_num, grass_sp, cell_pos) \
+/* compute the Region coordinates of the origin of a cell */
+#define CELL_POS(cell_pos, grass_sp, cell_num) \
 	cell_pos[X] = cell_num[X] * grass_sp->cell[X]; \
 	cell_pos[Y] = cell_num[Y] * grass_sp->cell[Y]
 
@@ -214,14 +230,23 @@ struct leaf_segment {
 	vect_t	N;	/* surface normal of blade segment */
 };
 
-struct plant {
-	point_t	root;	/* location of base of plant */
+struct blade {
+	point_t	root;	/* location of base of blade */
+	double	tot_len;
 	int	segs;
 	struct leaf_segment leaf[BLADE_SEGS_MAX];
+	point_t	pmin;
+	point_t	pmax;
 };
+
+
+/*
+ *
+ *
+ */
 static void
-make_plant(pl, c, cell_pos, grass_sp)
-struct plant *pl;
+make_blade(pl, c, cell_pos, grass_sp)
+struct blade *pl;
 point_t		c;	/* derived from cell_num */
 CONST point_t	cell_pos;
 CONST struct grass_specific *grass_sp;
@@ -232,14 +257,13 @@ CONST struct grass_specific *grass_sp;
 	int t;
 	double val;
 	vect_t v;
+	point_t pmin, pmax;
+	point_t seg_start;
 
 	if (rdebug&RDEBUG_SHADE)
-		bu_log("\tmake plant..");
+		bu_log("\tmake blade..");
 
-	/* get position of the root of the plant */
-
-
-
+	/* get position of the root of the blade */
 	pl->root[X] = cell_pos[X] + 
 		grass_sp->cell[X] * bn_noise_perlin(c);
 
@@ -247,26 +271,26 @@ CONST struct grass_specific *grass_sp;
 	pl->root[Y] = cell_pos[Y] + 
 		grass_sp->cell[Y] * bn_noise_perlin(cl);
 	pl->root[Z] = 0.0;	/* XXX not valid for non-slab grass */
+	
+
+	VMOVE(pl->pmin, pl->root);
+	VMOVE(pl->pmax, pl->root);
 
 	VSCALE(cl, cl, grass_sp->lacunarity);
 
+	pl->segs = grass_sp->nsegs;
 
-#if 0
-	pl->segs = 1 + (BLADE_SEGS_MAX-1) * 
-		bn_noise_turb(cl, grass_sp->h_val, grass_sp->lacunarity, 3);
-#else
-	pl->segs = 3;
-#endif
 	VSCALE(cl, cl, grass_sp->lacunarity * .5);
 
 	/* get vector for blade growth */
 	bn_noise_vec(cl, pl->leaf[0].blade);
 	pl->leaf[0].blade[Z] += 1.0;
 	VUNITIZE(pl->leaf[0].blade);
-	pl->leaf[0].len = grass_sp->t + 
+	pl->tot_len = pl->leaf[0].len = grass_sp->t + 
 		bn_noise_turb(pl->root, grass_sp->h_val,
 			grass_sp->lacunarity, grass_sp->octaves) *
 		grass_sp->t;
+
 
 	/* get surface normal for blade */
 	VCROSS(left, pl->leaf[0].blade, z_axis);
@@ -281,6 +305,7 @@ CONST struct grass_specific *grass_sp;
 			V3ARGS(pl->leaf[0].N));
 	}
 
+	VJOIN1(seg_start, pl->root, pl->leaf[0].len, pl->leaf[0].blade);
 
 	for (t=1; t < pl->segs ; t++) {
 
@@ -302,7 +327,7 @@ CONST struct grass_specific *grass_sp;
 		if (val < .3) val = .3;
 		if (val > .9) val = .9;
 
-		pl->leaf[t].len = pl->leaf[t-1].len * val;
+		pl->tot_len += pl->leaf[t].len = pl->leaf[t-1].len * val;
 
 		VCROSS(pl->leaf[t].N, left, pl->leaf[t].blade);
 		VUNITIZE(pl->leaf[t].N);
@@ -312,7 +337,13 @@ CONST struct grass_specific *grass_sp;
 	                	V3ARGS(pl->leaf[t].blade),
 				V3ARGS(pl->leaf[t].N));
 		}
+
+		VJOIN1(seg_start, seg_start, pl->leaf[t].len, pl->leaf[t].blade);
 	}
+
+	/* compute bounding box */
+	VMINMAX(pl->pmin, pl->pmax, seg_start);
+
 }
 
 /*	Intersect ray with leaf segment.  We already know we're within
@@ -324,8 +355,8 @@ CONST struct grass_specific *grass_sp;
  */
 static int
 hit_blade(pl, r, swp, grass_sp, seg, ldist)
-CONST struct plant *pl;
-CONST struct grass_ray *r;
+CONST struct blade *pl;
+struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
 CONST struct grass_specific *grass_sp;
 int seg;
@@ -335,28 +366,43 @@ double ldist[2];
 
 	/* get the hit point/PCA */
 	if (rdebug&RDEBUG_SHADE)
-		bu_log("hit_blade\n");
+		bu_log("\t  hit_blade()\n");
 
 
 	if (ldist[0] < r->hit.hit_dist) {
 
 		/* we're the closest hit on the cell */
-		VJOIN1(swp->sw_hit.hit_point, r->r.r_pt, ldist[0], r->r.r_dir);
-		VMOVE(swp->sw_hit.hit_normal, pl->leaf[seg].N);
-		return 1;
+		r->hit.hit_dist = ldist[0];
+		VJOIN1(r->hit.hit_point, r->r.r_pt, ldist[0], r->r.r_dir);
+		VMOVE(r->hit.hit_normal, pl->leaf[seg].N);
+
+		if (rdebug&RDEBUG_SHADE) {
+			bu_log("  New closest hit %g < %g\n",
+				ldist[0], r->hit.hit_dist);
+			bu_log("  pt:(%g %g %g)\n  Normal:(%g %g %g)\n",
+				V3ARGS(r->hit.hit_point),
+				V3ARGS(r->hit.hit_normal));
+		}
+
+
+		return SHADE_ABORT_GRASS;
+	} else {
+		if (rdebug&RDEBUG_SHADE)
+			bu_log("abandon hit in cell: %g > %g\n",
+				ldist[0], r->hit.hit_dist);
 	}
-	return 0;
+	return SHADE_CONT;
 }
 
-/*	intersect ray with leaves of single plant
+/*	intersect ray with leaves of single blade
  *
  *	Return:
  *		0	missed
  *		1	hit something
  */
 static int
-isect_plant(pl, r, swp, grass_sp)
-CONST struct plant *pl;
+isect_blade(pl, r, swp, grass_sp)
+CONST struct blade *pl;
 CONST struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
 CONST struct grass_specific *grass_sp;
@@ -370,13 +416,19 @@ CONST struct grass_specific *grass_sp;
 	point_t PCA_grass;
 	vect_t	tmp;
 	double dist;
+	double accum_len;/* accumulated distance along blade from prev segs */
+	double fract;	/* fraction of total blade length to PCA */
+	double blade_width;/* width of blade at PCA with ray */
+
 
 	if (rdebug&RDEBUG_SHADE)
-		bu_log("\t  isect_plant()\n");
+		bu_log("\t  isect_blade()\n");
 
 	VMOVE(pt, pl->root);
 
-	for (seg=0 ; seg < pl->segs ; ) {
+	accum_len = 0.0;
+
+	for (seg=0 ; seg < pl->segs ; accum_len += pl->leaf[seg].len ) {
 
 		cond = rt_dist_line3_line3(ldist, r->r.r_pt, r->r.r_dir,
 			pt, pl->leaf[seg].blade, &r->tol);
@@ -396,7 +448,20 @@ CONST struct grass_specific *grass_sp;
 		VJOIN1(PCA_grass, pt, ldist[1], pl->leaf[seg].blade);
 		VSUB2(tmp, PCA_grass, PCA_ray);
 		dist = MAGNITUDE(tmp);
-		if (dist < (PCA_ray_radius+grass_sp->blade_width)) {
+
+		/* We want to narrow the blade of grass toward the tip.
+		 * So we scale the width of the blade based upon the 
+		 * fraction of total blade length to PCA.
+		 */
+		fract = (accum_len + ldist[1]) / pl->tot_len;
+		blade_width = grass_sp->blade_width * (1.0 - fract);
+
+		if (dist < (PCA_ray_radius+blade_width)) {
+			if (rdebug&RDEBUG_SHADE)
+				bu_log("\thit grass: %g < (%g + %g)\n",
+					dist, PCA_ray_radius,
+					grass_sp->blade_width);
+
 			return hit_blade(pl, r, swp, grass_sp, seg, ldist);
 		}
 		if (rdebug&RDEBUG_SHADE) bu_log("missed aside\n");
@@ -407,7 +472,114 @@ iter:
 		seg++;
 	}
 
-	return 0;
+	return SHADE_CONT;
+}
+
+
+#if 0
+/*
+ *	N O R M _ N O I S E
+ *
+ *	Apply a noise function to the surface normal
+ */
+static void
+norm_noise(pt, val, gravel_sp, func, swp, rescale)
+point_t pt;
+double val;
+struct gravel_specific *gravel_sp;
+double (*func)();
+struct shadework	*swp;	/* defined in material.h */
+int rescale;
+{
+	vect_t N, tmp;
+	point_t u_pt, v_pt;
+	vect_t u_vec, v_vec;
+	double u_val, v_val;
+	mat_t u_mat, v_mat;
+
+	/* dork the normal around
+	 * Convert the normal to shader space, get u,v coordinate system
+	 */
+
+	if( rdebug&RDEBUG_SHADE) {
+		VPRINT("Model space Normal", swp->sw_hit.hit_normal);
+	}
+	MAT4X3VEC(N, gravel_sp->m_to_sh, swp->sw_hit.hit_normal);
+	VUNITIZE(N);
+	if( rdebug&RDEBUG_SHADE) {
+		VPRINT("Shader space Normal", N);
+	}
+
+	/* construct coordinate system from vectors perpendicular to normal */
+	bn_vec_perp(u_vec, N);
+	VCROSS(v_vec, N, u_vec);
+
+	/* compute noise function at position slightly off pt in both
+	 * U and V directions to get change in values
+	 */
+	VJOIN1(u_pt, pt, gravel_sp->nsd, u_vec);
+	u_val = func(u_pt, gravel_sp->h_val, gravel_sp->lacunarity,
+		gravel_sp->octaves);
+
+	if (rescale) RESCALE_NOISE(u_val);
+
+	VJOIN1(v_pt, pt, gravel_sp->nsd, v_vec);
+	v_val = func(v_pt, gravel_sp->h_val, gravel_sp->lacunarity,
+		gravel_sp->octaves);
+
+	if (rescale) RESCALE_NOISE(v_val);
+
+	/* construct normal rotation about U and V vectors based upon 
+	 * variation in surface in each direction.  Apply the result to
+	 * the surface normal.
+	 */
+	bn_mat_arb_rot(u_mat, pt, u_vec, (val - v_val) * gravel_sp->max_angle);
+	MAT4X3VEC(tmp, u_mat, N);
+
+	bn_mat_arb_rot(v_mat, pt, v_vec, (val - u_val) * gravel_sp->max_angle);
+
+	MAT4X3VEC(N, v_mat, tmp);
+
+	if( rdebug&RDEBUG_SHADE) {
+		VPRINT("old normal", swp->sw_hit.hit_normal);
+	}
+
+	MAT4X3VEC(swp->sw_hit.hit_normal, gravel_sp->sh_to_m, N);
+	VUNITIZE(swp->sw_hit.hit_normal);
+	if( rdebug&RDEBUG_SHADE) {
+		VPRINT("new normal", swp->sw_hit.hit_normal);
+	}
+}
+#endif
+
+static int
+stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell)
+point_t cell_pos;	/* origin of cell in region coordinates */
+struct grass_ray	*r;
+struct grass_specific	*grass_sp;
+struct shadework	*swp;
+double dist_to_cell;
+{
+	double val;
+	point_t tmp;
+	/* the ray is "large" so just pick something appropriate */
+
+	if (rdebug&RDEBUG_SHADE)
+		bu_log("statistical bailout\n");
+
+	r->hit.hit_dist = dist_to_cell;
+	VJOIN1(r->hit.hit_point, r->r.r_pt, dist_to_cell, r->r.r_dir);
+#if 0
+	VSET(swp->sw_color, 1.0, 0.0, 0.0);
+#else
+
+	bn_noise_vec(cell_pos, r->hit.hit_normal);
+	r->hit.hit_normal[Z] += 1.0;
+	VUNITIZE(r->hit.hit_normal);
+
+#endif
+
+	return SHADE_ABORT_GRASS;
 }
 
 
@@ -435,17 +607,39 @@ struct grass_specific	*grass_sp;
 	vect_t v;
 	int p;		/* current plant number (loop variable) */
 	int ppc;	/* # plants in this cell */
-	struct plant pl;
+	struct blade pl;
 	int hit = 0;
+	double dist_to_cell;
 
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("isect_cell(%ld,%ld)\n", V2ARGS(cell));
+
+
+	/* get coords of cell */
+	CELL_POS(cell_pos, grass_sp, cell);
+
+	VSUB2(v, cell_pos, r->r.r_pt);
+	dist_to_cell = MAGNITUDE(v);
+
+	
+	/* radius of ray at cell origin */
+	val = r->radius + r->diverge * dist_to_cell;
+
+	if (rdebug&RDEBUG_SHADE)
+		bu_log("\t  ray radius @cell %g = %g, %g, %g   (%g)\n\t   cell:%g,%g\n",
+			val, r->radius, r->diverge, dist_to_cell,  val*32.0,
+			V2ARGS(grass_sp->cell));
+
+	val *= 32.0;
+	if (val >= grass_sp->cell[X] || val >= grass_sp->cell[Y])
+		return stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell);
+
 
 	/* Figure out how many plants are in this cell */
 	VMOVE(c, cell); /* int/float conv */
 	val = bn_noise_perlin(c);
 	ppc = (int) (grass_sp->ppc + grass_sp->ppcd * val * 2.0);
-	CELL_POS(cell, grass_sp, cell_pos);
+
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("cell pos(%g,%g .. %g,%g)\n", V2ARGS(cell_pos),
 			cell_pos[X]+grass_sp->cell[X],
@@ -457,9 +651,9 @@ struct grass_specific	*grass_sp;
 	/* intersect the ray with each plant */
 	for (p=0 ;  p < ppc ; p++) {
 
-		make_plant(&pl, c, cell_pos, grass_sp);
+		make_blade(&pl, c, cell_pos, grass_sp);
 
-		hit |= isect_plant(&pl, r, swp, grass_sp);
+		hit |= isect_blade(&pl, r, swp, grass_sp);
 
 		VSCALE(c, c, grass_sp->lacunarity);
 	}
@@ -484,13 +678,13 @@ struct grass_specific	*grass_sp;
  *
  *  Return:
  *	0	continue grid marching
- *	~0	abort grid marching
+ *	!0	abort grid marching
  */
 static int
 do_cells(cell_num, r, flags, swp, out_dist, grass_sp)
 long			cell_num[3];
-struct grass_ray		*r;
-short 			flags;
+struct grass_ray	*r;
+short 			flags;		/* which adj cells need processing */
 double 			out_dist;
 struct shadework	*swp;	/* defined in material.h */
 struct grass_specific	*grass_sp;
@@ -557,7 +751,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	long		tD_iter[2];
 	long		cell_num[3];	/* cell number */
 	long		old_cell_num[3];	/* cell number */
-
+	int		status;
 
 
 	/* check the validity of the arguments we got */
@@ -568,12 +762,14 @@ char			*dp;	/* ptr to the shader-specific struct */
 	if( rdebug&RDEBUG_SHADE)
 		bu_struct_print( "grass_render Parameters:", grass_print_tab, (char *)grass_sp );
 
+#if 0
 	if (swp->sw_xmitonly) {
 		if( rdebug&RDEBUG_SHADE)
 			bu_log("grass no shadows\n");
 		swp->sw_transmit = 1.0;
 		return 0;
 	}
+#endif
 	/* XXX now how would you transform the tolerance structure
 	 * to the local coordinate space ?
 	 */
@@ -627,7 +823,8 @@ char			*dp;	/* ptr to the shader-specific struct */
 	VSUB2(v, out_pt, gr.r.r_pt);
 	gr.r.r_max = gr.hit.hit_dist = out_dist = MAGNITUDE(v);
 	VMOVE(gr.hit.hit_point, out_pt);
-	
+	MAT4X3VEC(gr.hit.hit_normal, grass_sp->m_to_sh, swp->sw_hit.hit_normal);
+
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_log("Pt: (%g %g %g)\nRPt:(%g %g %g)\n", V3ARGS(ap->a_ray.r_pt),
@@ -726,13 +923,13 @@ char			*dp;	/* ptr to the shader-specific struct */
 					V3ARGS(curr_pt));
 				bu_log("cell num: %d %d\n", V2ARGS(cell_num));
 			}
-			CELL_POS(cell_num, grass_sp, cell_pos);
+			CELL_POS(cell_pos, grass_sp, cell_num);
 
 			if( rdebug&RDEBUG_SHADE)
 				bu_log("cell pos: %g %g\n", V2ARGS(cell_pos));
 		}
 
-		if (do_cells(cell_num, &gr, flags,
+		if (status = do_cells(cell_num, &gr, flags,
 		    swp, out_dist, grass_sp))
 			goto done;
 
@@ -787,6 +984,7 @@ done:
 	if( rdebug&RDEBUG_SHADE)
 		bu_log("Hit grass blades\n");
 
+
 	/* if we got here then we hit something.  Convert the hit info
 	 * back into model coordinates.
 	 *
@@ -799,11 +997,26 @@ done:
 	 */
 
 	MAT4X3PNT(swp->sw_hit.hit_point, grass_sp->sh_to_m, gr.hit.hit_point);
+	VSUB2(v, swp->sw_hit.hit_point, ap->a_ray.r_pt);
+	swp->sw_hit.hit_dist = MAGNITUDE(v);
 
 	swp->sw_transmit = 0.0;
+
+	if (status & SHADE_ABORT_STACK) {
+		if( rdebug&RDEBUG_SHADE)
+			bu_log("Aborting stack (statistical grass)\n");
+		return 0;
+	}
+
+
 	if (swp->sw_xmitonly) return 0;
 
+	if( rdebug&RDEBUG_SHADE)
+		bu_log("normal before xform:(%g %g %g)\n",
+			V3ARGS(swp->sw_hit.hit_normal));
+
 	MAT4X3VEC(swp->sw_hit.hit_normal, grass_sp->sh_to_m, gr.hit.hit_normal);
+
 	if( rdebug&RDEBUG_SHADE) {
 		VPRINT("Rnormal", gr.hit.hit_normal);
 		VPRINT("Mnormal", swp->sw_hit.hit_normal);
@@ -811,8 +1024,6 @@ done:
 	}
 	VUNITIZE(swp->sw_hit.hit_normal);
 
-	VSUB2(v, swp->sw_hit.hit_point, ap->a_ray.r_pt);
-	swp->sw_hit.hit_dist = MAGNITUDE(v);
 
 	return 1;
 
