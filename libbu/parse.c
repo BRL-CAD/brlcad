@@ -320,7 +320,7 @@ CONST struct bu_external	*ext;
 			ntohd( loc, cp, ip->sp_count );
 			cp += len;
 			bytes_used += len;
-			continue;
+			break;
 		case 'd':
 			/* 32-bit network integer, from "int" */
 			{
@@ -336,7 +336,7 @@ CONST struct bu_external	*ext;
 				}
 				bytes_used += ip->sp_count * 4;
 			}
-			continue;
+			break;
 		case 'i':
 			/* 16-bit integer, from "int" */
 			for( i = ip->sp_count-1; i >= 0; i-- )  {
@@ -346,7 +346,7 @@ CONST struct bu_external	*ext;
 				cp += 2;
 			}
 			bytes_used += ip->sp_count * 2;
-			continue;
+			break;
 		case 's': 
 			{	/* char array transmitted as a
 				 * 4 byte character count, followed by a
@@ -375,7 +375,7 @@ CONST struct bu_external	*ext;
 				cp += lenstr;
 				bytes_used += lenstr;
 			}
-			continue;
+			break;
 		case 'c':
 			{
 				register unsigned long lenarray;
@@ -394,7 +394,7 @@ CONST struct bu_external	*ext;
 				cp += lenarray;
 				bytes_used += lenarray;
 			}
-			continue;
+			break;
 		default:
 			return( -1 );
 		}
