@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -117,7 +117,9 @@ struct rt_i	*rtip;
 struct mfuncs	**headp;
 {
 	register struct mfuncs *mfp;
+#ifdef HAVE_DLOPEN
 	register struct mfuncs *mfp_new;
+#endif
 	struct bu_vls	arg;
 	char	matname[32];
 	int	i;
@@ -140,7 +142,9 @@ struct mfuncs	**headp;
 	}
 	matname[i] = '\0';	/* ensure null termination */
 
+#ifdef HAVE_DLOPEN
 retry:
+#endif
 	for( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
 		if (matname[0] != mfp->mf_name[0]  ||
 		    strcmp( matname, mfp->mf_name ) != 0 )
@@ -227,7 +231,7 @@ struct mfuncs	**headp;
 			}
 			/* add one */
 			if (stk_dosetup(start, rp, &sp->udata[i],
-				&sp->mfuncs[i], rtip, headp) == 0 )  {
+				(char **)&sp->mfuncs[i], rtip, headp) == 0 )  {
 					inputs |= sp->mfuncs[i]->mf_inputs;
 					i++;
 			} else {
@@ -245,7 +249,7 @@ struct mfuncs	**headp;
 			return( 0 );
 		}
 		/* add one */
-		if (stk_dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i],
+		if (stk_dosetup(start, rp, &sp->udata[i], (char **)&sp->mfuncs[i],
 		    rtip, headp ) == 0 )  {
 			inputs |= sp->mfuncs[i]->mf_inputs;
 			i++;
