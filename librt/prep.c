@@ -107,7 +107,14 @@ struct db_i	*dbip;
 
 	rtip->rti_max_beam_radius = 175.0/2;	/* Largest Army bullet */
 
+	/* This sets the space partitioning algorithm to Mike's original
+	 * non-uniform binary space paritioning tree.
+	 * If you change this to anything else, you must also modify
+	 * "rt_find_backing_dist()" (in shoot.c), to handle the different
+	 * alogorithm            -JRA
+	 */
 	rtip->rti_space_partition = RT_PART_NUBSPT;
+
 	rtip->rti_nugrid_dimlimit = 0;
 	rtip->rti_nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 
