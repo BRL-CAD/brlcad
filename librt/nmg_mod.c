@@ -114,8 +114,8 @@ CONST struct rt_tol	*tol;
 	} while( c == b
 		|| VAPPROXEQUAL(a->vg_p->coord, c->vg_p->coord, tol->dist)
 		|| VAPPROXEQUAL(b->vg_p->coord, c->vg_p->coord, tol->dist)
-		|| collinear(a->vg_p->coord, b->vg_p->coord, c->vg_p->coord,
-			tol->dist));
+		|| rt_3pts_collinear(a->vg_p->coord, b->vg_p->coord,
+			c->vg_p->coord, tol->dist));
 
 	if (rt_mk_plane_3pts(plane,
 	    a->vg_p->coord, b->vg_p->coord, c->vg_p->coord, tol) < 0 ) {
