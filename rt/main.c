@@ -77,6 +77,7 @@ long nsolids;		/* total # of solids participating */
 long nregions;		/* total # of regions participating */
 long nshots;		/* # of ray-meets-solid "shots" */
 long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
+int outfd;		/* fd of optional pixel output file */
 
 struct soltab *HeadSolid = SOLTAB_NULL;
 
@@ -84,8 +85,9 @@ struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
 
 struct seg *HeadSeg = SEG_NULL;
 
-char usage[] = 
-"Usage:  rt [-f[#]] [-x#] [-aAz] [-eElev] model.vg object [objects]\n";
+char usage[] = "\
+Usage:  rt [options] model.vg object [objects]\n\
+Options:  -f[#] -x# -aAz -eElev [-o model.pix]\n";
 
 /* Used for autosizing */
 static fastf_t xbase, ybase, zbase;
@@ -145,8 +147,16 @@ char **argv;
 			/* Set elevation */
 			elevation = atof( &argv[0][2] );
 			break;
+		case 'o':
+			/* Output pixel file name */
+			if( (outfd = creat( argv[1], 0444 )) <= 0 )  {
+				perror( argv[1] );
+				exit(10);
+			}
+			argc--; argv++;
+			break;
 		default:
-			printf("Unknown option '%c' ignored\n", argv[0][1]);
+			printf("rt:  Option '%c' unknown\n", argv[0][1]);
 			printf(usage);
 			break;
 		}
@@ -162,26 +172,27 @@ char **argv;
 	if( debug )
 		setbuffer( stdout, ttyObuf, sizeof(ttyObuf) );
 
+	timer_prep();		/* Start timing preparations */
+
 	/* Build directory of GED database */
 	dir_build( argv[0] );
 	argc--; argv++;
 
-	if( !(debug&DEBUG_QUICKIE) )  {
-		/* Set up the online display */
-		dev_setup(npts);
-	}
-
 	/* Load the desired portion of the model */
-	timer_prep();
 	while( argc > 0 )  {
 		get_tree(argv[0]);
 		argc--; argv++;
 	}
 	(void)timer_print("PREP");
 
-	timer_prep();
-
 	if( HeadSolid == 0 )  bomb("No solids");
+
+	/* Set up the online display and/or the display file */
+	if( !(debug&DEBUG_QUICKIE) )  {
+		dev_setup(npts);
+	}
+
+	timer_prep();	/* start timing actual run */
 
 	/* Determine a view */
 	GETSTRUCT(rayp, ray);
@@ -232,7 +243,7 @@ char **argv;
 	MAT3XVEC( l1vec, viewrot, tempdir );
 	VUNITIZE(l1vec);
 
-	/* 2:  Green, behind, and overhead */
+	/* 2:  Grey, behind, and overhead */
 	tempdir[0] = 2 * (xbase + (npts/2)*deltas);
 	tempdir[1] = 2 * (ybase + npts*deltas);
 	tempdir[2] = 2 * (zbase + (npts/2)*deltas);
@@ -294,7 +305,13 @@ char **argv;
 			}
 			if( debug )  fflush(stdout);
 		}
+		/* End of scan line */
+		dev_eol( yscreen );
 	}
+
+	/*
+	 *  All done.  Display run statistics.
+	 */
 	{
 		FAST double utime;
 		utime = timer_print("SHOT");
