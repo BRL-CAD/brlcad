@@ -29,7 +29,7 @@ echo
 
 for i in Cakefile.defs setup.sh cray.sh cake/Makefile cakeaux/Makefile
 do
-	chmod 664 $i
+	chmod 775 $i
 	ed - $i << EOF
 f
 g,$BINDIR,s,,$NEW,p
