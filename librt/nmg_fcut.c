@@ -1402,6 +1402,7 @@ int			other_rs_state;
 			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
 			nmg_state_names[new_state], action_names[action] );
 		rt_log("Plotting this loopuse, before action:\n");
+		nmg_pr_lu_briefly(nmg_lu_of_vu(vu), (char *)0);
 		nmg_face_lu_plot(nmg_lu_of_vu(vu), rs->vu[0], rs->vu[rs->nvu-1] );
 	}
 
