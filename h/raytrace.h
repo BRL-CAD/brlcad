@@ -132,6 +132,7 @@ struct rt_tol {
 	double		para;			/* nearly 1 */
 };
 #define RT_TOL_MAGIC	0x98c734bb
+#define RT_CK_TOL(_p)	RT_CKMAG(_p, RT_TOL_MAGIC, "rt_tol")
 
 #define	RT_VECT_ARE_PARALLEL(_dot,_tol)		\
 	(((_dot) < 0) ? ((-(_dot))>=(_tol)->para) : ((_dot) >= (_tol)->para))
@@ -147,6 +148,7 @@ struct rt_tess_tol  {
 	double		norm;			/* normal tol */
 };
 #define RT_TESS_TOL_MAGIC	0xb9090dab
+#define RT_CK_TESS_TOL(_p)	RT_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
 
 /*
  *  Macros for providing function prototypes, regardless of whether
