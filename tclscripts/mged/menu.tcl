@@ -356,8 +356,8 @@ proc undo_edit_menu {} {
 	}
 
 	.$id.m.settings.m.cm_origin entryconfigure 3 -state disabled
-	if {$mged_rotate($id) == "k"} {
-	    set mged_rotate($id) "v"
+	if {$mged_rotate_about($id) == "k"} {
+	    set mged_rotate_about($id) "v"
 	    doit $id "set rotate_about $mged_rotate_about($id)"
 	}
     }
