@@ -105,8 +105,8 @@ static char *units_str[] = {
 	"extra"
 };
 
-FILE *infile = stdin;
-FILE *outfile = stdout;
+FILE *infile;
+FILE *outfile;
 
 void
 pr_prompt()  {
@@ -123,6 +123,10 @@ int argc;
 char **argv;
 {
 	int	rateflag = 0;
+
+	/* In some ANSI implementations, symbol "stdin" is a variable. */
+	infile = stdin;
+	outfile = stdout;
 
 	/* Check for proper invocation */
 	if( argc < 2 )  {
