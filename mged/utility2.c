@@ -2073,6 +2073,8 @@ int argc;
 char **argv;
 {
 	struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
 	union record rec;
 	char id[10];
 
@@ -2088,14 +2090,11 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	if( db_get( dbip, dp, &rec, 0, 1 ) )
-	{
-		Tcl_AppendResult(interp, "Cannot get database record for ",
-			argv[1], "\n", (char *)NULL );
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
 		return TCL_ERROR;
-	}
-
-	sprintf( id, "%d\n", rec.c.c_regionid );
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	sprintf( id, "%d\n", comb->region_id );
+	rt_comb_ifree( &intern );
 	Tcl_AppendResult(interp, id, (char *)NULL );
 
 	return TCL_OK;
@@ -2111,7 +2110,6 @@ char **argv;
 	int i,j;
 	int item;
 	struct directory *dp;
-	union record rec;
 	struct bu_vls v;
 	int new_argc;
 	int lim;
@@ -2134,22 +2132,30 @@ char **argv;
 	for( j=1; j<argc; j++)
 	{
 		item = atoi( argv[j] );
+		if( item < 1 )
+			continue;
 
 		for( i = 0; i < RT_DBNHASH; i++ )
 		{
 			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
 			{
+				struct rt_db_internal intern;
+				struct rt_comb_internal *comb;
+
 				if( (dp->d_flags & DIR_COMB|DIR_REGION) !=
 				    (DIR_COMB|DIR_REGION) )
 					continue;
-				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 ) {
-				  bu_vls_free( &v );
-				  (void)signal( SIGINT, SIG_IGN );
-				  TCL_READ_ERR_return;
+
+				if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+					TCL_READ_ERR_return;
+				comb = (struct rt_comb_internal *)intern.idb_ptr;
+				if( comb->region_id != 0 ||
+					comb->aircode != item )
+				{
+					rt_comb_ifree( &intern );
+					continue;
 				}
-				if( rec.c.c_regionid != 0 ||
-					rec.c.c_aircode != item )
-						continue;
+				rt_comb_ifree( &intern );
 
 				bu_vls_strcat( &v, " " );
 				bu_vls_strcat( &v, dp->d_namep );
@@ -2166,7 +2172,6 @@ char **argv;
 		new_argv = (char **)bu_calloc( lim+1, sizeof( char *), "f_eac: new_argv" );
 		new_argc = rt_split_cmd( new_argv, lim+1, bu_vls_addr( &v ) );
 		retval = f_edit( clientData, interp, new_argc, new_argv );
-		bu_vls_free( &v );
 		bu_free( (genptr_t)new_argv, "f_eac: new_argv" );
 		bu_vls_free( &v );
 		(void)signal( SIGINT, SIG_IGN );
