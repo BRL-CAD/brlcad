@@ -293,6 +293,52 @@ struct vertexuse *vu;
 	rt_log("How did I get here %s %d?\n", __FILE__, __LINE__);
 	rt_bomb("nmg_find_fu_of_vu()\n");
 }
+/*
+ *			N M G _ F I N D _ F U _ W I T H _ F G _ I N _ S
+ *
+ *  Find a faceuse in shell s1 that shares the face_g structure with
+ *  fu2 and has the same orientation.
+ *  This may be an OT_OPPOSITE faceuse, depending on orientation.
+ *  Returns NULL if no such faceuse can be found in s1.
+ */
+struct faceuse *
+nmg_find_fu_with_fg_in_s( s1, fu2 )
+CONST struct shell	*s1;
+CONST struct faceuse	*fu2;
+{
+	struct faceuse		*fu1;
+	struct face		*f2;
+	register struct face_g	*fg2;
+
+	NMG_CK_SHELL(s1);
+	NMG_CK_FACEUSE(fu2);
+
+	f2 = fu2->f_p;
+	NMG_CK_FACE(f2);
+	fg2 = f2->fg_p;
+	NMG_CK_FACE_G(fg2);
+
+	for( RT_LIST_FOR( fu1, faceuse, &s1->fu_hd ) )  {
+		register struct face	*f1;
+		register struct	face_g	*fg1;
+		int			flip1, flip2;
+
+		NMG_CK_FACEUSE(fu1);
+		f1 = fu1->f_p;
+		NMG_CK_FACE(f1);
+		fg1 = fu1->f_p->fg_p;
+		NMG_CK_FACE_G(fg1);
+
+		if( fg1 != fg2 )  continue;
+
+		/* Face geometry matches, select fu1 or it's mate */
+		flip1 = (fu1->orientation != OT_SAME) != (f1->flip != 0);
+		flip2 = (fu2->orientation != OT_SAME) != (f2->flip != 0);
+		if( flip1 == flip2 )  return fu1;
+		return fu1->fumate_p;
+	}
+	return (struct faceuse *)NULL;
+}
 
 /************************************************************************
  *									*
@@ -1334,6 +1380,7 @@ int		first;
  *
  *  Given an nmgregion, build an nmg_ptbl list which has each edge
  *  pointer in the region listed exactly once.
+ * XXX How about changing to take magic_p, make name nmg_edge_tabulate() ?
  */
 
 void
@@ -1358,6 +1405,114 @@ struct nmgregion *r;
 	handlers = nmg_visit_handlers_null;             /* struct copy */
 	handlers.vis_edge = nmg_2ref_handler;
 	nmg_visit( &r->l.magic, &handlers, (genptr_t)&st );
+
+	rt_free( (char *)st.visited, "visited[]");
+}
+
+/*
+ *			N M G _ 2 E D G E U S E _ H A N D L E R
+ *
+ *  A private support routine for nmg_edgeuse_tabulate().
+ *  Having just visited a edgeuse, if this is the first time,
+ *  add it to the nmg_ptbl array.
+ */
+static void
+nmg_2edgeuse_handler( eup, state, first )
+long		*eup;
+genptr_t	state;
+int		first;
+{
+	register struct vf_state *sp = (struct vf_state *)state;
+	register struct edgeuse	*eu = (struct edgeuse *)eup;
+
+	NMG_CK_EDGEUSE(eu);
+	/* If this edgeuse has been processed before, do nothing more */
+	if( !NMG_INDEX_FIRST_TIME(sp->visited, eu) )  return;
+
+	nmg_tbl( sp->tabl, TBL_INS, eup );
+}
+
+/*
+ *			N M G _ E D G E U S E _ T A B U L A T E
+ *
+ *  Given a pointer to any nmg data structure,
+ *  build an nmg_ptbl list which has every edgeuse
+ *  pointer from there on "down" in the model, each one listed exactly once.
+ */
+void
+nmg_edgeuse_tabulate( tab, magic_p )
+struct nmg_ptbl		*tab;
+CONST long		*magic_p;
+{
+	struct model		*m;
+	struct vf_state		st;
+	struct nmg_visit_handlers	handlers;
+
+	m = nmg_find_model( magic_p );
+	NMG_CK_MODEL(m);
+
+	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.tabl = tab;
+
+	(void)nmg_tbl( tab, TBL_INIT, 0 );
+
+	handlers = nmg_visit_handlers_null;		/* struct copy */
+	handlers.bef_edgeuse = nmg_2edgeuse_handler;
+	nmg_visit( &m->magic, &handlers, (genptr_t)&st );
+
+	rt_free( (char *)st.visited, "visited[]");
+}
+
+/*
+ *			N M G _ 2 F A C E _ H A N D L E R
+ *
+ *  A private support routine for nmg_face_tabulate().
+ *  Having just visited a face, if this is the first time,
+ *  add it to the nmg_ptbl array.
+ */
+static void
+nmg_2face_handler( fp, state, first )
+long		*fp;
+genptr_t	state;
+int		first;
+{
+	register struct vf_state *sp = (struct vf_state *)state;
+	register struct face	*f = (struct face *)fp;
+
+	NMG_CK_FACE(f);
+	/* If this face has been processed before, do nothing more */
+	if( !NMG_INDEX_FIRST_TIME(sp->visited, f) )  return;
+
+	nmg_tbl( sp->tabl, TBL_INS, fp );
+}
+
+/*
+ *			N M G _ F A C E _ T A B U L A T E
+ *
+ *  Given a pointer to any nmg data structure,
+ *  build an nmg_ptbl list which has every face
+ *  pointer from there on "down" in the model, each one listed exactly once.
+ */
+void
+nmg_face_tabulate( tab, magic_p )
+struct nmg_ptbl		*tab;
+CONST long		*magic_p;
+{
+	struct model		*m;
+	struct vf_state		st;
+	struct nmg_visit_handlers	handlers;
+
+	m = nmg_find_model( magic_p );
+	NMG_CK_MODEL(m);
+
+	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.tabl = tab;
+
+	(void)nmg_tbl( tab, TBL_INIT, 0 );
+
+	handlers = nmg_visit_handlers_null;		/* struct copy */
+	handlers.vis_face = nmg_2face_handler;
+	nmg_visit( &m->magic, &handlers, (genptr_t)&st );
 
 	rt_free( (char *)st.visited, "visited[]");
 }
