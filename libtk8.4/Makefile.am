@@ -15,8 +15,8 @@ configure:
 
 
 all-am:
-	if [ ! -d build ] ; then make configure ; fi
-	if [ ! -e build/Makefile ] ; then rm -rf build && make configure ; fi
+	if [ ! -d build ] ; then $(MAKE) configure ; fi
+	if [ ! -e build/Makefile ] ; then rm -rf build && $(MAKE) configure ; fi
 	$(MAKE) -$(MAKEFLAGS) -C build all
 
 install-am:
