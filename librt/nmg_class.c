@@ -653,15 +653,17 @@ CONST struct rt_tol	*tol;
 	    (euv_cl == OUTSIDE && matev_cl == INSIDE)) {
 	    	nmg_pr_class_status("eu vu", euv_cl);
 	    	nmg_pr_class_status("eumate vu", matev_cl);
-	    	/* Do them over, so we can watch */
-		rt_g.NMG_debug |= DEBUG_CLASSIFY;
-		(void)class_vu_vs_s(eu->vu_p, s, classlist, tol);
-		(void)class_vu_vs_s(eu->eumate_p->vu_p, s, classlist, tol);
+	    	if( rt_g.debug || rt_g.NMG_debug )  {
+		    	/* Do them over, so we can watch */
+			rt_g.NMG_debug |= DEBUG_CLASSIFY;
+			(void)class_vu_vs_s(eu->vu_p, s, classlist, tol);
+			(void)class_vu_vs_s(eu->eumate_p->vu_p, s, classlist, tol);
+		    	EUPRINT("didn't this edge get cut?", eu);
+		    	nmg_pr_eu(eu, "  ");
+	    	}
 
-	    	EUPRINT("didn't this edge get cut?", eu);
-	    	nmg_pr_eu(eu, "  ");
-		rt_bomb("class_eu_vs_s\n");
-	    }
+		rt_bomb("class_eu_vs_s:  edge didn't get cut\n");
+	}
 
 	if (euv_cl == ON_SURF && matev_cl == ON_SURF) {
 		/* check for radial uses of this edge by the shell */
@@ -803,31 +805,33 @@ CONST struct rt_tol	*tol;
 	if (in > 0 && out > 0) {
 		FILE *fd;
 		rt_log("Loopuse edges in:%d on:%d out:%d\n", in, on, out);
-		for(RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-			if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
-				fprintf(stderr, "In:  ");
-			else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p))
-				fprintf(stderr, "Out: ");
-			else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p))
-				fprintf(stderr, "On:  ");
-			else
-				fprintf(stderr, "Unknown edge class? ");
-			EUPRINT("edgeuse", eu);
-		}
+		if( rt_g.NMG_debug )  {
+			for(RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+				if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
+					fprintf(stderr, "In:  ");
+				else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p))
+					fprintf(stderr, "Out: ");
+				else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p))
+					fprintf(stderr, "On:  ");
+				else
+					fprintf(stderr, "Unknown edge class? ");
+				EUPRINT("edgeuse", eu);
+			}
 
-		if ((fd=fopen("badloop.pl", "w")) != NULL) {
-			long *b;
-			struct model *m;
+			if ((fd=fopen("badloop.pl", "w")) != NULL) {
+				long *b;
+				struct model *m;
 
-			m = nmg_find_model(lu->up.magic_p);
+				m = nmg_find_model(lu->up.magic_p);
 			
-			b = (long *)rt_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
+				b = (long *)rt_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
 
-			nmg_pl_lu(fd, lu, b, 255, 255, 255);
-			fclose(fd);
+				nmg_pl_lu(fd, lu, b, 255, 255, 255);
+				fclose(fd);
+			}
+			nmg_pr_lu(lu, "");
+			nmg_stash_model_to_file( "class.g", nmg_find_model((long *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
 		}
-		nmg_pr_lu(lu, "");
-		nmg_stash_model_to_file( "class.g", nmg_find_model((long *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
 		rt_bomb("class_lu_vs_s: loop transits plane of shell/face?\n");
 	}
 	if (out > 0) {

@@ -1353,11 +1353,14 @@ fastf_t			*mag2;
 			nmg_state_names[rs1->state],
 			nmg_state_names[rs2->state] );
 
-		/* Drop a plot file */
-		rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT|DEBUG_PLOTEM;
-		nmg_pl_comb_fu( 0, 1, rs1->fu1 );
-		nmg_pl_comb_fu( 0, 2, rs1->fu2 );
+		if( rt_g.debug || rt_g.NMG_debug )  {
+			/* Drop a plot file */
+			rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT|DEBUG_PLOTEM;
+			nmg_pl_comb_fu( 0, 1, rs1->fu1 );
+			nmg_pl_comb_fu( 0, 2, rs1->fu2 );
+		}
 
+		rt_log("nmg_face_combine() bad ending state\n");
 /*		rt_bomb("nmg_face_combine() bad ending state\n"); */
 	}
 }
@@ -1832,7 +1835,7 @@ rt_log("force next eu to ray\n");
 			vu, pos,
 			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
 			nmg_state_names[new_state], action_names[action] );
-	     if( rt_g.NMG_debug )  {
+	     if( rt_g.debug || rt_g.NMG_debug )  {
 		/* First, print this faceuse */
 		lu = nmg_lu_of_vu( vu );
 		/* Drop a plot file */
@@ -1897,9 +1900,9 @@ rt_log("force next eu to ray\n");
 		prev_vu = rs->vu[pos-1];
 		NMG_CK_VERTEXUSE(prev_vu);
 		prev_lu = nmg_lu_of_vu( prev_vu );
-		if( prev_lu != lu )  rt_bomb("nmg_face_state_transition: prev_vu not on same loop\n");
+		if( prev_lu->l_p != lu->l_p )  rt_bomb("nmg_face_state_transition: prev_vu not on same loop\n");
 /* XXX sometimes up is a vu */
-		if( *prev_vu->up.magic_p != NMG_MAGIC_EDGEUSE )  rt_bomb("nmg_face_state_transition: prev_vu->up is not an edge\n");
+		if( *prev_vu->up.magic_p != NMG_EDGEUSE_MAGIC )  rt_bomb("nmg_face_state_transition: prev_vu->up is not an edge\n");
 		eu = prev_vu->up.eu_p;
 		NMG_CK_EDGEUSE(eu);
 		e_assessment = nmg_assess_eu( eu, 1, rs, pos-1 );	/* forw */
