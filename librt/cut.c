@@ -86,8 +86,8 @@ register struct rt_i *rtip;
 	rt_ct_optim( &rtip->rti_CutHead, 0 );
 
 	/* Measure the depth of tree, find max # of RPPs in a cut node */
-	rt_hist_init( &rtip->rti_hist_cellsize, 0, rtip->nsolids/4, 50 );
-	rt_hist_init( &rtip->rti_hist_cutdepth, 0, rt_cutDepth+10, 50 );
+	rt_hist_init( &rtip->rti_hist_cellsize, 0, 100, 100 );
+	rt_hist_init( &rtip->rti_hist_cutdepth, 0, rt_cutDepth+1, 100 );
 	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
 	rt_ct_measure( rtip, &rtip->rti_inf_box, 0 );
 	if(rt_g.debug&DEBUG_CUT)  {
