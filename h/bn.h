@@ -840,6 +840,9 @@ BU_EXTERN(void			bn_tabdata_constval, (struct bn_tabdata	*data, double val));
 BU_EXTERN(struct bn_tabdata	*bn_tabdata_from_array, (CONST double *array));
 BU_EXTERN(struct bn_table	*bn_table_merge2, (CONST struct bn_table *a,
 				CONST struct bn_table *b));
+BU_EXTERN(struct bn_tabdata	*bn_tabdata_mk_linear_filter,
+					(CONST struct bn_table *spectrum,
+					double lower_wavelen, double upper_wavelen));
 
 /*----------------------------------------------------------------------*/
 /* vlist.c */
