@@ -7,6 +7,7 @@
 
 # Ensure /bin/sh
 export PATH || (sh $0 $*; kill $$)
+path_to_perf_sh=`dirname $0`
 
 NAME=$0
 if test "x$1" = x
@@ -21,9 +22,22 @@ HOST="$1"
 NOTE1="$2"
 NOTE2="$3"
 
-NEW_FILES="moss.log world.log star.log bldg391.log m35.log sphflake.log"
-REF_FILES="../pix/moss.log ../pix/world.log ../pix/star.log \
-	../pix/bldg391.log ../pix/m35.log ../pix/sphflake.log"
+NEW_FILES=" \
+	moss.log \
+	world.log \
+	star.log \
+	bldg391.log \
+	m35.log \
+	sphflake.log \
+"
+REF_FILES=" \
+	$path_to_perf_sh/../pix/moss.log \
+	$path_to_perf_sh/../pix/world.log \
+	$path_to_perf_sh/../pix/star.log \
+	$path_to_perf_sh/../pix/bldg391.log \
+	$path_to_perf_sh/../pix/m35.log \
+	$path_to_perf_sh/../pix/sphflake.log \
+"
 
 for i in $NEW_FILES $REF_FILES
 do

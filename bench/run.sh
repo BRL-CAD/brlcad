@@ -9,11 +9,12 @@ echo "================================="
 
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+path_to_run_sh=`dirname $0`
 
 eval `machinetype.sh -b 2> /dev/null`	# sets MACHINE, UNIXTYPE, HAS_TCP
 if test "x$MACHINE" = "x" ; then
     echo Looking for machinetype.sh...
-    eval `../sh/machinetype.sh -b 2> /dev/null`
+    eval `$path_to_run_sh/../sh/machinetype.sh -b 2> /dev/null`
     if test "x$MACHINE" = "x" ; then
         echo WARNING: could not find machinetype.sh
         # try _something_, linux is pretty popular
@@ -27,18 +28,19 @@ echo Looking for RT...
 # find RT (environment variable overrides)
 if test "x${RT}" = "x" ; then
 	echo ...checking for NFS or local build...
+	echo "pwd is `pwd`  and $0"
 	# check for NFS build
-	if test -x ../.rt.$MACHINE/rt ;	then
+	if test -x $path_to_run_sh/../.rt.$MACHINE/rt ;	then
 		echo ...found NFS build
-		RT=../.rt.$MACHINE/rt
-		if test x${DB} != x ; then DB=../.db.$MACHINE ; fi
-		LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.liboptical.$MACHINE:../.libitcl3.2.$MACHINE:../.libtcl8.3.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
+		RT=$path_to_run_sh/../.rt.$MACHINE/rt
+		if test x${DB} != x ; then DB=$path_to_run_sh/../.db.$MACHINE ; fi
+		LD_LIBRARY_PATH=$path_to_run_sh/../.libbu.$MACHINE:$path_to_run_sh/../.libbn.$MACHINE:$path_to_run_sh/../.liboptical.$MACHINE:$path_to_run_sh/../.libitcl3.2.$MACHINE:$path_to_run_sh/../.libtcl8.3.$MACHINE:$path_to_run_sh/../.librt.$MACHINE:$path_to_run_sh/../.libfb.$MACHINE:$path_to_run_sh/../.libpkg.$MACHINE:$path_to_run_sh/../.libsysv.$MACHINE:$LD_LIBRARY_PATH
 	# check for local build
-	elif test -f ../rt/rt ;	then
+	elif test -f $path_to_run_sh/../rt/rt ;	then
 		echo ...found local build
-		RT=../rt/rt
-		if test x${DB} != x ; then DB=../db ; fi
-		LD_LIBRARY_PATH=../libbu:../libbn:../liboptical:../libitcl3.2:../libtcl8.3:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
+		RT=$path_to_run_sh/../rt/rt
+		if test x${DB} != x ; then DB=$path_to_run_sh/../db ; fi
+		LD_LIBRARY_PATH=$path_to_run_sh/../libbu:$path_to_run_sh/../libbn:$path_to_run_sh/../liboptical:$path_to_run_sh/../libitcl3.2:$path_to_run_sh/../libtcl8.3:$path_to_run_sh/../librt:$path_to_run_sh/../libfb:$path_to_run_sh/../libpkg:$path_to_run_sh/../libsysv:$LD_LIBRARY_PATH
 	fi
 fi
 
@@ -48,15 +50,15 @@ echo Looking for geometry database directory...
 if test "x${DB}" = "x" ; then
 	echo ...checking for NFS or local build...	
 	# check for NFS build
-	if test -f ../.db.$MACHINE/sphflake.g ;	then 
+	if test -f $path_to_run_sh/../.db.$MACHINE/sphflake.g ;	then 
 		echo ...found NFS build
-		DB=../.db.$MACHINE
-		LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.liboptical.$MACHINE:../.libitcl3.2.$MACHINE:../.libtcl8.3.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
+		DB=$path_to_run_sh/../.db.$MACHINE
+		LD_LIBRARY_PATH=$path_to_run_sh/../.libbu.$MACHINE:$path_to_run_sh/../.libbn.$MACHINE:$path_to_run_sh/../.liboptical.$MACHINE:$path_to_run_sh/../.libitcl3.2.$MACHINE:$path_to_run_sh/../.libtcl8.3.$MACHINE:$path_to_run_sh/../.librt.$MACHINE:$path_to_run_sh/../.libfb.$MACHINE:$path_to_run_sh/../.libpkg.$MACHINE:$path_to_run_sh/../.libsysv.$MACHINE:$LD_LIBRARY_PATH
 	# check for local build
-	elif test -f ../db/sphflake.g ; then
+	elif test -f $path_to_run_sh/../db/sphflake.g ; then
 		echo ...found local build
-		DB=../db
-		LD_LIBRARY_PATH=../libbu:../libbn:../liboptical:../libitcl3.2:../libtcl8.3:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
+		DB=$path_to_run_sh/../db
+		LD_LIBRARY_PATH=$path_to_run_sh/../libbu:$path_to_run_sh/../libbn:$path_to_run_sh/../liboptical:$path_to_run_sh/../libitcl3.2:$path_to_run_sh/../libtcl8.3:$path_to_run_sh/../librt:$path_to_run_sh/../libfb:$path_to_run_sh/../libpkg:$path_to_run_sh/../libsysv:$LD_LIBRARY_PATH
 	fi
 
 fi
@@ -66,12 +68,12 @@ echo Checking for pixel comparison utility...
 # CMP environment variable overrides
 if test "x${CMP}" = "x" ; then
 	echo ...checking for NFS of local build...
-	if test -x ../.bench.$MACHINE/pixcmp ; then
+	if test -x $path_to_run_sh/../.bench.$MACHINE/pixcmp ; then
 		echo ...found NFS build
-		CMP=../.bench.$MACHINE/pixcmp
-	elif test -x ./pixcmp ;	then
+		CMP=$path_to_run_sh/../.bench.$MACHINE/pixcmp
+	elif test -x $path_to_run_sh/pixcmp ;	then
 		echo ...found local build
-		CMP=./pixcmp
+		CMP=$path_to_run_sh/pixcmp
 	else
 		echo ...need to build pixcmp
 		cake >& /dev/null
@@ -88,8 +90,8 @@ if test "x${CMP}" = "x" ; then
 			fi
 		fi
 		echo ...building pixcmp with $CC
-		$CC -o pixcmp -I../h pixcmp.c
-		CMP=./pixcmp
+		$CC -o pixcmp -I$path_to_run_sh/../h pixcmp.c
+		CMP=$path_to_run_sh/pixcmp
 	fi
 fi
 
@@ -146,7 +148,7 @@ start 0;
 end;
 EOF
 if test -f gmon.out; then mv -f gmon.out gmon.moss.out; fi
-${CMP} ../pix/moss.pix moss.pix
+${CMP} $path_to_run_sh/../pix/moss.pix moss.pix
 if test $? = 0 ; then
 	echo moss.pix:  answers are RIGHT
 else
@@ -172,7 +174,7 @@ start 0;
 end;
 EOF
 if test -f gmon.out; then mv -f gmon.out gmon.world.out; fi
-${CMP} ../pix/world.pix world.pix
+${CMP} $path_to_run_sh/../pix/world.pix world.pix
 if test $? = 0 ; then
 	echo world.pix:  answers are RIGHT
 else
@@ -197,7 +199,7 @@ start 0;
 end;
 EOF
 if test -f gmon.out; then mv -f gmon.out gmon.star.out; fi
-${CMP} ../pix/star.pix star.pix
+${CMP} $path_to_run_sh/../pix/star.pix star.pix
 if test $? = 0 ; then
 	echo star.pix:  answers are RIGHT
 else
@@ -223,7 +225,7 @@ start 0;
 end;
 EOF
 if test -f gmon.out; then mv -f gmon.out gmon.bldg391.out; fi
-${CMP} ../pix/bldg391.pix bldg391.pix
+${CMP} $path_to_run_sh/../pix/bldg391.pix bldg391.pix
 if test $? = 0 ; then
 	echo bldg391.pix:  answers are RIGHT
 else
@@ -248,7 +250,7 @@ start 0;
 end;
 EOF
 if test -f gmon.out; then mv -f gmon.out gmon.m35.out; fi
-${CMP} ../pix/m35.pix m35.pix
+${CMP} $path_to_run_sh/../pix/m35.pix m35.pix
 if test $? = 0 ; then
 	echo m35.pix:  answers are RIGHT
 else
@@ -271,16 +273,12 @@ start 0;
 end;
 EOF
 if test -f gmon.out; then mv -f gmon.out gmon.sphflake.out; fi
-${CMP} ../pix/sphflake.pix sphflake.pix
+${CMP} $path_to_run_sh/../pix/sphflake.pix sphflake.pix
 if test $? = 0 ; then
 	echo sphflake.pix:  answers are RIGHT
 else
 	echo sphflake.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
 fi
-
-
-echo
-echo Testing complete, check times against reference files in ../pix/.
 
 if test x$UNIXTYPE = xBSD ; then
 	HOST=`hostname`
@@ -288,4 +286,15 @@ else
 	HOST=`uname -n`
 fi
 
-sh ../bench/perf.sh "$HOST" "`date`" "$*" >> summary
+sh $path_to_run_sh/../bench/perf.sh "$HOST" "`date`" "$*" >> summary
+ret=$?
+if ! test $ret = 0 ; then
+    tail -1 summary
+    exit $ret
+else
+    echo
+    echo "Summary:"
+    tail -2 summary
+fi
+echo
+echo Testing complete, check times against reference files in $path_to_run_sh/../pix/.
