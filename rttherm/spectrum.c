@@ -399,7 +399,8 @@ CONST char	*filename;
 
 	RES_ACQUIRE( &rt_g.res_syscall );
 	for( j=0; j <= spect->nwave; j++ )  {
-		fscanf( fp, "%g", spect->wavel[j] );
+		/* XXX assumes fastf_t == double */
+		fscanf( fp, "%lf", &spect->wavel[j] );
 	}
 	fclose(fp);
 	RES_RELEASE( &rt_g.res_syscall );
@@ -480,7 +481,7 @@ unsigned int		n;		/* # wavelengths to eval at */
 	RT_CK_SPECT_SAMPLE(ss);
 	spect = ss->spectrum;
 	RT_CK_SPECTRUM(spect);
-rt_log("rt_spect_black_body( x%x, %g degK ) %g um to %g um\n", ss, temp,
+if(rt_g.debug) rt_log("rt_spect_black_body( x%x, %g degK ) %g um to %g um\n", ss, temp,
 spect->wavel[0] * 0.001,	/* nm to um */
 spect->wavel[spect->nwave] * 0.001	/* nm to um */
 );
@@ -534,7 +535,7 @@ double			temp;		/* Degrees Kelvin */
 	RT_CK_SPECT_SAMPLE(ss);
 	spect = ss->spectrum;
 	RT_CK_SPECTRUM(spect);
-rt_log("rt_spect_black_body_fast( x%x, %g degK )\n", ss, temp );
+if(rt_g.debug) rt_log("rt_spect_black_body_fast( x%x, %g degK )\n", ss, temp );
 
 	for( j = 0; j < spect->nwave; j++ )  {
 		ss->val[j] = PLANCK( (spect->wavel[j]*0.001), temp ) *
@@ -560,7 +561,7 @@ double			temp;		/* Degrees Kelvin */
 	RT_CK_SPECT_SAMPLE(ss);
 	spect = ss->spectrum;
 	RT_CK_SPECTRUM(spect);
-rt_log("rt_spect_black_body_points( x%x, %g degK )\n", ss, temp );
+if(rt_g.debug) rt_log("rt_spect_black_body_points( x%x, %g degK )\n", ss, temp );
 
 	for( j = 0; j < spect->nwave; j++ )  {
 		ss->val[j] = PLANCK( (spect->wavel[j]*0.001), temp );
