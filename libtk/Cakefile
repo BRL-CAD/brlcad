@@ -34,7 +34,7 @@ PRODUCTS: Makefile.MTYPE cache.MTYPE
 	make `echo CAKEFLAGS | tr '\040' '\012' | grep -- -s` -f Makefile.MTYPE
 
 Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYPE
-	( \C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER -DTK_NO_SECURITY\"; \
+	( \C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER\"; \
 		\A\F\T\E\R\_\M\A\K\E=\"AFTER_MAKE\"; \
 		\R\A\N\L\I\B=\"RANLIB\";\
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
