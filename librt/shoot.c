@@ -345,7 +345,7 @@ if(rt_g.debug&DEBUG_ADVANCE)bu_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X 
 }
 #else
 
-#define MUCHO_DIAGS	0
+#define MUCHO_DIAGS	1
 /*
  *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
  *
@@ -384,8 +384,6 @@ register struct shootray_status	*ssp;
 		 */
 		ssp->dist_corr = ssp->box_start + OFFSET_DIST;
 top:
-		if( ssp->dist_corr >= ssp->model_end )
-			break;	/* done! */
 		/* VJOIN1( pt, ap->a_ray.r_pt, ssp->dist_corr, ap->a_ray.r_dir ); */
 		px = ap->a_ray.r_pt[X] + ssp->dist_corr * ap->a_ray.r_dir[X];
 		py = ap->a_ray.r_pt[Y] + ssp->dist_corr * ap->a_ray.r_dir[Y];
@@ -393,6 +391,16 @@ top:
 		if( rt_g.debug&DEBUG_ADVANCE) {
 			bu_log("rt_advance_to_next_cell() dist_corr=%g, pt=(%g, %g, %g)\n",
 				ssp->dist_corr, px, py, pz );
+		}
+		/* !RT_POINT_IN_RPP() */
+		if( !(
+		       ( px >= ap->a_rt_i->mdl_min[X] && px <= ap->a_rt_i->mdl_max[X] ) &&
+		       ( py >= ap->a_rt_i->mdl_min[Y] && py <= ap->a_rt_i->mdl_max[Y] ) &&
+		       ( pz >= ap->a_rt_i->mdl_min[Z] && pz <= ap->a_rt_i->mdl_max[Z] )
+		     )
+		) {
+			/* Point outside model RPP */
+			break;	/* done! */
 		}
 
 		cutp = &(ap->a_rt_i->rti_CutHead);
@@ -446,55 +454,51 @@ top:
 
 		/* Don't get stuck within the same box for long */
 		if( cutp==ssp->lastcut )  {
+			fastf_t	delta;
 push:			;
 		     	if( rt_g.debug & DEBUG_ADVANCE )  {
 				bu_log("%d,%d box push odist_corr=%.20e n=%.20e model_end=%.20e\n",
 					ap->a_x, ap->a_y,
 					ssp->odist_corr, ssp->dist_corr, ssp->model_end );
-				bu_log("box_start o=%.20e n=%.20e, box_end o=%.20e n=%.20e\n",
+				bu_log("box_start o=%.20e n=%.20e\nbox_end   o=%.20e n=%.20e\n",
 					ssp->obox_start, ssp->box_start,
 					ssp->obox_end, ssp->box_end );
 				bu_log("Point=(%g,%g,%g)\n", px, py, pz );
 				VPRINT("Dir", ssp->newray.r_dir);
-#if MUCHO_DIAGS
 			     	rt_pr_cut( cutp, 0 );
-#endif
 		     	}
 
 			/* Advance 1mm, or smallest value that hardware
 			 * floating point resolution will allow.
 			 */
 			fraction = frexp( ssp->box_end, &exponent );
-#if MUCHO_DIAGS
-		     	if( rt_g.debug & DEBUG_ADVANCE )  {
-				bu_log("frexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
-		     	}
-#endif
-			if( exponent <= 0 )  {
-				/* Never advance less than 1mm */
-				ssp->box_start = ssp->box_end + 1.0;
-			} else {
-				if( rt_g.debug & DEBUG_ADVANCE )  {
-					bu_log("exp=%d, fraction=%.20e\n", exponent, fraction);
-				}
-				if( sizeof(fastf_t) <= 4 )
-					fraction += 1.0e-5;
-				else
-					fraction += 1.0e-14;
-				ssp->box_start = ldexp( fraction, exponent );
-#if MUCHO_DIAGS
-		     	if( rt_g.debug & DEBUG_ADVANCE )  {
-				bu_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
-		     	}
-#endif
-			}
+
 			if( rt_g.debug & DEBUG_ADVANCE )  {
-				bu_log("push: was=%.20e, now=%.20e\n",
+				bu_log("exp=%d, fraction=%.20e\n", exponent, fraction);
+			}
+			if( sizeof(fastf_t) <= 4 )
+				fraction += 1.0e-5;
+			else
+				fraction += 1.0e-14;
+			delta = ldexp( fraction, exponent );
+#if MUCHO_DIAGS
+		     	if( rt_g.debug & DEBUG_ADVANCE )  {
+				bu_log("ldexp: delta=%g, fract=%g, exp=%d\n", delta, fraction, exponent);
+		     	}
+#endif
+			/* Never advance less than 1mm */
+			if( delta < 1 )  delta = 1.0;
+			ssp->box_start = ssp->box_end + delta;
+			ssp->box_end = ssp->box_start + delta;
+
+			if( rt_g.debug & DEBUG_ADVANCE )  {
+				bu_log("push%d: was=%.20e, now=%.20e\n\n",
+					push_flag,
 					ssp->box_end, ssp->box_start);
 			}
 			push_flag++;
-			if( push_flag > 7 )  {
-		     		bu_log("rt_advance_to_next_cell(): internal ERROR: infinite loop aborted, ray %d,%d truncated\n",
+			if( push_flag > 3 )  {
+		     		bu_log("rt_advance_to_next_cell(): INTERNAL ERROR: infinite loop aborted, ray %d,%d truncated\n",
 					ap->a_x, ap->a_y);
 				return CUTTER_NULL;
 			}
@@ -535,6 +539,8 @@ push:			;
 	/* Off the end of the model RPP */
      	if( rt_g.debug & DEBUG_ADVANCE )  {
      		bu_log("rt_advance_to_next_cell(): escaped model RPP\n");
+     		VPRINT("mdl_min", ap->a_rt_i->mdl_min);
+     		VPRINT("mdl_max", ap->a_rt_i->mdl_max);
      	}
 	return(CUTTER_NULL);
 }
