@@ -651,7 +651,7 @@ struct vertexuse_a {
 # define MINVAL(_a, _b) ((_a) < (_b) ? (_a) : (_b))
 #endif
 
-#define EUPRINT(_s, _eu)	euprint( (_s), (_eu) )
+#define EUPRINT(_s, _eu)	nmg_euprint( (_s), (_eu) )
 #define PLPRINT(_s, _pl) rt_log("%s %gx + %gy + %gz = %g\n", (_s), \
 	(_pl)[0], (_pl)[1], (_pl)[2], (_pl)[3])
 
@@ -697,57 +697,88 @@ struct nmg_boolstruct {
 #	define	NMG_EXTERN(type_and_name,args)	extern type_and_name()
 #endif
 
-NMG_EXTERN(struct model		*nmg_mmr, () );
-NMG_EXTERN(struct model		*nmg_mm, () );
+/* From file nmg_mk.c */
 NMG_EXTERN(struct model		*nmg_find_model, (long *magic_p) );
-NMG_EXTERN(struct shell 	*nmg_msv, (struct nmgregion *r_p) );
+NMG_EXTERN(struct model		*nmg_mm, () );
+NMG_EXTERN(struct model		*nmg_mmr, () );
 NMG_EXTERN(struct nmgregion	*nmg_mrsv, (struct model *m) );
+NMG_EXTERN(struct shell 	*nmg_msv, (struct nmgregion *r_p) );
 NMG_EXTERN(struct vertexuse	*nmg_mvu, (struct vertex *v, long *upptr) );
 NMG_EXTERN(struct vertexuse	*nmg_mvvu, (long *upptr) );
 NMG_EXTERN(struct edgeuse	*nmg_me, (struct vertex *v1, struct vertex *v2, struct shell *s) );
+NMG_EXTERN(void			nmg_ck_list, (struct nmg_list *hd, char *str) );
 NMG_EXTERN(struct edgeuse	*nmg_meonvu, (struct vertexuse *vu) );
-NMG_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
 NMG_EXTERN(struct loopuse	*nmg_ml, (struct shell *s) );
-NMG_EXTERN(struct loopuse	*nmg_mlv, (long *magic, struct vertex *v, int orientation) );
+NMG_EXTERN(void			nmg_movevu, (struct vertexuse *vu, struct vertex *v) );
+NMG_EXTERN(void			nmg_kvu, (struct vertexuse *vu) );
+NMG_EXTERN(void			nmg_kfu, (struct faceuse *fu1) );
+NMG_EXTERN(void			nmg_klu, (struct loopuse *lu1) );
 NMG_EXTERN(struct faceuse	*nmg_mf, (struct loopuse *lu1) );
-NMG_EXTERN(struct faceuse	*nmg_cface, (struct shell *s, struct vertex **vt,	int n) );
-NMG_EXTERN(struct faceuse	*nmg_cmface, (struct shell *s, struct vertex **vt[], int n) );
+NMG_EXTERN(void			nmg_keu, (struct edgeuse *eu) );
+NMG_EXTERN(void			nmg_ks, (struct shell *s) );
+NMG_EXTERN(void			nmg_kr, (struct nmgregion *r) );
+NMG_EXTERN(void			nmg_km, (struct model *m) );
+NMG_EXTERN(void			nmg_vertex_gv, (struct vertex *v, pointp_t pt) );
+NMG_EXTERN(void			nmg_loop_g, (struct loop *l) );
+NMG_EXTERN(void			nmg_face_g, (struct faceuse *fu, plane_t p) );
+NMG_EXTERN(void			nmg_face_bb, (struct face *f) );
+NMG_EXTERN(void			nmg_shell_a, (struct shell *s) );
+NMG_EXTERN(void			nmg_region_a, (struct nmgregion *r) );
 NMG_EXTERN(struct edgeuse	*nmg_eusplit, (struct vertex *v, struct edgeuse *oldeu) );
-NMG_EXTERN(struct edge	*nmg_esplit, (struct vertex *v, struct edge *e) );
-NMG_EXTERN(char		*nmg_identify_magic, (long magic) );
-NMG_EXTERN(int		nmg_tbl, (struct nmg_ptbl *b, int func, long *p) );
-NMG_EXTERN(void		nmg_movevu, (struct vertexuse *vu, struct vertex *v) );
-NMG_EXTERN(void		nmg_kfu, (struct faceuse *fu1) );
-NMG_EXTERN(void		nmg_klu, (struct loopuse *lu1) );
-NMG_EXTERN(void		nmg_evu, (struct edgeuse *eu) );
-NMG_EXTERN(void		nmg_kvu, (struct vertexuse *vu) );
-NMG_EXTERN(void		nmg_keu, (struct edgeuse *eu) );
-NMG_EXTERN(void		nmg_ks, (struct shell *s) );
-NMG_EXTERN(void		nmg_kr, (struct nmgregion *r) );
-NMG_EXTERN(void		nmg_km, (struct model *m) );
-NMG_EXTERN(void		nmg_pr_m, (struct model *m) );
-NMG_EXTERN(void		nmg_pr_r, (struct nmgregion *r, char *h) );
-NMG_EXTERN(void		nmg_pr_s, (struct shell *s, char *h) );
-NMG_EXTERN(void		nmg_pr_fg, (struct face_g *fg, char *h) );
-NMG_EXTERN(void		nmg_pr_f, (struct face *f, char *h) );
-NMG_EXTERN(void		nmg_pr_fu, (struct faceuse *fu, char *h) );
-NMG_EXTERN(void		nmg_pr_l, (struct loop *l, char *h) );
-NMG_EXTERN(void		nmg_pr_lu, (struct loopuse *lu, char *h) );
-NMG_EXTERN(void		nmg_pr_e, (struct edge *e, char *h) );
-NMG_EXTERN(void		nmg_pr_eu, (struct edgeuse *eu, char *h) );
-NMG_EXTERN(void		nmg_pr_vg, (struct vertex_g *vg, char *h) );
-NMG_EXTERN(void		nmg_pr_v, (struct vertex *v, char *h) );
-NMG_EXTERN(void		nmg_pr_vu, (struct vertexuse *vu, char *h) );
-NMG_EXTERN(void		nmg_unglueedge, (struct edgeuse *eu) );
-NMG_EXTERN(void		nmg_moveeu, (struct edgeuse *eudst, struct edgeuse *eusrc) );
+NMG_EXTERN(void			nmg_moveeu, (struct edgeuse *eudst, struct edgeuse *eusrc) );
+NMG_EXTERN(void			nmg_unglueedge, (struct edgeuse *eu) );
+NMG_EXTERN(void			nmg_jv, (struct vertex *v1, struct vertex *v2) );
+NMG_EXTERN(struct loopuse	*nmg_mlv, (long *magic, struct vertex *v, int orientation) );
 NMG_EXTERN(void 		nmg_moveltof, (struct faceuse *fu, struct shell *s) );
-NMG_EXTERN(void		nmg_face_g, (struct faceuse *fu, plane_t p) );
-NMG_EXTERN(void		nmg_face_bb, (struct face *f) );
-NMG_EXTERN(void		nmg_vertex_gv, (struct vertex *v, pointp_t pt) );
-NMG_EXTERN(void		nmg_loop_g, (struct loop *l) );
-NMG_EXTERN(void		nmg_shell_a, (struct shell *s) );
-NMG_EXTERN(void		nmg_jv, (struct vertex *v1, struct vertex *v2) );
-NMG_EXTERN(void		nmg_moveltof, (struct faceuse *fu, struct shell *s) );
+NMG_EXTERN(struct faceuse	*nmg_cface, (struct shell *s, struct vertex **vt,	int n) );
+NMG_EXTERN(struct edge		*nmg_esplit, (struct vertex *v, struct edge *e) );
+NMG_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
+NMG_EXTERN(struct vertexuse	*nmg_find_vu_in_face, (point_t pt, struct faceuse *fu, fastf_t tol) );
+NMG_EXTERN(void			nmg_gluefaces, (struct faceuse *fulist[], int n) );
+NMG_EXTERN(struct edgeuse	*nmg_findeu, (struct vertex *v1, struct vertex *v2, struct shell *s, struct edgeuse *eup) );
+NMG_EXTERN(struct faceuse	*nmg_cmface, (struct shell *s, struct vertex **vt[], int n) );
+NMG_EXTERN(void			nmg_jl, (struct loopuse *lu, struct edgeuse *eu) );
+NMG_EXTERN(void			nmg_simplify_loop, (struct loopuse *lu) );
+/* kill_snakes */
+NMG_EXTERN(void			nmg_simplify_face, (struct faceuse *fu) );
+NMG_EXTERN(void			nmg_simplify_shell, (struct shell *s) );
+NMG_EXTERN(int			nmg_demote_lu, (struct loopuse *lu) );
+NMG_EXTERN(int			nmg_demote_eu, (struct edgeuse *eu) );
+/* nmg_eu_sq */
+
+/* From nmg_misc.c */
+NMG_EXTERN(char			*nmg_identify_magic, (long magic) );
+NMG_EXTERN(int			nmg_tbl, (struct nmg_ptbl *b, int func, long *p) );
+NMG_EXTERN(int			nmg_in_or_ref, (struct vertexuse *vu, struct nmg_ptbl *b) );
+NMG_EXTERN(void			nmg_pr_orient, (int orientation, char *h) );
+NMG_EXTERN(void			nmg_pr_m, (struct model *m) );
+NMG_EXTERN(void			nmg_pr_r, (struct nmgregion *r, char *h) );
+NMG_EXTERN(void			nmg_pr_sa, (struct shell_a *sa, char *h) );
+NMG_EXTERN(void			nmg_pr_lg, (struct loop_g *lg, char *h) );
+NMG_EXTERN(void			nmg_pr_fg, (struct face_g *fg, char *h) );
+NMG_EXTERN(void			nmg_pr_s, (struct shell *s, char *h) );
+NMG_EXTERN(void			nmg_pr_f, (struct face *f, char *h) );
+NMG_EXTERN(void			nmg_pr_fu, (struct faceuse *fu, char *h) );
+NMG_EXTERN(void			nmg_pr_l, (struct loop *l, char *h) );
+NMG_EXTERN(void			nmg_pr_lu, (struct loopuse *lu, char *h) );
+NMG_EXTERN(void			nmg_pr_e, (struct edge *e, char *h) );
+NMG_EXTERN(void			nmg_pr_eu, (struct edgeuse *eu, char *h) );
+NMG_EXTERN(void			nmg_pr_vg, (struct vertex_g *vg, char *h) );
+NMG_EXTERN(void			nmg_pr_v, (struct vertex *v, char *h) );
+NMG_EXTERN(void			nmg_pr_vu, (struct vertexuse *vu, char *h) );
+/* static nmg_check_radial */
+NMG_EXTERN(int			nmg_ck_closed_surf, (struct shell *s) );
+NMG_EXTERN(int			nmg_ck_closed_region, (struct nmgregion *r) );
+/* polytonmg */
+NMG_EXTERN(struct loopuse	*nmg_lu_of_vu, (struct vertexuse *vu) );
+NMG_EXTERN(struct shell		*nmg_lups, (struct loopuse *lu) );
+NMG_EXTERN(struct shell		*nmg_eups, (struct edgeuse *eu) );
+NMG_EXTERN(struct edgeuse	*nmg_faceradial, (struct edgeuse *eu) );
+NMG_EXTERN(int			nmg_manifold_face, (struct faceuse *fu) );
+NMG_EXTERN(void			nmg_euprint, (char *str, struct edgeuse *eu) );
+
+/* From nmg_plot.c */
+/* rt_vlblock_init, et.al. */
 NMG_EXTERN(void		nmg_pl_fu, (FILE *fp, struct faceuse *fu,
 					struct nmg_ptbl *b, int red,
 					int green, int blue ) );
@@ -763,25 +794,17 @@ NMG_EXTERN(void		nmg_pl_e, (FILE *fp, struct edge *e,
 NMG_EXTERN(void		nmg_pl_s, (FILE *fp, struct shell *s) );
 NMG_EXTERN(void		nmg_pl_r, (FILE *fp, struct nmgregion *r) );
 NMG_EXTERN(void		nmg_pl_m, (FILE *fp, struct model *m) );
-NMG_EXTERN(struct vertexuse	*nmg_find_vu_in_face, (point_t pt, struct faceuse *fu, fastf_t tol) );
 NMG_EXTERN(void		nmg_mesh_faces, (struct faceuse *fu1, struct faceuse *fu2) );
 NMG_EXTERN(void		nmg_isect_faces, (struct faceuse *fu1, struct faceuse *fu2) );
 NMG_EXTERN(struct nmgregion	*nmg_do_bool, (struct nmgregion *s1, struct nmgregion *s2, int oper, fastf_t tol) );
-NMG_EXTERN(int		nmg_ck_closed_surf, (struct shell *s) );
+NMG_EXTERN(void		nmg_ensure_vertex, (struct vertex *v, struct shell *s) );
 NMG_EXTERN(void		nmg_m_to_g, (FILE *fp, struct model *m) );
 NMG_EXTERN(void		nmg_r_to_g, (FILE *fp, struct nmgregion *r) );
 NMG_EXTERN(void		nmg_s_to_g, (FILE *fp, struct shell *s, unsigned char rgb[]) );
 NMG_EXTERN(struct shell	*polytonmg, (FILE *fd, struct nmgregion *r) );
 NMG_EXTERN(void		nmg_pr_orient, (int orientation, char *h) );
-NMG_EXTERN(int		nmg_manifold_face, (struct faceuse *fu) );
-NMG_EXTERN(int		nmg_demote_eu, (struct edgeuse *eu) );
-NMG_EXTERN(int		nmg_demote_lu, (struct loopuse *lu) );
-NMG_EXTERN(void		nmg_region_a, (struct nmgregion *r) );
 NMG_EXTERN(void		nmg_ck_lueu, (struct loopuse *cklu, char *s) );
-NMG_EXTERN(void		nmg_jl, (struct loopuse *lu, struct edgeuse *eu) );
-NMG_EXTERN(void		nmg_simplify_loop, (struct loopuse *lu) );
-NMG_EXTERN(void		nmg_simplify_face, (struct faceuse *fu) );
-NMG_EXTERN(void		nmg_simplify_shell, (struct shell *s) );
+NMG_EXTERN(void		nmg_evu, (struct edgeuse *eu) );
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
