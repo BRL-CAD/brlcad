@@ -458,7 +458,7 @@ printf("intersect planes are %d %d %d\n",i1+1,i2+1,i3+1);
 	VCROSS(vec3, &es_peqn[i1][0], &es_peqn[i2][0]);
 	for(i=0; i<3; i++) {
 		j = pos * 3 + i;
-		es_rec.s.s_values[j] = d * ((es_peqn[i1][3] * vec1[i])
+		sp->s_values[j] = d * ((es_peqn[i1][3] * vec1[i])
 					  - (es_peqn[i2][3] * vec2[i])
 					  + (es_peqn[i3][3] * vec3[i]));
 	}
