@@ -33,10 +33,20 @@
 #define DO_SINGLE_DISPLAY_LIST
 #endif
 
-#define GED_FACTOR 2048.0
-#define INV_GED_FACTOR 0.00048828125
-#define GED2PM1(x) (((fastf_t)(x))*INV_GED_FACTOR)
-#define DEGRAD  57.2957795130823208767981548141051703324054724665642
+#if !defined(PI)      /* sometimes found in math.h */
+#define PI 3.14159265358979323846264338327950288419716939937511
+#endif
+
+#define GED_MAX 2047.0
+#define GED_MIN -2048.0
+#define INV_GED 0.00048828125
+
+#define RAD2DEG 57.2957795130823208767981548141051703324054724665642
+#define DEG2RAD 0.01745329251994329573
+
+/* +-2048 to +-1 */
+#define GED2PM1(x) (((fastf_t)(x))*INV_GED)
+
 #define SL_TOL 0.03125  /* size of dead spot - 64/2048 */
 
 #define AMM_IDLE 0
@@ -104,13 +114,6 @@ struct shared_info {
   int	  _dv_1adc;
   int	  _dv_2adc;
   int	  _dv_distadc;
-  fastf_t _curs_x;
-  fastf_t _curs_y;
-  fastf_t _c_tdist;
-  fastf_t _angle1;
-  fastf_t _angle2;
-  fastf_t _adc_a1_deg;
-  fastf_t _adc_a2_deg;
 
   /* Rate stuff */
   int     _rateflag_model_tran;
@@ -233,6 +236,7 @@ struct dm_list {
   fastf_t _rect_height;		/* ------ normalized view coordinates.   */
 #endif
 
+  int _adc_auto;
   int _grid_auto_size;
   int _dml_mouse_dx;
   int _dml_mouse_dy;
@@ -294,13 +298,6 @@ struct dm_char_queue {
 #define cur_menu curr_dm_list->menu_vars->_cur_menu
 #define cur_item curr_dm_list->menu_vars->_cur_menu_item
 
-#define curs_x curr_dm_list->s_info->_curs_x
-#define curs_y curr_dm_list->s_info->_curs_y
-#define c_tdist curr_dm_list->s_info->_c_tdist
-#define angle1 curr_dm_list->s_info->_angle1
-#define angle2 curr_dm_list->s_info->_angle2
-#define adc_a1_deg curr_dm_list->s_info->_adc_a1_deg
-#define adc_a2_deg curr_dm_list->s_info->_adc_a2_deg
 #define dv_xadc curr_dm_list->s_info->_dv_xadc
 #define dv_yadc curr_dm_list->s_info->_dv_yadc
 #define dv_1adc curr_dm_list->s_info->_dv_1adc
@@ -388,6 +385,7 @@ struct dm_char_queue {
 #define rect_height curr_dm_list->_rect_height
 #endif
 
+#define adc_auto curr_dm_list->_adc_auto
 #define grid_auto_size curr_dm_list->_grid_auto_size
 #define dml_mouse_dx curr_dm_list->_dml_mouse_dx
 #define dml_mouse_dy curr_dm_list->_dml_mouse_dy
