@@ -1131,27 +1131,32 @@ struct rt_tol	*tol;
 		NMG_CK_VERTEX_G(vu_next->v_p->vg_p);
 		VSUB2(eu_dir, vu_next->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 		VUNITIZE(eu_dir);
+		
 		if (MAGSQ(eu_dir) >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
-				if (tri_debug)
-					rt_log("new_max 0x%08x %g %g %g -> %g %g %g vdot %g\n",
+				if (tri_debug) {
+					rt_log("\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
+					rt_log("\tnew_last/max 0x%08x %g %g %g -> %g %g %g vdot %g\n",
 						vu,
 						V3ARGS(vu->v_p->vg_p->coord),
 						V3ARGS(vu_next->v_p->vg_p->coord),
 						vu_dot);
+				}
 				dot_max = vu_dot;
-				*first_vu = vu;
+				*last_vu = vu;
 			}
 			if (vu_dot < dot_min) {
-				if (tri_debug)
-					rt_log("new_min 0x%08x %g %g %g -> %g %g %g vdot %g\n",
+				if (tri_debug) {
+					rt_log("\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
+					rt_log("\tnew_first/min 0x%08x %g %g %g -> %g %g %g vdot %g\n",
 						vu, 
 						V3ARGS(vu->v_p->vg_p->coord),
 						V3ARGS(vu_next->v_p->vg_p->coord),
 						vu_dot);
+				}
 
 				dot_min = vu_dot;
-				*last_vu = vu;
+				*first_vu = vu;
 			}
 		}
 
@@ -1165,22 +1170,26 @@ struct rt_tol	*tol;
 		VUNITIZE(eu_dir);
 		if (MAGSQ(eu_dir) >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
-				if (tri_debug)
-					rt_log("new_max 0x%08x %g %g %g <- %g %g %g vdot %g\n",
+				if (tri_debug) {
+					rt_log("\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
+					rt_log("\tnew_max 0x%08x %g %g %g <- %g %g %g vdot %g\n",
 						vu, 
 						V3ARGS(vu->v_p->vg_p->coord),
 						V3ARGS(vu_last->v_p->vg_p->coord),
 						vu_dot);
+				}
 				dot_max = vu_dot;
 				*first_vu = vu;
 			}
 			if (vu_dot < dot_min) {
-				if (tri_debug)
-					rt_log("new_min 0x%08x %g %g %g <- %g %g %g vdot %g\n",
+				if (tri_debug) {
+					rt_log("\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
+					rt_log("\tnew_min 0x%08x %g %g %g <- %g %g %g vdot %g\n",
 						vu,
 						V3ARGS(vu->v_p->vg_p->coord),
 						V3ARGS(vu_last->v_p->vg_p->coord),
 						vu_dot);
+				}
 				dot_min = vu_dot;
 				*last_vu = vu;
 			}
@@ -1220,6 +1229,7 @@ CONST struct rt_tol *tol;
 	VSUB2(dir, cut_vu2->v_p->vg_p->coord,
 		   cut_vu1->v_p->vg_p->coord);
 
+	VPRINT("\tdir", dir);
 	if ( ! (fu = nmg_find_fu_of_vu(cut_vu1)) ) {
 		rt_log("%s: %d no faceuse parent of vu\n", __FILE__, __LINE__);
 		rt_bomb("Bye now\n");
