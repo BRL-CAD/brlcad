@@ -1335,8 +1335,10 @@ struct rt_vlblock {
 /*
  *  Replacements for definitions from ../h/vmath.h
  */
+#undef V2PRINT
 #undef VPRINT
 #undef HPRINT
+#define V2PRINT(a,b)	rt_log("%s (%g, %g)\n", a, (b)[0], (b)[1] );
 #define VPRINT(a,b)	rt_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
 #define HPRINT(a,b)	rt_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
@@ -1769,9 +1771,13 @@ RT_EXTERN(int rt_isect_2lines, (fastf_t *t, fastf_t *u, CONST point_t p,
 RT_EXTERN(int rt_isect_line_lseg, (fastf_t *t, CONST point_t p,
 	CONST vect_t d, CONST point_t a, CONST point_t b,
 	CONST struct rt_tol *tol) );
-RT_EXTERN(double rt_dist_line_point, (CONST point_t pt, CONST vect_t dir,
-	CONST point_t a) );
-RT_EXTERN(double rt_dist_line_origin, (CONST point_t pt, CONST vect_t dir) );
+#define rt_dist_line_point(pt,dir,a)	rt_dist_line3_pt3(pt,dir,a)
+RT_EXTERN(double		rt_dist_line3_pt3, (CONST point_t pt,
+				CONST vect_t dir, CONST point_t a) );
+RT_EXTERN(double		rt_distsq_line3_pt3, (CONST point_t pt,
+				CONST vect_t dir, CONST point_t a));
+RT_EXTERN(double		rt_dist_line_origin, (CONST point_t pt,
+				CONST vect_t dir) );
 RT_EXTERN(double		rt_dist_line2_point2, (CONST point_t pt,
 				CONST vect_t dir, CONST point_t a));
 RT_EXTERN(double		rt_distsq_line2_point2, (CONST point_t pt,
@@ -1790,6 +1796,12 @@ RT_EXTERN(int rt_coplanar, (CONST plane_t a, CONST plane_t b,
 	CONST struct rt_tol *tol));
 RT_EXTERN(double		rt_angle_measure, (vect_t vec, CONST vect_t x_dir,
 				CONST vect_t y_dir));
+RT_EXTERN(double		rt_dist_pt3_along_line3, (CONST point_t	p,
+				CONST vect_t d, CONST point_t x));
+RT_EXTERN(double		rt_dist_pt2_along_line2, (CONST point_t p,
+				CONST vect_t d, CONST point_t x));
+RT_EXTERN(int			rt_between, (double left, double mid,
+				double right, CONST struct rt_tol *tol));
 
 
 /* CxDiv, CxSqrt */
