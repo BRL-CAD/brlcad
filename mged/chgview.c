@@ -502,7 +502,6 @@ sol_com:
 			dp->d_namep, dp->d_len-1 );
 		break;
 
-	case ID_STRINGSOL:
 	case ID_EBM:
 	case ID_VOL:
 		(void)printf("%s: %s\n", dp->d_namep, rp->ss.ss_str );
