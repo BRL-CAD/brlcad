@@ -1358,3 +1358,8 @@ proc rt_solid_list_callback { id } {
 	return
     }
 }
+
+proc rt_handle_configure { id } {
+    after cancel rt_set_fb_size $id
+    after idle rt_set_fb_size $id
+}

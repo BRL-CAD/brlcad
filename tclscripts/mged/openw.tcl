@@ -74,7 +74,7 @@ if ![info exists mged_default(multi_pane)] {
 }
 
 if ![info exists mged_default(config)] {
-    set mged_default(config) g
+    set mged_default(config) b
 }
 
 if [info exists env(DISPLAY)] {
@@ -2082,6 +2082,7 @@ do_rebind_keys $id
 
 # Throw away key events
 bind $mged_gui($id,top) <KeyPress> { break }
+bind $mged_gui($id,top) <Configure> "mged_handle_configure $id"
 
 set dbname [_mged_opendb]
 set_wm_title $id $dbname
@@ -2845,4 +2846,10 @@ proc get_cmd_win_height { id } {
     set fh [get_font_height .$id.t]
 
     return [expr $fh * $mged_gui($id,num_lines)]
+}
+
+proc mged_handle_configure { id } {
+    if [winfo exists .$id.rt] {
+	rt_handle_configure $id
+    }
 }
