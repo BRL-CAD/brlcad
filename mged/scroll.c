@@ -512,9 +512,10 @@ int y_top;
  *		-1 if pen is ABOVE scroll	(error)
  */
 int
-scroll_select( pen_x, pen_y )
+scroll_select( pen_x, pen_y, do_func )
 int		pen_x;
 register int	pen_y;
+int do_func;
 { 
 	register int		yy;
 	struct scroll_item	**m;
@@ -552,7 +553,8 @@ register int	pen_y;
 			/* See if hooked function has been specified */
 			if( mptr->scroll_func == ((void (*)())0) )  continue;
 
-			(*(mptr->scroll_func))(mptr, val);
+			if(do_func)
+			  (*(mptr->scroll_func))(mptr, val);
 #if 0
 			dmaflag = 1;
 #endif
