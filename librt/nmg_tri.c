@@ -1824,8 +1824,8 @@ int void_ok;
 	nmg_loop_g(new_lu->l_p, tol);
 
 	/* XXX Does anyone care about loopuse orientations at this stage?
-	nmg_lu_reorient( old_lu, tol );
-	nmg_lu_reorient( new_lu, tol );
+	nmg_lu_reorient( old_lu );
+	nmg_lu_reorient( new_lu );
 	 */
 
 	/* get the edgeuse of the new vertexuse we just created */
@@ -2204,7 +2204,7 @@ CONST struct rt_tol	*tol;
 
 				nmg_split_touchingloops(toplu, tol);
 				for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
-					nmg_lu_reorient(lu, tol);
+					nmg_lu_reorient(lu);
 
 			} else {
 
@@ -2638,7 +2638,7 @@ CONST struct rt_tol	*tol;
 
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
-		nmg_lu_reorient(lu, tol);
+		nmg_lu_reorient(lu);
 
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		plfu( fu, tbl2d );
