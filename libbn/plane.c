@@ -2387,7 +2387,7 @@ fail:
 	return 0;
 }
 
-#if 0
+#if 1
 /*
  *			B N _ I S E C T _ R A Y _ T R I
  *
@@ -2478,10 +2478,10 @@ CONST point_t B;
 
 
 	/* beta is projection of VPP onto VB (not necessaily in plane) */
-	beta = VDOT(VB, VP_right ) * (-1 * entleave);
+	beta = VDOT(VB, VPP ) * (-1 * entleave);
 	if (beta < 0.0 || beta > fabs(NdotDir)) return 0;
 
-	k = VDOT(VPP, N) / NdotDIR;
+	k = VDOT(VPP, N) / NdotDir;
 	
 	if (dist_p) *dist_p = k;
 	if (N_p) {
