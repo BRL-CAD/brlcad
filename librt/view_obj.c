@@ -1582,6 +1582,7 @@ vo_tra(struct view_obj	*vop,
 		MAT_DELTAS_GET_NEG(vc, vop->vo_center);
 		break;
 	case 'v':
+	default:
 		VSCALE(tvec, tvec, -2.0*vop->vo_local2base*vop->vo_invSize);
 		MAT4X3PNT(work, vop->vo_view2model, tvec);
 		MAT_DELTAS_GET_NEG(vc, vop->vo_center);
