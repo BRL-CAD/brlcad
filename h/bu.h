@@ -1427,6 +1427,15 @@ struct bu_observer {
 };
 #define BU_OBSERVER_NULL	((struct bu_observer *)0)
 
+/*			B U _ C M D T A B
+ *
+ *
+ */
+struct bu_cmdtab {
+  char *ct_name;
+  int (*ct_func)();
+};
+
 /*----------------------------------------------------------------------*/
 /* Miscellaneous macros */
 #define bu_made_it()		bu_log("Made it to %s:%d\n",	\

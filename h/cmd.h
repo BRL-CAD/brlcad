@@ -10,11 +10,6 @@
 #define CMDHIST_NULL (struct bu_cmdhist *)NULL
 #define CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL
 
-struct bu_cmdtab {
-  char *ct_name;
-  int (*ct_func)();
-};
-
 struct bu_cmdhist {
   struct bu_list l;
   struct bu_vls h_command;
