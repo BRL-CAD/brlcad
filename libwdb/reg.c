@@ -29,13 +29,79 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
 #include "db.h"
 #include "vmath.h"
 #include "bn.h"
+#include "raytrace.h"
 #include "wdb.h"
+
+/*
+ *			M K _ C O M B _ I N T E R N A L
+ *
+ *  A helper routine to create an rt_comb_internal version of the
+ *  combination given a linked list of wmember structures.
+ *
+ *  Note that this doesn't provide GIFT-like semantics to the op list.
+ *  Should it?
+ */
+struct rt_comb_internal *
+mk_comb_internal( struct wmember *headp )
+{
+	struct rt_comb_internal	*comb;
+	register struct wmember *wp;
+	union tree	*leafp, *nodep;
+
+	BU_GETSTRUCT( comb, rt_comb_internal );
+	comb->magic = RT_COMB_MAGIC;
+	bu_vls_init( &comb->shader );
+	bu_vls_init( &comb->material );
+
+	for( BU_LIST_FOR( wp, wmember, &headp->l ) )  {
+		if( wp->l.magic != WMEMBER_MAGIC )  {
+			bu_bomb("mk_comb_internal:  corrupted linked list\n");
+		}
+		BU_GETUNION( leafp, tree );
+		leafp->tr_l.magic = RT_TREE_MAGIC;
+		leafp->tr_l.tl_op = OP_DB_LEAF;
+		leafp->tr_l.tl_name = bu_strdup( wp->wm_name );
+		if( !bn_mat_is_identity( wp->wm_mat ) )  {
+			leafp->tr_l.tl_mat = bn_mat_dup( wp->wm_mat );
+		}
+
+		if( !comb->tree )  {
+			comb->tree = leafp;
+			continue;
+		}
+		/* Build a left-heavy tree */
+		BU_GETUNION( nodep, tree );
+		nodep->tr_b.magic = RT_TREE_MAGIC;
+		switch( wp->wm_op )  {
+		case WMOP_UNION:
+			nodep->tr_b.tb_op = OP_UNION;
+			break;
+		case WMOP_INTERSECT:
+			nodep->tr_b.tb_op = OP_INTERSECT;
+			break;
+		case WMOP_SUBTRACT:
+			nodep->tr_b.tb_op = OP_SUBTRACT;
+			break;
+		default:
+			bu_bomb("mk_comb_internal() bad wm_op");
+		}
+		nodep->tr_b.tb_left = comb->tree;
+		nodep->tr_b.tb_right = leafp;
+		comb->tree = nodep;
+	}
+	return comb;
+}
 
 /* so we don't have to include mat.o */
 static fastf_t ident_mat[16] = {
@@ -68,6 +134,8 @@ CONST unsigned char	*rgb;
 int			inherit;
 {
 	union record rec;
+
+	BU_ASSERT_LONG( mk_version, <=, 4 );
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.c.c_id = ID_COMB;
@@ -122,6 +190,8 @@ int		los;
 int		inherit;
 {
 	union record rec;
+
+	BU_ASSERT_LONG( mk_version, <=, 4 );
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.c.c_id = ID_COMB;
@@ -182,6 +252,8 @@ int		region;
 {
 	union record rec;
 
+	BU_ASSERT_LONG( mk_version, <=, 4 );
+
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.c.c_id = ID_COMB;
 	if( region )
@@ -211,6 +283,8 @@ int		bool_op;
 {
 	union record rec;
 	register int i;
+
+	BU_ASSERT_LONG( mk_version, <=, 4 );
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.M.m_id = ID_MEMB;
@@ -253,10 +327,7 @@ int	op;
 {
 	register struct wmember *wp;
 
-	if( (wp = (struct wmember *)malloc(sizeof(struct wmember))) == WMEMBER_NULL )  {
-		fprintf(stderr,"mk_addmember:  malloc failure\n");
-		return(WMEMBER_NULL);
-	}
+	BU_GETSTRUCT( wp, wmember );
 	wp->l.magic = WMEMBER_MAGIC;
 	strncpy( wp->wm_name, name, sizeof(wp->wm_name) );
 	switch( op )  {
@@ -302,32 +373,28 @@ CONST char	*matparm;
 CONST unsigned char	*rgb;
 int		inherit;
 {
-	register struct wmember *wp;
-	register int len = 0;
+	struct rt_comb_internal *comb;
 
-	/* Measure length of list */
-	for( BU_LIST_FOR( wp, wmember, &headp->l ) )  {
-		if( wp->l.magic != WMEMBER_MAGIC )  {
-			fprintf(stderr, "mk_wmcomb:  corrupted linked list\n");
-			abort();
-		}
-		len++;
+	comb = mk_comb_internal( headp );
+	if( region )  comb->region_flag = 1;
+	if( matname )  bu_vls_strcat( &comb->shader, matname );
+	if( matparm )  {
+		bu_vls_strcat( &comb->shader, " " );
+		bu_vls_strcat( &comb->shader, matparm );
 	}
-
-	/* Output combination record and member records */
-	if( mk_comb( fp, name, len, region, matname, matparm, rgb, inherit ) < 0 )  {
-		(void)mk_freemembers( headp );
-		return(-1);
+	/* XXX Convert to TCL form? */
+	if( rgb )  {
+		comb->rgb_valid = 1;
+		comb->rgb[0] = rgb[0];
+		comb->rgb[1] = rgb[1];
+		comb->rgb[2] = rgb[2];
 	}
-	for( BU_LIST_FOR( wp, wmember, &headp->l ) )  {
-		if( mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op ) < 0 )  {
-			(void)mk_freemembers( headp );
-			return(-1);
-		}
-	}
+	comb->inherit = inherit;
 
 	/* Release the member structure dynamic storage */
-	return( mk_freemembers( headp ) );
+	mk_freemembers( headp );
+
+	return mk_export_fwrite( fp, name, comb, ID_COMB );
 }
 
 /*

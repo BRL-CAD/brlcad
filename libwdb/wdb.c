@@ -58,13 +58,14 @@ char		*name;
 CONST vect_t	norm;
 double		d;
 {
-	struct rt_half_internal		half;
+	struct rt_half_internal		*half;
 
-	half.magic = RT_HALF_INTERNAL_MAGIC;
-	VMOVE( half.eqn, norm );
-	half.eqn[3] = d;
+	BU_GETSTRUCT( half, rt_half_internal );
+	half->magic = RT_HALF_INTERNAL_MAGIC;
+	VMOVE( half->eqn, norm );
+	half->eqn[3] = d;
 
-	return mk_export_fwrite( fp, name, (genptr_t)&half, ID_HALF );
+	return mk_export_fwrite( fp, name, (genptr_t)half, ID_HALF );
 }
 
 /*
@@ -81,14 +82,15 @@ CONST point_t	center;
 CONST vect_t	normal;
 CONST fastf_t	magnitude;
 {
-	struct rt_grip_internal		grip;
+	struct rt_grip_internal		*grip;
 
-	grip.magic = RT_GRIP_INTERNAL_MAGIC;
-	VMOVE( grip.center, center );
-	VMOVE( grip.normal, normal );
-	grip.mag = magnitude;
+	BU_GETSTRUCT( grip, rt_grip_internal );
+	grip->magic = RT_GRIP_INTERNAL_MAGIC;
+	VMOVE( grip->center, center );
+	VMOVE( grip->normal, normal );
+	grip->mag = magnitude;
 
-	return mk_export_fwrite( fp, name, (genptr_t)&grip, ID_GRIP );
+	return mk_export_fwrite( fp, name, (genptr_t)grip, ID_GRIP );
 }
 
 /*
@@ -220,15 +222,16 @@ char		*name;
 CONST fastf_t	*pts;		/* [24] */
 {
 	register int i;
-	struct rt_arb_internal	arb;
+	struct rt_arb_internal	*arb;
 
-	arb.magic = RT_ARB_INTERNAL_MAGIC;
+	BU_GETSTRUCT( arb, rt_arb_internal );
+	arb->magic = RT_ARB_INTERNAL_MAGIC;
 #	include "noalias.h"
 	for( i=0; i < 8; i++ )  {
-		VMOVE( arb.pt[i], &pts[i*3] );
+		VMOVE( arb->pt[i], &pts[i*3] );
 	}
 
-	return mk_export_fwrite( fp, name, (genptr_t)&arb, ID_ARB8 );
+	return mk_export_fwrite( fp, name, (genptr_t)arb, ID_ARB8 );
 }
 
 /*
@@ -243,15 +246,16 @@ char		*name;
 CONST point_t	center;
 fastf_t		radius;
 {
-	struct rt_ell_internal	ell;
+	struct rt_ell_internal	*ell;
 
-	ell.magic = RT_ELL_INTERNAL_MAGIC;
-	VMOVE( ell.v, center );
-	VSET( ell.a, radius, 0, 0 );
-	VSET( ell.b, 0, radius, 0 );
-	VSET( ell.c, 0, 0, radius );
+	BU_GETSTRUCT( ell, rt_ell_internal );
+	ell->magic = RT_ELL_INTERNAL_MAGIC;
+	VMOVE( ell->v, center );
+	VSET( ell->a, radius, 0, 0 );
+	VSET( ell->b, 0, radius, 0 );
+	VSET( ell->c, 0, 0, radius );
 
-	return mk_export_fwrite( fp, name, (genptr_t)&ell, ID_ELL );
+	return mk_export_fwrite( fp, name, (genptr_t)ell, ID_ELL );
 }
 
 /*
@@ -268,15 +272,16 @@ char		*name;
 CONST point_t	center;
 CONST vect_t	a, b, c;
 {
-	struct rt_ell_internal	ell;
+	struct rt_ell_internal	*ell;
 
-	ell.magic = RT_ELL_INTERNAL_MAGIC;
-	VMOVE( ell.v, center );
-	VMOVE( ell.a, a );
-	VMOVE( ell.b, b );
-	VMOVE( ell.c, c );
+	BU_GETSTRUCT( ell, rt_ell_internal );
+	ell->magic = RT_ELL_INTERNAL_MAGIC;
+	VMOVE( ell->v, center );
+	VMOVE( ell->a, a );
+	VMOVE( ell->b, b );
+	VMOVE( ell->c, c );
 
-	return mk_export_fwrite( fp, name, (genptr_t)&ell, ID_ELL );
+	return mk_export_fwrite( fp, name, (genptr_t)ell, ID_ELL );
 }
 
 /*
@@ -294,15 +299,16 @@ CONST point_t	center;
 CONST vect_t	inorm;
 double		r1, r2;
 {
-	struct rt_tor_internal	tor;
+	struct rt_tor_internal	*tor;
 
-	tor.magic = RT_TOR_INTERNAL_MAGIC;
-	VMOVE( tor.v, center );
-	VMOVE( tor.h, inorm );
-	tor.r_a = r1;
-	tor.r_h = r2;
+	BU_GETSTRUCT( tor, rt_tor_internal );
+	tor->magic = RT_TOR_INTERNAL_MAGIC;
+	VMOVE( tor->v, center );
+	VMOVE( tor->h, inorm );
+	tor->r_a = r1;
+	tor->r_h = r2;
 
-	return mk_export_fwrite( fp, name, (genptr_t)&tor, ID_TOR );
+	return mk_export_fwrite( fp, name, (genptr_t)tor, ID_TOR );
 }
 
 /*
@@ -351,17 +357,18 @@ CONST vect_t	b;
 CONST vect_t	c;
 CONST vect_t	d;
 {
-	struct rt_tgc_internal	tgc;
+	struct rt_tgc_internal	*tgc;
 
-	tgc.magic = RT_TGC_INTERNAL_MAGIC;
-	VMOVE( tgc.v, base );
-	VMOVE( tgc.h, height );
-	VMOVE( tgc.a, a );
-	VMOVE( tgc.b, b );
-	VMOVE( tgc.c, c );
-	VMOVE( tgc.d, d );
+	BU_GETSTRUCT( tgc, rt_tgc_internal );
+	tgc->magic = RT_TGC_INTERNAL_MAGIC;
+	VMOVE( tgc->v, base );
+	VMOVE( tgc->h, height );
+	VMOVE( tgc->a, a );
+	VMOVE( tgc->b, b );
+	VMOVE( tgc->c, c );
+	VMOVE( tgc->d, d );
 
-	return mk_export_fwrite( fp, name, (genptr_t)&tgc, ID_TGC );
+	return mk_export_fwrite( fp, name, (genptr_t)tgc, ID_TGC );
 }
 
 
@@ -481,16 +488,17 @@ CONST point_t	vert;
 CONST vect_t	height, breadth;
 double		half_w;
 {
-	struct rt_rpc_internal	rpc;
+	struct rt_rpc_internal	*rpc;
 
-	rpc.rpc_magic = RT_RPC_INTERNAL_MAGIC;
+	BU_GETSTRUCT( rpc, rt_rpc_internal );
+	rpc->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 
-	VMOVE( rpc.rpc_V, vert );
-	VMOVE( rpc.rpc_H, height );
-	VMOVE( rpc.rpc_B, breadth );
-	rpc.rpc_r = half_w;
+	VMOVE( rpc->rpc_V, vert );
+	VMOVE( rpc->rpc_H, height );
+	VMOVE( rpc->rpc_B, breadth );
+	rpc->rpc_r = half_w;
 
-	return mk_export_fwrite( fp, name, (genptr_t)&rpc, ID_RPC );
+	return mk_export_fwrite( fp, name, (genptr_t)rpc, ID_RPC );
 }
 
 /*
@@ -511,17 +519,18 @@ CONST vect_t	height, breadth;
 fastf_t		half_w;
 fastf_t		asymp;
 {
-	struct rt_rhc_internal	rhc;
+	struct rt_rhc_internal	*rhc;
 
-	rhc.rhc_magic = RT_RHC_INTERNAL_MAGIC;
+	BU_GETSTRUCT( rhc, rt_rhc_internal );
+	rhc->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
-	VMOVE( rhc.rhc_V, vert );
-	VMOVE( rhc.rhc_H, height );
-	VMOVE( rhc.rhc_B, breadth );
-	rhc.rhc_r = half_w;
-	rhc.rhc_c = asymp;
+	VMOVE( rhc->rhc_V, vert );
+	VMOVE( rhc->rhc_H, height );
+	VMOVE( rhc->rhc_B, breadth );
+	rhc->rhc_r = half_w;
+	rhc->rhc_c = asymp;
 
-	return mk_export_fwrite( fp, name, (genptr_t)&rhc, ID_RHC );
+	return mk_export_fwrite( fp, name, (genptr_t)rhc, ID_RHC );
 }
 
 /*
@@ -539,17 +548,18 @@ CONST point_t	vert;
 CONST vect_t	height, breadth;
 fastf_t		r1, r2;
 {
-	struct rt_epa_internal	epa;
+	struct rt_epa_internal	*epa;
 
-	epa.epa_magic = RT_EPA_INTERNAL_MAGIC;
+	BU_GETSTRUCT( epa, rt_epa_internal );
+	epa->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
-	VMOVE( epa.epa_V, vert );
-	VMOVE( epa.epa_H, height );
-	VMOVE( epa.epa_Au, breadth );
-	epa.epa_r1 = r1;
-	epa.epa_r2 = r2;
+	VMOVE( epa->epa_V, vert );
+	VMOVE( epa->epa_H, height );
+	VMOVE( epa->epa_Au, breadth );
+	epa->epa_r1 = r1;
+	epa->epa_r2 = r2;
 
-	return mk_export_fwrite( fp, name, (genptr_t)&epa, ID_EPA );
+	return mk_export_fwrite( fp, name, (genptr_t)epa, ID_EPA );
 }
 
 /*
@@ -569,18 +579,19 @@ CONST point_t	vert;
 CONST vect_t	height, breadth;
 fastf_t		r1, r2, c;
 {
-	struct rt_ehy_internal	ehy;
+	struct rt_ehy_internal	*ehy;
 
-	ehy.ehy_magic = RT_EHY_INTERNAL_MAGIC;
+	BU_GETSTRUCT( ehy, rt_ehy_internal );
+	ehy->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
-	VMOVE( ehy.ehy_V, vert );
-	VMOVE( ehy.ehy_H, height );
-	VMOVE( ehy.ehy_Au, breadth );
-	ehy.ehy_r1 = r1;
-	ehy.ehy_r2 = r2;
-	ehy.ehy_c = c;
+	VMOVE( ehy->ehy_V, vert );
+	VMOVE( ehy->ehy_H, height );
+	VMOVE( ehy->ehy_Au, breadth );
+	ehy->ehy_r1 = r1;
+	ehy->ehy_r2 = r2;
+	ehy->ehy_c = c;
 
-	return mk_export_fwrite( fp, name, (genptr_t)&ehy, ID_EHY );
+	return mk_export_fwrite( fp, name, (genptr_t)ehy, ID_EHY );
 }
 
 /*
@@ -599,15 +610,16 @@ CONST point_t	vert;
 CONST vect_t	norm, smajor;
 fastf_t		rrot, sminor;
 {
-	struct rt_eto_internal	eto;
+	struct rt_eto_internal	*eto;
 
-	eto.eto_magic = RT_ETO_INTERNAL_MAGIC;
+	BU_GETSTRUCT( eto, rt_eto_internal );
+	eto->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
-	VMOVE( eto.eto_V, vert );
-	VMOVE( eto.eto_N, norm );
-	VMOVE( eto.eto_C, smajor );
-	eto.eto_r = rrot;
-	eto.eto_rd = sminor;
+	VMOVE( eto->eto_V, vert );
+	VMOVE( eto->eto_N, norm );
+	VMOVE( eto->eto_C, smajor );
+	eto->eto_r = rrot;
+	eto->eto_rd = sminor;
 
-	return mk_export_fwrite( fp, name, (genptr_t)&eto, ID_ETO );
+	return mk_export_fwrite( fp, name, (genptr_t)eto, ID_ETO );
 }

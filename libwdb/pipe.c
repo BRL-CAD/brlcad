@@ -57,16 +57,17 @@ vect_t	height;
 double	vradius;
 double	hradius;
 {
-	struct rt_part_internal	part;
+	struct rt_part_internal	*part;
 
-	part.part_magic = RT_PART_INTERNAL_MAGIC;
-	VMOVE( part.part_V, vertex );
-	VMOVE( part.part_H, height );
-	part.part_vrad = vradius;
-	part.part_hrad = hradius;
-	part.part_type = 0;		/* sanity, unused */
+	BU_GETSTRUCT( part, rt_part_internal );
+	part->part_magic = RT_PART_INTERNAL_MAGIC;
+	VMOVE( part->part_V, vertex );
+	VMOVE( part->part_H, height );
+	part->part_vrad = vradius;
+	part->part_hrad = hradius;
+	part->part_type = 0;		/* sanity, unused */
 
-	return mk_export_fwrite( fp, name, (genptr_t)&part, ID_PARTICLE );
+	return mk_export_fwrite( fp, name, (genptr_t)part, ID_PARTICLE );
 }
 
 
@@ -86,7 +87,7 @@ FILE			*fp;
 char			*name;
 struct wdb_pipept	*headp;
 {
-	struct rt_pipe_internal		pipe;
+	struct rt_pipe_internal		*pipe;
 	int				ret;
 
 	if( rt_pipe_ck( headp ) )
@@ -95,15 +96,16 @@ struct wdb_pipept	*headp;
 		return( 1 );
 	}
 
-	pipe.pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-	BU_LIST_INIT( &pipe.pipe_segs_head );
+	BU_GETSTRUCT( pipe, rt_pipe_internal );
+	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+	BU_LIST_INIT( &pipe->pipe_segs_head );
 	/* "borrow" linked list from caller */
-	BU_LIST_APPEND_LIST( &pipe.pipe_segs_head, &headp->l );
+	BU_LIST_APPEND_LIST( &pipe->pipe_segs_head, &headp->l );
 
 	ret = mk_export_fwrite( fp, name, (genptr_t)&pipe, ID_PIPE );
 
 	/* "return" linked list to caller */
-	BU_LIST_APPEND_LIST( &headp->l, &pipe.pipe_segs_head );
+	BU_LIST_APPEND_LIST( &headp->l, &pipe->pipe_segs_head );
 	return ret;
 }
 

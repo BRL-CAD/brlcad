@@ -57,17 +57,18 @@ int		xdim;		/* X dimension of file (w cells) */
 int		ydim;		/* Y dimension of file (n cells) */
 CONST matp_t	mat;		/* convert solid coords to model space */
 {
-	struct rt_dsp_internal dsp;
+	struct rt_dsp_internal *dsp;
 	
-	dsp.magic = RT_DSP_INTERNAL_MAGIC;
-	bu_vls_init( &dsp.dsp_file );
-	bu_vls_strcpy( &dsp.dsp_file, file);
+	BU_GETSTRUCT( dsp, rt_dsp_internal );
+	dsp->magic = RT_DSP_INTERNAL_MAGIC;
+	bu_vls_init( &dsp->dsp_file );
+	bu_vls_strcpy( &dsp->dsp_file, file);
 
-	dsp.dsp_xcnt = xdim;
-	dsp.dsp_ycnt = ydim;
-	mat_copy( dsp.dsp_stom, mat );
+	dsp->dsp_xcnt = xdim;
+	dsp->dsp_ycnt = ydim;
+	mat_copy( dsp->dsp_stom, mat );
 
-	return( mk_export_fwrite( fp, name, (genptr_t)&dsp, ID_DSP ) );
+	return( mk_export_fwrite( fp, name, (genptr_t)dsp, ID_DSP ) );
 }
 
 /*
@@ -83,16 +84,17 @@ int		ydim;		/* Y dimension of file (n cells) */
 fastf_t		tallness;	/* Z extrusion height (mm) */
 CONST matp_t	mat;		/* convert local coords to model space */
 {
-	struct rt_ebm_internal	ebm;
+	struct rt_ebm_internal	*ebm;
 
-	ebm.magic = RT_EBM_INTERNAL_MAGIC;
-	strncpy( ebm.file, file, RT_EBM_NAME_LEN );
-	ebm.xdim = xdim;
-	ebm.ydim = ydim;
-	ebm.tallness = tallness;
-	mat_copy( ebm.mat , mat );
+	BU_GETSTRUCT( ebm, rt_ebm_internal );
+	ebm->magic = RT_EBM_INTERNAL_MAGIC;
+	strncpy( ebm->file, file, RT_EBM_NAME_LEN );
+	ebm->xdim = xdim;
+	ebm->ydim = ydim;
+	ebm->tallness = tallness;
+	mat_copy( ebm->mat , mat );
 
-	return( mk_export_fwrite( fp, name, (genptr_t)&ebm, ID_EBM ) );
+	return( mk_export_fwrite( fp, name, (genptr_t)ebm, ID_EBM ) );
 }
 
 /*
@@ -111,19 +113,20 @@ int		hi;		/* High threshold */
 CONST vect_t	cellsize;	/* ideal coords: size of each cell */
 CONST matp_t	mat;		/* convert local coords to model space */
 {
-	struct rt_vol_internal	vol;
+	struct rt_vol_internal	*vol;
 
-	vol.magic = RT_VOL_INTERNAL_MAGIC;
-	strncpy( vol.file, file, RT_VOL_NAME_LEN );
-	vol.xdim = xdim;
-	vol.ydim = ydim;
-	vol.zdim = zdim;
-	vol.lo = lo;
-	vol.hi = hi;
-	VMOVE( vol.cellsize , cellsize );
-	mat_copy( vol.mat , mat );
+	BU_GETSTRUCT( vol, rt_vol_internal );
+	vol->magic = RT_VOL_INTERNAL_MAGIC;
+	strncpy( vol->file, file, RT_VOL_NAME_LEN );
+	vol->xdim = xdim;
+	vol->ydim = ydim;
+	vol->zdim = zdim;
+	vol->lo = lo;
+	vol->hi = hi;
+	VMOVE( vol->cellsize , cellsize );
+	mat_copy( vol->mat , mat );
 
-	return( mk_export_fwrite( fp, name, (genptr_t)&vol, ID_VOL ) );
+	return( mk_export_fwrite( fp, name, (genptr_t)vol, ID_VOL ) );
 }
 
 /*
@@ -141,6 +144,8 @@ CONST char	*string_solid;
 CONST char	*string_arg;
 {
 	union record	rec[DB_SS_NGRAN];
+
+	BU_ASSERT_LONG( mk_version, <=, 4 );
 
 	bzero( (char *)rec, sizeof(rec) );
 	rec[0].ss.ss_id = DBID_STRSOL;
@@ -170,13 +175,13 @@ CONST char	*file;
 CONST char	*treetop;
 int		meth;
 {
-	struct rt_submodel_internal in;
+	struct rt_submodel_internal *in;
 
-	bzero( (char *)&in, sizeof(in) );
-	in.magic = RT_SUBMODEL_INTERNAL_MAGIC;
-	if( file )  strncpy( in.file, file, sizeof(in.file)-1 );
-	strncpy( in.treetop, treetop, sizeof(in.treetop)-1 );
-	in.meth = meth;
+	BU_GETSTRUCT( in, rt_submodel_internal );
+	in->magic = RT_SUBMODEL_INTERNAL_MAGIC;
+	if( file )  strncpy( in->file, file, sizeof(in->file)-1 );
+	strncpy( in->treetop, treetop, sizeof(in->treetop)-1 );
+	in->meth = meth;
 
-	return mk_export_fwrite( fp, name, (genptr_t)&in, ID_SUBMODEL );
+	return mk_export_fwrite( fp, name, (genptr_t)in, ID_SUBMODEL );
 }

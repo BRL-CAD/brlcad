@@ -50,6 +50,9 @@ char	*name;
 {
 	union record rec;
 
+	/* In v5, the caller should be using BoT solids */
+	BU_ASSERT_LONG( mk_version, <=, 4 );
+
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.p.p_id = ID_P_HEAD;
 	NAMEMOVE( name, rec.p.p_name );
@@ -77,6 +80,9 @@ fastf_t	norms[][3];
 		fprintf(stderr,"mk_poly:  npts=%d is bad\n", npts);
 		return(-1);
 	}
+
+	/* In v5, the caller should be using BoT solids */
+	BU_ASSERT_LONG( mk_version, <=, 4 );
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.q.q_id = ID_P_DATA;
@@ -114,6 +120,9 @@ fastf_t	verts[][3];
 		fprintf(stderr,"mk_poly:  npts=%d is bad\n", npts);
 		return(-1);
 	}
+
+	/* In v5, the caller should be using BoT solids */
+	BU_ASSERT_LONG( mk_version, <=, 4 );
 
 	VSUB2( v1, verts[1], verts[0] );
 	VSUB2( v2, verts[npts-1], verts[0] );

@@ -45,9 +45,8 @@ vect_t h, u_vec, v_vec;
 {
 	struct rt_db_internal intern;
 	struct rt_extrude_internal *extr;
-	int ret;
 
-	extr = (struct rt_extrude_internal *)bu_malloc( sizeof( struct rt_extrude_internal ), "extrusion" );
+	BU_GETSTRUCT( extr, rt_extrude_internal );
 	extr->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 	NAMEMOVE( sketch_name, extr->sketch_name );
 	VMOVE( extr->V, V );
@@ -57,13 +56,10 @@ vect_t h, u_vec, v_vec;
 	extr->keypoint = keypoint;
 	extr->skt = (struct rt_sketch_internal *)NULL;
 
-	ret = mk_export_fwrite( fp, name, (genptr_t)extr, ID_EXTRUDE );
-
 	RT_INIT_DB_INTERNAL( &intern );
 	intern.idb_ptr = (genptr_t)extr;
 	intern.idb_type = ID_EXTRUDE;
+	intern.idb_meth = &rt_functab[ID_EXTRUDE];
 
-	rt_extrude_ifree( &intern );
-
-	return( ret );
+	return mk_fwrite_internal( fp, name, &intern );
 }

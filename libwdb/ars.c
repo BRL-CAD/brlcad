@@ -52,12 +52,13 @@ int	ncurves;
 int	pts_per_curve;
 fastf_t	**curves;
 {
-	struct rt_ars_internal	ars;
+	struct rt_ars_internal	*ars;
 
-	ars.magic = RT_ARS_INTERNAL_MAGIC;
-	ars.ncurves = ncurves;
-	ars.pts_per_curve = pts_per_curve;
-	ars.curves = curves;
+	BU_GETSTRUCT( ars, rt_ars_internal );
+	ars->magic = RT_ARS_INTERNAL_MAGIC;
+	ars->ncurves = ncurves;
+	ars->pts_per_curve = pts_per_curve;
+	ars->curves = curves;
 
-	return mk_export_fwrite( filep, name, (genptr_t)&ars, ID_ARS );
+	return mk_export_fwrite( filep, name, (genptr_t)ars, ID_ARS );
 }

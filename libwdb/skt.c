@@ -42,17 +42,12 @@ char *name;
 struct rt_sketch_internal *skt;
 {
 	struct rt_db_internal intern;
-	int ret;
 
 	RT_SKETCH_CK_MAGIC( skt );
-
-	ret = mk_export_fwrite( fp, name, (genptr_t)skt, ID_SKETCH );
 
 	RT_INIT_DB_INTERNAL( &intern );
 	intern.idb_ptr = (genptr_t)skt;
 	intern.idb_type = ID_SKETCH;
-
-	rt_sketch_ifree( &intern );
-
-	return( ret );
+	intern.idb_meth = &rt_functab[ID_SKETCH];
+	return mk_fwrite_internal( fp, name, &intern );
 }

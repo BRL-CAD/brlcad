@@ -30,9 +30,34 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
+int	mk_version = 5;		/* which version of the database to write */
+
 /*
+ *			M K _ F W R I T E _ I N T E R N A L
+ *
  *  Applies scalling (units change) as specified in mk_conv2mm.
- *  The caller must free "gp".
+ *  'ip' is freed by the library.
+ *
+ *  Returns -
+ *	 0	OK
+ *	<0	error
+ */
+int
+mk_fwrite_internal( FILE *fp, const char *name, struct rt_db_internal *ip )
+{
+	RT_CK_DB_INTERNAL(ip);
+
+	if( mk_version <= 4 )
+		return rt_fwrite_internal( fp, name, ip, mk_conv2mm );
+	return rt_fwrite_internal5( fp, name, ip, mk_conv2mm );
+}
+
+/*
+ *			M K _ E X P O R T _ F W R I T E
+ *
+ *  Applies scalling (units change) as specified in mk_conv2mm.
+ *  'gp' is freed by the library.  Be careful it isn't an automatic struct
+ *  on the stack.
  *
  *  Returns -
  *	 0	OK
@@ -50,7 +75,7 @@ int		id;
 	if( (id <= 0 || id > ID_MAXIMUM) && id != ID_COMBINATION )  {
 		bu_log("mk_export_fwrite(%s): id=%d bad\n",
 			name, id );
-		return(-1);
+		return -1;
 	}
 
 	RT_INIT_DB_INTERNAL( &intern );
@@ -58,10 +83,5 @@ int		id;
 	intern.idb_meth = &rt_functab[id];
 	intern.idb_ptr = gp;
 
-	if( rt_fwrite_internal( fp, name, &intern, mk_conv2mm ) < 0 )  {
-		bu_log("mk_export_fwrite(%s): rt_fwrite_internal failure\n",
-			name );
-		return(-2);				/* FAIL */
-	}
-	return 0;					/* OK */
+	return mk_fwrite_internal( fp, name, &intern );
 }

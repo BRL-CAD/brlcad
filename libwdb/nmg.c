@@ -35,7 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /*
  *			M K _ N M G
  *
- *  Caller is responsible for freeing the NMG, if desired.
+ *  The NMG is freed after being written.
  *
  *  Returns -
  *	<0	error
@@ -63,6 +63,8 @@ struct model	*m;
  *
  *	XXX Since the nmg_triangulate_fu needs a tolerance structure, we
  *		have to invent one for the moment.  This is bogus.
+ *
+ *	XXX This should really write the shell as a BoT solid.
  */
 void
 write_shell_as_polysolid( out_fp, name, s)
@@ -80,6 +82,9 @@ struct shell *s;
 	struct bn_tol tol;
 
 	NMG_CK_SHELL( s );
+
+	/* XXX Need support for v5 here */
+	BU_ASSERT_LONG( mk_version, <=, 4 );
 
 	/* XXX Yet another tol structure is "faked" */
 	tol.magic = BN_TOL_MAGIC;

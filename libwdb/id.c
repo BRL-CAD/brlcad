@@ -45,7 +45,9 @@ mk_id( fp, title )
 FILE		*fp;
 CONST char	*title;
 {
-	return db_fwrite_ident( fp, title, 1.0 );
+	if( mk_version <= 4 )
+		return db_fwrite_ident( fp, title, 1.0 );
+	return db5_fwrite_ident( fp, title, 1.0 );
 }
 
 /*
@@ -64,7 +66,9 @@ FILE		*fp;
 CONST char	*title;
 register CONST char	*units;
 {
-	return db_fwrite_ident( fp, title, bu_units_conversion(units) );
+	if( mk_version <= 4 )
+		return db_fwrite_ident( fp, title, bu_units_conversion(units) );
+	return db5_fwrite_ident( fp, title, bu_units_conversion(units) );
 }
 
 /*
@@ -90,5 +94,7 @@ FILE		*fp;
 CONST char	*title;
 double		local2mm;
 {
-	return db_fwrite_ident( fp, title, local2mm );
+	if( mk_version <= 4 )
+		return db_fwrite_ident( fp, title, local2mm );
+	return db5_fwrite_ident( fp, title, local2mm );
 }

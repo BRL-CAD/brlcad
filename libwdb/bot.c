@@ -53,34 +53,35 @@ struct bu_bitv	*face_mode;		/* a flag for each face indicating thickness is appe
 					 * otherwise thickness is centered about hit point
 					 */
 {
-	struct rt_bot_internal bot;
+	struct rt_bot_internal *bot;
 	int i;
 
-	bot.magic = RT_BOT_INTERNAL_MAGIC;
-	bot.mode = mode;
-	bot.orientation = orientation;
-	bot.error_mode = error_mode;
-	bot.num_vertices = num_vertices;
-	bot.num_faces = num_faces;
-	bot.vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "bot.vertices" );
+	BU_GETSTRUCT( bot, rt_bot_internal );
+	bot->magic = RT_BOT_INTERNAL_MAGIC;
+	bot->mode = mode;
+	bot->orientation = orientation;
+	bot->error_mode = error_mode;
+	bot->num_vertices = num_vertices;
+	bot->num_faces = num_faces;
+	bot->vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "bot->vertices" );
 	for( i=0 ; i<num_vertices*3 ; i++ )
-		bot.vertices[i] = vertices[i];
-	bot.faces = (int *)bu_calloc( num_faces * 3, sizeof( int ), "bot.faces" );
+		bot->vertices[i] = vertices[i];
+	bot->faces = (int *)bu_calloc( num_faces * 3, sizeof( int ), "bot->faces" );
 	for( i=0 ; i<num_faces*3 ; i++ )
-		bot.faces[i] = faces[i];
+		bot->faces[i] = faces[i];
 	if( mode == RT_BOT_PLATE )
 	{
-		bot.thickness = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "bot.thickness" );
+		bot->thickness = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "bot->thickness" );
 		for( i=0 ; i<num_faces ; i++ )
-			bot.thickness[i] = thickness[i];
-		bot.face_mode = bu_bitv_dup( face_mode );
+			bot->thickness[i] = thickness[i];
+		bot->face_mode = bu_bitv_dup( face_mode );
 	}
 	else
 	{
-		bot.thickness = (fastf_t *)NULL;
-		bot.face_mode = (struct bu_bitv *)NULL;
+		bot->thickness = (fastf_t *)NULL;
+		bot->face_mode = (struct bu_bitv *)NULL;
 	}
 	
 
-	return mk_export_fwrite( fp, name, (genptr_t)&bot, ID_BOT );
+	return mk_export_fwrite( fp, name, (genptr_t)bot, ID_BOT );
 }
