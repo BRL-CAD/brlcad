@@ -44,10 +44,6 @@ static char RCSid[] = "$Header$";
 #include "wdb.h"
 #include "../librt/debug.h"
 
-#define		MIN_ANG		5.0	/* 5 degrees, used in checking for acute angles
-					 * between adjacent faces in PLATE-MODE
-					 */
-
 #define		NAMESIZE	16	/* from db.h */
 
 #define		LINELEN		128	/* Length of char array for input line */
@@ -70,23 +66,16 @@ static char	vehicle[17];		/* Title for BRLCAD model from VEHICLE card */
 static char	name_name[NAMESIZE+1];	/* Component name built from $NAME card */
 static int	name_count;		/* Count of number of times this name_name has been used */
 static int	pass;			/* Pass number (0 -> only make names, 1-> do geometry ) */
-static int	nmgs=0;			/* Flag: >0 -> There are NMG's in current component */
+static int	bot=0;			/* Flag: >0 -> There are BOT's in current component */
 static int	warnings=0;		/* Flag: >0 -> Print warning messages */
 static int	debug=0;		/* Debug flag */
 static int	rt_debug=0;		/* rt_g.debug */
 static int	nmg_debug=0;		/* rt_g.NMG_debug */
-static int	polysolids=1;		/* Flag: >0 -> Build polysolids, not NMG's */
-static fastf_t	max_cos=0.0;		/* cosine of minimum allowed angle between faces in PLATE mode components */
 static int	sol_count=0;		/* number of solids, used to create unique solid names */
 static int	comp_count=0;		/* Count of components in FASTGEN4 file */
-static int	conv_count=0;		/* Count of components successfully converted to BRLCAD */
-static int	second_chance=0;	/* Count of PLATE-MODE objects converted on second try */
 static long	curr_offset=0;		/* Offset into input file for current element */
 static long	curr_sect=0;		/* Offset into input file for current section card */
 static long	prev_sect=0;		/* Offset into input file for previous section card */
-static int	try_count=0;		/* Counter for number of tries to build currect section */
-static int	arb6_worked=0;		/* flag notifying of Make_arb6_obj() success */
-static int	use_arb6=0;		/* flag indicating that all plate-mode should be converted as ARB6's */
 static int	do_skips=0;		/* flag indicating that not all components will be processed */
 static int	*region_list;		/* array of region_ids to be processed */
 static int	region_list_len=0;	/* actual length of the malloc'd region_list array */
@@ -95,15 +84,12 @@ static struct cline    *cline_last_ptr; /* Pointer to last element in linked lis
 static struct wmember  group_head[11];	/* Lists of regions for groups */
 static struct wmember  hole_head;	/* List of regions used as holes (not solid parts of model) */
 static struct bu_ptbl stack;		/* Stack for traversing name_tree */
-static struct model	*m;		/* NMG model for surface elements */
-static struct nmgregion	*r;		/* NMGregion */
-static struct shell	*s;		/* NMG shell */
-static struct bn_tol	tol;		/* Tolerance struct for NMG's */
 
-static struct faceuse	**dup_fu;	/* NMG faceuses that were duplicates */
-static int		dup_count=0;	/* number of faceuses in the dup_fu list */
-static int		dup_size=0;	/* size of dup_fu array */
-#define		DUP_BLOCK	64	/* Number of elements in initial dup_fu array */
+static int		*faces;		/* one triplet per face indexing three grid points */
+static fastf_t		*thickness;	/* thickness of each face */
+static char		*facemode;	/* mode for each face */
+static int		face_size=0;	/* actual length of above arrays */
+static int		face_count=0;	/* number of faces in above arrays */
 
 static int	*int_list;		/* Array of integers */
 static int	int_list_count=0;	/* Number of ints in above array */
@@ -114,24 +100,12 @@ static char	*usage="Usage:\n\tfast4-g [-dnwp] [-c component_list] [-o plot_file]
 	a - set minimum allowed angle (degrees) between adjacent faces in PLATE mode\n\
 		components with smaller angles will be converted using ARB6 solids\n\
 	d - print debugging info\n\
-	n - produce NMG solids rather than polysolids\n\
 	w - print warnings about creating default names\n\
-	p - convert all plate-mode components as ARB6 solids\n\
 	c - process only the listed region ids, may be a list (3001,4082,5347) or a range (2314-3527)\n\
 	o - create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed\n\
-	x - set RT debug flag\n\
-	X - set NMG debug flag\n\
-	D - set tolerance distance (mm)\n\
-	P - set tolerance for parallel test (cosine of angle)\n";
+	x - set RT debug flag\n";
 
-RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
-RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl, struct bn_tol *tol ) );
-RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s1 , fastf_t thick , int normal_ward , int approximate , struct bn_tol *tol ) );
-RT_EXTERN( struct edgeuse *nmg_next_radial_eu , ( CONST struct edgeuse *eu , CONST struct shell *s , int wires ) );
-RT_EXTERN( struct faceuse *nmg_mk_new_face_from_loop , ( struct loopuse *lu ) );
 RT_EXTERN( fastf_t mat_determinant , (mat_t matrix ) );
-RT_EXTERN( struct faceuse *nmg_mk_new_face_from_loop, ( struct loopuse *lu ) );
-RT_EXTERN( void Fix_normals, ( struct shell *sh ) );
 
 #define		PLATE_MODE	1
 #define		VOLUME_MODE	2
@@ -153,6 +127,7 @@ RT_EXTERN( void Fix_normals, ( struct shell *sh ) );
 #define		CCONE2		'd'
 #define		CSPHERE		's'
 #define		NMG		'n'
+#define		BOT		't'
 
 /* convenient macro for building regions */
 #define		MK_REGION( fp , headp , g_id , c_id , e_id , type ) \
@@ -241,40 +216,9 @@ struct holes
 #define HOLE 1
 #define WALL 2
 
-struct fast_verts
-{
-	point_t pt;
-	struct vertex *v;
-} *grid_pts;
-
-struct fast_fus
-{
-	struct faceuse *fu;
-	fastf_t thick;
-	int pos;
-	int element;
-	int pt1, pt2, pt3;
-	struct fast_fus *next;
-} *fus_root;
-
-struct adjacent_faces
-{
-	struct faceuse *fu1,*fu2;
-	struct edgeuse *eu1,*eu2;
-	struct adjacent_faces *next;
-} *adj_root;
-
-struct elem_list
-{
-	int element;
-	int no_pts;
-	int pt[4];
-	struct elem_list *next;
-} *elem_root;
+point_t *grid_pts;
 
 static int elem_match[4]={1,2,4,8};
-
-#define NMG_PUSH( _ptr , _stack )       bu_ptbl_ins_unique( _stack , (long *) _ptr )
 
 int
 is_a_hole( id )
@@ -315,12 +259,12 @@ void
 plot_tri( pt1, pt2, pt3 )
 int pt1, pt2, pt3;
 {
-	pdv_3move( fd_plot, grid_pts[pt1].pt );
-	pdv_3cont( fd_plot, grid_pts[pt2].pt );
-	pdv_3cont( fd_plot, grid_pts[pt3].pt );
-	pdv_3cont( fd_plot, grid_pts[pt1].pt );
+	pdv_3move( fd_plot, grid_pts[pt1] );
+	pdv_3cont( fd_plot, grid_pts[pt2] );
+	pdv_3cont( fd_plot, grid_pts[pt3] );
+	pdv_3cont( fd_plot, grid_pts[pt1] );
 }
-
+#if 0
 struct fast_fus *
 Find_fus( fu )
 struct faceuse *fu;
@@ -594,22 +538,22 @@ int pt1, pt2, pt3;
 					switch( matches )
 					{
 						case 3:
-							VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[1]].pt );
+							VSUB2( v0, grid_pts[elem->pt[0]], grid_pts[elem->pt[1]] );
 							break;
 						case 5:
-							VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[2]].pt );
+							VSUB2( v0, grid_pts[elem->pt[0]], grid_pts[elem->pt[2]] );
 							break;
 						case 6:
-							VSUB2( v0, grid_pts[elem->pt[1]].pt, grid_pts[elem->pt[2]].pt );
+							VSUB2( v0, grid_pts[elem->pt[1]], grid_pts[elem->pt[2]] );
 							break;
 						case 9:
-							VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[3]].pt );
+							VSUB2( v0, grid_pts[elem->pt[0]], grid_pts[elem->pt[3]] );
 							break;
 						case 10:
-							VSUB2( v0, grid_pts[elem->pt[1]].pt, grid_pts[elem->pt[3]].pt );
+							VSUB2( v0, grid_pts[elem->pt[1]], grid_pts[elem->pt[3]] );
 							break;
 						case 12:
-							VSUB2( v0, grid_pts[elem->pt[2]].pt, grid_pts[elem->pt[3]].pt );
+							VSUB2( v0, grid_pts[elem->pt[2]], grid_pts[elem->pt[3]] );
 							break;
 					}
 					/* one edge in common */
@@ -621,15 +565,15 @@ int pt1, pt2, pt3;
 						fastf_t dot;
 
 						if( bn_mk_plane_3pts( pl1,
-							grid_pts[pt1].pt,
-							grid_pts[pt2].pt,
-							grid_pts[pt3].pt, &tol ) )
+							grid_pts[pt1],
+							grid_pts[pt2],
+							grid_pts[pt3], &tol ) )
 								break;
 
 						if( bn_mk_plane_3pts( pl2,
-							grid_pts[elem->pt[0]].pt,
-							grid_pts[elem->pt[1]].pt,
-							grid_pts[elem->pt[2]].pt, &tol ) )
+							grid_pts[elem->pt[0]],
+							grid_pts[elem->pt[1]],
+							grid_pts[elem->pt[2]], &tol ) )
 								break;
 
 						if( bn_coplanar( pl1, pl2, &tol ) < 1 )
@@ -682,7 +626,7 @@ int pt1, pt2, pt3;
 						/* odd_pt is the point not in common.
 						 * Calculate vector from match_pt to odd_pt
 						 */
-						VSUB2( v1, grid_pts[odd_pt].pt, grid_pts[match_pt].pt );
+						VSUB2( v1, grid_pts[odd_pt], grid_pts[match_pt] );
 
 						/* Calculate vector from match_pt to
 						 * an unmatched point in elem
@@ -691,7 +635,7 @@ int pt1, pt2, pt3;
 						{
 							if( match[i] )
 								continue;
-							VSUB2( v2, grid_pts[elem->pt[i]].pt, grid_pts[match_pt].pt );
+							VSUB2( v2, grid_pts[elem->pt[i]], grid_pts[match_pt] );
 							break;
 						}
 						VUNITIZE( v0 );
@@ -807,22 +751,22 @@ int pt1, pt2, pt3, pt4;
 				switch( matches )
 				{
 					case 3:
-						VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[1]].pt );
+						VSUB2( v0, grid_pts[elem->pt[0]], grid_pts[elem->pt[1]] );
 						break;
 					case 5:
-						VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[2]].pt );
+						VSUB2( v0, grid_pts[elem->pt[0]], grid_pts[elem->pt[2]] );
 						break;
 					case 6:
-						VSUB2( v0, grid_pts[elem->pt[1]].pt, grid_pts[elem->pt[2]].pt );
+						VSUB2( v0, grid_pts[elem->pt[1]], grid_pts[elem->pt[2]] );
 						break;
 					case 9:
-						VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[3]].pt );
+						VSUB2( v0, grid_pts[elem->pt[0]], grid_pts[elem->pt[3]] );
 						break;
 					case 10:
-						VSUB2( v0, grid_pts[elem->pt[1]].pt, grid_pts[elem->pt[3]].pt );
+						VSUB2( v0, grid_pts[elem->pt[1]], grid_pts[elem->pt[3]] );
 						break;
 					case 12:
-						VSUB2( v0, grid_pts[elem->pt[2]].pt, grid_pts[elem->pt[3]].pt );
+						VSUB2( v0, grid_pts[elem->pt[2]], grid_pts[elem->pt[3]] );
 						break;
 				}
 				/* one edge in common */
@@ -834,15 +778,15 @@ int pt1, pt2, pt3, pt4;
 					fastf_t dot;
 
 					if( bn_mk_plane_3pts( pl1,
-						grid_pts[pt1].pt,
-						grid_pts[pt2].pt,
-						grid_pts[pt3].pt, &tol ) )
+						grid_pts[pt1],
+						grid_pts[pt2],
+						grid_pts[pt3], &tol ) )
 							break;
 
 					if( bn_mk_plane_3pts( pl2,
-						grid_pts[elem->pt[0]].pt,
-						grid_pts[elem->pt[1]].pt,
-						grid_pts[elem->pt[2]].pt, &tol ) )
+						grid_pts[elem->pt[0]],
+						grid_pts[elem->pt[1]],
+						grid_pts[elem->pt[2]], &tol ) )
 							break;
 
 					if( bn_coplanar( pl1, pl2, &tol ) < 1 )
@@ -895,7 +839,7 @@ int pt1, pt2, pt3, pt4;
 					/* odd_pt is the point not in common.
 					 * Calculate vector from match_pt to odd_pt
 					 */
-					VSUB2( v1, grid_pts[odd_pt].pt, grid_pts[match_pt].pt );
+					VSUB2( v1, grid_pts[odd_pt], grid_pts[match_pt] );
 
 					/* Calculate vector from match_pt to
 					 * an unmatched point in elem
@@ -904,7 +848,7 @@ int pt1, pt2, pt3, pt4;
 					{
 						if( match[i] )
 							continue;
-						VSUB2( v2, grid_pts[elem->pt[i]].pt, grid_pts[match_pt].pt );
+						VSUB2( v2, grid_pts[elem->pt[i]], grid_pts[match_pt] );
 						break;
 					}
 					VUNITIZE( v0 );
@@ -1104,7 +1048,7 @@ int element_no;
 	fus->pt3 = pt3;
 	fus->element = element_no;
 }
-
+#endif
 void
 Check_names()
 {
@@ -2284,11 +2228,10 @@ do_grid()
 	while( grid_no > grid_size - 1 )
 	{
 		grid_size += GRID_BLOCK;
-		grid_pts = (struct fast_verts *)rt_realloc( (char *)grid_pts , grid_size * sizeof( struct fast_verts ) , "fast4-g: grid_pts" );
+		grid_pts = (point_t *)rt_realloc( (char *)grid_pts , grid_size * sizeof( point_t ) , "fast4-g: grid_pts" );
 	}
 
-	VSET( grid_pts[grid_no].pt , x*25.4 , y*25.4 , z*25.4 );
-	grid_pts[grid_no].v = (struct vertex *)NULL;
+	VSET( grid_pts[grid_no] , x*25.4 , y*25.4 , z*25.4 );
 
 	if( grid_no > max_grid_no )
 		max_grid_no = grid_no;
@@ -2361,7 +2304,7 @@ make_cline_regions()
 			/* make sphere solid at cline joint */
 			sprintf( name , "%d.%d.j0" , region_id , pt_no );
 			Insert_name( &name_root , name );
-			mk_sph( fdout , name , grid_pts[pt_no].pt , sph_radius );
+			mk_sph( fdout , name , grid_pts[pt_no] , sph_radius );
 
 			/* Union sphere */
 			if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
@@ -2376,7 +2319,7 @@ make_cline_regions()
 			{
 				sprintf( name , "%d.%d.j1" , region_id , pt_no );
 				Insert_name( &name_root , name );
-				mk_sph( fdout , name , grid_pts[pt_no].pt , sph_inner_radius );
+				mk_sph( fdout , name , grid_pts[pt_no] , sph_inner_radius );
 
 				if( mk_addmember( name , &head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				{
@@ -2544,7 +2487,7 @@ do_sphere()
 	BU_LIST_INIT( &sphere_region.l );
 
 	make_solid_name( name , CSPHERE , element_id , comp_id , group_id , 0 );
-	mk_sph( fdout , name , grid_pts[center_pt].pt , radius );
+	mk_sph( fdout , name , grid_pts[center_pt] , radius );
 
 	if( mk_addmember( name ,  &sphere_region , WMOP_UNION ) == (struct wmember *)NULL )
 	{
@@ -2563,7 +2506,7 @@ do_sphere()
 		}
 
 		make_solid_name( name , CSPHERE , element_id , comp_id , group_id , 1 );
-		mk_sph( fdout , name , grid_pts[center_pt].pt , inner_radius );
+		mk_sph( fdout , name , grid_pts[center_pt] , inner_radius );
 
 		if( mk_addmember( name , &sphere_region , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 		{
@@ -2587,7 +2530,7 @@ int r_id;
 
 	make_unique_name( name );
 }
-
+#if 0
 void
 Check_normals()
 {
@@ -4114,9 +4057,9 @@ Make_arb6_obj()
 		}
 		else
 		{
-			VMOVE( pts[0], grid_pts[fus->pt1].pt )
-			VMOVE( pts[1], grid_pts[fus->pt2].pt )
-			VMOVE( pts[4], grid_pts[fus->pt3].pt )
+			VMOVE( pts[0], grid_pts[fus->pt1] )
+			VMOVE( pts[1], grid_pts[fus->pt2] )
+			VMOVE( pts[4], grid_pts[fus->pt3] )
 		}
 
 		/* move one side of the arb6 half the thickness */
@@ -4176,7 +4119,7 @@ Make_arb6_obj()
 	/* subtract any holes for this component */
 	Subtract_holes( &head , comp_id , group_id );
 
-	MK_REGION( fdout , &head , group_id , comp_id , nmgs , NMG )
+	MK_REGION( fdout , &head , group_id , comp_id , bot , NMG )
 
 	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed in make_arb6_obj\n" );
@@ -4575,12 +4518,6 @@ make_nmg_objects()
 		}
 
 	}
-	else if( mode == PLATE_MODE && (try_count || use_arb6) )
-	{
-		Make_arb6_obj();
-		arb6_worked = 1;
-		return(0);
-	}
 	else if( mode == PLATE_MODE )
 	{
 		nmg_rebound( m , &tol );
@@ -4910,8 +4847,6 @@ make_nmg_objects()
 			bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (after mk_nmg)\n" );
 	}
 
-	try_count = 0;
-
 out:	nmg_km( m );
 
 	m = (struct model *)NULL;
@@ -4940,17 +4875,6 @@ out:	nmg_km( m );
 	}
 	adj_root = (struct adjacent_faces *)NULL;
 
-	elem = elem_root;
-	while( elem )
-	{
-		struct elem_list *tmp;
-
-		tmp = elem;
-		elem = elem->next;
-		bu_free( (char *)tmp, "make_nmg_objects: elem" );
-	}
-	elem_root = (struct elem_list *)NULL;
-
 	dup_count = 0;
 
 	if( failed )
@@ -4968,13 +4892,14 @@ out:	nmg_km( m );
 	/* subtract any holes for this component */
 	Subtract_holes( &head , comp_id , group_id );
 
-	MK_REGION( fdout , &head , group_id , comp_id , nmgs , NMG )
+	MK_REGION( fdout , &head , group_id , comp_id , bot , NMG )
 
 	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_obj\n" );
 
 	return( 0 );
 }
+#endif
 
 void
 do_vehicle()
@@ -5071,10 +4996,10 @@ do_cline()
 	strncpy( field , &line[64] , 8 );
 	radius = atof( field ) * 25.4;
 
-	VSUB2( height , grid_pts[pt2].pt , grid_pts[pt1].pt );
+	VSUB2( height , grid_pts[pt2] , grid_pts[pt1] );
 
 	make_solid_name( name , CLINE , element_id , comp_id , group_id , 0 );
-	mk_rcc( fdout , name , grid_pts[pt1].pt , height , radius );
+	mk_rcc( fdout , name , grid_pts[pt1] , height , radius );
 
 	if( thick > radius )
 	{
@@ -5086,7 +5011,7 @@ do_cline()
 	else if( thick > 0.0 )
 	{
 		make_solid_name( name , CLINE , element_id , comp_id , group_id , 1 );
-		mk_rcc( fdout , name , grid_pts[pt1].pt , height , radius-thick );
+		mk_rcc( fdout , name , grid_pts[pt1] , height , radius-thick );
 	}
 
 	Add_to_clines( element_id , pt1 , pt2 , thick , radius );
@@ -5210,9 +5135,9 @@ do_ccone1()
 		r2 = SQRT_SMALL_FASTF;
 
 	/* make outside TGC */
-	VSUB2( height , grid_pts[pt2].pt , grid_pts[pt1].pt );
+	VSUB2( height , grid_pts[pt2] , grid_pts[pt1] );
 	make_solid_name( outer_name , CCONE1 , element_id , comp_id , group_id , 0 );
-	mk_trc_h( fdout , outer_name , grid_pts[pt1].pt , height , r1 , r2 );
+	mk_trc_h( fdout , outer_name , grid_pts[pt1] , height , r1 , r2 );
 
 	BU_LIST_INIT( &r_head.l );
 	if( mk_addmember( outer_name , &r_head , WMOP_UNION ) == (struct wmember *)NULL )
@@ -5242,13 +5167,13 @@ do_ccone1()
 		{
 			r1a = r1;
 			inner_r1 = r1 - thick/sin_ang;
-			VMOVE( base , grid_pts[pt1].pt );
+			VMOVE( base , grid_pts[pt1] );
 		}
 		else
 		{
 			r1a = r1 + (r2 - r1)*thick/length;
 			inner_r1 = r1a - thick/sin_ang;
-			VJOIN1( base , grid_pts[pt1].pt , thick , height_dir );
+			VJOIN1( base , grid_pts[pt1] , thick , height_dir );
 		}
 
 		if( inner_r1 < 0.0 )
@@ -5266,13 +5191,13 @@ do_ccone1()
 		{
 			r2a = r2;
 			inner_r2 = r2 - thick/sin_ang;
-			VMOVE( top , grid_pts[pt2].pt );
+			VMOVE( top , grid_pts[pt2] );
 		}
 		else
 		{
 			r2a = r2 + (r1 - r2)*thick/length;
 			inner_r2 = r2a - thick/sin_ang;
-			VJOIN1( top , grid_pts[pt2].pt , -thick , height_dir );
+			VJOIN1( top , grid_pts[pt2] , -thick , height_dir );
 		}
 
 		if( inner_r2 < 0.0 )
@@ -5402,10 +5327,10 @@ do_ccone2()
 
 	BU_LIST_INIT( &r_head.l );
 
-	VSUB2( height , grid_pts[pt2].pt , grid_pts[pt1].pt );
+	VSUB2( height , grid_pts[pt2] , grid_pts[pt1] );
 
 	make_solid_name( name , CCONE2 , element_id , comp_id , group_id , 0 );
-	mk_trc_h( fdout , name , grid_pts[pt1].pt , height , ro1 , ro2 );
+	mk_trc_h( fdout , name , grid_pts[pt1] , height , ro1 , ro2 );
 
 	if( mk_addmember( name , &r_head , WMOP_UNION ) == (struct wmember *)NULL )
 		rt_bomb( "mk_addmember failed!\n" );
@@ -5419,7 +5344,7 @@ do_ccone2()
 			ri2 = SQRT_SMALL_FASTF;
 
 		make_solid_name( name , CCONE2 , element_id , comp_id , group_id , 1 );
-		mk_trc_h( fdout , name , grid_pts[pt1].pt , height , ri1 , ri2 );
+		mk_trc_h( fdout , name , grid_pts[pt1] , height , ri1 , ri2 );
 
 		if( mk_addmember( name , &r_head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 			rt_bomb( "mk_addmember failed!\n" );
@@ -5567,7 +5492,7 @@ getline()
 
 	return( 1 );
 }
-
+#if 0
 void
 make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos )
 int pt1,pt2,pt3;
@@ -5584,7 +5509,7 @@ int pos;
 
 	if( debug )
 		bu_log( "make_fast_fu: ( %f %f %f )\n\t( %f %f %f )\n\t( %f %f %f )\n" ,
-			V3ARGS( grid_pts[pt1].pt ), V3ARGS( grid_pts[pt2].pt ), V3ARGS( grid_pts[pt3].pt ) );
+			V3ARGS( grid_pts[pt1] ), V3ARGS( grid_pts[pt2] ), V3ARGS( grid_pts[pt3] ) );
 
 	verts[0] = &grid_pts[pt1].v;
 	verts[1] = &grid_pts[pt2].v;
@@ -5614,9 +5539,9 @@ int pos;
 		bu_log( "\tfu = x%x\n" , fu );
 
 	lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
-	nmg_vertex_gv( grid_pts[pt1].v , grid_pts[pt1].pt );
-	nmg_vertex_gv( grid_pts[pt2].v , grid_pts[pt2].pt );
-	nmg_vertex_gv( grid_pts[pt3].v , grid_pts[pt3].pt );
+	nmg_vertex_gv( grid_pts[pt1].v , grid_pts[pt1] );
+	nmg_vertex_gv( grid_pts[pt2].v , grid_pts[pt2] );
+	nmg_vertex_gv( grid_pts[pt3].v , grid_pts[pt3] );
 
 	area = nmg_loop_plane_area( lu , pl );
 	if( area <= 0.0 )
@@ -5699,6 +5624,31 @@ int pt1, pt2, pt3;
 
 	return( 0 );
 }
+#endif
+
+void
+Add_bot_face( pt1, pt2, pt3, thick, pos )
+int pt1, pt2, pt3;
+fastf_t thick;
+int pos;
+{
+	if( face_count >= face_size )
+	{
+		face_size += GRID_BLOCK;
+		faces = (int *)bu_realloc( (void *)faces,  face_size*3*sizeof( int ), "faces" );
+		thickness = (fastf_t *)bu_realloc( (void *)thickness, face_size*sizeof( fastf_t ), "thickness" );
+		facemode = (char *)bu_realloc( (void *)facemode, face_size*sizeof( char ), "facemode" );
+	}
+
+	faces[face_count*3] = pt1;
+	faces[face_count*3+1] = pt2;
+	faces[face_count*3+2] = pt3;
+
+	thickness[face_count] = thick;
+	facemode[face_count] = pos;
+
+	face_count++;
+}
 
 void
 do_tri()
@@ -5715,11 +5665,20 @@ do_tri()
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
 
-	if( !nmgs )
-		nmgs = element_id;
+	if( !bot )
+		bot = element_id;
 
 	if( !pass )
 		return;
+
+	if( faces == NULL )
+	{
+		faces = (int *)bu_malloc( GRID_BLOCK*3*sizeof( int ), "faces" );
+		thickness = (fastf_t *)bu_malloc( GRID_BLOCK*sizeof( fastf_t ), "thickness" );
+		facemode = (char *)bu_malloc( GRID_BLOCK*sizeof( char ), "facemode" );
+		face_size = GRID_BLOCK;
+		face_count = 0;
+	}
 
 	strncpy( field , &line[24] , 8 );
 	pt1 = atoi( field );
@@ -5737,25 +5696,12 @@ do_tri()
 		return;
 	}
 
-	/* check if this face has already been modelled (FASTGEN4 error) */
-	if( Check_for_dup_face( pt1, pt2, pt3 ) )
-	{
-		bu_log( "Duplicate face in element %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		bu_log( "\t grid points %d %d %d\n", pt1, pt2, pt3 );
-		bu_log( "\tthis face ignored\n" );
-		return;
-	}
-
+	thick = 0.0;
+	pos = 0;
 	if( mode == PLATE_MODE )
 	{
 		strncpy( field , &line[56] , 8 );
 		thick = atof( field ) * 25.4;
-		if( thick <= 0.0 )
-		{
-			bu_log( "do_tri: illegal thickness (%f), skipping CTRI element\n" , thick );
-			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
-			return;
-		}
 
 		strncpy( field , &line[64] , 8 );
 		pos = atoi( field );
@@ -5771,21 +5717,15 @@ do_tri()
 		}
 		if( debug )
 			bu_log( "\tplate mode: thickness = %f\n" , thick );
-	}
 
-	overlap = Check_tri_overlap( element_id, pt1, pt2, pt3);
-	if( overlap )
-	{
-		bu_log( "WARNING: CTRI element %d overlaps with existing element %d\n",
-			element_id, overlap );
-		bu_log( "\tCTRI element %d ignored\n", element_id );
-		return;
+		thickness[face_count] = thick;
+		facemode[face_count] = pos;
 	}
 
 	if( do_plot )
 		plot_tri( pt1, pt2, pt3 );
-	make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos );
-	Add_elem( element_id, 3, pt1, pt2, pt3, -1 );
+
+	Add_bot_face( pt1, pt2, pt3, thick, pos );
 }
 
 void
@@ -5795,8 +5735,6 @@ do_quad()
 	int pt1,pt2,pt3,pt4;
 	fastf_t thick;
 	int pos;
-	int overlap;
-	int skipped=0;
 
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
@@ -5804,11 +5742,20 @@ do_quad()
 	if( debug )
 		bu_log( "do_quad: %s\n" , line );
 
-	if( !nmgs )
-		nmgs = element_id;
+	if( !bot )
+		bot = element_id;
 
 	if( !pass )
 		return;
+
+	if( faces == NULL )
+	{
+		faces = (int *)bu_malloc( GRID_BLOCK*3*sizeof( int ), "faces" );
+		thickness = (fastf_t *)bu_malloc( GRID_BLOCK*sizeof( fastf_t ), "thickness" );
+		facemode = (char *)bu_malloc( GRID_BLOCK*sizeof( char ), "facemode" );
+		face_size = GRID_BLOCK;
+		face_count = 0;
+	}
 
 	strncpy( field , &line[24] , 8 );
 	pt1 = atoi( field );
@@ -5826,12 +5773,6 @@ do_quad()
 	{
 		strncpy( field , &line[56] , 8 );
 		thick = atof( field ) * 25.4;
-		if( thick <= 0.0 )
-		{
-			bu_log( "do_quad: illegal thickness (%f), skipping CQUAD element\n" , thick );
-			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
-			return;
-		}
 
 		strncpy( field , &line[64] , 8 );
 		pos = atoi( field );
@@ -5847,97 +5788,8 @@ do_quad()
 		}
 	}
 
-	overlap = Check_quad_overlap( element_id, pt1, pt2, pt3, pt4 );
-	if( overlap > 0 )
-	{
-		bu_log( "WARNING: CQUAD element %d overlaps with existing CQUAD element %d\n",
-			element_id, overlap );
-		bu_log( "\tCQUAD element %d ignored\n", element_id );
-		(void)Check_for_dup_face( pt1, pt2, pt3 );
-		(void)Check_for_dup_face( pt1, pt3, pt4 );
-		return;
-	}
-	else if( overlap < 0 )
-	{
-		int i;
-
-		i = pt1;
-		pt1 = pt2;
-		pt2 = pt3;
-		pt3 = pt4;
-		pt4 = i;
-	}
-
-	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
-	{
-		bu_log( "do_quad: ignoring degenerate triangular face in CQUAD element\n" );
-		bu_log( "\t\t%d %d %d\n", pt1, pt2, pt3 );
-		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		skipped = 1;
-	}
-	else if( Check_for_dup_face( pt1, pt2, pt3 ) )
-	{
-		bu_log( "Duplicate face in element %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		bu_log( "\t grid points %d %d %d\n", pt1, pt2, pt3 );
-		bu_log( "\tthis face ignored\n" );
-		skipped = 1;
-	}
-	else
-	{
-		overlap = Check_tri_overlap( element_id, pt1, pt2, pt3 );
-		if( overlap )
-		{
-			bu_log( "WARNING: CQUAD element %d overlaps with existing element %d\n",
-				element_id, overlap );
-			bu_log( "\tPart of CQUAD element %d ignored\n", element_id );
-			skipped = 1;
-		}
-		else
-		{
-			if( do_plot )
-				plot_tri( pt1, pt2, pt3 );
-			make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos );
-		}
-	}
-
-	if( pt1 == pt3 || pt3 == pt4 || pt1 == pt4 )
-	{
-		bu_log( "do_quad: ignoring degenerate triangular face in CQUAD element\n" );
-		bu_log( "\t\t%d %d %d\n", pt1, pt3, pt4 );
-		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		skipped += 2;
-	}
-	else if( Check_for_dup_face( pt1, pt3, pt4 ) )
-	{
-		bu_log( "Duplicate face in element %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		bu_log( "\t grid points %d %d %d\n", pt1, pt3, pt4 );
-		bu_log( "\tthis face ignored\n" );
-		skipped += 2;
-	}
-	else
-	{
-		overlap = Check_tri_overlap( element_id, pt1, pt3, pt4 );
-		if( overlap )
-		{
-			bu_log( "WARNING: CQUAD element %d overlaps with existing element %d\n",
-				element_id, overlap );
-			bu_log( "\tPart of CQUAD element %d ignored\n", element_id );
-			skipped += 2;
-		}
-		else
-		{
-			if( do_plot )
-				plot_tri( pt1, pt3, pt4 );
-			make_fast_fu( pt1 , pt3 , pt4 , element_id , thick , pos );
-		}
-	}
-
-	if( !skipped )
-		Add_elem( element_id, 4, pt1, pt2, pt3, pt4 );
-	else if( skipped == 1 )
-		Add_elem( element_id, 3, pt1, pt3, pt4, -1 );
-	else if( skipped == 2 )
-		Add_elem( element_id, 3, pt1, pt2, pt3, -1 );
+	Add_bot_face( pt1, pt2, pt3, thick, pos );
+	Add_bot_face( pt1, pt3, pt4, thick, pos );
 }
 
 int
@@ -5958,7 +5810,79 @@ int id;
 	return( 1 );
 }
 
-/*	cleanup from previous component and start a new one */
+void
+make_bot_object()
+{
+	int i;
+	int max_pt=0, min_pt=999999;
+	int num_vertices;
+	struct bu_bitv *bv=NULL;
+	int bot_mode;
+	char name[NAMESIZE+1];
+	struct wmember bot_region;
+	int element_id=bot;
+
+	if( !pass )
+	{
+		make_region_name( name , group_id , comp_id , element_id , BOT );
+		return;
+	}
+
+	printf( "make_bot_object with %d faces\n", face_count );
+
+	for( i=0 ; i<face_count ; i++ )
+	{
+		V_MIN( min_pt, faces[i*3] );
+		V_MAX( max_pt, faces[i*3] );
+		V_MIN( min_pt, faces[i*3+1] );
+		V_MAX( max_pt, faces[i*3+1] );
+		V_MIN( min_pt, faces[i*3+2] );
+		V_MAX( max_pt, faces[i*3+2] );
+	}
+
+	num_vertices = max_pt - min_pt + 1;
+
+	for( i=0 ; i<face_count*3 ; i++ )
+		faces[i] -= min_pt;
+
+	if( mode == 1 )
+	{
+		bot_mode = RT_BOT_PLATE;
+		bv = bu_bitv_new( face_count );
+		bu_bitv_clear( bv );
+		for( i=0 ; i<face_count ; i++ )
+		{
+			if( facemode[i] == POS_FRONT )
+				BU_BITSET( bv, i );
+		}
+	}
+	else
+		bot_mode = RT_BOT_SOLID;
+
+	BU_LIST_INIT( &bot_region.l );
+
+	make_solid_name( name , BOT , element_id , comp_id , group_id , 0 );
+	mk_bot( fdout, name, bot_mode, RT_BOT_UNORIENTED, 0, num_vertices, face_count, &grid_pts[min_pt],
+		faces, thickness, bv );
+
+	if( mk_addmember( name ,  &bot_region , WMOP_UNION ) == (struct wmember *)NULL )
+	{
+		bu_log( "make_bot_object: Error in adding %s to bot region\n" , name );
+		rt_bomb( "make_bot_object" );
+	}
+
+	if( bv )
+		bu_free( (char *)bv, "bv" );
+
+	/* subtract any holes for this component */
+	Subtract_holes( &bot_region , comp_id , group_id );
+
+	MK_REGION( fdout , &bot_region , group_id , comp_id , element_id , BOT )
+}
+
+/*	cleanup from previous component and start a new one.
+ *	This is called with final == 1 when ENDDATA is found
+ */
 void
 do_section( final )
 int final;
@@ -5972,130 +5896,26 @@ int final;
 	prev_sect = curr_sect;
 	curr_sect = curr_offset;
 
-	if( pass )
+	if( pass )	/* doing geometry */
 	{
-		if( try_count )
-			region_id = old_region_id;
-
 		if( region_id && !skip_region( region_id ) )
 		{
-			if( !try_count )
-				comp_count++;
+			comp_count++;
 
-			if( nmgs )
-			{
-			    if( (BU_SETJUMP) || make_nmg_objects() )
-			    {
-				struct fast_fus *fus;
-				struct adjacent_faces *adj;
-			    	struct elem_list *elem;
-
-				bu_log( "***********component %s, group #%d, component #%d failed\n",
-					name_name, group_id , comp_id );
-
-				if( m )
-				{
-					nmg_km( m );
-
-					if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
-						bu_log( "ERROR: bu_mem_barriercheck failed in Do_section after nmg_km()\n" );
-
-					m = (struct model *)NULL;
-					r = (struct nmgregion *)NULL;
-					s = (struct shell *)NULL;
-				}
-
-				if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
-					bu_log( "ERROR: bu_mem_barriercheck failed in Do_section before freeing fus list\n" );
-
-				/* clear lists */
-				fus = fus_root;
-				while( fus )
-				{
-					struct fast_fus *tmp;
-
-					tmp = fus;
-					fus = fus->next;
-					bu_free( (char *)tmp , "Do_section: fus" );
-				}
-				fus_root = (struct fast_fus *)NULL;
-
-				if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
-					bu_log( "ERROR: bu_mem_barriercheck failed in Do_section before freeing adj_face list\n" );
-
-				adj = adj_root;
-				while( adj )
-				{
-					struct adjacent_faces *tmp;
-
-					tmp = adj;
-					adj = adj->next;
-					bu_free( (char *)tmp , "Do_section: adj" );
-				}
-				adj_root = (struct adjacent_faces *)NULL;
-
-				elem = elem_root;
-				while( elem )
-				{
-					struct elem_list *tmp;
-
-					tmp = elem;
-					elem = elem->next;
-					bu_free( (char *)tmp, "Do_section: elem" );
-				}
-				elem_root = (struct elem_list *)NULL;
-
-			    	dup_count = 0;
-
-				if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
-					bu_log( "ERROR: bu_mem_barriercheck failed in Do_section after freeing adj_face list\n" );
-
-				/* If a plate-mode component failed, try again using arb6's */
-				if( mode == PLATE_MODE )
-				{
-					/* increment try counter */
-					try_count++;
-
-					if( try_count == 1 )
-					{
-						if( fseek( fdin , prev_sect , SEEK_SET ) )
-						{
-							bu_log( "Cannot seek in input file, not retrying group %d, comnponent %d\n",
-								group_id , comp_id );
-						}
-						else
-						{
-							bu_log( "Retrying group %d, component %d\n",
-								group_id , comp_id );
-							(void)getline();
-							old_region_id = region_id;
-						}
-					}
-				}
-				conv_count--;
-			    }
-			    BU_UNSETJUMP;
-			}
+			if( bot )
+				make_bot_object();
 			make_cline_regions();
 			make_comp_group();
-			if( arb6_worked )
-			{
-				second_chance++;
-				try_count = 0;
-				arb6_worked = 0;
-			}
-			else
-				conv_count++;
 
 		}
 		if( final && debug ) /* The ENDATA card has been found */
 			List_names();
 	}
-	else if( nmgs )
+	else if( bot )
 	{
 		char	name[NAMESIZE+1];
 
-		make_region_name( name , group_id , comp_id , nmgs , NMG );
+		make_region_name( name , group_id , comp_id , bot , NMG );
 	}
 
 	if( !final )
@@ -6147,10 +5967,11 @@ int final;
 		if( pass )
 			name_name[0] = '\0';
 
-		nmgs = 0;
+		bot = 0;
+		face_count = 0;
 	}
 }
-
+#if 0
 struct model *
 inside_arb( pts , thick )
 int pts[8];
@@ -6220,7 +6041,7 @@ fastf_t thick;
 	bu_ptbl_ins( &faces , (long *)fu );
 
 	for( i=0 ; i<8 ; i++ )
-		nmg_vertex_gv( grid_pts[pts[i]].v , grid_pts[pts[i]].pt );
+		nmg_vertex_gv( grid_pts[pts[i]].v , grid_pts[pts[i]] );
 
 	i = 0;
 	while( i < BU_PTBL_END( &faces ) )
@@ -6262,7 +6083,7 @@ fastf_t thick;
 
 	return( m1 );
 }
-
+#endif
 void
 do_hex1()
 {
@@ -6326,7 +6147,7 @@ do_hex1()
 	pts[7] = atoi( field );
 
 	for( i=0 ; i<8 ; i++ )
-		VMOVE( points[i] , grid_pts[pts[i]].pt );
+		VMOVE( points[i] , grid_pts[pts[i]] );
 
 	make_solid_name( name , CHEX1 , element_id , comp_id , group_id , 0 );
 	mk_arb8( fdout , name , &points[0][X] );
@@ -6363,6 +6184,7 @@ do_hex1()
 		}
 
 		/* get inside arb */
+#if 0
 		m1 = inside_arb( pts , thick );
 
 		if( m1 == (struct model *)NULL )
@@ -6383,6 +6205,7 @@ do_hex1()
 			rt_bomb( "CHEX1: mk_addmember failed\n" );
 
 		nmg_km( m1 );
+#endif
 
 	}
 	MK_REGION( fdout , &head , group_id , comp_id , element_id , CHEX1 )
@@ -6452,7 +6275,7 @@ do_hex2()
 	pts[7] = atoi( field );
 
 	for( i=0 ; i<8 ; i++ )
-		VMOVE( points[i] , grid_pts[pts[i]].pt );
+		VMOVE( points[i] , grid_pts[pts[i]] );
 
 	make_solid_name( name , CHEX2 , element_id , comp_id , group_id , 0 );
 	mk_arb8( fdout , name , &points[0][X] );
@@ -6477,7 +6300,7 @@ int pass_number;
 {
 
 	if( debug )
-		bu_log( "\n\nProcess_input( pass = %d ), try = %d\n" , pass_number , try_count );
+		bu_log( "\n\nProcess_input( pass = %d )\n" , pass_number );
 /*	bu_prmem( "At start of Process_input:" );	*/
 
 	if( pass_number != 0 && pass_number != 1 )
@@ -6537,9 +6360,6 @@ int pass_number;
 		if( !line[0] )
 			strcpy( line, "ENDDATA" );
 	}
-
-	if( try_count )
-		return( 1 );
 
 	if( debug )
 	{
@@ -6711,6 +6531,7 @@ char *argv[];
 	char *plot_file=NULL;
 
 	/* Initialze tolerance struct */
+#if 0
         tol.magic = BN_TOL_MAGIC;
         tol.dist = 0.005;
         tol.dist_sq = tol.dist * tol.dist;
@@ -6718,7 +6539,7 @@ char *argv[];
         tol.para = 1 - tol.perp;
 
 	max_cos = cos( MIN_ANG*bn_pi/180.0 );
-
+#endif
 	while( (c=getopt( argc , argv , "o:c:pa:dnwx:b:X:D:P:" ) ) != EOF )
 	{
 		switch( c )
@@ -6730,17 +6551,8 @@ char *argv[];
 			case 'c':	/* convert only the specified components */
 				make_region_list( optarg );
 				break;
-			case 'p':	/* convert plate-mode componnets as ARB6's */
-				use_arb6 = 1;
-				break;
-			case 'a':	/* minimum angle */
-				max_cos = cos( atof( optarg )*bn_pi/180.0 );
-				break;
 			case 'd':	/* debug option */
 				debug = 1;
-				break;
-			case 'n':
-				polysolids = 0;
 				break;
 			case 'w':	/* print warnings */
 				warnings = 1;
@@ -6749,23 +6561,8 @@ char *argv[];
 				sscanf( optarg, "%x", &rt_debug );
 				rt_g.debug = rt_debug;
 				break;
-			case 'X':
-				sscanf( optarg, "%x", &nmg_debug );
-				rt_g.NMG_debug = nmg_debug;
-				break;
 			case 'b':
 				sscanf( optarg, "%x", &bu_debug );
-				break;
-			case 'D':
-				tol.dist = atof( optarg );
-				bu_log( "tolerance distance set to %f\n" , tol.dist );
-				tol.dist_sq = tol.dist * tol.dist;
-				break;
-			case 'P':
-				tol.perp = atof( optarg );
-				bu_log( "tolerance perpendicular set to %f\n" , tol.perp );
-				tol.para = 1.0 - tol.perp;
-				bu_log( "tolerance parallel set to %f\n" , tol.para );
 				break;
 			default:
 				rt_bomb( usage );
@@ -6815,7 +6612,7 @@ char *argv[];
 	}
 
 	grid_size = GRID_BLOCK;
-	grid_pts = (struct fast_verts *)bu_malloc( grid_size * sizeof( struct fast_verts ) , "fast4-g: grid_pts" );
+	grid_pts = (point_t *)bu_malloc( grid_size * sizeof( point_t ) , "fast4-g: grid_pts" );
 
 	cline_root = (struct cline *)NULL;
 	cline_last_ptr = (struct cline *)NULL;
@@ -6824,24 +6621,10 @@ char *argv[];
 
 	hole_root = (struct holes *)NULL;
 
-	fus_root = (struct fast_fus *)NULL;
-
-	adj_root = (struct adjacent_faces *)NULL;
-
-	elem_root = (struct elem_list *)NULL;
-
-	dup_count = 0;
-	dup_fu = (struct faceuse **)bu_calloc( DUP_BLOCK, sizeof( struct faceuse *), "dup_fu" );
-	dup_size = DUP_BLOCK;
-
 	name_name[0] = '\0';
 	name_count = 0;
 
 	vehicle[0] = '\0';
-
-	m = (struct model *)NULL;
-	r = (struct nmgregion *)NULL;
-	s = (struct shell *)NULL;
 
 	bu_ptbl_init( &stack , 64, " &stack ");
 
@@ -6870,7 +6653,5 @@ char *argv[];
 	fclose( fdout );
 	Post_process( output_file );
 
-	bu_log( "%d components converted out of %d attempted\n" , conv_count , comp_count );
-	bu_log( "\t%d rejections or failures converted on second try (as a group of ARB6 solids)\n", second_chance );
-	bu_log( "\tFor a total of %d components converted\n" , conv_count+second_chance );
+	bu_log( "%d components converted\n", comp_count );
 }
