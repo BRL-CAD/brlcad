@@ -199,6 +199,7 @@ int		ms_1st_done;
 int		ms_all_done;
 int		ms_flush;
 int		ms_total;
+fastf_t		sec_between_frames;
 
 fastf_t		ms_rt_min;		/* ms it took fastest ray-tracer */
 fastf_t		ms_rt_max;		/* ms it took slowest ray-tracer */
@@ -276,6 +277,19 @@ register char **argv;
 	}
 
 	return(1);		/* OK */
+}
+
+/*
+ *			T V D I F F
+ *
+ *  Return t1 - t0, as a floating-point number of seconds.
+ */
+double
+tvdiff(t1, t0)
+struct timeval	*t1, *t0;
+{
+	return( (t1->tv_sec - t0->tv_sec) +
+		(t1->tv_usec - t0->tv_usec) / 1000000. );
 }
 
 /*
@@ -1048,6 +1062,9 @@ ClientData clientData;
 	(void)gettimeofday( &frame_start, (struct timezone *)NULL );
 	finish_position = 0;
 
+	/* Determine how long it's been since end of last frame */
+	sec_between_frames = tvdiff( &frame_start, &t_all_done );
+
 	/* Keep track of the POV used for this assignment.  For refresh. */
 	if( last_pov )  {
 		bu_free( last_pov, "last POV pkg" );
@@ -1549,19 +1566,6 @@ char			*buf;
 }
 
 /*
- *			T V D I F F
- *
- *  Return t1 - t0, as a floating-point number of seconds.
- */
-double
-tvdiff(t1, t0)
-struct timeval	*t1, *t0;
-{
-	return( (t1->tv_sec - t0->tv_sec) +
-		(t1->tv_usec - t0->tv_usec) / 1000000. );
-}
-
-/*
  *			R T S Y N C _ P H _ D O N E
  *
  *  This message indicates that RTNODE has successfully sent
@@ -1704,7 +1708,8 @@ check_others:
 		1.0/interval,
 		network_overhead,
 		ms_1st_done, ms_all_done,
-		nbuf );
+		nbuf
+	    );
 
 	/* Trigger TCL code to auto-update cpu status window on major changes */
 	if( sched_update )
