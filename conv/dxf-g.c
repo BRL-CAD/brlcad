@@ -742,7 +742,6 @@ process_tables_layer_code( int code )
 		curr_color = 0;
 		curr_state->sub_state = UNKNOWN_TABLE_STATE;
 		return( process_tables_unknown_code( code ) );
-		break;
 	}
 		
 	return( 0 );
@@ -937,7 +936,6 @@ process_entities_polyline_vertex_code( int code )
 			bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		return( process_entities_code[curr_state->sub_state]( code ) );
-		break;
 	case 999:	/* comment */
 		printf( "%s\n", line );
 		break;
@@ -1085,7 +1083,6 @@ process_entities_polyline_code( int code )
 			}
 			break;
 		}
-		break;
 	case 70:	/* polyline flag */
 		polyline_flag = atoi( line );
 		break;
@@ -1203,7 +1200,6 @@ process_entities_unknown_code( int code )
 			}
 			break;
 		}
-		break;
 	}
 		
 	return( 0 );
