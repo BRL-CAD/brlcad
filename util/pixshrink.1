@@ -31,11 +31,13 @@ program.
 .PP
 The program reads the entire image into memory,
 and then scales the image down by
-the factor indicated.
-An output pixel is the result of averaging a square grid of 
-dimension
-.I shrink_factor
-of input pixels.
+to 1/factor the original size in both dimensions.
+
+
+By default, pixshrink uses boxcar averaging to produce the output pixels from
+the input.  The 
+.I \-u
+option causes pixshrink to use image undersampling instead.
 .PP
 .SH "SEE ALSO"
 brlcad(1), pixcrop(1), pixrect(1), pixinterp2x(1), pixscale(1), pix(5).
