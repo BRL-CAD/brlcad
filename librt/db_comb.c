@@ -472,6 +472,96 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			D B _ T R E E _ F L A T T E N _ D E S C R I B E
+ */
+void
+db_tree_flatten_describe( vls, tp, indented, lvl, mm2local )
+struct bu_vls		*vls;
+CONST union tree	*tp;
+int			indented;
+int			lvl;
+double			mm2local;
+{
+	int	status;
+	int node_count, actual_count;
+	struct rt_tree_array	*rt_tree_array;
+	
+
+	BU_CK_VLS(vls);
+
+	if( !tp )
+	{
+		/* no tree, probably an empty combination */
+		bu_vls_strcat( vls, "-empty-\n" );
+		return;
+	}
+	RT_CK_TREE(tp);
+
+	node_count = db_tree_nleaves( tp );
+	if( node_count > 0 )
+	{
+		int i;
+		char op;
+		int status;
+
+		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
+		actual_count = db_flatten_tree( rt_tree_array, tp, OP_UNION ) - rt_tree_array;
+		for( i=0 ; i<node_count ; i++ )
+		{
+			switch (rt_tree_array[i].tl_op)
+			{
+				case OP_INTERSECT:
+					op = '+';
+					break;
+				case OP_SUBTRACT:
+					op = '-';
+					break;
+				case OP_UNION:
+					op = 'u';
+					break;
+				default:
+					bu_bomb("db_tree_flatten_describe() corrupt rt_tree_array");
+			}
+
+			status = mat_categorize( rt_tree_array[i].tl_tree->tr_l.tl_mat );
+			if( !indented )  bu_vls_spaces( vls, 2*lvl );
+			bu_vls_printf( vls, " %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name );
+			if( status & STAT_ROT ) {
+				fastf_t	az, el;
+				bn_ae_vec( &az, &el, rt_tree_array[i].tl_tree->tr_l.tl_mat ?
+					rt_tree_array[i].tl_tree->tr_l.tl_mat : bn_mat_identity );
+				bu_vls_printf( vls, 
+					" az=%g, el=%g, ",
+					az, el );
+			}
+			if( status & STAT_XLATE ) {
+				bu_vls_printf( vls, " [%g,%g,%g]",
+					rt_tree_array[i].tl_tree->tr_l.tl_mat[MDX]*mm2local,
+					rt_tree_array[i].tl_tree->tr_l.tl_mat[MDY]*mm2local,
+					rt_tree_array[i].tl_tree->tr_l.tl_mat[MDZ]*mm2local);
+			}
+			if( status & STAT_SCALE ) {
+				bu_vls_printf( vls, " scale %g",
+					1.0/rt_tree_array[i].tl_tree->tr_l.tl_mat[15] );
+			}
+			if( status & STAT_PERSP ) {
+				bu_vls_printf( vls, 
+					" Perspective=[%g,%g,%g]??",
+					rt_tree_array[i].tl_tree->tr_l.tl_mat[12],
+					rt_tree_array[i].tl_tree->tr_l.tl_mat[13],
+					rt_tree_array[i].tl_tree->tr_l.tl_mat[14] );
+			}
+		bu_vls_printf( vls, "\n" );
+		}
+	}
+	else
+	{
+		if( !indented )  bu_vls_spaces( vls, 2*lvl );
+		bu_vls_strcat( vls, "-empty-\n" );
+	}
+}
+
+/*
  *			D B _ T R E E _ D E S C R I B E
  */
 void
@@ -622,7 +712,8 @@ double		mm2local;
 
 	if( comb->tree )  {
 		if( verbose )  {
-			db_tree_describe( str, comb->tree, 0, 1, mm2local );
+			db_tree_flatten_describe( str, comb->tree, 0, 1, mm2local );
+/*			db_tree_describe( str, comb->tree, 0, 1, mm2local ); */
 		} else {
 			rt_pr_tree_vls( str, comb->tree );
 		}
