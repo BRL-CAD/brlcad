@@ -9,6 +9,7 @@
  *	Michael John Muuss	(Programming)
  *	Peter F. Stiller	(Curvature Analysis)
  *	Phillip Dykstra		(RPPs, Curvature)
+ *	Dave Becker		(Vectorization)
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -351,6 +352,68 @@ struct application	*ap;
 	return(segp);			/* HIT */
 }
 
+
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+
+/*
+ *			E L L _ V S H O T
+ *
+ *  This is the Becker vector version.
+ */
+void
+ell_vshot( stp, rp, segp, n, resp)
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct resource         *resp; /* pointer to a list of free segs */
+{
+	register int    i;
+	register struct ell_specific *ell;
+	LOCAL vect_t	dprime;		/* D' */
+	LOCAL vect_t	pprime;		/* P' */
+	LOCAL vect_t	xlated;		/* translated vector */
+	LOCAL fastf_t	dp, dd;		/* D' dot P', D' dot D' */
+	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
+	FAST fastf_t	root;		/* root of radical */
+
+	/* for each ray/ellipse pair */
+#	include "noalias.h"
+	for(i = 0; i < n; i++){
+#if !CRAY /* XXX currently prevents vectorization on cray */
+	 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
+#endif
+		ell = (struct ell_specific *)stp[i]->st_specific;
+
+		MAT4X3VEC( dprime, ell->ell_SoR, rp[i]->r_dir );
+		VSUB2( xlated, rp[i]->r_pt, ell->ell_V );
+		MAT4X3VEC( pprime, ell->ell_SoR, xlated );
+
+		dp = VDOT( dprime, pprime );
+		dd = VDOT( dprime, dprime );
+
+		if( (root = dp*dp - dd * (VDOT(pprime,pprime)-1.0)) < 0 ) {
+			SEG_MISS(segp[i]);		/* No hit */
+		}
+	        else {
+			root = sqrt(root);
+
+			segp[i].seg_next = SEG_NULL;
+			segp[i].seg_stp = stp[i];
+
+			if( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
+				/* k1 is entry, k2 is exit */
+				segp[i].seg_in.hit_dist = k1;
+				segp[i].seg_out.hit_dist = k2;
+			} else {
+				/* k2 is entry, k1 is exit */
+				segp[i].seg_in.hit_dist = k2;
+				segp[i].seg_out.hit_dist = k1;
+			}
+		}
+	}
+}
+
 /*
  *  			E L L _ N O R M
  *  
@@ -572,3 +635,4 @@ struct directory *dp;
 		ADD_VL( vhead, &middle[i*ELEMENTS_PER_VECT], 1 );
 	}
 }
+

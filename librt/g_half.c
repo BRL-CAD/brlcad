@@ -4,8 +4,9 @@
  *  Function -
  *  	Intersect a ray with a Halfspace
  *  
- *  Author -
+ *  Authors -
  *	Michael John Muuss
+ *	Dave Becker		(Vectorization)
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -179,6 +180,62 @@ struct application	*ap;
 		return(segp);			/* HIT */
 	}
 	/* NOTREACHED */
+}
+
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+/*
+ *			H L F _ V S H O T
+ *
+ *  This is the Becker vector version
+ */
+void
+hlf_vshot( stp, rp, segp, n, resp)
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct resource         *resp; /* pointer to a list of free segs */
+{
+	register int    i;
+	register struct half_specific *halfp;
+	LOCAL fastf_t	in, out;	/* ray in/out distances */
+	FAST fastf_t	slant_factor;	/* Direction dot Normal */
+	FAST fastf_t	norm_dist;
+
+	/* for each ray/halfspace pair */
+#	include "noalias.h"
+	for(i = 0; i < n; i++){
+		if (stp[i] == 0) continue; /* indicates "skip this pair" */
+
+		halfp = (struct half_specific *)stp[i]->st_specific;
+
+		in = -INFINITY;
+		out = INFINITY;
+
+		norm_dist = VDOT(halfp->half_N, rp[i]->r_pt) - halfp->half_d;
+
+		if((slant_factor = -VDOT(halfp->half_N, rp[i]->r_dir)) <
+								-1.0e-10) {
+			/* exit point, when dir.N < 0.  out = min(out,s) */
+			out = norm_dist/slant_factor;
+		} else if ( slant_factor > 1.0e-10 )  {
+			/* entry point, when dir.N > 0.  in = max(in,s) */
+			in = norm_dist/slant_factor;
+		}  else  {
+			/* ray is parallel to plane when dir.N == 0.
+			 * If it is outside the solid, stop now */
+			if( norm_dist > 0.0 ) {
+				SEG_MISS(segp[i]);		/* No hit */
+			        continue;
+			}
+		}
+
+		/* HIT */
+		segp[i].seg_next = SEG_NULL;
+		segp[i].seg_stp = stp[i];
+		segp[i].seg_in.hit_dist = in;
+		segp[i].seg_out.hit_dist = out;
+	}
 }
 
 /*

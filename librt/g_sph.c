@@ -7,6 +7,7 @@
  *
  *  Authors -
  *	Phillip Dykstra
+ *	Dave Becker		(Vectorization)
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -262,6 +263,66 @@ struct application	*ap;
 	segp->seg_in.hit_dist = b - root;
 	segp->seg_out.hit_dist = b + root;
 	return(segp);			/* HIT */
+}
+
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+/*
+ *			S P H _ V S H O T
+ *
+ *  This is the Becker vectorized version
+ */
+void
+sph_vshot( stp, rp, segp, n, resp)
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct resource         *resp; /* pointer to a list of free segs */
+{
+	register struct sph_specific *sph;
+	LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
+	FAST fastf_t	magsq_ov;	/* length squared of ov */
+	FAST fastf_t	b;		/* second term of quadratic eqn */
+	FAST fastf_t	root;		/* root of radical */
+	register int    i;
+
+	/* for each ray/sphere pair */
+#	include "noalias.h"
+	for(i = 0; i < n; i++){
+#if !CRAY	/* XXX currently prevents vectorization on cray */
+	 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
+#endif
+
+		sph = (struct sph_specific *)stp[i]->st_specific;
+		VSUB2( ov, sph->sph_V, rp[i]->r_pt );
+		b = VDOT( rp[i]->r_dir, ov );
+	        magsq_ov = MAGSQ(ov);
+
+		if( magsq_ov >= sph->sph_radsq ) {
+			/* ray origin is outside of sphere */
+			if( b < 0 ) {
+				/* ray direction is away from sphere */
+				SEG_MISS(segp[i]);		/* No hit */
+				continue;
+			}
+			root = b*b - magsq_ov + sph->sph_radsq;
+			if( root <= 0 ) {
+				/* no real roots */
+				SEG_MISS(segp[i]);		/* No hit */
+				continue;
+			}
+		} else {
+			root = b*b - magsq_ov + sph->sph_radsq;
+		}
+		root = sqrt(root);
+
+		segp[i].seg_stp = stp[i];
+		segp[i].seg_next = SEG_NULL;
+
+		/* we know root is positive, so we know the smaller t */
+		segp[i].seg_in.hit_dist = b - root;
+		segp[i].seg_out.hit_dist = b + root;
+	}
 }
 
 /*

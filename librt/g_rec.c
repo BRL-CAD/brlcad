@@ -509,6 +509,132 @@ check_plates:
 	/* NOTREACHED */
 }
 
+#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
+/*
+ *			R E C _ V S H O T
+ *
+ *  This is the Becker vector version
+ */
+void
+rec_vshot( stp, rp, segp, n, resp)
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct resource         *resp; /* pointer to a list of free segs */
+{
+	register int    i;
+	register struct rec_specific *rec;
+	LOCAL vect_t	dprime;		/* D' */
+	LOCAL vect_t	pprime;		/* P' */
+	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
+	LOCAL vect_t	xlated;		/* translated vector */
+	LOCAL struct hit hits[3];	/* 4 potential hit points */
+	register struct hit *hitp;	/* pointer to hit point */
+	FAST fastf_t	b;		/* coeff of polynomial */
+	FAST fastf_t	root;		/* root of radical */
+	FAST fastf_t	dx2dy2;
+
+	/* for each ray/right_eliptical_cylinder pair */
+#	include "noalias.h"
+	for(i = 0; i < n; i++){
+#if !CRAY /* XXX currently prevents vectorization on cray */
+	 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
+#endif
+
+		rec = (struct rec_specific *)stp[i]->st_specific;
+		hitp = &hits[0];
+
+		/* out, Mat, vect */
+		MAT4X3VEC( dprime, rec->rec_SoR, rp[i]->r_dir );
+		VSUB2( xlated, rp[i]->r_pt, rec->rec_V );
+		MAT4X3VEC( pprime, rec->rec_SoR, xlated );
+
+		if( NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL) )
+			goto check_plates;
+
+		/* Find roots of eqn, using forumla for quadratic w/ a=1 */
+		b = 2 * ( dprime[X]*pprime[X] + dprime[Y]*pprime[Y] ) * 
+		   (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
+		if( (root = b*b - 4 * dx2dy2 *
+		    (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1)) <= 0 )
+			goto check_plates;
+
+		root = sqrt(root);
+		k1 = (root-b) * 0.5;
+		k2 = (root+b) * (-0.5);
+
+		/*
+		 *  k1 and k2 are potential solutions to intersection with side.
+		 *  See if they fall in range.
+		 */
+		VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
+		if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
+			hitp->hit_dist = k1;
+			hitp->hit_private = &rec_compute[0];	/* compute N */
+			hitp++;
+		}
+
+		VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
+		if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
+			hitp->hit_dist = k2;
+			hitp->hit_private = &rec_compute[0];	/* compute N */
+			hitp++;
+		}
+
+		/*
+		 * Check for hitting the end plates.
+		 */
+check_plates:
+		if( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
+			/* 0 or 1 hits so far, this is worthwhile */
+			k1 = -pprime[Z] / dprime[Z];	/* bottom plate */
+			k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
+
+			VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );/* hit' */
+			if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+			    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
+				hitp->hit_dist = k1;
+				hitp->hit_private = &rec_compute[2];	/* -H */
+				hitp++;
+			}
+
+			VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );/* hit' */
+			if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+			    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
+				hitp->hit_dist = k2;
+				hitp->hit_private = &rec_compute[1];	/* +H */
+				hitp++;
+			}
+		}
+
+		if( hitp != &hits[2] ) {
+			SEG_MISS(segp[i]);		/* MISS */
+		} else {
+			segp[i].seg_stp = stp[i];
+			segp[i].seg_next = SEG_NULL;
+
+			if( hits[0].hit_dist < hits[1].hit_dist )  {
+				/* entry is [0], exit is [1] */
+				VMOVE(segp[i].seg_in.hit_vpriv, hits[0].hit_vpriv);
+				segp[i].seg_in.hit_dist = hits[0].hit_dist;
+				segp[i].seg_in.hit_private = hits[0].hit_private;
+				VMOVE(segp[i].seg_out.hit_vpriv, hits[1].hit_vpriv);
+				segp[i].seg_out.hit_dist = hits[1].hit_dist;
+				segp[i].seg_out.hit_private = hits[1].hit_private;
+			} else {
+				/* entry is [1], exit is [0] */
+				VMOVE(segp[i].seg_in.hit_vpriv, hits[1].hit_vpriv);
+				segp[i].seg_in.hit_dist = hits[1].hit_dist;
+				segp[i].seg_in.hit_private = hits[1].hit_private;
+				VMOVE(segp[i].seg_out.hit_vpriv, hits[0].hit_vpriv);
+				segp[i].seg_out.hit_dist = hits[0].hit_dist;
+				segp[i].seg_out.hit_private = hits[0].hit_private;
+			}
+		}
+	}
+}
+
 /*
  *  			R E C _ N O R M
  *
