@@ -2768,6 +2768,53 @@ int flags;		/* BLIT_xxx flags */
 	int xdel, ydel;
 	int xwd, xht;
 
+	/*
+	 * Newish code, discover masks and shifts for each of RGB
+	 */
+	unsigned int a_pixel;
+
+	unsigned long test_mask;
+	unsigned long a_mask;
+
+	int red_shift, green_shift, blue_shift;
+	int i;
+
+	a_mask = xi->xi_visual->red_mask;
+	test_mask = 1;
+	for (i=0; i<sizeof(unsigned long)*8;i++) {
+		if (test_mask & a_mask) break;
+		test_mask = test_mask << 1;
+	}
+	for (;i<sizeof(unsigned long)*8;i++) {
+		if (!(test_mask & a_mask)) break;
+		test_mask = test_mask << 1;
+	}
+	red_shift = i-8;
+
+	a_mask = xi->xi_visual->green_mask;
+	test_mask = 1;
+	for (i=0; i<sizeof(unsigned long)*8;i++) {
+		if (test_mask & a_mask) break;
+		test_mask = test_mask << 1;
+	}
+	for (;i<sizeof(unsigned long)*8;i++) {
+		if (!(test_mask & a_mask)) break;
+		test_mask = test_mask << 1;
+	}
+	green_shift = i-8;
+
+	a_mask = xi->xi_visual->blue_mask;
+	test_mask = 1;
+	for (i=0; i<sizeof(unsigned long)*8;i++) {
+		if (test_mask & a_mask) break;
+		test_mask = test_mask << 1;
+	}
+	for (;i<sizeof(unsigned long)*8;i++) {
+		if (!(test_mask & a_mask)) break;
+		test_mask =test_mask << 1;
+	}
+	blue_shift = i-8;
+
 #if BLIT_DBG
 printf("blit: enter %dx%d at (%d, %d), disp (%d, %d) to (%d, %d)  flags %d\n",
 	w, h, x1, y1, xi->xi_ilf, xi->xi_ibt, xi->xi_irt, xi->xi_itp, flags);
@@ -2851,516 +2898,119 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 	{
 	case FLG_VD24:
 	case FLG_VT24:
-	{
-		unsigned char *irgb;
-		unsigned int *opix;
-
-		opix = (unsigned int *)&(xi->xi_pix[(oy * xi->xi_xwidth +
-			ox) * sizeof(unsigned int)]);
-
-		irgb = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) * sizeof
-			(RGBpixel)]);
-
-		if (ifp->if_xzoom == 1 && ifp->if_yzoom == 1) {
-			/* Special case if no zooming */
-
-			int j, k;
-
-			for (j = y2 - y1 + 1; j; j--) {
-				unsigned char *line_irgb;
-				unsigned char *p;
-
-				line_irgb = irgb;
-				p = (unsigned char *)opix;
-
-				/* For each line, convert/copy pixels */
-
-				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))  {
-					if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-						if( xi->xi_visual->red_mask & 0xFF)  {
-							DEBUG1("FB1a\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = 0;
-								*p++ = line_irgb[BLU];
-								*p++ = line_irgb[GRN];
-								*p++ = line_irgb[RED];
-								line_irgb += sizeof (RGBpixel);
-							}
-						} else {
-							DEBUG1("FB1b\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = 0;
-								*p++ = line_irgb[RED];
-								*p++ = line_irgb[GRN];
-								*p++ = line_irgb[BLU];
-								line_irgb += sizeof (RGBpixel);
-							}
-						}
-					} else {
-						if( xi->xi_visual->red_mask & 0xFF)  {
-							DEBUG1("FB1c\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = line_irgb[RED];
-								*p++ = line_irgb[GRN];
-								*p++ = line_irgb[BLU];
-								*p++ = 0;
-								line_irgb += sizeof (RGBpixel);
-							}
-						} else {
-							DEBUG1("FB1d\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = line_irgb[BLU];
-								*p++ = line_irgb[GRN];
-								*p++ = line_irgb[RED];
-								*p++ = 0;
-								line_irgb += sizeof (RGBpixel);
-							}
-						}
-					}
-				} else {
-					unsigned char *red = xi->xi_redmap;
-					unsigned char *grn = xi->xi_grnmap;
-					unsigned char *blu = xi->xi_blumap;
-
-					if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-						if( xi->xi_visual->red_mask & 0xFF)  {
-							DEBUG1("FB2a\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = 0;
-								*p++ = blu[line_irgb[BLU]];
-								*p++ = grn[line_irgb[GRN]];
-								*p++ = red[line_irgb[RED]];
-								line_irgb += sizeof (RGBpixel);
-							}
-						} else {
-							DEBUG1("FB2b\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = 0;
-								*p++ = red[line_irgb[RED]];
-								*p++ = grn[line_irgb[GRN]];
-								*p++ = blu[line_irgb[BLU]];
-								line_irgb += sizeof (RGBpixel);
-							}
-						}
-					} else {
-						if( xi->xi_visual->red_mask & 0xFF)  {
-							DEBUG1("FB2c\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = red[line_irgb[RED]];
-								*p++ = grn[line_irgb[GRN]];
-								*p++ = blu[line_irgb[BLU]];
-								*p++ = 0;
-								line_irgb += sizeof (RGBpixel);
-							}
-						} else {
-							DEBUG1("FB2d\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = blu[line_irgb[BLU]];
-								*p++ = grn[line_irgb[GRN]];
-								*p++ = red[line_irgb[RED]];
-								*p++ = 0;
-								line_irgb += sizeof (RGBpixel);
-							}
-						}
-					}
-				}
-				irgb += xi->xi_iwidth * sizeof (RGBpixel);
-				opix -= xi->xi_xwidth;
-			}
-		} else {
-			/* General case, zooming in effect */
-
-			for (y = y1; y <= y2; y++) {
-				int pyht;
-				int copied;
-				unsigned char *line_irgb;
-				unsigned int  *prev_line;
-				unsigned char *p;
-
-				/* Calculate # lines needed */
-
-				if (y == y1)
-					pyht = y1ht;
-				else if (y == y2)
-					pyht = y2ht;
-				else
-					pyht = ifp->if_yzoom;
-
-
-				/* Save pointer to start of line */
-
-				line_irgb = irgb;
-				prev_line = opix;
-				p = (unsigned char *)opix;
-
-				/* For the first line, convert/copy pixels */
-
-				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))  {
-					for (x = x1; x <= x2; x++) {
-							int pxwd;
-
-						/* Calculate # pixels needed */
-
-						if (x == x1)
-							pxwd = x1wd;
-						else if (x == x2)
-							pxwd = x2wd;
-						else
-							pxwd = ifp->if_xzoom;
-
-						/* Make as many copies as needed */
-						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-							if( xi->xi_visual->red_mask & 0xFF)  {
-								DEBUG1("FB3a\n")
-								while (pxwd--)   {
-									*p++ = 0;
-									*p++ = line_irgb[BLU];
-									*p++ = line_irgb[GRN];
-									*p++ = line_irgb[RED];
-								}
-							} else {
-								DEBUG1("FB3b\n")
-								while (pxwd--)   {
-									*p++ = 0;
-									*p++ = line_irgb[RED];
-									*p++ = line_irgb[GRN];
-									*p++ = line_irgb[BLU];
-								}
-							}
-						} else {
-							if( xi->xi_visual->red_mask & 0xFF)  {
-								DEBUG1("FB3c\n")
-								while (pxwd--)   {
-									*p++ = line_irgb[RED];
-									*p++ = line_irgb[GRN];
-									*p++ = line_irgb[BLU];
-									*p++ = 0;
-								}
-							} else {
-								DEBUG1("FB3d\n")
-								while (pxwd--)   {
-									*p++ = line_irgb[BLU];
-									*p++ = line_irgb[GRN];
-									*p++ = line_irgb[RED];
-									*p++ = 0;
-								}
-							}
-						}
-						line_irgb += sizeof (RGBpixel);
-					}
-				} else {
-					unsigned char *red = xi->xi_redmap;
-					unsigned char *grn = xi->xi_grnmap;
-					unsigned char *blu = xi->xi_blumap;
-
-					for (x = x1; x <= x2; x++) {
-						int pxwd;
-
-						/* Calculate # pixels needed */
-
-						if (x == x1)
-							pxwd = x1wd;
-						else if (x == x2)
-							pxwd = x2wd;
-						else
-							pxwd = ifp->if_xzoom;
-
-
-						/* Make as many copies as needed */
-						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-							if( xi->xi_visual->red_mask & 0xFF)  {
-								DEBUG1("FB4a\n")
-								while (pxwd--)  {
-									*p++ = 0;
-									*p++ = blu[line_irgb[BLU]];
-									*p++ = grn[line_irgb[GRN]];
-									*p++ = red[line_irgb[RED]];
-								}
-							} else {
-								DEBUG1("FB4b\n")
-								while (pxwd--)  {
-									*p++ = 0;
-									*p++ = red[line_irgb[RED]];
-									*p++ = grn[line_irgb[GRN]];
-									*p++ = blu[line_irgb[BLU]];
-								}
-							}
-						} else {
-							if( xi->xi_visual->red_mask & 0xFF)  {
-								DEBUG1("FB4c\n")
-								while (pxwd--)  {
-									*p++ = red[line_irgb[RED]];
-									*p++ = grn[line_irgb[GRN]];
-									*p++ = blu[line_irgb[BLU]];
-									*p++ = 0;
-								}
-							} else {
-								DEBUG1("FB4d\n")
-								while (pxwd--)  {
-									*p++ = blu[line_irgb[BLU]];
-									*p++ = grn[line_irgb[GRN]];
-									*p++ = red[line_irgb[RED]];
-									*p++ = 0;
-								}
-							}
-						}
-						line_irgb += sizeof (RGBpixel);
-					}
-				}
-				copied = p - (unsigned char *)opix;	/* bytes */
-
-				irgb += xi->xi_iwidth * sizeof (RGBpixel);
-				opix -= xi->xi_xwidth;
-
-				/* Copy remaining output lines from 1st output line */
-
-				pyht--;
-				while (pyht--) {
-					memcpy(opix, prev_line, copied);
-					opix -= xi->xi_xwidth;
-				}
-			}
-		}
-		break;
-	}
-
 	case FLG_VD16:
 	case FLG_VT16:
 	{
 		unsigned char *irgb;
 		unsigned char *opix;
+		unsigned char *red = xi->xi_redmap;
+		unsigned char *grn = xi->xi_grnmap;
+		unsigned char *blu = xi->xi_blumap;
 
-		opix = (unsigned char *)&(xi->xi_pix[(oy * xi->xi_xwidth + ox) * 2]);
+		opix = &(xi->xi_pix[oy * xi->xi_image->bytes_per_line + ox *
+			(xi->xi_image->bits_per_pixel/8)]);
 
-		irgb = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) * sizeof(RGBpixel)]);
+		irgb = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) * sizeof
+			(RGBpixel)]);
 
-		if (ifp->if_xzoom == 1 && ifp->if_yzoom == 1) {
-			/* Special case if no zooming */
+		/* General case, zooming in effect */
 
-			int j, k;
+		for (y = y1; y <= y2; y++) {
+			int pyht;
+			int copied;
+			unsigned char *line_irgb;
+			unsigned char *prev_line;
+			unsigned char *p;
 
-			for (j = y2 - y1 + 1; j; j--) {
-				unsigned char *line_irgb;
-				unsigned char *p;
+			/* Calculate # lines needed */
 
-				line_irgb = irgb;
-				p = (unsigned char *)opix;
+			if (y == y1)
+				pyht = y1ht;
+			else if (y == y2)
+				pyht = y2ht;
+			else
+				pyht = ifp->if_yzoom;
 
-				/* For each line, convert/copy pixels */
 
-				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))  {
-					if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-						if( xi->xi_visual->red_mask & 0xFF)  {
-							DEBUG1("FB1a\n")
-							for (k = x2 - x1 + 1; k; k--) {
-		 						*p++ = (line_irgb[BLU]>>3) | ((line_irgb[GRN]>>2)<<5);
-								*p++ = (line_irgb[GRN]>>5) | ((line_irgb[RED]>>3)<<3);
-								line_irgb += sizeof (RGBpixel);
-							}
-						} else {
-							DEBUG1("FB1b\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = (line_irgb[RED]>>3) | ((line_irgb[GRN]>>2)<<5);
-								*p++ = (line_irgb[GRN]>>5) | ((line_irgb[BLU]>>3)<<5);
-								line_irgb += sizeof (RGBpixel);
-							}
-						}
-					} else {
-						if( xi->xi_visual->red_mask & 0xFF)  {
-							DEBUG1("FB1c\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = (line_irgb[RED]>>3) | ((line_irgb[GRN]>>2)<<5);
-								*p++ = (line_irgb[GRN]>>5) | ((line_irgb[BLU]>>3)<<5);
-								line_irgb += sizeof (RGBpixel);
-							}
-						} else {
-							DEBUG1("FB1d 16 bit\n")
-							for (k = x2 - x1 + 1; k; k--) {
-		 						*p++ = (line_irgb[BLU]>>3) | ((line_irgb[GRN]>>2)<<5);
-								*p++ = (line_irgb[GRN]>>5) | ((line_irgb[RED]>>3)<<3);
-								line_irgb += sizeof (RGBpixel);
-							}
-						}
-					}
-				} else {
-					unsigned char *red = xi->xi_redmap;
-					unsigned char *grn = xi->xi_grnmap;
-					unsigned char *blu = xi->xi_blumap;
+			/* Save pointer to start of line */
 
-					if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-						if( xi->xi_visual->red_mask & 0xFF)  {
-							DEBUG1("FB2a\n")
-							for (k = x2 - x1 + 1; k; k--) {
-		 						*p++ = (blu[line_irgb[BLU]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
-								*p++ = (grn[line_irgb[GRN]]>>5) | ((red[line_irgb[RED]]>>3)<<3);
-								line_irgb += sizeof (RGBpixel);
-							}
-						} else {
-							DEBUG1("FB2b\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = (red[line_irgb[RED]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
-								*p++ = (grn[line_irgb[GRN]]>>5) | ((blu[line_irgb[BLU]]>>3)<<5);
-								line_irgb += sizeof (RGBpixel);
-							}
-						}
-					} else {
-						if( xi->xi_visual->red_mask & 0xFF)  {
-							DEBUG1("FB2c\n")
-							for (k = x2 - x1 + 1; k; k--) {
-								*p++ = (red[line_irgb[RED]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
-								*p++ = (grn[line_irgb[GRN]]>>5) | ((blu[line_irgb[BLU]]>>3)<<5);
-								line_irgb += sizeof (RGBpixel);
-							}
-						} else {
-							DEBUG1("FB2d\n")
-							for (k = x2 - x1 + 1; k; k--) {
-		 						*p++ = (blu[line_irgb[BLU]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
-								*p++ = (grn[line_irgb[GRN]]>>5) | ((red[line_irgb[RED]]>>3)<<3);
-								line_irgb += sizeof (RGBpixel);
-							}
-						}
-					}
-				}
-				irgb += xi->xi_iwidth * sizeof (RGBpixel);
-				opix -= xi->xi_xwidth * 2;
-			}
-		} else {
-			/* General case, zooming in effect */
+			line_irgb = irgb;
+			prev_line = opix;
+			p = (unsigned char *)opix;
 
-			for (y = y1; y <= y2; y++) {
-				int pyht;
-				int copied;
-				unsigned char *line_irgb;
-				unsigned char  *prev_line;
-				unsigned char *p;
+			/* For the first line, convert/copy pixels */
 
-				/* Calculate # lines needed */
+			for (x = x1; x <= x2; x++) {
+					int pxwd;
 
-				if (y == y1)
-					pyht = y1ht;
-				else if (y == y2)
-					pyht = y2ht;
+				/* Calculate # pixels needed */
+
+				if (x == x1)
+					pxwd = x1wd;
+				else if (x == x2)
+					pxwd = x2wd;
 				else
-					pyht = ifp->if_yzoom;
+					pxwd = ifp->if_xzoom;
 
-
-				/* Save pointer to start of line */
-
-				line_irgb = irgb;
-				prev_line = opix;
-				p = (unsigned char *)opix;
-
-				/* For the first line, convert/copy pixels */
-
+				/* Make as many copies as needed */
 				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))  {
-					for (x = x1; x <= x2; x++) {
-							int pxwd;
-
-						/* Calculate # pixels needed */
-
-						if (x == x1)
-							pxwd = x1wd;
-						else if (x == x2)
-							pxwd = x2wd;
-						else
-							pxwd = ifp->if_xzoom;
-
-						/* Make as many copies as needed */
-						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-							if( xi->xi_visual->red_mask & 0xFF)  {
-								DEBUG1("FB3a\n")
-								while (pxwd--)   {
-			 						*p++ = (line_irgb[BLU]>>3) | ((line_irgb[GRN]>>2)<<5);
-									*p++ = (line_irgb[GRN]>>5) | ((line_irgb[RED]>>3)<<3);
-								}
-							} else {
-								DEBUG1("FB3b\n")
-								while (pxwd--)   {
-									*p++ = (line_irgb[RED]>>3) | ((line_irgb[GRN]>>2)<<5);
-									*p++ = (line_irgb[GRN]>>5) | ((line_irgb[BLU]>>3)<<5);
-								}
-							}
-						} else {
-							if( xi->xi_visual->red_mask & 0xFF)  {
-								DEBUG1("FB3c\n")
-								while (pxwd--)   {
-									*p++ = (line_irgb[RED]>>3) | ((line_irgb[GRN]>>2)<<5);
-									*p++ = (line_irgb[GRN]>>5) | ((line_irgb[BLU]>>3)<<5);
-								}
-							} else {
-								DEBUG1("FB3d\n")
-								while (pxwd--)   {
-			 						*p++ = (line_irgb[BLU]>>3) | ((line_irgb[GRN]>>2)<<5);
-									*p++ = (line_irgb[GRN]>>5) | ((line_irgb[RED]>>3)<<3);
-								}
-							}
-						}
-						line_irgb += sizeof (RGBpixel);
-					}
+					a_pixel  = (line_irgb[RED] << red_shift) & xi->xi_visual->red_mask;
+					a_pixel |= (line_irgb[GRN] << green_shift) & xi->xi_visual->green_mask;
+					a_pixel |= (line_irgb[BLU] << blue_shift) & xi->xi_visual->blue_mask;
 				} else {
-					unsigned char *red = xi->xi_redmap;
-					unsigned char *grn = xi->xi_grnmap;
-					unsigned char *blu = xi->xi_blumap;
+					a_pixel  = (red[line_irgb[RED]] << red_shift) & xi->xi_visual->red_mask;
+					a_pixel |= (grn[line_irgb[GRN]] << green_shift) & xi->xi_visual->green_mask;
+					a_pixel |= (blu[line_irgb[BLU]] << blue_shift) & xi->xi_visual->blue_mask;
+				}
 
-					for (x = x1; x <= x2; x++) {
-						int pxwd;
-
-						/* Calculate # pixels needed */
-
-						if (x == x1)
-							pxwd = x1wd;
-						else if (x == x2)
-							pxwd = x2wd;
-						else
-							pxwd = ifp->if_xzoom;
-
-
-						/* Make as many copies as needed */
-						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
-							if( xi->xi_visual->red_mask & 0xFF)  {
-								DEBUG1("FB4a\n")
-								while (pxwd--)  {
-			 						*p++ = (blu[line_irgb[BLU]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
-									*p++ = (grn[line_irgb[GRN]]>>5) | ((red[line_irgb[RED]]>>3)<<3);
-								}
-							} else {
-								DEBUG1("FB4b\n")
-								while (pxwd--)  {
-									*p++ = (red[line_irgb[RED]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
-									*p++ = (grn[line_irgb[GRN]]>>5) | ((blu[line_irgb[BLU]]>>3)<<5);
-								}
-							}
-						} else {
-							if( xi->xi_visual->red_mask & 0xFF)  {
-								DEBUG1("FB4c\n")
-								while (pxwd--)  {
-									*p++ = (red[line_irgb[RED]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
-									*p++ = (grn[line_irgb[GRN]]>>5) | ((blu[line_irgb[BLU]]>>3)<<5);
-								}
-							} else {
-								DEBUG1("FB4d\n")
-								while (pxwd--)  {
-			 						*p++ = (blu[line_irgb[BLU]]>>3) | ((grn[line_irgb[GRN]]>>2)<<5);
-									*p++ = (grn[line_irgb[GRN]]>>5) | ((red[line_irgb[RED]]>>3)<<3);
-								}
-							}
+				if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+					if (xi->xi_image->bits_per_pixel == 16) {
+						while (pxwd--)   {
+							*p++ = (a_pixel >> 8) & 0xff;
+							*p++ = a_pixel & 0xff;
 						}
-						line_irgb += sizeof (RGBpixel);
+					} else if (xi->xi_image->bits_per_pixel == 24) {
+						while (pxwd--)   {
+							*p++ = (a_pixel >> 16) & 0xff;
+							*p++ = (a_pixel >> 8) & 0xff;
+							*p++ = a_pixel & 0xff;
+						}
+					} else if (xi->xi_image->bits_per_pixel == 32) {
+						while (pxwd--) {
+							*p++ = (a_pixel >> 24) & 0xff;
+							*p++ = (a_pixel >> 16) & 0xff;
+							*p++ = (a_pixel >> 8) & 0xff;
+							*p++ = a_pixel & 0xff;
+						}
 					}
+
+				} else { /* LSB order */
+					if (xi->xi_image->bits_per_pixel == 16) {
+						while (pxwd--)   {
+							*p++ = a_pixel & 0xff;
+							*p++ = (a_pixel >> 8) & 0xff;
+						}
+					} else if (xi->xi_image->bits_per_pixel == 24) {
+						while (pxwd--)   {
+							*p++ = a_pixel & 0xff;
+							*p++ = (a_pixel >> 8) & 0xff;
+							*p++ = (a_pixel >> 16) & 0xff;
+						}
+					} else if (xi->xi_image->bits_per_pixel == 32) {
+						while (pxwd--) {
+							*p++ = a_pixel & 0xff;
+							*p++ = (a_pixel >> 8) & 0xff;
+							*p++ = (a_pixel >> 16) & 0xff;
+							*p++ = (a_pixel >> 24) & 0xff;
+						}
+					}
+
 				}
-				copied = p - (unsigned char *)opix;	/* bytes */
-
-				irgb += xi->xi_iwidth * sizeof (RGBpixel);
-				opix -= xi->xi_xwidth * 2;
-
-				/* Copy remaining output lines from 1st output line */
-
-				pyht--;
-				while (pyht--) {
-					memcpy(opix, prev_line, copied);
-					opix -= xi->xi_xwidth * 2;
-				}
+				line_irgb += sizeof (RGBpixel);
 			}
+			copied = p - (unsigned char *)opix;	/* bytes */
+			irgb += xi->xi_iwidth * sizeof(RGBpixel);
+			opix -= xi->xi_image->bytes_per_line;
 		}
 		break;
 	}
