@@ -18,9 +18,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
-#include <fb.h>
+
+#include "machine.h"
+#include "fb.h"
 
 /* Program constants */
 #define		High_Size	1024

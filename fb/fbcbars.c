@@ -52,12 +52,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <stdio.h>
-#include "fb.h"
+#include "conf.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"		/* For getopt() */
+#include "fb.h"
 
 #define MAX_LINE	(8*1024)	/* Max pixels/line */
 static unsigned char scanline[3*MAX_LINE];	/* 1 scanline pixel buffer */

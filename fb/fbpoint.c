@@ -20,8 +20,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#include "../h/fb.h"
+#include "machine.h"
+#include "externs.h"		/* For malloc() */
+#include "fb.h"
 
 FBIO *fbp;
 
@@ -125,7 +129,6 @@ main(argc, argv)
 char **argv;
 {
 	int width, height;
-	char *malloc();
 
 	setbuf( stderr, malloc( BUFSIZ ) );
 	width = height = 0;

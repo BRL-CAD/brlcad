@@ -23,9 +23,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
 #include "machine.h"
-#include "externs.h"
+#include "externs.h"		/* For getopt and malloc */
 #include "fb.h"
 
 int	file_width = 512;	/* width of input sub-images in pixels */

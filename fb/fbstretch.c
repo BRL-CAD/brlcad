@@ -65,14 +65,7 @@ static char	RCSid[] =		/* for "what" utility */
 #define	USAGE3 "\t[ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
 #define	OPTSTR	"af:F:hn:N:s:S:vw:W:x:y:"
 
-#ifdef BSD	/* BRL-CAD */
-#define	NO_VFPRINTF	1
-#define	NO_STRRCHR	1
-#endif
-
-#if defined(sgi) && !defined(mips)	/* Not all SYSVs are perfect */
-#define	NO_VFPRINTF	1
-#endif
+#include "conf.h"
 
 #ifndef DEBUG
 #define	NDEBUG
@@ -80,19 +73,20 @@ static char	RCSid[] =		/* for "what" utility */
 #include	<assert.h>
 #include	<signal.h>
 #include	<stdio.h>
-#ifdef BSD
-#include	<strings.h>
-#else
+#ifdef USE_STRING_H
 #include	<string.h>
+#else
+#include	<strings.h>
 #endif
-#include "machine.h"
-#include "externs.h"
-
-#if __STDC__
+#if HAVE_STDARG_H
 #include	<stdarg.h>
 #else
 #include	<varargs.h>
 #endif
+
+#include "machine.h"
+#include "externs.h"
+#include "fb.h"			/* BRL CAD package libfb.a interface */
 
 #ifndef EXIT_SUCCESS
 #define	EXIT_SUCCESS	0
@@ -100,10 +94,6 @@ static char	RCSid[] =		/* for "what" utility */
 #ifndef EXIT_FAILURE
 #define	EXIT_FAILURE	1
 #endif
-extern char	*optarg;
-extern int	optind;
-
-#include "fb.h"			/* BRL CAD package libfb.a interface */
 
 typedef int	bool;
 #define	false	0
@@ -149,7 +139,7 @@ VMessage( format, ap )
 	va_list	ap;
 	{
 	(void)fprintf( stderr, "%s: ", arg0 );
-#ifdef NO_VFPRINTF
+#if !defined(HAVE_VPRINTF)
 	(void)fprintf( stderr, format,	/* kludge city */
 		       ((int *)ap)[0], ((int *)ap)[1],
 		       ((int *)ap)[2], ((int *)ap)[3],
@@ -164,7 +154,7 @@ VMessage( format, ap )
 	}
 
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 static void
 Message( char *format, ... )
 #else
@@ -173,12 +163,12 @@ Message( va_alist )
 	va_dcl
 #endif
 	{
-#if !__STDC__
+#if !defined(HAVE_STDARG_H)
 	register char	*format;	/* must be picked up by va_arg() */
 #endif
 	va_list		ap;
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 	va_start( ap, format );
 #else
 	va_start( ap );
@@ -189,7 +179,7 @@ Message( va_alist )
 	}
 
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 static void
 Fatal( char *format, ... )
 #else
@@ -198,12 +188,12 @@ Fatal( va_alist )
 	va_dcl
 #endif
 	{
-#if !__STDC__
+#if !defined(HAVE_STDARG_H)
 	register char	*format;	/* must be picked up by va_arg() */
 #endif
 	va_list		ap;
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 	va_start( ap, format );
 #else
 	va_start( ap );
@@ -537,19 +527,11 @@ main( argc, argv )
 			/* Clear out top margin. */
 
 			for ( ; dst_y < dst_height; ++dst_y )
-#if __STDC__
-				if ( fb_write( dst_fbp, 0, dst_y,
-					       Dst( 0, 0 ),
-					       dst_width
-					     ) == -1
-				   )
-#else
 				if ( fb_write( dst_fbp, 0, dst_y,
 					       (unsigned char *)Dst( 0, 0 ),
 					       dst_width
 					     ) == -1
 				   )
-#endif
 					Fatal( "Error writing top margin" );
 
 			goto done;	/* that's all folks */
@@ -562,19 +544,11 @@ main( argc, argv )
 		/* Fill input scan line buffer. */
 
 		for ( src_y = bot_y; src_y < top_y; ++src_y )
-#if __STDC__
-			if ( fb_read( src_fbp, 0, src_y,
-				      Src( 0, src_y - bot_y ),
-				      src_width
-				    ) == -1
-			   )
-#else
 			if ( fb_read( src_fbp, 0, src_y,
 				      (unsigned char *)Src( 0, src_y - bot_y ),
 				      src_width
 				    ) == -1
 			   )
-#endif
 				Fatal( "Error reading scan line" );
 
 		dst_x = 0;
@@ -591,19 +565,11 @@ main( argc, argv )
 			{
     ccflush:		/* End of band; flush buffer. */
 
-#if __STDC__
-			if ( fb_write( dst_fbp, 0, dst_y,
-				       Dst( 0, 0 ),
-				       dst_width
-				     ) == -1
-			   )
-#else
 			if ( fb_write( dst_fbp, 0, dst_y,
 				       (unsigned char *)Dst( 0, 0 ),
 				       dst_width
 				     ) == -1
 			   )
-#endif
 				Fatal( "Error writing scan line" );
 
 			++dst_y;
@@ -690,17 +656,10 @@ main( argc, argv )
 
 		/* Fill input scan line buffer. */
 
-#if __STDC__
-		if ( fb_read( src_fbp, 0, src_y, Src( 0, 0 ),
-			      src_width
-			    ) == -1
-		   )
-#else
 		if ( fb_read( src_fbp, 0, src_y, (unsigned char *)Src( 0, 0 ),
 			      src_width
 			    ) == -1
 		   )
-#endif
 			Fatal( "Error reading scan line" );
 
 		dst_x = 0;
@@ -718,20 +677,12 @@ main( argc, argv )
     ceflush:		/* End of band; flush buffer. */
 
 			for ( dst_y = top_y; --dst_y >= bot_y; )
-#if __STDC__
-				if ( fb_write( dst_fbp, 0, dst_y,
-					       Dst( 0, dst_y - bot_y ),
-					       dst_width
-					     ) == -1
-				   )
-#else
 				if ( fb_write( dst_fbp, 0, dst_y,
 					       (unsigned char *)Dst( 0, dst_y - bot_y
 							      ),
 					       dst_width
 					     ) == -1
 				   )
-#endif
 					Fatal( "Error writing scan line" );
 
 			--src_y;
@@ -820,19 +771,11 @@ main( argc, argv )
 			/* Clear out top margin. */
 
 			for ( ; dst_y < dst_height; ++dst_y )
-#if __STDC__
-				if ( fb_write( dst_fbp, 0, dst_y,
-					       Dst( 0, 0 ),
-					       dst_width
-					     ) == -1
-				   )
-#else
 				if ( fb_write( dst_fbp, 0, dst_y,
 					       (unsigned char *)Dst( 0, 0 ),
 					       dst_width
 					     ) == -1
 				   )
-#endif
 					Fatal( "Error writing top margin" );
 
 			goto done;	/* that's all folks */
@@ -845,19 +788,11 @@ main( argc, argv )
 		/* Fill input scan line buffer. */
 
 		for ( src_y = bot_y; src_y < top_y; ++src_y )
-#if __STDC__
-			if ( fb_read( src_fbp, 0, src_y,
-				      Src( 0, src_y - bot_y ),
-				      src_width
-				    ) == -1
-			   )
-#else
 			if ( fb_read( src_fbp, 0, src_y,
 				      (unsigned char *)Src( 0, src_y - bot_y ),
 				      src_width
 				    ) == -1
 			   )
-#endif
 				Fatal( "Error reading scan line" );
 
 		src_x = (dst_width - 1) / x_scale + EPSILON;
@@ -865,20 +800,11 @@ main( argc, argv )
 		if ( src_x < 0 )
 			{
 			/* End of band; flush buffer. */
-
-#if __STDC__
-			if ( fb_write( dst_fbp, 0, dst_y,
-				       Dst( 0, 0 ),
-				       dst_width
-				     ) == -1
-			   )
-#else
 			if ( fb_write( dst_fbp, 0, dst_y,
 				       (unsigned char *)Dst( 0, 0 ),
 				       dst_width
 				     ) == -1
 			   )
-#endif
 				Fatal( "Error writing scan line" );
 
 			++dst_y;
@@ -961,18 +887,10 @@ main( argc, argv )
 		assert(top_y - bot_y <= (int)(y_scale + 1 - EPSILON));
 
 		/* Fill input scan line buffer. */
-
-#if __STDC__
-		if ( fb_read( src_fbp, 0, src_y, Src( 0, 0 ),
-			      src_width
-			    ) == -1
-		   )
-#else
 		if ( fb_read( src_fbp, 0, src_y, (unsigned char *)Src( 0, 0 ),
 			      src_width
 			    ) == -1
 		   )
-#endif
 			Fatal( "Error reading scan line" );
 
 		src_x = (dst_width - 1) / x_scale + EPSILON;
@@ -982,20 +900,12 @@ main( argc, argv )
 			/* End of band; flush buffer. */
 
 			for ( dst_y = top_y; --dst_y >= bot_y; )
-#if __STDC__
-				if ( fb_write( dst_fbp, 0, dst_y,
-					       Dst( 0, dst_y - bot_y ),
-					       dst_width
-					     ) == -1
-				   )
-#else
 				if ( fb_write( dst_fbp, 0, dst_y,
 					       (unsigned char *)Dst( 0, dst_y - bot_y
 							      ),
 					       dst_width
 					     ) == -1
 				   )
-#endif
 					Fatal( "Error writing scan line" );
 
 			--src_y;

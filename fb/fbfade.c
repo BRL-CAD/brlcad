@@ -48,34 +48,24 @@ static char	RCSid[] =		/* for "what" utility */
 	"\t[ -h ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
 #define	OPTSTR	"f:F:hn:N:s:S:w:W:"
 
-#ifdef BSD	/* BRL-CAD */
-#define	NO_DRAND48	1
-#define	NO_VFPRINTF	1
-#define	NO_STRRCHR	1
-#endif
-
-#if defined(sgi) && !defined(mips)	/* Not all SYSVs are perfect */
-#define	NO_VFPRINTF	1
-#endif
+#include "conf.h"
 
 #include	<signal.h>
 #include	<stdio.h>
-#ifdef BSD
-#include	<strings.h>
-#else
+#ifdef USE_STRING_H
 #include	<string.h>
+#else
+#include	<strings.h>
 #endif
-#include "machine.h"
-#include "externs.h"
-
-#if __STDC__
-#define	SIZE_T	size_t
-extern double	drand48( void );	/* in UNIX System V C library */
+#ifdef HAVE_STDARG_H
 #include	<stdarg.h>
 #else
-#define	SIZE_T	unsigned
 #include	<varargs.h>
 #endif
+
+#include "machine.h"
+#include "externs.h"			/* For getopt() */
+#include "fb.h"			/* BRL CAD package libfb.a interface */
 
 #ifndef EXIT_SUCCESS
 #define	EXIT_SUCCESS	0
@@ -83,10 +73,8 @@ extern double	drand48( void );	/* in UNIX System V C library */
 #ifndef EXIT_FAILURE
 #define	EXIT_FAILURE	1
 #endif
-extern char	*optarg;
-extern int	optind;
 
-#include	<fb.h>			/* BRL CAD package libfb.a interface */
+#define SIZE_T size_t
 
 typedef int	bool;
 #define	false	0
@@ -105,22 +93,17 @@ static RGBpixel	*pix;			/* input image */
 static RGBpixel	bg = { 0, 0, 0 };	/* background */
 
 
-#ifdef NO_DRAND48
+#ifndef HAVE_DRAND48
 /* Simulate drand48() using 31-bit random() assumed to exist (e.g. in 4BSD): */
 
 double
-drand48(
-#if __STDC__
-	 void
-#endif
-       )
+drand48()
 	{
 	extern long	random();
 
 	return (double)random() / 2147483648.0;	/* range [0,1) */
 	}
 #endif
-
 
 static char *
 Simple( path )
@@ -138,7 +121,7 @@ VMessage( format, ap )
 	va_list	ap;
 	{
 	(void)fprintf( stderr, "%s: ", arg0 );
-#ifdef NO_VFPRINTF
+#ifndef HAVE_VPRINTF
 	(void)fprintf( stderr, format,	/* kludge city */
 		       ((int *)ap)[0], ((int *)ap)[1],
 		       ((int *)ap)[2], ((int *)ap)[3]
@@ -151,7 +134,7 @@ VMessage( format, ap )
 	}
 
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 static void
 Message( char *format, ... )
 #else
@@ -160,12 +143,12 @@ Message( va_alist )
 	va_dcl
 #endif
 	{
-#if !__STDC__
+#if !defined(HAVE_STDARG_H)
 	register char	*format;	/* must be picked up by va_arg() */
 #endif
 	va_list		ap;
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 	va_start( ap, format );
 #else
 	va_start( ap );
@@ -176,7 +159,7 @@ Message( va_alist )
 	}
 
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 static void
 Fatal( char *format, ... )
 #else
@@ -185,12 +168,12 @@ Fatal( va_alist )
 	va_dcl
 #endif
 	{
-#if !__STDC__
+#if !defined(HAVE_STDARG_H)
 	register char	*format;	/* must be picked up by va_arg() */
 #endif
 	va_list		ap;
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 	va_start( ap, format );
 #else
 	va_start( ap );

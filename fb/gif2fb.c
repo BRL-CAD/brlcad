@@ -30,7 +30,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"			/* For getopt */
 #include "fb.h"
 
 #define	LSB	0	/* Least Signifigent Byte */
@@ -77,10 +82,6 @@ struct acolor	LocalColors[256];
 
 struct GIF_head Header;
 struct GIF_Image Im;
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 char *framebuffer=NULL;
 

@@ -22,8 +22,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
+#include "machine.h"
+#include "externs.h"			/* For getopt() */
 #include "fb.h"
 
 typedef int	bool;			/* boolean data type */
@@ -41,15 +45,13 @@ struct stroke {
 	short		xsign;		/* 0 or +1 */
 	short		ysign;		/* -1, 0, or +1 */
 	bool		ymajor; 	/* true iff Y is major dir. */
+#undef major
+#undef minor
 	short		major;		/* major dir delta (nonneg) */
 	short		minor;		/* minor dir delta (nonneg) */
 	short		e;		/* DDA error accumulator */
 	short		de;		/* increment for `e' */
 }; 		/* rasterization descriptor */
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 static char	*framebuffer = NULL;
 FBIO		*fbp;			/* Current framebuffer */

@@ -22,15 +22,16 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"		/* For getopt() */
 #include "fb.h"
 
 int		sec;
 int		usec;
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 void		newframe();
 

@@ -63,6 +63,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #if DEBUG
 # define STATIC	/* nothing, for debugging */
 #else
@@ -152,6 +154,8 @@ typedef struct descr {
 	tiny		xsign;		/* 0 or +1 */
 	tiny		ysign;		/* -1, 0, or +1 */
 	bool		ymajor; 	/* true iff Y is major dir. */
+#undef major
+#undef minor
 	short		major;		/* major dir delta (nonneg) */
 	short		minor;		/* minor dir delta (nonneg) */
 	short		e;		/* DDA error accumulator */

@@ -33,6 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "machine.h"
+#include "externs.h"			/* For getopt() */
 #include "fb.h"
 #include "vfont-if.h"
 
@@ -345,13 +346,6 @@ char spectab[128] = {
 	'5',	/*right arrow*/
 	'8'	/*section mark*/
 };
-
-extern char	*malloc();
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-
 
 static char	*framebuffer = NULL;
 

@@ -19,6 +19,8 @@
 static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <time.h>
 
@@ -68,20 +70,16 @@ If omitted, the .rle file is written to stdout\n";
  */
 char *
 strdup( cp )
-register char *cp;
+register CONST char *cp;
 {
 	register char	*base;
 	register int	len;
 
 	len = strlen( cp )+2;
-	if( (base = malloc( len )) == (char *)0 )
+	if( (base = (char *)malloc( len )) == (char *)0 )
 		return( (char *)0 );
 
-#ifdef BSD
 	bcopy( cp, base, len );
-#else
-	memcpy( base, cp, len );
-#endif
 	return(base);
 }
 
@@ -95,8 +93,6 @@ get_args( argc, argv )
 register char	**argv;
 {
 	register int	c;
-	extern int	optind;
-	extern char	*optarg;
 
 	while( (c = getopt( argc, argv, "cF:hds:w:n:S:W:N:X:Y:C:" )) != EOF )  {
 		switch( c )  {
@@ -272,7 +268,7 @@ char	*argv[];
 	outrle.ymin = screen_yoff;
 	outrle.xmax = screen_xoff + file_width - 1;
 	outrle.ymax = screen_yoff + file_height - 1;
-	outrle.comments = (CONST_DECL char **)0;
+	outrle.comments = (CONST char **)0;
 
 	/* Add comments to the header file, since we have one */
 	if( framebuffer == (char *)0 )

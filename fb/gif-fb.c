@@ -50,15 +50,7 @@ static char	RCSid[] =		/* for "what" utility */
 #define	USAGE	"gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]"
 #define	OPTSTR	"F:ci:ovz"
 
-#ifdef BSD	/* BRL-CAD */
-#define	NO_VFPRINTF	1
-#define	NO_MEMCPY	1
-#define	NO_STRRCHR	1
-#endif
-
-#if defined(sgi) && !defined(mips)	/* Not all SYSVs are perfect */
-#define	NO_VFPRINTF	1
-#endif
+#include "conf.h"
 
 #ifndef DEBUG
 #define	NDEBUG
@@ -66,26 +58,23 @@ static char	RCSid[] =		/* for "what" utility */
 #include	<assert.h>
 #include	<signal.h>
 #include	<stdio.h>
-#ifdef BSD
-#include	<strings.h>
-#else
+#ifdef USE_STRING_H
 #include	<string.h>
+#else
+#include	<strings.h>
 #endif
-#include "machine.h"
-#include "externs.h"
-
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 # define	RBMODE	"rb"			/* "b" not really necessary for POSIX */
 # include	<stdarg.h>
 #else
-# ifdef NO_MEMCPY
-#  define	memcpy( s1, s2, n )	bcopy( s2, s1, n )
-# else
-#  include	<memory.h>
-# endif
-# include	<varargs.h>
 # define	RBMODE	"r"
+# include	<varargs.h>
 #endif
+
+
+#include "machine.h"
+#include "externs.h"
+#include "fb.h"			/* BRL CAD package libfb.a interface */
 
 #ifndef EXIT_SUCCESS
 #define	EXIT_SUCCESS	0
@@ -93,10 +82,6 @@ static char	RCSid[] =		/* for "what" utility */
 #ifndef EXIT_FAILURE
 #define	EXIT_FAILURE	1
 #endif
-extern char	*optarg;
-extern int	optind;
-
-#include	<fb.h>			/* BRL CAD package libfb.a interface */
 
 typedef int	bool;
 #define	false	0
@@ -149,7 +134,7 @@ VMessage( format, ap )
 	va_list	ap;
 	{
 	(void)fprintf( stderr, "%s: ", arg0 );
-#ifdef NO_VFPRINTF
+#if !defined(HAVE_VPRINTF)
 	(void)fprintf( stderr, format,	/* kludge city */
 		       ((int *)ap)[0], ((int *)ap)[1],
 		       ((int *)ap)[2], ((int *)ap)[3]
@@ -162,7 +147,7 @@ VMessage( format, ap )
 	}
 
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 static void
 Message( char *format, ... )
 #else
@@ -171,12 +156,12 @@ Message( va_alist )
 	va_dcl
 #endif
 	{
-#if !__STDC__
+#if !defined(HAVE_STDARG_H)
 	register char	*format;	/* must be picked up by va_arg() */
 #endif
 	va_list		ap;
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 	va_start( ap, format );
 #else
 	va_start( ap );
@@ -187,7 +172,7 @@ Message( va_alist )
 	}
 
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 static void
 Fatal( char *format, ... )
 #else
@@ -196,12 +181,12 @@ Fatal( va_alist )
 	va_dcl
 #endif
 	{
-#if !__STDC__
+#if !defined(HAVE_STDARG_H)
 	register char	*format;	/* must be picked up by va_arg() */
 #endif
 	va_list		ap;
 
-#if __STDC__
+#if defined(HAVE_STDARG_H)
 	va_start( ap, format );
 #else
 	va_start( ap );
@@ -985,7 +970,7 @@ main( argc, argv )
 				if ( verbose )
 					Message( "global color map used" );
 
-				(void)memcpy( cmap, g_cmap, 3 * entries );
+				(void)bcopy( g_cmap, cmap, 3 * entries );
 				}
 
 			/* `image' is 0 if all images are to be displayed;

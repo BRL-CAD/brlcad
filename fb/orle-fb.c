@@ -19,7 +19,11 @@
 static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"			/* For getopt() */
 #include "fb.h"
 #include "orle.h"
 
@@ -247,11 +251,7 @@ register int	repeat;
 	{	register int	i;
 	for( i = 0; i < repeat; ++i )
 		{
-#ifdef BSD
 		bcopy( src, dest, scan_bytes );
-#else
-		memcpy( dest, src, scan_bytes );
-#endif
 		dest += scan_bytes;
 		}
 	return;
@@ -262,8 +262,6 @@ static int
 pars_Argv( argc, argv )
 register char	**argv;
 	{	register int	c;
-		extern int	optind;
-		extern char	*optarg;
 	/* Parse options.						*/
 	while( (c = getopt( argc, argv, "tOF:b:dp:v" )) != EOF )
 		{
