@@ -278,15 +278,23 @@ static struct funtab {
  * on the standard input.  Once the
  * main loop of the editor is entered, this routine will be called
  * to process commands which have been typed in completely.
+ * Return value non-zero means to print a prompt.  This is needed
+ * when non-blocking I/O is used instead of select.
  */
-void
+int
 cmdline()
 {
-	if( parse_line() )  {
-		/* don't process this command line */
-		return;
+	int	i;
+
+	i = parse_line();
+	if( i == 0 ) {
+		(void)do_cmd();
+		return 1;
 	}
-	(void)do_cmd();
+	if( i < 0 )
+		return 0;
+
+	return 1;
 }
 
 /*
@@ -294,6 +302,7 @@ cmdline()
  *
  * Parse commandline into argument vector
  * Returns nonzero value if input is to be ignored
+ * Returns less than zero if there is no input to read.
  */
 int
 parse_line()
@@ -308,7 +317,10 @@ parse_line()
 	*lp = '\0';
 
 	/* Read input line */
-	(void)fgets( line, MAXLINE, stdin );
+	if( fgets( line, MAXLINE, stdin ) == NULL ) {
+		if( !feof( stdin ) )
+			return -1;	/* nothing to read */
+	}
 
 	/* Check for Control-D (EOF) */
 	if( feof( stdin ) )  {
