@@ -4223,8 +4223,9 @@ CONST vect_t	mousevec;
       mat_t	xlatemat;
 #ifdef TRY_EDIT_NEW_WAY
       MAT4X3PNT( pos_view, model2view, e_axes_pos );
-      mousevec[Z] = pos_view[Z];
-      MAT4X3PNT( pt, view2model, mousevec );
+      pos_view[X] = mousevec[X];
+      pos_view[Y] = mousevec[Y];
+      MAT4X3PNT( pt, view2model, pos_view );
 
       /* Need vector from current vertex/keypoint
        * to desired new location.
@@ -4266,8 +4267,9 @@ CONST vect_t	mousevec;
 
 #ifdef TRY_EDIT_NEW_WAY
     MAT4X3PNT( pos_view, model2view, e_axes_pos );
-    mousevec[Z] = pos_view[Z];
-    MAT4X3PNT( temp, view2model, mousevec );
+    pos_view[X] = mousevec[X];
+    pos_view[Y] = mousevec[Y];
+    MAT4X3PNT( temp, view2model, pos_view );
     MAT4X3PNT( es_mparam, es_invmat, temp );
     es_mvalid = 1;	/* es_mparam is valid */
 #else
@@ -4293,8 +4295,10 @@ CONST vect_t	mousevec;
 
 #ifdef TRY_EDIT_NEW_WAY
       MAT4X3PNT(pos_view, model2view, e_axes_pos);
-      mousevec[Z] = pos_view[Z];
-      MAT4X3PNT(temp, view2model, mousevec);
+      pos_view[X] = mousevec[X];
+      pos_view[Y] = mousevec[Y];
+      /* Do NOT change pos_view[Z] ! */
+      MAT4X3PNT( temp, view2model, pos_view );
       MAT4X3PNT( tr_temp, es_invmat, temp );
       VSUB2( tgc->h, tr_temp, tgc->v );
 #else
@@ -4317,8 +4321,9 @@ CONST vect_t	mousevec;
     /* point is located at es_values[es_menu*3] */
 #ifdef TRY_EDIT_NEW_WAY
     MAT4X3PNT(pos_view, model2view, e_axes_pos);
-    mousevec[Z] = pos_view[Z];
-    MAT4X3PNT(temp, view2model, mousevec);
+    pos_view[X] = mousevec[X];
+    pos_view[Y] = mousevec[Y];
+    MAT4X3PNT(temp, view2model, pos_view);
     MAT4X3PNT(pos_model, es_invmat, temp);
 #else
     {
@@ -4343,8 +4348,9 @@ CONST vect_t	mousevec;
   case EARB:
 #ifdef TRY_EDIT_NEW_WAY
     MAT4X3PNT(pos_view, model2view, e_axes_pos);
-    mousevec[Z] = pos_view[Z];
-    MAT4X3PNT(temp, view2model, mousevec);
+    pos_view[X] = mousevec[X];
+    pos_view[Y] = mousevec[Y];
+    MAT4X3PNT(temp, view2model, pos_view);
     MAT4X3PNT(pos_model, es_invmat, temp);
 #else
     /* move arb edge, through indicated point */
@@ -4359,8 +4365,9 @@ CONST vect_t	mousevec;
   case ECMD_ARB_MOVE_FACE:
 #ifdef TRY_EDIT_NEW_WAY
     MAT4X3PNT(pos_view, model2view, e_axes_pos);
-    mousevec[Z] = pos_view[Z];
-    MAT4X3PNT(temp, view2model, mousevec);
+    pos_view[X] = mousevec[X];
+    pos_view[Y] = mousevec[Y];
+    MAT4X3PNT(temp, view2model, pos_view);
     MAT4X3PNT(pos_model, es_invmat, temp);
 #else
     /* move arb face, through  indicated  point */
@@ -4439,8 +4446,9 @@ CONST vect_t	mousevec;
   case ECMD_ARS_MOVE_COL:
 #ifdef TRY_EDIT_NEW_WAY
     MAT4X3PNT(pos_view, model2view, e_axes_pos);
-    mousevec[Z] = pos_view[Z];
-    MAT4X3PNT(temp, view2model, mousevec);
+    pos_view[X] = mousevec[X];
+    pos_view[Y] = mousevec[Y];
+    MAT4X3PNT(temp, view2model, pos_view);
     MAT4X3PNT(es_mparam, es_invmat, temp);
 #else
     MAT4X3PNT( temp, view2model, mousevec );
