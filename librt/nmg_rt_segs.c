@@ -874,16 +874,134 @@ struct nmg_ptbl *next_tbl;
 	return (long *)NULL;
 }
 
+
+static void
+visitor(l_p, tbl, after)
+long *l_p;
+struct nmg_ptbl *tbl;
+int after;
+{
+	(void)nmg_tbl(tbl, TBL_INS_UNIQUE, l_p);
+}
+
 /*
  *	Add an element provided by nmg_visit to a nmg_ptbl struct.
  */
 static void
-visitor(l, tbl, i)
-long *l;
-genptr_t tbl;
-int i;
+build_topo_list(l_p, tbl)
+long *l_p;
+struct nmg_ptbl *tbl;
 {
-	(void)nmg_tbl((struct nmg_ptbl *)tbl, TBL_INS_UNIQUE, l);
+	struct nmg_visit_handlers htab;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct edgeuse *eu_p;
+	struct vertexuse *vu;
+	struct vertexuse *vu_p;
+	int radial_not_mate=0;
+
+	switch (*l_p) {
+	case NMG_FACEUSE_MAGIC:
+		htab = nmg_visit_handlers_null;
+		htab.vis_face = htab.vis_edge = htab.vis_vertex = visitor;
+		nmg_visit(l_p, &htab, (genptr_t *)tbl);
+		break;
+	case NMG_EDGEUSE_MAGIC:
+		eu = eu_p = (struct edgeuse *)l_p;
+		do {
+			/* if the parent of this edgeuse is a face loopuse
+			 * add the face to the list of shared topology
+			 */
+			if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+			    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC)
+				nmg_tbl(tbl, TBL_INS_UNIQUE,
+					(long *)eu->up.lu_p->up.fu_p->f_p);
+
+			if (radial_not_mate)	eu = eu->radial_p;
+			else			eu = eu->eumate_p;
+			radial_not_mate = ! radial_not_mate;
+		} while (eu != eu_p);
+
+		nmg_tbl(tbl, TBL_INS_UNIQUE, (long *)eu->e_p);
+		nmg_tbl(tbl, TBL_INS_UNIQUE, (long *)eu->vu_p->v_p);
+		nmg_tbl(tbl, TBL_INS_UNIQUE, (long *)eu->eumate_p->vu_p->v_p);
+
+		break;
+	case NMG_VERTEXUSE_MAGIC:
+		vu_p = (struct vertexuse *)l_p;
+		nmg_tbl(tbl, TBL_INS_UNIQUE, (long *)vu_p->v_p);
+
+		for (RT_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd)) {
+			lu = (struct loopuse *)NULL;
+			switch (*vu->up.magic_p) {
+			case NMG_EDGEUSE_MAGIC:
+				eu = vu->up.eu_p;
+				nmg_tbl(tbl, TBL_INS_UNIQUE, (long *)eu->e_p);
+				if (*eu->up.magic_p !=  NMG_LOOPUSE_MAGIC)
+					break;
+
+				lu = eu->up.lu_p;
+				/* fallthrough */
+
+			case NMG_LOOPUSE_MAGIC:
+				if ( ! lu ) lu = vu->up.lu_p;
+
+				if (*lu->up.magic_p == NMG_FACEUSE_MAGIC)
+					nmg_tbl(tbl, TBL_INS_UNIQUE,
+						(long *)lu->up.fu_p->f_p);
+				break;
+			case NMG_SHELL_MAGIC:
+				break;
+			default:
+				rt_log("%s[%d]: Bogus vertexuse parent magic:%s.",
+					rt_identify_magic( *vu->up.magic_p ));
+				rt_bomb("goodbye");
+			}
+		}
+		break;
+	default:
+		rt_log("%s[%d]: Bogus magic number pointer:%s",
+			rt_identify_magic( *l_p ) );
+		rt_bomb("goodbye");
+	}
+}
+
+static void
+unresolved(a_hit, next_hit, a_tbl, next_tbl, hd)
+struct hitmiss *a_hit;
+struct hitmiss *next_hit;
+struct nmg_ptbl  *a_tbl;
+struct nmg_ptbl  *next_tbl;
+struct hitmiss *hd;
+{
+
+	struct hitmiss *hm;
+	register long **l_p;
+	register long **b;
+
+	rt_log("Unable to fix state transition--->\n");
+	for (RT_LIST_FOR(hm, hitmiss, &hd->l)) {
+		if (hm == next_hit) {
+			rt_log("======= ======\n");
+			nmg_rt_print_hitmiss(hm);
+			rt_log("================\n");
+		} else 
+			nmg_rt_print_hitmiss(hm);
+	}
+
+	rt_log("topo table A\n");
+	b = &a_tbl->buffer[a_tbl->end];
+	l_p = &a_tbl->buffer[0];
+	for ( ; l_p < b ; l_p ++)
+		rt_log("\t0x%08x %s\n",**l_p, rt_identify_magic( **l_p));
+
+	rt_log("topo table NEXT\n");
+	b = &next_tbl->buffer[next_tbl->end];
+	l_p = &next_tbl->buffer[0];
+	for ( ; l_p < b ; l_p ++)
+		rt_log("\t0x%08x %s\n",**l_p, rt_identify_magic( **l_p));
+	
+	rt_log("<---Unable to fix state transition\n");
 }
 
 
@@ -943,12 +1061,10 @@ struct hitmiss *hd;
 			 */
 
 			nmg_tbl(a_tbl, TBL_RST, (long *)NULL);
-			
-			nmg_visit((long *)a_hit->outbound_use, &htab, a_tbl);
+			build_topo_list(a_hit->outbound_use, a_tbl);
 
 			nmg_tbl(next_tbl, TBL_RST, (long *)NULL);
-			nmg_visit((long *)next_hit->inbound_use, &htab,
-					next_tbl);
+			build_topo_list(next_hit->outbound_use, next_tbl);
 
 
 			/* If the tables have elements in common,
@@ -967,9 +1083,10 @@ struct hitmiss *hd;
 					(NMG_RAY_STATE_ON << 4);
 				a_hit->inbound_use = long_ptr;
 
-			} else {
-				rt_bomb("Unable to fix state transition\n");
-			}
+			} else 
+				unresolved(a_hit, next_hit,
+						a_tbl, next_tbl, hd);
+
 		}
 
 		/* save next_tbl as a_tbl for next iteration */

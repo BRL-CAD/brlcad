@@ -33,8 +33,15 @@ struct edgeuse	*eu;
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
+	eunext = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);	
+	NMG_CK_VERTEXUSE(eunext->vu_p);
+	NMG_CK_VERTEX(eunext->vu_p->v_p);
+	NMG_CK_VERTEX_G(eunext->vu_p->v_p->vg_p);
+
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
-		rt_log("nmg_class_pt_eu()\n");
+		rt_log("nmg_class_pt_eu( (%g %g %g)->(%g %g %g) )\n",
+			V3ARGS(eu->vu_p->v_p->vg_p->coord),
+			V3ARGS(eunext->vu_p->v_p->vg_p->coord));
 
 	/* if this edgeuse's vertexuse is on a previously processed & touched
 	 * vertex:
@@ -48,9 +55,12 @@ struct edgeuse	*eu;
 			fpi->vu_func(eu->vu_p, fpi);
 
 		NMG_INDEX_ASSIGN(fpi->tbl, eu->e_p, NMG_FPI_TOUCHED);
+		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
+			rt_log("\teu->vu->v previously touched\n");
+
 		return;
 	}
-	eunext = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);	
+
 	/* if the next edgeuse's vertexuse is on a previously 
 	 * processed & touched vertex:
 	 *	if the user wants to get called for each use,
@@ -63,11 +73,14 @@ struct edgeuse	*eu;
 			fpi->vu_func(eunext->vu_p, fpi);
 
 		NMG_INDEX_ASSIGN(fpi->tbl, eu->e_p, NMG_FPI_TOUCHED);
+		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
+			rt_log("\teunext->vu->v previously touched\n");
+
 		return;
 	}
 
 
-	/* The verticies at the ends of this edge where missed or not
+	/* The verticies at the ends of this edge were missed or not
 	 * previously processed.
 	 */
 	switch (NMG_INDEX_GET(fpi->tbl, eu->e_p)) {
@@ -78,12 +91,18 @@ struct edgeuse	*eu;
 		 * If the user wants to get called for each use, make the
 		 * call for this edgeuse.
 		 */
+		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
+			rt_log ("\teu previously hit\n");
+
 		if (fpi->eu_func && fpi->allhits == NMG_FPI_PERUSE)
 			fpi->eu_func(eu, fpi);
 
-		/* fallthrough */
-
+		return;
+		break;
 	case NMG_FPI_MISSED:
+		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
+			rt_log ("\teu previously missed\n");
+
 		return;
 	}
 
@@ -91,6 +110,10 @@ struct edgeuse	*eu;
 	/* The edgeuse was not previously processed, 
 	 * so it's time to do it now.
 	 */
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
+		rt_log ("\tprocessing eu (%g %g %g) -> (%g %g %g)\n",
+			V3ARGS(eu->vu_p->v_p->vg_p->coord),
+			V3ARGS(eunext->vu_p->v_p->vg_p->coord));
 
 	status = rt_dist_pt3_lseg3(&dist, pca,
 		eu->vu_p->v_p->vg_p->coord,

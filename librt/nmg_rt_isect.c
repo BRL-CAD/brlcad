@@ -462,7 +462,8 @@ char *Pole_name;
 		double dotA;
 		double dotB;
 
-		rt_log("\tplane point beyond both edges.... Doing the Tanenbaum algorithm.\n");
+	   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			rt_log("\tplane point beyond both edges.... Doing the Tanenbaum algorithm.\n");
 
 		VSUB2(VtoPole_prj, Pole_prj_pt, vu->v_p->vg_p->coord);
 
@@ -475,15 +476,14 @@ char *Pole_name;
 				 * PCA is plane projection point.
 				 */
 			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-					rt_log("Tanenbaum says the point is inside the face\n");
+					rt_log("\tpoint inside face\n");
 				VMOVE(Pole_pca, Pole_prj_pt);
-				VMOVE(pca_to_pole_vect, polar_height_vect);
+				VSUB2(pca_to_pole_vect, Pole, Pole_prj_pt);
 			} else {
-				/* Point is "outside" face,
-				 * PCA is at vertex.
-				 */
+				/* Point is "outside" face, PCA is at vertex. */
 			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-					rt_log("Tanenbaum says the point is outside the face, PCA is at the vertex\n");
+					rt_log("\tpoint outside face, PCA is vertex\n");
+
 				VSUB2(pca_to_pole_vect, pcaA, Pole);
 				VMOVE(Pole_pca, pcaA);
 			}
@@ -493,19 +493,23 @@ char *Pole_name;
 				 * PCA is plane projection point
 				 */
 			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-					rt_log("Tanenbaum says the point is inside the face\n");
+					rt_log("\tpoint is inside face\n");
 				VMOVE(Pole_pca, Pole_prj_pt);
-				VMOVE(pca_to_pole_vect, polar_height_vect);
+				VSUB2(pca_to_pole_vect, Pole, Pole_prj_pt);
 			} else {
-				/* Point is "outside" face,
-				 * PCA is at vertex.
-				 */
+
+				/* Point is "outside" face, PCA is at vertex. */
 			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-					rt_log("Tanenbaum says the point is outside the face, PCA is at the vertex\n");
+					rt_log("\tpoint is outside face, PCA is vertex\n");
 				VSUB2(pca_to_pole_vect, pcaB, Pole);
 				VMOVE(Pole_pca, pcaB);
 			}
 		}
+	   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			VPRINT("\tpca_to_pole_vect", pca_to_pole_vect);
+		*Pole_dist = MAGNITUDE(pca_to_pole_vect);
+		return;
+
 		break;
 	}
 	case 0x34: /* fallthrough */
