@@ -44,4 +44,5 @@ everything&::	PRODUCTS
 %.o:    ../SRCDIR/%.y			if exist ../SRCDIR/%.y
 	-rm -f ./%.c ./%.h ./%.o
         YACC YACC_OPTS ../SRCDIR/%.y
+	mv ./y.tab.c ./%.c
 	CC CFLAGS -I. -c ./%.c
