@@ -95,6 +95,9 @@ int		mode;
 	wdbp->magic = RT_WDB_MAGIC;
 	wdbp->type = mode;
 	wdbp->dbip = dbip;
+
+	dbip->dbi_uses++;
+
 	return wdbp;
 }
 
