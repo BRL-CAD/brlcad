@@ -4778,7 +4778,7 @@ fi
 	    LD_SEARCH_FLAGS='-L${LIB_RUNTIME_DIR}'
 	    SHARED_LIB_SUFFIX='${VERSION}\$\{DBGX\}.a'
 	    ;;
-	IRIX-5.*|IRIX-6.*|IRIX64-6.5*)
+	IRIX-5.*|IRIX-6.*)
 	    SHLIB_CFLAGS=""
 	    SHLIB_LD="ld -n32 -shared -rdata_shared"
 	    SHLIB_LD_LIBS='${LIBS}'
