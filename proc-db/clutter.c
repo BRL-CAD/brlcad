@@ -78,7 +78,7 @@ char	**argv;
 
 #define rand0to1(p)	(BN_UNIF_DOUBLE(p)+0.5)
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
 
@@ -90,7 +90,7 @@ char	**argv;
 	rgb[0] = 240;	/* gold/brown */
 	rgb[1] = 180;
 	rgb[2] = 64;
-	mat_idn( identity );
+	bn_mat_idn( identity );
 	mk_comb( stdout, "plane.r", 1, 1, "", "", rgb, 0 );
 	mk_memb( stdout, "plane", identity, UNION );
 	(void)mk_addmember( "plane.r", &head, WMOP_UNION );
@@ -171,7 +171,7 @@ double	size;
 	vect_t	minpt, maxpt;
 	struct wmember head;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	/* These should change somewhat for each layer, and be done by rots */
 	VSET( maj, 1, 0, .2 );
@@ -240,7 +240,7 @@ int	nsolids;	/* number of solids for this layer */
 	int	i;
 	struct wmember head;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	for( todo = nsolids-1; todo >= 0; todo-- )  {
 		cos_var = cos( var*rand0to1(rbuf) );
@@ -339,7 +339,7 @@ double	size;
 	char	name[32];
 	struct wmember head;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	/* Make some objects */
 	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
@@ -378,7 +378,7 @@ double	size;
 	char	name[32];
 	struct wmember head;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	size *= 0.3;		/* Don't occupy full cell */
 	xbase = xc - size/2;
@@ -454,7 +454,7 @@ int	n;
 	char	sname[32];
 	struct wmember head;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	VSET( normal, 0, 0, 1 );
 	for( i=0; i<n; i++ )  {
