@@ -598,9 +598,10 @@ CONST struct rt_tol	*tol;
 	 * XXX max(c[X], c[Y], d[X], d[Y]) / MAX_FASTF_DYNAMIC_RANGE
 	 * XXX In any case, nothing smaller than 1e-16
 	 */
-	if( NEAR_ZERO( det, SQRT_SMALL_FASTF ) )  {
+#define DETERMINANT_TOL		1.0e-14		/* XXX caution on non-IEEE machines */
+	if( NEAR_ZERO( det, DETERMINANT_TOL ) )  {
 		/* Lines are parallel */
-		if( !NEAR_ZERO( det1, SQRT_SMALL_FASTF ) )  {
+		if( !NEAR_ZERO( det1, DETERMINANT_TOL ) )  {
 			/* Lines are NOT co-linear, just parallel */
 			if( rt_g.debug & DEBUG_MATH )  {
 				rt_log("\tparallel, not co-linear.  det=%e, det1=%g\n", det, det1);
@@ -1193,9 +1194,9 @@ CONST struct rt_tol	*tol;
 	det = c[q] * d[r] - d[q] * c[r];
 	det1 = (c[q] * h[r] - h[q] * c[r]);		/* see below */
 	/* XXX This should be no smaller than 1e-16.  See rt_isect_line2_line2 for details */
-	if( NEAR_ZERO( det, SQRT_SMALL_FASTF ) )  {
+	if( NEAR_ZERO( det, DETERMINANT_TOL ) )  {
 		/* Lines are parallel */
-		if( !NEAR_ZERO( det1, SQRT_SMALL_FASTF ) )  {
+		if( !NEAR_ZERO( det1, DETERMINANT_TOL ) )  {
 			/* Lines are NOT co-linear, just parallel */
 			return -2;	/* parallel, no intersection */
 		}
@@ -1246,8 +1247,8 @@ CONST struct rt_tol	*tol;
 	 */
 	det = *t * d[s] - *u * c[s] - h[s];
 	if( !NEAR_ZERO( det, tol->dist ) )  {
-		/* This tolerance needs to be much less loose than
-		 * SQRT_SMALL_FASTF.
+		/* XXX This tolerance needs to be much less loose than
+		 * XXX SQRT_SMALL_FASTF.  What about DETERMINANT_TOL?
 		 */
 		/* Inconsistent solution, lines miss each other */
 		return(-1);
@@ -1628,7 +1629,9 @@ CONST struct rt_tol	*tol;
 	VMOVE_2D(ABunit, AtoB);
 	distsq = MAGSQ_2D(ABunit);
 	if( distsq < tol->dist_sq )  {
-rt_log("distsq A=%g\n", distsq);
+		if( rt_g.debug & DEBUG_MATH )  {
+			rt_log("distsq A=%g\n", distsq);
+		}
 		return -1;	/* A equals B, and P isn't there */
 	}
 	distsq = 1/sqrt(distsq);
@@ -1646,8 +1649,10 @@ rt_log("distsq A=%g\n", distsq);
 	/* because of pythgorean theorem ... */
 	distsq = MAGSQ_2D(AtoP) - APprABunit * APprABunit;
 	if (distsq > tol->dist_sq) {
-VPRINT("ABunit", ABunit);
-rt_log("distsq B=%g\n", distsq);
+		if( rt_g.debug & DEBUG_MATH )  {
+			VPRINT("ABunit", ABunit);
+			rt_log("distsq B=%g\n", distsq);
+		}
 		return(-1);	/* dist pt to line too large */
 	}
 
