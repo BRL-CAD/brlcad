@@ -57,14 +57,14 @@ Makefile.MTYPE:	Makefile.in	if not exist Makefile.MTYPE
 	MAKETHIS
 
 clean&:
-	make -f Makefile.MTYPE clean
+	make -f Makefile.MTYPE clean Makefile zlib.h Makefile.in lib.exp
 
 noprod&:
 	rm -rf *.ARCH_SUF *.a
 
 clobber&: Makefile.MTYPE
 	make -f Makefile.MTYPE clean
-	rm -f *.MTYPE Makefile
+	rm -f *.MTYPE Makefile zlib.h Makefile.in lib.exp
 
 install&: Makefile.MTYPE
 	cp ../SRCDIR/zlib.h .
