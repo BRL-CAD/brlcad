@@ -42,15 +42,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct menu_item second_menu[], sed_menu[];
 
-#if 0
-int	menuflag;	/* flag indicating if a menu item is selected */
-struct menu_item *menu_array[NMENU];	/* base of array of menu items */
-
-static int	menu_top;	/* screen loc of the first menu item */
-int	cur_menu;	/* index of selected menu in list */
-int	cur_item;	/* index of selected item in menu */
-#endif
-
 void set_menucurrent();
 int set_arrowloc();
 
@@ -76,7 +67,7 @@ char **argv;
 	if (Tcl_GetInt(interp, argv[1], &index) != TCL_OK)
 	    return TCL_ERROR;
 
-	if (index < 0 || index > NMENU) {
+	if (index < 0 || NMENU <= index) {
 	    Tcl_AppendResult(interp, "index out of range", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -250,7 +241,7 @@ int y_top;
 		  GED2PM1(MENUXLIM), GED2PM1(menu_top),
 		  GED2PM1(XMIN), GED2PM1(menu_top));
 
-  for( menu=0, m = menu_array; m < &menu_array[NMENU]; m++,menu++ )  {
+  for( menu=0, m = menu_array; m - menu_array < NMENU; m++,menu++ )  {
     if( *m == MENU_NULL )  continue;
     for( item=0, mptr = *m;
 	 mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
@@ -329,7 +320,7 @@ int do_func;
 	 */
 	yy = menu_top;
 
-	for( menu=0, m=menu_array; m < &menu_array[NMENU]; m++,menu++ )  {
+	for( menu=0, m=menu_array; m - menu_array < NMENU; m++,menu++ )  {
 		if( *m == MENU_NULL )  continue;
 		for( item=0, mptr = *m;
 		     mptr->menu_string[0] != '\0';
