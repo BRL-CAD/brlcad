@@ -35,8 +35,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "raytrace.h"
 #include "db.h"
+#include "raytrace.h"
 
 #include "./debug.h"
 
@@ -83,13 +83,13 @@ CONST char *str;
 struct directory *
 db_lookup( dbip, name, noisy )
 struct db_i		*dbip;
-register char		*name;
+register CONST char	*name;
 int			noisy;
 {
 	register struct directory *dp;
 	char		local[NAMESIZE+2];
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_lookup:  bad dbip\n");
+	RT_CK_DBI(dbip);
 
 	if( (int)strlen(name) > NAMESIZE )  {
 		(void)strncpy( local, name, NAMESIZE );	/* Trim the name */
@@ -109,9 +109,7 @@ int			noisy;
 		}
 	}
 
-	if( noisy )
-		rt_log("db_lookup:  could not find '%s'\n", name );
-	if(rt_g.debug&DEBUG_DB) rt_log("db_lookup(%s) failed\n", name);
+	if(noisy || rt_g.debug&DEBUG_DB) rt_log("db_lookup(%s) failed\n", name);
 	return( DIR_NULL );
 }
 
@@ -123,7 +121,7 @@ int			noisy;
 struct directory *
 db_diradd( dbip, name, laddr, len, flags )
 register struct db_i	*dbip;
-register char		*name;
+register CONST char	*name;
 long			laddr;
 int			len;
 int			flags;
@@ -132,7 +130,7 @@ int			flags;
 	register struct directory *dp;
 	char			local[NAMESIZE+2+2];
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_diradd:  bad dbip\n");
+	RT_CK_DBI(dbip);
 
 	if(rt_g.debug&DEBUG_DB)  {
 		rt_log("db_diradd(dbip=x%x, name='%s', addr=x%x, len=%d, flags=x%x)\n",
@@ -168,6 +166,7 @@ int			flags;
 	GETSTRUCT( dp, directory );
 	if( dp == DIR_NULL )
 		return( DIR_NULL );
+	dp->d_magic = RT_DIR_MAGIC;
 	dp->d_namep = rt_strdup( local );
 	dp->d_addr = laddr;
 	dp->d_flags = flags;
@@ -196,7 +195,8 @@ register struct directory	*dp;
 	register struct directory *findp;
 	register struct directory **headp;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_dirdelete:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 
 	headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
 	if( *headp == dp )  {
@@ -231,12 +231,13 @@ int
 db_rename( dbip, dp, newname )
 register struct db_i		*dbip;
 register struct directory	*dp;
-char				*newname;
+CONST char			*newname;
 {
 	register struct directory *findp;
 	register struct directory **headp;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_rename:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 
 	/* Remove from linked list */
 	headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
@@ -273,13 +274,13 @@ out:
  */
 void
 db_pr_dir( dbip )
-register struct db_i	*dbip;
+register CONST struct db_i	*dbip;
 {
-	register struct directory *dp;
+	register CONST struct directory *dp;
 	register char		*flags;
 	register int		i;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_pr_dir:  bad dbip\n");
+	RT_CK_DBI(dbip);
 
 	rt_log("db_pr_dir(x%x):  Dump of directory for file %s [%s]\n",
 		dbip, dbip->dbi_filename,
