@@ -20,8 +20,12 @@ extern char *optarg;
 extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
+#define DEBUG_NAMES 1
+#define DEBUG_STATS 2
 #define DEBUG_QUAD 8
 long debug = 0;
+int verbose = 0;
+
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
@@ -63,28 +67,57 @@ int parse_args(int ac, char *av[])
 }
 
 
+static int tbl[19][8] = {
+	{ 0, 1, 3, 4,	1, 2, 0, 5},
+	{ 0, 1, 4, 3,	1, 2, 0, 5},
+	{ 0, 1, 3, 5,	1, 2, 0, 4},
+	{ 0, 1, 5, 3,	1, 2, 0, 4},
+	{ 0, 1, 5, 4,	1, 2, 0, 3},
+	{ 0, 1, 4, 5,	1, 2, 0, 3},
+	{ 0, 2, 3, 4,	0, 1, 2, 5},
+	{ 0, 2, 4, 3,	0, 1, 2, 5},
+	{ 0, 2, 3, 5,	0, 1, 2, 4},
+	{ 0, 2, 5, 3,	0, 1, 2, 4},
+	{ 0, 2, 4, 5,	0, 1, 2, 3},
+	{ 0, 2, 5, 4,	0, 1, 2, 3},
+	{ 1, 2, 3, 4,	0, 1, 5, 2},
+	{ 1, 2, 4, 3,	0, 1, 5, 2},
+	{ 1, 2, 3, 5,	0, 1, 4, 2},
+	{ 1, 2, 5, 3,	0, 1, 4, 2},
+	{ 1, 2, 4, 5,	0, 1, 3, 2},
+	{ 1, 2, 5, 4,	0, 1, 3, 2}
+};
+
 /*
  *	Compare two successive triangles to see if they are coplanar and
  *	share two verticies.
  *
  */
 int
-tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int idx[4])
+tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
 {
-    int *f = &bot->faces[faceidx*3];  /* get the individual face */
+    int *vnum = &bot->faces[faceidx*3];  /* get the individual face */
     point_t A, B, C, N1, N2;
     vect_t vAB, vAC;
     fastf_t *v = bot->vertices;
+    int i, tmp;
+
 
     if (faceidx >= bot->num_faces-1) return 0;
 
-
+    if (debug&DEBUG_QUAD) {
+	fprintf(stderr, "tris_are_planar_quad()\n");
+	for (i=0 ; i < 6 ;i++) {
+	    fprintf(stderr, "%d: %d   %7g %7g %7g\n", i, vnum[i], 
+		    V3ARGS(&v[3*vnum[i]]));
+	}
+    }
     /* compare the surface normals */
 
     /* if the first vertex is greater than the number of verticies
      * this is probably a bogus face, and something bad has happened
      */
-    if (f[0] > bot->num_vertices-1) {
+    if (vnum[0] > bot->num_vertices-1) {
 	fprintf(stderr, "Bounds error\n");
 	abort();
     }
@@ -92,96 +125,73 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int idx[4])
 
     /* look to see if the normals are within tolerance */
 
-    VMOVE(A, &v[f[0]]);
-    VMOVE(B, &v[f[1]]);
-    VMOVE(C, &v[f[2]]);
+    VMOVE(A, &v[3*vnum[0]]);
+    VMOVE(B, &v[3*vnum[1]]);
+    VMOVE(C, &v[3*vnum[2]]);
     
     VSUB2(vAB, B, A);
     VSUB2(vAC, C, A);
-
     VCROSS(N1, vAB, vAC);
     VUNITIZE(N1);
 
-
-    VMOVE(A, &v[f[3]]);
-    VMOVE(B, &v[f[4]]);
-    VMOVE(C, &v[f[5]]);
+    VMOVE(A, &v[3*vnum[3]]);
+    VMOVE(B, &v[3*vnum[4]]);
+    VMOVE(C, &v[3*vnum[5]]);
     
     VSUB2(vAB, B, A);
     VSUB2(vAC, C, A);
-
     VCROSS(N2, vAB, vAC);
     VUNITIZE(N2);
 
+
+    if (debug&DEBUG_QUAD) {
+	VPRINT("N1", N1);
+	VPRINT("N2", N2);
+    }
+
     /* if the normals are out of tolerance, simply give up */
-    if ( ! VAPPROXEQUAL(N1, N2, 0.005)) return 0;
+    if ( ! VAPPROXEQUAL(N1, N2, 0.005)) {
+	if (debug&DEBUG_QUAD)
+	    fprintf(stderr, "normals don't match  %g %g %g   %g %g %g\n",
+		    V3ARGS(N1), V3ARGS(N2));
+
+	return 0;
+    }
 
     if (debug&DEBUG_QUAD) {
 	fprintf(stderr, "numv %d\n", bot->num_vertices);
 	fprintf(stderr, "possible quad %d %d %d  %d %d %d\n",
-		f[0], f[1], f[2], f[3], f[4], f[5]);
+		vnum[0], vnum[1], vnum[2], vnum[3], vnum[4], vnum[5]);
     }
 
     /* find adjacent/matching verticies */
-    for (i=0 ; i < 2 ; i++) {
-	for (j=3 ; j < 6 ; j++) {
-	    if (f[i] == f[j]) {
-		/* found 1 vertex match */
-		
-		for (s=i+1 ; s < 3 ; s++) {
-		    for (t=3 ; t < 6 ; t++) {
-			if (f[s] == f[t]) {
-			    /* double match (assuming no repeated verticies */
 
-			    /*
-			     * 0 1  3 4
-			     * 0 1  4 3
-			     * 0 1  3 5
-			     * 0 1  5 3
-			     * 0 1  5 4
-			     * 0 1  4 5
+    for (i=0 ; i < 18 ; i++) {
+	int *t;
 
-			     * 0 2  3 4
-			     * 0 2  4 3
-			     * 0 2  3 5
-			     * 0 2  5 3
-			     * 0 2  4 5
-			     * 0 2  5 4
-			     *
-			     * 1 2  3 4
-			     * 1 2  4 3
-			     * 1 2  3 5
-			     * 1 2  5 3
-			     * 1 2  4 5
-			     * 1 2  5 4
-			     *
-			     */
+	t = &tbl[i][0];
 
-			}
-		    }
-		}
+	if (vnum[t[0]] == vnum[t[2]] && vnum[t[1]] == vnum[t[3]]) {
+	    if (debug&DEBUG_QUAD)
+		fprintf(stderr, "matched %d,%d and %d,%d,  (%d/%d %d/%d)\n",
+			vnum[t[0]], vnum[t[2]], vnum[t[1]], vnum[t[3]],
+			t[0], t[2], t[1], t[3]);
+
+	    vidx[0] = vnum[t[4]];
+	    vidx[1] = vnum[t[5]];
+	    vidx[2] = vnum[t[6]];
+	    vidx[3] = vnum[t[7]];
+	    if (debug&DEBUG_QUAD) {
+		fprintf(stderr, "%d %d %d %d\n", V4ARGS(vidx));
+		for (tmp=0 ; tmp < 4 ; tmp++)
+		    fprintf(stderr, "%d vidx:%d %7g %7g %7g\n", tmp, vidx[tmp],
+			    V3ARGS(&v[3*vidx[tmp]]));
 	    }
+	    return 1;
 	}
-    } 
-
-    if (f[0] == f[5]) {
-    } else if (f[1]
-
-    if (f[0] == f[5] && f[2] == f[3]) {
-	idx[0] = f[0];
-	idx[1] = f[1];
-	idx[2] = f[2];
-	idx[3] = f[4];
-	if (debug&DEBUG_QUAD)
-	    fprintf(stderr, "quad %d %d %d %d\n", V4ARGS(idx));
-	return 1;
     }
-
-
-    /* if we don't have matching vertices we're done */
+    /* No match, so we print both triangles */
     return 0;
-
-
 }
 int count_quad_faces(struct rt_bot_internal *bot)
 {
@@ -190,10 +200,12 @@ int count_quad_faces(struct rt_bot_internal *bot)
     int vidx[4];
 
     for (i=0 ; i < bot->num_faces ; i++) {
-	count += tris_are_planar_quad(bot, i, vidx);
+	if (tris_are_planar_quad(bot, i, vidx))
+	    ++count;
     }
 
-    fprintf(stderr, "%d quads\n", count);
+    if (debug&DEBUG_STATS)
+	fprintf(stderr, "%d quads\n", count);
     return count;
 }
 
@@ -220,7 +232,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 
 
     sprintf(Value,"%s.dxf",name);
-    printf("Writing DXF: %s\n",Value);
+    if (debug&DEBUG_NAMES) fprintf(stderr, "Writing DXF: %s\n",Value);
     FH= fopen(Value,"w");
 
 
@@ -261,7 +273,8 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "0\n");
 
 
-    printf("writing %d verticies\n",num_vertices);
+    if (debug&DEBUG_STATS)
+	fprintf(stderr, "writing %d verticies\n",num_vertices);
     for (i= 0; i < num_vertices; i++) {
 	fprintf(FH, "VERTEX\n");
 	fprintf(FH, "8\n");
@@ -280,10 +293,9 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 	/*printf("\t%g %g %g\n",vertices[3*i+0],vertices[3*i+1],vertices[3*i+2]);*/
     }
 
-
-    printf("writing %d faces (- %d for quads)\n", num_faces, quads);
+    if (debug&DEBUG_STATS)
+	fprintf(stderr, "writing %d faces (- %d for quads)\n", num_faces, quads);
     for (i= 0; i < num_faces; i++) {
-
 	fprintf(FH, "VERTEX\n");
 	fprintf(FH, "8\n");
 	fprintf(FH, "Meshes\n");
@@ -299,7 +311,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 	fprintf(FH, "254\n");
 	fprintf(FH, "10\n0.0\n20\n0.0\n30\n0.0\n"); /* WCS origin */
 	fprintf(FH, "70\n128\n");/* line type pattern is continuous */
-	if (tris_are_planar_quad(bot, i, vidx)) {
+	if (  tris_are_planar_quad(bot, i, vidx) ) {
 	    fprintf(FH, "71\n%d\n",vidx[0]+1); /* vertex 1 */
 	    fprintf(FH, "72\n%d\n",vidx[1]+1); /* vertex 2 */
 	    fprintf(FH, "73\n%d\n",vidx[2]+1); /* vertex 3 */
@@ -371,11 +383,12 @@ int main(int ac, char *av[])
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     struct rt_i *rtip;
+    struct directory *dp;
 
     arg_count = parse_args(ac, av);
 	
-    if ((ac - arg_count) < 2) {
-	fprintf(stderr, "usage: %s geom.g file.dxf bot1 bot2 bot3...\n", progname);
+    if ((ac - arg_count) < 1) {
+	fprintf(stderr, "usage: %s geom.g [file.dxf] [bot1 bot2 bot3...]\n", progname);
 	exit(-1);
     }
 
@@ -389,28 +402,67 @@ int main(int ac, char *av[])
     arg_count++;
 
     /* process command line objects */
-    for ( ; arg_count < ac ; arg_count++ ) {
-	printf("current: %s\n",av[arg_count]);
-	struct directory *dirp;
+    if (arg_count < ac) {
+	for ( ; arg_count < ac ; arg_count++ ) {
+	    printf("current: %s\n",av[arg_count]);
+	    struct directory *dirp;
 
-	if (!rt_db_lookup_internal(rtip->rti_dbip, av[arg_count], 
-				   &dirp,
-				   &intern, 
-				   LOOKUP_QUIET,
-				   &rt_uniresource)) {
-	    fprintf(stderr, "db_lookup failed on %s\n", av[arg_count]);
+	    if (!rt_db_lookup_internal(rtip->rti_dbip, av[arg_count], 
+				       &dirp,
+				       &intern, 
+				       LOOKUP_QUIET,
+				       &rt_uniresource)) {
+		fprintf(stderr, "db_lookup failed on %s\n", av[arg_count]);
+		continue;
+	    }
+
+	    if (intern.idb_minor_type != ID_BOT) {
+		if (debug&DEBUG_NAMES)
+		    fprintf(stderr, "%s is not a BOT\n", av[arg_count]);
+		continue;
+	    }
+
+	    bot = (struct rt_bot_internal *)intern.idb_ptr;
+
+	    write_dxf(bot, av[arg_count]);
+
+	}
+    } else {
+	mat_t mat;
+	int i;
+
+	mat_idn(mat);
+
+	/* dump all the bots */
+FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
+
+        /* we only dump BOT primitives, so skip some obvious exceptions */
+	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
+	    dp->d_flags & DIR_COMB)
+	    continue;
+
+	if (debug&DEBUG_NAMES)
+	    fprintf(stderr, "%s\n", dp->d_namep);
+
+	/* get the internal form */
+	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat,&rt_uniresource);
+
+	if (i < 0) {
+	    fprintf(stderr, "rt_get_internal failure %d on %s\n", i, dp->d_namep);
 	    continue;
 	}
-
-	if (intern.idb_minor_type != ID_BOT) {
-	    fprintf(stderr, "%s is not a BOT\n", av[arg_count]);
+	
+	if (i != ID_BOT) {
+	    if (debug&DEBUG_NAMES)
+		fprintf(stderr, "skipping \"%s\" (not a BOT)\n", dp->d_namep);
 	    continue;
 	}
 
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 
-	write_dxf(bot, av[arg_count]);
-
+	write_dxf(bot, dp->d_namep);
+	    
+FOR_ALL_DIRECTORY_END
     }
     return 0;
 }
