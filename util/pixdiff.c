@@ -27,6 +27,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
+long	matching;
+long	off1;
+long	offmany;
+
 char usage[] = "Usage: pixdiff f1.pix f2.pix >file.pix\n";
 
 main(argc, argv)
@@ -61,22 +65,50 @@ char **argv;
 		r2 = fgetc( f2 );
 		g2 = fgetc( f2 );
 		b2 = fgetc( f2 );
-		if( feof(f1) || feof(f2) )  exit(0);
+		if( feof(f1) || feof(f2) )  break;
 
 		if( r1 != r2 || g1 != g2 || b1 != b2 )  {
+			register int i;
+
 			/* Highlight differing channels */
-			if( r1 != r2 )
-				putc( 0xFF, stdout);
-			else
+			if( r1 != r2 )  {
+				if( (i = r1 - r2) < 0 )  i = -i;
+				if( i > 1 )  {
+					putc( 0xFF, stdout);
+					offmany++;
+				} else {
+					putc( 0xC0, stdout);
+					off1++;
+				}
+			} else {
 				putc( 0, stdout);
-			if( g1 != g2 )
-				putc( 0xFF, stdout);
-			else
+				matching++;
+			}
+			if( g1 != g2 )  {
+				if( (i = g1 - g2) < 0 )  i = -i;
+				if( i > 1 )  {
+					putc( 0xFF, stdout);
+					offmany++;
+				} else {
+					putc( 0xC0, stdout);
+					off1++;
+				}
+			} else {
 				putc( 0, stdout);
-			if( b1 != b2 )
-				putc( 0xFF, stdout);
-			else
+				matching++;
+			}
+			if( b1 != b2 )  {
+				if( i > 1 )  {
+					putc( 0xFF, stdout);
+					offmany++;
+				} else {
+					putc( 0xC0, stdout);
+					off1++;
+				}
+			} else {
 				putc( 0, stdout);
+				matching++;
+			}
 		}  else  {
 			/* Common case:  equal.  Give B&W NTSC average */
 			/* .35 R +  .55 G + .10 B, done in fixed-point */
@@ -86,6 +118,11 @@ char **argv;
 			putc( i, stdout);
 			putc( i, stdout);
 			putc( i, stdout);
+			matching += 3;
 		}
 	}
+	fprintf(stderr,
+		"pixdiff bytes: %7d matching, %7d off by 1, %7d off by many\n",
+		matching, off1, offmany );
+	exit(0);
 }
