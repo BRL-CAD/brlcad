@@ -542,7 +542,11 @@ RGBpixel	*scan_buf;
 						*pp = *cp++;
 						pp += STRIDE;
 						}
+#ifdef BSD
 					fp->_ptr = (char *)cp;
+#else
+					fp->_ptr = cp;
+#endif
 					}
 				else
 				while( n-- > 0 )
@@ -830,7 +834,11 @@ int		n;
 			*op++ = *cp;
 			cp += STRIDE;
 			}
+#ifdef BSD
 		fp->_ptr = (char *)op;
+#else
+		fp->_ptr = op;
+#endif
 		}
 	else
 	while( count-- > 0 )
