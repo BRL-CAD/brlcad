@@ -543,7 +543,7 @@ void (*errlog)();
 	}
 #endif
 	do  {
-#if defined(__convexc__)
+#if __STDC__
 		s2 = accept(fd, (struct sockaddr *)&from, &fromlen);
 #else
 		s2 = accept(fd, (char *)&from, &fromlen);
