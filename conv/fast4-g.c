@@ -134,7 +134,7 @@ static char	*mode_str[3]=		/* mode strings */
 				r_id = g_id * 1000 + c_id; \
 				make_region_name( name , g_id , c_id , e_id , type ); \
 				mk_lrcomb( fp , name , headp , 1 ,\
-					(char *)NULL, (char *)NULL, (char *)NULL, r_id, 0, 0, 0, 0 ); \
+					(char *)NULL, (char *)NULL, (unsigned char *)NULL, r_id, 0, 0, 0, 0 ); \
 			}
 
 #define	PUSH( ptr )	nmg_tbl( &stack , TBL_INS , (long *)ptr )
