@@ -1599,9 +1599,9 @@ hoc_register_menu_data "Tools" "Query Ray Control Panel..." "Query Ray Control P
 hoc_register_menu_data "Tools" "Raytrace Control Panel..." "Raytrace Control Panel"\
 	{ { summary "Tool for raytracing." }
           { see_also rt } }
-.$id.menubar.tools add command -label "Animmate Control Panel..." -underline 1\
+.$id.menubar.tools add command -label "AnimMate Control Panel..." -underline 1\
 	-command "animmate .$id"
-hoc_register_menu_data "Tools" "Animmate Control Panel..." "Animmate Control Panel"\
+hoc_register_menu_data "Tools" "AnimMate Control Panel..." "AnimMate Control Panel"\
 	{ { summary "Tool for building animation scripts." }
           { see_also animmate } }
 .$id.menubar.tools add separator
