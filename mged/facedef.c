@@ -19,12 +19,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "db.h"
 #include "vmath.h"
+#include "rtlist.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./sedit.h"
-#include "externs.h"
 #include "./solid.h"
 #include <signal.h>
 
@@ -63,7 +65,6 @@ char *p_nupnt[] = {
 void	f_facedef();
 
 static void	get_pleqn(), get_rotfb(), get_nupnt();
-void	calc_pnts();
 static int	get_3pts();
 
 /*			F _ F A C E D E F ( )
@@ -90,7 +91,7 @@ f_facedef()
 		(void)printf("Facedef: must be in solid edit\n");
 		return;
 	}
-	else if( es_rec.s.s_type != GENARB8 ){
+	if( es_rec.s.s_type != GENARB8 ){
 		(void)printf("Facedef: type must be GENARB8\n");
 		return;
 	}	
@@ -176,97 +177,97 @@ f_facedef()
 		args += argcnt;
 	}
 
-	switch( *cmd_args[2] ){
-		case 'a': 
-			/* special case for arb7, because of 2 4-pt planes meeting */
-			if( es_rec.s.s_cgtype == ARB7 )
-				if( plane!=0 && plane!=3 ){
-					(void)printf("Facedef: can't redefine that arb7 plane\n");
-					return;
-				}
-			while( args < 7 ){  	/* total # of args under this option */
-				(void)printf("%s",p_pleqn[args-3]);
-				if( (argcnt = getcmd(args)) < 0 ){
-					(void)printf("Facedef: input bad\n");
-					return;
-				}
-				args += argcnt;
+	switch( cmd_args[2][0] ){
+	case 'a': 
+		/* special case for arb7, because of 2 4-pt planes meeting */
+		if( es_rec.s.s_cgtype == ARB7 )
+			if( plane!=0 && plane!=3 ){
+				(void)printf("Facedef: can't redefine that arb7 plane\n");
+				return;
 			}
-			get_pleqn( es_peqn[plane], &cmd_args[3] );
-			break;
-		case 'b': 
-			/* special case for arb7, because of 2 4-pt planes meeting */
-			if( es_rec.s.s_cgtype == ARB7 )
-				if( plane!=0 && plane!=3 ){
-					(void)printf("Facedef: can't redefine that arb7 plane\n");
-					return;
-				}
-			while( args < 12 ){           /* total # of args under this option */
-				(void)printf("%s %d: ", p_3pts[(args-3)%3] ,args/3);
-				if( (argcnt = getcmd(args)) < 0 ){
-					(void)printf("Facedef: input bad\n");
-					return;
-				}
-				args += argcnt;
+		while( args < 7 ){  	/* total # of args under this option */
+			(void)printf("%s",p_pleqn[args-3]);
+			if( (argcnt = getcmd(args)) < 0 ){
+				(void)printf("Facedef: input bad\n");
+				return;
 			}
-			if( get_3pts( es_peqn[plane], &cmd_args[3], &tol) ){
-				/* clean up array es_peqn for anyone else */
-				calc_planes( &es_rec.s, es_rec.s.s_cgtype );
-				return;				/* failure */
+			args += argcnt;
+		}
+		get_pleqn( es_peqn[plane], &cmd_args[3] );
+		break;
+	case 'b': 
+		/* special case for arb7, because of 2 4-pt planes meeting */
+		if( es_rec.s.s_cgtype == ARB7 )
+			if( plane!=0 && plane!=3 ){
+				(void)printf("Facedef: can't redefine that arb7 plane\n");
+				return;
 			}
-			break;
-		case 'c': 
-			/* special case for arb7, because of 2 4-pt planes meeting */
-			if( es_rec.s.s_cgtype == ARB7 && (plane != 0 && plane != 3) ) {
-				while( args < 5 ){ 	/* total # of args under this option */
-					(void)printf("%s",p_rotfb[args-3]);
-					if( (argcnt = getcmd(args)) < 0){
-						(void)printf("Facedef: input bad\n");
-						return;
-					}
-					args += argcnt;
-				}
-				cmd_args[5] = "v5";
-				(void)printf("Fixed point is vertex five.\n");
+		while( args < 12 ){           /* total # of args under this option */
+			(void)printf("%s %d: ", p_3pts[(args-3)%3] ,args/3);
+			if( (argcnt = getcmd(args)) < 0 ){
+				(void)printf("Facedef: input bad\n");
+				return;
 			}
-			else while( args < 8 ){         /* total # of args under this option */	
-				if( args > 5 && cmd_args[5][0] == 'v' )       /* vertex point given,stop */
-					break;
+			args += argcnt;
+		}
+		if( get_3pts( es_peqn[plane], &cmd_args[3], &tol) ){
+			/* clean up array es_peqn for anyone else */
+			calc_planes( &es_rec.s, es_rec.s.s_cgtype );
+			return;				/* failure */
+		}
+		break;
+	case 'c': 
+		/* special case for arb7, because of 2 4-pt planes meeting */
+		if( es_rec.s.s_cgtype == ARB7 && (plane != 0 && plane != 3) ) {
+			while( args < 5 ){ 	/* total # of args under this option */
 				(void)printf("%s",p_rotfb[args-3]);
-				if( (argcnt = getcmd(args)) < 0 ){
+				if( (argcnt = getcmd(args)) < 0){
 					(void)printf("Facedef: input bad\n");
 					return;
 				}
 				args += argcnt;
 			}
-			get_rotfb(es_peqn[plane], &cmd_args[3], &es_rec.s);
-			break;
-		case 'd': 
-			/* special case for arb7, because of 2 4-pt planes meeting */
-			if( es_rec.s.s_cgtype == ARB7 )
-				if( plane!=0 && plane!=3 ){
-					(void)printf("Facedef: can't redefine that arb7 plane\n");
-					return;
-				}
-			while( args < 6 ){  	/* total # of args under this option */
-				(void)printf("%s",p_nupnt[args-3]);
-				if( (argcnt = getcmd(args)) < 0 ){
-					(void)printf("Facedef: input bad\n");
-					return;
-				}
-				args += argcnt;
+			cmd_args[5] = "v5";
+			(void)printf("Fixed point is vertex five.\n");
+		}
+		else while( args < 8 ){         /* total # of args under this option */	
+			if( args > 5 && cmd_args[5][0] == 'v' )       /* vertex point given,stop */
+				break;
+			(void)printf("%s",p_rotfb[args-3]);
+			if( (argcnt = getcmd(args)) < 0 ){
+				(void)printf("Facedef: input bad\n");
+				return;
 			}
-			get_nupnt(es_peqn[plane], &cmd_args[3]);
-			break;
-		case 'q': 
-			return;
-		default:  
-			(void)printf("Facedef: not an option\n");
-			return;
+			args += argcnt;
+		}
+		get_rotfb(es_peqn[plane], &cmd_args[3], &es_rec.s);
+		break;
+	case 'd': 
+		/* special case for arb7, because of 2 4-pt planes meeting */
+		if( es_rec.s.s_cgtype == ARB7 )
+			if( plane!=0 && plane!=3 ){
+				(void)printf("Facedef: can't redefine that arb7 plane\n");
+				return;
+			}
+		while( args < 6 ){  	/* total # of args under this option */
+			(void)printf("%s",p_nupnt[args-3]);
+			if( (argcnt = getcmd(args)) < 0 ){
+				(void)printf("Facedef: input bad\n");
+				return;
+			}
+			args += argcnt;
+		}
+		get_nupnt(es_peqn[plane], &cmd_args[3]);
+		break;
+	case 'q': 
+		return;
+	default:  
+		(void)printf("Facedef: '%s' is not an option\n", cmd_args[2]);
+		return;
 	}
 
 	/* find all vertices, put in vector notation */
-	calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
+	calc_pnts( &es_rec.s, es_rec.s.s_cgtype, es_peqn );
 
 	/* go back to before es_mat changes */
 	VMOVE( tempvec, &es_rec.s.s_values[0] );
@@ -311,7 +312,7 @@ char	*argv[];
 /*
  * 			G E T _ 3 P T S
  *
- *  Gets three definite points from the array cmd_args[]
+ *  Gets three definite points from the array argv[]
  *  and finds the planar equation from these points.
  *  The resulting plane equation is stored in 'plane'.
  *
@@ -405,6 +406,8 @@ char	*argv[];
 }
 
 /* 			C A L C _ P N T S (  )
+ * XXX replaced by rt_arb_calc_points
+ *
  * Takes the array es_peqn[] and intersects the planes to find the vertices
  * of a GENARB8.  The vertices are stored in the solid record 'old_srec' which
  * is of type 'type'.  If intersect fails, the points (in vector notation) of
@@ -439,4 +442,42 @@ int type;
 			&temp_srec.s_values[0]  );
 	}
 	return;						/* success */
+}
+
+/*
+ *			R T _ A R B _ C A L C _ P O I N T S
+ *
+ * Takes the planes[] array and intersects the planes to find the vertices
+ * of a GENARB8.  The vertices are stored into arb->pt[].
+ * If the intersect fails, the existing points of arb->pt[]
+ * are used to clean up the planes[] array for anyone else.
+ * This is an analog of rt_arb_calc_planes().
+ */
+int
+rt_arb_calc_points( arb, cgtype, planes, tol )
+struct rt_arb_internal	*arb;
+int		cgtype;
+plane_t		planes[6];
+struct rt_tol	*tol;
+{
+	int	i;
+	point_t	pt[8];
+
+	RT_ARB_CK_MAGIC(arb);
+
+	/* find new points for entire solid */
+	for(i=0; i<8; i++){
+		if( rt_arb_3face_intersect( pt[i], planes, cgtype, i*3 ) < 0 )  {
+			rt_log("rt_arb_calc_points: Intersection of planes fails %d\n", i);
+			/* clean up planes[] for anyone else */
+			(void)rt_arb_calc_planes( planes, arb, cgtype, tol );
+			return -1;			/* FAIL */
+		}
+	}
+
+	/* Move new points to arb */
+	for( i=0; i<8; i++ )  {
+		VMOVE( arb->pt[i], pt[i] );
+	}
+	return 0;					/* success */
 }
