@@ -290,7 +290,6 @@ struct directory *dp1, *dp2;
 struct db_i *dbip1, *dbip2;
 {
 	char *c1, *c2;
-	Tcl_Obj *key1, *val1, *key2, *val2;
 	struct bu_vls adjust;
 
 	/* check if same solid type */
