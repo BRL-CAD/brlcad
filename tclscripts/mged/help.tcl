@@ -67,7 +67,7 @@ set help_data(exit)		{{}	{exit}}
 set help_data(extrude)		{{#### distance}	{extrude dist from face}}
 set help_data(expand)		{{wildcard expression}	{expands wildcard expression}}
 set help_data(eye_pt)		{{mx my mz}	{set eye point to given model coordinates (in mm)}}
-set help_data(e_muves)		{{MUVES_component_1 MUVES_component2 ...}	{display listed MUVES components}}
+set help_data(e_muves)		{{MUVES_component_1 MUVES_component2 ...}	{display listed MUVES components/systems}}
 set help_data(facedef)		{{####}	{define new face for an arb}}
 set help_data(facetize)		{{[-tT] [-P#] new_obj old_obj(s)}	{convert objects to faceted NMG objects at current tol}}
 set help_data(find)		{{<objects>}	{find all references to objects}}
@@ -105,7 +105,7 @@ set help_data(listeval)		{{}	{lists 'evaluated' path solids}}
 set help_data(loadtk)		{{[DISPLAY]}	{Initializes the Tk window library}}
 set help_data(lookat)		{{x y z}	{Adjust view to look at given coordinates}}
 set help_data(ls)		{{}	{table of contents}}
-set help_data(l_muves)		{{MUVES_component1 MUVES_component2 ...} {list the BRL-CAD regions that make up the specified MUVES components}}
+set help_data(l_muves)		{{MUVES_component1 MUVES_component2 ...} {list the components that make up the specified MUVES components/systems}}
 set help_data(M)		{{1|0 xpos ypos}	{handle a middle mouse event}}
 set help_data(make)		{{name <arb8|sph|ellg|tor|tgc|rpc|rhc|epa|ehy|eto|part|grip|half|nmg|pipe>}	{create a primitive}}
 set help_data(make_bb)		{{new_rpp_name obj1_or_path1 [list of objects or paths ...]}	{make a bounding box solid enclosing specified objects/paths}}
@@ -156,7 +156,7 @@ set help_data(qvrot)		{{dx dy dz theta}	{set view from direction vector and twis
 set help_data(r)		{{region <operation solid>}	{create or extend a Region combination}}
 set help_data(R)		{{1|0 xpos ypos}	{handle a right mouse event}}
 set help_data(rcodes)		{{filename}	{read region ident codes from filename}}
-set help_data(read_muves)	{{MUVES_regionmap_file}	{read the MUVES region_map file}}
+set help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{read the MUVES region_map file and optionally the sysdef file}}
 set help_data(red)		{{object}	{edit a group or region using a text editor}}
 set help_data(refresh)		{{}	{send new control list}}
 set help_data(regdebug)		{{[number]}	{toggle display manager debugging or set debug level}}
@@ -202,7 +202,7 @@ set help_data(track)		{{<parameters>}	{adds tracks to database}}
 set help_data(tra)              {{dx dy dz} {translate by (dx,dy,dz)}}
 set help_data(translate)	{{x y z}	{trans object to x,y, z}}
 set help_data(tree)		{{object(s)}	{print out a tree of all members of an object}}
-set help_data(t_muves)		{{}	{list all the known MUVES components}}
+set help_data(t_muves)		{{}	{list all the known MUVES components/systems}}
 set help_data(unaim)		{{id}	{stop aiming at id}}
 set help_data(units)		{{[mm|cm|m|in|ft|...]}	{change units}}
 set help_date(unshare_menu)	{{pathName}	{pathName no longer shares its menu}}
