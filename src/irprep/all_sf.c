@@ -25,13 +25,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
 
@@ -41,15 +39,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "msr.h"
 
+
 #if !defined(PI)
-#define PI 3.14159265358979323846262    /*  Pi.  */
+#  define PI 3.14159265358979323846262    /*  Pi.  */
 #endif
 #define ZTOL 1.e-20	/*  Zero tolerance.  */
 
 struct application ap;  /*  Structure passed between functions.  */
 
-extern int hit(register struct application *ap_p, struct partition *PartHeadp);       /*  User supplied hit function.  */
-extern int miss(void);      /*  User supplied miss function.  */
+extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);       /*  User supplied hit function.  */
+extern int miss(struct application *ap);      /*  User supplied miss function.  */
 extern int overlap(void);   /*  User supplied overlap function.  */
 
 struct table
@@ -531,13 +530,9 @@ int main(int argc, char **argv)
 /***************************************************************************/
 /*		Hit, miss, & overlap functions.                            */
 /***************************************************************************/
-int
-hit(register struct application *ap_p, struct partition *PartHeadp)
-
 /*  User supplied hit function.  */
-
-                                  
-                            
+int
+hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 {							/*  START # 1000  */
    register struct partition *pp;
    register struct hit *hitp;
@@ -668,24 +663,17 @@ hit(register struct application *ap_p, struct partition *PartHeadp)
 }							/*  END # 1000  */
 
 /***************************************************************************/
-int
-miss(void)
-
 /*  User supplied hit function.  */
-
+int
+miss(struct application *ap)
 {							/*  START # 2000  */
-
    return(1);
 }							/*  END # 2000  */
 
 /***************************************************************************/
+/*  User supplied overlap function.  */
 int
 overlap(void)
-
-/*  User supplied overlap function.  */
-
 {							/*  START # 3000  */
-
    return(2);
 }							/*  END # 3000  */
-
