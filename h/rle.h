@@ -30,9 +30,9 @@
 #ifndef RLE_H
 #define RLE_H
 
-#include "rle_config.h"		/* Configuration parameters. */
 
 #include <stdio.h>		/* Declare FILE. */
+#include "rle_config.h"		/* Configuration parameters. */
 
 #ifdef c_plusplus
 #define USE_PROTOTYPES
