@@ -611,7 +611,7 @@ proc muves_read_region_map { rm_file } {
     set muves_regions {}
     set rm_file_cid [open $rm_file]
 
-    while ![eof $rm_file_cid] {
+    while {[eof $rm_file_cid] == 0} {
 	gets $rm_file_cid line
 	set len [llength $line]
 
@@ -634,7 +634,7 @@ proc muves_read_final_results { fr_file } {
     set fr_file_cid [open $fr_file]
 
     ##################### skip to threats #####################
-    while { ![eof $fr_file_cid] } {
+    while {[eof $fr_file_cid] == 0} {
 	gets $fr_file_cid line
 
 	if {$line == "Q:threat"} {
@@ -644,7 +644,7 @@ proc muves_read_final_results { fr_file } {
 
     ##################### process threats #####################
     set muves_threats {}
-    while { ![eof $fr_file_cid] } {
+    while {[eof $fr_file_cid] == 0} {
 	gets $fr_file_cid line
 
 	if {$line == "Q:modkeys"} {
@@ -655,7 +655,7 @@ proc muves_read_final_results { fr_file } {
     }
 
     ##################### skip to views #######################
-    while { ![eof $fr_file_cid] } {
+    while {[eof $fr_file_cid] == 0} {
 	gets $fr_file_cid line
 
 	if {$line == "Q:view-v2"} {
@@ -665,7 +665,7 @@ proc muves_read_final_results { fr_file } {
 
     ##################### process views ########################
     set muves_views {}
-    while { ![eof $fr_file_cid] } {
+    while {[eof $fr_file_cid] == 0} {
 	gets $fr_file_cid line
 
 	if {$line == "Q:states"} {
@@ -680,7 +680,7 @@ proc muves_read_final_results { fr_file } {
 	unset muves_states
     }
     set muves_states(num) 0
-    while { ![eof $fr_file_cid] } {
+    while {[eof $fr_file_cid] == 0} {
 	gets $fr_file_cid line
 
 	set result [regexp "\\\(\[0-9\]+\\\)\[ \t\]+(\[^ \t\]+)\[ \t\]+(\[0-9\]+)\[ \t\]+(.+)$" $line match type n state_name]
@@ -734,7 +734,7 @@ proc muves_read_final_results { fr_file } {
 	gets $fr_file_cid line
 	set muves_shot_records(AP:$i) [lrange $line 2 end]
 
-	for { set j 1 } { ![eof $fr_file_cid] } { incr j } {
+	for { set j 1 } {[eof $fr_file_cid] == 0} { incr j } {
 	    gets $fr_file_cid line
 
 	    set key [lindex $line 0]
