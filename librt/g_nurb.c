@@ -38,7 +38,9 @@ static const char RCSnurb[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-#define M_SQRT1_2       0.70710678118654752440
+#ifndef M_SQRT1_2
+#	define M_SQRT1_2       0.70710678118654752440
+#endif /* M_SQRT1_2 */
 
 struct nurb_specific {
 	struct nurb_specific *  next;	/* next surface in the the solid */
