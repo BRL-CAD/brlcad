@@ -249,6 +249,7 @@ set -S2 "/bin/sh"
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
 /*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
 /*		Warning 1110 is "statement is unreachable" */
+/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function" */
 #		define	OPTIMIZER	-O2 -OPT:fold_arith_limit=16000 \
 					-OPT:const_copy_limit=16000 \
 					-use_readonly_const \
@@ -260,29 +261,29 @@ set -S2 "/bin/sh"
 #	endif
 #	define	GFLAG		-mips3 -KPIC -G 7
 #	define  XINCDIR /usr/include/X11
-#	define	XLIBDIR /usr/lib
+#	define	XLIBDIR /usr/lib32
 #	if 0	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -mips4 -shared -o
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib
+#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib32
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 /*		Warning 84:  library not used for resolving any symbol */
 /*		Warning 85: definition in one library preempts that in another */
 /*		Warning 134: weak definition in one library preempts that in another */
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134 -Wl,-woff,1048
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
-#		define	STANDARD_LIBES	-lm -lmalloc -lc
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+#		define	STANDARD_LIBES	-n32 -lm -lmalloc -lc
+#		define	LD_OPTS		-n32 GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #	endif
 #	define	TCL_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 #	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
-#	define  CC_OPTS		GFLAG -xansi -DIRIX=6
+#	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -Wl,-woff,1048
 #	define	IRIX	6
 #	define	LGT_CONFIG	GFLAG
 
