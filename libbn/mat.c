@@ -56,6 +56,7 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 double	mat_degtorad = 0.0174532925199433;
 double	mat_radtodeg = 57.29577951308230698802;
 
+extern void	mat_print();
 
 /*
  *			M A T _ A T A N 2
@@ -236,7 +237,8 @@ register matp_t output;
 		}
 
 		if( fabs(y) < SQRT_SMALL_FASTF )  {
-			rt_log("mat_inv:  error!\n");
+			rt_log("mat_inv:  error! fabs(y)=%g\n", fabs(y));
+			mat_print("singular matrix", input);
 			abort();
 			return;		/* ERROR */
 		}
