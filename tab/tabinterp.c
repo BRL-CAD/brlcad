@@ -461,14 +461,23 @@ register struct chan	*chp;
 spline( chp )
 register struct chan	*chp;
 {
-	float d,s,u,v,hi,hi1;
+	float d,s,u,v;
+	double	hi;			/* horiz interval i-1 to i */
+	double	hi1;			/* horiz interval i to i+1 */
 	float h;
-	float D2yi,D2yi1,D2yn1,x0,x1,yy,a;
+	float D2yi,D2yi1,D2yn1;
+	float a;
 	int end;
 	float corr;
 	register int i,j,m;
-	float konst = 0.0;		/* ?? */
+	float konst = 0.0;		/* derriv. at endpts, non-periodic */
 	float *diag, *rrr;
+	register int	t;
+
+	/* First, as a quick hack, do linear interpolation to fill in
+	 * values off the endpoints, in non-periodic case
+	 */
+	linear_interpolate( chp );
 
 	if(chp->c_ilen<3) {
 		printf("need at least 3 points to spline\n");
@@ -476,10 +485,8 @@ register struct chan	*chp;
 	}
 
 	i = (chp->c_ilen+1)*sizeof(float);
-	if( !diag )
-		diag = (float *)rt_malloc((unsigned)i, "diag");
-	if( !rrr )
-		rrr = (float *)rt_malloc((unsigned)i, "rrr");
+	diag = (float *)rt_malloc((unsigned)i, "diag");
+	rrr = (float *)rt_malloc((unsigned)i, "rrr");
 	if( !rrr || !diag )  {
 		printf("malloc failure\n");
 		goto bad;
@@ -489,12 +496,16 @@ register struct chan	*chp;
 	d = 1;
 	rrr[0] = 0;
 	s = chp->c_periodic?-1:0;
-	for(i=0;++i<chp->c_ilen-!chp->c_periodic;){	/* triangularize */
+	/* triangularize */
+	for( i=0; ++i < chp->c_ilen - !chp->c_periodic; )  {
 		hi = chp->c_itime[i]-chp->c_itime[i-1];
-		hi1 = i==chp->c_ilen-1?chp->c_itime[1]-chp->c_itime[0]:
-			chp->c_itime[i+1]-chp->c_itime[i];
+		hi1 = (i==chp->c_ilen-1) ?
+			chp->c_itime[1] - chp->c_itime[0] :
+			chp->c_itime[i+1] - chp->c_itime[i];
 		if(hi1*hi<=0) {
-			printf("spline: ??\n");
+			fprintf(stderr,
+			    "spline: Horiz. interval changed sign at i=%d, time=%g\n",
+			    i, chp->c_itime[i]);
 			goto bad;
 		}
 		u = i==1?0.0:u-s*s/d;
@@ -508,10 +519,11 @@ register struct chan	*chp;
 		    a - hi*hi/d; 
 	}
 	D2yi = D2yn1 = 0;
-	for(i=chp->c_ilen-!chp->c_periodic;--i>=0;){	/* back substitute */
+	/* back substitute */
+	for( i = chp->c_ilen - !chp->c_periodic; --i >= 0; )  {
 		end = i==chp->c_ilen-1;
-		hi1 = end?chp->c_itime[1]-chp->c_itime[0]:
-			chp->c_itime[i+1]-chp->c_itime[i];
+		hi1 = end ? chp->c_itime[1] - chp->c_itime[0]:
+			chp->c_itime[i+1] - chp->c_itime[i];
 		D2yi1 = D2yi;
 		if(i>0){
 			hi = chp->c_itime[i]-chp->c_itime[i-1];
@@ -535,20 +547,53 @@ register struct chan	*chp;
 		if(end) continue;
 
 		/* hi1 is range of time covered in this interval */
+#if 0
 		/* m will be number of samples in this interval */
 		m = hi1 * fps;
 		if(m<=0) m = 1;
-		h = hi1/m;
 
 		/* interpolate, high to low */
 		for(j=m;j>0||i==0&&j==0;j--) {
 			register int sub;
-			x0 = (m-j)*h/hi1;
-			x1 = j*h/hi1;
-			yy = D2yi*(x0-x0*x0*x0)+D2yi1*(x1-x1*x1*x1);
-			yy = chp->c_ival[i]*x0+chp->c_ival[i+1]*x1 -hi1*hi1*yy/6;
-			sub = (int)((chp->c_itime[i]+j*h)*fps);
+			register double	x0;	/* fraction from [i+0] */
+			register double	x1;	/* fraction from [i+1] */
+			register double	yy;
+
+			x1 = (double)j / (double) m;
+			x0 = 1 - x1;
+			yy = D2yi * (x0 - x0*x0*x0) + D2yi1 * (x1 - x1*x1*x1);
+			yy = chp->c_ival[i] * x0 + chp->c_ival[i+1] * x1 - 
+				hi1 * hi1 * yy / 6;
+			sub = (int)((chp->c_itime[i]+x1*hi1)*fps);
 			chp->c_oval[sub] = yy;
+		}
+#endif
+		/* Sweep o_time[], looking for times in this span */
+		for( t=0; t<o_len; t++ )  {
+			register double	x0;	/* fraction from [i+0] */
+			register double	x1;	/* fraction from [i+1] */
+			register double	yy;
+			register double	cur_t;
+
+			cur_t = o_time[t];
+			if( chp->c_periodic )  {
+				/* Should be pre-computed once/sline call XXX */
+				while( cur_t > chp->c_itime[chp->c_ilen-1] )
+					cur_t -= chp->c_itime[0];
+				while( cur_t < chp->c_itime[0] );
+					cur_t += chp->c_itime[chp->c_ilen-1];
+			}
+			if( cur_t > chp->c_ival[i+1] )
+				continue;
+			if( cur_t < chp->c_ival[i] )
+				continue;
+			x0 = (cur_t - chp->c_ival[i]) /
+			    (chp->c_ival[i+1] - chp->c_ival[i]);
+			x1 = 1 - x0;
+			yy = D2yi * (x0 - x0*x0*x0) + D2yi1 * (x1 - x1*x1*x1);
+			yy = chp->c_ival[i] * x0 + chp->c_ival[i+1] * x1 - 
+				hi1 * hi1 * yy / 6;
+			chp->c_oval[t] = yy;
 		}
 	}
 	rt_free( (char *)diag, "diag");
