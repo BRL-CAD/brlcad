@@ -4,7 +4,7 @@ static char rcsid[] = "$Header$";
 #include <stdio.h>
 extern int Debug;
 extern double Beta;
-/*	sharpen	an image.
+/*	sharpen	- return a sharpened tone mapped buffer.
  *
  * Entry:
  *	buf	- buffer to place bytes.
@@ -14,22 +14,34 @@ extern double Beta;
  *	Map	- tone scale mapping.
  *
  * Exit:
- *	returns pointer to buf or NULL
+ *	returns 0 on EOF
+ *		number of byes read otherwise.
  *
  * Uses:
  *	Debug	- Current debug level.
  *	Beta	- sharpening value.
  *
  * Calls:
- *	Random	- return a random number between -0.5 and 0.5;
+ *	None.
  *
  * Method:
- *	straight-forward.
+ *	if no sharpening just read a line tone scale and return.
+ *	if first time called get space for processing and do setup.
+ *	if first line then
+ *		only use cur and next lines
+ *	else if last line then
+ *		only use cur and last lines
+ *	else
+ *		use last cur and next lines
+ *	endif
  *
  * Author:
- *	Christopher T. Johnson	- 90/03/21
+ *	Christopher T. Johnson
  *
  * $Log$
+ * Revision 1.1  90/04/13  00:31:49  cjohnson
+ * Initial revision
+ * 
  * 
  */
 int
@@ -40,7 +52,7 @@ int  num;
 FILE *file;
 unsigned char *Map;
 {
-	static unsigned char *last=0,*cur,*next;
+	static unsigned char *last,*cur=0,*next;
 	static int linelen;
 	int result;
 
@@ -71,7 +83,7 @@ unsigned char *Map;
  *	space to load pixels into and read first and second line of
  *	the file.
  */
-	if (!last) {
+	if (!cur) {
 		linelen=num;
 		last = 0;
 		cur  = (unsigned char *)malloc(linelen);
@@ -113,42 +125,76 @@ unsigned char *Map;
 		}
 	}
 /*
- *	if cur is NULL then we are at EOF.
+ *	if cur is NULL then we are at EOF.  Memory leak here as
+ *	we don't free last.
  */
 	if (!cur) return(0);
 
+/*
+ * Value is the following Laplacian filter kernel:
+ *		0.25
+ *	0.25	-1.0	0.25
+ *		0.25
+ *
+ * Thus value is zero in constant value areas and none zero on
+ * edges.
+ *
+ * Page 335 of Digital Halftoning defines
+ *	J     [n] = J[n] - Beta*Laplacian_filter[n]*J[n]
+ *	 sharp
+ *
+ * J, J     , Laplacian_filter[n] are all in the range 0.0 to 1.0
+ *     sharp
+ *
+ * The folowing is done in mostly interger mode, there is only one
+ * floating point multiply done.
+ */
+
+/*
+ *	if first line
+ */
 	if (!last) {
 		i=0;
 		value=next[i] + cur[i+1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
+		buf[i] = cur[i] - Beta*(value*cur[i]/(255*2));
 		for (; i < linelen-1; i++) {
 			value = next[i] + cur[i-1] + cur[i+1] - cur[i]*3;
-			buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
+			buf[i] = cur[i] - Beta*(value*cur[i]/(255*3));
 		}
 		value=next[i] + cur[i-1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
+		buf[i] = cur[i] - Beta*(value*cur[i]/(255*2));
+/*
+ *		first time through so we will need this buffer space
+ *		the next time through.
+ */
 		last  = (unsigned char *)malloc(linelen);
+/*
+ *	if last line
+ */
 	} else if (!next) {
 		i=0;
 		value=last[i] + cur[i+1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
+		buf[i] = cur[i] - Beta*(value*cur[i]/(255*2));
 		for (; i < linelen-1; i++) {
 			value = last[i] + cur[i-1] + cur[i+1] - cur[i]*3;
-			buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
+			buf[i] = cur[i] - Beta*(value*cur[i]/(255*3));
 		}
 		value=last[i] + cur[i-1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
+		buf[i] = cur[i] - Beta*(value*cur[i]/(255*2));
+/*
+ *	all other lines.
+ */
 	} else {
 		i=0;
-		value=last[i] +next[i] + cur[i+1] - cur[i]*3;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
+		value=last[i] + next[i] + cur[i+1] - cur[i]*3;
+		buf[i] = cur[i] - Beta*(value*cur[i]/(255*3));
 		for (; i < linelen-1; i++) {
 			value = last[i] + next[i] + cur[i-1] + cur[i+1]
 			     - cur[i]*4;
-			buf[i] = cur[i] - Beta*value*cur[i]/(255*4);
+			buf[i] = cur[i] - Beta*(value*cur[i]/(255*4));
 		}
 		value=last[i] + next[i] + cur[i-1] - cur[i]*3;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
+		buf[i] = cur[i] - Beta*(value*cur[i]/(255*3));
 	}
 	return(linelen);
 }
