@@ -91,7 +91,8 @@ static int dmo_refreshFb_tcl();
 static int dmo_flush_tcl();
 static int dmo_sync_tcl();
 static int dmo_size_tcl();
-static int dmo_aspect_tcl();
+static int dmo_get_aspect_tcl();
+static int dmo_observer_tcl();
 
 static void dmo_fbs_callback();
 
@@ -132,7 +133,8 @@ static struct bu_cmdtab dmo_cmds[] = {
 	"sync",			dmo_sync_tcl,
 	"close",		dmo_close_tcl,
 	"size",			dmo_size_tcl,
-	"aspect",		dmo_aspect_tcl,
+	"get_aspect",		dmo_get_aspect_tcl,
+	"observer",		dmo_observer_tcl,
 	(char *)0,		(int (*)())0
 };
 
@@ -174,6 +176,9 @@ dmo_deleteProc(clientData)
      ClientData clientData;
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
+
+	/* free observers */
+	bu_observer_free(&dmop->dmo_observers);
 
 	/* close framebuffer */
 	dmo_closeFb(dmop);
@@ -336,6 +341,7 @@ dmo_open_tcl(clientData, interp, argc, argv)
 	dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
 	dmop->dmo_fbs.fbs_callback = dmo_fbs_callback;
 	dmop->dmo_fbs.fbs_clientData = dmop;
+	BU_LIST_INIT(&dmop->dmo_observers.l);
 
 	/* append to list of dm_obj's */
 	BU_LIST_APPEND(&HeadDMObj.l,&dmop->l);
@@ -1336,10 +1342,10 @@ dmo_closeFb_tcl(clientData, interp, argc, argv)
 #endif
 
 /*
- * Listen for framebuffer clients.
+ * Set/get the port used to listen for framebuffer clients.
  *
  * Usage:
- *	  procname listen port
+ *	  procname listen [port]
  *
  * Returns the port number actually used.
  *
@@ -1532,11 +1538,11 @@ dmo_size_tcl(clientData, interp, argc, argv)
  * Get window aspect ratio (i.e. width / height)
  *
  * Usage:
- *	  procname aspect
+ *	  procname get_aspect
  *
  */
 static int
-dmo_aspect_tcl(clientData, interp, argc, argv)
+dmo_get_aspect_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
      int     argc;
@@ -1561,15 +1567,42 @@ dmo_aspect_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
+/*
+ * Attach/detach observers to/from list.
+ *
+ * Usage:
+ *	  procname observer cmd [args]
+ *
+ */
+static int
+dmo_observer_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct dm_obj *dmop = (struct dm_obj *)clientData;
+
+	if (argc < 3) {
+		struct bu_vls vls;
+
+		/* return help message */
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dm_observer");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	return bu_cmd((ClientData)&dmop->dmo_observers,
+		      interp, argc - 2, argv + 2, bu_observer_cmds, 0);
+}
+
 static void
 dmo_fbs_callback(clientData)
      genptr_t clientData;
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
-	struct bu_vls vls;
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "fbs_callback %s", bu_vls_addr(&dmop->dmo_name));
-	Tcl_Eval(dmop->dmo_interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+	bu_observer_notify(dmop->dmo_interp, &dmop->dmo_observers, bu_vls_addr(&dmop->dmo_name));
 }
