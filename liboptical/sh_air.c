@@ -17,7 +17,7 @@
 #define air_MAGIC 0x41697200	/* "Air" */
 struct air_specific {
 	long	magic;
-	double	d_p_mm;	/* density per unit mm */
+	double	d_p_m;	/* density per unit meter */
 	double	scale;
 	double	delta;
 	double	color[3];
@@ -29,7 +29,7 @@ struct air_specific {
 
 static struct air_specific air_defaults = {
 	air_MAGIC,
-	.001,		/* d_p_mm */	
+	.1,		/* d_p_m */	
 	.01,		/* scale */
 	0.0,		/* delta */
 	{ .5, .5, .625 }/* color */
@@ -40,7 +40,7 @@ static struct air_specific air_defaults = {
 #define SHDR_AO(m)	offsetofarray(struct air_specific, m)
 
 struct structparse air_parse[] = {
-	{"%f",  1, "dpmm",		SHDR_O(d_p_mm),		FUNC_NULL },
+	{"%f",  1, "dpm",		SHDR_O(d_p_m),		FUNC_NULL },
 	{"%f",  1, "scale",		SHDR_O(scale),		FUNC_NULL },
 	{"%f",  1, "s",			SHDR_O(scale),		FUNC_NULL },
 	{"%f",  1, "delta",		SHDR_O(delta),		FUNC_NULL },
@@ -48,17 +48,20 @@ struct structparse air_parse[] = {
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
-HIDDEN int	air_setup(), air_render(), fog_render(), emist_render();
+HIDDEN int	air_setup(), airtest_render(), air_render(), emist_render();
 HIDDEN void	air_print(), air_free();
 
 struct mfuncs air_mfuncs[] = {
-	{"air",		0,		0,		MFI_HIT,	0,
+	{"airtest",	0,		0,		MFI_HIT,	0,
+	air_setup,	airtest_render,	air_print,	air_free },
+
+	{"air",		0,		0,		MFI_HIT, MFF_PROC,
 	air_setup,	air_render,	air_print,	air_free },
 
-	{"fog",		0,		0,		MFI_HIT,	0,
-	air_setup,	fog_render,	air_print,	air_free },
+	{"fog",		0,		0,		MFI_HIT, MFF_PROC,
+	air_setup,	air_render,	air_print,	air_free },
 
-	{"emist",	0,		0,		MFI_HIT,	0,
+	{"emist",	0,		0,		MFI_HIT, MFF_PROC,
 	air_setup,	emist_render,	air_print,	air_free },
 
 	{(char *)0,	0,		0,		0,		0,
@@ -98,7 +101,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	rp->reg_aircode = 1;
 #endif
 
-	rt_log("\"%s\"\n", RT_VLS_ADDR(matparm) );
+	if (rdebug&RDEBUG_SHADE) rt_log("\"%s\"\n", RT_VLS_ADDR(matparm) );
 	if( rt_structparse( matparm, air_parse, (char *)air_sp ) < 0 )
 		return(-1);
 
@@ -129,13 +132,15 @@ char *cp;
 }
 
 /*
- *	A I R _ R E N D E R
+ *	A I R T E S T _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c)
  *	once for each hit point to be shaded.
+ *
+ *
  */
 int
-air_render( ap, pp, swp, dp )
+airtest_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
 struct shadework	*swp;
@@ -160,13 +165,20 @@ char	*dp;
 	return(1);
 }
 /*
- *	F O G _ R E N D E R
+ *	A I R _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c)
  *	once for each hit point to be shaded.
+ *
+ *
+ *	This implements Beer's law homogeneous Fog/haze
+ *
+ *	Tau = optical path depth = density_per_unit_distance * distance
+ *
+ *	transmission = e^(-Tau)
  */
 int
-fog_render( ap, pp, swp, dp )
+air_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
 struct shadework	*swp;
@@ -183,28 +195,29 @@ char	*dp;
 	CK_air_SP(air_sp);
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_structprint( "fog_specific", air_parse, (char *)air_sp );
-		rt_log("fog in(%g) out(%g) r_pt(%g %g %g)\n",
+		rt_structprint( "air_specific", air_parse, (char *)air_sp );
+		rt_log("air in(%g) out(%g) r_pt(%g %g %g)\n",
 			pp->pt_inhit->hit_dist,
 			pp->pt_outhit->hit_dist,
 			V3ARGS(ap->a_ray.r_pt));
 	}
 
-	/* We can't trust the reflect/refract support in rt to do the right
+	/* XXX
+	 * We can't trust the reflect/refract support in rt to do the right
 	 * thing so we have to take over here.
 	 */
-#if 0
-	swp->sw_transmit = 1.0;
-	return(1);
-#endif	
+
 
 	/* Beer's Law Homogeneous Fog */
 
-	/* tau = optical path depth = density per mm * distance */
-	if (pp->pt_inhit->hit_dist < 0.0) dist = pp->pt_outhit->hit_dist;
-	else dist = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist);
+	/* get the path length right */
+	if (pp->pt_inhit->hit_dist < 0.0)
+		dist = pp->pt_outhit->hit_dist;
+	else
+		dist = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist);
 
-	tau = air_sp->d_p_mm * dist;
+	/* tau = optical path depth = density per mm * distance */
+	tau = (air_sp->d_p_m*0.001 ) * dist;
 
 	/* transmission = e^(-tau) */
 	swp->sw_transmit = exp(-tau);
@@ -213,14 +226,14 @@ char	*dp;
 	else if ( swp->sw_transmit < 0.0 ) swp->sw_transmit = 0.0;
 
 	/* extinction = 1. - transmission.  Extinguished part replaced by
-	 * color of the air
+	 * the "color of the air".
 	 */
 #if 0
 	VMOVE(swp->sw_color, air_sp->color);
 	VMOVE(swp->sw_basecolor, air_sp->color);
 #endif
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("fog o dist:%gmm tau:%g transmit:%g color(%g %g %g)\n",
+		rt_log("air o dist:%gmm tau:%g transmit:%g color(%g %g %g)\n",
 			dist, tau, swp->sw_transmit, V3ARGS(swp->sw_color) );
 
 	return(1);
@@ -238,13 +251,13 @@ char	*dp;
  * Zo = elevation at ray start
  * Ze = elevation at ray end
  * Zd = Z component of normalized ray vector 
- * d_p_mm = overall fog density
+ * d_p_m = overall fog density
  * B = density falloff with altitude
  *
  *
  *	delta = height at which fog starts
  *	scale = stretches exponential decay zone
- *	d_p_mm = maximum density @ ground
+ *	d_p_m = maximum density @ ground
  *
  *	This is called (from viewshade() in shade.c)
  *	once for each hit point to be shaded.
@@ -285,9 +298,9 @@ char	*dp;
 	Zd = ap->a_ray.r_dir[Z];
 
 	if ( NEAR_ZERO( Zd, SQRT_SMALL_FASTF ) )
-		tau = air_sp->d_p_mm * te * exp( -Zo);
+		tau = (air_sp->d_p_m*0.001) * te * exp( -Zo);
 	else
-		tau = ((air_sp->d_p_mm * te) /  Zd) * ( exp(-Zo) - exp(-Ze) );
+		tau = (( (air_sp->d_p_m*0.001) * te) /  Zd) * ( exp(-Zo) - exp(-Ze) );
 
 /*	XXX future
 	tau *= noise_fbm(pt);
@@ -313,13 +326,13 @@ char	*dp;
  * Zo = elevation at ray start
  * Ze = elevation at ray end
  * Zd = Z component of normalized ray vector 
- * d_p_mm = overall fog density
+ * d_p_m = overall fog density
  * B = density falloff with altitude
  *
  *
  *	delta = height at which fog starts
  *	scale = stretches exponential decay zone
- *	d_p_mm = maximum density @ ground
+ *	d_p_m = maximum density @ ground
  *
  *	This is called (from viewshade() in shade.c)
  *	once for each hit point to be shaded.
