@@ -20,8 +20,8 @@ LEX = lex
 LEXOPTS=
 # LEXOPTS= -l
 
-BINDIR=/vld/butler/brlcad/.m4i64/bin/bin
-MANDIR=/vld/butler/brlcad/.m4i64/bin/man/man1
+BINDIR=/usr/brlcad/bin/bin
+MANDIR=/usr/brlcad/bin/man/man1
 
 #LDFLAGS=-k 64k
 
