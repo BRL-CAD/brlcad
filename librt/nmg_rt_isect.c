@@ -2706,6 +2706,8 @@ out:
 	/* free the hitmiss table */
 	rt_free( (char *)rd.hitmiss, "free nmg geom hit list");
 
+	/* free the manifold table */
+	rt_free( (char *)rd.manifolds, "free manifolds table" );
 
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 		rt_log("nmg_class_ray_vs_shell() returns %s(%d)\n",
