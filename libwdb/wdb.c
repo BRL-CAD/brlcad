@@ -90,7 +90,7 @@ CONST point_t	max;
 	VSET( pt8[6], max[X], max[Y], max[Z] );
 	VSET( pt8[7], min[X], max[Y], max[Z] );
 
-	return( mk_arb8( fp, name, (CONST point_t *)pt8 ) );
+	return( mk_arb8( fp, name, &pt8[0][X] ) );
 }
 
 
@@ -150,7 +150,7 @@ fastf_t		x_top_len;
 	VADD2(pts[6], pts[5], yvec);	/* seventh vertex */
 	VADD2(pts[7], pts[4], yvec);	/* eighth vertex */
 
-	return( mk_arb8(fp, name, (CONST point_t *)pts) );
+	return( mk_arb8(fp, name, &pts[0][X]) );
 }
 
 
@@ -161,21 +161,21 @@ int
 mk_arb4( fp, name, pts )
 FILE		*fp;
 char		*name;
-CONST point_t	pts[4];
+CONST fastf_t	*pts;	/* [4*3] */
 {
 	point_t	pt8[8];
 
-	VMOVE( pt8[0], pts[0] );
-	VMOVE( pt8[1], pts[1] );
-	VMOVE( pt8[2], pts[2] );
-	VMOVE( pt8[3], pts[2] );	/* shared point for base */
+	VMOVE( pt8[0], &pts[0*3] );
+	VMOVE( pt8[1], &pts[1*3] );
+	VMOVE( pt8[2], &pts[2*3] );
+	VMOVE( pt8[3], &pts[2*3] );	/* shared point for base */
 
-	VMOVE( pt8[4], pts[3] );	/* top point */
-	VMOVE( pt8[5], pts[3] );
-	VMOVE( pt8[6], pts[3] );
-	VMOVE( pt8[7], pts[3] );
+	VMOVE( pt8[4], &pts[3*3] );	/* top point */
+	VMOVE( pt8[5], &pts[3*3] );
+	VMOVE( pt8[6], &pts[3*3] );
+	VMOVE( pt8[7], &pts[3*3] );
 
-	return( mk_arb8( fp, name, (CONST point_t *)pt8 ) );
+	return( mk_arb8( fp, name, &pt8[0][X] ) );
 }
 
 /*
@@ -192,7 +192,7 @@ int
 mk_arb8( fp, name, pts )
 FILE		*fp;
 char		*name;
-CONST point_t	pts[8];
+CONST fastf_t	*pts;		/* [24] */
 {
 	register int i;
 	struct rt_arb_internal	arb;
@@ -200,7 +200,7 @@ CONST point_t	pts[8];
 	arb.magic = RT_ARB_INTERNAL_MAGIC;
 #	include "noalias.h"
 	for( i=0; i < 8; i++ )  {
-		VMOVE( arb.pt[i], pts[i] );
+		VMOVE( arb.pt[i], &pts[i*3] );
 	}
 
 	return mk_export_fwrite( fp, name, (genptr_t)&arb, ID_ARB8 );
