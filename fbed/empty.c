@@ -14,46 +14,15 @@
 static
 char sccsTag[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, archive /vld/moss/src/fbed/s.empty.c";
 #endif
-#if defined( BSD ) || defined( CRAY ) || defined( sun )
-#	include <sys/types.h>
-#	include <sys/time.h>
-#endif
 
-#if defined(sgi)
-#	include <bsd/sys/types.h>
-#	if !defined(mips) || defined(SGI4D_Rel2)
-		/* 3D systems, and Rel2 4D systems. */
-#		include <bsd/sys/time.h>
-#	else
-		/* Rel3 4D systems got it right */
-#		include <sys/time.h>
-#	endif
-#	include "fb.h"
-#endif
+#include "conf.h"
 
-#ifdef VLDSYSV
-/* BRL SysV under 4.2 */
-#define select	_select
-struct timeval
-	{
-	long	tv_sec;		/* seconds */
-	long	tv_usec;	/* and microseconds */
-	};
-#else
-#endif
+#include <stdio.h>
+#include <sys/time.h>
 
-#ifndef FD_ZERO
-/* 4.2 does not define these */
-#ifdef CRAY
-#define	FD_SET(n, p)	(*p |= (n) == 0 ? 1 : (1 << (n)))
-#define FD_ZERO(p)	*p = 0
-typedef	long	fd_set;
-#else
-#define	FD_SET(n, p)	((p)->fds_bits[0] |= (n) == 0 ? 1 : (1 << (n)))
-#define FD_ZERO(p)	(p)->fds_bits[0] = 0
-/** typedef	struct fd_set { fd_mask	fds_bits[1]; } fd_set; **/
-#endif
-#endif /* FD_ZERO */
+#include "machine.h"
+#include "externs.h"
+#include "fb.h"
 
 /*	e m p t y ( )
 	Examine file descriptor for input with no time delay.

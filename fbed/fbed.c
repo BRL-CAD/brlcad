@@ -9,12 +9,21 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
 #include <fcntl.h>
+
 #include "machine.h"
 #include "externs.h"
+#include "fb.h"
+
+#include "./std.h"
+#include "./ascii.h"
+#include "./font.h"
+#include "./try.h"
 #include "./extern.h"
 
 #if !defined(NSIG)
@@ -791,7 +800,7 @@ f_Stop( buf ) /* Stop program. */
 char *buf;
 	{	int pid = getpid();
 		int sig;
-#ifdef BSD
+#ifdef SIGSTOP
 	sig = SIGSTOP;
 #else
 	sig = 17;
@@ -2082,25 +2091,18 @@ int sig;
 	case SIGCLD :
 		break;
 #endif
-#if defined(SIGCHLD)
+#if defined(SIGCHLD) && (SIGCLD != SIGCHLD)
 	case SIGCHLD :
 		break;
 #endif
 
-#ifdef BSD
+#if defined(SIGSTOP) && defined(SIGTSTP) && defined(SIGCONT)
 	case SIGSTOP :
 	case SIGTSTP :
 		(void) f_Stop( (char *) NULL );
 		break;
 	case SIGCONT :
 		break;
-#else
-#	ifdef VLDSYSV
-	case 18 :
-	case SIGUSR2 :
-		(void) f_Stop( (char *) NULL );
-		break;
-#	endif
 #endif
 	default :
 		prnt_Event( "\"%s\", signal(%d).", __FILE__, sig );
