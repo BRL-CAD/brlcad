@@ -38,7 +38,7 @@ char	**argv;
     int			*thresh_val;	/* The threshold value */
     int			nm_threshs;	/* How many thresholds? */
     int			i;
-    unsigned char	*bin_color;	/* The resultant pixel values */
+    unsigned char	*bin_color = (unsigned char *)0;/* resultant pixel values */
 
     char		*malloc();
 

@@ -32,7 +32,8 @@ int argc;
 char **argv;
 {
 	char colors[8][3],s[1024];
-	int numcolors,c,i,x,y,x1,x2,y1,y2,r,g,b;
+	int	numcolors = 0;
+	int	c,i,x,y,x1,x2,y1,y2,r,g,b;
 
 	if (argc != 1) {
 		printf("Usage: %s < infile > outfile\n",argv[0]);
