@@ -105,7 +105,7 @@ calc_adc_a1()
     dx = view_pt[X] * GED_MAX - dv_xadc;
     dy = view_pt[Y] * GED_MAX - dv_yadc;
 
-    if(dx != 0 || dy != 0)
+    if(dx != 0.0 || dy != 0.0)
       adc_a1 = RAD2DEG*atan2(dy, dx);
   }
 }
@@ -122,7 +122,7 @@ calc_adc_a2()
     dx = view_pt[X] * GED_MAX - dv_xadc;
     dy = view_pt[Y] * GED_MAX - dv_yadc;
 
-    if(dx != 0 || dy != 0)
+    if(dx != 0.0 || dy != 0.0)
       adc_a2 = RAD2DEG*atan2(dy, dx);
   }
 }
@@ -141,7 +141,7 @@ calc_adc_dst()
     dy = view_pt[Y] * GED_MAX - dv_yadc;
     dist = sqrt(dx * dx + dy * dy);
     adc_dst = dist * INV_GED;
-    dv_distadc = (dist / M_SQRT2_DIV2) - 2047;
+    dv_distadc = (dist / M_SQRT2_DIV2) - 2047.0;
   }else
     adc_dst = (dv_distadc * INV_GED + 1.0) * M_SQRT2_DIV2;
 }
@@ -235,24 +235,14 @@ adcursor()
   calc_adc_a2();
   calc_adc_dst();
 
-#if 0
-  idxy[0] = dv_xadc;
-  idxy[1] = dv_yadc;
-
-  idxy[0] = (idxy[0] < GED_MIN ? GED_MIN : idxy[0]);
-  idxy[0] = (idxy[0] > GED_MAX ? GED_MAX : idxy[0]);
-  idxy[1] = (idxy[1] < GED_MIN ? GED_MIN : idxy[1]);
-  idxy[1] = (idxy[1] > GED_MAX ? GED_MAX : idxy[1]);
-#endif
-
   DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
   DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
   DM_DRAW_LINE_2D(dmp,
-		  GED2PM1(GED_MIN), GED2PM1(dv_yadc) * dmp->dm_aspect,
-		  GED2PM1(GED_MAX), GED2PM1(dv_yadc) * dmp->dm_aspect); /* Horizontal */
+		  GED2PM1(GED_MIN), GED2PM1(dv_yadc),
+		  GED2PM1(GED_MAX), GED2PM1(dv_yadc)); /* Horizontal */
   DM_DRAW_LINE_2D(dmp,
-		  GED2PM1(dv_xadc), GED2PM1(GED_MAX) * dmp->dm_aspect,
-		  GED2PM1(dv_xadc), GED2PM1(GED_MIN) * dmp->dm_aspect);  /* Vertical */
+		  GED2PM1(dv_xadc), GED2PM1(GED_MAX),
+		  GED2PM1(dv_xadc), GED2PM1(GED_MIN));  /* Vertical */
 
   angle1 = adc_a1 * DEG2RAD;
   angle2 = adc_a2 * DEG2RAD;
@@ -264,13 +254,11 @@ adcursor()
   Y1 = dv_yadc + d2;
   x2 = dv_xadc - d1;
   y2 = dv_yadc - d2;
-  (void)clip ( &x1, &Y1, &x2, &y2 );
 
   x3 = dv_xadc + d2;
   y3 = dv_yadc - d1;
   x4 = dv_xadc - d2;
   y4 = dv_yadc + d1;
-  (void)clip ( &x3, &y3, &x4, &y4 );
 
   DM_DRAW_LINE_2D(dmp,
 		  GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
@@ -285,13 +273,11 @@ adcursor()
   Y1 = dv_yadc + d2;
   x2 = dv_xadc - d1;
   y2 = dv_yadc - d2;
-  (void)clip(&x1, &Y1, &x2, &y2);
 
   x3 = dv_xadc + d2;
   y3 = dv_yadc - d1;
   x4 = dv_xadc - d2;
   y4 = dv_yadc + d1;
-  (void)clip(&x3, &y3, &x4, &y4);
 
   DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 1);
   DM_DRAW_LINE_2D(dmp,
