@@ -53,6 +53,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./solid.h"
 #include "./dm.h"
+#include "nmg.h"
 
 #include "../librt/debug.h"	/* XXX */
 
@@ -288,10 +289,16 @@ f_delobj()
 }
 
 void
-f_debug()
+f_debug( argc, argv )
+int	argc;
+char	**argv;
 {
+	int	lvl = 0;
+
+	if( argc > 1 )  lvl = atoi(argv[1]);
+
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
-	pr_schain( &HeadSolid );
+	pr_schain( &HeadSolid, lvl );
 }
 
 void
@@ -645,20 +652,24 @@ register struct directory *dp;
  *  about each solid structure.
  */
 void
-pr_schain( startp )
+pr_schain( startp, lvl )
 struct solid *startp;
+int		lvl;			/* debug level */
 {
-	register struct solid *sp;
-	register int i;
+	register struct solid	*sp;
+	register int		i;
+	register struct vlist	*vp;
 
-	sp = startp->s_forw;
-	while( sp != startp )  {
+	for( sp = startp->s_forw; sp != startp; sp = sp->s_forw )  {
 		(void)printf( sp->s_flag == UP ? "VIEW ":"-no- " );
 		for( i=0; i <= sp->s_last; i++ )
 			(void)printf("/%s", sp->s_path[i]->d_namep);
 		if( sp->s_iflag == UP )
 			(void)printf(" ILLUM");
 		(void)printf("\n");
+
+		if( lvl <= 0 )  continue;
+
 		/* convert to the local unit for printing */
 		(void)printf("  (%.3f,%.3f,%.3f) sz=%g ",
 			sp->s_center[X]*base2local,
@@ -674,7 +685,16 @@ struct solid *startp;
 			sp->s_color[1],
 			sp->s_color[2],
 			sp->s_dmindex );
-		sp = sp->s_forw;
+
+		if( lvl <= 1 )  continue;
+
+		/* Print the actual vector list */
+		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+			printf("%d (%g, %g, %g)\n", vp->vl_draw,
+				vp->vl_pnt[X],
+				vp->vl_pnt[Y],
+				vp->vl_pnt[Z] );
+		}
 	}
 }
 
@@ -779,4 +799,141 @@ f_knob()
 		(void)printf("x,y,z for rotation, S for scale, X,Y,Z for slew\n");
 		return;
 	}
+}
+
+
+f_nmgtest( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct solid	*sp;
+	struct model		*m;
+	struct nmgregion	*r1;
+	struct nmgregion	*r2;
+	struct vlhead		vhead;
+	struct directory	*dp;
+	mat_t		mat;
+	union record	*recp;
+	int		i;
+	point_t		minvalue, maxvalue;
+	struct vlist	*vp;
+
+	vhead.vh_first = vhead.vh_last = VL_NULL;
+
+	mat_idn( mat );
+
+	m = nmg_mm();		/* Make "model" */
+
+	if( (dp = db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
+		goto out;
+	recp = db_getmrec( dbip, dp );
+	GET_SOLID( sp );
+
+	/* Tessellate Solid to NMG */
+	printf(" tess %s\n", dp->d_namep );
+	if( rt_functab[rt_id_solid(recp)].ft_tessellate(
+	    &r1, m, recp, mat, dp ) < 0 )  {
+		rt_log("%s tessellation failure\n", dp->d_namep);
+	    	return;
+	}
+	NMG_CK_REGION( r1 );
+	rt_free( (char *)recp, "record");
+
+	for( i = 2; i < argc; i += 2 )  {
+		int	op;
+
+		if( (dp = db_lookup( dbip, argv[i+1], LOOKUP_NOISY )) == DIR_NULL )
+			continue;
+		recp = db_getmrec( dbip, dp );
+
+		/* Tessellate Solid to NMG */
+		printf("  %s %s\n", argv[i], dp->d_namep );
+		if( rt_functab[rt_id_solid(recp)].ft_tessellate(
+		    &r2, m, recp, mat, dp ) < 0 )  {
+			rt_log("%s tessellation failure\n", dp->d_namep);
+			rt_free( (char *)recp, "record");
+			continue;
+		}
+		NMG_CK_REGION( r2 );
+		rt_free( (char *)recp, "record");
+
+		/* Bool */
+		switch( argv[i][0] )  {
+		case UNION:
+			op = NMG_BOOL_ADD;
+			break;
+		case SUBTRACT:
+			op = NMG_BOOL_SUB;
+			break;
+		case INTERSECT:
+			op = NMG_BOOL_ISECT;
+			break;
+		default:
+			printf("Operation '%c' unknown, using subtraction\n",
+				argv[i][0] );
+			op = NMG_BOOL_SUB;
+		}
+		/* input r1 and r2 are destroyed, output is new r1 */
+		r1 = nmg_do_bool( r1, r2, op );
+		NMG_CK_REGION( r1 );
+	}
+
+out:
+	/* Convert NMG to vlist */
+	/* 0 = vectors, 1 = w/polygon markers */
+	nmg_s_to_vlist( &vhead, m->r_p->s_p, 1 );
+
+	/* Destroy NMG */
+	nmg_km( m );
+
+	VSET( sp->s_basecolor, 255, 0, 0 );
+
+	/*
+	 * Compute the min, max, and center points.
+	 */
+	VSETALL( maxvalue, -INFINITY );
+	VSETALL( minvalue,  INFINITY );
+	sp->s_vlist = vhead.vh_first;
+	sp->s_vlen = 0;
+	for( vp = vhead.vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
+		VMINMAX( minvalue, maxvalue, vp->vl_pnt );
+		sp->s_vlen++;
+	}
+
+	VADD2SCALE( sp->s_center, minvalue, maxvalue, 0.5 );
+
+	sp->s_size = maxvalue[X] - minvalue[X];
+	MAX( sp->s_size, maxvalue[Y] - minvalue[Y] );
+	MAX( sp->s_size, maxvalue[Z] - minvalue[Z] );
+
+	sp->s_iflag = DOWN;
+	sp->s_soldash = 0;
+
+	sp->s_last = 0;
+	sp->s_Eflag = 1;	/* This is processed region */
+
+	/* Copy path information */
+	sp->s_path[0] = dp;
+	sp->s_regionid = -42;
+	sp->s_addr = 0;
+	sp->s_bytes = 0;
+
+	/* Cvt to displaylist, determine displaylist memory requirement. */
+	if( !no_memory && (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
+		/* Allocate displaylist storage for object */
+		sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
+		if( sp->s_addr == 0 )  {
+			no_memory = 1;
+			(void)printf("draw: out of Displaylist\n");
+			sp->s_bytes = 0;	/* not drawn */
+		} else {
+			sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes );
+		}
+	}
+
+	/* Add to linked list of solid structs */
+	APPEND_SOLID( sp, HeadSolid.s_back );
+	dmp->dmr_viewchange( DM_CHGV_ADD, sp );
+
+	dmaflag = 1;
 }
