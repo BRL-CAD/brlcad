@@ -834,6 +834,9 @@ int	count;
 	if( qtest() )
 		sgw_inqueue(ifp);
 
+	if( x < 0 || x > ifp->if_width ||
+	    y < 0 || y > ifp->if_height )
+		return(-1);
 	ret = 0;
 	xpos = x;
 	ypos = y;
@@ -878,8 +881,15 @@ int	count;
 	int ret;
 	int hfwidth = (ifp->if_width/SGI(ifp)->si_xzoom)/2;
 	int hfheight = (ifp->if_height/SGI(ifp)->si_yzoom)/2;
+
+	if( qtest() )
+		sgw_inqueue(ifp);
+	if( xmem < 0 || xmem > ifp->if_width ||
+	    ymem < 0 || ymem > ifp->if_height)
+		return(-1);
 	if( SGI(ifp)->si_curs_on )
 		cursoff();		/* Cursor interferes with writing */
+
 	ret = 0;
 	xscr = (xmem - (SGI(ifp)->si_xcenter-hfwidth)) * SGI(ifp)->si_xzoom;
 	yscr = (ymem - (SGI(ifp)->si_ycenter-hfheight)) * SGI(ifp)->si_yzoom;
