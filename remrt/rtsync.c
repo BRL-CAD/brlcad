@@ -110,6 +110,7 @@ int			vrmgr_listen_fd;	/* for new connections */
 struct pkg_conn		*vrmgr_pc;		/* connection to VRMGR */
 struct ihost		*vrmgr_ihost;		/* host of vrmgr_pc */
 char			*pending_pov;		/* pending new POV */
+char			*last_pov;		/* last POV sent */
 int			print_on = 1;
 
 /*
@@ -334,6 +335,7 @@ char **argv;
  *
  *  Make all the nodes re-prep.
  */
+int
 reprep( clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
@@ -379,6 +381,30 @@ char **argv;
 		}
 	}
 	return TCL_OK;
+}
+
+/*
+ *			R E F R E S H
+ *
+ *  If there isn't a pending POV message, cause the last POV to be
+ *  re-ray-traced.
+ *  Used primarily when GUI is changing viewing parameters but POV
+ *  isn't changing.
+ */
+int
+refresh( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	if( pending_pov )  return TCL_OK;
+	if( last_pov )  {
+		pending_pov = bu_strdup( last_pov );
+		return TCL_OK;
+	}
+	Tcl_AppendResult(interp, "refresh:  no last_pov, ignored\n");
+	return TCL_ERROR;
 }
 
 /**********************************************************************/
@@ -665,6 +691,8 @@ char	*argv[];
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "reprep", reprep,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "refresh", refresh,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	/* Accept commands on stdin */
 	if( isatty(fileno(stdin)) )  {
@@ -780,6 +808,14 @@ ClientData clientData;
 	/* Record starting time for this frame */
 	(void)gettimeofday( &time_start, (struct timezone *)NULL );
 
+	/* Keep track of the POV used for this assignment.  For refresh. */
+	if( last_pov )  {
+		bu_free( last_pov, "last POV pkg" );
+		last_pov = NULL;
+	}
+	last_pov = pending_pov;
+	pending_pov = NULL;
+
 	/* Have some CPUS! Parcel up 'height' scanlines. */
 	start_line = 0;
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
@@ -804,7 +840,7 @@ ClientData clientData;
 		bu_vls_printf( &msg, "%d %d %d %s\n",
 			256,
 			start_line, end_line,
-			pending_pov+4 );
+			last_pov+4 );
 		if( pkg_send_vls( RTSYNCMSG_POV, &msg, rtnodes[i].pkg ) < 0 )  {
 			drop_rtnode( i );
 			bu_vls_free(&msg);
@@ -817,9 +853,6 @@ ClientData clientData;
 		start_line = end_line + 1;
 		rtnodes[i].busy = 1;
 	}
-
-	free( pending_pov );
-	pending_pov = NULL;
 }
 
 /*
