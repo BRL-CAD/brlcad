@@ -25,7 +25,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#ifdef SYSV
 #include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 
 /*  Need the following for rt_shootray.  */
