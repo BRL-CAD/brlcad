@@ -213,9 +213,10 @@ struct solid	*sp;
  */
 
 static int
-rpt_solids(ap, ph)
+rpt_solids(ap, ph, final_segs)
 struct application	*ap;
 struct partition	*ph;
+struct seg		*final_segs;
 {
     char			**result;
     struct db_full_path		*fp;
@@ -261,10 +262,21 @@ struct partition	*ph;
 	BU_CKMAG(ph, PT_HD_MAGIC, "partition head");
 	pp = ph -> pt_forw;
 	BU_CKMAG(pp, PT_MAGIC, "partition structure");
+	BU_CKMAG(final_segs, RT_SEG_MAGIC, "segment structure");
 	for (segh = pp -> pt_inseg;
 		*((long *) segh) != BU_LIST_HEAD_MAGIC;
 		segh = (struct seg *) (segh -> l.forw))
 	    BU_CKMAG(segh, RT_SEG_MAGIC, "segment structure");
+
+	/*
+	 *	Let's see what final_segs contains...
+	 */
+	RT_CHECK_SEG(final_segs -> seg_stp);
+	bu_vls_trunc(&sol_path_name, 0);
+	fp = &(final_segs -> seg_stp -> st_path);
+	bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
+	printf("At line %d, sol_path_name contains '%s'\n",
+		__LINE__, bu_vls_addr(&sol_path_name));
 
 	/*
 	 *	March down the segment list
