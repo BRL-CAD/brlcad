@@ -197,16 +197,10 @@ CONST char *name;
 		return DBI_NULL;
 	}
 #else
-	{
-		union record new;
-
-		/* Prepare the v4 IDENT record */
-		bzero( (char *)&new, sizeof(new) );
-		new.i.i_id = ID_IDENT;
-		new.i.i_units = ID_MM_UNIT;
-		strncpy( new.i.i_version, ID_VERSION, sizeof(new.i.i_version) );
-		strcpy( new.i.i_title, "Untitled MGED Database" );
-		(void)fwrite( (char *)&new, 1, sizeof(new), fp );
+	/* Create a v4 database */
+	if( db_fwrite_ident( fp, "Untitled v4 BRL-CAD Database", 1.0 ) < 0 )  {
+		(void)fclose(fp);
+		return DBI_NULL;
 	}
 #endif
 
