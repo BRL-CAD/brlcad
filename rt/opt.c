@@ -153,7 +153,7 @@ register char **argv;
 				f = 0;
 				if( (cp = strchr(optarg, '/')) ||
 				    (cp = strchr(optarg, ',')) )  {
-					if( sscanf( optarg, "%lf", &f ) == 1 )  {
+					if( sscanf( cp+1, "%lf", &f ) == 1 )  {
 						if( f > 0 && f < 1 )
 							rt_perp_tol = f;
 					}
