@@ -99,7 +99,7 @@ char	*argv[];
 		 * compute the m and the b of the line as specified by the
 		 * equation y = mx + b.
 		 */
-		fprintf(stderr, "min=%lf, max=%lf\n", min, max);
+		fprintf(stderr, "min=%f, max=%f\n", min, max);
 		if (max < min)  {
 			printf("MINMAX: max less than min!\n");
 			exit(1);
