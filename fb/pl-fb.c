@@ -322,12 +322,12 @@ char **argv;
 	if ( filename == NULL || filename[0] == 0 )  {
 		if( isatty(fileno(stdin)) )  {
 			fprintf(stderr,usage);
-			return Foo(-3);
+			exit(Foo(-3));
 		}
 		filename = "-";
 		pfin = stdin;
 	} else if( (pfin = fopen( filename, "r" )) == NULL )
-		return Foo( -2 );
+		exit(Foo(-2));
 
 	/*
 	 * Handle image-size specific initializations
@@ -365,6 +365,7 @@ char **argv;
 	SetSigs();			/* set signal catchers */
 
 	(void)DoFile( );	/* plot it */
+	exit(0);
 }
 
 
