@@ -830,18 +830,21 @@ struct db_tree_state {
 	int		(*ts_region_start_func) BU_ARGS((
 				struct db_tree_state * /*tsp*/,
 				struct db_full_path * /*pathp*/,
-				CONST struct rt_comb_internal * /* combp */
+				CONST struct rt_comb_internal * /* combp */,
+				genptr_t client_data
 			));
 	union tree *	(*ts_region_end_func) BU_ARGS((
 				struct db_tree_state * /*tsp*/,
 				struct db_full_path * /*pathp*/,
-				union tree * /*curtree*/
+				union tree * /*curtree*/,
+				genptr_t client_data
 			));
 	union tree *	(*ts_leaf_func) BU_ARGS((
 				struct db_tree_state * /*tsp*/,
 				struct db_full_path * /*pathp*/,
 				struct bu_external * /*ep*/,
-				int /*id*/
+				int /*id*/,
+				genptr_t client_data
 			));
 	CONST struct rt_tess_tol *ts_ttol;	/* Tessellation tolerance */
 	CONST struct bn_tol	*ts_tol;	/* Math tolerance */
@@ -2149,7 +2152,7 @@ BU_EXTERN(int db_follow_path_for_state, (struct db_tree_state *tsp,
 	struct db_full_path *pathp, CONST char *orig_str, int noisy));
 BU_EXTERN(union tree *db_recurse, (struct db_tree_state	*tsp,
 	struct db_full_path *pathp,
-	struct combined_tree_state **region_start_statepp));
+	struct combined_tree_state **region_start_statepp, genptr_t client_data));
 BU_EXTERN(union tree *db_dup_subtree, (CONST union tree	*tp));
 BU_EXTERN(void db_free_tree, (union tree *tp));
 BU_EXTERN(void db_non_union_push, (union tree *tp));
@@ -2159,7 +2162,7 @@ BU_EXTERN(int db_tally_subtree_regions, (union tree *tp,
 BU_EXTERN(int db_walk_tree, (struct db_i *dbip, int argc, CONST char **argv,
 	int ncpu, CONST struct db_tree_state *init_state,
 	int (*reg_start_func)(), union tree * (*reg_end_func)(),
-	union tree * (*leaf_func)() ));
+	union tree * (*leaf_func)(), genptr_t client_data ));
 BU_EXTERN(int db_path_to_mat, (struct db_i *dbip, struct db_full_path *pathp,
 	mat_t mat, int depth));
 BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
@@ -2643,10 +2646,10 @@ BU_EXTERN(int			nmg_two_region_vertex_fuse, (struct nmgregion *r1,
 				struct nmgregion *r2, CONST struct bn_tol *tol));
 BU_EXTERN(union tree		*nmg_booltree_leaf_tess, (struct db_tree_state *tsp,
 				struct db_full_path *pathp,
-				struct bu_external *ep, int id));
+				struct bu_external *ep, int id, genptr_t client_data));
 BU_EXTERN(union tree		*nmg_booltree_leaf_tnurb, (struct db_tree_state *tsp,
 				struct db_full_path *pathp,
-				struct bu_external *ep, int id));
+				struct bu_external *ep, int id, genptr_t client_data));
 BU_EXTERN(union tree		*nmg_booltree_evaluate, (union tree *tp,
 				CONST struct bn_tol *tol));
 BU_EXTERN(void			nmg_region_v_unique, (struct nmgregion *r1,

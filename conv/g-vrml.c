@@ -88,7 +88,7 @@ struct bu_structparse vrml_mat_parse[]={
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
-RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
+RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
 static char	usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
@@ -116,10 +116,11 @@ static int	regions_converted = 0;
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
 static int
-select_lights( tsp, pathp, curtree )
+select_lights( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
 union tree			*curtree;
+genptr_t			client_data;
 {
 	struct directory *dp;
 	struct rt_db_internal intern;
@@ -162,10 +163,11 @@ union tree			*curtree;
 }
 
 static int
-select_non_lights( tsp, pathp, curtree )
+select_non_lights( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
 union tree			*curtree;
+genptr_t			client_data;
 {
 	return( !select_lights( tsp, pathp, curtree ) );
 }
@@ -325,7 +327,8 @@ char	*argv[];
 			&tree_state,
 			select_lights,
 			do_region_end,
-			nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+			nmg_booltree_leaf_tess,
+			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 
 	}
@@ -343,7 +346,8 @@ char	*argv[];
 		&tree_state,
 		select_non_lights,
 		do_region_end,
-		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+		nmg_booltree_leaf_tess,
+		(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 	/* Release dynamic storage */
 	nmg_km(the_model);
@@ -768,10 +772,11 @@ struct mater_info *mater;
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(tsp, pathp, curtree)
+union tree *do_region_end(tsp, pathp, curtree, client_data)
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	extern FILE		*fp_fig;
 	struct nmgregion	*r;

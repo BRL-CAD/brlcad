@@ -37,7 +37,7 @@ static char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "../librt/debug.h"
 
-RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
+RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
 static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
@@ -139,10 +139,11 @@ int id;
 }
 
 static int
-select_region( tsp, pathp, curtree )
+select_region( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	if(verbose )
 		bu_log( "select_region: curr_id = %d, tsp->ts_regionid = %d\n" , curr_id , tsp->ts_regionid);
@@ -166,10 +167,11 @@ union tree		*curtree;
 }
 
 static union tree *
-region_stub( tsp, pathp, curtree )
+region_stub( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	bu_log( "region stub called, this shouldn't happen\n" );
 	rt_bomb( "region_stub\n" );
@@ -178,11 +180,12 @@ union tree		*curtree;
 }
 
 static union tree *
-leaf_stub( tsp, pathp, ep, id )
+leaf_stub( tsp, pathp, ep, id, client_data )
 struct db_tree_state    *tsp;
 struct db_full_path     *pathp;
 struct bu_external      *ep;
 int                     id;
+genptr_t		client_data;
 {
 	bu_log( "leaf stub called, this shouldn't happen\n" );
 	rt_bomb( "leaf_stub\n" );
@@ -615,7 +618,8 @@ char	*argv[];
 		&tree_state,
 		get_reg_id,			/* put id in table */
 		region_stub,
-		leaf_stub );
+		leaf_stub,
+		(genptr_t)NULL);
 
 	/* Process regions in ident order */
 	curr_id = 0;
@@ -648,7 +652,8 @@ char	*argv[];
 			&tree_state,
 			select_region,
 			do_region_end,
-			nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+			nmg_booltree_leaf_tess,
+			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 		nmg_km( the_model );
 
@@ -686,10 +691,11 @@ char	*argv[];
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(tsp, pathp, curtree)
+union tree *do_region_end(tsp, pathp, curtree, client_data)
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	extern FILE		*fp_fig;
 	struct nmgregion	*r;

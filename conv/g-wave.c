@@ -44,7 +44,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../librt/debug.h"
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
-RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
+RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
@@ -242,7 +242,8 @@ char	*argv[];
 		&tree_state,
 		0,			/* take all regions */
 		do_region_end,
-		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+		nmg_booltree_leaf_tess,
+		(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 	percent = 0;
 	if(regions_tried>0){
@@ -539,10 +540,11 @@ int material_id;
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(tsp, pathp, curtree)
+union tree *do_region_end(tsp, pathp, curtree, client_data)
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	extern FILE		*fp_fig;
 	union tree		*ret_tree;

@@ -38,7 +38,7 @@ static char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "../librt/debug.h"
 
-RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
+RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
 static char	usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] brlcad_db.g object(s)\n";
@@ -532,7 +532,8 @@ char	*argv[];
 		&tree_state,
 		0,
 		do_region_end,
-		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+		nmg_booltree_leaf_tess,
+		(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 	nmg_km( the_model );
 
@@ -569,10 +570,11 @@ char	*argv[];
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(tsp, pathp, curtree)
+union tree *do_region_end(tsp, pathp, curtree, client_data)
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	FILE			*fp_out;
 	struct nmgregion	*r;

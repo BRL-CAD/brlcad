@@ -44,7 +44,7 @@ static char RCSid[] = "$Header$";
 #include "wdb.h"
 #include "../librt/debug.h"
 
-RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
+RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
 static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
@@ -79,10 +79,11 @@ static int	regions_converted = 0;
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(tsp, pathp, curtree)
+union tree *do_region_end(tsp, pathp, curtree, client_data)
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	extern FILE		*fp_fig;
 	struct nmgregion	*r;
@@ -317,7 +318,8 @@ genptr_t	ptr;
 			&tree_state,
 			0,
 			do_region_end,
-			nmg_booltree_leaf_tess);
+			nmg_booltree_leaf_tess,
+			(genptr_t)NULL);
 
 		/* Release dynamic storage */
 		nmg_km(the_model);

@@ -626,11 +626,12 @@ static int push_error;
  * linked list could be handled by bu_list macros but it is simple
  * enough to do hear with out them.
  */
-HIDDEN union tree *push_leaf( tsp, pathp, ep, id)
+HIDDEN union tree *push_leaf( tsp, pathp, ep, id, client_data)
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct bu_external	*ep;
 int			id;
+genptr_t		client_data;
 {
 	union tree	*curtree;
 	struct directory *dp;
@@ -699,10 +700,11 @@ int			id;
 /*
  * A null routine that does nothing.
  */
-HIDDEN union tree *push_region_end( tsp, pathp, curtree)
+HIDDEN union tree *push_region_end( tsp, pathp, curtree, client_data)
 register struct db_tree_state *tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	return curtree;
 }
@@ -842,7 +844,7 @@ char **argv;
 	    &push_initial_tree_state,
 	    0,				/* take all regions */
 	    push_region_end,
-	    push_leaf);
+	    push_leaf, (genptr_t)NULL );
 
 	/*
 	 * If there was any error, then just free up the solid

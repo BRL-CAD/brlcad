@@ -1152,11 +1152,12 @@ nmg_region_v_unique( rB, tol );
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tess(tsp, pathp, ep, id)
+nmg_booltree_leaf_tess(tsp, pathp, ep, id, client_data)
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct bu_external	*ep;
 int			id;
+genptr_t		client_data;
 {
 	struct rt_db_internal	intern;
 	struct model		*m;
@@ -1226,11 +1227,12 @@ int			id;
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tnurb(tsp, pathp, ep, id)
+nmg_booltree_leaf_tnurb(tsp, pathp, ep, id, client_data)
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct bu_external	*ep;
 int			id;
+genptr_t		client_data;
 {
 	struct rt_db_internal	intern;
 	struct nmgregion	*r1;

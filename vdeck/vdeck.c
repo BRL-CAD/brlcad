@@ -419,10 +419,11 @@ int		neg;
  *  This routine will be called by db_walk_tree() once all the
  *  solids in this region have been visited.
  */
-union tree *region_end( tsp, pathp, curtree )
+union tree *region_end( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	struct directory	*dp;
 	char			*fullname;
@@ -552,11 +553,12 @@ union tree		*curtree;
  *
  *  Re-use the librt "soltab" structures here, for our own purposes.
  */
-union tree *gettree_leaf( tsp, pathp, ep, id )
+union tree *gettree_leaf( tsp, pathp, ep, id, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct rt_external	*ep;
 int			id;
+genptr_t		client_data;
 {
 	register fastf_t	f;
 	register struct soltab	*stp;
@@ -1361,7 +1363,7 @@ register char *prefix;
 	/*  '1' indicates one CPU.  This code isn't ready for parallelism */
 	if( db_walk_tree( dbip, curr_ct, (CONST char **)curr_list,
 	    1, &rt_initial_tree_state,
-	    0, region_end, gettree_leaf ) < 0 )  {
+	    0, region_end, gettree_leaf, (genptr_t)NULL ) < 0 )  {
 		fprintf(stderr,"Unable to treewalk any trees!\n");
 	    	exit(11);
 	}

@@ -207,10 +207,11 @@ hack_for_lee()
  *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *mged_wireframe_region_end( tsp, pathp, curtree )
+HIDDEN union tree *mged_wireframe_region_end( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	return( curtree );
 }
@@ -220,11 +221,12 @@ union tree		*curtree;
  *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *mged_wireframe_leaf( tsp, pathp, ep, id )
+HIDDEN union tree *mged_wireframe_leaf( tsp, pathp, ep, id, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct bu_external	*ep;
 int			id;
+genptr_t		client_data;
 {
 	struct rt_db_internal	intern;
 	union tree	*curtree;
@@ -319,10 +321,11 @@ static struct bn_vlblock	*mged_draw_edge_uses_vbp;
  *  further processing of this region.
  *  A hack to view polygonal models (converted from FASTGEN) more rapidly.
  */
-mged_nmg_region_start( tsp, pathp, combp )
+mged_nmg_region_start( tsp, pathp, combp, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 CONST struct rt_comb_internal *combp;
+genptr_t client_data;
 {
 	union tree		*tp;
 	struct directory	*dp;
@@ -445,10 +448,11 @@ out:
  *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *mged_nmg_region_end( tsp, pathp, curtree )
+HIDDEN union tree *mged_nmg_region_end( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t client_data;
 {
 	struct nmgregion	*r;
 	struct bu_list		vhead;
@@ -730,7 +734,7 @@ int	kind;
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_wireframe_region_end,
-			mged_wireframe_leaf );
+			mged_wireframe_leaf, (genptr_t)NULL );
 		break;
 	case 2:		/* Big-E */
 #	    if 0
@@ -739,7 +743,7 @@ int	kind;
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_bigE_region_end,
-			mged_bigE_leaf );
+			mged_bigE_leaf, (genptr_t)NULL );
 		break;
 #	    else
 		Tcl_AppendResult(interp, "drawtrees:  can't do big-E here\n", (char *)NULL);
@@ -767,7 +771,8 @@ A production implementation will exist in the maintenance release.\n", (char *)N
 			mged_nmg_region_end,
 	  		mged_nmg_use_tnurbs ?
 	  			nmg_booltree_leaf_tnurb :
-				nmg_booltree_leaf_tess
+				nmg_booltree_leaf_tess,
+			(genptr_t)NULL
 			);
 
 	  	if (mged_draw_edge_uses) {
@@ -1364,10 +1369,11 @@ static union tree	*mged_facetize_tree;
  *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *mged_facetize_region_end( tsp, pathp, curtree )
+HIDDEN union tree *mged_facetize_region_end( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	struct bu_list		vhead;
 
@@ -1517,7 +1523,8 @@ char	**argv;
 		mged_facetize_region_end,
   		mged_nmg_use_tnurbs ?
   			nmg_booltree_leaf_tnurb :
-			nmg_booltree_leaf_tess
+			nmg_booltree_leaf_tess,
+		(genptr_t)NULL
 		);
 
 
@@ -1733,7 +1740,8 @@ char	**argv;
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_facetize_region_end,
-			nmg_booltree_leaf_tess );
+			nmg_booltree_leaf_tess,
+			(genptr_t)NULL );
 
 		if( i < 0 )  {
 		  Tcl_AppendResult(interp, "bev: error in db_walk_tree()\n", (char *)NULL);

@@ -793,11 +793,12 @@ fail:
  *			P A T H L I S T _ L E A F _ F U N C
  */
 static union tree *
-pathlist_leaf_func( tsp, pathp, ext, id )
+pathlist_leaf_func( tsp, pathp, ext, id, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct bu_external	*ext;
 int			id;
+genptr_t		client_data;
 {
 	char	*str;
 
@@ -843,7 +844,7 @@ char	        **argv;
 
   if( db_walk_tree( dbip, argc-1, (CONST char **)argv+1, 1,
 		    &mged_initial_tree_state,
-		    0, 0, pathlist_leaf_func ) < 0 )  {
+		    0, 0, pathlist_leaf_func, (genptr_t)NULL ) < 0 )  {
     Tcl_AppendResult(interp, "db_walk_tree() error", (char *)NULL);
     return TCL_ERROR;
   }

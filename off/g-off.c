@@ -31,7 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "../librt/debug.h"
 
-RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
+RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 
 static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
@@ -187,7 +187,8 @@ char	*argv[];
 		&jack_tree_state,
 		0,			/* take all regions */
 		do_region_end,
-		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+		nmg_booltree_leaf_tess,
+		(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 	fprintf(fp_fig, "\troot=%s_seg.base;\n", rt_vls_addr(&base_seg));
 	fprintf(fp_fig, "}\n");
@@ -210,10 +211,11 @@ char	*argv[];
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(tsp, pathp, curtree)
+union tree *do_region_end(tsp, pathp, curtree, client_data)
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	extern FILE		*fp_fig;
 	union tree		*ret_tree;

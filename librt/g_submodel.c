@@ -579,11 +579,12 @@ struct goodies {
  *  This routine must be prepared to run in parallel.
  *  This routine should be generally exported for other uses.
  */
-HIDDEN union tree *rt_submodel_wireframe_leaf( tsp, pathp, ep, id )
+HIDDEN union tree *rt_submodel_wireframe_leaf( tsp, pathp, ep, id, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct bu_external	*ep;
 int			id;
+genptr_t		client_data;
 {
 	struct rt_db_internal	intern;
 	union tree	*curtree;
@@ -705,7 +706,8 @@ CONST struct bn_tol	*tol;
 		&state,
 		0,			/* take all regions */
 		NULL,			/* rt_submodel_wireframe_region_end */
-		rt_submodel_wireframe_leaf );
+		rt_submodel_wireframe_leaf,
+		(genptr_t)NULL );
 
 	if( ret < 0 )  bu_log("rt_submodel_plot() db_walk_tree(%s) failure\n", sip->treetop);
 	if( sip->file[0] != '\0' )

@@ -1407,10 +1407,11 @@ dgo_nmg_debug_display_hack()
 }
 
 static union tree *
-dgo_wireframe_region_end(tsp, pathp, curtree)
+dgo_wireframe_region_end(tsp, pathp, curtree, client_data)
      register struct db_tree_state	*tsp;
      struct db_full_path	*pathp;
      union tree		*curtree;
+     genptr_t			client_data;
 {
 	return (curtree);
 }
@@ -1421,11 +1422,12 @@ dgo_wireframe_region_end(tsp, pathp, curtree)
  *  This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_wireframe_leaf(tsp, pathp, ep, id)
+dgo_wireframe_leaf(tsp, pathp, ep, id, client_data)
      struct db_tree_state	*tsp;
      struct db_full_path	*pathp;
-     struct bu_external	*ep;
+     struct bu_external		*ep;
      int			id;
+     genptr_t			client_data;
 {
 	struct rt_db_internal	intern;
 	union tree	*curtree;
@@ -1516,10 +1518,11 @@ dgo_wireframe_leaf(tsp, pathp, ep, id)
  *  A hack to view polygonal models (converted from FASTGEN) more rapidly.
  */
 int
-dgo_nmg_region_start(tsp, pathp, combp)
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-CONST struct rt_comb_internal *combp;
+dgo_nmg_region_start(tsp, pathp, combp, client_data)
+     struct db_tree_state	*tsp;
+     struct db_full_path	*pathp;
+     CONST struct rt_comb_internal *combp;
+     genptr_t			client_data;
 {
 	union tree		*tp;
 	struct directory	*dp;
@@ -1644,10 +1647,11 @@ out:
  *  This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_nmg_region_end( tsp, pathp, curtree )
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
+dgo_nmg_region_end( tsp, pathp, curtree, client_data )
+     register struct db_tree_state	*tsp;
+     struct db_full_path	*pathp;
+     union tree		*curtree;
+     genptr_t			client_data;
 {
 	struct nmgregion	*r;
 	struct bu_list		vhead;
@@ -1903,7 +1907,7 @@ dgo_drawtrees(argc, argv, kind)
 			&curr_dgop->dgo_initial_tree_state,
 			0,			/* take all regions */
 			dgo_wireframe_region_end,
-			dgo_wireframe_leaf);
+			dgo_wireframe_leaf, (genptr_t)NULL);
 		break;
 	case 2:		/* Big-E */
 		Tcl_AppendResult(curr_interp, "drawtrees:  can't do big-E here\n", (char *)NULL);
@@ -1919,14 +1923,12 @@ dgo_drawtrees(argc, argv, kind)
 	  	}
 
 		ret = db_walk_tree(curr_dbip, argc, (CONST char **)argv,
-			ncpu,
-			&curr_dgop->dgo_initial_tree_state,
-			dgo_enable_fastpath ? dgo_nmg_region_start : 0,
-			dgo_nmg_region_end,
-	  		dgo_nmg_use_tnurbs ?
-	  			nmg_booltree_leaf_tnurb :
-				nmg_booltree_leaf_tess
-			);
+				   ncpu,
+				   &curr_dgop->dgo_initial_tree_state,
+				   dgo_enable_fastpath ? dgo_nmg_region_start : 0,
+				   dgo_nmg_region_end,
+				   dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+				   (genptr_t)NULL);
 
 	  	if (dgo_draw_edge_uses) {
 	  		dgo_cvt_vlblock_to_solids(curr_dbip, curr_interp,

@@ -43,7 +43,7 @@ static char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "../librt/debug.h"
 
-RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
+RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s, int *dir, long *flags ));
 
 static char	usage[] = "Usage:\n\
@@ -114,10 +114,11 @@ int id;
 
 /* routine used in tree walker to select regions with the current ident number */
 static int
-select_region( tsp, pathp, curtree )
+select_region( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	if( tsp->ts_regionid == curr_id )
 		return( 0 );
@@ -127,10 +128,11 @@ union tree		*curtree;
 
 /* routine used in tree walker to collect region ident numbers */
 static int
-get_reg_id( tsp, pathp, curtree )
+get_reg_id( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	insert_id( tsp->ts_regionid );
 	return( -1 );
@@ -138,10 +140,11 @@ union tree		*curtree;
 
 /* stubs to warn of the unexpected */
 static union tree *
-region_stub( tsp, pathp, curtree )
+region_stub( tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	struct directory *fp_name;	/* name from pathp */
 
@@ -151,11 +154,12 @@ union tree		*curtree;
 }
 
 static union tree *
-leaf_stub( tsp, pathp, ep, id )
+leaf_stub( tsp, pathp, ep, id, client_data )
 struct db_tree_state    *tsp;
 struct db_full_path     *pathp;
 struct bu_external      *ep;
 int                     id;
+genptr_t		client_data;
 {
 	struct directory *fp_name;	/* name from pathp */
 
@@ -781,7 +785,8 @@ char	*argv[];
 		&tree_state,
 		get_reg_id,			/* put id in table */
 		region_stub,			/* do nothing */
-		leaf_stub );			/* do nothing */
+		leaf_stub,
+		(genptr_t)NULL );			/* do nothing */
 
 	/* TANKILL only allows up to 2000 distinct component codes */
 	if( ident_count > 2000 )
@@ -814,7 +819,8 @@ char	*argv[];
 			&tree_state,
 			select_region,			/* selects regions with curr_id */
 			do_region_end,			/* calls Write_tankill_region */
-			nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+			nmg_booltree_leaf_tess,
+			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 	}
 
 	percent = 0;
@@ -847,10 +853,11 @@ char	*argv[];
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(tsp, pathp, curtree)
+union tree *do_region_end(tsp, pathp, curtree, client_data)
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
+genptr_t		client_data;
 {
 	extern FILE		*fp_fig;
 	struct nmgregion	*r;

@@ -948,11 +948,12 @@ int			noisy;
  *  Helper routine for db_recurse()
  */
 void
-db_recurse_subtree( tp, msp, pathp, region_start_statepp )
+db_recurse_subtree( tp, msp, pathp, region_start_statepp, client_data )
 union tree		*tp;
 struct db_tree_state	*msp;
 struct db_full_path	*pathp;
 struct combined_tree_state	**region_start_statepp;
+genptr_t	client_data;
 {
 	struct db_tree_state	memb_state;
 	union tree		*subtree;
@@ -976,7 +977,7 @@ struct combined_tree_state	**region_start_statepp;
 		}
 
 		/* Recursive call */
-		if( (subtree = db_recurse( &memb_state, pathp, region_start_statepp )) != TREE_NULL )  {
+		if( (subtree = db_recurse( &memb_state, pathp, region_start_statepp, client_data )) != TREE_NULL )  {
 			union tree	*tmp;
 
 			/* graft subtree on in place of 'tp' leaf node */
@@ -1005,12 +1006,12 @@ struct combined_tree_state	**region_start_statepp;
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-		db_recurse_subtree( tp->tr_b.tb_left, &memb_state, pathp, region_start_statepp );
+		db_recurse_subtree( tp->tr_b.tb_left, &memb_state, pathp, region_start_statepp, client_data );
 		if( tp->tr_op == OP_SUBTRACT )
 			memb_state.ts_sofar |= TS_SOFAR_MINUS;
 		else if( tp->tr_op == OP_INTERSECT )
 			memb_state.ts_sofar |= TS_SOFAR_INTER;
-		db_recurse_subtree( tp->tr_b.tb_right, &memb_state, pathp, region_start_statepp );
+		db_recurse_subtree( tp->tr_b.tb_right, &memb_state, pathp, region_start_statepp, client_data );
 		break;
 
 	default:
@@ -1033,10 +1034,11 @@ out:
  *  It is not intended to be used for collecting state.
  */
 union tree *
-db_recurse( tsp, pathp, region_start_statepp )
+db_recurse( tsp, pathp, region_start_statepp, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct combined_tree_state	**region_start_statepp;
+genptr_t	client_data;
 {
 	struct directory	*dp;
 	struct bu_external	ext;
@@ -1101,7 +1103,7 @@ struct combined_tree_state	**region_start_statepp;
 			 *  This might be used for ignoring air regions.
 			 */
 			if( tsp->ts_region_start_func && 
-			    tsp->ts_region_start_func( &nts, pathp, comb ) < 0 )  {
+			    tsp->ts_region_start_func( &nts, pathp, comb, client_data ) < 0 )  {
 				if(rt_g.debug&DEBUG_TREEWALK)  {
 					char	*sofar = db_path_to_string(pathp);
 					bu_log("db_recurse() ts_region_start_func deletes %s\n",
@@ -1155,7 +1157,7 @@ region_end:
 			 */
 			if( tsp->ts_region_end_func )  {
 				curtree = tsp->ts_region_end_func(
-					&nts, pathp, curtree );
+					&nts, pathp, curtree, client_data );
 				if(curtree) RT_CK_TREE(curtree);
 			}
 		}
@@ -1217,7 +1219,7 @@ region_end:
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
-		curtree = tsp->ts_leaf_func( tsp, pathp, &ext, id );
+		curtree = tsp->ts_leaf_func( tsp, pathp, &ext, id, client_data );
 		if(curtree) RT_CK_TREE(curtree);
 	} else {
 		bu_log("db_recurse:  %s is neither COMB nor SOLID?\n",
@@ -1786,6 +1788,7 @@ struct db_walk_parallel_state {
 	int		reg_current;		/* semaphored when parallel */
 	union tree *	(*reg_end_func)();
 	union tree *	(*reg_leaf_func)();
+	genptr_t	client_data;
 };
 #define DB_WALK_PARALLEL_STATE_MAGIC	0x64777073	/* dwps */
 #define DB_CK_WPS(_p)	BU_CKMAG(_p, DB_WALK_PARALLEL_STATE_MAGIC, "db_walk_parallel_state")
@@ -1794,10 +1797,11 @@ struct db_walk_parallel_state {
  *			D B _ W A L K _ S U B T R E E
  */
 HIDDEN void
-db_walk_subtree( tp, region_start_statepp, leaf_func )
+db_walk_subtree( tp, region_start_statepp, leaf_func, client_data )
 register union tree	*tp;
 struct combined_tree_state	**region_start_statepp;
 union tree		 *(*leaf_func)();
+genptr_t	client_data;
 {
 	struct combined_tree_state	*ctsp;
 	union tree	*curtree;
@@ -1835,7 +1839,7 @@ union tree		 *(*leaf_func)();
 		else
 			ctsp->cts_s.ts_sofar &= ~TS_SOFAR_REGION;
 
-		curtree = db_recurse( &ctsp->cts_s, &ctsp->cts_p, region_start_statepp );
+		curtree = db_recurse( &ctsp->cts_s, &ctsp->cts_p, region_start_statepp, client_data );
 		if( curtree == TREE_NULL )  {
 			char	*str;
 			str = db_path_to_string( &(ctsp->cts_p) );
@@ -1857,7 +1861,7 @@ union tree		 *(*leaf_func)();
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-		db_walk_subtree( tp->tr_b.tb_left, region_start_statepp, leaf_func );
+		db_walk_subtree( tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data );
 		return;
 
 	case OP_UNION:
@@ -1865,8 +1869,8 @@ union tree		 *(*leaf_func)();
 	case OP_SUBTRACT:
 	case OP_XOR:
 		/* This node is known to be a binary op */
-		db_walk_subtree( tp->tr_b.tb_left, region_start_statepp, leaf_func );
-		db_walk_subtree( tp->tr_b.tb_right, region_start_statepp, leaf_func );
+		db_walk_subtree( tp->tr_b.tb_left, region_start_statepp, leaf_func, client_data );
+		db_walk_subtree( tp->tr_b.tb_right, region_start_statepp, leaf_func, client_data );
 		return;
 
 	case OP_DB_LEAF:
@@ -1918,7 +1922,7 @@ genptr_t	arg;
 		/* Walk the full subtree now */
 		region_start_statep = (struct combined_tree_state *)0;
 		db_walk_subtree( curtree, &region_start_statep,
-			wps->reg_leaf_func );
+			wps->reg_leaf_func, wps->client_data );
 
 		/*  curtree->tr_op may be OP_NOP here.
 		 *  It is up to db_reg_end_func() to deal with this,
@@ -1945,7 +1949,7 @@ genptr_t	arg;
 			wps->reg_trees[mine] = (*(wps->reg_end_func))(
 				&(region_start_statep->cts_s),
 				&(region_start_statep->cts_p),
-				curtree );
+				curtree, wps->client_data );
 		}
 
 		db_free_combined_tree_state( region_start_statep );
@@ -1971,7 +1975,7 @@ genptr_t	arg;
  *	 0	OK
  */
 int
-db_walk_tree( dbip, argc, argv, ncpu, init_state, reg_start_func, reg_end_func, leaf_func )
+db_walk_tree( dbip, argc, argv, ncpu, init_state, reg_start_func, reg_end_func, leaf_func, client_data )
 struct db_i	*dbip;
 int		argc;
 CONST char	**argv;
@@ -1980,6 +1984,7 @@ CONST struct db_tree_state *init_state;
 int		(*reg_start_func)();
 union tree *	(*reg_end_func)();
 union tree *	(*leaf_func)();
+genptr_t	client_data;
 {
 	union tree		*whole_tree = TREE_NULL;
 	int			new_reg_count;
@@ -2020,7 +2025,7 @@ union tree *	(*leaf_func)();
 		ts.ts_leaf_func = db_gettree_leaf;
 
 		region_start_statep = (struct combined_tree_state *)0;
-		curtree = db_recurse( &ts, &path, &region_start_statep );
+		curtree = db_recurse( &ts, &path, &region_start_statep, client_data );
 		if( region_start_statep )
 			db_free_combined_tree_state( region_start_statep );
 		db_free_full_path( &path );
@@ -2126,6 +2131,7 @@ union tree *	(*leaf_func)();
 	wps.reg_current = 0;			/* Semaphored */
 	wps.reg_end_func = reg_end_func;
 	wps.reg_leaf_func = leaf_func;
+	wps.client_data = client_data;
 
 	if( ncpu <= 1 )  {
 		db_walk_dispatcher( 0, (genptr_t)&wps );

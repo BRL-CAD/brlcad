@@ -3580,11 +3580,12 @@ struct db_full_path	*pathp;
 	return (struct joint *) 0;
 }
 
-HIDDEN union tree *mesh_leaf( tsp, pathp, ep, id)
+HIDDEN union tree *mesh_leaf( tsp, pathp, ep, id, client_data)
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct bu_external	*ep;
 int			id;
+genptr_t		client_data;
 {
 	struct	rt_db_internal	internal;
 	struct rt_grip_internal *gip;
@@ -3644,10 +3645,11 @@ int			id;
 
 	return curtree;
 }
-HIDDEN union tree *mesh_end_region (tsp, pathp, curtree )
+HIDDEN union tree *mesh_end_region (tsp, pathp, curtree, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
 union tree			*curtree;
+genptr_t			client_data;
 {
 	return curtree;
 }
@@ -3711,7 +3713,8 @@ char **argv;
 	    &mesh_initial_tree_state,
 	    0,			/* Begin region */
 	    mesh_end_region,	/* End region */
-	    mesh_leaf);		/* node */
+	    mesh_leaf,		/* node */
+	    (genptr_t)NULL);
 
 	/*
 	 * Now we draw the the overlays.  We do this by building a 

@@ -113,10 +113,11 @@ CONST struct db_tree_state	rt_initial_tree_state = {
  *  This routine must be prepared to run in parallel.
  */
 /* ARGSUSED */
-HIDDEN int rt_gettree_region_start( tsp, pathp, combp )
+HIDDEN int rt_gettree_region_start( tsp, pathp, combp, client_data )
 CONST struct db_tree_state	*tsp;
 CONST struct db_full_path	*pathp;
 CONST struct rt_comb_internal	*combp;
+genptr_t			client_data;
 {
 	RT_CK_RTI(tsp->ts_rtip);
 
@@ -142,10 +143,11 @@ CONST struct rt_comb_internal	*combp;
  *  Therefore, everything which referred to the tree has been moved
  *  out into the serial section.  (rt_tree_region_assign, rt_bound_tree)
  */
-HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree )
+HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree, client_data )
 register CONST struct db_tree_state	*tsp;
 CONST struct db_full_path	*pathp;
 union tree			*curtree;
+genptr_t			client_data;
 {
 	struct region		*rp;
 	struct directory	*dp;
@@ -383,11 +385,12 @@ more_checks:
  *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *rt_gettree_leaf( tsp, pathp, ep, id )
+HIDDEN union tree *rt_gettree_leaf( tsp, pathp, ep, id, client_data )
 CONST struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
 CONST struct bu_external	*ep;
 int				id;
+genptr_t			client_data;
 {
 	register struct soltab	*stp;
 	union tree		*curtree;
@@ -684,7 +687,7 @@ int		ncpus;
 		&tree_state,
 		rt_gettree_region_start,
 		rt_gettree_region_end,
-		rt_gettree_leaf );
+		rt_gettree_leaf, (genptr_t)NULL );
 
 	/* DEBUG:  Ensure that all region trees are valid */
 	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
