@@ -416,7 +416,7 @@ union tree		*curtree;
 
 	regions_tried++;
 	/* Begin rt_bomb() protection */
-	if( ncpu == 1 && RT_SETJUMP )  {
+	if( RT_SETJUMP )  {
 		/* Error, bail out */
 		RT_UNSETJUMP;		/* Relinquish the protection */
 
