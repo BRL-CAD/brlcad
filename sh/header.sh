@@ -194,12 +194,53 @@ if [ $length -lt `expr 69 - $prefixlen - 1` ] ; then
     fi
 fi
 
-titleline="$commentprefix "
+if [ "x$wrap" = "x1" ] ; then
+    titleline="* "
+else
+    titleline="$commentprefix "
+fi
 while [ $position -gt 0 ] ; do
     titleline="${titleline} "
     position="`expr $position - 1`"
 done
 titleline="${titleline}${title}"
+
+
+###################################
+# figure out the copyright extent #
+###################################
+copyright=""
+currentyear="`date | awk '{print $6}'`"
+copyrightline="`grep -i copyright $FILE | grep -v -i notice | head -1`"
+if [ "x$copyrightline" = "x" ] ; then
+    copyrightline="`grep -i copyright $FILE | grep -v -i united | head -1`"
+fi
+if [ "x$copyrightline" = "x" ] ; then
+    startyear="$currentyear"
+else
+    startyear="`echo "$copyrightline" | sed 's/.*\([0-9][0-9][0-9][0-9]\)-[0-9][0-9][0-9][0-9].*/\1/'`"
+    echo "start is $startyear"
+    if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
+        startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\),[0-9][0-9][0-9][0-9],[0-9][0-9][0-9][0-9][^0-9].*/\1/'`"
+	echo "start2 is $startyear"
+	if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
+	    # didn't find a year, so use current year
+	    startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\),[0-9][0-9][0-9][0-9][^0-9].*/\1/'`"
+	    echo "start3 is $startyear"
+	    if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
+		startyear="$currentyear"
+	    fi
+	fi
+    fi
+fi
+
+if [ "x$startyear" != "x$currentyear" ] ; then
+    copyright="${startyear}-${currentyear}"
+else
+    copyright="${currentyear}"
+fi
+
+echo "using copyright of $copyright"
 
 
 ##############################
@@ -209,10 +250,20 @@ block=""
 c="$commentprefix"
 block="${block}${titleline}
 $c BRL-CAD
-$c
-$c Copyright (c) 2004 United States Government as represented by the
+$c"
+
+if [ "x$startyear" != "x$currentyear" ] ; then
+    # longer date wraps the 'the'
+    block="${block}
+$c Copyright (c) $copyright United States Government as represented by
+$c the U.S. Army Research Laboratory.
+$c"
+else
+    block="${block}
+$c Copyright (c) $copyright United States Government as represented by the
 $c U.S. Army Research Laboratory.
 $c"
+fi
 
 case $LICE in
     BSD)
@@ -311,12 +362,12 @@ fi
 ###################################
 # see if the license block exists #
 ###################################
-foundtitle="`head -3 $FILE | grep "$title" | wc | awk '{print $1}'`"
+foundtitle="`head -5 $FILE | grep "$title" | wc | awk '{print $1}'`"
 prepend=no
 if [ "x$foundtitle" = "x0" ] ; then
     prepend=yes
 else
-    licline="`echo "$block" | tail -3 | head -1`"
+    licline="`echo "$block" | tail -5 | head -1`"
     foundfileheader="`head -50 $FILE | grep "$licline" | wc | awk '{print $1}'`"
     if [ "x$foundfileheader" = "x0" ] ; then
 	prepend=yes
@@ -344,6 +395,7 @@ mv -f $FILE ${FILE}.backup
 skip=1
 lineone="`cat ${FILE}.backup | head -1`"
 linetwo="`cat ${FILE}.backup | head -2 | tail -1`"
+linethree="`cat ${FILE}.backup | head -3 | tail -1`"
 case "$lineone" in 
     "/*")
         echo "Found C comment start"
@@ -353,11 +405,29 @@ case "$lineone" in
 	        echo "Found old file header"
 		skip=3
 		;;
+	    " *")
+	        echo "Found empty comment line"
+		skip=3
+		if [ "x$foundtitle" = "x1" ] ; then
+		    case "$linethree" in
+			" *"*${title})
+			echo "Found old file header"
+			skip=4
+			;;
+		    esac
+		fi
+		;;
 	esac
 	;;
     "/*"*${title})
         echo "Found C comment start with file header"
 	skip=2
+	case "$linetwo" in
+	    " *")
+	        echo "Found empty comment line"
+		skip=3
+		;;
+	esac
 	;;
     "#!/bin/"*)
         echo "Found script exec line"
@@ -370,6 +440,44 @@ case "$lineone" in
 		;;
 	esac
 	;;
+    "")
+        echo "Found empty line"
+	skip=2
+	case "$linetwo" in
+	    "/*")
+	        echo "Found C comment start"
+		skip=3
+		case "$linethree" in
+		    " *"*${title})
+		        echo "Found old file header"
+			skip=4
+			;;
+		    " *")
+		        echo "Found empty comment line"
+			skip=4
+			if [ "x$foundtitle" = "x1" ] ; then
+			    case "$linethree" in
+				" *"*${title})
+				    echo "Found old file header"
+				    skip=5
+				    ;;
+			    esac
+			    
+			fi
+			;;
+		esac
+		;;
+	    "/*"*${title})
+	    echo "Found C comment start with file header"
+	    skip=3
+	    case "$linetwo" in
+		" *")
+	            echo "Found empty comment line"
+		    skip=4
+		    ;;
+	    esac
+	    ;;
+	esac
 	;;
     *)
         echo "ERROR: Found unknown line one: $lineone"
