@@ -26,31 +26,42 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
+#define	INFIN		999999		/* An "infinite" file size */
 #define MAX_LINE	2048		/* Max pixels/line */
 RGBpixel scanline[MAX_LINE];		/* 1 scanline pixel buffer */
 static int scanbytes;			/* # of bytes of scanline */
 
-char *file_name;
-FILE *infp;
+char	*file_name;
+int	infd;
 
-int inverse = 0;			/* Draw upside-down */
-int clear = 0;
-int height;				/* input height */
-int width;				/* input width */
+int	fileinput = 0;		/* file of pipe on input? */
+
+int	file_width = 512;	/* default input width */
+int	file_height = INFIN;	/* default input height */
+int	scr_width = 0;		/* screen tracks file if not given */
+int	scr_height = 0;
+int	file_xoff, file_yoff;
+int	scr_xoff, scr_yoff;
+int	clear = 0;
+int	zoom = 0;
+int	inverse = 0;			/* Draw upside-down */
 
 char usage[] = "\
-Usage: pix-fb [-h -i -c] [-s squaresize] [-W width] [-H height] [file.pix]\n";
+Usage: pix-fb [-h -i -c -z]\n\
+	[-s squarefilesize] [-w file_width]\n\
+	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
+	[-S squarescrsize] [-W scr_width] [-H scr_height] [file.pix]\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hics:W:H:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hiczs:w:x:y:X:Y:S:W:H:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
-			height = width = 1024;
+			file_height = file_width = 1024;
 			break;
 		case 'i':
 			inverse = 1;
@@ -58,15 +69,36 @@ register char **argv;
 		case 'c':
 			clear = 1;
 			break;
+		case 'z':
+			zoom = 1;
+			break;
 		case 's':
-			/* square size */
-			height = width = atoi(optarg);
+			/* square file size */
+			file_height = file_width = atoi(optarg);
+			break;
+		case 'w':
+			file_width = atoi(optarg);
+			break;
+		case 'x':
+			file_xoff = atoi(optarg);
+			break;
+		case 'y':
+			file_yoff = atoi(optarg);
+			break;
+		case 'X':
+			scr_xoff = atoi(optarg);
+			break;
+		case 'Y':
+			scr_yoff = atoi(optarg);
+			break;
+		case 'S':
+			scr_height = scr_width = atoi(optarg);
 			break;
 		case 'W':
-			width = atoi(optarg);
+			scr_width = atoi(optarg);
 			break;
 		case 'H':
-			height = atoi(optarg);
+			scr_height = atoi(optarg);
 			break;
 
 		default:		/* '?' */
@@ -78,15 +110,16 @@ register char **argv;
 		if( isatty(fileno(stdin)) )
 			return(0);
 		file_name = "-";
-		infp = stdin;
+		infd = 0;
 	} else {
 		file_name = argv[optind];
-		if( (infp = fopen(file_name, "r")) == NULL )  {
+		if( (infd = open(file_name, 0)) == NULL )  {
 			(void)fprintf( stderr,
 				"pix-fb: cannot open \"%s\" for reading\n",
 				file_name );
 			return(0);
 		}
+		fileinput++;
 	}
 
 	if ( argc > ++optind )
@@ -101,42 +134,138 @@ char **argv;
 {
 	register int y;
 	register FBIO *fbp;
-
-	height = width = 512;		/* Defaults */
+	int	xout, yout, n;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
 
-	scanbytes = width * sizeof(RGBpixel);
+	/* If screen size was not set, track the file size */
+	if( scr_width == 0 )
+		scr_width = file_width;
+	if( scr_height == 0 && file_height != INFIN )
+		scr_height = file_height;
 
-	if( (fbp = fb_open( NULL, width, height )) == NULL )
+	if( (fbp = fb_open( NULL, scr_width, scr_height )) == NULL )
 		exit(12);
+
+	/* Get the screen size we were given */
+	scr_width = fb_getwidth(fbp);
+	scr_height = fb_getheight(fbp);
+
+	/* compute pixels output to screen */
+	xout = scr_width - scr_xoff;
+	if( xout < 0 ) xout = 0;
+	if( xout > (file_width-file_xoff) ) xout = (file_width-file_xoff);
+	yout = scr_height - scr_yoff;
+	if( yout < 0 ) yout = 0;
+	if( yout > (file_height-file_yoff) ) yout = (file_height-file_yoff);
+	if( xout > MAX_LINE ) {
+		fprintf( stderr, "pix-fb: can't output %d pixel lines.\n", xout );
+		exit( 2 );
+	}
+	scanbytes = xout * sizeof(RGBpixel);
 
 	if( clear )  {
 		fb_clear( fbp, PIXEL_NULL );
 		fb_wmap( fbp, COLORMAP_NULL );
 	}
-	/* Zoom in, in the center of view */
-	fb_zoom( fbp, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
-	fb_window( fbp, width/2, height/2 );
+	/*
+	 * XXX - we use Xout in the Y values since we currently always
+	 * assume files have infinite height! (thus yout is always
+	 * scr_height-scr_yoff)
+	 */
+	if( zoom ) {
+		/* Zoom in, in the center of view */
+		fb_zoom( fbp, scr_width/xout, scr_height/xout );
+		if( inverse )
+			fb_window( fbp, scr_xoff+xout/2, scr_height-1-(scr_yoff+xout/2) );
+		else
+			fb_window( fbp, scr_xoff+xout/2, scr_yoff+xout/2 );
+	}
+
+/*	if( file_yoff != 0 ) skipbytes( infd, file_yoff*file_width*3 );*/
 
 	if( !inverse )  {
 		/* Normal way -- bottom to top */
-		for( y=0; y < height; y++ )  {
-			if( fread( (char *)scanline, scanbytes, 1, infp ) != 1 )
-				break;
-			fb_write( fbp, 0, y, scanline, width );
+		for( y = scr_yoff; y < scr_yoff + yout; y++ )  {
+			if( file_xoff != 0 )
+				skipbytes( infd, file_xoff*sizeof(RGBpixel) );
+			n = mread( infd, (char *)scanline, scanbytes );
+			if( n <= 0 ) break;
+			fb_write( fbp, scr_xoff, y, scanline, xout );
+			/* slop at the end of the line? */
+			if( xout < file_width-file_xoff )
+				skipbytes( infd, (file_width-file_xoff-xout)*sizeof(RGBpixel) );
 		}
 	}  else  {
 		/* Inverse -- top to bottom */
-		for( y = height-1; y >= 0; y-- )  {
-			if( fread( (char *)scanline, scanbytes, 1, infp ) != 1 )
-				break;
-			fb_write( fbp, 0, y, scanline, width );
+		for( y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y-- )  {
+			if( file_xoff != 0 )
+				skipbytes( infd, file_xoff*sizeof(RGBpixel) );
+			n = mread( infd, (char *)scanline, scanbytes );
+			if( n <= 0 ) break;
+			fb_write( fbp, scr_xoff, y, scanline, xout );
+			/* slop at the end of the line? */
+			if( xout < file_width-file_xoff )
+				skipbytes( infd, (file_width-file_xoff-xout)*sizeof(RGBpixel) );
 		}
 	}
 	fb_close( fbp );
 	exit(0);
+}
+
+/*
+ * Throw bytes away.  Use reads into scanline buffer if a pipe, else seek.
+ */
+skipbytes( fd, num )
+int	fd;
+long	num;
+{
+	int	n, try;
+
+	if( fileinput ) {
+		(void)lseek( fd, num, 1 );
+		return 0;
+	}
+	
+	while( num > 0 ) {
+		try = num > MAX_LINE ? MAX_LINE : num;
+		n = read( fd, scanline, try );
+		if( n <= 0 ){
+			return -1;
+		}
+		num -= n;
+	}
+	return	0;
+}
+
+/*
+ * "Multiple try" read.
+ *  Will keep reading until either an error occurs
+ *  or the requested number of bytes is read.  This
+ *  is important for pipes.
+ */
+mread( fd, bp, num )
+int	fd;
+register char	*bp;
+register int	num;
+{
+	register int	n;
+	int	count;
+
+	count = 0;
+
+	while( num > 0 ) {
+		n = read( fd, bp, num );
+		if( n < 0 )
+			return	-1;
+		if( n == 0 )
+			return count;
+		bp += n;
+		count += n;
+		num -= n;
+	}
+	return count;
 }
