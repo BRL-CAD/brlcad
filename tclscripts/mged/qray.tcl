@@ -248,18 +248,18 @@ proc init_qray_control { id } {
     frame $top.gridF5
     button $top.applyB -relief raised -text "Apply"\
 	    -command "qray_apply $id"
-    button $top.loadB -relief raised -text "Load"\
-	    -command "qray_load $id"
+    button $top.resetB -relief raised -text "Reset"\
+	    -command "qray_reset $id"
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top; set mged_qray_control($id) 0 }"
-    grid $top.applyB x $top.loadB x $top.dismissB -sticky "ew" -in $top.gridF5
+    grid $top.applyB x $top.resetB x $top.dismissB -sticky "ew" -in $top.gridF5
     grid columnconfigure $top.gridF5 1 -weight 1
     grid columnconfigure $top.gridF5 3 -weight 1
     grid $top.gridF5 -sticky "ew" -padx 8 -pady 8
 
     grid columnconfigure $top 0 -weight 1
 
-    qray_load $id
+    qray_reset $id
     set qray_effects($id) [qray effects]
     qray_effects $id
 
@@ -315,7 +315,7 @@ proc qray_apply { id } {
     eval qray overlapcolor $qray_overlapColor($id)
 }
 
-proc qray_load { id } {
+proc qray_reset { id } {
     global mged_active_dm
     global mged_use_air
     global qray_active_mouse
@@ -468,7 +468,7 @@ proc init_qray_adv { id } {
     }
 
     toplevel $top -screen $player_screen($id)
-    qray_load_fmt $id
+    qray_reset_fmt $id
 
     frame $top.gridF1 -relief groove -bd 2
     label $top.fmtL -text "Query Ray Formats"
@@ -521,11 +521,11 @@ proc init_qray_adv { id } {
     frame $top.gridF2
     button $top.applyB -relief raised -text "Apply"\
 	    -command "qray_apply_fmt $id"
-    button $top.loadB -relief raised -text "Load"\
-	    -command "qray_load_fmt $id"
+    button $top.resetB -relief raised -text "Reset"\
+	    -command "qray_reset_fmt $id"
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top; }"
-    grid $top.applyB x $top.loadB x $top.dismissB -sticky "ew" -in $top.gridF2
+    grid $top.applyB x $top.resetB x $top.dismissB -sticky "ew" -in $top.gridF2
     grid columnconfigure $top.gridF2 1 -weight 1
     grid columnconfigure $top.gridF2 3 -weight 1
     grid $top.gridF2 -sticky "ew" -padx 8 -pady 8
@@ -559,7 +559,7 @@ proc qray_apply_fmt { id } {
     qray fmt o $qray_fmt_overlap($id)
 }
 
-proc qray_load_fmt { id } {
+proc qray_reset_fmt { id } {
     global mged_active_dm
     global qray_fmt_ray
     global qray_fmt_head
