@@ -111,8 +111,8 @@ struct seg *segp;
 #include <errno.h>
 /* These aren't defined in BSD errno.h.					*/
 extern int	errno;
+#if !HAVE_SYS_ERRLIST_DECL
 extern int	sys_nerr;
-#if 0
 extern char	*sys_errlist[];
 #endif
 
