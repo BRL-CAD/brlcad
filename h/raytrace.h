@@ -4734,6 +4734,7 @@ BU_EXTERN(int	wdb_shells_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int arg
 BU_EXTERN(int	wdb_xpush_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_showmats_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_copyeval_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_version_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 
 /* defined in dg_obj.c */
 BU_EXTERN(void	dgo_autoview,		(struct dg_obj *dgop, struct view_obj *vop, Tcl_Interp *interp));
