@@ -49,6 +49,7 @@ extern struct pkg_conn *pkg_getclient();
 extern struct pkg_conn *pkg_makeconn();
 extern void pkg_close();
 extern int pkg_send();
+extern int pkg_2send();
 extern int pkg_stream();
 extern int pkg_flush();
 extern int pkg_waitfor();
