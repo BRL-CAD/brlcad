@@ -1182,6 +1182,10 @@ BU_EXTERN(void			bu_list_free, (struct bu_list *hd));
 BU_EXTERN(void			bu_list_parallel_append, (struct bu_list *headp,
 					struct bu_list *itemp));
 BU_EXTERN(struct bu_list *	bu_list_parallel_dequeue, (struct bu_list *headp));
+BU_EXTERN(void			bu_ck_list, (CONST struct bu_list *hd,
+				CONST char *str) );
+BU_EXTERN(void			bu_ck_list_magic, (CONST struct bu_list *hd,
+				CONST char *str, CONST long magic) );
 
 /* log.c */
 BU_EXTERN(void			bu_log_indent_delta, (int delta) );

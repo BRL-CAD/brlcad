@@ -138,3 +138,108 @@ struct bu_list	*headp;
 	}
 	/* NOTREACHED */
 }
+
+/*
+ *			B U _ C K _ L I S T
+ *
+ *  Generic bu_list doubly-linked list checker.
+ */
+void
+bu_ck_list( hd, str )
+CONST struct bu_list	*hd;
+CONST char		*str;
+{
+	register CONST struct bu_list	*cur;
+	int	head_count = 0;
+
+	cur = hd;
+	do  {
+		if( cur->magic == BU_LIST_HEAD_MAGIC )  head_count++;
+		if( !cur->forw )  {
+			bu_log("bu_ck_list(%s) cur=x%x, cur->forw=x%x, hd=x%x\n",
+				str, cur, cur->forw, hd );
+			bu_bomb("bu_ck_list() forw\n");
+		}
+		if( cur->forw->back != cur )  {
+			bu_log("bu_ck_list(%s) cur=x%x, cur->forw=x%x, cur->forw->back=x%x, hd=x%x\n",
+				str, cur, cur->forw, cur->forw->back, hd );
+			bu_bomb("bu_ck_list() forw->back\n");
+		}
+		if( !cur->back )  {
+			bu_log("bu_ck_list(%s) cur=x%x, cur->back=x%x, hd=x%x\n",
+				str, cur, cur->back, hd );
+			bu_bomb("bu_ck_list() back\n");
+		}
+		if( cur->back->forw != cur )  {
+			bu_log("bu_ck_list(%s) cur=x%x, cur->back=x%x, cur->back->forw=x%x, hd=x%x\n",
+				str, cur, cur->back, cur->back->forw, hd );
+			bu_bomb("bu_ck_list() back->forw\n");
+		}
+		cur = cur->forw;
+	} while( cur != hd );
+
+	if( head_count != 1 )  {
+		bu_log("bu_ck_list(%s) head_count = %d, hd=x%x\n", str, head_count, hd);
+		bu_bomb("bu_ck_list() headless!\n");
+	}
+}
+
+/*
+ *			B U _ C K _ L I S T _ M A G I C
+ *
+ *  bu_list doubly-linked list checker which checks the magic number for
+ *	all elements in the linked list
+ */
+void
+bu_ck_list_magic( hd, str, magic )
+CONST struct bu_list	*hd;
+CONST char		*str;
+CONST long		magic;
+{
+	register CONST struct bu_list	*cur;
+	int	head_count = 0;
+
+	cur = hd;
+	do  {
+		if( cur->magic == BU_LIST_HEAD_MAGIC )  {
+			head_count++;
+		} else if( cur->magic != magic ) {
+			bu_log("nmg_ck_list(%s) cur magic=(%s)x%x, cur->forw magic=(%s)x%x, hd magic=(%s)x%x\n",
+				str, bu_identify_magic(cur->magic), cur->magic,
+				bu_identify_magic(cur->forw->magic), cur->forw->magic,
+				bu_identify_magic(hd->magic), hd->magic);
+			bu_bomb("nmg_ck_list_magic() cur->magic\n");
+		}
+
+		if( !cur->forw )  {
+			bu_log("nmg_ck_list_magic(%s) cur=x%x, cur->forw=x%x, hd=x%x\n",
+				str, cur, cur->forw, hd );
+			bu_bomb("nmg_ck_list_magic() forw\n");
+		}
+		if( cur->forw->back != cur )  {
+			bu_log("nmg_ck_list_magic(%s) cur=x%x, cur->forw=x%x, cur->forw->back=x%x, hd=x%x\n",
+				str, cur, cur->forw, cur->forw->back, hd );
+			bu_log(" cur=%s, cur->forw=%s, cur->forw->back=%s\n",
+				bu_identify_magic(cur->magic),
+				bu_identify_magic(cur->forw->magic),
+				bu_identify_magic(cur->forw->back->magic) );
+			bu_bomb("nmg_ck_list_magic() forw->back\n");
+		}
+		if( !cur->back )  {
+			bu_log("nmg_ck_list_magic(%s) cur=x%x, cur->back=x%x, hd=x%x\n",
+				str, cur, cur->back, hd );
+			bu_bomb("nmg_ck_list_magic() back\n");
+		}
+		if( cur->back->forw != cur )  {
+			bu_log("nmg_ck_list_magic(%s) cur=x%x, cur->back=x%x, cur->back->forw=x%x, hd=x%x\n",
+				str, cur, cur->back, cur->back->forw, hd );
+			bu_bomb("nmg_ck_list_magic() back->forw\n");
+		}
+		cur = cur->forw;
+	} while( cur != hd );
+
+	if( head_count != 1 )  {
+		bu_log("nmg_ck_list_magic(%s) head_count = %d, hd=x%x\n", str, head_count, hd);
+		bu_bomb("nmg_ck_list_magic() headless!\n");
+	}
+}
