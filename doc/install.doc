@@ -206,6 +206,7 @@ Find a disk with 100-150 Mbytes of free space that you can use.
 The BRL-CAD Package is distributed in source code form only,
 so you will need enough space to simultaneously store
 the source material, documentation, binary files, and test images.
+For example, the final Sun-4 executables alone total more than 54 Mbytes.
 .IP 2)
 Mount the distribution tape on the tape drive.
 Make certain that the tape is write protected.
