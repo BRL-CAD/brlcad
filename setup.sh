@@ -13,18 +13,22 @@
 SHELL=/bin/sh
 export SHELL
 
-# Confirm that the installation directory is correct.
-# newbindir.sh can be run to edit all relevant files (including this one).
 
-# This is the "master" definition of where BRL-CAD is to installed.
-BASEDIR=/usr/brlcad
+############################################################################
+#
+# Acquire current machine type, BASEDIR, etc.
+#
+# newbindir.sh can be run to edit all relevant files (esp. machinetype.sh).
+#
+############################################################################
+eval `sh sh/machinetype.sh -v`
 
 BINDIR=$BASEDIR/bin
 MANDIR=$BASEDIR/man/man1
 
 echo "  BINDIR = ${BINDIR},  BASEDIR = ${BASEDIR}"
-
-# Create all the necessary directories
+echo
+echo Creating the necessary directories
 
 for LAST in \
 	bin include include/brlcad lib vfont \
@@ -43,6 +47,7 @@ done
 # For this purpose, specifically exclude "dot" from the check.
 #
 ############################################################################
+echo Checking search path
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
 				s/:$//
@@ -82,6 +87,7 @@ fi
 # pertain to the installation process only, and don't get installed.
 #
 ############################################################################
+echo Installing shell scripts
 cd sh
 for i in *.sh
 do
@@ -95,16 +101,10 @@ cd ..
 
 ############################################################################
 #
-# Acquire current machine type, etc.
-#
-############################################################################
-eval `sh machinetype.sh -b`
-
-############################################################################
-#
 # Make and install "cake" and "cakeaux"
 #
 ############################################################################
+echo Compiling cake and cakeaux
 if test x$1 != x-f
 then
 	cd cake
@@ -143,6 +143,7 @@ fi
 #  the results.
 #
 ############################################################################
+echo Comparing settings between machinetype.sh and Cakefile.defs
 IN_FILE=/tmp/Cakefile$$
 OUT_FILE=/tmp/setup$$
 trap '/bin/rm -f ${IN_FILE} ${OUT_FILE}; exit 1' 1 2 3 15	# Clean up temp file
@@ -201,3 +202,4 @@ then
 fi
 
 # Congratulations.  Everything is fine.
+echo "BRL-CAD initial setup is complete."
