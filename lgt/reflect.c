@@ -118,13 +118,13 @@ static int		refrac_total;
 static int		hits_shadowed;
 static int		hits_lit;
 
-/* Local communication with worker(). */
-static int curr_scan;		/* Current scan line number. */
-static int last_scan;		/* Last scan. */
-static int nworkers;		/* Number of workers now running. */
+/* Local communication with render_Scan(). */
+static int curr_scan;		/* current scan line number */
+static int last_scan;		/* last scan */
+static int nworkers;		/* number of workers now running */
 static int a_gridsz;
 static fastf_t	grid_dh[3], grid_dv[3];
-static struct application ag;	/* Global application structure. */
+static struct application ag;	/* global application structure */
 
 /* Bit map for hidden line drawing. */
 #ifndef BITSPERBYTE
@@ -216,7 +216,7 @@ RGBpixel	**pp;
 void
 render_Model( frame )
 int	frame;
-	{
+	{	int	x;
 	(void) signal( SIGINT, abort_sig );
 	if( npsw > 1 )
 		pix_buffered = B_LINE;
@@ -324,7 +324,7 @@ int	frame;
 		/*
 		 * SERIAL case -- one CPU does all the work.
 		 */
-		render_Scan(0);
+		render_Scan();
 		view_end();
 		(void) signal( SIGINT, norml_sig );
 		return;
@@ -335,23 +335,30 @@ int	frame;
 	nworkers = 0;
 	rt_parallel( render_Scan, npsw );
 
+	/* ensure that all the workers are REALLY dead */
+	for( x = 0; nworkers > 0; x++ )
+		;
+	if( x > 0 )
+		rt_log( "render_Model: termination took %d extra loops\n",
+			x );	
+
 	view_end();
 	(void) signal( SIGINT, norml_sig );
 	return;
 	}
 
-render_Scan( cpu )
-int	cpu;
+render_Scan()
 	{	fastf_t		grid_y_inc[3], grid_x_inc[3];
 		RGBpixel	scanbuf[1024];
+		register int	com;
+		int		cpu;	/* local CPU number */
 		
 	/* Must have local copy of application structure for parallel
 		threads of execution, so make copy.			*/
 		struct application	a;
 
-		register int com;
 	RES_ACQUIRE( &rt_g.res_worker );
-	com = nworkers++;
+	cpu = nworkers++;
 	RES_RELEASE( &rt_g.res_worker );
 
 	resource[cpu].re_cpu = cpu;
