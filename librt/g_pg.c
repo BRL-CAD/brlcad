@@ -292,7 +292,16 @@ struct seg		*seghead;
 		}
 	}
 
-	/* remove duplicate hits */
+	/* Remove duplicate hits.
+	   We remove one of a pair of hits when they are
+		1) close together, and
+		2) both "entry" or both "exit" occurrences.
+	   Two immediate "entry" or two immediate "exit" hits suggest
+	   that we hit both of two joined faces, while we want to hit only
+	   one.  An "entry" followed by an "exit" (or vice versa) suggests
+	   that we grazed an edge, and thus we should leave both
+	   in the hit list. */
+	
 	{
 		register int i, j;
 		LOCAL struct hit temp;
@@ -302,7 +311,9 @@ struct seg		*seghead;
 			fastf_t dist;
 
 			dist = hits[i].hit_dist - hits[i+1].hit_dist;
-			if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) )
+			if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
+				VDOT( hits[i].hit_normal, rp->r_dir ) *
+			        VDOT( hits[i+1].hit_normal, rp->r_dir) > 0)
 			{
 				for( j=i ; j<nhits-1 ; j++ )
 					hits[j] = hits[j+1];
@@ -311,6 +322,7 @@ struct seg		*seghead;
 			}
 		}
 	}
+
 
 	if( nhits == 1 )
 		nhits = 0;
