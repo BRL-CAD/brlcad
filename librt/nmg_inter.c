@@ -338,11 +338,13 @@ struct vertexuse	*vu;
 		break;
 	case 1:
 		/* pt is at start of edge */
-		nmg_jv( vu->v_p, eu->vu_p->v_p );
+		/* The vertex assumes the coords of the edge vertex */
+		nmg_jv( eu->vu_p->v_p, vu->v_p );
 		ret = 1;
 		break;
 	case 2:
 		/* pt is at end of edge */
+		/* The vertex assumes the coords of the edge vertex */
 		nmg_jv( vu->v_p, eu->eumate_p->vu_p->v_p );
 		ret = 1;
 		break;
