@@ -155,7 +155,7 @@ and tick spacings work together to give the
 user accurate information about where things
 are in the view as well as a high degree of
 accuracy when snapping." } }
-    label $top.anchorL -text "Anchor Point" -anchor w
+    label $top.anchorL -text "Anchor Point" -anchor e
     hoc_register_data $top.anchorL "Anchor Point" $hoc_data
     entry $top.anchorE -relief sunken -bd 2 -width 12 -textvar grid_control_anchor($id)
     hoc_register_data $top.anchorE "Anchor Point" $hoc_data
@@ -182,9 +182,8 @@ settings to the grid." } }
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Dismiss/close the grid anchor control panel." } }
 
-    grid $top.anchorL -sticky "ew" -in $top.anchorF
-    grid $top.anchorE -sticky "ew" -in $top.anchorF
-    grid columnconfigure $top.anchorF 0 -weight 1
+    grid $top.anchorL $top.anchorE -sticky "ew" -in $top.anchorF
+    grid columnconfigure $top.anchorF 1 -weight 1
 
     grid $top.anchorF -sticky "ew" -in $top.gridF1 -padx 8 -pady 8
     grid columnconfigure $top.gridF1 0 -weight 1
@@ -240,7 +239,6 @@ proc init_grid_control { id } {
     frame $top.maj_vF -relief sunken -bd 2
 
     frame $top.anchorF
-    frame $top.anchorFF -relief sunken -bd 2
 
     label $top.tickSpacingL -text "Tick Spacing\n($localunit/tick)"
     hoc_register_data $top.tickSpacingL "Tick Spacing"\
@@ -363,9 +361,9 @@ and tick spacings work together to give the
 user accurate information about where things
 are in the view as well as a high degree of
 accuracy when snapping." } }
-    label $top.anchorL -text "Anchor Point" -anchor w
+    label $top.anchorL -text "Anchor Point" -anchor e
     hoc_register_data $top.anchorL "Grid Anchor Point" $hoc_data
-    entry $top.anchorE -relief flat -width 12 -textvar grid_control($id,anchor)
+    entry $top.anchorE -relief sunken -bd 2 -width 12 -textvar grid_control($id,anchor)
     hoc_register_data $top.anchorE "Grid Anchor Point" $hoc_data
 
     label $top.gridEffectsL -text "Grid Effects" -anchor w
@@ -436,52 +434,42 @@ The tick spacing will be a power of 10 in local units." } }
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid $top.squareGridCB - - - -in $top.gridFF1 \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
-
-    grid $top.anchorL -sticky "ew" -in $top.anchorF
-    grid $top.anchorE -sticky "ew" -in $top.anchorFF
-    grid $top.anchorFF -sticky "ew" -in $top.anchorF
-    grid $top.anchorF x x -sticky "ew" -in $top.gridFF2 \
-	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
-    grid columnconfigure $top.anchorF 0 -weight 1
-    grid columnconfigure $top.anchorFF 0 -weight 1
-
-    grid $top.gridEffectsL x $top.drawCB x $top.snapCB x -sticky "ew" -in $top.gridFF3\
-	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
-
-    grid $top.okB $top.applyB x $top.resetB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF4
-
     grid columnconfigure $top.gridFF1 1 -weight 1
     grid columnconfigure $top.gridFF1 3 -weight 1
-    grid columnconfigure $top.gridF1 0 -weight 1
     grid $top.gridFF1 -sticky "ew" -in $top.gridF1 \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
+    grid columnconfigure $top.gridF1 0 -weight 1
     grid $top.gridF1 -sticky "ew" \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     
+    grid $top.anchorL $top.anchorE -sticky "ew" -in $top.anchorF
+    grid columnconfigure $top.anchorF 1 -weight 1
+    grid $top.anchorF -sticky "ew" -in $top.gridFF2 \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid columnconfigure $top.gridFF2 0 -weight 1
-    grid columnconfigure $top.gridFF2 1 -minsize 20
-    grid columnconfigure $top.gridFF2 2 -weight 1
-    grid columnconfigure $top.gridF2 0 -weight 1
     grid $top.gridFF2 -sticky "ew" -in $top.gridF2 -padx $grid_control($id,padx)
+    grid columnconfigure $top.gridF2 0 -weight 1
     grid $top.gridF2 -sticky "ew" -padx $grid_control($id,padx) -pady $grid_control($id,pady)
 
+    grid $top.gridEffectsL x $top.drawCB x $top.snapCB x -sticky "ew" -in $top.gridFF3\
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid columnconfigure $top.gridFF3 0 -weight 0
     grid columnconfigure $top.gridFF3 1 -weight 1
     grid columnconfigure $top.gridFF3 3 -minsize 20
     grid columnconfigure $top.gridFF3 5 -weight 1
-    grid columnconfigure $top.gridF3 0 -weight 1
     grid $top.gridFF3 -sticky "ew" -in $top.gridF3 \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
+    grid columnconfigure $top.gridF3 0 -weight 1
     grid $top.gridF3 -sticky "ew" \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
 
+    grid $top.okB $top.applyB x $top.resetB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF4
     grid columnconfigure $top.gridF4 2 -weight 1
     grid columnconfigure $top.gridF4 5 -weight 1
     grid $top.gridF4 -sticky "ew" \
 	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
 
     grid columnconfigure $top 0 -weight 1
-    grid columnconfigure $top 0 -minsize 400
 
     grid_control_reset $id
     set grid_control($id,square) 1
