@@ -1,27 +1,190 @@
 #!/vld/jra/brlcad/.libtk.m4i64/wish
 
 # these routines implement the gui for the BRL-CAD shaders
-# shader_params is an array containing all the values for this shader
+# shader_params is a global array containing all the values for this shader gui
+# the 'id' is passed to these routines to use for uniqueness
 # the top-level interface is 'do_shader'
 
-proc do_shader_apply { shade_var id } {
+# To implement a new shader gui:
+#	1. add the new shader to the 'switch' in 'do_shader_apply'
+#	2. add the new shader to the 'switch' in 'do_shader'
+#	3. add the new shader to the 'switch' in 'set_shader_params'
+#	3. add a menu item for the new shader in 'init_comb' (comb.tcl)
+#	4. add the following routines:
+
+# proc do_newshader { shade_var id } - Creates the frame to hold the shader widgets and
+#	creates the labels, entries, buttons... Also registers 'help-in-context' data
+#	calls 'set_newshader_values' to set initial settings of widgets
+#	returns the created frame name.
+
+# proc set_newshader_values { shader_str id }
+#	sets the shader widget values according to the passed in shader string
+
+# proc do_newshader_apply { shade_var id }
+#	builds a shader string from the widgets and places the finished string
+#	in a level 0 variable, whose name gets passed in
+
+# proc set_newshader_defaults { id }
+#	This routine sets the default values for this shader
+
+# FAKESTAR routines
+proc do_fakestar { shade_var id } {
+	global shader_params
 	upvar #0 $shade_var shader_str
 
-	set current_shader_type [lindex $shader_str 0]
+	catch { destroy $shader_params($id,window).fr }
+	frame $shader_params($id,window).fr
 
-	switch $current_shader_type {
+	label $shader_params($id,window).fr.fakestar_m -text "There are no parameters to set for the fakestar texture map"
+	hoc_register_data $shader_params($id,window).fr.tst_m "Fake Star" {
+		{summary "The Fake Star texture maps an imaginary star field onto the object."}
+	}
 
-		plastic -
-		mirror -
-		glass {
-			do_phong_apply $shade_var $id
-		}
+	grid $shader_params($id,window).fr.fakestar_m -row 0 -column 1 -columnspan 2
+	grid $shader_params($id,window).fr -columnspan 4
 
-		bwtexture -
-		texture {
-			do_texture_apply $shade_var $id
+	return $shader_params($id,window).fr
+}
+
+proc set_fakestar_values { shader_str id } {
+#	there are none
+	return
+}
+
+proc do_fakestar_apply { shade_var id } {
+	return
+}
+
+proc set_fakestar_defaults { id } {
+	return
+}
+
+# TESTMAP routines
+proc do_testmap { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shader_str
+
+	catch { destroy $shader_params($id,window).fr }
+	frame $shader_params($id,window).fr
+
+	label $shader_params($id,window).fr.tst_m -text "There are no parameters to set for the testmap"
+	hoc_register_data $shader_params($id,window).fr.tst_m "Testmap" {
+		{summary "The 'testmap' shader maps red and blue colors onto the object\n\
+			based on the 'uv' coordinates. The colors vary from (0 0 0) at\n\
+			'uv' == (0,0) to (255 0 255) at 'uv' == (1,1)."}
+	}
+
+	grid $shader_params($id,window).fr.tst_m -row 0 -column 1 -columnspan 2
+	grid $shader_params($id,window).fr -columnspan 4
+
+	return $shader_params($id,window).fr
+}
+
+proc set_testmap_values { shader_str id } {
+#	there are none
+	return
+}
+
+proc do_testmap_apply { shade_var id } {
+	return
+}
+
+proc set_testmap_defaults { id } {
+	return
+}
+
+# CHECKER routines
+proc do_checker { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shader_str
+
+	catch { destroy $shader_params($id,window).fr }
+	frame $shader_params($id,window).fr
+
+	label $shader_params($id,window).fr.color1 -text "First Color"
+	entry $shader_params($id,window).fr.color1_e -width 15 -textvariable shader_params($id,ckr_a)
+	bind $shader_params($id,window).fr.color1_e <Return> "do_shader_apply $shade_var $id"
+	label $shader_params($id,window).fr.color2 -text "Second Color"
+	entry $shader_params($id,window).fr.color2_e -width 15 -textvariable shader_params($id,ckr_b)
+	bind $shader_params($id,window).fr.color2_e <Return> "do_shader_apply $shade_var $id"
+
+	hoc_register_data $shader_params($id,window).fr.color1_e "First Color" {
+		{summary "Enter one of the colors to use in the checkerboard pattern"}
+		{range "An RGB triple, each value from 0 to 255"}
+	}
+	hoc_register_data $shader_params($id,window).fr.color2_e "Second Color" {
+		{summary "Enter another color to use in the checkerboard pattern"}
+		{range "An RGB triple, each value from 0 to 255"}
+	}
+
+	set_checker_values $shader_str $id
+
+	grid $shader_params($id,window).fr.color1 -row 0 -column 1
+	grid $shader_params($id,window).fr.color1_e -row 0 -column 2
+	grid $shader_params($id,window).fr.color2 -row 1 -column 1
+	grid $shader_params($id,window).fr.color2_e -row 1 -column 2
+
+	grid $shader_params($id,window).fr -columnspan 4
+
+	return $shader_params($id,window).fr
+}
+
+proc set_checker_values { shader_str id } {
+	global shader_params
+
+	set shader_params($id,ckr_a) ""
+	set shader_params($id,ckr_b) ""
+
+	if { [llength $shader_str] > 1 } then {
+		set params [lindex $shader_str 1]
+	} else {
+		set params ""
+	}
+	set list_len [llength $params]
+	if { $list_len > 1 } then {
+
+		for { set index 0 } { $index < $list_len } { set index [expr $index + 2] } {
+			set key [lindex $params $index]
+			set value [lindex $params [expr $index + 1]]
+
+			switch $key {
+				a {
+					if { $value != $shader_params($id,def_ckr_a) } then {
+						set shader_params($id,ckr_a) $value }
+				}
+
+				b {
+					if { $value != $shader_params($id,def_ckr_b) } then {
+						set shader_params($id,ckr_b) $value }
+				}
+			}
 		}
 	}
+}
+
+proc do_checker_apply { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shader
+
+	set params ""
+
+	# check each parameter to see if it's been set
+	# if set to the default, ignore it
+	if { [string length $shader_params($id,ckr_a) ] > 0 } then {
+		if { $shader_params($id,ckr_a) != $shader_params($id,def_ckr_a) } then {
+			lappend params a $shader_params($id,ckr_a) } }
+	if { [string length $shader_params($id,ckr_b) ] > 0 } then {
+		if { $shader_params($id,ckr_b) != $shader_params($id,def_ckr_b) } then {
+			lappend params b $shader_params($id,ckr_b) } }
+
+	set shader [list $shader_params($id,shader_name) $params ]
+}
+
+proc set_checker_defaults { id } {
+	global shader_params
+
+	set shader_params($id,def_ckr_a) [list 255 255 255]
+	set shader_params($id,def_ckr_b) [list 0 0 0]
 }
 
 # PHONG routines
@@ -29,57 +192,185 @@ proc do_shader_apply { shade_var id } {
 proc do_phong { shade_var id } {
 	global shader_params
 	upvar #0 $shade_var shader_str
-	set saved_str $shader_str
 
 	catch { destroy $shader_params($id,window).fr }
 	frame $shader_params($id,window).fr
 
 	label $shader_params($id,window).fr.trans -text Transparency
 	entry $shader_params($id,window).fr.trans_e -width 5 -textvariable shader_params($id,trans)
+	bind $shader_params($id,window).fr.trans_e <Return> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.refl -text "mirror reflectance"
 	entry $shader_params($id,window).fr.refl_e -width 5 -textvariable shader_params($id,refl)
+	bind $shader_params($id,window).fr.refl_e <Return> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.spec -text "Specular reflectivity"
 	entry $shader_params($id,window).fr.spec_e -width 5 -textvariable shader_params($id,spec)
+	bind $shader_params($id,window).fr.spec_e <Return> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.diff -text "Diffuse reflectivity"
 	entry $shader_params($id,window).fr.diff_e -width 5 -textvariable shader_params($id,diff)
+	bind $shader_params($id,window).fr.diff_e <Return> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.ri -text "Refractive index"
 	entry $shader_params($id,window).fr.ri_e -width 5 -textvariable shader_params($id,ri)
+	bind $shader_params($id,window).fr.ri_e <Return> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.shine -text Shininess
 	entry $shader_params($id,window).fr.shine_e -width 5 -textvariable shader_params($id,shine)
+	bind $shader_params($id,window).fr.shine_e <Return> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.ext -text Extinction
 	entry $shader_params($id,window).fr.ext_e -width 5 -textvariable shader_params($id,ext)
+	bind $shader_params($id,window).fr.ext_e <Return> "do_shader_apply $shade_var $id"
 
 	hoc_register_data $shader_params($id,window).fr.trans Transparency {
-		{summary "The observer can see diffuse and specular reflections from\n \
-			an object as well as transmitted and/or reflected images.\n \
-			The transparency is the fraction of light that will be\n \
-			transmitted through the object. The mirror reflectance is\n \
-			the fraction of light that will be reflected as a mirror image.\n \
-			The fraction of light remaining after transmission and mirror\n \
-			reflection is divided between diffuse and specular reflections\n \
-			The diffuse and specular reflections are what the observer uses to\n \
-			perceive the color and shape of an object."}
-		{description "The fraction of light that will be\n \
+		{summary "The observer can see diffuse and specular reflections from\n\
+			an object as well as transmitted and/or reflected images.\n\
+			The transparency is the fraction of light that will be\n\
+			transmitted through the object. The mirror reflectance is\n\
+			the fraction of light that will be reflected as a mirror image.\n\
+			The fraction of light remaining after transmission and mirror\n\
+			reflection is divided between diffuse and specular reflections\n\
+			The diffuse and specular reflections are what the observer uses to\n\
+			perceive the color and shape of an object. Transparency plus mirror\n\
+			reflectance is typically less than 1.0, and diffuse plus specular\n\
+			is typically equal to 1.0."}
+		{description "The fraction of light that will be\n\
 			transmitted through this object" }
 		{range "0.0 through 1.0"}
 	}
 
 	hoc_register_data $shader_params($id,window).fr.trans_e Transparency {
-		{description "Enter the fraction of light that\n \
+		{summary "The observer can see diffuse and specular reflections from\n\
+			an object as well as transmitted and/or reflected images.\n\
+			The transparency is the fraction of light that will be\n\
+			transmitted through the object. The mirror reflectance is\n\
+			the fraction of light that will be reflected as a mirror image.\n\
+			The fraction of light remaining after transmission and mirror\n\
+			reflection is divided between diffuse and specular reflections\n\
+			The diffuse and specular reflections are what the observer uses to\n\
+			perceive the color and shape of an object. Transparency plus mirror\n\
+			reflectance is typically less than 1.0, and diffuse plus specular\n\
+			is typically equal to 1.0."}
+		{description "Enter the fraction of light that\n\
 			will be transmitted through this object"}
 		{range "0.0 through 1.0"}
 	}
 
-	hoc_register_data $shader_params($id,window).fr.refl Reflectivity {
-		{description "The fraction of light that will be reflected\n \
+	hoc_register_data $shader_params($id,window).fr.refl "Mirror Reflectivity" {
+		{summary "The observer can see diffuse and specular reflections from\n\
+			an object as well as transmitted and/or reflected images.\n\
+			The transparency is the fraction of light that will be\n\
+			transmitted through the object. The mirror reflectance is\n\
+			the fraction of light that will be reflected as a mirror image.\n\
+			The fraction of light remaining after transmission and mirror\n\
+			reflection is divided between diffuse and specular reflections\n\
+			The diffuse and specular reflections are what the observer uses to\n\
+			perceive the color and shape of an object. Transparency plus mirror\n\
+			reflectance is typically less than 1.0, and diffuse plus specular\n\
+			is typically equal to 1.0."}
+		{description "The fraction of light that will be reflected\n\
 			by the surface of this object"}
 		{range "0.0 through 1.0" }
 	}
 
-	hoc_register_data $shader_params($id,window).fr.refl_e Reflectivity {
-		{description "Enter the fraction of light that will be reflected\n \
+	hoc_register_data $shader_params($id,window).fr.refl_e "Mirror Reflectivity" {
+		{summary "The observer can see diffuse and specular reflections from\n\
+			an object as well as transmitted and/or reflected images.\n\
+			The transparency is the fraction of light that will be\n\
+			transmitted through the object. The mirror reflectance is\n\
+			the fraction of light that will be reflected as a mirror image.\n\
+			The fraction of light remaining after transmission and mirror\n\
+			reflection is divided between diffuse and specular reflections\n\
+			The diffuse and specular reflections are what the observer uses to\n\
+			perceive the color and shape of an object. Transparency plus mirror\n\
+			reflectance is typically less than 1.0, and diffuse plus specular\n\
+			is typically equal to 1.0."}
+		{description "Enter the fraction of light that will be reflected\n\
 			by the surface of this object"}
 		{range "0.0 through 1.0" }
+	}
+
+	hoc_register_data $shader_params($id,window).fr.spec "Specular Reflectivity" {
+		{summary "The observer can see diffuse and specular reflections from\n\
+			an object as well as transmitted and/or reflected images.\n\
+			The transparency is the fraction of light that will be\n\
+			transmitted through the object. The mirror reflectance is\n\
+			the fraction of light that will be reflected as a mirror image.\n\
+			The fraction of light remaining after transmission and mirror\n\
+			reflection is divided between diffuse and specular reflections\n\
+			The diffuse and specular reflections are what the observer uses to\n\
+			perceive the color and shape of an object. Transparency plus mirror\n\
+			reflectance is typically less than 1.0, and diffuse plus specular\n\
+			is typically equal to 1.0."}
+		{description "Enter the fraction of light that will be specularly reflected\n\
+			by the surface of this object"}
+		{range "0.0 through 1.0" }
+	}
+
+	hoc_register_data $shader_params($id,window).fr.spec_e "Specular Reflectivity" {
+		{summary "The observer can see diffuse and specular reflections from\n\
+			an object as well as transmitted and/or reflected images.\n\
+			The transparency is the fraction of light that will be\n\
+			transmitted through the object. The mirror reflectance is\n\
+			the fraction of light that will be reflected as a mirror image.\n\
+			The fraction of light remaining after transmission and mirror\n\
+			reflection is divided between diffuse and specular reflections\n\
+			The diffuse and specular reflections are what the observer uses to\n\
+			perceive the color and shape of an object. Transparency plus mirror\n\
+			reflectance is typically less than 1.0, and diffuse plus specular\n\
+			is typically equal to 1.0."}
+		{description "Enter the fraction of light that will be specularly reflected\n\
+			by the surface of this object"}
+		{range "0.0 through 1.0" }
+	}
+
+	hoc_register_data $shader_params($id,window).fr.diff "Diffuse Reflectivity" {
+		{summary "The observer can see diffuse and specular reflections from\n\
+			an object as well as transmitted and/or reflected images.\n\
+			The transparency is the fraction of light that will be\n\
+			transmitted through the object. The mirror reflectance is\n\
+			the fraction of light that will be reflected as a mirror image.\n\
+			The fraction of light remaining after transmission and mirror\n\
+			reflection is divided between diffuse and specular reflections\n\
+			The diffuse and specular reflections are what the observer uses to\n\
+			perceive the color and shape of an object. Transparency plus mirror\n\
+			reflectance is typically less than 1.0, and diffuse plus specular\n\
+			is typically equal to 1.0."}
+		{description "Enter the fraction of light that will be diffusely reflected\n\
+			by the surface of this object"}
+		{range "0.0 through 1.0" }
+	}
+
+	hoc_register_data $shader_params($id,window).fr.diff_e "Diffuse Reflectivity" {
+		{summary "The observer can see diffuse and specular reflections from\n\
+			an object as well as transmitted and/or reflected images.\n\
+			The transparency is the fraction of light that will be\n\
+			transmitted through the object. The mirror reflectance is\n\
+			the fraction of light that will be reflected as a mirror image.\n\
+			The fraction of light remaining after transmission and mirror\n\
+			reflection is divided between diffuse and specular reflections\n\
+			The diffuse and specular reflections are what the observer uses to\n\
+			perceive the color and shape of an object. Transparency plus mirror\n\
+			reflectance is typically less than 1.0, and diffuse plus specular\n\
+			is typically equal to 1.0."}
+		{description "Enter the fraction of light that will be diffusely reflected\n\
+			by the surface of this object"}
+		{range "0.0 through 1.0" }
+	}
+
+	hoc_register_data $shader_params($id,window).fr.ri_e "Index of Refraction" {
+		{summary "This is the index of refraction for this material. The index for\n\
+			air is 1.0. This parameter is only useful for materials that have\n\
+			a non-zero transparency."}
+		{range "not less than 1.0"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.shine_e "Shininess" {
+		{summary "An indication of the 'shininess' of this material. A higher number\n\
+			will make the object look more shiney"}
+		{range "integer values from 1 to 10"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.ext_e "Extinction" {
+		{summary "Fraction of light absorbed per linear meter of this material.\n\
+			The default value here is 0.0."}
+		{range "non-negative"}
 	}
 
 #	set variables from current 'params' list
@@ -100,9 +391,6 @@ proc do_phong { shade_var id } {
 	grid $shader_params($id,window).fr.shine_e -row 3 -column 2
 	grid $shader_params($id,window).fr.ext -row 4 -column 1
 	grid $shader_params($id,window).fr.ext_e -row 4 -column 2
-#	grid $shader_params($id,window).fr.apply -row 6 -column 0
-#	grid $shader_params($id,window).fr.reset -row 6 -column 1 -columnspan 2
-#	grid $shader_params($id,window).fr.dismiss -row 6 -column 3
 	
 	grid $shader_params($id,window).fr -columnspan 4
 
@@ -211,21 +499,13 @@ proc do_phong_apply { shade_var id } {
 		if { [expr $shader_params($id,ext) != $shader_params($id,def_ext)] } then {
 			lappend params ex $shader_params($id,ext) } }
 
-	set shader [list $shader_params($id,default_choice) $params ]
-}
-
-proc do_phong_reset { shade_var id saved_str } {
-	global shader_params
-	upvar #0 $shade_var shader_str
-
-	set shader_str $saved_str
-	set_phong_values $saved_str $id
+	set shader [list $shader_params($id,shader_name) $params ]
 }
 
 proc set_phong_defaults { id } {
 	global shader_params
 
-	switch $shader_params($id,default_choice) {
+	switch $shader_params($id,shader_name) {
 
 		plastic {
 			set shader_params($id,def_shine) 10
@@ -260,48 +540,13 @@ proc set_phong_defaults { id } {
 
 }
 
-
-proc do_plastic { shade_var id } {
-	global shader_params
-
-	set shader_params($id,default_choice) plastic
-	set_phong_defaults $id
-	set my_win [do_phong $shade_var $id]
-	return $my_win
-}
-
-proc do_mirror { shade_var id } {
-	global shader_params
-
-	set shader_params($id,default_choice) mirror
-	set_phong_defaults $id
-	set my_win [do_phong $shade_var $id]
-	return $my_win
-}
-
-proc do_glass { shade_var id } {
-	global shader_params
-
-	set shader_params($id,default_choice) glass
-	set_phong_defaults $id
-	set my_win [do_phong $shade_var $id]
-	return $my_win
-}
-
 # TEXTURE MAP routines
-
-proc do_texture_reset { shade_var id saved_str } {
-	global shader_params
-	upvar #0 $shade_var shader_str
-
-	set shader_str $saved_str
-	set_texture_values $saved_str $id
-}
 
 proc set_texture_defaults { id } {
 	global shader_params
 
-	switch $shader_params($id,default_choice) {
+	switch $shader_params($id,shader_name) {
+		bump -
 		bwtexture -
 		texture {
 			set shader_params($id,def_width) 512
@@ -316,7 +561,7 @@ proc set_texture_values { shader_str id } {
 #       make sure all the entry variables start empty
 
 	set shader_params($id,transp) ""
-	set shader_params($id,trans_valid) ""
+	set shader_params($id,trans_valid) 0
 	set shader_params($id,file) ""
 	set shader_params($id,width) ""
 	set shader_params($id,height) ""
@@ -391,35 +636,58 @@ proc do_texture_apply { shade_var id } {
 				lappend params trans_valid 1 }
 	}
 
-	set shader [list $shader_params($id,default_choice) $params ]
+	set shader [list $shader_params($id,shader_name) $params ]
 }
 
-proc do_texture_main { shade_var id } {
+proc do_texture { shade_var id } {
 	global shader_params
 	upvar #0 $shade_var shader_str
-	set saved_str $shader_str
 
-#	set shader_params($id,window) .top_$id
-#	catch {destroy $shader_params($id,window)}
-#	toplevel $shader_params($id,window)
-#	wm title $shader_params($id,window) "$shader_params($id,default_choice) Shader Parameters"
 	catch { destroy $shader_params($id,window).fr }
 	frame $shader_params($id,window).fr
 
 	label $shader_params($id,window).fr.file -text "Texture File Name"
 	entry $shader_params($id,window).fr.file_e -width 40 -textvariable shader_params($id,file)
+	bind $shader_params($id,window).fr.file_e <Return> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.width -text "File Width (pixels)"
 	entry $shader_params($id,window).fr.width_e -width 5 -textvariable shader_params($id,width)
+	bind $shader_params($id,window).fr.width_e <Return> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.height -text "File height (pixels)"
 	entry $shader_params($id,window).fr.height_e -width 5 -textvariable shader_params($id,height)
+	bind $shader_params($id,window).fr.height_e <Return> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.trans -text "Transparency (RGB)"
 	entry $shader_params($id,window).fr.trans_e -width 15 -textvariable shader_params($id,transp)
+	bind $shader_params($id,window).fr.trans_e <Return> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.valid -text "Use transparency"
 	checkbutton $shader_params($id,window).fr.valid_e -variable shader_params($id,trans_valid)
 
-#	button $shader_params($id,window).fr.apply -text apply -command "do_texture_apply $shade_var $id"
-#	button $shader_params($id,window).fr.reset -text reset -command "do_texture_reset $shade_var $id {$saved_str}"
-#	button $shader_params($id,window).fr.dismiss -text dismiss -command "do_dismiss $id"
+	hoc_register_data $shader_params($id,window).fr.file_e File {
+		{ summary "Enter the name of the file containing the texture to be mapped to this\n\
+			object. This file should be a 'pix' file for the 'texture' shader,\n\
+			or a 'bw' file for 'bwtexture'."}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.width_e Width {
+		{ summary "Enter the width of the texture in pixels\n(default is 512)"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.height_e Height {
+		{ summary "Enter the height of the texture in pixels\n(default is 512)"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.trans_e Transparency {
+		{ summary "Enter the color in the texture that will be treated as\n\
+			transparent. All pixels on this object that get assigned this\n\
+			color from the texture will be treated as though this object\n\
+			does not exist. For the 'texture' shader, this must be an RGB\n\
+			triple. For the 'bwtexture' shader, a single value is sufficient"}
+		{ range "RGB values must be integers from 0 to 255"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.valid_e Transparency {
+		{ summary "If depressed, transparency is enabled using the transparency\n\
+			color. Otherwise, the transparency color is ignored"}
+	}
 
 #	set variables from current 'params' list
 
@@ -435,49 +703,99 @@ proc do_texture_main { shade_var id } {
 	grid $shader_params($id,window).fr.trans_e -row 2 -column 1 -sticky w
 	grid $shader_params($id,window).fr.valid_e -row 2 -column 2 -sticky e
 	grid $shader_params($id,window).fr.valid -row 2 -column 3 -sticky w
-#	grid $shader_params($id,window).fr.apply -row 3 -column 0
-#	grid $shader_params($id,window).fr.reset -row 3 -column 1 -columnspan 2
-#	grid $shader_params($id,window).fr.dismiss -row 3 -column 3
 
 	grid $shader_params($id,window).fr -columnspan 4
 
 	return $shader_params($id,window).fr
 }
 
-proc do_texture { shade_var id } {
+proc set_shader_params { shade_var id } {
+	upvar #0 $shade_var shade_str
 	global shader_params
 
-	set shader_params($id,default_choice) texture
-	set_texture_defaults $id
-	set my_win [do_texture_main $shade_var $id]
-	return $my_win
+	set err [catch "set shader [lindex $shade_str 0]"]
+
+	if { $err != 0 } {
+		tk_messageBox -title "Shader String Error" -type ok -icon error \
+			-message "Invalid shader string ($shade_str)"
+		return
+	}
+
+	if { $shader != $shader_params($id,shader_name) } { 
+		do_shader $shade_var $id $shader_params($id,window)
+		return
+	}
+	
+	switch $shader {
+		glass -
+		mirror -
+		plastic {
+			set_phong_values $shade_str $id
+		}
+		bump -
+		bwtexture -
+		texture {
+			set_texture_values $shade_str $id
+		}
+		checker {
+			set_checker_values $shade_str $id
+		}
+		testmap {
+			set_testmap_values $shade_str $id
+		}
+		fakestar {
+			set_fakestar_values $shade_str $id
+		}
+	}
 }
 
 # This is the top-level interface
 #	'shade_var' contains the name of the variable that the level 0 caller is using
 #	to hold the shader string, e.g., "plastic { sh 8 dp .1 }"
 #	These routines will update that variable
-proc do_shader { shade_var id_name frame_name } {
+proc do_shader { shade_var id frame_name } {
 	global shader_params
 	upvar #0 $shade_var shade_str
 
-	set shader_params($id_name,parent_window_id) $id_name
-	set shader_params($id_name,window) $frame_name
+	set shader_params($id,parent_window_id) $id
+	set shader_params($id,window) $frame_name
 
 	if { [llength $shade_str] < 1 } then {
 		set shade_str plastic
-		set my_win [do_plastic $shade_var $id_name]
+		set shader_params($id,shader_name) $shade_str
+		set my_win [do_plastic $shade_var $id]
 	} else {
 		set material [lindex $shade_str 0]
+		set shader_params($id,shader_name) $material
 		switch $material {
-			glass { set my_win [do_glass $shade_var $id_name] }
-			mirror { set my_win [do_mirror $shade_var $id_name] }
-			plastic { set my_win [do_plastic $shade_var $id_name] }
+			glass -
+			mirror -
+			plastic {
+				set_phong_defaults $id
+				set my_win [do_phong $shade_var $id]
+			}
+			bump -
 			bwtexture -
-			texture { set my_win [do_texture $shade_var $id_name] }
+			texture {
+				set_texture_defaults $id
+				set my_win [do_texture $shade_var $id]
+			}
+			checker {
+				set_checker_defaults $id
+				set my_win [do_checker $shade_var $id]
+			}
+			testmap {
+				set_testmap_defaults $id
+				set my_win [do_testmap $shade_var $id]
+			}
+			fakestar {
+				set_fakestar_defaults $id
+				set my_win [do_fakestar $shade_var $id]
+			}
 
 			default {
-				tk_messageBox -title "Shader Name Error" -type ok -icon error -message "Invalid shader name ($material)"
+				tk_messageBox -title "Shader Name Error" -type ok -icon error \
+					 -message "Invalid shader name ($material)"
 				set my_win ""
 			}
 		}
@@ -486,3 +804,33 @@ proc do_shader { shade_var id_name frame_name } {
 	return $my_win
 }
 
+
+proc do_shader_apply { shade_var id } {
+	upvar #0 $shade_var shader_str
+
+	set current_shader_type [lindex $shader_str 0]
+
+	switch $current_shader_type {
+
+		plastic -
+		mirror -
+		glass {
+			do_phong_apply $shade_var $id
+		}
+
+		bump -
+		bwtexture -
+		texture {
+			do_texture_apply $shade_var $id
+		}
+		checker {
+			do_checker_apply $shade_var $id
+		}
+		testmap {
+			do_testmap_apply $shade_var $id
+		}
+		fakestar {
+			do_fakestar_apply $shade_var $id
+		}
+	}
+}
