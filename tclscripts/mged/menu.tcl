@@ -226,7 +226,7 @@ proc do_edit_menu { type menu1 } {
 	foreach item $menu1 {
 	    if {$item != "RETURN"} {
 		.$id.menubar.edit insert $i radiobutton -variable edit_type \
-			-label $item -command "press \"$item\"; \
+			-label $item -command "press \"edit menu\"; press \"$item\"; \
 			set mged_gui($id,transform) e; set_transform $id"
 		incr i
 	    }
