@@ -763,9 +763,7 @@ struct shell *s;
 		NMG_CK_EDGEUSE(eu);
 		NMG_CK_EDGE(eu->e_p);
 
-		nmg_pl_eu(fp, eu, &b, (unsigned char)200, 
-			(unsigned char)200, 
-			(unsigned char)0);
+		nmg_pl_eu(fp, eu, &b, 200, 200, 0 );
 	}
 	if (s->vu_p) {
 		nmg_pl_v(fp, s->vu_p->v_p, &b );
@@ -805,6 +803,269 @@ struct model *m;
 
 	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
 		nmg_pl_r(fp, r);
+	}
+}
+
+/************************************************************************
+ *									*
+ *		Visualization as VLIST routines				*
+ *									*
+ ************************************************************************/
+
+/*
+ *			N M G _ V L B L O C K _ V
+ */
+static void nmg_vlblock_v(vbp, v, b)
+struct vlblock	*vbp;
+struct vertex *v;
+struct nmg_ptbl *b;
+{
+	pointp_t p;
+	static char label[128];
+	struct vlhead	*vh;
+
+	if (nmg_tbl(b, TBL_LOC, &v->magic) >= 0) return;
+
+	(void)nmg_tbl(b, TBL_INS, &v->magic);
+
+	NMG_CK_VERTEX(v);
+	NMG_CK_VERTEX_G(v->vg_p);
+	p = v->vg_p->coord;
+
+	vh = rt_vlblock_find( vbp, 255, 255, 255 );
+#if 0
+	if (rt_g.NMG_debug & DEBUG_LABEL_PTS) {
+		(void)sprintf(label, "%g %g %g", p[0], p[1], p[2]);
+		pdv_3move( vbp, p );
+		pl_label(vbp, label);
+	}
+#endif
+	ADD_VL( vh, p, VL_CMD_LINE_MOVE );
+	ADD_VL( vh, p, VL_CMD_LINE_DRAW );
+}
+
+/*
+ *			N M G _ V L B L O C K _ E
+ */
+static nmg_vlblock_e(vbp, e, b, R, G, B)
+struct vlblock	*vbp;
+struct edge *e;
+struct nmg_ptbl *b;
+unsigned char R, G, B;
+{
+	pointp_t p0, p1;
+	point_t end0, end1;
+	vect_t v;
+	struct vlhead	*vh;
+
+	if (nmg_tbl(b, TBL_LOC, &e->magic) >= 0) return;
+
+	(void)nmg_tbl(b, TBL_INS, &e->magic);
+	
+	NMG_CK_EDGEUSE(e->eu_p);
+	NMG_CK_VERTEXUSE(e->eu_p->vu_p);
+	NMG_CK_VERTEX(e->eu_p->vu_p->v_p);
+	NMG_CK_VERTEX_G(e->eu_p->vu_p->v_p->vg_p);
+	p0 = e->eu_p->vu_p->v_p->vg_p->coord;
+
+	NMG_CK_VERTEXUSE(e->eu_p->eumate_p->vu_p);
+	NMG_CK_VERTEX(e->eu_p->eumate_p->vu_p->v_p);
+	NMG_CK_VERTEX_G(e->eu_p->eumate_p->vu_p->v_p->vg_p);
+	p1 = e->eu_p->eumate_p->vu_p->v_p->vg_p->coord;
+
+	/* leave a little room between the edge endpoints and the vertex
+	 * compute endpoints by forming a vector between verets, scale vector
+	 * and modify points
+	 */
+	VSUB2SCALE(v, p1, p0, 0.95);
+	VADD2(end0, p0, v);
+	VREVERSE(v, v);
+
+	VADD2(end1, p1, v);
+
+	vh = rt_vlblock_find( vbp, 255, 255, 255 );
+	ADD_VL( vh, end0, VL_CMD_LINE_MOVE );
+	ADD_VL( vh, end1, VL_CMD_LINE_DRAW );
+
+	nmg_vlblock_v(vbp, e->eu_p->vu_p->v_p, b);
+	nmg_vlblock_v(vbp, e->eu_p->eumate_p->vu_p->v_p, b);
+}
+
+/*
+ *			M N G _ V L B L O C K _ E U
+ */
+void nmg_vlblock_eu(vbp, eu, b, R, G, B)
+struct vlblock	*vbp;
+struct edgeuse *eu;
+struct nmg_ptbl *b;
+int		R, G, B;
+{
+	point_t base, tip;
+	point_t	radial_tip;
+	point_t	next_base;
+	point_t	last_tip;
+	struct vlhead	*vh;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_EDGE(eu->e_p);
+	NMG_CK_VERTEXUSE(eu->vu_p);
+	NMG_CK_VERTEX(eu->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
+
+	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
+	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
+
+	if (nmg_tbl(b, TBL_LOC, &eu->l.magic) >= 0) return;
+	(void)nmg_tbl(b, TBL_INS, &eu->l.magic);
+
+	nmg_vlblock_e(vbp, eu->e_p, b, R, G, B);
+
+	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
+
+	    	nmg_eu_coords(eu, base, tip);
+	    	if (eu->up.lu_p->up.fu_p->orientation == OT_SAME)
+	    		R += 50;
+		else if (eu->up.lu_p->up.fu_p->orientation == OT_OPPOSITE)
+			R -= 50;
+	    	else
+	    		R = G = B = (unsigned char)255;
+
+		vh = rt_vlblock_find( vbp, R, G, B );
+		ADD_VL( vh, base, VL_CMD_LINE_MOVE );
+		ADD_VL( vh, tip, VL_CMD_LINE_DRAW );
+
+	    	nmg_eu_radial( eu, radial_tip );
+		vh = rt_vlblock_find( vbp, R, G-20, B );
+		ADD_VL( vh, tip, VL_CMD_LINE_MOVE );
+		ADD_VL( vh, radial_tip, VL_CMD_LINE_DRAW );
+
+	    	nmg_eu_next_base( eu, next_base );
+		vh = rt_vlblock_find( vbp, 0, 100, 0 );
+		ADD_VL( vh, tip, VL_CMD_LINE_MOVE );
+		ADD_VL( vh, next_base, VL_CMD_LINE_DRAW );
+	}
+}
+
+/*
+ *			N M G _ V L B L O C K _ L U
+ */
+void nmg_vlblock_lu(vbp, lu, b, R, G, B)
+struct vlblock	*vbp;
+struct loopuse *lu;
+struct nmg_ptbl *b;
+unsigned char R, G, B;
+{
+	struct edgeuse	*eu;
+	long		magic1;
+
+	NMG_CK_LOOPUSE(lu);
+	if (nmg_tbl(b, TBL_LOC, &lu->l.magic) >= 0) return;
+
+	(void)nmg_tbl(b, TBL_INS, &lu->l.magic);
+
+	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
+	if (magic1 == NMG_VERTEXUSE_MAGIC &&
+	    lu->orientation != OT_BOOLPLACE) {
+	    	nmg_vlblock_v(vbp, NMG_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p, b);
+	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
+		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+			nmg_vlblock_eu(vbp, eu, b, R, G, B);
+		}
+	}
+}
+
+/*
+ *			M N G _ V L B L O C K _ F U
+ */
+void nmg_vlblock_fu(vbp, fu, b)
+struct vlblock	*vbp;
+struct faceuse *fu;
+struct nmg_ptbl *b;
+{
+	struct loopuse *lu;
+
+	NMG_CK_FACEUSE(fu);
+	if (nmg_tbl(b, TBL_LOC, &fu->l.magic) >= 0) return;
+	(void)nmg_tbl(b, TBL_INS, &fu->l.magic);
+
+	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+		nmg_vlblock_lu(vbp, lu, b, 80, 100, 170 );
+	}
+}
+
+/*
+ *			N M G _ V L B L O C K _ S
+ */
+void nmg_vlblock_s(vbp, s)
+struct vlblock	*vbp;
+struct shell *s;
+{
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct nmg_ptbl b;
+
+	NMG_CK_SHELL(s);
+
+	/* get space for list of items processed */
+	(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
+
+	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+		NMG_CK_FACEUSE(fu);
+		nmg_vlblock_fu(vbp, fu, &b );
+	}
+
+	for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu);
+		nmg_vlblock_lu(vbp, lu, &b, 255, 0, 0);
+	}
+
+	for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_EDGE(eu->e_p);
+
+		nmg_vlblock_eu(vbp, eu, &b, 200, 200, 0 );
+	}
+	if (s->vu_p) {
+		nmg_vlblock_v(vbp, s->vu_p->v_p, &b );
+	}
+
+	if( NMG_LIST_IS_EMPTY( &s->fu_hd ) &&
+	    NMG_LIST_IS_EMPTY( &s->lu_hd ) &&
+	    NMG_LIST_IS_EMPTY( &s->eu_hd ) && !s->vu_p) {
+	    	rt_log("WARNING nmg_vlblock_s() shell has no children\n");
+	}
+
+	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+}
+
+/*
+ *			N M G _ V L B L O C K _ R
+ */
+void nmg_vlblock_r(vbp, r)
+struct vlblock	*vbp;
+struct nmgregion *r;
+{
+	struct shell *s;
+
+	for( NMG_LIST( s, shell, &r->s_hd ) )  {
+		nmg_vlblock_s(vbp, s);
+	}
+}
+
+/*
+ *			N M G _ V L B L O C K _ M
+ */
+void nmg_vlblock_m(vbp, m)
+struct vlblock	*vbp;
+struct model *m;
+{
+	struct nmgregion *r;
+
+	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
+		nmg_vlblock_r(vbp, r);
 	}
 }
 
