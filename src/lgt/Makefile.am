@@ -42,7 +42,6 @@ lgt_LDADD = \
 	${FB} \
 	${TERMIO} \
 	${CURSOR} \
-	${LIBGL} \
 	${LIBSGIGL}
 
 lgt_CFLAGS = -DBEHIND_ME_TOL=0.05

@@ -33,7 +33,6 @@ fbed_LDADD = \
 	${TERMIO} \
 	${CURSOR} \
 	${CURSES} \
-	${LIBGL} \
 	${LIBSGIGL}
 
 man_MANS = fbed.1
