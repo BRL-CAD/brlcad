@@ -384,6 +384,7 @@ Ir_open()
 	int		win_o_x=272;
 	int		win_o_y=12;
 
+#ifdef DM_OGL
 	/* This is a hack to handle the fact that the sgi attach crashes
 	 * if a direct OpenGL context has been previously opened in the 
 	 * current mged session. This stops the attach before it crashes.
@@ -395,6 +396,7 @@ Ir_open()
 		rt_log("quit this session and reopen it.\n");
 		return(-1);
 	}
+#endif /* DM_OGL */
 	/*
 	 *  Take inventory of the hardware.
 	 *  See "types for class graphics" in /usr/include/sys/invent.h
