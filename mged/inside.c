@@ -151,7 +151,6 @@ char **argv;
 	struct directory	*outdp;
 	mat_t newmat;
 	int	cgtype;		/* cgtype ARB 4..8 */
-	int	p1, p2, p3;
 	int	nface;
 	fastf_t	thick[6];
 	plane_t	planes[6];
@@ -715,7 +714,7 @@ fastf_t	thick[6];
 	fastf_t	aa[2], ab[2], ba[2], bb[2];
 	fastf_t	dt, h1, h2, ht, dtha, dthb;
 	fastf_t	s, d4, d5, ctan, t3;
-	register int i, j, k;
+	register int i, k;
 	double ratio;
 
 	thick[3] = thick[2];
@@ -869,8 +868,8 @@ struct rt_db_internal	*ip;
 fastf_t	thick[4];
 {
 	struct rt_rpc_internal	*rpc = (struct rt_rpc_internal *)ip->idb_ptr;
-	fastf_t			b, bp, th, rp, yp;
-	vect_t			Bu, Hu, Norm, Ru;
+	fastf_t			b;
+	vect_t			Bu, Hu, Ru;
 
 	RT_RPC_CK_MAGIC(rpc);
 
@@ -903,23 +902,19 @@ fastf_t	thick[4];
 	return(0);
 }
 
-/* finds inside of rhc, not quite right */
+/* XXX finds inside of rhc, not quite right */
 int
 rhcin(ip, thick)
 struct rt_db_internal	*ip;
 fastf_t	thick[4];
 {
 	struct rt_rhc_internal	*rhc = (struct rt_rhc_internal *)ip->idb_ptr;
-	fastf_t			rn;
-	point_t			Vn;
 	vect_t			Bn, Hn, Bu, Hu, Ru;
 
 	RT_RHC_CK_MAGIC(rhc);
 	
-	VMOVE( Vn, rhc->rhc_V );
 	VMOVE( Bn, rhc->rhc_B );
 	VMOVE( Hn, rhc->rhc_H );
-	rn = rhc->rhc_r;
 	
 	/* get unit coordinate axes */
 	VMOVE( Bu, Bn );
