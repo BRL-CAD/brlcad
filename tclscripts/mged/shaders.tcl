@@ -7,11 +7,12 @@
 #	1. add the new shader to the 'switch' in 'do_shader_apply'
 #	2. add the new shader to the 'switch' in 'do_shader'
 #	3. add the new shader to the 'switch' in 'set_shader_params'
-#	4. add the new shader to the switch command in 'stack_add' and 'env_select', if this shader is
+#	4. add the new shader to the switch command in 'stack_add', 'stack_insert', and 'env_select', if this shader is
 #		appropriate for being in a stack or environment map
-#	5. add a menu item for the new shader in 'init_comb' (comb.tcl)
-#	6. add the new shader to the list of shader names in the 'is_good_shader' proc
-#	7. add the following routines:
+#	5. add the new shader to the menus in 'do_stack' and 'do_envmap'
+#	6. add a menu item for the new shader in 'init_comb' (comb.tcl)
+#	7. add the new shader to the list of shader names in the 'is_good_shader' proc
+#	8. add the following routines:
 
 # proc do_newshader { shade_var id } - Creates the frame to hold the shader widgets and
 #	creates the labels, entries, buttons... Also registers 'help-in-context' data
@@ -27,6 +28,628 @@
 
 # proc set_newshader_defaults { id }
 #	This routine sets the default values for this shader
+
+
+
+
+
+proc vec_compare { v1 v2 n } {
+	for { set i 0 } { $i < $n } { incr i } {
+		if { [expr [lindex $v1 $i] != [lindex $v2 $i]] } then {
+			return 1
+		}
+	}
+	return 0
+}
+
+# camouflage routines
+
+proc color_trigger { shade_var id name1 name2 op } {
+	do_shader_apply $shade_var $id
+}
+
+proc do_camo {  shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shader_str
+
+	catch { destroy $shader_params($id,window).fr }
+	frame $shader_params($id,window).fr
+
+	trace vdelete shader_params($id,c1) w "color_trigger $shade_var $id"
+	trace vdelete shader_params($id,c2) w "color_trigger $shade_var $id"
+	trace vdelete shader_params($id,c3) w "color_trigger $shade_var $id"
+
+	set shader_params($id,c1) ""
+	set shader_params($id,c2) ""
+	set shader_params($id,c3) ""
+
+	label $shader_params($id,window).fr.lacun -text Lacunarity
+	entry $shader_params($id,window).fr.lacun_e -width 5 -textvariable shader_params($id,lacun)
+	bind $shader_params($id,window).fr.lacun_e <KeyRelease> "do_shader_apply $shade_var $id"
+	hoc_register_data $shader_params($id,window).fr.lacun "Lacunarity" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "The grid on which the noise function is built is scaled by this value\n\
+			for each successive octave of noise which will be combined to produce the\n\
+			final result. (default is 2.1753974)"}
+		{range "Must be greater than zero"}
+	}
+	hoc_register_data $shader_params($id,window).fr.lacun_e "Lacunarity" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "The grid on which the noise function is built is scaled by this value\n\
+			for each successive octave of noise which will be combined to produce the\n\
+			final result. (default is 2.1753974)"}
+		{range "Must be greater than zero"}
+	}
+
+	label $shader_params($id,window).fr.h -text "H value"
+	entry $shader_params($id,window).fr.h_e -width 5 -textvariable shader_params($id,hval)
+	bind $shader_params($id,window).fr.h_e <KeyRelease> "do_shader_apply $shade_var $id"
+	hoc_register_data $shader_params($id,window).fr.h "H Value" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "The value for H (default is 1.0)"}
+		{range "??"}
+	}
+	hoc_register_data $shader_params($id,window).fr.h_e "H Value" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "The value for H (default is 1.0)"}
+		{range "??"}
+	}
+
+	label $shader_params($id,window).fr.octaves -text "Octaves"
+	entry $shader_params($id,window).fr.octaves_e -width 5 -textvariable shader_params($id,octaves)
+	bind $shader_params($id,window).fr.octaves_e <KeyRelease> "do_shader_apply $shade_var $id"
+	hoc_register_data $shader_params($id,window).fr.octaves "Octaves" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "The number of times the noise grid will be scaled\n\
+			and recombined to produce the final noise function."}
+		{range "Must be greater than 0 (default is  4.0)"}
+	}
+	hoc_register_data $shader_params($id,window).fr.octaves_e "Octaves" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "The number of times the noise grid will be scaled\n\
+			and recombined to produce the final noise function."}
+		{range "Must be greater than 0 (default is  4.0)"}
+	}
+
+	label $shader_params($id,window).fr.size -text "Noise Size"
+	entry $shader_params($id,window).fr.size_e -width 5 -textvariable shader_params($id,size)
+	bind $shader_params($id,window).fr.size_e <KeyRelease> "do_shader_apply $shade_var $id"
+	hoc_register_data $shader_params($id,window).fr.size "Noise Size" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "A larger number here produces larger color patches (default is 1.0)"}
+		{range "must be greater than zero"}
+	}
+	hoc_register_data $shader_params($id,window).fr.size_e "Noise Size" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "A larger number here produces larger color patches (default is 1.0)"}
+		{range "must be greater than zero"}
+	}
+
+	label $shader_params($id,window).fr.scale -text "Noise Scale (X, Y, Z)"
+	entry $shader_params($id,window).fr.scale_e -width 20 -textvariable shader_params($id,scale)
+	bind $shader_params($id,window).fr.scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+	hoc_register_data $shader_params($id,window).fr.scale "Noise Scale" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "Three scale values are required (X, Y, and Z)."}
+		{range "Must be greater than 0 Default values are (1.0 1.0 1.0)"}
+	}
+	hoc_register_data $shader_params($id,window).fr.scale_e "Noise Scale" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "Three scale values are required (X, Y, and Z)."}
+		{range "Must be greater than 0 Default values are (1.0 1.0 1.0)"}
+	}
+
+	label $shader_params($id,window).fr.c1 -text "Color #1"
+	frame $shader_params($id,window).fr.c1_e
+	color_entry_build $shader_params($id,window).fr.c1_e color shader_params($id,c1)\
+		"color_entry_chooser $id $shader_params($id,window).fr.c1_e color \"Color #1\"\
+		 shader_params $id,c1"\
+		12 $shader_params($id,c1)
+	hoc_register_data $shader_params($id,window).fr.c1 "Color #1" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "This is one of three colors used in the camouflage pattern\n\
+			(default color is 97/74/41)"}
+	}
+
+	label $shader_params($id,window).fr.c2 -text "Background Color"
+	frame $shader_params($id,window).fr.c2_e
+	color_entry_build $shader_params($id,window).fr.c2_e color shader_params($id,c2)\
+		"color_entry_chooser $id $shader_params($id,window).fr.c2_e color \"Background Color\"\
+		 shader_params $id,c2"\
+		12 $shader_params($id,c2)
+	hoc_register_data $shader_params($id,window).fr.c2 "Background Color" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "This is the background color used in the camouflage pattern\n\
+			(default color is 26/77/10)"}
+	}
+
+	label $shader_params($id,window).fr.c3 -text "Color #2"
+	frame $shader_params($id,window).fr.c3_e
+	color_entry_build $shader_params($id,window).fr.c3_e color shader_params($id,c3)\
+		"color_entry_chooser $id $shader_params($id,window).fr.c3_e color \"Color #2\"\
+		 shader_params $id,c3"\
+		12 $shader_params($id,c3)
+	hoc_register_data $shader_params($id,window).fr.c3 "Color #2" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "This is one of three colors used in the camouflage pattern\n\
+			(default color is 38/38/38)"}
+	}
+
+	label $shader_params($id,window).fr.t1 -text "Threshold #1"
+	entry $shader_params($id,window).fr.t1_e -width 5 -textvariable  shader_params($id,t1)
+	bind $shader_params($id,window).fr.t1_e <KeyRelease> "do_shader_apply $shade_var $id"
+	hoc_register_data $shader_params($id,window).fr.t1 "Noise Scale" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "Areas where the noise function returns a value less than this threshold\n\
+			will be colored using color #1"}
+		{range " -1.0 to +1.0 (default is -0.25)"}
+	}
+	hoc_register_data $shader_params($id,window).fr.t1_e "Noise Scale" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "Areas where the noise function returns a value less than this threshold\n\
+			will be colored using color #1"}
+		{range " -1.0 to +1.0 (default is -0.25)"}
+	}
+
+	label $shader_params($id,window).fr.t2 -text "Threshold #2"
+	entry $shader_params($id,window).fr.t2_e -width 5 -textvariable  shader_params($id,t2)
+	bind $shader_params($id,window).fr.t2_e <KeyRelease> "do_shader_apply $shade_var $id"
+	hoc_register_data $shader_params($id,window).fr.t2 "Noise Scale" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "Areas where the noise function returns a value greater than this threshold\n\
+			will be colored using color #2 (default is 0.25)"}
+		{range " -1.0 to +1.0"}
+	}
+	hoc_register_data $shader_params($id,window).fr.t2_e "Noise Scale" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "Areas where the noise function returns a value greater than this threshold\n\
+			will be colored using color #2 (default is 0.25)"}
+		{range " -1.0 to +1.0"}
+	}
+
+	label $shader_params($id,window).fr.delta -text "Noise Delta (X, Y, Z)"
+	entry $shader_params($id,window).fr.delta_e -width 20  -textvariable shader_params($id,delta)
+	bind $shader_params($id,window).fr.delta_e <KeyRelease> "do_shader_apply $shade_var $id"
+	hoc_register_data $shader_params($id,window).fr.delta "Noise Delta" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "These values provide a delta into the noise space.\n\
+			Default values are (1000.0 1000.0 1000.0)" }
+	}
+	hoc_register_data $shader_params($id,window).fr.delta_e "Noise Delta" {
+		{summary "The 'camo' shader creates a pseudo-random tri-color camoflage pattern\n\
+			on the object using a fractal noise pattern. This is a procedural shader\n\
+			based upon a fractal noise function known as fractional brownian motion or fBm.\n\
+			The fractal noise function produces a pseudo-random number in the range\n\
+			[-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region."}
+		{description "These values provide a delta into the noise space.\n\
+			Default values are (1000.0 1000.0 1000.0)" }
+	}
+
+	set_camo_values $shader_str $id
+
+	trace variable shader_params($id,c1) w "color_trigger $shade_var $id"
+	trace variable shader_params($id,c2) w "color_trigger $shade_var $id"
+	trace variable shader_params($id,c3) w "color_trigger $shade_var $id"
+
+	grid $shader_params($id,window).fr.c2 -row 0 -column 0 -columnspan 2 -sticky e
+	grid $shader_params($id,window).fr.c2_e.colorF
+	grid $shader_params($id,window).fr.c2_e -row 0 -column 2 -columnspan 2 -sticky w
+	grid $shader_params($id,window).fr.c1 -row 1 -column 0 -columnspan 2 -sticky e
+	grid $shader_params($id,window).fr.c1_e.colorF
+	grid $shader_params($id,window).fr.c1_e -row 1 -column 2 -columnspan 2 -sticky w
+	grid $shader_params($id,window).fr.c3 -row 2 -column 0 -columnspan 2 -sticky e
+	grid $shader_params($id,window).fr.c3_e.colorF
+	grid $shader_params($id,window).fr.c3_e -row 2 -column 2 -columnspan 2 -sticky w
+	grid $shader_params($id,window).fr.t1 -row 3 -column 0 -sticky e
+	grid $shader_params($id,window).fr.t1_e -row 3 -column 1 -sticky w
+	grid $shader_params($id,window).fr.t2 -row 3 -column 2 -sticky e
+	grid $shader_params($id,window).fr.t2_e -row 3 -column 3 -sticky w
+	grid $shader_params($id,window).fr.lacun -row 4 -column 0 -sticky e
+	grid $shader_params($id,window).fr.lacun_e -row 4 -column 1 -sticky w
+	grid $shader_params($id,window).fr.h -row 4 -column 2 -sticky e
+	grid $shader_params($id,window).fr.h_e -row 4 -column 3 -sticky w
+	grid $shader_params($id,window).fr.size -row 5 -column 0 -sticky e
+	grid $shader_params($id,window).fr.size_e -row 5 -column 1 -sticky w
+	grid $shader_params($id,window).fr.octaves -row 5 -column 2 -sticky e
+	grid $shader_params($id,window).fr.octaves_e -row 5 -column 3 -sticky w
+	grid $shader_params($id,window).fr.scale -row 6 -column 0 -columnspan 2 -sticky e
+	grid $shader_params($id,window).fr.scale_e -row 6 -column 2 -columnspan 2 -sticky w
+	grid $shader_params($id,window).fr.delta -row 7 -column 0  -columnspan 2 -sticky e
+	grid $shader_params($id,window).fr.delta_e -row 7 -column 2  -columnspan 2 -sticky w
+
+	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
+
+	return $shader_params($id,window).fr
+}
+
+proc set_camo_values { shader_str id } {
+	global shader_params
+
+	# temporarily remove traces on the colors
+	set tr1_info [trace vinfo shader_params($id,c1)]
+	set tr1_len [llength $tr1_info]
+	for {set index 0} {$index < $tr1_len } {incr index } {
+		set atrace [lindex $tr1_info $index]
+		trace vdelete shader_params($id,c1) [lindex $atrace 0] [lindex $atrace 1]
+	}
+	set tr2_info [trace vinfo shader_params($id,c2)]
+	set tr2_len [llength $tr2_info]
+	for {set index 0} {$index < $tr2_len } {incr index } {
+		set atrace [lindex $tr2_info $index]
+		trace vdelete shader_params($id,c2) [lindex $atrace 0] [lindex $atrace 1]
+	}
+	set tr3_info [trace vinfo shader_params($id,c3)]
+	set tr3_len [llength $tr3_info]
+	for {set index 0} {$index < $tr3_len } {incr index } {
+		set atrace [lindex $tr3_info $index]
+		trace vdelete shader_params($id,c3) [lindex $atrace 0] [lindex $atrace 1]
+	}
+
+	set shader_params($id,c1) ""
+	set shader_params($id,c2) ""
+	set shader_params($id,c3) ""
+	set shader_params($id,lacun) ""
+	set shader_params($id,hval) ""
+	set shader_params($id,octaves) ""
+	set shader_params($id,size) ""
+	set shader_params($id,scale) ""
+	set shader_params($id,t1) ""
+	set shader_params($id,t2) ""
+	set shader_params($id,delta) ""
+
+	if { [llength $shader_str] > 1 } then {
+		set params [lindex $shader_str 1]
+	} else {
+		set params ""
+	}
+	set err [catch {set list_len [llength $params]}]
+	if { $err } {set list_len 0}
+	if { $list_len > 0 } then {
+		 for { set index 0 } { $index < $list_len } { set index [expr $index + 2] } {
+			set key [lindex $params $index]
+			set value [lindex $params [expr $index + 1]]
+
+			switch $key {
+				lacunarity -
+				l { catch {
+					if { $value != $shader_params($id,def_lacun) } then {
+						set shader_params($id,lacun) $value
+					}
+				   }  }
+				H { catch {
+					if { $value != $shader_params($id,def_hval) } then {
+						set shader_params($id,hval) $value
+					}
+				  }  }
+				octaves -
+				o { catch {
+					if { $value != $shader_params($id,def_octaves) } then  {
+						set shader_params($id,octaves) $value
+					}
+				  }  }
+				t1 { catch {
+					if { $value != $shader_params($id,def_t1) } then  {
+						set shader_params($id,t1) $value
+					}
+				  }  }
+				t2 { catch {
+					if { $value != $shader_params($id,def_t2) } then  {
+						set shader_params($id,t2) $value
+					}
+				  }  }
+				size -
+				s { catch {
+					if { $value != $shader_params($id,def_size) } then  {
+						set shader_params($id,size) $value
+					}
+				  }  }
+				vscale -
+				vs -
+				v { catch {
+					if { [vec_compare $value $shader_params($id,def_scale) 3] } then  {
+						set shader_params($id,scale) $value
+					}
+				  }  }
+				c1 { catch {
+					if { [vec_compare $value $shader_params($id,def_c1) 3] } then  {
+						set shader_params($id,c1) $value
+					}
+				  }  }
+				c2 { catch {
+					if { [vec_compare $value $shader_params($id,def_c2) 3] } then  {
+						set shader_params($id,c2) $value
+					}
+				  }  }
+				c3 { catch {
+					if { $value != $shader_params($id,def_c3) } then  {
+						set shader_params($id,c3) $value
+					}
+				  }  }
+				delta -
+				d { catch {
+					if { [vec_compare $value $shader_params($id,def_delta) 3] } then {
+						set shader_params($id,delta) $value
+					}
+				  }   }
+			}
+		}
+	}
+
+	# reinstate the traces on the colors
+	for {set index 0} {$index < $tr1_len } {incr index } {
+		set atrace [lindex $tr1_info $index]
+		trace variable shader_params($id,c1) [lindex $atrace 0] [lindex $atrace 1]
+	}
+	for {set index 0} {$index < $tr2_len } {incr index } {
+		set atrace [lindex $tr2_info $index]
+		trace variable shader_params($id,c2) [lindex $atrace 0] [lindex $atrace 1]
+	}
+	for {set index 0} {$index < $tr3_len } {incr index } {
+		set atrace [lindex $tr3_info $index]
+		trace variable shader_params($id,c3) [lindex $atrace 0] [lindex $atrace 1]
+	}
+}
+
+proc do_camo_apply { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shade_str
+
+	set params ""
+
+	if { [string length $shader_params($id,lacun) ] > 0 } then {
+		catch {
+			if { [expr $shader_params($id,lacun) != $shader_params($id,def_lacun)] } then {
+				lappend params l $shader_params($id,lacun)
+			}
+		}
+	}
+
+	if { [string length $shader_params($id,hval) ] > 0 } then {
+		catch {
+			if { [expr $shader_params($id,hval) != $shader_params($id,def_hval)] } then {
+				lappend params H $shader_params($id,hval)
+			}
+		}
+	}
+
+	if { [string length $shader_params($id,octaves) ] > 0 } then {
+		catch {
+			if { [expr $shader_params($id,octaves) != $shader_params($id,def_octaves)] } then {
+				lappend params o $shader_params($id,octaves)
+			}
+		}
+	}
+
+	if { [string length $shader_params($id,t1) ] > 0 } then {
+		catch {
+			if { [expr $shader_params($id,t1) != $shader_params($id,def_t1)] } then {
+				lappend params t1 $shader_params($id,t1)
+			}
+		}
+	}
+
+	if { [string length $shader_params($id,t2) ] > 0 } then {
+		catch {
+			if { [expr $shader_params($id,t2) != $shader_params($id,def_t2)] } then {
+				lappend params t2 $shader_params($id,t2)
+			}
+		}
+	}
+
+	if { [string length $shader_params($id,size) ] > 0 } then {
+		catch {
+			if { [expr $shader_params($id,size) != $shader_params($id,def_size)] } then {
+				lappend params s $shader_params($id,size)
+			}
+		}
+	}
+
+	if { [string length $shader_params($id,scale) ] > 0 } then {
+		catch {
+			if { [vec_compare $shader_params($id,scale) $shader_params($id,def_scale) 3] } then {
+				lappend params v $shader_params($id,scale)
+			}
+		}
+	}
+
+	if { [string length $shader_params($id,c1) ] > 0 } then {
+		catch {
+			if { [vec_compare $shader_params($id,c1) $shader_params($id,def_c1) 3] } then {
+				lappend params c1 $shader_params($id,c1)
+			}
+		}
+	}
+
+	if { [string length $shader_params($id,c2) ] > 0 } then {
+		catch {
+			if { [vec_compare $shader_params($id,c2) $shader_params($id,def_c2) 3] } then {
+				lappend params c2 $shader_params($id,c2)
+			}
+		}
+	}
+
+	if { [string length $shader_params($id,c3) ] > 0 } then {
+		catch {
+			if { [vec_compare $shader_params($id,c3) $shader_params($id,def_c3) 3] } then {
+				lappend params c3 $shader_params($id,c3)
+			}
+		}
+	}
+
+	if { [string length $shader_params($id,delta) ] > 0 } then {
+		catch {
+			if { [vec_compare $shader_params($id,delta) $shader_params($id,def_delta) 3] } then {
+				lappend params d $shader_params($id,delta)
+			}
+		}
+	}
+
+	set shade_str [list camo $params]
+}
+
+proc set_camo_defaults { id } {
+	global shader_params
+
+	set shader_params($id,def_lacun) 2.1753974
+	set shader_params($id,def_hval) 1.0
+	set shader_params($id,def_octaves) 4.0
+	set shader_params($id,def_size) 1.0
+	set shader_params($id,def_scale) { 1.0 1.0 1.0 }
+	set shader_params($id,def_c1) { 97  74 41 }
+	set shader_params($id,def_c2) { 26 77 10 }
+	set shader_params($id,def_c3) { 38 38 38 }
+	set shader_params($id,def_t1) -0.25
+	set shader_params($id,def_t2) 0.25
+	set shader_params($id,def_delta) { 1000.0 1000.0 1000.0 }
+}
+
+# Projection routines
+proc do_prj {  shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shader_str
+
+	catch { destroy $shader_params($id,window).fr }
+	frame $shader_params($id,window).fr
+
+	label $shader_params($id,window).fr.fname -text "Parameter File"
+	entry $shader_params($id,window).fr.fname_e -width 20 -textvariable shader_params($id,fname)
+	bind $shader_params($id,window).fr.fname_e <KeyRelease> "do_shader_apply $shade_var $id"
+
+	hoc_register_data $shader_params($id,window).fr.fname "File Name" {
+		{summary "The projection shader projects one or more images on the object.\n\
+			All the parameters required by the projection shader are\n\
+			expected to be supplied in a single file. The MGED command\n\
+			'prj_add' may be used to construct this file."}
+
+		{description "The name of the file containing the parameters for\n\
+			the projection shader"}
+	}
+	hoc_register_data $shader_params($id,window).fr.fname_e "File Name" {
+		{summary "The projection shader projects one or more images on the object.\n\
+			All the parameters required by the projection shader are\n\
+			expected to be supplied in a single file. The MGED command\n\
+			'prj_add' may be used to construct this file."}
+		{description "The name of the file containing the parameters for\n\
+			the projection shader"}
+	}
+
+	set_prj_values $shader_str $id
+
+	grid $shader_params($id,window).fr.fname -row 0 -column 0 -sticky e
+	grid $shader_params($id,window).fr.fname_e -row 0 -column 1 -sticky w
+
+	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
+
+	return $shader_params($id,window).fr
+}
+
+proc set_prj_values { shader_str id } {
+	global shader_params
+
+	set shader_params($id,fname) ""
+
+	if { [llength $shader_str] > 1 } then {
+		set params [lindex $shader_str 1]
+	} else {
+		set params ""
+	}
+	set err [catch {set list_len [llength $params]}]
+	if { $err } {set list_len 0}
+	if { $list_len > 0 } then {
+		set shader_params($id,fname) [lindex $params 0]
+	}
+}
+
+proc do_prj_apply { shade_var id } {
+	global shader_params
+	upvar #0 $shade_var shade_str
+
+	set params ""
+
+	if { [string length $shader_params($id,fname) ] > 0 } then {
+		lappend params $shader_params($id,fname)
+	}
+
+	set shade_str [list prj $params]
+}
+
+proc set_prj_defaults { id } {
+	global shader_params
+
+	set shader_params($id,fname) ""
+}
 
 # FAKESTAR routines
 proc do_fakestar { shade_var id } {
@@ -177,7 +800,8 @@ proc set_checker_values { shader_str id } {
 	} else {
 		set params ""
 	}
-	set list_len [llength $params]
+	set err [catch {set list_len [llength $params]}]
+	if { $err } {set  list_len 0}
 	if { $list_len > 1 } then {
 
 		for { set index 0 } { $index < $list_len } { set index [expr $index + 2] } {
@@ -487,7 +1111,8 @@ proc set_phong_values { shader_str id } {
 	} else {
 		set params ""
 	}
-	set list_len [llength $params]
+	set err [catch {set list_len [llength $params]}]
+	if { $err } {set list_len 0}
 	if { $list_len > 1 } then {
 
 		for { set index 0 } { $index < $list_len } { set index [expr $index + 2] } {
@@ -696,7 +1321,8 @@ proc set_texture_values { shader_str id } {
 	} else {
 		set params ""
 	}
-	set list_len [llength $params]
+	set err [catch {set list_len [llength $params]}]
+	if { $err } {set list_len 0}
 	if { $list_len > 1 } then {
 
 		for { set index 0 } { $index < $list_len } { set index [expr $index + 2] } {
@@ -957,7 +1583,7 @@ proc stack_delete { index shade_var id } {
 # adjust the shader list
 	set shader_params($id,stk_$index,window) deleted
 	set shader_params($id,stk_$index,shader_name) ""
-	do_stack_apply $shade_var $id
+#	do_stack_apply $shade_var $id
 }
 
 proc stack_add { shader shade_var id } {
@@ -1014,6 +1640,14 @@ proc stack_add { shader shade_var id } {
 			set_cloud_defaults "$id,stk_$index"
 			set tmp_win [do_cloud $shade_var $id,stk_$index]
 		}
+		prj {
+			set_prj_defaults "$id,stk_$index"
+			set tmp_win [do_prj $shade_var $id,stk_$index]
+		}
+		camo {
+			set_camo_defaults "$id,stk_$index"
+			set tmp_win [do_camo $shade_var $id,stk_$index]
+		}
 		default {
 			set_unknown_defaults "$id,stk_$index"
 			set tmp_win [do_unknown $shade_var $id,stk_$index]
@@ -1023,7 +1657,7 @@ proc stack_add { shader shade_var id } {
 	grid $shader_params($id,window).fr.stk_$index.del -columnspan 4
 	grid $shader_params($id,window).fr.stk_$index -columnspan 2 -sticky ew
 	grid columnconfigure $shader_params($id,window).fr.stk_$index 0 -minsize 400
-	do_shader_apply $shade_var $id
+#	do_shader_apply $shade_var $id
 }
 
 # do not call this routine without first deleting the index_th window
@@ -1079,6 +1713,14 @@ proc stack_insert { index shader shade_var id } {
 			set_cloud_defaults "$id,stk_$index"
 			set tmp_win [do_cloud $shade_var $id,stk_$index]
 		}
+		camo {
+			set_camo_defaults "$id,stk_$index"
+			set tmp_win [do_camo $shade_var $id,stk_$index]
+		}
+		prj {
+			set_prj_defaults "$id,stk_$index"
+			set tmp_win [do_prj $shade_var $id,stk_$index]
+		}
 		default {
 			set_unknown_defaults "$id,stk_$index"
 			set tmp_win [do_unknown $shade_var $id,stk_$index]
@@ -1094,7 +1736,7 @@ proc stack_insert { index shader shade_var id } {
 		incr index
 	}
 
-	do_stack_apply $shade_var $id
+#	do_stack_apply $shade_var $id
 }
 
 proc set_stack_values { shade_str id } {
@@ -1105,11 +1747,13 @@ proc set_stack_values { shade_str id } {
 
 	if {$shade_length < 2 } {return}
 
-	set rerun_stack_apply 0
-
+	# get  shader name (should be stack, or maybe envmap)
 	set shader [lindex $shade_str 0]
+
+	# get parameters (this should be the list of shaders in the stack)
 	set shader_list [lindex $shade_str 1]
 
+	# if this is an envmap using a stack, get the stack stuff out of the shader_list
 	if { [string compare $shader envmap] == 0 } {
 		# envmap shader using a stack
 		set err [catch "set shade_length [llength $shader_list]"]
@@ -1121,13 +1765,16 @@ proc set_stack_values { shade_str id } {
 		 set shader_list [lindex $shader_list 1]
 	}
 
-
 	set err [catch "set no_of_shaders [llength $shader_list]"]
 	if { $err != 0 } {return}
 
+	# process each shader in the list
 	for {set index 0} {$index < $no_of_shaders} {incr index } {
+		# get the index_th shader from the shader list
 		set sub_str [lindex $shader_list $index]
 		set shader [lindex $sub_str 0]
+
+		# if we are beyond the current stack length, then we need to add another shader to the stack
 		if { $index >= $shader_params($id,stack_len) } {
 			# add another shader frame
 			stack_add $shader $shader_params($id,shade_var) $id
@@ -1143,6 +1790,8 @@ proc set_stack_values { shade_str id } {
 				# ignore deleted windows
 				if { [string compare $shader_params($id,stk_$i,window) "deleted"] == 0 } continue
 				incr count
+
+				# $shader should match $shader_params($id,stk_$i,shader_name)
 				if { $count == $index } then {
 					if { [string compare $shader_params($id,stk_$i,shader_name) $shader] == 0 } then {
 						# shader name hasn't changed, so just set the new values
@@ -1167,7 +1816,6 @@ proc set_stack_values { shade_str id } {
 							}  else {
 								set_unknown_values $sub_str $id,stk_$i
 							}
-							set rerun_stack_apply 1
 						} else {
 							# old shader is unrecognized and new is unrecognized, just update values
 							set_unknown_values $sub_str $id,stk_$i
@@ -1177,8 +1825,6 @@ proc set_stack_values { shade_str id } {
 			}
 		}
 	}
-
-	if { $rerun_stack_apply } {do_stack_apply $shader_params($id,shade_var) $id}
 }
 
 proc do_stack { shade_var id } {
@@ -1217,6 +1863,10 @@ proc do_stack { shade_var id } {
 		-label cloud -command "stack_add cloud $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
 		-label checker -command "stack_add checker $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
+		-label camouflage -command "stack_add camo $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
+		-label projection -command "stack_add prj $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
 		-label testmap -command "stack_add testmap $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
@@ -1296,6 +1946,14 @@ proc env_select { shader shade_var id } {
 			set_stack_defaults "$id,env"
 			set tmp_win [do_stack $shade_var $id,env]
 		}
+		prj {
+			set_prj_defaults "$id,env"
+			set tmp_win [do_prj $shade_var $id,env]
+		}
+		camo {
+			set_camo_defaults "$id,env"
+			set tmp_win [do_camo $shade_var $id,env]
+		}
 		default {
 			set_unknown_defaults "$id,env"
 			set tmp_win [do_unknown $shade_var $id,env]
@@ -1346,7 +2004,8 @@ proc set_envmap_values { shade_str id } {
 	if { $err != 0 } {return}
 
 	if { $shade_length < 2 } { return }
-	set env_params [lindex $shade_str 1]
+	set err [ctach {set env_params [lindex $shade_str 1]}]
+	if { $err } {return}
 	set err [catch "set sub_len [llength $env_params]"]
 	if { $err != 0 } {return}
 
@@ -1396,6 +2055,10 @@ proc do_envmap { shade_var id } {
 		-label cloud -command "env_select cloud $shade_var $id"
 	$shader_params($id,window).fr.sel_env.m add command \
 		-label checker -command "env_select checker $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label camouflage -command "env_select camo $shade_var $id"
+	$shader_params($id,window).fr.sel_env.m add command \
+		-label projection -command "env_select prj $shade_var $id"
 	$shader_params($id,window).fr.sel_env.m add command \
 		-label testmap -command "env_select testmap $shade_var $id"
 	$shader_params($id,window).fr.sel_env.m add command \
@@ -1475,7 +2138,8 @@ proc set_cloud_values { shader_str id } {
 	} else {
 		set params ""
 	}
-	set list_len [llength $params]
+	set err [catch {set list_len [llength $params]}]
+	if { $err } {set list_len 0}
 	if { $list_len > 1 } then {
 		for { set index 0 } { $index < $list_len } { set index [expr $index + 2] } {
 			set key [lindex $params $index]
@@ -1568,7 +2232,8 @@ proc set_unknown_values { shader_str id } {
 
 	set shader_params($id,unk_param) ""
 
-	set shader [lindex $shader_str 0]
+	set err [catch {set shader [lindex $shader_str 0]}]
+	if { $err } {return}
 	if { [string compare "stack" $shader] == 0 || [string compare "envmap" $shader] == 0 } then {
 		set shader_params($id,unk_name) unknown
 	} else {
@@ -1593,58 +2258,70 @@ proc set_unknown_defaults { id } {
 	return
 }
 
+# This proc is called whenever the user types in the main 'shader' entry widget
 proc set_shader_params { shade_var id } {
 	upvar #0 $shade_var shade_str
-	global shader_params
+	global shader_params errorInfo
 
 	set err [catch "set shader [lindex $shade_str 0]"]
 	if { $err != 0 } {return}
 
-	if { [string compare $shader $shader_params($id,shader_name)] } { 
+	#  if possible, just update values in the current frame
+	if { [string compare $shader $shader_params($id,shader_name)] == 0 ||
+		([is_good_shader $shader] == 0 &&
+		 [is_good_shader $shader_params($id,shader_name)] == 0) } then {
+
+		switch $shader {
+			glass {
+				set_glass_values $shade_str $id
+			}
+			mirror {
+				set_mirror_values $shade_str $id
+			}
+			plastic {
+				set_phong_values $shade_str $id
+			}
+			bump {
+				set_bump_values $shade_str $id
+			}
+			bwtexture {
+				set_bwtexture_values $shade_str $id
+			}
+			texture {
+				set_texture_values $shade_str $id
+			}
+			checker {
+				set_checker_values $shade_str $id
+			}
+			testmap {
+				set_testmap_values $shade_str $id
+			}
+			fakestar {
+				set_fakestar_values $shade_str $id
+			}
+			stack {
+				set_stack_values $shade_str $id
+			}
+			envmap {
+				set_envmap_values $shade_str $id
+			}
+			cloud {
+				set_cloud_values $shade_str $id
+			}
+			prj {
+				set_prj_values $shade_str $id
+			}
+			camo {
+				set_camo_values $shade_str $id
+			}
+			default {
+				set_unknown_values $shade_str $id
+			}
+		}
+	} else {
+		# we have to replace the current frame with a different shader
 		do_shader $shade_var $id $shader_params($id,window)
 		return
-	}
-
-	switch $shader {
-		glass {
-			set_glass_values $shade_str $id
-		}
-		mirror {
-			set_mirror_values $shade_str $id
-		}
-		plastic {
-			set_phong_values $shade_str $id
-		}
-		bump {
-			set_bump_values $shade_str $id
-		}
-		bwtexture {
-			set_bwtexture_values $shade_str $id
-		}
-		texture {
-			set_texture_values $shade_str $id
-		}
-		checker {
-			set_checker_values $shade_str $id
-		}
-		testmap {
-			set_testmap_values $shade_str $id
-		}
-		fakestar {
-			set_fakestar_values $shade_str $id
-		}
-		stack {
-			set_stack_values $shade_str $id
-		}
-		envmap {
-			set_envmap_values $shade_str $id
-		}
-		cloud {
-			set_cloud_values $shade_str $id
-		}
-		default {
-			set_unknown_values $shade_str $id
-		}
 	}
 }
 
@@ -1653,7 +2330,7 @@ proc set_shader_params { shade_var id } {
 #	to hold the shader string, e.g., "plastic { sh 8 dp .1 }"
 #	These routines will update that variable
 proc do_shader { shade_var id frame_name } {
-	global shader_params
+	global shader_params errorInfo
 	upvar #0 $shade_var shade_str
 
 	set shader_params($id,parent_window_id) $id
@@ -1665,6 +2342,7 @@ proc do_shader { shade_var id frame_name } {
 	if { [llength $shade_str] > 0 } then {
 		set material [lindex $shade_str 0]
 		set shader_params($id,shader_name) $material
+
 		switch $material {
 			glass {
 				set_glass_defaults $id
@@ -1707,6 +2385,14 @@ proc do_shader { shade_var id frame_name } {
 			cloud {
 				set_cloud_defaults $id
 				set my_win [do_cloud $shade_var $id]
+			}
+			prj {
+				set_prj_defaults $id
+				set my_win [do_prj $shade_var $id]
+			}
+			camo {
+				set_camo_defaults $id
+				set my_win [do_camo $shade_var $id]
 			}
 			default {
 				set_unknown_defaults $id
@@ -1760,6 +2446,12 @@ proc do_shader_apply { shade_var id } {
 		cloud {
 			do_cloud_apply $shade_var $id
 		}
+		prj {
+			do_prj_apply $shade_var $id
+		}
+		camo {
+			do_camo_apply $shade_var $id
+		}
 		default {
 			do_unknown_apply $shade_var $id
 		}
@@ -1779,6 +2471,8 @@ proc is_good_shader { shader } {
 		checker -
 		envmap -
 		cloud -
+		prj -
+		camo -
 		testmap { return 1 }
 		default { return 0 }
 	}
