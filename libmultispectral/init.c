@@ -52,6 +52,7 @@ struct mfuncs	**headp;
 	/* Compiled from sources in liboptical */
 	MFUNCS( phg_mfuncs );
 	MFUNCS( light_mfuncs );
+	MFUNCS( camo_mfuncs );
 
 	/* multi-spectral-specific routines */
 	MFUNCS( temp_mfuncs );
@@ -101,7 +102,6 @@ struct mfuncs	**headp;
 		mlib_add_shader( headp, points_mfuncs );
 		mlib_add_shader( headp, toyota_mfuncs );
 		mlib_add_shader( headp, wood_mfuncs );
-		mlib_add_shader( headp, camo_mfuncs );
 		mlib_add_shader( headp, scloud_mfuncs );
 		mlib_add_shader( headp, air_mfuncs );
 		mlib_add_shader( headp, rtrans_mfuncs );
