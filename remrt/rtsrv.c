@@ -61,28 +61,10 @@ mat_t Viewrotscale;
 mat_t toEye;
 fastf_t viewsize;
 fastf_t	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
-
-#ifdef PARALLEL
-#ifdef cray
-#define MAX_PSW		4
-struct taskcontrol {
-	int	tsk_len;
-	int	tsk_id;
-	int	tsk_value;
-} taskcontrol[MAX_PSW];
-#endif
-
-#ifdef alliant
-#define MAX_PSW	8
-#endif
-#endif
 /***** end variables shared with worker() */
 
 char scanbuf[8*1024*3];		/* generous scan line */
 
-#ifndef MAX_PSW
-#define MAX_PSW 1
-#endif
 /* Variables shared within mainline pieces */
 int npsw = MAX_PSW;
 static char outbuf[132];
