@@ -57,7 +57,9 @@ typedef long	bitv_t;		/* largest integer type */
 #define RES_INIT(ptr)		RES_RELEASE(ptr)
 /* RES_ACQUIRE is a function in rt.c, using tas instruction */
 #define RES_RELEASE(ptr)	*(ptr)=0;
+
 #define MAX_PSW		8	/* Max number of processors */
+#define PARALLEL	1
 
 #endif alliant
 
@@ -106,8 +108,9 @@ typedef long	bitv_t;		/* largest integer type */
 #define RES_INIT(ptr)		;
 #define RES_ACQUIRE(ptr)	;
 #define RES_RELEASE(ptr)	;
-#endif
 #define MAX_PSW	1		/* only one processor, max */
+
+#endif
 
 #define BITV_MASK	((1<<BITV_SHIFT)-1)
 
