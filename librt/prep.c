@@ -133,7 +133,7 @@ struct db_i	*dbip;
  *  Note that the rt_g structure needs to be cleaned separately.
  */
 void
-bu_free_rti( rtip )
+rt_free_rti( rtip )
 struct rt_i	*rtip;
 {
 	RT_CK_RTI(rtip);
