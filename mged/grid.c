@@ -131,6 +131,7 @@ draw_grid()
   point_t vpt1, vpt2;
   fastf_t inv_grid_res_h;
   fastf_t inv_grid_res_v;
+  fastf_t inv_aspect;
 
   if(NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
      NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
@@ -140,13 +141,14 @@ draw_grid()
   inv_grid_res_v= 1.0 / grid_state->gr_res_v;
 
   sf = view_state->vs_Viewscale*base2local;
-  inv_sf = 1 / sf;
+  inv_sf = 1.0 / sf;
+  inv_aspect = 1.0 / dmp->dm_aspect; 
 
   VSCALE(model_grid_anchor, grid_state->gr_anchor, local2base);
   MAT4X3PNT(view_grid_anchor, view_state->vs_model2view, model_grid_anchor);
   VSCALE(view_grid_anchor_local, view_grid_anchor, sf);
 
-  VSET(view_lleft_corner, -1.0, -1.0, 0.0);
+  VSET(view_lleft_corner, -1.0, -inv_aspect, 0.0);
   VSCALE(view_lleft_corner_local, view_lleft_corner, sf);
   nh = (view_grid_anchor_local[X] - view_lleft_corner_local[X]) * inv_grid_res_h;
   nv = (view_grid_anchor_local[Y] - view_lleft_corner_local[Y]) * inv_grid_res_v;
@@ -162,7 +164,7 @@ draw_grid()
 	 0.0);
   }
 
-  nh_lines = 2.0 * sf * inv_grid_res_v + (2 * grid_state->gr_res_major_v);
+  nh_lines = 2.0 * inv_aspect * sf * inv_grid_res_v + (2 * grid_state->gr_res_major_v);
   nv_lines = 2.0 * sf * inv_grid_res_h + (2 * grid_state->gr_res_major_h);
 
   DM_SET_FGCOLOR(dmp,
