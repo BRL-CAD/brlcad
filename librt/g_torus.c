@@ -418,7 +418,7 @@ struct seg		*seghead;
 	if ( (i = polyRoots( &C, val )) != 4 ){
 		if( i != 0 )  {
 			rt_log("tor:  polyRoots() 4!=%d\n", i);
-			rt_pr_roots( i, val );
+			rt_pr_roots( stp->st_name, val, i );
 		}
 		return(0);		/* MISS */
 	}
@@ -445,7 +445,7 @@ struct seg		*seghead;
 
 	default:
 		rt_log("rt_tor_shot: reduced 4 to %d roots\n",i);
-		rt_pr_roots( 4, val );
+		rt_pr_roots( stp->st_name, val, 4 );
 		return(0);		/* No hit */
 
 	case 2:
@@ -641,7 +641,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 		if ( (num_roots = polyRoots( &(C[i]), &(val[i][0]) )) != 4 ){
 			if( num_roots != 0 )  {
 				rt_log("tor:  polyRoots() 4!=%d\n", num_roots);
-				rt_pr_roots( num_roots, val );
+				rt_pr_roots( "tor", val, num_roots );
 			}
 			SEG_MISS(segp[i]);		/* MISS */
 		}
@@ -681,7 +681,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 		else if( num_zero != 2 && num_zero != 4 ) {
 #if 0
 			rt_log("rt_tor_shot: reduced 4 to %d roots\n",i);
-			rt_pr_roots( 4, val );
+			rt_pr_roots( stp->st_name, val, 4 );
 #endif
 			SEG_MISS(segp[i]);		/* MISS */
 		}
