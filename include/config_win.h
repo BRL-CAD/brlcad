@@ -46,6 +46,9 @@
 #	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
 # endif
 
+#define BRLCAD_ROOT ""
+
+#define HAVE_CALLOC	1
 #define HAVE_STDLIB_H	1
 #define HAVE_STDARG_H	1
 #define HAVE_STRING_H	1
@@ -65,7 +68,6 @@
 #define HAVE_VFORK	1
 #define HAVE_VPRINTF	1
 #define USE_PROTOTYPES	1
-#define HAVE_STRING_H	1
 #define HAVE_REGEX_H	1
 #define HAVE_STRCHR 1
 #define HAVE_TIME 1
@@ -73,6 +75,10 @@
 #define bzero(str,n)		memset( str, 0, n )
 #define bcopy(from,to,count)	memcpy( to, from, count )
 #define REVERSED_IEEE	yes
+#define INSTALL_DIRECTORY "C:/brlcad7_0"
+#define HAVE_TIME_H 1
+#define HAVE_FCNTL_H 1
+#define HAVE_ERRNO_H 1
 
 #include <windows.h>
 #include <io.h>
