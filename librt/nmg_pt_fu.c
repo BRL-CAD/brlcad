@@ -278,6 +278,7 @@ found:
 
 	switch (ved->status) {
 	case 0: /* pt is on the edge(use) */
+		ved->dist = 0.0; /* rt_dist_pt3_lseg3() doesn't set this to dist in this case */
 		ei->class = NMG_CLASS_AonBshared;
 		if (fpi->eu_func &&
 		    (fpi->hits == NMG_FPI_PERUSE ||
