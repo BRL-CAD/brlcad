@@ -14,7 +14,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -72,13 +72,13 @@ genptr_t		client_data;	/* argument for handler */
 
 		if( db5_header_is_valid( cp ) == 0 )  {
 			bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
-		    	return -1;
+		    	goto fatal;
 		}
 		cp += sizeof(header);
 		addr = sizeof(header);
 		while( addr < eof )  {
 			if( (cp = db5_get_raw_internal_ptr( &raw, cp )) == NULL )  {
-				return -1;			/* fatal error */
+				goto fatal;
 			}
 			(*handler)(dbip, &raw, addr, client_data);
 			nrec++;
@@ -92,13 +92,13 @@ genptr_t		client_data;	/* argument for handler */
 		if( fread( header, sizeof header, 1, dbip->dbi_fp ) != 1  ||
 		    db5_header_is_valid( header ) == 0 )  {
 			bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
-		    	return -1;
+		    	goto fatal;
 		}
 		for(;;)  {
 			addr = ftell( dbip->dbi_fp );
 			if( (got = db5_get_raw_internal_fp( &raw, dbip->dbi_fp )) < 0 )  {
 				if( got == -1 )  break;		/* EOF */
-				return -1;			/* fatal error */
+				goto fatal;
 			}
 			(*handler)(dbip, &raw, addr, client_data);
 			nrec++;
@@ -112,8 +112,11 @@ genptr_t		client_data;	/* argument for handler */
 	}
 
 	dbip->dbi_nrec = nrec;		/* # obj in db, not inc. header */
-
 	return 0;			/* success */
+
+fatal:
+	dbip->dbi_read_only = 1;	/* Writing would corrupt it worse */
+	return -1;			/* fatal error */
 }
 
 /*
@@ -239,6 +242,7 @@ genptr_t		client_data;	/* unused client_data from db_scan() */
  *	0	OK
  *	-1	failure
  */
+int
 db_dirbuild( dbip )
 struct db_i	*dbip;
 {
