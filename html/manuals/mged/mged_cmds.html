@@ -3109,6 +3109,18 @@ Note that this may significantly slow the <I>preview</I>.
 </DD>
 <HR>
 
+<DT><a NAME="prj_add"><B>prj_add</B> <I>shaderfile</I> [<I>image_file</I>] [<I>image_width</I>] [<I>image_height</I>]</DT>
+
+<DD> The ``prj_add'' command appends information to the specified <I>shaderfile</I>. The information
+appended is in the form required by the ``projection'' shader (<I>prj</I>) and includes the <I>image_file</I>
+(typically a ``pix'' file), the <I>image_width</I> and <I>image_height</I>, and current view parameters
+frmo the <I>mged</I> display. The resulting <I>shaderfile</I> may then be used as the parameter to the <I>prj</I>
+shader. Before executing this command, the region wireframe display in <I>mged</I> should be aligned with
+the <I>image_file</I> (underlayed in <I>mged</I>'s framebuffer) and the <I>image_file</I> should have the same
+height and width as the <I>mged</I> display.
+</DD>
+<HR>
+
 <DT><a NAME="ps"><B>ps</B> [<I>-f font</I>] [<I>-t title</I>] [<I>-c creator</I>]
 	[<I>-s size_in_inches</I>] [<I>-l line_width</I>] <I>output_file</I></DT>
 
