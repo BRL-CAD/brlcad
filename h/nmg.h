@@ -638,7 +638,7 @@ extern struct edgeuse	*nmg_me(struct vertex *v1, struct vertex *v2, struct shell
 extern struct edgeuse	*nmg_meonvu(struct vertexuse *vu);
 extern struct edgeuse	*nmg_eins(struct edgeuse *eu);
 extern struct loopuse	*nmg_ml(struct shell *s);
-extern struct loopuse	*nmg_mlv(long *magic, struct vertex *v);
+extern struct loopuse	*nmg_mlv(long *magic, struct vertex *v, char orientation);
 extern struct faceuse	*nmg_mf(struct loopuse *lu1);
 extern struct faceuse	*nmg_cface(struct shell *s, struct vertex **vt,	int n);
 extern struct faceuse	*nmg_cmface(struct shell *s, struct vertex **vt[], int n);
@@ -697,7 +697,7 @@ extern int		nmg_ck_closed_surf(struct shell *s);
 extern void		nmg_m_to_g(FILE *fp, struct model *m);
 extern void		nmg_r_to_g(FILE *fp, struct nmgregion *r);
 extern void		nmg_s_to_g(FILE *fp, struct shell *s, unsigned char rgb[]);
-extern struct shell	*polytonmg(FILE *fd, struct nmgregion *r, point_t min, point_t max);
+extern struct shell	*polytonmg(FILE *fd, struct nmgregion *r);
 extern void		nmg_pr_orient(char o, char *h);
 extern int		nmg_manifold_face(struct faceuse *fu);
 extern int		nmg_demote_eu(struct edgeuse *eu);
