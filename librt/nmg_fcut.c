@@ -2286,6 +2286,7 @@ doit:
 		rt_log("nmg_onon_fix(): removing %d dead vertexuses\n", zapped);
 		nmg_tbl(b, TBL_RM, 0 );
 		nmg_tbl(ob, TBL_RM, 0 );
+rt_bomb("nmg_onon_fix(): check the intersector\n");
 		return 1;
 	}
 
@@ -2702,7 +2703,7 @@ struct rt_tol *tol;	/* tolerance for collinearity check */
 
 				if(rt_g.NMG_debug&DEBUG_FCUT)
 					rt_log( "\tvu1 is on vu2's eu, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n" , dist_to_loop_sq , tol->dist_sq );
-				new_eu = nmg_esplit( vu1->v_p , vu2->up.eu_p );
+				new_eu = nmg_ebreak( vu1->v_p , vu2->up.eu_p );
 				nmg_klu( vu1->up.lu_p );
 				return( 1 );
 			}
@@ -2726,7 +2727,7 @@ struct rt_tol *tol;	/* tolerance for collinearity check */
 
 				if(rt_g.NMG_debug&DEBUG_FCUT)
 					rt_log( "\tvu1 is on eu that ends at vu2, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n" , dist_to_loop_sq , tol->dist_sq );
-				new_eu = nmg_esplit( vu1->v_p , eu_to );
+				new_eu = nmg_ebreak( vu1->v_p , eu_to );
 				nmg_klu( vu1->up.lu_p );
 				return( 1 );
 			}
