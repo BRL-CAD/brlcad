@@ -517,6 +517,7 @@ char *cp;
 struct ckr_specific  {
 	int	ckr_a[3];	/* first RGB */
 	int	ckr_b[3];	/* second RGB */
+	double	ckr_scale;
 };
 #define CKR_NULL	((struct ckr_specific *)0)
 #define CKR_O(m)	offsetof(struct ckr_specific, m)
@@ -524,6 +525,7 @@ struct ckr_specific  {
 struct bu_structparse ckr_parse[] = {
 	{"%d",	3, "a",	offsetofarray(struct ckr_specific, ckr_a), FUNC_NULL },
 	{"%d",	3, "b",	offsetofarray(struct ckr_specific, ckr_b), FUNC_NULL },
+	{"%f",	1, "s", offsetof(struct ckr_specific, ckr_scale), FUNC_NULL },
 	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
 
@@ -540,13 +542,26 @@ char	*dp;
 	register struct ckr_specific *ckp =
 		(struct ckr_specific *)dp;
 	register int *cp;
+	int u, v;
 
+	u = swp->sw_uv.uv_u * ckp->ckr_scale;
+	v = swp->sw_uv.uv_v * ckp->ckr_scale;
+
+	if ( (u&1) && (v&1) || !(u&1) && !(v&1)) {
+		cp = ckp->ckr_a;
+	} else {
+		cp = ckp->ckr_b;
+	}
+
+#if 0
 	if( (swp->sw_uv.uv_u < 0.5 && swp->sw_uv.uv_v < 0.5) ||
 	    (swp->sw_uv.uv_u >=0.5 && swp->sw_uv.uv_v >=0.5) )  {
 		cp = ckp->ckr_a;
 	} else {
 		cp = ckp->ckr_b;
 	}
+#endif
+
 	VSET( swp->sw_color,
 		(unsigned char)cp[0] * rt_inv255,
 		(unsigned char)cp[1] * rt_inv255,
@@ -575,6 +590,8 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	GETSTRUCT( ckp, ckr_specific );
 	*dpp = (char *)ckp;
 	ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
+	ckp->ckr_b[0] = ckp->ckr_b[1] = ckp->ckr_b[2] = 0;
+	ckp->ckr_scale = 2.0;
 	if( bu_struct_parse( matparm, ckr_parse, (char *)ckp ) < 0 )  {
 		rt_free( (char *)ckp, "ckr_specific" );
 		return(-1);
