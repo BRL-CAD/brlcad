@@ -1,0 +1,46 @@
+/*
+ *  Authors -
+ *	John R. Anderson
+ *	Susanne L. Muuss
+ *	Earl P. Weaver
+ *
+ *  Source -
+ *	VLD/ASB Building 1065
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
+ */
+
+/*		Read and print Start Section		*/
+
+#include <stdio.h>
+#include "./iges_struct.h"
+#include "./iges_extern.h"
+
+Readstart()
+{
+
+	int i=0,done=0;
+
+	while( !done )
+	{
+		if( Readrec( ++i ) )
+		{
+			fprintf( stderr , "End of file encountered\n" );
+			exit( 1 );
+		}
+
+		if( card[72] != 'S' )
+		{
+			done = 1;
+			break;
+		}
+		card[72] = '\0';
+		printf( "%s\n" , card );
+	}
+	putchar( '\n' );
+}
+

@@ -1,0 +1,29 @@
+/*
+ *			vdeck/Cakefile
+ */
+
+#define SRCDIR	iges
+#define PRODUCTS	conv-igs2g
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#define FILES	 conv-igs2g usage readstart recsize readrec readglobal \
+	readstrg readint readflt readtime makedir readcols \
+	findp summary stack readtree showtree convtree \
+	copytree arrange bubbleup treecheck freetree \
+	makemembers convsolids readname convassem matmult \
+	readcnv evalxform readmatrix makegroup block2 \
+	sphere wedge tor cyl ortho cone ell convinst \
+	extrude extrudcirc extrudcon getcurve \
+	revolve splinef readdbl brlabs docolor spline spl convsurf \
+	b-spline
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* Explicit composition of each product */
+
+conv-igs2g:	OBJ
+	CC LDFLAGS -o conv-igs2g OBJ LIBWDB LIBES
+
+#include "../Cakefile.rules"

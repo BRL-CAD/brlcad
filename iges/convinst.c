@@ -1,0 +1,83 @@
+/*
+ *  Authors -
+ *	John R. Anderson
+ *	Susanne L. Muuss
+ *	Earl P. Weaver
+ *
+ *  Source -
+ *	VLD/ASB Building 1065
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
+ */
+
+#include <stdio.h>
+#include "./iges_struct.h"
+#include "./iges_extern.h"
+#include "wdb.h"
+
+Convinst()
+{
+
+	int i,type,pointer,conv=0,totinst=0;
+	mat_t *rot;
+
+	for( i=0 ; i<totentities ; i++ )
+	{
+		if( dir[i]->type != 430 ) /* This is not an instance */
+			continue;
+
+		totinst++;
+
+		/* read parameters */
+		if( dir[i]->param <= pstart )
+		{
+			printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+					dir[i]->direct , dir[i]->name );
+			continue;
+		}
+		Readrec( dir[i]->param );
+		Readint( &type , "" );
+		Readint( &pointer , "" );
+
+		/* convert pointer to a "dir" index */
+		pointer = (-pointer - 1)/2;
+		if( pointer < 0 || pointer >= totentities )
+		{
+			printf( "Solid instance D%07d (%s) does not point to a legal solid\n",
+				dir[i]->direct , dir[i]->name );
+			continue;
+		}
+		
+
+		/* copy pointed to object info to replace instance entity */
+		dir[i]->type = dir[pointer]->type;
+		dir[i]->form = dir[pointer]->form;
+		dir[i]->param = dir[pointer]->param;
+
+		/* increment reference count for pointed to entity */
+		dir[pointer]->referenced++;
+
+		/* fix up transformation matrix if needed */
+		if( dir[i]->trans == 0 && dir[pointer]->trans == 0 )
+			continue;	/* nothing to do */
+		else if( dir[i]->trans == 0 )
+			dir[i]->trans = dir[pointer]->trans;	/* same as instanced */
+		else if( dir[i]->trans != 0 )
+		{
+			/* this instance refers to a transformation entity
+			   but the original instanced object does too,
+			   these matrices need to be combined */
+
+			rot = (mat_t *)malloc( sizeof( mat_t ) );
+			Matmult( rot , *(dir[i]->rot) , dir[pointer]->rot );
+			dir[i]->rot = rot;
+		}
+		conv++;
+	}
+
+	printf( "\nConverted %d solid instances out of %d total instances\n" , conv , totinst );
+}
