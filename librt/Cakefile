@@ -45,7 +45,7 @@
         nurb_c2 oslo_calc oslo_map nurb_plot nurb_bezier nurb_trim \
 	nurb_interp nurb_reverse nurb_tess nurb_trim_util \
 	wdb_obj view_obj dg_obj vdraw wdb_comb_std bezier_2d_isect \
-	bigE binary_obj
+	bigE binary_obj qray nirt
 
 /* Oddly, this line needs to be present to keep IBM AIX cpp happy. */
 #ifdef FAST_SQRT

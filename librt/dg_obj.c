@@ -79,6 +79,14 @@ extern struct mater *rt_material_head;	/* now defined in librt/mater.c */
 /* declared in vdraw.c */
 extern struct bu_cmdtab vdraw_cmds[];
 
+/* declared in qray.c */
+extern int	dgo_qray_cmd();
+extern void	dgo_init_qray();
+extern void	dgo_free_qray();
+
+/* declared in nirt.c */
+extern int	dgo_nirt_cmd();
+
 static int dgo_open_tcl();
 #if 0
 static int dgo_close_tcl();
@@ -106,15 +114,14 @@ static int dgo_tol_tcl();
 static int dgo_rtcheck_tcl();
 static int dgo_observer_tcl();
 static int dgo_report_tcl();
-#if 1
 extern int dgo_E_tcl();
-#endif
 static int dgo_autoview_tcl();
+static int dgo_qray_tcl();
+static int dgo_nirt_tcl();
 
 static union tree *dgo_wireframe_region_end();
 static union tree *dgo_wireframe_leaf();
 static int dgo_drawtrees();
-static void dgo_cvt_vlblock_to_solids();
 int dgo_invent_solid();
 static void dgo_bound_solid();
 void dgo_drawH_part2();
@@ -124,9 +131,11 @@ void dgo_eraseobjall_callback();
 static void dgo_eraseobj();
 void dgo_color_soltab();
 static int dgo_run_rt();
-static int dgo_build_tops();
 static void dgo_rt_write();
 static void dgo_rt_set_eye_model();
+void dgo_cvt_vlblock_to_solids();
+int dgo_build_tops();
+void dgo_pr_wait_status();
 
 void dgo_notify();
 static void dgo_print_schain();
@@ -144,9 +153,7 @@ static struct bu_cmdtab dgo_cmds[] = {
 	{"close",		dgo_close_tcl},
 #endif
 	{"draw",		dgo_draw_tcl},
-#if 1
 	{"E",			dgo_E_tcl},
-#endif
 	{"erase",		dgo_erase_tcl},
 	{"erase_all",		dgo_erase_all_tcl},
 	{"ev",			dgo_ev_tcl},
@@ -154,8 +161,10 @@ static struct bu_cmdtab dgo_cmds[] = {
 	{"headSolid",		dgo_headSolid_tcl},
 	{"illum",		dgo_illum_tcl},
 	{"label",		dgo_label_tcl},
+	{"nirt",		dgo_nirt_tcl},
 	{"observer",		dgo_observer_tcl},
 	{"overlay",		dgo_overlay_tcl},
+	{"qray",		dgo_qray_tcl},
 	{"report",		dgo_report_tcl},
 	{"rt",			dgo_rt_tcl},
 	{"rtabort",		dgo_rtabort_tcl},
@@ -222,6 +231,7 @@ dgo_deleteProc(clientData)
 
 
 	bu_vls_free(&dgop->dgo_name);
+	dgo_free_qray(dgop);
 
 	BU_LIST_DEQUEUE(&dgop->l);
 	bu_free((genptr_t)dgop, "dgo_deleteProc: dgop");
@@ -278,6 +288,8 @@ dgo_open_cmd(char		*oname,
 	BU_LIST_INIT(&dgop->dgo_headVDraw);
 	BU_LIST_INIT(&dgop->dgo_observers.l);
 	BU_LIST_INIT(&dgop->dgo_headRunRt.l);
+
+	dgo_init_qray(dgop);
 
 	/* append to list of dg_obj's */
 	BU_LIST_APPEND(&HeadDGObj.l,&dgop->l);
@@ -1915,6 +1927,81 @@ dgo_report_tcl(clientData, interp, argc, argv)
 }
 
 
+int
+dgo_rtabort_cmd(struct dg_obj	*dgop,
+		Tcl_Interp	*interp,
+		int		argc,
+		char 		**argv)
+{
+	struct run_rt	*rrp;
+
+	for (BU_LIST_FOR(rrp, run_rt, &dgop->dgo_headRunRt.l)) {
+		kill(rrp->pid, SIGKILL);
+		rrp->aborted = 1;
+	}
+
+	return TCL_OK;
+}
+
+static int
+dgo_rtabort_tcl(ClientData clientData,
+		 Tcl_Interp *interp,
+		 int argc,
+		 char **argv)
+{
+	struct dg_obj	*dgop = (struct dg_obj *)clientData;
+
+	return dgo_rtabort_cmd(dgop, interp, argc-1, argv+1);
+}
+
+static int
+dgo_qray_tcl(ClientData	clientData,
+	     Tcl_Interp	*interp,
+	     int	argc,
+	     char	**argv)
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+	
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+	return dgo_qray_cmd(dgop, interp, argc-1, argv+1);
+}
+
+static int
+dgo_nirt_tcl(ClientData	clientData,
+	     Tcl_Interp	*interp,
+	     int	argc,
+	     char	**argv)
+{
+	struct dg_obj	*dgop = (struct dg_obj *)clientData;
+	struct view_obj	*vop;
+	
+	if (argc < 3 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias dgo_nirt %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
+	/* search for view object */
+	for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
+		if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+			break;
+	}
+
+	if (BU_LIST_IS_HEAD(vop, &HeadViewObj.l)) {
+		Tcl_AppendResult(interp, "dgo_nirt: bad view object - ", argv[2],
+				 "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	return dgo_nirt_cmd(dgop, vop, interp, argc-2, argv+2);
+}
+
 #if 0
 /* skeleton functions for dg_obj methods */
 int
@@ -2413,7 +2500,7 @@ dgo_drawtrees(dgop, interp, argc, argv, kind)
 				struct bu_vls vls;
 
 				bu_vls_init(&vls);
-				bu_vls_printf(&vls, "helplib %s", argv[0]);
+ 				bu_vls_printf(&vls, "helplib %s", argv[0]);
 				Tcl_Eval(interp, bu_vls_addr(&vls));
 				bu_vls_free(&vls);
 				bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
@@ -2489,7 +2576,7 @@ dgo_drawtrees(dgop, interp, argc, argv, kind)
 /*
  *			C V T _ V L B L O C K _ T O _ S O L I D S
  */
-static void
+void
 dgo_cvt_vlblock_to_solids(dgop, interp, vbp, name, copy)
      struct dg_obj *dgop;
      Tcl_Interp *interp;
@@ -3066,7 +3153,7 @@ done: ;
  *
  *  Build a command line vector of the tops of all objects in view.
  */
-static int
+int
 dgo_build_tops(Tcl_Interp	*interp,
 	       struct solid	*hsp,
 	       char		**start,
@@ -3155,33 +3242,6 @@ dgo_rt_write(struct dg_obj	*dgop,
 		}
 	}
 	(void)fprintf(fp, "end;\n");
-}
-
-int
-dgo_rtabort_cmd(struct dg_obj	*dgop,
-		Tcl_Interp	*interp,
-		int		argc,
-		char 		**argv)
-{
-	struct run_rt	*rrp;
-
-	for (BU_LIST_FOR(rrp, run_rt, &dgop->dgo_headRunRt.l)) {
-		kill(rrp->pid, SIGKILL);
-		rrp->aborted = 1;
-	}
-
-	return TCL_OK;
-}
-
-static int
-dgo_rtabort_tcl(ClientData clientData,
-		 Tcl_Interp *interp,
-		 int argc,
-		 char **argv)
-{
-	struct dg_obj	*dgop = (struct dg_obj *)clientData;
-
-	return dgo_rtabort_cmd(dgop, interp, argc-1, argv+1);
 }
 
 static void
@@ -3527,4 +3587,41 @@ dgo_print_schain_vlcmds(dgop, interp)
 
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
+}
+
+/*
+ *			P R _ W A I T _ S T A T U S
+ *
+ *  Interpret the status return of a wait() system call,
+ *  for the edification of the watching luser.
+ *  Warning:  This may be somewhat system specific, most especially
+ *  on non-UNIX machines.
+ */
+void
+dgo_pr_wait_status(Tcl_Interp	*interp,
+		   int		status)
+{
+	int	sig = status & 0x7f;
+	int	core = status & 0x80;
+	int	ret = status >> 8;
+	struct bu_vls tmp_vls;
+
+	if (status == 0) {
+		Tcl_AppendResult(interp, "Normal exit\n", (char *)NULL);
+		return;
+	}
+
+	bu_vls_init(&tmp_vls);
+	bu_vls_printf(&tmp_vls, "Abnormal exit x%x", status);
+
+	if (core)
+		bu_vls_printf(&tmp_vls, ", core dumped");
+
+	if (sig)
+		bu_vls_printf(&tmp_vls, ", terminating signal = %d", sig);
+	else
+		bu_vls_printf(&tmp_vls, ", return (exit) code = %d", ret);
+
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), "\n", (char *)NULL);
+	bu_vls_free(&tmp_vls);
 }
