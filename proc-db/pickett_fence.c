@@ -205,5 +205,6 @@ int main(int argc, char *argv[])
   nwm = mk_addmember(firstname, &fwm, WMOP_SUBTRACT);
   for (l = 0; l < 16; l++)
     nwm->wm_mat[l] = first_mat[l];
-  mk_lcomb(f, "fence.c", &fwm, 0, "plastic", "", "50 50 20", 0);
+  sprintf(name, "%sfence.c", prefix);
+  mk_lcomb(f, name, &fwm, 0, "plastic", "", "50 50 20", 0);
 }

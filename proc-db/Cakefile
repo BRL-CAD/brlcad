@@ -7,7 +7,7 @@
 #define SRCDIR	proc-db
 #define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
 			pipetest nmgmodel brickwall wall tea_nmg \
-			pipe terrain sphflake picket_fence
+			pipe terrain sphflake pickett_fence
 #define STATIC_PRODUCTS		\
 	../SRCDIR/mol-data.dat ../SRCDIR/mol-data1.dat \
 	../SRCDIR/mol-data2.dat \
@@ -75,7 +75,7 @@ wall:	wall.o
 sphflake: sphflake.o
 	CC LDFLAGS sphflake.o LIBWDB LIBRT LIBBN LIBBU LIBU_LIBES LIBES -o sphflake
 
-picket_fence: picket_fence.o
-	CC LDFLAGS picket_fence.o LIBWDB LIBRT LIBBN LIBBU LIBU_LIBES LIBES -o picket_fence
+pickett_fence: pickett_fence.o
+	CC LDFLAGS pickett_fence.o LIBWDB LIBRT LIBBN LIBBU LIBU_LIBES LIBES -o pickett_fence
 
 #include "../Cakefile.rules"
