@@ -122,7 +122,7 @@ char	*argv[];
 		/* Ignore .pss extension if it's there. */
 		doti = strlen(reg_name) - 4;
 		if (doti > 0 && !strcmp(".pss", reg_name+doti))
-		reg_name[doti] = NULL;
+		reg_name[doti] = '\0';
 	}
 
 	jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile, bfile);
