@@ -57,7 +57,7 @@ double	fromheadfract, toheadfract;
 	VSUB2( diff, to, from );
 	if( (len = MAGNITUDE(diff)) < SMALL )  return;
 	VSCALE( diff, diff, 1/len );
-	pl_mat_vec_ortho( c1, diff );
+	bn_vec_ortho( c1, diff );
 	VCROSS( c2, c1, diff );
 
 	if( fromheadfract != 0 )  {
