@@ -143,6 +143,11 @@ extern int	fb_wpixel(FBIO *ifp, RGBpixel *pp);
 extern int	fb_flush(FBIO *ifp);
 extern void	fb_log(char *fmt, ...);
 extern int	fb_null(void);
+/* utility functions */
+extern int	fb_common_file_size(int *w, int *h, char *file, int psize);
+extern int	fb_common_image_size(int *w, int *h, int npixels);
+extern int	fb_is_linear_cmap(ColorMap *cmap);
+extern void	fb_make_linear_cmap(ColorMap *cmap);
 #else
 extern FBIO	*fb_open();
 extern int	fb_close();
@@ -155,6 +160,11 @@ extern int	fb_wpixel();
 extern int	fb_flush();
 extern void	fb_log();
 extern int	fb_null();
+/* utility functions */
+extern int	fb_common_file_size();
+extern int	fb_common_image_size();
+extern int	fb_is_linear_cmap();
+extern void	fb_make_linear_cmap();
 #endif
 
 /*
@@ -167,8 +177,6 @@ extern int	_fb_pgflush();
 extern int	_fb_disk_enable;
 extern int	fb_sim_readrect();
 extern int	fb_sim_writerect();
-extern int	fb_is_linear_cmap();
-extern void	fb_make_linear_cmap();
 
 /*
  * Copy one RGB pixel to another.
