@@ -597,7 +597,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 #endif
 
-#ifdef linux
+#if defined (linux) && !defined(__ia64__)
 /********************************
  *                              *
  *        Linux on IA32         *
