@@ -609,7 +609,7 @@ com_table	*ctp;
     int 	i = 0;      /* current position on the *buffer        */
     FILE	*newf;
     static char	*new_dest;
-
+    RT_EXTERN(FILE *popen, (CONST char *command, CONST char *type) );
     static FILE	*(*openfunc)() = 0;
 
     while (isspace(*(buffer+i)))
