@@ -136,10 +136,10 @@ mat_t			mat;
  *  Generally, only libwdb will set conv2mm != 1.0
  */
 int
-rt_ars_export( ep, ip, conv2mm )
+rt_ars_export( ep, ip, local2mm )
 struct rt_external	*ep;
 struct rt_db_internal	*ip;
-double			conv2mm;
+double			local2mm;
 {
 	struct ars_internal	*arip;
 	union record		*rec;
@@ -193,7 +193,7 @@ double			conv2mm;
 			lim = (left > 8 ) ? 8 : left;
 			for( el=0; el < lim; el++ )  {
 				vect_t	diff;
-				VSUB2SCALE( diff, fp, base_pt, conv2mm );
+				VSUB2SCALE( diff, fp, base_pt, local2mm );
 				/* NOTE: also type converts to dbfloat_t */
 				VMOVE( &(bp->b_values[el*3]), diff );
 				fp += ELEMENTS_PER_VECT;
@@ -212,11 +212,11 @@ double			conv2mm;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_ars_describe( str, ip, verbose, units )
+rt_ars_describe( str, ip, verbose, mm2local )
 struct rt_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
-double			units;
+double			mm2local;
 {
 	register int			j;
 	register struct ars_internal	*arip =
@@ -232,9 +232,9 @@ double			units;
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
-		arip->curves[0][X] * units,
-		arip->curves[0][Y] * units,
-		arip->curves[0][Z] * units );
+		arip->curves[0][X] * mm2local,
+		arip->curves[0][Y] * mm2local,
+		arip->curves[0][Z] * mm2local );
 	rt_vls_strcat( str, buf );
 
 	if( !verbose )  return;
@@ -247,9 +247,9 @@ double			units;
 		rt_vls_strcat( str, buf );
 		for( j=0; j < arip->pts_per_curve; j++ )  {
 			sprintf(buf, "\t\t(%g, %g, %g)\n",
-				v[X] * units,
-				v[Y] * units,
-				v[Z] * units );
+				v[X] * mm2local,
+				v[Y] * mm2local,
+				v[Z] * mm2local );
 			rt_vls_strcat( str, buf );
 			v += ELEMENTS_PER_VECT;
 		}
