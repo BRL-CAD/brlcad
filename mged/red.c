@@ -333,7 +333,6 @@ char *name;
 					(char *)NULL );
 				fclose( fp );
 				return( 1 );
-				break;
 		}
 		if( fprintf( fp , " %c %s" , op , rt_tree_array[i].tl_tree->tr_l.tl_name ) <= 0 )
 		{

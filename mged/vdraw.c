@@ -550,7 +550,6 @@ char **argv;
 			Tcl_AppendResult(interp, "0", (char *)NULL);
 			return TCL_OK;
 		}
-		break;
 	case 'v':
 		if (argc<3) {
 			Tcl_AppendResult(interp,"vdraw: need more args",(char *)NULL);
@@ -599,7 +598,6 @@ char **argv;
 			Tcl_AppendResult(interp,"vdraw: unknown option to vdraw vlist", (char *)NULL);
 			return TCL_ERROR;
 		}
-		break;
 	default:
 		Tcl_AppendResult(interp, "vdraw: see vdraw.c for help\n", (char *)NULL);
 		return TCL_ERROR;

@@ -29,10 +29,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "mater.h"
 
-#include "./sedit.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
+#include "./sedit.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 

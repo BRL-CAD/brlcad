@@ -713,7 +713,7 @@ char	**argv;
 {
   register int	i,j,k;
   register struct directory *dp;
-  register struct rt_db_internal intern;
+  struct rt_db_internal intern;
   register struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))

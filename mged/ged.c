@@ -88,11 +88,7 @@ extern int mged_slider_link_vars();
 int dm_pipe[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 
-int    update_views;
-#if 0
-extern void mged_do_rate_rotate();
-extern void mged_do_rate_slew();
-#endif
+int    update_views = 0;
 extern struct dm dm_Null;
 extern struct _mged_variables default_mged_variables;
 

@@ -461,8 +461,8 @@ register matp_t out, change, in;
 void
 wrt_point( out, change, in, point )
 register matp_t out;
-CONST register matp_t change, in;
-CONST register vect_t point;
+register CONST matp_t change, in;
+register CONST vect_t point;
 {
 	mat_t	t;
 
