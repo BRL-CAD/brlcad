@@ -511,14 +511,6 @@ case "$target" in
 	*-*-*BSD*)
 		PTHREAD_LIBS="-pthread"
 		;;
-	*-*-*irix*)
-		is_irix=yes
-		# XXX nasty temp hack for backwards cake compatibility
-		CFLAGS="$CFLAGS -DIRIX"
-		if test "x$build_64bit" = "xyes" ; then
-			CFLAGS="$CFLAGS -DIRIX64"
-		fi
-		;;
 esac
 AC_SUBST(PTHREAD_LIBS)
 
@@ -1469,6 +1461,19 @@ else
 fi
 AC_SUBST(LIBZ)
 
+dnl *** libtkGLX ***
+
+dnl See if we can build libtkGLX
+# XXX need to test why the library fails on non-irix
+TKGLX=
+if test "x$host_os" = "xirix6.5"
+	TKGLX=libtkGLX
+fi
+AC_SUBST(TKGLX)
+
+
+dnl *** 64-bit compilation ***
+
 dnl figure out whether we are building 64-bit
 build_brlcad_64bit="no"
 if test "x$build_64bit" = "xyes" ; then
@@ -1502,6 +1507,15 @@ else
 	fi
 fi
 
+# XXX nasty temp hack for backwards cake compatibility.
+# XXX the code that relies on this will be going away, but until then..
+if test "x$build_brlcad_64bit" = "xyes" -a test "x$host_os" = "xirix6.5" ; then
+	CFLAGS="$CFLAGS -DIRIX64"
+else
+	CFLAGS="$CFLAGS -DIRIX"
+fi
+
+
 dnl ***************************
 dnl *** Configure Makefiles ***
 dnl ***************************
@@ -1510,7 +1524,6 @@ AM_CONDITIONAL(BUILD_JOVE, [test "x$use_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
-AM_CONDITIONAL(IRIX, [test "x$is_irix" == "xyes" ])
 AM_CONDITIONAL(JAVA, [test "x$with_java" != "xno"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$only_rts" != "xno"])
