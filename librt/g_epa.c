@@ -171,6 +171,13 @@ struct pt_node {
 RT_EXTERN(void	rt_ell, (fastf_t *ov, CONST fastf_t *V, CONST fastf_t *A,
 			CONST fastf_t *B, int sides) );
 
+struct bu_structparse rt_epa_parse[] = {
+    { "%f", 3, "V",   offsetof(struct rt_epa_internal, epa_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "H",   offsetof(struct rt_epa_internal, epa_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "A",   offsetof(struct rt_epa_internal, epa_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_1", offsetof(struct rt_epa_internal, epa_r1),    BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_2", offsetof(struct rt_epa_internal, epa_r2),    BU_STRUCTPARSE_FUNC_NULL },
+    {0} };
 
 /*
  *  			R T _ E P A _ P R E P
