@@ -856,8 +856,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	NEAR_ZERO(v[X],tol) && NEAR_ZERO(v[Y],tol) && NEAR_ZERO(v[Z],tol)  )
 
 /* Macros to update min and max X,Y,Z values to contain a point */
-#define V_MIN(r,s)	if( (r) > (s) ) r = (s)
-#define V_MAX(r,s)	if( (r) < (s) ) r = (s)
+#define V_MIN(r,s)	if( (s) < (r) ) r = (s)
+#define V_MAX(r,s)	if( (s) > (r) ) r = (s)
 #define VMIN(r,s)	{ V_MIN((r)[X],(s)[X]); V_MIN((r)[Y],(s)[Y]); V_MIN((r)[Z],(s)[Z]); }
 #define VMAX(r,s)	{ V_MAX((r)[X],(s)[X]); V_MAX((r)[Y],(s)[Y]); V_MAX((r)[Z],(s)[Z]); }
 #define VMINMAX( min, max, pt )	{ VMIN( (min), (pt) ); VMAX( (max), (pt) ); }

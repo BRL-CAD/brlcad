@@ -363,7 +363,7 @@ struct rt_dsp_internal{
 	unsigned	dsp_xcnt;		/* # samples in row of data */
 	unsigned	dsp_ycnt;		/* # of columns in data */
 	int		dsp_smooth;		/* bool: surf normal interp */
-	double		dsp_xs;			/* not used */
+	double		dsp_xs;			/* pirated for pieces */
 	double		dsp_ys;			/* not used */
 	double		dsp_zs;			/* not used */
 	mat_t		dsp_mtos;		/* model to solid space */
