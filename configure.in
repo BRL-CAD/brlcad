@@ -159,11 +159,13 @@ dnl typedefs
 dnl functions
 AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strchr getopt writev regex)
 AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,,Lacking fstatfs)])
-AC_CHECK_DECL(sys_errlist,AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]),,[# include <stdio.h>])
+AC_CHECK_DECL(sys_errlist,AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]),AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),[# include <stdio.h>])
 AC_CHECK_FUNC(popen,AC_DEFINE(HAVE_POPEN_DECL,1,popen))
 AC_CHECK_FUNC(strdup,[AC_DEFINE(HAVE_STRDUP_DECL,1,strdup) AC_DEFINE(HAVE_STRDUP,1,strdup)])
-AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique)
 AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,,Fix this, sys/types.h and sys/stat.h ...))
+
+AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique)
+AC_DEFINE(USE_PROTOTYPES,1,heh)
 
 dnl POSIX_REGEXEC
 dnl CALTECH_MALLOC
