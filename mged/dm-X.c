@@ -1352,14 +1352,15 @@ X_load_startup()
   struct rt_vls str;
   char *path;
   char *filename;
-  int     found;
 
 #define DM_X_RCFILE "xinit.tk"
 
   bzero((void *)&head_x_vars, sizeof(struct x_vars));
   RT_LIST_INIT( &head_x_vars.l );
 
-  found = 0;
+  /* Start with internal default */
+  Tcl_Eval( interp, x_init_str );
+
   rt_vls_init( &str );
 
   if((filename = getenv("DM_X_RCFILE")) == (char *)NULL )
@@ -1372,45 +1373,28 @@ X_load_startup()
     rt_vls_strcat( &str, "/" );
     rt_vls_strcat( &str, filename );
 
-    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL )
-      found = 1;
-  }
-
-  if(!found){
-    if( (path = getenv("HOME")) != (char *)NULL )  {
-      /* Use HOME path */
-      rt_vls_strcpy( &str, path );
-      rt_vls_strcat( &str, "/" );
-      rt_vls_strcat( &str, filename );
-
-      if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
-	found = 1;
+    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
+      fclose(fp);
+      (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
     }
   }
 
-  if( !found ) {
-    /* Check current directory */
-    if( (fp = fopen( filename, "r" )) != NULL )  {
-      rt_vls_strcpy( &str, filename );
-      found = 1;
+  if( (path = getenv("HOME")) != (char *)NULL )  {
+    /* Use HOME path */
+    rt_vls_strcpy( &str, path );
+    rt_vls_strcat( &str, "/" );
+    rt_vls_strcat( &str, filename );
+
+    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
+	fclose(fp);
+	(void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
     }
   }
 
-  if(!found){
-    rt_vls_free(&str);
-
-    /* Using default */
-    if(Tcl_Eval( interp, x_init_str ) == TCL_ERROR)
-      return -1;
-
-    return 0;
-  }
-
-  fclose( fp );
-
-  if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
-    rt_vls_free(&str);
-    return -1;
+  /* Check current directory */
+  if( (fp = fopen( filename, "r" )) != NULL )  {
+    fclose(fp);
+    (void)Tcl_EvalFile( interp, filename );
   }
 
   rt_vls_free(&str);
