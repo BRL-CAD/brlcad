@@ -71,7 +71,9 @@ struct shadework	*swp;
 
 	RT_AP_CHECK(ap);
 
-	if( swp->sw_xmitonly )  return 1;
+/*	This prevents us from shadowing as a result of procedural shaders. Lee
+ *	if( swp->sw_xmitonly )  return 1;
+ */
 
 	reflect = swp->sw_reflect;
 	transmit = swp->sw_transmit;
@@ -173,6 +175,8 @@ struct shadework	*swp;
 		sub_ap.a_level = 0;	/* # of internal reflections */
 		sub_ap.a_cumlen = 0;	/* distance through the glass */
 		sub_ap.a_user = -1;	/* sanity */
+		sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
+		sub_ap.a_diverge = 0.0;
 		sub_ap.a_uptr = (genptr_t)(pp->pt_regionp);
 		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
 		VMOVE( incident_dir, ap->a_ray.r_dir );
@@ -223,6 +227,8 @@ do_inside:
 		sub_ap.a_miss = rr_miss;
 		sub_ap.a_purpose = "rr internal ray probing for glass exit pnt";
 		sub_ap.a_onehit = 3;
+		sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
+		sub_ap.a_diverge = 0.0;
 		switch( code = rt_shootray( &sub_ap ) )  {
 		case 3:
 			/* More glass to come.
@@ -334,6 +340,8 @@ do_exit:
 		sub_ap.a_onehit = ap->a_onehit;
 		sub_ap.a_level = ap->a_level+1;
 		sub_ap.a_uptr = ap->a_uptr;
+		sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
+		sub_ap.a_diverge = 0.0;
 		if( code == 3 )  {
 			sub_ap.a_purpose = "rr recurse on next glass";
 		}  else  {
@@ -372,6 +380,8 @@ do_reflection:
 
 		/* Mirror reflection */
 		sub_ap = *ap;		/* struct copy */
+		sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
+		sub_ap.a_diverge = 0.0;
 		sub_ap.a_level = ap->a_level+1;
 		sub_ap.a_onehit = -1;	/* Require at least one non-air hit */
 		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
