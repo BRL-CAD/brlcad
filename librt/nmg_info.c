@@ -1181,8 +1181,9 @@ CONST struct rt_tol	*tol;
 								rt_log("nmg_find_edge_between_2fu() belatedly fusing e1=x%x, eg1=x%x, e2=x%x, eg2=x%x\n",
 									eur->e_p, eur->e_p->eg_p,
 									ret->e_p, ret->e_p->eg_p );
-									/* XXX Really need to move over all uses of that edge, not just this one. */
-									nmg_use_edge_g( eur->e_p, ret->e_p->eg_p );
+								nmg_move_eg( eur->e_p->eg_p, ret->e_p->eg_p, nmg_find_s_of_eu(eur) );
+								/* See if there are any others. */
+								nmg_model_fuse( nmg_find_model(&eur->l.magic), tol );
 							} else {
 					    			rt_bomb("nmg_find_edge_between_2fu() 2 faces intersect with differing edge geometries?\n");
 							}
