@@ -576,7 +576,7 @@ int axis;
 
     /* label axis */
     dmp->dmr_puts(labels[i], ((int)(2048.0 * v2[X])) + 15,
-		  ((int)(2048.0 * v2[Y])) + 15, 1, DM_YELLOW, -1);
+		  ((int)(2048.0 * v2[Y])) + 15, 1, DM_YELLOW);
   }
 
   dmp->dmr_newrot(model2view, 0);

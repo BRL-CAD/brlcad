@@ -28,10 +28,14 @@ extern int dm_pipe[];
 
 #ifdef VIRTUAL_TRACKBALL
 #define VIRTUAL_TRACKBALL_OFF 0
-#define VIRTUAL_TRACKBALL_IGNORE 1 /* Ignore motion events */
+#define VIRTUAL_TRACKBALL_ON 1
 #define VIRTUAL_TRACKBALL_ROTATE 2 
 #define VIRTUAL_TRACKBALL_TRANSLATE 3
 #define VIRTUAL_TRACKBALL_ZOOM 4
+
+#define VIRTUAL_TRACKBALL_NOT_ACTIVE(_type,_name)\
+  ((_type)dm_vars)->_name == VIRTUAL_TRACKBALL_OFF ||\
+  ((_type)dm_vars)->_name == VIRTUAL_TRACKBALL_ON
 #endif
 
 /* Interface to a specific Display Manager */
