@@ -21,7 +21,15 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#include <stdlib.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <unistd.h>
 
 unsigned char	ibuf[3*1024];

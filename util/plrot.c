@@ -23,6 +23,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <ctype.h>
 #include <math.h>
 
@@ -30,6 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"			/* For getopt() */
 #include "bu.h"
 #include "vmath.h"
+#include "plot3.h"
 #include "bn.h"
 
 #define	UPPER_CASE(c)	((c)-32)
@@ -74,6 +80,113 @@ Usage: plrot [options] [file1 ... fileN] > file.plot\n\
    -v             Verbose\n\
    -S#            Space: takes a quoted string of six floats\n";
 
+/*
+ *			M O D E L _ R P P
+ *
+ *  Process a space command.
+ *  Behavior depends on setting of several flags.
+ *
+ *  Implicit Returns -
+ *	In all cases, sets space_min and space_max.
+ */
+int
+model_rpp( min, max )
+const point_t	min, max;
+{
+
+	if( space_set )  {
+		fprintf(stderr, "plrot:  additional SPACE command ignored\n");
+		fprintf(stderr, "got: space (%g, %g, %g) (%g, %g, %g)\n",
+			V3ARGS(min), V3ARGS(max) );
+		fprintf(stderr, "still using: space (%g, %g, %g) (%g, %g, %g)\n",
+			V3ARGS(space_min), V3ARGS(space_max) );
+		return 0;
+	}
+
+	if( rpp )  {
+		point_t	rot_center;		/* center of rotation */
+		mat_t	xlate;
+		mat_t	resize;
+		mat_t	t1, t2;
+
+		VADD2SCALE( rot_center, min, max, 0.5 );
+
+		/* Create the matrix which encodes this */
+		MAT_IDN( xlate );
+		MAT_DELTAS( xlate, -rot_center[X], -rot_center[Y], -rot_center[Z] );
+		MAT_IDN( resize );
+		resize[15] = 1/scale;
+		bn_mat_mul( t1, resize, xlate );
+		bn_mat_mul( t2, rmat, t1 );
+		MAT_COPY( rmat, t2 );
+		if( verbose )  {
+			bn_mat_print("rmat", rmat);
+		}
+
+		if( Mflag )  {
+			/*  Don't rebound, just expand size of space
+			 *  around center point.
+			 *  Has advantage of the output space() not being
+			 *  affected by changes in rotation,
+			 *  which may be significant for animation scripts.
+			 */
+			vect_t	diag;
+			double	v;
+
+			VSUB2( diag, max, min );
+			v = MAGNITUDE(diag)*0.5 + 0.5;
+			VSET( space_min, -v, -v, -v );
+			VSET( space_max,  v,  v,  v );
+		} else {
+			/* re-bound the space() rpp with a tighter one
+			 * after rotating & scaling it.
+			 */
+			bn_rotate_bbox( space_min, space_max, rmat, min, max );
+		}
+		space_set = 1;
+	} else {
+		VMOVE( space_min, min );
+		VMOVE( space_max, max );
+		space_set = 1;
+	}
+
+	if( forced_space )  {
+		/* Put forced space back */
+		VMOVE( space_min, forced_space_min );
+		VMOVE( space_max, forced_space_max );
+		space_set = 1;
+	}
+
+	if( verbose )  {
+		fprintf(stderr, "got: space (%g, %g, %g) (%g, %g, %g)\n",
+			V3ARGS(min), V3ARGS(max) );
+		fprintf(stderr, "put: space (%g, %g, %g) (%g, %g, %g)\n",
+			V3ARGS(space_min), V3ARGS(space_max) );
+	}
+
+	return( 1 );
+}
+
+
+int
+getshort( fp )
+FILE	*fp;
+{
+	register long	v, w;
+
+	v = getc(fp);
+	v |= (getc(fp)<<8);	/* order is important! */
+
+	/* worry about sign extension - sigh */
+	if( v <= 0x7FFF )  return(v);
+	w = -1;
+	w &= ~0x7FFF;
+	return( w | v );
+}
+
+
+
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -204,6 +317,7 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+
 /*
  *			M A I N
  */
@@ -239,6 +353,7 @@ char	**argv;
 	} else {
 		dofile( stdin );
 	}
+	return 0;
 }
 
 /*
@@ -437,92 +552,6 @@ FILE	*fp;
 		;
 }
 
-/*
- *			M O D E L _ R P P
- *
- *  Process a space command.
- *  Behavior depends on setting of several flags.
- *
- *  Implicit Returns -
- *	In all cases, sets space_min and space_max.
- */
-int
-model_rpp( min, max )
-const point_t	min, max;
-{
-
-	if( space_set )  {
-		fprintf(stderr, "plrot:  additional SPACE command ignored\n");
-		fprintf(stderr, "got: space (%g, %g, %g) (%g, %g, %g)\n",
-			V3ARGS(min), V3ARGS(max) );
-		fprintf(stderr, "still using: space (%g, %g, %g) (%g, %g, %g)\n",
-			V3ARGS(space_min), V3ARGS(space_max) );
-		return 0;
-	}
-
-	if( rpp )  {
-		point_t	rot_center;		/* center of rotation */
-		mat_t	xlate;
-		mat_t	resize;
-		mat_t	t1, t2;
-
-		VADD2SCALE( rot_center, min, max, 0.5 );
-
-		/* Create the matrix which encodes this */
-		MAT_IDN( xlate );
-		MAT_DELTAS( xlate, -rot_center[X], -rot_center[Y], -rot_center[Z] );
-		MAT_IDN( resize );
-		resize[15] = 1/scale;
-		bn_mat_mul( t1, resize, xlate );
-		bn_mat_mul( t2, rmat, t1 );
-		MAT_COPY( rmat, t2 );
-		if( verbose )  {
-			bn_mat_print("rmat", rmat);
-		}
-
-		if( Mflag )  {
-			/*  Don't rebound, just expand size of space
-			 *  around center point.
-			 *  Has advantage of the output space() not being
-			 *  affected by changes in rotation,
-			 *  which may be significant for animation scripts.
-			 */
-			vect_t	diag;
-			double	v;
-
-			VSUB2( diag, max, min );
-			v = MAGNITUDE(diag)*0.5 + 0.5;
-			VSET( space_min, -v, -v, -v );
-			VSET( space_max,  v,  v,  v );
-		} else {
-			/* re-bound the space() rpp with a tighter one
-			 * after rotating & scaling it.
-			 */
-			bn_rotate_bbox( space_min, space_max, rmat, min, max );
-		}
-		space_set = 1;
-	} else {
-		VMOVE( space_min, min );
-		VMOVE( space_max, max );
-		space_set = 1;
-	}
-
-	if( forced_space )  {
-		/* Put forced space back */
-		VMOVE( space_min, forced_space_min );
-		VMOVE( space_max, forced_space_max );
-		space_set = 1;
-	}
-
-	if( verbose )  {
-		fprintf(stderr, "got: space (%g, %g, %g) (%g, %g, %g)\n",
-			V3ARGS(min), V3ARGS(max) );
-		fprintf(stderr, "put: space (%g, %g, %g) (%g, %g, %g)\n",
-			V3ARGS(space_min), V3ARGS(space_max) );
-	}
-
-	return( 1 );
-}
 
 /******* Coordinate Transforms / Output *******/
 
@@ -601,20 +630,6 @@ mat_t	m;
 	fwrite( buf, 1, 3*8, stdout );
 }
 
-getshort( fp )
-FILE	*fp;
-{
-	register long	v, w;
-
-	v = getc(fp);
-	v |= (getc(fp)<<8);	/* order is important! */
-
-	/* worry about sign extension - sigh */
-	if( v <= 0x7FFF )  return(v);
-	w = -1;
-	w &= ~0x7FFF;
-	return( w | v );
-}
 
 double
 getdouble( fp )

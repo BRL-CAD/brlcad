@@ -103,7 +103,7 @@ static const char RCSrtstring[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
@@ -211,7 +211,7 @@ int bu_fgetc (bfp)
 register BU_FILE	*bfp;
 
 {
-    char	*cp;
+    char	*cp = (char *)NULL;
     int		comment_char;	/* The comment character */
     int		strip_comments;	/* Should I strip comments? */
 
@@ -1009,7 +1009,7 @@ char	*argv[];
 
 {
     char		*db_name;	/* Name of database */
-    char		*sf_name;	/* Name of spec file */
+    char		*sf_name = NULL;	/* Name of spec file */
     BU_FILE		*sfp = NULL;	/* Spec file */
     int			ch;		/* Command-line character */
     int			tankill = 0;	/* TANKILL format (vs. BRL-CAD)? */

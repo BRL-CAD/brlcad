@@ -25,6 +25,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <unistd.h>
+#include "conf.h"
+#include "machine.h"
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
+#include "plot3.h"
 
 FILE	*fp;
 
@@ -79,4 +86,5 @@ char **argv;
 			}
 		}
 	}
+	return 0;
 }

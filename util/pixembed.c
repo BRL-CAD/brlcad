@@ -50,6 +50,7 @@ Usage: pixembed [-h] [-b border_inset] \n\
 /*
  *			G E T _ A R G S
  */
+int
 get_args( argc, argv )
 register char **argv;
 {

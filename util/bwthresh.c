@@ -24,7 +24,15 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#include <stdlib.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #define		USAGE		"Usage: 'bwthresh val ...'\n"
 
@@ -38,8 +46,6 @@ char	**argv;
     int			nm_threshs;	/* How many thresholds? */
     int			i;
     unsigned char	*bin_color = (unsigned char *)0;/* resultant pixel values */
-
-    char		*malloc();
 
     if ((nm_threshs = argc - 1) < 1)
     {

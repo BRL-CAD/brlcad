@@ -38,7 +38,7 @@ char **argv;
 
 	int seed = getpid();
 	int high, low;
-	double  center;
+	double  center = 0;
 	int verbose = 0;
 	int gauss = 0;
 	int uniform = 0;
@@ -112,4 +112,6 @@ char **argv;
 		tmp*=BN_UNIF_DOUBLE(up)+0.5;
 		fprintf(stdout,"%d\n", low +(int)tmp);
 	}
+	return 0;
 }
+ 

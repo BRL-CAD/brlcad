@@ -106,6 +106,7 @@ getlong(msgp)
 	return (u | *p);
 }
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -158,6 +159,81 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+
+/*
+ * Encode/decode functions for RT_BYTE_ENCODED images:
+ *
+ * The "run-length encoding" is of the form
+ *
+ *	<byte><byte>...<ESC><0>...<byte><ESC><count><byte>...
+ *
+ * where the counts are in the range 0..255 and the actual number of
+ * instances of <byte> is <count>+1 (i.e. actual is 1..256). One- or
+ * two-character sequences are left unencoded; three-or-more character
+ * sequences are encoded as <ESC><count><byte>.  <ESC> is the character
+ * code 128.  Each single <ESC> in the input data stream is encoded as
+ * <ESC><0>, because the <count> in this scheme can never be 0 (actual
+ * count can never be 1).  <ESC><ESC> is encoded as <ESC><1><ESC>. 
+ *
+ * This algorithm will fail (make the "compressed" data bigger than the
+ * original data) only if the input stream contains an excessive number of
+ * one- and two-character sequences of the <ESC> character.  
+ */
+
+#define ESCAPE		128
+
+int
+decoderead(buf,size,length,fp)
+unsigned char	*buf;
+int		size;		/* should be one! */
+int		length;		/* number of items to read */
+FILE		*fp;		/* input file pointer */
+{
+	static	int	repeat = -1;
+	static	int	lastchar = 0;
+	int		number_read;
+
+	number_read = 0;
+
+	if (size != 1) {
+		fprintf(stderr,"decoderead: unable to process size = %d.\n",
+			size);
+		exit(1);
+	}
+
+	while (length) {
+		if (repeat >= 0) {
+			*buf = lastchar;
+			--length;
+			++buf;
+			number_read++;
+			--repeat;
+		} else {
+			lastchar = getc(fp);
+			if (lastchar < 0) return(number_read);
+			if (lastchar == ESCAPE) {
+				repeat = getc(fp);
+				if (repeat <0) return(number_read);
+				if (repeat == 0) {
+					*buf = ESCAPE;
+					++buf;
+					number_read++;
+					--length;
+					--repeat;
+				} else {
+					lastchar = getc(fp);
+					if (lastchar < 0) return(number_read);
+				}
+			} else {
+				*buf = lastchar;
+				--length;
+				++buf;
+				++number_read;
+			}
+		}
+	}
+	return(number_read);
+}
 
 unsigned char bits[8] = { 128, 64, 32, 16, 8, 4, 2, 1 };
 
@@ -332,78 +408,4 @@ char **argv;
 		exit(1);
 	}
 	exit(0);
-}
-/*
- * Encode/decode functions for RT_BYTE_ENCODED images:
- *
- * The "run-length encoding" is of the form
- *
- *	<byte><byte>...<ESC><0>...<byte><ESC><count><byte>...
- *
- * where the counts are in the range 0..255 and the actual number of
- * instances of <byte> is <count>+1 (i.e. actual is 1..256). One- or
- * two-character sequences are left unencoded; three-or-more character
- * sequences are encoded as <ESC><count><byte>.  <ESC> is the character
- * code 128.  Each single <ESC> in the input data stream is encoded as
- * <ESC><0>, because the <count> in this scheme can never be 0 (actual
- * count can never be 1).  <ESC><ESC> is encoded as <ESC><1><ESC>. 
- *
- * This algorithm will fail (make the "compressed" data bigger than the
- * original data) only if the input stream contains an excessive number of
- * one- and two-character sequences of the <ESC> character.  
- */
-
-#define ESCAPE		128
-
-int
-decoderead(buf,size,length,fp)
-unsigned char	*buf;
-int		size;		/* should be one! */
-int		length;		/* number of items to read */
-FILE		*fp;		/* input file pointer */
-{
-	static	int	repeat = -1;
-	static	int	lastchar = 0;
-	int		number_read;
-
-	number_read = 0;
-
-	if (size != 1) {
-		fprintf(stderr,"decoderead: unable to process size = %d.\n",
-			size);
-		exit(1);
-	}
-
-	while (length) {
-		if (repeat >= 0) {
-			*buf = lastchar;
-			--length;
-			++buf;
-			number_read++;
-			--repeat;
-		} else {
-			lastchar = getc(fp);
-			if (lastchar < 0) return(number_read);
-			if (lastchar == ESCAPE) {
-				repeat = getc(fp);
-				if (repeat <0) return(number_read);
-				if (repeat == 0) {
-					*buf = ESCAPE;
-					++buf;
-					number_read++;
-					--length;
-					--repeat;
-				} else {
-					lastchar = getc(fp);
-					if (lastchar < 0) return(number_read);
-				}
-			} else {
-				*buf = lastchar;
-				--length;
-				++buf;
-				++number_read;
-			}
-		}
-	}
-	return(number_read);
 }

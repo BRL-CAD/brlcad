@@ -27,11 +27,12 @@
  *	All rights reserved.
  */
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 extern int	getopt();
 extern char	*optarg;
 extern int	optind;
-extern unsigned char *malloc();
 
 #define	MAXBUFBYTES	3*1024*1024	/* max bytes to malloc in buffer space */
 
@@ -57,6 +58,7 @@ static	char usage[] = "\
 Usage: pixscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -134,88 +136,6 @@ register char **argv;
 	return(1);		/* OK */
 }
 
-int
-main( argc, argv )
-int argc; char **argv;
-{
-	int i;
-
-	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
-		(void)fputs(usage, stderr);
-		exit( 1 );
-	}
-
-	if( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
-		fprintf( stderr, "pixscale: bad size\n" );
-		exit( 2 );
-	}
-
-	/* See how many lines we can buffer */
-	scanlen = 3 * inx;
-	init_buffer( scanlen );
-	if (inx < outx) i = outx * 3;
-	else i = inx * 3;
-
-	if( (outbuf = malloc(i)) == NULL )
-		exit( 4 );
-
-	/* Here we go */
-	i = scale( stdout, inx, iny, outx, outy );
-	free( outbuf );
-	free( buffer );
-	return( 0 );
-}
-
-/*
- * Determine max number of lines to buffer.
- *  and malloc space for it.
- *  XXX - CHECK FILE SIZE
- */
-void
-init_buffer( scanlen )
-int scanlen;
-{
-	int	max;
-
-	/* See how many we could buffer */
-	max = MAXBUFBYTES / scanlen;
-
-	/*
-	 * Do a max of 512.  We really should see how big
-	 * the input file is to decide if we should buffer
-	 * less than our max.
-	 */
-	if( max > 4096 ) max = 4096;
-
-	buflines = max;
-	buf_start = (-buflines);
-	buffer = malloc( buflines * scanlen );
-}
-
-/*
- * Load the buffer with scan lines centered around
- * the given y coordinate.
- */
-void
-fill_buffer( y )
-int y;
-{
-	static int	file_pos = 0;
-
-	buf_start = y - buflines/2;
-	if( buf_start < 0 ) buf_start = 0;
-
-	if( file_pos != buf_start * scanlen )  {
-		if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
-			fprintf( stderr, "pixscale: Can't seek to input pixel! y=%d\n", y );
-			exit( 3 );
-		}
-		file_pos = buf_start * scanlen;
-	}
-	fread( buffer, scanlen, buflines, buffp );
-	file_pos += buflines * scanlen;
-}
-
 /****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
 
 /* ceiling and floor functions for positive numbers */
@@ -230,6 +150,7 @@ int y;
  * We will preserve the amount of light energy per unit area.
  * To scale up we use bilinear interpolation.
  */
+int
 scale( ofp, ix, iy, ox, oy )
 FILE	*ofp;
 int	ix, iy, ox, oy;
@@ -314,6 +235,89 @@ int	ix, iy, ox, oy;
 	}
 	return( 1 );
 }
+
+int
+main( argc, argv )
+int argc; char **argv;
+{
+	int i;
+
+	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
+	}
+
+	if( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
+		fprintf( stderr, "pixscale: bad size\n" );
+		exit( 2 );
+	}
+
+	/* See how many lines we can buffer */
+	scanlen = 3 * inx;
+	init_buffer( scanlen );
+	if (inx < outx) i = outx * 3;
+	else i = inx * 3;
+
+	if( (outbuf = malloc(i)) == NULL )
+		exit( 4 );
+
+	/* Here we go */
+	i = scale( stdout, inx, iny, outx, outy );
+	free( outbuf );
+	free( buffer );
+	return( 0 );
+}
+
+/*
+ * Determine max number of lines to buffer.
+ *  and malloc space for it.
+ *  XXX - CHECK FILE SIZE
+ */
+void
+init_buffer( scanlen )
+int scanlen;
+{
+	int	max;
+
+	/* See how many we could buffer */
+	max = MAXBUFBYTES / scanlen;
+
+	/*
+	 * Do a max of 512.  We really should see how big
+	 * the input file is to decide if we should buffer
+	 * less than our max.
+	 */
+	if( max > 4096 ) max = 4096;
+
+	buflines = max;
+	buf_start = (-buflines);
+	buffer = malloc( buflines * scanlen );
+}
+
+/*
+ * Load the buffer with scan lines centered around
+ * the given y coordinate.
+ */
+void
+fill_buffer( y )
+int y;
+{
+	static int	file_pos = 0;
+
+	buf_start = y - buflines/2;
+	if( buf_start < 0 ) buf_start = 0;
+
+	if( file_pos != buf_start * scanlen )  {
+		if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
+			fprintf( stderr, "pixscale: Can't seek to input pixel! y=%d\n", y );
+			exit( 3 );
+		}
+		file_pos = buf_start * scanlen;
+	}
+	fread( buffer, scanlen, buflines, buffp );
+	file_pos += buflines * scanlen;
+}
+
 
 /*
  * Bilinear Interpolate a file of pixels.

@@ -33,6 +33,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include <bu.h>
+#include <vmath.h>
+#include <bn.h>
 #include "externs.h"		/* For getopt, etc */
 
 static char	*file_name;
@@ -49,6 +52,7 @@ Usage: pixhalve [-h] [-a]\n\
 
 void separate(), combine(), ripple(), filter5(), filter3();
 
+int
 get_args( argc, argv )
 register char **argv;
 {

@@ -26,7 +26,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 #include	<string.h>
 #else
 #include	<strings.h>
@@ -48,13 +48,13 @@ struct	kernels {
 	int	kerndiv;	/* Divisor for kernel */
 	int	kernoffset;	/* To be added to result */
 } kernel[] = {
-	{ "Low Pass", "lo", 3, 5, 3, 5, 10, 5, 3, 5, 3, 42, 0 },
-	{ "Laplacian", "la", -1, -1, -1, -1, 8, -1, -1, -1, -1, 16, 128 },
-	{ "High Pass", "hi", -1, -2, -1, -2,13, -2, -1, -2, -1, 1, 0 },
-	{ "Horizontal Gradiant", "hg", 1, 0, -1, 1, 0, -1, 1, 0, -1, 6, 128 },
-	{ "Vertical Gradient", "vg", 1, 1, 1, 0, 0, 0, -1, -1, -1, 6, 128 },
-	{ "Boxcar Average", "b", 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 0 },
-	{ NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ "Low Pass", "lo", {3, 5, 3, 5, 10, 5, 3, 5, 3}, 42, 0 },
+	{ "Laplacian", "la", {-1, -1, -1, -1, 8, -1, -1, -1, -1}, 16, 128 },
+	{ "High Pass", "hi", {-1, -2, -1, -2,13, -2, -1, -2, -1}, 1, 0 },
+	{ "Horizontal Gradiant", "hg", {1, 0, -1, 1, 0, -1, 1, 0, -1}, 6, 128 },
+	{ "Vertical Gradient", "vg", {1, 1, 1, 0, 0, 0, -1, -1, -1}, 6, 128 },
+	{ "Boxcar Average", "b", {1, 1, 1, 1, 1, 1, 1, 1, 1}, 9, 0 },
+	{ NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0 },
 };
 
 int	*kern;
@@ -75,6 +75,7 @@ char	usage[] = "\
 Usage: pixfilter [-f type] [-v] [-d div] [-o offset]\n\
         [-s squaresize] [-w width] [-n height] [file.pix] > file.pix\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {

@@ -160,6 +160,7 @@ int		i;
     );
 }
 
+int
 main (argc, argv)
 
 int	argc;
@@ -168,7 +169,7 @@ char	*argv[];
 {
     char		*cf_name = 0;	/* name of color file */
     char		*inf_name;	/* name of input stream */
-    char		*outf_name;	/*  "   "  output   "   */
+    char		*outf_name = NULL;	/*  "   "  output   "   */
     unsigned char	pixbuf[3];	/* the current input pixel */
     FILE		*infp = NULL;	/* input stream */
     FILE		*outfp = NULL;	/* output   "   */
@@ -211,7 +212,7 @@ char	*argv[];
 		next_color = 0;
 		break;
 	    case 'x':
-		if (sscanf(optarg, "%x", &debug) != 1)
+		if (sscanf(optarg, "%x", (unsigned int *) &debug) != 1)
 		{
 		    bu_log("Invalid debug-flag value: '%s'\n", optarg);
 		    print_usage();
@@ -320,4 +321,5 @@ char	*argv[];
 	    exit (1);
 	}
     }
+    return 0;
 }

@@ -32,6 +32,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "externs.h"		/* For getopt, etc */
 #include "vmath.h"
 #include "bu.h"
+#include "bn.h"
 #include "fb.h"
 
 #define	ACHROMATIC	-1.0
@@ -388,7 +389,8 @@ int		col_nm;		/* Current column */
 /*
  *		    G E T _ A R G S ( )
  */
-static get_args (argc, argv)
+static int
+get_args (argc, argv)
 
 int		argc;
 register char **argv;
@@ -542,6 +544,7 @@ register char **argv;
 /*
  *			M A I N ( )
  */
+int
 main (argc, argv)
 
 int	argc;

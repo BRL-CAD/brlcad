@@ -19,8 +19,15 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <stdio.h>
+#include "conf.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 /* Dots are least most signifigant bit first in increasing index */
 struct	app_record {
 	unsigned char	ml[432];

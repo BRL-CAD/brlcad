@@ -20,6 +20,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+#include "conf.h"
+#include "machine.h"
+#include "bu.h"
+#include "vmath.h"
+#include "plot3.h"
+
 
 static char usage[] = "Usage: plcolor r g b\n";
 
@@ -46,4 +55,5 @@ int argc; char **argv;
 	b = atoi( argv[3] );
 
 	pl_color( stdout, r, g, b );
+	return 0;
 }

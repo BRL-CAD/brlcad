@@ -31,6 +31,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <signal.h>
 #include <errno.h>
 
@@ -47,6 +52,7 @@ int	Done = 0;
 static char usage[] = "\
 Usage: %s [-v] [-t seconds] [-r response ] [-l]\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -71,7 +77,7 @@ register char **argv;
 		}
 	}
 	if (Timeout < 0) Timeout = 0;
-	if (Loop & Timeout <= 0) Timeout=5;
+	if ( (Loop & Timeout) <= 0) Timeout=5;
 
 	if (Loop) Verbose = 0;
 

@@ -19,7 +19,21 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+#include <unistd.h>
+#include <stdlib.h>
+
+#include "conf.h"
+#include "machine.h"
+#include "bu.h"
+
 
 #define	TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
@@ -99,10 +113,93 @@ int	verbose;
 long	counts['z'-'A'+1];	/* for counting command usage */
 FILE	*fp;
 
-void	outchar(), outstring(), outshort(), outfloat();
+/* void	outchar(), outstring(), outshort(), outfloat(); */
 
 static char usage[] = "\
 Usage: pldebug [-v] [unix_plot]\n";
+
+
+void
+outchar( n )
+int	n;
+{
+	int	i, c;
+
+	putchar('(');
+	for( i = 0; i < n; i++ ) {
+		if( i != 0 )
+			putchar(',');
+		c = getc(fp);
+		printf("%3d", c );
+	}
+	putchar(')');
+}
+
+void
+outstring( n )
+int	n;
+{
+	int	c;
+
+	putchar('"');
+	while( (c = getc(fp)) != '\n' && c != EOF )
+		putchar(c);
+	putchar('"');
+}
+
+int
+getshort()
+{
+	register long	v, w;
+
+	v = getc(fp);
+	v |= (getc(fp)<<8);	/* order is important! */
+
+	/* worry about sign extension - sigh */
+	if( v <= 0x7FFF )  return(v);
+	w = -1;
+	w &= ~0x7FFF;
+	return( w | v );
+}
+
+void
+outshort( n )
+int	n;
+{
+	int	i;
+	short	s;
+
+	putchar('(');
+	for( i = 0; i < n; i++ ) {
+		if( i != 0 )
+			putchar(',');
+		s = getshort();
+		printf("%d", s );
+	}
+	putchar(')');
+}
+
+void
+outfloat( n )
+int	n;
+{
+	int	i;
+	unsigned char	in[8*16];
+	double	out[16];
+
+	fread( in, 8, n, fp );
+	ntohd( (unsigned char *)out, in, n );
+
+	putchar('(');
+	for( i = 0; i < n; i++ ) {
+		if( i != 0 )
+			putchar(',');
+		printf("%g", out[i] );
+	}
+	putchar(')');
+}
+
+
 
 int
 main( argc, argv )
@@ -183,83 +280,5 @@ char	**argv;
 			}
 		}
 	}
-}
-
-void
-outchar( n )
-int	n;
-{
-	int	i, c;
-
-	putchar('(');
-	for( i = 0; i < n; i++ ) {
-		if( i != 0 )
-			putchar(',');
-		c = getc(fp);
-		printf("%3d", c );
-	}
-	putchar(')');
-}
-
-void
-outstring( n )
-int	n;
-{
-	int	c;
-
-	putchar('"');
-	while( (c = getc(fp)) != '\n' && c != EOF )
-		putchar(c);
-	putchar('"');
-}
-
-void
-outshort( n )
-int	n;
-{
-	int	i;
-	short	s;
-
-	putchar('(');
-	for( i = 0; i < n; i++ ) {
-		if( i != 0 )
-			putchar(',');
-		s = getshort();
-		printf("%d", s );
-	}
-	putchar(')');
-}
-
-void
-outfloat( n )
-int	n;
-{
-	int	i;
-	char	in[8*16];
-	double	out[16];
-
-	fread( in, 8, n, fp );
-	ntohd( out, in, n );
-
-	putchar('(');
-	for( i = 0; i < n; i++ ) {
-		if( i != 0 )
-			putchar(',');
-		printf("%g", out[i] );
-	}
-	putchar(')');
-}
-
-getshort()
-{
-	register long	v, w;
-
-	v = getc(fp);
-	v |= (getc(fp)<<8);	/* order is important! */
-
-	/* worry about sign extension - sigh */
-	if( v <= 0x7FFF )  return(v);
-	w = -1;
-	w &= ~0x7FFF;
-	return( w | v );
+	return 0;
 }

@@ -24,6 +24,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"			/* For bzero */
 #include "externs.h"			/* For getopt and malloc */
@@ -76,6 +81,7 @@ int	n;
 /*
  *			G E T _ A R G S
  */
+int
 get_args( argc, argv )
 register char **argv;
 {

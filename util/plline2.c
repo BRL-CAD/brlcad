@@ -22,9 +22,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
+#include "vmath.h"
+#include "plot3.h"
 #include "externs.h"			/* For atof and atoi */
 
 
@@ -36,7 +44,9 @@ int argc; char **argv;
 {
 	int	c;
 	double	x1, y1, x2, y2;
-	int	r, g, b;
+	int	r = 0;
+	int 	g = 0;
+	int	b = 0;
 
 	if( argc < 5 || isatty(fileno(stdout)) ) {
 		fprintf( stderr, usage );
@@ -65,4 +75,6 @@ int argc; char **argv;
 		pl_color( stdout, r, g, b );
 
 	pd_line( stdout, x1, y1, x2, y2 );
+
+	return 0;
 }

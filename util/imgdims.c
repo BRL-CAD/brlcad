@@ -21,12 +21,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 #include <stdio.h>
+#include <ctype.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
 #include "machine.h"
 #include "externs.h"		/* For getopt(), etc. */
 #include "bu.h"
+#include "vmath.h"
+#include "bn.h"
 
 #define	BELIEVE_NAME	0
 #define	BELIEVE_STAT	1
@@ -92,6 +96,7 @@ char	*buf;
     return (DFLT_PIXEL_SIZE);
 }
 
+int
 main (argc, argv)
 
 int argc;

@@ -192,6 +192,7 @@ char	*color;
     return (pp);
 }
 
+int
 main (argc, argv)
 
 int	argc;
@@ -300,4 +301,6 @@ char	*argv[];
     bu_free((genptr_t) buf, "pixel buffer");
 
     bu_rb_walk1(palette, print_pixel, INORDER);
+
+    return 0;
 }

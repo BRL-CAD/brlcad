@@ -25,6 +25,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 # include <stdio.h>
+#include <stdlib.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #ifdef vax
 # include <vaxuba/opio.h>
 # include <sys/ioctl.h>

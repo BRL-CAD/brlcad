@@ -22,6 +22,12 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <stdio.h>
+#include "conf.h"
+#include "machine.h"
+#include "bu.h"
+#include "vmath.h"
+#include "plot3.h"
+
 
 char	buf[2048];
 
@@ -58,4 +64,6 @@ char	*argv;
 			pdv_3cont( stdout, xyz );
 		}
 	}
+
+	return 0;
 }

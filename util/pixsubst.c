@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 extern int errno;
 
@@ -22,19 +23,19 @@ char *argv[];
 
 	if( argc == 7 )
 	{
-		*argv++;
+		argv++;
 		pixin[0] = '\0' + atoi( *argv );
-		*argv++;
+		argv++;
 		pixin[1] = '\0' + atoi( *argv );
-		*argv++;
+		argv++;
 		pixin[2] = '\0' + atoi( *argv );
 	}
 
-	*argv++;
+	argv++;
 	pixout[0] = '\0' + atoi( *argv );
-	*argv++;
+	argv++;
 	pixout[1] = '\0' + atoi( *argv );
-	*argv++;
+	argv++;
 	pixout[2] = '\0' + atoi( *argv );
 
 	if( argc == 4 )
@@ -54,4 +55,5 @@ char *argv[];
 		else
 			fwrite( pix , sizeof( unsigned char ) , npixels , stdout );
 	}
+	return 0;
 }

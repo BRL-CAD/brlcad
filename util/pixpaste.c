@@ -25,9 +25,17 @@ static const char RCSid[] = "@(#)$Header$";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"		/* For getopt and malloc */
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
 
 static int	org_width = 512;	/* Default file sizes 512x512 */
 static int	org_height = 512;
@@ -57,6 +65,7 @@ pixpaste: Usage: pixpaste [-v] [-h] [-H] [-a] [-A] [-# num_bytes]\n\
 		 [-x horizontal] [-y vertical] orig_file paste_file\n\
 	A '-' can be used to indicate stdin for orig_file or paste_file\n";
 
+int
 get_args( argc, argv)
 register int argc;
 register char **argv;

@@ -24,6 +24,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+#include <unistd.h>
 
 #include "machine.h"
 #include "fb.h"
@@ -136,4 +143,5 @@ char **argv;
 				i, bin_r[i], bin_g[i], bin_b[i], npix );
 	}
 	fb_close( fbp );
+	return 0;
 }
