@@ -735,6 +735,18 @@ struct resource	*resp;
 		}
 	}
 
+	/* The 're_tree' guys are individually malloc()ed and linked using the 'tb_left' field */
+	if( resp->re_tree_hd != TREE_NULL ) {
+		union tree *tp;
+
+		tp = resp->re_tree_hd;
+		while( tp != TREE_NULL ) {
+			resp->re_tree_hd = tp->tr_b.tb_left;
+			bu_free( (char *)tp, "union tree in resource struct" );
+			tp = resp->re_tree_hd;
+		}
+	}
+
 	/* 're_boolstack' is a simple pointer */
 	if( resp->re_boolstack )  {
 		bu_free( (genptr_t)resp->re_boolstack, "boolstack" );
