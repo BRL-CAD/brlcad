@@ -717,7 +717,7 @@ init_sedit()
 			/* find the plane equations */
 			calc_planes( &es_rec.s, type );
 		}
-#if 0
+#if 1
 		/* XXX strictly experimental! */
 		if( es_rec.s.s_type == GENELL )  {
 			rt_log("Experimental:  new_way=1\n");
@@ -808,10 +808,11 @@ replot_editing_solid()
  * Works the new_way only.
  */
 void
-transform_editing_solid(os, mat, is)
+transform_editing_solid(os, mat, is, free)
 struct rt_db_internal	*os;
 mat_t			mat;
 struct rt_db_internal	*is;
+int			free;
 {
 	struct rt_external	ext;
 	struct directory	*dp;
@@ -826,7 +827,7 @@ struct rt_db_internal	*is;
 		rt_log("transform_editing_solid(%s):  solid export failure\n", dp->d_namep);
 		rt_bomb("transform_editing_solid");		/* FAIL */
 	}
-    	if( os == is && is->idb_ptr )  {
+	if( (free || os == is) && is->idb_ptr )  {
 		rt_functab[id].ft_ifree( is );
     		is->idb_ptr = (genptr_t)0;
     	}
@@ -1099,7 +1100,7 @@ sedit()
 			mat_t	scalemat;
 			mat_idn(scalemat);
 			scalemat[15] = 1/es_scale;
-			transform_editing_solid(&es_int, scalemat, &es_int);
+			transform_editing_solid(&es_int, scalemat, &es_int, 1);
 		} else {
 			for(i=3; i<=21; i+=3) { 
 				op = &es_rec.s.s_values[i];
@@ -1124,7 +1125,7 @@ sedit()
 				 * to new location.  Then apply matrix.
 				 */
 				rt_bomb("new_way");
-				transform_editing_solid(&es_int, xlatemat, &es_int);
+				transform_editing_solid(&es_int, xlatemat, &es_int, 1);
 			} else {
 				MAT4X3PNT( work, es_invmat, es_para );
 				VMOVE(es_rec.s.s_values, work);
@@ -1242,7 +1243,7 @@ sedit()
 		if( new_way )  {
 			/* XXX Need to xlate keypoint to origin, then rotate, then put back. */
 			rt_bomb("new_way");
-			transform_editing_solid(&es_int, incr_change, &es_int);
+			transform_editing_solid(&es_int, incr_change, &es_int, 1);
 		} else {
 			for(i=1; i<8; i++) {
 				op = &es_rec.s.s_values[i*3];
@@ -1544,7 +1545,7 @@ CONST mat_t		mat;
 
 	if( new_way )  {
 		id = es_int.idb_type;
-		transform_editing_solid( &intern, mat, &es_int );
+		transform_editing_solid( &intern, mat, &es_int, 0 );
 	} else {
 		/* Fake up an external record.  Does not need to be freed */
 		sol = *sp;		/* struct copy */
