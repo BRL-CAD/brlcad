@@ -172,6 +172,7 @@ char **argv;
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
 	RES_INIT( &rt_g.res_model );
+	BU_LIST_INIT( &rt_g.rtg_nmgfree );
 	/*
 	 *  Do not use rt_log() or rt_malloc() before this point!
 	 */
