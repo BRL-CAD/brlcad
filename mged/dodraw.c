@@ -102,8 +102,16 @@ long	us;		/* microseconds of extra delay */
 	refresh();		/* Force screen update */
 
 	/* Extra delay between screen updates, for more viewing time */
-	if(us)
-		(void)bsdselect( 0, 0, us );
+	/* Use /dev/tty to select on, because stdin may be a file */
+	if(us)  {
+		int	fd;
+		if( (fd = open("/dev/tty", 2)) < 0 )  {
+			perror("/dev/tty");
+		} else {
+			(void)bsdselect( 1<<fd, 0, us );
+			close(fd);
+		}
+	}
 }
 
 /*
@@ -128,8 +136,16 @@ long		us;		/* microseconds of extra delay */
 	refresh();		/* Force screen update */
 
 	/* Extra delay between screen updates, for more viewing time */
-	if(us)
-		(void)bsdselect( 0, 0, us );
+	/* Use /dev/tty to select on, because stdin may be a file */
+	if(us)  {
+		int	fd;
+		if( (fd = open("/dev/tty", 2)) < 0 )  {
+			perror("/dev/tty");
+		} else {
+			(void)bsdselect( 1<<fd, 0, us );
+			close(fd);
+		}
+	}
 }
 
 /*
@@ -1048,6 +1064,8 @@ char	**argv;
 	RT_INIT_DB_INTERNAL(&intern);
 	intern.idb_type = ID_NMG;
 	intern.idb_ptr = (genptr_t)mged_nmg_model;
+	mged_nmg_model = (struct model *)NULL;
+
 	RT_INIT_EXTERNAL( &ext );
 
 	/* Scale change on export is 1.0 -- no change */
