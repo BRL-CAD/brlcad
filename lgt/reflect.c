@@ -1863,7 +1863,8 @@ hl_Postprocess()
 			/* Output pixel based on bitmap value.  If bit is
 				ON, pixel should be ON. */
 			if( anti_aliasing )
-				{
+				{ /* NOTE: the 3030 compiler barfs on
+				     HL_TSTBIT if we use registers here. */
 #if defined(sgi) && ! defined(mips)
 					int xa, ya, xn, yn;
 #else
