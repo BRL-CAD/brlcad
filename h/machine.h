@@ -109,6 +109,7 @@ typedef long long	bitv_t;	/* largest integer type */
 #define RES_INIT(ptr)		RES_RELEASE(ptr)
 /* RES_ACQUIRE is a function in machine.c, using tas instruction */
 #define RES_RELEASE(ptr)	*(ptr)=0;
+
 #define MAX_PSW		4	/* Max number of processors */
 #define DEFAULT_PSW	1	/* for now */
 #define PARALLEL	1
@@ -147,7 +148,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 /* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines */
 #define MAX_PSW		4
-#define DEFAULT_PSW	MAX_PSW
+#define DEFAULT_PSW	1
 #define PARALLEL	1
 #endif
 
