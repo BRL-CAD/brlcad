@@ -1,4 +1,24 @@
-/*			W D B _C O M B _ S T D . C
+/*                  W D B _ C O M B _ S T D . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1997-2004 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public License
+ * as published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file wdb_comb_std.c
  *
  *	Code to implement the database objects "c" command
  *
@@ -17,7 +37,6 @@
  *  Copyright Notice -
  *      This software is Copyright (C) 1997-2004 by the United States Army
  *      in all countries except the USA.  All rights reserved.
- *
  */
 
 #ifndef lint
@@ -26,13 +45,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "tcl.h"
@@ -41,6 +58,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
+
 
 #define	PRINT_USAGE Tcl_AppendResult(interp, "c: usage 'c [-cr] comb_name [bool_expr]'\n",\
 				     (char *)NULL)

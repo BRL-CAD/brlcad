@@ -1,4 +1,26 @@
-/*		This module implements the 'E' command
+/*                          B I G E . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1997-2004 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public License
+ * as published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file bigE.c
+ *
+ * This module implements the 'E' command.
  *
  *  Author -
  *	John Anderson
@@ -20,14 +42,12 @@ static const char RCSid[] = "";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <signal.h>
 #ifdef HAVE_STRING_H
-#	include <string.h>
+#  include <string.h>
 #else
-#	include <strings.h>
+#  include <strings.h>
 #endif
 #include <errno.h>
 #include <time.h>

@@ -1,6 +1,26 @@
-/*******************************************************************
-
-CMD_VDRAW - edit vector lists and display them as pseudosolids
+/*                         V D R A W . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2004 United States Government as represented by the
+ * U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public License
+ * as published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file vdraw.c
+ *
+ edit vector lists and display them as pseudosolids.
 
 OPEN COMMAND
 vdraw	open			- with no argument, asks if there is
@@ -77,15 +97,14 @@ Acknowledgements:
 	*- build separate vdraw commands
 
 ********************************************************************/
+
 #include "common.h"
-
-
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
 #include <signal.h>
