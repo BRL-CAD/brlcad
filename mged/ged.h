@@ -224,7 +224,7 @@ extern void		eraseobj(register struct directory **dpp), eraseobjall(register str
 extern void		sedit_menu(void);
 extern void		attach(), get_attached(void);
 extern void		(*cur_sigint)();	/* Current SIGINT status */
-extern void		sig2(void), sig3(void);
+extern void		sig2(int), sig3(int);
 
 extern void		aexists(char *name);
 extern int		clip(fastf_t *, fastf_t *, fastf_t *, fastf_t *), getname(), use_pen(), dir_print();
