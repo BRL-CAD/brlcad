@@ -4,6 +4,7 @@ fb-pix \- save a framebuffer image in a color pix file
 .SH SYNOPSIS
 .B fb-pix
 .RB [ \-hi ]
+.RB [ \-F\  framebuffer]
 .RB [ \-s\  squaresize]
 .RB [ \-w\  width]
 .RB [ \-n\  height]
@@ -21,7 +22,14 @@ is used to select the display device (see
 .IR brlcad(1) ).
 If this variable is not set, the default device for your system will
 be used.
-By default, the output file will be made size 512x512 pixels.
+Alternatively, the framebuffer may be explicitly specified
+by using the
+.B \-F
+flag.
+.PP
+By default, the output
+.I pix
+file, and the requested framebuffer size, is assumed to be 512x512 pixels.
 Specifying the
 .B \-h
 flag, changes the default to 1024x1024.

@@ -30,15 +30,17 @@ extern int	optind;
 RGBpixel scanline[MAX_LINE];	/* 1 scanline pixel buffer */
 static int scanbytes;			/* # of bytes of scanline */
 
-char *file_name;
-FILE *outfp;
+char	*framebuffer = NULL;
+char	*file_name;
+FILE	*outfp;
 
 int inverse = 0;			/* Draw upside-down */
 int height;				/* input height */
 int width;				/* input width */
 
 char usage[] = "\
-Usage: fb-pix [-h -i] [-s squaresize] [-w width] [-n height] [file.pix]\n";
+Usage: fb-pix [-h -i] [-F framebuffer]\n\
+	[-s squaresize] [-w width] [-n height] [file.pix]\n";
 
 get_args( argc, argv )
 register char **argv;
@@ -53,6 +55,9 @@ register char **argv;
 			break;
 		case 'i':
 			inverse = 1;
+			break;
+		case 'F':
+			framebuffer = optarg;
 			break;
 		case 's':
 			/* square size */
@@ -108,7 +113,7 @@ char **argv;
 
 	scanbytes = width * sizeof(RGBpixel);
 
-	if( (fbp = fb_open( NULL, width, height )) == NULL )
+	if( (fbp = fb_open( framebuffer, width, height )) == NULL )
 		exit(12);
 
 	if( !inverse )  {
