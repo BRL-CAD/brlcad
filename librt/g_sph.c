@@ -270,26 +270,19 @@ register struct xray *rp;
  *
  *  Return the curvature of the sphere.
  */
-sph_curve( cvp, hitp, stp, rp )
+sph_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
-struct xray *rp;
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
 
- 	cvp->crv_c1 = sph->sph_rad;
+ 	cvp->crv_c1 = - sph->sph_rad;
  	cvp->crv_c2 = cvp->crv_c1;
+
 	/* any tangent direction */
  	rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
-
-	if( VDOT( hitp->hit_normal, rp->r_dir ) > 0 )  {
-		/* ray strikes surface from inside; make curv negative */
-		cvp->crv_c1 = - cvp->crv_c1;
-		cvp->crv_c2 = - cvp->crv_c2;
-	}
- 	return;
 }
 
 /*

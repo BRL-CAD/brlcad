@@ -549,11 +549,10 @@ register struct xray *rp;
  *
  *  Return the curvature of the torus.
  */
-tor_curve( cvp, hitp, stp, rp )
+tor_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
-struct xray *rp;
 {
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
@@ -583,8 +582,8 @@ struct xray *rp;
 	}
 	d = sqrt(x1*x1 + y1*y1 + z1*z1);
 
-	cvp->crv_c1 = (d - tor->tor_r1) / (d * tor->tor_r2);
-	cvp->crv_c2 = 1.0 / tor->tor_r2;
+	cvp->crv_c1 = (tor->tor_r1 - d) / (d * tor->tor_r2);
+	cvp->crv_c2 = -1.0 / tor->tor_r2;
 
 	w4[X] = x1 / d;
 	w4[Y] = y1 / d;
@@ -592,12 +591,6 @@ struct xray *rp;
 	VCROSS( w5, tor->tor_N, w4 );
 	VCROSS( cvp->crv_pdir, w5, hitp->hit_normal );
 	VUNITIZE( cvp->crv_pdir );
-
-	if( VDOT( hitp->hit_normal, rp->r_dir ) > 0 )  {
-		/* ray strikes surface from inside; make curv negative */
-		cvp->crv_c1 = - cvp->crv_c1;
-		cvp->crv_c2 = - cvp->crv_c2;
-	}
 }
 
 tor_uv()

@@ -557,11 +557,10 @@ register struct xray *rp;
  *  indicate no curvature.  Otherwise, compute curvature.
  *  Normal must have been computed before calling this routine.
  */
-rec_curve( cvp, hitp, stp, rp )
+rec_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
-struct xray *rp;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -579,12 +578,7 @@ struct xray *rp;
 		ax = VDOT( uu, rec->rec_A ) * rec->rec_iAsq;
 		bx = VDOT( uu, rec->rec_B ) * rec->rec_iBsq;
 		q = sqrt( ax * ax * rec->rec_iAsq + bx * bx * rec->rec_iBsq );
-		cvp->crv_c2 = rec->rec_iAsq * rec->rec_iBsq / (q*q*q);
-
-		if( VDOT( hitp->hit_normal, rp->r_dir ) > 0 )  {
-			/* ray strikes surface from inside; make curv negative */
-			cvp->crv_c2 = - cvp->crv_c2;
-		}
+		cvp->crv_c2 = - rec->rec_iAsq * rec->rec_iBsq / (q*q*q);
 		break;
 	case 1:
 	case 2:
@@ -595,7 +589,6 @@ struct xray *rp;
 		rt_log("rec_curve: bad flag x%x\n", (int)hitp->hit_private);
 		break;
 	}
-
 }
 
 /*

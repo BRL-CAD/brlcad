@@ -281,11 +281,10 @@ register struct xray *rp;
  *  Pick a principle direction orthogonal to normal, and 
  *  indicate no curvature.
  */
-hlf_curve( cvp, hitp, stp, rp )
+hlf_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
-struct xray *rp;
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;

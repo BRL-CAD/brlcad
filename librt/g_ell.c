@@ -372,11 +372,10 @@ register struct xray *rp;
  *
  *  Return the curvature of the ellipsoid.
  */
-ell_curve( cvp, hitp, stp, rp )
+ell_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
-struct xray *rp;
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -446,8 +445,6 @@ struct xray *rp;
 		4.0 * (g*fxy - f*fyy)*(e*fxy - f*fxx);
 	if( t5 < 0 ) {
 		fprintf( stderr, "t5 Negative\n" );
-		VPRINT( "Ray origin", rp->r_pt );
-		VPRINT( "Ray dir", rp->r_dir );
 		VPRINT( "w4", w4 );
 		fprintf( stderr, "fx,fy,fxx,fyy,fxy = %e %e %e %e %e\n", fx, fy, fxx, fyy, fxy );
 		fprintf( stderr, "e,f,g = %e %e %e\n", e, f, g );
@@ -460,13 +457,13 @@ struct xray *rp;
 
 	rc1sav = (t6 - t5)/t2;
 	rc2sav = (t6 + t5)/t2;
-	if( (cvp->crv_c1 = rc1sav) < 0 )
+	if( (cvp->crv_c1 = -rc1sav) > 0 )
 		cvp->crv_c1 = -cvp->crv_c1;
-	if( (cvp->crv_c2 = rc2sav) < 0 )
+	if( (cvp->crv_c2 = -rc2sav) > 0 )
 		cvp->crv_c2 = -cvp->crv_c2;
 
 	/* smaller magnitude curvature first */
-	if( cvp->crv_c1 > cvp->crv_c2 )  {
+	if( cvp->crv_c1 < cvp->crv_c2 ) {
 		FAST fastf_t f;
 		f = cvp->crv_c2;
 		cvp->crv_c2 = cvp->crv_c1;
@@ -502,12 +499,6 @@ struct xray *rp;
 	/* transform coords back to usual system */
 	VCOMB3( cvp->crv_pdir, a1, aup, b1, bup, c1, cup );
 	VUNITIZE( cvp->crv_pdir );
-
-	if( VDOT( hitp->hit_normal, rp->r_dir ) > 0 )  {
-		/* ray strikes surface from inside; make curv negative */
-		cvp->crv_c1 = - cvp->crv_c1;
-		cvp->crv_c2 = - cvp->crv_c2;
-	}
 }
 
 /*

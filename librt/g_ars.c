@@ -460,11 +460,10 @@ register struct xray *rp;
  *  Pick a principle direction orthogonal to normal, and 
  *  indicate no curvature.
  */
-ars_curve( cvp, hitp, stp, rp )
+ars_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
-struct xray *rp;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)hitp->hit_private;
@@ -472,7 +471,6 @@ struct xray *rp;
 	rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
-
 
 /*
  *  			A R S _ U V
@@ -529,7 +527,6 @@ register struct soltab *stp;
 		trip = nexttri;
 	}
 }
-
 
 ars_class()
 {

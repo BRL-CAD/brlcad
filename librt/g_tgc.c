@@ -917,11 +917,10 @@ tgc_plot()
 {
 }
 
-tgc_curve( cvp, hitp, stp, rp )
+tgc_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
-struct xray *rp;
 {
 	static int count = 0;
 	register struct tgc_specific *tgc =
@@ -935,11 +934,6 @@ struct xray *rp;
 		rt_orthovec( cvp->crv_pdir, hitp->hit_normal );	/* XXX - random guess */
 		cvp->crv_c1 = 0;
 		cvp->crv_c2 = 0;			/* XXX - to do */
-
-		if( VDOT( hitp->hit_normal, rp->r_dir ) > 0 )  {
-			/* ray strikes surface from inside; make curv negative */
-			cvp->crv_c2 = - cvp->crv_c2;
-		}
 		break;
 	case 1:
 	case 2:
