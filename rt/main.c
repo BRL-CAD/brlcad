@@ -34,6 +34,7 @@ double AmbientIntensity = 0.1;	/* Ambient light intensity */
 vect_t l0vec;			/* 0th light vector */
 vect_t l1vec;			/* 1st light vector */
 vect_t l2vec;			/* 2st light vector */
+vect_t l0pos;			/* 0th light position */
 double azimuth, elevation;
 int outfd;		/* fd of optional pixel output file */
 FILE *outfp;		/* used to write .PP files */
@@ -54,6 +55,7 @@ char **argv;
 	static vect_t tempdir;
 	static int matflag = 0;		/* read matrix from stdin */
 	static double utime;
+	char *title_file, *title_obj;	/* name of file and first object */
 
 	npts = 512;
 	azimuth = -35.0;			/* GIFT defaults */
@@ -119,21 +121,26 @@ char **argv;
 		exit(2);
 	}
 
-	/* initialize application based upon lightmodel # */
-	view_init( &ap );
-	ap.a_init( &ap, argv[0], argv[1] );
+	title_file = argv[0];
+	title_obj = argv[1];
 
 	timer_prep();		/* Start timing preparations */
 
 	/* Build directory of GED database */
-	dir_build( argv[0] );
+	if( dir_build( argv[0] ) < 0 )
+		rtbomb("Unable to continue");
 	argc--; argv++;
 
 	/* Load the desired portion of the model */
 	while( argc > 0 )  {
-		get_tree(argv[0]);
+		(void)get_tree(argv[0]);
 		argc--; argv++;
 	}
+
+	/* initialize application based upon lightmodel # */
+	view_init( &ap );
+	ap.a_init( &ap, title_file, title_obj );
+
 	(void)timer_print("PREP");
 
 	if( HeadSolid == SOLTAB_NULL )  {
@@ -195,27 +202,31 @@ char **argv;
 
 	fprintf(stderr,"Ambient light at %f%%\n", AmbientIntensity * 100.0 );
 
-	/* Determine the Light location(s) in view space */
-	/* 0:  Blue, at left edge, 1/2 high */
-	tempdir[0] = 2 * (base[X]);
-	tempdir[1] = (2/2) * (base[Y]);
-	tempdir[2] = 2 * (base[Z] + npts*deltas);
-	MAT4X3VEC( l0vec, view2model, tempdir );
-	VUNITIZE(l0vec);
+	if( lightmodel != 0 )  {
+		/* Determine the Light location(s) in view space */
+		/* lightmodel 0 does this in view.c */
+		/* 0:  Blue, at left edge, 1/2 high */
+		tempdir[0] = 2 * (base[X]);
+		tempdir[1] = (2/2) * (base[Y]);
+		tempdir[2] = 2 * (base[Z] + npts*deltas);
+		MAT4X3VEC( l0pos, view2model, tempdir );
+		VMOVE( l0vec, l0pos );
+		VUNITIZE(l0vec);
 
-	/* 1: Red, at right edge, 1/2 high */
-	tempdir[0] = 2 * (base[X] + npts*deltas);
-	tempdir[1] = (2/2) * (base[Y]);
-	tempdir[2] = 2 * (base[Z] + npts*deltas);
-	MAT4X3VEC( l1vec, view2model, tempdir );
-	VUNITIZE(l1vec);
+		/* 1: Red, at right edge, 1/2 high */
+		tempdir[0] = 2 * (base[X] + npts*deltas);
+		tempdir[1] = (2/2) * (base[Y]);
+		tempdir[2] = 2 * (base[Z] + npts*deltas);
+		MAT4X3VEC( l1vec, view2model, tempdir );
+		VUNITIZE(l1vec);
 
-	/* 2:  Grey, behind, and overhead */
-	tempdir[0] = 2 * (base[X] + (npts/2)*deltas);
-	tempdir[1] = 2 * (base[Y] + npts*deltas);
-	tempdir[2] = 2 * (base[Z] + (npts/2)*deltas);
-	MAT4X3VEC( l2vec, view2model, tempdir );
-	VUNITIZE(l2vec);
+		/* 2:  Grey, behind, and overhead */
+		tempdir[0] = 2 * (base[X] + (npts/2)*deltas);
+		tempdir[1] = 2 * (base[Y] + npts*deltas);
+		tempdir[2] = 2 * (base[Z] + (npts/2)*deltas);
+		MAT4X3VEC( l2vec, view2model, tempdir );
+		VUNITIZE(l2vec);
+	}
 
 	timer_prep();	/* start timing actual run */
 
