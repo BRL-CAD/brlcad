@@ -107,6 +107,7 @@ int		mode;
 	wdbp->magic = WDB_MAGIC;
 	wdbp->type = mode;
 	wdbp->dbip = dbip;
+	return wdbp;
 }
 
 /* XXX move to another module.  db_alloc(), probably. */
