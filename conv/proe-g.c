@@ -32,6 +32,7 @@ static char RCSid[] = "$Header$";
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <ctype.h>
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
@@ -49,9 +50,10 @@ static int NMG_debug=0;		/* NMG debug flag */
 static int solid_count=0;	/* count of solids converted */
 static struct rt_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
-static char *usage="proe-g < proe_file.brl > output.g\n\
+static char *usage="proe-g [-p] < proe_file.brl > output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
-	and output.g is the name of a BRL-CAD database file\n";
+	and output.g is the name of a BRL-CAD database file\n\
+	The -p option is to create polysolids rather than NMG's\n";
 
 struct render_verts
 {
@@ -59,7 +61,106 @@ struct render_verts
 	struct vertex *v;
 };
 
-#define	MAX_LINE_LEN	256
+struct name_conv_list
+{
+	char brlcad_name[NAMESIZE+1];
+	char name[80],type[10],path[256];
+	struct name_conv_list *next;
+} *name_root=(struct name_conv_list *)NULL;
+
+#define	MAX_LINE_LEN	512
+
+struct name_conv_list *
+Add_new_name( name , type , path )
+char *name,*type,*path;
+{
+	struct name_conv_list *ptr,*ptr2;
+	char tmp_name[NAMESIZE];
+	int len;
+	int try_count=0;
+	char try_char='@';
+
+	/* Add a new name */
+	ptr = (struct name_conv_list *)rt_malloc( sizeof( struct name_conv_list ) , "Get_unique_name: prev->next" );
+	ptr->next = (struct name_conv_list *)NULL;
+	strcpy( ptr->name , name );
+	strcpy( ptr->type , type );
+	strcpy( ptr->path , path );
+	strncpy( ptr->brlcad_name , name , NAMESIZE );
+	ptr->brlcad_name[NAMESIZE] = '\0';
+
+	/* make sure brlcad_name is unique */
+	len = strlen( ptr->brlcad_name );
+	strcpy( tmp_name , ptr->brlcad_name );
+	ptr2 = name_root;
+	while( ptr2 )
+	{
+		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) )
+		{
+			try_char++;
+			if( try_char == '[' )
+				try_char = 'a';
+			if( try_char == '{' )
+				rt_log( "Too many objects with same name (%s)\n" , ptr->brlcad_name );
+
+			strcpy( tmp_name , ptr->brlcad_name );
+			sprintf( &tmp_name[len-2] , "_%c" , try_char );
+			ptr2 = name_root;
+		}
+		else
+			ptr2 = ptr2->next;
+	}
+
+	strcpy( ptr->brlcad_name , tmp_name );
+	return( ptr );
+}
+
+char *
+Get_unique_name( name , type , path )
+char *name,*type,*path;
+{
+	struct name_conv_list *ptr,*prev;
+
+	if( name_root == (struct name_conv_list *)NULL )
+	{
+		/* start new list */
+		name_root = Add_new_name( name , type , path );
+		ptr = name_root;
+	}
+	else
+	{
+		int found=0;
+
+		prev = (struct name_conv_list *)NULL;
+		ptr = name_root;
+		while( ptr && !found )
+		{
+			found = 1;
+
+			if( strcmp( name , ptr->name ) )
+				found = 0;
+			else if( strcmp( type , ptr->type ) )
+				found = 0;
+			else if( strcmp( path , ptr->path ) )
+				found = 0;
+
+			if( !found )
+			{
+				prev = ptr;
+				ptr = ptr->next;
+			}
+		}
+
+		if( !found )
+		{
+			prev->next = Add_new_name( name , type , path );
+			ptr = prev->next;
+		}
+	}
+
+	return( ptr->brlcad_name );
+}
+
 
 void
 Convert_assy( line )
@@ -68,35 +169,96 @@ char line[MAX_LINE_LEN];
 	struct wmember head;
 	struct wmember *wmem;
 	char line1[MAX_LINE_LEN];
-	char name[NAMESIZE+1];
-	char memb_name[NAMESIZE+1];
+	char name[80];
+	char type[10];
+	char path[256];
+	char memb_name[80];
+	char memb_type[10];
+	char memb_path[256];
+	char *brlcad_name;
 	double mat_col[4];
 	int start;
+	int i;
 
 	RT_LIST_INIT( &head.l );
 
-	start = 7;
-	while( isspace( line[++start] ) );
+	start = (-1);
+	/* skip leading blanks */
+	while( isspace( line[++start] ) && line[start] != '\0' );
+	if( strncmp( &line[start] , "assembly" , 8 ) )
+	{
+		rt_log( "PROE-G: Convert_assy called for non-assembly:\n%s\n" , line );
+		return;
+	}
 
-	strncpy( name , &line[start] , NAMESIZE );
-	name[NAMESIZE] = '\0';
+	/* skip blanks before name */
+	start += 7;
+	while( isspace( line[++start] ) && line[start] != '\0' );
+
+	/* get name */
+	i = (-1);
+	start--;
+	while( !isspace( line[++start] ) && line[start] != '\0' )
+		name[++i] = line[start];
+	name[++i] = '\0';
+
+	/* get type */
+	i = (-1);
+	while( isspace( line[++start] ) && line[start] != '\0' );
+	start--;
+	while( !isspace( line[++start] ) && line[start] != '\0' )
+		type[++i] = line[start];
+	type[++i] = '\0';
+
+	/* get path */
+	i = (-1);
+	while( isspace( line[++start] ) && line[start] != '\0' );
+	start--;
+	while( !isspace( line[++start] ) && line[start] != '\0' )
+		path[++i] = line[start];
+	path[++i] = '\0';
 
 	while( gets( line1 ) )
 	{
-		if( !strncmp( line1 , "endassembly" , 11 ) )
+		/* skip leading blanks */
+		start = (-1);
+		while( isspace( line1[++start] ) && line[start] != '\0' );
+
+		if( !strncmp( &line1[start] , "endassembly" , 11 ) )
 		{
-			mk_lcomb( stdout , name , &head , 0 , (char *)NULL , (char *)NULL , (char *)NULL , 0 );
+
+			brlcad_name = Get_unique_name( name , type , path );
+			mk_lcomb( stdout , brlcad_name , &head , 0 , (char *)NULL , (char *)NULL , (char *)NULL , 0 );
 			break;
 		}
-		else if( !strncmp( line1 , " member" , 7 ) )
+		else if( !strncmp( &line1[start] , "member" , 6 ) )
 		{
-			start = 6;
-			while( isspace( line1[++start] ) );
-			strncpy( memb_name , &line1[start] , NAMESIZE );
-			memb_name[NAMESIZE] = '\0';
-			wmem = mk_addmember( memb_name , &head , WMOP_UNION );
+			start += 5;
+			while( isspace( line1[++start] ) && line1[start] != '\0' );
+			i = (-1);
+			start--;
+			while( !isspace( line1[++start] ) && line1[start] != '\0' )
+				memb_name[++i] = line1[start];
+			memb_name[++i] = '\0';
+
+			while( isspace( line1[++start] ) && line1[start] != '\0' );
+			i = (-1);
+			start--;
+			while( !isspace( line1[++start] ) && line1[start] != '\0' )
+				memb_type[++i] = line1[start];
+			memb_type[++i] = '\0';
+
+			while( isspace( line1[++start] ) && line1[start] != '\0' );
+			i = (-1);
+			start--;
+			while( !isspace( line1[++start] ) && line1[start] != '\0' )
+				memb_path[++i] = line1[start];
+			memb_path[++i] = '\0';
+
+			brlcad_name = Get_unique_name( memb_name , memb_type , memb_path );
+			wmem = mk_addmember( brlcad_name , &head , WMOP_UNION );
 		}
-		else if( !strncmp( line1 , " matrix" , 7 ) )
+		else if( !strncmp( &line1[start] , "matrix" , 6 ) )
 		{
 			int i,j;
 
@@ -124,7 +286,9 @@ Convert_part( line )
 char line[MAX_LINE_LEN];
 {
 	char line1[MAX_LINE_LEN];
-	char name[NAMESIZE+1];
+	char name[80];
+	char type[10];
+	char path[256];
 	char solid_name[NAMESIZE+1];
 	int start;
 	int i;
@@ -136,8 +300,10 @@ char line[MAX_LINE_LEN];
 	struct nmg_ptbl faces;
 	float colr[3];
 	char color[3];
+	char *brlcad_name;
 	struct wmember head;
 	struct wmember *wmem;
+	vect_t normal;
 
 	RT_LIST_INIT( &head.l );
 	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
@@ -146,10 +312,41 @@ char line[MAX_LINE_LEN];
 	r = nmg_mrsv( m );
 	s = RT_LIST_FIRST( shell , &r->s_hd );
 
-	start = 5;
-	while( isspace( line[++start] ) );
-	strcpy( name , &line[start] );
-	name[NAMESIZE] = '\0';
+	start = (-1);
+	/* skip leading blanks */
+	while( isspace( line[++start] ) && line[start] != '\0' );
+	if( strncmp( &line[start] , "solid" , 5 ) )
+	{
+		rt_log( "Convert_part: Called for non-part\n%s\n" , line );
+		return;
+	}
+
+	/* skip blanks before name */
+	start += 4;
+	while( isspace( line[++start] ) && line[start] != '\0' );
+
+	/* get name */
+	i = (-1);
+	start--;
+	while( !isspace( line[++start] ) && line[start] != '\0' )
+		name[++i] = line[start];
+	name[++i] = '\0';
+
+	/* get type */
+	i = (-1);
+	while( isspace( line[++start] ) && line[start] != '\0' );
+	start--;
+	while( !isspace( line[++start] ) && line[start] != '\0' )
+		type[++i] = line[start];
+	type[++i] = '\0';
+
+	/* get path */
+	i = (-1);
+	while( isspace( line[++start] ) && line[start] != '\0' );
+	start--;
+	while( !isspace( line[++start] ) && line[start] != '\0' )
+		path[++i] = line[start];
+	path[++i] = '\0';
 
 	while( gets( line1 ) != NULL )
 	{
@@ -163,6 +360,18 @@ char line[MAX_LINE_LEN];
 			for( i=0 ; i<3 ; i++ )
 				color[i] = (int)(colr[i] * 255.0);
 		}
+		else if( !strncmp( &line1[start] , "normal" , 6 ) )
+		{
+			float x,y,z;
+
+			start += 6;
+			sscanf( &line1[start] , "%f%f%f" , &x , &y , &z );
+			VSET( normal , x , y , z );
+		}
+		else if( !strncmp( &line1[start] , "facet" , 5 ) )
+		{
+			VSET( normal , 0.0 , 0.0 , 0.0 );
+		}
 		else if( !strncmp( &line1[start] , "outer loop" , 10 ) )
 		{
 			struct faceuse *fu;
@@ -170,6 +379,7 @@ char line[MAX_LINE_LEN];
 			int endloop=0;
 			int vert_no=0;
 			struct loopuse *lu;
+			plane_t pl;
 
 			while( !endloop )
 			{
@@ -201,18 +411,19 @@ char line[MAX_LINE_LEN];
 			for( i=0 ; i<3 ; i++ )
 				nmg_vertex_gv( verts[i].v , verts[i].pt );
 
-			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-			{
-				plane_t pl;
+			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
 
-				area = nmg_loop_plane_area( lu , pl );
-				if( area > 0.0 )
+			area = nmg_loop_plane_area( lu , pl );
+			if( area > 0.0 )
+			{
+				if( normal[X] != 0.0 || normal[Y] != 0.0 || normal[Z] != 0.0 )
 				{
-					if( lu->orientation == OT_OPPOSITE )
+					if( VDOT( normal , pl ) < 0.0 )
+					{
 						HREVERSE( pl , pl );
-					nmg_face_g( fu , pl );
-					break;
+					}
 				}
+				nmg_face_g( fu , pl );
 			}
 
 			if( area > 0.0 )
@@ -228,14 +439,14 @@ char line[MAX_LINE_LEN];
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 
-	nmg_fix_normals( s , &tol );
-
 	if( !polysolid )
+	{
 		nmg_shell_coplanar_face_merge( s , &tol , 1 );
 
-	nmg_rebound( m , &tol );
+		nmg_rebound( m , &tol );
 
-	nmg_model_vertex_fuse( m , &tol );
+		(void)nmg_model_vertex_fuse( m , &tol );
+	}
 
 	sprintf( solid_name , "sol.%d" , solid_count );
 	solid_count++;
@@ -251,7 +462,10 @@ char line[MAX_LINE_LEN];
 	nmg_km( m );
 
 	mk_addmember( solid_name , &head , WMOP_UNION );
-	mk_lrcomb( stdout , name , &head , 1 , (char *)NULL , (char *)NULL , color , id_no , 0 , 1 , 100 , 0 );
+
+	brlcad_name = Get_unique_name( name , type , path );
+
+	mk_lrcomb( stdout , brlcad_name , &head , 1 , (char *)NULL , (char *)NULL , color , id_no , 0 , 1 , 100 , 0 );
 	id_no++;
 }
 
