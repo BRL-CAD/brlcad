@@ -12,12 +12,15 @@
 #define CONFIG_OPTS	-p BASEDIR
 #define	AFTER_MAKE	/**/
 #define	FIX_FILE	afile
+#define AFTER_INSTALL	/**/
 #else
 #define PRODUCTS	libz.so
 #define SHARED_PRODUCT	libz.so''[[LIBVERS]]
 #define CONFIG_OPTS	-s -p BASEDIR
 #define	AFTER_MAKE	mv libz.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
 #define	FIX_FILE	sfile
+#define AFTER_INSTALL	mv BASEDIR/lib/PRODUCTS BASEDIR/lib/SHARED_PRODUCT ; sharedliblink.sh BASEDIR/lib/SHARED_PRODUCT
+
 #endif
 
 #if !defined(LDSHARED)
@@ -67,13 +70,13 @@ install&: Makefile.MTYPE
 	cp ../SRCDIR/zlib.h .
 	cp ../SRCDIR/zconf.h .
 	make -f Makefile.MTYPE install prefix=BASEDIR
+	AFTER_INSTALL
 
 install-nobak&: Makefile.MTYPE
 	cp ../SRCDIR/zlib.h .
 	cp ../SRCDIR/zconf.h .
 	make -f Makefile.MTYPE install prefix=BASEDIR
-	mv BASEDIR/lib/PRODUCTS BASEDIR/lib/SHARED_PRODUCT
-	sharedliblink.sh BASEDIR/lib/SHARED_PRODUCT
+	AFTER_INSTALL
 
 test&: Makefile.MTYPE
 	make -f Makefile.MTYPE test
