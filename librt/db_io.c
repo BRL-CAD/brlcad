@@ -176,6 +176,7 @@ long		count;		/* byte count */
 long		offset;		/* byte offset from start of file */
 {
 	register int	got;
+	register int	s;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_read:  bad dbip\n");
 	if(rt_g.debug&DEBUG_DB)  {
@@ -195,10 +196,14 @@ long		offset;		/* byte offset from start of file */
 	}
 	RES_ACQUIRE( &rt_g.res_syscall );
 #if defined(unix) || defined(__unix) || defined(__unix__)
-	(void)lseek( dbip->dbi_fd, offset, 0 );
+	if ((s=lseek( dbip->dbi_fd, offset, 0 )) != offset) {
+		rt_log("db_read: lseek returns %d not %d\n", i, offset);
+		rt_bomb("Goodbye");
+	}
 	got = read( dbip->dbi_fd, addr, count );
 #else
-	(void)fseek( dbip->dbi_fp, offset, 0 );
+	if (fseek( dbip->dbi_fp, offset, 0 ))
+		rt_bomb("db_read: fseek error\n");
 	got = fread( addr, 1, count, dbip->dbi_fp );
 #endif
 	RES_RELEASE( &rt_g.res_syscall );
