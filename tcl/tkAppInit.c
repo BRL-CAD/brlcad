@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#) tkAppInit.c 1.12 94/12/17 16:30:56";
+static char sccsid[] = "@(#) tkAppInit.c 1.15 95/06/28 13:14:28";
 #endif /* not lint */
 
 #include "tk.h"
@@ -22,10 +22,8 @@ static char sccsid[] = "@(#) tkAppInit.c 1.12 94/12/17 16:30:56";
  * Sun shared libraries to be used for Tcl.
  */
 
-#ifdef NEED_MATHERR
 extern int matherr();
 int *tclDummyMathPtr = (int *) matherr;
-#endif
 
 /*
  *----------------------------------------------------------------------
@@ -49,7 +47,7 @@ main(argc, argv)
     int argc;			/* Number of command-line arguments. */
     char **argv;		/* Values of command-line arguments. */
 {
-    Tk_Main(argc, argv);
+    Tk_Main(argc, argv, Tcl_AppInit);
     return 0;			/* Needed only to prevent compiler warning. */
 }
 
@@ -77,8 +75,6 @@ Tcl_AppInit(interp)
     Tcl_Interp *interp;		/* Interpreter for application. */
 {
     Tk_Window main;
-
-    main = Tk_MainWindow(interp);
 
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
