@@ -348,7 +348,7 @@ struct bn_table	*tabp;
 register double		scale;
 {
 	register int		j;
-	register fastf_t	*op, *i1;
+	register fastf_t	*op;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_scale(x%x, %g)\n", tabp, scale );
 
@@ -830,7 +830,6 @@ CONST struct bn_tabdata	*olddata;
 			 *	Full intervals from j+1 to k
 			 *	Partial interval from k to newx[i+1]
 			 */
-			fastf_t	w_frac;
 			fastf_t wsum;		/* weighted sum */
 			fastf_t	a,b;		/* values being averaged */
 			int	s;
@@ -1048,7 +1047,6 @@ CONST char	*filename;
 {
 	struct bn_table	*tabp;
 	struct bn_tabdata	*data;
-	struct bu_vls		line;
 	FILE	*fp;
 	char	buf[128];
 	int	count = 0;

@@ -325,11 +325,9 @@ unsigned long limit; \
 { \
 	register DATATYPE *detail; \
 	register DATATYPE *avg; \
-	register DATATYPE *ptr; \
 	unsigned long img_size; \
 	unsigned long half_size; \
 	unsigned long x, y, x_tmp, y_tmp, d, i, j; \
-	int do_free = 0; \
 	register fastf_t onehalf = (fastf_t)0.5; \
 \
 	CK_POW_2( dimen ); \
@@ -338,7 +336,6 @@ unsigned long limit; \
 		tbuffer = (DATATYPE *)bu_malloc( \
 				(dimen/2) * channels * sizeof( *buffer ), \
 				"1d wavelet buffer"); \
-		do_free = 1; \
 	} \
 \
 	/* each iteration of this loop decomposes the data into 4 quarters: \
@@ -433,9 +430,8 @@ unsigned long limit; \
 	register DATATYPE *avg; \
 	unsigned long img_size; \
 	unsigned long dbl_size; \
-	int do_free = 0; \
 	unsigned long x_tmp, d, x, i, j; \
-	unsigned long y_tmp, y, row_len, row_start; \
+	unsigned long y, row_len, row_start; \
  \
 	CK_POW_2( avg_size ); \
 	CK_POW_2( width ); \
@@ -450,7 +446,6 @@ unsigned long limit; \
 	if ( ! tbuf ) { \
 		tbuf = ( DATATYPE *)bu_malloc((width/2) * channels * sizeof( *buf ), \
 				"1d wavelet reconstruct tmp buffer"); \
-		do_free = 1; \
 	} \
  \
 	row_len = width * channels; \
@@ -561,13 +556,11 @@ unsigned long limit; \
 { \
 	register DATATYPE *detail; \
 	register DATATYPE *avg; \
-	register DATATYPE *ptr; \
 	unsigned long img_wsize; \
 	unsigned long img_hsize; \
 	unsigned long half_wsize; \
 	unsigned long half_hsize; \
 	unsigned long x, y, x_tmp, y_tmp, d, i, j; \
-	int do_free = 0; \
 	register fastf_t onehalf = (fastf_t)0.5; \
 \
 	CK_POW_2( width ); \
@@ -579,7 +572,6 @@ unsigned long limit; \
 		tbuffer = (DATATYPE *)bu_malloc( \
 				(((width>height)?width:height)/2) * channels * sizeof( *buffer ), \
 				"1d wavelet buffer"); \
-		do_free = 1; \
 	} \
 \
 	/* each iteration of this loop decomposes the data into 4 quarters: \

@@ -801,7 +801,6 @@ vect_t dx,dn;
 {
 	vect_t temp;
 	fastf_t hyp, sign,inv,mag;
-	int ret;
 
 	sign = 1.0;
 	mag = MAGNITUDE(dx);
@@ -877,7 +876,7 @@ int end;
 {
 	void anim_dir2mat(), anim_add_trans(), anim_view_rev();
 	static vect_t p1, p2, p3;
-	vect_t dir, dir2;
+	vect_t dir;
 	static vect_t norm;
 	static int state = ASM_EMPTY;
 
