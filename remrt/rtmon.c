@@ -114,6 +114,16 @@ bu_get_1cpu_speed()
 		return lookup( CPU_SPEED_FILE, ut.machine );
 	}
 #endif
+	FILE	*fp;
+	double	d;
+	/* File format:  scale-factor TAB #Mhz SPACE IP99 */
+	if( (fp = popen("grep \"`hinv | head -1 | cut '-d ' -f 2,4`\" 1cpu.speeds", "r")) != NULL )  {
+		d = 0.9876;
+		if( fscanf( fp, "%lf", &d ) != 1 )
+			return 1.0;
+		fclose(fp);
+		return d;
+	}
 #endif
 	return 1.0;
 }
