@@ -21,7 +21,7 @@ burst_SOURCES = \
 	trie.c \
 	ui.c
 
-burst_LDADD = ${RT} ${FB} ${TERMIO} ${CURSES}
+burst_LDADD = ${LIBRT} ${FB} ${TERMIO} ${CURSES}
 
 noinst_HEADERS = \
 	ascii.h \

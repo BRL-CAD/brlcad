@@ -381,7 +381,7 @@ mst_SOURCES = mst.c
 mst_LDADD = ${BU}
 
 remapid_SOURCES = remapid.c
-remapid_LDADD = ${RT}
+remapid_LDADD = ${LIBRT}
 
 texturescale_SOURCES = texturescale.c
 texturescale_LDADD = ${BN}

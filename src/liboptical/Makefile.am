@@ -40,7 +40,7 @@ SRCS = \
 	wray.c
 
 liboptical_la_LDFLAGS = -version-info 19:1
-liboptical_la_LIBADD = ${BU} ${BN} ${TCL} ${RT}
+liboptical_la_LIBADD = ${BU} ${BN} ${TCL} ${LIBRT}
 liboptical_la_SOURCES = \
 	$(SRCS) \
 	vers.c
@@ -49,7 +49,7 @@ noinst_LTLIBRARIES = librtms.la
 
 librtms_la_CFLAGS = -DRT_MULTISPECTRAL
 librtms_la_LDFLAGS = -static
-librtms_la_LIBADD = ${BU} ${BN} ${TCL} ${RT}
+librtms_la_LIBADD = ${BU} ${BN} ${TCL} ${LIBRT}
 librtms_la_SOURCES = \
 	sh_camo.c \
 	sh_light.c \

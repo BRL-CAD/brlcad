@@ -1571,8 +1571,8 @@ AC_SUBST(PKG)
 RLE='${top_builddir}/src/other/libutahrle/libutahrle.la'
 AC_SUBST(RLE)
 
-RT='${top_builddir}/src/librt/librt.la'
-AC_SUBST(RT)
+LIBRT='${top_builddir}/src/librt/librt.la'
+AC_SUBST(LIBRT)
 
 SYSV='${top_builddir}/src/libsysv/libsysv.la'
 AC_SUBST(SYSV)

@@ -1,6 +1,6 @@
 # $Id$
 
-LDADD = ${RT} ${FB} ${OPTICAL} ${TCL}
+LDADD = ${LIBRT} ${FB} ${OPTICAL} ${TCL}
 
 if ONLY_BENCHMARK
 bin_PROGRAMS = \

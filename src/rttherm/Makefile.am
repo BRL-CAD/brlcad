@@ -12,7 +12,7 @@ bin_PROGRAMS = \
 
 dist_bin_SCRIPTS = ssampview.tcl
 
-LDADD = ${RT} ${FB} ${OPTICAL} ${TCL}
+LDADD = ${LIBRT} ${FB} ${OPTICAL} ${TCL}
 
 man_MANS = \
 	rttherm.1 \

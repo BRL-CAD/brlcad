@@ -10,13 +10,13 @@ bin_PROGRAMS = \
 	secpass \
 	shapefact
 
-all_sf_LDADD = ${RT} ${BN}
+all_sf_LDADD = ${LIBRT} ${BN}
 all_sf_SOURCES = all_sf.c
 
-display_LDADD = ${RT} ${BN}
+display_LDADD = ${LIBRT} ${BN}
 display_SOURCES = display.c
 
-firpass_LDADD = ${RT} ${BN}
+firpass_LDADD = ${LIBRT} ${BN}
 firpass_SOURCES = firpass.c subroutines.c
 
 irdisp_LDADD = ${FB}
@@ -30,10 +30,10 @@ ir_X_LDADD = ${X_LIBS}
 ir_X_SOURCES = ir-X.c
 ir_X_CFLAGS = ${X_CFLAGS}
 
-secpass_LDADD = ${RT} ${BN}
+secpass_LDADD = ${LIBRT} ${BN}
 secpass_SOURCES = secpass.c subroutines.c
 
-shapefact_LDADD = ${RT} ${BN}
+shapefact_LDADD = ${LIBRT} ${BN}
 shapefact_SOURCES = shapefact.c
 
 man_MANS = \

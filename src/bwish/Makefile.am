@@ -37,7 +37,7 @@ btclsh_LDADD = \
 	${ITCL_LIBS} \
 	${TCL} \
 	${PKG} \
-	${RT} \
+	${LIBRT} \
 	${SYSV} \
 	${TERMIO} \
 	${WDB}
