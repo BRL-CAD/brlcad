@@ -2543,6 +2543,17 @@ CONST point_t B;
 }
 #endif
 
+/*
+ *			B N _ H L F _ C L A S S
+ *
+ *  Classify a halfspace, specified by its plane equation,
+ *  against a bounding RPP.
+ *
+ *  Returns -
+ *      BN_CLASSIFY_INSIDE
+ *      BN_CLASSIFY_OVERLAPPING
+ *      BN_CLASSIFY_OUTSIDE
+ */
 int
 bn_hlf_class( half_eqn, min, max, tol )
 CONST plane_t		half_eqn;
