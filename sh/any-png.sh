@@ -57,8 +57,8 @@ rle)
 jpg|jpeg)
 	jpeg-fb -F"/dev/mem -" $OLDFILE | eval $PNGIFY $NEWFILE;;
 png)
-	echo "$OLDFILE: Attempting to convert PNG to PNG, aborting."
-	exit 1;;
+	# This can sometimes be useful as a way of getting more compression.
+	png-pix $OLDFILE | eval $PNGIFY $NEWFILE;;
 gif)
 	gif-fb -c -F"/dev/mem -" $OLDFILE | eval $PNGIFY $NEWFILE;;
 *)
