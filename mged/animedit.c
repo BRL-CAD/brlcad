@@ -3576,12 +3576,15 @@ genptr_t		client_data;
 	union	tree		*curtree;
 	struct	directory	*dp;
 
-	BU_GETUNION(curtree, tree);
-	curtree->tr_op = OP_SOLID;
 
 	if (id != ID_GRIP) {
-		return curtree;
+		return TREE_NULL;
 	}
+
+	BU_GETUNION(curtree, tree);
+	curtree->tr_op = OP_SOLID;
+	curtree->magic = RT_TREE_MAGIC;
+	curtree->tr_op = OP_NOP;
 	dp = pathp->fp_names[pathp->fp_len-1];
 /*
  * get the grip information.
