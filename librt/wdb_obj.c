@@ -117,9 +117,11 @@ struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
 /* ==== BEGIN evil stuff ==== */
 
 /* input path */
-static struct directory *wdb_objects[WDB_MAX_LEVELS];
-static int wdb_objpos;
-static struct directory *wdb_path[WDB_MAX_LEVELS];
+static struct directory *wdb_desired_path[WDB_MAX_LEVELS];
+static int wdb_desired_path_end;
+static struct directory *wdb_accumulated_path[WDB_MAX_LEVELS];
+
+/* struct db_full_path	xxx; */
 
 /* ==== END evil stuff ==== */
 
@@ -1168,6 +1170,8 @@ wdb_list_tcl(clientData, interp, argc, argv)
 }
 
 /*
+ * This is a callback invoked by db_tree_funcleaf(), which
+ * recursively invokes wdb_trace()
  */
 static void
 wdb_do_trace(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
@@ -1207,7 +1211,7 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
      Tcl_Interp			*interp;
      struct db_i		*dbip;
      register struct directory *dp;
-     int pathpos;
+     int pathpos;	/* subscript to wdb_accumulated_path[] */
      mat_t old_xlate;
      int flag;
      mat_t wdb_xform;
@@ -1231,7 +1235,7 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 		bu_vls_free(&tmp_vls);
 
 		for(i=0; i < WDB_MAX_LEVELS; i++)
-			Tcl_AppendResult(interp, "/", wdb_path[i]->d_namep, (char *)NULL);
+			Tcl_AppendResult(interp, "/", wdb_accumulated_path[i]->d_namep, (char *)NULL);
 
 		Tcl_AppendResult(interp, "\n", (char *)NULL);
 		return 0;
@@ -1243,7 +1247,7 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 			return 0;
 		}
 
-		wdb_path[pathpos] = dp;
+		wdb_accumulated_path[pathpos] = dp;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		if (comb->tree)  {
 			struct do_trace_state	dts;
@@ -1251,6 +1255,7 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 			dts.pathpos = pathpos;
 			dts.old_xlate = old_xlate;
 			dts.flag = flag;
+			/* Recursively invoke wdb_trace() via wdb_do_trace () */
 			db_tree_funcleaf(dbip, comb, comb->tree, wdb_do_trace,
 				(genptr_t)&dts, NULL, NULL );
 		}
@@ -1261,17 +1266,17 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 	/* not a combination  -  should have a solid */
 
 	/* last (bottom) position */
-	wdb_path[pathpos] = dp;
+	wdb_accumulated_path[pathpos] = dp;
 
 	/* check for desired path */
-	for (k=0; k<wdb_objpos; k++) {
-		if (wdb_path[k]->d_addr != wdb_objects[k]->d_addr) {
+	for (k=0; k<wdb_desired_path_end; k++) {
+		if (wdb_accumulated_path[k]->d_addr != wdb_desired_path[k]->d_addr) {
 			/* not the desired path */
 			return 0;
 		}
 	}
 
-	/* have the desired path up to wdb_objpos */
+	/* have the desired path up to wdb_desired_path_end */
 	bn_mat_copy(wdb_xform, old_xlate);
 
 	if (flag == WDB_CPEVAL)
@@ -1279,7 +1284,7 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 
 	/* print the path */
 	for (k=0; k<pathpos; k++)
-		Tcl_AppendResult(interp, "/", wdb_path[k]->d_namep, (char *)NULL);
+		Tcl_AppendResult(interp, "/", wdb_accumulated_path[k]->d_namep, (char *)NULL);
 
 	if (flag == WDB_LISTPATH) {
 		bu_vls_printf( &str, "/%16s:\n", dp->d_namep );
@@ -1358,32 +1363,32 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 
 	if (argc == 2 && strchr(argv[1], '/')) {
 		char *tok;
-		wdb_objpos = 0;
+		wdb_desired_path_end = 0;
 
 		tok = strtok( argv[1], "/" );
 		while (tok) {
-			if ((wdb_objects[wdb_objpos++] = db_lookup(wdbop->wdb_wp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
+			if ((wdb_desired_path[wdb_desired_path_end++] = db_lookup(wdbop->wdb_wp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
 				return TCL_ERROR;
 			tok = strtok( (char *)NULL, "/" );
 		}
 	} else {
-		wdb_objpos = argc-1;
+		wdb_desired_path_end = argc-1;
 
 		/* build directory pointer array for desired path */
-		for (i=0; i<wdb_objpos; i++) {
-			if ((wdb_objects[i] = db_lookup(wdbop->wdb_wp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
+		for (i=0; i<wdb_desired_path_end; i++) {
+			if ((wdb_desired_path[i] = db_lookup(wdbop->wdb_wp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
 				return TCL_ERROR;
 		}
 	}
 
 	bn_mat_idn( wdb_xform );
 
-	if( wdb_trace(interp, wdbop->wdb_wp->dbip, wdb_objects[0], 0,
+	if( wdb_trace(interp, wdbop->wdb_wp->dbip, wdb_desired_path[0], 0,
 	    bn_mat_identity, flag, wdb_xform) == 0 )  {
 		/* path not found */
 		Tcl_AppendResult(interp, "PATH:  ", (char *)NULL);
-		for (i=0; i<wdb_objpos; i++)
-			Tcl_AppendResult(interp, "/", wdb_objects[i]->d_namep, (char *)NULL);
+		for (i=0; i<wdb_desired_path_end; i++)
+			Tcl_AppendResult(interp, "/", wdb_desired_path[i]->d_namep, (char *)NULL);
 
 		Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
 	    	return TCL_ERROR;
