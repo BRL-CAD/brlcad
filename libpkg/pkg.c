@@ -836,6 +836,10 @@ register struct pkg_conn *pc;
 	if( (i = writev(pc->pkc_fd, cmdvec, 3)) != len1+len2+sizeof(hdr) )  {
 		if( i < 0 )  {
 			pkg_perror(pc->pkc_errlog, "pkg_2send: writev");
+			sprintf( errbuf,
+				"pkg_send2(type=%d, buf1=x%x, len1=%d, buf2=x%x, len2=%d, pc=x%x)\n",
+				 type, buf1, len1, buf2, len2, pc );
+			(pc->pkc_errlog)(errbuf);
 			return(-1);
 		}
 		sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote %d\n",
