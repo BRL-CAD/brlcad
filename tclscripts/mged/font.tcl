@@ -53,6 +53,54 @@ if ![info exists mged_default(label_font)] {
     }
 }
 
+if ![info exists mged_default(entry_font)] {
+    set mged_default(entry_font) {
+	-family helvetica -size 12 -weight bold -slant roman -underline 0 -overstrike 0
+    }
+}
+
+if ![info exists mged_default(bold_font)] {
+    set mged_default(bold_font) {
+	-family "new century schoolbook" -size 16 -weight bold -slant roman -underline 0 -overstrike 0
+    }
+}
+
+if ![info exists mged_default(italic_font)] {
+    set mged_default(italic_font) {
+	-family "new century schoolbook" -size 16 -weight normal -slant italic -underline 0 -overstrike 0
+    }
+}
+
+if ![info exists mged_default(underline_font)] {
+    set mged_default(underline_font) {
+	-family "new century schoolbook" -size 16 -weight normal -slant roman -underline 1 -overstrike 0
+    }
+}
+
+if ![info exists mged_default(overstrike_font)] {
+    set mged_default(overstrike_font) {
+	-family "new century schoolbook" -size 16 -weight normal -slant roman -underline 0 -overstrike 1
+    }
+}
+
+if ![info exists mged_default(all_font)] {
+    set mged_default(all_font) {
+	-family helvetica -size 12 -weight bold -slant roman -underline 0 -overstrike 0
+    }
+}
+
+if ![info exists font_scheme_data] {
+    set font_scheme_data { {fs_button_font button_font Buttons}
+                           {fs_entry_font entry_font Entries}
+			   {fs_label_font label_font Labels}
+			   {fs_list_font list_font Lists}
+			   {fs_menu_font menu_font Menus}
+			   {fs_menubutton_font menubutton_font Menubuttons}
+			   {fs_text_font text_font Text}
+			   {fs_all_font {} All}
+		         }
+}
+
 ## - font_init
 #
 # Create fonts used by GUI components.
@@ -60,12 +108,20 @@ if ![info exists mged_default(label_font)] {
 proc font_init {} {
     global mged_default
 
+    # create named fonts used by GUI components
     eval font create text_font $mged_default(text_font)
     eval font create menu_font $mged_default(menu_font)
     eval font create button_font $mged_default(button_font)
     eval font create menubutton_font $mged_default(menubutton_font)
     eval font create list_font $mged_default(list_font)
     eval font create label_font $mged_default(label_font)
+    eval font create entry_font $mged_default(entry_font)
+
+    # create named fonts used by the font gui
+    eval font create bold_font $mged_default(bold_font)
+    eval font create italic_font $mged_default(italic_font)
+    eval font create underline_font $mged_default(underline_font)
+    eval font create overstrike_font $mged_default(overstrike_font)
 
     option add *Text.font text_font
     option add *Menu.font menu_font
@@ -73,19 +129,153 @@ proc font_init {} {
     option add *Menubutton.font menubutton_font
     option add *List.font list_font
     option add *Label.font label_font
+    option add *Entry.font entry_font
+}
+
+## - font_scheme_init
+#
+# A control panel for viewing/modifying MGED's font scheme.
+#
+proc font_scheme_init { id } {
+    global mged_gui
+    global mged_default
+    global font_gui
+    global font_scheme_data
+
+    set top .$id.font_scheme
+    set gui_top .$id.font_gui
+
+    if [winfo exists $top] {
+	raise $top
+	return
+    }
+
+    set font_gui($id,padx) 4
+    set font_gui($id,pady) 4
+
+    toplevel $top -screen $mged_gui($id,screen)
+    frame $top.gridF1
+    frame $top.gridF2
+
+    ################## display gui fonts ##################
+    label $top.family -text "Family"
+    label $top.size -text "Size"
+    grid x $top.family $top.size -sticky nsew -in $top.gridF1
+    foreach datum $font_scheme_data {
+	set fsname [lindex $datum 0]($id)
+	set fname [lindex $datum 1]
+	set fstitle [lindex $datum 2]
+
+	if {$fname == {}} {
+	    set cb font_scheme_callback_all
+
+	    #  Create the named font fs_all_font.
+	    catch {eval font create $fsname $mged_default(all_font)}
+
+	    # make l2 and l3 placeholders
+	    set l2 x
+	    set l3 x
+	} else {
+	    set cb font_scheme_callback
+
+	    # Create the named font used by the font scheme control panel
+	    #     and initialize with the font used by the GUI component.
+	    set fconfig [font configure $fname]
+	    catch {eval font create $fsname $fconfig}
+
+	    set l2 $top._$fstitle\L2
+	    set l3 $top._$fstitle\L3
+	}
+
+
+	set l1 $top._$fstitle\L1
+	set mb $top._$fstitle\MB
+	set mbm $top._$fstitle\MB.menu
+	font_scheme_build_display $id $top $gui_top $fsname $fstitle $fconfig \
+		$cb $l1 $l2 $l3 $mb $mbm
+
+	grid $l1 $l2 $l3 $mb -sticky nsew -in $top.gridF1
+    }
+
+    ################## buttons along bottom ##################
+    button $top.okB -relief raised -text "Ok"\
+	    -command "font_scheme_ok $id $top $gui_top"
+    button $top.applyB -relief raised -text "Apply"\
+	    -command "font_scheme_apply $id"
+    button $top.resetB -relief raised -text "Reset"\
+	    -command "font_scheme_reset $id $top"
+    button $top.dismissB -relief raised -text "Dismiss"\
+	    -command "font_scheme_dismiss $id $top $gui_top"
+    grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky nsew -in $top.gridF2
+    grid columnconfigure $top.gridF2 2 -weight 1
+    grid columnconfigure $top.gridF2 4 -weight 1
+
+    grid columnconfigure $top 0 -weight 1
+    grid rowconfigure $top 1 -weight 1
+
+    grid $top.gridF1 -sticky nsew -padx $font_gui($id,padx) -pady $font_gui($id,pady)
+    grid $top.gridF2 -sticky nsew -padx $font_gui($id,padx) -pady $font_gui($id,pady)
+
+    # pop up near mouse
+    place_near_mouse $top
+
+    # disallow the user to resize
+    wm resizable $top 0 0
+    wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
+    wm title $top "Fonts"
+}
+
+## - font_scheme_build_display
+#
+# Builds a font display line.
+#
+proc font_scheme_build_display { id top gui_top fsname fstitle fconfig cb l1 l2 l3 mb mbm } {
+    global mged_default
+
+    label $l1 -text $fstitle -anchor e
+    if {$l2 != "x"} {
+	label $l2 -text [lindex $fconfig 1] -font $fsname
+	label $l3 -text [lindex $fconfig 3] -font $fsname
+    }
+
+    menubutton $mb -menu $mbm -indicatoron 1
+#	bind $mb <Enter> "%W configure -relief raised; break"
+#	bind $mb <Leave> "%W configure -relief flat; break"
+    menu $mbm -title "" -tearoff $mged_default(tearoff_menus)
+
+    $mbm add command -label "courier 12" \
+	    -command " $cb $id $top $fsname $fstitle \"-family courier -size 12 -weight normal -slant roman -underline 0 -overstrike 0\""
+    $mbm add command -label "courier 18" \
+	    -command "$cb $id $top $fsname $fstitle \"-family courier -size 18 -weight normal -slant roman -underline 0 -overstrike 0\""
+    $mbm add command -label "fixed 12" \
+	    -command "$cb $id $top $fsname $fstitle \"-family fixed -size 12 -weight normal -slant roman -underline 0 -overstrike 0\""
+    $mbm add command -label "fixed 18" \
+	    -command "$cb $id $top $fsname $fstitle \"-family fixed -size 18 -weight normal -slant roman -underline 0 -overstrike 0\""
+    $mbm add command -label "helvetica 12" \
+	    -command "$cb $id $top $fsname $fstitle \"-family helvetica -size 12 -weight normal -slant roman -underline 0 -overstrike 0\""
+    $mbm add command -label "helvetica 18" \
+	    -command "$cb $id $top $fsname $fstitle \"-family helvetica -size 18 -weight normal -slant roman -underline 0 -overstrike 0\""
+    $mbm add command -label "Font Tool..." \
+	    -command "font_gui_init $id $gui_top $fsname $fstitle \"$cb $id $top $fsname $fstitle\""
 }
 
 ## - font_gui_init
 #
 # A control panel for modifying MGED's named fonts.
 #
-proc font_gui_init { id } {
+proc font_gui_init { id top fname title callback } {
     global mged_gui
     global font_gui
 
-    set top .$id.font_gui
-
     if [winfo exists $top] {
+	set font_gui($id,callback) $callback
+	font_set_name $id $fname
+	font_bindCB $id $top.weightCB font_gui($id,weight) bold 0
+	font_bindCB $id $top.slantCB font_gui($id,slant) italic 0
+	font_bindCB $id $top.underlineCB font_gui($id,underline) 1 0
+	font_bindCB $id $top.overstrikeCB font_gui($id,overstrike) 1 0
+	wm title $top "$title Font"
+
 	raise $top
 	return
     }
@@ -95,97 +285,82 @@ proc font_gui_init { id } {
 
     set font_gui($id,padx) 4
     set font_gui($id,pady) 4
+    set font_gui($id,callback) $callback
 
     toplevel $top -screen $mged_gui($id,screen)
 
     ################## describe the font ##################
     frame $top.gridF1
-    frame $top.gridF1A
-    frame $top.gridF1B
-    frame $top.gridF1C
 
     # name
-    frame $top.nameF -relief sunken -bd 2
-    label $top.nameL -text "Name:" -anchor e
-    entry $top.nameE -relief flat -textvariable font_gui($id,name)
-    menubutton $top.nameMB -relief raised -bd 2 -indicatoron 1 -menu $top.nameMB.menu
-    font_build_nameM $id $top.nameMB.menu
-    grid $top.nameE $top.nameMB -sticky nsew -in $top.nameF
-    grid columnconfigure $top.nameF 0 -weight 1
-    bind $top.nameE <Return> "font_set_name $id \$font_gui($id,name)"
+    font_set_name $id $fname
 
     # family
-    frame $top.familyF
-    label $top.familyL -text "Family:" -anchor e
     menubutton $top.familyMB -relief raised -bd 2 -indicatoron 1 \
 	    -textvariable font_gui($id,family) \
 	    -menu $top.familyMB.menu
     font_build_familyM $id $top.familyMB.menu
-    grid $top.familyL $top.familyMB -sticky nsew -in $top.familyF
 
     # size
     frame $top.sizeF -relief sunken -bd 2
-    label $top.sizeL -text "Size:" -anchor e
-    entry $top.sizeE -relief flat -textvariable font_gui($id,size)
+    entry $top.sizeE -relief flat -textvariable font_gui($id,size) -width 3
     menubutton $top.sizeMB -relief raised -bd 2 -indicatoron 1 -menu $top.sizeMB.menu
     font_build_sizeM $id $top.sizeMB.menu
     grid $top.sizeE $top.sizeMB -sticky nsew -in $top.sizeF
+    grid rowconfigure $top.sizeF 0 -weight 1
     grid columnconfigure $top.sizeF 0 -weight 1
     bind $top.sizeE <Return> "font_update $id"
 
     # weight
-    frame $top.weightF
-    label $top.weightL -text "Weight:" -anchor e
-    menubutton $top.weightMB -relief raised -bd 2 -indicatoron 1 \
-	    -textvariable font_gui($id,weight) \
-	    -menu $top.weightMB.menu
-    font_build_weightM $id $top.weightMB.menu
-    grid $top.weightL $top.weightMB -sticky nsew -in $top.weightF
+    checkbutton $top.weightCB -offvalue normal -onvalue bold \
+	    -variable font_gui($id,weight) \
+	    -indicatoron 0 \
+	    -width 2 \
+	    -text B \
+	    -font bold_font \
+	    -selectcolor #ececec \
+	    -command "font_bindCB $id $top.weightCB font_gui($id,weight) bold 1; font_update $id"
+    font_bindCB $id $top.weightCB font_gui($id,weight) bold 0
 
     # slant
-    frame $top.slantF
-    label $top.slantL -text "Slant:" -anchor e
-    menubutton $top.slantMB -relief raised -bd 2 -indicatoron 1 \
-	    -textvariable font_gui($id,slant) \
-	    -menu $top.slantMB.menu
-    font_build_slantM $id $top.slantMB.menu
-    grid $top.slantL $top.slantMB -sticky nsew -in $top.slantF
+    checkbutton $top.slantCB -offvalue roman -onvalue italic \
+	    -variable font_gui($id,slant) \
+	    -indicatoron 0 \
+	    -width 2 \
+	    -text I \
+	    -font italic_font \
+	    -selectcolor #ececec \
+	    -command "font_bindCB $id $top.slantCB font_gui($id,slant) italic 1; font_update $id"
+    font_bindCB $id $top.slantCB font_gui($id,slant) italic 0
 
     # underline
-    checkbutton $top.underlineCB -offvalue 0 -onvalue 1 -variable font_gui($id,underline) \
-	    -text "Underline" \
-	    -command "font_update $id"
+    checkbutton $top.underlineCB -offvalue 0 -onvalue 1 \
+	    -variable font_gui($id,underline) \
+	    -indicatoron 0 \
+	    -width 2 \
+	    -text U \
+	    -font underline_font \
+	    -selectcolor #ececec \
+	    -command "font_bindCB $id $top.underlineCB font_gui($id,underline) 1 1; font_update $id"
+    font_bindCB $id $top.underlineCB font_gui($id,underline) 1 0
 
     # overstrike
-    checkbutton $top.overstrikeCB -offvalue 0 -onvalue 1 -variable font_gui($id,overstrike)\
-	    -text "Overstrike" \
-	    -command "font_update $id"
+    checkbutton $top.overstrikeCB -offvalue 0 -onvalue 1 \
+	    -variable font_gui($id,overstrike)\
+	    -indicatoron 0 \
+	    -width 2 \
+	    -text O \
+	    -font overstrike_font \
+	    -selectcolor #ececec \
+	    -command "font_bindCB $id $top.overstrikeCB font_gui($id,overstrike) 1 1; font_update $id"
+    font_bindCB $id $top.overstrikeCB font_gui($id,overstrike) 1 0
 
-    grid $top.nameL $top.nameF $top.sizeL $top.sizeF \
-	    -padx $font_gui($id,padx) -pady $font_gui($id,pady) \
-	    -sticky nsew -in $top.gridF1A
-    grid columnconfigure $top.gridF1A 1 -weight 1
-    grid columnconfigure $top.gridF1A 3 -weight 1
-
-    grid x $top.familyF $top.weightF $top.slantF x\
-	    -padx $font_gui($id,padx) -pady $font_gui($id,pady) \
-	    -sticky nsew -in $top.gridF1B
-    grid columnconfigure $top.gridF1B 0 -weight 1
-    grid columnconfigure $top.gridF1B 4 -weight 1
-
-    grid x $top.underlineCB $top.overstrikeCB x \
-	    -padx $font_gui($id,padx) -pady $font_gui($id,pady) \
-	    -sticky nsew -in $top.gridF1C
-    grid columnconfigure $top.gridF1C 0 -weight 1
-    grid columnconfigure $top.gridF1C 3 -weight 1
-
-    grid $top.gridF1A -sticky nsew -in $top.gridF1 \
-	    -padx $font_gui($id,padx) -pady $font_gui($id,pady)
-    grid $top.gridF1B -sticky nsew -in $top.gridF1 \
-	    -padx $font_gui($id,padx) -pady $font_gui($id,pady)
-    grid $top.gridF1C -sticky nsew -in $top.gridF1 \
-	    -padx $font_gui($id,padx) -pady $font_gui($id,pady)
+    grid x $top.familyMB $top.sizeF $top.weightCB $top.slantCB \
+	    $top.underlineCB $top.overstrikeCB x \
+	    -padx $font_gui($id,padx) \
+	    -sticky nsew -in $top.gridF1
     grid columnconfigure $top.gridF1 0 -weight 1
+    grid columnconfigure $top.gridF1 7 -weight 1
 
     ################# demonstrate the font ################
     frame $top.gridF2
@@ -205,7 +380,7 @@ proc font_gui_init { id } {
 	    -command "font_reset $id $top"
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "font_dismiss $id $top"
-    grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky ew -in $top.gridF3
+    grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky nsew -in $top.gridF3
     grid columnconfigure $top.gridF3 2 -weight 1
     grid columnconfigure $top.gridF3 4 -weight 1
 
@@ -222,7 +397,7 @@ proc font_gui_init { id } {
     # disallow the user to resize
     wm resizable $top 0 0
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
-    wm title $top "Font Editor ($id)"
+    wm title $top "$title Font"
 }
 
 ## - font_build_nameM
@@ -383,6 +558,37 @@ proc font_set_slant { id slant } {
     font_update $id
 }
 
+## - font_bindCB
+#
+# If the button is checked, set the bindings to raise
+# and flatten the button as the mouse passes over.
+# Otherwise, disable the bindings and leave the button
+# in a sunken state.
+#
+proc font_bindCB { id w var val callback } {
+    global font_gui
+
+    if {[subst $[subst $var]] == $val} {
+	# In this case (i.e. the button is checked),
+	# so the border is set to a nonzero value
+	# to make the button appear sunken.
+	$w configure -bd 2 -padx 1 -pady 1
+
+	bind $w <Enter> ""
+	bind $w <Leave> ""
+    } else {
+	if {$callback} {
+	    # assume the mouse is over the checkbutton
+	    $w configure -bd 2 -padx 1 -pady 1
+	} else {
+	    $w configure -bd 0 -padx 3 -pady 3
+	}
+
+	bind $w <Enter> "%W configure -bd 2 -padx 1 -pady 1"
+	bind $w <Leave> "%W configure -bd 0 -padx 3 -pady 3"
+    }
+}
+
 ## - font_update
 #
 # update label to reflect the state of the font gui
@@ -460,6 +666,10 @@ proc font_apply { id } {
     if {$ret} {
 	catch {eval font configure $font_gui($id,name) $font_params}
     }
+
+    if {$font_gui($id,callback) != {}} {
+	eval $font_gui($id,callback) {$font_params}
+    }
 }
 
 ## - font_reset
@@ -476,4 +686,99 @@ proc font_reset { id top } {
 proc font_dismiss { id top } {
     destroy $top
     font delete font_gui_font($id)
+}
+
+proc font_scheme_callback { id top font key fconfig } {
+    global font_gui
+
+#    set fconfig [font configure $font]
+    eval font configure $font $fconfig
+    $top._$key\L2 configure -text [lindex $fconfig 1]
+    $top._$key\L3 configure -text [lindex $fconfig 3]
+}
+
+proc font_scheme_callback_all { id top font key fconfig } {
+    global font_scheme_data
+
+#    set fconfig [font configure $font]
+
+    foreach datum $font_scheme_data {
+	set fsname [lindex $datum 0]($id)
+	set fname [lindex $datum 1]
+	set key [lindex $datum 2]
+
+	if {$fname != {}} {
+	    font_scheme_callback $id $top $fsname $key $fconfig
+	} else {
+	    # configure fs_all_font($id)
+	    eval font configure $fsname $fconfig
+	}
+    }
+}
+
+proc font_scheme_set { id top font fconfig } {
+    eval font configure $font $fconfig
+}
+
+proc font_scheme_set_all { id top font fconfig } {
+    global font_scheme_data
+
+    foreach datum $font_scheme_data {
+	set font [lindex $datum 0]($id)
+	set fname [lindex $datum 1]
+	
+	if {$fname != {}} {
+	    font_scheme_set $id $top $font $fconfig
+	}
+    }
+}
+
+proc font_scheme_ok { id top gui_top } {
+    font_scheme_apply $id
+    font_scheme_dismiss $id $top $gui_top
+}
+
+proc font_scheme_apply { id } {
+    global font_scheme_data
+
+    # apply the font_scheme font configurations to the gui component fonts
+    foreach datum $font_scheme_data {
+	set fsname [lindex $datum 0]($id)
+	set fname [lindex $datum 1]
+
+	if {$fname != {}} {
+	    set fsconfig [font configure $fsname]
+	    eval font configure $fname $fsconfig
+	}
+    }
+}
+
+proc font_scheme_reset { id top } {
+    global font_scheme_data
+
+    # apply the gui component font configurations to the font_scheme fonts
+    foreach datum $font_scheme_data {
+	set fsname [lindex $datum 0]($id)
+	set fname [lindex $datum 1]
+
+	if {$fname != {}} {
+	    set fstitle [lindex $datum 2]
+	    set fconfig [font configure $fname]
+	    eval font configure $fsname $fconfig
+	    font_scheme_callback $id $top $fsname $fstitle $fconfig
+	}
+    }
+}
+
+proc font_scheme_dismiss { id top gui_top } {
+    global font_scheme_data
+
+    destroy $top
+    catch {destroy $gui_top}
+
+    # destroy the named fonts used by font_schemes
+    foreach datum $font_scheme_data {
+	set fsname [lindex $datum 0]($id)
+	font delete $fsname
+    }
 }
