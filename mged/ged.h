@@ -115,6 +115,7 @@ extern int	drawreg;	/* if > 0, process and draw regions */
 
 /* defined in buttons.c */
 extern float	acc_sc_sol;	/* accumulate solid scale factor */
+extern float	acc_sc[3];	/* accumulate local object scale factors */
 extern mat_t	acc_rot_sol;	/* accumulate solid rotations */
 
 /* defined in path.c */
@@ -194,6 +195,8 @@ extern int	ipathpos;	/* path index of illuminated element */
 #define SARROW		004
 #define	ROTARROW	010	/* Object rotation enabled */
 extern int	movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
+
+extern int	edobj;		/* object editing options */
 
 /* Flags for line type decisions */
 #define ROOT	UP
