@@ -27,13 +27,15 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #include "./material.h"
 #include "./mathtab.h"
 
-#define MAX_IREFLECT	5	/* Maximum internal reflection level */
-#define MAX_BOUNCE	3	/* Maximum recursion level */
+int	max_ireflect = 5;	/* Maximum internal reflection level */
+int	max_bounces = 6;	/* Maximum recursion level */
 
 #define MSG_PROLOGUE	20		/* # initial messages to see */
 #define MSG_INTERVAL	4000		/* message interval thereafter */
 
-#define RI_AIR		1.0    /* Refractive index of air.		*/
+#define RI_AIR		1.0		/* Refractive index of air */
+
+#define AIR_GAP_TOL	0.01		/* Max permitted air gap for RI tracking */
 
 HIDDEN int	rr_hit(), rr_miss();
 HIDDEN int	rr_refract();
@@ -48,18 +50,23 @@ rr_render( ap, pp, swp, dp )
 register struct application *ap;
 struct partition *pp;
 struct shadework	*swp;
-char	*dp;
+char		*dp;
 {
-	auto struct application sub_ap;
-	auto fastf_t	f;
-	auto vect_t	work;
-	auto vect_t	incident_dir;
-	auto vect_t	filter_color;
+	struct application sub_ap;
+	fastf_t	f;
+	vect_t	work;
+	vect_t	incident_dir;
+	vect_t	filter_color;
+	fastf_t	attenuation;
+	fastf_t	transmit;
+	fastf_t	reflect;
 
-	if( swp->sw_reflect <= 0 && swp->sw_transmit <= 0 )
+	reflect = swp->sw_reflect;
+	transmit = swp->sw_transmit;
+	if( reflect <= 0 && transmit <= 0 )
 		goto finish;
 
-	if( ap->a_level >= MAX_BOUNCE )  {
+	if( ap->a_level >= max_bounces )  {
 		/* Nothing more to do for this ray */
 		static long count = 0;		/* Not PARALLEL, should be OK */
 
@@ -88,17 +95,32 @@ char	*dp;
 	if( (swp->sw_inputs & (MFI_HIT|MFI_NORMAL)) != (MFI_HIT|MFI_NORMAL) )
 		shade_inputs( ap, pp, swp, MFI_HIT|MFI_NORMAL );
 
+	/*
+	 *  If this ray is being fired from the exit point of
+	 *  an object, and is directly entering another object,
+	 *  (ie, there is no intervening air-gap), and
+	 *  the two refractive indices match, then do not fire a
+	 *  reflected ray -- just take the transmission contribution.
+	 *  This is important, eg, for glass gun tubes projecting
+	 *  through a glass armor plate. :-)
+	 */
+	if( NEAR_ZERO( pp->pt_inhit->hit_dist, AIR_GAP_TOL ) &&
+	    ap->a_refrac_index == swp->sw_refrac_index )  {
+	    	transmit += reflect;
+	    	reflect = 0;
+/*rt_log("no reflect, ri=%g, lvl=%d\n", ap->a_refrac_index, ap->a_level);*/
+	}
 
 	/*
 	 *  Diminish base color appropriately, and add in
 	 *  contributions from mirror reflection & transparency
 	 */
-	f = 1 - (swp->sw_reflect + swp->sw_transmit);
+	f = 1 - (reflect + transmit);
 	if( f < 0 )  f = 0;
 	else if( f > 1 )  f = 1;
 	VSCALE( swp->sw_color, swp->sw_color, f );
 
-	if( swp->sw_reflect > 0 )  {
+	if( reflect > 0 )  {
 		LOCAL vect_t	to_eye;
 
 		/* Mirror reflection */
@@ -116,28 +138,36 @@ char	*dp;
 
 		/* a_user has hit/miss flag! */
 		if( sub_ap.a_user == 0 )  {
+			/* MISS */
 			VMOVE( sub_ap.a_color, background );
+		} else {
+			ap->a_cumlen += sub_ap.a_cumlen;
 		}
 		VJOIN1(swp->sw_color, swp->sw_color,
-			swp->sw_reflect, sub_ap.a_color);
+			reflect, sub_ap.a_color);
 	}
-	if( swp->sw_transmit > 0 )  {
+	if( transmit > 0 )  {
 		/*
 		 *  Calculate refraction at entrance.
-		 *  XXX A fairly serious bug with this code is that it doees
-		 *  not handle the case of two adjacent pieces of glass,
-		 *  ie, the RI of the last/current medium
-		 *  does not propagate along the ray.
 		 */
 		sub_ap = *ap;		/* struct copy */
 		sub_ap.a_level = 0;	/* # of internal reflections */
+		sub_ap.a_cumlen = 0;	/* distance through the glass */
 		sub_ap.a_user = (int)(pp->pt_regionp);
 		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
 		VMOVE( incident_dir, ap->a_ray.r_dir );
-		if( !rr_refract(incident_dir, /* Incident ray (IN) */
+
+		/* If there is an air gap, reset ray's RI to air */
+		if( pp->pt_inhit->hit_dist > AIR_GAP_TOL )
+			sub_ap.a_refrac_index = RI_AIR;
+/*else rt_log("%d,%d no air gap, ri=%g,%g\n", sub_ap.a_x, sub_ap.a_y, sub_ap.a_refrac_index, swp->sw_refrac_index);*/
+
+		if( sub_ap.a_refrac_index != swp->sw_refrac_index &&
+		    !rr_refract( incident_dir,		/* input direction */
 			swp->sw_hit.hit_normal,
-			RI_AIR, swp->sw_refrac_index,
-			sub_ap.a_ray.r_dir	/* Refracted ray (OUT) */
+			sub_ap.a_refrac_index,
+			swp->sw_refrac_index,
+			sub_ap.a_ray.r_dir		/* output direction */
 		) )  {
 			/* Reflected back outside solid */
 			VSETALL( filter_color, 1 );
@@ -183,18 +213,24 @@ do_inside:
 				sub_ap.a_uvec );
 		}
 		VMOVE( sub_ap.a_ray.r_pt, sub_ap.a_uvec );
-
-		/* Calculate refraction at exit. */
 		VMOVE( incident_dir, sub_ap.a_ray.r_dir );
+
+		/*
+		 *  Calculate refraction at exit.
+		 *  XXX We really should "look ahead" to "sense" the
+		 *  RI of the next material.  Just using RI_AIR is
+		 *  excessively simplistic.
+		 */
 		if( !rr_refract( incident_dir,		/* input direction */
 			sub_ap.a_vvec,			/* exit normal */
-			swp->sw_refrac_index, RI_AIR,
+			swp->sw_refrac_index,
+			RI_AIR,
 			sub_ap.a_ray.r_dir		/* output direction */
 		) )  {
 			static long count = 0;		/* not PARALLEL, should be OK */
 
 			/* Reflected internally -- keep going */
-			if( (++sub_ap.a_level) <= MAX_IREFLECT )
+			if( (++sub_ap.a_level) <= max_ireflect )
 				goto do_inside;
 
 			/*
@@ -220,6 +256,18 @@ do_inside:
 		}
 do_exit:
 		/*
+		 *  Apply attenuation factor due to thickness of the glass.
+		 *  This is totally arbitrary, for now.
+		 *  Assume 20% attenuation per meter of glass, 2e-4/mm
+		 */
+		attenuation = 1;
+#ifdef later
+		attenuation = (1.0 - 2e-4 * sub_ap.a_cumlen);
+		if( attenuation < 0 )  attenuation = 0;
+/*rt_log("len=%g, atten=%g lvl%d\n", sub_ap.a_cumlen, attenuation, sub_ap.a_level);*/
+#endif
+
+		/*
 		 *  Process the escaping refracted ray.
 		 *  This is the only place we might recurse dangerously,
 		 *  so we are careful to use our caller's recursion level+1.
@@ -230,15 +278,19 @@ do_exit:
 		sub_ap.a_onehit = ap->a_onehit;
 		sub_ap.a_level = ap->a_level+1;
 		sub_ap.a_purpose = "escaping refracted ray";
+		sub_ap.a_refrac_index = swp->sw_refrac_index;
+		sub_ap.a_cumlen = 0;
 		(void) rt_shootray( &sub_ap );
 
 		/* a_user has hit/miss flag! */
 		if( sub_ap.a_user == 0 )  {
 			VMOVE( sub_ap.a_color, background );
+			sub_ap.a_cumlen = 0;
 		}
+		f = transmit * attenuation;
 		VELMUL( work, filter_color, sub_ap.a_color );
 		VJOIN1( swp->sw_color, swp->sw_color,
-			swp->sw_transmit, work );
+			f, work );
 	}
 finish:
 	return(1);
@@ -382,10 +434,10 @@ struct partition *PartHeadp;
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
 	}
 
-	VMOVE( ap->a_uvec, hitp->hit_point );
-
 	/* For refraction, want exit normal to point inward. */
 	VREVERSE( ap->a_vvec, hitp->hit_normal );
+	VMOVE( ap->a_uvec, hitp->hit_point );
+	ap->a_cumlen += (hitp->hit_dist - pp->pt_inhit->hit_dist);
 	return(2);			/* OK */
 }
 
