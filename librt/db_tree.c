@@ -1518,10 +1518,12 @@ db_walk_dispatcher()
 		 *  reg_end_func() returns a pointer to any unused
 		 *  subtree for freeing.
 		 */
-		db_reg_trees[mine] = (*db_reg_end_func)(
-			&(region_start_statep->cts_s),
-			&(region_start_statep->cts_p),
-			curtree );
+		if( db_reg_end_func )  {
+			db_reg_trees[mine] = (*db_reg_end_func)(
+				&(region_start_statep->cts_s),
+				&(region_start_statep->cts_p),
+				curtree );
+		}
 
 		db_free_combined_tree_state( region_start_statep );
 	}
