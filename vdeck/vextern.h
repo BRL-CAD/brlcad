@@ -1,10 +1,11 @@
 /*
- *	@(#) vextern.h			retrieved: 8/13/86 at 08:18:54,
- *	@(#) version 1.4		last edit: 10/11/83 at 09:04:02.
+ *	@(#) vextern.h			retrieved: 8/13/86 at 08:18:58,
+ *	@(#) version 1.5		last edit: 10/11/83 at 09:31:55.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
  */
+extern char	*usage[], *cmd[];
 extern mat_t	xform, notrans, identity;
 
 extern Directory	directory[], *dp, *lookup();
@@ -37,11 +38,11 @@ extern int	rrfd, rd_rrfd;	extern char	reg_file[];
 
 extern int	ndir, nns, nnr, numrr;
 
-extern int	regflag, orflag, item, space, delsol, delreg;
-extern int	path[];
-extern int	isave;
-extern char	buff[],	name[];
-extern char	operate;
-extern long	savsol;
-extern jmp_buf	env;
-
+extern int		regflag, orflag, item, space, delsol, delreg;
+extern Directory	*path[];
+extern int		isave;
+extern char		buff[],	name[];
+extern char		operate;
+extern long		savsol;
+extern jmp_buf		env;
+extern struct		ident ident, idbuf;
