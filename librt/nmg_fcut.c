@@ -501,6 +501,8 @@ CONST genptr_t	b;
 	/* Sort from small to large max_angle */
 	if( va->lsp->max_angle > vb->lsp->max_angle )
 		return 1;
+	if( va->lsp->max_angle == vb->lsp->max_angle )
+		return 0;
 	return -1;
 }
 
