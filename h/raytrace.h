@@ -54,7 +54,6 @@
 #include "bu.h"
 #include "compat4.h"
 #include "bn.h"
-#include "solid.h"
 
 #ifndef NMG_H
 #include "nmg.h"
@@ -1039,7 +1038,7 @@ struct dg_obj {
 	struct bu_list	l;
 	struct bu_vls		dgo_name;	/* drawable geometry object name */
 	struct rt_wdb		*dgo_wdbp;	/* associated database */
-	struct solid		dgo_headSolid;	/* head of solid list */
+	struct bu_list		dgo_headSolid;	/* head of solid list */
 	struct bu_list		dgo_headVDraw;	/* head of vdraw list */
 	struct vd_curve		*dgo_currVHead;	/* current vdraw head */
 	char			*dgo_rt_cmd[RT_MAXARGS];
