@@ -25,11 +25,11 @@
 
 #if HAS_TCP
 #    define COMPLETE_LIBES	\
-	LIBPKG LIBWDB LIBRT LIBRT_LIBES MGED_LIBES LIBMALLOC LIBES
+	LIBPKG LIBWDB LIBRT LIBRT_LIBES MGED_LIBES LIBES
 #    define	TCP_FILES	vrlink
 #else
 #    define COMPLETE_LIBES	\
-	LIBWDB LIBRT LIBRT_LIBES MGED_LIBES LIBMALLOC LIBES
+	LIBWDB LIBRT LIBRT_LIBES MGED_LIBES LIBES
 #    define	TCP_FILES	/**/
 #endif
 
@@ -39,9 +39,9 @@ mged:	OBJ LIBRT_DEP LIBWDB_DEP
 	CC -o mged LDFLAGS OBJ COMPLETE_LIBES vers.o
 
 cad_boundp: cad_boundp.o
-	CC -o cad_boundp cad_boundp.o LIBMALLOC LIBES
+	CC -o cad_boundp cad_boundp.o LIBES
 
 cad_parea: cad_parea.o
-	CC -o cad_parea cad_parea.o LIBMALLOC LIBES
+	CC -o cad_parea cad_parea.o LIBES
 
 #include "../Cakefile.rules"
