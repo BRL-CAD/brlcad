@@ -23,6 +23,7 @@ double		local2base;		/* from db_i struct, not fastf_t */
 
 extern struct application	ap;
 extern struct rt_i		*rti_tab[];	/* For use w/ and w/o air */
+extern struct resource		res_tab[];	/* For use w/ and w/o air */
 extern struct nirt_obj		object_list;
 extern com_table		ComTab[];
 extern outval			ValTab[];
@@ -370,8 +371,8 @@ com_table		*ctp;
 	for (op = &object_list; op -> obj_next != NULL; op = op -> obj_next)
 	    do_rt_gettree( rtip, op -> obj_name, 0);
     }
-	/* XXX ap.a_resource needs to be set here */
     ap.a_rt_i = rti_tab[new_use];
+    ap.a_resource = &res_tab[new_use];
 }
 
 void nirt_units (buffer, ctp)
