@@ -136,6 +136,7 @@ struct bu_structparse view_parse[] = {
  *  			V I E W _ P I X E L
  *  
  *  Arrange to have the pixel output.
+ *  a_uptr has region pointer, for reference.
  */
 void
 view_pixel(ap)
@@ -198,12 +199,34 @@ register struct application *ap;
 			fp->ff_color[2] = b;
 			if( ap->a_user == 0 )  {
 				fp->ff_dist = -INFINITY;	/* shot missed model */
+				fp->ff_frame = -1;		/* Don't cache misses */
 				return;
 			}
 			/* XXX a_dist is negative and misleading when eye is in air */
 			fp->ff_dist = (float)ap->a_dist;
 			VJOIN1( fp->ff_hitpt, ap->a_ray.r_pt,
 				ap->a_dist, ap->a_ray.r_dir );
+			fp->ff_regp = (struct region *)ap->a_uptr;
+			RT_CK_REGION(fp->ff_regp);
+#if 0
+{
+	point_t	new_view_pt;
+	MAT4X3PNT( new_view_pt, model2view, fp->ff_hitpt );
+}
+#endif
+			/*
+			 *  This pixel was just computed.
+			 *  Look at next pixel on scanline, 
+			 *  and if it is a reprojected old value
+			 *  and hit a different region than this pixel,
+			 *  then recompute it too.
+			 */
+			if( ap->a_x >= width-1 )  return;
+			if( fp[1].ff_frame <= 0 )  return;	/* not valid, will be recomputed. */
+			if( fp[1].ff_regp == fp->ff_regp )
+				return;				/* OK */
+			/* Next pixel is probably out of date, mark it for re-computing */
+			fp[1].ff_frame = -1;
 			return;
 		}
 
@@ -578,6 +601,7 @@ register struct application *ap;
 
 		VMOVE( ap->a_color, u.sw.sw_color );
 		ap->a_user = 1;		/* Signal view_pixel:  HIT */
+		ap->a_uptr = (genptr_t)&env_region;
 		return(1);
 	}
 
@@ -609,6 +633,7 @@ struct seg *finished_segs;
 		return(0);
 	}
 	hitp = pp->pt_inhit;
+	ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
 
 	if(rdebug&RDEBUG_HITS)  {
 		bu_log("colorview: lvl=%d coloring %s\n",
@@ -654,7 +679,7 @@ struct seg *finished_segs;
 		/* Push on to exit point, and trace on from there */
 		sub_ap = *ap;	/* struct copy */
 		sub_ap.a_level = ap->a_level+1;
-		f = pp->pt_outhit->hit_dist+0.0001;
+		f = pp->pt_outhit->hit_dist+hitp->hit_dist+0.0001;
 		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
 		sub_ap.a_purpose = "pushed eye position";
 		(void)rt_shootray( &sub_ap );
@@ -666,7 +691,8 @@ struct seg *finished_segs;
 		VSCALE( ap->a_color, sub_ap.a_color, 0.80 );
 
 		ap->a_user = 1;		/* Signal view_pixel: HIT */
-		ap->a_dist = hitp->hit_dist;
+		ap->a_dist = f + sub_ap.a_dist;
+		ap->a_uptr = sub_ap.a_uptr;	/* which region */
 		goto out;
 	}
 
@@ -733,7 +759,9 @@ struct seg *finished_segs;
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
 	/* XXX This is always negative when eye is inside air solid */
 	ap->a_dist = hitp->hit_dist;
+
 out:
+	RT_CK_REGION(ap->a_uptr);
 	if(rdebug&RDEBUG_HITS)  {
 		bu_log("colorview: lvl=%d ret a_user=%d %s\n",
 			ap->a_level,
@@ -1015,18 +1043,33 @@ bu_log("mallocing curr_float_frame\n");
 			) {
 				point_t	new_view_pt;
 				int	ix, iy;
+				int	agelim;
 
+				if( ip->ff_frame < 0 )
+					continue;	/* Not valid */
 				if( ip->ff_dist <= -INFINITY )
 					continue;	/* was a miss */
 				/* new model2view has been computed before here */
 				MAT4X3PNT( new_view_pt, model2view, ip->ff_hitpt );
-				ix = new_view_pt[X] * width;
-				iy = new_view_pt[Y] * height;
+				ix = (new_view_pt[X] + 1) * 0.5 * width;
+				iy = (new_view_pt[Y] + 1) * 0.5 * height;
 				/* See if reprojects off of screen */
 				if( ix < 0 || ix >= width )  continue;
 				if( iy < 0 || iy >= height )  continue;
+				/* Reprojection lies on screen, see if pixel already occupied */
 				op = &curr_float_frame[iy*width + ix];
+				/* Don't reproject again if new val is more distant */
+				if( op->ff_frame >= 0 )  {
+					/* XXX Need to recompute both distances from current eye_pt! */
+/* XXXXXX This is main source of speckles */
+					if( op->ff_dist < ip->ff_dist )  continue;
+					else count--;	/* Don't double-count */
+				}
+				/* Don't reproject too many times */
 				/* See if old pixel is more then N frames old */
+				agelim = ((iy+ix)&03)+2;
+				if( curframe - ip->ff_frame >= agelim )
+					continue;
 				/* re-use old pixel as new pixel */
 				*op = *ip;	/* struct copy */
 				count++;
