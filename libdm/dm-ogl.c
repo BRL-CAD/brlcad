@@ -124,12 +124,9 @@ struct dm dm_ogl = {
   Ogl_colorchange,
   Ogl_window, Ogl_debug, 0, 0,
   0,				/* no displaylist */
-  0,				/* multi-window */
   IRBOUND,
   "ogl", "X Windows with OpenGL graphics",
   0,				/* mem map */
-  0,
-  0,
   0,
   0,
   0,
@@ -239,7 +236,7 @@ char *argv[];
   ((struct ogl_vars *)dmp->dmr_vars)->mvars.fogdensity = 1.0;
 
   if(BU_LIST_IS_EMPTY(&head_ogl_vars.l))
-    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)DM_TYPE_OGL);
 
   BU_LIST_APPEND(&head_ogl_vars.l, &((struct ogl_vars *)dmp->dmr_vars)->l);
 
@@ -290,8 +287,10 @@ struct dm *dmp;
     return TCL_ERROR;
   }
 
-  ((struct ogl_vars *)dmp->dmr_vars)->width = DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
-  ((struct ogl_vars *)dmp->dmr_vars)->height = DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+  ((struct ogl_vars *)dmp->dmr_vars)->width = DisplayWidth(tmp_dpy,
+							   DefaultScreen(tmp_dpy)) - 20;
+  ((struct ogl_vars *)dmp->dmr_vars)->height = DisplayHeight(tmp_dpy,
+							     DefaultScreen(tmp_dpy)) - 20;
 
   /* Make window square */
   if(((struct ogl_vars *)dmp->dmr_vars)->height < ((struct ogl_vars *)dmp->dmr_vars)->width)
@@ -382,7 +381,8 @@ struct dm *dmp;
       if(!strcmp(list->name, "dial+buttons")){
 	if((dev = XOpenDevice(((struct ogl_vars *)dmp->dmr_vars)->dpy,
 			      list->id)) == (XDevice *)NULL){
-	  Tcl_AppendResult(interp, "Glx_open: Couldn't open the dials+buttons\n", (char *)NULL);
+	  Tcl_AppendResult(interp, "Glx_open: Couldn't open the dials+buttons\n",
+			   (char *)NULL);
 	  goto Done;
 	}
 
@@ -519,7 +519,7 @@ struct dm *dmp;
   bu_free(dmp->dmr_vars, "Ogl_close: ogl_vars");
 
   if(BU_LIST_IS_EMPTY(&head_ogl_vars.l))
-    Tk_DeleteGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+    Tk_DeleteGenericHandler(dmp->dmr_eventhandler, (ClientData)DM_TYPE_OGL);
 }
 
 /*
@@ -575,7 +575,8 @@ struct dm *dmp;
       fogdepth = (GLfloat) 0.5*((struct ogl_vars *)dmp->dmr_vars)->mvars.fogdensity;
 #endif
       glFogf(GL_FOG_DENSITY, fogdepth);
-      glFogi(GL_FOG_MODE, ((struct ogl_vars *)dmp->dmr_vars)->mvars.perspective_mode ? GL_EXP : GL_LINEAR);
+      glFogi(GL_FOG_MODE, ((struct ogl_vars *)dmp->dmr_vars)->mvars.perspective_mode ?
+	     GL_EXP : GL_LINEAR);
     }
     if (((struct ogl_vars *)dmp->dmr_vars)->mvars.lighting_on){
       glEnable(GL_LIGHTING);
@@ -684,8 +685,10 @@ int which_eye;
 		break;
 	case 2:
 		/* L eye */
-		glViewport(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1, ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1); 
-		glScissor(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1, ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
+		glViewport(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
+			   ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1); 
+		glScissor(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
+			  ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
 		break;
 	}
 
@@ -882,7 +885,6 @@ short index;
 	}
 
 	return(1);	/* OK */
-
 }
 
 /*
@@ -1151,9 +1153,6 @@ struct dm *dmp;
 
 		glColor3ub( (short)255,  (short)255,  (short)255 );
 
-		/* apply region-id based colors to the solid table */
-		dmp->dmr_cfunc();
-
 		return;
 	}
 
@@ -1178,11 +1177,9 @@ struct dm *dmp;
 
 	((struct ogl_vars *)dmp->dmr_vars)->ovec = -1;	/* Invalidate the old colormap entry */
 
-	/* apply region-id based colors to the solid table */
-	dmp->dmr_cfunc();
-
 	/* best to do this before the colorit */
-	if (((struct ogl_vars *)dmp->dmr_vars)->mvars.cueing_on && ((struct ogl_vars *)dmp->dmr_vars)->mvars.lighting_on){
+	if (((struct ogl_vars *)dmp->dmr_vars)->mvars.cueing_on &&
+	    ((struct ogl_vars *)dmp->dmr_vars)->mvars.lighting_on){
 		((struct ogl_vars *)dmp->dmr_vars)->mvars.lighting_on = 0;
 		glDisable(GL_LIGHTING);
 	}
@@ -1191,10 +1188,14 @@ struct dm *dmp;
 	Ogl_colorit(dmp);
 
 	for( i=0; i < ((struct ogl_vars *)dmp->dmr_vars)->uslots; i++ )  {
-		Ogl_gen_color( dmp, i,
-			       ((struct ogl_vars *)dmp->dmr_vars)->rgbtab[i].r,
+		Ogl_gen_color( dmp, i
+#if 1
+			       );
+#else
+			       , ((struct ogl_vars *)dmp->dmr_vars)->rgbtab[i].r,
 			       ((struct ogl_vars *)dmp->dmr_vars)->rgbtab[i].g,
 			       ((struct ogl_vars *)dmp->dmr_vars)->rgbtab[i].b);
+#endif
 	}
 
 	/* best to do this after the colorit */
@@ -1625,6 +1626,7 @@ struct dm *dmp;
 
   if( ((struct ogl_vars *)dmp->dmr_vars)->mvars.rgb )  return;
 
+#if 0
   FOR_ALL_SOLIDS(sp, &dmp->dmr_hp->l)  {
     r = sp->s_color[0];
     g = sp->s_color[1];
@@ -1660,6 +1662,7 @@ struct dm *dmp;
 next:		
     ;
   }
+#endif
 }
 
 
@@ -1707,7 +1710,8 @@ int i;\
  *	mode, DM_BLACK uses map entry 0, and does not generate a ramp for it.
  *	Non depthcued mode skips the first CMAP_BASE colormap entries.
  *
- *	This routine is not called at all if ((struct ogl_vars *)dmp->dmr_vars)->mvars.rgb is set.
+ *	This routine is not called at all if
+ *                       ((struct ogl_vars *)dmp->dmr_vars)->mvars.rgb is set.
  */
 static void
 Ogl_gen_color(dmp, c)
@@ -1739,7 +1743,6 @@ int c;
       blue = rgbtab[c].b * 256;
 #endif
 			
-
       if (((struct ogl_vars *)dmp->dmr_vars)->mvars.cueing_on){
 	for(i = 0, j = MAP_ENTRY(c) + CMAP_RAMP_WIDTH - 1; 
 	    i < CMAP_RAMP_WIDTH;

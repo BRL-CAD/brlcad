@@ -48,13 +48,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm-X.h"
 #include "solid.h"
 
-#define FONTBACK	"-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
-#define FONT5	"5x7"
-#define FONT6	"6x10"
-#define FONT7	"7x13"
-#define FONT8	"8x13"
-#define FONT9	"9x15"
-
 void     X_configure_window_shape();
 void     X_establish_perspective();
 void     X_set_perspective();
@@ -101,11 +94,8 @@ struct dm dm_X = {
   X_colorchange,
   X_window, X_debug, Nu_int0, Nu_int0,
   0,				/* no displaylist */
-  0,				/* multi-window */
   PLOTBOUND,
   "X", "X Window System (X11)",
-  0,
-  0,
   0,
   0,
   0,
@@ -140,7 +130,7 @@ char *argv[];
   ((struct x_vars *)dmp->dmr_vars)->mvars.dummy_perspective = 1;
 
   if(BU_LIST_IS_EMPTY(&head_x_vars.l))
-    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)DM_TYPE_X);
 
   BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dmr_vars)->l);
 
@@ -347,7 +337,7 @@ struct dm *dmp;
   bu_free(dmp->dmr_vars, "X_close: x_vars");
 
   if(BU_LIST_IS_EMPTY(&head_x_vars.l))
-    Tk_DeleteGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+    Tk_DeleteGenericHandler(dmp->dmr_eventhandler, (ClientData)DM_TYPE_X);
 }
 
 /*
@@ -424,7 +414,6 @@ short index;
 {
     static vect_t   pnt;
     register struct rt_vlist	*tvp;
-    int useful = TCL_ERROR;
     XSegment segbuf[1024];		/* XDrawSegments list */
     XSegment *segp;			/* current segment */
     XGCValues gcv;
@@ -505,7 +494,8 @@ short index;
 		if( illum && !((struct x_vars *)dmp->dmr_vars)->is_monochrome ){
 		    gcv.foreground = ((struct x_vars *)dmp->dmr_vars)->white;
 		}
-		XChangeGC( ((struct x_vars *)dmp->dmr_vars)->dpy, ((struct x_vars *)dmp->dmr_vars)->gc, GCForeground, &gcv );
+		XChangeGC( ((struct x_vars *)dmp->dmr_vars)->dpy,
+			   ((struct x_vars *)dmp->dmr_vars)->gc, GCForeground, &gcv );
 #endif
 		pnt[0] *= 2047;
 		pnt[1] *= 2047;
@@ -520,50 +510,57 @@ short index;
 		segp++;
 		lastx = x;
 		lasty = y;
-		useful = TCL_OK;
 		if( nseg == 1024 ) {
-		    XDrawSegments( ((struct x_vars *)dmp->dmr_vars)->dpy, ((struct x_vars *)dmp->dmr_vars)->pix, ((struct x_vars *)dmp->dmr_vars)->gc, segbuf, nseg );
-		    /* Thicken the drawing, if monochrome */
-		    if( illum && ((struct x_vars *)dmp->dmr_vars)->is_monochrome ){
-			int	i;
-			/* XXX - width and height don't work on Sun! */
-			/* Thus the following gross hack */
-			segp = segbuf;
-			for( i = 0; i < nseg; i++ ) {
-			    segp->x1++;
-			    segp->y1++;
-			    segp->x2++;
-			    segp->y2++;
-			    segp++;
-			}
-			XDrawSegments( ((struct x_vars *)dmp->dmr_vars)->dpy, ((struct x_vars *)dmp->dmr_vars)->pix, ((struct x_vars *)dmp->dmr_vars)->gc, segbuf, nseg );
-		    }
-		    nseg = 0;
+		  XDrawSegments( ((struct x_vars *)dmp->dmr_vars)->dpy,
+				 ((struct x_vars *)dmp->dmr_vars)->pix,
+				 ((struct x_vars *)dmp->dmr_vars)->gc, segbuf, nseg );
+		  /* Thicken the drawing, if monochrome */
+		  if( illum && ((struct x_vars *)dmp->dmr_vars)->is_monochrome ){
+		    int	i;
+		    /* XXX - width and height don't work on Sun! */
+		    /* Thus the following gross hack */
 		    segp = segbuf;
+		    for( i = 0; i < nseg; i++ ) {
+		      segp->x1++;
+		      segp->y1++;
+		      segp->x2++;
+		      segp->y2++;
+		      segp++;
+		    }
+		    XDrawSegments( ((struct x_vars *)dmp->dmr_vars)->dpy,
+				   ((struct x_vars *)dmp->dmr_vars)->pix,
+				   ((struct x_vars *)dmp->dmr_vars)->gc, segbuf, nseg );
+		  }
+		  nseg = 0;
+		  segp = segbuf;
 		}
 		break;
 	    }
 	}
     }
     if( nseg ) {
-	XDrawSegments( ((struct x_vars *)dmp->dmr_vars)->dpy, ((struct x_vars *)dmp->dmr_vars)->pix, ((struct x_vars *)dmp->dmr_vars)->gc, segbuf, nseg );
-	if( illum && ((struct x_vars *)dmp->dmr_vars)->is_monochrome ){
-	    int	i;
-	    /* XXX - width and height don't work on Sun! */
-	    /* Thus the following gross hack */
-	    segp = segbuf;
-	    for( i = 0; i < nseg; i++ ) {
-		segp->x1++;
-		segp->y1++;
-		segp->x2++;
-		segp->y2++;
-		segp++;
-	    }
-	    XDrawSegments( ((struct x_vars *)dmp->dmr_vars)->dpy, ((struct x_vars *)dmp->dmr_vars)->pix, ((struct x_vars *)dmp->dmr_vars)->gc, segbuf, nseg );
+      XDrawSegments( ((struct x_vars *)dmp->dmr_vars)->dpy,
+		     ((struct x_vars *)dmp->dmr_vars)->pix,
+		     ((struct x_vars *)dmp->dmr_vars)->gc, segbuf, nseg );
+      if( illum && ((struct x_vars *)dmp->dmr_vars)->is_monochrome ){
+	int	i;
+	/* XXX - width and height don't work on Sun! */
+	/* Thus the following gross hack */
+	segp = segbuf;
+	for( i = 0; i < nseg; i++ ) {
+	  segp->x1++;
+	  segp->y1++;
+	  segp->x2++;
+	  segp->y2++;
+	  segp++;
 	}
+	XDrawSegments( ((struct x_vars *)dmp->dmr_vars)->dpy,
+		       ((struct x_vars *)dmp->dmr_vars)->pix,
+		       ((struct x_vars *)dmp->dmr_vars)->gc, segbuf, nseg );
+      }
     }
 
-    return(useful);
+    return 1;    /* OK */
 }
 
 /*
@@ -721,8 +718,6 @@ static void
 X_colorchange(dmp)
 struct dm *dmp;
 {
-  /* apply colors to the solid table */
-  dmp->dmr_cfunc();
 }
 
 /* ARGSUSED */

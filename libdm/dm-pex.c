@@ -108,11 +108,8 @@ struct dm dm_pex = {
   Pex_colorchange,
   Pex_window, Pex_debug, 0, 0,
   0,				/* no displaylist */
-  0,				/* multi-window */
   PLOTBOUND,
   "pex", "X Window System (X11)",
-  0,
-  0,
   0,
   0,
   0,
@@ -151,7 +148,7 @@ char *argv[];
   ((struct pex_vars *)dmp->dmr_vars)->mvars.dummy_perspective = 1;
 
   if(BU_LIST_IS_EMPTY(&head_pex_vars.l))
-    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)DM_TYPE_PEX);
 
   BU_LIST_APPEND(&head_pex_vars.l, &((struct pex_vars *)dmp->dmr_vars)->l);
 
@@ -324,13 +321,13 @@ struct dm *dmp;
 
 #ifndef CRAY2
 #if 1
-    cp = FONT;
+    cp = FONT6;
     if ( (((struct pex_vars *)dmp->dmr_vars)->fontstruct =
 	 XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, cp)) == NULL ) {
       /* Try hardcoded backup font */
       if ( (((struct pex_vars *)dmp->dmr_vars)->fontstruct =
-	    XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, FONT2)) == NULL) {
-	bu_log( "dm-X: Can't open font '%s' or '%s'\n", cp, FONT2 );
+	    XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, FONTBACK)) == NULL) {
+	bu_log( "dm-X: Can't open font '%s' or '%s'\n", cp, FONTBACK );
 	return TCL_ERROR;
       }
     }
@@ -406,7 +403,7 @@ struct dm *dmp;
   bu_free(dmp->dmr_vars, "Pex_close: dmp->dmr_vars");
 
   if(BU_LIST_IS_EMPTY(&head_pex_vars.l))
-    Tk_DeleteGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+    Tk_DeleteGenericHandler(dmp->dmr_eventhandler, (ClientData)DM_TYPE_PEX);
 }
 
 /*
@@ -651,6 +648,8 @@ short index;
   }
   PEXEndRendering(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		  ((struct pex_vars *)dmp->dmr_vars)->renderer, True);
+
+  return 1;        /* OK */
 }
 
 /*
@@ -869,7 +868,6 @@ struct dm *dmp;
 		      ((struct pex_vars *)dmp->dmr_vars)->rattrs.depth_cue_table,
 		      cue_num, 1, PEXLUTDepthCue, &cue_entry );
 #endif
-  dmp->dmr_cfunc(); /* apply colors to the solid table */
 }
 
 /* ARGSUSED */

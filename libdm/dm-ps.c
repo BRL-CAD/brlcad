@@ -74,11 +74,8 @@ struct dm dm_PS = {
   PS_colorchange,
   PS_window, PS_debug, 0, 0,
   0,				/* no displaylist */
-  0,				/* no display to release! */
   PLOTBOUND,
   "ps", "Screen to PostScript",
-  0,
-  0,
   0,
   0,
   0,
@@ -593,7 +590,6 @@ static void
 PS_colorchange(dmp)
 struct dm *dmp;
 {
-  dmp->dmr_cfunc();
 }
 
 /* ARGSUSED */

@@ -52,9 +52,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 
 int     X_dm_init();
-#if 0
-struct dm_list *get_dm_list();
-#endif
 
 static void	X_statechange();
 static int     X_dm();
@@ -107,18 +104,16 @@ XEvent *eventPtr;
   XComposeStatus compose_stat;
   XWindowAttributes xwa;
   struct bu_vls cmd;
+  struct x_vars *p;
   register struct dm_list *save_dm_list;
   int status = CMD_OK;
 
-  if(eventPtr->type == DestroyNotify)
+  GET_DM(p, x_vars, eventPtr->xany.window, &head_x_vars.l);
+  if(p == (struct x_vars *)NULL || eventPtr->type == DestroyNotify)
     return TCL_OK;
 
   save_dm_list = curr_dm_list;
-#if 0
-  curr_dm_list = get_dm_list(eventPtr->xany.window);
-#else
   GET_DM_LIST(curr_dm_list, x_vars, eventPtr->xany.window);
-#endif
 
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
@@ -254,6 +249,7 @@ int	a, b;
 	}
 
 	/*X_viewchange( DM_CHGV_REDO, SOLID_NULL );*/
+	++dmaflag;
 }
 
 static int
@@ -398,27 +394,12 @@ static void
 establish_perspective()
 {
   X_establish_perspective(dmp);
+  ++dmaflag;
 }
 
 static void
 set_perspective()
 {
   X_set_perspective(dmp);
+  ++dmaflag;
 }
-
-#if 0
-static struct dm_list *
-get_dm_list(window)
-Window window;
-{
-  register struct dm_list *p;
-
-/*XXXX*/
-  for(BU_LIST_FOR(p, dm_list, &head_dm_list.l)){
-    if(window == p->win)
-	return ((struct mged_x_vars *)p->app_vars)->dm_list;
-  }
-
-  return DM_LIST_NULL;
-}
-#endif

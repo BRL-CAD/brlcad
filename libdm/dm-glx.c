@@ -170,12 +170,9 @@ struct dm dm_glx = {
   Glx_colorchange,
   Glx_window, Glx_debug, 0, 0,
   0,			/* no "displaylist", per. se. */
-  0,			/* multi-window */
   IRBOUND,
   "glx", "SGI - mixed mode",
   0,			/* mem map */
-  0,
-  0,
   0,
   0,
   0,
@@ -218,20 +215,6 @@ char *argv[];
 {
   static int count = 0;
 
-#ifdef DM_OGL
-  /* This is a hack to handle the fact that the sgi attach crashes
-   * if a direct OpenGL context has been previously opened in the 
-   * current mged session. This stops the attach before it crashes.
-   */
-  if (ogl_ogl_used){
-    Tcl_AppendResult(interp, "Can't attach sgi, because a direct OpenGL context has\n",
-		     "previously been opened in this session. To use sgi,\n",
-		     "quit this session and reopen it.\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-  ogl_sgi_used = 1;
-#endif /* DM_OGL */
-
   /* Only need to do this once for this display manager */
   if(!count)
     Glx_load_startup(dmp);
@@ -252,9 +235,23 @@ char *argv[];
   ((struct glx_vars *)dmp->dmr_vars)->mvars.dummy_perspective = 1;
 
   if(BU_LIST_IS_EMPTY(&head_glx_vars.l))
-    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)DM_TYPE_GLX);
 
   BU_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)dmp->dmr_vars)->l);
+
+#ifdef DM_OGL
+  /* This is a hack to handle the fact that the sgi attach crashes
+   * if a direct OpenGL context has been previously opened in the 
+   * current mged session. This stops the attach before it crashes.
+   */
+  if (ogl_ogl_used){
+    Tcl_AppendResult(interp, "Can't attach sgi, because a direct OpenGL context has\n",
+		     "previously been opened in this session. To use sgi,\n",
+		     "quit this session and reopen it.\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+  ogl_sgi_used = 1;
+#endif /* DM_OGL */
 
   if(dmp->dmr_vars)
     return TCL_OK;
@@ -560,7 +557,7 @@ struct dm *dmp;
   bu_free(dmp->dmr_vars, "Glx_close: glx_vars");
 
   if(BU_LIST_IS_EMPTY(&head_glx_vars.l))
-    Tk_DeleteGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+    Tk_DeleteGenericHandler(dmp->dmr_eventhandler, (ClientData)DM_TYPE_GLX);
 }
 
 /*
@@ -1176,9 +1173,6 @@ struct dm *dmp;
 
 		RGBcolor( (short)255, (short)255, (short)255 );
 
-		/* apply region-id based colors to the solid table */
-		dmp->dmr_cfunc();
-
 		return;
 	}
 
@@ -1199,9 +1193,6 @@ struct dm *dmp;
 	}
 
 	ovec = -1;	/* Invalidate the old colormap entry */
-
-	/* apply region-id based colors to the solid table */
-	dmp->dmr_cfunc();
 
 	/* Map the colors in the solid table to colormap indices */
 	Glx_colorit(dmp);
@@ -1225,6 +1216,7 @@ struct dm *dmp;
 
 	if( ((struct glx_vars *)dmp->dmr_vars)->mvars.rgb )  return;
 
+#if 0
 	FOR_ALL_SOLIDS(sp, &dmp->dmr_hp->l)  {
 		r = sp->s_color[0];
 		g = sp->s_color[1];
@@ -1257,6 +1249,7 @@ struct dm *dmp;
 next:		
 		;
 	}
+#endif
 }
 
 #if IR_KNOBS

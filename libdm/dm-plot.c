@@ -74,11 +74,8 @@ struct dm dm_Plot = {
   Plot_colorchange,
   Plot_window, Plot_debug, Nu_int0, Nu_int0,
   0,			/* no displaylist */
-  1,			/* play it safe (could be frame buffer) */
   PLOTBOUND,
   "plot", "Screen to UNIX-Plot",
-  0,
-  0,
   0,
   0,
   0,
@@ -532,7 +529,6 @@ static void
 Plot_colorchange(dmp)
 struct dm *dmp;
 {
-  dmp->dmr_cfunc();
 }
 
 /* ARGSUSED */

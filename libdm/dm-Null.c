@@ -29,11 +29,8 @@ struct dm dm_Null = {
   Nu_void,
   Nu_void, Nu_void, Nu_int0, Nu_int0,
   0,			/* no displaylist */
-  0,			/* no display to release */
   0.0,
   "nu", "Null Display",
-  0,
-  0,
   0,
   0,
   0,

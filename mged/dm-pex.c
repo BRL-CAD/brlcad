@@ -64,9 +64,6 @@ static void	Pex_statechange();
 static int     Pex_dm();
 static void     establish_perspective();
 static void     set_perspective();
-#if 0
-static struct dm_list *get_dm_list();
-#endif
 #ifdef USE_PROTOTYPES
 static Tk_GenericProc Pex_doevent;
 #else
@@ -118,19 +115,16 @@ XEvent *eventPtr;
   XComposeStatus compose_stat;
   XWindowAttributes xwa;
   struct bu_vls cmd;
+  struct pex_vars *p;
   register struct dm_list *save_dm_list;
   int status = CMD_OK;
 
-  if(eventPtr->type == DestroyNotify)
+  GET_DM(p, pex_vars, eventPtr->xany.window, &head_pex_vars.l);
+  if(p == (struct pex_vars *)NULL || eventPtr->type == DestroyNotify)
     return TCL_OK;
 
   save_dm_list = curr_dm_list;
-
-#if 0
-  curr_dm_list = get_dm_list(eventPtr->xany.window);
-#else
   GET_DM_LIST(curr_dm_list, pex_vars, eventPtr->xany.window);
-#endif
 
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
@@ -300,6 +294,7 @@ int	a, b;
 	}
 
 	/*Pex_viewchange( DM_CHGV_REDO, SOLID_NULL );*/
+	++dmaflag;
 }
 
 int
@@ -446,26 +441,12 @@ static void
 establish_perspective()
 {
   Pex_establish_perspective(dmp);
+  ++dmaflag;
 }
 
 static void
 set_perspective()
 {
   Pex_set_perspective(dmp);
+  ++dmaflag;
 }
-
-#if 0
-static struct dm_list *
-get_dm_list(window)
-Window window;
-{
-  register struct pex_vars *p;
-
-  for( BU_LIST_FOR(p, pex_vars, &head_pex_vars.l) ){
-    if(window == p->win)
-      return ((struct mged_pex_vars *)p->app_vars)->dm_list;
-  }
-
-  return DM_LIST_NULL;
-}
-#endif

@@ -91,9 +91,6 @@ static void     establish_perspective();
 static void     set_perspective();
 static void     refresh_hook();
 static void     set_knob_offset();
-#if 0
-static struct dm_list *get_dm_list();
-#endif
 
 struct bu_structparse Glx_vparse[] = {
 	{"%d",	1, "depthcue",		Glx_MV_O(cueing_on),	Glx_colorchange },
@@ -102,13 +99,13 @@ struct bu_structparse Glx_vparse[] = {
 	{"%d",  1, "lighting",		Glx_MV_O(lighting_on),	establish_lighting },
 	{"%d",  1, "perspective",       Glx_MV_O(perspective_mode), establish_perspective },
 	{"%d",  1, "set_perspective",Glx_MV_O(dummy_perspective),  set_perspective },
-	{"%d",  1, "has_zbuf",		Glx_MV_O(zbuf),	refresh_hook },
-	{"%d",  1, "has_rgb",		Glx_MV_O(rgb),	Glx_colorchange },
-	{"%d",  1, "has_doublebuffer",	Glx_MV_O(doublebuffer), refresh_hook },
-	{"%d",  1, "min_scr_z",		Glx_MV_O(min_scr_z),	refresh_hook },
-	{"%d",  1, "max_scr_z",		Glx_MV_O(max_scr_z),	refresh_hook },
 	{"%d",  1, "debug",		Glx_MV_O(debug),	FUNC_NULL },
 	{"%d",  1, "linewidth",		Glx_MV_O(linewidth),	refresh_hook },
+	{"%d",  1, "has_zbuf",		Glx_MV_O(zbuf),		FUNC_NULL },
+	{"%d",  1, "has_rgb",		Glx_MV_O(rgb),		FUNC_NULL },
+	{"%d",  1, "has_doublebuffer",	Glx_MV_O(doublebuffer), FUNC_NULL },
+	{"%d",  1, "min_scr_z",		Glx_MV_O(min_scr_z),	FUNC_NULL },
+	{"%d",  1, "max_scr_z",		Glx_MV_O(max_scr_z),	FUNC_NULL },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
@@ -188,21 +185,18 @@ XEvent *eventPtr;
   static int knobs_during_help[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   register struct dm_list *save_dm_list;
-  register struct dm_list *p;
   struct bu_vls cmd;
+  struct glx_vars *p;
   int status = CMD_OK;
 
-  if(eventPtr->type == DestroyNotify)
+  GET_DM(p, glx_vars, eventPtr->xany.window, &head_glx_vars.l);
+  if(p == (struct glx_vars *)NULL || eventPtr->type == DestroyNotify)
     return TCL_OK;
 
   bu_vls_init(&cmd);
   save_dm_list = curr_dm_list;
 
-#if 0
-  curr_dm_list = get_dm_list(eventPtr->xany.window);
-#else
   GET_DM_LIST(curr_dm_list, glx_vars, eventPtr->xany.window);
-#endif
 
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
@@ -637,6 +631,8 @@ Glx_statechange( a, b )
 	}
 
 	Glx_viewchange( dmp, DM_CHGV_REDO, SOLID_NULL );
+
+	++dmaflag;
 }
 
 /*
@@ -803,42 +799,38 @@ register char *str;
 }
 
 static void
-set_knob_offset()
-{
-  int i;
-
-  for(i = 0; i < 8; ++i)
-    ((struct glx_vars *)dm_vars)->knobs[i] = 0;
-}
-
-static void
 Glx_colorchange()
 {
   dmp->dmr_colorchange(dmp);
+  ++dmaflag;
 }
 
 static void
 establish_zbuffer()
 {
   Glx_establish_zbuffer(dmp);
+  ++dmaflag;
 }
 
 static void
 establish_lighting()
 {
   Glx_establish_lighting(dmp);
+  ++dmaflag;
 }
 
 static void
 establish_perspective()
 {
   Glx_establish_perspective(dmp);
+  ++dmaflag;
 }
 
 static void
 set_perspective()
 {
   Glx_set_perspective(dmp);
+  ++dmaflag;
 }
 
 static void
@@ -847,20 +839,11 @@ refresh_hook()
   dmaflag = 1;
 }
 
-#if 0
-static struct dm_list *
-get_dm_list(window)
-Window window;
+static void
+set_knob_offset()
 {
-  register struct glx_vars *p;
+  int i;
 
-  for( BU_LIST_FOR(p, glx_vars, &head_glx_vars.l) ){
-    if(window == p->win){
-      GLXwinset(p->dpy, p->win);
-      return ((struct mged_glx_vars *)p->app_vars)->dm_list;
-    }
-  }
-
-  return DM_LIST_NULL;
+  for(i = 0; i < 8; ++i)
+    ((struct glx_vars *)dm_vars)->knobs[i] = 0;
 }
-#endif

@@ -98,14 +98,14 @@ struct bu_structparse Ogl_vparse[] = {
 	{"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting },
  	{"%d",  1, "perspective",       Ogl_MV_O(perspective_mode), establish_perspective },
 	{"%d",  1, "set_perspective",   Ogl_MV_O(dummy_perspective),  set_perspective },
-	{"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),	refresh_hook },
-	{"%d",  1, "has_rgb",		Ogl_MV_O(rgb),	Ogl_colorchange },
-	{"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), refresh_hook },
-	{"%d",  1, "depth",		Ogl_MV_O(depth),	FUNC_NULL },
-	{"%d",  1, "debug",		Ogl_MV_O(debug),	FUNC_NULL },
 	{"%d",  1, "linewidth",		Ogl_MV_O(linewidth),	do_linewidth },
 	{"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fog },
 	{"%f",  1, "density",		Ogl_MV_O(fogdensity),	refresh_hook },
+	{"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		FUNC_NULL },
+	{"%d",  1, "has_rgb",		Ogl_MV_O(rgb),		FUNC_NULL },
+	{"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), FUNC_NULL },
+	{"%d",  1, "depth",		Ogl_MV_O(depth),	FUNC_NULL },
+	{"%d",  1, "debug",		Ogl_MV_O(debug),	FUNC_NULL },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
@@ -152,22 +152,19 @@ XEvent *eventPtr;
 {
   static int button0  = 0;   /*  State of button 0 */
   static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  register struct dm_list *save_dm_list;
-  register struct dm_list *p;
   struct bu_vls cmd;
+  struct ogl_vars *p;
+  register struct dm_list *save_dm_list;
   int status = CMD_OK;
 
-  if(eventPtr->type == DestroyNotify)
+  GET_DM(p, ogl_vars, eventPtr->xany.window, &head_ogl_vars.l);
+  if(p == (struct ogl_vars *)NULL || eventPtr->type == DestroyNotify)
     return TCL_OK;
 
   bu_vls_init(&cmd);
   save_dm_list = curr_dm_list;
 
-#if 0
-  curr_dm_list = get_dm_list(eventPtr->xany.window);
-#else
   GET_DM_LIST(curr_dm_list, ogl_vars, eventPtr->xany.window);
-#endif
 
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
@@ -655,6 +652,7 @@ int	a, b;
 	}
 
 	/*Ogl_viewchange( DM_CHGV_REDO, SOLID_NULL );*/
+	++dmaflag;
 }
 
 /*
@@ -802,42 +800,49 @@ static void
 Ogl_colorchange()
 {
   dmp->dmr_colorchange(dmp);
+  ++dmaflag;
 }
 
 static void
 establish_zbuffer()
 {
   Ogl_establish_zbuffer(dmp);
+  ++dmaflag;
 }
 
 static void
 establish_lighting()
 {
   Ogl_establish_lighting(dmp);
+  ++dmaflag;
 }
 
 static void
 establish_perspective()
 {
   Ogl_establish_perspective(dmp);
+  ++dmaflag;
 }
 
 static void
 set_perspective()
 {
   Ogl_set_perspective(dmp);
+  ++dmaflag;
 }
 
 static void
 do_linewidth()
 {
   Ogl_do_linewidth(dmp);
+  ++dmaflag;
 }
 
 static void
 do_fog()
 {
   Ogl_do_fog(dmp);
+  ++dmaflag;
 }
 
 static void
@@ -854,23 +859,3 @@ set_knob_offset()
   for(i = 0; i < 8; ++i)
     ((struct ogl_vars *)dm_vars)->knobs[i] = 0;
 }
-
-#if 0
-static struct dm_list *
-get_dm_list(window)
-Window window;
-{
-  register struct ogl_vars *p;
-
-  for( BU_LIST_FOR(p, ogl_vars, &head_ogl_vars.l) ){
-    if(window == p->win){
-      if (!glXMakeCurrent(p->dpy, p->win, p->glxc))
-	return DM_LIST_NULL;
-
-      return ((struct mged_ogl_vars *)p->app_vars)->dm_list;
-    }
-  }
-
-  return DM_LIST_NULL;
-}
-#endif
