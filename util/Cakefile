@@ -11,7 +11,7 @@
 	bwcrop bwdiff bwfilter bwhist bwhisteq \
 	bwmod bwrect bwrot bwscale bwshrink \
 	bwstat bwthresh \
-	cv dpix-pix dunncolor dunnsnap \
+	cv double-asc dpix-pix dunncolor dunnsnap \
 	pixelswap decimate \
 	files-tape gencolor hd loop mac-pix \
 	op-bw orle-pix \
@@ -326,7 +326,10 @@ bary:	bary.o
 	CC LDFLAGS -o bary bary.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 pixdsplit:	pixdsplit.o
-	CC LDFLAGS -o pixdsplit pixdsplit.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
+	CC LDFLAGS -o pixdsplit pixdsplit.o LIBPLOT LIBBU LIBBU_LIBES LIBES
+
+double-asc:	double-asc.o
+	CC LDFLAGS -o double-asc double-asc.o LIBPLOT LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
 
 bwthresh: bwthresh.o
 	CC LDFLAGS -o bwthresh bwthresh.o LIBES
