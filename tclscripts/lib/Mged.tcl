@@ -467,5 +467,5 @@ body Mged::help {args} {
 }
 
 body Mged::getUserCmds {} {
-    return "[QuadDisplay::getUserCmds] [$db getUserCmds]"
+    return "? apropos help [QuadDisplay::getUserCmds] [$db getUserCmds]"
 }
