@@ -917,7 +917,37 @@ tgc_plot()
 {
 }
 
-tgc_curve()
+tgc_curve( cvp, hitp, stp, rp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
+struct xray *rp;
 {
-	rt_log("tgc_curve?\n");
+	static int count = 0;
+	register struct tgc_specific *tgc =
+		(struct tgc_specific *)stp->st_specific;
+
+	if( count++ == 0 )
+		rt_log("WARNING: tgc_curve is not fully implemented\n");
+
+	switch( hitp->hit_private-tgc_compute )  {
+	case 0:
+		rt_orthovec( cvp->crv_pdir, hitp->hit_normal );	/* XXX - random guess */
+		cvp->crv_c1 = 0;
+		cvp->crv_c2 = 0;			/* XXX - to do */
+
+		if( VDOT( hitp->hit_normal, rp->r_dir ) > 0 )  {
+			/* ray strikes surface from inside; make curv negative */
+			cvp->crv_c2 = - cvp->crv_c2;
+		}
+		break;
+	case 1:
+	case 2:
+		rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
+		cvp->crv_c1 = cvp->crv_c2 = 0;
+		break;
+	default:
+		rt_log("tgc_curve: bad flag x%x\n", (int)hitp->hit_private);
+		break;
+	}
 }
