@@ -1887,8 +1887,8 @@ CONST char		*title;
 /* state for nmg_unbreak_edge */
 struct nmg_unbreak_state
 {
-	int		unbroken;	/* count of edges mended */
 	long		*flags;		/* index based array of flags for model */
+	int		unbroken;	/* count of edges mended */
 };
 
 /* XXX move to nmg_mod.c */
@@ -2030,6 +2030,7 @@ int	after;
 	struct edge *e;
 	struct edge_g *eg;
 	struct nmg_unbreak_state *ub_state;
+	struct vertex	*vb;
 	struct vertexuse *vu;
 
 	e = (struct edge *)ep;
@@ -2054,7 +2055,7 @@ int	after;
 		return;
 	}
 
-	/* find two consecutive uses.  First look forward. */
+	/* Check for two consecutive uses, by looking forward. */
 	eu1 = e->eu_p;
 	NMG_CK_EDGEUSE( eu1 );
 	eu2 = RT_LIST_PNEXT_CIRC( edgeuse , eu1 );
@@ -2067,6 +2068,8 @@ int	after;
 		/* rt_log("nmg_unbreak_handler: edge geom not shared\n"); */
 		return;
 	}
+	vb = eu2->vu_p->v_p;
+	NMG_CK_VERTEX(vb);
 
 	/* at this point, the situation is:
 
@@ -2076,14 +2079,22 @@ int	after;
 		*<-----------*<-----------*
 		    eu1mate      eu2mate
 	*/
-	if( nmg_unbreak_edge( eu1 ) == 0 )  {
-		/* keep a count of unbroken edges */
-		ub_state->unbroken++;
-	}
+	if( nmg_unbreak_edge( eu1 ) != 0 )  return;
+
+	/* keep a count of unbroken edges */
+	ub_state->unbroken++;
+
+#if 0
+	/* See if vertex "B" survived, meaning it has other uses */
+	if( vb->l.magic != NMG_VERTEX_MAGIC )  return;
+
+	/* It's really unclear how to proceed here. No context info. */
+#endif
 }
 
 /* XXX This should be made a global constant */
-static CONST struct nmg_visit_handlers  nmg_visit_handlers_null;
+/* XXX move to raytrace.h and ??? */
+CONST struct nmg_visit_handlers  nmg_visit_handlers_null;
 
 /*
  *			N M G _ U N B R E A K _ R E G I O N _ E D G E S
