@@ -354,8 +354,10 @@ char **argv;
 		/* apply solid editing changes if necessary */
 		if( sedraw > 0) {
 			sedit();
+#if 1
 			sedraw = 0;
 			dmaflag = 1;
+#endif
 		}
 
 		/*
@@ -1166,7 +1168,7 @@ slewview( view_pos )
 vect_t view_pos;
 {
 #if 1
-  char *av[8];
+  char *av[9];
   struct bu_vls x_vls, y_vls, z_vls;
 
   bu_vls_init(&x_vls);
@@ -1176,16 +1178,17 @@ vect_t view_pos;
   bu_vls_printf(&y_vls, "%f", -view_pos[Y]);
   bu_vls_printf(&z_vls, "%f", -view_pos[Z]);
 
-  av[0] = "iknob";
-  av[1] = "aX";
-  av[2] = bu_vls_addr(&x_vls);
-  av[3] = "aY";
-  av[4] = bu_vls_addr(&y_vls);;
-  av[5] = "aZ";
-  av[6] = bu_vls_addr(&z_vls);;
-  av[7] = NULL;
+  av[0] = "knob";
+  av[1] = "-i";
+  av[2] = "aX";
+  av[3] = bu_vls_addr(&x_vls);
+  av[4] = "aY";
+  av[5] = bu_vls_addr(&y_vls);;
+  av[6] = "aZ";
+  av[7] = bu_vls_addr(&z_vls);;
+  av[8] = NULL;
 
-  (void)f_knob((ClientData)NULL, interp, 7, av);
+  (void)f_knob((ClientData)NULL, interp, 8, av);
 
   bu_vls_free(&x_vls);
   bu_vls_free(&y_vls);
@@ -1326,6 +1329,26 @@ new_mats()
 	mat_mul( model2view, Viewrot, toViewcenter );
 	model2view[15] = Viewscale;
 	mat_inv( view2model, model2view );
+
+#if 1
+	{
+	  vect_t work, work1;
+	  vect_t temp, temp1;
+
+	  /* Find current azimuth, elevation, and twist angles */
+	  VSET( work , 0 , 0 , 1 );       /* view z-direction */
+	  MAT4X3VEC( temp , view2model , work );
+	  VSET( work1 , 1 , 0 , 0 );      /* view x-direction */
+	  MAT4X3VEC( temp1 , view2model , work1 );
+
+	  /* calculate angles using accuracy of 0.005, since display
+	   * shows 2 digits right of decimal point */
+	  mat_aet_vec( &curr_dm_list->s_info->azimuth,
+		       &curr_dm_list->s_info->elevation,
+		       &curr_dm_list->s_info->twist,
+		       temp , temp1 , (fastf_t)0.005 );
+	}
+#endif
 
 	if( state != ST_VIEW ) {
 	    register struct dm_list *p;
