@@ -131,12 +131,13 @@ vr_viewpoint_hook()
 	/* Need to send current viewpoint to VR mgr */
 	/* XXX more will be needed */
 	/* Eye point, quaturnion for orientation */
-	rt_vls_printf( &str, "pov %e %e %e   %e %e %e %e   %e\n", 
+	rt_vls_printf( &str, "pov %e %e %e   %e %e %e %e   %e   %e %e %e\n", 
 		-toViewcenter[MDX],
 		-toViewcenter[MDY],
 		-toViewcenter[MDZ],
 		V4ARGS(orient),
-		Viewscale );
+		Viewscale,
+		V3ARGS(recip_vanishing_point) );
 
 	if( pkg_send_vls( VRMSG_POV, &str, vrmgr ) < 0 )  {
 		fprintf(stderr,"viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
@@ -160,7 +161,7 @@ char	*argv[];
 {
 	quat_t		orient;
 
-	if( argc < 1+3+4+1 )  {
+	if( argc < 1+3+4+1+3 )  {
 		printf("pov: insufficient args\n");
 		return;
 	}
@@ -173,6 +174,9 @@ char	*argv[];
 	orient[3] = atof(argv[7]);
 	quat_quat2mat( Viewrot, orient );
 	Viewscale = atof(argv[8]);
+	recip_vanishing_point[X] = atof(argv[9]);
+	recip_vanishing_point[Y] = atof(argv[10]);
+	recip_vanishing_point[Z] = atof(argv[11]);
 	new_mats();
 }
 
