@@ -1471,7 +1471,7 @@ Display *dpy;
 
 	/* How many visuals? */
 	vp = XGetVisualInfo(dpy, VisualNoMask, NULL, &num );
-	XFree( vp );
+	XFree( (char *)vp );
 	printf("%d Visual(s)\n", num);
 	printf("ImageByteOrder: %s\n",
 		ImageByteOrder(dpy) == MSBFirst ? "MSBFirst" : "LSBFirst");
