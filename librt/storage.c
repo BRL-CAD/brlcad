@@ -45,6 +45,8 @@ char *str;
 
 	if( ptr==(char *)0 || debug&DEBUG_MEM )
 		rtlog("%x=malloc(%d) %s\n", ptr, cnt, str);
+	if( ptr==(char *)0 )
+		rtbomb("vmalloc: malloc failure");
 	return(ptr);
 }
 
@@ -76,7 +78,7 @@ get_seg()  {
 	register struct seg *sp;
 	register int bytes;
 
-	bytes = 64*sizeof(struct seg);
+	bytes = byte_roundup(64*sizeof(struct seg));
 	if( (cp = vmalloc(bytes, "get_seg")) == (char *)0 )  {
 		rtlog("get_seg: malloc failure\n");
 		exit(17);
@@ -109,7 +111,7 @@ get_pt()  {
 
 	size = PT_BYTES;		/* depends on nsolids */
 	size = (size + sizeof(long) -1) & (~(sizeof(long)-1));
-	bytes = 64*size;
+	bytes = byte_roundup(64*size);
 	if( (cp = vmalloc(bytes, "get_pt")) == (char *)0 )  {
 		rtlog("get_pt: malloc failure\n");
 		exit(17);
@@ -120,4 +122,46 @@ get_pt()  {
 		cp += size;
 		bytes -= size;
 	}
+}
+
+/*
+ *  			B Y T E _ R O U N D U P
+ *  
+ *  On systems with the CalTech malloc(), the amount of storage
+ *  ACTUALLY ALLOCATED is the amount requested rounded UP to the
+ *  nearest power of two.  For structures which are acquired and
+ *  released often, this works well, but for structures which will
+ *  remain unchanged for the duration of the program, this wastes
+ *  as much as 50% of the address space (and usually memory as well).
+ *  Here, we round up a byte size to the nearest power of two,
+ *  leaving off the malloc header, so as to ask for storage without
+ *  wasting any.
+ *  
+ *  On systems with the traditional malloc(), this strategy will just
+ *  consume the memory in somewhat larger chunks, but overall little
+ *  unused memory will be consumed.
+ */
+int
+byte_roundup(nbytes)
+register int nbytes;
+{
+	static int pagesz;
+	register int n;
+	register int amt;
+
+	if (pagesz == 0)
+		pagesz = 1024;		/* getpagesize(); */
+
+#define OVERHEAD	(4*sizeof(unsigned char) + \
+			2*sizeof(unsigned short) + \
+			sizeof(unsigned int) )
+	n = pagesz - OVERHEAD;
+	if (nbytes <= n)
+		return(n);
+	amt = pagesz;
+
+	while (nbytes > amt + n) {
+		amt <<= 1;
+	}
+	return(amt-OVERHEAD-sizeof(int));
 }
