@@ -35,7 +35,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-BU_EXTERN(void		rt_pr_seg_vls, (struct bu_vls *, CONST struct seg *));
 
 /*
  *			R T _ P R _ S O L T A B
