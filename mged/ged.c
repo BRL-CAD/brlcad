@@ -224,12 +224,40 @@ char **argv;
 		 * Use data tablet inputs.
 		 */		 
 		if( dm_values.dv_penpress )
-			rateflag++;
+			rateflag++;	/* to catch transition back to 0 */
 
-		xcross = dm_values.dv_xpen;
-		ycross = dm_values.dv_ypen;
+		switch( dm_values.dv_penpress )  {
+		case DV_INZOOM:
+			Viewscale *= 0.5;
+			new_mats();
+			break;
 
-		usepen();
+		case DV_OUTZOOM:
+			Viewscale *= 2.0;
+			new_mats();
+			break;
+
+		case DV_SLEW:		/* Move view center to here */
+			{
+				vect_t tabvec;
+				tabvec[X] =  dm_values.dv_xpen / 2047.0;
+				tabvec[Y] =  dm_values.dv_ypen / 2047.0;
+				tabvec[Z] = 0;
+				slewview( tabvec );
+			}
+			break;
+
+		case DV_PICK:		/* transition 0 --> 1 */
+		case 0:			/* transition 1 --> 0 */
+			usepen();
+			break;
+		default:
+			(void)printf("pen(%d,%d,x%x) -- bad dm press code\n",
+			dm_values.dv_xpen,
+			dm_values.dv_ypen,
+			dm_values.dv_penpress);
+			break;
+		}
 
 		/*
 		 * Set up window so that drawing does not run over into the
