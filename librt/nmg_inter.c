@@ -393,6 +393,8 @@ nmg_isect2d_final_cleanup()
  *	0	if there was no intersection
  *	1	if the vertex was an endpoint of the edge.
  *	2	if edge was split (in the middle) at vertex.
+ *
+ * XXX YYY ZZZ replace this with nmg_isect_vu_on_eu().
  */
 static int
 nmg_isect_edge2p_vert2p( is, eu, vu )
@@ -800,6 +802,166 @@ rt_log("%%%%%% point is outside face loop, no need to break eu1?\n");
 }
 
 /*
+ *			N M G _ B R E A K _ E U _ O N _ V
+ *
+ *  The vertexuse 'vu' is known to lie in the plane of eu's face.
+ *  If vu lies between the two endpoints of eu, break eu and
+ *  return the new edgeuse pointer.
+ *
+ *  Note that no "intersection line" stuff is done, the goal here is
+ *  just to get the edge appropriately broken.
+ *
+ *  Either faceuse can be passed in, but it needs to be consistent with the
+ *  faceuse used to establish the 2d vertex cache.
+ *
+ *  Returns -
+ *	new_eu	if edge is broken
+ *	0	otherwise
+ */
+struct edgeuse *
+nmg_break_eu_on_v( eu1, v2, fu, is )
+struct edgeuse		*eu1;
+struct vertex		*v2;
+struct faceuse		*fu;	/* for plane equation of (either) face */
+struct nmg_inter_struct	*is;
+{
+	point_t		a;
+	point_t		b;
+	point_t		p;
+	int		code;
+	fastf_t		dist;
+	struct vertex	*v1a;
+	struct vertex	*v1b;
+	struct edgeuse		*new_eu = (struct edgeuse *)0;
+
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_VERTEX(v2);
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_INTER_STRUCT(is);
+
+	v1a = eu1->vu_p->v_p;
+	v1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p->v_p;
+
+	/* Check for already shared topology */
+	if( v1a == v2 || v1b == v2 )  {
+		goto out;
+	}
+
+	/* Map to 2d */
+	nmg_get_2d_vertex( a, v1a, is, fu );
+	nmg_get_2d_vertex( b, v1b, is, fu );
+	nmg_get_2d_vertex( p, v2, is, fu );
+
+	dist = -INFINITY;
+	code = rt_isect_pt2_lseg2( &dist, a, b, p, &(is->tol) );
+
+	switch(code)  {
+	case -2:
+		/* P outside AB */
+		break;
+	default:
+	case -1:
+		/* P not on line */
+		V2PRINT("a", a);
+		V2PRINT("p", p);
+		V2PRINT("b", b);
+		rt_log("nmg_break_eu_on_v() P not on line?\n");
+		break;
+	case 1:
+		/* P is at A */
+		nmg_jv( v1a, v2 );
+		break;
+	case 2:
+		/* P is at B */
+		nmg_jv( v1b, v2 );
+		break;
+	case 3:
+		/* P is in the middle, break edge */
+		new_eu = nmg_ebreak( v2, eu1 );
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			rt_log("nmg_break_eu_on_v() breaking eu=x%x on v=x%x, new_eu=x%x\n",
+				eu1, v2, new_eu );
+		}
+		break;
+	}
+
+out:
+	return new_eu;
+}
+
+/*
+ *			N M G _ B R E A K _ 2 C O L I N E A R _ E D G E 2 P
+ *
+ *  Perform edge mutual breaking only on two colinear edgeuses.
+ *  No intersect list stuff is performed.
+ *  This can result in 2 new edgeuses showing up in either loop.
+ *
+ *  Two colinear line segments (eu1 and eu2, or just "1" and "2" in the
+ *  diagram) can overlap each other in one of 9 configurations,
+ *  labeled A through I:
+ *
+ *	A	B	C	D	E	F	G	H	I
+ *
+ *  vu1b,vu2b
+ *	*	*	  *	  *	*	  *	*	  *	*=*
+ *	1	1	  2	  2	1	  2	1	  2	1 2
+ *	1=*	1	  2	*=2	1=*	*=2	*	  *	1 2
+ *	1 2	*=*	*=*	1 2	1 2	1 2			1 2
+ *	1 2	  2	1	1 2	1 2	1 2	  *	*	1 2
+ *	1=*	  2	1	*=2	*=2	1=*	  2	1	1 2
+ *	1	  *	*	  2	  2	1	  *	*	1 2
+ *	*			  *	  *	*			*=*
+ *   vu1a,vu2a
+ *
+ *  To ensure nothing is missed, break every edgeuse on all 4 vertices.
+ *  If a new edgeuse is created, add it to the list of edgeuses still to be
+ *  broken.
+ *  Brute force, but *certain* not to miss anything.
+ *
+ *  Returns the number of edgeuses that resulted,
+ *  which is always at least the original 2.
+ */
+int
+nmg_break_2colinear_edge2p( eu1, eu2, fu, is )
+struct edgeuse	*eu1;
+struct edgeuse	*eu2;
+struct faceuse		*fu;	/* for plane equation of (either) face */
+struct nmg_inter_struct	*is;
+{
+	struct edgeuse	*eu[10];
+	struct vertex	*v[4];
+	register int	i;
+	register int	j;
+	int		neu;	/* Number of edgeuses */
+
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_EDGEUSE(eu2);
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_INTER_STRUCT(is);
+
+	v[0] = eu1->vu_p->v_p;
+	v[1] = eu1->eumate_p->vu_p->v_p;
+	v[2] = eu2->vu_p->v_p;
+	v[3] = eu2->eumate_p->vu_p->v_p;
+
+	eu[0] = eu1;
+	eu[1] = eu2;
+	neu = 2;
+
+	for( i=0; i < neu; i++ )  {
+		for( j=0; j<4; j++ )  {
+			if( eu[neu] = nmg_break_eu_on_v(eu[i],v[j],fu,is) )
+				neu++;
+		}
+	}
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("nmg_break_2colinear_edge2p(eu1=x%x, eu2=x%x) #eu=%d\n",
+			eu1, eu2, neu);
+	}
+	return neu;
+}
+
+/*
  * N M G _ I S E C T _ T W O _ C O L I N E A R _ E D G E 2 P _ B O T H _ W A Y S
  *
  *  A wrapper for nmg_isect_two_colinear_edge2p().
@@ -886,10 +1048,8 @@ CONST struct rt_tol	*tol;
 		rt_log("\tnmg_isect_two_colinear_edge2p_both_ways()=%d, dist: %g, %g\n",
 			status, eu2dist[0], eu2dist[1] );
 	}
-	if(fu1)nmg_ck_face_worthless_edges( fu1 );
-	if(fu2)nmg_ck_face_worthless_edges( fu2 );
 
-	if( status != 0 )  return ret;
+	if( status != 0 )  goto out;
 #endif
 
 	/*  Find break points on eu2 caused by vu1[ab]. */
@@ -899,6 +1059,7 @@ CONST struct rt_tol	*tol;
 	> 0 )  {
 		ret |= ISECT_SPLIT2;	/* eu2 was broken */
 	}
+out:
 	if(fu1)nmg_ck_face_worthless_edges( fu1 );
 	if(fu2)nmg_ck_face_worthless_edges( fu2 );
 	return ret;
@@ -1190,6 +1351,19 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	}
 
 	if( status == 0 )  {
+		/* Lines are co-linear */
+#if 1
+		/* XXX This part might not help, test it. */
+		/* First, perform full mutual intersection */
+		if( nmg_break_2colinear_edge2p( eu1, eu2, fu2, is ) > 2 )  {
+			/* Things might have changed */
+			vu1a = eu1->vu_p;
+			vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
+			vu2a = eu2->vu_p;
+			vu2b = RT_LIST_PNEXT_CIRC( edgeuse, eu2 )->vu_p;
+		}
+#endif
+		/* XXX Drop back to old routine to list the verts */
 		ret |= nmg_isect_two_colinear_edge2p_both_ways( dist,
 			is->l1, is->l2,
 			vu1a, vu1b, vu2a, vu2b,
