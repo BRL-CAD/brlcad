@@ -15,7 +15,18 @@ static
 char sccsTag[] = "@(#) glob.c 2.2, modified 1/5/87 at 16:57:29, archive /vld/moss/src/fbed/s.glob.c";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "fb.h"
+
+#include "./std.h"
+#include "./ascii.h"
+#include "./font.h"
+#include "./try.h"
 #include "./extern.h"
 
 RGBpixel *menu_addr;

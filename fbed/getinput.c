@@ -10,7 +10,18 @@ static
 char sccsTag[] = "@(#) getinput.c 2.1, modified 12/9/86 at 15:56:41, archive /vld/moss/src/fbed/s.getinput.c";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "fb.h"
+
+#include "./std.h"
+#include "./ascii.h"
+#include "./font.h"
+#include "./try.h"
 #include "./extern.h"
 
 extern char *char_To_String();
