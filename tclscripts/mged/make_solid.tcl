@@ -86,7 +86,7 @@ proc make_solid { id w type } {
     set result [catch {_mged_make $mged_solid_name($id) $type} msg]
 
     if {$result == 0} {
-	_mged_sed $mged_solid_name($id)
+	catch {_mged_sed $mged_solid_name($id)}
 	catch {destroy $w}
     } else {
 	cad_dialog .$id.solidDialog $player_screen($id)\
