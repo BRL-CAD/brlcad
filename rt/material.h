@@ -59,11 +59,13 @@ struct shadework {
 	fastf_t		sw_transmit;
 	fastf_t		sw_reflect;
 	fastf_t		sw_refrac_index;
+	fastf_t		sw_extinction;	/* extinction coeff, mm^-1 */
 	fastf_t		sw_color[3];	/* shaded color */
 	fastf_t		sw_basecolor[3]; /* base color */
 	struct hit	sw_hit;		/* ray hit (dist,point,normal) */
 	struct uvcoord	sw_uv;
 	fastf_t		sw_intensity[3*SW_NLIGHTS]; /* light intensities */
+	fastf_t		sw_tolight[3*SW_NLIGHTS];   /* light directions */
 	char		*sw_visible[SW_NLIGHTS]; /* visibility flags/ptrs */
 	int		sw_xmitonly;	/* flag: need sw_transmit only */
 	int		sw_inputs;	/* fields from mf_inputs actually filled */
