@@ -9,6 +9,7 @@
  *
  *	define rt_xxx_internal --- parameters for solid
  *	define xxx_specific --- raytracing form, possibly w/precomuted terms
+ *	define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
  *
  *	code import/export/describe/print/ifree/plot/prep/shot/curve/uv/tess
  *
@@ -19,10 +20,13 @@
  *		struct rt_functab entry
  *		rt_id_solid()
  *	edit raytrace.h to make ID_XXX, increment ID_MAXIMUM
+ *	edit db_scan.c to add the new solid to db_scan()
  *	edit Cakefile to add g_xxx.c to compile
  *
  *	Then:
  *	go to /cad/libwdb and create mk_xxx() routine
+ *	go to /cad/conv and edit g2asc.c and asc2g.c to support the new solid
+ *	go to /cad/librt and edit tcl.c to add the new solid to  rt_solid_type_lookup[]
  *	go to /cad/mged and create the edit support
  *
  *  Authors -
