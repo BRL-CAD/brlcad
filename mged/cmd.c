@@ -44,7 +44,7 @@ void	f_region(), f_itemair(), f_modify(), f_kill(), f_list();
 void	f_zap(), f_group(), f_param(), f_mirror(), f_extrude();
 void	f_delmem(), f_arbdef(), f_comm(), f_quit();
 void	f_edcomb(), f_status(), f_vrot();
-void	f_refresh(), f_fix(), f_rt();
+void	f_refresh(), f_fix(), f_rt(), f_saveview();
 void	f_make(), f_attach(), f_release();
 void	f_tedit(), f_memprint();
 void	f_mirface(), f_units(), f_title();
@@ -147,6 +147,8 @@ static struct funtab {
 	f_refresh, 1,1,
 "rt", "[options]", "do raytrace of view",
 	f_rt,1,MAXARGS,
+"saveview", "file [args]", "save view in file for RT",
+	f_saveview,2,MAXARGS,
 "attach", "<device>", "attach to a display processor, or NU",
 	f_attach,2,2,
 "release", "", "release current display processor [attach NU]",
